@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.67 2002/12/13 19:45:52 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.68 2002/12/14 00:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 
 		foreach(lst, node->initPlan)
 		{
-			SubPlanExprState  *sstate = (SubPlanExprState *) lfirst(lst);
+			SubPlanState  *sstate = (SubPlanState *) lfirst(lst);
 			PlanState  *splan = sstate->planstate;
 
 			if (splan->plan->extParam != NIL)	/* don't care about child
@@ -72,7 +72,7 @@ ExecReScan(PlanState *node, ExprContext *exprCtxt)
 		}
 		foreach(lst, node->subPlan)
 		{
-			SubPlanExprState  *sstate = (SubPlanExprState *) lfirst(lst);
+			SubPlanState  *sstate = (SubPlanState *) lfirst(lst);
 			PlanState  *splan = sstate->planstate;
 
 			if (splan->plan->extParam != NIL)

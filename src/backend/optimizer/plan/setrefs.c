@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.85 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.86 2002/12/14 00:17:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ set_plan_references(Plan *plan, List *rtable)
 	 * subplan references in this plan's tlist and quals.  If we did the
 	 * reference-adjustments bottom-up, then we would fail to match this
 	 * plan's var nodes against the already-modified nodes of the
-	 * children.  Fortunately, that consideration doesn't apply to SubPlanExpr
+	 * children.  Fortunately, that consideration doesn't apply to SubPlan
 	 * nodes; else we'd need two passes over the expression trees.
 	 */
 	set_plan_references(plan->lefttree, rtable);
@@ -227,9 +227,9 @@ set_plan_references(Plan *plan, List *rtable)
 
 	foreach(pl, plan->initPlan)
 	{
-		SubPlanExpr *sp = (SubPlanExpr *) lfirst(pl);
+		SubPlan *sp = (SubPlan *) lfirst(pl);
 
-		Assert(IsA(sp, SubPlanExpr));
+		Assert(IsA(sp, SubPlan));
 		set_plan_references(sp->plan, sp->rtable);
 	}
 }
@@ -259,9 +259,9 @@ fix_expr_references_walker(Node *node, void *context)
 		set_opfuncid((OpExpr *) node);
 	else if (IsA(node, DistinctExpr))
 		set_opfuncid((OpExpr *) node); /* rely on struct equivalence */
-	else if (IsA(node, SubPlanExpr))
+	else if (IsA(node, SubPlan))
 	{
-		SubPlanExpr *sp = (SubPlanExpr *) node;
+		SubPlan *sp = (SubPlan *) node;
 
 		set_plan_references(sp->plan, sp->rtable);
 	}

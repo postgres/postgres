@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.128 2002/12/12 15:49:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.129 2002/12/14 00:17:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2099,7 +2099,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			get_sublink_expr((SubLink *) node, context);
 			break;
 
-		case T_SubPlanExpr:
+		case T_SubPlan:
 			{
 				/*
 				 * We cannot see an already-planned subplan in

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.189 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.190 2002/12/14 00:17:52 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -665,18 +665,19 @@ _outSubLink(StringInfo str, SubLink *node)
 }
 
 static void
-_outSubPlanExpr(StringInfo str, SubPlanExpr *node)
+_outSubPlan(StringInfo str, SubPlan *node)
 {
-	WRITE_NODE_TYPE("SUBPLANEXPR");
+	WRITE_NODE_TYPE("SUBPLAN");
 
-	WRITE_OID_FIELD(typeOid);
+	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
+	WRITE_BOOL_FIELD(useor);
+	WRITE_NODE_FIELD(oper);
 	WRITE_NODE_FIELD(plan);
 	WRITE_INT_FIELD(plan_id);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_INTLIST_FIELD(setParam);
 	WRITE_INTLIST_FIELD(parParam);
 	WRITE_NODE_FIELD(args);
-	WRITE_NODE_FIELD(sublink);
 }
 
 static void
@@ -1498,8 +1499,8 @@ _outNode(StringInfo str, void *obj)
 			case T_SubLink:
 				_outSubLink(str, obj);
 				break;
-			case T_SubPlanExpr:
-				_outSubPlanExpr(str, obj);
+			case T_SubPlan:
+				_outSubPlan(str, obj);
 				break;
 			case T_FieldSelect:
 				_outFieldSelect(str, obj);

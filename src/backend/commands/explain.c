@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.97 2002/12/13 19:45:49 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.98 2002/12/14 00:17:50 tgl Exp $
  *
  */
 
@@ -589,8 +589,8 @@ explain_outNode(StringInfo str,
 		appendStringInfo(str, "  InitPlan\n");
 		foreach(lst, planstate->initPlan)
 		{
-			SubPlanExprState *sps = (SubPlanExprState *) lfirst(lst);
-			SubPlanExpr *sp = (SubPlanExpr *) sps->xprstate.expr;
+			SubPlanState *sps = (SubPlanState *) lfirst(lst);
+			SubPlan *sp = (SubPlan *) sps->xprstate.expr;
 
 			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
@@ -687,8 +687,8 @@ explain_outNode(StringInfo str,
 		appendStringInfo(str, "  SubPlan\n");
 		foreach(lst, planstate->subPlan)
 		{
-			SubPlanExprState *sps = (SubPlanExprState *) lfirst(lst);
-			SubPlanExpr *sp = (SubPlanExpr *) sps->xprstate.expr;
+			SubPlanState *sps = (SubPlanState *) lfirst(lst);
+			SubPlan *sp = (SubPlan *) sps->xprstate.expr;
 
 			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)

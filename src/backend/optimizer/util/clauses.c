@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.118 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.119 2002/12/14 00:17:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -486,7 +486,7 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, SubLink))
 		return false;
-	if (IsA(node, SubPlanExpr))
+	if (IsA(node, SubPlan))
 		return false;
 
 	return expression_tree_walker(node, expression_returns_set_walker,
@@ -519,7 +519,7 @@ contain_subplans_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
-	if (IsA(node, SubPlanExpr) ||
+	if (IsA(node, SubPlan) ||
 		IsA(node, SubLink))
 		return true;			/* abort the tree traversal and return
 								 * true */
@@ -530,7 +530,7 @@ contain_subplans_walker(Node *node, void *context)
  * pull_subplans
  *	  Recursively pulls all subplans from an expression tree.
  *
- *	  Returns list of SubPlanExpr nodes found.  Note the nodes themselves
+ *	  Returns list of SubPlan nodes found.  Note the nodes themselves
  *	  are not copied, only referenced.
  */
 List *
@@ -656,7 +656,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 		 */
 		List	   *t;
 
-		foreach(t, ((SubPlanExpr *) node)->args)
+		foreach(t, ((SubPlan *) node)->args)
 		{
 			Node	   *thisarg = lfirst(t);
 			Var		   *var;
@@ -1483,14 +1483,14 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 				break;
 		}
 	}
-	if (IsA(node, SubPlanExpr))
+	if (IsA(node, SubPlan))
 	{
 		/*
-		 * Return a SubPlanExpr unchanged --- too late to do anything
+		 * Return a SubPlan unchanged --- too late to do anything
 		 * with it.
 		 *
 		 * XXX should we elog() here instead?  Probably this routine
-		 * should never be invoked after SubPlanExpr creation.
+		 * should never be invoked after SubPlan creation.
 		 */
 		return node;
 	}
@@ -2089,17 +2089,17 @@ substitute_actual_parameters_mutator(Node *node,
  * FromExpr, JoinExpr, and SetOperationStmt nodes are handled, so that query
  * jointrees and setOperation trees can be processed without additional code.
  *
- * expression_tree_walker will handle SubLink and SubPlanExpr nodes by
- * recursing normally into the "lefthand" arguments (which are expressions
- * belonging to the outer plan).  It will also call the walker on the
- * sub-Query node; however, when expression_tree_walker itself is called on a
- * Query node, it does nothing and returns "false".  The net effect is that
- * unless the walker does something special at a Query node, sub-selects will
- * not be visited during an expression tree walk. This is exactly the behavior
- * wanted in many cases --- and for those walkers that do want to recurse into
- * sub-selects, special behavior is typically needed anyway at the entry to a
- * sub-select (such as incrementing a depth counter). A walker that wants to
- * examine sub-selects should include code along the lines of:
+ * expression_tree_walker will handle SubLink nodes by recursing normally into
+ * the "lefthand" arguments (which are expressions belonging to the outer
+ * plan).  It will also call the walker on the sub-Query node; however, when
+ * expression_tree_walker itself is called on a Query node, it does nothing
+ * and returns "false".  The net effect is that unless the walker does
+ * something special at a Query node, sub-selects will not be visited during
+ * an expression tree walk. This is exactly the behavior wanted in many cases
+ * --- and for those walkers that do want to recurse into sub-selects, special
+ * behavior is typically needed anyway at the entry to a sub-select (such as
+ * incrementing a depth counter). A walker that wants to examine sub-selects
+ * should include code along the lines of:
  *
  *		if (IsA(node, Query))
  *		{
@@ -2113,10 +2113,12 @@ substitute_actual_parameters_mutator(Node *node,
  * query_tree_walker is a convenience routine (see below) that calls the
  * walker on all the expression subtrees of the given Query node.
  *
- * NOTE: currently, because make_subplan() clears the subselect link in
- * a SubLink node, it is not actually possible to recurse into subselects
- * of an already-planned expression tree.  This is OK for current uses,
- * but ought to be cleaned up when we redesign querytree processing.
+ * expression_tree_walker will handle SubPlan nodes by recursing normally
+ * into the "oper" and "args" lists (which are expressions belonging to the
+ * outer plan).  It will not touch the completed subplan, however.  Since
+ * there is no link to the original Query, it is not possible to recurse into
+ * subselects of an already-planned expression tree.  This is OK for current
+ * uses, but may need to be revisited in future.
  *--------------------
  */
 
@@ -2207,24 +2209,13 @@ expression_tree_walker(Node *node,
 				SubLink    *sublink = (SubLink *) node;
 
 				/*
-				 * If the SubLink has already been processed by
-				 * subselect.c, it will have lefthand=NIL, and we need to
-				 * scan the oper list.	Otherwise we only need to look at
-				 * the lefthand list (the incomplete OpExpr nodes in the
-				 * oper list are deemed uninteresting, perhaps even
-				 * confusing).
+				 * We only recurse into the lefthand list (the incomplete
+				 * OpExpr nodes in the oper list are deemed uninteresting,
+				 * perhaps even confusing).
 				 */
-				if (sublink->lefthand)
-				{
-					if (walker((Node *) sublink->lefthand, context))
-						return true;
-				}
-				else
-				{
-					if (walker((Node *) sublink->oper, context))
-						return true;
-				}
-
+				if (expression_tree_walker((Node *) sublink->lefthand,
+										   walker, context))
+					return true;
 				/*
 				 * Also invoke the walker on the sublink's Query node, so
 				 * it can recurse into the sub-query if it wants to.
@@ -2232,15 +2223,16 @@ expression_tree_walker(Node *node,
 				return walker(sublink->subselect, context);
 			}
 			break;
-		case T_SubPlanExpr:
+		case T_SubPlan:
 			{
-				SubPlanExpr *expr = (SubPlanExpr *) node;
+				SubPlan *subplan = (SubPlan *) node;
 
-				/* recurse to the SubLink node, but not into the Plan */
-				if (walker((Node *) expr->sublink, context))
+				/* recurse into the oper list, but not into the Plan */
+				if (expression_tree_walker((Node *) subplan->oper,
+										   walker, context))
 					return true;
 				/* also examine args list */
-				if (expression_tree_walker((Node *) expr->args,
+				if (expression_tree_walker((Node *) subplan->args,
 										   walker, context))
 					return true;
 			}
@@ -2442,18 +2434,17 @@ query_tree_walker(Query *query,
  * expression_tree_mutator include all those normally found in target lists
  * and qualifier clauses during the planning stage.
  *
- * expression_tree_mutator will handle a SubPlanExpr node by recursing into
- * the args and sublink->oper lists (which belong to the outer plan), but it
+ * expression_tree_mutator will handle a SubPlan node by recursing into
+ * the "oper" and "args" lists (which belong to the outer plan), but it
  * will simply copy the link to the inner plan, since that's typically what
  * expression tree mutators want.  A mutator that wants to modify the subplan
- * can force appropriate behavior by recognizing subplan expression nodes
+ * can force appropriate behavior by recognizing SubPlan expression nodes
  * and doing the right thing.
  *
- * Bare SubLink nodes (without a SubPlanExpr) are handled by recursing into
- * the "lefthand" argument list only.  (A bare SubLink should be seen only if
- * the tree has not yet been processed by subselect.c.)  Again, this can be
- * overridden by the mutator, but it seems to be the most useful default
- * behavior.
+ * SubLink nodes are handled by recursing into the "lefthand" argument list
+ * only.  (A SubLink will be seen only if the tree has not yet been
+ * processed by subselect.c.)  Again, this can be overridden by the mutator,
+ * but it seems to be the most useful default behavior.
  *--------------------
  */
 
@@ -2560,9 +2551,8 @@ expression_tree_mutator(Node *node,
 		case T_SubLink:
 			{
 				/*
-				 * A "bare" SubLink (note we will not come here if we
-				 * found a SubPlanExpr node above it).  Transform the
-				 * lefthand side, but not the oper list nor the subquery.
+				 * We transform the lefthand side, but not the oper list nor
+				 * the subquery.
 				 */
 				SubLink    *sublink = (SubLink *) node;
 				SubLink    *newnode;
@@ -2572,20 +2562,17 @@ expression_tree_mutator(Node *node,
 				return (Node *) newnode;
 			}
 			break;
-		case T_SubPlanExpr:
+		case T_SubPlan:
 			{
-				SubPlanExpr   *expr = (SubPlanExpr *) node;
-				SubLink		  *oldsublink = expr->sublink;
-				SubPlanExpr   *newnode;
+				SubPlan	   *subplan = (SubPlan *) node;
+				SubPlan	   *newnode;
 
-				FLATCOPY(newnode, expr, SubPlanExpr);
-				/* flat-copy the SubLink node */
-				CHECKFLATCOPY(newnode->sublink, oldsublink, SubLink);
+				FLATCOPY(newnode, subplan, SubPlan);
 				/* transform args list (params to be passed to subplan) */
-				MUTATE(newnode->args, expr->args, List *);
-				/* transform sublink's oper list as well */
-				MUTATE(newnode->sublink->oper, oldsublink->oper, List *);
-				/* but not the subplan itself, which is referenced as-is */
+				MUTATE(newnode->args, subplan->args, List *);
+				/* transform oper list as well */
+				MUTATE(newnode->oper, subplan->oper, List *);
+				/* but not the sub-Plan itself, which is referenced as-is */
 				return (Node *) newnode;
 			}
 			break;

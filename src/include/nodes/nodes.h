@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.132 2002/12/13 19:46:00 tgl Exp $
+ * $Id: nodes.h,v 1.133 2002/12/14 00:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ typedef enum NodeTag
 	T_DistinctExpr,
 	T_BoolExpr,
 	T_SubLink,
-	T_SubPlanExpr,
+	T_SubPlan,
 	T_FieldSelect,
 	T_RelabelType,
 	T_CaseExpr,
@@ -133,7 +133,7 @@ typedef enum NodeTag
 	T_ArrayRefExprState,
 	T_FuncExprState,
 	T_BoolExprState,
-	T_SubPlanExprState,
+	T_SubPlanState,
 	T_CaseExprState,
 	T_CaseWhenState,
 	T_ConstraintTestState,

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.57 2002/12/12 15:49:41 tgl Exp $
+ * $Id: clauses.h,v 1.58 2002/12/14 00:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
 
 #define is_opclause(clause)		((clause) != NULL && IsA(clause, OpExpr))
 #define is_funcclause(clause)	((clause) != NULL && IsA(clause, FuncExpr))
-#define is_subplan(clause)		((clause) != NULL && IsA(clause, SubPlanExpr))
+#define is_subplan(clause)		((clause) != NULL && IsA(clause, SubPlan))
 
 
 extern Expr *make_opclause(Oid opno, Oid opresulttype, bool opretset,

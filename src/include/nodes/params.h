@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.20 2002/12/13 19:46:00 tgl Exp $
+ * $Id: params.h,v 1.21 2002/12/14 00:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ typedef ParamListInfoData *ParamListInfo;
  *	  array of ParamExecData records, which is referenced through
  *	  es_param_exec_vals or ecxt_param_exec_vals.
  *
- *	  If execPlan is not NULL, it points to a SubPlanExprState node that needs
+ *	  If execPlan is not NULL, it points to a SubPlanState node that needs
  *	  to be executed to produce the value.  (This is done so that we can have
  *	  lazy evaluation of InitPlans: they aren't executed until/unless a
  *	  result value is needed.)  Otherwise the value is assumed to be valid
@@ -98,7 +98,7 @@ typedef ParamListInfoData *ParamListInfo;
 
 typedef struct ParamExecData
 {
-	void	   *execPlan;		/* should be "SubPlanExprState *" */
+	void	   *execPlan;		/* should be "SubPlanState *" */
 	Datum		value;
 	bool		isnull;
 } ParamExecData;

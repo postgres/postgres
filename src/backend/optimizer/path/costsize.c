@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.95 2002/12/13 17:29:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.96 2002/12/14 00:17:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1234,7 +1234,7 @@ cost_qual_eval_walker(Node *node, Cost *total)
 		IsA(node, OpExpr) ||
 		IsA(node, DistinctExpr))
 		*total += cpu_operator_cost;
-	else if (IsA(node, SubPlanExpr))
+	else if (IsA(node, SubPlan))
 	{
 		/*
 		 * A subplan node in an expression indicates that the
@@ -1246,18 +1246,18 @@ cost_qual_eval_walker(Node *node, Cost *total)
 		 * NOTE: this logic should agree with the estimates used by
 		 * make_subplan() in plan/subselect.c.
 		 */
-		SubPlanExpr *subplan = (SubPlanExpr *) node;
+		SubPlan	   *subplan = (SubPlan *) node;
 		Plan	   *plan = subplan->plan;
 		Cost		subcost;
 
-		if (subplan->sublink->subLinkType == EXISTS_SUBLINK)
+		if (subplan->subLinkType == EXISTS_SUBLINK)
 		{
 			/* we only need to fetch 1 tuple */
 			subcost = plan->startup_cost +
 				(plan->total_cost - plan->startup_cost) / plan->plan_rows;
 		}
-		else if (subplan->sublink->subLinkType == ALL_SUBLINK ||
-				 subplan->sublink->subLinkType == ANY_SUBLINK)
+		else if (subplan->subLinkType == ALL_SUBLINK ||
+				 subplan->subLinkType == ANY_SUBLINK)
 		{
 			/* assume we need 50% of the tuples */
 			subcost = plan->startup_cost +

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.74 2002/12/13 19:46:00 tgl Exp $
+ * $Id: primnodes.h,v 1.75 2002/12/14 00:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -378,32 +378,21 @@ typedef struct BoolExpr
  * using AND and OR semantics respectively.
  *
  * SubLink is classed as an Expr node, but it is not actually executable;
- * it must be replaced in the expression tree by a SubPlanExpr node during
+ * it must be replaced in the expression tree by a SubPlan node during
  * planning.
  *
- * NOTE: lefthand and oper have varying meanings depending on where you look
- * in the parse/plan pipeline:
- * 1. gram.y delivers a list of the (untransformed) lefthand expressions in
- *	  lefthand, and sets oper to a single A_Expr (not a list!) containing
- *	  the string name of the operator, but no arguments.
- * 2. The parser's expression transformation transforms lefthand normally,
- *	  and replaces oper with a list of OpExpr nodes, one per lefthand
- *	  expression.  These nodes represent the parser's resolution of exactly
- *	  which operator to apply to each pair of lefthand and targetlist
- *	  expressions.	However, we have not constructed complete Expr trees for
- *	  these operations yet: the args fields of the OpExpr nodes are NIL.
- *	  This is the representation seen in saved rules and in the rewriter.
- * 3. Finally, the planner converts the oper list to a list of normal OpExpr
- *	  nodes representing the application of the operator(s) to the lefthand
- *	  expressions and values from the inner targetlist.  The inner
- *	  targetlist items are represented by placeholder Param nodes.
- *	  The lefthand field is set to NIL, since its expressions are now in
- *	  the Expr list.  This representation is passed to the executor.
- *
- * Planner routines that might see either representation 2 or 3 can tell
- * the difference by checking whether lefthand is NIL or not.  Also,
- * representation 2 appears in a "bare" SubLink, while representation 3 is
- * found in SubLinks that are children of SubPlanExpr nodes.
+ * NOTE: in the raw output of gram.y, lefthand contains a list of (raw)
+ * expressions, and oper contains a single A_Expr (not a list!) containing
+ * the string name of the operator, but no arguments.  Also, subselect is
+ * a raw parsetree.  During parse analysis, the parser transforms the
+ * lefthand expression list using normal expression transformation rules.
+ * It replaces oper with a list of OpExpr nodes, one per lefthand expression.
+ * These nodes represent the parser's resolution of exactly which operator
+ * to apply to each pair of lefthand and targetlist expressions.  However,
+ * we have not constructed complete Expr trees for these operations yet:
+ * the args fields of the OpExpr nodes are NIL.  And subselect is transformed
+ * to a Query.  This is the representation seen in saved rules and in the
+ * rewriter.
  *
  * In EXISTS and EXPR SubLinks, both lefthand and oper are unused and are
  * always NIL.	useor is not significant either for these sublink types.
@@ -423,37 +412,58 @@ typedef struct SubLink
 								 * "OR" not "AND" */
 	List	   *lefthand;		/* list of outer-query expressions on the
 								 * left */
-	List	   *oper;			/* list of OpExpr nodes for combining
-								 * operators, or final list of executable
-								 * expressions */
+	List	   *oper;			/* list of arg-less OpExpr nodes for
+								 * combining operators */
 	Node	   *subselect;		/* subselect as Query* or parsetree */
 } SubLink;
 
 /*
- * SubPlanExpr - executable expression node for a subplan (sub-SELECT)
+ * SubPlan - executable expression node for a subplan (sub-SELECT)
  *
- * The planner replaces SubLink nodes in expression trees with SubPlanExpr
- * nodes after it has finished planning the subquery.  See notes above.
+ * The planner replaces SubLink nodes in expression trees with SubPlan
+ * nodes after it has finished planning the subquery.  SubPlan contains
+ * a sub-plantree and rtable instead of a sub-Query.  Its "oper" field
+ * corresponds to the original SubLink's oper list, but has been expanded
+ * into valid executable expressions representing the application of the
+ * combining operator(s) to the lefthand expressions and values from the
+ * inner targetlist.  The original lefthand expressions now appear as
+ * left-hand arguments of the OpExpr nodes, while the inner targetlist items
+ * are represented by PARAM_EXEC Param nodes.  (Note: if the sub-select
+ * becomes an InitPlan rather than a SubPlan, the rebuilt oper list is
+ * part of the outer plan tree and so is not stored in the oper field.)
+ *
+ * The planner also derives lists of the values that need to be passed into
+ * and out of the subplan.  Input values are represented as a list "args" of
+ * expressions to be evaluated in the outer-query context (currently these
+ * args are always just Vars, but in principle they could be any expression).
+ * The values are assigned to the global PARAM_EXEC params indexed by parParam
+ * (the parParam and args lists must have the same length).  setParam is a
+ * list of the PARAM_EXEC params that are computed by the sub-select, if it
+ * is an initPlan.
  */
-typedef struct SubPlanExpr
+typedef struct SubPlan
 {
 	Expr		xpr;
-	Oid			typeOid;		/* PG_TYPE OID of the expression result */
+	/* Fields copied from original SubLink: */
+	SubLinkType subLinkType;	/* EXISTS, ALL, ANY, MULTIEXPR, EXPR */
+	bool		useor;			/* TRUE to combine column results with
+								 * "OR" not "AND" */
+	List	   *oper;			/* list of executable expressions for
+								 * combining operators (with arguments) */
+	/* The subselect, transformed to a Plan: */
 	struct Plan *plan;			/* subselect plan itself */
 	int			plan_id;		/* dummy thing because of we haven't equal
 								 * funcs for plan nodes... actually, we
 								 * could put *plan itself somewhere else
 								 * (TopPlan node ?)... */
 	List	   *rtable;			/* range table for subselect */
+	/* Information for passing params into and out of the subselect: */
 	/* setParam and parParam are lists of integers (param IDs) */
 	List	   *setParam;		/* non-correlated EXPR & EXISTS subqueries
 								 * have to set some Params for paren Plan */
 	List	   *parParam;		/* indices of input Params from parent plan */
 	List	   *args;			/* exprs to pass as parParam values */
-	SubLink    *sublink;		/* SubLink node from parser; holds info
-								 * about what to do with subselect's
-								 * results */
-} SubPlanExpr;
+} SubPlan;
 
 /* ----------------
  * FieldSelect

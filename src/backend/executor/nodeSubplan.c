@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.37 2002/12/13 19:45:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.38 2002/12/14 00:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,15 +30,14 @@
  * ----------------------------------------------------------------
  */
 Datum
-ExecSubPlan(SubPlanExprState *node,
+ExecSubPlan(SubPlanState *node,
 			ExprContext *econtext,
 			bool *isNull)
 {
+	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
-	SubPlanExpr *subplan = (SubPlanExpr *) node->xprstate.expr;
-	SubLink    *sublink = subplan->sublink;
-	SubLinkType subLinkType = sublink->subLinkType;
-	bool		useor = sublink->useor;
+	SubLinkType subLinkType = subplan->subLinkType;
+	bool		useor = subplan->useor;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	Datum		result;
@@ -292,56 +291,56 @@ ExecSubPlan(SubPlanExprState *node,
  * ----------------------------------------------------------------
  */
 void
-ExecInitSubPlan(SubPlanExprState *sstate, EState *estate)
+ExecInitSubPlan(SubPlanState *node, EState *estate)
 {
-	SubPlanExpr *expr = (SubPlanExpr *) sstate->xprstate.expr;
+	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
 	EState	   *sp_estate;
 
 	/*
 	 * Do access checking on the rangetable entries in the subquery.
 	 * Here, we assume the subquery is a SELECT.
 	 */
-	ExecCheckRTPerms(expr->rtable, CMD_SELECT);
+	ExecCheckRTPerms(subplan->rtable, CMD_SELECT);
 
 	/*
 	 * initialize state
 	 */
-	sstate->needShutdown = false;
-	sstate->curTuple = NULL;
+	node->needShutdown = false;
+	node->curTuple = NULL;
 
 	/*
 	 * create an EState for the subplan
 	 */
 	sp_estate = CreateExecutorState();
 
-	sp_estate->es_range_table = expr->rtable;
+	sp_estate->es_range_table = subplan->rtable;
 	sp_estate->es_param_list_info = estate->es_param_list_info;
 	sp_estate->es_param_exec_vals = estate->es_param_exec_vals;
 	sp_estate->es_tupleTable =
-		ExecCreateTupleTable(ExecCountSlotsNode(expr->plan) + 10);
+		ExecCreateTupleTable(ExecCountSlotsNode(subplan->plan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
 	sp_estate->es_instrument = estate->es_instrument;
 
 	/*
 	 * Start up the subplan
 	 */
-	sstate->planstate = ExecInitNode(expr->plan, sp_estate);
+	node->planstate = ExecInitNode(subplan->plan, sp_estate);
 
-	sstate->needShutdown = true;	/* now we need to shutdown the subplan */
+	node->needShutdown = true;	/* now we need to shutdown the subplan */
 
 	/*
 	 * If this plan is un-correlated or undirect correlated one and want
 	 * to set params for parent plan then prepare parameters.
 	 */
-	if (expr->setParam != NIL)
+	if (subplan->setParam != NIL)
 	{
 		List	   *lst;
 
-		foreach(lst, expr->setParam)
+		foreach(lst, subplan->setParam)
 		{
 			ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(lst)]);
 
-			prm->execPlan = sstate;
+			prm->execPlan = node;
 		}
 
 		/*
@@ -366,11 +365,11 @@ ExecInitSubPlan(SubPlanExprState *sstate, EState *estate)
  * ----------------------------------------------------------------
  */
 void
-ExecSetParamPlan(SubPlanExprState *node, ExprContext *econtext)
+ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 {
+	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
 	PlanState  *planstate = node->planstate;
-	SubPlanExpr *subplan = (SubPlanExpr *) node->xprstate.expr;
-	SubLinkType	subLinkType = subplan->sublink->subLinkType;
+	SubLinkType	subLinkType = subplan->subLinkType;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
 	List	   *lst;
@@ -473,7 +472,7 @@ ExecSetParamPlan(SubPlanExprState *node, ExprContext *econtext)
  * ----------------------------------------------------------------
  */
 void
-ExecEndSubPlan(SubPlanExprState *node)
+ExecEndSubPlan(SubPlanState *node)
 {
 	if (node->needShutdown)
 	{
@@ -488,10 +487,10 @@ ExecEndSubPlan(SubPlanExprState *node)
 }
 
 void
-ExecReScanSetParamPlan(SubPlanExprState *node, PlanState *parent)
+ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 {
 	PlanState  *planstate = node->planstate;
-	SubPlanExpr *subplan = (SubPlanExpr *) node->xprstate.expr;
+	SubPlan	   *subplan = (SubPlan *) node->xprstate.expr;
 	EState	   *estate = parent->state;
 	List	   *lst;
 

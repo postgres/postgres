@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.134 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.135 2002/12/14 00:17:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ planner(Query *parse)
 	 * purpose is communication across multiple sub-Queries.
 	 *
 	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
-	 * unique IDs to SubPlanExpr nodes, and we want those IDs to be unique for
+	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for
 	 * the life of a backend.  Also, PlannerInitPlan is saved/restored in
 	 * subquery_planner, not here.
 	 */
@@ -278,7 +278,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 		/* Must add the initPlans' extParams to the topmost node's, too */
 		foreach(lst, plan->initPlan)
 		{
-			SubPlanExpr *subplan = (SubPlanExpr *) lfirst(lst);
+			SubPlan	   *subplan = (SubPlan *) lfirst(lst);
 
 			plan->extParam = set_unioni(plan->extParam,
 										subplan->plan->extParam);

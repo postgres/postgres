@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.33 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.34 2002/12/14 00:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,10 +228,10 @@ ExecInitNode(Plan *node, EState *estate)
 	subps = NIL;
 	foreach(subp, node->initPlan)
 	{
-		SubPlanExpr *subplan = (SubPlanExpr *) lfirst(subp);
-		SubPlanExprState *sstate;
+		SubPlan	   *subplan = (SubPlan *) lfirst(subp);
+		SubPlanState *sstate;
 
-		Assert(IsA(subplan, SubPlanExpr));
+		Assert(IsA(subplan, SubPlan));
 		sstate = ExecInitExprInitPlan(subplan, result);
 		ExecInitSubPlan(sstate, estate);
 		subps = lappend(subps, sstate);
@@ -247,9 +247,9 @@ ExecInitNode(Plan *node, EState *estate)
 	subps = NIL;
 	foreach(subp, result->subPlan)
 	{
-		SubPlanExprState *sstate = (SubPlanExprState *) lfirst(subp);
+		SubPlanState *sstate = (SubPlanState *) lfirst(subp);
 
-		Assert(IsA(sstate, SubPlanExprState));
+		Assert(IsA(sstate, SubPlanState));
 		ExecInitSubPlan(sstate, estate);
 		subps = lappend(subps, sstate);
 	}
@@ -500,9 +500,9 @@ ExecEndNode(PlanState *node)
 
 	/* Clean up initPlans and subPlans */
 	foreach(subp, node->initPlan)
-		ExecEndSubPlan((SubPlanExprState *) lfirst(subp));
+		ExecEndSubPlan((SubPlanState *) lfirst(subp));
 	foreach(subp, node->subPlan)
-		ExecEndSubPlan((SubPlanExprState *) lfirst(subp));
+		ExecEndSubPlan((SubPlanState *) lfirst(subp));
 
 	if (node->chgParam != NIL)
 	{

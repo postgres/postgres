@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.143 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.144 2002/12/14 00:17:54 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -540,7 +540,7 @@ _readSubLink(void)
 }
 
 /*
- * _readSubPlanExpr is not needed since it doesn't appear in stored rules.
+ * _readSubPlan is not needed since it doesn't appear in stored rules.
  */
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.82 2002/12/13 19:45:56 tgl Exp $
+ * $Id: executor.h,v 1.83 2002/12/14 00:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,8 +92,7 @@ extern Datum ExecEvalExpr(ExprState *expression, ExprContext *econtext,
 extern Datum ExecEvalExprSwitchContext(ExprState *expression, ExprContext *econtext,
 						  bool *isNull, ExprDoneCond *isDone);
 extern ExprState *ExecInitExpr(Expr *node, PlanState *parent);
-extern SubPlanExprState *ExecInitExprInitPlan(SubPlanExpr *node,
-											  PlanState *parent);
+extern SubPlanState *ExecInitExprInitPlan(SubPlan *node, PlanState *parent);
 extern bool ExecQual(List *qual, ExprContext *econtext, bool resultForNull);
 extern int	ExecTargetListLength(List *targetlist);
 extern int	ExecCleanTargetListLength(List *targetlist);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.60 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.61 2002/12/14 00:17:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,8 +53,17 @@ int			PlannerPlanId = 0;	/* to assign unique ID to subquery plans */
  */
 
 
-static void convert_sublink_opers(SubLink *slink, List *targetlist,
-								  List **setParams);
+typedef struct finalize_primnode_results
+{
+	List	   *paramids;		/* List of PARAM_EXEC paramids found */
+} finalize_primnode_results;
+
+
+static List *convert_sublink_opers(List *operlist, List *lefthand,
+								   List *targetlist, List **setParams);
+static Node *replace_correlation_vars_mutator(Node *node, void *context);
+static Node *process_sublinks_mutator(Node *node, void *context);
+static bool finalize_primnode(Node *node, finalize_primnode_results *results);
 
 
 /*
@@ -144,28 +153,26 @@ generate_new_param(Oid paramtype, int32 paramtypmod)
 }
 
 /*
- * Convert a bare SubLink (as created by the parser) into a SubPlanExpr.
+ * Convert a bare SubLink (as created by the parser) into a SubPlan.
+ *
+ * We are given the raw SubLink and the already-processed lefthand argument
+ * list (use this instead of the SubLink's own field).
+ *
+ * The result is whatever we need to substitute in place of the SubLink
+ * node in the executable expression.  This will be either the SubPlan
+ * node (if we have to do the subplan as a subplan), or a Param node
+ * representing the result of an InitPlan, or possibly an AND or OR tree
+ * containing InitPlan Param nodes.
  */
 static Node *
-make_subplan(SubLink *slink)
+make_subplan(SubLink *slink, List *lefthand)
 {
-	SubPlanExpr *node = makeNode(SubPlanExpr);
+	SubPlan	   *node = makeNode(SubPlan);
 	Query	   *subquery = (Query *) (slink->subselect);
-	Oid			result_type = exprType((Node *) slink);
 	double		tuple_fraction;
 	Plan	   *plan;
 	List	   *lst;
 	Node	   *result;
-
-	/*
-	 * Check to see if this node was already processed; if so we have
-	 * trouble.  We check to see if the linked-to Query appears to have
-	 * been planned already, too.
-	 */
-	if (subquery == NULL)
-		elog(ERROR, "make_subplan: invalid expression structure (SubLink already processed?)");
-	if (subquery->base_rel_list != NIL)
-		elog(ERROR, "make_subplan: invalid expression structure (subquery already processed?)");
 
 	/*
 	 * Copy the source Query node.	This is a quick and dirty kluge to
@@ -210,14 +217,19 @@ make_subplan(SubLink *slink)
 	node->plan = plan = subquery_planner(subquery, tuple_fraction);
 
 	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this
-										 * SubPlanExpr */
+										 * SubPlan */
 
 	node->rtable = subquery->rtable;
-	node->sublink = slink;
 
-	node->typeOid = result_type;
-
-	slink->subselect = NULL;	/* cool ?! see error check above! */
+	/*
+	 * Fill in other fields of the SubPlan node.
+	 */
+	node->subLinkType = slink->subLinkType;
+	node->useor = slink->useor;
+	node->oper = NIL;
+	node->setParam = NIL;
+	node->parParam = NIL;
+	node->args = NIL;
 
 	/*
 	 * Make parParam list of params that current query level will pass to
@@ -262,17 +274,23 @@ make_subplan(SubLink *slink)
 	}
 	else if (node->parParam == NIL && slink->subLinkType == MULTIEXPR_SUBLINK)
 	{
-		convert_sublink_opers(slink, plan->targetlist, &node->setParam);
+		List   *oper;
+
+		/* Convert the oper list, but don't put it into the SubPlan node */
+		oper = convert_sublink_opers(slink->oper,
+									 lefthand,
+									 plan->targetlist,
+									 &node->setParam);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
-		if (length(slink->oper) > 1)
-			result = (Node *) ((slink->useor) ? make_orclause(slink->oper) :
-							   make_andclause(slink->oper));
+		if (length(oper) > 1)
+			result = (Node *) (node->useor ? make_orclause(oper) :
+							   make_andclause(oper));
 		else
-			result = (Node *) lfirst(slink->oper);
+			result = (Node *) lfirst(oper);
 	}
 	else
 	{
-		List	   *args = NIL;
+		List	   *args;
 
 		/*
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types
@@ -347,12 +365,16 @@ make_subplan(SubLink *slink)
 			}
 		}
 
-		/* Fix the SubLink's oper list */
-		convert_sublink_opers(slink, plan->targetlist, NULL);
+		/* Convert the SubLink's oper list into executable form */
+		node->oper = convert_sublink_opers(slink->oper,
+										   lefthand,
+										   plan->targetlist,
+										   NULL);
 
 		/*
 		 * Make node->args from parParam.
 		 */
+		args = NIL;
 		foreach(lst, node->parParam)
 		{
 			Var		   *var = nth(lfirsti(lst), PlannerParamVar);
@@ -379,27 +401,26 @@ make_subplan(SubLink *slink)
  * convert_sublink_opers: convert a SubLink's oper list from the
  * parser/rewriter format into the executor's format.
  *
- * The oper list is initially just a list of OpExpr nodes.  We replace it
- * with a list of actually executable expressions, in which the specified
- * operators are applied to corresponding elements of the lefthand list
- * and Params representing the results of the subplan.  lefthand is then
- * set to NIL.
+ * The oper list is initially a list of OpExpr nodes with NIL args.  We
+ * convert it to a list of actually executable expressions, in which the
+ * specified operators are applied to corresponding elements of the
+ * lefthand list and Params representing the results of the subplan.
  *
  * If setParams is not NULL, the paramids of the Params created are added
  * to the *setParams list.
  */
-static void
-convert_sublink_opers(SubLink *slink, List *targetlist,
-					  List **setParams)
+static List *
+convert_sublink_opers(List *operlist, List *lefthand,
+					  List *targetlist, List **setParams)
 {
 	List	   *newoper = NIL;
-	List	   *leftlist = slink->lefthand;
+	List	   *leftlist = lefthand;
 	List	   *lst;
 
-	foreach(lst, slink->oper)
+	foreach(lst, operlist)
 	{
 		OpExpr	   *oper = (OpExpr *) lfirst(lst);
-		Node	   *lefthand = lfirst(leftlist);
+		Node	   *leftop = lfirst(leftlist);
 		TargetEntry *te = lfirst(targetlist);
 		Param	   *prm;
 		Operator	tup;
@@ -430,7 +451,7 @@ convert_sublink_opers(SubLink *slink, List *targetlist,
 		 * Note: we use make_operand in case runtime type conversion
 		 * function calls must be inserted for this operator!
 		 */
-		left = make_operand(lefthand, exprType(lefthand), opform->oprleft);
+		left = make_operand(leftop, exprType(leftop), opform->oprleft);
 		right = make_operand((Node *) prm, prm->paramtype, opform->oprright);
 		newoper = lappend(newoper,
 						  make_opclause(oper->opno,
@@ -445,65 +466,12 @@ convert_sublink_opers(SubLink *slink, List *targetlist,
 		targetlist = lnext(targetlist);
 	}
 
-	slink->oper = newoper;
-	slink->lefthand = NIL;
-}
-
-/*
- * finalize_primnode: build lists of params appearing
- * in the given expression tree.  NOTE: items are added to list passed in,
- * so caller must initialize list to NIL before first call!
- */
-
-typedef struct finalize_primnode_results
-{
-	List	   *paramids;		/* List of PARAM_EXEC paramids found */
-} finalize_primnode_results;
-
-static bool
-finalize_primnode(Node *node, finalize_primnode_results *results)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Param))
-	{
-		if (((Param *) node)->paramkind == PARAM_EXEC)
-		{
-			int			paramid = (int) ((Param *) node)->paramid;
-
-			if (!intMember(paramid, results->paramids))
-				results->paramids = lconsi(paramid, results->paramids);
-		}
-		return false;			/* no more to do here */
-	}
-	if (is_subplan(node))
-	{
-		SubPlanExpr *subplan = (SubPlanExpr *) node;
-		List	   *lst;
-
-		/* Check extParam list for params to add to paramids */
-		foreach(lst, subplan->plan->extParam)
-		{
-			int			paramid = lfirsti(lst);
-			Var		   *var = nth(paramid, PlannerParamVar);
-
-			/* note varlevelsup is absolute level number */
-			if (var->varlevelsup < PlannerQueryLevel &&
-				!intMember(paramid, results->paramids))
-				results->paramids = lconsi(paramid, results->paramids);
-		}
-		/* fall through to recurse into subplan args */
-	}
-	return expression_tree_walker(node, finalize_primnode,
-								  (void *) results);
+	return newoper;
 }
 
 /*
  * Replace correlation vars (uplevel vars) with Params.
  */
-
-static Node *replace_correlation_vars_mutator(Node *node, void *context);
-
 Node *
 SS_replace_correlation_vars(Node *expr)
 {
@@ -529,9 +497,6 @@ replace_correlation_vars_mutator(Node *node, void *context)
 /*
  * Expand SubLinks to SubPlans in the given expression.
  */
-
-static Node *process_sublinks_mutator(Node *node, void *context);
-
 Node *
 SS_process_sublinks(Node *expr)
 {
@@ -547,20 +512,21 @@ process_sublinks_mutator(Node *node, void *context)
 	if (IsA(node, SubLink))
 	{
 		SubLink    *sublink = (SubLink *) node;
+		List	   *lefthand;
 
 		/*
-		 * First, scan the lefthand-side expressions, if any. This is a
-		 * tad klugy since we modify the input SubLink node, but that
-		 * should be OK (make_subplan does it too!)
+		 * First, recursively process the lefthand-side expressions, if any.
 		 */
-		sublink->lefthand = (List *)
+		lefthand = (List *)
 			process_sublinks_mutator((Node *) sublink->lefthand, context);
-		/* Now build the SubPlanExpr node and make the expr to return */
-		return make_subplan(sublink);
+		/*
+		 * Now build the SubPlan node and make the expr to return.
+		 */
+		return make_subplan(sublink, lefthand);
 	}
 
 	/*
-	 * Note that we will never see a SubPlanExpr expression in the input
+	 * Note that we will never see a SubPlan expression in the input
 	 * (since this is the very routine that creates 'em to begin with). So
 	 * the code in expression_tree_mutator() that might do inappropriate
 	 * things with SubPlans or SubLinks will not be exercised.
@@ -572,6 +538,12 @@ process_sublinks_mutator(Node *node, void *context)
 								   context);
 }
 
+/*
+ * SS_finalize_plan - do final sublink processing for a completed Plan.
+ *
+ * This recursively computes and sets the extParam and locParam lists
+ * for every Plan node in the given tree.
+ */
 List *
 SS_finalize_plan(Plan *plan, List *rtable)
 {
@@ -720,4 +692,47 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	plan->locParam = locParam;
 
 	return results.paramids;
+}
+
+/*
+ * finalize_primnode: build lists of params appearing
+ * in the given expression tree.  NOTE: items are added to list passed in,
+ * so caller must initialize list to NIL before first call!
+ */
+static bool
+finalize_primnode(Node *node, finalize_primnode_results *results)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Param))
+	{
+		if (((Param *) node)->paramkind == PARAM_EXEC)
+		{
+			int			paramid = (int) ((Param *) node)->paramid;
+
+			if (!intMember(paramid, results->paramids))
+				results->paramids = lconsi(paramid, results->paramids);
+		}
+		return false;			/* no more to do here */
+	}
+	if (is_subplan(node))
+	{
+		SubPlan	   *subplan = (SubPlan *) node;
+		List	   *lst;
+
+		/* Check extParam list for params to add to paramids */
+		foreach(lst, subplan->plan->extParam)
+		{
+			int			paramid = lfirsti(lst);
+			Var		   *var = nth(paramid, PlannerParamVar);
+
+			/* note varlevelsup is absolute level number */
+			if (var->varlevelsup < PlannerQueryLevel &&
+				!intMember(paramid, results->paramids))
+				results->paramids = lconsi(paramid, results->paramids);
+		}
+		/* fall through to recurse into subplan args */
+	}
+	return expression_tree_walker(node, finalize_primnode,
+								  (void *) results);
 }

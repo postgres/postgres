@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.232 2002/12/13 19:45:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.233 2002/12/14 00:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,21 +818,22 @@ _copySubLink(SubLink *from)
 }
 
 /*
- * _copySubPlanExpr
+ * _copySubPlan
  */
-static SubPlanExpr *
-_copySubPlanExpr(SubPlanExpr *from)
+static SubPlan *
+_copySubPlan(SubPlan *from)
 {
-	SubPlanExpr    *newnode = makeNode(SubPlanExpr);
+	SubPlan    *newnode = makeNode(SubPlan);
 
-	COPY_SCALAR_FIELD(typeOid);
+	COPY_SCALAR_FIELD(subLinkType);
+	COPY_SCALAR_FIELD(useor);
+	COPY_NODE_FIELD(oper);
 	COPY_NODE_FIELD(plan);
 	COPY_SCALAR_FIELD(plan_id);
 	COPY_NODE_FIELD(rtable);
 	COPY_INTLIST_FIELD(setParam);
 	COPY_INTLIST_FIELD(parParam);
 	COPY_NODE_FIELD(args);
-	COPY_NODE_FIELD(sublink);
 
 	return newnode;
 }
@@ -2431,8 +2432,8 @@ copyObject(void *from)
 		case T_SubLink:
 			retval = _copySubLink(from);
 			break;
-		case T_SubPlanExpr:
-			retval = _copySubPlanExpr(from);
+		case T_SubPlan:
+			retval = _copySubPlan(from);
 			break;
 		case T_FieldSelect:
 			retval = _copyFieldSelect(from);

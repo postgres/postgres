@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.119 2002/12/13 19:45:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.120 2002/12/14 00:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1794,8 +1794,8 @@ ExecEvalExpr(ExprState *expression,
 				}
 				break;
 			}
-		case T_SubPlanExpr:
-			retDatum = ExecSubPlan((SubPlanExprState *) expression,
+		case T_SubPlan:
+			retDatum = ExecSubPlan((SubPlanState *) expression,
 								   econtext,
 								   isNull);
 			break;
@@ -1883,7 +1883,7 @@ ExecEvalExprSwitchContext(ExprState *expression,
  * executions of the expression are needed.  Typically the context will be
  * the same as the per-query context of the associated ExprContext.
  *
- * Any Aggref and SubplanExpr nodes found in the tree are added to the lists
+ * Any Aggref and SubPlan nodes found in the tree are added to the lists
  * of such nodes held by the parent PlanState.  Otherwise, we do very little
  * initialization here other than building the state-node tree.  Any nontrivial
  * work associated with initializing runtime info for a node should happen
@@ -2003,31 +2003,26 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				state = (ExprState *) bstate;
 			}
 			break;
-		case T_SubPlanExpr:
+		case T_SubPlan:
 			{
 				/* Keep this in sync with ExecInitExprInitPlan, below */
-				SubPlanExpr *subplanexpr = (SubPlanExpr *) node;
-				SubLink *sublink = subplanexpr->sublink;
-				SubPlanExprState *sstate = makeNode(SubPlanExprState);
+				SubPlan *subplan = (SubPlan *) node;
+				SubPlanState *sstate = makeNode(SubPlanState);
 
-				Assert(IsA(sublink, SubLink));
 				if (!parent)
-					elog(ERROR, "ExecInitExpr: SubPlanExpr not expected here");
+					elog(ERROR, "ExecInitExpr: SubPlan not expected here");
 
 				/*
-				 * Here we just add the SubPlanExprState nodes to
+				 * Here we just add the SubPlanState nodes to
 				 * parent->subPlan.  The subplans will be initialized later.
 				 */
 				parent->subPlan = lcons(sstate, parent->subPlan);
 				sstate->planstate = NULL;
 
-				sstate->args = (List *)
-					ExecInitExpr((Expr *) subplanexpr->args, parent);
-
-				if (sublink->lefthand)
-					elog(ERROR, "ExecInitExpr: sublink has not been transformed");
 				sstate->oper = (List *)
-					ExecInitExpr((Expr *) sublink->oper, parent);
+					ExecInitExpr((Expr *) subplan->oper, parent);
+				sstate->args = (List *)
+					ExecInitExpr((Expr *) subplan->args, parent);
 
 				state = (ExprState *) sstate;
 			}
@@ -2145,25 +2140,19 @@ ExecInitExpr(Expr *node, PlanState *parent)
  * subplan expr, except we do NOT want to add the node to the parent's
  * subplan list.
  */
-SubPlanExprState *
-ExecInitExprInitPlan(SubPlanExpr *node, PlanState *parent)
+SubPlanState *
+ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
 {
-	SubLink *sublink = node->sublink;
-	SubPlanExprState *sstate = makeNode(SubPlanExprState);
+	SubPlanState *sstate = makeNode(SubPlanState);
 
-	Assert(IsA(sublink, SubLink));
 	if (!parent)
-		elog(ERROR, "ExecInitExpr: SubPlanExpr not expected here");
+		elog(ERROR, "ExecInitExpr: SubPlan not expected here");
 
 	/* The subplan's state will be initialized later */
 	sstate->planstate = NULL;
 
+	sstate->oper = (List *) ExecInitExpr((Expr *) node->oper, parent);
 	sstate->args = (List *) ExecInitExpr((Expr *) node->args, parent);
-
-	if (sublink->lefthand)
-		elog(ERROR, "ExecInitExpr: sublink has not been transformed");
-
-	sstate->oper = (List *) ExecInitExpr((Expr *) sublink->oper, parent);
 
 	sstate->xprstate.expr = (Expr *) node;
 

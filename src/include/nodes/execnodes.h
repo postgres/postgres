@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.84 2002/12/13 19:45:57 tgl Exp $
+ * $Id: execnodes.h,v 1.85 2002/12/14 00:17:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,21 +451,18 @@ typedef struct BoolExprState
 } BoolExprState;
 
 /* ----------------
- *		SubPlanExprState node
- *
- * Note: there is no separate ExprState node for the SubLink.  All it would
- * need is the oper field, which we can just as easily put here.
+ *		SubPlanState node
  * ----------------
  */
-typedef struct SubPlanExprState
+typedef struct SubPlanState
 {
 	ExprState	xprstate;
 	struct PlanState *planstate; /* subselect plan's state tree */
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
-	List	   *args;			/* states of argument expression(s) */
 	List	   *oper;			/* states for executable combining exprs */
-} SubPlanExprState;
+	List	   *args;			/* states of argument expression(s) */
+} SubPlanState;
 
 /* ----------------
  *		CaseExprState node
@@ -538,9 +535,9 @@ typedef struct PlanState
 	List	   *qual;			/* implicitly-ANDed qual conditions */
 	struct PlanState *lefttree;	/* input plan tree(s) */
 	struct PlanState *righttree;
-	List	   *initPlan;		/* Init SubPlanExprState nodes (un-correlated
+	List	   *initPlan;		/* Init SubPlanState nodes (un-correlated
 								 * expr subselects) */
-	List	   *subPlan;		/* SubPlanExprState nodes in my expressions */
+	List	   *subPlan;		/* SubPlanState nodes in my expressions */
 
 	/*
 	 * State for management of parameter-change-driven rescanning

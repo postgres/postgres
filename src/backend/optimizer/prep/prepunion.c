@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.82 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.83 2002/12/14 00:17:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -872,13 +872,13 @@ adjust_inherited_attrs_mutator(Node *node,
 	 */
 	if (is_subplan(node))
 	{
-		SubPlanExpr *subplan;
+		SubPlan *subplan;
 
 		/* Copy the node and process subplan args */
 		node = expression_tree_mutator(node, adjust_inherited_attrs_mutator,
 									   (void *) context);
 		/* Make sure we have separate copies of subplan and its rtable */
-		subplan = (SubPlanExpr *) node;
+		subplan = (SubPlan *) node;
 		subplan->plan = copyObject(subplan->plan);
 		subplan->rtable = copyObject(subplan->rtable);
 		return node;
