@@ -80,10 +80,8 @@ extern ScanKeyword *ScanKeywordLookup(char *text);
 
 /* return codes */
 
-#define OK			 0
-#define PARSE_ERROR		-1
-#define ILLEGAL_OPTION		-2
-#define INDICATOR_NOT_ARRAY -3
-
-#define NO_INCLUDE_FILE		ENOENT
-#define OUT_OF_MEMORY		ENOMEM
+#define ILLEGAL_OPTION		1
+#define NO_INCLUDE_FILE		2
+#define PARSE_ERROR			3
+#define INDICATOR_NOT_ARRAY 4
+#define OUT_OF_MEMORY		5

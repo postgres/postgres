@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.8 2001/07/11 03:43:52 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.9 2001/08/24 22:37:36 petere Exp $
 Postgres documentation
 -->
 
@@ -116,7 +116,7 @@ ecpg [ -v ] [ -t ] [ -I include-path ] [ -o outfile ]  file1 [ file2 ] [ ... ]
       <term><replaceable>return value</replaceable></term>
       <listitem>
        <para>
-	<application>ecpg</application> returns 0 to the shell on successful completion, -1
+	<application>ecpg</application> returns 0 to the shell on successful completion, non-zero
 	for errors.
        </para>
       </listitem>

@@ -1,6 +1,8 @@
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.47 2001/08/24 22:37:36 petere Exp $ */
+
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
-/* Placed under the same copyright as PostgresSQL */
+/* Placed under the same license as PostgresSQL */
 
 #include "postgres_fe.h"
 
@@ -10,9 +12,12 @@
 #include "getopt.h"
 #endif
 
+extern int	optind;
+extern char *optarg;
+
 #include "extern.h"
 
-int			ret_value = OK,
+int			ret_value = 0,
 			autocommit = 0;
 struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
@@ -20,14 +25,29 @@ struct typedefs *types = NULL;
 struct _defines *defines = NULL;
 
 static void
-usage(char *progname)
+help(const char *progname)
 {
-	fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-	fprintf(stderr, "Usage: %s: "
+	printf("%s is the PostgreSQL embedded SQL preprocessor for C programs.\n\n",
+		   progname);
+	printf("Usage:\n"
+		   "  %s %s[-I DIRECTORY] [-o OUTFILE] [-t] file1 [file2...]\n\n",
+		   progname,
 #ifdef YYDEBUG
-			"[-d]"
+		   "[-d] "
+#else
+		   ""
 #endif
-			" [-v] [-t] [-I include path] [ -o output file name] [-D define name] file1 [file2] ...\n", progname);
+		);
+	printf("Options:\n");
+#ifdef YYDEBUG
+	printf("  -d                   generate parser debug output\n");
+#endif
+	printf("  -I DIRECTORY         search DIRECTORY for include files\n");
+	printf("  -o OUTFILE           write result to OUTFILE\n");
+	printf("  -t                   turn on autocommit of transactions\n");
+	printf("\nIf no output file is specified, the name is formed by adding .c\n"
+		   "to the input file name, after stripping off .pgc if present.\n");
+	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
 }
 
 static void
@@ -60,9 +80,27 @@ main(int argc, char *const argv[])
 				verbose = false,
 				out_option = 0;
 	struct _include_path *ip;
+	char	   *progname;
 
-	extern int	optind;
-	extern char *optarg;
+	if (!strrchr(argv[0], '/'))
+		progname = argv[0];
+	else
+		progname = strrchr(argv[0], '/') + 1;
+
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "--help")==0 || strcmp(argv[1], "-?")==0)
+		{
+			help(progname);
+			exit(0);
+		}
+		else if (strcmp(argv[1], "--version")==0)
+		{
+			printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
+				   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+			exit(0);
+		}
+	}
 
 	add_include_path("/usr/include");
 	add_include_path(INCLUDE_PATH);
@@ -90,32 +128,38 @@ main(int argc, char *const argv[])
 				verbose = true;
 				break;
 			case 'D':
+				/* XXX not documented */
 				add_preprocessor_define(optarg);
 				break;
-#ifdef YYDEBUG
 			case 'd':
+#ifdef YYDEBUG
 				yydebug = 1;
-				break;
+#else
+				fprintf(stderr, "%s: parser debug support (-d) not available\n",
+						progname);
 #endif
+				break;
 			default:
-				usage(argv[0]);
+				fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
 				return ILLEGAL_OPTION;
 		}
 	}
 
 	if (verbose)
 	{
-		fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+		fprintf(stderr, "%s, the PostgreSQL embedded C preprocessor, version %d.%d.%d\n",
+				progname, MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 		fprintf(stderr, "exec sql include ... search starts here:\n");
 		for (ip = include_paths; ip != NULL; ip = ip->next)
 			fprintf(stderr, " %s\n", ip->path);
-		fprintf(stderr, "End of search list.\n");
-		return OK;
+		fprintf(stderr, "end of search list\n");
+		return 0;
 	}
 
 	if (optind >= argc)			/* no files specified */
 	{
-		usage(argv[0]);
+		fprintf(stderr, "%s: no input files specified\n", progname);
+		fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
 		return (ILLEGAL_OPTION);
 	}
 	else
