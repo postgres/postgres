@@ -2,7 +2,6 @@ package example;
 
 import java.io.*;
 import java.sql.*;
-import java.text.*;
 
 // rare in user code, but we use the LargeObject API in this test
 import org.postgresql.largeobject.*;
@@ -106,7 +105,7 @@ public class threadsafe
 			// will yield as long as either of the children are still running
 			System.out.println("Waiting for threads to run");
 			while (thread1.isAlive() || thread2.isAlive() || thread3.isAlive())
-				thread0.yield();
+				Thread.yield();
 		}
 		finally
 		{

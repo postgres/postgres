@@ -2,7 +2,6 @@ package example;
 
 import java.io.*;
 import java.sql.*;
-import java.text.*;
 
 /*
  * This example tests the various date styles that are available to postgresql.

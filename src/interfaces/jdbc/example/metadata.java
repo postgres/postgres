@@ -2,7 +2,6 @@ package example;
 
 import java.io.*;
 import java.sql.*;
-import java.text.*;
 
 /*
  * This example application is not really an example. It actually performs
