@@ -5,12 +5,12 @@
  *	  Example:	 a set is defined as being the result of the query
  *			retrieve (X.all)
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.57 2003/08/04 00:43:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.58 2003/08/04 02:40:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -15,10 +15,10 @@
  * but currently we have no need for oversize temp files without buffered
  * access.
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buffile.h,v 1.14 2003/04/29 03:21:30 tgl Exp $
+ * $Id: buffile.h,v 1.15 2003/08/04 02:40:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

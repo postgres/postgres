@@ -4,10 +4,10 @@
  *	  per-process shared memory data structures
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.63 2003/02/18 02:13:24 momjian Exp $
+ * $Id: proc.h,v 1.64 2003/08/04 02:40:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

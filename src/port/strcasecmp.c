@@ -1,7 +1,7 @@
-/* $Id: strcasecmp.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
+/* $Id: strcasecmp.c,v 1.2 2003/08/04 02:40:20 momjian Exp $ */
 
 /*
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
  *

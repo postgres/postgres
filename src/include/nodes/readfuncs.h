@@ -4,10 +4,10 @@
  *	  header file for read.c and readfuncs.c. These functions are internal
  *	  to the stringToNode interface and should not be used by anyone else.
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: readfuncs.h,v 1.16 2002/11/25 18:12:12 tgl Exp $
+ * $Id: readfuncs.h,v 1.17 2003/08/04 02:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

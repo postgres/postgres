@@ -4,10 +4,10 @@
  *	  prototypes for conversioncmds.c.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: conversioncmds.h,v 1.4 2003/06/27 14:45:31 petere Exp $
+ * $Id: conversioncmds.h,v 1.5 2003/08/04 02:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

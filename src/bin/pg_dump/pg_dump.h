@@ -3,10 +3,10 @@
  * pg_dump.h
  *	  Common header file for the pg_dump utility
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.102 2003/08/04 00:43:28 momjian Exp $
+ * $Id: pg_dump.h,v 1.103 2003/08/04 02:40:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

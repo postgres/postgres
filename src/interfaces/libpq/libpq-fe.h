@@ -4,10 +4,10 @@
  *	  This file contains definitions for structures and
  *	  externs for functions used by frontend postgres applications.
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.95 2003/08/04 00:43:33 momjian Exp $
+ * $Id: libpq-fe.h,v 1.96 2003/08/04 02:40:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,7 +4,7 @@
  *	  port-specific prototypes for Intel x86/UNIXWARE
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * univel.h,v 1.2 1995/03/17 06:40:18 andrew Exp

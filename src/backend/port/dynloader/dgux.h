@@ -2,10 +2,10 @@
  *
  * dgux.h
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dgux.h,v 1.15 2002/06/20 20:29:33 momjian Exp $
+ * $Id: dgux.h,v 1.16 2003/08/04 02:40:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

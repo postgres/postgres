@@ -4,12 +4,12 @@
  *	  POSTGRES generic list package
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.52 2003/08/04 00:43:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.53 2003/08/04 02:39:59 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle

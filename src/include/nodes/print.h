@@ -4,10 +4,10 @@
  *	  definitions for nodes/print.c
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: print.h,v 1.20 2002/12/05 15:50:39 tgl Exp $
+ * $Id: print.h,v 1.21 2003/08/04 02:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

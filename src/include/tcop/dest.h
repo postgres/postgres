@@ -51,10 +51,10 @@
  * calls in portal and cursor manipulations.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.39 2003/08/04 00:43:32 momjian Exp $
+ * $Id: dest.h,v 1.40 2003/08/04 02:40:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

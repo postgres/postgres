@@ -5,10 +5,10 @@
  *	  parse trees.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.20 2003/02/09 06:56:28 tgl Exp $
+ * $Id: parsetree.h,v 1.21 2003/08/04 02:40:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  prototypes for nodeGroup.c
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeGroup.h,v 1.24 2003/01/10 23:54:24 tgl Exp $
+ * $Id: nodeGroup.h,v 1.25 2003/08/04 02:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,10 +3,10 @@
  * user.c
  *	  Commands for manipulating users and groups.
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.123 2003/08/04 00:43:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.124 2003/08/04 02:39:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

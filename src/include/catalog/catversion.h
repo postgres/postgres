@@ -34,10 +34,10 @@
  * database contents or layout, such as altering tuple headers.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catversion.h,v 1.205 2003/08/04 00:43:30 momjian Exp $
+ * $Id: catversion.h,v 1.206 2003/08/04 02:40:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

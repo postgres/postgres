@@ -5,12 +5,12 @@
  *	  Also, a function to check for the owner (datdba) of a database.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.26 2003/06/27 14:45:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.27 2003/08/04 02:40:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -7,10 +7,10 @@
  * Client-side code should include postgres_fe.h instead.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.64 2003/08/04 00:43:29 momjian Exp $
+ * $Id: postgres.h,v 1.65 2003/08/04 02:40:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,12 +3,12 @@
  * pg_crc.c
  *	  PostgreSQL 64-bit CRC support
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/pg_crc.c,v 1.8 2002/06/20 20:29:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/pg_crc.c,v 1.9 2003/08/04 02:40:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -23,10 +23,10 @@
  * responsibility of the index access method --- not all AMs support this.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.55 2003/08/04 00:43:30 momjian Exp $
+ * $Id: pg_opclass.h,v 1.56 2003/08/04 02:40:12 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

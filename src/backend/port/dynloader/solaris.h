@@ -4,10 +4,10 @@
  *	  port-specific prototypes for Solaris
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: solaris.h,v 1.9 2002/06/20 20:29:33 momjian Exp $
+ * $Id: solaris.h,v 1.10 2003/08/04 02:40:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

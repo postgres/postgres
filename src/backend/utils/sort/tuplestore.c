@@ -32,11 +32,11 @@
  * the Tuplestore's state.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.15 2003/08/04 00:43:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.16 2003/08/04 02:40:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

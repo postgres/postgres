@@ -4,10 +4,10 @@
  *	  common declarations for the rtree access method code.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.29 2002/06/20 20:29:43 momjian Exp $
+ * $Id: rtree.h,v 1.30 2003/08/04 02:40:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

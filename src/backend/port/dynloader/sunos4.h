@@ -4,10 +4,10 @@
  *	  port-specific prototypes for SunOS 4
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sunos4.h,v 1.14 2002/06/20 20:29:33 momjian Exp $
+ * $Id: sunos4.h,v 1.15 2003/08/04 02:40:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

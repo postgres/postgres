@@ -4,10 +4,10 @@
  *	  prototypes for clauses.c.
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.66 2003/08/04 00:43:31 momjian Exp $
+ * $Id: clauses.h,v 1.67 2003/08/04 02:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

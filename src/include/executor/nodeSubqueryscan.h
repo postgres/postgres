@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSubqueryscan.h,v 1.7 2002/12/05 15:50:38 tgl Exp $
+ * $Id: nodeSubqueryscan.h,v 1.8 2003/08/04 02:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  internal structures for hash joins
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.29 2003/08/04 00:43:30 momjian Exp $
+ * $Id: hashjoin.h,v 1.30 2003/08/04 02:40:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

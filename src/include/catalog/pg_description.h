@@ -19,10 +19,10 @@
  * for example).
  *
  *
- * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.18 2003/03/10 22:28:19 tgl Exp $
+ * $Id: pg_description.h,v 1.19 2003/08/04 02:40:12 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
