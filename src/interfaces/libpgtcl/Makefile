@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.3 1996/10/30 06:18:36 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.4 1996/11/08 00:58:07 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,6 +27,11 @@ LIBLDLIBS+= -L$(LIBDIR) -lpq
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
+endif
+
+ifdef LINUX_ELF
+CFLAGS += -fPIC
+CC += -L $(POSTGRESDIR)/lib -lpq
 endif
 
 LIBSRCS= pgtcl.c pgtclCmds.c pgtclId.c
