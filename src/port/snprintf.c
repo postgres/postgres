@@ -65,7 +65,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.12 2005/03/02 05:22:22 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.13 2005/03/02 14:48:22 momjian Exp $";*/
 
 int			snprintf(char *str, size_t count, const char *fmt,...);
 int			vsnprintf(char *str, size_t count, const char *fmt, va_list args);
@@ -259,6 +259,23 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 						else
 							longflag = 1;
 						goto nextch;
+					/*
+					 *	We might export this to client apps so we should
+					 *	support 'qd' and 'I64d'(MinGW) also in case the
+					 *	native version does.
+					 */
+					case 'q':
+						longlongflag = 1;
+						longflag = 1;
+						goto nextch;
+					case 'I':
+						if (*(format+1) == '6' && *(format+2) == '4')
+						{
+							format += 2;
+							longlongflag = 1;
+							longflag = 1;
+							goto nextch;
+						}					
 					case 'u':
 					case 'U':
 						/* fmtnum(value,base,dosign,ljust,len,zpad,&output) */
