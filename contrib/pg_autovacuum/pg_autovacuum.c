@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.28 2005/01/24 00:13:38 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.29 2005/01/26 22:25:13 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -90,7 +90,7 @@ log_entry(const char *logentry, int level)
 {
 	/*
 	 * Note: Under Windows we dump the log entries to the normal
-	 * stderr/logfile as well, otherwise it can be a pain to debug 
+	 * stderr/logfile as well, otherwise it can be a pain to debug
 	 * service install failures etc.
 	 */
 
@@ -556,6 +556,9 @@ init_db_list(void)
 	Dllist	   *db_list = DLNewList();
 	db_info    *dbs = NULL;
 	PGresult   *res = NULL;
+#ifdef WIN32
+	int			k = 0;
+#endif
 
 	DLAddHead(db_list, DLNewElem(init_dbinfo((char *) "template1", 0, 0)));
 	if (DLGetHead(db_list) == NULL)
@@ -571,6 +574,30 @@ init_db_list(void)
 	 */
 	dbs = ((db_info *) DLE_VAL(DLGetHead(db_list)));
 	dbs->conn = db_connect(dbs);
+
+#ifdef WIN32
+	while (dbs->conn == NULL && !appMode && k < 10)
+	{
+		int        j;
+
+		/* Pause for 30 seconds to allow the database to start up */
+		log_entry("Pausing 30 seconds to allow the database to startup completely", LVL_INFO);
+		fflush(LOGOUTPUT);
+		ServiceStatus.dwWaitHint = 10;
+		for (j=0; j<6; j++)
+		{
+			pg_usleep(5000000);
+			ServiceStatus.dwCheckPoint++;
+			SetServiceStatus(hStatus, &ServiceStatus);
+			fflush(LOGOUTPUT);
+		}
+
+		/* now try again */
+		log_entry("Attempting to connect again.", LVL_INFO);
+		dbs->conn = db_connect(dbs);
+		k++;
+	}
+#endif
 
 	if (dbs->conn != NULL)
 	{
@@ -904,7 +931,7 @@ db_connect(db_info * dbi)
 		PQfinish(db_conn);
 		db_conn = NULL;
 	}
-		
+
 	return db_conn;
 }	/* end of db_connect() */
 
@@ -980,44 +1007,44 @@ static void
 perform_maintenance_command(db_info * dbi, tbl_info * tbl, int operation)
 {
 	char		buf[256];
-	
-	/* 
+
+	/*
 	 * Set the vacuum_cost variables if supplied on command line
-	 */	
+	 */
 	if (args->av_vacuum_cost_delay != -1)
-	{	
+	{
 		snprintf(buf, sizeof(buf), "set vacuum_cost_delay = %d",
 				 args->av_vacuum_cost_delay);
 		send_query(buf, dbi);
 	}
 	if (args->av_vacuum_cost_page_hit != -1)
-	{	
+	{
 		snprintf(buf, sizeof(buf), "set vacuum_cost_page_hit = %d",
 				 args->av_vacuum_cost_page_hit);
 		send_query(buf, dbi);
 	}
 	if (args->av_vacuum_cost_page_miss != -1)
-	{	
+	{
 		snprintf(buf, sizeof(buf), "set vacuum_cost_page_miss = %d",
 				 args->av_vacuum_cost_page_miss);
 		send_query(buf, dbi);
 	}
 	if (args->av_vacuum_cost_page_dirty != -1)
-	{	
+	{
 		snprintf(buf, sizeof(buf), "set vacuum_cost_page_dirty = %d",
 				 args->av_vacuum_cost_page_dirty);
 		send_query(buf, dbi);
 	}
 	if (args->av_vacuum_cost_limit != -1)
-	{	
+	{
 		snprintf(buf, sizeof(buf), "set vacuum_cost_limit = %d",
 				 args->av_vacuum_cost_limit);
 		send_query(buf, dbi);
 	}
-	
+
 	/*
-	 * if ((relisshared = t and database != template1) or 
-	 * if operation = ANALYZE_ONLY) 
+	 * if ((relisshared = t and database != template1) or
+	 * if operation = ANALYZE_ONLY)
 	 * then only do an analyze
 	 */
 	if ((tbl->relisshared > 0 && strcmp("template1", dbi->dbname) != 0) ||
@@ -1027,14 +1054,14 @@ perform_maintenance_command(db_info * dbi, tbl_info * tbl, int operation)
 		snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
 	else
 		return;
-			
+
 	if (args->debug >= 1)
 	{
 		sprintf(logbuffer, "Performing: %s", buf);
 		log_entry(logbuffer, LVL_DEBUG);
 		fflush(LOGOUTPUT);
 	}
-	
+
 	send_query(buf, dbi);
 
 	update_table_thresholds(dbi, tbl, operation);
@@ -1085,7 +1112,7 @@ get_cmd_args(int argc, char *argv[])
 	args->port = 0;
 
 	/*
-	 * Cost-Based Vacuum Delay Settings for pg_autovacuum 
+	 * Cost-Based Vacuum Delay Settings for pg_autovacuum
 	 */
 	args->av_vacuum_cost_delay = -1;
 	args->av_vacuum_cost_page_hit = -1;
@@ -1255,7 +1282,7 @@ usage(void)
 	fprintf(stderr, "   [-m] vacuum_cost_page_miss (default=none)\n");
 	fprintf(stderr, "   [-n] vacuum_cost_page_dirty (default=none)\n");
 	fprintf(stderr, "   [-l] vacuum_cost_limit (default=none)\n");
-	
+
 	fprintf(stderr, "   [-U] username (libpq default)\n");
 	fprintf(stderr, "   [-P] password (libpq default)\n");
 	fprintf(stderr, "   [-H] host (libpq default)\n");
@@ -1307,10 +1334,10 @@ print_cmd_args(void)
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->analyze_scaling_factor=%f", args->analyze_scaling_factor);
 	log_entry(logbuffer, LVL_INFO);
-	
+
 	if (args->av_vacuum_cost_delay != -1)
 		sprintf(logbuffer, "  args->av_vacuum_cost_delay=%d", args->av_vacuum_cost_delay);
-	else 
+	else
 		sprintf(logbuffer, "  args->av_vacuum_cost_delay=(default)");
 	log_entry(logbuffer, LVL_INFO);
 	if (args->av_vacuum_cost_page_hit != -1)
@@ -1333,7 +1360,7 @@ print_cmd_args(void)
 	else
 		sprintf(logbuffer, "  args->av_vacuum_cost_limit=(default)");
 	log_entry(logbuffer, LVL_INFO);
-	
+
 	sprintf(logbuffer, "  args->debug=%d", args->debug);
 	log_entry(logbuffer, LVL_INFO);
 
@@ -1450,8 +1477,8 @@ InstallService(void)
 	if (args->av_vacuum_cost_page_dirty != -1)
 		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_page_dirty);
 	if (args->av_vacuum_cost_limit != -1)
-		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_limit);		
-		
+		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_limit);
+
 	/* And write the new value */
 	if (RegSetValueEx(hk, "ImagePath", 0, REG_EXPAND_SZ, (LPBYTE) szCommand, (DWORD) strlen(szCommand) + 1))
 		return -4;
