@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.1
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2001/02/20 01:33:07 $
+last updated:           $Date: 2001/02/20 19:06:16 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -59,22 +59,9 @@ for HP's C compiler, or
 	CC=gcc ./configure
 for GCC.  If you omit this setting then configure will pick gcc.
 
-Note also that configure will default to no optimization for cc;
-you'll probably want to override that, say with
-	CC=cc CFLAGS=+O2 ./configure
-
 The default install target location is /usr/local/pgsql, which
 (particularly on HPUX 10) you might want to change to something under
 /opt.  If so, use the --prefix switch to configure.
-
-If you want to build the C++ client library (libpq++) then you need
-to use a C++ compiler from the same source as the C compiler; mixing
-HP and GNU compilers doesn't work. If you have both C++ compilers
-in your PATH, keep an eye on whether configure picks the right one.
-If it makes the wrong choice, set the environment variable CXX:
-	CC=gcc CXX=g++ ./configure --with-CXX
-or
-	CC=cc CXX=aCC ./configure --with-CXX
 
 
 1.3)	yacc dies trying to process src/backend/parser/gram.y.
