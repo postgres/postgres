@@ -374,6 +374,21 @@ ERROR:  portal "c" cannot be run
 	FETCH 10 FROM c;
 ERROR:  portal "c" cannot be run
 COMMIT;
+-- test case for problems with dropping an open relation during abort
+BEGIN;
+	savepoint x;
+		CREATE TABLE koju (a INT UNIQUE);
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "koju_a_key" for table "koju"
+		INSERT INTO koju VALUES (1);
+		INSERT INTO koju VALUES (1);
+ERROR:  duplicate key violates unique constraint "koju_a_key"
+	rollback to x;
+	CREATE TABLE koju (a INT UNIQUE);
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index "koju_a_key" for table "koju"
+	INSERT INTO koju VALUES (1);
+	INSERT INTO koju VALUES (1);
+ERROR:  duplicate key violates unique constraint "koju_a_key"
+ROLLBACK;
 DROP TABLE foo;
 DROP TABLE baz;
 DROP TABLE barbaz;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.185 2004/08/30 19:00:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.186 2004/09/06 17:56:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1333,9 +1333,6 @@ CommitTransaction(void)
 	 * backend-wide state.
 	 */
 
-	smgrDoPendingDeletes(true);
-	/* smgrcommit already done */
-
 	CallXactCallbacks(XACT_EVENT_COMMIT, InvalidTransactionId);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
@@ -1352,6 +1349,14 @@ CommitTransaction(void)
 	 */
 	AtEOXact_Inval(true);
 
+	/*
+	 * Likewise, dropping of files deleted during the transaction is best done
+	 * after releasing relcache and buffer pins.  (This is not strictly
+	 * necessary during commit, since such pins should have been released
+	 * already, but this ordering is definitely critical during abort.)
+	 */
+	smgrDoPendingDeletes(true);
+
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 true, true);
@@ -1363,6 +1368,7 @@ CommitTransaction(void)
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true, s->transactionIdData);
 	AtEOXact_Namespace(true);
+	/* smgrcommit already done */
 	AtEOXact_Files();
 	pgstat_count_xact_commit();
 
@@ -1481,15 +1487,13 @@ AbortTransaction(void)
 	 * ordering.
 	 */
 
-	smgrDoPendingDeletes(false);
-	smgrabort();
-
 	CallXactCallbacks(XACT_EVENT_ABORT, InvalidTransactionId);
 
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_BEFORE_LOCKS,
 						 false, true);
 	AtEOXact_Inval(false);
+	smgrDoPendingDeletes(false);
 	ResourceOwnerRelease(TopTransactionResourceOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 false, true);
@@ -1501,6 +1505,7 @@ AbortTransaction(void)
 	AtEOXact_SPI(false);
 	AtEOXact_on_commit_actions(false, s->transactionIdData);
 	AtEOXact_Namespace(false);
+	smgrabort();
 	AtEOXact_Files();
 	pgstat_count_xact_rollback();
 
@@ -3014,7 +3019,6 @@ CommitSubTransaction(void)
 	AtSubCommit_Notify();
 	AtEOSubXact_UpdatePasswordFile(true, s->transactionIdData,
 								   s->parent->transactionIdData);
-	AtSubCommit_smgr();
 
 	CallXactCallbacks(XACT_EVENT_COMMIT_SUB, s->parent->transactionIdData);
 
@@ -3024,6 +3028,7 @@ CommitSubTransaction(void)
 	AtEOSubXact_RelationCache(true, s->transactionIdData,
 							  s->parent->transactionIdData);
 	AtEOSubXact_Inval(true);
+	AtSubCommit_smgr();
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 true, false);
@@ -3109,8 +3114,6 @@ AbortSubTransaction(void)
 	RecordSubTransactionAbort();
 
 	/* Post-abort cleanup */
-	AtSubAbort_smgr();
-
 	CallXactCallbacks(XACT_EVENT_ABORT_SUB, s->parent->transactionIdData);
 
 	ResourceOwnerRelease(s->curTransactionOwner,
@@ -3119,6 +3122,7 @@ AbortSubTransaction(void)
 	AtEOSubXact_RelationCache(false, s->transactionIdData,
 							  s->parent->transactionIdData);
 	AtEOSubXact_Inval(false);
+	AtSubAbort_smgr();
 	ResourceOwnerRelease(s->curTransactionOwner,
 						 RESOURCE_RELEASE_LOCKS,
 						 false, false);

@@ -231,6 +231,19 @@ BEGIN;
 	FETCH 10 FROM c;
 COMMIT;
 
+-- test case for problems with dropping an open relation during abort
+BEGIN;
+	savepoint x;
+		CREATE TABLE koju (a INT UNIQUE);
+		INSERT INTO koju VALUES (1);
+		INSERT INTO koju VALUES (1);
+	rollback to x;
+
+	CREATE TABLE koju (a INT UNIQUE);
+	INSERT INTO koju VALUES (1);
+	INSERT INTO koju VALUES (1);
+ROLLBACK;
+
 DROP TABLE foo;
 DROP TABLE baz;
 DROP TABLE barbaz;
