@@ -1,3 +1,11 @@
+Tue Jun 06 12:00:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Added org/postgresql/DriverClass.java to the list of files removed
+	  by make clean (it's dynamically built)
+	- Fixed Statement, so that the update count is valid when an SQL
+	  DELETE operation is done.
+	- While fixing the update count, made it easier to get the OID of
+	  the last insert as well. Example is in example/basic.java
+
 Tue Jun 06 08:37:00 BST 2000 petermount@it.maidstone.gov.uk
 	- Removed a hardwired 8K limit on query strings
 	- Added some missing org.'s in Connection that prevented

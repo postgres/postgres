@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Id: Makefile,v 1.22 2000/05/15 21:32:51 peter Exp $
+#    $Id: Makefile,v 1.23 2000/06/06 11:05:56 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -181,7 +181,7 @@ clean:
 	$(FIND) . -name "*.class" -exec $(RM) {} \;
 	$(FIND) . -name "*.html" -exec $(RM) {} \;
 	-$(RM) -rf stock example/corba/stock.built
-	-$(RM) postgresql.jar
+	-$(RM) postgresql.jar org/postgresql/DriverClass.java
 	-$(RM) -rf Package-postgresql *output
 
 #######################################################################

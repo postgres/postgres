@@ -70,11 +70,27 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    * @param updateCount the number of rows affected by the operation
    * @param cursor the positioned update/delete cursor name
    */
-  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID)
   {
-      super(conn,fields,tuples,status,updateCount);
+      super(conn,fields,tuples,status,updateCount,insertOID);
   }
   
+  /**
+   * Create a new ResultSet - Note that we create ResultSets to
+   * represent the results of everything.
+   *
+   * @param fields an array of Field objects (basically, the
+   *	ResultSet MetaData)
+   * @param tuples Vector of the actual data
+   * @param status the status string returned from the back end
+   * @param updateCount the number of rows affected by the operation
+   * @param cursor the positioned update/delete cursor name
+   */
+  public ResultSet(Connection conn, Field[] fields, Vector tuples, String status, int updateCount)
+  {
+      super(conn,fields,tuples,status,updateCount,0);
+  }
+    
   /**
    * A ResultSet is initially positioned before its first row,
    * the first call to next makes the first row the current row;

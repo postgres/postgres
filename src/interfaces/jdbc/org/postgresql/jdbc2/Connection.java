@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.1 2000/04/17 20:07:50 peter Exp $
+ * $Id: Connection.java,v 1.2 2000/06/06 11:06:09 peter Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -378,9 +378,9 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
      * This overides the method in org.postgresql.Connection and returns a
      * ResultSet.
      */
-    protected java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException
+    protected java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount, int insertOID) throws SQLException
     {
-	return new org.postgresql.jdbc2.ResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount);
+	return new org.postgresql.jdbc2.ResultSet((org.postgresql.jdbc2.Connection)conn,fields,tuples,status,updateCount,insertOID);
     }
     
     // *****************

@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.3 2000/06/06 07:45:07 peter Exp $
+ * $Id: Connection.java,v 1.4 2000/06/06 11:05:59 peter Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -317,7 +317,8 @@ public abstract class Connection
 	    int fqp = 0;
 	    boolean hfr = false;
 	    String recv_status = null, msg;
-		int update_count = 1;
+	    int update_count = 1;
+	    int insert_oid = 0;
 	    SQLException final_error = null;
 	    
 	    // Commented out as the backend can now handle queries
@@ -359,11 +360,18 @@ public abstract class Connection
 			    recv_status = pg_stream.ReceiveString(8192);
 				
 				// Now handle the update count correctly.
-				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE")) {
+				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE")) {
 					try {
 						update_count = Integer.parseInt(recv_status.substring(1+recv_status.lastIndexOf(' ')));
 					} catch(NumberFormatException nfe) {
 						throw new PSQLException("postgresql.con.fathom",recv_status);
+					}
+					if(recv_status.startsWith("INSERT")) {
+					    try {
+						insert_oid = Integer.parseInt(recv_status.substring(1+recv_status.indexOf(' '),recv_status.lastIndexOf(' ')));
+					    } catch(NumberFormatException nfe) {
+						throw new PSQLException("postgresql.con.fathom",recv_status);
+					    }
 					}
 				}
 			    if (fields != null)
@@ -425,7 +433,7 @@ public abstract class Connection
 	    if (final_error != null)
 		throw final_error;
 		
-	    return getResultSet(this, fields, tuples, recv_status, update_count);
+	    return getResultSet(this, fields, tuples, recv_status, update_count, insert_oid);
 	}
     }
 
@@ -727,7 +735,7 @@ public abstract class Connection
      * This returns a resultset. It must be overridden, so that the correct
      * version (from jdbc1 or jdbc2) are returned.
      */
-    protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount) throws SQLException;
+    protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
     
     public abstract void close() throws SQLException;
 	
