@@ -165,7 +165,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
 sgml-local-ecat-files:nil
 End:
 -->
