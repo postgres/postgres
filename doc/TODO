@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 26 00:58:06 EDT 1999
+Last updated:		Wed Oct 27 14:28:26 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -55,6 +55,7 @@ PARSER
 * -require SELECT DISTINCT target list to have all ORDER BY columns
 * -When using aggregates + GROUP BY, no rows in should yield no rows out(Tom)
 * -Allow HAVING to use comparisons that have no aggregates(Tom)
+* Allow COUNT(DISTINCT col)
 
 VIEWS
 
