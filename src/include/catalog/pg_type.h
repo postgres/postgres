@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.26 1997/11/26 04:50:47 momjian Exp $
+ * $Id: pg_type.h,v 1.27 1998/01/19 02:37:47 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -363,6 +363,9 @@ DATA(insert OID = 1187 ( _timespan	 PGUID	-1 -1 f b t \054 0	1186 array_in array
 DATA(insert OID = 1296 ( timestamp	 PGUID	4  19 t b t \054 0	0 timestamp_in timestamp_out timestamp_in timestamp_out i _null_ ));
 DESCR("limited-range ISO-format date and time");
 #define TIMESTAMPOID	1296
+
+
+#define USE_ATTTYPMOD(typeid)	((typeid) == BPCHAROID || (typeid) == VARCHAROID)
 
 /*
  * prototypes for functions in pg_type.c

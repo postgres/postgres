@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.17 1998/01/14 15:48:43 momjian Exp $
+ * $Id: executor.h,v 1.18 1998/01/19 02:37:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,8 @@ extern TupleDesc ExecTypeFromTL(List *targetList);
 extern void ResetTupleCount(void);
 extern void ExecAssignNodeBaseInfo(EState *estate, CommonState *basenode,
 					   Plan *parent);
+extern void setAtttypmodForCreateTable(TupleDesc tupType, List *targetList,
+							List *rangeTable);
 extern void ExecAssignExprContext(EState *estate, CommonState *commonstate);
 extern void ExecAssignResultType(CommonState *commonstate,
 					 TupleDesc tupDesc);
