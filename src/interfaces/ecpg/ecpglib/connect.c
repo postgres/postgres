@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.3 2003/04/08 12:34:25 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.4 2003/05/02 14:43:25 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -10,8 +10,6 @@
 
 static struct connection *all_connections = NULL,
 		   *actual_connection = NULL;
-
-extern enum COMPAT_MODE ecpg_compat_mode;
 
 struct connection *
 ECPGget_connection(const char *connection_name)
@@ -261,6 +259,20 @@ ECPGnoticeProcessor(void *arg, const char *message)
 
 /* this contains some quick hacks, needs to be cleaned up, but it works */
 bool
+ECPGconnect_informix(int lineno, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
+{
+	char *informix_name = (char *)name, *envname;
+	
+	/* Informix uses an environment variable DBPATH that overrides
+	 * the connection parameters given here */
+	envname = getenv("DBPATH");
+	if (envname)
+		informix_name = envname;
+	return (ECPGconnect(lineno, informix_name, user, passwd, connection_name, autocommit));
+}
+	
+/* this contains some quick hacks, needs to be cleaned up, but it works */
+bool
 ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, const char *connection_name, int autocommit)
 {
 	struct connection *this;
@@ -269,26 +281,13 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 			   *tmp,
 			   *port = NULL,
 			   *realname = NULL,
-			   *options = NULL,
-			   *envname;
+			   *options = NULL;
 
 	ECPGinit_sqlca();
 
 	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
 		return false;
 
-	if (ecpg_compat_mode == ECPG_COMPAT_INFORMIX)
-	{
-		/* Informix uses an environment variable DBPATH that overrides
-		 * the connection parameters given here */
-		envname = getenv("DBPATH");
-		if (envname)
-		{
-			free(dbname);
-			dbname=strdup(envname);
-		}
-	}
-	
 	if (dbname == NULL && connection_name == NULL)
 		connection_name = "DEFAULT";
 
