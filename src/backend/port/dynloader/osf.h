@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: osf.h,v 1.6 2001/11/05 17:46:27 momjian Exp $
+ * $Id: osf.h,v 1.7 2001/11/15 16:08:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,12 @@
  * library as the file to be dynamically loaded.
  *
  */
+
+/* RTLD_GLOBAL is not available in <5.x */
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
+
 #define  pg_dlopen(f)	dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
 #define  pg_dlsym(h, f) ((PGFunction) dlsym(h, f))
 #define  pg_dlclose(h)	dlclose(h)
