@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Dec  4 13:23:41 EST 2002
+Last updated:		Thu Dec  5 15:30:28 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -296,8 +296,8 @@ Transactions
 Exotic Features
 ===============
 
-* Add SQL99 WITH clause to SELECT
-* Add SQL99 WITH RECURSIVE to SELECT
+* Add SQL99 WITH clause to SELECT (Tom, Fernando)
+* Add SQL99 WITH RECURSIVE to SELECT (Tom, Fernando)
 * Add the concept of dataspaces/tablespaces [tablespaces]
 * Allow queries across multiple databases [crossdb]
 * Add pre-parsing phase that converts non-ANSI features to supported features
@@ -441,6 +441,7 @@ Developers who have claimed items are:
 * D'Arcy is D'Arcy J.M. Cain <darcy@druid.net>
 * Dave is Dave Cramer <dave@fastcrypt.com>
 * Edmund is Edmund Mergl <E.Mergl@bawue.de>
+* Fernando Nasser <fnasser@redhat.com>
 * Gavin Sherry <swm@linuxworld.com.au>
 * Hiroshi is Hiroshi Inoue <Inoue@tpf.co.jp>
 * Karel is Karel Zak <zakkr@zf.jcu.cz>
