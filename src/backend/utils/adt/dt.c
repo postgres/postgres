@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.69 1999/04/26 04:42:48 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.70 1999/05/01 17:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3068,18 +3068,16 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #if defined(HAVE_TM_ZONE)
 				*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 #elif defined(HAVE_INT_TIMEZONE)
- #ifdef __CYGWIN__
-                       *tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timez
-one);
- #else
-                        *tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezon
-e);
- #endif
+#ifdef __CYGWIN__
+				*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
+#else
+				*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
+#endif
 #else
 #error USE_POSIX_TIME is defined but neither HAVE_TM_ZONE or HAVE_INT_TIMEZONE are defined
 #endif
 
-#else							/* !USE_POSIX_TIME */
+#else  /* !USE_POSIX_TIME */
 				*tzp = CTimeZone;
 #endif
 			}
