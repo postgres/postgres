@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.35 2005/01/08 22:13:33 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.36 2005/01/10 00:04:38 tgl Exp $
 -->
 
  <chapter id="largeObjects">
@@ -51,9 +51,11 @@ $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.35 2005/01/08 22:13:33 tgl Exp $
    </para>
 
    <para>
-    <indexterm><primary>TOAST</></>
-    <indexterm><primary>sliced bread</><see>TOAST</></indexterm>
-    <productname>PostgreSQL 7.1</productname> introduced a mechanism
+    <indexterm>
+     <primary>TOAST</primary>
+     <secondary>versus large objects</secondary>
+    </indexterm>
+    <productname>PostgreSQL</productname> 7.1 introduced a mechanism
     (nicknamed <quote><acronym>TOAST</acronym></quote>) that allows
     data values to be much larger than single pages.  This
     makes the large object facility partially obsolete.  One

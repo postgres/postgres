@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.24 2005/01/08 22:13:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xtypes.sgml,v 1.25 2005/01/10 00:04:38 tgl Exp $
 -->
 
  <sect1 id="xtypes">
@@ -232,10 +232,14 @@ CREATE TYPE complex (
  </para>
 
  <para>
+   <indexterm>
+    <primary>TOAST</primary>
+    <secondary>and user-defined types</secondary>
+   </indexterm>
   If the values of your data type might exceed a few hundred bytes in
   size (in internal form), you should make the data type
-  TOAST-able.<indexterm><primary>TOAST</primary><secondary>and
-  user-defined types</secondary></indexterm> To do this, the internal
+  <acronym>TOAST</>-able (see <xref linkend="storage-toast">).
+  To do this, the internal
   representation must follow the standard layout for variable-length
   data: the first four bytes must be an <type>int32</type> containing
   the total length in bytes of the datum (including itself).  The C

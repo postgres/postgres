@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.75 2005/01/04 00:39:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.76 2005/01/10 00:04:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -153,10 +153,14 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       inline, uncompressed. <literal>MAIN</literal> is for inline,
       compressible data. <literal>EXTERNAL</literal> is for external,
       uncompressed data, and <literal>EXTENDED</literal> is for external,
-      compressed data.  <literal>EXTENDED</literal> is the default for all
-      data types that support it.  Use of <literal>EXTERNAL</literal> will
+      compressed data.  <literal>EXTENDED</literal> is the default for most
+      data types that support non-<literal>PLAIN</literal> storage.
+      Use of <literal>EXTERNAL</literal> will
       make substring operations on <type>text</type> and <type>bytea</type>
-      columns faster, at the penalty of increased storage space.
+      columns faster, at the penalty of increased storage space.  Note that
+      <literal>SET STORAGE</> doesn't itself change anything in the table,
+      it just sets the strategy to be pursued during future table updates.
+      See <xref linkend="storage-toast"> for more information.
      </para>
     </listitem>
    </varlistentry>

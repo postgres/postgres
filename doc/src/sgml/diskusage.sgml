@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.13 2004/12/28 19:08:58 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.14 2005/01/10 00:04:38 tgl Exp $
 -->
 
 <chapter id="diskusage">
@@ -22,12 +22,12 @@ $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.13 2004/12/28 19:08:58 tgl Ex
    stored. If the table has any columns with potentially-wide values,
    there is also a <acronym>TOAST</> file associated with the table,
    which is used to store values too wide to fit comfortably in the main
-   table.  There will be one index on the
+   table (see <xref linkend="storage-toast">).  There will be one index on the
    <acronym>TOAST</> table, if present. There may also be indexes associated
    with the base table.  Each table and index is stored in a separate disk
    file &mdash; possibly more than one file, if the file would exceed one
    gigabyte.  Naming conventions for these files are described in <xref
-   linkend="file-layout">.
+   linkend="storage-file-layout">.
   </para>
 
   <para>

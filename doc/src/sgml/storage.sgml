@@ -1,0 +1,676 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.4 2005/01/10 00:04:38 tgl Exp $
+-->
+
+<chapter id="storage">
+
+<title>Database Physical Storage</title>
+
+<para>
+This chapter provides an overview of the physical storage format used by
+<productname>PostgreSQL</productname> databases.
+</para>
+
+<sect1 id="storage-file-layout">
+
+<title>Database File Layout</title>
+
+<para>
+This section describes the storage format at the level of files and
+directories.
+</para>
+
+<para>
+All the data needed for a database cluster is stored within the cluster's data
+directory, commonly referred to as <varname>PGDATA</> (after the name of the
+environment variable that can be used to define it).  A common location for
+<varname>PGDATA</> is <filename>/var/lib/pgsql/data</>.  Multiple clusters,
+managed by different postmasters, can exist on the same machine.
+</para>
+
+<para>
+The <varname>PGDATA</> directory contains several subdirectories and control
+files, as shown in <xref linkend="pgdata-contents-table">.  In addition to
+these required items, the cluster configuration files
+<filename>postgresql.conf</filename>, <filename>pg_hba.conf</filename>, and
+<filename>pg_ident.conf</filename> are traditionally stored in
+<varname>PGDATA</> (although beginning in
+<productname>PostgreSQL</productname> 8.0 it is possible to keep them
+elsewhere). 
+</para>
+
+<table tocentry="1" id="pgdata-contents-table">
+<title>Contents of <varname>PGDATA</></title>
+<tgroup cols="2">
+<thead>
+<row>
+<entry>
+Item
+</entry>
+<entry>Description</entry>
+</row>
+</thead>
+
+<tbody>
+
+<row>
+ <entry><filename>PG_VERSION</></entry>
+ <entry>A file containing the major version number of <productname>PostgreSQL</productname></entry>
+</row>
+
+<row>
+ <entry><filename>base</></entry>
+ <entry>Subdirectory containing per-database subdirectories</entry>
+</row>
+
+<row>
+ <entry><filename>global</></entry>
+ <entry>Subdirectory containing cluster-wide tables, such as
+ <structname>pg_database</></entry>
+</row>
+
+<row>
+ <entry><filename>pg_clog</></entry>
+ <entry>Subdirectory containing transaction commit status data</entry>
+</row>
+
+<row>
+ <entry><filename>pg_subtrans</></entry>
+ <entry>Subdirectory containing subtransaction status data</entry>
+</row>
+
+<row>
+ <entry><filename>pg_tblspc</></entry>
+ <entry>Subdirectory containing symbolic links to tablespaces</entry>
+</row>
+
+<row>
+ <entry><filename>pg_xlog</></entry>
+ <entry>Subdirectory containing WAL (Write Ahead Log) files</entry>
+</row>
+
+<row>
+ <entry><filename>postmaster.opts</></entry>
+ <entry>A file recording the command-line options the postmaster was
+last started with</entry>
+</row>
+
+<row>
+ <entry><filename>postmaster.pid</></entry>
+ <entry>A lock file recording the current postmaster PID and shared memory
+segment ID (not present after postmaster shutdown)</entry>
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+<para>
+For each database in the cluster there is a subdirectory within
+<varname>PGDATA</><filename>/base</>, named after the database's OID in
+<structname>pg_database</>.  This subdirectory is the default location
+for the database's files; in particular, its system catalogs are stored
+there.
+</para>
+
+<para>
+Each table and index is stored in a separate file, named after the table
+or index's <firstterm>filenode</> number, which can be found in
+<structname>pg_class</>.<structfield>relfilenode</>.
+</para>
+
+<caution>
+<para>
+Note that while a table's filenode often matches its OID, this is
+<emphasis>not</> necessarily the case; some operations, like
+<command>TRUNCATE</>, <command>REINDEX</>, <command>CLUSTER</> and some forms
+of <command>ALTER TABLE</>, can change the filenode while preserving the OID.
+Avoid assuming that filenode and table OID are the same.
+</para>
+</caution>
+
+<para>
+When a table or index exceeds 1Gb, it is divided into gigabyte-sized
+<firstterm>segments</>.  The first segment's file name is the same as the
+filenode; subsequent segments are named filenode.1, filenode.2, etc.
+This arrangement avoids problems on platforms that have file size limitations.
+The contents of tables and indexes are discussed further in
+<xref linkend="storage-page-layout">.
+</para>
+
+<para>
+A table that has columns with potentially large entries will have an
+associated <firstterm>TOAST</> table, which is used for out-of-line storage of
+field values that are too large to keep in the table rows proper.
+<structname>pg_class</>.<structfield>reltoastrelid</> links from a table to
+its <acronym>TOAST</> table, if any.
+See <xref linkend="storage-toast"> for more information.
+</para>
+
+<para>
+Tablespaces make the scenario more complicated.  Each user-defined tablespace
+has a symbolic link inside the <varname>PGDATA</><filename>/pg_tblspc</>
+directory, which points to the physical tablespace directory (as specified in
+its <command>CREATE TABLESPACE</> command).  The symbolic link is named after
+the tablespace's OID.  Inside the physical tablespace directory there is
+a subdirectory for each database that has elements in the tablespace, named
+after the database's OID.  Tables within that directory follow the filenode
+naming scheme.  The <literal>pg_default</> tablespace is not accessed through
+<filename>pg_tblspc</>, but corresponds to
+<varname>PGDATA</><filename>/base</>.  Similarly, the <literal>pg_global</>
+tablespace is not accessed through <filename>pg_tblspc</>, but corresponds to
+<varname>PGDATA</><filename>/global</>.
+</para>
+
+</sect1>
+
+<sect1 id="storage-toast">
+
+<title>TOAST</title>
+
+    <indexterm>
+     <primary>TOAST</primary>
+    </indexterm>
+    <indexterm><primary>sliced bread</><see>TOAST</></indexterm>
+
+<para>
+This section provides an overview of <acronym>TOAST</> (The
+Oversized-Attribute Storage Technique).
+</para>
+
+<para>
+Since <productname>PostgreSQL</productname> uses a fixed page size (commonly
+8Kb), and does not allow tuples to span multiple pages, it's not possible to
+store very large field values directly.  Before <productname>PostgreSQL</> 7.1
+there was a hard limit of just under one page on the total amount of data that
+could be put into a table row.  In release 7.1 and later, this limit is
+overcome by allowing large field values to be compressed and/or broken up into
+multiple physical rows.  This happens transparently to the user, with only
+small impact on most of the backend code.  The technique is affectionately
+known as <acronym>TOAST</> (or <quote>the best thing since sliced bread</>).
+</para>
+
+<para>
+Only certain data types support <acronym>TOAST</> &mdash; there is no need to
+impose the overhead on data types that cannot produce large field values.
+To support <acronym>TOAST</>, a data type must have a variable-length
+(<firstterm>varlena</>) representation, in which the first 32-bit word of any
+stored value contains the total length of the value in bytes (including
+itself).  <acronym>TOAST</> does not constrain the rest of the representation.
+All the C-level functions supporting a <acronym>TOAST</>-able data type must
+be careful to handle <acronym>TOAST</>ed input values.  (This is normally done
+by invoking <function>PG_DETOAST_DATUM</> before doing anything with an input
+value; but in some cases more efficient approaches are possible.)
+</para>
+
+<para>
+<acronym>TOAST</> usurps the high-order two bits of the varlena length word,
+thereby limiting the logical size of any value of a <acronym>TOAST</>-able
+data type to 1Gb (2<superscript>30</> - 1 bytes).  When both bits are zero,
+the value is an ordinary un-<acronym>TOAST</>ed value of the data type.  One
+of these bits, if set, indicates that the value has been compressed and must
+be decompressed before use.  The other bit, if set, indicates that the value
+has been stored out-of-line.  In this case the remainder of the value is
+actually just a pointer, and the correct data has to be found elsewhere.  When
+both bits are set, the out-of-line data has been compressed too.  In each case
+the length in the low-order bits of the varlena word indicates the actual size
+of the datum, not the size of the logical value that would be extracted by
+decompression or fetching of the out-of-line data.
+</para>
+
+<para>
+If any of the columns of a table are <acronym>TOAST</>-able, the table will
+have an associated <acronym>TOAST</> table, whose OID is stored in the table's
+<structname>pg_class</>.<structfield>reltoastrelid</> entry.  Out-of-line
+<acronym>TOAST</>ed values are kept in the <acronym>TOAST</> table, as
+described in more detail below.
+</para>
+
+<para>
+The compression technique used is a fairly simple and very fast member
+of the LZ family of compression techniques.  See
+<filename>src/backend/utils/adt/pg_lzcompress.c</> for the details.
+</para>
+
+<para>
+Out-of-line values are divided (after compression if used) into chunks of at
+most <literal>TOAST_MAX_CHUNK_SIZE</> bytes (this value is a little less than
+<literal>BLCKSZ/4</>, or about 2000 bytes by default).  Each chunk is stored
+as a separate row in the <acronym>TOAST</> table for the owning table.  Every
+<acronym>TOAST</> table has the columns <structfield>chunk_id</> (an OID
+identifying the particular <acronym>TOAST</>ed value),
+<structfield>chunk_seq</> (a sequence number for the chunk within its value),
+and <structfield>chunk_data</> (the actual data of the chunk).  A unique index
+on <structfield>chunk_id</> and <structfield>chunk_seq</> provides fast
+retrieval of the values.  A pointer datum representing an out-of-line
+<acronym>TOAST</>ed value therefore needs to store the OID of the
+<acronym>TOAST</> table in which to look and the OID of the specific value
+(its <structfield>chunk_id</>).  For convenience, pointer datums also store the
+logical datum size (original uncompressed data length) and actual stored size
+(different if compression was applied).  Allowing for the varlena header word,
+the total size of a <acronym>TOAST</> pointer datum is therefore 20 bytes
+regardless of the actual size of the represented value.
+</para>
+
+<para>
+The <acronym>TOAST</> code is triggered only
+when a row value to be stored in a table is wider than <literal>BLCKSZ/4</>
+bytes (normally 2Kb).  The <acronym>TOAST</> code will compress and/or move
+field values out-of-line until the row value is shorter than
+<literal>BLCKSZ/4</> bytes or no more gains can be had.  During an UPDATE
+operation, values of unchanged fields are normally preserved as-is; so an
+UPDATE of a row with out-of-line values incurs no <acronym>TOAST</> costs if
+none of the out-of-line values change.
+</para>
+
+<para>
+The <acronym>TOAST</> code recognizes four different strategies for storing
+<acronym>TOAST</>-able columns:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>PLAIN</literal> prevents either compression or
+      out-of-line storage.  This is the only possible strategy for
+      columns of non-<acronym>TOAST</>-able data types.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>EXTENDED</literal> allows both compression and out-of-line
+      storage.  This is the default for most <acronym>TOAST</>-able data types.
+      Compression will be attempted first, then out-of-line storage if
+      the row is still too big.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>EXTERNAL</literal> allows out-of-line storage but not
+      compression.  Use of <literal>EXTERNAL</literal> will
+      make substring operations on wide <type>text</type> and
+      <type>bytea</type> columns faster (at the penalty of increased storage
+      space) because these operations are optimized to fetch only the
+      required parts of the out-of-line value when it is not compressed.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>MAIN</literal> allows compression but not out-of-line
+      storage.  (Actually, out-of-line storage will still be performed
+      for such columns, but only as a last resort when there is no other
+      way to make the row small enough.)
+     </para>
+    </listitem>
+   </itemizedlist>
+
+Each <acronym>TOAST</>-able data type specifies a default strategy for columns
+of that data type, but the strategy for a given table column can be altered
+with <command>ALTER TABLE SET STORAGE</>.
+</para>
+
+<para>
+This scheme has a number of advantages compared to a more straightforward
+approach such as allowing row values to span pages.  Assuming that queries are
+usually qualified by comparisons against relatively small key values, most of
+the work of the executor will be done using the main row entry. The big values
+of <acronym>TOAST</>ed attributes will only be pulled out (if selected at all)
+at the time the result set is sent to the client. Thus, the main table is much
+smaller and more of its rows fit in the shared buffer cache than would be the
+case without any out-of-line storage. Sort sets shrink also, and sorts will
+more often be done entirely in memory. A little test showed that a table
+containing typical HTML pages and their URLs was stored in about half of the
+raw data size including the <acronym>TOAST</> table, and that the main table
+contained only about 10% of the entire data (the URLs and some small HTML
+pages). There was no runtime difference compared to an un-<acronym>TOAST</>ed
+comparison table, in which all the HTML pages were cut down to 7Kb to fit.
+</para>
+
+</sect1>
+
+<sect1 id="storage-page-layout">
+
+<title>Database Page Layout</title>
+
+<para>
+This section provides an overview of the page format used within
+<productname>PostgreSQL</productname> tables and indexes.<footnote>
+  <para>
+    Actually, index access methods need not use this page format.
+    All the existing index methods do use this basic format,
+    but the data kept on index metapages usually doesn't follow
+    the item layout rules.
+  </para>
+</footnote>
+Sequences and <acronym>TOAST</> tables are formatted just like a regular table.
+</para>
+
+<para>
+In the following explanation, a
+<firstterm>byte</firstterm>
+is assumed to contain 8 bits.  In addition, the term
+<firstterm>item</firstterm>
+refers to an individual data value that is stored on a page.  In a table,
+an item is a row; in an index, an item is an index entry.
+</para>
+
+<para>
+Every table and index is stored as an array of <firstterm>pages</> of a
+fixed size (usually 8Kb, although a different page size can be selected
+when compiling the server).  In a table, all the pages are logically
+equivalent, so a particular item (row) can be stored in any page.  In
+indexes, the first page is generally reserved as a <firstterm>metapage</>
+holding control information, and there may be different types of pages
+within the index, depending on the index access method.
+</para>
+
+<para>
+<xref linkend="page-table"> shows the overall layout of a page.
+There are five parts to each page.
+</para>
+
+<table tocentry="1" id="page-table">
+<title>Overall Page Layout</title>
+<titleabbrev>Page Layout</titleabbrev>
+<tgroup cols="2">
+<thead>
+<row>
+<entry>
+Item
+</entry>
+<entry>Description</entry>
+</row>
+</thead>
+
+<tbody>
+
+<row>
+ <entry>PageHeaderData</entry>
+ <entry>20 bytes long. Contains general information about the page, including
+free space pointers.</entry>
+</row>
+
+<row>
+<entry>ItemPointerData</entry>
+<entry>Array of (offset,length) pairs pointing to the actual items.
+4 bytes per item.</entry>
+</row>
+
+<row>
+<entry>Free space</entry>
+<entry>The unallocated space. New item pointers are allocated from the start
+of this area, new items from the end.</entry>
+</row>
+
+<row>
+<entry>Items</entry>
+<entry>The actual items themselves.</entry>
+</row>
+
+<row>
+<entry>Special space</entry>
+<entry>Index access method specific data. Different methods store different
+data. Empty in ordinary tables.</entry>
+</row>
+
+</tbody>
+</tgroup>
+</table>
+
+ <para>
+
+  The first 20 bytes of each page consists of a page header
+  (PageHeaderData). Its format is detailed in <xref
+  linkend="pageheaderdata-table">. The first two fields track the most
+  recent WAL entry related to this page. They are followed by three 2-byte
+  integer fields
+  (<structfield>pd_lower</structfield>, <structfield>pd_upper</structfield>,
+  and <structfield>pd_special</structfield>). These contain byte offsets
+  from the page start to the start
+  of unallocated space, to the end of unallocated space, and to the start of
+  the special space. 
+  The last 2 bytes of the page header,
+  <structfield>pd_pagesize_version</structfield>, store both the page size
+  and a version indicator.  Beginning with
+  <productname>PostgreSQL</productname> 8.0 the version number is 2; 
+  <productname>PostgreSQL</productname> 7.3 and 7.4 used version number 1;
+  prior releases used version number 0.
+  (The basic page layout and header format has not changed in these versions,
+  but the layout of heap row headers has.)  The page size
+  is basically only present as a cross-check; there is no support for having
+  more than one page size in an installation.
+  
+ </para>
+ 
+ <table tocentry="1" id="pageheaderdata-table">
+ <title>PageHeaderData Layout</title>
+ <titleabbrev>PageHeaderData Layout</titleabbrev>
+ <tgroup cols="4">   
+ <thead>
+  <row> 
+   <entry>Field</entry>
+   <entry>Type</entry>
+   <entry>Length</entry>
+   <entry>Description</entry>
+  </row>
+ </thead>
+ <tbody>
+  <row>
+   <entry>pd_lsn</entry>
+   <entry>XLogRecPtr</entry>
+   <entry>8 bytes</entry>
+   <entry>LSN: next byte after last byte of xlog record for last change
+   to this page</entry>
+  </row>
+  <row>
+   <entry>pd_tli</entry>
+   <entry>TimeLineID</entry>
+   <entry>4 bytes</entry>
+   <entry>TLI of last change</entry>
+  </row>
+  <row>
+   <entry>pd_lower</entry>
+   <entry>LocationIndex</entry>
+   <entry>2 bytes</entry>
+   <entry>Offset to start of free space</entry>
+  </row>
+  <row>
+   <entry>pd_upper</entry>
+   <entry>LocationIndex</entry>
+   <entry>2 bytes</entry>
+   <entry>Offset to end of free space</entry>
+  </row>
+  <row>
+   <entry>pd_special</entry>
+   <entry>LocationIndex</entry>
+   <entry>2 bytes</entry>
+   <entry>Offset to start of special space</entry>
+  </row>
+  <row>
+   <entry>pd_pagesize_version</entry>
+   <entry>uint16</entry>
+   <entry>2 bytes</entry>
+   <entry>Page size and layout version number information</entry>
+  </row>
+ </tbody>
+ </tgroup>
+ </table>
+
+ <para>
+  All the details may be found in
+  <filename>src/include/storage/bufpage.h</filename>.
+ </para>
+
+ <para>
+
+  Following the page header are item identifiers
+  (<type>ItemIdData</type>), each requiring four bytes.
+  An item identifier contains a byte-offset to
+  the start of an item, its length in bytes, and a few attribute bits
+  which affect its interpretation.
+  New item identifiers are allocated
+  as needed from the beginning of the unallocated space.
+  The number of item identifiers present can be determined by looking at
+  <structfield>pd_lower</>, which is increased to allocate a new identifier.
+  Because an item
+  identifier is never moved until it is freed, its index may be used on a
+  long-term basis to reference an item, even when the item itself is moved
+  around on the page to compact free space.  In fact, every pointer to an
+  item (<type>ItemPointer</type>, also known as
+  <type>CTID</type>) created by
+  <productname>PostgreSQL</productname> consists of a page number and the
+  index of an item identifier.
+
+ </para>
+
+ <para>
+ 
+  The items themselves are stored in space allocated backwards from the end
+  of unallocated space.  The exact structure varies depending on what the
+  table is to contain. Tables and sequences both use a structure named
+  <type>HeapTupleHeaderData</type>, described below.
+
+ </para>
+ 
+ <para>
+ 
+  The final section is the <quote>special section</quote> which may
+  contain anything the access method wishes to store.  For example,
+  b-tree indexes store links to the page's left and right siblings,
+  as well as some other data relevant to the index structure.
+  Ordinary tables do not use a special section at all (indicated by setting
+  <structfield>pd_special</> to equal the page size).
+  
+ </para>
+ 
+ <para>
+
+  All table rows are structured in the same way. There is a fixed-size
+  header (occupying 27 bytes on most machines), followed by an optional null
+  bitmap, an optional object ID field, and the user data. The header is
+  detailed
+  in <xref linkend="heaptupleheaderdata-table">.  The actual user data
+  (columns of the row) begins at the offset indicated by
+  <structfield>t_hoff</>, which must always be a multiple of the MAXALIGN
+  distance for the platform.
+  The null bitmap is
+  only present if the <firstterm>HEAP_HASNULL</firstterm> bit is set in
+  <structfield>t_infomask</structfield>. If it is present it begins just after
+  the fixed header and occupies enough bytes to have one bit per data column
+  (that is, <structfield>t_natts</> bits altogether). In this list of bits, a
+  1 bit indicates not-null, a 0 bit is a null.  When the bitmap is not
+  present, all columns are assumed not-null.
+  The object ID is only present if the <firstterm>HEAP_HASOID</firstterm> bit
+  is set in <structfield>t_infomask</structfield>.  If present, it appears just
+  before the <structfield>t_hoff</> boundary.  Any padding needed to make
+  <structfield>t_hoff</> a MAXALIGN multiple will appear between the null
+  bitmap and the object ID.  (This in turn ensures that the object ID is
+  suitably aligned.)
+  
+ </para>
+ 
+ <table tocentry="1" id="heaptupleheaderdata-table">
+ <title>HeapTupleHeaderData Layout</title>
+ <titleabbrev>HeapTupleHeaderData Layout</titleabbrev>
+ <tgroup cols="4">   
+ <thead>
+  <row> 
+   <entry>Field</entry>
+   <entry>Type</entry>
+   <entry>Length</entry>
+   <entry>Description</entry>
+  </row>
+ </thead>
+ <tbody>
+  <row>
+   <entry>t_xmin</entry>
+   <entry>TransactionId</entry>
+   <entry>4 bytes</entry>
+   <entry>insert XID stamp</entry>
+  </row>
+  <row>
+   <entry>t_cmin</entry>
+   <entry>CommandId</entry>
+   <entry>4 bytes</entry>
+   <entry>insert CID stamp</entry>
+  </row>
+  <row>
+   <entry>t_xmax</entry>
+   <entry>TransactionId</entry>
+   <entry>4 bytes</entry>
+   <entry>delete XID stamp</entry>
+  </row>
+  <row>
+   <entry>t_cmax</entry>
+   <entry>CommandId</entry>
+   <entry>4 bytes</entry>
+   <entry>delete CID stamp (overlays with t_xvac)</entry>
+  </row>
+  <row>
+   <entry>t_xvac</entry>
+   <entry>TransactionId</entry>
+   <entry>4 bytes</entry>
+   <entry>XID for VACUUM operation moving a row version</entry>
+  </row>
+  <row>
+   <entry>t_ctid</entry>
+   <entry>ItemPointerData</entry>
+   <entry>6 bytes</entry>
+   <entry>current TID of this or newer row version</entry>
+  </row>
+  <row>
+   <entry>t_natts</entry>
+   <entry>int16</entry>
+   <entry>2 bytes</entry>
+   <entry>number of attributes</entry>
+  </row>
+  <row>
+   <entry>t_infomask</entry>
+   <entry>uint16</entry>
+   <entry>2 bytes</entry>
+   <entry>various flag bits</entry>
+  </row>
+  <row>
+   <entry>t_hoff</entry>
+   <entry>uint8</entry>
+   <entry>1 byte</entry>
+   <entry>offset to user data</entry>
+  </row>
+ </tbody>
+ </tgroup>
+ </table>
+
+ <para>
+   All the details may be found in
+   <filename>src/include/access/htup.h</filename>.
+ </para>
+
+ <para>
+ 
+  Interpreting the actual data can only be done with information obtained
+  from other tables, mostly <structname>pg_attribute</structname>. The
+  key values needed to identify field locations are
+  <structfield>attlen</structfield> and <structfield>attalign</structfield>.
+  There is no way to directly get a
+  particular attribute, except when there are only fixed width fields and no
+  NULLs. All this trickery is wrapped up in the functions
+  <firstterm>heap_getattr</firstterm>, <firstterm>fastgetattr</firstterm>
+  and <firstterm>heap_getsysattr</firstterm>.
+  
+ </para>
+ <para>
+
+  To read the data you need to examine each attribute in turn. First check
+  whether the field is NULL according to the null bitmap. If it is, go to
+  the next. Then make sure you have the right alignment.  If the field is a
+  fixed width field, then all the bytes are simply placed. If it's a
+  variable length field (attlen = -1) then it's a bit more complicated.
+  All variable-length datatypes share the common header structure
+  <type>varattrib</type>, which includes the total length of the stored
+  value and some flag bits.  Depending on the flags, the data may be either
+  inline or in a <acronym>TOAST</> table;
+  it might be compressed, too (see <xref linkend="storage-toast">).
+  
+ </para>
+</sect1>
+
+</chapter>
