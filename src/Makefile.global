@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.28 1996/08/28 01:50:01 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.29 1996/08/28 07:14:00 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -62,19 +62,19 @@
 PORTNAME=	BSD44_derived
 
 # SRCDIR specifies where the source files are.
-SRCDIR=		/home/tools/postgres95-1.02/src
+SRCDIR=		/home/staff/scrappy/postgres/2.0/cvs/postgres95/src
 
 # For convenience, POSTGRESDIR is where DATADIR, BINDIR, and LIBDIR 
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
-POSTGRESDIR=	/home/tools/postgres95-1.02
+POSTGRESDIR=	/home/staff/scrappy/postgres/2.0/cvs/postgres95
 
 # POSTGRESLOGIN is the login name of the user who gets special
 # privileges within the database.  By default it is "postgres", but
 # you can change it to any existing login name (such as your own 
 # login if you are compiling a private version or don't have root
 # access).
-POSTGRESLOGIN=	postgres
+POSTGRESLOGIN=	scrappy
 
 # DATADIR specifies where the postmaster expects to find its database.
 # This may be overridden by command line options or the PGDATA environment
@@ -275,17 +275,18 @@ endif
 
 # Globally pass PORTNAME
 CFLAGS+= -DPORTNAME_$(PORTNAME) -D$(PORTNAME)
+CFLAGS += -I../../backend/port/$(PORTNAME)
 
 # Globally pass the default TCP port for postmaster(1).
-CFLAGS+= -DPOSTPORT='"5432"'
+CFLAGS+= -DPOSTPORT='"6543"'
 
 # include flags from mk/port/postgres.mk.$(PORTNAME)
 CFLAGS+= $(CFLAGS_BE)
 LDADD+= $(LDADD_BE)
 LDFLAGS+= $(LDFLAGS_BE)
 
-# enable patches to array update code
-CFLAGS += -DARRAY_PATCH
+# enable patches to array update code (moved to config.h)
+#CFLAGS += -DARRAY_PATCH
 # enable patches to null insert/update code
 CFLAGS += -DNULL_PATCH
 # enable patches for varchar and fsync

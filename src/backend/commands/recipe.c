@@ -7,13 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.1.1.1 1996/07/09 06:21:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.2 1996/08/28 07:16:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 
-#include "include/postgres.h"
+#include "postgres.h"
 #include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/execnodes.h"
