@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.84 2003/12/21 01:23:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.85 2003/12/21 03:00:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,10 +495,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	BlockNumber blkno;
 	StrategyNumber strat;
 	bool		res;
-	int32		result;
 	bool		nextkey;
 	bool		continuescan;
-	ScanKey		scankeys = NULL;
+	ScanKey		scankeys;
 	ScanKey	   *startKeys = NULL;
 	int			keysCount = 0;
 	int			i;
@@ -695,8 +694,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	pfree(startKeys);
 
-	current = &(scan->currentItemData);
-
 	/*
 	 * We want to locate either the first item >= boundary point, or
 	 * first item > boundary point, depending on the initial-positioning
@@ -746,6 +743,8 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	/* don't need to keep the stack around... */
 	_bt_freestack(stack);
 
+	current = &(scan->currentItemData);
+
 	if (!BufferIsValid(buf))
 	{
 		/* Only get here if index is completely empty */
@@ -764,6 +763,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	offnum = _bt_binsrch(rel, buf, keysCount, scankeys, nextkey);
 
 	ItemPointerSet(current, blkno, offnum);
+
+	/* done with manufactured scankey, now */
+	pfree(scankeys);
 
 	/*
 	 * It's now time to examine the initial-positioning strategy to find the
@@ -802,10 +804,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * that is always the correct starting position.)
 			 */
 			if (!_bt_step(scan, &buf, BackwardScanDirection))
-			{
-				pfree(scankeys);
 				return false;
-			}
 			break;
 
 		case BTLessEqualStrategyNumber:
@@ -818,10 +817,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * that is always the correct starting position.)
 			 */
 			if (!_bt_step(scan, &buf, BackwardScanDirection))
-			{
-				pfree(scankeys);
 				return false;
-			}
 			break;
 
 		case BTEqualStrategyNumber:
@@ -834,14 +830,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				/*
 				 * We are on first item > scankey.
 				 *
-				 * Back up one to arrive at last item <= scankey, then
-				 * check to see if it is equal to scankey.
+				 * Back up one to arrive at last item <= scankey.
+				 * We will check below to see if it is equal to scankey.
 				 */
 				if (!_bt_step(scan, &buf, BackwardScanDirection))
-				{
-					pfree(scankeys);
 					return false;
-				}
 			}
 			else
 			{
@@ -849,25 +842,15 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				 * We are on first item >= scankey.
 				 *
 				 * Make sure we are on a real item; might have to
-				 * step forward if currently at end of page.  Then check
-				 * to see if it is equal to scankey.
+				 * step forward if currently at end of page.
+				 * We will check below to see if it is equal to scankey.
 				 */
 				if (offnum > PageGetMaxOffsetNumber(page))
 				{
 					if (!_bt_step(scan, &buf, ForwardScanDirection))
-					{
-						pfree(scankeys);
 						return false;
-					}
 				}
 			}
-
-			/* If we are not now on an equal item, then there ain't any. */
-			offnum = ItemPointerGetOffsetNumber(current);
-			page = BufferGetPage(buf);
-			result = _bt_compare(rel, keysCount, scankeys, page, offnum);
-			if (result != 0)
-				goto nomatches; /* no equal items! */
 			break;
 
 		case BTGreaterEqualStrategyNumber:
@@ -879,10 +862,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			if (offnum > PageGetMaxOffsetNumber(page))
 			{
 				if (!_bt_step(scan, &buf, ForwardScanDirection))
-				{
-					pfree(scankeys);
 					return false;
-				}
 			}
 			break;
 
@@ -895,10 +875,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			if (offnum > PageGetMaxOffsetNumber(page))
 			{
 				if (!_bt_step(scan, &buf, ForwardScanDirection))
-				{
-					pfree(scankeys);
 					return false;
-				}
 			}
 			break;
 	}
@@ -924,14 +901,11 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	else
 	{
 		/* no tuples in the index match this scan key */
-nomatches:
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		_bt_relbuf(rel, buf);
 		res = false;
 	}
-
-	pfree(scankeys);
 
 	return res;
 }
