@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.1.1.1 1996/07/09 06:21:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.2 1996/07/22 23:30:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,6 +572,7 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
     newend = (RelativeAddr)LONGALIGN(hashtable->overflownext + sizeof(*otuple)
 				     + heapTuple->t_len);
     if (newend > hashtable->bottom) {
+#if 0
 	elog(DEBUG, "hash table out of memory. expanding.");
 	/* ------------------
 	 * XXX this is a temporary hack
@@ -586,6 +587,17 @@ ExecHashOverflowInsert(HashJoinTable hashtable,
 	    perror("repalloc");
 	    elog(WARN, "can't expand hashtable.");
 	}
+#else
+      /* ------------------
+       * XXX the temporary hack above doesn't work because things
+       * above us don't know that we've moved the hash table!
+       *  - Chris Dunlop, <chris@onthe.net.au>
+       * ------------------
+       */
+      elog(WARN, "hash table out of memory. Use -B parameter to increase buffe
+rs.");
+#endif
+
     }
     
     /* ----------------

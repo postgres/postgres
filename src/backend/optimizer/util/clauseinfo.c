@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.1.1.1 1996/07/09 06:21:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.2 1996/07/22 23:30:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,12 +146,11 @@ get_joinvars(Oid relid,
 
 	if( IsA (get_leftop(clause),Var) &&
 	   (relid == (get_leftop(clause))->varno)) {
-
-	    result1 = lappendi(result1, (get_leftop(clause))->varattno);
+	    result1 = lappendi(result1, (int4)(get_leftop(clause))->varattno);
 	    result2 = lappend(result2, "");
 	    result3 = lappendi(result3, _SELEC_CONSTANT_RIGHT_);
 	} else {
-	    result1 = lappendi(result1, (get_rightop(clause))->varattno);
+	    result1 = lappendi(result1, (int4)(get_rightop(clause))->varattno);
 	    result2 = lappend(result2, "");
 	    result3 = lappendi(result3, _SELEC_CONSTANT_LEFT_);
 	}

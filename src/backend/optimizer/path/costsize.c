@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.2 1996/07/16 07:12:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.3 1996/07/22 23:30:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,9 @@
 #include <limits.h>
 #define MAXINT        INT_MAX
 #else
-# if defined(PORTNAME_BSD44_derived) || defined(PORTNAME_bsdi) || defined(PORTNAME_bsdi_2_1)
+# if defined(PORTNAME_BSD44_derived) || \
+     defined(PORTNAME_bsdi) || \
+     defined(PORTNAME_bsdi_2_1)
 # include <machine/limits.h>
 # define MAXINT	INT_MAX
 # else
