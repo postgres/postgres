@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.5 1996/08/01 05:11:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.6 1996/10/11 03:22:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *      This is so that we can support more backends. (system-wide semaphore
  *      sets run out pretty fast.)                -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.5 1996/08/01 05:11:33 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.6 1996/10/11 03:22:59 scrappy Exp $
  */
 #include <sys/time.h>
 #ifndef WIN32
@@ -361,6 +361,10 @@ ProcKill(int exitStatus, int pid)
     ProcReleaseSpins(proc);
     LockReleaseAll(1,&proc->lockQueue);
     
+#ifdef USER_LOCKS
+    LockReleaseAll(0,&proc->lockQueue);
+#endif
+
     /* ----------------
      * get off the wait queue
      * ----------------
