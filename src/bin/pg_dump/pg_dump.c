@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.253 2002/04/24 02:42:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.254 2002/04/24 02:44:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,7 +574,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 		if (tblinfo[i].viewdef != NULL)
 			continue;
 
-		if (tblinfo[i].sequence)	/* already dumped */
+		if (tblinfo[i].relkind == RELKIND_SEQUENCE)		/* already dumped */
 			continue;
 
 		if (!onlytable || (strcmp(classname, onlytable) == 0) || (strlen(onlytable) == 0))
@@ -1672,7 +1672,7 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 		if (tblinfo[i].relname)
 			free(tblinfo[i].relname);
 
-		if (tblinfo[i].sequence)
+		if (tblinfo[i].relkind == RELKIND_SEQUENCE)
 			continue;
 
 		/* Process Attributes */
@@ -2212,7 +2212,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs, const char *tablename)
 		tblinfo[i].relname = strdup(PQgetvalue(res, i, i_relname));
 		tblinfo[i].relacl = strdup(PQgetvalue(res, i, i_relacl));
 		tblinfo[i].relkind = *(PQgetvalue(res, i, i_relkind));
-		tblinfo[i].sequence = (tblinfo[i].relkind == RELKIND_SEQUENCE);
 		tblinfo[i].hasindex = (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0);
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
@@ -2858,7 +2857,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 	for (i = 0; i < numTables; i++)
 	{
-		if (tblinfo[i].sequence)
+		if (tblinfo[i].relkind == RELKIND_SEQUENCE)
 			continue;
 
 		/* find all the user attributes and their types */
@@ -4242,7 +4241,7 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 }
 
 static void
-_dumpTableAttr70(Archive *fout, TableInfo *tblinfo, int i, int j, PQExpBuffer q)
+_dumpTableAttr70(TableInfo *tblinfo, int i, int j, PQExpBuffer q)
 {
 	int32		tmp_typmod;
 	int			precision;
@@ -4303,10 +4302,7 @@ _dumpTableAttr70(Archive *fout, TableInfo *tblinfo, int i, int j, PQExpBuffer q)
 
 void
 dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
-		   IndInfo *indinfo, int numIndexes,
-		   InhInfo *inhinfo, int numInherits,
-		   TypeInfo *tinfo, int numTypes, const char *tablename,
-		   const bool aclsSkip, const bool oids,
+		   const char *tablename, const bool aclsSkip,
 		   const bool schemaOnly, const bool dataOnly)
 {
 	int			i,
@@ -4336,7 +4332,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 	}
 	for (i = 0; i < numTables; i++)
 	{
-		if (!(tblinfo[i].sequence))
+		if (tblinfo[i].relkind != RELKIND_SEQUENCE)
 			continue;
 		if (!tablename || (!strcmp(tblinfo[i].relname, tablename))
 			|| (serialSeq && !strcmp(tblinfo[i].relname, serialSeq)))
@@ -4352,7 +4348,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 	for (i = 0; i < numTables; i++)
 	{
-		if (tblinfo[i].sequence)	/* already dumped */
+		if (tblinfo[i].relkind == RELKIND_SEQUENCE)		/* already dumped */
 			continue;
 
 		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)) || (strlen(tablename) == 0))
@@ -4415,7 +4411,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 						if (g_fout->remoteVersion >= 70100)
 							appendPQExpBuffer(q, "%s", tblinfo[i].atttypedefns[j]);
 						else
-							_dumpTableAttr70(fout, tblinfo, i, j, q);
+							_dumpTableAttr70(tblinfo, i, j, q);
 
 						/* Default value */
 						if (tblinfo[i].adef_expr[j] != NULL && tblinfo[i].inhAttrDef[j] == 0)
