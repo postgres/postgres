@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.16 1998/04/06 00:24:10 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.17 1998/08/01 19:30:27 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ CFLAGS+= -I..
 
 OBJS = dynloader.o @INET_ATON@ @STRERROR@ @MISSING_RANDOM@ @SRANDOM@
 OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @STRDUP@ @TAS@ @ISINF@
-OBJS+= @STRTOL@ @STRTOUL@
+OBJS+= @STRTOL@ @STRTOUL@ @SNPRINTF@
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)

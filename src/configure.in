@@ -533,6 +533,10 @@ AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(tzset memmove sigsetjmp kill sysconf fpclass)
 AC_CHECK_FUNCS(fp_class fp_class_d class)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
+AC_CHECK_FUNC(snprintf,
+	      AC_DEFINE(HAVE_SNPRINTF),
+	      ISINF='snprintf.o')
+AC_SUBST(SNPRINTF)
 AC_CHECK_FUNC(isinf,
 	      AC_DEFINE(HAVE_ISINF),
 	      ISINF='isinf.o')

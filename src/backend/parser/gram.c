@@ -219,7 +219,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.20 1998/07/26 02:17:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.21 1998/08/01 19:30:23 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -255,7 +255,7 @@
 #include "utils/elog.h"
 #include "access/xact.h"
 
-#ifdef MB
+#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
 
@@ -3927,7 +3927,7 @@ static const short yycheck[] = {     3,
    182
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
-#line 3 "/usr/local/bison/bison.simple"
+#line 3 "/usr/share/misc/bison.simple"
 
 /* Skeleton output parser for bison,
    Copyright (C) 1984, 1989, 1990 Free Software Foundation, Inc.
@@ -4120,7 +4120,7 @@ __yy_memcpy (char *to, char *from, int count)
 #endif
 #endif
 
-#line 196 "/usr/local/bison/bison.simple"
+#line 196 "/usr/share/misc/bison.simple"
 
 /* The user can define YYPARSE_PARAM as the name of an argument to be passed
    into yyparse.  The argument should have type void *.
@@ -6393,7 +6393,7 @@ case 389:
 					}
 					n->dbname = yyvsp[-3].str;
 					n->dbpath = yyvsp[-1].str;
-#ifdef MB
+#ifdef MULTIBYTE
 					if (yyvsp[0].str != NULL) {
 						n->encoding = pg_char_to_encoding(yyvsp[0].str);
 						if (n->encoding < 0) {
@@ -6414,7 +6414,7 @@ case 390:
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = yyvsp[0].str;
 					n->dbpath = NULL;
-#ifdef MB
+#ifdef MULTIBYTE
 					n->encoding = GetTemplateEncoding();
 #endif
 					yyval.node = (Node *)n;
@@ -9518,7 +9518,7 @@ case 854:
     break;}
 }
    /* the action file gets copied in in place of this dollarsign */
-#line 498 "/usr/local/bison/bison.simple"
+#line 498 "/usr/share/misc/bison.simple"
 
   yyvsp -= yylen;
   yyssp -= yylen;
