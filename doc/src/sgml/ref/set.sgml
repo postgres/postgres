@@ -20,7 +20,7 @@
   <synopsis>
 SET <replaceable class="PARAMETER">variable</replaceable> { TO | = } { '<replaceable class="PARAMETER">value</replaceable>' | DEFAULT }
 SET TIME ZONE { '<replaceable class="PARAMETER">timezone</replaceable>' | LOCAL | DEFAULT };
-SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED | DEFAULT }
+SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED }
   </synopsis>
 
   <refsect2 id="R2-SQL-SET-1">
@@ -350,9 +350,16 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED | DEFAULT }
 	  </term>
 	  <listitem>
 	   <para>
-	    The current transaction reads only 
-	    committed rows.  READ COMMITTED is the default.
+	    The current transaction queries read only rows committed
+	    before a query began. READ COMMITTED is the default.
 	   </para>
+
+	   <note>
+	   <para>
+	    <acronym>SQL92</acronym> standard requires 
+	    SERIALIZABLE to be the default isolation level.
+	   </para>
+	   </note>
 	  </listitem>
 	 </varlistentry>
 	 
@@ -362,24 +369,14 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED | DEFAULT }
 	  </term>
 	  <listitem>
 	   <para>
-	    The current transaction will place a 
-	    lock on every row read, so later reads in that transaction 
-	    see the rows unmodified by other transactions.
+	    The current transaction queries read only rows committed
+	    before first DML statement 
+	    (<command>SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO</command>)
+	    was executed in this transaction. 
 	   </para>
 	  </listitem>
 	 </varlistentry>
 	 
-	 <varlistentry>
-	  <term>
-	   DEFAULT
-	  </term>
-	  <listitem>
-	   <para>
-	    Sets the isolation level for the current transaction to
-	    <option>READ COMMITTED</option>.
-	   </para>
-	  </listitem>
-	 </varlistentry>
 	</variablelist>
        </para>
       </listitem>
@@ -789,7 +786,7 @@ SET TRANSACTION ISOLATION LEVEL { READ COMMITTED | SERIALIZED | DEFAULT }
    <para>
     There is no
     <command>SET <replaceable class="parameter">variable</replaceable></command>
-    in <acronym>SQL92</acronym>.
+    in <acronym>SQL92</acronym> (except for SET TRANSACTION ISOLATION LEVEL).
     
     The <acronym>SQL92</acronym> syntax for <command>SET TIME ZONE</command>
     is slightly different,
