@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.107 1997/11/16 04:36:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.108 1997/11/16 05:32:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1719,11 +1719,11 @@ HandleSlashCmds(PsqlSettings *pset,
 			{
 								/* operators */
 				SendQuery(&success, pset,"\
-					SELECT	t0.typname AS result, \
+					SELECT	o.oprname AS operator_, \
+							p.proname AS func_name, \
+							t0.typname AS result, \
 							t1.typname AS left_type, \
 							t2.typname AS right_type, \
-							o.oprname AS operatr, \
-							p.proname AS func_name, \
 							obj_description(o.oid) as description \
 					FROM	pg_proc p, pg_type t0, \
 							pg_type t1, pg_type t2, \
@@ -1733,29 +1733,34 @@ HandleSlashCmds(PsqlSettings *pset,
 							p.pronargs = 2 AND \
 							o.oprleft = t1.oid AND \
 							o.oprright = t2.oid \
-					ORDER BY result, left_type, right_type, operatr;",
+					ORDER BY operator_, func_name, result, left_type, \
+							right_type;",
 						false, false, 0);
 				SendQuery(&success, pset,"\
 					SELECT	o.oprname AS left_unary, \
-							t.typname AS operand, \
-							r.typname AS return_type, \
+							p.proname AS func_name, \
+							t0.typname AS return_type, \
+							t1.typname AS operand, \
 							obj_description(o.oid) as description \
-					FROM	pg_operator o, pg_type t, pg_type r \
-					WHERE	o.oprkind = 'l' AND \
-							o.oprright = t.oid AND \
-							o.oprresult = r.oid \
-					ORDER BY operand;",
+					FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 \
+					WHERE	RegprocToOid(o.oprcode) = p.oid AND \
+							o.oprresult = t0.oid AND \
+							o.oprkind = 'l' AND \
+							o.oprright = t1.oid \
+					ORDER BY left_unary, func_name, return_type, operand;",
 						false, false, 0);
 				SendQuery(&success, pset,"\
 					SELECT	o.oprname AS right_unary, \
-							t.typname AS operand, \
-							r.typname AS return_type, \
+							p.proname AS func_name, \
+							t0.typname AS return_type, \
+							t1.typname AS operand, \
 							obj_description(o.oid) as description \
-					FROM	pg_operator o, pg_type t, pg_type r \
-					WHERE	o.oprkind = 'r' AND \
-							o.oprleft = t.oid AND \
-							o.oprresult = r.oid \
-					ORDER BY operand;",
+					FROM	pg_operator o, pg_proc p, pg_type t0, pg_type t1 \
+					WHERE	RegprocToOid(o.oprcode) = p.oid AND \
+							o.oprresult = t0.oid AND \
+							o.oprkind = 'r' AND \
+							o.oprleft = t1.oid \
+					ORDER BY right_unary, func_name, return_type, operand;",
 						false, false, 0);
 			}
 			else if (strncmp(cmd, "ds", 2) == 0)
