@@ -18,7 +18,7 @@
 #  define DISABLE_XOPEN_NLS 
 #  define HAVE_ISINF
 #  define NEED_UNION_SEMUN 
-#  define NEED_SYS_SELECT_H
+#  define HAVE_SYS_SELECT_H
 #  define HAVE_TZSET
 #  define HAVE_ANSI_CPP
 #  define HAS_TEST_AND_SET

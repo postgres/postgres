@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.33 1997/01/24 18:00:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.34 1997/01/24 18:27:29 scrappy Exp $
  *
  * NOTES
  *
@@ -65,9 +65,9 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-#if defined(NEED_SYS_SELECT_H)
+#ifdef HAVE_SYS_SELECT_H
 # include <sys/select.h>
-#endif /* NEED_SYS_SELECT_H */
+#endif 
 
 #include "storage/ipc.h"
 #include "libpq/libpq.h"
