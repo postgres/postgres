@@ -520,7 +520,7 @@ From pgsql-general-owner+M2136@hub.org Sat Jun  3 23:31:02 2000
 Received: from renoir.op.net (root@renoir.op.net [207.29.195.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA28683
 	for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:31:01 -0400 (EDT)
-Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.14 $) with ESMTP id WAA20977 for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:05:07 -0400 (EDT)
+Received: from news.tht.net (news.hub.org [216.126.91.242]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id WAA20977 for <pgman@candle.pha.pa.us>; Sat, 3 Jun 2000 22:05:07 -0400 (EDT)
 Received: from hub.org (majordom@hub.org [216.126.84.1])
 	by news.tht.net (8.9.3/8.9.3) with ESMTP id VAD35811;
 	Sat, 3 Jun 2000 21:54:36 -0400 (EDT)
@@ -641,6 +641,126 @@ tree system and something that works like the current stuff in which case
 I'd say it's probably one unique for the former and one per for the
 latter.
 
+
+
+
+From olly@lfix.co.uk Wed Jan 24 16:41:45 2001
+Received: from anchor-post-31.mail.demon.net (anchor-post-31.mail.demon.net [194.217.242.89])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA05688
+	for <pgman@candle.pha.pa.us>; Wed, 24 Jan 2001 16:41:44 -0500 (EST)
+Received: from lfix.demon.co.uk ([158.152.59.127] helo=linda.lfix.co.uk)
+	by anchor-post-31.mail.demon.net with esmtp (Exim 2.12 #1)
+	id 14LXfg-0007lc-0V; Wed, 24 Jan 2001 21:41:40 +0000
+Received: from lfix.co.uk (olly@localhost [127.0.0.1])
+	by linda.lfix.co.uk (8.11.2/8.11.2/Debian 8.11.2-1) with ESMTP id f0OLfdF12876;
+	Wed, 24 Jan 2001 21:41:39 GMT
+Message-Id: <200101242141.f0OLfdF12876@linda.lfix.co.uk>
+X-Mailer: exmh version 2.2 06/23/2000 (debian 2.2-1) with nmh-1.0.4+dev
+X-URL: http://www.lfix.co.uk/oliver
+X-face: "xUFVDj+ZJtL_IbURmI}!~xAyPC"Mrk=MkAm&tPQnNq(FWxv49R}\>0oI8VM?O2VY+N7@F-
+	KMLl*!h}B)u@TW|B}6<X<J|}QsVlTi:RA:O7Abc(@D2Y/"J\S,b1!<&<B/J}b.Ii9@B]H6V!+#sE0Q
+	_+=`K$5TI|4I0-=Cp%pt~L#QYydO'iBXR~\tT?uftep9n9AF`@SzTwsw6uqJ}pL,h(cZi}T#PB"#!k
+	p^e=Z.K~fuw$l?]lUV)?R]U}l;f*~Ol)#fpKR)Yt}XOr6BI\_Jjr0!@GMnpCTnTym4f;c{;Ms=0{`D
+	Lq9MO6{wj%s-*N"G,g
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Stephan Szabo <sszabo@megazone23.bigpanda.com>,
+        PostgreSQL-development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Re: [GENERAL] child table doesn't inherit PRIMARY KEY? 
+In-reply-to: Message from Bruce Momjian <pgman@candle.pha.pa.us> 
+   of Wed, 24 Jan 2001 14:31:29 EST. <200101241931.OAA26463@candle.pha.pa.us> 
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Date: Wed, 24 Jan 2001 21:41:39 +0000
+From: "Oliver Elphick" <olly@lfix.co.uk>
+Status: OR
+
+Bruce Momjian wrote:
+  >> On Wed, 24 Jan 2001, Bruce Momjian wrote:
+
+  >I smell TODO item.  In fact, I now see a TODO item:
+  >
+  >* Unique index on base column not honored on inserts from inherited table
+  >  INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
+  >  [inherit]
+  >
+  >So it seems the fact the UNIQUE doesn't apply to the new table is just a
+  >manifestion of the fact that people expect UNIQUE to span the entire
+  >inheritance tree.  I will add the emails to [inherit] and mark it as
+  >resolved.
+
+Bruce, could you add this text to TODO.detail on the subject of 
+inherited constraints.  I first sent it on Christmas Eve, and I 
+think most people were too busy holidaying to comment.
+
+=================================================================
+Tom Lane wrote:
+  >Hm.  The short-term answer seems to be to modify the queries generated
+  >by the RI triggers to say "ONLY foo".  I am not sure whether we
+  >understand the semantics involved in allowing a REFERENCES target to be
+  >taken as an inheritance tree rather than just one table, but certainly
+  >the current implementation won't handle that correctly.
+
+May I propose these semantics as a basis for future development:
+
+1. An inheritance hierarchy (starting at any point in a tree) should be
+equivalent to an updatable view of all the tables at the point of
+reference and below.  By default, all descendant tables are combined
+with the ancestor for all purposes.  The keyword ONLY must be used to
+alter this behaviour.  Only inherited columns of descendant tables are
+visible from higher in the tree.  Columns may not be dropped in descendants.
+If columns are added to ancestors, they must be inserted correctly in
+descendants so as to preserve column ordering and inheritance.  If
+a column is dropped in an ancestor, it is dropped in all descendants.
+
+2. Insertion into a hierarchy means insertion into the table named in
+the INSERT statement; updating or deletion affects whichever table(s)
+the affected rows are found in.  Updating cannot move a row from one
+table to another.
+
+3. Inheritance of a table implies inheriting all its constraints unless
+ONLY is used or the constraints are subsequently dropped; again, dropping
+operates through all descendant tables.  A primary key, foreign key or
+unique constraint cannot be dropped or modified for a descendant.  A
+unique index on a column is shared by all tables below the table for
+which it is declared.  It cannot be dropped for any descendant.
+
+In other words, only NOT NULL and CHECK constraints can be dropped in
+descendants.
+
+In multiple inheritance, a column may inherit multiple unique indices
+from its several ancestors.  All inherited constraints must be satisfied
+together (though check constraints may be dropped).
+
+4. RI to a table implies the inclusion of all its descendants in the
+check.  Since a referenced column may be uniquely indexed further up
+the hierarchy than in the table named, the check must ensure that
+the referenced value occurs in the right segment of the hierarchy.  RI
+to one particular level of the hierarchy, excluding descendants, requires
+the use of ONLY in the constraint.
+
+5. Dropping a table implies dropping all its descendants.
+
+6. Changes of permissions on a table propagate to all its descendants.
+Permissions on descendants may be looser than those on ancestors; they
+may not be more restrictive.
+
+
+This scheme is a lot more restrictive than C++'s or Eiffel's definition
+of inheritance, but it seems to me to make the concept truly useful,
+without introducing excessive complexity.
+
+============================================================
+
+-- 
+Oliver Elphick                                Oliver.Elphick@lfix.co.uk
+Isle of Wight                              http://www.lfix.co.uk/oliver
+PGP: 1024R/32B8FAA1: 97 EA 1D 47 72 3F 28 47  6B 7E 39 CC 56 E4 C1 47
+GPG: 1024D/3E1D0C1C: CA12 09E0 E8D5 8870 5839  932A 614D 4C34 3E1D 0C1C
+                 ========================================
+     "If anyone has material possessions and sees his
+      brother in need but has no pity on him, how can the
+      love of God be in him?"
+                                    I John 3:17 
 
 
 
