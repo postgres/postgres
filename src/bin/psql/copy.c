@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Team
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.7 2000/01/20 21:51:09 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.8 2000/01/21 04:21:12 tgl Exp $
  */
 #include <c.h>
 #include "copy.h"
@@ -318,7 +318,7 @@ do_copy(const char *args)
 
 
 /*
- * handeCopyOut
+ * handleCopyOut
  * receives data as a result of a COPY ... TO stdout command
  *
  * If you want to use COPY TO in your application, this is the code to steal :)
@@ -367,7 +367,7 @@ handleCopyOut(PGconn *conn, FILE *copystream)
 
 
 /*
- * handeCopyOut
+ * handleCopyIn
  * receives data as a result of a COPY ... FROM stdin command
  *
  * Again, if you want to use COPY FROM in your application, copy this.
@@ -387,12 +387,18 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 	bool		linedone;
 	char		copybuf[COPYBUFSIZ];
 	char	   *s;
-	int			buflen;
+	int			bufleft;
 	int			c = 0;
+
+	if (prompt)					/* disable prompt if not interactive */
+	{
+		if (! isatty(fileno(copystream)))
+			prompt = NULL;
+	}
 
 	while (!copydone)
 	{							/* for each input line ... */
-		if (prompt && isatty(fileno(copystream)))
+		if (prompt)
 		{
 			fputs(prompt, stdout);
 			fflush(stdout);
@@ -400,9 +406,9 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 		firstload = true;
 		linedone = false;
 		while (!linedone)
-		{						/* for each buffer ... */
+		{						/* for each bufferload in line ... */
 			s = copybuf;
-			for (buflen = COPYBUFSIZ; buflen > 1; buflen--)
+			for (bufleft = COPYBUFSIZ-1; bufleft > 0; bufleft--)
 			{
 				c = getc(copystream);
 				if (c == '\n' || c == EOF)
@@ -413,7 +419,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 				*s++ = c;
 			}
 			*s = '\0';
-			if (c == EOF)
+			if (c == EOF && s == copybuf && firstload)
 			{
 				PQputline(conn, "\\.");
 				copydone = true;
@@ -423,10 +429,10 @@ handleCopyIn(PGconn *conn, FILE *copystream, const char *prompt)
 			if (firstload)
 			{
 				if (!strcmp(copybuf, "\\."))
-                                {
+				{
 					copydone = true;
-                                        break;
-                                }
+					break;
+				}
 				firstload = false;
 			}
 		}
