@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.67 2002/11/08 17:37:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.68 2002/11/08 18:32:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,11 @@
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 
-#ifndef PI
-#define PI 3.1415926536
+#ifndef M_PI
+/* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
+#define M_PI 3.14159265358979323846
 #endif
+
 
 /*
  * Internal routines
@@ -4365,7 +4367,7 @@ circle_center(PG_FUNCTION_ARGS)
 static double
 circle_ar(CIRCLE *circle)
 {
-	return PI * (circle->radius * circle->radius);
+	return M_PI * (circle->radius * circle->radius);
 }
 
 
@@ -4438,6 +4440,7 @@ circle_poly(PG_FUNCTION_ARGS)
 				size;
 	int			i;
 	double		angle;
+	double		anglestep;
 
 	if (FPzero(circle->radius) || (npts < 2))
 		elog(ERROR, "Unable to convert circle to polygon");
@@ -4455,9 +4458,11 @@ circle_poly(PG_FUNCTION_ARGS)
 	poly->size = size;
 	poly->npts = npts;
 
+	anglestep = (2.0 * M_PI) / npts;
+
 	for (i = 0; i < npts; i++)
 	{
-		angle = i * (2 * PI / npts);
+		angle = i * anglestep;
 		poly->p[i].x = circle->center.x - (circle->radius * cos(angle));
 		poly->p[i].y = circle->center.y + (circle->radius * sin(angle));
 	}
