@@ -952,4 +952,3 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 		qlog("INVALID STATEMENT HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
 #undef PRN_NULLCHECK
 }
-
