@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.24 2003/09/08 23:17:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.25 2003/09/12 22:17:23 tgl Exp $
 -->
 
 <sect1 id="notation">
@@ -41,7 +41,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/notation.sgml,v 1.24 2003/09/08 23:17:15 tg
   in charge of installing and running the server.  A <firstterm>user</firstterm>
   could be anyone who is using, or wants to use, any part of the
   <productname>PostgreSQL</productname> system.  These terms should not
-  be interpreted too narrowly; this documentation set does not have fixed
+  be interpreted too narrowly; this book does not have fixed
   presumptions about system administration procedures.
  </para>
 </sect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.207 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.208 2003/09/12 22:17:23 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -322,9 +322,9 @@ su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgs
 
     <para>
 <screen>
-FATAL: StreamServerPort: bind() failed: Address already in use
-        Is another postmaster already running on port 5432?
-        If not, wait a few seconds an retry.
+LOG:  could not bind IPv4 socket: Address already in use
+HINT:  Is another postmaster already running on port 5432? If not, wait a few seconds and retry.
+FATAL:  could not create TCP/IP listen socket
 </screen>
      This usually means just what it suggests: you tried to start
      another <command>postmaster</command> on the same port where one is already running.
@@ -334,35 +334,36 @@ FATAL: StreamServerPort: bind() failed: Address already in use
      on a reserved port number may draw something like:
 <screen>
 $ <userinput>postmaster -i -p 666</userinput>
-FATAL: StreamServerPort: bind() failed: Permission denied
-        Is another postmaster already running on port 666?
-        If not, wait a few seconds an retry.
+LOG:  could not bind IPv4 socket: Permission denied
+HINT:  Is another postmaster already running on port 666? If not, wait a few seconds and retry.
+FATAL:  could not create TCP/IP listen socket
 </screen>
     </para>
 
     <para>
      A message like
 <screen>
-IpcMemoryCreate: shmget(key=5440001, size=83918612, 01600) failed: Invalid argument
-FATAL 1:  ShmemCreate: cannot create region
+FATAL:  could not create shared memory segment: Invalid argument
+DETAIL:  Failed syscall was shmget(key=5440001, size=4011376640, 03600).
 </screen>
      probably means your kernel's limit on the size of shared memory is
-     smaller than the buffer area <productname>PostgreSQL</productname>
-     is trying to create (83918612 bytes in this example). Or it could
+     smaller than the work area <productname>PostgreSQL</productname>
+     is trying to create (4011376640 bytes in this example). Or it could
      mean that you do not have System-V-style shared memory support
      configured into your kernel at all. As a temporary workaround, you
      can try starting the server with a smaller-than-normal number
      of buffers (<option>-B</option> switch). You will eventually want
      to reconfigure your kernel to increase the allowed shared memory
      size. You may also see this message when trying to start multiple
-     servers on the same machine if their total space requested
+     servers on the same machine, if their total space requested
      exceeds the kernel limit.
     </para>
 
     <para>
      An error like
 <screen>
-IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on device
+FATAL:  could not create semaphores: No space left on device
+DETAIL:  Failed syscall was semget(5440126, 17, 03600).
 </screen>
      does <emphasis>not</emphasis> mean you've run out of disk
      space. It means your kernel's limit on the number of <systemitem
@@ -401,7 +402,7 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
     <para>
 <screen>
 psql: could not connect to server: Connection refused
-        Is the server running on host server.joe.com and accepting
+        Is the server running on host "server.joe.com" and accepting
         TCP/IP connections on port 5432?
 </screen>
      This is the generic <quote>I couldn't find a server to talk
@@ -414,7 +415,7 @@ psql: could not connect to server: Connection refused
      Alternatively, you'll get this when attempting Unix-domain socket
      communication to a local server:
 <screen>
-psql: could not connect to server: Connection refused
+psql: could not connect to server: No such file or directory
         Is the server running locally and accepting
         connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
 </screen>
@@ -546,7 +547,7 @@ SET ENABLE_SEQSCAN TO OFF;
     The virtual table <structname>pg_settings</structname> allows
     displaying and updating session run-time parameters. It contains one
     row for each configuration parameter; the columns are shown in
-    <xref linkend="runtime-pgsettings-table">.  This form allows the
+    <xref linkend="runtime-pgsettings-table">.  This table allows the
     configuration data to be joined with other tables and have a
     selection criteria applied.
    </para>
@@ -3381,8 +3382,9 @@ default:\
 
   <para>
    There are several ways to shut down the database server. You control
-   the type of shutdown by sending different signals to the server
-   process.
+   the type of shutdown by sending different signals to the
+   <command>postmaster</command> process.
+
    <variablelist>
     <varlistentry>
      <term><systemitem>SIGTERM</systemitem><indexterm><primary>SIGTERM</></></term>

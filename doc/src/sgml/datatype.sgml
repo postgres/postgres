@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.123 2003/08/31 17:32:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.124 2003/09/12 22:17:22 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -2821,7 +2821,7 @@ CREATE TABLE test (a BIT(3), b BIT VARYING(5));
 INSERT INTO test VALUES (B'101', B'00');
 INSERT INTO test VALUES (B'10', B'101');
 <computeroutput>
-ERROR:  Bit string length 2 does not match type BIT(3)
+ERROR:  bit string length 2 does not match type bit(3)
 </computeroutput>
 INSERT INTO test VALUES (B'10'::bit(3), B'101');
 SELECT * FROM test;

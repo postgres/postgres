@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.36 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/mvcc.sgml,v 2.37 2003/09/12 22:17:23 tgl Exp $
 -->
 
  <chapter id="mvcc">
@@ -344,7 +344,7 @@ COMMIT;
     then the serializable transaction will be rolled back with the message
 
 <screen>
-ERROR:  Can't serialize access due to concurrent update
+ERROR:  could not serialize access due to concurrent update
 </screen>
 
     because a serializable transaction cannot modify rows changed by

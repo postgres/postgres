@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.73 2003/06/25 01:14:37 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.74 2003/09/12 22:17:19 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -622,7 +622,7 @@
      <row>
       <entry><structfield>adnum</structfield></entry>
       <entry><type>int2</type></entry>
-      <entry><literal>pg_attribute.attnum</literal></entry>
+      <entry><literal><link linkend="catalog-pg-attribute"><structname>pg_attribute</structname></link>.attnum</literal></entry>
       <entry>The number of the column</entry>
      </row>
 
@@ -1650,7 +1650,7 @@
      <row>
       <entry><structfield>refclassid</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_class.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
       <entry>The OID of the system catalog the referenced object is in</entry>
      </row>
 
@@ -3579,7 +3579,7 @@
      <row>
       <entry><structfield>typbasetype</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal>pg_type.oid</literal></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry><para>
        If this is a derived type (see <structfield>typtype</structfield>),
        then <structfield>typbasetype</structfield> identifies

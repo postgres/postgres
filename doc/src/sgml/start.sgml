@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.31 2003/08/10 01:20:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.32 2003/09/12 22:17:24 tgl Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -183,10 +183,10 @@ createdb: command not found
    <para>
     Another response could be this:
 <screen>
-psql: could not connect to server: Connection refused
+createdb: could not connect to database template1: could not connect to server:
+No such file or directory
         Is the server running locally and accepting
         connections on Unix domain socket "/tmp/.s.PGSQL.5432"?
-createdb: database creation failed
 </screen>
     This means that the server was not started, or it was not started
     where <command>createdb</command> expected it.  Again, check the
@@ -197,8 +197,7 @@ createdb: database creation failed
     If you do not have the privileges required to create a database,
     you will see the following:
 <screen>
-ERROR:  CREATE DATABASE: permission denied
-createdb: database creation failed
+createdb: database creation failed: ERROR:  permission denied to create database
 </screen>
     Not every user has authorization to create new databases.  If
     <productname>PostgreSQL</productname> refuses to create databases
@@ -358,7 +357,7 @@ mydb=#
 <prompt>mydb=&gt;</prompt> <userinput>SELECT version();</userinput>
                             version
 ----------------------------------------------------------------
- PostgreSQL 7.3devel on i586-pc-linux-gnu, compiled by GCC 2.96
+ PostgreSQL &version; on i586-pc-linux-gnu, compiled by GCC 2.96
 (1 row)
 
 <prompt>mydb=&gt;</prompt> <userinput>SELECT current_date;</userinput>

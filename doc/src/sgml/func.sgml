@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.172 2003/09/11 18:30:38 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.173 2003/09/12 22:17:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -3890,8 +3890,8 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
     </table>
 
    <para>
-    Warning. <literal><function>to_char</function>(<type>interval</type>, <type>text</type>)</literal> 
-    is deprecated and should not be used in newly-written code. Will be removed in the next version.
+    Warning: <literal><function>to_char</function>(<type>interval</type>, <type>text</type>)</literal> 
+    is deprecated and should not be used in newly-written code. It will be removed in the next version.
    </para>
 
    <para>
@@ -6402,7 +6402,16 @@ SELECT a,
  2 | two
  3 | other
 </screen>
-    </para>
+   </para>
+
+   <para>
+    A <token>CASE</token> expression does not evaluate any subexpressions
+    that are not needed to determine the result.  For example, this is a
+    possible way of avoiding a division-by-zero failure:
+<programlisting>
+SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
+</programlisting>
+   </para>
   </sect2>
 
   <sect2>
@@ -6418,13 +6427,21 @@ SELECT a,
 
   <para>
    The <function>COALESCE</function> function returns the first of its
-   arguments that is not null.  This is often useful to substitute a
+   arguments that is not null.  Null is returned only if all arguments
+   are null.  This is often useful to substitute a
    default value for null values when data is retrieved for display,
    for example:
 <programlisting>
 SELECT COALESCE(description, short_description, '(none)') ...
 </programlisting>
   </para>
+
+   <para>
+    Like a <token>CASE</token> expression, <function>COALESCE</function> will
+    not evaluate arguments that are not needed to determine the result;
+    that is, arguments to the right of the first non-null argument are
+    not evaluated.
+   </para>
   </sect2>
 
   <sect2>
@@ -7278,6 +7295,21 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <row>
 	<entry>
      <literal>
+      <function>array_cat</function>
+      (<type>anyarray</type>, <type>anyarray</type>)
+     </literal>
+    </entry>
+	<entry><type>anyarray</type></entry>
+	<entry>
+     concatenate two arrays, returning <literal>NULL</literal>
+     for <literal>NULL</literal> inputs
+    </entry>
+	<entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5])</literal></entry>
+	<entry><literal>{1,2,3,4,5}</literal></entry>
+       </row>
+       <row>
+	<entry>
+     <literal>
       <function>array_append</function>
       (<type>anyarray</type>, <type>anyelement</type>)
      </literal>
@@ -7293,17 +7325,17 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <row>
 	<entry>
      <literal>
-      <function>array_cat</function>
-      (<type>anyarray</type>, <type>anyarray</type>)
+      <function>array_prepend</function>
+      (<type>anyelement</type>, <type>anyarray</type>)
      </literal>
     </entry>
 	<entry><type>anyarray</type></entry>
 	<entry>
-     concatenate two arrays, returning <literal>NULL</literal>
-     for <literal>NULL</literal> inputs
+     append an element to the beginning of an array, returning
+     <literal>NULL</literal> for <literal>NULL</literal> inputs
     </entry>
-	<entry><literal>array_cat(ARRAY[1,2,3], ARRAY[4,5,6])</literal></entry>
-	<entry><literal>{1,2,3,4,5,6}</literal></entry>
+	<entry><literal>array_prepend(1, ARRAY[2,3])</literal></entry>
+	<entry><literal>{1,2,3}</literal></entry>
        </row>
        <row>
 	<entry>
@@ -7317,7 +7349,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      returns a text representation of array dimension lower and upper bounds,
      generating an ERROR for <literal>NULL</literal> inputs
     </entry>
-	<entry><literal>array_dims(array[[1,2,3],[4,5,6]])</literal></entry>
+	<entry><literal>array_dims(array[[1,2,3], [4,5,6]])</literal></entry>
 	<entry><literal>[1:2][1:3]</literal></entry>
        </row>
        <row>
@@ -7338,17 +7370,17 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <row>
 	<entry>
      <literal>
-      <function>array_prepend</function>
-      (<type>anyelement</type>, <type>anyarray</type>)
+      <function>array_upper</function>
+      (<type>anyarray</type>, <type>integer</type>)
      </literal>
     </entry>
-	<entry><type>anyarray</type></entry>
+	<entry><type>integer</type></entry>
 	<entry>
-     append an element to the beginning of an array, returning
+     returns upper bound of the requested array dimension, returning
      <literal>NULL</literal> for <literal>NULL</literal> inputs
     </entry>
-	<entry><literal>array_prepend(1, ARRAY[2,3])</literal></entry>
-	<entry><literal>{1,2,3}</literal></entry>
+	<entry><literal>array_upper(ARRAY[1,2,3,4], 1)</literal></entry>
+	<entry><literal>4</literal></entry>
        </row>
        <row>
 	<entry>
@@ -7362,23 +7394,8 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      concatenates array elements using provided delimiter, returning
      <literal>NULL</literal> for <literal>NULL</literal> inputs
     </entry>
-	<entry><literal>array_to_string(array[1.1,2.2,3.3]::numeric(4,2)[],'~^~')</literal></entry>
-	<entry><literal>1.10~^~2.20~^~3.30</literal></entry>
-       </row>
-       <row>
-	<entry>
-     <literal>
-      <function>array_upper</function>
-      (<type>anyarray</type>, <type>integer</type>)
-     </literal>
-    </entry>
-	<entry><type>integer</type></entry>
-	<entry>
-     returns upper bound of the requested array dimension, returning
-     <literal>NULL</literal> for <literal>NULL</literal> inputs
-    </entry>
-	<entry><literal>array_upper(array_append(ARRAY[1,2,3], 4), 1)</literal></entry>
-	<entry><literal>4</literal></entry>
+	<entry><literal>array_to_string(array[1, 2, 3], '~^~')</literal></entry>
+	<entry><literal>1~^~2~^~3</literal></entry>
        </row>
        <row>
 	<entry>
@@ -7392,8 +7409,8 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
      splits string into array elements using provided delimiter, returning
      <literal>NULL</literal> for <literal>NULL</literal> inputs
     </entry>
-	<entry><literal>string_to_array('1.10~^~2.20~^~3.30','~^~')::float8[]</literal></entry>
-	<entry><literal>{1.1,2.2,3.3}</literal></entry>
+	<entry><literal>string_to_array( 'xx~^~yy~^~zz', '~^~')</literal></entry>
+	<entry><literal>{xx,yy,zz}</literal></entry>
        </row>
       </tbody>
      </tgroup>

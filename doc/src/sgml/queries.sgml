@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.23 2003/08/31 17:32:19 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/queries.sgml,v 1.24 2003/09/12 22:17:23 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -982,6 +982,11 @@ SELECT a, b, c FROM ...
 <programlisting>
 SELECT tbl1.a, tbl2.a, tbl1.b FROM ...
 </programlisting>
+    When working with multiple tables, it can also be useful to ask for
+    all the columns of a particular table:
+<programlisting>
+SELECT tbl1.*, tbl2.a FROM ...
+</programlisting>
     (See also <xref linkend="queries-where">.)
    </para>
 
@@ -1237,6 +1242,17 @@ SELECT a AS b FROM table1 ORDER BY a;
    <quote>smaller</quote> is defined in terms of the
    <literal>&lt;</literal> operator.  Similarly, descending order is
    determined with the <literal>&gt;</literal> operator.
+    <footnote>
+     <para>
+      Actually, <productname>PostgreSQL</> uses the <firstterm>default btree
+      operator class</> for the column's datatype to determine the sort
+      ordering for <literal>ASC</> and <literal>DESC</>.  Conventionally,
+      datatypes will be set up so that the <literal>&lt;</literal> and
+      <literal>&gt;</literal> operators correspond to this sort ordering,
+      but a user-defined datatype's designer could choose to do something
+      different.
+     </para>
+    </footnote>
   </para>
 
   <para>

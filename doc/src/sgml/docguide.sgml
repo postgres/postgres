@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.45 2003/09/11 21:42:19 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.46 2003/09/12 22:17:22 tgl Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -30,8 +30,8 @@
    </listitem>
   </itemizedlist>
 
-  Additionally, a number of plain-text README-type files can be found
-  throughout the <productname>PostgreSQL</productname> source tree,
+  Additionally, a number of plain-text <filename>README</filename> files can
+  be found throughout the <productname>PostgreSQL</productname> source tree,
   documenting various implementation issues.
  </para>
 
@@ -1244,10 +1244,12 @@ End:
    <para>
     Reference pages describing SQL commands should contain the
     following sections: Name, Synopsis, Description, Parameters,
-    Usage, Diagnostics, Notes, Examples, Compatibility, History, See
+    Outputs, Notes, Examples, Compatibility, History, See
     Also.  The Parameters section is like the Options section, but
     there is more freedom about which clauses of the command can be
-    listed.  The Compatibility section should explain to what extent
+    listed.  The Outputs section is only needed if the command returns
+    something other than a default command-completion tag.  The Compatibility
+    section should explain to what extent
     this command conforms to the SQL standard(s), or to which other
     database system it is compatible.  The See Also section of SQL
     commands should list SQL commands before cross-references to

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.18 2003/08/31 17:32:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.19 2003/09/12 22:17:22 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1939,8 +1939,8 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 DROP TABLE products;
 
 NOTICE:  constraint $1 on table orders depends on table products
-ERROR:  Cannot drop table products because other objects depend on it
-        Use DROP ... CASCADE to drop the dependent objects too
+ERROR:  cannot drop table products because other objects depend on it
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 </screen>
    The error message contains a useful hint: if you do not want to
    bother deleting all the dependent objects individually, you can run
@@ -1958,7 +1958,7 @@ DROP TABLE products CASCADE;
    specifying <literal>CASCADE</literal>.  Of course, the nature of
    the possible dependencies varies with the type of the object.  You
    can also write <literal>RESTRICT</literal> instead of
-   <literal>CASCADE</literal> to get the default behavior which is to
+   <literal>CASCADE</literal> to get the default behavior, which is to
    prevent drops of objects that other objects depend on.
   </para>
 

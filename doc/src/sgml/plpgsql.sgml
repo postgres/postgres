@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.25 2003/09/11 21:42:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.26 2003/09/12 22:17:23 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -2047,14 +2047,14 @@ COMMIT;
 RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>, ...</optional></optional>;
 </synopsis>
 
-    Possible levels are <literal>DEBUG</literal> (write the message to
-    the server log), <literal>LOG</literal> (write the message to the
-    server log with a higher priority), <literal>INFO</literal>,
-    <literal>NOTICE</literal> and <literal>WARNING</literal> (write
-    the message to the server log and send it to the client, with
-    respectively higher priorities), and <literal>EXCEPTION</literal>
-    (raise an error and abort the current transaction). Whether
-    messages of a particular priority are reported to the client,
+    Possible levels are <literal>DEBUG</literal>,
+    <literal>LOG</literal>, <literal>INFO</literal>,
+    <literal>NOTICE</literal>, <literal>WARNING</literal>,
+    and <literal>EXCEPTION</literal>.
+    <literal>EXCEPTION</literal> raises an error and aborts the current
+    transaction; the other levels only generate messages of different
+    priority levels.
+    Whether messages of a particular priority are reported to the client,
     written to the server log, or both is controlled by the
     <varname>log_min_messages</varname> and
     <varname>client_min_messages</varname> configuration
@@ -2078,14 +2078,14 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
 
    <para>
     In this example, the value of <literal>v_job_id</> will replace the
-    <literal>%</literal> in the string.
+    <literal>%</literal> in the string:
 <programlisting>
 RAISE NOTICE ''Calling cs_create_job(%)'', v_job_id;
 </programlisting>
    </para>
 
    <para>
-    This example will abort the transaction with the given error message.
+    This example will abort the transaction with the given error message:
 <programlisting>
 RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
 </programlisting>
@@ -2111,10 +2111,9 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
     <para>
      Thus, the only thing <application>PL/pgSQL</application>
      currently does when it encounters an abort during execution of a
-     function or trigger procedure is to write some additional
-     <literal>NOTICE</literal> level log messages telling in which
-     function and where (line number and type of statement) this
-     happened.  The error always stops execution of the function.
+     function or trigger procedure is to add some fields to the message
+     telling in which function and where (line number and type of statement)
+     the error happened.  The error always stops execution of the function.
     </para>
  </sect1>
 
@@ -2365,8 +2364,8 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
 
      <listitem>
       <para>
-       You can overload functions in <productname>PostgreSQL</>. This is often used to work 
-       around the lack of default parameters.
+       You can overload function names in <productname>PostgreSQL</>. This is
+       often used to work around the lack of default parameters.
       </para>
      </listitem>
 

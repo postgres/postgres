@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.24 2003/08/31 17:32:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/maintenance.sgml,v 1.25 2003/09/12 22:17:23 tgl Exp $
 -->
 
 <chapter id="maintenance">
@@ -347,9 +347,8 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
 
 <programlisting>
 play=# VACUUM;
-WARNING:  Some databases have not been vacuumed in 1613770184 transactions.
-        Better vacuum them within 533713463 transactions,
-        or you may have a wraparound failure.
+WARNING:  some databases have not been vacuumed in 1613770184 transactions
+HINT:  Better vacuum them within 533713463 transactions, or you may have a wraparound failure.
 VACUUM
 </programlisting>
    </para>
@@ -387,20 +386,11 @@ VACUUM
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname> is unable to reuse B-tree index
-   pages in certain cases. The problem is that if indexed rows are
-   deleted, those index pages can only be reused by rows with similar
-   values. For example, if indexed rows are deleted and newly
-   inserted/updated rows have much higher values, the new rows can't use
-   the index space made available by the deleted rows. Instead, such
-   new rows must be placed on new index pages. In such cases, disk
-   space used by the index will grow indefinitely, even if
-   <command>VACUUM</> is run frequently.
-  </para>
-  <para>
-   As a solution, you can use the <command>REINDEX</> command
-   periodically to discard pages used by deleted rows. There is also
-   <filename>contrib/reindexdb</> which can reindex an entire database.
+   In some situations it is worthwhile to rebuild indexes periodically
+   with the <command>REINDEX</> command. (There is also
+   <filename>contrib/reindexdb</> which can reindex an entire database.)
+   However, <productname>PostgreSQL</> 7.4 has substantially reduced the need
+   for this activity compared to earlier releases.
   </para>
  </sect1>
 

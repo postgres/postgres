@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.57 2003/09/05 20:31:35 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.58 2003/09/12 22:17:22 tgl Exp $
 -->
 
 <chapter id="client-authentication">
@@ -130,7 +130,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       </para>
 
       <para>
-       To be able make use of this option the server must be built
+       To make use of this option the server must be built
        with SSL support enabled. Furthermore, SSL must be enabled by
        enabling the <varname>ssl</varname> configuration parameter
        (see <xref linkend="runtime-config"> for more information).
@@ -901,7 +901,7 @@ omicron       bryanh            guest1
 
    <para>
 <ProgramListing>
-No pg_hba.conf entry for host 123.123.123.123, user andym, database testdb
+FATAL:  no pg_hba.conf entry for host "123.123.123.123", user "andym", database "testdb"
 </ProgramListing>
     This is what you are most likely to get if you succeed in contacting
     the server, but it does not want to talk to you. As the message
@@ -912,7 +912,7 @@ No pg_hba.conf entry for host 123.123.123.123, user andym, database testdb
 
    <para>
 <ProgramListing>
-Password authentication failed for user 'andym'
+FATAL:  Password authentication failed for user "andym"
 </ProgramListing>
     Messages like this indicate that you contacted the server, and it is
     willing to talk to you, but not until you pass the authorization
@@ -924,25 +924,27 @@ Password authentication failed for user 'andym'
 
    <para>
 <ProgramListing>
-FATAL 1:  user "andym" does not exist
+FATAL:  user "andym" does not exist
 </ProgramListing>
     The indicated user name was not found.
    </para>
 
    <para>
 <ProgramListing>
-FATAL 1:  Database "testdb" does not exist in the system catalog.
+FATAL:  database "testdb" does not exist
 </ProgramListing>
     The database you are trying to connect to does not exist. Note that
     if you do not specify a database name, it defaults to the database
     user name, which may or may not be the right thing.
    </para>
 
+   <tip>
    <para>
-    Note that the server log may contain more information about an
+    The server log may contain more information about an
     authentication failure than is reported to the client. If you are
     confused about the reason for a failure, check the log.
    </para>
+   </tip>
   </sect1>
 
  </chapter>
