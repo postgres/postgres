@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.48 2001/03/22 06:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.49 2001/06/01 15:45:42 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -58,15 +58,14 @@
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/xact.h"
 #include "catalog/pg_proc.h"
-#include "catalog/pg_type.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "tcop/fastpath.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -114,78 +113,38 @@ SendFunctionResult(Datum retval,/* actual return value */
 }
 
 /*
- * This structure saves enough state so that one can avoid having to
- * do catalog lookups over and over again.	(Each RPC can require up
- * to FUNC_MAX_ARGS+2 lookups, which is quite tedious.)
- *
- * The previous incarnation of this code just assumed that any argument
- * of size <= 4 was by value; this is not correct.	There is no cheap
- * way to determine function argument length etc.; one must simply pay
- * the price of catalog lookups.
+ * Formerly, this code attempted to cache the function and type info
+ * looked up by fetch_fp_info, but only for the duration of a single
+ * transaction command (since in theory the info could change between
+ * commands).  This was utterly useless, because postgres.c executes
+ * each fastpath call as a separate transaction command, and so the
+ * cached data could never actually have been reused.  If it had worked
+ * as intended, it would have had problems anyway with dangling references
+ * in the FmgrInfo struct.  So, forget about caching and just repeat the
+ * syscache fetches on each usage.  They're not *that* expensive.
  */
 struct fp_info
 {
 	Oid			funcid;
 	FmgrInfo	flinfo;			/* function lookup info for funcid */
+	int16		arglen[FUNC_MAX_ARGS];
 	bool		argbyval[FUNC_MAX_ARGS];
-	int32		arglen[FUNC_MAX_ARGS];	/* signed (for varlena) */
+	int16		retlen;
 	bool		retbyval;
-	int32		retlen;			/* signed (for varlena) */
-	TransactionId xid;			/* when the lookup was done */
-	CommandId	cid;
 };
 
 /*
- * We implement one-back caching here.	If we need to do more, we can.
- * Most routines in tight loops (like PQfswrite -> F_LOWRITE) will do
- * the same thing repeatedly.
- */
-static struct fp_info last_fp = {InvalidOid};
-
-/*
- * valid_fp_info
- *
- * RETURNS:
- *		T if the state in 'fip' is valid for the given func OID
- *		F otherwise
- *
- * "invalid" means:
- * The saved state was either uninitialized, for another function,
- * or from a previous command.	(Commands can do updates, which
- * may invalidate catalog entries for subsequent commands.	This
- * is overly pessimistic but since there is no smarter invalidation
- * scheme...).
- */
-static bool
-valid_fp_info(Oid func_id, struct fp_info * fip)
-{
-	Assert(OidIsValid(func_id));
-	Assert(fip != (struct fp_info *) NULL);
-
-	return (OidIsValid(fip->funcid) &&
-			func_id == fip->funcid &&
-			TransactionIdIsCurrentTransactionId(fip->xid) &&
-			CommandIdIsCurrentCommandId(fip->cid));
-}
-
-/*
- * update_fp_info
+ * fetch_fp_info
  *
  * Performs catalog lookups to load a struct fp_info 'fip' for the
  * function 'func_id'.
- *
- * RETURNS:
- *		The correct information in 'fip'.  Sets 'fip->funcid' to
- *		InvalidOid if an exception occurs.
  */
 static void
-update_fp_info(Oid func_id, struct fp_info * fip)
+fetch_fp_info(Oid func_id, struct fp_info * fip)
 {
 	Oid		   *argtypes;		/* an oidvector */
 	Oid			rettype;
-	HeapTuple	func_htp,
-				type_htp;
-	Form_pg_type tp;
+	HeapTuple	func_htp;
 	Form_pg_proc pp;
 	int			i;
 
@@ -197,56 +156,32 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	 * funcid is OK, we clear the funcid here.	It must not be set to the
 	 * correct value until we are about to return with a good struct
 	 * fp_info, since we can be interrupted (i.e., with an elog(ERROR,
-	 * ...)) at any time.
+	 * ...)) at any time.  [No longer really an issue since we don't save
+	 * the struct fp_info across transactions anymore, but keep it anyway.]
 	 */
-	MemSet((char *) fip, 0, (int) sizeof(struct fp_info));
+	MemSet((char *) fip, 0, sizeof(struct fp_info));
 	fip->funcid = InvalidOid;
+
+	fmgr_info(func_id, &fip->flinfo);
 
 	func_htp = SearchSysCache(PROCOID,
 							  ObjectIdGetDatum(func_id),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(func_htp))
-		elog(ERROR, "update_fp_info: cache lookup for function %u failed",
+		elog(ERROR, "fetch_fp_info: cache lookup for function %u failed",
 			 func_id);
 	pp = (Form_pg_proc) GETSTRUCT(func_htp);
 	rettype = pp->prorettype;
 	argtypes = pp->proargtypes;
 
-	fmgr_info(func_id, &fip->flinfo);
-
-	for (i = 0; i < fip->flinfo.fn_nargs; ++i)
+	for (i = 0; i < pp->pronargs; ++i)
 	{
 		if (OidIsValid(argtypes[i]))
-		{
-			type_htp = SearchSysCache(TYPEOID,
-									  ObjectIdGetDatum(argtypes[i]),
-									  0, 0, 0);
-			if (!HeapTupleIsValid(type_htp))
-				elog(ERROR, "update_fp_info: bad argument type %u for %u",
-					 argtypes[i], func_id);
-			tp = (Form_pg_type) GETSTRUCT(type_htp);
-			fip->argbyval[i] = tp->typbyval;
-			fip->arglen[i] = tp->typlen;
-			ReleaseSysCache(type_htp);
-		}						/* else it had better be VAR_LENGTH_ARG */
+			get_typlenbyval(argtypes[i], &fip->arglen[i], &fip->argbyval[i]);
 	}
 
 	if (OidIsValid(rettype))
-	{
-		type_htp = SearchSysCache(TYPEOID,
-								  ObjectIdGetDatum(rettype),
-								  0, 0, 0);
-		if (!HeapTupleIsValid(type_htp))
-			elog(ERROR, "update_fp_info: bad return type %u for %u",
-				 rettype, func_id);
-		tp = (Form_pg_type) GETSTRUCT(type_htp);
-		fip->retbyval = tp->typbyval;
-		fip->retlen = tp->typlen;
-		ReleaseSysCache(type_htp);
-	}							/* else it had better by VAR_LENGTH_RESULT */
-
-	fip->xid = GetCurrentTransactionId();
-	fip->cid = GetCurrentCommandId();
+		get_typlenbyval(rettype, &fip->retlen, &fip->retbyval);
 
 	ReleaseSysCache(func_htp);
 
@@ -286,6 +221,7 @@ HandleFunctionRequest(void)
 	Datum		retval;
 	int			i;
 	char	   *p;
+	struct fp_info my_fp;
 	struct fp_info *fip;
 
 	/*
@@ -324,14 +260,11 @@ HandleFunctionRequest(void)
 		return EOF;
 
 	/*
-	 * This is where the one-back caching is done. If you want to save
-	 * more state, make this a loop around an array.  Given the relatively
-	 * short lifespan of the cache, not clear that there's any win
-	 * possible.
+	 * There used to be a lame attempt at caching lookup info here.
+	 * Now we just do the lookups on every call.
 	 */
-	fip = &last_fp;
-	if (!valid_fp_info(fid, fip))
-		update_fp_info(fid, fip);
+	fip = &my_fp;
+	fetch_fp_info(fid, fip);
 
 	if (fip->flinfo.fn_nargs != nargs || nargs > FUNC_MAX_ARGS)
 	{
