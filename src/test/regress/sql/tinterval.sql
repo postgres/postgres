@@ -1,0 +1,88 @@
+CREATE TABLE TINTERVAL_TBL (f1  tinterval);
+
+INSERT INTO TINTERVAL_TBL (f1)
+   VALUES ('["-infinity" "infinity"]');
+
+INSERT INTO TINTERVAL_TBL (f1)
+   VALUES ('["May 10, 1943 23:59:12" "Jan 14, 1973 03:14:21"]');
+
+INSERT INTO TINTERVAL_TBL (f1)
+   VALUES ('["Sep 4, 1983 23:59:12" "Oct 4, 1983 23:59:12"]');
+
+INSERT INTO TINTERVAL_TBL (f1)
+   VALUES ('["epoch" "Mon May  1 00:30:30 1995"]');
+
+INSERT INTO TINTERVAL_TBL (f1)
+   VALUES ('["Feb 15 1990 12:15:03" "current"]');
+
+
+-- badly formatted tintervals 
+INSERT INTO TINTERVAL_TBL (f1)
+   VALUES ('["bad time specifications" ""]');
+
+INSERT INTO TINTERVAL_TBL (f1)
+   VALUES ('["" "infinity"]');
+
+-- test tinterval operators
+
+SELECT '' AS seven, TINTERVAL_TBL.*;
+
+-- length ==
+SELECT '' AS one, t.*
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #= '@ 1 months';
+
+-- length <>
+SELECT '' AS three, t.*
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #<> '@ 1 months';
+
+-- length <
+SELECT '' AS zero, t.*
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #< '@ 1 month';
+
+-- length <=
+SELECT '' AS one, t.*
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #<= '@ 1 month';
+
+-- length >
+SELECT '' AS three, t.*
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #> '@ 1 year';
+
+-- length >=
+SELECT '' AS three, t.*
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #>= '@ 3 years';
+
+-- overlaps
+SELECT '' AS three, t1.*
+   FROM TINTERVAL_TBL t1
+   WHERE t1.f1 &&
+        '["Aug 15 14:23:19 1983" "Sep 16 14:23:19 1983"]'::tinterval;
+
+SELECT '' AS five, t1.*, t2.*
+   FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
+   WHERE t1.f1 && t2.f1 and
+         t1.f1 = t2.f1;
+
+SELECT '' AS fourteen, t1.*, t2.*
+   FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
+   WHERE t1.f1 && t2.f1 and
+        not t1.f1 = t2.f1;
+
+-- contains
+SELECT '' AS five, t1.*
+   FROM TINTERVAL_TBL t1
+   WHERE not t1.f1 << 
+        '["Aug 15 14:23:19 1980" "Sep 16 14:23:19 1990"]'::tinterval;
+
+-- make time interval
+SELECT '' AS three, t1.*
+   FROM TINTERVAL_TBL t1
+   WHERE t1.f1 &&
+        ('Aug 15 14:23:19 1983'::abstime <#>
+         'Sep 16 14:23:19 1983'::abstime);
+
