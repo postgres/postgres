@@ -7,15 +7,14 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.1.1.1 1996/07/09 06:21:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.2 1996/11/03 05:06:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
+#include "postgres.h"
 
 #include "storage/ipc.h"
 #include "storage/multilev.h"
-#include "utils/elog.h"
 #include "storage/sinval.h"
 #include "storage/bufmgr.h"
 #include "storage/proc.h"

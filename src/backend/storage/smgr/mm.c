@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.2 1996/08/27 22:20:27 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.3 1996/11/03 05:07:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 
 #include "utils/hsearch.h"
 #include "utils/rel.h"
-#include "utils/elog.h"
 #include "utils/memutils.h"
 
 /*

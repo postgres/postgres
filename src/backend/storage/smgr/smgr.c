@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.2 1996/08/27 22:20:28 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.3 1996/11/03 05:08:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,10 +18,9 @@
 #include "postgres.h"
 
 #include "storage/ipc.h"
-#include "storage/smgr.h"
 #include "storage/block.h"
+#include "storage/smgr.h"
 #include "utils/rel.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 
 typedef struct f_smgr {

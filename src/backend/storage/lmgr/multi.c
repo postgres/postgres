@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.1.1.1 1996/07/09 06:21:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.2 1996/11/03 05:07:31 scrappy Exp $
  *
  * NOTES:
  *   (1) The lock.c module assumes that the caller here is doing
@@ -22,11 +22,11 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include "postgres.h"
 #include "storage/lmgr.h"
 #include "storage/multilev.h"
 
 #include "utils/rel.h"
-#include "utils/elog.h"
 #include "miscadmin.h"		/* MyDatabaseId */
 
 

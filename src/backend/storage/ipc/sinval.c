@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.2 1996/10/31 05:54:43 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.3 1996/11/03 05:06:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 /* #define INVALIDDEBUG	1 */
 
+#include <sys/types.h>
 #include <sys/ipc.h>
 
 #include "postgres.h"
@@ -20,7 +21,6 @@
 #include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 #include "storage/spin.h"
-#include "utils/elog.h"
 
 extern SISeg		*shmInvalBuffer;/* the shared buffer segment, set by*/
     	    	    	    	    	/*   SISegmentAttach()	    	    */

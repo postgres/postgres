@@ -7,11 +7,11 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.1.1.1 1996/07/09 06:21:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.2 1996/11/03 05:07:46 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "c.h"
+#include "postgres.h"
 
 #include "storage/block.h"
 #include "storage/off.h"

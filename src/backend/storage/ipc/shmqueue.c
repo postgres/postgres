@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.1.1.1 1996/07/09 06:21:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.2 1996/11/03 05:06:58 scrappy Exp $
  *
  * NOTES
  *
@@ -25,7 +25,6 @@
 #include <stdio.h>		/* for sprintf() */
 #include "postgres.h"
 #include "storage/shmem.h"	/* where the declarations go */
-#include "utils/elog.h"
 
 /*#define SHMQUEUE_DEBUG*/
 #ifdef SHMQUEUE_DEBUG

@@ -7,19 +7,18 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.1.1.1 1996/07/09 06:21:58 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.2 1996/11/03 05:07:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 #include <sys/file.h>
 
-#include "c.h"
+#include "postgres.h"
 
 #include "storage/item.h"
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
-#include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/memutils.h"
 #include "storage/bufpage.h"

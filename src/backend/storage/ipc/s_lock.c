@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.5 1996/10/31 10:20:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.6 1996/11/03 05:06:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,9 @@
 #ifdef WIN32
 #include <windows.h>
 #endif /* WIN32 */
+
+#include "postgres.h"
+
 #include "storage/ipc.h"
 
 

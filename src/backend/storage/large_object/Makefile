@@ -4,16 +4,14 @@
 #    Makefile for storage/large_object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/large_object/Makefile,v 1.1 1996/10/27 09:52:20 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/large_object/Makefile,v 1.2 1996/11/03 05:07:07 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../port/$(PORTNAME) \
-              -I../../include \
+INCLUDE_OPT = -I../../port/$(PORTNAME) \
               -I../../../include
 
 CFLAGS+=$(INCLUDE_OPT)

@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.2 1996/08/26 06:31:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.3 1996/11/03 05:07:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>		/* for sprintf() */
 #include <sys/file.h>
-#include "c.h"
+#include "postgres.h"
 #include "libpq/libpq-fs.h"
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -34,7 +34,6 @@
 #include "utils/rel.h"
 #include "utils/palloc.h"
 #include "storage/large_object.h"
-#include "utils/elog.h"
 #include "utils/syscache.h"
 #include "utils/builtins.h"	/* for namestrcpy() */
 #include "catalog/heap.h"
