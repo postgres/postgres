@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.26 2001/11/23 21:08:51 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.27 2002/02/12 22:25:15 momjian Exp $
 -->
 
  <chapter id="tutorial-advanced">
@@ -103,12 +103,12 @@ SELECT * FROM myview;
 
 <programlisting>
 CREATE TABLE cities (
-	name		varchar(80) primary key,
+	city		varchar(80) primary key,
 	location	point
 );
 
 CREATE TABLE weather (
-	city		varchar(80) references weather,
+	city		varchar(80) references cities,
 	temp_lo		int,
 	temp_hi		int,
 	prcp		real,
