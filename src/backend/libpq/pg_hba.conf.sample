@@ -96,7 +96,7 @@
 # 
 #   trust:  	No authentication is done. Any valid username is accepted,
 # 		including the PostgreSQL superuser. This option should
-# 		be use only for machines where all users are truested.
+# 		be used only for hosts where all users are trusted.
 # 
 #   password:	Authentication is done by matching a password supplied
 #		in clear by the host. If no AUTH_ARGUMENT is used, the
