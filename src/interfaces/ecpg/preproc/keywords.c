@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.57 2003/05/16 04:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.58 2003/05/23 15:19:34 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"analyze", ANALYZE},
 	{"and", AND},
 	{"any", ANY},
+	{"array", ARRAY},
 	{"as", AS},
 	{"asc", ASC},
 	{"assertion", ASSERTION},
@@ -126,6 +127,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"extract", EXTRACT},
 	{"false", FALSE_P},
 	{"fetch", FETCH},
+	{"first", FIRST_P},
 	{"float", FLOAT_P},
 	{"for", FOR},
 	{"force", FORCE},
@@ -141,6 +143,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"group", GROUP_P},
 	{"handler", HANDLER},
 	{"having", HAVING},
+	{"hold", HOLD},
 	{"hour", HOUR_P},
 	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},
@@ -170,6 +173,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"key", KEY},
 	{"lancompiler", LANCOMPILER},
 	{"language", LANGUAGE},
+	{"last", LAST_P},
 	{"leading", LEADING},
 	{"left", LEFT},
 	{"level", LEVEL},
@@ -241,6 +245,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"rename", RENAME},
 	{"replace", REPLACE},
 	{"reset", RESET},
+	{"restart", RESTART},
 	{"restrict", RESTRICT},
 	{"returns", RETURNS},
 	{"revoke", REVOKE},

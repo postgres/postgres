@@ -1436,6 +1436,11 @@ Tue May 20 11:47:00 CEST 2003
 Thu May 22 09:33:54 CEST 2003
 
 	- ecpg now recognizes named struct/union usage.
+
+Fri May 23 11:46:15 CEST 2003
+
+	- Synced parser and keyword table.
+	- ecpg now accepts array elements as input variables.
 	- Set ecpg version to 2.12.0.
 	- Set ecpg library to 3.4.2.
 	- Set pgtypes library to 1.0.0

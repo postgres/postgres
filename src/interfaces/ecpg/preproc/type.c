@@ -233,21 +233,81 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 					break;
 				case ECPGt_struct:
 				case ECPGt_union:
-					ECPGdump_a_struct(o, name, ind_name, type->size, type->u.element, (ind_type->type == ECPGt_NO_INDICATOR) ? ind_type : ind_type->u.element, NULL, prefix, ind_prefix);
+					/* If var_array_element is not equal                                                                                                                                   * NULL, we have to use the                                                                                                                                            * <var_array_element>th entry and not                                                                                                                                 * the whole array */                                                                                                                                                 if (var_array_element == NULL)
+						ECPGdump_a_struct(o, name, ind_name, type->size,
+								type->u.element,
+								(ind_type->type == ECPGt_NO_INDICATOR) ? ind_type : ind_type->u.element,
+								NULL, prefix, ind_prefix);
+					else
+					{
+						char *array_element = (char *)mm_alloc(strlen(name) + strlen(var_array_element) + sizeof("[]\0")), *ind_array_element;
+						
+						sprintf(array_element, "%s[%s]", name, var_array_element);
+
+						if (ind_type->type != ECPGt_NO_INDICATOR)
+						{
+							ind_array_element = (char *)mm_alloc(strlen(ind_name) + strlen(ind_array_element) + sizeof("+\0"));
+	                                                sprintf(ind_array_element, "%s[%s]", ind_name, ind_array_element);
+
+							ECPGdump_a_struct(o, array_element, ind_array_element, make_str("1"),
+	                                                              type->u.element, ind_type->u.element,
+	                                                              NULL, prefix, ind_prefix);
+							free(ind_array_element);
+						}
+						else
+							ECPGdump_a_struct(o, array_element, ind_name, make_str("1"),
+								type->u.element, ind_type,
+								NULL, prefix, ind_prefix);
+
+						free (array_element);
+					}
 					break;
 				default:
 					if (!IS_SIMPLE_TYPE(type->u.element->type))
 						yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
 
-					ECPGdump_a_simple(o, name, type->u.element->type,
+					/* If var_array_element is not equal
+					 * NULL, we have to use the
+					 * <var_array_element>th entry and not
+					 * the whole array */
+					if (var_array_element == NULL)
+						ECPGdump_a_simple(o, name,
+							type->u.element->type,
 						type->u.element->size, type->size, NULL, prefix);
+					else
+					{
+						char *array_element = (char *)mm_alloc(strlen(name) + strlen(var_array_element) + sizeof("+\0"));
+						
+						sprintf(array_element, "%s+%s", name, var_array_element);
+						ECPGdump_a_simple(o, array_element,
+							type->u.element->type,
+							type->u.element->size, make_str("1"), NULL, prefix);
+						free(array_element);
+						
+						
+					}
+					
 					if (ind_type != NULL)
 					{
 						if (ind_type->type == ECPGt_NO_INDICATOR)
 							ECPGdump_a_simple(o, ind_name, ind_type->type, ind_type->size, make_str("-1"), NULL, ind_prefix);
 						else
-							ECPGdump_a_simple(o, ind_name, ind_type->u.element->type,
-											  ind_type->u.element->size, ind_type->size, NULL, prefix);
+						{
+							if (ind_array_element == NULL)
+								ECPGdump_a_simple(o, ind_name, ind_type->u.element->type,
+										  ind_type->u.element->size, ind_type->size, NULL, prefix);
+							else
+							{
+								char *array_element = (char *)mm_alloc(strlen(ind_name) + strlen(ind_array_element) + sizeof("+\0"));
+							
+								sprintf(array_element, "%s+%s", ind_name, ind_array_element);
+								ECPGdump_a_simple(o, array_element,
+										ind_type->u.element->type,
+										ind_type->u.element->size,
+										make_str("1"), NULL, prefix);
+								free(array_element);
+							}
+						}
 					}
 			}
 			break;
