@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.62 2002/09/02 05:42:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.63 2002/09/02 06:19:38 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -197,7 +197,7 @@ psql_completion(char *text, int start, int end)
 	static char *sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CLOSE", "CLUSTER", "COMMENT", "COMMIT", "COPY",
 		"CREATE", "DECLARE", "DELETE", "DROP", "EXPLAIN", "FETCH", "GRANT",
-		"INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "RESET",
+		"INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "REINDEX", "RESET",
 		"REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW", "TRUNCATE", "UNLISTEN", "UPDATE",
 		"VACUUM", NULL
 	};
