@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.76 2003/10/06 01:11:12 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.77 2003/11/12 22:53:16 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -332,6 +332,7 @@ AcceptResult(const PGresult *result)
 		{
 			case PGRES_COMMAND_OK:
 			case PGRES_TUPLES_OK:
+			case PGRES_EMPTY_QUERY:
 			case PGRES_COPY_IN:
 				/* Fine, do nothing */
 				break;
