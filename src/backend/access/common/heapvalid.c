@@ -7,41 +7,26 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.8 1996/10/31 07:48:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/heapvalid.c,v 1.9 1996/11/01 09:41:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <time.h>
-
 #include "postgres.h"
-#include "fmgr.h"
-#include "access/attnum.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_attribute.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "storage/block.h"
-#include "storage/buf.h"
-#include "storage/fd.h"
-#include "storage/item.h"
-#include "storage/itemid.h"
-#include "storage/off.h"
-#include "storage/page.h"
-#include "utils/nabstime.h"
-
-#include "access/skey.h"
-#include "access/tupdesc.h"
-#include "access/xact.h"
-#include "rewrite/prs2lock.h"
-#include "storage/bufpage.h"
-#include "storage/itemptr.h"
-
-#include "access/strat.h"
 
 #include "access/htup.h"
 #include "utils/rel.h"
+#include "access/tupdesc.h"
+
+#include "fmgr.h"
+#include "catalog/pg_attribute.h"
+#include "storage/buf.h"
+#include "storage/item.h"
+#include "storage/itemid.h"
+#include "storage/page.h"
+
+#include "access/xact.h"
+#include "storage/bufpage.h"
 
 #include "access/heaptuple.h"
 #include "utils/tqual.h"

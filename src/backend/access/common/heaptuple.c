@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.11 1996/11/01 09:12:18 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.12 1996/11/01 09:41:35 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -19,14 +19,14 @@
 
 #include "postgres.h"
 
-#include "utils/palloc.h"
-#include "storage/bufpage.h"
-#include "access/transam.h"
-#include "storage/buf.h"
-#include "access/tupmacs.h"
-#include "access/tupdesc.h"
-#include "utils/memutils.h"
 #include "access/htup.h"
+#include "access/transam.h"
+#include "access/tupdesc.h"
+#include "access/tupmacs.h"
+#include "storage/buf.h"
+#include "storage/bufpage.h"
+#include "utils/memutils.h"
+#include "utils/palloc.h"
 
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"
