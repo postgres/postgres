@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.27 2002/11/04 14:22:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.28 2003/05/29 22:30:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,11 @@
 /* #include "bootstrap_tokens.h" */
 
 
-int		yyline;  /* keep track of the line number for error reporting */
+/* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
+
+
+static int	yyline;  /* keep track of the line number for error reporting */
 
 %}
 

@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.15 2003/05/27 17:49:46 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.16 2003/05/29 22:30:02 tgl Exp $
  */
 
 %{
@@ -20,6 +20,9 @@
 #include "storage/fd.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
+
+/* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
 #define CONFIG_FILENAME "postgresql.conf"
 

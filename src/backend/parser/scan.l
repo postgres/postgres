@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.106 2003/05/29 20:40:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.107 2003/05/29 22:30:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 #define YY_READ_BUF_SIZE 16777216
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
-#define fprintf(file, fmt, msg)  ereport(FATAL, (errmsg_internal("%s", msg)))
+#define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
 
 extern YYSTYPE yylval;
 

@@ -4,6 +4,9 @@
 #include "deflex.h"
 #include "parser.h"
 
+/* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
+
 /* postgres allocation function */
 #define free    pfree
 #define malloc  palloc

@@ -7,6 +7,9 @@
 
 #include "buffer.h"
 
+/* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#define fprintf(file, fmt, msg)  ereport(ERROR, (errmsg_internal("%s", msg)))
+
 
 /* flex screws a couple symbols when used with the -P option; fix those */
 #define YY_DECL int cube_yylex YY_PROTO(( void )); \
@@ -52,6 +55,5 @@ float        ({integer}|{real})([eE]{integer})?
 int cube_yylex();
 
 void cube_flush_scanner_buffer(void) {
-  fprintf(stderr, "cube_flush_scanner_buffer called\n");
   YY_FLUSH_BUFFER;
 }
