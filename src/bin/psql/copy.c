@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.47 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.48 2004/07/11 00:54:55 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -516,7 +516,7 @@ do_copy(const char *args)
 	if (options->from)
 	{
 		if (options->file)
-			copystream = fopen(options->file, "r");
+			copystream = fopen(options->file, R_TEXTFILE);
 		else if (!options->psql_inout)
  			copystream = pset.cur_cmd_source;
 		else
