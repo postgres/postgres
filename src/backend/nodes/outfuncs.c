@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.78 1999/03/23 16:50:53 momjian Exp $
+ *  $Id: outfuncs.c,v 1.79 1999/04/25 03:19:15 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1658,21 +1658,15 @@ _outNode(StringInfo str, void *obj)
 
 /*
  * nodeToString -
- *	   returns the ascii representation of the Node
+ *	   returns the ascii representation of the Node as a palloc'd string
  */
 char *
 nodeToString(void *obj)
 {
-	StringInfo	str;
-	char	   *s;
+	StringInfoData	str;
 
-	if (obj == NULL)
-		return "";
-	Assert(obj != NULL);
-	str = makeStringInfo();
-	_outNode(str, obj);
-	s = str->data;
-	pfree(str);
-
-	return s;
+	/* see stringinfo.h for an explanation of this maneuver */
+	initStringInfo(&str);
+	_outNode(&str, obj);
+	return str.data;
 }

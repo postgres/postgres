@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.22 1999/02/13 23:18:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.23 1999/04/25 03:19:10 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -68,6 +68,7 @@
 #include "utils/builtins.h"		/* for oideq */
 #include "tcop/fastpath.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 
 #include "access/xact.h"		/* for TransactionId/CommandId protos */
 
@@ -87,32 +88,36 @@ SendFunctionResult(Oid fid,		/* function id */
 				   int retlen	/* the length according to the catalogs */
 )
 {
-	pq_putnchar("V", 1);
+	StringInfoData buf;
+
+	pq_beginmessage(&buf);
+	pq_sendbyte(&buf, 'V');
 
 	if (retlen != 0)
 	{
-		pq_putnchar("G", 1);
+		pq_sendbyte(&buf, 'G');
 		if (retbyval)
 		{						/* by-value */
-			pq_putint(retlen, 4);
-			pq_putint((int) (Datum) retval, retlen);
+			pq_sendint(&buf, retlen, 4);
+			pq_sendint(&buf, (int) (Datum) retval, retlen);
 		}
 		else
 		{						/* by-reference ... */
 			if (retlen < 0)
 			{					/* ... varlena */
-				pq_putint(VARSIZE(retval) - VARHDRSZ, VARHDRSZ);
-				pq_putnchar(VARDATA(retval), VARSIZE(retval) - VARHDRSZ);
+				pq_sendint(&buf, VARSIZE(retval) - VARHDRSZ, VARHDRSZ);
+				pq_sendbytes(&buf, VARDATA(retval), VARSIZE(retval) - VARHDRSZ);
 			}
 			else
 			{					/* ... fixed */
-				pq_putint(retlen, 4);
-				pq_putnchar(retval, retlen);
+				pq_sendint(&buf, retlen, 4);
+				pq_sendbytes(&buf, retval, retlen);
 			}
 		}
 	}
 
-	pq_putnchar("0", 1);
+	pq_sendbyte(&buf, '0');
+	pq_endmessage(&buf);
 }
 
 /*
@@ -276,6 +281,7 @@ HandleFunctionRequest()
 	Oid			fid;
 	int			argsize;
 	int			nargs;
+	int			tmp;
 	char	   *arg[8];
 	char	   *retval;
 	int			i;
@@ -283,8 +289,9 @@ HandleFunctionRequest()
 	char	   *p;
 	struct fp_info *fip;
 
-	fid = (Oid) pq_getint(4);	/* function oid */
-	nargs = pq_getint(4);		/* # of arguments */
+	pq_getint(&tmp, 4);			/* function oid */
+	fid = (Oid) tmp;
+	pq_getint(&nargs, 4);		/* # of arguments */
 
 	/*
 	 * This is where the one-back caching is done. If you want to save
@@ -311,13 +318,14 @@ HandleFunctionRequest()
 			arg[i] = (char *) NULL;
 		else
 		{
-			argsize = pq_getint(4);
+			pq_getint(&argsize, 4);
 
 			Assert(argsize > 0);
 			if (fip->argbyval[i])
 			{					/* by-value */
 				Assert(argsize <= 4);
-				arg[i] = (char *) pq_getint(argsize);
+				pq_getint(&tmp, argsize);
+				arg[i] = (char *) tmp;
 			}
 			else
 			{					/* by-reference ... */
@@ -328,14 +336,14 @@ HandleFunctionRequest()
 																 * 98 Jan 6 */
 						elog(ERROR, "HandleFunctionRequest: palloc failed");
 					VARSIZE(p) = argsize + VARHDRSZ;
-					pq_getnchar(VARDATA(p), 0, argsize);
+					pq_getbytes(VARDATA(p), argsize);
 				}
 				else
 				{				/* ... fixed */
 					/* XXX cross our fingers and trust "argsize" */
 					if (!(p = palloc(argsize + 1)))
 						elog(ERROR, "HandleFunctionRequest: palloc failed");
-					pq_getnchar(p, 0, argsize);
+					pq_getbytes(p, argsize);
 				}
 				palloced |= (1 << i);
 				arg[i] = p;

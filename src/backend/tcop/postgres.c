@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.107 1999/04/20 02:19:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.108 1999/04/25 03:19:10 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -52,6 +52,7 @@
 #include "executor/execdebug.h"
 #include "executor/executor.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 #include "libpq/libpq-be.h"
 #include "libpq/pqsignal.h"
 #include "nodes/pg_list.h"
@@ -304,15 +305,15 @@ InteractiveBackend(char *inBuf)
 static char
 SocketBackend(char *inBuf)
 {
-	char		qtype[2];
+	char		qtype;
 	char		result = '\0';
 
 	/* ----------------
 	 *	get input from the frontend
 	 * ----------------
 	 */
-	strcpy(qtype, "?");
-	if (pq_getnchar(qtype, 0, 1) == EOF)
+	qtype = '?';
+	if (pq_getbytes(&qtype, 1) == EOF)
 	{
 		/* ------------
 		 *	when front-end applications quits/dies
@@ -321,7 +322,7 @@ SocketBackend(char *inBuf)
 		proc_exit(0);
 	}
 
-	switch (*qtype)
+	switch (qtype)
 	{
 			/* ----------------
 			 *	'Q': user entered a query
@@ -358,7 +359,7 @@ SocketBackend(char *inBuf)
 			 * ----------------
 			 */
 		default:
-			elog(FATAL, "Socket command type %c unknown\n", *qtype);
+			elog(FATAL, "Socket command type %c unknown", qtype);
 			break;
 	}
 	return result;
@@ -1461,7 +1462,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			Portfd = open(NULL_DEV, O_RDWR | O_BINARY, 0666);
 #endif
 		}
-		pq_init(Portfd);
+		pq_init();	/* reset libpq */
 		whereToSendOutput = Remote;
 	}
 	else
@@ -1521,16 +1522,19 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (whereToSendOutput == Remote &&
 		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
-		pq_putnchar("K", 1);
-		pq_putint((int32) MyProcPid, sizeof(int32));
-		pq_putint((int32) MyCancelKey, sizeof(int32));
+		StringInfoData buf;
+		pq_beginmessage(&buf);
+		pq_sendbyte(&buf, 'K');
+		pq_sendint(&buf, (int32) MyProcPid, sizeof(int32));
+		pq_sendint(&buf, (int32) MyCancelKey, sizeof(int32));
+		pq_endmessage(&buf);
 		/* Need not flush since ReadyForQuery will do it. */
 	}
 
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.107 $ $Date: 1999/04/20 02:19:53 $\n");
+		puts("$Revision: 1.108 $ $Date: 1999/04/25 03:19:10 $\n");
 	}
 
 	/* ----------------

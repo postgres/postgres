@@ -8,23 +8,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.42 1999/02/13 23:14:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.43 1999/04/25 03:19:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <string.h>
-#include <postgres.h>
 
-#include <fmgr.h>
-#include <access/heapam.h>
-#include <access/printtup.h>
-#include <catalog/pg_type.h>
-#include <libpq/libpq.h>
-#include <utils/syscache.h>
+#include "postgres.h"
+
+#include "fmgr.h"
+#include "access/heapam.h"
+#include "access/printtup.h"
+#include "catalog/pg_type.h"
+#include "libpq/libpq.h"
+#include "libpq/pqformat.h"
+#include "utils/syscache.h"
 
 #ifdef MULTIBYTE
-#include <mb/pg_wchar.h>
+#include "mb/pg_wchar.h"
 #endif
 
 static void printtup_setup(DestReceiver* self, TupleDesc typeinfo);
@@ -152,6 +154,7 @@ static void
 printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 {
 	DR_printtup *myState = (DR_printtup*) self;
+	StringInfoData buf;
 	int			i,
 				j,
 				k,
@@ -172,7 +175,8 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 	 *	tell the frontend to expect new tuple data (in ASCII style)
 	 * ----------------
 	 */
-	pq_putnchar("D", 1);
+	pq_beginmessage(&buf);
+	pq_sendbyte(&buf, 'D');
 
 	/* ----------------
 	 *	send a bitmap of which attributes are not null
@@ -187,13 +191,13 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
 		{
-			pq_putint(j, 1);
+			pq_sendint(&buf, j, 1);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
 	if (k != (1 << 7))			/* flush last partial byte */
-		pq_putint(j, 1);
+		pq_sendint(&buf, j, 1);
 
 	/* ----------------
 	 *	send the attributes of this tuple
@@ -212,12 +216,12 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 #ifdef MULTIBYTE
 			p = pg_server_to_client(outputstr, strlen(outputstr));
 			outputlen = strlen(p);
-			pq_putint(outputlen + VARHDRSZ, VARHDRSZ);
-			pq_putnchar(p, outputlen);
+			pq_sendint(&buf, outputlen + VARHDRSZ, VARHDRSZ);
+			pq_sendbytes(&buf, p, outputlen);
 #else
 			outputlen = strlen(outputstr);
-			pq_putint(outputlen + VARHDRSZ, VARHDRSZ);
-			pq_putnchar(outputstr, outputlen);
+			pq_sendint(&buf, outputlen + VARHDRSZ, VARHDRSZ);
+			pq_sendbytes(&buf, outputstr, outputlen);
 #endif
 			pfree(outputstr);
 		}
@@ -225,10 +229,12 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 		{
 			outputstr = "<unprintable>";
 			outputlen = strlen(outputstr);
-			pq_putint(outputlen + VARHDRSZ, VARHDRSZ);
-			pq_putnchar(outputstr, outputlen);
+			pq_sendint(&buf, outputlen + VARHDRSZ, VARHDRSZ);
+			pq_sendbytes(&buf, outputstr, outputlen);
 		}
 	}
+
+	pq_endmessage(&buf);
 }
 
 /* ----------------
@@ -325,6 +331,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 void
 printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 {
+	StringInfoData buf;
 	int			i,
 				j,
 				k;
@@ -335,7 +342,8 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 	 *	tell the frontend to expect new tuple data (in binary style)
 	 * ----------------
 	 */
-	pq_putnchar("B", 1);
+	pq_beginmessage(&buf);
+	pq_sendbyte(&buf, 'B');
 
 	/* ----------------
 	 *	send a bitmap of which attributes are not null
@@ -350,13 +358,13 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 		k >>= 1;
 		if (k == 0)				/* end of byte? */
 		{
-			pq_putint(j, 1);
+			pq_sendint(&buf, j, 1);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
 	if (k != (1 << 7))			/* flush last partial byte */
-		pq_putint(j, 1);
+		pq_sendint(&buf, j, 1);
 
 	/* ----------------
 	 *	send the attributes of this tuple
@@ -378,8 +386,8 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 				/* variable length, assume a varlena structure */
 				len = VARSIZE(attr) - VARHDRSZ;
 
-				pq_putint(len, VARHDRSZ);
-				pq_putnchar(VARDATA(attr), len);
+				pq_sendint(&buf, len, VARHDRSZ);
+				pq_sendbytes(&buf, VARDATA(attr), len);
 
 #ifdef IPORTAL_DEBUG
 				{
@@ -399,20 +407,20 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 					int16		i16;
 					int32		i32;
 
-					pq_putint(len, sizeof(int32));
+					pq_sendint(&buf, len, sizeof(int32));
 					switch (len)
 					{
 						case sizeof(int8):
 							i8 = DatumGetChar(attr);
-							pq_putnchar((char *) &i8, len);
+							pq_sendbytes(&buf, (char *) &i8, len);
 							break;
 						case sizeof(int16):
 							i16 = DatumGetInt16(attr);
-							pq_putnchar((char *) &i16, len);
+							pq_sendbytes(&buf, (char *) &i16, len);
 							break;
 						case sizeof(int32):
 							i32 = DatumGetInt32(attr);
-							pq_putnchar((char *) &i32, len);
+							pq_sendbytes(&buf, (char *) &i32, len);
 							break;
 					}
 #ifdef IPORTAL_DEBUG
@@ -421,8 +429,8 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 				}
 				else
 				{
-					pq_putint(len, sizeof(int32));
-					pq_putnchar(DatumGetPointer(attr), len);
+					pq_sendint(&buf, len, sizeof(int32));
+					pq_sendbytes(&buf, DatumGetPointer(attr), len);
 #ifdef IPORTAL_DEBUG
 					fprintf(stderr, "byref length %d data %x\n", len,
 							DatumGetPointer(attr));
@@ -431,4 +439,6 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 			}
 		}
 	}
+
+	pq_endmessage(&buf);
 }

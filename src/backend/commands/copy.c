@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.73 1999/02/13 23:15:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.74 1999/04/25 03:19:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,12 +89,14 @@ inline void CopyDonePeek(FILE *fp, int c, int pickup);
  *
  * CopySendString does the same for null-terminated strings
  * CopySendChar does the same for single characters
+ *
+ * NB: no data conversion is applied by these functions
  */
 inline void CopySendData(void *databuf, int datasize, FILE *fp) {
   if (!fp)
-    pq_putnchar(databuf, datasize);
+	  pq_putbytes((char*) databuf, datasize);
   else
-    fwrite(databuf, datasize, 1, fp);
+	  fwrite(databuf, datasize, 1, fp);
 }
     
 inline void CopySendString(char *str, FILE *fp) {
@@ -112,17 +114,24 @@ inline void CopySendChar(char c, FILE *fp) {
  *
  * CopyGetChar does the same for single characters
  * CopyGetEof checks if it's EOF on the input
+ *
+ * NB: no data conversion is applied by these functions
  */
 inline void CopyGetData(void *databuf, int datasize, FILE *fp) {
   if (!fp)
-    pq_getnchar(databuf, 0, datasize); 
+    pq_getbytes((char*) databuf, datasize); 
   else 
     fread(databuf, datasize, 1, fp);
 }
 
 inline int CopyGetChar(FILE *fp) {
   if (!fp) 
-    return pq_getchar();
+  {
+	  unsigned char ch;
+	  if (pq_getbytes((char*) &ch, 1))
+		  return EOF;
+	  return ch;
+  }
   else
     return getc(fp);
 }
@@ -143,7 +152,7 @@ inline int CopyGetEof(FILE *fp) {
  */
 inline int CopyPeekChar(FILE *fp) {
   if (!fp) 
-    return pq_peekchar();
+    return pq_peekbyte();
   else
     return getc(fp);
 }
@@ -153,7 +162,7 @@ inline void CopyDonePeek(FILE *fp, int c, int pickup) {
     if (pickup) {
       /* We want to pick it up - just receive again into dummy buffer */
       char c;
-      pq_getnchar(&c, 0, 1);
+      pq_getbytes(&c, 1);
     }
     /* If we didn't want to pick it up, just leave it where it sits */
   }
@@ -216,7 +225,10 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	 * descriptor leak.  bjm 1998/08/29
 	 */
 	if (file_opened)
+	{
 		FreeFile(fp);
+		file_opened = false;
+	}
 
 	rel = heap_openr(relname);
 	if (rel == NULL)
@@ -271,6 +283,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				if (IsUnderPostmaster)
 				{
 					SendCopyBegin();
+					pq_startcopyout();
 					fp = NULL;
 				}
 				else
@@ -301,9 +314,12 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			FreeFile(fp);
 			file_opened = false;
 		}
-		else if (!from && !binary)
+		else if (!from)
 		{
-			CopySendData("\\.\n",3,fp);
+			if (!binary)
+				CopySendData("\\.\n",3,fp);
+			if (IsUnderPostmaster)
+				pq_endcopyout(false);
 		}
 	}
 }

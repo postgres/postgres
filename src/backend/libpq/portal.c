@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: portal.c,v 1.20 1999/02/13 23:15:45 momjian Exp $
+ *  $Id: portal.c,v 1.21 1999/04/25 03:19:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,6 @@
  *		PQgetvalue		- Return an attribute (field) value
  *		PQgetlength		- Return an attribute (field) length
  *		PQclear			- free storage claimed by named portal
- *		PQnotifies		- Return a list of relations on which notification
- *						  has occurred.
- *		PQremoveNotify	- Remove this notification from the list.
  *
  *	 NOTES
  *		These functions may be used by both frontend routines which
@@ -646,86 +643,4 @@ PQclear(char *pname)
 	if (!valid_pointer("PQclear: invalid portal name pointer", pname))
 		return;
 	pbuf_close(pname);
-}
-
-/*
- * async notification.
- * This is going away with pending rewrite of comm. code...
- */
-/* static SLList pqNotifyList;*/
-static Dllist *pqNotifyList = NULL;
-
-/* remove invalid notifies before returning */
-void
-PQcleanNotify()
-{
-	Dlelem	   *e,
-			   *next;
-	PQNotifyList *p;
-
-	e = DLGetHead(pqNotifyList);
-
-	while (e)
-	{
-		next = DLGetSucc(e);
-		p = (PQNotifyList *) DLE_VAL(e);
-		if (p->valid == 0)
-		{
-			DLRemove(e);
-			DLFreeElem(e);
-			pfree(p);
-		}
-		e = next;
-	}
-}
-
-void
-PQnotifies_init()
-{
-	Dlelem	   *e;
-	PQNotifyList *p;
-
-	if (pqNotifyList == NULL)
-		pqNotifyList = DLNewList();
-	else
-	{
-		/* clean all notifies */
-		for (e = DLGetHead(pqNotifyList); e != NULL; e = DLGetSucc(e))
-		{
-			p = (PQNotifyList *) DLE_VAL(e);
-			p->valid = 0;
-		}
-		PQcleanNotify();
-	}
-}
-
-PQNotifyList *
-PQnotifies()
-{
-	Dlelem	   *e;
-
-	PQcleanNotify();
-	e = DLGetHead(pqNotifyList);
-	return e ? (PQNotifyList *) DLE_VAL(e) : NULL;
-}
-
-void
-PQremoveNotify(PQNotifyList *nPtr)
-{
-	nPtr->valid = 0;			/* remove later */
-}
-
-void
-PQappendNotify(char *relname, int pid)
-{
-	PQNotifyList *p;
-
-	if (pqNotifyList == NULL)
-		pqNotifyList = DLNewList();
-
-	p = (PQNotifyList *) pbuf_alloc(sizeof(PQNotifyList));
-	StrNCpy(p->relname, relname, NAMEDATALEN);
-	p->be_pid = pid;
-	p->valid = 1;
-	DLAddTail(pqNotifyList, DLNewElem(p));
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.44 1999/02/13 23:15:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.45 1999/04/25 03:19:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,6 +94,7 @@
 #include "fmgr.h"
 #include "lib/dllist.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"
@@ -798,9 +799,12 @@ NotifyMyFrontEnd(char *relname, int32 listenerPID)
 {
 	if (whereToSendOutput == Remote)
 	{
-		pq_putnchar("A", 1);
-		pq_putint(listenerPID, sizeof(int32));
-		pq_putstr(relname);
+		StringInfoData buf;
+		pq_beginmessage(&buf);
+		pq_sendbyte(&buf, 'A');
+		pq_sendint(&buf, listenerPID, sizeof(int32));
+		pq_sendstring(&buf, relname, strlen(relname));
+		pq_endmessage(&buf);
 		/* NOTE: we do not do pq_flush() here.  For a self-notify, it will
 		 * happen at the end of the transaction, and for incoming notifies
 		 * ProcessIncomingNotify will do it after finding all the notifies.

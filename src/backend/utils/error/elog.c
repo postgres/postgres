@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.41 1999/04/20 02:19:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.42 1999/04/25 03:19:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,12 +188,21 @@ elog(int lev, const char *fmt,...)
 	/* Send IPC message to the front-end program */
 	if (IsUnderPostmaster && lev > DEBUG)
 	{
-		/* notices are not exactly errors, handle it differently */
+		/* notices are not errors, handle 'em differently */
+		char msgtype;
 		if (lev == NOTICE)
-			pq_putnchar("N", 1);
+			msgtype = 'N';
 		else
-			pq_putnchar("E", 1);
-		pq_putstr(line + TIMESTAMP_SIZE);		/* don't show timestamps */
+		{
+			/* Abort any COPY OUT in progress when an error is detected.
+			 * This hack is necessary because of poor design of copy protocol.
+			 */
+			pq_endcopyout(true);
+			msgtype = 'E';
+		}
+		/* exclude the timestamp from msg sent to frontend */
+		pq_putmessage(msgtype, line + TIMESTAMP_SIZE,
+					  strlen(line + TIMESTAMP_SIZE) + 1);
 		/*
 		 * This flush is normally not necessary, since postgres.c will
 		 * flush out waiting data when control returns to the main loop.

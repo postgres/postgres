@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.27 1999/02/13 23:21:35 momjian Exp $
+ * $Id: libpq.h,v 1.28 1999/04/25 03:19:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,17 +121,6 @@ extern PortalEntry **portals;
 extern size_t portals_array_size;
 
 /*
- *	Asynchronous notification
- */
-typedef struct PQNotifyList
-{
-	char		relname[NAMEDATALEN];	/* listen/notify name */
-	int			be_pid;			/* process id of backend */
-	int			valid;			/* has this already been handled by user. */
-/*	  SLNode Node; */
-} PQNotifyList;
-
-/*
  * Exceptions.
  */
 
@@ -194,11 +183,6 @@ extern char *PQgetvalue(PortalBuffer *portal, int tuple_index, int field_number)
 extern char *PQgetAttr(PortalBuffer *portal, int tuple_index, int field_number);
 extern int	PQgetlength(PortalBuffer *portal, int tuple_index, int field_number);
 extern void PQclear(char *pname);
-extern void PQcleanNotify(void);
-extern void PQnotifies_init(void);
-extern PQNotifyList *PQnotifies(void);
-extern void PQremoveNotify(PQNotifyList *nPtr);
-extern void PQappendNotify(char *relname, int pid);
 
 /*
  * prototypes for functions in portalbuf.c
@@ -250,51 +234,19 @@ extern int32 pqtest(struct varlena * vlena);
 /*
  * prototypes for functions in pqcomm.c
  */
-extern void pq_init(int fd);
-extern void pq_gettty(char *tp);
-extern int	pq_getport(void);
-extern void pq_close(void);
-extern int	pq_flush(void);
-extern int	pq_recvbuf(void);
-extern int	pq_getstr(char *s, int maxlen);
-extern int	PQgetline(char *s, int maxlen);
-extern int	PQputline(char *s);
-extern int	pq_getchar(void);
-extern int	pq_peekchar(void);
-extern int	pq_getnchar(char *s, int off, int maxlen);
-extern int	pq_getint(int b);
-extern int  pq_putchar(unsigned char c);
-extern void pq_putstr(char *s);
-extern void pq_putnchar(char *s, int n);
-extern void pq_putint(int i, int b);
-extern int	pq_getinaddr(struct sockaddr_in * sin, char *host, int port);
-extern int	pq_getinserv(struct sockaddr_in * sin, char *host, char *serv);
-
-#ifdef MULTIBYTE
-extern void pq_putncharlen(char *s, int n);
-
-#endif
-
-extern int pq_connect(char *dbname, char *user, char *args, char *hostName,
-		   char *debugTty, char *execFile, short portName);
-extern int	StreamOpen(char *hostName, short portName, Port *port);
-extern void StreamDoUnlink(void);
 extern int	StreamServerPort(char *hostName, short portName, int *fdP);
 extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
-
-/*
- * Internal send/receive buffers in libpq.
- * These probably shouldn't be global at all, but unless we merge
- * pqcomm.c and pqcomprim.c they have to be...
- */
-
-#define PQ_BUFFER_SIZE 8192
-
-extern unsigned char PqSendBuffer[PQ_BUFFER_SIZE];
-extern int PqSendPointer;	/* Next index to store a byte in PqSendBuffer */
-extern unsigned char PqRecvBuffer[PQ_BUFFER_SIZE];
-extern int PqRecvPointer;	/* Next index to read a byte from PqRecvBuffer */
-extern int PqRecvLength;	/* End of data available in PqRecvBuffer */
+extern void pq_init(void);
+extern int	pq_getport(void);
+extern void pq_close(void);
+extern int	pq_getbytes(char *s, size_t len);
+extern int	pq_getstring(char *s, size_t len);
+extern int	pq_peekbyte(void);
+extern int	pq_putbytes(const char *s, size_t len);
+extern int	pq_flush(void);
+extern int	pq_putmessage(char msgtype, const char *s, size_t len);
+extern void	pq_startcopyout(void);
+extern void	pq_endcopyout(bool errorAbort);
 
 #endif	 /* LIBPQ_H */

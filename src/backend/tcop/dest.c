@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.25 1999/02/13 23:18:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.26 1999/04/25 03:19:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 
 #include "access/htup.h"
 #include "libpq/libpq.h"
+#include "libpq/pqformat.h"
 #include "access/printtup.h"
 #include "utils/portal.h"
 #include "utils/palloc.h"
@@ -137,8 +138,7 @@ BeginCommand(char *pname,
 			 *		send fe info on tuples we're about to send
 			 * ----------------
 			 */
-			pq_putnchar("P", 1);/* new portal.. */
-			pq_putstr(pname);	/* portal name */
+			pq_putmessage('P', pname, strlen(pname)+1);
 
 			/* ----------------
 			 *		if this is a retrieve, then we send back the tuple
@@ -148,17 +148,24 @@ BeginCommand(char *pname,
 			 */
 			if (operation == CMD_SELECT && !isIntoRel)
 			{
-				pq_putnchar("T", 1);	/* type info to follow.. */
-				pq_putint(natts, 2);	/* number of attributes in tuples */
+				StringInfoData buf;
+				pq_beginmessage(&buf);
+				pq_sendbyte(&buf, 'T');	/* tuple descriptor message type */
+				pq_sendint(&buf, natts, 2);	/* # of attributes in tuples */
 
 				for (i = 0; i < natts; ++i)
 				{
-					pq_putstr(attrs[i]->attname.data);
-					pq_putint((int) attrs[i]->atttypid, sizeof(attrs[i]->atttypid));
-					pq_putint(attrs[i]->attlen, sizeof(attrs[i]->attlen));
+					pq_sendstring(&buf, attrs[i]->attname.data,
+								  strlen(attrs[i]->attname.data));
+					pq_sendint(&buf, (int) attrs[i]->atttypid,
+							   sizeof(attrs[i]->atttypid));
+					pq_sendint(&buf, attrs[i]->attlen,
+							   sizeof(attrs[i]->attlen));
 					if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-						pq_putint(attrs[i]->atttypmod, sizeof(attrs[i]->atttypmod));
+						pq_sendint(&buf, attrs[i]->atttypmod,
+								   sizeof(attrs[i]->atttypmod));
 				}
+				pq_endmessage(&buf);
 			}
 			break;
 
@@ -265,8 +272,8 @@ EndCommand(char *commandTag, CommandDest dest)
 			 *		tell the fe that the query is over
 			 * ----------------
 			 */
-			sprintf(buf, "C%s%s", commandTag, CommandInfo);
-			pq_putstr(buf);
+			sprintf(buf, "%s%s", commandTag, CommandInfo);
+			pq_putmessage('C', buf, strlen(buf)+1);
 			CommandInfo[0] = '\0';
 			break;
 
@@ -293,18 +300,18 @@ void
 SendCopyBegin(void)
 {
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-		pq_putnchar("H", 1);	/* new way */
+		pq_putbytes("H", 1);	/* new way */
 	else
-		pq_putnchar("B", 1);	/* old way */
+		pq_putbytes("B", 1);	/* old way */
 }
 
 void
 ReceiveCopyBegin(void)
 {
 	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-		pq_putnchar("G", 1);	/* new way */
+		pq_putbytes("G", 1);	/* new way */
 	else
-		pq_putnchar("D", 1);	/* old way */
+		pq_putbytes("D", 1);	/* old way */
 	/* We *must* flush here to ensure FE knows it can send. */
 	pq_flush();
 }
@@ -330,7 +337,7 @@ NullCommand(CommandDest dest)
 			 *		tell the fe that we saw an empty query string
 			 * ----------------
 			 */
-			pq_putstr("I");
+			pq_putbytes("I", 1);
 			break;
 
 		case Local:
@@ -359,7 +366,7 @@ ReadyForQuery(CommandDest dest)
 		case RemoteInternal:
 		case Remote:
 			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-				pq_putnchar("Z", 1);
+				pq_putbytes("Z", 1);
 			/* Flush output at end of cycle in any case. */
 			pq_flush();
 			break;
