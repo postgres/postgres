@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.276 2004/08/12 19:03:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.277 2004/08/13 16:29:55 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2439,7 +2439,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
         module to the server log. This is a crude profiling
         instrument.  <varname>log_statement_stats</varname> reports total
         statement statistics, while the others report per-state statistics.
-        All of these options are disabled by default.
+        <varname>log_statement_stats</varname> can not be enabled with 
+        the other options.  All of these options are disabled by default.  
         Only superusers can turn off any of these options if they have
         been enabled by the administrator.
        </para>
