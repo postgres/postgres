@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.101 2003/04/25 03:28:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.102 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,15 +415,13 @@ ClientAuthentication(Port *port)
 			 * out the less clueful good guys.
 			 */
 			{
-				const char *hostinfo = "localhost";
-#ifdef HAVE_IPV6
-				char	ip_hostinfo[INET6_ADDRSTRLEN];
-#else
-				char	ip_hostinfo[INET_ADDRSTRLEN];
-#endif
-				if (isAF_INETx(port->raddr.sa.sa_family) )
-					hostinfo = SockAddr_ntop(&port->raddr, ip_hostinfo,
-							   sizeof(ip_hostinfo), 1);
+				char	hostinfo[NI_MAXHOST];
+
+				getnameinfo(
+					(struct sockaddr *)&port->raddr.addr,
+					port->raddr.salen,
+					hostinfo, sizeof(hostinfo),
+					NULL, 0, NI_NUMERICHOST);
 
 				elog(FATAL,
 					"No pg_hba.conf entry for host %s, user %s, database %s",
@@ -464,7 +462,7 @@ ClientAuthentication(Port *port)
 					elog(FATAL, "pg_local_sendauth: can't do setsockopt: %m");
 			}
 #endif
-			if (port->raddr.sa.sa_family == AF_UNIX)
+			if (port->raddr.addr.ss_family == AF_UNIX)
 				sendAuthRequest(port, AUTH_REQ_SCM_CREDS);
 #endif
 			status = authident(port);

@@ -411,6 +411,9 @@
 /* Define to 1 if the system has the type `struct fcred'. */
 #undef HAVE_STRUCT_FCRED
 
+/* Define to 1 if the system has the type `struct sockaddr_storage'. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE
+
 /* Define to 1 if the system has the type `struct sockaddr_un'. */
 #undef HAVE_STRUCT_SOCKADDR_UN
 
@@ -486,6 +489,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have unix sockets. */
+#undef HAVE_UNIX_SOCKETS
 
 /* Define to 1 if you have the `utime' function. */
 #undef HAVE_UTIME

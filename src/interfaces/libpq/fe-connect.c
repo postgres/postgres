@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.243 2003/06/09 17:59:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.244 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,6 +727,7 @@ connectMakeNonblocking(PGconn *conn)
 static int
 connectNoDelay(PGconn *conn)
 {
+#ifdef	TCP_NODELAY
 	int			on = 1;
 
 	if (setsockopt(conn->sock, IPPROTO_TCP, TCP_NODELAY,
@@ -738,6 +739,7 @@ connectNoDelay(PGconn *conn)
 						  SOCK_STRERROR(SOCK_ERRNO));
 		return 0;
 	}
+#endif
 
 	return 1;
 }
@@ -751,15 +753,20 @@ connectNoDelay(PGconn *conn)
 static void
 connectFailureMessage(PGconn *conn, int errorno)
 {
-	if (conn->raddr.sa.sa_family == AF_UNIX)
+	char	hostname[NI_MAXHOST];
+	char	service[NI_MAXHOST];
+
+	getnameinfo((struct sockaddr *)&conn->raddr.addr, conn->raddr.salen,
+		hostname, sizeof(hostname), service, sizeof(service),
+		NI_NUMERICHOST | NI_NUMERICSERV);
+	if (conn->raddr.addr.ss_family == AF_UNIX)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext(
 									  "could not connect to server: %s\n"
 						"\tIs the server running locally and accepting\n"
 						  "\tconnections on Unix domain socket \"%s\"?\n"
 										),
-						  SOCK_STRERROR(errorno),
-						  conn->raddr.un.sun_path);
+			SOCK_STRERROR(errorno), service);
 	else
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext(
@@ -788,10 +795,10 @@ static int
 connectDBStart(PGconn *conn)
 {
 	int			portnum;
-	char		portstr[64];
-	struct addrinfo *addrs = NULL;
-	struct addrinfo hint;
-	const char *node = NULL;
+	char			portstr[64];
+	struct addrinfo		*addrs = NULL;
+	struct addrinfo		hint;
+	const char		*node = NULL;
 	int			ret;
 
 	if (!conn)
@@ -808,6 +815,7 @@ connectDBStart(PGconn *conn)
 	/* Initialize hint structure */
 	MemSet(&hint, 0, sizeof(hint));
 	hint.ai_socktype = SOCK_STREAM;
+	hint.ai_family = AF_UNSPEC;
 
 	/* Set up port number as a string */
 	if (conn->pgport != NULL && conn->pgport[0] != '\0')
@@ -829,17 +837,15 @@ connectDBStart(PGconn *conn)
 		node = conn->pghost;
 		hint.ai_family = AF_UNSPEC;
 	}
+#ifdef HAVE_UNIX_SOCKETS
 	else
 	{
 		/* pghostaddr and pghost are NULL, so use Unix domain socket */
-#ifdef HAVE_UNIX_SOCKETS
-		node = "unix";
+		node = NULL;
 		hint.ai_family = AF_UNIX;
-		UNIXSOCK_PATH(conn->raddr.un, portnum, conn->pgunixsocket);
-		conn->raddr_len = UNIXSOCK_LEN(conn->raddr.un);
-		StrNCpy(portstr, conn->raddr.un.sun_path, sizeof(portstr));
-#endif   /* HAVE_UNIX_SOCKETS */
+		UNIXSOCK_PATH(portstr, portnum, conn->pgunixsocket);
 	}
+#endif   /* HAVE_UNIX_SOCKETS */
 
 	/* Use getaddrinfo2() to resolve the address */
 	ret = getaddrinfo2(node, portstr, &hint, &addrs);
@@ -1066,12 +1072,11 @@ keep_going:						/* We will come back to here until there
 					/* Remember current address for possible error msg */
 					memcpy(&conn->raddr, addr_cur->ai_addr,
 						   addr_cur->ai_addrlen);
-					conn->raddr_len = addr_cur->ai_addrlen;
 
 					/* Open a socket */
 					conn->sock = socket(addr_cur->ai_family,
-										SOCK_STREAM,
-										addr_cur->ai_protocol);
+							addr_cur->ai_socktype,
+							addr_cur->ai_protocol);
 					if (conn->sock < 0)
 					{
 						/*
@@ -1093,13 +1098,23 @@ keep_going:						/* We will come back to here until there
 					 * Select socket options: no delay of outgoing data for
 					 * TCP sockets, and nonblock mode.  Fail if this fails.
 					 */
-					if (isAF_INETx(addr_cur->ai_family))
+					if (!IS_AF_UNIX(addr_cur->ai_family))
 					{
 						if (!connectNoDelay(conn))
-							break;
+						{
+							closesocket(conn->sock);
+							conn->sock = -1;
+							conn->addr_cur = addr_cur->ai_next;
+							continue;
+						}
 					}
 					if (connectMakeNonblocking(conn) == 0)
-						break;
+					{
+						closesocket(conn->sock);
+						conn->sock = -1;
+						conn->addr_cur = addr_cur->ai_next;
+						continue;
+					}
 					/*
 					 * Start/make connection.  This should not block, since
 					 * we are in nonblock mode.  If it does, well, too bad.
@@ -1163,9 +1178,8 @@ retry_connect:
 
 		case CONNECTION_STARTED:
 			{
-				ACCEPT_TYPE_ARG3 laddrlen;
 				int			optval;
-				ACCEPT_TYPE_ARG3 optlen = sizeof(optval);
+				ACCEPT_TYPE_ARG3	optlen = sizeof(optval);
 
 				/*
 				 * Write ready, since we've made it here, so the
@@ -1212,11 +1226,13 @@ retry_connect:
 				}
 
 				/* Fill in the client address */
-				laddrlen = sizeof(conn->laddr);
-				if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
+				conn->laddr.salen = sizeof(conn->laddr.addr);
+				if (getsockname(conn->sock, 
+					(struct sockaddr *)&conn->laddr.addr,
+					&conn->laddr.salen) < 0)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  libpq_gettext("could not get client address from socket: %s\n"),
+						libpq_gettext("could not get client address from socket: %s\n"),
 									  SOCK_STRERROR(SOCK_ERRNO));
 					goto error_return;
 				}
@@ -1240,7 +1256,7 @@ retry_connect:
 				 */
 
 #ifdef HAVE_UNIX_SOCKETS
-				if (conn->raddr.sa.sa_family == AF_UNIX)
+				if (conn->raddr.addr.ss_family == AF_UNIX)
 				{
 					/* Don't bother requesting SSL over a Unix socket */
 					conn->allow_ssl_try = false;
@@ -2044,14 +2060,15 @@ PQrequestCancel(PGconn *conn)
 	 * We need to open a temporary connection to the postmaster. Use the
 	 * information saved by connectDB to do this with only kernel calls.
 	 */
-	if ((tmpsock = socket(conn->raddr.sa.sa_family, SOCK_STREAM, 0)) < 0)
+	if ((tmpsock = socket(conn->raddr.addr.ss_family, SOCK_STREAM, 0)) < 0)
 	{
 		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- socket() failed: ");
 		goto cancel_errReturn;
 	}
 retry3:
-	if (connect(tmpsock, &conn->raddr.sa, conn->raddr_len) < 0)
+	if (connect(tmpsock, (struct sockaddr *)&conn->raddr.addr,
+		conn->raddr.salen) < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */

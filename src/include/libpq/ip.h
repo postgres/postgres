@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: ip.h,v 1.7 2003/06/12 07:00:57 momjian Exp $
+ * $Id: ip.h,v 1.8 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,12 +21,17 @@ extern int   getaddrinfo2(const char *hostname, const char *servname,
 						  struct addrinfo **result);
 extern void  freeaddrinfo2(int hint_ai_family, struct addrinfo *ai);
 
-extern char *SockAddr_ntop(const SockAddr *sa, char *dst, size_t cnt,
-						   int v4conv);
-extern int   SockAddr_pton(SockAddr *sa, const char *src);
+extern int   rangeSockAddr(const struct sockaddr_storage *addr,
+			const struct sockaddr_storage *netaddr,
+			const struct sockaddr_storage *netmask);
 
-extern int   isAF_INETx(const int family);
-extern int   rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr,
-						   const SockAddr *netmask);
+extern int SockAddr_cidr_mask(struct sockaddr_storage **mask,
+				char *numbits, int family);
+
+#ifdef	HAVE_UNIX_SOCKETS
+#define	IS_AF_UNIX(fam)	(fam == AF_UNIX)
+#else
+#define	IS_AF_UNIX(fam) (0)
+#endif
 
 #endif /* IP_H */

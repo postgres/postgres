@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.3 2003/04/27 23:56:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/getaddrinfo.c,v 1.4 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,28 +16,50 @@
 /* This is intended to be used in both frontend and backend, so use c.h */
 #include "c.h"
 
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#ifdef	HAVE_UNIX_SOCKETS
+#include <sys/un.h>
+#endif
 
 #include "getaddrinfo.h"
 
-
+/*
+ * get address info for ipv4 sockets.
+ *
+ *	Bugs:	- only one addrinfo is set even though hintp is NULL or
+ *		  ai_socktype is 0
+ *		- AI_CANONNAME is not supported.
+ *		- servname can only be a number, not text.
+ */
 int
 getaddrinfo(const char *node, const char *service,
-			const struct addrinfo *hints,
+			const struct addrinfo *hintp,
 			struct addrinfo **res)
 {
-	struct addrinfo *ai;
-	struct sockaddr_in sin, *psin;
+	struct addrinfo		*ai;
+	struct sockaddr_in	sin, *psin;
+	struct addrinfo		hints;
 
-	if (!hints ||
-		(hints->ai_family != AF_INET && hints->ai_family != AF_UNSPEC))
+	if (hintp == NULL)	
+	{
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_family = AF_INET;
+		hints.ai_socktype = SOCK_STREAM;
+	}
+	else
+	{
+		memcpy(&hints, hintp, sizeof(hints));
+	}
+
+	if (hints.ai_family != AF_INET && hints.ai_family != AF_UNSPEC)
 		return EAI_FAMILY;
 
-	if (hints->ai_socktype != SOCK_STREAM)
-		return EAI_SOCKTYPE;
+	if (hints.ai_socktype == 0)
+		hints.ai_socktype = SOCK_STREAM;
 
 	if (!node && !service)
 		return EAI_NONAME;
@@ -50,9 +72,12 @@ getaddrinfo(const char *node, const char *service,
 	{
 		if (node[0] == '\0')
 			sin.sin_addr.s_addr = htonl(INADDR_ANY);
-		else if (hints->ai_flags & AI_NUMERICHOST)
+		else if (hints.ai_flags & AI_NUMERICHOST)
 		{
-			inet_aton(node, &sin.sin_addr);
+			if (!inet_aton(node, &sin.sin_addr))
+			{
+				return EAI_FAIL;
+			}
 		}
 		else
 		{
@@ -64,9 +89,8 @@ getaddrinfo(const char *node, const char *service,
 				switch (h_errno)
 				{
 					case HOST_NOT_FOUND:
-						return EAI_NONAME;
 					case NO_DATA:
-						return EAI_NODATA;
+						return EAI_NONAME;
 					case TRY_AGAIN:
 						return EAI_AGAIN;
 					case NO_RECOVERY:
@@ -75,14 +99,14 @@ getaddrinfo(const char *node, const char *service,
 				}
 			}
 			if (hp->h_addrtype != AF_INET)
-				return EAI_ADDRFAMILY;
+				return EAI_FAIL;
 
 			memcpy(&(sin.sin_addr), hp->h_addr, hp->h_length);
 		}
 	}
 	else
 	{
-		if (hints->ai_flags & AI_PASSIVE)
+		if (hints.ai_flags & AI_PASSIVE)
 			sin.sin_addr.s_addr = htonl(INADDR_ANY);
 		else
 			sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
@@ -90,10 +114,16 @@ getaddrinfo(const char *node, const char *service,
 
 	if (service)
 		sin.sin_port = htons((unsigned short) atoi(service));
+#if SALEN
+        sin.sin_len = sizeof(sin);
+#endif
 
 	ai = malloc(sizeof(*ai));
 	if (!ai)
+	{
 		return EAI_MEMORY;
+	}
+
 	psin = malloc(sizeof(*psin));
 	if (!psin)
 	{
@@ -103,9 +133,10 @@ getaddrinfo(const char *node, const char *service,
 
 	memcpy(psin, &sin, sizeof(*psin));
 
+	ai->ai_flags = 0;
 	ai->ai_family = AF_INET;
-	ai->ai_socktype = SOCK_STREAM;
-	ai->ai_protocol = IPPROTO_TCP;
+	ai->ai_socktype = hints.ai_socktype;
+	ai->ai_protocol = hints.ai_protocol;
 	ai->ai_addrlen = sizeof(*psin);
 	ai->ai_addr = (struct sockaddr *) psin;
 	ai->ai_canonname = NULL;
@@ -140,9 +171,6 @@ gai_strerror(int errcode)
 		case EAI_NONAME:
 			hcode = HOST_NOT_FOUND;
 			break;
-		case EAI_NODATA:
-			hcode = NO_DATA;
-			break;
 		case EAI_AGAIN:
 			hcode = TRY_AGAIN;
 			break;
@@ -160,8 +188,6 @@ gai_strerror(int errcode)
 	{
 		case EAI_NONAME:
 			return "Unknown host";
-		case EAI_NODATA:
-			return "No address associated with name";
 		case EAI_AGAIN:
 			return "Host name lookup failure";
 		case EAI_FAIL:
@@ -170,4 +196,83 @@ gai_strerror(int errcode)
 	}
 
 #endif /* HAVE_HSTRERROR */
+}
+
+/*
+ * Convert an address to a hostname.
+ * 
+ * Bugs:	- Only supports NI_NUMERICHOST and NI_NUMERICSERV
+ *		  It will never resolv a hostname.
+ *		- No IPv6 support.
+ */
+int
+getnameinfo(const struct sockaddr *sa, int salen,
+		char *node, int nodelen,
+		char *service, int servicelen, int flags)
+{
+	sa_family_t	family;
+	int		ret = -1;
+
+	/* Invalid arguments. */
+	if (sa == NULL || (node == NULL && service == NULL))
+	{
+		return EAI_FAIL;
+	}
+
+	/* We don't support those. */
+	if ((node && !(flags & NI_NUMERICHOST))
+		|| (service && !(flags & NI_NUMERICSERV)))
+	{
+		return EAI_FAIL;
+	}
+
+	family = sa->sa_family;
+#ifdef	HAVE_IPV6
+	if (family == AF_INET6)
+	{
+		return	EAI_FAMILY;
+	}
+#endif
+
+	if (service)
+	{
+		if (family == AF_INET)
+		{
+			ret = snprintf(service, servicelen, "%d",
+				ntohs(((struct sockaddr_in *)sa)->sin_port));
+		}
+#ifdef	HAVE_UNIX_SOCKETS
+		else if (family == AF_UNIX)
+		{
+			ret = snprintf(service, servicelen, "%s",
+				((struct sockaddr_un *)sa)->sun_path);
+		}
+#endif
+		if (ret == -1 || ret > servicelen)
+		{
+			return EAI_MEMORY;
+		}
+	}
+
+	if (node)
+	{
+		if (family == AF_INET)
+		{
+			char	*p;
+			p = inet_ntoa(((struct sockaddr_in *)sa)->sin_addr);
+			ret = snprintf(node, nodelen, "%s", p);
+		}
+#ifdef	HAVE_UNIX_SOCKETS
+		else if (family == AF_UNIX)
+		{
+			ret = snprintf(node, nodelen, "%s", "localhost");
+		}
+#endif
+		if (ret == -1 || ret > nodelen)
+		{
+			return EAI_MEMORY;
+		}
+	}
+
+	return 0;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.11 2003/06/12 07:00:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/ip.c,v 1.12 2003/06/12 07:36:51 momjian Exp $
  *
  * This file and the IPV6 implementation were initially provided by
  * Nigel Kukard <nkukard@lbsd.net>, Linux Based Systems Design
@@ -36,20 +36,19 @@
 #include "libpq/ip.h"
 
 
-static int   rangeSockAddrAF_INET(const SockAddr *addr,
-								  const SockAddr *netaddr,
-								  const SockAddr *netmask);
-
+static int	rangeSockAddrAF_INET(const struct sockaddr_in *addr,
+			const struct sockaddr_in *netaddr,
+			const struct sockaddr_in *netmask);
 #ifdef HAVE_IPV6
-static int   rangeSockAddrAF_INET6(const SockAddr *addr,
-								   const SockAddr *netaddr,
-								   const SockAddr *netmask);
-static void  convSockAddr6to4(const SockAddr *src, SockAddr *dst);
+static int	rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
+			const struct sockaddr_in6 *netaddr,
+			const struct sockaddr_in6 *netmask);
 #endif
 
-#ifdef HAVE_UNIX_SOCKETS
-static int getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
-							struct addrinfo **result);
+#ifdef	HAVE_UNIX_SOCKETS
+static int	getaddrinfo_unix(const char *path,
+			const struct addrinfo *hintsp,
+			struct addrinfo **result);
 #endif
 
 
@@ -127,6 +126,11 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 
 	MemSet(&hints, 0, sizeof(hints));
 
+	if (strlen(path) >= sizeof(unp->sun_path))
+	{
+		return EAI_FAIL;
+	}
+
 	if (hintsp == NULL)
 	{
 		hints.ai_family = AF_UNIX;
@@ -141,7 +145,7 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 	if (hints.ai_family != AF_UNIX)
 	{
 		/* shouldn't have been called */
-		return EAI_ADDRFAMILY;
+		return EAI_FAIL;
 	}
 
 	aip = calloc(1, sizeof(struct addrinfo));
@@ -166,8 +170,6 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 	aip->ai_addr = (struct sockaddr *) unp;
 	aip->ai_addrlen = sizeof(struct sockaddr_un);
 
-	if (strlen(path) >= sizeof(unp->sun_path))
-		return EAI_SERVICE;
 	strcpy(unp->sun_path, path);
 
 #if SALEN
@@ -178,121 +180,110 @@ getaddrinfo_unix(const char *path, const struct addrinfo *hintsp,
 }
 #endif   /* HAVE_UNIX_SOCKETS */
 
-/* ----------
- * SockAddr_ntop - set IP address string from SockAddr
- *
- * parameters...  sa	: SockAddr union
- *				  dst	: buffer for address string
- *				  cnt	: sizeof dst
- *				  v4conv: non-zero: if address is IPv4 mapped IPv6 address then
- *						  convert to IPv4 address.
- * returns... pointer to dst
- * if sa.sa_family is not AF_INET or AF_INET6 dst is set as empy string.
- * ----------
- */
-char *
-SockAddr_ntop(const SockAddr *sa, char *dst, size_t cnt, int v4conv)
+
+int
+rangeSockAddr(const struct sockaddr_storage *addr,
+		const struct sockaddr_storage *netaddr,
+		const struct sockaddr_storage *netmask)
 {
-	switch (sa->sa.sa_family)
-	{
-		case AF_INET:
+	if (addr->ss_family == AF_INET)
+		return rangeSockAddrAF_INET((struct sockaddr_in *)addr,
+			(struct sockaddr_in *)netaddr,
+			(struct sockaddr_in *)netmask);
 #ifdef HAVE_IPV6
-			inet_ntop(AF_INET, &sa->in.sin_addr, dst, cnt);
-#else
-			StrNCpy(dst, inet_ntoa(sa->in.sin_addr), cnt);
+	else if (addr->ss_family == AF_INET6)
+		return rangeSockAddrAF_INET6((struct sockaddr_in6 *)addr,
+			(struct sockaddr_in6 *)netaddr,
+			(struct sockaddr_in6 *)netmask);
 #endif
-			break;
-#ifdef HAVE_IPV6
-		case AF_INET6:
-			inet_ntop(AF_INET6, &sa->in6.sin6_addr, dst, cnt);
-			if (v4conv && IN6_IS_ADDR_V4MAPPED(&sa->in6.sin6_addr))
-				strcpy(dst, dst + 7);
-			break;
-#endif
-		default:
-			dst[0] = '\0';
-			break;
-	}
-	return dst;
+	else
+		return 0;
 }
 
-
 /*
- *	SockAddr_pton - IPv6 pton
+ *  SockAddr_cidr_mask - make a network mask of the appropriate family
+ *    and required number of significant bits
+ *
+ * Note: Returns a static pointer for the mask, so it's not thread safe,
+ *       and a second call will overwrite the data.
  */
 int
-SockAddr_pton(SockAddr *sa, const char *src)
+SockAddr_cidr_mask(struct sockaddr_storage **mask, char *numbits, int family)
 {
-	int			family = AF_INET;
-
-#ifdef HAVE_IPV6
-	if (strchr(src, ':'))
-		family = AF_INET6;
+	long			bits;
+	char			*endptr;
+static	struct sockaddr_storage	sock;
+	struct sockaddr_in	mask4;
+#ifdef	HAVE_IPV6
+	struct sockaddr_in6	mask6;
 #endif
 
-	sa->sa.sa_family = family;
+	bits = strtol(numbits, &endptr, 10);
+
+	if (*numbits == '\0' || *endptr != '\0')
+	{
+		return -1;
+	}
+
+	if ((bits < 0) || (family == AF_INET && bits > 32)
+#ifdef HAVE_IPV6
+		|| (family == AF_INET6 && bits > 128)
+#endif
+		)
+	{
+		return -1;
+	}
+
+	*mask = &sock;
 
 	switch (family)
 	{
 		case AF_INET:
-#ifdef HAVE_IPV6
-			return inet_pton(AF_INET, src, &sa->in.sin_addr);
-#else
-			return inet_aton(src, &sa->in.sin_addr);
-#endif
-
+			mask4.sin_addr.s_addr = 
+				htonl((0xffffffffUL << (32 - bits))
+					& 0xffffffffUL);
+			memcpy(&sock, &mask4, sizeof(mask4));			
+			break;
 #ifdef HAVE_IPV6
 		case AF_INET6:
-			return inet_pton(AF_INET6, src, &sa->in6.sin6_addr);
+		{
+			int i;
+			
+			for (i = 0; i < 16; i++)
+			{
+				if (bits <= 0)
+				{
+					mask6.sin6_addr.s6_addr[i] = 0;
+				}
+				else if (bits >= 8)
+				{
+					mask6.sin6_addr.s6_addr[i] = 0xff;
+				}
+				else
+				{
+					mask6.sin6_addr.s6_addr[i] =
+						(0xff << (8 - bits)) & 0xff;
+				}
+				bits -= 8;
+			}
+			memcpy(&sock, &mask6, sizeof(mask6));
 			break;
+		}
 #endif
 		default:
 			return -1;
 	}
+
+	sock.ss_family = family;
+	return 0;
 }
-
-
-/*
- *	isAF_INETx - check to see if sa is AF_INET or AF_INET6
- */
-int
-isAF_INETx(const int family)
-{
-	if (family == AF_INET
-#ifdef HAVE_IPV6
-		|| family == AF_INET6
-#endif
-		)
-		return 1;
-	else
-		return 0;
-}
-
 
 int
-rangeSockAddr(const SockAddr *addr, const SockAddr *netaddr,
-			  const SockAddr *netmask)
+rangeSockAddrAF_INET(const struct sockaddr_in *addr, const struct sockaddr_in *netaddr,
+					 const struct sockaddr_in *netmask)
 {
-	if (addr->sa.sa_family == AF_INET)
-		return rangeSockAddrAF_INET(addr, netaddr, netmask);
-#ifdef HAVE_IPV6
-	else if (addr->sa.sa_family == AF_INET6)
-		return rangeSockAddrAF_INET6(addr, netaddr, netmask);
-#endif
-	else
-		return 0;
-}
-
-static int
-rangeSockAddrAF_INET(const SockAddr *addr, const SockAddr *netaddr,
-					 const SockAddr *netmask)
-{
-	if (addr->sa.sa_family != AF_INET ||
-		netaddr->sa.sa_family != AF_INET ||
-		netmask->sa.sa_family != AF_INET)
-		return 0;
-	if (((addr->in.sin_addr.s_addr ^ netaddr->in.sin_addr.s_addr) &
-		 netmask->in.sin_addr.s_addr) == 0)
+	if (((addr->sin_addr.s_addr ^ netaddr->sin_addr.s_addr) &
+		 netmask->sin_addr.s_addr) == 0)
 		return 1;
 	else
 		return 0;
@@ -300,46 +291,22 @@ rangeSockAddrAF_INET(const SockAddr *addr, const SockAddr *netaddr,
 
 
 #ifdef HAVE_IPV6
-
-static int
-rangeSockAddrAF_INET6(const SockAddr *addr, const SockAddr *netaddr,
-					  const SockAddr *netmask)
+int
+rangeSockAddrAF_INET6(const struct sockaddr_in6 *addr,
+		const struct sockaddr_in6 *netaddr,
+		const struct sockaddr_in6 *netmask)
 {
 	int			i;
 
-	if (IN6_IS_ADDR_V4MAPPED(&addr->in6.sin6_addr))
-	{
-		SockAddr	addr4;
-
-		convSockAddr6to4(addr, &addr4);
-		if (rangeSockAddrAF_INET(&addr4, netaddr, netmask))
-			return 1;
-	}
-
-	if (netaddr->sa.sa_family != AF_INET6 ||
-		netmask->sa.sa_family != AF_INET6)
-		return 0;
-
 	for (i = 0; i < 16; i++)
 	{
-		if (((addr->in6.sin6_addr.s6_addr[i] ^ netaddr->in6.sin6_addr.s6_addr[i]) &
-			 netmask->in6.sin6_addr.s6_addr[i]) != 0)
+		if (((addr->sin6_addr.s6_addr[i] ^ netaddr->sin6_addr.s6_addr[i]) &
+			 netmask->sin6_addr.s6_addr[i]) != 0)
 			return 0;
 	}
 
 	return 1;
 }
+#endif
 
-static void
-convSockAddr6to4(const SockAddr *src, SockAddr *dst)
-{
-	MemSet(dst, 0, sizeof(*dst));
-	dst->in.sin_family = AF_INET;
-	/* both src and dst are assumed to be in network byte order */
-	dst->in.sin_port = src->in6.sin6_port;
-	memcpy(&dst->in.sin_addr.s_addr,
-		   ((char *) (&src->in6.sin6_addr.s6_addr)) + 12,
-		   sizeof(struct in_addr));
-}
 
-#endif /* HAVE_IPV6 */

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.332 2003/06/11 06:56:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.333 2003/06/12 07:36:51 momjian Exp $
  *
  * NOTES
  *
@@ -168,14 +168,9 @@ int			ReservedBackends;
 
 static char *progname = (char *) NULL;
 
-/*
- * Default Values
- */
-static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
-
-#ifdef HAVE_UNIX_SOCKETS
-static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
-#endif
+/* The sockets we're listening to. */
+#define	MAXLISTEN	10
+int	ListenSocket[MAXLISTEN];
 
 /* Used to reduce macros tests */
 #ifdef EXEC_BACKEND
@@ -384,10 +379,11 @@ reg_reply(DNSServiceRegistrationReplyErrorType errorCode, void *context)
 int
 PostmasterMain(int argc, char *argv[])
 {
-	int			opt;
-	int			status;
+	int		opt;
+	int		status;
 	char		original_extraoptions[MAXPGPATH];
-	char	   *potential_DataDir = NULL;
+	char		*potential_DataDir = NULL;
+	int		i;
 
 	*original_extraoptions = '\0';
 
@@ -713,32 +709,53 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Establish input sockets.
 	 */
+	for (i = 0; i < MAXLISTEN; i++)
+	{
+		ListenSocket[i] = -1;
+	}
 	if (NetServer)
 	{
-#ifdef HAVE_IPV6
-		/* Try INET6 first.  May fail if kernel doesn't support IP6 */
-		status = StreamServerPort(AF_INET6, VirtualHost,
-								  (unsigned short) PostPortNumber,
-								  UnixSocketDir,
-								  &ServerSock_INET);
-		if (status != STATUS_OK)
+		if (VirtualHost && VirtualHost[0])
 		{
-			elog(LOG, "IPv6 support disabled --- perhaps the kernel does not support IPv6");
-#endif
-			status = StreamServerPort(AF_INET, VirtualHost,
-									  (unsigned short) PostPortNumber,
-									  UnixSocketDir,
-									  &ServerSock_INET);
+			char	*p, *q;
+			char	c = 0;
+
+			q = VirtualHost;
+			do
+			{
+				p = strchr(q, ' ');
+				if (p)
+				{
+					c = *p;
+					*p = '\0';
+				}
+				status = StreamServerPort(AF_UNSPEC, q,
+					(unsigned short) PostPortNumber,
+					UnixSocketDir, ListenSocket, MAXLISTEN);
+				if (status != STATUS_OK)
+				{
+					postmaster_error("cannot create tcpip "
+						"listen socket for: %s", p);
+				}
+				if (p)
+				{
+					*p = c;
+					q = p + 1;
+				}
+			}
+			while (p);
+		}
+		else
+		{
+			status = StreamServerPort(AF_UNSPEC, NULL,
+				(unsigned short) PostPortNumber,
+				UnixSocketDir, ListenSocket, MAXLISTEN);
 			if (status != STATUS_OK)
 			{
-				postmaster_error("cannot create INET stream port");
-				ExitPostmaster(1);
+				postmaster_error("cannot create tcpip listen "
+					"socket.");
 			}
-#ifdef HAVE_IPV6
-			else
-				elog(LOG, "IPv4 socket created");
 		}
-#endif
 #ifdef USE_RENDEZVOUS                    
                 if (service_name != NULL)
                 {
@@ -754,10 +771,9 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef HAVE_UNIX_SOCKETS
-	status = StreamServerPort(AF_UNIX, VirtualHost,
-							  (unsigned short) PostPortNumber,
-							  UnixSocketDir,
-							  &ServerSock_UNIX);
+	status = StreamServerPort(AF_UNIX, NULL,
+			(unsigned short) PostPortNumber,
+			UnixSocketDir, ListenSocket, MAXLISTEN);
 	if (status != STATUS_OK)
 	{
 		postmaster_error("cannot create UNIX stream port");
@@ -961,12 +977,11 @@ usage(const char *progname)
 static int
 ServerLoop(void)
 {
-	fd_set		readmask,
-				writemask;
+	fd_set			readmask, writemask;
 	int			nSockets;
-	struct timeval now,
-				later;
-	struct timezone tz;
+	struct timeval		now, later;
+	struct timezone		tz;
+	int			i;
 
 	gettimeofday(&now, &tz);
 
@@ -1065,40 +1080,22 @@ ServerLoop(void)
 		 * New connection pending on our well-known port's socket? If so,
 		 * fork a child process to deal with it.
 		 */
-
-#ifdef HAVE_UNIX_SOCKETS
-		if (ServerSock_UNIX != INVALID_SOCK
-			&& FD_ISSET(ServerSock_UNIX, &rmask))
+		for (i = 0; i < MAXLISTEN; i++)
 		{
-			port = ConnCreate(ServerSock_UNIX);
-			if (port)
+			if (ListenSocket[i] != -1 && FD_ISSET(ListenSocket[i], &rmask))
 			{
-				BackendStartup(port);
+				port = ConnCreate(ListenSocket[i]);
+				if (port)
+				{
+					BackendStartup(port);
 
-				/*
-				 * We no longer need the open socket or port structure in
-				 * this process
-				 */
-				StreamClose(port->sock);
-				ConnFree(port);
-			}
-		}
-#endif
-
-		if (ServerSock_INET != INVALID_SOCK
-			&& FD_ISSET(ServerSock_INET, &rmask))
-		{
-			port = ConnCreate(ServerSock_INET);
-			if (port)
-			{
-				BackendStartup(port);
-
-				/*
-				 * We no longer need the open socket or port structure in
-				 * this process
-				 */
-				StreamClose(port->sock);
-				ConnFree(port);
+					/*
+					 * We no longer need the open socket
+					 * or port structure in this process
+					 */
+					StreamClose(port->sock);
+					ConnFree(port);
+				}
 			}
 		}
 
@@ -1118,25 +1115,20 @@ static int
 initMasks(fd_set *rmask, fd_set *wmask)
 {
 	int			nsocks = -1;
+	int			i;
 
 	FD_ZERO(rmask);
 	FD_ZERO(wmask);
 
-#ifdef HAVE_UNIX_SOCKETS
-	if (ServerSock_UNIX != INVALID_SOCK)
+	for (i = 0; i < MAXLISTEN; i++)
 	{
-		FD_SET(ServerSock_UNIX, rmask);
-
-		if (ServerSock_UNIX > nsocks)
-			nsocks = ServerSock_UNIX;
-	}
-#endif
-
-	if (ServerSock_INET != INVALID_SOCK)
-	{
-		FD_SET(ServerSock_INET, rmask);
-		if (ServerSock_INET > nsocks)
-			nsocks = ServerSock_INET;
+		int	fd = ListenSocket[i];
+		if (fd != -1)
+		{
+			FD_SET(fd, rmask);
+			if (fd > nsocks)
+				nsocks = fd;
+		}
 	}
 
 	return nsocks + 1;
@@ -1220,7 +1212,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 #ifdef USE_SSL
 		/* No SSL when disabled or on Unix sockets */
-		if (!EnableSSL || port->laddr.sa.sa_family != AF_INET)
+		if (!EnableSSL || port->laddr.addr.ss_family != AF_INET)
 			SSLok = 'N';
 		else
 			SSLok = 'S';		/* Support for SSL */
@@ -1560,14 +1552,18 @@ ConnFree(Port *conn)
 void
 ClosePostmasterPorts(bool pgstat_too)
 {
+	int	i;
+
 	/* Close the listen sockets */
-	if (NetServer)
-		StreamClose(ServerSock_INET);
-	ServerSock_INET = INVALID_SOCK;
-#ifdef HAVE_UNIX_SOCKETS
-	StreamClose(ServerSock_UNIX);
-	ServerSock_UNIX = INVALID_SOCK;
-#endif
+	for (i = 0; i < MAXLISTEN; i++)
+	{
+		if (ListenSocket[i] != -1)
+		{
+			StreamClose(ListenSocket[i]);
+			ListenSocket[i] = -1;
+		}
+	}
+
 	/* Close pgstat control sockets, unless we're starting pgstat itself */
 	if (pgstat_too)
 		pgstat_close_sockets();
@@ -2226,19 +2222,20 @@ split_opts(char **argv, int *argcp, char *s)
 static int
 BackendFork(Port *port)
 {
-	char	   *remote_host;
-	char	  **av;
-	int			maxac;
-	int			ac;
+	char		**av;
+	int		maxac;
+	int		ac;
 	char		debugbuf[32];
 	char		protobuf[32];
 #ifdef EXEC_BACKEND
 	char		pbuf[NAMEDATALEN + 256];
 #endif
-	int			i;
-	int			status;
-	struct timeval now;
-	struct timezone tz;
+	int		i;
+	int		status;
+	struct timeval	now;
+	struct timezone	tz;
+	char		remote_host[NI_MAXHOST];
+	char		remote_port[NI_MAXSERV];
 
 	/*
 	 * Let's clean up ourselves as the postmaster child
@@ -2286,63 +2283,37 @@ BackendFork(Port *port)
 	/*
 	 * Get the remote host name and port for logging and status display.
 	 */
-	if (isAF_INETx(port->raddr.sa.sa_family))
+	remote_host[0] = '\0';
+	remote_port[0] = '\0';
+	if (!getnameinfo((struct sockaddr *)&port->raddr.addr,
+		port->raddr.salen,
+		remote_host, sizeof(remote_host),
+		remote_port, sizeof(remote_host),
+		(log_hostname ? 0 : NI_NUMERICHOST) | NI_NUMERICSERV))
 	{
-		unsigned short remote_port;
-		char	   *host_addr;
-#ifdef HAVE_IPV6
-		char	   ip_hostinfo[INET6_ADDRSTRLEN];
-#else
-		char	   ip_hostinfo[INET_ADDRSTRLEN];
-#endif
-
-		remote_port = ntohs(port->raddr.in.sin_port);
-		host_addr = SockAddr_ntop(&port->raddr, ip_hostinfo,
-			sizeof(ip_hostinfo), 1);
-
-		remote_host = NULL;
-
-		if (log_hostname)
-		{
-			struct hostent *host_ent;
-
-			host_ent = gethostbyaddr((char *) &port->raddr.in.sin_addr,
-									 sizeof(port->raddr.in.sin_addr),
-									 AF_INET);
-
-			if (host_ent)
-			{
-				remote_host = palloc(strlen(host_addr) + strlen(host_ent->h_name) + 3);
-				sprintf(remote_host, "%s[%s]", host_ent->h_name, host_addr);
-			}
-		}
-
-		if (remote_host == NULL)
-			remote_host = pstrdup(host_addr);
-
-		if (Log_connections)
-			elog(LOG, "connection received: host=%s port=%hu",
-				 remote_host, remote_port);
-
-		if (LogSourcePort)
-		{
-			/* modify remote_host for use in ps status */
-			int			slen = strlen(remote_host) + 10;
-			char	   *str = palloc(slen);
-
-			snprintf(str, slen, "%s:%hu", remote_host, remote_port);
-			pfree(remote_host);
-			remote_host = str;
-		}
+		getnameinfo((struct sockaddr *)&port->raddr.addr,
+			port->raddr.salen,
+			remote_host, sizeof(remote_host),
+			remote_port, sizeof(remote_host),
+			NI_NUMERICHOST | NI_NUMERICSERV);
 	}
-	else
-	{
-	   	/* not AF_INET */
-		remote_host = "[local]";
 
-		if (Log_connections)
-			elog(LOG, "connection received: host=%s",
-				 remote_host);
+	if (Log_connections)
+	{
+		elog(LOG, "connection received: host=%s port=%s",
+			remote_host, remote_port);
+	}
+
+	if (LogSourcePort)
+	{
+		/* modify remote_host for use in ps status */
+		int		slen = strlen(remote_host) + 10;
+		char		*str = palloc(slen);
+
+		snprintf(str, slen, "%s:%s", remote_host, remote_port);
+		strncpy(remote_host, str, sizeof(remote_host));
+		remote_host[sizeof(remote_host) - 1] = '\0';
+		pfree(str);
 	}
 
 	/*
@@ -2516,14 +2487,8 @@ ExitPostmaster(int status)
 	 *
 	 * MUST		-- vadim 05-10-1999
 	 */
-	if (ServerSock_INET != INVALID_SOCK)
-		StreamClose(ServerSock_INET);
-	ServerSock_INET = INVALID_SOCK;
-#ifdef HAVE_UNIX_SOCKETS
-	if (ServerSock_UNIX != INVALID_SOCK)
-		StreamClose(ServerSock_UNIX);
-	ServerSock_UNIX = INVALID_SOCK;
-#endif
+	/* Should I use true instead? */
+	ClosePostmasterPorts(false);
 
 	proc_exit(status);
 }

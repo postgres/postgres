@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.102 2003/06/12 07:00:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.103 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -542,9 +542,14 @@ static void
 parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 {
 	int			line_number;
-	char	   *token;
-	char	   *db;
-	char	   *user;
+	char			*token;
+	char			*db;
+	char			*user;
+	struct addrinfo		*file_ip_addr = NULL, *file_ip_mask = NULL;
+	struct addrinfo		hints;
+	struct sockaddr_storage	*mask;
+	char 			*cidr_slash;
+	int			ret;
 
 	Assert(line != NIL);
 	line_number = lfirsti(line);
@@ -582,12 +587,11 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			port->auth_method == uaKrb5)
 			goto hba_syntax;
 
-		if (port->raddr.sa.sa_family != AF_UNIX)
+		if (port->raddr.addr.ss_family != AF_UNIX)
 			return;
 	}
 	else if (strcmp(token, "host") == 0 || strcmp(token, "hostssl") == 0)
 	{
-		SockAddr file_ip_addr, mask;
 
 		if (strcmp(token, "hostssl") == 0)
 		{
@@ -618,26 +622,77 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 		user = lfirst(line);
 
-		/* Read the IP address field. */
+		/* Read the IP address field. (with or without CIDR netmask) */
 		line = lnext(line);
 		if (!line)
 			goto hba_syntax;
 		token = lfirst(line);
 
-		if(SockAddr_pton(&file_ip_addr, token) < 0)
-			goto hba_syntax;
+		/* Check if it has a CIDR suffix and if so isolate it */
+		cidr_slash = index(token,'/');
+		if (cidr_slash)
+		{
+			*cidr_slash = '\0';
+		}
 
-		/* Read the mask field. */
-		line = lnext(line);
-		if (!line)
-			goto hba_syntax;
-		token = lfirst(line);
+		hints.ai_flags = AI_NUMERICHOST;
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = 0;
+		hints.ai_protocol = 0;
+		hints.ai_addrlen = 0;
+		hints.ai_canonname = NULL;
+		hints.ai_addr = NULL;
+		hints.ai_next = NULL;
 
-		if(SockAddr_pton(&mask, token) < 0)
+		/* Get the IP address either way */
+		ret = getaddrinfo2(token, NULL, &hints, &file_ip_addr);
+		if (ret)
+		{
+			elog(LOG, "getaddrinfo2() returned %d", ret);
+			if (cidr_slash)
+			{
+				*cidr_slash = '/';
+			}
 			goto hba_syntax;
+		}
 
-		if(file_ip_addr.sa.sa_family != mask.sa.sa_family)
-			goto hba_syntax;
+		if (file_ip_addr->ai_family != port->raddr.addr.ss_family)
+		{
+			/* Wrong address family. */
+			freeaddrinfo2(hints.ai_family, file_ip_addr);
+			return;
+		}
+
+		/* Get the netmask */
+		if (cidr_slash)
+		{
+			*cidr_slash = '/';
+			if (SockAddr_cidr_mask(&mask, cidr_slash + 1,
+				file_ip_addr->ai_family) < 0)
+			{
+                               goto hba_syntax;
+			}
+		}
+		else
+		{
+			/* Read the mask field. */
+			line = lnext(line);
+			if (!line)
+				goto hba_syntax;
+			token = lfirst(line);
+
+			ret = getaddrinfo2(token, NULL, &hints, &file_ip_mask);
+			if (ret)
+			{
+				goto hba_syntax;
+			}
+			mask = (struct sockaddr_storage *)file_ip_mask->ai_addr;
+
+			if(file_ip_addr->ai_family != mask->ss_family)
+			{
+				goto hba_syntax;
+			}
+		}
 
 		/* Read the rest of the line. */
 		line = lnext(line);
@@ -648,9 +703,16 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			goto hba_syntax;
 
 		/* Must meet network restrictions */
-		if (!isAF_INETx(port->raddr.sa.sa_family) ||
-			!rangeSockAddr(&port->raddr, &file_ip_addr, &mask))
-			return;
+		if (!rangeSockAddr(&port->raddr.addr,
+			(struct sockaddr_storage *)file_ip_addr->ai_addr, mask))
+		{
+			goto hba_freeaddr;
+		}
+		freeaddrinfo2(hints.ai_family, file_ip_addr);
+		if (file_ip_mask)
+		{
+			freeaddrinfo2(hints.ai_family, file_ip_mask);
+		}
 	}
 	else
 		goto hba_syntax;
@@ -670,6 +732,16 @@ hba_syntax:
 		 line ? (const char *) lfirst(line) : "(end of line)");
 
 	*error_p = true;
+
+hba_freeaddr:
+	if (file_ip_addr)
+	{
+		freeaddrinfo2(hints.ai_family, file_ip_addr);
+	}
+	if (file_ip_mask)
+	{
+		freeaddrinfo2(hints.ai_family, file_ip_mask);
+	}
 	return;
 }
 
@@ -1106,10 +1178,8 @@ interpret_ident_response(char *ident_response,
  *	But iff we're unable to get the information from ident, return false.
  */
 static bool
-ident_inet(const struct in_addr remote_ip_addr,
-		   const struct in_addr local_ip_addr,
-		   const ushort remote_port,
-		   const ushort local_port,
+ident_inet(const SockAddr remote_addr,
+		   const SockAddr local_addr,
 		   char *ident_user)
 {
 	int			sock_fd,		/* File descriptor for socket on which we
@@ -1117,8 +1187,39 @@ ident_inet(const struct in_addr remote_ip_addr,
 				rc;				/* Return code from a locally called
 								 * function */
 	bool		ident_return;
+	char		remote_addr_s[NI_MAXHOST];
+	char		remote_port[NI_MAXSERV];
+	char		local_addr_s[NI_MAXHOST];
+	char		local_port[NI_MAXSERV];
+	char		ident_port[NI_MAXSERV];
+	struct addrinfo	*ident_serv = NULL, *la = NULL, hints;
 
-	sock_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
+	/* Might look a little weird to first convert it to text and
+	 * then back to sockaddr, but it's protocol indepedant. */
+	getnameinfo((struct sockaddr *)&remote_addr.addr,
+		remote_addr.salen, remote_addr_s, sizeof(remote_addr_s),
+		remote_port, sizeof(remote_port),
+		NI_NUMERICHOST|NI_NUMERICSERV);
+	getnameinfo((struct sockaddr *)&local_addr.addr,
+		local_addr.salen, local_addr_s,	sizeof(local_addr_s),
+		local_port, sizeof(local_port),
+		NI_NUMERICHOST|NI_NUMERICSERV);
+
+	snprintf(ident_port, sizeof(ident_port), "%d", IDENT_PORT);
+	hints.ai_flags = AI_NUMERICHOST;
+	hints.ai_family = remote_addr.addr.ss_family;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+	hints.ai_addrlen = 0;
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+	getaddrinfo2(remote_addr_s, ident_port, &hints, &ident_serv);
+	getaddrinfo2(local_addr_s, NULL, &hints, &la);
+	
+	sock_fd = socket(ident_serv->ai_family, ident_serv->ai_socktype,
+		ident_serv->ai_protocol);
+
 	if (sock_fd == -1)
 	{
 		elog(LOG, "Failed to create socket on which to talk to Ident server: %m");
@@ -1126,42 +1227,27 @@ ident_inet(const struct in_addr remote_ip_addr,
 	}
 	else
 	{
-		struct sockaddr_in ident_server;
-		struct sockaddr_in la;
-
-		/*
-		 * Socket address of Ident server on the system from which client
-		 * is attempting to connect to us.
-		 */
-		ident_server.sin_family = AF_INET;
-		ident_server.sin_port = htons(IDENT_PORT);
-		ident_server.sin_addr = remote_ip_addr;
-
 		/*
 		 * Bind to the address which the client originally contacted,
 		 * otherwise the ident server won't be able to match up the right
 		 * connection. This is necessary if the PostgreSQL server is
 		 * running on an IP alias.
 		 */
-		memset(&la, 0, sizeof(la));
-		la.sin_family = AF_INET;
-		la.sin_addr = local_ip_addr;
-		rc = bind(sock_fd, (struct sockaddr *) & la, sizeof(la));
+
+		rc = bind(sock_fd, la->ai_addr, la->ai_addrlen);
 		if (rc == 0)
 		{
-			rc = connect(sock_fd,
-			   (struct sockaddr *) & ident_server, sizeof(ident_server));
+			rc = connect(sock_fd, ident_serv->ai_addr, 
+				ident_serv->ai_addrlen);
 		}
 		if (rc != 0)
 		{
-			/* save_errno is in case inet_ntoa changes errno */
-			int			save_errno = errno;
+			int	save_errno = errno;
 
 			elog(LOG, "Unable to connect to Ident server on the host which is "
 				 "trying to connect to Postgres "
-				 "(IP address %s, Port %d): %s",
-				 inet_ntoa(remote_ip_addr), IDENT_PORT,
-				 strerror(save_errno));
+				 "(Address %s, Port %s): %s", remote_addr_s,
+				 ident_port, strerror(save_errno));
 			ident_return = false;
 		}
 		else
@@ -1169,8 +1255,8 @@ ident_inet(const struct in_addr remote_ip_addr,
 			char		ident_query[80];
 
 			/* The query we send to the Ident server */
-			snprintf(ident_query, sizeof(ident_query), "%d,%d\n",
-					 ntohs(remote_port), ntohs(local_port));
+			snprintf(ident_query, sizeof(ident_query), "%s,%s\r\n",
+				remote_port, local_port);
 			/* loop in case send is interrupted */
 			do
 			{
@@ -1181,10 +1267,9 @@ ident_inet(const struct in_addr remote_ip_addr,
 				int			save_errno = errno;
 
 				elog(LOG, "Unable to send query to Ident server on the host which is "
-					 "trying to connect to Postgres (Host %s, Port %d), "
+					 "trying to connect to Postgres (Host %s, Port %s), "
 					 "even though we successfully connected to it: %s",
-					 inet_ntoa(remote_ip_addr), IDENT_PORT,
-					 strerror(save_errno));
+					 remote_addr_s, ident_port, strerror(save_errno));
 				ident_return = false;
 			}
 			else
@@ -1199,9 +1284,9 @@ ident_inet(const struct in_addr remote_ip_addr,
 
 					elog(LOG, "Unable to receive response from Ident server "
 						 "on the host which is "
-					 "trying to connect to Postgres (Host %s, Port %d), "
+					 "trying to connect to Postgres (Host %s, Port %s), "
 						 "even though we successfully sent our query to it: %s",
-						 inet_ntoa(remote_ip_addr), IDENT_PORT,
+						 remote_addr_s, ident_port,
 						 strerror(save_errno));
 					ident_return = false;
 				}
@@ -1215,6 +1300,8 @@ ident_inet(const struct in_addr remote_ip_addr,
 			closesocket(sock_fd);
 		}
 	}
+	freeaddrinfo2(hints.ai_family, la);
+	freeaddrinfo2(hints.ai_family, ident_serv);
 	return ident_return;
 }
 
@@ -1371,13 +1458,13 @@ authident(hbaPort *port)
 {
 	char		ident_user[IDENT_USERNAME_MAX + 1];
 
-	switch (port->raddr.sa.sa_family)
+	switch (port->raddr.addr.ss_family)
 	{
 		case AF_INET:
-			if (!ident_inet(port->raddr.in.sin_addr,
-							port->laddr.in.sin_addr,
-							port->raddr.in.sin_port,
-							port->laddr.in.sin_port, ident_user))
+#ifdef	HAVE_IPV6
+		case AF_INET6:
+#endif
+			if (!ident_inet(port->raddr, port->laddr, ident_user))
 				return STATUS_ERROR;
 			break;
 		case AF_UNIX:

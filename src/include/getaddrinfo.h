@@ -16,7 +16,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: getaddrinfo.h,v 1.2 2003/04/02 00:49:28 tgl Exp $
+ * $Id: getaddrinfo.h,v 1.3 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,22 +40,29 @@ struct addrinfo {
 	struct addrinfo *ai_next;
 };
 
-#define EAI_BADFLAGS	-1
+#define EAI_BADFLAGS		-1
 #define EAI_NONAME		-2
 #define EAI_AGAIN		-3
 #define EAI_FAIL		-4
-#define EAI_NODATA		-5
 #define EAI_FAMILY		-6
-#define EAI_SOCKTYPE	-7
+#define EAI_SOCKTYPE		-7
 #define EAI_SERVICE		-8
-#define EAI_ADDRFAMILY	-9
 #define EAI_MEMORY		-10
 #define EAI_SYSTEM		-11
 
 #define AI_PASSIVE		0x0001
 #define AI_NUMERICHOST	0x0004
 
+#define NI_NUMERICHOST	1
+#define NI_NUMERICSERV	2
+
 #endif /* HAVE_STRUCT_ADDRINFO */
+
+#ifndef	NI_MAXHOST
+#define NI_MAXHOST	1025
+#define NI_MAXSERV	32
+#endif
+
 
 
 #ifndef HAVE_GETADDRINFO
@@ -76,10 +83,18 @@ struct addrinfo {
 #endif
 #define gai_strerror pg_gai_strerror
 
+#ifdef getnameinfo
+#undef getnameinfo
+#endif
+#define	getnameinfo pg_getnameinfo
+
 extern int getaddrinfo(const char *node, const char *service,
 					   const struct addrinfo *hints, struct addrinfo **res);
 extern void freeaddrinfo(struct addrinfo *res);
 extern const char *gai_strerror(int errcode);
+extern int getnameinfo(const struct sockaddr *sa, int salen,
+			char *node, int nodelen,
+			char *service, int servicelen, int flags);
 
 #endif /* HAVE_GETADDRINFO */
 

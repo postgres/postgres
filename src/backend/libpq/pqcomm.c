@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.156 2003/06/09 17:59:19 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.157 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,33 +199,30 @@ StreamDoUnlink(void)
 
 int
 StreamServerPort(int family, char *hostName, unsigned short portNumber,
-				 char *unixSocketName, int *fdP)
+	 char *unixSocketName, int ListenSocket[], int MaxListen)
 {
 	int			fd,
 				err;
 	int			maxconn;
 	int			one = 1;
 	int			ret;
-	char		portNumberStr[64];
-	char	   *service;
-	struct addrinfo *addrs = NULL;
-	struct addrinfo hint;
-
-#ifdef HAVE_UNIX_SOCKETS
-	Assert(family == AF_UNIX || isAF_INETx(family));
-#else
-	Assert(isAF_INETx(family));
-#endif
+	char			portNumberStr[64];
+	char			*service;
+	struct addrinfo		*addrs = NULL, *addr;
+	struct addrinfo		hint;
+	int			listen_index = 0;
+	int			added = 0;
 
 	/* Initialize hint structure */
 	MemSet(&hint, 0, sizeof(hint));
 	hint.ai_family = family;
-	hint.ai_flags = AI_PASSIVE;
+	hint.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
 	hint.ai_socktype = SOCK_STREAM;
 
 #ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
+		/* Lock_AF_UNIX will also fill in sock_path. */
 		if (Lock_AF_UNIX(portNumber, unixSocketName) != STATUS_OK)
 			return STATUS_ERROR;
 		service = sock_path;
@@ -246,73 +243,132 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		return STATUS_ERROR;
 	}
 
-	if ((fd = socket(family, SOCK_STREAM, 0)) < 0)
+	for (addr = addrs; addr; addr = addr->ai_next)
 	{
-		elog(LOG, "server socket failure: socket(): %s",
-			 strerror(errno));
-		freeaddrinfo2(hint.ai_family, addrs);
-		return STATUS_ERROR;
-	}
-
-	if (isAF_INETx(family))
-	{
-		if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
-						sizeof(one))) == -1)
+		if (!IS_AF_UNIX(family) && IS_AF_UNIX(addr->ai_family))
 		{
-			elog(LOG, "server socket failure: setsockopt(SO_REUSEADDR): %s",
+			/* Only set up a unix domain socket when
+			 * they really asked for it.  The service/port
+			 * is different in that case. */
+			continue;
+		}
+
+		/* See if there is still room to add 1 more socket. */
+		for (; listen_index < MaxListen; listen_index++)
+		{
+			if (ListenSocket[listen_index] == -1)
+			{
+				break;
+			}
+		}
+		if (listen_index == MaxListen)
+		{
+			/* Nothing found. */
+			break;
+		}
+		if ((fd = socket(addr->ai_family, addr->ai_socktype,
+			addr->ai_protocol)) < 0)
+		{
+			elog(LOG, "server socket failure: socket(): %s",
 				 strerror(errno));
-			freeaddrinfo2(hint.ai_family, addrs);
-			return STATUS_ERROR;
+			continue;
 		}
-	}
 
-	Assert(addrs->ai_next == NULL && addrs->ai_family == family);
-	err = bind(fd, addrs->ai_addr, addrs->ai_addrlen);
-	if (err < 0)
-	{
-		elog(LOG, "server socket failure: bind(): %s\n"
-			 "\tIs another postmaster already running on port %d?",
-			 strerror(errno), (int) portNumber);
-		if (family == AF_UNIX)
-			elog(LOG, "\tIf not, remove socket node (%s) and retry.",
-				 sock_path);
-		else
-			elog(LOG, "\tIf not, wait a few seconds and retry.");
-		freeaddrinfo2(hint.ai_family, addrs);
-		return STATUS_ERROR;
-	}
 
-#ifdef HAVE_UNIX_SOCKETS
-	if (family == AF_UNIX)
-	{
-		if (Setup_AF_UNIX() != STATUS_OK)
+
+		if (!IS_AF_UNIX(addr->ai_family))
 		{
-			freeaddrinfo2(hint.ai_family, addrs);
-			return STATUS_ERROR;
+			if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+				(char *) &one, sizeof(one))) == -1)
+			{
+				elog(LOG, "server socket failure: "
+					"setsockopt(SO_REUSEADDR): %s",
+					strerror(errno));
+				closesocket(fd);
+				continue;
+			}
 		}
-	}
+
+#ifdef IPV6_V6ONLY
+		if (addr->ai_family == AF_INET6)
+		{
+			if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY,
+				(char *)&one, sizeof(one)) == -1)
+			{
+				elog(LOG, "server socket failure: "
+					"setsockopt(IPV6_V6ONLY): %s",
+					strerror(errno));
+				closesocket(fd);
+				continue;
+			}
+		}
 #endif
 
-	/*
-	 * Select appropriate accept-queue length limit.  PG_SOMAXCONN is only
-	 * intended to provide a clamp on the request on platforms where an
-	 * overly large request provokes a kernel error (are there any?).
-	 */
-	maxconn = MaxBackends * 2;
-	if (maxconn > PG_SOMAXCONN)
-		maxconn = PG_SOMAXCONN;
+		/*
+		 * Note: This might fail on some OS's, like Linux
+		 * older than 2.4.21-pre3, that don't have the IPV6_V6ONLY
+		 * socket option, and map ipv4 addresses to ipv6.  It will
+		 * show ::ffff:ipv4 for all ipv4 connections.
+		 */
+		err = bind(fd, addr->ai_addr, addr->ai_addrlen);
+		if (err < 0)
+		{
+			elog(LOG, "server socket failure: bind(): %s\n"
+				"\tIs another postmaster already running on "
+				"port %d?", strerror(errno), (int) portNumber);
+			if (addr->ai_family == AF_UNIX)
+			{
+				elog(LOG, "\tIf not, remove socket node (%s) "
+					"and retry.", sock_path);
+			}
+			else
+			{
+				elog(LOG, "\tIf not, wait a few seconds and "
+					"retry.");
+			}
+			closesocket(fd);
+			continue;
+		}
 
-	err = listen(fd, maxconn);
-	if (err < 0)
-	{
-		elog(LOG, "server socket failure: listen(): %s",
-			 strerror(errno));
-		freeaddrinfo2(hint.ai_family, addrs);
-		return STATUS_ERROR;
+#ifdef HAVE_UNIX_SOCKETS
+		if (addr->ai_family == AF_UNIX)
+		{
+			if (Setup_AF_UNIX() != STATUS_OK)
+			{
+				closesocket(fd);
+				break;
+			}
+		}
+#endif
+
+		/*
+		 * Select appropriate accept-queue length limit.  PG_SOMAXCONN
+		 * is only intended to provide a clamp on the request on
+		 * platforms where an overly large request provokes a kernel
+		 * error (are there any?).
+		 */
+		maxconn = MaxBackends * 2;
+		if (maxconn > PG_SOMAXCONN)
+			maxconn = PG_SOMAXCONN;
+
+		err = listen(fd, maxconn);
+		if (err < 0)
+		{
+			elog(LOG, "server socket failure: listen(): %s",
+				 strerror(errno));
+			closesocket(fd);
+			continue;
+		}
+		ListenSocket[listen_index] = fd;
+		added++;
 	}
 
-	*fdP = fd;
-	freeaddrinfo2(hint.ai_family, addrs);
+	freeaddrinfo(addrs);
+
+	if (!added)
+	{
+		return STATUS_ERROR;
+	}
 	return STATUS_OK;
 }
 
@@ -325,10 +381,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 static int
 Lock_AF_UNIX(unsigned short portNumber, char *unixSocketName)
 {
-	SockAddr	saddr;	/* just used to get socket path */
-
-	UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
-	strcpy(sock_path, saddr.un.sun_path);
+	UNIXSOCK_PATH(sock_path, portNumber, unixSocketName);
 
 	/*
 	 * Grab an interlock file associated with the socket file.
@@ -422,13 +475,11 @@ Setup_AF_UNIX(void)
 int
 StreamConnection(int server_fd, Port *port)
 {
-	ACCEPT_TYPE_ARG3 addrlen;
-
 	/* accept connection (and fill in the client (remote) address) */
-	addrlen = sizeof(port->raddr);
+	port->raddr.salen = sizeof(port->raddr.addr);
 	if ((port->sock = accept(server_fd,
-							 (struct sockaddr *) &port->raddr,
-							 &addrlen)) < 0)
+			 (struct sockaddr *) &port->raddr.addr,
+			 &port->raddr.salen)) < 0)
 	{
 		elog(LOG, "StreamConnection: accept() failed: %m");
 		return STATUS_ERROR;
@@ -444,25 +495,27 @@ StreamConnection(int server_fd, Port *port)
 #endif
 
 	/* fill in the server (local) address */
-	addrlen = sizeof(port->laddr);
-	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
-					&addrlen) < 0)
+	port->laddr.salen = sizeof(port->laddr.addr);
+	if (getsockname(port->sock, (struct sockaddr *) & port->laddr.addr,
+					&port->laddr.salen) < 0)
 	{
 		elog(LOG, "StreamConnection: getsockname() failed: %m");
 		return STATUS_ERROR;
 	}
 
 	/* select NODELAY and KEEPALIVE options if it's a TCP connection */
-	if (isAF_INETx(port->laddr.sa.sa_family))
+	if (!IS_AF_UNIX(port->laddr.addr.ss_family))
 	{
 		int			on = 1;
 
+#ifdef	TCP_NODELAY
 		if (setsockopt(port->sock, IPPROTO_TCP, TCP_NODELAY,
 					   (char *) &on, sizeof(on)) < 0)
 		{
 			elog(LOG, "StreamConnection: setsockopt(TCP_NODELAY) failed: %m");
 			return STATUS_ERROR;
 		}
+#endif
 		if (setsockopt(port->sock, SOL_SOCKET, SO_KEEPALIVE,
 					   (char *) &on, sizeof(on)) < 0)
 		{

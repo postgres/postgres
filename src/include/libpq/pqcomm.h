@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.85 2003/05/08 18:33:32 tgl Exp $
+ * $Id: pqcomm.h,v 1.86 2003/06/12 07:36:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,57 +32,59 @@
 #include <netinet/in.h>
 #endif   /* not WIN32 */
 
+#ifndef	HAVE_STRUCT_SOCKADDR_STORAGE
+/* Define a struct sockaddr_storage if we don't have one. */
+/*
+ * Desired design of maximum size and alignment
+ */
+#define _SS_MAXSIZE    128  /* Implementation specific max size */
+#define _SS_ALIGNSIZE  (sizeof (int64_t))
+                         /* Implementation specific desired alignment */
+/*
+ * Definitions used for sockaddr_storage structure paddings design.
+ */
+#define	_SS_PAD1SIZE	(_SS_ALIGNSIZE - sizeof (sa_family_t))
+#define	_SS_PAD2SIZE	(_SS_MAXSIZE - (sizeof (sa_family_t) + \
+				_SS_PAD1SIZE + _SS_ALIGNSIZE))
 
-#ifndef INET_ADDRSTRLEN
-#define INET_ADDRSTRLEN 16
+struct sockaddr_storage {
+#ifdef SALEN
+    uint8_t	__ss_len;        /* address length */
 #endif
+    sa_family_t	ss_family;	/* address family */
 
-#ifndef INET6_ADDRSTRLEN
-#define INET6_ADDRSTRLEN 46
-#endif
-
-
-#ifndef HAVE_STRUCT_SOCKADDR_UN
-struct sockaddr_un
-{
-	short int	sun_family;		/* AF_UNIX */
-	char		sun_path[108];	/* path name (gag) */
+    char	__ss_pad1[_SS_PAD1SIZE];
+		/* 6 byte pad, this is to make implementation
+		 * specific pad up to alignment field that
+		 * follows explicit in the data structure */
+    int64_t	__ss_align;
+		/* field to force desired structure
+		 * storage alignment */
+    char	__ss_pad2[_SS_PAD2SIZE];
+		/* 112 byte pad to achieve desired size,
+		 * _SS_MAXSIZE value minus size of ss_family
+		 * __ss_pad1, __ss_align fields is 112 */
 };
 #endif
 
-/* Define a generic socket address type. */
-
-typedef union SockAddr
-{
-	struct sockaddr sa;
-	struct sockaddr_in in;
-#ifdef HAVE_IPV6
-	struct sockaddr_in6 in6;
-#endif
-	struct sockaddr_un un;
+typedef struct {
+	struct sockaddr_storage	addr;
+	ACCEPT_TYPE_ARG3	salen;
 } SockAddr;
 
+/* Some systems don't have it, so default it to 0 so it doesn't
+ * have any effect on those systems. */
+#ifndef	AI_ADDRCONFIG
+#define	AI_ADDRCONFIG 0
+#endif
 
 /* Configure the UNIX socket location for the well known port. */
 
-#define UNIXSOCK_PATH(sun,port,defpath) \
-		snprintf((sun).sun_path, sizeof((sun).sun_path), "%s/.s.PGSQL.%d", \
+#define UNIXSOCK_PATH(path,port,defpath) \
+		snprintf(path, sizeof(path), "%s/.s.PGSQL.%d", \
 				((defpath) && *(defpath) != '\0') ? (defpath) : \
 				DEFAULT_PGSOCKET_DIR, \
 				(port))
-
-/*
- *		We do this because sun_len is in BSD's struct, while others don't.
- *		We never actually set BSD's sun_len, and I can't think of a
- *		platform-safe way of doing it, but the code still works. bjm
- */
-#if defined(SUN_LEN)
-#define UNIXSOCK_LEN(sun) \
-		(SUN_LEN(&(sun)))
-#else
-#define UNIXSOCK_LEN(sun) \
-		(strlen((sun).sun_path) + offsetof(struct sockaddr_un, sun_path))
-#endif
 
 /*
  * These manipulate the frontend/backend protocol version number.

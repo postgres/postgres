@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.36 2003/05/15 16:35:29 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.37 2003/06/12 07:36:51 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -22,7 +22,9 @@
 #include <fcntl.h>
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/types.h>
 #include <sys/socket.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <errno.h>
@@ -36,6 +38,7 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_database.h"
 #include "libpq/pqsignal.h"
+#include "libpq/libpq.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/memutils.h"
@@ -69,7 +72,7 @@ bool		pgstat_is_running = false;
  */
 static int	pgStatSock = -1;
 static int	pgStatPipe[2];
-static struct sockaddr_in pgStatAddr;
+static struct sockaddr_storage pgStatAddr;
 static int	pgStatPmPipe[2] = {-1, -1};
 
 static int	pgStatPid;
@@ -141,7 +144,9 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
 void
 pgstat_init(void)
 {
-	int			alen;
+	ACCEPT_TYPE_ARG3	alen;
+	struct	addrinfo	*addr, hints;
+	int			ret;
 
 	/*
 	 * Force start of collector daemon if something to collect
@@ -174,7 +179,24 @@ pgstat_init(void)
 	/*
 	 * Create the UDP socket for sending and receiving statistic messages
 	 */
-	if ((pgStatSock = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
+	hints.ai_flags = AI_PASSIVE;
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = 0;
+	hints.ai_addrlen = 0;
+	hints.ai_addr = NULL;
+	hints.ai_canonname = NULL;
+	hints.ai_next = NULL;
+	ret = getaddrinfo2("localhost", NULL, &hints, &addr);
+	if (ret || !addr)
+	{
+		elog(LOG, "PGSTAT: getaddrinfo2() failed: %s",
+			gai_strerror(ret));
+		goto startup_failed;
+	}
+	
+	if ((pgStatSock = socket(addr->ai_family,
+		addr->ai_socktype, addr->ai_protocol)) < 0)
 	{
 		elog(LOG, "PGSTAT: socket() failed: %m");
 		goto startup_failed;
@@ -184,16 +206,16 @@ pgstat_init(void)
 	 * Bind it to a kernel assigned port on localhost and get the assigned
 	 * port via getsockname().
 	 */
-	pgStatAddr.sin_family = AF_INET;
-	pgStatAddr.sin_port = htons(0);
-	inet_aton("127.0.0.1", &(pgStatAddr.sin_addr));
-	alen = sizeof(pgStatAddr);
-	if (bind(pgStatSock, (struct sockaddr *) & pgStatAddr, alen) < 0)
+	if (bind(pgStatSock, addr->ai_addr, addr->ai_addrlen) < 0)
 	{
-		elog(LOG, "PGSTAT: bind(127.0.0.1) failed: %m");
+		elog(LOG, "PGSTAT: bind() failed: %m");
 		goto startup_failed;
 	}
-	if (getsockname(pgStatSock, (struct sockaddr *) & pgStatAddr, &alen) < 0)
+	freeaddrinfo2(hints.ai_family, addr);
+	addr = NULL;
+
+	alen = sizeof(pgStatAddr);
+	if (getsockname(pgStatSock, (struct sockaddr *)&pgStatAddr, &alen) < 0)
 	{
 		elog(LOG, "PGSTAT: getsockname() failed: %m");
 		goto startup_failed;
@@ -235,6 +257,11 @@ pgstat_init(void)
 	return;
 
 startup_failed:
+	if (addr)
+	{
+		freeaddrinfo2(hints.ai_family, addr);
+	}
+
 	if (pgStatSock >= 0)
 		closesocket(pgStatSock);
 	pgStatSock = -1;
@@ -1496,7 +1523,7 @@ pgstat_recvbuffer(void)
 	int			msg_send = 0;	/* next send index in buffer */
 	int			msg_recv = 0;	/* next receive index */
 	int			msg_have = 0;	/* number of bytes stored */
-	struct sockaddr_in fromaddr;
+	struct sockaddr_storage	fromaddr;
 	int			fromlen;
 	bool		overflow = false;
 
@@ -1601,9 +1628,9 @@ pgstat_recvbuffer(void)
 		if (FD_ISSET(pgStatSock, &rfds))
 		{
 			fromlen = sizeof(fromaddr);
-			len = recvfrom(pgStatSock,
-						   (char *) &input_buffer, sizeof(PgStat_Msg), 0,
-						   (struct sockaddr *) &fromaddr, &fromlen);
+			len = recvfrom(pgStatSock, (char *) &input_buffer,
+				sizeof(PgStat_Msg), 0,
+				(struct sockaddr *) &fromaddr, &fromlen);
 			if (len < 0)
 			{
 				elog(LOG, "PGSTATBUFF: recvfrom() failed: %m");
@@ -1629,9 +1656,7 @@ pgstat_recvbuffer(void)
 			 * kernel-level check due to having used connect(), but let's
 			 * do it anyway.)
 			 */
-			if (fromaddr.sin_addr.s_addr != pgStatAddr.sin_addr.s_addr)
-				continue;
-			if (fromaddr.sin_port != pgStatAddr.sin_port)
+			if (memcmp(&fromaddr, &pgStatAddr, fromlen))
 				continue;
 
 			/*

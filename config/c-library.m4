@@ -1,5 +1,5 @@
 # Macros that test various C library quirks
-# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.19 2003/05/22 16:39:26 tgl Exp $
+# $Header: /cvsroot/pgsql/config/c-library.m4,v 1.20 2003/06/12 07:36:51 momjian Exp $
 
 
 # PGAC_VAR_INT_TIMEZONE
@@ -87,16 +87,27 @@ AC_DEFUN([PGAC_UNION_SEMUN],
 
 # PGAC_STRUCT_SOCKADDR_UN
 # -----------------------
-# If `struct sockaddr_un' exists, define HAVE_STRUCT_SOCKADDR_UN. If
-# it is missing then one could define it as { short int sun_family;
-# char sun_path[108]; }. (Requires test for <sys/un.h>!)
+# If `struct sockaddr_un' exists, define HAVE_UNIX_SOCKETS.
+# (Requires test for <sys/un.h>!)
 AC_DEFUN([PGAC_STRUCT_SOCKADDR_UN],
-[AC_CHECK_TYPES([struct sockaddr_un], [], [],
+[AC_CHECK_TYPES([struct sockaddr_un], [AC_DEFINE(HAVE_UNIX_SOCKETS, 1, [Define to 1 if you have unix sockets.])], [],
 [#include <sys/types.h>
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
 ])])# PGAC_STRUCT_SOCKADDR_UN
+
+
+# PGAC_STRUCT_SOCKADDR_STORAGE
+# ----------------------------
+# If `struct sockaddr_storage' exists, define HAVE_STRUCT_SOCKADDR_STORAGE. If
+# it is missing then one could define it.
+AC_DEFUN([PGAC_STRUCT_SOCKADDR_STORAGE],
+[AC_CHECK_TYPES([struct sockaddr_storage], [], [],
+[#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+])])# PGAC_STRUCT_SOCKADDR_STORAGE
 
 
 # PGAC_STRUCT_ADDRINFO
