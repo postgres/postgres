@@ -72,17 +72,26 @@ fi
 dnl this part selects the template from the one in the
 dnl template directory.
 
+dnl LOOK FOR EXACT MATCH FIRST,
+dnl then try an OS without a version
+
 AC_MSG_CHECKING(setting template to)
 AC_ARG_WITH(template,
     [  --with-template=TEMPLATE
                           use operating system template file 
                               see template directory],
     [  TEMPLATE=$withval ],
-    [  host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
-       GUESS=`grep "$host_no_ver" template/.similar | sed 's/.*=//' | tail -1`
+    [  
+       GUESS=`grep "^$host=" template/.similar | sed 's/.*=//' | tail -1`
        if test "$GUESS"
-       then	TEMPLATE="$GUESS"
-       else	TEMPLATE=`uname -s | tr A-Z a-z` 
+       then TEMPLATE="$GUESS"
+       else
+           host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
+           GUESS=`grep "^$host_no_ver" template/.similar | sed 's/.*=//' | tail -1`
+           if test "$GUESS"
+           then	TEMPLATE="$GUESS"
+           else	TEMPLATE=`uname -s | tr A-Z a-z` 
+           fi
        fi
     ])
 AC_MSG_RESULT($TEMPLATE)
