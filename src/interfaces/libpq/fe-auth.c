@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.84 2003/10/25 03:48:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.85 2003/11/26 15:55:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,11 +409,11 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 #if defined(HAVE_KRB5_ERROR_TEXT_DATA)
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
-					 err_ret->text.length, err_ret->text.data);
+					 (int) err_ret->text.length, err_ret->text.data);
 #elif defined(HAVE_KRB5_ERROR_E_DATA)
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
-					 err_ret->e_data->length,
+					 (int) err_ret->e_data->length,
 					 (const char *) err_ret->e_data->data);
 #else
 #error "bogus configuration"
