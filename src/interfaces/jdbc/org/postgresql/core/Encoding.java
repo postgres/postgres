@@ -8,7 +8,7 @@ import org.postgresql.util.*;
 /**
  * Converts to and from the character encoding used by the backend.
  *
- * $Id: Encoding.java,v 1.1 2001/07/21 18:52:11 momjian Exp $
+ * $Id: Encoding.java,v 1.2 2001/10/16 20:07:17 barry Exp $
  */
 
 public class Encoding {
@@ -21,27 +21,40 @@ public class Encoding {
     private static final Hashtable encodings = new Hashtable();
 
     static {
+        //Note: this list should match the set of supported server
+        // encodings found in backend/util/mb/encnames.c
         encodings.put("SQL_ASCII", new String[] { "ASCII", "us-ascii" });
         encodings.put("UNICODE", new String[] { "UTF-8", "UTF8" });
         encodings.put("LATIN1", new String[] { "ISO8859_1" });
         encodings.put("LATIN2", new String[] { "ISO8859_2" });
         encodings.put("LATIN3", new String[] { "ISO8859_3" });
         encodings.put("LATIN4", new String[] { "ISO8859_4" });
-	encodings.put("LATIN5", new String[] { "ISO8859_5" });
-	encodings.put("LATIN6", new String[] { "ISO8859_6" });
-	encodings.put("LATIN7", new String[] { "ISO8859_7" });
-	encodings.put("LATIN8", new String[] { "ISO8859_8" });
-	encodings.put("LATIN9", new String[] { "ISO8859_9" });
+	encodings.put("ISO_8859_5", new String[] { "ISO8859_5" });
+	encodings.put("ISO_8859_6", new String[] { "ISO8859_6" });
+	encodings.put("ISO_8859_7", new String[] { "ISO8859_7" });
+	encodings.put("ISO_8859_8", new String[] { "ISO8859_8" });
+	encodings.put("LATIN5", new String[] { "ISO8859_9" });
+	encodings.put("LATIN7", new String[] { "ISO8859_13" });
+	encodings.put("LATIN9", new String[] { "ISO8859_15_FDIS" });
 	encodings.put("EUC_JP", new String[] { "EUC_JP" });
 	encodings.put("EUC_CN", new String[] { "EUC_CN" });
 	encodings.put("EUC_KR", new String[] { "EUC_KR" });
 	encodings.put("EUC_TW", new String[] { "EUC_TW" });
-        encodings.put("WIN", new String[] { "Cp1252" });
+	encodings.put("SJIS", new String[] { "SJIS" });
+	encodings.put("BIG5", new String[] { "Big5" });
+        encodings.put("WIN1250", new String[] { "Cp1250" });
+        encodings.put("WIN", new String[] { "Cp1251" });
+        encodings.put("ALT", new String[] { "Cp866" });
 	// We prefer KOI8-U, since it is a superset of KOI8-R.
 	encodings.put("KOI8", new String[] { "KOI8_U", "KOI8_R" });
 	// If the database isn't encoding-aware then we can't have
 	// any preferred encodings.
         encodings.put("UNKNOWN", new String[0]);
+	// The following encodings do not have a java equivalent
+        encodings.put("MULE_INTERNAL", new String[0]);
+        encodings.put("LATIN6", new String[0]);
+        encodings.put("LATIN8", new String[0]);
+        encodings.put("LATIN10", new String[0]);
     }
 
     private final String encoding;
