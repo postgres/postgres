@@ -51,9 +51,15 @@ psql -A -q -t -c "select * from pg_database" template1 | grep '|' | tr '|' ' ' |
 grep -v '^template1 ' | \
 while read DATABASE DBUSERID ENCODING DATAPATH
 do
-	echo "${BS}connect template1 $DBUSERID"
+	DBUSERNAME="`echo \" \
+		select usename \
+		from pg_user \
+		where usesysid = $DBUSERID; \" | \
+		psql -A -q -t template1`"
 
-	if pg_encoding $ENCODING >/dev/null 2>&1
+	echo "${BS}connect template1 $DBUSERNAME"
+
+	if sh -c "pg_encoding $ENCODING" >/dev/null 2>&1
 	then
 		echo "create database $DATABASE with encoding='`pg_encoding $ENCODING`';"
 	else
