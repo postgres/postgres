@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.24 2000/08/03 23:07:46 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.25 2000/10/27 01:52:15 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -20,8 +20,9 @@
 #include "utils/inet.h"
 
 
-static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 static int32 network_cmp_internal(inet *a1, inet *a2);
+static int v4bitncmp(unsigned long a1, unsigned long a2, int bits);
+static bool v4addressOK(unsigned long a1, int bits);
 
 /*
  *	Access macros.	Add IPV6 support.
@@ -50,14 +51,29 @@ network_in(char *src, int type)
 	inet	   *dst;
 
 	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
+	/* make sure any unused bits in a CIDR value are zeroed */
+	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
 
 	/* First, try for an IP V4 address: */
 	ip_family(dst) = AF_INET;
 	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst),
 						 type ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > 32))
+	{
 		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "could not parse \"%s\"", src);
+		elog(ERROR, "invalid %s value '%s'",
+			 type ? "CIDR" : "INET", src);
+	}
+
+	/*
+	 * Error check: CIDR values must not have any bits set beyond the masklen.
+	 * XXX this code not IPV6 ready.
+	 */
+	if (type)
+	{
+		if (! v4addressOK(ip_v4addr(dst), bits))
+			elog(ERROR, "invalid CIDR value '%s': width too small", src);
+	}
 
 	VARATT_SIZEP(dst) = VARHDRSZ
 		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
@@ -128,11 +144,12 @@ cidr_out(PG_FUNCTION_ARGS)
 /*
  *	Basic comparison function for sorting and inet/cidr comparisons.
  *
- * XXX this ignores bits to the right of the mask.  That's probably
- * correct for CIDR, almost certainly wrong for INET.  We need to have
- * two sets of comparator routines, not just one.  Note that suggests
- * that CIDR and INET should not be considered binary-equivalent by
- * the parser?
+ * Comparison is first on the common bits of the network part, then on
+ * the length of the network part, and then on the whole unmasked address.
+ * The effect is that the network part is the major sort key, and for
+ * equal network parts we sort on the host part.  Note this is only sane
+ * for CIDR if address bits to the right of the mask are guaranteed zero;
+ * otherwise logically-equal CIDRs might compare different.
  */
 
 static int32
@@ -140,12 +157,16 @@ network_cmp_internal(inet *a1, inet *a2)
 {
 	if (ip_family(a1) == AF_INET && ip_family(a2) == AF_INET)
 	{
-		int		order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2),
-								  Min(ip_bits(a1), ip_bits(a2)));
+		int		order;
 
+		order = v4bitncmp(ip_v4addr(a1), ip_v4addr(a2),
+						  Min(ip_bits(a1), ip_bits(a2)));
 		if (order != 0)
 			return order;
-		return ((int32) ip_bits(a1)) - ((int32) ip_bits(a2));
+		order = ((int) ip_bits(a1)) - ((int) ip_bits(a2));
+		if (order != 0)
+			return order;
+		return v4bitncmp(ip_v4addr(a1), ip_v4addr(a2), 32);
 	}
 	else
 	{
@@ -455,13 +476,11 @@ network_netmask(PG_FUNCTION_ARGS)
  */
 
 static int
-v4bitncmp(unsigned int a1, unsigned int a2, int bits)
+v4bitncmp(unsigned long a1, unsigned long a2, int bits)
 {
-	unsigned long mask = 0;
-	int			i;
+	unsigned long mask;
 
-	for (i = 0; i < bits; i++)
-		mask = (mask >> 1) | 0x80000000;
+	mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
 	a1 = ntohl(a1);
 	a2 = ntohl(a2);
 	if ((a1 & mask) < (a2 & mask))
@@ -469,4 +488,19 @@ v4bitncmp(unsigned int a1, unsigned int a2, int bits)
 	else if ((a1 & mask) > (a2 & mask))
 		return (1);
 	return (0);
+}
+
+/*
+ * Returns true if given address fits fully within the specified bit width.
+ */
+static bool
+v4addressOK(unsigned long a1, int bits)
+{
+	unsigned long mask;
+
+	mask = (0xFFFFFFFFL << (32 - bits)) & 0xFFFFFFFFL;
+	a1 = ntohl(a1);
+	if ((a1 & mask) == a1)
+		return true;
+	return false;
 }

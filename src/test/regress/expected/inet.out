@@ -6,7 +6,7 @@ DROP TABLE INET_TBL;
 ERROR:  table "inet_tbl" does not exist
 CREATE TABLE INET_TBL (c cidr, i inet);
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.226/24');
-INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.0/24', '192.168.1.226');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '10.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10.0.0.0', '10.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10.1.2.3', '10.1.2.3/32');
@@ -15,6 +15,9 @@ INSERT INTO INET_TBL (c, i) VALUES ('10.1', '10.1.2.3/16');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '10.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '11.1.2.3/8');
 INSERT INTO INET_TBL (c, i) VALUES ('10', '9.1.2.3/8');
+-- check that CIDR rejects invalid input:
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');
+ERROR:  invalid CIDR value '192.168.1.2/24': width too small
 SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
  ten |     cidr     |       inet       
 -----+--------------+------------------
@@ -107,15 +110,10 @@ SELECT '' AS four, c AS cidr, masklen(c) AS "masklen(cidr)",
 
 SELECT '' AS six, c AS cidr, i AS inet FROM INET_TBL
   WHERE c = i;
- six |     cidr     |       inet       
------+--------------+------------------
-     | 192.168.1/24 | 192.168.1.226/24
-     | 10/8         | 10.1.2.3/8
-     | 10.1.2.3/32  | 10.1.2.3
-     | 10.1.2/24    | 10.1.2.3/24
-     | 10.1/16      | 10.1.2.3/16
-     | 10/8         | 10.1.2.3/8
-(6 rows)
+ six |    cidr     |   inet   
+-----+-------------+----------
+     | 10.1.2.3/32 | 10.1.2.3
+(1 row)
 
 SELECT '' AS ten, i, c,
   i < c AS lt, i <= c AS le, i = c AS eq, 
@@ -125,14 +123,14 @@ SELECT '' AS ten, i, c,
   FROM INET_TBL;
  ten |        i         |      c       | lt | le | eq | ge | gt | ne | sb | sbe | sup | spe 
 -----+------------------+--------------+----+----+----+----+----+----+----+-----+-----+-----
-     | 192.168.1.226/24 | 192.168.1/24 | f  | t  | t  | t  | f  | f  | f  | t   | f   | t
+     | 192.168.1.226/24 | 192.168.1/24 | f  | f  | f  | t  | t  | t  | f  | t   | f   | t
      | 192.168.1.226    | 192.168.1/24 | f  | f  | f  | t  | t  | t  | t  | t   | f   | f
-     | 10.1.2.3/8       | 10/8         | f  | t  | t  | t  | f  | f  | f  | t   | f   | t
+     | 10.1.2.3/8       | 10/8         | f  | f  | f  | t  | t  | t  | f  | t   | f   | t
      | 10.1.2.3/8       | 10.0.0.0/32  | t  | t  | f  | f  | f  | t  | f  | f   | t   | t
      | 10.1.2.3         | 10.1.2.3/32  | f  | t  | t  | t  | f  | f  | f  | t   | f   | t
-     | 10.1.2.3/24      | 10.1.2/24    | f  | t  | t  | t  | f  | f  | f  | t   | f   | t
-     | 10.1.2.3/16      | 10.1/16      | f  | t  | t  | t  | f  | f  | f  | t   | f   | t
-     | 10.1.2.3/8       | 10/8         | f  | t  | t  | t  | f  | f  | f  | t   | f   | t
+     | 10.1.2.3/24      | 10.1.2/24    | f  | f  | f  | t  | t  | t  | f  | t   | f   | t
+     | 10.1.2.3/16      | 10.1/16      | f  | f  | f  | t  | t  | t  | f  | t   | f   | t
+     | 10.1.2.3/8       | 10/8         | f  | f  | f  | t  | t  | t  | f  | t   | f   | t
      | 11.1.2.3/8       | 10/8         | f  | f  | f  | t  | t  | t  | f  | f   | f   | f
      | 9.1.2.3/8        | 10/8         | t  | t  | f  | f  | f  | t  | f  | f   | f   | f
 (10 rows)
