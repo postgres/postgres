@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.2 1998/12/30 20:46:06 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.3 1999/01/05 11:12:11 wieck Exp $
  *
  * ----------
  */
@@ -20,7 +20,7 @@
  * The hardcoded limits and defaults of the numeric data type
  * ----------
  */
-#define NUMERIC_MAX_PRECISION		4000
+#define NUMERIC_MAX_PRECISION		1000
 #define NUMERIC_DEFAULT_PRECISION	30
 #define NUMERIC_DEFAULT_SCALE		6
 
