@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.24 1998/08/19 02:02:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.25 1998/08/19 15:47:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ IndexNext(IndexScan *node)
 			{
 				bool		prev_matches = false;
 				int			prev_index;
-
+		
 				/* ----------------
 			 	 *	store the scanned tuple in the scan tuple slot of
 			 	 *	the scan state.  Eventually we will only do this and not
@@ -142,10 +142,17 @@ IndexNext(IndexScan *node)
 								slot,		/* slot to store in */
 								buffer,		/* buffer associated with tuple  */
 								false);		/* don't pfree */
- 
+
+				/*
+				 *	We must check to see if the current tuple would have been
+				 *	matched by an earlier index, so we don't double report it.
+				 *	We do this by passing the tuple through ExecQual and look
+				 *	for failure with all previous qualifications.
+				 */
 				for (prev_index = 0; prev_index < indexstate->iss_IndexPtr;
 																prev_index++)
 				{
+					scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
 					if (ExecQual(nth(prev_index, node->indxqual),
 						scanstate->cstate.cs_ExprContext))
 					{
