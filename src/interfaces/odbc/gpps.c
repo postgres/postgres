@@ -97,10 +97,18 @@ GetPrivateProfileString(char *theSection,	// section name
 	  /* This code makes it so that a file in the users home dir
 	   * overrides a the "default" file as passed in
 	  */
+#ifndef __CYGWIN32__
 	aFile = (FILE*)(buf ? fopen(buf, "r") : NULL);
+#else
+	aFile = (FILE*)(buf ? fopen(buf, "rb") : NULL);
+#endif
 	if(!aFile) {
 		sprintf(buf,"%s",theIniFileName);
+#ifndef __CYGWIN32__
 		aFile = (FILE*)(buf ? fopen(buf, "r") : NULL);
+#else
+		aFile = (FILE*)(buf ? fopen(buf, "rb") : NULL);
+#endif
 	}
 
 		

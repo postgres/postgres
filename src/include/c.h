@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.48 1999/01/17 03:22:51 tgl Exp $
+ * $Id: c.h,v 1.49 1999/01/17 06:19:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,10 @@
 #ifdef STDC_HEADERS
 #include <stddef.h>
 #include <stdarg.h>
+#endif
+
+#ifdef __CYGWIN32__
+#include <errno.h>
 #endif
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.34 1998/09/01 04:32:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.35 1999/01/17 06:18:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,7 +550,11 @@ _ReadLOArray(char *str,
 	{
 		FILE	   *afd;
 
+#ifndef __CYGWIN32__
 		if ((afd = AllocateFile(accessfile, "r")) == NULL)
+#else
+		if ((afd = AllocateFile(accessfile, "r")) == NULL)
+#endif
 			elog(ERROR, "unable to open access pattern file");
 		*chunkFlag = true;
 		retStr = _ChunkArray(*fd, afd, ndim, dim, baseSize, nbytes,

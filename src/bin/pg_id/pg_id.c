@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.6 1998/06/15 19:30:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/pg_id.c,v 1.7 1999/01/17 06:19:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-
+#ifdef __CYGWIN32__
+#include <getopt.h>
+#endif
 
 int
 main(int argc, char **argv)

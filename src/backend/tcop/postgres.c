@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.95 1998/12/16 11:53:52 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.96 1999/01/17 06:18:42 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -39,6 +39,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#ifdef __CYGWIN32__
+#include <getopt.h>
+#endif
 
 #include "postgres.h"
 #include "miscadmin.h"
@@ -1451,7 +1454,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		{
 			fprintf(stderr,
 					"Postmaster flag set: no port number specified, use /dev/null\n");
+#ifndef __CYGWIN32__
 			Portfd = open(NULL_DEV, O_RDWR, 0666);
+#else
+			Portfd = open(NULL_DEV, O_RDWR | O_BINARY, 0666);
+#endif
 		}
 		pq_init(Portfd);
 		whereToSendOutput = Remote;
@@ -1520,7 +1527,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.95 $ $Date: 1998/12/16 11:53:52 $\n");
+		puts("$Revision: 1.96 $ $Date: 1999/01/17 06:18:42 $\n");
 	}
 
 	/* ----------------

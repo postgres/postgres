@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.92 1998/12/15 12:46:01 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.93 1999/01/17 06:18:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,11 @@ vc_init()
 {
 	int			fd;
 
+#ifndef __CYGWIN32__
 	if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
+#else
+	if ((fd = open("pg_vlock", O_CREAT | O_EXCL | O_BINARY, 0600)) < 0)
+#endif
 	{
 		elog(ERROR, "Can't create lock file.  Is another vacuum cleaner running?\n\
 \tIf not, you may remove the pg_vlock file in the %s\n\

@@ -1,6 +1,19 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.21 1998/08/28 14:17:57 momjian Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.22 1999/01/17 06:19:58 momjian Exp $
 #
+if [ $# -eq 0 ];
+then
+	echo "Syntaxe: $0 <portname>"
+	exit 1
+fi
+
+if [ $1 == "win" ];
+then
+	HOST="-h localhost"
+else
+	HOST=""
+fi
+
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
 	ECHO_N="echo -n"
@@ -18,7 +31,7 @@ PGTZ="PST8PDT"; export PGTZ
 PGDATESTYLE="Postgres,US"; export PGDATESTYLE
 
 #FRONTEND=monitor
-FRONTEND="psql -n -e -q"
+FRONTEND="psql $HOST -n -e -q"
 
 SYSTEM=`uname -s`
 
@@ -31,10 +44,10 @@ echo "See regress/README for more information."
 echo ""
 
 echo "=============== destroying old regression database... ================="
-destroydb regression
+destroydb $HOST regression
 
 echo "=============== creating new regression database...   ================="
-createdb regression
+createdb $HOST regression
 if [ $? -ne 0 ]; then
      echo createdb failed
      exit 1

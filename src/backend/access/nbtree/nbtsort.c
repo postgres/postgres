@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.33 1998/09/01 04:27:07 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.34 1999/01/17 06:18:12 momjian Exp $
  *
  * NOTES
  *
@@ -420,7 +420,11 @@ _bt_tapecreate(char *fname)
 
 	tape->bttb_magic = BTTAPEMAGIC;
 
+#ifndef __CYGWIN32__
 	tape->bttb_fd = FileNameOpenFile(fname, O_RDWR | O_CREAT | O_TRUNC, 0600);
+#else
+	tape->bttb_fd = FileNameOpenFile(fname, O_RDWR | O_CREAT | O_TRUNC | O_BINARY, 0600);
+#endif
 	Assert(tape->bttb_fd >= 0);
 
 	/* initialize the buffer */

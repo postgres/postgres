@@ -345,7 +345,11 @@ read_pg_options(SIGNAL_ARGS)
 	}
 
 	snprintf(buffer, BUF_SIZE - 1, "%s/%s", DataDir, "pg_options");
+#ifndef __CYGWIN32__
 	if ((fd = open(buffer, O_RDONLY)) < 0)
+#else
+	if ((fd = open(buffer, O_RDONLY | O_BINARY)) < 0)
+#endif
 		return;
 
 	if ((n = read(fd, buffer, BUF_SIZE - 1)) > 0)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.51 1998/12/18 09:10:36 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.52 1999/01/17 06:18:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -620,7 +620,11 @@ ProcessUtility(Node *parsetree,
 
 				filename = stmt->filename;
 				closeAllVfds();
+#ifndef __CYGWIN32__
 				if ((fp = AllocateFile(filename, "r")) == NULL)
+#else
+				if ((fp = AllocateFile(filename, "rb")) == NULL)
+#endif
 					elog(ERROR, "LOAD: could not open file '%s'", filename);
 				FreeFile(fp);
 				load_file(filename);

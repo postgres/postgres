@@ -12,6 +12,7 @@ i386-pc-solaris=solaris_i386_gcc
 i386-pc-sunos5=solaris_i386_gcc
 i386-unknown-freebsd=freebsd
 i386-unknown-netbsd=netbsd
+i386-pc-cygwin32=cygwin32
 i486-pc-linux-gnu=linux_i386
 i586-pc-linux-gnu=linux_i386
 i586-pc-sco3.2v=sco

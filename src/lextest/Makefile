@@ -19,6 +19,6 @@ lextest: lextest.c scan.l
 	@echo "If this fails, flex is broken" | ./lextest || rm -f lextest
 
 clean:
-	rm -f lextest lex.yy.c lex.yy.o lextest.o
+	rm -f lextest$(X) lex.yy.c lex.yy.o lextest.o
 
 dep:

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.16 1998/07/26 04:31:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.17 1999/01/17 06:19:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,19 +43,37 @@ endif
 all: $(INFILES)
 	cd input; $(MAKE) all; cd ..
 	cd output; $(MAKE) all; cd ..
+#ifneq ($(PORTNAME), win)
 	$(MAKE) -C ../../../contrib/spi REFINT_VERBOSE=1 refint$(DLSUFFIX) \
 	autoinc$(DLSUFFIX)
+#else
+#	cat /dev/null > ../../../contrib/spi/refint$(DLSUFFIX)
+#	cat /dev/null > ../../../contrib/spi/autoinc$(DLSUFFIX)
+#endif
+
+#ifeq ($(PORTNAME), win)
+#regress.dll: regress.c
+#	cat /dev/null > $@
+#endif
 
 #
 # run the test
 #
 runtest: $(INFILES) 
+ifneq ($(PORTNAME), win)
 	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
-	$(SHELL) ./regress.sh 2>&1 | tee regress.out
+	$(SHELL) ./regress.sh $(PORTNAME) 2>&1 | tee regress.out
+else
+	MULTIBYTE=$(MULTIBYTE);export MULTIBYTE; \
+	./regress.sh $(PORTNAME) 2>&1 | tee regress.out
+endif
 	@echo "ACTUAL RESULTS OF REGRESSION TEST ARE NOW IN FILE regress.out"
 
 clean:
-	rm -f $(INFILES) regress.out
+	rm -f $(INFILES) regress.out regress.o regression.diffs
+ifeq ($(PORTNAME), win)
+	rm -f regress.def
+endif
 	$(MAKE) -C sql clean
 	$(MAKE) -C expected clean
 	$(MAKE) -C results clean

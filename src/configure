@@ -668,8 +668,6 @@ PORTNAME=${os}
 
 
 
-
-
 echo "checking echo setting..."
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -760,7 +758,7 @@ fi
 
 
 if test "$INCLUDE_DIRS"; then
-	for dir in $INCLUDE_DIRS; do
+	for dir in $INCLUDE_DIRS $SRCH_INC; do
 		if test -d "$dir"; then
 			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
 		else
@@ -798,7 +796,7 @@ fi
 
 
 if test "$LIBRARY_DIRS"; then
-	for dir in $LIBRARY_DIRS; do
+	for dir in $LIBRARY_DIRS $SRCH_LIB; do
 		if test -d "$dir"; then
 			PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
 		else
@@ -1549,11 +1547,11 @@ esac
 
 ECHO_N_OUT=`echo -n "" | wc -c`
 ECHO_C_OUT=`echo "\c" | wc -c`
-if test "$ECHO_N_OUT" -eq 0; then
+if test $ECHO_N_OUT -eq 0; then
 	DASH_N='-n'
 	BACKSLASH_C=
 else
-	if test "ECHO_C_OUT" -eq 0; then
+	if test $ECHO_C_OUT -eq 0; then
 		DASH_N=
 		BACKSLASH_C='\\\\c'
 	else

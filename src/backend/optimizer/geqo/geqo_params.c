@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.10 1998/09/01 03:23:11 momjian Exp $
+* $Id: geqo_params.c,v 1.11 1999/01/17 06:18:27 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -91,7 +91,11 @@ geqo_params(int string_length)
 	sprintf(conf_file, "%s/%s", DataDir, GEQO_FILE);
 
 	/* open the config file */
+#ifndef __CYGWIN32__
 	file = AllocateFile(conf_file, "r");
+#else
+	file = AllocateFile(conf_file, "rb");
+#endif
 	if (file)
 	{
 

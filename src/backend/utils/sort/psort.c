@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.46 1999/01/01 04:48:49 momjian Exp $
+ *	  $Id: psort.c,v 1.47 1999/01/17 06:19:02 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -1033,8 +1033,11 @@ gettape()
 
 	StrNCpy(tp->tl_name, uniqueName, MAXPGPATH);
 
-
+#ifndef __CYGWIN32__
 	file = AllocateFile(tp->tl_name, "w+");
+#else
+	file = AllocateFile(tp->tl_name, "w+b");
+#endif
 	if (file == NULL)
 		elog(ERROR, "Open: %s in %s line %d, %s", tp->tl_name,
 			 __FILE__, __LINE__, strerror(errno));

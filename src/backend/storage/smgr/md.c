@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.39 1998/09/01 04:32:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.40 1999/01/17 06:18:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,11 @@ mdcreate(Relation reln)
 	char	   *path;
 
 	path = relpath(reln->rd_rel->relname.data);
+#ifndef __CYGWIN32__
 	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
+#else
+	fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
+#endif
 
 	/*
 	 * If the file already exists and is empty, we pretend that the create
@@ -157,7 +161,11 @@ mdcreate(Relation reln)
 	{
 		if (!IsBootstrapProcessingMode())
 			return -1;
+#ifndef __CYGWIN32__
 		fd = FileNameOpenFile(path, O_RDWR, 0600);		/* Bootstrap */
+#else
+		fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);	/* Bootstrap */
+#endif
 		if (fd < 0)
 			return -1;
 	}
@@ -290,11 +298,19 @@ mdopen(Relation reln)
 
 	path = relpath(reln->rd_rel->relname.data);
 
+#ifndef __CYGWIN32__
 	fd = FileNameOpenFile(path, O_RDWR, 0600);
+#else
+	fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);
+#endif
 
 	/* this should only happen during bootstrap processing */
 	if (fd < 0)
+#ifndef __CYGWIN32__
 		fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
+#else
+		fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
+#endif
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)
@@ -622,7 +638,11 @@ mdblindwrt(char *dbstr,
 	}
 #endif
 
+#ifndef __CYGWIN32__
 	if ((fd = open(path, O_RDWR, 0600)) < 0)
+#else
+	if ((fd = open(path, O_RDWR | O_BINARY, 0600)) < 0)
+#endif
 		return SM_FAIL;
 
 	/* seek to the right spot */
@@ -900,7 +920,11 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 		fullpath = path;
 
 	/* open the file */
+#ifndef __CYGWIN32__
 	fd = PathNameOpenFile(fullpath, O_RDWR | oflags, 0600);
+#else
+	fd = PathNameOpenFile(fullpath, O_RDWR | O_BINARY | oflags, 0600);
+#endif
 
 	if (dofree)
 		pfree(fullpath);

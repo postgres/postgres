@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.87 1999/01/17 03:37:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.88 1999/01/17 06:19:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,7 +567,7 @@ connectDB(PGconn *conn)
 		conn->raddr.in.sin_port = htons((unsigned short) (portno));
 		conn->raddr_len = sizeof(struct sockaddr_in);
 	}
-#ifndef WIN32
+#if !defined(WIN32) && !defined(__CYGWIN32__)
 	else
 		conn->raddr_len = UNIXSOCK_PATH(conn->raddr.un, portno);
 #endif

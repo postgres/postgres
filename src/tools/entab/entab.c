@@ -94,7 +94,11 @@ char	  **argv;
 			in_file = stdin;
 		else
 		{
+#ifndef __CYGWIN32__
 			if ((in_file = fopen(*argv, "r")) == NULL)
+#else
+			if ((in_file = fopen(*argv, "rb")) == NULL)
+#endif
 				halt("PERROR:  Can not open file %s\n", argv[0]);
 			argv++;
 		}

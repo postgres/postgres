@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.21 1998/11/27 19:52:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.22 1999/01/17 06:18:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,11 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 	sprintf(dbfname, "%s%cpg_database", DataDir, SEP_CHAR);
 	fileflags = O_RDONLY;
 
+#ifndef __CYGWIN32__
 	if ((dbfd = open(dbfname, O_RDONLY, 0)) < 0)
+#else
+	if ((dbfd = open(dbfname, O_RDONLY | O_BINARY, 0)) < 0)
+#endif
 		elog(FATAL, "Cannot open %s", dbfname);
 
 	pfree(dbfname);

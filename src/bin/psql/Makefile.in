@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.14 1998/11/30 00:30:05 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.15 1999/01/17 06:19:19 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,13 +43,13 @@ submake:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
 install: psql
-	$(INSTALL) $(INSTL_EXE_OPTS) psql $(BINDIR)/psql
+	$(INSTALL) $(INSTL_EXE_OPTS) psql$(X) $(BINDIR)/psql$(X)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
-	rm -f psql $(OBJS) 
+	rm -f psql$(X) $(OBJS) 
 
 ifeq (depend,$(wildcard depend))
 include depend

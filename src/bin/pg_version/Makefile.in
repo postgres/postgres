@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.5 1998/04/06 16:51:27 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile.in,v 1.6 1999/01/17 06:19:14 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,13 +28,13 @@ submake:
 	$(MAKE) -C ../../utils version.o
 
 install: pg_version
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_version $(BINDIR)/pg_version
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_version$(X) $(BINDIR)/pg_version$(X)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean: 
-	rm -f pg_version pg_version.o
+	rm -f pg_version$(X) pg_version.o
 
 ifeq (depend,$(wildcard depend))
 include depend

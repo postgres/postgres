@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.62 1999/01/17 03:10:23 tgl Exp $
+ *  $Id: pqcomm.c,v 1.63 1999/01/17 06:18:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -466,7 +466,11 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		 * can safely delete the file.
 		 */
 #ifdef HAVE_FCNTL_SETLK
+#ifndef __CYGWIN32__
 		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK, 0666)) >= 0)
+#else
+		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | O_BINARY, 0666)) >= 0)
+#endif
 		{
 			struct flock	lck;
 			
@@ -519,7 +523,11 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		 * lock_fd is left open to keep the lock.
 		 */
 #ifdef HAVE_FCNTL_SETLK
+#ifndef __CYGWIN32__
 		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK, 0666)) >= 0)
+#else
+		if ((lock_fd = open(sock_path, O_WRONLY | O_NONBLOCK | O_BINARY, 0666)) >= 0)
+#endif
 		{
 			struct flock	lck;
 			

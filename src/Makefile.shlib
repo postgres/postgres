@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.5 1998/11/30 00:30:03 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.6 1999/01/17 06:18:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -156,6 +156,10 @@ ifeq ($(PORTNAME), unixware)
   endif
 endif
 
+ifeq ($(PORTNAME), win)
+  install-shlib-dep	:= install-shlib
+  shlib				:= $(NAME)$(DLSUFFIX)
+endif
 
 # Default target definition.  Note shlib is empty if not building a shlib.
 
@@ -163,6 +167,7 @@ all: lib$(NAME).a $(shlib)
 
 # Rules to build regular and shared libraries
 
+ifneq ($(PORTNAME), win)
 lib$(NAME).a: $(OBJS)
 ifdef MK_NO_LORDER
 	$(AR) $(AROPT) $@ $(OBJS) 
@@ -170,10 +175,21 @@ else
 	$(AR) $(AROPT) $@ `lorder $(OBJS) | tsort`
 endif
 	$(RANLIB) $@
+endif
 
 ifneq ($(shlib),)
+ifneq ($(PORTNAME), win)
 $(shlib): $(OBJS)
 	$(LD) $(LDFLAGS_SL) -o $@ $(OBJS) $(SHLIB_LINK)
+else
+$(shlib) lib$(NAME).a: $(OBJS) $(SRCDIR)/utils/dllinit.o
+	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(SRCDIR)/utils/dllinit.o $(DLLINIT) $(SHLIB_LINK)
+	$(DLLTOOL) --dllname $(shlib) --def $(NAME).def --output-lib lib$(NAME).a
+
+$(SRCDIR)/utils/dllinit.o: $(SRCDIR)/utils/dllinit.c
+	$(MAKE) -C $(SRCDIR)/utils dllinit.o
+endif
 endif
 
 # Rules to install regular and shared libraries
@@ -185,6 +201,7 @@ install-lib: lib$(NAME).a
 
 install-shlib: $(shlib)
 	$(INSTALL) $(INSTL_SHLIB_OPTS) $(shlib) $(LIBDIR)/$(shlib)
+ifneq ($(PORTNAME), win)
 	if [ "$(shlib)" != "lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)" ]; then \
 		cd $(LIBDIR); \
 		rm -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION); \
@@ -195,3 +212,4 @@ install-shlib: $(shlib)
 		rm -f lib$(NAME)$(DLSUFFIX); \
 		$(LN_S) $(shlib) lib$(NAME)$(DLSUFFIX); \
 	fi
+endif

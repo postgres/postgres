@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.14 1998/11/27 19:52:02 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.15 1999/01/17 06:18:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,9 +172,15 @@ ExecHashJoin(HashJoin *node)
 			palloc(nbatch * sizeof(File));
 		for (i = 0; i < nbatch; i++)
 		{
+#ifndef __CYGWIN32__
 			outerbatches[i] = FileNameOpenFile(
-											 ABSADDR(outerbatchNames[i]),
-											   O_CREAT | O_RDWR, 0600);
+							ABSADDR(outerbatchNames[i]),
+							O_CREAT | O_RDWR, 0600);
+#else
+			outerbatches[i] = FileNameOpenFile(
+							ABSADDR(outerbatchNames[i]),
+							O_CREAT | O_RDWR | O_BINARY, 0600);
+#endif
 		}
 		hjstate->hj_OuterBatches = outerbatches;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.52 1998/12/15 12:46:37 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.53 1999/01/17 06:18:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1861,7 +1861,11 @@ init_irels(void)
 	int			i;
 	int			relno;
 
+#ifndef __CYGWIN32__
 	if ((fd = FileNameOpenFile(INIT_FILENAME, O_RDONLY, 0600)) < 0)
+#else
+	if ((fd = FileNameOpenFile(INIT_FILENAME, O_RDONLY | O_BINARY, 0600)) < 0)
+#endif
 	{
 		write_irels();
 		return;
@@ -2022,7 +2026,11 @@ write_irels(void)
 	int			relno;
 	RelationBuildDescInfo bi;
 
+#ifndef __CYGWIN32__
 	fd = FileNameOpenFile(INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+#else
+	fd = FileNameOpenFile(INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
+#endif
 	if (fd < 0)
 		elog(FATAL, "cannot create init file %s", INIT_FILENAME);
 

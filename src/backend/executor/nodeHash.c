@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: nodeHash.c,v 1.28 1998/12/15 12:46:06 vadim Exp $
+ *  $Id: nodeHash.c,v 1.29 1999/01/17 06:18:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,8 +100,13 @@ ExecHash(Hash *node)
 		batches = (File *) palloc(nbatch * sizeof(File));
 		for (i = 0; i < nbatch; i++)
 		{
+#ifndef __CYGWIN32__
 			batches[i] = FileNameOpenFile(ABSADDR(innerbatchNames[i]),
 										  O_CREAT | O_RDWR, 0600);
+#else
+			batches[i] = FileNameOpenFile(ABSADDR(innerbatchNames[i]),
+										  O_CREAT | O_RDWR | O_BINARY, 0600);
+#endif
 		}
 		hashstate->hashBatches = batches;
 		batchPos = (RelativeAddr *) ABSADDR(hashtable->innerbatchPos);

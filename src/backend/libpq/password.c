@@ -1,7 +1,7 @@
 /* 
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.19 1998/12/14 06:50:26 scrappy Exp $ 
+ * $Id: password.c,v 1.20 1999/01/17 06:18:26 momjian Exp $ 
  *
  */
 
@@ -27,7 +27,11 @@ verify_password(char *auth_arg, char *user, char *password)
 	strcat(pw_file_fullname, "/");
 	strcat(pw_file_fullname, auth_arg);
 
+#ifndef __CYGWIN32__
 	pw_file = AllocateFile(pw_file_fullname, "r");
+#else
+	pw_file = AllocateFile(pw_file_fullname, "rb");
+#endif
 	if (!pw_file)
 	{
 		snprintf(PQerrormsg, ERROR_MSG_LENGTH,

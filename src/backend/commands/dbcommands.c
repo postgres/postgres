@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.28 1998/12/15 12:45:55 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.29 1999/01/17 06:18:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,7 +305,11 @@ stop_vacuum(char *dbpath, char *dbname)
 	else
 		snprintf(filename, 256, "%s%c%s.vacuum", dbpath, SEP_CHAR, dbname);
 
+#ifndef __CYGWIN32__
 	if ((fp = AllocateFile(filename, "r")) != NULL)
+#else
+	if ((fp = AllocateFile(filename, "rb")) != NULL)
+#endif
 	{
 		fscanf(fp, "%d", &pid);
 		FreeFile(fp);

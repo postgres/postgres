@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.34 1998/11/27 19:51:27 vadim Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.35 1999/01/17 06:18:11 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -58,12 +58,34 @@ CFLAGS+= $(KRBFLAGS)
 LDFLAGS+= $(KRBLIBS)
 endif
 
+ifeq ($(MAKE_DLL), true)
+DLLOBJS=$(OBJS)
+DLLOBJS+= ../utils/version.o
+DLLLIBS= -L/usr/local/lib -lcygipc -lcrypt -lcygwin -lkernel32
+
+postgres.def: $(DLLOBJS)
+	$(DLLTOOL) --export-all --output-def $@ $(DLLOBJS)
+
+libpostgres.a: $(DLLOBJS) ../utils/dllinit.o postgres.def
+	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
+endif
 
 all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source \
 				global1.description local1_template1.description
 
+ifneq ($(PORTNAME), win)
 postgres: fmgr.h $(OBJS) ../utils/version.o
 	$(CC) -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
+else
+postgres: $(DLLOBJS) ../utils/dllinit.o postgres.def libpostgres.a
+	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
+	gcc -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(DLLOBJS) $(DLLLIBS)
+	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
+	gcc -g -o $@$(X) $@.exp $(DLLOBJS) $(DLLLIBS)
+	rm $@.exp $@.base
+endif
+
+#.PHONY: postgres
 
 $(OBJS): $(DIRS:%=%.dir)
 
@@ -71,7 +93,10 @@ $(DIRS:%=%.dir):
 	$(MAKE) -C $(subst .dir,,$@) all 
 
 ../utils/version.o:
-	$(MAKE) -C ../utils version.o        
+	$(MAKE) -C ../utils version.o
+
+../utils/dllinit.c:
+	$(MAKE) -C ../utils dllinit.o
 
 global1.bki.source local1_template1.bki.source \
 global1.description local1_template1.description: catalog/$@
@@ -89,7 +114,6 @@ postgres.o: $(OBJS)
 fast:
 	$(CC) -r -o postgres.o $(OBJS) $(LDFLAGS)
 
-
 ############################################################################
 # The following targets are specified in make commands that appear in the
 # make files in our subdirectories.
@@ -104,9 +128,14 @@ fmgr.h:
 
 #############################################################################
 clean:
-	rm -f postgres $(POSTGRES_IMP) fmgr.h parse.h \
+	rm -f postgres$(X) $(POSTGRES_IMP) fmgr.h parse.h \
 	    global1.bki.source local1_template1.bki.source \
 	    global1.description local1_template1.description
+ifeq ($(PORTNAME), win)
+ifeq ($(MAKE_DLL), true)
+	rm -f postgres.dll postgres.def libpostgres.a
+endif
+endif
 	for i in $(DIRS); do $(MAKE) -C $$i clean; done
 
 .DEFAULT:
@@ -132,12 +161,18 @@ install: $(LIBDIR) $(BINDIR) $(HEADERDIR) postgres $(POSTGRES_IMP) fmgr.h\
          global1.bki.source local1_template1.bki.source \
          global1.description local1_template1.description \
          libpq/pg_hba.conf.sample optimizer/geqo/pg_geqo.sample
-	$(INSTALL) $(INSTL_EXE_OPTS) postgres $(BINDIR)/postgres
+	$(INSTALL) $(INSTL_EXE_OPTS) postgres$(X) $(BINDIR)/postgres$(X)
 ifeq ($(MAKE_EXPORTS), true)
 	$(INSTALL) $(INSTLOPTS) $(POSTGRES_IMP) $(LIBDIR)/$(POSTGRES_IMP)
 endif
 	@rm -f $(BINDIR)/postmaster
-	ln -s postgres $(BINDIR)/postmaster
+	ln -s postgres$(X) $(BINDIR)/postmaster
+ifeq ($(PORTNAME), win)
+ifeq ($(MAKE_DLL), true)
+#	$(INSTALL) $(INSTLOPTS) postgres.dll $(BINDIR)/postgres.dll
+	$(INSTALL) $(INSTLOPTS) libpostgres.a $(LIBDIR)/libpostgres.a
+endif
+endif
 	$(INSTALL) $(INSTLOPTS) fmgr.h $(HEADERDIR)/fmgr.h
 	$(INSTALL) $(INSTLOPTS) global1.bki.source \
 	  $(LIBDIR)/global1.bki.source
@@ -152,7 +187,13 @@ endif
 	$(INSTALL) $(INSTLOPTS) optimizer/geqo/pg_geqo.sample \
 	  $(LIBDIR)/pg_geqo.sample
 
-$(BINDIR) $(LIBDIR) $(HEADERDIR): 
+#$(BINDIR) $(LIBDIR) $(HEADERDIR):
+#	mkdir $@
+$(BINDIR):
+	mkdir $@
+$(LIBDIR):
+	mkdir $@
+$(HEADERDIR):
 	mkdir $@
 
 #############################################################################

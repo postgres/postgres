@@ -15,7 +15,7 @@ pg_passwd: $(OBJS)
 	$(CC) -o pg_passwd $(OBJS) $(LDFLAGS)
 
 install: pg_passwd
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_passwd $(BINDIR)/pg_passwd
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_passwd$(X) $(BINDIR)/pg_passwd$(X)
 
 .PHONY: submake
 submake:
@@ -25,7 +25,7 @@ depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean:
-	rm -f pg_passwd $(OBJS)
+	rm -f pg_passwd$(X) $(OBJS)
 
 ifeq (depend,$(wildcard depend))
 include depend

@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.12 1998/10/30 15:05:23 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.13 1999/01/17 06:19:53 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,11 @@ LFLAGS+= -i -l
 
 OBJS=	pl_parse.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 
+ifeq ($(PORTNAME), win)
+SHLIB_LINK+= -L$(LIBPQDIR) -lpq
+else
 SHLIB_LINK= -L$(LIBPQDIR) -lpq
+endif
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
@@ -74,3 +78,6 @@ pl.tab.h:	pl_gram.c
 clean:
 	rm -f lib$(NAME).a $(shlib)
 	rm -f *.o pl.tab.h pl_gram.c pl_scan.c
+ifeq ($(PORTNAME), win)
+	rm -f $(NAME).def
+endif

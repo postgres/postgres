@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.9 1998/10/28 06:49:10 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.10 1999/01/17 06:19:43 momjian Exp $
 #
 #-------------------------------------------------------------------------
 @SET_MAKE@
@@ -73,7 +73,11 @@ clean:
 distclean: clean
 	-rm -f config.h GNUmakefile Makefile.global
 	-rm -f config.cache config.log config.status
+ifeq ($(PORTNAME), win)
+	@if [ $SRCDIR != $ODBCSRCDIR ]; then rm -f template makefiles port; fi
+else
 	@if [ $SRCDIR ne $ODBCSRCDIR ]; then rm -f template makefiles port
+endif
 
 .PHONY: standalone
 

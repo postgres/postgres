@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.98 1998/11/29 01:51:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.99 1999/01/17 06:18:34 momjian Exp $
  *
  * NOTES
  *
@@ -71,6 +71,10 @@
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
+#endif
+
+#ifdef __CYGWIN32__
+#include <getopt.h>
 #endif
 
 #include "storage/ipc.h"
@@ -170,7 +174,9 @@ static int	real_argc;
 static char Execfile[MAXPATHLEN] = "";
 
 static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
+#ifndef __CYGWIN32__
 static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
+#endif
 
 /*
  * Set by the -o option
@@ -268,7 +274,11 @@ checkDataDir(const char *DataDir, bool *DataDirOK)
 
 		sprintf(path, "%s%cbase%ctemplate1%cpg_class",
 				DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR);
+#ifndef __CYGWIN32__
 		fp = AllocateFile(path, "r");
+#else
+		fp = AllocateFile(path, "rb");
+#endif
 		if (fp == NULL)
 		{
 			fprintf(stderr, "%s does not find the database system.  "
@@ -522,6 +532,7 @@ PostmasterMain(int argc, char *argv[])
 			exit(1);
 		}
 	}
+#ifndef __CYGWIN32__
 	status = StreamServerPort(NULL, PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
@@ -529,7 +540,7 @@ PostmasterMain(int argc, char *argv[])
 				progname);
 		exit(1);
 	}
-
+#endif
 	/* set up shared memory and semaphores */
 	EnableMemoryContext(TRUE);
 	reset_shared(PostPortName);
@@ -584,7 +595,11 @@ pmdaemonize(void)
 		exit(1);
 	}
 #endif
+#ifndef __CYGWIN32__
 	i = open(NULL_DEV, O_RDWR);
+#else
+	i = open(NULL_DEV, O_RDWR | O_BINARY);
+#endif
 	dup2(i, 0);
 	dup2(i, 1);
 	dup2(i, 2);
@@ -688,12 +703,14 @@ ServerLoop(void)
 
 		/* new connection pending on our well-known port's socket */
 
+#ifndef __CYGWIN32__
 		if (ServerSock_UNIX != INVALID_SOCK &&
 			FD_ISSET(ServerSock_UNIX, &rmask) &&
 			(port = ConnCreate(ServerSock_UNIX)) != NULL)
 			PacketReceiveSetup(&port->pktInfo,
 							   readStartupPacket,
 							   (void *) port);
+#endif
 
 		if (ServerSock_INET != INVALID_SOCK &&
 			FD_ISSET(ServerSock_INET, &rmask) &&
@@ -802,6 +819,7 @@ initMasks(fd_set *rmask, fd_set *wmask)
 	FD_ZERO(rmask);
 	FD_ZERO(wmask);
 
+#ifndef __CYGWIN32__
 	if (ServerSock_UNIX != INVALID_SOCK)
 	{
 		FD_SET(ServerSock_UNIX, rmask);
@@ -809,6 +827,7 @@ initMasks(fd_set *rmask, fd_set *wmask)
 		if (ServerSock_UNIX > nsocks)
 			nsocks = ServerSock_UNIX;
 	}
+#endif
 
 	if (ServerSock_INET != INVALID_SOCK)
 	{
@@ -1437,7 +1456,9 @@ DoBackend(Port *port)
 	/* Close the postmater sockets */
 	if (NetServer)
 		StreamClose(ServerSock_INET);
+#ifndef __CYGWIN32__
 	StreamClose(ServerSock_UNIX);
+#endif
 
 	/* Save port for ps status */
 	MyProcPort = port;
@@ -1546,8 +1567,10 @@ ExitPostmaster(int status)
 	 */
 	if (ServerSock_INET != INVALID_SOCK)
 		StreamClose(ServerSock_INET);
+#ifndef __CYGWIN32__
 	if (ServerSock_UNIX != INVALID_SOCK)
 		StreamClose(ServerSock_UNIX);
+#endif
 	proc_exit(status);
 }
 

@@ -71,7 +71,11 @@ char filebuf[80];
 
 		if (! LOGFP) {
 			generate_filename(MYLOGDIR,MYLOGFILE,filebuf);
+#ifndef __CYGWIN32__
 			LOGFP = fopen(filebuf, "w");
+#else
+			LOGFP = fopen(filebuf, "wb");
+#endif
 			globals.mylogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}
@@ -102,7 +106,11 @@ FILE* LOGFP = globals.qlogFP;
 
 		if (! LOGFP) {
 			generate_filename(QLOGDIR,QLOGFILE,filebuf);
+#ifndef __CYGWIN32__
 			LOGFP = fopen(filebuf, "w");
+#else
+			LOGFP = fopen(filebuf, "wb");
+#endif
 			globals.qlogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}

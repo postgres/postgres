@@ -164,7 +164,7 @@ AC_ARG_WITH(includes,
     ])
 
 if test "$INCLUDE_DIRS"; then
-	for dir in $INCLUDE_DIRS; do
+	for dir in $INCLUDE_DIRS $SRCH_INC; do
 		if test -d "$dir"; then
 			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir"
 		else
@@ -196,7 +196,7 @@ AC_ARG_WITH(libraries,
     ])
 
 if test "$LIBRARY_DIRS"; then
-	for dir in $LIBRARY_DIRS; do
+	for dir in $LIBRARY_DIRS $SRCH_LIB; do
 		if test -d "$dir"; then
 			PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
 		else

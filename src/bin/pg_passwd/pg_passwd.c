@@ -63,7 +63,11 @@ read_pwd_file(char *filename)
 	int			i;
 
 try_again:
+#ifndef __CYGWIN32__
 	fp = fopen(filename, "r");
+#else
+	fp = fopen(filename, "rb");
+#endif
 	if (fp == NULL)
 	{
 		if (errno == ENOENT)
@@ -75,7 +79,11 @@ try_again:
 			{
 				case 'y':
 				case 'Y':
+#ifndef __CYGWIN32__
 					fp = fopen(filename, "w");
+#else
+					fp = fopen(filename, "wb");
+#endif
 					if (fp == NULL)
 					{
 						perror(filename);
@@ -193,7 +201,11 @@ link_again:
 	}
 
 	/* open file */
+#ifndef __CYGWIN32__
 	if ((fp = fopen(filename, "w")) == NULL)
+#else
+	if ((fp = fopen(filename, "wb")) == NULL)
+#endif
 	{
 		perror(filename);
 		exit(1);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.9 1998/04/29 12:41:29 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.10 1999/01/17 06:20:06 momjian Exp $
  *
  * NOTES
  *		XXX eventually, should be able to handle version identifiers
@@ -68,7 +68,11 @@ ValidatePgVersion(const char *path, char **reason_p)
 
 	PathSetVersionFilePath(path, full_path);
 
+#ifndef __CYGWIN32__
 	if ((fd = open(full_path, O_RDONLY, 0)) == -1)
+#else
+	if ((fd = open(full_path, O_RDONLY | O_BINARY, 0)) == -1)
+#endif
 	{
 		*reason_p = malloc(200);
 		sprintf(*reason_p, "File '%s' does not exist or no read permission.", full_path);
@@ -123,7 +127,11 @@ SetPgVersion(const char *path, char **reason_p)
 
 	PathSetVersionFilePath(path, full_path);
 
+#ifndef __CYGWIN32__
 	fd = open(full_path, O_WRONLY | O_CREAT | O_EXCL, 0666);
+#else
+	fd = open(full_path, O_WRONLY | O_CREAT | O_EXCL | O_BINARY, 0666);
+#endif
 	if (fd < 0)
 	{
 		*reason_p = malloc(100 + strlen(full_path));

@@ -36,6 +36,7 @@
 #include "pathnames.h"
 #endif
 
+#include <features.h>
 #include "postgres.h"
 
 #include "regex/cdefs.h"
@@ -73,7 +74,7 @@ typedef unsigned long long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.16 1999/01/17 03:22:49 tgl Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.17 1999/01/17 06:18:33 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 

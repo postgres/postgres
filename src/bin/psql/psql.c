@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.165 1998/12/14 04:59:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.166 1999/01/17 06:19:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,9 @@
 #endif
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
+#ifdef __CYGWIN32__
+#include <getopt.h>
 #endif
 
 #ifdef HAVE_LIBREADLINE
@@ -1436,9 +1439,17 @@ do_copy(const char *args, PsqlSettings *pset)
 			strcat(query, " TO stdout");
 
 		if (from)
+#ifndef __CYGWIN32__
 			copystream = fopen(file, "r");
+#else
+			copystream = fopen(file, "rb");
+#endif
 		else
+#ifndef __CYGWIN32__
 			copystream = fopen(file, "w");
+#else
+			copystream = fopen(file, "wb");
+#endif
 		if (copystream == NULL)
 			fprintf(stderr,
 				"Unable to open file %s which to copy, errno = %s (%d).",
@@ -2139,7 +2150,11 @@ HandleSlashCmds(PsqlSettings *pset,
 				}
 				stat(lastfile, &st);
 				editFile(lastfile);
+#ifndef __CYGWIN32__
 				if ((stat(lastfile, &st2) == -1) || ((fd = fopen(lastfile, "r")) == NULL))
+#else
+				if ((stat(lastfile, &st2) == -1) || ((fd = fopen(lastfile, "rb")) == NULL))
+#endif
 				{
 					perror(lastfile);
 					break;
@@ -2209,7 +2224,11 @@ HandleSlashCmds(PsqlSettings *pset,
 					fprintf(stderr, "\\i must be followed by a file name\n");
 					break;
 				}
+#ifndef __CYGWIN32__
 				if ((fd = fopen(optarg, "r")) == NULL)
+#else
+				if ((fd = fopen(optarg, "rb")) == NULL)
+#endif
 				{
 					fprintf(stderr, "file named %s could not be opened\n", optarg);
 					break;
@@ -2305,7 +2324,11 @@ HandleSlashCmds(PsqlSettings *pset,
 					fprintf(stderr, "\\w must be followed by a file name\n");
 					break;
 				}
+#ifndef __CYGWIN32__
 				if ((fd = fopen(optarg, "w")) == NULL)
+#else
+				if ((fd = fopen(optarg, "w")) == NULL)
+#endif
 				{
 					fprintf(stderr, "file named %s could not be opened\n", optarg);
 					break;
@@ -3086,7 +3109,11 @@ setFout(PsqlSettings *pset, char *fname)
 		if (*fname == '|')
 		{
 			pqsignal(SIGPIPE, SIG_IGN);
+#ifndef __CYGWIN32__
 			pset->queryFout = popen(fname + 1, "w");
+#else
+			pset->queryFout = popen(fname + 1, "wb");
+#endif
 			pset->pipe = 1;
 		}
 		else

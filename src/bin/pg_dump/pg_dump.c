@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.97 1998/12/13 23:41:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.98 1999/01/17 06:19:05 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -74,6 +74,10 @@
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
+#endif
+
+#ifdef __CYGWIN32__
+#include <getopt.h>
 #endif
 
 #include "pg_dump.h"
@@ -629,7 +633,11 @@ main(int argc, char **argv)
 		g_fout = stdout;
 	else
 	{
+#ifndef __CYGWIN32__
 		g_fout = fopen(filename, "w");
+#else
+		g_fout = fopen(filename, "wb");
+#endif
 		if (g_fout == NULL)
 		{
 			fprintf(stderr,

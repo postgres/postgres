@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.13 1998/12/14 06:50:24 scrappy Exp $
+ * $Id: crypt.c,v 1.14 1999/01/17 06:18:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,11 @@ crypt_openpwdfile()
 	FILE	   *pwdfile;
 
 	filename = crypt_getpwdfilename();
+#ifndef __CYGWIN32__
 	pwdfile = AllocateFile(filename, "r");
+#else
+	pwdfile = AllocateFile(filename, "rb");
+#endif
 
 	return pwdfile;
 }

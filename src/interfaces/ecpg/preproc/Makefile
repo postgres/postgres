@@ -15,10 +15,10 @@ OBJ=y.tab.o pgc.o type.o ecpg.o ecpg_keywords.o ../../../backend/parser/scansup.
 all:: ecpg
 
 clean:
-	rm -f *.o core a.out ecpg y.tab.h y.tab.c pgc.c *~
+	rm -f *.o core a.out ecpg$(X) y.tab.h y.tab.c pgc.c *~
 
 install: all
-	$(INSTALL) $(INSTL_EXE_OPTS) ecpg $(DESTDIR)$(BINDIR)
+	$(INSTALL) $(INSTL_EXE_OPTS) ecpg$(X) $(DESTDIR)$(BINDIR)
 
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/ecpg

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.24 1998/10/08 18:30:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.25 1999/01/17 06:18:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -338,7 +338,11 @@ SetCharSet()
 		map_file = (char *) malloc((strlen(DataDir) +
 									strlen(p) + 2) * sizeof(char));
 		sprintf(map_file, "%s/%s", DataDir, p);
+#ifndef __CYGWIN32__
 		file = fopen(map_file, "r");
+#else
+		file = fopen(map_file, "rb");
+#endif
 		if (file == NULL)
 			return;
 		eof = false;
