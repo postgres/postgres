@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb 20 15:37:09 EST 2004
+Last updated:		Wed Mar  3 00:16:52 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -206,6 +206,7 @@ Commands
 
 * CLUSTER
 	o Automatically maintain clustering on a table
+	o Add way to remove cluster specification on a table
 
 * COPY
 	o Allow dump/load of CSV format
