@@ -175,8 +175,11 @@ describeTypes(const char *name, PsqlSettings *pset, bool verbose, bool desc)
                ",\n       (CASE WHEN t.typlen=-1 THEN 'var'::text ELSE t.typlen::text END) as \"Length\""
                ",\n       u.usename as \"Owner\""
             );
-	if (desc)
-		strcat(buf, ",\n       obj_description(t.oid) as \"Description\"");
+    /*
+	 *	Let's always show descriptions for this.  There is room.
+	 *	bjm 1999/12/31
+     */
+	strcat(buf, ",\n       obj_description(t.oid) as \"Description\"");
     /*
      * do not include array types (start with underscore),
      * do not include user relations (typrelid!=0)
