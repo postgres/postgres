@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.37 2001/12/08 03:24:22 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.38 2002/01/08 05:39:26 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -278,7 +278,7 @@ CATALOG "/usr/local/share/sgml/docbook/3.1/catalog"
    <para>
     More information about the FreeBSD documentation tools can be
     found in the <ulink
-    url="http://www.freebsd.org/tutorials/docproj-primer/tools.html">FreeBSD
+    url="http://www.freebsd.org/doc/en_US.ISO8859-1/books/fdp-primer/index.html">FreeBSD
     Documentation Project's instructions</ulink>.
    </para>
   </sect2>

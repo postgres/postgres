@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.20 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.21 2002/01/08 05:39:26 momjian Exp $
 Genetic Optimizer
 -->
 
@@ -290,7 +290,31 @@ Genetic Optimizer
        <para>
 	FAQ in <ulink url="news://comp.ai.genetic">comp.ai.genetic</ulink>
 	is available at <ulink
-	 url="ftp://ftp.Germany.EU.net/pub/research/softcomp/EC/Welcome.html">Encore</ulink>.
+	url="http://surf.de.uu.net/encore/www/">here</ulink>.
+       </para>
+      </abstract>
+     </bookbiblio>
+
+     <bookbiblio>
+      <title>
+       Evolutionary Computation and its application to art and design
+
+      </title>
+      <authorgroup>
+       <author>
+	<firstname>Craig</firstname>
+	<surname>Reynolds</surname>
+       </author>
+      </authorgroup>
+      <publisher>
+       <publishername>
+	InterNet resource
+       </publishername>
+      </publisher>
+      <abstract>
+       <para>
+	The URL is <ulink
+	url="http://www.red3d.com/cwr/evolve.html">here</ulink>.
        </para>
       </abstract>
      </bookbiblio>

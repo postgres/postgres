@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.12 2002/01/07 02:29:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.13 2002/01/08 05:39:26 momjian Exp $
 -->
 
 <chapter id="plperl">
@@ -180,7 +180,7 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
   <para>
    Access to database itself from your Perl function can be done via
    an experimental module <ulink
-   url="http://www.formenos.org/PgSPI/"><literal>DBD::PgSPI</literal></ulink>
+   url="http://cpan.digisle.net/authors/id/A/AP/APILOS/"><literal>DBD::PgSPI</literal></ulink>
    (also on <ulink url="http://www.cpan.org">CPAN</ulink>). This
    module makes available a <acronym>DBI</>-compliant database-handle
    named <varname>$pg_dbh</varname>, and you can use that to perform
