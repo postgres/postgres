@@ -1,0 +1,16 @@
+DBMS:		PostgreSQL 6.2b10
+OS:		FreeBSD 2.1.5-RELEASE
+HardWare:	i586/90, 24M RAM, IDE
+StartUp:	postmaster -B 256 '-o -S 2048' -S
+Compiler:	gcc 2.6.3
+Compiled:	-O, without CASSERT checking, with
+		-DTBL_FREE_CMD_MEMORY (to free memory
+		if BEGIN/END after each query execution)
+
+DB connection startup: 0.20
+8192 INSERTs INTO SIMPLE (1 xact): 39.58
+8192 INSERTs INTO SIMPLE (8192 xacts): 1190.98
+Create INDEX on SIMPLE: 3.69
+8192 INSERTs INTO SIMPLE with INDEX (1 xact): 46.65
+8192 random INDEX scans on SIMPLE (1 xact): 65.49
+ORDER BY SIMPLE: 2.27
