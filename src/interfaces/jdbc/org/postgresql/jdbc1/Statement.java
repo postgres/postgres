@@ -66,8 +66,6 @@ public class Statement extends org.postgresql.Statement implements java.sql.Stat
 	public int executeUpdate(String sql) throws SQLException
 	{
 		this.execute(sql);
-		if (((org.postgresql.ResultSet)result).reallyResultSet())
-			throw new PSQLException("postgresql.stat.result");
 		return this.getUpdateCount();
 	}
 
