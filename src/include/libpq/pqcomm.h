@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.88 2003/06/24 01:49:22 momjian Exp $
+ * $Id: pqcomm.h,v 1.89 2003/07/15 17:54:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,41 +34,35 @@
 
 #ifndef	HAVE_STRUCT_SOCKADDR_STORAGE
 /* Define a struct sockaddr_storage if we don't have one. */
-/*
- * Desired design of maximum size and alignment
- */
-#define _SS_MAXSIZE    128  /* Implementation specific max size */
-#define _SS_ALIGNSIZE  (sizeof (int64_t))
-                         /* Implementation specific desired alignment */
-/*
- * Definitions used for sockaddr_storage structure paddings design.
- */
-#define	_SS_PAD1SIZE	(_SS_ALIGNSIZE - sizeof (sa_family_t))
-#define	_SS_PAD2SIZE	(_SS_MAXSIZE - (sizeof (sa_family_t) + \
-				_SS_PAD1SIZE + _SS_ALIGNSIZE))
+
+#define _SS_MAXSIZE    128		/* Implementation specific max size */
 
 #ifdef __CYGWIN__
 typedef unsigned short sa_family_t;
 #endif
 
+/* This must exactly match the non-padding fields of sockaddr_storage! */
+struct nopad_sockaddr_storage {
+#ifdef SALEN
+    uint8	__ss_len;			/* address length */
+#endif
+    sa_family_t	ss_family;		/* address family */
+
+    int64	__ss_align;			/* ensures struct is properly aligned */
+};
+
 struct sockaddr_storage {
 #ifdef SALEN
-    uint8_t	__ss_len;        /* address length */
+    uint8	__ss_len;			/* address length */
 #endif
-    sa_family_t	ss_family;	/* address family */
+    sa_family_t	ss_family;		/* address family */
 
-    char	__ss_pad1[_SS_PAD1SIZE];
-		/* 6 byte pad, this is to make implementation
-		 * specific pad up to alignment field that
-		 * follows explicit in the data structure */
-    int64_t	__ss_align;
-		/* field to force desired structure
-		 * storage alignment */
-    char	__ss_pad2[_SS_PAD2SIZE];
-		/* 112 byte pad to achieve desired size,
-		 * _SS_MAXSIZE value minus size of ss_family
-		 * __ss_pad1, __ss_align fields is 112 */
+    int64	__ss_align;			/* ensures struct is properly aligned */
+
+    char	__ss_pad[_SS_MAXSIZE - sizeof(struct nopad_sockaddr_storage)];
+								/* ensures struct has desired size */
 };
+
 #elif !defined(HAVE_STRUCT_SOCKADDR_STORAGE_SS_FAMILY)
 # ifdef HAVE_STRUCT_SOCKADDR_STORAGE___SS_FAMILY
 #  define ss_family __ss_family
