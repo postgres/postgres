@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.21 1996/08/19 13:50:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.22 1996/08/20 05:04:06 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -59,7 +59,7 @@
 #	until after this file is processed!
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
-PORTNAME=	svr4
+PORTNAME=	BSD44_derived
 
 # SRCDIR specifies where the source files are.
 SRCDIR=		/home/tools/postgres95-1.02/src
@@ -157,10 +157,12 @@ EUROPEAN_DATES = 1
 USE_READLINE= true
 
 # directories for the readline and history libraries.
-READLINE_INCDIR=  /home/tools/include
-HISTORY_INCDIR=   /home/tools/include -I/home/tools/include/readline
-READLINE_LIBDIR=  /home/tools/lib
-HISTORY_LIBDIR=   /home/tools/lib
+READLINE_INCDIR=  -I/home/tools/include
+READLINE_LIBDIR=  -L/home/tools/lib
+
+# use the following if your readline has a separate history lib
+#HISTORY_INCDIR=   -I/home/tools/include -I/home/tools/include/readline
+#HISTORY_LIBDIR=   -L/home/tools/lib
 
 # If you do not plan to use Host based authentication,
 # comment out the following line
