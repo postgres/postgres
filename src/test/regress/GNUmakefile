@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.36 2002/01/08 21:00:30 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.37 2002/07/02 04:53:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -137,7 +137,8 @@ clean distclean maintainer-clean:
 	$(MAKE) -C $(contribdir)/spi clean
 	rm -f $(output_files) $(input_files) $(DLOBJS) regress.o pg_regress
 # things created by various check targets
-	rm -rf results tmp_check log
+	rm -rf tmp_check log
+	rm -f results/*.out
 	rm -f regression.diffs regression.out regress.out run_check.out
 ifeq ($(PORTNAME), win)
 	rm -f regress.def
