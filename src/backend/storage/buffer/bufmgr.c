@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.98 2000/11/30 19:03:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.99 2000/12/22 20:04:43 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -723,6 +723,7 @@ BufferSync()
 	RelFileNode	rnode;
 	XLogRecPtr	recptr;
 	Relation	reln = NULL;
+	bool		dirty = false;
 
 	for (i = 0, bufHdr = BufferDescriptors; i < NBuffers; i++, bufHdr++)
 	{
@@ -745,6 +746,7 @@ BufferSync()
 
 		buffer = BufferDescriptorGetBuffer(bufHdr);
 		rnode = bufHdr->tag.rnode;
+		dirty = bufHdr->flags & BM_DIRTY;
 
 		SpinRelease(BufMgrLock);
 
@@ -758,6 +760,17 @@ BufferSync()
 		 */
 		LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
+		if (!dirty && !(bufHdr->cntxDirty))
+		{
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+			SpinAcquire(BufMgrLock);
+			UnpinBuffer(bufHdr);
+			SpinRelease(BufMgrLock);
+			if (reln != (Relation) NULL)
+				RelationDecrementReferenceCount(reln);
+			continue;
+		}
+
 		/*
 		 * Force XLOG flush for buffer' LSN
 		 */
@@ -766,9 +779,8 @@ BufferSync()
 
 		/*
 		 * Now it's safe to write buffer to disk
-		 * (if needed at all -:))
+		 * (if no one else already)
 		 */
-
 		SpinAcquire(BufMgrLock);
 		if (bufHdr->flags & BM_IO_IN_PROGRESS)
 			WaitIO(bufHdr, BufMgrLock);
@@ -824,20 +836,19 @@ BufferSync()
 			 */
 			if (!(bufHdr->flags & BM_JUST_DIRTIED))
 				bufHdr->flags &= ~BM_DIRTY;
+			UnpinBuffer(bufHdr);
+			SpinRelease(BufMgrLock);
 		}
 		else
+		{
+			UnpinBuffer(bufHdr);
+			SpinRelease(BufMgrLock);
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-
-		UnpinBuffer(bufHdr);
-
-		SpinRelease(BufMgrLock);
+		}
 
 		/* drop refcnt obtained by RelationNodeCacheGetRelation */
 		if (reln != (Relation) NULL)
-		{
 			RelationDecrementReferenceCount(reln);
-			reln = NULL;
-		}
 	}
 
 }
