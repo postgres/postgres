@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.475 2004/08/29 04:12:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.476 2004/09/29 23:39:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -272,8 +272,8 @@ static void doNegateFloat(Value *v);
 %type <node>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg columnElem where_clause
-				a_expr b_expr c_expr AexprConst indirection_el columnref
-				in_expr having_clause func_table array_expr
+				a_expr b_expr c_expr func_expr AexprConst indirection_el
+				columnref in_expr having_clause func_table array_expr
 %type <list>	row type_list array_expr_list
 %type <node>	case_expr case_arg when_clause case_default
 %type <list>	when_clause_list
@@ -3238,18 +3238,12 @@ index_elem:	ColId opt_class
 					$$->expr = NULL;
 					$$->opclass = $2;
 				}
-			| func_name '(' expr_list ')' opt_class
+			| func_expr opt_class
 				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = $1;
-					n->args = $3;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
-					$$->expr = (Node *)n;
-					$$->opclass = $5;
+					$$->expr = $1;
+					$$->opclass = $2;
 				}
 			| '(' a_expr ')' opt_class
 				{
@@ -6479,7 +6473,55 @@ c_expr:		columnref								{ $$ = $1; }
 				}
 			| case_expr
 				{ $$ = $1; }
-			| func_name '(' ')'
+			| func_expr
+				{ $$ = $1; }
+			| select_with_parens			%prec UMINUS
+				{
+					SubLink *n = makeNode(SubLink);
+					n->subLinkType = EXPR_SUBLINK;
+					n->lefthand = NIL;
+					n->operName = NIL;
+					n->subselect = $1;
+					$$ = (Node *)n;
+				}
+			| EXISTS select_with_parens
+				{
+					SubLink *n = makeNode(SubLink);
+					n->subLinkType = EXISTS_SUBLINK;
+					n->lefthand = NIL;
+					n->operName = NIL;
+					n->subselect = $2;
+					$$ = (Node *)n;
+				}
+			| ARRAY select_with_parens
+				{
+					SubLink *n = makeNode(SubLink);
+					n->subLinkType = ARRAY_SUBLINK;
+					n->lefthand = NIL;
+					n->operName = NIL;
+					n->subselect = $2;
+					$$ = (Node *)n;
+				}
+			| ARRAY array_expr
+				{	$$ = $2;	}
+			| row
+				{
+					RowExpr *r = makeNode(RowExpr);
+					r->args = $1;
+					r->row_typeid = InvalidOid;	/* not analyzed yet */
+					$$ = (Node *)r;
+				}
+		;
+
+/*
+ * func_expr is split out from c_expr just so that we have a classification
+ * for "everything that is a function call or looks like one".  This isn't
+ * very important, but it saves us having to document which variants are
+ * legal in the backwards-compatible functional-index syntax for CREATE INDEX.
+ * (Note that many of the special SQL functions wouldn't actually make any
+ * sense as functional index entries, but we ignore that consideration here.)
+ */
+func_expr:	func_name '(' ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					n->funcname = $1;
@@ -6935,42 +6977,6 @@ c_expr:		columnref								{ $$ = $1; }
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
 					$$ = (Node *)n;
-				}
-			| select_with_parens			%prec UMINUS
-				{
-					SubLink *n = makeNode(SubLink);
-					n->subLinkType = EXPR_SUBLINK;
-					n->lefthand = NIL;
-					n->operName = NIL;
-					n->subselect = $1;
-					$$ = (Node *)n;
-				}
-			| EXISTS select_with_parens
-				{
-					SubLink *n = makeNode(SubLink);
-					n->subLinkType = EXISTS_SUBLINK;
-					n->lefthand = NIL;
-					n->operName = NIL;
-					n->subselect = $2;
-					$$ = (Node *)n;
-				}
-			| ARRAY select_with_parens
-				{
-					SubLink *n = makeNode(SubLink);
-					n->subLinkType = ARRAY_SUBLINK;
-					n->lefthand = NIL;
-					n->operName = NIL;
-					n->subselect = $2;
-					$$ = (Node *)n;
-				}
-			| ARRAY array_expr
-				{	$$ = $2;	}
-			| row
-				{
-					RowExpr *r = makeNode(RowExpr);
-					r->args = $1;
-					r->row_typeid = InvalidOid;	/* not analyzed yet */
-					$$ = (Node *)r;
 				}
 		;
 
