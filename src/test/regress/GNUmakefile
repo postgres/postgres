@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.35 2001/09/16 16:11:11 petere Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/GNUmakefile,v 1.36 2002/01/08 21:00:30 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -87,7 +87,7 @@ $(output_files): expected/%.out: output/%.source
 # $(srcdir) to the build directory.
 
 ifdef VPATH
-remaining_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out)
+remaining_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out) $(srcdir)/resultmap
 remaining_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(remaining_files_src))
 
 all: $(remaining_files_build)
