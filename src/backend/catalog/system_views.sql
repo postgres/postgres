@@ -3,7 +3,7 @@
  *
  * Copyright 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.5 2004/01/14 03:46:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.6 2004/04/26 15:24:41 momjian Exp $
  */
 
 CREATE VIEW pg_user AS 
@@ -118,11 +118,11 @@ CREATE VIEW pg_stat_all_tables AS
 
 CREATE VIEW pg_stat_sys_tables AS 
     SELECT * FROM pg_stat_all_tables 
-    WHERE schemaname IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_stat_user_tables AS 
     SELECT * FROM pg_stat_all_tables 
-    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_statio_all_tables AS 
     SELECT 
@@ -151,11 +151,11 @@ CREATE VIEW pg_statio_all_tables AS
 
 CREATE VIEW pg_statio_sys_tables AS 
     SELECT * FROM pg_statio_all_tables 
-    WHERE schemaname IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_statio_user_tables AS 
     SELECT * FROM pg_statio_all_tables 
-    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_stat_all_indexes AS 
     SELECT 
@@ -175,11 +175,11 @@ CREATE VIEW pg_stat_all_indexes AS
 
 CREATE VIEW pg_stat_sys_indexes AS 
     SELECT * FROM pg_stat_all_indexes 
-    WHERE schemaname IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_stat_user_indexes AS 
     SELECT * FROM pg_stat_all_indexes 
-    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_statio_all_indexes AS 
     SELECT 
@@ -199,11 +199,11 @@ CREATE VIEW pg_statio_all_indexes AS
 
 CREATE VIEW pg_statio_sys_indexes AS 
     SELECT * FROM pg_statio_all_indexes 
-    WHERE schemaname IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_statio_user_indexes AS 
     SELECT * FROM pg_statio_all_indexes 
-    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_statio_all_sequences AS 
     SELECT 
@@ -219,11 +219,11 @@ CREATE VIEW pg_statio_all_sequences AS
 
 CREATE VIEW pg_statio_sys_sequences AS 
     SELECT * FROM pg_statio_all_sequences 
-    WHERE schemaname IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_statio_user_sequences AS 
     SELECT * FROM pg_statio_all_sequences 
-    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast');
+    WHERE schemaname NOT IN ('pg_catalog', 'pg_toast', 'information_schema');
 
 CREATE VIEW pg_stat_activity AS 
     SELECT 
