@@ -11,8 +11,6 @@
  * This file is the property of the Digital Music Network (DMN).
  * It is being made available to users of the PostgreSQL system
  * under the BSD license.
- *
- * NOTE: This module requires sizeof(void *) to be the same as sizeof(int)
  */
 #include "postgres.h"
 
@@ -36,9 +34,6 @@
 #include "utils/lsyscache.h"
 
 
-/* Uncomment this define if you are compiling for postgres 7.2.x */
-/* #define PG_7_2 */
-
 /* This is actually a postgres version of a one dimensional array */
 
 typedef struct
@@ -58,19 +53,17 @@ typedef struct callContext
 }	CTX;
 
 #define TOASTED		1
-#define START_NUM	8
-#define PGARRAY_SIZE(n) (sizeof(PGARRAY) + ((n-1)*sizeof(int4)))
+#define START_NUM	8			/* initial size of arrays */
+#define PGARRAY_SIZE(n) (sizeof(PGARRAY) + (((n)-1)*sizeof(int4)))
 
-static PGARRAY *GetPGArray(int4 state, int fAdd);
-static PGARRAY *ShrinkPGArray(PGARRAY * p);
+static PGARRAY *GetPGArray(PGARRAY *p, int fAdd);
+static PGARRAY *ShrinkPGArray(PGARRAY *p);
 
 Datum		int_agg_state(PG_FUNCTION_ARGS);
-Datum		int_agg_final_count(PG_FUNCTION_ARGS);
 Datum		int_agg_final_array(PG_FUNCTION_ARGS);
 Datum		int_enum(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(int_agg_state);
-PG_FUNCTION_INFO_V1(int_agg_final_count);
 PG_FUNCTION_INFO_V1(int_agg_final_array);
 PG_FUNCTION_INFO_V1(int_enum);
 
@@ -81,11 +74,9 @@ PG_FUNCTION_INFO_V1(int_enum);
  * PortalContext isn't really right, but it's close enough.
  */
 static PGARRAY *
-GetPGArray(int4 state, int fAdd)
+GetPGArray(PGARRAY *p, int fAdd)
 {
-	PGARRAY    *p = (PGARRAY *) state;
-
-	if (!state)
+	if (!p)
 	{
 		/* New array */
 		int			cb = PGARRAY_SIZE(START_NUM);
@@ -94,9 +85,7 @@ GetPGArray(int4 state, int fAdd)
 		p->a.size = cb;
 		p->a.ndim = 0;
 		p->a.flags = 0;
-#ifndef PG_7_2
 		p->a.elemtype = INT4OID;
-#endif
 		p->items = 0;
 		p->lower = START_NUM;
 	}
@@ -118,7 +107,8 @@ GetPGArray(int4 state, int fAdd)
 }
 
 /* Shrinks the array to its actual size and moves it into the standard
- * memory allocation context, frees working memory	*/
+ * memory allocation context, frees working memory
+ */
 static PGARRAY *
 ShrinkPGArray(PGARRAY * p)
 {
@@ -139,10 +129,8 @@ ShrinkPGArray(PGARRAY * p)
 		pnew->a.size = cb;
 		pnew->a.ndim = 1;
 		pnew->a.flags = 0;
-#ifndef PG_7_2
 		pnew->a.elemtype = INT4OID;
-#endif
-		pnew->lower = 0;
+		pnew->lower = 1;
 
 		pfree(p);
 	}
@@ -153,28 +141,37 @@ ShrinkPGArray(PGARRAY * p)
 Datum
 int_agg_state(PG_FUNCTION_ARGS)
 {
-	int4		state = PG_GETARG_INT32(0);
-	int4		value = PG_GETARG_INT32(1);
+	PGARRAY    *state;
+	PGARRAY    *p;
 
-	PGARRAY    *p = GetPGArray(state, 1);
-
-	if (!p)
-		/* internal error */
-		elog(ERROR, "no aggregate storage");
-	else if (p->items >= p->lower)
-		/* internal error */
-		elog(ERROR, "aggregate storage too small");
+	if (PG_ARGISNULL(0))
+		state = NULL;
 	else
-		p->array[p->items++] = value;
-	PG_RETURN_INT32(p);
+		state = (PGARRAY *) PG_GETARG_POINTER(0);
+	p = GetPGArray(state, 1);
+
+	if (!PG_ARGISNULL(1))
+	{
+		int4	value = PG_GETARG_INT32(1);
+
+		if (!p)		/* internal error */
+			elog(ERROR, "no aggregate storage");
+		else if (p->items >= p->lower)		/* internal error */
+			elog(ERROR, "aggregate storage too small");
+		else
+			p->array[p->items++] = value;
+	}
+	PG_RETURN_POINTER(p);
 }
 
-/* This is the final function used for the integer aggregator. It returns all the integers
- * collected as a one dimensional integer array */
+/* This is the final function used for the integer aggregator. It returns all
+ * the integers collected as a one dimensional integer array
+ */
 Datum
 int_agg_final_array(PG_FUNCTION_ARGS)
 {
-	PGARRAY    *pnew = ShrinkPGArray(GetPGArray(PG_GETARG_INT32(0), 0));
+	PGARRAY    *state = (PGARRAY *) PG_GETARG_POINTER(0);
+	PGARRAY    *pnew = ShrinkPGArray(GetPGArray(state, 0));
 
 	if (pnew)
 		PG_RETURN_POINTER(pnew);
@@ -206,18 +203,12 @@ int_enum(PG_FUNCTION_ARGS)
 		/* Allocate a working context */
 		pc = (CTX *) palloc(sizeof(CTX));
 
-		/* Don't copy attribute if you don't need too */
+		/* Don't copy attribute if you don't need to */
 		if (VARATT_IS_EXTENDED(p))
 		{
 			/* Toasted!!! */
 			pc->p = (PGARRAY *) PG_DETOAST_DATUM_COPY(p);
 			pc->flags = TOASTED;
-			if (!pc->p)
-			{
-				/* internal error */
-				elog(ERROR, "error in toaster; not detoasting");
-				PG_RETURN_NULL();
-			}
 		}
 		else
 		{
@@ -225,11 +216,10 @@ int_enum(PG_FUNCTION_ARGS)
 			pc->p = p;
 			pc->flags = 0;
 		}
-		fcinfo->context = (Node *) pc;
 		pc->num = 0;
+		fcinfo->context = (Node *) pc;
 	}
-	else
-	/* use an existing one */
+	else	/* use an existing one */
 		pc = (CTX *) fcinfo->context;
 	/* Are we done yet? */
 	if (pc->num >= pc->p->items)
@@ -242,8 +232,8 @@ int_enum(PG_FUNCTION_ARGS)
 		rsi->isDone = ExprEndResult;
 	}
 	else
-	/* nope, return the next value */
 	{
+		/* nope, return the next value */
 		int			val = pc->p->array[pc->num++];
 
 		rsi->isDone = ExprMultipleResult;
