@@ -400,6 +400,15 @@ WHERE p1.aggfinalfn = p2.oid AND
      p2.pronargs != 1 OR
      p1.aggtranstype != p2.proargtypes[0]);
 
+-- If transfn is strict then either initval should be non-NULL, or
+-- basetype should equal transtype so that the first non-null input
+-- can be assigned as the state value.
+
+SELECT p1.oid, p1.aggname, p2.oid, p2.proname
+FROM pg_aggregate AS p1, pg_proc AS p2
+WHERE p1.aggtransfn = p2.oid AND p2.proisstrict AND
+    p1.agginitval IS NULL AND p1.aggbasetype != p1.aggtranstype;
+
 -- **************** pg_opclass ****************
 
 -- There should not be multiple entries in pg_opclass with the same
