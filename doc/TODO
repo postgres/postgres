@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Apr 19 11:37:51 EDT 2004
+Last updated:		Mon Apr 19 13:03:08 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -211,7 +211,7 @@ Commands
 	o Add way to remove cluster specification on a table
 
 * COPY
-	o Allow dump/load of CSV format
+	o -Allow dump/load of CSV format
 	o Allow COPY to report error lines and continue;  optionally
 	  allow error codes to be specified; requires savepoints or can
 	  not be run in a multi-statement transaction
