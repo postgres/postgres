@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.38 2000/03/18 19:53:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.39 2000/03/19 00:19:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,9 @@ static Operator oper_exact(char *op, Oid arg1, Oid arg2);
 static Operator oper_inexact(char *op, Oid arg1, Oid arg2);
 static int binary_oper_get_candidates(char *opname,
 									  CandidateList *candidates);
-static int unary_oper_get_candidates(char *op,
-						  Oid typeId,
-						  CandidateList *candidates,
-						  char rightleft);
+static int unary_oper_get_candidates(char *opname,
+									 CandidateList *candidates,
+									 char rightleft);
 static void op_error(char *op, Oid arg1, Oid arg2);
 static void unary_op_error(char *op, Oid arg, bool is_left_op);
 
@@ -66,7 +65,8 @@ oprid(Operator op)
 
 /* binary_oper_get_candidates()
  *	given opname, find all possible input type pairs for which an operator
- *	named opname exists.  Build a list of the candidate input types.
+ *	named opname exists.
+ *	Build a list of the candidate input types.
  *	Returns number of candidates found.
  */
 static int
@@ -79,7 +79,7 @@ binary_oper_get_candidates(char *opname,
 	HeapTuple	tup;
 	Form_pg_operator oper;
 	int			ncandidates = 0;
-	ScanKeyData opKey[3];
+	ScanKeyData opKey[2];
 
 	*candidates = NULL;
 
@@ -102,10 +102,11 @@ binary_oper_get_candidates(char *opname,
 
 	while (HeapTupleIsValid(tup = heap_getnext(pg_operator_scan, 0)))
 	{
+		oper = (Form_pg_operator) GETSTRUCT(tup);
+
 		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
 		current_candidate->args = (Oid *) palloc(2 * sizeof(Oid));
 
-		oper = (Form_pg_operator) GETSTRUCT(tup);
 		current_candidate->args[0] = oper->oprleft;
 		current_candidate->args[1] = oper->oprright;
 		current_candidate->next = *candidates;
@@ -123,8 +124,15 @@ binary_oper_get_candidates(char *opname,
 /* oper_select_candidate()
  * Given the input argtype array and more than one candidate
  * for the function argtype array, attempt to resolve the conflict.
- * returns the selected argtype array if the conflict can be resolved,
+ * Returns the selected argtype array if the conflict can be resolved,
  * otherwise returns NULL.
+ *
+ * By design, this is pretty similar to func_select_candidate in parse_func.c.
+ * However, we can do a couple of extra things here because we know we can
+ * have no more than two args to deal with.  Also, the calling convention
+ * is a little different: we must prune away "candidates" that aren't actually
+ * coercion-compatible with the input types, whereas in parse_func.c that
+ * gets done by match_argtypes before func_select_candidate is called.
  *
  * This routine is new code, replacing binary_oper_select_candidate()
  * which dates from v4.2/v1.0.x days. It tries very hard to match up
@@ -173,20 +181,57 @@ oper_select_candidate(int nargs,
 	Oid		   *current_typeids;
 	int			unknownOids;
 	int			i;
-
 	int			ncandidates;
 	int			nbestMatch,
 				nmatch;
-
 	CATEGORY	slot_category,
 				current_category;
 	Oid			slot_type,
 				current_type;
 
-/*
- * Run through all candidates and keep those with the most matches
- *	on exact types. Keep all candidates if none match.
- */
+	/*
+	 * First, delete any candidates that cannot actually accept the given
+	 * input types, whether directly or by coercion.  (Note that
+	 * can_coerce_type will assume that UNKNOWN inputs are coercible to
+	 * anything, so candidates will not be eliminated on that basis.)
+	 */
+	ncandidates = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+	{
+		if (can_coerce_type(nargs, input_typeids, current_candidate->args))
+		{
+			if (last_candidate == NULL)
+			{
+				candidates = current_candidate;
+				last_candidate = current_candidate;
+				ncandidates = 1;
+			}
+			else
+			{
+				last_candidate->next = current_candidate;
+				last_candidate = current_candidate;
+				ncandidates++;
+			}
+		}
+		/* otherwise, don't bother keeping this one... */
+	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
+
+	/* Done if no candidate or only one candidate survives */
+	if (ncandidates == 0)
+		return NULL;
+	if (ncandidates == 1)
+		return candidates->args;
+
+	/*
+	 * Run through all candidates and keep those with the most matches
+	 * on exact types. Keep all candidates if none match.
+	 */
 	ncandidates = 0;
 	nbestMatch = 0;
 	last_candidate = NULL;
@@ -198,8 +243,8 @@ oper_select_candidate(int nargs,
 		nmatch = 0;
 		for (i = 0; i < nargs; i++)
 		{
-			if ((input_typeids[i] != UNKNOWNOID)
-				&& (current_typeids[i] == input_typeids[i]))
+			if (input_typeids[i] != UNKNOWNOID &&
+				current_typeids[i] == input_typeids[i])
 				nmatch++;
 		}
 
@@ -224,21 +269,65 @@ oper_select_candidate(int nargs,
 	if (last_candidate)			/* terminate rebuilt list */
 		last_candidate->next = NULL;
 
-	if (ncandidates <= 1)
+	if (ncandidates == 1)
+		return candidates->args;
+
+	/*
+	 * Still too many candidates?
+	 * Run through all candidates and keep those with the most matches
+	 * on exact types + binary-compatible types.
+	 * Keep all candidates if none match.
+	 */
+	ncandidates = 0;
+	nbestMatch = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
 	{
-		if (ncandidates > 0)
+		current_typeids = current_candidate->args;
+		nmatch = 0;
+		for (i = 0; i < nargs; i++)
 		{
-			if (!can_coerce_type(nargs, input_typeids, candidates->args))
-				ncandidates = 0;
+			if (input_typeids[i] != UNKNOWNOID)
+			{
+				if (current_typeids[i] == input_typeids[i] ||
+					IS_BINARY_COMPATIBLE(current_typeids[i],
+										 input_typeids[i]))
+					nmatch++;
+			}
 		}
-		return (ncandidates == 1) ? candidates->args : NULL;
+
+		/* take this one as the best choice so far? */
+		if ((nmatch > nbestMatch) || (last_candidate == NULL))
+		{
+			nbestMatch = nmatch;
+			candidates = current_candidate;
+			last_candidate = current_candidate;
+			ncandidates = 1;
+		}
+		/* no worse than the last choice, so keep this one too? */
+		else if (nmatch == nbestMatch)
+		{
+			last_candidate->next = current_candidate;
+			last_candidate = current_candidate;
+			ncandidates++;
+		}
+		/* otherwise, don't bother keeping this one... */
 	}
 
-/*
- * Still too many candidates?
- * Now look for candidates which allow coercion and are preferred types.
- * Keep all candidates if none match.
- */
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
+
+	if (ncandidates == 1)
+		return candidates->args;
+
+	/*
+	 * Still too many candidates?
+	 * Now look for candidates which are preferred types at the args that
+	 * will require coercion.
+	 * Keep all candidates if none match.
+	 */
 	ncandidates = 0;
 	nbestMatch = 0;
 	last_candidate = NULL;
@@ -253,10 +342,8 @@ oper_select_candidate(int nargs,
 			if (input_typeids[i] != UNKNOWNOID)
 			{
 				current_category = TypeCategory(current_typeids[i]);
-				if (current_typeids[i] == input_typeids[i])
-					nmatch++;
-				else if (IsPreferredType(current_category, current_typeids[i])
-						 && can_coerce_type(1, &input_typeids[i], &current_typeids[i]))
+				if (current_typeids[i] == input_typeids[i] ||
+					IsPreferredType(current_category, current_typeids[i]))
 					nmatch++;
 			}
 		}
@@ -279,27 +366,20 @@ oper_select_candidate(int nargs,
 	if (last_candidate)			/* terminate rebuilt list */
 		last_candidate->next = NULL;
 
-	if (ncandidates <= 1)
-	{
-		if (ncandidates > 0)
-		{
-			if (!can_coerce_type(nargs, input_typeids, candidates->args))
-				ncandidates = 0;
-		}
-		return (ncandidates == 1) ? candidates->args : NULL;
-	}
+	if (ncandidates == 1)
+		return candidates->args;
 
-/*
- * Still too many candidates?
- * Try assigning types for the unknown columns.
- *
- * First try: if we have an unknown and a non-unknown input, see whether
- * there is a candidate all of whose input types are the same as the known
- * input type (there can be at most one such candidate).  If so, use that
- * candidate.  NOTE that this is cool only because operators can't
- * have more than 2 args, so taking the last non-unknown as current_type
- * can yield only one possibility if there is also an unknown.
- */
+	/*
+	 * Still too many candidates?
+	 * Try assigning types for the unknown columns.
+	 *
+	 * First try: if we have an unknown and a non-unknown input, see whether
+	 * there is a candidate all of whose input types are the same as the known
+	 * input type (there can be at most one such candidate).  If so, use that
+	 * candidate.  NOTE that this is cool only because operators can't
+	 * have more than 2 args, so taking the last non-unknown as current_type
+	 * can yield only one possibility if there is also an unknown.
+	 */
 	unknownOids = FALSE;
 	current_type = UNKNOWNOID;
 	for (i = 0; i < nargs; i++)
@@ -325,25 +405,22 @@ oper_select_candidate(int nargs,
 					nmatch++;
 			}
 			if (nmatch == nargs)
-			{
-				/* coercion check here is probably redundant, but be safe */
-				if (can_coerce_type(nargs, input_typeids, current_typeids))
-					return current_typeids;
-			}
+				return current_typeids;
 		}
 	}
 
-/*
- * Second try: examine each unknown argument position to see if all the
- * candidates agree on the type category of that slot.  If so, and if some
- * candidates accept the preferred type in that category, eliminate the
- * candidates with other input types.  If we are down to one candidate
- * at the end, we win.
- *
- * XXX It's kinda bogus to do this left-to-right, isn't it?  If we eliminate
- * some candidates because they are non-preferred at the first slot, we won't
- * notice that they didn't have the same type category for a later slot.
- */
+	/*
+	 * Second try: examine each unknown argument position to see if all the
+	 * candidates agree on the type category of that slot.  If so, and if some
+	 * candidates accept the preferred type in that category, eliminate the
+	 * candidates with other input types.  If we are down to one candidate
+	 * at the end, we win.
+	 *
+	 * XXX It's kinda bogus to do this left-to-right, isn't it?  If we
+	 * eliminate some candidates because they are non-preferred at the first
+	 * slot, we won't notice that they didn't have the same type category for
+	 * a later slot.
+	 */
 	for (i = 0; i < nargs; i++)
 	{
 		if (input_typeids[i] == UNKNOWNOID)
@@ -400,20 +477,11 @@ oper_select_candidate(int nargs,
 		}
 	}
 
-	ncandidates = 0;
-	last_candidate = NULL;
-	for (current_candidate = candidates;
-		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
-	{
-		if (can_coerce_type(nargs, input_typeids, current_candidate->args))
-		{
-			ncandidates++;
-			last_candidate = current_candidate;
-		}
-	}
-
-	return (ncandidates == 1) ? last_candidate->args : NULL;
+	if (candidates == NULL)
+		return NULL;			/* no remaining candidates */
+	if (candidates->next != NULL)
+		return NULL;			/* more than one remaining candidate */
+	return candidates->args;
 }	/* oper_select_candidate() */
 
 
@@ -529,13 +597,13 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noWarnings)
 
 
 /* unary_oper_get_candidates()
- *	given opname and typeId, find all possible types for which
- *	a right/left unary operator named opname exists,
- *	such that typeId can be coerced to it
+ *	given opname, find all possible types for which
+ *	a right/left unary operator named opname exists.
+ *	Build a list of the candidate input types.
+ *	Returns number of candidates found.
  */
 static int
-unary_oper_get_candidates(char *op,
-						  Oid typeId,
+unary_oper_get_candidates(char *opname,
 						  CandidateList *candidates,
 						  char rightleft)
 {
@@ -545,17 +613,19 @@ unary_oper_get_candidates(char *op,
 	HeapTuple	tup;
 	Form_pg_operator oper;
 	int			ncandidates = 0;
-
-	static ScanKeyData opKey[2] = {
-		{0, Anum_pg_operator_oprname, F_NAMEEQ},
-	{0, Anum_pg_operator_oprkind, F_CHAREQ}};
+	ScanKeyData opKey[2];
 
 	*candidates = NULL;
 
-	fmgr_info(F_NAMEEQ, (FmgrInfo *) &opKey[0].sk_func);
-	opKey[0].sk_argument = NameGetDatum(op);
-	fmgr_info(F_CHAREQ, (FmgrInfo *) &opKey[1].sk_func);
-	opKey[1].sk_argument = CharGetDatum(rightleft);
+	ScanKeyEntryInitialize(&opKey[0], 0,
+						   Anum_pg_operator_oprname,
+						   F_NAMEEQ,
+						   NameGetDatum(opname));
+
+	ScanKeyEntryInitialize(&opKey[1], 0,
+						   Anum_pg_operator_oprkind,
+						   F_CHAREQ,
+						   CharGetDatum(rightleft));
 
 	pg_operator_desc = heap_openr(OperatorRelationName, AccessShareLock);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
@@ -566,10 +636,11 @@ unary_oper_get_candidates(char *op,
 
 	while (HeapTupleIsValid(tup = heap_getnext(pg_operator_scan, 0)))
 	{
+		oper = (Form_pg_operator) GETSTRUCT(tup);
+
 		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
 		current_candidate->args = (Oid *) palloc(sizeof(Oid));
 
-		oper = (Form_pg_operator) GETSTRUCT(tup);
 		if (rightleft == 'r')
 			current_candidate->args[0] = oper->oprleft;
 		else
@@ -606,7 +677,7 @@ right_oper(char *op, Oid arg)
 	if (!HeapTupleIsValid(tup))
 	{
 		/* Try for inexact matches */
-		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'r');
+		ncandidates = unary_oper_get_candidates(op, &candidates, 'r');
 		if (ncandidates == 0)
 		{
 			unary_op_error(op, arg, FALSE);
@@ -658,7 +729,7 @@ left_oper(char *op, Oid arg)
 	if (!HeapTupleIsValid(tup))
 	{
 		/* Try for inexact matches */
-		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'l');
+		ncandidates = unary_oper_get_candidates(op, &candidates, 'l');
 		if (ncandidates == 0)
 		{
 			unary_op_error(op, arg, TRUE);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.75 2000/03/16 06:35:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.76 2000/03/19 00:19:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,14 +127,14 @@ agg_get_candidates(char *aggname,
 	HeapTuple	tup;
 	Form_pg_aggregate agg;
 	int			ncandidates = 0;
-
-	static ScanKeyData aggKey[1] = {
-	{0, Anum_pg_aggregate_aggname, F_NAMEEQ}};
+	ScanKeyData	aggKey[1];
 
 	*candidates = NULL;
 
-	fmgr_info(F_NAMEEQ, (FmgrInfo *) &aggKey[0].sk_func);
-	aggKey[0].sk_argument = NameGetDatum(aggname);
+	ScanKeyEntryInitialize(&aggKey[0], 0,
+						   Anum_pg_aggregate_aggname,
+						   F_NAMEEQ,
+						   NameGetDatum(aggname));
 
 	pg_aggregate_desc = heap_openr(AggregateRelationName, AccessShareLock);
 	pg_aggregate_scan = heap_beginscan(pg_aggregate_desc,
@@ -145,10 +145,11 @@ agg_get_candidates(char *aggname,
 
 	while (HeapTupleIsValid(tup = heap_getnext(pg_aggregate_scan, 0)))
 	{
+		agg = (Form_pg_aggregate) GETSTRUCT(tup);
+
 		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
 		current_candidate->args = (Oid *) palloc(sizeof(Oid));
 
-		agg = (Form_pg_aggregate) GETSTRUCT(tup);
 		current_candidate->args[0] = agg->aggbasetype;
 		current_candidate->next = *candidates;
 		*candidates = current_candidate;
@@ -478,40 +479,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	/*
-	 * See if this is really a type-coercion request: single-argument
-	 * function call where the function name is a type name.  If so,
-	 * and if we can do the coercion trivially, just go ahead and do it
-	 * without requiring there to be a real function for it.  "Trivial"
-	 * coercions are ones that involve binary-compatible types and ones
-	 * that are coercing a previously-unknown-type literal constant
-	 * to a specific type.
-	 */
-	if (nargs == 1)
-	{
-		Type		tp;
-
-		tp = SearchSysCacheTuple(TYPENAME,
-								 PointerGetDatum(funcname),
-								 0, 0, 0);
-		if (HeapTupleIsValid(tp))
-		{
-			Oid		targetType = typeTypeId(tp);
-			Node   *arg1 = lfirst(fargs);
-			Oid		sourceType = exprType(arg1);
-
-			if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
-				sourceType == targetType ||
-				IS_BINARY_COMPATIBLE(sourceType, targetType))
-			{
-				/*
-				 * coerce_type can handle these cases, so why duplicate code...
-				 */
-				return coerce_type(pstate, arg1, sourceType, targetType, -1);
-			}
-		}
-	}
-
-	/*
 	 * If we dropped through to here it's really a function (or a set,
 	 * which is implemented as a function). Extract arg type info and
 	 * transform relation name arguments into varnodes of the appropriate
@@ -615,9 +582,74 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		exists = func_get_detail(funcname, nargs, oid_array, &funcid,
 								 &rettype, &retset, &true_oid_array);
 		if (!exists)
-			elog(ERROR, "No such function '%s' with the specified attributes",
-				 funcname);
+		{
+			/*
+			 * If we can't find a function (or can't find a unique function),
+			 * see if this is really a type-coercion request: single-argument
+			 * function call where the function name is a type name.  If so,
+			 * and if we can do the coercion trivially, just go ahead and do
+			 * it without requiring there to be a real function for it.
+			 *
+			 * "Trivial" coercions are ones that involve binary-compatible
+			 * types and ones that are coercing a previously-unknown-type
+			 * literal constant to a specific type.
+			 *
+			 * DO NOT try to generalize this code to nontrivial coercions,
+			 * because you'll just set up an infinite recursion between this
+			 * routine and coerce_type!  We have already failed to find a
+			 * suitable "real" coercion function, so we have to fail unless
+			 * this is a coercion that coerce_type can handle by itself.
+			 * Make sure this code stays in sync with what coerce_type does!
+			 */
+			if (nargs == 1)
+			{
+				Type		tp;
 
+				tp = SearchSysCacheTuple(TYPENAME,
+										 PointerGetDatum(funcname),
+										 0, 0, 0);
+				if (HeapTupleIsValid(tp))
+				{
+					Oid		sourceType = oid_array[0];
+					Oid		targetType = typeTypeId(tp);
+					Node   *arg1 = lfirst(fargs);
+
+					if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
+						sourceType == targetType ||
+						IS_BINARY_COMPATIBLE(sourceType, targetType))
+					{
+						/* Ah-hah, we can do it as a trivial coercion.
+						 * coerce_type can handle these cases, so why
+						 * duplicate code...
+						 */
+						return coerce_type(pstate, arg1,
+										   sourceType, targetType, -1);
+					}
+				}
+			}
+
+			/*
+			 * Oops.  Time to die.
+			 *
+			 * If there is a single argument of complex type, we might be
+			 * dealing with the PostQuel notation rel.function instead of
+			 * the more usual function(rel).  Give a nonspecific error
+			 * message that will cover both cases.
+			 */
+			if (nargs == 1)
+			{
+				Type	tp = typeidType(oid_array[0]);
+				if (typeTypeFlag(tp) == 'c')
+					elog(ERROR, "No such attribute or function '%s'",
+						 funcname);
+			}
+
+			/* Else generate a detailed complaint */
+			func_error(NULL, funcname, nargs, oid_array,
+					   "Unable to identify a function that satisfies the "
+					   "given argument types"
+					   "\n\tYou may need to add explicit typecasts");
+		}
 	}
 
 	/* got it */
@@ -760,7 +792,7 @@ func_get_candidates(char *funcname, int nargs)
 	heapRelation = heap_openr(ProcedureRelationName, AccessShareLock);
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
-						   (AttrNumber) 1,
+						   (AttrNumber) Anum_pg_proc_proname,
 						   (RegProcedure) F_NAMEEQ,
 						   (Datum) funcname);
 
@@ -851,8 +883,13 @@ match_argtypes(int nargs,
 /* func_select_candidate()
  * Given the input argtype array and more than one candidate
  * for the function argtype array, attempt to resolve the conflict.
- * returns the selected argtype array if the conflict can be resolved,
+ * Returns the selected argtype array if the conflict can be resolved,
  * otherwise returns NULL.
+ *
+ * By design, this is pretty similar to oper_select_candidate in parse_oper.c.
+ * However, the calling convention is a little different: we assume the caller
+ * already pruned away "candidates" that aren't actually coercion-compatible
+ * with the input types, whereas oper_select_candidate must do that itself.
  */
 static Oid *
 func_select_candidate(int nargs,
@@ -865,17 +902,16 @@ func_select_candidate(int nargs,
 	int			i;
 	int			ncandidates;
 	int			nbestMatch,
-				nmatch,
-				ncompat;
+				nmatch;
 	CATEGORY	slot_category,
 				current_category;
 	Oid			slot_type,
 				current_type;
 
-/*
- * Run through all candidates and keep those with the most matches
- *	on explicit types. Keep all candidates if none match.
- */
+	/*
+	 * Run through all candidates and keep those with the most matches
+	 * on exact types. Keep all candidates if none match.
+	 */
 	ncandidates = 0;
 	nbestMatch = 0;
 	last_candidate = NULL;
@@ -885,28 +921,12 @@ func_select_candidate(int nargs,
 	{
 		current_typeids = current_candidate->args;
 		nmatch = 0;
-		ncompat = 0;
 		for (i = 0; i < nargs; i++)
 		{
-			if (input_typeids[i] != UNKNOWNOID)
-			{
-				if (current_typeids[i] == input_typeids[i])
-					nmatch++;
-				else if (IS_BINARY_COMPATIBLE(current_typeids[i],
-											  input_typeids[i]))
-					ncompat++;
-			}
+			if (input_typeids[i] != UNKNOWNOID &&
+				current_typeids[i] == input_typeids[i])
+				nmatch++;
 		}
-
-		/*
-		 * If we find an exact match at all arg positions, we're done;
-		 * there can be only one such candidate.
-		 */
-		if (nmatch == nargs)
-			return current_candidate->args;
-
-		/* Otherwise, use match+compat as the score. */
-		nmatch += ncompat;
 
 		/* take this one as the best choice so far? */
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
@@ -932,20 +952,118 @@ func_select_candidate(int nargs,
 	if (ncandidates == 1)
 		return candidates->args;
 
-/*
- * Still too many candidates?
- * Try assigning types for the unknown columns.
- *
- * We do this by examining each unknown argument position to see if all the
- * candidates agree on the type category of that slot.  If so, and if some
- * candidates accept the preferred type in that category, eliminate the
- * candidates with other input types.  If we are down to one candidate
- * at the end, we win.
- *
- * XXX It's kinda bogus to do this left-to-right, isn't it?  If we eliminate
- * some candidates because they are non-preferred at the first slot, we won't
- * notice that they didn't have the same type category for a later slot.
- */
+	/*
+	 * Still too many candidates?
+	 * Run through all candidates and keep those with the most matches
+	 * on exact types + binary-compatible types.
+	 * Keep all candidates if none match.
+	 */
+	ncandidates = 0;
+	nbestMatch = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+	{
+		current_typeids = current_candidate->args;
+		nmatch = 0;
+		for (i = 0; i < nargs; i++)
+		{
+			if (input_typeids[i] != UNKNOWNOID)
+			{
+				if (current_typeids[i] == input_typeids[i] ||
+					IS_BINARY_COMPATIBLE(current_typeids[i],
+										 input_typeids[i]))
+					nmatch++;
+			}
+		}
+
+		/* take this one as the best choice so far? */
+		if ((nmatch > nbestMatch) || (last_candidate == NULL))
+		{
+			nbestMatch = nmatch;
+			candidates = current_candidate;
+			last_candidate = current_candidate;
+			ncandidates = 1;
+		}
+		/* no worse than the last choice, so keep this one too? */
+		else if (nmatch == nbestMatch)
+		{
+			last_candidate->next = current_candidate;
+			last_candidate = current_candidate;
+			ncandidates++;
+		}
+		/* otherwise, don't bother keeping this one... */
+	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
+
+	if (ncandidates == 1)
+		return candidates->args;
+
+	/*
+	 * Still too many candidates?
+	 * Now look for candidates which are preferred types at the args that
+	 * will require coercion.
+	 * Keep all candidates if none match.
+	 */
+	ncandidates = 0;
+	nbestMatch = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+	{
+		current_typeids = current_candidate->args;
+		nmatch = 0;
+		for (i = 0; i < nargs; i++)
+		{
+			if (input_typeids[i] != UNKNOWNOID)
+			{
+				current_category = TypeCategory(current_typeids[i]);
+				if (current_typeids[i] == input_typeids[i] ||
+					IsPreferredType(current_category, current_typeids[i]))
+					nmatch++;
+			}
+		}
+
+		if ((nmatch > nbestMatch) || (last_candidate == NULL))
+		{
+			nbestMatch = nmatch;
+			candidates = current_candidate;
+			last_candidate = current_candidate;
+			ncandidates = 1;
+		}
+		else if (nmatch == nbestMatch)
+		{
+			last_candidate->next = current_candidate;
+			last_candidate = current_candidate;
+			ncandidates++;
+		}
+	}
+
+	if (last_candidate)			/* terminate rebuilt list */
+		last_candidate->next = NULL;
+
+	if (ncandidates == 1)
+		return candidates->args;
+
+	/*
+	 * Still too many candidates?
+	 * Try assigning types for the unknown columns.
+	 *
+	 * We do this by examining each unknown argument position to see if all the
+	 * candidates agree on the type category of that slot.  If so, and if some
+	 * candidates accept the preferred type in that category, eliminate the
+	 * candidates with other input types.  If we are down to one candidate
+	 * at the end, we win.
+	 *
+	 * XXX It's kinda bogus to do this left-to-right, isn't it?  If we
+	 * eliminate some candidates because they are non-preferred at the first
+	 * slot, we won't notice that they didn't have the same type category for
+	 * a later slot.
+	 */
 	for (i = 0; i < nargs; i++)
 	{
 		if (input_typeids[i] == UNKNOWNOID)
@@ -1002,16 +1120,11 @@ func_select_candidate(int nargs,
 		}
 	}
 
-	ncandidates = 0;
-	for (current_candidate = candidates;
-		 current_candidate != NULL;
-		 current_candidate = current_candidate->next)
-		ncandidates++;
-
-	if (ncandidates == 1)
-		return candidates->args;
-
-	return NULL;
+	if (candidates == NULL)
+		return NULL;			/* no remaining candidates */
+	if (candidates->next != NULL)
+		return NULL;			/* more than one remaining candidate */
+	return candidates->args;
 }	/* func_select_candidate() */
 
 
@@ -1043,12 +1156,7 @@ func_get_detail(char *funcname,
 				bool *retset,	/* return value */
 				Oid **true_typeids)		/* return value */
 {
-	Oid		  **input_typeid_vector;
-	Oid		   *current_input_typeids;
-	CandidateList function_typeids;
-	CandidateList current_function_typeids;
 	HeapTuple	ftup;
-	Form_pg_proc pform;
 
 	/* attempt to find with arguments exactly as specified... */
 	ftup = SearchSysCacheTuple(PROCNAME,
@@ -1056,23 +1164,37 @@ func_get_detail(char *funcname,
 							   Int32GetDatum(nargs),
 							   PointerGetDatum(oid_array),
 							   0);
-	*true_typeids = oid_array;
 
-	/* didn't find an exact match, so now try to match up candidates... */
-	if (!HeapTupleIsValid(ftup))
+	if (HeapTupleIsValid(ftup))
 	{
+		/* given argument types are the right ones */
+		*true_typeids = oid_array;
+	}
+	else
+	{
+		/* didn't find an exact match, so now try to match up candidates... */
+		CandidateList function_typeids;
+
 		function_typeids = func_get_candidates(funcname, nargs);
 
 		/* found something, so let's look through them... */
 		if (function_typeids != NULL)
 		{
-			int			ncandidates;
+			Oid		  **input_typeid_vector = NULL;
+			Oid		   *current_input_typeids;
 
-			input_typeid_vector = argtype_inherit(nargs, oid_array);
+			/*
+			 * First we will search with the given oid_array, then with
+			 * variants based on replacing complex types with their
+			 * inheritance ancestors.  Stop as soon as any match is found.
+			 */
 			current_input_typeids = oid_array;
 
 			do
 			{
+				CandidateList current_function_typeids;
+				int			ncandidates;
+
 				ncandidates = match_argtypes(nargs, current_input_typeids,
 											 function_typeids,
 											 &current_function_typeids);
@@ -1087,29 +1209,22 @@ func_get_detail(char *funcname,
 										  PointerGetDatum(*true_typeids),
 											   0);
 					Assert(HeapTupleIsValid(ftup));
+					break;
 				}
 
 				/*
 				 * multiple candidates? then better decide or throw an
 				 * error...
 				 */
-				else if (ncandidates > 1)
+				if (ncandidates > 1)
 				{
 					*true_typeids = func_select_candidate(nargs,
 												   current_input_typeids,
 											   current_function_typeids);
 
-					/* couldn't decide, so quit */
-					if (*true_typeids == NULL)
+					if (*true_typeids != NULL)
 					{
-						func_error(NULL, funcname, nargs, oid_array,
-								   "Unable to identify a function which satisfies the given argument types"
-								   "\n\tYou will have to retype your query using explicit typecasts");
-					}
-
-					/* found something, so use the first one... */
-					else
-					{
+						/* was able to choose a best candidate */
 						ftup = SearchSysCacheTuple(PROCNAME,
 											   PointerGetDatum(funcname),
 												   Int32GetDatum(nargs),
@@ -1117,35 +1232,34 @@ func_get_detail(char *funcname,
 												   0);
 						Assert(HeapTupleIsValid(ftup));
 					}
+					/* otherwise, ambiguous function call, so fail by
+					 * exiting loop with ftup still NULL.
+					 */
+					break;
 				}
+
+				/*
+				 * No match here, so try the next inherited type vector.
+				 * First time through, we need to compute the list of vectors.
+				 */
+				if (input_typeid_vector == NULL)
+					input_typeid_vector = argtype_inherit(nargs, oid_array);
+
 				current_input_typeids = *input_typeid_vector++;
 			}
-			while (current_input_typeids != InvalidOid && ncandidates == 0);
+			while (current_input_typeids != NULL);
 		}
 	}
 
-	if (!HeapTupleIsValid(ftup))
+	if (HeapTupleIsValid(ftup))
 	{
-		Type		tp;
+		Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
 
-		if (nargs == 1)
-		{
-			tp = typeidType(oid_array[0]);
-			if (typeTypeFlag(tp) == 'c')
-				elog(ERROR, "No such attribute or function '%s'", funcname);
-		}
-	}
-	else
-	{
-		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*funcid = ftup->t_data->t_oid;
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
-
 		return true;
 	}
-
-	/* shouldn't reach here */
 	return false;
 }	/* func_get_detail() */
 
@@ -1677,11 +1791,13 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg)
 	if (caller == NULL)
 	{
 		elog(ERROR, "Function '%s(%s)' does not exist%s%s",
-			 funcname, p, ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
+			 funcname, p,
+			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
 	else
 	{
 		elog(ERROR, "%s: function '%s(%s)' does not exist%s%s",
-			 caller, funcname, p, ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
+			 caller, funcname, p,
+			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
 }
