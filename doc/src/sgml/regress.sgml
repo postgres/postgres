@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.29 2002/10/12 16:31:55 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/regress.sgml,v 1.30 2002/11/08 20:26:12 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -264,12 +264,17 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
      Some of the tests involve computing 64-bit (<type>double
      precision</type>) numbers from table columns. Differences in
      results involving mathematical functions of <type>double
-     precision</type> columns have been observed.  The float8 and
-     geometry tests are particularly prone to small differences across
-     platforms, or even with different compiler optimization options.
+     precision</type> columns have been observed.  The <literal>float8</> and
+     <literal>geometry</> tests are particularly prone to small differences
+     across platforms, or even with different compiler optimization options.
      Human eyeball comparison is needed to determine the real
      significance of these differences which are usually 10 places to
      the right of the decimal point.
+    </para>
+
+    <para>
+     Some systems display minus zero as <literal>-0</>, while others
+     just show <literal>0</>.
     </para>
 
     <para>
@@ -277,32 +282,6 @@ PGTZ='PST8PDT7,M04.01.0,M10.05.03'; export PGTZ
      <function>exp()</function> differently from the mechanism
      expected by the current <productname>PostgreSQL</productname>
      code.
-    </para>
-   </sect2>
-    
-   <sect2>
-    <title>Polygon differences</title>
-      
-    <para>
-     Several of the tests involve operations on geographic data about
-     the Oakland/Berkeley, California street map. The map data is expressed as
-     polygons whose vertices are represented as pairs of <type>double
-     precision</type> numbers (decimal latitude and
-     longitude). Initially, some tables are created and loaded with
-     geographic data, then some views are created that join two
-     tables using the polygon intersection operator
-     (<literal>##</literal>), then a select is done on the view.
-    </para>
-
-    <para>
-     When comparing the results from different platforms, differences
-     occur in the 2nd or 3rd place to the right of the decimal
-     point. The SQL statements where these problems occur are the
-     following:
-<programlisting>
-SELECT * from street;
-SELECT * from iexit;
-</programlisting>
     </para>
    </sect2>
 
