@@ -1048,6 +1048,11 @@ connectby_text(PG_FUNCTION_ARGS)
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
 
+	/* check to see if caller supports us returning a tuplestore */
+	if (!rsinfo || !(rsinfo->allowedModes & SFRM_Materialize))
+		elog(ERROR, "connectby: materialize mode required, but it is not "
+			 "allowed in this context");
+
 	if (fcinfo->nargs == 6)
 	{
 		branch_delim = GET_STR(PG_GETARG_TEXT_P(5));
