@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.16 2001/09/28 08:09:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.17 2001/10/03 18:32:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,16 +200,36 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 				buf = pstrdup("numeric");
 			break;
 
+		case TIMEOID:
+			if (with_typemod && typemod > 0)
+				buf = psnprintf(50, "time(%d) without time zone",
+								typemod);
+			else
+				buf = pstrdup("time without time zone");
+			break;
+
 		case TIMETZOID:
-			buf = pstrdup("time with time zone");
+			if (with_typemod && typemod > 0)
+				buf = psnprintf(50, "time(%d) with time zone",
+								typemod);
+			else
+				buf = pstrdup("time with time zone");
 			break;
 
 		case TIMESTAMPOID:
-			buf = pstrdup("timestamp without time zone");
+			if (with_typemod && typemod > 0)
+				buf = psnprintf(50, "timestamp(%d) without time zone",
+								typemod);
+			else
+				buf = pstrdup("timestamp without time zone");
 			break;
 
 		case TIMESTAMPTZOID:
-			buf = pstrdup("timestamp with time zone");
+			if (with_typemod && typemod > 0)
+				buf = psnprintf(50, "timestamp(%d) with time zone",
+								typemod);
+			else
+				buf = pstrdup("timestamp with time zone");
 			break;
 
 		case VARBITOID:
