@@ -1,12 +1,11 @@
 ============================================================
-Frequently Asked Questions (FAQ) for PostgreSQL 7.1
+Frequently Asked Questions (FAQ) for PostgreSQL 7.2
 Sun Solaris specific
 to be read in conjunction with the installation instructions
 ============================================================
-last updated:        $Date: 2001/04/08 16:36:13 $
+last updated:        $Date: 2001/12/10 13:02:20 $
 
-current maintainer:  Marc Liyanage (liyanage@access.ch)
-original author:     Marc Liyanage (liyanage@access.ch)
+current maintainer:  Peter Eisentraut <peter_e@gmx.net>
 
 
 Contents:
@@ -14,8 +13,6 @@ Contents:
 1) What tools do I need to build and install PostgreSQL on Solaris?
 2) Why do I get problems when building with OpenSSL support?
 3) Why does configure complain about a failed test program?
-4) A bunch of regression tests fail in random, non-reproduceable
-   patterns.  What's wrong?
 
 
 1) What tools do I need to build and install PostgreSQL on Solaris?
@@ -65,21 +62,5 @@ export LD_LIBRARY_PATH
 and restart configure.  You will also have to keep this setting
 whenever you run any of the installed PostgreSQL programs.
 
-In the future, consider installing the offending libraries so they
-provide their own "rpath".
-
-
-4) A bunch of regression tests fail in random, non-reproduceable
-   patterns.  What's wrong?
-
-A lot of users have reported that the parallel regression test suite
-causes a varying, unpredictable set of tests to fail, usually tests in
-the second half of the run.  The failure is usually a failure to
-connect to the server at all, or an abrupt loss of the connection.
-Invariably, these problems go away when the regression test suite is
-changed to use TCP/IP sockets instead of Unix domain sockets.  (Change
-line 163 of src/test/regress/pg_regress to match *solaris*; yes, there
-should be an easier way to do this.)  Since a number of users do not
-seem to have any problems with this at all, we do not claim that "Unix
-domain sockets are broken on Solaris", but feel free to draw your own
-conclusions, or better yet, share your insights with the rest of us.
+Alternatively, set the environment variable LD_RUN_PATH.  See the
+ld(1) man page for more information.
