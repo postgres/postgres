@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.22 2002/11/18 17:12:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.23 2002/12/30 18:42:12 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -108,14 +108,16 @@ CLUSTER
 
   <para>
    When a table is clustered, <productname>PostgreSQL</productname>
-   remembers on which index it was clustered.  In calls to
+   remembers on which index it was clustered.  The form
    <command>CLUSTER <replaceable class="parameter">tablename</replaceable></command>,
-   the table is clustered on the same index that it was clustered before.
+   re-clusters the table on the same index that it was clustered before.
   </para>
 
   <para>
-   A simple <command>CLUSTER</command> clusters all the tables in the database
-   that the calling user owns and uses the saved cluster information.  This
+   <command>CLUSTER</command> without any parameter re-clusters all the tables
+   in the
+   current database that the calling user owns, or all tables if called
+   by a superuser.  (Never-clustered tables are not touched.)  This
    form of <command>CLUSTER</command> cannot be called from inside a
    transaction or function.
   </para>
@@ -157,15 +159,15 @@ CLUSTER
    </para>
 
    <para>
-	<command>CLUSTER</command> preserves GRANT, inheritance, index, foreign
-	key, and other ancillary information about the table.
+    <command>CLUSTER</command> preserves GRANT, inheritance, index, foreign
+    key, and other ancillary information about the table.
    </para>
 
    <para>
-	Because <command>CLUSTER</command> remembers the clustering information,
-	one can cluster the tables one wants clustered manually the first time, and
-	setup a timed event similar to <command>VACUUM</command> so that the tables
-	are periodically and automatically clustered.
+    Because <command>CLUSTER</command> remembers the clustering information,
+    one can cluster the tables one wants clustered manually the first time, and
+    setup a timed event similar to <command>VACUUM</command> so that the tables
+    are periodically re-clustered.
    </para>
 
    <para>

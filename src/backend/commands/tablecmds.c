@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.62 2002/12/16 18:39:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.63 2002/12/30 18:42:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,7 +355,7 @@ RemoveRelation(const RangeVar *relation, DropBehavior behavior)
  *		Removes all the rows from a relation.
  *
  * Note: This routine only does safety and permissions checks;
- * rebuild_rel in cluster.c does the actual work.
+ * rebuild_relation in cluster.c does the actual work.
  */
 void
 TruncateRelation(const RangeVar *relation)
@@ -366,7 +366,6 @@ TruncateRelation(const RangeVar *relation)
 	Relation	fkeyRel;
 	SysScanDesc fkeyScan;
 	HeapTuple	tuple;
-	List	   *indexes;
 
 	/* Grab exclusive lock in preparation for truncate */
 	rel = heap_openrv(relation, AccessExclusiveLock);
@@ -433,17 +432,13 @@ TruncateRelation(const RangeVar *relation)
 	systable_endscan(fkeyScan);
 	heap_close(fkeyRel, AccessShareLock);
 
-	/* Save the information of all indexes on the relation. */
-	indexes = get_indexattr_list(rel, InvalidOid);
-
-	/* Keep the lock until transaction commit */
-	heap_close(rel, NoLock);
-
 	/*
 	 * Do the real work using the same technique as cluster, but
-	 * without the code copy portion
+	 * without the data-copying portion
 	 */
-	rebuild_rel(relid, InvalidOid, indexes, false);
+	rebuild_relation(rel, InvalidOid);
+
+	/* NB: rebuild_relation does heap_close() */
 }
 
 /*----------
