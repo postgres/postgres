@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.49 2002/01/16 23:51:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.50 2002/05/06 02:39:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -707,13 +707,12 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 	 * By here, the inserting transaction has committed - have to check
 	 * when...
 	 */
-
-	if (TransactionIdFollowsOrEquals(tuple->t_xmin, snapshot->xmax))
-		return false;
 	if (TransactionIdFollowsOrEquals(tuple->t_xmin, snapshot->xmin))
 	{
 		uint32		i;
 
+		if (TransactionIdFollowsOrEquals(tuple->t_xmin, snapshot->xmax))
+			return false;
 		for (i = 0; i < snapshot->xcnt; i++)
 		{
 			if (TransactionIdEquals(tuple->t_xmin, snapshot->xip[i]))
@@ -748,12 +747,15 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 		tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 	}
 
-	if (TransactionIdFollowsOrEquals(tuple->t_xmax, snapshot->xmax))
-		return true;
+	/*
+	 * OK, the deleting transaction committed too ... but when?
+	 */
 	if (TransactionIdFollowsOrEquals(tuple->t_xmax, snapshot->xmin))
 	{
 		uint32		i;
 
+		if (TransactionIdFollowsOrEquals(tuple->t_xmax, snapshot->xmax))
+			return true;
 		for (i = 0; i < snapshot->xcnt; i++)
 		{
 			if (TransactionIdEquals(tuple->t_xmax, snapshot->xip[i]))
