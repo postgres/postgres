@@ -14,6 +14,10 @@ A dump/restore is not required for those running 7.1.X.
 Changes
 -------
 Fix PL/PgSQL SELECTs when returning no rows
+Fix for psql backslash core dump
+Referential integrity permission fix
+Optimizer fixes
+pg_dump cleanups 
 
 
 
