@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/destroyuser.1,v 1.9 1998/07/24 16:10:19 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/destroyuser.1,v 1.10 1998/07/24 16:36:56 momjian Exp $
 .TH DESTROYUSER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 destroyuser - destroy a Postgres user and associated databases
@@ -76,6 +76,7 @@ Once invoked with the above options,
 will warn you about the databases that will be destroyed in the
 process and permit you to abort the removal of the user if desired.
 .SH "SEE ALSO"
+drop_user(l),
 createuser(1),
 psql(1),
 postmaster(1).
