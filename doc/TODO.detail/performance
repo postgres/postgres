@@ -341,3 +341,214 @@ Informix Software  (No, really)         300 Lakeside Drive  Oakland, CA 94612
  good, you'll have to ram them down people's throats." -- Howard Aiken
 
 
+From owner-pgsql-hackers@hub.org Tue Oct 19 10:31:10 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA29087
+	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:31:08 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id KAA27535 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 10:19:47 -0400 (EDT)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id KAA30328;
+	Tue, 19 Oct 1999 10:12:10 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 19 Oct 1999 10:11:55 -0400
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id KAA30030
+	for pgsql-hackers-outgoing; Tue, 19 Oct 1999 10:11:00 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by hub.org (8.9.3/8.9.3) with ESMTP id KAA29914
+	for <pgsql-hackers@postgreSQL.org>; Tue, 19 Oct 1999 10:10:33 -0400 (EDT)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id KAA09038;
+	Tue, 19 Oct 1999 10:09:15 -0400 (EDT)
+To: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+cc: "Vadim Mikheev" <vadim@krs.ru>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] mdnblocks is an amazing time sink in huge relations 
+In-reply-to: Your message of Tue, 19 Oct 1999 19:03:22 +0900 
+             <000801bf1a19$2d88ae20$2801007e@cadzone.tpf.co.jp> 
+Date: Tue, 19 Oct 1999 10:09:15 -0400
+Message-ID: <9036.940342155@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: OR
+
+"Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
+> 1. shared cache holds committed system tuples.
+> 2. private cache holds uncommitted system tuples.
+> 3. relpages of shared cache are updated immediately by
+>     phisical change and corresponding buffer pages are
+>     marked dirty.
+> 4. on commit, the contents of uncommitted tuples except
+>    relpages,reltuples,... are copied to correponding tuples
+>    in shared cache and the combined contents are
+>    committed.
+> If so,catalog cache invalidation would be no longer needed.
+> But synchronization of the step 4. may be difficult.
+
+I think the main problem is that relpages and reltuples shouldn't
+be kept in pg_class columns at all, because they need to have
+very different update behavior from the other pg_class columns.
+
+The rest of pg_class is update-on-commit, and we can lock down any one
+row in the normal MVCC way (if transaction A has modified a row and
+transaction B also wants to modify it, B waits for A to commit or abort,
+so it can know which version of the row to start from).  Furthermore,
+there can legitimately be several different values of a row in use in
+different places: the latest committed, an uncommitted modification, and
+one or more old values that are still being used by active transactions
+because they were current when those transactions started.  (BTW, the
+present relcache is pretty bad about maintaining pure MVCC transaction
+semantics like this, but it seems clear to me that that's the direction
+we want to go in.)
+
+relpages cannot operate this way.  To be useful for avoiding lseeks,
+relpages *must* change exactly when the physical file changes.  It
+matters not at all whether the particular transaction that extended the
+file ultimately commits or not.  Moreover there can be only one correct
+value (per relation) across the whole system, because there is only one
+length of the relation file.
+
+If we want to take reltuples seriously and try to maintain it
+on-the-fly, then I think it needs still a third behavior.  Clearly
+it cannot be updated using MVCC rules, or we lose all writer
+concurrency (if A has added tuples to a rel, B would have to wait
+for A to commit before it could update reltuples...).  Furthermore
+"updating" isn't a simple matter of storing what you think the new
+value is; otherwise two transactions adding tuples in parallel would
+leave the wrong answer after B commits and overwrites A's value.
+I think it would work for each transaction to keep track of a net delta
+in reltuples for each table it's changed (total tuples added less total
+tuples deleted), and then atomically add that value to the table's
+shared reltuples counter during commit.  But that still leaves the
+problem of how you use the counter during a transaction to get an
+accurate answer to the question "If I scan this table now, how many tuples
+will I see?"  At the time the question is asked, the current shared
+counter value might include the effects of transactions that have
+committed since your transaction started, and therefore are not visible
+under MVCC rules.  I think getting the correct answer would involve
+making an instantaneous copy of the current counter at the start of
+your xact, and then adding your own private net-uncommitted-delta to
+the saved shared counter value when asked the question.  This doesn't
+look real practical --- you'd have to save the reltuples counts of
+*all* tables in the database at the start of each xact, on the off
+chance that you might need them.  Ugh.  Perhaps someone has a better
+idea.  In any case, reltuples clearly needs different mechanisms than
+the ordinary fields in pg_class do, because updating it will be a
+performance bottleneck otherwise.
+
+If we allow reltuples to be updated only by vacuum-like events, as
+it is now, then I think keeping it in pg_class is still OK.
+
+In short, it seems clear to me that relpages should be removed from
+pg_class and kept somewhere else if we want to make it more reliable
+than it is now, and the same for reltuples (but reltuples doesn't
+behave the same as relpages, and probably ought to be handled
+differently).
+
+			regards, tom lane
+
+************
+
+From owner-pgsql-hackers@hub.org Tue Oct 19 21:25:30 1999
+Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28130
+	for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:25:26 -0400 (EDT)
+Received: from hub.org (hub.org [216.126.84.1]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id VAA10512 for <maillist@candle.pha.pa.us>; Tue, 19 Oct 1999 21:15:28 -0400 (EDT)
+Received: from localhost (majordom@localhost)
+	by hub.org (8.9.3/8.9.3) with SMTP id VAA50745;
+	Tue, 19 Oct 1999 21:07:23 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers)
+Received: by hub.org (bulk_mailer v1.5); Tue, 19 Oct 1999 21:07:01 -0400
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id VAA50644
+	for pgsql-hackers-outgoing; Tue, 19 Oct 1999 21:06:06 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+Received: from sd.tpf.co.jp (sd.tpf.co.jp [210.161.239.34])
+	by hub.org (8.9.3/8.9.3) with ESMTP id VAA50584
+	for <pgsql-hackers@postgreSQL.org>; Tue, 19 Oct 1999 21:05:26 -0400 (EDT)
+	(envelope-from Inoue@tpf.co.jp)
+Received: from cadzone ([126.0.1.40] (may be forged))
+          by sd.tpf.co.jp (2.5 Build 2640 (Berkeley 8.8.6)/8.8.4) with SMTP
+   id KAA01715; Wed, 20 Oct 1999 10:05:14 +0900
+From: "Hiroshi Inoue" <Inoue@tpf.co.jp>
+To: "Tom Lane" <tgl@sss.pgh.pa.us>
+Cc: <pgsql-hackers@postgreSQL.org>
+Subject: RE: [HACKERS] mdnblocks is an amazing time sink in huge relations 
+Date: Wed, 20 Oct 1999 10:09:13 +0900
+Message-ID: <000501bf1a97$b925a860$2801007e@cadzone.tpf.co.jp>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+X-Mimeole: Produced By Microsoft MimeOLE V4.72.2106.4
+Importance: Normal
+Sender: owner-pgsql-hackers@postgreSQL.org
+Status: ORr
+
+> -----Original Message-----
+> From: Hiroshi Inoue [mailto:Inoue@tpf.co.jp]
+> Sent: Tuesday, October 19, 1999 6:45 PM
+> To: Tom Lane
+> Cc: pgsql-hackers@postgreSQL.org
+> Subject: RE: [HACKERS] mdnblocks is an amazing time sink in huge
+> relations 
+> 
+> 
+> > 
+> > "Hiroshi Inoue" <Inoue@tpf.co.jp> writes:
+> 
+> [snip]
+>  
+> > 
+> > > Deletion is necessary only not to consume disk space.
+> > >
+> > > For example vacuum could remove not deleted files.
+> > 
+> > Hmm ... interesting idea ... but I can hear the complaints
+> > from users already...
+> >
+> 
+> My idea is only an analogy of PostgreSQL's simple recovery
+> mechanism of tuples.
+> 
+> And my main point is
+> 	"delete fails after commit" doesn't harm the database
+> 	except that not deleted files consume disk space.
+> 
+> Of cource,it's preferable to delete relation files immediately
+> after(or just when) commit.
+> Useless files are visible though useless tuples are invisible.
+>
+
+Anyway I don't need "DROP TABLE inside transactions" now
+and my idea is originally for that issue.
+
+After a thought,I propose the following solution.
+
+1. mdcreate() couldn't create existent relation files.
+    If the existent file is of length zero,we would overwrite
+    the file.(seems the comment in md.c says so but the
+    code doesn't do so). 
+    If the file is an Index relation file,we would overwrite
+    the file.
+
+2. mdunlink() couldn't unlink non-existent relation files.
+    mdunlink() doesn't call elog(ERROR) even if the file
+    doesn't exist,though I couldn't find where to change
+    now.
+    mdopen() doesn't call elog(ERROR) even if the file
+    doesn't exist and leaves the relation as CLOSED. 
+
+Comments ?
+
+Regards. 
+
+Hiroshi Inoue
+Inoue@tpf.co.jp
+
+************
+

@@ -2,16 +2,17 @@
 # This utility is used to generate a compact list of changes for each
 # release, bjm 2000-02-22
 
-# Usage $0 [-r 'revision pattern'] file
+# Usage $0 file
 
+# no branches: 
 # cvs log -d '>1999-06-14 00:00:00 GMT' . > log
-# pgcvslog -r '\.2\.[0-9]*$' log
+#
+# pre and post-branch logs:
+# cvs log -d'2000-05-08 00:00:00 GMT<2000-05-29 00:00:00 GMT'
+# cvs log -d'>2000-05-29 00:00:00 GMT' -rREL7_0_PATCHES 
+#
 
-if [ "X$1" = "X-r" ]
-then	REV="$2"
-	shift 2
-else	REV=".*"
-fi
+# pgcvslog -r '\.2\.[0-9]*$' log
 
 cat "$@" |
 
@@ -20,8 +21,6 @@ cat "$@" |
 
 awk '
 	$0 ~ /^Working file:/	{workingfile = $0}
-
-	$1 == "revision" && $2 !~ /'"$REV"'/ {skip = "Y"}
 
 	($0 ~ /^====*$/ || $0 ~ /^----*$/) && skip == "N" \
 	{

@@ -192,7 +192,8 @@ PERFORMANCE
 
 FSYNC
 
-* Allow transaction commits with rollback with no-fsync performance [fsync](Vadim)
+* Allow transaction commits with rollback with no-fsync performance
+  [fsync] (Vadim)
 
 INDEXES
 
@@ -231,6 +232,7 @@ MISC
 * Remove pg_listener index
 * Remove ANALYZE from VACUUM so it can be run separately without locks
 * Gather more accurate statistics using indexes
+* Improve statistics storage in pg_class [performance]
 
 SOURCE CODE
 -----------
