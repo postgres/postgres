@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.1.1.1.2.1 1996/08/21 04:23:32 scrappy Exp $
+ * $Id: pg_attribute.h,v 1.1.1.1.2.2 1996/08/24 20:56:42 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -44,13 +44,19 @@ CATALOG(pg_attribute) BOOTSTRAP {
     Oid  	attrelid;      
     NameData  	attname;
     Oid  	atttypid;
+      /* atttypid is the OID of the instance in Catalog Class pg_type that
+         defines the data type of this attribute (e.g. int4).  Information in
+         that instance is redundant with the attlen, attbyval, and attalign
+         attributes of this instance, so they had better match or Postgres
+         will fail.
+         */
     Oid  	attdefrel;
     int4  	attnvals;
     Oid  	atttyparg;	/* type arg for arrays/spquel/procs */
     int2 	attlen;
-      /* attlen is the number of bytes we use to represent the value 
-         of this attribute, e.g. 4 for an int4.  But for a variable length 
-         attribute, attlen is -1.
+      /* attlen is a copy of the typlen field from pg_type for this
+         attribute.  See atttypid above.  See struct TypeTupleFormData for
+         definition.
          */
     int2  	attnum;
       /* attnum is the "attribute number" for the attribute:  A 
@@ -68,6 +74,10 @@ CATALOG(pg_attribute) BOOTSTRAP {
          */
     int2 	attbound;
     bool  	attbyval;
+      /* attbyval is a copy of the typbyval field from pg_type for this
+         attribute.  See atttypid above.  See struct TypeTupleFormData for
+         definition.
+         */
     bool 	attcanindex;
     Oid 	attproc;	/* spquel? */
     int4	attnelems;
@@ -80,7 +90,11 @@ CATALOG(pg_attribute) BOOTSTRAP {
          walking process.  
          */
     bool        attisset;
-    char	attalign;  /* alignment (c=char, s=short, i=int, d=double) */
+    char	attalign; 
+      /* attalign is a copy of the typalign field from pg_type for this
+         attribute.  See atttypid above.  See struct TypeTupleFormData for
+         definition.
+         */
 } FormData_pg_attribute;
 
 /*
