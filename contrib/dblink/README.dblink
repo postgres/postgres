@@ -82,7 +82,8 @@ Outputs
 
 Example usage
 
-  select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd','select f1, f2 from mytable');
+  select dblink('hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
+               ,'select f1, f2 from mytable');
 
 
 ==================================================================
@@ -118,44 +119,16 @@ Example usage
 
 ==================================================================
 
-NOTE: If you need to provide selection criteria in a WHERE clause, it is necessary
-to 'fake' a UNION, e.g.
+A more convenient way to use dblink may be to create a view:
 
-  select
-     dblink_tok(t1.dblink_p,0) as f1
-    ,dblink_tok(t1.dblink_p,1) as f2
-  from
-   (
-    select dblink(
-                   'hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
-                  ,'select f1, f2 from mytable'
-                 ) as dblink_p
-    union all
-    select null where false
-   ) as t1
-  where
-    dblink_tok(t1.dblink_p,0) = 'mycriteria';
-
-in order to work around an issue with the query optimizer. A more convenient way to approach
-this problem is to create a view:
-
-  create view myremotetable as
-  select
-     dblink_tok(t1.dblink_p,0) as f1
-    ,dblink_tok(t1.dblink_p,1) as f2
-  from
-   (
-    select dblink(
-                   'hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
-                  ,'select f1, f2 from mytable'
-                 ) as dblink_p
-    union all
-    select null where false
-   ) as t1;
+ create view myremotetable as
+ select dblink_tok(t1.dblink_p,0) as f1, dblink_tok(t1.dblink_p,1) as f2
+ from (select dblink('hostaddr=127.0.0.1 port=5432 dbname=template1 user=postgres password=postgres'
+                    ,'select proname, prosrc from pg_proc') as dblink_p) as t1;
 
 Then you can simply write:
 
-   select f1,f2 from myremotetable where f1 = 'mycriteria';
+   select f1, f2 from myremotetable where f1 like 'bytea%';
 
 ==================================================================
 
