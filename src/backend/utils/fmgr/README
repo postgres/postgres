@@ -423,6 +423,11 @@ function is called in).  The function stores pointers to the Tuplestore and
 TupleDesc into ReturnSetInfo, sets returnMode to indicate materialize mode,
 and returns null.  isDone is not used and should be left at ExprSingleResult.
 
+If the function is being called as a table function (ie, it appears in a
+FROM item), then the expected tuple descriptor is passed in ReturnSetInfo;
+in other contexts the expectedDesc field will be NULL.  The function need
+not pay attention to expectedDesc, but it may be useful in special cases.
+
 There is no support for functions accepting sets; instead, the function will
 be called multiple times, once for each element of the input set.
 

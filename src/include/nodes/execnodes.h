@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.73 2002/08/30 00:28:41 tgl Exp $
+ * $Id: execnodes.h,v 1.74 2002/08/30 23:59:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,12 +147,16 @@ typedef enum
 typedef struct ReturnSetInfo
 {
 	NodeTag		type;
+	/* values set by caller: */
 	ExprContext *econtext;		/* context function is being called in */
+	TupleDesc	expectedDesc;	/* tuple descriptor expected by caller */
 	int			allowedModes;	/* bitmask: return modes caller can handle */
-	SetFunctionReturnMode	returnMode;	/* actual return mode */
+	/* result status from function (but pre-initialized by caller): */
+	SetFunctionReturnMode returnMode;	/* actual return mode */
 	ExprDoneCond isDone;		/* status for ValuePerCall mode */
-	Tuplestorestate *setResult;	/* return object for Materialize mode */
-	TupleDesc	setDesc;		/* descriptor for Materialize mode */
+	/* fields filled by function in Materialize return mode: */
+	Tuplestorestate *setResult;	/* holds the complete returned tuple set */
+	TupleDesc	setDesc;		/* actual descriptor for returned tuples */
 } ReturnSetInfo;
 
 /* ----------------

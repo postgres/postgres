@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.8 2002/08/30 00:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.9 2002/08/30 23:59:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@ FunctionNext(FunctionScan *node)
 		scanstate->tuplestorestate = tuplestorestate =
 			ExecMakeTableFunctionResult((Expr *) scanstate->funcexpr,
 										econtext,
+										scanstate->tupdesc,
 										&funcTupdesc);
 
 		/*

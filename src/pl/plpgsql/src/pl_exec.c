@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.60 2002/08/30 00:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.61 2002/08/30 23:59:46 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -144,9 +144,9 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtypelem,
 				int32 reqtypmod,
 				bool *isnull);
-static void exec_set_found(PLpgSQL_execstate * estate, bool state);
 static void exec_init_tuple_store(PLpgSQL_execstate *estate);
-static void exec_set_ret_tupdesc(PLpgSQL_execstate *estate, List *labels);
+static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
+static void exec_set_found(PLpgSQL_execstate * estate, bool state);
 
 
 /* ----------
@@ -679,18 +679,9 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 		rettup = NULL;
 	else
 	{
-		TupleDesc	td1 = trigdata->tg_relation->rd_att;
-		TupleDesc	td2 = estate.rettupdesc;
-		int			i;
-
-		if (td1->natts != td2->natts)
+		if (!compatible_tupdesc(estate.rettupdesc,
+								trigdata->tg_relation->rd_att))
 			elog(ERROR, "returned tuple structure doesn't match table of trigger event");
-		for (i = 1; i <= td1->natts; i++)
-		{
-			if (SPI_gettypeid(td1, i) != SPI_gettypeid(td2, i))
-				elog(ERROR, "returned tuple structure doesn't match table of trigger event");
-		}
-
 		/* Copy tuple to upper executor memory */
 		rettup = SPI_copytuple((HeapTuple) (estate.retval));
 	}
@@ -1597,6 +1588,8 @@ static int
 exec_stmt_return_next(PLpgSQL_execstate *estate,
 					  PLpgSQL_stmt_return_next *stmt)
 {
+	TupleDesc tupdesc;
+	int		 natts;
 	HeapTuple tuple;
 	bool		free_tuple = false;
 
@@ -1606,35 +1599,39 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	if (estate->tuple_store == NULL)
 		exec_init_tuple_store(estate);
 
+	/* rettupdesc will be filled by exec_init_tuple_store */
+	tupdesc = estate->rettupdesc;
+	natts	= tupdesc->natts;
+
 	if (stmt->rec)
 	{
 		PLpgSQL_rec *rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+
+		if (!compatible_tupdesc(tupdesc, rec->tupdesc))
+			elog(ERROR, "Wrong record type supplied in RETURN NEXT");
 		tuple = rec->tup;
-		estate->rettupdesc = rec->tupdesc;
 	}
 	else if (stmt->row)
 	{
-		PLpgSQL_var *var;
-		TupleDesc tupdesc;
 		Datum	*dvalues;
 		char	*nulls;
-		int		 natts;
 		int		 i;
 
-		if (!estate->rettupdesc)
-			exec_set_ret_tupdesc(estate, NIL);
+		if (natts != stmt->row->nfields)
+			elog(ERROR, "Wrong record type supplied in RETURN NEXT");
 
-		tupdesc = estate->rettupdesc;
-		natts	= tupdesc->natts;
 		dvalues	= (Datum *) palloc(natts * sizeof(Datum));
 		nulls	= (char *) palloc(natts * sizeof(char));
-
 		MemSet(dvalues, 0, natts * sizeof(Datum));
 		MemSet(nulls, 'n', natts);
 
-		for (i = 0; i < stmt->row->nfields; i++)
+		for (i = 0; i < natts; i++)
 		{
+			PLpgSQL_var *var;
+
 			var = (PLpgSQL_var *) (estate->datums[stmt->row->varnos[i]]);
+			if (var->datatype->typoid != tupdesc->attrs[i]->atttypid)
+				elog(ERROR, "Wrong record type supplied in RETURN NEXT");
 			dvalues[i] = var->value;
 			if (!var->isnull)
 				nulls[i] = ' ';
@@ -1650,19 +1647,40 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	{
 		Datum	retval;
 		bool	isNull;
+		Oid		rettype;
 		char	nullflag;
 
-		if (!estate->rettupdesc)
-			exec_set_ret_tupdesc(estate, makeList1(makeString("unused")));
+		if (natts != 1)
+			elog(ERROR, "Wrong result type supplied in RETURN NEXT");
 
 		retval = exec_eval_expr(estate,
 								stmt->expr,
 								&isNull,
-								&(estate->rettype));
+								&rettype);
+
+		/* coerce type if needed */
+		if (!isNull && rettype != tupdesc->attrs[0]->atttypid)
+		{
+			Oid targType = tupdesc->attrs[0]->atttypid;
+			Oid typInput;
+			Oid typElem;
+			FmgrInfo	finfo_input;
+
+			getTypeInputInfo(targType, &typInput, &typElem);
+			fmgr_info(typInput, &finfo_input);
+
+			retval = exec_cast_value(retval,
+									 rettype,
+									 targType,
+									 &finfo_input,
+									 typElem,
+									 tupdesc->attrs[0]->atttypmod,
+									 &isNull);
+		}
 
 		nullflag = isNull ? 'n' : ' ';
 
-		tuple = heap_formtuple(estate->rettupdesc, &retval, &nullflag);
+		tuple = heap_formtuple(tupdesc, &retval, &nullflag);
 
 		free_tuple = true;
 
@@ -1690,24 +1708,17 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 }
 
 static void
-exec_set_ret_tupdesc(PLpgSQL_execstate *estate, List *labels)
-{
-	estate->rettype = estate->fn_rettype;
-	estate->rettupdesc = TypeGetTupleDesc(estate->rettype, labels);
-
-	if (!estate->rettupdesc)
-		elog(ERROR, "Could not produce descriptor for rowtype");
-}
-
-static void
 exec_init_tuple_store(PLpgSQL_execstate *estate)
 {
 	ReturnSetInfo *rsi = estate->rsi;
 	MemoryContext oldcxt;
 
-	/* Check caller can handle a set result */
+	/*
+	 * Check caller can handle a set result in the way we want
+	 */
 	if (!rsi || !IsA(rsi, ReturnSetInfo) ||
-		(rsi->allowedModes & SFRM_Materialize) == 0)
+		(rsi->allowedModes & SFRM_Materialize) == 0 ||
+		rsi->expectedDesc == NULL)
 		elog(ERROR, "Set-valued function called in context that cannot accept a set");
 
 	estate->tuple_store_cxt = rsi->econtext->ecxt_per_query_memory;
@@ -1715,6 +1726,8 @@ exec_init_tuple_store(PLpgSQL_execstate *estate)
 	oldcxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
 	estate->tuple_store = tuplestore_begin_heap(true, SortMem);
 	MemoryContextSwitchTo(oldcxt);
+
+	estate->rettupdesc = rsi->expectedDesc;
 }
 
 
@@ -2839,9 +2852,9 @@ exec_assign_value(PLpgSQL_execstate * estate,
 	bool		attisnull;
 	Oid			atttype;
 	int32		atttypmod;
-	HeapTuple	typetup;
 	HeapTuple	newtup;
-	Form_pg_type typeStruct;
+	Oid			typInput;
+	Oid			typElem;
 	FmgrInfo	finfo_input;
 
 	switch (target->dtype)
@@ -2942,19 +2955,17 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 */
 			atttype = SPI_gettypeid(rec->tupdesc, fno + 1);
 			atttypmod = rec->tupdesc->attrs[fno]->atttypmod;
-			typetup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(atttype),
-									 0, 0, 0);
-			if (!HeapTupleIsValid(typetup))
-				elog(ERROR, "cache lookup for type %u failed", atttype);
-			typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-			fmgr_info(typeStruct->typinput, &finfo_input);
+			getTypeInputInfo(atttype, &typInput, &typElem);
+			fmgr_info(typInput, &finfo_input);
 
 			attisnull = *isNull;
-			values[fno] = exec_cast_value(value, valtype,
-										  atttype, &finfo_input,
-										  typeStruct->typelem,
-										  atttypmod, &attisnull);
+			values[fno] = exec_cast_value(value,
+										  valtype,
+										  atttype,
+										  &finfo_input,
+										  typElem,
+										  atttypmod,
+										  &attisnull);
 			if (attisnull)
 				nulls[fno] = 'n';
 			else
@@ -2964,12 +2975,10 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 * Avoid leaking the result of exec_cast_value, if it
 			 * performed a conversion to a pass-by-ref type.
 			 */
-			if (!typeStruct->typbyval && !attisnull && values[fno] != value)
+			if (!attisnull && values[fno] != value && !get_typbyval(atttype))
 				mustfree = DatumGetPointer(values[fno]);
 			else
 				mustfree = NULL;
-
-			ReleaseSysCache(typetup);
 
 			/*
 			 * Now call heap_formtuple() to create a new tuple that
@@ -3574,6 +3583,26 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	 */
 	expr->plan_simple_expr = tle->expr;
 	expr->plan_simple_type = exprType(tle->expr);
+}
+
+/*
+ * Check two tupledescs have matching number and types of attributes
+ */
+static bool
+compatible_tupdesc(TupleDesc td1, TupleDesc td2)
+{
+	int			i;
+
+	if (td1->natts != td2->natts)
+		return false;
+
+	for (i = 0; i < td1->natts; i++)
+	{
+		if (td1->attrs[i]->atttypid != td2->attrs[i]->atttypid)
+			return false;
+	}
+
+	return true;
 }
 
 /* ----------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.102 2002/08/30 00:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.103 2002/08/30 23:59:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -707,6 +707,7 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 		fcinfo.resultinfo = (Node *) &rsinfo;
 		rsinfo.type = T_ReturnSetInfo;
 		rsinfo.econtext = econtext;
+		rsinfo.expectedDesc = NULL;
 		rsinfo.allowedModes = (int) SFRM_ValuePerCall;
 		rsinfo.returnMode = SFRM_ValuePerCall;
 		/* isDone is filled below */
@@ -851,6 +852,7 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
 Tuplestorestate *
 ExecMakeTableFunctionResult(Expr *funcexpr,
 							ExprContext *econtext,
+							TupleDesc expectedDesc,
 							TupleDesc *returnDesc)
 {
 	Tuplestorestate *tupstore = NULL;
@@ -859,7 +861,7 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 	List	   *argList;
 	FunctionCachePtr fcache;
 	FunctionCallInfoData fcinfo;
-	ReturnSetInfo rsinfo;		/* for functions returning sets */
+	ReturnSetInfo rsinfo;
 	ExprDoneCond argDone;
 	MemoryContext callerContext;
 	MemoryContext oldcontext;
@@ -918,17 +920,14 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 	}
 
 	/*
-	 * If function returns set, prepare a resultinfo node for
-	 * communication
+	 * Prepare a resultinfo node for communication.  We always do this even
+	 * if not expecting a set result, so that we can pass expectedDesc.
 	 */
-	if (fcache->func.fn_retset)
-	{
-		fcinfo.resultinfo = (Node *) &rsinfo;
-		rsinfo.type = T_ReturnSetInfo;
-		rsinfo.econtext = econtext;
-		rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
-	}
-	/* we set these fields always since we examine them below */
+	fcinfo.resultinfo = (Node *) &rsinfo;
+	rsinfo.type = T_ReturnSetInfo;
+	rsinfo.econtext = econtext;
+	rsinfo.expectedDesc = expectedDesc;
+	rsinfo.allowedModes = (int) (SFRM_ValuePerCall | SFRM_Materialize);
 	rsinfo.returnMode = SFRM_ValuePerCall;
 	/* isDone is filled below */
 	rsinfo.setResult = NULL;

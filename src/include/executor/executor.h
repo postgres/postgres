@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.75 2002/08/30 00:28:41 tgl Exp $
+ * $Id: executor.h,v 1.76 2002/08/30 23:59:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@ extern Datum ExecMakeFunctionResult(FunctionCachePtr fcache,
 					   ExprDoneCond *isDone);
 extern Tuplestorestate *ExecMakeTableFunctionResult(Expr *funcexpr,
 													ExprContext *econtext,
+													TupleDesc expectedDesc,
 													TupleDesc *returnDesc);
 extern Datum ExecEvalExpr(Node *expression, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
