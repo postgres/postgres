@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62 2002/10/27 02:52:10 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.1 2003/01/27 00:23:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1282,14 +1282,15 @@ static void
 _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap)
 {
 	_write_msg(modulename, fmt, ap);
-	if (AH->public.verbose)
-		write_msg(NULL, "*** aborted because of error\n");
 
-	if (AH)
+	if (AH) {
+		if (AH->public.verbose)
+			write_msg(NULL, "*** aborted because of error\n");
 		if (AH->connection)
 			PQfinish(AH->connection);
-	if (AH->blobConnection)
-		PQfinish(AH->blobConnection);
+		if (AH->blobConnection)
+			PQfinish(AH->blobConnection);
+	}
 
 	exit(1);
 }
