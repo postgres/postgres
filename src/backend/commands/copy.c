@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.234 2004/11/06 17:46:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.235 2004/12/03 17:13:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,7 @@ static bool fe_eof;				/* true if detected end of copy data */
 static EolType eol_type;		/* EOL type of input */
 static int	client_encoding;	/* remote side's character encoding */
 static int	server_encoding;	/* local encoding */
+static bool embedded_line_warning;
 
 /* these are just for error messages, see copy_in_error_callback */
 static bool copy_binary;		/* is it a binary copy? */
@@ -1190,6 +1191,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
 	attr_count = list_length(attnumlist);
+	embedded_line_warning = false;
 
 	/*
 	 * Get info about the columns we need to process.
@@ -2627,6 +2629,25 @@ CopyAttributeOutCSV(char *server_string, char *delim, char *quote,
 		 !use_quote && (c = *test_string) != '\0';
 		 test_string += mblen)
 	{
+		/*
+		 * We don't know here what the surrounding line end characters
+		 * might be. It might not even be under postgres' control. So
+		 * we simple warn on ANY embedded line ending character.
+		 *
+		 * This warning will disappear when we make line parsing field-aware,
+		 * so that we can reliably read in embedded line ending characters
+		 * regardless of the file's line-end context.
+		 *
+		 */
+
+		if (!embedded_line_warning  && (c == '\n' || c == '\r') )
+		{
+			embedded_line_warning = true;
+			elog(WARNING,
+				 "CSV fields with embedded linefeed or carriage return "
+				 "characters might not be able to be reimported");
+		}
+
 		if (c == delimc || c == quotec || c == '\n' || c == '\r')
 			use_quote = true;
 		if (!same_encoding)
