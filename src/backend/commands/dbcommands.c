@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.152 2005/03/04 20:21:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.153 2005/03/12 21:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -722,8 +722,8 @@ RenameDatabase(const char *oldname, const char *newname)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   oldname);
 
-	/* must have createdb */
-	if (!have_createdb_privilege())
+	/* must have createdb rights */
+	if (!superuser() && !have_createdb_privilege())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("permission denied to rename database")));
@@ -883,8 +883,7 @@ AlterDatabaseOwner(const char *dbname, AclId newOwnerSysId)
 		bool		isNull;
 		HeapTuple	newtuple;
 
-		/* changing owner's database for someone else: must be superuser */
-		/* note that the someone else need not have any permissions */
+		/* must be superuser to change ownership */
 		if (!superuser())
 			ereport(ERROR,
 					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
@@ -999,24 +998,22 @@ get_db_info(const char *name, Oid *dbIdP, int4 *ownerIdP,
 	return gottuple;
 }
 
+/* Check if current user has createdb privileges */
 static bool
 have_createdb_privilege(void)
 {
+	bool		result = false;
 	HeapTuple	utup;
-	bool		retval;
 
 	utup = SearchSysCache(SHADOWSYSID,
 						  Int32GetDatum(GetUserId()),
 						  0, 0, 0);
-
-	if (!HeapTupleIsValid(utup))
-		retval = false;
-	else
-		retval = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
-
-	ReleaseSysCache(utup);
-
-	return retval;
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
+		ReleaseSysCache(utup);
+	}
+	return result;
 }
 
 /*
