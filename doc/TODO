@@ -1,37 +1,25 @@
 TODO list for PostgreSQL
 ========================
-#A dash (-) marks changes that will appear in the upcoming 8.0 release.#
+#A dash (-) marks changes that will appear in the upcoming 8.1 release.#
 
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Sep 25 21:33:44 EDT 2004
+Last updated:		Mon Sep 27 10:15:31 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
 
-Remove items before beta?
-
-Urgent
-======
-
-* -Point-in-time data recovery using backup and write-ahead log
-* -Create native Win32 port
 
 
 Administration
 ==============
 
-* -Incremental backups
 * Remove behavior of postmaster -o after making postmaster/postgres
   flags unique
-* -Allow configuration files to be specified in a different directory
 * Allow limits on per-db/user connections
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
-* -Add the concept of dataspaces/tablespaces (Gavin)
-* -Allow logging of only data definition(DDL), or DDL and modification statements
-* -Allow log lines to include session-level information, like database and user
 * Allow server log information to be output as INSERT statements
 
   This would allow server log information to be easily loaded into
@@ -51,7 +39,6 @@ Administration
 
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade
 * Have SHOW ALL and pg_settings show descriptions for server-side variables
-* -Allow external interfaces to extend the GUC variable set
 * Allow GRANT/REVOKE permissions to be given to all schema objects with one 
   command
 * Remove unreferenced table files created by transactions that were
@@ -123,7 +110,6 @@ Data Types
 ==========
 
 * Remove Money type, add money formatting for decimal type
-* -Change factorial to return a numeric (Gavin)
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values
 * Allow INET subnet tests with non-constants to be indexed
@@ -138,16 +124,12 @@ Data Types
   seqname.nextval (?)
 * Disallow changing default expression of a SERIAL column (?)
 * Allow infinite dates just like infinite timestamps
-* -Allow pg_dump to dump sequences using NO_MAXVALUE and NO_MINVALUE
-* -Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
 * Have initdb set DateStyle based on locale?
 * Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
 * Allow to_char to print localized month names
 * Allow functions to have a search path specified at creation time
-* -Make LENGTH() of CHAR() not count trailing spaces
 * Allow substring/replace() to get/set bit values
 * Add GUC variable to allow output of interval values in ISO8601 format
-* -Support composite types as table columns
 * Fix data types where equality comparison isn't intuitive, e.g. box
 * Merge hardwired timezone names with the TZ database; allow either kind
   everywhere a TZ name is currently taken
@@ -195,9 +177,6 @@ Multi-Language Support
 * Improve Unicode combined character handling (?)
 * Add octet_length_server() and octet_length_client()
 * Make octet_length_client() the same as octet_length()?
-* -Prevent mismatch of frontend/backend encodings from converting bytea
-  data from being interpreted as encoded strings
-* -Fix upper()/lower() to work for multibyte encodings
 
 
 Views / Rules
@@ -214,7 +193,6 @@ Views / Rules
 Indexes
 =======
 
-* -Order duplicate index entries on creation by ctid for faster heap lookups
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
   key, foreign key  [inheritance]
 * UNIQUE INDEX on base column not honored on inserts/updates from
@@ -239,7 +217,6 @@ Indexes
   col3 = 9, spin though the index checking for col1 and col3 matches,
   rather than just col1
 
-* -Be smarter about insertion of already-ordered data into btree index
 * Prevent index uniqueness checks when UPDATE does not modify the column
 
   Uniqueness (index) checks are done when updating a column even if the
@@ -262,8 +239,6 @@ Indexes
 
   One solution is to create a partial index on an IS NULL expression.
 
-* -Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
-  float4, numeric/decimal too
 * Add concurrency to GIST
 * Pack hash index buckets onto disk pages more efficiently
 
@@ -279,7 +254,6 @@ Commands
 * Change LIMIT/OFFSET to use int8
 * CREATE TABLE AS can not determine column lengths from expressions [atttypmod]
 * Allow UPDATE to handle complex aggregates [update] (?)
-* -Allow command blocks to ignore certain types of errors
 * Allow backslash handling in quoted strings to be disabled for portability
 
   The use of C-style backslashes (.e.g. \n, \r) in quoted strings is not
@@ -299,12 +273,8 @@ Commands
 * Allow REINDEX to rebuild all database indexes, remove /contrib/reindex
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Add a schema option to createlang
-* -Allow savepoints / nested transactions (Alvaro)
-* -Use nested transactions to prevent syntax errors from aborting a transaction
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
 * Allow SET CONSTRAINTS to be qualified by schema/table name
-* -Prevent COMMENT ON DATABASE from using a database name
-* -Add NO WAIT LOCKs
 * Allow TRUNCATE ... CASCADE/RESTRICT
 * Allow PREPARE of cursors
 * Allow PREPARE to automatically determine parameter types based on the SQL 
@@ -322,8 +292,6 @@ Commands
   Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
   such information in memory would improve performance.
 
-* -COMMENT ON [ CAST | CONVERSION | OPERATOR CLASS | LARGE OBJECT | LANGUAGE ] 
-  (Christopher) 
 * Dump large object comments in custom dump format
 * Add optional textual message to NOTIFY
 
@@ -331,7 +299,6 @@ Commands
   message, perhaps indicating the row modified or other custom
   information.
 
-* -Allow more ISOLATION LEVELS to be accepted
 * Allow CREATE TABLE foo (f1 INT CHECK (f1 > 0) CHECK (f1 < 10)) to work
   by searching for non-conflicting constraint names, and prefix with
   table name?
@@ -344,7 +311,6 @@ Commands
 * Add C code to copy directories for use in creating new databases
 * Ignore temporary tables from other sessions when processing
   inheritance?
-* -Add GUC setting to make created tables default to WITHOUT OIDS
 * Have pg_ctl look at PGHOST in case it is a socket directory?
 * Allow column-level GRANT/REVOKE privileges
 * Add a session mode to warn about non-standard SQL usage in queries
@@ -362,15 +328,7 @@ Commands
 
 
 * ALTER
-	o -ALTER TABLE ADD COLUMN does not honor DEFAULT and non-CHECK CONSTRAINT
-	o -ALTER TABLE ADD COLUMN column DEFAULT should fill existing
-	  rows with DEFAULT value
-	o -ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
-          of the item above
 	o Have ALTER TABLE RENAME rename SERIAL sequence names
-	o -Allow ALTER TABLE to modify column lengths and change to binary
-	  compatible types
-	o -Add ALTER DATABASE ... OWNER TO newowner
 	o Add ALTER DOMAIN TYPE
 	o Allow ALTER TABLE ... ALTER CONSTRAINT ... RENAME
 	o Allow ALTER TABLE to change constraint deferrability and actions
@@ -387,10 +345,6 @@ Commands
 	Currently non-global system tables must be in the default database
 	schema. Global system tables can never be moved.
 
-	o -Add ALTER DOMAIN, AGGREGATE, CONVERSION ... OWNER TO
-	o -Add ALTER SEQUENCE ... OWNER TO
-	o -Add ALTER INDEX that works just like ALTER TABLE already does
-	  on an index
 
 * CLUSTER
 	o Automatically maintain clustering on a table
@@ -401,14 +355,12 @@ Commands
         be to create a merged heap/index data file so an index lookup would
 	automatically access the heap data too.
 
-	o -Add ALTER TABLE table SET WITHOUT CLUSTER (Christopher)
 	o Add default clustering to system tables
 
 	To do this, determine the ideal cluster index for each system
 	table and set the cluster setting during initdb.
 
 * COPY
-	o -Allow dump/load of CSV format
 	o Allow COPY to report error lines and continue
 	
 	This requires the use of a savepoint before each COPY line is
@@ -461,7 +413,6 @@ Commands
 	Currently only constants are supported.
 
 	o Change PL/PgSQL to use palloc() instead of malloc()
-	o -Allow Java server-side programming
 	o Handle references to temporary tables that are created, destroyed, 
 	  then recreated during a session, and EXECUTE is not used
 	  
@@ -470,7 +421,6 @@ Commands
 
 	o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
 	o Improve PL/PgSQL exception handling using savepoints
-	o -Allow PL/pgSQL parameters to be specified by name and type during definition
 	o Allow function parameters to be passed by name,
 	  get_employee_salary(emp_id => 12345, tax_year => 2001)
 	o Add Oracle-style packages
@@ -490,9 +440,6 @@ Clients
   can be used on that data using /contrib/xml2. It also supports XSLT
   transformations.
     
-* -Allow psql \du to show users, and add \dg for groups
-* -Have psql \dn show only visible temp schemas using current_schemas()
-* -Have psql '\i ~/<tab><tab>' actually load files it displays from home dir
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name (?)
 * Have psql show current values for a sequence
@@ -506,9 +453,6 @@ Clients
 
 * pg_dump
 	o Have pg_dump use multi-statement transactions for INSERT dumps
-	o -Allow pg_dump to dump CREATE CONVERSION (Christopher)
-	o -Make pg_restore continue after errors, so it acts more like pg_dump
-	  scripts
 	o Allow pg_dump to use multiple -t and -n switches
 
 	  This should be done by allowing a '-t schema.table' syntax.
@@ -542,7 +486,6 @@ Clients
 	Document differences between ecpg and the SQL standard and
 	information about the Informix-compatibility module.
 
-	o -Implement SET DESCRIPTOR
 	o Solve cardinality > 1 for input descriptors / variables (?)
 	o Improve error handling (?)
 	o Add a semantic check level, e.g. check if a table really exists
@@ -589,11 +532,6 @@ Referential Integrity
 
 * Allow statement-level triggers to access modified rows
 * Support triggers on columns
-* -Have AFTER triggers execute after the appropriate SQL statement in a 
-  function, not at the end of the function
-* -Print table names with constraint names in error messages, or make constraint
-  names unique within a schema
-* -Issue NOTICE if foreign key data requires costly test to match primary key
 * Remove CREATE CONSTRAINT TRIGGER
 
   This was used in older releases to dump referential integrity
@@ -611,8 +549,6 @@ Dependency Checking
 ===================
 
 * Flush cached query plans when the dependent objects change
-* -Use dependency information to dump data in proper order
-* -Have pg_dump -c clear the database using dependency information
 * Track dependencies in function bodies and recompile/invalidate
 
 
@@ -691,8 +627,6 @@ Vacuum
   write lock. However, the read lock promotion to write lock could lead
   to deadlock situations.
 
-* -Provide automatic running of vacuum in the background in backend
-  rather than in /contrib (Matthew)
 * Allow free space map to be auto-sized or warn when it is too small
 
   The free space map is in shared memory so resizing is difficult.
@@ -825,7 +759,6 @@ Miscellaneous
   overhead.
 
 * Add a script to ask system configuration questions and tune postgresql.conf
-* -Use background process to write dirty shared buffers to disk
 * Use a phantom command counter for nested subtransactions to reduce
   tuple overhead
 
@@ -840,16 +773,12 @@ Source Code
 * Move platform-specific ps status display info from ps_status.c to ports
 * Improve access-permissions check on data directory in Cygwin (Tom)
 * Add optional CRC checksum to heap and index pages
-* -Change representation of whole-tuple parameters to functions
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
 * Remove memory/file descriptor freeing before ereport(ERROR)
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
-* -Add checks for fclose() failure (Tom)
-* -Change CVS ID to PostgreSQL
-* -Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Promote debug_query_string into a server-side function current_query()
 * Allow the identifier length to be increased via a configure option
