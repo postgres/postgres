@@ -6,7 +6,7 @@
 
   This file now requires Ant 1.4.1.  2002-04-18
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.31 2002/12/11 12:27:47 davec Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.32 2003/02/27 05:45:43 barry Exp $
 
 -->
 
@@ -22,6 +22,7 @@
   <property name="builddir" value="build" />
   <property name="package" value="org/postgresql" />
   <property name="debug" value="on" />
+  <property name="ssl" value="false" />
 
   <property file="build.properties"/>
 
@@ -47,6 +48,7 @@
         <equals arg1="${ant.java.version}" arg2="1.4"/>
     </condition>
     <available property="datasource" classname="javax.sql.DataSource"/>
+    <available property="ssl" classname="javax.net.ssl.SSLSocketFactory"/>
     <available property="junit" classname="junit.framework.Test" />
     <condition property="jdbc2tests">
       <and>
@@ -160,12 +162,27 @@
         <equals arg1="${jdbc3}" arg2="true"/>
     </condition>
 
+    <!-- determine the ssl status -->
+    <condition property="ssl_config" value="">
+        <equals arg1="${ssl}" arg2="true"/>
+    </condition>
+    <condition property="ssl_config" value="//">
+        <equals arg1="${ssl}" arg2="false"/>
+    </condition>
+    <condition property="ssl_edition" value="SSL">
+        <equals arg1="${ssl}" arg2="true"/>
+    </condition>
+    <condition property="ssl_edition" value="NO SSL">
+        <equals arg1="${ssl}" arg2="false"/>
+    </condition>
+
     <!-- Some defaults -->
     <filter token="MAJORVERSION" value="${major}" />
     <filter token="MINORVERSION" value="${minor}" />
-    <filter token="VERSION" value="PostgreSQL ${fullversion} ${edition}" />
+    <filter token="VERSION" value="PostgreSQL ${fullversion} ${edition} with ${ssl_edition}" />
     <filter token="JDBCCONNECTCLASS" value="${connectclass}" />
     <filter token="DEF_PGPORT" value="${def_pgport}" />
+    <filter token="SSL" value="${ssl_config}" />
 
      <fail unless="major" message="'major' undefined. Please follow the directions in README."/>
      <fail unless="minor" message="'minor' undefined. Please follow the directions in README."/>
@@ -181,7 +198,7 @@
           tofile="${package}/Driver.java"
           filtering="yes" />
 
-    <echo message="Configured build for the ${edition} edition driver" />
+    <echo message="Configured build for the ${edition} edition driver with ${ssl_edition}" />
   </target>
 
 

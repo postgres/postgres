@@ -27,7 +27,7 @@ public class PSQLException extends SQLException
 	 */
 	public PSQLException(String error, Object[] args)
 	{
-		//super();
+		super();
 		translate(error, args);
 	}
 

@@ -10,7 +10,7 @@ import org.postgresql.core.*;
 import org.postgresql.util.*;
 
 /*
- * $Id: PG_Stream.java,v 1.17 2002/08/20 04:26:02 barry Exp $
+ * $Id: PG_Stream.java,v 1.18 2003/02/27 05:45:44 barry Exp $
  *
  * This class is used by Connection & PGlobj for communicating with the
  * backend.
@@ -20,9 +20,11 @@ import org.postgresql.util.*;
 //	This class handles all the Streamed I/O for a org.postgresql connection
 public class PG_Stream
 {
-	private Socket connection;
-	private InputStream pg_input;
-	private BufferedOutputStream pg_output;
+	public String host;
+	public int port;
+	public Socket connection;
+	public InputStream pg_input;
+	public BufferedOutputStream pg_output;
 	private byte[] byte_buf = new byte[8*1024];
 
 	/*
@@ -33,8 +35,10 @@ public class PG_Stream
 	 * @param port the port number that the postmaster is sitting on
 	 * @exception IOException if an IOException occurs below it.
 	 */
-	public PG_Stream(String host, int port) throws IOException
+	public PG_Stream(String p_host, int p_port) throws IOException
 	{
+		host = p_host;
+		port = p_port;
 		connection = new Socket(host, port);
 
 		// Submitted by Jason Venner <jason@idiom.com> adds a 10x speed

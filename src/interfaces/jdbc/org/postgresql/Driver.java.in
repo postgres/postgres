@@ -1,5 +1,6 @@
 package org.postgresql;
 
+import java.io.*;
 import java.sql.*;
 import java.util.*;
 
@@ -66,15 +67,17 @@ public class Driver implements java.sql.Driver
 	 *
 	 * user - (optional) The user to connect as
 	 * password - (optional) The password for the user
+	 * ssl - (optional) Use SSL when connecting to the server
 	 * charSet - (optional) The character set to be used for converting
 	 *	 to/from the database to unicode.  If multibyte is enabled on the
 	 *	 server then the character set of the database is used as the default,
 	 *	 otherwise the jvm character encoding is used as the default.
-			* loglevel - (optional) Enable logging of messages from the driver.
-			*		The value is an integer from 1 to 2 where:
-			*		  INFO = 1, DEBUG = 2
-			*		The output is sent to DriverManager.getPrintWriter() if set,
-			*		otherwise it is sent to System.out.
+	 *   This value is only used when connecting to a 7.2 or older server.
+	 * loglevel - (optional) Enable logging of messages from the driver.
+	 *		The value is an integer from 1 to 2 where:
+	 *		  INFO = 1, DEBUG = 2
+	 *		The output is sent to DriverManager.getPrintWriter() if set,
+	 *		otherwise it is sent to System.out.
 	 * compatible - (optional) This is used to toggle
 	 *	 between different functionality as it changes across different releases
 	 *	 of the jdbc driver code.  The values here are versions of the jdbc
@@ -136,8 +139,9 @@ public class Driver implements java.sql.Driver
 		}
 		catch (Exception ex2)
 		{
-			if (Driver.logDebug)
+			if (Driver.logDebug) {
 				Driver.debug("error", ex2);
+			}
 			throw new PSQLException("postgresql.unusual", ex2);
 		}
 	}
@@ -211,7 +215,7 @@ public class Driver implements java.sql.Driver
 	 */
 	public static String getVersion()
 	{
-		return "@VERSION@ jdbc driver build " + m_buildNumber;
+		return "@VERSION@ (build " + m_buildNumber + ")";
 	}
 
 	/*
@@ -248,7 +252,17 @@ public class Driver implements java.sql.Driver
 		String key = "";
 		String value = "";
 
-		StringTokenizer st = new StringTokenizer(url, ":/;=&?", true);
+		String l_urlServer = url;
+		String l_urlArgs = "";
+
+		int l_qPos = url.indexOf('?');
+		if (l_qPos != -1) {
+			l_urlServer = url.substring(0,l_qPos);
+			l_urlArgs = url.substring(l_qPos+1);
+		}
+
+		//parse the server part of the url
+		StringTokenizer st = new StringTokenizer(l_urlServer, ":/", true);
 		for (int count = 0; (st.hasMoreTokens()); count++)
 		{
 			String token = st.nextToken();
@@ -318,25 +332,19 @@ public class Driver implements java.sql.Driver
 					urlProps.put("PGDBNAME", token);
 					state = -2;
 				}
-				else if (state <= -2 && (count % 2) == 1)
-				{
-					// PM Aug 2 1997 - added tests for ? and &
-					if (token.equals(";") || token.equals("?") || token.equals("&") )
-						state = -3;
-					else if (token.equals("="))
-						state = -5;
-				}
-				else if (state <= -2 && (count % 2) == 0)
-				{
-					if (state == -3)
-						key = token;
-					else if (state == -5)
-					{
-						value = token;
-						urlProps.put(key, value);
-						state = -2;
-					}
-				}
+			}
+		}
+
+		//parse the args part of the url
+		StringTokenizer qst = new StringTokenizer(l_urlArgs, "&");
+		for (int count = 0; (qst.hasMoreTokens()); count++)
+		{
+			String token = qst.nextToken();
+			int l_pos = token.indexOf('=');
+			if (l_pos == -1) {
+				urlProps.put(token, "");
+			} else {
+				urlProps.put(token.substring(0,l_pos), token.substring(l_pos+1));
 			}
 		}
 
@@ -419,7 +427,10 @@ public class Driver implements java.sql.Driver
 	{
 		if (logDebug)
 		{
-			DriverManager.println(msg + ex != null ? ex.getMessage() : "null Exception");
+			DriverManager.println(msg);
+			if(ex != null) {
+				DriverManager.println(ex.toString());
+			}
 		}
 	}
 	/*
@@ -441,9 +452,29 @@ public class Driver implements java.sql.Driver
 	{
 		if (logInfo)
 		{
-			DriverManager.println(msg + ex != null ? ex.getMessage() : "null Exception");
+			DriverManager.println(msg);
+			if(ex != null) {
+				DriverManager.println(ex.toString());
+			}
 		}
 	}
+
+
+	public static void makeSSL(PG_Stream p_stream) throws IOException {
+@SSL@		if (logDebug)
+@SSL@			debug("converting regular socket connection to ssl");
+@SSL@		javax.net.ssl.SSLSocketFactory factory = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
+@SSL@		p_stream.connection = (javax.net.ssl.SSLSocket) factory.createSocket(p_stream.connection,p_stream.host,p_stream.port,true);
+@SSL@		p_stream.pg_input = new BufferedInputStream(p_stream.connection.getInputStream(), 8192);
+@SSL@		p_stream.pg_output = new BufferedOutputStream(p_stream.connection.getOutputStream(), 8192);
+	}
+
+	public static boolean sslEnabled() {
+		boolean l_return = false;
+@SSL@		l_return = true;
+		return l_return;
+	}
+
 
 	//The build number should be incremented for every new build
 	private static int m_buildNumber = 201;
