@@ -3,9 +3,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL v7.4\n"
+"Project-Id-Version: PostgreSQL 7.4\n"
 "POT-Creation-Date: 2003-10-05 13:26-0300\n"
-"PO-Revision-Date: 2003-10-08 19:10+0100\n"
+"PO-Revision-Date: 2003-10-09 23:58+0100\n"
 "Last-Translator: Fabrizio Mazzoni <veramente@libero.it>\n"
 "Language-Team: Fabrizio Mazzoni <veramente@libero.it>\n"
 "MIME-Version: 1.0\n"
@@ -104,7 +104,7 @@ msgstr ""
 
 #: createdb.c:217
 msgid "  -D, --location=PATH       alternative place to store the database\n"
-msgstr "  -D, --location=PERCORSO       percorso alternativo in cui salvare il database\n"
+msgstr "  -D, --location=PERCORSO   percorso alternativo in cui salvare il database\n"
 
 #: createdb.c:218
 msgid "  -E, --encoding=ENCODING   encoding for the database\n"
@@ -112,11 +112,11 @@ msgstr "  -E, --encoding=CODIFICA   codifica del database\n"
 
 #: createdb.c:219
 msgid "  -O, --owner=OWNER         database user to own the new database\n"
-msgstr "  -O, --owner=PROPRIETARIO         utente proprietario del database\n"
+msgstr "  -O, --owner=UTENTE        utente proprietario del database\n"
 
 #: createdb.c:220
 msgid "  -T, --template=TEMPLATE   template database to copy\n"
-msgstr "  -T, --template=DB_MATRICE   copia il database DB_MATRICE\n"
+msgstr "  -T, --template=MATRICE    copia il database MATRICE\n"
 
 #: clusterdb.c:238
 #: createdb.c:221
@@ -154,7 +154,7 @@ msgstr "  --help                    mostra questo aiuto e poi esci\n"
 #: droplang.c:253
 #: dropuser.c:154
 msgid "  --version                 output version information, then exit\n"
-msgstr "  --version                 mostra informazioni sulla versione e poi esci\n"
+msgstr "  --version                 mostra informazioni sulla versione, poi esci\n"
 
 #: clusterdb.c:242
 #: createdb.c:225
@@ -176,7 +176,7 @@ msgstr ""
 #: dropuser.c:149
 #: vacuumdb.c:270
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
-msgstr "  -h, --host=NOME_HOST       indirizzo database o directory socket\n"
+msgstr "  -h, --host=NOME_HOST      indirizzo database o directory socket\n"
 
 #: clusterdb.c:244
 #: createdb.c:227
@@ -187,7 +187,7 @@ msgstr "  -h, --host=NOME_HOST       indirizzo database o directory socket\n"
 #: dropuser.c:150
 #: vacuumdb.c:271
 msgid "  -p, --port=PORT           database server port\n"
-msgstr "  -p, --port=PORTA           porta del server database\n"
+msgstr "  -p, --port=PORTA          porta del server database\n"
 
 #: clusterdb.c:245
 #: createdb.c:228
@@ -196,7 +196,7 @@ msgstr "  -p, --port=PORTA           porta del server database\n"
 #: droplang.c:250
 #: vacuumdb.c:272
 msgid "  -U, --username=USERNAME   user name to connect as\n"
-msgstr "  -U, --username=NOME_UTENTE   nome utente da utilizzare per la connessione\n"
+msgstr "  -U, --username=UTENTE     nome utente da utilizzare per la connessione\n"
 
 #: clusterdb.c:246
 #: createdb.c:229
@@ -213,7 +213,7 @@ msgid ""
 "By default, a database with the same name as the current user is created.\n"
 msgstr ""
 "\n"
-"Default, un database con lo stesso nome dell'utente corrente verrà creato.\n"
+"Di base, un database con lo stesso nome dell'utente corrente verrà creato.\n"
 
 #: clusterdb.c:248
 #: createdb.c:231
@@ -297,7 +297,7 @@ msgstr "  %s [OPZIONE]... NOME_LINGUAGGIO [NOME_DB]\n"
 
 #: createlang.c:275
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
-msgstr "  -d, --dbname=NOME_DB       database in cui installare il linguaggio\n"
+msgstr "  -d, --dbname=NOME_DB      database in cui installare il linguaggio\n"
 
 #: createlang.c:277
 #: droplang.c:247
@@ -306,7 +306,7 @@ msgstr "  -l, --list                mostra la lista dei linguaggi attualmente in
 
 #: createlang.c:278
 msgid "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
-msgstr "  -L, --pglib=CARTELLA     cerca il file di interpretazione linguaggio in CARTELLA\n"
+msgstr "  -L, --pglib=CARTELLA      cerca il file di interpretazione linguaggio in CARTELLA\n"
 
 #: createuser.c:141
 #, c-format
@@ -359,11 +359,11 @@ msgstr "  %s [OPZIONI]... [NOME_UTENTE]\n"
 
 #: createuser.c:239
 msgid "  -a, --adduser             user can add new users\n"
-msgstr "  -a, --adduser             l'utente può creare utenti\n"
+msgstr "  -a, --adduser             l'utente può creare altri utenti\n"
 
 #: createuser.c:240
 msgid "  -A, --no-adduser          user cannot add new users\n"
-msgstr "  -A, --no-adduser        l'utente non può creare utenti\n"
+msgstr "  -A, --no-adduser          l'utente non può creare utenti\n"
 
 #: createuser.c:241
 msgid "  -d, --createdb            user can create new databases\n"
@@ -391,7 +391,7 @@ msgstr "  -i, --sysid=SYSID         seleziona un sysid per il nuovo utente\n"
 
 #: createuser.c:254
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
-msgstr "  -U, --username=NOME_UTENTE   nome utente con cui collegarsi (non quello da creare)\n"
+msgstr "  -U, --username=UTENTE     nome utente con cui collegarsi (non quello da creare)\n"
 
 #: createuser.c:255
 #: dropuser.c:152
@@ -405,7 +405,7 @@ msgid ""
 "be prompted interactively.\n"
 msgstr ""
 "\n"
-"Se uno tra -a, -A, -d, -D e NOME_UTENTE non è specificato, ti sarà richesto interattivamente.\n"
+"Se uno tra -a, -A, -d, -D ed UTENTE non è specificato, ti sarà richesto interattivamente.\n"
 
 #: dropdb.c:91
 #, c-format
@@ -472,7 +472,7 @@ msgstr ""
 
 #: droplang.c:245
 msgid "  -d, --dbname=DBNAME       database from which to remove the language\n"
-msgstr "  -d, --dbname=NOME_DB       database dal quale eliminare il linguaggio\n"
+msgstr "  -d, --dbname=NOME_DB      database dal quale eliminare il linguaggio\n"
 
 #: dropuser.c:103
 msgid "Enter name of user to drop: "
@@ -499,7 +499,7 @@ msgstr ""
 
 #: dropuser.c:151
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
-msgstr "  -U, --username=NOME_UTENTE  nome utente con cui collegarsi (non quello da eliminare)\n"
+msgstr "  -U, --username=UTENTE     nome utente con cui collegarsi (non quello da eliminare)\n"
 
 #: clusterdb.c:119
 #, c-format

@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "POT-Creation-Date: 2003-10-05 13:25-0300\n"
-"PO-Revision-Date: 2003-10-08 19:02+0100\n"
+"PO-Revision-Date: 2003-10-09 23:35+0100\n"
 "Last-Translator: Fabrizio Mazzoni <veramente@libero.it>\n"
 "Language-Team: Fabrizio Mazzoni <veramente@libero.it>\n"
 "MIME-Version: 1.0\n"
@@ -213,7 +213,7 @@ msgstr "Numeri in virgola mobile"
 #: pg_resetxlog.c:454
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
-msgstr "Dimansione massima del nome di una locale:        %u\n"
+msgstr "Dimensione massima del nome di una locale:        %u\n"
 
 #: pg_resetxlog.c:455
 #, c-format
@@ -298,7 +298,7 @@ msgstr "Opzioni:\n"
 
 #: pg_resetxlog.c:695
 msgid "  -f              force update to be done\n"
-msgstr "  -f              forza l'aggiornamento ad essere eseguito\n"
+msgstr "  -f              forza lesecuzione dell'aggiornamento\n"
 
 #: pg_resetxlog.c:696
 msgid "  -l FILEID,SEG   force minimum WAL starting location for new transaction log\n"
@@ -306,7 +306,7 @@ msgstr "  -l FILEID,SEG   forza un nuovo inizio di WAL minimo per una nuova tran
 
 #: pg_resetxlog.c:697
 msgid "  -n              no update, just show extracted control values (for testing)\n"
-msgstr "  -n              non aggiornare, mostra solo i valori di controllo estrati (solo per prove)\n"
+msgstr "  -n              nessun aggiornamento, mostra solo i valori di controllo estrati (solo per prove)\n"
 
 #: pg_resetxlog.c:698
 msgid "  -o OID          set next OID\n"
