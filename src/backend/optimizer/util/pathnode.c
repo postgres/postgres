@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.49 1999/07/27 03:51:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.50 1999/07/30 00:56:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,11 +329,16 @@ create_index_path(Query *root,
 
 	/* Note that we are making a pathnode for a single-scan indexscan;
 	 * therefore, both indexid and indexqual should be single-element
-	 * lists (unless indexqual is empty).
+	 * lists.  We initialize indexqual to contain one empty sublist,
+	 * representing a single index traversal with no index restriction
+	 * conditions.  If we do have restriction conditions to use, they
+	 * will get inserted below.
 	 */
+	Assert(length(index->relids) == 1);
 	pathnode->indexid = index->relids;
+	pathnode->indexqual = lcons(NIL, NIL);
+
 	pathnode->indexkeys = index->indexkeys;
-	pathnode->indexqual = NIL;
 
 	/*
 	 * The index must have an ordering for the path to have (ordering)
@@ -358,14 +363,19 @@ create_index_path(Query *root,
 
 	if (is_join_scan || restriction_clauses == NULL)
 	{
-
 		/*
 		 * Indices used for joins or sorting result nodes don't restrict
 		 * the result at all, they simply order it, so compute the scan
 		 * cost accordingly -- use a selectivity of 1.0.
+		 *
+		 * is the statement above really true?	what about IndexScan as the
+		 * inner of a join?
+		 *
+		 * I think it's OK --- this routine is only used to make index paths
+		 * for mergejoins and sorts.  Index paths used as the inner side of
+		 * a nestloop join do provide restriction, but they are not made
+		 * with this code.  See index_innerjoin() in indxpath.c.
 		 */
-/* is the statement above really true?	what about IndexScan as the
-   inner of a join? */
 		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
 											  index->pages,
 											  1.0,
@@ -378,8 +388,8 @@ create_index_path(Query *root,
 	else
 	{
 		/*
-		 * Compute scan cost for the case when 'index' is used with a
-		 * restriction clause.
+		 * Compute scan cost for the case when 'index' is used with
+		 * restriction clause(s).
 		 */
 		List	   *indexquals;
 		float		npages;
@@ -390,6 +400,11 @@ create_index_path(Query *root,
 		/* expand special operators to indexquals the executor can handle */
 		indexquals = expand_indexqual_conditions(indexquals);
 
+		/* Insert qual list into 1st sublist of pathnode->indexqual;
+		 * we already made the cons cell above, no point in wasting it...
+		 */
+		lfirst(pathnode->indexqual) = indexquals;
+
 		index_selectivity(root,
 						  lfirsti(rel->relids),
 						  lfirsti(index->relids),
@@ -397,7 +412,6 @@ create_index_path(Query *root,
 						  &npages,
 						  &selec);
 
-		pathnode->indexqual = lcons(indexquals, NIL);
 		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
 											  (int) npages,
 											  selec,
