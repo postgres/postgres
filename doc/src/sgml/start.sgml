@@ -215,8 +215,8 @@ createdb: database creation failed on mydb.
 <ItemizedList Mark="bullet" Spacing="compact">
 <ListItem>
 <Para>
-running the <ProductName>Postgres</ProductName>  terminal  monitor  programs  (e.g.
-        <Application>psql</Application>) which allows you to interactively
+running the <ProductName>Postgres</ProductName>  terminal  monitor  programs
+ (e.g. <Application>psql</Application>) which allows you to interactively
         enter, edit, and execute <Acronym>SQL</Acronym> commands.
 </Para>
 </ListItem>
@@ -226,12 +226,13 @@ running the <ProductName>Postgres</ProductName>  terminal  monitor  programs  (e
         library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
         from <Acronym>C</Acronym> and get answers and status messages  back  to
         your  program.   This interface is discussed further
-        in <XRef LinkEnd="PROGRAMMERS-GUIDE">.
+        in <xref linkend="libpq" endterm="libpq">.
 </Para>
 </ListItem>
 </ItemizedList>
 
-You might want to start up <Application>psql</Application>, to try out the examples in this manual.
+You might want to start up <Application>psql</Application>, 
+to try out the examples in this manual.
  It can be activated for the <Database>mydb</Database>
      database by typing the command:
 <ProgramListing>

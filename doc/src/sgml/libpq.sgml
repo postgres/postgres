@@ -1,5 +1,5 @@
-<Chapter Id="libpq">
-<Title><FileName>libpq</FileName></Title>
+<Chapter Id="libpq-chapter">
+<Title id="libpq"><FileName>libpq</FileName></Title>
 
 <Para>
 
@@ -1614,7 +1614,6 @@ main()
         exit_nicely(conn);
     }
     PQclear(res);
-
     res = PQexec(conn, "FETCH ALL in mycursor");
     if (PQresultStatus(res) != PGRES_TUPLES_OK)
     {
@@ -1636,7 +1635,6 @@ main()
             printf("%-15s", PQgetvalue(res, i, j));
         printf("\n");
     }
-
     PQclear(res);
 
     /* close the cursor */
