@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.108 1997/11/16 05:32:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.109 1997/11/17 05:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2099,7 +2099,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		 * for next command
 		 */
 
-		if (line == NULL)
+		if (line == NULL || *line == '\0')
 		{		/* 	No more input.	Time to quit, or \i done */
 			if (!pset->quiet)
 				printf("EOF\n");/* Goes on prompt line */
