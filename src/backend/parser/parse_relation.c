@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.31 1999/09/29 18:16:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.32 1999/10/07 04:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 		{
 			RangeTblEntry *rte = lfirst(et);
 
-			/* only entries on outer(non-function?) scope */
+			/* only consider RTEs mentioned in FROM or UPDATE/DELETE */
 			if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
 				continue;
 
@@ -178,45 +178,51 @@ addRangeTableEntry(ParseState *pstate,
 				   char *relname,
 				   char *refname,
 				   bool inh,
-				   bool inFromCl)
+				   bool inFromCl,
+				   bool inJoinSet)
 {
 	Relation	relation;
-	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	RangeTblEntry *rte;
 	int			sublevels_up;
 
 	if (pstate != NULL)
 	{
-		if (refnameRangeTablePosn(pstate, refname, &sublevels_up) != 0 &&
-			(!inFromCl || sublevels_up == 0))
+		int			rt_index = refnameRangeTablePosn(pstate, refname,
+													 &sublevels_up);
+
+		if (rt_index != 0 && (!inFromCl || sublevels_up == 0))
 		{
 			if (!strcmp(refname, "*CURRENT*") || !strcmp(refname, "*NEW*"))
-			{
-				int			rt_index = refnameRangeTablePosn(pstate, refname, &sublevels_up);
-
 				return (RangeTblEntry *) nth(rt_index - 1, pstate->p_rtable);
-			}
 			elog(ERROR, "Table name '%s' specified more than once", refname);
 		}
 	}
 
+	rte = makeNode(RangeTblEntry);
+
 	rte->relname = pstrdup(relname);
 	rte->refname = pstrdup(refname);
 
+	/* Get the rel's OID.  This access also ensures that we have an
+	 * up-to-date relcache entry for the rel.  We don't need to keep
+	 * it open, however.
+	 */
 	relation = heap_openr(relname, AccessShareLock);
 	rte->relid = RelationGetRelid(relation);
 	heap_close(relation, AccessShareLock);
 
 	/*
-	 * Flags - zero or more from inheritance,union,version or recursive
-	 * (transitive closure) [we don't support them all -- ay 9/94 ]
+	 * Flags: this RTE should be expanded to include descendant tables,
+	 * this RTE is in the FROM clause, this RTE should be included in
+	 * the planner's final join.
 	 */
 	rte->inh = inh;
-
-	/* RelOID */
 	rte->inFromCl = inFromCl;
+	rte->inJoinSet = inJoinSet;
+	rte->skipAcl = false;		/* always starts out false */
 
 	/*
-	 * close the relation we're done with it for now.
+	 * Add completed RTE to range table list.
 	 */
 	if (pstate != NULL)
 		pstate->p_rtable = lappend(pstate->p_rtable, rte);
@@ -240,7 +246,8 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 	rte = refnameRangeTableEntry(pstate, refname);
 	if (rte == NULL)
 	{
-		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
+		rte = addRangeTableEntry(pstate, relname, refname,
+								 FALSE, FALSE, TRUE);
 #ifdef WARN_FROM
 		elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
 			pstate->parentParseState != NULL ? " in subquery" : "",

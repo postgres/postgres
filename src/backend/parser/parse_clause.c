@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.45 1999/09/18 19:07:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.46 1999/10/07 04:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,15 @@ makeRangeTable(ParseState *pstate, List *frmList, Node **qual)
  * setTargetTable
  *	  Add the target relation of INSERT or UPDATE to the range table,
  *	  and make the special links to it in the ParseState.
+ *
+ *	  Note that the target is not marked as either inFromCl or inJoinSet.
+ *	  For INSERT, we don't want the target to be joined to; it's a
+ *	  destination of tuples, not a source.  For UPDATE/DELETE, we do
+ *	  need to scan or join the target.  This will happen without the
+ *	  inJoinSet flag because the planner's preprocess_targetlist()
+ *	  adds the destination's CTID attribute to the targetlist, and
+ *	  therefore the destination will be a referenced table even if
+ *	  there is no other use of any of its attributes.  Tricky, eh?
  */
 void
 setTargetTable(ParseState *pstate, char *relname)
@@ -69,7 +78,8 @@ setTargetTable(ParseState *pstate, char *relname)
 
 	if ((refnameRangeTablePosn(pstate, relname, &sublevels_up) == 0)
 		|| (sublevels_up != 0))
-		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
+		rte = addRangeTableEntry(pstate, relname, relname,
+								 FALSE, FALSE, FALSE);
 	else
 		rte = refnameRangeTableEntry(pstate, relname);
 
@@ -230,7 +240,8 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	 * we expand * to foo.x.
 	 */
 
-	rte = addRangeTableEntry(pstate, relname, refname, baserel->inh, TRUE);
+	rte = addRangeTableEntry(pstate, relname, refname,
+							 baserel->inh, TRUE, TRUE);
 
 	return refname;
 }

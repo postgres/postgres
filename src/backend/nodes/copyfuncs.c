@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.92 1999/08/21 03:48:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.93 1999/10/07 04:23:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1316,8 +1316,8 @@ _copyRangeTblEntry(RangeTblEntry *from)
 	newnode->relid = from->relid;
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;
+	newnode->inJoinSet = from->inJoinSet;
 	newnode->skipAcl = from->skipAcl;
-
 
 	return newnode;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.73 1999/08/21 03:48:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.74 1999/10/07 04:23:04 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1379,6 +1379,10 @@ _readRangeTblEntry()
 	token = lsptok(NULL, &length);		/* eat :inFromCl */
 	token = lsptok(NULL, &length);		/* get :inFromCl */
 	local_node->inFromCl = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :inJoinSet */
+	token = lsptok(NULL, &length);		/* get :inJoinSet */
+	local_node->inJoinSet = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* eat :skipAcl */
 	token = lsptok(NULL, &length);		/* get :skipAcl */

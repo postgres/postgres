@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.38 1999/10/03 23:55:27 tgl Exp $
+ *	$Id: view.c,v 1.39 1999/10/07 04:23:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,9 +225,9 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	 * table... CURRENT first, then NEW....
 	 */
 	rt_entry1 = addRangeTableEntry(NULL, (char *) viewName, "*CURRENT*",
-								   FALSE, FALSE);
+								   FALSE, FALSE, FALSE);
 	rt_entry2 = addRangeTableEntry(NULL, (char *) viewName, "*NEW*",
-								   FALSE, FALSE);
+								   FALSE, FALSE, FALSE);
 	new_rt = lcons(rt_entry2, old_rt);
 	new_rt = lcons(rt_entry1, new_rt);
 

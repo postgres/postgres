@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.59 1999/10/02 04:42:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.60 1999/10/07 04:23:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -818,12 +818,13 @@ ApplyRetrieveRule(Query *parsetree,
 				  int rt_index,
 				  int relation_level,
 				  Relation relation,
+				  bool relWasInJoinSet,
 				  int *modified)
 {
 	Query	   *rule_action = NULL;
 	Node	   *rule_qual;
 	List	   *rtable,
-			   *rt,
+			   *addedrtable,
 			   *l;
 	int			nothing,
 				rt_length;
@@ -844,19 +845,23 @@ ApplyRetrieveRule(Query *parsetree,
 		nothing = TRUE;
 
 	rtable = copyObject(parsetree->rtable);
-	foreach(rt, rtable)
+	rt_length = length(rtable);	/* original length, not counting rule */
+
+	addedrtable = copyObject(rule_action->rtable);
+
+	/* If the original rel wasn't in the join set, none of its spawn is.
+	 * If it was, then leave the spawn's flags as they are.
+	 */
+	if (! relWasInJoinSet)
 	{
-		RangeTblEntry *rte = lfirst(rt);
-
-		/*
-		 * this is to prevent add_missing_vars_to_base_rels() from adding
-		 * a bogus entry to the new target list.
-		 */
-		rte->inFromCl = false;
+		foreach(l, addedrtable)
+		{
+			RangeTblEntry *rte = lfirst(l);
+			rte->inJoinSet = false;
+		}
 	}
-	rt_length = length(rtable);
 
-	rtable = nconc(rtable, copyObject(rule_action->rtable));
+	rtable = nconc(rtable, addedrtable);
 	parsetree->rtable = rtable;
 
 	/* FOR UPDATE of view... */
@@ -1006,10 +1011,14 @@ fireRIRrules(Query *parsetree)
 	RuleLock   *rules;
 	RewriteRule *rule;
 	RewriteRule RIRonly;
+	bool		relWasInJoinSet;
 	int			modified = false;
 	int			i;
 	List	   *l;
 
+	/* don't try to convert this into a foreach loop, because
+	 * rtable list can get changed each time through...
+	 */
 	rt_index = 0;
 	while (rt_index < length(parsetree->rtable))
 	{
@@ -1017,46 +1026,57 @@ fireRIRrules(Query *parsetree)
 
 		rte = nth(rt_index - 1, parsetree->rtable);
 
-		if (!rangeTableEntry_used((Node *) parsetree, rt_index, 0))
+		/*
+		 * If the table is not one named in the original FROM clause
+		 * then it must be referenced in the query, or we ignore it.
+		 * This prevents infinite expansion loop due to new rtable
+		 * entries inserted by expansion of a rule.
+		 */
+		if (! rte->inFromCl && rt_index != parsetree->resultRelation &&
+			! rangeTableEntry_used((Node *) parsetree, rt_index, 0))
 		{
-
-			/*
-			 * Unused range table entries must not be marked as coming
-			 * from a clause. Otherwise the planner will generate joins
-			 * over relations that in fact shouldn't be scanned at all and
-			 * the result will contain duplicates
-			 *
-			 * Jan
-			 *
-			 */
-			rte->inFromCl = FALSE;
+			/* Make sure the planner ignores it too... */
+			rte->inJoinSet = false;
 			continue;
 		}
 
 		rel = heap_openr(rte->relname, AccessShareLock);
-		if (rel->rd_rules == NULL)
+		rules = rel->rd_rules;
+		if (rules == NULL)
 		{
 			heap_close(rel, AccessShareLock);
 			continue;
 		}
 
-		rules = rel->rd_rules;
-		locks = NIL;
+		relWasInJoinSet = rte->inJoinSet; /* save before possibly clearing */
 
 		/*
 		 * Collect the RIR rules that we must apply
 		 */
+		locks = NIL;
 		for (i = 0; i < rules->numLocks; i++)
 		{
 			rule = rules->rules[i];
 			if (rule->event != CMD_SELECT)
 				continue;
 
-			if (rule->attrno > 0 &&
-				!attribute_used((Node *) parsetree,
-								rt_index,
-								rule->attrno, 0))
-				continue;
+			if (rule->attrno > 0)
+			{
+				/* per-attr rule; do we need it? */
+				if (! attribute_used((Node *) parsetree,
+									 rt_index,
+									 rule->attrno, 0))
+					continue;
+			}
+			else
+			{
+				/* Rel-wide ON SELECT DO INSTEAD means this is a view.
+				 * Remove the view from the planner's join target set,
+				 * or we'll get no rows out because view itself is empty!
+				 */
+				if (rule->isInstead)
+					rte->inJoinSet = false;
+			}
 
 			locks = lappend(locks, rule);
 		}
@@ -1083,6 +1103,7 @@ fireRIRrules(Query *parsetree)
 										  rt_index,
 										  RIRonly.attrno == -1,
 										  rel,
+										  relWasInJoinSet,
 										  &modified);
 		}
 
@@ -2012,10 +2033,10 @@ Except_Intersect_Rewrite(Query *parsetree)
 			 * If the Select Query node has aggregates in use add all the
 			 * subselects to the HAVING qual else to the WHERE qual
 			 */
-			if (intersect_node->hasAggs == false)
-				AddQual(intersect_node, (Node *) n);
-			else
+			if (intersect_node->hasAggs)
 				AddHavingQual(intersect_node, (Node *) n);
+			else
+				AddQual(intersect_node, (Node *) n);
 
 			/* Now we got sublinks */
 			intersect_node->hasSubLinks = true;

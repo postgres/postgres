@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.39 1999/08/26 05:07:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.40 1999/10/07 04:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,15 +77,21 @@ add_vars_to_targetlist(Query *root, List *vars)
 }
 
 /*
- * add_missing_vars_to_tlist
- *	  If we have range variable(s) in the FROM clause that does not appear
- *	  in the target list nor qualifications, we add it to the base relation
- *	  list. For instance, "select f.x from foo f, foo f2" is a join of f and
- *	  f2. Note that if we have "select foo.x from foo f", it also gets turned
- *	  into a join.
+ * add_missing_rels_to_query
+ *
+ *	  If we have a range variable in the FROM clause that does not appear
+ *	  in the target list nor qualifications, we must add it to the base
+ *	  relation list so that it will be joined.  For instance, "select f.x
+ *	  from foo f, foo f2" is a join of f and f2.  Note that if we have
+ *	  "select foo.x from foo f", it also gets turned into a join (between
+ *	  foo as foo and foo as f).
+ *
+ *	  To avoid putting useless entries into the per-relation targetlists,
+ *	  this should only be called after all the variables in the targetlist
+ *	  and quals have been processed by the routines above.
  */
 void
-add_missing_vars_to_tlist(Query *root, List *tlist)
+add_missing_rels_to_query(Query *root)
 {
 	int			varno = 1;
 	List	   *l;
@@ -93,21 +99,21 @@ add_missing_vars_to_tlist(Query *root, List *tlist)
 	foreach(l, root->rtable)
 	{
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
-		Relids		relids;
 
-		relids = lconsi(varno, NIL);
-		if (rte->inFromCl && !rel_member(relids, root->base_rel_list))
+		if (rte->inJoinSet)
 		{
-			RelOptInfo *rel;
-			Var		   *var;
+			RelOptInfo *rel = get_base_rel(root, varno);
 
-			/* add it to base_rel_list */
-			rel = get_base_rel(root, varno);
-			/* give it a dummy tlist entry for its OID */
-			var = makeVar(varno, ObjectIdAttributeNumber, OIDOID, -1, 0);
-			add_var_to_tlist(rel, var);
+			/* If the rel isn't otherwise referenced, give it a dummy
+			 * targetlist consisting of its own OID.
+			 */
+			if (rel->targetlist == NIL)
+			{
+				Var		   *var = makeVar(varno, ObjectIdAttributeNumber,
+										  OIDOID, -1, 0);
+				add_var_to_tlist(rel, var);
+			}
 		}
-		pfree(relids);
 		varno++;
 	}
 }

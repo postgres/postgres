@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.53 1999/10/02 04:37:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.54 1999/10/07 04:23:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -33,6 +33,11 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
+
+/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
+#define MAKEBOOLCONST(val,isnull) \
+	((Node *) makeConst(BOOLOID, 1, (Datum) (val), \
+						(isnull), true, false, false))
 
 typedef struct {
 	List	   *groupClause;
@@ -312,17 +317,20 @@ make_andclause(List *andclauses)
 }
 
 /*
- * Sometimes (such as in the result of cnfify), we use lists of expression
- * nodes with implicit AND semantics.  These functions convert between an
- * AND-semantics expression list and the ordinary representation of a
- * boolean expression.
+ * Sometimes (such as in the result of canonicalize_qual or the input of
+ * ExecQual), we use lists of expression nodes with implicit AND semantics.
+ *
+ * These functions convert between an AND-semantics expression list and the
+ * ordinary representation of a boolean expression.
+ *
+ * Note that an empty list is considered equivalent to TRUE.
  */
 Expr *
 make_ands_explicit(List *andclauses)
 {
 	if (andclauses == NIL)
-		return NULL;
-	else if (length(andclauses) == 1)
+		return (Expr *) MAKEBOOLCONST(true, false);
+	else if (lnext(andclauses) == NIL)
 		return (Expr *) lfirst(andclauses);
 	else
 		return make_andclause(andclauses);
@@ -331,10 +339,20 @@ make_ands_explicit(List *andclauses)
 List *
 make_ands_implicit(Expr *clause)
 {
+	/*
+	 * NB: because the parser sets the qual field to NULL in a query that
+	 * has no WHERE clause, we must consider a NULL input clause as TRUE,
+	 * even though one might more reasonably think it FALSE.  Grumble.
+	 * If this causes trouble, consider changing the parser's behavior.
+	 */
 	if (clause == NULL)
-		return NIL;
+		return NIL;				/* NULL -> NIL list == TRUE */
 	else if (and_clause((Node *) clause))
 		return clause->args;
+	else if (IsA(clause, Const) &&
+			 ! ((Const *) clause)->constisnull &&
+			 DatumGetInt32(((Const *) clause)->constvalue))
+		return NIL;				/* constant TRUE input -> NIL list */
 	else
 		return lcons(clause, NIL);
 }
@@ -807,11 +825,6 @@ eval_const_expressions(Node *node)
 	/* no context or special setup needed, so away we go... */
 	return eval_const_expressions_mutator(node, NULL);
 }
-
-/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
-#define MAKEBOOLCONST(val,isnull) \
-	((Node *) makeConst(BOOLOID, 1, (Datum) (val), \
-						(isnull), true, false, false))
 
 static Node *
 eval_const_expressions_mutator (Node *node, void *context)

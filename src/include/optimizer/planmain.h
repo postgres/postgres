@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.33 1999/08/22 23:56:43 tgl Exp $
+ * $Id: planmain.h,v 1.34 1999/10/07 04:23:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,7 @@
 /*
  * prototypes for plan/planmain.c
  */
-extern Plan *query_planner(Query *root,
-			  int command_type, List *tlist, List *qual);
-
+extern Plan *query_planner(Query *root, List *tlist, List *qual);
 
 /*
  * prototypes for plan/createplan.c
@@ -42,8 +40,8 @@ extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
  */
 extern void make_var_only_tlist(Query *root, List *tlist);
 extern void add_restrict_and_join_to_rels(Query *root, List *clauses);
+extern void add_missing_rels_to_query(Query *root);
 extern void set_joininfo_mergeable_hashable(List *rel_list);
-extern void add_missing_vars_to_tlist(Query *root, List *tlist);
 
 /*
  * prototypes for plan/setrefs.c

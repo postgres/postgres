@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.49 1999/09/26 02:28:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.50 1999/10/07 04:23:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -596,6 +596,8 @@ _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 	if (a->inh != b->inh)
 		return false;
 	if (a->inFromCl != b->inFromCl)
+		return false;
+	if (a->inJoinSet != b->inJoinSet)
 		return false;
 	if (a->skipAcl != b->skipAcl)
 		return false;

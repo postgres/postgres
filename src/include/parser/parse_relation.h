@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.12 1999/07/19 00:26:17 tgl Exp $
+ * $Id: parse_relation.h,v 1.13 1999/10/07 04:23:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,8 @@ extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   char *relname,
 				   char *refname,
 				   bool inh,
-				   bool inFromCl);
+				   bool inFromCl,
+				   bool inJoinSet);
 extern List *expandAll(ParseState *pstate, char *relname, char *refname,
 		  int *this_resno);
 extern int	attnameAttNum(Relation rd, char *a);

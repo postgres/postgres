@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.96 1999/09/29 16:06:02 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.97 1999/10/07 04:23:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1514,8 +1514,7 @@ ExecRelCheck(Relation rel, HeapTuple tuple, EState *estate)
 	rte->relname = nameout(&(rel->rd_rel->relname));
 	rte->refname = rte->relname;
 	rte->relid = RelationGetRelid(rel);
-	rte->inh = false;
-	rte->inFromCl = true;
+	/* inh, inFromCl, inJoinSet, skipAcl won't be used, leave them zero */
 	rtlist = lcons(rte, NIL);
 	econtext->ecxt_scantuple = slot;	/* scan tuple slot */
 	econtext->ecxt_innertuple = NULL;	/* inner tuple slot */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.107 1999/10/05 18:14:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.108 1999/10/07 04:23:12 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -72,7 +72,6 @@ static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static Node *makeRowExpr(char *opr, List *largs, List *rargs);
 static void mapTargetColumns(List *source, List *target);
-static char *fmtId(char *rawid);
 static void param_type_init(Oid *typev, int nargs);
 static Node *doNegate(Node *n);
 
@@ -130,7 +129,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		UpdateStmt, InsertStmt, select_clause, SelectStmt, NotifyStmt, DeleteStmt, 
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt,
-		ConstraintsSetStmt,
+		RuleActionStmtOrEmpty, ConstraintsSetStmt,
 
 %type <str>		opt_database1, opt_database2, location, encoding
 
@@ -165,7 +164,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		result, relation_name_list, OptTableElementList,
 		OptInherit, definition,
 		opt_with, func_args, func_args_list, func_as,
-		oper_argtypes, RuleActionList, RuleActionBlock, RuleActionMulti,
+		oper_argtypes, RuleActionList, RuleActionMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
 		sort_clause, sortby_list, index_params, index_list, name_list,
 		from_clause, from_expr, table_list, opt_array_bounds,
@@ -374,17 +373,18 @@ stmtblock:  stmtmulti
 				{ parsetree = $1; }
 		;
 
+/* the thrashing around here is to discard "empty" statements... */
 stmtmulti:  stmtmulti ';' stmt
-				{ if ($3 != (Node *)NIL)
+				{ if ($3 != (Node *)NULL)
 					$$ = lappend($1, $3);
 				  else
 					$$ = $1;
 				}
 		| stmt
-				{ if ($1 != (Node *)NIL)
+				{ if ($1 != (Node *)NULL)
 					$$ = lcons($1,NIL);
 				  else
-					$$ = (Node *)NIL;
+					$$ = NIL;
 				}
 		;
 
@@ -433,7 +433,7 @@ stmt :	  AddAttrStmt
 		| VariableResetStmt
 		| ConstraintsSetStmt
 		|	/*EMPTY*/
-				{ $$ = (Node *)NIL; }
+				{ $$ = (Node *)NULL; }
 		;
 
 /*****************************************************************************
@@ -930,7 +930,7 @@ ColConstraint:
 		CONSTRAINT name ColConstraintElem
 				{
 						Constraint *n = (Constraint *)$3;
-						if (n != NULL) n->name = fmtId($2);
+						if (n != NULL) n->name = $2;
 						$$ = $3;
 				}
 		| ColConstraintElem
@@ -1024,7 +1024,7 @@ ColConstraintElem:  CHECK '(' a_expr ')'
 TableConstraint:  CONSTRAINT name ConstraintElem
 				{
 						Constraint *n = (Constraint *)$3;
-						if (n != NULL) n->name = fmtId($2);
+						if (n != NULL) n->name = $2;
 						$$ = $3;
 				}
 		| ConstraintElem
@@ -2034,26 +2034,34 @@ RuleStmt:  CREATE RULE name AS
 RuleActionList:  NOTHING				{ $$ = NIL; }
 		| SelectStmt					{ $$ = lcons($1, NIL); }
 		| RuleActionStmt				{ $$ = lcons($1, NIL); }
-		| '[' RuleActionBlock ']'		{ $$ = $2; }
-		| '(' RuleActionBlock ')'		{ $$ = $2; } 
+		| '[' RuleActionMulti ']'		{ $$ = $2; }
+		| '(' RuleActionMulti ')'		{ $$ = $2; } 
 		;
 
-RuleActionBlock:  RuleActionMulti		{  $$ = $1; }
-		| RuleActionStmt				{ $$ = lcons($1, NIL); }
-		;
-
-RuleActionMulti:  RuleActionMulti RuleActionStmt
-				{  $$ = lappend($1, $2); }
-		| RuleActionMulti RuleActionStmt ';'
-				{  $$ = lappend($1, $2); }
-		| RuleActionStmt ';'
-				{ $$ = lcons($1, NIL); }
+/* the thrashing around here is to discard "empty" statements... */
+RuleActionMulti:  RuleActionMulti ';' RuleActionStmtOrEmpty
+				{ if ($3 != (Node *)NULL)
+					$$ = lappend($1, $3);
+				  else
+					$$ = $1;
+				}
+		| RuleActionStmtOrEmpty
+				{ if ($1 != (Node *)NULL)
+					$$ = lcons($1,NIL);
+				  else
+					$$ = NIL;
+				}
 		;
 
 RuleActionStmt:	InsertStmt
 		| UpdateStmt
 		| DeleteStmt
 		| NotifyStmt
+		;
+
+RuleActionStmtOrEmpty:	RuleActionStmt
+		|	/*EMPTY*/
+				{ $$ = (Node *)NULL; }
 		;
 
 event_object:  relation_name '.' attr_name
@@ -3676,12 +3684,25 @@ a_expr:  attr
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
 		| func_name '(' '*' ')'
 				{
-					/* cheap hack for aggregate (eg. count) */
+					/*
+					 * For now, we transform AGGREGATE(*) into AGGREGATE(1).
+					 *
+					 * This does the right thing for COUNT(*) (in fact,
+					 * any certainly-non-null expression would do for COUNT),
+					 * and there are no other aggregates in SQL92 that accept
+					 * '*' as parameter.
+					 *
+					 * XXX really, the '*' ought to be transformed to some
+					 * special construct that wouldn't be acceptable as the
+					 * input of a non-aggregate function, in case the given
+					 * func_name matches a plain function.  This would also
+					 * support a possible extension to let user-defined
+					 * aggregates do something special with '*' as input.
+					 */
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *star = makeNode(A_Const);
-
-					star->val.type = T_String;
-					star->val.val.str = "";
+					star->val.type = T_Integer;
+					star->val.val.ival = 1;
 					n->funcname = $1;
 					n->args = lcons(star, NIL);
 					$$ = (Node *)n;
@@ -5265,30 +5286,6 @@ void parser_init(Oid *typev, int nargs)
 }
 
 
-/* fmtId()
- * Check input string for non-lowercase/non-numeric characters.
- * Returns either input string or input surrounded by double quotes.
- */
-static char *
-fmtId(char *rawid)
-{
-	static char *cp;
-
-	for (cp = rawid; *cp != '\0'; cp++)
-		if (! (islower(*cp) || isdigit(*cp) || (*cp == '_'))) break;
-
-	if (*cp != '\0') {
-		cp = palloc(strlen(rawid)+3);
-		strcpy(cp,"\"");
-		strcat(cp,rawid);
-		strcat(cp,"\"");
-	} else {
-		cp = rawid;
-	};
-
-	return cp;
-}
-
 /*
  * param_type_init()
  *
@@ -5313,6 +5310,11 @@ Oid param_type(int t)
  *	The optimizer doesn't like '-' 4 for index use.  It only checks for
  *	Var '=' Const.  It wants an integer of -4, so we try to merge the
  *	minus into the constant.
+ *
+ *	This code is no longer essential as of 10/1999, since the optimizer
+ *	now has a constant-subexpression simplifier.  However, we can save
+ *	a few cycles throughout the parse and rewrite stages if we collapse
+ *	the minus into the constant sooner rather than later...
  */
 static Node *doNegate(Node *n)
 {

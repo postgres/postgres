@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.120 1999/10/03 23:55:30 tgl Exp $
+ *	$Id: analyze.c,v 1.121 1999/10/07 04:23:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,17 +298,8 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause)
+	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
-
-	/*
-	 * If there is a havingQual but there are no aggregates, then there is
-	 * something wrong with the query because HAVING must contain
-	 * aggregates in its expressions! Otherwise the query could have been
-	 * formulated using the WHERE clause.
-	 */
-	if (qry->havingQual && ! qry->hasAggs)
-		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 
 	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
@@ -961,9 +952,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		nothing_qry->commandType = CMD_NOTHING;
 
 		addRangeTableEntry(pstate, stmt->object->relname, "*CURRENT*",
-						   FALSE, FALSE);
+						   FALSE, FALSE, FALSE);
 		addRangeTableEntry(pstate, stmt->object->relname, "*NEW*",
-						   FALSE, FALSE);
+						   FALSE, FALSE, FALSE);
 
 		nothing_qry->rtable = pstate->p_rtable;
 
@@ -983,9 +974,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		 * equal to 2.
 		 */
 		addRangeTableEntry(pstate, stmt->object->relname, "*CURRENT*",
-						   FALSE, FALSE);
+						   FALSE, FALSE, FALSE);
 		addRangeTableEntry(pstate, stmt->object->relname, "*NEW*",
-						   FALSE, FALSE);
+						   FALSE, FALSE, FALSE);
 
 		pstate->p_last_resno = 1;
 		pstate->p_is_rule = true;		/* for expand all */
@@ -1048,17 +1039,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 	qry->hasAggs = pstate->p_hasAggs;
-	if (pstate->p_hasAggs || qry->groupClause)
+	if (pstate->p_hasAggs || qry->groupClause || qry->havingQual)
 		parseCheckAggregates(pstate, qry);
-
-	/*
-	 * If there is a havingQual but there are no aggregates, then there is
-	 * something wrong with the query because HAVING must contain
-	 * aggregates in its expressions! Otherwise the query could have been
-	 * formulated using the WHERE clause.
-	 */
-	if (qry->havingQual && ! qry->hasAggs)
-		elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 
 	/*
 	 * The INSERT INTO ... SELECT ... could have a UNION in child, so

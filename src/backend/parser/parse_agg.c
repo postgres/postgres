@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.28 1999/08/21 03:48:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.29 1999/10/07 04:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,8 +129,8 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	List	   *groupClauses = NIL;
 	List	   *tl;
 
-	/* This should only be called if we found aggregates or grouping */
-	Assert(pstate->p_hasAggs || qry->groupClause);
+	/* This should only be called if we found aggregates, GROUP, or HAVING */
+	Assert(pstate->p_hasAggs || qry->groupClause || qry->havingQual);
 
 	/*
 	 * Aggregates must never appear in WHERE clauses. (Note this check
@@ -161,6 +161,15 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	}
 
 	/*
+	 * The expression specified in the HAVING clause can only contain
+	 * aggregates, group columns and functions thereof.  As with WHERE,
+	 * we want to point the finger at HAVING before the target list.
+	 */
+	if (!exprIsAggOrGroupCol(qry->havingQual, groupClauses))
+		elog(ERROR,
+			 "Illegal use of aggregates or non-group column in HAVING clause");
+
+	/*
 	 * The target list can only contain aggregates, group columns and
 	 * functions thereof.
 	 */
@@ -173,14 +182,6 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 				 "Illegal use of aggregates or non-group column in target list");
 	}
 
-	/*
-	 * The expression specified in the HAVING clause has the same
-	 * restriction as those in the target list.
-	 */
-	if (!exprIsAggOrGroupCol(qry->havingQual, groupClauses))
-		elog(ERROR,
-			 "Illegal use of aggregates or non-group column in HAVING clause");
-
 	/* Release the list storage (but not the pointed-to expressions!) */
 	freeList(groupClauses);
 }
@@ -190,12 +191,12 @@ Aggref *
 ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		 List *target, int precedence)
 {
-	Oid			fintype;
-	Oid			vartype;
-	Oid			xfn1;
-	Form_pg_aggregate aggform;
-	Aggref	   *aggref;
 	HeapTuple	theAggTuple;
+	Form_pg_aggregate aggform;
+	Oid			fintype;
+	Oid			xfn1;
+	Oid			vartype;
+	Aggref	   *aggref;
 	bool		usenulls = false;
 
 	theAggTuple = SearchSysCacheTuple(AGGNAME,
@@ -206,65 +207,18 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		elog(ERROR, "Aggregate %s does not exist", aggname);
 
 	/*
-	 * We do a major hack for count(*) here.
+	 * There used to be a really ugly hack for count(*) here.
 	 *
-	 * Count(*) poses several problems.  First, we need a field that is
-	 * guaranteed to be in the range table, and unique.  Using a constant
-	 * causes the optimizer to properly remove the aggragate from any
-	 * elements of the query. Using just 'oid', which can not be null, in
-	 * the parser fails on:
+	 * It's gone.  Now, the grammar transforms count(*) into count(1),
+	 * which does the right thing.  (It didn't use to do the right thing,
+	 * because the optimizer had the wrong ideas about semantics of queries
+	 * without explicit variables.  Fixed as of Oct 1999 --- tgl.)
 	 *
-	 * select count(*) from tab1, tab2	   -- oid is not unique select
-	 * count(*) from viewtable		-- views don't have real oids
-	 *
-	 * So, for an aggregate with parameter '*', we use the first valid range
-	 * table entry, and pick the first column from the table. We set a
-	 * flag to count nulls, because we could have nulls in that column.
-	 *
-	 * It's an ugly job, but someone has to do it. bjm 1998/1/18
+	 * Since "1" never evaluates as null, we currently have no need of
+	 * the "usenulls" flag, but it should be kept around; in fact, we should
+	 * extend the pg_aggregate table to let usenulls be specified as an
+	 * attribute of user-defined aggregates.
 	 */
-
-	if (nodeTag(lfirst(target)) == T_Const)
-	{
-		Const	   *con = (Const *) lfirst(target);
-
-		if (con->consttype == UNKNOWNOID && VARSIZE(con->constvalue) == VARHDRSZ)
-		{
-			Attr	   *attr = makeNode(Attr);
-			List	   *rtable,
-					   *rlist;
-			RangeTblEntry *first_valid_rte;
-
-			Assert(lnext(target) == NULL);
-
-			if (pstate->p_is_rule)
-				rtable = lnext(lnext(pstate->p_rtable));
-			else
-				rtable = pstate->p_rtable;
-
-			first_valid_rte = NULL;
-			foreach(rlist, rtable)
-			{
-				RangeTblEntry *rte = lfirst(rlist);
-
-				/* only entries on outer(non-function?) scope */
-				if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
-					continue;
-
-				first_valid_rte = rte;
-				break;
-			}
-			if (first_valid_rte == NULL)
-				elog(ERROR, "Can't find column to do aggregate(*) on.");
-
-			attr->relname = first_valid_rte->refname;
-			attr->attrs = lcons(makeString(
-						   get_attname(first_valid_rte->relid, 1)), NIL);
-
-			lfirst(target) = transformExpr(pstate, (Node *) attr, precedence);
-			usenulls = true;
-		}
-	}
 
 	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
 	fintype = aggform->aggfinaltype;

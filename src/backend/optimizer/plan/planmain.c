@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.45 1999/09/26 02:28:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.46 1999/10/07 04:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
 
+
 /*
  * query_planner
  *	  Routine to create a query plan.  It does so by first creating a
@@ -39,9 +40,8 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
  *	  be placed where and any relation level qualifications to be
  *	  satisfied.
  *
- *	  command-type is the query command, e.g., select, delete, etc.
- *	  tlist is the target list of the query
- *	  qual is the qualification of the query
+ *	  tlist is the target list of the query (do NOT use root->targetList!)
+ *	  qual is the qualification of the query (likewise!)
  *
  *	  Note: the Query node now also includes a query_pathkeys field, which
  *	  is both an input and an output of query_planner().  The input value
@@ -57,25 +57,20 @@ static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
  */
 Plan *
 query_planner(Query *root,
-			  int command_type,
 			  List *tlist,
 			  List *qual)
 {
 	List	   *constant_qual = NIL;
 	List	   *var_only_tlist;
-	List	   *level_tlist;
 	Plan	   *subplan;
 
 	/*
-	 * Simplify constant expressions in both targetlist and qual.
+	 * Note: union_planner should already have done constant folding
+	 * in both the tlist and qual, so we don't do it again here
+	 * (indeed, we may be getting a flattened var-only tlist anyway).
 	 *
-	 * Note that at this point the qual has not yet been converted to
-	 * implicit-AND form, so we can apply eval_const_expressions directly.
-	 * Also note that we need to do this before SS_process_sublinks,
-	 * because that routine inserts bogus "Const" nodes.
+	 * Is there any value in re-folding the qual after canonicalize_qual?
 	 */
-	tlist = (List *) eval_const_expressions((Node *) tlist);
-	qual = (List *) eval_const_expressions((Node *) qual);
 
 	/*
 	 * Canonicalize the qual, and convert it to implicit-AND format.
@@ -97,96 +92,74 @@ query_planner(Query *root,
 		qual = (List *) SS_process_sublinks((Node *) qual);
 
 	/*
-	 * Pull out any non-variable qualifications so these can be put in the
-	 * topmost result node.  (Any *really* non-variable quals will probably
+	 * If the query contains no relation references at all, it must be
+	 * something like "SELECT 2+2;".  Build a trivial "Result" plan.
+	 */
+	if (root->rtable == NIL)
+	{
+		/* If it's not a select, it should have had a target relation... */
+		if (root->commandType != CMD_SELECT)
+			elog(ERROR, "Empty range table for non-SELECT query");
+
+		root->query_pathkeys = NIL; /* signal unordered result */
+
+		/* Make childless Result node to evaluate given tlist. */
+		return (Plan *) make_result(tlist, (Node *) qual, (Plan *) NULL);
+	}
+
+	/*
+	 * Pull out any non-variable qual clauses so these can be put in a
+	 * toplevel "Result" node, where they will gate execution of the whole
+	 * plan (the Result will not invoke its descendant plan unless the
+	 * quals are true).  Note that any *really* non-variable quals will
 	 * have been optimized away by eval_const_expressions().  What we're
-	 * looking for here is quals that depend only on outer-level vars...)
+	 * mostly interested in here is quals that depend only on outer-level
+	 * vars, although if the qual reduces to "WHERE FALSE" this path will
+	 * also be taken.
 	 */
 	qual = pull_constant_clauses(qual, &constant_qual);
 
 	/*
 	 * Create a target list that consists solely of (resdom var) target
 	 * list entries, i.e., contains no arbitrary expressions.
-	 */
-	var_only_tlist = flatten_tlist(tlist);
-	if (var_only_tlist)
-		level_tlist = var_only_tlist;
-	else
-		/* from old code. the logic is beyond me. - ay 2/95 */
-		level_tlist = tlist;
-
-	/*
-	 * A query may have a non-variable target list and a non-variable
-	 * qualification only under certain conditions: - the query creates
-	 * all-new tuples, or - the query is a replace (a scan must still be
-	 * done in this case).
-	 */
-	if (var_only_tlist == NULL && qual == NULL)
-	{
-		root->query_pathkeys = NIL; /* these plans make unordered results */
-
-		switch (command_type)
-		{
-			case CMD_SELECT:
-			case CMD_INSERT:
-				return ((Plan *) make_result(tlist,
-											 (Node *) constant_qual,
-											 (Plan *) NULL));
-				break;
-			case CMD_DELETE:
-			case CMD_UPDATE:
-				{
-					SeqScan    *scan = make_seqscan(tlist,
-													NIL,
-													root->resultRelation);
-
-					if (constant_qual != NULL)
-						return ((Plan *) make_result(tlist,
-													 (Node *) constant_qual,
-													 (Plan *) scan));
-					else
-						return (Plan *) scan;
-				}
-				break;
-			default:
-				return (Plan *) NULL;
-		}
-	}
-
-	/*
-	 * Choose the best access path and build a plan for it.
-	 */
-	subplan = subplanner(root, level_tlist, qual);
-
-	/*
-	 * Build a result node linking the plan if we have constant quals
-	 */
-	if (constant_qual)
-	{
-		subplan = (Plan *) make_result(tlist,
-									   (Node *) constant_qual,
-									   subplan);
-
-		root->query_pathkeys = NIL; /* result is unordered, no? */
-
-		return subplan;
-	}
-
-	/*
-	 * Replace the toplevel plan node's flattened target list with the
-	 * targetlist given by my caller, so that expressions are evaluated.
+	 *
+	 * All subplan nodes will have "flat" (var-only) tlists.
 	 *
 	 * This implies that all expression evaluations are done at the root
 	 * of the plan tree.  Once upon a time there was code to try to push
 	 * expensive function calls down to lower plan nodes, but that's dead
 	 * code and has been for a long time...
 	 */
+	var_only_tlist = flatten_tlist(tlist);
+
+	/*
+	 * Choose the best access path and build a plan for it.
+	 */
+	subplan = subplanner(root, var_only_tlist, qual);
+
+	/*
+	 * Build a result node to control the plan if we have constant quals.
+	 */
+	if (constant_qual)
+	{
+		/*
+		 * The result node will also be responsible for evaluating
+		 * the originally requested tlist.
+		 */
+		subplan = (Plan *) make_result(tlist,
+									   (Node *) constant_qual,
+									   subplan);
+	}
 	else
 	{
+		/*
+		 * Replace the toplevel plan node's flattened target list with the
+		 * targetlist given by my caller, so that expressions are evaluated.
+		 */
 		subplan->targetlist = tlist;
-
-		return subplan;
 	}
+
+	return subplan;
 
 #ifdef NOT_USED
 
@@ -230,11 +203,30 @@ subplanner(Query *root,
 
 	make_var_only_tlist(root, flat_tlist);
 	add_restrict_and_join_to_rels(root, qual);
-	add_missing_vars_to_tlist(root, flat_tlist);
+	add_missing_rels_to_query(root);
 
 	set_joininfo_mergeable_hashable(root->base_rel_list);
 
 	final_rel = make_one_rel(root, root->base_rel_list);
+
+	if (! final_rel)
+	{
+		/*
+		 * We expect to end up here for a trivial INSERT ... VALUES query
+		 * (which will have a target relation, so it gets past query_planner's
+		 * check for empty range table; but the target rel is unreferenced
+		 * and not marked inJoinSet, so we find there is nothing to join).
+		 * 
+		 * It's also possible to get here if the query was rewritten by the
+		 * rule processor (creating rangetable entries not marked inJoinSet)
+		 * but the rules either did nothing or were simplified to nothing
+		 * by constant-expression folding.  So, don't complain.
+		 */
+		root->query_pathkeys = NIL; /* signal unordered result */
+
+		/* Make childless Result node to evaluate given tlist. */
+		return (Plan *) make_result(flat_tlist, (Node *) qual, (Plan *) NULL);
+	}
 
 #ifdef NOT_USED					/* fix xfunc */
 
@@ -258,13 +250,6 @@ subplanner(Query *root,
 		}
 	}
 #endif
-
-	if (! final_rel)
-	{
-		elog(NOTICE, "final relation is null");
-		root->query_pathkeys = NIL; /* result is unordered, no? */
-		return create_plan((Path *) NULL);
-	}
 
 	/*
 	 * Determine the cheapest path and create a subplan to execute it.
@@ -344,10 +329,11 @@ subplanner(Query *root,
 		}
 	}
 
-	/* Nothing for it but to sort the cheapestpath --- but we let the
+	/*
+	 * Nothing for it but to sort the cheapestpath --- but we let the
 	 * caller do that.  union_planner has to be able to add a sort node
 	 * anyway, so no need for extra code here.  (Furthermore, the given
-	 * pathkeys might involve something we can't compute yet, such as
+	 * pathkeys might involve something we can't compute here, such as
 	 * an aggregate function...)
 	 */
 	root->query_pathkeys = final_rel->cheapestpath->pathkeys;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.83 1999/10/03 23:55:36 tgl Exp $
+ * $Id: parsenodes.h,v 1.84 1999/10/07 04:23:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typedef struct Query
 	bool		isBinary;		/* binary portal? */
 	bool		isTemp;			/* is 'into' a temp table? */
 	bool		unionall;		/* union without unique sort */
-	bool		hasAggs;		/* has aggregates in target list */
+	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
 
 	List	   *rtable;			/* list of range table entries */
@@ -968,30 +968,48 @@ typedef struct TargetEntry
 	NodeTag		type;
 	Resdom	   *resdom;			/* fjoin overload this to be a list?? */
 	Fjoin	   *fjoin;
-	Node	   *expr;			/* can be a list too */
+	Node	   *expr;
 } TargetEntry;
 
-/*
+/*--------------------
  * RangeTblEntry -
- *	  used in range tables. Some of the following are only used in one of
+ *	  A range table is a List of RangeTblEntry nodes.
+ *
+ *	  Some of the following are only used in one of
  *	  the parsing, optimizing, execution stages.
  *
- *	  inFromCl marks those range variables that are listed in the from clause.
- *	  In SQL, the targetlist can only refer to range variables listed in the
- *	  from clause but POSTQUEL allows you to refer to tables not specified, in
- *	  which case a range table entry will be generated. We use POSTQUEL
- *	  semantics which is more powerful. However, we need SQL semantics in
- *	  some cases (eg. when expanding a '*')
+ *	  inFromCl marks those range variables that are listed in the FROM clause.
+ *	  In SQL, the query can only refer to range variables listed in the
+ *	  FROM clause, but POSTQUEL allows you to refer to tables not listed,
+ *	  in which case a range table entry will be generated.  We still support
+ *	  this POSTQUEL feature, although there is some doubt whether it's
+ *	  convenient or merely confusing.  The flag is needed since an
+ *	  implicitly-added RTE shouldn't change the namespace for unqualified
+ *	  column names processed later, and it also shouldn't affect the
+ *	  expansion of '*'.
+ *
+ *	  inJoinSet marks those range variables that the planner should join
+ *	  over even if they aren't explicitly referred to in the query.  For
+ *	  example, "SELECT COUNT(1) FROM tx" should produce the number of rows
+ *	  in tx.  A more subtle example uses a POSTQUEL implicit RTE:
+ *			SELECT COUNT(1) FROM tx WHERE TRUE OR (tx.f1 = ty.f2)
+ *	  Here we should get the product of the sizes of tx and ty.  However,
+ *	  the query optimizer can simplify the WHERE clause to "TRUE", so
+ *	  ty will no longer be referred to explicitly; without a flag forcing
+ *	  it to be included in the join, we will get the wrong answer.  So,
+ *	  a POSTQUEL implicit RTE must be marked inJoinSet but not inFromCl.
+ *--------------------
  */
 typedef struct RangeTblEntry
 {
 	NodeTag		type;
 	char	   *relname;		/* real name of the relation */
-	char	   *refname;		/* the reference name (specified in the
-								 * from clause) */
-	Oid			relid;
-	bool		inh;			/* inheritance? */
-	bool		inFromCl;		/* comes from From Clause */
+	char	   *refname;		/* the reference name (as specified in the
+								 * FROM clause) */
+	Oid			relid;			/* OID of the relation */
+	bool		inh;			/* inheritance requested? */
+	bool		inFromCl;		/* present in FROM clause */
+	bool		inJoinSet;		/* planner must include this rel */
 	bool		skipAcl;		/* skip ACL check in executor */
 } RangeTblEntry;
 

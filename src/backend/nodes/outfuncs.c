@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.96 1999/10/03 23:55:29 tgl Exp $
+ *	$Id: outfuncs.c,v 1.97 1999/10/07 04:23:04 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -864,12 +864,13 @@ static void
 _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	appendStringInfo(str,
-					 " RTE :relname %s :refname %s :relid %u :inh %s :inFromCl %s :skipAcl %s",
+					 " RTE :relname %s :refname %s :relid %u :inh %s :inFromCl %s :inJoinSet %s :skipAcl %s",
 					 stringStringInfo(node->relname),
 					 stringStringInfo(node->refname),
 					 node->relid,
 					 node->inh ? "true" : "false",
 					 node->inFromCl ? "true" : "false",
+					 node->inJoinSet ? "true" : "false",
 					 node->skipAcl ? "true" : "false");
 }
 

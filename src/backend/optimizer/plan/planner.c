@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.69 1999/09/26 02:28:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.70 1999/10/07 04:23:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,6 +93,37 @@ union_planner(Query *parse)
 	AttrNumber *groupColIdx = NULL;
 	List	   *current_pathkeys = NIL;
 	Index		rt_index;
+
+	/*
+	 * A HAVING clause without aggregates is equivalent to a WHERE clause
+	 * (except it can only refer to grouped fields).  If there are no
+	 * aggs anywhere in the query, then we don't want to create an Agg
+	 * plan node, so merge the HAVING condition into WHERE.  (We used to
+	 * consider this an error condition, but it seems to be legal SQL.)
+	 */
+	if (parse->havingQual != NULL && ! parse->hasAggs)
+	{
+		if (parse->qual == NULL)
+			parse->qual = parse->havingQual;
+		else
+			parse->qual = (Node *) make_andclause(lappend(lcons(parse->qual,
+																NIL),
+														  parse->havingQual));
+		parse->havingQual = NULL;
+	}
+
+	/*
+	 * Simplify constant expressions in targetlist and quals.
+	 *
+	 * Note that at this point the qual has not yet been converted to
+	 * implicit-AND form, so we can apply eval_const_expressions directly.
+	 * Also note that we need to do this before SS_process_sublinks,
+	 * because that routine inserts bogus "Const" nodes.
+	 */
+	tlist = (List *) eval_const_expressions((Node *) tlist);
+	parse->qual = eval_const_expressions(parse->qual);
+	parse->havingQual = eval_const_expressions(parse->havingQual);
+
 
 	if (parse->unionClause)
 	{
@@ -221,7 +252,6 @@ union_planner(Query *parse)
 
 		/* Generate the (sub) plan */
 		result_plan = query_planner(parse,
-									parse->commandType,
 									sub_tlist,
 									(List *) parse->qual);
 
@@ -301,25 +331,6 @@ union_planner(Query *parse)
 	 */
 	if (parse->havingQual)
 	{
-		/*--------------------
-		 * Require the havingQual to contain at least one aggregate function
-		 * (else it could have been done as a WHERE constraint).  This check
-		 * used to be much stricter, requiring an aggregate in each clause of
-		 * the CNF-ified qual.  However, that's probably overly anal-retentive.
-		 * We now do it first so that we will not complain if there is an
-		 * aggregate but it gets optimized away by eval_const_expressions().
-		 * The agg itself is never const, of course, but consider
-		 *		SELECT ... HAVING xyz OR (COUNT(*) > 1)
-		 * where xyz reduces to constant true in a particular query.
-		 * We probably should not refuse this query.
-		 *--------------------
-		 */
-		if (pull_agg_clause(parse->havingQual) == NIL)
-			elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
-
-		/* Simplify constant expressions in havingQual */
-		parse->havingQual = eval_const_expressions(parse->havingQual);
-
 		/* Convert the havingQual to implicit-AND normal form */
 		parse->havingQual = (Node *)
 			canonicalize_qual((Expr *) parse->havingQual, true);
