@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug 13 21:30:49 EDT 2004
+Last updated:		Mon Aug 16 00:37:25 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -93,6 +93,11 @@ Administration
 
 * Create dump tool for write-ahead logs for use in determining
   transaction id for point-in-time recovery
+* Set proper permissions on non-system schemas during db creation
+
+  Currently all schemas are owned by the super-user because they are 
+  copied from the template1 database.
+
 * Improve replication solutions
 	o Automatic failover
 
