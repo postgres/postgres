@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.11 1996/10/05 21:34:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.12 1996/10/12 07:49:56 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -111,7 +111,7 @@ fi
 
 TEMPLATE=$LIBDIR/local1_template1.bki.source
 GLOBAL=$LIBDIR/global1.bki.source
-PG_HBA_SAMPLE=$LIBDIR/pg_hba.sample
+PG_HBA_SAMPLE=$LIBDIR/pg_hba.conf.sample
 
 #-------------------------------------------------------------------------
 # Find the input files
@@ -264,7 +264,7 @@ if [ $template_only -eq 0 ]; then
 
     pg_version $PGDATA
 
-    cp $PG_HBA_SAMPLE $PGDATA/pg_hba
+    cp $PG_HBA_SAMPLE $PGDATA/pg_hba.conf
 
     echo "Adding template1 database to pg_database..."
 
