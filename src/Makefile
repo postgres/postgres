@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.11 1996/11/13 10:34:58 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.12 1996/11/19 02:43:46 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -38,8 +38,8 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C libpgtcl $@
 endif
 	$(MAKE) -C bin $@
-ifneq ($(wildcard ../doc), )
-	$(MAKE) -C ../doc $@
+ifneq ($(wildcard man), )
+	$(MAKE) -C man $@
 endif
 	@if test $@. = all. -o $@. = .; then \
 	echo All of Postgres95 is successfully made.  Ready to install. ;\
