@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.136 2001/03/22 06:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.136.2.1 2001/08/08 22:32:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,8 +305,15 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 	if (from)
 	{							/* copy from file to database */
-		if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-			elog(ERROR, "You cannot change sequence relation %s", relname);
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+		{
+			if (rel->rd_rel->relkind == RELKIND_VIEW)
+				elog(ERROR, "You cannot copy view %s", relname);
+			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+				elog(ERROR, "You cannot change sequence relation %s", relname);
+			else
+				elog(ERROR, "You cannot copy object %s", relname);
+		}
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
@@ -330,6 +337,15 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 	}
 	else
 	{							/* copy from database to file */
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+		{
+			if (rel->rd_rel->relkind == RELKIND_VIEW)
+				elog(ERROR, "You cannot copy view %s", relname);
+			else if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+				elog(ERROR, "You cannot copy sequence %s", relname);
+			else
+				elog(ERROR, "You cannot copy object %s", relname);
+		}
 		if (pipe)
 		{
 			if (IsUnderPostmaster)
