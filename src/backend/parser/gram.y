@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.57 1997/10/25 01:09:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.58 1997/10/25 05:56:41 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -20,6 +20,8 @@
  * NOTES
  *	  CAPITALS are used to represent terminal symbols.
  *	  non-capitals are used to represent non-terminals.
+ *	  SQL92-specific syntax is separated from plain SQL/Postgres syntax
+ *	  to help isolate the non-extensible portions of the parser.
  *
  *	  if you use list, make sure the datum is a node so that the printing
  *	  routines work
@@ -115,18 +117,15 @@ static char *FlattenStringList(List *list);
 		ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt
 
-%type <str>		txname, char_type
 %type <node>	SubSelect
 %type <str>		join_expr, join_outer, join_spec
 %type <boolean> TriggerActionTime, TriggerForSpec
 
-%type <str>		DateTime, TriggerEvents, TriggerFuncArg
+%type <str>		TriggerEvents, TriggerFuncArg
 
 %type <str>		relation_name, copy_file_name, copy_delimiter, def_name,
 		database_name, access_method_clause, access_method, attr_name,
 		class, index_name, name, file_name, recipe_name, aggr_argtype
-
-%type <constrdef>		ConstraintElem, ConstraintDef
 
 %type <str>		opt_id, opt_portal_name,
 		before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
@@ -154,10 +153,10 @@ static char *FlattenStringList(List *list);
 %type <node>	position_expr
 %type <list>	extract_list, position_list
 %type <list>	substr_list, substr_from, substr_for, trim_list
-%type <list>	interval_opts
+%type <list>	opt_interval
 
-%type <boolean> opt_inh_star, opt_binary, opt_instead, opt_with_col, opt_with_copy,
-				index_opt_unique, opt_verbose, opt_analyze, opt_null
+%type <boolean> opt_inh_star, opt_binary, opt_instead, opt_with_copy,
+				index_opt_unique, opt_verbose, opt_analyze
 
 %type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation,
 		def_type, opt_direction, remove_type, opt_column, event
@@ -171,12 +170,11 @@ static char *FlattenStringList(List *list);
 %type <pstmt>	purge_quals
 %type <astmt>	insert_rest
 
-%type <typnam>	Typename, typname, opt_type
 %type <coldef>	columnDef, alter_clause
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
 				a_expr, a_expr_or_null, AexprConst,
-				in_expr_nodes, not_in_expr_nodes,
+				in_expr, in_expr_nodes, not_in_expr, not_in_expr_nodes,
 				having_clause
 %type <value>	NumConst
 %type <attr>	event_object, attr
@@ -189,14 +187,25 @@ static char *FlattenStringList(List *list);
 %type <target>	res_target_el, res_target_el2
 %type <paramno> ParamNo
 
+%type <typnam>	Typename, opt_type, Array, Generic, Character, Datetime, Numeric
+%type <str>		generic, character, datetime
+%type <str>		opt_charset, opt_collate
+%type <str>		opt_float, opt_numeric, opt_decimal
+%type <boolean>	opt_varying, opt_timezone
+
 %type <ival>	Iconst
 %type <str>		Sconst
 %type <str>		Id, date, var_value, zone_value
-%type <str>		ColId
+%type <str>		ColId, ColLabel
 
+%type <constrdef>	ConstraintElem, ConstraintDef
+
+%type <list>	constraint_elem
 %type <list>	default_expr
 %type <str>		opt_default
-%type <list>	constraint_elem
+%type <boolean>	opt_constraint
+%type <list>	key_actions, key_action
+%type <str>		key_match, key_reference
 
 /*
  * If you make any token changes, remember to:
@@ -204,37 +213,56 @@ static char *FlattenStringList(List *list);
  *		- update the keyword table in parser/keywords.c
  */
 
-/* Keywords */
-%token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, ANALYZE,
-		AND, APPEND, ARCHIVE, ARCH_STORE, AS, ASC,
-		BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BINARY, BY,
-		CAST, CHANGE, CHECK, CLOSE, CLUSTER, COLUMN,
-		COMMIT, CONSTRAINT, COPY, CREATE, CROSS, CURRENT, CURSOR,
-		DATABASE, DECLARE, DEFAULT, DELETE, DELIMITERS, DESC,
-		DISTINCT, DO, DROP, END_TRANS, EXISTS, EXTEND,
-		FETCH, FOR, FORWARD, FROM, FULL, FUNCTION, GRANT, GROUP, HAVING, HEAVY,
-		IN, INDEX, INHERITS, INNERJOIN, INSERT, INSTEAD, INTO, IS, ISNULL,
-		JOIN, LANGUAGE, LEFT, LIGHT, LISTEN, LOAD, LOCAL, MERGE, MOVE,
-		NATURAL, NEW, NONE, NOT, NOTHING, NOTIFY, NOTNULL,
-		OIDS, ON, OPERATOR, OPTION, OR, ORDER, OUTERJOIN,
-		PNULL, PRIVILEGES, PROCEDURE, PUBLIC, PURGE, P_TYPE,
-		RENAME, REPLACE, RESET, RETRIEVE, RETURNS, REVOKE, RIGHT, ROLLBACK, RULE,
-		SELECT, SET, SETOF, SHOW, STDIN, STDOUT, STORE,
-		TABLE, TO, TRANSACTION, TRIGGER,
-		UNION, UNIQUE, UPDATE, USING, VACUUM, VALUES,
-		VERBOSE, VERSION, VIEW, WHERE, WITH, WORK
-%token	EXECUTE, RECIPE, EXPLAIN, LIKE, SEQUENCE
+/* Reserved word tokens
+ * SQL92 syntax has many type-specific constructs.
+ * So, go ahead and make these types reserved words,
+ *  and call-out the syntax explicitly.
+ * This gets annoying when trying to also retain Postgres' nice
+ *  type-extensible features, but we don't really have a choice.
+ * - thomas 1997-10-11
+ */
 
-/* SQL-92 support */
-%token	INTERVAL, TIME, ZONE
-%token	DAYINTERVAL, HOURINTERVAL, MINUTEINTERVAL, MONTHINTERVAL,
-		SECONDINTERVAL, YEARINTERVAL
-%token	BOTH, LEADING, TRAILING, 
-%token	EXTRACT, POSITION, SUBSTRING, TRIM
-%token	DOUBLE, PRECISION, FLOAT
-%token	DECIMAL, NUMERIC
-%token	CHARACTER, VARYING
-%token	CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP
+/* Keywords (in SQL92 reserved words) */
+%token	ACTION, ADD, ALL, ALTER, AND, AS, ASC,
+		BEGIN_TRANS, BETWEEN, BOTH, BY,
+		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
+		COLLATE, COLUMN, COMMIT, CONSTRAINT, CREATE, CROSS,
+		CURRENT, CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
+		DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
+		END_TRANS, EXECUTE, EXISTS, EXTRACT,
+		FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
+		GRANT, GROUP, HAVING, HOUR_P,
+		IN, INNER_P, INSERT, INTERVAL, INTO, IS,
+		JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
+		MATCH, MINUTE_P, MONTH_P,
+		NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NOTNULL, NULL_P, NUMERIC,
+		ON, OPTION, OR, ORDER, OUTER_P,
+		PARTIAL, PRECISION, POSITION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
+		REFERENCES, REVOKE, RIGHT, ROLLBACK,
+		SECOND_P, SELECT, SET, SUBSTRING,
+		TABLE, TIME, TIMESTAMP, TO, TRAILING, TRANSACTION, TRIM,
+		UNION, UNIQUE, UPDATE, USING,
+		VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW,
+		WHERE, WITH, WORK, YEAR_P, ZONE
+
+/* Keywords (in SQL3 reserved words) */
+%token	FALSE_P, TRIGGER, TRUE_P
+
+/* Keywords (in SQL92 non-reserved words) */
+%token	TYPE_P
+
+/* Keywords for Postgres support (not in SQL92 reserved words) */
+%token	ABORT_TRANS, ACL, AFTER, AGGREGATE, ANALYZE,
+		APPEND, ARCHIVE, ARCH_STORE,
+		BACKWARD, BEFORE, BINARY, CHANGE, CLUSTER, COPY,
+		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
+		FORWARD, FUNCTION, HEAVY,
+		INDEX, INHERITS, INSTEAD, ISNULL,
+		LIGHT, LISTEN, LOAD, MERGE, MOVE,
+		NEW, NONE, NOTHING, OIDS, OPERATOR, PURGE,
+		RECIPE, RENAME, REPLACE, RESET, RETRIEVE, RETURNS, RULE,
+		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, STORE,
+		VACUUM, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op
@@ -245,29 +273,30 @@ static char *FlattenStringList(List *list);
 %token			OP
 
 /* precedence */
-%left	OR
-%left	AND
-%right	NOT
-%right	'='
-%nonassoc LIKE
-%nonassoc BETWEEN
-%nonassoc IN
-%nonassoc Op
-%nonassoc NOTNULL
-%nonassoc ISNULL
-%nonassoc IS
-%left	'+' '-'
-%left	'*' '/'
-%left	'|'				/* this is the relation union op, not logical or */
-%right	':'				/* Unary Operators		*/
-%left	';'				/* end of statement or natural log	  */
-%nonassoc  '<' '>'
-%right	 UMINUS
-%left	'.'
-%left	'[' ']'
-%nonassoc TYPECAST
-%nonassoc REDUCE
-%left	UNION
+%left		OR
+%left		AND
+%right		NOT
+%right		'='
+%nonassoc	LIKE
+%nonassoc	BETWEEN
+%nonassoc	IN
+%nonassoc	Op
+%nonassoc	NOTNULL
+%nonassoc	ISNULL
+%nonassoc	IS
+%left		'+' '-'
+%left		'*' '/'
+%left		'|'				/* this is the relation union op, not logical or */
+/* Unary Operators */
+%right		':'
+%left		';'				/* end of statement or natural log */
+%nonassoc	'<' '>'
+%right		UMINUS
+%left		'.'
+%left		'[' ']'
+%nonassoc	TYPECAST
+%nonassoc	REDUCE
+%left		UNION
 %%
 
 stmtblock: stmtmulti
@@ -322,21 +351,24 @@ stmt :	  AddAttrStmt
 		| VariableResetStmt
 		;
 
+
 /*****************************************************************************
  *
  * Set PG internal variable
  *	  SET name TO 'var_value'
+ * Include SQL92 syntax (thomas 1997-10-22):
+ *    SET TIME ZONE 'var_value'
  *
  *****************************************************************************/
 
-VariableSetStmt:  SET Id TO var_value
+VariableSetStmt:  SET ColId TO var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
 					n->value = $4;
 					$$ = (Node *) n;
 				}
-		|  SET Id '=' var_value
+		|  SET ColId '=' var_value
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
@@ -356,10 +388,10 @@ var_value:  Sconst			{ $$ = $1; }
 		;
 
 zone_value:  Sconst			{ $$ = $1; }
-		| LOCAL				{ $$ = NULL; }
+		| LOCAL				{ $$ = "default"; }
 		;
 
-VariableShowStmt:  SHOW Id
+VariableShowStmt:  SHOW ColId
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
 					n->name  = $2;
@@ -367,13 +399,14 @@ VariableShowStmt:  SHOW Id
 				}
 		;
 
-VariableResetStmt:	RESET Id
+VariableResetStmt:	RESET ColId
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name  = $2;
 					$$ = (Node *) n;
 				}
 		;
+
 
 /*****************************************************************************
  *
@@ -407,32 +440,23 @@ printf( "list has %d elements\n", length($3));
 #endif
 					$$ = lp;
 				}
-			| DROP opt_column Id
+			| DROP opt_column ColId
 				{	elog(WARN,"ALTER TABLE/DROP COLUMN not yet implemented",NULL); }
-			| ALTER opt_column Id SET opt_default
+			| ALTER opt_column ColId SET opt_default
 				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented",NULL); }
-			| ALTER opt_column Id DROP DEFAULT
+			| ALTER opt_column ColId DROP DEFAULT
 				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented",NULL); }
 			| ADD ConstraintElem
 				{	elog(WARN,"ALTER TABLE/ADD CONSTRAINT not yet implemented",NULL); }
 		;
 
-/* Column definition might include WITH TIME ZONE, but only for the data types
- *  called out in SQL92 date/time definitions. So, check explicitly for "timestamp"
- * and "time". - thomas 1997-07-14
- */
-columnDef:  Id Typename opt_with_col opt_default opt_null
+columnDef:  ColId Typename opt_default opt_constraint
 				{
 					$$ = makeNode(ColumnDef);
 					$$->colname = $1;
 					$$->typename = $2;
-					$$->typename->timezone = $3;
-					$$->defval = $4;
-					$$->is_not_null = $5;
-					if ($$->typename->timezone
-					&& (strcasecmp($$->typename->name, "timestamp")
-					&& strcasecmp($$->typename->name, "time")))
-					elog(NOTICE,"%s does not use WITH TIME ZONE",$$->typename->name);
+					$$->defval = $3;
+					$$->is_not_null = $4;
 				}
 		;
 
@@ -500,16 +524,49 @@ default_expr:  AexprConst
 				{	$$ = lcons( makeString( $1), $2); }
 			| default_expr Op
 				{	$$ = lappend( $1, makeString( $2)); }
+			/* XXX - thomas 1997-10-07 v6.2 function-specific code to be changed */
+			| CURRENT_DATE
+				{	$$ = lcons( makeString( "date( 'current'::datetime + '0 sec')"), NIL); }
+			| CURRENT_TIME
+				{	$$ = lcons( makeString( "'now'::time"), NIL); }
+			| CURRENT_TIME '(' Iconst ')'
+				{
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIME(p) precision must be zero",NULL);
+					$$ = lcons( makeString( "'now'::time"), NIL);
+				}
+			| CURRENT_TIMESTAMP
+				{	$$ = lcons( makeString( "now()"), NIL); }
+			| CURRENT_TIMESTAMP '(' Iconst ')'
+				{
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIMESTAMP(p) precision must be zero",NULL);
+					$$ = lcons( makeString( "now()"), NIL);
+				}
+			| CURRENT_USER
+				{	$$ = lcons( makeString( "CURRENT_USER"), NIL); }
 		;
 
-opt_null: NOT PNULL								{ $$ = TRUE; }
+opt_constraint:  NOT NULL_P						{ $$ = TRUE; }
 			| NOTNULL							{ $$ = TRUE; }
+			| UNIQUE
+				{
+					elog(WARN,"CREATE TABLE/UNIQUE not yet implemented",NULL);
+					$$ = FALSE;
+				}
+			| PRIMARY KEY
+				{
+					elog(WARN,"CREATE TABLE/PRIMARY KEY not yet implemented",NULL);
+					$$ = FALSE;
+				}
+			| REFERENCES ColId opt_column_list key_match key_actions
+				{
+					elog(WARN,"CREATE TABLE/FOREIGN KEY not yet implemented",NULL);
+					$$ = FALSE;
+				}
 			| /* EMPTY */						{ $$ = FALSE; }
 		;
 
-opt_with_col:  WITH TIME ZONE					{ $$ = TRUE; }
-			|  /* EMPTY */						{ $$ = FALSE; }
-		;
 
 /*****************************************************************************
  *
@@ -674,16 +731,22 @@ printf("ConstraintDef: string is %s\n", (char *) constr->def);
 #endif
 					$$ = constr;
 				}
+		| UNIQUE '(' columnList ')'
+				{	elog(WARN,"CREATE TABLE/UNIQUE not yet implemented",NULL); }
+		| PRIMARY KEY '(' columnList ')'
+				{	elog(WARN,"CREATE TABLE/PRIMARY KEY not yet implemented",NULL); }
+		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
+				{	elog(WARN,"CREATE TABLE/FOREIGN KEY not yet implemented",NULL); }
 		;
 
 constraint_elem:  AexprConst
 				{	$$ = makeConstantList((A_Const *) $1); }
 			| Pnull
 				{	$$ = lcons( makeString("NULL"), NIL); }
-			| Id
+			| ColId
 				{
 #ifdef PARSEDEBUG
-printf( "Id is %s\n", $1);
+printf( "ColId is %s\n", $1);
 #endif
 					$$ = lcons( makeString($1), NIL);
 				}
@@ -735,6 +798,26 @@ printf( "Id is %s\n", $1);
 				{	$$ = lcons( makeString( $1), $2); }
 			| constraint_elem Op
 				{	$$ = lappend( $1, makeString( $2)); }
+		;
+
+key_match:  MATCH FULL					{ $$ = NULL; }
+		| MATCH PARTIAL					{ $$ = NULL; }
+		| /*EMPTY*/						{ $$ = NULL; }
+		;
+
+key_actions:  key_action key_action		{ $$ = NIL; }
+		| key_action					{ $$ = NIL; }
+		| /*EMPTY*/						{ $$ = NIL; }
+		;
+
+key_action:  ON DELETE key_reference	{ $$ = NIL; }
+		| ON UPDATE key_reference		{ $$ = NIL; }
+		;
+
+key_reference:  NO ACTION				{ $$ = NULL; }
+		| CASCADE						{ $$ = NULL; }
+		| SET DEFAULT					{ $$ = NULL; }
+		| SET NULL_P					{ $$ = NULL; }
 		;
 
 
@@ -871,6 +954,7 @@ DropTrigStmt:	DROP TRIGGER name ON relation_name
 				}
 		;
 
+
 /*****************************************************************************
  *
  *		QUERY :
@@ -897,27 +981,27 @@ printf("def_rest: defname is %s\n", $1);
 		;
 
 def_type:  OPERATOR							{ $$ = OPERATOR; }
-			|  Type
+		|  Type
 				{
 #ifdef PARSEDEBUG
-printf("def_type: decoding P_TYPE\n");
+printf("def_type: decoding TYPE_P\n");
 #endif
-					$$ = P_TYPE;
+					$$ = TYPE_P;
 				}
-			|  AGGREGATE					{ $$ = AGGREGATE; }
+		|  AGGREGATE						{ $$ = AGGREGATE; }
 		;
 
 def_name:  PROCEDURE						{ $$ = "procedure"; }
-			|  Id							{ $$ = $1; }
-			|  MathOp						{ $$ = $1; }
-			|  Op							{ $$ = $1; }
+		|  ColId							{ $$ = $1; }
+		|  MathOp							{ $$ = $1; }
+		|  Op								{ $$ = $1; }
 		;
 
 definition:  '(' def_list ')'				{ $$ = $2; }
 		;
 
 def_list:  def_elem							{ $$ = lcons($1, NIL); }
-			|  def_list ',' def_elem		{ $$ = lappend($1, $3); }
+		|  def_list ',' def_elem			{ $$ = lappend($1, $3); }
 		;
 
 def_elem:  def_name '=' def_arg
@@ -930,7 +1014,7 @@ pprint($3);
 					$$->defname = $1;
 					$$->arg = (Node *)$3;
 				}
-			|  def_name
+		|  def_name
 				{
 #ifdef PARSEDEBUG
 printf("def_elem: decoding %s\n", $1);
@@ -939,7 +1023,7 @@ printf("def_elem: decoding %s\n", $1);
 					$$->defname = $1;
 					$$->arg = (Node *)NULL;
 				}
-			|  DEFAULT '=' def_arg
+		|  DEFAULT '=' def_arg
 				{
 #ifdef PARSEDEBUG
 printf("def_elem: decoding DEFAULT =\n");
@@ -951,11 +1035,11 @@ pprint($3);
 				}
 		;
 
-def_arg:  Id							{  $$ = (Node *)makeString($1); }
-			| all_Op					{  $$ = (Node *)makeString($1); }
-			| NumConst					{  $$ = (Node *)$1; /* already a Value */ }
-			| Sconst					{  $$ = (Node *)makeString($1); }
-			| SETOF Id
+def_arg:  ColId							{  $$ = (Node *)makeString($1); }
+		| all_Op						{  $$ = (Node *)makeString($1); }
+		| NumConst						{  $$ = (Node *)$1; /* already a Value */ }
+		| Sconst						{  $$ = (Node *)makeString($1); }
+		| SETOF ColId
 				{
 					TypeName *n = makeNode(TypeName);
 					n->name = $2;
@@ -963,7 +1047,7 @@ def_arg:  Id							{  $$ = (Node *)makeString($1); }
 					n->arrayBounds = NULL;
 					$$ = (Node *)n;
 				}
-			| DOUBLE					{  $$ = (Node *)makeString("double"); }
+		| DOUBLE						{  $$ = (Node *)makeString("double"); }
 		;
 
 
@@ -974,14 +1058,14 @@ def_arg:  Id							{  $$ = (Node *)makeString($1); }
  *
  *****************************************************************************/
 
-DestroyStmt:	DROP TABLE relation_name_list
+DestroyStmt:  DROP TABLE relation_name_list
 				{
 					DestroyStmt *n = makeNode(DestroyStmt);
 					n->relNames = $3;
 					n->sequence = FALSE;
 					$$ = (Node *)n;
 				}
-		|		DROP SEQUENCE relation_name_list
+		| DROP SEQUENCE relation_name_list
 				{
 					DestroyStmt *n = makeNode(DestroyStmt);
 					n->relNames = $3;
@@ -1034,6 +1118,7 @@ opt_portal_name: IN name				{ $$ = $2;}
 		| /*EMPTY*/						{ $$ = NULL; }
 		;
 
+
 /*****************************************************************************
  *
  *		QUERY:
@@ -1041,7 +1126,7 @@ opt_portal_name: IN name				{ $$ = $2;}
  *
  *****************************************************************************/
 
-GrantStmt: GRANT privileges ON relation_name_list TO grantee opt_with_grant
+GrantStmt:  GRANT privileges ON relation_name_list TO grantee opt_with_grant
 				{
 					$$ = (Node*)makeAclStmt($2,$4,$6,'+');
 					free($2);
@@ -1063,7 +1148,7 @@ privileges:  ALL PRIVILEGES
 				}
 		;
 
-operation_commalist: operation
+operation_commalist:  operation
 				{
 						$$ = aclmakepriv("",$1);
 				}
@@ -1074,7 +1159,7 @@ operation_commalist: operation
 				}
 		;
 
-operation:	  SELECT
+operation:  SELECT
 				{
 						$$ = ACL_MODE_RD_CHR;
 				}
@@ -1090,7 +1175,7 @@ operation:	  SELECT
 				{
 						$$ = ACL_MODE_WR_CHR;
 				}
-			| RULE
+		| RULE
 				{
 						$$ = ACL_MODE_RU_CHR;
 				}
@@ -1100,22 +1185,23 @@ grantee:  PUBLIC
 				{
 						$$ = aclmakeuser("A","");
 				}
-		| GROUP Id
+		| GROUP ColId
 				{
 						$$ = aclmakeuser("G",$2);
 				}
-		| Id
+		| ColId
 				{
 						$$ = aclmakeuser("U",$1);
 				}
 		;
 
-opt_with_grant : /* empty */
-		|	WITH GRANT OPTION
+opt_with_grant:  WITH GRANT OPTION
 				{
 					yyerror("WITH GRANT OPTION is not supported.  Only relation owners can set privileges");
-				}
+				 }
+		| /*EMPTY*/
 		;
+
 
 /*****************************************************************************
  *
@@ -1131,6 +1217,7 @@ RevokeStmt: REVOKE privileges ON relation_name_list FROM grantee
 					free($6);
 				}
 		;
+
 
 /*****************************************************************************
  *
@@ -1159,14 +1246,58 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
 				}
 		;
 
-access_method_clause:	USING access_method		 { $$ = $2; }
-					  | /* empty -- 'btree' is default access method */
-												 { $$ = "btree"; }
+index_opt_unique:  UNIQUE						{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
-index_opt_unique: UNIQUE						 { $$ = TRUE; }
-				  | /*empty*/					 { $$ = FALSE; }
+access_method_clause:  USING access_method		{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = "btree"; }
 		;
+
+index_params:  index_list						{ $$ = $1; }
+		| func_index							{ $$ = lcons($1,NIL); }
+		;
+
+index_list:  index_list ',' index_elem			{ $$ = lappend($1, $3); }
+		| index_elem							{ $$ = lcons($1, NIL); }
+		;
+
+func_index: name '(' name_list ')' opt_type opt_class
+				{
+					$$ = makeNode(IndexElem);
+					$$->name = $1;
+					$$->args = $3;
+					$$->class = $6;
+					$$->tname = $5;
+				}
+		  ;
+
+index_elem:  attr_name opt_type opt_class
+				{
+					$$ = makeNode(IndexElem);
+					$$->name = $1;
+					$$->args = NIL;
+					$$->class = $3;
+					$$->tname = $2;
+				}
+		;
+
+opt_type:  ':' Typename							{ $$ = $2;}
+		| FOR Typename							{ $$ = $2;}
+		| /*EMPTY*/								{ $$ = NULL;}
+		;
+
+/* opt_class "WITH class" conflicts with preceeding opt_type
+ *  for Typename of "TIMESTAMP WITH TIME ZONE"
+ * So, remove "WITH class" from the syntax. OK??
+ * - thomas 1997-10-12
+ *		|  WITH class							{ $$ = $2; }
+ */
+opt_class:  class								{ $$ = $1; }
+		|  USING class							{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
 
 /*****************************************************************************
  *
@@ -1183,6 +1314,7 @@ ExtendStmt:  EXTEND INDEX index_name where_clause
 					$$ = (Node *)n;
 				}
 		;
+
 
 /*****************************************************************************
  *
@@ -1221,7 +1353,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *****************************************************************************/
 
 ProcedureStmt:	CREATE FUNCTION def_name def_args
-				   RETURNS def_arg opt_with AS Sconst LANGUAGE Sconst
+			 RETURNS def_arg opt_with AS Sconst LANGUAGE Sconst
 				{
 					ProcedureStmt *n = makeNode(ProcedureStmt);
 					n->funcname = $3;
@@ -1322,7 +1454,7 @@ RemoveStmt:  DROP remove_type name
 				}
 		;
 
-remove_type:  Type								{  $$ = P_TYPE; }
+remove_type:  Type								{  $$ = TYPE_P; }
 		|  INDEX								{  $$ = INDEX; }
 		|  RULE									{  $$ = RULE; }
 		|  VIEW									{  $$ = VIEW; }
@@ -1385,6 +1517,7 @@ oper_argtypes:	name
 		| name ',' NONE			/* right unary */
 				{ $$ = makeList(makeString($1), NULL, -1); }
 		;
+
 
 /*****************************************************************************
  *
@@ -1679,6 +1812,7 @@ ClusterStmt:  CLUSTER index_name ON relation_name
 				}
 		;
 
+
 /*****************************************************************************
  *
  *		QUERY:
@@ -1708,12 +1842,12 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 				}
 		;
 
-opt_verbose:  VERBOSE					{ $$ = TRUE; }
-		| /* EMPTY */					{ $$ = FALSE; }
+opt_verbose:  VERBOSE							{ $$ = TRUE; }
+		| /* EMPTY */							{ $$ = FALSE; }
 		;
 
-opt_analyze:  ANALYZE					{ $$ = TRUE; }
-		| /* EMPTY */					{ $$ = FALSE; }
+opt_analyze:  ANALYZE							{ $$ = TRUE; }
+		| /* EMPTY */							{ $$ = FALSE; }
 		;
 
 opt_va_list: '(' va_list ')'
@@ -1727,6 +1861,7 @@ va_list: name
 		| va_list ',' name
 				{ $$=lappend($1,$3); }
 		;
+
 
 /*****************************************************************************
  *
@@ -1743,6 +1878,7 @@ ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
 					$$ = (Node *)n;
 				}
 		;
+
 
 /*****************************************************************************
  *																			 *
@@ -1806,7 +1942,7 @@ columnList:
 				{ $$ = lcons($1, NIL); }
 		;
 
-columnElem: Id opt_indirection
+columnElem: ColId opt_indirection
 				{
 					Ident *id = makeNode(Ident);
 					id->name = $1;
@@ -1814,6 +1950,7 @@ columnElem: Id opt_indirection
 					$$ = (Node *)id;
 				}
 		;
+
 
 /*****************************************************************************
  *
@@ -1899,48 +2036,10 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
  *
  *****************************************************************************/
 
-/******************************************************************************
 RetrieveStmt:  SELECT opt_unique res_target_list2
-			   result from_clause where_clause
-			   group_clause having_clause
-			   sort_clause
-				{
-					RetrieveStmt *n = makeNode(RetrieveStmt);
-					n->unique = $2;
-					n->targetList = $3;
-					n->into = $4;
-					n->fromClause = $5;
-					n->whereClause = $6;
-					n->groupClause = $7;
-					n->havingClause = $8;
-					n->sortClause = $9;
-					$$ = (Node *)n;
-				}
-		;
-
-RetrieveStmt:  Select UNION select_list sort_clause
-		| Select sort_clause
-Select:  SELECT opt_unique res_target_list2
-			   result from_clause where_clause
-			   group_clause having_clause
-				{
-					Select *n = makeNode(Select);
-					n->unique = $2;
-					n->targetList = $3;
-					n->into = $4;
-					n->fromClause = $5;
-					n->whereClause = $6;
-					n->groupClause = $7;
-					n->havingClause = $8;
-					$$ = (Node *)n;
-				}
-		;
-******************************************************************************/
-
-RetrieveStmt:  SELECT opt_unique res_target_list2
-			   result from_clause where_clause
-			   group_clause having_clause
-			   union_clause sort_clause
+			 result from_clause where_clause
+			 group_clause having_clause
+			 union_clause sort_clause
 				{
 					RetrieveStmt *n = makeNode(RetrieveStmt);
 					n->unique = $2;
@@ -1957,7 +2056,7 @@ RetrieveStmt:  SELECT opt_unique res_target_list2
 		;
 
 union_clause:  UNION select_list				{ $$ = $2; }
-		|  /*EMPTY*/							{ $$ = NIL; }
+		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
 select_list:  select_list UNION SubSelect
@@ -1967,8 +2066,8 @@ select_list:  select_list UNION SubSelect
 		;
 
 SubSelect:	SELECT opt_unique res_target_list2
-			   result from_clause where_clause
-			   group_clause having_clause
+			 result from_clause where_clause
+			 group_clause having_clause
 				{
 					SubSelect *n = makeNode(SubSelect);
 					n->unique = $2;
@@ -1987,22 +2086,20 @@ result:  INTO TABLE relation_name
 				{  $$ = NULL;  }
 		;
 
-opt_unique:  DISTINCT			{ $$ = "*"; }
-		| DISTINCT ON Id		{ $$ = $3; }
-		| /*EMPTY*/				{ $$ = NULL;}
+opt_unique:  DISTINCT							{ $$ = "*"; }
+		| DISTINCT ON ColId						{ $$ = $3; }
+		| /*EMPTY*/								{ $$ = NULL;}
 		;
 
 sort_clause:  ORDER BY sortby_list				{ $$ = $3; }
 		|  /*EMPTY*/							{ $$ = NIL; }
 		;
 
-sortby_list:  sortby
-				{ $$ = lcons($1, NIL); }
-		| sortby_list ',' sortby
-				{ $$ = lappend($1, $3); }
+sortby_list:  sortby							{ $$ = lcons($1, NIL); }
+		| sortby_list ',' sortby				{ $$ = lappend($1, $3); }
 		;
 
-sortby:  Id OptUseOp
+sortby:  ColId OptUseOp
 				{
 					$$ = makeNode(SortGroupBy);
 					$$->resno = 0;
@@ -2010,7 +2107,7 @@ sortby:  Id OptUseOp
 					$$->name = $1;
 					$$->useOp = $2;
 				}
-		| Id '.' Id OptUseOp
+		| ColId '.' ColId OptUseOp
 				{
 					$$ = makeNode(SortGroupBy);
 					$$->resno = 0;
@@ -2029,51 +2126,11 @@ sortby:  Id OptUseOp
 		;
 
 OptUseOp:  USING Op								{ $$ = $2; }
-		|  USING '<'							{ $$ = "<"; }
-		|  USING '>'							{ $$ = ">"; }
-		|  ASC									{ $$ = "<"; }
-		|  DESC									{ $$ = ">"; }
-		|  /*EMPTY*/							{ $$ = "<"; /*default*/ }
-		;
-
-index_params: index_list						{ $$ = $1; }
-		| func_index							{ $$ = lcons($1,NIL); }
-		;
-
-index_list:
-		  index_list ',' index_elem
-				{ $$ = lappend($1, $3); }
-		| index_elem
-				{ $$ = lcons($1, NIL); }
-		;
-
-func_index: name '(' name_list ')' opt_type opt_class
-				{
-					$$ = makeNode(IndexElem);
-					$$->name = $1;
-					$$->args = $3;
-					$$->class = $6;
-					$$->tname = $5;
-				}
-		  ;
-
-index_elem:  attr_name opt_type opt_class
-				{
-					$$ = makeNode(IndexElem);
-					$$->name = $1;
-					$$->args = NIL;
-					$$->class = $3;
-					$$->tname = $2;
-				}
-		;
-
-opt_type: ':' Typename							{ $$ = $2;}
-		|  /*EMPTY*/							{ $$ = NULL;}
-		;
-
-opt_class:	class
-		|  WITH class							{ $$ = $2; }
-		|  /*EMPTY*/							{ $$ = NULL; }
+		| USING '<'								{ $$ = "<"; }
+		| USING '>'								{ $$ = ">"; }
+		| ASC									{ $$ = "<"; }
+		| DESC									{ $$ = ">"; }
+		| /*EMPTY*/								{ $$ = "<"; /*default*/ }
 		;
 
 /*
@@ -2085,27 +2142,27 @@ opt_class:	class
  *
  *	XXX i believe '*' should be the default behavior, but...
  */
-opt_inh_star: '*'						{ $$ = TRUE; }
-		|  /*EMPTY*/					{ $$ = FALSE; }
+opt_inh_star:  '*'								{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
-relation_name_list:	name_list;
+relation_name_list:  name_list;
 
-name_list: name
+name_list:  name
 				{	$$ = lcons(makeString($1),NIL); }
 		| name_list ',' name
 				{	$$ = lappend($1,makeString($3)); }
 		;
 
-group_clause: GROUP BY groupby_list				{ $$ = $3; }
+group_clause:  GROUP BY groupby_list			{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
-groupby_list: groupby							{ $$ = lcons($1, NIL); }
+groupby_list:  groupby							{ $$ = lcons($1, NIL); }
 		| groupby_list ',' groupby				{ $$ = lappend($1, $3); }
 		;
 
-groupby:  Id
+groupby:  ColId
 				{
 					$$ = makeNode(SortGroupBy);
 					$$->resno = 0;
@@ -2113,7 +2170,7 @@ groupby:  Id
 					$$->name = $1;
 					$$->useOp = NULL;
 				}
-		| Id '.' Id
+		| ColId '.' ColId
 				{
 					$$ = makeNode(SortGroupBy);
 					$$->resno = 0;
@@ -2131,9 +2188,10 @@ groupby:  Id
 				}
 		;
 
-having_clause: HAVING a_expr					{ $$ = $2; }
+having_clause:  HAVING a_expr					{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
+
 
 /*****************************************************************************
  *
@@ -2160,13 +2218,13 @@ from_list:	from_list ',' from_val
 				{ $$ = lcons($1, NIL); }
 		;
 
-from_val:  relation_expr AS Id
+from_val:  relation_expr AS ColLabel
 				{
 					$$ = makeNode(RangeVar);
 					$$->relExpr = $1;
 					$$->name = $3;
 				}
-		| relation_expr Id
+		| relation_expr ColId
 				{
 					$$ = makeNode(RangeVar);
 					$$->relExpr = $1;
@@ -2180,16 +2238,16 @@ from_val:  relation_expr AS Id
 				}
 		;
 
-join_expr:  NATURAL join_expr						{ $$ = NULL; }
+join_expr:  NATURAL join_expr					{ $$ = NULL; }
 		| FULL join_outer
 				{ elog(WARN,"FULL OUTER JOIN not yet implemented",NULL); }
 		| LEFT join_outer
 				{ elog(WARN,"LEFT OUTER JOIN not yet implemented",NULL); }
 		| RIGHT join_outer
 				{ elog(WARN,"RIGHT OUTER JOIN not yet implemented",NULL); }
-		| OUTERJOIN
+		| OUTER_P
 				{ elog(WARN,"OUTER JOIN not yet implemented",NULL); }
-		| INNERJOIN
+		| INNER_P
 				{ elog(WARN,"INNER JOIN not yet implemented",NULL); }
 		| UNION
 				{ elog(WARN,"UNION JOIN not yet implemented",NULL); }
@@ -2197,20 +2255,20 @@ join_expr:  NATURAL join_expr						{ $$ = NULL; }
 				{ elog(WARN,"INNER JOIN not yet implemented",NULL); }
 		;
 
-join_outer:  OUTERJOIN					{ $$ = NULL; }
-		| /*EMPTY*/						{ $$ = NULL;  /* no qualifiers */ }
+join_outer:  OUTER_P							{ $$ = NULL; }
+		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
 		;
 
-join_spec:	ON '(' a_expr ')'			{ $$ = NULL; }
-		| USING '(' join_list ')'		{ $$ = NULL; }
-		| /*EMPTY*/						{ $$ = NULL;  /* no qualifiers */ }
+join_spec:	ON '(' a_expr ')'					{ $$ = NULL; }
+		| USING '(' join_list ')'				{ $$ = NULL; }
+		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
 		;
 
 join_list: join_using							{ $$ = lcons($1, NIL); }
 		| join_list ',' join_using				{ $$ = lappend($1, $3); }
 		;
 
-join_using:  Id
+join_using:  ColId
 				{
 					$$ = makeNode(SortGroupBy);
 					$$->resno = 0;
@@ -2218,7 +2276,7 @@ join_using:  Id
 					$$->name = $1;
 					$$->useOp = NULL;
 				}
-		| Id '.' Id
+		| ColId '.' ColId
 				{
 					$$ = makeNode(SortGroupBy);
 					$$->resno = 0;
@@ -2236,8 +2294,8 @@ join_using:  Id
 				}
 		;
 
-where_clause:  WHERE a_expr				{ $$ = $2; }
-		| /*EMPTY*/						{ $$ = NULL;  /* no qualifiers */ }
+where_clause:  WHERE a_expr						{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NULL;  /* no qualifiers */ }
 		;
 
 relation_expr:	relation_name
@@ -2266,7 +2324,9 @@ relation_expr:	relation_name
 				}
 		;
 
-
+/* Time travel
+ * Range specification clause.
+ */
 time_range:  '[' opt_range_start ',' opt_range_end ']'
 				{
 					$$ = makeNode(TimeRange);
@@ -2305,36 +2365,32 @@ nest_array_bounds:	'[' ']' nest_array_bounds
 				{  $$ = NIL; }
 		;
 
-/*
- * typname handles types without trailing parens for size specification.
- * Typename uses either typname or explicit txname(size).
- * So, must handle FLOAT in both places. - thomas 1997-09-20
- */
-typname:  txname
-				{
-					char *tname;
-					$$ = makeNode(TypeName);
 
-					if (!strcasecmp($1, "float"))
-						tname = xlateSqlType("float8");
-					else if (!strcasecmp($1, "decimal"))
-						tname = xlateSqlType("integer");
-					else if (!strcasecmp($1, "numeric"))
-						tname = xlateSqlType("integer");
-					else
-						tname = xlateSqlType($1);
-					$$->name = tname;
+/*****************************************************************************
+ *
+ *	Type syntax
+ *		SQL92 introduces a large amount of type-specific syntax.
+ *		Define individual clauses to handle these cases, and use
+ *		 the generic case to handle regular type-extensible Postgres syntax.
+ *		- thomas 1997-10-10
+ *
+ *****************************************************************************/
+
+Typename:  Array opt_array_bounds
+				{
+					$$ = $1;
+					$$->arrayBounds = $2;
 
 					/* Is this the name of a complex type? If so, implement
 					 * it as a set.
 					 */
-					if (!strcmp(saved_relname, tname))
+					if (!strcmp(saved_relname, $$->name))
 						/* This attr is the same type as the relation
 						 * being defined. The classic example: create
 						 * emp(name=text,mgr=emp)
 						 */
 						$$->setof = TRUE;
-					else if (get_typrelid((Type)type(tname)) != InvalidOid)
+					else if (get_typrelid((Type)type($$->name)) != InvalidOid)
 						 /* (Eventually add in here that the set can only
 						  * contain one element.)
 						  */
@@ -2342,144 +2398,230 @@ typname:  txname
 					else
 						$$->setof = FALSE;
 				}
-		| SETOF txname
+		| Character
+		| SETOF Array
 				{
-					char *tname = xlateSqlType($2);
-					$$ = makeNode(TypeName);
-					$$->name = tname;
+					$$ = $2;
 					$$->setof = TRUE;
 				}
 		;
 
-/* Type names
- * Allow the following parsing categories:
- *  - strings which are not keywords (Id)
- *  - some explicit SQL/92 data types (e.g. DOUBLE PRECISION)
- *  - TYPE as an SQL/92 non-reserved word, but parser keyword
- *  - other date/time strings (e.g. YEAR)
- * - thomas 1997-10-08
+Array:  Generic
+		| Datetime
+		| Numeric
+		;
+
+Generic:  generic
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType($1);
+				}
+		;
+
+generic:  Id									{ $$ = $1; }
+		| TYPE_P								{ $$ = xlateSqlType("type"); }
+		| DOUBLE PRECISION						{ $$ = xlateSqlType("float8"); }
+		;
+
+/* SQL92 numeric data types
+ * Check FLOAT() precision limits assuming IEEE floating types.
+ * Provide rudimentary DECIMAL() and NUMERIC() implementations
+ *  by checking parameters and making sure they match what is possible with INTEGER.
+ * - thomas 1997-09-18
  */
-txname:  Id								{ $$ = $1; }
-		| DateTime						{ $$ = $1; }
-		| TIME							{ $$ = xlateSqlType("time"); }
-		| P_TYPE						{ $$ = xlateSqlType("type"); }
-		| INTERVAL interval_opts		{ $$ = xlateSqlType("interval"); }
-		| CHARACTER char_type			{ $$ = $2; }
-		| DOUBLE PRECISION				{ $$ = xlateSqlType("float8"); }
-		| FLOAT							{ $$ = xlateSqlType("float"); }
-		| DECIMAL						{ $$ = "decimal"; }
-		| NUMERIC						{ $$ = "numeric"; }
-		;
-
-char_type:  VARYING						{ $$ = xlateSqlType("varchar"); }
-		| /*EMPTY*/						{ $$ = xlateSqlType("char"); }
-		;
-
-interval_opts:	YEARINTERVAL					{ $$ = lcons("year", NIL); }
-		| MONTHINTERVAL							{ $$ = NIL; }
-		| DAYINTERVAL							{ $$ = NIL; }
-		| HOURINTERVAL							{ $$ = NIL; }
-		| MINUTEINTERVAL						{ $$ = NIL; }
-		| SECONDINTERVAL						{ $$ = NIL; }
-		| YEARINTERVAL TO MONTHINTERVAL			{ $$ = NIL; }
-		| DAYINTERVAL TO HOURINTERVAL			{ $$ = NIL; }
-		| DAYINTERVAL TO MINUTEINTERVAL			{ $$ = NIL; }
-		| DAYINTERVAL TO SECONDINTERVAL			{ $$ = NIL; }
-		| HOURINTERVAL TO MINUTEINTERVAL		{ $$ = NIL; }
-		| HOURINTERVAL TO SECONDINTERVAL		{ $$ = NIL; }
-		| /* EMPTY */							{ $$ = NIL; }
-		;
-
-Typename:  typname opt_array_bounds
-				{
-					$$ = $1;
-					$$->arrayBounds = $2;
-#if FALSE
-					if (!strcasecmp($1->name, "varchar"))
-						$$->typlen = 4 + 1;
-#endif
-				}
-		| txname '(' Iconst ')'
-				{
-					/*
-					 * The following implements CHAR() and VARCHAR().
-					 * We do it here instead of the 'typname:' production
-					 * because we don't want to allow arrays of VARCHAR().
-					 * I haven't thought about whether that will work or not.
-					 *								- ay 6/95
-					 * Also implements FLOAT().
-					 * Check precision limits assuming IEEE floating types.
-					 *								- thomas 1997-09-18
-					 */
-					$$ = makeNode(TypeName);
-					if (!strcasecmp($1, "float")) {
-						if ($3 < 1)
-							elog(WARN,"precision for FLOAT must be at least 1",NULL);
-						else if ($3 < 7)
-							$$->name = xlateSqlType("float4");
-						else if ($3 < 16)
-							$$->name = xlateSqlType("float8");
-						else
-							elog(WARN,"precision for FLOAT must be less than 16",NULL);
-					} else if (!strcasecmp($1, "decimal")) {
-						/* DECIMAL is allowed to have more precision than specified */
-						if ($3 > 9)
-							elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$3);
-						$$->name = xlateSqlType("integer");
-
-					} else if (!strcasecmp($1, "numeric")) {
-						/* integer holds 9.33 decimal places, so assume an even 9 for now */
-						if ($3 != 9)
-							elog(WARN,"NUMERIC precision %d must be 9",$3);
-						$$->name = xlateSqlType("integer");
-
-					} else {
-						if (!strcasecmp($1, "char"))
-							$$->name = xlateSqlType("bpchar");
-						else if (!strcasecmp($1, "varchar"))
-							$$->name = xlateSqlType("varchar");
-						else
-							yyerror("parse error");
-						if ($3 < 1)
-							elog(WARN,"length for '%s' type must be at least 1",$1);
-						else if ($3 > 4096)
-							/* we can store a char() of length up to the size
-							 * of a page (8KB) - page headers and friends but
-							 * just to be safe here...	- ay 6/95
-							 * XXX note this hardcoded limit - thomas 1997-07-13
-							 */
-							elog(WARN,"length for '%s' type cannot exceed 4096",$1);
-
-						/* we actually implement this sort of like a varlen, so
-						 * the first 4 bytes is the length. (the difference
-						 * between this and "text" is that we blank-pad and
-						 * truncate where necessary
-						 */
-						$$->typlen = 4 + $3;
-					}
-				}
-		| txname '(' Iconst ',' Iconst ')'
+Numeric:  FLOAT opt_float
 				{
 					$$ = makeNode(TypeName);
-					if (!strcasecmp($1, "decimal")) {
-						if ($3 > 9)
-							elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$3);
-						if ($5 != 0)
-							elog(WARN,"DECIMAL scale %d must be zero",$5);
-						$$->name = xlateSqlType("integer");
-
-					} else if (!strcasecmp($1, "numeric")) {
-						if ($3 != 9)
-							elog(WARN,"NUMERIC precision %d must be 9",$3);
-						if ($5 != 0)
-							elog(WARN,"NUMERIC scale %d must be zero",$5);
-						$$->name = xlateSqlType("integer");
-
-					} else {
-						elog(WARN,"%s(%d,%d) not implemented",$1,$3,$5);
-					}
+					$$->name = xlateSqlType($2);
+				}
+		| DECIMAL opt_decimal
+				{
+					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("integer");
 				}
+		| NUMERIC opt_numeric
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType("integer");
+				}
+		;
+
+opt_float:  '(' Iconst ')'
+				{
+					if ($2 < 1)
+						elog(WARN,"precision for FLOAT must be at least 1",NULL);
+					else if ($2 < 7)
+						$$ = xlateSqlType("float4");
+					else if ($2 < 16)
+						$$ = xlateSqlType("float8");
+					else
+						elog(WARN,"precision for FLOAT must be less than 16",NULL);
+				}
+		| /*EMPTY*/
+				{
+					$$ = xlateSqlType("float8");
+				}
+		;
+
+opt_numeric:  '(' Iconst ',' Iconst ')'
+				{
+					if ($2 != 9)
+						elog(WARN,"NUMERIC precision %d must be 9",$2);
+					if ($4 != 0)
+						elog(WARN,"NUMERIC scale %d must be zero",$4);
+				}
+		| '(' Iconst ')'
+				{
+					if ($2 != 9)
+						elog(WARN,"NUMERIC precision %d must be 9",$2);
+				}
+		| /*EMPTY*/
+				{
+					$$ = NULL;
+				}
+		;
+
+opt_decimal:  '(' Iconst ',' Iconst ')'
+				{
+					if ($2 > 9)
+						elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$2);
+					if ($4 != 0)
+						elog(WARN,"DECIMAL scale %d must be zero",$4);
+					$$ = NULL;
+				}
+		| '(' Iconst ')'
+				{
+					if ($2 > 9)
+						elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$2);
+					$$ = NULL;
+				}
+		| /*EMPTY*/
+				{
+					$$ = NULL;
+				}
+		;
+
+/* SQL92 character data types
+ * The following implements CHAR() and VARCHAR().
+ * We do it here instead of the 'Generic' production
+ * because we don't want to allow arrays of VARCHAR().
+ * I haven't thought about whether that will work or not.
+ *								- ay 6/95
+ */
+Character:  character '(' Iconst ')'
+				{
+					$$ = makeNode(TypeName);
+					if (!strcasecmp($1, "char"))
+						$$->name = xlateSqlType("bpchar");
+					else if (!strcasecmp($1, "varchar"))
+						$$->name = xlateSqlType("varchar");
+					else
+						yyerror("parse error");
+					if ($3 < 1)
+						elog(WARN,"length for '%s' type must be at least 1",$1);
+					else if ($3 > 4096)
+						/* we can store a char() of length up to the size
+						 * of a page (8KB) - page headers and friends but
+						 * just to be safe here...	- ay 6/95
+						 * XXX note this hardcoded limit - thomas 1997-07-13
+						 */
+						elog(WARN,"length for type '%s' cannot exceed 4096",$1);
+
+					/* we actually implement this sort of like a varlen, so
+					 * the first 4 bytes is the length. (the difference
+					 * between this and "text" is that we blank-pad and
+					 * truncate where necessary
+					 */
+					$$->typlen = 4 + $3;
+				}
+		| character
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType($1);
+				}
+		;
+
+character:  CHARACTER opt_varying opt_charset opt_collate
+				{
+					char *type, *c;
+					if (($3 == NULL) || (strcasecmp($3, "sql_text") == 0)) {
+						if ($2) type = xlateSqlType("varchar");
+						else type = xlateSqlType("char");
+					} else {
+						if ($2) {
+							c = palloc(strlen("var") + strlen($3) + 1);
+							strcpy(c, "var");
+							strcat(c, $3);
+							type = xlateSqlType(c);
+						} else {
+							type = xlateSqlType($3);
+						}
+					};
+					if ($4 != NULL)
+					elog(WARN,"COLLATE %s not yet implemented",$4);
+					$$ = type;
+				}
+		| CHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "char"); }
+		| VARCHAR								{ $$ = xlateSqlType("varchar"); }
+		| NATIONAL CHARACTER opt_varying		{ $$ = xlateSqlType($3? "varchar": "char"); }
+		| NCHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "char"); }
+		;
+
+opt_varying:  VARYING							{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+opt_charset:  CHARACTER SET ColId				{ $$ = $3; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+opt_collate:  COLLATE ColId						{ $$ = $2; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+Datetime:  datetime
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType($1);
+				}
+		| TIMESTAMP opt_timezone
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType("timestamp");
+					$$->timezone = $2;
+				}
+		| TIME
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType("time");
+				}
+		| INTERVAL opt_interval
+				{
+					$$ = makeNode(TypeName);
+					$$->name = xlateSqlType("interval");
+				}
+		;
+
+datetime:  YEAR_P								{ $$ = "year"; }
+		| MONTH_P								{ $$ = "month"; }
+		| DAY_P									{ $$ = "day"; }
+		| HOUR_P								{ $$ = "hour"; }
+		| MINUTE_P								{ $$ = "minute"; }
+		| SECOND_P								{ $$ = "second"; }
+		;
+
+opt_timezone:  WITH TIME ZONE					{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+opt_interval:  datetime							{ $$ = lcons($1, NIL); }
+		| YEAR_P TO MONTH_P						{ $$ = NIL; }
+		| DAY_P TO HOUR_P						{ $$ = NIL; }
+		| DAY_P TO MINUTE_P						{ $$ = NIL; }
+		| DAY_P TO SECOND_P						{ $$ = NIL; }
+		| HOUR_P TO MINUTE_P					{ $$ = NIL; }
+		| HOUR_P TO SECOND_P					{ $$ = NIL; }
+		| /* EMPTY */							{ $$ = NIL; }
 		;
 
 
@@ -2536,14 +2678,21 @@ a_expr:  attr opt_indirection
 						((ParamNo *)$1)->typename = $3;
 					$$ = (Node *)$1;
 				}
-		| CAST AexprConst AS Typename
+		| CAST a_expr AS Typename
 				{
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($2) == T_A_Const)
-						((A_Const *)$2)->typename = $4;
-					else
-						((ParamNo *)$2)->typename = $4;
 					$$ = (Node *)$2;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($2) == T_A_Const) {
+						((A_Const *)$2)->typename = $4;
+					} else if (nodeTag($2) == T_Param) {
+						((ParamNo *)$2)->typename = $4;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $4->name;
+						n->args = lcons($2,NIL);
+						$$ = (Node *)n;
+					}
 				}
 		| '(' a_expr_or_null ')'
 				{	$$ = $2; }
@@ -2557,7 +2706,7 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
 		| a_expr Op
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| Id
+		| ColId
 				{
 					/* could be a column name or a relation_name */
 					Ident *n = makeNode(Ident);
@@ -2611,7 +2760,7 @@ a_expr:  attr opt_indirection
 
 					$$ = (Node *)n;
 				}
-		| CURRENT_TIME '(' AexprConst ')'
+		| CURRENT_TIME '(' Iconst ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *s = makeNode(A_Const);
@@ -2627,7 +2776,8 @@ a_expr:  attr opt_indirection
 					t->name = xlateSqlType("time");
 					t->setof = FALSE;
 
-					elog(NOTICE,"CURRENT_TIME(p) precision not implemented",NULL);
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIME(p) precision must be zero",NULL);
 
 					$$ = (Node *)n;
 				}
@@ -2645,7 +2795,7 @@ a_expr:  attr opt_indirection
 
 					$$ = (Node *)n;
 				}
-		| CURRENT_TIMESTAMP '(' AexprConst ')'
+		| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
 					FuncCall *n = makeNode(FuncCall);
 					A_Const *s = makeNode(A_Const);
@@ -2661,8 +2811,16 @@ a_expr:  attr opt_indirection
 					t->name = xlateSqlType("timestamp");
 					t->setof = FALSE;
 
-					elog(NOTICE,"CURRENT_TIMESTAMP(p) precision not implemented",NULL);
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIMESTAMP(p) precision must be zero",NULL);
 
+					$$ = (Node *)n;
+				}
+			| CURRENT_USER
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "getpgusername";
+					n->args = NIL;
 					$$ = (Node *)n;
 				}
 		/* We probably need to define an "exists" node,
@@ -2672,7 +2830,7 @@ a_expr:  attr opt_indirection
 		 */
 		| EXISTS '(' SubSelect ')'
 				{
-					elog(WARN,"EXISTS not yet supported",NULL);
+					elog(WARN,"EXISTS not yet implemented",NULL);
 					$$ = $3;
 				}
 		| EXTRACT '(' extract_list ')'
@@ -2734,12 +2892,40 @@ a_expr:  attr opt_indirection
 				}
 		| a_expr ISNULL
 				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
-		| a_expr IS PNULL
+		| a_expr IS NULL_P
 				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
 		| a_expr NOTNULL
 				{	$$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
-		| a_expr IS NOT PNULL
+		| a_expr IS NOT NULL_P
 				{	$$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
+		| a_expr IS TRUE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "t";
+					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+				}
+		| a_expr IS FALSE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "f";
+					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+				}
+		| a_expr IS NOT TRUE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "f";
+					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+				}
+		| a_expr IS NOT FALSE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "t";
+					$$ = makeA_Expr(OP, "=", $1, (Node *)n);
+				}
 		| a_expr BETWEEN AexprConst AND AexprConst
 				{
 					$$ = makeA_Expr(AND, NULL,
@@ -2752,9 +2938,9 @@ a_expr:  attr opt_indirection
 						makeA_Expr(OP, "<", $1, $4),
 						makeA_Expr(OP, ">", $1, $6));
 				}
-		| a_expr IN { saved_In_Expr = $1; } '(' in_expr_nodes ')'
+		| a_expr IN { saved_In_Expr = $1; } '(' in_expr ')'
 				{	$$ = $5; }
-		| a_expr NOT IN { saved_In_Expr = $1; } '(' not_in_expr_nodes ')'
+		| a_expr NOT IN { saved_In_Expr = $1; } '(' not_in_expr ')'
 				{	$$ = $6; }
 		| a_expr AND a_expr
 				{	$$ = makeA_Expr(AND, NULL, $1, $3); }
@@ -2790,7 +2976,7 @@ expr_list: a_expr_or_null
 				{ $$ = lappend($1, $3); }
 		;
 
-extract_list: DateTime FROM a_expr
+extract_list: datetime FROM a_expr
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
@@ -2838,14 +3024,21 @@ position_expr:  attr opt_indirection
 						((ParamNo *)$1)->typename = $3;
 					$$ = (Node *)$1;
 				}
-		| CAST AexprConst AS Typename
+		| CAST position_expr AS Typename
 				{
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($2) == T_A_Const)
-						((A_Const *)$2)->typename = $4;
-					else
-						((ParamNo *)$2)->typename = $4;
 					$$ = (Node *)$2;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($2) == T_A_Const) {
+						((A_Const *)$2)->typename = $4;
+					} else if (nodeTag($2) == T_Param) {
+						((ParamNo *)$2)->typename = $4;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $4->name;
+						n->args = lcons($2,NIL);
+						$$ = (Node *)n;
+					}
 				}
 		| '(' position_expr ')'
 				{	$$ = $2; }
@@ -2855,7 +3048,7 @@ position_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, $1, NULL, $2); }
 		| position_expr Op
 				{	$$ = makeA_Expr(OP, $2, $1, NULL); }
-		| Id
+		| ColId
 				{
 					/* could be a column name or a relation_name */
 					Ident *n = makeNode(Ident);
@@ -2955,12 +3148,30 @@ trim_list: a_expr FROM expr_list
 				{ $$ = $1; }
 		;
 
+in_expr:  SubSelect
+				{
+					elog(WARN,"IN (SUBSELECT) not yet implemented",NULL);
+					$$ = $1;
+				}
+		| in_expr_nodes
+				{	$$ = $1; }
+		;
+
 in_expr_nodes: AexprConst
 				{	$$ = makeA_Expr(OP, "=", saved_In_Expr, $1); }
 		|  in_expr_nodes ',' AexprConst
 				{	$$ = makeA_Expr(OR, NULL, $1,
 						makeA_Expr(OP, "=", saved_In_Expr, $3));
 				}
+		;
+
+not_in_expr:  SubSelect
+				{
+					elog(WARN,"NOT IN (SUBSELECT) not yet implemented",NULL);
+					$$ = $1;
+				}
+		| not_in_expr_nodes
+				{	$$ = $1; }
 		;
 
 not_in_expr_nodes: AexprConst
@@ -2997,13 +3208,6 @@ attrs:	  attr_name
 				{ $$ = lappend($1, makeString("*")); }
 		;
 
-DateTime:  YEARINTERVAL							{ $$ = "year"; }
-		| MONTHINTERVAL							{ $$ = "month"; }
-		| DAYINTERVAL							{ $$ = "day"; }
-		| HOURINTERVAL							{ $$ = "hour"; }
-		| MINUTEINTERVAL						{ $$ = "minute"; }
-		| SECONDINTERVAL						{ $$ = "second"; }
-		;
 
 /*****************************************************************************
  *
@@ -3030,7 +3234,7 @@ res_target_list:  res_target_list ',' res_target_el
 				}
 		;
 
-res_target_el: Id opt_indirection '=' a_expr_or_null
+res_target_el: ColId opt_indirection '=' a_expr_or_null
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $1;
@@ -3070,7 +3274,7 @@ res_target_list2: res_target_list2 ',' res_target_el2
 		;
 
 /* AS is not optional because shift/red conflict with unary ops */
-res_target_el2: a_expr_or_null AS ColId
+res_target_el2: a_expr_or_null AS ColLabel
 				{
 					$$ = makeNode(ResTarget);
 					$$->name = $3;
@@ -3110,7 +3314,7 @@ res_target_el2: a_expr_or_null AS ColId
 				}
 		;
 
-opt_id:  Id										{ $$ = $1; }
+opt_id:  ColId									{ $$ = $1; }
 		| /* EMPTY */							{ $$ = NULL; }
 		;
 
@@ -3133,22 +3337,25 @@ relation_name:	SpecialRuleRelation
 				}
 		;
 
-database_name:			Id				{ $$ = $1; };
+database_name:			ColId			{ $$ = $1; };
 access_method:			Id				{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
 class:					Id				{ $$ = $1; };
-index_name:				Id				{ $$ = $1; };
+index_name:				ColId			{ $$ = $1; };
 
-name:  Id								{ $$ = $1; }
-		| DateTime						{ $$ = $1; }
-		| TIME							{ $$ = xlateSqlType("time"); }
-		| P_TYPE						{ $$ = xlateSqlType("type"); }
-		;
+/* Functions
+ * Include date/time keywords as SQL92 extension.
+ * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
+ */
+name:					ColId			{ $$ = $1; };
 
 date:					Sconst			{ $$ = $1; };
 file_name:				Sconst			{ $$ = $1; };
 recipe_name:			Id				{ $$ = $1; };
 
+/* Constants
+ * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
+ */
 AexprConst:  Iconst
 				{
 					A_Const *n = makeNode(A_Const);
@@ -3172,6 +3379,20 @@ AexprConst:  Iconst
 				}
 		| ParamNo
 				{	$$ = (Node *)$1;  }
+		| TRUE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "t";
+					$$ = (Node *)n;
+				}
+		| FALSE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "f";
+					$$ = (Node *)n;
+				}
 		;
 
 ParamNo:  PARAM
@@ -3188,17 +3409,33 @@ NumConst:  Iconst						{ $$ = makeInteger($1); }
 Iconst:  ICONST							{ $$ = $1; };
 Sconst:  SCONST							{ $$ = $1; };
 
+/* Column and type identifier
+ * Does not include explicit datetime types
+ *  since these must be decoupled in Typename syntax.
+ * Use ColId for most identifiers. - thomas 1997-10-21
+ */
 Id:  IDENT								{ $$ = $1; };
 
-/* Column identifier (also used for table identifier)
- * Allow date/time names ("year", etc.) (SQL/92 extension).
- * Allow TYPE (SQL/92 non-reserved word).
- * - thomas 1997-10-08
+/* Column identifier
+ * Include date/time keywords as SQL92 extension.
+ * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
  */
-ColId:	Id								{ $$ = $1; }
-		| DateTime						{ $$ = $1; }
+ColId:  Id								{ $$ = $1; }
+		| datetime						{ $$ = $1; }
 		| TIME							{ $$ = "time"; }
-		| P_TYPE						{ $$ = "type"; }
+		| TYPE_P						{ $$ = "type"; }
+		;
+
+/* Column label
+ * Allowed labels in "AS" clauses.
+ * Include TRUE/FALSE SQL3 reserved words for Postgres backward
+ *  compatibility. Cannot allow this for column names since the
+ *  syntax would not distinguish between the constant value and
+ *  a column name. - thomas 1997-10-24
+ */
+ColLabel:  ColId						{ $$ = $1; }
+		| TRUE_P						{ $$ = "true"; }
+		| FALSE_P						{ $$ = "false"; }
 		;
 
 SpecialRuleRelation:  CURRENT
@@ -3217,9 +3454,8 @@ SpecialRuleRelation:  CURRENT
 				}
 		;
 
-Type:	P_TYPE;
-Pnull:	PNULL;
-
+Type:	TYPE_P;
+Pnull:	NULL_P;
 
 %%
 
@@ -3243,16 +3479,18 @@ xlateSqlType(char *name)
 {
 	if (!strcasecmp(name,"int") ||
 		!strcasecmp(name,"integer"))
-		return "int4"; /* strdup("int4") --   strdup leaks memory here */
+		return "int4";
 	else if (!strcasecmp(name, "smallint"))
 		return "int2";
 	else if (!strcasecmp(name, "real"))
 		return "float8";
 	else if (!strcasecmp(name, "interval"))
 		return "timespan";
+	else if (!strcasecmp(name, "boolean"))
+		return "bool";
 	else
 		return name;
-}
+} /* xlateSqlName() */
 
 void parser_init(Oid *typev, int nargs)
 {
