@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.19 2001/05/17 21:12:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.20 2001/06/27 21:21:37 petere Exp $
  *
  * NOTES
  *
@@ -38,7 +38,7 @@
 #include "strdup.h"
 #endif
 
-static const char *progname = "Archiver(db)";
+static const char *modulename = "archiver (db)";
 
 static void _check_database_version(ArchiveHandle *AH, bool ignoreVersion);
 static PGconn *_connectDB(ArchiveHandle *AH, const char *newdbname, char *newUser);
@@ -73,7 +73,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!destination)
 		return NULL;
 	if (prompt)
-		fputs(prompt, stderr);
+		fputs(gettext(prompt), stderr);
 
 #ifdef HAVE_TERMIOS_H
 	if (!echo)
@@ -128,7 +128,7 @@ _parse_version(ArchiveHandle *AH, const char* versionString)
 
 	if (cnt < 2)
 	{
-		die_horribly(AH, "Unable to parse version string: %s\n", versionString);
+		die_horribly(AH, modulename, "unable to parse version string \"%s\"\n", versionString);
 	}
 
 	if (cnt == 2)
@@ -148,13 +148,12 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 
 	myversion = _parse_version(AH, PG_VERSION);
 
-	res = PQexec(conn, "SELECT version()");
+	res = PQexec(conn, "SELECT version();");
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK ||
 		PQntuples(res) != 1)
 
-		die_horribly(AH, "check_database_version(): command failed.  "
-			  "Explanation from backend: '%s'.\n", PQerrorMessage(conn));
+		die_horribly(AH, modulename, "could not get version from server: %s", PQerrorMessage(conn));
 
 	remoteversion_str = PQgetvalue(res, 0, 0);
 	remoteversion = _parse_version(AH, remoteversion_str + 11);
@@ -166,13 +165,12 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	if (myversion != remoteversion 
 		&& (remoteversion < AH->public.minRemoteVersion || remoteversion > AH->public.maxRemoteVersion) )
 	{
-		fprintf(stderr, "Database version: %s\n%s version: %s\n",
-				remoteversion_str, progname, PG_VERSION);
+		write_msg(NULL, "server version: %s, %s version: %s\n",
+				  remoteversion_str, progname, PG_VERSION);
 		if (ignoreVersion)
-			fprintf(stderr, "Proceeding despite version mismatch.\n");
+			write_msg(NULL, "proceeding despite version mismatch\n");
 		else
-			die_horribly(AH, "Aborting because of version mismatch.\n"
-						 "Use --ignore-version if you think it's safe to proceed anyway.\n");
+			die_horribly(AH, NULL, "aborting because of version mismatch  (Use the -i option to proceed anyway.)\n");
 	}
 }
 
@@ -193,12 +191,11 @@ UserIsSuperuser(ArchiveHandle *AH, char *user)
 	res = PQexec(AH->connection, qry->data);
 
 	if (!res)
-		die_horribly(AH, "%s: null result checking superuser status of %s.\n",
-					 progname, user);
+		die_horribly(AH, modulename, "null result checking superuser status of %s\n", user);
 
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-		die_horribly(AH, "%s: Could not check superuser status of %s. Explanation from backend: %s\n",
-					 progname, user, PQerrorMessage(AH->connection));
+		die_horribly(AH, modulename, "could not check superuser status of %s: %s",
+					 user, PQerrorMessage(AH->connection));
 
 	ntups = PQntuples(res);
 
@@ -284,7 +281,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 	{
 		password = simple_prompt("Password: ", 100, false);
 		if (password == NULL)
-			die_horribly(AH, "out of memory");
+			die_horribly(AH, modulename, "out of memory\n");
 	}
 
 	do
@@ -294,7 +291,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 							   NULL, NULL, newdb,
 							   newuser, password);
 		if (!newConn)
-			die_horribly(AH, "%s: Failed to reconnect (PQsetdbLogin failed).\n", progname);
+			die_horribly(AH, modulename, "failed to reconnect to database\n");
 
 		if (PQstatus(newConn) == CONNECTION_BAD)
 		{
@@ -318,8 +315,8 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, char *requser)
 				password = simple_prompt("Password: ", 100, false);
 			}
 			else
-				die_horribly(AH, "%s: Could not reconnect. %s\n",
-							 progname, PQerrorMessage(newConn));
+				die_horribly(AH, modulename, "could not reconnect to database: %s",
+							 PQerrorMessage(newConn));
 		}
 
 	} while (need_pass);
@@ -350,10 +347,10 @@ ConnectDatabase(Archive *AHX,
 	bool		need_pass = false;
 
 	if (AH->connection)
-		die_horribly(AH, "%s: already connected to database\n", progname);
+		die_horribly(AH, modulename, "already connected to database\n");
 
 	if (!dbname && !(dbname = getenv("PGDATABASE")))
-		die_horribly(AH, "%s: no database name specified\n", progname);
+		die_horribly(AH, modulename, "no database name specified\n");
 
 	AH->dbname = strdup(dbname);
 
@@ -376,7 +373,7 @@ ConnectDatabase(Archive *AHX,
 	{
 		password = simple_prompt("Password: ", 100, false);
 		if (password == NULL)
-			die_horribly(AH, "out of memory");
+			die_horribly(AH, modulename, "out of memory\n");
 		AH->requirePassword = true;
 	}
 	else
@@ -393,8 +390,7 @@ ConnectDatabase(Archive *AHX,
 									  AH->dbname, AH->username, password);
 
 		if (!AH->connection)
-			die_horribly(AH, "%s: Failed to connect (PQsetdbLogin failed).\n",
-						 progname);
+			die_horribly(AH, modulename, "failed to connect to database\n");
 
 		if (PQstatus(AH->connection) == CONNECTION_BAD &&
 			strcmp(PQerrorMessage(AH->connection), "fe_sendauth: no password supplied\n") == 0 &&
@@ -413,7 +409,7 @@ ConnectDatabase(Archive *AHX,
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
-		die_horribly(AH, "Connection to database '%s' failed.\n%s\n",
+		die_horribly(AH, modulename, "connection to database \"%s\" failed: %s",
 					 AH->dbname, PQerrorMessage(AH->connection));
 
 	/* check for version mismatch */
@@ -432,9 +428,12 @@ ConnectDatabase(Archive *AHX,
 /* Public interface */
 /* Convenience function to send a query. Monitors result to handle COPY statements */
 int
-ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc)
+ExecuteSqlCommand(ArchiveHandle *AH, PQExpBuffer qry, char *desc, bool use_blob)
 {
-	return _executeSqlCommand(AH, AH->connection, qry, desc);
+	if (use_blob)
+		return _executeSqlCommand(AH, AH->blobConnection, qry, desc);
+	else
+		return _executeSqlCommand(AH, AH->connection, qry, desc);
 }
 
 /*
@@ -450,20 +449,20 @@ _executeSqlCommand(ArchiveHandle *AH, PGconn *conn, PQExpBuffer qry, char *desc)
 	/* fprintf(stderr, "Executing: '%s'\n\n", qry->data); */
 	res = PQexec(conn, qry->data);
 	if (!res)
-		die_horribly(AH, "%s: %s. No result from backend.\n", progname, desc);
+		die_horribly(AH, modulename, "%s: no result from backend\n", desc);
 
 	if (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
 		if (PQresultStatus(res) == PGRES_COPY_IN)
 		{
 			if (conn != AH->connection)
-				die_horribly(AH, "%s: COPY command execute in non-primary connection.\n", progname);
+				die_horribly(AH, modulename, "COPY command executed in non-primary connection\n");
 
 			AH->pgCopyIn = 1;
 		}
 		else
-			die_horribly(AH, "%s: %s. Code = %d. Explanation from backend: '%s'.\n",
-						 progname, desc, PQresultStatus(res), PQerrorMessage(AH->connection));
+			die_horribly(AH, modulename, "%s: %s",
+						 desc, PQerrorMessage(AH->connection));
 	}
 
 	PQclear(res);
@@ -545,7 +544,7 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 				 */
 
 				if (PQputline(AH->connection, AH->pgCopyBuf->data) != 0)
-					die_horribly(AH, "%s: error returned by PQputline\n", progname);
+					die_horribly(AH, modulename, "error returned by PQputline\n");
 
 				resetPQExpBuffer(AH->pgCopyBuf);
 
@@ -557,7 +556,7 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 				if (isEnd)
 				{
 					if (PQendcopy(AH->connection) != 0)
-						die_horribly(AH, "%s: error returned by PQendcopy\n", progname);
+						die_horribly(AH, modulename, "error returned by PQendcopy\n");
 
 					AH->pgCopyIn = 0;
 					break;
@@ -606,7 +605,7 @@ ExecuteSqlCommandBuf(ArchiveHandle *AH, void *qryv, int bufLen)
 						 * fprintf(stderr, "    sending: '%s'\n\n",
 						 * AH->sqlBuf->data);
 						 */
-						ExecuteSqlCommand(AH, AH->sqlBuf, "Could not execute query");
+						ExecuteSqlCommand(AH, AH->sqlBuf, "could not execute query", false);
 						resetPQExpBuffer(AH->sqlBuf);
 						AH->sqlparse.lastChar = '\0';
 					}
@@ -696,8 +695,8 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 
 	res = PQexec(AH->blobConnection, tblQry->data);
 	if (!res)
-		die_horribly(AH, "%s: could not find OID attrs of %s. Explanation from backend '%s'\n",
-					 progname, tablename, PQerrorMessage(AH->connection));
+		die_horribly(AH, modulename, "could not find oid columns of table \"%s\": %s",
+					 tablename, PQerrorMessage(AH->connection));
 
 	if ((n = PQntuples(res)) == 0)
 	{
@@ -730,14 +729,14 @@ FixupBlobRefs(ArchiveHandle *AH, char *tablename)
 
 		uRes = PQexec(AH->blobConnection, tblQry->data);
 		if (!uRes)
-			die_horribly(AH, "%s: could not update attr %s of table %s. Explanation from backend '%s'\n",
-						 progname, attr, tablename, PQerrorMessage(AH->blobConnection));
+			die_horribly(AH, modulename,
+						 "could not update column \"%s\" of table \"%s\": %s",
+						 attr, tablename, PQerrorMessage(AH->blobConnection));
 
 		if (PQresultStatus(uRes) != PGRES_COMMAND_OK)
-			die_horribly(AH, "%s: error while updating attr %s of table %s (result = %d)."
-						 " Explanation from backend '%s'\n",
-						 progname, attr, tablename, PQresultStatus(uRes),
-						 PQerrorMessage(AH->blobConnection));
+			die_horribly(AH, modulename,
+						 "error while updating column \"%s\" of table \"%s\": %s",
+						 attr, tablename, PQerrorMessage(AH->blobConnection));
 
 		PQclear(uRes);
 	}
@@ -762,12 +761,12 @@ CreateBlobXrefTable(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "Create Temporary Table %s(oldOid oid, newOid oid);", BLOB_XREF_TABLE);
 
-	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create BLOB xref table '" BLOB_XREF_TABLE "'");
+	ExecuteSqlCommand(AH, qry, "could not create BLOB cross reference table", true);
 
 	resetPQExpBuffer(qry);
 
 	appendPQExpBuffer(qry, "Create Unique Index %s_ix on %s(oldOid)", BLOB_XREF_TABLE, BLOB_XREF_TABLE);
-	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create index on BLOB xref table '" BLOB_XREF_TABLE "'");
+	ExecuteSqlCommand(AH, qry, "could not create index on BLOB cross reference table", true);
 }
 
 void
@@ -777,7 +776,7 @@ InsertBlobXref(ArchiveHandle *AH, int old, int new)
 
 	appendPQExpBuffer(qry, "Insert Into %s(oldOid, newOid) Values (%d, %d);", BLOB_XREF_TABLE, old, new);
 
-	_executeSqlCommand(AH, AH->blobConnection, qry, "can not create BLOB xref entry");
+	ExecuteSqlCommand(AH, qry, "could not create BLOB cross reference entry", true);
 }
 
 void
@@ -787,7 +786,7 @@ StartTransaction(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "Begin;");
 
-	ExecuteSqlCommand(AH, qry, "can not start database transaction");
+	ExecuteSqlCommand(AH, qry, "could not start database transaction", false);
 	AH->txActive = true;
 }
 
@@ -798,7 +797,8 @@ StartTransactionXref(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "Begin;");
 
-	_executeSqlCommand(AH, AH->blobConnection, qry, "can not start BLOB xref transaction");
+	ExecuteSqlCommand(AH, qry,
+					  "could not start transaction for BLOB cross references", true);
 	AH->blobTxActive = true;
 }
 
@@ -809,7 +809,7 @@ CommitTransaction(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "Commit;");
 
-	ExecuteSqlCommand(AH, qry, "can not commit database transaction");
+	ExecuteSqlCommand(AH, qry, "could not commit database transaction", false);
 	AH->txActive = false;
 }
 
@@ -820,6 +820,6 @@ CommitTransactionXref(ArchiveHandle *AH)
 
 	appendPQExpBuffer(qry, "Commit;");
 
-	_executeSqlCommand(AH, AH->blobConnection, qry, "can not commit BLOB xref transaction");
+	ExecuteSqlCommand(AH, qry, "could not commit transaction for BLOB cross references", true);
 	AH->blobTxActive = false;
 }

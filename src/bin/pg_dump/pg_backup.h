@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.12 2001/05/17 21:12:48 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.13 2001/06/27 21:21:37 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -129,7 +129,7 @@ typedef struct _restoreOptions
  * Main archiver interface.
  */
 
-extern void exit_horribly(Archive *AH, const char *fmt,...);
+extern void exit_horribly(Archive *AH, const char *modulename, const char *fmt, ...) __attribute__((format(printf,3,4)));
 
 extern char *
 simple_prompt(const char *prompt, int maxlen, bool echo);

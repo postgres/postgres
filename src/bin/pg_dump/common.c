@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.55 2001/04/03 08:52:59 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.56 2001/06/27 21:21:36 petere Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -31,7 +31,9 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres_fe.h"
 #include "pg_dump.h"
+#include "pg_backup_archiver.h"
 
 #include <ctype.h>
 
@@ -44,7 +46,7 @@ static char **findParentsByOid(TableInfo *tbinfo, int numTables,
 				 InhInfo *inhinfo, int numInherits,
 				 const char *oid,
 				 int *numParents,
-				 int (**parentIndices)[]);
+				 int (**parentIndexes)[]);
 static int	findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
@@ -116,8 +118,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 	}
 
 	/* should never get here */
-	fprintf(stderr, "failed sanity check, opr with oid %s was not found\n",
-			oid);
+	write_msg(NULL, "failed sanity check, operator with oid %s not found\n", oid);
 
 	/* no suitable operator name was found */
 	return (NULL);
@@ -127,7 +128,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 /*
  * findParentsByOid
  *	  given the oid of a class, return the names of its parent classes
- * and assign the number of parents, and parent indices to the last arguments.
+ * and assign the number of parents, and parent indexes to the last arguments.
  *
  *
  * returns NULL if none
@@ -136,7 +137,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 static char **
 findParentsByOid(TableInfo *tblinfo, int numTables,
 				 InhInfo *inhinfo, int numInherits, const char *oid,
-				 int *numParentsPtr, int (**parentIndices)[])
+				 int *numParentsPtr, int (**parentIndexes)[])
 {
 	int			i,
 				j;
@@ -157,7 +158,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 	if (numParents > 0)
 	{
 		result = (char **) malloc(sizeof(char *) * numParents);
-		(*parentIndices) = malloc(sizeof(int) * numParents);
+		(*parentIndexes) = malloc(sizeof(int) * numParents);
 		j = 0;
 		for (i = 0; i < numInherits; i++)
 		{
@@ -168,14 +169,19 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 				if (parentInd < 0)
 				{
 					selfInd = findTableByOid(tblinfo, numTables, oid);
-					fprintf(stderr,
-							"failed sanity check, parent oid %s of table %s (oid %s) was not found\n",
-							inhinfo[i].inhparent,
-						  (selfInd >= 0) ? tblinfo[selfInd].relname : "",
-							oid);
+					if (selfInd >= 0)
+						write_msg(NULL, "failed sanity check, parent oid %s of table %s (oid %s) not found\n",
+								   inhinfo[i].inhparent,
+								   tblinfo[selfInd].relname,
+								   oid);
+					else
+						write_msg(NULL, "failed sanity check, parent oid %s of table (oid %s) not found\n",
+								   inhinfo[i].inhparent,
+								   oid);
+
 					exit(2);
 				}
-				(**parentIndices)[j] = parentInd;
+				(**parentIndexes)[j] = parentInd;
 				result[j++] = tblinfo[parentInd].relname;
 			}
 		}
@@ -183,7 +189,7 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 	}
 	else
 	{
-		(*parentIndices) = NULL;
+		(*parentIndexes) = NULL;
 		return NULL;
 	}
 }
@@ -212,7 +218,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 			{
 				if (argNum >= arraysize)
 				{
-					fprintf(stderr, "parseNumericArray: too many numbers\n");
+					write_msg(NULL, "parseNumericArray: too many numbers\n");
 					exit(2);
 				}
 				temp[j] = '\0';
@@ -227,7 +233,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 			if (!(isdigit((unsigned char) s) || s == '-') ||
 				j >= sizeof(temp) - 1)
 			{
-				fprintf(stderr, "parseNumericArray: bogus number\n");
+				write_msg(NULL, "parseNumericArray: bogus number\n");
 				exit(2);
 			}
 			temp[j++] = s;
@@ -281,7 +287,7 @@ dumpSchema(Archive *fout,
 	int			numInherits;
 	int			numAggregates;
 	int			numOperators;
-	int			numIndices;
+	int			numIndexes;
 	TypeInfo   *tinfo = NULL;
 	FuncInfo   *finfo = NULL;
 	AggInfo    *agginfo = NULL;
@@ -316,9 +322,9 @@ dumpSchema(Archive *fout,
 	tblinfo = getTables(&numTables, finfo, numFuncs);
 
 	if (g_verbose)
-		fprintf(stderr, "%s reading indices information %s\n",
+		fprintf(stderr, "%s reading indexes information %s\n",
 				g_comment_start, g_comment_end);
-	indinfo = getIndices(&numIndices);
+	indinfo = getIndexes(&numIndexes);
 
 	if (g_verbose)
 		fprintf(stderr, "%s reading table inheritance information %s\n",
@@ -355,15 +361,15 @@ dumpSchema(Archive *fout,
 		fprintf(stderr, "%s dumping out tables %s\n",
 				g_comment_start, g_comment_end);
 
-	dumpTables(fout, tblinfo, numTables, indinfo, numIndices, inhinfo, numInherits,
+	dumpTables(fout, tblinfo, numTables, indinfo, numIndexes, inhinfo, numInherits,
 	   tinfo, numTypes, tablename, aclsSkip, oids, schemaOnly, dataOnly);
 
 	if (fout && !dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out indices %s\n",
+			fprintf(stderr, "%s dumping out indexes %s\n",
 					g_comment_start, g_comment_end);
-		dumpIndices(fout, indinfo, numIndices, tblinfo, numTables, tablename);
+		dumpIndexes(fout, indinfo, numIndexes, tblinfo, numTables, tablename);
 	}
 
 	if (!tablename && !dataOnly)
@@ -404,7 +410,7 @@ dumpSchema(Archive *fout,
 	clearTypeInfo(tinfo, numTypes);
 	clearFuncInfo(finfo, numFuncs);
 	clearInhInfo(inhinfo, numInherits);
-	clearIndInfo(indinfo, numIndices);
+	clearIndInfo(indinfo, numIndexes);
 	return tblinfo;
 }
 
@@ -426,7 +432,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				k;
 	int			parentInd;
 	int			inhAttrInd;
-	int			(*parentIndices)[];
+	int			(*parentIndexes)[];
 	bool		foundAttr; 		/* Attr was found in a parent */
 	bool		foundNotNull;	/* Attr was NOT NULL in a parent */
 	bool		defaultsMatch;	/* All non-empty defaults match */
@@ -451,7 +457,7 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 												 inhinfo, numInherits,
 												 tblinfo[i].oid,
 												 &tblinfo[i].numParents,
-												 &parentIndices);
+												 &parentIndexes);
 
 		/*
 	     * For each attr, check the parent info: if no parent has
@@ -477,13 +483,13 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 
 			for (k = 0; k < tblinfo[i].numParents; k++)
 			{
-				parentInd = (*parentIndices)[k];
+				parentInd = (*parentIndexes)[k];
 
 				if (parentInd < 0)
 				{
 					/* shouldn't happen unless findParentsByOid is broken */
-					fprintf(stderr, "failed sanity check, table %s not found by flagInhAttrs\n",
-							tblinfo[i].parentRels[k]);
+					write_msg(NULL, "failed sanity check, table \"%s\" not found by flagInhAttrs\n",
+							  tblinfo[i].parentRels[k]);
 					exit(2);
 				};
 

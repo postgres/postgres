@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.34 2001/05/17 21:12:48 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.35 2001/06/27 21:21:37 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -38,6 +38,7 @@
 #include "postgres_fe.h"
 
 #include <time.h>
+#include <errno.h>
 
 #include "pqexpbuffer.h"
 
@@ -271,7 +272,9 @@ typedef struct _tocEntry
 } TocEntry;
 
 /* Used everywhere */
-extern void die_horribly(ArchiveHandle *AH, const char *fmt,...);
+extern const char *progname;
+extern void die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, ...) __attribute__((format(printf,3,4)));
+extern void write_msg(const char *modulename, const char *fmt, ...) __attribute__((format(printf,2,3)));
 
 extern void WriteTOC(ArchiveHandle *AH);
 extern void ReadTOC(ArchiveHandle *AH);

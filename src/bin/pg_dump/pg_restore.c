@@ -11,7 +11,7 @@
  *		  user-defined types
  *		  user-defined functions
  *		  tables
- *		  indices
+ *		  indexes
  *		  aggregates
  *		  operators
  *		  ACL - grant/revoke
@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.20 2001/05/17 21:12:49 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.21 2001/06/27 21:21:37 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -55,10 +55,8 @@
  */
 
 #include "pg_backup.h"
+#include "pg_backup_archiver.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 
 #ifndef HAVE_STRDUP
@@ -71,6 +69,10 @@
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
+
+#ifdef ENABLE_NLS
+#include <locale.h>
 #endif
 
 /* Forward decls */
@@ -116,16 +118,24 @@ int
 main(int argc, char **argv)
 {
 	RestoreOptions *opts;
-	char	   *progname;
 	int			c;
 	Archive    *AH;
 	char	   *fileSpec = NULL;
 	extern int	optind;
 	extern char *optarg;
 
+#ifdef ENABLE_NLS
+	setlocale(LC_ALL, "");
+	bindtextdomain("pg_dump", LOCALEDIR);
+	textdomain("pg_dump");
+#endif
+
 	opts = NewRestoreOptions();
 
-	progname = argv[0];
+	if (!strrchr(argv[0], '/'))
+		progname = argv[0];
+	else
+		progname = strrchr(argv[0], '/') + 1;
 
 	if (argc > 1)
 	{
@@ -257,7 +267,7 @@ main(int argc, char **argv)
 				opts->aclsSkip = 1;
 				break;
 			default:
-				fprintf(stderr, "Try '%s --help' for more information.\n", progname);
+				fprintf(stderr, gettext("Try '%s --help' for more information.\n"), progname);
 				exit(1);
 		}
 	}
@@ -289,8 +299,8 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				fprintf(stderr, "%s: Unknown archive format '%s', please specify 't' or 'c'\n",
-						progname, opts->formatName);
+				write_msg("unrecognized archive format '%s'; please specify 't' or 'c'\n",
+						  opts->formatName);
 				exit(1);
 		}
 	}
@@ -335,75 +345,78 @@ main(int argc, char **argv)
 static void
 usage(const char *progname)
 {
-	printf("%s restores a PostgreSQL database from an archive created by pg_dump.\n\n"
-		   "Usage:\n  %s [options] [file]\n\n"
-		   "Options:\n",
+	printf(gettext(
+		"%s restores a PostgreSQL database from an archive created by pg_dump.\n\n"
+		"Usage:\n  %s [options] [file]\n\n"
+		"Options:\n"),
 		   progname, progname);
 #ifdef HAVE_GETOPT_LONG
-	puts(
-		 "  -a, --data-only          restore only the data, no schema\n"
-	   "  -c, --clean              clean (drop) schema prior to create\n"
-	"  -C, --create             output commands to create the database\n"
-		 "  -d, --dbname=NAME        specify database name\n"
-		 "  -f, --file=FILENAME      script output file name\n"
-		 "  -F, --format {c|f}       specify backup file format\n"
-		 "  -h, --host HOSTNAME      server host name\n"
-		 "  -i, --index[=NAME]       restore indices or named index\n"
-		 "  -l, --list               dump summarized TOC for this file\n"
-		 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
-		 "                           output from this file\n"
-		 "  -N, --orig-order         restore in original dump order\n"
-		 "  -o, --oid-order          restore in oid order\n"
-	 "  -O, --no-owner           do not reconnect to database to match\n"
-		 "                           object owner\n"
-		 "  -p, --port PORT          server port number\n"
-	   "  -P, --function[=NAME]    restore functions or named function\n"
-		 "  -r, --rearrange          rearrange output to put indexes etc. at end\n"
-		 "  -R, --no-reconnect       disallow ALL reconnections to the database\n"
-		 "  -s, --schema-only        restore only the schema, no data\n"
-		 "  -S, --superuser=NAME     specify the superuser user name to use for\n"
-		 "                           disabling triggers\n"
-		 "  -t, --table[=TABLE]      restore this table only\n"
-		 "  -T, --trigger[=NAME]     restore triggers or named trigger\n"
-		 "  -U, --username=NAME      connect as specified database user\n"
-		 "  -v, --verbose            verbose\n"
-		 "  -W, --password           force password prompt (should happen automatically)\n"
-	 "  -x, --no-acl             skip dumping of ACLs (grant/revoke)\n");
+	puts(gettext(
+		"  -a, --data-only          restore only the data, no schema\n"
+		"  -c, --clean              clean (drop) schema prior to create\n"
+		"  -C, --create             output commands to create the database\n"
+		"  -d, --dbname=NAME        specify database name\n"
+		"  -f, --file=FILENAME      script output file name\n"
+		"  -F, --format {c|f}       specify backup file format\n"
+		"  -h, --host HOSTNAME      server host name\n"
+		"  -i, --index[=NAME]       restore indexes or named index\n"
+		"  -l, --list               dump summarized TOC for this file\n"
+		"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
+		"                           output from this file\n"
+		"  -N, --orig-order         restore in original dump order\n"
+		"  -o, --oid-order          restore in oid order\n"
+		"  -O, --no-owner           do not reconnect to database to match\n"
+		"                           object owner\n"
+		"  -p, --port PORT          server port number\n"
+		"  -P, --function[=NAME]    restore functions or named function\n"
+		"  -r, --rearrange          rearrange output to put indexes etc. at end\n"
+		"  -R, --no-reconnect       disallow ALL reconnections to the database\n"
+		"  -s, --schema-only        restore only the schema, no data\n"
+		"  -S, --superuser=NAME     specify the superuser user name to use for\n"
+		"                           disabling triggers\n"
+		"  -t, --table[=TABLE]      restore this table only\n"
+		"  -T, --trigger[=NAME]     restore triggers or named trigger\n"
+		"  -U, --username=NAME      connect as specified database user\n"
+		"  -v, --verbose            verbose\n"
+		"  -W, --password           force password prompt (should happen automatically)\n"
+		"  -x, --no-acl             skip dumping of ACLs (grant/revoke)\n"
+		));
 
-#else							/* not HAVE_GETOPT_LONG */
+#else /* not HAVE_GETOPT_LONG */
 
-	puts(
-		 "  -a                       restore only the data, no schema\n"
-	   "  -c                       clean (drop) schema prior to create\n"
-	"  -C                       output commands to create the database\n"
-		 "  -d NAME                  specify database name\n"
-		 "  -f FILENAME              script output file name\n"
-		 "  -F {c|f}                 specify backup file format\n"
-		 "  -h HOSTNAME              server host name\n"
-		 "  -i NAME                  restore indices or named index\n"
-		 "  -l                       dump summarized TOC for this file\n"
-		 "  -L FILENAME              use specified table of contents for ordering\n"
-		 "                           output from this file\n"
-		 "  -N                       restore in original dump order\n"
-		 "  -o                       restore in oid order\n"
-		 "  -O                       do not output reconnect to database to match\n"
-		 "                           object owner\n"
-		 "  -p PORT                  server port number\n"
-	   "  -P NAME                  restore functions or named function\n"
-		 "  -r                       rearrange output to put indexes etc at end\n"
-		 "  -R                       disallow ALL reconnections to the database\n"
-		 "  -s                       restore only the schema, no data\n"
-		 "  -S NAME                  specify the superuser user name to use for\n"
-		 "                           disabling triggers\n"
-		 "  -t NAME                  restore this table only\n"
-		 "  -T NAME                  restore triggers or named trigger\n"
-		 "  -U NAME                  connect as specified database user\n"
-		 "  -v                       verbose\n"
-		 "  -W                       force password prompt (should happen automatically)\n"
-	 "  -x                       skip dumping of ACLs (grant/revoke)\n");
+	puts(gettext(
+		"  -a                       restore only the data, no schema\n"
+		"  -c                       clean (drop) schema prior to create\n"
+		"  -C                       output commands to create the database\n"
+		"  -d NAME                  specify database name\n"
+		"  -f FILENAME              script output file name\n"
+		"  -F {c|f}                 specify backup file format\n"
+		"  -h HOSTNAME              server host name\n"
+		"  -i NAME                  restore indexes or named index\n"
+		"  -l                       dump summarized TOC for this file\n"
+		"  -L FILENAME              use specified table of contents for ordering\n"
+		"                           output from this file\n"
+		"  -N                       restore in original dump order\n"
+		"  -o                       restore in oid order\n"
+		"  -O                       do not output reconnect to database to match\n"
+		"                           object owner\n"
+		"  -p PORT                  server port number\n"
+		"  -P NAME                  restore functions or named function\n"
+		"  -r                       rearrange output to put indexes etc at end\n"
+		"  -R                       disallow ALL reconnections to the database\n"
+		"  -s                       restore only the schema, no data\n"
+		"  -S NAME                  specify the superuser user name to use for\n"
+		"                           disabling triggers\n"
+		"  -t NAME                  restore this table only\n"
+		"  -T NAME                  restore triggers or named trigger\n"
+		"  -U NAME                  connect as specified database user\n"
+		"  -v                       verbose\n"
+		"  -W                       force password prompt (should happen automatically)\n"
+		"  -x                       skip dumping of ACLs (grant/revoke)\n"
+		));
 #endif
-	puts("If [file] is not supplied, then standard input is used.\n");
-	puts("Report bugs to <pgsql-bugs@postgresql.org>.");
+	puts(gettext("If no input file name is supplied, then standard input is used.\n"));
+	puts(gettext("Report bugs to <pgsql-bugs@postgresql.org>."));
 }
 
 

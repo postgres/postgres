@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.10 2001/04/01 05:42:51 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.11 2001/06/27 21:21:37 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -35,9 +35,6 @@
 
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
-
-#include <stdlib.h>
-#include <string.h>
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
@@ -77,7 +74,7 @@ typedef struct
 	char	   *filename;
 } lclTocEntry;
 
-static char *progname = "Archiver(files)";
+static char *modulename = "file archiver";
 static void _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt);
 static void _getBlobTocEntry(ArchiveHandle *AH, int *oid, char *fname);
 
@@ -122,11 +119,9 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 	if (AH->mode == archModeWrite)
 	{
 
-		fprintf(stderr, "\n*************************************************************\n"
-				"* WARNING: This format is for demonstration purposes. It is   *\n"
-				"*          not intended for general use. Files will be dumped *\n"
-				"*          into the current working directory.                *\n"
-				"***************************************************************\n\n");
+		write_msg(modulename, "WARNING:\n"
+				  "  This format is for demonstration purposes, it is not intended for\n"
+				  "  normal use. Files will be written in the current working directory.\n");
 
 		if (AH->fSpec && strcmp(AH->fSpec, "") != 0)
 			AH->FH = fopen(AH->fSpec, PG_BINARY_W);
@@ -134,7 +129,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 			AH->FH = stdout;
 
 		if (AH->FH == NULL)
-			die_horribly(NULL, "%s: Could not open output file\n", progname);
+			die_horribly(NULL, modulename, "could not open output file: %s\n", strerror(errno));
 
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
 
@@ -152,7 +147,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 			AH->FH = stdin;
 
 		if (AH->FH == NULL)
-			die_horribly(NULL, "%s: Could not open input file\n", progname);
+			die_horribly(NULL, modulename, "could not open input file: %s\n", strerror(errno));
 
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
 
@@ -160,7 +155,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 		ReadToc(AH);
 		/* Nothing else in the file... */
 		if (fclose(AH->FH) != 0)
-			die_horribly(AH, "%s: Could not close TOC file (fclose failed).\n", progname);
+			die_horribly(AH, modulename, "could not close TOC file: %s\n", strerror(errno));
 	}
 
 }
@@ -250,7 +245,7 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 #endif
 
 	if (tctx->FH == NULL)
-		die_horribly(AH, "%s: Could not open data file for output\n", progname);
+		die_horribly(AH, modulename, "could not open data file for output\n");
 
 }
 
@@ -271,7 +266,7 @@ _EndData(ArchiveHandle *AH, TocEntry *te)
 
 	/* Close the file */
 	if (GZCLOSE(tctx->FH) != 0)
-		die_horribly(AH, "%s: could not close data file\n", progname);
+		die_horribly(AH, modulename, "could not close data file\n");
 
 	tctx->FH = NULL;
 }
@@ -295,7 +290,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 #endif
 
 	if (AH->FH == NULL)
-		die_horribly(AH, "%s: Could not open data file for input\n", progname);
+		die_horribly(AH, modulename, "could not open data file for input\n");
 
 	while ((cnt = GZREAD(buf, 1, 4095, AH->FH)) > 0)
 	{
@@ -304,7 +299,7 @@ _PrintFileData(ArchiveHandle *AH, char *filename, RestoreOptions *ropt)
 	}
 
 	if (GZCLOSE(AH->FH) != 0)
-		die_horribly(AH, "%s: could not close data file after reading\n", progname);
+		die_horribly(AH, modulename, "could not close data file after reading\n");
 
 }
 
@@ -368,7 +363,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 	ctx->blobToc = fopen("blobs.toc", PG_BINARY_R);
 
 	if (ctx->blobToc == NULL)
-		die_horribly(AH, "%s: Could not open BLOB TOC for input\n", progname);
+		die_horribly(AH, modulename, "could not open BLOB TOC for input: %s\n", strerror(errno));
 
 	_getBlobTocEntry(AH, &oid, fname);
 
@@ -381,7 +376,7 @@ _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt)
 	}
 
 	if (fclose(ctx->blobToc) != 0)
-		die_horribly(AH, "%s: could not close BLOB TOC file\n", progname);
+		die_horribly(AH, modulename, "could not close BLOB TOC file: %s\n", strerror(errno));
 
 	EndRestoreBlobs(AH);
 }
@@ -393,7 +388,7 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	lclContext *ctx = (lclContext *) AH->formatData;
 
 	if (fputc(i, AH->FH) == EOF)
-		die_horribly(AH, "%s: could not write byte\n", progname);
+		die_horribly(AH, modulename, "could not write byte\n");
 
 	ctx->filePos += 1;
 
@@ -420,7 +415,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, int len)
 
 	res = fwrite(buf, 1, len, AH->FH);
 	if (res != len)
-		die_horribly(AH, "%s: write error in _WriteBuf (%d != %d)\n", progname, res, len);
+		die_horribly(AH, modulename, "write error in _WriteBuf (%d != %d)\n", res, len);
 
 	ctx->filePos += res;
 	return res;
@@ -445,7 +440,7 @@ _CloseArchive(ArchiveHandle *AH)
 		WriteHead(AH);
 		WriteToc(AH);
 		if (fclose(AH->FH) != 0)
-			die_horribly(AH, "%s: could not close TOC file\n", progname);
+			die_horribly(AH, modulename, "could not close TOC file: %s\n", strerror(errno));
 		WriteDataChunks(AH);
 	}
 
@@ -478,7 +473,8 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 	ctx->blobToc = fopen(fname, PG_BINARY_W);
 
 	if (ctx->blobToc == NULL)
-		die_horribly(AH, "%s: could not open BLOB TOC for output\n", progname);
+		die_horribly(AH, modulename,
+					 "could not open BLOB TOC for output: %s\n", strerror(errno));
 
 }
 
@@ -499,7 +495,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	char	   *sfx;
 
 	if (oid == 0)
-		die_horribly(AH, "%s: illegal OID for BLOB (%d)\n", progname, oid);
+		die_horribly(AH, modulename, "invalid OID for BLOB (%u)\n", oid);
 
 	if (AH->compression != 0)
 		sfx = ".gz";
@@ -518,7 +514,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 #endif
 
 	if (tctx->FH == NULL)
-		die_horribly(AH, "%s: Could not open BLOB file\n", progname);
+		die_horribly(AH, modulename, "could not open BLOB file\n");
 }
 
 /*
@@ -533,7 +529,7 @@ _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
 	if (GZCLOSE(tctx->FH) != 0)
-		die_horribly(AH, "%s: could not close BLOB file\n", progname);
+		die_horribly(AH, modulename, "could not close BLOB file\n");
 }
 
 /*
@@ -551,7 +547,7 @@ _EndBlobs(ArchiveHandle *AH, TocEntry *te)
 	/* WriteInt(AH, 0); */
 
 	if (fclose(ctx->blobToc) != 0)
-		die_horribly(AH, "%s: could not close BLOB TOC file\n", progname);
+		die_horribly(AH, modulename, "could not close BLOB TOC file: %s\n", strerror(errno));
 
 }
 

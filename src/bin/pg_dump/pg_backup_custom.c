@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.11 2001/04/25 07:03:19 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.12 2001/06/27 21:21:37 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -35,7 +35,6 @@
 #include "pg_backup.h"
 #include "pg_backup_archiver.h"
 
-#include <stdlib.h>
 #include <errno.h>
 
 /*--------
@@ -103,7 +102,7 @@ static void _EndDataCompressor(ArchiveHandle *AH, TocEntry *te);
 static int	_getFilePos(ArchiveHandle *AH, lclContext *ctx);
 static int	_DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush);
 
-static char *progname = "Archiver(custom)";
+static char *modulename = "custom archiver";
 
 
 
@@ -147,12 +146,12 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	 */
 	ctx = (lclContext *) malloc(sizeof(lclContext));
 	if (ctx == NULL)
-		die_horribly(AH, "%s: Unable to allocate archive context", progname);
+		die_horribly(AH, modulename, "out of memory\n");
 	AH->formatData = (void *) ctx;
 
 	ctx->zp = (z_streamp) malloc(sizeof(z_stream));
 	if (ctx->zp == NULL)
-		die_horribly(AH, "%s: unable to allocate zlib stream archive context", progname);
+		die_horribly(AH, modulename, "out of memory\n");
 
 	/*
 	 * zlibOutSize is the buffer size we tell zlib it can output to.  We
@@ -167,7 +166,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	ctx->filePos = 0;
 
 	if (ctx->zlibOut == NULL || ctx->zlibIn == NULL)
-		die_horribly(AH, "%s: unable to allocate buffers in archive context", progname);
+		die_horribly(AH, modulename, "out of memory\n");
 
 	/*
 	 * Now open the file
@@ -181,7 +180,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 			AH->FH = stdout;
 
 		if (!AH->FH)
-			die_horribly(AH, "%s: unable to open archive file %s", progname, AH->fSpec);
+			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
 
@@ -194,7 +193,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		else
 			AH->FH = stdin;
 		if (!AH->FH)
-			die_horribly(AH, "%s: unable to open archive file %s", progname, AH->fSpec);
+			die_horribly(AH, modulename, "could not open archive file %s: %s", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = (fseek(AH->FH, 0, SEEK_CUR) == 0);
 
@@ -387,7 +386,7 @@ static void
 _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	if (oid == 0)
-		die_horribly(AH, "%s: illegal OID for BLOB (%d)\n", progname, oid);
+		die_horribly(AH, modulename, "invalid OID for BLOB\n");
 
 	WriteInt(AH, oid);
 	_StartDataCompressor(AH, te);
@@ -446,8 +445,9 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		{
 
 			if ((TocIDRequired(AH, id, ropt) & 2) != 0)
-				die_horribly(AH, "%s: Dumping a specific TOC data block out of order is not supported"
-							 " without on this input stream (fseek required)\n", progname);
+				die_horribly(AH, modulename,
+							 "Dumping a specific TOC data block out of order is not supported"
+							 " without id on this input stream (fseek required)\n");
 
 			switch (blkType)
 			{
@@ -464,8 +464,9 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 				default:		/* Always have a default */
 
-					die_horribly(AH, "%s: unrecognized data block type while searching archive %d\n",
-								 progname, blkType);
+					die_horribly(AH, modulename,
+								 "unrecognized data block type (%d) while searching archive\n",
+								 blkType);
 					break;
 			}
 
@@ -480,7 +481,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		/* Grab it */
 
 		if (fseek(AH->FH, tctx->dataPos, SEEK_SET) != 0)
-			die_horribly(AH, "%s: error %d in file seek\n", progname, errno);
+			die_horribly(AH, modulename, "error during file seek: %s\n", strerror(errno));
 
 		_readBlockHeader(AH, &blkType, &id);
 
@@ -488,8 +489,8 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 	/* Are we sane? */
 	if (id != te->id)
-		die_horribly(AH, "%s: Found unexpected block ID (%d) when reading data - expected %d\n",
-					 progname, id, te->id);
+		die_horribly(AH, modulename, "found unexpected block ID (%d) when reading data - expected %d\n",
+					 id, te->id);
 
 	switch (blkType)
 	{
@@ -502,15 +503,15 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		case BLK_BLOBS:
 
 			if (!AH->connection)
-				die_horribly(AH, "%s: BLOBs can not be loaded without a database connection\n", progname);
+				die_horribly(AH, modulename, "BLOBs cannot be loaded without a database connection\n");
 
 			_LoadBlobs(AH);
 			break;
 
 		default:				/* Always have a default */
 
-			die_horribly(AH, "%s: unrecognized data block type %d while restoring archive\n",
-						 progname, blkType);
+			die_horribly(AH, modulename, "unrecognized data block type %d while restoring archive\n",
+						 blkType);
 			break;
 	}
 
@@ -546,7 +547,7 @@ _PrintData(ArchiveHandle *AH)
 		zp->opaque = Z_NULL;
 
 		if (inflateInit(zp) != Z_OK)
-			die_horribly(AH, "%s: could not initialize compression library - %s\n", progname, zp->msg);
+			die_horribly(AH, modulename, "could not initialize compression library: %s\n", zp->msg);
 	}
 
 #endif
@@ -560,7 +561,7 @@ _PrintData(ArchiveHandle *AH)
 			ctx->zlibIn = NULL;
 			ctx->zlibIn = (char *) malloc(blkLen + 1);
 			if (!ctx->zlibIn)
-				die_horribly(AH, "%s: failed to allocate decompression buffer\n", progname);
+				die_horribly(AH, modulename, "out of memory\n");
 
 			ctx->inSize = blkLen + 1;
 			in = ctx->zlibIn;
@@ -568,7 +569,7 @@ _PrintData(ArchiveHandle *AH)
 
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
-			die_horribly(AH, "%s: could not read data block - expected %d, got %d\n", progname, blkLen, cnt);
+			die_horribly(AH, modulename, "could not read data block - expected %d, got %d\n", blkLen, cnt);
 
 		ctx->filePos += blkLen;
 
@@ -586,7 +587,7 @@ _PrintData(ArchiveHandle *AH)
 				zp->avail_out = zlibOutSize;
 				res = inflate(zp, 0);
 				if (res != Z_OK && res != Z_STREAM_END)
-					die_horribly(AH, "%s: unable to uncompress data - %s\n", progname, zp->msg);
+					die_horribly(AH, modulename, "unable to uncompress data: %s\n", zp->msg);
 
 				out[zlibOutSize - zp->avail_out] = '\0';
 				ahwrite(out, 1, zlibOutSize - zp->avail_out, AH);
@@ -618,7 +619,7 @@ _PrintData(ArchiveHandle *AH)
 			zp->avail_out = zlibOutSize;
 			res = inflate(zp, 0);
 			if (res != Z_OK && res != Z_STREAM_END)
-				die_horribly(AH, "%s: unable to uncompress data - %s\n", progname, zp->msg);
+				die_horribly(AH, modulename, "unable to uncompress data: %s\n", zp->msg);
 
 			out[zlibOutSize - zp->avail_out] = '\0';
 			ahwrite(out, 1, zlibOutSize - zp->avail_out, AH);
@@ -692,7 +693,7 @@ _skipData(ArchiveHandle *AH)
 		}
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
-			die_horribly(AH, "%s: could not read data block - expected %d, got %d\n", progname, blkLen, cnt);
+			die_horribly(AH, modulename, "could not read data block - expected %d, got %d\n", blkLen, cnt);
 
 		ctx->filePos += blkLen;
 
@@ -720,7 +721,7 @@ _WriteByte(ArchiveHandle *AH, const int i)
 	if (res != EOF)
 		ctx->filePos += 1;
 	else
-		die_horribly(AH, "%s: could not write byte./n", progname);
+		die_horribly(AH, modulename, "could not write byte: %s\n", strerror(errno));
 	return res;
 }
 
@@ -763,7 +764,7 @@ _WriteBuf(ArchiveHandle *AH, const void *buf, int len)
 	res = fwrite(buf, 1, len, AH->FH);
 
 	if (res != len)
-		die_horribly(AH, "%s: write error in _WriteBuf (%d != %d)\n", progname, res, len);
+		die_horribly(AH, modulename, "write error in _WriteBuf (%d != %d)\n", res, len);
 
 	ctx->filePos += res;
 	return res;
@@ -833,7 +834,7 @@ _CloseArchive(ArchiveHandle *AH)
 	}
 
 	if (fclose(AH->FH) != 0)
-		die_horribly(AH, "%s: could not close archive file\n", progname);
+		die_horribly(AH, modulename, "could not close archive file: %s\n", strerror(errno));
 
 	AH->FH = NULL;
 }
@@ -856,7 +857,7 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 		pos = ftell(AH->FH);
 		if (pos != ctx->filePos)
 		{
-			fprintf(stderr, "Warning: ftell mismatch with filePos - filePos used\n");
+			write_msg(modulename, "WARNING: ftell mismatch with filePos - filePos used\n");
 			pos = ctx->filePos;
 		}
 	}
@@ -903,7 +904,7 @@ _StartDataCompressor(ArchiveHandle *AH, TocEntry *te)
 		zp->opaque = Z_NULL;
 
 		if (deflateInit(zp, AH->compression) != Z_OK)
-			die_horribly(AH, "%s: could not initialize compression library - %s\n", progname, zp->msg);
+			die_horribly(AH, modulename, "could not initialize compression library: %s\n", zp->msg);
 	}
 
 #else
@@ -936,7 +937,7 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 	{
 		res = deflate(zp, flush);
 		if (res == Z_STREAM_ERROR)
-			die_horribly(AH, "%s: could not compress data - %s\n", progname, zp->msg);
+			die_horribly(AH, modulename, "could not compress data: %s\n", zp->msg);
 
 		if (((flush == Z_FINISH) && (zp->avail_out < zlibOutSize))
 			|| (zp->avail_out == 0)
@@ -958,7 +959,7 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 				 */
 				WriteInt(AH, zlibOutSize - zp->avail_out);
 				if (fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH) != (zlibOutSize - zp->avail_out))
-					die_horribly(AH, "%s: could not write compressed chunk\n", progname);
+					die_horribly(AH, modulename, "could not write compressed chunk\n");
 				ctx->filePos += zlibOutSize - zp->avail_out;
 			}
 			zp->next_out = out;
@@ -972,7 +973,7 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 		{
 			WriteInt(AH, zp->avail_in);
 			if (fwrite(zp->next_in, 1, zp->avail_in, AH->FH) != zp->avail_in)
-				die_horribly(AH, "%s: could not write uncompressed chunk\n", progname);
+				die_horribly(AH, modulename, "could not write uncompressed chunk\n");
 			ctx->filePos += zp->avail_in;
 			zp->avail_in = 0;
 		}
@@ -1021,7 +1022,7 @@ _EndDataCompressor(ArchiveHandle *AH, TocEntry *te)
 		} while (res != Z_STREAM_END);
 
 		if (deflateEnd(zp) != Z_OK)
-			die_horribly(AH, "%s: error closing compression stream - %s\n", progname, zp->msg);
+			die_horribly(AH, modulename, "could not close compression stream: %s\n", zp->msg);
 	}
 #endif
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.27 2001/05/17 21:12:48 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.28 2001/06/27 21:21:37 petere Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -64,12 +64,8 @@
 #include "pg_backup_archiver.h"
 #include "pg_backup_db.h"
 
-#include <string.h>
+#include <errno.h>
 #include <unistd.h>				/* for dup */
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 
 #include "pqexpbuffer.h"
 #include "libpq/libpq-fs.h"
@@ -94,9 +90,11 @@ static int	_discoverArchiveFormat(ArchiveHandle *AH);
 static void _fixupOidInfo(TocEntry *te);
 static Oid _findMaxOID(const char *((*deps)[]));
 
-static char *progname = "Archiver";
+const char *progname;
+static char *modulename = "archiver";
 
-static void _die_horribly(ArchiveHandle *AH, const char *fmt, va_list ap);
+static void _write_msg(const char *modulename, const char *fmt, va_list ap);
+static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap);
 
 static int	_canRestoreBlobs(ArchiveHandle *AH);
 static int	_restoringToDB(ArchiveHandle *AH);
@@ -148,7 +146,7 @@ CloseArchive(Archive *AHX)
 		res = fclose(AH->OF);
 
 	if (res != 0)
-		die_horribly(AH, "%s: could not close the output file in CloseArchive\n", progname);
+		die_horribly(AH, modulename, "could not close the output file in CloseArchive\n");
 }
 
 /* Public */
@@ -165,7 +163,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	AH->ropt = ropt;
 
 	if (ropt->create && ropt->noReconnect)
-		die_horribly(AH, "%s: --create and --no-reconnect are incompatible options\n", progname);
+		die_horribly(AH, modulename, "-C and -R are incompatible options\n");
 
 	/*
 	 * If we're using a DB connection, then connect it.
@@ -174,7 +172,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	{
 		ahlog(AH, 1, "Connecting to database for restore\n");
 		if (AH->version < K_VERS_1_3)
-			die_horribly(AH, "Direct database connections are not supported in pre-1.3 archives");
+			die_horribly(AH, modulename, "direct database connections are not supported in pre-1.3 archives\n");
 
 		/* XXX Should get this from the archive */
 		AHX->minRemoteVersion = 070100;
@@ -226,11 +224,10 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	}
 
 	if (!ropt->superuser)
-		fprintf(stderr, "\n%s: ******** WARNING ******** \n"
-		 "        Data restoration may fail since any defined triggers\n"
-		"        can not be disabled (no superuser username specified).\n"
-		"        This is only a problem for restoration into a database\n"
-				"        with triggers already defined.\n\n", progname);
+		write_msg(modulename, "WARNING:\n"
+				  "  Data restoration may fail because existing triggers cannot be disabled\n"
+				  "  (no superuser user name specified).  This is only a problem when\n"
+				  "  restoring into a database with already existing triggers.\n");
 
 	/*
 	 * Setup the output file if necessary.
@@ -275,12 +272,9 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 		if (!ropt->suppressDumpWarnings && strcmp(te->desc, "WARNING") == 0)
 		{
 			if (!ropt->dataOnly && te->defn != NULL && strlen(te->defn) != 0) 
-			{
-				fprintf(stderr, "%s: Warning from original dump file:\n%s\n", progname, te->defn);
-			} else if (te->copyStmt != NULL && strlen(te->copyStmt) != 0)
-			{
-				fprintf(stderr, "%s: Warning from original dump file:\n%s\n", progname, te->copyStmt);
-			}
+				write_msg(modulename, "warning from original dump file: %s\n", te->defn);
+			else if (te->copyStmt != NULL && strlen(te->copyStmt) != 0)
+				write_msg(modulename, "warning from original dump file: %s\n", te->copyStmt);
 	 	}
 
 		defnDumped = false;
@@ -320,8 +314,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				{
 #ifndef HAVE_LIBZ
 					if (AH->compression != 0)
-						die_horribly(AH, "%s: Unable to restore data from a compressed archive\n", 
-										progname);
+						die_horribly(AH, modulename, "unable to restore from compressed archive (not configured for compression support)\n");
 #endif
 
 					_printTocEntry(AH, te, ropt, true);
@@ -339,7 +332,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * warnings.
 						 */
 						if (!AH->CustomOutPtr)
-							fprintf(stderr, "%s: WARNING - skipping BLOB restoration\n", progname);
+							write_msg(modulename, "WARNING: skipping BLOB restoration\n");
 
 					}
 					else
@@ -599,8 +592,7 @@ WriteData(Archive *AHX, const void *data, int dLen)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
 	if (!AH->currToc)
-		die_horribly(AH, "%s: WriteData can not be called outside the context of "
-					 "a DataDumper routine\n", progname);
+		die_horribly(AH, modulename, "WriteData cannot be called outside the context of a DataDumper routine\n");
 
 	return (*AH->WriteDataPtr) (AH, data, dLen);
 }
@@ -625,7 +617,7 @@ ArchiveEntry(Archive *AHX, const char *oid, const char *name,
 
 	newToc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!newToc)
-		die_horribly(AH, "Archiver: unable to allocate memory for TOC entry\n");
+		die_horribly(AH, modulename, "out of memory\n");
 
 	newToc->prev = AH->toc->prev;
 	newToc->next = AH->toc;
@@ -720,7 +712,7 @@ StartBlob(Archive *AHX, Oid oid)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
 	if (!AH->StartBlobPtr)
-		die_horribly(AH, "%s: BLOB output not supported in chosen format\n", progname);
+		die_horribly(AH, modulename, "BLOB output not supported in chosen format\n");
 
 	(*AH->StartBlobPtr) (AH, AH->currToc, oid);
 
@@ -784,7 +776,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	if (!AH->createdBlobXref)
 	{
 		if (!AH->connection)
-			die_horribly(AH, "%s: can not restore BLOBs without a database connection", progname);
+			die_horribly(AH, modulename, "cannot restore BLOBs without a database connection");
 
 		CreateBlobXrefTable(AH);
 		AH->createdBlobXref = 1;
@@ -803,7 +795,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 
 	loOid = lo_creat(AH->connection, INV_READ | INV_WRITE);
 	if (loOid == 0)
-		die_horribly(AH, "%s: unable to create BLOB\n", progname);
+		die_horribly(AH, modulename, "could not create BLOB\n");
 
 	ahlog(AH, 2, "Restoring BLOB oid %d as %d\n", oid, loOid);
 
@@ -811,7 +803,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 
 	AH->loFd = lo_open(AH->connection, loOid, INV_WRITE);
 	if (AH->loFd == -1)
-		die_horribly(AH, "%s: unable to open BLOB\n", progname);
+		die_horribly(AH, modulename, "could not open BLOB\n");
 
 	AH->writingBlob = 1;
 }
@@ -951,7 +943,7 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	/* Setup the file */
 	fh = fopen(ropt->tocFile, PG_BINARY_R);
 	if (!fh)
-		die_horribly(AH, "%s: could not open TOC file\n", progname);
+		die_horribly(AH, modulename, "could not open TOC file\n");
 
 	while (fgets(buf, 1024, fh) != NULL)
 	{
@@ -972,14 +964,14 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 		id = strtol(buf, &endptr, 10);
 		if (endptr == buf)
 		{
-			fprintf(stderr, "%s: WARNING - line ignored: %s\n", progname, buf);
+			write_msg(modulename, "WARNING: line ignored: %s\n", buf);
 			continue;
 		}
 
 		/* Find TOC entry */
 		te = _getTocEntry(AH, id);
 		if (!te)
-			die_horribly(AH, "%s: could not find entry for id %d\n", progname, id);
+			die_horribly(AH, modulename, "could not find entry for id %d\n", id);
 
 		ropt->idWanted[id - 1] = 1;
 
@@ -988,7 +980,7 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	}
 
 	if (fclose(fh) != 0)
-		die_horribly(AH, "%s: could not close TOC file\n", progname);
+		die_horribly(AH, modulename, "could not close TOC file: %s\n", strerror(errno));
 }
 
 /**********************
@@ -1035,7 +1027,7 @@ archprintf(Archive *AH, const char *fmt,...)
 		bSize *= 2;
 		p = (char *) malloc(bSize);
 		if (p == NULL)
-			exit_horribly(AH, "%s: could not allocate buffer for archprintf\n", progname);
+			exit_horribly(AH, modulename, "out of memory\n");
 		va_start(ap, fmt);
 		cnt = vsnprintf(p, bSize, fmt, ap);
 		va_end(ap);
@@ -1104,7 +1096,7 @@ SetOutput(ArchiveHandle *AH, char *filename, int compression)
 #endif
 
 	if (!AH->OF)
-		die_horribly(AH, "%s: could not set output\n", progname);
+		die_horribly(AH, modulename, "could not open output file: %s\n", strerror(errno));
 
 	return sav;
 }
@@ -1120,7 +1112,7 @@ ResetOutput(ArchiveHandle *AH, OutputContext sav)
 		res = fclose(AH->OF);
 
 	if (res != 0)
-		die_horribly(AH, "%s: could not reset the output file\n", progname);
+		die_horribly(AH, modulename, "could not close output file: %s\n", strerror(errno));
 
 	AH->gzOut = sav.gzOut;
 	AH->OF = sav.OF;
@@ -1155,7 +1147,7 @@ ahprintf(ArchiveHandle *AH, const char *fmt,...)
 		bSize *= 2;
 		p = (char *) malloc(bSize);
 		if (p == NULL)
-			die_horribly(AH, "%s: could not allocate buffer for ahprintf\n", progname);
+			die_horribly(AH, modulename, "out of memory\n");
 		va_start(ap, fmt);
 		cnt = vsnprintf(p, bSize, fmt, ap);
 		va_end(ap);
@@ -1203,8 +1195,8 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		res = lo_write(AH->connection, AH->loFd, (void *) ptr, size * nmemb);
 		ahlog(AH, 5, "Wrote %d bytes of BLOB data (result = %d)\n", size * nmemb, res);
 		if (res < size * nmemb)
-			die_horribly(AH, "%s: could not write to large object (result = %d, expected %d)\n",
-						 progname, res, size * nmemb);
+			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
+						 res, size * nmemb);
 
 		return res;
 	}
@@ -1212,7 +1204,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 	{
 		res = GZWRITE((void *) ptr, size, nmemb, AH->OF);
 		if (res != (nmemb * size))
-			die_horribly(AH, "%s: could not write to archive\n", progname);
+			die_horribly(AH, modulename, "could not write to compressed archive\n");
 		return res;
 	}
 	else if (AH->CustomOutPtr)
@@ -1220,7 +1212,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		res = AH->CustomOutPtr (AH, ptr, size * nmemb);
 
 		if (res != (nmemb * size))
-			die_horribly(AH, "%s: could not write to custom output routine\n", progname);
+			die_horribly(AH, modulename, "could not write to custom output routine\n");
 		return res;
 	}
 	else
@@ -1236,7 +1228,7 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		{
 			res = fwrite((void *) ptr, size, nmemb, AH->OF);
 			if (res != nmemb)
-				die_horribly(AH, "%s: could not write to output file (%d != %d)\n", progname, res, nmemb);
+				die_horribly(AH, modulename, "could not write to output file (%d != %d)\n", res, nmemb);
 			return res;
 		}
 	}
@@ -1244,9 +1236,30 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 
 /* Common exit code */
 static void
-_die_horribly(ArchiveHandle *AH, const char *fmt, va_list ap)
+_write_msg(const char *modulename, const char *fmt, va_list ap)
 {
-	vfprintf(stderr, fmt, ap);
+	if (modulename)
+		fprintf(stderr, "%s[%s]: ", progname, gettext(modulename));
+	else
+		fprintf(stderr, "%s: ", progname);
+	vfprintf(stderr, gettext(fmt), ap);
+}
+
+void
+write_msg(const char *modulename, const char *fmt, ...)
+{
+	va_list		ap;
+
+	va_start(ap, fmt);
+	_write_msg(modulename, fmt, ap);
+	va_end(ap);
+}
+
+
+static void
+_die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap)
+{
+	_write_msg(modulename, fmt, ap);
 
 	if (AH)
 		if (AH->connection)
@@ -1259,22 +1272,22 @@ _die_horribly(ArchiveHandle *AH, const char *fmt, va_list ap)
 
 /* External use */
 void
-exit_horribly(Archive *AH, const char *fmt,...)
+exit_horribly(Archive *AH, const char *modulename, const char *fmt,...)
 {
 	va_list		ap;
 
 	va_start(ap, fmt);
-	_die_horribly((ArchiveHandle *) AH, fmt, ap);
+	_die_horribly((ArchiveHandle *) AH, modulename, fmt, ap);
 }
 
 /* Archiver use (just different arg declaration) */
 void
-die_horribly(ArchiveHandle *AH, const char *fmt,...)
+die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...)
 {
 	va_list		ap;
 
 	va_start(ap, fmt);
-	_die_horribly(AH, fmt, ap);
+	_die_horribly(AH, modulename, fmt, ap);
 }
 
 
@@ -1420,7 +1433,7 @@ ReadStr(ArchiveHandle *AH)
 	{
 		buf = (char *) malloc(l + 1);
 		if (!buf)
-			die_horribly(AH, "%s: Unable to allocate sufficient memory in ReadStr - " "requested %d (0x%x) bytes\n", progname, l, l);
+			die_horribly(AH, modulename, "out of memory\n");
 
 		(*AH->ReadBufPtr) (AH, (void *) buf, l);
 		buf[l] = '\0';
@@ -1437,10 +1450,9 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	int			cnt;
 	int			wantClose = 0;
 
-	/*
-	 * fprintf(stderr, "%s: Attempting to ascertain archive format\n",
-	 * progname);
-	 */
+#if 0
+	 write_msg(modulename, "attempting to ascertain archive format\n");
+#endif
 
 	if (AH->lookahead)
 		free(AH->lookahead);
@@ -1459,13 +1471,17 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		fh = stdin;
 
 	if (!fh)
-		die_horribly(AH, "Archiver: could not open input file\n");
+		die_horribly(AH, modulename, "could not open input file: %s\n", strerror(errno));
 
 	cnt = fread(sig, 1, 5, fh);
 
 	if (cnt != 5)
-		die_horribly(AH, "%s: input file is too short, or is unreadable (read %d, expected 5)\n", 
-							progname, cnt);
+	{
+		if (ferror(fh))
+			die_horribly(AH, modulename, "could not read input file: %s\n", strerror(errno));
+		else
+			die_horribly(AH, modulename, "input file is too short (read %d, expected 5)\n", cnt);
+	}
 
 	/* Save it, just in case we need it later */
 	strncpy(&AH->lookahead[0], sig, 5);
@@ -1509,11 +1525,10 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 		AH->lookaheadLen += cnt;
 
 		if (AH->lookaheadLen != 512)
-			die_horribly(AH, "%s: input file does not appear to be a valid archive (too short?)\n",
-						 progname);
+			die_horribly(AH, modulename, "input file does not appear to be a valid archive (too short?)\n");
 
 		if (!isValidTarHeader(AH->lookahead))
-			die_horribly(AH, "%s: input file does not appear to be a valid archive\n", progname);
+			die_horribly(AH, modulename, "input file does not appear to be a valid archive\n");
 
 		AH->format = archTar;
 	}
@@ -1531,15 +1546,15 @@ _discoverArchiveFormat(ArchiveHandle *AH)
 	else
 		AH->lookaheadLen = 0;	/* Don't bother since we've reset the file */
 
-	/*
-	 * fprintf(stderr, "%s: read %d bytes into lookahead buffer\n",
-	 * progname, AH->lookaheadLen);
-	 */
+#if 0
+	write_msg(modulename, "read %d bytes into lookahead buffer\n", AH->lookaheadLen);
+#endif
 
 	/* Close the file */
 	if (wantClose)
 		if (fclose(fh) != 0)
-			die_horribly(AH, "%s: could not close the input file after reading header\n", progname);
+			die_horribly(AH, modulename, "could not close the input file after reading header: %s\n",
+						 strerror(errno));
 
 	return AH->format;
 }
@@ -1554,14 +1569,13 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 {
 	ArchiveHandle *AH;
 
-	/*
-	 * fprintf(stderr, "%s: allocating AH for %s, format %d\n", progname,
-	 * FileSpec, fmt);
-	 */
+#if 0
+	 write_msg(modulename, "allocating AH for %s, format %d\n", FileSpec, fmt);
+#endif
 
 	AH = (ArchiveHandle *) calloc(1, sizeof(ArchiveHandle));
 	if (!AH)
-		die_horribly(AH, "Archiver: Could not allocate archive handle\n");
+		die_horribly(AH, modulename, "out of memory\n");
 
 	AH->vmaj = K_VERS_MAJOR;
 	AH->vmin = K_VERS_MINOR;
@@ -1590,7 +1604,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	AH->toc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!AH->toc)
-		die_horribly(AH, "Archiver: Could not allocate TOC header\n");
+		die_horribly(AH, modulename, "out of memory\n");
 
 	AH->toc->next = AH->toc;
 	AH->toc->prev = AH->toc;
@@ -1605,9 +1619,9 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->gzOut = 0;
 	AH->OF = stdout;
 
-	/*
-	 * fprintf(stderr, "%s: archive format is %d\n", progname, fmt);
-	 */
+#if 0
+	 write_msg(modulename, "archive format is %d\n", fmt);
+#endif
 
 	if (fmt == archUnknown)
 		AH->format = _discoverArchiveFormat(AH);
@@ -1634,7 +1648,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 			break;
 
 		default:
-			die_horribly(AH, "Archiver: Unrecognized file format '%d'\n", fmt);
+			die_horribly(AH, modulename, "unrecognized file format '%d'\n", fmt);
 	}
 
 	return AH;
@@ -1748,7 +1762,7 @@ ReadToc(ArchiveHandle *AH)
 
 		/* Sanity check */
 		if (te->id <= 0 || te->id > AH->tocCount)
-			die_horribly(AH, "Archiver: failed sanity check (bad entry id) - perhaps a corrupt TOC\n");
+			die_horribly(AH, modulename, "failed sanity check (bad entry id) - perhaps a corrupt TOC\n");
 
 		te->hadDumper = ReadInt(AH);
 		te->oid = ReadStr(AH);
@@ -1778,22 +1792,20 @@ ReadToc(ArchiveHandle *AH)
 					deps = realloc(deps, sizeof(char*) * depSize);
 				}
 				(*deps)[depIdx] = ReadStr(AH);
-				/* 
-				 * if ((*deps)[depIdx])
-				 *  fprintf(stderr, "Read Dependency for %s -> %s\n", te->name, (*deps)[depIdx]);
-				 */
+#if 0
+				if ((*deps)[depIdx])
+					write_msg(modulename, "read dependency for %s -> %s\n",
+							  te->name, (*deps)[depIdx]);
+#endif
 			} while ( (*deps)[depIdx++] != NULL);
 
 			if (depIdx > 1) /* We have a non-null entry */
-			{
-				/* Trim it */
-				te->depOid = realloc(deps, sizeof(char*) * depIdx);
-			} else { /* No deps */
-				te->depOid = NULL;
-			}
-		} else {
-			te->depOid = NULL;
+				te->depOid = realloc(deps, sizeof(char*) * depIdx);	/* trim it */
+			else
+				te->depOid = NULL; /* no deps */
 		}
+		else
+			te->depOid = NULL;
 
 		/* Set maxOidVal etc for use in sorting */
 		_fixupOidInfo(te);
@@ -1946,11 +1958,10 @@ WriteHead(ArchiveHandle *AH)
 
 #ifndef HAVE_LIBZ
 	if (AH->compression != 0)
-		fprintf(stderr, "%s: WARNING - requested compression not available in this installation - "
-				"archive will be uncompressed \n", progname);
+		write_msg(modulename, "WARNING: requested compression not available in this "
+				  "installation - archive will be uncompressed\n");
 
 	AH->compression = 0;
-
 #endif
 
 	WriteInt(AH, AH->compression);
@@ -1980,7 +1991,7 @@ ReadHead(ArchiveHandle *AH)
 		(*AH->ReadBufPtr) (AH, tmpMag, 5);
 
 		if (strncmp(tmpMag, "PGDMP", 5) != 0)
-			die_horribly(AH, "Archiver: Did not fing magic PGDMP in file header\n");
+			die_horribly(AH, modulename, "did not find magic string in file header\n");
 
 		AH->vmaj = (*AH->ReadBytePtr) (AH);
 		AH->vmin = (*AH->ReadBytePtr) (AH);
@@ -1994,22 +2005,21 @@ ReadHead(ArchiveHandle *AH)
 
 
 		if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
-			die_horribly(AH, "%s: unsupported version (%d.%d) in file header\n",
-						 progname, AH->vmaj, AH->vmin);
+			die_horribly(AH, modulename, "unsupported version (%d.%d) in file header\n",
+						 AH->vmaj, AH->vmin);
 
 		AH->intSize = (*AH->ReadBytePtr) (AH);
 		if (AH->intSize > 32)
-			die_horribly(AH, "Archiver: sanity check on integer size (%d) failes\n", AH->intSize);
+			die_horribly(AH, modulename, "sanity check on integer size (%d) failed\n", AH->intSize);
 
 		if (AH->intSize > sizeof(int))
-			fprintf(stderr, "\n%s: WARNING - archive was made on a machine with larger integers, "
-					"some operations may fail\n", progname);
+			write_msg(modulename, "WARNING: archive was made on a machine with larger integers, some operations may fail\n");
 
 		fmt = (*AH->ReadBytePtr) (AH);
 
 		if (AH->format != fmt)
-			die_horribly(AH, "%s: expected format (%d) differs from format found in file (%d)\n",
-						 progname, AH->format, fmt);
+			die_horribly(AH, modulename, "expected format (%d) differs from format found in file (%d)\n",
+						 AH->format, fmt);
 	}
 
 	if (AH->version >= K_VERS_1_2)
@@ -2024,8 +2034,7 @@ ReadHead(ArchiveHandle *AH)
 
 #ifndef HAVE_LIBZ
 	if (AH->compression != 0)
-		fprintf(stderr, "%s: WARNING - archive is compressed - any data will not be available\n",
-				progname);
+		write_msg(modulename, "WARNING: archive is compressed, but this installation does not support compression - no data will be available\n");
 #endif
 
 	if (AH->version >= K_VERS_1_4)
@@ -2043,7 +2052,7 @@ ReadHead(ArchiveHandle *AH)
 		AH->createDate = mktime(&crtm);
 
 		if (AH->createDate == (time_t) -1)
-			fprintf(stderr, "%s: WARNING - bad creation date in header\n", progname);
+			write_msg(modulename, "WARNING: bad creation date in header\n");
 	}
 
 }
