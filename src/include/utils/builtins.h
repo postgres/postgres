@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.144 2000/12/08 23:57:00 tgl Exp $
+ * $Id: builtins.h,v 1.145 2000/12/22 18:00:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,6 +508,7 @@ extern Datum network_masklen(PG_FUNCTION_ARGS);
 extern Datum network_broadcast(PG_FUNCTION_ARGS);
 extern Datum network_host(PG_FUNCTION_ARGS);
 extern Datum network_show(PG_FUNCTION_ARGS);
+extern Datum network_abbrev(PG_FUNCTION_ARGS);
 
 /* mac.c */
 extern Datum macaddr_in(PG_FUNCTION_ARGS);

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.45 2000/12/19 17:35:46 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.46 2000/12/22 18:00:24 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -2432,7 +2432,7 @@ Not defined by this name. Implements the intersection operator '#'
 	<entry>cidr</entry>
 	<entry>extract network part of address</entry>
 	<entry>network('192.168.1.5/24')</entry>
-	<entry>192.168.1/24</entry>
+	<entry>192.168.1.0/24</entry>
        </row>
        <row>
 	<entry>text(inet)</entry>
@@ -2441,15 +2441,22 @@ Not defined by this name. Implements the intersection operator '#'
 	<entry>text(inet '192.168.1.5')</entry>
 	<entry>192.168.1.5/32</entry>
        </row>
+       <row>
+	<entry>abbrev(inet)</entry>
+	<entry>text</entry>
+	<entry>extract abbreviated display as text</entry>
+	<entry>abbrev(cidr '10.1.0.0/16')</entry>
+	<entry>10.1/16</entry>
+       </row>
       </tbody>
      </tgroup>
     </table>
 
    <para>
     All of the functions for <type>inet</type> can be applied to
-    <type>cidr</type> values as well.  The <function>host</>() and
-    <function>text</>() functions are primarily intended to offer
-    alternative display formats.
+    <type>cidr</type> values as well.  The <function>host</>(),
+    <function>text</>(), and <function>abbrev</>() functions are primarily
+    intended to offer alternative display formats.
    </para>
 
    <para>

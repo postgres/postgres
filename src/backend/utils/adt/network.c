@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.27 2000/11/25 21:30:54 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.28 2000/12/22 18:00:20 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -111,19 +111,24 @@ inet_out(PG_FUNCTION_ARGS)
 	inet	   *src = PG_GETARG_INET_P(0);
 	char		tmp[sizeof("255.255.255.255/32")];
 	char	   *dst;
+	int			len;
 
 	if (ip_family(src) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		if (ip_type(src))
-			dst = inet_cidr_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
-								 tmp, sizeof(tmp));
-		else
-			dst = inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
-								tmp, sizeof(tmp));
-
+		/* Use inet style for both inet and cidr, since we don't want
+		 * abbreviated CIDR style here.
+		 */
+		dst = inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
+							tmp, sizeof(tmp));
 		if (dst == NULL)
 			elog(ERROR, "unable to print address (%s)", strerror(errno));
+		/* For CIDR, add /n if not present */
+		if (ip_type(src) && strchr(tmp, '/') == NULL)
+		{
+			len = strlen(tmp);
+			snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(src));
+		}
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
@@ -375,17 +380,50 @@ network_show(PG_FUNCTION_ARGS)
 		/* force display of 32 bits, regardless of masklen... */
 		if (inet_net_ntop(AF_INET, &ip_v4addr(ip), 32, tmp, sizeof(tmp)) == NULL)
 			elog(ERROR, "unable to print host (%s)", strerror(errno));
+		/* Add /n if not present (which it won't be) */
+		if (strchr(tmp, '/') == NULL)
+		{
+			len = strlen(tmp);
+			snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(ip));
+		}
 	}
 	else
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
-	/* Add /n if not present */
-	if (strchr(tmp, '/') == NULL)
+	/* Return string as a text datum */
+	len = strlen(tmp);
+	ret = (text *) palloc(len + VARHDRSZ);
+	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	memcpy(VARDATA(ret), tmp, len);
+	PG_RETURN_TEXT_P(ret);
+}
+
+Datum
+network_abbrev(PG_FUNCTION_ARGS)
+{
+	inet	   *ip = PG_GETARG_INET_P(0);
+	text	   *ret;
+	char	   *dst;
+	int			len;
+	char		tmp[sizeof("255.255.255.255/32")];
+
+	if (ip_family(ip) == AF_INET)
 	{
-		len = strlen(tmp);
-		snprintf(tmp + len, sizeof(tmp) - len, "/%u", ip_bits(ip));
+		/* It's an IP V4 address: */
+		if (ip_type(ip))
+			dst = inet_cidr_ntop(AF_INET, &ip_v4addr(ip), ip_bits(ip),
+								 tmp, sizeof(tmp));
+		else
+			dst = inet_net_ntop(AF_INET, &ip_v4addr(ip), ip_bits(ip),
+								tmp, sizeof(tmp));
+
+		if (dst == NULL)
+			elog(ERROR, "unable to print address (%s)", strerror(errno));
 	}
+	else
+		/* Go for an IPV6 address here, before faulting out: */
+		elog(ERROR, "unknown address family (%d)", ip_family(ip));
 
 	/* Return string as a text datum */
 	len = strlen(tmp);

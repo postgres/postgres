@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.180 2000/12/21 20:48:16 petere Exp $
+ * $Id: pg_proc.h,v 1.181 2000/12/22 18:00:17 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2294,6 +2294,8 @@ DATA(insert OID = 930 (  network_supeq		PGUID 12 f t t t 2 f 16 "869 869" 100 0 
 DESCR("is-supernet-or-equal");
 
 /* inet/cidr functions */
+DATA(insert OID = 605 (  abbrev				PGUID 12 f t t t 1 f 25 "869" 100 0 0 100  network_abbrev - ));
+DESCR("abbreviated display of inet/cidr value");
 DATA(insert OID = 683 (  network			PGUID 12 f t t t 1 f 650 "869" 100 0 0 100  network_network - ));
 DESCR("network part of address");
 DATA(insert OID = 696 (  netmask			PGUID 12 f t t t 1 f 869 "869" 100 0 0 100  network_netmask - ));
