@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.58 2003/09/25 18:58:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.59 2003/09/28 02:11:23 tgl Exp $
  *
  * ----------
  */
@@ -2144,13 +2144,11 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				const char *querysep;
 				const char *qualsep;
 				Oid			queryoids[RI_MAX_NUMKEYS];
-				Plan	   *spi_plan;
 				int			i;
-				List	   *l;
 
 				/* ----------
 				 * The query string built is
-				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
+				 *	UPDATE ONLY <fktable> SET fkatt1 = DEFAULT [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, ri_PlanCheck could
@@ -2167,7 +2165,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
-					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
+					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = DEFAULT",
 							 querysep, attname);
 					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
 							 qualsep, attname, i + 1);
@@ -2181,34 +2179,6 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 				/* Prepare the plan, don't save it */
 				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
 									 &qkey, fk_rel, pk_rel, false);
-
-				/*
-				 * Scan the plan's targetlist and replace the NULLs by
-				 * appropriate column defaults, if any (if not, they stay
-				 * NULL).
-				 *
-				 * XXX	This is really ugly; it'd be better to use "UPDATE
-				 * SET foo = DEFAULT", if we had it.
-				 */
-				spi_plan = (Plan *) lfirst(((_SPI_plan *) qplan)->ptlist);
-				foreach(l, spi_plan->targetlist)
-				{
-					TargetEntry *tle = (TargetEntry *) lfirst(l);
-					Node	   *dfl;
-
-					/* Ignore any junk columns or Var=Var columns */
-					if (tle->resdom->resjunk)
-						continue;
-					if (IsA(tle->expr, Var))
-						continue;
-
-					dfl = build_column_default(fk_rel, tle->resdom->resno);
-					if (dfl)
-					{
-						fix_opfuncids(dfl);
-						tle->expr = (Expr *) dfl;
-					}
-				}
 			}
 
 			/*
@@ -2368,13 +2338,11 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				const char *querysep;
 				const char *qualsep;
 				Oid			queryoids[RI_MAX_NUMKEYS];
-				Plan	   *spi_plan;
 				int			i;
-				List	   *l;
 
 				/* ----------
 				 * The query string built is
-				 *	UPDATE ONLY <fktable> SET fkatt1 = NULL [, ...]
+				 *	UPDATE ONLY <fktable> SET fkatt1 = DEFAULT [, ...]
 				 *			WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, ri_PlanCheck could
@@ -2400,7 +2368,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 						!ri_OneKeyEqual(pk_rel, i, old_row,
 									  new_row, &qkey, RI_KEYPAIR_PK_IDX))
 					{
-						snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
+						snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = DEFAULT",
 								 querysep, attname);
 						querysep = ",";
 					}
@@ -2415,34 +2383,6 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				/* Prepare the plan, don't save it */
 				qplan = ri_PlanCheck(querystr, qkey.nkeypairs, queryoids,
 									 &qkey, fk_rel, pk_rel, false);
-
-				/*
-				 * Scan the plan's targetlist and replace the NULLs by
-				 * appropriate column defaults, if any (if not, they stay
-				 * NULL).
-				 *
-				 * XXX	This is really ugly; it'd be better to use "UPDATE
-				 * SET foo = DEFAULT", if we had it.
-				 */
-				spi_plan = (Plan *) lfirst(((_SPI_plan *) qplan)->ptlist);
-				foreach(l, spi_plan->targetlist)
-				{
-					TargetEntry *tle = (TargetEntry *) lfirst(l);
-					Node	   *dfl;
-
-					/* Ignore any junk columns or Var=Var columns */
-					if (tle->resdom->resjunk)
-						continue;
-					if (IsA(tle->expr, Var))
-						continue;
-
-					dfl = build_column_default(fk_rel, tle->resdom->resno);
-					if (dfl)
-					{
-						fix_opfuncids(dfl);
-						tle->expr = (Expr *) dfl;
-					}
-				}
 			}
 
 			/*
