@@ -3,12 +3,23 @@
  * copyfuncs.c
  *	  Copy functions for Postgres tree nodes.
  *
+ * NOTE: a general convention when copying or comparing plan nodes is
+ * that we ignore the executor state subnode.  We do not need to look
+ * at it because no current uses of copyObject() or equal() need to
+ * deal with already-executing plan trees.  By leaving the state subnodes
+ * out, we avoid needing to write copy/compare routines for all the
+ * different executor state node types.
+ *
+ * Another class of nodes not currently handled is nodes that appear
+ * only in "raw" parsetrees (gram.y output not yet analyzed by the parser).
+ * Perhaps some day that will need to be supported.
+ *
+ *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.114 2000/06/18 22:44:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.115 2000/06/29 07:35:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1671,9 +1682,6 @@ copyObject(void *from)
 		case T_Agg:
 			retval = _copyAgg(from);
 			break;
-		case T_GroupClause:
-			retval = _copyGroupClause(from);
-			break;
 		case T_Unique:
 			retval = _copyUnique(from);
 			break;
@@ -1699,9 +1707,6 @@ copyObject(void *from)
 		case T_Var:
 			retval = _copyVar(from);
 			break;
-		case T_Attr:
-			retval = _copyAttr(from);
-			break;
 		case T_Oper:
 			retval = _copyOper(from);
 			break;
@@ -1710,6 +1715,12 @@ copyObject(void *from)
 			break;
 		case T_Param:
 			retval = _copyParam(from);
+			break;
+		case T_Aggref:
+			retval = _copyAggref(from);
+			break;
+		case T_SubLink:
+			retval = _copySubLink(from);
 			break;
 		case T_Func:
 			retval = _copyFunc(from);
@@ -1720,20 +1731,11 @@ copyObject(void *from)
 		case T_ArrayRef:
 			retval = _copyArrayRef(from);
 			break;
-		case T_Aggref:
-			retval = _copyAggref(from);
-			break;
-		case T_SubLink:
-			retval = _copySubLink(from);
+		case T_Iter:
+			retval = _copyIter(from);
 			break;
 		case T_RelabelType:
 			retval = _copyRelabelType(from);
-			break;
-		case T_CaseExpr:
-			retval = _copyCaseExpr(from);
-			break;
-		case T_CaseWhen:
-			retval = _copyCaseWhen(from);
 			break;
 
 			/*
@@ -1769,9 +1771,6 @@ copyObject(void *from)
 		case T_JoinInfo:
 			retval = _copyJoinInfo(from);
 			break;
-		case T_Iter:
-			retval = _copyIter(from);
-			break;
 		case T_Stream:
 			retval = _copyStream(from);
 			break;
@@ -1780,29 +1779,35 @@ copyObject(void *from)
 			break;
 
 			/*
+			 * VALUE NODES
+			 */
+		case T_Integer:
+		case T_Float:
+		case T_String:
+			retval = _copyValue(from);
+			break;
+		case T_List:
+			{
+				List	   *list = from,
+						   *l,
+						   *nl;
+
+				/* rather ugly coding for speed... */
+				/* Note the input list cannot be NIL if we got here. */
+				nl = lcons(copyObject(lfirst(list)), NIL);
+				retval = nl;
+
+				foreach(l, lnext(list))
+				{
+					lnext(nl) = lcons(copyObject(lfirst(l)), NIL);
+					nl = lnext(nl);
+				}
+			}
+			break;
+
+			/*
 			 * PARSE NODES
 			 */
-		case T_TargetEntry:
-			retval = _copyTargetEntry(from);
-			break;
-		case T_RangeTblEntry:
-			retval = _copyRangeTblEntry(from);
-			break;
-		case T_RowMark:
-			retval = _copyRowMark(from);
-			break;
-		case T_SortClause:
-			retval = _copySortClause(from);
-			break;
-		case T_A_Const:
-			retval = _copyAConst(from);
-			break;
-		case T_TypeName:
-			retval = _copyTypeName(from);
-			break;
-		case T_TypeCast:
-			retval = _copyTypeCast(from);
-			break;
 		case T_Query:
 			retval = _copyQuery(from);
 			break;
@@ -1837,35 +1842,44 @@ copyObject(void *from)
 			retval = _copyLockStmt(from);
 			break;
 
-			/*
-			 * VALUE NODES
-			 */
-		case T_Integer:
-		case T_Float:
-		case T_String:
-			retval = _copyValue(from);
+		case T_Attr:
+			retval = _copyAttr(from);
 			break;
-		case T_List:
-			{
-				List	   *list = from,
-						   *l,
-						   *nl;
-
-				/* rather ugly coding for speed... */
-				/* Note the input list cannot be NIL if we got here. */
-				nl = lcons(copyObject(lfirst(list)), NIL);
-				retval = nl;
-
-				foreach(l, lnext(list))
-				{
-					lnext(nl) = lcons(copyObject(lfirst(l)), NIL);
-					nl = lnext(nl);
-				}
-			}
+		case T_A_Const:
+			retval = _copyAConst(from);
 			break;
+		case T_TypeCast:
+			retval = _copyTypeCast(from);
+			break;
+		case T_TypeName:
+			retval = _copyTypeName(from);
+			break;
+		case T_TargetEntry:
+			retval = _copyTargetEntry(from);
+			break;
+		case T_RangeTblEntry:
+			retval = _copyRangeTblEntry(from);
+			break;
+		case T_SortClause:
+			retval = _copySortClause(from);
+			break;
+		case T_GroupClause:
+			retval = _copyGroupClause(from);
+			break;
+		case T_CaseExpr:
+			retval = _copyCaseExpr(from);
+			break;
+		case T_CaseWhen:
+			retval = _copyCaseWhen(from);
+			break;
+		case T_RowMark:
+			retval = _copyRowMark(from);
+			break;
+
 		default:
-			elog(ERROR, "copyObject: don't know how to copy %d", nodeTag(from));
-			retval = from;
+			elog(ERROR, "copyObject: don't know how to copy node type %d",
+				 nodeTag(from));
+			retval = from;		/* keep compiler quiet */
 			break;
 	}
 	return retval;

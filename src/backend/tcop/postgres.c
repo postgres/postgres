@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.162 2000/06/28 03:32:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.163 2000/06/29 07:35:57 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -17,6 +17,8 @@
  *-------------------------------------------------------------------------
  */
 
+#include "postgres.h"
+
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
@@ -24,9 +26,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <sys/socket.h>
-
-#include "postgres.h"
-
 #include <errno.h>
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -408,6 +407,31 @@ pg_parse_and_rewrite(char *query_string,	/* string to execute */
 
 	querytree_list = new_list;
 
+#ifdef COPY_PARSE_PLAN_TREES
+	/* Optional debugging check: pass parsetree output through copyObject() */
+	/*
+	 * Note: we run this test after rewrite, not before, because copyObject()
+	 * does not handle most kinds of nodes that are used only in raw parse
+	 * trees.  The present (bizarre) implementation of UNION/INTERSECT/EXCEPT
+	 * doesn't run analysis of the second and later subqueries until rewrite,
+	 * so we'd get false failures on these queries if we did it beforehand.
+	 *
+	 * Currently, copyObject doesn't know about most of the utility query
+	 * types, so suppress the check until that can be fixed... it should
+	 * be fixed, though.
+	 */
+	if (querytree_list &&
+		((Query *) lfirst(querytree_list))->commandType != CMD_UTILITY)
+	{
+		new_list = (List *) copyObject(querytree_list);
+		/* This checks both copyObject() and the equal() routines... */
+		if (! equal(new_list, querytree_list))
+			elog(NOTICE, "pg_parse_and_rewrite: copyObject failed on parse tree");
+		else
+			querytree_list = new_list;
+	}
+#endif
+
 	if (Debug_print_rewritten)
 	{
 		if (Debug_pretty_print)
@@ -457,6 +481,24 @@ pg_plan_query(Query *querytree)
 		fprintf(stderr, "PLANNER STATISTICS\n");
 		ShowUsage();
 	}
+
+#ifdef COPY_PARSE_PLAN_TREES
+	/* Optional debugging check: pass plan output through copyObject() */
+	{
+		Plan   *new_plan = (Plan *) copyObject(plan);
+
+		/* equal() currently does not have routines to compare Plan nodes,
+		 * so don't try to test equality here.  Perhaps fix someday?
+		 */
+#ifdef NOT_USED
+		/* This checks both copyObject() and the equal() routines... */
+		if (! equal(new_plan, plan))
+			elog(NOTICE, "pg_plan_query: copyObject failed on plan tree");
+		else
+#endif
+			plan = new_plan;
+	}
+#endif
 
 	/* ----------------
 	 *	Print plan if debugging.
@@ -1366,7 +1408,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.162 $ $Date: 2000/06/28 03:32:18 $\n");
+		puts("$Revision: 1.163 $ $Date: 2000/06/29 07:35:57 $\n");
 	}
 
 	/*

@@ -1,14 +1,30 @@
 /*-------------------------------------------------------------------------
  *
  * equalfuncs.c
- *	  equality functions to compare node trees
+ *	  Equality functions to compare node trees.
+ *
+ * NOTE: a general convention when copying or comparing plan nodes is
+ * that we ignore the executor state subnode.  We do not need to look
+ * at it because no current uses of copyObject() or equal() need to
+ * deal with already-executing plan trees.  By leaving the state subnodes
+ * out, we avoid needing to write copy/compare routines for all the
+ * different executor state node types.
+ *
+ * Currently, in fact, equal() doesn't know how to compare Plan nodes
+ * at all, let alone their executor-state subnodes.  This will probably
+ * need to be fixed someday, but presently there is no need to compare
+ * plan trees.
+ *
+ * Another class of nodes not currently handled is nodes that appear
+ * only in "raw" parsetrees (gram.y output not yet analyzed by the parser).
+ * Perhaps some day that will need to be supported.
+ *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.66 2000/04/12 17:15:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.67 2000/06/29 07:35:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,56 +468,6 @@ _equalHashPath(HashPath *a, HashPath *b)
 	return true;
 }
 
-/* XXX	This equality function is a quick hack, should be
- *		fixed to compare all fields.
- *
- * XXX	Why is this even here?	We don't have equal() funcs for
- *		any other kinds of Plan nodes... likely this is dead code...
- */
-static bool
-_equalIndexScan(IndexScan *a, IndexScan *b)
-{
-
-	/*
-	 * if(a->scan.plan.cost != b->scan.plan.cost) return(false);
-	 */
-
-	if (!equal(a->indxqual, b->indxqual))
-		return false;
-
-	if (a->scan.scanrelid != b->scan.scanrelid)
-		return false;
-
-	if (a->indxorderdir != b->indxorderdir)
-		return false;
-
-	if (!equali(a->indxid, b->indxid))
-		return false;
-	return true;
-}
-
-static bool
-_equalTidScan(TidScan *a, TidScan *b)
-{
-	Assert(IsA(a, TidScan));
-	Assert(IsA(b, TidScan));
-
-	/*
-	 * if(a->scan.plan.cost != b->scan.plan.cost) return(false);
-	 */
-
-	if (a->needRescan != b->needRescan)
-		return false;
-
-	if (!equal(a->tideval, b->tideval))
-		return false;
-
-	if (a->scan.scanrelid != b->scan.scanrelid)
-		return false;
-
-	return true;
-}
-
 static bool
 _equalSubPlan(SubPlan *a, SubPlan *b)
 {
@@ -704,6 +670,17 @@ _equalSortClause(SortClause *a, SortClause *b)
 }
 
 static bool
+_equalRowMark(RowMark *a, RowMark *b)
+{
+	if (a->rti != b->rti)
+		return false;
+	if (a->info != b->info)
+		return false;
+
+	return true;
+}
+
+static bool
 _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 {
 	if (!equal(a->resdom, b->resdom))
@@ -792,6 +769,9 @@ equal(void *a, void *b)
 
 	switch (nodeTag(a))
 	{
+		case T_SubPlan:
+			retval = _equalSubPlan(a, b);
+			break;
 		case T_Resdom:
 			retval = _equalResdom(a, b);
 			break;
@@ -801,23 +781,8 @@ equal(void *a, void *b)
 		case T_Expr:
 			retval = _equalExpr(a, b);
 			break;
-		case T_Iter:
-			retval = _equalIter(a, b);
-			break;
-		case T_Stream:
-			retval = _equalStream(a, b);
-			break;
-		case T_Attr:
-			retval = _equalAttr(a, b);
-			break;
 		case T_Var:
 			retval = _equalVar(a, b);
-			break;
-		case T_Array:
-			retval = _equalArray(a, b);
-			break;
-		case T_ArrayRef:
-			retval = _equalArrayRef(a, b);
 			break;
 		case T_Oper:
 			retval = _equalOper(a, b);
@@ -834,32 +799,29 @@ equal(void *a, void *b)
 		case T_SubLink:
 			retval = _equalSubLink(a, b);
 			break;
-		case T_RelabelType:
-			retval = _equalRelabelType(a, b);
-			break;
 		case T_Func:
 			retval = _equalFunc(a, b);
 			break;
-		case T_RestrictInfo:
-			retval = _equalRestrictInfo(a, b);
+		case T_Array:
+			retval = _equalArray(a, b);
+			break;
+		case T_ArrayRef:
+			retval = _equalArrayRef(a, b);
+			break;
+		case T_Iter:
+			retval = _equalIter(a, b);
+			break;
+		case T_RelabelType:
+			retval = _equalRelabelType(a, b);
 			break;
 		case T_RelOptInfo:
 			retval = _equalRelOptInfo(a, b);
-			break;
-		case T_IndexOptInfo:
-			retval = _equalIndexOptInfo(a, b);
-			break;
-		case T_PathKeyItem:
-			retval = _equalPathKeyItem(a, b);
 			break;
 		case T_Path:
 			retval = _equalPath(a, b);
 			break;
 		case T_IndexPath:
 			retval = _equalIndexPath(a, b);
-			break;
-		case T_TidPath:
-			retval = _equalTidPath(a, b);
 			break;
 		case T_NestPath:
 			retval = _equalNestPath(a, b);
@@ -870,25 +832,29 @@ equal(void *a, void *b)
 		case T_HashPath:
 			retval = _equalHashPath(a, b);
 			break;
-		case T_IndexScan:
-			retval = _equalIndexScan(a, b);
+		case T_PathKeyItem:
+			retval = _equalPathKeyItem(a, b);
 			break;
-		case T_TidScan:
-			retval = _equalTidScan(a, b);
-			break;
-		case T_SubPlan:
-			retval = _equalSubPlan(a, b);
+		case T_RestrictInfo:
+			retval = _equalRestrictInfo(a, b);
 			break;
 		case T_JoinInfo:
 			retval = _equalJoinInfo(a, b);
 			break;
+		case T_Stream:
+			retval = _equalStream(a, b);
+			break;
+		case T_TidPath:
+			retval = _equalTidPath(a, b);
+			break;
+		case T_IndexOptInfo:
+			retval = _equalIndexOptInfo(a, b);
+			break;
 		case T_EState:
 			retval = _equalEState(a, b);
 			break;
-		case T_Integer:
-		case T_Float:
-		case T_String:
-			retval = _equalValue(a, b);
+		case T_Attr:
+			retval = _equalAttr(a, b);
 			break;
 		case T_List:
 			{
@@ -911,8 +877,16 @@ equal(void *a, void *b)
 				retval = true;
 			}
 			break;
+		case T_Integer:
+		case T_Float:
+		case T_String:
+			retval = _equalValue(a, b);
+			break;
 		case T_Query:
 			retval = _equalQuery(a, b);
+			break;
+		case T_TargetEntry:
+			retval = _equalTargetEntry(a, b);
 			break;
 		case T_RangeTblEntry:
 			retval = _equalRangeTblEntry(a, b);
@@ -924,15 +898,16 @@ equal(void *a, void *b)
 			/* GroupClause is equivalent to SortClause */
 			retval = _equalSortClause(a, b);
 			break;
-		case T_TargetEntry:
-			retval = _equalTargetEntry(a, b);
-			break;
 		case T_CaseExpr:
 			retval = _equalCaseExpr(a, b);
 			break;
 		case T_CaseWhen:
 			retval = _equalCaseWhen(a, b);
 			break;
+		case T_RowMark:
+			retval = _equalRowMark(a, b);
+			break;
+
 		default:
 			elog(NOTICE, "equal: don't know whether nodes of type %d are equal",
 				 nodeTag(a));
