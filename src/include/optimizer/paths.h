@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.59 2001/11/05 17:46:34 momjian Exp $
+ * $Id: paths.h,v 1.59.2.1 2005/01/23 02:26:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,7 @@ extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
 					 ScanDirection scandir);
 extern List *build_join_pathkeys(Query *root,
 					RelOptInfo *joinrel,
+					JoinType jointype,
 					List *outer_pathkeys);
 extern List *make_pathkeys_for_sortclauses(List *sortclauses,
 							  List *tlist);

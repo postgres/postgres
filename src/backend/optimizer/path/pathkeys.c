@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.36 2001/11/11 20:33:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.36.2.1 2005/01/23 02:25:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -621,7 +621,12 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
  *	  vars they were joined with; furthermore, it doesn't matter what kind
  *	  of join algorithm is actually used.
  *
+ *	  EXCEPTION: in a FULL or RIGHT join, we cannot treat the result as
+ *	  having the outer path's path keys, because null lefthand rows may be
+ *	  inserted at random points.  It must be treated as unsorted.
+ *
  * 'joinrel' is the join relation that paths are being formed for
+ * 'jointype' is the join type (inner, left, full, etc)
  * 'outer_pathkeys' is the list of the current outer path's path keys
  *
  * Returns the list of new path keys.
@@ -629,8 +634,12 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 List *
 build_join_pathkeys(Query *root,
 					RelOptInfo *joinrel,
+					JoinType jointype,
 					List *outer_pathkeys)
 {
+	if (jointype == JOIN_FULL || jointype == JOIN_RIGHT)
+		return NIL;
+
 	/*
 	 * This used to be quite a complex bit of code, but now that all
 	 * pathkey sublists start out life canonicalized, we don't have to do
