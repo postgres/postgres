@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.43 1999/05/17 18:22:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.44 1999/05/25 13:16:10 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1393,6 +1393,129 @@ checkQueryHasAggs(Node *node)
 }
 
 
+/*
+ * checkQueryHasSubLink -
+ *	Queries marked hasAggs might not have them any longer after
+ *	rewriting. Check it.
+ */
+static bool
+checkQueryHasSubLink(Node *node)
+{
+	if (node == NULL)
+		return FALSE;
+
+	switch(nodeTag(node)) {
+		case T_TargetEntry:
+			{
+				TargetEntry	*tle = (TargetEntry *)node;
+
+				return checkQueryHasSubLink((Node *)(tle->expr));
+			}
+			break;
+
+		case T_Aggref:
+			return TRUE;
+
+		case T_Expr:
+			{
+				Expr	*exp = (Expr *)node;
+
+				return checkQueryHasSubLink((Node *)(exp->args));
+			}
+			break;
+
+		case T_Iter:
+			{
+				Iter	*iter = (Iter *)node;
+
+				return checkQueryHasSubLink((Node *)(iter->iterexpr));
+			}
+			break;
+
+		case T_ArrayRef:
+			{
+				ArrayRef	*ref = (ArrayRef *)node;
+
+				if (checkQueryHasSubLink((Node *)(ref->refupperindexpr)))
+					return TRUE;
+				
+				if (checkQueryHasSubLink((Node *)(ref->reflowerindexpr)))
+					return TRUE;
+				
+				if (checkQueryHasSubLink((Node *)(ref->refexpr)))
+					return TRUE;
+				
+				if (checkQueryHasSubLink((Node *)(ref->refassgnexpr)))
+					return TRUE;
+				
+				return FALSE;
+			}
+			break;
+
+		case T_Var:
+			return FALSE;
+
+		case T_Param:
+			return FALSE;
+
+		case T_Const:
+			return FALSE;
+
+		case T_List:
+			{
+				List	*l;
+
+				foreach (l, (List *)node) {
+					if (checkQueryHasSubLink((Node *)lfirst(l)))
+						return TRUE;
+				}
+				return FALSE;
+			}
+			break;
+
+		case T_CaseExpr:
+			{
+				CaseExpr	*exp = (CaseExpr *)node;
+
+				if (checkQueryHasSubLink((Node *)(exp->args)))
+					return TRUE;
+
+				if (checkQueryHasSubLink((Node *)(exp->defresult)))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_CaseWhen:
+			{
+				CaseWhen	*when = (CaseWhen *)node;
+
+				if (checkQueryHasSubLink((Node *)(when->expr)))
+					return TRUE;
+
+				if (checkQueryHasSubLink((Node *)(when->result)))
+					return TRUE;
+
+				return FALSE;
+			}
+			break;
+
+		case T_SubLink:
+			return TRUE;
+
+		default:
+			elog(NOTICE, "unknown node tag %d in checkQueryHasSubLink()", nodeTag(node));
+			elog(NOTICE, "Node is: %s", nodeToString(node));
+			break;
+
+
+	}
+
+	return FALSE;
+}
+
+
 static Node *
 FindMatchingTLEntry(List *tlist, char *e_attname)
 {
@@ -2116,10 +2239,23 @@ fireRIRrules(Query *parsetree)
 	while(rt_index < length(parsetree->rtable)) {
 		++rt_index;
 
-		if (!rangeTableEntry_used((Node *)parsetree, rt_index, 0))
-			continue;
-		
 		rte = nth(rt_index - 1, parsetree->rtable);
+
+		if (!rangeTableEntry_used((Node *)parsetree, rt_index, 0))
+		{
+			/*
+			 * Unused range table entries must not be marked as coming
+			 * from a clause. Otherwise the planner will generate
+			 * joins over relations that in fact shouldn't be scanned
+			 * at all and the result will contain duplicates
+			 *
+			 * Jan
+			 *
+			 */
+			rte->inFromCl = FALSE;
+			continue;
+		}
+		
 		rel = heap_openr(rte->relname);
 		if (rel->rd_rules == NULL) {
 			heap_close(rel);
@@ -2705,6 +2841,8 @@ BasicQueryRewrite(Query *parsetree)
 		if (query->hasAggs)
 			query->hasAggs = checkQueryHasAggs((Node *)(query->targetList))
 						   | checkQueryHasAggs((Node *)(query->havingQual));
+		query->hasSubLinks = checkQueryHasSubLink((Node *)(query->qual))
+						   | checkQueryHasSubLink((Node *)(query->havingQual));
 		results = lappend(results, query);
 	}
 	return results;
