@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.10 1996/11/21 06:10:55 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.11 1996/12/06 09:41:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -409,9 +409,19 @@ _bt_firsteq(Relation rel,
  *	     0 if scankey == tuple at offnum;
  *	    +1 if scankey > tuple at offnum.
  *
+ *	-- Old comments:
  *	In order to avoid having to propagate changes up the tree any time
  *	a new minimal key is inserted, the leftmost entry on the leftmost
  *	page is less than all possible keys, by definition.
+ *
+ *	-- New ones:
+ *	New insertion code (fix against updating _in_place_ if new minimal
+ *	key has bigger size than old one) may delete P_HIKEY entry on the
+ *	root page in order to insert new minimal key - and so this definition 
+ *	does not work properly in this case and breaks key' order on root 
+ *	page. BTW, this propagation occures only while page' splitting, 
+ *	but not "any time a new min key is inserted" (see _bt_insertonpg). 
+ *		- vadim 12/05/96
  */
 int
 _bt_compare(Relation rel,
@@ -436,6 +446,8 @@ _bt_compare(Relation rel,
      *  If this is a leftmost internal page, and if our comparison is
      *  with the first key on the page, then the item at that position is
      *  by definition less than the scan key.
+     *
+     *  - see new comments above...
      */
     
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -453,12 +465,20 @@ _bt_compare(Relation rel,
 	 *  well as the rightmost page.  but that implies that this
 	 *  code path only applies to the root -- which seems
 	 *  unlikely..
+	 *
+	 *  - see new comments above...
 	 */
 	if (! P_RIGHTMOST(opaque)) {
 	    elog(WARN, "_bt_compare: invalid comparison to high key");
 	}
 
+#ifdef 0
 	/*
+	 *  We just have to belive that right answer will not
+	 *  break anything. I've checked code and all seems to be ok.
+	 *  See new comments above...
+	 *
+	 *  -- Old comments
 	 *  If the item on the page is equal to the scankey, that's
 	 *  okay to admit.  We just can't claim that the first key on
 	 *  the page is greater than anything.
@@ -469,6 +489,7 @@ _bt_compare(Relation rel,
 	    return (0);
 	}
 	return (1);
+#endif
     }
     
     btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
@@ -601,6 +622,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     Page page;
     BTStack stack;
     OffsetNumber offnum, maxoff;
+    bool offGmax = false;
     BTItem btitem;
     IndexTuple itup;
     ItemPointer current;
@@ -665,7 +687,10 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     maxoff = PageGetMaxOffsetNumber(page);
     
     if (offnum > maxoff)
+    {
 	offnum = maxoff;
+	offGmax = true;
+    }
     
     blkno = BufferGetBlockNumber(buf);
     ItemPointerSet(current, blkno, offnum);
@@ -736,10 +761,21 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	    if (result > 0)
 		(void) _bt_twostep(scan, &buf, ForwardScanDirection);
 	}
+	else if ( offGmax && result > 0 )
+	{   /*
+	     * Just remember:  _bt_binsrch() returns the OffsetNumber of 
+	     * the first matching key on the page, or the OffsetNumber at 
+	     * which the matching key WOULD APPEAR IF IT WERE on this page.
+	     * No key on this page, but offnum from _bt_binsrch() greater
+	     * maxoff - have to move right. - vadim 12/06/96
+	     */
+	    (void) _bt_twostep(scan, &buf, ForwardScanDirection);
+	}
 	break;
 	
     case BTGreaterStrategyNumber:
-	if (result >= 0) {
+	/* offGmax helps as above */
+	if (result >= 0 || offGmax) {
 	    do {
 		if (!_bt_twostep(scan, &buf, ForwardScanDirection))
 		    break;
@@ -1084,13 +1120,17 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     maxoff = PageGetMaxOffsetNumber(page);
     
     if (ScanDirectionIsForward(dir)) {
-	if (PageIsEmpty(page)) {
-	    maxoff = FirstOffsetNumber;
-	} else {
-	    maxoff = PageGetMaxOffsetNumber(page);
-	}
+	if ( !P_LEFTMOST(opaque) )	/* non-leftmost page ? */
+	    elog (WARN, "_bt_endpoint: leftmost page (%u) has not leftmost flag", blkno);
 	start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-	
+	/*
+	 * I don't understand this stuff! It doesn't work for non-rightmost
+	 * pages with only one element (P_HIKEY) which we have after
+	 * deletion itups by vacuum (it's case of start > maxoff).
+	 * Scanning in BackwardScanDirection is not understandable at all.
+	 * Well - new stuff. - vadim 12/06/96
+	 */
+#ifdef 0
 	if (PageIsEmpty(page) || start > maxoff) {
 	    ItemPointerSet(current, blkno, maxoff);
 	    if (!_bt_step(scan, &buf, BackwardScanDirection))
@@ -1098,10 +1138,35 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	    
 	    start = ItemPointerGetOffsetNumber(current);
 	    page = BufferGetPage(buf);
-	} else {
+	}
+#endif
+	if ( PageIsEmpty (page) )
+	{
+	    if ( start != P_HIKEY )	/* non-rightmost page */
+		elog (WARN, "_bt_endpoint: non-rightmost page (%u) is empty", blkno);
+	    /* It's left- & right- most page - root page, - and it's empty... */
+	    return ((RetrieveIndexResult) NULL);
+	}
+	if ( start > maxoff )		/* start == 2 && maxoff == 1 */
+	{
+	    ItemPointerSet(current, blkno, maxoff);
+	    if (!_bt_step(scan, &buf, ForwardScanDirection))
+		return ((RetrieveIndexResult) NULL);
+	    
+	    start = ItemPointerGetOffsetNumber(current);
+	    page = BufferGetPage(buf);
+	}
+	/* new stuff ends here */
+	else {
 	    ItemPointerSet(current, blkno, start);
 	}
     } else if (ScanDirectionIsBackward(dir)) {
+	/*
+	 * I don't understand this stuff too! If RIGHT-most leaf page is
+	 * empty why do scanning in ForwardScanDirection ???
+	 * Well - new stuff. - vadim 12/06/96
+	 */
+#ifdef 0
 	if (PageIsEmpty(page)) {
 	    ItemPointerSet(current, blkno, FirstOffsetNumber);
 	    if (!_bt_step(scan, &buf, ForwardScanDirection))
@@ -1109,7 +1174,23 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	    
 	    start = ItemPointerGetOffsetNumber(current);
 	    page = BufferGetPage(buf);
-	} else {
+	}
+#endif
+	if (PageIsEmpty(page))
+	{
+	    /* If it's leftmost page too - it's empty root page... */
+	    if ( P_LEFTMOST(opaque) )
+	    	return ((RetrieveIndexResult) NULL);
+	    /* Go back ! */
+	    ItemPointerSet(current, blkno, FirstOffsetNumber);
+	    if (!_bt_step(scan, &buf, BackwardScanDirection))
+		return ((RetrieveIndexResult) NULL);
+	    
+	    start = ItemPointerGetOffsetNumber(current);
+	    page = BufferGetPage(buf);
+	}
+	/* new stuff ends here */
+	else {
 	    start = PageGetMaxOffsetNumber(page);
 	    ItemPointerSet(current, blkno, start);
 	}
