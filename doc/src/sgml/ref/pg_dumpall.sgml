@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.44 2004/06/07 20:35:57 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.45 2004/07/12 14:35:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -177,11 +177,43 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-O</></term>
+      <term><option>--no-owner</option></term>
+      <listitem>
+       <para>
+        Do not output commands to set
+	ownership of objects to match the original database.
+	By default, <application>pg_dumpall</application> issues
+	<command>SET SESSION AUTHORIZATION</command>
+	statements to set ownership of created schema elements.
+	These statements
+	will fail when the script is run unless it is started by a superuser
+	(or the same user that owns all of the objects in the script).
+	To make a script that can be restored by any user, but will give
+	that user ownership of all the objects, specify <option>-O</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-s</option></term>
       <term><option>--schema-only</option></term>
       <listitem>
        <para>
 	Dump only the schema (data definitions), no data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-S <replaceable class="parameter">username</replaceable></option></term>
+      <term><option>--superuser=<replaceable class="parameter">username</replaceable></option></term>
+      <listitem>
+       <para>
+        Specify the superuser user name to use when disabling triggers.
+	This is only relevant if <option>--disable-triggers</> is used.
+	(Usually, it's better to leave this out, and instead start the
+	resulting script as superuser.)
        </para>
       </listitem>
      </varlistentry>
@@ -206,6 +238,50 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Prevent dumping of access privileges (grant/revoke commands).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-X disable-dollar-quoting</></term>
+      <term><option>--disable-dollar-quoting</></term>
+      <listitem>
+       <para>
+        This option disables the use of dollar quoting for function bodies,
+        and forces them to be quoted using SQL standard string syntax.
+       </para>
+     </listitem>
+    </varlistentry>
+
+     <varlistentry>
+      <term><option>-X disable-triggers</></term>
+      <term><option>--disable-triggers</></term>
+      <listitem>
+       <para>
+        This option is only relevant when creating a data-only dump.
+        It instructs <application>pg_dumpall</application> to include commands
+        to temporarily disable triggers on the target tables while
+        the data is reloaded.  Use this if you have referential
+        integrity checks or other triggers on the tables that you
+        do not want to invoke during data reload.
+       </para>
+
+       <para>
+        Presently, the commands emitted for <option>--disable-triggers</>
+        must be done as superuser.  So, you should also specify
+        a superuser name with <option>-S</>, or preferably be careful to
+        start the resulting script as a superuser.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-X use-set-session-authorization</></term>
+      <term><option>--use-set-session-authorization</></term>
+      <listitem>
+       <para>
+        This option is obsolete but still accepted for backwards
+        compatibility with <application>pg_dump</application>.
        </para>
       </listitem>
      </varlistentry>

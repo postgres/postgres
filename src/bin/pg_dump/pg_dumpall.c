@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.43 2004/06/21 13:36:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.44 2004/07/12 14:35:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,6 @@ static PGconn *connectDatabase(const char *dbname, const char *pghost, const cha
 				const char *pguser, bool require_password);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 
-
 char	    pg_dump_bin[MAXPGPATH];
 PQExpBuffer pgdumpopts;
 bool		output_clean = false;
@@ -67,7 +66,10 @@ bool		skip_acls = false;
 bool		verbose = false;
 int			server_version;
 
-
+/* flags for -X long options */
+int	disable_dollar_quoting = 0;
+int	disable_triggers = 0;
+int	use_setsessauth = 0;
 
 int
 main(int argc, char *argv[])
@@ -92,13 +94,24 @@ main(int argc, char *argv[])
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
 		{"oids", no_argument, NULL, 'o'},
+		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
 		{"password", no_argument, NULL, 'W'},
 		{"schema-only", no_argument, NULL, 's'},
+		{"superuser", required_argument, NULL, 'S'},
 		{"username", required_argument, NULL, 'U'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"no-privileges", no_argument, NULL, 'x'},
 		{"no-acl", no_argument, NULL, 'x'},
+
+		/*
+		 * the following options don't have an equivalent short option
+		 * letter, but are available as '-X long-name'
+		 */
+		{"disable-dollar-quoting", no_argument, &disable_dollar_quoting, 1},
+		{"disable-triggers", no_argument, &disable_triggers, 1},
+		{"use-set-session-authorization", no_argument, &use_setsessauth, 1},
+
 		{NULL, 0, NULL, 0}
 	};
 
@@ -142,7 +155,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acdDgh:iop:sU:vWx", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDgh:ioOp:sS:U:vWxX:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -174,6 +187,10 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -%c", c);
 				break;
 
+			case 'O':
+				appendPQExpBuffer(pgdumpopts, " -O");
+				break;
+
 			case 'p':
 				pgport = optarg;
 				appendPQExpBuffer(pgdumpopts, " -p '%s'", pgport);
@@ -182,6 +199,10 @@ main(int argc, char *argv[])
 			case 's':
 				schema_only = true;
 				appendPQExpBuffer(pgdumpopts, " -s");
+				break;
+
+			case 'S':
+				appendPQExpBuffer(pgdumpopts, " -S '%s'", optarg);
 				break;
 
 			case 'U':
@@ -204,12 +225,40 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -x");
 				break;
 
+			case 'X':
+				if (strcmp(optarg, "disable-dollar-quoting") == 0)
+					appendPQExpBuffer(pgdumpopts, " -X disable-dollar-quoting");
+				else if (strcmp(optarg, "disable-triggers") == 0)
+					appendPQExpBuffer(pgdumpopts, " -X disable-triggers");
+				else if (strcmp(optarg, "use-set-session-authorization") == 0)
+					/* no-op, still allowed for compatibility */ ;
+				else
+				{
+					fprintf(stderr,
+							_("%s: invalid -X option -- %s\n"),
+							progname, optarg);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
+					exit(1);
+				}
+				break;
+
+			case 0:
+				break;
+
 			default:
 				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}
 
+	/*  Add long options to the pg_dump argument list */
+	if (disable_dollar_quoting)
+		appendPQExpBuffer(pgdumpopts, " -X disable-dollar-quoting");
+	if (disable_triggers)
+		appendPQExpBuffer(pgdumpopts, " -X disable-triggers");
+	if (use_setsessauth)
+		/* no-op, still allowed for compatibility */ ;
+		
 	if (optind < argc)
 	{
 		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
@@ -270,9 +319,15 @@ help(void)
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
 	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
+	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
+	printf(_("  -O, --no-owner           do not output commands to set object ownership\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
 	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
+	printf(_("  -X disable-dollar-quoting, --disable-dollar-quoting\n"
+			 "                           disable dollar quoting, use SQL standard quoting\n"));
+	printf(_("  -X disable-triggers, --disable-triggers\n"
+			 "                           disable triggers during data-only restore\n"));
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
 
