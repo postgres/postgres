@@ -1,10 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.11 1999/01/07 03:02:27 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.12 1999/02/13 03:54:51 thomas Exp $
 
 Postgres Programmer's Guide.
 - thomas 1998-10-27
 
 $Log: programmer.sgml,v $
+Revision 1.12  1999/02/13 03:54:51  thomas
+Re-enable arch-dev.sgml now that it has new information from Stefan's
+ Master's Thesis.
+
 Revision 1.11  1999/01/07 03:02:27  thomas
 Remove mention of a couple of introductory chapters
  which are not used here.
@@ -188,16 +192,7 @@ Disable it until we put in some info.
 
 <!-- development -->
 
-<!--
-The arch-dev chapter is current almost identical 
-to the arch-pg chapter appearing earlier in the
-Programmer's Guide. If the Developer's Guide is
-split into a separate document then start using this
-again.
-- thomas 1998-10-23
 &arch-dev; 
--->
-
 &geqo;
 &protocol;
 &signals;
