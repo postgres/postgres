@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.52 1999/09/26 02:28:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.53 1999/10/02 04:37:52 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -49,27 +49,29 @@ static Node *eval_const_expressions_mutator (Node *node, void *context);
 Expr *
 make_clause(int type, Node *oper, List *args)
 {
-	if (type == AND_EXPR || type == OR_EXPR || type == NOT_EXPR ||
-		type == OP_EXPR || type == FUNC_EXPR)
-	{
-		Expr	   *expr = makeNode(Expr);
+	Expr	   *expr = makeNode(Expr);
 
-		/*
-		 * assume type checking already done and we don't need the type of
-		 * the expr any more.
-		 */
-		expr->typeOid = InvalidOid;
-		expr->opType = type;
-		expr->oper = oper;		/* ignored for AND, OR, NOT */
-		expr->args = args;
-		return expr;
-	}
-	else
+	switch (type)
 	{
-		elog(ERROR, "make_clause: unsupported type %d", type);
-		/* will this ever happen? translated from lispy C code - ay 10/94 */
-		return (Expr *) args;
+		case AND_EXPR:
+		case OR_EXPR:
+		case NOT_EXPR:
+			expr->typeOid = BOOLOID;
+			break;
+		case OP_EXPR:
+			expr->typeOid = ((Oper *) oper)->opresulttype;
+			break;
+		case FUNC_EXPR:
+			expr->typeOid = ((Func *) oper)->functype;
+			break;
+		default:
+			elog(ERROR, "make_clause: unsupported type %d", type);
+			break;
 	}
+	expr->opType = type;
+	expr->oper = oper;			/* ignored for AND, OR, NOT */
+	expr->args = args;
+	return expr;
 }
 
 
@@ -107,7 +109,7 @@ make_opclause(Oper *op, Var *leftop, Var *rightop)
 {
 	Expr	   *expr = makeNode(Expr);
 
-	expr->typeOid = InvalidOid; /* assume type checking done */
+	expr->typeOid = op->opresulttype;
 	expr->opType = OP_EXPR;
 	expr->oper = (Node *) op;
 	if (rightop)
