@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.lib.mk,v 1.1.1.1 1996/07/09 06:22:19 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.lib.mk,v 1.2 1996/08/13 07:48:29 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ endif
 
 $(shlib):	$(addprefix $(objdir)/,$(LIBOBJS))
 	@rm -f $(objdir)/$(shlib)
-	cd $(objdir); $(CC) -shared $(LIBOBJS) -o $(shlib) 
+	cd $(objdir); $(CC) $(LDFLAGS) -shared $(LIBOBJS) -o $(shlib) 
 
 CLEANFILES+= $(LIBOBJS) $(lib) $(shlib)
 
