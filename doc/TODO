@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May  5 21:04:39 EDT 2000
+Last updated:		Sat May  6 12:04:42 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -183,6 +183,7 @@ MISC
 * Allow multi-level query trees for INSERT INTO ... SELECT
 * Use IPC_EXCL when creating shared memory and semaphores
 * have pg_upgrade use pg_ctl to stop/start postmaster
+* Encrpyt passwords in pg_shadow table
 
 PERFORMANCE
 -----------
