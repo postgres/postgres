@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.90 1999/03/10 05:02:33 tgl Exp $
+ * $Id: pg_proc.h,v 1.91 1999/03/14 05:09:00 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -735,6 +735,8 @@ DATA(insert OID = 350 (  btint2cmp		   PGUID 11 f t f 2 f 23 "21 21" 100 0 0 100
 DESCR("btree less-equal-greater");
 DATA(insert OID = 351 (  btint4cmp		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
 DESCR("btree less-equal-greater");
+DATA(insert OID = 842 (  btint8cmp		   PGUID 11 f t f 2 f 23 "20 20" 100 0 0 100  foo bar ));
+DESCR("btree less-equal-greater");
 DATA(insert OID = 352 (  btint42cmp		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  foo bar ));
 DESCR("btree less-equal-greater");
 DATA(insert OID = 353 (  btint24cmp		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
@@ -820,6 +822,8 @@ DESCR("hash(internal)");
 DATA(insert OID = 449 (  hashint2		   PGUID 11 f t f 2 f 23 "21 21" 100 0 0 100  foo bar ));
 DESCR("hash");
 DATA(insert OID = 450 (  hashint4		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
+DESCR("hash");
+DATA(insert OID = 949 (  hashint8		   PGUID 11 f t f 2 f 23 "20 20" 100 0 0 100  foo bar ));
 DESCR("hash");
 DATA(insert OID = 451 (  hashfloat4		   PGUID 11 f t f 2 f 23 "700 700" 100 0 0 100	foo bar ));
 DESCR("hash");

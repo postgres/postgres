@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.13 1999/02/13 23:14:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.14 1999/03/14 05:08:55 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -30,6 +30,12 @@ uint32
 hashint4(uint32 key)
 {
 	return ~key;
+}
+
+uint32
+hashint8(uint64 *key)
+{
+	return ~((uint32)key);
 }
 
 /* Hash function from Chris Torek. */
