@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.55 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.56 2002/08/09 16:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,12 +20,12 @@
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_constraint.h"
-#include "catalog/pg_database.h"
 #include "catalog/pg_description.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
 #include "commands/comment.h"
+#include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
@@ -398,34 +398,16 @@ static void
 CommentDatabase(List *qualname, char *comment)
 {
 	char	   *database;
-	Relation	pg_database;
-	ScanKeyData entry;
-	HeapScanDesc scan;
-	HeapTuple	dbtuple;
 	Oid			oid;
 
 	if (length(qualname) != 1)
 		elog(ERROR, "CommentDatabase: database name may not be qualified");
 	database = strVal(lfirst(qualname));
 
-	/* Only allow comments on the current database */
-	if (strcmp(database, DatabaseName) != 0)
-		elog(ERROR, "Database comments may only be applied to the current database");
-
-	/* First find the tuple in pg_database for the database */
-
-	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&entry, 0, Anum_pg_database_datname,
-						   F_NAMEEQ, CStringGetDatum(database));
-	scan = heap_beginscan(pg_database, SnapshotNow, 1, &entry);
-	dbtuple = heap_getnext(scan, ForwardScanDirection);
-
-	/* Validate database exists, and fetch the db oid */
-
-	if (!HeapTupleIsValid(dbtuple))
+	/* First get the database OID */
+	oid = get_database_oid(database);
+	if (!OidIsValid(oid))
 		elog(ERROR, "database \"%s\" does not exist", database);
-	AssertTupleDescHasOid(pg_database->rd_att);
-	oid = HeapTupleGetOid(dbtuple);
 
 	/* Allow if the user matches the database dba or is a superuser */
 
@@ -433,14 +415,12 @@ CommentDatabase(List *qualname, char *comment)
 		elog(ERROR, "you are not permitted to comment on database \"%s\"",
 			 database);
 
+	/* Only allow comments on the current database */
+	if (oid != MyDatabaseId)
+		elog(ERROR, "Database comments may only be applied to the current database");
+
 	/* Create the comment with the pg_database oid */
-
 	CreateComments(oid, RelOid_pg_database, 0, comment);
-
-	/* Complete the scan and close any opened relations */
-
-	heap_endscan(scan);
-	heap_close(pg_database, AccessShareLock);
 }
 
 /*

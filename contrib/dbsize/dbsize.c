@@ -8,12 +8,10 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
-#include "catalog/catname.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_database.h"
+#include "commands/dbcommands.h"
 #include "fmgr.h"
 #include "utils/builtins.h"
-#include "utils/fmgroids.h"
 
 
 static char *
@@ -46,31 +44,15 @@ database_size(PG_FUNCTION_ARGS)
 {
 	Name		dbname = PG_GETARG_NAME(0);
 
-	HeapTuple	tuple;
-	Relation	relation;
-	ScanKeyData	scanKey;
-	HeapScanDesc scan;
 	Oid			dbid;
 	char	   *dbpath;
 	DIR		   *dirdesc;
 	struct dirent *direntry;
 	int64		totalsize;
 
-	relation = heap_openr(DatabaseRelationName, AccessShareLock);
-	ScanKeyEntryInitialize(&scanKey, 0, Anum_pg_database_datname,
-						   F_NAMEEQ, NameGetDatum(dbname));
-	scan = heap_beginscan(relation, SnapshotNow, 1, &scanKey);
-	tuple = heap_getnext(scan, ForwardScanDirection);
-
-	if (!HeapTupleIsValid(tuple))
+	dbid = get_database_oid(NameStr(*dbname));
+	if (!OidIsValid(dbid))
 		elog(ERROR, "database %s does not exist", NameStr(*dbname));
-
-	dbid = HeapTupleGetOid(tuple);
-	if (dbid == InvalidOid)
-		elog(ERROR, "invalid database id");
-
-	heap_endscan(scan);
-	heap_close(relation, NoLock);
 
 	dbpath = GetDatabasePath(dbid);
 

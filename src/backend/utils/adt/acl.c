@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.74 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.75 2002/08/09 16:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include "catalog/namespace.h"
 #include "catalog/pg_shadow.h"
+#include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -34,8 +35,16 @@ static const char *aclparse(const char *s, AclItem *aip, unsigned *modechg);
 static bool aclitemeq(const AclItem *a1, const AclItem *a2);
 static bool aclitemgt(const AclItem *a1, const AclItem *a2);
 
-static AclMode convert_priv_string(text *priv_type_text);
-static Oid convert_rel_name(text *relname);
+static Oid convert_table_name(text *tablename);
+static AclMode convert_table_priv_string(text *priv_type_text);
+static Oid convert_database_name(text *databasename);
+static AclMode convert_database_priv_string(text *priv_type_text);
+static Oid convert_function_name(text *functionname);
+static AclMode convert_function_priv_string(text *priv_type_text);
+static Oid convert_language_name(text *languagename);
+static AclMode convert_language_priv_string(text *priv_type_text);
+static Oid convert_schema_name(text *schemaname);
+static AclMode convert_schema_priv_string(text *priv_type_text);
 
 
 /*
@@ -646,266 +655,179 @@ aclcontains(PG_FUNCTION_ARGS)
 
 
 /*
- * has_table_privilege_name_name
- *		Check user privileges on a relation given
- *		name username, text relname, and text priv name.
+ * has_table_privilege variants
+ *		These are all named "has_table_privilege" at the SQL level.
+ *		They take various combinations of relation name, relation OID,
+ *		user name, user sysid, or implicit user = current_user.
  *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * has_table_privilege_name_name
+ *		Check user privileges on a table given
+ *		name username, text tablename, and text priv name.
  */
 Datum
 has_table_privilege_name_name(PG_FUNCTION_ARGS)
 {
 	Name		username = PG_GETARG_NAME(0);
-	text	   *relname = PG_GETARG_TEXT_P(1);
+	text	   *tablename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	int32		usesysid;
-	Oid			reloid;
+	Oid			tableoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	/*
-	 * Lookup userid based on username
-	 */
 	usesysid = get_usesysid(NameStr(*username));
+	tableoid = convert_table_name(tablename);
+	mode = convert_table_priv_string(priv_type_text);
 
-	/*
-	 * Lookup rel OID based on relname
-	 */
-	reloid = convert_rel_name(relname);
-
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
-
-	/*
-	 * Check for the privilege
-	 */
-	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
-
 /*
  * has_table_privilege_name
- *		Check user privileges on a relation given
- *		text relname and text priv name.
+ *		Check user privileges on a table given
+ *		text tablename and text priv name.
  *		current_user is assumed
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
  */
 Datum
 has_table_privilege_name(PG_FUNCTION_ARGS)
 {
-	text	   *relname = PG_GETARG_TEXT_P(0);
+	text	   *tablename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
 	int32		usesysid;
-	Oid			reloid;
+	Oid			tableoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
 	usesysid = GetUserId();
+	tableoid = convert_table_name(tablename);
+	mode = convert_table_priv_string(priv_type_text);
 
-	/*
-	 * Lookup rel OID based on relname
-	 */
-	reloid = convert_rel_name(relname);
-
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
-
-	/*
-	 * Check for the privilege
-	 */
-	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
-
 /*
  * has_table_privilege_name_id
- *		Check user privileges on a relation given
- *		name usename, rel oid, and text priv name.
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
+ *		Check user privileges on a table given
+ *		name usename, table oid, and text priv name.
  */
 Datum
 has_table_privilege_name_id(PG_FUNCTION_ARGS)
 {
 	Name		username = PG_GETARG_NAME(0);
-	Oid			reloid = PG_GETARG_OID(1);
+	Oid			tableoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	int32		usesysid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	/*
-	 * Lookup userid based on username
-	 */
 	usesysid = get_usesysid(NameStr(*username));
+	mode = convert_table_priv_string(priv_type_text);
 
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
-
-	/*
-	 * Check for the privilege
-	 */
-	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
-
 /*
  * has_table_privilege_id
- *		Check user privileges on a relation given
- *		rel oid, and text priv name.
+ *		Check user privileges on a table given
+ *		table oid, and text priv name.
  *		current_user is assumed
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
  */
 Datum
 has_table_privilege_id(PG_FUNCTION_ARGS)
 {
-	Oid			reloid = PG_GETARG_OID(0);
+	Oid			tableoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
 	int32		usesysid;
 	AclMode		mode;
 	AclResult	aclresult;
 
 	usesysid = GetUserId();
+	mode = convert_table_priv_string(priv_type_text);
 
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
-
-	/*
-	 * Check for the privilege
-	 */
-	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
-
 /*
  * has_table_privilege_id_name
- *		Check user privileges on a relation given
- *		usesysid, text relname, and priv name.
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
+ *		Check user privileges on a table given
+ *		usesysid, text tablename, and text priv name.
  */
 Datum
 has_table_privilege_id_name(PG_FUNCTION_ARGS)
 {
 	int32		usesysid = PG_GETARG_INT32(0);
-	text	   *relname = PG_GETARG_TEXT_P(1);
+	text	   *tablename = PG_GETARG_TEXT_P(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
-	Oid			reloid;
+	Oid			tableoid;
 	AclMode		mode;
 	AclResult	aclresult;
 
-	/*
-	 * Lookup rel OID based on relname
-	 */
-	reloid = convert_rel_name(relname);
+	tableoid = convert_table_name(tablename);
+	mode = convert_table_priv_string(priv_type_text);
 
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
-
-	/*
-	 * Check for the privilege
-	 */
-	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
-
 /*
  * has_table_privilege_id_id
- *		Check user privileges on a relation given
- *		usesysid, rel oid, and priv name.
- *
- * RETURNS
- *		a boolean value
- *		't' indicating user has the privilege
- *		'f' indicating user does not have the privilege
+ *		Check user privileges on a table given
+ *		usesysid, table oid, and text priv name.
  */
 Datum
 has_table_privilege_id_id(PG_FUNCTION_ARGS)
 {
 	int32		usesysid = PG_GETARG_INT32(0);
-	Oid			reloid = PG_GETARG_OID(1);
+	Oid			tableoid = PG_GETARG_OID(1);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
 	AclMode		mode;
 	AclResult	aclresult;
 
-	/*
-	 * Convert priv_type_text to an AclMode
-	 */
-	mode = convert_priv_string(priv_type_text);
+	mode = convert_table_priv_string(priv_type_text);
 
-	/*
-	 * Check for the privilege
-	 */
-	aclresult = pg_class_aclcheck(reloid, usesysid, mode);
+	aclresult = pg_class_aclcheck(tableoid, usesysid, mode);
 
 	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
 }
 
 /*
- *		Internal functions.
+ *		Support routines for has_table_privilege family.
  */
 
 /*
- * Given a relation name expressed as a string, look it up and return Oid
+ * Given a table name expressed as a string, look it up and return Oid
  */
 static Oid
-convert_rel_name(text *relname)
+convert_table_name(text *tablename)
 {
 	RangeVar   *relrv;
 
-	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
+	relrv = makeRangeVarFromNameList(textToQualifiedNameList(tablename,
 													"has_table_privilege"));
 
 	return RangeVarGetRelid(relrv, false);
 }
 
 /*
- * convert_priv_string
- *		Internal function.
- *		Return mode from priv_type string
- *
- * RETURNS
- *		AclMode
+ * convert_table_priv_string
+ *		Convert text string to AclMode value.
  */
 static AclMode
-convert_priv_string(text *priv_type_text)
+convert_table_priv_string(text *priv_type_text)
 {
 	char	   *priv_type;
 
@@ -936,10 +858,810 @@ convert_priv_string(text *priv_type_text)
 	if (strcasecmp(priv_type, "TRIGGER") == 0)
 		return ACL_TRIGGER;
 
-	elog(ERROR, "has_table_privilege: invalid privilege type %s", priv_type);
+	elog(ERROR, "has_table_privilege: invalid privilege type %s",
+		 priv_type);
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
+}
+
+
+/*
+ * has_database_privilege variants
+ *		These are all named "has_database_privilege" at the SQL level.
+ *		They take various combinations of database name, database OID,
+ *		user name, user sysid, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * has_database_privilege_name_name
+ *		Check user privileges on a database given
+ *		name username, text databasename, and text priv name.
+ */
+Datum
+has_database_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	text	   *databasename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	Oid			databaseoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	databaseoid = convert_database_name(databasename);
+	mode = convert_database_priv_string(priv_type_text);
+
+	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_database_privilege_name
+ *		Check user privileges on a database given
+ *		text databasename and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_database_privilege_name(PG_FUNCTION_ARGS)
+{
+	text	   *databasename = PG_GETARG_TEXT_P(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	Oid			databaseoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	databaseoid = convert_database_name(databasename);
+	mode = convert_database_priv_string(priv_type_text);
+
+	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_database_privilege_name_id
+ *		Check user privileges on a database given
+ *		name usename, database oid, and text priv name.
+ */
+Datum
+has_database_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			databaseoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	mode = convert_database_priv_string(priv_type_text);
+
+	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_database_privilege_id
+ *		Check user privileges on a database given
+ *		database oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_database_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			databaseoid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	mode = convert_database_priv_string(priv_type_text);
+
+	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_database_privilege_id_name
+ *		Check user privileges on a database given
+ *		usesysid, text databasename, and text priv name.
+ */
+Datum
+has_database_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	text	   *databasename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			databaseoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	databaseoid = convert_database_name(databasename);
+	mode = convert_database_priv_string(priv_type_text);
+
+	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_database_privilege_id_id
+ *		Check user privileges on a database given
+ *		usesysid, database oid, and text priv name.
+ */
+Datum
+has_database_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			databaseoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	AclMode		mode;
+	AclResult	aclresult;
+
+	mode = convert_database_priv_string(priv_type_text);
+
+	aclresult = pg_database_aclcheck(databaseoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ *		Support routines for has_database_privilege family.
+ */
+
+/*
+ * Given a database name expressed as a string, look it up and return Oid
+ */
+static Oid
+convert_database_name(text *databasename)
+{
+	char	   *dbname;
+	Oid			oid;
+
+	dbname = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(databasename)));
+
+	oid = get_database_oid(dbname);
+	if (!OidIsValid(oid))
+		elog(ERROR, "database \"%s\" does not exist", dbname);
+
+	return oid;
+}
+
+/*
+ * convert_database_priv_string
+ *		Convert text string to AclMode value.
+ */
+static AclMode
+convert_database_priv_string(text *priv_type_text)
+{
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(priv_type_text)));
 
 	/*
-	 * We should never get here, but stop the compiler from complaining
+	 * Return mode from priv_type string
 	 */
-	return ACL_NO_RIGHTS;
+	if (strcasecmp(priv_type, "CREATE") == 0)
+		return ACL_CREATE;
+
+	if (strcasecmp(priv_type, "TEMPORARY") == 0)
+		return ACL_CREATE_TEMP;
+
+	if (strcasecmp(priv_type, "TEMP") == 0)
+		return ACL_CREATE_TEMP;
+
+	elog(ERROR, "has_database_privilege: invalid privilege type %s",
+		 priv_type);
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
+}
+
+
+/*
+ * has_function_privilege variants
+ *		These are all named "has_function_privilege" at the SQL level.
+ *		They take various combinations of function name, function OID,
+ *		user name, user sysid, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * has_function_privilege_name_name
+ *		Check user privileges on a function given
+ *		name username, text functionname, and text priv name.
+ */
+Datum
+has_function_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	text	   *functionname = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	Oid			functionoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	functionoid = convert_function_name(functionname);
+	mode = convert_function_priv_string(priv_type_text);
+
+	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_function_privilege_name
+ *		Check user privileges on a function given
+ *		text functionname and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_function_privilege_name(PG_FUNCTION_ARGS)
+{
+	text	   *functionname = PG_GETARG_TEXT_P(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	Oid			functionoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	functionoid = convert_function_name(functionname);
+	mode = convert_function_priv_string(priv_type_text);
+
+	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_function_privilege_name_id
+ *		Check user privileges on a function given
+ *		name usename, function oid, and text priv name.
+ */
+Datum
+has_function_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			functionoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	mode = convert_function_priv_string(priv_type_text);
+
+	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_function_privilege_id
+ *		Check user privileges on a function given
+ *		function oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_function_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			functionoid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	mode = convert_function_priv_string(priv_type_text);
+
+	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_function_privilege_id_name
+ *		Check user privileges on a function given
+ *		usesysid, text functionname, and text priv name.
+ */
+Datum
+has_function_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	text	   *functionname = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			functionoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	functionoid = convert_function_name(functionname);
+	mode = convert_function_priv_string(priv_type_text);
+
+	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_function_privilege_id_id
+ *		Check user privileges on a function given
+ *		usesysid, function oid, and text priv name.
+ */
+Datum
+has_function_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			functionoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	AclMode		mode;
+	AclResult	aclresult;
+
+	mode = convert_function_priv_string(priv_type_text);
+
+	aclresult = pg_proc_aclcheck(functionoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ *		Support routines for has_function_privilege family.
+ */
+
+/*
+ * Given a function name expressed as a string, look it up and return Oid
+ */
+static Oid
+convert_function_name(text *functionname)
+{
+	char	   *funcname;
+	Oid			oid;
+
+	funcname = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(functionname)));
+
+	oid = DatumGetObjectId(DirectFunctionCall1(regprocedurein,
+											   CStringGetDatum(funcname)));
+
+	if (!OidIsValid(oid))
+		elog(ERROR, "function \"%s\" does not exist", funcname);
+
+	return oid;
+}
+
+/*
+ * convert_function_priv_string
+ *		Convert text string to AclMode value.
+ */
+static AclMode
+convert_function_priv_string(text *priv_type_text)
+{
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(priv_type_text)));
+
+	/*
+	 * Return mode from priv_type string
+	 */
+	if (strcasecmp(priv_type, "EXECUTE") == 0)
+		return ACL_EXECUTE;
+
+	elog(ERROR, "has_function_privilege: invalid privilege type %s",
+		 priv_type);
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
+}
+
+
+/*
+ * has_language_privilege variants
+ *		These are all named "has_language_privilege" at the SQL level.
+ *		They take various combinations of language name, language OID,
+ *		user name, user sysid, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * has_language_privilege_name_name
+ *		Check user privileges on a language given
+ *		name username, text languagename, and text priv name.
+ */
+Datum
+has_language_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	text	   *languagename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	Oid			languageoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	languageoid = convert_language_name(languagename);
+	mode = convert_language_priv_string(priv_type_text);
+
+	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_language_privilege_name
+ *		Check user privileges on a language given
+ *		text languagename and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_language_privilege_name(PG_FUNCTION_ARGS)
+{
+	text	   *languagename = PG_GETARG_TEXT_P(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	Oid			languageoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	languageoid = convert_language_name(languagename);
+	mode = convert_language_priv_string(priv_type_text);
+
+	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_language_privilege_name_id
+ *		Check user privileges on a language given
+ *		name usename, language oid, and text priv name.
+ */
+Datum
+has_language_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			languageoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	mode = convert_language_priv_string(priv_type_text);
+
+	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_language_privilege_id
+ *		Check user privileges on a language given
+ *		language oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_language_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			languageoid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	mode = convert_language_priv_string(priv_type_text);
+
+	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_language_privilege_id_name
+ *		Check user privileges on a language given
+ *		usesysid, text languagename, and text priv name.
+ */
+Datum
+has_language_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	text	   *languagename = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			languageoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	languageoid = convert_language_name(languagename);
+	mode = convert_language_priv_string(priv_type_text);
+
+	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_language_privilege_id_id
+ *		Check user privileges on a language given
+ *		usesysid, language oid, and text priv name.
+ */
+Datum
+has_language_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			languageoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	AclMode		mode;
+	AclResult	aclresult;
+
+	mode = convert_language_priv_string(priv_type_text);
+
+	aclresult = pg_language_aclcheck(languageoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ *		Support routines for has_language_privilege family.
+ */
+
+/*
+ * Given a language name expressed as a string, look it up and return Oid
+ */
+static Oid
+convert_language_name(text *languagename)
+{
+	char	   *langname;
+	Oid			oid;
+
+	langname = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(languagename)));
+
+	oid = GetSysCacheOid(LANGNAME,
+						 CStringGetDatum(langname),
+						 0, 0, 0);
+	if (!OidIsValid(oid))
+		elog(ERROR, "language \"%s\" does not exist", langname);
+
+	return oid;
+}
+
+/*
+ * convert_language_priv_string
+ *		Convert text string to AclMode value.
+ */
+static AclMode
+convert_language_priv_string(text *priv_type_text)
+{
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(priv_type_text)));
+
+	/*
+	 * Return mode from priv_type string
+	 */
+	if (strcasecmp(priv_type, "USAGE") == 0)
+		return ACL_USAGE;
+
+	elog(ERROR, "has_language_privilege: invalid privilege type %s",
+		 priv_type);
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
+}
+
+
+/*
+ * has_schema_privilege variants
+ *		These are all named "has_schema_privilege" at the SQL level.
+ *		They take various combinations of schema name, schema OID,
+ *		user name, user sysid, or implicit user = current_user.
+ *
+ *		The result is a boolean value: true if user has the indicated
+ *		privilege, false if not.
+ */
+
+/*
+ * has_schema_privilege_name_name
+ *		Check user privileges on a schema given
+ *		name username, text schemaname, and text priv name.
+ */
+Datum
+has_schema_privilege_name_name(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	text	   *schemaname = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	Oid			schemaoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	schemaoid = convert_schema_name(schemaname);
+	mode = convert_schema_priv_string(priv_type_text);
+
+	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_schema_privilege_name
+ *		Check user privileges on a schema given
+ *		text schemaname and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_schema_privilege_name(PG_FUNCTION_ARGS)
+{
+	text	   *schemaname = PG_GETARG_TEXT_P(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	Oid			schemaoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	schemaoid = convert_schema_name(schemaname);
+	mode = convert_schema_priv_string(priv_type_text);
+
+	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_schema_privilege_name_id
+ *		Check user privileges on a schema given
+ *		name usename, schema oid, and text priv name.
+ */
+Datum
+has_schema_privilege_name_id(PG_FUNCTION_ARGS)
+{
+	Name		username = PG_GETARG_NAME(0);
+	Oid			schemaoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = get_usesysid(NameStr(*username));
+	mode = convert_schema_priv_string(priv_type_text);
+
+	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_schema_privilege_id
+ *		Check user privileges on a schema given
+ *		schema oid, and text priv name.
+ *		current_user is assumed
+ */
+Datum
+has_schema_privilege_id(PG_FUNCTION_ARGS)
+{
+	Oid			schemaoid = PG_GETARG_OID(0);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
+	int32		usesysid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	usesysid = GetUserId();
+	mode = convert_schema_priv_string(priv_type_text);
+
+	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_schema_privilege_id_name
+ *		Check user privileges on a schema given
+ *		usesysid, text schemaname, and text priv name.
+ */
+Datum
+has_schema_privilege_id_name(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	text	   *schemaname = PG_GETARG_TEXT_P(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	Oid			schemaoid;
+	AclMode		mode;
+	AclResult	aclresult;
+
+	schemaoid = convert_schema_name(schemaname);
+	mode = convert_schema_priv_string(priv_type_text);
+
+	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ * has_schema_privilege_id_id
+ *		Check user privileges on a schema given
+ *		usesysid, schema oid, and text priv name.
+ */
+Datum
+has_schema_privilege_id_id(PG_FUNCTION_ARGS)
+{
+	int32		usesysid = PG_GETARG_INT32(0);
+	Oid			schemaoid = PG_GETARG_OID(1);
+	text	   *priv_type_text = PG_GETARG_TEXT_P(2);
+	AclMode		mode;
+	AclResult	aclresult;
+
+	mode = convert_schema_priv_string(priv_type_text);
+
+	aclresult = pg_namespace_aclcheck(schemaoid, usesysid, mode);
+
+	PG_RETURN_BOOL(aclresult == ACLCHECK_OK);
+}
+
+/*
+ *		Support routines for has_schema_privilege family.
+ */
+
+/*
+ * Given a schema name expressed as a string, look it up and return Oid
+ */
+static Oid
+convert_schema_name(text *schemaname)
+{
+	char	   *nspname;
+	Oid			oid;
+
+	nspname = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(schemaname)));
+
+	oid = GetSysCacheOid(NAMESPACENAME,
+						 CStringGetDatum(nspname),
+						 0, 0, 0);
+	if (!OidIsValid(oid))
+		elog(ERROR, "schema \"%s\" does not exist", nspname);
+
+	return oid;
+}
+
+/*
+ * convert_schema_priv_string
+ *		Convert text string to AclMode value.
+ */
+static AclMode
+convert_schema_priv_string(text *priv_type_text)
+{
+	char	   *priv_type;
+
+	priv_type = DatumGetCString(DirectFunctionCall1(textout,
+											PointerGetDatum(priv_type_text)));
+
+	/*
+	 * Return mode from priv_type string
+	 */
+	if (strcasecmp(priv_type, "CREATE") == 0)
+		return ACL_CREATE;
+
+	if (strcasecmp(priv_type, "USAGE") == 0)
+		return ACL_USAGE;
+
+	elog(ERROR, "has_schema_privilege: invalid privilege type %s",
+		 priv_type);
+	return ACL_NO_RIGHTS;		/* keep compiler quiet */
 }

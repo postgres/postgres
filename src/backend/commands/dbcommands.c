@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.98 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.99 2002/08/09 16:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -745,4 +745,79 @@ remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 	}
 
 	return success;
+}
+
+
+/*
+ * get_database_oid - given a database name, look up the OID
+ *
+ * Returns InvalidOid if database name not found.
+ *
+ * This is not actually used in this file, but is exported for use elsewhere.
+ */
+Oid
+get_database_oid(const char *dbname)
+{
+	Relation	pg_database;
+	ScanKeyData entry[1];
+	HeapScanDesc scan;
+	HeapTuple	dbtuple;
+	Oid			oid;
+
+	/* There's no syscache for pg_database, so must look the hard way */
+	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry[0], 0x0,
+						   Anum_pg_database_datname, F_NAMEEQ,
+						   CStringGetDatum(dbname));
+	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
+
+	dbtuple = heap_getnext(scan, ForwardScanDirection);
+
+	/* We assume that there can be at most one matching tuple */
+	if (HeapTupleIsValid(dbtuple))
+		oid = HeapTupleGetOid(dbtuple);
+	else
+		oid = InvalidOid;
+
+	heap_endscan(scan);
+	heap_close(pg_database, AccessShareLock);
+
+	return oid;
+}
+
+/*
+ * get_database_owner - given a database OID, fetch the owner's usesysid.
+ *
+ * Errors out if database not found.
+ *
+ * This is not actually used in this file, but is exported for use elsewhere.
+ */
+Oid
+get_database_owner(Oid dbid)
+{
+	Relation	pg_database;
+	ScanKeyData entry[1];
+	HeapScanDesc scan;
+	HeapTuple	dbtuple;
+	int32		dba;
+
+	/* There's no syscache for pg_database, so must look the hard way */
+	pg_database = heap_openr(DatabaseRelationName, AccessShareLock);
+	ScanKeyEntryInitialize(&entry[0], 0x0,
+						   ObjectIdAttributeNumber, F_OIDEQ,
+						   ObjectIdGetDatum(dbid));
+	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
+
+	dbtuple = heap_getnext(scan, ForwardScanDirection);
+
+	if (!HeapTupleIsValid(dbtuple))
+		elog(ERROR, "database %u does not exist", dbid);
+
+	dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
+
+	heap_endscan(scan);
+	heap_close(pg_database, AccessShareLock);
+
+	/* XXX some confusion about whether userids are OID or int4 ... */
+	return (Oid) dba;
 }

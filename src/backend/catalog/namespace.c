@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.29 2002/08/08 01:44:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.30 2002/08/09 16:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,13 @@ static void InitTempTableNamespace(void);
 static void RemoveTempRelations(Oid tempNamespaceId);
 static void RemoveTempRelationsCallback(void);
 static void NamespaceCallback(Datum arg, Oid relid);
+
+/* These don't really need to appear in any header file */
+Datum pg_table_is_visible(PG_FUNCTION_ARGS);
+Datum pg_type_is_visible(PG_FUNCTION_ARGS);
+Datum pg_function_is_visible(PG_FUNCTION_ARGS);
+Datum pg_operator_is_visible(PG_FUNCTION_ARGS);
+Datum pg_opclass_is_visible(PG_FUNCTION_ARGS);
 
 
 /*
@@ -1746,4 +1753,48 @@ fetch_search_path(bool includeImplicit)
 	}
 
 	return result;
+}
+
+/*
+ * Export the FooIsVisible functions as SQL-callable functions.
+ */
+
+Datum
+pg_table_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(RelationIsVisible(oid));
+}
+
+Datum
+pg_type_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(TypeIsVisible(oid));
+}
+
+Datum
+pg_function_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(FunctionIsVisible(oid));
+}
+
+Datum
+pg_operator_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(OperatorIsVisible(oid));
+}
+
+Datum
+pg_opclass_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(OpclassIsVisible(oid));
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.189 2002/08/06 14:11:05 tgl Exp $
+ * $Id: builtins.h,v 1.190 2002/08/09 16:45:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,30 @@ extern Datum has_table_privilege_id_name(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_id_id(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_name(PG_FUNCTION_ARGS);
 extern Datum has_table_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_database_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_database_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_database_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_database_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_database_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_database_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_function_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_function_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_function_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_function_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_function_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_function_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_language_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_language_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_language_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_language_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_language_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_language_privilege_id(PG_FUNCTION_ARGS);
+extern Datum has_schema_privilege_name_name(PG_FUNCTION_ARGS);
+extern Datum has_schema_privilege_name_id(PG_FUNCTION_ARGS);
+extern Datum has_schema_privilege_id_name(PG_FUNCTION_ARGS);
+extern Datum has_schema_privilege_id_id(PG_FUNCTION_ARGS);
+extern Datum has_schema_privilege_name(PG_FUNCTION_ARGS);
+extern Datum has_schema_privilege_id(PG_FUNCTION_ARGS);
 
 /* bool.c */
 extern Datum boolin(PG_FUNCTION_ARGS);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.50 2002/08/05 03:29:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.51 2002/08/09 16:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/pg_proc.h"
 #include "executor/executor.h"
 #include "utils/fcache.h"
+#include "utils/fmgroids.h"
 #include "utils/sets.h"
 #include "utils/syscache.h"
 
@@ -58,7 +59,7 @@ SetDefine(char *querystr, Oid elemType)
 							 true,		/* returnsSet */
 							 elemType,	/* returnType */
 							 SQLlanguageId,	/* language */
-							 SQLvalidatorId,
+							 F_FMGR_SQL_VALIDATOR,
 							 querystr,	/* prosrc */
 							 fileName,	/* probin */
 							 false,		/* not aggregate */

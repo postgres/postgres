@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.109 2002/08/08 14:29:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.110 2002/08/09 16:45:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -4925,55 +4925,9 @@ select current_setting('DateStyle');
     <literal>false</literal> instead. It is the equivalent to the SQL
     <command>SET</command> command. For example:
 <programlisting>
-SHOW show_query_stats;
- show_query_stats
-------------------
- on
-(1 row)
-
 select set_config('show_query_stats','off','f');
  set_config
 ------------
- off
-(1 row)
-
-SHOW show_query_stats;
- show_query_stats
-------------------
- off
-(1 row)
-
-select set_config('show_query_stats','on','t');
- set_config
-------------
- on
-(1 row)
-
-SHOW show_query_stats;
- show_query_stats
-------------------
- off
-(1 row)
-
-BEGIN;
-BEGIN
-select set_config('show_query_stats','on','t');
- set_config
-------------
- on
-(1 row)
-
-SHOW show_query_stats;
- show_query_stats
-------------------
- on
-(1 row)
-
-COMMIT;
-COMMIT
-SHOW show_query_stats;
- show_query_stats
-------------------
  off
 (1 row)
 </programlisting>
@@ -5002,6 +4956,66 @@ SHOW show_query_stats;
        <entry><type>boolean</type></entry>
        <entry>does current user have access to table</entry>
       </row>
+      <row>
+       <entry><function>has_database_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>database</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have access to database</entry>
+      </row>
+      <row>
+       <entry><function>has_database_privilege</function>(<parameter>database</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have access to database</entry>
+      </row>
+      <row>
+       <entry><function>has_function_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>function</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have access to function</entry>
+      </row>
+      <row>
+       <entry><function>has_function_privilege</function>(<parameter>function</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have access to function</entry>
+      </row>
+      <row>
+       <entry><function>has_language_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>language</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have access to language</entry>
+      </row>
+      <row>
+       <entry><function>has_language_privilege</function>(<parameter>language</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have access to language</entry>
+      </row>
+      <row>
+       <entry><function>has_schema_privilege</function>(<parameter>user</parameter>,
+                                  <parameter>schema</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does user have access to schema</entry>
+      </row>
+      <row>
+       <entry><function>has_schema_privilege</function>(<parameter>schema</parameter>,
+                                  <parameter>access</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>does current user have access to schema</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -5009,9 +5023,21 @@ SHOW show_query_stats;
    <indexterm zone="functions-misc">
     <primary>has_table_privilege</primary>
    </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>has_database_privilege</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>has_function_privilege</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>has_language_privilege</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>has_schema_privilege</primary>
+   </indexterm>
 
    <para>
-    <function>has_table_privilege</function> determines whether a user
+    <function>has_table_privilege</function> checks whether a user
     can access a table in a particular way.  The user can be
     specified by name or by ID
     (<classname>pg_user</classname>.<structfield>usesysid</structfield>), or if the argument is
@@ -5030,6 +5056,140 @@ SHOW show_query_stats;
 <programlisting>
 SELECT has_table_privilege('myschema.mytable', 'select');
 </programlisting>
+   </para>
+
+   <para>
+    <function>has_database_privilege</function> checks whether a user
+    can access a database in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    The desired access type must evaluate to
+    <literal>CREATE</literal>,
+    <literal>TEMPORARY</literal>, or
+    <literal>TEMP</literal> (which is equivalent to
+    <literal>TEMPORARY</literal>).
+   </para>
+
+   <para>
+    <function>has_function_privilege</function> checks whether a user
+    can access a function in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    When specifying a function by a text string rather than by OID,
+    the allowed input is the same as for the <type>regprocedure</> datatype.
+    The desired access type must currently evaluate to
+    <literal>EXECUTE</literal>.
+   </para>
+
+   <para>
+    <function>has_language_privilege</function> checks whether a user
+    can access a procedural language in a particular way.  The possibilities
+    for its arguments are analogous to <function>has_table_privilege</function>.
+    The desired access type must currently evaluate to
+    <literal>USAGE</literal>.
+   </para>
+
+   <para>
+    <function>has_schema_privilege</function> checks whether a user
+    can access a schema in a particular way.  The possibilities for its
+    arguments are analogous to <function>has_table_privilege</function>.
+    The desired access type must evaluate to
+    <literal>CREATE</literal> or
+    <literal>USAGE</literal>.
+   </para>
+
+   <table>
+    <title>Schema Visibility Inquiry Functions</title>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</entry> <entry>Return Type</entry> <entry>Description</entry></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><function>pg_table_is_visible</function>(<parameter>tableOID</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is table visible in search path</entry>
+      </row>
+      <row>
+       <entry><function>pg_type_is_visible</function>(<parameter>typeOID</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is type visible in search path</entry>
+      </row>
+      <row>
+       <entry><function>pg_function_is_visible</function>(<parameter>functionOID</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is function visible in search path</entry>
+      </row>
+      <row>
+       <entry><function>pg_operator_is_visible</function>(<parameter>operatorOID</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is operator visible in search path</entry>
+      </row>
+      <row>
+       <entry><function>pg_opclass_is_visible</function>(<parameter>opclassOID</parameter>)
+       </entry>
+       <entry><type>boolean</type></entry>
+       <entry>is operator class visible in search path</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-misc">
+    <primary>pg_table_is_visible</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>pg_type_is_visible</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>pg_function_is_visible</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>pg_operator_is_visible</primary>
+   </indexterm>
+   <indexterm zone="functions-misc">
+    <primary>pg_opclass_is_visible</primary>
+   </indexterm>
+
+   <para>
+    <function>pg_table_is_visible</function> checks whether a table
+    (or view, or any other kind of <structname>pg_class</> entry) is
+    <firstterm>visible</> in the current schema search path.  A table
+    is said to be visible if its containing schema is in the search path
+    and no table of the same name appears earlier in the search path.
+    This is equivalent to the statement that the table can be referenced
+    by name without explicit schema qualification.
+    For example, to list the names of all visible tables:
+<programlisting>
+SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
+</programlisting>
+   </para>
+
+   <para>
+    <function>pg_type_is_visible</function>,
+    <function>pg_function_is_visible</function>,
+    <function>pg_operator_is_visible</function>, and
+    <function>pg_opclass_is_visible</function> perform the same sort of
+    visibility check for types, functions, operators, and operator classes,
+    respectively.  For functions and operators, an object in the search path
+    is visible if there is no object of the same name <emphasis>and argument
+    datatype(s)</> earlier in the path.  For operator classes,
+    both name and associated index access method are considered.
+   </para>
+
+   <para>
+    All these functions require object OIDs to identify the object to be
+    checked.  If you want to test an object by name, it is convenient to use
+    the OID alias types (<type>regclass</>, <type>regtype</>,
+    <type>regprocedure</>, or <type>regoperator</>), for example
+<programlisting>
+SELECT pg_type_is_visible('myschema.widget'::regtype);
+</programlisting>
+    Note that it would not make much sense to test an unqualified name in
+    this way --- if the name can be recognized at all, it must be visible.
    </para>
 
    <table>
