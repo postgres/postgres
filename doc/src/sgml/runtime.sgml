@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.273 2004/08/06 04:15:07 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.274 2004/08/08 19:42:56 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -513,10 +513,11 @@ postmaster -c log_connections=yes -c log_destination='syslog'
 <programlisting>
 env PGOPTIONS='-c geqo=off' psql
 </programlisting>
-    (This works for any <application>libpq</>-based client application, not just
-    <application>psql</application>.) Note that this won't work for
-    parameters that are fixed when the server is started, such as the port
-    number.
+    (This works for any <application>libpq</>-based client application, not
+    just <application>psql</application>.) Note that this won't work for
+    parameters that are fixed when the server is started, nor for
+    parameters that require superuser permissions to change (not even
+    if you are logging in as superuser).
    </para>
 
    <para>
@@ -666,7 +667,7 @@ SET ENABLE_SEQSCAN TO OFF;
         to request more <systemitem class="osname">System V</> shared
         memory or semaphores than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
-        adjust these parameters, if necessary.
+        adjust those parameters, if necessary.
        </para>
       </listitem>
      </varlistentry>
@@ -713,11 +714,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>unix_socket_group</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        Sets the group owner of the Unix domain socket.  (The owning
+        Sets the owning group of the Unix-domain socket.  (The owning
         user of the socket is always the user that starts the
         server.)  In combination with the option
         <varname>unix_socket_permissions</varname> this can be used as
-        an additional access control mechanism for this socket type.
+        an additional access control mechanism for Unix-domain connections.
         By default this is the empty string, which uses the default
         group for the current user.  This option can only be set at
         server start.
@@ -729,9 +730,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>unix_socket_permissions</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Sets the access permissions of the Unix domain socket.  Unix
+        Sets the access permissions of the Unix-domain socket.  Unix
         domain sockets use the usual Unix file system permission set.
-        The option value is expected to be an numeric mode
+        The option value is expected to be a numeric mode
         specification in the form accepted by the
         <function>chmod</function> and <function>umask</function>
         system calls.  (To use the customary octal format the number
@@ -741,7 +742,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         The default permissions are <literal>0777</literal>, meaning
         anyone can connect. Reasonable alternatives are
-        <literal>0770</literal> (only user and group, see also under
+        <literal>0770</literal> (only user and group, see also
         <varname>unix_socket_group</varname>) and <literal>0700</literal>
         (only user). (Note that actually for a Unix domain socket, only write
         permission matters and there is no point in setting or revoking
@@ -900,7 +901,7 @@ SET ENABLE_SEQSCAN TO OFF;
         to request more <systemitem class="osname">System V</> shared
         memory than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
-        adjust these parameters, if necessary.
+        adjust those parameters, if necessary.
        </para>
       </listitem>
      </varlistentry>
@@ -1081,7 +1082,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <para>
       The intent of this feature is to allow administrators to reduce
       the I/O impact of these commands on concurrent database
-      activity. There are some situations in which it is not very
+      activity. There are many situations in which it is not very
       important that maintenance commands like
       <command>VACUUM</command> and <command>ANALYZE</command> finish
       quickly; however, it is usually very important that these
@@ -1097,6 +1098,23 @@ SET ENABLE_SEQSCAN TO OFF;
      </para>
 
      <variablelist>
+      <varlistentry id="guc-vacuum-cost-delay" xreflabel="vacuum_cost_delay">
+       <term><varname>vacuum_cost_delay</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         The length of time, in milliseconds, that the process will sleep
+         when the cost limit has been exceeded.
+         The default value is 0, which disables the cost-based vacuum
+         delay feature.  Positive values enable cost-based vacuuming.
+         Note that on many systems, the effective resolution
+         of sleep delays is 10 milliseconds; setting
+         <varname>vacuum_cost_delay</varname> to a value that is
+         not a multiple of 10 may have the same results as setting it
+         to the next higher multiple of 10.
+        </para>
+       </listitem>
+      </varlistentry>
+
       <varlistentry id="guc-vacuum-cost-page-hit" xreflabel="vacuum_cost_page_hit">
        <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)</term>
        <listitem>
@@ -1137,25 +1155,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
-         The accumulated cost that will cause the vacuuming process to briefly
-         nap. The default value is 200.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-vacuum-cost-delay" xreflabel="vacuum_cost_delay">
-       <term><varname>vacuum_cost_delay</varname> (<type>integer</type>)</term>
-       <listitem>
-        <para>
-         The length of time, in milliseconds, that the process will nap
-         when the cost limit has been exceeded.
-         The default value is 0, which disables the cost-based vacuum
-         delay feature.  Positive values enable cost-based vacuuming.
-         Note however that on many systems, the effective resolution
-         of sleep delays is 10 milliseconds; setting
-         <varname>vacuum_cost_delay</varname> to a value that is
-         not a multiple of 10 may have the same results as setting it
-         to the next higher multiple of 10.
+         The accumulated cost that will cause the vacuuming process to sleep.
+         The default value is 200.
         </para>
        </listitem>
       </varlistentry>
@@ -1163,7 +1164,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <note>
       <para>
-       There are certain bulk operations that hold critical locks and should
+       There are certain operations that hold critical locks and should
        therefore complete as quickly as possible.  Cost-based vacuum
        delays do not occur during such operations.  Therefore it is
        possible that the cost accumulates far higher than the specified
@@ -1176,6 +1177,85 @@ SET ENABLE_SEQSCAN TO OFF;
      </note>
 
     </sect3>
+
+    <sect3 id="runtime-config-resource-background-writer">
+     <title>Background Writer</title>
+
+     <para>
+      Beginning in <productname>PostgreSQL</> 8.0, there is a separate server
+      process called the <firstterm>background writer</>, whose sole function
+      is to issue writes of <quote>dirty</> shared buffers.  The intent is
+      that server processes handling user queries should seldom or never have
+      to wait for a write to occur, because the background writer will do it.
+      This arrangement also reduces the performance penalty associated with
+      checkpoints.  The background writer will continuously trickle out dirty
+      pages to disk, so that only a few pages will need to be forced out when
+      checkpoint time arrives, instead of the storm of dirty-buffer writes that
+      formerly occurred at each checkpoint.  However there is a net overall
+      increase in I/O load, because where a repeatedly-dirtied page might
+      before have been written only once per checkpoint interval, the
+      background writer might write it several times in the same interval.
+      In most situations a continuous low load is preferable to periodic
+      spikes, but the parameters discussed in this section can be used to tune
+      the behavior for local needs.
+     </para>
+
+     <variablelist>
+      <varlistentry id="guc-bgwriter-delay" xreflabel="bgwriter_delay">
+       <term><varname>bgwriter_delay</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         Specifies the delay between activity rounds for the
+         background writer.  In each round the writer issues writes for some
+         number of dirty buffers (controllable by the following parameters).
+         The selected buffers will always be the
+         least recently used ones among the currently dirty buffers.
+         It then sleeps for <varname>bgwriter_delay</varname> milliseconds,
+         and repeats.
+         Note that on many systems, the effective resolution
+         of sleep delays is 10 milliseconds; setting
+         <varname>bgwriter_delay</varname> to a value that is
+         not a multiple of 10 may have the same results as setting it
+         to the next higher multiple of 10.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> file.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-bgwriter-percent" xreflabel="bgwriter_percent">
+       <term><varname>bgwriter_percent</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         In each round, no more than this percentage of the currently dirty
+         buffers will be written (rounding up any fraction to the next whole
+         number of buffers).
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> file.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-bgwriter-maxpages" xreflabel="bgwriter_maxpages">
+       <term><varname>bgwriter_maxpages</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+         In each round, no more than this many dirty buffers will be written.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> file.
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+
+     <para>
+      Smaller values of <varname>bgwriter_percent</varname> and
+      <varname>bgwriter_maxpages</varname> reduce the extra I/O load caused by
+      the background writer, but leave more work to be done at checkpoint
+      time.  To reduce load spikes at checkpoints, increase the values.
+     </para>
+    </sect3>
+
    </sect2>
 
    <sect2 id="runtime-config-wal">
@@ -1203,8 +1283,6 @@ SET ENABLE_SEQSCAN TO OFF;
         to make sure that updates are physically written to disk. This
         insures that a database cluster will recover to a
         consistent state after an operating system or hardware crash.
-        (Crashes of the database server itself are <emphasis>not</>
-        related to this.)
        </para>
 
        <para>
@@ -1218,6 +1296,9 @@ SET ENABLE_SEQSCAN TO OFF;
         However, if the system crashes, the results of the last few
         committed transactions may be lost in part or whole. In the
         worst case, unrecoverable data corruption may occur.
+        (Crashes of the database server itself are <emphasis>not</>
+        a risk factor here.  Only an operating-system-level crash
+        creates a risk of corruption.)
        </para>
 
        <para>
@@ -1251,6 +1332,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <literal>open_sync</> (write WAL files with <function>open()</> option <symbol>O_SYNC</>), and
         <literal>open_datasync</> (write WAL files with <function>open()</> option <symbol>O_DSYNC</>).
         Not all of these choices are available on all platforms.
+        If <varname>fsync</varname> is off then this setting is irrelevant.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> file.
        </para>
@@ -1261,9 +1343,42 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>wal_buffers</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Number of disk-page buffers in shared memory for WAL
-        logging. The default is 8. This option can only be set at
-        server start.
+        Number of disk-page buffers allocated in shared memory for WAL data.
+        The default is 8.  The setting need only be large enough to hold
+        the amount of WAL data generated by one typical transaction.
+        This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+                
+     <varlistentry id="guc-commit-delay" xreflabel="commit_delay">
+      <term><varname>commit_delay</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Time delay between writing a commit record to the WAL buffer
+        and flushing the buffer out to disk, in microseconds. A
+        nonzero delay can allow multiple transactions to be committed
+        with only one <function>fsync()</function> system call, if
+        system load is high enough that additional transactions become
+        ready to commit within the given interval. But the delay is
+        just wasted if no other transactions become ready to
+        commit. Therefore, the delay is only performed if at least
+        <varname>commit_siblings</varname> other transactions are
+        active at the instant that a server process has written its
+        commit record. The default is zero (no delay).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-commit-siblings" xreflabel="commit_siblings">
+      <term><varname>commit_siblings</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Minimum number of concurrent open transactions to require
+        before performing the <varname>commit_delay</> delay. A larger
+        value makes it more probable that at least one other
+        transaction will become ready to commit during the delay
+        interval. The default is five.
        </para>
       </listitem>
      </varlistentry>
@@ -1303,42 +1418,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Write a message to the server logs if checkpoints caused by
-        the filling of checkpoint segment files happens more
-        frequently than this number of seconds.  The default is 30
-        seconds.  Zero turns off the warning.
-       </para>
-      </listitem>
-     </varlistentry>
-                
-                
-     <varlistentry id="guc-commit-delay" xreflabel="commit_delay">
-      <term><varname>commit_delay</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        Time delay between writing a commit record to the WAL buffer
-        and flushing the buffer out to disk, in microseconds. A
-        nonzero delay allows multiple transactions to be committed
-        with only one <function>fsync()</function> system call, if
-        system load is high enough additional transactions may become
-        ready to commit within the given interval. But the delay is
-        just wasted if no other transactions become ready to
-        commit. Therefore, the delay is only performed if at least
-        <varname>commit_siblings</varname> other transactions are
-        active at the instant that a server process has written its
-        commit record. The default is zero (no delay).
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-commit-siblings" xreflabel="commit_siblings">
-      <term><varname>commit_siblings</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        Minimum number of concurrent open transactions to require
-        before performing the <varname>commit_delay</> delay. A larger
-        value makes it more probable that at least one other
-        transaction will become ready to commit during the delay
-        interval. The default is five.
+        the filling of checkpoint segment files happen closer together
+        than this many seconds.  The default is 30 seconds.
+        Zero turns off the warning.
        </para>
       </listitem>
      </varlistentry>
@@ -1377,7 +1459,6 @@ SET ENABLE_SEQSCAN TO OFF;
     <sect3 id="runtime-config-query-enable">
      <title>Planner Method Configuration</title>
 
-     <note>
       <para>
        These configuration parameters provide a crude method for
        influencing the query plans chosen by the query optimizer. If
@@ -1395,7 +1476,6 @@ SET ENABLE_SEQSCAN TO OFF;
        particular column using <command>ALTER TABLE SET
        STATISTICS</command>.
       </para>
-     </note>
 
      <variablelist>
      <varlistentry id="guc-enable-hashagg" xreflabel="enable_hashagg">
@@ -1744,7 +1824,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        By default, this variable is set to
+        By default, this variable is set the same as
         <varname>from_collapse_limit</varname>, which is appropriate
         for most uses. Setting it to 1 prevents any reordering of
         inner <literal>JOIN</>s. Thus, the explicit join order
@@ -1973,8 +2053,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Controls whether or not the SQL statement that causes an error
         condition will also be recorded in the server log. All SQL
-        statements that cause an error of the specified level, or a
-        higher level, are logged.  The default is
+        statements that cause an error of the specified level or
+        higher are logged.  The default is
         <literal>PANIC</literal> (effectively turning this feature
         off for normal use). Valid values are <literal>DEBUG5</literal>,
         <literal>DEBUG4</literal>, <literal>DEBUG3</literal>,
@@ -1996,11 +2076,11 @@ SET ENABLE_SEQSCAN TO OFF;
        <listitem>
         <para>
          Sets a minimum statement execution time (in milliseconds)
-         for statement to be logged.  All SQL statements
-         that run in the time specified or longer will be logged with
+         that causes a statement to be logged.  All SQL statements
+         that run for the time specified or longer will be logged with
          their duration.  Setting this to zero will print
          all queries and their durations.  Minus-one (the default)
-         disables this.  For example, if you set it to 
+         disables the feature.  For example, if you set it to 
          <literal>250</literal> then all SQL statements that run 250ms 
          or longer will be logged.  Enabling this option can be
          useful in tracking down unoptimized queries in your applications.
@@ -2016,12 +2096,13 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Runs the server silently. If this option is set, the server
         will automatically run in background and any controlling
-        terminals are disassociated.  Thus, no messages are written to
-        standard output or standard error (same effect as
-        <command>postmaster</>'s <option>-S</option> option). Unless
-        <application>syslog</> logging is enabled, using this option
-        is discouraged because it makes it impossible to see error
-        messages.
+        terminals are disassociated (same effect as
+        <command>postmaster</>'s <option>-S</option> option).
+        The server's standard output and standard error are redirected
+	to <literal>/dev/null</>, so any messages sent to them will be lost.
+	Unless <application>syslog</> logging is selected or
+	<varname>redirect_stderr</> is enabled, using this option
+        is discouraged because it makes it impossible to see error messages.
        </para>
       </listitem>
      </varlistentry>
@@ -2188,11 +2269,13 @@ SET ENABLE_SEQSCAN TO OFF;
 	 below - anything else that looks like an escape is ignored. Other
 	 characters are copied straight to the log line. Some escapes are
 	 only recognised by session processes, and do not apply to
-	 processes without controlling sessions. <application>Syslog</> produces its own
+	 background processes such as the postmaster. <application>Syslog</>
+         produces its own 
 	 timestamp and process ID information, so you probably do not want to
 	 use those escapes if you are using <application>syslog</>.
 	 This option can only be set at server start or in the
-     <filename>postgresql.conf</filename> configuration file.
+         <filename>postgresql.conf</filename> configuration file.
+
 	 <informaltable>
 	  <tgroup cols="3">
 	   <thead>
@@ -2238,7 +2321,7 @@ SET ENABLE_SEQSCAN TO OFF;
 	     <entry><literal>%c</literal></entry>
 	     <entry>Session ID. A unique identifier for each session.
 	     It is 2 4-byte hexadecimal numbers (without leading zeros) 
-	      separated by a dot. The numbers
+             separated by a dot. The numbers
 	     are the Session Start Time and the Process ID, so this can also
 	     be used as a space saving way of printing these items.</entry>
 	     <entry>Yes</entry>
@@ -2258,7 +2341,7 @@ SET ENABLE_SEQSCAN TO OFF;
 	     <entry><literal>%x</literal></entry>
 	     <entry>Does not produce any output, but tells non-session
 	     processes to stop at this point in the string. Ignored by
-	     session backends.</entry>
+	     session processes.</entry>
 	     <entry>No</entry>
 	    </row>
 	    <row>
@@ -2277,7 +2360,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>log_statement</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        Controls which SQL statement are logged. Valid values are
+        Controls which SQL statements are logged. Valid values are
         <literal>all</>, <literal>ddl</>, <literal>mod</>, and
         <literal>none</>. <literal>ddl</> logs all data definition
         commands like <literal>CREATE</>, <literal>ALTER</>, and
@@ -2571,8 +2654,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Aborts any statement that takes over the specified number of
-        milliseconds.  A value of zero turns off the timer, which is
-        the default value.
+        milliseconds.  A value of zero (the default) turns off the limitation.
        </para>
       </listitem>
      </varlistentry>
@@ -2760,28 +2842,28 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         If a dynamically loadable module needs to be opened and the
-        specified name does not have a directory component (i.e. the
+        file name specified in the <command>CREATE FUNCTION</command> or
+        <command>LOAD</command> command
+        does not have a directory component (i.e. the
         name does not contain a slash), the system will search this
-        path for the specified file.  (The name that is used is the
-        name specified in the <command>CREATE FUNCTION</command> or
-        <command>LOAD</command> command.)
+        path for the required file.
        </para>
 
        <para>
         The value for <varname>dynamic_library_path</varname> has to be a
-        list of absolute directory names separated by colon or, in windows
-        environments with semi-colon. If a directory name starts
-        with the special value <literal>$libdir</literal>, the
+        list of absolute directory paths separated by colons (or semi-colons
+	on Windows).  If a list element starts
+        with the special string <literal>$libdir</literal>, the
         compiled-in <productname>PostgreSQL</productname> package
-        library directory is substituted. This where the modules
-        provided by the <productname>PostgreSQL</productname>
-        distribution are installed. (Use <literal>pg_config
-        --pkglibdir</literal> to print the name of this directory.) For
-        example:
+        library directory is substituted for <literal>$libdir</literal>. This
+        is where the modules provided by the standard
+        <productname>PostgreSQL</productname> distribution are installed.
+        (Use <literal>pg_config --pkglibdir</literal> to find out the name of
+        this directory.) For example:
 <programlisting>
 dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 </programlisting>
-        or, in a windows environment:
+        or, in a Windows environment:
 <programlisting>
 dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 </programlisting>
@@ -2923,15 +3005,15 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         This controls whether <command>CREATE TABLE</command>
         and <command>CREATE TABLE AS</command> will include OIDs in
         newly-created tables, if neither <literal>WITH OIDS</literal>
-        or <literal>WITHOUT OIDS</literal> have been specified. It
-        also determines whether OIDs will be included in the table
+        nor <literal>WITHOUT OIDS</literal> have been specified. It
+        also determines whether OIDs will be included in tables
         created by <command>SELECT INTO</command>. In
         <productname>PostgreSQL</productname> &version;
         <varname>default_with_oids</varname> defaults to
         true. This is also the behavior of previous versions
         of <productname>PostgreSQL</productname>. However, assuming
         that tables will contain OIDs by default is not
-        encouraged. Therefore, this option will default to false in a
+        encouraged. This option will probably default to false in a
         future release of <productname>PostgreSQL</productname>.
        </para>
 
@@ -2940,7 +3022,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         this option should left enabled. To ease compatibility with
         future versions of <productname>PostgreSQL</productname>, this
         option should be disabled, and applications that require OIDs
-        on certain tables should explictely specify <literal>WITH
+        on certain tables should explicitly specify <literal>WITH
         OIDS</literal> when issuing the <command>CREATE
         TABLE</command> statements for the tables in question.
        </para>
@@ -2963,7 +3045,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         = <replaceable>expr</></literal>) are treated as
         <literal><replaceable>expr</> IS NULL</literal>, that is, they
         return true if <replaceable>expr</> evaluates to the null value,
-        and false otherwise. The correct behavior of
+        and false otherwise. The correct SQL-spec-compliant behavior of
         <literal><replaceable>expr</> = NULL</literal> is to always
         return null (unknown). Therefore this option defaults to off.
        </para>
@@ -2983,8 +3065,8 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        Note that this option only affects the literal <literal>=</>
-        operator, not other comparison operators or other expressions
+        Note that this option only affects the exact form <literal>= NULL</>,
+        not other comparison operators or other expressions
         that are computationally equivalent to some expression
         involving the equals operator (such as <literal>IN</literal>).
         Thus, this option is not a general fix for bad programming.
@@ -3004,7 +3086,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <title>Compiled-in Options</title>
 
     <para>
-     The following options are available read-only, and are determined
+     The following <quote>parameters</> are read-only, and are determined
      when <productname>PostgreSQL</productname> is compiled. As such,
      they have been excluded from the sample
      <filename>postgresql.conf</> file.  These options determine
@@ -3084,11 +3166,10 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     <title>Customized Options</title>
 
     <para>
-     The following was designed to allow options not normally known to
-     <productname>PostgreSQL</productname> to be declared in the posgresql.conf
-     file and/or manipulated using the <command>SET</command> in a controlled
-     manner so that add-on modules to the postgres proper (such as lanugage
-     mappings for triggers and functions) can be configured in a unified way.
+     This feature was designed to allow options not normally known to
+     <productname>PostgreSQL</productname> to be added by add-on modules
+     (such as procedural languages).  This allows add-on modules to be
+     configured in the standard ways.
     </para>
 
     <variablelist>
@@ -3098,33 +3179,13 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <indexterm><primary>custom_variable_classes</></>
       <listitem>
        <para>
-        This variable specifies one or several classes to be used for custom
-        variables. A custom variable is a variable not normally known to
-        the <productname>PostgreSQL</productname> proper but used by some add
-        on module.
-       </para>
-
-       <para>
-        Aribtrary variables can be defined for each class specified here. Those
-        variables will be treated as placeholders and have no meaning until the
-        module that defines them is loaded. When a module for a specific class is
-        loaded, it will add the proper variable definitions for the class
-        associated with it, convert any placeholder values according to those
-        definitions, and issue warnings for any placeholders that then remains.
-       </para>
-       
-       <para>
-        Here is an example what custom variables might look like:
-
-<programlisting>
-custom_variable_class = 'plr,pljava'
-plr.foo = '/usr/lib/R'
-pljava.baz = 1
-plruby.var = true        <== this one would generate an error
-</programlisting>
-       </para>
-
-       <para>
+        This variable specifies one or several class names to be used for
+        custom variables, in the form of a comma-separated list. A custom
+        variable is a variable not normally known
+        to <productname>PostgreSQL</productname> proper but used by some
+        add-on module.  Such variables must have names consisting of a class
+	name, a dot, and a variable name.  <varname>custom_variable_classes</>
+        specifies all the class names in use in a particular installation.
         This option can only be set at server start or in the
         <filename>postgresql.conf</filename> configuration file.
        </para>
@@ -3132,7 +3193,34 @@ plruby.var = true        <== this one would generate an error
       </listitem>
      </varlistentry>
     </variablelist>
-	</sect2>
+
+    <para>
+     The difficulty with setting custom variables in
+     <filename>postgresql.conf</> is that the file must be read before add-on
+     modules have been loaded, and so custom variables would ordinarily be
+     rejected as unknown.  When <varname>custom_variable_classes</> is set,
+     the server will accept definitions of arbitrary variables within each
+     specified class.  These variables will be treated as placeholders and
+     will have no function until the module that defines them is loaded. When a
+     module for a specific class is loaded, it will add the proper variable
+     definitions for its class name, convert any placeholder
+     values according to those definitions, and issue warnings for any
+     placeholders of its class that remain (which presumably would be
+     misspelled configuration variables).
+    </para>
+
+    <para>
+     Here is an example of what <filename>postgresql.conf</> might contain
+     when using custom variables:
+
+<programlisting>
+custom_variable_classes = 'plr,pljava'
+plr.path = '/usr/lib/R'
+pljava.foo = 1
+plruby.bar = true        # generates error, unknown class name
+</programlisting>
+    </para>
+   </sect2>
 
    <sect2 id="runtime-config-developer">
     <title>Developer Options</title>
@@ -3162,6 +3250,17 @@ plruby.var = true        <== this one would generate an error
         <varname>debug_assertions</varname> defaults to on if
         <productname>PostgreSQL</productname> has been built with
         assertions enabled.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-debug-shared-buffers" xreflabel="debug_shared_buffers">
+      <term><varname>debug_shared_buffers</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Number of seconds between ARC reports.
+        If set greater than zero, emit ARC statistics to the log every so many
+        seconds.  Zero (the default) disables reporting.
        </para>
       </listitem>
      </varlistentry>
