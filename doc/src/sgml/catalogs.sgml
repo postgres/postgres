@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.58 2002/09/02 05:52:34 momjian Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.59 2002/09/03 01:04:40 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1865,7 +1865,7 @@
       <entry>indisclustered</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>unused</entry>
+      <entry>If true, the table was last clustered on this index.</entry>
      </row>
 
      <row>

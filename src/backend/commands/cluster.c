@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.88 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.89 2002/09/03 01:04:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,12 +304,7 @@ get_indexattr_list(Relation OldHeap, Oid OldIndex)
 			palloc(sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
 		memcpy(attrs->classOID, indexForm->indclass,
 			   sizeof(Oid) * attrs->indexInfo->ii_NumIndexAttrs);
-
-		/* We'll set indisclustered at index creation time on the
-		 * index we are currently clustering, and reset it on other
-		 * indexes.
-		 */
-		attrs->isclustered = (OldIndex == indexOID ? true : false);
+		attrs->isclustered = (OldIndex == indexOID);
 
 		/* Name and access method of each index come from pg_class */
 		classTuple = SearchSysCache(RELOID,
@@ -373,19 +368,25 @@ recreate_indexattr(Oid OIDOldHeap, List *indexes)
 
 		CommandCounterIncrement();
 
-		/* Set indisclustered to the correct value.  Only one index is
-		 * allowed to be clustered.
+		/*
+		 * Make sure that indisclustered is correct: it should be set
+		 * only for the index we just clustered on.
 		 */
 		pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
 		tuple = SearchSysCacheCopy(INDEXRELID,
-							   ObjectIdGetDatum(attrs->indexOID),
-							   0, 0, 0);
+								   ObjectIdGetDatum(attrs->indexOID),
+								   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup failed for index %u", attrs->indexOID);
 		index = (Form_pg_index) GETSTRUCT(tuple);
-		index->indisclustered = attrs->isclustered;
-		simple_heap_update(pg_index, &tuple->t_self, tuple);
-		CatalogUpdateIndexes(pg_index, tuple);
+		if (index->indisclustered != attrs->isclustered)
+		{
+			index->indisclustered = attrs->isclustered;
+			simple_heap_update(pg_index, &tuple->t_self, tuple);
+			CatalogUpdateIndexes(pg_index, tuple);
+		}
 		heap_freetuple(tuple);
-		heap_close(pg_index, NoLock);
+		heap_close(pg_index, RowExclusiveLock);
 
 		/* Destroy new index with old filenode */
 		object.classId = RelOid_pg_class;
