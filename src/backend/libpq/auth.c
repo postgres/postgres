@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.72 2001/11/05 17:46:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.73 2002/02/19 19:49:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,8 +619,15 @@ sendAuthRequest(Port *port, AuthRequest areq)
 		pq_sendbytes(&buf, port->cryptSalt, 2);
 
 	pq_endmessage(&buf);
-	pq_flush();
+
+	/*
+	 * Flush message so client will see it, except for AUTH_REQ_OK,
+	 * which need not be sent until we are ready for queries.
+	 */
+	if (areq != AUTH_REQ_OK)
+		pq_flush();
 }
+
 
 #ifdef USE_PAM
 
