@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.17 1997/10/03 13:10:06 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.18 1997/10/25 05:11:06 thomas Exp $
  */
 
 #include <stdio.h>
@@ -64,6 +64,10 @@ cash_in(const char *str)
 				csymbol;
 
 #ifdef USE_LOCALE
+#ifdef CASHDEBUG
+	setlocale(LC_ALL, "");
+	lconvert = localeconv();
+#endif
 	if (lconvert == NULL)
 		lconvert = localeconv();
 
@@ -83,6 +87,11 @@ cash_in(const char *str)
 	csymbol = '$';
 	psymbol = '+';
 	nsymbol = '-';
+#endif
+
+#ifdef CASHDEBUG
+printf( "cashin- precision %d; decimal %c; thousands %c; currency %c; positive %c; negative %c\n",
+ fpoint, dsymbol, ssymbol, csymbol, psymbol, nsymbol);
 #endif
 
 	/* we need to add all sorts of checking here.  For now just */
