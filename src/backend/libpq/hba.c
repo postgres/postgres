@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.119 2003/12/25 03:44:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.120 2004/02/02 16:58:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,11 +37,22 @@
 #include "storage/fd.h"
 
 
-#define IDENT_USERNAME_MAX 512
 /* Max size of username ident server can return */
+#define IDENT_USERNAME_MAX 512
+
+/* Standard TCP port number for Ident service.  Assigned by IANA */
+#define IDENT_PORT 113
+
+/* Name of the config file  */
+#define CONF_FILE "pg_hba.conf"
+
+/* Name of the usermap file */
+#define USERMAP_FILE "pg_ident.conf"
 
 /* This is used to separate values in multi-valued column strings */
 #define MULTI_VALUE_SEP "\001"
+
+#define MAX_TOKEN	256
 
 /*
  * These variables hold the pre-parsed contents of the hba and ident
@@ -80,19 +91,19 @@ pg_isblank(const char c)
 
 
 /*
- *	 Grab one token out of fp. Tokens are strings of non-blank
- *	 characters bounded by blank characters, beginning of line, and
- *	 end of line. Blank means space or tab. Return the token as
- *	 *buf. Leave file positioned to character immediately after the
- *	 token or EOF, whichever comes first. If no more tokens on line,
- *	 return null string as *buf and position file to beginning of
- *	 next line or EOF, whichever comes first. Allow spaces in quoted
- *	 strings. Terminate on unquoted commas. Handle comments. Treat
- *   unquoted keywords that might be user names or database names 
- *   specially, by appending a newline to them.
+ * Grab one token out of fp. Tokens are strings of non-blank
+ * characters bounded by blank characters, beginning of line, and
+ * end of line. Blank means space or tab. Return the token as
+ * *buf. Leave file positioned at the character immediately after the
+ * token or EOF, whichever comes first. If no more tokens on line,
+ * return empty string as *buf and position the file to the beginning
+ * of the next line or EOF, whichever comes first. Allow spaces in
+ * quoted strings. Terminate on unquoted commas. Handle
+ * comments. Treat unquoted keywords that might be user names or
+ * database names specially, by appending a newline to them.
  */
-void
-next_token(FILE *fp, char *buf, const int bufsz)
+static void
+next_token(FILE *fp, char *buf, int bufsz)
 {
 	int			c;
 	char	   *start_buf = buf;
@@ -101,88 +112,89 @@ next_token(FILE *fp, char *buf, const int bufsz)
 	bool		was_quote = false;
 	bool        saw_quote = false;
 
+	Assert(end_buf > start_buf);
+
 	/* Move over initial whitespace and commas */
 	while ((c = getc(fp)) != EOF && (pg_isblank(c) || c == ','))
 		;
 
-	if (c != EOF && c != '\n')
+	if (c == EOF || c == '\n')
 	{
-		/*
-		 * Build a token in buf of next characters up to EOF, EOL,
-		 * unquoted comma, or unquoted whitespace.
-		 */
-		while (c != EOF && c != '\n' &&
-			   (!pg_isblank(c) || in_quote == true))
+		*buf = '\0';
+		return;
+	}
+
+	/*
+	 * Build a token in buf of next characters up to EOF, EOL,
+	 * unquoted comma, or unquoted whitespace.
+	 */
+	while (c != EOF && c != '\n' &&
+		   (!pg_isblank(c) || in_quote == true))
+	{
+		/* skip comments to EOL */
+		if (c == '#' && !in_quote)
 		{
-			/* skip comments to EOL */
-			if (c == '#' && !in_quote)
-			{
-				while ((c = getc(fp)) != EOF && c != '\n')
-					;
-				/* If only comment, consume EOL too; return EOL */
-				if (c != EOF && buf == start_buf)
-					c = getc(fp);
-				break;
-			}
-
-			if (buf >= end_buf)
-			{
-				ereport(LOG,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("authentication file token too long, skipping: \"%s\"",
-								buf)));
-				/* Discard remainder of line */
-				while ((c = getc(fp)) != EOF && c != '\n')
-					;
-				buf[0] = '\0';
-				break;
-			}
-
-			if (c != '"' || (c == '"' && was_quote))
-				*buf++ = c;
-
-			/* We pass back the comma so the caller knows there is more */
-			if ((pg_isblank(c) || c == ',') && !in_quote)
-				break;
-
-			/* Literal double-quote is two double-quotes */
-			if (in_quote && c == '"')
-				was_quote = !was_quote;
-			else
-				was_quote = false;
-
-			if (c == '"')
-			{
-				in_quote = !in_quote;
-				saw_quote = true;
-			}
-
-			c = getc(fp);
+			while ((c = getc(fp)) != EOF && c != '\n')
+				;
+			/* If only comment, consume EOL too; return EOL */
+			if (c != EOF && buf == start_buf)
+				c = getc(fp);
+			break;
 		}
 
-		/*
-		 * Put back the char right after the token (critical in case it is
-		 * EOL, since we need to detect end-of-line at next call).
-		 */
-		if (c != EOF)
-			ungetc(c, fp);
+		if (buf >= end_buf)
+		{
+			ereport(LOG,
+					(errcode(ERRCODE_CONFIG_FILE_ERROR),
+					 errmsg("authentication file token too long, skipping: \"%s\"",
+							buf)));
+			/* Discard remainder of line */
+			while ((c = getc(fp)) != EOF && c != '\n')
+				;
+			buf[0] = '\0';
+			break;
+		}
+
+		if (c != '"' || (c == '"' && was_quote))
+			*buf++ = c;
+
+		/* We pass back the comma so the caller knows there is more */
+		if ((pg_isblank(c) || c == ',') && !in_quote)
+			break;
+
+		/* Literal double-quote is two double-quotes */
+		if (in_quote && c == '"')
+			was_quote = !was_quote;
+		else
+			was_quote = false;
+
+		if (c == '"')
+		{
+			in_quote = !in_quote;
+			saw_quote = true;
+		}
+
+		c = getc(fp);
 	}
 
-
-	if ( !saw_quote && 
-	     (
-			 strncmp(start_buf,"all",3) == 0  ||
-			 strncmp(start_buf,"sameuser",8) == 0  ||
-			 strncmp(start_buf,"samegroup",9) == 0 
-		 )
-		)
-	{
-		/* append newline to a magical keyword */
-		*buf++ = '\n';
-	}
+	/*
+	 * Put back the char right after the token (critical in case it is
+	 * EOL, since we need to detect end-of-line at next call).
+	 */
+	if (c != EOF)
+		ungetc(c, fp);
 
 	*buf = '\0';
 
+	if (!saw_quote && 
+	     (strcmp(start_buf, "all") == 0 ||
+		  strcmp(start_buf, "sameuser") == 0 ||
+		  strcmp(start_buf, "samegroup") == 0))
+	{
+		/* append newline to a magical keyword */
+		*buf++ = '\n';
+		*buf = '\0';
+	}
 }
 
 /*
