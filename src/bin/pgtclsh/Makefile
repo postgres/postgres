@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.2 1996/07/23 03:03:36 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.3 1996/11/04 05:14:34 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,11 +21,11 @@ CFLAGS+=  -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(X11_INCDIR) -I$(srcdir)/libpgtcl
 LIBPGTCL= -L$(srcdir)/libpgtcl/$(objdir) -L$(LIBDIR) -lpgtcl
 
 pgtclsh: $(objdir)/pgtclAppInit.o
-	$(CC) $(CDEBUG) -o $(objdir)/$(@F) $(objdir)/pgtclAppInit.o\
+	$(CC) $(CFLAGS) -o $(objdir)/$(@F) $(objdir)/pgtclAppInit.o\
 	$(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) $(TCL_LIB) -lm $(LD_ADD)
 
 pgtksh: $(objdir)/pgtkAppInit.o
-	$(CC) $(CDEBUG) -o $(objdir)/$(@F) $(objdir)/pgtkAppInit.o \
+	$(CC) $(CFLAGS) -o $(objdir)/$(@F) $(objdir)/pgtkAppInit.o \
 	$(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) -L$(TK_LIBDIR) -L$(X11_LIBDIR) \
 	$(TK_LIB) $(TCL_LIB) -lX11 -lm $(LD_ADD)
 
