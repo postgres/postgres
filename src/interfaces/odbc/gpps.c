@@ -37,6 +37,7 @@
 #include <string.h>
 #include "misc.h"
 #include "gpps.h"
+#include "dlg_specific.h"
 
 #ifndef TRUE
 #define TRUE	((BOOL)1)
@@ -46,6 +47,12 @@
 #endif
 
 
+/*
+ * theIniFileName is searched for in:
+ * 	$HOME/theIniFileName
+ * 	theIniFileName
+ * 	ODBCINST_INI
+ */
 DWORD
 GetPrivateProfileString(char *theSection,		/* section name */
 						char *theKey,	/* search key name */
@@ -70,46 +77,38 @@ GetPrivateProfileString(char *theSection,		/* section name */
 	size_t		aReturnLength = 0;
 	BOOL		aSectionFound = FALSE;
 	BOOL		aKeyFound = FALSE;
-	int			j = 0;
+	size_t		aReturnLength = 0;
+	BOOL		aSectionFound = FALSE;
+	BOOL		aKeyFound = FALSE;
 
-	j = strlen(theIniFileName) + 1;
 	ptr = (char *) getpwuid(getuid());	/* get user info */
 
-	if (ptr == NULL)
-	{
-		if (MAXPGPATH - 1 < j)
-			theIniFileName[MAXPGPATH - 1] = '\0';
-
-		sprintf(buf, "%s", theIniFileName);
-	}
-	ptr = ((struct passwd *) ptr)->pw_dir;		/* get user home dir */
-	if (ptr == NULL || *ptr == '\0')
+	if (ptr == NULL || (((struct passwd *) ptr)->pw_dir) == NULL || *(((struct passwd *) ptr)->pw_dir) == '\0')
 		ptr = "/home";
+	else
+		ptr = ((struct passwd *) ptr)->pw_dir;		/* get user home dir */
 
 	/*
-	 * This doesn't make it so we find an ini file but allows normal
-	 * processing to continue further on down. The likelihood is that the
-	 * file won't be found and thus the default value will be returned.
+	 * If it can't be opened because the paths are too long, then
+	 * skip it, don't just truncate the path string...  The truncated path
+	 * might accidently be an existing file.  The default value will be
+	 * returned instead.
 	 */
-	if (MAXPGPATH - 1 < strlen(ptr) + j)
+	if (MAXPGPATH - 1 >= strlen(ptr) + 1 + strlen(theIniFileName))
 	{
-		if (MAXPGPATH - 1 < strlen(ptr))
-			ptr[MAXPGPATH - 1] = '\0';
-		else
-			theIniFileName[MAXPGPATH - 1 - strlen(ptr)] = '\0';
+		sprintf(buf, "%s/%s", ptr, theIniFileName);
+		aFile = (FILE *) fopen(buf, PG_BINARY_R);
 	}
-
-	sprintf(buf, "%s/%s", ptr, theIniFileName);
 
 	/*
 	 * This code makes it so that a file in the users home dir overrides a
 	 * the "default" file as passed in
 	 */
-	aFile = (FILE *) (buf ? fopen(buf, PG_BINARY_R) : NULL);
 	if (!aFile)
 	{
-		sprintf(buf, "%s", theIniFileName);
-		aFile = (FILE *) (buf ? fopen(buf, PG_BINARY_R) : NULL);
+		aFile = (FILE *) fopen(theIniFileName, PG_BINARY_R);
+		if (!aFile)
+			aFile = (FILE *) fopen(ODBCINST_INI, PG_BINARY_R);
 	}
 
 	aLength = (theDefault == NULL) ? 0 : strlen(theDefault);
