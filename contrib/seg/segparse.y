@@ -7,7 +7,7 @@
 
 #include "segdata.h"
 
-#undef yylex                  /* falure to redefine yylex will result in calling the */
+#undef yylex                  /* failure to redefine yylex will result in calling the */
 #define yylex seg_yylex       /* wrong scanner when running inside postgres backend  */
 
   extern int yylex(void);     /* defined as seg_yylex in segscan.l */

@@ -10,7 +10,7 @@
 
 #include "cubedata.h"
 
-#undef yylex                 /* falure to redefine yylex will result in a call to  the */
+#undef yylex                 /* failure to redefine yylex will result in a call to  the */
 #define yylex cube_yylex     /* wrong scanner when running inside the postgres backend  */
 
 extern int yylex(void);      /* defined as cube_yylex in cubescan.l */
