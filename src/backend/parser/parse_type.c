@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.41 2002/05/12 20:10:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.42 2002/05/17 22:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "parser/parser.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -93,7 +94,7 @@ LookupTypeName(const TypeName *typename)
 
 		/* emit nuisance warning */
 		elog(NOTICE, "%s converted to %s",
-			 TypeNameToString(typename), typeidTypeName(restype));
+			 TypeNameToString(typename), format_type_be(restype));
 	}
 	else
 	{
@@ -187,7 +188,7 @@ TypeNameToString(const TypeName *typename)
 	else
 	{
 		/* Look up internally-specified type */
-		appendStringInfo(&string, "%s", typeidTypeName(typename->typeid));
+		appendStringInfo(&string, "%s", format_type_be(typename->typeid));
 	}
 
 	/*
@@ -252,12 +253,7 @@ typenameType(const TypeName *typename)
 	return (Type) tup;
 }
 
-/* check to see if a type id is valid,
- * returns true if it is. By using this call before calling
- * typeidType or typeidTypeName, more meaningful error messages
- * can be produced because the caller typically has more context of
- *	what's going on                 - jolly
- */
+/* check to see if a type id is valid, returns true if it is */
 bool
 typeidIsValid(Oid id)
 {
@@ -417,32 +413,6 @@ typeidOutfunc(Oid type_id)
 	return outfunc;
 }
 #endif
-
-/* return a type name, given a typeid */
-/* nb: type name is NOT unique; use this only for error messages */
-char *
-typeidTypeName(Oid id)
-{
-	HeapTuple	tup;
-	Form_pg_type typetuple;
-	char	   *result;
-
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(id),
-						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "Unable to locate type oid %u in catalog", id);
-	typetuple = (Form_pg_type) GETSTRUCT(tup);
-
-	/*
-	 * pstrdup here because result may need to outlive the syscache entry
-	 * (eg, it might end up as part of a parse tree that will outlive the
-	 * current transaction...)
-	 */
-	result = pstrdup(NameStr(typetuple->typname));
-	ReleaseSysCache(tup);
-	return result;
-}
 
 /* given a typeid, return the type's typrelid (associated relation, if any) */
 Oid

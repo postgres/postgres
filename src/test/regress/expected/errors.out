@@ -102,7 +102,7 @@ create aggregate newavg2 (sfunc = int4pl,
 			  stype = int4,
 			  finalfunc = int2um,
 			  initcond = '0');
-ERROR:  AggregateCreate: function 'int2um(int4)' does not exist
+ERROR:  AggregateCreate: function int2um(integer) does not exist
 -- left out basetype
 create aggregate newcnt1 (sfunc = int4inc,
 			  stype = int4,
@@ -137,10 +137,10 @@ drop aggregate newcnt (nonesuch);
 ERROR:  Type "nonesuch" does not exist
 -- no such aggregate 
 drop aggregate nonesuch (int4);
-ERROR:  RemoveAggregate: aggregate 'nonesuch' for type integer does not exist
+ERROR:  RemoveAggregate: aggregate nonesuch(integer) does not exist
 -- no such aggregate for type
 drop aggregate newcnt (float4);
-ERROR:  RemoveAggregate: aggregate 'newcnt' for type real does not exist
+ERROR:  RemoveAggregate: aggregate newcnt(real) does not exist
 --
 -- REMOVE FUNCTION
  
@@ -152,7 +152,7 @@ drop function 314159();
 ERROR:  parser: parse error at or near "314159"
 -- no such function 
 drop function nonesuch();
-ERROR:  RemoveFunction: function 'nonesuch()' does not exist
+ERROR:  RemoveFunction: function nonesuch() does not exist
 --
 -- REMOVE TYPE
  

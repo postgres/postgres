@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.72 2002/05/12 23:43:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.73 2002/05/17 22:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 										InvalidOid,
 										isExplicit);
 		if (!OidIsValid(funcId))
-			elog(ERROR, "coerce_type: no conversion function from %s to %s",
+			elog(ERROR, "coerce_type: no conversion function from '%s' to '%s'",
 				 format_type_be(inputTypeId), format_type_be(targetTypeId));
 
 		result = build_func_call(funcId, baseTypeId, makeList1(node));
@@ -392,8 +392,8 @@ select_common_type(List *typeids, const char *context)
 				 * both types in different categories? then not much
 				 * hope...
 				 */
-				elog(ERROR, "%s types \"%s\" and \"%s\" not matched",
-				  context, typeidTypeName(ptype), typeidTypeName(ntype));
+				elog(ERROR, "%s types '%s' and '%s' not matched",
+				  context, format_type_be(ptype), format_type_be(ntype));
 			}
 			else if (IsPreferredType(pcategory, ntype)
 					 && !IsPreferredType(pcategory, ptype)
@@ -448,8 +448,8 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 						   false);
 	else
 	{
-		elog(ERROR, "%s unable to convert to type \"%s\"",
-			 context, typeidTypeName(targetTypeId));
+		elog(ERROR, "%s unable to convert to type %s",
+			 context, format_type_be(targetTypeId));
 	}
 	return node;
 }

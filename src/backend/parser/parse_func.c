@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.129 2002/05/12 23:43:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.130 2002/05/17 22:35:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
+#include "lib/stringinfo.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -261,9 +262,25 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * give an error message that is appropriate for that case.
 		 */
 		if (is_column)
-			elog(ERROR, "Attribute \"%s\" not found",
-				 strVal(lfirst(funcname)));
-		/* Else generate a detailed complaint */
+		{
+			char   *colname = strVal(lfirst(funcname));
+			Oid		relTypeId;
+
+			Assert(nargs == 1);
+			if (IsA(first_arg, RangeVar))
+				elog(ERROR, "No such attribute %s.%s",
+					 ((RangeVar *) first_arg)->relname, colname);
+			relTypeId = exprType(first_arg);
+			if (!ISCOMPLEX(relTypeId))
+				elog(ERROR, "Attribute notation .%s applied to type %s, which is not a complex type",
+					 colname, format_type_be(relTypeId));
+			else
+				elog(ERROR, "Attribute \"%s\" not found in datatype %s",
+					 colname, format_type_be(relTypeId));
+		}
+		/*
+		 * Else generate a detailed complaint for a function
+		 */
 		func_error(NULL, funcname, nargs, oid_array,
 				   "Unable to identify a function that satisfies the "
 				   "given argument types"
@@ -1214,39 +1231,31 @@ func_error(const char *caller, List *funcname,
 		   int nargs, const Oid *argtypes,
 		   const char *msg)
 {
-	char		p[(NAMEDATALEN + 2) * FUNC_MAX_ARGS],
-			   *ptr;
+	StringInfoData argbuf;
 	int			i;
 
-	ptr = p;
-	*ptr = '\0';
+	initStringInfo(&argbuf);
+
 	for (i = 0; i < nargs; i++)
 	{
 		if (i)
-		{
-			*ptr++ = ',';
-			*ptr++ = ' ';
-		}
+			appendStringInfo(&argbuf, ", ");
 		if (OidIsValid(argtypes[i]))
-		{
-			strncpy(ptr, typeidTypeName(argtypes[i]), NAMEDATALEN);
-			*(ptr + NAMEDATALEN) = '\0';
-		}
+			appendStringInfo(&argbuf, format_type_be(argtypes[i]));
 		else
-			strcpy(ptr, "opaque");
-		ptr += strlen(ptr);
+			appendStringInfo(&argbuf, "opaque");
 	}
 
 	if (caller == NULL)
 	{
-		elog(ERROR, "Function '%s(%s)' does not exist%s%s",
-			 NameListToString(funcname), p,
+		elog(ERROR, "Function %s(%s) does not exist%s%s",
+			 NameListToString(funcname), argbuf.data,
 			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
 	else
 	{
-		elog(ERROR, "%s: function '%s(%s)' does not exist%s%s",
-			 caller, NameListToString(funcname), p,
+		elog(ERROR, "%s: function %s(%s) does not exist%s%s",
+			 caller, NameListToString(funcname), argbuf.data,
 			 ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
 }
@@ -1271,10 +1280,10 @@ find_aggregate_func(const char *caller, List *aggname, Oid basetype)
 	if (!OidIsValid(oid))
 	{
 		if (basetype == InvalidOid)
-			elog(ERROR, "%s: aggregate '%s' for all types does not exist",
+			elog(ERROR, "%s: aggregate %s(*) does not exist",
 				 caller, NameListToString(aggname));
 		else
-			elog(ERROR, "%s: aggregate '%s' for type %s does not exist",
+			elog(ERROR, "%s: aggregate %s(%s) does not exist",
 				 caller, NameListToString(aggname),
 				 format_type_be(basetype));
 	}

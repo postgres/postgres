@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.70 2002/05/12 23:43:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.71 2002/05/17 22:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "parser/parsetree.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "parser/parse_type.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -748,7 +748,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 		 * datatypes?  NO, because sortkey selection may screw up anyway.
 		 */
 		elog(ERROR, "Unable to identify an equality operator for types '%s' and '%s'",
-			 typeidTypeName(ltype), typeidTypeName(rtype));
+			 format_type_be(ltype), format_type_be(rtype));
 	}
 	pgopform = (Form_pg_operator) GETSTRUCT(eq_operator);
 
@@ -759,7 +759,7 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 		pgopform->oprrsortop != sortop2 ||
 		pgopform->oprresult != BOOLOID)
 		elog(ERROR, "Equality operator for types '%s' and '%s' should be mergejoinable, but isn't",
-			 typeidTypeName(ltype), typeidTypeName(rtype));
+			 format_type_be(ltype), format_type_be(rtype));
 
 	clause = makeNode(Expr);
 	clause->typeOid = BOOLOID;

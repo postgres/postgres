@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.83 2002/04/29 22:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.84 2002/05/17 22:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,6 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
-#include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -938,8 +937,8 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 												 inputType, inputType,
 												 true);
 			if (!OidIsValid(eq_function))
-				elog(ERROR, "Unable to identify an equality operator for type '%s'",
-					 typeidTypeName(inputType));
+				elog(ERROR, "Unable to identify an equality operator for type %s",
+					 format_type_be(inputType));
 			fmgr_info(eq_function, &(peraggstate->equalfn));
 			peraggstate->sortOperator = any_ordering_op(inputType);
 			peraggstate->sortstate = NULL;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.44 2002/04/11 19:59:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.45 2002/05/17 22:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "optimizer/cost.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
-#include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -83,7 +82,7 @@ AggregateCreate(const char *aggName,
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 	if (proc->prorettype != aggTransType)
 		elog(ERROR, "return type of transition function %s is not %s",
-			 NameListToString(aggtransfnName), typeidTypeName(aggTransType));
+			 NameListToString(aggtransfnName), format_type_be(aggTransType));
 
 	/*
 	 * If the transfn is strict and the initval is NULL, make sure input

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.70 2002/04/11 19:59:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.71 2002/05/17 22:35:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ ProcedureCreate(const char *procedureName,
 		(relid = typeidTypeRelid(typev[0])) != 0 &&
 		get_attnum(relid, (char *) procedureName) != InvalidAttrNumber)
 		elog(ERROR, "method %s already an attribute of type %s",
-			 procedureName, typeidTypeName(typev[0]));
+			 procedureName, format_type_be(typev[0]));
 
 	/*
 	 * If this is a postquel procedure, we parse it here in order to be
