@@ -3,18 +3,17 @@
 <TITLE>PostgreSQL Backend Directories</TITLE>
 </HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#FF0000" VLINK="#A00000" ALINK="#0000FF">
-<H1 ALIGN=CENTER>
+<H1>
 PostgreSQL Backend Directories
 </H1>
-<H2 ALIGN=CENTER>
+<H2>
 by Bruce Momjian
 </H2>
-<P>
-<P>
 <HR>
+<P>
 <EM>Click on any of the section headings to see the source code for that section.
 </EM>
-<P>
+</P>
 <H2>
 <A NAME="bootstrap"></A>
 <A HREF="../../backend/bootstrap">bootstrap</A>
@@ -94,7 +93,7 @@ This uses the parser output to generate an optimal plan for the
 executor.
 </P>
 <H3>
-<A NAME="optimizer/path"></A>
+<A NAME="optimizer_path"></A>
 <A HREF="../../backend/optimizer/path">optimizer/path</A>
 - creates path from parser output
 </H3>
@@ -106,7 +105,7 @@ and optimizer table statistics to evaluate each possible execution
 method, and assigns a cost to each.
 </P>
 <H3>
-<A NAME="optimizer/geqo"></A>
+<A NAME="optimizer_geqo"></A>
 <A HREF="../../backend/optimizer/geqo">optimizer/geqo</A>
 - genetic query optimizer
 </H3>
@@ -121,7 +120,7 @@ tables, it is faster.
 There is an option to control when this feature is used.
 </P>
 <H3>
-<A NAME="optimizer/plan"></A>
+<A NAME="optimizer_plan"></A>
 <A HREF="../../backend/optimizer/plan">optimizer/plan</A>
 - optimizes path output
 </H3>
@@ -130,7 +129,7 @@ This takes the <I>optimizer/path</I> output, chooses the path with the
 least cost, and creates a plan for the executor.
 </P>
 <H3>
-<A NAME="optimizer/prep"></A>
+<A NAME="optimizer_prep"></A>
 <A HREF="../../backend/optimizer/prep">optimizer/prep</A>
 - handle special plan cases
 </H3>
@@ -138,7 +137,7 @@ least cost, and creates a plan for the executor.
 This does special plan processing.
 </P>
 <H3>
-<A NAME="optimizer/util"></A>
+<A NAME="optimizer_util"></A>
 <A HREF="../../backend/optimizer/util">optimizer/util</A>
 - optimizer support routines
 </H3>
@@ -190,31 +189,31 @@ that pre-format user requests into a predefined format.
 These allow uniform resource access by the backend.
 <BR>
 <BR>
-<A NAME="storage/buffer"></A>
+<A NAME="storage_buffer"></A>
 <A HREF="../../backend/storage/buffer">storage/buffer</A>
 - shared buffer pool manager
 <BR>
-<A NAME="storage/file"></A>
+<A NAME="storage_file"></A>
 <A HREF="../../backend/storage/file">storage/file</A>
 - file manager
 <BR>
-<A NAME="storage/ipc"></A>
+<A NAME="storage_ipc"></A>
 <A HREF="../../backend/storage/ipc">storage/ipc</A>
 - semaphores and shared memory
 <BR>
-<A NAME="storage/large_object"></A>
+<A NAME="storage_large_object"></A>
 <A HREF="../../backend/storage/large_object">storage/large_object</A>
 - large objects
 <BR>
-<A NAME="storage/lmgr"></A>
+<A NAME="storage_lmgr"></A>
 <A HREF="../../backend/storage/lmgr">storage/lmgr</A>
 - lock manager
 <BR>
-<A NAME="storage/page"></A>
+<A NAME="storage_page"></A>
 <A HREF="../../backend/storage/page">storage/page</A>
 - page manager
 <BR>
-<A NAME="storage/smgr"></A>
+<A NAME="storage_smgr"></A>
 <A HREF="../../backend/storage/smgr">storage/smgr</A>
 - storage/disk manager
 <BR>
@@ -230,35 +229,35 @@ These control the way data is accessed in heap, indexes, and
 transactions.
 <BR>
 <BR>
-<A NAME="access/common"></A>
+<A NAME="access_common"></A>
 <A HREF="../../backend/access/common">access/common</A>
 - common access routines
 <BR>
-<A NAME="access/gist"></A>
+<A NAME="access_gist"></A>
 <A HREF="../../backend/access/gist">access/gist</A>
 - easy-to-define access method system
 <BR>
-<A NAME="access/hash"></A>
+<A NAME="access_hash"></A>
 <A HREF="../../backend/access/hash">access/hash</A>
 - hash
 <BR>
-<A NAME="access/heap"></A>
+<A NAME="access_heap"></A>
 <A HREF="../../backend/access/heap">access/heap</A>
 - heap is use to store data rows
 <BR>
-<A NAME="access/index"></A>
+<A NAME="access_index"></A>
 <A HREF="../../backend/access/index">access/index</A>
 - used by all index types
 <BR>
-<A NAME="access/nbtree"></A>
+<A NAME="access_nbtree"></A>
 <A HREF="../../backend/access/nbtree">access/nbtree</A>
 - Lehman and Yao's btree management algorithm 
 <BR>
-<A NAME="access/rtree"></A>
+<A NAME="access_rtree"></A>
 <A HREF="../../backend/access/rtree">access/rtree</A>
 - used for indexing of 2-dimensional data
 <BR>
-<A NAME="access/transam"></A>
+<A NAME="access_transam"></A>
 <A HREF="../../backend/access/transam">access/transam</A>
 - transaction manager (BEGIN/ABORT/COMMIT)
 <BR>
@@ -289,7 +288,7 @@ store requests and data.
 - support routines
 </H2>
 <H3>
-<A NAME="utils/adt"></A>
+<A NAME="utils_adt"></A>
 <A HREF="../../backend/utils/adt">utils/adt</A>
 - built-in data type routines
 </H3>
@@ -297,7 +296,7 @@ store requests and data.
 This contains all the PostgreSQL builtin data types.
 </P>
 <H3>
-<A NAME="utils/cache"></A>
+<A NAME="utils_cache"></A>
 <A HREF="../../backend/utils/cache">utils/cache</A>
 - system/relation/function cache routines
 </H3>
@@ -314,7 +313,7 @@ This last cache maintains information about all recently-accessed
 tables, not just system ones.
 </P>
 <H3>
-<A NAME="utils/error"></A>
+<A NAME="utils_error"></A>
 <A HREF="../../backend/utils/error">utils/error</A>
 - error reporting routines
 </H3>
@@ -322,7 +321,7 @@ tables, not just system ones.
 Reports backend errors to the front end.
 </P>
 <H3>
-<A NAME="utils/fmgr"></A>
+<A NAME="utils_fmgr"></A>
 <A HREF="../../backend/utils/fmgr">utils/fmgr</A>
 - function manager
 </H3>
@@ -331,7 +330,7 @@ This handles the calling of dynamically-loaded functions, and the calling
 of functions defined in the system tables.
 </P>
 <H3>
-<A NAME="utils/hash"></A>
+<A NAME="utils_hash"></A>
 <A HREF="../../backend/utils/hash">utils/hash</A>
 - hash routines for internal algorithms
 </H3>
@@ -341,17 +340,17 @@ do quick lookups of dynamic data storage structures maintained by the
 backend.
 </P>
 <H3>
-<A NAME="utils/init"></A>
+<A NAME="utils_init"></A>
 <A HREF="../../backend/utils/init">utils/init</A>
 - various initialization stuff
 </H3>
 <H3>
-<A NAME="utils/misc"></A>
+<A NAME="utils_misc"></A>
 <A HREF="../../backend/utils/misc">utils/misc</A>
 - miscellaneous stuff
 </H3>
 <H3>
-<A NAME="utils/mmgr"></A>
+<A NAME="utils_mmgr"></A>
 <A HREF="../../backend/utils/mmgr">utils/mmgr</A>
 - memory manager(process-local memory)
 </H3>
@@ -363,7 +362,7 @@ By doing this, the backend can easily free memory once a statement or
 transaction completes.
 </P>
 <H3>
-<A NAME="utils/sort"></A>
+<A NAME="utils_sort"></A>
 <A HREF="../../backend/utils/sort">utils/sort</A>
 - sort routines for internal algorithms
 </H3>
@@ -372,7 +371,7 @@ When statement output must be sorted as part of a backend operation,
 this code sorts the tuples, either in memory or using disk files.
 </P>
 <H3>
-<A NAME="utils/time"></A>
+<A NAME="utils_time"></A>
 <A HREF="../../backend/utils/time">utils/time</A>
 - transaction time qualification routines
 </H3>
@@ -419,13 +418,11 @@ This does processing for the rules system.
 - unused (array handling?)
 </H2>
 <BR>
-<HR SIZE="2" NOSHADE>
+<HR>
 <SMALL>
-<ADDRESS>
 Maintainer:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
 Last updated:		Tue Dec  9 17:56:08 EST 1997
-</ADDRESS>
 </SMALL>
 </BODY>
 </HTML>
