@@ -183,3 +183,13 @@ set enable_seqscan to off;
 select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
 -- note: if above select doesn't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
+
+-- test [not] (like|ilike) (any|all) (...)
+select 'foo' like any (array['%a', '%o']); -- t
+select 'foo' like any (array['%a', '%b']); -- f
+select 'foo' like all (array['f%', '%o']); -- t
+select 'foo' like all (array['f%', '%b']); -- f
+select 'foo' not like any (array['%a', '%b']); -- t
+select 'foo' not like all (array['%a', '%o']); -- f
+select 'foo' ilike any (array['%A', '%O']); -- t
+select 'foo' ilike all (array['F%', '%O']); -- t

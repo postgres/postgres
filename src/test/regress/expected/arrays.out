@@ -377,3 +377,52 @@ select * from arr_tbl where f1 > '{1,2,3}' and f1 <= '{1,5,3}';
 
 -- note: if above select doesn't produce the expected tuple order,
 -- then you didn't get an indexscan plan, and something is busted.
+-- test [not] (like|ilike) (any|all) (...)
+select 'foo' like any (array['%a', '%o']); -- t
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'foo' like any (array['%a', '%b']); -- f
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'foo' like all (array['f%', '%o']); -- t
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'foo' like all (array['f%', '%b']); -- f
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'foo' not like any (array['%a', '%b']); -- t
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'foo' not like all (array['%a', '%o']); -- f
+ ?column? 
+----------
+ f
+(1 row)
+
+select 'foo' ilike any (array['%A', '%O']); -- t
+ ?column? 
+----------
+ t
+(1 row)
+
+select 'foo' ilike all (array['F%', '%O']); -- t
+ ?column? 
+----------
+ t
+(1 row)
+

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.449 2004/03/17 20:48:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.450 2004/04/05 03:07:26 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -194,7 +194,7 @@ static void doNegateFloat(Value *v);
 				database_name access_method_clause access_method attr_name
 				index_name name function_name file_name
 
-%type <list>	func_name handler_name qual_Op qual_all_Op
+%type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_validator
 
 %type <range>	qualified_name OptConstrFromTable
@@ -5692,7 +5692,7 @@ r_expr:  row IN_P select_with_parens
 					/* Stick a NOT on top */
 					$$ = (Node *) makeA_Expr(AEXPR_NOT, NIL, NULL, (Node *) n);
 				}
-			| row qual_all_Op sub_type select_with_parens
+			| row subquery_Op sub_type select_with_parens
 			%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
@@ -5702,7 +5702,7 @@ r_expr:  row IN_P select_with_parens
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-			| row qual_all_Op select_with_parens
+			| row subquery_Op select_with_parens
 			%prec Op
 				{
 					SubLink *n = makeNode(SubLink);
@@ -5712,7 +5712,7 @@ r_expr:  row IN_P select_with_parens
 					n->subselect = $3;
 					$$ = (Node *)n;
 				}
-			| row qual_all_Op row
+			| row subquery_Op row
 			%prec Op
 				{
 					$$ = makeRowExpr($2, $1, $3);
@@ -5806,6 +5806,23 @@ qual_all_Op:
 					{ $$ = makeList1(makeString($1)); }
 			| OPERATOR '(' any_operator ')'			{ $$ = $3; }
 		;
+
+subquery_Op:
+			all_Op { $$ = makeList1(makeString($1)); }
+			| OPERATOR '(' any_operator ')'			{ $$ = $3; }
+			| LIKE { $$ = makeList1(makeString("~~")); }
+			| NOT LIKE { $$ = makeList1(makeString("!~~")); }
+			| ILIKE { $$ = makeList1(makeString("~~*")); }
+			| NOT ILIKE { $$ = makeList1(makeString("!~~*")); }
+/* cannot put SIMILAR TO here, because SIMILAR TO is a hack.
+ * the regular expression is preprocessed by a function (similar_escape),
+ * and the ~ operator for posix regular expressions is used. 
+ *        x SIMILAR TO y     ->    x ~ similar_escape(y)
+ * this transformation is made on the fly by the parser upwards.
+ * however the SubLink structure which handles any/some/all stuff
+ * is not ready for such a thing.
+ */
+			;
 
 /*
  * General expressions
@@ -6132,7 +6149,7 @@ a_expr:		c_expr									{ $$ = $1; }
 						$$ = n;
 					}
 				}
-			| a_expr qual_all_Op sub_type select_with_parens %prec Op
+			| a_expr subquery_Op sub_type select_with_parens %prec Op
 				{
 					SubLink *n = makeNode(SubLink);
 					n->subLinkType = $3;
@@ -6141,7 +6158,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-			| a_expr qual_all_Op sub_type '(' a_expr ')' %prec Op
+			| a_expr subquery_Op sub_type '(' a_expr ')' %prec Op
 				{
 					if ($3 == ANY_SUBLINK)
 						$$ = (Node *) makeA_Expr(AEXPR_OP_ANY, $2, $1, $5);
