@@ -1,6 +1,247 @@
 <Chapter Id="release">
 <Title>Release Notes</Title>
 
+<Sect1>
+<Title>Release 6.5</Title>
+<!--
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Bruce</firstname>
+<surname>Momjian</surname>
+</author>
+</authorgroup>
+<date>1998-06-01</date>
+</docinfo>
+-->
+
+<para>
+This release marks the development team's final mastery of the source
+code we inherited from Berkeley.  You will see we are now easily adding
+major features, thanks to the increasing size and experience of our
+world-wide development team:  Here is a brief, incomplete summary:
+
+<itemizedlist spacing="compact">
+<listitem>
+<para>
+Multi-version concurrency control(MVCC):  This removes our old
+table-level locking, and replaces it with a locking system that is
+superior to most commercial database systems.  In a traditional system,
+each row that is modified is locked until committed, preventing reads by
+other users.  MVCC uses the natural multi-version nature of PostgreSQL
+to allow readers to continue reading consistent data during writer
+activity.  Writers continue to use the compact pg_log transaction
+system.  This is all preformed without having to allocate a lock for
+every row like traditional database systems.  So, basically, we no
+longer have table-level locking, we have something better than row-level
+locking.
+</para>
+</listitem>
+<listitem>
+<para>
+Numeric data type:  We now have a true numeric data type, with
+user-specified precision.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Temporary tables:  Temporary tables are guaranteed to have unique names
+within a database session, and are destroyed on session exit.
+</para>
+</listitem>
+
+<listitem>
+<para>
+New SQL features:  We now have CASE, INTERSECT, and EXCEPT statement
+support.  We have new LIMIT/OFFSET, SET TRANSACTION ISOLATION LEVEL,
+SELECT ... FOR UPDATE, and an improved LOCK command.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Speedups:  We continue to speed up PostgreSQL, thanks to the variety of
+talents within our team.  We have sped up memory allocation,
+optimization, table joins, and row transfers routines.
+</para>
+</listitem>
+
+<listitem>
+<para>
+Other:  We continue to expand our port list, this time including
+Win32/NT.  Most interfaces have new versions, and existing functionality
+has been improved.
+</para>
+</listitem>
+
+</itemizedlist>
+</para>
+
+<sect2>
+<title>Migration to v6.5</title>
+
+<para>
+A dump/restore using <application>pg_dump</application> 
+or <application>pg_dumpall</application>
+is required for those wishing to migrate data from any
+previous release of <productname>Postgres</productname>.
+</para>
+</sect2>
+<sect2>
+<title>Detailed Change List</title>
+
+<para>
+<programlisting>
+Bug Fixes
+---------
+Fix text<->float8 and text<->float4 conversion functions(Thomas)
+Fix for creating tables with mixed-case constraints(Billy)
+Change exp()/pow() behavior to generate error on underflow/overflow(Jan)
+Fix bug in pg_dump -z
+Memory overrun cleanups(Tatsuo)
+Fix for lo_import crash(Tatsuo)
+Adjust handling of data type names to suppress double quotes(Thomas)
+Use type coersion for matching columns and DEFAULT(Thomas)
+Fix deadlock so it only checks once after one second of sleep(Bruce)
+Fixes for aggregates and PL/pgsql(Hiroshi)
+Fix for subquery crash(Vadim)
+Fix for libpq function PQfnumber and case-insensitive names(Bahman Rafatjoo)
+Fix for large object write-in-middle, no extra block, memory consumption(Tatsuo)
+Fix for pg_dump -d or -D and  quote special characters in INSERT
+Repair serious problems with dynahash(Tom)
+Fix INET/CIDR portability problems
+Fix problem with selectivity error in ALTER TABLE ADD COLUMN(Bruce)
+Fix executor so mergejoin of different column types works(Tom)
+Fix for Alpha OR selectivity bug
+Fix OR index selectivity problem(Bruce)
+Fix so \d shows proper length for char()/varchar()(Ryan)
+Fix tutorial code(Clark)
+Improve destroyuser checking(Oliver)
+Fix for Kerberos(Rodney McDuff)
+Fix for dropping database while dirty buffers(Bruce)
+Fix so sequence nextval() can be case-sensitive(Bruce)
+Fix !!= operator
+Drop buffers before destroying database files(Bruce)
+Fix case where executor evaluates functions twice(Tatsuo)
+Allow sequence nextval actions to be case-sensitive(Bruce)
+Fix optimizer indexing not working for negative numbers(Bruce)
+Fix for memory leak in executor with fjIsNull
+Fix for aggregate memory leaks(Erik Riedel)
+Allow username containing a dash GRANT permissions
+Cleanup of NULL in inet types
+Clean up system table bugs(Tom)
+Fix problems of PAGER and \? command(Masaaki Sakaida)
+Reduce default multi-segment file size limit to 1GB(Peter)
+Fix for dumping of CREATE OPERATOR(Tom)
+Fix for backward scanning of cursors(Hiroshi Inoue)
+Fix for COPY FROM STDIN when using \i(Tom)
+Fix for subselect is compared inside an expression(Jan)
+Fix handling of error reporting while returning rows(Tom)
+Fix problems with reference to array types(Tom,Jan)
+Prevent UPDATE SET oid(Jan)
+Fix pg_dump so -t option can handle case-sensitive tablenames
+Fixes for GROUP BY in special cases(Tom, Jan)
+Fix for memory leak in failed queries(Tom)
+DEFAULT now supports mixed-case identifiers(Tom)
+Fix for multi-segment uses of DROP/RENAME table, indexes(Ole Gjerde)
+
+Enhancements
+------------
+Add "vacuumdb" utility
+Speed up libpq by allocating memory better(Tom)
+EXPLAIN all indices used(Tom)
+Implement CASE, COALESCE, NULLIF  expression(Thomas)
+New pg_dump table output format(Constantin)
+Add string min()/max() functions(Thomas)
+Extend new type coersion techniques to aggregates(Thomas)
+New moddatetime contrib(Terry)
+Update to pgaccess 0.96(Constantin)
+Add routines for single-byte "char" type(Thomas)
+Improved substr() function(Thomas)
+Improved multi-byte handling(Tatsuo)
+Multi-version concurrency control/MVCC(Vadim)
+New Serialized mode(Vadim)
+Fix for tables over 2gigs(Peter)
+New SET TRANSACTION ISOLATION LEVEL(Vadim)
+New LOCK TABLE IN ... MODE(Vadim)
+Update ODBC driver(Byron)
+New NUMERIC data type(Jan)
+New SELECT FOR UPDATE(Vadim)
+Handle "NaN" and "Infinity" for input values(Jan)
+Improved date/year handling(Thomas)
+Improved handling of backend connections(Magnus)
+New options ELOG_TIMESTAMPS and USE_SYSLOG options for log files(Massimo)
+New TCL_ARRAYS option(Massimo)
+New INTERSECT and EXCEPT(Stefan)
+New pg_index.indisprimary for primary key tracking(D'Arcy)
+New pg_dump option to allow dropping of tables before creation(Brook)
+Speedup of row output routines(Tom)
+New READ COMMITTED isolation level(Vadim)
+New TEMP tables/indexes(Bruce)
+Prevent sorting if result is already sorted(Jan)
+New memory allocation optimization(Jan)
+Allow psql to do \p\g(Bruce)
+Allow multiple rule actions(Jan)
+Added LIMIT/OFFSET functionality(Jan)
+Improve optimizer when joining a large number of tables(Bruce)
+New intro to SQL from S. Simkovics' Master's Thesis (Stefan, Thomas)
+New intro to backend processing from S. Simkovics' Master's Thesis (Stefan)
+Improved int8 support(Ryan Bradetich, Thomas, Tom)
+New routines to convert between int8 and text/varchar types(Thomas)
+New bushy plans, where meta-tables are joined(Bruce)
+Enable right-hand queries by default(Bruce)
+Allow reliable maximum number of backends to be set at configure time
+      (--with-maxbackends and postmaster switch (-N backends))(Tom)
+GEQO default now 10 tables because of optimizer speedups(Tom)
+Allow NULL=Var for MS-SQL portability(Michael, Bruce)
+Modify contrib check_primary_key() so either "automatic" or "dependent"(Anand)
+Allow psql \d on a view show query(Ryan)
+Speedup for LIKE(Bruce)
+Ecpg fixes/features, see src/interfaces/ecpg/ChangeLog file(Michael)
+JDBC fixes/features, see src/interfaces/jdbc/CHANGELOG(Peter)
+Make % operator have precedence like /(Bruce)
+Add new postgres -O option to allow system table structure changes(Bruce)
+Update contrib/pginterface/findoidjoins script(Tom)
+Major speedup in vacuum of deleted rows with indexes(Vadim) 
+Allow non-SQL functions to run different versions based on arguments(Tom)
+Add -E option that shows actual queries sent by \dt and friends(Masaaki Sakaida)
+Add version number in startup banners for psql(Masaaki Sakaida)
+New contrib/vacuumlo removes large objects not referenced(Peter)
+New initialization for table sizes so non-vacuumed tables perform better(Tom)
+Improve error messages when a connection is rejected(Tom)
+Support for arrays of char() and varchar() fields(Massimo)
+Overhaul of hash code to increase reliability and performance(Tom)
+Update to PyGreSQL 2.4(D'Arcy)
+Changed debug options so -d4 and -d5 produce different node displays(Jan)
+New pg_options: pretty_plan, pretty_parse, pretty_rewritten(Jan)
+Better optimization statistics for system table access(Tom)
+Better handling of non-default block sizes(Massimo)
+Improve GEQO optimizer memory consumption(Tom)
+UNION now suppports ORDER BY of columns not in target list(Jan)
+Major libpq++ improvements(Vince Vielhaber)
+
+Source Tree Changes
+-------------------
+Improve port matching(Tom)
+Portability fixes for SunOS
+Add NT/Win32 backend port and enable dynamic loading(Magnus and Daniel Horak)
+New port to Cobalt Qube(Mips) running Linux(Tatsuo)
+Port to NetBSD/m68k(Mr. Mutsuki Nakajima)
+Port to NetBSD/sun3(Mr. Mutsuki Nakajima)
+Port to NetBSD/macppc(Toshimi Aoki)
+Fix for tcl/tk configuration(Vince)
+Removed CURRENT keyword for rule queries(Jan)
+NT dynamic loading now works(Daniel Horak)
+Add ARM32 support(Andrew McMurry)
+Better support for HPUX 11 and Unixware
+Improve file handling to be more uniform, prevent file descriptor leak(Tom)
+New install commands for plpgsql(Jan)
+</programlisting>
+</Para>
+</sect2>
+</Sect1>
+
 
 <Sect1>
 <Title>Release 6.4.2</Title>
