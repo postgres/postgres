@@ -1,0 +1,1247 @@
+# Hungarian message translation file for psql
+# Krisztian Szekely <szekelyk@different.hu>, 2003.
+#
+# $Header: /cvsroot/pgsql/src/bin/psql/po/Attic/hu.po,v 1.2 2003/06/29 10:13:13 petere Exp $
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.3\n"
+"POT-Creation-Date: 2002-12-01 04:20-0500\n"
+"PO-Revision-Date: 2003-01-01 23:05+0100\n"
+"Last-Translator: Krisztian Szekely <szekelyk@different.hu>\n"
+"Language-Team: Hungarian <szekelyk@different.hu>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-2\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: command.c:156
+msgid "Warning: This syntax is deprecated.\n"
+msgstr "Figyelem: Elavult szintaxis.\n"
+
+#: command.c:163
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "Érvénytelen parancs \\%s. Segítség \\? kiadásával kérheto.\n"
+
+#: command.c:165
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "érvénytelen parancs \\%s\n"
+
+#: command.c:292
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "nem állapítható meg a home könyvtár: %s\n"
+
+#: command.c:308
+#, c-format
+msgid "\\%s: could not change directory to '%s': %s\n"
+msgstr "\\%s: nem sikerült a könyvtárváltás '%s'-b(ae): %s\n"
+
+#: command.c:404
+#: command.c:764
+msgid "no query buffer\n"
+msgstr "nincs lekérdezési puffer\n"
+
+#: command.c:459
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found\n"
+msgstr "%s: érvénytelen karakter kódolási név vagy a konverziós eljárás nem található\n"
+
+#: command.c:520
+#: command.c:551
+#: command.c:562
+#: command.c:576
+#: command.c:618
+#: command.c:744
+#: command.c:773
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: hiányzik egy szükséges paraméter\n"
+
+#: command.c:606
+msgid "Query buffer is empty."
+msgstr "A lekérdezési puffer  üres."
+
+#: command.c:639
+msgid "Query buffer reset (cleared)."
+msgstr "A lekérdezési puffer nullázva (törölve)."
+
+#: command.c:650
+#, c-format
+msgid "Wrote history to %s.\n"
+msgstr "Elozmények mentése %s fájlba.\n"
+
+#: command.c:690
+#: command.c:1144
+#: command.c:1241
+#: command.c:1929
+#: common.c:64
+#: copy.c:90
+#: copy.c:118
+#: describe.c:41
+#: mainloop.c:80
+#: mainloop.c:388
+msgid "out of memory\n"
+msgstr "nincs elég memória\n"
+
+#: command.c:699
+#: command.c:749
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: hiba\n"
+
+#: command.c:728
+msgid "Timing is on."
+msgstr "Idomérés be."
+
+#: command.c:731
+msgid "Timing is off."
+msgstr "Idomérés ki."
+
+#: command.c:788
+#: command.c:808
+#: command.c:1004
+#: command.c:1017
+#: command.c:1028
+#: command.c:1586
+#: command.c:1599
+#: command.c:1611
+#: command.c:1624
+#: command.c:1638
+#: command.c:1652
+#: command.c:1682
+#: common.c:113
+#: copy.c:381
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:874
+#, c-format
+msgid "\\%s: extra argument '%s' ignored\n"
+msgstr "\\%s: extra paraméter '%s' figyelmenkívül hagyva\n"
+
+#: command.c:965
+#: command.c:993
+#: command.c:1117
+msgid "parse error at the end of line\n"
+msgstr "értelmezési hiba a fájl végénél\n"
+
+#: command.c:1356
+#: command.c:1380
+#: startup.c:175
+#: startup.c:193
+msgid "Password: "
+msgstr "Jelszó:"
+
+#: command.c:1394
+#: common.c:162
+#: common.c:282
+#: common.c:468
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1398
+msgid "Previous connection kept\n"
+msgstr "Elozo kapcsolat megtartva\n"
+
+#: command.c:1410
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\kapcsolat: %s"
+
+#: command.c:1422
+#, c-format
+msgid "You are now connected to database %s.\n"
+msgstr "%s adatbázishoz kapcsolódtál hozzá.\n"
+
+#: command.c:1424
+#, c-format
+msgid "You are now connected as new user %s.\n"
+msgstr "%s új felhasználóként kapcsolódtál.\n"
+
+#: command.c:1427
+#, c-format
+msgid "You are now connected to database %s as user %s.\n"
+msgstr "%s adatbázishoz %s felhasználóként kapcsolódtál hozzá.\n"
+
+#: command.c:1524
+#, c-format
+msgid "could not start editor %s\n"
+msgstr "%s szerkesztot nem sikerült indítani\n"
+
+#: command.c:1526
+msgid "could not start /bin/sh\n"
+msgstr "/bin/sh héjjat nem sikerült indítani\n"
+
+#: command.c:1571
+#, c-format
+msgid "could not open temporary file %s: %s\n"
+msgstr "nem sikerült %s átmeneti fájl megnyitása: %s\n"
+
+#: command.c:1755
+msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
+msgstr "\\pset: engedélyezett formátumok nem igazított (unaligned), igazított (aligned), html, latex\n"
+
+#: command.c:1760
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "%s a kimeneti formátum.\n"
+
+#: command.c:1770
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "%d a keret stílusa.\n"
+
+#: command.c:1779
+msgid "Expanded display is on.\n"
+msgstr "Kibovített kijelzés bekapcsolva.\n"
+
+#: command.c:1780
+msgid "Expanded display is off.\n"
+msgstr "Kibovített kijelzés kikapcsolva.\n"
+
+#: command.c:1792
+#, c-format
+msgid "Null display is '%s'.\n"
+msgstr "A Null kijelzés: '%s'.\n"
+
+#: command.c:1804
+#, c-format
+msgid "Field separator is '%s'.\n"
+msgstr "'%s' a mezo elválasztó.\n"
+
+#: command.c:1818
+msgid "Record separator is <newline>."
+msgstr "A rekordelválasztó <enter>."
+
+#: command.c:1820
+#, c-format
+msgid "Record separator is '%s'.\n"
+msgstr "'%s' a rekordelválasztó.\n"
+
+#: command.c:1831
+msgid "Showing only tuples."
+msgstr "Csak tuple megjelenítése."
+
+#: command.c:1833
+msgid "Tuples only is off."
+msgstr "Csak tuple megejelenítés kikapcsolva."
+
+#: command.c:1849
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "\"%s\" a cím.\n"
+
+#: command.c:1851
+msgid "Title is unset.\n"
+msgstr "Nincs cím.\n"
+
+#: command.c:1867
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr "A táblaparaméter \"%s\".\n"
+
+#: command.c:1869
+msgid "Table attributes unset.\n"
+msgstr "Táblaparaméter törölve.\n"
+
+#: command.c:1880
+msgid "Using pager is on."
+msgstr "Lapozó használata."
+
+#: command.c:1882
+msgid "Using pager is off."
+msgstr "Lapozó kikapcsolva."
+
+#: command.c:1893
+msgid "Default footer is on."
+msgstr "Alapértelmezett lábléc bekapcsolva."
+
+#: command.c:1895
+msgid "Default footer is off."
+msgstr "Alapértelmezett lábléc kikapcsolva."
+
+#: command.c:1901
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: ismeretlen opció: %s\n"
+
+#: command.c:1944
+msgid "\\!: failed\n"
+msgstr "\\!: sikertelen\n"
+
+#: common.c:57
+#, c-format
+msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
+msgstr "%s: xstrdup: cannot duplicate null pointer (belso hiba)\n"
+
+#: common.c:230
+#: common.c:343
+msgid "You are currently not connected to a database.\n"
+msgstr "Pillanatnyilag nem kapcsolódsz adatbázishoz.\n"
+
+#: common.c:289
+#: common.c:478
+msgid "connection to server was lost\n"
+msgstr "a szerverrel megszakadt a kapcsolat\n"
+
+#: common.c:292
+#: common.c:481
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "Megszakadt a szerverrel a kapcsolat. Megpróbálom nullázni: "
+
+#: common.c:296
+#: common.c:485
+msgid "Failed.\n"
+msgstr "Sikertelen.\n"
+
+#: common.c:306
+#: common.c:497
+msgid "Succeeded.\n"
+msgstr "Sikeres.\n"
+
+#: common.c:351
+#, c-format
+msgid ""
+"***(Single step mode: Verify query)*********************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)********************\n"
+msgstr ""
+"***(Lépésenkénti végrehajtás: Lekérdezés ellenorzése)*********************************************\n"
+"%s\n"
+"***(nyomj entert a folytatáshoz, vagy x-t és entert a kilépéshez)********************\n"
+
+#: common.c:457
+msgid "Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr "Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+
+#: common.c:503
+#, c-format
+msgid "Asynchronous NOTIFY '%s' from backend with pid %d received.\n"
+msgstr "Aszinkron ÉRTESÍTÉS '%s' a backendtol %d piddel érkezett.\n"
+
+#: common.c:516
+#: common.c:519
+#, c-format
+msgid "Time: %.2f ms\n"
+msgstr "Ido: %.2f ms\n"
+
+#: copy.c:112
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: paraméterrek szükségesek\n"
+
+#: copy.c:292
+#, c-format
+msgid "\\copy: parse error at '%s'\n"
+msgstr "\\copy: értemlezési hiba '%s'\n"
+
+#: copy.c:294
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: értelmezési hiba a sor végénél\n"
+
+#: copy.c:392
+#, c-format
+msgid "%s: cannot copy from/to a directory\n"
+msgstr "%s: nem sikerült a könyvtárba/könyvtárból másolni\n"
+
+#: copy.c:413
+#, c-format
+msgid "\\copy: %s"
+msgstr "\\másol: %s"
+
+#: copy.c:417
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\másol: nem várt válasz (%d)\n"
+
+#: help.c:48
+msgid "on"
+msgstr "be"
+
+#: help.c:48
+msgid "off"
+msgstr "ki"
+
+#: help.c:70
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "az aktuális felhasználónevet nem sikerült megállapítani: %s\n"
+
+#: help.c:83
+#, c-format
+msgid "This is psql %s, the PostgreSQL interactive terminal.\n"
+"\n"
+msgstr "Ez a program a psql %s, a PostgreSQL interaktív terminálja.\n"
+"\n"
+
+#: help.c:85
+msgid "Usage:"
+msgstr "Használat:"
+
+#: help.c:86
+msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
+msgstr "  psql [OPCIÓK]... [ADATBÁZISNÉV [FELHASZNÁLÓNÉV]]\n"
+
+#: help.c:88
+msgid "General options:"
+msgstr "Általános opciók:"
+
+#: help.c:93
+#, c-format
+msgid "  -d DBNAME       specify database name to connect to (default: %s)\n"
+msgstr "  -d ADATBÁZISNÉV       a megadott adatbázishoz fog kapcsolódni (alapértelmezett: %s)\n"
+
+#: help.c:94
+msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
+msgstr "  -c PARANCS       egy parancs futtatása (SQL vagy belso) és kilép"
+
+#: help.c:95
+msgid "  -f FILENAME     execute commands from file, then exit"
+msgstr "  -f FÁJLNÉV     parancsok futtatása fájlból, aztán kilép"
+
+#: help.c:96
+msgid "  -l              list available databases, then exit"
+msgstr "  -l              elérheto adatbázisok listája, aztán kilép"
+
+#: help.c:97
+msgid "  -v NAME=VALUE   set psql variable 'NAME' to 'VALUE'"
+msgstr "  -v NÉV=ÉRTÉK   'NÉV psql változóhoz 'ÉRTÉK' hozzárendelése"
+
+#: help.c:98
+msgid "  -X              do not read startup file (~/.psqlrc)"
+msgstr "  -X              indítófájl (~/.psqlrc) kihagyása"
+
+#: help.c:99
+msgid "  --help          show this help, then exit"
+msgstr "  --help          e segítség kiírása, aztán kilép"
+
+#: help.c:100
+msgid "  --version       output version information, then exit"
+msgstr "  --version       verzió megjelenítése, aztán kilép"
+
+#: help.c:102
+msgid "\n"
+"Input and output options:"
+msgstr "\n"
+"Bemeneti és kimeneti opciók:"
+
+#: help.c:103
+msgid "  -a              echo all input from script"
+msgstr "  -a              szkript adatbevitelének megjelenítése"
+
+#: help.c:104
+msgid "  -e              echo commands sent to server"
+msgstr "  -e              a szervernek küldött parancsok megjelenítése"
+
+#: help.c:105
+msgid "  -E              display queries that internal commands generate"
+msgstr "  -E              belso parancsok által eloállított lekérdezések megjelenítése"
+
+#: help.c:106
+msgid "  -q              run quietly (no messages, only query output)"
+msgstr "  -q              csendes futás (nincsenek üzenetek, csak a lekérdezés eredménye)"
+
+#: help.c:107
+msgid "  -o FILENAME     send query results to file (or |pipe)"
+msgstr "  -o FÁJLNÉV     lekérdezés eredményének küldése fájlba (vagy |csobe)"
+
+#: help.c:108
+msgid "  -n              disable enhanced command line editing (readline)"
+msgstr "  -n              kibovített parancssor szerkesztési lehetoségek tiltása (readline)"
+
+#: help.c:109
+msgid "  -s              single step mode (confirm each query)"
+msgstr "  -s              lépésenkénti üzemmód (minden lekérdezés jóváhagyandó)"
+
+#: help.c:110
+msgid "  -S              single line mode (end of line terminates SQL command)"
+msgstr "  -S              egysoros özemmód (a sorvége jel lezárja az SQL parancsot)"
+
+#: help.c:112
+msgid "\n"
+"Output format options:"
+msgstr "\n"
+"Kimeneti formátum opciók:"
+
+#: help.c:113
+msgid "  -A              unaligned table output mode (-P format=unaligned)"
+msgstr "  -A              nemigazított táblázat kiviteli üzemmód (-P format=unaligned)"
+
+#: help.c:114
+msgid "  -H              HTML table output mode (-P format=html)"
+msgstr "  -H              HTML táblázat kiviteli üzemmód (-P format=html)"
+
+#: help.c:115
+msgid "  -t              print rows only (-P tuples_only)"
+msgstr "  -t              csak a sorok kivitele (-P tuples_only)"
+
+#: help.c:116
+msgid "  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"
+msgstr "  -T TEXT         HTML tábla címke paramétereinek beállítása (szélesség, keret) (-P tableattr=)"
+
+#: help.c:117
+msgid "  -x              turn on expanded table output (-P expanded)"
+msgstr "  -x              kibovített táblakimenet bekapcsolása (-P expanded)"
+
+#: help.c:118
+msgid "  -P VAR[=ARG]    set printing option 'VAR' to 'ARG' (see \\pset command)"
+msgstr "  -P VÁLT[=ÉRT]    nyomtatási opció 'VÁLT' beállítása 'ÉRT'-re (lásd még \\pset parancs)"
+
+#: help.c:119
+#, c-format
+msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
+msgstr "  -F KARAKTERLÁNC       mezoelválasztó beállítása (alapérték: \"%s\") (-P fieldsep=)\n"
+
+#: help.c:121
+msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
+msgstr "  -R KARATERLÁNC       rekordelválasztó beállítása (alapérték: újsor (newline)) (-P recordsep=)"
+
+#: help.c:123
+msgid "\n"
+"Connection options:"
+msgstr "\n"
+"Kapcsolat opciói:"
+
+#: help.c:126
+#, c-format
+msgid "  -h HOSTNAME     specify database server host (default: %s)\n"
+msgstr "  -h SZERVERNÉV     adatbázis szerver neve (alapértelmezett: %s)\n"
+
+#: help.c:127
+msgid "local socket"
+msgstr "helyi socket"
+
+#: help.c:130
+#, c-format
+msgid "  -p PORT         specify database server port (default: %s)\n"
+msgstr "  -p PORT         adatbázis szerver port megadása (alapérték: %s)\n"
+
+#: help.c:136
+#, c-format
+msgid "  -U NAME         specify database user name (default: %s)\n"
+msgstr "  -U NÉV         adatbázis felhasználónév megadása (alapérték: %s)\n"
+
+#: help.c:137
+msgid "  -W              prompt for password (should happen automatically)"
+msgstr "  -W              kérdezzen rá a jelszóra (automatikusan így kell történnie)"
+
+#: help.c:140
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+"(for SQL commands) from within psql, or consult the psql section in\n"
+"the PostgreSQL documentation.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>."
+msgstr ""
+"\n"
+"További informácihozz üss \"\\?\"-t (belso parancsokhoz) vagy \"\\help\"-t\n"
+"(SQL parancsokhoz) a psqlben, vagy olvasd el a psqlrol szoló részt\n"
+"a PostgreSQL dokumentációjában.\n"
+"\n"
+"Hibákat a <pgsql-bugs@postgresql.org>címen tudsz jelenteni."
+
+#: help.c:174
+msgid " \\a             toggle between unaligned and aligned output mode\n"
+msgstr " \\a             váltás igazított és nemigazított kimeneti üzemmód között\n"
+
+#: help.c:175
+#, c-format
+msgid " \\c[onnect] [DBNAME|- [USER]]\n"
+"                connect to new database (currently \"%s\")\n"
+msgstr " \\c[onnect] [ADATBÁZIS|- [FELHASZNÁLÓ]]\n"
+"                kapcsolódás új adatbázishoz (pillanatnyilag \"%s\")\n"
+
+#: help.c:178
+msgid " \\C [STRING]    set table title, or unset if none\n"
+msgstr " \\C [KARAKTERLÁNC]    tábla címének beállítása, vagy törlése paraméter nélkül\n"
+
+#: help.c:179
+msgid " \\cd [DIR]      change the current working directory\n"
+msgstr " \\cd [KÖNYVTÁR]      aktuális munkakönyvtár megváltoztatása\n"
+
+#: help.c:180
+msgid " \\copy ...      perform SQL COPY with data stream to the client host\n"
+msgstr " \\copy ...      SQL COPY végrehajtása adatfolyam a kliens felé\n"
+
+#: help.c:181
+msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr " \\copyright     PostgreSQL használati és terjesztési feltételek\n"
+
+#: help.c:182
+msgid " \\d [NAME]      describe table, index, sequence, or view\n"
+msgstr " \\d [NÉV]      tábla, index, sorozat vagy nézet leírása\n"
+
+#: help.c:183
+msgid " \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
+"                list tables/indexes/sequences/views/system tables\n"
+msgstr " \\d{t|i|s|v|S} [MINTA] (\"+\" megadásával további részletek)\n"
+"                táblák/indexek/sorozatok/nézetek/rendszer táblák listája\n"
+
+#: help.c:185
+msgid " \\da [PATTERN]  list aggregate functions\n"
+msgstr " \\da [MINTA]  aggregáló függvények listája\n"
+
+#: help.c:186
+msgid " \\dd [PATTERN]  show comment for object\n"
+msgstr " \\dd [MINTA]  objektumhoz tartozó megjegyzés megjelenítése\n"
+
+#: help.c:187
+msgid " \\dD [PATTERN]  list domains\n"
+msgstr " \\dD [MINTA]  domének listája\n"
+
+#: help.c:188
+msgid " \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
+msgstr " \\df [MINTA]  függvénylista ( \"+\" megadásával további részletek)\n"
+
+#: help.c:189
+msgid " \\do [NAME]     list operators\n"
+msgstr " \\do [NÉV]     muveletek listája\n"
+
+#: help.c:190
+msgid " \\dl            list large objects, same as \\lo_list\n"
+msgstr " \\dl            nagy objektumok listája, ugyanaz mint \\lo_list\n"
+
+#: help.c:191
+msgid " \\dp [PATTERN]  list table access privileges\n"
+msgstr " \\dp [MINTA]  tábla hozzáférési jogosultságok listája\n"
+
+#: help.c:192
+msgid " \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
+msgstr " \\dT [MINTA]  adattpusok listája (\"+\" opcióval további részletek)\n"
+
+#: help.c:193
+msgid " \\du [PATTERN]  list users\n"
+msgstr " \\du [MINTA]  felhasználók listája\n"
+
+#: help.c:194
+msgid " \\e [FILE]      edit the query buffer (or file) with external editor\n"
+msgstr " \\e [FÁJL]      lekérdezo puffer (vagy fájl) szerkesztése külso szerkesztovel\n"
+
+#: help.c:195
+msgid " \\echo [STRING] write string to standard output\n"
+msgstr " \\echo [KARAKTERLÁNC] karakterláncot a szabványos kimenetre írja\n"
+
+#: help.c:196
+msgid " \\encoding [ENCODING]  show or set client encoding\n"
+msgstr " \\encoding [KARAKTERKÓDOLÁS]  kliens oldali karakterkódolás megjelenítése vagy beállítása\n"
+
+#: help.c:197
+msgid " \\f [STRING]    show or set field separator for unaligned query output\n"
+msgstr " \\f [KARAKTERLÁNC]    nem igazított lekérdezési kimenethez mezo elválasztó beállítása vagy megjelenítése\n"
+
+#: help.c:198
+msgid " \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"
+msgstr " \\g [FÁJL]      lekérdezési puffer küldése a szervernek (és az eredmény fájlba vagy |csobe)\n"
+
+#: help.c:199
+msgid " \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
+msgstr " \\h [NÉV]      segítség SQL parancs szintaxisához, * minden parancshoz\n"
+
+#: help.c:200
+#, c-format
+msgid " \\H             toggle HTML output mode (currently %s)\n"
+msgstr " \\H             HTML kimeneti mód állítása (pillanatnyilag %s)\n"
+
+#: help.c:202
+msgid " \\i FILE        execute commands from file\n"
+msgstr " \\i FÁJL        parancsok futtatása a fájlból\n"
+
+#: help.c:203
+msgid " \\l             list all databases\n"
+msgstr " \\l             az összes adatbázis listája\n"
+
+#: help.c:204
+msgid " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                large object operations\n"
+msgstr " \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                nagy objektumok muveletei\n"
+
+#: help.c:206
+msgid " \\o FILE        send all query results to file or |pipe\n"
+msgstr " \\o FÁJL        a lekérdezés minden eredménye fájlba |csobe\n"
+
+#: help.c:207
+msgid " \\p             show the contents of the query buffer\n"
+msgstr " \\p             lekérdezési puffer tartalma\n"
+
+#: help.c:208
+msgid ""
+" \\pset NAME [VALUE]  set table output option\n"
+"                (NAME := {format|border|expanded|fieldsep|null|recordsep|\n"
+"                tuples_only|title|tableattr|pager})\n"
+msgstr ""
+" \\pset NÉV [ÉRTÉK]  tábla kimeneti opció beállítása\n"
+"                (NÉV := {format|border|expanded|fieldsep|null|recordsep|\n"
+"                tuples_only|title|tableattr|pager})\n"
+
+#: help.c:211
+msgid " \\q             quit psql\n"
+msgstr " \\q             kilép a psqlból\n"
+
+#: help.c:212
+msgid " \\qecho [STRING]  write string to query output stream (see \\o)\n"
+msgstr " \\qecho [KARAKTERLÁNC]  karakterlánc írása a lekérdezés kimenetébe (lásd még \\o)\n"
+
+#: help.c:213
+msgid " \\r             reset (clear) the query buffer\n"
+msgstr " \\r             lekérdezési puffer ürítése\n"
+
+#: help.c:214
+msgid " \\s [FILE]      display history or save it to file\n"
+msgstr " \\s [FÁJL]      elozmények megjelenítése vagy fájlba mentése\n"
+
+#: help.c:215
+msgid " \\set [NAME [VALUE]]  set internal variable, or list all if no parameters\n"
+msgstr " \\set [NÉV [ÉRTÉK]]  belso változó beállítása, vagy az összes litázása paraméter nélkül\n"
+
+#: help.c:216
+#, c-format
+msgid " \\t             show only rows (currently %s)\n"
+msgstr " \\t             csak a sorok mutatása (pillanatnyilag %s)\n"
+
+#: help.c:218
+msgid " \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
+msgstr " \\T [KARAKTERLÁNC]    HTML <table> címke paraméterek beállítása, vagy törlése üresen\n"
+
+#: help.c:219
+#, c-format
+msgid " \\timing        toggle timing of commands (currently %s)\n"
+msgstr " \\timing        parancsok idomérésének állítása (pillanatnyilag %s)\n"
+
+#: help.c:221
+msgid " \\unset NAME    unset (delete) internal variable\n"
+msgstr " \\unset NÉV    belso változó törlése\n"
+
+#: help.c:222
+msgid " \\w [FILE]      write query buffer to file\n"
+msgstr " \\w [FÁJL]      lekérdezési puffer fájlba írása\n"
+
+#: help.c:223
+#, c-format
+msgid " \\x             toggle expanded output (currently %s)\n"
+msgstr " \\x             kibovített kimenet állítása (pillanatnyilag %s)\n"
+
+#: help.c:225
+msgid " \\z [PATTERN]   list table access privileges (same as \\dp)\n"
+msgstr " \\z [MINTA]   tábla hozzáférési jogosultságok listázása (ua. mint \\dp)\n"
+
+#: help.c:226
+msgid " \\! [COMMAND]   execute command in shell or start interactive shell\n"
+msgstr " \\! [PARANCS]   parancs végrehajtása a héjban vagy interaktív héj indítása\n"
+
+#: help.c:256
+msgid "Available help:\n"
+msgstr "Az elérheto segítség:\n"
+
+#: help.c:294
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"Parancs:   %s\n"
+"Leírás:   %s\n"
+"Szintaxis:\n"
+"%s\n"
+"\n"
+
+#: help.c:305
+#, c-format
+msgid "No help available for '%-.*s'.\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr "'%-.*s'-h(oeö) nincs segítség.\n"
+"Próbáld a \\h-t paraméter nélkül a rendelkezésre álló segítség megtekintéséhez.\n"
+
+#: input.c:177
+#, c-format
+msgid "could not save history to %s: %s\n"
+msgstr "elozmények nem menthetok %s fájlba: %s\n"
+
+#: large_obj.c:69
+msgid "Warning: Your transaction in progress has been committed."
+msgstr "Figyelem: A folyamatban lévo tranzakciód véglegesítve."
+
+#: large_obj.c:71
+msgid "Warning: Your transaction in progress has been rolled back."
+msgstr "Figyelem: A folyamatban lévo tranzakciód visszagörgetve."
+
+#: large_obj.c:98
+msgid "\\lo_export: not connected to a database\n"
+msgstr "\\lo_export: nincs adatbázissal kapcsolat\n"
+
+#: large_obj.c:165
+msgid "\\lo_import: not connected to a database\n"
+msgstr "\\lo_import: nincs adatbázissal kapcsolat\n"
+
+#: large_obj.c:282
+msgid "\\lo_unlink: not connected to a database\n"
+msgstr "\\lo_unlink: nincs adatbázissal kapcsolat\n"
+
+#: describe.c:86
+#: describe.c:137
+#: describe.c:210
+#: describe.c:272
+#: describe.c:319
+#: describe.c:418
+#: describe.c:693
+#: describe.c:1268
+#: large_obj.c:363
+msgid "Description"
+msgstr "Leírás"
+
+#: large_obj.c:371
+msgid "Large objects"
+msgstr "Nagy objektumok"
+
+#: mainloop.c:242
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "%s elhagyása a \"\\q\" beadásával.\n"
+
+#: print.c:413
+msgid "(No rows)\n"
+msgstr "(Nincsenek sorok)\n"
+
+#: print.c:1114
+msgid "(1 row)"
+msgstr "(1 sor)"
+
+#: print.c:1116
+#, c-format
+msgid "(%d rows)"
+msgstr "(%d sor)"
+
+#: startup.c:134
+#: startup.c:612
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: elfogyott a memória\n"
+
+#: startup.c:169
+msgid "User name: "
+msgstr "Felhasználónév:"
+
+#: startup.c:278
+#, c-format
+msgid ""
+"Welcome to %s %s, the PostgreSQL interactive terminal.\n"
+"\n"
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help on internal slash commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+"\n"
+msgstr ""
+"Üdvözöl %s %s, a PostgreSQL interaktív terminál.\n"
+"\n"
+"Típus:  \\copyright terjesztési feltételek\n"
+"       \\h segítség az SQL parancsokhoz\n"
+"       \\? segítség a belso (vagy slash) parancsokhoz\n"
+"       \\g vagy pontosvesszo a lekérdezés lezárásához\n"
+"       \\q kilépés\n"
+"\n"
+
+#: startup.c:452
+#, c-format
+msgid "%s: couldn't set printing parameter %s\n"
+msgstr "%s: %s kimeneti paraméter beállítása nem sikerült\n"
+
+#: startup.c:498
+#, c-format
+msgid "%s: could not delete variable %s\n"
+msgstr "%s: %s változót nem sikerült törölni\n"
+
+#: startup.c:508
+#, c-format
+msgid "%s: could not set variable %s\n"
+msgstr "%s: %s változót nem sikerült beállítani\n"
+
+#: startup.c:539
+#: startup.c:559
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Próbáld meg a '%s --help' formában további információkért.\n"
+
+#: startup.c:552
+#, c-format
+msgid "%s was compiled without support for long options.\n"
+"Use --help for help on invocation options.\n"
+msgstr "%s-t a hosszú opciók támogatás kihagyásával fordították.\n"
+"Használd a --help paramétert segítség kérésére az opciók hívásáról.\n"
+
+#: startup.c:577
+#, c-format
+msgid "%s: warning: extra option %s ignored\n"
+msgstr "%s: figyelem: %s különleges paraméter figyelmenkívül hagyva\n"
+
+#: startup.c:584
+#, c-format
+msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
+msgstr "%s: Figyelem: A -u opció elavult. Helyette a  -U használatos.\n"
+
+#: startup.c:641
+msgid "contains support for command-line editing"
+msgstr "parancssor szerkesztésének támogatása"
+
+#: startup.c:664
+#, c-format
+msgid "SSL connection (cipher: %s, bits: %i)\n"
+"\n"
+msgstr "SSL kapcsolat (kódoló: %s, bitek: %i)\n"
+"\n"
+
+#: describe.c:85
+#: describe.c:127
+#: describe.c:197
+#: describe.c:270
+#: describe.c:364
+#: describe.c:418
+#: describe.c:1261
+#: describe.c:1367
+msgid "Schema"
+msgstr "Séma"
+
+#: describe.c:85
+#: describe.c:127
+#: describe.c:197
+#: describe.c:270
+#: describe.c:312
+#: describe.c:418
+#: describe.c:1261
+#: describe.c:1368
+msgid "Name"
+msgstr "Név"
+
+#: describe.c:85
+msgid "(all types)"
+msgstr "(minden típus)"
+
+#: describe.c:86
+msgid "Data type"
+msgstr "Adattípus"
+
+#: describe.c:100
+msgid "List of aggregate functions"
+msgstr "Aggregáló függvények listája."
+
+#: describe.c:127
+msgid "Result data type"
+msgstr "Eredmény adattípusa."
+
+#: describe.c:128
+msgid "Argument data types"
+msgstr "Paraméter adattípusa."
+
+#: describe.c:136
+#: describe.c:312
+#: describe.c:1263
+msgid "Owner"
+msgstr "Tulajdonos"
+
+#: describe.c:136
+msgid "Language"
+msgstr "Nyelv"
+
+#: describe.c:137
+msgid "Source code"
+msgstr "Forráskód"
+
+#: describe.c:171
+msgid "List of functions"
+msgstr "Függvény lista."
+
+#: describe.c:207
+msgid "Internal name"
+msgstr "Belso név"
+
+#: describe.c:207
+msgid "Size"
+msgstr "Méret"
+
+#: describe.c:239
+msgid "List of data types"
+msgstr "Adattípus lista."
+
+#: describe.c:271
+msgid "Left arg type"
+msgstr ""
+
+#: describe.c:271
+msgid "Right arg type"
+msgstr ""
+
+#: describe.c:272
+msgid "Result type"
+msgstr "Erdemény típus."
+
+#: describe.c:286
+msgid "List of operators"
+msgstr "Muveletek listája"
+
+#: describe.c:315
+msgid "Encoding"
+msgstr "Kódolás"
+
+#: describe.c:331
+msgid "List of databases"
+msgstr "Adatbázisok listája"
+
+#: describe.c:364
+#: describe.c:1278
+msgid "Table"
+msgstr "Tábla"
+
+#: describe.c:364
+msgid "Access privileges"
+msgstr "Hozzáférési jogosultságok."
+
+#: describe.c:386
+#, c-format
+msgid "Access privileges for database \"%s\""
+msgstr "Adatbázis hozzáférési jogosultságok \"%s\""
+
+#: describe.c:418
+msgid "Object"
+msgstr "Objektum"
+
+#: describe.c:429
+msgid "aggregate"
+msgstr ""
+
+#: describe.c:447
+msgid "function"
+msgstr "függvény"
+
+#: describe.c:461
+msgid "operator"
+msgstr "muvelet"
+
+#: describe.c:475
+msgid "data type"
+msgstr "adattipus"
+
+#: describe.c:492
+#: describe.c:1262
+msgid "table"
+msgstr "tábla"
+
+#: describe.c:492
+#: describe.c:1262
+msgid "view"
+msgstr "nézet"
+
+#: describe.c:492
+#: describe.c:1262
+msgid "index"
+msgstr "index"
+
+#: describe.c:492
+#: describe.c:1262
+msgid "sequence"
+msgstr "sorozat"
+
+#: describe.c:508
+msgid "rule"
+msgstr "szabály"
+
+#: describe.c:524
+msgid "trigger"
+msgstr "trigger"
+
+#: describe.c:542
+msgid "Object descriptions"
+msgstr "Objektum leírás"
+
+#: describe.c:588
+#, c-format
+msgid "Did not find any relation named \"%s\".\n"
+msgstr "Nem találtam\"%s\" nevu relációt.\n"
+
+#: describe.c:667
+#, c-format
+msgid "Did not find any relation with oid %s.\n"
+msgstr "Nem találtam %s obejktumazonosítóval (oid) rendelkezo relációt.\n"
+
+#: describe.c:680
+msgid "Column"
+msgstr "Oszlop"
+
+#: describe.c:681
+#: describe.c:1263
+#: describe.c:1369
+msgid "Type"
+msgstr "Típus"
+
+#: describe.c:687
+msgid "Modifiers"
+msgstr "Módosító"
+
+#: describe.c:787
+#, c-format
+msgid "Table \"%s.%s\""
+msgstr "Tábla \"%s.%s\""
+
+#: describe.c:791
+#, c-format
+msgid "View \"%s.%s\""
+msgstr "Nézet \"%s.%s\""
+
+#: describe.c:795
+#, c-format
+msgid "Sequence \"%s.%s\""
+msgstr "Sorozat \"%s.%s\""
+
+#: describe.c:799
+#, c-format
+msgid "Index \"%s.%s\""
+msgstr "Index \"%s.%s\""
+
+#: describe.c:803
+#, c-format
+msgid "Special relation \"%s.%s\""
+msgstr "Speciális reláció \"%s.%s\""
+
+#: describe.c:807
+#, c-format
+msgid "TOAST table \"%s.%s\""
+msgstr "TOAST tábla \"%s.%s\""
+
+#: describe.c:811
+#, c-format
+msgid "Composite type \"%s.%s\""
+msgstr "Összetett típus \"%s.%s\""
+
+#: describe.c:815
+#, c-format
+msgid "?%c? \"%s.%s\""
+msgstr "?%c? \"%s.%s\""
+
+#: describe.c:854
+msgid "primary key, "
+msgstr "elsodleges kulcs"
+
+#: describe.c:856
+msgid "unique, "
+msgstr "egyedi,"
+
+#: describe.c:862
+#, c-format
+msgid "for table \"%s.%s\""
+msgstr "táblának \"%s.%s\""
+
+#: describe.c:901
+#, c-format
+msgid "View definition: %s"
+msgstr "Nézet definíció: %s"
+
+#: describe.c:907
+#: describe.c:1103
+msgid "Rules"
+msgstr "Szabályok"
+
+#: describe.c:1027
+msgid "Indexes"
+msgstr "Indexek"
+
+#: describe.c:1041
+msgid " primary key"
+msgstr "elsodleges kulcs"
+
+#: describe.c:1043
+msgid " unique"
+msgstr "egyedi"
+
+#: describe.c:1064
+msgid "Check constraints"
+msgstr "Kényszerek ellenorzése"
+
+#: describe.c:1067
+#, c-format
+msgid "%s: \"%s\" %s"
+msgstr "%s: \"%s\" %s"
+
+#: describe.c:1072
+#, c-format
+msgid "%*s  \"%s\" %s"
+msgstr "%*s  \"%s\" %s"
+
+#: describe.c:1082
+msgid "Foreign Key constraints"
+msgstr "Külso kulcs kényszerei"
+
+#: describe.c:1085
+#, c-format
+msgid "%s: %s %s"
+msgstr "%s: %s %s"
+
+#: describe.c:1090
+#, c-format
+msgid "%*s  %s %s"
+msgstr "%*s  %s %s"
+
+#: describe.c:1118
+msgid "Triggers"
+msgstr "Triggerek"
+
+#: describe.c:1200
+msgid "User name"
+msgstr "Felhasználó név"
+
+#: describe.c:1200
+msgid "User ID"
+msgstr "Felhasználó azonosító (ID)"
+
+#: describe.c:1201
+msgid "superuser, create database"
+msgstr "szuperfelhasználó, adatbázis létrehozása"
+
+#: describe.c:1202
+msgid "superuser"
+msgstr "szuperfelhasználó"
+
+#: describe.c:1202
+msgid "create database"
+msgstr "adatbázis létrehozás"
+
+#: describe.c:1203
+msgid "Attributes"
+msgstr "Tulajdonságok"
+
+#: describe.c:1216
+msgid "List of database users"
+msgstr "Adatbázis felhasználók listája"
+
+#: describe.c:1263
+msgid "special"
+msgstr "speciális"
+
+#: describe.c:1324
+msgid "No matching relations found.\n"
+msgstr "Nem találtam passzoló relációt.\n"
+
+#: describe.c:1326
+msgid "No relations found.\n"
+msgstr "Nem találtam relációt.\n"
+
+#: describe.c:1331
+msgid "List of relations"
+msgstr "Relációk listája"
+
+#: describe.c:1370
+msgid "Modifier"
+msgstr "Módosító"
+
+#: describe.c:1384
+msgid "List of domains"
+msgstr "Domének listája"
+

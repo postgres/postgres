@@ -1,0 +1,432 @@
+# Turkish translated messages for PostgreSQL backend
+# Nicolai Tufar <ntufar@APB.com.TR>, 2002.
+#
+# $Header: /cvsroot/pgsql/src/backend/po/tr.po,v 1.2 2003/06/29 10:13:12 petere Exp $
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.3\n"
+"POT-Creation-Date: 2002-12-04 18:14+0200\n"
+"PO-Revision-Date: 2002-12-04 19:48+0200\n"
+"Last-Translator: Nicolai Tufar <ntufar@APB.com.TR>\n"
+"Language-Team: None so far <ntufar@APB.com.TR>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-9\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: bootstrap/bootstrap.c:193
+msgid ""
+"Usage:\n"
+"  postgres -boot [-d level] [-D datadir] [-F] [-o file] [-x num] dbname\n"
+"  -d 1-5           debug mode\n"
+"  -D datadir       data directory\n"
+"  -F               turn off fsync\n"
+"  -o file          send debug output to file\n"
+"  -x num           internal use\n"
+msgstr ""
+"Kullaným:\n"
+"  postgres -boot [-d level] [-D datadir] [-F] [-o file] [-x num] dbname\n"
+"  -d 1-5           debug modu\n"
+"  -D datadir       veritabaný dizini\n"
+"  -F               UNIX fsync() fonksyonu engelle\n"
+"  -o file          debug çýkýþý 'file' dosyasýna gönder\n"
+"  -x num           internal use\n"
+
+#: bootstrap/bootstrap.c:307 postmaster/postmaster.c:309
+#, c-format
+msgid ""
+"%s does not know where to find the database system data.\n"
+"You must specify the directory that contains the database system\n"
+"either by specifying the -D invocation option or by setting the\n"
+"PGDATA environment variable.\n"
+"\n"
+msgstr ""
+"%s, greken veritabaný dosyalarý bulamamaktadýr.\n"
+"Veritabaný dosyalarý bulunan dizini belirtmek için\n"
+"Baþlatma parametresi -D veya PGDATA enviroment deðiþkeni\n"
+"ile belirtmeniz gerekmektedir.\n"
+"\n"
+
+#: libpq/be-secure.c:591
+#, c-format
+msgid "failed to create SSL context: %s"
+msgstr "SSL modülü etkinleþtirme hatasý: %s"
+
+#: libpq/be-secure.c:602
+#, c-format
+msgid "failed to load server certificate (%s): %s"
+msgstr "sunucu srtifika (%s) yükleme baþarýsýz: %s"
+
+#: libpq/be-secure.c:610
+#, c-format
+msgid "failed to stat private key file (%s): %s"
+msgstr "private key dosyasý (%s) bulunamýyor: %s"
+
+#: libpq/be-secure.c:617
+#, c-format
+msgid "bad permissions on private key file (%s)"
+msgstr "private key dosyasýnýn (%s) eriþme haklarý geçirsiz"
+
+#: libpq/be-secure.c:622
+#, c-format
+msgid "failed to load private key file (%s): %s"
+msgstr "private key dosyasý (%s) yükleme baþarýsýz: %s"
+
+#: libpq/be-secure.c:628
+#, c-format
+msgid "check of private key failed: %s"
+msgstr "private key denetlemesi baþarýsýz: %s"
+
+#: libpq/be-secure.c:645
+#, c-format
+msgid "could not read root cert file (%s): %s"
+msgstr "ana sertifika dosyasý (%s) okunamamaktadýr: %s"
+
+#: main/main.c:83
+#, c-format
+msgid "%s: setsysinfo failed: %s\n"
+msgstr "%s: setsysinfo baþarýsýz: %s\n"
+
+#: main/main.c:172
+msgid ""
+"\"root\" execution of the PostgreSQL server is not permitted.\n"
+"\n"
+"The server must be started under an unprivileged user id to prevent\n"
+"a possible system security compromise.  See the documentation for\n"
+"more information on how to properly start the server.\n"
+"\n"
+msgstr ""
+"PostgreSQL'in, \"root\" kullanýcý olarak çalýþtýrýlmasýný tavsiye "
+"edilmememktedir.\n"
+"\n"
+"Olasý güvenilik açýðý önlemek için, sunucu, sistem yönetici olmayan \n"
+"bir kullanýcý ID ile çalýþtýrýlmalýdýr.\n"
+"Sunucunun doðru baþlatýlmasý konusunda daha fazla bilgi için\n"
+"PostgreSQL dökümanlara müracaat ediniz.\n"
+"\n"
+
+#: main/main.c:192
+#, c-format
+msgid "%s: real and effective user ids must match\n"
+msgstr "%s: gerçek ve efektif kullanýcý ID'leri birbirine uymalýdýr\n"
+
+#: main/main.c:227
+#, c-format
+msgid "%s: invalid current euid %d\n"
+msgstr "%s: aktif euid %d geçersizidr\n"
+
+#: scan.l:295
+msgid "unterminated /* comment"
+msgstr "'/*' ile baþlatýlmýþ açýklama sonlandýrýlmamýþtýr"
+
+#: scan.l:323
+msgid "unterminated bit string literal"
+msgstr "bit satýr ifadesi sonlandýrýlmamýþtýr"
+
+#: scan.l:342
+msgid "unterminated hexadecimal string literal"
+msgstr "hexadecimal satýr ifadesi sonlandýrýlmamýþtýr"
+
+#: scan.l:388
+msgid "unterminated quoted string"
+msgstr "týrnakla sýnýrlandýrýlmýþ satýr sonlandýrýlmamýþtýr"
+
+#: scan.l:399
+msgid "zero-length delimited identifier"
+msgstr "týrnakla sýnýrlandýrýlmýþ ifade sýfýr uzunluktadýr"
+
+#: scan.l:420
+msgid "unterminated quoted identifier"
+msgstr "týrnakla sýnýrlandýrýlmýþ belirteç sonlandýrýlmamýþtýr"
+
+#: y.tab.c:8804
+msgid "parse error; also virtual memory exhausted"
+msgstr "parse hatasý; vertual hafýza dolmuþtur"
+
+#: y.tab.c:8808
+msgid "parse error"
+msgstr "parse hatasý"
+
+#: y.tab.c:17489
+msgid "parser stack overflow"
+msgstr "parser stack overflow"
+
+#: postmaster/postmaster.c:349
+#, c-format
+msgid ""
+"%s does not find the database system.\n"
+"Expected to find it in the PGDATA directory \"%s\",\n"
+"but unable to open file \"%s\": %s\n"
+"\n"
+msgstr ""
+"%s veritabaný sistemi bulamamaktadýr.\n"
+"PGDATA = \"%s\" klasöründe arama yapýlmýþtýr\n"
+"ancak \"%s\" dosyasý bulunamamýþtýr: %s\n"
+"\n"
+
+#: postmaster/postmaster.c:434
+msgid "Assert checking is not compiled in."
+msgstr "Assert kontrol modülü yüklenmemiþtir."
+
+#: postmaster/postmaster.c:553 postmaster/postmaster.c:564
+#: postmaster/postmaster.c:632
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr " Daha fazla bilgi için '%s --help' çalýþtýrýn\n"
+
+#: postmaster/postmaster.c:563
+#, c-format
+msgid "invalid argument -- %s"
+msgstr "geçersiz parametre -- %s"
+
+#: postmaster/postmaster.c:587
+msgid ""
+"The number of buffers (-B) must be at least twice the number of allowed "
+"connections (-N) and at least 16."
+msgstr ""
+"Buffer sayýsý (-B), izin verilen baðlantý sayýsýndan (-N) en az iki kat daha "
+"büyük ve 16'dan daha küçük olmamalýdýr."
+
+#: postmaster/postmaster.c:593
+msgid "superuser_reserved_connections must be less than max_connections."
+msgstr ""
+"superuser_reserved_connections parametresi, max_connections parametresinden "
+"küçük olmalýdýr."
+
+#: postmaster/postmaster.c:631
+msgid "For SSL, TCP/IP connections must be enabled."
+msgstr "SSL desteði için, TCP/IP desteði etkin olmalýdýr."
+
+#: postmaster/postmaster.c:678
+msgid "cannot create INET stream port"
+msgstr "INET baðlantý portu açýlamýyor"
+
+#: postmaster/postmaster.c:690
+msgid "cannot create UNIX stream port"
+msgstr "UNIX baðlantý portu açýlamýyor"
+
+#: postmaster/postmaster.c:810
+#, c-format
+msgid "fork failed: %s"
+msgstr "fork() baþarýsýz: %s"
+
+#: postmaster/postmaster.c:832
+#, c-format
+msgid "cannot disassociate from controlling TTY: %s"
+msgstr "control TTY ile baðlantý kesilemiyor: %s"
+
+#: postmaster/postmaster.c:852
+#, c-format
+msgid ""
+"%s is the PostgreSQL server.\n"
+"\n"
+msgstr ""
+"%s, PostgreSQL dunucusudur.\n"
+"\n"
+
+#: postmaster/postmaster.c:853
+#, c-format
+msgid ""
+"Usage:\n"
+"  %s [OPTION]...\n"
+"\n"
+msgstr ""
+"Kullaným:\n"
+"  %s [OPTION]...\n"
+"\n"
+
+#: postmaster/postmaster.c:854
+msgid "Options:\n"
+msgstr "Opsiyonlar:\n"
+
+#: postmaster/postmaster.c:856
+msgid "  -A 1|0          enable/disable run-time assert checking\n"
+msgstr "  -A 1|0          çalýþma zamaný assert denetimi açýk/kapalý\n"
+
+#: postmaster/postmaster.c:858
+#, c-format
+msgid "  -B NBUFFERS     number of shared buffers (default %d)\n"
+msgstr "  -B NBUFFERS     shared buffers sayýsý (varsayýlan %d)\n"
+
+#: postmaster/postmaster.c:859
+msgid "  -c NAME=VALUE   set run-time parameter\n"
+msgstr "  -c NAME=VALUE   çalýþma parametresine deðer ver\n"
+
+#: postmaster/postmaster.c:860
+msgid "  -d 1-5          debugging level\n"
+msgstr "  -d 1-5          debug düzeyi\n"
+
+#: postmaster/postmaster.c:861
+msgid "  -D DATADIR      database directory\n"
+msgstr "  -D DATADIR      veritabaný dizini\n"
+
+#: postmaster/postmaster.c:862
+msgid "  -F              turn fsync off\n"
+msgstr "  -F              UNIX fsync() kullanýmý engelle\n"
+
+#: postmaster/postmaster.c:863
+msgid "  -h HOSTNAME     host name or IP address to listen on\n"
+msgstr "  -h HOSTNAME     sunucunun kullanacaðý host name veya IP adresi\n"
+
+#: postmaster/postmaster.c:864
+msgid "  -i              enable TCP/IP connections\n"
+msgstr "  -i              TCP/IP baðlantýlarý etkinleþtir\n"
+
+#: postmaster/postmaster.c:865
+msgid "  -k DIRECTORY    Unix-domain socket location\n"
+msgstr "  -k DIRECTORY    Unix-domain socket'in yeri\n"
+
+#: postmaster/postmaster.c:867
+msgid "  -l              enable SSL connections\n"
+msgstr "  -l              SSL baðlantýlarý etkinleþtir\n"
+
+#: postmaster/postmaster.c:869
+#, c-format
+msgid "  -N MAX-CONNECT  maximum number of allowed connections (default %d)\n"
+msgstr "  -N MAX-CONNECT  maksimum baðlantý sayýsý (varsayýlan %d)\n"
+
+#: postmaster/postmaster.c:871
+msgid "  -o OPTIONS      pass 'OPTIONS' to each backend server\n"
+msgstr "  -o OPTIONS      her backend sunucusuna þu 'OPTIONS'larý ilet\n"
+
+#: postmaster/postmaster.c:872
+#, c-format
+msgid "  -p PORT         port number to listen on (default %d)\n"
+msgstr ""
+"  -p PORT         sunucunun kullanacaðý port numarasý (varsayýlan %d)\n"
+
+#: postmaster/postmaster.c:873
+msgid ""
+"  -S              silent mode (start in background without logging output)\n"
+msgstr ""
+"  -S              sessiz modu (log kayýrlarý yazmadan arka plânda çalýþtýr)\n"
+
+#: postmaster/postmaster.c:874
+msgid "  --help          show this help, then exit\n"
+msgstr "  --help          bu help ekraný göster\n"
+
+#: postmaster/postmaster.c:875
+msgid "  --version       output version information, then exit\n"
+msgstr "  --version       versyon bilgileri göster\n"
+
+#: postmaster/postmaster.c:877
+msgid ""
+"\n"
+"Developer options:\n"
+msgstr ""
+"\n"
+"Program geliþtirici opsiyonlar:\n"
+
+#: postmaster/postmaster.c:878
+msgid ""
+"  -n              do not reinitialize shared memory after abnormal exit\n"
+msgstr ""
+"  -n              anormal çýkýþtan sonra shared memorynin yeniden "
+"biçimlendirmesini engelle\n"
+
+#: postmaster/postmaster.c:879
+msgid "  -s              send SIGSTOP to all backend servers if one dies\n"
+msgstr ""
+"  -s              bir backend sunucunun çöktüðünde tüm backend'lere SIGSTOP "
+"gönder\n"
+
+#: postmaster/postmaster.c:881
+msgid ""
+"\n"
+"Please read the documentation for the complete list of run-time\n"
+"configuration settings and how to set them on the command line or in\n"
+"the configuration file.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr ""
+"\n"
+"Çalýþma zamaný ayarlarýn tam listesai ve onlarý komut satýrýnda ve\n"
+"ayarlar dosyasýnda kullanýþý görmek için dökümanlara baþvurunuz.\n"
+"\n"
+"Sistem hatalarý <pgsql-bugs@postgresql.org> adresine bildiriniz.\n"
+
+#: postmaster/postmaster.c:1585
+msgid "statistics collector process"
+msgstr "istatistik toplama süreci"
+
+#: postmaster/postmaster.c:1598
+msgid "shutdown process"
+msgstr "sistem kapatma süreci"
+
+#: postmaster/postmaster.c:1609
+msgid "startup process"
+msgstr "sistem baþlatma süreci"
+
+#: postmaster/postmaster.c:1690
+msgid "child process"
+msgstr "alt süreç"
+
+#: postmaster/postmaster.c:1735
+msgid "server process"
+msgstr "sunucu süreci"
+
+#: postmaster/postmaster.c:1976
+msgid "Server process fork() failed: "
+msgstr "Sunucu süreci fork() iþlemi baþarýsýz: "
+
+#: postmaster/postmaster.c:2677
+#, c-format
+msgid "cannot create file %s: %s"
+msgstr "%s dosyasý yaratýlamýyor: %s"
+
+#: postmaster/postmaster.c:2689
+#, c-format
+msgid "writing file %s failed"
+msgstr "%s dosyasýna yazma hatasý"
+
+#: utils/error/elog.c:218
+#, c-format
+msgid "copy: line %d, "
+msgstr "copy: satýr %d, "
+
+#. translator: This must fit in fmt_fixedbuf.
+#: utils/error/elog.c:241 utils/error/elog.c:337
+msgid "elog: out of memory"
+msgstr "elog: RAM yetersiz "
+
+#: utils/error/elog.c:776
+msgid "Numerical result out of range"
+msgstr "Sayýsal sonuç hedef dýþýdýr"
+
+#: utils/error/elog.c:790
+#, c-format
+msgid "operating system error %d"
+msgstr "iþletim sistemi hatasý %d"
+
+#: utils/error/elog.c:812
+msgid "DEBUG:  "
+msgstr "DEBUG:  "
+
+#: utils/error/elog.c:816
+msgid "LOG:  "
+msgstr "LOG:  "
+
+#: utils/error/elog.c:819
+msgid "INFO:  "
+msgstr "BÝLGÝ:  "
+
+#: utils/error/elog.c:822
+msgid "NOTICE:  "
+msgstr "NOT:  "
+
+#: utils/error/elog.c:825
+msgid "WARNING:  "
+msgstr "UYARI:  "
+
+#: utils/error/elog.c:828
+msgid "ERROR:  "
+msgstr "HATA:  "
+
+#: utils/error/elog.c:831
+msgid "FATAL:  "
+msgstr "FATAL:  "
+
+#: utils/error/elog.c:834
+msgid "PANIC:  "
+msgstr "PANÝK:  "
