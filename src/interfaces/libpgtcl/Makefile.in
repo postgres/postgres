@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.38 2000/01/10 15:41:29 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.39 2000/03/08 01:58:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
-SHLIB_LINK+= -L../libpq -lpq
+SHLIB_LINK+= $(LIBPQ)
 
 # If crypt is a separate library, rather than part of libc, it may need
 # to be referenced separately to keep (broken) linkers happy.  (This is

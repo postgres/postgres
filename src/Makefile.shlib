@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.17 1999/12/09 19:14:22 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.18 2000/03/08 01:58:15 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -103,6 +103,24 @@ ifeq ($(PORTNAME), freebsd)
       LDFLAGS_SL	:= -x -shared -soname $(shlib)
     else
       shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+      LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
+    endif
+    CFLAGS		+= $(CFLAGS_SL)
+  endif
+endif
+
+ifeq ($(PORTNAME), netbsd)
+  ifdef BSD_SHLIB
+    install-shlib-dep	:= install-shlib
+    soname		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+    shlib		:= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    ifdef ELF_SYSTEM
+      LD		:= $(CC)
+      LDFLAGS_SL	:= -shared -Wl,-soname -Wl,$(soname)
+      ifneq ($(SHLIB_LINK),)
+        LDFLAGS_SL	+= -Wl,-R$(LIBDIR)
+      endif
+    else
       LDFLAGS_SL	:= -x -Bshareable -Bforcearchive
     endif
     CFLAGS		+= $(CFLAGS_SL)

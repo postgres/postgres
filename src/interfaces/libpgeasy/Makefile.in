@@ -4,7 +4,7 @@
 #    Makefile for pgeasy library
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.5 2000/01/10 15:41:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.6 2000/03/08 01:58:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,9 +23,7 @@ endif
 
 OBJS= libpgeasy.o halt.o
 
-SHLIB_LINK+= -L../libpq -lpq
-
-SHLIB_LINK+= -L../libpq -lpq
+SHLIB_LINK+= $(LIBPQ)
 
 # If crypt is a separate library, rather than part of libc, it may need
 # to be referenced separately to keep (broken) linkers happy.  (This is

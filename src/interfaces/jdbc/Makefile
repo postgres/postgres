@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.16 1999/09/15 21:56:16 peter Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.17 2000/03/08 01:58:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,11 +34,11 @@ all:
 	@echo
 	@echo If you are using JDK1.1.x, you will need the JDBC1.2 driver.
 	@echo To compile, type:
-	@echo "  make jdbc1"
+	@echo "  $(MAKE) jdbc1"
 	@echo
 	@echo "If you are using JDK1.2 (aka Java2) you need the JDBC2."
 	@echo To compile, type:
-	@echo "  make jdbc2"
+	@echo "  $(MAKE) jdbc2"
 	@echo ------------------------------------------------------------
 
 msg:	
@@ -59,10 +59,10 @@ msg:
 	@echo
 	@echo ------------------------------------------------------------
 	@echo To build the examples, type:
-	@echo "  make examples"
+	@echo "  $(MAKE) examples"
 	@echo
 	@echo "To build the CORBA example (requires Java2):"
-	@echo "  make corba"
+	@echo "  $(MAKE) corba"
 	@echo ------------------------------------------------------------
 	@echo
 

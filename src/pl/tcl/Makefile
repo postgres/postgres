@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.10 1998/12/13 23:46:49 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.11 2000/03/08 01:58:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ CFLAGS+= -I$(SRCDIR)/backend
 
 CFLAGS+= $(TCL_DEFS)
 
-LDADD+= -L$(LIBPQDIR) -lpq
+LDADD+= $(LIBPQ)
         
 #
 # DLOBJS is the dynamically-loaded object file.

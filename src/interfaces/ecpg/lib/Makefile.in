@@ -6,18 +6,18 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.62 2000/03/07 15:10:52 meskes Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/Makefile.in,v 1.63 2000/03/08 01:58:24 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 NAME= ecpg
 SO_MAJOR_VERSION= 3
-SO_MINOR_VERSION= 1.0
+SO_MINOR_VERSION= 1
 
 SRCDIR= @top_srcdir@
 include $(SRCDIR)/Makefile.global
 
-CFLAGS+= -I../include -I$(SRCDIR)/interfaces/libpq
+CFLAGS+= -I../include -I$(LIBPQDIR)
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
@@ -26,7 +26,7 @@ endif
 OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 	connect.o misc.o
 
-SHLIB_LINK= -L../../libpq -lpq
+SHLIB_LINK= $(LIBPQ)
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib

@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.20 2000/01/10 15:41:31 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.21 2000/03/08 01:58:37 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,9 +43,9 @@ endif
 OBJS = pgconnection.o pgdatabase.o pgtransdb.o pgcursordb.o pglobject.o 
 
 ifeq ($(PORTNAME), win)
-SHLIB_LINK+= --driver-name g++ -L../libpq -lpq
+SHLIB_LINK+= --driver-name g++ $(LIBPQ)
 else
-SHLIB_LINK= -L../libpq -lpq
+SHLIB_LINK= $(LIBPQ)
 endif
 
 # For CC on IRIX, must use CC as linker/archiver of C++ libraries

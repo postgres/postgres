@@ -1,0 +1,16 @@
+ifdef ELF_SYSTEM
+LDFLAGS += -Wl,-E
+endif
+%.so: %.o
+ifdef ELF_SYSTEM
+	$(LD) -x -Bshareable -o $@ $<
+else
+	$(LD) $(LDREL) $(LDOUT) $<.obj -x $<
+	@echo building shared object $@
+	@rm -f $@.pic
+	@${AR} cq $@.pic `lorder $<.obj | tsort`
+	${RANLIB} $@.pic
+	@rm -f $@
+	$(LD) -x -Bshareable -Bforcearchive \
+	  -o $@ $@.pic
+endif

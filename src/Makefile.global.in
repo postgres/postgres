@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.66 2000/02/10 19:11:17 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.67 2000/03/08 01:58:15 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -54,6 +54,10 @@ BSD_SHLIB= true
 ELF_SYSTEM= @ELF_SYS@
 
 LIBPQDIR:= $(SRCDIR)/interfaces/libpq
+LIBPGTCLDIR:= $(SRCDIR)/interfaces/libpgtcl
+
+LIBPQ:= -L$(LIBPQDIR) -lpq
+LIBPGTCL:= -L$(LIBPGTCLDIR) -lpgtcl
 
 # For convenience, POSTGRESDIR is where BINDIR, and LIBDIR
 # and other target destinations are rooted.  Of course, each of these is
@@ -69,6 +73,10 @@ BINDIR= $(POSTGRESDIR)/bin
 # can just put the absolute pathname to the library at the end of your
 # command line.
 LIBDIR= $(POSTGRESDIR)/lib
+
+# Where the database templates are stored
+#
+TEMPLATEDIR= $(POSTGRESDIR)/lib
 
 # This is the directory where IPC utilities ipcs and ipcrm are located
 #

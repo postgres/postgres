@@ -23,11 +23,7 @@ case "$host_os" in
     bsdi*) os=bsdi need_tas=no ;;
  freebsd1*|freebsd2*) os=freebsd need_tas=no ;;
  freebsd*) os=freebsd need_tas=no elf=yes ;;
-  netbsd*)
-	os=bsd need_tas=no
-	case "$host_cpu" in
-	  powerpc) elf=yes ;;
-	esac ;;
+  netbsd*) os=netbsd need_tas=no ;;
   openbsd*) os=bsd need_tas=no ;;
     dgux*) os=dgux need_tas=no ;;
      aix*) os=aix need_tas=no ;;

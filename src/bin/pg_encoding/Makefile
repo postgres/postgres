@@ -6,7 +6,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.4 2000/01/15 18:30:32 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/Makefile,v 1.5 2000/03/08 01:58:20 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ CFLAGS:= -I$(SRCDIR)/include $(CFLAGS)
 all: submake pg_encoding
 
 pg_encoding: $(OBJS)
-	$(CC) -o pg_encoding $(OBJS) -L$(LIBPQDIR) -lpq $(LDFLAGS) $(CFLAGS)
+	$(CC) -o pg_encoding $(OBJS) $(LIBPQ) $(LDFLAGS) $(CFLAGS)
 
 .PHONY: submake
 
