@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.97 2003/04/12 22:28:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.98 2003/04/13 04:07:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,16 +69,11 @@ static List *tokenize_file(FILE *file);
 static char *tokenize_inc_file(const char *inc_filename);
 
 /*
- * Some standard C libraries, including GNU, have an isblank() function.
- * Others, including Solaris, do not.  So we have our own.  Watch out for
- * macro-ized versions, too.
+ * isblank() exists in the ISO C99 spec, but it's not very portable yet,
+ * so provide our own version.
  */
-#ifdef isblank
-#undef isblank
-#endif
-
 static bool
-isblank(const char c)
+pg_isblank(const char c)
 {
 	return c == ' ' || c == '\t' || c == '\r';
 }
@@ -104,7 +99,7 @@ next_token(FILE *fp, char *buf, const int bufsz)
 	bool		was_quote = false;
 
 	/* Move over initial whitespace and commas */
-	while ((c = getc(fp)) != EOF && (isblank(c) || c == ','))
+	while ((c = getc(fp)) != EOF && (pg_isblank(c) || c == ','))
 		;
 
 	if (c != EOF && c != '\n')
@@ -114,7 +109,7 @@ next_token(FILE *fp, char *buf, const int bufsz)
 		 * unquoted comma, or unquoted whitespace.
 		 */
 		while (c != EOF && c != '\n' &&
-			   (!isblank(c) || in_quote == true))
+			   (!pg_isblank(c) || in_quote == true))
 		{
 			/* skip comments to EOL */
 			if (c == '#' && !in_quote)
@@ -141,7 +136,7 @@ next_token(FILE *fp, char *buf, const int bufsz)
 				*buf++ = c;
 
 			/* We pass back the comma so the caller knows there is more */
-			if ((isblank(c) || c == ',') && !in_quote)
+			if ((pg_isblank(c) || c == ',') && !in_quote)
 				break;
 
 			/* Literal double-quote is two double-quotes */
@@ -1050,14 +1045,14 @@ interpret_ident_response(char *ident_response,
 			int			i;		/* Index into *response_type */
 
 			cursor++;			/* Go over colon */
-			while (isblank(*cursor))
+			while (pg_isblank(*cursor))
 				cursor++;		/* skip blanks */
 			i = 0;
-			while (*cursor != ':' && *cursor != '\r' && !isblank(*cursor) &&
+			while (*cursor != ':' && *cursor != '\r' && !pg_isblank(*cursor) &&
 				   i < (int) (sizeof(response_type) - 1))
 				response_type[i++] = *cursor++;
 			response_type[i] = '\0';
-			while (isblank(*cursor))
+			while (pg_isblank(*cursor))
 				cursor++;		/* skip blanks */
 			if (strcmp(response_type, "USERID") != 0)
 				return false;
@@ -1083,7 +1078,7 @@ interpret_ident_response(char *ident_response,
 						int			i;	/* Index into *ident_user */
 
 						cursor++;		/* Go over colon */
-						while (isblank(*cursor))
+						while (pg_isblank(*cursor))
 							cursor++;	/* skip blanks */
 						/* Rest of line is user name.  Copy it over. */
 						i = 0;
