@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-03-12 13:39+0100\n"
-"PO-Revision-Date: 2004-03-12 13:58+0100\n"
+"PO-Revision-Date: 2004-03-12 16:18+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -92,7 +92,7 @@ msgstr "\"%s\" är en speciell relation"
 #: access/heap/heapam.c:617 access/heap/heapam.c:652 access/heap/heapam.c:687
 #, c-format
 msgid "\"%s\" is a composite type"
-msgstr "\"%s\" är en sammanslagen typ"
+msgstr "\"%s\" är en sammansatt typ"
 
 #: access/heap/hio.c:109
 #, c-format
@@ -751,7 +751,7 @@ msgstr "WAL-fil-SYSID är %s, pg_control-SYSID är %s"
 
 #: access/transam/xlog.c:3686
 msgid "Incorrect XLOG_SEG_SIZE in file header."
-msgstr ""
+msgstr "Felaktig XLOG_SEG_SIZE i filhuvud."
 
 #: access/transam/xlog.c:3826 access/transam/xlog.c:3858
 #, c-format
@@ -1099,7 +1099,7 @@ msgstr "kolumn \"%s\" har pseudo-typ %s"
 #: catalog/heap.c:446
 #, c-format
 msgid "column \"%s\" has composite type %s"
-msgstr "kolumn \"%s\" har sammanslagen typ %s"
+msgstr "kolumn \"%s\" har sammansatt typ %s"
 
 #: catalog/heap.c:734 catalog/index.c:524 commands/tablecmds.c:1296
 #, c-format
@@ -1640,7 +1640,7 @@ msgstr "integritetsvillkor \"%s\" för tabell \"%s\" existerar inte"
 
 #: commands/comment.c:991
 msgid "language name may not be qualified"
-msgstr ""
+msgstr "språknamnet får inte vara kvalificerat (qualified)"
 
 #: commands/comment.c:1006
 msgid "must be superuser to comment on procedural language"
@@ -1891,7 +1891,7 @@ msgstr ""
 
 #: commands/copy.c:1795 commands/copy.c:1813
 msgid "Use \"\\r\" to represent carriage return."
-msgstr ""
+msgstr "Använd \"\\r\" för att representera vagnretur (carriage return)."
 
 #: commands/copy.c:1830
 msgid "literal newline found in data"
@@ -2003,7 +2003,7 @@ msgstr "kunde inte initiera databaskatalogen"
 #: commands/dbcommands.c:978
 #, c-format
 msgid "Failing system command was: %s"
-msgstr ""
+msgstr "Systemkommandot som misslyckades var: %s"
 
 #: commands/dbcommands.c:374 commands/dbcommands.c:379
 #: commands/dbcommands.c:979
@@ -2376,12 +2376,12 @@ msgstr "operatorklass \"%s\" för accessmetoden \"%s\" finns redan"
 #: commands/opclasscmds.c:300
 #, c-format
 msgid "could not make operator class \"%s\" be default for type %s"
-msgstr ""
+msgstr "kunde inte göra operatorklassen \"%s\" till standard för typ %s"
 
 #: commands/opclasscmds.c:303
 #, c-format
 msgid "Operator class \"%s\" already is the default."
-msgstr ""
+msgstr "Operatorklassen \"%s\" är redan standard."
 
 #: commands/opclasscmds.c:429
 msgid "btree operators must be binary"
@@ -2397,7 +2397,7 @@ msgstr "btree-operatorer måste ha indextyp som vänster argument"
 
 #: commands/opclasscmds.c:481
 msgid "btree procedures must have two arguments"
-msgstr ""
+msgstr "btree-procedurer måste ha två argument"
 
 #: commands/opclasscmds.c:485
 msgid "btree procedures must return integer"
@@ -2405,7 +2405,7 @@ msgstr "btree-procedurer måste returnera heltal"
 
 #: commands/opclasscmds.c:489
 msgid "btree procedures must have index type as first input"
-msgstr ""
+msgstr "btree-procedurer måste ha indextypen som första indata"
 
 #: commands/opclasscmds.c:521
 #, c-format
@@ -3046,16 +3046,16 @@ msgstr ""
 #: commands/typecmds.c:968
 #, c-format
 msgid "changing argument type of function %s from \"opaque\" to %s"
-msgstr ""
+msgstr "ändrar argumenttyp på funktionen %s från \"opaque\" till %s"
 
 #: commands/typecmds.c:1079
-#, fuzzy, c-format
+#, c-format
 msgid "type analyze function %s must return type \"boolean\""
-msgstr "funktionen %s måste returnera typen \"trigger\""
+msgstr "typanalysfunktionen %s måste returnera typen \"boolean\""
 
 #: commands/typecmds.c:1108
 msgid "composite type must have at least one attribute"
-msgstr ""
+msgstr "sammansatt typ måste ha minst ett attribut"
 
 #: commands/typecmds.c:1340
 #, c-format
@@ -3066,7 +3066,7 @@ msgstr "kolumn \"%s\" i tabell \"%s\" innehåller null-värden"
 #, c-format
 msgid ""
 "column \"%s\" of table \"%s\" contains values that violate the new constraint"
-msgstr ""
+msgstr "kolumnen \"%s\" i tabell \"%s\" innehåller värden som bryter mot det nya villkortet"
 
 #: commands/typecmds.c:1807
 #, c-format
@@ -4156,7 +4156,7 @@ msgstr ""
 #: main/main.c:86
 #, c-format
 msgid "%s: setsysinfo failed: %s\n"
-msgstr ""
+msgstr "%s: setsysinfo misslyckades: %s\n"
 
 #: main/main.c:188
 msgid ""
@@ -4389,7 +4389,7 @@ msgstr "SELECT FOR UPDATE tillåts inte med aggregatfunktioner"
 
 #: parser/analyze.c:2920
 msgid "SELECT FOR UPDATE cannot be applied to a join"
-msgstr ""
+msgstr "SELECT FOR UPDATE kan inte appliceras på en join"
 
 #: parser/analyze.c:2925
 msgid "SELECT FOR UPDATE cannot be applied to NEW or OLD"
@@ -4645,7 +4645,7 @@ msgstr ""
 
 #: parser/parse_expr.c:105
 msgid "expression too complex"
-msgstr ""
+msgstr "uttrycket för komplicerat"
 
 #: parser/parse_expr.c:106
 #, c-format
@@ -4941,7 +4941,7 @@ msgstr ""
 #: parser/parse_target.c:421
 #, c-format
 msgid "column \"%s\" is of type %s but expression is of type %s"
-msgstr ""
+msgstr "kolumn \"%s\" har typ %s men uttrycket är av typ %s"
 
 #: parser/parse_target.c:556
 msgid "SELECT * with no tables specified is not valid"
@@ -5756,7 +5756,7 @@ msgstr ""
 
 #: postmaster/postmaster.c:1920
 msgid "statistics collector process"
-msgstr ""
+msgstr "statistikinsamlingsprocess"
 
 #: postmaster/postmaster.c:1933
 msgid "shutdown process"
@@ -6282,7 +6282,7 @@ msgstr ""
 
 #: tcop/postgres.c:1922
 msgid "floating-point exception"
-msgstr ""
+msgstr "flyttalsavbrott"
 
 #: tcop/postgres.c:1923
 msgid ""
@@ -6323,7 +6323,7 @@ msgstr "  -d 1-5          debug-nivå (0 är av)\n"
 
 #: tcop/postgres.c:1987
 msgid "  -e              use European date input format (DMY)\n"
-msgstr ""
+msgstr "  -e              använd europeiskt datumformat för indata (DMY)\n"
 
 #: tcop/postgres.c:1988
 msgid "  -E              echo query before execution\n"
@@ -6530,7 +6530,7 @@ msgstr ""
 
 #: utils/adt/acl.c:282
 msgid "a name must follow the \"/\" sign"
-msgstr ""
+msgstr "ett namn måste följa på tecknet \"/\""
 
 #: utils/adt/acl.c:291
 #, c-format
@@ -6740,7 +6740,7 @@ msgstr "ogiltigt typnamn \"%s\""
 #: utils/adt/int8.c:537 utils/adt/int8.c:566 utils/adt/int8.c:644
 #: utils/adt/int8.c:685 utils/adt/numeric.c:3678 utils/adt/timestamp.c:2002
 msgid "division by zero"
-msgstr ""
+msgstr "division med noll"
 
 #: utils/adt/date.c:87 utils/adt/datetime.c:1309 utils/adt/datetime.c:2073
 msgid "date/time value \"current\" is no longer supported"
@@ -6944,11 +6944,11 @@ msgstr ""
 
 #: utils/adt/float.c:1363 utils/adt/float.c:1389
 msgid "cannot take logarithm of zero"
-msgstr ""
+msgstr "kan inte ta logartimen av noll"
 
 #: utils/adt/float.c:1368 utils/adt/float.c:1394 utils/adt/numeric.c:4291
 msgid "cannot take logarithm of a negative number"
-msgstr ""
+msgstr "kan inte ta logaritmen av ett negativt tal"
 
 #: utils/adt/float.c:1421 utils/adt/float.c:1446 utils/adt/float.c:1471
 #: utils/adt/float.c:1497 utils/adt/float.c:1522 utils/adt/float.c:1547
@@ -7626,7 +7626,7 @@ msgstr ""
 #: utils/adt/timestamp.c:3425 utils/adt/timestamp.c:3537
 #, c-format
 msgid "interval units \"%s\" not recognized"
-msgstr ""
+msgstr "intervallenhet \"%s\" känns inte igen"
 
 #: utils/adt/timestamp.c:2830 utils/adt/timestamp.c:3507
 #, c-format
@@ -7645,7 +7645,7 @@ msgstr ""
 #: utils/adt/varbit.c:109 utils/adt/varbit.c:263
 #, c-format
 msgid "bit string length %d does not match type bit(%d)"
-msgstr ""
+msgstr "bitsträngslängden %d matchar inte typen bit(%d)"
 
 #: utils/adt/varbit.c:131 utils/adt/varbit.c:370
 #, c-format
@@ -7653,14 +7653,14 @@ msgid "\"%c\" is not a valid binary digit"
 msgstr "\"%c\" är inte en giltig binär siffra"
 
 #: utils/adt/varbit.c:156 utils/adt/varbit.c:395
-#, fuzzy, c-format
+#, c-format
 msgid "\"%c\" is not a valid hexadecimal digit"
-msgstr "\"%d\" är inte en giltigt kodningskod"
+msgstr "\"%c\" är inte en giltig hexdecimal siffra"
 
 #: utils/adt/varbit.c:348 utils/adt/varbit.c:532
 #, c-format
 msgid "bit string too long for type bit varying(%d)"
-msgstr ""
+msgstr "bitsträngen för lång för typen bit varying(%d)"
 
 #: utils/adt/varbit.c:472
 msgid "invalid length in external bit string"
@@ -7803,7 +7803,7 @@ msgstr "kunde inte återöppna filen \"%s\" som stdout: %m"
 
 #: utils/error/elog.c:1058 utils/error/elog.c:1060
 msgid "[unknown]"
-msgstr ""
+msgstr "[okänd]"
 
 #: utils/error/elog.c:1192 utils/error/elog.c:1344 utils/error/elog.c:1407
 msgid "missing error text"
@@ -7928,7 +7928,7 @@ msgid ""
 "If you're sure there are no old server processes still running, remove the "
 "shared memory block with the command \"ipcrm\", or just delete the file \"%s"
 "\"."
-msgstr ""
+msgstr "Om du är säker på att ingen gammal serverprocess forfarande kör, så ta bort det delade minnesblocket med kommandot \"ipcrm\", eller radera helt enkelt filen \"%s\"."
 
 #: utils/init/miscinit.c:600
 #, c-format
@@ -7954,7 +7954,7 @@ msgstr "kunde inte läsa från fil \"%s\": %m"
 #: utils/init/miscinit.c:835 utils/init/miscinit.c:848
 #, c-format
 msgid "\"%s\" is not a valid data directory"
-msgstr ""
+msgstr "\"%s\" är inte en giltigt datakatalog"
 
 #: utils/init/miscinit.c:837
 #, c-format
@@ -7979,7 +7979,7 @@ msgstr ""
 
 #: utils/init/miscinit.c:902
 msgid "invalid list syntax for parameter \"preload_libraries\""
-msgstr ""
+msgstr "ogiltigt listsyntax för parameter \"preload_libraries\""
 
 #: utils/init/miscinit.c:947
 #, c-format
@@ -8004,7 +8004,7 @@ msgstr ""
 #: utils/init/postinit.c:277
 #, c-format
 msgid "The database subdirectory \"%s\" is missing."
-msgstr ""
+msgstr "Databasens underbibliotek \"%s\" saknas."
 
 #: utils/init/postinit.c:282
 #, c-format
@@ -8285,7 +8285,7 @@ msgstr ""
 
 #: utils/misc/guc.c:488
 msgid "Runs the server silently."
-msgstr ""
+msgstr "Kör servern tyst."
 
 #: utils/misc/guc.c:489
 msgid ""
@@ -8654,9 +8654,8 @@ msgid "Sets the maximum number of disk pages for which free space is tracked."
 msgstr ""
 
 #: utils/misc/guc.c:1172
-#, fuzzy
 msgid "Sets the maximum number of locks per transaction."
-msgstr "Max antal lås per transaktion"
+msgstr "Sätter maximalt antal lås per transaktion."
 
 #: utils/misc/guc.c:1173
 msgid ""
@@ -9034,7 +9033,7 @@ msgstr "parameter \"%s\" kräver ett boolskt värde"
 
 #: utils/misc/guc.c:2771
 msgid "Must be superuser to change this value to false."
-msgstr ""
+msgstr "Måste vara superanvändare för att ändra detta värde till \"false\"."
 
 #: utils/misc/guc.c:2793 utils/misc/guc.c:2890
 #, c-format
@@ -9049,11 +9048,11 @@ msgstr "parameter \"%s\" kräver ett heltalsvärde"
 #: utils/misc/guc.c:2853
 #, c-format
 msgid "%d is outside the valid range for parameter \"%s\" (%d .. %d)"
-msgstr ""
+msgstr "%d är utanför giltigt intervall för parameter \"%s\" (%d .. %d)"
 
 #: utils/misc/guc.c:2868
 msgid "Must be superuser to increase this value or set it to zero."
-msgstr ""
+msgstr "Måste vara superanvändare för att öka detta värde eller sätta det till noll."
 
 #: utils/misc/guc.c:2942
 #, c-format
@@ -9063,11 +9062,11 @@ msgstr "parameter \"%s\" kräver ett numeriskt värde"
 #: utils/misc/guc.c:2950
 #, c-format
 msgid "%g is outside the valid range for parameter \"%s\" (%g .. %g)"
-msgstr ""
+msgstr "%g är utanför giltigt intervall för parameter \"%s\" (%g .. %g)"
 
 #: utils/misc/guc.c:2964 utils/misc/guc.c:3063
 msgid "Must be superuser to increase this value."
-msgstr ""
+msgstr "Måste vara superanvändare för att öka detta värde."
 
 #: utils/misc/guc.c:2986
 #, c-format
@@ -9095,7 +9094,7 @@ msgstr "kunde inte tolka inställningen för parameter \"%s\""
 
 #: utils/misc/guc.c:4623
 msgid "SET AUTOCOMMIT TO OFF is no longer supported"
-msgstr ""
+msgstr "SET AUTOCOMMIT TO OFF stöds inte längre"
 
 #: guc-file.l:268
 #, c-format
@@ -9105,7 +9104,7 @@ msgstr "syntaxfel i fil \"%s\" rad %u, nära symbol \"%s\""
 #: utils/mmgr/aset.c:336
 #, c-format
 msgid "Failed while creating memory context \"%s\"."
-msgstr ""
+msgstr "Misslyckades vid skapande av minneskontext \"%s\"."
 
 #: utils/mmgr/aset.c:502 utils/mmgr/aset.c:699 utils/mmgr/aset.c:892
 #, c-format
@@ -9120,16 +9119,16 @@ msgstr "markör \"%s\" finns redan"
 #: utils/mmgr/portalmem.c:174
 #, c-format
 msgid "closing existing cursor \"%s\""
-msgstr ""
+msgstr "stänger existerande markör \"%s\""
 
 #: utils/sort/logtape.c:202
 #, c-format
 msgid "could not write block %ld of temporary file: %m"
-msgstr ""
+msgstr "kunde inte skriva block %ld i temporär fil: %m"
 
 #: utils/sort/logtape.c:204
 msgid "Perhaps out of disk space?"
-msgstr ""
+msgstr "Du kanske har slut på diskutrymme?"
 
 #: utils/sort/logtape.c:221
 #, c-format
