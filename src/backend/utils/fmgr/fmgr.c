@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.71 2003/06/29 00:33:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.72 2003/07/01 00:04:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1616,16 +1616,19 @@ pg_detoast_datum_slice(struct varlena * datum, int32 first, int32 count)
 
 /*-------------------------------------------------------------------------
  *		Support routines for extracting info from fn_expr parse tree
+ *
+ * These are needed by polymorphic functions, which accept multiple possible
+ * input types and need help from the parser to know what they've got.
  *-------------------------------------------------------------------------
  */
 
 /*
- * Get the OID of the function return type
+ * Get the actual type OID of the function return type
  *
  * Returns InvalidOid if information is not available
  */
 Oid
-get_fn_expr_rettype(FunctionCallInfo fcinfo)
+get_fn_expr_rettype(FmgrInfo *flinfo)
 {
 	Node   *expr;
 
@@ -1633,21 +1636,21 @@ get_fn_expr_rettype(FunctionCallInfo fcinfo)
 	 * can't return anything useful if we have no FmgrInfo or if
 	 * its fn_expr node has not been initialized
 	 */
-	if (!fcinfo || !fcinfo->flinfo || !fcinfo->flinfo->fn_expr)
+	if (!flinfo || !flinfo->fn_expr)
 		return InvalidOid;
 
-	expr = fcinfo->flinfo->fn_expr;
+	expr = flinfo->fn_expr;
 
 	return exprType(expr);
 }
 
 /*
- * Get the type OID of a specific function argument (counting from 0)
+ * Get the actual type OID of a specific function argument (counting from 0)
  *
  * Returns InvalidOid if information is not available
  */
 Oid
-get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum)
+get_fn_expr_argtype(FmgrInfo *flinfo, int argnum)
 {
 	Node   *expr;
 	List   *args;
@@ -1657,10 +1660,10 @@ get_fn_expr_argtype(FunctionCallInfo fcinfo, int argnum)
 	 * can't return anything useful if we have no FmgrInfo or if
 	 * its fn_expr node has not been initialized
 	 */
-	if (!fcinfo || !fcinfo->flinfo || !fcinfo->flinfo->fn_expr)
+	if (!flinfo || !flinfo->fn_expr)
 		return InvalidOid;
 
-	expr = fcinfo->flinfo->fn_expr;
+	expr = flinfo->fn_expr;
 
 	if (IsA(expr, FuncExpr))
 		args = ((FuncExpr *) expr)->args;

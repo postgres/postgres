@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.92 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.93 2003/07/01 00:04:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2792,7 +2792,7 @@ array_type_coerce(PG_FUNCTION_ARGS)
 
 	if (my_extra->srctype != src_elem_type)
 	{
-		Oid			tgt_type = get_fn_expr_rettype(fcinfo);
+		Oid			tgt_type = get_fn_expr_rettype(fmgr_info);
 		Oid			tgt_elem_type;
 		Oid			funcId;
 

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.4 2003/06/27 00:33:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.5 2003/07/01 00:04:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,8 @@ array_push(PG_FUNCTION_ARGS)
 	int16		typlen;
 	bool		typbyval;
 	char		typalign;
-	Oid			arg0_typeid = get_fn_expr_argtype(fcinfo, 0);
-	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo, 1);
+	Oid			arg0_typeid = get_fn_expr_argtype(fcinfo->flinfo, 0);
+	Oid			arg1_typeid = get_fn_expr_argtype(fcinfo->flinfo, 1);
 	Oid			arg0_elemid;
 	Oid			arg1_elemid;
 	ArrayMetaState *my_extra;

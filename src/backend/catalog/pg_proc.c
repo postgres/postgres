@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.97 2003/06/15 17:59:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.98 2003/07/01 00:04:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "utils/syscache.h"
 
 
-static void checkretval(Oid rettype, char fn_typtype, List *queryTreeList);
 Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
@@ -317,15 +316,20 @@ ProcedureCreate(const char *procedureName,
 }
 
 /*
- * checkretval() -- check return value of a list of sql parse trees.
+ * check_sql_fn_retval() -- check return value of a list of sql parse trees.
  *
  * The return value of a sql function is the value returned by
- * the final query in the function.  We do some ad-hoc define-time
- * type checking here to be sure that the user is returning the
- * type he claims.
+ * the final query in the function.  We do some ad-hoc type checking here
+ * to be sure that the user is returning the type he claims.
+ *
+ * This is normally applied during function definition, but in the case
+ * of a function with polymorphic arguments, we instead apply it during
+ * function execution startup.  The rettype is then the actual resolved
+ * output type of the function, rather than the declared type.  (Therefore,
+ * we should never see ANYARRAY or ANYELEMENT as rettype.)
  */
-static void
-checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
+void
+check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 {
 	Query	   *parse;
 	int			cmd;
@@ -472,7 +476,7 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 
 		relation_close(reln, AccessShareLock);
 	}
-	else if (fn_typtype == 'p' && rettype == RECORDOID)
+	else if (rettype == RECORDOID)
 	{
 		/* Shouldn't have a typerelid */
 		Assert(typerelid == InvalidOid);
@@ -481,6 +485,14 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 		 * For RECORD return type, defer this check until we get the first
 		 * tuple.
 		 */
+	}
+	else if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
+	{
+		/*
+		 * This should already have been caught ...
+		 */
+		elog(ERROR, "functions returning ANYARRAY or ANYELEMENT must " \
+			 "have at least one argument of either type");
 	}
 	else
 		elog(ERROR, "return type %s is not supported for SQL functions",
@@ -505,7 +517,9 @@ fmgr_internal_validator(PG_FUNCTION_ARGS)
 	Datum		tmp;
 	char	   *prosrc;
 
-	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
+	tuple = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(funcoid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup of function %u failed", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
@@ -544,7 +558,9 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	char	   *prosrc;
 	char	   *probin;
 
-	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
+	tuple = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(funcoid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup of function %u failed", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
@@ -585,38 +601,62 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	Datum		tmp;
 	char	   *prosrc;
 	char		functyptype;
+	bool		haspolyarg;
 	int			i;
 
-	tuple = SearchSysCache(PROCOID, funcoid, 0, 0, 0);
+	tuple = SearchSysCache(PROCOID,
+						   ObjectIdGetDatum(funcoid),
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup of function %u failed", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	functyptype = get_typtype(proc->prorettype);
 
-	/* Disallow pseudotypes in arguments and result */
-	/* except that return type can be RECORD or VOID */
+	/* Disallow pseudotype result */
+	/* except for RECORD, VOID, ANYARRAY, or ANYELEMENT */
 	if (functyptype == 'p' &&
 		proc->prorettype != RECORDOID &&
-		proc->prorettype != VOIDOID)
+		proc->prorettype != VOIDOID &&
+		proc->prorettype != ANYARRAYOID &&
+		proc->prorettype != ANYELEMENTOID)
 		elog(ERROR, "SQL functions cannot return type %s",
 			 format_type_be(proc->prorettype));
 
+	/* Disallow pseudotypes in arguments */
+	/* except for ANYARRAY or ANYELEMENT */
+	haspolyarg = false;
 	for (i = 0; i < proc->pronargs; i++)
 	{
 		if (get_typtype(proc->proargtypes[i]) == 'p')
-			elog(ERROR, "SQL functions cannot have arguments of type %s",
-				 format_type_be(proc->proargtypes[i]));
+		{
+			if (proc->proargtypes[i] == ANYARRAYOID ||
+				proc->proargtypes[i] == ANYELEMENTOID)
+				haspolyarg = true;
+			else
+				elog(ERROR, "SQL functions cannot have arguments of type %s",
+					 format_type_be(proc->proargtypes[i]));
+		}
 	}
 
-	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
-	if (isnull)
-		elog(ERROR, "null prosrc");
+	/*
+	 * We can't precheck the function definition if there are any polymorphic
+	 * input types, because actual datatypes of expression results will be
+	 * unresolvable.  The check will be done at runtime instead.
+	 */
+	if (!haspolyarg)
+	{
+		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc");
 
-	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
-	querytree_list = pg_parse_and_rewrite(prosrc, proc->proargtypes, proc->pronargs);
-	checkretval(proc->prorettype, functyptype, querytree_list);
+		querytree_list = pg_parse_and_rewrite(prosrc,
+											  proc->proargtypes,
+											  proc->pronargs);
+		check_sql_fn_retval(proc->prorettype, functyptype, querytree_list);
+	}
 
 	ReleaseSysCache(tuple);
 

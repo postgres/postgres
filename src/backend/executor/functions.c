@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.66 2003/06/12 17:29:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.67 2003/07/01 00:04:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -76,7 +77,8 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 /* non-export function prototypes */
 static execution_state *init_execution_state(char *src,
-					 Oid *argOidVect, int nargs);
+					 Oid *argOidVect, int nargs,
+					 Oid rettype, bool haspolyarg);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
@@ -90,7 +92,8 @@ static void ShutdownSQLFunction(Datum arg);
 
 
 static execution_state *
-init_execution_state(char *src, Oid *argOidVect, int nargs)
+init_execution_state(char *src, Oid *argOidVect, int nargs,
+					 Oid rettype, bool haspolyarg)
 {
 	execution_state *firstes;
 	execution_state *preves;
@@ -98,6 +101,13 @@ init_execution_state(char *src, Oid *argOidVect, int nargs)
 			   *qtl_item;
 
 	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
+
+	/*
+	 * If the function has any arguments declared as polymorphic types,
+	 * then it wasn't type-checked at definition time; must do so now.
+	 */
+	if (haspolyarg)
+		check_sql_fn_retval(rettype, get_typtype(rettype), queryTree_list);
 
 	firstes = NULL;
 	preves = NULL;
@@ -133,16 +143,20 @@ static void
 init_sql_fcache(FmgrInfo *finfo)
 {
 	Oid			foid = finfo->fn_oid;
+	Oid			rettype;
 	HeapTuple	procedureTuple;
 	HeapTuple	typeTuple;
 	Form_pg_proc procedureStruct;
 	Form_pg_type typeStruct;
 	SQLFunctionCachePtr fcache;
 	Oid		   *argOidVect;
+	bool		haspolyarg;
 	char	   *src;
 	int			nargs;
 	Datum		tmp;
 	bool		isNull;
+
+	fcache = (SQLFunctionCachePtr) palloc0(sizeof(SQLFunctionCache));
 
 	/*
 	 * get the procedure tuple corresponding to the given function Oid
@@ -153,30 +167,37 @@ init_sql_fcache(FmgrInfo *finfo)
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "init_sql_fcache: Cache lookup failed for procedure %u",
 			 foid);
-
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 
 	/*
-	 * get the return type from the procedure tuple
+	 * get the result type from the procedure tuple, and check for
+	 * polymorphic result type; if so, find out the actual result type.
 	 */
+	rettype = procedureStruct->prorettype;
+
+	if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
+	{
+		rettype = get_fn_expr_rettype(finfo);
+		if (rettype == InvalidOid)
+			elog(ERROR, "could not determine actual result type for function declared %s",
+				 format_type_be(procedureStruct->prorettype));
+	}
+
+	/* Now look up the actual result type */
 	typeTuple = SearchSysCache(TYPEOID,
-						   ObjectIdGetDatum(procedureStruct->prorettype),
+							   ObjectIdGetDatum(rettype),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "init_sql_fcache: Cache lookup failed for type %u",
-			 procedureStruct->prorettype);
-
+			 rettype);
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-
-	fcache = (SQLFunctionCachePtr) palloc0(sizeof(SQLFunctionCache));
 
 	/*
 	 * get the type length and by-value flag from the type tuple
 	 */
 	fcache->typlen = typeStruct->typlen;
 
-	if (typeStruct->typtype != 'c' &&
-		procedureStruct->prorettype != RECORDOID)
+	if (typeStruct->typtype != 'c' && rettype != RECORDOID)
 	{
 		/* The return type is not a composite type, so just use byval */
 		fcache->typbyval = typeStruct->typbyval;
@@ -205,17 +226,35 @@ init_sql_fcache(FmgrInfo *finfo)
 		fcache->funcSlot = NULL;
 
 	/*
-	 * Parse and plan the queries.  We need the argument info to pass
+	 * Parse and plan the queries.  We need the argument type info to pass
 	 * to the parser.
 	 */
 	nargs = procedureStruct->pronargs;
+	haspolyarg = false;
 
 	if (nargs > 0)
 	{
+		int		argnum;
+
 		argOidVect = (Oid *) palloc(nargs * sizeof(Oid));
 		memcpy(argOidVect,
 			   procedureStruct->proargtypes,
 			   nargs * sizeof(Oid));
+		/* Resolve any polymorphic argument types */
+		for (argnum = 0; argnum < nargs; argnum++)
+		{
+			Oid		argtype = argOidVect[argnum];
+
+			if (argtype == ANYARRAYOID || argtype == ANYELEMENTOID)
+			{
+				argtype = get_fn_expr_argtype(finfo, argnum);
+				if (argtype == InvalidOid)
+					elog(ERROR, "could not determine actual type of argument declared %s",
+						 format_type_be(argOidVect[argnum]));
+				argOidVect[argnum] = argtype;
+				haspolyarg = true;
+			}
+		}
 	}
 	else
 		argOidVect = (Oid *) NULL;
@@ -229,7 +268,8 @@ init_sql_fcache(FmgrInfo *finfo)
 			 foid);
 	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
-	fcache->func_state = init_execution_state(src, argOidVect, nargs);
+	fcache->func_state = init_execution_state(src, argOidVect, nargs,
+											  rettype, haspolyarg);
 
 	pfree(src);
 
