@@ -24,10 +24,10 @@ extern char Ps_status_buffer[];
         } while (0)
 
 #define PS_CLEAR_STATUS() \
-        do { Ps_status_buffer[0] = '\0'; } while (0)
+        do { /*Ps_status_buffer[0] = '\0';*/ } while (0)
 
 #define PS_SET_STATUS(status) \
-        do { strcpy(Ps_status_buffer, (status)); } while (0)
+        do { /*strcpy(Ps_status_buffer, (status));*/ } while (0)
 
 #define PS_STATUS (Ps_status_buffer)
 
