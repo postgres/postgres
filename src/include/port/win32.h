@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.31 2004/08/31 11:29:56 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.32 2004/09/09 00:59:44 momjian Exp $ */
 
 /* undefine and redefine after #include */
 #undef mkdir
@@ -19,7 +19,7 @@
 #define USES_WINSOCK
 
 /* defines for dynamic linking on Win32 platform */
-#if defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(__MINGW32__) || defined(__CYGWIN__)
 
 #if __GNUC__ && ! defined (__declspec)
 #error You need egcs 1.1 or newer for compiling!

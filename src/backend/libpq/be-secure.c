@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.48 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.49 2004/09/09 00:59:31 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -659,7 +659,7 @@ initialize_SSL(void)
 		 * think of a reasonable check to apply on Windows.  (See also the
 		 * data directory permission check in postmaster.c)
 		 */
-#if !defined(__CYGWIN__) && !defined(WIN32)
+#if !defined(WIN32) && !defined(__CYGWIN__)
 		if (!S_ISREG(buf.st_mode) || (buf.st_mode & (S_IRWXG | S_IRWXO)) ||
 			buf.st_uid != getuid())
 			ereport(FATAL,

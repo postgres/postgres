@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.168 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.169 2004/09/09 00:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@
 #include <sys/types.h>
 
 #include <errno.h>
-#if defined(__CYGWIN__) || defined(WIN32)
+#if defined(WIN32) || defined(__CYGWIN__)
 #include <fcntl.h>				/* ensure O_BINARY is available */
 #endif
 #ifdef HAVE_SUPPORTDEFS_H
@@ -680,7 +680,7 @@ typedef NameData *Name;
  *	literal control-Z.	The other affect is that we see CRLF, but
  *	that is OK because we can already handle those cleanly.
  */
-#if defined(__CYGWIN__) || defined(WIN32)
+#if defined(WIN32) || defined(__CYGWIN__)
 #define PG_BINARY	O_BINARY
 #define PG_BINARY_R "rb"
 #define PG_BINARY_W "wb"

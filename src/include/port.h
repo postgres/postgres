@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.59 2004/09/09 00:24:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.60 2004/09/09 00:59:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ extern int	win32_open(const char *, int,...);
 #endif
 
 /* Global variable holding time zone information. */
-#if !defined(__CYGWIN__)
+#ifndef __CYGWIN__
 #define TIMEZONE_GLOBAL timezone
 #define TZNAME_GLOBAL tzname
 #else

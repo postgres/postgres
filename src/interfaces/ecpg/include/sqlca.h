@@ -2,7 +2,7 @@
 #define POSTGRES_SQLCA_H
 
 #ifndef DLLIMPORT
-#if defined(__CYGWIN__) || defined(WIN32)
+#if  defined(WIN32) || defined(__CYGWIN__)
 #define DLLIMPORT __declspec (dllimport)
 #else
 #define DLLIMPORT

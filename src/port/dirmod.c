@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.22 2004/08/29 05:07:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.23 2004/09/09 00:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,14 +66,14 @@ pgrename(const char *from, const char *to)
 {
 	int			loops = 0;
 
-#ifdef WIN32
+#if defined(WIN32) && !defined(__CYGWIN__)
 	while (!MoveFileEx(from, to, MOVEFILE_REPLACE_EXISTING))
 #endif
 #ifdef __CYGWIN__
 		while (rename(from, to) < 0)
 #endif
 		{
-#ifdef WIN32
+#if defined(WIN32) && !defined(__CYGWIN__)
 			if (GetLastError() != ERROR_ACCESS_DENIED)
 #endif
 #ifdef __CYGWIN__

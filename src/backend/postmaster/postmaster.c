@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.424 2004/08/29 05:06:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.425 2004/09/09 00:59:33 momjian Exp $
  *
  * NOTES
  *
@@ -976,7 +976,7 @@ checkDataDir(const char *checkdir)
 	 * be proper support for Unix-y file permissions.  Need to think of a
 	 * reasonable check to apply on Windows.
 	 */
-#if !defined(__CYGWIN__) && !defined(WIN32)
+#if !defined(WIN32) && !defined(__CYGWIN__)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 		ereport(FATAL,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
