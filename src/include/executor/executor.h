@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.102 2003/10/01 21:30:52 tgl Exp $
+ * $Id: executor.h,v 1.102.2.1 2003/12/18 20:21:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,7 @@ extern EState *CreateExecutorState(void);
 extern void FreeExecutorState(EState *estate);
 extern ExprContext *CreateExprContext(EState *estate);
 extern void FreeExprContext(ExprContext *econtext);
+extern void ReScanExprContext(ExprContext *econtext);
 
 #define ResetExprContext(econtext) \
 	MemoryContextReset((econtext)->ecxt_per_tuple_memory)
