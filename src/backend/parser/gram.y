@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.22 1996/12/17 01:53:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.23 1996/12/20 20:33:12 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -98,7 +98,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
     AppendStmt		*astmt;
 }
 
-%type <node>	stmt, AddAttrStmt, ClosePortalStmt,
+%type <node>	stmt, 
+	AddAttrStmt, ClosePortalStmt,
 	CopyStmt, CreateStmt, DefineStmt, DestroyStmt, 
 	ExtendStmt, FetchStmt,	GrantStmt,
 	IndexStmt, MoveStmt, ListenStmt, OptimizableStmt, 
@@ -121,10 +122,12 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <str>	privileges, operation_commalist, grantee
 %type <chr>	operation
 
-%type <list>	stmtblock, relation_name_list, OptTableElementList,
+%type <list>	stmtblock, stmtmulti,
+	relation_name_list, OptTableElementList,
 	tableElementList, OptInherit, definition,
 	opt_with, def_args, def_name_list, func_argtypes, 
-	oper_argtypes, OptStmtList, OptStmtBlock, opt_column_list, columnList,
+	oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
+	opt_column_list, columnList,
 	sort_clause, sortby_list, index_params, 
 	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
 	expr_list, attrs, res_target_list, res_target_list2,
@@ -210,7 +213,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %left  	'+' '-'
 %left  	'*' '/'
 %left	'|'		/* this is the relation union op, not logical or */
-%right  ';' ':'		/* Unary Operators      */
+%right  ':'		/* Unary Operators      */
+%left	';'		/* end of statement or natural log    */
 %nonassoc  '<' '>'
 %right   UMINUS
 %left	'.'
@@ -219,12 +223,18 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %nonassoc REDUCE
 %%
 
-stmtblock:  stmt ';' stmtblock
-		{ parsetree = lcons($1, parsetree); }
-	| stmt ';'
-		{ parsetree = lcons($1, NIL); }
-	| stmt
-		{ parsetree = lcons($1, NIL); }
+stmtblock: stmtmulti
+		{ parsetree = $1; }
+	|  stmt
+		{ parsetree = lcons($1,NIL); }
+	;
+
+stmtmulti: stmtmulti stmt ';'
+		{ $$ = lappend($1, $2); }
+	|  stmtmulti stmt
+		{ $$ = lappend($1, $2); }
+	|  stmt ';'
+		{ $$ = lcons($1,NIL); }
 	;
 
 stmt :	  AddAttrStmt
@@ -949,14 +959,20 @@ OptStmtList:  NOTHING			{ $$ = NIL; }
 	| '[' OptStmtBlock ']'		{ $$ = $2; }
         ;
 
-OptStmtBlock:  OptimizableStmt 		
+OptStmtBlock:  OptStmtMulti
+               {  $$ = $1; }
+	|  OptimizableStmt
 		{ $$ = lcons($1, NIL); }
+	;
+	
+OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
+               {  $$ = lappend($1, $2); }
+	|  OptStmtMulti OptimizableStmt
+               {  $$ = lappend($1, $2); }
 	|  OptimizableStmt ';'
 		{ $$ = lcons($1, NIL); }
-	|  OptStmtBlock OptimizableStmt
-               {  $$ = lappend($1, $2); }
 	;
-
+	
 event_object: relation_name '.' attr_name
 		{ 
 		    $$ = makeNode(Attr);
