@@ -8,21 +8,58 @@ signature with length of 4096 bits to represent sets).
 
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
-for additional information. Andrey Oktyabrski has done a great work on 
+for additional information. Andrey Oktyabrski did a great work on 
 adding new functions and operations.
 
 
 FUNCTIONS:
 
   int   icount(int[]) - the number of elements in intarray
+
+test=# select icount('{1,2,3}'::int[]);   
+ icount 
+--------
+      3
+(1 row)
+
   int[] sort(int[], 'asc' | 'desc') - sort intarray
+
+test=# select sort('{1,2,3}'::int[],'desc');
+  sort   
+---------
+ {3,2,1}
+(1 row)
+
   int[] sort(int[]) - sort in ascending order
   int[] sort_asc(int[]),sort_desc(int[]) - shortcuts for sort 
+
   int[] uniq(int[]) - returns unique elements
+
+test=# select uniq(sort('{1,2,3,2,1}'::int[]));
+  uniq   
+---------
+ {1,2,3}
+(1 row)
+
   int   idx(int[], int item) - returns index of first intarray matching element to item, or
                               '0' if matching failed.
+
+test=# select idx('{1,2,3,2,1}'::int[],2);
+ idx 
+-----
+   2
+(1 row)
+
+
   int[] subarray(int[],int START [, int LEN]) - returns part of intarray starting from
                                                 element number START (from 1) and length LEN. 
+
+test=# select subarray('{1,2,3,2,1}'::int[],2,3);
+ subarray 
+----------
+ {2,3,2}
+(1 row)
+
 
 OPERATIONS:
 
@@ -33,7 +70,7 @@ OPERATIONS:
   int[] + int     - push element to array ( add to end of array)
   int[] + int[]   - merge of arrays (right array added to the end of left one)
   int[] - int     - remove entries matched by right argument from array
-  int[] - int[]   - remove left array from right
+  int[] - int[]   - remove right array from left
   int[] | int     - returns intarray - union of arguments
   int[] | int[]   - returns intarray as a union of two arrays
   int[] & int[]   - returns intersection of arrays
