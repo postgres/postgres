@@ -110,9 +110,11 @@
    integers.  In practice the default operator class for the field's
    datatype is usually sufficient.  The main point of having operator classes
    is that for some datatypes, there could be more than one meaningful
-   ordering.  For an index on such a datatype, we could select which
-   ordering we wanted by selecting the proper operator class.  There
-   are also some operator classes with special purposes:
+   ordering.  For example, we might want to sort a complex-number datatype
+   either by absolute value or by real part.  We could do this by defining
+   two operator classes for the datatype and then selecting the proper
+   class when making an index.  There are also some operator classes with
+   special purposes:
 
    <itemizedlist>
     <listitem>
