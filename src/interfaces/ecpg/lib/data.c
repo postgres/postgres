@@ -8,13 +8,26 @@
 bool
 get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 	 enum ECPGttype type, enum ECPGttype ind_type,
-	 void *var, void *ind, long varcharsize, long offset)
+	 void *var, void *ind, long varcharsize, long offset,
+	 bool isarray)
 {
 	char *pval = (char *)PQgetvalue(results, act_tuple, act_field);
 
 	ECPGlog("get_data line %d: RESULT: %s\n", lineno, pval ? pval : "");
 
 	/* Now the pval is a pointer to the value. */
+	/* let's check is it really is an array if it should be */
+	if (isarray)
+	{
+		if (*pval !=  '{')
+		{
+			ECPGlog("get_data data entry does not look like an array in line %d\n", lineno);
+			ECPGraise(lineno, ECPG_DATA_NOT_ARRAY, NULL);
+			return(false);
+		}
+		else ++pval;
+	}
+
 	/* We will have to decode the value */
 
 	/*
@@ -48,8 +61,10 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			break;
 	}
 	
-	switch (type)
-	{
+	do
+	{	
+	   switch (type)
+	   {
 		long		res;
 		unsigned long	ures;
 		double		dres;
@@ -61,7 +76,8 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			if (pval)
 			{
 				res = strtol(pval, &scan_length, 10);
-				if (*scan_length != '\0')	/* Garbage left */
+				if ((isarray && *scan_length != ',' && *scan_length != '}')
+					|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 				{
 					ECPGraise(lineno, ECPG_INT_FORMAT, pval);
 					return (false);
@@ -94,7 +110,8 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			if (pval)
 			{
 				ures = strtoul(pval, &scan_length, 10);
-				if (*scan_length != '\0')	/* Garbage left */
+				if ((isarray && *scan_length != ',' && *scan_length != '}')
+					|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 				{
 					ECPGraise(lineno, ECPG_UINT_FORMAT, pval);
 					return (false);
@@ -127,7 +144,8 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			if (pval)
 			{
 				dres = strtod(pval, &scan_length);
-				if (*scan_length != '\0')	/* Garbage left */
+				if ((isarray && *scan_length != ',' && *scan_length != '}')
+					|| (!isarray && *scan_length != '\0'))	/* Garbage left */
 				{
 					ECPGraise(lineno, ECPG_FLOAT_FORMAT, pval);
 					return (false);
@@ -246,7 +264,23 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 			ECPGraise(lineno, ECPG_UNSUPPORTED, ECPGtype_name(type));
 			return (false);
 			break;
-	}
-	
+	   }
+	   if (isarray)
+	   {
+	   	bool string = false;
+	   	
+	   	/* set array to next entry */
+	   	++act_tuple;
+	   	
+	   	/* set pval to the next entry */
+	   	for (; string || (*pval != ',' && *pval != '}'); ++pval)
+	   		if (*pval == '"')
+	   			string = string ? false : true;
+	   	
+	   	if (*pval == ',')
+	   		++pval;
+	   }
+	} while (isarray && *pval != '}');
+
 	return (true);
 }

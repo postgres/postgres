@@ -832,5 +832,10 @@ Wed Feb 23 17:08:28 CET 2000
 Fri Feb 25 16:13:11 CET 2000
 
 	- Fixed some bugs I created when I cleaned up, thanks Christof.
+
+Wed Mar  1 10:49:03 CET 2000
+
+	- Synced preproc.y with gram.y.
+	- Added output of arrays.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

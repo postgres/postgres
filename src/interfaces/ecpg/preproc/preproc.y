@@ -275,7 +275,7 @@ make_name(void)
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
-%type  <str>	OptInherit key_reference comment_text
+%type  <str>	OptInherit key_reference comment_text ConstraintDeferrabilitySpec
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
@@ -283,7 +283,7 @@ make_name(void)
 %type  <str>    target_list target_el update_target_list alias_clause
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
-%type  <str>    file_name AexprConst ParamNo TypeId c_expr ColQualListWithNull
+%type  <str>    file_name AexprConst ParamNo TypeId c_expr
 %type  <str>	in_expr_nodes a_expr b_expr TruncateStmt CommentStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_action
@@ -292,8 +292,8 @@ make_name(void)
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
 %type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
-%type  <str>	SelectStmt SubSelect result OptTemp OptTempType OptTempScope
-%type  <str>	opt_table opt_all sort_clause sortby_list ColQualifier
+%type  <str>	SelectStmt SubSelect result OptTemp ConstraintAttributeSpec
+%type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause opt_distinct
 %type  <str>	join_outer where_clause relation_expr sub_type
@@ -329,18 +329,16 @@ make_name(void)
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
-%type  <str>    select_clause opt_select_limit select_limit_value TimeClause
+%type  <str>    select_clause opt_select_limit select_limit_value ConstraintTimeSpec
 %type  <str>    select_offset_value using_expr join_expr ReindexStmt
 %type  <str>	using_list from_expr join_clause join_type
 %type  <str>	join_qual update_list join_clause join_clause_with_union
 %type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
-%type  <str>    OptConstrFromTable comment_op ConstraintAttribute
+%type  <str>    OptConstrFromTable comment_op OptTempTableName
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
 %type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
-%type  <str>	ColConstraintWithNull ColConstraintElemWithNull NotNull
-%type  <str>	join_expr_with_union DefaultClause DefaultExpr PrimaryKey
-%type  <str>	DeferrabilityClause opt_force key_update
+%type  <str>	join_expr_with_union opt_force key_update
 /***
 #ifdef ENABLE_ORACLE_JOIN_SYNTAX
 %type  <str>   oracle_list oracle_expr oracle_outer
@@ -991,23 +989,25 @@ CreateStmt:  CREATE OptTemp TABLE relation_name '(' OptTableElementList ')'
 				}
 		;
 
-OptTemp:  OptTempType                           { $$ = $1; }
-                | OptTempScope OptTempType	{ $$ = cat2_str($1,$2); }
-                ;
+/*
+ * Redundancy here is needed to avoid shift/reduce conflicts,
+ * since TEMP is not a reserved word.  See also OptTempTableName.
+ */
 
-OptTempType:	  TEMP		{ $$ = make_str("temp"); }
-		| TEMPORARY	{ $$ = make_str("temporary"); }
-		| /* EMPTY */	{ $$ = EMPTY; }
+OptTemp:  	TEMPORARY		{ $$ = make_str("temporary"); }
+		| TEMP			{ $$ = make_str("temp"); }
+		| LOCAL TEMPORARY	{ $$ = make_str("local temporary"); }
+		| LOCAL TEMP		{ $$ = make_str("local temp"); }
+		| GLOBAL TEMPORARY	{
+					  mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					  $$ = make_str("global temporary");
+					}
+		| GLOBAL TEMP		{
+					  mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+					  $$ = make_str("global temp");
+					}
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
-
-OptTempScope:  GLOBAL
-               {
-                    mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
-                    $$ = make_str("global");
-               }
-             | LOCAL { $$ = make_str("local"); }
-             ;
-
 
 OptTableElementList:  OptTableElementList ',' OptTableElement
 				{
@@ -1024,7 +1024,7 @@ OptTableElement:  columnDef		{ $$ = $1; }
 			| TableConstraint	{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColQualifier opt_collate
+columnDef:  ColId Typename ColQualList opt_collate
 				{
 					if (strlen($4) > 0)
 					{
@@ -1033,7 +1033,7 @@ columnDef:  ColId Typename ColQualifier opt_collate
 					}
 					$$ = cat_str(4, $1, $2, $3, $4);
 				}
-	| ColId SERIAL ColQualifier opt_collate
+	| ColId SERIAL ColQualList opt_collate
 		{
 			if (strlen($4) > 0)
 			{
@@ -1044,42 +1044,9 @@ columnDef:  ColId Typename ColQualifier opt_collate
 		}
 		;
 
-/*
- * ColQualifier encapsulates an entire column qualification,
- * including DEFAULT, constraints, and constraint attributes.
- * Note that the DefaultClause handles the empty case.
- */
-ColQualifier:	DefaultClause ColQualList			{ $$ = cat2_str($1, $2); }
-		| NotNull DefaultClause ColQualListWithNull	{ $$ = cat_str(3, $1, $2, $3); }
-		| DefaultExpr NotNull ColQualListWithNull	{ $$ = cat_str(3, $1, $2, $3); }
-                | DefaultExpr NotNull				{ $$ = cat2_str($1, $2); }
-                | NotNull DefaultClause				{ $$ = cat2_str($1, $2); }
-		| NULL_P DefaultClause ColQualListWithNull	{ $$ = cat_str(3, make_str("null"), $2, $3); }
-                | NULL_P DefaultClause				{ $$ = cat2_str(make_str("null"), $2); }
-                | DefaultClause		           		{ $$ = $1; }
-		;
-
-/*
- * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
- * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
- * or be part of a_expr NOT LIKE or similar constructs).
- */
-DefaultClause:  DefaultExpr     { $$ = $1; }
-		| /*EMPTY*/	{ $$ = EMPTY; }
-                ;
-
-DefaultExpr:  DEFAULT NULL_P		{ $$ = make_str("default null"); }
-		| DEFAULT b_expr	{ $$ = cat2_str(make_str("default"), $2); }
-		;
-
 ColQualList:  ColQualList ColConstraint	{ $$ = cat2_str($1,$2); }
-			| ColConstraint	{ $$ = $1; }
+			| /*EMPTY*/	{ $$ = EMPTY; }
 		;
-
-ColQualListWithNull:  ColConstraintWithNull ColQualListWithNull
-			{ $$ = cat2_str($1, $2); }
-		|  ColConstraintWithNull
-			{ $$ = $1; }
 
 ColConstraint:	CONSTRAINT name ColConstraintElem
 				{
@@ -1087,12 +1054,8 @@ ColConstraint:	CONSTRAINT name ColConstraintElem
 				}
 		| ColConstraintElem
 				{ $$ = $1; }
-		;
-
-ColConstraintWithNull:	CONSTRAINT name ColConstraintElemWithNull
-			{ $$ = cat_str(3, make_str("constraint"), $2, $3); }
-		| ColConstraintElemWithNull
-			{ $$ = $1; }
+		| ConstraintAttr
+				{ $$ = $1; }
 		;
 
 /* DEFAULT NULL is already the default for Postgres.
@@ -1106,40 +1069,56 @@ ColConstraintWithNull:	CONSTRAINT name ColConstraintElemWithNull
  * shift/reduce conflicts with WITH TIME ZONE anyway.
  * - thomas 1999-01-08
  */
-ColConstraintElem:  ColConstraintElemWithNull
-                                {
-                                        $$ = $1;
-                                }
-                        | UNIQUE
+ColConstraintElem: 	NOT NULL_P
+				{
+					$$ = make_str("not null");
+				}
+			| NULL_P
+				{
+					$$ = make_str("null");
+				}
+			| UNIQUE
 				{
 					$$ = make_str("unique");
 				}
-			| PrimaryKey
+			| PRIMARY KEY
 				{
-					$$ = $1;
+					$$ = make_str("primary key");
+				}
+			| CHECK '(' a_expr ')'
+				{
+					$$ = cat_str(3, make_str("check ("), $3, make_str(")"));
+				}
+			| DEFAULT NULL_P
+				{
+					$$ = make_str("default null");
+				}
+			| DEFAULT b_expr
+				{
+					$$ = cat2_str(make_str("default"), $2);
+				}
+			|  REFERENCES ColId opt_column_list key_match key_actions 
+				{
+					$$ = cat_str(5, make_str("references"), $2, $3, $4, $5);  
 				}
 			;
 
-
-ColConstraintElemWithNull:  CHECK '(' a_expr ')'
-				{
-					$$ = cat_str(3, make_str("check("), $3, make_str(")"));
-				}
-			| REFERENCES ColId opt_column_list
-				key_match key_actions ConstraintAttribute
-				{
-					$$ = cat_str(6, make_str("references"), $2, $3, $4, $5, $6);
-				}
-			| REFERENCES ColId opt_column_list
-				key_match key_actions
-				{
-					$$ = cat_str(5, make_str("references"), $2, $3, $4, $5);
-				}
+/*
+ * ConstraintAttr represents constraint attributes, which we parse as if
+ * they were independent constraint clauses, in order to avoid shift/reduce
+ * conflicts (since NOT might start either an independent NOT NULL clause
+ * or an attribute).  analyze.c is responsible for attaching the attribute
+ * information to the preceding "real" constraint node, and for complaining
+ * if attribute clauses appear in the wrong place or wrong combinations.
+ *
+ * See also ConstraintAttributeSpec, which can be used in places where
+ * there is no parsing conflict.
+ */
+ConstraintAttr: DEFERRABLE		{ $$ = make_str("deferrable"); }
+		| NOT DEFERRABLE	{ $$ = make_str("not deferrable"); }
+		| INITIALLY DEFERRED	{ $$ = make_str("initially deferred"); }
+		| INITIALLY IMMEDIATE	{ $$ = make_str("initially immediate"); }
 		;
-
-PrimaryKey:  PRIMARY KEY	{ $$ = make_str("primary key"); }
-
-NotNull:  NOT NULL_P		{ $$ = make_str("not null"); }
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
  *  a column definition. ColConstraintElem specifies the embedded form.
@@ -1161,19 +1140,14 @@ ConstraintElem:  CHECK '(' a_expr ')'
 				{
 					$$ = cat_str(3, make_str("unique("), $3, make_str(")"));
 				}
-		| PrimaryKey '(' columnList ')'
+		| PRIMARY KEY '(' columnList ')'
 				{
-					$$ = cat_str(3, make_str("primary key("), $3, make_str(")"));
+					$$ = cat_str(3, make_str("primary key("), $4, make_str(")"));
 				}
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
-			key_match key_actions ConstraintAttribute
+			key_match key_actions ConstraintAttributeSpec
 				{
 					$$ = cat_str(8, make_str("foreign key("), $4, make_str(") references"), $7, $8, $9, $10, $11);
-				}
-		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
-			key_match key_actions
-				{
-					$$ = cat_str(7, make_str("foreign key("), $4, make_str(") references"), $7, $8, $9, $10);
 				}
 		;
 
@@ -1347,7 +1321,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 	|	CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
                                 relation_name OptConstrFromTable
-				ConstraintAttribute
+				ConstraintAttributeSpec
                                 FOR EACH ROW EXECUTE PROCEDURE
 				name '(' TriggerFuncArgs ')'
 				{
@@ -1422,18 +1396,18 @@ OptConstrFromTable:                     /* Empty */
                                 }
                 ;
 
-ConstraintAttribute: DeferrabilityClause
+ConstraintAttributeSpec: ConstraintDeferrabilitySpec
                 { 	$$ = $1; }
-	| TimeClause
-		{ 	$$ = $1; }
-	| DeferrabilityClause TimeClause
-		{
+	| ConstraintDeferrabilitySpec ConstraintTimeSpec
+		{	
 			if (strcmp($1, "deferrable") != 0 && strcmp($2, "initially deferrable") == 0 )
 				mmerror(ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
 
-                	$$ = cat2_str($1, $2);
+			$$ = cat2_str($1, $2);
 		}
-	| TimeClause DeferrabilityClause
+	| ConstraintTimeSpec
+		{ 	$$ = $1; }
+	| ConstraintTimeSpec ConstraintDeferrabilitySpec
 		{
 			if (strcmp($2, "deferrable") != 0 && strcmp($1, "initially deferrable") == 0 )
 				mmerror(ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
@@ -1442,11 +1416,11 @@ ConstraintAttribute: DeferrabilityClause
 		}
 	;
 
-DeferrabilityClause: NOT DEFERRABLE	{ $$ = make_str("not deferrable"); }
+ConstraintDeferrabilitySpec: NOT DEFERRABLE	{ $$ = make_str("not deferrable"); }
 	                | DEFERRABLE	{ $$ = make_str("deferrable"); }
                 ;
 
-TimeClause: INITIALLY IMMEDIATE		{ $$ = make_str("initially immediate"); }
+ConstraintTimeSpec: INITIALLY IMMEDIATE		{ $$ = make_str("initially immediate"); }
                 | INITIALLY DEFERRED	{ $$ = make_str("initially deferrable"); }
                 ;
 
@@ -2545,12 +2519,56 @@ SubSelect:     SELECT opt_distinct target_list
 				}
 		;
 
-result:  INTO OptTemp opt_table relation_name		{ FoundInto = 1;
-							  $$= cat_str(4, make_str("into"), $2, $3, $4);
-							}
-		| INTO into_list			{ $$ = EMPTY; }
-		| /*EMPTY*/				{ $$ = EMPTY; }
+result:  INTO OptTempTableName 		{
+						FoundInto = 1;
+						$$= cat2_str(make_str("into"), $2);
+					}
+		| INTO into_list	{ $$ = EMPTY; }
+		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
+
+/*
+ * Redundancy here is needed to avoid shift/reduce conflicts,
+ * since TEMP is not a reserved word.  See also OptTemp.
+ *
+ * The result is a cons cell (not a true list!) containing
+ * a boolean and a table name.
+ */
+OptTempTableName:  TEMPORARY opt_table relation_name
+			{
+				$$ = cat_str(3, make_str("temporary"), $2, $3);
+			}
+                       | TEMP opt_table relation_name
+			{
+				$$ = cat_str(3, make_str("temp"), $2, $3);
+			}
+                       | LOCAL TEMPORARY opt_table relation_name
+			{
+				$$ = cat_str(3, make_str("local temporary"), $3, $4);
+			}
+                       | LOCAL TEMP opt_table relation_name
+			{
+				$$ = cat_str(3, make_str("local temp"), $3, $4);
+			}
+                       | GLOBAL TEMPORARY opt_table relation_name
+                        {
+				mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+				$$ = cat_str(3, make_str("global temporary"), $3, $4);
+                        }
+                       | GLOBAL TEMP opt_table relation_name
+                        {
+				mmerror(ET_ERROR, "GLOBAL TEMPORARY TABLE is not currently supported");
+				$$ = cat_str(3, make_str("global temp"), $3, $4);
+                        }
+                       | TABLE relation_name
+			{
+				$$ = cat2_str(make_str("table"), $2);
+			}
+                       | relation_name
+			{
+				$$ = $1;
+			}
+                ;
 
 opt_table:  TABLE					{ $$ = make_str("table"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
@@ -3839,7 +3857,6 @@ ColId:  ident					{ $$ = $1; }
 		| CREATEUSER			{ $$ = make_str("createuser"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
 		| DATABASE			{ $$ = make_str("database"); }
-		| DEFERRABLE			{ $$ = make_str("deferrable"); }
 		| DEFERRED			{ $$ = make_str("deferred"); }
 		| DELIMITERS			{ $$ = make_str("delimiters"); }
 		| DOUBLE			{ $$ = make_str("double"); }
@@ -3853,7 +3870,6 @@ ColId:  ident					{ $$ = $1; }
 		| INCREMENT			{ $$ = make_str("increment"); }
 		| INDEX				{ $$ = make_str("index"); }
 		| INHERITS			{ $$ = make_str("inherits"); }
-		| INITIALLY			{ $$ = make_str("initially"); }
 		| INSENSITIVE			{ $$ = make_str("insensitive"); }
 		| INSTEAD			{ $$ = make_str("instead"); }
 		| INTERVAL			{ $$ = make_str("interval"); }
@@ -3900,6 +3916,8 @@ ColId:  ident					{ $$ = $1; }
 		| STDIN                         { $$ = make_str("stdin"); }
 		| STDOUT                        { $$ = make_str("stdout"); }
 		| SYSID                         { $$ = make_str("sysid"); }
+		| TEMP				{ $$ = make_str("temp"); }
+		| TEMPORARY			{ $$ = make_str("temporary"); }
 		| TIME				{ $$ = make_str("time"); }
 		| TIMESTAMP			{ $$ = make_str("timestamp"); }
 		| TIMEZONE_HOUR                 { $$ = make_str("timezone_hour"); }
@@ -3977,6 +3995,7 @@ ColLabel:  ColId			{ $$ = $1; }
 		| CURRENT_USER		{ $$ = make_str("current_user"); }
 		| DEC			{ $$ = make_str("dec"); }
 		| DECIMAL		{ $$ = make_str("decimal"); }
+		| DEFERRABLE		{ $$ = make_str("deferrable"); }
 		| DO			{ $$ = make_str("do"); }
 		| ELSE                  { $$ = make_str("else"); }
 		| END_TRANS             { $$ = make_str("end"); }
@@ -3987,6 +4006,7 @@ ColLabel:  ColId			{ $$ = $1; }
 		| FOREIGN		{ $$ = make_str("foreign"); }
 		| GLOBAL		{ $$ = make_str("global"); }
 		| GROUP			{ $$ = make_str("group"); }
+		| INITIALLY		{ $$ = make_str("initially"); }
 		| LISTEN		{ $$ = make_str("listen"); }
 		| LOAD			{ $$ = make_str("load"); }
 		| LOCK_P		{ $$ = make_str("lock"); }

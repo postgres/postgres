@@ -24,6 +24,7 @@
 #include <ecpgtype.h>
 #include <ecpglib.h>
 #include <sqlca.h>
+#include <sql3types.h>
 
 /* variables visible to the programs */
 static struct sqlca sqlca_init =
@@ -689,23 +690,46 @@ ECPGexecute(struct statement * stmt)
 					isarray = 0;
 					if (PQresultStatus(query) == PGRES_TUPLES_OK) {
 						isarray = atol((char *)PQgetvalue(query, 0, 0));
+						if (ECPGDynamicType(PQftype(results, act_field)) == SQL3_CHARACTER ||
+						    (PQftype(results, act_field)) == SQL3_CHARACTER_VARYING)
+						{
+							/* arrays of character strings are not yet implemented */
+							isarray = false;
+						}
 						ECPGlog("ECPGexecute line %d: TYPE database: %d C: %d array: %s\n", stmt->lineno, PQftype(results, act_field), var->type, isarray ? "yes" : "no");
 					}
 					PQclear(query);
 
-					/*
-					 * if we don't have enough space, we cannot read all
-					 * tuples
-					 */
-					if ((var->arrsize > 0 && ntuples > var->arrsize) || (var->ind_arrsize > 0 && ntuples > var->ind_arrsize))
+					if (!isarray)
 					{
-						ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
+						/*
+						 * if we don't have enough space, we cannot read all
+						 * tuples
+						 */
+						if ((var->arrsize > 0 && ntuples > var->arrsize) || (var->ind_arrsize > 0 && ntuples > var->ind_arrsize))
+						{
+							ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 								stmt->lineno, ntuples, var->arrsize);
-						ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL);
-						status = false;
-						break;
+							ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL);
+							status = false;
+							break;
+						}
 					}
-
+					else
+					{
+						/*
+						 * since we read an array, the variable has to be
+						 * an array too
+						 */
+						if (var->arrsize == 0)
+						{
+							ECPGlog("ECPGexecute line %d: variable is not an array\n");
+							ECPGraise(stmt->lineno, ECPG_NO_ARRAY, NULL);
+							status = false;
+							break;
+						} 
+					}
+					
 					/*
 					 * allocate memory for NULL pointers
 					 */
@@ -745,7 +769,7 @@ ECPGexecute(struct statement * stmt)
 					{
 						if (!get_data(results, act_tuple, act_field, stmt->lineno,
 						         var->type, var->ind_type, var->value,
-						         var->ind_value, var->varcharsize, var->offset))
+						         var->ind_value, var->varcharsize, var->offset, isarray))
 						         status = false;
 					}
 					var = var->next;
@@ -1067,12 +1091,8 @@ ECPGlog(const char *format,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/ecpglib.c,v 1.60 2000/02/23 19:25:43 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/ecpglib.c,v 1.61 2000/03/01 12:49:42 meskes Exp $
  */
-
-/* I borrowed the include files from ecpglib.c, maybe we don't need all of them */
-
-#include <sql3types.h>
 
 PGconn *ECPG_internal_get_connection(char *name);
 

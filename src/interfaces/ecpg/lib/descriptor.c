@@ -26,28 +26,6 @@ static PGresult
 } 
 
 static unsigned int
-ECPGDynamicType(Oid type)
-{
-	switch(type)
-	{
-		case 16:	return SQL3_BOOLEAN;	/* bool */
-		case 21:	return SQL3_SMALLINT;	/* int2 */
-		case 23:	return SQL3_INTEGER;	/* int4 */
-		case 25:	return SQL3_CHARACTER;	/* text */
-		case 700:	return SQL3_REAL;		/* float4 */
-		case 701:	return SQL3_DOUBLE_PRECISION;	/* float8 */
-		case 1042:	return SQL3_CHARACTER;	/* bpchar */
-		case 1043:	return SQL3_CHARACTER_VARYING;	/* varchar */
-		case 1082:	return SQL3_DATE_TIME_TIMESTAMP;	/* date */
-		case 1083:	return SQL3_DATE_TIME_TIMESTAMP;	/* time */
-		case 1184:	return SQL3_DATE_TIME_TIMESTAMP;	/* datetime */
-		case 1296:	return SQL3_DATE_TIME_TIMESTAMP;	/* timestamp */
-		case 1700:	return SQL3_NUMERIC;	/* numeric */
-		default:	return -type;
-	}
-}
-
-static unsigned int
 ECPGDynamicType_DDT(Oid type)
 {
 	switch(type)
@@ -60,7 +38,6 @@ ECPGDynamicType_DDT(Oid type)
 			return SQL3_DDT_ILLEGAL;
 	}
 }
-
 
 bool
 ECPGget_desc_header(int lineno, char * desc_name, int *count)
@@ -266,7 +243,7 @@ ECPGget_desc(int lineno, char *desc_name, int index, ...)
 	        		ECPGlog("ECPGget_desc: TYPE = %d\n", ECPGDynamicType_DDT(PQftype(ECPGresult, index)));
                         	break;
 			case ECPGd_data:
-				if (!get_data(ECPGresult, 0, index, lineno, vartype, ECPGt_NO_INDICATOR, var, NULL, varcharsize, offset))
+				if (!get_data(ECPGresult, 0, index, lineno, vartype, ECPGt_NO_INDICATOR, var, NULL, varcharsize, offset, false))
 					return (false);                        	
 					
 				break;

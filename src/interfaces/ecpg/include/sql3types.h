@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/include/sql3types.h,v 1.1 2000/02/16 16:18:03 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/include/sql3types.h,v 1.2 2000/03/01 12:49:41 meskes Exp $
  */
 
 /* chapter 13.1 table 2: Codes used for SQL data types in Dynamic SQL */

@@ -67,6 +67,16 @@ ECPGraise(int line, int code, const char *str)
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
 				"NULL value without indicator in line %d.", line);
 			break;
+		
+		case ECPG_NO_ARRAY: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"variable is not an array in line %d.", line);
+			break;
+			
+		case ECPG_DATA_NOT_ARRAY: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"data read from backend is not an array in line %d.", line);
+			break;
 			
 		case ECPG_NO_CONN: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
