@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.64 1999/01/27 00:36:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.65 1999/01/27 16:48:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,7 +376,7 @@ ExecCheckPerms(CmdType operation,
 	if (!ok)
 		elog(ERROR, "%s: %s", rname.data, aclcheck_error_strings[aclcheck_result]);
 
-	if (parseTree->rowMark != NULL)
+	if (parseTree != NULL && parseTree->rowMark != NULL)
 	{
 		foreach(lp, parseTree->rowMark)
 		{
