@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.27 1997/04/02 03:48:01 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.28 1997/04/15 18:18:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,8 @@
 # include <sys/time.h>
 # include <sys/resource.h>
 #endif 
+
+#include <port-protos.h>
 
 bool VacuumRunning =	false;
 static int MESSAGE_LEVEL;	/* message level */

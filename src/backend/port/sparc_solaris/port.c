@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.3 1996/11/27 08:15:25 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/port/sparc_solaris/Attic/port.c,v 1.4 1997/04/15 18:18:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,9 @@
 
 #include "postgres.h"
 #include "port-protos.h"
+#ifndef HAVE_GETRUSAGE
 #include "rusagestub.h"
+#endif /* HAVE_GETRUSAGE */
 
 long
 random()
@@ -32,6 +34,7 @@ srandom(int seed)
     srand48((long int) seed);
 }
 
+#ifndef HAVE_GETRUSAGE
 int
 getrusage(int who, struct rusage *rusage)
 {
@@ -68,3 +71,4 @@ getrusage(int who, struct rusage *rusage)
     rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
     return(0);
 }
+#endif /* HAVE_GETRUSAGE */
