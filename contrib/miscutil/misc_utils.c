@@ -96,7 +96,7 @@ active_listeners(text *relname)
 	{
 		d = heap_getattr(lTuple, Anum_pg_listener_pid, tdesc, &isnull);
 		pid = DatumGetInt32(d);
-		if ((pid == ourpid) || (kill(pid, SIGTSTP) == 0))
+		if ((pid == ourpid) || (kill(pid, 0) == 0))
 			count++;
 	}
 	heap_endscan(sRel);
