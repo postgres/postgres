@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.49 2001/02/09 20:38:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.50 2001/02/10 00:50:18 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -165,6 +165,20 @@ NOTICE:  Initializing database with en_US collation order.
   </para>
 
   <para>
+   This shells syntax can get tedious quickly.  Therefore the shell
+   script wrapper <application>pg_ctl</application> is provided that
+   encapsulates some of the tasks.  E.g.,
+<programlisting>
+pg_ctl start -l logfile
+</programlisting>
+   will start the server in the background and put the output into the
+   named log file.  The <option>-D</option> option has the same
+   meaning as when invoking postmaster directly.
+   <application>pg_ctl</application> also implements a symmetric
+   <quote>stop</quote> operation.
+  </para>
+
+  <para>
    Normally, you will want to start the database server when the
    computer boots up. This is not required; the
    <productname>PostgreSQL</productname> server can be run
@@ -178,67 +192,78 @@ NOTICE:  Initializing database with en_US collation order.
    with them. Many systems have a file
    <filename>/etc/rc.local</filename> or
    <filename>/etc/rc.d/rc.local</filename> which is almost certainly
-   no bad place to put such a command. Whatever you do, postmaster
+   no bad place to put such a command. Whatever you do, the server
    must be run by the <productname>Postgres</productname> user account
    <emphasis>and not by root</emphasis> or any other user. Therefore
    you probably always want to form your command lines along the lines
    of <literal>su -c '...' postgres</literal>, for example:
 <programlisting>
-nohup su -c 'postmaster -D /usr/local/pgsql/data > server.log 2>&1' postgres &
+su -c 'pg_ctl -D /usr/local/pgsql/data -l serverlog' postgres
 </programlisting>
-   (using the program <application>nohup</application> to prevent the
-   server from dying when you log out).
   </para>
 
   <para>
-   Here are a few more operating system specific suggestions.
+   Here are a few more operating system specific suggestions.  (Always
+   replace the proper installation directory and the user name you
+   chose.)
 
    <itemizedlist>
     <listitem>
      <para>
-      Edit the file <filename>rc.local</filename> on
-      <productname>NetBSD</productname> or file
-      <filename>rc2.d</filename> on <productname>Solaris</productname> to contain the
-      following single line:
+      For <productname>FreeBSD</productname>, take a look at the file
+      <filename>contrib/start-scripts/freebsd</filename> in the
+      <productname>PostgreSQL</productname> source distribution.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On <productname>OpenBSD</productname>, add the following lines
+      to the file <filename>/etc/rc.local</filename>:
 <programlisting>
-su postgres -c "/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data"
+if [ -x /usr/local/pgsql/bin/pg_ctl -a -x /usr/local/pgsql/bin/postmaster ]; then
+    su - -c '/usr/local/pgsql/bin/pg_ctl start -l /var/postgresql/log -s' postgres
+    echo -n ' postgresql'
+fi
 </programlisting>
      </para>
     </listitem>
 
     <listitem>
      <para>
-      On <productname>FreeBSD</productname> edit
-      <filename>/usr/local/etc/rc.d/pgsql.sh</filename> to contain the
-      following lines and make it <literal>chmod 755</literal> and
-      <literal>chown root:bin</literal>.
+      On <productname>Linux</productname> systems either add
 <programlisting>
-#!/bin/sh
-[ -x /usr/local/pgsql/bin/postmaster ] && {
-    su -l pgsql -c 'exec /usr/local/pgsql/bin/postmaster
-        -D/usr/local/pgsql/data
-        -S -o -F > /usr/local/pgsql/errlog' &
-    echo -n ' pgsql'
-}
+/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data
 </programlisting>
-      You may put the line breaks as shown above. The shell is smart
-      enough to keep parsing beyond end-of-line if there is an
-      expression unfinished. The exec saves one layer of shell under
-      the postmaster process so the parent is init.
+      to <filename>/etc/rc.d/rc.local</filename> or look into the file
+      <filename>contrib/start-scripts/linux</filename> in the
+      <productname>PostgreSQL</productname> source distribution to
+      integrate the start and shutdown into the run level system.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      On <productname>RedHat Linux</productname> add a file
-      <filename>/etc/rc.d/init.d/postgres.init</filename> 
-       which is based on the example in <filename>contrib/linux/</filename>.
-       Then make a softlink to this file from
-       <filename>/etc/rc.d/rc5.d/S98postgres.init</filename>.
-      </para>
-     </listitem>
-    </itemizedlist>
-   </para>
+      On <productname>NetBSD</productname>, either use the
+      <productname>FreeBSD</productname> or
+      <productname>Linux</productname> start scripts, depending on
+      preference, as an example and place the file at
+      <filename>/usr/local/etc/rc.d/postgresql</filename>.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      On <productname>Solaris</productname>, edit the file
+      <filename>rc2.d</filename> to contain the following single line:
+<programlisting>
+su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgsql/data"
+</programlisting>
+     </para>
+    </listitem>
+   </itemizedlist>
+
+  </para>
 
    <para>
     While the <application>postmaster</application> is running, it's
@@ -246,13 +271,6 @@ su postgres -c "/usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data"
     directory. This is used as in interlock against multiple running
     postmaster on the same data directory and can also be used for
     shutting down the postmaster.
-   </para>
-
-   <para>
-    The shell script wrapper <application>pg_ctl</application> that
-    comes with <productname>Postgres</productname> can also be used to
-    control starting (and stopping!) of the database server in
-    intelligent fashion.
    </para>
 
    <sect2 id="postmaster-start-failures">
