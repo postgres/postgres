@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.68 2004/05/02 13:38:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.69 2004/05/11 17:36:13 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -177,6 +177,12 @@ typedef ArrayType IdList;
 #define ACL_ALL_RIGHTS_LANGUAGE		(ACL_USAGE)
 #define ACL_ALL_RIGHTS_NAMESPACE	(ACL_USAGE|ACL_CREATE)
 
+/* operation codes for pg_*_aclmask */
+typedef enum
+{
+	ACLMASK_ALL,				/* normal case: compute all bits */
+	ACLMASK_ANY					/* return when result is known nonzero */
+} AclMaskHow;
 
 /* result codes for pg_*_aclcheck */
 typedef enum
@@ -227,6 +233,17 @@ extern Datum hash_aclitem(PG_FUNCTION_ARGS);
 extern void ExecuteGrantStmt(GrantStmt *stmt);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
+
+extern AclMode pg_class_aclmask(Oid table_oid, AclId userid,
+								AclMode mask, AclMaskHow how);
+extern AclMode pg_database_aclmask(Oid db_oid, AclId userid,
+								   AclMode mask, AclMaskHow how);
+extern AclMode pg_proc_aclmask(Oid proc_oid, AclId userid,
+							   AclMode mask, AclMaskHow how);
+extern AclMode pg_language_aclmask(Oid lang_oid, AclId userid,
+								   AclMode mask, AclMaskHow how);
+extern AclMode pg_namespace_aclmask(Oid nsp_oid, AclId userid,
+									AclMode mask, AclMaskHow how);
 
 extern AclResult pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode);
 extern AclResult pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode);

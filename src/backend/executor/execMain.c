@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.230 2004/03/23 19:35:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.231 2004/05/11 17:36:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,28 +412,13 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	userid = rte->checkAsUser ? rte->checkAsUser : GetUserId();
 
 	/*
-	 * For each bit in requiredPerms, apply the required check.  (We can't
-	 * do this in one aclcheck call because aclcheck treats multiple bits
-	 * as OR semantics, when we want AND.)
-	 *
-	 * We use a well-known cute trick for isolating the rightmost one-bit
-	 * in a nonzero word.  See nodes/bitmapset.c for commentary.
+	 * We must have *all* the requiredPerms bits, so use aclmask not
+	 * aclcheck.
 	 */
-#define RIGHTMOST_ONE(x) ((int32) (x) & -((int32) (x)))
-
-	while (requiredPerms != 0)
-	{
-		AclMode		thisPerm;
-		AclResult	aclcheck_result;
-
-		thisPerm = RIGHTMOST_ONE(requiredPerms);
-		requiredPerms &= ~thisPerm;
-
-		aclcheck_result = pg_class_aclcheck(relOid, userid, thisPerm);
-		if (aclcheck_result != ACLCHECK_OK)
-			aclcheck_error(aclcheck_result, ACL_KIND_CLASS,
-						   get_rel_name(relOid));
-	}
+	if (pg_class_aclmask(relOid, userid, requiredPerms, ACLMASK_ALL)
+		!= requiredPerms)
+		aclcheck_error(ACLCHECK_NO_PRIV, ACL_KIND_CLASS,
+					   get_rel_name(relOid));
 }
 
 /*

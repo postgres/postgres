@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.97 2004/01/14 03:44:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.98 2004/05/11 17:36:12 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -48,7 +48,8 @@ static void ExecuteGrantStmt_Namespace(GrantStmt *stmt);
 
 static const char *privilege_to_string(AclMode privilege);
 
-static AclResult aclcheck(Acl *acl, AclId userid, AclMode mode);
+static AclMode aclmask(Acl *acl, AclId userid,
+					   AclMode mask, AclMaskHow how);
 
 
 #ifdef ACLDEBUG
@@ -869,15 +870,33 @@ in_group(AclId uid, AclId gid)
 
 
 /*
- * aclcheck
+ * aclmask --- compute bitmask of all privileges held by userid.
  *
- * Returns ACLCHECK_OK if the 'userid' has ACL entries in 'acl' to
- * satisfy any one of the requirements of 'mode'.  Returns an
- * appropriate ACLCHECK_* error code otherwise.
+ * When 'how' = ACLMASK_ALL, this simply returns the privilege bits
+ * held by the given userid according to the given ACL list, ANDed
+ * with 'mask'.  (The point of passing 'mask' is to let the routine
+ * exit early if all privileges of interest have been found.)
+ *
+ * When 'how' = ACLMASK_ANY, returns as soon as any bit in the mask
+ * is known true.  (This lets us exit soonest in cases where the
+ * caller is only going to test for zero or nonzero result.)
+ *
+ * Usage patterns:
+ *
+ * To see if any of a set of privileges are held:
+ *		if (aclmask(acl, userid, privs, ACLMASK_ANY) != 0)
+ *
+ * To see if all of a set of privileges are held:
+ *		if (aclmask(acl, userid, privs, ACLMASK_ALL) == privs)
+ *
+ * To determine exactly which of a set of privileges are held:
+ *		heldprivs = aclmask(acl, userid, privs, ACLMASK_ALL);
  */
-static AclResult
-aclcheck(Acl *acl, AclId userid, AclMode mode)
+static AclMode
+aclmask(Acl *acl, AclId userid, AclMode mask, AclMaskHow how)
 {
+	AclMode		result;
+	AclMode		remaining;
 	AclItem    *aidat;
 	int			i,
 				num;
@@ -887,38 +906,55 @@ aclcheck(Acl *acl, AclId userid, AclMode mode)
 	 * appropriate default
 	 */
 	if (acl == NULL)
-	{
 		elog(ERROR, "null ACL");
-		return ACLCHECK_NO_PRIV;
-	}
+
+	/* Quick exit for mask == 0 */
+	if (mask == 0)
+		return 0;
 
 	num = ACL_NUM(acl);
 	aidat = ACL_DAT(acl);
 
+	result = 0;
+
 	/*
-	 * See if privilege is granted directly to user or to public
+	 * Check privileges granted directly to user or to public
 	 */
 	for (i = 0; i < num; i++)
-		if (ACLITEM_GET_IDTYPE(aidat[i]) == ACL_IDTYPE_WORLD
-			|| (ACLITEM_GET_IDTYPE(aidat[i]) == ACL_IDTYPE_UID
-				&& aidat[i].ai_grantee == userid))
+	{
+		AclItem	   *aidata = &aidat[i];
+
+		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_WORLD
+			|| (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_UID
+				&& aidata->ai_grantee == userid))
 		{
-			if (aidat[i].ai_privs & mode)
-				return ACLCHECK_OK;
+			result |= (aidata->ai_privs & mask);
+			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
+				return result;
 		}
+	}
 
 	/*
-	 * See if he has the permission via any group (do this in a separate
-	 * pass to avoid expensive(?) lookups in pg_group)
+	 * Check privileges granted via groups.  We do this in a separate
+	 * pass to minimize expensive lookups in pg_group.
 	 */
+	remaining = (mask & ~result);
 	for (i = 0; i < num; i++)
-		if (ACLITEM_GET_IDTYPE(aidat[i]) == ACL_IDTYPE_GID
-			&& aidat[i].ai_privs & mode
-			&& in_group(userid, aidat[i].ai_grantee))
-			return ACLCHECK_OK;
+	{
+		AclItem	   *aidata = &aidat[i];
 
-	/* If here, doesn't have the privilege. */
-	return ACLCHECK_NO_PRIV;
+		if (ACLITEM_GET_IDTYPE(*aidata) == ACL_IDTYPE_GID
+			&& (aidata->ai_privs & remaining)
+			&& in_group(userid, aidata->ai_grantee))
+		{
+			result |= (aidata->ai_privs & mask);
+			if ((how == ACLMASK_ALL) ? (result == mask) : (result != 0))
+				return result;
+			remaining = (mask & ~result);
+		}
+	}
+
+	return result;
 }
 
 
@@ -1001,17 +1037,20 @@ aclcheck_error(AclResult aclerr, AclObjectKind objectkind,
 
 
 /*
- * Exported routine for checking a user's access privileges to a table
+ * Exported routine for examining a user's privileges for a table
+ *
+ * See aclmask() for a description of the API.
  *
  * Note: we give lookup failure the full ereport treatment because the
  * has_table_privilege() family of functions allow users to pass
  * any random OID to this function.  Likewise for the sibling functions
  * below.
  */
-AclResult
-pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
+AclMode
+pg_class_aclmask(Oid table_oid, AclId userid,
+				 AclMode mask, AclMaskHow how)
 {
-	AclResult	result;
+	AclMode		result;
 	bool		usesuper,
 				usecatupd;
 	HeapTuple	tuple;
@@ -1046,7 +1085,8 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
-			  errmsg("relation with OID %u does not exist", table_oid)));
+				 errmsg("relation with OID %u does not exist",
+						table_oid)));
 	classForm = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
@@ -1058,7 +1098,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 	 * be protected in this way.  Assume the view rules can take care
 	 * of themselves.
 	 */
-	if ((mode & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
+	if ((mask & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
 		IsSystemClass(classForm) &&
 		classForm->relkind != RELKIND_VIEW &&
 		!usecatupd &&
@@ -1067,8 +1107,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 #ifdef ACLDEBUG
 		elog(DEBUG2, "permission denied for system catalog update");
 #endif
-		ReleaseSysCache(tuple);
-		return ACLCHECK_NO_PRIV;
+		mask &= ~(ACL_INSERT | ACL_UPDATE | ACL_DELETE);
 	}
 
 	/*
@@ -1080,7 +1119,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 		elog(DEBUG2, "%u is superuser, home free", userid);
 #endif
 		ReleaseSysCache(tuple);
-		return ACLCHECK_OK;
+		return mask;
 	}
 
 	/*
@@ -1102,7 +1141,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, mode);
+	result = aclmask(acl, userid, mask, how);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1114,12 +1153,13 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 }
 
 /*
- * Exported routine for checking a user's access privileges to a database
+ * Exported routine for examining a user's privileges for a database
  */
-AclResult
-pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
+AclMode
+pg_database_aclmask(Oid db_oid, AclId userid,
+					AclMode mask, AclMaskHow how)
 {
-	AclResult	result;
+	AclMode		result;
 	Relation	pg_database;
 	ScanKeyData entry[1];
 	HeapScanDesc scan;
@@ -1130,7 +1170,7 @@ pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(userid))
-		return ACLCHECK_OK;
+		return mask;
 
 	/*
 	 * Get the database's ACL from pg_database
@@ -1167,7 +1207,7 @@ pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, mode);
+	result = aclmask(acl, userid, mask, how);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1180,12 +1220,13 @@ pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 }
 
 /*
- * Exported routine for checking a user's access privileges to a function
+ * Exported routine for examining a user's privileges for a function
  */
-AclResult
-pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
+AclMode
+pg_proc_aclmask(Oid proc_oid, AclId userid,
+				AclMode mask, AclMaskHow how)
 {
-	AclResult	result;
+	AclMode		result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -1193,7 +1234,7 @@ pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(userid))
-		return ACLCHECK_OK;
+		return mask;
 
 	/*
 	 * Get the function's ACL from pg_proc
@@ -1223,7 +1264,7 @@ pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, mode);
+	result = aclmask(acl, userid, mask, how);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1235,12 +1276,13 @@ pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
 }
 
 /*
- * Exported routine for checking a user's access privileges to a language
+ * Exported routine for examining a user's privileges for a language
  */
-AclResult
-pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
+AclMode
+pg_language_aclmask(Oid lang_oid, AclId userid,
+					AclMode mask, AclMaskHow how)
 {
-	AclResult	result;
+	AclMode		result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -1248,7 +1290,7 @@ pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(userid))
-		return ACLCHECK_OK;
+		return mask;
 
 	/*
 	 * Get the language's ACL from pg_language
@@ -1276,7 +1318,7 @@ pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, mode);
+	result = aclmask(acl, userid, mask, how);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1288,12 +1330,13 @@ pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 }
 
 /*
- * Exported routine for checking a user's access privileges to a namespace
+ * Exported routine for examining a user's privileges for a namespace
  */
-AclResult
-pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
+AclMode
+pg_namespace_aclmask(Oid nsp_oid, AclId userid,
+					 AclMode mask, AclMaskHow how)
 {
-	AclResult	result;
+	AclMode		result;
 	HeapTuple	tuple;
 	Datum		aclDatum;
 	bool		isNull;
@@ -1304,11 +1347,11 @@ pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
 	 * we have all grantable privileges on it.
 	 */
 	if (isTempNamespace(nsp_oid))
-		return ACLCHECK_OK;
+		return mask;
 
 	/* Superusers bypass all permission checking. */
 	if (superuser_arg(userid))
-		return ACLCHECK_OK;
+		return mask;
 
 	/*
 	 * Get the schema's ACL from pg_namespace
@@ -1338,7 +1381,7 @@ pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, mode);
+	result = aclmask(acl, userid, mask, how);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1347,6 +1390,71 @@ pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
 	ReleaseSysCache(tuple);
 
 	return result;
+}
+
+
+/*
+ * Exported routine for checking a user's access privileges to a table
+ *
+ * Returns ACLCHECK_OK if the user has any of the privileges identified by
+ * 'mode'; otherwise returns a suitable error code (in practice, always
+ * ACLCHECK_NO_PRIV).
+ */
+AclResult
+pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
+{
+	if (pg_class_aclmask(table_oid, userid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
+}
+
+/*
+ * Exported routine for checking a user's access privileges to a database
+ */
+AclResult
+pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
+{
+	if (pg_database_aclmask(db_oid, userid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
+}
+
+/*
+ * Exported routine for checking a user's access privileges to a function
+ */
+AclResult
+pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
+{
+	if (pg_proc_aclmask(proc_oid, userid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
+}
+
+/*
+ * Exported routine for checking a user's access privileges to a language
+ */
+AclResult
+pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
+{
+	if (pg_language_aclmask(lang_oid, userid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
+}
+
+/*
+ * Exported routine for checking a user's access privileges to a namespace
+ */
+AclResult
+pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
+{
+	if (pg_namespace_aclmask(nsp_oid, userid, mode, ACLMASK_ANY) != 0)
+		return ACLCHECK_OK;
+	else
+		return ACLCHECK_NO_PRIV;
 }
 
 
