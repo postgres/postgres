@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.31 2002/10/24 23:19:13 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.31.2.1 2003/07/22 19:00:36 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -75,12 +75,14 @@ static int	pgStatPid;
 static long pgStatNumMessages = 0;
 
 static bool pgStatRunningInCollector = FALSE;
+
 static int	pgStatTabstatAlloc = 0;
 static int	pgStatTabstatUsed = 0;
 static PgStat_MsgTabstat **pgStatTabstatMessages = NULL;
+#define TABSTAT_QUANTUM		4	/* we alloc this many at a time */
+
 static int	pgStatXactCommit = 0;
 static int	pgStatXactRollback = 0;
-
 
 static TransactionId pgStatDBHashXact = InvalidTransactionId;
 static HTAB *pgStatDBHash = NULL;
@@ -752,32 +754,37 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	}
 
 	/*
-	 * On the first of all calls initialize the message buffers.
+	 * On the first of all calls create some message buffers.
 	 */
-	if (pgStatTabstatAlloc == 0)
+	if (pgStatTabstatMessages == NULL)
 	{
-		pgStatTabstatAlloc = 4;
-		pgStatTabstatMessages = (PgStat_MsgTabstat **)
-			malloc(sizeof(PgStat_MsgTabstat *) * pgStatTabstatAlloc);
-		if (pgStatTabstatMessages == NULL)
+		PgStat_MsgTabstat *newMessages;
+		PgStat_MsgTabstat **msgArray;
+
+		newMessages = (PgStat_MsgTabstat *)
+			malloc(sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		if (newMessages == NULL)
 		{
-			elog(LOG, "PGSTATBE: malloc() failed");
+			elog(LOG, "out of memory");
 			return;
 		}
-		for (i = 0; i < pgStatTabstatAlloc; i++)
+		msgArray = (PgStat_MsgTabstat **)
+			malloc(sizeof(PgStat_MsgTabstat *) * TABSTAT_QUANTUM);
+		if (msgArray == NULL)
 		{
-			pgStatTabstatMessages[i] = (PgStat_MsgTabstat *)
-				malloc(sizeof(PgStat_MsgTabstat));
-			if (pgStatTabstatMessages[i] == NULL)
-			{
-				elog(LOG, "PGSTATBE: malloc() failed");
-				return;
-			}
+			free(newMessages);
+			elog(LOG, "out of memory");
+			return;
 		}
+		MemSet(newMessages, 0, sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		for (i = 0; i < TABSTAT_QUANTUM; i++)
+			msgArray[i] = newMessages++;
+		pgStatTabstatMessages = msgArray;
+		pgStatTabstatAlloc = TABSTAT_QUANTUM;
 	}
 
 	/*
-	 * Lookup the so far used table slots for this relation.
+	 * Search the already-used message slots for this relation.
 	 */
 	for (mb = 0; mb < pgStatTabstatUsed; mb++)
 	{
@@ -799,7 +806,6 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 		 */
 		i = pgStatTabstatMessages[mb]->m_nentries++;
 		useent = &pgStatTabstatMessages[mb]->m_entry[i];
-		memset(useent, 0, sizeof(PgStat_TableEntry));
 		useent->t_id = rel_id;
 		stats->tabentry = (void *) useent;
 		return;
@@ -810,27 +816,31 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	 */
 	if (pgStatTabstatUsed >= pgStatTabstatAlloc)
 	{
-		pgStatTabstatAlloc += 4;
-		pgStatTabstatMessages = (PgStat_MsgTabstat **)
-			realloc(pgStatTabstatMessages,
-					sizeof(PgStat_MsgTabstat *) * pgStatTabstatAlloc);
-		if (pgStatTabstatMessages == NULL)
+		int		newAlloc = pgStatTabstatAlloc + TABSTAT_QUANTUM;
+		PgStat_MsgTabstat *newMessages;
+		PgStat_MsgTabstat **msgArray;
+
+		newMessages = (PgStat_MsgTabstat *)
+			malloc(sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		if (newMessages == NULL)
 		{
-			pgStatTabstatAlloc -= 4;
-			elog(LOG, "PGSTATBE: malloc() failed");
+			elog(LOG, "out of memory");
 			return;
 		}
-		for (i = pgStatTabstatUsed; i < pgStatTabstatAlloc; i++)
+		msgArray = (PgStat_MsgTabstat **)
+			realloc(pgStatTabstatMessages,
+					sizeof(PgStat_MsgTabstat *) * newAlloc);
+		if (msgArray == NULL)
 		{
-			pgStatTabstatMessages[i] = (PgStat_MsgTabstat *)
-				malloc(sizeof(PgStat_MsgTabstat));
-			if (pgStatTabstatMessages[i] == NULL)
-			{
-				pgStatTabstatAlloc -= 4;
-				elog(LOG, "PGSTATBE: malloc() failed");
-				return;
-			}
+			free(newMessages);
+			elog(LOG, "out of memory");
+			return;
 		}
+		MemSet(newMessages, 0, sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
+		for (i = 0; i < TABSTAT_QUANTUM; i++)
+			msgArray[pgStatTabstatAlloc + i] = newMessages++;
+		pgStatTabstatMessages = msgArray;
+		pgStatTabstatAlloc = newAlloc;
 	}
 
 	/*
@@ -839,10 +849,8 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	mb = pgStatTabstatUsed++;
 	pgStatTabstatMessages[mb]->m_nentries = 1;
 	useent = &pgStatTabstatMessages[mb]->m_entry[0];
-	memset(useent, 0, sizeof(PgStat_TableEntry));
 	useent->t_id = rel_id;
 	stats->tabentry = (void *) useent;
-	return;
 }
 
 
