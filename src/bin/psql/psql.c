@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.10 1996/07/27 04:38:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.11 1996/07/28 06:48:42 julian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1134,8 +1134,8 @@ main(int argc, char** argv)
   settings.opt.pager = 1;
   if (!isatty(0) || !isatty(1))
   	settings.quiet = settings.notty = 1;
-  else
 #ifndef NOREADLINE
+  else
 	settings.useReadline = 1;
 #endif
 
