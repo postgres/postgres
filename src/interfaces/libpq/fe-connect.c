@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.215 2002/12/06 04:37:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.216 2002/12/19 19:30:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
 char	   *pwdfMatchesString(char *buf, char *token);
 char *PasswordFromFile(char *hostname, char *port, char *dbname,
-					   char *username);
+				 char *username);
 
 /*
  *		Connecting to a Database
@@ -1054,7 +1054,7 @@ static int
 connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
-	time_t			finish_time = ((time_t) -1);
+	time_t		finish_time = ((time_t) -1);
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
@@ -1064,11 +1064,14 @@ connectDBComplete(PGconn *conn)
 	 */
 	if (conn->connect_timeout != NULL)
 	{
-		int timeout = atoi(conn->connect_timeout);
+		int			timeout = atoi(conn->connect_timeout);
 
 		if (timeout > 0)
 		{
-			/* Rounding could cause connection to fail; need at least 2 secs */
+			/*
+			 * Rounding could cause connection to fail; need at least 2
+			 * secs
+			 */
 			if (timeout < 2)
 				timeout = 2;
 			/* calculate the finish time based on start + timeout */
@@ -1611,143 +1614,149 @@ PQsetenvPoll(PGconn *conn)
 		switch (conn->setenv_state)
 		{
 			case SETENV_STATE_ENCODINGS_SEND:
-			{
-				const char *env = getenv("PGCLIENTENCODING");
-
-				if (!env || *env == '\0')
 				{
-					/*
-					 * PGCLIENTENCODING is not specified, so query server
-					 * for it.  We must use begin/commit in case autocommit
-					 * is off by default.
-					 */
-					if (!PQsendQuery(conn, "begin; select getdatabaseencoding(); commit"))
-						goto error_return;
+					const char *env = getenv("PGCLIENTENCODING");
 
-					conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;
-					return PGRES_POLLING_READING;
-				}
-				else
-				{
-					/* otherwise set client encoding in pg_conn struct */
-					int			encoding = pg_char_to_encoding(env);
-
-					if (encoding < 0)
+					if (!env || *env == '\0')
 					{
-						printfPQExpBuffer(&conn->errorMessage,
-										  libpq_gettext("invalid encoding name in PGCLIENTENCODING: %s\n"),
-										  env);
-						goto error_return;
-					}
-					conn->client_encoding = encoding;
-
-					/* Move on to setting the environment options */
-					conn->setenv_state = SETENV_STATE_OPTION_SEND;
-				}
-				break;
-			}
-
-			case SETENV_STATE_ENCODINGS_WAIT:
-			{
-				if (PQisBusy(conn))
-					return PGRES_POLLING_READING;
-
-				res = PQgetResult(conn);
-
-				if (res)
-				{
-					if (PQresultStatus(res) == PGRES_TUPLES_OK)
-					{
-						/* set client encoding in pg_conn struct */
-						char	   *encoding;
-
-						encoding = PQgetvalue(res, 0, 0);
-						if (!encoding)		/* this should not happen */
-							conn->client_encoding = PG_SQL_ASCII;
-						else
-							conn->client_encoding = pg_char_to_encoding(encoding);
-					}
-					else if (PQresultStatus(res) != PGRES_COMMAND_OK)
-					{
-						PQclear(res);
-						goto error_return;
-					}
-					PQclear(res);
-					/* Keep reading until PQgetResult returns NULL */
-				}
-				else
-				{
-					/* NULL result indicates that the query is finished */
-					/* Move on to setting the environment options */
-					conn->setenv_state = SETENV_STATE_OPTION_SEND;
-				}
-				break;
-			}
-
-			case SETENV_STATE_OPTION_SEND:
-			{
-				/* Send an Environment Option */
-				char		setQuery[100];		/* note length limits in
-												 * sprintf's below */
-
-				if (conn->next_eo->envName)
-				{
-					const char *val;
-
-					if ((val = getenv(conn->next_eo->envName)))
-					{
-						if (strcasecmp(val, "default") == 0)
-							sprintf(setQuery, "SET %s = %.60s",
-									conn->next_eo->pgName, val);
-						else
-							sprintf(setQuery, "SET %s = '%.60s'",
-									conn->next_eo->pgName, val);
-#ifdef CONNECTDEBUG
-						printf("Use environment variable %s to send %s\n",
-							   conn->next_eo->envName, setQuery);
-#endif
-						if (!PQsendQuery(conn, setQuery))
+						/*
+						 * PGCLIENTENCODING is not specified, so query
+						 * server for it.  We must use begin/commit in
+						 * case autocommit is off by default.
+						 */
+						if (!PQsendQuery(conn, "begin; select getdatabaseencoding(); commit"))
 							goto error_return;
 
-						conn->setenv_state = SETENV_STATE_OPTION_WAIT;
+						conn->setenv_state = SETENV_STATE_ENCODINGS_WAIT;
+						return PGRES_POLLING_READING;
 					}
 					else
-						conn->next_eo++;
+					{
+						/* otherwise set client encoding in pg_conn struct */
+						int			encoding = pg_char_to_encoding(env);
+
+						if (encoding < 0)
+						{
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("invalid encoding name in PGCLIENTENCODING: %s\n"),
+											  env);
+							goto error_return;
+						}
+						conn->client_encoding = encoding;
+
+						/* Move on to setting the environment options */
+						conn->setenv_state = SETENV_STATE_OPTION_SEND;
+					}
+					break;
 				}
-				else
+
+			case SETENV_STATE_ENCODINGS_WAIT:
 				{
-					/* No more options to send, so we are done. */
-					conn->setenv_state = SETENV_STATE_IDLE;
+					if (PQisBusy(conn))
+						return PGRES_POLLING_READING;
+
+					res = PQgetResult(conn);
+
+					if (res)
+					{
+						if (PQresultStatus(res) == PGRES_TUPLES_OK)
+						{
+							/* set client encoding in pg_conn struct */
+							char	   *encoding;
+
+							encoding = PQgetvalue(res, 0, 0);
+							if (!encoding)		/* this should not happen */
+								conn->client_encoding = PG_SQL_ASCII;
+							else
+								conn->client_encoding = pg_char_to_encoding(encoding);
+						}
+						else if (PQresultStatus(res) != PGRES_COMMAND_OK)
+						{
+							PQclear(res);
+							goto error_return;
+						}
+						PQclear(res);
+						/* Keep reading until PQgetResult returns NULL */
+					}
+					else
+					{
+						/*
+						 * NULL result indicates that the query is
+						 * finished
+						 */
+						/* Move on to setting the environment options */
+						conn->setenv_state = SETENV_STATE_OPTION_SEND;
+					}
+					break;
 				}
-				break;
-			}
+
+			case SETENV_STATE_OPTION_SEND:
+				{
+					/* Send an Environment Option */
+					char		setQuery[100];	/* note length limits in
+												 * sprintf's below */
+
+					if (conn->next_eo->envName)
+					{
+						const char *val;
+
+						if ((val = getenv(conn->next_eo->envName)))
+						{
+							if (strcasecmp(val, "default") == 0)
+								sprintf(setQuery, "SET %s = %.60s",
+										conn->next_eo->pgName, val);
+							else
+								sprintf(setQuery, "SET %s = '%.60s'",
+										conn->next_eo->pgName, val);
+#ifdef CONNECTDEBUG
+							printf("Use environment variable %s to send %s\n",
+								   conn->next_eo->envName, setQuery);
+#endif
+							if (!PQsendQuery(conn, setQuery))
+								goto error_return;
+
+							conn->setenv_state = SETENV_STATE_OPTION_WAIT;
+						}
+						else
+							conn->next_eo++;
+					}
+					else
+					{
+						/* No more options to send, so we are done. */
+						conn->setenv_state = SETENV_STATE_IDLE;
+					}
+					break;
+				}
 
 			case SETENV_STATE_OPTION_WAIT:
-			{
-				if (PQisBusy(conn))
-					return PGRES_POLLING_READING;
-
-				res = PQgetResult(conn);
-
-				if (res)
 				{
-					if (PQresultStatus(res) != PGRES_COMMAND_OK)
+					if (PQisBusy(conn))
+						return PGRES_POLLING_READING;
+
+					res = PQgetResult(conn);
+
+					if (res)
 					{
+						if (PQresultStatus(res) != PGRES_COMMAND_OK)
+						{
+							PQclear(res);
+							goto error_return;
+						}
 						PQclear(res);
-						goto error_return;
+						/* Keep reading until PQgetResult returns NULL */
 					}
-					PQclear(res);
-					/* Keep reading until PQgetResult returns NULL */
+					else
+					{
+						/*
+						 * NULL result indicates that the query is
+						 * finished
+						 */
+						/* Send the next option */
+						conn->next_eo++;
+						conn->setenv_state = SETENV_STATE_OPTION_SEND;
+					}
+					break;
 				}
-				else
-				{
-					/* NULL result indicates that the query is finished */
-					/* Send the next option */
-					conn->next_eo++;
-					conn->setenv_state = SETENV_STATE_OPTION_SEND;
-				}
-				break;
-			}
 
 			case SETENV_STATE_IDLE:
 				return PGRES_POLLING_OK;
@@ -1755,7 +1764,7 @@ PQsetenvPoll(PGconn *conn)
 			default:
 				printfPQExpBuffer(&conn->errorMessage,
 								  libpq_gettext("invalid state %c, "
-												"probably indicative of memory corruption\n"),
+						   "probably indicative of memory corruption\n"),
 								  conn->setenv_state);
 				goto error_return;
 		}
