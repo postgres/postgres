@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.14 1996/07/25 07:26:37 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.15 1996/07/25 20:43:35 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -47,6 +47,7 @@
 #       bsdi_2_1        -       BSD/OS 2.1
 #	aix		-	IBM on AIX 3.2.5
 #	irix5		-	SGI MIPS on IRIX 5.3
+#	dgux            -       DG/UX 5.4R3.10
 #  Some hooks are provided for
 #	svr4		-	Intel x86 on Intel SVR4
 #	next		-	Motorola MC68K or Intel x86 on NeXTSTEP 3.2

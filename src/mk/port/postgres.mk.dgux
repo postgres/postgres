@@ -1,0 +1,39 @@
+#-------------------------------------------------------------------------
+#
+# postgres.mk.linux--
+#    Intel x86/Linux specific rules and variables
+#
+# Copyright (c) 1994-5, Regents of the University of California
+#
+#    $Id: postgres.mk.dgux,v 1.1 1996/07/25 20:45:05 scrappy Exp $
+#
+# NOTE
+#    you may remove lines that start with ## which are general comments
+#-------------------------------------------------------------------------
+ifndef MK_PORT
+MK_PORT=	linux
+
+RANLIB=		ranlib
+SLSUFF=		.so
+#LDFLAGS+=	-rdynamic
+
+
+CFLAGS_SL=	-fpic
+%.so:  %.o
+	cd $(objdir); $(CC) -shared -o $(@F) $(<F)
+
+#
+# for postgres.mk
+#
+CC=		gcc
+CFLAGS_OPT=	-O2 -pipe
+
+CFLAGS_BE= -D__USE_POSIX_SIGNALS -DUSE_POSIX_SIGNALS -O2
+LDADD_BE= -ldl -lfl
+
+LEX = flex
+YACC = bison -y
+
+INSTALL=/usr/bin/X11/bsdinst
+
+endif
