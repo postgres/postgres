@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.206 2001/02/10 02:31:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.207 2001/02/11 23:12:28 tgl Exp $
  *
  * NOTES
  *
@@ -1557,7 +1557,8 @@ reaper(SIGNAL_ARGS)
 				abort();
 			if (exitstatus != 0)
 			{
-				fprintf(stderr, "Shutdown failed - abort\n");
+				fprintf(stderr, "%s: Shutdown proc %d exited with status %d\n",
+						progname, pid, exitstatus);
 				fflush(stderr);
 				ExitPostmaster(1);
 			}
@@ -1569,7 +1570,8 @@ reaper(SIGNAL_ARGS)
 				abort();
 			if (exitstatus != 0)
 			{
-				fprintf(stderr, "Startup failed - abort\n");
+				fprintf(stderr, "%s: Startup proc %d exited with status %d - abort\n",
+						progname, pid, exitstatus);
 				fflush(stderr);
 				ExitPostmaster(1);
 			}
