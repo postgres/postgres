@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.21 1996/12/30 23:05:16 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.22 1997/01/07 00:04:16 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -121,6 +121,44 @@ exit_nicely(PGconn* conn)
 }
 
 
+/*
+ * isViewRule
+ *		Determine if the relation is a VIEW 
+ *
+ */
+bool
+isViewRule(char *relname)
+{
+    PGresult *res;
+    int ntups;
+    char query[MAXQUERYLEN];
+    
+    res = PQexec(g_conn, "begin");
+    if (!res || 
+        PQresultStatus(res) != PGRES_COMMAND_OK) {
+        fprintf(stderr,"BEGIN command failed\n");
+        exit_nicely(g_conn);
+    }
+    PQclear(res);
+
+    sprintf(query, "select relname from pg_class, pg_rewrite "
+		   "where pg_class.oid = ev_class "
+		   "and rulename = '_RET%s'", relname);
+
+    res = PQexec(g_conn, query);
+    if (!res || 
+        PQresultStatus(res) != PGRES_TUPLES_OK) {
+        fprintf(stderr,"isViewRule(): SELECT failed\n");
+        exit_nicely(g_conn);
+    }
+    
+    ntups = PQntuples(res);
+
+    PQclear(res);
+    res = PQexec(g_conn, "end");
+    PQclear(res);
+    return ntups > 0 ? TRUE : FALSE;
+}
 
 #define COPYBUFSIZ      8192
 
@@ -305,6 +343,10 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
     
     for(i = 0; i < numTables; i++) {
         const char *classname = tblinfo[i].relname;
+
+	/* Skip VIEW relations */
+	if (isViewRule(tblinfo[i].relname))
+		continue;
 
         if (!onlytable || (!strcmp(classname,onlytable))) {
             if (g_verbose)
@@ -1074,6 +1116,7 @@ getIndices(int *numIndices)
     int i_indproc;
     int i_indkey;
     int i_indclassname;
+    int i_indisunique;
     
     /* find all the user-defined indices.
        We do not handle partial indices.
@@ -1095,7 +1138,7 @@ getIndices(int *numIndices)
     sprintf(query,
             "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
             "i.indproc, i.indkey[0], o.opcname as indclassname, "
-            "a.amname as indamname from pg_index i, pg_class t1, "
+            "a.amname as indamname, i.indisunique from pg_index i, pg_class t1, "
             "pg_class t2, pg_opclass o, pg_am a "
             "where t1.oid = i.indexrelid and t2.oid = i.indrelid "
             "and o.oid = i.indclass[0] and t1.relam = a.oid and "
@@ -1122,6 +1165,7 @@ getIndices(int *numIndices)
     i_indproc = PQfnumber(res,"indproc");
     i_indkey = PQfnumber(res,"indkey");
     i_indclassname = PQfnumber(res,"indclassname");
+    i_indisunique = PQfnumber(res,"indisunique");
 
     for (i=0;i<ntups;i++) {
         indinfo[i].indexrelname = strdup(PQgetvalue(res,i,i_indexrelname));
@@ -1130,6 +1174,7 @@ getIndices(int *numIndices)
         indinfo[i].indproc = strdup(PQgetvalue(res,i,i_indproc));
         indinfo[i].indkey = strdup(PQgetvalue(res,i,i_indkey));
         indinfo[i].indclassname = strdup(PQgetvalue(res,i,i_indclassname));
+        indinfo[i].indisunique = strdup(PQgetvalue(res,i,i_indisunique));
     }
     PQclear(res);
     res = PQexec(g_conn,"end");
@@ -1450,6 +1495,10 @@ void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
 
         if (!tablename || (!strcmp(tblinfo[i].relname,tablename))) {
 
+	    /* Skip VIEW relations */
+            if (isViewRule(tblinfo[i].relname))
+                continue;
+
             /* skip archive names*/
             if (isArchiveName(tblinfo[i].relname))
                 continue;
@@ -1583,7 +1632,8 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
         
         if (!tablename || (!strcmp(indinfo[i].indrelname,tablename))) {
         
-            sprintf(q,"CREATE INDEX %s on %s using %s (",
+            sprintf(q,"CREATE %s INDEX %s on %s using %s (",
+		    (strcmp(indinfo[i].indisunique, "t") == 0) ? "UNIQUE" : "",
                     indinfo[i].indexrelname,
                     indinfo[i].indrelname,
                     indinfo[i].indamname);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.9 1996/12/27 23:12:57 bryanh Exp $
+ * $Id: pg_dump.h,v 1.10 1997/01/07 00:04:19 scrappy Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -87,6 +87,7 @@ typedef struct _indInfo {
     char *indproc;       /* oid of the function to compute the index, 0 if none*/
     char *indkey;        /* attribute number of the key attribute */
     char *indclassname;  /* name of the opclass of the key */
+    char *indisunique;   /* is this index unique? */
 } IndInfo;
 
 typedef struct _aggInfo {
@@ -161,6 +162,7 @@ extern void check_conn_and_db(void);
 extern int strInArray(const char* pattern, char** arr, int arr_size);
 extern void parseArgTypes(char **argtypes, const char* str);
 extern int isArchiveName(const char*);
+extern bool isViewRule(char *relname);
 
 /*
  * version specific routines 
