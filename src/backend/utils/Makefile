@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.1 1996/10/27 09:53:07 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.2 1996/11/02 02:03:50 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,22 +14,27 @@ INCLUDE_OPT = -I.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
-all: SUBSYS.o
+all: submake SUBSYS.o
 
-SUBSYS.o: fmgrtab.o
+OBJS = fmgrtab.o adt/SUBSYS.o cache/SUBSYS.o error/SUBSYS.o \
+       fmgr/SUBSYS.o hash/SUBSYS.o init/SUBSYS.o misc/SUBSYS.o mmgr/SUBSYS.o \
+       sort/SUBSYS.o time/SUBSYS.o
+
+SUBSYS.o: $(OBJS) 
+	$(LD) -r -o SUBSYS.o $(OBJS)
+
+.PHONY: submake clean dep
+submake:
 	$(MAKE) -C adt SUBSYS.o
 	$(MAKE) -C cache SUBSYS.o
 	$(MAKE) -C error SUBSYS.o
 	$(MAKE) -C fmgr SUBSYS.o
 	$(MAKE) -C hash SUBSYS.o
 	$(MAKE) -C init SUBSYS.o
+	$(MAKE) -C misc SUBSYS.o
 	$(MAKE) -C mmgr SUBSYS.o
 	$(MAKE) -C sort SUBSYS.o
 	$(MAKE) -C time SUBSYS.o
-	$(LD) -r -o SUBSYS.o \
-	    fmgrtab.o adt/SUBSYS.o cache/SUBSYS.o error/SUBSYS.o \
-	    fmgr/SUBSYS.o hash/SUBSYS.o init/SUBSYS.o mmgr/SUBSYS.o \
-	    sort/SUBSYS.o time/SUBSYS.o
 
 fmgrtab.o: ../fmgr.h
 
@@ -47,6 +52,7 @@ clean:
 	$(MAKE) -C fmgr  clean 
 	$(MAKE) -C hash  clean 
 	$(MAKE) -C init  clean 
+	$(MAKE) -C misc  clean 
 	$(MAKE) -C mmgr  clean 
 	$(MAKE) -C sort  clean 
 	$(MAKE) -C time  clean 
@@ -59,6 +65,7 @@ dep: fmgr.h fmgrtab.c
 	$(MAKE) -C fmgr  dep 
 	$(MAKE) -C hash  dep 
 	$(MAKE) -C init  dep 
+	$(MAKE) -C misc  dep 
 	$(MAKE) -C mmgr  dep 
 	$(MAKE) -C sort  dep 
 	$(MAKE) -C time  dep 
@@ -66,3 +73,4 @@ dep: fmgr.h fmgrtab.c
 ifeq (depend,$(wildcard depend))
 include depend
 endif
+
