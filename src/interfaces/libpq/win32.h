@@ -21,9 +21,3 @@
  * crypt not available (yet)
  */
 #define crypt(a,b) a
-
-/*
- * Parts of config.h that you get with autoconf on other systems
- */
-#define MAXIMUM_ALIGNOF 4
-#define ACCEPT_TYPE_ARG3 int

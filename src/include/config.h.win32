@@ -1,15 +1,17 @@
 /*
  * Parts of config.h that you get with autoconf on other systems
  */
-
-
 #define PG_VERSION "7.1"
 #define PG_VERSION_STR "7.1 (win32)"
 
 #define SYSCONFDIR ""
 
+#define DEF_PGPORT 5432
 #define DEF_PGPORT_STR "5432"
+
 #define MAXIMUM_ALIGNOF 4
+#define ACCEPT_TYPE_ARG3 int
+
 #define MAXPGPATH 1024
 
 #define INDEX_MAX_KEYS		16
