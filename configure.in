@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.271 2003/08/01 03:10:03 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.272 2003/08/01 19:12:52 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -108,7 +108,7 @@ AC_SUBST(PORTNAME)
 # assembler code in src/include/storage/s_lock.h, so we just use
 # a dummy file here.
 case $host in
-  *-*-hpux*)        need_tas=yes; tas_file=hpux.s ;;
+  hppa*-*-hpux*)        need_tas=yes; tas_file=hpux_hppa.s ;;
   sparc-*-solaris*) need_tas=yes; tas_file=solaris_sparc.s ;;
   i?86-*-solaris*)   need_tas=yes; tas_file=solaris_i386.s ;;
   *)                need_tas=no;  tas_file=dummy.s ;;

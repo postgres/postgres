@@ -1453,7 +1453,7 @@ PORTNAME=$template
 # assembler code in src/include/storage/s_lock.h, so we just use
 # a dummy file here.
 case $host in
-  *-*-hpux*)        need_tas=yes; tas_file=hpux.s ;;
+  hppa*-*-hpux*)        need_tas=yes; tas_file=hpux_hppa.s ;;
   sparc-*-solaris*) need_tas=yes; tas_file=solaris_sparc.s ;;
   i?86-*-solaris*)   need_tas=yes; tas_file=solaris_i386.s ;;
   *)                need_tas=no;  tas_file=dummy.s ;;

@@ -1,8 +1,12 @@
 /*
+ * tas() for HPPA.
+ *
  * To generate tas.s using this template:
  *	1. cc +O2 -S -c tas.c
  *	2. edit tas.s:
  *		- replace the LDW with LDCWX
+ *	3. install as src/backend/port/tas/hpux_hppa.s.
+ *
  * For details about the LDCWX instruction, see the "Precision
  * Architecture and Instruction Reference Manual" (09740-90014 of June
  * 1987), p. 5-38.

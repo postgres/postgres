@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.110 2003/07/20 04:31:32 momjian Exp $
+ *	  $Id: s_lock.h,v 1.111 2003/08/01 19:12:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ tas(volatile slock_t *lock)
 
 
 /* Intel Itanium */
-#ifdef __ia64__
+#if defined(__ia64__) || defined(__ia64)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -131,7 +131,7 @@ tas(volatile slock_t *lock)
 	return (int) ret;
 }
 
-#endif	 /* __ia64__ */
+#endif	 /* __ia64__ || __ia64 */
 
 
 #if defined(__arm__) || defined(__arm__)
@@ -368,8 +368,9 @@ tas(volatile slock_t *s_lock)
 
 
 /*************************************************************************
- * These are the platforms that do not use inline assembler (and hence
- * have common code for gcc and non-gcc compilers, if both are available).
+ * These are the platforms that have only one compiler, or do not use inline
+ * assembler (and hence have common code for gcc and non-gcc compilers,
+ * if both are available).
  */
 
 
@@ -437,9 +438,9 @@ tas(volatile slock_t *lock)
 #endif	 /* __alpha */
 
 
-#if defined(__hpux)
+#if defined(__hppa)
 /*
- * HP-UX (PA-RISC)
+ * HP's PA-RISC
  *
  * Note that slock_t on PA-RISC is a structure instead of char
  * (see include/port/hpux.h).
@@ -459,7 +460,7 @@ tas(volatile slock_t *lock)
 
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
 
-#endif	 /* __hpux */
+#endif	 /* __hppa */
 
 #if defined(__QNX__) && defined(__WATCOMC__)
 /*
