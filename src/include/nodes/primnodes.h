@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.82 2003/05/06 00:20:33 tgl Exp $
+ * $Id: primnodes.h,v 1.83 2003/06/06 15:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,7 @@ typedef struct Aggref
 	Oid			aggfnoid;		/* pg_proc Oid of the aggregate */
 	Oid			aggtype;		/* type Oid of result of the aggregate */
 	Expr	   *target;			/* expression we are aggregating on */
+	Index		agglevelsup;	/* > 0 if agg belongs to outer query */
 	bool		aggstar;		/* TRUE if argument was really '*' */
 	bool		aggdistinct;	/* TRUE if it's agg(DISTINCT ...) */
 } Aggref;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.153 2003/05/06 00:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.154 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ planner(Query *parse, bool isCursor, int cursorOptions)
 	double		tuple_fraction;
 	Plan	   *result_plan;
 	Index		save_PlannerQueryLevel;
-	List	   *save_PlannerParamVar;
+	List	   *save_PlannerParamList;
 
 	/*
 	 * The planner can be called recursively (an example is when
@@ -91,11 +91,11 @@ planner(Query *parse, bool isCursor, int cursorOptions)
 	 * subquery_planner, not here.
 	 */
 	save_PlannerQueryLevel = PlannerQueryLevel;
-	save_PlannerParamVar = PlannerParamVar;
+	save_PlannerParamList = PlannerParamList;
 
 	/* Initialize state for handling outer-level references and params */
 	PlannerQueryLevel = 0;		/* will be 1 in top-level subquery_planner */
-	PlannerParamVar = NIL;
+	PlannerParamList = NIL;
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (isCursor)
@@ -130,14 +130,14 @@ planner(Query *parse, bool isCursor, int cursorOptions)
 	}
 
 	/* executor wants to know total number of Params used overall */
-	result_plan->nParamExec = length(PlannerParamVar);
+	result_plan->nParamExec = length(PlannerParamList);
 
 	/* final cleanup of the plan */
 	set_plan_references(result_plan, parse->rtable);
 
 	/* restore state for outer planner, if any */
 	PlannerQueryLevel = save_PlannerQueryLevel;
-	PlannerParamVar = save_PlannerParamVar;
+	PlannerParamList = save_PlannerParamList;
 
 	return result_plan;
 }
@@ -261,8 +261,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 *
 	 * Note that both havingQual and parse->jointree->quals are in
 	 * implicitly-ANDed-list form at this point, even though they are
-	 * declared as Node *.	Also note that contain_agg_clause does not
-	 * recurse into sub-selects, which is exactly what we need here.
+	 * declared as Node *.
 	 */
 	newHaving = NIL;
 	foreach(lst, (List *) parse->havingQual)
@@ -396,6 +395,11 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	/* Expand SubLinks to SubPlans */
 	if (parse->hasSubLinks)
 		expr = SS_process_sublinks(expr, (kind == EXPRKIND_QUAL));
+
+	/*
+	 * XXX do not insert anything here unless you have grokked the comments
+	 * in SS_replace_correlation_vars ...
+	 */
 
 	/* Replace uplevel vars with Param nodes */
 	if (PlannerQueryLevel > 1)
@@ -1356,7 +1360,7 @@ make_subplanTargetList(Query *parse,
 	 * If we're not grouping or aggregating, nothing to do here;
 	 * query_planner should receive the unmodified target list.
 	 */
-	if (!parse->hasAggs && !parse->groupClause && !parse->havingQual)
+	if (!parse->hasAggs && !parse->groupClause)
 	{
 		*need_tlist_eval = true;
 		return tlist;

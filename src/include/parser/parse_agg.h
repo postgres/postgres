@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_agg.h,v 1.25 2003/01/17 03:25:04 tgl Exp $
+ * $Id: parse_agg.h,v 1.26 2003/06/06 15:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,8 @@
 #define PARSE_AGG_H
 
 #include "parser/parse_node.h"
+
+extern void transformAggregateCall(ParseState *pstate, Aggref *agg);
 
 extern void parseCheckAggregates(ParseState *pstate, Query *qry);
 

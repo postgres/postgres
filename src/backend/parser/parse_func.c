@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.148 2003/05/26 00:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.149 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_proc.h"
 #include "lib/stringinfo.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_agg.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
@@ -336,12 +337,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		aggref->aggstar = agg_star;
 		aggref->aggdistinct = agg_distinct;
 
+		/* parse_agg.c does additional aggregate-specific processing */
+		transformAggregateCall(pstate, aggref);
+
 		retval = (Node *) aggref;
 
 		if (retset)
 			elog(ERROR, "Aggregates may not return sets");
-
-		pstate->p_hasAggs = true;
 	}
 
 	return retval;

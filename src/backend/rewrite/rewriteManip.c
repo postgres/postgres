@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.71 2003/02/08 20:20:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.72 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,13 @@
 #include "utils/lsyscache.h"
 
 
-static bool checkExprHasAggs_walker(Node *node, void *context);
+typedef struct
+{
+	int			sublevels_up;
+} checkExprHasAggs_context;
+
+static bool checkExprHasAggs_walker(Node *node,
+									checkExprHasAggs_context *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
 static Relids offset_relid_set(Relids relids, int offset);
 static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
@@ -32,29 +38,55 @@ static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
  * checkExprHasAggs -
  *	Queries marked hasAggs might not have them any longer after
  *	rewriting. Check it.
+ *
+ * The objective of this routine is to detect whether there are aggregates
+ * belonging to the initial query level.  Aggregates belonging to subqueries
+ * or outer queries do NOT cause a true result.  We must recurse into
+ * subqueries to detect outer-reference aggregates that logically belong to
+ * the initial query level.
  */
 bool
 checkExprHasAggs(Node *node)
 {
+	checkExprHasAggs_context context;
+
+	context.sublevels_up = 0;
 	/*
-	 * If a Query is passed, examine it --- but we will not recurse into
-	 * sub-Queries.
+	 * Must be prepared to start with a Query or a bare expression tree;
+	 * if it's a Query, we don't want to increment sublevels_up.
 	 */
 	return query_or_expression_tree_walker(node,
 										   checkExprHasAggs_walker,
-										   NULL,
-										   QTW_IGNORE_RT_SUBQUERIES);
+										   (void *) &context,
+										   0);
 }
 
 static bool
-checkExprHasAggs_walker(Node *node, void *context)
+checkExprHasAggs_walker(Node *node, checkExprHasAggs_context *context)
 {
 	if (node == NULL)
 		return false;
 	if (IsA(node, Aggref))
-		return true;			/* abort the tree traversal and return
+	{
+		if (((Aggref *) node)->agglevelsup == context->sublevels_up)
+			return true;		/* abort the tree traversal and return
 								 * true */
-	return expression_tree_walker(node, checkExprHasAggs_walker, context);
+		/* else fall through to examine argument */
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   checkExprHasAggs_walker,
+								   (void *) context, 0);
+		context->sublevels_up--;
+		return result;
+	}
+	return expression_tree_walker(node, checkExprHasAggs_walker,
+								  (void *) context);
 }
 
 /*
@@ -380,6 +412,8 @@ adjust_relid_set(Relids relids, int oldrelid, int newrelid)
  * that sublink are not affected, only outer references to vars that belong
  * to the expression's original query level or parents thereof.
  *
+ * Aggref nodes are adjusted similarly.
+ *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * Var nodes in-place.	The given expression tree should have been copied
  * earlier to ensure that no unwanted side-effects occur!
@@ -403,7 +437,15 @@ IncrementVarSublevelsUp_walker(Node *node,
 
 		if (var->varlevelsup >= context->min_sublevels_up)
 			var->varlevelsup += context->delta_sublevels_up;
-		return false;
+		return false;			/* done here */
+	}
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *agg = (Aggref *) node;
+
+		if (agg->agglevelsup >= context->min_sublevels_up)
+			agg->agglevelsup += context->delta_sublevels_up;
+		/* fall through to recurse into argument */
 	}
 	if (IsA(node, Query))
 	{

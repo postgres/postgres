@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.251 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.252 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -725,6 +725,7 @@ _copyAggref(Aggref *from)
 	COPY_SCALAR_FIELD(aggfnoid);
 	COPY_SCALAR_FIELD(aggtype);
 	COPY_NODE_FIELD(target);
+	COPY_SCALAR_FIELD(agglevelsup);
 	COPY_SCALAR_FIELD(aggstar);
 	COPY_SCALAR_FIELD(aggdistinct);
 

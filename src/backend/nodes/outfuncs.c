@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.206 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.207 2003/06/06 15:04:02 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -613,6 +613,7 @@ _outAggref(StringInfo str, Aggref *node)
 	WRITE_OID_FIELD(aggfnoid);
 	WRITE_OID_FIELD(aggtype);
 	WRITE_NODE_FIELD(target);
+	WRITE_UINT_FIELD(agglevelsup);
 	WRITE_BOOL_FIELD(aggstar);
 	WRITE_BOOL_FIELD(aggdistinct);
 }

@@ -49,3 +49,16 @@ SELECT newsum(four) AS sum_1500 FROM onek;
 
 SELECT newcnt(four) AS cnt_1000 FROM onek;
 
+
+-- test for outer-level aggregates
+
+-- this should work
+select ten, sum(distinct four) from onek a
+group by ten
+having exists (select 1 from onek b where sum(distinct a.four) = b.four);
+
+-- this should fail because subquery has an agg of its own in WHERE
+select ten, sum(distinct four) from onek a
+group by ten
+having exists (select 1 from onek b
+               where sum(distinct a.four + b.four) = b.four);

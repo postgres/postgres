@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.138 2003/05/28 22:32:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.139 2003/06/06 15:04:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -308,6 +308,13 @@ make_ands_implicit(Expr *clause)
  *	  Recursively search for Aggref nodes within a clause.
  *
  *	  Returns true if any aggregate found.
+ *
+ * This does not descend into subqueries, and so should be used only after
+ * reduction of sublinks to subplans, or in contexts where it's known there
+ * are no subqueries.  There mustn't be outer-aggregate references either.
+ *
+ * (If you want something like this but able to deal with subqueries,
+ * see rewriteManip.c's checkExprHasAggs().)
  */
 bool
 contain_agg_clause(Node *clause)
@@ -321,8 +328,12 @@ contain_agg_clause_walker(Node *node, void *context)
 	if (node == NULL)
 		return false;
 	if (IsA(node, Aggref))
+	{
+		Assert(((Aggref *) node)->agglevelsup == 0);
 		return true;			/* abort the tree traversal and return
 								 * true */
+	}
+	Assert(!IsA(node, SubLink));
 	return expression_tree_walker(node, contain_agg_clause_walker, context);
 }
 
@@ -331,6 +342,10 @@ contain_agg_clause_walker(Node *node, void *context)
  *	  Recursively search for DISTINCT Aggref nodes within a clause.
  *
  *	  Returns true if any DISTINCT aggregate found.
+ *
+ * This does not descend into subqueries, and so should be used only after
+ * reduction of sublinks to subplans, or in contexts where it's known there
+ * are no subqueries.  There mustn't be outer-aggregate references either.
  */
 bool
 contain_distinct_agg_clause(Node *clause)
@@ -345,10 +360,12 @@ contain_distinct_agg_clause_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, Aggref))
 	{
+		Assert(((Aggref *) node)->agglevelsup == 0);
 		if (((Aggref *) node)->aggdistinct)
 			return true;		/* abort the tree traversal and return
 								 * true */
 	}
+	Assert(!IsA(node, SubLink));
 	return expression_tree_walker(node, contain_distinct_agg_clause_walker, context);
 }
 
@@ -357,6 +374,10 @@ contain_distinct_agg_clause_walker(Node *node, void *context)
  *	  Recursively count the Aggref nodes in an expression tree.
  *
  *	  Note: this also checks for nested aggregates, which are an error.
+ *
+ * This does not descend into subqueries, and so should be used only after
+ * reduction of sublinks to subplans, or in contexts where it's known there
+ * are no subqueries.  There mustn't be outer-aggregate references either.
  */
 int
 count_agg_clause(Node *clause)
@@ -374,6 +395,7 @@ count_agg_clause_walker(Node *node, int *count)
 		return false;
 	if (IsA(node, Aggref))
 	{
+		Assert(((Aggref *) node)->agglevelsup == 0);
 		(*count)++;
 
 		/*
@@ -388,6 +410,7 @@ count_agg_clause_walker(Node *node, int *count)
 		 */
 		return false;
 	}
+	Assert(!IsA(node, SubLink));
 	return expression_tree_walker(node, count_agg_clause_walker,
 								  (void *) count);
 }

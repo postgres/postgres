@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.105 2003/05/30 20:23:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.106 2003/06/06 15:04:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1178,6 +1178,9 @@ ExecInitAgg(Agg *node, EState *estate)
 					finalfn_oid;
 		Datum		textInitVal;
 		int			i;
+
+		/* Planner should have assigned aggregate to correct level */
+		Assert(aggref->agglevelsup == 0);
 
 		/* Look for a previous duplicate aggregate */
 		for (i = 0; i <= aggno; i++)

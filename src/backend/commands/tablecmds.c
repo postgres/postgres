@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.73 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.74 2003/06/06 15:04:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2870,9 +2870,9 @@ AlterTableAddCheckConstraint(Relation rel, Constraint *constr)
 	/*
 	 * No subplans or aggregates, either...
 	 */
-	if (contain_subplans(expr))
+	if (pstate->p_hasSubLinks)
 		elog(ERROR, "cannot use subselect in CHECK constraint expression");
-	if (contain_agg_clause(expr))
+	if (pstate->p_hasAggs)
 		elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
 
 	/*

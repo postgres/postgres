@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.77 2003/03/25 16:15:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.78 2003/06/06 15:04:01 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1094,6 +1094,29 @@ sqrt(2)
     linkend="functions-aggregate">.  Other aggregate functions may be added
     by the user. 
    </para>
+
+   <para>
+    An aggregate expression may only appear in the result list or
+    <literal>HAVING</> clause of a <command>SELECT</> command.
+    It is forbidden in other clauses, such as <literal>WHERE</>,
+    because those clauses are logically evaluated before the results
+    of aggregates are formed.
+   </para>
+
+   <para>
+    When an aggregate expression appears in a subquery (see
+    <xref linkend="sql-syntax-scalar-subqueries"> and
+    <xref linkend="functions-subquery">), the aggregate is normally
+    evaluated over the rows of the subquery.  But an exception occurs
+    if the aggregate's argument contains only outer-level variables:
+    the aggregate then belongs to the nearest such outer level, and is
+    evaluated over the rows of that query.  The aggregate expression
+    as a whole is then an outer reference for the subquery it appears in,
+    and acts as a constant over any one evaluation of that subquery.
+    The restriction about
+    appearing only in the result list or <literal>HAVING</> clause
+    applies with respect to the query level that the aggregate belongs to.
+   </para>
   </sect2>
 
   <sect2 id="sql-syntax-type-casts">
@@ -1164,7 +1187,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
    </para>
   </sect2>
 
-  <sect2>
+  <sect2 id="sql-syntax-scalar-subqueries">
    <title>Scalar Subqueries</title>
 
    <para>

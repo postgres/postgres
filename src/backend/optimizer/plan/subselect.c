@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.75 2003/04/29 22:13:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.76 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -35,27 +36,42 @@
 
 Index		PlannerQueryLevel;	/* level of current query */
 List	   *PlannerInitPlan;	/* init subplans for current query */
-List	   *PlannerParamVar;	/* to get Var from Param->paramid */
+List	   *PlannerParamList;	/* to keep track of cross-level Params */
 
 int			PlannerPlanId = 0;	/* to assign unique ID to subquery plans */
 
-/*--------------------
- * PlannerParamVar is a list of Var nodes, wherein the n'th entry
- * (n counts from 0) corresponds to Param->paramid = n.  The Var nodes
- * are ordinary except for one thing: their varlevelsup field does NOT
- * have the usual interpretation of "subplan levels out from current".
- * Instead, it contains the absolute plan level, with the outermost
- * plan being level 1 and nested plans having higher level numbers.
- * This nonstandardness is useful because we don't have to run around
- * and update the list elements when we enter or exit a subplan
- * recursion level.  But we must pay attention not to confuse this
- * meaning with the normal meaning of varlevelsup.
+/*
+ * PlannerParamList keeps track of the PARAM_EXEC slots that we have decided
+ * we need for the query.  At runtime these slots are used to pass values
+ * either down into subqueries (for outer references in subqueries) or up out
+ * of subqueries (for the results of a subplan).  The n'th entry in the list
+ * (n counts from 0) corresponds to Param->paramid = n.
  *
- * We also need to create Param slots that don't correspond to any outer Var.
- * For these, we set varno = 0 and varlevelsup = 0, so that they can't
- * accidentally match an outer Var.
- *--------------------
+ * Each ParamList item shows the absolute query level it is associated with,
+ * where the outermost query is level 1 and nested subqueries have higher
+ * numbers.  The item the parameter slot represents can be one of three kinds:
+ *
+ * A Var: the slot represents a variable of that level that must be passed
+ * down because subqueries have outer references to it.  The varlevelsup
+ * value in the Var will always be zero.
+ *
+ * An Aggref (with an expression tree representing its argument): the slot
+ * represents an aggregate expression that is an outer reference for some
+ * subquery.  The Aggref itself has agglevelsup = 0, and its argument tree
+ * is adjusted to match in level.
+ *
+ * A Param: the slot holds the result of a subplan (it is a setParam item
+ * for that subplan).  The absolute level shown for such items corresponds
+ * to the parent query of the subplan.
+ *
+ * Note: we detect duplicate Var parameters and coalesce them into one slot,
+ * but we do not do this for Aggref or Param slots.
  */
+typedef struct PlannerParamItem
+{
+	Node	   *item;			/* the Var, Aggref, or Param */
+	Index		abslevel;		/* its absolute query level */
+} PlannerParamItem;
 
 
 typedef struct finalize_primnode_context
@@ -78,42 +94,25 @@ static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
 
 /*
- * Create a new entry in the PlannerParamVar list, and return its index.
- *
- * var contains the data to use, except for varlevelsup which
- * is set from the absolute level value given by varlevel.  NOTE that
- * the passed var is scribbled on and placed directly into the list!
- * Generally, caller should have just created or copied it.
- */
-static int
-new_param(Var *var, Index varlevel)
-{
-	var->varlevelsup = varlevel;
-
-	PlannerParamVar = lappend(PlannerParamVar, var);
-
-	return length(PlannerParamVar) - 1;
-}
-
-/*
  * Generate a Param node to replace the given Var,
  * which is expected to have varlevelsup > 0 (ie, it is not local).
  */
 static Param *
-replace_var(Var *var)
+replace_outer_var(Var *var)
 {
-	List	   *ppv;
 	Param	   *retval;
-	Index		varlevel;
+	List	   *ppl;
+	PlannerParamItem *pitem;
+	Index		abslevel;
 	int			i;
 
 	Assert(var->varlevelsup > 0 && var->varlevelsup < PlannerQueryLevel);
-	varlevel = PlannerQueryLevel - var->varlevelsup;
+	abslevel = PlannerQueryLevel - var->varlevelsup;
 
 	/*
-	 * If there's already a PlannerParamVar entry for this same Var, just
+	 * If there's already a PlannerParamList entry for this same Var, just
 	 * use it.	NOTE: in sufficiently complex querytrees, it is possible
-	 * for the same varno/varlevel to refer to different RTEs in different
+	 * for the same varno/abslevel to refer to different RTEs in different
 	 * parts of the parsetree, so that different fields might end up
 	 * sharing the same Param number.  As long as we check the vartype as
 	 * well, I believe that this sort of aliasing will cause no trouble.
@@ -121,22 +120,33 @@ replace_var(Var *var)
 	 * execution in each part of the tree.
 	 */
 	i = 0;
-	foreach(ppv, PlannerParamVar)
+	foreach(ppl, PlannerParamList)
 	{
-		Var		   *pvar = lfirst(ppv);
+		pitem = (PlannerParamItem *) lfirst(ppl);
+		if (pitem->abslevel == abslevel && IsA(pitem->item, Var))
+		{
+			Var	   *pvar = (Var *) pitem->item;
 
-		if (pvar->varno == var->varno &&
-			pvar->varattno == var->varattno &&
-			pvar->varlevelsup == varlevel &&
-			pvar->vartype == var->vartype)
-			break;
+			if (pvar->varno == var->varno &&
+				pvar->varattno == var->varattno &&
+				pvar->vartype == var->vartype)
+				break;
+		}
 		i++;
 	}
 
-	if (!ppv)
+	if (!ppl)
 	{
 		/* Nope, so make a new one */
-		i = new_param((Var *) copyObject(var), varlevel);
+		var = (Var *) copyObject(var);
+		var->varlevelsup = 0;
+
+		pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
+		pitem->item = (Node *) var;
+		pitem->abslevel = abslevel;
+
+		PlannerParamList = lappend(PlannerParamList, pitem);
+		/* i is already the correct index for the new item */
 	}
 
 	retval = makeNode(Param);
@@ -148,17 +158,66 @@ replace_var(Var *var)
 }
 
 /*
+ * Generate a Param node to replace the given Aggref
+ * which is expected to have agglevelsup > 0 (ie, it is not local).
+ */
+static Param *
+replace_outer_agg(Aggref *agg)
+{
+	Param	   *retval;
+	PlannerParamItem *pitem;
+	Index		abslevel;
+	int			i;
+
+	Assert(agg->agglevelsup > 0 && agg->agglevelsup < PlannerQueryLevel);
+	abslevel = PlannerQueryLevel - agg->agglevelsup;
+
+	/*
+	 * It does not seem worthwhile to try to match duplicate outer aggs.
+	 * Just make a new slot every time.
+	 */
+	agg = (Aggref *) copyObject(agg);
+	IncrementVarSublevelsUp((Node *) agg, - ((int) agg->agglevelsup), 0);
+	Assert(agg->agglevelsup == 0);
+
+	pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
+	pitem->item = (Node *) agg;
+	pitem->abslevel = abslevel;
+
+	PlannerParamList = lappend(PlannerParamList, pitem);
+	i = length(PlannerParamList) - 1;
+
+	retval = makeNode(Param);
+	retval->paramkind = PARAM_EXEC;
+	retval->paramid = (AttrNumber) i;
+	retval->paramtype = agg->aggtype;
+
+	return retval;
+}
+
+/*
  * Generate a new Param node that will not conflict with any other.
+ *
+ * This is used to allocate PARAM_EXEC slots for subplan outputs.
+ *
+ * paramtypmod is currently unused but might be wanted someday.
  */
 static Param *
 generate_new_param(Oid paramtype, int32 paramtypmod)
 {
-	Var		   *var = makeVar(0, 0, paramtype, paramtypmod, 0);
-	Param	   *retval = makeNode(Param);
+	Param	   *retval;
+	PlannerParamItem *pitem;
 
+	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = (AttrNumber) new_param(var, 0);
+	retval->paramid = (AttrNumber) length(PlannerParamList);
 	retval->paramtype = paramtype;
+
+	pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
+	pitem->item = (Node *) retval;
+	pitem->abslevel = PlannerQueryLevel;
+
+	PlannerParamList = lappend(PlannerParamList, pitem);
 
 	return retval;
 }
@@ -256,10 +315,9 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	tmpset = bms_copy(plan->extParam);
 	while ((paramid = bms_first_member(tmpset)) >= 0)
 	{
-		Var		   *var = nth(paramid, PlannerParamVar);
+		PlannerParamItem *pitem = nth(paramid, PlannerParamList);
 
-		/* note varlevelsup is absolute level number */
-		if (var->varlevelsup == PlannerQueryLevel)
+		if (pitem->abslevel == PlannerQueryLevel)
 			node->parParam = lappendi(node->parParam, paramid);
 	}
 	bms_free(tmpset);
@@ -408,17 +466,14 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		args = NIL;
 		foreach(lst, node->parParam)
 		{
-			Var		   *var = nth(lfirsti(lst), PlannerParamVar);
-
-			var = (Var *) copyObject(var);
+			PlannerParamItem *pitem = nth(lfirsti(lst), PlannerParamList);
 
 			/*
-			 * Must fix absolute-level varlevelsup from the
-			 * PlannerParamVar entry.  But since var is at current subplan
-			 * level, this is easy:
+			 * The Var or Aggref has already been adjusted to have the
+			 * correct varlevelsup or agglevelsup.  We probably don't even
+			 * need to copy it again, but be safe.
 			 */
-			var->varlevelsup = 0;
-			args = lappend(args, var);
+			args = lappend(args, copyObject(pitem->item));
 		}
 		node->args = args;
 
@@ -682,6 +737,20 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 
 /*
  * Replace correlation vars (uplevel vars) with Params.
+ *
+ * Uplevel aggregates are replaced, too.
+ *
+ * Note: it is critical that this runs immediately after SS_process_sublinks.
+ * Since we do not recurse into the arguments of uplevel aggregates, they will
+ * get copied to the appropriate subplan args list in the parent query with
+ * uplevel vars not replaced by Params, but only adjusted in level (see
+ * replace_outer_agg).  That's exactly what we want for the vars of the parent
+ * level --- but if an aggregate's argument contains any further-up variables,
+ * they have to be replaced with Params in their turn.  That will happen when
+ * the parent level runs SS_replace_correlation_vars.  Therefore it must do
+ * so after expanding its sublinks to subplans.  And we don't want any steps
+ * in between, else those steps would never get applied to the aggregate
+ * argument expressions, either in the parent or the child level.
  */
 Node *
 SS_replace_correlation_vars(Node *expr)
@@ -698,7 +767,12 @@ replace_correlation_vars_mutator(Node *node, void *context)
 	if (IsA(node, Var))
 	{
 		if (((Var *) node)->varlevelsup > 0)
-			return (Node *) replace_var((Var *) node);
+			return (Node *) replace_outer_var((Var *) node);
+	}
+	if (IsA(node, Aggref))
+	{
+		if (((Aggref *) node)->agglevelsup > 0)
+			return (Node *) replace_outer_agg((Aggref *) node);
 	}
 	return expression_tree_mutator(node,
 								   replace_correlation_vars_mutator,
@@ -785,19 +859,18 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	 * We do this once to save time in the per-plan recursion steps.
 	 */
 	paramid = 0;
-	foreach(lst, PlannerParamVar)
+	foreach(lst, PlannerParamList)
 	{
-		Var		   *var = (Var *) lfirst(lst);
+		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(lst);
 
-		/* note varlevelsup is absolute level number */
-		if (var->varlevelsup < PlannerQueryLevel)
+		if (pitem->abslevel < PlannerQueryLevel)
 		{
 			/* valid outer-level parameter */
 			outer_params = bms_add_member(outer_params, paramid);
 			valid_params = bms_add_member(valid_params, paramid);
 		}
-		else if (var->varlevelsup == PlannerQueryLevel &&
-				 var->varno == 0 && var->varattno == 0)
+		else if (pitem->abslevel == PlannerQueryLevel &&
+				 IsA(pitem->item, Param))
 		{
 			/* valid local parameter (i.e., a setParam of my child) */
 			valid_params = bms_add_member(valid_params, paramid);

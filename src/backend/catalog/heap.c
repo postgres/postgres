@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.245 2003/05/28 16:03:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.246 2003/06/06 15:04:01 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1619,9 +1619,9 @@ AddRelationRawConstraints(Relation rel,
 		/*
 		 * No subplans or aggregates, either...
 		 */
-		if (contain_subplans(expr))
+		if (pstate->p_hasSubLinks)
 			elog(ERROR, "cannot use subselect in CHECK constraint expression");
-		if (contain_agg_clause(expr))
+		if (pstate->p_hasAggs)
 			elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
 
 		/*
@@ -1738,9 +1738,9 @@ cookDefault(ParseState *pstate,
 	/*
 	 * No subplans or aggregates, either...
 	 */
-	if (contain_subplans(expr))
+	if (pstate->p_hasSubLinks)
 		elog(ERROR, "cannot use subselects in DEFAULT clause");
-	if (contain_agg_clause(expr))
+	if (pstate->p_hasAggs)
 		elog(ERROR, "cannot use aggregate functions in DEFAULT clause");
 
 	/*

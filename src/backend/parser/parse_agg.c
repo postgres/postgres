@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.52 2003/04/03 18:04:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.53 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "optimizer/var.h"
 #include "parser/parse_agg.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 
 
 typedef struct
@@ -33,6 +34,147 @@ static void check_ungrouped_columns(Node *node, ParseState *pstate,
 						List *groupClauses, bool have_non_var_grouping);
 static bool check_ungrouped_columns_walker(Node *node,
 							   check_ungrouped_columns_context *context);
+
+
+/*
+ * transformAggregateCall -
+ *		Finish initial transformation of an aggregate call
+ *
+ * parse_func.c has recognized the function as an aggregate, and has set
+ * up all the fields of the Aggref except agglevelsup.  Here we must
+ * determine which query level the aggregate actually belongs to, set
+ * agglevelsup accordingly, and mark p_hasAggs true in the corresponding
+ * pstate level.
+ */
+void
+transformAggregateCall(ParseState *pstate, Aggref *agg)
+{
+	int			min_varlevel;
+
+	/*
+	 * The aggregate's level is the same as the level of the lowest-level
+	 * variable or aggregate in its argument; or if it contains no variables
+	 * at all, we presume it to be local.
+	 */
+	min_varlevel = find_minimum_var_level((Node *) agg->target);
+
+	/*
+	 * An aggregate can't directly contain another aggregate call of the
+	 * same level (though outer aggs are okay).  We can skip this check
+	 * if we didn't find any local vars or aggs.
+	 */
+	if (min_varlevel == 0)
+	{
+		if (checkExprHasAggs((Node *) agg->target))
+			elog(ERROR, "aggregate function calls may not be nested");
+	}
+
+	if (min_varlevel < 0)
+		min_varlevel = 0;
+	agg->agglevelsup = min_varlevel;
+
+	/* Mark the correct pstate as having aggregates */
+	while (min_varlevel-- > 0)
+		pstate = pstate->parentParseState;
+	pstate->p_hasAggs = true;
+}
+
+
+/*
+ * parseCheckAggregates
+ *	Check for aggregates where they shouldn't be and improper grouping.
+ *
+ *	Ideally this should be done earlier, but it's difficult to distinguish
+ *	aggregates from plain functions at the grammar level.  So instead we
+ *	check here.  This function should be called after the target list and
+ *	qualifications are finalized.
+ */
+void
+parseCheckAggregates(ParseState *pstate, Query *qry)
+{
+	List	   *groupClauses = NIL;
+	bool		have_non_var_grouping = false;
+	List	   *lst;
+	bool		hasJoinRTEs;
+	Node	   *clause;
+
+	/* This should only be called if we found aggregates or grouping */
+	Assert(pstate->p_hasAggs || qry->groupClause);
+
+	/*
+	 * Aggregates must never appear in WHERE or JOIN/ON clauses.
+	 *
+	 * (Note this check should appear first to deliver an appropriate error
+	 * message; otherwise we are likely to complain about some innocent
+	 * variable in the target list, which is outright misleading if the
+	 * problem is in WHERE.)
+	 */
+	if (checkExprHasAggs(qry->jointree->quals))
+		elog(ERROR, "Aggregates not allowed in WHERE clause");
+	if (checkExprHasAggs((Node *) qry->jointree->fromlist))
+		elog(ERROR, "Aggregates not allowed in JOIN conditions");
+
+	/*
+	 * No aggregates allowed in GROUP BY clauses, either.
+	 *
+	 * While we are at it, build a list of the acceptable GROUP BY
+	 * expressions for use by check_ungrouped_columns() (this avoids
+	 * repeated scans of the targetlist within the recursive routine...).
+	 * And detect whether any of the expressions aren't simple Vars.
+	 */
+	foreach(lst, qry->groupClause)
+	{
+		GroupClause *grpcl = (GroupClause *) lfirst(lst);
+		Node	   *expr;
+
+		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
+		if (expr == NULL)
+			continue;			/* probably cannot happen */
+		if (checkExprHasAggs(expr))
+			elog(ERROR, "Aggregates not allowed in GROUP BY clause");
+		groupClauses = lcons(expr, groupClauses);
+		if (!IsA(expr, Var))
+			have_non_var_grouping = true;
+	}
+
+	/*
+	 * If there are join alias vars involved, we have to flatten them
+	 * to the underlying vars, so that aliased and unaliased vars will be
+	 * correctly taken as equal.  We can skip the expense of doing this
+	 * if no rangetable entries are RTE_JOIN kind.
+	 */
+	hasJoinRTEs = false;
+	foreach(lst, pstate->p_rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
+
+		if (rte->rtekind == RTE_JOIN)
+		{
+			hasJoinRTEs = true;
+			break;
+		}
+	}
+
+	if (hasJoinRTEs)
+		groupClauses = (List *) flatten_join_alias_vars(qry,
+														(Node *) groupClauses);
+
+	/*
+	 * Check the targetlist and HAVING clause for ungrouped variables.
+	 */
+	clause = (Node *) qry->targetList;
+	if (hasJoinRTEs)
+		clause = flatten_join_alias_vars(qry, clause);
+	check_ungrouped_columns(clause, pstate,
+							groupClauses, have_non_var_grouping);
+
+	clause = (Node *) qry->havingQual;
+	if (hasJoinRTEs)
+		clause = flatten_join_alias_vars(qry, clause);
+	check_ungrouped_columns(clause, pstate,
+							groupClauses, have_non_var_grouping);
+}
+
 
 /*
  * check_ungrouped_columns -
@@ -81,10 +223,15 @@ check_ungrouped_columns_walker(Node *node,
 		return false;			/* constants are always acceptable */
 
 	/*
-	 * If we find an aggregate function, do not recurse into its
-	 * arguments; ungrouped vars in the arguments are not an error.
+	 * If we find an aggregate call of the original level, do not recurse
+	 * into its arguments; ungrouped vars in the arguments are not an error.
+	 * We can also skip looking at the arguments of aggregates of higher
+	 * levels, since they could not possibly contain Vars that are of concern
+	 * to us (see transformAggregateCall).  We do need to look into the
+	 * arguments of aggregates of lower levels, however.
 	 */
-	if (IsA(node, Aggref))
+	if (IsA(node, Aggref) &&
+		(int) ((Aggref *) node)->agglevelsup >= context->sublevels_up)
 		return false;
 
 	/*
@@ -164,99 +311,4 @@ check_ungrouped_columns_walker(Node *node,
 	}
 	return expression_tree_walker(node, check_ungrouped_columns_walker,
 								  (void *) context);
-}
-
-/*
- * parseCheckAggregates
- *	Check for aggregates where they shouldn't be and improper grouping.
- *
- *	Ideally this should be done earlier, but it's difficult to distinguish
- *	aggregates from plain functions at the grammar level.  So instead we
- *	check here.  This function should be called after the target list and
- *	qualifications are finalized.
- */
-void
-parseCheckAggregates(ParseState *pstate, Query *qry)
-{
-	List	   *groupClauses = NIL;
-	bool		have_non_var_grouping = false;
-	List	   *lst;
-	bool		hasJoinRTEs;
-	Node	   *clause;
-
-	/* This should only be called if we found aggregates, GROUP, or HAVING */
-	Assert(pstate->p_hasAggs || qry->groupClause || qry->havingQual);
-
-	/*
-	 * Aggregates must never appear in WHERE or JOIN/ON clauses.
-	 *
-	 * (Note this check should appear first to deliver an appropriate error
-	 * message; otherwise we are likely to complain about some innocent
-	 * variable in the target list, which is outright misleading if the
-	 * problem is in WHERE.)
-	 */
-	if (contain_agg_clause(qry->jointree->quals))
-		elog(ERROR, "Aggregates not allowed in WHERE clause");
-	if (contain_agg_clause((Node *) qry->jointree->fromlist))
-		elog(ERROR, "Aggregates not allowed in JOIN conditions");
-
-	/*
-	 * No aggregates allowed in GROUP BY clauses, either.
-	 *
-	 * While we are at it, build a list of the acceptable GROUP BY
-	 * expressions for use by check_ungrouped_columns() (this avoids
-	 * repeated scans of the targetlist within the recursive routine...).
-	 * And detect whether any of the expressions aren't simple Vars.
-	 */
-	foreach(lst, qry->groupClause)
-	{
-		GroupClause *grpcl = (GroupClause *) lfirst(lst);
-		Node	   *expr;
-
-		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
-		if (expr == NULL)
-			continue;			/* probably cannot happen */
-		if (contain_agg_clause(expr))
-			elog(ERROR, "Aggregates not allowed in GROUP BY clause");
-		groupClauses = lcons(expr, groupClauses);
-		if (!IsA(expr, Var))
-			have_non_var_grouping = true;
-	}
-
-	/*
-	 * If there are join alias vars involved, we have to flatten them
-	 * to the underlying vars, so that aliased and unaliased vars will be
-	 * correctly taken as equal.  We can skip the expense of doing this
-	 * if no rangetable entries are RTE_JOIN kind.
-	 */
-	hasJoinRTEs = false;
-	foreach(lst, pstate->p_rtable)
-	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
-
-		if (rte->rtekind == RTE_JOIN)
-		{
-			hasJoinRTEs = true;
-			break;
-		}
-	}
-
-	if (hasJoinRTEs)
-		groupClauses = (List *) flatten_join_alias_vars(qry,
-														(Node *) groupClauses);
-
-	/*
-	 * Check the targetlist and HAVING clause for ungrouped variables.
-	 */
-	clause = (Node *) qry->targetList;
-	if (hasJoinRTEs)
-		clause = flatten_join_alias_vars(qry, clause);
-	check_ungrouped_columns(clause, pstate,
-							groupClauses, have_non_var_grouping);
-
-	clause = (Node *) qry->havingQual;
-	if (hasJoinRTEs)
-		clause = flatten_join_alias_vars(qry, clause);
-	check_ungrouped_columns(clause, pstate,
-							groupClauses, have_non_var_grouping);
 }

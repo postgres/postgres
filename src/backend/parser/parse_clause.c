@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.113 2003/04/29 22:13:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.114 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
@@ -494,7 +495,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 */
 	if (pstate->p_hasAggs)
 	{
-		if (contain_agg_clause(funcexpr))
+		if (checkExprHasAggs(funcexpr))
 			elog(ERROR, "cannot use aggregate function in FROM function expression");
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.36 2003/05/09 23:01:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.37 2003/06/06 15:04:01 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1720,9 +1720,9 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * No subplans or aggregates, either...
 	 */
-	if (contain_subplans(expr))
+	if (pstate->p_hasSubLinks)
 		elog(ERROR, "cannot use subselect in CHECK constraint expression");
-	if (contain_agg_clause(expr))
+	if (pstate->p_hasAggs)
 		elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
 
 	/*

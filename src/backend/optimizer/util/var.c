@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.50 2003/05/28 22:32:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.51 2003/06/06 15:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,12 @@ typedef struct
 
 typedef struct
 {
+	int			min_varlevel;
+	int			sublevels_up;
+} find_minimum_var_level_context;
+
+typedef struct
+{
 	FastList	varlist;
 	bool		includeUpperVars;
 } pull_var_clause_context;
@@ -54,6 +60,8 @@ static bool contain_var_reference_walker(Node *node,
 static bool contain_var_clause_walker(Node *node, void *context);
 static bool contain_vars_of_level_walker(Node *node, int *sublevels_up);
 static bool contain_vars_above_level_walker(Node *node, int *sublevels_up);
+static bool find_minimum_var_level_walker(Node *node,
+					   find_minimum_var_level_context *context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
@@ -322,6 +330,109 @@ contain_vars_above_level_walker(Node *node, int *sublevels_up)
 	return expression_tree_walker(node,
 								  contain_vars_above_level_walker,
 								  (void *) sublevels_up);
+}
+
+
+/*
+ * find_minimum_var_level
+ *	  Recursively scan a clause to find the lowest variable level it
+ *	  contains --- for example, zero is returned if there are any local
+ *	  variables, one if there are no local variables but there are
+ *	  one-level-up outer references, etc.  Subqueries are scanned to see
+ *	  if they possess relevant outer references.  (But any local variables
+ *	  within subqueries are not relevant.)
+ *
+ *	  -1 is returned if the clause has no variables at all.
+ *
+ * Will recurse into sublinks.  Also, may be invoked directly on a Query.
+ */
+int
+find_minimum_var_level(Node *node)
+{
+	find_minimum_var_level_context context;
+
+	context.min_varlevel = -1;	/* signifies nothing found yet */
+	context.sublevels_up = 0;
+
+	(void) query_or_expression_tree_walker(node,
+										   find_minimum_var_level_walker,
+										   (void *) &context,
+										   0);
+
+	return context.min_varlevel;
+}
+
+static bool
+find_minimum_var_level_walker(Node *node,
+							  find_minimum_var_level_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		int		varlevelsup = ((Var *) node)->varlevelsup;
+
+		/* convert levelsup to frame of reference of original query */
+		varlevelsup -= context->sublevels_up;
+		/* ignore local vars of subqueries */
+		if (varlevelsup >= 0)
+		{
+			if (context->min_varlevel < 0 ||
+				context->min_varlevel > varlevelsup)
+			{
+				context->min_varlevel = varlevelsup;
+				/*
+				 * As soon as we find a local variable, we can abort the
+				 * tree traversal, since min_varlevel is then certainly 0.
+				 */
+				if (varlevelsup == 0)
+					return true;
+			}
+		}
+	}
+	/*
+	 * An Aggref must be treated like a Var of its level.  Normally we'd get
+	 * the same result from looking at the Vars in the aggregate's argument,
+	 * but this fails in the case of a Var-less aggregate call (COUNT(*)).
+	 */
+	if (IsA(node, Aggref))
+	{
+		int		agglevelsup = ((Aggref *) node)->agglevelsup;
+
+		/* convert levelsup to frame of reference of original query */
+		agglevelsup -= context->sublevels_up;
+		/* ignore local aggs of subqueries */
+		if (agglevelsup >= 0)
+		{
+			if (context->min_varlevel < 0 ||
+				context->min_varlevel > agglevelsup)
+			{
+				context->min_varlevel = agglevelsup;
+				/*
+				 * As soon as we find a local aggregate, we can abort the
+				 * tree traversal, since min_varlevel is then certainly 0.
+				 */
+				if (agglevelsup == 0)
+					return true;
+			}
+		}
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into subselects */
+		bool		result;
+
+		context->sublevels_up++;
+		result = query_tree_walker((Query *) node,
+								   find_minimum_var_level_walker,
+								   (void *) context,
+								   0);
+		context->sublevels_up--;
+		return result;
+	}
+	return expression_tree_walker(node,
+								  find_minimum_var_level_walker,
+								  (void *) context);
 }
 
 

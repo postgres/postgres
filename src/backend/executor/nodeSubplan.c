@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.45 2003/04/08 23:20:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.46 2003/06/06 15:04:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,7 +240,9 @@ ExecScanSubPlan(SubPlanState *node,
 	oldcontext = MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 
 	/*
-	 * Set Params of this plan from parent plan correlation Vars
+	 * Set Params of this plan from parent plan correlation values.
+	 * (Any calculation we have to do is done in the parent econtext,
+	 * since the Param values don't need to have per-query lifetime.)
 	 */
 	pvar = node->args;
 	foreach(lst, subplan->parParam)

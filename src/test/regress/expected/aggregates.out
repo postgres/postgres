@@ -137,3 +137,23 @@ SELECT newcnt(four) AS cnt_1000 FROM onek;
      1000
 (1 row)
 
+-- test for outer-level aggregates
+-- this should work
+select ten, sum(distinct four) from onek a
+group by ten
+having exists (select 1 from onek b where sum(distinct a.four) = b.four);
+ ten | sum 
+-----+-----
+   0 |   2
+   2 |   2
+   4 |   2
+   6 |   2
+   8 |   2
+(5 rows)
+
+-- this should fail because subquery has an agg of its own in WHERE
+select ten, sum(distinct four) from onek a
+group by ten
+having exists (select 1 from onek b
+               where sum(distinct a.four + b.four) = b.four);
+ERROR:  Aggregates not allowed in WHERE clause

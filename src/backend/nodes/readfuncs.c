@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.153 2003/05/06 00:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.154 2003/06/06 15:04:02 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -413,6 +413,7 @@ _readAggref(void)
 	READ_OID_FIELD(aggfnoid);
 	READ_OID_FIELD(aggtype);
 	READ_NODE_FIELD(target);
+	READ_UINT_FIELD(agglevelsup);
 	READ_BOOL_FIELD(aggstar);
 	READ_BOOL_FIELD(aggdistinct);
 
