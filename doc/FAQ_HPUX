@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.1
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2001/03/20 00:18:21 $
+last updated:           $Date: 2001/04/30 23:55:26 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -24,12 +24,12 @@ Section 1:      Installing PostgreSQL
 
 1.1)	What do I need to install PostgreSQL on HP-UX?
 
-PostgreSQL 7.1 is known to build and pass regression test on HPUX 10.20,
-given appropriate system patch levels and build tools.  It should work on
-other HPUX 9.* and 10.* releases for Series 700/800 machines, too (prior
-Postgres releases were tested on 9.03 and 9.05).  I have heard nonspecific
-reports of problems on HPUX 11; more info and/or patches would be
-appreciated!
+PostgreSQL 7.1 should work on Series 700/800 machines running HPUX 9.*,
+10.*, or 11.*, given appropriate system patch levels and build tools.
+At least one developer routinely tests on HPUX 10.20, and we have reports
+of successful install on HPUX 11.  Releases before 7.1 were tested on
+HPUX 9.03 and 9.05; 7.1 should still work there although no recent tests
+have been reported.
 
 Aside from the PostgreSQL source distribution, you will need GNU make
 (HP's make will not do), and either GNU gcc or HP's full ANSI C compiler.
@@ -57,11 +57,12 @@ explicitly select the compiler to use when you run `configure':
 	CC=cc ./configure
 for HP's C compiler, or
 	CC=gcc ./configure
-for GCC.  If you omit this setting then configure will pick gcc.
+for GCC.  If you omit this setting, then configure will pick gcc
+if it has a choice.
 
 The default install target location is /usr/local/pgsql, which
-(particularly on HPUX 10) you might want to change to something under
-/opt.  If so, use the --prefix switch to configure.
+you might want to change to something under /opt.  If so, use
+the --prefix switch to configure.
 
 
 1.3)	yacc dies trying to process src/backend/parser/gram.y.
@@ -80,6 +81,7 @@ a starting point.
 
 Note that this shouldn't affect you if you are using a distribution
 tarball, but it does matter if you pull the sources from the CVS server.
+The CVS server does not store prebuilt yacc output files.
 
 
 1.4)	Linking the main postgres executable fails, complaining that
