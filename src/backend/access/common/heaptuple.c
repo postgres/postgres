@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.49 1999/02/13 23:14:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.50 1999/03/14 20:17:20 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -689,7 +689,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	len += ComputeDataSize(tupleDescriptor, value, nulls);
 
 	tuple = (HeapTuple) palloc(HEAPTUPLESIZE + len);
-	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);;
+	td = tuple->t_data = (HeapTupleHeader) ((char *) tuple + HEAPTUPLESIZE);
 
 	MemSet((char *) td, 0, (int) len);
 
