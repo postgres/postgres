@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.152 1998/08/06 05:12:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.153 1998/08/10 20:31:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\t           -- toggle table headings and row count (currently %s)\n", on(pset->opt.header));
 	fprintf(fout, " \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", pset->opt.tableOpt ? pset->opt.tableOpt : "");
 	fprintf(fout, " \\x           -- toggle expanded output (currently %s)\n", on(pset->opt.expanded));
+	fprintf(fout, " \\w <fname>   -- output current buffer to a file\n");
 	fprintf(fout, " \\z           -- list current grant/revoke permissions\n");
 	fprintf(fout, " \\! [<cmd>]   -- shell escape or command\n");
 
@@ -2135,13 +2136,34 @@ HandleSlashCmds(PsqlSettings *pset,
 				break;
 			}
 
+		case 'H':
+			if (toggle(pset, &pset->opt.html3, "HTML3.0 tabular output"))
+				pset->opt.standard = 0;
+			break;
+
 		case 'l':				/* \l is list database */
 			listAllDbs(pset);
 			break;
 
-		case 'H':
-			if (toggle(pset, &pset->opt.html3, "HTML3.0 tabular output"))
-				pset->opt.standard = 0;
+		case 'm':				/* monitor like type-setting */
+			if (toggle(pset, &pset->opt.standard, "standard SQL separaters and padding"))
+			{
+				pset->opt.html3 = pset->opt.expanded = 0;
+				pset->opt.align = pset->opt.header = 1;
+				if (pset->opt.fieldSep)
+					free(pset->opt.fieldSep);
+				pset->opt.fieldSep = strdup("|");
+				if (!pset->quiet)
+					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
+			}
+			else
+			{
+				if (pset->opt.fieldSep)
+					free(pset->opt.fieldSep);
+				pset->opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
+				if (!pset->quiet)
+					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
+			}
 			break;
 
 		case 'o':
@@ -2175,31 +2197,6 @@ HandleSlashCmds(PsqlSettings *pset,
 #endif
 			break;
 
-		case 'm':				/* monitor like type-setting */
-			if (toggle(pset, &pset->opt.standard, "standard SQL separaters and padding"))
-			{
-				pset->opt.html3 = pset->opt.expanded = 0;
-				pset->opt.align = pset->opt.header = 1;
-				if (pset->opt.fieldSep)
-					free(pset->opt.fieldSep);
-				pset->opt.fieldSep = strdup("|");
-				if (!pset->quiet)
-					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
-			}
-			else
-			{
-				if (pset->opt.fieldSep)
-					free(pset->opt.fieldSep);
-				pset->opt.fieldSep = strdup(DEFAULT_FIELD_SEP);
-				if (!pset->quiet)
-					printf("field separator changed to '%s'\n", pset->opt.fieldSep);
-			}
-			break;
-
-		case 'z':				/* list table rights (grant/revoke) */
-			rightsList(pset);
-			break;
-
 		case 't':				/* toggle headers */
 			toggle(pset, &pset->opt.header, "output headings and row count");
 			break;
@@ -2216,8 +2213,32 @@ HandleSlashCmds(PsqlSettings *pset,
 			}
 			break;
 
+		case 'w':
+			{
+				FILE	   *fd;
+
+				if (!optarg)
+				{
+					fprintf(stderr, "\\w must be followed by a file name\n");
+					break;
+				}
+				if ((fd = fopen(optarg, "w")) == NULL)
+				{
+					fprintf(stderr, "file named %s could not be opened\n", optarg);
+					break;
+				}
+				fputs(query, fd);
+				fputs("\n", fd);
+				fclose(fd);
+				break;
+			}
+
 		case 'x':
 			toggle(pset, &pset->opt.expanded, "expanded table representation");
+			break;
+
+		case 'z':				/* list table rights (grant/revoke) */
+			rightsList(pset);
 			break;
 
 		case '!':
@@ -2252,13 +2273,17 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	int			successResult = 1;
 	int			slashCmdStatus = CMD_SEND;
 
-	/*
-	 * slashCmdStatus can be: CMD_UNKNOWN	  - send currently constructed
-	 * query to backend (i.e. we got a \g) CMD_SEND		   - send
-	 * currently constructed query to backend (i.e. we got a \g)
-	 * CMD_SKIP_LINE   - skip processing of this line, continue building
-	 * up query CMD_TERMINATE	- terminate processing of this query
-	 * entirely CMD_NEWEDIT		- new query supplied by edit
+	/*--------------------------------------------------------------  
+	 * slashCmdStatus can be:
+	 * CMD_UNKNOWN	  	- send currently constructed query to backend
+	 * 					  (i.e. we got a \g)
+	 * CMD_SEND		  	- send currently constructed query to backend
+	 *					  (i.e. we got a \g)
+	 * CMD_SKIP_LINE  	- skip processing of this line, continue building
+	 * 					  up query
+	 * CMD_TERMINATE  	- terminate processing of this query entirely
+	 * CMD_NEWEDIT		- new query supplied by edit
+	 *---------------------------------------------------------------
 	 */
 
 	bool		querySent = false;
@@ -2358,7 +2383,6 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 		 * query - pointer to current command query_start - placeholder
 		 * for next command
 		 */
-
 		if (line == NULL || (!interactive && *line == '\0'))
 		{						/* No more input.  Time to quit, or \i
 								 * done */
