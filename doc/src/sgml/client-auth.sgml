@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.22 2001/10/04 22:27:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.23 2001/11/02 18:39:57 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -68,6 +68,19 @@
   </para>
 
   <para>
+   Each record specifies a connection type, a client IP address range
+   (if relevant for the connection type), a database name or names,
+   and the authentication method to be used for connections matching
+   these parameters.
+   The first record that matches the type, client address and requested
+   database name of a connection attempt is used to do the
+   authentication step.  There is no <quote>fall-through</> or
+   <quote>backup</>: if one record is chosen and the authentication
+   fails, the following records are not considered. If no record
+   matches, the access will be denied.
+  </para>
+
+  <para>
    A record may have one of the three formats
    <synopsis>
 local   <replaceable>database</replaceable> <replaceable>authentication-method</replaceable> [ <replaceable>authentication-option</replaceable> ]
@@ -107,7 +120,9 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
        TCP/IP. To make use of this option the server must be
        built with SSL support enabled. Furthermore, SSL must be
        enabled with the <option>-l</> option or equivalent configuration
-       setting when the server is started.
+       setting when the server is started.  (Note: <literal>host</literal>
+       records will match either SSL or non-SSL connection attempts, but
+       <literal>hostssl</literal> records match only SSL connections.)
       </para>
      </listitem>
     </varlistentry>
@@ -131,8 +146,9 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      <term><replaceable>IP mask</replaceable></term>
      <listitem>
       <para>
-       These two fields control to which hosts a
-       <literal>host</literal> record applies, based on their IP
+       These two fields specify to which client machines a
+       <literal>host</literal> or <literal>hostssl</literal>
+       record applies, based on their IP
        address. (Of course IP addresses can be spoofed but this
        consideration is beyond the scope of
        <productname>Postgres</productname>.) The precise logic is that
@@ -151,7 +167,8 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      <listitem>
       <para>
        Specifies the method that users must use to authenticate themselves
-       when connecting to that database. The possible choices follow,
+       when connecting under the control of this authentication record.
+       The possible choices are summarized here,
        details are in <xref linkend="auth-methods">.
 
        <variablelist>
@@ -322,17 +339,27 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
      </listitem>
     </varlistentry>
    </variablelist>
-
-   The first record that matches the client IP address and requested
-   database name of a connection attempt is used to do the
-   authentication step.  There is no <quote>fall-through</> or
-   <quote>backup</>: if one record is chosen and the authentication
-   fails, the following records are not considered. If no record
-   matches, the access will be denied.
   </para>
 
   <para>
-   The <filename>pg_hba.conf</filename> file is loaded only on startup
+   Since the <filename>pg_hba.conf</filename> records are examined
+   sequentially for each connection attempt, order of the records is
+   very significant.  Typically, earlier records will have tight
+   connection match parameters and weaker authentication methods,
+   while later records will have looser match parameters and stronger
+   authentication methods.  For example, one might wish to use
+   <literal>trust</> authentication for local TCP connections but
+   require a password for remote TCP connections.  In this case a
+   record specifying <literal>trust</> authentication for connections
+   from 127.0.0.1 would appear before a record specifying password
+   authentication for a wider range of allowed client IP addresses.
+  </para>
+
+  <para>
+    <indexterm>
+     <primary>SIGHUP</primary>
+    </indexterm>
+   The <filename>pg_hba.conf</filename> file is read on startup
    and when the <application>postmaster</> receives a
    <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
    active system, you will need to signal the <application>postmaster</>
@@ -632,7 +659,7 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
     to connect as the database user he is requesting to connect as.
     This is controlled by the ident map
     argument that follows the <literal>ident</> keyword in the
-    <filename>pg_hba.conf</filename> file. The simplest ident map is
+    <filename>pg_hba.conf</filename> file. There is a predefined ident map
     <literal>sameuser</literal>, which allows any operating system
     user to connect as the database user of the same name (if the
     latter exists). Other maps must be created manually.
@@ -640,7 +667,8 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
 
    <para>
     <indexterm><primary>pg_ident.conf</primary></indexterm>
-    Ident maps are held in the file <filename>pg_ident.conf</filename>
+    Ident maps other than <literal>sameuser</literal> are defined
+    in the file <filename>pg_ident.conf</filename>
     in the data directory, which contains lines of the general form:
 <synopsis>
 <replaceable>map-name</> <replaceable>ident-username</> <replaceable>database-username</>
@@ -656,6 +684,18 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
     database users a given operating system user may correspond to and vice
     versa.
    </para>
+
+  <para>
+    <indexterm>
+     <primary>SIGHUP</primary>
+    </indexterm>
+   The <filename>pg_ident.conf</filename> file is read on startup
+   and when the <application>postmaster</> receives a
+   <systemitem>SIGHUP</systemitem> signal. If you edit the file on an
+   active system, you will need to signal the <application>postmaster</>
+   (using <application>pg_ctl reload</> or <application>kill -HUP</>)
+   to make it re-read the file.
+  </para>
 
    <para>
     A <filename>pg_ident.conf</filename> file that could be used in

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.40 2001/11/01 18:10:48 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.41 2001/11/02 18:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,9 @@
 
 #include <errno.h>
 #include <unistd.h>
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
 
 #include "libpq/crypt.h"
 #include "libpq/libpq.h"
@@ -24,15 +27,15 @@
 #include "storage/fd.h"
 #include "utils/nabstime.h"
 
-#ifdef HAVE_CRYPT_H
-#include <crypt.h>
-#endif
 
-char	  **pwd_cache = NULL;
-int			pwd_cache_count = 0;
+#define CRYPT_PWD_FILE	"pg_pwd"
+
+
+static char	  **pwd_cache = NULL;
+static int		pwd_cache_count = 0;
 
 /*
- * crypt_getpwdfilename --- get name of password file
+ * crypt_getpwdfilename --- get full pathname of password file
  *
  * Note that result string is palloc'd, and should be freed by the caller.
  */
@@ -50,28 +53,8 @@ crypt_getpwdfilename(void)
 }
 
 /*
- * crypt_getpwdreloadfilename --- get name of password-reload-needed flag file
- *
- * Note that result string is palloc'd, and should be freed by the caller.
+ * Open the password file if possible (return NULL if not)
  */
-char *
-crypt_getpwdreloadfilename(void)
-{
-	char	   *pwdfilename;
-	int			bufsize;
-	char	   *rpfnam;
-
-	pwdfilename = crypt_getpwdfilename();
-	bufsize = strlen(pwdfilename) + strlen(CRYPT_PWD_RELOAD_SUFX) + 1;
-	rpfnam = (char *) palloc(bufsize);
-	snprintf(rpfnam, bufsize, "%s%s", pwdfilename, CRYPT_PWD_RELOAD_SUFX);
-	pfree(pwdfilename);
-
-	return rpfnam;
-}
-
-/*-------------------------------------------------------------------------*/
-
 static FILE *
 crypt_openpwdfile(void)
 {
@@ -123,107 +106,128 @@ compar_user(const void *user_a, const void *user_b)
 	return result;
 }
 
-/*-------------------------------------------------------------------------*/
-
-static void
-crypt_loadpwdfile(void)
+/*
+ * Load or reload the password-file cache
+ */
+void
+load_password_cache(void)
 {
-	char	   *filename;
-	int			result;
 	FILE	   *pwd_file;
 	char		buffer[1024];
 
-	filename = crypt_getpwdreloadfilename();
-	result = unlink(filename);
-	pfree(filename);
+	/*
+	 * If for some reason we fail to open the password file, preserve the
+	 * old cache contents; this seems better than dropping the cache if,
+	 * say, we are temporarily out of filetable slots.
+	 */
+	if (!(pwd_file = crypt_openpwdfile()))
+		return;
+
+	/* free any old data */
+	if (pwd_cache)
+	{
+		while (--pwd_cache_count >= 0)
+			pfree(pwd_cache[pwd_cache_count]);
+		pfree(pwd_cache);
+		pwd_cache = NULL;
+		pwd_cache_count = 0;
+	}
 
 	/*
-	 * We want to delete the flag file before reading the contents of the
-	 * pg_pwd file.  If result == 0 then the unlink of the reload file was
-	 * successful. This means that a backend performed a COPY of the
-	 * pg_shadow file to pg_pwd.  Therefore we must now do a reload.
+	 * Read the file and store its lines in current memory context,
+	 * which we expect will be PostmasterContext.  That context will
+	 * live as long as we need the cache to live, ie, until just after
+	 * each postmaster child has completed client authentication.
 	 */
-	if (!pwd_cache || result == 0)
+	while (fgets(buffer, sizeof(buffer), pwd_file) != NULL)
 	{
-		/* free the old data only if this is a reload */
-		if (pwd_cache)
-		{
-			while (pwd_cache_count--)
-				free((void *) pwd_cache[pwd_cache_count]);
-			free((void *) pwd_cache);
-			pwd_cache = NULL;
-			pwd_cache_count = 0;
-		}
-
-		if (!(pwd_file = crypt_openpwdfile()))
-			return;
+		int			blen;
 
 		/*
-		 * Here is where we load the data from pg_pwd.
+		 * We must remove the return char at the end of the string, as
+		 * this will affect the correct parsing of the password entry.
 		 */
-		while (fgets(buffer, sizeof(buffer), pwd_file) != NULL)
-		{
-			/*
-			 * We must remove the return char at the end of the string, as
-			 * this will affect the correct parsing of the password entry.
-			 */
-			if (buffer[(result = strlen(buffer) - 1)] == '\n')
-				buffer[result] = '\0';
+		if (buffer[(blen = strlen(buffer) - 1)] == '\n')
+			buffer[blen] = '\0';
 
+		if (pwd_cache == NULL)
 			pwd_cache = (char **)
-				realloc((void *) pwd_cache,
-						sizeof(char *) * (pwd_cache_count + 1));
-			pwd_cache[pwd_cache_count++] = strdup(buffer);
-		}
-		FreeFile(pwd_file);
-
-		/*
-		 * Now sort the entries in the cache for faster searching later.
-		 */
-		qsort((void *) pwd_cache, pwd_cache_count, sizeof(char *), compar_user);
+				palloc(sizeof(char *) * (pwd_cache_count + 1));
+		else
+			pwd_cache = (char **)
+				repalloc((void *) pwd_cache,
+						 sizeof(char *) * (pwd_cache_count + 1));
+		pwd_cache[pwd_cache_count++] = pstrdup(buffer);
 	}
+
+	FreeFile(pwd_file);
+
+	/*
+	 * Now sort the entries in the cache for faster searching later.
+	 */
+	qsort((void *) pwd_cache, pwd_cache_count, sizeof(char *), compar_user);
 }
 
-/*-------------------------------------------------------------------------*/
-
-static void
+/*
+ * Parse a line of the password file to extract password and valid-until date.
+ */
+static bool
 crypt_parsepwdentry(char *buffer, char **pwd, char **valdate)
 {
 	char	   *parse = buffer;
 	int			count,
 				i;
 
+	*pwd = NULL;
+	*valdate = NULL;
+
 	/*
 	 * skip to the password field
 	 */
 	for (i = 0; i < 6; i++)
-		parse += (strcspn(parse, CRYPT_PWD_FILE_SEPSTR) + 1);
+	{
+		parse += strcspn(parse, CRYPT_PWD_FILE_SEPSTR);
+		if (*parse == '\0')
+			return false;
+		parse++;
+	}
 
 	/*
 	 * store a copy of user password to return
 	 */
 	count = strcspn(parse, CRYPT_PWD_FILE_SEPSTR);
 	*pwd = (char *) palloc(count + 1);
-	strncpy(*pwd, parse, count);
+	memcpy(*pwd, parse, count);
 	(*pwd)[count] = '\0';
-	parse += (count + 1);
+	parse += count;
+	if (*parse == '\0')
+	{
+		pfree(*pwd);
+		*pwd = NULL;
+		return false;
+	}
+	parse++;
 
 	/*
 	 * store a copy of the date login becomes invalid
 	 */
 	count = strcspn(parse, CRYPT_PWD_FILE_SEPSTR);
 	*valdate = (char *) palloc(count + 1);
-	strncpy(*valdate, parse, count);
+	memcpy(*valdate, parse, count);
 	(*valdate)[count] = '\0';
-	parse += (count + 1);
+
+	return true;
 }
 
-/*-------------------------------------------------------------------------*/
-
-static int
+/*
+ * Lookup a username in the password-file cache,
+ * return his password and valid-until date.
+ */
+static bool
 crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 {
-	crypt_loadpwdfile();
+	*passwd = NULL;
+	*valuntil = NULL;
 
 	if (pwd_cache)
 	{
@@ -236,14 +240,12 @@ crypt_getloginfo(const char *user, char **passwd, char **valuntil)
 									  compar_user);
 		if (pwd_entry)
 		{
-			crypt_parsepwdentry(*pwd_entry, passwd, valuntil);
-			return STATUS_OK;
+			if (crypt_parsepwdentry(*pwd_entry, passwd, valuntil))
+				return true;
 		}
 	}
 
-	*passwd = NULL;
-	*valuntil = NULL;
-	return STATUS_ERROR;
+	return false;
 }
 
 /*-------------------------------------------------------------------------*/
@@ -256,7 +258,7 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 			   *crypt_pwd;
 	int			retval = STATUS_ERROR;
 
-	if (crypt_getloginfo(user, &passwd, &valuntil) == STATUS_ERROR)
+	if (!crypt_getloginfo(user, &passwd, &valuntil))
 		return STATUS_ERROR;
 
 	if (passwd == NULL || *passwd == '\0')

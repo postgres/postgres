@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.87 2001/11/01 18:09:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.88 2001/11/02 18:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "access/heapam.h"
@@ -33,14 +34,15 @@
 #include "utils/syscache.h"
 
 
-static void CheckPgUserAclNotNull(void);
 extern bool Password_encryption;
+
+static void CheckPgUserAclNotNull(void);
 
 /*---------------------------------------------------------------------
  * write_password_file / update_pg_pwd
  *
  * copy the modified contents of pg_shadow to a file used by the postmaster
- * for user authentication.  The file is stored as $PGDATA/pg_pwd.
+ * for user authentication.  The file is stored as $PGDATA/global/pg_pwd.
  *
  * This function set is both a trigger function for direct updates to pg_shadow
  * as well as being called directly from create/alter/drop user.
@@ -57,7 +59,6 @@ write_password_file(Relation rel)
 			   *tempname;
 	int			bufsize;
 	FILE	   *fp;
-	int			flagfd;
 	mode_t		oumask;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
@@ -133,7 +134,7 @@ write_password_file(Relation rel)
 		/*
 		 * The extra columns we emit here are not really necessary. To remove
 		 * them, the parser in backend/libpq/crypt.c would need to be
-		 * adjusted.  Initdb might also need adjustments.
+		 * adjusted.
 		 */
 		fprintf(fp,
 				"%s"
@@ -168,6 +169,7 @@ write_password_file(Relation rel)
 
 	/*
 	 * Rename the temp file to its final name, deleting the old pg_pwd.
+	 * We expect that rename(2) is an atomic action.
 	 */
 	if (rename(tempname, filename))
 		elog(ERROR, "rename %s to %s: %m", tempname, filename);
@@ -176,19 +178,10 @@ write_password_file(Relation rel)
 	pfree((void *) filename);
 
 	/*
-	 * Create a flag file the postmaster will detect the next time it
-	 * tries to authenticate a user.  The postmaster will know to reload
-	 * the pg_pwd file contents.  Note: we used to elog(ERROR) if the file
-	 * creation failed, but it's a little silly to abort the transaction
-	 * at this point, so let's just make it a NOTICE.
+	 * Signal the postmaster to reload its password-file cache.
 	 */
-	filename = crypt_getpwdreloadfilename();
-	flagfd = BasicOpenFile(filename, O_WRONLY | O_CREAT, 0600);
-	if (flagfd < 0)
-		elog(NOTICE, "write_password_file: unable to write %s: %m", filename);
-	else
-		close(flagfd);
-	pfree((void *) filename);
+	if (IsUnderPostmaster)
+		kill(getppid(), SIGHUP);
 }
 
 

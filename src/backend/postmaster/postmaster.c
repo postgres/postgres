@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.253 2001/10/28 06:25:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.254 2001/11/02 18:39:57 tgl Exp $
  *
  * NOTES
  *
@@ -747,6 +747,12 @@ PostmasterMain(int argc, char *argv[])
 		ExitPostmaster(1);
 
 	/*
+	 * Load cached files for client authentication.
+	 */
+	load_hba_and_ident();
+	load_password_cache();
+
+	/*
 	 * We're ready to rock and roll...
 	 */
 	StartupPID = StartupDataBase();
@@ -852,8 +858,6 @@ ServerLoop(void)
 				later;
 	struct timezone tz;
 
-	load_hba_and_ident();
-
 	gettimeofday(&now, &tz);
 
 	nSockets = initMasks(&readmask, &writemask);
@@ -925,6 +929,7 @@ ServerLoop(void)
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
 			load_hba_and_ident();
+			load_password_cache();
 		}
 
 		/*

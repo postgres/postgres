@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.91 2001/10/31 20:35:02 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.92 2001/11/02 18:39:57 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -479,8 +479,10 @@ syslog = 2
      <primary>SIGHUP</primary>
     </indexterm>
     The configuration file is reread whenever the postmaster receives
-    a <systemitem>SIGHUP</> signal. This signal is also propagated to all running
-    backend processes, so that running sessions get the new default.
+    a <systemitem>SIGHUP</> signal (which is most easily sent by means
+    of <application>pg_ctl reload</>).  The postmaster also propagates
+    this signal to all already-running backend processes, so that
+    existing sessions also get the new default.
     Alternatively, you can send the signal to only one backend process
     directly.
    </para>
