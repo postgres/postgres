@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.255 2004/03/26 03:18:28 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.256 2004/03/31 19:59:22 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2182,7 +2182,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         For each query, write performance statistics of the respective
         module to the server log. This is a crude profiling
-        instrument. All of these options are disabled by default.
+        instrument.  <varname>log_statement_stats</varname> reports total
+        statement statistics, while the others report per-state statistics.
+        All of these options are disabled by default.
         Only superusers can turn off any of these options if they have
         been enabled by the administrator.
        </para>
