@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.68 2000/03/12 18:57:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.69 2000/03/16 03:23:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,16 +55,11 @@ static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 static bool rangeTableEntry_used(Node *node, int rt_index, int sublevels_up);
 static bool attribute_used(Node *node, int rt_index, int attno,
 						   int sublevels_up);
-static bool modifyAggrefUplevel(Node *node, void *context);
 static bool modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
 									   int sublevels_up, int new_sublevels_up);
 static Node *modifyAggrefDropQual(Node *node, Node *targetNode);
 static SubLink *modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree);
 static Node *modifyAggrefQual(Node *node, Query *parsetree);
-static bool checkQueryHasAggs(Node *node);
-static bool checkQueryHasAggs_walker(Node *node, void *context);
-static bool checkQueryHasSubLink(Node *node);
-static bool checkQueryHasSubLink_walker(Node *node, void *context);
 static Query *fireRIRrules(Query *parsetree);
 static Query *Except_Intersect_Rewrite(Query *parsetree);
 static void check_targetlists_are_compatible(List *prev_target,
@@ -291,63 +286,13 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 
 
 /*
- * modifyAggrefUplevel -
- *	In the newly created sublink for an aggregate column used in
- *	the qualification, we must increment the varlevelsup in all the
- *	var nodes.
- *
- * NOTE: although this has the form of a walker, we cheat and modify the
- * Var nodes in-place.  The given expression tree should have been copied
- * earlier to ensure that no unwanted side-effects occur!
- */
-static bool
-modifyAggrefUplevel(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		var->varlevelsup++;
-		return false;
-	}
-	if (IsA(node, SubLink))
-	{
-		/*
-		 * Standard expression_tree_walker will not recurse into subselect,
-		 * but here we must do so.
-		 */
-		SubLink    *sub = (SubLink *) node;
-
-		if (modifyAggrefUplevel((Node *) (sub->lefthand), context))
-			return true;
-		if (modifyAggrefUplevel((Node *) (sub->subselect), context))
-			return true;
-		return false;
-	}
-	if (IsA(node, Query))
-	{
-		/* Reach here after recursing down into subselect above... */
-		Query	   *qry = (Query *) node;
-
-		if (modifyAggrefUplevel((Node *) (qry->targetList), context))
-			return true;
-		if (modifyAggrefUplevel((Node *) (qry->qual), context))
-			return true;
-		if (modifyAggrefUplevel((Node *) (qry->havingQual), context))
-			return true;
-		return false;
-	}
-	return expression_tree_walker(node, modifyAggrefUplevel,
-								  (void *) context);
-}
-
-
-/*
  * modifyAggrefChangeVarnodes -
  *	Change the var nodes in a sublink created for an aggregate column
  *	used in the qualification to point to the correct local RTE.
+ *
+ * XXX if we still need this after redoing querytree design, it should
+ * be combined with ChangeVarNodes, which is the same thing except for
+ * not having the option to adjust the vars' varlevelsup.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * Var nodes in-place.  The given expression tree should have been copied
@@ -547,18 +492,18 @@ modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 	 * Recursing would be a bad idea --- we'd likely produce an
 	 * infinite recursion.  This whole technique is a crock, really...
 	 */
-	if (checkQueryHasAggs(subquery->qual))
+	if (checkExprHasAggs(subquery->qual))
 		elog(ERROR, "Cannot handle multiple aggregate functions in WHERE clause");
 	subquery->groupClause = NIL;
 	subquery->havingQual = NULL;
 	subquery->hasAggs = TRUE;
-	subquery->hasSubLinks = checkQueryHasSubLink(subquery->qual);
+	subquery->hasSubLinks = checkExprHasSubLink(subquery->qual);
 	subquery->unionClause = NULL;
 
 	/* Increment all varlevelsup fields in the new subquery */
-	modifyAggrefUplevel((Node *) subquery, NULL);
+	IncrementVarSublevelsUp((Node *) subquery, 1, 0);
 
-	/* Replace references to the target table with correct varno.
+	/* Replace references to the target table with correct local varno.
 	 * Note +1 here to account for effects of previous line!
 	 */
 	modifyAggrefChangeVarnodes((Node *) subquery, target->varno,
@@ -600,49 +545,6 @@ modifyAggrefQual(Node *node, Query *parsetree)
 }
 
 
-/*
- * checkQueryHasAggs -
- *	Queries marked hasAggs might not have them any longer after
- *	rewriting. Check it.
- */
-static bool
-checkQueryHasAggs(Node *node)
-{
-	return checkQueryHasAggs_walker(node, NULL);
-}
-
-static bool
-checkQueryHasAggs_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Aggref))
-		return true;			/* abort the tree traversal and return true */
-	return expression_tree_walker(node, checkQueryHasAggs_walker, context);
-}
-
-/*
- * checkQueryHasSubLink -
- *	Queries marked hasSubLinks might not have them any longer after
- *	rewriting. Check it.
- */
-static bool
-checkQueryHasSubLink(Node *node)
-{
-	return checkQueryHasSubLink_walker(node, NULL);
-}
-
-static bool
-checkQueryHasSubLink_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, SubLink))
-		return true;			/* abort the tree traversal and return true */
-	return expression_tree_walker(node, checkQueryHasSubLink_walker, context);
-}
-
-
 static Node *
 FindMatchingTLEntry(List *tlist, char *e_attname)
 {
@@ -672,38 +574,6 @@ make_null(Oid type)
 	c->constisnull = true;
 	c->constbyval = get_typbyval(type);
 	return (Node *) c;
-}
-
-
-/*
- * apply_RIR_adjust_sublevel -
- *	Set the varlevelsup field of all Var nodes in the given expression tree
- *	to sublevels_up.  We do NOT recurse into subselects.
- *
- * NOTE: although this has the form of a walker, we cheat and modify the
- * Var nodes in-place.  The given expression tree should have been copied
- * earlier to ensure that no unwanted side-effects occur!
- */
-static bool
-apply_RIR_adjust_sublevel_walker(Node *node, int *sublevels_up)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Var))
-	{
-		Var		   *var = (Var *) node;
-
-		var->varlevelsup = *sublevels_up;
-		return false;
-	}
-	return expression_tree_walker(node, apply_RIR_adjust_sublevel_walker,
-								  (void *) sublevels_up);
-}
-
-static void
-apply_RIR_adjust_sublevel(Node *node, int sublevels_up)
-{
-	apply_RIR_adjust_sublevel_walker(node, &sublevels_up);
 }
 
 
@@ -749,9 +619,12 @@ apply_RIR_view_mutator(Node *node,
 				return make_null(var->vartype);
 			}
 
+			/* Make a copy of the tlist item to return */
 			expr = copyObject(expr);
+			/* Adjust varlevelsup if tlist item is from higher query level */
 			if (var->varlevelsup > 0)
-				apply_RIR_adjust_sublevel(expr, var->varlevelsup);
+				IncrementVarSublevelsUp(expr, var->varlevelsup, 0);
+
 			*(context->modified) = true;
 			return (Node *) expr;
 		}
@@ -1279,8 +1152,11 @@ fireRules(Query *parsetree,
 			else
 				qual_product = (Query *) nth(0, *qual_products);
 
+			MemSet(&qual_info, 0, sizeof(qual_info));
 			qual_info.event = qual_product->commandType;
+			qual_info.current_varno = rt_index;
 			qual_info.new_varno = length(qual_product->rtable) + 2;
+
 			qual_product = CopyAndAddQual(qual_product,
 										  actions,
 										  event_qual,
@@ -1575,16 +1451,16 @@ BasicQueryRewrite(Query *parsetree)
 		if (query->hasAggs)
 		{
 			query->hasAggs =
-				checkQueryHasAggs((Node *) (query->targetList)) ||
-				checkQueryHasAggs((Node *) (query->havingQual));
-			if (checkQueryHasAggs((Node *) (query->qual)))
+				checkExprHasAggs((Node *) (query->targetList)) ||
+				checkExprHasAggs((Node *) (query->havingQual));
+			if (checkExprHasAggs((Node *) (query->qual)))
 				elog(ERROR, "BasicQueryRewrite: failed to remove aggs from qual");
 		}
 		if (query->hasSubLinks)
 			query->hasSubLinks =
-				checkQueryHasSubLink((Node *) (query->targetList)) ||
-				checkQueryHasSubLink((Node *) (query->qual)) ||
-				checkQueryHasSubLink((Node *) (query->havingQual));
+				checkExprHasSubLink((Node *) (query->targetList)) ||
+				checkExprHasSubLink((Node *) (query->qual)) ||
+				checkExprHasSubLink((Node *) (query->havingQual));
 		results = lappend(results, query);
 	}
 

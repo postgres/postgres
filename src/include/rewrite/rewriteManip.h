@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.19 2000/01/26 05:58:30 momjian Exp $
+ * $Id: rewriteManip.h,v 1.20 2000/03/16 03:23:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,15 @@
 extern void OffsetVarNodes(Node *node, int offset, int sublevels_up);
 extern void ChangeVarNodes(Node *node, int old_varno, int new_varno,
 						   int sublevels_up);
+extern void IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
+									int min_sublevels_up);
 extern void AddQual(Query *parsetree, Node *qual);
 extern void AddHavingQual(Query *parsetree, Node *havingQual);
 extern void AddNotQual(Query *parsetree, Node *qual);
 extern void AddGroupClause(Query *parsetree, List *group_by, List *tlist);
+
+extern bool checkExprHasAggs(Node *node);
+extern bool checkExprHasSubLink(Node *node);
 
 extern void FixNew(RewriteInfo *info, Query *parsetree);
 

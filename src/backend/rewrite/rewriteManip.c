@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.44 2000/01/27 18:11:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.45 2000/03/16 03:23:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,52 @@
 
 #define MUTATE(newfield, oldfield, fieldtype, mutator, context)  \
 		( (newfield) = (fieldtype) mutator((Node *) (oldfield), (context)) )
+
+static bool checkExprHasAggs_walker(Node *node, void *context);
+static bool checkExprHasSubLink_walker(Node *node, void *context);
+
+
+/*
+ * checkExprHasAggs -
+ *	Queries marked hasAggs might not have them any longer after
+ *	rewriting. Check it.
+ */
+bool
+checkExprHasAggs(Node *node)
+{
+	return checkExprHasAggs_walker(node, NULL);
+}
+
+static bool
+checkExprHasAggs_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+		return true;			/* abort the tree traversal and return true */
+	return expression_tree_walker(node, checkExprHasAggs_walker, context);
+}
+
+/*
+ * checkExprHasSubLink -
+ *	Queries marked hasSubLinks might not have them any longer after
+ *	rewriting. Check it.
+ */
+bool
+checkExprHasSubLink(Node *node)
+{
+	return checkExprHasSubLink_walker(node, NULL);
+}
+
+static bool
+checkExprHasSubLink_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, SubLink))
+		return true;			/* abort the tree traversal and return true */
+	return expression_tree_walker(node, checkExprHasSubLink_walker, context);
+}
 
 
 /*
@@ -195,6 +241,89 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 }
 
 /*
+ * IncrementVarSublevelsUp - adjust Var nodes when pushing them down in tree
+ *
+ * Find all Var nodes in the given tree having varlevelsup >= min_sublevels_up,
+ * and add delta_sublevels_up to their varlevelsup value.  This is needed when
+ * an expression that's correct for some nesting level is inserted into a
+ * subquery.  Ordinarily the initial call has min_sublevels_up == 0 so that
+ * all Vars are affected.  The point of min_sublevels_up is that we can
+ * increment it when we recurse into a sublink, so that local variables in
+ * that sublink are not affected, only outer references to vars that belong
+ * to the expression's original query level or parents thereof.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * Var nodes in-place.  The given expression tree should have been copied
+ * earlier to ensure that no unwanted side-effects occur!
+ */
+
+typedef struct {
+	int			delta_sublevels_up;
+	int			min_sublevels_up;
+} IncrementVarSublevelsUp_context;
+
+static bool
+IncrementVarSublevelsUp_walker(Node *node,
+							   IncrementVarSublevelsUp_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup >= context->min_sublevels_up)
+			var->varlevelsup += context->delta_sublevels_up;
+		return false;
+	}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (IncrementVarSublevelsUp_walker((Node *) (sub->lefthand),
+										   context))
+			return true;
+		IncrementVarSublevelsUp((Node *) (sub->subselect),
+								context->delta_sublevels_up,
+								context->min_sublevels_up + 1);
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (IncrementVarSublevelsUp_walker((Node *) (qry->targetList),
+										   context))
+			return true;
+		if (IncrementVarSublevelsUp_walker((Node *) (qry->qual),
+										   context))
+			return true;
+		if (IncrementVarSublevelsUp_walker((Node *) (qry->havingQual),
+										   context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, IncrementVarSublevelsUp_walker,
+								  (void *) context);
+}
+
+void
+IncrementVarSublevelsUp(Node *node, int delta_sublevels_up,
+						int min_sublevels_up)
+{
+	IncrementVarSublevelsUp_context context;
+
+	context.delta_sublevels_up = delta_sublevels_up;
+	context.min_sublevels_up = min_sublevels_up;
+	IncrementVarSublevelsUp_walker(node, &context);
+}
+
+/*
  * Add the given qualifier condition to the query's WHERE clause
  */
 void
@@ -214,6 +343,13 @@ AddQual(Query *parsetree, Node *qual)
 		parsetree->qual = copy;
 	else
 		parsetree->qual = (Node *) make_andclause(makeList(old, copy, -1));
+
+	/*
+	 * Make sure query is marked correctly if added qual has sublinks or
+	 * aggregates (not sure it can ever have aggs, but sublinks definitely).
+	 */
+	parsetree->hasAggs |= checkExprHasAggs(copy);
+	parsetree->hasSubLinks |= checkExprHasSubLink(copy);
 }
 
 /*
@@ -237,6 +373,13 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 		parsetree->havingQual = copy;
 	else
 		parsetree->havingQual = (Node *) make_andclause(makeList(old, copy, -1));
+
+	/*
+	 * Make sure query is marked correctly if added qual has sublinks or
+	 * aggregates (not sure it can ever have aggs, but sublinks definitely).
+	 */
+	parsetree->hasAggs |= checkExprHasAggs(copy);
+	parsetree->hasSubLinks |= checkExprHasSubLink(copy);
 }
 
 #ifdef NOT_USED
@@ -428,13 +571,9 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 			{
 				/* Make a copy of the tlist item to return */
 				n = copyObject(n);
-				if (IsA(n, Var))
-				{
-					((Var *) n)->varlevelsup = this_varlevelsup;
-				}
-				/* XXX what to do if tlist item is NOT a var?
-				 * Should we be using something like apply_RIR_adjust_sublevel?
-				 */
+				/* Adjust varlevelsup if tlist item is from higher query */
+				if (this_varlevelsup > 0)
+					IncrementVarSublevelsUp(n, this_varlevelsup, 0);
 				return n;
 			}
 		}
@@ -552,24 +691,26 @@ HandleRIRAttributeRule_mutator(Node *node,
 			}
 			else
 			{
-				NameData	name_to_look_for;
+				char   *name_to_look_for;
 
-				NameStr(name_to_look_for)[0] = '\0';
-				namestrcpy(&name_to_look_for,
-						   (char *) get_attname(getrelid(this_varno,
-														 context->rtable),
-												this_varattno));
-				if (NameStr(name_to_look_for)[0])
+				name_to_look_for = get_attname(getrelid(this_varno,
+														context->rtable),
+											   this_varattno);
+				if (name_to_look_for)
 				{
 					Node	   *n;
 
 					*context->modified = TRUE;
 					n = FindMatchingTLEntry(context->targetlist,
-											(char *) &name_to_look_for);
+											name_to_look_for);
 					if (n == NULL)
 						return make_null(var->vartype);
-					else
-						return copyObject(n);
+					/* Make a copy of the tlist item to return */
+					n = copyObject(n);
+					/* Adjust varlevelsup if tlist item is from higher query */
+					if (this_varlevelsup > 0)
+						IncrementVarSublevelsUp(n, this_varlevelsup, 0);
+					return n;
 				}
 			}
 		}
