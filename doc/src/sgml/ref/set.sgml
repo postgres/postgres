@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.30 2000/02/19 08:14:54 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.31 2000/02/27 21:07:03 tgl Exp $
 Postgres documentation
 -->
 
@@ -870,7 +870,7 @@ SET DATESTYLE TO 'ISO';
    Enable GEQO for queries with 4 or more tables:
 
    <programlisting> 
-SET GEQO ON=4;
+SET GEQO = 'ON=4';
    </programlisting>
 
    Set GEQO to default:
