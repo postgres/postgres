@@ -7,49 +7,57 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.93 1999/10/07 04:23:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.94 1999/11/01 05:15:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
-#include "catalog/pg_type.h"
 #include "optimizer/planmain.h"
 #include "optimizer/subselect.h"
-#include "utils/syscache.h"
 
-/*
- * listCopy
- *	  this copy function only copies the "lcons-cells" of the list but not
- *	  its contents. (good for list of pointers as well as list of integers).
- */
-List *
-listCopy(List *list)
-{
-	List	   *newlist = NIL;
-	List	   *l,
-			   *nl = NIL;
-
-	foreach(l, list)
-	{
-		if (newlist == NIL)
-			newlist = nl = lcons(lfirst(l), NIL);
-		else
-		{
-			lnext(nl) = lcons(lfirst(l), NIL);
-			nl = lnext(nl);
-		}
-	}
-	return newlist;
-}
 
 /*
  * Node_Copy
  *	  a macro to simplify calling of copyObject on the specified field
  */
 #define Node_Copy(from, newnode, field) \
-	newnode->field = copyObject(from->field)
+	((newnode)->field = copyObject((from)->field))
+
+
+/*
+ * listCopy
+ *	  This copy function only copies the "cons-cells" of the list, not the
+ *	  pointed-to objects.  (Use copyObject if you want a "deep" copy.)
+ *
+ *	  We also use this function for copying lists of integers, which is
+ *	  grotty but unlikely to break --- it could fail if sizeof(pointer)
+ *	  is less than sizeof(int), but I don't know any such machines...
+ *
+ *	  Note that copyObject will surely coredump if applied to a list
+ *	  of integers!
+ */
+List *
+listCopy(List *list)
+{
+	List	   *newlist,
+			   *l,
+			   *nl;
+
+	/* rather ugly coding for speed... */
+	if (list == NIL)
+		return NIL;
+
+	newlist = nl = lcons(lfirst(list), NIL);
+
+	foreach(l, lnext(list))
+	{
+		lnext(nl) = lcons(lfirst(l), NIL);
+		nl = lnext(nl);
+	}
+	return newlist;
+}
 
 /* ****************************************************************
  *					 plannodes.h copy functions
@@ -684,9 +692,6 @@ _copyOper(Oper *from)
 static Const *
 _copyConst(Const *from)
 {
-	static Oid	cached_type;
-	static bool cached_typbyval;
-
 	Const	   *newnode = makeNode(Const);
 
 	/* ----------------
@@ -696,92 +701,31 @@ _copyConst(Const *from)
 	newnode->consttype = from->consttype;
 	newnode->constlen = from->constlen;
 
-	/* ----------------
-	 *	XXX super cheesy hack until parser/planner
-	 *	puts in the right values here.
-	 *
-	 *	But I like cheese.
-	 * ----------------
-	 */
-	if (!from->constisnull && cached_type != from->consttype)
-	{
-		HeapTuple	typeTuple;
-		Form_pg_type typeStruct;
-
-		/* ----------------
-		 *	 get the type tuple corresponding to the paramList->type,
-		 *	 If this fails, returnValue has been pre-initialized
-		 *	 to "null" so we just return it.
-		 * ----------------
-		 */
-		typeTuple = SearchSysCacheTuple(TYPOID,
-										ObjectIdGetDatum(from->consttype),
-										0, 0, 0);
-
-		/* ----------------
-		 *	 get the type length and by-value from the type tuple and
-		 *	 save the information in our one element cache.
-		 * ----------------
-		 */
-		Assert(PointerIsValid(typeTuple));
-
-		typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-		cached_typbyval = (typeStruct)->typbyval ? true : false;
-		cached_type = from->consttype;
-	}
-
-	from->constbyval = cached_typbyval;
-
-	if (!from->constisnull)
+	if (from->constbyval || from->constisnull)
 	{
 		/* ----------------
-		 *		copying the Datum in a const node is a bit trickier
-		 *	because it might be a pointer and it might also be of
-		 *	variable length...
+		 *	passed by value so just copy the datum.
+		 *	Also, don't try to copy struct when value is null!
 		 * ----------------
 		 */
-		if (from->constbyval == true)
-		{
-			/* ----------------
-			 *	passed by value so just copy the datum.
-			 * ----------------
-			 */
-			newnode->constvalue = from->constvalue;
-		}
-		else
-		{
-			/* ----------------
-			 *	not passed by value. datum contains a pointer.
-			 * ----------------
-			 */
-			if (from->constlen != -1)
-			{
-				/* ----------------
-				 *		fixed length structure
-				 * ----------------
-				 */
-				newnode->constvalue = PointerGetDatum(palloc(from->constlen));
-				memmove((char *) newnode->constvalue,
-						(char *) from->constvalue, from->constlen);
-			}
-			else
-			{
-				/* ----------------
-				 *		variable length structure.	here the length is stored
-				 *	in the first int pointed to by the constval.
-				 * ----------------
-				 */
-				int			length;
-
-				length = VARSIZE(from->constvalue);
-				newnode->constvalue = PointerGetDatum(palloc(length));
-				memmove((char *) newnode->constvalue,
-						(char *) from->constvalue, length);
-			}
-		}
+		newnode->constvalue = from->constvalue;
 	}
 	else
-		newnode->constvalue = from->constvalue;
+	{
+		/* ----------------
+		 *	not passed by value. datum contains a pointer.
+		 * ----------------
+		 */
+		int			length = from->constlen;
+
+		if (length == -1)		/* variable-length type? */
+			length = VARSIZE(from->constvalue);
+		newnode->constvalue = PointerGetDatum(palloc(length));
+		memcpy(DatumGetPointer(newnode->constvalue),
+			   DatumGetPointer(from->constvalue),
+			   length);
+	}
+
 	newnode->constisnull = from->constisnull;
 	newnode->constbyval = from->constbyval;
 	newnode->constisset = from->constisset;
@@ -1646,21 +1590,19 @@ copyObject(void *from)
 		case T_List:
 			{
 				List	   *list = from,
-						   *l;
-				List	   *newlist = NIL,
-						   *nl = NIL;
+						   *l,
+						   *nl;
 
-				foreach(l, list)
+				/* rather ugly coding for speed... */
+				/* Note the input list cannot be NIL if we got here. */
+				nl = lcons(copyObject(lfirst(list)), NIL);
+				retval = nl;
+
+				foreach(l, lnext(list))
 				{
-					if (newlist == NIL)
-						newlist = nl = lcons(copyObject(lfirst(l)), NIL);
-					else
-					{
-						lnext(nl) = lcons(copyObject(lfirst(l)), NIL);
-						nl = lnext(nl);
-					}
+					lnext(nl) = lcons(copyObject(lfirst(l)), NIL);
+					nl = lnext(nl);
 				}
-				retval = newlist;
 			}
 			break;
 		default:
