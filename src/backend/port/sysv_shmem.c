@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.33 2004/04/19 17:42:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.34 2004/05/06 19:23:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 
 #ifdef EXEC_BACKEND
 	/* If Exec case, just attach and return the pointer */
-	if (UsedShmemSegAddr != NULL && !makePrivate)
+	if (UsedShmemSegAddr != NULL && !makePrivate && IsUnderPostmaster)
 	{
 		void* origUsedShmemSegAddr = UsedShmemSegAddr;
 

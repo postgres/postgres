@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.381 2004/04/19 17:42:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.382 2004/05/06 19:23:25 momjian Exp $
  *
  * NOTES
  *
@@ -2741,8 +2741,7 @@ Backend_forkexec(Port *port)
 
 	/* Format up context to pass to exec'd process */
 	snprintf(buf[bufc++],MAXPGPATH,"%lu",tmpBackendFileNum);
-	/* FIXME: [fork/exec] whitespaces in directories? */
-	snprintf(buf[bufc++],MAXPGPATH,"%s",DataDir);
+	snprintf(buf[bufc++],MAXPGPATH,"\"%s\"",DataDir);
 
 	/* Add to the arg list */
 	Assert(bufc <= lengthof(buf));
@@ -3039,6 +3038,7 @@ SSDataBase(int xlop)
 #endif
 #else
 	char		idbuf[32];
+	char		ddirbuf[MAXPGPATH];
 #endif
 
 	fflush(stdout);
@@ -3097,8 +3097,9 @@ SSDataBase(int xlop)
 
 #ifdef EXEC_BACKEND
 		/* pass data dir before end of secure switches (-p) */
+		snprintf(ddirbuf, MAXPGPATH, "\"%s\"", DataDir);
 		av[ac++] = "-D";
-		av[ac++] = DataDir;
+		av[ac++] = ddirbuf;
 
 		/* and the backend identifier + dbname */
 		snprintf(idbuf, sizeof(idbuf), "-p%lu,template1", tmpBackendFileNum);
@@ -3490,7 +3491,7 @@ pid_t win32_forkexec(const char* path, char *argv[])
 	HANDLE waiterThread;
 
 	/* Format the cmd line */
-	snprintf(cmdLine,sizeof(cmdLine),"%s",path);
+	snprintf(cmdLine,sizeof(cmdLine),"\"%s\"",path);
 	i = 0;
 	while (argv[++i] != NULL)
 	{
