@@ -1688,16 +1688,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
 	String relKind;
 	switch (r.getBytes(3)[0]) {
-	case 'r':
+	case (byte) 'r':
 	    relKind = "TABLE";
 	    break;
-	case 'i':
+	case (byte) 'i':
 	    relKind = "INDEX";
 	    break;
-	case 'S':
+	case (byte) 'S':
 	    relKind = "SEQUENCE";
 	    break;
-	case 'v':
+	case (byte) 'v':
 	    relKind = "VIEW";
 	    break;
 	default:
@@ -2622,11 +2622,10 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    * @return ResultSet each row is an index column description
    */
   // Implementation note: This is required for Borland's JBuilder to work
-  public java.sql.ResultSet getIndexInfo(String catalog, String schema, String table, boolean unique, boolean approximate) throws SQLException
+  public java.sql.ResultSet getIndexInfo(String catalog, String schema, String tableName, boolean unique, boolean approximate) throws SQLException
   {
-    // for now, this returns an empty result set.
     Field f[] = new Field[13];
-    ResultSet r;	// ResultSet for the SQL query that we need to do
+    java.sql.ResultSet r;	// ResultSet for the SQL query that we need to do
     Vector v = new Vector();		// The new ResultSet tuple stuff
 
     f[0] = new Field(connection, "TABLE_CAT", iVarcharOid, 32);
@@ -2642,6 +2641,59 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[10] = new Field(connection, "CARDINALITY", iInt4Oid, 4);
     f[11] = new Field(connection, "PAGES", iInt4Oid, 4);
     f[12] = new Field(connection, "FILTER_CONDITION", iVarcharOid, 32);
+
+    r = connection.ExecSQL("select " +
+				"c.relname, " +
+				"x.indisunique, " +
+				"i.relname, " +
+				"x.indisclustered, " +
+				"a.amname, " +
+				"x.indkey, " +
+				"c.reltuples, " +
+				"c.relpages " +
+				"FROM pg_index x, pg_class c, pg_class i, pg_am a " +
+				"WHERE ((c.relname = '" + tableName.toLowerCase() + "') " +
+				" AND (c.oid = x.indrelid) " +
+				" AND (i.oid = x.indexrelid) " +
+				" AND (c.relam = a.oid)) " +
+				"ORDER BY x.indisunique DESC, " +
+				" x.indisclustered, a.amname, i.relname");  
+    while (r.next()) {
+        // indkey is an array of column ordinals (integers).  In the JDBC
+        // interface, this has to be separated out into a separate
+        // tuple for each indexed column.  Also, getArray() is not yet
+        // implemented for Postgres JDBC, so we parse by hand.
+        String columnOrdinalString = r.getString(6);
+        StringTokenizer stok = new StringTokenizer(columnOrdinalString);
+        int [] columnOrdinals = new int[stok.countTokens()];
+        int o = 0;
+        while (stok.hasMoreTokens()) {
+            columnOrdinals[o++] = Integer.parseInt(stok.nextToken());
+        }
+        for (int i = 0; i < columnOrdinals.length; i++) {
+            byte [] [] tuple = new byte [13] [];
+            tuple[0] = "".getBytes(); 
+            tuple[1] = "".getBytes();
+            tuple[2] = r.getBytes(1);
+            tuple[3] = r.getBoolean(2) ? "f".getBytes() : "t".getBytes();
+            tuple[4] = null;
+            tuple[5] = r.getBytes(3);
+            tuple[6] = r.getBoolean(4) ?
+                Integer.toString(tableIndexClustered).getBytes() :
+                r.getString(5).equals("hash") ?
+				Integer.toString(tableIndexHashed).getBytes() :
+                Integer.toString(tableIndexOther).getBytes();
+            tuple[7] = Integer.toString(i + 1).getBytes();
+            java.sql.ResultSet columnNameRS = connection.ExecSQL("select a.attname FROM pg_attribute a, pg_class c WHERE (a.attnum = " + columnOrdinals[i] + ") AND (a.attrelid = " + r.getInt(8) + ")");
+            columnNameRS.next();
+            tuple[8] = columnNameRS.getBytes(1);
+            tuple[9] = null;  // sort sequence ???
+            tuple[10] = r.getBytes(7);  // inexact
+            tuple[11] = r.getBytes(8);
+            tuple[12] = null;
+            v.addElement(tuple);
+        }
+    }
 
     return new ResultSet(connection, f, v, "OK", 1);
   }

@@ -2009,7 +2009,9 @@ SQLStatistics(
 	char	   *table_name;
 	char		index_name[MAX_INFO_STRING];
 	short		fields_vector[16];
-	char		isunique[10];
+	char		isunique[10],
+				isclustered[10],
+				ishash[MAX_INFO_STRING];
 	SDWORD		index_name_len,
 				fields_vector_len;
 	TupleNode  *row;
@@ -2169,10 +2171,13 @@ SQLStatistics(
 	indx_stmt = (StatementClass *) hindx_stmt;
 
 	sprintf(index_query, "select c.relname, i.indkey, i.indisunique"
-			", c.relhasrules"
-			" from pg_index i, pg_class c, pg_class d"
-			" where c.oid = i.indexrelid and d.relname = '%s'"
-			" and d.oid = i.indrelid", table_name);
+			", x.indisclustered, a.amname, i.relhasrules"
+			" from pg_index x, pg_class i, pg_class c, pg_am a"
+			" where c.relname = '%s'"
+			" and c.oid = x.indrelid"
+			" and x.indexrelid = i.oid"
+			" and i.relam = a.oid"
+			, table_name);
 
 	result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
@@ -2224,7 +2229,33 @@ SQLStatistics(
 		goto SEEYA;
 	}
 
+	/* bind the "is clustered" column */
 	result = SQLBindCol(hindx_stmt, 4, SQL_C_CHAR,
+						isclustered, sizeof(isclustered), NULL);
+	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+	{
+		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
+												 * in SQLStatistics."; */
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		goto SEEYA;
+
+	}
+
+	/* bind the "is hash" column */
+	result = SQLBindCol(hindx_stmt, 5, SQL_C_CHAR,
+						ishash, sizeof(ishash), NULL);
+	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+	{
+		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
+												 * in SQLStatistics."; */
+		stmt->errornumber = indx_stmt->errornumber;
+		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		goto SEEYA;
+
+	}
+
+	result = SQLBindCol(hindx_stmt, 6, SQL_C_CHAR,
 						relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
@@ -2255,6 +2286,9 @@ SQLStatistics(
 		sprintf(buf, "%s_idx_fake_oid", table_name);
 		set_tuplefield_string(&row->tuple[5], buf);
 
+		/*
+		 * Clustered/HASH index?
+		 */
 		set_tuplefield_int2(&row->tuple[6], (Int2) SQL_INDEX_OTHER);
 		set_tuplefield_int2(&row->tuple[7], (Int2) 1);
 
@@ -2297,7 +2331,12 @@ SQLStatistics(
 				set_tuplefield_string(&row->tuple[4], "");
 				set_tuplefield_string(&row->tuple[5], index_name);
 
-				set_tuplefield_int2(&row->tuple[6], (Int2) SQL_INDEX_OTHER);
+				/*
+				 * Clustered/HASH index?
+				 */
+				set_tuplefield_int2(&row->tuple[6], (Int2)
+					(atoi(isclustered) ? SQL_INDEX_CLUSTERED :
+					(!strncmp(ishash, "hash", 4)) ? SQL_INDEX_HASHED : SQL_INDEX_OTHER);
 				set_tuplefield_int2(&row->tuple[7], (Int2) (i + 1));
 
 				if (fields_vector[i] == OID_ATTNUM)
