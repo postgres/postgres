@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.20 1997/05/11 15:11:34 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.21 1997/05/13 04:26:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -700,7 +700,9 @@ printf( "datetime_add_span- date was %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, t
 #ifdef DATEDEBUG
 printf( "datetime_add_span- date becomes %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
 #endif
-		tm2datetime( tm, fsec, NULL, result);
+		if (tm2datetime( tm, fsec, NULL, result) != 0)
+		    elog(WARN,"Unable to add datetime and timespan",NULL);
+
 
 	    } else {
 		DATETIME_INVALID(*result);
@@ -1673,7 +1675,7 @@ tm2datetime( struct tm *tm, double fsec, int *tzp, DateTime *result) {
 
     /* Julian day routines are not correct for negative Julian days */
     if (! IS_VALID_JULIAN( tm->tm_year, tm->tm_mon, tm->tm_mday))
-	return(DT_INVALID);
+	return(-1);
 
     date = date2j(tm->tm_year,tm->tm_mon,tm->tm_mday) - date2j(2000,1,1);
     time = time2t(tm->tm_hour,tm->tm_min,(tm->tm_sec + fsec));
