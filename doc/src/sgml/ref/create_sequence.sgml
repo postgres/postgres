@@ -234,10 +234,16 @@ CREATE SEQUENCE <replaceable class="parameter">seqname</replaceable>
 to get a new number from the sequence.
 The function
 <function>currval('<replaceable class="parameter">seqname</replaceable>')</function>
- may be used
-   to determine the number returned by the last call to
+ may be used to determine the number returned by the last call to
 <function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
  for the specified sequence in the current session.
+The function
+<function>setval('<replaceable class="parameter">seqname</replaceable>',
+ <replaceable class="parameter">newvalue</replaceable>)</function>
+may be used to set the current value of the specified sequence.
+The next call to 
+<function>nextval(<replaceable class="parameter">seqname</replaceable>)</function>
+will return the given value plus the sequence increment.
   </para>
   
   <para>
@@ -259,10 +265,8 @@ SELECT last_value FROM sequence_name;
    calls to a generator.
   </para>
 
-  <para>
-  <TITLE>
-  NOTE:
-  </TITLE>
+<caution>
+<para>
   Unexpected results may be obtained if a cache setting greater than one
   is used for a sequence object that will be used concurrently by multiple
   backends.  Each backend will allocate "cache" successive sequence values
@@ -273,7 +277,8 @@ SELECT last_value FROM sequence_name;
   will be lost.  Furthermore, although multiple backends are guaranteed to
   allocate distinct sequence values, the values may be generated out of
   sequence when all the backends are considered.  (For example, with a cache
-  setting of 10, backend A might reserve values 1..10 and return nextval=1, then
+  setting of 10, backend A might reserve values 1..10 and return nextval=1, 
+then
   backend B might reserve values 11..20 and return nextval=11 before backend
   A has generated nextval=2.)  Thus, with a cache setting of one it is safe
   to assume that nextval values are generated sequentially; with a cache
@@ -281,7 +286,7 @@ SELECT last_value FROM sequence_name;
   are all distinct, not that they are generated purely sequentially.
   Also, last_value will reflect the latest value reserved by any backend,
   whether or not it has yet been returned by nextval.
-  </para>
+</caution>
   
   <REFSECT2 ID="R2-SQL-CREATESEQUENCE-3">
    <REFSECT2INFO>
@@ -327,6 +332,20 @@ nextval
 INSERT INTO distributors VALUES (NEXTVAL('serial'),'nothing');
    </programlisting>
   </para>
+
+  <para>
+   Set the sequence value after a COPY FROM:
+   <programlisting>
+CREATE FUNCTION distributors_id_max() RETURNS INT4
+       AS 'SELECT max(id) FROM distributors' 
+       LANGUAGE 'sql';
+BEGIN;
+COPY distributors FROM 'input_file';
+SELECT setval('serial', distributors_id_max());
+END;
+   </programlisting>
+  </para>
+
  </REFSECT1>
  
  <REFSECT1 ID="R1-SQL-CREATESEQUENCE-3">

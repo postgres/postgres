@@ -450,11 +450,11 @@ DEFAULT
 <listitem>
 <para>
 Sets the maximum number of rows returned by a query to be unlimited.
-</varlistentry>
-
 <para>
 By default, there is no limit to the number of rows
 returned by a query.
+</varlistentry>
+
 </variablelist>
 
 </VARLISTENTRY>

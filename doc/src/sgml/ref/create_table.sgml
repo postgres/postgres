@@ -117,16 +117,10 @@ requires the <REPLACEABLE CLASS="PARAMETER">column_constraint_clause</REPLACEABL
        an insert or update operation to succeed. Each constraint
        must evaluate to a boolean expression. Multiple columns
        may be referenced within a single constraint.
-       The use of
-       <TERM>
+       Only one PRIMARY KEY clause may be specified for a table;
        PRIMARY KEY <REPLACEABLE>column</REPLACEABLE>
-       </TERM>
-       as a table constraint
-       is mutually incompatible with
-       <TERM>
-       PRIMARY KEY
-       </TERM>
-       used as a column constraint.
+       (a table constraint) and PRIMARY KEY (a column constraint) are
+       mutually exclusive..
        See the table constraint clause for more information.
       </PARA>
      </LISTITEM>
