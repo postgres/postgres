@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.4 2000/12/10 20:47:34 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.5 2001/03/13 14:08:18 pjw Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -101,11 +101,11 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     you used as <replaceable class="parameter">outfile</replaceable>
     for the pg_dump command. The database <replaceable
     class="parameter">dbname</replaceable> will not be created by this
-    command, you must do that yourself before executing
-    <application>psql</> (e.g., with <userinput>createdb <replaceable
-    class="parameter">dbname</></userinput>). <application>psql</>
-    supports similar options to <application>pg_dump</> for
-    controlling the database server location and the user names. See
+    command, you must create it yourself from template0 before executing
+    <application>psql</> (e.g., with <userinput>createdb -t template0
+    <replaceableclass="parameter">dbname</></userinput>).
+    <application>psql</> supports similar options to <application>pg_dump</> 
+    for controlling the database server location and the user names. See
     its reference page for more information.
    </para>
 
@@ -130,6 +130,18 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
 </programlisting>
     </informalexample>
    </para>
+
+
+  <important>
+   <para>
+	The dumps produced by pg_dump are relative to template0. This means 
+    that any languages, procedure etc added to template1 will also be
+    dumped by <application>pg_dump</>. As a result, when restoring, if 
+    you are using a customized template1, you must create the empty
+    database from template0, as in the example above.
+   </para>
+  </important>
+
   </sect2>
 
   <sect2>
@@ -236,6 +248,27 @@ cat <replaceable class="parameter">filename</replaceable>.* | psql <replaceable 
     </para>
    </formalpara>
 
+   <formalpara>
+    <title>Use the custom dump format (V7.1).</title>
+    <para>
+     If PostgreSQL was built on a system with the zlib compression library
+     installed, the custom dump format will compress data as it writes it
+     to the output file. For large databases, this will produce similar dump
+     sizes to using gzip, but has the added advantage that the tables can be
+     restored selectively. The following command dumps a database using the
+     custom dump format:
+
+     <informalexample>
+<programlisting>
+pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable class="parameter">filename</replaceable>
+</programlisting>
+     </informalexample>
+
+     See the <application>pg_dump</> and <application>pg_restore</> reference pages for details.
+
+    </para>
+   </formalpara>
+
   </sect2>
 
   <sect2>
@@ -258,10 +291,13 @@ cat <replaceable class="parameter">filename</replaceable>.* | psql <replaceable 
    </para>
 
    <para>
-    Large objects are not handled by <application>pg_dump</>. The
-    directory <filename>contrib/pg_dumplo</> of the
-    <productname>Postgres</> source tree contains a program that can
-    do that.
+    For reasons of backward compatibility, <application>pg_dump</> does
+    not dump large objects by default. To dump large objects you must use 
+    either custom or TAR output format, and use the -B option in 
+    <application>pg_dump</>. See the reference pages for details.
+    The directory <filename>contrib/pg_dumplo</> of the
+    <productname>Postgres</> source tree also contains a program that can
+    dump large objects.
    </para>
 
    <para>
