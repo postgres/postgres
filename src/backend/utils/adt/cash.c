@@ -3,13 +3,13 @@
  * Written by D'Arcy J.M. Cain
  *
  * Functions to allow input and output of money normally but store
- * and handle it as longs
+ * and handle it as int4s
  *
  * A slightly modified version of this file and a discussion of the
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  * 
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.8 1997/08/21 23:56:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.9 1997/08/22 07:12:52 momjian Exp $
  */
 
 #include <stdio.h>
@@ -97,7 +97,7 @@ cash_in(const char *str)
     while (isspace(*s) || *s == csymbol) s++;
 
     for (; ; s++) {
-	/* we look for digits as long as we have less */
+	/* we look for digits as int4 as we have less */
 	/* than the required number of decimal places */
 	if (isdigit(*s) && dec < fpoint) {
 	    value = (value * 10) + *s - '0';
@@ -421,7 +421,7 @@ cashsmaller(Cash *c1, Cash *c2)
 
 
 /* cash_words_out()
- * This converts a long as well but to a representation using words
+ * This converts a int4 as well but to a representation using words
  * Obviously way North American centric - sorry
  */
 const char *

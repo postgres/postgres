@@ -3,13 +3,14 @@
  * Written by D'Arcy J.M. Cain
  *
  * Functions to allow input and output of money normally but store
- *  and handle it as long integers.
+ *  and handle it as int4.
  */
 
 #ifndef CASH_H
 #define CASH_H
 
-typedef long int Cash;
+/* if we store this as 4 bytes, we better make it int, not long, bjm */
+typedef signed int Cash;
 
 extern const char *cash_out(Cash *value);
 extern Cash *cash_in(const char *str);
