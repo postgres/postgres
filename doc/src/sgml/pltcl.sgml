@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.6 2000/09/29 20:21:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.7 2001/02/09 03:06:38 tgl Exp $
 -->
 
  <chapter id="pltcl">
@@ -9,7 +9,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.6 2000/09/29 20:21:34 petere
    PL/Tcl is a loadable procedural language for the
    <productname>Postgres</productname> database system
    that enables the Tcl language to be used to create functions and
-   trigger-procedures.
+   trigger procedures.
   </para>
 
   <para>
@@ -26,24 +26,39 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.6 2000/09/29 20:21:34 petere
     writer has in the C language, except for some restrictions.
    </para>
    <para>
-    The good restriction is, that everything is executed in a safe
-    Tcl-interpreter. In addition to the limited command set of safe Tcl, only
-    a few commands are available to access the database over SPI and to raise
+    The good restriction is that everything is executed in a safe
+    Tcl interpreter. In addition to the limited command set of safe Tcl, only
+    a few commands are available to access the database via SPI and to raise
     messages via elog(). There is no way to access internals of the
-    database backend or gaining OS-level access under the permissions of the
-    <productname>Postgres</productname> user ID like in C.
+    database backend or to gain OS-level access under the permissions of the
+    <productname>Postgres</productname> user ID, as a C function can do.
     Thus, any unprivileged database user may be
     permitted to use this language.
    </para>
    <para>
-    The other, internal given, restriction is, that Tcl procedures cannot
-    be used to create input-/output-functions for new data types.
+    The other, implementation restriction is that Tcl procedures cannot
+    be used to create input/output functions for new data types.
    </para>
    <para>
-    The shared object for the PL/Tcl call handler is automatically built
-    and installed in the <productname>Postgres</productname>
-    library directory if the Tcl/Tk support is specified
-    in the configuration step of the installation procedure.
+    Sometimes it is desirable to write Tcl functions that are not restricted
+    to safe Tcl --- for example, one might want a Tcl function that sends
+    mail.  To handle these cases, there is a variant of PL/Tcl called PL/TclU
+    (for untrusted Tcl).  This is the exact same language except that a full
+    Tcl interpreter is used.  <emphasis>If PL/TclU is used, it must be
+    installed as an untrusted procedural language</emphasis> so that only
+    database superusers can create functions in it.  The writer of a PL/TclU
+    function must take care that the function cannot be used to do anything
+    unwanted, since it will be able to do anything that could be done by
+    a user logged in as the database administrator.
+   </para>
+   <para>
+    The shared object for the PL/Tcl and PL/TclU call handlers is
+    automatically built and installed in the
+    <productname>Postgres</productname> 
+    library directory if Tcl/Tk support is specified
+    in the configuration step of the installation procedure.  To install
+    PL/Tcl and/or PL/TclU in a particular database, use the
+    <filename>createlang</filename> script.
    </para>
   </sect1>
 
@@ -61,7 +76,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.6 2000/09/29 20:21:34 petere
      different functions as long as the number of arguments or their types
      differ. This would collide with Tcl procedure names. To offer the same
      flexibility in PL/Tcl, the internal Tcl procedure names contain the object
-     ID of the procedures pg_proc row as part of their name. Thus, different
+     ID of the procedure's pg_proc row as part of their name. Thus, different
      argtype versions of the same <productname>Postgres</productname> 
      function are different for Tcl too.
     </para>
@@ -72,17 +87,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.6 2000/09/29 20:21:34 petere
     <title>Defining Functions in PL/Tcl</title>
 
     <para>
-     To create a function in the PL/Tcl language, use the known syntax
+     To create a function in the PL/Tcl language, use the standard syntax
 
      <programlisting>
-CREATE FUNCTION <replaceable>funcname</replaceable> <replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS '
+CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS '
     # PL/Tcl function body
 ' LANGUAGE 'pltcl';
      </programlisting>
 
-     When calling this function in a query, the arguments are given as
-     variables $1 ... $n to the Tcl procedure body. So a little max function
-     returning the higher of two int4 values would be created as:
+     When the function is called, the arguments are given as
+     variables $1 ... $n to the Tcl procedure body.  For example,
+     a function
+     returning the higher of two int4 values could be defined as:
 
      <programlisting>
 CREATE FUNCTION tcl_max (int4, int4) RETURNS int4 AS '
@@ -120,13 +136,18 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
     <para>
      Sometimes (especially when using the SPI functions described later) it
      is useful to have some global status data that is held between two
-     calls to a procedure. 
-     All PL/Tcl procedures executed in one backend share the same
+     calls to a procedure.  This is easily done since
+     all PL/Tcl procedures executed in one backend share the same
      safe Tcl interpreter.
-     To help protecting PL/Tcl procedures from side effects,
+    </para>
+    <para>
+     To help protect PL/Tcl procedures from unwanted side effects,
      an array is made available to each procedure via the upvar
-     command. The global name of this variable is the procedures internal
-     name and the local name is GD.
+     command. The global name of this variable is the procedure's internal
+     name and the local name is GD.  It is recommended that GD be used
+     for private status data of a procedure.  Use regular Tcl global variables
+     only for values that you specifically intend to be shared among multiple
+     procedures.
     </para>
    </sect2>
 
@@ -140,7 +161,7 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
      language.
     </para>
     <para>
-     The informations from the trigger manager are given to the procedure body
+     The information from the trigger manager is given to the procedure body
      in the following variables:
 
      <variablelist>
@@ -259,8 +280,8 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
     </para>
     <para>
      Here's a little example trigger procedure that forces an integer value
-     in a table to keep track of the # of updates that are performed on the
-     row. For new row's inserted, the value is initialized to 0 and then
+     in a table to keep track of the number of updates that are performed on the
+     row. For new rows inserted, the value is initialized to 0 and then
      incremented on every update operation:
 
      <programlisting>
@@ -305,7 +326,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
        <para>
 	Fire a log message. Possible levels are NOTICE, ERROR,
 	FATAL, DEBUG and NOIND
-	like for the <function>elog</function> C function.
+	as for the <function>elog</function> C function.
        </para>
       </listitem>
      </varlistentry>
@@ -332,7 +353,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
 "SELECT 'doesn't' AS ret"
 	</programlisting>
 
-	what would cause a parse error during
+	which would cause a parse error during
 	<function>spi_exec</function> or
 	<function>spi_prepare</function>.
 	It should contain
