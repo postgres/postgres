@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.110 2004/01/31 00:45:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.111 2004/01/31 05:09:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2232,7 +2232,7 @@ array_to_text(PG_FUNCTION_ARGS)
 		if (i > 0)
 			appendStringInfo(result_str, "%s%s", fldsep, value);
 		else
-			appendStringInfo(result_str, "%s", value);
+			appendStringInfoString(result_str, value);
 
 		p = att_addlength(p, typlen, PointerGetDatum(p));
 		p = (char *) att_align(p, typalign);

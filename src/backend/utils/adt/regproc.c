@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.85 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.86 2004/01/31 05:09:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,7 +340,7 @@ format_procedure(Oid procedure_oid)
 
 			if (i > 0)
 				appendStringInfoChar(&buf, ',');
-			appendStringInfo(&buf, "%s", format_type_be(thisargtype));
+			appendStringInfoString(&buf, format_type_be(thisargtype));
 		}
 		appendStringInfoChar(&buf, ')');
 

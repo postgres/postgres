@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.161 2003/12/28 21:57:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.162 2004/01/31 05:09:40 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -752,7 +752,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 
 			attname = get_relid_attribute_name(indrelid, attnum);
 			if (!colno || colno == keyno + 1)
-				appendStringInfo(&buf, "%s", quote_identifier(attname));
+				appendStringInfoString(&buf, quote_identifier(attname));
 			keycoltype = get_atttype(indrelid, attnum);
 		}
 		else
@@ -772,7 +772,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 				/* Need parens if it's not a bare function call */
 				if (indexkey && IsA(indexkey, FuncExpr) &&
 					((FuncExpr *) indexkey)->funcformat == COERCE_EXPLICIT_CALL)
-					appendStringInfo(&buf, "%s", str);
+					appendStringInfoString(&buf, str);
 				else
 					appendStringInfo(&buf, "(%s)", str);
 			}
@@ -947,7 +947,7 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 						string = "";	/* keep compiler quiet */
 						break;
 				}
-				appendStringInfo(&buf, "%s", string);
+				appendStringInfoString(&buf, string);
 
 				/* Add ON UPDATE and ON DELETE clauses, if needed */
 				switch (conForm->confupdtype)
@@ -1126,11 +1126,9 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 		colName = get_relid_attribute_name(relId, DatumGetInt16(keys[j]));
 
 		if (j == 0)
-			appendStringInfo(buf, "%s",
-							 quote_identifier(colName));
+			appendStringInfoString(buf, quote_identifier(colName));
 		else
-			appendStringInfo(buf, ", %s",
-							 quote_identifier(colName));
+			appendStringInfo(buf, ", %s", quote_identifier(colName));
 	}
 }
 
@@ -2134,9 +2132,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 
 		appendStringInfo(buf, sep);
 		sep = ", ";
-		appendStringInfo(buf, "%s",
-						 quote_identifier(get_relid_attribute_name(rte->relid,
-														tle->resdom->resno)));
+		appendStringInfoString(buf,
+							   quote_identifier(get_relid_attribute_name(rte->relid,
+																		 tle->resdom->resno)));
 	}
 	appendStringInfo(buf, ") ");
 
@@ -2753,7 +2751,7 @@ get_rule_expr(Node *node, deparse_context *context,
 										 quote_identifier(refname));
 				}
 				if (attname)
-					appendStringInfo(buf, "%s", quote_identifier(attname));
+					appendStringInfoString(buf, quote_identifier(attname));
 				else
 					appendStringInfo(buf, "*");
 			}
@@ -3763,8 +3761,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				{
 					if (col != rte->alias->colnames)
 						appendStringInfo(buf, ", ");
-					appendStringInfo(buf, "%s",
-								  quote_identifier(strVal(lfirst(col))));
+					appendStringInfoString(buf,
+										   quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
@@ -3902,8 +3900,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				{
 					if (col != j->using)
 						appendStringInfo(buf, ", ");
-					appendStringInfo(buf, "%s",
-								  quote_identifier(strVal(lfirst(col))));
+					appendStringInfoString(buf,
+								quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
@@ -3934,7 +3932,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 				{
 					if (col != j->alias->colnames)
 						appendStringInfo(buf, ", ");
-					appendStringInfo(buf, "%s",
+					appendStringInfoString(buf,
 								  quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
@@ -4164,7 +4162,7 @@ quote_qualified_identifier(const char *namespace,
 	initStringInfo(&buf);
 	if (namespace)
 		appendStringInfo(&buf, "%s.", quote_identifier(namespace));
-	appendStringInfo(&buf, "%s", quote_identifier(ident));
+	appendStringInfoString(&buf, quote_identifier(ident));
 	return buf.data;
 }
 
@@ -4316,7 +4314,7 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 		appendStringInfo(&buf, "OPERATOR(%s.", quote_identifier(nspname));
 	}
 
-	appendStringInfo(&buf, "%s", oprname);
+	appendStringInfoString(&buf, oprname);
 
 	if (nspname)
 		appendStringInfoChar(&buf, ')');
@@ -4338,7 +4336,7 @@ print_operator_name(StringInfo buf, List *opname)
 	int			nnames = length(opname);
 
 	if (nnames == 1)
-		appendStringInfo(buf, "%s", strVal(lfirst(opname)));
+		appendStringInfoString(buf, strVal(lfirst(opname)));
 	else
 	{
 		appendStringInfo(buf, "OPERATOR(");

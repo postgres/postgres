@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.231 2004/01/22 00:34:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.232 2004/01/31 05:09:40 neilc Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1427,7 +1427,7 @@ _outValue(StringInfo str, Value *value)
 			 * We assume the value is a valid numeric literal and so does
 			 * not need quoting.
 			 */
-			appendStringInfo(str, "%s", value->val.str);
+			appendStringInfoString(str, value->val.str);
 			break;
 		case T_String:
 			appendStringInfoChar(str, '"');
@@ -1436,7 +1436,7 @@ _outValue(StringInfo str, Value *value)
 			break;
 		case T_BitString:
 			/* internal representation already has leading 'b' */
-			appendStringInfo(str, "%s", value->val.str);
+			appendStringInfoString(str, value->val.str);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) value->type);

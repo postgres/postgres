@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.118 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.119 2004/01/31 05:09:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1002,7 +1002,7 @@ show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
 		/* And add to str */
 		if (keyno > 0)
 			appendStringInfo(str, ", ");
-		appendStringInfo(str, "%s", exprstr);
+		appendStringInfoString(str, exprstr);
 	}
 
 	appendStringInfo(str, "\n");
