@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.60 1997/10/30 16:39:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.61 1997/10/31 00:50:39 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -64,6 +64,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 static List *makeConstantList( A_Const *node);
 static char *FlattenStringList(List *list);
 static char *fmtId(char *rawid);
+static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 
 /* old versions of flex define this as a macro */
 #if defined(yywrap)
@@ -2755,9 +2756,9 @@ a_expr:  attr opt_indirection
 		| '(' a_expr_or_null ')'
 				{	$$ = $2; }
 		| a_expr Op a_expr
-				{	$$ = makeA_Expr(OP, $2, $1, $3); }
+				{	$$ = makeIndexable($2,$1,$3);	}
 		| a_expr LIKE a_expr
-				{	$$ = makeA_Expr(OP, "~~", $1, $3); }
+				{	$$ = makeIndexable("~~", $1, $3); }
 		| a_expr NOT LIKE a_expr
 				{	$$ = makeA_Expr(OP, "!~~", $1, $4); }
 		| Op a_expr
@@ -3526,6 +3527,176 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 	a->rexpr = rexpr;
 	return (Node *)a;
 }
+
+static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
+{
+	Node *result = NULL;
+
+	/* we do this so indexes can be used */
+	if (strcmp(opname,"~") == 0)
+	{
+		if (nodeTag(rexpr) == T_A_Const &&
+		   ((A_Const *)rexpr)->val.type == T_String &&
+		   ((A_Const *)rexpr)->val.val.str[0] == '^')
+		{
+			A_Const *n = (A_Const *)rexpr;
+			char *match_least = palloc(strlen(n->val.val.str)+2);
+			char *match_most = palloc(strlen(n->val.val.str)+2);
+			int pos, match_pos=0;
+
+			/* skip leading ^ */
+			for (pos = 1; n->val.val.str[pos]; pos++)
+			{
+				if (n->val.val.str[pos] == '.' ||
+					n->val.val.str[pos] == '?' ||
+					n->val.val.str[pos] == '*' ||
+					n->val.val.str[pos] == '[' ||
+					n->val.val.str[pos] == '$')
+		     		break;
+		     	if (n->val.val.str[pos] == '\\')
+					pos++;
+				match_least[match_pos] = n->val.val.str[pos];
+				match_most[match_pos++] = n->val.val.str[pos];
+			}
+
+			if (match_pos != 0)
+			{
+				A_Const *least = makeNode(A_Const);
+				A_Const *most = makeNode(A_Const);
+				
+				/* make strings to be used in index use */
+				match_least[match_pos] = '\0';
+				match_most[match_pos] = '\377';
+				match_most[match_pos+1] = '\0';
+				least->val.type = T_String;
+				least->val.val.str = match_least;
+				most->val.type = T_String;
+				most->val.val.str = match_most;
+				result = makeA_Expr(AND, NULL,
+						makeA_Expr(OP, "~", lexpr, rexpr),
+						makeA_Expr(AND, NULL,
+							makeA_Expr(OP, ">=", lexpr, (Node *)least),
+							makeA_Expr(OP, "<=", lexpr, (Node *)most)));
+			}
+		}
+	}
+	else if (strcmp(opname,"~*") == 0)
+	{
+		if (nodeTag(rexpr) == T_A_Const &&
+		   ((A_Const *)rexpr)->val.type == T_String &&
+		   ((A_Const *)rexpr)->val.val.str[0] == '^')
+		{
+			A_Const *n = (A_Const *)rexpr;
+			char *match_lower_least = palloc(strlen(n->val.val.str)+2);
+			char *match_lower_most = palloc(strlen(n->val.val.str)+2);
+			char *match_upper_least = palloc(strlen(n->val.val.str)+2);
+			char *match_upper_most = palloc(strlen(n->val.val.str)+2);
+			int pos, match_pos=0;
+
+			/* skip leading ^ */
+			for (pos = 1; n->val.val.str[pos]; pos++)
+			{
+				if (n->val.val.str[pos] == '.' ||
+					n->val.val.str[pos] == '?' ||
+					n->val.val.str[pos] == '*' ||
+					n->val.val.str[pos] == '[' ||
+					n->val.val.str[pos] == '$')
+		     		break;
+		     	if (n->val.val.str[pos] == '\\')
+					pos++;
+				/* If we have punctuation, this works well */
+				match_lower_least[match_pos] = tolower(n->val.val.str[pos]);
+ 								match_lower_most[match_pos] = tolower(n->val.val.str[pos]);
+				match_upper_least[match_pos] = toupper(n->val.val.str[pos]);
+ 								match_upper_most[match_pos++] = toupper(n->val.val.str[pos]);
+			}
+
+			if (match_pos != 0)
+			{
+				A_Const *lower_least = makeNode(A_Const);
+				A_Const *lower_most = makeNode(A_Const);
+				A_Const *upper_least = makeNode(A_Const);
+				A_Const *upper_most = makeNode(A_Const);
+				
+				/* make strings to be used in index use */
+				match_lower_least[match_pos] = '\0';
+				match_lower_most[match_pos] = '\377';
+				match_lower_most[match_pos+1] = '\0';
+				match_upper_least[match_pos] = '\0';
+				match_upper_most[match_pos] = '\377';
+				match_upper_most[match_pos+1] = '\0';
+				lower_least->val.type = T_String;
+				lower_least->val.val.str = match_lower_least;
+				lower_most->val.type = T_String;
+				lower_most->val.val.str = match_lower_most;
+				upper_least->val.type = T_String;
+				upper_least->val.val.str = match_upper_least;
+				upper_most->val.type = T_String;
+				upper_most->val.val.str = match_upper_most;
+				result = makeA_Expr(AND, NULL,
+						makeA_Expr(OP, "~*", lexpr, rexpr),
+						makeA_Expr(OR, NULL,
+						makeA_Expr(AND, NULL,
+							makeA_Expr(OP, ">=", lexpr, (Node *)lower_least),
+							makeA_Expr(OP, "<=", lexpr, (Node *)lower_most)),
+						makeA_Expr(AND, NULL,
+							makeA_Expr(OP, ">=", lexpr, (Node *)upper_least),
+							makeA_Expr(OP, "<=", lexpr, (Node *)upper_most))));
+			}
+		}
+	}
+	else if (strcmp(opname,"~~") == 0)
+	{
+		if (nodeTag(rexpr) == T_A_Const &&
+		   ((A_Const *)rexpr)->val.type == T_String)
+		{
+			A_Const *n = (A_Const *)rexpr;
+			char *match_least = palloc(strlen(n->val.val.str)+2);
+			char *match_most = palloc(strlen(n->val.val.str)+2);
+			int pos, match_pos=0;
+	
+			for (pos = 0; n->val.val.str[pos]; pos++)
+			{
+				if ((n->val.val.str[pos] == '%' &&
+					 n->val.val.str[pos+1] != '%') ||
+				    (n->val.val.str[pos] == '_' &&
+		     		 n->val.val.str[pos+1] != '_'))
+		     		break;
+		     	if (n->val.val.str[pos] == '%' ||
+				    n->val.val.str[pos] == '_' ||
+				    n->val.val.str[pos] == '\\')
+					pos++;
+				match_least[match_pos] = n->val.val.str[pos];
+				match_most[match_pos++] = n->val.val.str[pos];
+			}
+	
+			if (match_pos != 0)
+			{
+				A_Const *least = makeNode(A_Const);
+				A_Const *most = makeNode(A_Const);
+				
+				/* make strings to be used in index use */
+				match_least[match_pos] = '\0';
+				match_most[match_pos] = '\377';
+				match_most[match_pos+1] = '\0';
+				least->val.type = T_String;
+				least->val.val.str = match_least;
+				most->val.type = T_String;
+				most->val.val.str = match_most;
+				result = makeA_Expr(AND, NULL,
+						makeA_Expr(OP, "~~", lexpr, rexpr),
+						makeA_Expr(AND, NULL,
+							makeA_Expr(OP, ">=", lexpr, (Node *)least),
+							makeA_Expr(OP, "<=", lexpr, (Node *)most)));
+			}
+		}
+	}
+	
+	if (result == NULL)
+		result = makeA_Expr(OP, opname, lexpr, rexpr);
+	return result;
+}
+
 
 /* xlateSqlType()
  * Convert alternate type names to internal Postgres types.
