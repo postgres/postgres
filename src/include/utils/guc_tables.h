@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- *	  $Id: guc_tables.h,v 1.3 2003/07/28 16:22:16 momjian Exp $
+ *	  $Id: guc_tables.h,v 1.4 2003/07/28 19:31:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,7 @@
 #define GUC_TABLES 1
 
 /*
- * Groupings to help organize all the run-time options for display.
- *
- * Keep this in sync with config_group_names[] in guc.c.
+ * Groupings to help organize all the run-time options for display
  */
 enum config_group
 {
@@ -55,18 +53,15 @@ enum config_group
 	DEVELOPER_OPTIONS
 };
 
-
 /*
  * GUC supports these types of variables:
- *
- * Keep in sync with config_type_name in guc.c
  */
 enum config_type
 {
-	PGC_BOOL = 0,
-	PGC_INT = 1,
-	PGC_REAL = 2,
-	PGC_STRING = 3
+	PGC_BOOL,
+	PGC_INT,
+	PGC_REAL,
+	PGC_STRING
 };
 
 /*
@@ -171,7 +166,13 @@ struct config_string
 	char	   *tentative_val;
 };
 
+/* constant tables corresponding to enums above and in guc.h */
 extern const char * const config_group_names[];
+extern const char * const config_type_names[];
+extern const char * const GucContext_Names[];
+extern const char * const GucSource_Names[];
+
+/* the current set of variables */
 extern struct config_generic **guc_variables;
 extern int	num_guc_variables;
 

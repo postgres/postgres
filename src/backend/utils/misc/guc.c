@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.142 2003/07/28 16:22:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.143 2003/07/28 19:31:32 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -155,49 +155,6 @@ static char *timezone_string;
 static char *XactIsoLevel_string;
 
 
-/*
- * Used for pg_settings. Keep in sync with config_type enum in guc_tables.h
- */
-static char *config_type_name[] = 
-{
-	"bool",
-	"integer",
-	"real",
-	"string"
-};
-
-/*
- * Used for pg_settings. Keep in sync with GucContext enum in guc.h
- */
-static char *GucContextName[] = 
-{
-	"internal",
-	"postmaster",
-	"sighup",
-	"backend",
-	"super-user",
-	"userlimit",
-	"user"
-};
-
-/*
- * Used for pg_settings. Keep in sync with GucSource enum in guc.h
- */
-static char *GucSourceName[] = 
-{
-	"default",
-	"environment variable",
-	"configuration file",
-	"command line",
-	"userstart",
-	"database",
-	"user",
-	"client",
-	"override",
-	"session"
-};
-
-
 /* Macros for freeing malloc'd pointers only if appropriate to do so */
 /* Some of these tests are probably redundant, but be safe ... */
 #define SET_STRING_VARIABLE(rec, newval) \
@@ -239,44 +196,124 @@ static char *GucSourceName[] =
 
 
 /*
- * The display name for each of the groupings defined in enum config_group
- * This array needs to be kept in sync with enum config_group.
- * This array however needs to be NULL terminated.
+ * Displayable names for context types (enum GucContext)
+ *
+ * Note: these strings are deliberately not localized.
  */
-const char *const config_group_names[] = {
+const char * const GucContext_Names[] = 
+{
+	/* PGC_INTERNAL */			"internal",
+	/* PGC_POSTMASTER */		"postmaster",
+	/* PGC_SIGHUP */			"sighup",
+	/* PGC_BACKEND */			"backend",
+	/* PGC_SUSET */				"superuser",
+	/* PGC_USERLIMIT */			"userlimit",
+	/* PGC_USERSET */			"user"
+};
+
+/*
+ * Displayable names for source types (enum GucSource)
+ *
+ * Note: these strings are deliberately not localized.
+ */	
+const char * const GucSource_Names[] = 
+{
+	/* PGC_S_DEFAULT */			"default",
+	/* PGC_S_ENV_VAR */			"environment variable",
+	/* PGC_S_FILE */			"configuration file",
+	/* PGC_S_ARGV */			"command line",
+	/* PGC_S_UNPRIVILEGED */	"unprivileged",
+	/* PGC_S_DATABASE */		"database",
+	/* PGC_S_USER */			"user",
+	/* PGC_S_CLIENT */			"client",
+	/* PGC_S_OVERRIDE */		"override",
+	/* PGC_S_SESSION */			"session"
+};
+
+/*
+ * Displayable names for the groupings defined in enum config_group
+ */
+const char *const config_group_names[] =
+{
+	/* UNGROUPED */
 	gettext_noop("Ungrouped"),
+	/* CONN_AUTH */
 	gettext_noop("Connections & Authentication"),
+	/* CONN_AUTH_SETTINGS */
 	gettext_noop("Connections & Authentication / Connection Settings"),
+	/* CONN_AUTH_SECURITY */
 	gettext_noop("Connections & Authentication / Security & Authentication"),
+	/* RESOURCES */
 	gettext_noop("Resource Usage"),
+	/* RESOURCES_MEM */
 	gettext_noop("Resource Usage / Memory"),
+	/* RESOURCES_FSM */
 	gettext_noop("Resource Usage / Free Space Map"),
+	/* RESOURCES_KERNEL */
 	gettext_noop("Resource Usage / Kernel Resources"),
+	/* WAL */
 	gettext_noop("Write Ahead Log"),
+	/* WAL_SETTINGS */
 	gettext_noop("Write Ahead Log / Settings"),
+	/* WAL_CHECKPOINTS */
 	gettext_noop("Write Ahead Log / Checkpoints"),
+	/* QUERY_TUNING */
 	gettext_noop("Query Tuning"),
+	/* QUERY_TUNING_METHOD */
 	gettext_noop("Query Tuning / Planner Method Enabling"),
+	/* QUERY_TUNING_COST */
 	gettext_noop("Query Tuning / Planner Cost Constants"),
+	/* QUERY_TUNING_GEQO */
 	gettext_noop("Query Tuning / Genetic Query Optimizer"),
+	/* QUERY_TUNING_OTHER */
 	gettext_noop("Query Tuning / Other Planner Options"),
+	/* LOGGING */
 	gettext_noop("Reporting & Logging"),
+	/* LOGGING_SYSLOG */
 	gettext_noop("Reporting & Logging / Syslog"),
+	/* LOGGING_WHEN */
 	gettext_noop("Reporting & Logging / When To Log"),
+	/* LOGGING_WHAT */
 	gettext_noop("Reporting & Logging / What To Log"),
+	/* STATS */
 	gettext_noop("Statistics"),
+	/* STATS_MONITORING */
 	gettext_noop("Statistics / Monitoring"),
+	/* STATS_COLLECTOR */
 	gettext_noop("Statistics / Query & Index Statistics Collector"),
+	/* CLIENT_CONN */
 	gettext_noop("Client Connection Defaults"),
+	/* CLIENT_CONN_STATEMENT */
 	gettext_noop("Client Connection Defaults / Statement Behavior"),
+	/* CLIENT_CONN_LOCALE */
 	gettext_noop("Client Connection Defaults / Locale and Formatting"),
+	/* CLIENT_CONN_OTHER */
 	gettext_noop("Client Connection Defaults / Other Defaults"),
+	/* LOCK_MANAGEMENT */
 	gettext_noop("Lock Management"),
+	/* COMPAT_OPTIONS */
 	gettext_noop("Version & Platform Compatibility"),
+	/* COMPAT_OPTIONS_PREVIOUS */
 	gettext_noop("Version & Platform Compatibility / Previous Postgres Versions"),
+	/* COMPAT_OPTIONS_CLIENT */
 	gettext_noop("Version & Platform Compatibility / Other Platforms & Clients"),
+	/* DEVELOPER_OPTIONS */
 	gettext_noop("Developer Options"),
+	/* help_config wants this array to be null-terminated */
 	NULL
+};
+
+/*
+ * Displayable names for GUC variable types (enum config_type)
+ *
+ * Note: these strings are deliberately not localized.
+ */
+const char * const config_type_names[] = 
+{
+	/* PGC_BOOL */		"bool",
+	/* PGC_INT */		"integer",
+	/* PGC_REAL */		"real",
+	/* PGC_STRING */	"string"
 };
 
 
@@ -2509,9 +2546,9 @@ set_config_option(const char *name, const char *value,
 										name)));
 						return false;
 					}
-					/* Limit non-super user changes */
+					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
-						source > PGC_S_USERSTART &&
+						source > PGC_S_UNPRIVILEGED &&
 						newval < conf->session_val &&
 						!superuser())
 					{
@@ -2522,10 +2559,10 @@ set_config_option(const char *name, const char *value,
 								 errhint("Must be superuser to change this value to false.")));
 						return false;
 					}
-					/* Allow admin to override non-super user setting */
+					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
-						source < PGC_S_USERSTART &&
-						record->session_source > PGC_S_USERSTART &&
+						source < PGC_S_UNPRIVILEGED &&
+						record->session_source > PGC_S_UNPRIVILEGED &&
 						newval > conf->session_val &&
 						!superuser())
 							DoIt = DoIt_orig;
@@ -2605,9 +2642,9 @@ set_config_option(const char *name, const char *value,
 										newval, name, conf->min, conf->max)));
 						return false;
 					}
-					/* Limit non-super user changes */
+					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
-						source > PGC_S_USERSTART &&
+						source > PGC_S_UNPRIVILEGED &&
 						conf->session_val != 0 &&
 						(newval > conf->session_val || newval == 0) &&
 						!superuser())
@@ -2619,10 +2656,10 @@ set_config_option(const char *name, const char *value,
 								 errhint("Must be superuser to increase this value or set it to zero.")));
 						return false;
 					}
-					/* Allow admin to override non-super user setting */
+					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
-						source < PGC_S_USERSTART &&
-						record->session_source > PGC_S_USERSTART &&
+						source < PGC_S_UNPRIVILEGED &&
+						record->session_source > PGC_S_UNPRIVILEGED &&
 						newval < conf->session_val &&
 						!superuser())
 							DoIt = DoIt_orig;
@@ -2702,9 +2739,9 @@ set_config_option(const char *name, const char *value,
 										newval, name, conf->min, conf->max)));
 						return false;
 					}
-					/* Limit non-super user changes */
+					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
-						source > PGC_S_USERSTART &&
+						source > PGC_S_UNPRIVILEGED &&
 						newval > conf->session_val &&
 						!superuser())
 					{
@@ -2715,10 +2752,10 @@ set_config_option(const char *name, const char *value,
 								 errhint("Must be superuser to increase this value.")));
 						return false;
 					}
-					/* Allow admin to override non-super user setting */
+					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
-						source < PGC_S_USERSTART &&
-						record->session_source > PGC_S_USERSTART &&
+						source < PGC_S_UNPRIVILEGED &&
+						record->session_source > PGC_S_UNPRIVILEGED &&
 						newval < conf->session_val &&
 						!superuser())
 							DoIt = DoIt_orig;
@@ -2791,15 +2828,18 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 
-					if (*conf->variable)
+					if (record->context == PGC_USERLIMIT &&
+						*conf->variable)
 					{
 						int old_int_value, new_int_value;
 
-						/* Limit non-super user changes */
-						assign_msglvl(&old_int_value, conf->reset_val, true, interactive);
-						assign_msglvl(&new_int_value, newval, true, interactive);
-						if (record->context == PGC_USERLIMIT &&
-							source > PGC_S_USERSTART &&
+						/* all USERLIMIT strings are message levels */
+						assign_msglvl(&old_int_value, conf->reset_val,
+									  true, interactive);
+						assign_msglvl(&new_int_value, newval,
+									  true, interactive);
+						/* Limit non-superuser changes */
+						if (source > PGC_S_UNPRIVILEGED &&
 							new_int_value > old_int_value &&
 							!superuser())
 						{
@@ -2810,14 +2850,13 @@ set_config_option(const char *name, const char *value,
 									 errhint("Must be superuser to increase this value.")));
 							return false;
 						}
-						/* Allow admin to override non-super user setting */
-						if (record->context == PGC_USERLIMIT &&
-							source < PGC_S_USERSTART &&
-							record->session_source > PGC_S_USERSTART &&
+						/* Allow admin to override non-superuser setting */
+						if (source < PGC_S_UNPRIVILEGED &&
+							record->session_source > PGC_S_UNPRIVILEGED &&
 							newval < conf->session_val &&
 							!superuser())
 								DoIt = DoIt_orig;
-						}
+					}
 				}
 				else if (conf->reset_val)
 				{
@@ -3389,13 +3428,13 @@ GetConfigOptionByNum(int varnum, const char **values, bool *noshow)
 	values[1] = _ShowOption(conf);
 
 	/* context */
-	values[2] = GucContextName[conf->context];
+	values[2] = GucContext_Names[conf->context];
 
 	/* vartype */
-	values[3] = config_type_name[conf->vartype];
+	values[3] = config_type_names[conf->vartype];
 
 	/* source */
-	values[4] = GucSourceName[conf->source];
+	values[4] = GucSource_Names[conf->source];
 
 	/* now get the type specifc attributes */
 	switch (conf->vartype)

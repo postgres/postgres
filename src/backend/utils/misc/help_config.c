@@ -25,7 +25,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.2 2003/07/09 17:57:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.3 2003/07/28 19:31:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,20 +132,6 @@ static void printGenericFoot(struct config_generic structToPrint);
 static void printMixedStruct(mixedStruct * structToPrint);
 static bool displayStruct(mixedStruct * structToDisplay);
 
-/*
- * This array contains the display names for each of the GucContexts available
- *
- * Note: these strings are deliberately not localized.
- */
-static const char *const GucContext_names[] = {
-	"INTERNAL",
-	"POSTMASTER",
-	"SIGHUP",
-	"BACKEND",
-	"SUSET",
-	"USERLIMIT",
-	"USERSET"
-};
 
 /*
  * Reads in the the command line options and sets the state of the program
@@ -406,7 +392,7 @@ printGenericHead(struct config_generic structToPrint)
 {
 	printf(gettext(GENERIC_FORMAT[outFormat]),
 		   structToPrint.name,
-		   GucContext_names[structToPrint.context],
+		   GucContext_Names[structToPrint.context],
 		   gettext(config_group_names[structToPrint.group]));
 }
 

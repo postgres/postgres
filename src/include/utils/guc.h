@@ -7,7 +7,7 @@
  * Copyright 2000-2003 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.37 2003/07/28 16:22:13 momjian Exp $
+ * $Id: guc.h,v 1.38 2003/07/28 19:31:32 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -49,21 +49,19 @@
  * we don't yet know if the user is a superuser.
  *
  * USERLIMIT options can only be manipulated in certain ways by
- * non-super users.
+ * non-superusers.
  *
  * USERSET options can be set by anyone any time.
- *
- * Keep in sync with GucContextName in guc.c
  */
 typedef enum
 {
-	PGC_INTERNAL = 0,
-	PGC_POSTMASTER = 1,
-	PGC_SIGHUP = 2,
-	PGC_BACKEND = 3,
-	PGC_SUSET = 4,
-	PGC_USERLIMIT = 5,
-	PGC_USERSET = 6
+	PGC_INTERNAL,
+	PGC_POSTMASTER,
+	PGC_SIGHUP,
+	PGC_BACKEND,
+	PGC_SUSET,
+	PGC_USERLIMIT,
+	PGC_USERSET
 } GucContext;
 
 /*
@@ -76,24 +74,21 @@ typedef enum
  * as the current value.  Note that source == PGC_S_OVERRIDE should be
  * used when setting a PGC_INTERNAL option.
  *
- * Keep in sync with GucSourceName in guc.c
+ * PGC_S_UNPRIVILEGED isn't actually a source value, but the dividing line
+ * between privileged and unprivileged sources for USERLIMIT purposes.
  */
 typedef enum
 {
-	PGC_S_DEFAULT = 0,			/* wired-in default */
-	PGC_S_ENV_VAR = 1,			/* postmaster environment variable */
-	PGC_S_FILE = 2,				/* postgresql.conf */
-	PGC_S_ARGV = 3,				/* postmaster command line */
-	PGC_S_USERSTART=4,			/*
-								 *	Settings below are controlled by users.
-								 *	This is used by PGC_USERLIMT to prevent
-								 *	non-super users from changing certain settings.
-								 */
-	PGC_S_DATABASE = 5,			/* per-database setting */
-	PGC_S_USER = 6,				/* per-user setting */
-	PGC_S_CLIENT = 7,			/* from client connection request */
-	PGC_S_OVERRIDE = 8,			/* special case to forcibly set default */
-	PGC_S_SESSION = 9			/* SET command */
+	PGC_S_DEFAULT,				/* wired-in default */
+	PGC_S_ENV_VAR,				/* postmaster environment variable */
+	PGC_S_FILE,					/* postgresql.conf */
+	PGC_S_ARGV,					/* postmaster command line */
+	PGC_S_UNPRIVILEGED,			/* dividing line for USERLIMIT */
+	PGC_S_DATABASE,				/* per-database setting */
+	PGC_S_USER,					/* per-user setting */
+	PGC_S_CLIENT,				/* from client connection request */
+	PGC_S_OVERRIDE,				/* special case to forcibly set default */
+	PGC_S_SESSION				/* SET command */
 } GucSource;
 
 /* GUC vars that are actually declared in guc.c, rather than elsewhere */
@@ -117,6 +112,7 @@ extern bool Australian_timezones;
 extern int	log_min_error_statement;
 extern int	log_min_messages;
 extern int	client_min_messages;
+extern int	log_min_duration_statement;
 
 
 extern void SetConfigOption(const char *name, const char *value,
@@ -153,7 +149,5 @@ extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 void write_nondefault_variables(GucContext context);
 void read_nondefault_variables(void);
 #endif
-
-extern int	log_min_duration_statement;
 
 #endif   /* GUC_H */
