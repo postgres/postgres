@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.58 2001/03/22 03:59:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.59 2001/04/16 19:44:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,8 +444,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 */
 		RelOptInfo *rel = get_base_rel(root, lfirsti(relids));
 
-		rel->baserestrictinfo = lcons(restrictinfo,
-									  rel->baserestrictinfo);
+		rel->baserestrictinfo = lappend(rel->baserestrictinfo,
+										restrictinfo);
 
 		/*
 		 * Check for a "mergejoinable" clause even though it's not a join
@@ -549,8 +549,8 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 		 */
 		joininfo = find_joininfo_node(get_base_rel(root, cur_relid),
 									  unjoined_relids);
-		joininfo->jinfo_restrictinfo = lcons(restrictinfo,
-										   joininfo->jinfo_restrictinfo);
+		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
+											   restrictinfo);
 	}
 }
 
