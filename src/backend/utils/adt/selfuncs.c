@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.76 2000/07/29 03:26:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.77 2000/08/03 00:58:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,9 +252,33 @@ eqsel(PG_FUNCTION_ARGS)
 Datum
 neqsel(PG_FUNCTION_ARGS)
 {
+	Oid			opid = PG_GETARG_OID(0);
+	Oid			relid = PG_GETARG_OID(1);
+	AttrNumber	attno = PG_GETARG_INT16(2);
+	Datum		value = PG_GETARG_DATUM(3);
+	int32		flag = PG_GETARG_INT32(4);
+	Oid			eqopid;
 	float8		result;
 
-	result = DatumGetFloat8(eqsel(fcinfo));
+	/*
+	 * We want 1 - eqsel() where the equality operator is the one associated
+	 * with this != operator, that is, its negator.
+	 */
+	eqopid = get_negator(opid);
+	if (eqopid)
+	{
+		result = DatumGetFloat8(DirectFunctionCall5(eqsel,
+													ObjectIdGetDatum(eqopid),
+													ObjectIdGetDatum(relid),
+													Int16GetDatum(attno),
+													value,
+													Int32GetDatum(flag)));
+	}
+	else
+	{
+		/* Use default selectivity (should we raise an error instead?) */
+		result = DEFAULT_EQ_SEL;
+	}
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
 }
@@ -392,15 +416,39 @@ scalarltsel(PG_FUNCTION_ARGS)
 Datum
 scalargtsel(PG_FUNCTION_ARGS)
 {
+	Oid			opid = PG_GETARG_OID(0);
+	Oid			relid = PG_GETARG_OID(1);
+	AttrNumber	attno = PG_GETARG_INT16(2);
+	Datum		value = PG_GETARG_DATUM(3);
+	int32		flag = PG_GETARG_INT32(4);
+	Oid			ltopid;
 	float8		result;
 
 	/*
 	 * Compute selectivity of "<", then invert --- but only if we were
-	 * able to produce a non-default estimate.
+	 * able to produce a non-default estimate.  Note that we get the
+	 * negator which strictly speaking means we are looking at "<="
+	 * for ">" or "<" for ">=".  We assume this won't matter.
 	 */
-	result = DatumGetFloat8(scalarltsel(fcinfo));
+	ltopid = get_negator(opid);
+	if (ltopid)
+	{
+		result = DatumGetFloat8(DirectFunctionCall5(scalarltsel,
+													ObjectIdGetDatum(ltopid),
+													ObjectIdGetDatum(relid),
+													Int16GetDatum(attno),
+													value,
+													Int32GetDatum(flag)));
+	}
+	else
+	{
+		/* Use default selectivity (should we raise an error instead?) */
+		result = DEFAULT_INEQ_SEL;
+	}
+
 	if (result != DEFAULT_INEQ_SEL)
 		result = 1.0 - result;
+
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -567,7 +615,7 @@ nlikesel(PG_FUNCTION_ARGS)
 Datum
 eqjoinsel(PG_FUNCTION_ARGS)
 {
-#ifdef NOT_USED
+#ifdef NOT_USED					/* see neqjoinsel() before removing me! */
 	Oid			opid = PG_GETARG_OID(0);
 #endif
 	Oid			relid1 = PG_GETARG_OID(1);
@@ -620,6 +668,11 @@ neqjoinsel(PG_FUNCTION_ARGS)
 {
 	float8		result;
 
+	/*
+	 * XXX we skip looking up the negator operator here because we know
+	 * eqjoinsel() won't look at it anyway.  If eqjoinsel() ever does look,
+	 * this routine will need to look more like neqsel() does.
+	 */
 	result = DatumGetFloat8(eqjoinsel(fcinfo));
 	result = 1.0 - result;
 	PG_RETURN_FLOAT8(result);
