@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.60 2002/03/29 19:06:17 tgl Exp $
+ * $Id: indexing.h,v 1.61 2002/04/05 00:31:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@
 #define OpclassOidIndex				"pg_opclass_oid_index"
 #define OperatorNameIndex			"pg_operator_oprname_l_r_k_index"
 #define OperatorOidIndex			"pg_operator_oid_index"
-#define ProcedureNameIndex			"pg_proc_proname_narg_type_index"
+#define ProcedureNameNspIndex		"pg_proc_proname_args_nsp_index"
 #define ProcedureOidIndex			"pg_proc_oid_index"
 #define RelCheckIndex				"pg_relcheck_rcrelid_index"
 #define RewriteOidIndex				"pg_rewrite_oid_index"
@@ -176,7 +176,7 @@ DECLARE_UNIQUE_INDEX(pg_opclass_oid_index on pg_opclass using btree(oid oid_ops)
 DECLARE_UNIQUE_INDEX(pg_operator_oid_index on pg_operator using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_k_index on pg_operator using btree(oprname name_ops, oprleft oid_ops, oprright oid_ops, oprkind char_ops));
 DECLARE_UNIQUE_INDEX(pg_proc_oid_index on pg_proc using btree(oid oid_ops));
-DECLARE_UNIQUE_INDEX(pg_proc_proname_narg_type_index on pg_proc using btree(proname name_ops, pronargs int2_ops, proargtypes oidvector_ops));
+DECLARE_UNIQUE_INDEX(pg_proc_proname_args_nsp_index on pg_proc using btree(proname name_ops, pronargs int2_ops, proargtypes oidvector_ops, pronamespace oid_ops));
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_relcheck_rcrelid_index on pg_relcheck using btree(rcrelid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_rewrite_oid_index on pg_rewrite using btree(oid oid_ops));

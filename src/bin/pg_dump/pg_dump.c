@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.244 2002/03/21 05:47:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.245 2002/04/05 00:31:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@
 #include "access/attnum.h"
 #include "access/htup.h"
 #include "catalog/pg_class.h"
+#include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 
@@ -1953,7 +1954,7 @@ getFuncs(int *numFuncs)
 	int			i_proretset;
 	int			i_prosrc;
 	int			i_probin;
-	int			i_iscachable;
+	int			i_provolatile;
 	int			i_isstrict;
 	int			i_usename;
 
@@ -1965,7 +1966,20 @@ getFuncs(int *numFuncs)
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 						  "proretset, proargtypes, prosrc, probin, "
 						  "(select usename from pg_user where proowner = usesysid) as usename, "
-						  "proiscachable, 'f'::boolean as proisstrict "
+						  "case when proiscachable then 'i' else 'v' end as provolatile, "
+"'f'::boolean as proisstrict "
+						  "from pg_proc "
+						  "where pg_proc.oid > '%u'::oid",
+						  g_last_builtin_oid);
+	}
+	else if (g_fout->remoteVersion < 70300)
+	{
+		appendPQExpBuffer(query,
+		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
+						  "proretset, proargtypes, prosrc, probin, "
+						  "(select usename from pg_user where proowner = usesysid) as usename, "
+						  "case when proiscachable then 'i' else 'v' end as provolatile, "
+						  "proisstrict "
 						  "from pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
 						  g_last_builtin_oid);
@@ -1976,7 +1990,7 @@ getFuncs(int *numFuncs)
 		   "SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 						  "proretset, proargtypes, prosrc, probin, "
 						  "(select usename from pg_user where proowner = usesysid) as usename, "
-						  "proiscachable, proisstrict "
+						  "provolatile, proisstrict "
 						  "from pg_proc "
 						  "where pg_proc.oid > '%u'::oid",
 						  g_last_builtin_oid);
@@ -2008,7 +2022,7 @@ getFuncs(int *numFuncs)
 	i_proretset = PQfnumber(res, "proretset");
 	i_prosrc = PQfnumber(res, "prosrc");
 	i_probin = PQfnumber(res, "probin");
-	i_iscachable = PQfnumber(res, "proiscachable");
+	i_provolatile = PQfnumber(res, "provolatile");
 	i_isstrict = PQfnumber(res, "proisstrict");
 	i_usename = PQfnumber(res, "usename");
 
@@ -2025,7 +2039,7 @@ getFuncs(int *numFuncs)
 		finfo[i].nargs = atoi(PQgetvalue(res, i, i_pronargs));
 		finfo[i].lang = atooid(PQgetvalue(res, i, i_prolang));
 		finfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
-		finfo[i].iscachable = (strcmp(PQgetvalue(res, i, i_iscachable), "t") == 0);
+		finfo[i].provolatile = (PQgetvalue(res, i, i_provolatile))[0];
 		finfo[i].isstrict = (strcmp(PQgetvalue(res, i, i_isstrict), "t") == 0);
 
 		if (strlen(finfo[i].usename) == 0)
@@ -3559,20 +3573,32 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 					  asPart->data);
 	formatStringLiteral(q, func_lang, CONV_ALL);
 
-	if (finfo[i].iscachable || finfo[i].isstrict)		/* OR in new attrs here */
+	if (finfo[i].provolatile != PROVOLATILE_VOLATILE ||
+		finfo[i].isstrict)		/* OR in new attrs here */
 	{
 		appendPQExpBuffer(q, " WITH (");
 		listSep = listSepNone;
 
-		if (finfo[i].iscachable)
+		if (finfo[i].provolatile == PROVOLATILE_IMMUTABLE)
 		{
-			appendPQExpBuffer(q, "%s iscachable", listSep);
+			appendPQExpBuffer(q, "%s isImmutable", listSep);
 			listSep = listSepComma;
+		}
+		else if (finfo[i].provolatile == PROVOLATILE_STABLE)
+		{
+			appendPQExpBuffer(q, "%s isStable", listSep);
+			listSep = listSepComma;
+		}
+		else if (finfo[i].provolatile != PROVOLATILE_VOLATILE)
+		{
+			write_msg(NULL, "Unexpected provolatile value for function %s\n",
+					  finfo[i].proname);
+			exit_nicely();
 		}
 
 		if (finfo[i].isstrict)
 		{
-			appendPQExpBuffer(q, "%s isstrict", listSep);
+			appendPQExpBuffer(q, "%s isStrict", listSep);
 			listSep = listSepComma;
 		}
 		appendPQExpBuffer(q, " )");

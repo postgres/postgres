@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.39 2002/03/29 19:05:57 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.40 2002/04/05 00:31:22 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -1654,6 +1654,15 @@
      </row>
 
      <row>
+      <entry>pronamespace</entry>
+      <entry><type>oid</type></entry>
+      <entry>pg_namespace.oid</entry>
+      <entry>
+       The OID of the namespace that contains this function
+      </entry>
+     </row>
+
+     <row>
       <entry>proowner</entry>
       <entry><type>int4</type></entry>
       <entry>pg_shadow.usesysid</entry>
@@ -1682,13 +1691,6 @@
      </row>
 
      <row>
-      <entry>proiscachable</entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Function returns same result for same input values</entry>
-     </row>
-
-     <row>
       <entry>proisstrict</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -1697,6 +1699,25 @@
        case the function won't actually be called at all.  Functions
        that are not <quote>strict</quote> must be prepared to handle
        null inputs.
+      </entry>
+     </row>
+
+     <row>
+      <entry>provolatile</entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+       <structfield>provolatile</structfield> tells whether the function's
+       result depends only on its input arguments, or is affected by outside
+       factors.
+       It is <literal>i</literal> for <quote>immutable</> functions,
+       which always deliver the same result for the same inputs.
+       It is <literal>s</literal> for <quote>stable</> functions,
+       whose results (for fixed inputs) do not change within a scan.
+       It is <literal>v</literal> for <quote>volatile</> functions,
+       whose results may change at any time.  (Use <literal>v</literal> also
+       for functions with side-effects, so that calls to them cannot get
+       optimized away.)
       </entry>
      </row>
 

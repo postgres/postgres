@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.64 2001/10/25 05:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.65 2002/04/05 00:31:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,13 +42,13 @@ regprocin(PG_FUNCTION_ARGS)
 	char	   *pro_name_or_oid = PG_GETARG_CSTRING(0);
 	RegProcedure result = InvalidOid;
 	int			matches = 0;
-	ScanKeyData skey[1];
 
 	if (pro_name_or_oid[0] == '-' && pro_name_or_oid[1] == '\0')
 		PG_RETURN_OID(InvalidOid);
 
 	if (pro_name_or_oid[0] >= '0' &&
-		pro_name_or_oid[0] <= '9')
+		pro_name_or_oid[0] <= '9' &&
+		strspn(pro_name_or_oid, "0123456789") == strlen(pro_name_or_oid))
 	{
 		Oid			searchOid;
 
@@ -61,67 +61,33 @@ regprocin(PG_FUNCTION_ARGS)
 			elog(ERROR, "No procedure with oid %s", pro_name_or_oid);
 		matches = 1;
 	}
-	else if (!IsIgnoringSystemIndexes())
-	{
-		Relation	hdesc;
-		Relation	idesc;
-		IndexScanDesc sd;
-		RetrieveIndexResult indexRes;
-		HeapTupleData tuple;
-		Buffer		buffer;
-
-		ScanKeyEntryInitialize(&skey[0], 0x0,
-							   (AttrNumber) 1,
-							   (RegProcedure) F_NAMEEQ,
-							   CStringGetDatum(pro_name_or_oid));
-
-		hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
-		idesc = index_openr(ProcedureNameIndex);
-		sd = index_beginscan(idesc, false, 1, skey);
-
-		while ((indexRes = index_getnext(sd, ForwardScanDirection)))
-		{
-			tuple.t_datamcxt = NULL;
-			tuple.t_data = NULL;
-			tuple.t_self = indexRes->heap_iptr;
-			heap_fetch(hdesc, SnapshotNow, &tuple, &buffer, sd);
-			pfree(indexRes);
-			if (tuple.t_data != NULL)
-			{
-				result = (RegProcedure) tuple.t_data->t_oid;
-				ReleaseBuffer(buffer);
-				if (++matches > 1)
-					break;
-			}
-		}
-
-		index_endscan(sd);
-		index_close(idesc);
-		heap_close(hdesc, AccessShareLock);
-	}
 	else
 	{
-		Relation	proc;
-		HeapScanDesc procscan;
-		HeapTuple	proctup;
+		Relation	hdesc;
+		ScanKeyData skey[1];
+		SysScanDesc	funcscan;
+		HeapTuple	tuple;
 
 		ScanKeyEntryInitialize(&skey[0], 0x0,
 							   (AttrNumber) Anum_pg_proc_proname,
 							   (RegProcedure) F_NAMEEQ,
 							   CStringGetDatum(pro_name_or_oid));
 
-		proc = heap_openr(ProcedureRelationName, AccessShareLock);
-		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, skey);
+		hdesc = heap_openr(ProcedureRelationName, AccessShareLock);
 
-		while (HeapTupleIsValid(proctup = heap_getnext(procscan, 0)))
+		funcscan = systable_beginscan(hdesc, ProcedureNameNspIndex, true,
+									  SnapshotNow, 1, skey);
+
+		while (HeapTupleIsValid(tuple = systable_getnext(funcscan)))
 		{
-			result = proctup->t_data->t_oid;
+			result = (RegProcedure) tuple->t_data->t_oid;
 			if (++matches > 1)
 				break;
 		}
 
-		heap_endscan(procscan);
-		heap_close(proc, AccessShareLock);
+		systable_endscan(funcscan);
+
+		heap_close(hdesc, AccessShareLock);
 	}
 
 	if (matches > 1)

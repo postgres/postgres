@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.72 2002/03/31 06:26:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.73 2002/04/05 00:31:31 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -304,7 +304,7 @@ static const struct cachedesc cacheinfo[] = {
 			0
 	}},
 	{ProcedureRelationName,		/* PROCNAME */
-		ProcedureNameIndex,
+		ProcedureNameNspIndex,	/* XXX very temporary */
 		0,
 		3,
 		{

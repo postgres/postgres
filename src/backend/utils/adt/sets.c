@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.41 2002/03/29 19:06:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.42 2002/04/05 00:31:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,8 +61,8 @@ SetDefine(char *querystr, Oid elemType)
 							 querystr,	/* sourceCode */
 							 fileName,	/* fileName */
 							 true,		/* trusted */
-							 false,		/* canCache (assume unsafe) */
 							 false,		/* isStrict (irrelevant, no args) */
+							 PROVOLATILE_VOLATILE,	/* assume unsafe */
 							 100,		/* byte_pct */
 							 0, /* perbyte_cpu */
 							 0, /* percall_cpu */

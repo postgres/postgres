@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.95 2002/03/21 16:00:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.96 2002/04/05 00:31:27 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -52,7 +52,8 @@ static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 					check_subplans_for_ungrouped_vars_context * context);
-static bool contain_noncachable_functions_walker(Node *node, void *context);
+static bool contain_mutable_functions_walker(Node *node, void *context);
+static bool contain_volatile_functions_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node, void *context);
 static Expr *simplify_op_or_func(Expr *expr, List *args);
 
@@ -698,29 +699,29 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 
 
 /*****************************************************************************
- *		Check clauses for noncachable functions
+ *		Check clauses for mutable functions
  *****************************************************************************/
 
 /*
- * contain_noncachable_functions
- *	  Recursively search for noncachable functions within a clause.
+ * contain_mutable_functions
+ *	  Recursively search for mutable functions within a clause.
  *
- * Returns true if any noncachable function (or operator implemented by a
- * noncachable function) is found.	This test is needed so that we don't
+ * Returns true if any mutable function (or operator implemented by a
+ * mutable function) is found.	This test is needed so that we don't
  * mistakenly think that something like "WHERE random() < 0.5" can be treated
  * as a constant qualification.
  *
  * XXX we do not examine sublinks/subplans to see if they contain uses of
- * noncachable functions.  It's not real clear if that is correct or not...
+ * mutable functions.  It's not real clear if that is correct or not...
  */
 bool
-contain_noncachable_functions(Node *clause)
+contain_mutable_functions(Node *clause)
 {
-	return contain_noncachable_functions_walker(clause, NULL);
+	return contain_mutable_functions_walker(clause, NULL);
 }
 
 static bool
-contain_noncachable_functions_walker(Node *node, void *context)
+contain_mutable_functions_walker(Node *node, void *context)
 {
 	if (node == NULL)
 		return false;
@@ -731,18 +732,67 @@ contain_noncachable_functions_walker(Node *node, void *context)
 		switch (expr->opType)
 		{
 			case OP_EXPR:
-				if (!op_iscachable(((Oper *) expr->oper)->opno))
+				if (op_volatile(((Oper *) expr->oper)->opno) != PROVOLATILE_IMMUTABLE)
 					return true;
 				break;
 			case FUNC_EXPR:
-				if (!func_iscachable(((Func *) expr->oper)->funcid))
+				if (func_volatile(((Func *) expr->oper)->funcid) != PROVOLATILE_IMMUTABLE)
 					return true;
 				break;
 			default:
 				break;
 		}
 	}
-	return expression_tree_walker(node, contain_noncachable_functions_walker,
+	return expression_tree_walker(node, contain_mutable_functions_walker,
+								  context);
+}
+
+
+/*****************************************************************************
+ *		Check clauses for volatile functions
+ *****************************************************************************/
+
+/*
+ * contain_volatile_functions
+ *	  Recursively search for volatile functions within a clause.
+ *
+ * Returns true if any volatile function (or operator implemented by a
+ * volatile function) is found.	This test prevents invalid conversions
+ * of volatile expressions into indexscan quals.
+ *
+ * XXX we do not examine sublinks/subplans to see if they contain uses of
+ * volatile functions.  It's not real clear if that is correct or not...
+ */
+bool
+contain_volatile_functions(Node *clause)
+{
+	return contain_volatile_functions_walker(clause, NULL);
+}
+
+static bool
+contain_volatile_functions_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Expr))
+	{
+		Expr	   *expr = (Expr *) node;
+
+		switch (expr->opType)
+		{
+			case OP_EXPR:
+				if (op_volatile(((Oper *) expr->oper)->opno) == PROVOLATILE_VOLATILE)
+					return true;
+				break;
+			case FUNC_EXPR:
+				if (func_volatile(((Func *) expr->oper)->funcid) == PROVOLATILE_VOLATILE)
+					return true;
+				break;
+			default:
+				break;
+		}
+	}
+	return expression_tree_walker(node, contain_volatile_functions_walker,
 								  context);
 }
 
@@ -754,23 +804,25 @@ contain_noncachable_functions_walker(Node *node, void *context)
 /*
  * is_pseudo_constant_clause
  *	  Detect whether a clause is "constant", ie, it contains no variables
- *	  of the current query level and no uses of noncachable functions.
+ *	  of the current query level and no uses of volatile functions.
  *	  Such a clause is not necessarily a true constant: it can still contain
- *	  Params and outer-level Vars.	However, its value will be constant over
- *	  any one scan of the current query, so it can be used as an indexscan
- *	  key or (if a top-level qual) can be pushed up to become a gating qual.
+ *	  Params and outer-level Vars, not to mention functions whose results
+ *	  may vary from one statement to the next.  However, the clause's value
+ *	  will be constant over any one scan of the current query, so it can be
+ *	  used as an indexscan key or (if a top-level qual) can be pushed up to
+ *	  become a gating qual.
  */
 bool
 is_pseudo_constant_clause(Node *clause)
 {
 	/*
 	 * We could implement this check in one recursive scan.  But since the
-	 * check for noncachable functions is both moderately expensive and
+	 * check for volatile functions is both moderately expensive and
 	 * unlikely to fail, it seems better to look for Vars first and only
-	 * check for noncachable functions if we find no Vars.
+	 * check for volatile functions if we find no Vars.
 	 */
 	if (!contain_var_clause(clause) &&
-		!contain_noncachable_functions(clause))
+		!contain_volatile_functions(clause))
 		return true;
 	return false;
 }
@@ -1019,7 +1071,7 @@ CommuteClause(Expr *clause)
  *
  * We do understand that certain functions may deliver non-constant
  * results even with constant inputs, "nextval()" being the classic
- * example.  Functions that are not marked "proiscachable" in pg_proc
+ * example.  Functions that are not marked "immutable" in pg_proc
  * will not be pre-evaluated here, although we will reduce their
  * arguments as far as possible.  Functions that are the arguments
  * of Iter nodes are also not evaluated.
@@ -1412,7 +1464,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	Oid			result_typeid;
 	HeapTuple	func_tuple;
 	Form_pg_proc funcform;
-	bool		proiscachable;
+	char		provolatile;
 	bool		proisstrict;
 	bool		proretset;
 	int16		resultTypLen;
@@ -1447,7 +1499,7 @@ simplify_op_or_func(Expr *expr, List *args)
 
 	/*
 	 * Get the function procedure's OID and look to see whether it is
-	 * marked proiscachable.
+	 * marked immutable.
 	 *
 	 * XXX would it be better to take the result type from the pg_proc tuple,
 	 * rather than the Oper or Func node?
@@ -1469,7 +1521,7 @@ simplify_op_or_func(Expr *expr, List *args)
 	}
 
 	/*
-	 * we could use func_iscachable() here, but we need several fields out
+	 * we could use func_volatile() here, but we need several fields out
 	 * of the func tuple, so might as well just look it up once.
 	 */
 	func_tuple = SearchSysCache(PROCOID,
@@ -1478,12 +1530,12 @@ simplify_op_or_func(Expr *expr, List *args)
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "Function OID %u does not exist", funcid);
 	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	proiscachable = funcform->proiscachable;
+	provolatile = funcform->provolatile;
 	proisstrict = funcform->proisstrict;
 	proretset = funcform->proretset;
 	ReleaseSysCache(func_tuple);
 
-	if (!proiscachable)
+	if (provolatile != PROVOLATILE_IMMUTABLE)
 		return NULL;
 
 	/*

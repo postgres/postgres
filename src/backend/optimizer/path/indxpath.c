@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.114 2002/03/20 19:44:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.115 2002/04/05 00:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -783,7 +783,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		 * Check for an indexqual that could be handled by a nestloop
 		 * join. We need the index key to be compared against an
 		 * expression that uses none of the indexed relation's vars and
-		 * contains no non-cachable functions.
+		 * contains no volatile functions.
 		 */
 		if (match_index_to_operand(indexkey, leftop, rel, index))
 		{
@@ -792,7 +792,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 			isIndexable =
 				!intMember(lfirsti(rel->relids), othervarnos) &&
-				!contain_noncachable_functions((Node *) rightop) &&
+				!contain_volatile_functions((Node *) rightop) &&
 				is_indexable_operator(clause, opclass, true);
 			freeList(othervarnos);
 			return isIndexable;
@@ -804,7 +804,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 			isIndexable =
 				!intMember(lfirsti(rel->relids), othervarnos) &&
-				!contain_noncachable_functions((Node *) leftop) &&
+				!contain_volatile_functions((Node *) leftop) &&
 				is_indexable_operator(clause, opclass, false);
 			freeList(othervarnos);
 			return isIndexable;
@@ -1142,7 +1142,7 @@ static const StrategyNumber
  *	  implies another.	A simple and general way is to see if they are
  *	  equal(); this works for any kind of expression.  (Actually, there
  *	  is an implied assumption that the functions in the expression are
- *	  cachable, ie dependent only on their input arguments --- but this
+ *	  immutable, ie dependent only on their input arguments --- but this
  *	  was checked for the predicate by CheckPredicate().)
  *
  *	  Our other way works only for (binary boolean) operators that are

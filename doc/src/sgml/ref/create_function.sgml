@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.34 2002/03/22 19:20:37 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.35 2002/04/05 00:31:24 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -160,35 +160,63 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term>iscachable</term>
+      <term>isStrict</term>
       <listitem>
        <para>
-	<option>Iscachable</option> indicates that the function always
-	returns the same result when given the same argument values (i.e.,
-	it does not do database lookups or otherwise use information not
-	directly present in its parameter list).  The optimizer uses
-	<option>iscachable</option> to know whether it is safe to
-	pre-evaluate a call of the function.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>isstrict</term>
-      <listitem>
-       <para>
-	<option>isstrict</option> indicates that the function always
+	<option>isStrict</option> indicates that the function always
 	returns NULL whenever any of its arguments are NULL.  If this
 	attribute is specified, the function is not executed when there
 	are NULL arguments; instead a NULL result is assumed automatically.
-	When <option>isstrict</option> is not specified, the function will
+	When <option>isStrict</option> is not specified, the function will
 	be called for NULL inputs.  It is then the function author's
 	responsibility to check for NULLs if necessary and respond
 	appropriately.
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>isImmutable</term>
+      <term>isCachable</term>
+      <term>isStable</term>
+      <term>isVolatile</term>
+      <listitem>
+       <para>
+        These attributes inform the system whether it is safe to replace
+	multiple evaluations of the function with a single evaluation.
+	At most one choice should be specified.  (If none of these appear,
+	<option>isVolatile</option> is the default assumption.)
+	<option>isImmutable</option> indicates that the function always
+	returns the same result when given the same argument values; that
+	is, it does not do database lookups or otherwise use information not
+	directly present in its parameter list.  If this option is given,
+	any call of the function with all-constant arguments can be
+	immediately replaced with the function value.
+	<option>isCachable</option> is an
+	obsolete equivalent of <option>isImmutable</option>; it's still
+	accepted for backwards-compatibility reasons.
+	<option>isStable</option> indicates that within a single table scan
+	the function will consistently
+	return the same result for the same argument values, but that its
+	result could change across SQL statements.  This is the appropriate
+	selection for functions whose results depend on database lookups,
+	parameter variables (such as the current timezone), etc.  Also note
+	that the <literal>CURRENT_TIMESTAMP</> family of functions qualify
+	as stable, since their values do not change within a transaction.
+	<option>isVolatile</option> indicates that the function value can
+	change even within a single table scan, so no optimizations can be
+	made.  Relatively few database functions are volatile in this sense;
+	some examples are <literal>random()</>, <literal>currval()</>,
+	<literal>timeofday()</>.  Note that any function that has side-effects
+	must be classified volatile, even if its result is quite predictable,
+	to prevent calls from being optimized away; an example is
+	<literal>setval()</>.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
+
+    Attribute names are not case-sensitive.
   </para>
 
  </refsect1>
@@ -342,7 +370,7 @@ CREATE TABLE product (
 <programlisting>
 CREATE FUNCTION point(complex) RETURNS point
     AS '/home/bernie/pgsql/lib/complex.so', 'complex_to_point'
-    LANGUAGE C;
+    LANGUAGE C WITH (isStrict);
 </programlisting>
 
   The C declaration of the function could be:
@@ -359,6 +387,9 @@ Point * complex_to_point (Complex *z)
 	return p;
 }
 </programlisting>
+
+   Note that the function is marked <quote>strict</>; this allows us
+   to skip checking for NULL input in the function body.
   </para>    
  </refsect1>
 

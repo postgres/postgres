@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.66 2002/03/31 06:26:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.67 2002/04/05 00:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/index.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_opclass.h"
+#include "catalog/pg_proc.h"
 #include "commands/defrem.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -233,11 +234,11 @@ CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 		elog(ERROR, "Cannot use aggregate in index predicate");
 
 	/*
-	 * A predicate using noncachable functions is probably wrong, for the
+	 * A predicate using mutable functions is probably wrong, for the
 	 * same reasons that we don't allow a functional index to use one.
 	 */
-	if (contain_noncachable_functions((Node *) predList))
-		elog(ERROR, "Cannot use non-cachable function in index predicate");
+	if (contain_mutable_functions((Node *) predList))
+		elog(ERROR, "Functions in index predicate must be marked isImmutable");
 }
 
 
@@ -320,13 +321,13 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	}
 
 	/*
-	 * Require that the function be marked cachable.  Using a noncachable
+	 * Require that the function be marked immutable.  Using a mutable
 	 * function for a functional index is highly questionable, since if
 	 * you aren't going to get the same result for the same data every
 	 * time, it's not clear what the index entries mean at all.
 	 */
-	if (!func_iscachable(funcid))
-		elog(ERROR, "DefineIndex: index function must be marked iscachable");
+	if (func_volatile(funcid) != PROVOLATILE_IMMUTABLE)
+		elog(ERROR, "DefineIndex: index function must be marked isImmutable");
 
 	/* Process opclass, using func return type as default type */
 

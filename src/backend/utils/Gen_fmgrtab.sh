@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.21 2002/02/18 23:11:20 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.22 2002/04/05 00:31:28 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ sed 	-e 's/^.*OID[^=]*=[^0-9]*//' \
 	-e 's/[ 	]*).*$//' | \
 $AWK '
 /^#/		{ print; next; }
-$4 == "12"	{ print; next; }' > $CPPTMPFILE
+$5 == "12"	{ print; next; }' > $CPPTMPFILE
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -232,7 +232,7 @@ $AWK 'BEGIN {
     Bool["f"] = "false"
 }
 { printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
-	$1, $(NF-2), $9, Bool[$8], Bool[$10], $(NF-2)
+	$1, $(NF-2), $10, Bool[$8], Bool[$11], $(NF-2)
 }' $RAWFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then

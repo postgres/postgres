@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.67 2002/03/29 19:06:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.68 2002/04/05 00:31:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,17 +40,17 @@ static void checkretval(Oid rettype, List *queryTreeList);
  * ----------------------------------------------------------------
  */
 Oid
-ProcedureCreate(char *procedureName,
+ProcedureCreate(const char *procedureName,
 				Oid procNamespace,
 				bool replace,
 				bool returnsSet,
 				Oid returnType,
 				Oid languageObjectId,
-				char *prosrc,
-				char *probin,
+				const char *prosrc,
+				const char *probin,
 				bool trusted,
-				bool canCache,
 				bool isStrict,
+				char volatility,
 				int32 byte_pct,
 				int32 perbyte_cpu,
 				int32 percall_cpu,
@@ -167,7 +167,7 @@ ProcedureCreate(char *procedureName,
 	 */
 	if (parameterCount == 1 && OidIsValid(typev[0]) &&
 		(relid = typeidTypeRelid(typev[0])) != 0 &&
-		get_attnum(relid, procedureName) != InvalidAttrNumber)
+		get_attnum(relid, (char *) procedureName) != InvalidAttrNumber)
 		elog(ERROR, "method %s already an attribute of type %s",
 			 procedureName, typeidTypeName(typev[0]));
 
@@ -180,7 +180,9 @@ ProcedureCreate(char *procedureName,
 
 	if (languageObjectId == SQLlanguageId)
 	{
-		querytree_list = pg_parse_and_rewrite(prosrc, typev, parameterCount);
+		querytree_list = pg_parse_and_rewrite((char *) prosrc,
+											  typev,
+											  parameterCount);
 		/* typecheck return value */
 		checkretval(returnType, querytree_list);
 	}
@@ -196,12 +198,11 @@ ProcedureCreate(char *procedureName,
 	 * of backwards compatibility, accept an empty 'prosrc' value as
 	 * meaning the supplied SQL function name.
 	 */
-
 	if (languageObjectId == INTERNALlanguageId)
 	{
 		if (strlen(prosrc) == 0)
 			prosrc = procedureName;
-		if (fmgr_internal_function(prosrc) == InvalidOid)
+		if (fmgr_internal_function((char *) prosrc) == InvalidOid)
 			elog(ERROR,
 				 "there is no built-in function named \"%s\"",
 				 prosrc);
@@ -216,7 +217,6 @@ ProcedureCreate(char *procedureName,
 	 * called, but it seems friendlier to verify the library's validity at
 	 * CREATE FUNCTION time.
 	 */
-
 	if (languageObjectId == ClanguageId)
 	{
 		void	   *libraryhandle;
@@ -224,9 +224,11 @@ ProcedureCreate(char *procedureName,
 		/* If link symbol is specified as "-", substitute procedure name */
 		if (strcmp(prosrc, "-") == 0)
 			prosrc = procedureName;
-		(void) load_external_function(probin, prosrc, true,
+		(void) load_external_function((char *) probin,
+									  (char *) prosrc,
+									  true,
 									  &libraryhandle);
-		(void) fetch_finfo_record(libraryhandle, prosrc);
+		(void) fetch_finfo_record(libraryhandle, (char *) prosrc);
 	}
 
 	/*
@@ -242,18 +244,18 @@ ProcedureCreate(char *procedureName,
 
 	i = 0;
 	namestrcpy(&procname, procedureName);
-	values[i++] = NameGetDatum(&procname);
-	values[i++] = Int32GetDatum(GetUserId());
-	values[i++] = ObjectIdGetDatum(languageObjectId);
-	/* XXX isinherited is always false for now */
-	values[i++] = BoolGetDatum(false);
-	values[i++] = BoolGetDatum(trusted);
-	values[i++] = BoolGetDatum(canCache);
-	values[i++] = BoolGetDatum(isStrict);
-	values[i++] = UInt16GetDatum(parameterCount);
-	values[i++] = BoolGetDatum(returnsSet);
-	values[i++] = ObjectIdGetDatum(returnType);
-	values[i++] = PointerGetDatum(typev);
+	values[i++] = NameGetDatum(&procname);		/* proname */
+	values[i++] = ObjectIdGetDatum(procNamespace); /* pronamespace */
+	values[i++] = Int32GetDatum(GetUserId());	/* proowner */
+	values[i++] = ObjectIdGetDatum(languageObjectId); /* prolang */
+	values[i++] = BoolGetDatum(false);			/* proisinh (unused) */
+	values[i++] = BoolGetDatum(trusted);		/* proistrusted */
+	values[i++] = BoolGetDatum(isStrict);		/* proisstrict */
+	values[i++] = CharGetDatum(volatility);		/* provolatile */
+	values[i++] = UInt16GetDatum(parameterCount); /* pronargs */
+	values[i++] = BoolGetDatum(returnsSet);		/* proretset */
+	values[i++] = ObjectIdGetDatum(returnType);	/* prorettype */
+	values[i++] = PointerGetDatum(typev);		/* proargtypes */
 	values[i++] = Int32GetDatum(byte_pct);		/* probyte_pct */
 	values[i++] = Int32GetDatum(perbyte_cpu);	/* properbyte_cpu */
 	values[i++] = Int32GetDatum(percall_cpu);	/* propercall_cpu */
@@ -262,6 +264,8 @@ ProcedureCreate(char *procedureName,
 									  CStringGetDatum(prosrc));
 	values[i++] = DirectFunctionCall1(textin,	/* probin */
 									  CStringGetDatum(probin));
+	/* proacl will be handled below */
+
 
 	rel = heap_openr(ProcedureRelationName, RowExclusiveLock);
 	tupDesc = rel->rd_att;
@@ -294,7 +298,7 @@ ProcedureCreate(char *procedureName,
 			elog(ERROR, "ProcedureCreate: cannot change return type of existing function."
 				 "\n\tUse DROP FUNCTION first.");
 
-		/* do not change existing permissions */
+		/* do not change existing permissions, either */
 		replaces[Anum_pg_proc_proacl-1] = ' ';
 
 		/* Okay, do it... */

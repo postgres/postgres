@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.122 2002/03/29 22:10:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.123 2002/04/05 00:31:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -525,7 +525,7 @@ func_get_candidates(char *funcname, int nargs)
 						   (RegProcedure) F_INT2EQ,
 						   Int16GetDatum(nargs));
 
-	funcscan = systable_beginscan(heapRelation, ProcedureNameIndex, true,
+	funcscan = systable_beginscan(heapRelation, ProcedureNameNspIndex, true,
 								  SnapshotNow, 2, skey);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(funcscan)))

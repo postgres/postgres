@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.72 2002/03/29 19:06:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.73 2002/04/05 00:31:25 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -145,7 +145,7 @@ static void
 compute_full_attributes(List *parameters,
 						int32 *byte_pct_p, int32 *perbyte_cpu_p,
 						int32 *percall_cpu_p, int32 *outin_ratio_p,
-						bool *canCache_p, bool *isStrict_p)
+						bool *isStrict_p, char *volatility_p)
 {
 /*-------------
  *	 Interpret the parameters *parameters and return their contents as
@@ -156,18 +156,15 @@ compute_full_attributes(List *parameters,
  *
  *	Note: currently, only two of these parameters actually do anything:
  *
- *	 * canCache means the optimizer's constant-folder is allowed to
- *	   pre-evaluate the function when all its inputs are constants.
- *
  *	 * isStrict means the function should not be called when any NULL
  *	   inputs are present; instead a NULL result value should be assumed.
+ *
+ *	 * volatility tells the optimizer whether the function's result can
+ *	   be assumed to be repeatable over multiple evaluations.
  *
  *	The other four parameters are not used anywhere.	They used to be
  *	used in the "expensive functions" optimizer, but that's been dead code
  *	for a long time.
- *
- *	Since canCache and isStrict are useful for any function, we now allow
- *	attributes to be supplied for all functions regardless of language.
  *------------
  */
 	List	   *pl;
@@ -177,17 +174,26 @@ compute_full_attributes(List *parameters,
 	*perbyte_cpu_p = PERBYTE_CPU;
 	*percall_cpu_p = PERCALL_CPU;
 	*outin_ratio_p = OUTIN_RATIO;
-	*canCache_p = false;
 	*isStrict_p = false;
+	*volatility_p = PROVOLATILE_VOLATILE;
 
 	foreach(pl, parameters)
 	{
 		DefElem    *param = (DefElem *) lfirst(pl);
 
-		if (strcasecmp(param->defname, "iscachable") == 0)
-			*canCache_p = true;
-		else if (strcasecmp(param->defname, "isstrict") == 0)
+		if (strcasecmp(param->defname, "isstrict") == 0)
 			*isStrict_p = true;
+		else if (strcasecmp(param->defname, "isimmutable") == 0)
+			*volatility_p = PROVOLATILE_IMMUTABLE;
+		else if (strcasecmp(param->defname, "isstable") == 0)
+			*volatility_p = PROVOLATILE_STABLE;
+		else if (strcasecmp(param->defname, "isvolatile") == 0)
+			*volatility_p = PROVOLATILE_VOLATILE;
+		else if (strcasecmp(param->defname, "iscachable") == 0)
+		{
+			/* obsolete spelling of isImmutable */
+			*volatility_p = PROVOLATILE_IMMUTABLE;
+		}
 		else if (strcasecmp(param->defname, "trusted") == 0)
 		{
 			/*
@@ -273,8 +279,8 @@ CreateFunction(ProcedureStmt *stmt)
 				perbyte_cpu,
 				percall_cpu,
 				outin_ratio;
-	bool		canCache,
-				isStrict;
+	bool		isStrict;
+	char		volatility;
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
 
@@ -311,7 +317,7 @@ CreateFunction(ProcedureStmt *stmt)
 
 	compute_full_attributes(stmt->withClause,
 							&byte_pct, &perbyte_cpu, &percall_cpu,
-							&outin_ratio, &canCache, &isStrict);
+							&outin_ratio, &isStrict, &volatility);
 
 	interpret_AS_clause(languageOid, languageName, stmt->as,
 						&prosrc_str, &probin_str);
@@ -329,8 +335,8 @@ CreateFunction(ProcedureStmt *stmt)
 					prosrc_str, /* converted to text later */
 					probin_str, /* converted to text later */
 					true,		/* (obsolete "trusted") */
-					canCache,
 					isStrict,
+					volatility,
 					byte_pct,
 					perbyte_cpu,
 					percall_cpu,

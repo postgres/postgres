@@ -61,7 +61,7 @@ WHERE p1.oid != p2.oid AND
     (p1.prolang != p2.prolang OR
      p1.proisinh != p2.proisinh OR
      p1.proistrusted != p2.proistrusted OR
-     p1.proiscachable != p2.proiscachable OR
+     p1.provolatile != p2.provolatile OR
      p1.pronargs != p2.pronargs OR
      p1.proretset != p2.proretset);
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.130 2002/04/03 05:39:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.131 2002/04/05 00:31:23 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Define a third class of function volatility to allow indexscans in more cases
 Locale support is now built by default; choice of locale is set by initdb and/or at run-time
 ALTER TABLE ALTER COLUMN SET/DROP NOT NULL
 EXPLAIN output comes out as a query result, not a NOTICE message
