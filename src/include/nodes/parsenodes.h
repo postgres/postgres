@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.136 2001/07/16 19:07:40 momjian Exp $
+ * $Id: parsenodes.h,v 1.137 2001/08/04 19:38:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -760,7 +760,7 @@ typedef struct VariableResetStmt
 typedef struct LockStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to lock */
+	List	   *rellist;		/* relations to lock */
 	int			mode;			/* lock mode */
 } LockStmt;
 
