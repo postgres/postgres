@@ -74,7 +74,13 @@ public class Array implements java.sql.Array
 		Object retVal = null;
 
 		ArrayList array = new ArrayList();
-		if ( rawString != null )
+ 		
+		/* Check if the String is also not an empty array
+                 * otherwise there will be an exception thrown below
+                 * in the ResultSet.toX with an empty string.
+                 * -- Doug Fields <dfields-pg-jdbc@pexicom.com> Feb 20, 2002 */
+                
+		if ( rawString != null && !rawString.equals("{}") )
 		{
 			char[] chars = rawString.toCharArray();
 			StringBuffer sbuf = new StringBuffer();
