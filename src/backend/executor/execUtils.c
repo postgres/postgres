@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.64 2000/07/14 22:17:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.65 2000/08/22 04:06:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -866,9 +866,8 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 
 	heapTuple = slot->val;
 
-	/* ----------------
-	 *	get information from the result relation info structure.
-	 * ----------------
+	/*
+	 * Get information from the result relation info structure.
 	 */
 	resultRelationInfo = estate->es_result_relation_info;
 	numIndices = resultRelationInfo->ri_NumIndices;
@@ -877,14 +876,26 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	heapRelation = resultRelationInfo->ri_RelationDesc;
 	heapDescriptor = RelationGetDescr(heapRelation);
 
-	/* ----------------
-	 *	Make a temporary expr/memory context for evaluating predicates
-	 *	and functional-index functions.
-	 *	XXX should do this once per command not once per tuple, and
-	 *	just reset it once per tuple.
-	 * ----------------
+	/*
+	 * We will use the EState's per-tuple context for evaluating predicates
+	 * and functional-index functions.  Create it if it's not already there;
+	 * if it is, reset it to free previously-used storage.
 	 */
-	econtext = MakeExprContext(slot, TransactionCommandContext);
+	econtext = estate->es_per_tuple_exprcontext;
+	if (econtext == NULL)
+	{
+		MemoryContext	oldContext;
+
+		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+		estate->es_per_tuple_exprcontext = econtext =
+			MakeExprContext(NULL, estate->es_query_cxt);
+		MemoryContextSwitchTo(oldContext);
+	}
+	else
+		ResetExprContext(econtext);
+
+	/* Arrange for econtext's scan tuple to be the tuple under test */
+	econtext->ecxt_scantuple = slot;
 
 	/* ----------------
 	 *	for each index, form and insert the index tuple
@@ -935,8 +946,6 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		if (result)
 			pfree(result);
 	}
-
-	FreeExprContext(econtext);
 }
 
 void

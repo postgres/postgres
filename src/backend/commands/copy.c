@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.120 2000/08/06 04:26:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.121 2000/08/22 04:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "executor/executor.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -598,7 +599,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 				tuples_read = 0;
 	bool		reading_to_eof = true;
 	RelationInfo *relationInfo;
-	EState	   *estate = makeNode(EState);		/* for ExecConstraints() */
+	EState	   *estate = CreateExecutorState();	/* for ExecConstraints() */
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 	Oid			loaded_oid = InvalidOid;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.18 2000/07/12 02:37:30 tgl Exp $
+ * $Id: hashjoin.h,v 1.19 2000/08/22 04:06:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  * This makes it easy and fast to release the storage when we don't need it
  * anymore.
  *
- * The contexts are made children of TransactionCommandContext, ensuring
+ * The hashtable contexts are made children of the per-query context, ensuring
  * that they will be discarded at end of statement even if the join is
  * aborted early by an error.  (Likewise, any temporary files we make will
  * be cleaned up by the virtual file manager in event of an error.)

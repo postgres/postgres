@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.50 2000/07/17 03:04:53 tgl Exp $
+ *	$Id: nodeHash.c,v 1.51 2000/08/22 04:06:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,7 +334,8 @@ ExecHashTableCreate(Hash *node)
 
 	/* ----------------
 	 *	Initialize the hash table control block.
-	 *	The hashtable control block is just palloc'd from executor memory.
+	 *	The hashtable control block is just palloc'd from the executor's
+	 *	per-query memory context.
 	 * ----------------
 	 */
 	hashtable = (HashJoinTable) palloc(sizeof(HashTableData));
@@ -361,7 +362,7 @@ ExecHashTableCreate(Hash *node)
 	 *	working storage.  See notes in executor/hashjoin.h.
 	 * ----------------
 	 */
-	hashtable->hashCxt = AllocSetContextCreate(TransactionCommandContext,
+	hashtable->hashCxt = AllocSetContextCreate(CurrentMemoryContext,
 											   "HashTableContext",
 											   ALLOCSET_DEFAULT_MINSIZE,
 											   ALLOCSET_DEFAULT_INITSIZE,

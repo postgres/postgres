@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.123 2000/08/06 04:26:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.124 2000/08/22 04:06:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1574,31 +1574,32 @@ ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 {
 	int			ncheck = rel->rd_att->constr->num_check;
 	ConstrCheck *check = rel->rd_att->constr->check;
-	MemoryContext oldContext;
 	ExprContext *econtext;
+	MemoryContext oldContext;
 	List	   *qual;
 	int			i;
 
 	/*
-	 * Make sure econtext, expressions, etc are placed in appropriate context.
+	 * We will use the EState's per-tuple context for evaluating constraint
+	 * expressions.  Create it if it's not already there; if it is, reset it
+	 * to free previously-used storage.
 	 */
-	oldContext = MemoryContextSwitchTo(TransactionCommandContext);
-
-	/*
-	 * Create or reset the exprcontext for evaluating constraint expressions.
-	 */
-	econtext = estate->es_constraint_exprcontext;
+	econtext = estate->es_per_tuple_exprcontext;
 	if (econtext == NULL)
-		estate->es_constraint_exprcontext = econtext =
-			MakeExprContext(NULL, TransactionCommandContext);
+	{
+		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+		estate->es_per_tuple_exprcontext = econtext =
+			MakeExprContext(NULL, estate->es_query_cxt);
+		MemoryContextSwitchTo(oldContext);
+	}
 	else
 		ResetExprContext(econtext);
 
 	/*
 	 * If first time through for current result relation, set up econtext's
 	 * range table to refer to result rel, and build expression nodetrees
-	 * for rel's constraint expressions.  All this stuff is kept in
-	 * TransactionCommandContext so it will still be here next time through.
+	 * for rel's constraint expressions.  All this stuff is kept in the
+	 * per-query memory context so it will still be here next time through.
 	 *
 	 * NOTE: if there are multiple result relations (eg, due to inheritance)
 	 * then we leak storage for prior rel's expressions and rangetable.
@@ -1608,7 +1609,14 @@ ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 	if (econtext->ecxt_range_table == NIL ||
 		getrelid(1, econtext->ecxt_range_table) != RelationGetRelid(rel))
 	{
-		RangeTblEntry *rte = makeNode(RangeTblEntry);
+		RangeTblEntry *rte;
+
+		/*
+		 * Make sure expressions, etc are placed in appropriate context.
+		 */
+		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+
+		rte = makeNode(RangeTblEntry);
 
 		rte->relname = RelationGetRelationName(rel);
 		rte->ref = makeNode(Attr);
@@ -1627,10 +1635,10 @@ ExecRelCheck(Relation rel, TupleTableSlot *slot, EState *estate)
 			qual = (List *) stringToNode(check[i].ccbin);
 			estate->es_result_relation_constraints[i] = qual;
 		}
-	}
 
-	/* Done with building long-lived items */
-	MemoryContextSwitchTo(oldContext);
+		/* Done with building long-lived items */
+		MemoryContextSwitchTo(oldContext);
+	}
 
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;

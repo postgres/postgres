@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.37 2000/07/17 03:05:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.38 2000/08/22 04:06:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,8 +68,8 @@ CreateExecutorState(void)
 	state->es_direction = ForwardScanDirection;
 	state->es_range_table = NIL;
 
-	state->es_into_relation_descriptor = NULL;
 	state->es_result_relation_info = NULL;
+	state->es_into_relation_descriptor = NULL;
 
 	state->es_param_list_info = NULL;
 	state->es_param_exec_vals = NULL;
@@ -77,6 +77,10 @@ CreateExecutorState(void)
 	state->es_tupleTable = NULL;
 
 	state->es_junkFilter = NULL;
+
+	state->es_query_cxt = CurrentMemoryContext;
+
+	state->es_per_tuple_exprcontext = NULL;
 
 	/* ----------------
 	 *	return the executor state structure
@@ -144,12 +148,10 @@ PreparePortal(char *portalName)
 	}
 
 	/* ----------------
-	 *	 Create the new portal and make its memory context active.
+	 *	 Create the new portal.
 	 * ----------------
 	 */
 	portal = CreatePortal(portalName);
-
-	MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
 	return portal;
 }
@@ -170,8 +172,9 @@ ProcessQuery(Query *parsetree,
 	char	   *tag;
 	bool		isRetrieveIntoPortal;
 	bool		isRetrieveIntoRelation;
-	Portal		portal = NULL;
 	char	   *intoName = NULL;
+	Portal		portal = NULL;
+	MemoryContext oldContext = NULL;
 	QueryDesc  *queryDesc;
 	EState	   *state;
 	TupleDesc	attinfo;
@@ -217,14 +220,18 @@ ProcessQuery(Query *parsetree,
 	if (isRetrieveIntoPortal)
 	{
 		portal = PreparePortal(intoName);
-		/* CurrentMemoryContext is now pointing to portal's context */
+		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		parsetree = copyObject(parsetree);
 		plan = copyObject(plan);
+		/*
+		 * We stay in portal's memory context for now, so that query desc,
+		 * EState, and plan startup info are also allocated in the portal
+		 * context.
+		 */
 	}
 
 	/* ----------------
-	 *	Now we can create the QueryDesc object (this is also in
-	 *	the portal context, if portal retrieve).
+	 *	Now we can create the QueryDesc object.
 	 * ----------------
 	 */
 	queryDesc = CreateQueryDesc(parsetree, plan, dest);
@@ -241,7 +248,7 @@ ProcessQuery(Query *parsetree,
 		queryDesc->dest = (int) None;
 
 	/* ----------------
-	 *	create a default executor state..
+	 *	create a default executor state.
 	 * ----------------
 	 */
 	state = CreateExecutorState();
@@ -279,9 +286,11 @@ ProcessQuery(Query *parsetree,
 					   state,
 					   PortalCleanup);
 
-		MemoryContextSwitchTo(TransactionCommandContext);
+		/* Now we can return to caller's memory context. */
+		MemoryContextSwitchTo(oldContext);
 
 		EndCommand(tag, dest);
+
 		return;
 	}
 

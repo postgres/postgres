@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.46 2000/08/13 02:50:24 tgl Exp $
+ * $Id: execnodes.h,v 1.47 2000/08/22 04:06:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,9 +223,14 @@ typedef struct EState
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMark;		/* not good place, but there is no other */
-	/* these two fields are storage space for ExecConstraints(): */
+	MemoryContext es_query_cxt;	/* per-query context in which EState lives */
+	/* this ExprContext is for per-output-tuple operations, such as
+	 * constraint checks and index-value computations.  It can be reset
+	 * for each output tuple.  Note that it will be created only if needed.
+	 */
+	ExprContext *es_per_tuple_exprcontext;
+	/* this field is storage space for ExecConstraints(): */
 	List	  **es_result_relation_constraints;
-	ExprContext *es_constraint_exprcontext;
 	/* Below is to re-evaluate plan qual in READ COMMITTED mode */
 	struct Plan *es_origPlan;
 	Pointer		es_evalPlanQual;
