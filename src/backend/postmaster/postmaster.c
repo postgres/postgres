@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.12 1996/10/12 07:48:49 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.13 1996/10/13 04:01:05 bryanh Exp $
  *
  * NOTES
  *
@@ -152,7 +152,8 @@ static int MultiplexedBackendPort;
  * postmaster.c - function prototypes
  */
 static void pmdaemonize(void);
-static int ConnStartup(Port *port);
+static void ConnStartup(Port *port, int *status, 
+                        char *errormsg, const int errormsg_len);
 static int ConnCreate(int serverFd, int *newFdP);
 static void reset_shared(short port);
 static void pmdie(SIGNAL_ARGS);
@@ -163,9 +164,9 @@ static int DoExec(StartupInfo *packet, int portFd);
 static void ExitPostmaster(int status);
 static void usage(const char *);
 static void checkDataDir(void);
-
 int ServerLoop(void);
 int BackendStartup(StartupInfo *packet, Port *port, int *pidPtr);
+static void send_error_reply(Port *port, const char *errormsg);
 
 extern char *optarg;
 extern int optind, opterr;
