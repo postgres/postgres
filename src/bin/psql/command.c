@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.133 2004/11/06 17:56:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.134 2004/11/09 14:39:43 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1145,7 +1145,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		ret = GetTempPath(MAXPGPATH, tmpdir);
 		if (ret == 0 || ret > MAXPGPATH)
 		{
-			psql_error("Can not locate temporary directory: %s",
+			psql_error("cannot locate temporary directory: %s",
 						!ret ? strerror(errno) : "");
 			return false;
 		}

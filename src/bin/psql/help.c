@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.95 2004/10/12 21:54:44 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.96 2004/11/09 14:39:44 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -250,7 +250,7 @@ slashUsage(unsigned short int pager)
 	fprintf(output, _("Copy, Large Object\n"));
 	fprintf(output, _("  \\copy ...      perform SQL COPY with data stream to the client host\n"));
 	fprintf(output, _("  \\lo_export LOBOID FILE\n"
-					  "  \\lo_import FILE [COMMENT] \n"
+					  "  \\lo_import FILE [COMMENT]\n"
 					  "  \\lo_list\n"
 				   "  \\lo_unlink LOBOID    large object operations\n"));
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.109 2004/11/05 19:16:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.110 2004/11/09 14:39:43 petere Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1149,9 +1149,9 @@ describeOneTableDetails(const char *schemaname,
 				/* Label as primary key or unique (but not both) */
 				appendPQExpBuffer(&buf,
 							  strcmp(PQgetvalue(result1, i, 1), "t") == 0
-								  ? _(" PRIMARY KEY,") :
+								  ? " PRIMARY KEY," :
 							 (strcmp(PQgetvalue(result1, i, 2), "t") == 0
-							  ? _(" UNIQUE,")
+							  ? " UNIQUE,"
 							  : ""));
 				/* Everything after "USING" is echoed verbatim */
 				indexdef = PQgetvalue(result1, i, 4);
@@ -1162,7 +1162,7 @@ describeOneTableDetails(const char *schemaname,
 				appendPQExpBuffer(&buf, " %s", indexdef);
 
 				if (strcmp(PQgetvalue(result1, i, 3), "t") == 0)
-					appendPQExpBuffer(&buf, _(" CLUSTER"));
+					appendPQExpBuffer(&buf, " CLUSTER");
 
 				footers[count_footers++] = pg_strdup(buf.data);
 			}
@@ -1388,7 +1388,7 @@ describeUsers(const char *pattern)
 		return false;
 
 	myopt.nullPrint = NULL;
-	myopt.title = _("List of database users");
+	myopt.title = _("List of users");
 
 	printQuery(res, &myopt, pset.queryFout);
 
@@ -1428,7 +1428,7 @@ describeGroups(const char *pattern)
 		return false;
 
 	myopt.nullPrint = NULL;
-	myopt.title = _("List of database groups");
+	myopt.title = _("List of groups");
 
 	printQuery(res, &myopt, pset.queryFout);
 
