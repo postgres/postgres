@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.33 2002/11/07 22:08:30 tgl Exp $
+ * $Id: pg_config.h.in,v 1.34 2002/11/10 00:38:21 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -186,18 +186,6 @@
 /* #define ALLOW_DANGEROUS_LO_FUNCTIONS */
 
 /*
- * Use btree bulkload code: 
- * this code is moderately slow (~10% slower) compared to the regular
- * btree (insertion) build code on sorted or well-clustered data.  on
- * random data, however, the insertion build code is unusable -- the
- * difference on a 60MB heap is a factor of 15 because the random
- * probes into the btree thrash the buffer pool.
- *
- * Great thanks to Paul M. Aoki (aoki@CS.Berkeley.EDU)
- */
-#define FASTBUILD /* access/nbtree/nbtsort.c */
-
-/*
  * MAXPGPATH: standard size of a pathname buffer in Postgres (hence,
  * maximum usable pathname length is one less).
  *
@@ -276,9 +264,6 @@
  * copyObject(), to facilitate catching errors and omissions in copyObject().
  */
 /* #define COPY_PARSE_PLAN_TREES */
-
-/* Enable debugging print statements in the date/time support routines. */
-/* #define DATEDEBUG */
 
 /* Enable debugging print statements for lock-related operations. */
 /* #define LOCK_DEBUG */
