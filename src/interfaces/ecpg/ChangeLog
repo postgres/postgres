@@ -1524,6 +1524,10 @@ Thu Jun 26 13:26:13 CEST 2003
 
 	- Added another compatibility level INFORMIX_SE.
 	- Synced again.
+	
+Sun Jun 29 11:22:48 CEST 2003
+
+	- Just another sync.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

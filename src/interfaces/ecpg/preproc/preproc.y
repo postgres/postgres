@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.241 2003/06/27 00:33:26 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.242 2003/06/29 09:25:19 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1730,7 +1730,7 @@ DropStmt:  DROP drop_type any_name_list opt_drop_behavior
 			{ $$ = cat_str(4, make_str("drop"), $2, $3, $4); }
 		;
 
-drop_type:	TABLE		{ $$ = make_str("table"); }
+drop_type:	TABLE			{ $$ = make_str("table"); }
 		| SEQUENCE		{ $$ = make_str("sequence"); }
 		| VIEW			{ $$ = make_str("view"); }
 		| INDEX			{ $$ = make_str("index"); }
@@ -2177,10 +2177,28 @@ opt_force: FORCE			{ $$ = make_str("force"); }
  *
  *****************************************************************************/
 
-RenameStmt:  ALTER TABLE relation_expr RENAME opt_column opt_name TO name
+RenameStmt:  ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
+			{ $$ = cat_str(6, make_str("alter aggregate"), $3, make_str("("), $5, make_str(") rename to"), $9); }
+	| ALTER CONVERSION_P any_name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter conversion"), $3, make_str("rename to"), $6); }
+	| ALTER DATABASE database_name RENAME TO database_name
+			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("rename to"), $6); }
+	| ALTER FUNCTION func_name func_args RENAME TO name
+			{ $$ = cat_str(5, make_str("alter function"), $3, $4, make_str("rename to"), $7); }
+	| ALTER GROUP_P UserId RENAME TO UserId
+			{ $$ = cat_str(4, make_str("alter group"), $3, make_str("rename to"), $6); }
+	| ALTER LANGUAGE name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter language"), $3, make_str("rename to"), $6); }
+	| ALTER OPERATOR CLASS any_name USING access_method RENAME TO name
+			{ $$ = cat_str(6, make_str("alter operator class"), $4, make_str("using"), $6, make_str("rename to"), $9); }
+	| ALTER SCHEMA name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter schema"), $3, make_str("rename to"), $6); }
+	| ALTER TABLE relation_expr RENAME opt_column opt_name TO name
 			{ $$ = cat_str(7, make_str("alter table"), $3, make_str("rename"), $5, $6, make_str("to"), $8); }
 	| ALTER TRIGGER name ON relation_expr RENAME TO name
 			{ $$ = cat_str(6, make_str("alter trigger"), $3, make_str("on"), $5, make_str("rename to"), $8); }
+	| ALTER USER UserId RENAME TO UserId
+			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("rename to"), $6); }
 		;
 
 opt_name:  name				{ $$ = $1; }
@@ -3476,6 +3494,8 @@ a_expr:  c_expr
 			{ $$ = cat_str(3, $1, make_str("not in"), $4); }
 		| a_expr qual_all_Op sub_type select_with_parens %prec Op
 			{ $$ = cat_str(4, $1, $2, $3, $4); }
+		| a_expr qual_all_Op sub_type '(' a_expr ')' %prec Op
+			{ $$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); }
 		| UNIQUE select_with_parens %prec Op
 			{ $$ = cat2_str(make_str("unique"), $2); }
 		| r_expr
