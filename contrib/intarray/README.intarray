@@ -10,6 +10,12 @@ All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
 for additional information.
 
+CHANGES:
+
+March 19, 2001
+   1. Added support for toastable keys
+   2. Improved split algorithm for intbig (selection speedup is about 30%)
+
 INSTALLATION:
 
   gmake

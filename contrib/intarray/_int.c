@@ -4,6 +4,11 @@
   format for these routines is dictated by Postgres architecture.
 ******************************************************************************/
 
+/*
+#define GIST_DEBUG
+#define GIST_QUERY_DEBUG 
+*/
+
 #include "postgres.h"
 
 #include <float.h>
@@ -17,32 +22,46 @@
 #include "utils/builtins.h"
 #include "storage/bufpage.h"
 
+/* number ranges for compression */
 #define MAXNUMRANGE 100 
 
 #define max(a,b)        ((a) >  (b) ? (a) : (b))
 #define min(a,b)        ((a) <= (b) ? (a) : (b))
 #define abs(a)          ((a) <  (0) ? -(a) : (a))
 
-#define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
-#ifdef PGSQL71
-#define ARRSIZE(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
-#else
-#define ARRSIZE(x)  getNitems( ARR_NDIM(x), ARR_DIMS(x))
-#endif
-
+/* dimension of array */
 #define NDIM 1
 
-#define ARRISNULL(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRSIZE( x ) ) ? 0 : 1 ) : 1  ) : 1 )
-#define SORT(x) if ( ARRSIZE( x ) > 1 ) isort( (void*)ARRPTR( x ), ARRSIZE( x ) );
+/* useful macros for accessing int4 arrays */
+#define ARRPTR(x)  ( (int4 *) ARR_DATA_PTR(x) )
+#ifdef PGSQL71
+#define ARRNELEMS(x)  ArrayGetNItems( ARR_NDIM(x), ARR_DIMS(x))
+#else
+#define ARRNELEMS(x)  getNitems( ARR_NDIM(x), ARR_DIMS(x))
+#endif
+
+#define ARRISNULL(x) ( (x) ? ( ( ARR_NDIM(x) == NDIM ) ? ( ( ARRNELEMS( x ) ) ? 0 : 1 ) : 1  ) : 1 )
+
+#define SORT(x) \
+	do { \
+		 if ( ARRNELEMS( x ) > 1 ) \
+			isort( (void*)ARRPTR( x ), ARRNELEMS( x ) ); \
+	} while(0)
+
 #define PREPAREARR(x) \
-	if ( ARRSIZE( x ) > 1 ) {\
-		if ( isort( (void*)ARRPTR( x ), ARRSIZE( x ) ) )\
-			x = _int_unique( x );\
-	}
+	do { \
+		 if ( ARRNELEMS( x ) > 1 ) \
+			if ( isort( (void*)ARRPTR( x ), ARRNELEMS( x ) ) ) \
+				x = _int_unique( x ); \
+	} while(0)
+
+/* "wish" function */
+#define WISH_F(a,b,c) (double)( -(double)(((a)-(b))*((a)-(b))*((a)-(b)))*(c) )
+
 
 /* bigint defines */
 #define BITBYTE 8
-#define SIGLENINT  128
+#define SIGLENINT  64   /* >122 => key will toast, so very slow!!! */
 #define SIGLEN  ( sizeof(int)*SIGLENINT )
 #define SIGLENBIT (SIGLEN*BITBYTE)
 
@@ -50,10 +69,6 @@ typedef char BITVEC[SIGLEN];
 typedef char* BITVECP;
 #define SIGPTR(x)  ( (BITVECP) ARR_DATA_PTR(x) )
 
-#define NULLIFY(a) MemSet( a, 0, sizeof( BITVEC ) )
-#define NEWSIG(a) \
-        a=(BITVECP) malloc( sizeof( BITVEC ) );\
-        NULLIFY(a);
 
 #define LOOPBYTE(a) \
         for(i=0;i<SIGLEN;i++) {\
@@ -71,13 +86,7 @@ typedef char* BITVECP;
 #define SETBIT(x,i)   GETBYTEBIT(x,i) |=  ( 0x01 << ( (i) % BITBYTE ) )
 #define GETBIT(x,i) ( (GETBYTEBIT(x,i) >> ( (i) % BITBYTE )) & 0x01 )
 
-#define union_sig(a,b,r) LOOPBYTE(r[i] = a[i] | b[i])
-#define inter_sig(a,b,r) LOOPBYTE(r[i] = a[i] & b[i])
 
-/*
-#define GIST_DEBUG
-#define GIST_QUERY_DEBUG 
-*/
 #ifdef GIST_DEBUG
 static void printarr ( ArrayType * a, int num ) {
 	char bbb[16384];
@@ -87,7 +96,7 @@ static void printarr ( ArrayType * a, int num ) {
 	d = ARRPTR( a );
 	*bbb = '\0';
 	cur = bbb;
-	for(l=0; l<min( num, ARRSIZE( a ));l++) {
+	for(l=0; l<min( num, ARRNELEMS( a ));l++) {
 		sprintf(cur,"%d ", d[l] );
 		cur = strchr( cur, '\0' ) ;
 	}
@@ -119,12 +128,13 @@ static ArrayType * resize_intArrayType( ArrayType * a, int num );
 static int internal_size( int *a, int len );
 static ArrayType * _int_unique( ArrayType * a );
 
-/* common gist function*/
+/* common GiST function*/
 static GIST_SPLITVEC *  _int_common_picksplit(bytea *entryvec, 
 		GIST_SPLITVEC *v, 
 		formarray unionf, 
 		formarray interf, 
-		formfloat sizef);
+		formfloat sizef,
+		float coef);
 static float * _int_common_penalty(GISTENTRY *origentry, 
 		GISTENTRY *newentry, 
 		float *result,
@@ -147,7 +157,7 @@ bool *           g_int_same(ArrayType *b1, ArrayType *b2, bool *result);
 
 
 /*
-** R-tree suport functions
+** R-tree support functions
 */
 bool     inner_int_contains(ArrayType *a, ArrayType *b);
 bool     inner_int_overlap(ArrayType *a, ArrayType *b);
@@ -199,6 +209,8 @@ g_int_consistent(GISTENTRY *entry,
     bool retval;
    
     /* sort query for fast search, key is already sorted */
+	/* XXX are we sure it's safe to scribble on the query object here? */
+	/* XXX what about toasted input? */
     if ( ARRISNULL( query ) ) return FALSE; 
     PREPAREARR( query );    
 
@@ -238,21 +250,29 @@ g_int_compress(GISTENTRY *entry)
     int i,min,cand;
 
     retval = palloc(sizeof(GISTENTRY));
-    if ( ! retval ) 
-	elog(ERROR,"Can't allocate memory for compression");
 
-    if ( ARRISNULL( (ArrayType *) entry->pred ) )  {
+#ifdef PGSQL71
+	if ( entry->pred ) 
+		r = (ArrayType *)PG_DETOAST_DATUM_COPY( entry->pred );
+	else 
+		r = NULL;
+#else
+    r = copy_intArrayType( (ArrayType *) entry->pred );
+#endif
+
+    if ( ARRISNULL( r ) )  {
 #ifdef GIST_DEBUG
 	elog(NOTICE,"COMP IN: NULL"); 
 #endif
-    	gistentryinit(*retval, (char *)NULL, entry->rel, entry->page, entry->offset, 
-		0, FALSE);
+	if ( r ) if ( (char*)r != (char*)entry->pred ) pfree(r);
+
+	gistentryinit(*retval, (char *)NULL, entry->rel, entry->page, entry->offset, 
+				  0, FALSE);
 	return( retval ); 
     }
-
-    r = copy_intArrayType( (ArrayType *) entry->pred ); 
+ 
     if ( entry->leafkey ) PREPAREARR( r );
-    len = ARRSIZE( r );
+    len = ARRNELEMS( r );
 
 #ifdef GIST_DEBUG
     elog(NOTICE, "COMP IN: %d leaf; %d rel; %d page; %d offset; %d bytes; %d elems", entry->leafkey, (int)entry->rel, (int)entry->page, (int)entry->offset, (int)entry->bytes, len);
@@ -297,10 +317,21 @@ g_int_decompress(GISTENTRY *entry)
     int *din;
     int i,j;
 
-    if ( entry->bytes < ARR_OVERHEAD( NDIM ) || ARRISNULL( (ArrayType *) entry->pred ) ) { 
+#ifdef PGSQL71
+	if ( entry->pred ) 
+		in = (ArrayType *)PG_DETOAST_DATUM( entry->pred );
+	else 
+		in = NULL;
+#else
+	in = (ArrayType *) entry->pred;
+#endif
+
+    if ( entry->bytes < ARR_OVERHEAD( NDIM ) || ARRISNULL( in ) ) { 
     	retval = palloc(sizeof(GISTENTRY));
-    	if ( ! retval ) 
-		elog(ERROR,"Can't allocate memory for decompression");
+
+#ifdef PGSQL71	
+	if ( in ) if ( (char*)in != (char*)entry->pred ) pfree(in);
+#endif
     	gistentryinit(*retval, (char *)NULL, entry->rel, entry->page, entry->offset, 0, FALSE);
 #ifdef GIST_DEBUG
 	elog(NOTICE,"DECOMP IN: NULL"); 
@@ -309,8 +340,7 @@ g_int_decompress(GISTENTRY *entry)
     }
     
 
-    in = (ArrayType *) entry->pred; 
-    lenin = ARRSIZE(in);
+    lenin = ARRNELEMS(in);
     din = ARRPTR(in);
 
     if ( lenin < 2*MAXNUMRANGE ) { /*not comressed value*/
@@ -333,9 +363,11 @@ g_int_decompress(GISTENTRY *entry)
 		if ( (!i) || *(dr-1) != j )
 			*dr++ = j;
 
+#ifdef PGSQL71	
+    if ( (char*)in != (char*)entry->pred ) pfree(in);
+#endif
     retval = palloc(sizeof(GISTENTRY));
-    if ( ! retval ) 
-	elog(ERROR,"Can't allocate memory for decompression");
+
     gistentryinit(*retval, (char *)r, entry->rel, entry->page, entry->offset, VARSIZE( r ), FALSE);
 
     return(retval);
@@ -355,11 +387,11 @@ GIST_SPLITVEC *
 g_int_picksplit(bytea *entryvec,
 	      GIST_SPLITVEC *v)
 {
-
 	return _int_common_picksplit( entryvec, v, 
 		inner_int_union, 
 		inner_int_inter,
-		rt__int_size);  
+		rt__int_size,
+		1e-8);  
 }
 
 /*
@@ -387,6 +419,7 @@ bool
 _int_contains ( ArrayType *a, ArrayType *b ) {
 	bool res;
 	ArrayType *an, *bn;
+
 	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return FALSE;
 
 	an = copy_intArrayType( a );
@@ -408,8 +441,8 @@ inner_int_contains ( ArrayType *a, ArrayType *b ) {
   
         if ( ARRISNULL( a ) || ARRISNULL( b ) ) return FALSE;
 
-        na = ARRSIZE( a );
-	nb = ARRSIZE( b );	
+        na = ARRNELEMS( a );
+	nb = ARRNELEMS( b );	
 	da = ARRPTR( a );
 	db = ARRPTR( b );
 
@@ -444,39 +477,62 @@ _int_same ( ArrayType *a, ArrayType *b ) {
         int na , nb ;
         int n; 
         int *da, *db;
+		bool result;
+	ArrayType *an, *bn;
 	bool anull = ARRISNULL( a );
 	bool bnull = ARRISNULL( b );
 
 	if ( anull || bnull ) 
 		return ( anull && bnull ) ? TRUE : FALSE; 
+
+	an = copy_intArrayType( a );
+	bn = copy_intArrayType( b );
 	
-	SORT( a );
-	SORT( b );		
-	na = ARRSIZE( a );
-	nb = ARRSIZE( b );
-	da = ARRPTR( a );
-	db = ARRPTR( b );
+	SORT( an );
+	SORT( bn );		
+	na = ARRNELEMS( an );
+	nb = ARRNELEMS( bn );
+	da = ARRPTR( an );
+	db = ARRPTR( bn );
 
-        if ( na != nb ) return FALSE;
+	result = FALSE;
 
-        n = 0;
+	if ( na == nb )
+	{
+		result = TRUE;
         for(n=0; n<na; n++)
                 if ( da[n] != db[n] )
-                        return FALSE;
+				{
+					result = FALSE;
+					break;
+				}
+	}
 
-        return TRUE; 
+	pfree( an ); pfree( bn );
+
+	return result;
 }
 
 /*  _int_overlap -- does a overlap b?
  */
 bool 
 _int_overlap ( ArrayType *a, ArrayType *b ) {
+	bool result;
+	ArrayType *an, *bn;
+
 	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return FALSE;
 	
-	SORT(a);
-	SORT(b);
+	an = copy_intArrayType( a );
+	bn = copy_intArrayType( b );
 
-        return inner_int_overlap( a, b );
+	SORT(an);
+	SORT(bn);
+
+	result = inner_int_overlap( an, bn );
+
+	pfree( an ); pfree( bn );
+
+	return result;
 }
 
 bool 
@@ -487,8 +543,8 @@ inner_int_overlap ( ArrayType *a, ArrayType *b ) {
 
 	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return FALSE;
 	
-	na = ARRSIZE( a );
-	nb = ARRSIZE( b );
+	na = ARRNELEMS( a );
+	nb = ARRNELEMS( b );
 	da = ARRPTR( a );
 	db = ARRPTR( b );
 
@@ -510,10 +566,21 @@ inner_int_overlap ( ArrayType *a, ArrayType *b ) {
 
 ArrayType * 
 _int_union ( ArrayType *a, ArrayType *b ) {
-	if ( ! ARRISNULL( a ) ) SORT(a);
-	if ( ! ARRISNULL( b ) ) SORT(b);
+	ArrayType *result;
+	ArrayType *an, *bn;
+	
+	an = copy_intArrayType( a );
+	bn = copy_intArrayType( b );
 
-        return inner_int_union( a, b );
+	if ( ! ARRISNULL( an ) ) SORT(an);
+	if ( ! ARRISNULL( bn ) ) SORT(bn);
+
+	result = inner_int_union( an, bn );
+
+	if (an) pfree( an );
+	if (bn) pfree( bn );
+
+	return result;
 }
 
 ArrayType * 
@@ -534,8 +601,8 @@ inner_int_union ( ArrayType *a, ArrayType *b ) {
 	if ( r ) { 
 		dr = ARRPTR( r );
 	} else {
-		na = ARRSIZE( a );
-		nb = ARRSIZE( b );
+		na = ARRNELEMS( a );
+		nb = ARRNELEMS( b );
 		da = ARRPTR( a );
 		db = ARRPTR( b );
 
@@ -555,7 +622,7 @@ inner_int_union ( ArrayType *a, ArrayType *b ) {
 
 	}	
 
-	if ( ARRSIZE(r) > 1 ) 
+	if ( ARRNELEMS(r) > 1 ) 
 		r = _int_unique( r );
 
 	return r;
@@ -564,12 +631,22 @@ inner_int_union ( ArrayType *a, ArrayType *b ) {
 
 ArrayType * 
 _int_inter ( ArrayType *a, ArrayType *b ) {
-	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return FALSE;
+	ArrayType *result;
+	ArrayType *an, *bn;
 	
-	SORT(a);
-	SORT(b);
+	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return new_intArrayType(0);
 
-        return inner_int_inter( a, b );
+	an = copy_intArrayType( a );
+	bn = copy_intArrayType( b );
+
+	SORT(an);
+	SORT(bn);
+
+	result = inner_int_inter( an, bn );
+
+	pfree( an ); pfree( bn );
+
+	return result;
 }
 
 ArrayType * 
@@ -583,10 +660,10 @@ inner_int_inter ( ArrayType *a, ArrayType *b ) {
     elog(NOTICE, "inner_inter %d %d", ARRISNULL( a ), ARRISNULL( b ) );
 #endif
 
-	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return NULL;
+	if ( ARRISNULL( a ) || ARRISNULL( b ) ) return new_intArrayType(0);
 
-	na = ARRSIZE( a );
-	nb = ARRSIZE( b );
+	na = ARRNELEMS( a );
+	nb = ARRNELEMS( b );
 	da = ARRPTR( a );
 	db = ARRPTR( b );
 	r = new_intArrayType( min(na, nb) ); 
@@ -605,7 +682,7 @@ inner_int_inter ( ArrayType *a, ArrayType *b ) {
 
 	if ( (dr - ARRPTR(r)) == 0 ) {
 		pfree( r );
-		return NULL;
+		return new_intArrayType(0);
 	} else 
 		return resize_intArrayType(r, dr - ARRPTR(r) );
 }
@@ -616,7 +693,7 @@ rt__int_size(ArrayType *a, float *size)
   if ( ARRISNULL( a ) )
     *size = 0.0;
   else
-    *size = (float)ARRSIZE( a );
+    *size = (float)ARRNELEMS( a );
   
   return;
 }
@@ -654,8 +731,7 @@ new_intArrayType( int num ) {
 	int nbytes = ARR_OVERHEAD( NDIM ) + sizeof(int)*num;
 	
 	r = (ArrayType *) palloc( nbytes );
-	if ( ! r )
-		elog(ERROR, "Can't allocate memory for new array");
+
 	MemSet(r, 0, nbytes);
 	r->size = nbytes;
 	r->ndim = NDIM;
@@ -672,11 +748,9 @@ static ArrayType *
 resize_intArrayType( ArrayType * a, int num ) {
 	int nbytes = ARR_OVERHEAD( NDIM ) + sizeof(int)*num;
 
-	if ( num == ARRSIZE(a) ) return a;
+	if ( num == ARRNELEMS(a) ) return a;
 
 	a = (ArrayType *) repalloc( a, nbytes );
-	if ( ! a )
-		elog(ERROR, "Can't reallocate memory for new array");
 	
 	a->size = nbytes;
 	*( (int*)ARR_DIMS(a) ) = num; 
@@ -686,8 +760,8 @@ resize_intArrayType( ArrayType * a, int num ) {
 static ArrayType * 
 copy_intArrayType( ArrayType * a ) {
 	ArrayType * r;
-	if ( ! a ) return NULL;
-	r = new_intArrayType( ARRSIZE(a) );
+	if ( ARRISNULL(a) ) return NULL;
+	r = new_intArrayType( ARRNELEMS(a) );
 	memmove(r,a,VARSIZE(a));
 	return r;
 }
@@ -708,7 +782,7 @@ internal_size (int *a, int len ) {
 static ArrayType * 
 _int_unique( ArrayType * r ) {
 	int *tmp, *dr, *data;
-	int num = ARRSIZE(r);
+	int num = ARRNELEMS(r);
 	data = tmp = dr = ARRPTR( r );
 	while( tmp - data < num ) 
 		if ( *tmp != *dr ) 
@@ -721,15 +795,14 @@ _int_unique( ArrayType * r ) {
 /*********************************************************************
 ** intbig functions
 *********************************************************************/
-
 static void 
 gensign(BITVEC sign, int * a, int len) {
         int i;
-        NULLIFY(sign);
-        for(i=0; i<len; i++) {
-                SETBIT( sign, (*a)%SIGLENBIT );
-                a++;
-        }
+		/* we assume that the sign vector is previously zeroed */
+		for(i=0; i<len; i++) {
+			SETBIT( sign, (*a)%SIGLENBIT );
+			a++;
+		}
 }
 
 static bool  
@@ -777,20 +850,13 @@ rt__intbig_size(ArrayType *a, float* sz) {
 
 static ArrayType *    
 _intbig_union(ArrayType *a, ArrayType *b) {
-        ArrayType * r = NULL;
+        ArrayType * r;
         BITVECP da, db, dr;
         int i;
-
+       
         if ( ARRISNULL( a ) && ARRISNULL( b ) ) return new_intArrayType(0);
-
-        if ( ARRISNULL( a ) ) {
-		r = copy_intArrayType( b );
-		return r;
-	}
-        if ( ARRISNULL( b ) ) {
-		r = copy_intArrayType( a );
-		return r;
-	}
+        if ( ARRISNULL( a ) ) return copy_intArrayType( b );
+        if ( ARRISNULL( b ) ) return copy_intArrayType( a );
 	
 	r = new_intArrayType( SIGLENINT );
 
@@ -802,14 +868,14 @@ _intbig_union(ArrayType *a, ArrayType *b) {
 
         return r;
 } 
-/*
+
 static ArrayType *    
 _intbig_inter(ArrayType *a, ArrayType *b) {
-        ArrayType * r = NULL;
+        ArrayType * r;
         BITVECP da, db, dr;
         int i;
-        
-        if ( ARRISNULL( a ) || ARRISNULL( b ) ) return NULL;
+
+        if ( ARRISNULL( a ) || ARRISNULL( b ) ) return new_intArrayType(0);
 
 	r = new_intArrayType( SIGLENINT );
 
@@ -821,7 +887,7 @@ _intbig_inter(ArrayType *a, ArrayType *b) {
 
         return r;
 } 
-*/
+
 bool *
 g_intbig_same(ArrayType *a, ArrayType *b, bool *result) {
 	BITVECP da, db;
@@ -862,8 +928,6 @@ g_intbig_compress(GISTENTRY *entry) {
 	if ( ! entry->leafkey ) return entry;
 	
 	retval = palloc(sizeof(GISTENTRY));
-	if ( ! retval )
-		elog(ERROR,"Can't allocate memory for compression");
 
 	if ( ARRISNULL( in ) )  {
 #ifdef PGSQL71	
@@ -876,8 +940,8 @@ g_intbig_compress(GISTENTRY *entry) {
 	r = new_intArrayType( SIGLENINT );
 	gensign( SIGPTR( r ), 
 		 ARRPTR ( in ),
-		 ARRSIZE( in ) );
-
+		 ARRNELEMS( in ) );
+	
 	gistentryinit(*retval, (char *)r, entry->rel, entry->page, entry->offset, VARSIZE( r ), FALSE);
 
 #ifdef PGSQL71	
@@ -889,72 +953,28 @@ g_intbig_compress(GISTENTRY *entry) {
 
 GISTENTRY *      
 g_intbig_decompress(GISTENTRY *entry) {
+#ifdef PGSQL71
+	ArrayType *key;
+	key = (ArrayType *)PG_DETOAST_DATUM( entry->pred );
+	if ( (char*)key != (char*)entry->pred ) {
+		GISTENTRY *retval;
+		retval = palloc(sizeof(GISTENTRY));
+
+		gistentryinit(*retval, (char *)key, entry->rel, entry->page, entry->offset, VARSIZE( key ), FALSE);
+		return retval;
+	}
+#endif
 	return entry;
 }
 
 GIST_SPLITVEC *  
 g_intbig_picksplit(bytea *entryvec, GIST_SPLITVEC *v) {
+        return _int_common_picksplit( entryvec, v,
+                _intbig_union,
+                _intbig_inter,
+                rt__intbig_size,
+		1.0);   
 
-    OffsetNumber k;
-    ArrayType *datum_l, *datum_r, *datum_alpha;
-    ArrayType *unionarr;
-    float size_l, size_r;
-    int nbytes;
-    OffsetNumber *left, *right;
-    OffsetNumber maxoff;
-
-#ifdef GIST_DEBUG
-    elog(NOTICE, "--------picksplit %d",(VARSIZE(entryvec) - VARHDRSZ)/sizeof(GISTENTRY));
-#endif
-
-    maxoff = ((VARSIZE(entryvec) - VARHDRSZ)/sizeof(GISTENTRY)) - 2;
-    nbytes =  (maxoff + 2) * sizeof(OffsetNumber);
-    v->spl_left = (OffsetNumber *) palloc(nbytes);
-    v->spl_right = (OffsetNumber *) palloc(nbytes);
-    left = v->spl_left;
-    v->spl_nleft = 0;
-    right = v->spl_right;
-    v->spl_nright = 0;
-    
-    maxoff = OffsetNumberNext(maxoff);
-    datum_l = datum_r = NULL;
-    
-    for (k = FirstOffsetNumber; k <= maxoff; k = OffsetNumberNext(k)) {
-	datum_alpha = (ArrayType *)(((GISTENTRY *)(VARDATA(entryvec)))[k].pred);
-
-	if ( k != FirstOffsetNumber ) {
-	    unionarr = (ArrayType *)_intbig_union(datum_l, datum_alpha);
-	    if ( datum_l ) pfree(datum_l);
-	    datum_l = unionarr;
-	    rt__intbig_size((ArrayType *)unionarr, &size_l);
-	    *left++ = k;
-	    v->spl_nleft++;
-	} else {
-	    unionarr = (ArrayType *)_intbig_union(datum_r, datum_alpha);
-	    if ( datum_r ) pfree(datum_r);
-	    datum_r = unionarr;
-	    rt__intbig_size((ArrayType *)unionarr, &size_r);
-	    *right++ = k;
-	    v->spl_nright++;
-	}
-    }
-
-    if ( *(left-1) > *(right-1) ) { 
-        *right = FirstOffsetNumber;
-        *(left-1) = InvalidOffsetNumber;
-    } else {
-        *left = FirstOffsetNumber;
-        *(right-1) = InvalidOffsetNumber;
-    }
-
-
-    v->spl_ldatum = (char *)datum_l;
-    v->spl_rdatum = (char *)datum_r;
-
-#ifdef GIST_DEBUG
-    elog(NOTICE, "--------ENDpicksplit %d %d",v->spl_nleft, v->spl_nright);
-#endif
-    return v;
 }
 
 ArrayType *      
@@ -965,7 +985,6 @@ g_intbig_union(bytea *entryvec, int *sizep) {
 float *          
 g_intbig_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result){
     _int_common_penalty( origentry, newentry, result, _intbig_union, rt__intbig_size);
-    *result= SIGLENBIT - *result;
     return result;
 }
 
@@ -974,13 +993,13 @@ g_intbig_consistent(GISTENTRY *entry, ArrayType *query, StrategyNumber strategy)
     bool retval;
     ArrayType * q;
 
+	/* XXX what about toasted input? */
     if ( ARRISNULL( query ) ) return FALSE;
 
     q = new_intArrayType( SIGLENINT );
-
     gensign( 	SIGPTR( q ),
 		ARRPTR( query ),
-		ARRSIZE( query ) );
+		ARRNELEMS( query ) );
 
     switch(strategy) {
     case RTOverlapStrategyNumber:
@@ -1042,9 +1061,10 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf) {
 
 }
 
-/*
-** The GiST Penalty method for _intments
-*/
+/*****************************************
+ * The GiST Penalty method for _intments *
+ *****************************************/
+
 float *
 _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 		formarray unionf,
@@ -1063,7 +1083,7 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
     pfree((char *)ud);
 
 #ifdef GIST_DEBUG
-    elog(NOTICE, "--penalty\t%g\t%g\t%g", *result, tmp1, tmp2);
+    elog(NOTICE, "--penalty\t%g", *result);
 #endif
 
     return(result);
@@ -1078,7 +1098,8 @@ _int_common_picksplit(bytea *entryvec,
 	      	GIST_SPLITVEC *v,
 		formarray unionf,
 		formarray interf,
-		formfloat sizef)
+		formfloat sizef,
+		float coef)
 {
     OffsetNumber i, j;
     ArrayType *datum_alpha, *datum_beta;
@@ -1105,7 +1126,7 @@ _int_common_picksplit(bytea *entryvec,
     
     firsttime = true;
     waste = 0.0;
-    
+   
     for (i = FirstOffsetNumber; i < maxoff; i = OffsetNumberNext(i)) {
 	datum_alpha = (ArrayType *)(((GISTENTRY *)(VARDATA(entryvec)))[i].pred);
 	for (j = OffsetNumberNext(i); j <= maxoff; j = OffsetNumberNext(j)) {
@@ -1137,7 +1158,7 @@ _int_common_picksplit(bytea *entryvec,
 	    }
 	}
     }
-   
+
     left = v->spl_left;
     v->spl_nleft = 0;
     right = v->spl_right;
@@ -1163,7 +1184,6 @@ _int_common_picksplit(bytea *entryvec,
      */
     
     maxoff = OffsetNumberNext(maxoff);
-
     for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i)) {
 
 	
@@ -1192,7 +1212,7 @@ _int_common_picksplit(bytea *entryvec,
 	(*sizef)((ArrayType *)union_dr, &size_beta);
 
 	/* pick which page to add it to */
-	if (size_alpha - size_l < size_beta - size_r) {
+	if (size_alpha - size_l < size_beta - size_r + WISH_F(v->spl_nleft, v->spl_nright, coef)) {
 	    if ( datum_l ) pfree(datum_l);
 	    if ( union_dr ) pfree(union_dr);
 	    datum_l = union_dl;
@@ -1208,7 +1228,6 @@ _int_common_picksplit(bytea *entryvec,
 	    v->spl_nright++;
 	}
     }
-    /**left = *right = FirstOffsetNumber;*/  /* sentinel value, see dosplit() */
 
     if ( *(left-1) > *(right-1) ) { 
         *right = FirstOffsetNumber;
@@ -1217,7 +1236,6 @@ _int_common_picksplit(bytea *entryvec,
         *left = FirstOffsetNumber;
         *(right-1) = InvalidOffsetNumber;
     }
-
 
     v->spl_ldatum = (char *)datum_l;
     v->spl_rdatum = (char *)datum_r;
