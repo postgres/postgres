@@ -1,0 +1,168 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.1 1998/08/15 06:52:03 thomas Exp $
+Indices and Keys
+
+$Log: keys.sgml,v $
+Revision 1.1  1998/08/15 06:52:03  thomas
+Nice exposition on indices and keys from Herouth Maoz which appeared
+ on the mailing lists a while ago. Maybe slightly changed to fit docs.
+Will go into the User's Guide.
+
+-->
+
+<chapter id="keys">
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Herouth</firstname>
+<surname>Maoz</surname>
+</author>
+</authorgroup>
+<date>1998-03-02</date>
+</docinfo>
+
+<Title>Indices and Keys</Title>
+
+<Note>
+<Title>Author</Title>
+<Para>
+Written by 
+<ULink url="herouth@oumail.openu.ac.il">Herouth Maoz</ULink>
+</Para>
+</Note>
+
+<Note>
+<Title>Editor's Note</Title>
+<Para>
+This originally appeared on the mailing list
+ in response to the question:
+ "What is the difference between PRIMARY KEY and UNIQUE constraints?".
+</Para>
+</Note>
+
+<ProgramListing>
+Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
+
+        What's the difference between:
+
+              PRIMARY KEY(fields,...) and
+              UNIQUE (fields,...)
+
+       - Is this an alias ?
+       - If PRIMARY KEY is already unique, then why
+         there's another kind of key named UNIQUE ?
+</ProgramListing>
+
+<Para>
+A primary key is the field(s) used to identify a specific row. For example,
+Social Security numbers identifying a person.
+</Para>
+<Para>
+A simply UNIQUE combination of fields has nothing to do with identifying
+the row. It's simply an integrity constraint. For example, I have
+collections of links. Each collection is identified by a unique number,
+which is the primary key. This key is used in relations.
+</Para>
+<Para>
+However, my application requires that each collection will also have a
+unique name. Why? So that a human being who wants to modify a collection
+will be able to identify it. It's much harder to know, if you have two
+collections named "Life Science", the the one tagged 24433 is the one you
+need, and the one tagged 29882 is not.
+</Para>
+<Para>
+So, the user selects the collection by its name. We therefore make sure,
+withing the database, that names are unique. However, no other table in the
+database relates to the collections table by the collection Name. That
+would be very inefficient.
+</Para>
+<Para>
+Moreover, despite being unique, the collection name does not actually
+define the collection! For example, if somebody decided to change the name
+of the collection from "Life Science" to "Biology", it will still be the
+same collection, only with a different name. As long as the name is unique,
+that's OK.
+</Para>
+<Para>
+So:
+
+<itemizedlist>
+<ListItem>
+<Para>
+Primary key:
+<itemizedList Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+Is used for identifying the row and relating to it.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+Is impossible (or hard) to update.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+Should not allow NULLs.
+</Para>
+</ListItem>
+</itemizedlist>
+
+<ListItem>
+<Para>
+Unique field(s):
+<itemizedlist Mark="bullet" Spacing="compact">
+<ListItem>
+<Para>
+Are used as an alternative access to the row.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+Are updateable, so long as they are kept unique.
+</Para>
+</ListItem>
+<ListItem>
+<Para>
+NULLs are acceptable.
+</Para>
+</ListItem>
+</itemizedlist>
+</itemizedlist>
+
+<Para>
+As for why no non-unique keys are specifiable by SQL syntax? Well - you
+must understand that indexes are implementation-dependent. SQL does not
+define the implementation, merely the relations between data in the
+database.
+</Para>
+<Para>
+Thus, you may query a table by any combination of its columns, despite the
+fact that you don't have an index on these columns. The indexes are merely
+an implementational aid which each RDBMS offers you, in order to cause
+commonly used queries to be done more efficiently. Some RDBMS may give you
+additional measures, such as keeping a key stored in main memory. They will
+have a special command, for example
+<programlisting>
+CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
+</programlisting>
+(this is not an existing command, just an example).
+</Para>
+<Para>
+In fact, when you create a primary key or a unique combination of fields,
+nowhere in the SQL specification does it say that an index is created, nor that
+the retrieval of data by the key is going to be more efficient than a
+sequential scan!
+</Para>
+<Para>
+So, if you want to use a combination of fields which is not unique as a
+secondary key, you really don't have to specify anything - just start
+retrieving by that combination! However, if you want to make the retrieval
+efficient, you'll have to resort to the means your RDBMS provider gives you
+- be it an index, my imaginary MEMSTORE command, or an intelligent RDBMS
+which crates indices without your knowledge based on the fact that you have
+sent it many queries based on a specific combination of keys... (It learns
+from experience).
+</Para>
+</chapter>
+
