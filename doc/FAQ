@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Feb 2 12:44:03 EST 2005
+   Last updated: Mon Feb 14 23:01:58 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -200,7 +200,7 @@
    also browse the manuals online at http://www.PostgreSQL.org/docs.
    
    There are two PostgreSQL books available online at
-   http://www.PostgreSQL.org/docs/awbook.html and
+   http://www.postgresql.org/docs/books/awbook.html and
    http://www.commandprompt.com/ppbook/. There is a list of PostgreSQL
    books available for purchase at
    http://techdocs.PostgreSQL.org/techdocs/bookreviews.php. There is also
