@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.5 1997/08/19 21:37:40 momjian Exp $
+ * $Id: xact.h,v 1.6 1997/08/29 09:05:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,8 @@
 typedef struct TransactionStateData {
     TransactionId	transactionIdData;
     CommandId		commandId;
-    AbsoluteTime		startTime;
+    CommandId		scanCommandId;
+    AbsoluteTime	startTime;
     int			state;
     int			blockState;
 } TransactionStateData;
@@ -63,9 +64,12 @@ extern bool IsAbortedTransactionBlockState(void);
 extern void OverrideTransactionSystem(bool flag);
 extern TransactionId GetCurrentTransactionId(void);
 extern CommandId GetCurrentCommandId(void);
+extern CommandId GetScanCommandId(void);
+extern void SetScanCommandId(CommandId);
 extern AbsoluteTime GetCurrentTransactionStartTime(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern bool CommandIdIsCurrentCommandId(CommandId cid);
+extern bool CommandIdGEScanCommandId(CommandId cid);
 extern void CommandCounterIncrement(void);
 extern void InitializeTransactionSystem(void);
 extern bool CurrentXactInProgress(void);

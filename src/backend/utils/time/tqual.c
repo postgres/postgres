@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.3 1997/08/19 21:36:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.4 1997/08/29 09:04:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,6 +580,13 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
  *	    (Xmax is not committed &&           the row was deleted by another transaction
  *           Xmax != my-transaction))))         that has not been committed
  *
+ * XXX
+ *	CommandId stuff didn't work properly if one used SQL-functions in 
+ *	UPDATE/INSERT(fromSELECT)/DELETE scans: SQL-funcs call 
+ *	CommandCounterIncrement and made tuples changed/inserted by
+ *	current command visible to command itself (so we had multiple
+ *	update of updated tuples, etc).		- vadim 08/29/97
+ *	
  *	mao says 17 march 1993:  the tests in this routine are correct;
  *	if you think they're not, you're wrong, and you should think
  *	about it again.  i know, it happened to me.  we don't need to
@@ -615,13 +622,13 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
     if (!AbsoluteTimeIsBackwardCompatiblyValid(tuple->t_tmin)) {
 	
 	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin)
-	    && CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+	    && CommandIdGEScanCommandId(tuple->t_cmin)) {
 	    
 	    return (false);
 	}
 	
 	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin)
-	    && !CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+	    && !CommandIdGEScanCommandId(tuple->t_cmin)) {
 	    
 	    if (!TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
 		return (true);
@@ -629,7 +636,7 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
 	    
 	    Assert(TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax));
 	    
-	    if (CommandIdIsCurrentCommandId(tuple->t_cmax)) {
+	    if (CommandIdGEScanCommandId(tuple->t_cmax)) {
 		return (true);
 	    }
 	}
@@ -813,13 +820,13 @@ HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
     if (!AbsoluteTimeIsBackwardCompatiblyValid(tuple->t_tmin)) {
 	
 	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin) &&
-	    CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+	    CommandIdGEScanCommandId(tuple->t_cmin)) {
 	    
 	    return (false);
 	}
 	
 	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin) &&
-	    !CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+	    !CommandIdGEScanCommandId(tuple->t_cmin)) {
 	    
 	    if (!TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
 		return (true);
@@ -827,7 +834,7 @@ HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
 	    
 	    Assert(TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax));
 	    
-	    return ((bool) !CommandIdIsCurrentCommandId(tuple->t_cmax));
+	    return ((bool) !CommandIdGEScanCommandId(tuple->t_cmax));
 	}
 	
 	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
@@ -849,7 +856,8 @@ HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
 	}
 	
 	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax)) {
-	    return (CommandIdIsCurrentCommandId(tuple->t_cmin));
+	    return (CommandIdGEScanCommandId(tuple->t_cmin));
+	    /* it looks like error		      ^^^^ */
 	}
 	
 	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
