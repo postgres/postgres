@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 12 12:13:58 EDT 2001
+Last updated:		Fri Oct 12 12:29:28 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -327,6 +327,9 @@ MISCELLANEOUS
 * -Read pg_hba.conf only on postmaster startup or SIGHUP (Bruce)
 * Make secondary WAL page write()'s write only modified data
 * -Improve spinlock code [performance] (Tom)
+* Do listen() in postmaster and accept() in pre-forked backend
+* Have pre-forked backend pre-connect to last requested database or pass
+  file descriptor to backend pre-forked for matching database
 
 SOURCE CODE
 -----------
