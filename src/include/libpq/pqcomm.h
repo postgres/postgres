@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.19 1998/01/26 01:42:21 scrappy Exp $
+ * $Id: pqcomm.h,v 1.20 1998/01/27 04:08:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ typedef union SockAddr {
 
 #define	UNIXSOCK_PATH(sun,port) \
 	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)) + \
-		sizeof ((sun).sun_family))
+		sizeof ((sun).sun_len) + sizeof ((sun).sun_family))
 
 
 /*
