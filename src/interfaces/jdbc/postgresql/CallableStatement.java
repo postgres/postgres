@@ -1,126 +1,133 @@
 package postgresql;
 
-import java.math.*;
 import java.sql.*;
+import java.math.*;
 
 /**
- * @version 1.0 15-APR-1997
- * @author <A HREF="mailto:adrian@hottub.org">Adrian Hall</A>
- *
- * CallableStatement is used to execute SQL stored procedures.
- *
- * JDBC provides a stored procedure SQL escape that allows stored procedures
- * to be called in a standard way for all RDBMS's.  This escape syntax has
- * one form that includes a result parameter and one that does not.  If used,
- * the result parameter must be generated as an OUT parameter.  The other
- * parameters may be used for input, output or both.  Parameters are refered
- * to sequentially, by number.  The first parameter is 1.
- *
- * <PRE>
- *	{?= call <procedure-name>[<arg1>,<arg2>, ...]}
- *	{call <procedure-name>[<arg1>,<arg2>, ...]}
- * </PRE>
- *
- * IN parameters are set using the set methods inherited from 
- * PreparedStatement.  The type of all OUT parameters must be registered
- * prior to executing the stored procedure; their values are retrieved
- * after execution via the get methods provided here.
- *
- * A CallableStatement may return a ResultSet or multiple ResultSets.  Multiple
- * ResultSets are handled using operations inherited from Statement.
- *
- * For maximum portability, a call's ResultSets and update counts should be
- * processed prior to getting the values of output parameters.
- *
- * @see java.sql.Connection#prepareCall
- * @see java.sql.ResultSet
- * @see java.sql.CallableStatement
+ * JDBC Interface to Postgres95 functions
  */
-public class CallableStatement implements java.sql.CallableStatement 
+
+// Copy methods from the Result set object here.
+
+public class CallableStatement extends PreparedStatement implements java.sql.CallableStatement
 {
-	public void registerOutParameter (int paramterIndex, int sqlType) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public void registerOutParameter (int parameterIndex, int sqlType, int scale) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public boolean wasNull () throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public String getString (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public boolean getBoolean (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public byte getByte (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public short getShort (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public int getInt (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public long getLong (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public float getFloat (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public double getDouble (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public BigDecimal getBigDecimal (int parameterIndex, int scale) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public byte[] getBytes (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public Date getDate (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public Time getTime (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public Timestamp getTimestamp (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
-	public Object getObject (int parameterIndex) throws SQLException
-	{
-		// XXX-Not Implemented
-	}
-
+  CallableStatement(Connection c,String q) throws SQLException
+  {
+    super(c,q);
+  }
+  
+  // Before executing a stored procedure call you must explicitly
+  // call registerOutParameter to register the java.sql.Type of each
+  // out parameter.
+  public void registerOutParameter(int parameterIndex, int sqlType) throws SQLException {
+  }
+  
+  // You must also specify the scale for numeric/decimal types:	
+  public void registerOutParameter(int parameterIndex, int sqlType,
+				   int scale) throws SQLException
+  {
+  }
+  
+  public boolean isNull(int parameterIndex) throws SQLException {
+    return true;
+  }
+  
+  // New API (JPM)
+  public boolean wasNull() throws SQLException {
+    // check to see if the last access threw an exception
+    return false; // fake it for now
+  }
+  
+  // Methods for retrieving OUT parameters from this statement.
+  public String getChar(int parameterIndex) throws SQLException {
+    return null;
+  }
+  
+  // New API (JPM)
+  public String getString(int parameterIndex) throws SQLException {
+    return null;
+  }
+  //public String getVarChar(int parameterIndex) throws SQLException {
+  //   return null;
+  //}
+  
+  public String getLongVarChar(int parameterIndex) throws SQLException {
+    return null;
+  }
+  
+  // New API (JPM) (getBit)
+  public boolean getBoolean(int parameterIndex) throws SQLException {
+    return false;
+  }
+  
+  // New API (JPM) (getTinyInt)
+  public byte getByte(int parameterIndex) throws SQLException {
+    return 0;
+  }
+  
+  // New API (JPM) (getSmallInt)
+  public short getShort(int parameterIndex) throws SQLException {
+    return 0;
+  }
+  
+  // New API (JPM) (getInteger)
+  public int getInt(int parameterIndex) throws SQLException {
+    return 0;
+  }
+  
+  // New API (JPM) (getBigInt)
+  public long getLong(int parameterIndex) throws SQLException {
+    return 0;
+  }
+  
+  public float getFloat(int parameterIndex) throws SQLException {
+    return (float) 0.0;
+  }
+  
+  public double getDouble(int parameterIndex) throws SQLException {
+    return 0.0;
+  }
+  
+  public BigDecimal getBigDecimal(int parameterIndex, int scale)
+       throws SQLException {
+	 return null;
+  }
+  
+  // New API (JPM) (getBinary)
+  public byte[] getBytes(int parameterIndex) throws SQLException {
+    return null;
+  }
+  
+  // New API (JPM) (getLongVarBinary)
+  public byte[] getBinaryStream(int parameterIndex) throws SQLException {
+    return null;
+  }
+  
+  public java.sql.Date getDate(int parameterIndex) throws SQLException {
+    return null;
+  }
+  public java.sql.Time getTime(int parameterIndex) throws SQLException {
+    return null;
+  }
+  public java.sql.Timestamp getTimestamp(int parameterIndex)
+       throws SQLException {
+	 return null;
+  }
+  
+  //----------------------------------------------------------------------
+  // Advanced features:
+  
+  // You can obtain a ParameterMetaData object to get information 
+  // about the parameters to this CallableStatement.
+  public DatabaseMetaData getMetaData() {
+    return null;
+  }
+  
+  // getObject returns a Java object for the parameter.
+  // See the JDBC spec's "Dynamic Programming" chapter for details.
+  public Object getObject(int parameterIndex)
+       throws SQLException {
+	 return null;
+  }
 }
+
