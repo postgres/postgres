@@ -92,23 +92,23 @@
   <ROW>
     <ENTRY>Digital 4.0</ENTRY>
     <ENTRY>Alpha</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>in progress; v6.2.1 confirmed working (<ULink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ULink>)</ENTRY>
+    <ENTRY>v6.3.2</ENTRY>
+    <ENTRY>1998-04-16</ENTRY>
+    <ENTRY>reported working for DUnix/v3.2g (<ULink url="mailto:pjlobo@euitt.upm.es">Pedro J. Lobo</ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
     <ENTRY>Alpha</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
-    <ENTRY>partial success (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>,
+    <ENTRY>v6.3.2</ENTRY>
+    <ENTRY>1998-04-16</ENTRY>
+    <ENTRY>mostly successful (<ULink url="mailto:rkirkpat@nag.cs.colorado.edu">Ryan Kirkpatrick</ULink>,
 <ULink url="mailto:jsturm@zenacomp.com"> Jeff Sturm </ULink>)</ENTRY>
   </ROW>
   <ROW>
     <ENTRY>linux 2.0.x</ENTRY>
     <ENTRY>x86</ENTRY>
-    <ENTRY>v6.3</ENTRY>
-    <ENTRY>1998-03-01</ENTRY>
+    <ENTRY>v6.3.2</ENTRY>
+    <ENTRY>1998-04-16</ENTRY>
     <ENTRY>(<ULink url="mailto:lockhart@alumni.caltech.edu">Thomas Lockhart</ULink>,
 <ULink url="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</ULink>)</ENTRY>
   </ROW>
@@ -191,7 +191,7 @@
 <Title>Unsupported Platforms</Title>
 
 <Para>
-A few platforms which have been attempted and which have been
+There are a few platforms which have been attempted and which have been
 reported to not work with the standard distribution.
 Others listed here do not provide sufficient library support for an attempt.
 
