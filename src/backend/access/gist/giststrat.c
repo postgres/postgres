@@ -37,6 +37,8 @@
 #include "storage/bufpage.h"
 #include "access/gist.h"
 
+#include "access/istrat.h"
+
 /*
  *  Note:  negate, commute, and negatecommute all assume that operators are
  *	   ordered as follows in the strategy map:

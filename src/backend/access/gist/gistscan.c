@@ -46,6 +46,30 @@
 #include "access/sdir.h"
 #include "access/genam.h"
 
+#include "storage/ipc.h"
+#include "storage/spin.h"
+#include "utils/hsearch.h"
+#include "storage/shmem.h"
+#include "storage/lock.h"    
+#include "storage/lmgr.h" 
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
+
+#include "utils/palloc.h"
+
+#include "storage/block.h"
+#include "storage/off.h"  
+#include "access/rtree.h"
+
+#include <stdio.h>
+#include "storage/bufmgr.h"
+
+#include "access/giststrat.h"
+
 /* routines defined and used here */
 static void gistregscan(IndexScanDesc s);
 static void gistdropscan(IndexScanDesc s);
@@ -134,8 +158,8 @@ gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
     
     p = (GISTScanOpaque) s->opaque;
     if (p != (GISTScanOpaque) NULL) {
-	freestack(p->s_stack);
-	freestack(p->s_markstk);
+	gistfreestack(p->s_stack);
+	gistfreestack(p->s_markstk);
 	p->s_stack = p->s_markstk = (GISTSTACK *) NULL;
 	p->s_flags = 0x0;
     } else {
@@ -191,7 +215,7 @@ gistmarkpos(IndexScanDesc s)
 	n = n->gs_parent;
     }
     
-    freestack(p->s_markstk);
+    gistfreestack(p->s_markstk);
     p->s_markstk = o;
 }
 
@@ -221,7 +245,7 @@ gistrestrpos(IndexScanDesc s)
 	n = n->gs_parent;
     }
     
-    freestack(p->s_stack);
+    gistfreestack(p->s_stack);
     p->s_stack = o;
 }
 
@@ -233,8 +257,8 @@ gistendscan(IndexScanDesc s)
     p = (GISTScanOpaque) s->opaque;
     
     if (p != (GISTScanOpaque) NULL) {
-	freestack(p->s_stack);
-	freestack(p->s_markstk);
+	gistfreestack(p->s_stack);
+	gistfreestack(p->s_markstk);
     }
     
     gistdropscan(s);
