@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.9 2004/07/01 18:32:58 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.10 2004/07/04 15:02:22 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -436,6 +436,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 	va_list		args;
 	struct descriptor *desc;
 	struct descriptor_item *desc_item;
+	struct variable *var;
 
 	for (desc = all_descriptors; desc; desc = desc->next)
 	{
@@ -463,69 +464,59 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 		desc->items = desc_item;
 	}
 
+	if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
+	        return false;
+
 	va_start(args, index);
 
 	do
 	{
 		enum ECPGdtype itemtype;
-		long		varcharsize;
-		long		offset;
-		long		arrsize;
-		enum ECPGttype vartype;
-		void	   *var;
+		enum ECPGttype type;
+		const char	*tobeinserted = NULL;
+		bool		malloced;
 
 		itemtype = va_arg(args, enum ECPGdtype);
 
 		if (itemtype == ECPGd_EODT)
 			break;
 
-		vartype = va_arg(args, enum ECPGttype);
-		var = va_arg(args, void *);
-		varcharsize = va_arg(args, long);
-		arrsize = va_arg(args, long);
-		offset = va_arg(args, long);
+		type = va_arg(args, enum ECPGttype);
+		ECPGget_variable(&args, type, var, false);
 
 		switch (itemtype)
 		{
 			case ECPGd_data:
 			{
-				// FIXME: how to do this in general?
-				switch (vartype)
+				if (!ECPGstore_input(lineno, true, var, &tobeinserted, &malloced))
 				{
-					case ECPGt_char:
-						desc_item->data = strdup((char *)var);
-						break;
-					case ECPGt_int:
-					{
-						char buf[20];
-						snprintf(buf, 20, "%d", *(int *)var);
-						desc_item->data = strdup(buf);
-						break;
-					}
-					default:
-						abort();
+					ECPGfree(var);
+					return false;
 				}
+				
+				desc_item->data = (char *) tobeinserted;
+				tobeinserted = NULL;
 				break;
 			}
 
 			case ECPGd_indicator:
-				set_int_item(lineno, &desc_item->indicator, var, vartype);
+				set_int_item(lineno, &desc_item->indicator, var->pointer, var->type);
 				break;
 
 			case ECPGd_length:
-				set_int_item(lineno, &desc_item->length, var, vartype);
+				set_int_item(lineno, &desc_item->length, var->pointer, var->type);
 				break;
 
 			case ECPGd_precision:
-				set_int_item(lineno, &desc_item->precision, var, vartype);
+				set_int_item(lineno, &desc_item->precision, var->pointer, var->type);
 				break;
 
 			case ECPGd_scale:
-				set_int_item(lineno, &desc_item->scale, var, vartype);
+				set_int_item(lineno, &desc_item->scale, var->pointer, var->type);
 				break;
 
 			case ECPGd_type:
-				set_int_item(lineno, &desc_item->type, var, vartype);
+				set_int_item(lineno, &desc_item->type, var->pointer, var->type);
 				break;
 
 			default:
@@ -533,6 +524,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 				char	type_str[20];
 				snprintf(type_str, sizeof(type_str), "%d", itemtype);
 				ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR_ITEM, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, type_str);
+				ECPGfree(var);
 				return false;
 			}
 		}
@@ -544,6 +536,7 @@ ECPGset_desc(int lineno, char *desc_name, int index,...)
 		}*/
 	}
 	while (true);
+	ECPGfree(var);
 
 	return true;
 }

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.35 2004/06/30 15:01:56 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.36 2004/07/04 15:02:22 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -69,6 +69,59 @@ quote_postgres(char *arg, int lineno)
 	return res;
 }
 
+void
+ECPGget_variable(va_list *ap, enum ECPGttype type, struct variable *var, bool indicator)
+{
+	var->type = type;
+	var->pointer = va_arg(*ap, char *);
+
+	var->varcharsize = va_arg(*ap, long);
+	var->arrsize = va_arg(*ap, long);
+	var->offset = va_arg(*ap, long);
+	
+	if (var->arrsize == 0 || var->varcharsize == 0)
+		var->value = *((char **) (var->pointer));
+	else
+		var->value = var->pointer;
+
+	/*
+	 * negative values are used to indicate an array without given
+	 * bounds
+	 */
+	/* reset to zero for us */
+	if (var->arrsize < 0)
+		var->arrsize = 0;
+	if (var->varcharsize < 0)
+		var->varcharsize = 0;
+
+	var->next = NULL;
+	
+	if (indicator)
+	{
+		var->ind_type = va_arg(*ap, enum ECPGttype);
+		var->ind_pointer = va_arg(*ap, char *);
+		var->ind_varcharsize = va_arg(*ap, long);
+		var->ind_arrsize = va_arg(*ap, long);
+		var->ind_offset = va_arg(*ap, long);
+
+		if (var->ind_type != ECPGt_NO_INDICATOR
+			&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
+			var->ind_value = *((char **) (var->ind_pointer));
+		else
+			var->ind_value = var->ind_pointer;
+
+		/*
+		 * negative values are used to indicate an array without given
+		 * bounds
+		 */
+		/* reset to zero for us */
+		if (var->ind_arrsize < 0)
+			var->ind_arrsize = 0;
+		if (var->ind_varcharsize < 0)
+			var->ind_varcharsize = 0;
+	}
+}
+
 /*
  * create a list of variables
  * The variables are listed with input variables preceding outputvariables
@@ -118,8 +171,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
 				return false;
 
-			var->type = type;
-			var->pointer = va_arg(ap, char *);
+			ECPGget_variable(&ap, type, var, true);
 
 			/* if variable is NULL, the statement hasn't been prepared */
 			if (var->pointer == NULL)
@@ -128,48 +180,6 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 				ECPGfree(var);
 				return false;
 			}
-
-			var->varcharsize = va_arg(ap, long);
-			var->arrsize = va_arg(ap, long);
-			var->offset = va_arg(ap, long);
-
-			if (var->arrsize == 0 || var->varcharsize == 0)
-				var->value = *((char **) (var->pointer));
-			else
-				var->value = var->pointer;
-
-			/*
-			 * negative values are used to indicate an array without given
-			 * bounds
-			 */
-			/* reset to zero for us */
-			if (var->arrsize < 0)
-				var->arrsize = 0;
-			if (var->varcharsize < 0)
-				var->varcharsize = 0;
-
-			var->ind_type = va_arg(ap, enum ECPGttype);
-			var->ind_pointer = va_arg(ap, char *);
-			var->ind_varcharsize = va_arg(ap, long);
-			var->ind_arrsize = va_arg(ap, long);
-			var->ind_offset = va_arg(ap, long);
-			var->next = NULL;
-
-			if (var->ind_type != ECPGt_NO_INDICATOR
-				&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
-				var->ind_value = *((char **) (var->ind_pointer));
-			else
-				var->ind_value = var->ind_pointer;
-
-			/*
-			 * negative values are used to indicate an array without given
-			 * bounds
-			 */
-			/* reset to zero for us */
-			if (var->ind_arrsize < 0)
-				var->ind_arrsize = 0;
-			if (var->ind_varcharsize < 0)
-				var->ind_varcharsize = 0;
 
 			for (ptr = *list; ptr && ptr->next; ptr = ptr->next);
 
@@ -477,8 +487,8 @@ ECPGstore_result(const PGresult *results, int act_field,
 	return status;
 }
 
-static bool
-ECPGstore_input(const struct statement * stmt, const struct variable * var,
+bool
+ECPGstore_input(const int lineno, const bool force_indicator, const struct variable * var,
 				const char **tobeinserted_p, bool *malloced_p)
 {
 	char	   *mallocedval = NULL;
@@ -491,7 +501,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 #if 0
 	if (var->arrsize > 1 &&...)
 	{
-		ECPGraise(stmt->lineno, ECPG_ARRAY_INSERT, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
+		ECPGraise(lineno, ECPG_ARRAY_INSERT, ECPG_SQLSTATE_DATATYPE_MISMATCH, NULL);
 		return false;
 	}
 #endif
@@ -530,7 +540,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 			break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_NO_INDICATOR:
-			if (stmt->force_indicator == false)
+			if (force_indicator == false)
 			{
 				if (ECPGis_noind_null(var->type, var->value))
 					*tobeinserted_p = "null";
@@ -546,7 +556,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				int			element;
 
 			case ECPGt_short:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -566,7 +576,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_int:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -586,7 +596,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_short:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -606,7 +616,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_int:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -626,7 +636,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -646,7 +656,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -666,7 +676,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 #ifdef HAVE_LONG_LONG_INT_64
 			case ECPGt_long_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 30, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 30, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -686,7 +696,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_long_long:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 30, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 30, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -706,7 +716,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 			case ECPGt_float:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 25, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -726,7 +736,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_double:
-				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 25, lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -746,7 +756,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_bool:
-				if (!(mallocedval = ECPGalloc(var->arrsize + sizeof("array []"), stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize + sizeof("array []"), lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -765,7 +775,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 						for (element = 0; element < var->arrsize; element++)
 							sprintf(mallocedval + strlen(mallocedval), "%c,", (((int *) var->value)[element]) ? 't' : 'f');
 					else
-						ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, "different size");
+						ECPGraise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, "different size");
 
 					strcpy(mallocedval + strlen(mallocedval) - 1, "]");
 				}
@@ -776,7 +786,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					else if (var->offset == sizeof(int))
 						sprintf(mallocedval, "'%c'", (*((int *) var->value)) ? 't' : 'f');
 					else
-						ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, "different size");
+						ECPGraise(lineno, ECPG_CONVERT_BOOL, ECPG_SQLSTATE_DATATYPE_MISMATCH, "different size");
 				}
 
 				*tobeinserted_p = mallocedval;
@@ -787,15 +797,15 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 			case ECPGt_unsigned_char:
 				{
 					/* set slen to string length if type is char * */
-					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
+					int slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
 
-					if (!(newcopy = ECPGalloc(slen + 1, stmt->lineno)))
+					if (!(newcopy = ECPGalloc(slen + 1, lineno)))
 						return false;
 
 					strncpy(newcopy, (char *) var->value, slen);
 					newcopy[slen] = '\0';
 
-					mallocedval = quote_postgres(newcopy, stmt->lineno);
+					mallocedval = quote_postgres(newcopy, lineno);
 					if (!mallocedval)
 						return false;
 
@@ -810,7 +820,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				{
 					int			slen = strlen((char *) var->value);
 
-					if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+					if (!(mallocedval = ECPGalloc(slen + 1, lineno)))
 						return false;
 
 					strncpy(mallocedval, (char *) var->value, slen);
@@ -825,13 +835,13 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					struct ECPGgeneric_varchar *variable =
 					(struct ECPGgeneric_varchar *) (var->value);
 
-					if (!(newcopy = (char *) ECPGalloc(variable->len + 1, stmt->lineno)))
+					if (!(newcopy = (char *) ECPGalloc(variable->len + 1, lineno)))
 						return false;
 
 					strncpy(newcopy, variable->arr, variable->len);
 					newcopy[variable->len] = '\0';
 
-					mallocedval = quote_postgres(newcopy, stmt->lineno);
+					mallocedval = quote_postgres(newcopy, lineno);
 					if (!mallocedval)
 						return false;
 
@@ -862,7 +872,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 							PGTYPESnumeric_free(nval);
 							slen = strlen(str);
 
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [] "), lineno)))
 								return false;
 
 							if (!element)
@@ -885,7 +895,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 						PGTYPESnumeric_free(nval);
 						slen = strlen(str);
 
-						if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
+						if (!(mallocedval = ECPGalloc(slen + 1, lineno)))
 							return false;
 
 						strncpy(mallocedval, str, slen);
@@ -907,10 +917,10 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESinterval_to_asc((interval *) ((var + var->offset * element)->value)), stmt->lineno);
+							str = quote_postgres(PGTYPESinterval_to_asc((interval *) ((var + var->offset * element)->value)), lineno);
 							slen = strlen(str);
 
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],interval "), stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],interval "), lineno)))
 								return false;
 
 							if (!element)
@@ -924,10 +934,10 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESinterval_to_asc((interval *) (var->value)), stmt->lineno);
+						str = quote_postgres(PGTYPESinterval_to_asc((interval *) (var->value)), lineno);
 						slen = strlen(str);
 
-						if (!(mallocedval = ECPGalloc(slen + sizeof("interval ") + 1, stmt->lineno)))
+						if (!(mallocedval = ECPGalloc(slen + sizeof("interval ") + 1, lineno)))
 							return false;
 
 						strcpy(mallocedval, "interval ");
@@ -950,10 +960,10 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESdate_to_asc(*(date *) ((var + var->offset * element)->value)), stmt->lineno);
+							str = quote_postgres(PGTYPESdate_to_asc(*(date *) ((var + var->offset * element)->value)), lineno);
 							slen = strlen(str);
 
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],date "), stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],date "), lineno)))
 								return false;
 
 							if (!element)
@@ -967,10 +977,10 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESdate_to_asc(*(date *) (var->value)), stmt->lineno);
+						str = quote_postgres(PGTYPESdate_to_asc(*(date *) (var->value)), lineno);
 						slen = strlen(str);
 
-						if (!(mallocedval = ECPGalloc(slen + sizeof("date ") + 1, stmt->lineno)))
+						if (!(mallocedval = ECPGalloc(slen + sizeof("date ") + 1, lineno)))
 							return false;
 
 						strcpy(mallocedval, "date ");
@@ -993,10 +1003,10 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), stmt->lineno);
+							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), lineno);
 							slen = strlen(str);
 
-							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [], timestamp "), stmt->lineno)))
+							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [], timestamp "), lineno)))
 								return false;
 
 							if (!element)
@@ -1010,10 +1020,10 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), stmt->lineno);
+						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), lineno);
 						slen = strlen(str);
 
-						if (!(mallocedval = ECPGalloc(slen + sizeof("timestamp") + 1, stmt->lineno)))
+						if (!(mallocedval = ECPGalloc(slen + sizeof("timestamp") + 1, lineno)))
 							return false;
 
 						strcpy(mallocedval, "timestamp ");
@@ -1032,7 +1042,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 
 			default:
 				/* Not implemented yet */
-				ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (char *) ECPGtype_name(var->type));
+				ECPGraise(lineno, ECPG_UNSUPPORTED, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, (char *) ECPGtype_name(var->type));
 				return false;
 				break;
 		}
@@ -1104,7 +1114,7 @@ ECPGexecute(struct statement * stmt)
 					desc_inlist.ind_value = desc_inlist.ind_pointer = NULL;
 					desc_inlist.ind_varcharsize = desc_inlist.ind_arrsize = desc_inlist.ind_offset = 0;
 
-					if (!ECPGstore_input(stmt, &desc_inlist, &tobeinserted, &malloced))
+					if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, &desc_inlist, &tobeinserted, &malloced))
 						return false;
 					
 					break;
@@ -1116,7 +1126,7 @@ ECPGexecute(struct statement * stmt)
 		}
 		else
 		{
-			if (!ECPGstore_input(stmt, var, &tobeinserted, &malloced))
+			if (!ECPGstore_input(stmt->lineno, stmt->force_indicator, var, &tobeinserted, &malloced))
 				return false;
 		}
 		if (tobeinserted)

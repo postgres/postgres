@@ -1825,6 +1825,15 @@ Sun Jun 27 13:50:58 CEST 2004
 Mon Jun 28 11:08:42 CEST 2004
 
 	- Arrays can be read as arrays or as character strings now.
+	
+Wed Jun 30 16:56:32 CEST 2004
+
+	- Added SET DESCRIPTOR command. 
+	- Cleaned up error handling in preprocessor.
+	
+Sun Jul  4 16:53:53 CEST 2004
+
+	- Made sure SET DESCRIPTOR accepts all data types including constants.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.

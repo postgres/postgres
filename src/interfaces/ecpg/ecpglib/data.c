@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.25 2004/06/28 11:47:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.26 2004/07/04 15:02:22 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -76,10 +76,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 	 * and 0 if not
 	 */
 	if (PQgetisnull(results, act_tuple, act_field))
-	{
-		printf("MM NULL\n");
 		value_for_indicator = -1;
-	}
 
 	switch (ind_type)
 	{

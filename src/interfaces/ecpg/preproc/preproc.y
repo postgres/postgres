@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.290 2004/06/30 15:01:57 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.291 2004/07/04 15:02:23 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -504,7 +504,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	AlterUserSetStmt privilege_list privilege privilege_target
 %type  <str>	opt_grant_grant_option opt_revoke_grant_option cursor_options
 %type  <str>	transaction_mode_list_or_empty transaction_mode_list
-%type  <str>	function_with_argtypes_list function_with_argtypes
+%type  <str>	function_with_argtypes_list function_with_argtypes IntConstVar
 %type  <str>	DropdbStmt ClusterStmt grantee RevokeStmt Bit DropOpClassStmt
 %type  <str>	GrantStmt privileges PosAllConst constraints_set_list
 %type  <str>	ConstraintsSetStmt AllConst CreateDomainStmt opt_nowait
@@ -4204,6 +4204,17 @@ IntConst:	PosIntConst		{ $$ = $1; }
 		| '-' PosIntConst	{ $$ = cat2_str(make_str("-"), $2); }
 		;
 
+IntConstVar:	Iconst	
+		{
+		        char *length = mm_alloc(32);
+			
+			sprintf(length, "%d", (int) strlen($1));
+			new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0);
+			$$ = $1;
+		}
+		| cvariable	{ $$ = $1; }
+		;
+
 StringConst:	Sconst		{ $$ = $1; }
 		| civar		{ $$ = $1; }
 		;
@@ -5283,8 +5294,8 @@ opt_output:	SQL_OUTPUT	{ $$ = make_str("output"); }
 	
 /*
  * dynamic SQL: descriptor based access
- *	written by Christof Petig <christof.petig@wtal.de>
- *		and Peter Eisentraut <peter.eisentraut@credativ.de>
+ *	originall written by Christof Petig <christof.petig@wtal.de>
+ *			and Peter Eisentraut <peter.eisentraut@credativ.de>
  */
 
 /*
@@ -5319,7 +5330,7 @@ ECPGGetDescHeaderItems: ECPGGetDescHeaderItem
 		| ECPGGetDescHeaderItems ',' ECPGGetDescHeaderItem
 		;
 
-ECPGGetDescHeaderItem: CVARIABLE '=' desc_header_item
+ECPGGetDescHeaderItem: cvariable '=' desc_header_item
 			{ push_assignment($1, $3); }
 		;
 
@@ -5331,8 +5342,10 @@ ECPGSetDescHeaderItems: ECPGSetDescHeaderItem
 		| ECPGSetDescHeaderItems ',' ECPGSetDescHeaderItem
 		;
 
-ECPGSetDescHeaderItem: desc_header_item '=' CVARIABLE
-			{ push_assignment($3, $1); }
+ECPGSetDescHeaderItem: desc_header_item '=' IntConstVar
+                {
+			push_assignment($3, $1);
+		}
 		;
 
 
@@ -5343,9 +5356,7 @@ desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
  * manipulate a descriptor
  */
 
-ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE CVARIABLE ECPGGetDescItems
-			{  $$.str = $5; $$.name = $3; }
-		|	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGGetDescItems
+ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE IntConstVar ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		;
 
@@ -5353,12 +5364,10 @@ ECPGGetDescItems: ECPGGetDescItem
 		| ECPGGetDescItems ',' ECPGGetDescItem
 		;
 
-ECPGGetDescItem: CVARIABLE '=' descriptor_item	{ push_assignment($1, $3); };
+ECPGGetDescItem: cvariable '=' descriptor_item	{ push_assignment($1, $3); };
 
 
-ECPGSetDescriptor:	SET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE CVARIABLE ECPGSetDescItems
-			{  $$.str = $5; $$.name = $3; }
-		|	SET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGSetDescItems
+ECPGSetDescriptor:	SET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE IntConstVar ECPGSetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		;
 
@@ -5366,7 +5375,11 @@ ECPGSetDescItems: ECPGSetDescItem
 		| ECPGSetDescItems ',' ECPGSetDescItem
 		;
 
-ECPGSetDescItem: descriptor_item '=' CVARIABLE		{ push_assignment($3, $1); };
+ECPGSetDescItem: descriptor_item '=' IntConstVar
+		{
+			push_assignment($3, $1);
+		}
+		;
 
 
 descriptor_item:	SQL_CARDINALITY			{ $$ = ECPGd_cardinality; }

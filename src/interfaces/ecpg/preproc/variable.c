@@ -419,7 +419,7 @@ dump_variables(struct arguments * list, int mode)
 	/* Then the current element and its indicator */
 	ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
 					list->indicator->name, list->indicator->type,
-					NULL, NULL, 0, NULL, NULL);
+					NULL, NULL, make_str("0"), NULL, NULL);
 
 	/* Then release the list element. */
 	if (mode != 0)

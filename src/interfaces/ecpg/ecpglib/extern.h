@@ -124,6 +124,8 @@ PGresult **ECPGdescriptor_lvalue (int line, const char *descriptor);
 
 bool ECPGstore_result (const PGresult * results, int act_field,
 		       const struct statement *stmt, struct variable *var);
+bool ECPGstore_input(const int, const bool, const struct variable *, const char **, bool *);
+void ECPGget_variable(va_list *, enum ECPGttype, struct variable *, bool);
 
 /* SQLSTATE values generated or processed by ecpglib (intentionally
  * not exported -- users should refer to the codes directly) */

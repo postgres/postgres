@@ -8,6 +8,7 @@
 
 #include "libpq-fe.h"
 #include "ecpgtype.h"
+#include <string.h>
 
 #ifndef __BEOS__
 #ifndef __cplusplus
