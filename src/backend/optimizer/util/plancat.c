@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.4 1997/03/12 21:06:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.5 1997/04/09 01:52:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -564,9 +564,17 @@ IndexSelectivity(Oid indexrelid,
 				    (char *) constFlags[n],
 				    (char *) nIndexKeys, 
 				    (char *) indexrelid);
+#if 0 
+/* 
+ * So cool guys! Npages for x > 10 and x < 20 is twice as
+ * npages for x > 10!	- vadim 04/09/97
+ */
 	npages += PointerIsValid(amopnpages) ? *amopnpages : 0.0;
 	if ((i = npages) < npages) /* ceil(npages)? */
 	    npages += 1.0;
+#endif
+	npages += PointerIsValid(amopnpages) ? *amopnpages : 0.0;
+
 	amopselect = (float64) fmgr(amop->amopselect,
 				    (char *) operatorObjectIds[n],
 				    (char *) indrelid,
@@ -577,7 +585,13 @@ IndexSelectivity(Oid indexrelid,
 				    (char *) indexrelid);
 	select *= PointerIsValid(amopselect) ? *amopselect : 1.0;
     }
-    *idxPages = npages;
+    /*
+     * Estimation of npages below is hack of course, but it's
+     * better than it was before.	- vadim 04/09/97
+     */
+    if ( nIndexKeys > 1 )
+    	npages = npages / (1.0 + nIndexKeys);
+    *idxPages = ceil ((double)(npages/nIndexKeys));
     *idxSelec = select;
 }
 
