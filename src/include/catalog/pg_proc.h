@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.89 1999/02/13 23:21:12 momjian Exp $
+ * $Id: pg_proc.h,v 1.90 1999/03/10 05:02:33 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -331,29 +331,29 @@ DATA(insert OID = 156 (  int4mod		   PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  
 DESCR("modulus");
 DATA(insert OID = 157 (  textne			   PGUID 11 f t f 2 f 16 "25 25" 100 0 0 0	foo bar ));
 DESCR("not equal");
-DATA(insert OID = 158 (  int24eq		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 158 (  int24eq		   PGUID 11 f t f 2 f 16 "21 23" 100 0 0 100  foo bar ));
 DESCR("equal");
-DATA(insert OID = 159 (  int42eq		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 159 (  int42eq		   PGUID 11 f t f 2 f 16 "23 21" 100 0 0 100  foo bar ));
 DESCR("equal");
-DATA(insert OID = 160 (  int24lt		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 160 (  int24lt		   PGUID 11 f t f 2 f 16 "21 23" 100 0 0 100  foo bar ));
 DESCR("less-than");
-DATA(insert OID = 161 (  int42lt		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 161 (  int42lt		   PGUID 11 f t f 2 f 16 "23 21" 100 0 0 100  foo bar ));
 DESCR("less-than");
-DATA(insert OID = 162 (  int24gt		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 162 (  int24gt		   PGUID 11 f t f 2 f 16 "21 23" 100 0 0 100  foo bar ));
 DESCR("greater-than");
-DATA(insert OID = 163 (  int42gt		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 163 (  int42gt		   PGUID 11 f t f 2 f 16 "23 21" 100 0 0 100  foo bar ));
 DESCR("greater-than");
-DATA(insert OID = 164 (  int24ne		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 164 (  int24ne		   PGUID 11 f t f 2 f 16 "21 23" 100 0 0 100  foo bar ));
 DESCR("not equal");
-DATA(insert OID = 165 (  int42ne		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 165 (  int42ne		   PGUID 11 f t f 2 f 16 "23 21" 100 0 0 100  foo bar ));
 DESCR("not equal");
-DATA(insert OID = 166 (  int24le		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 166 (  int24le		   PGUID 11 f t f 2 f 16 "21 23" 100 0 0 100  foo bar ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 167 (  int42le		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 167 (  int42le		   PGUID 11 f t f 2 f 16 "23 21" 100 0 0 100  foo bar ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 168 (  int24ge		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
+DATA(insert OID = 168 (  int24ge		   PGUID 11 f t f 2 f 16 "21 23" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 169 (  int42ge		   PGUID 11 f t f 2 f 23 "23 21" 100 0 0 100  foo bar ));
+DATA(insert OID = 169 (  int42ge		   PGUID 11 f t f 2 f 16 "23 21" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equal");
 DATA(insert OID = 170 (  int24mul		   PGUID 11 f t f 2 f 23 "21 23" 100 0 0 100  foo bar ));
 DESCR("multiply");
@@ -893,7 +893,7 @@ DESCR("convert float8 to int8");
 
 /* OIDS 600 - 699 */
 
-DATA(insert OID = 1285 (  int4notin		   PGUID 11 f t f 2 f 16 "21 0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1285 (  int4notin		   PGUID 11 f t f 2 f 16 "23 0" 100 0 0 100  foo bar ));
 DESCR("not in");
 DATA(insert OID = 1286 (  oidnotin		   PGUID 11 f t f 2 f 16 "26 0" 100 0 0 100  foo bar ));
 DESCR("not in");
@@ -1096,17 +1096,17 @@ DESCR("matches LIKE expression");
 DATA(insert OID =  851 (  textnlike		   PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0 foo bar ));
 DESCR("does not match LIKE expression");
 
-DATA(insert OID =  852 (  int48eq		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DATA(insert OID =  852 (  int48eq		   PGUID 11 f t f 2 f 16 "23 20" 100 0 0 100  foo bar ));
 DESCR("equal");
-DATA(insert OID =  853 (  int48ne		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DATA(insert OID =  853 (  int48ne		   PGUID 11 f t f 2 f 16 "23 20" 100 0 0 100  foo bar ));
 DESCR("not equal");
-DATA(insert OID =  854 (  int48lt		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DATA(insert OID =  854 (  int48lt		   PGUID 11 f t f 2 f 16 "23 20" 100 0 0 100  foo bar ));
 DESCR("less-than");
-DATA(insert OID =  855 (  int48gt		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DATA(insert OID =  855 (  int48gt		   PGUID 11 f t f 2 f 16 "23 20" 100 0 0 100  foo bar ));
 DESCR("greater-than");
-DATA(insert OID =  856 (  int48le		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DATA(insert OID =  856 (  int48le		   PGUID 11 f t f 2 f 16 "23 20" 100 0 0 100  foo bar ));
 DESCR("less-than-or-equal");
-DATA(insert OID =  857 (  int48ge		   PGUID 11 f t f 2 f 16 "21 20" 100 0 0 100  foo bar ));
+DATA(insert OID =  857 (  int48ge		   PGUID 11 f t f 2 f 16 "23 20" 100 0 0 100  foo bar ));
 DESCR("greater-than-or-equal");
 
 DATA(insert OID =  858 (  namelike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
@@ -1861,7 +1861,7 @@ DATA(insert OID = 1474 (  poly_circle		PGUID 11 f t f 1 f 718 "604" 100 0 1 0	fo
 DESCR("convert polygon to circle");
 DATA(insert OID = 1475 (  circle_poly		PGUID 11 f t f 2 f 604 "23 718" 100 0 1 0  foo bar ));
 DESCR("convert vertex count and circle to polygon");
-DATA(insert OID = 1476 (  dist_pc			PGUID 11 f t f 2 f 604 "600 718" 100 0 1 0	foo bar ));
+DATA(insert OID = 1476 (  dist_pc			PGUID 11 f t f 2 f 701 "600 718" 100 0 1 0	foo bar ));
 DESCR("distance between");
 DATA(insert OID = 1477 (  circle_contain_pt   PGUID 11 f t f 2 f  16 "718 600" 100 0 0 100	foo bar ));
 DESCR("");
