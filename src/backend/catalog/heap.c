@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.134 2000/06/28 03:31:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.135 2000/07/02 04:46:09 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -166,12 +166,11 @@ heap_create(char *relname,
 {
 	static unsigned int uniqueId = 0;
 
-	int			i;
 	Oid			relid;
 	Relation	rel;
-	int			len;
 	bool		nailme = false;
 	int			natts = tupDesc->natts;
+	int			i;
 	MemoryContext oldcxt;
 
 	/* ----------------
@@ -236,12 +235,12 @@ heap_create(char *relname,
 	 *	allocate a new relation descriptor.
 	 * ----------------
 	 */
-	len = sizeof(RelationData);
-
-	rel = (Relation) palloc(len);
-	MemSet((char *) rel, 0, len);
+	rel = (Relation) palloc(sizeof(RelationData));
+	MemSet((char *) rel, 0, sizeof(RelationData));
 	rel->rd_fd = -1;			/* table is not open */
 	rel->rd_unlinked = true;	/* table is not created yet */
+
+	RelationSetReferenceCount(rel, 1);
 
 	/*
 	 * create a new tuple descriptor from the one passed in
@@ -257,14 +256,11 @@ heap_create(char *relname,
 	if (nailme)
 		rel->rd_isnailed = true;
 
-	RelationSetReferenceCount(rel, 1);
-
-	rel->rd_rel = (Form_pg_class) palloc(sizeof *rel->rd_rel);
-
 	/* ----------------
 	 *	initialize the fields of our new relation descriptor
 	 * ----------------
 	 */
+	rel->rd_rel = (Form_pg_class) palloc(sizeof *rel->rd_rel);
 	MemSet((char *) rel->rd_rel, 0, sizeof *rel->rd_rel);
 	strcpy(RelationGetPhysicalRelationName(rel), relname);
 	rel->rd_rel->relkind = RELKIND_UNCATALOGED;
@@ -284,9 +280,13 @@ heap_create(char *relname,
 	}
 
 	/* ----------------
+	 *	done building relcache entry.
+	 * ----------------
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
+	/* ----------------
 	 *	have the storage manager create the relation.
-	 *
-	 * XXX shouldn't we switch out of CacheMemoryContext for that?
 	 * ----------------
 	 */
 
@@ -295,8 +295,6 @@ heap_create(char *relname,
 		heap_storage_create(rel);
 
 	RelationRegisterRelation(rel);
-
-	MemoryContextSwitchTo(oldcxt);
 
 	return rel;
 }
