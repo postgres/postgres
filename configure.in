@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.173 2002/03/30 00:59:52 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.174 2002/04/01 01:11:00 tgl Exp $
 
 dnl Developers, please strive to achieve this order:
 dnl
@@ -299,7 +299,7 @@ if test x"$GCC" = x"yes" ; then
 else
   cc_string=$CC
 fi
-AC_DEFINE_UNQUOTED(PG_VERSION_STR, ["PostgreSQL $VERSION on $host, compiled by $cc_string"], [A canonical string containing the version number, platform, and C compiler])
+AC_DEFINE_UNQUOTED(PG_VERSION_STR, ["PostgreSQL $PACKAGE_VERSION on $host, compiled by $cc_string"], [A canonical string containing the version number, platform, and C compiler])
 
 
 #
