@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.64 2004/10/25 06:27:21 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.64.4.1 2005/01/21 00:17:02 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -473,6 +473,10 @@ decl_cursor_arglist : decl_cursor_arg
 				| decl_cursor_arglist ',' decl_cursor_arg
 					{
 						int i = $1->nfields++;
+
+						/* Guard against overflowing the array on malicious input */
+						if (i >= 1024)
+							yyerror("too many parameters specified for refcursor");
 
 						$1->fieldnames[i] = $3->refname;
 						$1->varnos[i] = $3->dno;
