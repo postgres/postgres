@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.12 2003/11/23 21:41:30 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/initdb/initdb.c,v 1.13 2003/11/23 22:17:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,7 @@
 #include <unistd.h>
 #include <locale.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "libpq/pqsignal.h"
 #include "mb/pg_wchar.h"
@@ -94,8 +95,6 @@ char	   *username = "";
 bool		pwprompt = false;
 bool		debug = false;
 bool		noclean = false;
-bool		show_help = false;
-bool		show_version = false;
 bool		show_setting = false;
 
 
@@ -250,7 +249,7 @@ xmalloc(size_t size)
 	result = malloc(size);
 	if (!result)
 	{
-		fputs(_("malloc failure - bailing out\n"), stderr);
+		fprintf(stderr, _("%s: out of memory\n"), progname);
 		exit(1);
 	}
 	return result;
@@ -264,7 +263,7 @@ xstrdup(const char *s)
 	result = strdup(s);
 	if (!result)
 	{
-		fputs(_("strdup failure - bailing out\n"), stderr);
+		fprintf(stderr, _("%s: out of memory\n"), progname);
 		exit(1);
 	}
 	return result;
@@ -395,7 +394,8 @@ readfile(char *path)
 
 	if ((infile = fopen(path, "r")) == NULL)
 	{
-		fprintf(stderr, _("could not read %s\n"), path);
+		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
+				progname, path, strerror(errno));
 		exit_nicely();
 	}
 
@@ -453,7 +453,8 @@ writefile(char *path, char **lines)
 	;
 	if ((out_file = fopen(path, PG_BINARY_W)) == NULL)
 	{
-		fprintf(stderr, _("could not write %s\n"), path);
+		fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
+				progname, path, strerror(errno));
 		exit_nicely();
 	}
 	for (line = lines; *line != NULL; line++)
@@ -2009,23 +2010,23 @@ usage(const char *progname)
 	printf(_(" [-D, --pgdata=]DATADIR     location for this database cluster\n"));
 	printf(_("  -E, --encoding=ENCODING   set default encoding for new databases\n"));
 	printf(_("  --locale=LOCALE           initialize database cluster with given locale\n"));
-	printf(_("  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"));
-	printf(_("  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"));
-	printf(_("                            initialize database cluster with given locale\n"));
-	printf(_("                            in the respective category (default taken from\n"));
-	printf(_("                            environment)\n"));
+	printf(_("  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
+			 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
+			 "                            initialize database cluster with given locale\n"
+			 "                            in the respective category (default taken from\n"
+			 "                            environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
-	printf(_("\nLess commonly used options: \n"));
+	printf(_("\nLess commonly used options:\n"));
 	printf(_("  -d, --debug               generate lots of debugging output\n"));
 	printf(_("  -s, --show                show internal settings\n"));
 	printf(_("  -L DIRECTORY              where to find the input files\n"));
 	printf(_("  -n, --noclean             do not clean up after errors\n"));
-	printf(_("\nIf the data directory is not specified, the environment variable PGDATA\n"));
-	printf(_("is used.\n"));
+	printf(_("\nIf the data directory is not specified, the environment variable PGDATA\n"
+			 "is used.\n"));
 	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
@@ -2115,20 +2116,24 @@ main(int argc, char *argv[])
 		self_path = NULL;
 	}
 
+    if (argc > 1)
+    {
+        if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
+        {
+            usage(progname);
+            exit(0);
+        }
+        if (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-V") == 0)
+        {
+            puts("initdb (PostgreSQL) " PG_VERSION);
+            exit(0);
+        }
+    }
+
 	/* process command-line options */
 
-	while (1)
+	while ((c = getopt_long(argc, argv, "dD:E:L:nU:W", long_options, &option_index)) != -1)
 	{
-		/*
-		 * a : as the first option char here lets us use ? as a short
-		 * option
-		 */
-		c = getopt_long(argc, argv, ":D:E:WU:?sVdnL:",
-						long_options, &option_index);
-
-		if (c == -1)
-			break;
-
 		switch (c)
 		{
 			case 'D':
@@ -2178,20 +2183,14 @@ main(int argc, char *argv[])
 			case 8:
 				locale = "C";
 				break;
-			case '?':
-				show_help = true;
-				break;
 			case 's':
 				show_setting = true;
 				break;
-			case 'V':
-				show_version = true;
-				break;
 			default:
-				show_help = true;
-				printf(_("Unrecognized option: %c\n"), c);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+                        progname);
+				exit(1);
 		}
-
 	}
 
 	/* Non-option argument specifies data directory */
@@ -2202,19 +2201,11 @@ main(int argc, char *argv[])
 	}
 
 	if (optind < argc)
-		show_help = true;
-
-	if (show_version)
 	{
-		/* hard coded name here, in case they rename executable */
-		printf("initdb (PostgreSQL) %s\n", PG_VERSION);
-		exit(0);
-	}
-
-	if (show_help)
-	{
-		usage(progname);
-		exit(0);
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+						  progname, argv[optind + 1]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
 	}
 
 	if (strlen(pg_data) == 0)
@@ -2229,11 +2220,9 @@ main(int argc, char *argv[])
 		{
 			fprintf(stderr,
 					_("%s: no data directory specified\n"
-					"You must identify the directory where the data "
-					"for this database system\n"
-					"will reside.  Do this with either the invocation "
-					"option -D or the\n"
-					"environment variable PGDATA.\n"),
+					  "You must identify the directory where the data for this database system\n"
+					  "will reside.  Do this with either the invocation option -D or the\n"
+					  "environment variable PGDATA.\n"),
 					progname);
 			exit(1);
 		}
