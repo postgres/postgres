@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.15 1999/02/09 03:51:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.16 1999/02/10 03:52:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ group_clauses_by_order(List *restrictinfo_list,
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
-			JoinKey    *keys;
+			JoinKey    *jmkeys;
 
 			path_order = makeNode(PathOrder);
 			path_order->ordtype = MERGE_ORDER;
@@ -65,15 +65,15 @@ group_clauses_by_order(List *restrictinfo_list,
 			xmergeinfo = match_order_mergeinfo(path_order, mergeinfo_list);
 			if (inner_relid == leftop->varno)
 			{
-				keys = makeNode(JoinKey);
-				keys->outer = rightop;
-				keys->inner = leftop;
+				jmkeys = makeNode(JoinKey);
+				jmkeys->outer = rightop;
+				jmkeys->inner = leftop;
 			}
 			else
 			{
-				keys = makeNode(JoinKey);
-				keys->outer = leftop;
-				keys->inner = rightop;
+				jmkeys = makeNode(JoinKey);
+				jmkeys->outer = leftop;
+				jmkeys->inner = rightop;
 			}
 
 			if (xmergeinfo == NULL)
@@ -87,7 +87,7 @@ group_clauses_by_order(List *restrictinfo_list,
 
 			((JoinMethod *) xmergeinfo)->clauses = lcons(clause,
 					  ((JoinMethod *) xmergeinfo)->clauses);
-			((JoinMethod *) xmergeinfo)->jmkeys = lcons(keys,
+			((JoinMethod *) xmergeinfo)->jmkeys = lcons(jmkeys,
 					  ((JoinMethod *) xmergeinfo)->jmkeys);
 		}
 	}

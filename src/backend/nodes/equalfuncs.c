@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.27 1999/02/09 03:51:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.28 1999/02/10 03:52:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,7 +366,7 @@ _equalPath(Path *a, Path *b)
 		if (!equal(a->path_order->ord.merge, b->path_order->ord.merge))
 			return false;
 	}
-	if (!equal(a->keys, b->keys))
+	if (!equal(a->pathkeys, b->pathkeys))
 		return false;
 
 	/*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.4 1999/02/09 17:02:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.5 1999/02/10 03:52:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,7 +767,7 @@ FreePathFields(Path *node)
 	pfree(node->path_order);	/* is it an object, but we don't have
 								   separate free for it */
 
-	freeObject(node->keys);
+	freeObject(node->pathkeys);
 
 	freeList(node->joinid);
 	freeObject(node->loc_restrictinfo);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.21 1999/02/09 03:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.22 1999/02/10 03:52:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,15 +165,15 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 		path = (Path *) lfirst(temp);
 
 #ifdef OPTDUP_DEBUG
-		if (!samekeys(path->keys, new_path->keys))
+		if (!samekeys(path->pathkeys, new_path->pathkeys))
 		{
 			printf("oldpath\n");
-			pprint(path->keys);
+			pprint(path->pathkeys);
 			printf("newpath\n");
-			pprint(new_path->keys);
-			if (path->keys && new_path->keys &&
-				length(lfirst(path->keys)) >= 2 &&
-				length(lfirst(path->keys)) < length(lfirst(new_path->keys)))
+			pprint(new_path->pathkeys);
+			if (path->pathkeys && new_path->pathkeys &&
+				length(lfirst(path->pathkeys)) >= 2 &&
+				length(lfirst(path->pathkeys)) < length(lfirst(new_path->pathkeys)))
 				sleep(0); /* set breakpoint here */
 		}
 		if (!equal_path_ordering(path->path_order,
@@ -186,7 +186,7 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 		}
 #endif
 		
-		if (samekeys(path->keys, new_path->keys) &&
+		if (samekeys(path->pathkeys, new_path->pathkeys) &&
 			equal_path_ordering(path->path_order,
 								new_path->path_order))
 		{
@@ -232,7 +232,7 @@ create_seqscan_path(RelOptInfo * rel)
 	pathnode->path_order = makeNode(PathOrder);
 	pathnode->path_order->ordtype = SORTOP_ORDER;
 	pathnode->path_order->ord.sortop = NULL;
-	pathnode->keys = NIL;
+	pathnode->pathkeys = NIL;
 
 	/*
 	 * copy restrictinfo list into path for expensive function processing --
@@ -300,7 +300,7 @@ create_index_path(Query *root,
 	 */
 	if (pathnode->path.path_order->ord.sortop)
 	{
-		pathnode->path.keys = collect_index_pathkeys(index->indexkeys,
+		pathnode->path.pathkeys = collect_index_pathkeys(index->indexkeys,
 													 rel->targetlist);
 
 		/*
@@ -309,11 +309,11 @@ create_index_path(Query *root,
 		 * relevant to the scan are not applied to the scan path node, so
 		 * if no index keys were found, we can't order the path).
 		 */
-		if (pathnode->path.keys == NULL)
+		if (pathnode->path.pathkeys == NULL)
 			pathnode->path.path_order->ord.sortop = NULL;
 	}
 	else
-		pathnode->path.keys = NULL;
+		pathnode->path.pathkeys = NULL;
 
 	if (is_join_scan || restriction_clauses == NULL)
 	{
@@ -413,7 +413,7 @@ create_index_path(Query *root,
  * 'outer_rel' is the outer join relation
  * 'outer_path' is the outer join path.
  * 'inner_path' is the inner join path.
- * 'keys' are the keys of the path
+ * 'pathkeys' are the keys of the path
  *
  * Returns the resulting path node.
  *
@@ -423,7 +423,7 @@ create_nestloop_path(RelOptInfo * joinrel,
 					 RelOptInfo * outer_rel,
 					 Path *outer_path,
 					 Path *inner_path,
-					 List *keys)
+					 List *pathkeys)
 {
 	JoinPath   *pathnode = makeNode(JoinPath);
 
@@ -432,13 +432,13 @@ create_nestloop_path(RelOptInfo * joinrel,
 	pathnode->outerjoinpath = outer_path;
 	pathnode->innerjoinpath = inner_path;
 	pathnode->pathinfo = joinrel->restrictinfo;
-	pathnode->path.keys = keys;
+	pathnode->path.pathkeys = pathkeys;
 	pathnode->path.joinid = NIL;
 	pathnode->path.outerjoincost = (Cost) 0.0;
 	pathnode->path.loc_restrictinfo = NIL;
 	pathnode->path.path_order = makeNode(PathOrder);
 	
-	if (keys)
+	if (pathkeys)
 	{
 		pathnode->path.path_order->ordtype = outer_path->path_order->ordtype;
 		if (outer_path->path_order->ordtype == SORTOP_ORDER)
@@ -479,7 +479,7 @@ create_nestloop_path(RelOptInfo * joinrel,
  * 'innerwidth' is the number of bytes per tuple in the inner relation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
- * 'keys' are the new keys of the join relation
+ * 'pathkeys' are the new keys of the join relation
  * 'order' is the sort order required for the merge
  * 'mergeclauses' are the applicable join/restriction clauses
  * 'outersortkeys' are the sort varkeys for the outer relation
@@ -494,7 +494,7 @@ create_mergejoin_path(RelOptInfo * joinrel,
 					  int innerwidth,
 					  Path *outer_path,
 					  Path *inner_path,
-					  List *keys,
+					  List *pathkeys,
 					  MergeOrder *order,
 					  List *mergeclauses,
 					  List *outersortkeys,
@@ -507,7 +507,7 @@ create_mergejoin_path(RelOptInfo * joinrel,
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.pathinfo = joinrel->restrictinfo;
-	pathnode->jpath.path.keys = keys;
+	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->jpath.path.path_order = makeNode(PathOrder);
 	pathnode->jpath.path.path_order->ordtype = MERGE_ORDER;
 	pathnode->jpath.path.path_order->ord.merge = order;
@@ -544,7 +544,7 @@ create_mergejoin_path(RelOptInfo * joinrel,
  * 'innerwidth' is the number of bytes per tuple in the inner relation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
- * 'keys' are the new keys of the join relation
+ * 'pathkeys' are the new keys of the join relation
  * 'operator' is the hashjoin operator
  * 'hashclauses' are the applicable join/restriction clauses
  * 'outerkeys' are the sort varkeys for the outer relation
@@ -559,7 +559,7 @@ create_hashjoin_path(RelOptInfo * joinrel,
 					 int innerwidth,
 					 Path *outer_path,
 					 Path *inner_path,
-					 List *keys,
+					 List *pathkeys,
 					 Oid operator,
 					 List *hashclauses,
 					 List *outerkeys,
@@ -573,7 +573,7 @@ create_hashjoin_path(RelOptInfo * joinrel,
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.pathinfo = joinrel->restrictinfo;
 	pathnode->jpath.path.loc_restrictinfo = NIL;
-	pathnode->jpath.path.keys = keys;
+	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->jpath.path.path_order = makeNode(PathOrder);
 	pathnode->jpath.path.path_order->ordtype = SORTOP_ORDER;
 	pathnode->jpath.path.path_order->ord.sortop = NULL;

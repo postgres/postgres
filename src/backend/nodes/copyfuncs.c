@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.65 1999/02/09 17:02:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.66 1999/02/10 03:52:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1114,7 +1114,7 @@ CopyPathFields(Path *from, Path *newnode)
 	else
 		Node_Copy(from, newnode, path_order->ord.merge);
 
-	Node_Copy(from, newnode, keys);
+	Node_Copy(from, newnode, pathkeys);
 
 	newnode->outerjoincost = from->outerjoincost;
 

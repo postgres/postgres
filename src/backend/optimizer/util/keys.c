@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.12 1999/02/09 06:30:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.13 1999/02/10 03:52:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,8 +207,7 @@ collect_index_pathkeys(int *index_keys, List *tlist)
 							   tlist,
 							   equal_indexkey_var);
 		if (mvar)
-			retval = nconc(retval, lcons(lcons(mvar, NIL),
-										 NIL));
+			retval = lappend(retval, lcons(mvar, NIL));
 		index_keys++;
 	}
 	return retval;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.25 1999/02/03 20:15:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.26 1999/02/10 03:52:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,8 +383,8 @@ print_path(Query *root, Path *path, int indent)
 			List	   *k,
 					   *l;
 
-			printf(" keys=");
-			foreach(k, path->keys)
+			printf(" pathkeys=");
+			foreach(k, path->pathkeys)
 			{
 				printf("(");
 				foreach(l, lfirst(k))

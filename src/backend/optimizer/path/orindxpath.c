@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.16 1999/02/09 03:51:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.17 1999/02/10 03:52:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ create_or_index_paths(Query *root,
 				 *	not in any order, so the sortop is NULL.
 				 */
 			    pathnode->path.path_order->ord.sortop = NULL;
-			    pathnode->path.keys = NIL;	/* not sure about this, bjm 1998/09/21 */
+			    pathnode->path.pathkeys = NIL;
 
 				pathnode->indexqual = lcons(clausenode, NIL);
 				pathnode->indexid = indexids;

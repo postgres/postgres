@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.20 1999/02/09 17:02:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.21 1999/02/10 03:52:36 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -212,16 +212,16 @@ print_expr(Node *expr, List *rtable)
 }
 
 /*
- * print_keys -
- *	  temporary here. where is keys list of list??
+ * print_pathkeys -
+ *	  temporary here. where is keys list of lists
  */
 void
-print_keys(List *keys, List *rtable)
+print_pathkeys(List *pathkeys, List *rtable)
 {
 	List	   *k;
 
 	printf("(");
-	foreach(k, keys)
+	foreach(k, pathkeys)
 	{
 		Node	   *var = lfirst((List *) lfirst(k));
 

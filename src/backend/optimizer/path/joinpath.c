@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.16 1999/02/09 03:51:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.17 1999/02/10 03:52:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,19 +341,19 @@ match_unsorted_outer(RelOptInfo * joinrel,
 
 		if (clauses)
 		{
-			List	   *keys = xmergeinfo->jmethod.jmkeys;
+			List	   *jmkeys = xmergeinfo->jmethod.jmkeys;
 			List	   *clauses = xmergeinfo->jmethod.clauses;
 
-			matchedJoinKeys = match_pathkeys_joinkeys(outerpath->keys,
-										keys,
+			matchedJoinKeys = match_pathkeys_joinkeys(outerpath->pathkeys,
+										jmkeys,
 										clauses,
 										OUTER,
 										&matchedJoinClauses);
-			merge_pathkeys = new_join_pathkeys(outerpath->keys,
+			merge_pathkeys = new_join_pathkeys(outerpath->pathkeys,
 								  joinrel->targetlist, clauses);
 		}
 		else
-			merge_pathkeys = outerpath->keys;
+			merge_pathkeys = outerpath->pathkeys;
 
 		if (best_innerjoin &&
 			path_is_cheaper(best_innerjoin, cheapest_inner))
@@ -415,7 +415,7 @@ match_unsorted_outer(RelOptInfo * joinrel,
 											matchedJoinClauses,
 											NIL,
 											varkeys),
-					  paths);
+									  paths);
 		}
 		else
 			temp_node = paths;
@@ -484,11 +484,11 @@ match_unsorted_inner(RelOptInfo * joinrel,
 
 		if (clauses)
 		{
-			List	   *keys = xmergeinfo->jmethod.jmkeys;
+			List	   *jmkeys = xmergeinfo->jmethod.jmkeys;
 			List	   *cls = xmergeinfo->jmethod.clauses;
 
-			matchedJoinKeys = match_pathkeys_joinkeys(innerpath->keys,
-										keys,
+			matchedJoinKeys = match_pathkeys_joinkeys(innerpath->pathkeys,
+										jmkeys,
 										cls,
 										INNER,
 										&matchedJoinClauses);

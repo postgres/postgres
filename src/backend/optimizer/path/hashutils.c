@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.11 1999/02/04 03:19:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.12 1999/02/10 03:52:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,21 +58,21 @@ group_clauses_by_hashop(List *restrictinfo_list,
 			Expr	   *clause = restrictinfo->clause;
 			Var		   *leftop = get_leftop(clause);
 			Var		   *rightop = get_rightop(clause);
-			JoinKey    *keys = (JoinKey *) NULL;
+			JoinKey    *joinkey = (JoinKey *) NULL;
 
 			xhashinfo = match_hashop_hashinfo(hashjoinop, hashinfo_list);
 
 			if (inner_relid == leftop->varno)
 			{
-				keys = makeNode(JoinKey);
-				keys->outer = rightop;
-				keys->inner = leftop;
+				joinkey = makeNode(JoinKey);
+				joinkey->outer = rightop;
+				joinkey->inner = leftop;
 			}
 			else
 			{
-				keys = makeNode(JoinKey);
-				keys->outer = leftop;
-				keys->inner = rightop;
+				joinkey = makeNode(JoinKey);
+				joinkey->outer = leftop;
+				joinkey->inner = rightop;
 			}
 
 			if (xhashinfo == NULL)
@@ -90,7 +90,7 @@ group_clauses_by_hashop(List *restrictinfo_list,
 
 			xhashinfo->jmethod.clauses = lcons(clause, xhashinfo->jmethod.clauses);
 
-			xhashinfo->jmethod.jmkeys = lcons(keys, xhashinfo->jmethod.jmkeys);
+			xhashinfo->jmethod.jmkeys = lcons(joinkey, xhashinfo->jmethod.jmkeys);
 		}
 	}
 	return hashinfo_list;

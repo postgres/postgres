@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.13 1999/02/09 17:02:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.14 1999/02/10 03:52:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  * match-pathkeys-joinkeys--
  *	  Attempts to match the keys of a path against the keys of join clauses.
  *	  This is done by looking for a matching join key in 'joinkeys' for
- *	  every path key in the list 'pathkeys'. If there is a matching join key
+ *	  every path key in the list 'path.keys'. If there is a matching join key
  *	  (not necessarily unique) for every path key, then the list of
  *	  corresponding join keys and join clauses are returned in the order in
  *	  which the keys matched the path keys.
@@ -216,10 +216,10 @@ match_paths_joinkeys(List *joinkeys,
 	{
 		Path	   *path = (Path *) lfirst(i);
 
-		key_match = every_func(joinkeys, path->keys, which_subkey);
+		key_match = every_func(joinkeys, path->pathkeys, which_subkey);
 
 		if (equal_path_ordering(ordering, path->path_order) &&
-			length(joinkeys) == length(path->keys) &&
+			length(joinkeys) == length(path->pathkeys) &&
 			key_match)
 		{
 
@@ -249,7 +249,7 @@ match_paths_joinkeys(List *joinkeys,
  *		in 'joinkeys'
  *
  * Returns a list of pathkeys: ((tlvar1)(tlvar2)...(tlvarN)).
- * [I've no idea why they have to be list of lists. Should be fixed. -ay 12/94]
+ * It is a list of lists because of multi-key indexes.
  */
 List *
 extract_path_keys(List *joinkeys,

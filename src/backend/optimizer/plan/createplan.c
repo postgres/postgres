@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.40 1999/02/09 17:02:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.41 1999/02/10 03:52:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static Node *fix_indxqual_references(Node *clause, Path *index_path);
-static Noname *make_noname(List *tlist, List *keys, Oid *operators,
+static Noname *make_noname(List *tlist, List *pathkeys, Oid *operators,
 		  Plan *plan_node, int nonametype);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig, Cost cost);
@@ -814,19 +814,19 @@ switch_outer(List *clauses)
 static List *
 set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
 {
-	Node	   *keys = NULL;
+	Node	   *pathkey = NULL;
 	int			keyno = 1;
 	Resdom	   *resdom = (Resdom *) NULL;
 	List	   *i = NIL;
 
 	foreach(i, pathkeys)
 	{
-		keys = lfirst((List *) lfirst(i));
-		resdom = tlist_member((Var *) keys, tlist);
+		pathkey = lfirst((List *) lfirst(i));
+		resdom = tlist_member((Var *) pathkey, tlist);
 		if (resdom)
 		{
 			/*
-			 * Order the resdom keys and replace the operator OID for each
+			 * Order the resdom pathkey and replace the operator OID for each
 			 * key with the regproc OID.
 			 *
 			 * XXX Note that the optimizer only generates merge joins with 1
@@ -852,7 +852,7 @@ set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
  *	  or (SEQSCAN(MATERIAL(plan-node)))
  *
  *	  'tlist' is the target list of the scan to be sorted or hashed
- *	  'keys' is the list of keys which the sort or hash will be done on
+ *	  'pathkeys' is the list of keys which the sort or hash will be done on
  *	  'operators' is the operators with which the sort or hash is to be done
  *		(a list of operator OIDs)
  *	  'plan-node' is the node which yields tuples for the sort
@@ -860,7 +860,7 @@ set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
  */
 static Noname *
 make_noname(List *tlist,
-		  List *keys,
+		  List *pathkeys,
 		  Oid *operators,
 		  Plan *plan_node,
 		  int nonametype)
@@ -870,7 +870,7 @@ make_noname(List *tlist,
 
 	/* Create a new target list for the noname, with keys set. */
 	noname_tlist = set_noname_tlist_operators(new_unsorted_tlist(tlist),
-										  keys,
+										  pathkeys,
 										  operators);
 	switch (nonametype)
 	{
@@ -881,7 +881,7 @@ make_noname(List *tlist,
 										   (Plan *) make_sort(noname_tlist,
 													  _NONAME_RELATION_ID_,
 															  plan_node,
-														  length(keys)));
+														  length(pathkeys)));
 			break;
 
 		case NONAME_MATERIAL:
@@ -891,7 +891,7 @@ make_noname(List *tlist,
 									   (Plan *) make_material(noname_tlist,
 													  _NONAME_RELATION_ID_,
 															  plan_node,
-														  length(keys)));
+														  length(pathkeys)));
 			break;
 
 		default:

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.27 1999/02/09 17:02:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.28 1999/02/10 03:52:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ cost_index(Oid indexid,
  *	  2. the cost of reading the sort result into memory (another seqscan)
  *		 unless 'noread' is set
  *
- * 'keys' is a list of sort keys
+ * 'pathkeys' is a list of sort keys
  * 'tuples' is the number of tuples in the relation
  * 'width' is the average tuple width in bytes
  * 'noread' is a flag indicating that the sort result can remain on disk
@@ -174,7 +174,7 @@ cost_index(Oid indexid,
  *
  */
 Cost
-cost_sort(List *keys, int tuples, int width, bool noread)
+cost_sort(List *pathkeys, int tuples, int width, bool noread)
 {
 	Cost		temp = 0;
 	int			npages = page_size(tuples, width);
@@ -183,7 +183,7 @@ cost_sort(List *keys, int tuples, int width, bool noread)
 
 	if (!_enable_sort_)
 		temp += _disable_cost_;
-	if (tuples == 0 || keys == NULL)
+	if (tuples == 0 || pathkeys == NULL)
 	{
 		Assert(temp >= 0);
 		return temp;
@@ -194,8 +194,8 @@ cost_sort(List *keys, int tuples, int width, bool noread)
 	 * could be base_log(pages, NBuffers), but we are only doing 2-way
 	 * merges
 	 */
-	temp += _cpu_page_wight_ *
-		numTuples * base_log((double) pages, (double) 2.0);
+	temp += _cpu_page_wight_ * numTuples *
+		base_log((double) pages, (double) 2.0);
 
 	if (!noread)
 		temp = temp + cost_seqscan(_NONAME_RELATION_ID_, npages, tuples);

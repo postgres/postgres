@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.12 1999/02/03 20:15:27 momjian Exp $
+ * $Id: geqo_misc.c,v 1.13 1999/02/10 03:52:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,8 +240,8 @@ geqo_print_path(Query *root, Path *path, int indent)
 			List	   *k,
 					   *l;
 
-			printf(" keys=");
-			foreach(k, path->keys)
+			printf(" pathkeys=");
+			foreach(k, path->pathkeys)
 			{
 				printf("(");
 				foreach(l, lfirst(k))

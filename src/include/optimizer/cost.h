@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.12 1999/02/03 20:15:52 momjian Exp $
+ * $Id: cost.h,v 1.13 1999/02/10 03:52:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ extern Cost cost_seqscan(int relid, int relpages, int reltuples);
 extern Cost cost_index(Oid indexid, int expected_indexpages, Cost selec,
 		   int relpages, int reltuples, int indexpages,
 		   int indextuples, bool is_injoin);
-extern Cost cost_sort(List *keys, int tuples, int width, bool noread);
+extern Cost cost_sort(List *pathkeys, int tuples, int width, bool noread);
 extern Cost cost_nestloop(Cost outercost, Cost innercost, int outertuples,
 			  int innertuples, int outerpages, bool is_indexjoin);
 extern Cost cost_mergejoin(Cost outercost, Cost innercost,

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.67 1999/02/09 17:02:49 momjian Exp $
+ *  $Id: outfuncs.c,v 1.68 1999/02/10 03:52:35 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -959,10 +959,10 @@ _outPathOrder(StringInfo str, PathOrder *node)
 static void
 _outPath(StringInfo str, Path *node)
 {
-	appendStringInfo(str, " PATH :pathtype %d :cost %f :keys ",
+	appendStringInfo(str, " PATH :pathtype %d :cost %f :pathkeys ",
 			node->pathtype,
 			node->path_cost);
-	_outNode(str, node->keys);
+	_outNode(str, node->pathkeys);
 
 	appendStringInfo(str, " :path_order ");
 	_outNode(str, node->path_order);
@@ -975,10 +975,10 @@ static void
 _outIndexPath(StringInfo str, IndexPath *node)
 {
 	appendStringInfo(str, 
-			" INDEXPATH :pathtype %d :cost %f :keys ",
+			" INDEXPATH :pathtype %d :cost %f :pathkeys ",
 			node->path.pathtype,
 			node->path.path_cost);
-	_outNode(str, node->path.keys);
+	_outNode(str, node->path.pathkeys);
 
 	appendStringInfo(str, " :path_order ");
 	_outNode(str, node->path.path_order);
@@ -997,10 +997,10 @@ static void
 _outJoinPath(StringInfo str, JoinPath *node)
 {
 	appendStringInfo(str, 
-			" JOINPATH :pathtype %d :cost %f :keys ",
+			" JOINPATH :pathtype %d :cost %f :pathkeys ",
 			node->path.pathtype,
 			node->path.path_cost);
-	_outNode(str, node->path.keys);
+	_outNode(str, node->path.pathkeys);
 
 	appendStringInfo(str, " :path_order ");
 	_outNode(str, node->path.path_order);
@@ -1028,10 +1028,10 @@ static void
 _outMergePath(StringInfo str, MergePath *node)
 {
 	appendStringInfo(str, 
-			" MERGEPATH :pathtype %d :cost %f :keys ",
+			" MERGEPATH :pathtype %d :cost %f :pathkeys ",
 			node->jpath.path.pathtype,
 			node->jpath.path.path_cost);
-	_outNode(str, node->jpath.path.keys);
+	_outNode(str, node->jpath.path.pathkeys);
 
 	appendStringInfo(str, " :path_order ");
 	_outNode(str, node->jpath.path.path_order);
@@ -1068,10 +1068,10 @@ static void
 _outHashPath(StringInfo str, HashPath *node)
 {
 	appendStringInfo(str, 
-			" HASHPATH :pathtype %d :cost %f :keys ",
+			" HASHPATH :pathtype %d :cost %f :pathkeys ",
 			node->jpath.path.pathtype,
 			node->jpath.path.path_cost);
-	_outNode(str, node->jpath.path.keys);
+	_outNode(str, node->jpath.path.pathkeys);
 
 	appendStringInfo(str, " :path_order ");
 	_outNode(str, node->jpath.path.path_order);
