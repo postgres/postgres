@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.18 1999/12/09 19:14:51 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.19 1999/12/13 22:33:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ OBJS+= @STRTOL@ @STRTOUL@ @SNPRINTF@
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 .PHONY: clean dep
 

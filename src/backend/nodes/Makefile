@@ -4,7 +4,7 @@
 #    Makefile for nodes
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.9 1999/12/09 19:14:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.10 1999/12/13 22:32:47 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS = nodeFuncs.o nodes.o list.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 outfuncs.o: ../parse.h
 

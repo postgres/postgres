@@ -4,7 +4,7 @@
 #    Makefile for utils/hash
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.6 1999/12/09 19:15:26 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/hash/Makefile,v 1.7 1999/12/13 22:34:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = dynahash.o hashfn.o
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

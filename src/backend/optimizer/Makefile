@@ -4,7 +4,7 @@
 #    Makefile for optimizer
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.6 1999/12/09 19:14:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/Makefile,v 1.7 1999/12/13 22:32:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,7 +18,7 @@ OBJS = path/SUBSYS.o plan/SUBSYS.o prep/SUBSYS.o util/SUBSYS.o geqo/SUBSYS.o
 DIRS = path plan prep util geqo
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 .PHONY: submake clean dep depend
 submake:

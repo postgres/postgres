@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.9 1999/12/09 19:15:13 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.10 1999/12/13 22:34:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ DIRS += mb
 endif
 
 SUBSYS.o: $(OBJS) 
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 .PHONY: submake clean dep
 submake:

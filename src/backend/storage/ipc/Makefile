@@ -4,7 +4,7 @@
 #    Makefile for storage/ipc
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.9 1999/12/09 19:15:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Makefile,v 1.10 1999/12/13 22:33:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ OBJS = ipc.o ipci.o shmem.o shmqueue.o sinval.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

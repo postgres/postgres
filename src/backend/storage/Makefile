@@ -4,7 +4,7 @@
 #    Makefile for the storage manager subsystem
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.5 1999/12/09 19:14:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/Makefile,v 1.6 1999/12/13 22:33:33 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ OBJS = buffer/SUBSYS.o file/SUBSYS.o ipc/SUBSYS.o large_object/SUBSYS.o \
 DIRS = buffer file ipc large_object lmgr page smgr
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 .PHONY: submake clean dep
 

@@ -4,7 +4,7 @@
 #    Makefile for access/common
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.14 1999/12/09 19:14:25 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/access/common/Makefile,v 1.15 1999/12/13 22:32:20 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ OBJS = heaptuple.o indextuple.o indexvalid.o printtup.o \
 all: SUBSYS.o
 
 SUBSYS.o: $(OBJS)
-	$(LD) $(LDREL) -o SUBSYS.o $(OBJS)
+	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 heaptuple.o heapvalid.o tupdesc.o: ../../fmgr.h
 
