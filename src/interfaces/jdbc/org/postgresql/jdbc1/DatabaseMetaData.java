@@ -2186,20 +2186,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
                                                      );
   }
   
-  private Vector importLoop(java.sql.ResultSet keyRelation) throws SQLException {
+  private void importLoop(Vector tuples, java.sql.ResultSet keyRelation) throws SQLException 
+  {
     String s,s2;
     String origTable=null, primTable=new String(""), schema;
     int i;
-    Vector v;
+    Vector v=new Vector();
 
     s=keyRelation.getString(1);
     s2=s;
-    System.out.println(s);
-    v=new Vector();
+    //System.out.println(s);
+    
     for (i=0;;i++) {
       s=s.substring(s.indexOf("\\000")+4);
       if (s.compareTo("")==0) {
-	System.out.println();
+	//System.out.println();
 	break;
       }
       s2=s.substring(0,s.indexOf("\\000"));
@@ -2214,7 +2215,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	schema=s2;
 	break;
       default:
-	v.add(s2);
+	v.addElement(s2);
       }
   }
 
@@ -2222,7 +2223,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   java.sql.ResultSetMetaData origCols=rstmp.getMetaData();
 
   String stmp;
-  Vector tuples=new Vector();
+  // Vector tuples=new Vector();
   byte tuple[][];
 
   // the foreign keys are only on even positions in the Vector.
@@ -2248,17 +2249,17 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	//KEY_SEQ
 	tuple[8]=Integer.toString(j).getBytes();
 
-	tuples.add(tuple);
+	tuples.addElement(tuple);
 
-	System.out.println(origCols.getColumnName(j)+
-	": "+j+" -> "+primTable+": "+
-	(String)v.elementAt(i+1));
+	//System.out.println(origCols.getColumnName(j)+
+	//": "+j+" -> "+primTable+": "+
+	//(String)v.elementAt(i+1));
 	break;
       }
     }
   }
 
-  return tuples;
+  //return tuples;
   }
 
   
@@ -2342,7 +2343,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     Vector tuples=new Vector();
     
     while (rs.next()) {
-	    tuples.addAll(importLoop(rs));	
+	    importLoop(tuples,rs);	
     }
 
     rsret=new ResultSet(connection, f, tuples, "OK", 1);

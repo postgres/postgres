@@ -2194,12 +2194,12 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 
     s=keyRelation.getString(1);
     s2=s;
-    System.out.println(s);
+    // System.out.println(s);
     v=new Vector();
     for (i=0;;i++) {
       s=s.substring(s.indexOf("\\000")+4);
       if (s.compareTo("")==0) {
-	System.out.println();
+	//System.out.println();
 	break;
       }
       s2=s.substring(0,s.indexOf("\\000"));
@@ -2249,10 +2249,11 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	tuple[8]=Integer.toString(j).getBytes();
 
 	tuples.add(tuple);
-
+/*
 	System.out.println(origCols.getColumnName(j)+
 	": "+j+" -> "+primTable+": "+
 	(String)v.elementAt(i+1));
+*/
 	break;
       }
     }
