@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.22 1999/05/25 16:12:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.23 1999/05/31 17:01:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,25 +52,23 @@
 #include	   "utils/memutils.h"
 
 /*
- * Fast arithmetic, relying on powers of 2,
- * and on pre-processor concatenation property
+ * Fast MOD arithmetic, assuming that y is a power of 2 !
  */
 
 #define MOD(x,y)			   ((x) & ((y)-1))
-
-/*
- * external routines
- */
 
 /*
  * Private function prototypes
  */
 static long *DynaHashAlloc(unsigned int size);
 static void DynaHashFree(Pointer ptr);
-static uint32 call_hash(HTAB *hashp, char *k, int len);
+static uint32 call_hash(HTAB *hashp, char *k);
 static SEG_OFFSET seg_alloc(HTAB *hashp);
 static int	bucket_alloc(HTAB *hashp);
 static int	dir_realloc(HTAB *hashp);
+static int	expand_table(HTAB *hashp);
+static int	hdefault(HTAB *hashp);
+static int	init_htab(HTAB *hashp, int nelem);
 
 typedef long *((*dhalloc_ptr) ());
 
@@ -117,15 +115,6 @@ DynaHashFree(Pointer ptr)
 #define MEM_FREE		pfree
 
 #endif	 /* FRONTEND */
-
-/* ----------------
- * Internal routines
- * ----------------
- */
-
-static int	expand_table(HTAB *hashp);
-static int	hdefault(HTAB *hashp);
-static int	init_htab(HTAB *hashp, int nelem);
 
 
 /*
@@ -220,6 +209,8 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	{
 		hctl->ssize = info->ssize;
 		hctl->sshift = my_log2(info->ssize);
+		/* ssize had better be a power of 2 */
+		Assert(hctl->ssize == (1L << hctl->sshift));
 	}
 	if (flags & HASH_FFACTOR)
 		hctl->ffactor = info->ffactor;
@@ -412,6 +403,8 @@ hash_estimate_size(long num_entries, long keysize, long datasize)
  * XXX this sure looks thoroughly broken to me --- tgl 2/99.
  * It's freeing every entry individually --- but they weren't
  * allocated individually, see bucket_alloc!!  Why doesn't it crash?
+ * ANSWER: it probably does crash, but is never invoked in normal
+ * operations...
  */
 
 void
@@ -479,14 +472,13 @@ hash_stats(char *where, HTAB *hashp)
 /*******************************SEARCH ROUTINES *****************************/
 
 static uint32
-call_hash(HTAB *hashp, char *k, int len)
+call_hash(HTAB *hashp, char *k)
 {
+	HHDR	   *hctl = hashp->hctl;
 	long		hash_val,
 				bucket;
-	HHDR	   *hctl;
 
-	hctl = hashp->hctl;
-	hash_val = hashp->hash(k, len);
+	hash_val = hashp->hash(k, (int) hctl->keysize);
 
 	bucket = hash_val & hctl->high_mask;
 	if (bucket > hctl->max_bucket)
@@ -550,9 +542,9 @@ hash_search(HTAB *hashp,
 	}
 	else
 	{
-		bucket = call_hash(hashp, keyPtr, hctl->keysize);
+		bucket = call_hash(hashp, keyPtr);
 		segment_num = bucket >> hctl->sshift;
-		segment_ndx = bucket & (hctl->ssize - 1);
+		segment_ndx = MOD(bucket, hctl->ssize);
 
 		segp = GET_SEG(hashp, segment_num);
 
@@ -598,8 +590,10 @@ hash_search(HTAB *hashp,
 				Assert(hctl->nkeys > 0);
 				hctl->nkeys--;
 
-				/* add the bucket to the freelist for this table.  */
+				/* remove record from hash bucket's chain. */
 				*prevIndexPtr = curr->next;
+
+				/* add the record to the freelist for this table.  */
 				curr->next = hctl->freeBucketIndex;
 				hctl->freeBucketIndex = currIndex;
 
@@ -639,7 +633,6 @@ hash_search(HTAB *hashp,
 	currIndex = hctl->freeBucketIndex;
 	if (currIndex == INVALID_INDEX)
 	{
-
 		/* no free elements.  allocate another chunk of buckets */
 		if (!bucket_alloc(hashp))
 			return NULL;
@@ -722,7 +715,7 @@ hash_seq(HTAB *hashp)
 		 * initialize the search within this bucket.
 		 */
 		segment_num = curBucket >> hctl->sshift;
-		segment_ndx = curBucket & (hctl->ssize - 1);
+		segment_ndx = MOD(curBucket, hctl->ssize);
 
 		/*
 		 * first find the right segment in the table directory.
@@ -751,6 +744,10 @@ hash_seq(HTAB *hashp)
 
 
 /********************************* UTILITIES ************************/
+
+/*
+ * Expand the table by adding one more hash bucket.
+ */
 static int
 expand_table(HTAB *hashp)
 {
@@ -790,19 +787,31 @@ expand_table(HTAB *hashp)
 		hctl->nsegs++;
 	}
 
-	/* OK, we got a new bucket */
+	/* OK, we created a new bucket */
 	hctl->max_bucket++;
-	old_bucket = (hctl->max_bucket & hctl->low_mask);
 
+	/*
+	 * *Before* changing masks, find old bucket corresponding to same hash
+	 * values; values in that bucket may need to be relocated to new bucket.
+	 * Note that new_bucket is certainly larger than low_mask at this point,
+	 * so we can skip the first step of the regular hash mask calc.
+	 */
+	old_bucket = (new_bucket & hctl->low_mask);
+
+	/*
+	 * If we crossed a power of 2, readjust masks.
+	 */
 	if (new_bucket > hctl->high_mask)
 	{
-		/* Starting a new doubling */
 		hctl->low_mask = hctl->high_mask;
 		hctl->high_mask = new_bucket | hctl->low_mask;
 	}
 
 	/*
-	 * Relocate records to the new bucket
+	 * Relocate records to the new bucket.  NOTE: because of the way the
+	 * hash masking is done in call_hash, only one old bucket can need to
+	 * be split at this point.  With a different way of reducing the hash
+	 * value, that might not be true!
 	 */
 	old_segnum = old_bucket >> hctl->sshift;
 	old_segndx = MOD(old_bucket, hctl->ssize);
@@ -816,12 +825,9 @@ expand_table(HTAB *hashp)
 		 chainIndex != INVALID_INDEX;
 		 chainIndex = nextIndex)
 	{
-
 		chain = GET_BUCKET(hashp, chainIndex);
 		nextIndex = chain->next;
-		if (call_hash(hashp,
-					  (char *) &(chain->key),
-					  hctl->keysize) == old_bucket)
+		if (call_hash(hashp, (char *) &(chain->key)) == old_bucket)
 		{
 			*old = chainIndex;
 			old = &chain->next;
@@ -831,8 +837,10 @@ expand_table(HTAB *hashp)
 			*newbi = chainIndex;
 			newbi = &chain->next;
 		}
-		chain->next = INVALID_INDEX;
 	}
+	/* don't forget to terminate the rebuilt hash chains... */
+	*old = INVALID_INDEX;
+	*newbi = INVALID_INDEX;
 	return 1;
 }
 
@@ -907,15 +915,13 @@ bucket_alloc(HTAB *hashp)
 	/* make sure its aligned correctly */
 	bucketSize = MAXALIGN(bucketSize);
 
-	/*
-	 * tmpIndex is the shmem offset into the first bucket of the array.
-	 */
 	tmpBucket = (ELEMENT *)
 		hashp->alloc((unsigned long) BUCKET_ALLOC_INCR * bucketSize);
 
 	if (!tmpBucket)
 		return 0;
 
+	/* tmpIndex is the shmem offset into the first bucket of the array */
 	tmpIndex = MAKE_HASHOFFSET(hashp, tmpBucket);
 
 	/* set the freebucket list to point to the first bucket */
