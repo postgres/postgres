@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.8 1997/06/23 14:58:51 thomas Exp $
+ * $Id: nabstime.h,v 1.9 1997/07/29 16:16:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,10 +43,10 @@ typedef TimeIntervalData *TimeInterval;
  *  so redefine them explicitly using these bit patterns. - tgl 97/02/24
  */
 #define EPOCH_ABSTIME	((AbsoluteTime) 0)
-#define INVALID_ABSTIME ((AbsoluteTime) 0x4FFFFFFE) /* 2147483647 == 2^31 - 1 */
-#define CURRENT_ABSTIME ((AbsoluteTime) 0x4FFFFFFD) /* 2147483646 == 2^31 - 2 */
-#define NOEND_ABSTIME	((AbsoluteTime) 0x4FFFFFFC) /* 2147483645 == 2^31 - 3 */
-#define BIG_ABSTIME	((AbsoluteTime) 0x4FFFFFFB) /* 2147483644 == 2^31 - 4 */
+#define INVALID_ABSTIME ((AbsoluteTime) 0x7FFFFFFE) /* 2147483647 == 2^31 - 1 */
+#define CURRENT_ABSTIME ((AbsoluteTime) 0x7FFFFFFD) /* 2147483646 == 2^31 - 2 */
+#define NOEND_ABSTIME	((AbsoluteTime) 0x7FFFFFFC) /* 2147483645 == 2^31 - 3 */
+#define BIG_ABSTIME	((AbsoluteTime) 0x7FFFFFFB) /* 2147483644 == 2^31 - 4 */
 
 #if defined(aix)
 /*
@@ -55,14 +55,12 @@ typedef TimeIntervalData *TimeInterval;
  * these integer constants depending on whether the constant is signed 
  * or not!
  */
-/*#define NOSTART_ABSTIME	((AbsoluteTime) HIBITI)	*/	/* - 2^31 */
 #define NOSTART_ABSTIME      ((AbsoluteTime) INT_MIN)
 #else
-/*#define NOSTART_ABSTIME ((AbsoluteTime) 2147483648)*/	/* - 2^31 */
 #define NOSTART_ABSTIME ((AbsoluteTime) 0x80000001) /* -2147483647 == - 2^31 */
 #endif /* aix */
 
-#define INVALID_RELTIME ((RelativeTime) 0x4FFFFFFE) /* 2147483647 == 2^31 - 1 */
+#define INVALID_RELTIME ((RelativeTime) 0x7FFFFFFE) /* 2147483647 == 2^31 - 1 */
 
 #define AbsoluteTimeIsValid(time) \
     ((bool) ((time) != INVALID_ABSTIME))

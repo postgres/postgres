@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.14 1997/07/29 14:08:21 momjian Exp $
+ * $Id: dt.h,v 1.15 1997/07/29 16:16:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ typedef struct {
 #define MONTH	1
 #define YEAR	2
 #define DAY	3
-#define TIME	4
+#define TIMES	4	/* not used - thomas 1997-07-14 */
 #define TZ	5
 #define DTZ	6
 #define DTZMOD	7

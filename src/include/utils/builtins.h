@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.19 1997/06/23 15:03:38 thomas Exp $
+ * $Id: builtins.h,v 1.20 1997/07/29 16:16:10 thomas Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -253,7 +253,7 @@ extern bool intervalct(TimeInterval i1, TimeInterval i2);
 extern bool intervalov(TimeInterval i1, TimeInterval i2);
 extern AbsoluteTime intervalstart(TimeInterval i);
 extern AbsoluteTime intervalend(TimeInterval i);
-extern int isreltime(char *timestring, int *sign, long *quantity, int *unitnr);
+extern int isreltime(char *timestring);
 extern text *timeofday(void);
 
 /* dt.c */
@@ -474,6 +474,7 @@ extern bool text_lt(struct varlena *arg1, struct varlena *arg2);
 extern bool text_le(struct varlena *arg1, struct varlena *arg2);
 extern bool text_gt(struct varlena *arg1, struct varlena *arg2);
 extern bool text_ge(struct varlena *arg1, struct varlena *arg2);
+extern int32 textpos(text* t1, text* t2);
 extern int32 byteaGetSize(struct varlena *v);
 extern int32 byteaGetByte(struct varlena *v, int32 n);
 extern int32 byteaGetBit(struct varlena *v, int32 n);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geo_decls.h,v 1.5 1997/06/03 14:10:32 thomas Exp $
+ * $Id: geo_decls.h,v 1.6 1997/07/29 16:16:13 thomas Exp $
  *
  * NOTE
  *    These routines do *not* use the float types from adt/.
@@ -39,7 +39,9 @@
 #define	FPge(A,B)		((B) - (A) <= EPSILON)
 #else
 #define	FPzero(A)		(A == 0)
+#define	FPnzero(A)		(A != 0)
 #define	FPeq(A,B)		(A == B)
+#define	FPne(A,B)		(A != B)
 #define	FPlt(A,B)		(A < B)
 #define	FPle(A,B)		(A <= B)
 #define	FPgt(A,B)		(A > B)
@@ -98,6 +100,7 @@ typedef	struct {
  *-------------------------------------------------------------------*/
 typedef struct {
 	double	A, B, C;
+
 	double	m;
 } LINE;
 
@@ -133,87 +136,6 @@ typedef struct {
 /* 
  * in geo_ops.h
  */
-extern BOX *box_in(char *str);
-extern char *box_out(BOX *box);
-extern BOX *box_construct(double x1, double x2, double y1, double y2);
-extern BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2);
-extern BOX *box_copy(BOX *box);
-extern bool box_same(BOX *box1, BOX *box2);
-extern bool box_overlap(BOX *box1, BOX *box2);
-extern bool box_overleft(BOX *box1, BOX *box2);
-extern bool box_left(BOX *box1, BOX *box2);
-extern bool box_right(BOX *box1, BOX *box2);
-extern bool box_overright(BOX *box1, BOX *box2);
-extern bool box_contained(BOX *box1, BOX *box2);
-extern bool box_contain(BOX *box1, BOX *box2);
-extern bool box_below(BOX *box1, BOX *box2);
-extern bool box_above(BOX *box1, BOX *box2);
-extern bool box_lt(BOX *box1, BOX *box2);
-extern bool box_gt(BOX *box1, BOX *box2);
-extern bool box_eq(BOX *box1, BOX *box2);
-extern bool box_le(BOX *box1, BOX *box2);
-extern bool box_ge(BOX *box1, BOX *box2);
-extern Point *box_center(BOX *box);
-extern double *box_area(BOX *box);
-extern double *box_length(BOX *box);
-extern double *box_height(BOX *box);
-extern double *box_distance(BOX *box1, BOX *box2);
-extern Point *box_center(BOX *box);
-extern BOX *box_intersect(BOX *box1, BOX *box2);
-extern LSEG *box_diagonal(BOX *box);
-
-/* private routines */
-extern double box_ar(BOX *box);
-extern double box_ln(BOX *box);
-extern double box_ht(BOX *box);
-extern double box_dt(BOX *box1, BOX *box2);
-
-extern BOX *box(Point *p1, Point *p2);
-extern BOX *box_add(BOX *box, Point *p);
-extern BOX *box_sub(BOX *box, Point *p);
-extern BOX *box_mul(BOX *box, Point *p);
-extern BOX *box_div(BOX *box, Point *p);
-
-extern LINE *line_construct_pm(Point *pt, double m);
-extern LINE *line_construct_pp(Point *pt1, Point *pt2);
-extern bool line_intersect(LINE *l1, LINE *l2);
-extern bool line_parallel(LINE *l1, LINE *l2);
-extern bool line_perp(LINE *l1, LINE *l2);
-extern bool line_vertical(LINE *line);
-extern bool line_horizontal(LINE *line);
-extern bool line_eq(LINE *l1, LINE *l2);
-extern double *line_distance(LINE *l1, LINE *l2);
-extern Point *line_interpt(LINE *l1, LINE *l2);
-
-extern PATH *path_in(char *str);
-extern char *path_out(PATH *path);
-extern bool path_n_lt(PATH *p1, PATH *p2);
-extern bool path_n_gt(PATH *p1, PATH *p2);
-extern bool path_n_eq(PATH *p1, PATH *p2);
-extern bool path_n_le(PATH *p1, PATH *p2);
-extern bool path_n_ge(PATH *p1, PATH *p2);
-extern bool path_inter(PATH *p1, PATH *p2);
-extern double *path_distance(PATH *p1, PATH *p2);
-extern double *path_length(PATH *path);
-
-extern bool path_isclosed(PATH *path);
-extern bool path_isopen(PATH *path);
-extern int4 path_npoints(PATH *path);
-
-extern PATH *path_close(PATH *path);
-extern PATH *path_open(PATH *path);
-extern PATH *path_add(PATH *p1, PATH *p2);
-extern PATH *path_add_pt(PATH *path, Point *point);
-extern PATH *path_sub_pt(PATH *path, Point *point);
-extern PATH *path_mul_pt(PATH *path, Point *point);
-extern PATH *path_div_pt(PATH *path, Point *point);
-
-extern POLYGON *path_poly(PATH *path);
-extern PATH *upgradepath(PATH *path);
-extern bool isoldpath(PATH *path);
-
-/* private routines */
-extern double path_ln(PATH *path);
 
 /* public point routines */
 extern Point *point_in(char *str);
@@ -251,10 +173,11 @@ extern bool lseg_vertical(LSEG *lseg);
 extern bool lseg_horizontal(LSEG *lseg);
 extern bool lseg_eq(LSEG *l1, LSEG *l2);
 extern double *lseg_distance(LSEG *l1, LSEG *l2);
+extern Point *lseg_center(LSEG *lseg);
 extern Point *lseg_interpt(LSEG *l1, LSEG *l2);
 extern double *dist_pl(Point *pt, LINE *line);
 extern double *dist_ps(Point *pt, LSEG *lseg);
-extern double *dist_ppth(Point *pt, PATH *path);
+extern double *dist_ppath(Point *pt, PATH *path);
 extern double *dist_pb(Point *pt, BOX *box);
 extern double *dist_sl(LSEG *lseg, LINE *line);
 extern double *dist_sb(LSEG *lseg, BOX *box);
@@ -282,6 +205,97 @@ extern void statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2);
 extern double lseg_dt(LSEG *l1, LSEG *l2);
 extern void make_bound_box(POLYGON *poly);
 
+/* public box routines */
+extern BOX *box_in(char *str);
+extern char *box_out(BOX *box);
+extern bool box_same(BOX *box1, BOX *box2);
+extern bool box_overlap(BOX *box1, BOX *box2);
+extern bool box_overleft(BOX *box1, BOX *box2);
+extern bool box_left(BOX *box1, BOX *box2);
+extern bool box_right(BOX *box1, BOX *box2);
+extern bool box_overright(BOX *box1, BOX *box2);
+extern bool box_contained(BOX *box1, BOX *box2);
+extern bool box_contain(BOX *box1, BOX *box2);
+extern bool box_below(BOX *box1, BOX *box2);
+extern bool box_above(BOX *box1, BOX *box2);
+extern bool box_lt(BOX *box1, BOX *box2);
+extern bool box_gt(BOX *box1, BOX *box2);
+extern bool box_eq(BOX *box1, BOX *box2);
+extern bool box_le(BOX *box1, BOX *box2);
+extern bool box_ge(BOX *box1, BOX *box2);
+extern Point *box_center(BOX *box);
+extern double *box_area(BOX *box);
+extern double *box_width(BOX *box);
+extern double *box_height(BOX *box);
+extern double *box_distance(BOX *box1, BOX *box2);
+extern Point *box_center(BOX *box);
+extern BOX *box_intersect(BOX *box1, BOX *box2);
+extern LSEG *box_diagonal(BOX *box);
+
+/* private routines */
+extern BOX *box_construct(double x1, double x2, double y1, double y2);
+extern BOX *box_fill(BOX *result, double x1, double x2, double y1, double y2);
+extern BOX *box_copy(BOX *box);
+
+extern double box_ar(BOX *box);
+extern double box_wd(BOX *box);
+extern double box_ht(BOX *box);
+extern double box_dt(BOX *box1, BOX *box2);
+
+extern BOX *box(Point *p1, Point *p2);
+extern BOX *box_add(BOX *box, Point *p);
+extern BOX *box_sub(BOX *box, Point *p);
+extern BOX *box_mul(BOX *box, Point *p);
+extern BOX *box_div(BOX *box, Point *p);
+
+/* private line routines */
+extern LINE *line_construct_pm(Point *pt, double m);
+extern LINE *line_construct_pp(Point *pt1, Point *pt2);
+extern bool line_intersect(LINE *l1, LINE *l2);
+extern bool line_parallel(LINE *l1, LINE *l2);
+extern bool line_perp(LINE *l1, LINE *l2);
+extern bool line_vertical(LINE *line);
+extern bool line_horizontal(LINE *line);
+extern bool line_eq(LINE *l1, LINE *l2);
+extern double *line_distance(LINE *l1, LINE *l2);
+extern Point *line_interpt(LINE *l1, LINE *l2);
+
+/* public path routines */
+extern PATH *path_in(char *str);
+extern char *path_out(PATH *path);
+extern bool path_n_lt(PATH *p1, PATH *p2);
+extern bool path_n_gt(PATH *p1, PATH *p2);
+extern bool path_n_eq(PATH *p1, PATH *p2);
+extern bool path_n_le(PATH *p1, PATH *p2);
+extern bool path_n_ge(PATH *p1, PATH *p2);
+extern bool path_inter(PATH *p1, PATH *p2);
+extern double *path_distance(PATH *p1, PATH *p2);
+extern double *path_length(PATH *path);
+
+extern bool path_isclosed(PATH *path);
+extern bool path_isopen(PATH *path);
+extern int4 path_npoints(PATH *path);
+
+extern PATH *path_close(PATH *path);
+extern PATH *path_open(PATH *path);
+extern PATH *path_add(PATH *p1, PATH *p2);
+extern PATH *path_add_pt(PATH *path, Point *point);
+extern PATH *path_sub_pt(PATH *path, Point *point);
+extern PATH *path_mul_pt(PATH *path, Point *point);
+extern PATH *path_div_pt(PATH *path, Point *point);
+extern bool path_contain_pt( PATH *path, Point *p);
+extern bool pt_contained_path( Point *p, PATH *path);
+
+extern Point *path_center(PATH *path);
+extern POLYGON *path_poly(PATH *path);
+
+extern PATH *upgradepath(PATH *path);
+extern bool isoldpath(PATH *path);
+
+/* private routines */
+extern double path_ln(PATH *path);
+extern bool plist_same(int npts, Point p1[], Point p2[]);
+
 /* public polygon routines */
 extern POLYGON *poly_in(char *s);
 extern char *poly_out(POLYGON *poly);
@@ -293,13 +307,20 @@ extern bool poly_same(POLYGON *polya, POLYGON *polyb);
 extern bool poly_overlap(POLYGON *polya, POLYGON *polyb);
 extern bool poly_contain(POLYGON *polya, POLYGON *polyb);
 extern bool poly_contained(POLYGON *polya, POLYGON *polyb);
+extern bool poly_contain_pt( POLYGON *poly, Point *p);
+extern bool pt_contained_poly( Point *p, POLYGON *poly);
 
+extern double *poly_distance(POLYGON *polya, POLYGON *polyb);
 extern int4 poly_npoints(POLYGON *poly);
+extern Point *poly_center(POLYGON *poly);
 extern BOX *poly_box(POLYGON *poly);
 extern PATH *poly_path(POLYGON *poly);
 extern POLYGON *box_poly(BOX *box);
+
 extern POLYGON *upgradepoly(POLYGON *poly);
 extern POLYGON *revertpoly(POLYGON *poly);
+
+/* private polygon routines */
 
 /* public circle routines */
 extern CIRCLE *circle_in(char *str);
@@ -321,6 +342,8 @@ extern bool circle_lt(CIRCLE *circle1, CIRCLE *circle2);
 extern bool circle_gt(CIRCLE *circle1, CIRCLE *circle2);
 extern bool circle_le(CIRCLE *circle1, CIRCLE *circle2);
 extern bool circle_ge(CIRCLE *circle1, CIRCLE *circle2);
+extern bool circle_contain_pt(CIRCLE *circle, Point *point);
+extern bool pt_contained_circle(Point *point, CIRCLE *circle);
 extern CIRCLE *circle_add_pt(CIRCLE *circle, Point *point);
 extern CIRCLE *circle_sub_pt(CIRCLE *circle, Point *point);
 extern CIRCLE *circle_mul_pt(CIRCLE *circle, Point *point);
@@ -330,8 +353,11 @@ extern double *circle_diameter(CIRCLE *circle);
 extern double *circle_radius(CIRCLE *circle);
 extern double *circle_distance(CIRCLE *circle1, CIRCLE *circle2);
 extern double *dist_pc(Point *point, CIRCLE *circle);
+extern double *dist_cpoly(CIRCLE *circle, POLYGON *poly);
 extern Point *circle_center(CIRCLE *circle);
 extern CIRCLE *circle(Point *center, float8 *radius);
+extern CIRCLE *box_circle(BOX *box);
+extern BOX *circle_box(CIRCLE *circle);
 extern CIRCLE *poly_circle(POLYGON *poly);
 extern POLYGON *circle_poly(int npts, CIRCLE *circle);
 
