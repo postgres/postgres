@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.118 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.119 2005/02/23 22:46:17 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2310,16 +2310,22 @@ to_hex64(PG_FUNCTION_ARGS)
 Datum
 md5_text(PG_FUNCTION_ARGS)
 {
-	char	   *buff = PG_TEXT_GET_STR(PG_GETARG_TEXT_P(0));
-	size_t		len = strlen(buff);
+	text	   *in_text = PG_GETARG_TEXT_P(0);
+	size_t		len;
 	char	   *hexsum;
 	text	   *result_text;
+
+	/* Calculate the length of the buffer using varlena metadata */
+	len = VARSIZE(in_text) - VARHDRSZ;
 
 	/* leave room for the terminating '\0' */
 	hexsum = (char *) palloc(MD5_HASH_LEN + 1);
 
 	/* get the hash result */
-	md5_hash((void *) buff, len, hexsum);
+	if (md5_hash(VARDATA(in_text), len, hexsum) == false)
+		ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	/* convert to text and return it */
 	result_text = PG_STR_GET_TEXT(hexsum);

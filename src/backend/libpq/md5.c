@@ -14,7 +14,7 @@
  *	Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.27 2004/12/31 21:59:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/md5.c,v 1.28 2005/02/23 22:46:17 neilc Exp $
  */
 
 
@@ -289,8 +289,8 @@ bytesToHex(uint8 b[16], char *s)
  *						  characters.  you thus need to provide an array
  *						  of 33 characters, including the trailing '\0'.
  *
- *	RETURNS		  0 on failure (out of memory for internal buffers) or
- *				  non-zero on success.
+ *	RETURNS		  false on failure (out of memory for internal buffers) or
+ *				  true on success.
  *
  *	STANDARDS	  MD5 is described in RFC 1321.
  *
