@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.23 1998/06/18 03:44:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.24 1998/06/18 03:56:08 momjian Exp $
  *
  * NOTES
  *
@@ -45,15 +45,7 @@
 #include <sys/ipc.h>
 #endif
 
-#ifdef NOT_USED
-#if defined(bsd44)
-int			UsePrivateMemory = 1;
-
-#else
-int			UsePrivateMemory = 0;
-
-#endif
-#endif
+static int			UsePrivateMemory = 0;
 
 static void IpcMemoryDetach(int status, char *shmaddr);
 
