@@ -1272,6 +1272,18 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 				break;
 		}
 	}
+	/*	
+	 *	If retres isn't set yet.
+	 */
+	if (!retres)
+	{
+		if (res && QR_get_aborted(res))
+			retres = res;
+		else if (tuples_return)
+			retres = result_in;
+		else
+			retres = res;
+	}
 	/*
 	 *	set notice message to result_in.
 	 */
