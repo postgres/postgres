@@ -8,10 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.67 2000/04/12 17:15:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.68 2000/05/25 23:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/file.h>
@@ -609,8 +610,11 @@ mdblindwrt(char *dbname,
 	seekpos = (long) (BLCKSZ * (blkno));
 #endif
 
+	errno = 0;
+
 	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
 	{
+		elog(DEBUG, "mdblindwrt: lseek(%ld) failed: %m", seekpos);
 		close(fd);
 		return SM_FAIL;
 	}
@@ -619,13 +623,22 @@ mdblindwrt(char *dbname,
 
 	/* write and optionally sync the block */
 	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+	{
+		elog(DEBUG, "mdblindwrt: write() failed: %m");
 		status = SM_FAIL;
+	}
 	else if (dofsync &&
 			 pg_fsync(fd) < 0)
+	{
+		elog(DEBUG, "mdblindwrt: fsync() failed: %m");
 		status = SM_FAIL;
+	}
 
 	if (close(fd) < 0)
+	{
+		elog(DEBUG, "mdblindwrt: close() failed: %m");
 		status = SM_FAIL;
+	}
 
 	return status;
 }
@@ -1121,6 +1134,9 @@ _mdfd_blind_getseg(char *dbname, char *relname, Oid dbid, Oid relid,
 #else
 	fd = open(path, O_RDWR | O_BINARY, 0600);
 #endif
+
+	if (fd < 0)
+		elog(DEBUG, "_mdfd_blind_getseg: couldn't open %s: %m", path);
 
 	pfree(path);
 
