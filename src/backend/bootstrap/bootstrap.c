@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.27 1997/11/17 16:58:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.28 1997/11/20 23:20:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,14 +487,14 @@ boot_openrel(char *relname)
 	{
 		StartPortalAllocMode(DefaultAllocMode, 0);
 		rdesc = heap_openr(TypeRelationName);
-		sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
 		for (i = 0; PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)); ++i);
 		heap_endscan(sdesc);
 		app = Typ = ALLOC(struct typmap *, i + 1);
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
 		app = Typ;
 		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
 		{
@@ -852,7 +852,7 @@ gettype(char *type)
 		if (DebugMode)
 			printf("bootstrap.c: External Type: %s\n", type);
 		rdesc = heap_openr(TypeRelationName);
-		sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
 		i = 0;
 		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
 			++i;
@@ -861,7 +861,7 @@ gettype(char *type)
 		while (i-- > 0)
 			*app++ = ALLOC(struct typmap, 1);
 		*app = (struct typmap *) NULL;
-		sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+		sdesc = heap_beginscan(rdesc, 0, false, 0, (ScanKey) NULL);
 		app = Typ;
 		while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
 		{

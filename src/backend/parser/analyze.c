@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.48 1997/10/30 16:34:22 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.49 1997/11/20 23:22:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
 #include "parse.h"				/* for AND, OR, etc. */
+#include "catalog/pg_aggregate.h"
 #include "catalog/pg_type.h"	/* for INT4OID, etc. */
 #include "catalog/pg_proc.h"
 #include "utils/elog.h"
@@ -66,33 +67,31 @@ static List *expandAllTables(ParseState *pstate);
 static char *figureColname(Node *expr, Node *resval);
 static List *makeTargetNames(ParseState *pstate, List *cols);
 static List *transformTargetList(ParseState *pstate, List *targetlist);
-static TargetEntry *
-make_targetlist_expr(ParseState *pstate,
+static TargetEntry *make_targetlist_expr(ParseState *pstate,
 					 char *colname, Node *expr,
 					 List *arrayRef);
 static bool inWhereClause = false;
 static Node *transformWhereClause(ParseState *pstate, Node *a_expr);
-static List *
-transformGroupClause(ParseState *pstate, List *grouplist,
+static List *transformGroupClause(ParseState *pstate, List *grouplist,
 					 List *targetlist);
-static List *
-transformSortClause(ParseState *pstate,
+static List *transformSortClause(ParseState *pstate,
 					List *orderlist, List *targetlist,
 					char *uniqueFlag);
 
 static void parseFromClause(ParseState *pstate, List *frmList);
-static Node *
-ParseFunc(ParseState *pstate, char *funcname,
+static Node *ParseFunc(ParseState *pstate, char *funcname,
 		  List *fargs, int *curr_resno);
 static List *setup_tlist(char *attname, Oid relid);
 static List *setup_base_tlist(Oid typeid);
-static void
-make_arguments(int nargs, List *fargs, Oid *input_typeids,
+static void make_arguments(int nargs, List *fargs, Oid *input_typeids,
 			   Oid *function_typeids);
 static void AddAggToParseState(ParseState *pstate, Aggreg *aggreg);
 static void finalizeAggregates(ParseState *pstate, Query *qry);
 static void parseCheckAggregates(ParseState *pstate, Query *qry);
 static ParseState *makeParseState(void);
+static Node *parser_typecast(Value *expr, TypeName *typename, int typlen);
+static Node *parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen);
+static Aggreg *ParseAgg(char *aggname, Oid basetype, Node *target);
 
 /*****************************************************************************
  *
@@ -464,9 +463,9 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		 * equal to 2.
 		 */
 		addRangeTableEntry(pstate, stmt->object->relname, "*CURRENT*",
-						   FALSE, FALSE, NULL);
+						   FALSE, FALSE);
 		addRangeTableEntry(pstate, stmt->object->relname, "*NEW*",
-						   FALSE, FALSE, NULL);
+						   FALSE, FALSE);
 
 		pstate->p_last_resno = 1;
 		pstate->p_is_rule = true;		/* for expand all */
@@ -947,8 +946,7 @@ parseFromClause(ParseState *pstate, List *frmList)
 		 * eg. select * from foo f where f.x = 1; will generate wrong answer
 		 * if we expand * to foo.x.
 		 */
-		rte = addRangeTableEntry(pstate, relname, refname, baserel->inh, TRUE,
-								 baserel->timeRange);
+		rte = addRangeTableEntry(pstate, relname, refname, baserel->inh, TRUE);
 	}
 }
 
@@ -968,7 +966,7 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 		return;
 
 	if (refnameRangeTablePosn(pstate->p_rtable, relname) < 1)
-		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE, NULL);
+		rte = addRangeTableEntry(pstate, relname, relname, FALSE, FALSE);
 	else
 		rte = refnameRangeTableEntry(pstate->p_rtable, relname);
 
@@ -2321,7 +2319,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 
 			rte = refnameRangeTableEntry(pstate->p_rtable, refname);
 			if (rte == NULL)
-				rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE, NULL);
+				rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE);
 
 			relname = rte->relname;
 			relid = rte->relid;
@@ -2443,7 +2441,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs, int *curr_resno)
 			rte = refnameRangeTableEntry(pstate->p_rtable, refname);
 			if (rte == NULL)
 				rte = addRangeTableEntry(pstate, refname, refname,
-										 FALSE, FALSE, NULL);
+										 FALSE, FALSE);
 			relname = rte->relname;
 
 			vnum = refnameRangeTablePosn(pstate->p_rtable, rte->refname);
@@ -2861,4 +2859,341 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 			 "parser: illegal use of aggregates or non-group column in HAVING clause");
  */
 	return;
+}
+
+/* not used
+#define    PSIZE(PTR)	   (*((int32 *)(PTR) - 1))
+*/
+
+static Node	   *
+parser_typecast(Value *expr, TypeName *typename, int typlen)
+{
+	/* check for passing non-ints */
+	Const	   *adt;
+	Datum		lcp;
+	Type		tp;
+	char		type_string[NAMEDATALEN];
+	int32		len;
+	char	   *cp = NULL;
+	char	   *const_string = NULL;
+	bool		string_palloced = false;
+
+	switch (nodeTag(expr))
+	{
+		case T_String:
+			const_string = DatumGetPointer(expr->val.str);
+			break;
+		case T_Integer:
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%ld", expr->val.ival);
+			break;
+		default:
+			elog(WARN,
+			"parser_typecast: cannot cast this expression to type \"%s\"",
+				 typename->name);
+	}
+
+	if (typename->arrayBounds != NIL)
+	{
+		sprintf(type_string, "_%s", typename->name);
+		tp = (Type) type(type_string);
+	}
+	else
+	{
+		tp = (Type) type(typename->name);
+	}
+
+	len = tlen(tp);
+
+#if 0							/* fix me */
+	switch (CInteger(lfirst(expr)))
+	{
+		case INT4OID:			/* int4 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%d", ((Const *) lnext(expr))->constvalue);
+			break;
+
+		case NAMEOID:			/* char16 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%s", ((Const *) lnext(expr))->constvalue);
+			break;
+
+		case CHAROID:			/* char */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%c", ((Const) lnext(expr))->constvalue);
+			break;
+
+		case FLOAT8OID: /* float8 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%f", ((Const) lnext(expr))->constvalue);
+			break;
+
+		case CASHOID:			/* money */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%d",
+					(int) ((Const *) expr)->constvalue);
+			break;
+
+		case TEXTOID:			/* text */
+			const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
+
+		case UNKNOWNOID:		/* unknown */
+			const_string = DatumGetPointer(((Const) lnext(expr))->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
+
+		default:
+			elog(WARN, "unknown type %d", CInteger(lfirst(expr)));
+	}
+#endif
+
+	cp = instr2(tp, const_string, typlen);
+
+	if (!tbyvalue(tp))
+	{
+/*
+		if (len >= 0 && len != PSIZE(cp)) {
+			char *pp;
+			pp = (char *) palloc(len);
+			memmove(pp, cp, len);
+			cp = pp;
+		}
+*/
+		lcp = PointerGetDatum(cp);
+	}
+	else
+	{
+		switch (len)
+		{
+			case 1:
+				lcp = Int8GetDatum(cp);
+				break;
+			case 2:
+				lcp = Int16GetDatum(cp);
+				break;
+			case 4:
+				lcp = Int32GetDatum(cp);
+				break;
+			default:
+				lcp = PointerGetDatum(cp);
+				break;
+		}
+	}
+
+	adt = makeConst(typeid(tp),
+					len,
+					(Datum) lcp,
+					false,
+					tbyvalue(tp),
+					false,		/* not a set */
+					true /* is cast */ );
+
+	if (string_palloced)
+		pfree(const_string);
+
+	return (Node *) adt;
+}
+
+static Node	   *
+parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
+{
+	/* check for passing non-ints */
+	Const	   *adt;
+	Datum		lcp;
+	int32		len = tlen(tp);
+	char	   *cp = NULL;
+
+	char	   *const_string = NULL;
+	bool		string_palloced = false;
+
+	Assert(IsA(expr, Const));
+
+	switch (exprType)
+	{
+		case 0:			/* NULL */
+			break;
+		case INT4OID:			/* int4 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%d",
+					(int) ((Const *) expr)->constvalue);
+			break;
+		case NAMEOID:			/* char16 */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%s",
+					(char *) ((Const *) expr)->constvalue);
+			break;
+		case CHAROID:			/* char */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%c",
+					(char) ((Const *) expr)->constvalue);
+			break;
+		case FLOAT4OID: /* float4 */
+			{
+				float32		floatVal =
+				DatumGetFloat32(((Const *) expr)->constvalue);
+
+				const_string = (char *) palloc(256);
+				string_palloced = true;
+				sprintf(const_string, "%f", *floatVal);
+				break;
+			}
+		case FLOAT8OID: /* float8 */
+			{
+				float64		floatVal =
+				DatumGetFloat64(((Const *) expr)->constvalue);
+
+				const_string = (char *) palloc(256);
+				string_palloced = true;
+				sprintf(const_string, "%f", *floatVal);
+				break;
+			}
+		case CASHOID:			/* money */
+			const_string = (char *) palloc(256);
+			string_palloced = true;
+			sprintf(const_string, "%ld",
+					(long) ((Const *) expr)->constvalue);
+			break;
+		case TEXTOID:			/* text */
+			const_string =
+				DatumGetPointer(((Const *) expr)->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
+		case UNKNOWNOID:		/* unknown */
+			const_string =
+				DatumGetPointer(((Const *) expr)->constvalue);
+			const_string = (char *) textout((struct varlena *) const_string);
+			break;
+		default:
+			elog(WARN, "unknown type %u ", exprType);
+	}
+
+	if (!exprType)
+	{
+		adt = makeConst(typeid(tp),
+						(Size) 0,
+						(Datum) NULL,
+						true,	/* isnull */
+						false,	/* was omitted */
+						false,	/* not a set */
+						true /* is cast */ );
+		return ((Node *) adt);
+	}
+
+	cp = instr2(tp, const_string, typlen);
+
+
+	if (!tbyvalue(tp))
+	{
+/*
+		if (len >= 0 && len != PSIZE(cp)) {
+			char *pp;
+			pp = (char *) palloc(len);
+			memmove(pp, cp, len);
+			cp = pp;
+		}
+*/
+		lcp = PointerGetDatum(cp);
+	}
+	else
+	{
+		switch (len)
+		{
+			case 1:
+				lcp = Int8GetDatum(cp);
+				break;
+			case 2:
+				lcp = Int16GetDatum(cp);
+				break;
+			case 4:
+				lcp = Int32GetDatum(cp);
+				break;
+			default:
+				lcp = PointerGetDatum(cp);
+				break;
+		}
+	}
+
+	adt = makeConst(typeid(tp),
+					(Size) len,
+					(Datum) lcp,
+					false,
+					false,		/* was omitted */
+					false,		/* not a set */
+					true /* is cast */ );
+
+	/*
+	 * printf("adt %s : %u %d %d\n",CString(expr),typeid(tp) , len,cp);
+	 */
+	if (string_palloced)
+		pfree(const_string);
+
+	return ((Node *) adt);
+}
+
+static Aggreg	   *
+ParseAgg(char *aggname, Oid basetype, Node *target)
+{
+	Oid			fintype;
+	Oid			vartype;
+	Oid			xfn1;
+	Form_pg_aggregate aggform;
+	Aggreg	   *aggreg;
+	HeapTuple	theAggTuple;
+
+	theAggTuple = SearchSysCacheTuple(AGGNAME, PointerGetDatum(aggname),
+									  ObjectIdGetDatum(basetype),
+									  0, 0);
+	if (!HeapTupleIsValid(theAggTuple))
+	{
+		elog(WARN, "aggregate %s does not exist", aggname);
+	}
+
+	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
+	fintype = aggform->aggfinaltype;
+	xfn1 = aggform->aggtransfn1;
+
+	if (nodeTag(target) != T_Var && nodeTag(target) != T_Expr)
+		elog(WARN, "parser: aggregate can only be applied on an attribute or expression");
+
+	/* only aggregates with transfn1 need a base type */
+	if (OidIsValid(xfn1))
+	{
+		basetype = aggform->aggbasetype;
+		if (nodeTag(target) == T_Var)
+			vartype = ((Var *) target)->vartype;
+		else
+			vartype = ((Expr *) target)->typeOid;
+
+		if (basetype != vartype)
+		{
+			Type		tp1,
+						tp2;
+
+			tp1 = get_id_type(basetype);
+			tp2 = get_id_type(vartype);
+			elog(NOTICE, "Aggregate type mismatch:");
+			elog(WARN, "%s works on %s, not %s", aggname,
+				 tname(tp1), tname(tp2));
+		}
+	}
+
+	aggreg = makeNode(Aggreg);
+	aggreg->aggname = pstrdup(aggname);
+	aggreg->basetype = aggform->aggbasetype;
+	aggreg->aggtype = fintype;
+
+	aggreg->target = target;
+
+	return aggreg;
 }

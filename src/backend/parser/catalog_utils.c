@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.29 1997/11/02 15:25:19 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.30 1997/11/20 23:22:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,7 +347,7 @@ binary_oper_get_candidates(char *opname,
 	pg_operator_desc = heap_openr(OperatorRelationName);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SelfTimeQual,
+									  true,
 									  nkeys,
 									  opKey);
 
@@ -642,7 +642,7 @@ unary_oper_get_candidates(char *op,
 	pg_operator_desc = heap_openr(OperatorRelationName);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SelfTimeQual,
+									  true,
 									  2,
 									  opKey);
 
@@ -1004,7 +1004,7 @@ func_get_candidates(char *funcname, int nargs)
 			ItemPointer iptr;
 
 			iptr = &indexRes->heap_iptr;
-			tuple = heap_fetch(heapRelation, NowTimeQual, iptr, &buffer);
+			tuple = heap_fetch(heapRelation, false, iptr, &buffer);
 			pfree(indexRes);
 			if (HeapTupleIsValid(tuple))
 			{
@@ -1352,7 +1352,7 @@ findsupers(Oid relid, Oid **supervec)
 							   ObjectIdEqualRegProcedure,
 							   ObjectIdGetDatum(relid));
 
-		inhscan = heap_beginscan(inhrel, 0, NowTimeQual, 1, &skey);
+		inhscan = heap_beginscan(inhrel, 0, false, 1, &skey);
 
 		while (HeapTupleIsValid(inhtup = heap_getnext(inhscan, 0, &buf)))
 		{

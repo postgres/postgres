@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.29 1997/11/17 16:31:39 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.30 1997/11/20 23:22:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,11 @@
 #include "parser/gramparse.h"
 #include "parser/keywords.h"
 #include "parser/scansup.h"
-#include "parser/sysfunc.h"
 #include "parse.h"
 #include "utils/builtins.h"
 
 extern char *parseString;
-extern char *parseCh;
+static char *parseCh;
 
 /* some versions of lex define this as a macro */
 #if defined(yywrap)
@@ -126,8 +125,6 @@ digit			[0-9]
 number			[-+.0-9Ee]
 letter			[\200-\377_A-Za-z]
 letter_or_digit	[\200-\377_A-Za-z0-9]
-
-sysfunc			SYS_{letter}{letter_or_digit}*
 
 identifier		{letter}{letter_or_digit}*
 
@@ -277,11 +274,6 @@ other			.
 					return (yytext[0]);
 				}
 
-
-{sysfunc}		{
-						yylval.str = pstrdup(SystemFunctionHandler((char *)yytext));
-						return (SCONST);
-				}
 
 {typecast}		{ return TYPECAST; }
 

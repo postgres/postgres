@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.15 1997/09/08 21:42:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.16 1997/11/20 23:20:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 			ItemPointer iptr;
 
 			iptr = &indexRes->heap_iptr;
-			tuple = heap_fetch(heapRelation, NowTimeQual, iptr, &buffer);
+			tuple = heap_fetch(heapRelation, false, iptr, &buffer);
 			pfree(indexRes);
 		}
 		else
@@ -394,7 +394,7 @@ ProcedureNameIndexScan(Relation heapRelation,
 			ItemPointer iptr;
 
 			iptr = &indexRes->heap_iptr;
-			tuple = heap_fetch(heapRelation, NowTimeQual, iptr, &buffer);
+			tuple = heap_fetch(heapRelation, false, iptr, &buffer);
 			pfree(indexRes);
 			if (HeapTupleIsValid(tuple))
 			{
@@ -459,7 +459,7 @@ ProcedureSrcIndexScan(Relation heapRelation, text *procSrc)
 		ItemPointer iptr;
 
 		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(heapRelation, NowTimeQual, iptr, &buffer);
+		tuple = heap_fetch(heapRelation, false, iptr, &buffer);
 		pfree(indexRes);
 	}
 	else

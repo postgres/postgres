@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.10 1997/10/25 01:08:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.11 1997/11/20 23:21:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -804,8 +804,7 @@ tg_parseTeeNode(TgRecipe * r,
 												  tt,
 												  tt,
 												  FALSE,
-												  FALSE,
-												  NULL));
+												  FALSE));
 		rt_ind = length(orig->rtable);
 	}
 

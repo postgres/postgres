@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.34 1997/09/12 04:07:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.35 1997/11/20 23:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	int32		ntuples;
 	TupleDesc	tupDesc;
 
-	scandesc = heap_beginscan(rel, 0, NULL, 0, NULL);
+	scandesc = heap_beginscan(rel, 0, false, 0, NULL);
 
 	attr_count = rel->rd_att->natts;
 	attr = rel->rd_att->attrs;
@@ -921,7 +921,7 @@ GetIndexRelations(Oid main_relation_oid,
 	bool		isnull;
 
 	pg_index_rel = heap_openr(IndexRelationName);
-	scandesc = heap_beginscan(pg_index_rel, 0, NULL, 0, NULL);
+	scandesc = heap_beginscan(pg_index_rel, 0, false, 0, NULL);
 	tupDesc = RelationGetTupleDescriptor(pg_index_rel);
 
 	*n_indices = 0;
@@ -1198,7 +1198,7 @@ CountTuples(Relation relation)
 
 	int			i;
 
-	scandesc = heap_beginscan(relation, 0, NULL, 0, NULL);
+	scandesc = heap_beginscan(relation, 0, false, 0, NULL);
 
 	for (tuple = heap_getnext(scandesc, 0, NULL), i = 0;
 		 tuple != NULL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.20 1997/09/08 21:41:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.21 1997/11/20 23:20:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 			{					/* they're equal */
 				btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
 				itup = &(btitem->bti_itup);
-				htup = heap_fetch(heapRel, SelfTimeQual, &(itup->t_tid), NULL);
+				htup = heap_fetch(heapRel, true, &(itup->t_tid), NULL);
 				if (htup != (HeapTuple) NULL)
 				{				/* it is a duplicate */
 					elog(WARN, "Cannot insert a duplicate key into a unique index.");

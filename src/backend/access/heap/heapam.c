@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.21 1997/11/02 15:24:26 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.22 1997/11/20 23:19:57 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -215,7 +215,7 @@ heapgettup(Relation relation,
 		   ItemPointer tid,
 		   int dir,
 		   Buffer *b,
-		   TimeQual timeQual,
+		   bool seeself,
 		   int nkeys,
 		   ScanKey key)
 {
@@ -254,19 +254,11 @@ heapgettup(Relation relation,
 		elog(DEBUG, "heapgettup(%.16s, tid=0x%x, dir=%d, ...)",
 			 RelationGetRelationName(relation), tid, dir);
 	}
-	elog(DEBUG, "heapgettup(..., b=0x%x, timeQ=0x%x, nkeys=%d, key=0x%x",
-		 b, timeQual, nkeys, key);
-	if (timeQual == SelfTimeQual)
-	{
-		elog(DEBUG, "heapgettup: relation(%c)=`%.16s', SelfTimeQual",
-			 relation->rd_rel->relkind, &relation->rd_rel->relname);
-	}
-	else
-	{
-		elog(DEBUG, "heapgettup: relation(%c)=`%.16s', timeQual=%d",
-			 relation->rd_rel->relkind, &relation->rd_rel->relname,
-			 timeQual);
-	}
+	elog(DEBUG, "heapgettup(..., b=0x%x, nkeys=%d, key=0x%x", b, nkeys, key);
+
+	elog(DEBUG, "heapgettup: relation(%c)=`%.16s', %s",
+		 relation->rd_rel->relkind, &relation->rd_rel->relname,
+		 (seeself == true) ? "SeeSelf" : "NoSeeSelf");
 #endif							/* !defined(HEAPDEBUGALL) */
 
 	if (!ItemPointerIsValid(tid))
@@ -303,9 +295,7 @@ heapgettup(Relation relation,
 
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
-		{
 			elog(WARN, "heapgettup: failed ReadBuffer");
-		}
 #endif
 
 		dp = (Page) BufferGetPage(*b);
@@ -430,7 +420,7 @@ heapgettup(Relation relation,
 			 * ----------------
 			 */
 			HeapTupleSatisfies(lpp, relation, *b, (PageHeader) dp,
-							   timeQual, nkeys, key, rtup);
+							   seeself, nkeys, key, rtup);
 			if (rtup != NULL)
 			{
 				ItemPointer iptr = &(rtup->t_ctid);
@@ -618,7 +608,7 @@ heap_close(Relation relation)
 HeapScanDesc
 heap_beginscan(Relation relation,
 			   int atend,
-			   TimeQual timeQual,
+			   bool seeself,
 			   unsigned nkeys,
 			   ScanKey key)
 {
@@ -646,9 +636,7 @@ heap_beginscan(Relation relation,
 
 	/* XXX someday assert SelfTimeQual if relkind == RELKIND_UNCATALOGED */
 	if (relation->rd_rel->relkind == RELKIND_UNCATALOGED)
-	{
-		timeQual = SelfTimeQual;
-	}
+		seeself = true;
 
 	/* ----------------
 	 *	increment relation ref count while scanning relation
@@ -666,24 +654,19 @@ heap_beginscan(Relation relation,
 	sdesc->rs_rd = relation;
 
 	if (nkeys)
-	{
-
 		/*
 		 * we do this here instead of in initsdesc() because heap_rescan
 		 * also calls initsdesc() and we don't want to allocate memory
 		 * again
 		 */
 		sdesc->rs_key = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
-	}
 	else
-	{
 		sdesc->rs_key = NULL;
-	}
 
 	initsdesc(sdesc, relation, atend, nkeys, key);
 
 	sdesc->rs_atend = atend;
-	sdesc->rs_tr = timeQual;
+	sdesc->rs_seeself = seeself;
 	sdesc->rs_nkeys = (short) nkeys;
 
 	return (sdesc);
@@ -900,7 +883,7 @@ heap_getnext(HeapScanDesc scandesc,
 						   iptr,
 						   -1,
 						   &(sdesc->rs_cbuf),
-						   sdesc->rs_tr,
+						   sdesc->rs_seeself,
 						   sdesc->rs_nkeys,
 						   sdesc->rs_key);
 		}
@@ -987,7 +970,7 @@ heap_getnext(HeapScanDesc scandesc,
 						   iptr,
 						   1,
 						   &sdesc->rs_cbuf,
-						   sdesc->rs_tr,
+						   sdesc->rs_seeself,
 						   sdesc->rs_nkeys,
 						   sdesc->rs_key);
 		}
@@ -1032,7 +1015,7 @@ heap_getnext(HeapScanDesc scandesc,
  */
 HeapTuple
 heap_fetch(Relation relation,
-		   TimeQual timeQual,
+		   bool seeself,
 		   ItemPointer tid,
 		   Buffer *b)
 {
@@ -1094,7 +1077,7 @@ heap_fetch(Relation relation,
 	 */
 
 	HeapTupleSatisfies(lp, relation, buffer, dp,
-					   timeQual, 0, (ScanKey) NULL, tuple);
+					   seeself, 0, (ScanKey) NULL, tuple);
 
 	if (tuple == NULL)
 	{
@@ -1259,7 +1242,7 @@ heap_delete(Relation relation, ItemPointer tid)
 	 * ----------------
 	 */
 	HeapTupleSatisfies(lp, relation, b, dp,
-					   NowTimeQual, 0, (ScanKey) NULL, tp);
+					   false, 0, (ScanKey) NULL, tp);
 	if (!tp)
 	{
 
@@ -1395,7 +1378,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 						 relation,
 						 buffer,
 						 (PageHeader) dp,
-						 NowTimeQual,
+						 false,
 						 0,
 						 (ScanKey) NULL,
 						 tuple);
@@ -1492,7 +1475,7 @@ heap_markpos(HeapScanDesc sdesc)
 					   (ItemPointer) NULL : &sdesc->rs_ctup->t_ctid,
 					   -1,
 					   &sdesc->rs_pbuf,
-					   sdesc->rs_tr,
+					   sdesc->rs_seeself,
 					   sdesc->rs_nkeys,
 					   sdesc->rs_key);
 
@@ -1506,7 +1489,7 @@ heap_markpos(HeapScanDesc sdesc)
 					   (ItemPointer) NULL : &sdesc->rs_ctup->t_ctid,
 					   1,
 					   &sdesc->rs_nbuf,
-					   sdesc->rs_tr,
+					   sdesc->rs_seeself,
 					   sdesc->rs_nkeys,
 					   sdesc->rs_key);
 	}
@@ -1594,7 +1577,7 @@ heap_restrpos(HeapScanDesc sdesc)
 					   &sdesc->rs_mptid,
 					   0,
 					   &sdesc->rs_pbuf,
-					   NowTimeQual,
+					   false,
 					   0,
 					   (ScanKey) NULL);
 	}
@@ -1610,7 +1593,7 @@ heap_restrpos(HeapScanDesc sdesc)
 					   &sdesc->rs_mctid,
 					   0,
 					   &sdesc->rs_cbuf,
-					   NowTimeQual,
+					   false,
 					   0,
 					   (ScanKey) NULL);
 	}
@@ -1626,7 +1609,7 @@ heap_restrpos(HeapScanDesc sdesc)
 					   &sdesc->rs_mntid,
 					   0,
 					   &sdesc->rs_nbuf,
-					   NowTimeQual,
+					   false,
 					   0,
 					   (ScanKey) NULL);
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.23 1997/11/05 21:18:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.24 1997/11/20 23:20:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ Async_Notify(char *relname)
 	lRel = heap_openr(ListenerRelationName);
 	tdesc = RelationGetTupleDescriptor(lRel);
 	RelationSetLockForWrite(lRel);
-	sRel = heap_beginscan(lRel, 0, NowTimeQual, 1, &key);
+	sRel = heap_beginscan(lRel, 0, false, 1, &key);
 
 	nulls[0] = nulls[1] = nulls[2] = ' ';
 	repl[0] = repl[1] = repl[2] = ' ';
@@ -287,7 +287,7 @@ Async_NotifyAtCommit()
 								   Int32GetDatum(1));
 			lRel = heap_openr(ListenerRelationName);
 			RelationSetLockForWrite(lRel);
-			sRel = heap_beginscan(lRel, 0, NowTimeQual, 1, &key);
+			sRel = heap_beginscan(lRel, 0, false, 1, &key);
 			tdesc = RelationGetTupleDescriptor(lRel);
 			ourpid = getpid();
 
@@ -441,7 +441,7 @@ Async_Listen(char *relname, int pid)
 
 	/* is someone already listening.  One listener per relation */
 	tdesc = RelationGetTupleDescriptor(lDesc);
-	s = heap_beginscan(lDesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+	s = heap_beginscan(lDesc, 0, false, 0, (ScanKey) NULL);
 	while (HeapTupleIsValid(htup = heap_getnext(s, 0, &b)))
 	{
 		d = heap_getattr(htup, b, Anum_pg_listener_relname, tdesc,
@@ -599,7 +599,7 @@ Async_NotifyFrontEnd()
 	lRel = heap_openr(ListenerRelationName);
 	RelationSetLockForWrite(lRel);
 	tdesc = RelationGetTupleDescriptor(lRel);
-	sRel = heap_beginscan(lRel, 0, NowTimeQual, 2, key);
+	sRel = heap_beginscan(lRel, 0, false, 2, key);
 
 	nulls[0] = nulls[1] = nulls[2] = ' ';
 	repl[0] = repl[1] = repl[2] = ' ';

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.28 1997/11/17 16:59:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.29 1997/11/20 23:23:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,7 +383,7 @@ scan_pg_rel_seq(RelationBuildDescInfo buildinfo)
 	if (!IsInitProcessingMode())
 		RelationSetLockForRead(pg_class_desc);
 	pg_class_scan =
-		heap_beginscan(pg_class_desc, 0, NowTimeQual, 1, &key);
+		heap_beginscan(pg_class_desc, 0, false, 1, &key);
 	pg_class_tuple = heap_getnext(pg_class_scan, 0, &buf);
 
 	/* ----------------
@@ -555,7 +555,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	 */
 	pg_attribute_desc = heap_openr(AttributeRelationName);
 	pg_attribute_scan =
-		heap_beginscan(pg_attribute_desc, 0, NowTimeQual, 1, &key);
+		heap_beginscan(pg_attribute_desc, 0, false, 1, &key);
 
 	/* ----------------
 	 *	add attribute data to relation->rd_att
@@ -726,7 +726,7 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName);
 	pg_rewrite_scan =
-		heap_beginscan(pg_rewrite_desc, 0, NowTimeQual, 1, &key);
+		heap_beginscan(pg_rewrite_desc, 0, false, 1, &key);
 	pg_rewrite_tupdesc =
 		RelationGetTupleDescriptor(pg_rewrite_desc);
 
@@ -1728,7 +1728,7 @@ AttrDefaultFetch(Relation relation)
 			break;
 
 		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(adrel, NowTimeQual, iptr, &buffer);
+		tuple = heap_fetch(adrel, false, iptr, &buffer);
 		pfree(indexRes);
 		if (!HeapTupleIsValid(tuple))
 			continue;
@@ -1817,7 +1817,7 @@ RelCheckFetch(Relation relation)
 			break;
 
 		iptr = &indexRes->heap_iptr;
-		tuple = heap_fetch(rcrel, NowTimeQual, iptr, &buffer);
+		tuple = heap_fetch(rcrel, false, iptr, &buffer);
 		pfree(indexRes);
 		if (!HeapTupleIsValid(tuple))
 			continue;

@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.9 1997/11/14 15:48:19 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.10 1997/11/20 23:22:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ endif
 
 
 OBJS= analyze.o catalog_utils.o dbcommands.o gram.o \
-      keywords.o parser.o parse_query.o scan.o scansup.o sysfunc.o
+      keywords.o parser.o parse_query.o scan.o scansup.o
 
 all: SUBSYS.o
 

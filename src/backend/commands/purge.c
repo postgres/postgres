@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.8 1997/09/08 02:22:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/purge.c,v 1.9 1997/11/20 23:21:08 momjian Exp $
  *
  * Note:
  *		XXX There are many instances of int32 instead of ...Time.  These
@@ -110,7 +110,7 @@ RelationPurge(char *relationName,
 	key[0].sk_argument = PointerGetDatum(relationName);
 	fmgr_info(key[0].sk_procedure, &key[0].sk_func, &key[0].sk_nargs);
 
-	scan = heap_beginscan(relation, 0, NowTimeQual, 1, key);
+	scan = heap_beginscan(relation, 0, false, 1, key);
 	oldTuple = heap_getnext(scan, 0, &buffer);
 	if (!HeapTupleIsValid(oldTuple))
 	{

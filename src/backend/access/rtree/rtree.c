@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.18 1997/09/18 20:19:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.19 1997/11/20 23:20:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ rtbuild(Relation heap,
 		slot = NULL;
 	}
 #endif							/* OMIT_PARTIAL_INDEX */
-	scan = heap_beginscan(heap, 0, NowTimeQual, 0, (ScanKey) NULL);
+	scan = heap_beginscan(heap, 0, false, 0, (ScanKey) NULL);
 	htup = heap_getnext(scan, 0, &buffer);
 
 	/* count the tuples as we insert them */

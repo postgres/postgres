@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_query.h,v 1.13 1997/11/02 15:27:08 vadim Exp $
+ * $Id: parse_query.h,v 1.14 1997/11/20 23:23:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,7 @@ extern int	refnameRangeTablePosn(List *rtable, char *refname);
 extern RangeTblEntry *
 addRangeTableEntry(ParseState *pstate,
 				   char *relname, char *refname,
-				   bool inh, bool inFromCl,
-				   TimeRange *timeRange);
+				   bool inh, bool inFromCl);
 extern List *
 expandAll(ParseState *pstate, char *relname, char *refname,
 		  int *this_resno);
@@ -49,13 +48,9 @@ extern Const *make_const(Value *value);
 extern void param_type_init(Oid *typev, int nargs);
 extern Oid	param_type(int t);
 
-/* parser.c (was ylib.c) */
 extern QueryTreeList *parser(char *str, Oid *typev, int nargs);
-extern Node *parser_typecast(Value *expr, TypeName *typename, int typlen);
-extern Node *parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen);
-extern Aggreg *ParseAgg(char *aggname, Oid basetype, Node *target);
-extern void
-handleTargetColname(ParseState *pstate, char **resname,
+
+extern void handleTargetColname(ParseState *pstate, char **resname,
 					char *refname, char *colname);
 
 /*

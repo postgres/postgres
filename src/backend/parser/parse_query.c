@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.22 1997/11/02 15:25:30 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.23 1997/11/20 23:22:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,8 +127,8 @@ RangeTblEntry *
 addRangeTableEntry(ParseState *pstate,
 				   char *relname,
 				   char *refname,
-				   bool inh, bool inFromCl,
-				   TimeRange *timeRange)
+				   bool inh,
+				   bool inFromCl)
 {
 	Relation	relation;
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
@@ -153,8 +153,6 @@ addRangeTableEntry(ParseState *pstate,
 	 * 9/94 ]
 	 */
 	rte->inh = inh;
-
-	rte->timeRange = timeRange;
 
 	/* RelOID */
 	rte->relid = RelationGetRelationId(relation);
@@ -194,7 +192,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 
 	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
 	if (rte == NULL)
-		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE, NULL);
+		rte = addRangeTableEntry(pstate, relname, refname, FALSE, FALSE);
 
 	rdesc = heap_open(rte->relid);
 
@@ -475,7 +473,7 @@ make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id)
 
 	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
 	if (rte == NULL)
-		rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE, NULL);
+		rte = addRangeTableEntry(pstate, refname, refname, FALSE, FALSE);
 
 	vnum = refnameRangeTablePosn(pstate->p_rtable, refname);
 

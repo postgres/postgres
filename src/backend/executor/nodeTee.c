@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.9 1997/09/08 21:43:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.10 1997/11/20 23:21:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ initTeeScanDescs(Tee *node)
 	{
 		teeState->tee_leftScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-													NowTimeQual,		/* time qual */
+													false, /* seeself */
 													0,	/* num scan keys */
 													NULL		/* scan keys */
 			);
@@ -261,7 +261,7 @@ initTeeScanDescs(Tee *node)
 	{
 		teeState->tee_rightScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-													 NowTimeQual,		/* time qual */
+													 false, /* seeself */
 													 0, /* num scan keys */
 													 NULL		/* scan keys */
 			);

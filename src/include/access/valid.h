@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.9 1997/11/02 15:26:46 vadim Exp $
+ * $Id: valid.h,v 1.10 1997/11/20 23:23:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ do \
 						   relation, \
 						   buffer, \
 						   disk_page, \
-						   qual, \
+						   seeself, \
 						   nKeys, \
 						   key, \
 						   result) \
@@ -144,7 +144,7 @@ do \
 			{ \
 				uint16	_infomask = _tuple->t_infomask; \
 				\
-				_res = HeapTupleSatisfiesTimeQual(_tuple, (qual)); \
+				_res = HeapTupleSatisfiesVisibility(_tuple, (seeself)); \
 				if (_tuple->t_infomask != _infomask) \
 					SetBufferCommitInfoNeedsSave(buffer); \
 				if (_res) \

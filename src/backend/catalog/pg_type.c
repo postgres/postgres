@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.11 1997/09/18 20:20:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.12 1997/11/20 23:20:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 
 	scan = heap_beginscan(pg_type_desc,
 						  0,
-						  SelfTimeQual,
+						  true,
 						  1,
 						  typeKey);
 
@@ -472,7 +472,7 @@ TypeCreate(char *typeName,
 	typeKey[0].sk_argument = PointerGetDatum(typeName);
 	pg_type_scan = heap_beginscan(pg_type_desc,
 								  0,
-								  SelfTimeQual,
+								  true,
 								  1,
 								  typeKey);
 

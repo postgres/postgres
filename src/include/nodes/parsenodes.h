@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.30 1997/11/07 06:38:38 thomas Exp $
+ * $Id: parsenodes.h,v 1.31 1997/11/20 23:23:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -786,16 +786,6 @@ typedef struct ParamString
 }			ParamString;
 
 /*
- * TimeRange - specifies a time range
- */
-typedef struct TimeRange
-{
-	NodeTag		type;
-	char	   *startDate;
-	char	   *endDate;		/* snapshot if NULL */
-}			TimeRange;
-
-/*
  * RelExpr - relation expressions
  */
 typedef struct RelExpr
@@ -803,7 +793,6 @@ typedef struct RelExpr
 	NodeTag		type;
 	char	   *relname;		/* the relation name */
 	bool		inh;			/* inheritance query */
-	TimeRange  *timeRange;		/* the time range */
 }			RelExpr;
 
 /*
@@ -887,14 +876,12 @@ typedef struct RangeTblEntry
 {
 	NodeTag		type;
 	char	   *relname;		/* real name of the relation */
-	TimeRange  *timeRange;		/* time range */
 	char	   *refname;		/* the reference name (specified in the
 								 * from clause) */
 	Oid			relid;
 	bool		inh;			/* inheritance? */
 	bool		archive;		/* filled in by plan_archive */
 	bool		inFromCl;		/* comes from From Clause */
-	TimeQual	timeQual;		/* filled in by pg_plan */
 }			RangeTblEntry;
 
 /*

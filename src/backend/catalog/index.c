@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.25 1997/11/02 15:25:01 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.26 1997/11/20 23:20:44 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -178,7 +178,7 @@ RelationNameGetObjectId(char *relationName,
 						   NameEqualRegProcedure,
 						   PointerGetDatum(relationName));
 
-	pg_class_scan = heap_beginscan(pg_class, 0, NowTimeQual, 1, &key);
+	pg_class_scan = heap_beginscan(pg_class, 0, false, 1, &key);
 
 	/* ----------------
 	 *	if we find the named relation, fetch its relation id
@@ -505,7 +505,7 @@ AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId)
 	 * ----------------
 	 */
 	pg_am_desc = heap_openr(AccessMethodRelationName);
-	pg_am_scan = heap_beginscan(pg_am_desc, 0, NowTimeQual, 1, &key);
+	pg_am_scan = heap_beginscan(pg_am_desc, 0, false, 1, &key);
 
 	pg_am_tuple = heap_getnext(pg_am_scan, 0, (Buffer *) NULL);
 
@@ -952,7 +952,7 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 						   ObjectIdEqualRegProcedure,
 						   ObjectIdGetDatum(indexoid));
 
-	scan = heap_beginscan(pg_index, 0, NowTimeQual, 1, &entry);
+	scan = heap_beginscan(pg_index, 0, false, 1, &entry);
 	tuple = heap_getnext(scan, 0, &buffer);
 	heap_endscan(scan);
 
@@ -1249,7 +1249,7 @@ index_destroy(Oid indexId)
 						   ObjectIdEqualRegProcedure,
 						   ObjectIdGetDatum(indexId));;
 
-	scan = heap_beginscan(catalogRelation, 0, NowTimeQual, 1, &entry);
+	scan = heap_beginscan(catalogRelation, 0, false, 1, &entry);
 	tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 
 	AssertState(HeapTupleIsValid(tuple));
@@ -1266,7 +1266,7 @@ index_destroy(Oid indexId)
 
 	entry.sk_attno = Anum_pg_attribute_attrelid;
 
-	scan = heap_beginscan(catalogRelation, 0, NowTimeQual, 1, &entry);
+	scan = heap_beginscan(catalogRelation, 0, false, 1, &entry);
 
 	while (tuple = heap_getnext(scan, 0, (Buffer *) NULL),
 		   HeapTupleIsValid(tuple))
@@ -1285,7 +1285,7 @@ index_destroy(Oid indexId)
 
 	entry.sk_attno = Anum_pg_index_indexrelid;
 
-	scan = heap_beginscan(catalogRelation, 0, NowTimeQual, 1, &entry);
+	scan = heap_beginscan(catalogRelation, 0, false, 1, &entry);
 	tuple = heap_getnext(scan, 0, (Buffer *) NULL);
 	if (!HeapTupleIsValid(tuple))
 	{
@@ -1415,7 +1415,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	key[0].sk_argument = ObjectIdGetDatum(relid);
 
 	pg_class_scan =
-		heap_beginscan(pg_class, 0, NowTimeQual, 1, key);
+		heap_beginscan(pg_class, 0, false, 1, key);
 
 	if (!HeapScanIsValid(pg_class_scan))
 	{
@@ -1611,7 +1611,7 @@ DefaultBuild(Relation heapRelation,
 	 */
 	scan = heap_beginscan(heapRelation, /* relation */
 						  0,	/* start at end */
-						  NowTimeQual,	/* time range */
+						  false, /* seeself */
 						  0,	/* number of keys */
 						  (ScanKey) NULL);		/* scan key */
 
@@ -1825,7 +1825,7 @@ IndexIsUniqueNoCache(Oid indexId)
 						   (RegProcedure) ObjectIdEqualRegProcedure,
 						   ObjectIdGetDatum(indexId));
 
-	scandesc = heap_beginscan(pg_index, 0, SelfTimeQual, 1, skey);
+	scandesc = heap_beginscan(pg_index, 0, true, 1, skey);
 
 	tuple = heap_getnext(scandesc, 0, NULL);
 	if (!HeapTupleIsValid(tuple))

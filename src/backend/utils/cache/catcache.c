@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.16 1997/09/18 20:22:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.17 1997/11/20 23:23:08 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -973,7 +973,7 @@ SearchSysCache(struct catcache * cache,
 		 */
 		MemoryContextSwitchTo(oldcxt);
 
-		sd = heap_beginscan(relation, 0, NowTimeQual,
+		sd = heap_beginscan(relation, 0, false,
 							cache->cc_nkeys, cache->cc_skey);
 
 		/* should this buffer be ReleaseBuffer'd?  --djm 8/20/96 */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.30 1997/11/02 15:24:55 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.31 1997/11/20 23:20:38 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -500,7 +500,7 @@ RelationAlreadyExists(Relation pg_class_desc, char relname[])
 	 */
 	pg_class_scan = heap_beginscan(pg_class_desc,
 								   0,
-								   NowTimeQual,
+								   false,
 								   1,
 								   &key);
 
@@ -903,7 +903,7 @@ RelationRemoveInheritance(Relation relation)
 
 	scan = heap_beginscan(catalogRelation,
 						  false,
-						  NowTimeQual,
+						  false,
 						  1,
 						  &entry);
 
@@ -931,7 +931,7 @@ RelationRemoveInheritance(Relation relation)
 
 	scan = heap_beginscan(catalogRelation,
 						  false,
-						  NowTimeQual,
+						  false,
 						  1,
 						  &entry);
 
@@ -959,7 +959,7 @@ RelationRemoveInheritance(Relation relation)
 
 	scan = heap_beginscan(catalogRelation,
 						  false,
-						  NowTimeQual,
+						  false,
 						  1,
 						  &entry);
 
@@ -998,7 +998,7 @@ RelationRemoveIndexes(Relation relation)
 
 	scan = heap_beginscan(indexRelation,
 						  false,
-						  NowTimeQual,
+						  false,
 						  1,
 						  &entry);
 
@@ -1046,7 +1046,7 @@ DeletePgRelationTuple(Relation rdesc)
 
 	pg_class_scan = heap_beginscan(pg_class_desc,
 								   0,
-								   NowTimeQual,
+								   false,
 								   1,
 								   &key);
 
@@ -1110,7 +1110,7 @@ DeletePgAttributeTuples(Relation rdesc)
 
 	pg_attribute_scan = heap_beginscan(pg_attribute_desc,
 									   0,
-									   NowTimeQual,
+									   false,
 									   1,
 									   &key);
 
@@ -1179,7 +1179,7 @@ DeletePgTypeTuple(Relation rdesc)
 
 	pg_type_scan = heap_beginscan(pg_type_desc,
 								  0,
-								  NowTimeQual,
+								  false,
 								  1,
 								  &key);
 
@@ -1215,7 +1215,7 @@ DeletePgTypeTuple(Relation rdesc)
 
 	pg_attribute_scan = heap_beginscan(pg_attribute_desc,
 									   0,
-									   NowTimeQual,
+									   false,
 									   1,
 									   &attkey);
 
@@ -1670,7 +1670,7 @@ RemoveAttrDefault(Relation rel)
 
 	RelationSetLockForWrite(adrel);
 
-	adscan = heap_beginscan(adrel, 0, NowTimeQual, 1, &key);
+	adscan = heap_beginscan(adrel, 0, false, 1, &key);
 
 	while (tup = heap_getnext(adscan, 0, (Buffer *) NULL), PointerIsValid(tup))
 		heap_delete(adrel, &tup->t_ctid);
@@ -1697,7 +1697,7 @@ RemoveRelCheck(Relation rel)
 
 	RelationSetLockForWrite(rcrel);
 
-	rcscan = heap_beginscan(rcrel, 0, NowTimeQual, 1, &key);
+	rcscan = heap_beginscan(rcrel, 0, false, 1, &key);
 
 	while (tup = heap_getnext(rcscan, 0, (Buffer *) NULL), PointerIsValid(tup))
 		heap_delete(rcrel, &tup->t_ctid);

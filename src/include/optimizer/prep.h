@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.5 1997/09/08 21:53:30 momjian Exp $
+ * $Id: prep.h,v 1.6 1997/11/20 23:23:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,12 +15,6 @@
 
 #include <nodes/plannodes.h>
 #include <nodes/parsenodes.h>
-
-/*
- * prototypes for archive.h
- */
-extern void plan_archive(List *rt);
-extern List *find_archive_rels(Oid relid);
 
 /*
  * prototypes for prepqual.h

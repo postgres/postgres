@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.23 1997/09/08 21:41:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.24 1997/11/20 23:20:21 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -153,7 +153,7 @@ btbuild(Relation heap,
 #endif							/* OMIT_PARTIAL_INDEX */
 
 	/* start a heap scan */
-	hscan = heap_beginscan(heap, 0, NowTimeQual, 0, (ScanKey) NULL);
+	hscan = heap_beginscan(heap, 0, false, 0, (ScanKey) NULL);
 	htup = heap_getnext(hscan, 0, &buffer);
 
 	/* build the index */

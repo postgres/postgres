@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.13 1997/11/17 16:58:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.14 1997/11/20 23:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,10 +236,10 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	 */
 	rt_entry1 =
 		addRangeTableEntry(NULL, (char *) viewName, "*CURRENT*",
-						   FALSE, FALSE, NULL);
+						   FALSE, FALSE);
 	rt_entry2 =
 		addRangeTableEntry(NULL, (char *) viewName, "*NEW*",
-						   FALSE, FALSE, NULL);
+						   FALSE, FALSE);
 	new_rt = lcons(rt_entry2, old_rt);
 	new_rt = lcons(rt_entry1, new_rt);
 

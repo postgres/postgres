@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.14 1997/09/18 20:20:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.15 1997/11/20 23:20:49 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -116,7 +116,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	 */
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SelfTimeQual,
+									  true,
 									  3,
 									  opKey);
 
@@ -697,7 +697,7 @@ OperatorDef(char *operatorName,
 
 		pg_operator_scan = heap_beginscan(pg_operator_desc,
 										  0,
-										  SelfTimeQual,
+										  true,
 										  3,
 										  opKey);
 
@@ -796,7 +796,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SelfTimeQual,
+									  true,
 									  1,
 									  opKey);
 
@@ -886,7 +886,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SelfTimeQual,
+									  true,
 									  1,
 									  opKey);
 

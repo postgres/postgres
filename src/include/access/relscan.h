@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.8 1997/09/08 21:50:56 momjian Exp $
+ * $Id: relscan.h,v 1.9 1997/11/20 23:23:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ typedef struct HeapScanDescData
 	ItemPointerData rs_mntid;	/* marked next tid */
 	ItemPointerData rs_mcd;		/* marked current delta XXX ??? */
 	bool		rs_atend;		/* restart scan at end? */
-	TimeQual	rs_tr;			/* time qualification */
+	bool		rs_seeself;		/* see self or not */
 	uint16		rs_cdelta;		/* current delta in chain */
 	uint16		rs_nkeys;		/* number of attributes in keys */
 	ScanKey		rs_key;			/* key descriptors */

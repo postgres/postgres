@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.6 1997/09/08 21:45:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.7 1997/11/20 23:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,10 +176,6 @@ plan_union_queries(Index rt_index,
 
 		case VERSION_FLAG:
 			union_relids = VersionGetParents(rt_entry->relid);
-			break;
-
-		case ARCHIVE_FLAG:
-			union_relids = find_archive_rels(rt_entry->relid);
 			break;
 
 		default:

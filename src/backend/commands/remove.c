@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.15 1997/09/18 20:20:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.16 1997/11/20 23:21:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 						   ObjectIdGetDatum(typeId2));
 
 	relation = heap_openr(OperatorRelationName);
-	scan = heap_beginscan(relation, 0, NowTimeQual, 3, operatorKey);
+	scan = heap_beginscan(relation, 0, false, 3, operatorKey);
 	tup = heap_getnext(scan, 0, &buffer);
 	if (HeapTupleIsValid(tup))
 	{
@@ -163,7 +163,7 @@ SingleOpOperatorRemove(Oid typeOid)
 	for (i = 0; i < 3; ++i)
 	{
 		key[0].sk_attno = attnums[i];
-		sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 1, key);
+		sdesc = heap_beginscan(rdesc, 0, false, 1, key);
 		while (PointerIsValid(tup = heap_getnext(sdesc, 0, &buffer)))
 		{
 			ItemPointerCopy(&tup->t_ctid, &itemPointerData);
@@ -212,7 +212,7 @@ AttributeAndRelationRemove(Oid typeOid)
 	oidptr->next = NULL;
 	optr = oidptr;
 	rdesc = heap_openr(AttributeRelationName);
-	sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 1, key);
+	sdesc = heap_beginscan(rdesc, 0, false, 1, key);
 	while (PointerIsValid(tup = heap_getnext(sdesc, 0, &buffer)))
 	{
 		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
@@ -233,7 +233,7 @@ AttributeAndRelationRemove(Oid typeOid)
 	while (PointerIsValid((char *) optr->next))
 	{
 		key[0].sk_argument = (Datum) (optr++)->reloid;
-		sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 1, key);
+		sdesc = heap_beginscan(rdesc, 0, false, 1, key);
 		tup = heap_getnext(sdesc, 0, &buffer);
 		if (PointerIsValid(tup))
 		{
@@ -283,7 +283,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 	typeKey[0].sk_argument = PointerGetDatum(typeName);
 
-	scan = heap_beginscan(relation, 0, NowTimeQual, 1, typeKey);
+	scan = heap_beginscan(relation, 0, false, 1, typeKey);
 	tup = heap_getnext(scan, 0, (Buffer *) 0);
 	if (!HeapTupleIsValid(tup))
 	{
@@ -301,7 +301,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 	shadow_type = makeArrayTypeName(typeName);
 	typeKey[0].sk_argument = NameGetDatum(shadow_type);
 
-	scan = heap_beginscan(relation, 0, NowTimeQual,
+	scan = heap_beginscan(relation, 0, false,
 						  1, (ScanKey) typeKey);
 	tup = heap_getnext(scan, 0, (Buffer *) 0);
 
@@ -389,7 +389,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	fmgr_info(key[0].sk_procedure, &key[0].sk_func, &key[0].sk_nargs);
 
 	relation = heap_openr(ProcedureRelationName);
-	scan = heap_beginscan(relation, 0, NowTimeQual, 1, key);
+	scan = heap_beginscan(relation, 0, false, 1, key);
 
 	do
 	{							/* hope this is ok because it's indexed */
@@ -496,7 +496,7 @@ RemoveAggregate(char *aggName, char *aggType)
 						   ObjectIdGetDatum(basetypeID));
 
 	relation = heap_openr(AggregateRelationName);
-	scan = heap_beginscan(relation, 0, NowTimeQual, 2, aggregateKey);
+	scan = heap_beginscan(relation, 0, false, 2, aggregateKey);
 	tup = heap_getnext(scan, 0, (Buffer *) 0);
 	if (!HeapTupleIsValid(tup))
 	{

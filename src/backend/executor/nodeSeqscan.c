@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.7 1997/09/08 21:43:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.8 1997/11/20 23:21:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,6 @@ InitScanRelation(SeqScan *node, EState *estate,
 	List	   *rangeTable;
 	RangeTblEntry *rtentry;
 	Oid			reloid;
-	TimeQual	timeQual;
 	ScanDirection direction;
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
@@ -179,7 +178,6 @@ InitScanRelation(SeqScan *node, EState *estate,
 		rangeTable = estate->es_range_table;
 		rtentry = rt_fetch(relid, rangeTable);
 		reloid = rtentry->relid;
-		timeQual = rtentry->timeQual;
 		direction = estate->es_direction;
 		resultRelationInfo = estate->es_result_relation_info;
 
@@ -188,7 +186,6 @@ InitScanRelation(SeqScan *node, EState *estate,
 					  NULL,		/* scan key */
 					  0,		/* is index */
 					  direction,/* scan direction */
-					  timeQual, /* time qual */
 					  &currentRelation, /* return: rel desc */
 					  (Pointer *) &currentScanDesc);	/* return: scan desc */
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.68 1997/11/17 16:37:24 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.69 1997/11/20 23:22:19 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -95,7 +95,6 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 	IndexElem			*ielem;
 	RangeVar			*range;
 	RelExpr				*relexp;
-	TimeRange			*trange;
 	A_Indices			*aind;
 	ResTarget			*target;
 	ParamNo				*paramno;
@@ -134,8 +133,7 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 
 %type <str>		opt_id, opt_portal_name,
 		before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique,
-		result, OptUseOp, opt_class, opt_range_start, opt_range_end,
-		SpecialRuleRelation
+		result, OptUseOp, opt_class, SpecialRuleRelation
 
 %type <str>		privileges, operation_commalist, grantee
 %type <chr>		operation, TriggerOneEvent
@@ -190,7 +188,6 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr);
 %type <ielem>	index_elem, func_index
 %type <range>	from_val
 %type <relexp>	relation_expr
-%type <trange>	time_range
 %type <target>	res_target_el, res_target_el2
 %type <paramno> ParamNo
 
@@ -2353,7 +2350,6 @@ relation_expr:	relation_name
 					$$ = makeNode(RelExpr);
 					$$->relname = $1;
 					$$->inh = FALSE;
-					$$->timeRange = NULL;
 				}
 		| relation_name '*'				  %prec '='
 				{
@@ -2361,44 +2357,7 @@ relation_expr:	relation_name
 					$$ = makeNode(RelExpr);
 					$$->relname = $1;
 					$$->inh = TRUE;
-					$$->timeRange = NULL;
 				}
-		| relation_name time_range
-				{
-					/* time-qualified query */
-					$$ = makeNode(RelExpr);
-					$$->relname = $1;
-					$$->inh = FALSE;
-					$$->timeRange = $2;
-				}
-		;
-
-/* Time travel
- * Range specification clause.
- */
-time_range:  '[' opt_range_start ',' opt_range_end ']'
-				{
-					$$ = makeNode(TimeRange);
-					$$->startDate = $2;
-					$$->endDate = $4;
-					elog (WARN, "time travel is no longer available");
-				}
-		| '[' date ']'
-				{
-					$$ = makeNode(TimeRange);
-					$$->startDate = $2;
-					$$->endDate = NULL;
-					elog (WARN, "time travel is no longer available");
-				}
-		;
-
-opt_range_start:  date
-		| /*EMPTY*/								{ $$ = "epoch"; }
-		;
-
-opt_range_end:	date
-		| /*EMPTY*/								{ $$ = "now"; }
-		;
 
 opt_array_bounds:  '[' ']' nest_array_bounds
 				{  $$ = lcons(makeInteger(-1), $3); }

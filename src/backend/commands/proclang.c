@@ -189,7 +189,7 @@ DropProceduralLanguage(DropPLangStmt * stmt)
 	ScanKeyEntryInitialize(&scanKeyData, 0, Anum_pg_language_lanname,
 						   F_NAMEEQ, PointerGetDatum(languageName));
 
-	scanDesc = heap_beginscan(rdesc, 0, NowTimeQual, 1, &scanKeyData);
+	scanDesc = heap_beginscan(rdesc, 0, false, 1, &scanKeyData);
 
 	tup = heap_getnext(scanDesc, 0, (Buffer *) NULL);
 

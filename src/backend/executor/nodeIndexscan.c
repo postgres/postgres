@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.10 1997/09/08 21:43:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.11 1997/11/20 23:21:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ IndexNext(IndexScan *node)
 		{
 			iptr = &result->heap_iptr;
 			tuple = heap_fetch(heapRelation,
-							   NowTimeQual,
+							   false,
 							   iptr,
 							   &buffer);
 			/* be tidy */
@@ -480,7 +480,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	RangeTblEntry *rtentry;
 	Index		relid;
 	Oid			reloid;
-	TimeQual	timeQual;
 
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
@@ -911,14 +910,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	relid = node->scan.scanrelid;
 	rtentry = rt_fetch(relid, rangeTable);
 	reloid = rtentry->relid;
-	timeQual = rtentry->timeQual;
 
 	ExecOpenScanR(reloid,		/* relation */
 				  0,			/* nkeys */
 				  (ScanKey) NULL,		/* scan key */
 				  0,			/* is index */
 				  direction,	/* scan direction */
-				  timeQual,		/* time qual */
 				  &currentRelation,		/* return: rel desc */
 				  (Pointer *) &currentScanDesc);		/* return: scan desc */
 
@@ -957,7 +954,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 						  scanKeys[i],	/* scan key */
 						  true, /* is index */
 						  direction,	/* scan direction */
-						  timeQual,		/* time qual */
 						  &(relationDescs[i]),	/* return: rel desc */
 						  (Pointer *) &(scanDescs[i]));
 			/* return: scan desc */

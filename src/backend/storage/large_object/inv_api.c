@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.19 1997/11/02 15:25:40 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.20 1997/11/20 23:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,7 +628,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 			 * a time qual in.
 			 */
 
-			htup = heap_fetch(obj_desc->heap_r, NowTimeQual,
+			htup = heap_fetch(obj_desc->heap_r, false,
 							  &(res->heap_iptr), bufP);
 
 		} while (htup == (HeapTuple) NULL);
@@ -639,7 +639,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 	}
 	else
 	{
-		htup = heap_fetch(obj_desc->heap_r, NowTimeQual,
+		htup = heap_fetch(obj_desc->heap_r, false,
 						  &(obj_desc->htid), bufP);
 	}
 
@@ -1206,7 +1206,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 		if (buf != InvalidBuffer)
 			ReleaseBuffer(buf);
 
-		htup = heap_fetch(hreln, NowTimeQual, &(res->heap_iptr), &buf);
+		htup = heap_fetch(hreln, false, &(res->heap_iptr), &buf);
 
 	} while (!HeapTupleIsValid(htup));
 
