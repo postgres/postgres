@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.238 2002/01/18 19:17:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.239 2002/01/25 18:49:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3885,47 +3885,53 @@ AddAcl(char *aclbuf, const char *keyword)
 }
 
 /*
- * This will take a string of 'arwR' and return a malloced,
- * comma delimited string of SELECT,INSERT,UPDATE,DELETE,RULE
+ * This will take a string of privilege code letters and return a malloced,
+ * comma delimited string of keywords for GRANT.
+ *
+ * Note: for cross-version compatibility, it's important to use ALL when
+ * appropriate.
  */
 static char *
 GetPrivileges(Archive *AH, const char *s)
 {
 	char		aclbuf[100];
+	bool		all = true;
 
 	aclbuf[0] = '\0';
 
-	if (strchr(s, 'a'))
-		AddAcl(aclbuf, "INSERT");
+#define CONVERT_PRIV(code,keywd) \
+	if (strchr(s, code)) \
+		AddAcl(aclbuf, keywd); \
+	else \
+		all = false
 
-	if (strchr(s, 'r'))
-		AddAcl(aclbuf, "SELECT");
-
-	if (strchr(s, 'R'))
-		AddAcl(aclbuf, "RULE");
+	CONVERT_PRIV('a', "INSERT");
+	CONVERT_PRIV('r', "SELECT");
+	CONVERT_PRIV('R', "RULE");
 
 	if (AH->remoteVersion >= 70200)
 	{
-		if (strchr(s, 'w'))
-			AddAcl(aclbuf, "UPDATE");
-		if (strchr(s, 'd'))
-			AddAcl(aclbuf, "DELETE");
-		if (strchr(s, 'x'))
-			AddAcl(aclbuf, "REFERENCES");
-		if (strchr(s, 't'))
-			AddAcl(aclbuf, "TRIGGER");
+		CONVERT_PRIV('w', "UPDATE");
+		CONVERT_PRIV('d', "DELETE");
+		CONVERT_PRIV('x', "REFERENCES");
+		CONVERT_PRIV('t', "TRIGGER");
 	}
 	else
 	{
-		if (strchr(s, 'w'))
-			AddAcl(aclbuf, "UPDATE,DELETE");
+		/* 7.0 and 7.1 have a simpler worldview */
+		CONVERT_PRIV('w', "UPDATE,DELETE");
 	}
 
-	return strdup(aclbuf);
+#undef CONVERT_PRIV
+
+	if (all)
+		return strdup("ALL");
+	else
+		return strdup(aclbuf);
 }
 
 /*
- * The name says it all; a function to append a string is the dest
+ * The name says it all; a function to append a string if the dest
  * is big enough. If not, it does a realloc.
  */
 static void
