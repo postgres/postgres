@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.76 2002/12/17 15:45:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.77 2003/01/21 22:06:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1356,15 +1356,15 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	exec_run_select(estate, stmt->query, 0, &portal);
 
 	SPI_cursor_fetch(portal, true, 10);
-	n = SPI_processed;
 	tuptab = SPI_tuptable;
+	n = SPI_processed;
 
 	/*
 	 * If the query didn't return any rows, set the target to NULL and
 	 * return with FOUND = false.
 	 */
 	if (n == 0)
-		exec_move_row(estate, rec, row, NULL, NULL);
+		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
 	else
 		found = true;			/* processed at least one tuple */
 
@@ -1478,6 +1478,7 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 	 * Run the query
 	 */
 	exec_run_select(estate, stmt->query, 1, NULL);
+	tuptab = estate->eval_tuptable;
 	n = estate->eval_processed;
 
 	/*
@@ -1486,7 +1487,7 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 	 */
 	if (n == 0)
 	{
-		exec_move_row(estate, rec, row, NULL, NULL);
+		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
 		exec_eval_cleanup(estate);
 		return PLPGSQL_RC_OK;
 	}
@@ -1494,7 +1495,6 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 	/*
 	 * Put the result into the target and set found to true
 	 */
-	tuptab = estate->eval_tuptable;
 	exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
 	exec_set_found(estate, true);
 
@@ -1627,6 +1627,8 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 	{
 		PLpgSQL_rec *rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
 
+		if (!HeapTupleIsValid(rec->tup))
+			elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
 		if (!compatible_tupdesc(tupdesc, rec->tupdesc))
 			elog(ERROR, "Wrong record type supplied in RETURN NEXT");
 		tuple = rec->tup;
@@ -2369,15 +2371,15 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	 * Fetch the initial 10 tuples
 	 */
 	SPI_cursor_fetch(portal, true, 10);
-	n = SPI_processed;
 	tuptab = SPI_tuptable;
+	n = SPI_processed;
 
 	/*
 	 * If the query didn't return any rows, set the target to NULL and
 	 * return with FOUND = false.
 	 */
 	if (n == 0)
-		exec_move_row(estate, rec, row, NULL, NULL);
+		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
 	else
 		found = true;
 
@@ -2776,8 +2778,8 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
 	 * ----------
 	 */
 	SPI_cursor_fetch(portal, true, 1);
-	n = SPI_processed;
 	tuptab = SPI_tuptable;
+	n = SPI_processed;
 
 	/* ----------
 	 * If the FETCH didn't return a row, set the target
@@ -2786,7 +2788,7 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
 	 */
 	if (n == 0)
 	{
-		exec_move_row(estate, rec, row, NULL, NULL);
+		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
 		return PLPGSQL_RC_OK;
 	}
 
@@ -3353,8 +3355,8 @@ exec_move_row(PLpgSQL_execstate * estate,
 			  HeapTuple tup, TupleDesc tupdesc)
 {
 	/*
-	 * Record is simple - just put the tuple and its descriptor into the
-	 * record
+	 * Record is simple - just copy the tuple and its descriptor into the
+	 * record variable
 	 */
 	if (rec != NULL)
 	{
@@ -3372,13 +3374,34 @@ exec_move_row(PLpgSQL_execstate * estate,
 		if (HeapTupleIsValid(tup))
 		{
 			rec->tup = heap_copytuple(tup);
-			rec->tupdesc = CreateTupleDescCopy(tupdesc);
 			rec->freetup = true;
-			rec->freetupdesc = true;
+		}
+		else if (tupdesc)
+		{
+			/* If we have a tupdesc but no data, form an all-nulls tuple */
+			char		*nulls;
+
+			/* +1 to avoid possible palloc(0) if no attributes */
+			nulls = (char *) palloc(tupdesc->natts * sizeof(char) + 1);
+			memset(nulls, 'n', tupdesc->natts * sizeof(char));
+
+			rec->tup = heap_formtuple(tupdesc, NULL, nulls);
+			rec->freetup = true;
+
+			pfree(nulls);
 		}
 		else
 		{
 			rec->tup = NULL;
+		}
+
+		if (tupdesc)
+		{
+			rec->tupdesc = CreateTupleDescCopy(tupdesc);
+			rec->freetupdesc = true;
+		}
+		else
+		{
 			rec->tupdesc = NULL;
 		}
 
@@ -3395,6 +3418,9 @@ exec_move_row(PLpgSQL_execstate * estate,
 	 * table, or it might have fewer if the table has had columns added by
 	 * ALTER TABLE. Ignore extra columns and assume NULL for missing
 	 * columns, the same as heap_getattr would do.
+	 *
+	 * If we have no tuple data at all, we'll assign NULL to all columns
+	 * of the row variable.
 	 */
 	if (row != NULL)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.83 2002/12/30 22:10:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.84 2003/01/21 22:06:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,13 +874,13 @@ SPI_cursor_close(Portal portal)
 /* =================== private functions =================== */
 
 /*
- * spi_printtup
- *		store tuple retrieved by Executor into SPITupleTable
+ * spi_dest_setup
+ *		Initialize to receive tuples from Executor into SPITupleTable
  *		of current SPI procedure
- *
  */
 void
-spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
+spi_dest_setup(DestReceiver *self, int operation,
+			   const char *portalName, TupleDesc typeinfo)
 {
 	SPITupleTable *tuptable;
 	MemoryContext oldcxt;
@@ -891,47 +891,70 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 	 * _SPI_connected
 	 */
 	if (_SPI_curid != _SPI_connected || _SPI_connected < 0)
+		elog(FATAL, "SPI: improper call to spi_dest_setup");
+	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
+		elog(FATAL, "SPI: stack corrupted in spi_dest_setup");
+
+	if (_SPI_current->tuptable != NULL)
+		elog(FATAL, "SPI: improper call to spi_dest_setup");
+
+	oldcxt = _SPI_procmem();	/* switch to procedure memory context */
+
+	tuptabcxt = AllocSetContextCreate(CurrentMemoryContext,
+									  "SPI TupTable",
+									  ALLOCSET_DEFAULT_MINSIZE,
+									  ALLOCSET_DEFAULT_INITSIZE,
+									  ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextSwitchTo(tuptabcxt);
+
+	_SPI_current->tuptable = tuptable = (SPITupleTable *)
+		palloc(sizeof(SPITupleTable));
+	tuptable->tuptabcxt = tuptabcxt;
+	tuptable->alloced = tuptable->free = 128;
+	tuptable->vals = (HeapTuple *) palloc(tuptable->alloced * sizeof(HeapTuple));
+	tuptable->tupdesc = CreateTupleDescCopy(typeinfo);
+
+	MemoryContextSwitchTo(oldcxt);
+}
+
+/*
+ * spi_printtup
+ *		store tuple retrieved by Executor into SPITupleTable
+ *		of current SPI procedure
+ */
+void
+spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
+{
+	SPITupleTable *tuptable;
+	MemoryContext oldcxt;
+
+	/*
+	 * When called by Executor _SPI_curid expected to be equal to
+	 * _SPI_connected
+	 */
+	if (_SPI_curid != _SPI_connected || _SPI_connected < 0)
 		elog(FATAL, "SPI: improper call to spi_printtup");
 	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
 		elog(FATAL, "SPI: stack corrupted in spi_printtup");
 
-	oldcxt = _SPI_procmem();	/* switch to procedure memory context */
-
 	tuptable = _SPI_current->tuptable;
 	if (tuptable == NULL)
-	{
-		tuptabcxt = AllocSetContextCreate(CurrentMemoryContext,
-										  "SPI TupTable",
-										  ALLOCSET_DEFAULT_MINSIZE,
-										  ALLOCSET_DEFAULT_INITSIZE,
-										  ALLOCSET_DEFAULT_MAXSIZE);
-		MemoryContextSwitchTo(tuptabcxt);
+		elog(FATAL, "SPI: improper call to spi_printtup");
 
-		_SPI_current->tuptable = tuptable = (SPITupleTable *)
-			palloc(sizeof(SPITupleTable));
-		tuptable->tuptabcxt = tuptabcxt;
-		tuptable->alloced = tuptable->free = 128;
-		tuptable->vals = (HeapTuple *) palloc(tuptable->alloced * sizeof(HeapTuple));
-		tuptable->tupdesc = CreateTupleDescCopy(tupdesc);
-	}
-	else
-	{
-		MemoryContextSwitchTo(tuptable->tuptabcxt);
+	oldcxt = MemoryContextSwitchTo(tuptable->tuptabcxt);
 
-		if (tuptable->free == 0)
-		{
-			tuptable->free = 256;
-			tuptable->alloced += tuptable->free;
-			tuptable->vals = (HeapTuple *) repalloc(tuptable->vals,
+	if (tuptable->free == 0)
+	{
+		tuptable->free = 256;
+		tuptable->alloced += tuptable->free;
+		tuptable->vals = (HeapTuple *) repalloc(tuptable->vals,
 								  tuptable->alloced * sizeof(HeapTuple));
-		}
 	}
 
 	tuptable->vals[tuptable->alloced - tuptable->free] = heap_copytuple(tuple);
 	(tuptable->free)--;
 
 	MemoryContextSwitchTo(oldcxt);
-	return;
 }
 
 /*
@@ -1448,19 +1471,10 @@ _SPI_checktuples(void)
 	SPITupleTable *tuptable = _SPI_current->tuptable;
 	bool		failed = false;
 
-	if (processed == 0)
-	{
-		if (tuptable != NULL)
-			failed = true;
-	}
-	else
-	{
-		/* some tuples were processed */
-		if (tuptable == NULL)	/* spi_printtup was not called */
-			failed = true;
-		else if (processed != (tuptable->alloced - tuptable->free))
-			failed = true;
-	}
+	if (tuptable == NULL)	/* spi_dest_setup was not called */
+		failed = true;
+	else if (processed != (tuptable->alloced - tuptable->free))
+		failed = true;
 
 	return failed;
 }
