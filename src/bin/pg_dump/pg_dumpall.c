@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.23 2003/07/23 08:47:30 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.24 2003/07/29 14:17:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,13 +279,13 @@ dumpUsers(PGconn *conn)
 	if (server_version >= 70100)
 		res = executeQuery(conn,
 						   "SELECT usename, usesysid, passwd, usecreatedb, "
-						   "usesuper, CAST(valuntil AS timestamp) "
+						   "usesuper, valuntil "
 						   "FROM pg_shadow "
 						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0')");
 	else
 		res = executeQuery(conn,
 						   "SELECT usename, usesysid, passwd, usecreatedb, "
-						   "usesuper, CAST(valuntil AS timestamp) "
+						   "usesuper, valuntil "
 						   "FROM pg_shadow "
 						   "WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template1')");
 
