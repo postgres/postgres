@@ -1,0 +1,17 @@
+QUERY: SELECT 'first line'
+' - next line'
+	' - third line'
+	AS "Three lines to one";
+Three lines to one                 
+-----------------------------------
+first line - next line - third line
+(1 row)
+
+QUERY: SELECT 'first line'
+' - next line' /* this comment is not allowed here */
+' - third line';
+WARN:parser: parse error at or near "'"
+QUERY: SELECT text(f1) FROM CHAR_TBL;
+WARN:func_get_detail: function text(bpchar) does not exist
+QUERY: SELECT text(f1) FROM VARCHAR_TBL;
+WARN:func_get_detail: function text(varchar) does not exist
