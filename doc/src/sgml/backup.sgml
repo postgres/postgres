@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.58 2005/03/17 05:10:11 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.59 2005/03/17 15:38:46 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -364,9 +364,11 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <para>
-   If your database is spread across multiple volumes (for example,
-   if you are using tablespaces) there may not be any way
-   to obtain exactly-simultaneous frozen snapshots of all the volumes.
+   If your database is spread across multiple file systems there may not 
+   be any way to obtain exactly-simultaneous frozen snapshots of all 
+   the volumes.  For example, if your data files and WAL log on different 
+   file disks, or if tablespaces are on different file systems, it might
+   not be possible to use snapshots because the snapshots must be simultaneous.
    Read your file system documentation very carefully before trusting
    to the consistent-snapshot technique in such situations.  The safest
    approach is to shut down the database server for long enough to
@@ -375,11 +377,12 @@ tar -cf backup.tar /usr/local/pgsql/data
 
   <para>
    Another option is to use <application>rsync</> to perform a file
-   system backup.  First, while the database server is running, 
-   run <application>rsync</>, then shut down the database
-   server and perform a second <application>rsync</>, then
-   restart the database server.  This allows a file system backup to be
-   performed with minimal downtime.
+   system backup.  This is done by first running <application>rsync</>
+   while the database server is running, then shutting down the database
+   server just long enough to do a second <application>rsync</>.  The
+   second <application>rsync</> will be much quicker than the first,
+   but will be consistent because the server was down.  This method
+   allows a file system backup to be performed with minimal downtime.
   </para>
 
   <para>
