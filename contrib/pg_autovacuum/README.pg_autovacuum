@@ -110,10 +110,10 @@ pg_autovacuum has the following optional arguments:
 -D daemonize: Detach from tty and run in background.
 -s sleep base value: see "Sleeping" below.
 -S sleep scaling factor: see "Sleeping" below.
--v vacuum base threshold: see Vacuum and Analyze.
--V vacuum scaling factor: see Vacuum and Analyze.
--a analyze base threshold: see Vacuum and Analyze.
--A analyze scaling factor: see Vacuum and Analyze.
+-v vacuum base threshold: see "Vacuum and Analyze" below.
+-V vacuum scaling factor: see "Vacuum and Analyze" below.
+-a analyze base threshold: see "Vacuum and Analyze" below.
+-A analyze scaling factor: see "Vacuum and Analyze" below.
 -L log file: Name of file to which output is submitted, otherwise STDERR
 -U username: Username pg_autovacuum will use to connect with, if not
    specified the current username is used.
@@ -129,7 +129,7 @@ the time of writing they are:
 -v 1000
 -V 2   
 -a 500 (half of -v if not specified)
--A 1   (half of -v if not specified)
+-A 1   (half of -V if not specified)
 -s 300 (5 minutes)
 -S 2
 
