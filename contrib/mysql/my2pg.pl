@@ -1,4 +1,4 @@
-#!/usr/bin/perl5
+#!/usr/bin/perl
 
 #
 # My2Pg: MySQL to PostgreSQL dump conversion utility
@@ -35,7 +35,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $Id: my2pg.pl,v 1.1 2001/02/10 11:43:12 momjian Exp $
+# $Id: my2pg.pl,v 1.2 2001/02/10 11:43:33 momjian Exp $
 
 # TODO:
 # + Handle SETs
@@ -46,6 +46,9 @@
 
 #
 # $Log: my2pg.pl,v $
+# Revision 1.2  2001/02/10 11:43:33  momjian
+# cleanup
+#
 # Revision 1.1  2001/02/10 11:43:12  momjian
 # Add other mysql conversion utility for comparisons.
 #
@@ -97,7 +100,7 @@ if($opts{n} ne '') {
 $|=1;
 
 print("------------------------------------------------------------------");
-print("\n-- My2Pg \$Revision: 1.1 $ \translated dump");
+print("\n-- My2Pg \$Revision: 1.2 $ \translated dump");
 print("\n--");
 print("\n------------------------------------------------------------------");
 
@@ -119,7 +122,7 @@ $libtypename.='/libtypes.so';
 # push header to libtypes.c
 open(LIBTYPES,">$libtypesource");
 print LIBTYPES "/******************************************************";
-print LIBTYPES "\n * My2Pg \$Revision: 1.1 $ \translated dump";
+print LIBTYPES "\n * My2Pg \$Revision: 1.2 $ \translated dump";
 print LIBTYPES "\n * User types definitions";
 print LIBTYPES "\n ******************************************************/";
 print LIBTYPES "\n\n#include <postgres.h>\n";
@@ -611,7 +614,7 @@ close(LIBTYPES);
 
 open(MAKE,">Makefile");
 print MAKE "#
-# My2Pg \$Revision: 1.1 $ \translated dump
+# My2Pg \$Revision: 1.2 $ \translated dump
 # Makefile
 #
 
