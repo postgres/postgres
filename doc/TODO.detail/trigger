@@ -612,3 +612,72 @@ TIP 6: Have you searched our list archives?
 
 http://archives.postgresql.org
 
+From jllachan@nsd.ca Tue Nov 26 14:42:05 2002
+Return-path: <jllachan@nsd.ca>
+Received: from beamish.nsd.ca (IDENT:root@[205.150.156.194])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id gAQJg2P06491
+	for <pgman@candle.pha.pa.us>; Tue, 26 Nov 2002 14:42:04 -0500 (EST)
+Received: (from smap@localhost)
+	by beamish.nsd.ca (8.9.3/8.9.3) id OAA28217;
+	Tue, 26 Nov 2002 14:41:56 -0500
+X-Authentication-Warning: beamish.nsd.ca: smap set sender to <jllachan@nsd.ca> using -f
+Received: from reddog.nsd.ca(192.168.101.30) by beamish.nsd.ca via smap (V2.1/2.1+anti-relay+anti-spam)
+	id xma028213; Tue, 26 Nov 02 14:41:31 -0500
+Received: from nsd.ca (jllachan-linux.nsd.ca [192.168.101.148])
+	by reddog.nsd.ca (8.8.7/8.8.7) with ESMTP id OAA22894;
+	Tue, 26 Nov 2002 14:40:22 -0500
+Sender: jllachan@reddog.nsd.ca
+Message-ID: <3DE3CE7B.614EE99E@nsd.ca>
+Date: Tue, 26 Nov 2002 14:41:47 -0500
+From: Jean-Luc Lachance <jllachan@nsd.ca>
+X-Mailer: Mozilla 4.77 [en] (X11; U; Linux 2.4.9-31 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: Christoph Dalitz <christoph.dalitz@hs-niederrhein.de>,
+   pgsql-general@postgresql.org
+Subject: Re: [GENERAL] ALTER TRIGGER DISABLE/ENABLE
+References: <200211261853.gAQIrdE00304@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+I think thte sintax should be:
+
+ALTER TABLE DISABLE|ENABLE TRIGGER {trigger name}|ALL
+
+
+
+Bruce Momjian wrote:
+> 
+> Christoph Dalitz wrote:
+> > Hello,
+> >
+> > while there have been suggested some hacks on the system catalog
+> > for disabling/enabling triggers, these have two serious disadvantages:
+> >
+> >  - they cannot be done by the owner of the trigger
+> >    (only the DBA has write access to the system catalog)
+> >  - messing in the system catalog for simple DB schema changes makes
+> >    most users feel uneasy
+> >
+> > Oracle has an SQL command "ALTER TRIGGER triggername DISABLE|ENABLE".
+> > Were it possible to put this command on the TODO list for a future PG release?
+> 
+> Already on TODO list:
+> 
+>         * Allow triggers to be disabled [trigger]
+> 
+> I will add your email to the TODO.detail thread.
+> 
+> --
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 359-1001
+>   +  If your life is a hard drive,     |  13 Roberts Road
+>   +  Christ can be your backup.        |  Newtown Square, Pennsylvania 19073
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 6: Have you searched our list archives?
+> 
+> http://archives.postgresql.org
+
