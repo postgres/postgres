@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.27 2000/03/01 21:09:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.28 2000/03/11 13:56:23 petere Exp $
 Postgres documentation
 -->
 
@@ -1966,8 +1966,8 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     <variablelist>
       <varlistentry>
         <term><literal>%M</literal></term>
-	<listitem><para>The hostname of the database server (or <quote>.</quote>
-         if Unix domain socket).</para></listitem>
+	<listitem><para>The full hostname (with domainname) of the database server (or
+         <quote>localhost</quote> if hostname information is not available).</para></listitem>
       </varlistentry>
 
       <varlistentry>

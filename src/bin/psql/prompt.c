@@ -3,8 +3,8 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.10 2000/03/08 01:38:59 momjian Exp $
- */
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.11 2000/03/11 13:56:24 petere Exp $
+ */ 
 #include "postgres.h"
 #include "prompt.h"
 
@@ -19,7 +19,10 @@
 #include <win32.h>
 #endif
 
-#include <sys/utsname.h>
+#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)
+#include <unistd.h>
+#include <netdb.h>
+#endif
 
 /*--------------------------
  * get_prompt
@@ -29,9 +32,10 @@
  * (might not be completely multibyte safe)
  *
  * Defined interpolations are:
- * %M - database server hostname (or "." if not TCP/IP)
- * %m - like %M but hostname truncated after first dot
- * %> - database server port number (or "." if not TCP/IP)
+ * %M - database server "hostname.domainname" (or "localhost" if this 
+ *	information is not available)
+ * %m - like %M, but hostname only (before first dot) 
+ * %> - database server port number
  * %n - database user name
  * %/ - current database
  * %~ - like %/ but "~" when database name equals user name
@@ -56,6 +60,51 @@
  * will be empty (not NULL!).
  *--------------------------
  */
+
+/*
+ * We need hostname information, only if connection is via UNIX socket 
+ */
+#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)
+
+#define DOMAINNAME	1
+#define HOSTNAME	2
+
+/* 
+ * Return full hostname for localhost. 
+ *	- informations are init only in firts time - not queries DNS or NIS
+ *	  for every localhost() call 	
+ */
+static char *
+localhost(int type, char *buf, int siz)	
+{	
+	static struct hostent	*hp = NULL;
+	static int err = 0;
+	
+	if (hp==NULL && err==0)
+	{	
+		char hname[256];		
+		
+		if (gethostname(hname, 256) == 0)
+		{
+			if (!(hp = gethostbyname(hname)))
+				err = 1; 
+		}
+		else
+			err = 1;		
+	}
+	
+	if (hp==NULL) 
+		return strncpy(buf, "localhost", siz);
+	
+	strncpy(buf, hp->h_name, siz);		/* full aaa.bbb.ccc */
+	
+	if (type==HOSTNAME)
+		buf[strcspn(buf, ".")] = '\0';
+	
+	return buf;	
+}
+#endif
+
 char *
 get_prompt(promptStatus_t status)
 {
@@ -115,23 +164,22 @@ get_prompt(promptStatus_t status)
 				case 'm':
 					if (pset.db)
 					{
+						/* INET socket */
 						if (PQhost(pset.db))
 						{
 							strncpy(buf, PQhost(pset.db), MAX_PROMPT_SIZE);
 							if (*p == 'm')
 								buf[strcspn(buf, ".")] = '\0';
 						}
-						else if (*p == 'M') 
-							buf[0] = '.';
-						else 
-						{
-							struct utsname ubuf;
-						
-							if (uname(&ubuf) < 0)
-								buf[0] = '.';
-							else 
-								strncpy(buf, ubuf.nodename, MAX_PROMPT_SIZE);	
-						}	
+						/* UNIX socket */
+#if !defined(WIN32) && !defined(__CYGWIN32__) && !defined(__QNX__)						
+						else {
+							if (*p == 'm')	
+								localhost(HOSTNAME, buf, MAX_PROMPT_SIZE);
+							else
+								localhost(DOMAINNAME, buf, MAX_PROMPT_SIZE);
+						}
+#endif					
 					}
 					break;
 					/* DB server port number */
