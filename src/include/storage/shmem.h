@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/shmem.h,v 1.40 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/shmem.h,v 1.41 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef struct SHM_QUEUE
 } SHM_QUEUE;
 
 /* shmem.c */
-extern void InitShmemAllocation(void *seghdr);
+extern void InitShmemAllocation(void *seghdr, bool init);
 extern void *ShmemAlloc(Size size);
 extern bool ShmemIsValid(unsigned long addr);
 extern void InitShmemIndex(void);

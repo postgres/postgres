@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.27 2003/12/12 18:45:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.28 2003/12/20 17:31:21 momjian Exp $
  *
  *
  * NOTES:
@@ -180,7 +180,6 @@ typedef struct FSMRelation FSMRelation;
 /* Header for whole map */
 struct FSMHeader
 {
-	HTAB	   *relHash;		/* hashtable of FSMRelation entries */
 	FSMRelation *usageList;		/* FSMRelations in usage-recency order */
 	FSMRelation *usageListTail; /* tail of usage-recency list */
 	FSMRelation *firstRel;		/* FSMRelations in arena storage order */
@@ -218,6 +217,7 @@ int			MaxFSMRelations;	/* these are set by guc.c */
 int			MaxFSMPages;
 
 static FSMHeader *FreeSpaceMap; /* points to FSMHeader in shared memory */
+static HTAB	*FreeSpaceMapRelHash; /* points to (what used to be) FSMHeader->relHash */
 
 
 static FSMRelation *lookup_fsm_rel(RelFileNode *rel);
@@ -265,13 +265,15 @@ InitFreeSpaceMap(void)
 {
 	HASHCTL		info;
 	int			nchunks;
+	bool found;
 
 	/* Create table header */
-	FreeSpaceMap = (FSMHeader *) ShmemAlloc(sizeof(FSMHeader));
+	FreeSpaceMap = (FSMHeader *) ShmemInitStruct("Free Space Map Header",sizeof(FSMHeader),&found);
 	if (FreeSpaceMap == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 			   errmsg("insufficient shared memory for free space map")));
+	if (!found)
 	MemSet(FreeSpaceMap, 0, sizeof(FSMHeader));
 
 	/* Create hashtable for FSMRelations */
@@ -279,16 +281,20 @@ InitFreeSpaceMap(void)
 	info.entrysize = sizeof(FSMRelation);
 	info.hash = tag_hash;
 
-	FreeSpaceMap->relHash = ShmemInitHash("Free Space Map Hash",
+	FreeSpaceMapRelHash = ShmemInitHash("Free Space Map Hash",
 										  MaxFSMRelations / 10,
 										  MaxFSMRelations,
 										  &info,
 										  (HASH_ELEM | HASH_FUNCTION));
 
-	if (!FreeSpaceMap->relHash)
+	if (!FreeSpaceMapRelHash)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 			   errmsg("insufficient shared memory for free space map")));
+
+	if (found)
+		return;
+
 
 	/* Allocate page-storage arena */
 	nchunks = (MaxFSMPages - 1) / CHUNKPAGES + 1;
@@ -974,7 +980,7 @@ lookup_fsm_rel(RelFileNode *rel)
 {
 	FSMRelation *fsmrel;
 
-	fsmrel = (FSMRelation *) hash_search(FreeSpaceMap->relHash,
+	fsmrel = (FSMRelation *) hash_search(FreeSpaceMapRelHash,
 										 (void *) rel,
 										 HASH_FIND,
 										 NULL);
@@ -995,7 +1001,7 @@ create_fsm_rel(RelFileNode *rel)
 	FSMRelation *fsmrel;
 	bool		found;
 
-	fsmrel = (FSMRelation *) hash_search(FreeSpaceMap->relHash,
+	fsmrel = (FSMRelation *) hash_search(FreeSpaceMapRelHash,
 										 (void *) rel,
 										 HASH_ENTER,
 										 &found);
@@ -1050,7 +1056,7 @@ delete_fsm_rel(FSMRelation *fsmrel)
 	unlink_fsm_rel_usage(fsmrel);
 	unlink_fsm_rel_storage(fsmrel);
 	FreeSpaceMap->numRels--;
-	result = (FSMRelation *) hash_search(FreeSpaceMap->relHash,
+	result = (FSMRelation *) hash_search(FreeSpaceMapRelHash,
 										 (void *) &(fsmrel->key),
 										 HASH_REMOVE,
 										 NULL);

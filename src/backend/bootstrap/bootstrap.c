@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.170 2003/12/12 18:45:08 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.171 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,9 +347,10 @@ BootstrapMain(int argc, char *argv[])
 	if (!dbname || argc != optind)
 		usage();
 
-
-	if (IsUnderPostmaster && ExecBackend && MyProc /* ordinary backend */ )
+#ifdef EXEC_BACKEND
+	if (IsUnderPostmaster && MyProc /* ordinary backend */ )
 		AttachSharedMemoryAndSemaphores();
+#endif
 
 	if (!IsUnderPostmaster /* when exec || ExecBackend */ )
 	{

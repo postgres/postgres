@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.130 2003/12/01 21:59:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.131 2003/12/20 17:31:21 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -153,8 +153,10 @@ PROCLOCK_PRINT(const char *where, const PROCLOCK *proclockP)
  * map from lock method id to the lock table structure
  */
 static LockMethod LockMethods[MAX_LOCK_METHODS];
-
+static HTAB*	LockMethodLockHash[MAX_LOCK_METHODS];
+static HTAB*	LockMethodProcLockHash[MAX_LOCK_METHODS];
 static int	NumLockMethods;
+
 
 /*
  * InitLocks -- Init the lock module.  Create a private data
@@ -245,8 +247,9 @@ LockMethodTableInit(char *tabName,
 	/*
 	 * Lock the LWLock for the table (probably not necessary here)
 	 */
+#ifndef EXEC_BACKEND
 	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
-
+#endif
 	/*
 	 * no zero-th table
 	 */
@@ -279,15 +282,15 @@ LockMethodTableInit(char *tabName,
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
 	sprintf(shmemName, "%s (lock hash)", tabName);
-	newLockMethod->lockHash = ShmemInitHash(shmemName,
+	LockMethodLockHash[NumLockMethods-1] = ShmemInitHash(shmemName,
 											init_table_size,
 											max_table_size,
 											&info,
 											hash_flags);
 
-	if (!newLockMethod->lockHash)
+	if (!LockMethodLockHash[NumLockMethods-1])
 		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
-	Assert(newLockMethod->lockHash->hash == tag_hash);
+	Assert(LockMethodLockHash[NumLockMethods-1]->hash == tag_hash);
 
 	/*
 	 * allocate a hash table for PROCLOCK structs.	This is used to store
@@ -299,20 +302,21 @@ LockMethodTableInit(char *tabName,
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
 	sprintf(shmemName, "%s (proclock hash)", tabName);
-	newLockMethod->proclockHash = ShmemInitHash(shmemName,
+	LockMethodProcLockHash[NumLockMethods-1] = ShmemInitHash(shmemName,
 												init_table_size,
 												max_table_size,
 												&info,
 												hash_flags);
 
-	if (!newLockMethod->proclockHash)
+	if (!LockMethodProcLockHash[NumLockMethods-1])
 		elog(FATAL, "could not initialize lock table \"%s\"", tabName);
 
 	/* init data structures */
 	LockMethodInit(newLockMethod, conflictsP, numModes);
 
+#ifndef EXEC_BACKEND
 	LWLockRelease(LockMgrLock);
-
+#endif
 	pfree(shmemName);
 
 	return newLockMethod->lockmethodid;
@@ -449,8 +453,8 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	/*
 	 * Find or create a lock with this tag
 	 */
-	Assert(lockMethodTable->lockHash->hash == tag_hash);
-	lock = (LOCK *) hash_search(lockMethodTable->lockHash,
+	Assert(LockMethodLockHash[lockmethodid]->hash == tag_hash);
+	lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
 								(void *) locktag,
 								HASH_ENTER, &found);
 	if (!lock)
@@ -497,7 +501,7 @@ LockAcquire(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	/*
 	 * Find or create a proclock entry with this tag
 	 */
-	proclockTable = lockMethodTable->proclockHash;
+	proclockTable = LockMethodProcLockHash[lockmethodid];
 	proclock = (PROCLOCK *) hash_search(proclockTable,
 										(void *) &proclocktag,
 										HASH_ENTER, &found);
@@ -988,8 +992,8 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	/*
 	 * Find a lock with this tag
 	 */
-	Assert(lockMethodTable->lockHash->hash == tag_hash);
-	lock = (LOCK *) hash_search(lockMethodTable->lockHash,
+	Assert(LockMethodLockHash[lockmethodid]->hash == tag_hash);
+	lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
 								(void *) locktag,
 								HASH_FIND, NULL);
 
@@ -1014,7 +1018,7 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 	proclocktag.proc = MAKE_OFFSET(MyProc);
 	TransactionIdStore(xid, &proclocktag.xid);
 
-	proclockTable = lockMethodTable->proclockHash;
+	proclockTable = LockMethodProcLockHash[lockmethodid];
 	proclock = (PROCLOCK *) hash_search(proclockTable,
 										(void *) &proclocktag,
 										HASH_FIND_SAVE, NULL);
@@ -1086,8 +1090,8 @@ LockRelease(LOCKMETHODID lockmethodid, LOCKTAG *locktag,
 		 * if there's no one waiting in the queue, we just released the
 		 * last lock on this object. Delete it from the lock table.
 		 */
-		Assert(lockMethodTable->lockHash->hash == tag_hash);
-		lock = (LOCK *) hash_search(lockMethodTable->lockHash,
+		Assert(LockMethodLockHash[lockmethodid]->hash == tag_hash);
+		lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
 									(void *) &(lock->tag),
 									HASH_REMOVE,
 									NULL);
@@ -1269,7 +1273,7 @@ LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
 		/*
 		 * remove the proclock entry from the hashtable
 		 */
-		proclock = (PROCLOCK *) hash_search(lockMethodTable->proclockHash,
+		proclock = (PROCLOCK *) hash_search(LockMethodProcLockHash[lockmethodid],
 											(void *) proclock,
 											HASH_REMOVE,
 											NULL);
@@ -1287,8 +1291,8 @@ LockReleaseAll(LOCKMETHODID lockmethodid, PGPROC *proc,
 			 * lock object.
 			 */
 			LOCK_PRINT("LockReleaseAll: deleting", lock, 0);
-			Assert(lockMethodTable->lockHash->hash == tag_hash);
-			lock = (LOCK *) hash_search(lockMethodTable->lockHash,
+			Assert(LockMethodLockHash[lockmethodid]->hash == tag_hash);
+			lock = (LOCK *) hash_search(LockMethodLockHash[lockmethodid],
 										(void *) &(lock->tag),
 										HASH_REMOVE, NULL);
 			if (!lock)
@@ -1367,7 +1371,7 @@ GetLockStatusData(void)
 
 	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
 
-	proclockTable = LockMethods[DEFAULT_LOCKMETHOD]->proclockHash;
+	proclockTable = LockMethodProcLockHash[DEFAULT_LOCKMETHOD];
 
 	data->nelements = i = proclockTable->hctl->nentries;
 
@@ -1480,7 +1484,7 @@ DumpAllLocks(void)
 	if (!lockMethodTable)
 		return;
 
-	proclockTable = lockMethodTable->proclockHash;
+	proclockTable = LockMethodProcLockHash[lockmethodid];
 
 	if (proc->waitLock)
 		LOCK_PRINT("DumpAllLocks: waiting on", proc->waitLock, 0);

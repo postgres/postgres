@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.104 2003/12/12 18:45:09 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.105 2003/12/20 17:31:21 momjian Exp $
  *
  * NOTES:
  *
@@ -51,11 +51,6 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
-
-
-/* Filename components for OpenTemporaryFile */
-#define PG_TEMP_FILES_DIR "pgsql_tmp"
-#define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
 
 /*
@@ -1217,8 +1212,12 @@ RemovePgTempFiles(void)
 	{
 		while ((db_de = readdir(db_dir)) != NULL)
 		{
-			if (strcmp(db_de->d_name, ".") == 0 ||
-				strcmp(db_de->d_name, "..") == 0)
+			if (strcmp(db_de->d_name, ".") == 0
+#ifndef EXEC_BACKEND
+			/* no PG_TEMP_FILES_DIR in DataDir in non EXEC_BACKEND case */
+				|| strcmp(db_de->d_name, "..") == 0
+#endif
+			)
 				continue;
 
 			snprintf(temp_path, sizeof(temp_path),

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.10 2003/11/29 22:40:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.11 2003/12/20 17:31:21 momjian Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -32,6 +32,13 @@ typedef struct XLogRecPtr
 	uint32		xlogid;			/* log file #, 0 based */
 	uint32		xrecoff;		/* byte offset of location in log file */
 } XLogRecPtr;
+
+typedef struct XLogwrtResult
+{
+	XLogRecPtr	Write;			/* last byte + 1 written out */
+	XLogRecPtr	Flush;			/* last byte + 1 flushed */
+} XLogwrtResult;
+
 
 /*
  * Macros for comparing XLogRecPtrs

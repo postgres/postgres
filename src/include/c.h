@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.157 2003/11/29 22:40:53 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.158 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,6 +791,13 @@ extern int	fdatasync(int fildes);
 #if defined(HAVE_LONG_LONG_INT_64) && !defined(HAVE_STRTOULL) && defined(HAVE_STRTOUQ)
 #define strtoull strtouq
 #define HAVE_STRTOULL 1
+#endif
+
+/* EXEC_BACKEND defines */
+#ifdef EXEC_BACKEND
+#define NON_EXEC_STATIC
+#else
+#define NON_EXEC_STATIC static
 #endif
 
 /* /port compatibility functions */

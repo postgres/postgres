@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.38 2003/11/29 22:41:03 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.39 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,11 @@
 #include <openssl/err.h>
 #endif
 
+
+typedef enum CAC_state
+{
+	CAC_OK, CAC_STARTUP, CAC_SHUTDOWN, CAC_RECOVERY, CAC_TOOMANY
+} CAC_state;
 
 /*
  * This is used by the postmaster in its communication with frontends.	It
@@ -42,6 +47,7 @@ typedef struct Port
 	ProtocolVersion proto;		/* FE/BE protocol version */
 	SockAddr	laddr;			/* local addr (postmaster) */
 	SockAddr	raddr;			/* remote addr (client) */
+	CAC_state	canAcceptConnections;	/* postmaster connection status */
 
 	/*
 	 * Information that needs to be saved from the startup packet and

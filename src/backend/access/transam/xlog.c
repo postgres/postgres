@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.128 2003/12/14 00:34:47 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.129 2003/12/20 17:31:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ XLogRecPtr	ProcLastRecEnd = {0, 0};
  * to update from XLogCtl->Insert.RedoRecPtr if we hold the info_lck;
  * see GetRedoRecPtr.
  */
-static XLogRecPtr RedoRecPtr;
+NON_EXEC_STATIC XLogRecPtr RedoRecPtr;
 
 /*----------
  * Shared-memory data structures for XLOG control
@@ -230,12 +230,6 @@ typedef struct XLogwrtRqst
 	XLogRecPtr	Write;			/* last byte + 1 to write out */
 	XLogRecPtr	Flush;			/* last byte + 1 to flush */
 } XLogwrtRqst;
-
-typedef struct XLogwrtResult
-{
-	XLogRecPtr	Write;			/* last byte + 1 written out */
-	XLogRecPtr	Flush;			/* last byte + 1 flushed */
-} XLogwrtResult;
 
 /*
  * Shared state data for XLogInsert.
@@ -404,7 +398,7 @@ static char ControlFilePath[MAXPGPATH];
  * Private, possibly out-of-date copy of shared LogwrtResult.
  * See discussion above.
  */
-static XLogwrtResult LogwrtResult = {{0, 0}, {0, 0}};
+NON_EXEC_STATIC XLogwrtResult LogwrtResult = {{0, 0}, {0, 0}};
 
 /*
  * openLogFile is -1 or a kernel FD for an open log file segment.
@@ -2398,7 +2392,7 @@ XLOGShmemSize(void)
 void
 XLOGShmemInit(void)
 {
-	bool		found;
+	bool		foundXLog, foundCFile;
 
 	/* this must agree with space requested by XLOGShmemSize() */
 	if (XLOGbuffers < MinXLOGbuffers)
@@ -2409,11 +2403,16 @@ XLOGShmemInit(void)
 						MAXALIGN(sizeof(XLogCtlData) +
 								 sizeof(XLogRecPtr) * XLOGbuffers)
 						+ BLCKSZ * XLOGbuffers,
-						&found);
-	Assert(!found);
+						&foundXLog);
 	ControlFile = (ControlFileData *)
-		ShmemInitStruct("Control File", sizeof(ControlFileData), &found);
-	Assert(!found);
+		ShmemInitStruct("Control File", sizeof(ControlFileData), &foundCFile);
+
+	if (foundXLog || foundCFile)
+	{
+		/* both should be present or neither */
+		Assert(foundXLog && foundCFile);
+		return;
+	}
 
 	memset(XLogCtl, 0, sizeof(XLogCtlData));
 

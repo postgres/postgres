@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.59 2003/12/01 21:59:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipci.c,v 1.60 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 	/*
 	 * Set up shared memory allocation mechanism
 	 */
-	InitShmemAllocation(seghdr);
+	InitShmemAllocation(seghdr, true);
 
 	/*
 	 * Now initialize LWLocks, which do shared memory allocation and are
@@ -135,12 +135,36 @@ CreateSharedMemoryAndSemaphores(bool makePrivate,
 }
 
 
+#ifdef EXEC_BACKEND
 /*
  * AttachSharedMemoryAndSemaphores
  *		Attaches to the existing shared resources.
  */
+
+/* FIXME: [fork/exec] This function is starting to look pretty much like
+	CreateSharedMemoryAndSemaphores. Refactor? */
 void
 AttachSharedMemoryAndSemaphores(void)
 {
+	PGShmemHeader *seghdr = PGSharedMemoryCreate(-1,false,-1);
+
+	InitShmemAllocation(seghdr, false);
+
+	InitShmemIndex();
+
+	XLOGShmemInit();
 	CLOGShmemInit();
+	InitBufferPool();
+
+	InitLocks();
+	InitLockTable(MaxBackends);
+
+	InitProcGlobal(MaxBackends);
+
+	CreateSharedInvalidationState(MaxBackends);
+
+	InitFreeSpaceMap();
+
+	PMSignalInit();
 }
+#endif

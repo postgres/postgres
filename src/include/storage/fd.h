@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.40 2003/11/29 22:41:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.41 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,5 +76,9 @@ extern void AtEOXact_Files(void);
 extern void RemovePgTempFiles(void);
 extern int	pg_fsync(int fd);
 extern int	pg_fdatasync(int fd);
+
+/* Filename components for OpenTemporaryFile */
+#define PG_TEMP_FILES_DIR "pgsql_tmp"
+#define PG_TEMP_FILE_PREFIX "pgsql_tmp"
 
 #endif   /* FD_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.379 2003/12/01 22:15:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.380 2003/12/20 17:31:21 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -68,6 +68,10 @@
 extern int	optind;
 extern char *optarg;
 
+#ifdef EXEC_BACKEND
+extern bool BackendInit(Port*);
+extern void read_backend_variables(pid_t, Port*);
+#endif
 
 /* ----------------
  *		global variables
@@ -2052,7 +2056,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * initialize globals (already done if under postmaster, but not if
 	 * standalone; cheap enough to do over)
 	 */
-
 	MyProcPid = getpid();
 
 	/*
@@ -2060,7 +2063,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 *
 	 * If we are running under the postmaster, this is done already.
 	 */
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster /* when exec || ExecBackend */)
 		MemoryContextInit();
 
 	set_ps_display("startup");
@@ -2268,7 +2271,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 				break;
 
 			case 'p':
-
 				/*
 				 * p - special flag passed if backend was forked by a
 				 * postmaster.
@@ -2276,23 +2278,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 				if (secure)
 				{
 #ifdef EXEC_BACKEND
-					char	   *p;
-					int			i;
-					int			PMcanAcceptConnections; /* will eventually be
-														 * global or static,
-														 * when fork */
-
-					sscanf(optarg, "%d,%d,%lu,%p,",
-						   &MyProcPort->sock, &PMcanAcceptConnections,
-						   &UsedShmemSegID, &UsedShmemSegAddr);
-					/* Grab dbname as last param */
-					for (i = 0, p = optarg - 1; i < 4 && p; i++)
-						p = strchr(p + 1, ',');
-					if (i == 4 && p)
-						dbname = strdup(p + 1);
+					IsUnderPostmaster = true;
 #else
 					dbname = strdup(optarg);
 #endif
+
 					secure = false;		/* subsequent switches are NOT
 										 * secure */
 					ctx = PGC_BACKEND;
@@ -2477,7 +2467,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		SetConfigOption("log_statement_stats", "false", ctx, gucsource);
 	}
 
-	if (!IsUnderPostmaster)
+	if (!IsUnderPostmaster || ExecBackend)
 	{
 		if (!potential_DataDir)
 		{
@@ -2497,10 +2487,27 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (IsUnderPostmaster)
 	{
 #ifdef EXEC_BACKEND
+		Port *port =(Port*)malloc(sizeof(Port));
+		if (port == NULL)
+			ereport(ERROR,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				errmsg("insufficient memory to allocate port")));
+
 		read_nondefault_variables();
+		read_backend_variables(getpid(),port);
+
+		/* FIXME: [fork/exec] Ugh */
+		load_hba();
+		load_ident();
+		load_user();
+		load_group();
+
+		if (!BackendInit(port))
+			return -1;
+
+		dbname = port->database_name;
 #endif
-	}
-	else
+	} else
 		ProcessConfigFile(PGC_POSTMASTER);
 
 	/*
@@ -2517,7 +2524,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * course, this isn't an issue for signals that are locally generated,
 	 * such as SIGALRM and SIGPIPE.)
 	 */
-
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, StatementCancelHandler);	/* cancel current query */
 	pqsignal(SIGTERM, die);		/* cancel current query and exit */
@@ -2565,10 +2571,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 					 errmsg("invalid command-line arguments for server process"),
 					 errhint("Try \"%s --help\" for more information.", argv[0])));
 		}
-		BaseInit();
-#ifdef EXECBACKEND
+#ifdef EXEC_BACKEND
 		AttachSharedMemoryAndSemaphores();
 #endif
+		XLOGPathInit();
+
+		BaseInit();
 	}
 	else
 	{
@@ -2845,7 +2853,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 		if (got_SIGHUP)
 		{
 			got_SIGHUP = false;
+#ifdef EXEC_BACKEND
+			read_nondefault_variables();
+#else
 			ProcessConfigFile(PGC_SIGHUP);
+#endif
 		}
 
 		/*
@@ -3199,4 +3211,3 @@ ShowUsage(const char *title)
 
 	pfree(str.data);
 }
-

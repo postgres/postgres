@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.18 2003/11/29 19:51:57 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lwlock.c,v 1.19 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ typedef struct LWLock
  * the pointer by fork from the postmaster.  LWLockIds are indexes into
  * the array.
  */
-static LWLock *LWLockArray = NULL;
+NON_EXEC_STATIC LWLock *LWLockArray = NULL;
 
 /* shared counter for dynamic allocation of LWLockIds */
 static int *LWLockCounter;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.74 2003/11/29 19:51:56 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/shmem.c,v 1.75 2003/12/20 17:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,11 @@ SHMEM_OFFSET ShmemBase;			/* start address of shared memory */
 
 static SHMEM_OFFSET ShmemEnd;	/* end+1 address of shared memory */
 
-static slock_t *ShmemLock;		/* spinlock for shared memory allocation */
+NON_EXEC_STATIC slock_t *ShmemLock;		/* spinlock for shared memory allocation */
+
+NON_EXEC_STATIC slock_t *ShmemIndexLock;		/* spinlock for ShmemIndex */
+
+NON_EXEC_STATIC void *ShmemIndexAlloc = NULL; /* Memory actually allocated for ShmemIndex */
 
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
@@ -88,7 +92,7 @@ static bool ShmemBootstrap = false;		/* bootstrapping shmem index? */
  * but we use void to avoid having to include ipc.h in shmem.h.
  */
 void
-InitShmemAllocation(void *seghdr)
+InitShmemAllocation(void *seghdr, bool init)
 {
 	PGShmemHeader *shmhdr = (PGShmemHeader *) seghdr;
 
@@ -97,26 +101,34 @@ InitShmemAllocation(void *seghdr)
 	ShmemBase = (SHMEM_OFFSET) shmhdr;
 	ShmemEnd = ShmemBase + shmhdr->totalsize;
 
-	/*
-	 * Initialize the spinlock used by ShmemAlloc.	We have to do the
-	 * space allocation the hard way, since ShmemAlloc can't be called
-	 * yet.
-	 */
-	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
-	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
-	Assert(shmhdr->freeoffset <= shmhdr->totalsize);
+	if (init)
+	{
+		/*
+		 * Initialize the spinlocks used by ShmemAlloc/ShmemInitStruct. We
+		 * have to do the space allocation the hard way, since ShmemAlloc
+		 * can't be called yet.
+		 */
+		ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
+		shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
+		Assert(shmhdr->freeoffset <= shmhdr->totalsize);
 
-	SpinLockInit(ShmemLock);
+		ShmemIndexLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
+		shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
+		Assert(shmhdr->freeoffset <= shmhdr->totalsize);
 
-	/* ShmemIndex can't be set up yet (need LWLocks first) */
-	ShmemIndex = (HTAB *) NULL;
-
-	/*
-	 * Initialize ShmemVariableCache for transaction manager.
-	 */
-	ShmemVariableCache = (VariableCache)
+		SpinLockInit(ShmemLock);
+		SpinLockInit(ShmemIndexLock);
+	
+		/* ShmemIndex can't be set up yet (need LWLocks first) */
+		ShmemIndex = (HTAB *) NULL;
+	
+		/*
+		 * Initialize ShmemVariableCache for transaction manager.
+		 */
+		ShmemVariableCache = (VariableCache)
 		ShmemAlloc(sizeof(*ShmemVariableCache));
-	memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
+		memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
+	}
 }
 
 /*
@@ -218,25 +230,28 @@ InitShmemIndex(void)
 	/*
 	 * Now, create an entry in the hashtable for the index itself.
 	 */
-	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
-	strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
-
-	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
-	if (!result)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of shared memory")));
-
-	Assert(ShmemBootstrap && !found);
-
-	result->location = MAKE_OFFSET(ShmemIndex->hctl);
-	result->size = SHMEM_INDEX_SIZE;
-
-	ShmemBootstrap = false;
+	if (!IsUnderPostmaster)
+	{
+		MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
+		strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
+	
+		result = (ShmemIndexEnt *)
+			hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
+		if (!result)
+			ereport(FATAL,
+					(errcode(ERRCODE_OUT_OF_MEMORY),
+					 errmsg("out of shared memory")));
+	
+		Assert(ShmemBootstrap && !found);
+	
+		result->location = MAKE_OFFSET(ShmemIndex->hctl);
+		result->size = SHMEM_INDEX_SIZE;
+	
+		ShmemBootstrap = false;
+	}
 
 	/* now release the lock acquired in ShmemInitStruct */
-	LWLockRelease(ShmemIndexLock);
+	SpinLockRelease(ShmemIndexLock);
 }
 
 /*
@@ -320,21 +335,33 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	strncpy(item.key, name, SHMEM_INDEX_KEYSIZE);
 	item.location = BAD_LOCATION;
 
-	LWLockAcquire(ShmemIndexLock, LW_EXCLUSIVE);
+	SpinLockAcquire(ShmemIndexLock);
 
 	if (!ShmemIndex)
 	{
-		/*
-		 * If the shmem index doesn't exist, we are bootstrapping: we must
-		 * be trying to init the shmem index itself.
-		 *
-		 * Notice that the ShmemIndexLock is held until the shmem index has
-		 * been completely initialized.
-		 */
-		Assert(strcmp(name, "ShmemIndex") == 0);
-		Assert(ShmemBootstrap);
-		*foundPtr = FALSE;
-		return ShmemAlloc(size);
+		if (IsUnderPostmaster)
+		{
+			/* Must be initializing a (non-standalone) backend */
+			Assert(strcmp(name, "ShmemIndex") == 0);
+			Assert(ShmemBootstrap);
+			Assert(ShmemIndexAlloc);
+			*foundPtr = TRUE;
+		}
+		else
+		{
+			/*
+			 * If the shmem index doesn't exist, we are bootstrapping: we must
+			 * be trying to init the shmem index itself.
+			 *
+			 * Notice that the ShmemIndexLock is held until the shmem index has
+			 * been completely initialized.
+			 */
+			Assert(strcmp(name, "ShmemIndex") == 0);
+			Assert(ShmemBootstrap);
+			*foundPtr = FALSE;
+			ShmemIndexAlloc = ShmemAlloc(size);
+		}
+		return ShmemIndexAlloc;
 	}
 
 	/* look it up in the shmem index */
@@ -343,7 +370,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 
 	if (!result)
 	{
-		LWLockRelease(ShmemIndexLock);
+		SpinLockRelease(ShmemIndexLock);
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
@@ -359,7 +386,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 		 */
 		if (result->size != size)
 		{
-			LWLockRelease(ShmemIndexLock);
+			SpinLockRelease(ShmemIndexLock);
 
 			elog(WARNING, "ShmemIndex entry size is wrong");
 			/* let caller print its message too */
@@ -376,7 +403,7 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 			/* out of memory */
 			Assert(ShmemIndex);
 			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, NULL);
-			LWLockRelease(ShmemIndexLock);
+			SpinLockRelease(ShmemIndexLock);
 
 			ereport(WARNING,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
@@ -389,6 +416,6 @@ ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 	}
 	Assert(ShmemIsValid((unsigned long) structPtr));
 
-	LWLockRelease(ShmemIndexLock);
+	SpinLockRelease(ShmemIndexLock);
 	return structPtr;
 }
