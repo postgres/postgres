@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.18 2002/01/23 21:08:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.19 2002/03/06 19:05:58 momjian Exp $
 -->
 
  <chapter id="pltcl">
@@ -441,16 +441,17 @@ SELECT 'doesn''t' AS ret
       <term><function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
        <para>
-	Emit a log or error message. Possible levels are <literal>DEBUG</>,
-	<literal>NOTICE</>, <literal>ERROR</>, and <literal>FATAL</>.
-	<literal>DEBUG</> and <literal>NOTICE</> simply emit the given message
-	into the postmaster log (and send it to the client too, in the case of
-	<literal>NOTICE</>).  <literal>ERROR</> raises an error condition:
-	further execution of the function is abandoned, and the current
-	transaction is aborted.  <literal>FATAL</> aborts the transaction and
-	causes the current backend to shut down (there is probably no good
-	reason to use this error level in PL/Tcl functions, but it's provided
-	for completeness).
+	Emit a log or error message. Possible levels are
+	<literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
+	<literal>NOTICE</>, <literal>WARNING</>, <literal>ERROR</>, and
+	<literal>FATAL</>. Most simply emit the given message just like
+	the <literal>elog</> backend C function. <literal>ERROR</>
+	raises an error condition: further execution of the function is
+	abandoned, and the current transaction is aborted.
+	<literal>FATAL</> aborts the transaction and causes the current
+	backend to shut down (there is probably no good reason to use
+	this error level in PL/Tcl functions, but it's provided for
+	completeness).
        </para>
       </listitem>
      </varlistentry>

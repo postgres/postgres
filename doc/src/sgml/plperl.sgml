@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.15 2002/01/25 19:13:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.16 2002/03/06 19:05:57 momjian Exp $
 -->
 
  <chapter id="plperl">
@@ -278,13 +278,12 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
       <term><function>elog</> <replaceable>level</replaceable>, <replaceable>msg</replaceable></term>
       <listitem>
        <para>
-	Emit a log or error message. Possible levels are <literal>DEBUG</>,
-	<literal>NOTICE</>, and <literal>ERROR</>.
-	<literal>DEBUG</> and <literal>NOTICE</> simply emit the given message
-	into the postmaster log (and send it to the client too, in the case of
-	<literal>NOTICE</>).  <literal>ERROR</> raises an error condition:
-	further execution of the function is abandoned, and the current
-	transaction is aborted.
+	Emit a log or error message. Possible levels are
+	<literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
+	<literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
+	<literal>ERROR</> raises an error condition: further execution
+	of the function is abandoned, and the current transaction is
+	aborted.
        </para>
       </listitem>
      </varlistentry>
