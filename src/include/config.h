@@ -38,7 +38,6 @@
 #define HAVE_SYSCONF
 
 #if defined(aix)
-#  undef HAVE_SYS_SELECT_H
 #  undef HAVE_ISINF
 #  define CLASS_CONFLICT 
 #  define DISABLE_XOPEN_NLS 
