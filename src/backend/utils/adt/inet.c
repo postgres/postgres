@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: inet.c,v 1.11 1998/10/22 04:58:07 momjian Exp $
+ *	$Id: inet.c,v 1.12 1998/10/22 13:16:23 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -43,12 +43,9 @@ static int	v4bitncmp(unsigned int a1, unsigned int a2, int bits);
 #define ip_v4addr(inetptr) \
 	(((inet_struct *)VARDATA(inetptr))->addr.ipv4_addr)
 
-/*
- *	INET address reader.
- */
-
-inet *
-inet_in(char *src)
+/* Common input routine */
+static inet *
+inet_common_in(char *src, int type)
 {
 	int			bits;
 	inet	   *dst;
@@ -57,24 +54,39 @@ inet_in(char *src)
 	if (dst == NULL)
 	{
 		elog(ERROR, "unable to allocate memory in inet_in()");
-		return (NULL);
+		return NULL;
 	}
 	/* First, try for an IP V4 address: */
 	ip_family(dst) = AF_INET;
-	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst), ip_addrsize(dst));
+	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst),
+			type ? ip_addrsize(dst) : -1);
 	if ((bits < 0) || (bits > 32))
 	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "could not parse \"%s\"", src);
 		pfree(dst);
-		return (NULL);
+		return NULL;
 	}
 	VARSIZE(dst) = VARHDRSZ
 		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
 		+ ip_addrsize(dst);
 	ip_bits(dst) = bits;
-	ip_type(dst) = 0;
-	return (dst);
+	ip_type(dst) = type;
+	return dst;
+}
+
+/* INET address reader.  */
+inet *
+inet_in(char *src)
+{
+	return inet_common_in(src, 0);
+}
+
+/* CIDR address reader.  */
+inet *
+cidr_in(char *src)
+{
+	return inet_common_in(src, 1);
 }
 
 /*
@@ -90,8 +102,14 @@ inet_out(inet *src)
 	if (ip_family(src) == AF_INET)
 	{
 		/* It's an IP V4 address: */
-		if (inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
-						  tmp, sizeof(tmp)) < 0)
+		if (ip_type(src))
+			dst = inet_cidr_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
+						  tmp, sizeof(tmp));
+		else
+			dst = inet_net_ntop(AF_INET, &ip_v4addr(src), ip_bits(src),
+						  tmp, sizeof(tmp));
+
+		if (dst == NULL)
 		{
 			elog(ERROR, "unable to print address (%s)", strerror(errno));
 			return (NULL);
@@ -101,52 +119,18 @@ inet_out(inet *src)
 	{
 		/* Go for an IPV6 address here, before faulting out: */
 		elog(ERROR, "unknown address family (%d)", ip_family(src));
-		return (NULL);
+		return NULL;
 	}
-	if (ip_type(src) == 0 && ip_bits(src) == 32 && (dst = strchr(tmp, '/')) != NULL)
-		*dst = 0;
 	dst = palloc(strlen(tmp) + 1);
 	if (dst == NULL)
 	{
 		elog(ERROR, "unable to allocate memory in inet_out()");
-		return (NULL);
+		return NULL;
 	}
 	strcpy(dst, tmp);
-	return (dst);
+	return dst;
 }
 
-/*
- *	CIDR uses all of INET's funcs, just has a separate input func.
- */
-
-inet *
-cidr_in(char *src)
-{
-	int			bits;
-	inet	   *dst;
-
-	dst = palloc(VARHDRSZ + sizeof(inet_struct));
-	if (dst == NULL)
-	{
-		elog(ERROR, "unable to allocate memory in cidr_in()");
-		return (NULL);
-	}
-	/* First, try for an IP V4 address: */
-	ip_family(dst) = AF_INET;
-	bits = inet_net_pton(ip_family(dst), src, &ip_v4addr(dst), ip_addrsize(dst));
-	if ((bits < 0) || (bits > 32))
-	{
-		/* Go for an IPV6 address here, before faulting out: */
-		elog(ERROR, "could not parse \"%s\"", src);
-		pfree(dst);
-		return (NULL);
-	}
-	VARSIZE(dst) = VARHDRSZ
-		+ ((char *) &ip_v4addr(dst) - (char *) VARDATA(dst))
-		+ ip_addrsize(dst);
-	ip_bits(dst) = bits;
-	return (dst);
-}
 
 /* just a stub */
 char *
@@ -331,7 +315,7 @@ inet_host(inet *ip)
 		/* It's an IP V4 address: */
 		if (inet_net_ntop(AF_INET, &ip_v4addr(ip), 32, tmp, sizeof(tmp)) < 0)
 		{
-			elog(ERROR, "unable to print netmask (%s)", strerror(errno));
+			elog(ERROR, "unable to print host (%s)", strerror(errno));
 			return (NULL);
 		}
 	}
@@ -343,7 +327,7 @@ inet_host(inet *ip)
 	}
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = 0;
-	len = VARHDRSZ + strlen(tmp);
+	len = VARHDRSZ + strlen(tmp) + 1;
 	ret = palloc(len);
 	if (ret == NULL)
 	{
@@ -358,7 +342,7 @@ inet_host(inet *ip)
 text *
 cidr_host(inet *ip)
 {
-		inet_host(ip);
+	return inet_host(ip);
 }
 
 int4
@@ -402,7 +386,7 @@ inet_broadcast(inet *ip)
 	}
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = 0;
-	len = VARHDRSZ + strlen(tmp);
+	len = VARHDRSZ + strlen(tmp) + 1;
 	ret = palloc(len);
 	if (ret == NULL)
 	{
@@ -417,7 +401,7 @@ inet_broadcast(inet *ip)
 text *
 cidr_broadcast(inet *ip)
 {
-	inet_broadcast(ip);
+	return inet_broadcast(ip);
 }
 	
 text *
@@ -447,7 +431,7 @@ inet_netmask(inet *ip)
 	}
 	if ((ptr = strchr(tmp, '/')) != NULL)
 		*ptr = 0;
-	len = VARHDRSZ + strlen(tmp);
+	len = VARHDRSZ + strlen(tmp) + 1;
 	ret = palloc(len);
 	if (ret == NULL)
 	{
@@ -462,7 +446,7 @@ inet_netmask(inet *ip)
 text *
 cidr_netmask(inet *ip)
 {
-	inet_netmask(ip);
+	return inet_netmask(ip);
 }
 
 /*

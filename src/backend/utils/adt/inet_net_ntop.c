@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.2 1998/10/04 15:35:08 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.3 1998/10/22 13:16:25 momjian Exp $";
 
 #endif
 
@@ -41,10 +41,12 @@ static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.2 1998/10/04 15:35:08 momj
 
 static char *inet_net_ntop_ipv4(const u_char *src, int bits,
 								char *dst, size_t size);
+static char *inet_cidr_ntop_ipv4(const u_char *src, int bits,
+								char *dst, size_t size);
 
 /*
  * char *
- * inet_net_ntop(af, src, bits, dst, size)
+ * inet_cidr_ntop(af, src, bits, dst, size)
  *	convert network number from network to presentation format.
  *	generates CIDR style result always.
  * return:
@@ -53,21 +55,22 @@ static char *inet_net_ntop_ipv4(const u_char *src, int bits,
  *	Paul Vixie (ISC), July 1996
  */
 char *
-inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
+inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af)
 	{
 		case AF_INET:
-			return (inet_net_ntop_ipv4(src, bits, dst, size));
+			return (inet_cidr_ntop_ipv4(src, bits, dst, size));
 		default:
 			errno = EAFNOSUPPORT;
 			return (NULL);
 	}
 }
 
+
 /*
  * static char *
- * inet_net_ntop_ipv4(src, bits, dst, size)
+ * inet_cidr_ntop_ipv4(src, bits, dst, size)
  *	convert IPv4 network number from network to presentation format.
  *	generates CIDR style result always.
  * return:
@@ -79,7 +82,7 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
  *	Paul Vixie (ISC), July 1996
  */
 static char *
-inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
+inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
 	char	   *odst = dst;
 	char	   *t;
@@ -135,6 +138,102 @@ inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 	return (odst);
 
 emsgsize:
+	errno = EMSGSIZE;
+	return (NULL);
+}
+
+
+/*
+ * char *
+ * inet_net_ntop(af, src, bits, dst, size)
+ *	convert host/network address from network to presentation format.
+ *	"src"'s size is determined from its "af".
+ * return:
+ *	pointer to dst, or NULL if an error occurred (check errno).
+ * note:
+ *	192.5.5.1/28 has a nonzero host part, which means it isn't a network
+ *	as called for by inet_net_pton() but it can be a host address with
+ *	an included netmask.
+ * author:
+ *	Paul Vixie (ISC), October 1998
+ */
+char *
+inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
+{
+	switch (af)
+	{
+		case AF_INET:
+			return (inet_net_ntop_ipv4(src, bits, dst, size));
+		default:
+			errno = EAFNOSUPPORT;
+			return (NULL);
+	}
+}
+
+/*
+ * static char *
+ * inet_net_ntop_ipv4(src, bits, dst, size)
+ *	convert IPv4 network address from network to presentation format.
+ *	"src"'s size is determined from its "af".
+ * return:
+ *	pointer to dst, or NULL if an error occurred (check errno).
+ * note:
+ *	network byte order assumed.  this means 192.5.5.240/28 has
+ *	0b11110000 in its fourth octet.
+ * author:
+ *	Paul Vixie (ISC), October 1998
+ */
+static char *
+inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
+{
+	char *odst = dst;
+	char *t;
+	size_t len = 4;
+	u_int m;
+	int b, tb;
+
+	if (bits < 0 || bits > 32)
+	{
+		errno = EINVAL;
+		return (NULL);
+	}
+	if (bits == 0)
+	{
+		if (size < sizeof "0")
+			goto emsgsize;
+		*dst++ = '0';
+		size--;
+		*dst = '\0';
+	}
+
+	/* Format whole octets plus nonzero trailing octets. */
+	tb = (bits == 32) ? 31 : bits;
+	for (b = 0; b <= (tb / 8) || (b < len && *src != 0); b++)
+	{
+		if (size < sizeof "255.")
+			goto emsgsize;
+		t = dst;
+		dst += SPRINTF((dst, "%u", *src++));
+		if (b + 1 <= (tb / 8) || (b + 1 < len && *src != 0))
+		{
+			*dst++ = '.';
+			*dst = '\0';
+		}
+		size -= (size_t)(dst - t);
+	}
+
+	/* don't print masklen if 32 bits */
+	if (bits == 32)
+		return odst;
+
+	/* Format CIDR /width. */
+	if (size < sizeof "/32")
+		goto emsgsize;
+	dst += SPRINTF((dst, "/%u", bits));
+
+	return (odst);
+
+ emsgsize:
 	errno = EMSGSIZE;
 	return (NULL);
 }

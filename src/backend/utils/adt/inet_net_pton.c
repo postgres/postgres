@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.5 1998/10/17 03:59:14 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.6 1998/10/22 13:16:26 momjian Exp $";
 
 #endif
 
@@ -41,7 +41,8 @@ static const char rcsid[] = "$Id: inet_net_pton.c,v 1.5 1998/10/17 03:59:14 momj
 #define SPRINTF(x) ((size_t)sprintf x)
 #endif
 
-static int	inet_net_pton_ipv4(const char *src, u_char *dst, size_t size);
+static int	inet_net_pton_ipv4(const char *src, u_char *dst);
+static int	inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size);
 
 /*
  * static int
@@ -55,6 +56,11 @@ static int	inet_net_pton_ipv4(const char *src, u_char *dst, size_t size);
  *	not a valid network specification.
  * author:
  *	Paul Vixie (ISC), June 1996
+ *
+ * Changes:
+ *  I added the inet_cidr_pton function (also from Paul) and changed
+ *  the names to reflect their current use.
+ *
  */
 int
 inet_net_pton(int af, const char *src, void *dst, size_t size)
@@ -62,7 +68,9 @@ inet_net_pton(int af, const char *src, void *dst, size_t size)
 	switch (af)
 	{
 		case AF_INET:
-			return (inet_net_pton_ipv4(src, dst, size));
+			return size == -1 ?
+					inet_net_pton_ipv4(src, dst) :
+					inet_cidr_pton_ipv4(src, dst, size);
 		default:
 			errno = EAFNOSUPPORT;
 			return (-1);
@@ -71,7 +79,7 @@ inet_net_pton(int af, const char *src, void *dst, size_t size)
 
 /*
  * static int
- * inet_net_pton_ipv4(src, dst, size)
+ * inet_cidr_pton_ipv4(src, dst, size)
  *	convert IPv4 network number from presentation to network format.
  *	accepts hex octets, hex strings, decimal octets, and /CIDR.
  *	"size" is in bytes and describes "dst".
@@ -86,7 +94,7 @@ inet_net_pton(int af, const char *src, void *dst, size_t size)
  *	Paul Vixie (ISC), June 1996
  */
 static int
-inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
+inet_cidr_pton_ipv4(const char *src, u_char *dst, size_t size)
 {
 	static const char
 				xdigits[] = "0123456789abcdef",
@@ -218,6 +226,109 @@ enoent:
 	return (-1);
 
 emsgsize:
+	errno = EMSGSIZE;
+	return (-1);
+}
+
+/*
+ * int
+ * inet_net_pton(af, src, dst, *bits)
+ *  convert network address from presentation to network format.
+ *  accepts inet_pton()'s input for this "af" plus trailing "/CIDR".
+ *  "dst" is assumed large enough for its "af".  "bits" is set to the
+ *  /CIDR prefix length, which can have defaults (like /32 for IPv4).
+ * return:
+ *  -1 if an error occurred (inspect errno; ENOENT means bad format).
+ *  0 if successful conversion occurred.
+ * note: 
+ *  192.5.5.1/28 has a nonzero host part, which means it isn't a network
+ *  as called for by inet_cidr_pton() but it can be a host address with
+ *  an included netmask.
+ * author:
+ *  Paul Vixie (ISC), October 1998
+ */
+static int
+inet_net_pton_ipv4(const char *src, u_char *dst)
+{
+	static const char digits[] = "0123456789";
+	const u_char *odst = dst;
+	int n, ch, tmp, bits;
+	size_t size = 4;
+
+	/* Get the mantissa. */
+	while (ch = *src++, (isascii(ch) && isdigit(ch)))
+	{
+		tmp = 0;
+		do
+		{
+			n = strchr(digits, ch) - digits;
+			assert(n >= 0 && n <= 9);
+			tmp *= 10;
+			tmp += n;
+			if (tmp > 255)
+				goto enoent;
+		} while ((ch = *src++) != '\0' && isascii(ch) && isdigit(ch));
+		if (size-- == 0)
+			goto emsgsize;
+		*dst++ = (u_char) tmp;
+		if (ch == '\0' || ch == '/')
+			break;
+		if (ch != '.')
+			goto enoent;
+	}
+
+	/* Get the prefix length if any. */
+	bits = -1;
+	if (ch == '/' && isascii(src[0]) && isdigit(src[0]) && dst > odst)
+	{
+		/* CIDR width specifier.  Nothing can follow it. */
+		ch = *src++;	/* Skip over the /. */
+		bits = 0;
+		do
+		{
+			n = strchr(digits, ch) - digits;
+			assert(n >= 0 && n <= 9);
+			bits *= 10;
+			bits += n;
+		} while ((ch = *src++) != '\0' && isascii(ch) && isdigit(ch));
+		if (ch != '\0')
+			goto enoent;
+		if (bits > 32)
+			goto emsgsize;
+	}
+
+	/* Firey death and destruction unless we prefetched EOS. */
+	if (ch != '\0')
+		goto enoent;
+
+	/* Prefix length can default to /32 only if all four octets spec'd. */
+	if (bits == -1)
+	{
+		if (dst - odst == 4)
+			bits = 32;
+		else
+			goto enoent;
+	}
+
+	/* If nothing was written to the destination, we found no address. */
+	if (dst == odst)
+		goto enoent;
+
+	/* If prefix length overspecifies mantissa, life is bad. */
+	if ((bits / 8) > (dst - odst))
+		goto enoent;
+
+	/* Extend address to four octets. */
+	while (size-- > 0)
+		*dst++ = 0;
+
+	return bits;
+
+ enoent:
+	errno = ENOENT;
+	return (-1);
+
+ emsgsize:
 	errno = EMSGSIZE;
 	return (-1);
 }
