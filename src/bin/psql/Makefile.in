@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.16 1999/11/04 21:56:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.17 1999/11/08 15:59:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ OBJS:
 help.o: sql_help.h
 
 ifneq ($(strip $(PERL)),) 
-sql_help.h: ../../../doc/src/sgml/ref/*.sgml create_help.pl
+sql_help.h: $(wildcard ../../../doc/src/sgml/ref/*.sgml) create_help.pl
 	$(PERL) create_help.pl sql_help.h 
 else
 sql_help.h:
