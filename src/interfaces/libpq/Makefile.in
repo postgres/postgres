@@ -7,12 +7,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.28 1998/09/10 04:59:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.29 1998/10/06 14:22:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
-SO_MAJOR_VERSION=1
-SO_MINOR_VERSION=1
+SO_MAJOR_VERSION=2
+SO_MINOR_VERSION=0
 
 SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
