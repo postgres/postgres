@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov 30 00:03:37 EST 2004
+Last updated:		Tue Nov 30 00:06:22 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -12,7 +12,7 @@ site, http://www.PostgreSQL.org.
 Bracketed items, "[]", have more detail.
 
 This list contains all known PostgreSQL bugs and feature requests. If
-you would like to work on an item, please read the developer's FAQ
+you would like to work on an item, please read the Developer's FAQ
 first.
 
 
