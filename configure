@@ -11603,7 +11603,7 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 _ACEOF
 
 else
-  STRDUP='$(top_builddir)/src/utils/strdup.o'
+  STRDUP='$(top_builddir)/src/backend/port/strdup.o'
 fi
 done
 
@@ -11844,6 +11844,13 @@ else
 fi
 done
 
+
+
+# Set path of dllinit.c for cygwin
+DLLINIT=""
+case $host_os in
+  cygwin*) DLLINIT='$(top_builddir)/src/backend/port/dllinit.o' ;;
+esac
 
 
 # On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
@@ -16673,6 +16680,7 @@ else
         sgml/stylesheets/nwalsh-modular \
         sgml/stylesheets/docbook \
         sgml/docbook/dsssl/modular \
+        sgml/docbook/stylesheet/dsssl/modular \
         sgml/docbook/dsssl-stylesheets
       do
         pgac_candidate=$pgac_prefix/$pgac_infix/$pgac_postfix
@@ -17526,6 +17534,7 @@ s,@STRDUP@,$STRDUP,;t t
 s,@STRTOL@,$STRTOL,;t t
 s,@STRTOUL@,$STRTOUL,;t t
 s,@STRCASECMP@,$STRCASECMP,;t t
+s,@DLLINIT@,$DLLINIT,;t t
 s,@HPUXMATHLIB@,$HPUXMATHLIB,;t t
 s,@HAVE_POSIX_SIGNALS@,$HAVE_POSIX_SIGNALS,;t t
 s,@MSGFMT@,$MSGFMT,;t t

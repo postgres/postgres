@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.79 2002/05/22 21:46:40 tgl Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.80 2002/07/16 05:46:35 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ else # win
 
 # No points for style here. How about encapsulating some of these
 # commands into variables?
-postgres: $(OBJS) $(top_builddir)/src/utils/dllinit.o postgres.def libpostgres.a
+postgres: $(OBJS) $(DLLINIT) postgres.def libpostgres.a
 	dlltool --dllname $@$(X) --output-exp $@.exp --def postgres.def
 	gcc $(LDFLAGS) -g -o $@$(X) -Wl,--base-file,$@.base $@.exp $(OBJS) $(DLLLIBS)
 	dlltool --dllname $@$(X) --base-file $@.base --output-exp $@.exp --def postgres.def
@@ -67,14 +67,14 @@ ifeq ($(MAKE_DLL), true)
 postgres.def: $(OBJS)
 	$(DLLTOOL) --export-all --output-def $@ $(OBJS)
 
-libpostgres.a: $(OBJS) $(top_builddir)/src/utils/dllinit.o postgres.def
+libpostgres.a: $(OBJS) $(DLLINIT) postgres.def
 	$(DLLTOOL) --dllname postgres.exe --def postgres.def --output-lib $@
 
 endif # MAKE_DLL
 
 
-$(top_builddir)/src/utils/dllinit.o: $(top_srcdir)/src/utils/dllinit.c
-	$(MAKE) -C $(top_builddir)/src/utils dllinit.o
+$(DLLINIT):
+	$(MAKE) -C $(@D) $(@F)
 
 # The postgres.o target is needed by the rule in Makefile.global that
 # creates the exports file when MAKE_EXPORTS = true.

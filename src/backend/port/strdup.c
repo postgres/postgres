@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.9 2002/06/20 20:29:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/Attic/strdup.c,v 1.3 2002/07/16 05:46:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

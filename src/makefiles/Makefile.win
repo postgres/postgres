@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.15 2001/09/06 02:58:33 momjian Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.16 2002/07/16 05:46:35 momjian Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
@@ -17,7 +17,7 @@ CFLAGS_SL =
 
 %.dll: %.o
 	$(DLLTOOL) --export-all --output-def $*.def $<
-	$(DLLWRAP) -o $@ --def $*.def $< $(top_builddir)/src/utils/dllinit.o $(DLLLIBS)
+	$(DLLWRAP) -o $@ --def $*.def $< $(DLLINIT) $(DLLLIBS)
 	rm -f $*.def
 
 ifeq ($(findstring backend,$(subdir)), backend)

@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.58 2002/05/24 18:10:17 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.59 2002/07/16 05:46:35 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -327,13 +327,13 @@ endif # PORTNAME == aix
 else # PORTNAME == win
 
 # WIN case
-$(shlib) lib$(NAME).a: $(OBJS) $(top_builddir)/src/utils/dllinit.o
+$(shlib) lib$(NAME).a: $(OBJS) $(DLLINIT)
 	$(DLLTOOL) --export-all --output-def $(NAME).def $(OBJS)
-	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(top_builddir)/src/utils/dllinit.o $(DLLINIT) $(DLLLIBS) $(SHLIB_LINK)
+	$(DLLWRAP) -o $(shlib) --dllname $(shlib) --def $(NAME).def $(OBJS) $(DLLINIT) $(DLLLIBS) $(SHLIB_LINK)
 	$(DLLTOOL) --dllname $(shlib) --def $(NAME).def --output-lib lib$(NAME).a
 
-$(top_builddir)/src/utils/dllinit.o: $(top_srcdir)/src/utils/dllinit.c
-	$(MAKE) -C $(top_builddir)/src/utils dllinit.o
+$(DLLINIT):
+	$(MAKE) -C $(@D) $(@F)
 
 endif # PORTNAME == win
 
