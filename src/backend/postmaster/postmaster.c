@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.14 1996/10/13 04:49:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.15 1996/10/13 18:38:04 momjian Exp $
  *
  * NOTES
  *
@@ -50,6 +50,7 @@
 #ifndef MAXHOSTNAMELEN
 #include <netdb.h>		/* for MAXHOSTNAMELEN on some */
 #endif
+#include <sys/socket.h>
 #if defined(USE_LIMITS_H)
 # include <machine/limits.h>
 # define MAXINT		INT_MAX
