@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.117 2003/06/26 18:23:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.118 2003/07/17 16:45:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2487,6 +2487,7 @@ StartupXLOG(void)
 				EndOfLog;
 	XLogRecord *record;
 	char	   *buffer;
+	uint32		freespace;
 
 	/* Use malloc() to ensure record buffer is MAXALIGNED */
 	buffer = (char *) malloc(_INTL_MAXLOGRECSZ);
@@ -2697,8 +2698,6 @@ StartupXLOG(void)
 	memcpy((char *) Insert->currpage, readBuf, BLCKSZ);
 	Insert->currpos = (char *) Insert->currpage +
 		(EndOfLog.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
-	/* Make sure rest of page is zero */
-	MemSet(Insert->currpos, 0, INSERT_FREESPACE(Insert));
 
 	LogwrtResult.Write = LogwrtResult.Flush = EndOfLog;
 
@@ -2708,6 +2707,27 @@ StartupXLOG(void)
 
 	XLogCtl->LogwrtRqst.Write = EndOfLog;
 	XLogCtl->LogwrtRqst.Flush = EndOfLog;
+
+	freespace = INSERT_FREESPACE(Insert);
+	if (freespace > 0)
+	{
+		/* Make sure rest of page is zero */
+		MemSet(Insert->currpos, 0, freespace);
+		XLogCtl->Write.curridx = 0;
+	}
+	else
+	{
+		/*
+		 * Whenever Write.LogwrtResult points to exactly the end of a page,
+		 * Write.curridx must point to the *next* page (see XLogWrite()).
+		 *
+		 * Note: it might seem we should do AdvanceXLInsertBuffer() here,
+		 * but we can't since we haven't yet determined the correct StartUpID
+		 * to put into the new page's header.  The first actual attempt to
+		 * insert a log record will advance the insert state.
+		 */
+		XLogCtl->Write.curridx = NextBufIdx(0);
+	}
 
 #ifdef NOT_USED
 	/* UNDO */
