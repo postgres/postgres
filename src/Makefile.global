@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.98 1997/01/24 16:18:50 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.99 1997/01/25 19:19:35 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -580,6 +580,7 @@ endif
 MK_NO_LORDER= true
 
 CC= gcc
+YACC=	bison -y
 
 # use the regex library
 USE_REGEX= 1
