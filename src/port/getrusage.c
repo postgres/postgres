@@ -1,4 +1,17 @@
-/* $Id: getrusage.c,v 1.2 2003/05/15 16:35:30 momjian Exp $ */
+/*-------------------------------------------------------------------------
+ *
+ * getusage.c
+ *	  64-bit versions of fseeko/ftello()
+ *
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/port/getrusage.c,v 1.3 2003/11/11 23:52:45 momjian Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #include <stdio.h>
 #include <errno.h>

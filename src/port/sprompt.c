@@ -1,9 +1,16 @@
-/*
- * psql - the PostgreSQL interactive terminal
+/*-------------------------------------------------------------------------
  *
- * Copyright 2000 by PostgreSQL Global Development Group
+ * sprompt.c
+ *	  simple_prompt() routine
  *
- * $Header: /cvsroot/pgsql/src/port/sprompt.c,v 1.2 2003/10/26 04:29:15 momjian Exp $
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/port/sprompt.c,v 1.3 2003/11/11 23:52:45 momjian Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 
 

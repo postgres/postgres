@@ -1,4 +1,4 @@
-/* $Id: strcasecmp.c,v 1.2 2003/08/04 02:40:20 momjian Exp $ */
+/* $Id: strcasecmp.c,v 1.3 2003/11/11 23:52:45 momjian Exp $ */
 
 /*
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
@@ -13,17 +13,13 @@
  * is provided ``as is'' without express or implied warranty.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)strcasecmp.c	5.5 (Berkeley) 11/24/87";
-#endif   /* LIBC_SCCS and not lint */
-
 #include <sys/types.h>
 #include <string.h>
 
 /*
  * This array is designed for mapping upper and lower case letter
  * together for a case independent comparison.	The mappings are
-p * based upon ascii character sequences.
+ * based upon ascii character sequences.
  */
 static unsigned char charmap[] = {
 	'\000', '\001', '\002', '\003', '\004', '\005', '\006', '\007',

@@ -1,4 +1,16 @@
-/* $Id: gethostname.c,v 1.2 2002/09/02 02:47:07 momjian Exp $ */
+/*-------------------------------------------------------------------------
+ *
+ * gethostname.c
+ *	  gethostname using uname
+ *
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/port/gethostname.c,v 1.3 2003/11/11 23:52:45 momjian Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #include "c.h"
 

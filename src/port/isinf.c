@@ -1,4 +1,16 @@
-/* $Id: isinf.c,v 1.1 2002/07/18 04:13:59 momjian Exp $ */
+/*-------------------------------------------------------------------------
+ *
+ * isinf.c
+ *
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/port/isinf.c,v 1.2 2003/11/11 23:52:45 momjian Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 
 #include "c.h"
 

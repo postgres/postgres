@@ -1,9 +1,19 @@
-/*
+/*-------------------------------------------------------------------------
+ *
+ * copydir.c
+ *	  copies a directory
+ *
+ * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
  *	While "xcopy /e /i /q" works fine for copying directories, on Windows XP
  *	it requires a Window handle which prevents it from working when invoked
  *	as a service.
  *
- * $Header: /cvsroot/pgsql/src/port/Attic/copydir.c,v 1.5 2003/09/10 20:12:01 tgl Exp $
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/port/Attic/copydir.c,v 1.6 2003/11/11 23:52:45 momjian Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"

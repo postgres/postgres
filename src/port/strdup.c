@@ -8,10 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/strdup.c,v 1.2 2003/08/04 02:40:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/strdup.c,v 1.3 2003/11/11 23:52:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+
 #include <string.h>
 #include <stdlib.h>
 #include "strdup.h"
