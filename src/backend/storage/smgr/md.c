@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.65 2000/04/09 04:43:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.66 2000/04/10 23:41:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,11 +48,10 @@
 typedef struct _MdfdVec
 {
 	int			mdfd_vfd;		/* fd number in vfd pool */
-	int			mdfd_flags;		/* free, temporary */
+	int			mdfd_flags;		/* fd status flags */
 
 /* these are the assigned bits in mdfd_flags: */
 #define MDFD_FREE		(1 << 0)/* unused entry */
-#define MDFD_TEMP		(1 << 1)/* close this entry at transaction end */
 
 	int			mdfd_lstbcnt;	/* most recent block count */
 	int			mdfd_nextFree;	/* next free vector */
@@ -72,8 +71,8 @@ static void mdclose_fd(int fd);
 static int _mdfd_getrelnfd(Relation reln);
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
 static MdfdVec *_mdfd_getseg(Relation reln, int blkno);
-static MdfdVec *_mdfd_blind_getseg(char *dbname, char *relname,
-								   Oid dbid, Oid relid, int blkno);
+static int _mdfd_blind_getseg(char *dbname, char *relname,
+							  Oid dbid, Oid relid, int blkno);
 static int	_fdvec_alloc(void);
 static void _fdvec_free(int);
 static BlockNumber _mdnblocks(File file, Size blcksz);
@@ -572,7 +571,8 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
  *
  *		We have to be able to do this using only the name and OID of
  *		the database and relation in which the block belongs.  Otherwise
- *		this is just like mdwrite().
+ *		this is much like mdwrite().  If dofsync is TRUE, then we fsync
+ *		the file, making it more like mdflush().
  */
 int
 mdblindwrt(char *dbname,
@@ -580,15 +580,16 @@ mdblindwrt(char *dbname,
 		   Oid dbid,
 		   Oid relid,
 		   BlockNumber blkno,
-		   char *buffer)
+		   char *buffer,
+		   bool dofsync)
 {
 	int			status;
 	long		seekpos;
-	MdfdVec    *v;
+	int			fd;
 
-	v = _mdfd_blind_getseg(dbname, relname, dbid, relid, blkno);
+	fd = _mdfd_blind_getseg(dbname, relname, dbid, relid, blkno);
 
-	if (v == NULL)
+	if (fd < 0)
 		return SM_FAIL;
 
 #ifndef LET_OS_MANAGE_FILESIZE
@@ -601,11 +602,22 @@ mdblindwrt(char *dbname,
 	seekpos = (long) (BLCKSZ * (blkno));
 #endif
 
-	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
+	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
+	{
+		close(fd);
 		return SM_FAIL;
+	}
 
 	status = SM_SUCCESS;
-	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
+
+	/* write and optionally sync the block */
+	if (write(fd, buffer, BLCKSZ) != BLCKSZ)
+		status = SM_FAIL;
+	else if (dofsync &&
+			 pg_fsync(fd) < 0)
+		status = SM_FAIL;
+
+	if (close(fd) < 0)
 		status = SM_FAIL;
 
 	return status;
@@ -633,7 +645,8 @@ mdmarkdirty(Relation reln, BlockNumber blkno)
  *
  *		We have to be able to do this using only the name and OID of
  *		the database and relation in which the block belongs.  Otherwise
- *		this is just like mdmarkdirty().
+ *		this is much like mdmarkdirty().  However, we do the fsync immediately
+ *		rather than building md/fd datastructures to postpone it till later.
  */
 int
 mdblindmarkdirty(char *dbname,
@@ -642,16 +655,23 @@ mdblindmarkdirty(char *dbname,
 				 Oid relid,
 				 BlockNumber blkno)
 {
-	MdfdVec    *v;
+	int			status;
+	int			fd;
 
-	v = _mdfd_blind_getseg(dbname, relname, dbid, relid, blkno);
+	fd = _mdfd_blind_getseg(dbname, relname, dbid, relid, blkno);
 
-	if (v == NULL)
+	if (fd < 0)
 		return SM_FAIL;
 
-	FileMarkDirty(v->mdfd_vfd);
+	status = SM_SUCCESS;
 
-	return SM_SUCCESS;
+	if (pg_fsync(fd) < 0)
+		status = SM_FAIL;
+
+	if (close(fd) < 0)
+		status = SM_FAIL;
+
+	return status;
 }
 
 /*
@@ -820,24 +840,15 @@ mdcommit()
 		v = &Md_fdvec[i];
 		if (v->mdfd_flags & MDFD_FREE)
 			continue;
-		if (v->mdfd_flags & MDFD_TEMP)
-		{
-			/* Sync and close the file */
-			mdclose_fd(i);
-		}
-		else
-		{
-			/* Sync, but keep the file entry */
-
+		/* Sync the file entry */
 #ifndef LET_OS_MANAGE_FILESIZE
-			for ( ; v != (MdfdVec *) NULL; v = v->mdfd_chain)
+		for ( ; v != (MdfdVec *) NULL; v = v->mdfd_chain)
 #else
-			if (v != (MdfdVec *) NULL)
+		if (v != (MdfdVec *) NULL)
 #endif
-			{
-				if (FileSync(v->mdfd_vfd) < 0)
-					return SM_FAIL;
-			}
+		{
+			if (FileSync(v->mdfd_vfd) < 0)
+				return SM_FAIL;
 		}
 	}
 
@@ -854,21 +865,9 @@ mdcommit()
 int
 mdabort()
 {
-	int			i;
-	MdfdVec    *v;
-
-	for (i = 0; i < CurFd; i++)
-	{
-		v = &Md_fdvec[i];
-		if (v->mdfd_flags & MDFD_FREE)
-			continue;
-		if (v->mdfd_flags & MDFD_TEMP)
-		{
-			/* Close the file */
-			mdclose_fd(i);
-		}
-	}
-
+	/* We don't actually have to do anything here.  fd.c will discard
+	 * fsync-needed bits in its AtEOXact_Files() routine.
+	 */
 	return SM_SUCCESS;
 }
 
@@ -1057,102 +1056,52 @@ _mdfd_getseg(Relation reln, int blkno)
 	return v;
 }
 
-/* Find the segment of the relation holding the specified block.
- * This is the same as _mdfd_getseg() except that we must work
- * "blind" with no Relation struct.
+/*
+ * Find the segment of the relation holding the specified block.
  *
- * NOTE: we have no easy way to tell whether a FD already exists for the
- * target relation, so we always make a new one.  This should probably
- * be improved somehow, but I doubt it's a significant performance issue
- * under normal circumstances.  The FD is marked to be closed at end of xact
- * so that we don't accumulate a lot of dead FDs.
+ * This performs the same work as _mdfd_getseg() except that we must work
+ * "blind" with no Relation struct.  We assume that we are not likely to
+ * touch the same relation again soon, so we do not create an FD entry for
+ * the relation --- we just open a kernel file descriptor which will be
+ * used and promptly closed.  The return value is the kernel descriptor,
+ * or -1 on failure.
  */
 
-static MdfdVec *
+static int
 _mdfd_blind_getseg(char *dbname, char *relname, Oid dbid, Oid relid,
 				   int blkno)
 {
-	MdfdVec    *v;
 	char	   *path;
 	int			fd;
-	int			vfd;
 #ifndef LET_OS_MANAGE_FILESIZE
 	int			segno;
-	int			targsegno;
 #endif
 
-	/* construct the path to the file and open it */
+	/* construct the path to the relation */
 	path = relpath_blind(dbname, relname, dbid, relid);
 
-#ifndef __CYGWIN32__
-	fd = FileNameOpenFile(path, O_RDWR, 0600);
-#else
-	fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);
-#endif
-
-	if (fd < 0)
-		return NULL;
-
-	vfd = _fdvec_alloc();
-	if (vfd < 0)
-		return NULL;
-
-	Md_fdvec[vfd].mdfd_vfd = fd;
-	Md_fdvec[vfd].mdfd_flags = MDFD_TEMP;
-	Md_fdvec[vfd].mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
 #ifndef LET_OS_MANAGE_FILESIZE
-	Md_fdvec[vfd].mdfd_chain = (MdfdVec *) NULL;
-
-#ifdef DIAGNOSTIC
-	if (Md_fdvec[vfd].mdfd_lstbcnt > RELSEG_SIZE)
-		elog(FATAL, "segment too big on relopen!");
-#endif
-
-	targsegno = blkno / RELSEG_SIZE;
-	for (v = &Md_fdvec[vfd], segno = 1; segno <= targsegno; segno++)
+	/* append the '.segno', if needed */
+	segno = blkno / RELSEG_SIZE;
+	if (segno > 0)
 	{
-		char	   *segpath;
-		MdfdVec    *newv;
-		MemoryContext oldcxt;
+		char   *segpath = (char *) palloc(strlen(path) + 12);
 
-		segpath = (char *) palloc(strlen(path) + 12);
 		sprintf(segpath, "%s.%d", path, segno);
+		pfree(path);
+		path = segpath;
+	}
+#endif
 
 #ifndef __CYGWIN32__
-		fd = FileNameOpenFile(segpath, O_RDWR | O_CREAT, 0600);
+	fd = open(path, O_RDWR, 0600);
 #else
-		fd = FileNameOpenFile(segpath, O_RDWR | O_BINARY | O_CREAT, 0600);
-#endif
-
-		pfree(segpath);
-
-		if (fd < 0)
-			return (MdfdVec *) NULL;
-
-		/* allocate an mdfdvec entry for it */
-		oldcxt = MemoryContextSwitchTo(MdCxt);
-		newv = (MdfdVec *) palloc(sizeof(MdfdVec));
-		MemoryContextSwitchTo(oldcxt);
-
-		/* fill the entry */
-		newv->mdfd_vfd = fd;
-		newv->mdfd_flags = MDFD_TEMP;
-		newv->mdfd_lstbcnt = _mdnblocks(fd, BLCKSZ);
-		newv->mdfd_chain = (MdfdVec *) NULL;
-#ifdef DIAGNOSTIC
-		if (newv->mdfd_lstbcnt > RELSEG_SIZE)
-			elog(FATAL, "segment too big on open!");
-#endif
-		v->mdfd_chain = newv;
-		v = newv;
-	}
-#else
-	v = &Md_fdvec[vfd];
+	fd = open(path, O_RDWR | O_BINARY, 0600);
 #endif
 
 	pfree(path);
 
-	return v;
+	return fd;
 }
 
 static BlockNumber

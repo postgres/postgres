@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.18 2000/04/09 04:43:18 tgl Exp $
+ * $Id: smgr.h,v 1.19 2000/04/10 23:41:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@ extern int	smgrflush(int16 which, Relation reln, BlockNumber blocknum,
 					  char *buffer);
 extern int	smgrblindwrt(int16 which, char *dbname, char *relname,
 						 Oid dbid, Oid relid,
-						 BlockNumber blkno, char *buffer);
+						 BlockNumber blkno, char *buffer,
+						 bool dofsync);
 extern int	smgrmarkdirty(int16 which, Relation reln, BlockNumber blkno);
 extern int	smgrblindmarkdirty(int16 which, char *dbname, char *relname,
 							   Oid dbid, Oid relid,
@@ -62,7 +63,8 @@ extern int	mdread(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdwrite(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdflush(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mdblindwrt(char *dbname, char *relname, Oid dbid, Oid relid,
-					   BlockNumber blkno, char *buffer);
+					   BlockNumber blkno, char *buffer,
+					   bool dofsync);
 extern int	mdmarkdirty(Relation reln, BlockNumber blkno);
 extern int	mdblindmarkdirty(char *dbname, char *relname, Oid dbid, Oid relid,
 							 BlockNumber blkno);
@@ -84,7 +86,8 @@ extern int	mmread(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mmwrite(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mmflush(Relation reln, BlockNumber blocknum, char *buffer);
 extern int	mmblindwrt(char *dbname, char *relname, Oid dbid, Oid relid,
-					   BlockNumber blkno, char *buffer);
+					   BlockNumber blkno, char *buffer,
+					   bool dofsync);
 extern int	mmmarkdirty(Relation reln, BlockNumber blkno);
 extern int	mmblindmarkdirty(char *dbname, char *relname, Oid dbid, Oid relid,
 							 BlockNumber blkno);

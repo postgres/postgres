@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.18 2000/01/26 05:57:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.19 2000/04/10 23:41:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,7 +478,8 @@ mmblindwrt(char *dbstr,
 		   Oid dbid,
 		   Oid relid,
 		   BlockNumber blkno,
-		   char *buffer)
+		   char *buffer,
+		   bool dofsync)
 {
 	return SM_FAIL;
 }

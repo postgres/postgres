@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.33 2000/04/09 04:43:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.34 2000/04/10 23:41:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,8 @@ typedef struct f_smgr
 							   char *buffer);
 	int			(*smgr_blindwrt) (char *dbname, char *relname,
 								  Oid dbid, Oid relid,
-								  BlockNumber blkno, char *buffer);
+								  BlockNumber blkno, char *buffer,
+								  bool dofsync);
 	int			(*smgr_markdirty) (Relation reln, BlockNumber blkno);
 	int			(*smgr_blindmarkdirty) (char *dbname, char *relname,
 										Oid dbid, Oid relid,
@@ -293,7 +294,8 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *		this case, the buffer manager will call smgrblindwrt() with
  *		the name and OID of the database and the relation to which the
  *		buffer belongs.  Every storage manager must be able to force
- *		this page down to stable storage in this circumstance.
+ *		this page down to stable storage in this circumstance.  The
+ *		write should be synchronous if dofsync is true.
  */
 int
 smgrblindwrt(int16 which,
@@ -302,7 +304,8 @@ smgrblindwrt(int16 which,
 			 Oid dbid,
 			 Oid relid,
 			 BlockNumber blkno,
-			 char *buffer)
+			 char *buffer,
+			 bool dofsync)
 {
 	char	   *dbstr;
 	char	   *relstr;
@@ -313,7 +316,7 @@ smgrblindwrt(int16 which,
 	relstr = pstrdup(relname);
 
 	status = (*(smgrsw[which].smgr_blindwrt)) (dbstr, relstr, dbid, relid,
-											   blkno, buffer);
+											   blkno, buffer, dofsync);
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot write block %d of %s [%s] blind",

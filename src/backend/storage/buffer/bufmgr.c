@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.78 2000/04/09 04:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.79 2000/04/10 23:41:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1127,7 +1127,8 @@ BufferSync()
 											  bufHdr->blind.relname,
 											  bufdb, bufrel,
 											  bufHdr->tag.blockNum,
-											  (char *) MAKE_PTR(bufHdr->data));
+											  (char *) MAKE_PTR(bufHdr->data),
+											  true); /* must fsync */
 					}
 					else
 					{
@@ -1529,7 +1530,8 @@ BufferReplace(BufferDesc *bufHdr)
 		status = smgrblindwrt(DEFAULT_SMGR, bufHdr->blind.dbname,
 							  bufHdr->blind.relname, bufdb, bufrel,
 							  bufHdr->tag.blockNum,
-							  (char *) MAKE_PTR(bufHdr->data));
+							  (char *) MAKE_PTR(bufHdr->data),
+							  false); /* no fsync */
 	}
 
 #ifndef OPTIMIZE_SINGLE
@@ -1544,9 +1546,11 @@ BufferReplace(BufferDesc *bufHdr)
 		return FALSE;
 
 	/* If we had marked this buffer as needing to be fsync'd, we can forget
-	 * about that, because it's now the storage manager's responsibility.
+	 * about that, because it's now the storage manager's responsibility
+	 * (but only if we called smgrwrite, not smgrblindwrt).
 	 */
-	ClearBufferDirtiedByMe(BufferDescriptorGetBuffer(bufHdr), bufHdr);
+	if (reln != (Relation) NULL)
+		ClearBufferDirtiedByMe(BufferDescriptorGetBuffer(bufHdr), bufHdr);
 
 	BufferFlushCount++;
 
