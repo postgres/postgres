@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.96 2002/07/04 16:44:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.97 2002/07/06 20:16:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,8 @@ static Datum ExecEvalNullTest(NullTest *ntest, ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalBooleanTest(BooleanTest *btest, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalConstraint(Constraint *constraint, ExprContext *econtext,
+								bool *isNull, ExprDoneCond *isDone);
 
 
 /*----------
@@ -1226,6 +1228,43 @@ ExecEvalNullTest(NullTest *ntest,
 	}
 }
 
+/*
+ * ExecEvalConstraint
+ *
+ * Test the constraint against the data provided.  If the data fits
+ * within the constraint specifications, pass it through (return the
+ * datum) otherwise throw an error.
+ */
+static Datum
+ExecEvalConstraint(Constraint *constraint, ExprContext *econtext,
+				   bool *isNull, ExprDoneCond *isDone)
+{
+	Datum		result;
+
+	result = ExecEvalExpr(constraint->raw_expr, econtext, isNull, isDone);
+
+	/* Test for the constraint type */
+	switch(constraint->contype)
+	{
+		case CONSTR_NOTNULL:
+			if (*isNull)
+			{
+				elog(ERROR, "Domain %s does not allow NULL values", constraint->name);
+			}
+			break;
+		case CONSTR_CHECK:
+
+				elog(ERROR, "ExecEvalConstraint: Domain CHECK Constraints not yet implemented");
+			break;
+		default:
+			elog(ERROR, "ExecEvalConstraint: Constraint type unknown");
+			break;
+	}
+
+	/* If all has gone well (constraint did not fail) return the datum */
+	return result;
+}
+
 /* ----------------------------------------------------------------
  *		ExecEvalBooleanTest
  *
@@ -1472,6 +1511,12 @@ ExecEvalExpr(Node *expression,
 									econtext,
 									isNull,
 									isDone);
+			break;
+		case T_Constraint:
+			retDatum = ExecEvalConstraint((Constraint *) expression,
+										 econtext,
+										 isNull,
+										 isDone);
 			break;
 		case T_CaseExpr:
 			retDatum = ExecEvalCase((CaseExpr *) expression,

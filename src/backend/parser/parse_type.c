@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.43 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.44 2002/07/06 20:16:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,7 +450,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	List	   *raw_parsetree_list;
 	SelectStmt *stmt;
 	ResTarget  *restarget;
-	A_Const    *aconst;
+	TypeCast   *typecast;   
 	TypeName   *typename;
 
 	initStringInfo(&buf);
@@ -463,7 +463,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	 * paranoia is justified since the string might contain anything.
 	 */
 	if (length(raw_parsetree_list) != 1)
-		elog(ERROR, "Invalid type name '%s'", str);
+		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
 	stmt = (SelectStmt *) lfirst(raw_parsetree_list);
 	if (stmt == NULL ||
 		!IsA(stmt, SelectStmt) ||
@@ -479,25 +479,23 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 		stmt->limitCount != NULL ||
 		stmt->forUpdate != NIL ||
 		stmt->op != SETOP_NONE)
-		elog(ERROR, "Invalid type name '%s'", str);
+		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
 	if (length(stmt->targetList) != 1)
-		elog(ERROR, "Invalid type name '%s'", str);
+		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
 	restarget = (ResTarget *) lfirst(stmt->targetList);
 	if (restarget == NULL ||
 		!IsA(restarget, ResTarget) ||
 		restarget->name != NULL ||
 		restarget->indirection != NIL)
-		elog(ERROR, "Invalid type name '%s'", str);
-	aconst = (A_Const *) restarget->val;
-	if (aconst == NULL ||
-		!IsA(aconst, A_Const) ||
-		aconst->val.type != T_Null)
-		elog(ERROR, "Invalid type name '%s'", str);
-	typename = aconst->typename;
+		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
+	typecast = (TypeCast *) restarget->val;
+	if (typecast == NULL ||
+		!IsA(typecast->arg, A_Const))
+		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
+	typename = typecast->typename;
 	if (typename == NULL ||
 		!IsA(typename, TypeName))
-		elog(ERROR, "Invalid type name '%s'", str);
-
+		elog(ERROR, "parseTypeString: Invalid type name '%s'", str);
 	*type_id = typenameTypeId(typename);
 	*typmod = typename->typmod;
 

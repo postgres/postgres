@@ -17,6 +17,9 @@ create domain domainnumeric numeric(8,2);
 create domain domainint4 int4;
 create domain domaintext text;
 
+-- Test coercions
+SELECT cast('123456' as domainvarchar); -- fail
+SELECT cast('12345' as domainvarchar); -- pass
 
 -- Test tables using domains
 create table basictest
@@ -65,7 +68,7 @@ drop domain domaintextarr restrict;
 
 
 create domain dnotnull varchar(15) NOT NULL;
-create domain dnull    varchar(15) NULL;
+create domain dnull    varchar(15);
 
 create table nulltest
            ( col1 dnotnull
@@ -81,6 +84,13 @@ INSERT INTO nulltest values ('a', 'b', NULL, 'd');
 INSERT INTO nulltest values ('a', 'b', 'c', NULL); -- Good
 select * from nulltest;
 
+-- Test out coerced (casted) constraints
+SELECT cast('1' as dnotnull);
+SELECT cast(NULL as dnotnull); -- fail
+SELECT cast(cast(NULL as dnull) as dnotnull); -- fail
+SELECT cast(col4 as dnotnull) from nulltest; -- fail
+
+-- cleanup
 drop table nulltest;
 drop domain dnotnull restrict;
 drop domain dnull restrict;

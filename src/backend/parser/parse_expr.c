@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.120 2002/07/04 15:24:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.121 2002/07/06 20:16:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -864,7 +864,7 @@ exprType(Node *expr)
 					TargetEntry *tent;
 
 					if (!qtree || !IsA(qtree, Query))
-						elog(ERROR, "Cannot get type for untransformed sublink");
+						elog(ERROR, "exprType: Cannot get type for untransformed sublink");
 					tent = (TargetEntry *) lfirst(qtree->targetList);
 					type = tent->resdom->restype;
 				}
@@ -881,6 +881,9 @@ exprType(Node *expr)
 		case T_CaseWhen:
 			type = exprType(((CaseWhen *) expr)->result);
 			break;
+		case T_Constraint:
+			type = exprType(((Constraint *) expr)->raw_expr);
+			break;
 		case T_NullTest:
 			type = BOOLOID;
 			break;
@@ -888,7 +891,7 @@ exprType(Node *expr)
 			type = BOOLOID;
 			break;
 		default:
-			elog(ERROR, "Do not know how to get type for %d node",
+			elog(ERROR, "exprType: Do not know how to get type for %d node",
 				 nodeTag(expr));
 			break;
 	}

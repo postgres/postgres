@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.74 2002/06/20 20:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.75 2002/07/06 20:16:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static Oid	PreferredType(CATEGORY category, Oid type);
 static Node *build_func_call(Oid funcid, Oid rettype, List *args);
 static Oid	find_coercion_function(Oid targetTypeId, Oid inputTypeId,
 								   Oid secondArgType, bool isExplicit);
-
+static Node	*TypeConstraints(Node *arg, Oid typeId);
 
 /* coerce_type()
  * Convert a function argument to a different type.
@@ -48,7 +48,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		targetTypeId == InvalidOid ||
 		node == NULL)
 	{
-		/* no conversion needed */
+		/* no conversion needed, but constraints may need to be applied */
 		result = node;
 	}
 	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
@@ -72,6 +72,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		Const	   *con = (Const *) node;
 		Const	   *newcon = makeNode(Const);
 		Type		targetType = typeidType(targetTypeId);
+		Oid			baseTypeId = getBaseType(targetTypeId);
 
 		newcon->consttype = targetTypeId;
 		newcon->constlen = typeLen(targetType);
@@ -83,14 +84,16 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		{
 			char	   *val = DatumGetCString(DirectFunctionCall1(unknownout,
 													   con->constvalue));
-
 			newcon->constvalue = stringTypeDatum(targetType, val, atttypmod);
 			pfree(val);
 		}
 
 		ReleaseSysCache(targetType);
 
+		/* Test for domain, and apply appropriate constraints */
 		result = (Node *) newcon;
+		if (targetTypeId != baseTypeId)
+			result = (Node *) TypeConstraints(result, targetTypeId);
 	}
 	else if (IsBinaryCompatible(inputTypeId, targetTypeId))
 	{
@@ -103,8 +106,17 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * default -1 typmod, to save a possible length-coercion later?
 		 * Would work if both types have same interpretation of typmod,
 		 * which is likely but not certain.
+		 *
+		 * Domains may have value restrictions beyond the base type that
+		 * must be accounted for.
 		 */
-		result = (Node *) makeRelabelType(node, targetTypeId, -1);
+		Oid			baseTypeId = getBaseType(targetTypeId);
+		result = node;
+		if (targetTypeId != baseTypeId)
+			result = (Node *) TypeConstraints(result, targetTypeId);
+
+		result = (Node *) makeRelabelType(result, targetTypeId, -1);
+
 	}
 	else if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
@@ -125,8 +137,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 *
 		 * For domains, we use the coercion function for the base type.
 		 */
-		Oid			baseTypeId = getBaseType(targetTypeId);
 		Oid			funcId;
+		Oid			baseTypeId = getBaseType(targetTypeId);
 
 		funcId = find_coercion_function(baseTypeId,
 										getBaseType(inputTypeId),
@@ -138,9 +150,12 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		result = build_func_call(funcId, baseTypeId, makeList1(node));
 
-		/* if domain, relabel with domain type ID */
+		/*
+		 * If domain, relabel with domain type ID and test against domain
+		 * constraints
+		 */
 		if (targetTypeId != baseTypeId)
-			result = (Node *) makeRelabelType(result, targetTypeId, -1);
+			result = (Node *) TypeConstraints(result, targetTypeId);
 
 		/*
 		 * If the input is a constant, apply the type conversion function
@@ -275,6 +290,21 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 {
 	Oid			baseTypeId;
 	Oid			funcId;
+	int32		domainTypMod = NULL;
+
+	/* If given type is a domain, use base type instead */
+	baseTypeId = getBaseTypeTypeMod(targetTypeId, &domainTypMod);
+
+
+	/*
+	 * Use the domain typmod rather than what was supplied if the
+	 * domain was empty.  atttypmod will always be -1 if domains are in use.
+	 */
+	if (baseTypeId != targetTypeId)
+	{
+		Assert(atttypmod < 0);
+		atttypmod = domainTypMod;
+	}
 
 	/*
 	 * A negative typmod is assumed to mean that no coercion is wanted.
@@ -282,12 +312,8 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	if (atttypmod < 0 || atttypmod == exprTypmod(node))
 		return node;
 
-	/* If given type is a domain, use base type instead */
-	baseTypeId = getBaseType(targetTypeId);
-
 	/* Note this is always implicit coercion */
 	funcId = find_coercion_function(baseTypeId, baseTypeId, INT4OID, false);
-
 	if (OidIsValid(funcId))
 	{
 		Const	   *cons;
@@ -301,10 +327,6 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 						 false);
 
 		node = build_func_call(funcId, baseTypeId, makeList2(node, cons));
-
-		/* relabel if it's domain case */
-		if (targetTypeId != baseTypeId)
-			node = (Node *) makeRelabelType(node, targetTypeId, atttypmod);
 	}
 
 	return node;
@@ -804,4 +826,59 @@ build_func_call(Oid funcid, Oid rettype, List *args)
 	expr->args = args;
 
 	return (Node *) expr;
+}
+
+/*
+ * Create an expression tree to enforce the constraints (if any)
+ * which should be applied by the type.
+ */
+static Node *
+TypeConstraints(Node *arg, Oid typeId)
+{
+	char   *notNull = NULL;
+
+	for (;;)
+	{
+		HeapTuple	tup;
+		Form_pg_type typTup;
+
+		tup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(typeId),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "getBaseType: failed to lookup type %u", typeId);
+		typTup = (Form_pg_type) GETSTRUCT(tup);
+
+		/* Test for NOT NULL Constraint */
+		if (typTup->typnotnull && notNull == NULL)
+			notNull = NameStr(typTup->typname);
+
+		/* TODO: Add CHECK Constraints to domains */
+
+		if (typTup->typtype != 'd')
+		{
+			/* Not a domain, so done */
+			ReleaseSysCache(tup);
+			break;
+		}
+
+		typeId = typTup->typbasetype;
+		ReleaseSysCache(tup);
+	}
+
+	/*
+	 * Only need to add one NOT NULL check regardless of how many 
+	 * domains in the tree request it.
+	 */
+	if (notNull != NULL) {
+		Constraint *r = makeNode(Constraint);
+
+		r->raw_expr = arg;
+		r->contype = CONSTR_NOTNULL;
+		r->name	= notNull; 
+
+		arg = (Node *) r;
+	}	
+
+	return arg;
 }

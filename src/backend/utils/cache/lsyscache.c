@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.74 2002/06/20 20:29:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.75 2002/07/06 20:16:36 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1051,6 +1051,43 @@ getBaseType(Oid typid)
 		}
 
 		typid = typTup->typbasetype;
+		ReleaseSysCache(tup);
+	}
+
+	return typid;
+}
+
+/*
+ * getBaseTypeTypeMod
+ *		If the given type is a domain, return its base type;
+ *		otherwise return the type's own OID.
+ */
+Oid
+getBaseTypeTypeMod(Oid typid, int32 *typmod)
+{
+	/*
+	 * We loop to find the bottom base type in a stack of domains.
+	 */
+	for (;;)
+	{
+		HeapTuple	tup;
+		Form_pg_type typTup;
+
+		tup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(typid),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "getBaseType: failed to lookup type %u", typid);
+		typTup = (Form_pg_type) GETSTRUCT(tup);
+		if (typTup->typtype != 'd')
+		{
+			/* Not a domain, so done */
+			ReleaseSysCache(tup);
+			break;
+		}
+
+		typid = typTup->typbasetype;
+		*typmod = typTup->typtypmod;
 		ReleaseSysCache(tup);
 	}
 

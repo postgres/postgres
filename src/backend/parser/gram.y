@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.336 2002/07/04 15:23:59 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.337 2002/07/06 20:16:35 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6968,24 +6968,16 @@ static Node *
 makeTypeCast(Node *arg, TypeName *typename)
 {
 	/*
-	 * If arg is an A_Const, just stick the typename into the
-	 * field reserved for it --- unless there's something there already!
-	 * (We don't want to collapse x::type1::type2 into just x::type2.)
-	 * Otherwise, generate a TypeCast node.
+	 * Simply generate a TypeCast node.
+	 *
+	 * Earlier we would determine whether an A_Const would
+	 * be acceptable, however Domains require coerce_type()
+	 * to process them -- applying constraints as required. 
 	 */
-	if (IsA(arg, A_Const) &&
-		((A_Const *) arg)->typename == NULL)
-	{
-		((A_Const *) arg)->typename = typename;
-		return arg;
-	}
-	else
-	{
-		TypeCast *n = makeNode(TypeCast);
-		n->arg = arg;
-		n->typename = typename;
-		return (Node *) n;
-	}
+	TypeCast *n = makeNode(TypeCast);
+	n->arg = arg;
+	n->typename = typename;
+	return (Node *) n;
 }
 
 static Node *

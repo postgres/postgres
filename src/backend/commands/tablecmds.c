@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.18 2002/07/01 15:27:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.19 2002/07/06 20:16:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@
 #include "utils/relcache.h"
 
 
-static List *MergeDomainAttributes(List *schema);
 static List *MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, bool *supHasOids);
 static bool change_varattnos_of_a_node(Node *node, const AttrNumber *newattno);
@@ -121,13 +120,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, get_namespace_name(namespaceId));
 	}
-
-	/*
-	 * Merge domain attributes into the known columns before processing table
-	 * inheritance.  Otherwise we risk adding double constraints to a
-	 * domain-type column that's inherited.
-	 */
-	schema = MergeDomainAttributes(schema);
 
 	/*
 	 * Look up inheritance ancestors and generate relation schema,
@@ -326,49 +318,6 @@ TruncateRelation(const RangeVar *relation)
 	heap_close(rel, NoLock);
 
 	heap_truncate(relid);
-}
-
-
-/*
- * MergeDomainAttributes
- *      Returns a new table schema with the constraints, types, and other
- *      attributes of domains resolved for fields using a domain as
- *      their type.
- */
-static List *
-MergeDomainAttributes(List *schema)
-{
-	List	   *entry;
-
-	/*
-	 * Loop through the table elements supplied. These should
-	 * never include inherited domains else they'll be
-	 * double (or more) processed.
-	 */
-	foreach(entry, schema)
-	{
-		ColumnDef  *coldef = lfirst(entry);
-		HeapTuple  tuple;
-		Form_pg_type typeTup;
-
-		tuple = typenameType(coldef->typename);
-		typeTup = (Form_pg_type) GETSTRUCT(tuple);
-
-		if (typeTup->typtype == 'd')
-		{
-			/* Force the column to have the correct typmod. */
-			coldef->typename->typmod = typeTup->typtypmod;
-			/* XXX more to do here? */
-		}
-
-		/* Enforce type NOT NULL || column definition NOT NULL -> NOT NULL */
-		/* Currently only used for domains, but could be valid for all */
-		coldef->is_not_null |= typeTup->typnotnull;
-
-		ReleaseSysCache(tuple);
-	}
-
-	return schema;
 }
 
 /*----------
