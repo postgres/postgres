@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.212 2003/09/29 22:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.213 2003/10/06 02:38:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ static StringInfoData attribute_buf;
  * to server encoding, and then extract individual attribute fields into
  * attribute_buf.  (We used to have CopyReadAttribute read the input source
  * directly, but that caused a lot of encoding issues and unnecessary logic
- * complexity).
+ * complexity.)
  */
 static StringInfoData line_buf;
 static bool line_buf_converted;
@@ -133,7 +133,8 @@ static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 char *delim, char *null_print);
 static bool CopyReadLine(void);
-static char *CopyReadAttribute(const char *delim, CopyReadResult *result);
+static char *CopyReadAttribute(const char *delim, const char *null_print,
+							   CopyReadResult *result, bool *isnull);
 static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
 						Oid typelem, bool *isnull);
 static void CopyAttributeOut(char *string, char *delim);
@@ -1014,6 +1015,17 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		tmp = 0;
 		CopySendInt32(tmp);
 	}
+	else
+	{
+		/*
+		 * For non-binary copy, we need to convert null_print to client
+		 * encoding, because it will be sent directly with CopySendString.
+		 */
+		if (server_encoding != client_encoding)
+			null_print = (char *)
+				pg_server_to_client((unsigned char *) null_print,
+									strlen(null_print));
+	}
 
 	mySnapshot = CopyQuerySnapshot();
 
@@ -1441,9 +1453,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 			if (file_has_oids)
 			{
-				string = CopyReadAttribute(delim, &result);
+				string = CopyReadAttribute(delim, null_print,
+										   &result, &isnull);
 
-				if (strcmp(string, null_print) == 0)
+				if (isnull)
 					ereport(ERROR,
 							(errcode(ERRCODE_BAD_COPY_FILE_FORMAT),
 							 errmsg("null OID in COPY data")));
@@ -1478,9 +1491,10 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 							 errmsg("missing data for column \"%s\"",
 									NameStr(attr[m]->attname))));
 
-				string = CopyReadAttribute(delim, &result);
+				string = CopyReadAttribute(delim, null_print,
+										   &result, &isnull);
 
-				if (strcmp(string, null_print) == 0)
+				if (isnull)
 				{
 					/* we read an SQL NULL, no need to do anything */
 				}
@@ -1880,25 +1894,33 @@ CopyReadLine(void)
 	return result;
 }
 
-/*
+/*----------
  * Read the value of a single attribute, performing de-escaping as needed.
+ *
+ * delim is the column delimiter string (must be just one byte for now).
+ * null_print is the null marker string.  Note that this is compared to
+ * the pre-de-escaped input string.
  *
  * *result is set to indicate what terminated the read:
  *		NORMAL_ATTR:	column delimiter
  *		END_OF_LINE:	end of line
  * In either case, the string read up to the terminator is returned.
  *
- * Note: This function does not care about SQL NULL values -- it
- * is the caller's responsibility to check if the returned string
- * matches what the user specified for the SQL NULL value.
- *
- * delim is the column delimiter string.
+ * *isnull is set true or false depending on whether the input matched
+ * the null marker.  Note that the caller cannot check this since the
+ * returned string will be the post-de-escaping equivalent, which may
+ * look the same as some valid data string.
+ *----------
  */
 static char *
-CopyReadAttribute(const char *delim, CopyReadResult *result)
+CopyReadAttribute(const char *delim, const char *null_print,
+				  CopyReadResult *result, bool *isnull)
 {
 	char		c;
 	char		delimc = delim[0];
+	int			start_cursor = line_buf.cursor;
+	int			end_cursor;
+	int			input_len;
 
 	/* reset attribute_buf to empty */
 	attribute_buf.len = 0;
@@ -1909,6 +1931,7 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 
 	for (;;)
 	{
+		end_cursor = line_buf.cursor;
 		if (line_buf.cursor >= line_buf.len)
 			break;
 		c = line_buf.data[line_buf.cursor++];
@@ -1957,16 +1980,6 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 						c = val & 0377;
 					}
 					break;
-
-					/*
-					 * This is a special hack to parse `\N' as
-					 * <backslash-N> rather then just 'N' to provide
-					 * compatibility with the default NULL output. -- pe
-					 */
-				case 'N':
-					appendStringInfoCharMacro(&attribute_buf, '\\');
-					c = 'N';
-					break;
 				case 'b':
 					c = '\b';
 					break;
@@ -1992,6 +2005,14 @@ CopyReadAttribute(const char *delim, CopyReadResult *result)
 		}
 		appendStringInfoCharMacro(&attribute_buf, c);
 	}
+
+	/* check whether raw input matched null marker */
+	input_len = end_cursor - start_cursor;
+	if (input_len == strlen(null_print) &&
+		strncmp(&line_buf.data[start_cursor], null_print, input_len) == 0)
+		*isnull = true;
+	else
+		*isnull = false;
 
 	return attribute_buf.data;
 }
