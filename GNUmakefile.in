@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.17 2001/02/10 02:31:25 tgl Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.18 2001/04/08 17:28:10 petere Exp $
 #
 
 subdir =
@@ -60,7 +60,7 @@ BZIP2	:= bzip2
 
 dist: $(distdir).tar.gz
 ifeq ($(split-dist), yes)
-dist: $(distdir).base.tar.gz $(distdir).docs.tar.gz $(distdir).support.tar.gz $(distdir).test.tar.gz
+dist: postgresql-base-$(VERSION).tar.gz postgresql-docs-$(VERSION).tar.gz postgresql-opt-$(VERSION).tar.gz postgresql-test-$(VERSION).tar.gz
 endif
 dist:
 	-rm -rf $(distdir)
@@ -68,17 +68,25 @@ dist:
 $(distdir).tar: distdir
 	$(TAR) chf $@ $(distdir)
 
-$(distdir).base.tar: distdir
-	$(TAR) -c $(addprefix --exclude $(distdir)/, doc src/test src/interfaces src/bin) \
+opt_files := src/backend/utils/mb contrib/retep build.xml \
+	src/tools src/corba src/data src/tutorial \
+	$(addprefix src/bin/, pgaccess pgtclsh pg_encoding) \
+	$(addprefix src/interfaces/, odbc libpq++ libpgtcl perl5 python jdbc) \
+	$(addprefix src/pl/, plperl tcl)
+
+docs_files := doc/postgres.tar.gz doc/src doc/TODO.detail doc/internals.ps
+
+postgresql-base-$(VERSION).tar: distdir
+	$(TAR) -c $(addprefix --exclude $(distdir)/, $(docs_files) $(opt_files) src/test) \
 	  -f $@ $(distdir)
 
-$(distdir).docs.tar: distdir
-	$(TAR) cf $@ $(distdir)/doc
+postgresql-docs-$(VERSION).tar: distdir
+	$(TAR) cf $@ $(addprefix $(distdir)/, $(docs_files))
 
-$(distdir).support.tar: distdir
-	$(TAR) cf $@ $(distdir)/src/interfaces $(distdir)/src/bin
+postgresql-opt-$(VERSION).tar: distdir
+	$(TAR) cf $@ $(addprefix $(distdir)/, $(opt_files))
 
-$(distdir).test.tar: distdir
+postgresql-test-$(VERSION).tar: distdir
 	$(TAR) cf $@ $(distdir)/src/test
 
 %.gz: %
@@ -121,3 +129,4 @@ distcheck: $(distdir).tar.gz
 	@echo "Distribution integrity checks out."
 
 .PHONY: dist distdir distcheck
+unexport split-dist
