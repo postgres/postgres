@@ -61,7 +61,7 @@ static SeqTable init_sequence(char *caller, char *name);
 static Form_pg_sequence read_info(char *caller, SeqTable elm, Buffer *buf);
 static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
 static int	get_param(DefElem *def);
-static void do_setval(char *seqname, int32 next, char iscalled);
+static void do_setval(char *seqname, int32 next, bool iscalled);
 
 /*
  * DefineSequence
