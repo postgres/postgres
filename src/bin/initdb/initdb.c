@@ -43,7 +43,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.25 2004/05/05 21:18:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.26 2004/05/10 20:51:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,35 +149,36 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 char	   *pgpath;
 
 /* forward declare all our functions */
-static bool rmtree(char *, bool);
-static void exit_nicely(void);
 #ifdef WIN32
 static char *expanded_path(char *);
 #else
 #define expanded_path(x) (x)
 #endif
-static char **readfile(char *);
-static void writefile(char *, char **);
+
+static void *xmalloc(size_t size);
+static char *xstrdup(const char *s);
+static bool rmtree(char *path, bool rmtopdir);
+static char **replace_token(char **lines, char *token, char *replacement);
+static char **readfile(char *path);
+static void writefile(char *path, char **lines);
 static void pclose_check(FILE *stream);
+static int mkdir_p(char *path, mode_t omode);
+static void exit_nicely(void);
 static char *get_id(void);
-static char *get_encoding_id(char *);
+static char *get_encoding_id(char *encoding_name);
 static char *get_short_version(void);
-static int	mkdir_p(char *, mode_t);
-static int	check_data_dir(void);
-static bool mkdatadir(char *);
-static bool chklocale(const char *);
-static void setlocales(void);
-static void set_input(char **, char *);
+static int check_data_dir(void);
+static bool mkdatadir(char *subdir);
+static void set_input(char **dest, char *filename);
 static void check_input(char *path);
-static int	find_postgres(char *);
-static int	set_paths(void);
-static char **replace_token(char **, char *, char *);
-static void set_short_version(char *, char *);
+static int find_postgres(char *path);
+static int set_paths(void);
+static void set_short_version(char *short_version, char *extrapath);
 static void set_null_conf(void);
-static void test_buffers(void);
 static void test_connections(void);
+static void test_buffers(void);
 static void setup_config(void);
-static void bootstrap_template1(char *);
+static void bootstrap_template1(char *short_version);
 static void setup_shadow(void);
 static void get_set_pwd(void);
 static void unlimit_systables(void);
@@ -190,12 +191,13 @@ static void set_info_version(void);
 static void setup_schema(void);
 static void vacuum_db(void);
 static void make_template0(void);
-static void usage(const char *);
-static void trapsig(int);
+static void trapsig(int signum);
 static void check_ok(void);
-static char *xstrdup(const char *);
-static void *xmalloc(size_t);
+static bool chklocale(const char *locale);
+static void setlocales(void);
+static void usage(const char *progname);
 static void init_nls(void);
+
 
 /*
  * macros for running pipes to postgres
