@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.3 2003/02/12 17:14:49 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.12.2.4 2003/04/17 04:19:55 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1408,35 +1408,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (x == null)
 		{
-			int l_sqlType;
-			if (x instanceof String)
-				l_sqlType = Types.VARCHAR;
-			else if (x instanceof BigDecimal)
-				l_sqlType = Types.DECIMAL;
-			else if (x instanceof Short)
-				l_sqlType = Types.SMALLINT;
-			else if (x instanceof Integer)
-				l_sqlType = Types.INTEGER;
-			else if (x instanceof Long)
-				l_sqlType = Types.BIGINT;
-			else if (x instanceof Float)
-				l_sqlType = Types.FLOAT;
-			else if (x instanceof Double)
-				l_sqlType = Types.DOUBLE;
-			else if (x instanceof byte[])
-				l_sqlType = Types.BINARY;
-			else if (x instanceof java.sql.Date)
-				l_sqlType = Types.DATE;
-			else if (x instanceof Time)
-				l_sqlType = Types.TIME;
-			else if (x instanceof Timestamp)
-				l_sqlType = Types.TIMESTAMP;
-			else if (x instanceof Boolean)
-				l_sqlType = Types.OTHER;
-			else 
-				l_sqlType = Types.OTHER;
-
-			setNull(parameterIndex, l_sqlType);
+			setNull(parameterIndex, Types.OTHER);
 			return ;
 		}
 		if (x instanceof String)
@@ -1768,6 +1740,10 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public String toString()
 	{
+		//if no sql yet set, return default toString()
+		if (m_sqlFragments == null)
+			return super.toString();
+
 		synchronized (sbuf)
 		{
 			sbuf.setLength(0);

@@ -3136,20 +3136,17 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			//<unnamed>\000ww\000vv\000UNSPECIFIED\000m\000a\000n\000b\000
 			// we are primarily interested in the column names which are the last items in the string
 
-			StringTokenizer st = new StringTokenizer(targs, "\\000");
+ 			Vector tokens = tokenize(targs, "\\000");
 
-			int advance = 4 + (keySequence - 1) * 2;
-			for ( int i = 0; st.hasMoreTokens() && i < advance ; i++ )
-				st.nextToken(); // advance to the key column of interest
-
-			if ( st.hasMoreTokens() )
-			{
-				fkeyColumn = st.nextToken();
-			}
-			if ( st.hasMoreTokens() )
-			{
-				pkeyColumn = st.nextToken();
-			}
+ 			int element = 4 + (keySequence - 1) * 2;
+ 			if (tokens.size() > element) {
+ 				fkeyColumn = (String)tokens.elementAt(element);
+  			}
+ 
+ 			element++;
+ 			if (tokens.size() > element) {
+ 				pkeyColumn = (String)tokens.elementAt(element);
+  			}
 
 			tuple[3] = pkeyColumn.getBytes(); //PKCOLUMN_NAME
 			tuple[7] = fkeyColumn.getBytes(); //FKCOLUMN_NAME
@@ -3553,8 +3550,33 @@ public abstract class AbstractJdbc1DatabaseMetaData
 		if (unique) {
 			sql += " AND i.indisunique ";
 		}
-		sql += " ORDER BY NON_UNIQUE, TYPE, INDEX_NAME ";
+		sql += " ORDER BY NON_UNIQUE, TYPE, INDEX_NAME, ORDINAL_POSITION ";
 		return connection.createStatement().executeQuery(sql);
 	}
+
+	/**
+	 * Tokenize based on words not on single characters.
+	 */
+	private static Vector tokenize(String input, String delimiter) {
+		Vector result = new Vector();
+		int start = 0;
+		int end = input.length();
+		int delimiterSize = delimiter.length();
+
+		while (start < end) {
+			int delimiterIndex = input.indexOf(delimiter,start);
+			if (delimiterIndex < 0) {
+				result.addElement(input.substring(start));
+				break;
+			} else {
+				String token = input.substring(start,delimiterIndex);
+				result.addElement(token);
+				start = delimiterIndex + delimiterSize;
+			}
+		}
+		return result;
+	}
+
+		
 
 }
