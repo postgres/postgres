@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.13 1998/01/05 16:39:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.14 1998/01/13 04:04:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,25 +15,20 @@
 #include <fcntl.h>
 
 #include "postgres.h"
-
-#include <libpq/be-fsstubs.h>
-#include "utils/memutils.h"
-#include "libpq/libpq-fs.h"
-
-#include "storage/fd.h"			/* for SEEK_ */
+#include "fmgr.h"
 
 #include "catalog/pg_type.h"
-
-#include "fmgr.h"
-#include "utils/array.h"
-
+#include "libpq/be-fsstubs.h"
+#include "libpq/libpq-fs.h"
 #include "optimizer/internal.h"
+#include "utils/array.h"
+#include "utils/memutils.h"
+
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
 #else
 #include <string.h>
 #endif
-
 
 #define INFTY 500000000
 #define MANY  10000

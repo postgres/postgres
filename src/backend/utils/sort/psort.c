@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.30 1998/01/07 21:06:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.31 1998/01/13 04:04:57 scrappy Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -40,27 +40,22 @@
 #include <unistd.h>
 
 #include "postgres.h"
+#include "miscadmin.h"
 
-#include "executor/execdebug.h"
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/relscan.h"
 #include "access/skey.h"
-#include "storage/buf.h"
-#include "storage/bufmgr.h"		/* for BLCKSZ */
-#include "utils/portal.h"		/* for {Start,End}PortalAllocMode */
-#include "utils/elog.h"
-#include "utils/rel.h"
-
+#include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "nodes/execnodes.h"
 #include "nodes/plannodes.h"
-#include "executor/executor.h"
-
-#include "utils/lselect.h"
-#include "utils/psort.h"
-
-#include "miscadmin.h"
+#include "storage/buf.h"
 #include "storage/fd.h"
+#include "utils/lselect.h"
+#include "utils/portal.h"		/* for {Start,End}PortalAllocMode */
+#include "utils/psort.h"
+#include "utils/rel.h"
 
 static bool createfirstrun(Sort * node);
 static bool createrun(Sort * node, FILE * file);
@@ -250,7 +245,7 @@ inittapes(Sort * node)
 
 #define USEMEM(NODE,AMT)		PS(node)->treeContext.sortMem -= (AMT)
 #define FREEMEM(NODE,AMT)		PS(node)->treeContext.sortMem += (AMT)
-#define LACKMEM(NODE)			(PS(node)->treeContext.sortMem <= MAXBLCKSZ)	/* not accurate */
+#define LACKMEM(NODE)			(PS(node)->treeContext.sortMem <= BLCKSZ)	/* not accurate */
 #define TRACEMEM(FUNC)
 #define TRACEOUT(FUNC, TUP)
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.60 1998/01/09 05:48:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.61 1998/01/13 04:04:36 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -40,54 +40,48 @@
 
 #include "postgres.h"
 #include "miscadmin.h"
-#include "catalog/catname.h"
+#include "fmgr.h"
+
 #include "access/xact.h"
-
-#include "lib/dllist.h"
-
+#include "catalog/catname.h"
 #include "commands/async.h"
-#include "tcop/tcopprot.h"		/* where declarations for this file go */
-#include "optimizer/planner.h"
-#include "parser/parser.h"
-
-#include "tcop/tcopprot.h"
-#include "tcop/tcopdebug.h"
-
 #include "executor/execdebug.h"
 #include "executor/executor.h"
+#include "lib/dllist.h"
+#include "libpq/libpq.h"
+#include "libpq/pqsignal.h"
+#include "nodes/pg_list.h"
+#include "nodes/print.h"
+#include "optimizer/cost.h"
+#include "optimizer/planner.h"
+#include "optimizer/prep.h"
+#include "parser/parser.h"
+#include "rewrite/rewriteHandler.h"		/* for QueryRewrite() */
+#include "storage/bufmgr.h"
+#include "tcop/dest.h"
+#include "tcop/fastpath.h"
+#include "tcop/pquery.h"
+#include "tcop/tcopdebug.h"
+#include "tcop/tcopprot.h"		/* where declarations for this file go */
+#include "tcop/utility.h"
+#include "utils/mcxt.h"
+#include "utils/rel.h"
+
 #if FALSE
 #include "nodes/relation.h"
 #endif
-#include "nodes/print.h"
 
-#include "optimizer/cost.h"
-#include "optimizer/planner.h"
 #if 0
 #include "optimizer/xfunc.h"
 #endif
-#include "optimizer/prep.h"
+
 #if FALSE
 #include "nodes/plannodes.h"
 #endif
 
-#include "storage/bufmgr.h"
-#include "fmgr.h"
-#include "utils/palloc.h"
-#include "utils/rel.h"
-
-#include "nodes/pg_list.h"
-#include "tcop/dest.h"
 #if FALSE
 #include "nodes/memnodes.h"
 #endif
-#include "utils/mcxt.h"
-#include "tcop/pquery.h"
-#include "tcop/utility.h"
-#include "tcop/fastpath.h"
-
-#include "libpq/libpq.h"
-#include "libpq/pqsignal.h"
-#include "rewrite/rewriteHandler.h"		/* for QueryRewrite() */
 
 static void quickdie(SIGNAL_ARGS);
 
@@ -1123,7 +1117,7 @@ PostgresMain(int argc, char *argv[])
 					int S;
 					
 					S = atoi(optarg);
-					if ( S >= 4*MAXBLCKSZ/1024 )
+					if ( S >= 4*BLCKSZ/1024 )
 						SortMem = S;
 				}
 				break;
@@ -1387,7 +1381,7 @@ PostgresMain(int argc, char *argv[])
 	if (IsUnderPostmaster == false)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.60 $ $Date: 1998/01/09 05:48:22 $");
+		puts("$Revision: 1.61 $ $Date: 1998/01/13 04:04:36 $");
 	}
 
 	/* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.26 1998/01/07 21:05:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.27 1998/01/13 04:04:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,14 +20,12 @@
 #include "postgres.h"
 #include "miscadmin.h"			/* for DataDir */
 
+#include "catalog/catalog.h"
 #include "storage/block.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"		/* where the declarations go */
-#include "storage/fd.h"
 #include "utils/mcxt.h"
 #include "utils/rel.h"
-#include "utils/palloc.h"
-#include "catalog/catalog.h"
 
 #undef DIAGNOSTIC
 
@@ -59,7 +57,22 @@ static MemoryContext MdCxt;
 #define MDFD_DIRTY		(uint16) 0x01
 #define MDFD_FREE		(uint16) 0x02
 
-#define RELSEG_SIZE		262144	/* (2 ** 31) / 8192 -- 2GB file */
+/*
+ * RELSEG_SIZE appears to be the number of segments that can
+ * be in a disk file.  It was defined as 262144 based on 8k
+ * blocks, but now that the block size can be changed, this
+ * has to be calculated at compile time.  Otherwise, the file
+ * size limit would not work out to 2-gig (2147483648).
+ *
+ * The number needs to be (2 ** 31) / BLCKSZ, but to be keep
+ * the math under MAXINT, pre-divide by 256 and use ...
+ *
+ *           (((2 ** 23) / BLCKSZ) * (2 ** 8))
+ *
+ * 07 Jan 98  darrenk
+ */
+
+#define RELSEG_SIZE		((8388608 / BLCKSZ) * 256)
 
 /* routines declared here */
 static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.11 1998/01/07 21:03:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.12 1998/01/13 04:04:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,29 +19,26 @@
 #include <string.h>
 
 #include "postgres.h"
-#include "nodes/pg_list.h"
-#include "nodes/nodes.h"
-#include "nodes/primnodes.h"
-#include "nodes/relation.h"
-#include "utils/elog.h"
-#include "utils/palloc.h"
-#include "utils/syscache.h"
+
+#include "access/heapam.h"
+#include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
-#include "utils/syscache.h"
-#include "catalog/pg_language.h"
-#include "optimizer/xfunc.h"
-#include "optimizer/clauses.h"
-#include "optimizer/pathnode.h"
-#include "optimizer/internal.h"
-#include "optimizer/cost.h"
-#include "optimizer/keys.h"
-#include "optimizer/tlist.h"
 #include "lib/lispsort.h"
-#include "access/heapam.h"
-#include "tcop/dest.h"
+#include "nodes/nodes.h"
+#include "nodes/pg_list.h"
+#include "nodes/primnodes.h"
+#include "nodes/relation.h"
+#include "optimizer/clauses.h"
+#include "optimizer/cost.h"
+#include "optimizer/internal.h"
+#include "optimizer/keys.h"
+#include "optimizer/pathnode.h"
+#include "optimizer/tlist.h"			/* for get_expr */
+#include "optimizer/xfunc.h"
 #include "storage/buf_internals.h"		/* for NBuffers */
-#include "optimizer/tlist.h"	/* for get_expr */
+#include "tcop/dest.h"
+#include "utils/syscache.h"
 
 #define ever ; 1 ;
 

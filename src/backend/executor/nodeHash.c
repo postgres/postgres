@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.15 1998/01/07 21:02:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.16 1998/01/13 04:03:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,15 +31,11 @@
 
 #include "postgres.h"
 
-
-#include "storage/fd.h"			/* for SEEK_ */
-#include "storage/ipc.h"
-#include "storage/bufmgr.h"		/* for BLCKSZ */
+#include "executor/execdebug.h"
 #include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
-#include "executor/execdebug.h"
-#include "utils/palloc.h"
+#include "storage/ipc.h"
 #include "utils/hsearch.h"
 
 extern int	NBuffers;

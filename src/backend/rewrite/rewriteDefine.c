@@ -7,29 +7,28 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.13 1998/01/07 21:04:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.14 1998/01/13 04:04:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <string.h>
+
 #include "postgres.h"
 
-#include "utils/rel.h"			/* for Relation stuff */
 #include "access/heapam.h"		/* access methods like amopenr */
-#include "utils/builtins.h"
-#include "utils/elog.h"			/* for elog */
-#include "utils/palloc.h"
-#include "utils/lsyscache.h"	/* for get_typlen */
-#include "nodes/pg_list.h"		/* for Lisp support */
 #include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"		/* for Lisp support */
 #include "parser/parse_relation.h"
-
 #include "rewrite/locks.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
 #include "rewrite/rewriteSupport.h"
 #include "tcop/tcopprot.h"
+#include "utils/builtins.h"
+#include "utils/lsyscache.h"	/* for get_typlen */
+#include "utils/rel.h"			/* for Relation stuff */
+
 
 Oid			LastOidProcessed = InvalidOid;
 
@@ -39,7 +38,7 @@ Oid			LastOidProcessed = InvalidOid;
  *
  * should this be smaller?
  */
-#define RULE_PLAN_SIZE 8192
+#define RULE_PLAN_SIZE BLCKSZ
 
 static void
 strcpyq(char *dest, char *source)

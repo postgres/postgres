@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.16 1998/01/07 21:04:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.17 1998/01/13 04:04:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@
 #include "storage/spin.h"
 #include "storage/smgr.h"
 #include "storage/lmgr.h"
-#include "storage/buf_internals.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"

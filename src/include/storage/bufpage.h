@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.13 1997/09/08 21:54:20 momjian Exp $
+ * $Id: bufpage.h,v 1.14 1998/01/13 04:05:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,9 @@
  *
  * note that this is actually limited to 2^13 because we have limited
  * ItemIdData.lp_off and ItemIdData.lp_len to 13 bits (see itemid.h).
+ *
+ * uint16 is still valid, but the limit has been raised to 15 bits.
+ * 06 Jan 98 - darrenk
  */
 typedef uint16 LocationIndex;
 
@@ -98,6 +101,9 @@ typedef uint16 LocationIndex;
  *						  page header, opaque space and a minimal tuple;
  *						  on the high end, we can only support pages up
  *						  to 8KB because lp_off/lp_len are 13 bits.
+ *
+ *						  see above comment.  Now use 15 bits and pages
+ *						  up to 32KB at your own risk.
  */
 typedef struct OpaqueData
 {
@@ -191,8 +197,11 @@ typedef enum
  *
  * XXX currently all page sizes are "valid" but we only actually
  *	   use BLCKSZ.
+ *
+ * 01/06/98 Now does something useful.  darrenk
+ *
  */
-#define PageSizeIsValid(pageSize) 1
+#define PageSizeIsValid(pageSize) ((pageSize) == BLCKSZ)
 
 /*
  * PageGetPageSize --

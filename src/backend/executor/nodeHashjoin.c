@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.8 1997/09/08 21:43:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.9 1998/01/13 04:03:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,20 +17,13 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
-
 #include "postgres.h"
-#include "storage/bufmgr.h"		/* for BLCKSZ */
-#include "storage/fd.h"			/* for SEEK_ */
-#include "executor/executor.h"
+
 #include "executor/execdebug.h"
+#include "executor/executor.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
-
 #include "optimizer/clauses.h"	/* for get_leftop */
-
-
-#include "utils/palloc.h"
 
 static TupleTableSlot *
 			ExecHashJoinOuterGetTuple(Plan *node, Plan *parent, HashJoinState *hjstate);

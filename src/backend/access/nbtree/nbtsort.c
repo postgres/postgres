@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.26 1998/01/07 21:01:59 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.27 1998/01/13 04:03:41 scrappy Exp $
  *
  * NOTES
  *
@@ -49,13 +49,12 @@
 
 #include <fcntl.h>
 
-#include <postgres.h>
+#include "postgres.h"
 
-#include <utils/memutils.h>
-#include <storage/bufpage.h>
-#include <access/nbtree.h>
-#include <storage/bufmgr.h>
-
+#include "access/nbtree.h"
+#include "storage/bufmgr.h"
+#include "storage/bufpage.h"
+#include "utils/memutils.h"
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
@@ -64,7 +63,7 @@
 #endif
 
 #ifdef BTREE_BUILD_STATS
-#include <tcop/tcopprot.h>
+#include "tcop/tcopprot.h"
 extern int	ShowExecutorStats;
 
 #endif
@@ -85,7 +84,7 @@ static void _bt_uppershutdown(Relation index, BTPageState *state);
 #define FASTBUILD_MERGE
 
 #define MAXTAPES		(7)
-#define TAPEBLCKSZ		(MAXBLCKSZ << 2)
+#define TAPEBLCKSZ		(BLCKSZ << 2)
 #define TAPETEMP		"pg_btsortXXXXXX"
 
 extern int	NDirectFileRead;
@@ -458,7 +457,7 @@ _bt_tapewrite(BTTapeBlock *tape, int eor)
 {
 	tape->bttb_eor = eor;
 	FileWrite(tape->bttb_fd, (char *) tape, TAPEBLCKSZ);
-	NDirectFileWrite += TAPEBLCKSZ / MAXBLCKSZ;
+	NDirectFileWrite += TAPEBLCKSZ / BLCKSZ;
 	_bt_tapereset(tape);
 }
 
@@ -496,7 +495,7 @@ _bt_taperead(BTTapeBlock *tape)
 		return (0);
 	}
 	Assert(tape->bttb_magic == BTTAPEMAGIC);
-	NDirectFileRead += TAPEBLCKSZ / MAXBLCKSZ;
+	NDirectFileRead += TAPEBLCKSZ / BLCKSZ;
 	return (1);
 }
 
