@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.34 1998/09/08 02:50:20 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.35 1998/09/09 03:48:01 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,9 +185,6 @@ union_planner(Query *parse)
 	 */
 	if (parse->hasAggs)
 	{
-		int			old_length = 0,
-					new_length = 0;
-
 		result_plan = (Plan *) make_agg(tlist, result_plan);
 
 		/*
@@ -256,31 +253,10 @@ union_planner(Query *parse)
 			 */
 			foreach(clause, ((Agg *) result_plan)->plan.qual)
 			{
-
-				/*
-				 * Make sure there are aggregates in the havingQual if so,
-				 * the list must be longer after
-				 * check_having_qual_for_aggs
-				 */
-				old_length = length(((Agg *) result_plan)->aggs);
-
 				((Agg *) result_plan)->aggs = nconc(((Agg *) result_plan)->aggs,
 					  check_having_qual_for_aggs((Node *) lfirst(clause),
 						((Agg *) result_plan)->plan.lefttree->targetlist,
 										 ((List *) parse->groupClause)));
-
-				/*
-				 * Have a look at the length of the returned list. If
-				 * there is no difference, no aggregates have been found
-				 * and that means, that the Qual belongs to the where
-				 * clause
-				 */
-				if (((new_length = length(((Agg *) result_plan)->aggs)) == old_length) ||
-					(new_length == 0))
-				{
-					elog(ERROR, "This could have been done in a where clause!!");
-					return (Plan *) NIL;
-				}
 			}
 			PlannerVarParam = lnext(PlannerVarParam);
 			if (vpm != NULL)

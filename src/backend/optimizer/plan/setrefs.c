@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.26 1998/09/01 04:29:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.27 1998/09/09 03:48:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1045,36 +1045,15 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 	else if (is_funcclause(clause) || not_clause(clause) ||
 			 or_clause(clause) || and_clause(clause))
 	{
-		int			new_length = 0,
-					old_length = 0;
-
 		/*
 		 * This is a function. Recursively call this routine for its
 		 * arguments... (i.e. for AND, OR, ... clauses!)
 		 */
 		foreach(t, ((Expr *) clause)->args)
 		{
-			old_length = length((List *) agg_list);
-
 			agg_list = nconc(agg_list,
 				 check_having_qual_for_aggs(lfirst(t), subplanTargetList,
 											groupClause));
-
-			/*
-			 * The arguments of OR or AND clauses are comparisons or
-			 * relations and because we are in the havingQual there must
-			 * be at least one operand using an aggregate function. If so,
-			 * we will find it and the lenght of the agg_list will be
-			 * increased after the above call to
-			 * check_having_qual_for_aggs. If there are no aggregates
-			 * used, the query could have been formulated using the
-			 * 'where' clause
-			 */
-			if (((new_length = length((List *) agg_list)) == old_length) || (new_length == 0))
-			{
-				elog(ERROR, "This could have been done in a where clause!!");
-				return NIL;
-			}
 		}
 		return agg_list;
 	}
@@ -1199,7 +1178,6 @@ check_having_qual_for_aggs(Node *clause, List *subplanTargetList, List *groupCla
 	}
 	else
 	{
-
 		/*
 		 * Ooops! we can not handle that!
 		 */
