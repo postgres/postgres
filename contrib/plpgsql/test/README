@@ -1,0 +1,22 @@
+Test suite for PL/pgSQL
+
+Scenario:
+
+    A building with a modern TP cabel installation where any
+    of the wall connectors can be used to plug in phones,
+    ethernet interfaces or local office hubs. The backside
+    of the wall connectors is wired to one of several patch-
+    fields in the building.
+
+    In the patchfields, there are hubs and all the slots
+    representing the wall connectors. In addition there are
+    slots that can represent a phone line from the central
+    phone system.
+
+    Triggers ensure consistency of the patching information.
+
+    Functions are used to build up powerful views that let
+    you look behind the wall when looking at a patchfield
+    or into a room.
+
+
