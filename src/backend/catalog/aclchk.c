@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.5 1998/02/11 19:09:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.6 1998/02/24 03:31:45 scrappy Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -39,7 +39,7 @@
 #include "utils/tqual.h"
 #include "fmgr.h"
 
-static int32 aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode);
+static int32 aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode);
 
 /*
  * Enable use of user relations in place of real system catalogs.
@@ -150,7 +150,7 @@ ChangeAcl(char *relname,
 		elog(DEBUG, "ChangeAcl: using default ACL");
 #endif
 /*		old_acl = acldefault(((Form_pg_class) GETSTRUCT(htp))->relowner); */
-		old_acl = acldefault();
+		old_acl = acldefault(relname);
 		free_old_acl = 1;
 	}
 
@@ -281,7 +281,7 @@ in_group(AclId uid, AclId gid)
  * any one of the requirements of 'mode'.  Returns 0 otherwise.
  */
 static int32
-aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
+aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 {
 	unsigned i;
 	AclItem *aip,
@@ -292,7 +292,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	/* if no acl is found, use world default */
 	if (!acl)
 	{
-		acl = acldefault();
+		acl = acldefault(relname);
 	}
 
 	num = ACL_NUM(acl);
@@ -475,7 +475,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 									 Anum_pg_class_relowner,
 									 RelationGetTupleDescriptor(relation),
 									 (bool *) NULL);
-		acl = aclownerdefault(ownerId);
+		acl = aclownerdefault(relname, ownerId);
 	}
 #else
 	{							/* This is why the syscache is great... */
@@ -511,7 +511,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		heap_close(relation);
 	}
 #endif
-	result = aclcheck(acl, id, (AclIdType) ACL_IDTYPE_UID, mode);
+	result = aclcheck(relname, acl, id, (AclIdType) ACL_IDTYPE_UID, mode);
 	if (acl)
 		pfree(acl);
 	return (result);

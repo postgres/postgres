@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.24 1998/02/11 19:12:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.25 1998/02/24 03:31:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <utils/memutils.h>
 #include "utils/acl.h"
 #include "utils/syscache.h"
+#include "catalog/catalog.h"
 #include "catalog/pg_user.h"
 #include "miscadmin.h"
 
@@ -342,7 +343,7 @@ aclitemgt(AclItem *a1, AclItem *a2)
 }
 
 Acl		   *
-aclownerdefault(AclId ownerid)
+aclownerdefault(char *relname, AclId ownerid)
 {
 	Acl		   *acl;
 	AclItem    *aip;
@@ -351,7 +352,7 @@ aclownerdefault(AclId ownerid)
 	aip = ACL_DAT(acl);
 	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
 	aip[0].ai_id = ACL_ID_WORLD;
-	aip[0].ai_mode = ACL_WORLD_DEFAULT;
+	aip[0].ai_mode = IsSystemRelationName(relname) ? ACL_RD : ACL_WORLD_DEFAULT;
 	aip[1].ai_idtype = ACL_IDTYPE_UID;
 	aip[1].ai_id = ownerid;
 	aip[1].ai_mode = ACL_OWNER_DEFAULT;
@@ -359,7 +360,7 @@ aclownerdefault(AclId ownerid)
 }
 
 Acl		   *
-acldefault(void)
+acldefault(char *relname)
 {
 	Acl		   *acl;
 	AclItem    *aip;
@@ -368,7 +369,7 @@ acldefault(void)
 	aip = ACL_DAT(acl);
 	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
 	aip[0].ai_id = ACL_ID_WORLD;
-	aip[0].ai_mode = ACL_WORLD_DEFAULT;
+	aip[0].ai_mode = IsSystemRelationName(relname) ? ACL_RD : ACL_WORLD_DEFAULT;
 	return (acl);
 }
 
