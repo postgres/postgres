@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.106 2004/10/05 19:30:20 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.107 2004/12/31 19:09:37 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -231,7 +231,7 @@ ifeq ($(PORTNAME), cygwin)
 	rm -f postgres.dll postgres.def libpostgres.a
 endif
 ifeq ($(PORTNAME), win32)
-	rm -f postgres.dll postgres.def libpostgres.a
+	rm -f postgres.dll postgres.def libpostgres.a $(WIN32RES)
 endif
 	for i in $(DIRS); do $(MAKE) -C $$i clean || exit; done
 
