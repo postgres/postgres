@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.40 1999/01/27 00:36:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.41 1999/01/27 01:11:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ getTypeOutAndElem(Oid type, Oid* typOutput, Oid* typElem)
 typedef struct {				/* Per-attribute information */
 	Oid			typoutput;		/* Oid for the attribute's type output fn */
 	Oid			typelem;		/* typelem value to pass to the output fn */
-	/* more soon... */
+	FmgrInfo	finfo;			/* Precomputed call info for typoutput */
 } PrinttupAttrInfo;
 
 typedef struct {
@@ -138,8 +138,9 @@ printtup_prepare_info(DR_printtup* myState, TupleDesc typeinfo, int numAttrs)
 	for (i = 0; i < numAttrs; i++)
 	{
 		PrinttupAttrInfo* thisState = myState->myinfo + i;
-		getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
-						  &thisState->typoutput, &thisState->typelem);
+		if (getTypeOutAndElem((Oid) typeinfo->attrs[i]->atttypid,
+							  &thisState->typoutput, &thisState->typelem))
+			fmgr_info(thisState->typoutput, &thisState->finfo);
 	}
 }
 
@@ -200,15 +201,14 @@ printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver* self)
 	 */
 	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
+		PrinttupAttrInfo* thisState = myState->myinfo + i;
 		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (isnull)
 			continue;
-		if (OidIsValid(myState->myinfo[i].typoutput))
+		if (OidIsValid(thisState->typoutput))
 		{
-			outputstr = fmgr(myState->myinfo[i].typoutput,
-							 attr,
-							 myState->myinfo[i].typelem,
-							 typeinfo->attrs[i]->atttypmod);
+			outputstr = (char *) (*fmgr_faddr(&thisState->finfo))
+				(attr, thisState->typelem, typeinfo->attrs[i]->atttypmod);
 #ifdef MULTIBYTE
 			p = pg_server_to_client(outputstr, strlen(outputstr));
 			outputlen = strlen(p);
