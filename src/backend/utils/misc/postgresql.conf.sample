@@ -2,19 +2,23 @@
 # PostgreSQL configuration file
 # -----------------------------
 #
-# This file consists of lines of the form
+# This file consists of lines of the form:
 #
 #   name = value
 #
-# (The `=' is optional.) White space is collapsed, comments are
-# introduced by `#' anywhere on a line.  The complete list of option
-# names and allowed values can be found in the PostgreSQL
-# documentation.  The commented-out settings shown in this file
-# represent the default values.
-
+# (The '=' is optional.) White space may be used. Comments are introduced
+# with '#' anywhere on a line. The complete list of option names and
+# allowed values can be found in the PostgreSQL documentation. The
+# commented-out settings shown in this file represent the default values.
+#
 # Any option can also be given as a command line switch to the
-# postmaster, e.g., 'postmaster -c log_connections=on'. Some options
+# postmaster, e.g. 'postmaster -c log_connections=on'. Some options
 # can be changed at run-time with the 'SET' SQL command.
+#
+# This file is read on postmaster startup and when the postmaster
+# receives a SIGHUP. If you edit the file on a running system, you have 
+# to SIGHUP the postmaster for the changes to take effect, or use 
+# "pg_ctl reload".
 
 
 #========================================================================
