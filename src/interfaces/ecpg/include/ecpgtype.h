@@ -70,7 +70,7 @@ extern		"C"
 		ECPGd_EODT				/* End of descriptor types. */
 	};
 
-#define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)
+#define IS_SIMPLE_TYPE(type) (((type) >= ECPGt_char && (type) <= ECPGt_varchar2) || (type)>=ECPGt_long_long)
 
 #ifdef __cplusplus
 }

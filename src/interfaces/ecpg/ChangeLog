@@ -1059,5 +1059,9 @@ Mon Feb 19 08:25:14 CET 2001
 Mon Feb 26 15:22:04 CET 2001
 
 	- Fixed misplaced variables FoundInto and QueryIsRule.
+
+Don Mar 29 10:23:05 CEST 2001
+
+	- Applied bug fix in ecpgtype.h by Adriaan Joubert.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
