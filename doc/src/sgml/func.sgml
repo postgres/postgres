@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.72 2001/09/20 14:20:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.73 2001/09/20 16:41:26 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -640,6 +640,14 @@
       <entry></entry>
      </row>
 -->
+     <row>
+      <entry><function>sign</function>(<type>numeric</type>)</entry>
+      <entry><type>numeric</type></entry>
+      <entry>sign of the argument (-1, 0, +1)</entry>
+      <entry><literal>sign(-8.4)</literal></entry>
+      <entry>-1</entry>
+     </row>
+
      <row>
       <entry><function>sqrt</function>(<type>dp</type>)</entry>
       <entry><type>dp</type></entry>
