@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.6 1998/03/14 22:55:21 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/cluster.l,v 1.7 1998/03/15 02:13:23 momjian Exp $
 .TH CLUSTER SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 cluster - give storage clustering advice to Postgres
@@ -51,9 +51,10 @@ of a big table will not fit in the cache.
 Another way is to use SELECT ... INTO TABLE temp FROM ...ORDER BY ...
 This uses the PostgreSQL sorting code in ORDER BY to match the index,
 and is much faster for unordered data.  You then drop the old table, use
-ALTER TABLE RENAME to rename 'temp' to the old name, and recreate the
-indexes.  From then on, CLUSTER should be fast because most of the heap
-data has been already ordered.
+ALTER TABLE RENAME to rename 'temp' to the old name, and recreate the b
+bindexes.  The only problem is that oids will not be preserved.  From
+then on, CLUSTER should be fast because most of the heap data has
+already been ordered, and the existing index is used.
 .SH EXAMPLE
 .nf
 /*
