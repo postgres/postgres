@@ -102,9 +102,10 @@ SELECT '' AS two, * from CHECK2_TBL;
 --
 CREATE SEQUENCE INSERT_SEQ;
 CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
-	y TEXT DEFAULT '-NULL-', z INT DEFAULT -1 * currval('insert_seq'),
-	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8), 
-		CHECK (x + z = 0));
+	y TEXT DEFAULT '-NULL-',
+	z INT DEFAULT -1 * currval('insert_seq'),
+	CONSTRAINT INSERT_CON CHECK (x >= 3 AND y <> 'check failed' AND x < 8),
+	CHECK (x + z = 0));
 INSERT INTO INSERT_TBL VALUES (null, null, null);
 ERROR:  ExecAppend: rejected due to CHECK constraint $2
 INSERT INTO INSERT_TBL(x,z) VALUES (2, -2);
@@ -170,6 +171,26 @@ SELECT 'eight' AS one, currval('insert_seq');
  eight |       8
 (1 row)
 
+--
+-- Check inheritance of defaults and constraints
+--
+CREATE TABLE INSERT_CHILD (cx INT default 42,
+	cy INT CHECK (cy > x))
+	INHERITS (INSERT_TBL);
+INSERT INTO INSERT_CHILD(x,z,cy) VALUES (7,-7,11);
+INSERT INTO INSERT_CHILD(x,z,cy) VALUES (7,-7,6);
+ERROR:  ExecAppend: rejected due to CHECK constraint insert_child_cy
+INSERT INTO INSERT_CHILD(x,z,cy) VALUES (6,-7,7);
+ERROR:  ExecAppend: rejected due to CHECK constraint $1
+INSERT INTO INSERT_CHILD(x,y,z,cy) VALUES (6,'check failed',-6,7);
+ERROR:  ExecAppend: rejected due to CHECK constraint insert_con
+SELECT * FROM INSERT_CHILD;
+ x |   y    | z  | cx | cy 
+---+--------+----+----+----
+ 7 | -NULL- | -7 | 42 | 11
+(1 row)
+
+DROP TABLE INSERT_CHILD;
 --
 -- Check constraints on INSERT INTO
 --
