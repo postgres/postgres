@@ -9,7 +9,7 @@ import org.postgresql.Driver;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.12 2003/03/07 18:39:45 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.13 2003/03/14 01:21:47 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -105,7 +105,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 			PBatchUpdateException updex =
 				new PBatchUpdateException("postgresql.stat.batch.error",
-										  new Integer(i), batch.elementAt(i), resultSucceeded);
+										  new Integer(i), m_sqlFragments[0], resultSucceeded);
 			updex.setNextException(e);
 
 			throw updex;
