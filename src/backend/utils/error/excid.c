@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.9 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/excid.c,v 1.10 2001/02/06 01:53:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,18 +41,6 @@ Exception	BadArg = {"Bad Argument to Function Call"};
 /*****************************************************************************
  *	 Specific Recoverable Exceptions										 *
  *****************************************************************************/
-
-/*
- * BadAllocSize
- *		Indicates that an allocation request is of unreasonable size.
- */
-Exception	BadAllocSize = {"Too Large Allocation Request"};
-
-/*
- * ExhaustedMemory
- *		Indicates an dynamic memory allocation failed.
- */
-Exception	ExhaustedMemory = {"Memory Allocation Failed"};
 
 /*
  * Unimplemented

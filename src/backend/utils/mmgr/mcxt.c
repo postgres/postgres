@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.26 2001/01/24 19:43:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.27 2001/02/06 01:53:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,8 +417,9 @@ MemoryContextAlloc(MemoryContext context, Size size)
 {
 	AssertArg(MemoryContextIsValid(context));
 
-	LogTrap(!AllocSizeIsValid(size), BadAllocSize,
-			("size=%d [0x%x]", size, size));
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "MemoryContextAlloc: invalid request size %lu",
+			 (unsigned long) size);
 
 	return (*context->methods->alloc) (context, size);
 }
@@ -474,8 +475,9 @@ repalloc(void *pointer, Size size)
 
 	AssertArg(MemoryContextIsValid(header->context));
 
-	LogTrap(!AllocSizeIsValid(size), BadAllocSize,
-			("size=%d [0x%x]", size, size));
+	if (!AllocSizeIsValid(size))
+		elog(ERROR, "repalloc: invalid request size %lu",
+			 (unsigned long) size);
 
     return (*header->context->methods->realloc) (header->context,
 												 pointer, size);
