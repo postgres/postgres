@@ -145,7 +145,7 @@ public class Connection implements java.sql.Connection
     if(info.getProperty("user")==null)
       throw new SQLException("The user property is missing. It is mandatory.");
     if(info.getProperty("password")==null)
-      throw new SQLException("The password property is missing. It is mandatory.")
+      throw new SQLException("The password property is missing. It is mandatory.");
     
     this_driver = d;
     this_url = new String(url);
