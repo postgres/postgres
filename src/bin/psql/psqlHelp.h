@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.29 1997/10/01 19:42:53 momjian Exp $
+ * $Id: psqlHelp.h,v 1.30 1997/10/02 13:58:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static struct _helpStruct QL_HELP[] = {
 	"copy [binary] <class_name> [with oids]\n\t{to|from} {<filename>|stdin|stdout} [using delimiters <delim>];"},
 	{"create",
 		"Please more be specific:",
-	"\tcreate aggregate\n\tcreate database\n\tcreate function\n\tcreate index\n\tcreate operator\n\tcreate rule\n\tcreate sequence\n\tcreate table\n\tcreate type\n\tcreate view"},
+	"\tcreate aggregate\n\tcreate database\n\tcreate function\n\tcreate index\n\tcreate operator\n\tcreate rule\n\tcreate sequence\n\tcreate table\n\tcreate trigger\n\tcreate type\n\tcreate view"},
 	{"create aggregate",
 		"define an aggregate function",
 	"create aggregate <agg_name> [as] (basetype = <data_type>, \n\t[sfunc1 = <sfunc_1>, stype1 = <sfunc1_return_type>]\n\t[sfunc2 = <sfunc_2>, stype2 = <sfunc2_return_type>]\n\t[,finalfunc = <final-function>]\n\t[,initcond1 = <initial-cond1>][,initcond2 = <initial-cond2>]);"},
@@ -77,7 +77,10 @@ static struct _helpStruct QL_HELP[] = {
 	"create sequence <sequence_name>\n\t[increment <NUMBER>]\n\t[start <NUMBER>]\n\t[minvalue <NUMBER>]\n\t[maxvalue <NUMBER>]\n\t[cache <NUMBER>]\n\t[cycle];"},
 	{"create table",
 		"create a new table",
-	"create table <class_name> ( <attr1> <type1> [not null] [default <value>],...)\n\t[inherits (<class_name1>,...<class_nameN>)\n\tconstraint <name> check (<test>) [,check (<test>)]\n\tarchive=<archive_mode>\n\tstore=<smgr_name>\n\tarch_store=<smgr_name>];"},
+	"create table <class_name>\n\t(<attr1> <type1> [default <expression>] [not null] [,...])\n\t[inherits (<class_name1>,...<class_nameN>)\n\t[[constraint <name>] check <condition> [,...] ]\n\tarchive=<archive_mode>\n\tstore=<smgr_name>\n\tarch_store=<smgr_name>];"},
+	{"create trigger",
+		"create a new trigger",
+	"create trigger <trigger_name> after|before event1 [or event2 [or event3] ]\n\ton <class_name> for each row|statement\n\texecute procedure <func_name> ([arguments]);\n\n\teventX is one of INSERT, DELETE, UPDATE"},
 	{"create type",
 		"create a new user-defined base data type",
 	"create type <typename> (\n\tinternallength = (<number> | variable),\n\t[externallength = (<number>|variable),]\n\tinput=<input_function>, output = <output_function>\n\t[,element = <typename>][,delimiter=<character>][,default=\'<string>\']\n\t[,send = <send_function>][,receive = <receive_function>][,passedbyvalue]);"},
@@ -147,6 +150,9 @@ static struct _helpStruct QL_HELP[] = {
 	{"load",
 		"dynamically load a module",
 	"load <filename>;"},
+	{"move",
+		"move an cursor position",
+	"move [forward|backward] [<number>|all] [in <cursorname>];"},
 	{"notify",
 		"signal all frontends and backends listening on a relation",
 	"notify <class_name>"},
