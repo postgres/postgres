@@ -1801,6 +1801,15 @@ Fri May 21 15:17:35 CEST 2004
 	- Fixed DEALLOCATE PREPARE to use correct function call
 	- Made sure connect statement does not accept single char variable,
 	  but only strings.
+	  
+Sat May 22 13:11:12 CEST 2004
+
+	- Added pg_config_paths.h to ecpglib.
+	
+Thu Jun 17 13:50:06 CEST 2004
+
+	- Added patch by ISHIDA Akio to allow indicators in execute
+	  statements.
 	- Set pgtypes library version to 1.2.
 	- Set ecpg version to 3.2.0.
 	- Set compat library version to 1.2.
