@@ -248,3 +248,13 @@ Wed Jun  3 13:38:57 CEST 1998
 	  CREATE RULE
 	- Set library version to 2.3
 	- Set version to 2.3.3
+
+Thu Jul  2 20:30:14 CEST 1998
+
+	- Changed new style db name to allow connection types "tcp" and
+	  "unix" only
+
+Tue Jul  7 15:14:14 CEST 1998
+
+	- Fixed some bugs in preproc.y
+	- Set version to 2.3.4

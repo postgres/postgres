@@ -291,7 +291,9 @@ ECPGdump_a_struct(FILE *o, const char *name, const char * ind_name, long arrsiz,
 		offset = obuf;
 	}
 	else
+	{
 		offset = offsetarg;
+	}
 
 	sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);
 	prefix = pbuf;
@@ -347,7 +349,9 @@ ECPGfree_type(struct ECPGtype * typ)
 			free(typ->u.members);
 		}
 		else
+		{
 			abort();
+		}
 	}
 	free(typ);
 }

@@ -4032,11 +4032,23 @@ connection_target: database_name opt_server opt_port
 		}
         |  db_prefix server opt_port '/' database_name opt_options
                 {
-		  /* new style: esql:postgresql://server[:port][/dbname] */
+		  /* new style: <tcp|unix>:postgresql://server[:port][/dbname] */
                   if (strncmp($2, "://", 3) != 0)
 		  {
 		    sprintf(errortext, "parse error at or near '%s'", $2);
 		    yyerror(errortext);
+		  }
+
+		  if (strncmp($1, "unix", 4) == 0 && strncmp($2, "localhost", 9) != 0)
+		  {
+		    sprintf(errortext, "unix domain sockets only work on 'localhost'");
+                    yyerror(errortext);
+		  }
+
+		  if (strncmp($1, "unix", 4) != 0 && strncmp($1, "tcp", 3) != 0)
+		  {
+		    sprintf(errortext, "only protocols 'tcp' and 'unix' are supported");
+                    yyerror(errortext);
 		  }
 	
 		  $$ = make4_str(make5_str(make1_str("\""), $1, $2, $3, make1_str("/")), $5, $6, make1_str("\""));
@@ -4061,7 +4073,7 @@ db_prefix: ident cvariable
 		    yyerror(errortext);	
 		  }
 
-		  if (strcmp($1, "esql") != 0 && strcmp($1, "ecpg") != 0 && strcmp($1, "sql") != 0 && strcmp($1, "isql") != 0 && strcmp($1, "proc") != 0)
+		  if (strcmp($1, "tcp") != 0 && strcmp($1, "unix") != 0)
 		  {
 		    sprintf(errortext, "Illegal connection type %s", $1);
 		    yyerror(errortext);
