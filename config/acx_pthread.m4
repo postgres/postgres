@@ -82,6 +82,8 @@ esac
 if test x"$acx_pthread_ok" = xno; then
 for flag in $acx_pthread_flags; do
 
+        tryPTHREAD_CFLAGS=""
+        tryPTHREAD_LIBS=""
         case $flag in
                 none)
                 AC_MSG_CHECKING([whether pthreads work without any flags])
@@ -125,7 +127,7 @@ for flag in $acx_pthread_flags; do
                     [pthread_t th; pthread_join(th, 0);
                      pthread_attr_init(0); pthread_cleanup_push(0, 0);
                      pthread_create(0,0,0,0); pthread_cleanup_pop(0); ],
-                    [acx_pthread_ok=yes])
+                    [acx_pthread_ok=yes], [acx_pthread_ok=no])
 
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
@@ -138,7 +140,6 @@ for flag in $acx_pthread_flags; do
             PTHREAD_LIBS=" $tryPTHREAD_LIBS $PTHREAD_LIBS"
             PTHREAD_CFLAGS="$PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
         fi
-
 done
 fi
 

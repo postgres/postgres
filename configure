@@ -13204,6 +13204,8 @@ esac
 if test x"$acx_pthread_ok" = xno; then
 for flag in $acx_pthread_flags; do
 
+        tryPTHREAD_CFLAGS=""
+        tryPTHREAD_LIBS=""
         case $flag in
                 none)
                 echo "$as_me:$LINENO: checking whether pthreads work without any flags" >&5
@@ -13317,6 +13319,7 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
+acx_pthread_ok=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
@@ -13332,7 +13335,6 @@ echo "${ECHO_T}$acx_pthread_ok" >&6
             PTHREAD_LIBS=" $tryPTHREAD_LIBS $PTHREAD_LIBS"
             PTHREAD_CFLAGS="$PTHREAD_CFLAGS $tryPTHREAD_CFLAGS"
         fi
-
 done
 fi
 
