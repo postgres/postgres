@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.84 2002/03/02 21:39:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.85 2002/03/04 04:45:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,9 +121,11 @@ void
 SetDataDir(const char *dir)
 {
 	char	   *new;
+	int			newlen;
 
 	AssertArg(dir);
 
+	/* If presented path is relative, convert to absolute */
 	if (dir[0] != '/')
 	{
 		char	   *buf;
@@ -163,6 +165,14 @@ SetDataDir(const char *dir)
 		if (!new)
 			elog(FATAL, "out of memory");
 	}
+
+	/*
+	 * Strip any trailing slash.  Not strictly necessary, but avoids
+	 * generating funny-looking paths to individual files.
+	 */
+	newlen = strlen(new);
+	if (newlen > 1 && new[newlen-1] == '/')
+		new[newlen-1] = '\0';
 
 	if (DataDir)
 		free(DataDir);
