@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.20 2004/07/12 19:15:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.21 2004/07/12 19:18:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1309,7 +1309,7 @@ main(int argc, char **argv)
 	pg_data = getenv("PGDATA");
 	if (pg_data)
 	{
-		/* XXX modifies environment var in-place ... ugly ... */
+		pg_data = xstrdup(pg_data);
 		canonicalize_path(pg_data);
 	}
 
