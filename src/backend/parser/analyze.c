@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.225 2002/03/31 06:26:31 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.226 2002/04/02 06:30:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #ifdef MULTIBYTE
@@ -801,25 +802,43 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	if (is_serial)
 	{
 		char	   *sname;
+		char	   *snamespace;
 		char	   *qstring;
 		A_Const    *snamenode;
 		FuncCall   *funccallnode;
-		CreateSeqStmt *sequence;
+		CreateSeqStmt *seqstmt;
+
+		/*
+		 * Determine name and namespace to use for the sequence.
+		 */
+		sname = makeObjectName(cxt->relation->relname, column->colname, "seq");
+		snamespace = get_namespace_name(RangeVarGetCreationNamespace(cxt->relation));
+
+		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
+			 cxt->stmtType, sname, cxt->relation->relname, column->colname);
+
+		/*
+		 * Build a CREATE SEQUENCE command to create the sequence object,
+		 * and add it to the list of things to be done before this
+		 * CREATE/ALTER TABLE.
+		 */
+		seqstmt = makeNode(CreateSeqStmt);
+		seqstmt->sequence = makeRangeVar(snamespace, sname);
+		seqstmt->options = NIL;
+
+		cxt->blist = lappend(cxt->blist, seqstmt);
 
 		/*
 		 * Create appropriate constraints for SERIAL.  We do this in full,
 		 * rather than shortcutting, so that we will detect any
 		 * conflicting constraints the user wrote (like a different
 		 * DEFAULT).
-		 */
-		sname = makeObjectName((cxt->relation)->relname, column->colname, "seq");
-
-		/*
+		 *
 		 * Create an expression tree representing the function call
 		 * nextval('"sequencename"')
 		 */
-		qstring = palloc(strlen(sname) + 2 + 1);
-		sprintf(qstring, "\"%s\"", sname);
+		qstring = palloc(strlen(snamespace) + strlen(sname) + 5 + 1);
+		sprintf(qstring, "\"%s\".\"%s\"", snamespace, sname);
 		snamenode = makeNode(A_Const);
 		snamenode->val.type = T_String;
 		snamenode->val.val.str = qstring;
@@ -845,21 +864,6 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_NOTNULL;
 		column->constraints = lappend(column->constraints, constraint);
-
-		/*
-		 * Build a CREATE SEQUENCE command to create the sequence object,
-		 * and add it to the list of things to be done before this
-		 * CREATE/ALTER TABLE.
-		 */
-		sequence = makeNode(CreateSeqStmt);
-		sequence->sequence = copyObject(cxt->relation);
-		sequence->sequence->relname = pstrdup(sname);
-		sequence->options = NIL;
-
-		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
-		cxt->stmtType, sequence->sequence->relname, (cxt->relation)->relname, column->colname);
-
-		cxt->blist = lappend(cxt->blist, sequence);
 	}
 
 	/* Process column constraints, if any... */
