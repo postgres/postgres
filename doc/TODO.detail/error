@@ -1,0 +1,405 @@
+From pgsql-hackers-owner+M16120=candle.pha.pa.us=pgman@postgresql.org Fri Nov 30 12:14:19 2001
+Return-path: <pgsql-hackers-owner+M16120=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAUIEIR21802
+	for <pgman@candle.pha.pa.us>; Fri, 30 Nov 2001 13:14:18 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAUI6ER13094
+	for <pgman@candle.pha.pa.us>; Fri, 30 Nov 2001 12:11:00 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16120=candle.pha.pa.us=pgman@postgresql.org)
+Received: from moutvdom01.kundenserver.de (moutvdom01.kundenserver.de [195.20.224.200])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAUI58m98870
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Nov 2001 13:05:08 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from [195.20.224.208] (helo=mrvdom01.schlund.de)
+	by moutvdom01.kundenserver.de with esmtp (Exim 2.12 #2)
+	id 169s27-00049P-00
+	for pgsql-hackers@postgresql.org; Fri, 30 Nov 2001 19:05:07 +0100
+Received: from p3e9e6fa2.dip0.t-ipconnect.de ([62.158.111.162])
+	by mrvdom01.schlund.de with esmtp (Exim 2.12 #2)
+	id 169s21-0001UP-00
+	for pgsql-hackers@postgresql.org; Fri, 30 Nov 2001 19:05:03 +0100
+Date: Fri, 30 Nov 2001 19:12:16 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+X-Sender: <peter@peter.localdomain>
+To: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Backend error message style issues
+Message-ID: <Pine.LNX.4.30.0111292302020.609-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: ORr
+
+Now that we've gone through nearly one development cycle with national
+language support, I'd like to bring up a number of issues concerning the
+style of the backend error messages that make life difficult, but probably
+not only for the translators but for users as well.  Not all of these are
+strictly translation issues, but the message catalogs make for a good
+overview of what's going on.
+
+I hope we can work through all of these during the next development
+period.
+
+Prefixing messages with command names
+-------------------------------------
+
+For instance,
+
+| CREATE DATABASE: permission denied
+
+This "command: message" style is typical for command-line programs and
+it's pretty useful there if you run many commands in a pipe.  The same
+usefulness could probably be derived if you run many SQL commands in a
+function.  (Just "permission denied" would be very confusing there!)
+
+If we want to use that style we should make it consistent and we should
+automate it.  Via the "command tag" mechanism we already know what command
+we're executing, so we can automatically prefix all messages that way.  It
+could even be switched off by the user if it's deemed annoying.
+
+
+Prefixing messages with function names
+--------------------------------------
+
+The function names obviously have no meaning to the user.  It is claimed
+that they allow a developer to locate the place the error was raised
+faster, but that's only half the truth.  Firstly, this whole thing doesn't
+work if the displayed name of the function was actually passed in from
+elsewhere.  Then it takes you three times longer to locate the source
+because you *think* you know where it was but it's not there.  Secondly,
+a developer doesn't have the need to locate every error.  For instance,
+
+| ExecAppend: rejected due to CHECK constraint foo
+
+There's no need to debug anything there, it's a perfectly normal use
+situation.
+
+I think the key here is to distinguish error messages that are perfectly
+normal user-level events from messages which really represent an "assert
+failure, but continue gracefully", such as
+
+| initGISTstate: numberOfAttributes %d > %d
+
+The latter could better be written something like
+
+| BETTER_BE_TRUE(index->rd_att->natts > INDEX_MAX_KEYS);
+
+we could lead to an error message in the style of an assert failure,
+including the expression in question and file and line information (and
+bug reporting suggestions).  This way the developer doesn't have to write
+any message text at all but still gets much better information to locate
+the source.  (E.g., note that the tested variable isn't even called
+"numberOfAttributes".)
+
+The exact API could be tuned to include some other information such as an
+informal message, but I think something along these lines needs to be
+worked out.
+
+
+Quoting
+-------
+
+Which is better:
+
+function '%s' not found
+function "%s" not found
+function %s not found
+
+I think two kinds of quotes is looking messy.  Personal suggestion:
+double quotes.
+
+
+Capitalization and punctuation
+------------------------------
+
+Which one?
+
+ERROR:  Permission denied.
+ERROR:  Permission denied
+ERROR:  permission denied
+
+I have personally used the GNU-recommended way which is the third, mostly
+just because it is *some* standardized way.  I don't have a strong feeling
+about the initial capitalization, but I'm against the periods except when
+the message is really a sentence and it contains some other punctuation
+(commas, etc.) or the message consists of more than one sentence.
+
+
+Grammatical structure and choice of words
+-----------------------------------------
+
+There are many others besides the above choices:
+
+ERROR: Permission was denied.
+ERROR: You don't have permission to do <task>.
+ERROR: Permission to do <task> was denied.
+ERROR: <task>: Permission denied
+
+In other cases there's a sea of possibilities:
+
+couldn't find THING
+can't find THING
+THING wasn't found
+unable to locate THING
+lookup of THING failed
+THING doesn't exist
+
+Strictly speaking, there are at least four different meanings among those
+six messages, yet they're used mostly randomly.
+
+There are a number of things to think about here: active vs passive, can
+vs could, complete sentence vs telegram style, use of colons, addressing
+the user with "you [cannot...]".
+
+And please let's not have the program talk in the "I"-form ("I have rolled
+back the current transaction ...").
+
+
+
+More esoteric discussions are also possible, but I'm going to postpone
+those. ;-)  However, I think it's worth working on this and perhaps
+putting together a "manual of style" that applies to all parts of
+PostgreSQL.  This would significantly improve the overall perceived
+quality.  Some projects like KDE, GNU, and GCC have teams that discuss
+these kinds of things and it's definitely showing.
+
+-- 
+Peter Eisentraut   peter_e@gmx.net
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M16128=candle.pha.pa.us=pgman@postgresql.org Fri Nov 30 13:39:41 2001
+Return-path: <pgsql-hackers-owner+M16128=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAUJdfR29066
+	for <pgman@candle.pha.pa.us>; Fri, 30 Nov 2001 14:39:41 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAUJXkR15701
+	for <pgman@candle.pha.pa.us>; Fri, 30 Nov 2001 13:36:17 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16128=candle.pha.pa.us=pgman@postgresql.org)
+Received: from corvette.mascari.com (dhcp065-024-158-068.columbus.rr.com [65.24.158.68])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAUJMnm01940
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Nov 2001 14:22:49 -0500 (EST)
+	(envelope-from mascarm@mascari.com)
+Received: from mascari.com (ferrari.mascari.com [192.168.2.1])
+	by corvette.mascari.com (8.9.3/8.9.3) with ESMTP id OAA20637;
+	Fri, 30 Nov 2001 14:16:52 -0500
+Message-ID: <3C07DBAD.A9735975@mascari.com>
+Date: Fri, 30 Nov 2001 14:19:09 -0500
+From: Mike Mascari <mascarm@mascari.com>
+Organization: Mascari Development Inc.
+X-Mailer: Mozilla 4.77 [en] (WinNT; U)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Backend error message style issues
+References: <Pine.LNX.4.30.0111292302020.609-100000@peter.localdomain>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut wrote:
+> 
+> Now that we've gone through nearly one development cycle with national
+> language support, I'd like to bring up a number of issues concerning the
+> style of the backend error messages that make life difficult, but probably
+> not only for the translators but for users as well.  Not all of these are
+> strictly translation issues, but the message catalogs make for a good
+> overview of what's going on.
+
+For what its worth, Oracle 8 ships with an error.txt file which
+dictates the message standards to which their products comply.
+Roughly:
+
+Size Of Message:
+---------------
+
+Cannot exceed 76 characters, even when embedded format specifiers
+are apart of the message. Only 
+start-up and system-dependent messages can exceed 76 characters.
+
+Simple Language:
+---------------
+
+Use non-cryptic messages and overly technical language.
+
+Upper vs. Lowercase:
+-------------------
+
+Use uppercase for commands and keywords, lowercase for message
+wording, including the first letter (which agrees with your use,
+Peter).
+
+Commands, Keywords, Parameter Values:
+------------------------------------
+
+When possible, give the command, keyword and parameters used in the
+message. 
+
+BAD: The relation could not be created
+GOOD: CREATE TABLE failed for table "foo" because the disk is full
+
+Period:
+------
+
+Do not end messages with a period (also agrees with your
+conclusion).
+
+Numbers:
+-------
+
+Don't enclose numbers with special characters. For example:
+
+BAD: rows returned by subquery (3) exceeded limit (1)
+GOOD: the subquery returned 3 rows exceeding the 1 row limit
+
+Quotes:
+------
+
+Don't use single or double quotes to emphasize a text variable or
+command
+
+Single Quotes:
+-------------
+
+Never use them.
+
+Double Quotes:
+-------------
+
+Always and only use them to identify database objects. 
+
+BAD: Unable to drop table employees
+GOOD: DROP TABLE of "employees" failed due to referential integrity
+constraints
+
+Ellipses:
+--------
+
+Don't use them. 
+
+BAD: Unable to drop column mascarm.employees.salary
+GOOD: ALTER TABLE was unable to drop the column "salary" table
+"employees" schema "mascarm"
+
+Parentheses:
+-----------
+
+Always and only use parentheses for constraint names
+
+BAD: not null constraint ri_employees violated
+GOOD: not null constraint (ri_employees) violated
+
+Brackets:
+--------
+
+Always and only used for program arguments
+
+Grammar:
+-------
+
+Use complete sentences whenever possible without the trailing
+period. Don't use multiple sentences. Use the active voice. Don't
+use an aggressive tone.
+
+Style:
+-----
+
+Make positive suggestions. Explain what is invalid and what is
+valid.
+
+Example:
+
+BAD: file name invalid
+BETTER: COPY failed because the file name was too long
+
+Routine names:
+-------------
+
+Do not use routine names in messages. Again, agrees with you, Peter.
+
+FWIW, 
+
+Mike Mascari
+mascarm@mascari.com
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M16130=candle.pha.pa.us=pgman@postgresql.org Fri Nov 30 14:09:48 2001
+Return-path: <pgsql-hackers-owner+M16130=candle.pha.pa.us=pgman@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fAUK9lR02095
+	for <pgman@candle.pha.pa.us>; Fri, 30 Nov 2001 15:09:48 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fAUK3MR16820
+	for <pgman@candle.pha.pa.us>; Fri, 30 Nov 2001 14:05:48 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16130=candle.pha.pa.us=pgman@postgresql.org)
+Received: from sss.pgh.pa.us ([192.204.191.242])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fAUJnLm02954
+	for <pgsql-hackers@postgresql.org>; Fri, 30 Nov 2001 14:49:21 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.4/8.11.4) with ESMTP id fAUJnEi10307;
+	Fri, 30 Nov 2001 14:49:14 -0500 (EST)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Backend error message style issues 
+In-Reply-To: <Pine.LNX.4.30.0111292302020.609-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0111292302020.609-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Fri, 30 Nov 2001 19:12:16 +0100"
+Date: Fri, 30 Nov 2001 14:49:14 -0500
+Message-ID: <10303.1007149754@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> I hope we can work through all of these during the next development
+> period.
+
+Too bad we didn't do it *before* doing a lot of translation work :-(.
+
+Yes, I agree that a pass of rationalizing the error messages would be
+useful.  Might want to think about that old bugaboo, error codes,
+while we're at it.  Also the perennial complaint that "ERROR" and
+"DEBUG" macros tend to conflict with other things.  As long as we're
+going to touch many/all of the elog() calls, couldn't we try to clean
+up all these issues?
+
+> Which is better:
+
+> function '%s' not found
+> function "%s" not found
+> function %s not found
+
+Given that 'x' and "x" mean very different things in SQL, I think that
+the first form is just plain wrong when an identifier is involved.
+Unfortunately a lot of older code uses that style.  I've tried to use
+double quotes in new messages, but have restrained myself from wholesale
+changes of existing messages.
+
+> More esoteric discussions are also possible, but I'm going to postpone
+> those. ;-)  However, I think it's worth working on this and perhaps
+> putting together a "manual of style" that applies to all parts of
+> PostgreSQL.  This would significantly improve the overall perceived
+> quality.
+
+Sounds like a plan to me: put together a style guide first, and then
+make a pass through the code to try to implement it.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
