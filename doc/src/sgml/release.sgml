@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.101 2001/09/16 04:18:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.102 2001/09/22 21:36:38 momjian Exp $
 -->
 
  <appendix id="release">
@@ -1811,7 +1811,7 @@ New install commands for plpgsql(Jan)
 
    <note>
    <title>Release date</title>
-   <simpara>1999-12-20</simpara>
+   <simpara>1998-12-20</simpara>
    </note>
 
 <!--
@@ -1857,7 +1857,7 @@ Fix for datetime constant problem on some platforms(Thomas)
 
    <note>
    <title>Release date</title>
-   <simpara>1999-12-18</simpara>
+   <simpara>1998-12-18</simpara>
    </note>
 
 <!--

@@ -1416,7 +1416,7 @@ New install commands for plpgsql(Jan)
   ------------------------------------------------------------------------
 
 
-Release 6.4.2  (1999-12-20)
+Release 6.4.2  (1998-12-20)
 
 The 6.4.1 release was improperly packaged. This also has one additional bug
 fix.
@@ -1436,7 +1436,7 @@ Fix for datetime constant problem on some platforms(Thomas)
   ------------------------------------------------------------------------
 
 
-Release 6.4.1  (1999-12-18)
+Release 6.4.1  (1998-12-18)
 
 This is basically a cleanup release for 6.4. We have fixed a variety of
 problems reported by 6.4 users.
