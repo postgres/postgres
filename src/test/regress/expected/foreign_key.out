@@ -699,7 +699,7 @@ CREATE TABLE FKTABLE_FAIL2 ( ftest1 int, CONSTRAINT fkfail1 FOREIGN KEY (ftest1)
 NOTICE:  CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ERROR:  UNIQUE constraint matching given keys for referenced table "pktable" not found
 DROP TABLE FKTABLE_FAIL1;
-ERROR:  Relation 'fktable_fail1' does not exist
+ERROR:  table "fktable_fail1" is nonexistent
 DROP TABLE FKTABLE_FAIL2;
-ERROR:  Relation 'fktable_fail2' does not exist
+ERROR:  table "fktable_fail2" is nonexistent
 DROP TABLE PKTABLE;

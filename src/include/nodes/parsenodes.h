@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.116 2000/10/07 00:58:21 tgl Exp $
+ * $Id: parsenodes.h,v 1.117 2000/10/18 16:16:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,15 +389,24 @@ typedef struct DefineStmt
 	List	   *definition;		/* a list of DefElem */
 } DefineStmt;
 
+
 /* ----------------------
- *		Drop Table Statement
+ *		Drop Table|Sequence|View|Index|Rule|Type Statement
  * ----------------------
  */
+
+#define DROP_TABLE    1
+#define DROP_SEQUENCE 2
+#define DROP_VIEW     3
+#define DROP_INDEX    4
+#define DROP_RULE     5
+#define DROP_TYPE_P   6
+
 typedef struct DropStmt
 {
 	NodeTag		type;
-	List	   *relNames;		/* relations to be dropped */
-	bool		sequence;
+	List	   *names;
+	int			removeType;
 } DropStmt;
 
 /* ----------------------
@@ -526,17 +535,6 @@ typedef struct RemoveOperStmt
 	char	   *opname;			/* operator to drop */
 	List	   *args;			/* types of the arguments */
 } RemoveOperStmt;
-
-/* ----------------------
- *		Drop {Type|Index|Rule|View} Statement
- * ----------------------
- */
-typedef struct RemoveStmt
-{
-	NodeTag		type;
-	int			removeType;		/* P_TYPE|INDEX|RULE|VIEW */
-	char	   *name;			/* name to drop */
-} RemoveStmt;
 
 /* ----------------------
  *		Alter Table Statement

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.6 1999/07/22 15:09:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.7 2000/10/18 16:16:03 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP VIEW <replaceable class="PARAMETER">name</replaceable>
+DROP VIEW <replaceable class="PARAMETER">name</replaceable> [, ...]
   </synopsis>
   
   <refsect2 id="R2-SQL-DROPVIEW-1">
@@ -70,7 +70,7 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR: RewriteGetRuleEventRel: rule "_RET<replaceable class="PARAMETER">name</replaceable>" not found
+ERROR: view <replaceable class="parameter">name</replaceable> is nonexistent
        </computeroutput></term>
       <listitem>
        <para>

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.96 2000/10/16 17:08:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.97 2000/10/18 16:16:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,71 @@
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
 
+
+/*
+ *
+ */
+
+struct kindstrings {
+	char kind;
+	char *name;
+	char *command;
+};
+
+static struct kindstrings kindstringarray[] = {
+	{ RELKIND_RELATION, "table", "TABLE" },
+	{ RELKIND_SEQUENCE, "sequence", "SEQUENCE" },
+	{ RELKIND_VIEW, "view", "VIEW" },
+	{ RELKIND_INDEX, "index", "INDEX" },
+	{ '\0', "", "" }
+};
+
+
+static void
+DropErrorMsg(char* relname, char wrongkind, char rightkind)
+{
+	struct kindstrings *rentry;
+	struct kindstrings *wentry;
+
+	for (rentry = kindstringarray; rentry->kind != '\0'; rentry++)
+		if (rentry->kind == rightkind)
+			break;
+	Assert(rentry->kind != '\0');
+
+	for (wentry = kindstringarray; wentry->kind != '\0'; wentry++)
+		if (wentry->kind == wrongkind)
+			break;
+	Assert(wentry->kind != '\0');
+	
+	elog(ERROR, "%s is not a %s. Use 'DROP %s' to remove a %s",
+			relname, rentry->name, wentry->command, wentry->name);
+}
+
+static void
+CheckClassKind(char *name, char rightkind)
+{
+	HeapTuple	tuple;
+	struct kindstrings *rentry;
+	Form_pg_class classform;
+
+	tuple = SearchSysCacheTuple(RELNAME,
+								PointerGetDatum(name),
+								0, 0, 0);
+
+	if (!HeapTupleIsValid(tuple))
+	{
+		for (rentry = kindstringarray; rentry->kind != '\0'; rentry++)
+			if (rentry->kind == rightkind)
+				break;
+		Assert(rentry->kind != '\0');
+		elog(ERROR, "%s \"%s\" is nonexistent", rentry->name, name);
+	}
+
+	classform = (Form_pg_class) GETSTRUCT(tuple);
+
+	if (classform->relkind != rightkind)
+		DropErrorMsg(name, classform->relkind, rightkind);
+}
 
 /* ----------------
  *		general utility function invoker
@@ -149,41 +214,76 @@ ProcessUtility(Node *parsetree,
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
-				List	   *args = stmt->relNames;
+				List	   *args = stmt->names;
 				List	   *arg;
 
-				set_ps_display(commandTag = "DROP");
-
-				/* check as much as we can before we start dropping ... */
-				foreach(arg, args)
-				{
-					Relation	rel;
+				foreach(arg, args) {
 
 					relname = strVal(lfirst(arg));
 					if (!allowSystemTableMods && IsSystemRelationName(relname))
 						elog(ERROR, "class \"%s\" is a system catalog",
 							 relname);
-					rel = heap_openr(relname, AccessExclusiveLock);
-					if (stmt->sequence &&
-						rel->rd_rel->relkind != RELKIND_SEQUENCE)
-						elog(ERROR, "Use DROP TABLE to drop table '%s'",
-							 relname);
-					if (!(stmt->sequence) &&
-						rel->rd_rel->relkind == RELKIND_SEQUENCE)
-						elog(ERROR, "Use DROP SEQUENCE to drop sequence '%s'",
-							 relname);
-					/* close rel, but keep lock until end of xact */
-					heap_close(rel, NoLock);
-					if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-						elog(ERROR, "you do not own class \"%s\"",
-							 relname);
+
+					set_ps_display(commandTag = "DROP");
+
+					switch(stmt->removeType)
+					{
+						case DROP_TABLE:
+							CheckClassKind(relname, RELKIND_RELATION);
+							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+								elog(ERROR, "you do not own table \"%s\"",
+									 relname);
+							RemoveRelation(relname);
+
+							break;
+
+						case DROP_SEQUENCE:
+							CheckClassKind(relname, RELKIND_SEQUENCE);
+							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+								elog(ERROR, "you do not own sequence \"%s\"",
+									 relname);
+							RemoveRelation(relname);
+
+							break;
+
+						case DROP_VIEW:
+							CheckClassKind(relname, RELKIND_VIEW);
+							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+								elog(ERROR, "you do not own view \"%s\"",
+									 relname);
+							RemoveView(relname);
+
+							break;
+
+						case DROP_INDEX:
+							CheckClassKind(relname, RELKIND_INDEX);
+							if (!pg_ownercheck(GetUserId(), relname, RELNAME))
+								elog(ERROR, "%s: %s", relname, 
+										aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+							RemoveIndex(relname);
+
+							break;
+
+						case DROP_RULE:
+							{
+								char	   *rulename = relname;
+								int			aclcheck_result;
+
+								relationName = RewriteGetRuleEventRel(rulename);
+								aclcheck_result = pg_aclcheck(relationName, GetUserId(), ACL_RU);
+								if (aclcheck_result != ACLCHECK_OK)
+									elog(ERROR, "%s: %s", relationName, 
+											aclcheck_error_strings[aclcheck_result]);
+								RemoveRewriteRule(rulename);
+							}
+							break;
+
+						case DROP_TYPE_P:
+							RemoveType(relname);
+							break;
+					}
 				}
-				/* OK, terminate 'em all */
-				foreach(arg, args)
-				{
-					relname = strVal(lfirst(arg));
-					RemoveRelation(relname);
-				}
+
 			}
 			break;
 
@@ -449,57 +549,6 @@ ProcessUtility(Node *parsetree,
 				ExtendIndex(stmt->idxname,		/* index name */
 							(Expr *) stmt->whereClause, /* where */
 							stmt->rangetable);
-			}
-			break;
-
-		case T_RemoveStmt:
-			{
-				RemoveStmt *stmt = (RemoveStmt *) parsetree;
-
-				set_ps_display(commandTag = "DROP");
-
-				switch (stmt->removeType)
-				{
-					case INDEX:
-						relname = stmt->name;
-						if (!allowSystemTableMods && IsSystemRelationName(relname))
-							elog(ERROR, "class \"%s\" is a system catalog index",
-								 relname);
-						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
-							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-						RemoveIndex(relname);
-						break;
-					case RULE:
-						{
-							char	   *rulename = stmt->name;
-							int			aclcheck_result;
-
-							relationName = RewriteGetRuleEventRel(rulename);
-							aclcheck_result = pg_aclcheck(relationName, GetUserId(), ACL_RU);
-							if (aclcheck_result != ACLCHECK_OK)
-								elog(ERROR, "%s: %s", relationName, aclcheck_error_strings[aclcheck_result]);
-							RemoveRewriteRule(rulename);
-						}
-						break;
-					case TYPE_P:
-						/* XXX moved to remove.c */
-						RemoveType(stmt->name);
-						break;
-					case VIEW:
-						{
-							char	   *viewName = stmt->name;
-							char	   *ruleName;
-
-							ruleName = MakeRetrieveViewRuleName(viewName);
-							relationName = RewriteGetRuleEventRel(ruleName);
-							if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
-								elog(ERROR, "%s: %s", relationName, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
-							pfree(ruleName);
-							RemoveView(viewName);
-						}
-						break;
-				}
-				break;
 			}
 			break;
 

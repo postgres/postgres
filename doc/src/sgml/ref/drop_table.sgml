@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.7 2000/07/21 04:37:10 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.8 2000/10/18 16:16:03 momjian Exp $
 Postgres documentation
 -->
 
@@ -39,7 +39,7 @@ DROP TABLE <replaceable class="PARAMETER">name</replaceable> [, ...]
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing table or view to drop.
+	The name of an existing table to drop.
        </para>
       </listitem>
      </varlistentry>
@@ -68,11 +68,11 @@ DROP
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-ERROR Relation "<replaceable class="parameter">name</replaceable>" Does Not Exist!
+ERROR: table "<replaceable class="parameter">name</replaceable>" is nonexistent
        </computeroutput></term>
       <listitem>
        <para>
-	If the specified table or view does not exist in the database.
+	If the specified table does not exist in the database.
        </para>
       </listitem>
      </varlistentry>
@@ -89,8 +89,8 @@ ERROR Relation "<replaceable class="parameter">name</replaceable>" Does Not Exis
    Description
   </title>
   <para>
-   <command>DROP TABLE</command> removes tables and views from the database.
-   Only its owner may destroy a table or view. A table
+   <command>DROP TABLE</command> removes tables from the database.
+   Only its owner may destroy a table. A table
    may be emptied of rows, but not destroyed, by using <command>DELETE</command>.
   </para>
   <para>

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.76 2000/10/07 00:58:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.77 2000/10/18 16:16:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,9 +850,9 @@ _equalDefineStmt(DefineStmt *a, DefineStmt *b)
 static bool
 _equalDropStmt(DropStmt *a, DropStmt *b)
 {
-	if (!equal(a->relNames, b->relNames))
+	if (!equal(a->names, b->names))
 		return false;
-	if (a->sequence != b->sequence)
+	if (a->removeType != b->removeType)
 		return false;
 
 	return true;
@@ -989,16 +989,6 @@ _equalRemoveOperStmt(RemoveOperStmt *a, RemoveOperStmt *b)
 	return true;
 }
 
-static bool
-_equalRemoveStmt(RemoveStmt *a, RemoveStmt *b)
-{
-	if (a->removeType != b->removeType)
-		return false;
-	if (!equalstr(a->name, b->name))
-		return false;
-
-	return true;
-}
 
 static bool
 _equalRenameStmt(RenameStmt *a, RenameStmt *b)
@@ -1958,9 +1948,6 @@ equal(void *a, void *b)
 			break;
 		case T_RemoveOperStmt:
 			retval = _equalRemoveOperStmt(a, b);
-			break;
-		case T_RemoveStmt:
-			retval = _equalRemoveStmt(a, b);
 			break;
 		case T_RenameStmt:
 			retval = _equalRenameStmt(a, b);
