@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Nov  9 10:10:57 EST 2004
+Last updated:		Tue Nov  9 11:50:52 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -838,6 +838,8 @@ Miscellaneous
   sorting, or execution of single query.  The major advantage of such a 
   feature would be to allow multiple CPUs to work together to process a 
   single query.
+
+* Research the use of larger pages sizes
 
 
 Source Code
