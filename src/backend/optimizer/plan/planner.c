@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.39 1999/02/02 17:46:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.40 1999/02/03 19:31:24 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,12 @@
 
 #include "executor/executor.h"
 
+#include "utils/builtins.h"
+#include "utils/syscache.h"
+#include "access/genam.h"
+#include "parser/parse_oper.h"
+
+static bool need_sortplan(List *sortcls, Plan *plan);
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
 extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
 			   List *groupClause, Plan *subplan);
@@ -344,7 +350,7 @@ union_planner(Query *parse)
 	}
 	else
 	{
-		if (parse->sortClause)
+		if (parse->sortClause && need_sortplan(parse->sortClause, result_plan))
 			return (make_sortplan(tlist, parse->sortClause, result_plan));
 		else
 			return ((Plan *) result_plan);
@@ -572,3 +578,170 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	/* success */
 	return;
 }
+
+
+/* ----------
+ * Support function for need_sortplan
+ * ----------
+ */
+static TargetEntry *
+get_matching_tle(Plan *plan, Resdom *resdom)
+{
+	List		*i;
+	TargetEntry	*tle;
+
+	foreach (i, plan->targetlist) {
+		tle = (TargetEntry *)lfirst(i);
+		if (tle->resdom->resno == resdom->resno)
+			return tle;
+	}
+	return NULL;
+}
+
+
+/* ----------
+ * Check if a user requested ORDER BY is already satisfied by
+ * the choosen index scan.
+ *
+ * Returns TRUE if sort is required, FALSE if can be omitted.
+ * ----------
+ */
+static bool
+need_sortplan(List *sortcls, Plan *plan)
+{
+	Relation	indexRel;
+	IndexScan	*indexScan;
+	Oid		indexId;
+	List		*i;
+	HeapTuple	htup;
+	Form_pg_index	index_tup;
+	int		key_no = 0;
+
+	/* ----------
+	 * Must be an IndexScan
+	 * ----------
+	 */
+	if (nodeTag(plan) != T_IndexScan) {
+		return TRUE;
+	}
+
+	indexScan = (IndexScan *)plan;
+
+	/* ----------
+	 * Should not have left- or righttree
+	 * ----------
+	 */
+	if (plan->lefttree != NULL) {
+		return TRUE;
+	}
+	if (plan->righttree != NULL) {
+		return TRUE;
+	}
+
+	/* ----------
+	 * Must be a single index scan
+	 * ----------
+	 */
+	if (length(indexScan->indxid) != 1) {
+		return TRUE;
+	}
+
+	/* ----------
+	 * Indices can only have up to 8 attributes. So an ORDER BY using
+	 * more that 8 attributes could never be satisfied by an index.
+	 * ----------
+	 */
+	if (length(sortcls) > 8) {
+		return TRUE;
+	}
+
+	/* ----------
+	 * The choosen Index must be a btree
+	 * ----------
+	 */
+	indexId = lfirsti(indexScan->indxid);
+
+	indexRel = index_open(indexId);
+	if (strcmp(nameout(&(indexRel->rd_am->amname)), "btree") != 0) {
+		heap_close(indexRel);
+		return TRUE;
+	}
+	heap_close(indexRel);
+
+	/* ----------
+	 * Fetch the index tuple
+	 * ----------
+	 */
+	htup = SearchSysCacheTuple(INDEXRELID,
+			ObjectIdGetDatum(indexId), 0, 0, 0);
+	if (!HeapTupleIsValid(htup)) {
+		elog(ERROR, "cache lookup for index %d failed", indexId);
+	}
+	index_tup = (Form_pg_index) GETSTRUCT(htup);
+
+	/* ----------
+	 * Check if all the sort clauses match the attributes in the index
+	 * ----------
+	 */
+	foreach (i, sortcls) {
+		SortClause	*sortcl;
+		Resdom		*resdom;
+		TargetEntry	*tle;
+		Var		*var;
+
+		sortcl = (SortClause *) lfirst(i);
+
+		resdom = sortcl->resdom;
+		tle = get_matching_tle(plan, resdom);
+		if (tle == NULL) {
+			/* ----------
+			 * Could this happen?
+			 * ----------
+			 */
+			return TRUE;
+		}
+		if (nodeTag(tle->expr) != T_Var) {
+			/* ----------
+			 * The target list expression isn't a var, so it
+			 * cannot be the indexed attribute
+			 * ----------
+			 */
+			return TRUE;
+		}
+		var = (Var *)(tle->expr);
+
+		if (var->varno != indexScan->scan.scanrelid) {
+			/* ----------
+			 * This Var isn't from the scan relation. So it isn't
+			 * that of the index
+			 * ----------
+			 */
+			return TRUE;
+		}
+
+		if (var->varattno != index_tup->indkey[key_no]) {
+			/* ----------
+			 * It isn't the indexed attribute.
+			 * ----------
+			 */
+			return TRUE;
+		}
+
+		if (oprid(oper("<", resdom->restype, resdom->restype, FALSE)) != sortcl->opoid) {
+			/* ----------
+			 * Sort order isn't in ascending order.
+			 * ----------
+			 */
+			return TRUE;
+		}
+
+		key_no++;
+	}
+
+	/* ----------
+	 * Index matches ORDER BY - sort not required
+	 * ----------
+	 */
+	return FALSE;
+}
+
