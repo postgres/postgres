@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.209 2003/03/20 18:58:02 momjian Exp $
+ * $Id: builtins.h,v 1.210 2003/03/21 23:18:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -568,6 +568,7 @@ extern Datum network_sup(PG_FUNCTION_ARGS);
 extern Datum network_supeq(PG_FUNCTION_ARGS);
 extern Datum network_network(PG_FUNCTION_ARGS);
 extern Datum network_netmask(PG_FUNCTION_ARGS);
+extern Datum network_hostmask(PG_FUNCTION_ARGS);
 extern Datum network_masklen(PG_FUNCTION_ARGS);
 extern Datum network_broadcast(PG_FUNCTION_ARGS);
 extern Datum network_host(PG_FUNCTION_ARGS);

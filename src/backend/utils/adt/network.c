@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.39 2003/03/21 21:54:29 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/network.c,v 1.40 2003/03/21 23:18:52 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -611,9 +611,8 @@ network_hostmask(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
 
-	dst = (inet *) palloc(VARHDRSZ + sizeof(inet_struct));
 	/* make sure any unused bits are zeroed */
-	MemSet(dst, 0, VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
 
 	if (ip_family(ip) == AF_INET)
 	{
