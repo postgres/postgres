@@ -1,8 +1,11 @@
-/* This is used by psql under Win32 */
-
 /*
- * Copyright (c) 1987, 1993, 1994
- *	The Regents of the University of California.  All rights reserved.
+ * getopt_long() -- long options parser
+ *
+ * Portions Copyright (c) 1987, 1993, 1994
+ * The Regents of the University of California.  All rights reserved.
+ *
+ * Portions Copyright (c) 2003
+ * PostgreSQL Global Development Group
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,35 +34,24 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * $Header: /cvsroot/pgsql/src/port/getopt_long.c,v 1.1 2003/01/06 18:53:25 petere Exp $
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
-#endif   /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-int			opterr = 1,			/* if error message should be printed */
-			optind = 1,			/* index into parent argv vector */
-			optopt,				/* character checked for validity */
-			optreset;			/* reset getopt */
-char	   *optarg;				/* argument associated with option */
+#include "getopt_long.h"
 
-#define BADCH	(int)'?'
-#define BADARG	(int)':'
+#define BADCH	'?'
+#define BADARG	':'
 #define EMSG	""
 
-/*
- * getopt
- *	Parse argc/argv argument vector.
- */
 int
-getopt(nargc, nargv, ostr)
-int			nargc;
-char	   *const * nargv;
-const char *ostr;
+getopt_long(int argc, char * const argv[],
+			const char *optstring,
+			const struct option *longopts, int *longindex)
 {
 	static char *place = EMSG;	/* option letter processing */
 	char	   *oli;			/* option letter list index */
@@ -67,35 +59,116 @@ const char *ostr;
 	if (optreset || !*place)
 	{							/* update scanning pointer */
 		optreset = 0;
-		if (optind >= nargc || *(place = nargv[optind]) != '-')
+
+		if (optind >= argc)
 		{
 			place = EMSG;
 			return -1;
 		}
-		if (place[1] && *++place == '-' && place[1] == '\0')
+
+		place = argv[optind];
+
+		if (place[0] != '-')
+		{
+			place = EMSG;
+			return -1;
+		}
+
+		place++;
+
+		if (place[0] && place[0] == '-' && place[1] == '\0')
 		{						/* found "--" */
 			++optind;
 			place = EMSG;
 			return -1;
 		}
-	}							/* option letter okay? */
-	if ((optopt = (int) *place++) == (int) ':' ||
-		!(oli = strchr(ostr, optopt)))
+
+		if (place[0] && place[0] == '-' && place[1])
+		{
+			/* long option */
+			size_t namelen;
+			int i;
+
+			place++;
+
+			namelen = strcspn(place, "=");
+			for (i = 0; longopts[i].name != NULL; i++)
+			{
+				if (strlen(longopts[i].name) == namelen
+					&& strncmp(place, longopts[i].name, namelen) == 0)
+				{
+					if (longopts[i].has_arg)
+					{
+						if (place[namelen] == '=')
+							optarg = place + namelen + 1;
+						else if (optind < argc-1)
+						{
+							optind++;
+							optarg = argv[optind];
+						}
+						else
+						{
+							if (optstring[0] == ':')
+								return BADARG;
+							if (opterr)
+								fprintf(stderr,
+										"%s: option requires an argument -- %s\n",
+										argv[0], place);
+							place = EMSG;
+							optind++;
+							return BADCH;
+						}
+					}
+					else
+					{
+						optarg = NULL;
+						if (place[namelen] != 0)
+						{
+							/* XXX error? */
+						}
+					}
+
+					optind++;
+
+					if (longindex)
+						*longindex = i;
+
+					place = EMSG;
+
+					if (longopts[i].flag == NULL)
+						return longopts[i].val;
+					else
+					{
+						*longopts[i].flag = longopts[i].val;
+						return 0;
+					}
+				}
+			}
+
+			if (opterr && optstring[0] != ':')
+				fprintf(stderr,
+						"%s: illegal option -- %s\n", argv[0], place);
+			place = EMSG;
+			optind++;
+			return BADCH;
+		}
+	}
+
+	/* short option */
+	optopt = (int) *place++;
+
+	oli = strchr(optstring, optopt);
+	if (!oli)
 	{
-		/*
-		 * if the user didn't specify '-' as an option, assume it means
-		 * -1.
-		 */
-		if (optopt == (int) '-')
-			return -1;
 		if (!*place)
 			++optind;
-		if (opterr && *ostr != ':')
-			(void) fprintf(stderr,
-					   "%s: illegal option -- %c\n", argv[0], optopt);
+		if (opterr && *optstring != ':')
+			fprintf(stderr,
+					"%s: illegal option -- %c\n", argv[0], optopt);
 		return BADCH;
 	}
-	if (*++oli != ':')
+
+	if (oli[1] != ':')
 	{							/* don't need argument */
 		optarg = NULL;
 		if (!*place)
@@ -105,22 +178,22 @@ const char *ostr;
 	{							/* need an argument */
 		if (*place)				/* no white space */
 			optarg = place;
-		else if (nargc <= ++optind)
+		else if (argc <= ++optind)
 		{						/* no arg */
 			place = EMSG;
-			if (*ostr == ':')
+			if (*optstring == ':')
 				return BADARG;
 			if (opterr)
-				(void) fprintf(stderr,
-							   "%s: option requires an argument -- %c\n",
-							   argv[0], optopt);
+				fprintf(stderr,
+						"%s: option requires an argument -- %c\n",
+						argv[0], optopt);
 			return BADCH;
 		}
 		else
-/* white space */
-			optarg = nargv[optind];
+			/* white space */
+			optarg = argv[optind];
 		place = EMSG;
 		++optind;
 	}
-	return optopt;				/* dump back option letter */
+	return optopt;
 }

@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.43 2002/10/18 22:05:36 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.44 2003/01/06 18:53:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,11 @@
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
+
+#ifndef HAVE_GETOPT_LONG
+#include "getopt_long.h"
+int optreset;
 #endif
 
 #ifdef ENABLE_NLS
@@ -85,7 +90,6 @@ main(int argc, char **argv)
 	static int	use_setsessauth = 0;
 	static int	disable_triggers = 0;
 
-#ifdef HAVE_GETOPT_LONG
 	struct option cmdopts[] = {
 		{"clean", 0, NULL, 'c'},
 		{"create", 0, NULL, 'C'},
@@ -124,8 +128,6 @@ main(int argc, char **argv)
 
 		{NULL, 0, NULL, 0}
 	};
-#endif   /* HAVE_GETOPT_LONG */
-
 
 #ifdef ENABLE_NLS
 	setlocale(LC_ALL, "");
@@ -154,11 +156,8 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:iI:lL:NoOp:P:rRsS:t:T:uU:vWxX:", cmdopts, NULL)) != -1)
-#else
-	while ((c = getopt(argc, argv, "acCd:f:F:h:iI:lL:NoOp:P:rRsS:t:T:uU:vWxX:")) != -1)
-#endif
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:iI:lL:NoOp:P:rRsS:t:T:uU:vWxX:",
+							cmdopts, NULL)) != -1)
 	{
 		switch (c)
 		{
@@ -285,11 +284,9 @@ main(int argc, char **argv)
 				}
 				break;
 
-#ifdef HAVE_GETOPT_LONG
 				/* This covers the long options equivalent to -X xxx. */
 			case 0:
 				break;
-#endif
 
 			default:
 				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
@@ -378,26 +375,16 @@ usage(const char *progname)
 	printf(_("  %s [OPTION]... [FILE]\n"), progname);
 
 	printf(_("\nGeneral options:\n"));
-#ifdef HAVE_GETOPT_LONG
 	printf(_("  -d, --dbname=NAME        output database name\n"));
 	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  -F, --format=c|t         specify backup file format\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"));
 	printf(_("  -l, --list               print summarized TOC of the archive\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
-#else /* not HAVE_GETOPT_LONG */
-	printf(_("  -d NAME                  output database name\n"));
-	printf(_("  -f FILENAME              output file name\n"));
-	printf(_("  -F c|t                   specify backup file format\n"));
-	printf(_("  -i                       proceed even when server version mismatches\n"));
-	printf(_("  -l                       print summarized TOC of the archive\n"));
-	printf(_("  -v                       verbose mode\n"));
-#endif /* not HAVE_GETOPT_LONG */
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
 
 	printf(_("\nOptions controlling the output content:\n"));
-#ifdef HAVE_GETOPT_LONG
 	printf(_("  -a, --data-only          restore only the data, no schema\n"));
 	printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
 	printf(_("  -C, --create             issue commands to create the database\n"));
@@ -423,44 +410,12 @@ usage(const char *progname)
 			 "                           of reconnecting, if possible\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
-#else /* not HAVE_GETOPT_LONG */
-	printf(_("  -a                       restore only the data, no schema\n"));
-	printf(_("  -c                       clean (drop) schema prior to create\n"));
-	printf(_("  -C                       issue commands to create the database\n"));
-	printf(_("  -I NAME                  restore named index\n"));
-	printf(_("  -L FILENAME              use specified table of contents for ordering\n"
-			 "                           output from this file\n"));
-	printf(_("  -N                       restore in original dump order\n"));
-	printf(_("  -o                       restore in OID order\n"));
-	printf(_("  -O                       do not reconnect to database to match\n"
-			 "                           object owner\n"));
-	printf(_("  -P NAME(args)            restore named function\n"));
-	printf(_("  -r                       rearrange output to put indexes etc. at end\n"));
-	printf(_("  -R                       disallow ALL reconnections to the database\n"));
-	printf(_("  -s                       restore only the schema, no data\n"));
-	printf(_("  -S NAME                  specify the superuser user name to use for\n"
-			 "                           disabling triggers\n"));
-	printf(_("  -t NAME                  restore named table\n"));
-	printf(_("  -T NAME                  restore named trigger\n"));
-	printf(_("  -x                       skip restoration of access privileges (grant/revoke)\n"));
-	printf(_("  -X use-set-session-authorization\n"
-			 "                           use SET SESSION AUTHORIZATION commands instead\n"
-			 "                           of reconnecting, if possible\n"));
-	printf(_("  -X disable-triggers      disable triggers during data-only restore\n"));
-#endif /* not HAVE_GETOPT_LONG */
 
 	printf(_("\nConnection options:\n"));
-#ifdef HAVE_GETOPT_LONG
 	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
-#else /* not HAVE_GETOPT_LONG */
-	printf(_("  -h HOSTNAME              database server host name\n"));
-	printf(_("  -p PORT                  database server port number\n"));
-	printf(_("  -U NAME                  connect as specified database user\n"));
-	printf(_("  -W                       force password prompt (should happen automatically)\n"));
-#endif /* not HAVE_GETOPT_LONG */
 
 	printf(_("\nIf no input file name is supplied, then standard input is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.33 2002/11/21 23:34:43 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.34 2003/01/06 18:53:24 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -74,7 +74,7 @@
 
    <para>
     <command>pg_restore</command> accepts the following command
-    line arguments.  (Long option forms are only available on some platforms.)
+    line arguments.
 
     <variablelist>
      <varlistentry>

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.313 2002/12/27 17:10:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.314 2003/01/06 18:53:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,11 @@
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
+#endif
+
+#ifndef HAVE_GETOPT_LONG
+#include "getopt_long.h"
+int optreset;
 #endif
 
 #include "access/attnum.h"
@@ -179,7 +184,6 @@ main(int argc, char **argv)
 
 	RestoreOptions *ropt;
 
-#ifdef HAVE_GETOPT_LONG
 	static struct option long_options[] = {
 		{"data-only", no_argument, NULL, 'a'},
 		{"blobs", no_argument, NULL, 'b'},
@@ -218,7 +222,6 @@ main(int argc, char **argv)
 		{NULL, 0, NULL, 0}
 	};
 	int			optindex;
-#endif
 
 #ifdef ENABLE_NLS
 	setlocale(LC_ALL, "");
@@ -260,12 +263,8 @@ main(int argc, char **argv)
 		}
 	}
 
-#ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:Z:", long_options, &optindex)) != -1)
-#else
-	while ((c = getopt(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:Z:-")) != -1)
-#endif
-
+	while ((c = getopt_long(argc, argv, "abcCdDf:F:h:ioOp:RsS:t:uU:vWxX:Z:",
+							long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -415,23 +414,15 @@ main(int argc, char **argv)
 					exit(1);
 				}
 				break;
+
 			case 'Z':			/* Compression Level */
 				compressLevel = atoi(optarg);
 				break;
-
-#ifndef HAVE_GETOPT_LONG
-			case '-':
-				fprintf(stderr,
-				  _("%s was compiled without support for long options.\n"
-					"Use --help for help on invocation options.\n"),
-						progname);
-				exit(1);
-				break;
-#else
 				/* This covers the long options equivalent to -X xxx. */
+
 			case 0:
 				break;
-#endif
+
 			default:
 				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
 				exit(1);
@@ -658,26 +649,16 @@ help(const char *progname)
 	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
 
 	printf(_("\nGeneral options:\n"));
-#ifdef HAVE_GETOPT_LONG
 	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
 			 "                           pg_dump version\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
 	printf(_("  -Z, --compress=0-9       compression level for compressed formats\n"));
-#else /* not HAVE_GETOPT_LONG */
-	printf(_("  -f FILENAME              output file name\n"));
-	printf(_("  -F c|t|p                 output file format (custom, tar, plain text)\n"));
-	printf(_("  -i                       proceed even when server version mismatches\n"
-			 "                           pg_dump version\n"));
-	printf(_("  -v                       verbose mode\n"));
-	printf(_("  -Z 0-9                   compression level for compressed formats\n"));
-#endif /* not HAVE_GETOPT_LONG */
 	printf(_("  --help                   show this help, then exit\n"));
 	printf(_("  --version                output version information, then exit\n"));
 
 	printf(_("\nOptions controlling the output content:\n"));
-#ifdef HAVE_GETOPT_LONG
 	printf(_("  -a, --data-only          dump only the data, not the schema\n"));
 	printf(_("  -b, --blobs              include large objects in dump\n"));
 	printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
@@ -699,41 +680,12 @@ help(const char *progname)
 			 "                           than \\connect commands\n"));
 	printf(_("  -X disable-triggers, --disable-triggers\n"
 			 "                           disable triggers during data-only restore\n"));
-#else /* not HAVE_GETOPT_LONG */
-	printf(_("  -a                       dump only the data, not the schema\n"));
-	printf(_("  -b                       include large objects in dump\n"));
-	printf(_("  -c                       clean (drop) schema prior to create\n"));
-	printf(_("  -C                       include commands to create database in dump\n"));
-	printf(_("  -d                       dump data as INSERT, rather than COPY, commands\n"));
-	printf(_("  -D                       dump data as INSERT commands with column names\n"));
-	printf(_("  -o                       include OIDs in dump\n"));
-	printf(_("  -O                       do not output \\connect commands in plain\n"
-			 "                           text format\n"));
-	printf(_("  -R                       disable ALL reconnections to the database in\n"
-			 "                           plain text format\n"));
-	printf(_("  -s                       dump only the schema, no data\n"));
-	printf(_("  -S NAME                  specify the superuser user name to use in\n"
-			 "                           plain text format\n"));
-	printf(_("  -t TABLE                 dump this table only (* for all)\n"));
-	printf(_("  -x                       do not dump privileges (grant/revoke)\n"));
-	printf(_("  -X use-set-session-authorization\n"
-			 "                           output SET SESSION AUTHORIZATION commands rather\n"
-			 "                           than \\connect commands\n"));
-	printf(_("  -X disable-triggers      disable triggers during data-only restore\n"));
-#endif /* not HAVE_GETOPT_LONG */
 
 	printf(_("\nConnection options:\n"));
-#ifdef HAVE_GETOPT_LONG
 	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
-#else /* not HAVE_GETOPT_LONG */
-	printf(_("  -h HOSTNAME              database server host name\n"));
-	printf(_("  -p PORT                  database server port number\n"));
-	printf(_("  -U NAME                  connect as specified database user\n"));
-	printf(_("  -W                       force password prompt (should happen automatically)\n"));
-#endif /* not HAVE_GETOPT_LONG */
 
 	printf(_("\nIf no database name is not supplied, then the PGDATABASE environment\n"
 			 "variable value is used.\n\n"));

@@ -9819,8 +9819,7 @@ test $ac_cv_func_memcmp_working = no && LIBOBJS="$LIBOBJS memcmp.$ac_objext"
 
 
 
-
-for ac_func in cbrt fcvt getopt_long getpeereid memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen fdatasync
+for ac_func in cbrt fcvt getpeereid memmove pstat setproctitle setsid sigprocmask sysconf waitpid dlopen fdatasync
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -10644,7 +10643,8 @@ fi
 
 
 
-for ac_func in fseeko gethostname getrusage inet_aton random srandom strcasecmp strdup strerror strtol strtoul
+
+for ac_func in fseeko gethostname getopt_long getrusage inet_aton random srandom strcasecmp strdup strerror strtol strtoul
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.81 2002/12/12 21:02:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.82 2003/01/06 18:53:24 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -446,10 +446,6 @@ PostgreSQL documentation
       </listitem>
     </varlistentry>
   </variablelist>
-
-  <para>
-   Long options are not available on all platforms.
-  </para>
  </refsect1>
 
 
