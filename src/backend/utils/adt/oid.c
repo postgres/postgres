@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.29 2000/01/10 04:36:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.30 2000/01/10 05:23:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,9 @@ oid8in(char *oidString)
 	{
 		if (sscanf(oidString, "%u", &result[slot]) != 1)
 			break;
-		while (*oidString && *oidString != ' ')
+		do
 			oidString++;
+		while (*oidString && *oidString != ' ')
 	}
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.28 2000/01/10 05:20:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.29 2000/01/10 05:23:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,8 +90,9 @@ int28in(char *intString)
 	{
 		if (sscanf(intString, "%hd", &result[slot]) != 1)
 			break;
-		while (*intString && *intString != ' ')
+		do
 			intString++;
+		while (*intString && *intString != ' ')
 	}
 	while (slot < INDEX_MAX_KEYS)
 		result[slot++] = 0;
