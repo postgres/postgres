@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.122 2000/07/04 06:11:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.123 2000/07/05 16:17:37 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1335,7 +1335,8 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
 
 	if (!LockClassinfoForUpdate(relid, &tuple, &buffer, confirmCommitted))
 		elog(ERROR, "IndexesAreActive couldn't lock %u", relid);
-	if (((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_RELATION)
+	if (((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_RELATION &&
+	    ((Form_pg_class) GETSTRUCT(&tuple))->relkind != RELKIND_TOASTVALUE)
 		elog(ERROR, "relation %u isn't an relation", relid);
 	isactive = ((Form_pg_class) GETSTRUCT(&tuple))->relhasindex;
 	ReleaseBuffer(buffer);

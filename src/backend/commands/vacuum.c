@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.161 2000/06/28 03:31:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.162 2000/07/05 16:17:38 wieck Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -58,7 +58,7 @@ static void vacuum_init(void);
 static void vacuum_shutdown(void);
 static void vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2);
 static VRelList getrels(NameData *VacRelP);
-static void vacuum_rel(Oid relid, bool analyze);
+static void vacuum_rel(Oid relid, bool analyze, bool is_toastrel);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages, VacPageList fraged_pages, int nindices, Relation *Irel);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacpagelist);
@@ -235,7 +235,7 @@ vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2)
 	/* vacuum each heap relation */
 	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
 	{
-		vacuum_rel(cur->vrl_relid, analyze);
+		vacuum_rel(cur->vrl_relid, analyze, false);
 		/* analyze separately so locking is minimized */
 		if (analyze)
 			analyze_rel(cur->vrl_relid, anal_cols2, MESSAGE_LEVEL);
@@ -347,7 +347,7 @@ getrels(NameData *VacRelP)
  *		us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-vacuum_rel(Oid relid, bool analyze)
+vacuum_rel(Oid relid, bool analyze, bool is_toastrel)
 {
 	HeapTuple	tuple;
 	Relation	onerel;
@@ -361,8 +361,10 @@ vacuum_rel(Oid relid, bool analyze)
 				i;
 	VRelStats  *vacrelstats;
 	bool		reindex = false;
+	Oid			toast_relid;
 
-	StartTransactionCommand();
+	if (!is_toastrel)
+		StartTransactionCommand();
 
 	/*
 	 * Check for user-requested abort.	Note we want this to be inside a
@@ -380,7 +382,8 @@ vacuum_rel(Oid relid, bool analyze)
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		CommitTransactionCommand();
+		if (!is_toastrel)
+			CommitTransactionCommand();
 		return;
 	}
 
@@ -392,6 +395,12 @@ vacuum_rel(Oid relid, bool analyze)
 	 */
 	onerel = heap_open(relid, AccessExclusiveLock);
 
+	/*
+	 * Remember the relations TOAST relation for later
+	 *
+	 */
+	toast_relid = onerel->rd_rel->reltoastrelid;
+
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetPgUserName(), RelationGetRelationName(onerel),
 					   RELNAME))
@@ -399,7 +408,8 @@ vacuum_rel(Oid relid, bool analyze)
 		elog(NOTICE, "Skipping \"%s\" --- only table owner can VACUUM it",
 			 RelationGetRelationName(onerel));
 		heap_close(onerel, AccessExclusiveLock);
-		CommitTransactionCommand();
+		if (!is_toastrel)
+			CommitTransactionCommand();
 		return;
 	}
 #endif
@@ -488,8 +498,18 @@ vacuum_rel(Oid relid, bool analyze)
 	update_relstats(vacrelstats->relid, vacrelstats->num_pages,
 			vacrelstats->num_tuples, vacrelstats->hasindex, vacrelstats);
 
+	/* If the relation has a secondary toast one, vacuum that too
+	 * while we still hold the lock on the master table. We don't
+	 * need to propagate "analyze" to it, because the toaster
+	 * allways uses hardcoded index access and statistics are
+	 * totally unimportant for toast relations
+	 */
+	if (toast_relid != InvalidOid)
+		vacuum_rel(toast_relid, false, true);
+
 	/* next command frees attribute stats */
-	CommitTransactionCommand();
+	if (!is_toastrel)
+		CommitTransactionCommand();
 }
 
 /*

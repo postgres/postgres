@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.86 2000/07/05 13:50:59 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.87 2000/07/05 16:17:38 wieck Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1319,14 +1319,14 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 					   -1, 0, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3,
 					   "chunk_data",
-					   TEXTOID,	/* XXX wouldn't BYTEAOID be better? */
+					   BYTEAOID,
 					   -1, 0, false);
 
-	/* XXX use RELKIND_TOASTVALUE here? */
 	/* XXX what if owning relation is temp?  need we mark toasttable too? */
-	/* !!! No need to worry about temp. It'll go away when it's master    */
-	/*     table is deleted. Jan                                          */
-	heap_create_with_catalog(toast_relname, tupdesc, RELKIND_RELATION,
+	/* XXX How do we know? No naming collisions possible because names    */
+	/*     are OID based. And toast table disappears when master table    */
+	/*     is destroyed. So what is it good for anyway? Jan               */
+	heap_create_with_catalog(toast_relname, tupdesc, RELKIND_TOASTVALUE,
 							 false, true);
 
 	/* make the toast relation visible, else index creation will fail */
@@ -1368,6 +1368,39 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 
 	heap_freetuple(reltup);
 
+	/*
+	 * Finally update the toast relations pg_class tuple to say
+	 * it has an index.
+	 */
+	reltup = SearchSysCacheTuple(RELNAME, PointerGetDatum(toast_relname),
+								 0, 0, 0);
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "ALTER TABLE: just created toast relation \"%s\" not found",
+			 toast_relname);
+	classtuple.t_self = reltup->t_self;
+	switch (heap_mark4update(class_rel, &classtuple, &buffer))
+	{
+		case HeapTupleSelfUpdated:
+		case HeapTupleMayBeUpdated:
+			break;
+		default:
+			elog(ERROR, "couldn't lock pg_class tuple");
+	}
+	reltup = heap_copytuple(&classtuple);
+	ReleaseBuffer(buffer);
+
+	((Form_pg_class) GETSTRUCT(reltup))->relhasindex = true;
+	heap_update(class_rel, &reltup->t_self, reltup, NULL);
+
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
+	CatalogIndexInsert(ridescs, Num_pg_class_indices, class_rel, reltup);
+	CatalogCloseIndices(Num_pg_class_indices, ridescs);
+
+	heap_freetuple(reltup);
+
+	/*
+	 * Close relatons and make changes visible
+	 */
 	heap_close(class_rel, NoLock);
 	heap_close(rel, NoLock);
 

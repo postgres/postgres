@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.120 2000/07/05 13:22:25 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.121 2000/07/05 16:17:43 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -718,6 +718,10 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 
 		if (resultRelationDesc->rd_rel->relkind == RELKIND_SEQUENCE)
 			elog(ERROR, "You can't change sequence relation %s",
+				 RelationGetRelationName(resultRelationDesc));
+
+		if (resultRelationDesc->rd_rel->relkind == RELKIND_TOASTVALUE)
+			elog(ERROR, "You can't change toast relation %s",
 				 RelationGetRelationName(resultRelationDesc));
 
 		resultRelationInfo = makeNode(RelationInfo);
