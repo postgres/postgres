@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.66 2000/03/11 05:14:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.67 2000/03/13 01:52:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,9 @@ static char *parseCh;
 static int myinput(char* buf, int max);
 #undef YY_INPUT
 #define YY_INPUT(buf,result,max) {result = myinput(buf,max);}
+
+/* No reason to constrain amount of data slurped per myinput() call. */
+#define YY_READ_BUF_SIZE 16777216
 
 #else /* !FLEX_SCANNER */
 
