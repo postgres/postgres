@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.87 2003/01/07 20:56:06 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.88 2003/01/10 21:57:44 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1527,7 +1527,7 @@ editFile(const char *fname)
 	sys = malloc(strlen(editorName) + strlen(fname) + 10 + 1);
 	if (!sys)
 		return false;
-	sprintf(sys, "exec  '%s' '%s'", editorName, fname);
+	sprintf(sys, "exec  %s '%s'", editorName, fname);
 	result = system(sys);
 	if (result == -1)
 		psql_error("could not start editor %s\n", editorName);
