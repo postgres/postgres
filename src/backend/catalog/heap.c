@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.102 1999/10/06 03:08:46 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.103 1999/10/07 05:48:03 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1870,7 +1870,7 @@ AddRelationRawConstraints(Relation rel,
 	 */
 	pstate = make_parsestate(NULL);
 	makeRangeTable(pstate, NULL, NULL);
-	addRangeTableEntry(pstate, relname, relname, false, true);
+	addRangeTableEntry(pstate, relname, relname, false, true, true);
 
 	/*
 	 * Process column default expressions.
