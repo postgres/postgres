@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.33 2000/02/21 03:36:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.34 2000/03/07 23:58:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,6 +288,9 @@ text_int2(text *string)
 	int			len;
 	char	   *str;
 
+	if (!string)
+		return 0;
+
 	len = (VARSIZE(string) - VARHDRSZ);
 
 	str = palloc(len + 1);
@@ -328,6 +331,9 @@ text_int4(text *string)
 
 	int			len;
 	char	   *str;
+
+	if (!string)
+		return 0;
 
 	len = (VARSIZE(string) - VARHDRSZ);
 
