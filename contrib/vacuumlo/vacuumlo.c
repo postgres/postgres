@@ -8,13 +8,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.10 2001/09/17 02:30:54 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.11 2002/04/24 02:45:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include <pg_config.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -28,24 +34,163 @@
 
 #define BUFSIZE			1024
 
-int			vacuumlo(char *, int);
+extern char *optarg;
+extern int optind, opterr, optopt;
+
+struct _param {
+        char *pg_user;
+	int  pg_prompt;
+	char *pg_port;
+	char *pg_host;
+	int  verbose;
+	int  dry_run;
+};
+
+int	vacuumlo(char *, struct _param *);
+char    *simple_prompt(const char *prompt, int , int);
+void    usage(void);
+
+
+/*
+ * simple_prompt
+ *
+ * Generalized function especially intended for reading in usernames and
+ * password interactively. Reads from /dev/tty or stdin/stderr.
+ *
+ * prompt:		The prompt to print
+ * maxlen:		How many characters to accept
+ * echo:		Set to 0 if you want to hide what is entered (for passwords)
+ *
+ * Returns a malloc()'ed string with the input (w/o trailing newline).
+ */
+static int prompt_state = 0;
+
+char *
+simple_prompt(const char *prompt, int maxlen, int echo)
+{
+	int			length;
+	char	   *destination;
+	FILE	   *termin,
+			   *termout;
+
+#ifdef HAVE_TERMIOS_H
+	struct termios t_orig,
+				t;
+#endif
+
+	destination = (char *) malloc(maxlen + 2);
+	if (!destination)
+		return NULL;
+
+	prompt_state = 1;		/* disable SIGINT */
+
+	/*
+	 * Do not try to collapse these into one "w+" mode file. Doesn't work
+	 * on some platforms (eg, HPUX 10.20).
+	 */
+	termin = fopen("/dev/tty", "r");
+	termout = fopen("/dev/tty", "w");
+	if (!termin || !termout)
+	{
+		if (termin)
+			fclose(termin);
+		if (termout)
+			fclose(termout);
+		termin = stdin;
+		termout = stderr;
+	}
+
+#ifdef HAVE_TERMIOS_H
+	if (!echo)
+	{
+		tcgetattr(fileno(termin), &t);
+		t_orig = t;
+		t.c_lflag &= ~ECHO;
+		tcsetattr(fileno(termin), TCSAFLUSH, &t);
+	}
+#endif
+
+	if (prompt)
+	{
+		fputs(prompt, termout);
+		fflush(termout);
+	}
+
+	if (fgets(destination, maxlen, termin) == NULL)
+		destination[0] = '\0';
+
+	length = strlen(destination);
+	if (length > 0 && destination[length - 1] != '\n')
+	{
+		/* eat rest of the line */
+		char		buf[128];
+		int			buflen;
+
+		do
+		{
+			if (fgets(buf, sizeof(buf), termin) == NULL)
+				break;
+			buflen = strlen(buf);
+		} while (buflen > 0 && buf[buflen - 1] != '\n');
+	}
+
+	if (length > 0 && destination[length - 1] == '\n')
+		/* remove trailing newline */
+		destination[length - 1] = '\0';
+
+#ifdef HAVE_TERMIOS_H
+	if (!echo)
+	{
+		tcsetattr(fileno(termin), TCSAFLUSH, &t_orig);
+		fputs("\n", termout);
+		fflush(termout);
+	}
+#endif
+
+	if (termin != stdin)
+	{
+		fclose(termin);
+		fclose(termout);
+	}
+
+	prompt_state = 0;		/* SIGINT okay again */
+
+	return destination;
+}
+
 
 
 /*
  * This vacuums LOs of one database. It returns 0 on success, -1 on failure.
  */
 int
-vacuumlo(char *database, int verbose)
+vacuumlo(char *database, struct _param *param)
 {
 	PGconn	   *conn;
 	PGresult   *res,
-			   *res2;
+		   *res2;
 	char		buf[BUFSIZE];
-	int			matched;
-	int			deleted;
-	int			i;
+	int		matched;
+	int		deleted;
+	int		i;
+	char            *password = NULL;
 
-	conn = PQsetdb(NULL, NULL, NULL, NULL, database);
+        if(param->pg_prompt) {
+                password = simple_prompt("Password: ", 32, 0);
+		if(!password) {
+		        fprintf(stderr, "failed to get password\n");
+		        exit(1);
+		}
+	}
+
+	conn = PQsetdbLogin( param->pg_host,
+	                     param->pg_port,
+                             NULL,
+			     NULL,
+			     database,
+			     param->pg_user,
+			     password
+	                   );
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
@@ -56,8 +201,11 @@ vacuumlo(char *database, int verbose)
 		return -1;
 	}
 
-	if (verbose)
+	if (param->verbose) {
 		fprintf(stdout, "Connected to %s\n", database);
+                if(param->dry_run)
+		        fprintf(stdout, "Test run: no large objects will be removed!\n");
+	}
 
 	/*
 	 * First we create and populate the LO temp table
@@ -132,7 +280,7 @@ vacuumlo(char *database, int verbose)
 		table = PQgetvalue(res, i, 0);
 		field = PQgetvalue(res, i, 1);
 
-		if (verbose)
+		if (param->verbose)
 			fprintf(stdout, "Checking %s in %s\n", field, table);
 
 		/*
@@ -188,19 +336,22 @@ vacuumlo(char *database, int verbose)
 	{
 		Oid			lo = atooid(PQgetvalue(res, i, 0));
 
-		if (verbose)
+		if (param->verbose)
 		{
 			fprintf(stdout, "\rRemoving lo %6u   ", lo);
 			fflush(stdout);
 		}
 
-		if (lo_unlink(conn, lo) < 0)
-		{
-			fprintf(stderr, "\nFailed to remove lo %u: ", lo);
-			fprintf(stderr, "%s", PQerrorMessage(conn));
-		}
-		else
-			deleted++;
+		if(param->dry_run == 0) {
+		        if (lo_unlink(conn, lo) < 0)
+		        {
+			        fprintf(stderr, "\nFailed to remove lo %u: ", lo);
+			        fprintf(stderr, "%s", PQerrorMessage(conn));
+		        }
+		        else
+			        deleted++;
+		} else
+		        deleted++;
 	}
 	PQclear(res);
 
@@ -212,33 +363,95 @@ vacuumlo(char *database, int verbose)
 
 	PQfinish(conn);
 
-	if (verbose)
-		fprintf(stdout, "\rRemoved %d large objects from %s.\n",
-				deleted, database);
+	if (param->verbose)
+		fprintf(stdout, "\r%s %d large objects from %s.\n",
+				(param->dry_run?"Would remove":"Removed"), deleted, database);
 
 	return 0;
 }
 
+void
+usage(void) {
+        fprintf(stdout, "vacuumlo removes unreferenced large objects from databases\n\n");
+        fprintf(stdout, "Usage:\n  vacuumlo [options] dbname [dbnames...]\n\n");
+        fprintf(stdout, "Options:\n");
+	fprintf(stdout, "  -v\t\tWrite a lot of output\n");
+	fprintf(stdout, "  -n\t\tDon't remove any large object, just show what would be done\n");
+        fprintf(stdout, "  -U username\tUsername to connect as\n");
+        fprintf(stdout, "  -W\t\tPrompt for password\n");
+        fprintf(stdout, "  -h hostname\tDatabase server host\n");
+	fprintf(stdout, "  -p port\tDatabase server port\n");
+        fprintf(stdout, "  -p port\tDatabase server port\n\n");
+}
+
+
 int
 main(int argc, char **argv)
 {
-	int			verbose = 0;
-	int			arg;
 	int			rc = 0;
+	struct _param           param;
+	int                     c;
+	int                     port;
 
-	if (argc < 2)
-	{
-		fprintf(stderr, "Usage: %s [-v] database_name [db2 ... dbn]\n",
-				argv[0]);
+	/* Parameter handling */
+        param.pg_user = NULL;
+	param.pg_prompt = 0;
+	param.pg_host = NULL;
+	param.pg_port = 0;
+        param.verbose = 0;
+	param.dry_run = 0;
+
+        while( 1 ) {
+	  c = getopt(argc, argv, "?h:U:p:vnW");
+	  if(c == -1)
+	    break;
+
+	  switch(c) {
+            case '?':
+	      if(optopt == '?') {
+	        usage();
+		exit(0);
+	      }
+	      exit(1);
+	    case ':':
+	      exit(1);
+            case 'v':
+	      param.verbose = 1;
+	      break;
+	    case 'n':
+	      param.dry_run = 1;
+	      param.verbose = 1;
+	      break;
+	    case 'U':
+	      param.pg_user = strdup(optarg);
+	      break;
+	    case 'W':
+	      param.pg_prompt = 1;
+	      break;
+	    case 'p':
+              port = strtol(optarg, NULL, 10);
+	      if( (port < 1) || (port > 65535)) {
+	        fprintf(stderr, "[%s]: invalid port number '%s'\n", argv[0], optarg);
 		exit(1);
+	      }
+	      param.pg_port = strdup(optarg);
+	      break;
+	    case 'h':
+	      param.pg_host = strdup(optarg);
+	      break;
+	  }
+	}
+	
+	/* No database given? Show usage */
+	if(optind >= argc-1) {
+	  fprintf(stderr, "vacuumlo: missing required argument: database name\n");
+	  fprintf(stderr, "Try 'vacuumlo -?' for help.\n");
+	  exit(1);
 	}
 
-	for (arg = 1; arg < argc; arg++)
-	{
-		if (strcmp("-v", argv[arg]) == 0)
-			verbose = !verbose;
-		else
-			rc += (vacuumlo(argv[arg], verbose) != 0);
+        for(c = optind; c < argc; c++) {
+	  /* Work on selected database */
+          rc += (vacuumlo(argv[c], &param) != 0);
 	}
 
 	return rc;
