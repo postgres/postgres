@@ -158,7 +158,7 @@ Fix to allow SELECT 'a' LIKE 'a' (Tom)
 Fix for SELECT 1 + NULL (Tom)
 Fixes to CHAR
 Fix log() on numeric type (Tom)
-Remove ':' and ';' operators
+Deprecate ':' and ';' operators
 
 Enhancements
 ------------

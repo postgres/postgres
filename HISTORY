@@ -99,7 +99,31 @@ Fix to allow SELECT 'a' LIKE 'a' (Tom)
 Fix for SELECT 1 + NULL (Tom)
 Fixes to CHAR
 Fix log() on numeric type (Tom)
-Remove ':' and ';' operators
+Depricate ':' and ';' operators
+Add TRUNCATE command to quickly truncate relation (Mike Mascari)
+Fix for views with tables/columns containing spaces  (Tom)
+Prevent permissions on indexes (Peter E)
+Fix for spinlock stuck problem when error is generated (Hiroshi)
+Fix ipcclean on Linux
+Fix handling of NULL constraint conditions (Tom)
+Fix memory leak in odbc driver (Nick Gorham)
+Fix for permission check on UNION tables (Tom)
+Fix to allow SELECT 'a' LIKE 'a' (Tom)
+Fix for SELECT 1 + NULL (Tom)
+Fixes to CHAR
+Fix log() on numeriRemove ':' and ';' operators
+Add TRUNCATE command to quickly truncate relation (Mike Mascari)
+Fix for views with tables/columns containing spaces  (Tom)
+Prevent permissions on indexes (Peter E)
+Fix for spinlock stuck problem when error is generated (Hiroshi)
+Fix ipcclean on Linux
+Fix handling of NULL constraint conditions (Tom)
+Fix memory leak in odbc driver (Nick Gorham)
+Fix for permission check on UNION tables (Tom)
+Fix to allow SELECT 'a' LIKE 'a' (Tom)
+Fix for SELECT 1 + NULL (Tom)
+Fixes to CHAR
+Fix log() on numeriRemove ':' and ';' operators
 
 Enhancements
 ------------
