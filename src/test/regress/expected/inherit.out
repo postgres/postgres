@@ -623,3 +623,31 @@ select * from d;
  32 | one | two | three
 (1 row)
 
+-- Tests for casting between the rowtypes of parent and child
+-- tables. See the pgsql-hackers thread beginning Dec. 4/04
+create table base (i integer);
+create table derived () inherits (base);
+insert into derived (i) values (0);
+select derived::base from derived;
+ derived 
+---------
+ (0)
+(1 row)
+
+drop table derived;
+drop table base;
+create table p1(ff1 int);
+create table p2(f1 text);
+create function p2text(p2) returns text as 'select $1.f1' language sql;
+create table c1(f3 int) inherits(p1,p2);
+insert into c1 values(123456789, 'hi', 42);
+select p2text(c1.*) from c1;
+ p2text 
+--------
+ hi
+(1 row)
+
+drop function p2text(p2);
+drop table c1;
+drop table p2;
+drop table p1;
