@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.45 1999/01/18 06:46:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.46 1999/01/20 19:48:13 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2803,6 +2803,8 @@ SelectStmt:	  select_w_o_sort sort_clause for_update_clause
 
 					if (n->unionClause != NULL)
 						elog(ERROR, "SELECT FOR UPDATE is not allowed with UNION clause");
+					if (n->intersectClause != NULL)
+						elog(ERROR, "SELECT FOR UPDATE is not allowed with INTERSECT/EXCEPT clause");
 					if (n->unique != NULL)
 						elog(ERROR, "SELECT FOR UPDATE is not allowed with DISTINCT clause");
 					if (n->groupClause != NULL)
