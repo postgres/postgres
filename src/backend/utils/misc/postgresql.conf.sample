@@ -18,3 +18,179 @@
 # Any option can also be given as a command line switch to the
 # postmaster, e.g., 'postmaster -c log_connections=on'. Some options
 # can be set at run-time with the 'SET' SQL command.
+
+
+	enable_seqscan = true
+	enable_indexscan = true
+	enable_tidscan = true
+	enable_sort = true
+	enable_nestloop = true
+	enable_mergejoin = true
+	enable_hashjoin = true
+
+	ksqo = izer, false
+	geqo = true
+
+	tcpip_socket = false
+	ssl = false
+	fsync = true
+	silent_mode = false
+
+	log_connections = false
+	log_timestamp = false
+	log_pid = false
+
+#ifdef USE_ASSERT_CHECKING
+	debug_assertions = true
+#endif
+
+	debug_print_query = false
+	debug_print_parse = false
+	debug_print_rewritten = false
+	debug_print_plan = false
+	debug_pretty_print = false
+
+	show_parser_stats = false
+	show_planner_stats = false
+	show_executor_stats = false
+	show_query_stats = false
+#ifdef BTREE_BUILD_STATS
+	show_btree_build_stats = false
+#endif
+
+	trace_notify = false
+
+#ifdef LOCK_DEBUG
+	trace_locks = false
+	trace_userlocks = false
+	trace_spinlocks = false
+	debug_deadlocks = false
+#endif
+
+	hostname_lookup = false
+	show_source_port = false
+
+	sql_inheritance = true
+
+	{NULL, 0, NULL, false}
+};
+
+
+static struct config_int
+ConfigureNamesInt[] =
+{
+	geqo_threshold = PGC_USERSET,            &geqo_rels,
+	 DEFAULT_GEQO_RELS, 2, INT_MAX
+	geqo_pool_size = PGC_USERSET,            &Geqo_pool_size,
+	 DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE
+	geqo_effort = PGC_USERSET,            &Geqo_effort,
+	 1, 1, INT_MAX
+	geqo_generations = PGC_USERSET,            &Geqo_generations,
+	 0, 0, INT_MAX
+	geqo_random_seed = PGC_USERSET,            &Geqo_random_seed,
+	 -1, INT_MIN, INT_MAX
+
+	deadlock_timeout = PGC_POSTMASTER,         &DeadlockTimeout,
+	 1000, 0, INT_MAX
+
+#ifdef ENABLE_SYSLOG
+	syslog = PGC_SIGHUP,             &Use_syslog,
+	 0, 0, 2
+#endif
+
+	/*
+	 * Note: There is some postprocessing done in PostmasterMain() to
+	 * make sure the buffers are at least twice the number of
+	 * backends, so the constraints here are partially unused.
+	 */
+	max_connections = PGC_POSTMASTER,         &MaxBackends,
+	 DEF_MAXBACKENDS, 1, MAXBACKENDS
+	shared_buffers = PGC_POSTMASTER,         &NBuffers,
+	 DEF_NBUFFERS, 16, INT_MAX
+	port = PGC_POSTMASTER,         &PostPortNumber,
+	 DEF_PGPORT, 1, 65535
+
+	sort_mem = PGC_USERSET,            &SortMem,
+	 512, 1, INT_MAX
+
+	debug_level = PGC_USERSET,            &DebugLvl,
+	 0, 0, 16
+
+#ifdef LOCK_DEBUG
+	trace_lock_oidmin = PGC_SUSET,              &Trace_lock_oidmin,
+	 BootstrapObjectIdData, 1, INT_MAX
+	trace_lock_table = PGC_SUSET,              &Trace_lock_table,
+	 0, 0, INT_MAX
+#endif
+	max_expr_depth = PGC_USERSET,            &max_expr_depth,
+	 DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX
+
+	unix_socket_permissions = PGC_POSTMASTER,         &Unix_socket_permissions,
+	 0777, 0000, 0777
+
+	checkpoint_timeout",	PGC_POSTMASTER,			&CheckPointTimeout,
+	 300, 30, 1800
+
+	wal_buffers",			PGC_POSTMASTER,			&XLOGbuffers,
+	 8, 4, INT_MAX
+
+	wal_files",			PGC_POSTMASTER,			&XLOGfiles,
+	 0, 0, 64
+
+	wal_debug",			PGC_SUSET,				&XLOG_DEBUG,
+	 0, 0, 16
+
+	commit_delay",		PGC_USERSET,			&CommitDelay,
+	 5, 0, 1000
+
+    {NULL, 0, NULL, 0, 0, 0}
+};
+
+
+static struct config_real
+ConfigureNamesReal[] =
+{
+    effective_cache_size = PGC_USERSET,          &effective_cache_size,
+     DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX
+    random_page_cost = PGC_USERSET,          &random_page_cost,
+     DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX
+    cpu_tuple_cost = PGC_USERSET,          &cpu_tuple_cost,
+     DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX
+    cpu_index_tuple_cost = PGC_USERSET,          &cpu_index_tuple_cost,
+     DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX
+    cpu_operator_cost = PGC_USERSET,          &cpu_operator_cost,
+     DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX
+
+    geqo_selection_bias = PGC_USERSET,          &Geqo_selection_bias,
+     DEFAULT_GEQO_SELECTION_BIAS,   MIN_GEQO_SELECTION_BIAS, MAX_GEQO_SELECTION_BIAS
+
+    {NULL, 0, NULL, 0.0, 0.0, 0.0}
+};
+
+
+static struct config_string
+ConfigureNamesString[] =
+{
+	krb_server_keyfile = PGC_POSTMASTER,       &pg_krb_server_keyfile,
+	 PG_KRB_SRVTAB, NULL
+
+	unix_socket_group = PGC_POSTMASTER,       &Unix_socket_group,
+	 " = NULL
+
+#ifdef ENABLE_SYSLOG
+	syslog_facility = PGC_POSTMASTER,	    &Syslog_facility, 
+	"LOCAL0 = check_facility	 
+	syslog_ident = PGC_POSTMASTER,	    &Syslog_ident, 
+	"postgres = NULL	 
+#endif
+
+	unix_socket_directory",	  PGC_POSTMASTER,       &UnixSocketDir,
+	 " = NULL
+
+	virtual_host",			  PGC_POSTMASTER,		&VirtualHost,
+	 " = NULL
+
+	{NULL, 0, NULL, NULL, NULL}
+};
+
+

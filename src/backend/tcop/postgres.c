@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.204 2001/01/24 14:32:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.205 2001/01/24 15:53:59 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1680,7 +1680,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.204 $ $Date: 2001/01/24 14:32:32 $\n");
+		puts("$Revision: 1.205 $ $Date: 2001/01/24 15:53:59 $\n");
 	}
 
 	/*
@@ -1791,7 +1791,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 
 		EnableNotifyInterrupt();
 
-		set_ps_display("idle");
+		if (!IsTransactionBlock())
+			set_ps_display("idle");
+		else	set_ps_display("idle in transaction");
 
 		/* Allow "die" interrupt to be processed while waiting */
 		ImmediateInterruptOK = true;
