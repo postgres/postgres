@@ -405,3 +405,108 @@ Peter
 >
 
 
+From pgsql-jdbc-owner+M884@postgresql.org Wed Jun 27 13:36:09 2001
+Return-path: <pgsql-jdbc-owner+M884@postgresql.org>
+Received: from postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f5RHa9q05483
+	for <pgman@candle.pha.pa.us>; Wed, 27 Jun 2001 13:36:09 -0400 (EDT)
+Received: from postgresql.org.org (webmail.postgresql.org [216.126.85.28])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5RHaAa03078
+	for <pgman@candle.pha.pa.us>; Wed, 27 Jun 2001 13:36:10 -0400 (EDT)
+	(envelope-from pgsql-jdbc-owner+M884@postgresql.org)
+Received: from net2.micro-automation.com (net2.micro-automation.com [64.7.141.29])
+	by postgresql.org (8.11.3/8.11.1) with SMTP id f5RHOka96908
+	for <pgsql-jdbc@postgresql.org>; Wed, 27 Jun 2001 13:24:46 -0400 (EDT)
+	(envelope-from Dave@micro-automation.net)
+Received: (qmail 32671 invoked from network); 27 Jun 2001 17:24:39 -0000
+Received: from eboxwest.ebox.com (HELO INSPIRON) (206.51.23.194)
+  by net2.micro-automation.com with SMTP; 27 Jun 2001 17:24:39 -0000
+Reply-To: <Dave@micro-automation.net>
+From: "Dave Cramer" <Dave@micro-automation.net>
+To: "'Barry Lind'" <barry@xythos.com>
+cc: <pgsql-jdbc@postgresql.org>
+Subject: [JDBC] RE: Todo/missing? (was Re: [ADMIN] High memory usage [PATCH])
+Date: Wed, 27 Jun 2001 13:22:42 -0400
+Organization: Micro Automation Inc.
+Message-ID: <008301c0ff2d$c885d880$0201a8c0@INSPIRON>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook, Build 10.0.2616
+Importance: Normal
+In-Reply-To: <3B39352E.6060904@xythos.com>
+X-MimeOLE: Produced By Microsoft MimeOLE V5.50.4133.2400
+X-AntiVirus: scanned for viruses by AMaViS 0.2.1 (http://amavis.org/)
+Precedence: bulk
+Sender: pgsql-jdbc-owner@postgresql.org
+Status: OR
+
+Barry,
+
+The getXXXFunctions aren't implemented
+Some of the other functions are correct for version 7.1 but not for
+previous versions. Ie. The row length, etc. I think the driver should
+get the version and determine what is correct for each version. 
+
+I think this is incorrect. 
+  public boolean supportsSelectForUpdate() throws SQLException
+  {
+    // XXX-Not Implemented
+    return false;
+  }
+
+There are a number of things here which are hard coded, and possible
+wrong.
+
+I started to work on this, but since I am going on vacation next week I
+have a number of fires to get down to a slow burn before I go.
+
+Dave
+
+-----Original Message-----
+From: Barry Lind [mailto:barry@xythos.com] 
+Sent: June 26, 2001 9:22 PM
+To: Dave Cramer
+Cc: pgsql-jdbc@postgresql.org
+Subject: Re: Todo/missing? (was Re: [ADMIN] High memory usage [PATCH])
+
+Dave,
+
+Can you give a little more detail on what you mean by 'Improved 
+DatabaseMetaData'?  What specific areas are currently lacking?
+
+thanks,
+--Barry
+
+
+>>On Mon, Jun 25, 2001 at 10:56:18PM -0400, Dave Cramer wrote:
+>>
+>>>I have to agree, we need to compile a todo list. 
+>>>
+>>>Mine would include:
+>>>
+>>>1) Comprehensive test suite. This may be available already.
+>>>2) Updateable resultSet
+>>>3) Improved DatabaseMetaData
+>>>4) Compatible blob support
+>>>
+> 
+> Added to official PostgreSQL TODO:
+> 
+> * JDBC
+>         * Comprehensive test suite. This may be available already.    
+>         * Updateable resultSet     
+>         * Improved DatabaseMetaData     
+>         * Compatible blob support    
+> 
+> 
+
+
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
