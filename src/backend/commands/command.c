@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.116 2001/01/08 03:14:58 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.117 2001/01/23 01:48:16 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1446,7 +1446,7 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 {
 	Relation 	class_rel;
 	HeapTuple 	tuple;
-	int4 		newOwnerSysid;
+	int32		newOwnerSysid;
 	Relation	idescs[Num_pg_class_indices];
 
 	/*

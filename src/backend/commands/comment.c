@@ -394,7 +394,7 @@ CommentDatabase(char *database, char *comment)
 	HeapScanDesc scan;
 	Oid			oid;
 	bool		superuser;
-	int4		dba;
+	int32		dba;
 	Oid		userid;
 
 	/*** First find the tuple in pg_database for the database ***/

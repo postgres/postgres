@@ -15,12 +15,12 @@
 typedef struct FormData_pg_sequence
 {
 	NameData	sequence_name;
-	int4		last_value;
-	int4		increment_by;
-	int4		max_value;
-	int4		min_value;
-	int4		cache_value;
-	int4		log_cnt;
+	int32		last_value;
+	int32		increment_by;
+	int32		max_value;
+	int32		min_value;
+	int32		cache_value;
+	int32		log_cnt;
 	char		is_cycled;
 	char		is_called;
 } FormData_pg_sequence;
