@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Oct 12 23:37:30 EDT 2001
+   Last updated: Fri Oct 12 23:53:35 EDT 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -825,9 +825,11 @@ BYTEA           bytea           variable-length byte array (null-safe)
    One approach is to to retrieve the next SERIAL value from the sequence
    object with the nextval() function before inserting and then insert it
    explicitly. Using the example table in 4.16.1, that might look like
-   this:
-    $newSerialID = nextval('person_id_seq');
+   this in Perl:
+    $sql = "SELECT nextval('person_id_seq')";
+    $newSerialID = ($conn->selectrow_array($sql))[0];
     INSERT INTO person (id, name) VALUES ($newSerialID, 'Blaise Pascal');
+    $res = $dbh->do($sql);
 
    You would then also have the new value stored in $newSerialID for use
    in other queries (e.g., as a foreign key to the person table). Note
@@ -838,7 +840,9 @@ BYTEA           bytea           variable-length byte array (null-safe)
    Alternatively, you could retrieve the assigned SERIAL value with the
    currval() function after it was inserted by default, e.g.,
     INSERT INTO person (name) VALUES ('Blaise Pascal');
-    $newID = currval('person_id_seq');
+    $res = $conn->do($sql);
+    $sql = "SELECT currval('person_id_seq')";
+    $newSerialID = ($conn->selectrow_array($sql))[0];
 
    Finally, you could use the OID returned from the INSERT statement to
    look up the default value, though this is probably the least portable
@@ -849,7 +853,8 @@ BYTEA           bytea           variable-length byte array (null-safe)
     4.16.3) Don't currval() and nextval() lead to a race condition with other
     users?
     
-   No. This is handled by the backends.
+   No. Currval() returns the current value assigned by your backend, not
+   by all users.
    
     4.17) What is an OID? What is a TID?
     
