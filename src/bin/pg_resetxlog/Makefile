@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2002, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.7 2004/04/26 17:40:48 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.8 2004/04/30 20:01:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/bin/pg_resetxlog
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := $(CPPFLAGS) -DFRONTEND
+override CPPFLAGS += -DFRONTEND
 
 OBJS= pg_resetxlog.o pg_crc.o \
       $(filter dirmod.o, $(LIBOBJS))
