@@ -1,9 +1,9 @@
-Proposal for memory allocation fixes, take 2		21-Jun-2000
---------------------------------------------
+Notes about memory allocation redesign			14-Jul-2000
+--------------------------------------
 
-We know that Postgres has serious problems with memory leakage during
-large queries that process a lot of pass-by-reference data.  There is
-no provision for recycling memory until end of query.  This needs to be
+Up through version 7.0, Postgres has serious problems with memory leakage
+during large queries that process a lot of pass-by-reference data.  There
+is no provision for recycling memory until end of query.  This needs to be
 fixed, even more so with the advent of TOAST which will allow very large
 chunks of data to be passed around in the system.  So, here is a proposal.
 
@@ -193,30 +193,53 @@ pathnodes; this will allow it to release the bulk of its temporary space
 usage (which can be a lot, for large joins) at completion of planning.
 The completed plan tree will be in TransactionCommandContext.
 
-The executor will have contexts with lifetime similar to plan nodes
-(I'm not sure at the moment whether there's need for one such context
-per plan level, or whether a single context is sufficient).  These
-contexts will hold plan-node-local execution state and related items.
-There will also be a context on each plan level that is reset at the start
-of each tuple processing cycle.  This per-tuple context will be the normal
-CurrentMemoryContext during evaluation of expressions and so forth.  By
-resetting it, we reclaim transient memory that was used during processing
-of the prior tuple.  That should be enough to solve the problem of running
-out of memory on large queries.  We must have a per-tuple context in each
-plan node, and we must reset it at the start of a tuple cycle rather than
-the end, so that each plan node can use results of expression evaluation
-as part of the tuple it returns to its parent node.
+The top-level executor routines, as well as most of the "plan node"
+execution code, will normally run in TransactionCommandContext.  Much
+of the memory allocated in these routines is intended to live until end
+of query, so this is appropriate for those purposes.  We already have
+a mechanism --- "tuple table slots" --- for avoiding leakage of tuples,
+which is the major kind of short-lived data handled by these routines.
+This still leaves a certain amount of explicit pfree'ing needed by plan
+node code, but that code largely exists already and is probably not worth
+trying to remove.  I looked at the possibility of running in a shorter-
+lived context (such as a context that gets reset per-tuple), but this
+seems fairly impractical.  The biggest problem with it is that code in
+the index access routines, as well as some other complex algorithms like
+tuplesort.c, assumes that palloc'd storage will live across tuples.
+For example, rtree uses a palloc'd state stack to keep track of an index
+scan.
 
-By resetting the per-tuple context, we will be able to free memory after
-each tuple is processed, rather than only after the whole plan is
-processed.  This should solve our memory leakage problems pretty well;
-yet we do not need to add very much new bookkeeping logic to do it.
-In particular, we do *not* need to try to keep track of individual values
-palloc'd during expression evaluation.
+The main improvement needed in the executor is that expression evaluation
+--- both for qual testing and for computation of targetlist entries ---
+needs to not leak memory.  To do this, each ExprContext (expression-eval
+context) created in the executor will now have a private memory context
+associated with it, and we'll arrange to switch into that context when
+evaluating expressions in that ExprContext.  The plan node that owns the
+ExprContext is responsible for resetting the private context to empty
+when it no longer needs the results of expression evaluations.  Typically
+the reset is done at the start of each tuple-fetch cycle in the plan node.
 
-Note we assume that resetting a context is a cheap operation.  This is
-true already, and we can make it even more true with a little bit of
-tuning in aset.c.
+Note that this design gives each plan node its own expression-eval memory
+context.  This appears necessary to handle nested joins properly, since
+an outer plan node might need to retain expression results it has computed
+while obtaining the next tuple from an inner node --- but the inner node
+might execute many tuple cycles and many expressions before returning a
+tuple.  The inner node must be able to reset its own expression context
+more often than once per outer tuple cycle.  Fortunately, memory contexts
+are cheap enough that giving one to each plan node doesn't seem like a
+problem.
+
+A problem with running index accesses and sorts in TransactionMemoryContext
+is that these operations invoke datatype-specific comparison functions,
+and if the comparators leak any memory then that memory won't be recovered
+till end of query.  The comparator functions all return bool or int32,
+so there's no problem with their result data, but there could be a problem
+with leakage of internal temporary data.  In particular, comparator
+functions that operate on TOAST-able data types will need to be careful
+not to leak detoasted versions of their inputs.  This is annoying, but
+it appears a lot easier to make the comparators conform than to fix the
+index and sort routines, so that's what I propose to do for 7.1.  Further
+cleanup can be left for another day.
 
 There will be some special cases, such as aggregate functions.  nodeAgg.c
 needs to remember the results of evaluation of aggregate transition
@@ -365,15 +388,3 @@ chunk of memory is allocated in (by checking the required standard chunk
 header), so nodeAgg can determine whether or not it's safe to reset
 its working context; it doesn't have to rely on the transition function
 to do what it's expecting.
-
-It might be that the executor per-run contexts described above should
-be tied directly to executor "EState" nodes, that is, one context per
-EState.  I'm not real clear on the lifespan of EStates or the situations
-where we have just one or more than one, so I'm not sure.  Comments?
-
-It would probably be possible to adapt the existing "portal" memory
-management mechanism to do what we need.  I am instead proposing setting
-up a totally new mechanism, because the portal code strikes me as
-extremely crufty and unwieldy.  It may be that we can eventually remove
-portals entirely, or perhaps reimplement them with this mechanism
-underneath.
