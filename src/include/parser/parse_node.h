@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.10 1998/02/26 04:42:46 momjian Exp $
+ * $Id: parse_node.h,v 1.11 1998/09/01 04:37:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,17 +44,14 @@ typedef struct ParseState
 
 extern ParseState *make_parsestate(ParseState *parentParseState);
 extern Expr *make_op(char *opname, Node *ltree, Node *rtree);
-extern Var *
-make_var(ParseState *pstate, Oid relid, char *refname,
+extern Var *make_var(ParseState *pstate, Oid relid, char *refname,
 		 char *attrname);
-extern ArrayRef *
-make_array_ref(Node *expr,
+extern ArrayRef *make_array_ref(Node *expr,
 			   List *indirection);
-extern ArrayRef *
-make_array_set(Expr *target_expr,
+extern ArrayRef *make_array_set(Expr *target_expr,
 			   List *upperIndexpr,
 			   List *lowerIndexpr,
 			   Expr *expr);
 extern Const *make_const(Value *value);
 
-#endif							/* PARSE_NODE_H */
+#endif	 /* PARSE_NODE_H */

@@ -30,27 +30,29 @@
 #include <stdio.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern		"C"
+{
 #endif
 
-enum ECPGttype
-{
-	ECPGt_char = 1, ECPGt_unsigned_char, ECPGt_short, ECPGt_unsigned_short,
-	ECPGt_int, ECPGt_unsigned_int, ECPGt_long, ECPGt_unsigned_long,
-	ECPGt_bool,
-	ECPGt_float, ECPGt_double,
-	ECPGt_varchar, ECPGt_varchar2,
-	ECPGt_array,
-	ECPGt_struct,
-	ECPGt_EOIT,					/* End of insert types. */
-	ECPGt_EORT,					/* End of result types. */
-	ECPGt_NO_INDICATOR				/* no indicator */
-};
+	enum ECPGttype
+	{
+		ECPGt_char = 1, ECPGt_unsigned_char, ECPGt_short, ECPGt_unsigned_short,
+		ECPGt_int, ECPGt_unsigned_int, ECPGt_long, ECPGt_unsigned_long,
+		ECPGt_bool,
+		ECPGt_float, ECPGt_double,
+		ECPGt_varchar, ECPGt_varchar2,
+		ECPGt_array,
+		ECPGt_struct,
+		ECPGt_EOIT,				/* End of insert types. */
+		ECPGt_EORT,				/* End of result types. */
+		ECPGt_NO_INDICATOR		/* no indicator */
+	};
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)
 
-const char * ECPGtype_name(enum ECPGttype);
+	const char *ECPGtype_name(enum ECPGttype);
 
 #ifdef __cplusplus
 }
+
 #endif

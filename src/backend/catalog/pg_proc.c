@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.22 1998/09/01 03:21:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.23 1998/09/01 04:27:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,6 +129,7 @@ ProcedureCreate(char *procedureName,
 
 	if (!strcmp(languageName, "sql"))
 	{
+
 		/*
 		 * If this call is defining a set, check if the set is already
 		 * defined by looking to see whether this call's function text

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.10 1998/09/01 03:27:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.11 1998/09/01 04:33:34 momjian Exp $
  *
  * NOTE
  *	  XXX This is a preliminary implementation which lacks fail-fast
@@ -26,8 +26,7 @@
 #endif
 
 static void AllocPointerDump(AllocPointer pointer);
-static int
-AllocSetIterate(AllocSet set,
+static int AllocSetIterate(AllocSet set,
 				void (*function) (AllocPointer pointer));
 
 #undef AllocSetReset

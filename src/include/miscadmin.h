@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.32 1998/08/25 21:24:12 scrappy Exp $
+ * $Id: miscadmin.h,v 1.33 1998/09/01 04:33:59 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -35,14 +35,14 @@ extern int	PostmasterMain(int argc, char *argv[]);
  * from utils/init/globals.c
  */
 extern int	Portfd;
-extern bool	Noversion;
-extern bool	Quiet;
-extern bool	QueryCancel;
+extern bool Noversion;
+extern bool Quiet;
+extern bool QueryCancel;
 extern char *DataDir;
 
 extern int	MyProcPid;
-extern struct Port	*MyProcPort;
-extern long	MyCancelKey;
+extern struct Port *MyProcPort;
+extern long MyCancelKey;
 
 extern char OutputFileName[];
 
@@ -123,6 +123,7 @@ extern char *ExpandDatabasePath(char *path);
 /* now in utils/init/miscinit.c */
 extern void SetDatabaseName(char *name);
 extern void SetDatabasePath(char *path);
+
 /* even if MB is not enabled, this function is neccesary
  * since pg_proc.h does have.
  */
@@ -206,4 +207,4 @@ extern bool IsNormalProcessingMode(void);
 extern void SetProcessingMode(ProcessingMode mode);
 extern ProcessingMode GetProcessingMode(void);
 
-#endif							/* MISCADMIN_H */
+#endif	 /* MISCADMIN_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execFlatten.h,v 1.6 1997/11/26 01:12:36 momjian Exp $
+ * $Id: execFlatten.h,v 1.7 1998/09/01 04:35:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@ extern Datum ExecEvalIter(Iter *iterNode, ExprContext *econtext, bool *resultIsN
 extern void ExecEvalFjoin(TargetEntry *tlist, ExprContext *econtext, bool *isNullVect, bool *fj_isDone);
 
 
-#endif							/* EXECFLATTEN_H */
+#endif	 /* EXECFLATTEN_H */

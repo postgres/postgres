@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: svr4.h,v 1.1 1998/02/24 03:41:58 scrappy Exp $
+ * $Id: svr4.h,v 1.2 1998/09/01 04:31:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,4 +31,4 @@
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
 
-#endif							/* DYNLOADER_H */
+#endif	 /* DYNLOADER_H */

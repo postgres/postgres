@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAgg.h,v 1.7 1998/02/13 03:43:34 vadim Exp $
+ * $Id: nodeAgg.h,v 1.8 1998/09/01 04:35:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern int	ExecCountSlotsAgg(Agg *node);
 extern void ExecEndAgg(Agg *node);
 extern void ExecReScanAgg(Agg *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif							/* NODEAGG_H */
+#endif	 /* NODEAGG_H */

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.24 1998/09/01 03:25:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.25 1998/09/01 04:32:01 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -30,15 +30,15 @@
 #include "miscadmin.h"			/* MyDatabaseId */
 
 static bool MultiAcquire(LOCKMETHOD lockmethod, LOCKTAG *tag,
-						 LOCKMODE lockmode, PG_LOCK_LEVEL level);
+			 LOCKMODE lockmode, PG_LOCK_LEVEL level);
 static bool MultiRelease(LOCKMETHOD lockmethod, LOCKTAG *tag,
-						 LOCKMODE lockmode, PG_LOCK_LEVEL level);
+			 LOCKMODE lockmode, PG_LOCK_LEVEL level);
 
 #ifdef LowLevelLocking
 
-static MASK	MultiConflicts[] = {
+static MASK MultiConflicts[] = {
 	(int) NULL,
-	
+
 /* RowShareLock */
 	(1 << ExclusiveLock),
 
@@ -46,26 +46,26 @@ static MASK	MultiConflicts[] = {
 	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock),
 
 /* ShareLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | 
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
 	(1 << RowExclusiveLock),
 
 /* ShareRowExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | 
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) |
 	(1 << ShareLock) | (1 << RowExclusiveLock),
-	
+
 /* ExclusiveLock */
-	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) | 
+	(1 << ExclusiveLock) | (1 << ShareRowExclusiveLock) | (1 << ShareLock) |
 	(1 << RowExclusiveLock) | (1 << RowShareLock),
-	
+
 /* ObjShareLock */
 	(1 << ObjExclusiveLock),
-	
+
 /* ObjExclusiveLock */
 	(1 << ObjExclusiveLock) | (1 << ObjShareLock),
-	
+
 /* ExtendLock */
 	(1 << ExtendLock)
-	
+
 };
 
 /*
@@ -90,7 +90,7 @@ static int	MultiPrios[] = {
  * WRITE conflict between the tuple's intent lock and the relation's
  * write lock.
  */
-static MASK	MultiConflicts[] = {
+static MASK MultiConflicts[] = {
 	(int) NULL,
 	/* All reads and writes at any level conflict with a write lock */
 	(1 << WRITE_LOCK) | (1 << WRITE_INTENT) | (1 << READ_LOCK) | (1 << READ_INTENT),
@@ -121,16 +121,18 @@ static int	MultiPrios[] = {
 	1
 };
 
-#endif	/* !LowLevelLocking */
+#endif	 /* !LowLevelLocking */
 
 /*
  * Lock table identifier for this lock table.  The multi-level
  * lock table is ONE lock table, not three.
  */
-LOCKMETHOD MultiTableId = (LOCKMETHOD) NULL;
-LOCKMETHOD LongTermTableId = (LOCKMETHOD) NULL;
+LOCKMETHOD	MultiTableId = (LOCKMETHOD) NULL;
+LOCKMETHOD	LongTermTableId = (LOCKMETHOD) NULL;
+
 #ifdef NOT_USED
-LOCKMETHOD ShortTermTableId = (LOCKMETHOD) NULL;
+LOCKMETHOD	ShortTermTableId = (LOCKMETHOD) NULL;
+
 #endif
 
 /*
@@ -141,8 +143,8 @@ InitMultiLevelLocks()
 {
 	int			lockmethod;
 
-	lockmethod = LockMethodTableInit("MultiLevelLockTable", 
-				 MultiConflicts, MultiPrios, MAX_LOCKMODES - 1);
+	lockmethod = LockMethodTableInit("MultiLevelLockTable",
+						  MultiConflicts, MultiPrios, MAX_LOCKMODES - 1);
 	MultiTableId = lockmethod;
 	if (!(MultiTableId))
 		elog(ERROR, "InitMultiLocks: couldnt initialize lock table");
@@ -157,6 +159,7 @@ InitMultiLevelLocks()
 	 */
 
 #ifdef USER_LOCKS
+
 	/*
 	 * Allocate another tableId for long-term locks
 	 */
@@ -420,7 +423,7 @@ MultiRelease(LOCKMETHOD lockmethod,
 			 LOCKMODE lockmode,
 			 PG_LOCK_LEVEL level)
 {
-	LOCKMODE		locks[N_LEVELS];
+	LOCKMODE	locks[N_LEVELS];
 	int			i,
 				status;
 	LOCKTAG		xxTag,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.21 1998/07/30 05:05:05 vadim Exp $
+ * $Id: nbtree.h,v 1.22 1998/09/01 04:34:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,15 +73,15 @@ typedef BTPageOpaqueData *BTPageOpaque;
 
 typedef struct BTScanOpaqueData
 {
-	Buffer			btso_curbuf;
-	Buffer			btso_mrkbuf;
-	ItemPointerData	curHeapIptr;
-	ItemPointerData	mrkHeapIptr;
-	uint16			qual_ok;		/* 0 for quals like key == 1 && key > 2 */
-	uint16			numberOfKeys;	/* number of keys */
-	uint16			numberOfFirstKeys;		/* number of keys for 1st
-											 * attribute */
-	ScanKey			keyData;		/* key descriptor */
+	Buffer		btso_curbuf;
+	Buffer		btso_mrkbuf;
+	ItemPointerData curHeapIptr;
+	ItemPointerData mrkHeapIptr;
+	uint16		qual_ok;		/* 0 for quals like key == 1 && key > 2 */
+	uint16		numberOfKeys;	/* number of keys */
+	uint16		numberOfFirstKeys;		/* number of keys for 1st
+										 * attribute */
+	ScanKey		keyData;		/* key descriptor */
 } BTScanOpaqueData;
 
 typedef BTScanOpaqueData *BTScanOpaque;
@@ -221,13 +221,11 @@ typedef struct BTPageState
 /*
  * prototypes for functions in nbtinsert.c
  */
-extern InsertIndexResult
-_bt_doinsert(Relation rel, BTItem btitem,
+extern InsertIndexResult _bt_doinsert(Relation rel, BTItem btitem,
 			 bool index_is_unique, Relation heapRel);
 
  /* default is to allow duplicates */
-extern bool
-_bt_itemcmp(Relation rel, Size keysz, BTItem item1, BTItem item2,
+extern bool _bt_itemcmp(Relation rel, Size keysz, BTItem item1, BTItem item2,
 			StrategyNumber strat);
 
 /*
@@ -249,16 +247,13 @@ extern void _bt_pagedel(Relation rel, ItemPointer tid);
  */
 extern bool BuildingBtree;		/* in nbtree.c */
 
-extern void
-btbuild(Relation heap, Relation index, int natts,
+extern void btbuild(Relation heap, Relation index, int natts,
 		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 		Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
-extern InsertIndexResult
-btinsert(Relation rel, Datum *datum, char *nulls,
+extern InsertIndexResult btinsert(Relation rel, Datum *datum, char *nulls,
 		 ItemPointer ht_ctid, Relation heapRel);
 extern char *btgettuple(IndexScanDesc scan, ScanDirection dir);
-extern char *
-btbeginscan(Relation rel, bool fromEnd, uint16 keysz,
+extern char *btbeginscan(Relation rel, bool fromEnd, uint16 keysz,
 			ScanKey scankey);
 
 extern void btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey);
@@ -278,17 +273,13 @@ extern void _bt_adjscans(Relation rel, ItemPointer tid, int op);
 /*
  * prototypes for functions in nbtsearch.c
  */
-extern BTStack
-_bt_search(Relation rel, int keysz, ScanKey scankey,
+extern BTStack _bt_search(Relation rel, int keysz, ScanKey scankey,
 		   Buffer *bufP);
-extern Buffer
-_bt_moveright(Relation rel, Buffer buf, int keysz,
+extern Buffer _bt_moveright(Relation rel, Buffer buf, int keysz,
 			  ScanKey scankey, int access);
-extern bool
-_bt_skeycmp(Relation rel, Size keysz, ScanKey scankey,
+extern bool _bt_skeycmp(Relation rel, Size keysz, ScanKey scankey,
 			Page page, ItemId itemid, StrategyNumber strat);
-extern OffsetNumber
-_bt_binsrch(Relation rel, Buffer buf, int keysz,
+extern OffsetNumber _bt_binsrch(Relation rel, Buffer buf, int keysz,
 			ScanKey scankey, int srchtype);
 extern RetrieveIndexResult _bt_next(IndexScanDesc scan, ScanDirection dir);
 extern RetrieveIndexResult _bt_first(IndexScanDesc scan, ScanDirection dir);
@@ -297,11 +288,9 @@ extern bool _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
 /*
  * prototypes for functions in nbtstrat.c
  */
-extern StrategyNumber
-_bt_getstrat(Relation rel, AttrNumber attno,
+extern StrategyNumber _bt_getstrat(Relation rel, AttrNumber attno,
 			 RegProcedure proc);
-extern bool
-_bt_invokestrat(Relation rel, AttrNumber attno,
+extern bool _bt_invokestrat(Relation rel, AttrNumber attno,
 				StrategyNumber strat, Datum left, Datum right);
 
 /*
@@ -322,4 +311,4 @@ extern void _bt_spooldestroy(void *spool);
 extern void _bt_spool(Relation index, BTItem btitem, void *spool);
 extern void _bt_leafbuild(Relation index, void *spool);
 
-#endif							/* NBTREE_H */
+#endif	 /* NBTREE_H */

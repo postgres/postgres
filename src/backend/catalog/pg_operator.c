@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.28 1998/09/01 03:21:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.29 1998/09/01 04:27:36 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -35,28 +35,23 @@
 #include <string.h>
 #endif
 
-static Oid
-OperatorGetWithOpenRelation(Relation pg_operator_desc,
+static Oid OperatorGetWithOpenRelation(Relation pg_operator_desc,
 							const char *operatorName,
 							Oid leftObjectId,
 							Oid rightObjectId);
-static Oid
-OperatorGet(char *operatorName,
+static Oid OperatorGet(char *operatorName,
 			char *leftTypeName,
 			char *rightTypeName);
 
-static Oid
-OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
+static Oid OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 								  char *operatorName,
 								  Oid leftObjectId,
 								  Oid rightObjectId);
-static Oid
-OperatorShellMake(char *operatorName,
+static Oid OperatorShellMake(char *operatorName,
 				  char *leftTypeName,
 				  char *rightTypeName);
 
-static void
-OperatorDef(char *operatorName,
+static void OperatorDef(char *operatorName,
 			int definedOK,
 			char *leftTypeName,
 			char *rightTypeName,
@@ -120,7 +115,7 @@ OperatorGetWithOpenRelation(Relation pg_operator_desc,
 	 */
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf, /* no cache? */
+									  SnapshotSelf,		/* no cache? */
 									  3,
 									  opKey);
 
@@ -475,7 +470,7 @@ OperatorDef(char *operatorName,
 	char	   *name[4];
 	Oid			typeId[8];
 	int			nargs;
-	NameData		oname;
+	NameData	oname;
 	TupleDesc	tupDesc;
 
 	static ScanKeyData opKey[3] = {
@@ -796,7 +791,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf, /* no cache? */
+									  SnapshotSelf,		/* no cache? */
 									  1,
 									  opKey);
 
@@ -872,7 +867,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf, /* no cache? */
+									  SnapshotSelf,		/* no cache? */
 									  1,
 									  opKey);
 

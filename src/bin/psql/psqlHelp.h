@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.51 1998/08/28 03:36:31 momjian Exp $
+ * $Id: psqlHelp.h,v 1.52 1998/09/01 04:33:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@ struct _helpStruct
 static struct _helpStruct QL_HELP[] = {
 	{"abort transaction",
 		"abort the current transaction",
-    "\
+	"\
 \tabort [transaction|work];"},
 	{"alter table",
 		"add/rename attributes, rename tables",

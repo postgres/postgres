@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.12 1998/09/01 03:23:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.13 1998/09/01 04:29:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ void
 set_clause_selectivities(List *clauseinfo_list, Cost new_selectivity)
 {
 	List	   *temp;
-	ClauseInfo	   *clausenode;
+	ClauseInfo *clausenode;
 	Cost		cost_clause;
 
 	foreach(temp, clauseinfo_list)
@@ -95,7 +95,7 @@ product_selec(List *clauseinfo_list)
 void
 set_rest_relselec(Query *root, List *rel_list)
 {
-	RelOptInfo		   *rel;
+	RelOptInfo *rel;
 	List	   *x;
 
 	foreach(x, rel_list)
@@ -117,7 +117,7 @@ void
 set_rest_selec(Query *root, List *clauseinfo_list)
 {
 	List	   *temp = NIL;
-	ClauseInfo	   *clausenode = (ClauseInfo *) NULL;
+	ClauseInfo *clausenode = (ClauseInfo *) NULL;
 	Cost		cost_clause;
 
 	foreach(temp, clauseinfo_list)
@@ -159,8 +159,8 @@ set_rest_selec(Query *root, List *clauseinfo_list)
 Cost
 compute_clause_selec(Query *root, Node *clause, List *or_selectivities)
 {
-    if (is_opclause(clause))
-	    return compute_selec(root, lcons(clause,NIL), or_selectivities);
+	if (is_opclause(clause))
+		return compute_selec(root, lcons(clause, NIL), or_selectivities);
 	else if (not_clause(clause))
 	{
 
@@ -182,9 +182,7 @@ compute_clause_selec(Query *root, Node *clause, List *or_selectivities)
 		return compute_selec(root, ((Expr *) clause)->args, or_selectivities);
 	}
 	else
-	{
 		return compute_selec(root, lcons(clause, NIL), or_selectivities);
-	}
 }
 
 /*

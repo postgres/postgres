@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.22 1998/09/01 03:22:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.23 1998/09/01 04:28:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,7 @@ static void mk_hj_temp(char *tempname);
 static int	hashFunc(char *key, int len);
 static int	ExecHashPartition(Hash *node);
 static RelativeAddr hashTableAlloc(int size, HashJoinTable hashtable);
-static void
-ExecHashOverflowInsert(HashJoinTable hashtable,
+static void ExecHashOverflowInsert(HashJoinTable hashtable,
 					   HashBucket bucket,
 					   HeapTuple heapTuple);
 

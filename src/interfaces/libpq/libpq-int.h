@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.1 1998/08/17 03:52:36 scrappy Exp $
+ * $Id: libpq-int.h,v 1.2 1998/09/01 04:40:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  * NB: we used to use PG_PROTOCOL_LATEST from the backend pqcomm.h file,
  * but that's not really the right thing: just recompiling libpq
  * against a more recent backend isn't going to magically update it
- * for most sorts of protocol changes.  So, when you change libpq
+ * for most sorts of protocol changes.	So, when you change libpq
  * to support a different protocol revision, you have to change this
  * constant too.  PG_PROTOCOL_EARLIEST and PG_PROTOCOL_LATEST in
  * pqcomm.h describe what the backend knows, not what libpq knows.
@@ -46,28 +46,29 @@
 
 /* === in fe-connect.c === */
 
-	extern int	pqPacketSend(PGconn *conn, const char *buf, size_t len);
+extern int	pqPacketSend(PGconn *conn, const char *buf, size_t len);
 
 /* === in fe-exec.c === */
 
-	extern void	pqClearAsyncResult(PGconn *conn);
+extern void pqClearAsyncResult(PGconn *conn);
 
 /* === in fe-misc.c === */
 
-	/* "Get" and "Put" routines return 0 if successful, EOF if not.
-	 * Note that for Get, EOF merely means the buffer is exhausted,
-	 * not that there is necessarily any error.
-	 */
-	extern int	pqGetc(char *result, PGconn *conn);
-	extern int	pqGets(char *s, int maxlen, PGconn *conn);
-	extern int	pqPuts(const char *s, PGconn *conn);
-	extern int	pqGetnchar(char *s, int len, PGconn *conn);
-	extern int	pqPutnchar(const char *s, int len, PGconn *conn);
-	extern int	pqGetInt(int *result, int bytes, PGconn *conn);
-	extern int	pqPutInt(int value, int bytes, PGconn *conn);
-	extern int	pqReadData(PGconn *conn);
-	extern int	pqFlush(PGconn *conn);
-	extern int	pqWait(int forRead, int forWrite, PGconn *conn);
+ /*
+  * "Get" and "Put" routines return 0 if successful, EOF if not. Note that
+  * for Get, EOF merely means the buffer is exhausted, not that there is
+  * necessarily any error.
+  */
+extern int	pqGetc(char *result, PGconn *conn);
+extern int	pqGets(char *s, int maxlen, PGconn *conn);
+extern int	pqPuts(const char *s, PGconn *conn);
+extern int	pqGetnchar(char *s, int len, PGconn *conn);
+extern int	pqPutnchar(const char *s, int len, PGconn *conn);
+extern int	pqGetInt(int *result, int bytes, PGconn *conn);
+extern int	pqPutInt(int value, int bytes, PGconn *conn);
+extern int	pqReadData(PGconn *conn);
+extern int	pqFlush(PGconn *conn);
+extern int	pqWait(int forRead, int forWrite, PGconn *conn);
 
 /* max length of message to send  */
 #define MAX_MESSAGE_LEN 8193
@@ -90,8 +91,9 @@
 #ifndef strerror
 #if defined(sun) && defined(sparc) && !defined(__SVR4)
 extern char *sys_errlist[];
-#define strerror(A) (sys_errlist[(A)])
-#endif /* sunos4 */
-#endif /* !strerror */
 
-#endif							/* LIBPQ_INT_H */
+#define strerror(A) (sys_errlist[(A)])
+#endif	 /* sunos4 */
+#endif	 /* !strerror */
+
+#endif	 /* LIBPQ_INT_H */

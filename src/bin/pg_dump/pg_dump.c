@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.82 1998/09/01 03:27:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.83 1998/09/01 04:33:45 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -80,13 +80,11 @@
 
 static void dumpSequence(FILE *fout, TableInfo tbinfo);
 static void dumpACL(FILE *fout, TableInfo tbinfo);
-static void
-dumpTriggers(FILE *fout, const char *tablename,
+static void dumpTriggers(FILE *fout, const char *tablename,
 			 TableInfo *tblinfo, int numTables);
 static char *checkForQuote(const char *s);
 static void clearTableInfo(TableInfo *, int);
-static void
-dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
+static void dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes);
 static int	findLastBuiltinOid(void);
 static bool isViewRule(char *relname);
@@ -130,7 +128,7 @@ usage(const char *progname)
 	fprintf(stderr,
 			"\t -d          \t\t dump data as proper insert strings\n");
 	fprintf(stderr,
-			"\t -D          \t\t dump data as inserts with attribute names\n");
+	  "\t -D          \t\t dump data as inserts with attribute names\n");
 	fprintf(stderr,
 			"\t -f filename \t\t script output filename\n");
 	fprintf(stderr,
@@ -593,8 +591,8 @@ main(int argc, char **argv)
 
 					tablename = strdup(optarg);
 					for (i = 0; tablename[i]; i++)
-						if (isascii((unsigned char)tablename[i]) &&
-						    isupper(tablename[i]))
+						if (isascii((unsigned char) tablename[i]) &&
+							isupper(tablename[i]))
 							tablename[i] = tolower(tablename[i]);
 				}
 				break;
@@ -2158,7 +2156,7 @@ dumpOprs(FILE *fout, OprInfo *oprinfo, int numOperators,
 				commutator,
 				negator,
 				restrictor,
-				(strcmp(oprinfo[i].oprcanhash, "t") == 0) ? ", HASHES" : "",
+			 (strcmp(oprinfo[i].oprcanhash, "t") == 0) ? ", HASHES" : "",
 				join,
 				sortop);
 
@@ -2287,11 +2285,11 @@ GetPrivledges(char *s)
 {
 	char	   *acls = NULL;
 
-	/* Grant All     == arwR */
-	/* INSERT        == a   */
-	/* UPDATE/DELETE == w   */
-	/* SELECT        == r   */
-	/* RULE          == R   */
+	/* Grant All	 == arwR */
+	/* INSERT		 == a	*/
+	/* UPDATE/DELETE == w	*/
+	/* SELECT		 == r	*/
+	/* RULE			 == R	*/
 
 	if (strstr(s, "arwR"))
 		return strdup("ALL");
@@ -2375,16 +2373,18 @@ ParseACL(const char *acls, int *count)
 	*count = NumAcls;
 	return ParsedAcl;
 }
+
 /*
  * dumpACL:
- *    Write out grant/revoke information
- *    Called for sequences and tables
+ *	  Write out grant/revoke information
+ *	  Called for sequences and tables
  */
 
 void
 dumpACL(FILE *fout, TableInfo tbinfo)
 {
-	int k, l;
+	int			k,
+				l;
 	ACL		   *ACLlist;
 
 	ACLlist = ParseACL(tbinfo.relacl, &l);
@@ -2508,13 +2508,13 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 					}
 					else
 					{
- 						strcpy(id1, fmtId(tblinfo[i].attnames[j]));
- 						strcpy(id2, fmtId(tblinfo[i].typnames[j]));
+						strcpy(id1, fmtId(tblinfo[i].attnames[j]));
+						strcpy(id2, fmtId(tblinfo[i].typnames[j]));
 						sprintf(q, "%s%s%s %s",
 								q,
 								(actual_atts > 0) ? ", " : "",
-							id1,
-							id2);
+								id1,
+								id2);
 						actual_atts++;
 					}
 					if (tblinfo[i].adef_expr[j] != NULL)
@@ -2528,9 +2528,9 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 			for (k = 0; k < tblinfo[i].ncheck; k++)
 			{
 				sprintf(q, "%s%s %s",
-					q,
-					(actual_atts + k > 0) ? ", " : "",
-					tblinfo[i].check_expr[k]);
+						q,
+						(actual_atts + k > 0) ? ", " : "",
+						tblinfo[i].check_expr[k]);
 			}
 
 			strcat(q, ")");
@@ -2584,7 +2584,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 	for (i = 0; i < numIndices; i++)
 	{
 		tableInd = findTableByName(tblinfo, numTables,
-					   (indinfo[i].indrelname));
+								   (indinfo[i].indrelname));
 
 		if (strcmp(indinfo[i].indproc, "0") == 0)
 			funcname = NULL;
@@ -2987,11 +2987,12 @@ dumpTriggers(FILE *fout, const char *tablename,
  * (to avoid the overhead of useless backend launches).
  */
 
-static void becomeUser(FILE *fout, const char *username)
+static void
+becomeUser(FILE *fout, const char *username)
 {
 	static const char *lastusername = "";
 
-	if (! aclsOption)
+	if (!aclsOption)
 		return;
 
 	if (strcmp(lastusername, username) == 0)

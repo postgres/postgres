@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.14 1998/09/01 03:25:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.15 1998/09/01 04:31:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ SISetActiveProcess(SISeg *segInOutP, BackendId backendId)
 int
 SIBackendInit(SISeg *segInOutP)
 {
-	LockRelId		LtCreateRelId();
+	LockRelId	LtCreateRelId();
 	TransactionId LMITransactionIdCopy();
 
 	Assert(MyBackendTag > 0);
@@ -100,7 +100,7 @@ SIBackendInit(SISeg *segInOutP)
 #ifdef	INVALIDDEBUG
 	elog(DEBUG, "SIBackendInit: backend tag %d; backend id %d.",
 		 MyBackendTag, MyBackendId);
-#endif							/* INVALIDDEBUG */
+#endif	 /* INVALIDDEBUG */
 
 	SISetActiveProcess(segInOutP, MyBackendId);
 	on_shmem_exit(CleanupInvalidationState, (caddr_t) segInOutP);
@@ -151,7 +151,7 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 	}
 
 	Assert(stateP);
-	
+
 	if (stateP->tag != InvalidBackendTag)
 	{
 		if (stateP->tag == backendTag)
@@ -360,16 +360,18 @@ SIGetProcStateLimit(SISeg *segP, int i)
 static bool
 SIIncNumEntries(SISeg *segP, int num)
 {
+
 	/*
-	 * Try to prevent table overflow. When the table is 70% full send
-	 * a SIGUSR2 to the postmaster which will send it back to all the
+	 * Try to prevent table overflow. When the table is 70% full send a
+	 * SIGUSR2 to the postmaster which will send it back to all the
 	 * backends. This will be handled by Async_NotifyHandler() with a
 	 * StartTransactionCommand() which will flush unread SI entries for
 	 * each backend.									dz - 27 Jan 1998
 	 */
-	if (segP->numEntries == (MAXNUMMESSAGES * 70 / 100)) {
+	if (segP->numEntries == (MAXNUMMESSAGES * 70 / 100))
+	{
 		TPRINTF(TRACE_VERBOSE,
-				"SIIncNumEntries: table is 70%% full, signaling postmaster");
+			"SIIncNumEntries: table is 70%% full, signaling postmaster");
 		kill(getppid(), SIGUSR2);
 	}
 
@@ -844,7 +846,7 @@ SISegmentInit(bool killExistingSegment, IPCKey key)
 		if (shmId < 0)
 		{
 			perror("SISegmentGet: failed");
-			return -1;		/* an error */
+			return -1;			/* an error */
 		}
 
 		/* Attach the shared cache invalidation  segment */
@@ -862,7 +864,7 @@ SISegmentInit(bool killExistingSegment, IPCKey key)
 		if (shmId < 0)
 		{
 			perror("SISegmentGet: getting an existent segment failed");
-			return -1;		/* an error */
+			return -1;			/* an error */
 		}
 		/* Attach the shared cache invalidation segment */
 		SISegmentAttach(shmId);

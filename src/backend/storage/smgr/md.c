@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.38 1998/09/01 03:25:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.39 1998/09/01 04:32:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -568,7 +568,7 @@ mdblindwrt(char *dbstr,
 		int4		owner;
 		Oid			id;
 		char	   *tmpPath;
-		int	   tmpEncoding;
+		int			tmpEncoding;
 
 		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath, &tmpEncoding);
 
@@ -607,7 +607,7 @@ mdblindwrt(char *dbstr,
 		int4		owner;
 		Oid			id;
 		char	   *tmpPath;
-		int	   tmpEncoding;
+		int			tmpEncoding;
 
 		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath, &tmpEncoding);
 

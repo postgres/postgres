@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.8 1998/09/01 03:23:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.9 1998/09/01 04:30:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ RelOptInfo *
 get_base_rel(Query *root, int relid)
 {
 	List	   *relids;
-	RelOptInfo		   *rel;
+	RelOptInfo *rel;
 
 	relids = lconsi(relid, NIL);
 	rel = rel_member(relids, root->base_rel_list);
@@ -65,6 +65,7 @@ get_base_rel(Query *root, int relid)
 		 */
 		if (relid < 0)
 		{
+
 			/*
 			 * If the relation is a materialized relation, assume
 			 * constants for sizes.

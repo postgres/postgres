@@ -4,7 +4,7 @@
 #include <errno.h>
 
 /* This is a list of all error codes the embedded SQL program can return */
-#define	ECPG_NO_ERROR		0
+#define ECPG_NO_ERROR		0
 #define ECPG_NOT_FOUND		100
 
 /* system error codes returned by ecpglib get the correct number,
@@ -14,7 +14,7 @@
 
 /* first we have a set of ecpg messages, they start at 200 */
 #define ECPG_UNSUPPORTED	-200
-#define ECPG_TOO_MANY_ARGUMENTS	-201
+#define ECPG_TOO_MANY_ARGUMENTS -201
 #define ECPG_TOO_FEW_ARGUMENTS	-202
 #define ECPG_TOO_MANY_MATCHES	-203
 #define ECPG_INT_FORMAT		-204
@@ -33,4 +33,4 @@
 #define ECPG_TRANS		-401
 #define ECPG_CONNECT		-402
 
-#endif /* !_ECPG_ERROR_H */
+#endif	 /* !_ECPG_ERROR_H */

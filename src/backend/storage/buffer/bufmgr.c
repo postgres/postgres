@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.42 1998/09/01 03:25:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.43 1998/09/01 04:31:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,13 +87,11 @@ static void WaitIO(BufferDesc *buf, SPINLOCK spinlock);
 static void SignalIO(BufferDesc *buf);
 extern long *NWaitIOBackendP;	/* defined in buf_init.c */
 
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 
-static Buffer
-ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
+static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
 						 bool bufferLockHeld);
-static BufferDesc *
-BufferAlloc(Relation reln, BlockNumber blockNum,
+static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr, bool bufferLockHeld);
 static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
@@ -119,8 +117,8 @@ RelationGetBufferWithBuffer(Relation relation,
 	{
 		if (!BufferIsLocal(buffer))
 		{
-			LockRelId   *lrelId = &(((LockInfo)(relation->lockInfo))->lockRelId);
-			
+			LockRelId  *lrelId = &(((LockInfo) (relation->lockInfo))->lockRelId);
+
 			bufHdr = &BufferDescriptors[buffer - 1];
 			SpinAcquire(BufMgrLock);
 			if (bufHdr->tag.blockNum == blockNumber &&
@@ -417,7 +415,7 @@ BufferAlloc(Relation reln,
 		}
 #ifdef BMTRACE
 		_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCFND);
-#endif							/* BMTRACE */
+#endif	 /* BMTRACE */
 
 		SpinRelease(BufMgrLock);
 
@@ -480,7 +478,7 @@ BufferAlloc(Relation reln,
 			 */
 			Assert(S_LOCK_FREE(&(buf->io_in_progress_lock)));
 			S_LOCK(&(buf->io_in_progress_lock));
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 
 			/*
 			 * Write the buffer out, being careful to release BufMgrLock
@@ -493,7 +491,7 @@ BufferAlloc(Relation reln,
 			smok = BufferReplace(buf, true);
 #ifndef OPTIMIZE_SINGLE
 			SpinAcquire(BufMgrLock);
-#endif							/* OPTIMIZE_SINGLE */
+#endif	 /* OPTIMIZE_SINGLE */
 
 			if (smok == FALSE)
 			{
@@ -507,7 +505,7 @@ BufferAlloc(Relation reln,
 #else							/* !HAS_TEST_AND_SET */
 				if (buf->refcount > 1)
 					SignalIO(buf);
-#endif							/* !HAS_TEST_AND_SET */
+#endif	 /* !HAS_TEST_AND_SET */
 				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 				buf->refcount--;
 				if (buf->refcount == 0)
@@ -553,7 +551,7 @@ BufferAlloc(Relation reln,
 #else							/* !HAS_TEST_AND_SET */
 				if (buf->refcount > 1)
 					SignalIO(buf);
-#endif							/* !HAS_TEST_AND_SET */
+#endif	 /* !HAS_TEST_AND_SET */
 				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
 				buf->refcount--;
 				buf = (BufferDesc *) NULL;
@@ -583,7 +581,7 @@ BufferAlloc(Relation reln,
 #else							/* !HAS_TEST_AND_SET */
 					if (buf->refcount > 1)
 						SignalIO(buf);
-#endif							/* !HAS_TEST_AND_SET */
+#endif	 /* !HAS_TEST_AND_SET */
 
 					/* give up the buffer since we don't need it any more */
 					buf->refcount--;
@@ -656,12 +654,12 @@ BufferAlloc(Relation reln,
 #ifdef HAS_TEST_AND_SET
 		Assert(S_LOCK_FREE(&(buf->io_in_progress_lock)));
 		S_LOCK(&(buf->io_in_progress_lock));
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 	}
 
 #ifdef BMTRACE
 	_bm_trace((reln->rd_rel->relisshared ? 0 : MyDatabaseId), RelationGetRelid(reln), blockNum, BufferDescriptorGetBuffer(buf), BMT_ALLOCNOTFND);
-#endif							/* BMTRACE */
+#endif	 /* BMTRACE */
 
 	SpinRelease(BufMgrLock);
 
@@ -1018,7 +1016,7 @@ BufferSync()
 
 #ifndef OPTIMIZE_SINGLE
 				SpinRelease(BufMgrLock);
-#endif							/* OPTIMIZE_SINGLE */
+#endif	 /* OPTIMIZE_SINGLE */
 				if (reln == (Relation) NULL)
 				{
 					status = smgrblindwrt(DEFAULT_SMGR, bufHdr->sb_dbname,
@@ -1034,7 +1032,7 @@ BufferSync()
 				}
 #ifndef OPTIMIZE_SINGLE
 				SpinAcquire(BufMgrLock);
-#endif							/* OPTIMIZE_SINGLE */
+#endif	 /* OPTIMIZE_SINGLE */
 
 				UnpinBuffer(bufHdr);
 				if (status == SM_FAIL)
@@ -1129,7 +1127,7 @@ SignalIO(BufferDesc *buf)
 	*NWaitIOBackendP = 0;
 }
 
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 
 long		NDirectFileRead;	/* some I/O's are direct file access.
 								 * bypass bufmgr */
@@ -1575,7 +1573,7 @@ BlowawayRelationBuffers(Relation rel, BlockNumber block)
 				if (buf->flags & BM_DIRTY)
 				{
 					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is dirty",
-						 rel->rd_rel->relname.data, block, buf->tag.blockNum);
+					rel->rd_rel->relname.data, block, buf->tag.blockNum);
 					return -1;
 				}
 				if (LocalRefCount[i] > 0)
@@ -1888,7 +1886,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 	kill(getpid(), SIGILL);
 }
 
-#endif							/* BMTRACE */
+#endif	 /* BMTRACE */
 
 void
 BufferRefCountReset(int *refcountsave)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.30 1998/09/01 03:25:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.31 1998/09/01 04:32:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,8 +151,8 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 	{
 		case ACL_IDTYPE_UID:
 			htup = SearchSysCacheTuple(USENAME,
-										PointerGetDatum(name),
-									  	0, 0, 0);
+									   PointerGetDatum(name),
+									   0, 0, 0);
 			if (!HeapTupleIsValid(htup))
 				elog(ERROR, "aclparse: non-existent user \"%s\"", name);
 			aip->ai_id = ((Form_pg_shadow) GETSTRUCT(htup))->usesysid;
@@ -262,8 +262,8 @@ aclitemout(AclItem *aip)
 	{
 		case ACL_IDTYPE_UID:
 			htup = SearchSysCacheTuple(USESYSID,
-										ObjectIdGetDatum(aip->ai_id),
-									  	0, 0, 0);
+									   ObjectIdGetDatum(aip->ai_id),
+									   0, 0, 0);
 			if (!HeapTupleIsValid(htup))
 			{
 				char	   *tmp = int2out(aip->ai_id);

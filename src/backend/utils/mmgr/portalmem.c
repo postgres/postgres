@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.13 1998/09/01 03:27:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.14 1998/09/01 04:33:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,7 +285,7 @@ PortalHeapMemoryFree(PortalHeapMemory this,
 			 pointer);
 #ifdef ALLOCFREE_ERROR_ABORT
 		Assert(AllocSetContains(&block->setData, pointer));
-#endif							/* ALLOCFREE_ERROR_ABORT */
+#endif	 /* ALLOCFREE_ERROR_ABORT */
 	}
 }
 

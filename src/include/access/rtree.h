@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.12 1998/02/26 04:40:25 momjian Exp $
+ * $Id: rtree.h,v 1.13 1998/09/01 04:34:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,34 +114,29 @@ extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
  *		RTree code.
  *		Defined in access/index-rtree/
  */
-extern InsertIndexResult
-rtinsert(Relation r, Datum *datum, char *nulls,
+extern InsertIndexResult rtinsert(Relation r, Datum *datum, char *nulls,
 		 ItemPointer ht_ctid, Relation heapRel);
 extern char *rtdelete(Relation r, ItemPointer tid);
 
 extern RetrieveIndexResult rtgettuple(IndexScanDesc s, ScanDirection dir);
-extern IndexScanDesc
-rtbeginscan(Relation r, bool fromEnd, uint16 nkeys,
+extern IndexScanDesc rtbeginscan(Relation r, bool fromEnd, uint16 nkeys,
 			ScanKey key);
 
 extern void rtendscan(IndexScanDesc s);
 extern void rtmarkpos(IndexScanDesc s);
 extern void rtrestrpos(IndexScanDesc s);
 extern void rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key);
-extern void
-rtbuild(Relation heap, Relation index, int natts,
+extern void rtbuild(Relation heap, Relation index, int natts,
 		AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 		Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
 extern void _rtdump(Relation r);
 
 /* rtscan.c */
-extern void
-rtadjscans(Relation r, int op, BlockNumber blkno,
+extern void rtadjscans(Relation r, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
 
 /* rtstrat.h */
-extern RegProcedure
-RTMapOperator(Relation r, AttrNumber attnum,
+extern RegProcedure RTMapOperator(Relation r, AttrNumber attnum,
 			  RegProcedure proc);
 
-#endif							/* RTREE_H */
+#endif	 /* RTREE_H */

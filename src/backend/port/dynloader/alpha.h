@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: alpha.h,v 1.1 1998/02/02 03:49:11 scrappy Exp $
+ * $Id: alpha.h,v 1.2 1998/09/01 04:30:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,4 +32,4 @@
 #define  pg_dlclose(h)	dlclose(h)
 #define  pg_dlerror()	dlerror()
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

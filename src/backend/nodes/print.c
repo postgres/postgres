@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.17 1998/08/16 05:35:35 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.18 1998/09/01 04:29:10 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -201,7 +201,7 @@ print_expr(Node *expr, List *rtable)
 
 			print_expr((Node *) get_leftop(e), rtable);
 			opname = get_opname(((Oper *) e->oper)->opno);
-			printf(" %s ", ((opname != NULL)? opname: "(invalid operator)"));
+			printf(" %s ", ((opname != NULL) ? opname : "(invalid operator)"));
 			print_expr((Node *) get_rightop(e), rtable);
 		}
 		else
@@ -392,13 +392,16 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 	{
 		List	   *lst;
 		int			whichplan = 0;
-		Append	   *appendplan = (Append *)p;
-		
+		Append	   *appendplan = (Append *) p;
+
 		foreach(lst, appendplan->appendplans)
 		{
-			Plan *subnode = (Plan *)lfirst(lst);
+			Plan	   *subnode = (Plan *) lfirst(lst);
 
-			/* I don't think we need to fiddle with the range table here, bjm */
+			/*
+			 * I don't think we need to fiddle with the range table here,
+			 * bjm
+			 */
 			print_plan_recursive(subnode, parsetree, indentLevel + 3, "a: ");
 
 			whichplan++;

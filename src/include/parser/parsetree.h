@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.4 1997/11/21 19:12:28 momjian Exp $
+ * $Id: parsetree.h,v 1.5 1998/09/01 04:37:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,4 +65,4 @@
 #define getrelname(rangeindex, rangetable) \
 	rt_relname((RangeTblEntry*)nth((rangeindex)-1, rangetable))
 
-#endif							/* PARSETREE_H */
+#endif	 /* PARSETREE_H */

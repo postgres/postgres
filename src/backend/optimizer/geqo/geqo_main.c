@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.10 1998/09/01 03:23:09 momjian Exp $
+ * $Id: geqo_main.c,v 1.11 1998/09/01 04:29:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ geqo(Query *root)
 				status_interval;
 
 	Gene	   *best_tour;
-	RelOptInfo		   *best_rel;
+	RelOptInfo *best_rel;
 
 /*	Plan *best_plan; */
 

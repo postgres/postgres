@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.18 1998/09/01 03:21:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.19 1998/09/01 04:27:15 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -29,8 +29,7 @@
 static int	RecoveryCheckingEnabled(void);
 static void TransRecover(Relation logRelation);
 static bool TransactionLogTest(TransactionId transactionId, XidStatus status);
-static void
-TransactionLogUpdate(TransactionId transactionId,
+static void TransactionLogUpdate(TransactionId transactionId,
 					 XidStatus status);
 
 /* ----------------

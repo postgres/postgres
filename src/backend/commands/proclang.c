@@ -162,8 +162,8 @@ DropProceduralLanguage(DropPLangStmt *stmt)
 	case_translate_language_name(stmt->plname, languageName);
 
 	langTup = SearchSysCacheTupleCopy(LANNAME,
-								  PointerGetDatum(languageName),
-								  0, 0, 0);
+									  PointerGetDatum(languageName),
+									  0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
 		elog(ERROR, "Language %s doesn't exist", languageName);
 

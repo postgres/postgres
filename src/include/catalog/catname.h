@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.9 1998/02/25 13:09:21 scrappy Exp $
+ * $Id: catname.h,v 1.10 1998/09/01 04:34:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,4 +46,4 @@
 
 extern char *SharedSystemRelationNames[];
 
-#endif							/* CATNAME_H */
+#endif	 /* CATNAME_H */

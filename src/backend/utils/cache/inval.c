@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.15 1998/09/01 03:26:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.16 1998/09/01 04:33:00 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -33,8 +33,7 @@
 
 static InvalidationEntry InvalidationEntryAllocate(uint16 size);
 static void LocalInvalidInvalidate(LocalInvalid invalid, void (*function) ());
-static LocalInvalid
-LocalInvalidRegister(LocalInvalid invalid,
+static LocalInvalid LocalInvalidRegister(LocalInvalid invalid,
 					 InvalidationEntry entry);
 static void getmyrelids(void);
 
@@ -166,7 +165,7 @@ elog(DEBUG, "CacheIdRegisterLocalInvalid(%d, %d, [%d, %d])", \
 	 ItemPointerGetOffsetNumber(pointer))
 #else
 #define CacheIdRegisterLocalInvalid_DEBUG1
-#endif							/* INVALIDDEBUG */
+#endif	 /* INVALIDDEBUG */
 
 static void
 CacheIdRegisterLocalInvalid(Index cacheId,
@@ -218,7 +217,7 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
 #ifdef	INVALIDDEBUG
 	elog(DEBUG, "RelationRegisterLocalInvalid(%d, %d)", relationId,
 		 objectId);
-#endif							/* defined(INVALIDDEBUG) */
+#endif	 /* defined(INVALIDDEBUG) */
 
 	/* ----------------
 	 *	create a message describing the relation descriptor
@@ -267,7 +266,7 @@ getmyrelids()
 	MyAMRelationId = tuple->t_oid;
 
 	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(AccessMethodOperatorRelationName),
+					   PointerGetDatum(AccessMethodOperatorRelationName),
 								0, 0, 0);
 	Assert(HeapTupleIsValid(tuple));
 	MyAMOPRelationId = tuple->t_oid;
@@ -287,7 +286,7 @@ elog(DEBUG, "CacheIdInvalidate(%d, %d, 0x%x[%d])", cacheId, hashIndex,\
 	 pointer, ItemPointerIsValid(pointer))
 #else
 #define CacheIdInvalidate_DEBUG1
-#endif							/* defined(INVALIDDEBUG) */
+#endif	 /* defined(INVALIDDEBUG) */
 
 static void
 CacheIdInvalidate(Index cacheId,
@@ -380,7 +379,7 @@ elog(DEBUG,\
 #else
 #define InvalidationMessageRegisterSharedInvalid_DEBUG1
 #define InvalidationMessageRegisterSharedInvalid_DEBUG2
-#endif							/* INVALIDDEBUG */
+#endif	 /* INVALIDDEBUG */
 
 static void
 InvalidationMessageRegisterSharedInvalid(InvalidationMessage message)
@@ -430,7 +429,7 @@ elog(DEBUG, "InvalidationMessageCacheInvalidate(c, %d, %d, [%d, %d])",\
 #else
 #define InvalidationMessageCacheInvalidate_DEBUG1
 #define InvalidationMessageCacheInvalidate_DEBUG2
-#endif							/* defined(INVALIDDEBUG) */
+#endif	 /* defined(INVALIDDEBUG) */
 
 static void
 InvalidationMessageCacheInvalidate(InvalidationMessage message)
@@ -536,7 +535,7 @@ DiscardInvalid()
 	 */
 #ifdef	INVALIDDEBUG
 	elog(DEBUG, "DiscardInvalid called");
-#endif							/* defined(INVALIDDEBUG) */
+#endif	 /* defined(INVALIDDEBUG) */
 
 	InvalidateSharedInvalid(CacheIdInvalidate, ResetSystemCaches);
 }
@@ -557,7 +556,7 @@ RegisterInvalid(bool send)
 	 */
 #ifdef	INVALIDDEBUG
 	elog(DEBUG, "RegisterInvalid(%d) called", send);
-#endif							/* defined(INVALIDDEBUG) */
+#endif	 /* defined(INVALIDDEBUG) */
 
 	/* ----------------
 	 *	Note: Invalid is a global variable
@@ -582,7 +581,7 @@ SetRefreshWhenInvalidate(bool on)
 {
 #ifdef	INVALIDDEBUG
 	elog(DEBUG, "RefreshWhenInvalidate(%d) called", on);
-#endif							/* defined(INVALIDDEBUG) */
+#endif	 /* defined(INVALIDDEBUG) */
 
 	RefreshWhenInvalidate = on;
 }
@@ -603,7 +602,7 @@ elog(DEBUG, "RelationInvalidateHeapTuple(%s, [%d,%d])", \
 	 ItemPointerGetOffsetNumber(&tuple->t_ctid))
 #else
 #define RelationInvalidateHeapTuple_DEBUG1
-#endif							/* defined(INVALIDDEBUG) */
+#endif	 /* defined(INVALIDDEBUG) */
 
 void
 RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.13 1998/07/20 20:48:52 momjian Exp $
+ * $Id: makefuncs.h,v 1.14 1998/09/01 04:36:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,15 +17,13 @@
 #include <nodes/parsenodes.h>
 #include <utils/fcache.h>
 
-extern Oper *
-makeOper(Oid opno,
+extern Oper *makeOper(Oid opno,
 		 Oid opid,
 		 Oid opresulttype,
 		 int opsize,
 		 FunctionCachePtr op_fcache);
 
-extern Var *
-makeVar(Index varno,
+extern Var *makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
 		int32 vartypmod,
@@ -34,10 +32,9 @@ makeVar(Index varno,
 		AttrNumber varoattno);
 
 extern TargetEntry *
-makeTargetEntry(Resdom *resdom, Node *expr);
+			makeTargetEntry(Resdom *resdom, Node *expr);
 
-extern Resdom *
-makeResdom(AttrNumber resno,
+extern Resdom *makeResdom(AttrNumber resno,
 		   Oid restype,
 		   int32 restypmod,
 		   char *resname,
@@ -45,8 +42,7 @@ makeResdom(AttrNumber resno,
 		   Oid reskeyop,
 		   int resjunk);
 
-extern Const *
-makeConst(Oid consttype,
+extern Const *makeConst(Oid consttype,
 		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
@@ -54,4 +50,4 @@ makeConst(Oid consttype,
 		  bool constisset,
 		  bool constiscast);
 
-#endif							/* MAKEFUNC_H */
+#endif	 /* MAKEFUNC_H */

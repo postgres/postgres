@@ -40,8 +40,7 @@ void		RelationBuildTriggers(Relation relation);
 void		FreeTriggerDesc(Relation relation);
 
 static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
-static HeapTuple
-GetTupleForTrigger(Relation relation, ItemPointer tid,
+static HeapTuple GetTupleForTrigger(Relation relation, ItemPointer tid,
 				   bool before);
 
 extern GlobalMemory CacheCxt;
@@ -220,8 +219,8 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 	/* update pg_class */
 	tuple = SearchSysCacheTupleCopy(RELNAME,
-									 PointerGetDatum(stmt->relname),
-									 0, 0, 0);
+									PointerGetDatum(stmt->relname),
+									0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: relation %s not found in pg_class", stmt->relname);
 
@@ -258,7 +257,7 @@ DropTrigger(DropTrigStmt *stmt)
 	MemoryContext oldcxt;
 	int			found = 0;
 	int			tgfound = 0;
-	
+
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetPgUserName(), stmt->relname, RELNAME))
 		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
@@ -298,8 +297,8 @@ DropTrigger(DropTrigStmt *stmt)
 	heap_close(tgrel);
 
 	tuple = SearchSysCacheTupleCopy(RELNAME,
-									 PointerGetDatum(stmt->relname),
-									 0, 0, 0);
+									PointerGetDatum(stmt->relname),
+									0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DropTrigger: relation %s not found in pg_class", stmt->relname);
 

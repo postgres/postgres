@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.5 1998/09/01 03:24:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.6 1998/09/01 04:30:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,8 @@
 #include "parser/parse_coerce.h"
 #include "utils/syscache.h"
 
-Oid DemoteType(Oid inType);
-Oid PromoteTypeToNext(Oid inType);
+Oid			DemoteType(Oid inType);
+Oid			PromoteTypeToNext(Oid inType);
 
 
 /* coerce_type()
@@ -35,45 +35,57 @@ Oid PromoteTypeToNext(Oid inType);
 Node *
 coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 {
-	Node   *result = NULL;
-	Oid		infunc;
-	Datum	val;
+	Node	   *result = NULL;
+	Oid			infunc;
+	Datum		val;
 
 #ifdef PARSEDEBUG
-printf("coerce_type: argument types are %d -> %d\n",
- inputTypeId, targetTypeId);
+	printf("coerce_type: argument types are %d -> %d\n",
+		   inputTypeId, targetTypeId);
 #endif
 
 	if (targetTypeId == InvalidOid)
 	{
 #ifdef PARSEDEBUG
-printf("coerce_type: apparent NULL target argument; suppress type conversion\n");
+		printf("coerce_type: apparent NULL target argument; suppress type conversion\n");
 #endif
 		result = node;
 	}
 	else if (inputTypeId != targetTypeId)
 	{
-		/* one of the known-good transparent conversions? then drop through... */
+
+		/*
+		 * one of the known-good transparent conversions? then drop
+		 * through...
+		 */
 		if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
 		{
 #ifdef PARSEDEBUG
-printf("coerce_type: argument type %s is known to be convertible to type %s\n",
- typeidTypeName(inputTypeId), typeidTypeName(targetTypeId));
+			printf("coerce_type: argument type %s is known to be convertible to type %s\n",
+			  typeidTypeName(inputTypeId), typeidTypeName(targetTypeId));
 #endif
 			result = node;
 		}
 
-		/* if not unknown input type, try for explicit conversion using functions... */
+		/*
+		 * if not unknown input type, try for explicit conversion using
+		 * functions...
+		 */
 		else if (inputTypeId != UNKNOWNOID)
 		{
-			/* We already know there is a function which will do this, so let's use it */
-			FuncCall *n = makeNode(FuncCall);
+
+			/*
+			 * We already know there is a function which will do this, so
+			 * let's use it
+			 */
+			FuncCall   *n = makeNode(FuncCall);
+
 			n->funcname = typeidTypeName(targetTypeId);
 			n->args = lcons(node, NIL);
 
 #ifdef PARSEDEBUG
-printf("coerce_type: construct function %s(%s)\n",
- typeidTypeName(targetTypeId), typeidTypeName(inputTypeId));
+			printf("coerce_type: construct function %s(%s)\n",
+			  typeidTypeName(targetTypeId), typeidTypeName(inputTypeId));
 #endif
 
 			result = transformExpr(pstate, (Node *) n, EXPR_COLUMN_FIRST);
@@ -81,14 +93,14 @@ printf("coerce_type: construct function %s(%s)\n",
 		else
 		{
 #ifdef PARSEDEBUG
-printf("coerce_type: node is UNKNOWN type\n");
+			printf("coerce_type: node is UNKNOWN type\n");
 #endif
-            if (nodeTag(node) == T_Const)
-            {
-				Const *con = (Const *) node;
+			if (nodeTag(node) == T_Const)
+			{
+				Const	   *con = (Const *) node;
 
 				val = (Datum) textout((struct varlena *)
-									   con->constvalue);
+									  con->constvalue);
 				infunc = typeidInfunc(targetTypeId);
 				con = makeNode(Const);
 				con->consttype = targetTypeId;
@@ -97,7 +109,7 @@ printf("coerce_type: node is UNKNOWN type\n");
 				/* use "-1" for varchar() type */
 				con->constvalue = (Datum) fmgr(infunc,
 											   val,
-											   typeidTypElem(targetTypeId),
+											 typeidTypElem(targetTypeId),
 											   -1);
 				con->constisnull = false;
 				con->constbyval = true;
@@ -107,7 +119,7 @@ printf("coerce_type: node is UNKNOWN type\n");
 			else
 			{
 #ifdef PARSEDEBUG
-printf("coerce_type: should never get here!\n");
+				printf("coerce_type: should never get here!\n");
 #endif
 				result = node;
 			}
@@ -116,14 +128,14 @@ printf("coerce_type: should never get here!\n");
 	else
 	{
 #ifdef PARSEDEBUG
-printf("coerce_type: argument type IDs %d match\n", inputTypeId);
+		printf("coerce_type: argument type IDs %d match\n", inputTypeId);
 #endif
 
 		result = node;
 	}
 
 	return result;
-} /* coerce_type() */
+}	/* coerce_type() */
 
 
 /* can_coerce_type()
@@ -131,12 +143,12 @@ printf("coerce_type: argument type IDs %d match\n", inputTypeId);
  *
  * There are a few types which are known apriori to be convertible.
  * We will check for those cases first, and then look for possible
- *  conversion functions.
+ *	conversion functions.
  *
  * Notes:
  * This uses the same mechanism as the CAST() SQL construct in gram.y.
  * We should also check the function return type on candidate conversion
- *  routines just to be safe but we do not do that yet...
+ *	routines just to be safe but we do not do that yet...
  * We need to have a zero-filled OID array here, otherwise the cache lookup fails.
  * - thomas 1998-03-31
  */
@@ -152,17 +164,21 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 	for (i = 0; i < nargs; i++)
 	{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: argument #%d types are %d -> %d\n",
- i, input_typeids[i], func_typeids[i]);
+		printf("can_coerce_type: argument #%d types are %d -> %d\n",
+			   i, input_typeids[i], func_typeids[i]);
 #endif
 		if (input_typeids[i] != func_typeids[i])
 		{
-			/* one of the known-good transparent conversions? then drop through... */
+
+			/*
+			 * one of the known-good transparent conversions? then drop
+			 * through...
+			 */
 			if (IS_BINARY_COMPATIBLE(input_typeids[i], func_typeids[i]))
 			{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: argument #%d type %s is known to be convertible to type %s\n",
- i, typeidTypeName(input_typeids[i]), typeidTypeName(func_typeids[i]));
+				printf("can_coerce_type: argument #%d type %s is known to be convertible to type %s\n",
+					   i, typeidTypeName(input_typeids[i]), typeidTypeName(func_typeids[i]));
 #endif
 			}
 
@@ -170,7 +186,7 @@ printf("can_coerce_type: argument #%d type %s is known to be convertible to type
 			else if (func_typeids[i] == InvalidOid)
 			{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: output OID func_typeids[%d] is zero\n", i);
+				printf("can_coerce_type: output OID func_typeids[%d] is zero\n", i);
 #endif
 				return false;
 			}
@@ -179,37 +195,46 @@ printf("can_coerce_type: output OID func_typeids[%d] is zero\n", i);
 			else if (input_typeids[i] == InvalidOid)
 			{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: input OID input_typeids[%d] is zero\n", i);
+				printf("can_coerce_type: input OID input_typeids[%d] is zero\n", i);
 #endif
 				return false;
 			}
 
-			/* if not unknown input type, try for explicit conversion using functions... */
+			/*
+			 * if not unknown input type, try for explicit conversion
+			 * using functions...
+			 */
 			else if (input_typeids[i] != UNKNOWNOID)
 			{
 				MemSet(&oid_array[0], 0, 8 * sizeof(Oid));
 				oid_array[0] = input_typeids[i];
 
-				/* look for a single-argument function named with the target type name */
+				/*
+				 * look for a single-argument function named with the
+				 * target type name
+				 */
 				ftup = SearchSysCacheTuple(PRONAME,
-										   PointerGetDatum(typeidTypeName(func_typeids[i])),
+						PointerGetDatum(typeidTypeName(func_typeids[i])),
 										   Int32GetDatum(1),
 										   PointerGetDatum(oid_array),
 										   0);
 
-				/* should also check the function return type just to be safe... */
+				/*
+				 * should also check the function return type just to be
+				 * safe...
+				 */
 				if (HeapTupleIsValid(ftup))
 				{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: found function %s(%s) to convert argument #%d\n",
- typeidTypeName(func_typeids[i]), typeidTypeName(input_typeids[i]), i);
+					printf("can_coerce_type: found function %s(%s) to convert argument #%d\n",
+						   typeidTypeName(func_typeids[i]), typeidTypeName(input_typeids[i]), i);
 #endif
 				}
 				else
 				{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: did not find function %s(%s) to convert argument #%d\n",
- typeidTypeName(func_typeids[i]), typeidTypeName(input_typeids[i]), i);
+					printf("can_coerce_type: did not find function %s(%s) to convert argument #%d\n",
+						   typeidTypeName(func_typeids[i]), typeidTypeName(input_typeids[i]), i);
 #endif
 					return false;
 				}
@@ -217,8 +242,8 @@ printf("can_coerce_type: did not find function %s(%s) to convert argument #%d\n"
 			else
 			{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: argument #%d type is %d (UNKNOWN)\n",
- i, input_typeids[i]);
+				printf("can_coerce_type: argument #%d type is %d (UNKNOWN)\n",
+					   i, input_typeids[i]);
 #endif
 			}
 
@@ -226,28 +251,28 @@ printf("can_coerce_type: argument #%d type is %d (UNKNOWN)\n",
 			if (typeTypeFlag(tp) == 'c')
 			{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: typeTypeFlag for %s is 'c'\n",
- typeidTypeName(input_typeids[i]));
+				printf("can_coerce_type: typeTypeFlag for %s is 'c'\n",
+					   typeidTypeName(input_typeids[i]));
 #endif
 				return false;
 			}
 
 #ifdef PARSEDEBUG
-printf("can_coerce_type: conversion from %s to %s is possible\n",
- typeidTypeName(input_typeids[i]), typeidTypeName(func_typeids[i]));
+			printf("can_coerce_type: conversion from %s to %s is possible\n",
+				   typeidTypeName(input_typeids[i]), typeidTypeName(func_typeids[i]));
 #endif
 		}
 		else
 		{
 #ifdef PARSEDEBUG
-printf("can_coerce_type: argument #%d type IDs %d match\n",
- i, input_typeids[i]);
+			printf("can_coerce_type: argument #%d type IDs %d match\n",
+				   i, input_typeids[i]);
 #endif
 		}
 	}
 
 	return true;
-} /* can_coerce_type() */
+}	/* can_coerce_type() */
 
 
 /* TypeCategory()
@@ -256,7 +281,7 @@ printf("can_coerce_type: argument #%d type IDs %d match\n",
 CATEGORY
 TypeCategory(Oid inType)
 {
-	CATEGORY result;
+	CATEGORY	result;
 
 	switch (inType)
 	{
@@ -307,7 +332,7 @@ TypeCategory(Oid inType)
 			break;
 	}
 	return result;
-} /* TypeCategory() */
+}	/* TypeCategory() */
 
 
 /* IsPreferredType()
@@ -317,7 +342,7 @@ bool
 IsPreferredType(CATEGORY category, Oid type)
 {
 	return type == PreferredType(category, type);
-} /* IsPreferredType() */
+}	/* IsPreferredType() */
 
 
 /* PreferredType()
@@ -326,7 +351,7 @@ IsPreferredType(CATEGORY category, Oid type)
 Oid
 PreferredType(CATEGORY category, Oid type)
 {
-	Oid		result;
+	Oid			result;
 
 	switch (category)
 	{
@@ -363,17 +388,17 @@ PreferredType(CATEGORY category, Oid type)
 			break;
 	}
 #ifdef PARSEDEBUG
-printf("PreferredType- (%d) preferred type is %s\n", category, typeidTypeName(result));
+	printf("PreferredType- (%d) preferred type is %s\n", category, typeidTypeName(result));
 #endif
 	return result;
-} /* PreferredType() */
+}	/* PreferredType() */
 
 
 #if FALSE
 Oid
 PromoteTypeToNext(Oid inType)
 {
-	Oid result;
+	Oid			result;
 
 	switch (inType)
 	{
@@ -418,13 +443,13 @@ PromoteTypeToNext(Oid inType)
 			break;
 	}
 	return result;
-} /* PromoteTypeToNext() */
+}	/* PromoteTypeToNext() */
 
 
 Oid
 DemoteType(Oid inType)
 {
-	Oid result;
+	Oid			result;
 
 	switch (inType)
 	{
@@ -438,13 +463,13 @@ DemoteType(Oid inType)
 			break;
 	}
 	return result;
-} /* DemoteType() */
+}	/* DemoteType() */
 
 
 Oid
 PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 {
-	Oid result;
+	Oid			result;
 
 	if (inType1 == inType2)
 	{
@@ -471,34 +496,35 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 		switch (*arg1)
 		{
 			case (CHAROID):
-			switch (*arg2)
-			{
-		case (BPCHAROID):
-		case (VARCHAROID):
-		case (TEXTOID):
+				switch (*arg2)
+				{
+					case (BPCHAROID):
+					case (VARCHAROID):
+					case (TEXTOID):
 
-		case (INT2OID):
-		case (INT4OID):
-		case (FLOAT4OID):
-		case (FLOAT8OID):
-		case (CASHOID):
+					case (INT2OID):
+					case (INT4OID):
+					case (FLOAT4OID):
+					case (FLOAT8OID):
+					case (CASHOID):
 
-		case (POINTOID):
-		case (LSEGOID):
-		case (LINEOID):
-		case (BOXOID):
-		case (PATHOID):
-		case (CIRCLEOID):
-		case (POLYGONOID):
+					case (POINTOID):
+					case (LSEGOID):
+					case (LINEOID):
+					case (BOXOID):
+					case (PATHOID):
+					case (CIRCLEOID):
+					case (POLYGONOID):
 
-		case (InvalidOid):
-		case (UNKNOWNOID):
-		case (BOOLOID):
-		default:
-			*arg1 = InvalidOid;
-			*arg2 = InvalidOid;
-			result = InvalidOid;
-	}
+					case (InvalidOid):
+					case (UNKNOWNOID):
+					case (BOOLOID):
+					default:
+						*arg1 = InvalidOid;
+						*arg2 = InvalidOid;
+						result = InvalidOid;
+				}
+		}
 	}
 	else if (isBuiltIn1 && !isBuiltIn2)
 	{
@@ -536,31 +562,33 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 		case (CHAROID):
 			switch (*arg2)
 			{
-		case (BPCHAROID):
-		case (VARCHAROID):
-		case (TEXTOID):
+				case (BPCHAROID):
+				case (VARCHAROID):
+				case (TEXTOID):
 
-		case (INT2OID):
-		case (INT4OID):
-		case (FLOAT4OID):
-		case (FLOAT8OID):
-		case (CASHOID):
+				case (INT2OID):
+				case (INT4OID):
+				case (FLOAT4OID):
+				case (FLOAT8OID):
+				case (CASHOID):
 
-		case (POINTOID):
-		case (LSEGOID):
-		case (LINEOID):
-		case (BOXOID):
-		case (PATHOID):
-		case (CIRCLEOID):
-		case (POLYGONOID):
+				case (POINTOID):
+				case (LSEGOID):
+				case (LINEOID):
+				case (BOXOID):
+				case (PATHOID):
+				case (CIRCLEOID):
+				case (POLYGONOID):
 
-		case (InvalidOid):
-		case (UNKNOWNOID):
-		case (BOOLOID):
-		default:
-			*arg1 = InvalidOid;
-			*arg2 = InvalidOid;
-			result = InvalidOid;
+				case (InvalidOid):
+				case (UNKNOWNOID):
+				case (BOOLOID):
+				default:
+					*arg1 = InvalidOid;
+					*arg2 = InvalidOid;
+					result = InvalidOid;
+			}
 	}
 }
+
 #endif

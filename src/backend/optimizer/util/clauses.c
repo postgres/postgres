@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.23 1998/09/01 03:23:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.24 1998/09/01 04:30:02 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -199,8 +199,8 @@ bool
 or_clause(Node *clause)
 {
 	return clause != NULL &&
-		   nodeTag(clause) == T_Expr &&
-		   ((Expr *) clause)->opType == OR_EXPR;
+	nodeTag(clause) == T_Expr &&
+	((Expr *) clause)->opType == OR_EXPR;
 }
 
 /*
@@ -460,7 +460,7 @@ is_joinable(Node *clause)
 	 * One side of the clause (i.e. left or right operands) must either be
 	 * a var node ...
 	 */
-	if (IsA(leftop, Var) || IsA(rightop, Var))
+	if (IsA(leftop, Var) ||IsA(rightop, Var))
 		return true;
 
 	/*

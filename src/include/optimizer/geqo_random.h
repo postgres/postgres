@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_random.h,v 1.2 1997/09/07 04:59:03 momjian Exp $
+ * $Id: geqo_random.h,v 1.3 1998/09/01 04:37:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,4 +34,4 @@
 
 #define geqo_randint(upper,lower) ( (int) floor( geqo_rand()*((upper-lower)+0.999999) )  +	lower )
 
-#endif							/* GEQO_RANDOM_H */
+#endif	 /* GEQO_RANDOM_H */

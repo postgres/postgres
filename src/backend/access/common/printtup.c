@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.34 1998/09/01 03:20:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.35 1998/09/01 04:26:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,8 +82,10 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	Datum		attr;
 	bool		isnull;
 	Oid			typoutput;
+
 #ifdef MULTIBYTE
 	unsigned char *p;
+
 #endif
 
 	/* ----------------
@@ -147,7 +149,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 			outputstr = "<unprintable>";
 			pq_putint(strlen(outputstr) + VARHDRSZ, VARHDRSZ);
 			pq_putnchar(outputstr, strlen(outputstr));
-		} 
+		}
 	}
 }
 

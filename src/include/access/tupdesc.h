@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupdesc.h,v 1.19 1998/09/01 03:27:35 momjian Exp $
+ * $Id: tupdesc.h,v 1.20 1998/09/01 04:34:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,11 +53,11 @@ typedef struct tupleDesc
 	Form_pg_attribute *attrs;
 	/* attrs[N] is a pointer to the description of Attribute Number N+1.  */
 	TupleConstr *constr;
-} *TupleDesc;
+}		   *TupleDesc;
 
 extern TupleDesc CreateTemplateTupleDesc(int natts);
 
-extern TupleDesc CreateTupleDesc(int natts, Form_pg_attribute *attrs);
+extern TupleDesc CreateTupleDesc(int natts, Form_pg_attribute * attrs);
 
 extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 
@@ -65,8 +65,7 @@ extern TupleDesc CreateTupleDescCopyConstr(TupleDesc tupdesc);
 
 extern void FreeTupleDesc(TupleDesc tupdesc);
 
-extern bool
-TupleDescInitEntry(TupleDesc desc,
+extern bool TupleDescInitEntry(TupleDesc desc,
 				   AttrNumber attributeNumber,
 				   char *attributeName,
 				   Oid typeid,
@@ -76,4 +75,4 @@ TupleDescInitEntry(TupleDesc desc,
 
 extern TupleDesc BuildDescForRelation(List *schema, char *relname);
 
-#endif							/* TUPDESC_H */
+#endif	 /* TUPDESC_H */

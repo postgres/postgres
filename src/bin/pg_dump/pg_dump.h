@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.31 1998/03/14 21:57:26 momjian Exp $
+ * $Id: pg_dump.h,v 1.32 1998/09/01 04:33:47 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -183,13 +183,11 @@ extern char g_opaque_type[10];	/* name for the opaque type */
  *	common utility functions
 */
 
-extern TableInfo *
-dumpSchema(FILE *fout,
+extern TableInfo *dumpSchema(FILE *fout,
 		   int *numTablesPtr,
 		   const char *tablename,
 		   const bool acls);
-extern void
-dumpSchemaIdx(FILE *fout,
+extern void dumpSchemaIdx(FILE *fout,
 			  const char *tablename,
 			  TableInfo *tblinfo,
 			  int numTables);
@@ -221,25 +219,19 @@ extern TableInfo *getTables(int *numTables, FuncInfo *finfo, int numFuncs);
 extern InhInfo *getInherits(int *numInherits);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern IndInfo *getIndices(int *numIndices);
-extern void
-dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
+extern void dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
-extern void
-dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
+extern void dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
-extern void
-dumpAggs(FILE *fout, AggInfo *agginfo, int numAggregates,
+extern void dumpAggs(FILE *fout, AggInfo *agginfo, int numAggregates,
 		 TypeInfo *tinfo, int numTypes);
-extern void
-dumpOprs(FILE *fout, OprInfo *agginfo, int numOperators,
+extern void dumpOprs(FILE *fout, OprInfo *agginfo, int numOperators,
 		 TypeInfo *tinfo, int numTypes);
-extern void
-dumpTables(FILE *fout, TableInfo *tbinfo, int numTables,
+extern void dumpTables(FILE *fout, TableInfo *tbinfo, int numTables,
 		   InhInfo *inhinfo, int numInherits,
 		   TypeInfo *tinfo, int numTypes, const char *tablename,
 		   const bool acls);
-extern void
-dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
+extern void dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			TableInfo *tbinfo, int numTables, const char *tablename);
 
 extern const char *

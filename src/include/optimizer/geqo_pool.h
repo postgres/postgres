@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.h,v 1.5 1997/11/26 01:13:30 momjian Exp $
+ * $Id: geqo_pool.h,v 1.6 1998/09/01 04:37:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,4 +35,4 @@ extern void spread_chromo(Chromosome *chromo, Pool *pool);
 
 extern void sort_pool(Pool *pool);
 
-#endif							/* GEQO_POOL_H */
+#endif	 /* GEQO_POOL_H */

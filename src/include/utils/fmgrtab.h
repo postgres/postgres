@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgrtab.h,v 1.7 1997/09/08 21:55:04 momjian Exp $
+ * $Id: fmgrtab.h,v 1.8 1998/09/01 04:39:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,4 +26,4 @@ extern FmgrCall *fmgr_isbuiltin(Oid id);
 extern func_ptr fmgr_lookupByName(char *name);
 extern void load_file(char *filename);
 
-#endif							/* FMGRTAB_H */
+#endif	 /* FMGRTAB_H */

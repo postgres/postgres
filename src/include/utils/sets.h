@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sets.h,v 1.3 1997/09/08 02:39:58 momjian Exp $
+ * $Id: sets.h,v 1.4 1998/09/01 04:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,4 +19,4 @@
 extern Oid	SetDefine(char *querystr, char *typename);
 extern int	seteval(Oid funcoid);
 
-#endif							/* SETS_H */
+#endif	 /* SETS_H */

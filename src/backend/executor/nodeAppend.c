@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.14 1998/07/15 22:16:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.15 1998/09/01 04:28:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,7 @@ exec_append_initialize_next(Append *node)
 		{
 			estate->es_result_relation_info =
 				(RelationInfo *) nth(whichplan,
-							   appendstate->as_result_relation_info_list);
+							  appendstate->as_result_relation_info_list);
 		}
 		result_slot->ttc_whichplan = whichplan;
 
@@ -505,8 +505,8 @@ void
 ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
 {
 	AppendState *appendstate = node->appendstate;
-	int	nplans = length(node->appendplans);
-	int i;
+	int			nplans = length(node->appendplans);
+	int			i;
 
 	for (i = 0; i < nplans; i++)
 	{
@@ -517,7 +517,7 @@ ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent)
 		if (rescanNode->chgParam == NULL)
 		{
 			exec_append_initialize_next(node);
-			ExecReScan((Plan *)rescanNode, exprCtxt, (Plan *) node);
+			ExecReScan((Plan *) rescanNode, exprCtxt, (Plan *) node);
 		}
 	}
 	appendstate->as_whichplan = 0;

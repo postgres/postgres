@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.96 1998/09/01 03:24:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.97 1998/09/01 04:31:21 momjian Exp $
  *
  * NOTES
  *
@@ -51,7 +51,7 @@
 
 #if !defined(NO_UNISTD_H)
 #include <unistd.h>
-#endif							/* !NO_UNISTD_H */
+#endif	 /* !NO_UNISTD_H */
 
 #include <ctype.h>
 #include <sys/types.h>			/* for fd_set stuff */
@@ -117,7 +117,7 @@ typedef struct bkend
 	long		cancel_key;		/* cancel key for cancels for this backend */
 } Backend;
 
-Port *MyBackendPort = NULL;
+Port	   *MyBackendPort = NULL;
 
 /* list of active backends.  For garbage collection only now. */
 
@@ -162,7 +162,7 @@ static IpcMemoryKey ipc_key;
 static int	NextBackendId = MAXINT;		/* XXX why? */
 static char *progname = (char *) NULL;
 static char **real_argv;
-static int  real_argc;
+static int	real_argc;
 
 /*
  * Default Values
@@ -184,10 +184,10 @@ static char ExtraOptions[ARGV_SIZE] = "";
  * the postmaster stop (rather than kill) peers and not reinitialize
  * shared data structures.
  */
-static bool	Reinit = true;
+static bool Reinit = true;
 static int	SendStop = false;
 
-static bool	NetServer = false;		/* if not zero, postmaster listen for
+static bool NetServer = false;	/* if not zero, postmaster listen for
 								 * non-local connections */
 
 
@@ -196,10 +196,12 @@ static bool	NetServer = false;		/* if not zero, postmaster listen for
  * alternative interface.
  */
 #ifdef HAVE_SIGPROCMASK
-static	sigset_t	oldsigmask,
-				newsigmask;
+static sigset_t oldsigmask,
+			newsigmask;
+
 #else
-static	int			orgsigmask = sigblock(0);
+static int	orgsigmask = sigblock(0);
+
 #endif
 
 /*
@@ -214,7 +216,7 @@ extern char *optarg;
 extern int	optind,
 			opterr;
 
-								 
+
 /*
  * postmaster.c - function prototypes
  */
@@ -225,25 +227,26 @@ static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
-static int DoBackend(Port *port);
+static int	DoBackend(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
-static int ServerLoop(void);
-static int BackendStartup(Port *port);
-static int readStartupPacket(void *arg, PacketLen len, void *pkt);
-static int processCancelRequest(Port *port, PacketLen len, void *pkt);
-static int initMasks(fd_set *rmask, fd_set *wmask);
+static int	ServerLoop(void);
+static int	BackendStartup(Port *port);
+static int	readStartupPacket(void *arg, PacketLen len, void *pkt);
+static int	processCancelRequest(Port *port, PacketLen len, void *pkt);
+static int	initMasks(fd_set *rmask, fd_set *wmask);
 static long PostmasterRandom(void);
 static void RandomSalt(char *salt);
 static void SignalChildren(SIGNAL_ARGS);
 
 #ifdef CYR_RECODE
-void GetCharSetByHost(char *, int, char *);
+void		GetCharSetByHost(char *, int, char *);
 
 #endif
 
 #ifdef USE_ASSERT_CHECKING
-int assert_enabled = 1;
+int			assert_enabled = 1;
+
 #endif
 
 static void
@@ -313,17 +316,17 @@ PostmasterMain(int argc, char *argv[])
 	bool		DataDirOK;		/* We have a usable PGDATA value */
 	char		hostbuf[MAXHOSTNAMELEN];
 	int			nonblank_argc;
-	
+
 	/*
-	 *	We need three params so we can display status.  If we don't
-	 *	get them from the user, let's make them ourselves.
+	 * We need three params so we can display status.  If we don't get
+	 * them from the user, let's make them ourselves.
 	 */
 	if (argc < 5)
 	{
-		int i;
-		char *new_argv[6];
+		int			i;
+		char	   *new_argv[6];
 
-		for (i=0; i < argc; i++)
+		for (i = 0; i < argc; i++)
 			new_argv[i] = argv[i];
 		for (; i < 5; i++)
 			new_argv[i] = "";
@@ -336,7 +339,7 @@ PostmasterMain(int argc, char *argv[])
 			exit(1);
 		}
 		new_argv[0] = Execfile;
-		
+
 		execv(new_argv[0], new_argv);
 
 		/* How did we get here, error! */
@@ -344,14 +347,17 @@ PostmasterMain(int argc, char *argv[])
 		fprintf(stderr, "PostmasterMain execv failed on %s\n", argv[0]);
 		exit(1);
 	}
-	    
+
 	progname = argv[0];
 	real_argv = argv;
 	real_argc = argc;
 
-	/* don't process any dummy args we placed at the end for status display */
+	/*
+	 * don't process any dummy args we placed at the end for status
+	 * display
+	 */
 	for (nonblank_argc = argc; nonblank_argc > 0; nonblank_argc--)
-		if (argv[nonblank_argc-1] != NULL && argv[nonblank_argc-1][0] != '\0')
+		if (argv[nonblank_argc - 1] != NULL && argv[nonblank_argc - 1][0] != '\0')
 			break;
 
 	/*
@@ -371,7 +377,7 @@ PostmasterMain(int argc, char *argv[])
 	DataDir = getenv("PGDATA"); /* default value */
 
 	opterr = 0;
-	while ((opt = getopt(nonblank_argc, argv,"A:a:B:b:D:dim:Mno:p:Ss")) != EOF)
+	while ((opt = getopt(nonblank_argc, argv, "A:a:B:b:D:dim:Mno:p:Ss")) != EOF)
 	{
 		switch (opt)
 		{
@@ -379,6 +385,7 @@ PostmasterMain(int argc, char *argv[])
 #ifndef USE_ASSERT_CHECKING
 				fprintf(stderr, "Assert checking is not enabled\n");
 #else
+
 				/*
 				 * Pass this option also to each backend.
 				 */
@@ -541,17 +548,17 @@ PostmasterMain(int argc, char *argv[])
 	 * Set up signal handlers for the postmaster process.
 	 */
 
-	pqsignal(SIGHUP,   pmdie);		/* send SIGHUP, don't die */
-	pqsignal(SIGINT,   pmdie);		/* die */
-	pqsignal(SIGQUIT,  pmdie);		/* send SIGTERM and die */
-	pqsignal(SIGTERM,  pmdie);		/* send SIGTERM,SIGKILL and die */
-	pqsignal(SIGPIPE,  SIG_IGN);	/* ignored */
-	pqsignal(SIGUSR1,  pmdie);		/* send SIGUSR1 and die */
-	pqsignal(SIGUSR2,  pmdie);		/* send SIGUSR2, don't die */
-	pqsignal(SIGCHLD,  reaper);		/* handle child termination */
-	pqsignal(SIGTTIN,  SIG_IGN);	/* ignored */
-	pqsignal(SIGTTOU,  SIG_IGN);	/* ignored */
-	pqsignal(SIGWINCH, dumpstatus);	/* dump port status */
+	pqsignal(SIGHUP, pmdie);	/* send SIGHUP, don't die */
+	pqsignal(SIGINT, pmdie);	/* die */
+	pqsignal(SIGQUIT, pmdie);	/* send SIGTERM and die */
+	pqsignal(SIGTERM, pmdie);	/* send SIGTERM,SIGKILL and die */
+	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
+	pqsignal(SIGUSR1, pmdie);	/* send SIGUSR1 and die */
+	pqsignal(SIGUSR2, pmdie);	/* send SIGUSR2, don't die */
+	pqsignal(SIGCHLD, reaper);	/* handle child termination */
+	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
+	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
+	pqsignal(SIGWINCH, dumpstatus);		/* dump port status */
 
 	status = ServerLoop();
 
@@ -612,7 +619,8 @@ ServerLoop(void)
 				writemask;
 	int			nSockets;
 	Dlelem	   *curr;
-	struct timeval now, later;
+	struct timeval now,
+				later;
 	struct timezone tz;
 
 	gettimeofday(&now, &tz);
@@ -655,18 +663,17 @@ ServerLoop(void)
 		while (random_seed == 0)
 		{
 			gettimeofday(&later, &tz);
-	
+
 			/*
-			 *	We are not sure how much precision is in tv_usec, so we
-			 *	swap the nibbles of 'later' and XOR them with 'now'.
-			 *  On the off chance that the result is 0, we loop until
-			 *  it isn't.
+			 * We are not sure how much precision is in tv_usec, so we
+			 * swap the nibbles of 'later' and XOR them with 'now'. On the
+			 * off chance that the result is 0, we loop until it isn't.
 			 */
 			random_seed = now.tv_usec ^
-					((later.tv_usec << 16) |
-					((later.tv_usec >> 16) & 0xffff));
+				((later.tv_usec << 16) |
+				 ((later.tv_usec >> 16) & 0xffff));
 		}
-				
+
 		/*
 		 * [TRH] To avoid race conditions, block SIGCHLD signals while we
 		 * are handling the request. (both reaper() and ConnCreate()
@@ -828,8 +835,9 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 	port = (Port *) arg;
 	si = (StartupPacket *) pkt;
 
-	/* The first field is either a protocol version number or
-	 * a special request code.
+	/*
+	 * The first field is either a protocol version number or a special
+	 * request code.
 	 */
 
 	port->proto = ntohl(si->protoVersion);
@@ -885,15 +893,15 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 
 /*
  * The client has sent a cancel request packet, not a normal
- * start-a-new-backend packet.  Perform the necessary processing.
+ * start-a-new-backend packet.	Perform the necessary processing.
  * Note that in any case, we return STATUS_ERROR to close the
- * connection immediately.  Nothing is sent back to the client.
+ * connection immediately.	Nothing is sent back to the client.
  */
 
 static int
 processCancelRequest(Port *port, PacketLen len, void *pkt)
 {
-	CancelRequestPacket	*canc = (CancelRequestPacket *) pkt;
+	CancelRequestPacket *canc = (CancelRequestPacket *) pkt;
 	int			backendPID;
 	long		cancelAuthCode;
 	Dlelem	   *curr;
@@ -989,14 +997,15 @@ reset_shared(short port)
 static void
 pmdie(SIGNAL_ARGS)
 {
-	int i;
+	int			i;
 
 	TPRINTF(TRACE_VERBOSE, "pmdie %d", postgres_signal_arg);
 
 	/*
 	 * Kill self and/or children processes depending on signal number.
 	 */
-	switch (postgres_signal_arg) {
+	switch (postgres_signal_arg)
+	{
 		case SIGHUP:
 			/* Send SIGHUP to all children (update options flags) */
 			SignalChildren(SIGHUP);
@@ -1013,15 +1022,14 @@ pmdie(SIGNAL_ARGS)
 		case SIGTERM:
 			/* Shutdown all children with SIGTERM and SIGKILL, then die */
 			SignalChildren(SIGTERM);
-			for (i=0; i<10; i++) {
-				if (!DLGetHead(BackendList)) {
+			for (i = 0; i < 10; i++)
+			{
+				if (!DLGetHead(BackendList))
 					break;
-				}
 				sleep(1);
 			}
-			if (DLGetHead(BackendList)) {
+			if (DLGetHead(BackendList))
 				SignalChildren(SIGKILL);
-			}
 			break;
 		case SIGUSR1:
 			/* Quick die all children with SIGUSR1 and die */
@@ -1095,10 +1103,10 @@ CleanupProc(int pid,
 	}
 
 	/*
-	 * If a backend dies in an ugly way (i.e.
-	 * exit status not 0) then we must signal all other backends to
-	 * quickdie.  If exit status is zero we assume everything is hunky
-	 * dory and simply remove the backend from the active backend list.
+	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
+	 * must signal all other backends to quickdie.	If exit status is zero
+	 * we assume everything is hunky dory and simply remove the backend
+	 * from the active backend list.
 	 */
 	if (!exitstatus)
 	{
@@ -1183,9 +1191,9 @@ CleanupProc(int pid,
 static void
 SignalChildren(int signal)
 {
-	Dlelem		*curr,
-				*next;
-	Backend 	*bp;
+	Dlelem	   *curr,
+			   *next;
+	Backend    *bp;
 	int			mypid = getpid();
 
 	curr = DLGetHead(BackendList);
@@ -1261,10 +1269,9 @@ BackendStartup(Port *port)
 #endif
 
 	/*
-	 * Compute the cancel key that will be assigned to this backend.
-	 * The backend will have its own copy in the forked-off process'
-	 * value of MyCancelKey, so that it can transmit the key to the
-	 * frontend.
+	 * Compute the cancel key that will be assigned to this backend. The
+	 * backend will have its own copy in the forked-off process' value of
+	 * MyCancelKey, so that it can transmit the key to the frontend.
 	 */
 	MyCancelKey = PostmasterRandom();
 
@@ -1281,21 +1288,22 @@ BackendStartup(Port *port)
 		fprintf(stderr, "-----------------------------------------\n");
 	}
 
-	/* Flush all stdio channels just before fork,
-	 * to avoid double-output problems.
+	/*
+	 * Flush all stdio channels just before fork, to avoid double-output
+	 * problems.
 	 */
 	fflush(NULL);
 
-    if ((pid = fork()) == 0)
-	{  /* child */
-        if (DoBackend(port))
+	if ((pid = fork()) == 0)
+	{							/* child */
+		if (DoBackend(port))
 		{
-            fprintf(stderr, "%s child[%d]: BackendStartup: backend startup failed\n",
-                    progname, (int) getpid());
-	 		exit(1);
+			fprintf(stderr, "%s child[%d]: BackendStartup: backend startup failed\n",
+					progname, (int) getpid());
+			exit(1);
 		}
 		else
-	    	exit(0);
+			exit(0);
 	}
 
 	/* in parent */
@@ -1367,9 +1375,9 @@ split_opts(char **argv, int *argcp, char *s)
 /*
  * DoBackend -- set up the argument list and perform an execv system call
  *
- * returns: 
- *      Shouldn't return at all.
- *      If execv() fails, return status.
+ * returns:
+ *		Shouldn't return at all.
+ *		If execv() fails, return status.
  */
 static int
 DoBackend(Port *port)
@@ -1390,18 +1398,19 @@ DoBackend(Port *port)
 	char		dbbuf[ARGV_SIZE + 1];
 	int			ac = 0;
 	int			i;
-	struct timeval	now;
-	struct timezone	tz;
+	struct timeval now;
+	struct timezone tz;
 
 	/*
-	 *	Let's clean up ourselves as the postmaster child
+	 * Let's clean up ourselves as the postmaster child
 	 */
-	
-	on_exit_reset(); /* we don't want the postmaster's proc_exit() handlers */
+
+	on_exit_reset();			/* we don't want the postmaster's
+								 * proc_exit() handlers */
 
 	/* ----------------
 	 *	register signal handlers.
-	 *  Thanks to the postmaster, these are currently blocked.
+	 *	Thanks to the postmaster, these are currently blocked.
 	 * ----------------
 	 */
 	pqsignal(SIGINT, die);
@@ -1439,26 +1448,26 @@ DoBackend(Port *port)
 	srandom(now.tv_usec);
 
 	/* Now, on to standard postgres stuff */
-	
+
 	MyProcPid = getpid();
 
 	strncpy(execbuf, Execfile, MAXPATHLEN - 1);
 	av[ac++] = execbuf;
 
 	/*
-	 *	We need to set our argv[0] to an absolute path name because
-	 *	some OS's use this for dynamic loading, like BSDI.  Without it,
-	 *	when we change directories to the database dir, the dynamic
-	 *	loader can't find the base executable and fails.
-	 *	Another advantage is that this changes the 'ps' displayed
-	 *	process name on some platforms.  It does on BSDI.  That's
-	 *	a big win.
+	 * We need to set our argv[0] to an absolute path name because some
+	 * OS's use this for dynamic loading, like BSDI.  Without it, when we
+	 * change directories to the database dir, the dynamic loader can't
+	 * find the base executable and fails. Another advantage is that this
+	 * changes the 'ps' displayed process name on some platforms.  It does
+	 * on BSDI.  That's a big win.
 	 */
-	
+
 #ifndef linux
+
 	/*
-	 * This doesn't work on linux and overwrites the only valid
-	 * pointer to the argv buffer.  See PS_INIT_STATUS macro.
+	 * This doesn't work on linux and overwrites the only valid pointer to
+	 * the argv buffer.  See PS_INIT_STATUS macro.
 	 */
 	real_argv[0] = Execfile;
 #endif
@@ -1516,7 +1525,7 @@ DoBackend(Port *port)
 		fprintf(stderr, ")\n");
 	}
 
-    return(PostgresMain(ac, av, real_argc, real_argv));
+	return (PostgresMain(ac, av, real_argc, real_argv));
 }
 
 /*
@@ -1581,8 +1590,8 @@ CharRemap(long int ch)
 static void
 RandomSalt(char *salt)
 {
-	long rand = PostmasterRandom();
-	
+	long		rand = PostmasterRandom();
+
 	*salt = CharRemap(rand % 62);
 	*(salt + 1) = CharRemap(rand / 62);
 }

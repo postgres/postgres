@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.23 1998/09/01 03:27:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.24 1998/09/01 04:33:43 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -36,14 +36,12 @@
 
 #include "pg_dump.h"
 
-static char **
-findParentsByOid(TableInfo *tbinfo, int numTables,
+static char **findParentsByOid(TableInfo *tbinfo, int numTables,
 				 InhInfo *inhinfo, int numInherits,
 				 const char *oid,
 				 int *numParents);
 static int	findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
-static void
-flagInhAttrs(TableInfo *tbinfo, int numTables,
+static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);
 

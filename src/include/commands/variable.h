@@ -2,7 +2,7 @@
  * Headers for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements
  *
- * $Id: variable.h,v 1.5 1998/07/26 04:31:24 scrappy Exp $
+ * $Id: variable.h,v 1.6 1998/09/01 04:35:40 momjian Exp $
  *
  */
 #ifndef VARIABLE_H
@@ -55,4 +55,4 @@ extern bool show_geqo(void);
 extern bool reset_geqo(void);
 extern bool parse_geqo(const char *);
 
-#endif							/* VARIABLE_H */
+#endif	 /* VARIABLE_H */

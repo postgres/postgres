@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_recombination.h,v 1.5 1997/11/26 01:13:32 momjian Exp $
+ * $Id: geqo_recombination.h,v 1.6 1998/09/01 04:37:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,4 +77,4 @@ extern void ox1(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_
 extern void ox2(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_table);
 
 
-#endif							/* GEQO_RECOMBINATION_H */
+#endif	 /* GEQO_RECOMBINATION_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.27 1998/09/01 03:21:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.28 1998/09/01 04:27:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,25 +50,19 @@ typedef struct RTSTATE
 } RTSTATE;
 
 /* non-export function prototypes */
-static InsertIndexResult
-rtdoinsert(Relation r, IndexTuple itup,
+static InsertIndexResult rtdoinsert(Relation r, IndexTuple itup,
 		   RTSTATE *rtstate);
-static void
-rttighten(Relation r, RTSTACK *stk, char *datum, int att_size,
+static void rttighten(Relation r, RTSTACK *stk, char *datum, int att_size,
 		  RTSTATE *rtstate);
-static InsertIndexResult
-dosplit(Relation r, Buffer buffer, RTSTACK *stack,
+static InsertIndexResult dosplit(Relation r, Buffer buffer, RTSTACK *stack,
 		IndexTuple itup, RTSTATE *rtstate);
-static void
-rtintinsert(Relation r, RTSTACK *stk, IndexTuple ltup,
+static void rtintinsert(Relation r, RTSTACK *stk, IndexTuple ltup,
 			IndexTuple rtup, RTSTATE *rtstate);
 static void rtnewroot(Relation r, IndexTuple lt, IndexTuple rt);
-static void
-picksplit(Relation r, Page page, SPLITVEC *v, IndexTuple itup,
+static void picksplit(Relation r, Page page, SPLITVEC *v, IndexTuple itup,
 		  RTSTATE *rtstate);
 static void RTInitBuffer(Buffer b, uint32 f);
-static OffsetNumber
-choose(Relation r, Page p, IndexTuple it,
+static OffsetNumber choose(Relation r, Page p, IndexTuple it,
 	   RTSTATE *rtstate);
 static int	nospace(Page p, IndexTuple it);
 static void initRtstate(RTSTATE *rtstate, Relation index);
@@ -163,12 +157,12 @@ rtbuild(Relation heap,
 		tupleTable = NULL;
 		slot = NULL;
 	}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* count the tuples as we insert them */
 	nh = ni = 0;
 
- 	scan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
+	scan = heap_beginscan(heap, 0, SnapshotNow, 0, (ScanKey) NULL);
 
 	while (HeapTupleIsValid(htup = heap_getnext(scan, 0)))
 	{
@@ -188,7 +182,7 @@ rtbuild(Relation heap,
 				ni++;
 				continue;
 			}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -202,7 +196,7 @@ rtbuild(Relation heap,
 			slot->val = htup;
 			if (ExecQual((List *) pred, econtext) == false)
 				continue;
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		ni++;
@@ -263,7 +257,7 @@ rtbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 		ExecDestroyTupleTable(tupleTable, true);
 		pfree(econtext);
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 	}
 
 	/*
@@ -1042,4 +1036,4 @@ _rtdump(Relation r)
 	}
 }
 
-#endif							/* defined RTDEBUG */
+#endif	 /* defined RTDEBUG */

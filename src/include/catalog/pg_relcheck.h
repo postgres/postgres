@@ -51,4 +51,4 @@ typedef FormData_pg_relcheck *Form_pg_relcheck;
 #define Anum_pg_relcheck_rcbin			3
 #define Anum_pg_relcheck_rcsrc			4
 
-#endif							/* PG_RELCHECK_H */
+#endif	 /* PG_RELCHECK_H */

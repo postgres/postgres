@@ -33,42 +33,32 @@
 #endif
 
 /* non-export function prototypes */
-static InsertIndexResult
-gistdoinsert(Relation r, IndexTuple itup,
+static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,
 			 GISTSTATE *GISTstate);
-static InsertIndexResult
-gistentryinsert(Relation r, GISTSTACK *stk,
+static InsertIndexResult gistentryinsert(Relation r, GISTSTACK *stk,
 				IndexTuple tup,
 				GISTSTATE *giststate);
-static void
-gistentryinserttwo(Relation r, GISTSTACK *stk, IndexTuple ltup,
+static void gistentryinserttwo(Relation r, GISTSTACK *stk, IndexTuple ltup,
 				   IndexTuple rtup, GISTSTATE *giststate);
-static void
-gistAdjustKeys(Relation r, GISTSTACK *stk, BlockNumber blk,
+static void gistAdjustKeys(Relation r, GISTSTACK *stk, BlockNumber blk,
 			   char *datum, int att_size, GISTSTATE *giststate);
-static void
-gistintinsert(Relation r, GISTSTACK *stk, IndexTuple ltup,
+static void gistintinsert(Relation r, GISTSTACK *stk, IndexTuple ltup,
 			  IndexTuple rtup, GISTSTATE *giststate);
-static InsertIndexResult
-gistSplit(Relation r, Buffer buffer,
+static InsertIndexResult gistSplit(Relation r, Buffer buffer,
 		  GISTSTACK *stack, IndexTuple itup,
 		  GISTSTATE *giststate);
-static void
-gistnewroot(GISTSTATE *giststate, Relation r, IndexTuple lt,
+static void gistnewroot(GISTSTATE *giststate, Relation r, IndexTuple lt,
 			IndexTuple rt);
 static void GISTInitBuffer(Buffer b, uint32 f);
-static BlockNumber
-gistChooseSubtree(Relation r, IndexTuple itup, int level,
+static BlockNumber gistChooseSubtree(Relation r, IndexTuple itup, int level,
 				  GISTSTATE *giststate,
 				  GISTSTACK **retstack, Buffer *leafbuf);
-static OffsetNumber
-gistchoose(Relation r, Page p, IndexTuple it,
+static OffsetNumber gistchoose(Relation r, Page p, IndexTuple it,
 		   GISTSTATE *giststate);
 static int	gistnospace(Page p, IndexTuple it);
 void		gistdelete(Relation r, ItemPointer tid);
 static IndexTuple gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t);
-static void
-gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
+static void gistcentryinit(GISTSTATE *giststate, GISTENTRY *e, char *pr,
 			   Relation r, Page pg, OffsetNumber o, int b, bool l);
 static char *int_range_out(INTRANGE *r);
 
@@ -169,7 +159,7 @@ gistbuild(Relation heap,
 		slot = NULL;
 		econtext = NULL;
 	}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 	/* int the tuples as we insert them */
 	nh = ni = 0;
 
@@ -193,7 +183,7 @@ gistbuild(Relation heap,
 				ni++;
 				continue;
 			}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -207,7 +197,7 @@ gistbuild(Relation heap,
 			slot->val = htup;
 			if (ExecQual((List *) pred, econtext) == false)
 				continue;
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		ni++;
@@ -286,7 +276,7 @@ gistbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 		ExecDestroyTupleTable(tupleTable, true);
 		pfree(econtext);
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 	}
 
 	/*
@@ -1168,7 +1158,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	itupform = (Form_pg_index) GETSTRUCT(htup);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "initGISTstate: index %d not found",
-		RelationGetRelid(index));
+			 RelationGetRelid(index));
 	giststate->haskeytype = itupform->indhaskeytype;
 	if (giststate->haskeytype)
 	{
@@ -1377,4 +1367,4 @@ int_range_out(INTRANGE *r)
 	return result;
 }
 
-#endif							/* defined GISTDEBUG */
+#endif	 /* defined GISTDEBUG */

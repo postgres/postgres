@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.15 1998/09/01 03:28:23 momjian Exp $
+ * $Id: dest.h,v 1.16 1998/09/01 04:38:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,10 +67,9 @@ extern void SendCopyBegin(void);
 extern void ReceiveCopyBegin(void);
 extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
-extern void
-BeginCommand(char *pname, int operation, TupleDesc attinfo,
+extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
 			 bool isIntoRel, bool isIntoPortal, char *tag,
 			 CommandDest dest);
 extern void UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples);
 
-#endif							/* DEST_H */
+#endif	 /* DEST_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopdebug.h,v 1.2 1997/09/07 05:01:53 momjian Exp $
+ * $Id: tcopdebug.h,v 1.3 1998/09/01 04:38:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,4 +40,4 @@
  * ----------------------------------------------------------------
  */
 
-#endif							/* TCOPDEBUG_H */
+#endif	 /* TCOPDEBUG_H */

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.10 1998/08/11 19:32:39 momjian Exp $
+ * $Id: strat.h,v 1.11 1998/09/01 04:34:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,8 @@ typedef struct StrategyTransformMapData
 	StrategyNumber strategy[1]; /* VARIABLE LENGTH ARRAY */
 } StrategyTransformMapData;		/* VARIABLE LENGTH
 
+								 *
+								 *
 								 *
 								 *
 								 *
@@ -90,4 +92,4 @@ typedef struct IndexStrategyData
 
 typedef IndexStrategyData *IndexStrategy;
 
-#endif							/* STRAT_H */
+#endif	 /* STRAT_H */

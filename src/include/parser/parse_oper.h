@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_oper.h,v 1.5 1998/05/29 14:07:50 thomas Exp $
+ * $Id: parse_oper.h,v 1.6 1998/09/01 04:37:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,4 +27,4 @@ extern Operator left_oper(char *op, Oid arg);
 extern Operator oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarnings);
 extern Operator oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarnings);
 
-#endif							/* PARSE_OPER_H */
+#endif	 /* PARSE_OPER_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: view.h,v 1.5 1997/11/26 01:12:33 momjian Exp $
+ * $Id: view.h,v 1.6 1998/09/01 04:35:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,4 +19,4 @@ extern char *MakeRetrieveViewRuleName(char *view_name);
 extern void DefineView(char *view_name, Query *view_parse);
 extern void RemoveView(char *view_name);
 
-#endif							/* VIEW_H */
+#endif	 /* VIEW_H */

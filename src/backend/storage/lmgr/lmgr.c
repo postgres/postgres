@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.18 1998/08/24 01:13:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.19 1998/09/01 04:31:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #ifdef	LOCKDEBUGALL
 #define LOCKDEBUG		1
-#endif							/* LOCKDEBUGALL */
+#endif	 /* LOCKDEBUGALL */
 
 #include <string.h>
 
@@ -56,20 +56,20 @@ extern Oid	MyDatabaseId;
 void
 RelationInitLockInfo(Relation relation)
 {
-	LockInfo			info;
-	char			   *relname;
-	MemoryContext		oldcxt;
-	extern Oid			MyDatabaseId;	/* XXX use include */
-	extern GlobalMemory	CacheCxt;
+	LockInfo	info;
+	char	   *relname;
+	MemoryContext oldcxt;
+	extern Oid	MyDatabaseId;	/* XXX use include */
+	extern GlobalMemory CacheCxt;
 
 	Assert(RelationIsValid(relation));
 	Assert(OidIsValid(RelationGetRelid(relation)));
 
 	info = (LockInfo) relation->lockInfo;
-	
+
 	if (LockInfoIsValid(info))
 		return;
-	
+
 	relname = (char *) RelationGetRelationName(relation);
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
@@ -99,7 +99,7 @@ elog(DEBUG, "RelationSetLockForDescriptorOpen(%s[%d,%d]) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUGALL_30
-#endif							/* LOCKDEBUGALL */
+#endif	 /* LOCKDEBUGALL */
 
 void
 RelationSetLockForDescriptorOpen(Relation relation)
@@ -131,7 +131,7 @@ elog(DEBUG, "RelationSetLockForRead(%s[%d,%d]) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_40
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /*
  * RelationSetLockForRead --
@@ -180,7 +180,7 @@ elog(DEBUG, "RelationUnsetLockForRead(%s[%d,%d]) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_50
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /*
  * RelationUnsetLockForRead --
@@ -226,7 +226,7 @@ elog(DEBUG, "RelationSetLockForWrite(%s[%d,%d]) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_60
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /*
  * RelationSetLockForWrite --
@@ -275,7 +275,7 @@ elog(DEBUG, "RelationUnsetLockForWrite(%s[%d,%d]) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId)
 #else
 #define LOCKDEBUG_70
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /*
  * RelationUnsetLockForWrite --
@@ -316,7 +316,7 @@ elog(DEBUG, "RelationSetLockForReadPage(%s[%d,%d], @%d) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_90
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /* ----------------
  *		RelationSetLockForWritePage
@@ -328,7 +328,7 @@ elog(DEBUG, "RelationSetLockForWritePage(%s[%d,%d], @%d) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_100
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /*
  * RelationSetLockForWritePage --
@@ -370,7 +370,7 @@ elog(DEBUG, "RelationUnsetLockForReadPage(%s[%d,%d], @%d) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_110
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /* ----------------
  *		RelationUnsetLockForWritePage
@@ -382,7 +382,7 @@ elog(DEBUG, "RelationUnsetLockForWritePage(%s[%d,%d], @%d) called", \
 	 RelationGetRelationName(relation), lockRelId.dbId, lockRelId.relId, page)
 #else
 #define LOCKDEBUG_120
-#endif							/* LOCKDEBUG */
+#endif	 /* LOCKDEBUG */
 
 /*
  * Set a single level write page lock.	Assumes that you already
@@ -609,4 +609,3 @@ RelationUnsetLockForExtend(Relation relation)
 }
 
 #endif
-

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.8 1998/07/21 04:17:30 momjian Exp $
+ * $Id: large_object.h,v 1.9 1998/09/01 04:38:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,4 +57,4 @@ extern int	inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes);
 /* added for buffer leak prevention [ PA ] */
 extern void inv_cleanindex(LargeObjectDesc *obj_desc);
 
-#endif							/* LARGE_OBJECT_H */
+#endif	 /* LARGE_OBJECT_H */

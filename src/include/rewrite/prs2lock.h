@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prs2lock.h,v 1.7 1997/09/08 21:54:03 momjian Exp $
+ * $Id: prs2lock.h,v 1.8 1998/09/01 04:37:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,4 +42,4 @@ typedef struct RuleLock
 	RewriteRule **rules;
 } RuleLock;
 
-#endif							/* REWRITE_H */
+#endif	 /* REWRITE_H */

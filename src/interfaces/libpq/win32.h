@@ -11,7 +11,7 @@
 
 
 /*
- * Some compat functions 
+ * Some compat functions
  */
 #define open(a,b,c) _open(a,b,c)
 #define read(a,b,c) _read(a,b,c)

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memnodes.h,v 1.7 1997/09/08 21:52:44 momjian Exp $
+ * $Id: memnodes.h,v 1.8 1998/09/01 04:36:39 momjian Exp $
  *
  * XXX the typedefs in this file are different from the other ???nodes.h;
  *	  they are pointers to structures instead of the structures themselves.
@@ -98,4 +98,4 @@ typedef struct PortalHeapMemory
 	(IsA(context,MemoryContext) || IsA(context,GlobalMemory) || \
 	 IsA(context,PortalVariableMemory) || IsA(context,PortalHeapMemory))
 
-#endif							/* MEMNODES_H */
+#endif	 /* MEMNODES_H */

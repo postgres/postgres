@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.6 1998/09/01 03:28:00 momjian Exp $
+ * $Id: pg_version.h,v 1.7 1998/09/01 04:35:20 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -54,4 +54,4 @@ typedef FormData_pg_version *Form_pg_version;
 #define Anum_pg_version_vertime			3
 
 
-#endif							/* PG_VERSION_H */
+#endif	 /* PG_VERSION_H */

@@ -1,4 +1,4 @@
-/* $Id: strcasecmp.c,v 1.4 1998/06/15 19:28:57 momjian Exp $ */
+/* $Id: strcasecmp.c,v 1.5 1998/09/01 04:30:46 momjian Exp $ */
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -15,7 +15,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)strcasecmp.c	5.5 (Berkeley) 11/24/87";
 
-#endif							/* LIBC_SCCS and not lint */
+#endif	 /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <string.h>

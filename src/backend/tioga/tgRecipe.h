@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.6 1998/02/26 04:36:45 momjian Exp $
+ * $Id: tgRecipe.h,v 1.7 1998/09/01 04:32:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,11 @@ typedef struct
 								 *
 								 *
 								 *
+								 *
+								 *
 								 * geo-decls.h */
 
-#endif							/* TIOGA_FRONTEND */
+#endif	 /* TIOGA_FRONTEND */
 
 typedef enum
 {

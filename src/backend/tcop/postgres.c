@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.88 1998/09/01 03:25:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.89 1998/09/01 04:32:13 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -35,7 +35,7 @@
 #include <errno.h>
 #if HAVE_SYS_SELECT_H
 #include <sys/select.h>
-#endif							/* aix */
+#endif	 /* aix */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -140,8 +140,8 @@ jmp_buf		Warn_restart;
 #else
 sigjmp_buf	Warn_restart;
 
-#endif							/* defined(nextstep) */
-bool			InError;
+#endif	 /* defined(nextstep) */
+bool		InError;
 
 extern int	NBuffers;
 
@@ -162,7 +162,7 @@ int			UseNewLine = 1;		/* Use newlines query delimiters (the
 #else
 int			UseNewLine = 0;		/* Use EOF as query delimiters */
 
-#endif							/* TCOP_DONTUSENEWLINE */
+#endif	 /* TCOP_DONTUSENEWLINE */
 
 /* ----------------
  *		bushy tree plan flag: if true planner will generate bushy-tree
@@ -445,27 +445,33 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 
 		if (DebugPrintQuery)
 		{
-			if (DebugPrintQuery > 3) {
+			if (DebugPrintQuery > 3)
+			{
 				/* Print the query string as is if query debug level > 3 */
-				TPRINTF(TRACE_QUERY, "query: %s",query_string);
-			} else {
+				TPRINTF(TRACE_QUERY, "query: %s", query_string);
+			}
+			else
+			{
 				/* Print condensed query string to fit in one log line */
-				char	buff[8192+1];
-				char	c,
-						*s,
-						*d;
-				int 	n,
-						is_space=1;
+				char		buff[8192 + 1];
+				char		c,
+						   *s,
+						   *d;
+				int			n,
+							is_space = 1;
 
-				for (s=query_string,d=buff,n=0; (c=*s) && (n<8192); s++) {
-					switch (c) {
+				for (s = query_string, d = buff, n = 0; (c = *s) && (n < 8192); s++)
+				{
+					switch (c)
+					{
 						case '\r':
 						case '\n':
 						case '\t':
 							c = ' ';
 							/* fall through */
 						case ' ':
-							if (is_space) continue;
+							if (is_space)
+								continue;
 							is_space = 1;
 							break;
 						default:
@@ -476,7 +482,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 					n++;
 				}
 				*d = '\0';
-				TPRINTF(TRACE_QUERY, "query: %s",buff);
+				TPRINTF(TRACE_QUERY, "query: %s", buff);
 			}
 		}
 
@@ -549,17 +555,20 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	/*
 	 * Override ACL checking if requested
 	 */
-	if (aclOverride) {
-		for (i = 0; i < querytree_list->len; i++) {
-			RangeTblEntry	*rte;
-			List		*l;
+	if (aclOverride)
+	{
+		for (i = 0; i < querytree_list->len; i++)
+		{
+			RangeTblEntry *rte;
+			List	   *l;
 
 			querytree = querytree_list->qtrees[i];
 			if (querytree->commandType == CMD_UTILITY)
 				continue;
 
-			foreach (l, querytree->rtable) {
-				rte = (RangeTblEntry *)lfirst(l);
+			foreach(l, querytree->rtable)
+			{
+				rte = (RangeTblEntry *) lfirst(l);
 
 				rte->skipAcl = TRUE;
 			}
@@ -652,7 +661,8 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	 * Check if the rewriting had thrown away anything
 	 * ----------
 	 */
-	if (querytree_list->len == 0) {
+	if (querytree_list->len == 0)
+	{
 		free(querytree_list->qtrees);
 		free(querytree_list);
 		querytree_list = NULL;
@@ -696,10 +706,8 @@ pg_exec_query_acl_override(char *query_string)
 void
 pg_exec_query_dest(char *query_string,	/* string to execute */
 				   CommandDest dest,	/* where results should go */
-				   bool aclOverride)	/* to give utility
-				   			 * commands power of
-							 * superusers
-							 */
+				   bool aclOverride)	/* to give utility commands power
+										 * of superusers */
 {
 	List	   *plan_list;
 	Plan	   *plan;
@@ -713,7 +721,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 
 	if (QueryCancel)
 		CancelQuery();
-		
+
 	/* pg_parse_and_plan could have failed */
 	if (querytree_list == NULL)
 		return;
@@ -740,11 +748,10 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			 *	 because that is done in ProcessUtility.
 			 * ----------------
 			 */
-			if (DebugPrintQuery) {
+			if (DebugPrintQuery)
 				TPRINTF(TRACE_QUERY, "ProcessUtility: %s", query_string);
-			} else if (Verbose) {
+			else if (Verbose)
 				TPRINTF(TRACE_VERBOSE, "ProcessUtility");
-			} 
 
 			ProcessUtility(querytree->utilityStmt, dest);
 
@@ -787,9 +794,7 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			for (j = 0; j < _exec_repeat_; j++)
 			{
 				if (Verbose)
-				{
 					TPRINTF(TRACE_VERBOSE, "ProcessQuery");
-				}
 				ProcessQuery(querytree, plan, dest);
 			}
 
@@ -880,7 +885,9 @@ QueryCancelHandler(SIGNAL_ARGS)
 void
 CancelQuery(void)
 {
-	/* QueryCancel flag will be reset in main loop, which we reach by
+
+	/*
+	 * QueryCancel flag will be reset in main loop, which we reach by
 	 * longjmp from elog().
 	 */
 	elog(ERROR, "Query was cancelled.");
@@ -923,28 +930,28 @@ usage(char *progname)
 int
 PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 {
-	bool			flagC = false,
-					flagQ = false,
-					flagE = false,
-					flagEu = false;
-	int				flag;
+	bool		flagC = false,
+				flagQ = false,
+				flagE = false,
+				flagEu = false;
+	int			flag;
 
-	char	   		*DBName = NULL;
-	int				errs = 0;
+	char	   *DBName = NULL;
+	int			errs = 0;
 
-	char			firstchar;
-	char			parser_input[MAX_PARSE_BUFFER];
-	char	   		*userName;
+	char		firstchar;
+	char		parser_input[MAX_PARSE_BUFFER];
+	char	   *userName;
 
 	/* Used if verbose is set, must be initialized */
-	char	   		*remote_info = "interactive";
-	char	   		*remote_host = "";
-	unsigned short 	remote_port  = 0;
+	char	   *remote_info = "interactive";
+	char	   *remote_host = "";
+	unsigned short remote_port = 0;
 
-	char	   		*DBDate = NULL;
-	extern int		optind;
-	extern char 	*optarg;
-	extern short 	DebugLvl;
+	char	   *DBDate = NULL;
+	extern int	optind;
+	extern char *optarg;
+	extern short DebugLvl;
 
 	/* ----------------
 	 *	parse command line arguments
@@ -992,14 +999,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		else if (strcasecmp(DBDate, "EURO") == 0)
 			EuroDates = TRUE;
 	}
-	
+
 	/*
 	 * Read default pg_options from file $DATADIR/pg_options.
 	 */
 	read_pg_options(0);
 
-    optind = 1; /* reset after postmaster usage */
-	
+	optind = 1;					/* reset after postmaster usage */
+
 	while ((flag = getopt(argc, argv,
 						  "A:B:bCD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:FW:"))
 		   != EOF)
@@ -1007,7 +1014,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		{
 			case 'A':
 				/* ----------------
-				 *  enable/disable assert checking.
+				 *	enable/disable assert checking.
 				 * ----------------
 				 */
 #ifdef USE_ASSERT_CHECKING
@@ -1048,19 +1055,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				flagQ = false;
 				DebugLvl = (short) atoi(optarg);
 				if (DebugLvl >= 1)
-				{
 					Verbose = DebugLvl;
-				}
 				if (DebugLvl >= 2)
-				{
-  					DebugPrintQuery = true;
-				}
+					DebugPrintQuery = true;
 				if (DebugLvl >= 3)
-				{
 					DebugPrintQuery = DebugLvl;
-				}
 				if (DebugLvl >= 4)
-  				{
+				{
 					DebugPrintParse = true;
 					DebugPrintPlan = true;
 					DebugPrintRewrittenParsetree = true;
@@ -1211,7 +1212,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				StatFp = stderr;
 				break;
 
-	    	case 'T':
+			case 'T':
 				parse_options(optarg);
 				break;
 
@@ -1252,7 +1253,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 			case 'W':
 				/* ----------------
-				 *  wait N seconds to allow attach from a debugger
+				 *	wait N seconds to allow attach from a debugger
 				 * ----------------
 				 */
 				sleep(atoi(optarg));
@@ -1352,33 +1353,38 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	/*
 	 * Find remote host name or address.
 	 */
-	if (IsUnderPostmaster) {
-		switch (MyProcPort->raddr.sa.sa_family) {
-			struct hostent *host_ent;
+	if (IsUnderPostmaster)
+	{
+		switch (MyProcPort->raddr.sa.sa_family)
+		{
+				struct hostent *host_ent;
 
-		    case AF_INET:
+			case AF_INET:
 				remote_info = remote_host = malloc(48);
 				remote_port = ntohs(MyProcPort->raddr.in.sin_port);
 				strcpy(remote_host, inet_ntoa(MyProcPort->raddr.in.sin_addr));
-				if (HostnameLookup) {
+				if (HostnameLookup)
+				{
 					host_ent = \
-						gethostbyaddr((char *)&MyProcPort->raddr.in.sin_addr,
-									  sizeof(MyProcPort->raddr.in.sin_addr),
+						gethostbyaddr((char *) &MyProcPort->raddr.in.sin_addr,
+								   sizeof(MyProcPort->raddr.in.sin_addr),
 									  AF_INET);
-					if (host_ent) {
+					if (host_ent)
+					{
 						strncpy(remote_host, host_ent->h_name, 48);
-						*(remote_host+47) = '\0';
+						*(remote_host + 47) = '\0';
 					}
 				}
-				if (ShowPortNumber) {
-					remote_info = malloc(strlen(remote_host)+6);
+				if (ShowPortNumber)
+				{
+					remote_info = malloc(strlen(remote_host) + 6);
 					sprintf(remote_info, "%s:%d", remote_host, remote_port);
 				}
 				break;
-		    case AF_UNIX:
+			case AF_UNIX:
 				remote_info = remote_host = "localhost";
 				break;
-		    default:
+			default:
 				remote_info = remote_host = "unknown";
 				break;
 		}
@@ -1388,8 +1394,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 *	set process params for ps
 	 * ----------------
 	 */
-	if (IsUnderPostmaster) {
-		PS_INIT_STATUS(real_argc, real_argv, argv[0], 
+	if (IsUnderPostmaster)
+	{
+		PS_INIT_STATUS(real_argc, real_argv, argv[0],
 					   remote_info, userName, DBName);
 		PS_SET_STATUS("idle");
 	}
@@ -1400,10 +1407,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 */
 	if (Verbose)
 	{
-		if (Verbose == 1) {
+		if (Verbose == 1)
+		{
 			TPRINTF(TRACE_VERBOSE, "started: host=%s user=%s database=%s",
 					remote_host, userName, DBName);
-		} else {
+		}
+		else
+		{
 			TPRINTF(TRACE_VERBOSE, "debug info:");
 			TPRINTF(TRACE_VERBOSE, "\tUser         = %s", userName);
 			TPRINTF(TRACE_VERBOSE, "\tRemoteHost   = %s", remote_host);
@@ -1449,32 +1459,28 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #ifdef MULTIBYTE
 	/* set default client encoding */
 	if (Verbose)
-	{
 		puts("\treset_client_encoding()..");
-	}
 	reset_client_encoding();
 	if (Verbose)
-	{
 		puts("\treset_client_encoding() done.");
-	}
 #endif
 
 	/* ----------------
-	 *  Set up handler for cancel-request signal, and
+	 *	Set up handler for cancel-request signal, and
 	 *	send this backend's cancellation info to the frontend.
 	 *	This should not be done until we are sure startup is successful.
 	 * ----------------
 	 */
 
-	pqsignal(SIGHUP,  read_pg_options);		/* upate pg_options from file */
-	pqsignal(SIGINT,  QueryCancelHandler);	/* cancel current query */
-	pqsignal(SIGQUIT, handle_warn);			/* handle error */
+	pqsignal(SIGHUP, read_pg_options);	/* upate pg_options from file */
+	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
+	pqsignal(SIGQUIT, handle_warn);		/* handle error */
 	pqsignal(SIGTERM, die);
 	pqsignal(SIGPIPE, die);
 	pqsignal(SIGUSR1, quickdie);
-	pqsignal(SIGUSR2, Async_NotifyHandler);	/* flush also sinval cache */
-	pqsignal(SIGCHLD, SIG_IGN);				/* ignored, sent by LockOwners */
-	pqsignal(SIGFPE,  FloatExceptionHandler);
+	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
+	pqsignal(SIGCHLD, SIG_IGN); /* ignored, sent by LockOwners */
+	pqsignal(SIGFPE, FloatExceptionHandler);
 
 	if (whereToSendOutput == Remote &&
 		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
@@ -1521,7 +1527,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.88 $ $Date: 1998/09/01 03:25:41 $");
+		puts("$Revision: 1.89 $ $Date: 1998/09/01 04:32:13 $");
 	}
 
 	/* ----------------
@@ -1564,9 +1570,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 				/* start an xact for this function invocation */
 				if (Verbose)
-				{
 					TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
-				}
 
 				StartTransactionCommand();
 				HandleFunctionRequest();
@@ -1601,9 +1605,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 					/* start an xact for this query */
 					if (Verbose)
-					{
 						TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
-					}
 					StartTransactionCommand();
 
 					pg_exec_query(parser_input);
@@ -1638,9 +1640,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		if (!IsEmptyQuery)
 		{
 			if (Verbose)
-			{
 				TPRINTF(TRACE_VERBOSE, "CommitTransactionCommand");
-			}
 			PS_SET_STATUS("commit");
 			CommitTransactionCommand();
 			PS_SET_STATUS("idle");
@@ -1661,7 +1661,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #include "rusagestub.h"
 #else							/* HAVE_GETRUSAGE */
 #include <sys/resource.h>
-#endif							/* HAVE_GETRUSAGE */
+#endif	 /* HAVE_GETRUSAGE */
 
 struct rusage Save_r;
 struct timeval Save_t;
@@ -1756,7 +1756,7 @@ ShowUsage(void)
 			r.ru_nvcsw - Save_r.ru_nvcsw,
 			r.ru_nivcsw - Save_r.ru_nivcsw,
 			r.ru_nvcsw, r.ru_nivcsw);
-#endif							/* HAVE_GETRUSAGE */
+#endif	 /* HAVE_GETRUSAGE */
 	fprintf(StatFp, "! postgres usage stats:\n");
 	PrintBufferUsage(StatFp);
 /*	   DisplayTupleCount(StatFp); */
@@ -1776,14 +1776,16 @@ assertTest(int val)
 {
 	Assert(val == 0);
 
-	if (assert_enabled) {
+	if (assert_enabled)
+	{
 		/* val != 0 should be trapped by previous Assert */
 		elog(NOTICE, "Assert test successfull (val = %d)", val);
-	} else {
-		elog(NOTICE, "Assert checking is disabled (val = %d)", val);
 	}
+	else
+		elog(NOTICE, "Assert checking is disabled (val = %d)", val);
 
 	return val;
 }
+
 #endif
 #endif

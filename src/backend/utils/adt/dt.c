@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.56 1998/09/01 03:25:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.57 1998/09/01 04:32:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,15 +32,12 @@
 #include "utils/builtins.h"
 
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
-static int
-DecodeNumber(int flen, char *field,
+static int DecodeNumber(int flen, char *field,
 			 int fmask, int *tmask, struct tm * tm, double *fsec);
-static int
-DecodeNumberField(int len, char *str,
+static int DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask, struct tm * tm, double *fsec);
 static int	DecodeSpecial(int field, char *lowtoken, int *val);
-static int
-DecodeTime(char *str, int fmask, int *tmask,
+static int DecodeTime(char *str, int fmask, int *tmask,
 		   struct tm * tm, double *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
 static int	DecodeUnits(int field, char *lowtoken, int *val);
@@ -2208,7 +2205,7 @@ static datetkn deltatktbl[] = {
 	{"mils", UNITS, DTK_MILLENIUM},		/* "millenia" relative time units */
 	{"millenia", UNITS, DTK_MILLENIUM}, /* "millenia" relative time units */
 	{DMILLENIUM, UNITS, DTK_MILLENIUM}, /* "millenium" relative time units */
-	{"millisecon", UNITS, DTK_MILLISEC},	/* relative time units */
+	{"millisecon", UNITS, DTK_MILLISEC},		/* relative time units */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative time units */
 	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
 	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative time units */
@@ -2223,18 +2220,18 @@ static datetkn deltatktbl[] = {
 	{DMILLISEC, UNITS, DTK_MILLISEC},
 	{"mseconds", UNITS, DTK_MILLISEC},
 	{"msecs", UNITS, DTK_MILLISEC},
-	{"qtr", UNITS, DTK_QUARTER},		/* "quarter" relative time */
+	{"qtr", UNITS, DTK_QUARTER},/* "quarter" relative time */
 	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative time */
-	{"reltime", IGNORE, 0},				/* for pre-v6.1 "Undefined Reltime" */
+	{"reltime", IGNORE, 0},		/* for pre-v6.1 "Undefined Reltime" */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},
 	{"seconds", UNITS, DTK_SECOND},
 	{"secs", UNITS, DTK_SECOND},
-	{DTIMEZONE, UNITS, DTK_TZ},			/* "timezone" time offset */
-	{"tz", UNITS, DTK_TZ},				/* "timezone" time offset */
+	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
+	{"tz", UNITS, DTK_TZ},		/* "timezone" time offset */
 	{"tz_hour", UNITS, DTK_TZ_HOUR},	/* timezone hour units */
-	{"tz_minute", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
+	{"tz_minute", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
 	{"us", UNITS, DTK_MICROSEC},/* "microsecond" relative time units */
 	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative time
@@ -3645,7 +3642,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  *	an unsigned floating point number. - thomas 1997-11-16
  *
  * Allow ISO-style time span, with implicit units on number of days
- *  preceeding an hh:mm:ss field. - thomas 1998-04-30
+ *	preceeding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
 DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, double *fsec)
@@ -3688,8 +3685,10 @@ DecodeDateDelta(char **field, int *ftype, int nf, int *dtype, struct tm * tm, do
 				break;
 
 			case DTK_TZ:
-				/* Timezone is a token with a leading sign character
-				 * and otherwise the same as a non-signed numeric field
+
+				/*
+				 * Timezone is a token with a leading sign character and
+				 * otherwise the same as a non-signed numeric field
 				 */
 			case DTK_DATE:
 			case DTK_NUMBER:
@@ -4258,7 +4257,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
  *
  * Support "traditional Postgres" and ISO-8601 styles.
  * Actually, afaik ISO does not address time interval formatting,
- *  but this looks similar to the spec for absolute date/time.
+ *	but this looks similar to the spec for absolute date/time.
  * - thomas 1998-04-30
  */
 int
@@ -4270,7 +4269,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 	switch (style)
 	{
-		/* compatible with ISO date formats */
+			/* compatible with ISO date formats */
 		case USE_ISO_DATES:
 			break;
 
@@ -4284,7 +4283,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 	{
 		is_before |= (tm->tm_year < 0);
 		sprintf(cp, "%d year%s",
-		 abs(tm->tm_year), ((abs(tm->tm_year) != 1) ? "s" : ""));
+				abs(tm->tm_year), ((abs(tm->tm_year) != 1) ? "s" : ""));
 		cp += strlen(cp);
 		is_nonzero = TRUE;
 	}
@@ -4292,26 +4291,26 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 	if (tm->tm_mon != 0)
 	{
 		is_before |= (tm->tm_mon < 0);
-		sprintf(cp, "%s%d mon%s", (is_nonzero? " ": ""),
-		 abs(tm->tm_mon), ((abs(tm->tm_mon) != 1) ? "s" : ""));
+		sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""),
+				abs(tm->tm_mon), ((abs(tm->tm_mon) != 1) ? "s" : ""));
 		cp += strlen(cp);
 		is_nonzero = TRUE;
 	}
 
 	switch (style)
 	{
-		/* compatible with ISO date formats */
+			/* compatible with ISO date formats */
 		case USE_ISO_DATES:
 			if (tm->tm_mday != 0)
 			{
 				is_before |= (tm->tm_mday < 0);
-				sprintf(cp, "%s%d", (is_nonzero? " ": ""), abs(tm->tm_mday));
+				sprintf(cp, "%s%d", (is_nonzero ? " " : ""), abs(tm->tm_mday));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
 			is_before |= ((tm->tm_hour < 0) || (tm->tm_min < 0));
-			sprintf(cp, "%s%02d:%02d", (is_nonzero? " ": ""),
-			 abs(tm->tm_hour), abs(tm->tm_min));
+			sprintf(cp, "%s%02d:%02d", (is_nonzero ? " " : ""),
+					abs(tm->tm_hour), abs(tm->tm_min));
 			cp += strlen(cp);
 			if ((tm->tm_hour != 0) || (tm->tm_min != 0))
 				is_nonzero = TRUE;
@@ -4341,7 +4340,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			if (tm->tm_mday != 0)
 			{
 				is_before |= (tm->tm_mday < 0);
-				sprintf(cp, "%s%d day%s", (is_nonzero? " ": ""),
+				sprintf(cp, "%s%d day%s", (is_nonzero ? " " : ""),
 				 abs(tm->tm_mday), ((abs(tm->tm_mday) != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
@@ -4349,7 +4348,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			if (tm->tm_hour != 0)
 			{
 				is_before |= (tm->tm_hour < 0);
-				sprintf(cp, "%s%d hour%s", (is_nonzero? " ": ""),
+				sprintf(cp, "%s%d hour%s", (is_nonzero ? " " : ""),
 				 abs(tm->tm_hour), ((abs(tm->tm_hour) != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
@@ -4358,8 +4357,8 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			if (tm->tm_min != 0)
 			{
 				is_before |= (tm->tm_min < 0);
-				sprintf(cp, "%s%d min%s", (is_nonzero? " ": ""),
-				 abs(tm->tm_min), ((abs(tm->tm_min) != 1) ? "s" : ""));
+				sprintf(cp, "%s%d min%s", (is_nonzero ? " " : ""),
+				   abs(tm->tm_min), ((abs(tm->tm_min) != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}
@@ -4369,7 +4368,7 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			{
 				fsec += tm->tm_sec;
 				is_before |= (fsec < 0);
-				sprintf(cp, "%s%.2f secs", (is_nonzero? " ": ""), fabs(fsec));
+				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""), fabs(fsec));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 
@@ -4378,8 +4377,8 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			else if (tm->tm_sec != 0)
 			{
 				is_before |= (tm->tm_sec < 0);
-				sprintf(cp, "%s%d sec%s", (is_nonzero? " ": ""),
-				 abs(tm->tm_sec), ((abs(tm->tm_sec) != 1) ? "s" : ""));
+				sprintf(cp, "%s%d sec%s", (is_nonzero ? " " : ""),
+				   abs(tm->tm_sec), ((abs(tm->tm_sec) != 1) ? "s" : ""));
 				cp += strlen(cp);
 				is_nonzero = TRUE;
 			}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.47 1998/09/01 03:22:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.48 1998/09/01 04:29:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -999,9 +999,9 @@ _copyArrayRef(ArrayRef *from)
  **			-- JMH, 8/2/93
  */
 static RelOptInfo *
-_copyRelOptInfo(RelOptInfo *from)
+_copyRelOptInfo(RelOptInfo * from)
 {
-	RelOptInfo		   *newnode = makeNode(RelOptInfo);
+	RelOptInfo *newnode = makeNode(RelOptInfo);
 	int			i,
 				len;
 
@@ -1320,9 +1320,9 @@ _copyMergeOrder(MergeOrder *from)
  * ----------------
  */
 static ClauseInfo *
-_copyClauseInfo(ClauseInfo *from)
+_copyClauseInfo(ClauseInfo * from)
 {
-	ClauseInfo	   *newnode = makeNode(ClauseInfo);
+	ClauseInfo *newnode = makeNode(ClauseInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1413,9 +1413,9 @@ _copyMInfo(MInfo *from)
  * ----------------
  */
 static JoinInfo *
-_copyJoinInfo(JoinInfo *from)
+_copyJoinInfo(JoinInfo * from)
 {
-	JoinInfo	   *newnode = makeNode(JoinInfo);
+	JoinInfo   *newnode = makeNode(JoinInfo);
 
 	/* ----------------
 	 *	copy remainder of node

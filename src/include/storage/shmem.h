@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.13 1998/06/27 15:47:48 momjian Exp $
+ * $Id: shmem.h,v 1.14 1998/09/01 04:38:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,13 +64,11 @@ extern void ShmemCreate(unsigned int key, unsigned int size);
 extern int	InitShmem(unsigned int key, unsigned int size);
 extern long *ShmemAlloc(unsigned long size);
 extern int	ShmemIsValid(unsigned long addr);
-extern HTAB *
-ShmemInitHash(char *name, long init_size, long max_size,
+extern HTAB *ShmemInitHash(char *name, long init_size, long max_size,
 			  HASHCTL *infoP, int hash_flags);
 extern bool ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr);
 extern SHMEM_OFFSET ShmemPIDDestroy(int pid);
-extern long *
-ShmemInitStruct(char *name, unsigned long size,
+extern long *ShmemInitStruct(char *name, unsigned long size,
 				bool *foundPtr);
 extern bool TransactionIdIsInProgress(TransactionId xid);
 
@@ -79,7 +77,7 @@ typedef int TableID;
 
 /* size constants for the shmem index table */
  /* max size of data structure string name */
-#define SHMEM_INDEX_KEYSIZE	(50)
+#define SHMEM_INDEX_KEYSIZE (50)
  /* data in shmem index table hash bucket */
 #define SHMEM_INDEX_DATASIZE (sizeof(ShmemIndexEnt) - SHMEM_INDEX_KEYSIZE)
  /* maximum size of the shmem index table */
@@ -88,10 +86,10 @@ typedef int TableID;
 /* this is a hash bucket in the shmem index table */
 typedef struct
 {
-	char		key[SHMEM_INDEX_KEYSIZE];	/* string name */
+	char		key[SHMEM_INDEX_KEYSIZE];		/* string name */
 	unsigned long location;		/* location in shared mem */
 	unsigned long size;			/* numbytes allocated for the structure */
-} ShmemIndexEnt;
+}			ShmemIndexEnt;
 
 /*
  * prototypes for functions in shmqueue.c
@@ -100,9 +98,8 @@ extern void SHMQueueInit(SHM_QUEUE *queue);
 extern void SHMQueueElemInit(SHM_QUEUE *queue);
 extern void SHMQueueDelete(SHM_QUEUE *queue);
 extern void SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem);
-extern void
-SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr,
+extern void SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr,
 			  SHM_QUEUE *nextQueue);
 extern bool SHMQueueEmpty(SHM_QUEUE *queue);
 
-#endif							/* SHMEM_H */
+#endif	 /* SHMEM_H */

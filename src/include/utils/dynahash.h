@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynahash.h,v 1.4 1997/09/08 02:39:38 momjian Exp $
+ * $Id: dynahash.h,v 1.5 1998/09/01 04:39:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,4 +15,4 @@
 
 extern int	my_log2(long num);
 
-#endif							/* DYNAHASH_H */
+#endif	 /* DYNAHASH_H */

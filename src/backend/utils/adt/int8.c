@@ -208,7 +208,7 @@ int48ge(int32 val1, int64 * val2)
 int64 *
 int8um(int64 * val)
 {
-	int64	    temp = 0;
+	int64		temp = 0;
 	int64	   *result = palloc(sizeof(int64));
 
 	if (!PointerIsValid(val))
@@ -217,7 +217,7 @@ int8um(int64 * val)
 #if FALSE
 	*result = temp - (*val);
 #else
-    result = int8mi(&temp, val);
+	result = int8mi(&temp, val);
 #endif
 
 	return result;
@@ -281,17 +281,18 @@ int8larger(int64 * val1, int64 * val2)
 {
 #if FALSE
 	int64	   *result = palloc(sizeof(int64));
+
 #endif
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
 
 #if FALSE
-	*result = ((*val1 > *val2)? *val1: *val2);
+	*result = ((*val1 > *val2) ? *val1 : *val2);
 
 	return result;
 #endif
-	return (*val1 > *val2)? val1: val2;
+	return (*val1 > *val2) ? val1 : val2;
 }	/* int8larger() */
 
 int64 *
@@ -299,17 +300,18 @@ int8smaller(int64 * val1, int64 * val2)
 {
 #if FALSE
 	int64	   *result = palloc(sizeof(int64));
+
 #endif
 
 	if ((!PointerIsValid(val1)) || (!PointerIsValid(val2)))
 		return NULL;
 
 #if FALSE
-	*result = ((*val1 < *val2)? *val1: *val2);
+	*result = ((*val1 < *val2) ? *val1 : *val2);
 
 	return result;
 #endif
-	return (*val1 < *val2)? val1: val2;
+	return (*val1 < *val2) ? val1 : val2;
 }	/* int8smaller() */
 
 
@@ -400,7 +402,7 @@ int48mul(int32 val1, int64 * val2)
 	if (!PointerIsValid(val2))
 		return NULL;
 
-	*result = (int64) val1 * *val2;
+	*result = (int64) val1 **val2;
 
 	return result;
 }	/* int48mul() */
@@ -442,14 +444,16 @@ int84(int64 * val)
 		elog(ERROR, "Invalid (null) int64, can't convert int8 to int4", NULL);
 
 #if FALSE
-	/* Hmm. This conditional always tests true on my i686/linux box.
-	 * It's a gcc compiler bug, or I'm missing something obvious, which is more likely...
-	 * - thomas 1998-06-09
+
+	/*
+	 * Hmm. This conditional always tests true on my i686/linux box. It's
+	 * a gcc compiler bug, or I'm missing something obvious, which is more
+	 * likely... - thomas 1998-06-09
 	 */
 	if ((*val < INT_MIN) || (*val > INT_MAX))
 #endif
-	if ((*val < (-pow(2, 31) + 1)) || (*val > (pow(2, 31) - 1)))
-		elog(ERROR, "int8 conversion to int4 is out of range", NULL);
+		if ((*val < (-pow(2, 31) + 1)) || (*val > (pow(2, 31) - 1)))
+			elog(ERROR, "int8 conversion to int4 is out of range", NULL);
 
 	result = *val;
 
@@ -501,10 +505,10 @@ i8tod(int64 * val)
  * Convert double float to 8-byte integer.
  * Do a range check before the conversion.
  * Note that the comparison probably isn't quite right
- *  since we only have ~52 bits of precision in a double float
- *  and so subtracting one from a large number gives the large
- *  number exactly. However, for some reason the comparison below
- *  does the right thing on my i686/linux-rh4.2 box.
+ *	since we only have ~52 bits of precision in a double float
+ *	and so subtracting one from a large number gives the large
+ *	number exactly. However, for some reason the comparison below
+ *	does the right thing on my i686/linux-rh4.2 box.
  * - thomas 1998-06-16
  */
 int64 *

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: solaris_i386.h,v 1.1 1998/06/19 02:55:06 momjian Exp $
+ * $Id: solaris_i386.h,v 1.2 1998/09/01 04:31:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,4 +31,4 @@
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

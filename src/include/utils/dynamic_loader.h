@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dynamic_loader.h,v 1.8 1997/09/08 21:54:56 momjian Exp $
+ * $Id: dynamic_loader.h,v 1.9 1998/09/01 04:39:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #ifdef MIN
 #undef MIN
 #undef MAX
-#endif							/* MIN */
+#endif	 /* MIN */
 
 /*
  * List of dynamically loaded files.
@@ -41,4 +41,4 @@ extern func_ptr pg_dlsym(void *handle, char *funcname);
 extern void pg_dlclose(void *handle);
 extern char *pg_dlerror(void);
 
-#endif							/* DYNAMIC_LOADER_H */
+#endif	 /* DYNAMIC_LOADER_H */

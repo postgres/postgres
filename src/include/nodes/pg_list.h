@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.8 1997/09/08 21:52:51 momjian Exp $
+ * $Id: pg_list.h,v 1.9 1998/09/01 04:36:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,4 +117,4 @@ extern bool same(List *foo, List *bar);
 /* in copyfuncs.c */
 extern List *listCopy(List *);
 
-#endif							/* PG_LIST_H */
+#endif	 /* PG_LIST_H */

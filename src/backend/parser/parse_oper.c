@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.16 1998/09/01 03:24:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.17 1998/09/01 04:30:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,19 +29,17 @@
 #include "utils/syscache.h"
 
 Oid *
-oper_select_candidate(int nargs, Oid *input_typeids, CandidateList candidates);
-static int
-binary_oper_get_candidates(char *opname,
+			oper_select_candidate(int nargs, Oid *input_typeids, CandidateList candidates);
+static int binary_oper_get_candidates(char *opname,
 						   Oid leftTypeId,
 						   Oid rightTypeId,
 						   CandidateList *candidates);
-static int
-unary_oper_get_candidates(char *op,
+static int unary_oper_get_candidates(char *op,
 						  Oid typeId,
 						  CandidateList *candidates,
 						  char rightleft);
 static void
-op_error(char *op, Oid arg1, Oid arg2);
+			op_error(char *op, Oid arg1, Oid arg2);
 
 Oid
 any_ordering_op(int restype)
@@ -53,8 +51,8 @@ any_ordering_op(int restype)
 	if (!HeapTupleIsValid(order_op))
 	{
 		elog(ERROR, "Unable to find an ordering operator '%s' for type %s."
-			"\n\tUse an explicit ordering operator or modify the query.",
-			"<", typeidTypeName(restype));
+			 "\n\tUse an explicit ordering operator or modify the query.",
+			 "<", typeidTypeName(restype));
 	}
 	order_opid = oprid(order_op);
 
@@ -107,7 +105,7 @@ binary_oper_get_candidates(char *opname,
 	pg_operator_desc = heap_openr(OperatorRelationName);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf,	/* ??? */
+									  SnapshotSelf,		/* ??? */
 									  nkeys,
 									  opKey);
 
@@ -128,7 +126,7 @@ binary_oper_get_candidates(char *opname,
 	heap_close(pg_operator_desc);
 
 	return ncandidates;
-} /* binary_oper_get_candidates() */
+}	/* binary_oper_get_candidates() */
 
 
 /* oper_select_candidate()
@@ -179,24 +177,24 @@ oper_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  CandidateList candidates)
 {
-	CandidateList	current_candidate;
-	CandidateList	last_candidate;
-	Oid			   *current_typeids;
-	int				unknownOids;
-	int				i;
+	CandidateList current_candidate;
+	CandidateList last_candidate;
+	Oid		   *current_typeids;
+	int			unknownOids;
+	int			i;
 
-	int				ncandidates;
-	int				nbestMatch,
-					nmatch;
+	int			ncandidates;
+	int			nbestMatch,
+				nmatch;
 
-	CATEGORY		slot_category,
-					current_category;
-	Oid				slot_type,
-					current_type;
+	CATEGORY	slot_category,
+				current_category;
+	Oid			slot_type,
+				current_type;
 
 /*
  * Run through all candidates and keep those with the most matches
- *  on explicit types. Keep all candidates if none match.
+ *	on explicit types. Keep all candidates if none match.
  */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -210,12 +208,12 @@ oper_select_candidate(int nargs,
 		for (i = 0; i < nargs; i++)
 		{
 			if ((input_typeids[i] != UNKNOWNOID)
-			 && (current_typeids[i] == input_typeids[i]))
+				&& (current_typeids[i] == input_typeids[i]))
 				nmatch++;
 		}
 
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- candidate has %d matches\n", nmatch);
+		printf("oper_select_candidate- candidate has %d matches\n", nmatch);
 #endif
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
@@ -224,7 +222,7 @@ printf("oper_select_candidate- candidate has %d matches\n", nmatch);
 			last_candidate = current_candidate;
 			ncandidates = 1;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- choose candidate as best match\n");
+			printf("oper_select_candidate- choose candidate as best match\n");
 #endif
 		}
 		else if (nmatch == nbestMatch)
@@ -233,14 +231,14 @@ printf("oper_select_candidate- choose candidate as best match\n");
 			last_candidate = current_candidate;
 			ncandidates++;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- choose candidate as possible match\n");
+			printf("oper_select_candidate- choose candidate as possible match\n");
 #endif
 		}
 		else
 		{
 			last_candidate->next = NULL;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- reject candidate as possible match\n");
+			printf("oper_select_candidate- reject candidate as possible match\n");
 #endif
 		}
 	}
@@ -250,7 +248,7 @@ printf("oper_select_candidate- reject candidate as possible match\n");
 		if (!can_coerce_type(1, &input_typeids[0], &candidates->args[0])
 		 || !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))
 			ncandidates = 0;
-		return (ncandidates == 1)? candidates->args: NULL;
+		return (ncandidates == 1) ? candidates->args : NULL;
 	}
 
 /*
@@ -275,13 +273,13 @@ printf("oper_select_candidate- reject candidate as possible match\n");
 				if (current_typeids[i] == input_typeids[i])
 					nmatch++;
 				else if (IsPreferredType(current_category, current_typeids[i])
-				 && can_coerce_type(1, &input_typeids[i], &current_typeids[i]))
+						 && can_coerce_type(1, &input_typeids[i], &current_typeids[i]))
 					nmatch++;
 			}
 		}
 
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- candidate has %d matches\n", nmatch);
+		printf("oper_select_candidate- candidate has %d matches\n", nmatch);
 #endif
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
@@ -290,7 +288,7 @@ printf("oper_select_candidate- candidate has %d matches\n", nmatch);
 			last_candidate = current_candidate;
 			ncandidates = 1;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- choose candidate as best match\n");
+			printf("oper_select_candidate- choose candidate as best match\n");
 #endif
 		}
 		else if (nmatch == nbestMatch)
@@ -299,14 +297,14 @@ printf("oper_select_candidate- choose candidate as best match\n");
 			last_candidate = current_candidate;
 			ncandidates++;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- choose candidate as possible match\n");
+			printf("oper_select_candidate- choose candidate as possible match\n");
 #endif
 		}
 		else
 		{
 			last_candidate->next = NULL;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- reject candidate as possible match\n");
+			printf("oper_select_candidate- reject candidate as possible match\n");
 #endif
 		}
 	}
@@ -318,10 +316,10 @@ printf("oper_select_candidate- reject candidate as possible match\n");
 		{
 			ncandidates = 0;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- unable to coerce preferred candidate\n");
+			printf("oper_select_candidate- unable to coerce preferred candidate\n");
 #endif
 		}
-		return (ncandidates == 1)? candidates->args: NULL;
+		return (ncandidates == 1) ? candidates->args : NULL;
 	}
 
 /*
@@ -333,7 +331,7 @@ printf("oper_select_candidate- unable to coerce preferred candidate\n");
 	for (i = 0; i < nargs; i++)
 	{
 		if ((input_typeids[i] != UNKNOWNOID)
-		 && (input_typeids[i] != InvalidOid))
+			&& (input_typeids[i] != InvalidOid))
 			current_type = input_typeids[i];
 		else
 			unknownOids = TRUE;
@@ -350,7 +348,7 @@ printf("oper_select_candidate- unable to coerce preferred candidate\n");
 			{
 				current_typeids = current_candidate->args;
 				if ((current_type == current_typeids[i])
-				 || IS_BINARY_COMPATIBLE(current_type, current_typeids[i]))
+				|| IS_BINARY_COMPATIBLE(current_type, current_typeids[i]))
 					nmatch++;
 			}
 			if (nmatch == nargs)
@@ -376,14 +374,14 @@ printf("oper_select_candidate- unable to coerce preferred candidate\n");
 					slot_category = current_category;
 					slot_type = current_type;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- assign column #%d first candidate slot type %s\n",
- i, typeidTypeName(current_type));
+					printf("oper_select_candidate- assign column #%d first candidate slot type %s\n",
+						   i, typeidTypeName(current_type));
 #endif
 				}
 				else if (current_category != slot_category)
 				{
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- multiple possible types for column #%d; unable to choose candidate\n", i);
+					printf("oper_select_candidate- multiple possible types for column #%d; unable to choose candidate\n", i);
 #endif
 					return NULL;
 				}
@@ -394,15 +392,15 @@ printf("oper_select_candidate- multiple possible types for column #%d; unable to
 						slot_type = current_type;
 						candidates = current_candidate;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- column #%d found preferred candidate type %s\n",
- i, typeidTypeName(slot_type));
+						printf("oper_select_candidate- column #%d found preferred candidate type %s\n",
+							   i, typeidTypeName(slot_type));
 #endif
 					}
 					else
 					{
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- column #%d found possible candidate type %s\n",
- i, typeidTypeName(current_type));
+						printf("oper_select_candidate- column #%d found possible candidate type %s\n",
+							   i, typeidTypeName(current_type));
 #endif
 					}
 				}
@@ -412,16 +410,16 @@ printf("oper_select_candidate- column #%d found possible candidate type %s\n",
 			{
 				input_typeids[i] = slot_type;
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- assign column #%d slot type %s\n",
- i, typeidTypeName(input_typeids[i]));
+				printf("oper_select_candidate- assign column #%d slot type %s\n",
+					   i, typeidTypeName(input_typeids[i]));
 #endif
 			}
 		}
 		else
 		{
 #ifdef PARSEDEBUG
-printf("oper_select_candidate- column #%d input type is %s\n",
- i, typeidTypeName(input_typeids[i]));
+			printf("oper_select_candidate- column #%d input type is %s\n",
+				   i, typeidTypeName(input_typeids[i]));
 #endif
 		}
 	}
@@ -432,12 +430,12 @@ printf("oper_select_candidate- column #%d input type is %s\n",
 		 current_candidate = current_candidate->next)
 	{
 		if (can_coerce_type(1, &input_typeids[0], &current_candidate->args[0])
-		 && can_coerce_type(1, &input_typeids[1], &current_candidate->args[1]))
+			&& can_coerce_type(1, &input_typeids[1], &current_candidate->args[1]))
 			ncandidates++;
 	}
 
-	return (ncandidates == 1)? candidates->args: NULL;
-} /* oper_select_candidate() */
+	return (ncandidates == 1) ? candidates->args : NULL;
+}	/* oper_select_candidate() */
 
 
 /* oper_exact()
@@ -452,8 +450,10 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 	Node	   *tree;
 
 	/* Unspecified type for one of the arguments? then use the other */
-	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid)) arg1 = arg2;
-	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid)) arg2 = arg1;
+	if ((arg1 == UNKNOWNOID) && (arg2 != InvalidOid))
+		arg1 = arg2;
+	else if ((arg2 == UNKNOWNOID) && (arg1 != InvalidOid))
+		arg2 = arg1;
 
 	tup = SearchSysCacheTuple(OPRNAME,
 							  PointerGetDatum(op),
@@ -461,7 +461,10 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 							  ObjectIdGetDatum(arg2),
 							  CharGetDatum('b'));
 
-	/* Did not find anything? then try flipping arguments on a commutative operator... */
+	/*
+	 * Did not find anything? then try flipping arguments on a commutative
+	 * operator...
+	 */
 	if (!HeapTupleIsValid(tup) && (arg1 != arg2))
 	{
 		tup = SearchSysCacheTuple(OPRNAME,
@@ -475,13 +478,13 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 			Form_pg_operator opform;
 
 #if PARSEDEBUG
-printf("oper_exact: found possible commutative operator candidate\n");
+			printf("oper_exact: found possible commutative operator candidate\n");
 #endif
 			opform = (Form_pg_operator) GETSTRUCT(tup);
 			if (opform->oprcom == tup->t_oid)
 			{
 #if PARSEDEBUG
-printf("oper_exact: commutative operator found\n");
+				printf("oper_exact: commutative operator found\n");
 #endif
 				if ((ltree != NULL) && (rtree != NULL))
 				{
@@ -499,7 +502,7 @@ printf("oper_exact: commutative operator found\n");
 	}
 
 	return tup;
-} /* oper_exact() */
+}	/* oper_exact() */
 
 
 /* oper_inexact()
@@ -510,11 +513,11 @@ printf("oper_exact: commutative operator found\n");
 Operator
 oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarnings)
 {
-	HeapTuple		tup;
-	CandidateList	candidates;
-	int				ncandidates;
-	Oid			   *targetOids;
-	Oid				inputOids[2];
+	HeapTuple	tup;
+	CandidateList candidates;
+	int			ncandidates;
+	Oid		   *targetOids;
+	Oid			inputOids[2];
 
 	/* Unspecified type for one of the arguments? then use the other */
 	if (arg2 == InvalidOid)
@@ -543,7 +546,7 @@ oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWa
 		Assert(HeapTupleIsValid(tup));
 
 #if PARSEDEBUG
-printf("oper_inexact: found single candidate\n");
+		printf("oper_inexact: found single candidate\n");
 #endif
 
 	}
@@ -557,7 +560,7 @@ printf("oper_inexact: found single candidate\n");
 		if (targetOids != NULL)
 		{
 #if PARSEDEBUG
-printf("oper_inexact: found candidate\n");
+			printf("oper_inexact: found candidate\n");
 #endif
 			tup = SearchSysCacheTuple(OPRNAME,
 									  PointerGetDatum(op),
@@ -574,14 +577,14 @@ printf("oper_inexact: found candidate\n");
 			if (!noWarnings)
 			{
 				elog(ERROR, "There is more than one possible operator '%s' for types '%s' and '%s'"
-					"\n\tYou will have to retype this query using an explicit cast",
-					op, typeTypeName(typeidType(arg1)), typeTypeName(typeidType(arg2)));
+					 "\n\tYou will have to retype this query using an explicit cast",
+					 op, typeTypeName(typeidType(arg1)), typeTypeName(typeidType(arg2)));
 			}
 			return NULL;
 		}
 	}
 	return (Operator) tup;
-} /* oper_inexact() */
+}	/* oper_inexact() */
 
 
 /* oper()
@@ -592,7 +595,7 @@ printf("oper_inexact: found candidate\n");
 Operator
 oper(char *opname, Oid ltypeId, Oid rtypeId, bool noWarnings)
 {
-	HeapTuple		tup;
+	HeapTuple	tup;
 
 	/* check for exact match on this operator... */
 	if (HeapTupleIsValid(tup = oper_exact(opname, ltypeId, rtypeId, NULL, NULL, TRUE)))
@@ -609,7 +612,7 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noWarnings)
 	}
 
 	return (Operator) tup;
-} /* oper() */
+}	/* oper() */
 
 
 /* unary_oper_get_candidates()
@@ -642,12 +645,12 @@ unary_oper_get_candidates(char *op,
 	opKey[1].sk_argument = CharGetDatum(rightleft);
 
 #ifdef PARSEDEBUG
-printf("unary_oper_get_candidates: start scan for '%s'\n", op);
+	printf("unary_oper_get_candidates: start scan for '%s'\n", op);
 #endif
 	pg_operator_desc = heap_openr(OperatorRelationName);
 	pg_operator_scan = heap_beginscan(pg_operator_desc,
 									  0,
-									  SnapshotSelf,	/* ??? */
+									  SnapshotSelf,		/* ??? */
 									  2,
 									  opKey);
 
@@ -664,8 +667,8 @@ printf("unary_oper_get_candidates: start scan for '%s'\n", op);
 		current_candidate->next = *candidates;
 		*candidates = current_candidate;
 #ifdef PARSEDEBUG
-printf("unary_oper_get_candidates: found candidate '%s' for type %s\n",
- op, typeidTypeName(current_candidate->args[0]));
+		printf("unary_oper_get_candidates: found candidate '%s' for type %s\n",
+			   op, typeidTypeName(current_candidate->args[0]));
 #endif
 		ncandidates++;
 	}
@@ -674,10 +677,10 @@ printf("unary_oper_get_candidates: found candidate '%s' for type %s\n",
 	heap_close(pg_operator_desc);
 
 #ifdef PARSEDEBUG
-printf("unary_oper_get_candidates: found %d candidates\n", ncandidates);
+	printf("unary_oper_get_candidates: found %d candidates\n", ncandidates);
 #endif
 	return ncandidates;
-} /* unary_oper_get_candidates() */
+}	/* unary_oper_get_candidates() */
 
 
 /* Given unary right-side operator (operator on right), return oper struct */
@@ -685,10 +688,10 @@ printf("unary_oper_get_candidates: found %d candidates\n", ncandidates);
 Operator
 right_oper(char *op, Oid arg)
 {
-	HeapTuple		tup;
-	CandidateList	candidates;
-	int				ncandidates;
-	Oid			   *targetOid;
+	HeapTuple	tup;
+	CandidateList candidates;
+	int			ncandidates;
+	Oid		   *targetOid;
 
 	tup = SearchSysCacheTuple(OPRNAME,
 							  PointerGetDatum(op),
@@ -708,7 +711,7 @@ right_oper(char *op, Oid arg)
 		{
 			tup = SearchSysCacheTuple(OPRNAME,
 									  PointerGetDatum(op),
-									  ObjectIdGetDatum(candidates->args[0]),
+								   ObjectIdGetDatum(candidates->args[0]),
 									  ObjectIdGetDatum(InvalidOid),
 									  CharGetDatum('r'));
 			Assert(HeapTupleIsValid(tup));
@@ -737,7 +740,7 @@ right_oper(char *op, Oid arg)
 		}
 	}
 	return (Operator) tup;
-} /* right_oper() */
+}	/* right_oper() */
 
 
 /* Given unary left-side operator (operator on left), return oper struct */
@@ -745,10 +748,10 @@ right_oper(char *op, Oid arg)
 Operator
 left_oper(char *op, Oid arg)
 {
-	HeapTuple		tup;
-	CandidateList	candidates;
-	int				ncandidates;
-	Oid			   *targetOid;
+	HeapTuple	tup;
+	CandidateList candidates;
+	int			ncandidates;
+	Oid		   *targetOid;
 
 	tup = SearchSysCacheTuple(OPRNAME,
 							  PointerGetDatum(op),
@@ -769,12 +772,12 @@ left_oper(char *op, Oid arg)
 			tup = SearchSysCacheTuple(OPRNAME,
 									  PointerGetDatum(op),
 									  ObjectIdGetDatum(InvalidOid),
-									  ObjectIdGetDatum(candidates->args[0]),
+								   ObjectIdGetDatum(candidates->args[0]),
 									  CharGetDatum('l'));
 			Assert(HeapTupleIsValid(tup));
 #ifdef PARSEDEBUG
-printf("left_oper: searched cache for single left oper candidate '%s %s'\n",
- op, typeidTypeName((Oid) candidates->args[0]));
+			printf("left_oper: searched cache for single left oper candidate '%s %s'\n",
+				   op, typeidTypeName((Oid) candidates->args[0]));
 #endif
 		}
 		else
@@ -793,13 +796,13 @@ printf("left_oper: searched cache for single left oper candidate '%s %s'\n",
 				return NULL;
 			}
 #ifdef PARSEDEBUG
-printf("left_oper: searched cache for best left oper candidate '%s %s'\n",
- op, typeidTypeName(*targetOid));
+			printf("left_oper: searched cache for best left oper candidate '%s %s'\n",
+				   op, typeidTypeName(*targetOid));
 #endif
 		}
 	}
 	return (Operator) tup;
-} /* left_oper() */
+}	/* left_oper() */
 
 
 /* op_error()
@@ -830,6 +833,6 @@ op_error(char *op, Oid arg1, Oid arg2)
 
 	elog(ERROR, "There is no operator '%s' for types '%s' and '%s'"
 		 "\n\tYou will either have to retype this query using an explicit cast,"
-		 "\n\tor you will have to define the operator using CREATE OPERATOR",
+	 "\n\tor you will have to define the operator using CREATE OPERATOR",
 		 op, typeTypeName(tp1), typeTypeName(tp2));
 }

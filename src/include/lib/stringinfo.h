@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringinfo.h,v 1.6 1998/03/20 04:12:21 momjian Exp $
+ * $Id: stringinfo.h,v 1.7 1998/09/01 04:36:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,4 +44,4 @@ extern StringInfo makeStringInfo(void);
  */
 extern void appendStringInfo(StringInfo str, char *buffer);
 
-#endif							/* STRINGINFO_H */
+#endif	 /* STRINGINFO_H */

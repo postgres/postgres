@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.19 1998/09/01 03:22:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.20 1998/09/01 04:28:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,16 +57,13 @@ typedef struct local_es
 
 /* non-export function prototypes */
 static TupleDesc postquel_start(execution_state *es);
-static execution_state *
-init_execution_state(FunctionCachePtr fcache,
+static execution_state *init_execution_state(FunctionCachePtr fcache,
 					 char *args[]);
 static TupleTableSlot *postquel_getnext(execution_state *es);
 static void postquel_end(execution_state *es);
-static void
-postquel_sub_params(execution_state *es, int nargs,
+static void postquel_sub_params(execution_state *es, int nargs,
 					char *args[], bool *nullV);
-static Datum
-postquel_execute(execution_state *es, FunctionCachePtr fcache,
+static Datum postquel_execute(execution_state *es, FunctionCachePtr fcache,
 				 List *fTlist, char **args, bool *isNull);
 
 

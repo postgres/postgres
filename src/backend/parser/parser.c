@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.35 1998/09/01 03:24:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.36 1998/09/01 04:30:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,7 @@ parser(char *str, Oid *typev, int nargs)
 #if defined(FLEX_SCANNER)
 	extern void DeleteBuffer(void);
 
-#endif							/* FLEX_SCANNER */
+#endif	 /* FLEX_SCANNER */
 
 	init_io();
 
@@ -54,7 +54,7 @@ parser(char *str, Oid *typev, int nargs)
 
 #if defined(FLEX_SCANNER)
 	DeleteBuffer();
-#endif							/* FLEX_SCANNER */
+#endif	 /* FLEX_SCANNER */
 
 	clearerr(stdin);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fstack.h,v 1.5 1997/09/08 21:52:20 momjian Exp $
+ * $Id: fstack.h,v 1.6 1998/09/01 04:36:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,4 +111,4 @@ extern Pointer FixedStackGetTop(FixedStack stack);
  */
 extern Pointer FixedStackGetNext(FixedStack stack, Pointer pointer);
 
-#endif							/* FSTACK_H */
+#endif	 /* FSTACK_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: excid.h,v 1.4 1997/09/07 05:02:29 momjian Exp $
+ * $Id: excid.h,v 1.5 1998/09/01 04:39:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,4 +26,4 @@ extern Exception InternalError; /* XXX inconsistent naming style */
 extern Exception SemanticError; /* XXX inconsistent naming style */
 extern Exception SystemError;	/* XXX inconsistent naming style */
 
-#endif							/* EXCID_H */
+#endif	 /* EXCID_H */

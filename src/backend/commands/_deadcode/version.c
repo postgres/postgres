@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.14 1998/08/19 02:01:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.15 1998/09/01 04:28:09 momjian Exp $
  *
  * NOTES
  *	  At the point the version is defined, 2 physical relations are created
@@ -303,7 +303,7 @@ VersionDelete(char *vname, char *bname, char *snapshot)
 			vname, vname, vname, bname, bname, snapshot, bname);
 
 	eval_as_new_xact(rule_buf);
-#endif							/* OLD_REWRITE */
+#endif	 /* OLD_REWRITE */
 }
 
 #endif
@@ -355,7 +355,7 @@ VersionReplace(char *vname, char *bname, char *snapshot)
 	vname, vname, vname, attr_list, bname, bname, snapshot, vname, bname);
 
 	eval_as_new_xact(rule_buf);
-#endif							/* OLD_REWRITE */
+#endif	 /* OLD_REWRITE */
 /*	printf("%s\n",rule_buf); */
 
 }

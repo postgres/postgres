@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.17 1998/08/25 21:24:07 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.18 1998/09/01 04:32:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ ProcessQueryDesc(QueryDesc *queryDesc)
 	plan = queryDesc->plantree;
 
 	operation = queryDesc->operation;
-	PS_SET_STATUS( tag = CreateOperationTag(operation) );
+	PS_SET_STATUS(tag = CreateOperationTag(operation));
 	dest = queryDesc->dest;
 
 	/* ----------------

@@ -17,7 +17,7 @@ typedef unsigned char slock_t;
 
 /***************************************************************
  * strcasecmp() is in c89.a. The following include will get the
- * needed prototype. 
+ * needed prototype.
  ***************************************************************/
 #include <strings.h>
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-auth.h,v 1.9 1998/08/17 03:50:33 scrappy Exp $
+ * $Id: fe-auth.h,v 1.10 1998/09/01 04:40:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,10 +30,9 @@
 #define DEFAULT_CLIENT_AUTHSVC	UNAUTHNAME
 #else							/* KRB4 || KRB5 */
 #define DEFAULT_CLIENT_AUTHSVC	"kerberos"
-#endif							/* KRB4 || KRB5 */
+#endif	 /* KRB4 || KRB5 */
 
-extern int
-fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
+extern int fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			const char *password, char *PQerrormsg);
 extern MsgType fe_getauthsvc(char *PQerrormsg);
 extern void fe_setauthsvc(const char *name, char *PQerrormsg);
@@ -42,4 +41,4 @@ extern char *fe_getauthname(char *PQerrormsg);
 #define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */
 #define PG_KRB5_VERSION "PGVER5.1"
 
-#endif							/* FE_AUTH_H */
+#endif	 /* FE_AUTH_H */

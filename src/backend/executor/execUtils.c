@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.37 1998/09/01 03:22:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.38 1998/09/01 04:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,7 @@
 #include "utils/lsyscache.h"
 #include "utils/mcxt.h"
 
-static void
-ExecGetIndexKeyInfo(Form_pg_index indexTuple, int *numAttsOutP,
+static void ExecGetIndexKeyInfo(Form_pg_index indexTuple, int *numAttsOutP,
 					AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);
 
 /* ----------------------------------------------------------------
@@ -750,7 +749,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	 */
 	indexSd = heap_beginscan(indexRd,	/* scan desc */
 							 false,		/* scan backward flag */
-							 SnapshotNow,	/* NOW snapshot */
+							 SnapshotNow,		/* NOW snapshot */
 							 1, /* number scan keys */
 							 &key);		/* scan keys */
 

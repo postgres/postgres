@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.8 1998/09/01 03:28:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/pqsignal.c,v 1.9 1998/09/01 04:40:14 momjian Exp $
  *
  * NOTES
  *		This shouldn't be in libpq, but the monitor and some other
@@ -38,5 +38,5 @@ pqsignal(int signo, pqsigfunc func)
 	if (sigaction(signo, &act, &oact) < 0)
 		return SIG_ERR;
 	return oact.sa_handler;
-#endif							/* !USE_POSIX_SIGNALS */
+#endif	 /* !USE_POSIX_SIGNALS */
 }

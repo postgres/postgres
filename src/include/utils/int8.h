@@ -6,16 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: int8.h,v 1.2 1998/08/23 22:25:54 momjian Exp $
+ * $Id: int8.h,v 1.3 1998/09/01 04:39:13 momjian Exp $
  *
  * NOTES
  * These data types are supported on all 64-bit architectures, and may
- *  be supported through libraries on some 32-bit machines. If your machine
- *  is not currently supported, then please try to make it so, then post
- *  patches to the postgresql.org hackers mailing list.
+ *	be supported through libraries on some 32-bit machines. If your machine
+ *	is not currently supported, then please try to make it so, then post
+ *	patches to the postgresql.org hackers mailing list.
  *
  * This code was written for and originally appeared in the contrib
- *  directory as a user-defined type.
+ *	directory as a user-defined type.
  * - thomas 1998-06-08
  *
  *-------------------------------------------------------------------------
@@ -26,15 +26,18 @@
 #ifdef HAVE_LONG_INT_64
 /* Plain "long int" fits, use it */
 typedef long int int64;
+
 #define INT64_FORMAT "%ld"
 #else
 #ifdef HAVE_LONG_LONG_INT_64
 /* We have working support for "long long int", use that */
 typedef long long int int64;
+
 #define INT64_FORMAT "%Ld"
 #else
 /* Won't actually work, but fall back to long int so that int8.c compiles */
 typedef long int int64;
+
 #define INT64_FORMAT "%ld"
 #define INT64_IS_BUSTED
 #endif
@@ -88,9 +91,10 @@ extern int32 int84(int64 * val);
 #if FALSE
 extern int64 *int28 (int16 val);
 extern int16 int82(int64 * val);
+
 #endif
 
 extern float64 i8tod(int64 * val);
 extern int64 *dtoi8(float64 val);
 
-#endif							/* INT8_H */
+#endif	 /* INT8_H */

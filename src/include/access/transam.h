@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.15 1998/07/21 06:17:39 vadim Exp $
+ * $Id: transam.h,v 1.16 1998/09/01 04:34:31 momjian Exp $
  *
  *	 NOTES
  *		Transaction System Version 101 now support proper oid
@@ -124,13 +124,13 @@ typedef VariableRelationContentsData *VariableRelationContents;
  */
 typedef struct VariableCacheData
 {
-	uint32			xid_count;
-	TransactionId	nextXid;
-	uint32			oid_count;		/* not implemented, yet */
-	Oid				nextOid;
-} VariableCacheData;
+	uint32		xid_count;
+	TransactionId nextXid;
+	uint32		oid_count;		/* not implemented, yet */
+	Oid			nextOid;
+}			VariableCacheData;
 
-typedef VariableCacheData	   *VariableCache;
+typedef VariableCacheData *VariableCache;
 
 /* ----------------
  *		extern declarations
@@ -148,14 +148,11 @@ extern void TransactionIdAbort(TransactionId transactionId);
 
 /* in transam/transsup.c */
 extern void AmiTransactionOverride(bool flag);
-extern void
-TransComputeBlockNumber(Relation relation,
+extern void TransComputeBlockNumber(Relation relation,
 			  TransactionId transactionId, BlockNumber *blockNumberOutP);
-extern XidStatus
-TransBlockNumberGetXidStatus(Relation relation,
+extern XidStatus TransBlockNumberGetXidStatus(Relation relation,
 				BlockNumber blockNumber, TransactionId xid, bool *failP);
-extern void
-TransBlockNumberSetXidStatus(Relation relation,
+extern void TransBlockNumberSetXidStatus(Relation relation,
 		   BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
 							 bool *failP);
 
@@ -189,4 +186,4 @@ extern bool AMI_OVERRIDE;
 /* in varsup.c */
 extern int	OidGenLockId;
 
-#endif							/* TRAMSAM_H */
+#endif	 /* TRAMSAM_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.19 1998/09/01 03:23:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.20 1998/09/01 04:29:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@
 extern int	Quiet;
 
 static void add_clause_to_rels(Query *root, List *clause);
-static void add_join_info_to_rels(Query *root, ClauseInfo *clauseinfo,
-							 List *join_relids);
+static void add_join_info_to_rels(Query *root, ClauseInfo * clauseinfo,
+					  List *join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars, List *join_relids);
 
 static MergeOrder *mergejoinop(Expr *clause);
@@ -170,7 +170,7 @@ add_clause_to_rels(Query *root, List *clause)
 {
 	List	   *relids;
 	List	   *vars;
-	ClauseInfo	   *clauseinfo = makeNode(ClauseInfo);
+	ClauseInfo *clauseinfo = makeNode(ClauseInfo);
 
 	/*
 	 * Retrieve all relids and vars contained within the clause.
@@ -199,6 +199,7 @@ add_clause_to_rels(Query *root, List *clause)
 		 */
 		if (is_funcclause((Node *) clause))
 		{
+
 			/*
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
@@ -222,6 +223,7 @@ add_clause_to_rels(Query *root, List *clause)
 
 		if (is_funcclause((Node *) clause))
 		{
+
 			/*
 			 * XXX If we have a func clause set selectivity to 1/3, really
 			 * need a true selectivity function.
@@ -252,13 +254,13 @@ add_clause_to_rels(Query *root, List *clause)
  *
  */
 static void
-add_join_info_to_rels(Query *root, ClauseInfo *clauseinfo, List *join_relids)
+add_join_info_to_rels(Query *root, ClauseInfo * clauseinfo, List *join_relids)
 {
 	List	   *join_relid;
 
 	foreach(join_relid, join_relids)
 	{
-		JoinInfo	   *joininfo;
+		JoinInfo   *joininfo;
 		List	   *other_rels = NIL;
 		List	   *rel;
 
@@ -269,7 +271,7 @@ add_join_info_to_rels(Query *root, ClauseInfo *clauseinfo, List *join_relids)
 		}
 
 		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
-							   other_rels);
+									  other_rels);
 		joininfo->jinfoclauseinfo =
 			lcons(copyObject((void *) clauseinfo), joininfo->jinfoclauseinfo);
 
@@ -332,8 +334,8 @@ init_join_info(List *rel_list)
 			   *y,
 			   *z;
 	RelOptInfo *rel;
-	JoinInfo	   *joininfo;
-	ClauseInfo	   *clauseinfo;
+	JoinInfo   *joininfo;
+	ClauseInfo *clauseinfo;
 	Expr	   *clause;
 
 	foreach(x, rel_list)

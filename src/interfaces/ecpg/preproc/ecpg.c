@@ -9,8 +9,9 @@
 #include <getopt.h>
 #else
 #include <unistd.h>
-extern int optind;
+extern int	optind;
 extern char *optarg;
+
 #endif
 #include <stdlib.h>
 #if defined(HAVE_STRING_H)
@@ -22,7 +23,7 @@ extern char *optarg;
 #include "extern.h"
 
 struct _include_path *include_paths;
-int no_auto_trans = 0;
+int			no_auto_trans = 0;
 struct cursor *cur = NULL;
 
 static void
@@ -33,22 +34,24 @@ usage(char *progname)
 }
 
 static void
-add_include_path(char * path)
+add_include_path(char *path)
 {
 	struct _include_path *ip = include_paths;
-	
-        include_paths = mm_alloc(sizeof(struct _include_path));
-        include_paths->path = path;
-        include_paths->next = ip;
+
+	include_paths = mm_alloc(sizeof(struct _include_path));
+	include_paths->path = path;
+	include_paths->next = ip;
 }
 
 int
 main(int argc, char *const argv[])
 {
-	int			fnr, c, out_option = 0;
-	struct _include_path	*ip;
-	
-	add_include_path("/usr/include");	
+	int			fnr,
+				c,
+				out_option = 0;
+	struct _include_path *ip;
+
+	add_include_path("/usr/include");
 	add_include_path(INCLUDE_PATH);
 	add_include_path("/usr/local/include");
 	add_include_path(".");
@@ -66,10 +69,10 @@ main(int argc, char *const argv[])
 				break;
 			case 'I':
 				add_include_path(optarg);
-		                break;
-		        case 't':
-		        	no_auto_trans = 1;
-		        	break;
+				break;
+			case 't':
+				no_auto_trans = 1;
+				break;
 			case 'v':
 				fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 				fprintf(stderr, "exec sql include ... search starts here:\n");
@@ -86,14 +89,15 @@ main(int argc, char *const argv[])
 	if (optind >= argc)			/* no files specified */
 	{
 		usage(argv[0]);
-		return(ILLEGAL_OPTION);
+		return (ILLEGAL_OPTION);
 	}
 	else
 	{
 		/* after the options there must not be anything but filenames */
 		for (fnr = optind; fnr < argc; fnr++)
 		{
-			char	   *output_filename = NULL, *ptr2ext;
+			char	   *output_filename = NULL,
+					   *ptr2ext;
 
 			input_filename = mm_alloc(strlen(argv[fnr]) + 5);
 
@@ -104,7 +108,7 @@ main(int argc, char *const argv[])
 			if (ptr2ext == NULL)
 			{
 				ptr2ext = input_filename + strlen(input_filename);
-				
+
 				/* no extension => add .pgc */
 				ptr2ext[0] = '.';
 				ptr2ext[1] = 'p';
@@ -116,12 +120,12 @@ main(int argc, char *const argv[])
 			if (out_option == 0)/* calculate the output name */
 			{
 				output_filename = strdup(input_filename);
-				
+
 				ptr2ext = strrchr(output_filename, '.');
 				/* make extension = .c */
 				ptr2ext[1] = 'c';
 				ptr2ext[2] = '\0';
-				
+
 				yyout = fopen(output_filename, "w");
 				if (yyout == NULL)
 				{
@@ -139,13 +143,14 @@ main(int argc, char *const argv[])
 			{
 				struct cursor *ptr;
 				struct _defines *defptr;
-				
+
 				/* remove old cursor definitions if any are still there */
 				for (ptr = cur; ptr != NULL;)
 				{
 					struct cursor *this = ptr;
-					struct arguments *l1, *l2;
-					
+					struct arguments *l1,
+							   *l2;
+
 					free(ptr->command);
 					free(ptr->name);
 					for (l1 = argsinsert; l1; l1 = l2)
@@ -161,20 +166,21 @@ main(int argc, char *const argv[])
 					ptr = ptr->next;
 					free(this);
 				}
-				
+
 				/* remove old defines as well */
 				for (defptr = defines; defptr != NULL;)
 				{
 					struct _defines *this = defptr;
+
 					free(defptr->new);
 					free(defptr->old);
 					defptr = defptr->next;
 					free(this);
 				}
-				
+
 				/* initialize lex */
 				lex_init();
-				
+
 				/* we need two includes and a constant */
 				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 
@@ -189,7 +195,7 @@ main(int argc, char *const argv[])
 
 			if (output_filename)
 				free(output_filename);
-				
+
 			free(input_filename);
 		}
 	}

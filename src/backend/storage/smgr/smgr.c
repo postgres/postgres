@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.19 1998/09/01 03:25:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.20 1998/09/01 04:32:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ smgrcreate(int16 which, Relation reln)
 	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
-		elog(ERROR, "cannot create %s",	reln->rd_rel->relname.data);
+		elog(ERROR, "cannot create %s", reln->rd_rel->relname.data);
 
 	return fd;
 }
@@ -251,7 +251,7 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 
 	if (status == SM_FAIL)
 		elog(ERROR, "cannot write block %d of %s",
-			blocknum, reln->rd_rel->relname.data);
+			 blocknum, reln->rd_rel->relname.data);
 
 	return status;
 }
@@ -349,7 +349,7 @@ smgrtruncate(int16 which, Relation reln, int nblocks)
 	{
 		if ((newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks)) < 0)
 			elog(ERROR, "cannot truncate %s to %d blocks",
-				reln->rd_rel->relname.data, nblocks);
+				 reln->rd_rel->relname.data, nblocks);
 	}
 
 	return newblks;

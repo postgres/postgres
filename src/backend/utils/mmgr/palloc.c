@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.7 1998/09/01 03:27:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/Attic/palloc.c,v 1.8 1998/09/01 04:33:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ palloc(Size size)
 	return malloc(size);
 #else
 	return MemoryContextAlloc(CurrentMemoryContext, size);
-#endif							/* PALLOC_IS_MALLOC */
+#endif	 /* PALLOC_IS_MALLOC */
 }
 
 void
@@ -77,7 +77,7 @@ pfree(void *pointer)
 	free(pointer);
 #else
 	MemoryContextFree(CurrentMemoryContext, pointer);
-#endif							/* PALLOC_IS_MALLOC */
+#endif	 /* PALLOC_IS_MALLOC */
 }
 
 /*

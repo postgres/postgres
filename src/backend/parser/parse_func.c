@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.27 1998/09/01 03:24:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.28 1998/09/01 04:30:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-static Node *
-ParseComplexProjection(ParseState *pstate,
+static Node *ParseComplexProjection(ParseState *pstate,
 					   char *funcname,
 					   Node *first_arg,
 					   bool *attisset);
@@ -64,14 +63,12 @@ func_get_detail(char *funcname,
 				Oid **true_typeids);
 static Oid	funcid_get_rettype(Oid funcid);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
-static void
-make_arguments(ParseState *pstate,
+static void make_arguments(ParseState *pstate,
 			   int nargs,
 			   List *fargs,
 			   Oid *input_typeids,
 			   Oid *function_typeids);
-static int
-match_argtypes(int nargs,
+static int match_argtypes(int nargs,
 			   Oid *input_typeids,
 			   CandidateList function_typeids,
 			   CandidateList *candidates);
@@ -270,23 +267,24 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 										 fargs, precedence);
 
 			/*
-		     * See if this is a single argument function with the function name
-		     *  also a type name and the input argument and type name binary compatible...
+			 * See if this is a single argument function with the function
+			 * name also a type name and the input argument and type name
+			 * binary compatible...
 			 */
 			if ((HeapTupleIsValid(tp = SearchSysCacheTuple(TYPNAME,
-														   PointerGetDatum(funcname),
+											   PointerGetDatum(funcname),
 														   0, 0, 0)))
-			 && IS_BINARY_COMPATIBLE(typeTypeId(tp), basetype))
-				return((Node *)lfirst(fargs));
+				&& IS_BINARY_COMPATIBLE(typeTypeId(tp), basetype))
+				return ((Node *) lfirst(fargs));
 		}
 	}
 
 
 	/*
 	 * If we dropped through to here it's really a function (or a set,
-	 *  which is implemented as a function).
-	 * Extract arg type info and transform relation name arguments
-	 *  into varnodes of the appropriate form.
+	 * which is implemented as a function). Extract arg type info and
+	 * transform relation name arguments into varnodes of the appropriate
+	 * form.
 	 */
 	MemSet(&oid_array[0], 0, 8 * sizeof(Oid));
 
@@ -372,7 +370,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 	else
 	{
-		bool exists;
+		bool		exists;
 
 		exists = func_get_detail(funcname, nargs, oid_array, &funcid,
 								 &rettype, &retset, &true_oid_array);
@@ -446,8 +444,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		seqrel = textout(seqname);
 
 		if ((aclcheck_result = pg_aclcheck(seqrel, GetPgUserName(),
-			   (((funcid == F_NEXTVAL) || (funcid == F_SETVAL)) ? 
-				ACL_WR : ACL_RD)))
+					   (((funcid == F_NEXTVAL) || (funcid == F_SETVAL)) ?
+						ACL_WR : ACL_RD)))
 			!= ACLCHECK_OK)
 			elog(ERROR, "%s.%s: %s",
 			  seqrel, funcname, aclcheck_error_strings[aclcheck_result]);
@@ -544,7 +542,7 @@ func_get_candidates(char *funcname, int nargs)
 		{
 			ItemPointer iptr;
 			Buffer		buffer;
-			
+
 			iptr = &indexRes->heap_iptr;
 			tuple = heap_fetch(heapRelation, SnapshotNow, iptr, &buffer);
 			pfree(indexRes);
@@ -614,7 +612,7 @@ match_argtypes(int nargs,
 	}
 
 	return ncandidates;
-} /* match_argtypes() */
+}	/* match_argtypes() */
 
 
 /* func_select_candidate()
@@ -633,24 +631,24 @@ func_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  CandidateList candidates)
 {
-	CandidateList	current_candidate;
-	CandidateList	last_candidate;
-	Oid			   *current_typeids;
-	int				i;
+	CandidateList current_candidate;
+	CandidateList last_candidate;
+	Oid		   *current_typeids;
+	int			i;
 
-	int				ncandidates;
-	int				nbestMatch,
-					nmatch,
-					nident;
+	int			ncandidates;
+	int			nbestMatch,
+				nmatch,
+				nident;
 
-	CATEGORY		slot_category,
-					current_category;
-	Oid				slot_type,
-					current_type;
+	CATEGORY	slot_category,
+				current_category;
+	Oid			slot_type,
+				current_type;
 
 /*
  * Run through all candidates and keep those with the most matches
- *  on explicit types. Keep all candidates if none match.
+ *	on explicit types. Keep all candidates if none match.
  */
 	ncandidates = 0;
 	nbestMatch = 0;
@@ -665,7 +663,7 @@ func_select_candidate(int nargs,
 		for (i = 0; i < nargs; i++)
 		{
 			if ((input_typeids[i] != UNKNOWNOID)
-			 && (current_typeids[i] == input_typeids[i]))
+				&& (current_typeids[i] == input_typeids[i]))
 				nmatch++;
 			else if (IS_BINARY_COMPATIBLE(current_typeids[i], input_typeids[i]))
 				nident++;
@@ -675,7 +673,7 @@ func_select_candidate(int nargs,
 			return current_candidate->args;
 
 #ifdef PARSEDEBUG
-printf("func_select_candidate- candidate has %d matches\n", nmatch);
+		printf("func_select_candidate- candidate has %d matches\n", nmatch);
 #endif
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
@@ -684,7 +682,7 @@ printf("func_select_candidate- candidate has %d matches\n", nmatch);
 			last_candidate = current_candidate;
 			ncandidates = 1;
 #ifdef PARSEDEBUG
-printf("func_select_candidate- choose candidate as best match\n");
+			printf("func_select_candidate- choose candidate as best match\n");
 #endif
 		}
 		else if (nmatch == nbestMatch)
@@ -693,14 +691,14 @@ printf("func_select_candidate- choose candidate as best match\n");
 			last_candidate = current_candidate;
 			ncandidates++;
 #ifdef PARSEDEBUG
-printf("func_select_candidate- choose candidate as possible match\n");
+			printf("func_select_candidate- choose candidate as possible match\n");
 #endif
 		}
 		else
 		{
 			last_candidate->next = NULL;
 #ifdef PARSEDEBUG
-printf("func_select_candidate- reject candidate as possible match\n");
+			printf("func_select_candidate- reject candidate as possible match\n");
 #endif
 		}
 	}
@@ -730,15 +728,15 @@ printf("func_select_candidate- reject candidate as possible match\n");
 						slot_category = current_category;
 						slot_type = current_type;
 #ifdef PARSEDEBUG
-printf("func_select_candidate- assign column #%d first candidate slot type %s\n",
- i, typeidTypeName(current_type));
+						printf("func_select_candidate- assign column #%d first candidate slot type %s\n",
+							   i, typeidTypeName(current_type));
 #endif
 					}
 					else if ((current_category != slot_category)
-					 && IS_BUILTIN_TYPE(current_type))
+							 && IS_BUILTIN_TYPE(current_type))
 					{
 #ifdef PARSEDEBUG
-printf("func_select_candidate- multiple possible types for column #%d; unable to choose candidate\n", i);
+						printf("func_select_candidate- multiple possible types for column #%d; unable to choose candidate\n", i);
 #endif
 						return NULL;
 					}
@@ -749,15 +747,15 @@ printf("func_select_candidate- multiple possible types for column #%d; unable to
 							slot_type = current_type;
 							candidates = current_candidate;
 #ifdef PARSEDEBUG
-printf("func_select_candidate- column #%d found preferred candidate type %s\n",
- i, typeidTypeName(slot_type));
+							printf("func_select_candidate- column #%d found preferred candidate type %s\n",
+								   i, typeidTypeName(slot_type));
 #endif
 						}
 						else
 						{
 #ifdef PARSEDEBUG
-printf("func_select_candidate- column #%d found possible candidate type %s\n",
- i, typeidTypeName(current_type));
+							printf("func_select_candidate- column #%d found possible candidate type %s\n",
+								   i, typeidTypeName(current_type));
 #endif
 						}
 					}
@@ -767,16 +765,16 @@ printf("func_select_candidate- column #%d found possible candidate type %s\n",
 				{
 					input_typeids[i] = slot_type;
 #ifdef PARSEDEBUG
-printf("func_select_candidate- assign column #%d slot type %s\n",
- i, typeidTypeName(input_typeids[i]));
+					printf("func_select_candidate- assign column #%d slot type %s\n",
+						   i, typeidTypeName(input_typeids[i]));
 #endif
 				}
 			}
 			else
 			{
 #ifdef PARSEDEBUG
-printf("func_select_candidate- column #%d input type is %s\n",
- i, typeidTypeName(input_typeids[i]));
+				printf("func_select_candidate- column #%d input type is %s\n",
+					   i, typeidTypeName(input_typeids[i]));
 #endif
 			}
 		}
@@ -792,36 +790,36 @@ printf("func_select_candidate- column #%d input type is %s\n",
 		return candidates->args;
 
 	return NULL;
-} /* func_select_candidate() */
+}	/* func_select_candidate() */
 
 
 /* func_get_detail()
  * Find the named function in the system catalogs.
  *
  * Attempt to find the named function in the system catalogs with
- *  arguments exactly as specified, so that the normal case
- *  (exact match) is as quick as possible.
+ *	arguments exactly as specified, so that the normal case
+ *	(exact match) is as quick as possible.
  *
  * If an exact match isn't found:
- *  1) get a vector of all possible input arg type arrays constructed
- *     from the superclasses of the original input arg types
- *  2) get a list of all possible argument type arrays to the function
- *     with given name and number of arguments
- *  3) for each input arg type array from vector #1:
- *   a) find how many of the function arg type arrays from list #2
- *      it can be coerced to
- *   b) if the answer is one, we have our function
- *   c) if the answer is more than one, attempt to resolve the conflict
- *   d) if the answer is zero, try the next array from vector #1
+ *	1) get a vector of all possible input arg type arrays constructed
+ *	   from the superclasses of the original input arg types
+ *	2) get a list of all possible argument type arrays to the function
+ *	   with given name and number of arguments
+ *	3) for each input arg type array from vector #1:
+ *	 a) find how many of the function arg type arrays from list #2
+ *		it can be coerced to
+ *	 b) if the answer is one, we have our function
+ *	 c) if the answer is more than one, attempt to resolve the conflict
+ *	 d) if the answer is zero, try the next array from vector #1
  */
 static bool
 func_get_detail(char *funcname,
 				int nargs,
 				Oid *oid_array,
-				Oid *funcid,		/* return value */
-				Oid *rettype,		/* return value */
-				bool *retset,		/* return value */
-				Oid **true_typeids)	/* return value */
+				Oid *funcid,	/* return value */
+				Oid *rettype,	/* return value */
+				bool *retset,	/* return value */
+				Oid **true_typeids)		/* return value */
 {
 	Oid		  **input_typeid_vector;
 	Oid		   *current_input_typeids;
@@ -864,33 +862,36 @@ func_get_detail(char *funcname,
 					ftup = SearchSysCacheTuple(PRONAME,
 											   PointerGetDatum(funcname),
 											   Int32GetDatum(nargs),
-											   PointerGetDatum(*true_typeids),
+										  PointerGetDatum(*true_typeids),
 											   0);
 					Assert(HeapTupleIsValid(ftup));
 				}
 
-				/* multiple candidates? then better decide or throw an error... */
+				/*
+				 * multiple candidates? then better decide or throw an
+				 * error...
+				 */
 				else if (ncandidates > 1)
 				{
 					*true_typeids = func_select_candidate(nargs,
-														  current_input_typeids,
-														  current_function_typeids);
+												   current_input_typeids,
+											   current_function_typeids);
 
 					/* couldn't decide, so quit */
 					if (*true_typeids == NULL)
 					{
 						func_error(NULL, funcname, nargs, oid_array,
-							"There is more than one function that satisfies the given argument types"
-							"\n\tYou will have to retype your query using explicit typecasts");
+								   "There is more than one function that satisfies the given argument types"
+								   "\n\tYou will have to retype your query using explicit typecasts");
 					}
 
 					/* found something, so use the first one... */
 					else
 					{
 						ftup = SearchSysCacheTuple(PRONAME,
-												   PointerGetDatum(funcname),
+											   PointerGetDatum(funcname),
 												   Int32GetDatum(nargs),
-												   PointerGetDatum(*true_typeids),
+										  PointerGetDatum(*true_typeids),
 												   0);
 						Assert(HeapTupleIsValid(ftup));
 					}
@@ -1155,16 +1156,16 @@ gen_cross_product(InhPaths *arginh, int nargs)
 
 /* make_arguments()
  * Given the number and types of arguments to a function, and the
- *  actual arguments and argument types, do the necessary typecasting.
+ *	actual arguments and argument types, do the necessary typecasting.
  *
  * There are two ways an input typeid can differ from a function typeid:
- *  1) the input type inherits the function type, so no typecasting required
- *  2) the input type can be typecast into the function type
+ *	1) the input type inherits the function type, so no typecasting required
+ *	2) the input type can be typecast into the function type
  * Right now, we only typecast unknowns, and that is all we check for.
  *
  * func_get_detail() now can find coersions for function arguments which
- *  will make this function executable. So, we need to recover these
- *  results here too.
+ *	will make this function executable. So, we need to recover these
+ *	results here too.
  * - thomas 1998-03-25
  */
 static void
@@ -1181,7 +1182,11 @@ make_arguments(ParseState *pstate,
 		 i < nargs;
 		 i++, current_fargs = lnext(current_fargs))
 	{
-		/* unspecified type for string constant? then use heuristics for conversion... */
+
+		/*
+		 * unspecified type for string constant? then use heuristics for
+		 * conversion...
+		 */
 		if (input_typeids[i] == UNKNOWNOID && function_typeids[i] != InvalidOid)
 		{
 			lfirst(current_fargs) =
@@ -1222,7 +1227,7 @@ setup_tlist(char *attname, Oid relid)
 	attno = get_attnum(relid, attname);
 	if (attno < 0)
 		elog(ERROR, "Cannot reference attribute '%s'"
-		 " of tuple params/return values for functions", attname);
+			 " of tuple params/return values for functions", attname);
 
 	typeid = get_atttype(relid, attno);
 	type_mod = get_atttypmod(relid, attno);
@@ -1454,11 +1459,11 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes, char *msg)
 	if (caller == NULL)
 	{
 		elog(ERROR, "Function '%s(%s)' does not exist%s%s",
-		 funcname, p, ((msg != NULL)? "\n\t": ""), ((msg != NULL)? msg: ""));
+			 funcname, p, ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
 	else
 	{
 		elog(ERROR, "%s: function '%s(%s)' does not exist%s%s",
-		 caller, funcname, p, ((msg != NULL)? "\n\t": ""), ((msg != NULL)? msg: ""));
+			 caller, funcname, p, ((msg != NULL) ? "\n\t" : ""), ((msg != NULL) ? msg : ""));
 	}
 }

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.6 1997/11/13 03:23:02 momjian Exp $
+ * $Id: pg_language.h,v 1.7 1998/09/01 04:35:03 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -75,4 +75,4 @@ DESCR("");
 #define SQLlanguageId 14
 
 
-#endif							/* PG_LANGUAGE_H */
+#endif	 /* PG_LANGUAGE_H */

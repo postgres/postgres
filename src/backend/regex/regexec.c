@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 
-#endif							/* LIBC_SCCS and not lint */
+#endif	 /* LIBC_SCCS and not lint */
 
 /*
  * the outer shell of regexec()
@@ -159,14 +159,15 @@ pg95_regexec(preg, string, nmatch, pmatch, eflags)
 const regex_t *preg;
 const char *string;
 size_t		nmatch;
-regmatch_t	*pmatch;
+regmatch_t *pmatch;
 int			eflags;
 {
 	struct re_guts *g = preg->re_g;
 
 #ifdef MULTIBYTE
-	pg_wchar *str;
-	int sts;
+	pg_wchar   *str;
+	int			sts;
+
 #endif
 
 #ifdef REDEBUG
@@ -183,19 +184,18 @@ int			eflags;
 	eflags = GOODFLAGS(eflags);
 
 #ifdef MULTIBYTE
-	str = (pg_wchar *)malloc((strlen(string)+1) * sizeof(pg_wchar));
-	if (!str) {
-	  return(REG_ESPACE);
-	}
-	(void)pg_mb2wchar((unsigned char *)string,str);
+	str = (pg_wchar *) malloc((strlen(string) + 1) * sizeof(pg_wchar));
+	if (!str)
+		return (REG_ESPACE);
+	(void) pg_mb2wchar((unsigned char *) string, str);
 	if (g->nstates <= CHAR_BIT * sizeof(states1) && !(eflags & REG_LARGE))
-	  sts = smatcher(g, str, nmatch, pmatch, eflags);
+		sts = smatcher(g, str, nmatch, pmatch, eflags);
 	else
-	  sts = lmatcher(g, str, nmatch, pmatch, eflags);
-	free((char *)str);
-	return(sts);
+		sts = lmatcher(g, str, nmatch, pmatch, eflags);
+	free((char *) str);
+	return (sts);
 
-#  else
+#else
 
 	if (g->nstates <= CHAR_BIT * sizeof(states1) && !(eflags & REG_LARGE))
 		return smatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bit.h,v 1.3 1997/09/08 02:39:29 momjian Exp $
+ * $Id: bit.h,v 1.4 1998/09/01 04:38:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,4 +36,4 @@ extern void BitArrayClearBit(BitArray bitArray, BitIndex bitIndex);
  */
 extern bool BitArrayBitIsSet(BitArray bitArray, BitIndex bitIndex);
 
-#endif							/* BIT_H */
+#endif	 /* BIT_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.21 1998/09/01 03:20:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.22 1998/09/01 04:26:48 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -118,7 +118,7 @@ hashbuild(Relation heap,
 		tupleTable = 0;
 		slot = 0;
 	}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* build the index */
 	nhtups = nitups = 0;
@@ -145,7 +145,7 @@ hashbuild(Relation heap,
 				nitups++;
 				continue;
 			}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -159,7 +159,7 @@ hashbuild(Relation heap,
 			slot->val = htup;
 			if (ExecQual((List *) pred, econtext) == false)
 				continue;
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		nitups++;
@@ -232,7 +232,7 @@ hashbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 		ExecDestroyTupleTable(tupleTable, true);
 		pfree(econtext);
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 	}
 
 	/*

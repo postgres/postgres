@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.29 1998/09/01 03:21:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.30 1998/09/01 04:27:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,7 @@
 #include <string.h>
 #endif
 
-static Oid
-TypeShellMakeWithOpenRelation(Relation pg_type_desc,
+static Oid TypeShellMakeWithOpenRelation(Relation pg_type_desc,
 							  char *typeName);
 
 /* ----------------------------------------------------------------
@@ -178,7 +177,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
-	values[i++] = NameGetDatum(&name);		/* 1 */
+	values[i++] = NameGetDatum(&name);	/* 1 */
 	values[i++] = (Datum) InvalidOid;	/* 2 */
 	values[i++] = (Datum) (int16) 0;	/* 3 */
 	values[i++] = (Datum) (int16) 0;	/* 4 */
@@ -379,17 +378,17 @@ TypeCreate(char *typeName,
 	 * ----------------
 	 */
 	i = 0;
-	namestrcpy(&name,typeName);
+	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* 1 */
 	values[i++] = (Datum) GetUserId();	/* 2 */
 	values[i++] = (Datum) internalSize; /* 3 */
 	values[i++] = (Datum) externalSize; /* 4 */
-	values[i++] = (Datum) passedByValue;/* 5 */
+	values[i++] = (Datum) passedByValue;		/* 5 */
 	values[i++] = (Datum) typeType;		/* 6 */
 	values[i++] = (Datum) (bool) 1;		/* 7 */
 	values[i++] = (Datum) typDelim;		/* 8 */
 	values[i++] = (Datum) (typeType == 'c' ? relationOid : InvalidOid); /* 9 */
-	values[i++] = (Datum) elementObjectId;/* 10 */
+	values[i++] = (Datum) elementObjectId;		/* 10 */
 
 	/*
 	 * arguments to type input and output functions must be 0
@@ -431,7 +430,7 @@ TypeCreate(char *typeName,
 				func_error("TypeCreate", procname, 1, argList, NULL);
 		}
 
-		values[i++] = (Datum) tup->t_oid;	/* 11 - 14 */
+		values[i++] = (Datum) tup->t_oid;		/* 11 - 14 */
 	}
 
 	/* ----------------
@@ -444,7 +443,7 @@ TypeCreate(char *typeName,
 	 *	initialize the default value for this type.
 	 * ----------------
 	 */
-	values[i] = (Datum) fmgr(F_TEXTIN,		/* 16 */
+	values[i] = (Datum) fmgr(F_TEXTIN,	/* 16 */
 							 PointerIsValid(defaultTypeValue)
 							 ? defaultTypeValue : "-"); /* XXX default
 														 * typdefault */
@@ -534,8 +533,9 @@ TypeRename(char *oldTypeName, char *newTypeName)
 {
 	Relation	pg_type_desc;
 	Relation	idescs[Num_pg_type_indices];
-	HeapTuple	oldtup, newtup;
-	
+	HeapTuple	oldtup,
+				newtup;
+
 	pg_type_desc = heap_openr(TypeRelationName);
 
 	oldtup = SearchSysCacheTupleCopy(TYPNAME,
@@ -547,7 +547,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 		heap_close(pg_type_desc);
 		elog(ERROR, "TypeRename: type %s not defined", oldTypeName);
 	}
-	
+
 	newtup = SearchSysCacheTuple(TYPNAME,
 								 PointerGetDatum(newTypeName),
 								 0, 0, 0);
@@ -557,7 +557,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 		heap_close(pg_type_desc);
 		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
 	}
-	
+
 	namestrcpy(&(((Form_pg_type) GETSTRUCT(oldtup))->typname), newTypeName);
 
 	setheapoverride(true);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: linux.h,v 1.3 1998/02/26 04:34:28 momjian Exp $
+ * $Id: linux.h,v 1.4 1998/09/01 04:31:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,4 +39,4 @@
 
 /* port.c */
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

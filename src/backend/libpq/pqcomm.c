@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.52 1998/09/01 03:22:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.53 1998/09/01 04:28:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@
 #if defined(linux)
 #ifndef SOMAXCONN
 #define SOMAXCONN 5				/* from Linux listen(2) man page */
-#endif							/* SOMAXCONN */
-#endif							/* linux */
+#endif	 /* SOMAXCONN */
+#endif	 /* linux */
 
 #include "miscadmin.h"
 #include "libpq/pqsignal.h"
@@ -184,8 +184,9 @@ pq_getstr(char *s, int maxlen)
 	int			c = '\0';
 
 #ifdef MULTIBYTE
-	unsigned char *p, *ps;
-	int len;
+	unsigned char *p,
+			   *ps;
+	int			len;
 
 	ps = s;
 	len = maxlen;
@@ -203,11 +204,12 @@ pq_getstr(char *s, int maxlen)
 
 #ifdef MULTIBYTE
 	p = pg_client_to_server(ps, len);
-	if (ps != p) {	/* actual conversion has been done? */
-	  strcpy(ps, p);
+	if (ps != p)
+	{							/* actual conversion has been done? */
+		strcpy(ps, p);
 	}
 #endif
-	
+
 	/* -----------------
 	 *	   If EOF reached let caller know.
 	 *	   (This will only happen if we hit EOF before the string
@@ -344,12 +346,12 @@ void
 pq_putstr(char *s)
 {
 #ifdef MULTIBYTE
-        unsigned char *p;
+	unsigned char *p;
 
-        p = pg_server_to_client(s, strlen(s));
+	p = pg_server_to_client(s, strlen(s));
 	if (pqPutString(p, Pfout))
 #else
-	if (pqPutString(s, Pfout))
+	if			(pqPutString(s, Pfout))
 #endif
 	{
 		sprintf(PQerrormsg,
@@ -555,16 +557,18 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		strcpy(sock_path, saddr.un.sun_path);
 
 		/*
-		 * If the socket exists but nobody has an advisory lock on it
-		 * we can safely delete the file.
+		 * If the socket exists but nobody has an advisory lock on it we
+		 * can safely delete the file.
 		 */
-		if ((lock_fd = open(sock_path, O_RDONLY|O_NONBLOCK, 0666)) >= 0) {
-			if (flock(lock_fd, LOCK_EX|LOCK_NB) == 0) {
+		if ((lock_fd = open(sock_path, O_RDONLY | O_NONBLOCK, 0666)) >= 0)
+		{
+			if (flock(lock_fd, LOCK_EX | LOCK_NB) == 0)
+			{
 				TPRINTF(TRACE_VERBOSE, "flock on %s, deleting", sock_path);
 				unlink(sock_path);
-			} else {
-				TPRINTF(TRACE_VERBOSE, "flock failed for %s", sock_path);
 			}
+			else
+				TPRINTF(TRACE_VERBOSE, "flock failed for %s", sock_path);
 			close(lock_fd);
 		}
 	}
@@ -584,8 +588,8 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		strcat(PQerrormsg,
 			   "\tIs another postmaster already running on that port?\n");
 		if (family == AF_UNIX)
-			sprintf(PQerrormsg+strlen(PQerrormsg),
-				   "\tIf not, remove socket node (%s) and retry.\n",
+			sprintf(PQerrormsg + strlen(PQerrormsg),
+					"\tIf not, remove socket node (%s) and retry.\n",
 					sock_path);
 		else
 			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
@@ -593,17 +597,18 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		return STATUS_ERROR;
 	}
 
-	if (family == AF_UNIX) {
+	if (family == AF_UNIX)
+	{
 		on_proc_exit(StreamDoUnlink, NULL);
 
 		/*
-		 * Open the socket file and get an advisory lock on it.
-		 * The lock_fd is left open to keep the lock.
+		 * Open the socket file and get an advisory lock on it. The
+		 * lock_fd is left open to keep the lock.
 		 */
-		if ((lock_fd = open(sock_path, O_RDONLY|O_NONBLOCK, 0666)) >= 0) {
-			if (flock(lock_fd, LOCK_EX|LOCK_NB) != 0) {
+		if ((lock_fd = open(sock_path, O_RDONLY | O_NONBLOCK, 0666)) >= 0)
+		{
+			if (flock(lock_fd, LOCK_EX | LOCK_NB) != 0)
 				TPRINTF(TRACE_VERBOSE, "flock error for %s", sock_path);
-			}
 		}
 	}
 
@@ -775,12 +780,13 @@ StreamOpen(char *hostName, short portName, Port *port)
 void
 pq_putncharlen(char *s, int n)
 {
-  unsigned char *p;
-  int len;
+	unsigned char *p;
+	int			len;
 
-  p = pg_server_to_client(s, n);
-  len = strlen(p);
-  pq_putint(len, sizeof(int));
-  pq_putnchar(p, len);
+	p = pg_server_to_client(s, n);
+	len = strlen(p);
+	pq_putint(len, sizeof(int));
+	pq_putnchar(p, len);
 }
+
 #endif

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.10 1997/09/12 21:25:02 momjian Exp $
+ * $Id: internal.h,v 1.11 1998/09/01 04:37:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,4 +88,4 @@ extern int	BushyPlanFlag;
 /* GEQO switch according to number of relations in a query */
 #define GEQO_RELS 8
 
-#endif							/* INTERNAL_H */
+#endif	 /* INTERNAL_H */

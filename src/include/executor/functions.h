@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: functions.h,v 1.7 1998/02/26 04:41:20 momjian Exp $
+ * $Id: functions.h,v 1.8 1998/09/01 04:35:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,12 +18,10 @@
 #include "nodes/primnodes.h"
 #include "utils/syscache.h"
 
-extern Datum
-ProjectAttribute(TupleDesc TD, TargetEntry *tlist,
+extern Datum ProjectAttribute(TupleDesc TD, TargetEntry *tlist,
 				 HeapTuple tup, bool *isnullP);
 
-extern Datum
-postquel_function(Func *funcNode, char **args,
+extern Datum postquel_function(Func *funcNode, char **args,
 				  bool *isNull, bool *isDone);
 
-#endif							/* FUNCTIONS_H */
+#endif	 /* FUNCTIONS_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.12 1998/09/01 03:26:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.13 1998/09/01 04:32:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,14 +72,14 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 	/* the last argument should be a ScanKey, not an integer! - jolly */
 	/* it looks like the arguments are out of order, too */
 	/* but skeyData is never initialized! does this work?? - ay 2/95 */
-	scan_descriptor = heap_beginscan(relation_to_scan, false, SnapshotNow, 
+	scan_descriptor = heap_beginscan(relation_to_scan, false, SnapshotNow,
 									 0, &skeyData);
 
 	retval = true;
 
 	/* do a scan of the relation, and do the check */
 	while (HeapTupleIsValid(current_tuple = heap_getnext(scan_descriptor, 0)) &&
-			retval)
+		   retval)
 	{
 		value = heap_getattr(current_tuple,
 							 (AttrNumber) attrid,

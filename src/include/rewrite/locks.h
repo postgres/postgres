@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: locks.h,v 1.8 1998/02/26 04:43:03 momjian Exp $
+ * $Id: locks.h,v 1.9 1998/09/01 04:37:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,7 @@
 #include "nodes/parsenodes.h"
 #include "rewrite/prs2lock.h"
 
-extern List *
-matchLocks(CmdType event, RuleLock *rulelocks, int varno,
+extern List *matchLocks(CmdType event, RuleLock *rulelocks, int varno,
 		   Query *parsetree);
 
-#endif							/* LOCKS_H */
+#endif	 /* LOCKS_H */

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: module.h,v 1.3 1997/09/08 02:39:51 momjian Exp $
+ * $Id: module.h,v 1.4 1998/09/01 04:39:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@
  */
 extern bool BypassEnable(int *enableCountInOutP, bool on);
 
-#endif							/* MODULE_H */
+#endif	 /* MODULE_H */

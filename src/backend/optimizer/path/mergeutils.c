@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.8 1998/09/01 03:23:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/mergeutils.c,v 1.9 1998/09/01 04:29:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ group_clauses_by_order(List *clauseinfo_list,
 
 	foreach(xclauseinfo, clauseinfo_list)
 	{
-		ClauseInfo	   *clauseinfo = (ClauseInfo *) lfirst(xclauseinfo);
+		ClauseInfo *clauseinfo = (ClauseInfo *) lfirst(xclauseinfo);
 		MergeOrder *merge_ordering = clauseinfo->mergejoinorder;
 
 		if (merge_ordering)

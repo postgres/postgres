@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: creatinh.h,v 1.7 1998/08/06 05:13:10 momjian Exp $
+ * $Id: creatinh.h,v 1.8 1998/09/01 04:35:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,4 +18,4 @@
 extern void DefineRelation(CreateStmt *stmt, char relkind);
 extern void RemoveRelation(char *name);
 
-#endif							/* CREATINH_H */
+#endif	 /* CREATINH_H */

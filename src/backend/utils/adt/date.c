@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.26 1998/09/01 03:25:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.27 1998/09/01 04:32:29 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -102,8 +102,7 @@ static int	correct_dir(char *direction, int *signptr);
 
 #endif
 
-static int
-istinterval(char *i_string,
+static int istinterval(char *i_string,
 			AbsoluteTime *i_start,
 			AbsoluteTime *i_end);
 
@@ -207,36 +206,39 @@ reltime2tm(int32 time, struct tm * tm)
 }	/* reltime2tm() */
 
 #if FALSE
-char	   *timestring;
-long		quantity;
-int			i;
-int			unitnr;
-
-timestring = (char *) palloc(Max(strlen(INVALID_RELTIME_STR),
-								 UNITMAXLEN) + 1);
-if (timevalue == INVALID_RELTIME)
+int
+dummyfunc()
 {
-	strcpy(timestring, INVALID_RELTIME_STR);
-	return timestring;
-}
+	char	   *timestring;
+	long		quantity;
+	int			i;
+	int			unitnr;
 
-if (timevalue == 0)
-	i = 1;						/* unit = 'seconds' */
-else
-	for (i = 12; i >= 0; i = i - 2)
-		if ((timevalue % sec_tab[i]) == 0)
-			break;				/* appropriate unit found */
-unitnr = i;
-quantity = (timevalue / sec_tab[unitnr]);
-if (quantity > 1 || quantity < -1)
-	unitnr++;					/* adjust index for PLURAL of unit */
-if (quantity >= 0)
-	sprintf(timestring, "%c %lu %s", RELTIME_LABEL,
-			quantity, unit_tab[unitnr]);
-else
-	sprintf(timestring, "%c %lu %s %s", RELTIME_LABEL,
-			(quantity * -1), unit_tab[unitnr], RELTIME_PAST);
-return timestring;
+	timestring = (char *) palloc(Max(strlen(INVALID_RELTIME_STR),
+									 UNITMAXLEN) + 1);
+	if (timevalue == INVALID_RELTIME)
+	{
+		strcpy(timestring, INVALID_RELTIME_STR);
+		return timestring;
+	}
+
+	if (timevalue == 0)
+		i = 1;					/* unit = 'seconds' */
+	else
+		for (i = 12; i >= 0; i = i - 2)
+			if ((timevalue % sec_tab[i]) == 0)
+				break;			/* appropriate unit found */
+	unitnr = i;
+	quantity = (timevalue / sec_tab[unitnr]);
+	if (quantity > 1 || quantity < -1)
+		unitnr++;				/* adjust index for PLURAL of unit */
+	if (quantity >= 0)
+		sprintf(timestring, "%c %lu %s", RELTIME_LABEL,
+				quantity, unit_tab[unitnr]);
+	else
+		sprintf(timestring, "%c %lu %s %s", RELTIME_LABEL,
+				(quantity * -1), unit_tab[unitnr], RELTIME_PAST);
+	return timestring;
 }
 
 #endif
@@ -987,126 +989,123 @@ isreltime(char *str)
 }	/* isreltime() */
 
 #if FALSE
-char	   *p;
-char		c;
-int			i;
-char		unit[UNITMAXLEN];
-char		direction[DIRMAXLEN];
-int			localSign;
-int			localUnitNumber;
-long		localQuantity;
-
-if (!PointerIsValid(sign))
+int
+dummyfunc()
 {
-	sign = &localSign;
-}
+	char	   *p;
+	char		c;
+	int			i;
+	char		unit[UNITMAXLEN];
+	char		direction[DIRMAXLEN];
+	int			localSign;
+	int			localUnitNumber;
+	long		localQuantity;
 
-if (!PointerIsValid(unitnr))
-{
-	unitnr = &localUnitNumber;
-}
+	if (!PointerIsValid(sign))
+		sign = &localSign;
 
-if (!PointerIsValid(quantity))
-{
-	quantity = &localQuantity;
-}
+	if (!PointerIsValid(unitnr))
+		unitnr = &localUnitNumber;
 
-unit[0] = '\0';
-direction[0] = '\0';
-p = timestring;
- /* skip leading blanks */
-while ((c = *p) != '\0')
-{
+	if (!PointerIsValid(quantity))
+		quantity = &localQuantity;
+
+	unit[0] = '\0';
+	direction[0] = '\0';
+	p = timestring;
+	/* skip leading blanks */
+	while ((c = *p) != '\0')
+	{
+		if (c != ' ')
+			break;
+		p++;
+	}
+
+	/* Test whether 'invalid time' identifier or not */
+	if (!strncmp(INVALID_RELTIME_STR, p, strlen(INVALID_RELTIME_STR) + 1))
+		return 2;				/* correct 'invalid time' identifier found */
+
+	/* handle label of relative time */
+	if (c != RELTIME_LABEL)
+		return 0;				/* syntax error */
+	c = *++p;
 	if (c != ' ')
-		break;
+		return 0;				/* syntax error */
 	p++;
-}
-
- /* Test whether 'invalid time' identifier or not */
-if (!strncmp(INVALID_RELTIME_STR, p, strlen(INVALID_RELTIME_STR) + 1))
-	return 2;					/* correct 'invalid time' identifier found */
-
- /* handle label of relative time */
-if (c != RELTIME_LABEL)
-	return 0;					/* syntax error */
-c = *++p;
-if (c != ' ')
-	return 0;					/* syntax error */
-p++;
- /* handle the quantity */
-*quantity = 0;
-for (;;)
-{
-	c = *p;
-	if (isdigit(c))
+	/* handle the quantity */
+	*quantity = 0;
+	for (;;)
 	{
-		*quantity = *quantity * 10 + (c - '0');
-		p++;
-	}
-	else
-	{
-		if (c == ' ')
-			break;				/* correct quantity found */
-		else
-			return 0;			/* syntax error */
-	}
-}
-
- /* handle unit */
-p++;
-i = 0;
-for (;;)
-{
-	c = *p;
-	if (c >= 'a' && c <= 'z' && i <= (UNITMAXLEN - 1))
-	{
-		unit[i] = c;
-		p++;
-		i++;
-	}
-	else
-	{
-		if ((c == ' ' || c == '\0')
-			&& correct_unit(unit, unitnr))
-			break;				/* correct unit found */
-		else
-			return 0;			/* syntax error */
-	}
-}
-
- /* handle optional direction */
-if (c == ' ')
-	p++;
-i = 0;
-*sign = 1;
-for (;;)
-{
-	c = *p;
-	if (c >= 'a' && c <= 'z' && i <= (DIRMAXLEN - 1))
-	{
-		direction[i] = c;
-		p++;
-		i++;
-	}
-	else
-	{
-		if ((c == ' ' || c == '\0') && i == 0)
+		c = *p;
+		if (isdigit(c))
 		{
-			*sign = 1;
-			break;				/* no direction specified */
-		}
-		if ((c == ' ' || c == '\0') && i != 0)
-		{
-			direction[i] = '\0';
-			correct_dir(direction, sign);
-			break;				/* correct direction found */
+			*quantity = *quantity * 10 + (c - '0');
+			p++;
 		}
 		else
-			return 0;			/* syntax error */
+		{
+			if (c == ' ')
+				break;			/* correct quantity found */
+			else
+				return 0;		/* syntax error */
+		}
 	}
-}
 
-return 1;
+	/* handle unit */
+	p++;
+	i = 0;
+	for (;;)
+	{
+		c = *p;
+		if (c >= 'a' && c <= 'z' && i <= (UNITMAXLEN - 1))
+		{
+			unit[i] = c;
+			p++;
+			i++;
+		}
+		else
+		{
+			if ((c == ' ' || c == '\0')
+				&& correct_unit(unit, unitnr))
+				break;			/* correct unit found */
+			else
+				return 0;		/* syntax error */
+		}
+	}
+
+	/* handle optional direction */
+	if (c == ' ')
+		p++;
+	i = 0;
+	*sign = 1;
+	for (;;)
+	{
+		c = *p;
+		if (c >= 'a' && c <= 'z' && i <= (DIRMAXLEN - 1))
+		{
+			direction[i] = c;
+			p++;
+			i++;
+		}
+		else
+		{
+			if ((c == ' ' || c == '\0') && i == 0)
+			{
+				*sign = 1;
+				break;			/* no direction specified */
+			}
+			if ((c == ' ' || c == '\0') && i != 0)
+			{
+				direction[i] = '\0';
+				correct_dir(direction, sign);
+				break;			/* correct direction found */
+			}
+			else
+				return 0;		/* syntax error */
+		}
+	}
+
+	return 1;
 }
 
 /*

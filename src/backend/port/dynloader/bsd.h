@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bsd.h,v 1.1 1997/12/19 23:17:42 scrappy Exp $
+ * $Id: bsd.h,v 1.2 1998/09/01 04:30:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,4 +45,4 @@ void	   *BSD44_derived_dlopen(const char *filename, int num);
 void	   *BSD44_derived_dlsym(void *handle, const char *name);
 void		BSD44_derived_dlclose(void *handle);
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port-protos.h,v 1.5 1997/12/19 22:45:57 scrappy Exp $
+ * $Id: port-protos.h,v 1.6 1998/09/01 04:31:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,4 @@ extern int	init_address_fixup(void);
 extern double rint(double x);
 extern double cbrt(double x);
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

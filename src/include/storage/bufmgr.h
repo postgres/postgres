@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.21 1998/08/19 02:03:57 momjian Exp $
+ * $Id: bufmgr.h,v 1.22 1998/09/01 04:38:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,14 +128,12 @@ extern int	ShowPinTrace;
 /*
  * prototypes for functions in bufmgr.c
  */
-extern Buffer
-RelationGetBufferWithBuffer(Relation relation,
+extern Buffer RelationGetBufferWithBuffer(Relation relation,
 							BlockNumber blockNumber, Buffer buffer);
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern int	WriteBuffer(Buffer buffer);
 extern int	WriteNoReleaseBuffer(Buffer buffer);
-extern Buffer
-ReleaseAndReadBuffer(Buffer buffer, Relation relation,
+extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 					 BlockNumber blockNum);
 
 extern void InitBufferPool(IPCKey key);
@@ -159,4 +157,4 @@ extern void BufferRefCountRestore(int *refcountsave);
 extern int	SetBufferWriteMode(int mode);
 extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
 
-#endif							/* !defined(BufMgrIncluded) */
+#endif	 /* !defined(BufMgrIncluded) */

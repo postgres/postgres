@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.20 1998/08/24 01:37:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.21 1998/09/01 04:31:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,10 @@
 #include "utils/acl.h"
 #include "catalog/pg_shadow.h"
 
-static void
-ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
+static void ApplyRetrieveRule(Query *parsetree, RewriteRule *rule,
 				  int rt_index, int relation_level,
 				  Relation relation, int *modified);
-static List *
-fireRules(Query *parsetree, int rt_index, CmdType event,
+static List *fireRules(Query *parsetree, int rt_index, CmdType event,
 		  bool *instead_flag, List *locks, List **qual_products);
 static void QueryRewriteSubLink(Node *node);
 static List *QueryRewriteOne(Query *parsetree);
@@ -146,21 +144,23 @@ OptimizeRIRRules(List *locks)
 static List *
 orderRules(List *locks)
 {
-	List	*regular = NIL;
-	List	*instead_rules = NIL;
-	List	*instead_qualified = NIL;
-	List	*i;
+	List	   *regular = NIL;
+	List	   *instead_rules = NIL;
+	List	   *instead_qualified = NIL;
+	List	   *i;
 
 	foreach(i, locks)
 	{
 		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
 
-		if (rule_lock->isInstead) {
+		if (rule_lock->isInstead)
+		{
 			if (rule_lock->qual == NULL)
 				instead_rules = lappend(instead_rules, rule_lock);
 			else
 				instead_qualified = lappend(instead_qualified, rule_lock);
-		} else
+		}
+		else
 			regular = lappend(regular, rule_lock);
 	}
 	regular = nconc(regular, instead_qualified);
@@ -202,7 +202,7 @@ FireRetrieveRulesAtQuery(Query *parsetree,
 	if ((rt_entry_locks = relation->rd_rules) == NULL)
 		return NIL;
 
-	locks = matchLocks(CMD_SELECT, rt_entry_locks, rt_index, parsetree);	
+	locks = matchLocks(CMD_SELECT, rt_entry_locks, rt_index, parsetree);
 
 	/* find all retrieve instead */
 	foreach(i, locks)
@@ -313,7 +313,7 @@ ApplyRetrieveRule(Query *parsetree,
 	OffsetVarNodes(rule_action->qual, rt_length);
 	OffsetVarNodes((Node *) rule_action->targetList, rt_length);
 	OffsetVarNodes(rule_qual, rt_length);
-	
+
 	OffsetVarNodes((Node *) rule_action->groupClause, rt_length);
 	OffsetVarNodes((Node *) rule_action->havingQual, rt_length);
 
@@ -330,24 +330,29 @@ ApplyRetrieveRule(Query *parsetree,
 
 	if (relation_level)
 	{
-	  HandleViewRule(parsetree, rtable, rule_action->targetList, rt_index,
-			 modified);
+		HandleViewRule(parsetree, rtable, rule_action->targetList, rt_index,
+					   modified);
 	}
 	else
 	{
-	  HandleRIRAttributeRule(parsetree, rtable, rule_action->targetList,
-				 rt_index, rule->attrno, modified, &badsql);
+		HandleRIRAttributeRule(parsetree, rtable, rule_action->targetList,
+							   rt_index, rule->attrno, modified, &badsql);
 	}
-	if (*modified && !badsql) {
-	  AddQual(parsetree, rule_action->qual);
-	  /* This will only work if the query made to the view defined by the following
-	   * groupClause groups by the same attributes or does not use group at all! */
-	  if (parsetree->groupClause == NULL)
-	    parsetree->groupClause=rule_action->groupClause;
-	  AddHavingQual(parsetree, rule_action->havingQual);
-	  parsetree->hasAggs = (rule_action->hasAggs || parsetree->hasAggs);
-	  parsetree->hasSubLinks = (rule_action->hasSubLinks ||  parsetree->hasSubLinks);
-	}	
+	if (*modified && !badsql)
+	{
+		AddQual(parsetree, rule_action->qual);
+
+		/*
+		 * This will only work if the query made to the view defined by
+		 * the following groupClause groups by the same attributes or does
+		 * not use group at all!
+		 */
+		if (parsetree->groupClause == NULL)
+			parsetree->groupClause = rule_action->groupClause;
+		AddHavingQual(parsetree, rule_action->havingQual);
+		parsetree->hasAggs = (rule_action->hasAggs || parsetree->hasAggs);
+		parsetree->hasSubLinks = (rule_action->hasSubLinks || parsetree->hasSubLinks);
+	}
 }
 
 static List *
@@ -382,9 +387,8 @@ ProcessRetrieveQuery(Query *parsetree,
 										 rule);
 		}
 		heap_close(rt_entry_relation);
-		if (*instead_flag) {
+		if (*instead_flag)
 			return result;
-		}
 	}
 	if (rule)
 		return NIL;
@@ -465,7 +469,7 @@ CopyAndAddQual(Query *parsetree,
  *	   with rule qualification save the original parsetree
  *	   and add their negated qualification to it. Real instead
  *	   rules finally throw away the original parsetree.
- *	   
+ *
  *	   remember: reality is for dead birds -- glass
  *
  */
@@ -504,22 +508,22 @@ fireRules(Query *parsetree,
 		bool		orig_instead_flag = *instead_flag;
 
 		/*
-		 * Instead rules change the resultRelation of the
-		 * query. So the permission checks on the initial
-		 * resultRelation would never be done (this is
-		 * normally done in the executor deep down). So
-		 * we must do it here. The result relations resulting
-		 * from earlier rewrites are already checked against
-		 * the rules eventrelation owner (during matchLocks)
-		 * and have the skipAcl flag set.
+		 * Instead rules change the resultRelation of the query. So the
+		 * permission checks on the initial resultRelation would never be
+		 * done (this is normally done in the executor deep down). So we
+		 * must do it here. The result relations resulting from earlier
+		 * rewrites are already checked against the rules eventrelation
+		 * owner (during matchLocks) and have the skipAcl flag set.
 		 */
-		if (rule_lock->isInstead && 
-				parsetree->commandType != CMD_SELECT) {
-			RangeTblEntry	*rte;
+		if (rule_lock->isInstead &&
+			parsetree->commandType != CMD_SELECT)
+		{
+			RangeTblEntry *rte;
 			int32		acl_rc;
 			int32		reqperm;
 
-			switch (parsetree->commandType) {
+			switch (parsetree->commandType)
+			{
 				case CMD_INSERT:
 					reqperm = ACL_AP;
 					break;
@@ -527,16 +531,18 @@ fireRules(Query *parsetree,
 					reqperm = ACL_WR;
 					break;
 			}
-			
-			rte = (RangeTblEntry *)nth(parsetree->resultRelation - 1,
-					parsetree->rtable);
-			if (!rte->skipAcl) {
+
+			rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
+										parsetree->rtable);
+			if (!rte->skipAcl)
+			{
 				acl_rc = pg_aclcheck(rte->relname,
-					GetPgUserName(), reqperm);
-				if (acl_rc != ACLCHECK_OK) {
+									 GetPgUserName(), reqperm);
+				if (acl_rc != ACLCHECK_OK)
+				{
 					elog(ERROR, "%s: %s",
-						rte->relname,
-						aclcheck_error_strings[acl_rc]);
+						 rte->relname,
+						 aclcheck_error_strings[acl_rc]);
 				}
 			}
 		}
@@ -545,9 +551,10 @@ fireRules(Query *parsetree,
 		*instead_flag = rule_lock->isInstead;
 		event_qual = rule_lock->qual;
 		actions = rule_lock->actions;
-		if (event_qual != NULL && *instead_flag) {
-			Query		*qual_product;
-			RewriteInfo	qual_info;
+		if (event_qual != NULL && *instead_flag)
+		{
+			Query	   *qual_product;
+			RewriteInfo qual_info;
 
 			/* ----------
 			 * If there are instead rules with qualifications,
@@ -561,21 +568,20 @@ fireRules(Query *parsetree,
 			 * list after we mangled it up enough.
 			 * ----------
 			 */
-			if (*qual_products == NIL) {
+			if (*qual_products == NIL)
 				qual_product = parsetree;
-			} else {
-				qual_product = (Query *)nth(0, *qual_products);
-			}
+			else
+				qual_product = (Query *) nth(0, *qual_products);
 
-			qual_info.event		= qual_product->commandType;
-			qual_info.new_varno	= length(qual_product->rtable) + 2;
-			qual_product = CopyAndAddQual(qual_product, 
-					actions, 
-					event_qual,
-					rt_index,
-					event);
-			
-			qual_info.rule_action	= qual_product;
+			qual_info.event = qual_product->commandType;
+			qual_info.new_varno = length(qual_product->rtable) + 2;
+			qual_product = CopyAndAddQual(qual_product,
+										  actions,
+										  event_qual,
+										  rt_index,
+										  event);
+
+			qual_info.rule_action = qual_product;
 
 			if (event == CMD_INSERT || event == CMD_UPDATE)
 				FixNew(&qual_info, qual_product);
@@ -658,9 +664,8 @@ fireRules(Query *parsetree,
 		 * throw away an eventually saved 'default' parsetree
 		 * ----------
 		 */
-		if (event_qual == NULL && *instead_flag) {
+		if (event_qual == NULL && *instead_flag)
 			*qual_products = NIL;
-		}
 	}
 	return results;
 }
@@ -682,19 +687,21 @@ RewritePreprocessQuery(Query *parsetree)
 	 * from the rewritten query.
 	 * ----------
 	 */
-	if (parsetree->resultRelation > 0) {
-		RangeTblEntry	*rte;
+	if (parsetree->resultRelation > 0)
+	{
+		RangeTblEntry *rte;
 		Relation	rd;
-		List		*tl;
-		TargetEntry	*tle;
-		int		resdomno;
-	
-		rte = (RangeTblEntry *)nth(parsetree->resultRelation - 1,
-					parsetree->rtable);
+		List	   *tl;
+		TargetEntry *tle;
+		int			resdomno;
+
+		rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
+									parsetree->rtable);
 		rd = heap_openr(rte->relname);
 
-		foreach (tl, parsetree->targetList) {
-			tle = (TargetEntry *)lfirst(tl);
+		foreach(tl, parsetree->targetList)
+		{
+			tle = (TargetEntry *) lfirst(tl);
 			resdomno = attnameAttNum(rd, tle->resdom->resname);
 			tle->resdom->resno = resdomno;
 		}
@@ -713,19 +720,19 @@ RewritePreprocessQuery(Query *parsetree)
 static Query *
 RewritePostprocessNonSelect(Query *parsetree)
 {
-	List		*rt;
-	int		rt_index = 0;
-	Query		*newtree = copyObject(parsetree);
-	
+	List	   *rt;
+	int			rt_index = 0;
+	Query	   *newtree = copyObject(parsetree);
+
 	foreach(rt, parsetree->rtable)
 	{
-		RangeTblEntry	*rt_entry = lfirst(rt);
+		RangeTblEntry *rt_entry = lfirst(rt);
 		Relation	rt_entry_relation = NULL;
-		RuleLock	*rt_entry_locks = NULL;
-		List		*locks = NIL;
-		List		*instead_locks = NIL;
-		List		*lock;
-		RewriteRule	*rule;
+		RuleLock   *rt_entry_locks = NULL;
+		List	   *locks = NIL;
+		List	   *instead_locks = NIL;
+		List	   *lock;
+		RewriteRule *rule;
 
 		rt_index++;
 		rt_entry_relation = heap_openr(rt_entry->relname);
@@ -733,7 +740,8 @@ RewritePostprocessNonSelect(Query *parsetree)
 
 		if (rt_entry_locks)
 		{
-			int	origcmdtype = newtree->commandType;
+			int			origcmdtype = newtree->commandType;
+
 			newtree->commandType = CMD_SELECT;
 			locks =
 				matchLocks(CMD_SELECT, rt_entry_locks, rt_index, newtree);
@@ -741,28 +749,29 @@ RewritePostprocessNonSelect(Query *parsetree)
 		}
 		if (locks != NIL)
 		{
-			foreach (lock, locks) {
-				rule = (RewriteRule *)lfirst(lock);
-				if (rule->isInstead) {
+			foreach(lock, locks)
+			{
+				rule = (RewriteRule *) lfirst(lock);
+				if (rule->isInstead)
 					instead_locks = nconc(instead_locks, lock);
-				}
 			}
 		}
 		if (instead_locks != NIL)
 		{
-			foreach (lock, instead_locks) {
-				int	relation_level;
-				int	modified = 0;
+			foreach(lock, instead_locks)
+			{
+				int			relation_level;
+				int			modified = 0;
 
-				rule = (RewriteRule *)lfirst(lock);
+				rule = (RewriteRule *) lfirst(lock);
 				relation_level = (rule->attrno == -1);
 
 				ApplyRetrieveRule(newtree,
-					rule,
-					rt_index,
-					relation_level,
-					rt_entry_relation,
-					&modified);
+								  rule,
+								  rt_index,
+								  relation_level,
+								  rt_entry_relation,
+								  &modified);
 			}
 		}
 
@@ -813,6 +822,7 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 		{
 			List	   *locks =
 			matchLocks(event, rt_entry_locks, result_relation, parsetree);
+
 			product_queries =
 				fireRules(parsetree,
 						  result_relation,
@@ -829,16 +839,18 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 		 * So we care for them here.
 		 * ----------
 		 */
-		if (product_queries != NIL) {
-			List	*pq;
-			Query	*tmp;
-			List	*new_products = NIL;
-		
-			foreach (pq, product_queries) {
-				tmp = (Query *)lfirst(pq);
+		if (product_queries != NIL)
+		{
+			List	   *pq;
+			Query	   *tmp;
+			List	   *new_products = NIL;
+
+			foreach(pq, product_queries)
+			{
+				tmp = (Query *) lfirst(pq);
 				tmp = RewritePostprocessNonSelect(tmp);
 				new_products = lappend(new_products, tmp);
-		    	}
+			}
 			product_queries = new_products;
 		}
 
@@ -937,7 +949,7 @@ QueryRewriteSubLink(Node *node)
 				 * SubLink we don't process it as part of this loop.
 				 */
 				QueryRewriteSubLink((Node *) query->qual);
-				
+
 				QueryRewriteSubLink((Node *) query->havingQual);
 
 				ret = QueryRewriteOne(query);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.23 1998/09/01 03:21:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.24 1998/09/01 04:27:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,7 @@
 
 
 /* non-export function prototypes */
-static void
-check_permissions(char *command, char *dbpath, char *dbname,
+static void check_permissions(char *command, char *dbpath, char *dbname,
 				  Oid *dbIdP, int4 *userIdP);
 static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
 static void stop_vacuum(char *dbpath, char *dbname);
@@ -46,7 +45,7 @@ void
 createdb(char *dbname, char *dbpath, int encoding)
 {
 	Oid			db_id;
-	int4			user_id;
+	int4		user_id;
 	char		buf[512];
 	char	   *lp,
 				loc[512];
@@ -100,7 +99,7 @@ createdb(char *dbname, char *dbpath, int encoding)
 void
 destroydb(char *dbname)
 {
-	int4			user_id;
+	int4		user_id;
 	Oid			db_id;
 	char	   *path;
 	char		dbpath[MAXPGPATH + 1];
@@ -203,8 +202,8 @@ check_permissions(char *command,
 
 	userName = GetPgUserName();
 	utup = SearchSysCacheTuple(USENAME,
-								PointerGetDatum(userName),
-							   	0, 0, 0);
+							   PointerGetDatum(userName),
+							   0, 0, 0);
 	*userIdP = ((Form_pg_shadow) GETSTRUCT(utup))->usesysid;
 	use_super = ((Form_pg_shadow) GETSTRUCT(utup))->usesuper;
 	use_createdb = ((Form_pg_shadow) GETSTRUCT(utup))->usecreatedb;
@@ -249,9 +248,9 @@ check_permissions(char *command,
 	if (dbfound)
 	{
 		dbowner = (int4) heap_getattr(dbtup,
-									 Anum_pg_database_datdba,
-									 RelationGetDescr(dbrel),
-									 (char *) NULL);
+									  Anum_pg_database_datdba,
+									  RelationGetDescr(dbrel),
+									  (char *) NULL);
 		*dbIdP = dbtup->t_oid;
 		dbtext = (text *) heap_getattr(dbtup,
 									   Anum_pg_database_datpath,

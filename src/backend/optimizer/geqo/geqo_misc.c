@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.10 1998/09/01 03:23:10 momjian Exp $
+ * $Id: geqo_misc.c,v 1.11 1998/09/01 04:29:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ geqo_print_joinclauses(Query *root, List *clauses)
 
 	foreach(l, clauses)
 	{
-		ClauseInfo	   *c = lfirst(l);
+		ClauseInfo *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))
@@ -262,7 +262,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 }
 
 void
-geqo_print_rel(Query *root, RelOptInfo *rel)
+geqo_print_rel(Query *root, RelOptInfo * rel)
 {
 	List	   *l;
 

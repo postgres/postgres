@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.12 1998/09/01 03:28:29 momjian Exp $
+ * $Id: catcache.h,v 1.13 1998/09/01 04:38:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,19 +63,15 @@ typedef struct catcache
 extern struct catcache *Caches;
 extern GlobalMemory CacheCxt;
 
-extern void
-CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
+extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 						 ItemPointer pointer);
 extern void ResetSystemCache(void);
 extern void SystemCacheRelationFlushed(Oid relId);
-extern CatCache *
-InitSysCache(char *relname, char *indname, int id, int nkeys,
+extern CatCache *InitSysCache(char *relname, char *indname, int id, int nkeys,
 			 int *key, HeapTuple (*iScanfuncP) ());
-extern HeapTuple
-SearchSysCache(struct catcache * cache, Datum v1, Datum v2,
+extern HeapTuple SearchSysCache(struct catcache * cache, Datum v1, Datum v2,
 			   Datum v3, Datum v4);
-extern void
-RelationInvalidateCatalogCacheTuple(Relation relation,
+extern void RelationInvalidateCatalogCacheTuple(Relation relation,
 									HeapTuple tuple, void (*function) ());
 
-#endif							/* CATCACHE_H */
+#endif	 /* CATCACHE_H */

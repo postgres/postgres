@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.27 1998/09/01 03:24:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.28 1998/09/01 04:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,8 +99,9 @@ IsDefinedRewriteRule(char *ruleName)
 	RewriteRelation = heap_openr(RewriteRelationName);
 
 	tuple = SearchSysCacheTuple(REWRITENAME,
-								 PointerGetDatum(ruleName),
-								 0, 0, 0);
+								PointerGetDatum(ruleName),
+								0, 0, 0);
+
 	/*
 	 * return whether or not the rewrite rule existed
 	 */
@@ -121,12 +122,12 @@ setRelhasrulesInRelation(Oid relationId, bool relhasrules)
 	 * lock to it.
 	 */
 	tuple = SearchSysCacheTupleCopy(RELOID,
-									 ObjectIdGetDatum(relationId),
-									 0, 0, 0);
+									ObjectIdGetDatum(relationId),
+									0, 0, 0);
 	Assert(HeapTupleIsValid(tuple));
 
 	relationRelation = heap_openr(RelationRelationName);
-	((Form_pg_class)GETSTRUCT(tuple))->relhasrules = relhasrules;
+	((Form_pg_class) GETSTRUCT(tuple))->relhasrules = relhasrules;
 	heap_replace(relationRelation, &tuple->t_ctid, tuple);
 
 	/* keep the catalog indices up to date */

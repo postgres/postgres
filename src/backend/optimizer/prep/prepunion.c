@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.26 1998/09/01 03:23:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.27 1998/09/01 04:29:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,21 +34,16 @@
 #include "optimizer/planner.h"
 #include "optimizer/planmain.h"
 
-static List *
-plan_inherit_query(List *relids, Index rt_index,
+static List *plan_inherit_query(List *relids, Index rt_index,
 				   RangeTblEntry *rt_entry, Query *parse,
 				   List **union_rtentriesPtr);
-static RangeTblEntry *
-new_rangetable_entry(Oid new_relid,
+static RangeTblEntry *new_rangetable_entry(Oid new_relid,
 					 RangeTblEntry *old_entry);
-static Query *
-subst_rangetable(Query *root, Index index,
+static Query *subst_rangetable(Query *root, Index index,
 				 RangeTblEntry *new_entry);
-static void
-fix_parsetree_attnums(Index rt_index, Oid old_relid,
+static void fix_parsetree_attnums(Index rt_index, Oid old_relid,
 					  Oid new_relid, Query *parsetree);
-static Append *
-make_append(List *appendplans, List *unionrtables, Index rt_index,
+static Append *make_append(List *appendplans, List *unionrtables, Index rt_index,
 			List *inheritrtable, List *tlist);
 
 
@@ -89,7 +84,7 @@ plan_union_queries(Query *parse)
 	 *
 	 * So the above query becomes:
 	 *
-	 * 	Append Node
+	 *	Append Node
 	 *	{
 	 *		Sort and Unique
 	 *		{
@@ -281,7 +276,7 @@ plan_inherit_query(List *relids,
 		new_root->sortClause = NULL;
 		new_root->groupClause = NULL;
 		new_root->havingQual = NULL;
-		
+
 		if (new_root->hasAggs)
 		{
 			new_root->hasAggs = false;
@@ -502,14 +497,14 @@ make_append(List *appendplans,
 {
 	Append	   *node = makeNode(Append);
 	List	   *subnode;
-	
+
 	node->appendplans = appendplans;
 	node->unionrtables = unionrtables;
 	node->inheritrelid = rt_index;
 	node->inheritrtable = inheritrtable;
 	node->plan.cost = 0.0;
 	foreach(subnode, appendplans)
-		node->plan.cost += ((Plan *)lfirst(subnode))->cost;
+		node->plan.cost += ((Plan *) lfirst(subnode))->cost;
 	node->plan.state = (EState *) NULL;
 	node->plan.targetlist = tlist;
 	node->plan.qual = NIL;

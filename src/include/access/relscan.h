@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.11 1998/07/27 19:38:29 vadim Exp $
+ * $Id: relscan.h,v 1.12 1998/09/01 04:34:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,4 +80,4 @@ typedef IndexScanDesc *IndexScanDescPtr;
  */
 #define IndexScanIsValid(scan) PointerIsValid(scan)
 
-#endif							/* RELSCAN_H */
+#endif	 /* RELSCAN_H */

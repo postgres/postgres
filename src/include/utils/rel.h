@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.19 1998/09/01 03:28:32 momjian Exp $
+ * $Id: rel.h,v 1.20 1998/09/01 04:39:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,8 +177,7 @@ typedef Relation *RelationPtr;
 
 extern IndexStrategy RelationGetIndexStrategy(Relation relation);
 
-extern void
-RelationSetIndexSupport(Relation relation, IndexStrategy strategy,
+extern void RelationSetIndexSupport(Relation relation, IndexStrategy strategy,
 						RegProcedure *support);
 
-#endif							/* REL_H */
+#endif	 /* REL_H */

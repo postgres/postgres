@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.41 1998/09/01 03:26:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.42 1998/09/01 04:32:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,9 +208,12 @@ textlen(text *t)
 {
 #ifdef MULTIBYTE
 	unsigned char *s;
-	int len, l, wl;
+	int			len,
+				l,
+				wl;
+
 #endif
-        
+
 	if (!PointerIsValid(t))
 		elog(ERROR, "Null input to textlen");
 
@@ -218,17 +221,18 @@ textlen(text *t)
 	len = 0;
 	s = VARDATA(t);
 	l = VARSIZE(t) - VARHDRSZ;
-	while (l > 0) {
-	  wl = pg_mblen(s);
-	  l -= wl;
-	  s += wl;
-	  len++;
+	while (l > 0)
+	{
+		wl = pg_mblen(s);
+		l -= wl;
+		s += wl;
+		len++;
 	}
-	return(len);
+	return (len);
 #else
 	return VARSIZE(t) - VARHDRSZ;
 #endif
-	
+
 }	/* textlen() */
 
 /*
@@ -322,9 +326,11 @@ text_substr(text *string, int32 m, int32 n)
 {
 	text	   *ret;
 	int			len;
+
 #ifdef MULTIBYTE
-	int i;
-	char *p;
+	int			i;
+	char	   *p;
+
 #endif
 
 	if ((string == (text *) NULL) || (m <= 0))
@@ -332,7 +338,7 @@ text_substr(text *string, int32 m, int32 n)
 
 	len = VARSIZE(string) - VARHDRSZ;
 #ifdef MULTIBYTE
-	len = pg_mbstrlen_with_len(VARDATA(string),len);
+	len = pg_mbstrlen_with_len(VARDATA(string), len);
 #endif
 
 	/* m will now become a zero-based starting position */
@@ -350,13 +356,11 @@ text_substr(text *string, int32 m, int32 n)
 
 #ifdef MULTIBYTE
 	p = VARDATA(string);
-	for (i=0;i<m;i++) {
-	  p += pg_mblen(p);
-	}
+	for (i = 0; i < m; i++)
+		p += pg_mblen(p);
 	m = p - VARDATA(string);
-	for (i=0;i<n;i++) {
-	  p += pg_mblen(p);
-	}
+	for (i = 0; i < n; i++)
+		p += pg_mblen(p);
 	n = p - (VARDATA(string) + m);
 #endif
 	ret = (text *) palloc(VARHDRSZ + n);
@@ -385,10 +389,13 @@ textpos(text *t1, text *t2)
 				p;
 	int			len1,
 				len2;
-	pg_wchar	   *p1,
+	pg_wchar   *p1,
 			   *p2;
+
 #ifdef MULTIBYTE
-	pg_wchar	*ps1, *ps2;
+	pg_wchar   *ps1,
+			   *ps2;
+
 #endif
 
 	if (!PointerIsValid(t1) || !PointerIsValid(t2))
@@ -400,11 +407,11 @@ textpos(text *t1, text *t2)
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
 #ifdef MULTIBYTE
-	ps1 = p1 = (pg_wchar *) palloc((len1 + 1)*sizeof(pg_wchar));
-	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(t1),p1,len1);
+	ps1 = p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t1), p1, len1);
 	len1 = pg_wchar_strlen(p1);
-	ps2 = p2 = (pg_wchar *) palloc((len2 + 1)*sizeof(pg_wchar));
-	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(t2),p2,len2);
+	ps2 = p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(t2), p2, len2);
 	len2 = pg_wchar_strlen(p2);
 #else
 	p1 = VARDATA(t1);
@@ -477,8 +484,9 @@ textne(text *arg1, text *arg2)
 int
 varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 {
-	int		result;
-	char *a1p, *a2p;
+	int			result;
+	char	   *a1p,
+			   *a2p;
 
 #ifdef USE_LOCALE
 	a1p = (unsigned char *) palloc(len1 + 1);
@@ -518,8 +526,10 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 int
 text_cmp(text *arg1, text *arg2)
 {
-	char 		*a1p, *a2p;
-	int		len1, len2;
+	char	   *a1p,
+			   *a2p;
+	int			len1,
+				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return (bool) FALSE;
@@ -539,7 +549,7 @@ text_cmp(text *arg1, text *arg2)
 bool
 text_lt(text *arg1, text *arg2)
 {
-	return (bool)(text_cmp(arg1, arg2) < 0);
+	return (bool) (text_cmp(arg1, arg2) < 0);
 }	/* text_lt() */
 
 /* text_le()
@@ -548,7 +558,7 @@ text_lt(text *arg1, text *arg2)
 bool
 text_le(text *arg1, text *arg2)
 {
-	return (bool)(text_cmp(arg1, arg2) <= 0);
+	return (bool) (text_cmp(arg1, arg2) <= 0);
 }	/* text_le() */
 
 bool
@@ -725,7 +735,7 @@ byteaSetBit(text *v, int32 n, int32 newBit)
 /* text_name()
  * Converts a text() type to a NameData type.
  */
-NameData *
+NameData   *
 text_name(text *s)
 {
 	NameData   *result;
@@ -735,24 +745,26 @@ text_name(text *s)
 		return NULL;
 
 	len = VARSIZE(s) - VARHDRSZ;
-	if (len > NAMEDATALEN) len = NAMEDATALEN;
+	if (len > NAMEDATALEN)
+		len = NAMEDATALEN;
 
 #ifdef STRINGDEBUG
-printf("text- convert string length %d (%d) ->%d\n",
- VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+	printf("text- convert string length %d (%d) ->%d\n",
+		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), len);
 #endif
 
 	result = palloc(NAMEDATALEN);
 	StrNCpy(result->data, VARDATA(s), NAMEDATALEN);
 
 	/* now null pad to full length... */
-	while (len < NAMEDATALEN) {
+	while (len < NAMEDATALEN)
+	{
 		*(result->data + len) = '\0';
 		len++;
 	}
 
 	return result;
-} /* text_name() */
+}	/* text_name() */
 
 /* name_text()
  * Converts a NameData type to a text type.
@@ -769,8 +781,8 @@ name_text(NameData *s)
 	len = strlen(s->data);
 
 #ifdef STRINGDEBUG
-printf("text- convert string length %d (%d) ->%d\n",
- VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+	printf("text- convert string length %d (%d) ->%d\n",
+		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), len);
 #endif
 
 	result = palloc(VARHDRSZ + len);
@@ -778,4 +790,4 @@ printf("text- convert string length %d (%d) ->%d\n",
 	VARSIZE(result) = len + VARHDRSZ;
 
 	return result;
-} /* name_text() */
+}	/* name_text() */

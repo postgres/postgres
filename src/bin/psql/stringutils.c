@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.14 1998/05/13 03:27:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/stringutils.c,v 1.15 1998/09/01 04:33:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,8 @@ leftTrim(char *s)
 char *
 rightTrim(char *s)
 {
-	char	   *sEnd, *bsEnd;
+	char	   *sEnd,
+			   *bsEnd;
 	bool		in_bs = false;
 
 	sEnd = s + strlen(s) - 1;

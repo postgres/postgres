@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.17 1998/09/01 03:27:47 momjian Exp $
+ * $Id: indexing.h,v 1.18 1998/09/01 04:34:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,25 +66,21 @@ extern char *IndexedCatalogNames[];
  */
 extern void CatalogOpenIndices(int nIndices, char **names, Relation *idescs);
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
-extern void
-CatalogIndexInsert(Relation *idescs,
+extern void CatalogIndexInsert(Relation *idescs,
 				   int nIndices,
 				   Relation heapRelation,
 				   HeapTuple heapTuple);
 extern bool CatalogHasIndex(char *catName, Oid catId);
 
-extern HeapTuple
-AttributeNameIndexScan(Relation heapRelation,
+extern HeapTuple AttributeNameIndexScan(Relation heapRelation,
 					   Oid relid,
 					   char *attname);
 
-extern HeapTuple
-AttributeNumIndexScan(Relation heapRelation,
+extern HeapTuple AttributeNumIndexScan(Relation heapRelation,
 					  Oid relid,
 					  AttrNumber attnum);
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
-extern HeapTuple
-ProcedureNameIndexScan(Relation heapRelation,
+extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
 					   char *procName, int2 nargs, Oid *argTypes);
 extern HeapTuple ProcedureSrcIndexScan(Relation heapRelation, text *procSrc);
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);
@@ -125,4 +121,4 @@ DECLARE_INDEX(pg_description_objoid_index on pg_description using btree(objoid o
 /* now build indices in the initialization scripts */
 BUILD_INDICES
 
-#endif							/* INDEXING_H */
+#endif	 /* INDEXING_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_listener.h,v 1.4 1997/09/08 02:35:17 momjian Exp $
+ * $Id: pg_listener.h,v 1.5 1998/09/01 04:35:04 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -53,4 +53,4 @@ CATALOG(pg_listener)
  */
 
 
-#endif							/* PG_LISTENER_H */
+#endif	 /* PG_LISTENER_H */

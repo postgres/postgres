@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.32 1998/09/01 03:21:19 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.33 1998/09/01 04:27:07 momjian Exp $
  *
  * NOTES
  *
@@ -184,7 +184,7 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 		return 1;				/* 1 > 2 */
 	}
 	else if (k2->btsk_item == (BTItem) NULL)
-		return -1;			/* 1 < 2 */
+		return -1;				/* 1 < 2 */
 
 	for (i = 0; i < _bt_nattr; i++)
 	{
@@ -198,14 +198,14 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 			return 1;			/* NULL ">" NOT_NULL */
 		}
 		else if (k2_nulls[i] != ' ')	/* k2 attr is NULL */
-			return -1;		/* NOT_NULL "<" NULL */
+			return -1;			/* NOT_NULL "<" NULL */
 
 		if (_bt_invokestrat(_bt_sortrel, i + 1, BTGreaterStrategyNumber,
 							k1_datum[i], k2_datum[i]))
 			return 1;			/* 1 > 2 */
 		else if (_bt_invokestrat(_bt_sortrel, i + 1, BTGreaterStrategyNumber,
 								 k2_datum[i], k1_datum[i]))
-			return -1;		/* 1 < 2 */
+			return -1;			/* 1 < 2 */
 	}
 
 	if (_bt_inspool->isunique && !equal_isnull)
@@ -731,7 +731,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 				printf("_bt_spool: inserted <%x> into output tape %d\n",
 					   d, btspool->bts_tape);
 			}
-#endif							/* FASTBUILD_DEBUG && FASTBUILD_SPOOL */
+#endif	 /* FASTBUILD_DEBUG && FASTBUILD_SPOOL */
 		}
 
 		/*
@@ -975,7 +975,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 				printf("_bt_buildadd: moved <%x> to offset %d at level %d\n",
 					   d, n, state->btps_level);
 			}
-#endif							/* FASTBUILD_DEBUG && FASTBUILD_MERGE */
+#endif	 /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 #endif
 		}
 
@@ -1058,7 +1058,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 		printf("_bt_buildadd: inserted <%x> at offset %d at level %d\n",
 			   d, off, state->btps_level);
 	}
-#endif							/* FASTBUILD_DEBUG && FASTBUILD_MERGE */
+#endif	 /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 #endif
 	if (last_bti == (BTItem) NULL)
 		first_off = P_FIRSTKEY;
@@ -1254,7 +1254,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 								   npass, nruns, d, t,
 								   BufferGetBlockNumber(state->btps_buf));
 						}
-#endif							/* FASTBUILD_DEBUG && FASTBUILD_MERGE */
+#endif	 /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 					}
 					else
 					{
@@ -1283,7 +1283,7 @@ _bt_merge(Relation index, BTSpool *btspool)
 								   npass, nruns, d, t,
 								   btspool->bts_tape);
 						}
-#endif							/* FASTBUILD_DEBUG && FASTBUILD_MERGE */
+#endif	 /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 					}
 
 					if (btsk.btsk_datum != (Datum *) NULL)
@@ -1408,7 +1408,7 @@ _bt_upperbuild(Relation index)
 				printf("_bt_upperbuild: inserting <%x> at %d\n",
 					   d, state->btps_level);
 			}
-#endif							/* FASTBUILD_DEBUG && FASTBUILD_MERGE */
+#endif	 /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 			_bt_buildadd(index, state, nbti, 0);
 			pfree((void *) nbti);
 		}

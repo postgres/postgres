@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeTee.h,v 1.5 1997/11/26 01:13:06 momjian Exp $
+ * $Id: nodeTee.h,v 1.6 1998/09/01 04:36:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern void ExecTeeReScan(Tee *node, ExprContext *exprCtxt, Plan *parent);
 extern void ExecEndTee(Tee *node, Plan *parent);
 extern int	ExecCountSlotsTee(Tee *node);
 
-#endif							/* NODETEE_H */
+#endif	 /* NODETEE_H */

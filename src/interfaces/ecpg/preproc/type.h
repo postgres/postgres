@@ -25,7 +25,7 @@ struct ECPGtype
 };
 
 /* Everything is malloced. */
-void ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
+void		ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
 struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, long);
@@ -45,7 +45,7 @@ void		ECPGfree_type(struct ECPGtype *);
    size is the maxsize in case it is a varchar. Otherwise it is the size of
 	   the variable (required to do array fetches of structs).
  */
-void		ECPGdump_a_type(FILE *, const char *, struct ECPGtype *,  const char *, struct ECPGtype *, const char *, const char *);
+void		ECPGdump_a_type(FILE *, const char *, struct ECPGtype *, const char *, struct ECPGtype *, const char *, const char *);
 
 /* A simple struct to keep a variable and its type. */
 struct ECPGtemp_type
@@ -71,19 +71,19 @@ enum WHEN
 struct when
 {
 	enum WHEN	code;
-	char		*command;
-	char	   	*str;
+	char	   *command;
+	char	   *str;
 };
 
 struct index
 {
-    int index1;
-    int index2;
-    char *str;
+	int			index1;
+	int			index2;
+	char	   *str;
 };
 
 struct this_type
 {
-	enum ECPGttype	type_enum;
-	char 		*type_str;
+	enum ECPGttype type_enum;
+	char	   *type_str;
 };

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.23 1998/08/04 16:43:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.24 1998/09/01 04:27:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 
 	if (es->printNodes)
 		s = nodeToString(plan);
-	
+
 	if (es->printCost)
 	{
 		s2 = Explain_PlanToString(plan, es);
@@ -107,7 +107,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 		len -= ELOG_MAXLEN - 64;
 	}
 	if (es->printNodes)
-		pprint(plan); /* display in postmaster log file */
+		pprint(plan);			/* display in postmaster log file */
 
 	pfree(es);
 }
@@ -123,7 +123,7 @@ ExplainQuery(Query *query, bool verbose, CommandDest dest)
 static void
 explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 {
-	List		*l;
+	List	   *l;
 	Relation	relation;
 	char	   *pname;
 	char		buf[1000];
@@ -280,11 +280,11 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 		List	   *saved_rtable = es->rtable;
 		List	   *lst;
 		int			whichplan = 0;
-		Append	   *appendplan = (Append *)plan;
+		Append	   *appendplan = (Append *) plan;
 
 		foreach(lst, appendplan->appendplans)
 		{
-			Plan *subnode = (Plan *)lfirst(lst);
+			Plan	   *subnode = (Plan *) lfirst(lst);
 
 			if (appendplan->inheritrelid > 0)
 			{

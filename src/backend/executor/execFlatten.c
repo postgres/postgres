@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.6 1998/09/01 03:22:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.7 1998/09/01 04:28:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,7 @@
 #include "executor/execFlatten.h"
 
 #ifdef SETS_FIXED
-static bool
-FjoinBumpOuterNodes(TargetEntry *tlist, ExprContext *econtext,
+static bool FjoinBumpOuterNodes(TargetEntry *tlist, ExprContext *econtext,
 					DatumPtr results, char *nulls);
 
 #endif

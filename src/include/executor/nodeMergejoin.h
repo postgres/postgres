@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMergejoin.h,v 1.8 1998/02/27 16:12:09 vadim Exp $
+ * $Id: nodeMergejoin.h,v 1.9 1998/09/01 04:36:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern int	ExecCountSlotsMergeJoin(MergeJoin *node);
 extern void ExecEndMergeJoin(MergeJoin *node);
 extern void ExecReScanMergeJoin(MergeJoin *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif							/* NODEMERGEJOIN_H; */
+#endif	 /* NODEMERGEJOIN_H; */

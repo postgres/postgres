@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.24 1998/08/06 05:12:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.25 1998/09/01 04:28:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	OffsetVarNodes(viewParse->qual, 2);
 
 	OffsetVarNodes(viewParse->havingQual, 2);
-	
+
 
 	/*
 	 * find the old range table...

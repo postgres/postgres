@@ -6,14 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.4 1998/08/14 16:07:00 thomas Exp $
+ * $Id: parse_coerce.h,v 1.5 1998/09/01 04:37:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSE_COERCE_H
 #define PARSE_COERCE_H
 
-typedef enum CATEGORY {
+typedef enum CATEGORY
+{
 	INVALID_TYPE,
 	UNKNOWN_TYPE,
 	BOOLEAN_TYPE,
@@ -24,13 +25,13 @@ typedef enum CATEGORY {
 	GEOMETRIC_TYPE,
 	USER_TYPE,
 	MIXED_TYPE
-} CATEGORY;
+}			CATEGORY;
 
 
 /* IS_BUILTIN_TYPE()
  * Check for types which are in the core distribution.
  * The built-in types can have more explicit support for type coersion, etc,
- *  since we know apriori how they should behave.
+ *	since we know apriori how they should behave.
  * - thomas 1998-05-13
  */
 #define IS_BUILTIN_TYPE(t) \
@@ -61,7 +62,7 @@ typedef enum CATEGORY {
 /* IS_BINARY_COMPATIBLE()
  * Check for types with the same underlying binary representation.
  * This allows us to cheat and directly exchange values without
- *  going through the trouble of calling a conversion function.
+ *	going through the trouble of calling a conversion function.
  */
 #define IS_BINARY_COMPATIBLE(a,b) \
 		  (((a) == BPCHAROID && (b) == TEXTOID) \
@@ -97,7 +98,7 @@ typedef enum CATEGORY {
 /* IS_HIGHEST_TYPE()
  * These types are the most general in each of the type categories.
  * Since timespan and datetime overload so many functions, let's
- *  give datetime the preference.
+ *	give datetime the preference.
  * Since text is a generic string type let's leave it out too.
  */
 #define IS_HIGHEST_TYPE(t) \
@@ -107,10 +108,10 @@ typedef enum CATEGORY {
 
 
 extern bool IsPreferredType(CATEGORY category, Oid type);
-extern Oid PreferredType(CATEGORY category, Oid type);
+extern Oid	PreferredType(CATEGORY category, Oid type);
 extern CATEGORY TypeCategory(Oid type);
 
 extern bool can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids);
 extern Node *coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId);
 
-#endif							/* PARSE_COERCE_H */
+#endif	 /* PARSE_COERCE_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.11 1998/09/01 03:26:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.12 1998/09/01 04:33:05 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
@@ -50,7 +50,7 @@ ExceptionalCondition(char *conditionName,
 	else
 	{
 		EPRINTF("TRAP: %s(\"%s:%s\", File: \"%s\", Line: %d)\n",
-				exceptionP->message, conditionName, 
+				exceptionP->message, conditionName,
 				(detail == NULL ? "" : detail),
 				fileName, lineNumber);
 	}

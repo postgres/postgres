@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.39 1998/08/29 04:05:45 momjian Exp $
+ * $Id: libpq-fe.h,v 1.40 1998/09/01 04:40:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ extern		"C"
 	} ExecStatusType;
 
 /* string descriptions of the ExecStatusTypes */
-	extern const char * const pgresStatus[];
+	extern const char *const pgresStatus[];
 
 /*
  * POSTGRES backend dependent Constants.
@@ -127,7 +127,7 @@ extern		"C"
 	} PGnotify;
 
 /* PQnoticeProcessor is a typedef for a callback function type */
-	typedef void (*PQnoticeProcessor) (void * arg, const char * message);
+	typedef void (*PQnoticeProcessor) (void *arg, const char *message);
 
 /* PGAsyncStatusType is private to libpq, really shouldn't be seen by users */
 	typedef enum
@@ -137,7 +137,7 @@ extern		"C"
 		PGASYNC_READY,			/* result ready for PQgetResult */
 		PGASYNC_COPY_IN,		/* Copy In data transfer in progress */
 		PGASYNC_COPY_OUT		/* Copy Out data transfer in progress */
-	} PGAsyncStatusType;
+	}			PGAsyncStatusType;
 
 /* generic socket address type for PGconn connection information.
  * Really shouldn't be visible to users */
@@ -148,7 +148,7 @@ extern		"C"
 #ifndef WIN32
 		struct sockaddr_un un;
 #endif
-	} PGSockAddr;
+	}			PGSockAddr;
 
 /* large-object-access data ... allocated only if large-object code is used.
  * Really shouldn't be visible to users */
@@ -187,13 +187,14 @@ extern		"C"
 		FILE	   *Pfdebug;
 
 		/* Callback procedure for notice/error message processing */
-		PQnoticeProcessor	noticeHook;
+		PQnoticeProcessor noticeHook;
 		void	   *noticeArg;
 
 		/* Status indicators */
-		ConnStatusType		status;
-		PGAsyncStatusType	asyncStatus;
-		Dllist	   *notifyList;	/* Notify msgs not yet handed to application */
+		ConnStatusType status;
+		PGAsyncStatusType asyncStatus;
+		Dllist	   *notifyList; /* Notify msgs not yet handed to
+								 * application */
 
 		/* Connection data */
 		int			sock;		/* Unix FD for socket, -1 if not connected */
@@ -205,28 +206,33 @@ extern		"C"
 		int			be_pid;		/* PID of backend --- needed for cancels */
 		int			be_key;		/* key of backend --- needed for cancels */
 		char		salt[2];	/* password salt received from backend */
-		PGlobjfuncs *lobjfuncs; /* private state for large-object access fns */
+		PGlobjfuncs *lobjfuncs; /* private state for large-object access
+								 * fns */
 
 		/* Buffer for data received from backend and not yet processed */
-		char		*inBuffer;	/* currently allocated buffer */
+		char	   *inBuffer;	/* currently allocated buffer */
 		int			inBufSize;	/* allocated size of buffer */
-		int			inStart;	/* offset to first unconsumed data in buffer */
+		int			inStart;	/* offset to first unconsumed data in
+								 * buffer */
 		int			inCursor;	/* next byte to tentatively consume */
-		int			inEnd;		/* offset to first position after avail data */
+		int			inEnd;		/* offset to first position after avail
+								 * data */
 
 		/* Buffer for data not yet sent to backend */
-		char		*outBuffer;	/* currently allocated buffer */
-		int			outBufSize;	/* allocated size of buffer */
+		char	   *outBuffer;	/* currently allocated buffer */
+		int			outBufSize; /* allocated size of buffer */
 		int			outCount;	/* number of chars waiting in buffer */
 
 		/* Status for asynchronous result construction */
-		PGresult		*result;	/* result being constructed */
-		PGresAttValue	*curTuple;	/* tuple currently being read */
+		PGresult   *result;		/* result being constructed */
+		PGresAttValue *curTuple;/* tuple currently being read */
 
-		/* Message space.  Placed last for code-size reasons.
-		 * errorMessage is the message last returned to the application.
-		 * When asyncStatus=READY, asyncErrorMessage is the pending message
-		 * that will be put in errorMessage by PQgetResult. */
+		/*
+		 * Message space.  Placed last for code-size reasons. errorMessage
+		 * is the message last returned to the application. When
+		 * asyncStatus=READY, asyncErrorMessage is the pending message
+		 * that will be put in errorMessage by PQgetResult.
+		 */
 		char		errorMessage[ERROR_MSG_LENGTH];
 		char		asyncErrorMessage[ERROR_MSG_LENGTH];
 	} PGconn;
@@ -303,8 +309,8 @@ extern		"C"
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 								const char *pgoptions, const char *pgtty,
-								const char *dbName,
-								const char *login, const char *pwd);
+											const char *dbName,
+									 const char *login, const char *pwd);
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
@@ -313,6 +319,7 @@ extern		"C"
 
 	/* close the current connection and free the PGconn data structure */
 	extern void PQfinish(PGconn *conn);
+
 	/*
 	 * close the current connection and restablish a new one with the same
 	 * parameters
@@ -331,16 +338,16 @@ extern		"C"
 	extern char *PQtty(PGconn *conn);
 	extern ConnStatusType PQstatus(PGconn *conn);
 	extern char *PQerrorMessage(PGconn *conn);
-	extern int PQsocket(PGconn *conn);
+	extern int	PQsocket(PGconn *conn);
 
 	/* Enable/disable tracing */
 	extern void PQtrace(PGconn *conn, FILE *debug_port);
 	extern void PQuntrace(PGconn *conn);
 
 	/* Override default notice processor */
-	extern void PQsetNoticeProcessor (PGconn *conn,
-									  PQnoticeProcessor proc,
-									  void *arg);
+	extern void PQsetNoticeProcessor(PGconn *conn,
+												 PQnoticeProcessor proc,
+												 void *arg);
 
 /* === in fe-exec.c === */
 
@@ -349,7 +356,7 @@ extern		"C"
 	extern PGnotify *PQnotifies(PGconn *conn);
 
 	/* Interface for multiple-result or asynchronous queries */
-	extern int  PQsendQuery(PGconn *conn, const char *query);
+	extern int	PQsendQuery(PGconn *conn, const char *query);
 	extern PGresult *PQgetResult(PGconn *conn);
 
 	/* Routines for managing an asychronous query */
@@ -362,14 +369,17 @@ extern		"C"
 	extern void PQputnbytes(PGconn *conn, const char *buffer, int nbytes);
 	extern int	PQendcopy(PGconn *conn);
 
-	/* "Fast path" interface --- not really recommended for application use */
+	/*
+	 * "Fast path" interface --- not really recommended for application
+	 * use
+	 */
 	extern PGresult *PQfn(PGconn *conn,
-						  int fnid,
-						  int *result_buf,
-						  int *result_len,
-						  int result_is_int,
-						  PQArgBlock *args,
-						  int nargs);
+									  int fnid,
+									  int *result_buf,
+									  int *result_len,
+									  int result_is_int,
+									  PQArgBlock *args,
+									  int nargs);
 
 	/* Accessor functions for PGresult objects */
 	extern ExecStatusType PQresultStatus(PGresult *res);
@@ -393,31 +403,32 @@ extern		"C"
 /* === in fe-print.c === */
 
 	extern void PQprint(FILE *fout,		/* output stream */
-						PGresult *res,
-						PQprintOpt *ps); /* option structure */
+									PGresult *res,
+									PQprintOpt *ps);	/* option structure */
 
-	/* PQdisplayTuples() is a better version of PQprintTuples(),
-	 * but both are obsoleted by PQprint().
+	/*
+	 * PQdisplayTuples() is a better version of PQprintTuples(), but both
+	 * are obsoleted by PQprint().
 	 */
 	extern void PQdisplayTuples(PGresult *res,
-								FILE *fp,	/* where to send the
-											 * output */
-								int fillAlign, /* pad the fields with
-												* spaces */
-								const char *fieldSep, /* field separator */
-								int printHeader,	/* display headers? */
-								int quiet);
+											FILE *fp,	/* where to send the
+														 * output */
+											int fillAlign,		/* pad the fields with
+																 * spaces */
+											const char *fieldSep,		/* field separator */
+											int printHeader,	/* display headers? */
+											int quiet);
 	extern void PQprintTuples(PGresult *res,
-							  FILE *fout,	/* output stream */
-							  int printAttName,		/* print attribute names
-													 * or not */
-							  int terseOutput,		/* delimiter bars or
-													 * not? */
-							  int width);	/* width of column, if
-											 * 0, use variable width */
+										  FILE *fout,	/* output stream */
+										  int printAttName,		/* print attribute names
+																 * or not */
+										  int terseOutput,		/* delimiter bars or
+																 * not? */
+										  int width);	/* width of column, if
+														 * 0, use variable width */
 
 #ifdef MULTIBYTE
-	extern int PQmblen(unsigned char *s);
+	extern int	PQmblen(unsigned char *s);
 #endif
 
 /* === in fe-lobj.c === */
@@ -436,6 +447,7 @@ extern		"C"
 
 #ifdef __cplusplus
 };
+
 #endif
 
-#endif							/* LIBPQ_FE_H */
+#endif	 /* LIBPQ_FE_H */

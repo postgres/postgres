@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.37 1998/09/01 03:25:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.38 1998/09/01 04:31:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,16 +61,16 @@
  */
 
 /*
- *      In order to prevent buffer leak on transaction commit, large object
- *      scan index handling has been modified. Indexes are persistant inside
- *      a transaction but may be closed between two calls to this API (when 
- *      transaction is committed while object is opened, or when no 
- *      transaction is active). Scan indexes are thus now reinitialized using
- *      the object current offset. [PA]
+ *		In order to prevent buffer leak on transaction commit, large object
+ *		scan index handling has been modified. Indexes are persistant inside
+ *		a transaction but may be closed between two calls to this API (when
+ *		transaction is committed while object is opened, or when no
+ *		transaction is active). Scan indexes are thus now reinitialized using
+ *		the object current offset. [PA]
  *
- *      Some cleanup has been also done for non freed memory.
+ *		Some cleanup has been also done for non freed memory.
  *
- *      For subsequent notes, [PA] is Pascal André <andre@via.ecp.fr>
+ *		For subsequent notes, [PA] is Pascal André <andre@via.ecp.fr>
  */
 
 #define IFREESPC(p)		(PageGetFreeSpace(p) - sizeof(HeapTupleData) - sizeof(struct varlena) - sizeof(int32))
@@ -78,13 +78,11 @@
 #define IMINBLK			512
 
 /* non-export function prototypes */
-static HeapTuple
-inv_newtuple(LargeObjectDesc *obj_desc, Buffer buffer,
+static HeapTuple inv_newtuple(LargeObjectDesc *obj_desc, Buffer buffer,
 			 Page page, char *dbuf, int nwrite);
 static HeapTuple inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer);
 static int	inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes);
-static int
-inv_wrold(LargeObjectDesc *obj_desc, char *dbuf, int nbytes,
+static int inv_wrold(LargeObjectDesc *obj_desc, char *dbuf, int nbytes,
 		  HeapTuple tuple, Buffer buffer);
 static void inv_indextup(LargeObjectDesc *obj_desc, HeapTuple tuple);
 static int	_inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln);
@@ -276,7 +274,8 @@ inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 
-	if (obj_desc->iscan != (IndexScanDesc) NULL) {
+	if (obj_desc->iscan != (IndexScanDesc) NULL)
+	{
 		index_endscan(obj_desc->iscan);
 		pfree(obj_desc->iscan);
 		obj_desc->iscan = NULL;
@@ -468,8 +467,8 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	/* fetch a block at a time */
 	while (nread < nbytes)
 	{
-		Buffer buffer;
-		
+		Buffer		buffer;
+
 		/* fetch an inversion file system block */
 		tuple = inv_fetchtup(obj_desc, &buffer);
 
@@ -482,7 +481,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		/* copy the data from this block into the buffer */
 		d = heap_getattr(tuple, 2, obj_desc->hdesc, &isNull);
 		ReleaseBuffer(buffer);
-		
+
 		fsblock = (struct varlena *) DatumGetPointer(d);
 
 		off = obj_desc->offset - obj_desc->lowbyte;
@@ -526,8 +525,8 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	/* write a block at a time */
 	while (nwritten < nbytes)
 	{
-		Buffer buffer;
-		
+		Buffer		buffer;
+
 		/*
 		 * Fetch the current inversion file system block.  If the class
 		 * storing the inversion file is empty, we don't want to do an
@@ -552,7 +551,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 				tuplen = inv_wrold(obj_desc, buf, nbytes - nwritten, tuple, buffer);
 		}
 		ReleaseBuffer(buffer);
-		
+
 		/* move pointers past the amount we just wrote */
 		buf += tuplen;
 		nwritten += tuplen;
@@ -565,23 +564,24 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 /*
  * inv_cleanindex --
- *       Clean opened indexes for large objects, and clears current result.
- *       This is necessary on transaction commit in order to prevent buffer
- *       leak. 
- *       This function must be called for each opened large object.
- *       [ PA, 7/17/98 ]
+ *		 Clean opened indexes for large objects, and clears current result.
+ *		 This is necessary on transaction commit in order to prevent buffer
+ *		 leak.
+ *		 This function must be called for each opened large object.
+ *		 [ PA, 7/17/98 ]
  */
-void 
+void
 inv_cleanindex(LargeObjectDesc *obj_desc)
 {
-        Assert(PointerIsValid(obj_desc));
+	Assert(PointerIsValid(obj_desc));
 
-	if (obj_desc->iscan == (IndexScanDesc) NULL) return;
+	if (obj_desc->iscan == (IndexScanDesc) NULL)
+		return;
 
 	index_endscan(obj_desc->iscan);
 	pfree(obj_desc->iscan);
 	obj_desc->iscan = (IndexScanDesc) NULL;
-	
+
 	ItemPointerSetInvalid(&(obj_desc->htid));
 }
 
@@ -630,13 +630,13 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 		{
 			ScanKeyData skey;
 
-			/* 
-			 * As scan index may be prematurely closed (on commit),
-			 * we must use object current offset (was 0) to 
-			 * reinitialize the entry [ PA ].
+			/*
+			 * As scan index may be prematurely closed (on commit), we
+			 * must use object current offset (was 0) to reinitialize the
+			 * entry [ PA ].
 			 */
 			ScanKeyEntryInitialize(&skey, 0x0, 1, F_INT4GE,
-					       Int32GetDatum(obj_desc->offset));
+								   Int32GetDatum(obj_desc->offset));
 			obj_desc->iscan =
 				index_beginscan(obj_desc->index_r,
 								(bool) 0, (uint16) 1,
@@ -658,13 +658,13 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 			 * rather that NowTimeQual.  We currently have no way to pass
 			 * a time qual in.
 			 *
-			 * This is now valid for snapshot !!!
-			 * And should be fixed in some way...	- vadim 07/28/98
-			 * 
+			 * This is now valid for snapshot !!! And should be fixed in some
+			 * way...	- vadim 07/28/98
+			 *
 			 */
 
 			tuple = heap_fetch(obj_desc->heap_r, SnapshotNow,
-							  &res->heap_iptr, buffer);
+							   &res->heap_iptr, buffer);
 			pfree(res);
 		} while (tuple == (HeapTuple) NULL);
 
@@ -675,7 +675,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 	else
 	{
 		tuple = heap_fetch(obj_desc->heap_r, SnapshotNow,
-						  &(obj_desc->htid), buffer);
+						   &(obj_desc->htid), buffer);
 	}
 
 	/*
@@ -1213,7 +1213,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 	long		size;
 	bool		isNull;
 	Buffer		buffer;
-	
+
 	/* scan backwards from end */
 	iscan = index_beginscan(ireln, (bool) 1, 0, (ScanKey) NULL);
 
@@ -1250,6 +1250,6 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 	d = heap_getattr(tuple, 1, hdesc, &isNull);
 	size = DatumGetInt32(d) + 1;
 	ReleaseBuffer(buffer);
-	
+
 	return size;
 }

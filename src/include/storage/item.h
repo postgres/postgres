@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: item.h,v 1.3 1997/09/07 05:01:16 momjian Exp $
+ * $Id: item.h,v 1.4 1998/09/01 04:38:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,4 +15,4 @@
 
 typedef Pointer Item;
 
-#endif							/* ITEM_H */
+#endif	 /* ITEM_H */

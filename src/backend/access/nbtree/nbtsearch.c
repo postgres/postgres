@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.37 1998/09/01 03:21:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.38 1998/09/01 04:27:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,14 +28,11 @@
 #endif
 
 
-static BTStack
-_bt_searchr(Relation rel, int keysz, ScanKey scankey,
+static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey,
 			Buffer *bufP, BTStack stack_in);
-static OffsetNumber
-_bt_firsteq(Relation rel, TupleDesc itupdesc, Page page,
+static OffsetNumber _bt_firsteq(Relation rel, TupleDesc itupdesc, Page page,
 			Size keysz, ScanKey scankey, OffsetNumber offnum);
-static int
-_bt_compare(Relation rel, TupleDesc itupdesc, Page page,
+static int _bt_compare(Relation rel, TupleDesc itupdesc, Page page,
 			int keysz, ScanKey scankey, OffsetNumber offnum);
 static bool
 			_bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
@@ -219,8 +216,8 @@ _bt_moveright(Relation rel,
 						if (_bt_skeycmp(rel, keysz, scankey, page,
 										PageGetItemId(page, P_FIRSTKEY),
 										BTEqualStrategyNumber))
-							elog(FATAL, "btree: BTP_CHAIN flag was expected in %s (access = %s)", 
-										rel->rd_rel->relname, access ? "bt_write" : "bt_read");
+							elog(FATAL, "btree: BTP_CHAIN flag was expected in %s (access = %s)",
+								 rel->rd_rel->relname, access ? "bt_write" : "bt_read");
 						if (_bt_skeycmp(rel, keysz, scankey, page,
 										PageGetItemId(page, offmax),
 										BTEqualStrategyNumber))

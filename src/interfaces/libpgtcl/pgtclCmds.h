@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.10 1998/06/16 04:10:17 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.11 1998/09/01 04:39:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,33 +28,37 @@
  * name.  (All their callbacks will be called, but in an unspecified order.)
  */
 
-typedef struct Pg_TclNotifies_s {
-    struct Pg_TclNotifies_s	*next;		/* list link */
-    Tcl_Interp 			*interp;	/* This Tcl interpreter */
-    /* NB: if interp == NULL, the interpreter is gone but we haven't
-     * yet got round to deleting the Pg_TclNotifies structure.
-     */
-    Tcl_HashTable		notify_hash;	/* Active pg_listen requests */
-} Pg_TclNotifies;
+typedef struct Pg_TclNotifies_s
+{
+	struct Pg_TclNotifies_s *next;		/* list link */
+	Tcl_Interp *interp;			/* This Tcl interpreter */
 
-typedef struct Pg_ConnectionId_s {
-    char		id[32];
-    PGconn		*conn;
-    int			res_max;	/* Max number of results allocated */
-    int			res_hardmax;	/* Absolute max to allow */
-    int			res_count;	/* Current count of active results */
-    int			res_last;	/* Optimize where to start looking */
-    int			res_copy;	/* Query result with active copy */
-    int			res_copyStatus; /* Copying status */
-    PGresult		**results;	/* The results */
+	/*
+	 * NB: if interp == NULL, the interpreter is gone but we haven't yet
+	 * got round to deleting the Pg_TclNotifies structure.
+	 */
+	Tcl_HashTable notify_hash;	/* Active pg_listen requests */
+}			Pg_TclNotifies;
 
-    Pg_TclNotifies	*notify_list;	/* head of list of notify info */
-    int			notifier_running;  /* notify event source is live */
+typedef struct Pg_ConnectionId_s
+{
+	char		id[32];
+	PGconn	   *conn;
+	int			res_max;		/* Max number of results allocated */
+	int			res_hardmax;	/* Absolute max to allow */
+	int			res_count;		/* Current count of active results */
+	int			res_last;		/* Optimize where to start looking */
+	int			res_copy;		/* Query result with active copy */
+	int			res_copyStatus; /* Copying status */
+	PGresult  **results;		/* The results */
 
-} Pg_ConnectionId;
+	Pg_TclNotifies *notify_list;/* head of list of notify info */
+	int			notifier_running;		/* notify event source is live */
+
+}			Pg_ConnectionId;
 
 #define RES_COPY_NONE	0
-#define RES_COPY_INPROGRESS	1
+#define RES_COPY_INPROGRESS 1
 #define RES_COPY_FIN	2
 
 
@@ -62,38 +66,38 @@ typedef struct Pg_ConnectionId_s {
 /* registered Tcl functions */
 /* **************************/
 extern int Pg_conndefaults(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_connect(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		   ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_disconnect(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_exec(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_select(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_result(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_open(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		   ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_close(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_read(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		   ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_write(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_lseek(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_creat(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_tell(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		   ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_unlink(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_import(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_lo_export(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 extern int Pg_listen(
-    ClientData cData, Tcl_Interp *interp, int argc, char* argv[]);
+		  ClientData cData, Tcl_Interp * interp, int argc, char *argv[]);
 
-#endif /*PGTCLCMDS_H*/
+#endif	 /* PGTCLCMDS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.27 1998/09/01 03:21:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.28 1998/09/01 04:26:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,16 +29,13 @@
 
 #ifdef USE_ASSERT_CHECKING
 static bool StrategyEvaluationIsValid(StrategyEvaluation evaluation);
-static bool
-StrategyExpressionIsValid(StrategyExpression expression,
+static bool StrategyExpressionIsValid(StrategyExpression expression,
 						  StrategyNumber maxStrategy);
 static ScanKey StrategyMapGetScanKeyEntry(StrategyMap map,
 						   StrategyNumber strategyNumber);
-static bool
-StrategyOperatorIsValid(StrategyOperator operator,
+static bool StrategyOperatorIsValid(StrategyOperator operator,
 						StrategyNumber maxStrategy);
-static bool
-StrategyTermIsValid(StrategyTerm term,
+static bool StrategyTermIsValid(StrategyTerm term,
 					StrategyNumber maxStrategy);
 
 #endif
@@ -378,8 +375,8 @@ RelationInvokeStrategy(Relation relation,
 	termData.degree = 1;
 
 	strategyMap = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
-												evaluation->maxStrategy,
-												attributeNumber);
+											  evaluation->maxStrategy,
+											  attributeNumber);
 
 	entry = StrategyMapGetScanKeyEntry(strategyMap, strategy);
 
@@ -456,9 +453,7 @@ RelationInvokeStrategy(Relation relation,
 			}
 
 			if (index == (*termP)->degree)
-			{
 				return StrategyTermEvaluate(*termP, strategyMap, left, right);
-			}
 
 			termP += 1;
 		}
@@ -494,7 +489,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 	else
 	{
 		ScanKeyData scanKeyData;
-	
+
 		ScanKeyEntryInitialize(&scanKeyData, 0,
 							   ObjectIdAttributeNumber,
 							   F_OIDEQ,
@@ -502,7 +497,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 		scan = heap_beginscan(operatorRelation, false, SnapshotNow,
 							  1, &scanKeyData);
-	
+
 		tuple = heap_getnext(scan, 0);
 	}
 
@@ -521,7 +516,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 
 	if (IsBootstrapProcessingMode())
 		heap_endscan(scan);
-	
+
 	if (!RegProcedureIsValid(entry->sk_procedure))
 	{
 		elog(ERROR,
@@ -565,7 +560,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_index_indexrelid,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(indexObjectId));
-	
+
 		relation = heap_openr(IndexRelationName);
 		scan = heap_beginscan(relation, false, SnapshotNow, 1, entry);
 		tuple = heap_getnext(scan, 0);
@@ -601,7 +596,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		heap_endscan(scan);
 		heap_close(relation);
 	}
-	
+
 	/* if support routines exist for this access method, load them */
 	if (maxSupportNumber > 0)
 	{
@@ -615,7 +610,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 		relation = heap_openr(AccessMethodProcedureRelationName);
 
 		for (attributeNumber = 1; attributeNumber <= maxAttributeNumber;
-			attributeNumber++)
+			 attributeNumber++)
 		{
 			int16		support;
 			Form_pg_amproc form;
@@ -723,4 +718,4 @@ IndexStrategyDisplay(IndexStrategy indexStrategy,
 	}
 }
 
-#endif							/* defined(ISTRATDEBUG) */
+#endif	 /* defined(ISTRATDEBUG) */

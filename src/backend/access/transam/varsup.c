@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.16 1998/07/21 06:17:13 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.17 1998/09/01 04:27:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ static void VariableRelationPutNextOid(Oid *oidP);
  */
 int			OidGenLockId;
 
-VariableCache	ShmemVariableCache = NULL;
+VariableCache ShmemVariableCache = NULL;
 
 /* ----------------------------------------------------------------
  *			  variable relation query/update routines
@@ -292,11 +292,11 @@ GetNewTransactionId(TransactionId *xid)
 	}
 
 	SpinAcquire(OidGenLockId);	/* not good for concurrency... */
-	
+
 	if (ShmemVariableCache->xid_count == 0)
 	{
 		TransactionId nextid;
-		
+
 		VariableRelationGetNextXid(&nextid);
 		TransactionIdStore(nextid, &(ShmemVariableCache->nextXid));
 		ShmemVariableCache->xid_count = VAR_XID_PREFETCH;
@@ -307,7 +307,7 @@ GetNewTransactionId(TransactionId *xid)
 	TransactionIdStore(ShmemVariableCache->nextXid, xid);
 	TransactionIdAdd(&(ShmemVariableCache->nextXid), 1);
 	(ShmemVariableCache->xid_count)--;
-	
+
 	SpinRelease(OidGenLockId);
 }
 

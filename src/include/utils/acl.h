@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.17 1998/02/26 04:43:43 momjian Exp $
+ * $Id: acl.h,v 1.18 1998/09/01 04:38:48 momjian Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -141,8 +141,7 @@ extern Acl *aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg);
 
 extern char *aclmakepriv(char *old_privlist, char new_priv);
 extern char *aclmakeuser(char *user_type, char *user);
-extern ChangeACLStmt *
-makeAclStmt(char *privs, List *rel_list, char *grantee,
+extern ChangeACLStmt *makeAclStmt(char *privs, List *rel_list, char *grantee,
 			char grant_or_revoke);
 
 /*
@@ -164,11 +163,9 @@ extern char *get_groname(AclId grosysid);
 
 extern int32 pg_aclcheck(char *relname, char *usename, AclMode mode);
 extern int32 pg_ownercheck(char *usename, char *value, int cacheid);
-extern int32
-pg_func_ownercheck(char *usename, char *funcname,
+extern int32 pg_func_ownercheck(char *usename, char *funcname,
 				   int nargs, Oid *arglist);
-extern int32
-pg_aggr_ownercheck(char *usename, char *aggname,
+extern int32 pg_aggr_ownercheck(char *usename, char *aggname,
 				   Oid basetypeID);
 
-#endif							/* ACL_H */
+#endif	 /* ACL_H */

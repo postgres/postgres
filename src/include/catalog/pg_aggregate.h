@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.16 1998/08/11 18:28:36 momjian Exp $
+ * $Id: pg_aggregate.h,v 1.17 1998/09/01 04:34:45 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -88,7 +88,7 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
  * ---------------
  */
 
-DATA(insert OID = 0 ( avg	PGUID int8pl      int4inc   int84div        20   20   23   20 _null_ 0 ));
+DATA(insert OID = 0 ( avg	PGUID int8pl	  int4inc	int84div		20	 20   23   20 _null_ 0 ));
 DATA(insert OID = 0 ( avg	PGUID int4pl	  int4inc	int4div			23	 23   23   23 _null_ 0 ));
 DATA(insert OID = 0 ( avg	PGUID int2pl	  int2inc	int2div			21	 21   21   21 _null_ 0 ));
 DATA(insert OID = 0 ( avg	PGUID float4pl	  float4inc float4div	   700	700  700  700 _null_ 0.0 ));
@@ -133,8 +133,7 @@ DATA(insert OID = 0 ( count PGUID - int4inc - 0 0 23 23 _null_ 0 ));
 /*
  * prototypes for functions in pg_aggregate.c
  */
-extern void
-AggregateCreate(char *aggName,
+extern void AggregateCreate(char *aggName,
 				char *aggtransfn1Name,
 				char *aggtransfn2Name,
 				char *aggfinalfnName,
@@ -143,8 +142,7 @@ AggregateCreate(char *aggName,
 				char *aggtransfn2typeName,
 				char *agginitval1,
 				char *agginitval2);
-extern char *
-AggNameGetInitVal(char *aggName, Oid basetype,
+extern char *AggNameGetInitVal(char *aggName, Oid basetype,
 				  int xfuncno, bool *isNull);
 
-#endif							/* PG_AGGREGATE_H */
+#endif	 /* PG_AGGREGATE_H */

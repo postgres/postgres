@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.24 1998/08/25 03:17:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.25 1998/09/01 04:30:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 static char *clauseText[] = {"ORDER", "GROUP"};
 
 static TargetEntry *
-findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause);
+			findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause);
 
 static void parseFromClause(ParseState *pstate, List *frmList);
 
@@ -71,7 +71,7 @@ makeRangeTable(ParseState *pstate, char *relname, List *frmList)
 /*
  * transformWhereClause -
  *	  transforms the qualification and make sure it is of type Boolean
- *    
+ *
  */
 Node *
 transformWhereClause(ParseState *pstate, Node *a_expr)
@@ -138,44 +138,44 @@ parseFromClause(ParseState *pstate, List *frmList)
  *	  returns the Resdom in the target list matching the specified varname
  *	  and range. If none exist one is created.
  *
- *    Rewritten for ver 6.4 to handle expressions in the GROUP/ORDER BY clauses.
- *     - daveh@insightdist.com  1998-07-31
+ *	  Rewritten for ver 6.4 to handle expressions in the GROUP/ORDER BY clauses.
+ *	   - daveh@insightdist.com	1998-07-31
  *
  */
 static TargetEntry *
 findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 {
-	List	    *l;
-	int			 rtable_pos = 0,
-				 target_pos = 0,
-				 targetlist_pos = 0;
+	List	   *l;
+	int			rtable_pos = 0,
+				target_pos = 0,
+				targetlist_pos = 0;
 	TargetEntry *target_result = NULL;
-	Value		*val = NULL;
-	char		*relname = NULL;
-	char		*name = NULL;
-	Node		*expr = NULL;
+	Value	   *val = NULL;
+	char	   *relname = NULL;
+	char	   *name = NULL;
+	Node	   *expr = NULL;
 	int			relCnt = 0;
 
 	/* Pull out some values before looping thru target list  */
-	switch(nodeTag(node))
+	switch (nodeTag(node))
 	{
-		case T_Attr: 
-			relname = ((Attr*)node)->relname;
-			val = (Value *)lfirst(((Attr*)node)->attrs);
+		case T_Attr:
+			relname = ((Attr *) node)->relname;
+			val = (Value *) lfirst(((Attr *) node)->attrs);
 			name = strVal(val);
 			rtable_pos = refnameRangeTablePosn(pstate, relname, NULL);
 			relCnt = length(pstate->p_rtable);
 			break;
 
 		case T_Ident:
-			name = ((Ident*)node)->name;
+			name = ((Ident *) node)->name;
 			relCnt = length(pstate->p_rtable);
 			break;
 
 		case T_A_Const:
-			val = &((A_Const*)node)->val;
-	
-			if (nodeTag(val) !=  T_Integer)  
+			val = &((A_Const *) node)->val;
+
+			if (nodeTag(val) != T_Integer)
 				elog(ERROR, "Illegal Constant in %s BY", clauseText[clause]);
 			target_pos = intVal(val);
 			break;
@@ -190,7 +190,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	}
 
 	/*
-	 *  Loop through target entries and try to match to node
+	 * Loop through target entries and try to match to node
 	 */
 	foreach(l, tlist)
 	{
@@ -202,93 +202,107 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 
 		++targetlist_pos;
 
-		switch(nodeTag(node))
+		switch (nodeTag(node))
 		{
-		case T_Attr:
-			if (strcmp(resname, name) == 0 && rtable_pos == test_rtable_pos)
-			{
-				/*   Check for only 1 table & ORDER BY -ambiguity does not matter here  */
-				if (clause == ORDER_CLAUSE && relCnt == 1)
+			case T_Attr:
+				if (strcmp(resname, name) == 0 && rtable_pos == test_rtable_pos)
+				{
+
+					/*
+					 * Check for only 1 table & ORDER BY -ambiguity does
+					 * not matter here
+					 */
+					if (clause == ORDER_CLAUSE && relCnt == 1)
+						return target;
+
+					if (target_result != NULL)
+						elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
+					else
+						target_result = target;
+					/* Stay in loop to check for ambiguity */
+				}
+				break;
+
+			case T_Ident:
+				if (strcmp(resname, name) == 0)
+				{
+
+					/*
+					 * Check for only 1 table & ORDER BY  -ambiguity does
+					 * not matter here
+					 */
+					if (clause == ORDER_CLAUSE && relCnt == 1)
+						return target;
+
+					if (target_result != NULL)
+						elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
+					else
+						target_result = target;
+					/* Stay in loop to check for ambiguity	*/
+				}
+				break;
+
+			case T_A_Const:
+				if (target_pos == targetlist_pos)
+				{
+					/* Can't be ambigious and we got what we came for  */
 					return target;
+				}
+				break;
 
-				if (target_result != NULL)
-					elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
-				else
-					target_result = target;
-				/*   Stay in loop to check for ambiguity */
-			}
-			break;
+			case T_FuncCall:
+			case T_A_Expr:
+				if (equal(expr, target->expr))
+				{
 
-		case T_Ident:
-			if (strcmp(resname, name) == 0)
-			{
-				/*   Check for only 1 table & ORDER BY  -ambiguity does not matter here */
-				if (clause == ORDER_CLAUSE && relCnt == 1)
-					return target;
+					/*
+					 * Check for only 1 table & ORDER BY  -ambiguity does
+					 * not matter here
+					 */
+					if (clause == ORDER_CLAUSE)
+						return target;
 
-				if (target_result != NULL)
-					elog(ERROR, "%s BY '%s' is ambiguous", clauseText[clause], name);
-				else
-					target_result = target;
-				/*   Stay in loop to check for ambiguity  */
-			}
-			break;
+					if (target_result != NULL)
+						elog(ERROR, "GROUP BY has ambiguous expression");
+					else
+						target_result = target;
+				}
+				break;
 
-		case T_A_Const:
-			if (target_pos == targetlist_pos)
-			{
-				/*   Can't be ambigious and we got what we came for  */
-				return target;
-			}
-			break;
-
-		case T_FuncCall:   
-		case T_A_Expr:
-			if (equal(expr, target->expr))
-			{
-				/*   Check for only 1 table & ORDER BY  -ambiguity does not matter here */
-				if (clause == ORDER_CLAUSE)
-					return target;
-
-				if (target_result != NULL)
-					elog(ERROR, "GROUP BY has ambiguous expression");
-				else
-					target_result = target;
-			}
-			break;
-
-		default:
-			elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
+			default:
+				elog(ERROR, "Illegal %s BY node = %d", clauseText[clause], nodeTag(node));
 		}
 	}
 
-	/* 
-	 * If no matches, construct a new target entry which is appended to the end
-	 * of the target list.   This target is set to be  resjunk = TRUE so that
-	 * it will not be projected into the final tuple.
-	 */  
+	/*
+	 * If no matches, construct a new target entry which is appended to
+	 * the end of the target list.	 This target is set to be  resjunk =
+	 * TRUE so that it will not be projected into the final tuple.
+	 */
 	if (target_result == NULL)
- 	{
-		switch(nodeTag(node))
+	{
+		switch (nodeTag(node))
 		{
-			case T_Attr: 
+			case T_Attr:
 				target_result = MakeTargetEntryIdent(pstate, node,
-										&((Attr*)node)->relname, NULL,
-										((Attr*)node)->relname, TRUE);
+										 &((Attr *) node)->relname, NULL,
+										 ((Attr *) node)->relname, TRUE);
 				lappend(tlist, target_result);
 				break;
 
 			case T_Ident:
 				target_result = MakeTargetEntryIdent(pstate, node,
-										&((Ident*)node)->name, NULL,
-										((Ident*)node)->name, TRUE);
+										   &((Ident *) node)->name, NULL,
+										   ((Ident *) node)->name, TRUE);
 				lappend(tlist, target_result);
 				break;
 
 			case T_A_Const:
-				/* 
-			 	* If we got this far, then must have been an out-of-range column number
-			 	*/
+
+				/*
+				 * If we got this far, then must have been an out-of-range
+				 * column number
+				 */
 				elog(ERROR, "%s BY position %d is not in target list", clauseText[clause], target_pos);
 				break;
 
@@ -376,7 +390,7 @@ transformSortClause(ParseState *pstate,
 	List	   *s = NIL;
 
 #ifdef PARSEDEBUG
-printf("transformSortClause: entering\n");
+	printf("transformSortClause: entering\n");
 #endif
 
 	while (orderlist != NIL)
@@ -389,13 +403,16 @@ printf("transformSortClause: entering\n");
 		restarget = findTargetlistEntry(pstate, sortby->node, targetlist, ORDER_CLAUSE);
 
 #ifdef PARSEDEBUG
-printf("transformSortClause: find sorting operator for type %d\n",
-  restarget->resdom->restype);
+		printf("transformSortClause: find sorting operator for type %d\n",
+			   restarget->resdom->restype);
 #endif
 
 		sortcl->resdom = resdom = restarget->resdom;
 
-		/* if we have InvalidOid, then this is a NULL field and don't need to sort */
+		/*
+		 * if we have InvalidOid, then this is a NULL field and don't need
+		 * to sort
+		 */
 		if (resdom->restype == InvalidOid)
 			resdom->restype = INT4OID;
 
@@ -447,10 +464,10 @@ printf("transformSortClause: find sorting operator for type %d\n",
 					SortClause *sortcl = lfirst(s);
 
 					/*
-					 *	We use equal() here because we are called for UNION
-					 *	from the optimizer, and at that point, the sort clause
-					 *	resdom pointers don't match the target list resdom
-					 *	pointers
+					 * We use equal() here because we are called for UNION
+					 * from the optimizer, and at that point, the sort
+					 * clause resdom pointers don't match the target list
+					 * resdom pointers
 					 */
 					if (equal(sortcl->resdom, tlelt->resdom))
 						break;
@@ -462,8 +479,8 @@ printf("transformSortClause: find sorting operator for type %d\n",
 					SortClause *sortcl = makeNode(SortClause);
 
 #ifdef PARSEDEBUG
-printf("transformSortClause: (2) find sorting operator for type %d\n",
-  tlelt->resdom->restype);
+					printf("transformSortClause: (2) find sorting operator for type %d\n",
+						   tlelt->resdom->restype);
 #endif
 
 					if (tlelt->resdom->restype == InvalidOid)
@@ -504,8 +521,8 @@ printf("transformSortClause: (2) find sorting operator for type %d\n",
 				SortClause *sortcl = makeNode(SortClause);
 
 #ifdef PARSEDEBUG
-printf("transformSortClause: try sorting type %d\n",
-  tlelt->resdom->restype);
+				printf("transformSortClause: try sorting type %d\n",
+					   tlelt->resdom->restype);
 #endif
 
 				sortcl->resdom = tlelt->resdom;
@@ -523,20 +540,20 @@ printf("transformSortClause: try sorting type %d\n",
  * Transform a UNION clause.
  * Note that the union clause is actually a fully-formed select structure.
  * So, it is evaluated as a select, then the resulting target fields
- *  are matched up to ensure correct types in the results.
+ *	are matched up to ensure correct types in the results.
  * The select clause parsing is done recursively, so the unions are evaluated
- *  right-to-left. One might want to look at all columns from all clauses before
- *  trying to coerce, but unless we keep track of the call depth we won't know
- *  when to do this because of the recursion.
+ *	right-to-left. One might want to look at all columns from all clauses before
+ *	trying to coerce, but unless we keep track of the call depth we won't know
+ *	when to do this because of the recursion.
  * Let's just try matching in pairs for now (right to left) and see if it works.
  * - thomas 1998-05-22
  */
 List *
 transformUnionClause(List *unionClause, List *targetlist)
 {
-	List		  *union_list = NIL;
+	List	   *union_list = NIL;
 	QueryTreeList *qlist;
-	int			   i;
+	int			i;
 
 	if (unionClause)
 	{
@@ -547,19 +564,20 @@ transformUnionClause(List *unionClause, List *targetlist)
 		{
 			List	   *prev_target = targetlist;
 			List	   *next_target;
-			
+
 			if (length(targetlist) != length(qlist->qtrees[i]->targetList))
-				elog(ERROR,"Each UNION clause must have the same number of columns");
-				
+				elog(ERROR, "Each UNION clause must have the same number of columns");
+
 			foreach(next_target, qlist->qtrees[i]->targetList)
 			{
-				Oid   itype;
-				Oid   otype;
-				otype = ((TargetEntry *)lfirst(prev_target))->resdom->restype;
-				itype = ((TargetEntry *)lfirst(next_target))->resdom->restype;
+				Oid			itype;
+				Oid			otype;
+
+				otype = ((TargetEntry *) lfirst(prev_target))->resdom->restype;
+				itype = ((TargetEntry *) lfirst(next_target))->resdom->restype;
 
 #ifdef PARSEDEBUG
-printf("transformUnionClause: types are %d -> %d\n", itype, otype);
+				printf("transformUnionClause: types are %d -> %d\n", itype, otype);
 #endif
 
 				/* one or both is a NULL column? then don't convert... */
@@ -567,14 +585,12 @@ printf("transformUnionClause: types are %d -> %d\n", itype, otype);
 				{
 					/* propagate a known type forward, if available */
 					if (itype != InvalidOid)
-					{
-						((TargetEntry *)lfirst(prev_target))->resdom->restype = itype;
-					}
+						((TargetEntry *) lfirst(prev_target))->resdom->restype = itype;
 #if FALSE
 					else
 					{
-						((TargetEntry *)lfirst(prev_target))->resdom->restype = UNKNOWNOID;
-						((TargetEntry *)lfirst(next_target))->resdom->restype = UNKNOWNOID;
+						((TargetEntry *) lfirst(prev_target))->resdom->restype = UNKNOWNOID;
+						((TargetEntry *) lfirst(next_target))->resdom->restype = UNKNOWNOID;
 					}
 #endif
 				}
@@ -584,26 +600,26 @@ printf("transformUnionClause: types are %d -> %d\n", itype, otype);
 				/* they don't match in type? then convert... */
 				else if (itype != otype)
 				{
-					Node *expr;
+					Node	   *expr;
 
-					expr = ((TargetEntry *)lfirst(next_target))->expr;
+					expr = ((TargetEntry *) lfirst(next_target))->expr;
 					expr = CoerceTargetExpr(NULL, expr, itype, otype);
 					if (expr == NULL)
 					{
-						elog(ERROR,"Unable to transform %s to %s"
+						elog(ERROR, "Unable to transform %s to %s"
 							 "\n\tEach UNION clause must have compatible target types",
 							 typeidTypeName(itype),
 							 typeidTypeName(otype));
 					}
-					((TargetEntry *)lfirst(next_target))->expr = expr;
-					((TargetEntry *)lfirst(next_target))->resdom->restype = otype;
+					((TargetEntry *) lfirst(next_target))->expr = expr;
+					((TargetEntry *) lfirst(next_target))->resdom->restype = otype;
 				}
 
 				/* both are UNKNOWN? then evaluate as text... */
 				else if (itype == UNKNOWNOID)
 				{
-					((TargetEntry *)lfirst(next_target))->resdom->restype = TEXTOID;
-					((TargetEntry *)lfirst(prev_target))->resdom->restype = TEXTOID;
+					((TargetEntry *) lfirst(next_target))->resdom->restype = TEXTOID;
+					((TargetEntry *) lfirst(prev_target))->resdom->restype = TEXTOID;
 				}
 				prev_target = lnext(prev_target);
 			}
@@ -613,4 +629,4 @@ printf("transformUnionClause: types are %d -> %d\n", itype, otype);
 	}
 	else
 		return NIL;
-} /* transformUnionClause() */
+}	/* transformUnionClause() */

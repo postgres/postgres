@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.20 1998/09/01 03:24:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.21 1998/09/01 04:31:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,6 +156,7 @@ ValidateRule(int event_type,
 	}
 
 #if 0
+
 	/*
 	 * on retrieve to class.attribute do instead nothing is converted to
 	 * 'on retrieve to class.attribute do instead retrieve (attribute =
@@ -200,51 +201,55 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 * rules only. And for SELECT events, it expects one non-nothing
 	 * action that is instead. Since we now hand out views and rules
 	 * to regular users, we must deny anything else.
-	 * 
+	 *
 	 * I know that I must write a new rewrite handler from scratch
 	 * for 6.5 so we can remove these checks and allow all the rules.
 	 *
-	 *     Jan
+	 *	   Jan
 	 * ----------
 	 */
 	if (event_obj->attrs)
 		elog(ERROR, "attribute level rules currently not supported");
-		/*
-		eslot_string = strVal(lfirst(event_obj->attrs));
-		*/
+
+	/*
+	 * eslot_string = strVal(lfirst(event_obj->attrs));
+	 */
 	else
 		eslot_string = NULL;
 
 	if (action != NIL)
-		foreach (l, action) {
-			query = (Query *)lfirst(l);
-			if (query->resultRelation == 1) {
-				elog(NOTICE, "rule actions on OLD currently not supported");
-				elog(ERROR, " use views or triggers instead");
-			}
-			if (query->resultRelation == 2) {
-				elog(NOTICE, "rule actions on NEW currently not supported");
-				elog(ERROR, " use triggers instead");
-			}
+		foreach(l, action)
+	{
+		query = (Query *) lfirst(l);
+		if (query->resultRelation == 1)
+		{
+			elog(NOTICE, "rule actions on OLD currently not supported");
+			elog(ERROR, " use views or triggers instead");
 		}
+		if (query->resultRelation == 2)
+		{
+			elog(NOTICE, "rule actions on NEW currently not supported");
+			elog(ERROR, " use triggers instead");
+		}
+	}
 
-	if (event_type == CMD_SELECT) {
-		if (length(action) == 0) {
+	if (event_type == CMD_SELECT)
+	{
+		if (length(action) == 0)
+		{
 			elog(NOTICE, "instead nothing rules on select currently not supported");
 			elog(ERROR, " use views instead");
 		}
-		if (length(action) > 1) {
+		if (length(action) > 1)
 			elog(ERROR, "multiple action rules on select currently not supported");
-		}
-		query = (Query *)lfirst(action);
-		if (!is_instead || query->commandType != CMD_SELECT) {
+		query = (Query *) lfirst(action);
+		if (!is_instead || query->commandType != CMD_SELECT)
 			elog(ERROR, "only instead-select rules currently supported on select");
-		}
 	}
+
 	/*
-	 * This rule is currently allowed - too restricted I know -
-	 * but women and children first
-	 *     Jan
+	 * This rule is currently allowed - too restricted I know - but women
+	 * and children first Jan
 	 */
 
 	event_relation = heap_openr(event_obj->relname);

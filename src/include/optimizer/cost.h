@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.10 1998/08/04 16:44:27 momjian Exp $
+ * $Id: cost.h,v 1.11 1998/09/01 04:36:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,24 +31,20 @@ extern bool _enable_mergejoin_;
 extern bool _enable_hashjoin_;
 
 extern Cost cost_seqscan(int relid, int relpages, int reltuples);
-extern Cost
-cost_index(Oid indexid, int expected_indexpages, Cost selec,
+extern Cost cost_index(Oid indexid, int expected_indexpages, Cost selec,
 		   int relpages, int reltuples, int indexpages,
 		   int indextuples, bool is_injoin);
 extern Cost cost_sort(List *keys, int tuples, int width, bool noread);
-extern Cost
-cost_nestloop(Cost outercost, Cost innercost, int outertuples,
+extern Cost cost_nestloop(Cost outercost, Cost innercost, int outertuples,
 			  int innertuples, int outerpages, bool is_indexjoin);
-extern Cost
-cost_mergejoin(Cost outercost, Cost innercost,
+extern Cost cost_mergejoin(Cost outercost, Cost innercost,
 			   List *outersortkeys, List *innersortkeys,
 		   int outersize, int innersize, int outerwidth, int innerwidth);
-extern Cost
-cost_hashjoin(Cost outercost, Cost innercost, List *outerkeys,
+extern Cost cost_hashjoin(Cost outercost, Cost innercost, List *outerkeys,
 			  List *innerkeys, int outersize, int innersize,
 			  int outerwidth, int innerwidth);
-extern int	compute_rel_size(RelOptInfo *rel);
-extern int	compute_rel_width(RelOptInfo *rel);
+extern int	compute_rel_size(RelOptInfo * rel);
+extern int	compute_rel_width(RelOptInfo * rel);
 extern int	compute_joinrel_size(JoinPath *joinpath);
 extern int	page_size(int tuples, int width);
 
@@ -60,8 +56,7 @@ extern void set_clause_selectivities(List *clauseinfo_list, Cost new_selectivity
 extern Cost product_selec(List *clauseinfo_list);
 extern void set_rest_relselec(Query *root, List *rel_list);
 extern void set_rest_selec(Query *root, List *clauseinfo_list);
-extern Cost
-compute_clause_selec(Query *root,
+extern Cost compute_clause_selec(Query *root,
 					 Node *clause, List *or_selectivities);
 
-#endif							/* COST_H */
+#endif	 /* COST_H */

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.44 1998/08/29 04:05:41 momjian Exp $
+ * $Id: c.h,v 1.45 1998/09/01 04:33:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,16 +63,16 @@
 #ifndef __cplusplus
 typedef char bool;
 
-#endif							/* not C++ */
+#endif	 /* not C++ */
 typedef bool *BoolPtr;
 
 #ifndef TRUE
 #define TRUE	1
-#endif							/* TRUE */
+#endif	 /* TRUE */
 
 #ifndef FALSE
 #define FALSE	0
-#endif							/* FALSE */
+#endif	 /* FALSE */
 
 /* ----------------------------------------------------------------
  *				Section 2: __STDC__, non-ansi C definitions:
@@ -102,13 +102,13 @@ typedef char *Pointer;
  *		Null pointer.
  */
 #define NULL	((void *) 0)
-#endif							/* !defined(NULL) */
+#endif	 /* !defined(NULL) */
 
 #define HAVE_ANSI_CPP			/* all ANSI C compilers must have this! */
 #if defined(NEED_STD_HDRS)
 #undef NEED_STD_HDRS			/* all ANSI systems must have
 								 * stddef/stdlib */
-#endif							/* NEED_STD_HDRS */
+#endif	 /* NEED_STD_HDRS */
 
 #else	/* !defined(__STDC__) *//* NOT ANSI C */
 
@@ -124,7 +124,7 @@ typedef char *Pointer;
  *		Null pointer.
  */
 #define NULL	0
-#endif							/* !defined(NULL) */
+#endif	 /* !defined(NULL) */
 
 /*
  * const --
@@ -153,7 +153,7 @@ typedef char *Pointer;
  */
 #define volatile				/* volatile */
 
-#endif	/* !defined(__STDC__) *//* NOT ANSI C */
+#endif	 /* !defined(__STDC__) */		/* NOT ANSI C */
 
 /*
  * CppAsString --
@@ -181,7 +181,7 @@ typedef char *Pointer;
 #define _priv_CppIdentity(x)x
 #define CppConcat(x, y)			_priv_CppIdentity(x)y
 
-#endif							/* !HAVE_ANSI_CPP */
+#endif	 /* !HAVE_ANSI_CPP */
 
 #ifndef __GNUC__				/* GNU cc */
 #endif
@@ -207,7 +207,7 @@ typedef char *Pointer;
 #else							/* NEED_STD_HDRS */
 #include <stddef.h>
 #include <stdlib.h>
-#endif							/* NEED_STD_HDRS */
+#endif	 /* NEED_STD_HDRS */
 
 /* ----------------------------------------------------------------
  *				Section 3:	standard system types
@@ -555,7 +555,7 @@ typedef Datum *DatumPtr;
  */
 #ifndef offsetof
 #define offsetof(type, field)	((long) &((type *)0)->field)
-#endif							/* offsetof */
+#endif	 /* offsetof */
 
 /*
  * lengthof --
@@ -633,8 +633,9 @@ typedef struct Exception
 #define AssertState(condition) \
 		Trap(!(condition), BadState)
 
-extern int assert_enabled;
-#endif							/* USE_ASSERT_CHECKING */
+extern int	assert_enabled;
+
+#endif	 /* USE_ASSERT_CHECKING */
 
 /*
  * LogTrap --
@@ -676,10 +677,12 @@ extern int assert_enabled;
 		LogTrap(!(condition), BadState, printArgs)
 
 extern int	assertEnable(int val);
+
 #ifdef ASSERT_CHECKING_TEST
 extern int	assertTest(int val);
+
 #endif
-#endif							/* USE_ASSERT_CHECKING */
+#endif	 /* USE_ASSERT_CHECKING */
 
 /* ----------------------------------------------------------------
  *				Section 8:	Min, Max, Abs macros
@@ -756,8 +759,7 @@ extern Exception BadArg;
 extern Exception BadState;
 
 /* in utils/error/assert.c */
-extern int
-ExceptionalCondition(char *conditionName,
+extern int ExceptionalCondition(char *conditionName,
 					 Exception *exceptionP, char *details,
 					 char *fileName, int lineNumber);
 
@@ -804,7 +806,7 @@ extern char *form(const char *fmt,...);
 #ifdef FIXADE
 #if defined(hpux)
 #include "port/hpux/fixade.h"	/* for unaligned access fixup */
-#endif							/* hpux */
+#endif	 /* hpux */
 #endif
 
 #if defined(sun) && defined(sparc) && !defined(__SVR4)
@@ -821,4 +823,4 @@ extern char *form(const char *fmt,...);
  *		end of c.h
  * ----------------
  */
-#endif							/* C_H */
+#endif	 /* C_H */

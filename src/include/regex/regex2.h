@@ -129,9 +129,9 @@ typedef struct
 	uch			mask;			/* bit within array */
 #ifdef MULTIBYTE
 	pg_wchar	hash;			/* hash code */
-	unsigned int	lc;	/* leading character (character-set) */
+	unsigned int lc;			/* leading character (character-set) */
 #else
-	uch		hash;			/* hash code */
+	uch			hash;			/* hash code */
 #endif
 	size_t		smultis;
 	char	   *multis;			/* -> char[smulti]	ab\0cd\0ef\0\0 */
@@ -139,11 +139,11 @@ typedef struct
 
 /* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
 #ifdef MULTIBYTE
-#define CHlc(c)	(((unsigned)(c)&0xff0000)>>16)
+#define CHlc(c) (((unsigned)(c)&0xff0000)>>16)
 #define CHadd(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] |= (cs)->mask, (cs)->hash += (unsigned)(c)&0xffff,\
 			 (cs)->lc = CHlc(c))
 #define CHsub(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] &= ~(cs)->mask, (cs)->hash -= (unsigned)(c)&0xffff)
-#define CHIN(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] & (cs)->mask && \
+#define CHIN(cs, c) ((cs)->ptr[(unsigned)(c)&0xffff] & (cs)->mask && \
 			 ((cs)->lc == CHlc(c)))
 #define MCadd(p, cs, cp)		mcadd(p, cs, cp)		/* regcomp() internal
 														 * fns */
@@ -186,7 +186,7 @@ struct re_guts
 	int			neol;			/* number of $ used */
 	int			ncategories;	/* how many character categories */
 	cat_t	   *categories;		/* ->catspace[-CHAR_MIN] */
-	pg_wchar    *must;			/* match must contain this string */
+	pg_wchar   *must;			/* match must contain this string */
 	int			mlen;			/* length of must */
 	size_t		nsub;			/* copy of re_nsub */
 	int			backrefs;		/* does it use back references? */
@@ -197,9 +197,9 @@ struct re_guts
 
 /* misc utilities */
 #ifdef MULTIBYTE
-#  define OUT		(16777216+1)	/* 16777216 == 2^24 == 3 bytes */
+#define OUT		  (16777216+1)	/* 16777216 == 2^24 == 3 bytes */
 #else
-#  define OUT		(CHAR_MAX+1)	/* a non-character value */
+#define OUT		  (CHAR_MAX+1)	/* a non-character value */
 #endif
 
 #ifdef MULTIBYTE

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.64 1998/09/01 03:28:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.65 1998/09/01 04:40:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,11 +33,11 @@
 #define TUPARR_GROW_BY 100
 
 /* keep this in same order as ExecStatusType in libpq-fe.h */
-const char * const pgresStatus[] = {
+const char *const pgresStatus[] = {
 	"PGRES_EMPTY_QUERY",
 	"PGRES_COMMAND_OK",
 	"PGRES_TUPLES_OK",
-	"PGRES_COPY_OUT", 
+	"PGRES_COPY_OUT",
 	"PGRES_COPY_IN",
 	"PGRES_BAD_RESPONSE",
 	"PGRES_NONFATAL_ERROR",
@@ -53,10 +53,10 @@ static PGresult *makeEmptyPGresult(PGconn *conn, ExecStatusType status);
 static void freeTuple(PGresAttValue *tuple, int numAttributes);
 static void addTuple(PGresult *res, PGresAttValue *tup);
 static void parseInput(PGconn *conn);
-static int getRowDescriptions(PGconn *conn);
-static int getAnotherTuple(PGconn *conn, int binary);
-static int getNotify(PGconn *conn);
-static int getNotice(PGconn *conn);
+static int	getRowDescriptions(PGconn *conn);
+static int	getAnotherTuple(PGconn *conn, int binary);
+static int	getNotify(PGconn *conn);
+static int	getNotice(PGconn *conn);
 
 
 /*
@@ -127,7 +127,7 @@ PQclear(PGresult *res)
 static void
 freeTuple(PGresAttValue *tuple, int numAttributes)
 {
-	int		i;
+	int			i;
 
 	if (tuple)
 	{
@@ -170,12 +170,13 @@ addTuple(PGresult *res, PGresAttValue *tup)
 	{
 		/* grow the array */
 		res->tupArrSize += TUPARR_GROW_BY;
+
 		/*
-		 * we can use realloc because shallow copying of the structure
-		 * is okay.  Note that the first time through, res->tuples is NULL.
-		 * realloc is supposed to do the right thing in that case.
-		 * Also note that the positions beyond res->ntups are garbage,
-		 * not necessarily NULL.
+		 * we can use realloc because shallow copying of the structure is
+		 * okay.  Note that the first time through, res->tuples is NULL.
+		 * realloc is supposed to do the right thing in that case. Also
+		 * note that the positions beyond res->ntups are garbage, not
+		 * necessarily NULL.
 		 */
 		res->tuples = (PGresAttValue **)
 			realloc(res->tuples, res->tupArrSize * sizeof(PGresAttValue *));
@@ -187,10 +188,10 @@ addTuple(PGresult *res, PGresAttValue *tup)
 
 /*
  * PQsendQuery
- *   Submit a query, but don't wait for it to finish
+ *	 Submit a query, but don't wait for it to finish
  *
  * Returns: 1 if successfully submitted
- *          0 if error (conn->errorMessage is set)
+ *			0 if error (conn->errorMessage is set)
  */
 
 int
@@ -204,7 +205,7 @@ PQsendQuery(PGconn *conn, const char *query)
 		return 0;
 	}
 	/* check to see if the query string is too long */
-	if (strlen(query) > MAX_MESSAGE_LEN-2)
+	if (strlen(query) > MAX_MESSAGE_LEN - 2)
 	{
 		sprintf(conn->errorMessage, "PQsendQuery() -- query is too long.  "
 				"Maximum length is %d\n", MAX_MESSAGE_LEN - 2);
@@ -259,11 +260,11 @@ PQconsumeInput(PGconn *conn)
 	if (!conn)
 		return;
 
-	/* Load more data, if available.
-	 * We do this no matter what state we are in, since we are probably
-	 * getting called because the application wants to get rid
-	 * of a read-select condition.
-	 * Note that we will NOT block waiting for more input.
+	/*
+	 * Load more data, if available. We do this no matter what state we
+	 * are in, since we are probably getting called because the
+	 * application wants to get rid of a read-select condition. Note that
+	 * we will NOT block waiting for more input.
 	 */
 	if (pqReadData(conn) < 0)
 		strcpy(conn->asyncErrorMessage, conn->errorMessage);
@@ -280,30 +281,34 @@ PQconsumeInput(PGconn *conn)
 static void
 parseInput(PGconn *conn)
 {
-	char	id;
+	char		id;
 
-	/* 
+	/*
 	 * Loop to parse successive complete messages available in the buffer.
 	 */
 	for (;;)
 	{
-		/* 
-		 * Quit if in COPY_OUT state: we expect raw data from the server until
-		 * PQendcopy is called.  Don't try to parse it according to the normal
-		 * protocol.  (This is bogus.  The data lines ought to be part of the
-		 * protocol and have identifying leading characters.)
+
+		/*
+		 * Quit if in COPY_OUT state: we expect raw data from the server
+		 * until PQendcopy is called.  Don't try to parse it according to
+		 * the normal protocol.  (This is bogus.  The data lines ought to
+		 * be part of the protocol and have identifying leading
+		 * characters.)
 		 */
 		if (conn->asyncStatus == PGASYNC_COPY_OUT)
 			return;
+
 		/*
 		 * OK to try to read a message type code.
 		 */
 		conn->inCursor = conn->inStart;
 		if (pqGetc(&id, conn))
 			return;
+
 		/*
-		 * NOTIFY and NOTICE messages can happen in any state besides COPY OUT;
-		 * always process them right away.
+		 * NOTIFY and NOTICE messages can happen in any state besides COPY
+		 * OUT; always process them right away.
 		 */
 		if (id == 'A')
 		{
@@ -317,18 +322,19 @@ parseInput(PGconn *conn)
 		}
 		else
 		{
+
 			/*
-			 * Other messages should only be processed while in BUSY state.
-			 * (In particular, in READY state we hold off further parsing
-			 * until the application collects the current PGresult.)
-			 * If the state is IDLE then we got trouble.
+			 * Other messages should only be processed while in BUSY
+			 * state. (In particular, in READY state we hold off further
+			 * parsing until the application collects the current
+			 * PGresult.) If the state is IDLE then we got trouble.
 			 */
 			if (conn->asyncStatus != PGASYNC_BUSY)
 			{
 				if (conn->asyncStatus == PGASYNC_IDLE)
 				{
 					sprintf(conn->errorMessage,
-							"Backend message type 0x%02x arrived while idle\n",
+					  "Backend message type 0x%02x arrived while idle\n",
 							id);
 					DONOTICE(conn, conn->errorMessage);
 					/* Discard the unexpected message; good idea?? */
@@ -341,18 +347,21 @@ parseInput(PGconn *conn)
 				case 'C':		/* command complete */
 					if (conn->result == NULL)
 						conn->result = makeEmptyPGresult(conn,
-														 PGRES_COMMAND_OK);
+													   PGRES_COMMAND_OK);
 					if (pqGets(conn->result->cmdStatus, CMDSTATUS_LEN, conn))
 						return;
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'E':		/* error return */
-					if (pqGets(conn->asyncErrorMessage,ERROR_MSG_LENGTH,conn))
+					if (pqGets(conn->asyncErrorMessage, ERROR_MSG_LENGTH, conn))
 						return;
 					/* delete any partially constructed result */
 					pqClearAsyncResult(conn);
-					/* we leave result NULL while setting asyncStatus=READY;
-					 * this signals an error condition to PQgetResult.
+
+					/*
+					 * we leave result NULL while setting
+					 * asyncStatus=READY; this signals an error condition
+					 * to PQgetResult.
 					 */
 					conn->asyncStatus = PGASYNC_READY;
 					break;
@@ -366,18 +375,20 @@ parseInput(PGconn *conn)
 					if (id != '\0')
 					{
 						sprintf(conn->errorMessage,
-								"unexpected character %c following 'I'\n", id);
+						  "unexpected character %c following 'I'\n", id);
 						DONOTICE(conn, conn->errorMessage);
 					}
 					if (conn->result == NULL)
 						conn->result = makeEmptyPGresult(conn,
-														 PGRES_EMPTY_QUERY);
+													  PGRES_EMPTY_QUERY);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'K':		/* secret key data from the backend */
-					/* This is expected only during backend startup,
-					 * but it's just as easy to handle it as part of the
-					 * main loop.  Save the data and continue processing.
+
+					/*
+					 * This is expected only during backend startup, but
+					 * it's just as easy to handle it as part of the main
+					 * loop.  Save the data and continue processing.
 					 */
 					if (pqGetInt(&(conn->be_pid), 4, conn))
 						return;
@@ -389,7 +400,8 @@ parseInput(PGconn *conn)
 						return;
 					/* We pretty much ignore this message type... */
 					break;
-				case 'T':		/* row descriptions (start of query results) */
+				case 'T':		/* row descriptions (start of query
+								 * results) */
 					if (conn->result == NULL)
 					{
 						/* First 'T' in a query sequence */
@@ -398,7 +410,9 @@ parseInput(PGconn *conn)
 					}
 					else
 					{
-						/* A new 'T' message is treated as the start of
+
+						/*
+						 * A new 'T' message is treated as the start of
 						 * another PGresult.  (It is not clear that this
 						 * is really possible with the current backend.)
 						 * We stop parsing until the application accepts
@@ -418,7 +432,7 @@ parseInput(PGconn *conn)
 					else
 					{
 						sprintf(conn->errorMessage,
-								"Backend sent D message without prior T\n");
+							 "Backend sent D message without prior T\n");
 						DONOTICE(conn, conn->errorMessage);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
@@ -435,7 +449,7 @@ parseInput(PGconn *conn)
 					else
 					{
 						sprintf(conn->errorMessage,
-								"Backend sent B message without prior T\n");
+							 "Backend sent B message without prior T\n");
 						DONOTICE(conn, conn->errorMessage);
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
@@ -450,8 +464,8 @@ parseInput(PGconn *conn)
 					break;
 				default:
 					sprintf(conn->asyncErrorMessage,
-							"unknown protocol character '%c' read from backend.  "
-							"(The protocol character is the first character the "
+					"unknown protocol character '%c' read from backend.  "
+					"(The protocol character is the first character the "
 							"backend sends in response to a query it receives).\n",
 							id);
 					/* Discard the unexpected message; good idea?? */
@@ -567,7 +581,7 @@ getAnotherTuple(PGconn *conn, int binary)
 	tup = conn->curTuple;
 
 	/* Get the null-value bitmap */
-	nbytes = (nfields + BYTELEN-1) / BYTELEN;
+	nbytes = (nfields + BYTELEN - 1) / BYTELEN;
 	if (nbytes >= MAX_FIELDS)
 	{
 		sprintf(conn->asyncErrorMessage,
@@ -637,7 +651,7 @@ getAnotherTuple(PGconn *conn, int binary)
 
 /*
  * PQisBusy
- *   Return TRUE if PQgetResult would block waiting for input.
+ *	 Return TRUE if PQgetResult would block waiting for input.
  */
 
 int
@@ -656,14 +670,14 @@ PQisBusy(PGconn *conn)
 
 /*
  * PQgetResult
- *    Get the next PGresult produced by a query.
- *    Returns NULL if and only if no query work remains.
+ *	  Get the next PGresult produced by a query.
+ *	  Returns NULL if and only if no query work remains.
  */
 
-PGresult *
+PGresult   *
 PQgetResult(PGconn *conn)
 {
-	PGresult	*res;
+	PGresult   *res;
 
 	if (!conn)
 		return NULL;
@@ -694,16 +708,16 @@ PQgetResult(PGconn *conn)
 			res = NULL;			/* query is complete */
 			break;
 		case PGASYNC_READY:
+
 			/*
 			 * conn->result is the PGresult to return, or possibly NULL
-			 * indicating an error.
-			 * conn->asyncErrorMessage holds the errorMessage to return.
-			 * (We keep it stashed there so that other user calls can't
-			 * overwrite it prematurely.)
+			 * indicating an error. conn->asyncErrorMessage holds the
+			 * errorMessage to return. (We keep it stashed there so that
+			 * other user calls can't overwrite it prematurely.)
 			 */
 			res = conn->result;
-			conn->result = NULL; /* handing over ownership to caller */
-			conn->curTuple = NULL; /* just in case */
+			conn->result = NULL;/* handing over ownership to caller */
+			conn->curTuple = NULL;		/* just in case */
 			if (!res)
 				res = makeEmptyPGresult(conn, PGRES_FATAL_ERROR);
 			strcpy(conn->errorMessage, conn->asyncErrorMessage);
@@ -742,11 +756,13 @@ PQgetResult(PGconn *conn)
 PGresult   *
 PQexec(PGconn *conn, const char *query)
 {
-	PGresult	*result;
-	PGresult	*lastResult;
+	PGresult   *result;
+	PGresult   *lastResult;
 
-	/* Silently discard any prior query result that application didn't eat.
-	 * This is probably poor design, but it's here for backward compatibility.
+	/*
+	 * Silently discard any prior query result that application didn't
+	 * eat. This is probably poor design, but it's here for backward
+	 * compatibility.
 	 */
 	while ((result = PQgetResult(conn)) != NULL)
 	{
@@ -755,19 +771,20 @@ PQexec(PGconn *conn, const char *query)
 		{
 			PQclear(result);
 			sprintf(conn->errorMessage,
-					"PQexec: you gotta get out of a COPY state yourself.\n");
+				"PQexec: you gotta get out of a COPY state yourself.\n");
 			return NULL;
 		}
 		PQclear(result);
 	}
 
 	/* OK to send the message */
-	if (! PQsendQuery(conn, query))
+	if (!PQsendQuery(conn, query))
 		return NULL;
 
-	/* For backwards compatibility, return the last result if there are
-	 * more than one.  We have to stop if we see copy in/out, however.
-	 * We will resume parsing when application calls PQendcopy.
+	/*
+	 * For backwards compatibility, return the last result if there are
+	 * more than one.  We have to stop if we see copy in/out, however. We
+	 * will resume parsing when application calls PQendcopy.
 	 */
 	lastResult = NULL;
 	while ((result = PQgetResult(conn)) != NULL)
@@ -788,7 +805,7 @@ PQexec(PGconn *conn, const char *query)
  * This is possible in several places, so we break it out as a subroutine.
  * Entry: 'N' flag character has already been consumed.
  * Exit: returns 0 if successfully consumed Notice message.
- *       returns EOF if not enough data.
+ *		 returns EOF if not enough data.
  */
 static int
 getNotice(PGconn *conn)
@@ -804,12 +821,12 @@ getNotice(PGconn *conn)
  * This is possible in several places, so we break it out as a subroutine.
  * Entry: 'A' flag character has already been consumed.
  * Exit: returns 0 if successfully consumed Notify message.
- *       returns EOF if not enough data.
+ *		 returns EOF if not enough data.
  */
 static int
 getNotify(PGconn *conn)
 {
-	PGnotify   tempNotify;
+	PGnotify	tempNotify;
 	PGnotify   *newNotify;
 
 	if (pqGetInt(&(tempNotify.be_pid), 4, conn))
@@ -885,14 +902,16 @@ PQgetline(PGconn *conn, char *s, int maxlen)
 		return EOF;
 	}
 
-	/* Since this is a purely synchronous routine, we don't bother to
+	/*
+	 * Since this is a purely synchronous routine, we don't bother to
 	 * maintain conn->inCursor; there is no need to back up.
 	 */
 	while (maxlen > 1)
 	{
 		if (conn->inStart < conn->inEnd)
 		{
-			char c = conn->inBuffer[conn->inStart++];
+			char		c = conn->inBuffer[conn->inStart++];
+
 			if (c == '\n')
 			{
 				result = 0;		/* success exit */
@@ -951,7 +970,7 @@ PQputnbytes(PGconn *conn, const char *buffer, int nbytes)
 int
 PQendcopy(PGconn *conn)
 {
-	PGresult	*result;
+	PGresult   *result;
 
 	if (!conn)
 		return 0;
@@ -960,7 +979,7 @@ PQendcopy(PGconn *conn)
 		conn->asyncStatus != PGASYNC_COPY_OUT)
 	{
 		sprintf(conn->errorMessage,
-				"PQendcopy() -- I don't think there's a copy in progress.");
+			 "PQendcopy() -- I don't think there's a copy in progress.");
 		return 1;
 	}
 
@@ -980,10 +999,10 @@ PQendcopy(PGconn *conn)
 		return 0;
 	}
 
-	/* Trouble.
-	 * The worst case is that we've lost sync with the backend entirely
-	 * due to application screwup of the copy in/out protocol.
-	 * To recover, reset the connection (talk about using a sledgehammer...)
+	/*
+	 * Trouble. The worst case is that we've lost sync with the backend
+	 * entirely due to application screwup of the copy in/out protocol. To
+	 * recover, reset the connection (talk about using a sledgehammer...)
 	 */
 	PQclear(result);
 
@@ -1014,9 +1033,9 @@ PQendcopy(PGconn *conn)
  *		nargs			: # of arguments in args array.
  *
  * RETURNS
- *      PGresult with status = PGRES_COMMAND_OK if successful.
+ *		PGresult with status = PGRES_COMMAND_OK if successful.
  *			*actual_result_len is > 0 if there is a return value, 0 if not.
- *      PGresult with status = PGRES_FATAL_ERROR if backend returns an error.
+ *		PGresult with status = PGRES_FATAL_ERROR if backend returns an error.
  *		NULL on communications failure.  conn->errorMessage will be set.
  * ----------------
  */
@@ -1031,7 +1050,7 @@ PQfn(PGconn *conn,
 	 int nargs)
 {
 	bool		needInput = false;
-	ExecStatusType	status = PGRES_FATAL_ERROR;
+	ExecStatusType status = PGRES_FATAL_ERROR;
 	char		id;
 	int			i;
 
@@ -1051,9 +1070,9 @@ PQfn(PGconn *conn,
 
 	if (pqPuts("F ", conn))		/* function */
 		return NULL;
-	if (pqPutInt(fnid, 4, conn)) /* function id */
+	if (pqPutInt(fnid, 4, conn))/* function id */
 		return NULL;
-	if (pqPutInt(nargs, 4, conn)) /* # of args */
+	if (pqPutInt(nargs, 4, conn))		/* # of args */
 		return NULL;
 
 	for (i = 0; i < nargs; ++i)
@@ -1084,8 +1103,10 @@ PQfn(PGconn *conn,
 				pqReadData(conn) < 0)
 				break;
 		}
-		/* Scan the message.
-		 * If we run out of data, loop around to try again.
+
+		/*
+		 * Scan the message. If we run out of data, loop around to try
+		 * again.
 		 */
 		conn->inCursor = conn->inStart;
 		needInput = true;
@@ -1093,9 +1114,10 @@ PQfn(PGconn *conn,
 		if (pqGetc(&id, conn))
 			continue;
 
-		/* We should see V or E response to the command,
-		 * but might get N and/or A notices first.
-		 * We also need to swallow the final Z before returning.
+		/*
+		 * We should see V or E response to the command, but might get N
+		 * and/or A notices first. We also need to swallow the final Z
+		 * before returning.
 		 */
 		switch (id)
 		{
@@ -1119,7 +1141,7 @@ PQfn(PGconn *conn,
 									   conn))
 							continue;
 					}
-					if (pqGetc(&id, conn)) /* get the last '0' */
+					if (pqGetc(&id, conn))		/* get the last '0' */
 						continue;
 				}
 				if (id == '0')
@@ -1127,7 +1149,8 @@ PQfn(PGconn *conn,
 					/* correctly finished function result message */
 					status = PGRES_COMMAND_OK;
 				}
-				else {
+				else
+				{
 					/* The backend violates the protocol. */
 					sprintf(conn->errorMessage,
 							"FATAL: PQfn: protocol error: id=%x\n", id);
@@ -1249,7 +1272,7 @@ check_tuple_field_number(const char *routineName, PGresult *res,
 char *
 PQfname(PGresult *res, int field_num)
 {
-	if (! check_field_number("PQfname", res, field_num))
+	if (!check_field_number("PQfname", res, field_num))
 		return NULL;
 	if (res->attDescs)
 		return res->attDescs[field_num].name;
@@ -1282,8 +1305,8 @@ PQfnumber(PGresult *res, const char *field_name)
 	}
 	else
 		for (i = 0; field_case[i]; i++)
-			if (isascii((unsigned char)field_case[i]) &&
-			    isupper(field_case[i]))
+			if (isascii((unsigned char) field_case[i]) &&
+				isupper(field_case[i]))
 				field_case[i] = tolower(field_case[i]);
 
 	for (i = 0; i < res->numAttributes; i++)
@@ -1301,7 +1324,7 @@ PQfnumber(PGresult *res, const char *field_name)
 Oid
 PQftype(PGresult *res, int field_num)
 {
-	if (! check_field_number("PQftype", res, field_num))
+	if (!check_field_number("PQftype", res, field_num))
 		return InvalidOid;
 	if (res->attDescs)
 		return res->attDescs[field_num].typid;
@@ -1312,7 +1335,7 @@ PQftype(PGresult *res, int field_num)
 short
 PQfsize(PGresult *res, int field_num)
 {
-	if (! check_field_number("PQfsize", res, field_num))
+	if (!check_field_number("PQfsize", res, field_num))
 		return 0;
 	if (res->attDescs)
 		return res->attDescs[field_num].typlen;
@@ -1323,7 +1346,7 @@ PQfsize(PGresult *res, int field_num)
 int
 PQfmod(PGresult *res, int field_num)
 {
-	if (! check_field_number("PQfmod", res, field_num))
+	if (!check_field_number("PQfmod", res, field_num))
 		return 0;
 	if (res->attDescs)
 		return res->attDescs[field_num].atttypmod;
@@ -1347,8 +1370,11 @@ PQcmdStatus(PGresult *res)
 const char *
 PQoidStatus(PGresult *res)
 {
-	char	*p, *e, *scan;
-	int		slen, olen;
+	char	   *p,
+			   *e,
+			   *scan;
+	int			slen,
+				olen;
 
 	if (!res)
 		return "";
@@ -1356,22 +1382,20 @@ PQoidStatus(PGresult *res)
 	if (strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return "";
 
-	/* The cmdStatus string looks like
-	 *     INSERT oid count\0
-	 * In order to be able to return an ordinary C string without
-	 * damaging the result for PQcmdStatus or PQcmdTuples, we copy
-	 * the oid part of the string to just after the null, so that
-	 * cmdStatus looks like
-	 *     INSERT oid count\0oid\0
-	 *                       ^ our return value points here
-	 * Pretty klugy eh?  This routine should've just returned an Oid value.
+	/*
+	 * The cmdStatus string looks like INSERT oid count\0 In order to be
+	 * able to return an ordinary C string without damaging the result for
+	 * PQcmdStatus or PQcmdTuples, we copy the oid part of the string to
+	 * just after the null, so that cmdStatus looks like INSERT oid
+	 * count\0oid\0 ^ our return value points here Pretty klugy eh?  This
+	 * routine should've just returned an Oid value.
 	 */
 
 	slen = strlen(res->cmdStatus);
-	p = res->cmdStatus + 7;			/* where oid is now */
-	e = res->cmdStatus + slen + 1; 	/* where to put the oid string */
+	p = res->cmdStatus + 7;		/* where oid is now */
+	e = res->cmdStatus + slen + 1;		/* where to put the oid string */
 
-	for (scan = p; *scan && *scan != ' '; )
+	for (scan = p; *scan && *scan != ' ';)
 		scan++;
 	olen = scan - p;
 	if (slen + olen + 2 > sizeof(res->cmdStatus))
@@ -1439,7 +1463,7 @@ PQcmdTuples(PGresult *res)
 char *
 PQgetvalue(PGresult *res, int tup_num, int field_num)
 {
-	if (! check_tuple_field_number("PQgetvalue", res, tup_num, field_num))
+	if (!check_tuple_field_number("PQgetvalue", res, tup_num, field_num))
 		return NULL;
 	return res->tuples[tup_num][field_num].value;
 }
@@ -1452,7 +1476,7 @@ PQgetvalue(PGresult *res, int tup_num, int field_num)
 int
 PQgetlength(PGresult *res, int tup_num, int field_num)
 {
-	if (! check_tuple_field_number("PQgetlength", res, tup_num, field_num))
+	if (!check_tuple_field_number("PQgetlength", res, tup_num, field_num))
 		return 0;
 	if (res->tuples[tup_num][field_num].len != NULL_LEN)
 		return res->tuples[tup_num][field_num].len;
@@ -1466,7 +1490,7 @@ PQgetlength(PGresult *res, int tup_num, int field_num)
 int
 PQgetisnull(PGresult *res, int tup_num, int field_num)
 {
-	if (! check_tuple_field_number("PQgetisnull", res, tup_num, field_num))
+	if (!check_tuple_field_number("PQgetisnull", res, tup_num, field_num))
 		return 1;				/* pretend it is null */
 	if (res->tuples[tup_num][field_num].len == NULL_LEN)
 		return 1;

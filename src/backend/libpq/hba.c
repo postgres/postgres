@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.34 1998/09/01 03:22:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.35 1998/09/01 04:28:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,7 +161,7 @@ process_hba_record(FILE *file, SockAddr *raddr, const char *user,
 /*---------------------------------------------------------------------------
   Process the non-comment record in the config file that is next on the file.
   See if it applies to a connection to a host with IP address "*raddr"
-  to a database named "*database".  If so, return *matches_p true
+  to a database named "*database".	If so, return *matches_p true
   and *userauth_p and *auth_arg as the values from the entry.
   If not, leave *matches_p as it was.  If the record has a syntax error,
   return *error_p true, after issuing a message to stderr.	If no error,
@@ -211,7 +211,7 @@ process_hba_record(FILE *file, SockAddr *raddr, const char *user,
 		 */
 
 		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0 &&
-		    (strcmp(db, "sameuser") != 0 || strcmp(database, user) != 0)) ||
+		 (strcmp(db, "sameuser") != 0 || strcmp(database, user) != 0)) ||
 			raddr->sa.sa_family != AF_UNIX)
 			return;
 	}
@@ -271,7 +271,7 @@ process_hba_record(FILE *file, SockAddr *raddr, const char *user,
 		 */
 
 		if ((strcmp(db, database) != 0 && strcmp(db, "all") != 0 &&
-		    (strcmp(db, "sameuser") != 0 || strcmp(database, user) != 0)) ||
+		 (strcmp(db, "sameuser") != 0 || strcmp(database, user) != 0)) ||
 			raddr->sa.sa_family != AF_INET ||
 			((file_ip_addr.s_addr ^ raddr->in.sin_addr.s_addr) & mask.s_addr) != 0x0000)
 			return;
@@ -679,7 +679,7 @@ parse_map_record(FILE *file,
 				return;
 			}
 		}
-		sprintf(PQerrormsg,"Incomplete line in pg_ident: %s",file_map);
+		sprintf(PQerrormsg, "Incomplete line in pg_ident: %s", file_map);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 	}

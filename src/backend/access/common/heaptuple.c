@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.40 1998/09/01 03:20:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.41 1998/09/01 04:26:39 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -935,7 +935,8 @@ heap_modifytuple(HeapTuple tuple,
 			(char *) &tuple->t_oid,
 			((char *) &tuple->t_hoff - (char *) &tuple->t_oid));		/* XXX */
 	newTuple->t_infomask = infomask;
-	newTuple->t_natts = numberOfAttributes;		/* fix t_natts just in case */
+	newTuple->t_natts = numberOfAttributes;		/* fix t_natts just in
+												 * case */
 	return newTuple;
 }
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rusagestub.h,v 1.2 1998/02/26 04:39:50 momjian Exp $
+ * $Id: rusagestub.h,v 1.3 1998/09/01 04:34:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,4 @@ struct rusage
 
 extern int	getrusage(int who, struct rusage * rusage);
 
-#endif							/* RUSAGESTUB_H */
+#endif	 /* RUSAGESTUB_H */

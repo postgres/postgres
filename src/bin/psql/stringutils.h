@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: stringutils.h,v 1.6 1997/09/08 02:33:46 momjian Exp $
+ * $Id: stringutils.h,v 1.7 1998/09/01 04:33:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,4 +42,4 @@ extern void testStringUtils();
 #define NULL 0
 #endif
 
-#endif							/* STRINGUTILS_H */
+#endif	 /* STRINGUTILS_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.11 1998/09/01 03:20:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.12 1998/09/01 04:26:49 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -136,11 +136,11 @@ hashoid(Oid key)
 uint32
 hashoid8(Oid *key)
 {
-	int i;
-	uint32 result = 0;
+	int			i;
+	uint32		result = 0;
 
-	for (i=0; i < 8; i++)
-		result = result ^ (~(uint32)key[i]);
+	for (i = 0; i < 8; i++)
+		result = result ^ (~(uint32) key[i]);
 	return result;
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.157 1998/08/29 04:05:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.158 1998/09/01 04:33:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,15 +70,18 @@
 #define pclose(x) _pclose(x)
 #define open(x,y,z) _open(x,y,z)
 #define strcasecmp(x,y) stricmp(x,y)
-#define pqsignal(x,y) 
+#define pqsignal(x,y)
 #define MAXPATHLEN MAX_PATH
 #define R_OK 0
 
 /* getopt is not in the standard includes on Win32 */
 extern char *optarg;
-extern int optind, opterr, optopt;
-int  getopt (int, char * const [], const char *);
-char *__progname = "psql";
+extern int	optind,
+			opterr,
+			optopt;
+int			getopt(int, char *const[], const char *);
+char	   *__progname = "psql";
+
 #endif
 
 /* This prompt string is assumed to have at least 3 characters by code in MainLoop().
@@ -146,11 +149,9 @@ struct winsize
 static void usage(char *progname);
 static void slashUsage();
 static bool handleCopyOut(PGresult *res, FILE *copystream);
-static bool
-handleCopyIn(PGresult *res, const bool mustprompt,
+static bool handleCopyIn(PGresult *res, const bool mustprompt,
 			 FILE *copystream);
-static int
-tableList(PsqlSettings *pset, bool deep_tablelist,
+static int tableList(PsqlSettings *pset, bool deep_tablelist,
 		  char info_type, bool system_tables);
 static int	tableDesc(PsqlSettings *pset, char *table, FILE *fout);
 static int	objectDescription(PsqlSettings *pset, char *object);
@@ -161,11 +162,10 @@ static char *gets_noreadline(char *prompt, FILE *source);
 static char *gets_readline(char *prompt, FILE *source);
 static char *gets_fromFile(char *prompt, FILE *source);
 static int	listAllDbs(PsqlSettings *pset);
-static void
-SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
+static void SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 		  const bool copy_in, const bool copy_out, FILE *copystream);
 static int
-HandleSlashCmds(PsqlSettings *pset,	char *line, char *query);
+			HandleSlashCmds(PsqlSettings *pset, char *line, char *query);
 static int	MainLoop(PsqlSettings *pset, char *query, FILE *source);
 static FILE *setFout(PsqlSettings *pset, char *fname);
 
@@ -312,18 +312,18 @@ PSQLexec(PsqlSettings *pset, char *query)
  * a cancel request to the backend.
  * Note that sending the cancel directly from the signal handler
  * is safe only because PQrequestCancel is carefully written to
- * make it so.  We have to be very careful what else we do in the
+ * make it so.	We have to be very careful what else we do in the
  * signal handler.
  * Writing on stderr is potentially dangerous, if the signal interrupted
- * some stdio operation on stderr.  On Unix we can avoid trouble by using
+ * some stdio operation on stderr.	On Unix we can avoid trouble by using
  * write() instead; on Windows that's probably not workable, but we can
  * at least avoid trusting printf by using the more primitive fputs.
  */
 
-static PGconn * cancelConn = NULL; /* connection to try cancel on */
+static PGconn *cancelConn = NULL;		/* connection to try cancel on */
 
 static void
-safe_write_stderr (const char * s)
+safe_write_stderr(const char *s)
 {
 #ifdef WIN32
 	fputs(s, stderr);
@@ -333,15 +333,13 @@ safe_write_stderr (const char * s)
 }
 
 static void
-handle_sigint (SIGNAL_ARGS)
+handle_sigint(SIGNAL_ARGS)
 {
 	if (cancelConn == NULL)
 		exit(1);				/* accept signal if no connection */
 	/* Try to send cancel request */
 	if (PQrequestCancel(cancelConn))
-	{
 		safe_write_stderr("\nCANCEL request sent\n");
-	}
 	else
 	{
 		safe_write_stderr("\nCannot send cancel request:\n");
@@ -627,7 +625,8 @@ int
 tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 {
 	char		descbuf[512];
-	int			nColumns, nIndices;
+	int			nColumns,
+				nIndices;
 	char	   *rtype;
 	char	   *rnotnull;
 	char	   *rhasdef;
@@ -667,12 +666,12 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	else
 	{
 #ifdef MULTIBYTE
-		for (i = 0; table[i]; i += PQmblen(table+i))
+		for (i = 0; table[i]; i += PQmblen(table + i))
 #else
 		for (i = 0; table[i]; i++)
 #endif
-			if (isascii((unsigned char)table[i]) &&
-			    isupper(table[i]))
+			if (isascii((unsigned char) table[i]) &&
+				isupper(table[i]))
 				table[i] = tolower(table[i]);
 	}
 
@@ -797,21 +796,22 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 			nIndices = PQntuples(res);
 			if (nIndices > 0)
 			{
+
 				/*
 				 * Display the information
 				 */
 
 				if (nIndices == 1)
 					fprintf(fout, "Index:    ");
-				else	
+				else
 					fprintf(fout, "Indices:  ");
-					
+
 				/* next, print out the instances */
 				for (i = 0; i < PQntuples(res); i++)
-				if (i == 0)
-					fprintf(fout, "%s\n", PQgetvalue(res, i, 0));
-				else
-					fprintf(fout, "          %s\n", PQgetvalue(res, i, 0));
+					if (i == 0)
+						fprintf(fout, "%s\n", PQgetvalue(res, i, 0));
+					else
+						fprintf(fout, "          %s\n", PQgetvalue(res, i, 0));
 			}
 			PQclear(res);
 		}
@@ -844,7 +844,7 @@ objectDescription(PsqlSettings *pset, char *object)
 	PGresult   *res;
 	int			i;
 	bool		success;
-	
+
 	/* Build the query */
 
 	while (isspace(*object))
@@ -863,7 +863,7 @@ objectDescription(PsqlSettings *pset, char *object)
 	else
 	{
 #ifdef MULTIBYTE
-		for (i = 0; object[i]; i += PQmblen(object+i))
+		for (i = 0; object[i]; i += PQmblen(object + i))
 #else
 		for (i = 0; object[i]; i++)
 #endif
@@ -1139,7 +1139,7 @@ SendQuery(bool *success_p, PsqlSettings *pset, const char *query,
 					*success_p = handleCopyIn(results, false, copystream);
 				else
 					*success_p = handleCopyIn(results,
-											  !pset->quiet && !pset->notty,
+											!pset->quiet && !pset->notty,
 											  stdin);
 				break;
 			case PGRES_NONFATAL_ERROR:
@@ -1437,8 +1437,9 @@ do_connect(const char *new_dbname,
 		else
 			userparam = PQuser(olddb);
 
-		/* libpq doesn't provide an accessor function for the password,
-		 * so we cheat here.
+		/*
+		 * libpq doesn't provide an accessor function for the password, so
+		 * we cheat here.
 		 */
 		pwparam = olddb->pgpass;
 
@@ -1464,7 +1465,8 @@ do_connect(const char *new_dbname,
 		}
 		else
 		{
-			cancelConn = pset->db; /* redirect sigint's loving attentions */
+			cancelConn = pset->db;		/* redirect sigint's loving
+										 * attentions */
 			PQfinish(olddb);
 			free(pset->prompt);
 			pset->prompt = malloc(strlen(PQdb(pset->db)) + 10);
@@ -1495,7 +1497,7 @@ do_edit(const char *filename_arg, char *query, int *status_p)
 #ifndef WIN32
 		sprintf(tmp, "/tmp/psql.%ld.%ld", (long) geteuid(), (long) getpid());
 #else
-		GetTempFileName(".","psql",0,tmp);
+		GetTempFileName(".", "psql", 0, tmp);
 #endif
 		fname = tmp;
 		unlink(tmp);
@@ -1770,7 +1772,7 @@ HandleSlashCmds(PsqlSettings *pset,
 		case 'c':
 			{
 				if (strncmp(cmd, "copy ", strlen("copy ")) == 0 ||
-				    strncmp(cmd, "copy	", strlen("copy	")) == 0)
+					strncmp(cmd, "copy	", strlen("copy	")) == 0)
 					do_copy(optarg2, pset);
 				else if (strcmp(cmd, "copy") == 0)
 				{
@@ -1820,9 +1822,10 @@ HandleSlashCmds(PsqlSettings *pset,
 			break;
 
 		case 'd':				/* \d describe database information */
+
 			/*
-			 * if the optarg2 name is surrounded by double-quotes, then don't
-			 * convert case
+			 * if the optarg2 name is surrounded by double-quotes, then
+			 * don't convert case
 			 */
 			if (optarg2)
 			{
@@ -1834,9 +1837,10 @@ HandleSlashCmds(PsqlSettings *pset,
 				}
 				else
 				{
-					int i;
+					int			i;
+
 #ifdef MULTIBYTE
-					for (i = 0; optarg2[i]; i += PQmblen(optarg2+i))
+					for (i = 0; optarg2[i]; i += PQmblen(optarg2 + i))
 #else
 					for (i = 0; optarg2[i]; i++)
 #endif
@@ -1844,7 +1848,7 @@ HandleSlashCmds(PsqlSettings *pset,
 							optarg2[i] = tolower(optarg2[i]);
 				}
 			}
-			
+
 #ifdef TIOCGWINSZ
 			if (pset->notty == 0 &&
 				(ioctl(fileno(stdout), TIOCGWINSZ, &screen_size) == -1 ||
@@ -1859,7 +1863,7 @@ HandleSlashCmds(PsqlSettings *pset,
 #endif
 			if (strncmp(cmd, "da", 2) == 0)
 			{
-				char descbuf[4096];
+				char		descbuf[4096];
 
 				/* aggregates */
 				descbuf[0] = '\0';
@@ -1870,9 +1874,9 @@ HandleSlashCmds(PsqlSettings *pset,
 				strcat(descbuf, "WHERE	a.aggbasetype = t.oid ");
 				if (optarg2)
 				{
-					strcat(descbuf, 	"AND a.aggname ~ '^");
-					strcat(descbuf, 	optarg2);
-					strcat(descbuf, 	"' ");
+					strcat(descbuf, "AND a.aggname ~ '^");
+					strcat(descbuf, optarg2);
+					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "UNION ");
 				strcat(descbuf, "SELECT	a.aggname AS aggname, ");
@@ -1882,9 +1886,9 @@ HandleSlashCmds(PsqlSettings *pset,
 				strcat(descbuf, "WHERE	a.aggbasetype = 0 ");
 				if (optarg2)
 				{
-					strcat(descbuf, 	"AND a.aggname ~ '^");
-					strcat(descbuf, 	optarg2);
-					strcat(descbuf, 	"' ");
+					strcat(descbuf, "AND a.aggname ~ '^");
+					strcat(descbuf, optarg2);
+					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "ORDER BY aggname, type;");
 				SendQuery(&success, pset, descbuf, false, false, NULL);
@@ -1894,7 +1898,8 @@ HandleSlashCmds(PsqlSettings *pset,
 				objectDescription(pset, optarg + 1);
 			else if (strncmp(cmd, "df", 2) == 0)
 			{
-				char descbuf[4096];
+				char		descbuf[4096];
+
 				/* functions/procedures */
 
 				/*
@@ -1918,9 +1923,9 @@ HandleSlashCmds(PsqlSettings *pset,
 				strcat(descbuf, "(pronargs = 0 or oid8types(p.proargtypes) != '') ");
 				if (optarg2)
 				{
-					strcat(descbuf, 	"AND p.proname ~ '^");
-					strcat(descbuf, 	optarg2);
-					strcat(descbuf, 	"' ");
+					strcat(descbuf, "AND p.proname ~ '^");
+					strcat(descbuf, optarg2);
+					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "ORDER BY result, function, arguments;");
 				SendQuery(&success, pset, descbuf, false, false, NULL);
@@ -1930,7 +1935,8 @@ HandleSlashCmds(PsqlSettings *pset,
 				tableList(pset, false, 'i', false);
 			else if (strncmp(cmd, "do", 2) == 0)
 			{
-				char descbuf[4096];
+				char		descbuf[4096];
+
 				/* operators */
 				descbuf[0] = '\0';
 				strcat(descbuf, "SELECT	o.oprname AS op, ");
@@ -1951,9 +1957,9 @@ HandleSlashCmds(PsqlSettings *pset,
 				strcat(descbuf, "		o.oprright = t2.oid ");
 				if (optarg2)
 				{
-					strcat(descbuf, 	"AND o.oprname ~ '^");
-					strcat(descbuf, 	optarg2);
-					strcat(descbuf, 	"' ");
+					strcat(descbuf, "AND o.oprname ~ '^");
+					strcat(descbuf, optarg2);
+					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "UNION ");
 				strcat(descbuf, "SELECT	o.oprname as op, ");
@@ -1971,9 +1977,9 @@ HandleSlashCmds(PsqlSettings *pset,
 				strcat(descbuf, "		o.oprright = t1.oid ");
 				if (optarg2)
 				{
-					strcat(descbuf, 	"AND o.oprname ~ '^");
-					strcat(descbuf, 	optarg2);
-					strcat(descbuf, 	"' ");
+					strcat(descbuf, "AND o.oprname ~ '^");
+					strcat(descbuf, optarg2);
+					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "UNION ");
 				strcat(descbuf, "SELECT	o.oprname  as op, ");
@@ -1991,9 +1997,9 @@ HandleSlashCmds(PsqlSettings *pset,
 				strcat(descbuf, "		o.oprleft = t1.oid ");
 				if (optarg2)
 				{
-					strcat(descbuf, 	"AND o.oprname ~ '^");
-					strcat(descbuf, 	optarg2);
-					strcat(descbuf, 	"' ");
+					strcat(descbuf, "AND o.oprname ~ '^");
+					strcat(descbuf, optarg2);
+					strcat(descbuf, "' ");
 				}
 				strcat(descbuf, "ORDER BY op, left_arg, right_arg, result;");
 				SendQuery(&success, pset, descbuf, false, false, NULL);
@@ -2008,24 +2014,24 @@ HandleSlashCmds(PsqlSettings *pset,
 				/* only tables */
 				tableList(pset, false, 't', false);
 			else if (strncmp(cmd, "dT", 2) == 0)
-		    {
-					char descbuf[4096];
-	
-					/* types */
-					descbuf[0] = '\0';
-					strcat(descbuf, "SELECT	typname AS type, ");
-					strcat(descbuf, "		obj_description(oid) as description ");
-					strcat(descbuf, "FROM	pg_type ");
-					strcat(descbuf, "WHERE	typrelid = 0 AND ");
-					strcat(descbuf, "		typname !~ '^_.*' ");
-					strcat(descbuf, "ORDER BY type;");
-					if (optarg2)
-					{
-						strcat(descbuf, 	"AND typname ~ '^");
-						strcat(descbuf, 	optarg2);
-						strcat(descbuf, 	"' ");
-					}
-					SendQuery(&success, pset, descbuf, false, false, NULL);
+			{
+				char		descbuf[4096];
+
+				/* types */
+				descbuf[0] = '\0';
+				strcat(descbuf, "SELECT	typname AS type, ");
+				strcat(descbuf, "		obj_description(oid) as description ");
+				strcat(descbuf, "FROM	pg_type ");
+				strcat(descbuf, "WHERE	typrelid = 0 AND ");
+				strcat(descbuf, "		typname !~ '^_.*' ");
+				strcat(descbuf, "ORDER BY type;");
+				if (optarg2)
+				{
+					strcat(descbuf, "AND typname ~ '^");
+					strcat(descbuf, optarg2);
+					strcat(descbuf, "' ");
+				}
+				SendQuery(&success, pset, descbuf, false, false, NULL);
 			}
 			else if (!optarg)
 				/* show tables, sequences and indices */
@@ -2101,9 +2107,9 @@ HandleSlashCmds(PsqlSettings *pset,
 				if (optarg && !*optarg && strlen(cmd) > 1)
 				{
 					int			i;
-					
+
 					/* line and cmd match until the first blank space */
-					for (i=2; isspace(line[i]); i++)
+					for (i = 2; isspace(line[i]); i++)
 						;
 					fs = cmd + i - 1;
 				}
@@ -2291,15 +2297,15 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 	int			successResult = 1;
 	int			slashCmdStatus = CMD_SEND;
 
-	/*--------------------------------------------------------------  
+	/*--------------------------------------------------------------
 	 * slashCmdStatus can be:
-	 * CMD_UNKNOWN	  	- send currently constructed query to backend
-	 * 					  (i.e. we got a \g)
-	 * CMD_SEND		  	- send currently constructed query to backend
+	 * CMD_UNKNOWN		- send currently constructed query to backend
 	 *					  (i.e. we got a \g)
-	 * CMD_SKIP_LINE  	- skip processing of this line, continue building
-	 * 					  up query
-	 * CMD_TERMINATE  	- terminate processing of this query entirely
+	 * CMD_SEND			- send currently constructed query to backend
+	 *					  (i.e. we got a \g)
+	 * CMD_SKIP_LINE	- skip processing of this line, continue building
+	 *					  up query
+	 * CMD_TERMINATE	- terminate processing of this query entirely
 	 * CMD_NEWEDIT		- new query supplied by edit
 	 *---------------------------------------------------------------
 	 */
@@ -2311,7 +2317,7 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 
 	/* We've reached the end of our command input. */
 	bool		success;
-	char		in_quote;	/* == 0 for no in_quote */
+	char		in_quote;		/* == 0 for no in_quote */
 	bool		was_bslash;		/* backslash */
 	int			paren_level;
 	char	   *query_start;
@@ -2453,12 +2459,13 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 			int			i;
 
 #ifdef MULTIBYTE
-			int mblen = 1;
+			int			mblen = 1;
+
 #endif
 
 			was_bslash = false;
 #ifdef MULTIBYTE
-			for (i = 0; i < len; mblen=PQmblen(line+i), i+=mblen)
+			for (i = 0; i < len; mblen = PQmblen(line + i), i += mblen)
 #else
 			for (i = 0; i < len; i++)
 #endif
@@ -2486,8 +2493,8 @@ MainLoop(PsqlSettings *pset, char *query, FILE *source)
 				}
 
 				if (querySent &&
-				    isascii((unsigned char)(line[i])) &&
-				    !isspace(line[i]))
+					isascii((unsigned char) (line[i])) &&
+					!isspace(line[i]))
 				{
 					query[0] = '\0';
 					querySent = false;
@@ -2682,14 +2689,16 @@ main(int argc, char **argv)
 
 #ifdef WIN32
 	{
-		WSADATA wsaData;
-		if (WSAStartup(MAKEWORD(1,1),&wsaData)) {
-			fprintf(stderr,"Failed to start winsock: %i\n",WSAGetLastError());
+		WSADATA		wsaData;
+
+		if (WSAStartup(MAKEWORD(1, 1), &wsaData))
+		{
+			fprintf(stderr, "Failed to start winsock: %i\n", WSAGetLastError());
 			exit(1);
 		}
 	}
 #endif
-	
+
 	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
 	settings.opt.header = 1;
@@ -2704,7 +2713,7 @@ main(int argc, char **argv)
 	else
 	{
 		/* Interactive defaults */
-		pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
+		pqsignal(SIGINT, handle_sigint);		/* control-C => cancel */
 #ifdef USE_READLINE
 		settings.useReadline = 1;
 #endif
@@ -2723,7 +2732,7 @@ main(int argc, char **argv)
 				settings.opt.align = 0;
 				break;
 			case 'a':
-#if 0				/* this no longer does anything */
+#if 0							/* this no longer does anything */
 				fe_setauthsvc(optarg, errbuf);
 #endif
 				break;
@@ -2941,7 +2950,7 @@ handleCopyOut(PGresult *res, FILE *copystream)
 		}
 	}
 	fflush(copystream);
-	return ! PQendcopy(res->conn);
+	return !PQendcopy(res->conn);
 }
 
 
@@ -2997,7 +3006,7 @@ handleCopyIn(PGresult *res, const bool mustprompt, FILE *copystream)
 		}
 		PQputline(res->conn, "\n");
 	}
-	return ! PQendcopy(res->conn);
+	return !PQendcopy(res->conn);
 }
 
 
@@ -3047,7 +3056,7 @@ setFout(PsqlSettings *pset, char *fname)
 static void
 prompt_for_password(char *username, char *password)
 {
-	char buf[512];
+	char		buf[512];
 	int			length;
 
 #ifdef HAVE_TERMIOS_H

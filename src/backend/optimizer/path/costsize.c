@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.24 1998/09/01 03:23:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.25 1998/09/01 04:29:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,7 +360,7 @@ cost_hashjoin(Cost outercost,
  * Returns the size.
  */
 int
-compute_rel_size(RelOptInfo *rel)
+compute_rel_size(RelOptInfo * rel)
 {
 	Cost		temp;
 	int			temp1;
@@ -383,7 +383,7 @@ compute_rel_size(RelOptInfo *rel)
  * Returns the width of the tuple as a fixnum.
  */
 int
-compute_rel_width(RelOptInfo *rel)
+compute_rel_width(RelOptInfo * rel)
 {
 	return compute_targetlist_width(get_actual_tlist(rel->targetlist));
 }

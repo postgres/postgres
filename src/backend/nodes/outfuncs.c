@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.45 1998/09/01 03:22:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.46 1998/09/01 04:29:07 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -129,6 +129,7 @@ _outFuncCall(StringInfo str, FuncCall *node)
 	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
 }
+
 #endif
 
 static void
@@ -660,7 +661,8 @@ _outResdom(StringInfo str, Resdom *node)
 	sprintf(buf, " :restypmod %d ", node->restypmod);
 	appendStringInfo(str, buf);
 	appendStringInfo(str, " :resname ");
-	sprintf(buf,"\"%s\"", node->resname); /* fix for SELECT col AS "my name" */
+	sprintf(buf, "\"%s\"", node->resname);		/* fix for SELECT col AS
+												 * "my name" */
 	appendStringInfo(str, buf);
 	sprintf(buf, " :reskey %d ", node->reskey);
 	appendStringInfo(str, buf);
@@ -990,7 +992,7 @@ _outEState(StringInfo str, EState *node)
  *	Stuff from relation.h
  */
 static void
-_outRelOptInfo(StringInfo str, RelOptInfo *node)
+_outRelOptInfo(StringInfo str, RelOptInfo * node)
 {
 	char		buf[500];
 
@@ -1356,7 +1358,7 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
  *	ClauseInfo is a subclass of Node.
  */
 static void
-_outClauseInfo(StringInfo str, ClauseInfo *node)
+_outClauseInfo(StringInfo str, ClauseInfo * node)
 {
 	char		buf[500];
 
@@ -1424,7 +1426,7 @@ _outHInfo(StringInfo str, HInfo *node)
  *	JoinInfo is a subclass of Node.
  */
 static void
-_outJoinInfo(StringInfo str, JoinInfo *node)
+_outJoinInfo(StringInfo str, JoinInfo * node)
 {
 	appendStringInfo(str, " JINFO ");
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.9 1998/02/26 04:40:14 momjian Exp $
+ * $Id: htup.h,v 1.10 1998/09/01 04:34:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,4 +106,4 @@ extern long heap_sysoffset[];
 #define HeapTupleAllFixed(tuple) \
 		(!(((HeapTuple) (tuple))->t_infomask & HEAP_HASVARLENA))
 
-#endif							/* HTUP_H */
+#endif	 /* HTUP_H */

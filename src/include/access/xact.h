@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.14 1998/07/27 19:38:30 vadim Exp $
+ * $Id: xact.h,v 1.15 1998/09/01 04:34:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,21 +22,21 @@
  */
 typedef struct TransactionStateData
 {
-	TransactionId		transactionIdData;
-	CommandId			commandId;
-	CommandId			scanCommandId;
-	AbsoluteTime		startTime;
-	int					state;
-	int					blockState;
+	TransactionId transactionIdData;
+	CommandId	commandId;
+	CommandId	scanCommandId;
+	AbsoluteTime startTime;
+	int			state;
+	int			blockState;
 } TransactionStateData;
 
 /*
  * Xact isolation levels
  */
-#define	XACT_DIRTY_READ			0		/* not implemented */
-#define	XACT_READ_COMMITTED		1
-#define	XACT_REPEATABLE_READ	2		/* not implemented */
-#define	XACT_SERIALIZED			3
+#define XACT_DIRTY_READ			0		/* not implemented */
+#define XACT_READ_COMMITTED		1
+#define XACT_REPEATABLE_READ	2		/* not implemented */
+#define XACT_SERIALIZED			3
 
 /* ----------------
  *		transaction states
@@ -117,4 +117,4 @@ extern bool xideq(TransactionId xid1, TransactionId xid2);
 extern bool TransactionIdIsLessThan(TransactionId id1, TransactionId id2);
 extern void TransactionIdAdd(TransactionId *xid, int value);
 
-#endif							/* XACT_H */
+#endif	 /* XACT_H */

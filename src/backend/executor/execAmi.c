@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.24 1998/07/27 19:37:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.25 1998/09/01 04:28:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,7 @@
 #include "access/heapam.h"
 #include "catalog/heap.h"
 
-static Pointer
-ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
+static Pointer ExecBeginScan(Relation relation, int nkeys, ScanKey skeys,
 			  bool isindex, ScanDirection dir, Snapshot snapshot);
 static Relation ExecOpenR(Oid relationOid, bool isindex);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.19 1998/06/15 18:40:02 momjian Exp $
+ * $Id: bufpage.h,v 1.20 1998/09/01 04:38:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -310,8 +310,7 @@ typedef enum
  */
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
-extern OffsetNumber
-PageAddItem(Page page, Item item, Size size,
+extern OffsetNumber PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, ItemIdFlags flags);
 extern Page PageGetTempPage(Page page, Size specialSize);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
@@ -321,4 +320,4 @@ extern void PageManagerModeSet(PageManagerMode mode);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 
 
-#endif							/* BUFPAGE_H */
+#endif	 /* BUFPAGE_H */

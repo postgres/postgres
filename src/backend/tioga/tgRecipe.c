@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.9 1998/06/15 19:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.10 1998/09/01 04:32:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,7 @@ static TgRecipe *fillTgRecipe(PortalBuffer *pbuf, int tupno);
 static void lookupEdges(TgRecipe * r, char *name);
 static void fillAllNodes(TgRecipe * r, char *name);
 static void fillAllElements(TgRecipe * r, char *name);
-static TgNode *
-connectTee(TgRecipe * r, TgNodePtr fromNode, TgNodePtr toNode,
+static TgNode *connectTee(TgRecipe * r, TgNodePtr fromNode, TgNodePtr toNode,
 		   int fromPort, int toPort);
 
 /*

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.9 1998/08/25 21:31:20 scrappy Exp $
+ * $Id: sinvaladt.h,v 1.10 1998/09/01 04:38:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,9 +125,8 @@ extern int	SISegmentInit(bool killExistingSegment, IPCKey key);
 extern bool SISetDataEntry(SISeg *segP, SharedInvalidData *data);
 extern void SISetProcStateInvalid(SISeg *segP);
 extern bool SIDelDataEntry(SISeg *segP);
-extern void
-SIReadEntryData(SISeg *segP, int backendId,
+extern void SIReadEntryData(SISeg *segP, int backendId,
 				void (*invalFunction) (), void (*resetFunction) ());
 extern void SIDelExpiredDataEntries(SISeg *segP);
 
-#endif							/* SINVALADT_H */
+#endif	 /* SINVALADT_H */

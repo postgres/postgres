@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.17 1998/09/01 03:26:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.18 1998/09/01 04:32:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,8 +112,8 @@ SetDefine(char *querystr, char *typename)
 		RelationSetLockForWrite(procrel);
 
 		tup = SearchSysCacheTuple(PROOID,
-									ObjectIdGetDatum(setoid),
-									0, 0, 0);
+								  ObjectIdGetDatum(setoid),
+								  0, 0, 0);
 		if (HeapTupleIsValid(tup))
 		{
 			newtup = heap_modifytuple(tup,

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.10 1997/09/08 02:39:00 momjian Exp $
+ * $Id: fd.h,v 1.11 1998/09/01 04:38:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,4 +77,4 @@ extern void FreeFile(FILE *);
 extern void closeAllVfds(void);
 extern int	pg_fsync(int fd);
 
-#endif							/* FD_H */
+#endif	 /* FD_H */

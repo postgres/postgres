@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itempos.h,v 1.5 1997/09/08 02:39:02 momjian Exp $
+ * $Id: itempos.h,v 1.6 1998/09/01 04:38:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,4 +41,4 @@ typedef ItemSubpositionData *ItemSubposition;
 #define PSKIP(OBJP, LEN)\
 		{ (OBJP)->op_cp += (LEN); (OBJP)->op_len -= (LEN); }
 
-#endif							/* ITEMPOS_H */
+#endif	 /* ITEMPOS_H */

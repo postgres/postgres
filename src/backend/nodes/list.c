@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.14 1998/09/01 03:22:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.15 1998/09/01 04:29:05 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -105,7 +105,7 @@ nconc(List *l1, List *l2)
 		;
 
 	lnext(temp) = l2;
-	return l1;				/* list1 is now list1+list2  */
+	return l1;					/* list1 is now list1+list2  */
 }
 
 
@@ -305,10 +305,10 @@ LispUnion(List *l1, List *l2)
 	List	   *j = NIL;
 
 	if (l1 == NIL)
-		return l2;			/* XXX - should be copy of l2 */
+		return l2;				/* XXX - should be copy of l2 */
 
 	if (l2 == NIL)
-		return l1;			/* XXX - should be copy of l1 */
+		return l1;				/* XXX - should be copy of l1 */
 
 	foreach(i, l1)
 	{
@@ -335,10 +335,10 @@ LispUnioni(List *l1, List *l2)
 	List	   *j = NIL;
 
 	if (l1 == NIL)
-		return l2;			/* XXX - should be copy of l2 */
+		return l2;				/* XXX - should be copy of l2 */
 
 	if (l2 == NIL)
-		return l1;			/* XXX - should be copy of l1 */
+		return l1;				/* XXX - should be copy of l1 */
 
 	foreach(i, l1)
 	{

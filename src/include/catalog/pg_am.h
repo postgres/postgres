@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.8 1998/08/19 02:03:48 momjian Exp $
+ * $Id: pg_am.h,v 1.9 1998/09/01 04:34:47 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -109,4 +109,4 @@ DESCR("");
 DATA(insert OID = 783 (  gist PGUID "o" 100 7 gistgettuple gistinsert gistdelete - - - - gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos - - gistbuild - - ));
 DESCR("");
 
-#endif							/* PG_AM_H */
+#endif	 /* PG_AM_H */

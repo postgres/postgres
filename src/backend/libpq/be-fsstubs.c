@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.25 1998/09/01 03:22:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.26 1998/09/01 04:28:46 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -370,22 +370,23 @@ lo_export(Oid lobjId, text *filename)
 
 /*
  * lo_commit -
- *       prepares large objects for transaction commit [PA, 7/17/98]
+ *		 prepares large objects for transaction commit [PA, 7/17/98]
  */
-void 
+void
 _lo_commit(void)
 {
-	int i;
+	int			i;
 	MemoryContext currentContext;
 
 	if (fscxt == NULL)
 		return;
-	
+
 	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
 	for (i = 0; i < MAX_LOBJ_FDS; i++)
 	{
-		if (cookies[i] != NULL) inv_cleanindex(cookies[i]);
+		if (cookies[i] != NULL)
+			inv_cleanindex(cookies[i]);
 	}
 
 	MemoryContextSwitchTo(currentContext);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.15 1998/02/23 06:28:16 vadim Exp $
+ * $Id: psort.h,v 1.16 1998/09/01 04:39:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,4 +106,4 @@ extern void psort_restorepos(Sort *node);
 extern void psort_end(Sort *node);
 extern void psort_rescan(Sort *node);
 
-#endif							/* PSORT_H */
+#endif	 /* PSORT_H */

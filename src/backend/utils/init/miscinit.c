@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.21 1998/09/01 03:26:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.22 1998/09/01 04:33:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,9 +241,10 @@ SetDatabaseName(char *name)
 const char *
 getdatabaseencoding()
 {
-  elog(ERROR, "you need to enable MB to use this function");
-  return("");
+	elog(ERROR, "you need to enable MB to use this function");
+	return ("");
 }
+
 #endif
 
 #ifdef CYR_RECODE
@@ -433,7 +434,7 @@ SetPgUserName()
 		free(UserName);
 	UserName = malloc(strlen(p) + 1);
 	strcpy(UserName, p);
-#endif							/* NO_SECURITY */
+#endif	 /* NO_SECURITY */
 }
 
 /* ----------------------------------------------------------------
@@ -469,8 +470,8 @@ SetUserId()
 
 	userName = GetPgUserName();
 	userTup = SearchSysCacheTuple(USENAME,
-									PointerGetDatum(userName),
-								  	0, 0, 0);
+								  PointerGetDatum(userName),
+								  0, 0, 0);
 	if (!HeapTupleIsValid(userTup))
 		elog(FATAL, "SetUserId: user \"%s\" is not in \"%s\"",
 			 userName,

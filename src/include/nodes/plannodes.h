@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.17 1998/08/04 16:44:24 momjian Exp $
+ * $Id: plannodes.h,v 1.18 1998/09/01 04:36:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,14 +139,10 @@ typedef struct Append
 {
 	Plan		plan;
 	List	   *appendplans;
-	List	   *unionrtables;	/*
-								 *	List of range tables, one for each
-								 *	union query.
-								 */
-	Index		inheritrelid;	/*
-								 *	The range table has to be changed for
-								 *	inheritance.
-								 */
+	List	   *unionrtables;	/* List of range tables, one for each
+								 * union query. */
+	Index		inheritrelid;	/* The range table has to be changed for
+								 * inheritance. */
 	List	   *inheritrtable;
 	AppendState *appendstate;
 } Append;
@@ -382,4 +378,4 @@ typedef struct SubPlan
 	bool		shutdown;		/* shutdown plan if TRUE */
 } SubPlan;
 
-#endif							/* PLANNODES_H */
+#endif	 /* PLANNODES_H */

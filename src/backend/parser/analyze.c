@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.84 1998/09/01 03:24:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.85 1998/09/01 04:30:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ parse_analyze(List *pl, ParseState *parentParseState)
 	while (pl != NIL)
 	{
 #ifdef PARSEDEBUG
-		elog(DEBUG,"parse tree from yacc:\n---\n%s\n---\n", nodeToString(lfirst(pl)));
+		elog(DEBUG, "parse tree from yacc:\n---\n%s\n---\n", nodeToString(lfirst(pl)));
 #endif
 
 		pstate = make_parsestate(parentParseState);
@@ -313,11 +313,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			 * better to create proper target list here...
 			 */
 			te = makeTargetEntry(makeResdom(defval[ndef].adnum,
-									att[defval[ndef].adnum - 1]->atttypid,
-									att[defval[ndef].adnum - 1]->atttypmod,
-									pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
-									0, 0, 0),
-						(Node *) stringToNode(defval[ndef].adbin));
+								   att[defval[ndef].adnum - 1]->atttypid,
+								  att[defval[ndef].adnum - 1]->atttypmod,
+			   pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
+											0, 0, 0),
+							  (Node *) stringToNode(defval[ndef].adbin));
 			qry->targetList = lappend(qry->targetList, te);
 		}
 	}
@@ -325,9 +325,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
-	/* The havingQual has a similar meaning as "qual" in the where statement. 
-	 * So we can easily use the code from the "where clause" with some additional
-         * traversals done in .../optimizer/plan/planner.c */
+	/*
+	 * The havingQual has a similar meaning as "qual" in the where
+	 * statement. So we can easily use the code from the "where clause"
+	 * with some additional traversals done in
+	 * .../optimizer/plan/planner.c
+	 */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
@@ -351,20 +354,24 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
-	/* The INSERT INTO ... SELECT ... could have a UNION
-	 * in child, so unionClause may be false
+	/*
+	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
+	 * unionClause may be false
 	 */
 	qry->unionall = stmt->unionall;
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
-	/* If there is a havingQual but there are no aggregates, then there is something wrong
-	 * with the query because having must contain aggregates in its expressions! 
-	 * Otherwise the query could have been formulated using the where clause. */
-	if((qry->hasAggs == false) && (qry->havingQual != NULL))
-	  {
-	    elog(ERROR,"This is not a valid having query!");
-	    return (Query *)NIL;
-	  }
+	/*
+	 * If there is a havingQual but there are no aggregates, then there is
+	 * something wrong with the query because having must contain
+	 * aggregates in its expressions! Otherwise the query could have been
+	 * formulated using the where clause.
+	 */
+	if ((qry->hasAggs == false) && (qry->havingQual != NULL))
+	{
+		elog(ERROR, "This is not a valid having query!");
+		return (Query *) NIL;
+	}
 
 	return (Query *) qry;
 }
@@ -495,13 +502,13 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 
 				if (column->is_sequence)
 				{
-					char *cstring;
+					char	   *cstring;
 					CreateSeqStmt *sequence;
 
 					constraint = makeNode(Constraint);
 					constraint->contype = CONSTR_DEFAULT;
 					constraint->name = makeTableName(stmt->relname, column->colname, "seq", NULL);
-					cstring = palloc(9+strlen(constraint->name)+2+1);
+					cstring = palloc(9 + strlen(constraint->name) + 2 + 1);
 					strcpy(cstring, "nextval('");
 					strcat(cstring, constraint->name);
 					strcat(cstring, "')");
@@ -509,20 +516,16 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					constraint->keys = NULL;
 
 					if (column->constraints != NIL)
-					{
 						column->constraints = lappend(column->constraints, constraint);
-					}
 					else
-					{
 						column->constraints = lcons(constraint, NIL);
-					}
 
 					sequence = makeNode(CreateSeqStmt);
 					sequence->seqname = pstrdup(constraint->name);
 					sequence->options = NIL;
 
 					elog(NOTICE, "CREATE TABLE will create implicit sequence %s for SERIAL column %s.%s",
-						 sequence->seqname, stmt->relname, column->colname);
+					  sequence->seqname, stmt->relname, column->colname);
 
 					ilist = lcons(sequence, NIL);
 
@@ -789,14 +792,16 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	qry->commandType = CMD_UTILITY;
 
 	/*
-	 * 'instead nothing' rules with a qualification need a
-	 * query a rangetable so the rewrite handler can add the
-	 * negated rule qualification to the original query. We
-	 * create a query with the new command type CMD_NOTHING
-	 * here that is treated special by the rewrite system.
+	 * 'instead nothing' rules with a qualification need a query a
+	 * rangetable so the rewrite handler can add the negated rule
+	 * qualification to the original query. We create a query with the new
+	 * command type CMD_NOTHING here that is treated special by the
+	 * rewrite system.
 	 */
-	if (stmt->actions == NIL) {
-		Query		*nothing_qry = makeNode(Query);
+	if (stmt->actions == NIL)
+	{
+		Query	   *nothing_qry = makeNode(Query);
+
 		nothing_qry->commandType = CMD_NOTHING;
 
 		addRangeTableEntry(pstate, stmt->object->relname, "*CURRENT*",
@@ -830,7 +835,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		pstate->p_is_rule = true;		/* for expand all */
 		pstate->p_hasAggs = false;
 
-		action = (Query *)lfirst(actions);
+		action = (Query *) lfirst(actions);
 		if (action->commandType != CMD_NOTHING)
 			lfirst(actions) = transformStmt(pstate, lfirst(actions));
 		actions = lnext(actions);
@@ -869,9 +874,12 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
-	/* The havingQual has a similar meaning as "qual" in the where statement. 
-	 * So we can easily use the code from the "where clause" with some additional
-         * traversals done in .../optimizer/plan/planner.c */
+	/*
+	 * The havingQual has a similar meaning as "qual" in the where
+	 * statement. So we can easily use the code from the "where clause"
+	 * with some additional traversals done in
+	 * .../optimizer/plan/planner.c
+	 */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
@@ -891,20 +899,24 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
-	/* The INSERT INTO ... SELECT ... could have a UNION
-	 * in child, so unionClause may be false
+	/*
+	 * The INSERT INTO ... SELECT ... could have a UNION in child, so
+	 * unionClause may be false
 	 */
 	qry->unionall = stmt->unionall;
 	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
-	/* If there is a havingQual but there are no aggregates, then there is something wrong
-	 * with the query because having must contain aggregates in its expressions! 
-	 * Otherwise the query could have been formulated using the where clause. */
-	if((qry->hasAggs == false) && (qry->havingQual != NULL))
-	  {
-	    elog(ERROR,"This is not a valid having query!");
-	    return (Query *)NIL;
-	  }
+	/*
+	 * If there is a havingQual but there are no aggregates, then there is
+	 * something wrong with the query because having must contain
+	 * aggregates in its expressions! Otherwise the query could have been
+	 * formulated using the where clause.
+	 */
+	if ((qry->hasAggs == false) && (qry->havingQual != NULL))
+	{
+		elog(ERROR, "This is not a valid having query!");
+		return (Query *) NIL;
+	}
 
 	return (Query *) qry;
 }

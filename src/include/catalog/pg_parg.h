@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_parg.h,v 1.5 1997/09/08 02:35:21 momjian Exp $
+ * $Id: pg_parg.h,v 1.6 1998/09/01 04:35:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -114,4 +114,4 @@ DATA(insert OID = 0 (  66 2 - 23 ));
 DATA(insert OID = 0 (  67 1 - 25 ));
 DATA(insert OID = 0 (  67 2 - 25 ));
 
-#endif							/* PG_PARG_H */
+#endif	 /* PG_PARG_H */

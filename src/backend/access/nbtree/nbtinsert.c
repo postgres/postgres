@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.29 1998/09/01 03:21:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.30 1998/09/01 04:27:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 	int			natts = rel->rd_rel->relnatts;
 	InsertIndexResult res;
 	Buffer		buffer;
-	
+
 	itup = &(btitem->bti_itup);
 
 	/* we need a scan key to do our search, so build one */

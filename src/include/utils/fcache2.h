@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache2.h,v 1.6 1998/01/24 22:50:42 momjian Exp $
+ * $Id: fcache2.h,v 1.7 1998/09/01 04:39:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,4 +17,4 @@
 
 extern void setFcache(Node *node, Oid foid, List *argList, ExprContext *econtext);
 
-#endif							/* FCACHE2_H */
+#endif	 /* FCACHE2_H */

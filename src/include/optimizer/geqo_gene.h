@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_gene.h,v 1.5 1997/11/26 01:13:27 momjian Exp $
+ * $Id: geqo_gene.h,v 1.6 1998/09/01 04:36:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,4 +43,4 @@ typedef struct Pool
 	int			string_length;
 } Pool;
 
-#endif							/* GEQO_GENE_H */
+#endif	 /* GEQO_GENE_H */

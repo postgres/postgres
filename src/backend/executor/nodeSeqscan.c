@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.13 1998/09/01 03:22:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.14 1998/09/01 04:28:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,8 +30,7 @@
 #include "access/heapam.h"
 #include "parser/parsetree.h"
 
-static Oid
-InitScanRelation(SeqScan *node, EState *estate,
+static Oid InitScanRelation(SeqScan *node, EState *estate,
 				 CommonScanState *scanstate, Plan *outerPlan);
 
 static TupleTableSlot *SeqNext(SeqScan *node);
@@ -83,7 +82,8 @@ SeqNext(SeqScan *node)
 
 	slot = ExecStoreTuple(tuple,/* tuple to store */
 						  slot, /* slot to store in */
-						  scandesc->rs_cbuf,/* buffer associated with this tuple */
+						  scandesc->rs_cbuf,	/* buffer associated with
+												 * this tuple */
 						  false);		/* don't pfree this pointer */
 
 	/* ----------------

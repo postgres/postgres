@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.20 1998/09/01 03:24:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.21 1998/09/01 04:30:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,7 @@
 #include "utils/lsyscache.h"
 
 static void disallow_setop(char *op, Type optype, Node *operand);
-static Node *
-make_operand(char *opname,
+static Node *make_operand(char *opname,
 			 Node *tree,
 			 Oid orig_typeId,
 			 Oid true_typeId);
@@ -69,8 +68,8 @@ make_operand(char *opname,
 	Type		true_type;
 
 #ifdef PARSEDEBUG
-printf("make_operand: constructing operand for '%s' %s->%s\n",
- opname, typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
+	printf("make_operand: constructing operand for '%s' %s->%s\n",
+	   opname, typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
 #endif
 	if (tree != NULL)
 	{
@@ -82,8 +81,8 @@ printf("make_operand: constructing operand for '%s' %s->%s\n",
 		if (true_typeId != orig_typeId)
 		{
 #ifdef PARSEDEBUG
-printf("make_operand: try to convert node from %s to %s\n",
- typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
+			printf("make_operand: try to convert node from %s to %s\n",
+			   typeidTypeName(orig_typeId), typeidTypeName(true_typeId));
 #endif
 			result = coerce_type(NULL, tree, orig_typeId, true_typeId);
 		}
@@ -104,7 +103,7 @@ printf("make_operand: try to convert node from %s to %s\n",
 	}
 
 	return result;
-} /* make_operand() */
+}	/* make_operand() */
 
 
 static void
@@ -157,11 +156,11 @@ make_op(char *opname, Node *ltree, Node *rtree)
 		rtypeId = (rtree == NULL) ? UNKNOWNOID : exprType(rtree);
 		tup = left_oper(opname, rtypeId);
 #ifdef PARSEDEBUG
-printf("make_op: returned from left_oper() with structure at %p\n", (void *)tup);
+		printf("make_op: returned from left_oper() with structure at %p\n", (void *) tup);
 #endif
 		opform = (Form_pg_operator) GETSTRUCT(tup);
 #ifdef PARSEDEBUG
-printf("make_op: calling make_operand()\n");
+		printf("make_op: calling make_operand()\n");
 #endif
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
 		left = NULL;
@@ -192,9 +191,9 @@ printf("make_op: calling make_operand()\n");
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
 	}
 
-	newop = makeOper(oprid(tup),		/* opno */
-					 InvalidOid,		/* opid */
-					 opform->oprresult,	/* operator result type */
+	newop = makeOper(oprid(tup),/* opno */
+					 InvalidOid,/* opid */
+					 opform->oprresult, /* operator result type */
 					 0,
 					 NULL);
 
@@ -211,7 +210,7 @@ printf("make_op: calling make_operand()\n");
 		result->args = lcons(left, lcons(right, NIL));
 
 	return result;
-} /* make_op() */
+}	/* make_op() */
 
 
 Var *
@@ -284,7 +283,7 @@ make_array_ref(Node *expr,
 
 	/* get the type tuple for the element type */
 	type_tuple = SearchSysCacheTuple(TYPOID,
-								ObjectIdGetDatum(type_struct_array->typelem),
+							ObjectIdGetDatum(type_struct_array->typelem),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple))
 		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
@@ -365,7 +364,7 @@ make_array_set(Expr *target_expr,
 			 type_struct_array->typname);
 	/* get the type tuple for the element type */
 	type_tuple = SearchSysCacheTuple(TYPOID,
-								ObjectIdGetDatum(type_struct_array->typelem),
+							ObjectIdGetDatum(type_struct_array->typelem),
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))

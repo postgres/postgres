@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.16 1998/09/01 03:25:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.17 1998/09/01 04:31:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ InitSpinLocks(int init, IPCKey key)
 
 #ifdef STABLE_MEMORY_STORAGE
 	extern SPINLOCK MMCacheLock;
+
 #endif
 
 	/* These six spinlocks have fixed location is shmem */
@@ -83,7 +84,7 @@ InitSpinLocks(int init, IPCKey key)
 
 #ifdef LOCKDEBUG
 #define PRINT_LOCK(LOCK) \
-    TPRINTF(TRACE_SPINLOCKS, \
+	TPRINTF(TRACE_SPINLOCKS, \
 			"(locklock = %d, flag = %d, nshlocks = %d, shlock = %d, " \
 			"exlock =%d)\n", LOCK->locklock, \
 			LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
@@ -140,9 +141,10 @@ SpinRelease(SPINLOCK lockid)
 	slckP = &(SLockArray[lockid]);
 
 #ifdef USE_ASSERT_CHECKING
+
 	/*
-	 * Check that we are actually holding the lock we are releasing.
-	 * This can be done only after MyProc has been initialized.
+	 * Check that we are actually holding the lock we are releasing. This
+	 * can be done only after MyProc has been initialized.
 	 */
 	if (MyProc)
 		Assert(MyProc->sLocks[lockid] > 0);
@@ -334,4 +336,4 @@ InitSpinLocks(int init, IPCKey key)
 	return TRUE;
 }
 
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */

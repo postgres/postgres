@@ -24,7 +24,7 @@ char *ps_status_buffer = NULL;
 
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname) \
 	{ \
-		int	i; \
+		int i; \
 		for (i = 0; i < (argc); i++) { \
 			memset((argv)[i], 0, strlen((argv)[i])); \
 		} \
@@ -49,7 +49,7 @@ char *ps_status_buffer = NULL;
 
 #else							/* !linux */
 
-extern const char **ps_status; 
+extern const char **ps_status;
 
 #define PS_DEFINE_BUFFER \
 const char **ps_status = NULL;
@@ -77,11 +77,11 @@ const char **ps_status = NULL;
 #endif
 
 #ifdef DONT_HAVE_PS_STATUS
-#define PS_DEFINE_BUFFER 
+#define PS_DEFINE_BUFFER
 #define PS_INIT_STATUS(argc, argv, execname, username, hostname, dbname)
 #define PS_CLEAR_STATUS()
 #define PS_SET_STATUS(status) { if ((status)); }
 #define PS_STATUS ""
-#endif							/* !linux */
+#endif	 /* !linux */
 
-#endif							/* PS_STATUS_H */
+#endif	 /* PS_STATUS_H */

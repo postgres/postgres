@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parser.h,v 1.3 1998/02/26 04:42:51 momjian Exp $
+ * $Id: parser.h,v 1.4 1998/09/01 04:37:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,4 +17,4 @@
 
 extern QueryTreeList *parser(char *str, Oid *typev, int nargs);
 
-#endif							/* PARSER_H */
+#endif	 /* PARSER_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.12 1998/09/01 03:27:40 momjian Exp $
+ * $Id: bootstrap.h,v 1.13 1998/09/01 04:34:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,7 @@ extern int	numattr;
 extern int	DebugMode;
 
 extern int	BootstrapMain(int ac, char *av[]);
-extern void
-index_register(char *heap,
+extern void index_register(char *heap,
 			   char *ind,
 			   int natts,
 			   AttrNumber *attnos,
@@ -57,4 +56,4 @@ extern char *CleanUpStr(char *s);
 extern int	EnterString(char *str);
 extern void build_indices(void);
 
-#endif							/* BOOTSTRAP_H */
+#endif	 /* BOOTSTRAP_H */

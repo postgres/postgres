@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.9 1998/01/24 22:50:56 momjian Exp $
+ * $Id: relcache.h,v 1.10 1998/09/01 04:39:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,4 +34,4 @@ extern void RelationRegisterRelation(Relation relation);
 extern void RelationPurgeLocalRelation(bool xactComitted);
 extern void RelationInitialize(void);
 
-#endif							/* RELCACHE_H */
+#endif	 /* RELCACHE_H */

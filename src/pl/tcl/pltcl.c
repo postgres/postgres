@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.5 1998/09/01 03:29:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.6 1998/09/01 04:40:28 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -127,40 +127,31 @@ static void pltcl_init_safe_interp(void);
 #ifdef PLTCL_UNKNOWN_SUPPORT
 static void pltcl_init_load_unknown(void);
 
-#endif							/* PLTCL_UNKNOWN_SUPPORT */
+#endif	 /* PLTCL_UNKNOWN_SUPPORT */
 
-Datum
-pltcl_call_handler(FmgrInfo *proinfo,
+Datum pltcl_call_handler(FmgrInfo *proinfo,
 				   FmgrValues *proargs, bool *isNull);
 
-static Datum
-pltcl_func_handler(FmgrInfo *proinfo,
+static Datum pltcl_func_handler(FmgrInfo *proinfo,
 				   FmgrValues *proargs, bool *isNull);
 
 static HeapTuple pltcl_trigger_handler(FmgrInfo *proinfo);
 
-static int
-pltcl_elog(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_elog(ClientData cdata, Tcl_Interp * interp,
 		   int argc, char *argv[]);
-static int
-pltcl_quote(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_quote(ClientData cdata, Tcl_Interp * interp,
 			int argc, char *argv[]);
 
-static int
-pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
 			   int argc, char *argv[]);
-static int
-pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
 				  int argc, char *argv[]);
-static int
-pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
 				int argc, char *argv[]);
 
-static void
-pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
+static void pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
-static void
-pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
+static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 						   Tcl_DString * retval);
 
 /**********************************************************************
@@ -306,7 +297,7 @@ pltcl_init_safe_interp(void)
 	pltcl_init_load_unknown();
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl_init_safe_interp(): SPI_finish failed");
-#endif							/* PLTCL_UNKNOWN_SUPPORT */
+#endif	 /* PLTCL_UNKNOWN_SUPPORT */
 }
 
 
@@ -382,7 +373,7 @@ pltcl_init_load_unknown(void)
 	Tcl_DStringFree(&unknown_src);
 }
 
-#endif							/* PLTCL_UNKNOWN_SUPPORT */
+#endif	 /* PLTCL_UNKNOWN_SUPPORT */
 
 
 /**********************************************************************
@@ -514,7 +505,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		 * return value.
 		 ************************************************************/
 		typeTup = SearchSysCacheTuple(TYPOID,
-									ObjectIdGetDatum(procStruct->prorettype),
+								ObjectIdGetDatum(procStruct->prorettype),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
@@ -544,7 +535,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		for (i = 0; i < proinfo->fn_nargs; i++)
 		{
 			typeTup = SearchSysCacheTuple(TYPOID,
-								ObjectIdGetDatum(procStruct->proargtypes[i]),
+							ObjectIdGetDatum(procStruct->proargtypes[i]),
 										  0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
@@ -1139,7 +1130,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 		 * for the input function
 		 ************************************************************/
 		typeTup = SearchSysCacheTuple(TYPOID,
-					  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid),
+				  ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
@@ -2156,7 +2147,7 @@ pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
 		 * for the output function
 		 ************************************************************/
 		typeTup = SearchSysCacheTuple(TYPOID,
-							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
+						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{
@@ -2229,7 +2220,7 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 		 * for the output function
 		 ************************************************************/
 		typeTup = SearchSysCacheTuple(TYPOID,
-							   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
+						   ObjectIdGetDatum(tupdesc->attrs[i]->atttypid),
 									  0, 0, 0);
 		if (!HeapTupleIsValid(typeTup))
 		{

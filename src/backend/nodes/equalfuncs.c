@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.19 1998/09/01 03:22:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.20 1998/09/01 04:29:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,7 +281,7 @@ _equalFunc(Func *a, Func *b)
  * ClauseInfo is a subclass of Node.
  */
 static bool
-_equalClauseInfo(ClauseInfo *a, ClauseInfo *b)
+_equalClauseInfo(ClauseInfo * a, ClauseInfo * b)
 {
 	Assert(IsA(a, ClauseInfo));
 	Assert(IsA(b, ClauseInfo));
@@ -306,7 +306,7 @@ _equalClauseInfo(ClauseInfo *a, ClauseInfo *b)
  * RelOptInfo is a subclass of Node.
  */
 static bool
-_equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
+_equalRelOptInfo(RelOptInfo * a, RelOptInfo * b)
 {
 	Assert(IsA(a, RelOptInfo));
 	Assert(IsA(b, RelOptInfo));
@@ -530,7 +530,7 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 }
 
 static bool
-_equalJoinInfo(JoinInfo *a, JoinInfo *b)
+_equalJoinInfo(JoinInfo * a, JoinInfo * b)
 {
 	Assert(IsA(a, JoinInfo));
 	Assert(IsA(b, JoinInfo));

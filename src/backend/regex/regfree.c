@@ -40,7 +40,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 
-#endif							/* LIBC_SCCS and not lint */
+#endif	 /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -69,9 +69,8 @@ regex_t    *preg;
 	preg->re_magic = 0;			/* mark it invalid */
 	g->magic = 0;				/* mark it invalid */
 #ifdef MULTIBYTE
-	if (preg->patsave != NULL) {
-	  free((char *)preg->patsave);
-	}
+	if (preg->patsave != NULL)
+		free((char *) preg->patsave);
 #endif
 	if (g->strip != NULL)
 		free((char *) g->strip);

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.22 1998/09/01 03:26:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.23 1998/09/01 04:32:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,7 @@
 #define FunctionalSelectivity(nIndKeys,attNum) (attNum==InvalidAttrNumber)
 
 static float32data getattdisbursion(Oid relid, AttrNumber attnum);
-static void
-gethilokey(Oid relid, AttrNumber attnum, Oid opid,
+static void gethilokey(Oid relid, AttrNumber attnum, Oid opid,
 		   char **high, char **low);
 
 

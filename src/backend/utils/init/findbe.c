@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.11 1998/09/01 03:26:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.12 1998/09/01 04:33:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,8 +160,8 @@ FindExec(char *full_path, char *argv0, char *binary_name)
 	int			pathlen;
 
 	/*
-	 * for the postmaster: First try: use the binary that's located in
-	 * the same directory as the postmaster, if it was invoked with an
+	 * for the postmaster: First try: use the binary that's located in the
+	 * same directory as the postmaster, if it was invoked with an
 	 * explicit path. Presumably the user used an explicit path because it
 	 * wasn't in PATH, and we don't want to use incompatible executables.
 	 *
@@ -170,9 +170,9 @@ FindExec(char *full_path, char *argv0, char *binary_name)
 	 * trees (obj/post{master,gres}) because they all put the two binaries
 	 * in the same place.
 	 *
-	 * for the binary: First try: if we're given some kind of path,
-	 * use it (making sure that a relative path is made absolute before
-	 * returning it).
+	 * for the binary: First try: if we're given some kind of path, use it
+	 * (making sure that a relative path is made absolute before returning
+	 * it).
 	 */
 	if (argv0 && (p = strrchr(argv0, '/')) && *++p)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.16 1998/09/01 03:23:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.17 1998/09/01 04:29:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "utils/elog.h"
 
 
-static List *prune_joinrel(RelOptInfo *rel, List *other_rels);
+static List *prune_joinrel(RelOptInfo * rel, List *other_rels);
 
 /*
  * prune-joinrels--
@@ -59,15 +59,15 @@ prune_joinrels(List *rel_list)
  *
  */
 static List *
-prune_joinrel(RelOptInfo *rel, List *other_rels)
+prune_joinrel(RelOptInfo * rel, List *other_rels)
 {
 	List	   *i = NIL;
 	List	   *result = NIL;
 
 	foreach(i, other_rels)
 	{
-		RelOptInfo	   *other_rel = (RelOptInfo *) lfirst(i);
-		
+		RelOptInfo *other_rel = (RelOptInfo *) lfirst(i);
+
 		if (same(rel->relids, other_rel->relids))
 		{
 			rel->pathlist = add_pathlist(rel,
@@ -96,7 +96,7 @@ prune_rel_paths(List *rel_list)
 	List	   *x = NIL;
 	List	   *y = NIL;
 	Path	   *path = NULL;
-	RelOptInfo		   *rel = (RelOptInfo *) NULL;
+	RelOptInfo *rel = (RelOptInfo *) NULL;
 	JoinPath   *cheapest = (JoinPath *) NULL;
 
 	foreach(x, rel_list)
@@ -130,7 +130,7 @@ prune_rel_paths(List *rel_list)
  *
  */
 Path *
-prune_rel_path(RelOptInfo *rel, Path *unorderedpath)
+prune_rel_path(RelOptInfo * rel, Path *unorderedpath)
 {
 	Path	   *cheapest = set_cheapest(rel, rel->pathlist);
 
@@ -165,7 +165,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 
 	foreach(xrel, rel_list1)
 	{
-		RelOptInfo		   *rel = (RelOptInfo *) lfirst(xrel);
+		RelOptInfo *rel = (RelOptInfo *) lfirst(xrel);
 
 		rel_list2 = prune_joinrel(rel, rel_list2);
 	}
@@ -187,7 +187,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 List *
 prune_oldrels(List *old_rels)
 {
-	RelOptInfo		   *rel;
+	RelOptInfo *rel;
 	List	   *joininfo_list,
 			   *xjoininfo,
 			   *i,
@@ -204,7 +204,7 @@ prune_oldrels(List *old_rels)
 		{
 			foreach(xjoininfo, joininfo_list)
 			{
-				JoinInfo	   *joininfo = (JoinInfo *) lfirst(xjoininfo);
+				JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 
 				if (!joininfo->inactive)
 				{

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: funcindex.h,v 1.5 1997/09/08 21:50:31 momjian Exp $
+ * $Id: funcindex.h,v 1.6 1998/09/01 04:34:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,4 +39,4 @@ typedef FuncIndexInfo *FuncIndexInfoPtr;
 
 #define FIisFunctionalIndex(FINFO) (FINFO->procOid != InvalidOid)
 
-#endif							/* FUNCINDEX_H */
+#endif	 /* FUNCINDEX_H */

@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.11 1998/09/01 03:28:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.12 1998/09/01 04:40:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #else
 #include <termios.h>
 #endif
-#endif /* WIN32 */
+#endif	 /* WIN32 */
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -52,19 +52,16 @@ static struct winsize
 #endif
 
 
-static void
-do_field(PQprintOpt *po, PGresult *res,
+static void do_field(PQprintOpt *po, PGresult *res,
 		 const int i, const int j, char *buf, const int fs_len,
 		 char **fields,
 		 const int nFields, char **fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout);
-static char *
-do_header(FILE *fout, PQprintOpt *po, const int nFields,
+static char *do_header(FILE *fout, PQprintOpt *po, const int nFields,
 		  int *fieldMax, char **fieldNames, unsigned char *fieldNotNum,
 		  const int fs_len, PGresult *res);
-static void
-output_row(FILE *fout, PQprintOpt *po, const int nFields, char **fields,
+static void output_row(FILE *fout, PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index);
 static void fill(int length, int max, char filler, FILE *fp);
@@ -150,7 +147,7 @@ PQprint(FILE *fout,
 
 		if (fout == NULL)
 			fout = stdout;
-		if (po->pager && fout == stdout 
+		if (po->pager && fout == stdout
 #ifndef WIN32
 			&&
 			isatty(fileno(stdin)) &&
@@ -502,20 +499,20 @@ PQprintTuples(PGresult *res,
  * if this variable is not defined, the same encoding as
  * the backend is assumed.
  */
-int PQmblen(unsigned char *s)
+int
+PQmblen(unsigned char *s)
 {
-  char *str;
-  int encoding = -1;
+	char	   *str;
+	int			encoding = -1;
 
-  str = getenv("PGCLIENTENCODING");
-  if (str) {
-    encoding = pg_char_to_encoding(str);
-  }
-  if (encoding < 0) {
-    encoding = MULTIBYTE;
-  }
-  return(pg_encoding_mblen(encoding, s));
+	str = getenv("PGCLIENTENCODING");
+	if (str)
+		encoding = pg_char_to_encoding(str);
+	if (encoding < 0)
+		encoding = MULTIBYTE;
+	return (pg_encoding_mblen(encoding, s));
 }
+
 #endif
 
 static void
@@ -552,11 +549,11 @@ do_field(PQprintOpt *po, PGresult *res,
 	if (!skipit)
 	{
 #ifdef MULTIBYTE
-	        int len;
+		int			len;
 
- 		for (p = pval, o = buf; *p;
-		     len = PQmblen(p),memcpy(o,p,len),
-		     o+=len, p+=len)
+		for (p = pval, o = buf; *p;
+			 len = PQmblen(p), memcpy(o, p, len),
+			 o += len, p += len)
 #else
 		for (p = pval, o = buf; *p; *(o++) = *(p++))
 #endif

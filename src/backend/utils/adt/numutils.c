@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.25 1998/09/01 03:26:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.26 1998/09/01 04:32:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ pg_atoi(char *s, int size, int c)
 				errno = ERANGE;
 				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
-#endif							/* HAS_LONG_LONG */
+#endif	 /* HAS_LONG_LONG */
 			break;
 		case sizeof(int16):
 			if (l < SHRT_MIN)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.25 1998/09/01 03:21:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.26 1998/09/01 04:27:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,8 +126,8 @@ CatalogIndexInsert(Relation *idescs,
 
 		indexDescriptor = RelationGetDescr(idescs[i]);
 		pgIndexTup = SearchSysCacheTupleCopy(INDEXRELID,
-										 ObjectIdGetDatum(idescs[i]->rd_id),
-										 0, 0, 0);
+									  ObjectIdGetDatum(idescs[i]->rd_id),
+											 0, 0, 0);
 		Assert(pgIndexTup);
 		pgIndexP = (Form_pg_index) GETSTRUCT(pgIndexTup);
 
@@ -228,7 +228,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 	RetrieveIndexResult indexRes;
 	HeapTuple	tuple = NULL;
 	Buffer		buffer;
-	
+
 	sd = index_beginscan(idesc, false, num_keys, skey);
 	while ((indexRes = index_getnext(sd, ForwardScanDirection)))
 	{
@@ -239,7 +239,7 @@ CatalogIndexFetchTuple(Relation heapRelation,
 		pfree(indexRes);
 		if (HeapTupleIsValid(tuple))
 			break;
-	} 
+	}
 
 	if (HeapTupleIsValid(tuple))
 	{
@@ -270,13 +270,13 @@ AttributeNameIndexScan(Relation heapRelation,
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure)F_OIDEQ,
+						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 
 	ScanKeyEntryInitialize(&skey[1],
 						   (bits16) 0x0,
 						   (AttrNumber) 2,
-						   (RegProcedure)F_NAMEEQ,
+						   (RegProcedure) F_NAMEEQ,
 						   NameGetDatum(attname));
 
 	idesc = index_openr(AttributeNameIndex);
@@ -299,13 +299,13 @@ AttributeNumIndexScan(Relation heapRelation,
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
-						   (RegProcedure)F_OIDEQ,
+						   (RegProcedure) F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 
 	ScanKeyEntryInitialize(&skey[1],
 						   (bits16) 0x0,
 						   (AttrNumber) 2,
-						   (RegProcedure)F_INT2EQ,
+						   (RegProcedure) F_INT2EQ,
 						   Int16GetDatum(attnum));
 
 	idesc = index_openr(AttributeNumIndex);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: float.h,v 1.2 1997/09/07 04:46:58 momjian Exp $
+ * $Id: float.h,v 1.3 1998/09/01 04:31:19 momjian Exp $
  *
  * NOTES
  *	  These come straight out of ANSI X3.159-1989 (p.18) and
@@ -27,4 +27,4 @@
 #define DBL_MIN 2.2250738585072014e-308
 #define DBL_MAX 1.7976931348623157e+308
 
-#endif							/* FLOAT_H */
+#endif	 /* FLOAT_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.17 1998/08/25 21:22:27 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.18 1998/09/01 04:28:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,8 @@ PacketReceiveFragment(Packet *pkt, int sock)
  * Set up a packet write for the postmaster event loop.
  */
 
-void		PacketSendSetup(Packet *pkt, int nbytes, PacketDoneProc iodone, void *arg)
+void
+PacketSendSetup(Packet *pkt, int nbytes, PacketDoneProc iodone, void *arg)
 {
 	pkt->len = (PacketLen) nbytes;
 	pkt->nrtodo = nbytes;

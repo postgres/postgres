@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: be-fsstubs.h,v 1.6 1998/07/21 04:17:26 momjian Exp $
+ * $Id: be-fsstubs.h,v 1.7 1998/09/01 04:36:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,4 +42,4 @@ extern int	lowrite(int fd, struct varlena * wbuf);
  */
 extern void _lo_commit(void);
 
-#endif							/* BE_FSSTUBS_H */
+#endif	 /* BE_FSSTUBS_H */

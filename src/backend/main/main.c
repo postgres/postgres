@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.21 1998/06/15 19:28:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.22 1998/09/01 04:28:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,11 +45,11 @@ main(int argc, char *argv[])
 #ifdef NOFIXADE
 	int			buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
 
-#endif							/* NOFIXADE */
+#endif	 /* NOFIXADE */
 #ifdef NOPRINTADE
 	int			buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
 
-#endif							/* NOPRINTADE */
+#endif	 /* NOPRINTADE */
 #endif
 
 #ifdef USE_LOCALE
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 		elog(NOTICE, "setsysinfo failed: %d\n", errno);
 #endif
 
-#endif							/* NOFIXADE || NOPRINTADE */
+#endif	 /* NOFIXADE || NOPRINTADE */
 
 	/*
 	 * use one executable for both postgres and postmaster, invoke one or

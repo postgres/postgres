@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: auth.h,v 1.9 1998/02/26 04:41:35 momjian Exp $
+ * $Id: auth.h,v 1.10 1998/09/01 04:36:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,4 +26,4 @@ void		auth_failed(Port *port);
 #define PG_KRB4_VERSION "PGVER4.1"		/* at most KRB_SENDAUTH_VLEN chars */
 #define PG_KRB5_VERSION "PGVER5.1"
 
-#endif							/* AUTH_H */
+#endif	 /* AUTH_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.15 1998/09/01 03:26:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.16 1998/09/01 04:33:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
 #include	   "utils/hsearch.h"
 #ifndef FRONTEND
 #include	   "utils/mcxt.h"
-#endif							/* !FRONTEND */
+#endif	 /* !FRONTEND */
 #include	   "utils/palloc.h"
 
 /*
@@ -115,7 +115,7 @@ DynaHashFree(Pointer ptr)
 #define MEM_ALLOC		palloc
 #define MEM_FREE		pfree
 
-#endif							/* FRONTEND */
+#endif	 /* FRONTEND */
 
 /* ----------------
  * Internal routines

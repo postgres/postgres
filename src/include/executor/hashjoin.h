@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hashjoin.h,v 1.6 1997/09/08 21:52:00 momjian Exp $
+ * $Id: hashjoin.h,v 1.7 1998/09/01 04:35:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,4 +81,4 @@ typedef HashBucketData *HashBucket;
 
 #define HASH_PERMISSION			0700
 
-#endif							/* HASHJOIN_H */
+#endif	 /* HASHJOIN_H */

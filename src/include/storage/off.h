@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: off.h,v 1.4 1997/09/08 02:39:06 momjian Exp $
+ * $Id: off.h,v 1.5 1998/09/01 04:38:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,4 +53,4 @@ typedef uint16 OffsetNumber;
 #define OffsetNumberPrev(offsetNumber) \
 	((OffsetNumber) (-1 + (offsetNumber)))
 
-#endif							/* OFF_H */
+#endif	 /* OFF_H */

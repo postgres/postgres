@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pos.h,v 1.4 1997/09/08 02:39:07 momjian Exp $
+ * $Id: pos.h,v 1.5 1998/09/01 04:38:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,4 +59,4 @@ typedef PositionIdData *PositionId;
 #define PositionIdGetOffsetNumber(positionId) \
 	((OffsetNumber) *(positionId))
 
-#endif							/* POS_H */
+#endif	 /* POS_H */

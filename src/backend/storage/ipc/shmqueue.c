@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.8 1998/09/01 03:25:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.9 1998/09/01 04:31:50 momjian Exp $
  *
  * NOTES
  *
@@ -32,7 +32,7 @@
 #define SHMQUEUE_DEBUG_HD		/* head inserts */
 #define SHMQUEUE_DEBUG_TL		/* tail inserts */
 #define SHMQUEUE_DEBUG_ELOG NOTICE
-#endif							/* SHMQUEUE_DEBUG */
+#endif	 /* SHMQUEUE_DEBUG */
 
 /*
  * ShmemQueueInit -- make the head of a new queue point
@@ -85,14 +85,14 @@ SHMQueueDelete(SHM_QUEUE *queue)
 
 #ifdef SHMQUEUE_DEBUG_DEL
 	dumpQ(queue, "in SHMQueueDelete: begin");
-#endif							/* SHMQUEUE_DEBUG_DEL */
+#endif	 /* SHMQUEUE_DEBUG_DEL */
 
 	prevElem->next = (queue)->next;
 	nextElem->prev = (queue)->prev;
 
 #ifdef SHMQUEUE_DEBUG_DEL
 	dumpQ((SHM_QUEUE *) MAKE_PTR(queue->prev), "in SHMQueueDelete: end");
-#endif							/* SHMQUEUE_DEBUG_DEL */
+#endif	 /* SHMQUEUE_DEBUG_DEL */
 }
 
 #ifdef SHMQUEUE_DEBUG
@@ -144,7 +144,7 @@ dumpQ(SHM_QUEUE *q, char *s)
 	elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
 }
 
-#endif							/* SHMQUEUE_DEBUG */
+#endif	 /* SHMQUEUE_DEBUG */
 
 /*
  * SHMQueueInsertHD -- put elem in queue between the queue head
@@ -162,7 +162,7 @@ SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem)
 
 #ifdef SHMQUEUE_DEBUG_HD
 	dumpQ(queue, "in SHMQueueInsertHD: begin");
-#endif							/* SHMQUEUE_DEBUG_HD */
+#endif	 /* SHMQUEUE_DEBUG_HD */
 
 	(elem)->next = prevPtr->next;
 	(elem)->prev = queue->prev;
@@ -171,7 +171,7 @@ SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem)
 
 #ifdef SHMQUEUE_DEBUG_HD
 	dumpQ(queue, "in SHMQueueInsertHD: end");
-#endif							/* SHMQUEUE_DEBUG_HD */
+#endif	 /* SHMQUEUE_DEBUG_HD */
 }
 
 #endif
@@ -187,7 +187,7 @@ SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem)
 
 #ifdef SHMQUEUE_DEBUG_TL
 	dumpQ(queue, "in SHMQueueInsertTL: begin");
-#endif							/* SHMQUEUE_DEBUG_TL */
+#endif	 /* SHMQUEUE_DEBUG_TL */
 
 	(elem)->prev = nextPtr->prev;
 	(elem)->next = queue->next;
@@ -196,7 +196,7 @@ SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem)
 
 #ifdef SHMQUEUE_DEBUG_TL
 	dumpQ(queue, "in SHMQueueInsertTL: end");
-#endif							/* SHMQUEUE_DEBUG_TL */
+#endif	 /* SHMQUEUE_DEBUG_TL */
 }
 
 /*

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.25 1998/08/01 15:26:34 vadim Exp $
+ * $Id: buf_internals.h,v 1.26 1998/09/01 04:38:10 momjian Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -51,7 +51,7 @@ typedef long **BufferBlock;
 
 struct buftag
 {
-	LockRelId		relId;
+	LockRelId	relId;
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 };
 
@@ -101,7 +101,7 @@ struct sbufdesc_unpadded
 	unsigned	refcount;
 #ifdef HAS_TEST_AND_SET
 	slock_t		io_in_progress_lock;
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 	char		sb_dbname[NAMEDATALEN];
 
 	/* NOTE NO PADDING OF THE MEMBER HERE */
@@ -125,7 +125,7 @@ struct sbufdesc
 #ifdef HAS_TEST_AND_SET
 	/* can afford a dedicated lock if test-and-set locks are available */
 	slock_t		io_in_progress_lock;
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 
 	char		sb_dbname[NAMEDATALEN]; /* name of db in which buf belongs */
 
@@ -173,7 +173,7 @@ typedef struct _bmtrace
 
 }			bmtrace;
 
-#endif							/* BMTRACE */
+#endif	 /* BMTRACE */
 
 
 /*
@@ -209,8 +209,7 @@ extern long *LocalRefCount;
 extern BufferDesc *LocalBufferDescriptors;
 extern int	NLocBuffer;
 
-extern BufferDesc *
-LocalBufferAlloc(Relation reln, BlockNumber blockNum,
+extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				 bool *foundPtr);
 extern int	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool release);
@@ -218,4 +217,4 @@ extern void InitLocalBuffer(void);
 extern void LocalBufferSync(void);
 extern void ResetLocalBufferPool(void);
 
-#endif							/* BUFMGR_INTERNALS_H */
+#endif	 /* BUFMGR_INTERNALS_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.38 1998/09/01 03:26:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.39 1998/09/01 04:32:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,8 @@ bpchar(char *s, int32 len)
 {
 	char	   *result,
 			   *r;
-	int			rlen, slen;
+	int			rlen,
+				slen;
 	int			i;
 
 	if (s == NULL)
@@ -152,8 +153,8 @@ bpchar(char *s, int32 len)
 		elog(ERROR, "bpchar: length of char() must be less than 4096");
 
 #ifdef STRINGDEBUG
-printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
- VARSIZE(s)-VARHDRSZ, VARSIZE(s), rlen, len);
+	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
+		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), rlen, len);
 #endif
 
 	result = (char *) palloc(len);
@@ -163,7 +164,7 @@ printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
 	s = VARDATA(s);
 
 #ifdef STRINGDEBUG
-printf("bpchar- string is '");
+	printf("bpchar- string is '");
 #endif
 
 	for (i = 0; (i < rlen) && (i < slen); i++)
@@ -172,14 +173,14 @@ printf("bpchar- string is '");
 			break;
 
 #ifdef STRINGDEBUG
-printf("%c", *s);
+		printf("%c", *s);
 #endif
 
 		*r++ = *s++;
 	}
 
 #ifdef STRINGDEBUG
-printf("'\n");
+	printf("'\n");
 #endif
 
 	/* blank pad the string if necessary */
@@ -187,7 +188,7 @@ printf("'\n");
 		*r++ = ' ';
 
 	return result;
-} /* bpchar() */
+}	/* bpchar() */
 
 
 /* bpchar_char()
@@ -197,7 +198,7 @@ int32
 bpchar_char(char *s)
 {
 	return (int32) *VARDATA(s);
-} /* bpchar_char() */
+}	/* bpchar_char() */
 
 /* char_bpchar()
  * Convert char to bpchar(1).
@@ -205,21 +206,21 @@ bpchar_char(char *s)
 char *
 char_bpchar(int32 c)
 {
-	char *result;
+	char	   *result;
 
-	result = palloc(VARHDRSZ+1);
+	result = palloc(VARHDRSZ + 1);
 
-	VARSIZE(result) = VARHDRSZ+1;
+	VARSIZE(result) = VARHDRSZ + 1;
 	*(VARDATA(result)) = (char) c;
 
 	return result;
-} /* char_bpchar() */
+}	/* char_bpchar() */
 
 
 /* bpchar_name()
  * Converts a bpchar() type to a NameData type.
  */
-NameData *
+NameData   *
 bpchar_name(char *s)
 {
 	NameData   *result;
@@ -229,29 +230,33 @@ bpchar_name(char *s)
 		return NULL;
 
 	len = VARSIZE(s) - VARHDRSZ;
-	if (len > NAMEDATALEN) len = NAMEDATALEN;
+	if (len > NAMEDATALEN)
+		len = NAMEDATALEN;
 
-	while (len > 0) {
-		if (*(VARDATA(s)+len-1) != ' ') break;
+	while (len > 0)
+	{
+		if (*(VARDATA(s) + len - 1) != ' ')
+			break;
 		len--;
 	}
 
 #ifdef STRINGDEBUG
-printf("bpchar- convert string length %d (%d) ->%d\n",
- VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+	printf("bpchar- convert string length %d (%d) ->%d\n",
+		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), len);
 #endif
 
 	result = (NameData *) palloc(NAMEDATALEN);
 	StrNCpy(result->data, VARDATA(s), NAMEDATALEN);
 
 	/* now null pad to full length... */
-	while (len < NAMEDATALEN) {
+	while (len < NAMEDATALEN)
+	{
 		*(result->data + len) = '\0';
 		len++;
 	}
 
 	return result;
-} /* bpchar_name() */
+}	/* bpchar_name() */
 
 /* name_bpchar()
  * Converts a NameData type to a bpchar type.
@@ -268,8 +273,8 @@ name_bpchar(NameData *s)
 	len = strlen(s->data);
 
 #ifdef STRINGDEBUG
-printf("bpchar- convert string length %d (%d) ->%d\n",
- VARSIZE(s)-VARHDRSZ, VARSIZE(s), len);
+	printf("bpchar- convert string length %d (%d) ->%d\n",
+		   VARSIZE(s) - VARHDRSZ, VARSIZE(s), len);
 #endif
 
 	result = (char *) palloc(VARHDRSZ + len);
@@ -277,7 +282,7 @@ printf("bpchar- convert string length %d (%d) ->%d\n",
 	VARSIZE(result) = len + VARHDRSZ;
 
 	return result;
-} /* name_bpchar() */
+}	/* name_bpchar() */
 
 
 /*****************************************************************************
@@ -372,7 +377,7 @@ varchar(char *s, int32 slen)
 	strncpy(VARDATA(result), VARDATA(s), len);
 
 	return result;
-} /* varchar() */
+}	/* varchar() */
 
 
 /*****************************************************************************
@@ -400,7 +405,10 @@ bpcharlen(char *arg)
 {
 #ifdef MULTIBYTE
 	unsigned char *s;
-	int len, l, wl;
+	int			len,
+				l,
+				wl;
+
 #endif
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) char() external representation", NULL);
@@ -408,13 +416,14 @@ bpcharlen(char *arg)
 	l = bcTruelen(arg);
 	len = 0;
 	s = VARDATA(arg);
-	while (l > 0) {
-	  wl = pg_mblen(s);
-	  l -= wl;
-	  s += wl;
-	  len++;
+	while (l > 0)
+	{
+		wl = pg_mblen(s);
+		l -= wl;
+		s += wl;
+		len++;
 	}
-	return(len);
+	return (len);
 #else
 	return bcTruelen(arg);
 #endif
@@ -565,7 +574,10 @@ varcharlen(char *arg)
 {
 #ifdef MULTIBYTE
 	unsigned char *s;
-	int len, l, wl;
+	int			len,
+				l,
+				wl;
+
 #endif
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
@@ -574,13 +586,14 @@ varcharlen(char *arg)
 	len = 0;
 	s = VARDATA(arg);
 	l = VARSIZE(arg) - VARHDRSZ;
-	while (l > 0) {
-	  wl = pg_mblen(s);
-	  l -= wl;
-	  s += wl;
-	  len++;
+	while (l > 0)
+	{
+		wl = pg_mblen(s);
+		l -= wl;
+		s += wl;
+		len++;
 	}
-	return(len);
+	return (len);
 #else
 	return VARSIZE(arg) - VARHDRSZ;
 #endif

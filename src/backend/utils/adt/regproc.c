@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.25 1998/09/01 03:26:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.26 1998/09/01 04:32:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *
  *****************************************************************************/
- 
+
 /*
  *		regprocin		- converts "proname" to proid
  *
@@ -46,27 +46,29 @@ regprocin(char *pro_name_and_oid)
 
 	if (!IsBootstrapProcessingMode())
 	{
+
 		/*
-		 *  we need to use the oid because there can be multiple entries
-		 *	with the same name.  We accept 1323_int4eq and 1323.
+		 * we need to use the oid because there can be multiple entries
+		 * with the same name.	We accept 1323_int4eq and 1323.
 		 */
-		if (strrchr(pro_name_and_oid,'_') != NULL)
+		if (strrchr(pro_name_and_oid, '_') != NULL)
 		{
 			proctup = SearchSysCacheTuple(PROOID,
-						ObjectIdGetDatum(atoi(strrchr(pro_name_and_oid,'_')+1)),
-											0, 0, 0);
+			  ObjectIdGetDatum(atoi(strrchr(pro_name_and_oid, '_') + 1)),
+										  0, 0, 0);
 
 		}
 		else if (atoi(pro_name_and_oid) != InvalidOid)
 		{
 			proctup = SearchSysCacheTuple(PROOID,
-											/* atoi stops at the _ */
-						ObjectIdGetDatum(atoi(pro_name_and_oid)),
-											0, 0, 0);
+			/* atoi stops at the _ */
+								ObjectIdGetDatum(atoi(pro_name_and_oid)),
+										  0, 0, 0);
 		}
 		if (HeapTupleIsValid(proctup))
-				result = (RegProcedure) proctup->t_oid;
-		else	elog(ERROR, "regprocin: no such procedure %s", pro_name_and_oid);
+			result = (RegProcedure) proctup->t_oid;
+		else
+			elog(ERROR, "regprocin: no such procedure %s", pro_name_and_oid);
 	}
 	else
 	{
@@ -74,7 +76,7 @@ regprocin(char *pro_name_and_oid)
 		HeapScanDesc procscan;
 		ScanKeyData key;
 		bool		isnull;
-	
+
 		proc = heap_openr(ProcedureRelationName);
 		if (!RelationIsValid(proc))
 		{
@@ -87,7 +89,7 @@ regprocin(char *pro_name_and_oid)
 							   (AttrNumber) 1,
 							   (RegProcedure) F_NAMEEQ,
 							   (Datum) pro_name_and_oid);
-	
+
 		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 		if (!HeapScanIsValid(procscan))
 		{
@@ -99,23 +101,23 @@ regprocin(char *pro_name_and_oid)
 		proctup = heap_getnext(procscan, 0);
 		if (HeapTupleIsValid(proctup))
 		{
-				result = (RegProcedure) heap_getattr(proctup,
-													 ObjectIdAttributeNumber,
-											RelationGetDescr(proc),
-													 &isnull);
-				if (isnull)
-					elog(FATAL, "regprocin: null procedure %s", pro_name_and_oid);
+			result = (RegProcedure) heap_getattr(proctup,
+												 ObjectIdAttributeNumber,
+												 RelationGetDescr(proc),
+												 &isnull);
+			if (isnull)
+				elog(FATAL, "regprocin: null procedure %s", pro_name_and_oid);
 		}
 		else
-				result = (RegProcedure) 0;
+			result = (RegProcedure) 0;
 
 		heap_endscan(procscan);
 		heap_close(proc);
-	}	
+	}
 
 #ifdef	EBUG
 	elog(DEBUG, "regprocin: no such procedure %s", pro_name_and_oid);
-#endif							/* defined(EBUG) */
+#endif	 /* defined(EBUG) */
 	return (int32) result;
 }
 
@@ -133,15 +135,15 @@ regprocout(RegProcedure proid)
 	if (!IsBootstrapProcessingMode())
 	{
 		proctup = SearchSysCacheTuple(PROOID,
-										ObjectIdGetDatum(proid),
-										0, 0, 0);
-	
+									  ObjectIdGetDatum(proid),
+									  0, 0, 0);
+
 		if (HeapTupleIsValid(proctup))
 		{
-				char	   *s;
-	
-				s = ((Form_pg_proc) GETSTRUCT(proctup))->proname.data;
-				snprintf(result, NAMEDATALEN, "%s_%d", s, proid);
+			char	   *s;
+
+			s = ((Form_pg_proc) GETSTRUCT(proctup))->proname.data;
+			snprintf(result, NAMEDATALEN, "%s_%d", s, proid);
 		}
 		else
 		{
@@ -154,7 +156,7 @@ regprocout(RegProcedure proid)
 		Relation	proc;
 		HeapScanDesc procscan;
 		ScanKeyData key;
-	
+
 		proc = heap_openr(ProcedureRelationName);
 		if (!RelationIsValid(proc))
 		{
@@ -167,7 +169,7 @@ regprocout(RegProcedure proid)
 							   (AttrNumber) ObjectIdAttributeNumber,
 							   (RegProcedure) F_INT4EQ,
 							   (Datum) proid);
-	
+
 		procscan = heap_beginscan(proc, 0, SnapshotNow, 1, &key);
 		if (!HeapScanIsValid(procscan))
 		{
@@ -183,7 +185,7 @@ regprocout(RegProcedure proid)
 			bool		isnull;
 
 			s = (char *) heap_getattr(proctup, 1,
-							  RelationGetDescr(proc), &isnull);
+									  RelationGetDescr(proc), &isnull);
 			if (!isnull)
 				StrNCpy(result, s, NAMEDATALEN);
 			else
@@ -191,8 +193,8 @@ regprocout(RegProcedure proid)
 		}
 		else
 		{
-				result[0] = '-';
-				result[1] = '\0';
+			result[0] = '-';
+			result[1] = '\0';
 		}
 		heap_endscan(procscan);
 		heap_close(proc);
@@ -200,8 +202,8 @@ regprocout(RegProcedure proid)
 	}
 
 #ifdef	EBUG
-			elog(DEBUG, "regprocout: no such procedure %d", proid);
-#endif							/* defined(EBUG) */
+	elog(DEBUG, "regprocout: no such procedure %d", proid);
+#endif	 /* defined(EBUG) */
 	return result;
 }
 
@@ -232,15 +234,15 @@ oid8types(Oid **oidArray)
 		if (*sp != InvalidOid)
 		{
 			typetup = SearchSysCacheTuple(TYPOID,
-											ObjectIdGetDatum(*sp),
-											0, 0, 0);
+										  ObjectIdGetDatum(*sp),
+										  0, 0, 0);
 			if (HeapTupleIsValid(typetup))
 			{
 				char	   *s;
 
 				s = ((Form_pg_type) GETSTRUCT(typetup))->typname.data;
 				StrNCpy(VARDATA(result) + strlen(VARDATA(result)), s,
-							NAMEDATALEN);
+						NAMEDATALEN);
 				strcat(VARDATA(result), " ");
 			}
 		}

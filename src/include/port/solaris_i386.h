@@ -24,7 +24,7 @@ typedef unsigned char slock_t;
 
 #ifndef			__nan_bytes
 #define __nan_bytes				{ 0, 0, 0, 0, 0, 0, 0xf8, 0x7f }
-#endif							/* __nan_bytes */
+#endif	 /* __nan_bytes */
 
 #ifdef			__GNUC__
 #define NAN \
@@ -34,8 +34,8 @@ typedef unsigned char slock_t;
 
 #else							/* Not GCC.  */
 #define				   NAN	   (*(__const double *) __nan)
-#endif							/* GCC.  */
-#endif							/* NAN */
+#endif	 /* GCC.  */
+#endif	 /* NAN */
 
 #ifndef		   index
 #define index  strchr

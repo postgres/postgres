@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.7 1998/06/15 18:39:52 momjian Exp $
+ * $Id: attnum.h,v 1.8 1998/09/01 04:34:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,4 +59,4 @@ typedef int16 AttrNumber;
 #define AttrOffsetGetAttrNumber(attributeOffset) \
 	 ((AttrNumber) (1 + attributeOffset))
 
-#endif							/* ATTNUM_H */
+#endif	 /* ATTNUM_H */

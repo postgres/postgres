@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.9 1998/02/26 04:40:27 momjian Exp $
+ * $Id: skey.h,v 1.10 1998/09/01 04:34:29 momjian Exp $
  *
  *
  * Note:
@@ -46,8 +46,7 @@ typedef ScanKeyData *ScanKey;
  * prototypes for functions in access/common/scankey.c
  */
 extern void ScanKeyEntrySetIllegal(ScanKey entry);
-extern void
-ScanKeyEntryInitialize(ScanKey entry, bits16 flags,
+extern void ScanKeyEntryInitialize(ScanKey entry, bits16 flags,
 	 AttrNumber attributeNumber, RegProcedure procedure, Datum argument);
 
-#endif							/* SKEY_H */
+#endif	 /* SKEY_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.6 1998/06/15 18:40:03 momjian Exp $
+ * $Id: itemid.h,v 1.7 1998/09/01 04:38:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,4 +75,4 @@ typedef struct ItemIdData *ItemId;
 	(bool) (((itemId)->lp_flags & LP_USED) != 0) \
 )
 
-#endif							/* ITEMID_H */
+#endif	 /* ITEMID_H */

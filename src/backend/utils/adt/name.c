@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.14 1998/09/01 03:26:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.15 1998/09/01 04:32:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ namestrcmp(Name name, char *str)
 	if (!name && !str)
 		return 0;
 	if (!name)
-		return -1;			/* NULL < anything */
+		return -1;				/* NULL < anything */
 	if (!str)
 		return 1;				/* NULL < anything */
 	return strncmp(name->data, str, NAMEDATALEN);

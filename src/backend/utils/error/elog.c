@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.34 1998/09/01 03:26:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.35 1998/09/01 04:33:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #ifndef O_RDONLY
 #include <sys/file.h>
-#endif							/* O_RDONLY */
+#endif	 /* O_RDONLY */
 #include <sys/types.h>
 #include <stdarg.h>
 #include <errno.h>
@@ -38,12 +38,12 @@
 /*
  * Global option to control the use of syslog(3) for logging:
  *
- *		0 	stdout/stderr only
- *  	1   stdout/stderr + syslog
- *  	2   syslog only
+ *		0	stdout/stderr only
+ *		1	stdout/stderr + syslog
+ *		2	syslog only
  */
 #define UseSyslog pg_options[OPT_SYSLOG]
-#define PG_LOG_FACILITY	LOG_LOCAL0
+#define PG_LOG_FACILITY LOG_LOCAL0
 #else
 #define UseSyslog 0
 #endif
@@ -69,10 +69,12 @@ elog(int lev, const char *fmt,...)
 
 #ifndef PG_STANDALONE
 	extern FILE *Pfout;
+
 #endif
 
 #ifdef USE_SYSLOG
 	int			log_level;
+
 #endif
 
 	int			len;
@@ -135,25 +137,26 @@ elog(int lev, const char *fmt,...)
 	va_end(ap);
 
 #ifdef USE_SYSLOG
-	switch (lev) {
-	case NOIND:
-		log_level = LOG_DEBUG;
-		break;
-	case DEBUG:
-		log_level = LOG_DEBUG;
-		break;
-	case NOTICE:
-		log_level = LOG_NOTICE;
-		break;
-	case ERROR:
-		log_level = LOG_WARNING;
-		break;
-	case FATAL:
-	default:
-		log_level = LOG_ERR;
-		break;
+	switch (lev)
+	{
+		case NOIND:
+			log_level = LOG_DEBUG;
+			break;
+		case DEBUG:
+			log_level = LOG_DEBUG;
+			break;
+		case NOTICE:
+			log_level = LOG_NOTICE;
+			break;
+		case ERROR:
+			log_level = LOG_WARNING;
+			break;
+		case FATAL:
+		default:
+			log_level = LOG_ERR;
+			break;
 	}
-	write_syslog(log_level, line+TIMESTAMP_SIZE);
+	write_syslog(log_level, line + TIMESTAMP_SIZE);
 #endif
 
 	len = strlen(strcat(line, "\n"));
@@ -195,7 +198,7 @@ elog(int lev, const char *fmt,...)
 		else
 			pq_putnchar("E", 1);
 		/* pq_putint(-101, 4); *//* should be query id */
-		pq_putstr(line+TIMESTAMP_SIZE);		/* don't show timestamps */
+		pq_putstr(line + TIMESTAMP_SIZE);		/* don't show timestamps */
 		pq_flush();
 	}
 	if (Pfout == NULL)
@@ -207,16 +210,16 @@ elog(int lev, const char *fmt,...)
 		 */
 		fputs(line, stderr);
 	}
-#endif							/* !PG_STANDALONE */
+#endif	 /* !PG_STANDALONE */
 
 	if (lev == ERROR)
 	{
-		extern bool	InError;
+		extern bool InError;
 
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InError)
 		{
-			kill(MyProcPid, SIGQUIT); /* abort to traffic cop */
+			kill(MyProcPid, SIGQUIT);	/* abort to traffic cop */
 			pause();
 		}
 

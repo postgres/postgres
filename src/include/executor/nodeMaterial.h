@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMaterial.h,v 1.7 1998/02/26 04:41:24 momjian Exp $
+ * $Id: nodeMaterial.h,v 1.8 1998/09/01 04:36:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,4 @@ extern List ExecMaterialMarkPos(Material *node);
 extern void ExecMaterialRestrPos(Material *node);
 
 #endif
-#endif							/* NODEMATERIAL_H */
+#endif	 /* NODEMATERIAL_H */

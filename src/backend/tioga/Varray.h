@@ -45,4 +45,4 @@ typedef void (*CopyingFunct) (void *from, void *to);
 extern Varray *NewVarray(size_t nobj, size_t size);
 extern int	AppendVarray(Varray * array, void *value, CopyingFunct copy);
 
-#endif							/* _VARRAY_H_ */
+#endif	 /* _VARRAY_H_ */

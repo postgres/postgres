@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: scansup.h,v 1.4 1997/11/26 01:14:18 momjian Exp $
+ * $Id: scansup.h,v 1.5 1998/09/01 04:37:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,4 +16,4 @@
 
 extern char *scanstr(char *s);
 
-#endif							/* SCANSUP_H */
+#endif	 /* SCANSUP_H */

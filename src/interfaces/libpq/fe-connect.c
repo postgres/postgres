@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.79 1998/08/17 03:50:34 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.80 1998/09/01 04:40:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,8 @@ static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
 static char *conninfo_getval(char *keyword);
 static void conninfo_free(void);
-static void defaultNoticeProcessor(void * arg, const char * message);
+static void defaultNoticeProcessor(void *arg, const char *message);
+
 /* XXX Why is this not static? */
 void		PQsetenv(PGconn *conn);
 
@@ -282,8 +283,10 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 {
 	PGconn	   *conn;
 	char	   *tmp;
+
 	/* An error message from some service we call. */
 	bool		error = FALSE;
+
 	/* We encountered an error that prevents successful completion */
 	int			i;
 
@@ -359,9 +362,10 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 
 	if (conn->dbName)
 	{
+
 		/*
-		 * if the database name is surrounded by double-quotes, then
-		 * don't convert case
+		 * if the database name is surrounded by double-quotes, then don't
+		 * convert case
 		 */
 		if (*conn->dbName == '"')
 		{
@@ -370,8 +374,8 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 		}
 		else
 			for (i = 0; conn->dbName[i]; i++)
-				if (isascii((unsigned char)conn->dbName[i]) &&
-				    isupper(conn->dbName[i]))
+				if (isascii((unsigned char) conn->dbName[i]) &&
+					isupper(conn->dbName[i]))
 					conn->dbName[i] = tolower(conn->dbName[i]);
 	}
 
@@ -392,57 +396,63 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 static int
 update_db_info(PGconn *conn)
 {
-	char *tmp, *old = conn->dbName;
-	
+	char	   *tmp,
+			   *old = conn->dbName;
+
 	if (strchr(conn->dbName, '@') != NULL)
 	{
 		/* old style: dbname[@server][:port] */
 		tmp = strrchr(conn->dbName, ':');
-		if (tmp != NULL) /* port number given */
+		if (tmp != NULL)		/* port number given */
 		{
-		 	conn->pgport = strdup(tmp + 1);
+			conn->pgport = strdup(tmp + 1);
 			*tmp = '\0';
 		}
-		
+
 		tmp = strrchr(conn->dbName, '@');
-		if (tmp != NULL) /* host name given */
+		if (tmp != NULL)		/* host name given */
 		{
-		 	conn->pghost = strdup(tmp + 1);
+			conn->pghost = strdup(tmp + 1);
 			*tmp = '\0';
 		}
-	
+
 		conn->dbName = strdup(old);
 		free(old);
 	}
 	else
 	{
-		int offset;
-		
+		int			offset;
+
 		/*
-	       * only allow protocols tcp and unix
-	       */
+		 * only allow protocols tcp and unix
+		 */
 		if (strncmp(conn->dbName, "tcp:", 4) == 0)
 			offset = 4;
 		else if (strncmp(conn->dbName, "unix:", 5) == 0)
 			offset = 5;
-		else return 0;
-			
+		else
+			return 0;
+
 		if (strncmp(conn->dbName + offset, "postgresql://", strlen("postgresql://")) == 0)
 		{
-        	        /* new style: <tcp|unix>:postgresql://server[:port][/dbname][?options] */
+
+			/*
+			 * new style:
+			 * <tcp|unix>:postgresql://server[:port][/dbname][?options]
+			 */
 			offset += strlen("postgresql://");
-			
+
 			tmp = strrchr(conn->dbName + offset, '?');
-			if (tmp != NULL) /* options given */
+			if (tmp != NULL)	/* options given */
 			{
-			 	conn->pgoptions = strdup(tmp + 1);
+				conn->pgoptions = strdup(tmp + 1);
 				*tmp = '\0';
 			}
-		
+
 			tmp = strrchr(conn->dbName + offset, '/');
-			if (tmp != NULL) /* database name given */
+			if (tmp != NULL)	/* database name given */
 			{
-			 	conn->dbName = strdup(tmp + 1);
+				conn->dbName = strdup(tmp + 1);
 				*tmp = '\0';
 			}
 			else
@@ -452,30 +462,31 @@ update_db_info(PGconn *conn)
 				else if (conn->pguser)
 					conn->dbName = strdup(conn->pguser);
 			}
-		
+
 			tmp = strrchr(old + offset, ':');
-			if (tmp != NULL) /* port number given */
+			if (tmp != NULL)	/* port number given */
 			{
-			 	conn->pgport = strdup(tmp + 1);
+				conn->pgport = strdup(tmp + 1);
 				*tmp = '\0';
 			}
-		
+
 			if (strncmp(old, "unix:", 5) == 0)
 			{
 				conn->pghost = NULL;
 				if (strcmp(old + offset, "localhost") != 0)
 				{
 					(void) sprintf(conn->errorMessage,
-					   "connectDB() -- non-tcp access only possible on localhost\n");
-					 return 1;
+								   "connectDB() -- non-tcp access only possible on localhost\n");
+					return 1;
 				}
 			}
-			else conn->pghost = strdup(old + offset);
-	
+			else
+				conn->pghost = strdup(old + offset);
+
 			free(old);
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -498,12 +509,12 @@ connectDB(PGconn *conn)
 	char		beresp;
 	int			on = 1;
 
-	/* 
-	* parse dbName to get all additional info in it, if any
-	*/
+	/*
+	 * parse dbName to get all additional info in it, if any
+	 */
 	if (update_db_info(conn) != 0)
 		goto connect_errReturn;
-		
+
 	/*
 	 * Initialize the startup packet.
 	 */
@@ -535,7 +546,8 @@ connectDB(PGconn *conn)
 		}
 		family = AF_INET;
 	}
-	else {
+	else
+	{
 		hp = NULL;
 		family = AF_UNIX;
 	}
@@ -556,7 +568,7 @@ connectDB(PGconn *conn)
 	else
 		conn->raddr_len = UNIXSOCK_PATH(conn->raddr.un, portno);
 #endif
-	
+
 
 	/* Connect to the server  */
 	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
@@ -577,14 +589,14 @@ connectDB(PGconn *conn)
 	}
 
 	/*
-	 * Set the right options.
-	 * We need nonblocking I/O, and we don't want delay of outgoing data.
+	 * Set the right options. We need nonblocking I/O, and we don't want
+	 * delay of outgoing data.
 	 */
 
 #ifndef WIN32
 	if (fcntl(conn->sock, F_SETFL, O_NONBLOCK) < 0)
 #else
-	if (ioctlsocket(conn->sock,FIONBIO, &on) != 0) 
+	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #endif
 	{
 		(void) sprintf(conn->errorMessage,
@@ -606,16 +618,16 @@ connectDB(PGconn *conn)
 		}
 		if (setsockopt(conn->sock, pe->p_proto, TCP_NODELAY,
 #ifdef WIN32
-			(char *)
+					   (char *)
 #endif
-					   &on, 
+					   &on,
 					   sizeof(on)) < 0)
 		{
 			(void) sprintf(conn->errorMessage,
-						   "connectDB() -- setsockopt failed: errno=%d\n%s\n",
+					  "connectDB() -- setsockopt failed: errno=%d\n%s\n",
 						   errno, strerror(errno));
 #ifdef WIN32
-			printf("Winsock error: %i\n",WSAGetLastError());
+			printf("Winsock error: %i\n", WSAGetLastError());
 #endif
 			goto connect_errReturn;
 		}
@@ -626,7 +638,7 @@ connectDB(PGconn *conn)
 	if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
-					   "connectDB() -- getsockname() failed: errno=%d\n%s\n",
+				   "connectDB() -- getsockname() failed: errno=%d\n%s\n",
 					   errno, strerror(errno));
 		goto connect_errReturn;
 	}
@@ -640,15 +652,15 @@ connectDB(PGconn *conn)
 	if (pqPacketSend(conn, (char *) &sp, sizeof(StartupPacket)) != STATUS_OK)
 	{
 		sprintf(conn->errorMessage,
-				"connectDB() --  couldn't send startup packet: errno=%d\n%s\n",
+		  "connectDB() --  couldn't send startup packet: errno=%d\n%s\n",
 				errno, strerror(errno));
 		goto connect_errReturn;
 	}
 
 	/*
-	 * Perform the authentication exchange:
-	 * wait for backend messages and respond as necessary.
-	 * We fall out of this loop when done talking to the postmaster.
+	 * Perform the authentication exchange: wait for backend messages and
+	 * respond as necessary. We fall out of this loop when done talking to
+	 * the postmaster.
 	 */
 
 	for (;;)
@@ -659,8 +671,10 @@ connectDB(PGconn *conn)
 		/* Load data, or detect EOF */
 		if (pqReadData(conn) < 0)
 			goto connect_errReturn;
-		/* Scan the message.
-		 * If we run out of data, loop around to try again.
+
+		/*
+		 * Scan the message. If we run out of data, loop around to try
+		 * again.
 		 */
 		conn->inCursor = conn->inStart;
 
@@ -679,7 +693,7 @@ connectDB(PGconn *conn)
 		if (beresp != 'R')
 		{
 			(void) sprintf(conn->errorMessage,
-						   "connectDB() -- expected authentication request\n");
+					 "connectDB() -- expected authentication request\n");
 			goto connect_errReturn;
 		}
 
@@ -710,20 +724,21 @@ connectDB(PGconn *conn)
 	}
 
 	/*
-	 * Now we expect to hear from the backend.
-	 * A ReadyForQuery message indicates that startup is successful,
-	 * but we might also get an Error message indicating failure.
-	 * (Notice messages indicating nonfatal warnings are also allowed
-	 * by the protocol, as is a BackendKeyData message.)
-	 * Easiest way to handle this is to let PQgetResult() read the messages.
-	 * We just have to fake it out about the state of the connection.
+	 * Now we expect to hear from the backend. A ReadyForQuery message
+	 * indicates that startup is successful, but we might also get an
+	 * Error message indicating failure. (Notice messages indicating
+	 * nonfatal warnings are also allowed by the protocol, as is a
+	 * BackendKeyData message.) Easiest way to handle this is to let
+	 * PQgetResult() read the messages. We just have to fake it out about
+	 * the state of the connection.
 	 */
 
 	conn->status = CONNECTION_OK;
 	conn->asyncStatus = PGASYNC_BUSY;
 	res = PQgetResult(conn);
 	/* NULL return indicating we have gone to IDLE state is expected */
-	if (res) {
+	if (res)
+	{
 		if (res->resultStatus != PGRES_FATAL_ERROR)
 			sprintf(conn->errorMessage,
 					"connectDB() -- unexpected message during startup\n");
@@ -731,16 +746,17 @@ connectDB(PGconn *conn)
 		goto connect_errReturn;
 	}
 
-	/* Given the new protocol that sends a ReadyForQuery message
-	 * after successful backend startup, it should no longer be
-	 * necessary to send an empty query to test for startup.
+	/*
+	 * Given the new protocol that sends a ReadyForQuery message after
+	 * successful backend startup, it should no longer be necessary to
+	 * send an empty query to test for startup.
 	 */
 
 #if 0
 
 	/*
-	 * Send a blank query to make sure everything works; in
-	 * particular, that the database exists.
+	 * Send a blank query to make sure everything works; in particular,
+	 * that the database exists.
 	 */
 	res = PQexec(conn, " ");
 	if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY)
@@ -754,8 +770,8 @@ connectDB(PGconn *conn)
 
 #endif
 
-	/* Post-connection housekeeping.
-	 * Send environment variables to server
+	/*
+	 * Post-connection housekeeping. Send environment variables to server
 	 */
 
 	PQsetenv(conn);
@@ -781,32 +797,38 @@ PQsetenv(PGconn *conn)
 {
 	struct EnvironmentOptions *eo;
 	char		setQuery[80];	/* mjl: size okay? XXX */
+
 #ifdef MULTIBYTE
-	char	*envname = "PGCLIENTENCODING";
-	static char	envbuf[64];		/* big enough? */
-	char	*env;
-	char	*encoding = 0;
+	char	   *envname = "PGCLIENTENCODING";
+	static char envbuf[64];		/* big enough? */
+	char	   *env;
+	char	   *encoding = 0;
 	PGresult   *rtn;
+
 #endif
 
 #ifdef MULTIBYTE
 	/* query server encoding */
 	env = getenv(envname);
-	if (!env) {
-	  rtn = PQexec(conn, "select getdatabaseencoding()");
-	  if (rtn && PQresultStatus(rtn) == PGRES_TUPLES_OK) {
-	    encoding = PQgetvalue(rtn,0,0);
-	    if (encoding) {
-	      /* set client encoding */
-	      sprintf(envbuf,"%s=%s",envname,encoding);
-	      putenv(envbuf);
-	    }
-	    PQclear(rtn);
-	  }
-	  if (!encoding) {	/* this should not happen */
-	    sprintf(envbuf,"%s=%s",envname,pg_encoding_to_char(MULTIBYTE));
-	    putenv(envbuf);
-	  }
+	if (!env)
+	{
+		rtn = PQexec(conn, "select getdatabaseencoding()");
+		if (rtn && PQresultStatus(rtn) == PGRES_TUPLES_OK)
+		{
+			encoding = PQgetvalue(rtn, 0, 0);
+			if (encoding)
+			{
+				/* set client encoding */
+				sprintf(envbuf, "%s=%s", envname, encoding);
+				putenv(envbuf);
+			}
+			PQclear(rtn);
+		}
+		if (!encoding)
+		{						/* this should not happen */
+			sprintf(envbuf, "%s=%s", envname, pg_encoding_to_char(MULTIBYTE));
+			putenv(envbuf);
+		}
 	}
 #endif
 
@@ -833,12 +855,13 @@ PQsetenv(PGconn *conn)
 
 /*
  * makeEmptyPGconn
- *   - create a PGconn data structure with (as yet) no interesting data
+ *	 - create a PGconn data structure with (as yet) no interesting data
  */
 static PGconn *
 makeEmptyPGconn(void)
 {
-	PGconn	*conn = (PGconn *) malloc(sizeof(PGconn));
+	PGconn	   *conn = (PGconn *) malloc(sizeof(PGconn));
+
 	if (conn == NULL)
 		return conn;
 
@@ -914,11 +937,11 @@ closePGconn(PGconn *conn)
 {
 	if (conn->sock >= 0)
 	{
+
 		/*
-		 * Try to send "close connection" message to backend.
-		 * Ignore any error.
-		 * Note: this routine used to go to substantial lengths to avoid
-		 * getting SIGPIPE'd if the connection were already closed.
+		 * Try to send "close connection" message to backend. Ignore any
+		 * error. Note: this routine used to go to substantial lengths to
+		 * avoid getting SIGPIPE'd if the connection were already closed.
 		 * Now we rely on pqFlush to avoid the signal.
 		 */
 		(void) pqPuts("X", conn);
@@ -998,9 +1021,10 @@ int
 PQrequestCancel(PGconn *conn)
 {
 	int			tmpsock = -1;
-	struct {
-		uint32				packetlen;
-		CancelRequestPacket	cp;
+	struct
+	{
+		uint32		packetlen;
+		CancelRequestPacket cp;
 	}			crp;
 
 	/* Check we have an open connection */
@@ -1015,9 +1039,8 @@ PQrequestCancel(PGconn *conn)
 	}
 
 	/*
-	 * We need to open a temporary connection to the postmaster.
-	 * Use the information saved by connectDB to do this with
-	 * only kernel calls.
+	 * We need to open a temporary connection to the postmaster. Use the
+	 * information saved by connectDB to do this with only kernel calls.
 	 */
 	if ((tmpsock = socket(conn->raddr.sa.sa_family, SOCK_STREAM, 0)) < 0)
 	{
@@ -1029,6 +1052,7 @@ PQrequestCancel(PGconn *conn)
 		strcpy(conn->errorMessage, "PQrequestCancel() -- connect() failed: ");
 		goto cancel_errReturn;
 	}
+
 	/*
 	 * We needn't set nonblocking I/O or NODELAY options here.
 	 */
@@ -1040,7 +1064,7 @@ PQrequestCancel(PGconn *conn)
 	crp.cp.backendPID = htonl(conn->be_pid);
 	crp.cp.cancelAuthCode = htonl(conn->be_key);
 
-	if (send(tmpsock, (char*) &crp, sizeof(crp), 0) != (int) sizeof(crp))
+	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
 	{
 		strcpy(conn->errorMessage, "PQrequestCancel() -- send() failed: ");
 		goto cancel_errReturn;
@@ -1404,6 +1428,7 @@ char *
 PQerrorMessage(PGconn *conn)
 {
 	static char noConn[] = "PQerrorMessage: conn pointer is NULL\n";
+
 	if (!conn)
 		return noConn;
 	return conn->errorMessage;
@@ -1441,7 +1466,7 @@ PQuntrace(PGconn *conn)
 }
 
 void
-PQsetNoticeProcessor (PGconn *conn, PQnoticeProcessor proc, void *arg)
+PQsetNoticeProcessor(PGconn *conn, PQnoticeProcessor proc, void *arg)
 {
 	if (conn == NULL)
 		return;
@@ -1457,7 +1482,7 @@ PQsetNoticeProcessor (PGconn *conn, PQnoticeProcessor proc, void *arg)
  */
 
 static void
-defaultNoticeProcessor(void * arg, const char * message)
+defaultNoticeProcessor(void *arg, const char *message)
 {
 	/* Note: we expect the supplied string to end with a newline already. */
 	fprintf(stderr, "%s", message);

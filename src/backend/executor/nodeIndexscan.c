@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.26 1998/09/01 03:22:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.27 1998/09/01 04:28:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ IndexNext(IndexScan *node)
 	EState	   *estate;
 	CommonScanState *scanstate;
 	IndexScanState *indexstate;
-	ScanDirection	direction;
-	Snapshot		snapshot;
+	ScanDirection direction;
+	Snapshot	snapshot;
 	IndexScanDescPtr scanDescs;
 	IndexScanDesc scandesc;
 	Relation	heapRelation;
@@ -95,7 +95,7 @@ IndexNext(IndexScan *node)
 	TupleTableSlot *slot;
 	Buffer		buffer = InvalidBuffer;
 	int			numIndices;
-	
+
 	/* ----------------
 	 *	extract necessary information from index scan node
 	 * ----------------
@@ -122,39 +122,40 @@ IndexNext(IndexScan *node)
 		while ((result = index_getnext(scandesc, direction)) != NULL)
 		{
 			tuple = heap_fetch(heapRelation, snapshot,
-								&result->heap_iptr, &buffer);
+							   &result->heap_iptr, &buffer);
 			pfree(result);
 
 			if (tuple != NULL)
 			{
 				bool		prev_matches = false;
 				int			prev_index;
-		
+
 				/* ----------------
-			 	 *	store the scanned tuple in the scan tuple slot of
-			 	 *	the scan state.  Eventually we will only do this and not
-			 	 *	return a tuple.  Note: we pass 'false' because tuples
-			 	 *	returned by amgetnext are pointers onto disk pages and
-			 	 *	were not created with palloc() and so should not be pfree()'d.
-			 	 * ----------------
-			 	 */
-				ExecStoreTuple(tuple,		/* tuple to store */
-								slot,		/* slot to store in */
-								buffer,		/* buffer associated with tuple  */
-								false);		/* don't pfree */
+				 *	store the scanned tuple in the scan tuple slot of
+				 *	the scan state.  Eventually we will only do this and not
+				 *	return a tuple.  Note: we pass 'false' because tuples
+				 *	returned by amgetnext are pointers onto disk pages and
+				 *	were not created with palloc() and so should not be pfree()'d.
+				 * ----------------
+				 */
+				ExecStoreTuple(tuple,	/* tuple to store */
+							   slot,	/* slot to store in */
+							   buffer,	/* buffer associated with tuple  */
+							   false);	/* don't pfree */
 
 				/*
-				 *	We must check to see if the current tuple would have been
-				 *	matched by an earlier index, so we don't double report it.
-				 *	We do this by passing the tuple through ExecQual and look
-				 *	for failure with all previous qualifications.
+				 * We must check to see if the current tuple would have
+				 * been matched by an earlier index, so we don't double
+				 * report it. We do this by passing the tuple through
+				 * ExecQual and look for failure with all previous
+				 * qualifications.
 				 */
 				for (prev_index = 0; prev_index < indexstate->iss_IndexPtr;
-																prev_index++)
+					 prev_index++)
 				{
 					scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
 					if (ExecQual(nth(prev_index, node->indxqual),
-						scanstate->cstate.cs_ExprContext))
+								 scanstate->cstate.cs_ExprContext))
 					{
 						prev_matches = true;
 						break;
@@ -259,17 +260,16 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	indxqual = node->indxqual;
 	numScanKeys = indexstate->iss_NumScanKeys;
 	indexstate->iss_IndexPtr = 0;
-	
+
 	/* it's possible in subselects */
 	if (exprCtxt == NULL)
 		exprCtxt = node->scan.scanstate->cstate.cs_ExprContext;
 
 	node->scan.scanstate->cstate.cs_ExprContext->ecxt_outertuple =
 		exprCtxt->ecxt_outertuple;
-		
+
 	/*
-	 * get the index qualifications and recalculate the appropriate
-	 * values
+	 * get the index qualifications and recalculate the appropriate values
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
@@ -282,17 +282,19 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 			run_keys = (int *) runtimeKeyInfo[i];
 			for (j = 0; j < n_keys; j++)
 			{
+
 				/*
 				 * If we have a run-time key, then extract the run-time
 				 * expression and evaluate it with respect to the current
-				 * outer tuple.  We then stick the result into the scan key.
+				 * outer tuple.  We then stick the result into the scan
+				 * key.
 				 */
 				if (run_keys[j] != NO_OP)
 				{
 					clause = nth(j, qual);
 					scanexpr = (run_keys[j] == RIGHT_OP) ?
 						(Node *) get_rightop(clause) : (Node *) get_leftop(clause);
-	
+
 					/*
 					 * pass in isDone but ignore it.  We don't iterate in
 					 * quals
@@ -333,7 +335,7 @@ ExecEndIndexScan(IndexScan *node)
 	IndexScanState *indexstate;
 	Pointer    *runtimeKeyInfo;
 	ScanKey    *scanKeys;
-  	List	   *indxqual;
+	List	   *indxqual;
 	int		   *numScanKeys;
 	int			numIndices;
 	int			i;
@@ -342,7 +344,7 @@ ExecEndIndexScan(IndexScan *node)
 	indexstate = node->indxstate;
 	indxqual = node->indxqual;
 	runtimeKeyInfo = (Pointer *) indexstate->iss_RuntimeKeyInfo;
-	
+
 	/* ----------------
 	 *	extract information from the node
 	 * ----------------
@@ -381,7 +383,7 @@ ExecEndIndexScan(IndexScan *node)
 	pfree(numScanKeys);
 
 	if (runtimeKeyInfo)
-	{	
+	{
 		for (i = 0; i < numIndices; i++)
 		{
 			List	   *qual;
@@ -394,7 +396,7 @@ ExecEndIndexScan(IndexScan *node)
 		}
 		pfree(runtimeKeyInfo);
 	}
-	
+
 	/* ----------------
 	 *	clear out tuple table slots
 	 * ----------------
@@ -428,7 +430,7 @@ ExecIndexMarkPos(IndexScan *node)
 #if 0
 	IndexScanMarkPosition(scanDesc);
 #endif
-	index_markpos (scanDesc);
+	index_markpos(scanDesc);
 }
 
 /* ----------------------------------------------------------------
@@ -457,7 +459,7 @@ ExecIndexRestrPos(IndexScan *node)
 #if 0
 	IndexScanRestorePosition(scanDesc);
 #endif
-	index_restrpos (scanDesc);
+	index_restrpos(scanDesc);
 }
 
 /* ----------------------------------------------------------------
@@ -504,7 +506,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	HeapScanDesc currentScanDesc;
 	ScanDirection direction;
 	int			baseid;
-	
+
 	List	   *execParam = NULL;
 
 	/* ----------------
@@ -727,22 +729,22 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 *	it identifies the value to place in our scan key.
 				 * ----------------
 				 */
-				
+
 				/* Life was so easy before ... subselects */
-				if ( ((Param *) leftop)->paramkind == PARAM_EXEC )
+				if (((Param *) leftop)->paramkind == PARAM_EXEC)
 				{
 					have_runtime_keys = true;
 					run_keys[j] = LEFT_OP;
-					execParam = lappendi (execParam, ((Param*) leftop)->paramid);
+					execParam = lappendi(execParam, ((Param *) leftop)->paramid);
 				}
 				else
 				{
 					scanvalue = ExecEvalParam((Param *) leftop,
-											  scanstate->cstate.cs_ExprContext,
+										scanstate->cstate.cs_ExprContext,
 											  &isnull);
 					if (isnull)
 						flags |= SK_ISNULL;
-					
+
 					run_keys[j] = NO_OP;
 				}
 			}
@@ -820,22 +822,22 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 *	it identifies the value to place in our scan key.
 				 * ----------------
 				 */
-				
+
 				/* Life was so easy before ... subselects */
-				if ( ((Param *) rightop)->paramkind == PARAM_EXEC )
+				if (((Param *) rightop)->paramkind == PARAM_EXEC)
 				{
 					have_runtime_keys = true;
 					run_keys[j] = RIGHT_OP;
-					execParam = lappendi (execParam, ((Param*) rightop)->paramid);
+					execParam = lappendi(execParam, ((Param *) rightop)->paramid);
 				}
 				else
 				{
 					scanvalue = ExecEvalParam((Param *) rightop,
-											  scanstate->cstate.cs_ExprContext,
+										scanstate->cstate.cs_ExprContext,
 											  &isnull);
 					if (isnull)
 						flags |= SK_ISNULL;
-					
+
 					run_keys[j] = NO_OP;
 				}
 			}
@@ -992,13 +994,13 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_ScanDescs = scanDescs;
 
 	indexstate->cstate.cs_TupFromTlist = false;
-	
-	/* 
-	 * if there are some PARAM_EXEC in skankeys then
-	 * force index rescan on first scan.
+
+	/*
+	 * if there are some PARAM_EXEC in skankeys then force index rescan on
+	 * first scan.
 	 */
-	((Plan*) node)->chgParam = execParam;
-	
+	((Plan *) node)->chgParam = execParam;
+
 	/* ----------------
 	 *	all done.
 	 * ----------------
@@ -1010,5 +1012,5 @@ int
 ExecCountSlotsIndexScan(IndexScan *node)
 {
 	return ExecCountSlotsNode(outerPlan((Plan *) node)) +
-		   ExecCountSlotsNode(innerPlan((Plan *) node)) + INDEXSCAN_NSLOTS;
+	ExecCountSlotsNode(innerPlan((Plan *) node)) + INDEXSCAN_NSLOTS;
 }

@@ -17,4 +17,4 @@ extern void ExecReScanSetParamPlan(SubPlan *node, Plan *parent);
 extern void ExecSetParamPlan(SubPlan *node);
 extern void ExecEndSubPlan(SubPlan *node);
 
-#endif							/* NODESUBPLAN_H */
+#endif	 /* NODESUBPLAN_H */

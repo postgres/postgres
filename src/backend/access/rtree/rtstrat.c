@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.9 1998/09/01 03:21:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.10 1998/09/01 04:27:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,7 @@
 #include <access/rtree.h>
 #include <access/istrat.h>
 
-static StrategyNumber
-RelationGetRTStrategy(Relation r,
+static StrategyNumber RelationGetRTStrategy(Relation r,
 					  AttrNumber attnum, RegProcedure proc);
 
 /*

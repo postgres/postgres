@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.20 1998/07/20 16:57:06 momjian Exp $
+ * $Id: libpq.h,v 1.21 1998/09/01 04:36:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ typedef struct TypeBlock
 {
 	char		name[NAMEDATALEN];		/* name of the attribute */
 	int			typid;			/* typid of the type */
-	int			typlen;		/* typlen of the type */
+	int			typlen;			/* typlen of the type */
 } TypeBlock;
 
 /* ----------------
@@ -179,11 +179,9 @@ extern int	PQninstancesGroup(PortalBuffer *portal, int group_index);
 extern int	PQnfieldsGroup(PortalBuffer *portal, int group_index);
 extern int	PQfnumberGroup(PortalBuffer *portal, int group_index, char *field_name);
 extern char *PQfnameGroup(PortalBuffer *portal, int group_index, int field_number);
-extern int
-PQftypeGroup(PortalBuffer *portal, int group_index,
+extern int PQftypeGroup(PortalBuffer *portal, int group_index,
 			 int field_number);
-extern int
-PQfsizeGroup(PortalBuffer *portal, int group_index,
+extern int PQfsizeGroup(PortalBuffer *portal, int group_index,
 			 int field_number);
 extern GroupBuffer *PQgroup(PortalBuffer *portal, int tuple_index);
 extern int	PQgetgroup(PortalBuffer *portal, int tuple_index);
@@ -236,15 +234,13 @@ extern void be_portalpush(PortalEntry *entry);
 extern PortalEntry *be_portalpop(void);
 extern PortalEntry *be_currentportal(void);
 extern PortalEntry *be_newportal(void);
-extern void
-be_typeinit(PortalEntry *entry, TupleDesc attrs,
+extern void be_typeinit(PortalEntry *entry, TupleDesc attrs,
 			int natts);
 extern void be_printtup(HeapTuple tuple, TupleDesc typeinfo);
 
 
 /* in be-pqexec.c */
-extern char *
-PQfn(int fnid, int *result_buf, int result_len, int result_is_int,
+extern char *PQfn(int fnid, int *result_buf, int result_len, int result_is_int,
 	 PQArgBlock *args, int nargs);
 extern char *PQexec(char *query);
 extern int	pqtest_PQexec(char *q);
@@ -271,16 +267,16 @@ extern int	pq_getinaddr(struct sockaddr_in * sin, char *host, int port);
 extern int	pq_getinserv(struct sockaddr_in * sin, char *host, char *serv);
 
 #ifdef MULTIBYTE
-extern void	pq_putncharlen(char *s, int n);
+extern void pq_putncharlen(char *s, int n);
+
 #endif
 
-extern int
-pq_connect(char *dbname, char *user, char *args, char *hostName,
+extern int pq_connect(char *dbname, char *user, char *args, char *hostName,
 		   char *debugTty, char *execFile, short portName);
 extern int	StreamOpen(char *hostName, short portName, Port *port);
 extern void StreamDoUnlink(void);
-extern int StreamServerPort(char *hostName, short portName, int *fdP);
-extern int StreamConnection(int server_fd, Port *port);
+extern int	StreamServerPort(char *hostName, short portName, int *fdP);
+extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
 
-#endif							/* LIBPQ_H */
+#endif	 /* LIBPQ_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.18 1998/09/01 03:27:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.19 1998/09/01 04:33:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ extern bool PostgresIsInitialized;
 #ifndef GOODAMI
 
 TransactionId HeapSpecialTransactionId = InvalidTransactionId;
-CommandId HeapSpecialCommandId = FirstCommandId;
+CommandId	HeapSpecialCommandId = FirstCommandId;
 
 void
 setheapoverride(bool on)
@@ -40,14 +40,14 @@ setheapoverride(bool on)
 	if (on)
 	{
 		TransactionIdStore(GetCurrentTransactionId(),
-							&HeapSpecialTransactionId);
+						   &HeapSpecialTransactionId);
 		HeapSpecialCommandId = GetCurrentCommandId();
 	}
 	else
 		HeapSpecialTransactionId = InvalidTransactionId;
 }
 
-#endif							/* !defined(GOODAMI) */
+#endif	 /* !defined(GOODAMI) */
 /*
  * XXX Transaction system override hacks end here
  */
@@ -196,7 +196,7 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
 		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
 			if (CommandIdGEScanCommandId(tuple->t_cmin))
-				return false; /* inserted after scan started */
+				return false;	/* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return true;
@@ -206,7 +206,7 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
 			if (CommandIdGEScanCommandId(tuple->t_cmax))
 				return true;	/* deleted after scan started */
 			else
-				return false; /* deleted before scan started */
+				return false;	/* deleted before scan started */
 		}
 
 		/*

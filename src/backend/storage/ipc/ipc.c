@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.32 1998/09/01 03:25:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.33 1998/09/01 04:31:47 momjian Exp $
  *
  * NOTES
  *
@@ -46,7 +46,7 @@
 #include <sys/ipc.h>
 #endif
 
-static int			UsePrivateMemory = 0;
+static int	UsePrivateMemory = 0;
 
 static void IpcMemoryDetach(int status, char *shmaddr);
 
@@ -61,9 +61,10 @@ static struct ONEXIT
 {
 	void		(*function) ();
 	caddr_t		arg;
-}	on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
+}			on_proc_exit_list[MAX_ON_EXITS], on_shmem_exit_list[MAX_ON_EXITS];
 
-static int	on_proc_exit_index, on_shmem_exit_index;
+static int	on_proc_exit_index,
+			on_shmem_exit_index;
 static void IpcConfigTip(void);
 
 typedef struct _PrivateMemStruct
@@ -116,11 +117,12 @@ proc_exit(int code)
 
 	TPRINTF(TRACE_VERBOSE, "proc_exit(%d) [#%d]", code, proc_exit_inprogress);
 
-    /*
-	 * If proc_exit is called too many times something bad is
-	 * happenig, so exit immediately.
+	/*
+	 * If proc_exit is called too many times something bad is happenig, so
+	 * exit immediately.
 	 */
-	if (proc_exit_inprogress > 9) {
+	if (proc_exit_inprogress > 9)
+	{
 		elog(ERROR, "infinite recursion in proc_exit");
 		goto exit;
 	}
@@ -136,7 +138,7 @@ proc_exit(int code)
 
 	/* do our shared memory exits first */
 	shmem_exit(code);
-	
+
 	/* ----------------
 	 *	call all the callbacks registered before calling exit().
 	 * ----------------
@@ -166,10 +168,11 @@ shmem_exit(int code)
 			code, shmem_exit_inprogress);
 
 	/*
-	 * If shmem_exit is called too many times something bad is
-	 * happenig, so exit immediately.
+	 * If shmem_exit is called too many times something bad is happenig,
+	 * so exit immediately.
 	 */
-	if (shmem_exit_inprogress > 9) {
+	if (shmem_exit_inprogress > 9)
+	{
 		elog(ERROR, "infinite recursion in shmem_exit");
 		exit(-1);
 	}
@@ -202,7 +205,7 @@ shmem_exit(int code)
  * ----------------------------------------------------------------
  */
 int
-on_proc_exit(void (*function) (), caddr_t arg)
+			on_proc_exit(void (*function) (), caddr_t arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
 		return -1;
@@ -223,7 +226,7 @@ on_proc_exit(void (*function) (), caddr_t arg)
  * ----------------------------------------------------------------
  */
 int
-on_shmem_exit(void (*function) (), caddr_t arg)
+			on_shmem_exit(void (*function) (), caddr_t arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		return -1;
@@ -402,7 +405,7 @@ IpcSemaphoreSet(int semId, int semno, int value)
 
 	if (errStatus == -1)
 	{
-	    EPRINTF("IpcSemaphoreSet: semctl failed (%s) id=%d",
+		EPRINTF("IpcSemaphoreSet: semctl failed (%s) id=%d",
 				strerror(errno), semId);
 	}
 }
@@ -734,7 +737,7 @@ LockIsFree(int lockid)
 
 #endif
 
-#endif							/* HAS_TEST_AND_SET */
+#endif	 /* HAS_TEST_AND_SET */
 
 static void
 IpcConfigTip(void)

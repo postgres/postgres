@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_rewrite.h,v 1.5 1997/10/25 05:25:10 thomas Exp $
+ * $Id: pg_rewrite.h,v 1.6 1998/09/01 04:35:13 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -61,4 +61,4 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
 #define Anum_pg_rewrite_ev_qual			6
 #define Anum_pg_rewrite_ev_action		7
 
-#endif							/* PG_REWRITE_H */
+#endif	 /* PG_REWRITE_H */

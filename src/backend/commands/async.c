@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.39 1998/09/01 03:21:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.40 1998/09/01 04:27:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,10 +64,10 @@
 #include <utils/ps_status.h>
 
 #define NotifyUnlock pg_options[OPT_NOTIFYUNLOCK]
-#define NotifyHack   pg_options[OPT_NOTIFYHACK]
+#define NotifyHack	 pg_options[OPT_NOTIFYHACK]
 
 extern TransactionState CurrentTransactionState;
-extern CommandDest 		whereToSendOutput;
+extern CommandDest whereToSendOutput;
 
 GlobalMemory notifyContext = NULL;
 
@@ -119,7 +119,7 @@ Async_NotifyHandler(SIGNAL_ARGS)
 	else
 	{
 		TPRINTF(TRACE_NOTIFY, "Async_NotifyHandler: "
-				"process in middle of transaction, state=%d, blockstate=%d",
+			 "process in middle of transaction, state=%d, blockstate=%d",
 				CurrentTransactionState->state,
 				CurrentTransactionState->blockState);
 		notifyFrontEndPending = 1;
@@ -213,13 +213,12 @@ Async_Notify(char *relname)
 	heap_endscan(sRel);
 
 	/*
-	 * Note: if the write lock is unset we can get multiple tuples
-	 * with same oid if other backends notify the same relation.
-	 * Use this option at your own risk.
+	 * Note: if the write lock is unset we can get multiple tuples with
+	 * same oid if other backends notify the same relation. Use this
+	 * option at your own risk.
 	 */
-	if (NotifyUnlock) {
+	if (NotifyUnlock)
 		RelationUnsetLockForWrite(lRel);
-	}
 
 	heap_close(lRel);
 
@@ -318,12 +317,13 @@ Async_NotifyAtCommit()
 			heap_close(lRel);
 
 			/*
-			 * Notify the frontend inside the current transaction while
-			 * we still have a valid write lock on pg_listeners. This
-			 * avoid waiting until all other backends have finished
-			 * with pg_listener.
+			 * Notify the frontend inside the current transaction while we
+			 * still have a valid write lock on pg_listeners. This avoid
+			 * waiting until all other backends have finished with
+			 * pg_listener.
 			 */
-			if (notifyFrontEndPending) {
+			if (notifyFrontEndPending)
+			{
 				/* The aux version is called inside transaction */
 				Async_NotifyFrontEnd_Aux();
 			}
@@ -333,14 +333,14 @@ Async_NotifyAtCommit()
 		}
 		else
 		{
+
 			/*
-			 * No notifies issued by us. If notifyFrontEndPending has been set
-			 * by Async_NotifyHandler notify the frontend of pending notifies
-			 * from other backends.
+			 * No notifies issued by us. If notifyFrontEndPending has been
+			 * set by Async_NotifyHandler notify the frontend of pending
+			 * notifies from other backends.
 			 */
-			if (notifyFrontEndPending) {
+			if (notifyFrontEndPending)
 				Async_NotifyFrontEnd();
-			}
 		}
 
 		ClearPendingNotify();
@@ -368,7 +368,8 @@ Async_NotifyAtCommit()
 void
 Async_NotifyAtAbort()
 {
-	if (pendingNotifies) {
+	if (pendingNotifies)
+	{
 		ClearPendingNotify();
 		DLFreeList(pendingNotifies);
 	}
@@ -380,9 +381,7 @@ Async_NotifyAtAbort()
 	{
 		/* don't forget to notify front end */
 		if (notifyFrontEndPending)
-		{
 			Async_NotifyFrontEnd();
-		}
 	}
 }
 
@@ -423,7 +422,8 @@ Async_Listen(char *relname, int pid)
 	char	   *relnamei;
 	TupleDesc	tupDesc;
 
-	if (whereToSendOutput != Remote) {
+	if (whereToSendOutput != Remote)
+	{
 		elog(NOTICE, "Async_Listen: "
 			 "listen not available on interactive sessions");
 		return;
@@ -459,7 +459,8 @@ Async_Listen(char *relname, int pid)
 			if (pid == MyProcPid)
 				alreadyListener = 1;
 		}
-		if (alreadyListener) {
+		if (alreadyListener)
+		{
 			/* No need to scan the rest of the table */
 			break;
 		}
@@ -521,7 +522,8 @@ Async_Unlisten(char *relname, int pid)
 	HeapTuple	lTuple;
 
 	/* Handle specially the `unlisten "*"' command */
-	if ((!relname) || (*relname == '\0') || (strcmp(relname,"*")==0)) {
+	if ((!relname) || (*relname == '\0') || (strcmp(relname, "*") == 0))
+	{
 		Async_UnlistenAll();
 		return;
 	}
@@ -575,15 +577,13 @@ Async_UnlistenAll()
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
 
 	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
-	{
 		heap_delete(lRel, &lTuple->t_ctid);
-	}
 	heap_endscan(sRel);
 	RelationUnsetLockForWrite(lRel);
 	heap_close(lRel);
 	TPRINTF(TRACE_NOTIFY, "Async_UnlistenAll: done");
 }
-  
+
 /*
  * --------------------------------------------------------------
  * Async_UnlistenOnExit --
@@ -654,7 +654,7 @@ Async_NotifyFrontEnd_Aux()
 
 #define MAX_DONE 64
 
-	char		*done[MAX_DONE];
+	char	   *done[MAX_DONE];
 	int			ndone = 0;
 	int			i;
 
@@ -687,13 +687,16 @@ Async_NotifyFrontEnd_Aux()
 						 &isnull);
 
 		/*
-		 * This hack deletes duplicate tuples which can be left
-		 * in the table if the NotifyUnlock option is set.
-		 * I'm further investigating this.	-- dz
+		 * This hack deletes duplicate tuples which can be left in the
+		 * table if the NotifyUnlock option is set. I'm further
+		 * investigating this.	-- dz
 		 */
-		if (NotifyHack) {
-			for (i=0; i<ndone; i++) {
-				if (strcmp(DatumGetName(d)->data, done[i]) == 0) {
+		if (NotifyHack)
+		{
+			for (i = 0; i < ndone; i++)
+			{
+				if (strcmp(DatumGetName(d)->data, done[i]) == 0)
+				{
 					TPRINTF(TRACE_NOTIFY,
 							"Async_NotifyFrontEnd: duplicate %s",
 							DatumGetName(d)->data);
@@ -701,9 +704,8 @@ Async_NotifyFrontEnd_Aux()
 					continue;
 				}
 			}
-			if (ndone < MAX_DONE) {
+			if (ndone < MAX_DONE)
 				done[ndone++] = pstrdup(DatumGetName(d)->data);
-			}
 		}
 
 		rTuple = heap_modifytuple(lTuple, lRel, value, nulls, repl);

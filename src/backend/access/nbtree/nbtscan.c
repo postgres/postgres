@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.17 1998/09/01 03:21:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.18 1998/09/01 04:27:04 momjian Exp $
  *
  *
  * NOTES
@@ -166,10 +166,10 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		so->btso_curbuf = buf;
 		if (ItemPointerIsValid(current))
 		{
-			Page	page = BufferGetPage(buf);
-			BTItem	btitem = (BTItem) PageGetItem(page, 
-					PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
-			
+			Page		page = BufferGetPage(buf);
+			BTItem		btitem = (BTItem) PageGetItem(page,
+			   PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
+
 			so->curHeapIptr = btitem->bti_itup.t_tid;
 		}
 	}
@@ -209,10 +209,10 @@ _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 		scan->currentItemData = tmp;
 		if (ItemPointerIsValid(current))
 		{
-			Page	page = BufferGetPage(buf);
-			BTItem	btitem = (BTItem) PageGetItem(page, 
-					PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
-			
+			Page		page = BufferGetPage(buf);
+			BTItem		btitem = (BTItem) PageGetItem(page,
+			   PageGetItemId(page, ItemPointerGetOffsetNumber(current)));
+
 			so->mrkHeapIptr = btitem->bti_itup.t_tid;
 		}
 	}

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: recipe.h,v 1.5 1997/11/26 01:12:24 momjian Exp $
+ * $Id: recipe.h,v 1.6 1998/09/01 04:35:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,4 +16,4 @@
 
 extern void beginRecipe(RecipeStmt *stmt);
 
-#endif							/* RECIPE_H */
+#endif	 /* RECIPE_H */

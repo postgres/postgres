@@ -50,10 +50,10 @@ typedef struct
 {
 	int			re_magic;
 	size_t		re_nsub;		/* number of parenthesized subexpressions */
-	const pg_wchar *re_endp;		/* end pointer for REG_PEND */
+	const pg_wchar *re_endp;	/* end pointer for REG_PEND */
 	struct re_guts *re_g;		/* none of your business :-) */
 #ifdef MULTIBYTE
-	pg_wchar	*patsave;	/* mee too :-) */
+	pg_wchar   *patsave;		/* mee too :-) */
 #endif
 
 } regex_t;
@@ -104,9 +104,8 @@ typedef struct
 
 int			pg95_regcomp(regex_t *, const char *, int);
 size_t		pg95_regerror(int, const regex_t *, char *, size_t);
-int
-pg95_regexec(const regex_t *,
+int pg95_regexec(const regex_t *,
 			 const char *, size_t, regmatch_t[], int);
 void		pg95_regfree(regex_t *);
 
-#endif							/* !_REGEX_H_ */
+#endif	 /* !_REGEX_H_ */

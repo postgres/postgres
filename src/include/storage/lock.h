@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.17 1998/08/25 21:20:31 scrappy Exp $
+ * $Id: lock.h,v 1.18 1998/09/01 04:38:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef int LOCKMETHOD;
  * CreateSpinLocks() or the number of shared memory locations allocated
  * for lock table spin locks in the case of machines with TAS instructions.
  */
-#define MAX_LOCK_METHODS 	3
+#define MAX_LOCK_METHODS	3
 
 #define INVALID_TABLEID		0
 
@@ -70,7 +70,7 @@ typedef struct LTAG
 	Oid			relId;
 	Oid			dbId;
 	ItemPointerData tupleId;
-	uint16		lockmethod;				/* needed by user locks */
+	uint16		lockmethod;		/* needed by user locks */
 } LOCKTAG;
 
 #define TAGSIZE (sizeof(LOCKTAG))
@@ -98,12 +98,12 @@ typedef struct LTAG
  */
 typedef struct LOCKMETHODCTL
 {
-	LOCKMETHOD 	lockmethod;
+	LOCKMETHOD	lockmethod;
 	int			numLockModes;
 	int			conflictTab[MAX_LOCKMODES];
 	int			prio[MAX_LOCKMODES];
 	SPINLOCK	masterLock;
-} LOCKMETHODCTL;
+}			LOCKMETHODCTL;
 
 /*
  * lockHash -- hash table on lock Ids,
@@ -115,8 +115,8 @@ typedef struct LOCKMETHODTABLE
 {
 	HTAB	   *lockHash;
 	HTAB	   *xidHash;
-	LOCKMETHODCTL    *ctl;
-} LOCKMETHODTABLE;
+	LOCKMETHODCTL *ctl;
+}			LOCKMETHODTABLE;
 
 /* -----------------------
  * A transaction never conflicts with its own locks.  Hence, if
@@ -153,7 +153,7 @@ typedef struct XIDTAG
 	int			pid;
 	TransactionId xid;
 #ifdef USE_XIDTAG_LOCKMETHOD
-	uint16		lockmethod;				/* for debug or consistency checking */
+	uint16		lockmethod;		/* for debug or consistency checking */
 #endif
 } XIDTAG;
 
@@ -232,26 +232,27 @@ extern SPINLOCK LockMgrLock;
 extern void InitLocks(void);
 extern void LockDisable(int status);
 extern LOCKMETHOD LockMethodTableInit(char *tabName, MASK *conflictsP,
-									  int *prioP, int numModes);
+					int *prioP, int numModes);
 extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
 extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-						LOCKMODE lockmode);
+			LOCKMODE lockmode);
 extern int LockResolveConflicts(LOCKMETHOD lockmethod, LOCK *lock,
-								LOCKMODE lockmode, TransactionId xid,
-								XIDLookupEnt *xidentP);
+					 LOCKMODE lockmode, TransactionId xid,
+					 XIDLookupEnt *xidentP);
 extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
-						LOCKMODE lockmode);
+			LOCKMODE lockmode);
 extern void GrantLock(LOCK *lock, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue);
 extern int	LockShmemSize(void);
 extern bool LockingDisabled(void);
 extern bool DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock,
-						  bool skip_check);
-ArrayType* LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag);
+			  bool skip_check);
+ArrayType  *LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag);
 
 #ifdef DEADLOCK_DEBUG
 extern void DumpLocks(void);
 extern void DumpAllLocks(void);
+
 #endif
 
-#endif							/* LOCK_H */
+#endif	 /* LOCK_H */

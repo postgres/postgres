@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_type.h,v 1.7 1998/07/12 21:29:35 momjian Exp $
+ * $Id: parse_type.h,v 1.8 1998/09/01 04:37:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,4 +34,4 @@ extern Oid	typeidTypElem(Oid type_id);
 extern Oid	GetArrayElementType(Oid typearray);
 extern Oid	typeidInfunc(Oid type_id);
 
-#endif							/* PARSE_TYPE_H */
+#endif	 /* PARSE_TYPE_H */

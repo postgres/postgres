@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.9 1998/09/01 03:28:20 momjian Exp $
+ * $Id: xfunc.h,v 1.10 1998/09/01 04:37:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,12 +49,10 @@ extern int	XfuncMode;			/* defined in tcop/postgres.c */
 #define is_join(pathnode) (length(get_relids(get_parent(pathnode))) > 1 ? 1 : 0)
 
 /* function prototypes from planner/path/xfunc.c */
-extern void xfunc_trypullup(RelOptInfo *rel);
-extern int
-xfunc_shouldpull(Path *childpath, JoinPath *parentpath,
-				 int whichchild, ClauseInfo *maxcinfopt);
-extern ClauseInfo *
-xfunc_pullup(Path *childpath, JoinPath *parentpath, ClauseInfo *cinfo,
+extern void xfunc_trypullup(RelOptInfo * rel);
+extern int xfunc_shouldpull(Path *childpath, JoinPath *parentpath,
+				 int whichchild, ClauseInfo * maxcinfopt);
+extern ClauseInfo *xfunc_pullup(Path *childpath, JoinPath *parentpath, ClauseInfo * cinfo,
 			 int whichchild, int clausetype);
 extern Cost xfunc_rank(Expr *clause);
 extern Cost xfunc_expense(Query *queryInfo, Expr *clause);
@@ -71,7 +69,7 @@ extern List *xfunc_primary_join(JoinPath *pathnode);
 extern Cost xfunc_get_path_cost(Path *pathnode);
 extern Cost xfunc_total_path_cost(JoinPath *pathnode);
 extern Cost xfunc_expense_per_tuple(JoinPath *joinnode, int whichchild);
-extern void xfunc_fixvars(Expr *clause, RelOptInfo *rel, int varno);
+extern void xfunc_fixvars(Expr *clause, RelOptInfo * rel, int varno);
 extern int	xfunc_cinfo_compare(void *arg1, void *arg2);
 extern int	xfunc_clause_compare(void *arg1, void *arg2);
 extern void xfunc_disjunct_sort(List *clause_list);
@@ -80,11 +78,11 @@ extern int	xfunc_func_width(RegProcedure funcid, List *args);
 extern int	xfunc_tuple_width(Relation rd);
 extern int	xfunc_num_join_clauses(JoinPath *path);
 extern List *xfunc_LispRemove(List *foo, List *bar);
-extern bool xfunc_copyrel(RelOptInfo *from, RelOptInfo **to);
+extern bool xfunc_copyrel(RelOptInfo * from, RelOptInfo ** to);
 
 /*
  * function prototypes for path/predmig.c
  */
 extern bool xfunc_do_predmig(Path root);
 
-#endif							/* XFUNC_H */
+#endif	 /* XFUNC_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.20 1998/09/01 03:23:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.21 1998/09/01 04:30:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,10 +40,9 @@
 #endif
 
 
-static void
-IndexSelectivity(Oid indexrelid, Oid indrelid, int32 nIndexKeys,
-			  Oid *AccessMethodOperatorClasses, Oid *operatorObjectIds,
-	int32 *varAttributeNumbers, char **constValues, int32 *constFlags,
+static void IndexSelectivity(Oid indexrelid, Oid indrelid, int32 nIndexKeys,
+				 Oid *AccessMethodOperatorClasses, Oid *operatorObjectIds,
+	   int32 *varAttributeNumbers, char **constValues, int32 *constFlags,
 				 float *idxPages, float *idxSelec);
 
 
@@ -65,7 +64,7 @@ relation_info(Query *root, Index relid,
 
 	relationObjectId = getrelid(relid, root->rtable);
 	relationTuple = SearchSysCacheTuple(RELOID,
-										ObjectIdGetDatum(relationObjectId),
+									  ObjectIdGetDatum(relationObjectId),
 										0, 0, 0);
 	if (HeapTupleIsValid(relationTuple))
 	{
@@ -195,7 +194,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 #ifdef notdef
 	/* XXX should iterate through strategies -- but how?  use #1 for now */
 	amstrategy = indexRelation->rd_am->amstrategies;
-#endif							/* notdef */
+#endif	 /* notdef */
 	amstrategy = 1;
 	relam = indexRelation->rd_rel->relam;
 	info->relam = relam;

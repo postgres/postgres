@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.8 1998/02/23 17:44:24 scrappy Exp $
+ * $Id: inval.h,v 1.9 1998/09/01 04:39:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,4 +46,4 @@ typedef InvalidationEntry LocalInvalid;
 
 #define EmptyLocalInvalid		NULL
 
-#endif							/* INVAL_H */
+#endif	 /* INVAL_H */

@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dllist.h,v 1.7 1997/09/08 21:52:17 momjian Exp $
+ * $Id: dllist.h,v 1.8 1998/09/01 04:36:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,4 +69,4 @@ extern Dlelem *DLRemHead(Dllist *list); /* remove and return the head */
 
 #define DLE_VAL(x)	(x->dle_val)
 
-#endif							/* DLLIST_H */
+#endif	 /* DLLIST_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.6 1997/09/18 14:21:02 momjian Exp $
+ * $Id: spin.h,v 1.7 1998/09/01 04:38:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,4 +32,4 @@ extern bool InitSpinLocks(int init, IPCKey key);
 extern void SpinAcquire(SPINLOCK lockid);
 extern void SpinRelease(SPINLOCK lockid);
 
-#endif							/* SPIN_H */
+#endif	 /* SPIN_H */

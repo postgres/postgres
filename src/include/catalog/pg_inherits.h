@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_inherits.h,v 1.5 1998/09/01 03:27:53 momjian Exp $
+ * $Id: pg_inherits.h,v 1.6 1998/09/01 04:35:00 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -54,4 +54,4 @@ typedef FormData_pg_inherits *Form_pg_inherits;
 #define Anum_pg_inherits_inhseqno		3
 
 
-#endif							/* PG_INHERITS_H */
+#endif	 /* PG_INHERITS_H */

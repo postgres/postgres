@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.12 1998/09/01 03:23:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.13 1998/09/01 04:29:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,21 +53,18 @@
 												 * (not a join) iff it has
 												 * a non-NULL cinfo field */
 
-static void
-xfunc_predmig(JoinPath pathnode, Stream streamroot,
+static void xfunc_predmig(JoinPath pathnode, Stream streamroot,
 			  Stream laststream, bool *progressp);
 static bool xfunc_series_llel(Stream stream);
 static bool xfunc_llel_chains(Stream root, Stream bottom);
 static Stream xfunc_complete_stream(Stream stream);
-static bool
-xfunc_prdmig_pullup(Stream origstream, Stream pullme,
+static bool xfunc_prdmig_pullup(Stream origstream, Stream pullme,
 					JoinPath joinpath);
 static void xfunc_form_groups(Stream root, Stream bottom);
 static void xfunc_free_stream(Stream root);
 static Stream xfunc_add_clauses(Stream current);
 static void xfunc_setup_group(Stream node, Stream bottom);
-static Stream
-xfunc_streaminsert(ClauseInfo clauseinfo, Stream current,
+static Stream xfunc_streaminsert(ClauseInfo clauseinfo, Stream current,
 				   int clausetype);
 static int	xfunc_num_relids(Stream node);
 static StreamPtr xfunc_get_downjoin(Stream node);
@@ -77,7 +74,7 @@ static int	xfunc_stream_compare(void *arg1, void *arg2);
 static bool xfunc_check_stream(Stream node);
 static bool xfunc_in_stream(Stream node, Stream stream);
 
-/* -----------------   MAIN FUNCTIONS	  ------------------------ */
+/* -----------------   MAIN FUNCTIONS ------------------------ */
 /*
 ** xfunc_do_predmig
 **	  wrapper for Predicate Migration.	It calls xfunc_predmig until no
@@ -318,7 +315,7 @@ xfunc_complete_stream(Stream stream)
 static bool
 xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 {
-	ClauseInfo		clauseinfo = get_cinfo(pullme);
+	ClauseInfo	clauseinfo = get_cinfo(pullme);
 	bool		progress = false;
 	Stream		upjoin,
 				orignode,
@@ -492,7 +489,7 @@ xfunc_form_groups(Query *queryInfo, Stream root, Stream bottom)
 }
 
 
-/* -------------------		   UTILITY FUNCTIONS	 ------------------------- */
+/* -------------------			   UTILITY FUNCTIONS	 ------------------------- */
 
 /*
  ** xfunc_free_stream --

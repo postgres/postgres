@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtscan.h,v 1.4 1997/11/26 01:12:06 momjian Exp $
+ * $Id: rtscan.h,v 1.5 1998/09/01 04:34:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,4 +19,4 @@
 
 void		rtadjscans(Relation r, int op, BlockNumber blkno, OffsetNumber offnum);
 
-#endif							/* RTSCAN_H */
+#endif	 /* RTSCAN_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.34 1998/09/01 03:21:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.35 1998/09/01 04:26:51 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -109,10 +109,10 @@ static bool ImmediateInvalidation;
  */
 static void
 initscan(HeapScanDesc scan,
-		  Relation relation,
-		  int atend,
-		  unsigned nkeys,
-		  ScanKey key)
+		 Relation relation,
+		 int atend,
+		 unsigned nkeys,
+		 ScanKey key)
 {
 	if (!RelationGetNumberOfBlocks(relation))
 	{
@@ -258,7 +258,7 @@ heapgettup(Relation relation,
 	elog(DEBUG, "heapgettup: relation(%c)=`%s', %p",
 		 relation->rd_rel->relkind, &relation->rd_rel->relname,
 		 snapshot);
-#endif							/* !defined(HEAPDEBUGALL) */
+#endif	 /* !defined(HEAPDEBUGALL) */
 
 	if (!ItemPointerIsValid(tid))
 		Assert(!PointerIsValid(tid));
@@ -283,12 +283,12 @@ heapgettup(Relation relation,
 		/* assume it is a valid TID XXX */
 		if (ItemPointerIsValid(tid) == false)
 		{
-			*buf= InvalidBuffer;
+			*buf = InvalidBuffer;
 			return NULL;
 		}
 		*buf = RelationGetBufferWithBuffer(relation,
-										 ItemPointerGetBlockNumber(tid),
-										 *buf);
+										   ItemPointerGetBlockNumber(tid),
+										   *buf);
 
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*buf))
@@ -414,6 +414,7 @@ heapgettup(Relation relation,
 
 				if (ItemPointerGetBlockNumber(iptr) != page)
 				{
+
 					/*
 					 * set block id to the correct page number --- this is
 					 * a hack to support the virtual fragment concept
@@ -762,7 +763,7 @@ elog(DEBUG, "heap_getnext([%s,nkeys=%d],backw=%d) called", \
 #define HEAPDEBUG_5
 #define HEAPDEBUG_6
 #define HEAPDEBUG_7
-#endif							/* !defined(HEAPDEBUGALL) */
+#endif	 /* !defined(HEAPDEBUGALL) */
 
 
 HeapTuple
@@ -990,7 +991,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
  *		value, and they are required to BuffferRelease() it when they
  *		are done.  If they want to make a copy of it before releasing it,
  *		they can call heap_copytyple().
- 
+
  * ----------------
  */
 HeapTuple
@@ -1005,8 +1006,8 @@ heap_fetch(Relation relation,
 	HeapTuple	tuple;
 	OffsetNumber offnum;
 
-	AssertMacro(PointerIsValid(userbuf));	/* see comments above */
-	
+	AssertMacro(PointerIsValid(userbuf));		/* see comments above */
+
 	/* ----------------
 	 *	increment access statistics
 	 * ----------------
@@ -1074,7 +1075,8 @@ heap_fetch(Relation relation,
 	 * ----------------
 	 */
 
-	*userbuf = buffer;	/* user is required to ReleaseBuffer() this */
+	*userbuf = buffer;			/* user is required to ReleaseBuffer()
+								 * this */
 
 	return tuple;
 }
@@ -1193,7 +1195,7 @@ heap_delete(Relation relation, ItemPointer tid)
 	{							/* XXX L_SH better ??? */
 		elog(ERROR, "heap_delete: failed ReadBuffer");
 	}
-#endif							/* NO_BUFFERISVALID */
+#endif	 /* NO_BUFFERISVALID */
 
 	dp = (PageHeader) BufferGetPage(buf);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
@@ -1206,10 +1208,11 @@ heap_delete(Relation relation, ItemPointer tid)
 	Assert(HeapTupleIsValid(tp));
 	if (TupleUpdatedByCurXactAndCmd(tp))
 	{
+
 		/*
-			Vadim says this is no longer needed 1998/6/15
-			elog(NOTICE, "Non-functional delete, tuple already deleted");
-		*/
+		 * Vadim says this is no longer needed 1998/6/15 elog(NOTICE,
+		 * "Non-functional delete, tuple already deleted");
+		 */
 		if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 			RelationUnsetLockForWrite(relation);
 		ReleaseBuffer(buf);
@@ -1309,7 +1312,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple replace_tuple)
 		/* XXX L_SH better ??? */
 		elog(ERROR, "amreplace: failed ReadBuffer");
 	}
-#endif							/* NO_BUFFERISVALID */
+#endif	 /* NO_BUFFERISVALID */
 
 	dp = (Page) BufferGetPage(buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(otid));

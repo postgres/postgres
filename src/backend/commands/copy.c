@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.58 1998/09/01 03:21:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.59 1998/09/01 04:27:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,7 @@ static Oid	GetOutputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static Oid	GetInputFunction(Oid type);
 static Oid	IsTypeByVal(Oid type);
-static void
-GetIndexRelations(Oid main_relation_oid,
+static void GetIndexRelations(Oid main_relation_oid,
 				  int *n_indices,
 				  Relation **index_rels);
 
@@ -108,17 +107,17 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
   the class.
 ----------------------------------------------------------------------------*/
 
-	static FILE	   *fp;						/* static for cleanup */
-	static bool		file_opened = false;	/* static for cleanup */
+	static FILE *fp;			/* static for cleanup */
+	static bool file_opened = false;	/* static for cleanup */
 	Relation	rel;
 	extern char *UserName;		/* defined in global.c */
 	const AclMode required_access = from ? ACL_WR : ACL_RD;
 	int			result;
 
 	/*
-	 *	Close previous file opened for COPY but failed with elog().
-	 *	There should be a better way, but would not be modular.
-	 *	Prevents file descriptor leak.  bjm 1998/08/29
+	 * Close previous file opened for COPY but failed with elog(). There
+	 * should be a better way, but would not be modular. Prevents file
+	 * descriptor leak.  bjm 1998/08/29
 	 */
 	if (file_opened)
 		FreeFile(fp);
@@ -449,7 +448,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				itupdescArr[i] = RelationGetDescr(index_rels[i]);
 				pgIndexTup =
 					SearchSysCacheTuple(INDEXRELID,
-								  ObjectIdGetDatum(RelationGetRelid(index_rels[i])),
+					   ObjectIdGetDatum(RelationGetRelid(index_rels[i])),
 										0, 0, 0);
 				Assert(pgIndexTup);
 				pgIndexP[i] = (Form_pg_index) GETSTRUCT(pgIndexTup);
@@ -500,7 +499,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 						/* SetSlotShouldFree(slot, false); */
 						slot->ttc_buffer = (Buffer) NULL;
 						slot->ttc_shouldFree = false;
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 					}
 				}
 				else
@@ -766,7 +765,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 						/* SetSlotContents(slot, tuple); */
 						if (ExecQual((List *) indexPred[i], econtext) == false)
 							continue;
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 					}
 					FormIndexDatum(indexNatts[i],
 								(AttrNumber *) &(pgIndexP[i]->indkey[0]),
@@ -1022,11 +1021,13 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	char		c;
 	int			done = 0;
 	int			i = 0;
+
 #ifdef MULTIBYTE
-	int	mblen;
-	int	encoding;
-	unsigned char	s[2];
-	int	j;
+	int			mblen;
+	int			encoding;
+	unsigned char s[2];
+	int			j;
+
 #endif
 
 #ifdef MULTIBYTE
@@ -1136,22 +1137,23 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		if (!done)
 			attribute[i++] = c;
 #ifdef MULTIBYTE
-			s[0] = c;
-			mblen = pg_encoding_mblen(encoding, s);
-			mblen--;
-			for(j=0;j<mblen;j++) {
-			  c = getc(fp);
-			  if (feof(fp))
-			    return NULL;
-			  attribute[i++] = c;
-			}
+		s[0] = c;
+		mblen = pg_encoding_mblen(encoding, s);
+		mblen--;
+		for (j = 0; j < mblen; j++)
+		{
+			c = getc(fp);
+			if (feof(fp))
+				return NULL;
+			attribute[i++] = c;
+		}
 #endif
 		if (i == EXT_ATTLEN - 1)
 			elog(ERROR, "CopyReadAttribute - attribute length too long. line: %d", lineno);
 	}
 	attribute[i] = '\0';
 #ifdef MULTIBYTE
-	return(pg_client_to_server((unsigned char*)attribute, strlen(attribute)));
+	return (pg_client_to_server((unsigned char *) attribute, strlen(attribute)));
 #else
 	return &attribute[0];
 #endif
@@ -1160,13 +1162,14 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 static void
 CopyAttributeOut(FILE *fp, char *server_string, char *delim, int is_array)
 {
-        char           *string;
+	char	   *string;
 	char		c;
 
 #ifdef MULTIBYTE
-	int	mblen;
-	int	encoding;
-	int	i;
+	int			mblen;
+	int			encoding;
+	int			i;
+
 #endif
 
 #ifdef MULTIBYTE
@@ -1178,7 +1181,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim, int is_array)
 
 #ifdef MULTIBYTE
 	for (; (mblen = pg_encoding_mblen(encoding, string)) &&
-	       ((c = *string) != '\0'); string += mblen)
+		 ((c = *string) != '\0'); string += mblen)
 #else
 	for (; (c = *string) != '\0'; string++)
 #endif
@@ -1204,9 +1207,8 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim, int is_array)
 			}
 		}
 #ifdef MULTIBYTE
-		for (i=0;i<mblen;i++) {
-			fputc(*(string+i), fp);
-		}
+		for (i = 0; i < mblen; i++)
+			fputc(*(string + i), fp);
 #else
 		fputc(*string, fp);
 #endif

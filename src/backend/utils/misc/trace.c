@@ -4,7 +4,7 @@
  *
  *	  Conditional trace ans logging functions.
  *
- *    Massimo Dal Zotto <dz@cs.unitn.it>
+ *	  Massimo Dal Zotto <dz@cs.unitn.it>
  *
  *-------------------------------------------------------------------------
  */
@@ -32,12 +32,12 @@
 /*
  * Global option to control the use of syslog(3) for logging:
  *
- *		0 	stdout/stderr only
- *  	1   stdout/stderr + syslog
- *  	2   syslog only
+ *		0	stdout/stderr only
+ *		1	stdout/stderr + syslog
+ *		2	syslog only
  */
-#define UseSyslog 		pg_options[OPT_SYSLOG]
-#define PG_LOG_FACILITY	LOG_LOCAL0
+#define UseSyslog		pg_options[OPT_SYSLOG]
+#define PG_LOG_FACILITY LOG_LOCAL0
 #define PG_LOG_IDENT	"postgres"
 #else
 #define UseSyslog 0
@@ -56,7 +56,7 @@ static char *opt_names[] = {
 	"parserstats",
 	"plannerstats",
 	"executorstats",
-	"shortlocks",			/* currently unused but needed, see lock.c */
+	"shortlocks",				/* currently unused but needed, see lock.c */
 	"locks",
 	"userlocks",
 	"spinlocks",
@@ -65,59 +65,65 @@ static char *opt_names[] = {
 	"palloc",
 	"lock_debug_oidmin",
 	"lock_debug_relid",
-	"lock_read_priority",	/* lock priority, see lock.c */
-	"deadlock_timeout",		/* deadlock timeout, see proc.c */
-	"syslog",				/* use syslog for error messages */
-	"hostlookup",			/* enable hostname lookup in ps_status */
-	"showportnumber",		/* show port number in ps_status */
-	"notifyunlock",			/* enable unlock of pg_listener after notify */
-	"notifyhack"			/* enable notify hack to remove duplicate tuples */
+	"lock_read_priority",		/* lock priority, see lock.c */
+	"deadlock_timeout",			/* deadlock timeout, see proc.c */
+	"syslog",					/* use syslog for error messages */
+	"hostlookup",				/* enable hostname lookup in ps_status */
+	"showportnumber",			/* show port number in ps_status */
+	"notifyunlock",				/* enable unlock of pg_listener after
+								 * notify */
+	"notifyhack"				/* enable notify hack to remove duplicate
+								 * tuples */
 };
 
 /*
  * Array of trace flags which can be set or reset independently.
  */
-int pg_options[NUM_PG_OPTIONS] = { 0 };
+int			pg_options[NUM_PG_OPTIONS] = {0};
 
-static int openlog_done = 0;
+static int	openlog_done = 0;
 
 /*
  * Print a timestamp and a message to stdout if the trace flag
  * indexed by the flag value is set.
  */
 int
-tprintf(int flag, const char *fmt, ... )
+tprintf(int flag, const char *fmt,...)
 {
 	va_list		ap;
-	char		line[ELOG_MAXLEN+TIMESTAMP_SIZE+1];
+	char		line[ELOG_MAXLEN + TIMESTAMP_SIZE + 1];
 
 #ifdef USE_SYSLOG
-	int 		log_level;
+	int			log_level;
+
 #endif
 
-	if ((flag == TRACE_ALL) || (pg_options[TRACE_ALL] > 0)) {
+	if ((flag == TRACE_ALL) || (pg_options[TRACE_ALL] > 0))
+	{
 		/* uconditional trace or trace all option set */
-	} else if (pg_options[TRACE_ALL] == 0) {
-		if ((flag < 0) || (flag >= NUM_PG_OPTIONS) || (!pg_options[flag])) {
-			return 0;
-		}
-	} else if (pg_options[TRACE_ALL] < 0) {
-		return 0;
 	}
+	else if (pg_options[TRACE_ALL] == 0)
+	{
+		if ((flag < 0) || (flag >= NUM_PG_OPTIONS) || (!pg_options[flag]))
+			return 0;
+	}
+	else if (pg_options[TRACE_ALL] < 0)
+		return 0;
 
 	va_start(ap, fmt);
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsprintf(line+TIMESTAMP_SIZE, fmt, ap);
+	vsprintf(line + TIMESTAMP_SIZE, fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG
 	log_level = ((flag == TRACE_ALL) ? LOG_INFO : LOG_DEBUG);
-	write_syslog(log_level, line+TIMESTAMP_SIZE);
+	write_syslog(log_level, line + TIMESTAMP_SIZE);
 #endif
 
-	if (UseSyslog <= 1) {
+	if (UseSyslog <= 1)
+	{
 		puts(line);
 		fflush(stdout);
 	}
@@ -129,23 +135,24 @@ tprintf(int flag, const char *fmt, ... )
  * Print a timestamp and a message to stderr.
  */
 int
-eprintf(const char *fmt, ... )
+eprintf(const char *fmt,...)
 {
 	va_list		ap;
-	char		line[ELOG_MAXLEN+TIMESTAMP_SIZE+1];
+	char		line[ELOG_MAXLEN + TIMESTAMP_SIZE + 1];
 
 	va_start(ap, fmt);
 #ifdef ELOG_TIMESTAMPS
 	strcpy(line, tprintf_timestamp());
 #endif
-	vsprintf(line+TIMESTAMP_SIZE, fmt, ap);
+	vsprintf(line + TIMESTAMP_SIZE, fmt, ap);
 	va_end(ap);
 
 #ifdef USE_SYSLOG
-	write_syslog(LOG_ERR, line+TIMESTAMP_SIZE);
+	write_syslog(LOG_ERR, line + TIMESTAMP_SIZE);
 #endif
 
-	if (UseSyslog <= 1) {
+	if (UseSyslog <= 1)
+	{
 		fputs(line, stderr);
 		fputc('\n', stderr);
 		fflush(stderr);
@@ -161,14 +168,17 @@ eprintf(const char *fmt, ... )
 void
 write_syslog(int level, char *line)
 {
-	if (UseSyslog >= 1) {
-		if (!openlog_done) {
+	if (UseSyslog >= 1)
+	{
+		if (!openlog_done)
+		{
 			openlog_done = 1;
-			openlog(PG_LOG_IDENT, LOG_PID|LOG_NDELAY, PG_LOG_FACILITY);
+			openlog(PG_LOG_IDENT, LOG_PID | LOG_NDELAY, PG_LOG_FACILITY);
 		}
 		syslog(level, "%s", line);
 	}
 }
+
 #endif
 
 #ifdef ELOG_TIMESTAMPS
@@ -178,10 +188,11 @@ write_syslog(int level, char *line)
 char *
 tprintf_timestamp()
 {
-	struct timeval	tv;
-	struct tm		*time;
-	time_t			tm;
-	static char		timestamp[32], pid[8];
+	struct timeval tv;
+	struct tm  *time;
+	time_t		tm;
+	static char timestamp[32],
+				pid[8];
 
 	gettimeofday(&tv, DST_NONE);
 	tm = tv.tv_sec;
@@ -189,29 +200,28 @@ tprintf_timestamp()
 
 	sprintf(pid, "[%d]", MyProcPid);
 	sprintf(timestamp, "%02d%02d%02d.%02d:%02d:%02d.%03d %7s ",
-			time->tm_year, time->tm_mon+1, time->tm_mday,
+			time->tm_year, time->tm_mon + 1, time->tm_mday,
 			time->tm_hour, time->tm_min, time->tm_sec,
-			tv.tv_usec/1000, pid);
+			tv.tv_usec / 1000, pid);
 
 	return timestamp;
 }
+
 #endif
 
 int
 option_flag(int flag)
 {
-	if ((flag < 0) || (flag >= NUM_PG_OPTIONS)) {
+	if ((flag < 0) || (flag >= NUM_PG_OPTIONS))
 		return 0;
-	}
 	return pg_options[flag];
 }
 
 int
 set_option_flag(int flag, int value)
 {
-	if ((flag < 0) || (flag >= NUM_PG_OPTIONS)) {
+	if ((flag < 0) || (flag >= NUM_PG_OPTIONS))
 		return -1;
-	}
 
 	pg_options[flag] = value;
 	return value;
@@ -220,26 +230,29 @@ set_option_flag(int flag, int value)
 /*
  * Parse an option string like "name,name+,name-,name=value".
  * Single options are delimited by ',',space,tab,newline or cr.
- */ 
+ */
 void
 parse_options(char *str)
 {
-	char	*s,
-			*name;
-	int		i,
-			len,
-			val,
-			is_comment;
+	char	   *s,
+			   *name;
+	int			i,
+				len,
+				val,
+				is_comment;
 
-	Assert((sizeof(opt_names)/sizeof(char*)) == NUM_PG_OPTIONS);
- 
+	Assert((sizeof(opt_names) / sizeof(char *)) == NUM_PG_OPTIONS);
+
 	str = strdup(str);
-	for (s=str; *s;) {
+	for (s = str; *s;)
+	{
 		is_comment = 0;
 		name = s;
 		val = 1;
-		for (; *s; s++) {
-			switch (*s) {
+		for (; *s; s++)
+		{
+			switch (*s)
+			{
 				case '#':
 					is_comment = 1;
 					break;
@@ -265,26 +278,28 @@ parse_options(char *str)
 					goto setval;
 			}
 		}
-    setval:
-		for (; *s; s++) {
-			if (*s == ',') {
+setval:
+		for (; *s; s++)
+		{
+			if (*s == ',')
+			{
 				*s++ = '\0';
 				break;
 			}
 		}
 		len = strlen(name);
-		if (len == 0) {
+		if (len == 0)
 			continue;
-		}
-		for (i=0; i<NUM_PG_OPTIONS; i++) {
-			if (strncmp(name, opt_names[i], len) == 0) {
+		for (i = 0; i < NUM_PG_OPTIONS; i++)
+		{
+			if (strncmp(name, opt_names[i], len) == 0)
+			{
 				pg_options[i] = val;
 				break;
 			}
 		}
-		if (!is_comment && (i >= NUM_PG_OPTIONS)) {
+		if (!is_comment && (i >= NUM_PG_OPTIONS))
 			fprintf(stderr, "invalid option: %s\n", name);
-		}
 	}
 	free(str);
 }
@@ -299,20 +314,22 @@ read_pg_options(SIGNAL_ARGS)
 	int			verbose;
 	char		buffer[BUF_SIZE];
 	char		c;
-	char		*s,
-				*p;
+	char	   *s,
+			   *p;
 
 	sprintf(buffer, "%s/%s", DataDir, "pg_options");
-	if ((fd = open(buffer, O_RDONLY)) < 0) {
+	if ((fd = open(buffer, O_RDONLY)) < 0)
 		return;
-	}
 
-	if ((n = read(fd, buffer, BUF_SIZE-1)) > 0) {
+	if ((n = read(fd, buffer, BUF_SIZE - 1)) > 0)
+	{
 		/* collpse buffer in place removing comments and spaces */
-		for (s=buffer,p=buffer,c='\0'; s<(buffer+n); ) {
-			switch (*s) {
+		for (s = buffer, p = buffer, c = '\0'; s < (buffer + n);)
+		{
+			switch (*s)
+			{
 				case '#':
-					while ((s < (buffer+n)) && (*s++ != '\n'));
+					while ((s < (buffer + n)) && (*s++ != '\n'));
 					break;
 				case ' ':
 				case '\t':
@@ -333,9 +350,8 @@ read_pg_options(SIGNAL_ARGS)
 		verbose = pg_options[TRACE_VERBOSE];
 		parse_options(buffer);
 		verbose |= pg_options[TRACE_VERBOSE];
-		if (verbose || postgres_signal_arg == SIGHUP) {
+		if (verbose || postgres_signal_arg == SIGHUP)
 			tprintf(TRACE_ALL, "read_pg_options: %s", buffer);
-		}
 	}
 
 	close(fd);
@@ -343,8 +359,8 @@ read_pg_options(SIGNAL_ARGS)
 
 /*
  * Local variables:
- *  tab-width: 4
- *  c-indent-level: 4
- *  c-basic-offset: 4
+ *	tab-width: 4
+ *	c-indent-level: 4
+ *	c-basic-offset: 4
  * End:
  */

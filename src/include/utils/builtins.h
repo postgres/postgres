@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.50 1998/09/01 03:28:28 momjian Exp $
+ * $Id: builtins.h,v 1.51 1998/09/01 04:38:52 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
  *	  Under no circumstances should it ever be included before
  *	  including fmgr.h!
  * fmgr.h does not seem to include this file, so don't know where this
- *  comment came from. Backend code must include this stuff explicitly
- *  as far as I can tell...
+ *	comment came from. Backend code must include this stuff explicitly
+ *	as far as I can tell...
  * - thomas 1998-06-08
  *
  *-------------------------------------------------------------------------
@@ -149,7 +149,7 @@ extern int	namestrcmp(Name name, char *str);
 /* XXX hack.  HP-UX has a ltoa (with different arguments) already. */
 #ifdef __hpux
 #define ltoa pg_ltoa
-#endif							/* hpux */
+#endif	 /* hpux */
 extern int32 pg_atoi(char *s, int size, int c);
 extern void itoa(int i, char *a);
 extern void ltoa(int32 l, char *a);
@@ -438,8 +438,8 @@ extern char *textout(text *vlena);
 extern text *textcat(text *arg1, text *arg2);
 extern bool texteq(text *arg1, text *arg2);
 extern bool textne(text *arg1, text *arg2);
-extern int varstr_cmp(char *arg1, int len1, char *arg2, int len2);
-extern int text_cmp(text *arg1, text *arg2);
+extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);
+extern int	text_cmp(text *arg1, text *arg2);
 extern bool text_lt(text *arg1, text *arg2);
 extern bool text_le(text *arg1, text *arg2);
 extern bool text_gt(text *arg1, text *arg2);
@@ -511,4 +511,4 @@ extern text *translate(text *string, char from, char to);
 
 /* acl.c */
 
-#endif							/* BUILTINS_H */
+#endif	 /* BUILTINS_H */

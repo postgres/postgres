@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeAppend.h,v 1.8 1998/07/15 22:16:21 momjian Exp $
+ * $Id: nodeAppend.h,v 1.9 1998/09/01 04:35:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern TupleTableSlot *ExecProcAppend(Append *node);
 extern void ExecEndAppend(Append *node);
 extern void ExecReScanAppend(Append *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif							/* NODEAPPEND_H */
+#endif	 /* NODEAPPEND_H */

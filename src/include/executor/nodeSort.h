@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSort.h,v 1.6 1998/02/23 06:27:55 vadim Exp $
+ * $Id: nodeSort.h,v 1.7 1998/09/01 04:36:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,4 +25,4 @@ extern void ExecSortMarkPos(Sort *node);
 extern void ExecSortRestrPos(Sort *node);
 extern void ExecReScanSort(Sort *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif							/* NODESORT_H */
+#endif	 /* NODESORT_H */

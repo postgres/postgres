@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.27 1998/09/01 03:23:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.28 1998/09/01 04:29:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,8 +44,7 @@
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
-extern Plan *
-make_groupPlan(List **tlist, bool tuplePerGroup,
+extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
 			   List *groupClause, Plan *subplan);
 
 /*
@@ -90,7 +89,7 @@ query_planner(Query *root,
 	printf("After cnfify()\n");
 	pprint(qual);
 #endif
-	
+
 	/*
 	 * A command without a target list or qualification is an error,
 	 * except for "delete foo".
@@ -191,8 +190,8 @@ query_planner(Query *root,
 	if (constant_qual)
 	{
 		subplan = (Plan *) make_result((!root->hasAggs &&
-									    !root->groupClause &&
-									    !root->havingQual)
+										!root->groupClause &&
+										!root->havingQual)
 									   ? tlist : subplan->targetlist,
 									   (Node *) constant_qual,
 									   subplan);
@@ -255,13 +254,13 @@ subplanner(Query *root,
 		   List *flat_tlist,
 		   List *qual)
 {
-	RelOptInfo	*final_rel;
-	List	    *final_rel_list;
+	RelOptInfo *final_rel;
+	List	   *final_rel_list;
 
 	/*
 	 * Initialize the targetlist and qualification, adding entries to
-	 * base_rel_list as relation references are found (e.g., in
-	 * the qualification, the targetlist, etc.)
+	 * base_rel_list as relation references are found (e.g., in the
+	 * qualification, the targetlist, etc.)
 	 */
 	root->base_rel_list = NIL;
 	root->join_rel_list = NIL;

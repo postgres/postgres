@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.31 1998/09/01 03:21:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.32 1998/09/01 04:27:46 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -422,16 +422,16 @@ PerformAddAttribute(char *relationName,
 		int			attnelems;
 
 		tup = SearchSysCacheTuple(ATTNAME,
-									ObjectIdGetDatum(reltup->t_oid),
-									PointerGetDatum(colDef->colname),
-									0, 0);
+								  ObjectIdGetDatum(reltup->t_oid),
+								  PointerGetDatum(colDef->colname),
+								  0, 0);
 
 		if (HeapTupleIsValid(tup))
 		{
 			heap_close(attrdesc);
 			heap_close(rel);
 			elog(ERROR, "PerformAddAttribute: attribute \"%s\" already exists in class \"%s\"",
-				colDef->colname, relationName);
+				 colDef->colname, relationName);
 		}
 
 		/*

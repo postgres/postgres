@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.6 1998/06/15 18:40:00 momjian Exp $
+ * $Id: block.h,v 1.7 1998/09/01 04:38:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,4 +115,4 @@ typedef BlockIdData *BlockId;	/* block identifier */
 	(BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) \
 )
 
-#endif							/* BLOCK_H */
+#endif	 /* BLOCK_H */

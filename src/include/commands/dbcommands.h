@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.5 1998/08/24 01:14:20 momjian Exp $
+ * $Id: dbcommands.h,v 1.6 1998/09/01 04:35:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@
 extern void createdb(char *dbname, char *dbpath, int encoding);
 extern void destroydb(char *dbname);
 
-#endif							/* DBCOMMANDS_H */
+#endif	 /* DBCOMMANDS_H */

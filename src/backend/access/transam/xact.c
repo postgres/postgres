@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.22 1998/09/01 03:21:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.23 1998/09/01 04:27:19 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -898,7 +898,7 @@ CommitTransaction()
 	 * ----------------
 	 */
 
-	/* handle commit for large objects [ PA, 7/17/98 ] */ 
+	/* handle commit for large objects [ PA, 7/17/98 ] */
 	_lo_commit();
 
 	CloseSequences();

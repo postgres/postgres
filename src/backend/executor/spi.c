@@ -47,8 +47,7 @@ static int	_SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount);
 static void _SPI_fetch(FetchStmt *stmt);
 
 #endif
-static int
-_SPI_execute_plan(_SPI_plan *plan,
+static int _SPI_execute_plan(_SPI_plan *plan,
 				  Datum *Values, char *Nulls, int tcount);
 
 #define _SPI_CPLAN_CURCXT	0
@@ -466,7 +465,7 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	}
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
-					 ObjectIdGetDatum(tupdesc->attrs[fnumber - 1]->atttypid),
+				 ObjectIdGetDatum(tupdesc->attrs[fnumber - 1]->atttypid),
 									0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))

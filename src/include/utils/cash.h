@@ -46,4 +46,4 @@ extern Cash *cashsmaller(Cash *c1, Cash *c2);
 
 extern const char *cash_words_out(Cash *value);
 
-#endif							/* CASH_H */
+#endif	 /* CASH_H */

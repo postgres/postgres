@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeSeqscan.h,v 1.6 1997/11/26 01:13:00 momjian Exp $
+ * $Id: nodeSeqscan.h,v 1.7 1998/09/01 04:36:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,4 +25,4 @@ extern void ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent);
 extern void ExecSeqMarkPos(SeqScan *node);
 extern void ExecSeqRestrPos(SeqScan *node);
 
-#endif							/* NODESEQSCAN_H */
+#endif	 /* NODESEQSCAN_H */

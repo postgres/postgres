@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdefs.h,v 1.2 1997/09/07 04:57:46 momjian Exp $
+ * $Id: execdefs.h,v 1.3 1998/09/01 04:35:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,4 +44,4 @@
 #define EXEC_MJ_SKIPINNER				8
 #define EXEC_MJ_SKIPOUTER				9
 
-#endif							/* EXECDEFS_H */
+#endif	 /* EXECDEFS_H */

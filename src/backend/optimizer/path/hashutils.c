@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.6 1998/09/01 03:23:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/hashutils.c,v 1.7 1998/09/01 04:29:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ group_clauses_by_hashop(List *clauseinfo_list,
 						int inner_relid)
 {
 	List	   *hashinfo_list = NIL;
-	ClauseInfo	   *clauseinfo = (ClauseInfo *) NULL;
+	ClauseInfo *clauseinfo = (ClauseInfo *) NULL;
 	List	   *i = NIL;
 	Oid			hashjoinop = 0;
 
@@ -121,7 +121,7 @@ match_hashop_hashinfo(Oid hashop, List *hashinfo_list)
 		key = xhashinfo->hashop;
 		if (hashop == key)
 		{						/* found */
-			return xhashinfo; /* should be a hashinfo node ! */
+			return xhashinfo;	/* should be a hashinfo node ! */
 		}
 	}
 	return (HInfo *) NIL;

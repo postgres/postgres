@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.21 1998/09/01 03:23:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/xfunc.c,v 1.22 1998/09/01 04:29:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,7 @@
 #define ever ; 1 ;
 
 /* local funcs */
-static int
-xfunc_card_unreferenced(Query *queryInfo,
+static int xfunc_card_unreferenced(Query *queryInfo,
 						Expr *clause, Relid referenced);
 
 */
@@ -60,8 +59,8 @@ void
 xfunc_trypullup(RelOptInfo rel)
 {
 	LispValue	y;				/* list ptr */
-	ClauseInfo		maxcinfo;		/* The ClauseInfo to pull up, as calculated by
-								 * xfunc_shouldpull() */
+	ClauseInfo	maxcinfo;		/* The ClauseInfo to pull up, as
+								 * calculated by xfunc_shouldpull() */
 	JoinPath	curpath;		/* current path in list */
 	int			progress;		/* has progress been made this time
 								 * through? */
@@ -147,12 +146,12 @@ xfunc_shouldpull(Query *queryInfo,
 				 Path childpath,
 				 JoinPath parentpath,
 				 int whichchild,
-				 ClauseInfo *maxcinfopt)		/* Out: pointer to clause to
-										 * pullup */
+				 ClauseInfo * maxcinfopt)		/* Out: pointer to clause
+												 * to pullup */
 {
 	LispValue	clauselist,
 				tmplist;		/* lists of clauses */
-	ClauseInfo		maxcinfo;		/* clause to pullup */
+	ClauseInfo	maxcinfo;		/* clause to pullup */
 	LispValue	primjoinclause	/* primary join clause */
 	= xfunc_primary_join(parentpath);
 	Cost		tmprank,
@@ -194,7 +193,7 @@ xfunc_shouldpull(Query *queryInfo,
 		{
 
 			if (tmplist != LispNil &&
-			  (tmprank = xfunc_rank(get_clause((ClauseInfo) lfirst(tmplist))))
+				(tmprank = xfunc_rank(get_clause((ClauseInfo) lfirst(tmplist))))
 				> maxrank)
 			{
 				maxcinfo = (ClauseInfo) lfirst(tmplist);
@@ -267,15 +266,15 @@ ClauseInfo
 xfunc_pullup(Query *queryInfo,
 			 Path childpath,
 			 JoinPath parentpath,
-			 ClauseInfo cinfo,		/* clause to pull up */
+			 ClauseInfo cinfo,	/* clause to pull up */
 			 int whichchild,	/* whether child is INNER or OUTER of join */
 			 int clausetype)	/* whether clause to pull is join or local */
 {
 	Path		newkid;
-	RelOptInfo			newrel;
+	RelOptInfo	newrel;
 	Cost		pulled_selec;
 	Cost		cost;
-	ClauseInfo		newinfo;
+	ClauseInfo	newinfo;
 
 	/* remove clause from childpath */
 	newkid = (Path) copyObject((Node) childpath);
@@ -294,8 +293,8 @@ xfunc_pullup(Query *queryInfo,
 	}
 
 	/*
-	 * * give the new child path its own RelOptInfo node that reflects the * lack
-	 * of the pulled-up predicate
+	 * * give the new child path its own RelOptInfo node that reflects the *
+	 * lack of the pulled-up predicate
 	 */
 	pulled_selec = compute_clause_selec(queryInfo,
 										get_clause(cinfo), LispNil);
@@ -497,8 +496,8 @@ xfunc_func_expense(LispValue node, LispValue args)
 
 	/* look up tuple in cache */
 	tupl = SearchSysCacheTuple(PROOID,
-								ObjectIdGetDatum(funcid),
-								0, 0, 0);
+							   ObjectIdGetDatum(funcid),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
 		elog(ERROR, "Cache lookup failed for procedure %d", funcid);
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
@@ -528,7 +527,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 			if (nargs > 0)
 				argOidVect = proc->proargtypes;
 			planlist = (List) pg_parse_and_plan(pq_src, argOidVect, nargs,
-												&parseTree_list, None, FALSE);
+										   &parseTree_list, None, FALSE);
 			if (IsA(node, Func))
 				set_func_planlist((Func) node, planlist);
 
@@ -612,7 +611,7 @@ xfunc_width(LispValue clause)
 	{
 		/* base case: width is width of this attribute */
 		tupl = SearchSysCacheTuple(TYPOID,
-								  ObjectIdGetDatum(get_vartype((Var) clause)),
+							 ObjectIdGetDatum(get_vartype((Var) clause)),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
 			elog(ERROR, "Cache lookup failed for type %d",
@@ -682,8 +681,8 @@ xfunc_width(LispValue clause)
 			elog(ERROR, "Cache lookup failed for procedure %d",
 				 get_opno((Oper) get_op(clause)));
 		return (xfunc_func_width
-				((RegProcedure) (((Form_pg_operator) (GETSTRUCT(tupl)))->oprcode),
-				 (LispValue) get_opargs(clause)));
+		((RegProcedure) (((Form_pg_operator) (GETSTRUCT(tupl)))->oprcode),
+		 (LispValue) get_opargs(clause)));
 	}
 	else if (fast_is_funcclause(clause))
 	{
@@ -740,7 +739,7 @@ xfunc_card_unreferenced(Query *queryInfo,
 	{
 		Assert(lnext(get_relids((RelOptInfo) lfirst(temp))) == LispNil);
 		allrelids = lappend(allrelids,
-							lfirst(get_relids((RelOptInfo) lfirst(temp))));
+						  lfirst(get_relids((RelOptInfo) lfirst(temp))));
 	}
 
 	/* find all relids referenced in query but not in clause */
@@ -760,7 +759,7 @@ xfunc_card_product(Query *queryInfo, Relid relids)
 {
 	LispValue	cinfonode;
 	LispValue	temp;
-	RelOptInfo			currel;
+	RelOptInfo	currel;
 	Cost		tuples;
 	Count		retval = 0;
 
@@ -777,7 +776,7 @@ xfunc_card_product(Query *queryInfo, Relid relids)
 				if (!xfunc_expense(queryInfo, get_clause((ClauseInfo) lfirst(cinfonode))))
 					tuples *=
 						compute_clause_selec(queryInfo,
-								   get_clause((ClauseInfo) lfirst(cinfonode)),
+							  get_clause((ClauseInfo) lfirst(cinfonode)),
 											 LispNil);
 			}
 
@@ -863,7 +862,7 @@ LispValue
 xfunc_primary_join(JoinPath pathnode)
 {
 	LispValue	joinclauselist = get_pathclauseinfo(pathnode);
-	ClauseInfo		mincinfo;
+	ClauseInfo	mincinfo;
 	LispValue	tmplist;
 	LispValue	minclause = LispNil;
 	Cost		minrank,
@@ -945,7 +944,7 @@ xfunc_get_path_cost(Query *queryInfo, Path pathnode)
 		cost += (Cost) (xfunc_local_expense(get_clause((ClauseInfo) lfirst(tmplist)))
 					  * (Cost) get_tuples(get_parent(pathnode)) * selec);
 		selec *= compute_clause_selec(queryInfo,
-									  get_clause((ClauseInfo) lfirst(tmplist)),
+								get_clause((ClauseInfo) lfirst(tmplist)),
 									  LispNil);
 	}
 
@@ -966,7 +965,7 @@ xfunc_get_path_cost(Query *queryInfo, Path pathnode)
 			cost += (Cost) (xfunc_local_expense(get_clause((ClauseInfo) lfirst(tmplist)))
 					  * (Cost) get_tuples(get_parent(pathnode)) * selec);
 			selec *= compute_clause_selec(queryInfo,
-									 get_clause((ClauseInfo) lfirst(tmplist)),
+								get_clause((ClauseInfo) lfirst(tmplist)),
 										  LispNil);
 		}
 	}
@@ -1097,8 +1096,8 @@ xfunc_total_path_cost(JoinPath pathnode)
 Cost
 xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
 {
-	RelOptInfo			outerrel = get_parent((Path) get_outerjoinpath(joinnode));
-	RelOptInfo			innerrel = get_parent((Path) get_innerjoinpath(joinnode));
+	RelOptInfo	outerrel = get_parent((Path) get_outerjoinpath(joinnode));
+	RelOptInfo	innerrel = get_parent((Path) get_innerjoinpath(joinnode));
 	Count		outerwidth = get_width(outerrel);
 	Count		outers_per_page = ceil(BLCKSZ / (outerwidth + sizeof(HeapTupleData)));
 
@@ -1139,7 +1138,7 @@ xfunc_expense_per_tuple(JoinPath joinnode, int whichchild)
  */
 void
 xfunc_fixvars(LispValue clause, /* clause being pulled up */
-			  RelOptInfo rel,			/* rel it's being pulled from */
+			  RelOptInfo rel,	/* rel it's being pulled from */
 			  int varno)		/* whether rel is INNER or OUTER of join */
 {
 	LispValue	tmpclause;		/* temporary variable */
@@ -1195,8 +1194,8 @@ xfunc_fixvars(LispValue clause, /* clause being pulled up */
 int
 xfunc_cinfo_compare(void *arg1, void *arg2)
 {
-	ClauseInfo		info1 = *(ClauseInfo *) arg1;
-	ClauseInfo		info2 = *(ClauseInfo *) arg2;
+	ClauseInfo	info1 = *(ClauseInfo *) arg1;
+	ClauseInfo	info2 = *(ClauseInfo *) arg2;
 
 	LispValue	clause1 = (LispValue) get_clause(info1),
 				clause2 = (LispValue) get_clause(info2);
@@ -1310,8 +1309,8 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 	/* lookup function and find its return type */
 	Assert(RegProcedureIsValid(funcid));
 	tupl = SearchSysCacheTuple(PROOID,
-								ObjectIdGetDatum(funcid),
-								0, 0, 0);
+							   ObjectIdGetDatum(funcid),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
 		elog(ERROR, "Cache lookup failed for procedure %d", funcid);
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
@@ -1430,9 +1429,9 @@ do { \
  **   Just like _copyRel, but doesn't copy the paths
  */
 bool
-xfunc_copyrel(RelOptInfo from, RelOptInfo *to)
+xfunc_copyrel(RelOptInfo from, RelOptInfo * to)
 {
-	RelOptInfo			newnode;
+	RelOptInfo	newnode;
 
 	Pointer		(*alloc) () = palloc;
 

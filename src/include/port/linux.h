@@ -15,7 +15,7 @@ typedef unsigned int slock_t;
 #elif defined(__alpha)
 typedef long int slock_t;
 
-#else /* i386 probably */
+#else							/* i386 probably */
 typedef unsigned char slock_t;
 
 #endif
@@ -35,4 +35,3 @@ typedef unsigned char slock_t;
 #if defined(PPC)
 #undef HAVE_INT_TIMEZONE
 #endif
-

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.15 1998/09/01 03:21:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.16 1998/09/01 04:27:27 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -185,7 +185,7 @@ get_grosysid(char *groname)
 
 	tuple = SearchSysCacheTuple(GRONAME,
 								PointerGetDatum(groname),
-							  	0, 0, 0);
+								0, 0, 0);
 	if (HeapTupleIsValid(tuple))
 		id = ((Form_pg_group) GETSTRUCT(tuple))->grosysid;
 	else
@@ -201,7 +201,7 @@ get_groname(AclId grosysid)
 
 	tuple = SearchSysCacheTuple(GROSYSID,
 								ObjectIdGetDatum(grosysid),
-							  	0, 0, 0);
+								0, 0, 0);
 	if (HeapTupleIsValid(tuple))
 		name = (((Form_pg_group) GETSTRUCT(tuple))->groname).data;
 	else
@@ -229,13 +229,13 @@ in_group(AclId uid, AclId gid)
 	}
 	tuple = SearchSysCacheTuple(GROSYSID,
 								ObjectIdGetDatum(gid),
-							  	0, 0, 0);
+								0, 0, 0);
 	if (HeapTupleIsValid(tuple) &&
 		!heap_attisnull(tuple, Anum_pg_group_grolist))
 	{
 		tmp = (IdList *) heap_getattr(tuple,
 									  Anum_pg_group_grolist,
-									RelationGetDescr(relation),
+									  RelationGetDescr(relation),
 									  (bool *) NULL);
 		/* XXX make me a function */
 		num = IDLIST_NUM(tmp);
@@ -369,7 +369,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(usename),
-							  	0, 0, 0);
+								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_aclcheck: user \"%s\" not found",
 			 usename);
@@ -420,8 +420,8 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 
 #ifndef ACLDEBUG
 	tuple = SearchSysCacheTuple(RELNAME,
-							   PointerGetDatum(relname),
-							   0, 0, 0);
+								PointerGetDatum(relname),
+								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
 		elog(ERROR, "pg_aclcheck: class \"%s\" not found",
@@ -450,10 +450,10 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 
 		relation = heap_openr(RelationRelationName);
 		ownerId = (int4) heap_getattr(tuple,
-									 Anum_pg_class_relowner,
-									 RelationGetDescr(relation),
-									 (bool *) NULL);
-		acl = aclownerdefault(relname, (AclId)ownerId);
+									  Anum_pg_class_relowner,
+									  RelationGetDescr(relation),
+									  (bool *) NULL);
+		acl = aclownerdefault(relname, (AclId) ownerId);
 	}
 #else
 	{							/* This is why the syscache is great... */
@@ -469,14 +469,14 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 			return ACLCHECK_NO_CLASS;
 		}
 		tuple = SearchSysCacheTuple(RELNAME,
-								   PointerGetDatum(relname),
-								   0, 0, 0);
+									PointerGetDatum(relname),
+									0, 0, 0);
 		if (HeapTupleIsValid(tuple) &&
 			!heap_attisnull(tuple, Anum_pg_class_relacl))
 		{
 			tmp = (Acl *) heap_getattr(tuple,
 									   Anum_pg_class_relacl,
-										RelationGetDescr(relation),
+									   RelationGetDescr(relation),
 									   (bool *) NULL);
 			acl = makeacl(ACL_NUM(tmp));
 			memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
@@ -501,7 +501,7 @@ pg_ownercheck(char *usename,
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(usename),
-							  	0, 0, 0);
+								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_ownercheck: user \"%s\" not found",
 			 usename);
@@ -520,7 +520,7 @@ pg_ownercheck(char *usename,
 	}
 
 	tuple = SearchSysCacheTuple(cacheid, PointerGetDatum(value),
-							  0, 0, 0);
+								0, 0, 0);
 	switch (cacheid)
 	{
 		case OPROID:
@@ -568,7 +568,7 @@ pg_func_ownercheck(char *usename,
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(usename),
-							  	0, 0, 0);
+								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_func_ownercheck: user \"%s\" not found",
 			 usename);
@@ -587,10 +587,10 @@ pg_func_ownercheck(char *usename,
 	}
 
 	tuple = SearchSysCacheTuple(PRONAME,
-							  PointerGetDatum(funcname),
-							  Int32GetDatum(nargs),
-							  PointerGetDatum(arglist),
-							  0);
+								PointerGetDatum(funcname),
+								Int32GetDatum(nargs),
+								PointerGetDatum(arglist),
+								0);
 	if (!HeapTupleIsValid(tuple))
 		func_error("pg_func_ownercheck", funcname, nargs, arglist, NULL);
 
@@ -610,7 +610,7 @@ pg_aggr_ownercheck(char *usename,
 
 	tuple = SearchSysCacheTuple(USENAME,
 								PointerGetDatum(usename),
-							  	0, 0, 0);
+								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "pg_aggr_ownercheck: user \"%s\" not found",
 			 usename);
@@ -629,9 +629,9 @@ pg_aggr_ownercheck(char *usename,
 	}
 
 	tuple = SearchSysCacheTuple(AGGNAME,
-							  PointerGetDatum(aggname),
-							  ObjectIdGetDatum(basetypeID),
-							  0, 0);
+								PointerGetDatum(aggname),
+								ObjectIdGetDatum(basetypeID),
+								0, 0);
 
 	if (!HeapTupleIsValid(tuple))
 		agg_error("pg_aggr_ownercheck", aggname, basetypeID);

@@ -43,15 +43,15 @@ static PyObject *PGError;
 
 #ifndef NO_DIRECT
 #define DIRECT_ACCESS	  1		/* enables direct access functions */
-#endif							/* NO_DIRECT */
+#endif	 /* NO_DIRECT */
 
 #ifndef NO_LARGE
 #define LARGE_OBJECTS	  1		/* enables large objects support */
-#endif							/* NO_LARGE */
+#endif	 /* NO_LARGE */
 
 #ifndef NO_DEF_VAR
 #define DEFAULT_VARS	  1		/* enables default variables use */
-#endif							/* NO_DEF_VAR */
+#endif	 /* NO_DEF_VAR */
 
 /* --------------------------------------------------------------------- */
 
@@ -65,7 +65,7 @@ PyObject   *pg_default_opt;		/* default connection options */
 PyObject   *pg_default_tty;		/* default debug tty */
 PyObject   *pg_default_port;	/* default connection port */
 
-#endif							/* DEFAULT_VARS */
+#endif	 /* DEFAULT_VARS */
 
 /* --------------------------------------------------------------------- */
 
@@ -110,7 +110,7 @@ typedef struct
 staticforward PyTypeObject PglargeType;
 
 #define is_pglargeobject(v) ((v)->ob_type == &PglargeType)
-#endif							/* LARGE_OBJECTS */
+#endif	 /* LARGE_OBJECTS */
 
 /* --------------------------------------------------------------------- */
 
@@ -148,7 +148,7 @@ check_lo(pglargeobject * self, int level)
 	return 1;
 }
 
-#endif							/* LARGE_OBJECTS */
+#endif	 /* LARGE_OBJECTS */
 
 /* --------------------------------------------------------------------- */
 
@@ -649,7 +649,7 @@ staticforward PyTypeObject PglargeType = {
 	0,							/* tp_hash */
 };
 
-#endif							/* LARGE_OBJECTS */
+#endif	 /* LARGE_OBJECTS */
 
 /* --------------------------------------------------------------------- */
 
@@ -823,7 +823,7 @@ pgconnect(pgobject * self, PyObject * args, PyObject * dict)
 
 	if ((!pgdbname) && (pg_default_base != Py_None))
 		pgdbname = PyString_AsString(pg_default_base);
-#endif							/* DEFAULT_VARS */
+#endif	 /* DEFAULT_VARS */
 
 	if ((npgobj = PyObject_NEW(pgobject, &PgType)) == NULL)
 		return NULL;
@@ -1213,7 +1213,7 @@ pg_endcopy(pgobject * self, PyObject * args)
 	return Py_None;
 }
 
-#endif							/* DIRECT_ACCESS */
+#endif	 /* DIRECT_ACCESS */
 
 
 static PyObject *
@@ -1381,13 +1381,13 @@ static struct PyMethodDef pgobj_methods[] = {
 	{"putline", (PyCFunction) pg_putline, 1},	/* direct access: putline */
 	{"getline", (PyCFunction) pg_getline, 1},	/* direct access: getline */
 	{"endcopy", (PyCFunction) pg_endcopy, 1},	/* direct access: endcopy */
-#endif							/* DIRECT_ACCESS */
+#endif	 /* DIRECT_ACCESS */
 
 #ifdef LARGE_OBJECTS
 	{"locreate", (PyCFunction) pg_locreate, 1}, /* creates large object */
 	{"getlo", (PyCFunction) pg_getlo, 1},		/* get lo from oid */
 	{"loimport", (PyCFunction) pg_loimport, 1}, /* imports lo from file */
-#endif							/* LARGE_OBJECTS */
+#endif	 /* LARGE_OBJECTS */
 
 	{NULL, NULL}				/* sentinel */
 };
@@ -1747,7 +1747,7 @@ pgsetdefport(PyObject * self, PyObject * args)
 	return old;
 }
 
-#endif							/* DEFAULT_VARS */
+#endif	 /* DEFAULT_VARS */
 
 /* List of functions defined in the module */
 
@@ -1765,7 +1765,7 @@ static struct PyMethodDef pg_methods[] = {
 	{"set_deftty", pgsetdeftty, 1},		/* sets default debug tty */
 	{"get_defport", pggetdefport, 1},	/* gets default port */
 	{"set_defport", pgsetdefport, 1},	/* sets default port */
-#endif							/* DEFAULT_VARS */
+#endif	 /* DEFAULT_VARS */
 	{NULL, NULL}				/* sentinel */
 };
 
@@ -1796,7 +1796,7 @@ initpg(void)
 	PyDict_SetItemString(dict, "SEEK_SET", PyInt_FromLong(SEEK_SET));
 	PyDict_SetItemString(dict, "SEEK_CUR", PyInt_FromLong(SEEK_CUR));
 	PyDict_SetItemString(dict, "SEEK_END", PyInt_FromLong(SEEK_END));
-#endif							/* LARGE_OBJECTS */
+#endif	 /* LARGE_OBJECTS */
 
 #ifdef DEFAULT_VARS
 	/* prepares default values */
@@ -1810,7 +1810,7 @@ initpg(void)
 	pg_default_port = Py_None;
 	Py_INCREF(Py_None);
 	pg_default_tty = Py_None;
-#endif							/* DEFAULT_VARS */
+#endif	 /* DEFAULT_VARS */
 
 	/* Check for errors */
 	if (PyErr_Occurred())

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.17 1998/09/01 03:23:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.18 1998/09/01 04:30:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ matching_tlvar(Var *var, List *targetlist)
  * CREATES:  new var-node iff no matching var-node exists in targetlist
  */
 void
-add_tl_element(RelOptInfo *rel, Var *var)
+add_tl_element(RelOptInfo * rel, Var *var)
 {
 	Expr	   *oldvar = (Expr *) NULL;
 
@@ -134,14 +134,14 @@ TargetEntry *
 create_tl_element(Var *var, int resdomno)
 {
 
-	return	makeTargetEntry(makeResdom(resdomno,
-					   var->vartype,
-					   var->vartypmod,
-					   NULL,
-					   (Index) 0,
-					   (Oid) 0,
-					   0),
-				(Node *) var);
+	return makeTargetEntry(makeResdom(resdomno,
+									  var->vartype,
+									  var->vartypmod,
+									  NULL,
+									  (Index) 0,
+									  (Oid) 0,
+									  0),
+						   (Node *) var);
 }
 
 /*
@@ -348,7 +348,7 @@ copy_vars(List *target, List *source)
 		 dest != NIL; src = lnext(src), dest = lnext(dest))
 	{
 		TargetEntry *temp = makeTargetEntry(((TargetEntry *) lfirst(dest))->resdom,
-									(Node *) get_expr(lfirst(src)));
+										 (Node *) get_expr(lfirst(src)));
 
 		result = lappend(result, temp);
 	}
@@ -432,8 +432,8 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 		result =
 			lappend(result,
 					makeTargetEntry(tle->resdom,
-							flatten_tlistentry((Node *) get_expr(tle),
-											   flat_tlist)));
+							   flatten_tlistentry((Node *) get_expr(tle),
+												  flat_tlist)));
 	}
 
 	return result;

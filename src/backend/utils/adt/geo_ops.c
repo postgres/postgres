@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.36 1998/09/01 03:26:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.37 1998/09/01 04:32:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -777,6 +777,7 @@ line_in(char *str)
 	LSEG		lseg;
 	int			isopen;
 	char	   *s;
+
 #endif
 
 	if (!PointerIsValid(str))
@@ -800,9 +801,11 @@ line_in(char *str)
 char *
 line_out(LINE *line)
 {
-	char *result;
+	char	   *result;
+
 #ifdef ENABLE_LINE_TYPE
-	LSEG lseg;
+	LSEG		lseg;
+
 #endif
 
 	if (!PointerIsValid(line))
@@ -2343,7 +2346,7 @@ close_pl(Point *pt, LINE *line)
  *
  * Some tricky code here, relying on boolean expressions
  *	evaluating to only zero or one to use as an array index.
- *      bug fixes by gthaker@atl.lmco.com; May 1, 1998 
+ *		bug fixes by gthaker@atl.lmco.com; May 1, 1998
  */
 Point *
 close_ps(Point *pt, LSEG *lseg)
@@ -2356,7 +2359,7 @@ close_ps(Point *pt, LSEG *lseg)
 
 #ifdef GEODEBUG
 	printf("close_sp:pt->x %f pt->y %f\nlseg(0).x %f lseg(0).y %f  lseg(1).x %f lseg(1).y %f\n",
-		pt->x, pt->y, lseg->p[0].x, lseg->p[0].y, lseg->p[1].x, lseg->p[1].y);
+	pt->x, pt->y, lseg->p[0].x, lseg->p[0].y, lseg->p[1].x, lseg->p[1].y);
 #endif
 
 	result = NULL;
@@ -2372,14 +2375,14 @@ close_ps(Point *pt, LSEG *lseg)
 #endif
 		/* first check if point is below or above the entire lseg. */
 		if (pt->y < lseg->p[!yh].y)
-		  result = point_copy(&lseg->p[!yh]); /* below the lseg */
+			result = point_copy(&lseg->p[!yh]); /* below the lseg */
 		else if (pt->y > lseg->p[yh].y)
-		  result = point_copy(&lseg->p[yh]); /* above the lseg */
+			result = point_copy(&lseg->p[yh]);	/* above the lseg */
 		if (result != NULL)
-		  return result;
+			return result;
 
 		/* point lines along (to left or right) of the vertical lseg. */
-		
+
 		result = palloc(sizeof(*result));
 		result->x = lseg->p[0].x;
 		result->y = pt->y;
@@ -2392,11 +2395,11 @@ close_ps(Point *pt, LSEG *lseg)
 #endif
 		/* first check if point is left or right of the entire lseg. */
 		if (pt->x < lseg->p[!xh].x)
-		  result = point_copy(&lseg->p[!xh]); /* left of the lseg */
+			result = point_copy(&lseg->p[!xh]); /* left of the lseg */
 		else if (pt->x > lseg->p[xh].x)
-		  result = point_copy(&lseg->p[xh]); /* right of the lseg */
+			result = point_copy(&lseg->p[xh]);	/* right of the lseg */
 		if (result != NULL)
-		  return result;
+			return result;
 
 		/* point lines along (at top or below) the horiz. lseg. */
 		result = palloc(sizeof(*result));
@@ -2405,31 +2408,41 @@ close_ps(Point *pt, LSEG *lseg)
 		return result;
 	}
 
-	/* vert. and horiz. cases are down, now check if the closest
-         * point is one of the end points or someplace on the lseg. */
+	/*
+	 * vert. and horiz. cases are down, now check if the closest point is
+	 * one of the end points or someplace on the lseg.
+	 */
 
 	/* TODO: Ask if "tmp" should be freed to prevent memory leak */
 
 	invm = -1.0 / point_sl(&(lseg->p[0]), &(lseg->p[1]));
-	tmp = line_construct_pm(&lseg->p[!yh], invm); /* lower edge of the "band" */
-	if (pt->y < (tmp->A*pt->x + tmp->C)) { /* we are below the lower edge */
-	  result = point_copy(&lseg->p[!yh]); /* below the lseg, take lower end pt */
-/* 	  fprintf(stderr,"below: tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
-	  return result;
+	tmp = line_construct_pm(&lseg->p[!yh], invm);		/* lower edge of the
+														 * "band" */
+	if (pt->y < (tmp->A * pt->x + tmp->C))
+	{							/* we are below the lower edge */
+		result = point_copy(&lseg->p[!yh]);		/* below the lseg, take
+												 * lower end pt */
+/*	  fprintf(stderr,"below: tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
+		return result;
 	}
-	tmp = line_construct_pm(&lseg->p[yh], invm); /* upper edge of the "band" */
-	if (pt->y > (tmp->A*pt->x + tmp->C)) { /* we are below the lower edge */
- 	  result = point_copy(&lseg->p[yh]); /* above the lseg, take higher end pt */
-/* 	  fprintf(stderr,"above: tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
-	  return result;
+	tmp = line_construct_pm(&lseg->p[yh], invm);		/* upper edge of the
+														 * "band" */
+	if (pt->y > (tmp->A * pt->x + tmp->C))
+	{							/* we are below the lower edge */
+		result = point_copy(&lseg->p[yh]);		/* above the lseg, take
+												 * higher end pt */
+/*	  fprintf(stderr,"above: tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
+		return result;
 	}
 
-	/* at this point the "normal" from point will hit lseg. The closet point
-	 * will be somewhere on the lseg */
+	/*
+	 * at this point the "normal" from point will hit lseg. The closet
+	 * point will be somewhere on the lseg
+	 */
 	tmp = line_construct_pm(pt, invm);
-/* 	fprintf(stderr,"tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
+/*	fprintf(stderr,"tmp A %f  B %f   C %f    m %f\n",tmp->A,tmp->B,tmp->C, tmp->m); */
 	result = interpt_sl(lseg, tmp);
-/* 	fprintf(stderr,"result.x %f  result.y %f\n", result->x, result->y); */
+/*	fprintf(stderr,"result.x %f  result.y %f\n", result->x, result->y); */
 	return result;
 }	/* close_ps() */
 
@@ -4428,7 +4441,7 @@ box_circle(BOX *box)
 }	/* box_circle() */
 
 
-POLYGON *
+POLYGON    *
 circle_poly(int npts, CIRCLE *circle)
 {
 	POLYGON    *poly;

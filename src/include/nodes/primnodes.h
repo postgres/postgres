@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.22 1998/07/12 21:29:33 momjian Exp $
+ * $Id: primnodes.h,v 1.23 1998/09/01 04:36:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,4 +351,4 @@ typedef struct ArrayRef
 	Node	   *refassgnexpr;
 } ArrayRef;
 
-#endif							/* PRIMNODES_H */
+#endif	 /* PRIMNODES_H */

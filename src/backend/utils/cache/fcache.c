@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.17 1998/09/01 03:26:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.18 1998/09/01 04:32:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,8 +36,7 @@
 #endif
 
 static Oid	GetDynamicFuncArgType(Var *arg, ExprContext *econtext);
-static FunctionCachePtr
-init_fcache(Oid foid,
+static FunctionCachePtr init_fcache(Oid foid,
 			bool use_syscache,
 			List *argList,
 			ExprContext *econtext);
@@ -126,7 +125,7 @@ init_fcache(Oid foid,
 	 * ----------------
 	 */
 	typeTuple = SearchSysCacheTuple(TYPOID,
-							   ObjectIdGetDatum(procedureStruct->prorettype),
+						   ObjectIdGetDatum(procedureStruct->prorettype),
 									0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))

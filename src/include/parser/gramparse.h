@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.7 1998/02/26 04:42:36 momjian Exp $
+ * $Id: gramparse.h,v 1.8 1998/09/01 04:37:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@ extern Oid	param_type(int t);
 extern void parser_init(Oid *typev, int nargs);
 extern int	yyparse(void);
 
-#endif							/* GRAMPARSE_H */
+#endif	 /* GRAMPARSE_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.14 1998/08/01 15:26:36 vadim Exp $
+ * $Id: lmgr.h,v 1.15 1998/09/01 04:38:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,19 +25,21 @@ typedef struct LockRelId
 {
 	Oid			relId;			/* a relation identifier */
 	Oid			dbId;			/* a database identifier */
-} LockRelId;
+}			LockRelId;
 
 #ifdef LowLevelLocking
 typedef struct LockInfoData
 {
 	LockRelId	lockRelId;
-	bool		lockHeld[MAX_LOCKMODES];	/* on table level */
+	bool		lockHeld[MAX_LOCKMODES];		/* on table level */
 } LockInfoData;
+
 #else
 typedef struct LockInfoData
 {
 	LockRelId	lockRelId;
 } LockInfoData;
+
 #endif
 
 typedef LockInfoData *LockInfo;
@@ -52,22 +54,17 @@ extern void RelationSetLockForWrite(Relation relation);
 extern void RelationUnsetLockForWrite(Relation relation);
 
 /* used in vaccum.c */
-extern void
-RelationSetLockForWritePage(Relation relation,
+extern void RelationSetLockForWritePage(Relation relation,
 							ItemPointer itemPointer);
 
 /* used in nbtpage.c, hashpage.c */
-extern void
-RelationSetSingleWLockPage(Relation relation,
+extern void RelationSetSingleWLockPage(Relation relation,
 						   ItemPointer itemPointer);
-extern void
-RelationUnsetSingleWLockPage(Relation relation,
+extern void RelationUnsetSingleWLockPage(Relation relation,
 							 ItemPointer itemPointer);
-extern void
-RelationSetSingleRLockPage(Relation relation,
+extern void RelationSetSingleRLockPage(Relation relation,
 						   ItemPointer itemPointer);
-extern void
-RelationUnsetSingleRLockPage(Relation relation,
+extern void RelationUnsetSingleRLockPage(Relation relation,
 							 ItemPointer itemPointer);
 extern void RelationSetRIntentLock(Relation relation);
 extern void RelationUnsetRIntentLock(Relation relation);
@@ -76,11 +73,10 @@ extern void RelationUnsetWIntentLock(Relation relation);
 
 /* single.c */
 extern bool SingleLockReln(LockInfo lockinfo, LOCKMODE lockmode, int action);
-extern bool
-SingleLockPage(LockInfo lockinfo, ItemPointer tidPtr,
+extern bool SingleLockPage(LockInfo lockinfo, ItemPointer tidPtr,
 			   LOCKMODE lockmode, int action);
 
 /* proc.c */
 extern void InitProcGlobal(IPCKey key);
 
-#endif							/* LMGR_H */
+#endif	 /* LMGR_H */

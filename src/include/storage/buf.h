@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf.h,v 1.3 1997/09/08 02:38:56 momjian Exp $
+ * $Id: buf.h,v 1.4 1998/09/01 04:38:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,4 +44,4 @@ typedef long Buffer;
  */
 #undef NO_BUFFERISVALID
 
-#endif							/* BUF_H */
+#endif	 /* BUF_H */

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.10 1998/08/19 02:03:52 momjian Exp $
+ * $Id: pg_opclass.h,v 1.11 1998/09/01 04:35:06 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -108,4 +108,4 @@ DESCR("");
 DATA(insert OID = 1313 (	timespan_ops   1186   ));
 DESCR("");
 
-#endif							/* PG_OPCLASS_H */
+#endif	 /* PG_OPCLASS_H */

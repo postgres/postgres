@@ -9,22 +9,22 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	  notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	  notice, this list of conditions and the following disclaimer in the
+ *	  documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *	  must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	  may be used to endorse or promote products derived from this software
+ *	  without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -37,10 +37,12 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)snprintf.c	8.1 (Berkeley) 6/4/93";
+
 #endif
 static const char rcsid[] =
-		"$Id: snprintf.c,v 1.2 1998/09/01 03:24:31 momjian Exp $";
-#endif /* LIBC_SCCS and not lint */
+"$Id: snprintf.c,v 1.3 1998/09/01 04:30:44 momjian Exp $";
+
+#endif	 /* LIBC_SCCS and not lint */
 
 #include <limits.h>
 #include <stdio.h>
@@ -52,20 +54,21 @@ static const char rcsid[] =
 
 #if __STDC__
 int
-snprintf(char *str, size_t n, char const *fmt, ...)
+snprintf(char *str, size_t n, char const * fmt,...)
 #else
 int
 snprintf(str, n, fmt, va_alist)
-	char *str;
-	size_t n;
-	char *fmt;
-	va_dcl
+char	   *str;
+size_t		n;
+char	   *fmt;
+
+va_dcl
 #endif
 {
-	size_t on;
-	int ret;
-	va_list ap;
-	FILE f;
+	size_t		on;
+	int			ret;
+	va_list		ap;
+	FILE		f;
 
 	on = n;
 	if (n != 0)
@@ -79,7 +82,7 @@ snprintf(str, n, fmt, va_alist)
 #endif
 	f._file = -1;
 	f._flags = __SWR | __SSTR;
-	f._bf._base = f._p = (unsigned char *)str;
+	f._bf._base = f._p = (unsigned char *) str;
 	f._bf._size = f._w = n;
 	ret = vfprintf(&f, fmt, ap);
 	if (on > 0)

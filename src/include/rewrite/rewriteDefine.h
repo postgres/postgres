@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteDefine.h,v 1.5 1997/11/26 01:14:22 momjian Exp $
+ * $Id: rewriteDefine.h,v 1.6 1998/09/01 04:38:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,4 +17,4 @@
 
 extern void DefineQueryRewrite(RuleStmt *args);
 
-#endif							/* REWRITEDEFINE_H */
+#endif	 /* REWRITEDEFINE_H */

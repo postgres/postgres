@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.36 1998/09/01 03:23:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.37 1998/09/01 04:29:12 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -326,14 +326,14 @@ _readAppend()
 	local_node->appendplans = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :unionrtables */
-	local_node->unionrtables = nodeRead(true);		/* now read it */
+	local_node->unionrtables = nodeRead(true);	/* now read it */
 
 	token = lsptok(NULL, &length);		/* eat :inheritrelid */
 	token = lsptok(NULL, &length);		/* get inheritrelid */
 	local_node->inheritrelid = strtoul(token, NULL, 10);
 
 	token = lsptok(NULL, &length);		/* eat :inheritrtable */
-	local_node->inheritrtable = nodeRead(true);		/* now read it */
+	local_node->inheritrtable = nodeRead(true); /* now read it */
 
 	return local_node;
 }
@@ -716,7 +716,7 @@ _readResdom()
 	else
 	{
 		local_node->resname = (char *) palloc(length + 1);
-		StrNCpy(local_node->resname, token+1, length + 1 - 2);/* strip quotes */
+		StrNCpy(local_node->resname, token + 1, length + 1 - 2);		/* strip quotes */
 	}
 
 	token = lsptok(NULL, &length);		/* eat :reskey */
@@ -1224,7 +1224,7 @@ _readEState()
 static RelOptInfo *
 _readRelOptInfo()
 {
-	RelOptInfo		   *local_node;
+	RelOptInfo *local_node;
 	char	   *token;
 	int			length;
 
@@ -1769,7 +1769,7 @@ _readMergeOrder()
 static ClauseInfo *
 _readClauseInfo()
 {
-	ClauseInfo	   *local_node;
+	ClauseInfo *local_node;
 	char	   *token;
 	int			length;
 
@@ -1867,7 +1867,7 @@ _readHInfo()
 static JoinInfo *
 _readJoinInfo()
 {
-	JoinInfo	   *local_node;
+	JoinInfo   *local_node;
 	char	   *token;
 	int			length;
 

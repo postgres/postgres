@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.17 1998/09/01 03:25:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.18 1998/09/01 04:32:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,25 +40,21 @@
 static CHUNK_INFO cInfo;
 
 /* non-export function prototypes */
-static int
-_FindBestChunk(int size, int *dmax, int *dbest, int dim,
+static int _FindBestChunk(int size, int *dmax, int *dbest, int dim,
 			   int A[MAXPAT][MAXDIM + 1], int N);
 static int	get_next(int *d, int k, int C, int *dmax);
 static void initialize_info(CHUNK_INFO *A, int ndim, int *dim, int *chunk);
 
 #ifdef LOARRAY
-static void
-_ConvertToChunkFile(int n, int baseSize, int *dim, int *C,
+static void _ConvertToChunkFile(int n, int baseSize, int *dim, int *C,
 					int srcfd, int destfd);
-static void
-read_chunk(int *chunk_no, int *C, char *a_chunk, int srcfd,
+static void read_chunk(int *chunk_no, int *C, char *a_chunk, int srcfd,
 		   int n, int baseSize, int *PX, int *dist);
 static int	write_chunk(struct varlena * a_chunk, int ofile);
 static int	seek_and_read(int pos, int size, char *buff, int fp, int from);
 
 #endif
-static int
-GetChunkSize(FILE *fd, int ndim, int dim[MAXDIM], int baseSize,
+static int GetChunkSize(FILE *fd, int ndim, int dim[MAXDIM], int baseSize,
 			 int d[MAXDIM]);
 
 /*------------------------------------------------------------------------
@@ -421,7 +417,7 @@ seek_and_read(int pos, int size, char *buff, int fp, int from)
 
 }
 
-#endif							/* LOARRAY */
+#endif	 /* LOARRAY */
 
 /*----------------------------------------------------------------------------
  * _ReadChunkArray --

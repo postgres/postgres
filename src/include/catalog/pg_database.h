@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.6 1998/08/24 01:14:17 momjian Exp $
+ * $Id: pg_database.h,v 1.7 1998/09/01 04:34:54 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -37,6 +37,7 @@ CATALOG(pg_database) BOOTSTRAP
 	int4		encoding;
 	text		datpath;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_database;
+
 /* ----------------
  *		Form_pg_database corresponds to a pointer to a tuple with
  *		the format of pg_database relation.
@@ -53,4 +54,4 @@ typedef FormData_pg_database *Form_pg_database;
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
 #define Anum_pg_database_datpath		4
-#endif							/* PG_DATABASE_H */
+#endif	 /* PG_DATABASE_H */

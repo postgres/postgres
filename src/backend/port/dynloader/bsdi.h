@@ -31,4 +31,4 @@
 
 /* port.c */
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.7 1997/09/08 21:50:47 momjian Exp $
+ * $Id: ibit.h,v 1.8 1998/09/01 04:34:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,4 +31,4 @@ typedef IndexAttributeBitMapData *IndexAttributeBitMap;
  */
 #define IndexAttributeBitMapIsValid(bits) PointerIsValid(bits)
 
-#endif							/* IBIT_H */
+#endif	 /* IBIT_H */

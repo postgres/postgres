@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeFuncs.h,v 1.6 1997/11/25 22:06:30 momjian Exp $
+ * $Id: nodeFuncs.h,v 1.7 1998/09/01 04:36:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@ extern bool var_is_rel(Var *var);
 extern Oper *replace_opid(Oper *oper);
 extern bool non_null(Expr *c);
 
-#endif							/* NODEFUNCS_H */
+#endif	 /* NODEFUNCS_H */

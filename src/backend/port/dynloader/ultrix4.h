@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ultrix4.h,v 1.1 1998/03/10 05:23:46 scrappy Exp $
+ * $Id: ultrix4.h,v 1.2 1998/09/01 04:31:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,4 +120,4 @@ extern char **dl_undefinedSymbols( /* int *count */ );
 extern void dl_printAllSymbols( /* void *handle */ );
 extern void dl_setLibraries( /* char *libs */ );
 
-#endif							/* _DL_HEADER_ */
+#endif	 /* _DL_HEADER_ */

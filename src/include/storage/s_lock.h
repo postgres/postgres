@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.44 1998/08/22 04:24:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.45 1998/09/01 04:38:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,9 +83,9 @@
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	register slock_t	_res;
+	register slock_t _res;
 
-    __asm__("    ldq   $0, %0              \n\
+__asm__("    ldq   $0, %0              \n\
                  bne   $0, already_set     \n\
                  ldq_l $0, %0	           \n\
                  bne   $0, already_set     \n\
@@ -97,11 +97,12 @@ tas(volatile slock_t *lock)
                  jmp   $31, end	           \n\
       stqc_fail: or    $31, 1, $0	       \n\
     already_set: bis   $0, $0, %1	       \n\
-            end: nop      " : "=m"(*lock), "=r"(_res) : : "0");
+            end: nop      ": "=m"(*lock), "=r"(_res): :"0");
 
 	return (int) _res;
 }
-#endif /* __alpha */
+
+#endif	 /* __alpha */
 
 
 
@@ -111,12 +112,13 @@ tas(volatile slock_t *lock)
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	register slock_t	_res = 1;
+	register slock_t _res = 1;
 
-    __asm__("lock; xchgb %0,%1" : "=q"(_res), "=m"(*lock) : "0"(_res) );
+__asm__("lock; xchgb %0,%1": "=q"(_res), "=m"(*lock):"0"(_res));
 	return (int) _res;
 }
-#endif /* i386 */
+
+#endif	 /* i386 */
 
 
 
@@ -126,14 +128,15 @@ tas(volatile slock_t *lock)
 static __inline__ int
 tas(volatile slock_t *lock)
 {
-	register slock_t	_res = 1;
+	register slock_t _res = 1;
 
-    __asm__("ldstub [%2], %0" \
-            : "=r" (_res), "=m" (*lock) \
-            : "r" (lock));
+	__asm__("ldstub [%2], %0" \
+:			"=r"(_res), "=m"(*lock) \
+:			"r"(lock));
 	return (int) _res;
 }
-#endif /* sparc */
+
+#endif	 /* sparc */
 
 
 
@@ -151,21 +154,22 @@ tas(volatile slock_t *lock)
 {
 	register	_res;
 
-	__asm__("	movl $1, r0
-		bbssi $0, (%1), 1f
-		clrl r0
-  1:	movl r0, %0 "
-  :		"=r"(_res)				/* return value, in register */
-  :		"r"(lock)				/* argument, 'lock pointer', in register */
-  :		"r0");					/* inline code uses this register */
+	__asm__("	movl $1, r0 \
+			bbssi $0, (%1), 1 f \
+			clrl r0 \
+1:			movl r0, %0 "
+:			"=r"(_res)			/* return value, in register */
+:			"r"(lock)			/* argument, 'lock pointer', in register */
+:			"r0");				/* inline code uses this register */
 	return (int) _res;
 }
-#endif /* NEED_VAX_TAS_ASM */
+
+#endif	 /* NEED_VAX_TAS_ASM */
 
 
 
 
-#else /* __GNUC__ */
+#else							/* __GNUC__ */
 /***************************************************************************
  * All non gcc
  */
@@ -181,7 +185,7 @@ tas(volatile slock_t *lock)
 #define S_UNLOCK(lock)	msem_unlock((lock), 0)
 #define S_INIT_LOCK(lock)	msem_init((lock), MSEM_UNLOCKED)
 #define S_LOCK_FREE(lock)	(!(lock)->msem_state)
-#endif /* __alpha */
+#endif	 /* __alpha */
 
 
 
@@ -191,21 +195,21 @@ tas(volatile slock_t *lock)
 #if defined(USE_UNIVEL_CC)
 #define TAS(lock)	tas(lock)
 
-asm int 
+asm int
 tas(slock_t *s_lock)
 {
-% mem s_lock
-	pushl	%ebx
-	movl	s_lock,%ebx
-	movl	$255,%eax
+	%mem s_lock
+	pushl % ebx
+	movl s_lock, %ebx
+	movl $255, %eax
 	lock
-	xchgb	%al,(%ebx)
-	popl	%ebx
+	xchgb % al, (%ebx)
+	popl % ebx
 }
 
-#endif /* USE_UNIVEL_CC */
+#endif	 /* USE_UNIVEL_CC */
 
-#endif /* NEED_I386_TAS_ASM */
+#endif	 /* NEED_I386_TAS_ASM */
 
 
 
@@ -213,19 +217,19 @@ tas(slock_t *s_lock)
 
 #define S_LOCK(lock)				\
 {						\
-    slock_t res = 1;				\
-    while (res) {				\
-      __asm__("movqd 0, r0");			\
-      __asm__("sbitd r0, %0" : "=m"(*lock));	\
-      __asm__("sprb us, %0" : "=r" (res));	\
-      res = ((res >> 5) & 1);			\
-    }						\
+	slock_t res = 1;				\
+	while (res) {				\
+	  __asm__("movqd 0, r0");			\
+	  __asm__("sbitd r0, %0" : "=m"(*lock));	\
+	  __asm__("sprb us, %0" : "=r" (res));	\
+	  res = ((res >> 5) & 1);			\
+	}						\
 }
 
-#endif /* NEED_NS32K_TAS_ASM */
+#endif	 /* NEED_NS32K_TAS_ASM */
 
 
-#endif /* defined(__GNUC__) */
+#endif	 /* defined(__GNUC__) */
 
 
 
@@ -248,7 +252,7 @@ static const slock_t clear_lock =
 
 #define S_UNLOCK(lock)	(*(lock) = clear_lock)	/* struct assignment */
 #define S_LOCK_FREE(lock)	( *(int *) (((long) (lock) + 15) & ~15) != 0)
-#endif /* __hpux */
+#endif	 /* __hpux */
 
 
 #if defined(__sgi)
@@ -265,7 +269,7 @@ static const slock_t clear_lock =
 #define S_UNLOCK(lock)	release_lock(lock)
 #define S_INIT_LOCK(lock)	init_lock(lock)
 #define S_LOCK_FREE(lock)	(stat_lock(lock) == UNLOCKED)
-#endif /* __sgi */
+#endif	 /* __sgi */
 
 
 #if defined(_AIX)
@@ -276,7 +280,7 @@ static const slock_t clear_lock =
  * (see storage/ipc.h).
  */
 #define TAS(lock)	cs((int *) (lock), 0, 1)
-#endif /* _AIX */
+#endif	 /* _AIX */
 
 
 #if defined (nextstep)
@@ -290,7 +294,7 @@ static const slock_t clear_lock =
 #define S_INIT_LOCK(lock)	mutex_init(lock)
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
 #define S_LOCK_FREE(alock)	((alock)->lock == 0)
-#endif /* nextstep */
+#endif	 /* nextstep */
 
 
 
@@ -301,29 +305,31 @@ static const slock_t clear_lock =
 
 #if !defined(S_LOCK)
 extern void s_lock(volatile slock_t *lock, const char *file, const int line);
+
 #define S_LOCK(lock) \
-    if (TAS((volatile slock_t *) lock)) {\
-        s_lock((volatile slock_t *) lock, __FILE__, __LINE__); \
-    } else
-#endif /* S_LOCK */
+	if (TAS((volatile slock_t *) lock)) {\
+		s_lock((volatile slock_t *) lock, __FILE__, __LINE__); \
+	} else
+#endif	 /* S_LOCK */
 
 #if !defined(S_LOCK_FREE)
 #define S_LOCK_FREE(lock)	(*(lock) == 0)
-#endif /* S_LOCK_FREE */
+#endif	 /* S_LOCK_FREE */
 
 #if !defined(S_UNLOCK)
 #define S_UNLOCK(lock)		(*(lock) = 0)
-#endif /* S_UNLOCK */
+#endif	 /* S_UNLOCK */
 
 #if !defined(S_INIT_LOCK)
 #define S_INIT_LOCK(lock)	S_UNLOCK(lock)
-#endif /* S_INIT_LOCK */
+#endif	 /* S_INIT_LOCK */
 
 #if !defined(TAS)
-int	tas(volatile slock_t *lock); /* port/.../tas.s, or s_lock.c */
+int			tas(volatile slock_t *lock);		/* port/.../tas.s, or
+												 * s_lock.c */
+
 #define TAS(lock)		tas((volatile slock_t *) lock)
-#endif /* TAS */
+#endif	 /* TAS */
 
-#endif /* HAS_TEST_AND_SET */
-#endif /* S_LOCK_H */
-
+#endif	 /* HAS_TEST_AND_SET */
+#endif	 /* S_LOCK_H */

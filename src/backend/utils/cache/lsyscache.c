@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.21 1998/09/01 03:26:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.22 1998/09/01 04:33:01 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -136,9 +136,9 @@ get_attisset(Oid relid, char *attname)
 	attno = get_attnum(relid, attname);
 
 	tuple = SearchSysCacheTuple(ATTNAME,
-							   ObjectIdGetDatum(relid),
-							   PointerGetDatum(attname),
-							   0, 0);
+								ObjectIdGetDatum(relid),
+								PointerGetDatum(attname),
+								0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "get_attisset: no attribute %s in relation %d",
 			 attname, relid);

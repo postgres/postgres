@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemptr.h,v 1.8 1998/06/15 18:40:03 momjian Exp $
+ * $Id: itemptr.h,v 1.9 1998/09/01 04:38:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,4 +123,4 @@ typedef ItemPointerData *ItemPointer;
 
 extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
 
-#endif							/* ITEMPTR_H */
+#endif	 /* ITEMPTR_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteHandler.h,v 1.5 1997/11/26 01:14:23 momjian Exp $
+ * $Id: rewriteHandler.h,v 1.6 1998/09/01 04:38:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,4 +35,4 @@ typedef struct _rewrite_meta_knowledge RewriteInfo;
 
 extern List *QueryRewrite(Query *parsetree);
 
-#endif							/* REWRITEHANDLER_H */
+#endif	 /* REWRITEHANDLER_H */

@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.15 1998/08/11 18:38:07 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.16 1998/09/01 04:32:45 momjian Exp $
  *
  */
 
@@ -54,7 +54,7 @@ lower(text *string)
 	ptr_ret = VARDATA(ret);
 
 	while (m--)
-		*ptr_ret++ = tolower((unsigned char)*ptr++);
+		*ptr_ret++ = tolower((unsigned char) *ptr++);
 
 	return ret;
 }
@@ -92,7 +92,7 @@ upper(text *string)
 	ptr_ret = VARDATA(ret);
 
 	while (m--)
-		*ptr_ret++ = toupper((unsigned char)*ptr++);
+		*ptr_ret++ = toupper((unsigned char) *ptr++);
 
 	return ret;
 }
@@ -131,15 +131,15 @@ initcap(text *string)
 	ptr = VARDATA(string);
 	ptr_ret = VARDATA(ret);
 
-	*ptr_ret++ = toupper((unsigned char)*ptr++);
+	*ptr_ret++ = toupper((unsigned char) *ptr++);
 	--m;
 
 	while (m--)
 	{
 		if (*(ptr_ret - 1) == ' ' || *(ptr_ret - 1) == '	')
-			*ptr_ret++ = toupper((unsigned char)*ptr++);
+			*ptr_ret++ = toupper((unsigned char) *ptr++);
 		else
-			*ptr_ret++ = tolower((unsigned char)*ptr++);
+			*ptr_ret++ = tolower((unsigned char) *ptr++);
 	}
 
 	return ret;

@@ -28,15 +28,13 @@
 #endif
 
 
-static OffsetNumber
-gistfindnext(IndexScanDesc s, Page p, OffsetNumber n,
+static OffsetNumber gistfindnext(IndexScanDesc s, Page p, OffsetNumber n,
 			 ScanDirection dir);
 static RetrieveIndexResult gistscancache(IndexScanDesc s, ScanDirection dir);
 static RetrieveIndexResult gistfirst(IndexScanDesc s, ScanDirection dir);
 static RetrieveIndexResult gistnext(IndexScanDesc s, ScanDirection dir);
 static ItemPointer gistheapptr(Relation r, ItemPointer itemp);
-static bool
-gistindex_keytest(IndexTuple tuple, TupleDesc tupdesc,
+static bool gistindex_keytest(IndexTuple tuple, TupleDesc tupdesc,
 				  int scanKeySize, ScanKey key, GISTSTATE *giststate,
 				  Relation r, Page p, OffsetNumber offset);
 

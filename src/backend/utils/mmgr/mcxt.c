@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.9 1998/09/01 03:27:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.10 1998/09/01 04:33:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,8 +75,7 @@ MemoryContext CurrentMemoryContext = NULL;
 
 static Pointer GlobalMemoryAlloc(GlobalMemory this, Size size);
 static void GlobalMemoryFree(GlobalMemory this, Pointer pointer);
-static Pointer
-GlobalMemoryRealloc(GlobalMemory this, Pointer pointer,
+static Pointer GlobalMemoryRealloc(GlobalMemory this, Pointer pointer,
 					Size size);
 static char *GlobalMemoryGetName(GlobalMemory this);
 static void GlobalMemoryDump(GlobalMemory this);

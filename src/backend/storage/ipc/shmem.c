@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.30 1998/09/01 03:25:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.31 1998/09/01 04:31:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ unsigned long ShmemBase = 0;	/* start and end address of shared memory */
 static unsigned long ShmemEnd = 0;
 static unsigned long ShmemSize = 0;		/* current size (and default) */
 
-extern	VariableCache	ShmemVariableCache;	/* varsup.c */
+extern VariableCache ShmemVariableCache;		/* varsup.c */
 
 SPINLOCK	ShmemLock;			/* lock for shared memory allocation */
 
@@ -85,8 +85,9 @@ SPINLOCK	ShmemIndexLock;		/* lock for shmem index access */
 static unsigned long *ShmemFreeStart = NULL;	/* pointer to the OFFSET
 												 * of first free shared
 												 * memory */
-static unsigned long *ShmemIndexOffset = NULL;		/* start of the shmem index
-														 * table (for bootstrap) */
+static unsigned long *ShmemIndexOffset = NULL;	/* start of the shmem
+												 * index table (for
+												 * bootstrap) */
 static int	ShmemBootstrap = FALSE;		/* flag becomes true when shared
 										 * mem is created by POSTMASTER */
 
@@ -155,6 +156,7 @@ InitShmem(unsigned int key, unsigned int size)
 				item;
 	bool		found;
 	IpcMemoryId shmid;
+
 	/* if zero key, use default memory size */
 	if (size)
 		ShmemSize = size;
@@ -204,7 +206,7 @@ InitShmem(unsigned int key, unsigned int size)
 	if (ShmemBootstrap)
 	{
 		*ShmemFreeStart = currFreeSpace;
-		memset (ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
+		memset(ShmemVariableCache, 0, sizeof(*ShmemVariableCache));
 	}
 
 	/* if ShmemFreeStart is NULL, then the allocator won't work */
@@ -217,8 +219,8 @@ InitShmem(unsigned int key, unsigned int size)
 
 	/* This will acquire the shmem index lock, but not release it. */
 	ShmemIndex = ShmemInitHash("ShmemIndex",
-								 SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
-								 &info, hash_flags);
+							   SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
+							   &info, hash_flags);
 
 	if (!ShmemIndex)
 	{
@@ -248,8 +250,7 @@ InitShmem(unsigned int key, unsigned int size)
 	{
 
 		/*
-		 * bootstrapping shmem: we have to initialize the shmem index
-		 * now.
+		 * bootstrapping shmem: we have to initialize the shmem index now.
 		 */
 
 		Assert(ShmemBootstrap);
@@ -501,14 +502,16 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	{
 #ifdef USE_ASSERT_CHECKING
 		char	   *strname = "ShmemIndex";
+
 #endif
+
 		/*
 		 * If the shmem index doesnt exist, we fake it.
 		 *
 		 * If we are creating the first shmem index, then let shmemalloc()
 		 * allocate the space for a new HTAB.  Otherwise, find the old one
-		 * and return that.  Notice that the ShmemIndexLock is held until the
-		 * shmem index has been completely initialized.
+		 * and return that.  Notice that the ShmemIndexLock is held until
+		 * the shmem index has been completely initialized.
 		 */
 		Assert(!strcmp(name, strname));
 		if (ShmemBootstrap)
@@ -545,6 +548,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	}
 	else if (*foundPtr)
 	{
+
 		/*
 		 * Structure is in the shmem index so someone else has allocated
 		 * it already.	The size better be the same as the size we are
@@ -634,23 +638,23 @@ TransactionIdIsInProgress(TransactionId xid)
  * placed in array. Current xact ID are never placed there (just
  * to reduce its length, xmin/xmax may be equal to cid).
  * MyProc->xmin will be setted if equal to InvalidTransactionId.
- * 
+ *
  * Yet another strange func for this place...	- vadim 07/21/98
  */
 Snapshot
 GetSnapshotData(bool serialized)
 {
-	Snapshot		snapshot = (Snapshot) malloc(sizeof(SnapshotData));
-	TransactionId	snapshot->xip = (TransactionId*) 
-									malloc(32 * sizeof(TransactionId));
-	ShmemIndexEnt  *result;
-	PROC		   *proc;
-	TransactionId	cid = GetCurrentTransactionId();
-	uint			count = 0;
-	unit			free = 31;
+	Snapshot	snapshot = (Snapshot) malloc(sizeof(SnapshotData));
+	TransactionId snapshot->xip = (TransactionId *)
+	malloc(32 * sizeof(TransactionId));
+	ShmemIndexEnt *result;
+	PROC	   *proc;
+	TransactionId cid = GetCurrentTransactionId();
+	uint		count = 0;
+	unit		free = 31;
 
 	Assert(ShmemIndex);
-	
+
 	snapshot->xmax = cid;
 	snapshot->xmin = cid;
 
@@ -672,7 +676,7 @@ GetSnapshotData(bool serialized)
 			continue;
 		proc = (PROC *) MAKE_PTR(result->location);
 		if (proc == MyProc || proc->xid < FirstTransactionId ||
-				serialized && proc->xid >= cid)
+			serialized && proc->xid >= cid)
 			continue;
 		if (proc->xid < snapshot->xmin)
 			snapshot->xmin = proc->xid;
@@ -680,8 +684,8 @@ GetSnapshotData(bool serialized)
 			snapshot->xmax = proc->xid;
 		if (free == 0)
 		{
-			snapshot->xip = (TransactionId*) realloc(snapshot->xip, 
-								(count + 33) * sizeof(TransactionId));
+			snapshot->xip = (TransactionId *) realloc(snapshot->xip,
+								   (count + 33) * sizeof(TransactionId));
 			free = 32;
 		}
 		snapshot->xip[count] = proc->xid;
@@ -695,4 +699,5 @@ GetSnapshotData(bool serialized)
 	elog(ERROR, "GetSnapshotData: ShmemIndex corrupted");
 	return NULL;
 }
+
 #endif

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtstrat.h,v 1.7 1998/02/26 04:40:26 momjian Exp $
+ * $Id: rtstrat.h,v 1.8 1998/09/01 04:34:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,8 +16,7 @@
 #include <utils/rel.h>
 #include <access/attnum.h>
 
-extern RegProcedure
-RTMapOperator(Relation r, AttrNumber attnum,
+extern RegProcedure RTMapOperator(Relation r, AttrNumber attnum,
 			  RegProcedure proc);
 
-#endif							/* RTSTRAT_H */
+#endif	 /* RTSTRAT_H */

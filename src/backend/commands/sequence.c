@@ -316,9 +316,9 @@ currval(struct varlena * seqin)
 int4
 setval(struct varlena * seqin, int4 next)
 {
-	char	*seqname = textout(seqin);
+	char	   *seqname = textout(seqin);
 	SeqTable	elm;
-	Buffer	buf;
+	Buffer		buf;
 	Form_pg_sequence seq;
 	ItemPointerData iptr;
 
@@ -329,17 +329,20 @@ setval(struct varlena * seqin, int4 next)
 #endif
 
 	/* open and WIntentLock sequence */
-	elm = init_sequence ("setval", seqname);
-	seq = read_info ("setval", elm, &buf);	/* lock page and read tuple */
+	elm = init_sequence("setval", seqname);
+	seq = read_info("setval", elm, &buf);		/* lock page and read
+												 * tuple */
 
-	if ( seq->cache_value != 1 ) {
-		elog (ERROR, "%s.setval: can't set value of sequence %s, cache != 1",
-			  seqname, seqname);
+	if (seq->cache_value != 1)
+	{
+		elog(ERROR, "%s.setval: can't set value of sequence %s, cache != 1",
+			 seqname, seqname);
 	}
 
-	if ((next < seq->min_value) || (next > seq->max_value)) {
-		elog (ERROR, "%s.setval: value %d is of of bounds (%d,%d)",
-			  seqname, next, seq->min_value, seq->max_value);
+	if ((next < seq->min_value) || (next > seq->max_value))
+	{
+		elog(ERROR, "%s.setval: value %d is of of bounds (%d,%d)",
+			 seqname, next, seq->min_value, seq->max_value);
 	}
 
 	/* save info in local cache */
@@ -350,11 +353,11 @@ setval(struct varlena * seqin, int4 next)
 	seq->last_value = next;		/* last fetched number */
 	seq->is_called = 't';
 
-	if ( WriteBuffer (buf) == STATUS_ERROR )
-		elog (ERROR, "%s.settval: WriteBuffer failed", seqname);
+	if (WriteBuffer(buf) == STATUS_ERROR)
+		elog(ERROR, "%s.settval: WriteBuffer failed", seqname);
 
 	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
-	RelationUnsetSingleWLockPage (elm->rel, &iptr);
+	RelationUnsetSingleWLockPage(elm->rel, &iptr);
 
 	return next;
 }

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: analyze.h,v 1.3 1998/01/19 05:06:39 momjian Exp $
+ * $Id: analyze.h,v 1.4 1998/09/01 04:37:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,4 +16,4 @@
 
 extern QueryTreeList *parse_analyze(List *pl, ParseState *parentParseState);
 
-#endif							/* ANALYZE_H */
+#endif	 /* ANALYZE_H */

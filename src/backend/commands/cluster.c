@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.30 1998/09/01 03:21:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.31 1998/09/01 04:27:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
 #include <optimizer/internal.h>
 #ifndef NO_SECURITY
 #include <utils/acl.h>
-#endif							/* !NO_SECURITY */
+#endif	 /* !NO_SECURITY */
 
 static Relation copy_heap(Oid OIDOldHeap);
 static void copy_index(Oid OIDOldIndex, Oid OIDNewHeap);
@@ -128,7 +128,8 @@ cluster(char *oldrelname, char *oldindexname)
 		elog(ERROR, "cluster: unknown relation: \"%s\"",
 			 oldrelname);
 	}
-	OIDOldHeap = RelationGetRelid(OldHeap);/* Get OID for the index scan	*/
+	OIDOldHeap = RelationGetRelid(OldHeap);		/* Get OID for the index
+												 * scan    */
 
 	OldIndex = index_openr(oldindexname);		/* Open old index relation	*/
 	if (!RelationIsValid(OldIndex))
@@ -136,7 +137,7 @@ cluster(char *oldrelname, char *oldindexname)
 		elog(ERROR, "cluster: unknown index: \"%s\"",
 			 oldindexname);
 	}
-	OIDOldIndex = RelationGetRelid(OldIndex);		/* OID for the index scan		  */
+	OIDOldIndex = RelationGetRelid(OldIndex);	/* OID for the index scan		  */
 
 	heap_close(OldHeap);
 	index_close(OldIndex);

@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.11 1998/09/01 03:22:10 momjian Exp $
+ * $Id: variable.c,v 1.12 1998/09/01 04:28:07 momjian Exp $
  *
  */
 
@@ -554,7 +554,7 @@ struct VariableParsers
 	{
 		"client_encoding", parse_client_encoding, show_client_encoding, reset_client_encoding
 	},
-       {
+	{
 		"server_encoding", parse_server_encoding, show_server_encoding, reset_server_encoding
 	},
 #endif

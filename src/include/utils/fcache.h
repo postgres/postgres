@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fcache.h,v 1.6 1998/01/15 19:46:36 pgsql Exp $
+ * $Id: fcache.h,v 1.7 1998/09/01 04:39:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,4 +54,4 @@ typedef struct
 } FunctionCache,
 		   *FunctionCachePtr;
 
-#endif							/* FCACHE_H */
+#endif	 /* FCACHE_H */

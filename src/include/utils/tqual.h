@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.13 1998/07/27 19:38:40 vadim Exp $
+ * $Id: tqual.h,v 1.14 1998/09/01 04:39:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,17 +18,17 @@
 
 typedef struct SnapshotData
 {
-	TransactionId		xmin;				/* XID < xmin are visible to me */
-	TransactionId		xmax;				/* XID > xmax are invisible to me */
-	TransactionId	   *xip;				/* array of xacts in progress */
-} SnapshotData;
+	TransactionId xmin;			/* XID < xmin are visible to me */
+	TransactionId xmax;			/* XID > xmax are invisible to me */
+	TransactionId *xip;			/* array of xacts in progress */
+}			SnapshotData;
 
-typedef SnapshotData	*Snapshot;
+typedef SnapshotData *Snapshot;
 
-#define	IsSnapshotNow(snapshot)		((Snapshot) snapshot == (Snapshot) 0x0)
-#define	IsSnapshotSelf(snapshot)	((Snapshot) snapshot == (Snapshot) 0x1)
-#define	SnapshotNow					((Snapshot) 0x0)
-#define	SnapshotSelf				((Snapshot) 0x1)
+#define IsSnapshotNow(snapshot)		((Snapshot) snapshot == (Snapshot) 0x0)
+#define IsSnapshotSelf(snapshot)	((Snapshot) snapshot == (Snapshot) 0x1)
+#define SnapshotNow					((Snapshot) 0x0)
+#define SnapshotSelf				((Snapshot) 0x1)
 
 extern TransactionId HeapSpecialTransactionId;
 extern CommandId HeapSpecialCommandId;
@@ -53,7 +53,7 @@ extern CommandId HeapSpecialCommandId;
 	) \
 )
 
-#define	heapisoverride() \
+#define heapisoverride() \
 ( \
 	(!TransactionIdIsValid(HeapSpecialTransactionId)) ? \
 		false \
@@ -77,4 +77,4 @@ extern bool HeapTupleSatisfiesNow(HeapTuple tuple);
 extern void setheapoverride(bool on);
 
 
-#endif							/* TQUAL_H */
+#endif	 /* TQUAL_H */

@@ -263,7 +263,7 @@ AlterUser(AlterUserStmt *stmt)
 	{
 		RelationUnsetLockForWrite(pg_shadow_rel);
 		heap_close(pg_shadow_rel);
-		UserAbortTransactionBlock(); /* needed? */
+		UserAbortTransactionBlock();	/* needed? */
 		elog(ERROR, "alterUser: user \"%s\" does not exist", stmt->user);
 		return;
 	}
@@ -430,8 +430,8 @@ RemoveUser(char *user)
 	 * tables, views, etc owned by the user.
 	 *
 	 * The second option would be to create a means of deleting tables, view,
-	 * etc. owned by the user from other databases.  pg_shadow is global and
-	 * so this must be done at some point.
+	 * etc. owned by the user from other databases.  pg_shadow is global
+	 * and so this must be done at some point.
 	 *
 	 * Let us not forget that the user should be removed from the pg_groups
 	 * also.
@@ -466,8 +466,8 @@ CheckPgUserAclNotNull()
 	HeapTuple	htup;
 
 	htup = SearchSysCacheTuple(RELNAME,
-							  PointerGetDatum(ShadowRelationName),
-							  0, 0, 0);
+							   PointerGetDatum(ShadowRelationName),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 	{
 		elog(ERROR, "IsPgUserAclNull: class \"%s\" not found",

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: copy.h,v 1.3 1997/09/07 04:57:23 momjian Exp $
+ * $Id: copy.h,v 1.4 1998/09/01 04:35:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,8 +14,7 @@
 #define COPY_H
 
 
-void
-DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe, char *filename,
+void DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe, char *filename,
 	   char *delim);
 
-#endif							/* COPY_H */
+#endif	 /* COPY_H */

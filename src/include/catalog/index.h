@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.12 1998/09/01 03:27:46 momjian Exp $
+ * $Id: index.h,v 1.13 1998/09/01 04:34:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,13 +22,11 @@ extern Form_pg_am AccessMethodObjectIdGetForm(Oid accessMethodObjectId);
 
 extern void UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate);
 
-extern void
-InitIndexStrategy(int numatts,
+extern void InitIndexStrategy(int numatts,
 				  Relation indexRelation,
 				  Oid accessMethodObjectId);
 
-extern void
-index_create(char *heapRelationName,
+extern void index_create(char *heapRelationName,
 			 char *indexRelationName,
 			 FuncIndexInfo *funcInfo,
 			 List *attributeList,
@@ -44,20 +42,17 @@ index_create(char *heapRelationName,
 
 extern void index_destroy(Oid indexId);
 
-extern void
-FormIndexDatum(int numberOfAttributes,
+extern void FormIndexDatum(int numberOfAttributes,
 			   AttrNumber *attributeNumber, HeapTuple heapTuple,
 			   TupleDesc heapDescriptor, Datum *datum,
 			   char *nullv, FuncIndexInfoPtr fInfo);
 
 extern void UpdateStats(Oid relid, long reltuples, bool hasindex);
 
-extern void
-FillDummyExprContext(ExprContext *econtext, TupleTableSlot *slot,
+extern void FillDummyExprContext(ExprContext *econtext, TupleTableSlot *slot,
 					 TupleDesc tupdesc, Buffer buffer);
 
-extern void
-index_build(Relation heapRelation, Relation indexRelation,
+extern void index_build(Relation heapRelation, Relation indexRelation,
 			int numberOfAttributes, AttrNumber *attributeNumber,
 		uint16 parameterCount, Datum *parameter, FuncIndexInfo *funcInfo,
 			PredInfo *predInfo);
@@ -65,4 +60,4 @@ index_build(Relation heapRelation, Relation indexRelation,
 extern bool IndexIsUnique(Oid indexId);
 extern bool IndexIsUniqueNoCache(Oid indexId);
 
-#endif							/* INDEX_H */
+#endif	 /* INDEX_H */

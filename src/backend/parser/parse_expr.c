@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.33 1998/09/01 03:24:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.34 1998/09/01 04:30:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,11 +264,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					if (length(left_expr) !=
 						length(right_expr))
 						elog(ERROR, "parser: Subselect has too many or too few fields.");
-					
-					if (length(left_expr) > 1 && 
-						strcmp (op, "=") != 0 && strcmp (op, "<>") != 0)
+
+					if (length(left_expr) > 1 &&
+						strcmp(op, "=") != 0 && strcmp(op, "<>") != 0)
 						elog(ERROR, "parser: '%s' is not relational operator", op);
-					
+
 					sublink->oper = NIL;
 					foreach(elist, left_expr)
 					{
@@ -301,10 +301,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			}
 
 /* Some nodes do _not_ come from the original parse tree,
- *  but result from parser transformation in this phase.
+ *	but result from parser transformation in this phase.
  * At least one construct (BETWEEN/AND) puts the same nodes
- *  into two branches of the parse tree; hence, some nodes
- *  are transformed twice.
+ *	into two branches of the parse tree; hence, some nodes
+ *	are transformed twice.
  * The three cases below come from transforming function calls.
  * Let's try just passing them through...
  * - thomas 1998-03-14

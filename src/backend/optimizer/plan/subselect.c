@@ -405,20 +405,23 @@ SS_process_sublinks(Node *expr)
 			SS_process_sublinks((Node *) ((Expr *) expr)->args);
 	else if (IsA(expr, SubLink))/* got it! */
 	{
-          /* Hack to make sure expr->oper->args points to the same VAR node
-           * as expr->lefthand does. Needed for subselects in the havingQual
-           * when used on views.
-           * Otherwise aggregate functions will fail later on (at execution 
-           * time!) Reason: The rewite System makes several copies of the
-           * VAR nodes and in this case it should not do so :-( */
-	    if(((SubLink *) expr)->lefthand != NULL)
+
+		/*
+		 * Hack to make sure expr->oper->args points to the same VAR node
+		 * as expr->lefthand does. Needed for subselects in the havingQual
+		 * when used on views. Otherwise aggregate functions will fail
+		 * later on (at execution time!) Reason: The rewite System makes
+		 * several copies of the VAR nodes and in this case it should not
+		 * do so :-(
+		 */
+		if (((SubLink *) expr)->lefthand != NULL)
 		{
-			lfirst(((Expr *) lfirst(((SubLink *)expr)->oper))->args) = 
-			lfirst(((SubLink *)expr)->lefthand);
+			lfirst(((Expr *) lfirst(((SubLink *) expr)->oper))->args) =
+				lfirst(((SubLink *) expr)->lefthand);
 		}
-	    expr = _make_subplan((SubLink *) expr);
+		expr = _make_subplan((SubLink *) expr);
 	}
-	
+
 	return expr;
 }
 

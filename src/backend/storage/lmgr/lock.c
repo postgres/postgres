@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.35 1998/09/01 03:25:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.36 1998/09/01 04:32:00 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -52,7 +52,7 @@
 #include "utils/ps_status.h"
 
 static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
-					  TransactionId xid);
+		   TransactionId xid);
 
 /*
  * lockDebugRelation can be used to trace unconditionally a single relation,
@@ -64,11 +64,11 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
  * If you are using tprintf you should specify a value greater than the max
  * oid of system relations, which can be found with the following query:
  *
- *   select max(int4in(int4out(oid))) from pg_class where relname ~ '^pg_';
+ *	 select max(int4in(int4out(oid))) from pg_class where relname ~ '^pg_';
  *
  * To get a useful lock trace you can use the following pg_options:
  *
- *   -T "verbose,query,locks,userlocks,lock_debug_oidmin=17500"
+ *	 -T "verbose,query,locks,userlocks,lock_debug_oidmin=17500"
  */
 #define LOCKDEBUG(lockmethod)	(pg_options[TRACE_SHORTLOCKS+lockmethod])
 #define lockDebugRelation		(pg_options[TRACE_LOCKRELATION])
@@ -77,10 +77,10 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 
 #ifdef LOCK_MGR_DEBUG
 #define LOCK_PRINT(where,lock,type) \
-    if (((LOCKDEBUG(LOCK_LOCKMETHOD(*(lock))) >= 1) \
-	     && (lock->tag.relId >= lockDebugOidMin)) \
-	    || (lock->tag.relId == lockDebugRelation)) \
-	    LOCK_PRINT_AUX(where,lock,type)
+	if (((LOCKDEBUG(LOCK_LOCKMETHOD(*(lock))) >= 1) \
+		 && (lock->tag.relId >= lockDebugOidMin)) \
+		|| (lock->tag.relId == lockDebugRelation)) \
+		LOCK_PRINT_AUX(where,lock,type)
 
 #define LOCK_PRINT_AUX(where,lock,type) \
 	TPRINTF(TRACE_ALL, \
@@ -113,11 +113,11 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 
 #define XID_PRINT(where,xidentP) \
 	if (((LOCKDEBUG(XIDENT_LOCKMETHOD(*(xidentP))) >= 1) \
-	     && (((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
+		 && (((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
 			 >= lockDebugOidMin)) \
-	    || (((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
+		|| (((LOCK *)MAKE_PTR(xidentP->tag.lock))->tag.relId \
 			== lockDebugRelation)) \
-	    XID_PRINT_AUX(where,xidentP)
+		XID_PRINT_AUX(where,xidentP)
 
 #define XID_PRINT_AUX(where,xidentP) \
 	TPRINTF(TRACE_ALL, \
@@ -137,18 +137,18 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 		 xidentP->nHolding)
 
 #define LOCK_TPRINTF(lock, args...) \
-    if (((LOCKDEBUG(LOCK_LOCKMETHOD(*(lock))) >= 1) \
-	     && (lock->tag.relId >= lockDebugOidMin)) \
-	    || (lock->tag.relId == lockDebugRelation)) \
-	    TPRINTF(TRACE_ALL, args)
+	if (((LOCKDEBUG(LOCK_LOCKMETHOD(*(lock))) >= 1) \
+		 && (lock->tag.relId >= lockDebugOidMin)) \
+		|| (lock->tag.relId == lockDebugRelation)) \
+		TPRINTF(TRACE_ALL, args)
 
-#else	/* !LOCK_MGR_DEBUG */
+#else							/* !LOCK_MGR_DEBUG */
 #define LOCK_PRINT(where,lock,type)
 #define LOCK_PRINT_AUX(where,lock,type)
 #define XID_PRINT(where,xidentP)
 #define XID_PRINT_AUX(where,xidentP)
 #define LOCK_TPRINTF(lock, args...)
-#endif	/* !LOCK_MGR_DEBUG */
+#endif	 /* !LOCK_MGR_DEBUG */
 
 static char *lock_types[] = {
 	"",
@@ -204,13 +204,13 @@ InitLocks()
 	}
 
 #ifdef LOCK_MGR_DEBUG
+
 	/*
-	 * If lockDebugOidMin value has not been specified
-	 * in pg_options set a default value.
+	 * If lockDebugOidMin value has not been specified in pg_options set a
+	 * default value.
 	 */
-	if (!lockDebugOidMin) {
+	if (!lockDebugOidMin)
 		lockDebugOidMin = BootstrapObjectIdData;
-	}
 #endif
 }
 
@@ -232,10 +232,10 @@ LockDisable(int status)
  * Notes: just copying.  Should only be called once.
  */
 static void
-LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
-			 MASK *conflictsP,
-			 int *prioP,
-			 int numModes)
+LockMethodInit(LOCKMETHODTABLE * lockMethodTable,
+			   MASK *conflictsP,
+			   int *prioP,
+			   int numModes)
 {
 	int			i;
 
@@ -260,11 +260,11 @@ LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
  */
 LOCKMETHOD
 LockMethodTableInit(char *tabName,
-			MASK *conflictsP,
-			int *prioP,
-			int numModes)
+					MASK *conflictsP,
+					int *prioP,
+					int numModes)
 {
-	LOCKMETHODTABLE    *lockMethodTable;
+	LOCKMETHODTABLE *lockMethodTable;
 	char	   *shmemName;
 	HASHCTL		info;
 	int			hash_flags;
@@ -355,7 +355,7 @@ LockMethodTableInit(char *tabName,
 	sprintf(shmemName, "%s (lock hash)", tabName);
 	lockMethodTable->lockHash = (HTAB *) ShmemInitHash(shmemName,
 										 INIT_TABLE_SIZE, MAX_TABLE_SIZE,
-											  &info, hash_flags);
+													   &info, hash_flags);
 
 	Assert(lockMethodTable->lockHash->hash == tag_hash);
 	if (!lockMethodTable->lockHash)
@@ -377,7 +377,7 @@ LockMethodTableInit(char *tabName,
 	sprintf(shmemName, "%s (xid hash)", tabName);
 	lockMethodTable->xidHash = (HTAB *) ShmemInitHash(shmemName,
 										 INIT_TABLE_SIZE, MAX_TABLE_SIZE,
-											 &info, hash_flags);
+													  &info, hash_flags);
 
 	if (!lockMethodTable->xidHash)
 	{
@@ -414,7 +414,7 @@ LockMethodTableInit(char *tabName,
 LOCKMETHOD
 LockMethodTableRename(LOCKMETHOD lockmethod)
 {
-	LOCKMETHOD newLockMethod;
+	LOCKMETHOD	newLockMethod;
 
 	if (NumLockMethods >= MAX_LOCK_METHODS)
 		return INVALID_LOCKMETHOD;
@@ -494,7 +494,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	bool		found;
 	LOCK	   *lock = NULL;
 	SPINLOCK	masterLock;
-	LOCKMETHODTABLE    *lockMethodTable;
+	LOCKMETHODTABLE *lockMethodTable;
 	int			status;
 	TransactionId xid;
 
@@ -560,7 +560,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		Assert(BlockIdEquals(&(lock->tag.tupleId.ip_blkid),
 							 &(locktag->tupleId.ip_blkid)));
 		LOCK_PRINT("LockAcquire: new", lock, lockmode);
-	} else {
+	}
+	else
+	{
 		LOCK_PRINT("LockAcquire: found", lock, lockmode);
 		Assert((lock->nHolding > 0) && (lock->holders[lockmode] >= 0));
 		Assert((lock->nActive > 0) && (lock->activeHolders[lockmode] >= 0));
@@ -589,7 +591,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	{
 		item.tag.pid = MyProcPid;
 		item.tag.xid = xid = 0;
-	} else {
+	}
+	else
+	{
 		xid = GetCurrentTransactionId();
 		TransactionIdStore(xid, &item.tag.xid);
 	}
@@ -618,7 +622,9 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		MemSet((char *) result->holders, 0, sizeof(int) * MAX_LOCKMODES);
 		ProcAddLock(&result->queue);
 		XID_PRINT("LockAcquire: new", result);
-	} else {
+	}
+	else
+	{
 		XID_PRINT("LockAcquire: found", result);
 		Assert((result->nHolding > 0) && (result->holders[lockmode] >= 0));
 		Assert(result->nHolding <= lock->nActive);
@@ -658,6 +664,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	else if (status == STATUS_FOUND)
 	{
 #ifdef USER_LOCKS
+
 		/*
 		 * User locks are non blocking. If we can't acquire a lock we must
 		 * remove the xid entry and return FALSE without waiting.
@@ -669,13 +676,12 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 				SHMQueueDelete(&result->queue);
 				result = (XIDLookupEnt *) hash_search(xidTable,
 													  (Pointer) result,
-													  HASH_REMOVE, &found);
-				if (!result || !found) {
+													HASH_REMOVE, &found);
+				if (!result || !found)
 					elog(NOTICE, "LockAcquire: remove xid, table corrupted");
-				}
-			} else {
-				XID_PRINT_AUX("LockAcquire: NHOLDING", result);
 			}
+			else
+				XID_PRINT_AUX("LockAcquire: NHOLDING", result);
 			lock->nHolding--;
 			lock->holders[lockmode]--;
 			LOCK_PRINT("LockAcquire: user lock failed", lock, lockmode);
@@ -686,11 +692,13 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		}
 #endif
 		status = WaitOnLock(lockmethod, lock, lockmode, xid);
+
 		/*
-		 * Check the xid entry status, in case something in the
-		 * ipc communication doesn't work correctly.
+		 * Check the xid entry status, in case something in the ipc
+		 * communication doesn't work correctly.
 		 */
-		if (!((result->nHolding > 0) && (result->holders[lockmode] > 0))) {
+		if (!((result->nHolding > 0) && (result->holders[lockmode] > 0)))
+		{
 			XID_PRINT_AUX("LockAcquire: INCONSISTENT ", result);
 			LOCK_PRINT_AUX("LockAcquire: INCONSISTENT ", lock, lockmode);
 			/* Should we retry ? */
@@ -737,20 +745,26 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 	int			bitmask;
 	int			i,
 				tmpMask;
+
 #ifdef USER_LOCKS
 	int			is_user_lock;
+
 #endif
 
 	numLockModes = LockMethodTable[lockmethod]->ctl->numLockModes;
 	xidTable = LockMethodTable[lockmethod]->xidHash;
 
-	if (xidentP) {
+	if (xidentP)
+	{
+
 		/*
 		 * A pointer to the xid entry was supplied from the caller.
 		 * Actually only LockAcquire can do it.
 		 */
 		result = xidentP;
-	} else {
+	}
+	else
+	{
 		/* ---------------------
 		 * read my own statistics from the xid table.  If there
 		 * isn't an entry, then we'll just add one.
@@ -766,12 +780,13 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 #endif
 #ifdef USER_LOCKS
 		is_user_lock = (lockmethod == 2);
-		if (is_user_lock) {
+		if (is_user_lock)
+		{
 			item.tag.pid = MyProcPid;
 			item.tag.xid = 0;
-		} else {
-			TransactionIdStore(xid, &item.tag.xid);
 		}
+		else
+			TransactionIdStore(xid, &item.tag.xid);
 #else
 		TransactionIdStore(xid, &item.tag.xid);
 #endif
@@ -788,9 +803,9 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		}
 
 		/*
-		 * If not found initialize the new entry. THIS SHOULD NEVER HAPPEN,
-		 * if we are trying to resolve a conflict we must already have
-		 * allocated an xid entry for this lock.	dz 21-11-1997
+		 * If not found initialize the new entry. THIS SHOULD NEVER
+		 * HAPPEN, if we are trying to resolve a conflict we must already
+		 * have allocated an xid entry for this lock.	 dz 21-11-1997
 		 */
 		if (!found)
 		{
@@ -799,12 +814,12 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 			 * the lock stats.
 			 * ---------------
 			 */
-			MemSet(result->holders,0, numLockModes * sizeof(*(lock->holders)));
+			MemSet(result->holders, 0, numLockModes * sizeof(*(lock->holders)));
 			result->nHolding = 0;
 			XID_PRINT_AUX("LockResolveConflicts: NOT FOUND", result);
-		} else {
-			XID_PRINT("LockResolveConflicts: found", result);
 		}
+		else
+			XID_PRINT("LockResolveConflicts: found", result);
 	}
 	Assert((result->nHolding >= 0) && (result->holders[lockmode] >= 0));
 
@@ -822,7 +837,8 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		PROC_QUEUE *waitQueue = &(lock->waitProcs);
 		PROC	   *topproc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
-		if (waitQueue->size && topproc->prio > myprio) {
+		if (waitQueue->size && topproc->prio > myprio)
+		{
 			XID_PRINT("LockResolveConflicts: higher priority proc waiting",
 					  result);
 			return STATUS_FOUND;
@@ -904,7 +920,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 		   TransactionId xid)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
-	LOCKMETHODTABLE    *lockMethodTable = LockMethodTable[lockmethod];
+	LOCKMETHODTABLE *lockMethodTable = LockMethodTable[lockmethod];
 	int			prio = lockMethodTable->ctl->prio[lockmode];
 	char		old_status[64],
 				new_status[64];
@@ -970,7 +986,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	LOCK	   *lock = NULL;
 	SPINLOCK	masterLock;
 	bool		found;
-	LOCKMETHODTABLE    *lockMethodTable;
+	LOCKMETHODTABLE *lockMethodTable;
 	XIDLookupEnt *result,
 				item;
 	HTAB	   *xidTable;
@@ -1024,7 +1040,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 								HASH_FIND, &found);
 
 	/*
-	 * let the caller print its own error message, too. Do not elog(ERROR).
+	 * let the caller print its own error message, too. Do not
+	 * elog(ERROR).
 	 */
 	if (!lock)
 	{
@@ -1037,7 +1054,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	{
 		SpinRelease(masterLock);
 #ifdef USER_LOCKS
-		if (is_user_lock) {
+		if (is_user_lock)
+		{
 			TPRINTF(TRACE_USERLOCKS, "LockRelease: no lock with this tag");
 			return FALSE;
 		}
@@ -1062,10 +1080,13 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	item.tag.lockmethod = lockmethod;
 #endif
 #ifdef USER_LOCKS
-	if (is_user_lock) {
+	if (is_user_lock)
+	{
 		item.tag.pid = MyProcPid;
 		item.tag.xid = xid = 0;
-	} else {
+	}
+	else
+	{
 		xid = GetCurrentTransactionId();
 		TransactionIdStore(xid, &item.tag.xid);
 	}
@@ -1084,21 +1105,22 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	{
 		SpinRelease(masterLock);
 #ifdef USER_LOCKS
-		if (!found && is_user_lock) {
+		if (!found && is_user_lock)
 			TPRINTF(TRACE_USERLOCKS, "LockRelease: no lock with this tag");
-		} else
+		else
 #endif
-		elog(NOTICE, "LockReplace: xid table corrupted");
+			elog(NOTICE, "LockReplace: xid table corrupted");
 		return FALSE;
 	}
 	XID_PRINT("LockRelease: found", result);
 	Assert(result->tag.lock == MAKE_OFFSET(lock));
 
 	/*
-	 * Check that we are actually holding a lock of the type we want
-	 * to release.
+	 * Check that we are actually holding a lock of the type we want to
+	 * release.
 	 */
-	if (!(result->holders[lockmode] > 0)) {
+	if (!(result->holders[lockmode] > 0))
+	{
 		SpinRelease(masterLock);
 		XID_PRINT_AUX("LockAcquire: WRONGTYPE", result);
 		elog(NOTICE, "LockRelease: you don't own a lock of type %s",
@@ -1114,7 +1136,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	lock->nHolding--;
 	lock->holders[lockmode]--;
 	lock->nActive--;
-    lock->activeHolders[lockmode]--;
+	lock->activeHolders[lockmode]--;
 
 	/* --------------------------
 	 * If there are still active locks of the type I just released, no one
@@ -1123,9 +1145,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	 * --------------------------
 	 */
 	if (lock->activeHolders[lockmode])
-	{
 		wakeupNeeded = false;
-	}
 	else
 	{
 		/* change the conflict mask.  No more of this lock type. */
@@ -1169,12 +1189,10 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	 */
 	if (!result->nHolding)
 	{
-		if (result->queue.prev == INVALID_OFFSET) {
+		if (result->queue.prev == INVALID_OFFSET)
 			elog(NOTICE, "LockRelease: xid.prev == INVALID_OFFSET");
-		}
-		if (result->queue.next == INVALID_OFFSET) {
+		if (result->queue.next == INVALID_OFFSET)
 			elog(NOTICE, "LockRelease: xid.next == INVALID_OFFSET");
-		}
 		if (result->queue.next != INVALID_OFFSET)
 			SHMQueueDelete(&result->queue);
 		XID_PRINT("LockRelease: deleting", result);
@@ -1199,9 +1217,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		ProcLockWakeup(&(lock->waitProcs), lockmethod, lock);
 	}
 	else
-	{
 		LOCK_TPRINTF(lock, "LockRelease: no wakeup needed");
-	}
 
 	SpinRelease(masterLock);
 	return TRUE;
@@ -1220,7 +1236,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 	XIDLookupEnt *result;
 	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
 	SPINLOCK	masterLock;
-	LOCKMETHODTABLE    *lockMethodTable;
+	LOCKMETHODTABLE *lockMethodTable;
 	int			i,
 				numLockModes;
 	LOCK	   *lock;
@@ -1245,7 +1261,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 
 	Assert(lockmethod < NumLockMethods);
 	lockMethodTable = LockMethodTable[lockmethod];
-	if (!lockMethodTable) {
+	if (!lockMethodTable)
+	{
 		elog(NOTICE, "LockAcquire: bad lockmethod %d", lockmethod);
 		return FALSE;
 	}
@@ -1261,6 +1278,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 
 	for (;;)
 	{
+
 		/*
 		 * Sometimes the queue appears to be messed up.
 		 */
@@ -1281,7 +1299,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 		lock = (LOCK *) MAKE_PTR(xidLook->tag.lock);
 
 		xidtag_lockmethod = XIDENT_LOCKMETHOD(*xidLook);
-		if ((xidtag_lockmethod == lockmethod) || (trace_flag >= 2)) {
+		if ((xidtag_lockmethod == lockmethod) || (trace_flag >= 2))
+		{
 			XID_PRINT("LockReleaseAll", xidLook);
 			LOCK_PRINT("LockReleaseAll", lock, 0);
 		}
@@ -1291,7 +1310,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			elog(NOTICE, "LockReleaseAll: xid/lock method mismatch: %d != %d",
 				 xidtag_lockmethod, lock->tag.lockmethod);
 #endif
-		if ((xidtag_lockmethod != lockmethod) && (trace_flag >= 2)) {
+		if ((xidtag_lockmethod != lockmethod) && (trace_flag >= 2))
+		{
 			TPRINTF(trace_flag, "LockReleaseAll: skipping other table");
 			nleft++;
 			goto next_item;
@@ -1310,7 +1330,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			{
 				TPRINTF(TRACE_USERLOCKS,
 						"LockReleaseAll: skiping normal lock [%d,%d,%d]",
-						xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
+				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 				nleft++;
 				goto next_item;
 			}
@@ -1322,28 +1342,32 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 					 lock->tag.tupleId.ip_posid,
 					 ((lock->tag.tupleId.ip_blkid.bi_hi << 16) +
 					  lock->tag.tupleId.ip_blkid.bi_lo),
-					 xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
+				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 				nleft++;
 				goto next_item;
 			}
 			TPRINTF(TRACE_USERLOCKS,
-					"LockReleaseAll: releasing user lock [%u,%u] [%d,%d,%d]",
+				"LockReleaseAll: releasing user lock [%u,%u] [%d,%d,%d]",
 					lock->tag.tupleId.ip_posid,
 					((lock->tag.tupleId.ip_blkid.bi_hi << 16) +
 					 lock->tag.tupleId.ip_blkid.bi_lo),
-					xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
+				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 		}
 		else
 		{
-			/* Can't check xidLook->tag.xid, can be 0 also for normal locks */
+
+			/*
+			 * Can't check xidLook->tag.xid, can be 0 also for normal
+			 * locks
+			 */
 			if (xidLook->tag.pid != 0)
 			{
 				TPRINTF(TRACE_LOCKS,
-						"LockReleaseAll: skiping user lock [%u,%u] [%d,%d,%d]",
+				  "LockReleaseAll: skiping user lock [%u,%u] [%d,%d,%d]",
 						lock->tag.tupleId.ip_posid,
 						((lock->tag.tupleId.ip_blkid.bi_hi << 16) +
 						 lock->tag.tupleId.ip_blkid.bi_lo),
-						xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
+				  xidLook->tag.lock, xidLook->tag.pid, xidLook->tag.xid);
 				nleft++;
 				goto next_item;
 			}
@@ -1362,7 +1386,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 				lock->holders[i] -= xidLook->holders[i];
 				lock->activeHolders[i] -= xidLook->holders[i];
 				Assert((lock->holders[i] >= 0) \
-					   && (lock->activeHolders[i] >= 0));
+					   &&(lock->activeHolders[i] >= 0));
 				if (!lock->activeHolders[i])
 					lock->mask &= BITS_OFF[i];
 			}
@@ -1380,7 +1404,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			 */
 			lock->nHolding = 0;
 			/* Fix the lock status, just for next LOCK_PRINT message. */
-			for (i=1; i<=numLockModes; i++) {
+			for (i = 1; i <= numLockModes; i++)
+			{
 				Assert(lock->holders[i] == lock->activeHolders[i]);
 				lock->holders[i] = lock->activeHolders[i] = 0;
 			}
@@ -1399,7 +1424,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 
 		XID_PRINT("LockReleaseAll: deleting", xidLook);
 		result = (XIDLookupEnt *) hash_search(lockMethodTable->xidHash,
-											  (Pointer) xidLook, 
+											  (Pointer) xidLook,
 											  HASH_REMOVE,
 											  &found);
 		if (!result || !found)
@@ -1452,7 +1477,8 @@ next_item:
 	/*
 	 * Reinitialize the queue only if nothing has been left in.
 	 */
-	if (nleft == 0) {
+	if (nleft == 0)
+	{
 		TPRINTF(trace_flag, "LockReleaseAll: reinitializing lockQueue");
 		SHMQueueInit(lockQueue);
 	}
@@ -1479,7 +1505,8 @@ LockShmemSize()
 	nXidSegs = 1 << (int) my_log2((nLockBuckets - 1) / DEF_SEGSIZE + 1);
 
 	size += MAXALIGN(NBACKENDS * sizeof(PROC)); /* each MyProc */
-	size += MAXALIGN(NBACKENDS * sizeof(LOCKMETHODCTL)); /* each lockMethodTable->ctl */
+	size += MAXALIGN(NBACKENDS * sizeof(LOCKMETHODCTL));		/* each
+																 * lockMethodTable->ctl */
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 
 	size += MAXALIGN(my_log2(NLOCKENTS) * sizeof(void *));
@@ -1531,7 +1558,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 	SHMEM_OFFSET end = MAKE_OFFSET(lockQueue);
 	LOCK	   *lock;
 
-	LOCKMETHODTABLE    *lockMethodTable;
+	LOCKMETHODTABLE *lockMethodTable;
 	XIDLookupEnt *result,
 				item;
 	HTAB	   *xidTable;
@@ -1692,16 +1719,16 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
  * This works only for user locks because normal locks have no
  * pid information in the corresponding XIDLookupEnt.
  */
-ArrayType *
+ArrayType  *
 LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 {
 	XIDLookupEnt *xidLook = NULL;
 	SPINLOCK	masterLock;
-	LOCK		*lock;
+	LOCK	   *lock;
 	SHMEM_OFFSET lock_offset;
-	int 		count = 0;
-	LOCKMETHODTABLE    *lockMethodTable;
-	HTAB 		*xidTable;
+	int			count = 0;
+	LOCKMETHODTABLE *lockMethodTable;
+	HTAB	   *xidTable;
 	bool		found;
 	int			ndims,
 				nitems,
@@ -1709,11 +1736,11 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 				size;
 	int			lbounds[1],
 				hbounds[1];
-	ArrayType	*array;
-	int			*data_ptr;
+	ArrayType  *array;
+	int		   *data_ptr;
 
 	/* Assume that no one will modify the result */
-	static int	empty_array[] = { 20, 1, 0, 0, 0 };
+	static int	empty_array[] = {20, 1, 0, 0, 0};
 
 #ifdef USER_LOCKS
 	int			is_user_lock;
@@ -1740,9 +1767,7 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	}
 
 	if (LockingIsDisabled)
-	{
 		return (ArrayType *) &empty_array;
-	}
 
 	masterLock = lockMethodTable->ctl->masterLock;
 	SpinAcquire(masterLock);
@@ -1768,7 +1793,8 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	{
 		SpinRelease(masterLock);
 #ifdef USER_LOCKS
-		if (is_user_lock) {
+		if (is_user_lock)
+		{
 			TPRINTF(TRACE_USERLOCKS, "LockOwners: no lock with this tag");
 			return (ArrayType *) &empty_array;
 		}
@@ -1799,53 +1825,61 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	xidTable = lockMethodTable->xidHash;
 	hash_seq(NULL);
 	nitems = 0;
-	while ((xidLook = (XIDLookupEnt *)hash_seq(xidTable)) &&
-		   (xidLook != (XIDLookupEnt *)TRUE)) {
-		if (count++ > 1000) {
-			elog(NOTICE,"LockOwners: possible loop, giving up");
+	while ((xidLook = (XIDLookupEnt *) hash_seq(xidTable)) &&
+		   (xidLook != (XIDLookupEnt *) TRUE))
+	{
+		if (count++ > 1000)
+		{
+			elog(NOTICE, "LockOwners: possible loop, giving up");
 			break;
 		}
 
-		if (xidLook->tag.pid == 0) {
+		if (xidLook->tag.pid == 0)
+		{
 			XID_PRINT("LockOwners: no pid", xidLook);
 			continue;
 		}
 
-		if (!xidLook->tag.lock) {
+		if (!xidLook->tag.lock)
+		{
 			XID_PRINT("LockOwners: NULL LOCK", xidLook);
 			continue;
 		}
 
-		if (xidLook->tag.lock != lock_offset) {
+		if (xidLook->tag.lock != lock_offset)
+		{
 			XID_PRINT("LockOwners: different lock", xidLook);
 			continue;
 		}
 
-		if (LOCK_LOCKMETHOD(*lock) != lockmethod) {
+		if (LOCK_LOCKMETHOD(*lock) != lockmethod)
+		{
 			XID_PRINT("LockOwners: other table", xidLook);
 			continue;
 		}
 
-		if (xidLook->nHolding <= 0) {
+		if (xidLook->nHolding <= 0)
+		{
 			XID_PRINT("LockOwners: not holding", xidLook);
 			continue;
 		}
 
-		if (nitems >= hbounds[0]) {
-			elog(NOTICE,"LockOwners: array size exceeded");
+		if (nitems >= hbounds[0])
+		{
+			elog(NOTICE, "LockOwners: array size exceeded");
 			break;
 		}
 
 		/*
-		 * Check that the holding process is still alive by sending
-		 * him an unused (ignored) signal. If the kill fails the
-		 * process is not alive.
+		 * Check that the holding process is still alive by sending him an
+		 * unused (ignored) signal. If the kill fails the process is not
+		 * alive.
 		 */
 		if ((xidLook->tag.pid != MyProcPid) \
-			&& (kill(xidLook->tag.pid, SIGCHLD)) != 0)
+			&&(kill(xidLook->tag.pid, SIGCHLD)) != 0)
 		{
 			/* Return a negative pid to signal that process is dead */
-			data_ptr[nitems++] = - (xidLook->tag.pid);
+			data_ptr[nitems++] = -(xidLook->tag.pid);
 			XID_PRINT("LockOwners: not alive", xidLook);
 			/* XXX - TODO: remove this entry and update lock stats */
 			continue;
@@ -1887,7 +1921,7 @@ DumpLocks()
 	LOCK	   *lock;
 	int			count = 0;
 	int			lockmethod = DEFAULT_LOCKMETHOD;
-	LOCKMETHODTABLE    *lockMethodTable;
+	LOCKMETHODTABLE *lockMethodTable;
 
 	ShmemPIDLookup(MyProcPid, &location);
 	if (location == INVALID_OFFSET)
@@ -1911,9 +1945,8 @@ DumpLocks()
 	SHMQueueFirst(lockQueue, (Pointer *) &xidLook, &xidLook->queue);
 	end = MAKE_OFFSET(lockQueue);
 
-	if (MyProc->waitLock) {
+	if (MyProc->waitLock)
 		LOCK_PRINT_AUX("DumpLocks: waiting on", MyProc->waitLock, 0);
-	}
 
 	for (;;)
 	{
@@ -1950,17 +1983,17 @@ void
 DumpAllLocks()
 {
 	SHMEM_OFFSET location;
-	PROC 		*proc;
+	PROC	   *proc;
 	XIDLookupEnt *xidLook = NULL;
-	LOCK		*lock;
-	int 		pid;
-	int 		count = 0;
+	LOCK	   *lock;
+	int			pid;
+	int			count = 0;
 	int			lockmethod = DEFAULT_LOCKMETHOD;
-	LOCKMETHODTABLE 	*lockMethodTable;
-	HTAB 		*xidTable;
+	LOCKMETHODTABLE *lockMethodTable;
+	HTAB	   *xidTable;
 
 	pid = getpid();
-	ShmemPIDLookup(pid,&location);
+	ShmemPIDLookup(pid, &location);
 	if (location == INVALID_OFFSET)
 		return;
 	proc = (PROC *) MAKE_PTR(location);
@@ -1974,26 +2007,29 @@ DumpAllLocks()
 
 	xidTable = lockMethodTable->xidHash;
 
-	if (MyProc->waitLock) {
-		LOCK_PRINT_AUX("DumpAllLocks: waiting on", MyProc->waitLock,0);
-	}
+	if (MyProc->waitLock)
+		LOCK_PRINT_AUX("DumpAllLocks: waiting on", MyProc->waitLock, 0);
 
 	hash_seq(NULL);
-	while ((xidLook = (XIDLookupEnt *)hash_seq(xidTable)) &&
-		   (xidLook != (XIDLookupEnt *)TRUE)) {
+	while ((xidLook = (XIDLookupEnt *) hash_seq(xidTable)) &&
+		   (xidLook != (XIDLookupEnt *) TRUE))
+	{
 		XID_PRINT_AUX("DumpAllLocks", xidLook);
 
-		if (xidLook->tag.lock) {
+		if (xidLook->tag.lock)
+		{
 			lock = (LOCK *) MAKE_PTR(xidLook->tag.lock);
 			LOCK_PRINT_AUX("DumpAllLocks", lock, 0);
-		} else {
-			elog(DEBUG, "DumpAllLocks: xidLook->tag.lock = NULL");
 		}
+		else
+			elog(DEBUG, "DumpAllLocks: xidLook->tag.lock = NULL");
 
-		if (count++ > 2000) {
-			elog(NOTICE,"DumpAllLocks: possible loop, giving up");
+		if (count++ > 2000)
+		{
+			elog(NOTICE, "DumpAllLocks: possible loop, giving up");
 			break;
 		}
 	}
 }
+
 #endif

@@ -7,12 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.63 1998/09/01 03:21:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.64 1998/09/01 04:27:29 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
  *		heap_create_with_catalog() - Create a cataloged relation
- *		heap_destroy_with_catalog()	- Removes named relation from catalogs
+ *		heap_destroy_with_catalog() - Removes named relation from catalogs
  *
  * NOTES
  *	  this code taken from access/heap/create.c, which contains
@@ -65,10 +65,9 @@
 #include <string.h>
 #endif
 
-static void
-AddPgRelationTuple(Relation pg_class_desc,
-				 Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
-				 char relkind);
+static void AddPgRelationTuple(Relation pg_class_desc,
+				   Relation new_rel_desc, Oid new_rel_oid, unsigned natts,
+				   char relkind);
 static void AddToTempRelList(Relation r);
 static void DeletePgAttributeTuples(Relation rel);
 static void DeletePgRelationTuple(Relation rel);
@@ -317,7 +316,7 @@ heap_create(char *name,
 	 * ----------------
 	 */
 
-	rel->rd_tmpunlinked = TRUE;		/* change once table is created */
+	rel->rd_tmpunlinked = TRUE; /* change once table is created */
 	rel->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rel);
 	rel->rd_tmpunlinked = FALSE;
 
@@ -479,8 +478,8 @@ RelationAlreadyExists(Relation pg_class_desc, char *relname)
 	if (!IsBootstrapProcessingMode())
 	{
 		tup = SearchSysCacheTuple(RELNAME,
-									PointerGetDatum(relname),
-									0, 0, 0);
+								  PointerGetDatum(relname),
+								  0, 0, 0);
 		if (HeapTupleIsValid(tup))
 			return true;
 		else
@@ -878,7 +877,7 @@ RelationRemoveInheritance(Relation relation)
 	HeapScanDesc scan;
 	ScanKeyData entry;
 	bool		found = false;
-	
+
 	/* ----------------
 	 *	open pg_inherits
 	 * ----------------
@@ -892,7 +891,7 @@ RelationRemoveInheritance(Relation relation)
 	 */
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_inherits_inhparent,
 						   F_OIDEQ,
-					  ObjectIdGetDatum(RelationGetRelid(relation)));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	scan = heap_beginscan(catalogRelation,
 						  false,
@@ -972,10 +971,10 @@ RelationRemoveIndexes(Relation relation)
 	ScanKeyData entry;
 
 	indexRelation = heap_openr(IndexRelationName);
-	
+
 	ScanKeyEntryInitialize(&entry, 0x0, Anum_pg_index_indrelid,
 						   F_OIDEQ,
-					  	   ObjectIdGetDatum(RelationGetRelid(relation)));
+						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	scan = heap_beginscan(indexRelation,
 						  false,
@@ -1008,8 +1007,8 @@ DeletePgRelationTuple(Relation rel)
 	pg_class_desc = heap_openr(RelationRelationName);
 
 	tup = SearchSysCacheTupleCopy(RELOID,
-									ObjectIdGetDatum(rel->rd_att->attrs[0]->attrelid),
-									0, 0, 0);
+					   ObjectIdGetDatum(rel->rd_att->attrs[0]->attrelid),
+								  0, 0, 0);
 	if (!HeapTupleIsValid(tup))
 	{
 		heap_close(pg_class_desc);
@@ -1023,7 +1022,7 @@ DeletePgRelationTuple(Relation rel)
 	 */
 	heap_delete(pg_class_desc, &tup->t_ctid);
 	pfree(tup);
-	
+
 	heap_close(pg_class_desc);
 }
 
@@ -1038,7 +1037,7 @@ DeletePgAttributeTuples(Relation rel)
 	Relation	pg_attribute_desc;
 	HeapTuple	tup;
 	int2		attnum;
-	
+
 	/* ----------------
 	 *	open pg_attribute
 	 * ----------------
@@ -1052,19 +1051,19 @@ DeletePgAttributeTuples(Relation rel)
 	RelationSetLockForWrite(pg_attribute_desc);
 
 	for (attnum = FirstLowInvalidHeapAttributeNumber + 1;
-			attnum <= rel->rd_att->natts;
-			attnum++)
+		 attnum <= rel->rd_att->natts;
+		 attnum++)
 	{
 		if (HeapTupleIsValid(tup = SearchSysCacheTupleCopy(ATTNUM,
-										ObjectIdGetDatum(RelationGetRelid(rel)),
-										Int16GetDatum(attnum),
-										0, 0)))
+								 ObjectIdGetDatum(RelationGetRelid(rel)),
+												   Int16GetDatum(attnum),
+														   0, 0)))
 		{
 			heap_delete(pg_attribute_desc, &tup->t_ctid);
 			pfree(tup);
 		}
 	}
-	
+
 	/* ----------------
 	 * Release the write lock
 	 * ----------------
@@ -1107,9 +1106,9 @@ DeletePgTypeTuple(Relation rel)
 	 * ----------------
 	 */
 	ScanKeyEntryInitialize(&key, 0,
-							Anum_pg_type_typrelid,
-							F_OIDEQ,
-							ObjectIdGetDatum(RelationGetRelid(rel)));
+						   Anum_pg_type_typrelid,
+						   F_OIDEQ,
+						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
 	pg_type_scan = heap_beginscan(pg_type_desc,
 								  0,
@@ -1470,7 +1469,7 @@ start:;
 		}
 	}
 	else if ((exprType(expr) != atp->atttypid)
-	 && !IS_BINARY_COMPATIBLE(exprType(expr), atp->atttypid))
+			 && !IS_BINARY_COMPATIBLE(exprType(expr), atp->atttypid))
 		elog(ERROR, "DEFAULT: type mismatched");
 
 	adbin = nodeToString(expr);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.12 1998/08/19 02:02:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.13 1998/09/01 04:30:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	aggreg->target = lfirst(target);
 	if (usenulls)
 		aggreg->usenulls = true;
-	
+
 	pstate->p_hasAggs = true;
 
 	return aggreg;

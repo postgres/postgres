@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: multilev.h,v 1.12 1998/08/01 15:26:38 vadim Exp $
+ * $Id: multilev.h,v 1.13 1998/09/01 04:38:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,18 +19,18 @@
 #ifdef LowLevelLocking
 
 /* DML locks */
-#define	RowShareLock			1	/* SELECT FOR UPDATE */
-#define	RowExclusiveLock		2	/* INSERT, UPDATE, DELETE */
-#define	ShareLock				3
-#define	ShareRowExclusiveLock	4
-#define	ExclusiveLock			5
+#define RowShareLock			1		/* SELECT FOR UPDATE */
+#define RowExclusiveLock		2		/* INSERT, UPDATE, DELETE */
+#define ShareLock				3
+#define ShareRowExclusiveLock	4
+#define ExclusiveLock			5
 
 /* DDL locks */
-#define	ObjShareLock			6
-#define	ObjExclusiveLock		7
+#define ObjShareLock			6
+#define ObjExclusiveLock		7
 
 /* Special locks */
-#define	ExtendLock				8
+#define ExtendLock				8
 
 #else
 
@@ -49,7 +49,7 @@
 
 #define EXTEND_LOCK		5
 
-#endif	/* !LowLevelLocking */
+#endif	 /* !LowLevelLocking */
 
 #define SHORT_TERM		1
 #define LONG_TERM		2
@@ -64,8 +64,10 @@ typedef int PG_LOCK_LEVEL;
 /* multi.c */
 
 extern LOCKMETHOD MultiTableId;
+
 #ifdef NOT_USED
 extern LOCKMETHOD ShortTermTableId;
+
 #endif
 
 /*
@@ -77,4 +79,4 @@ extern bool MultiLockTuple(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockm
 extern bool MultiLockPage(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode);
 extern bool MultiReleaseReln(LockInfo lockinfo, LOCKMODE lockmode);
 
-#endif							/* MULTILEV_H */
+#endif	 /* MULTILEV_H */

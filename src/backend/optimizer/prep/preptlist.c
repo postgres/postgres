@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.15 1998/09/01 03:23:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.16 1998/09/01 04:29:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,14 +34,11 @@
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 
-static List *
-expand_targetlist(List *tlist, Oid relid, int command_type,
+static List *expand_targetlist(List *tlist, Oid relid, int command_type,
 				  Index result_relation);
-static List *
-replace_matching_resname(List *new_tlist,
+static List *replace_matching_resname(List *new_tlist,
 						 List *old_tlist);
-static List *
-new_relation_targetlist(Oid relid, Index rt_index,
+static List *new_relation_targetlist(Oid relid, Index rt_index,
 						NodeTag node_type);
 
 
@@ -295,13 +292,13 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 									  false);
 
 					temp3 = makeTargetEntry(makeResdom(attno,
-											   atttype,
-											   -1,
-											   attname,
-											   0,
-											   (Oid) 0,
-											   0),
-									(Node *) temp2);
+													   atttype,
+													   -1,
+													   attname,
+													   0,
+													   (Oid) 0,
+													   0),
+											(Node *) temp2);
 					t_list = lappend(t_list, temp3);
 					break;
 				}
@@ -316,13 +313,13 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 								0, rt_index, attno);
 
 					temp_list = makeTargetEntry(makeResdom(attno,
-												   atttype,
-												   get_atttypmod(relid, attno),
-												   attname,
-												   0,
-												   (Oid) 0,
-												   0),
-										(Node *) temp_var);
+														   atttype,
+											 get_atttypmod(relid, attno),
+														   attname,
+														   0,
+														   (Oid) 0,
+														   0),
+												(Node *) temp_var);
 					t_list = lappend(t_list, temp_list);
 					break;
 				}

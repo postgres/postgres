@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.9 1998/08/19 02:03:51 momjian Exp $
+ * $Id: pg_amproc.h,v 1.10 1998/09/01 04:34:49 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -61,7 +61,7 @@ typedef FormData_pg_amproc *Form_pg_amproc;
  *		initial contents of pg_amproc
  * ----------------
  */
- 
+
 /* rtree */
 DATA(insert OID = 0 (402  422  193 1));
 DATA(insert OID = 0 (402  422  194 2));
@@ -122,4 +122,4 @@ DATA(insert OID = 0 (405 1181  455 1));
 DATA(insert OID = 0 (405 1312  452 1));
 DATA(insert OID = 0 (405 1313  452 1));
 
-#endif							/* PG_AMPROC_H */
+#endif	 /* PG_AMPROC_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.16 1998/09/01 03:22:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.17 1998/09/01 04:28:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ ExecMaterial(Material *node)
 
 	return ExecStoreTuple(heapTuple,	/* tuple to store */
 						  slot, /* slot to store in */
-						  currentScanDesc->rs_cbuf,	/* buffer for this tuple */
+						  currentScanDesc->rs_cbuf,		/* buffer for this tuple */
 						  false);		/* don't pfree this pointer */
 
 }

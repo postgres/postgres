@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.8 1998/02/26 04:44:01 momjian Exp $
+ * $Id: hsearch.h,v 1.9 1998/09/01 04:39:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,8 +133,7 @@ typedef enum
 extern HTAB *hash_create(int nelem, HASHCTL *info, int flags);
 extern void hash_destroy(HTAB *hashp);
 extern void hash_stats(char *where, HTAB *hashp);
-extern long *
-hash_search(HTAB *hashp, char *keyPtr, HASHACTION action,
+extern long *hash_search(HTAB *hashp, char *keyPtr, HASHACTION action,
 			bool *foundPtr);
 extern long *hash_seq(HTAB *hashp);
 
@@ -144,4 +143,4 @@ extern long *hash_seq(HTAB *hashp);
 extern long string_hash(char *key, int keysize);
 extern long tag_hash(int *key, int keysize);
 
-#endif							/* HSEARCH_H */
+#endif	 /* HSEARCH_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.58 1998/08/26 05:22:55 momjian Exp $
+ * $Id: parsenodes.h,v 1.59 1998/09/01 04:36:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -448,7 +448,7 @@ typedef struct UnlistenStmt
 {
 	NodeTag		type;
 	char	   *relname;		/* relation to unlisten on */
-} UnlistenStmt;
+}			UnlistenStmt;
 
 /* ----------------------
  *		{Begin|Abort|End} Transaction Statement
@@ -490,8 +490,7 @@ typedef struct CreatedbStmt
 	NodeTag		type;
 	char	   *dbname;			/* database to create */
 	char	   *dbpath;			/* location of database */
-	int	   encoding;			/* default encoding
-						   (see regex/pg_wchar.h) */
+	int			encoding;		/* default encoding (see regex/pg_wchar.h) */
 } CreatedbStmt;
 
 /* ----------------------
@@ -799,7 +798,7 @@ typedef struct SortGroupBy
 {
 	NodeTag		type;
 	char	   *useOp;			/* operator to use */
-	Node       *node;           /*  Expression  */    
+	Node	   *node;			/* Expression  */
 } SortGroupBy;
 
 /*
@@ -811,7 +810,7 @@ typedef struct JoinUsing
 	int			resno;			/* target number */
 	char	   *range;
 	char	   *name;			/* name of column to sort on */
-} JoinUsing;
+}			JoinUsing;
 
 /*
  * RangeVar - range variable, used in from clauses
@@ -832,7 +831,7 @@ typedef struct IndexElem
 	char	   *name;			/* name of index */
 	List	   *args;			/* if not NULL, function index */
 	char	   *class;
-	TypeName   *typename;			/* type of index's keys (optional) */
+	TypeName   *typename;		/* type of index's keys (optional) */
 } IndexElem;
 
 /*
@@ -912,4 +911,4 @@ typedef struct GroupClause
 	Oid			grpOpoid;		/* the sort operator to use */
 } GroupClause;
 
-#endif							/* PARSENODES_H */
+#endif	 /* PARSENODES_H */

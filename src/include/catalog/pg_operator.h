@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.35 1998/09/01 03:27:55 momjian Exp $
+ * $Id: pg_operator.h,v 1.36 1998/09/01 04:35:08 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -88,26 +88,26 @@ typedef FormData_pg_operator *Form_pg_operator;
  * ----------------
  */
 
-DATA(insert OID =  15 (	"="		   PGUID 0 b t t  23  20  16 416 417  37  37 int48eq eqsel eqjoinsel ));
-DATA(insert OID =  36 (	"<>"	   PGUID 0 b t t  23  20  16 417 416   0   0 int48ne neqsel neqjoinsel ));
-DATA(insert OID =  37 (	"<"		   PGUID 0 b t f  23  20  16 430 430   0   0 int48lt intltsel intltjoinsel ));
-DATA(insert OID =  76 (	">"		   PGUID 0 b t f  23  20  16 420 420   0   0 int48gt intgtsel intgtjoinsel ));
-DATA(insert OID =  80 (	"<="	   PGUID 0 b t f  23  20  16 419 419   0   0 int48le intlesel intlejoinsel ));
-DATA(insert OID =  82 (	">="	   PGUID 0 b t f  23  20  16 418 418   0   0 int48ge intgesel intgejoinsel ));
+DATA(insert OID =  15 ( "="		   PGUID 0 b t t  23  20  16 416 417  37  37 int48eq eqsel eqjoinsel ));
+DATA(insert OID =  36 ( "<>"	   PGUID 0 b t t  23  20  16 417 416   0   0 int48ne neqsel neqjoinsel ));
+DATA(insert OID =  37 ( "<"		   PGUID 0 b t f  23  20  16 430 430   0   0 int48lt intltsel intltjoinsel ));
+DATA(insert OID =  76 ( ">"		   PGUID 0 b t f  23  20  16 420 420   0   0 int48gt intgtsel intgtjoinsel ));
+DATA(insert OID =  80 ( "<="	   PGUID 0 b t f  23  20  16 419 419   0   0 int48le intlesel intlejoinsel ));
+DATA(insert OID =  82 ( ">="	   PGUID 0 b t f  23  20  16 418 418   0   0 int48ge intgesel intgejoinsel ));
 
-DATA(insert OID =  58 (	"<"		   PGUID 0 b t f  16  16  16  85  91   0   0 boollt intltsel intltjoinsel ));
-DATA(insert OID =  59 (	">"		   PGUID 0 b t f  16  16  16  85  91   0   0 boolgt intltsel intltjoinsel ));
-DATA(insert OID =  85 (	"<>"	   PGUID 0 b t f  16  16  16  85  91   0   0 boolne neqsel neqjoinsel ));
-DATA(insert OID =  91 (	"="		   PGUID 0 b t t  16  16  16  91  85   0   0 booleq eqsel eqjoinsel ));
+DATA(insert OID =  58 ( "<"		   PGUID 0 b t f  16  16  16  85  91   0   0 boollt intltsel intltjoinsel ));
+DATA(insert OID =  59 ( ">"		   PGUID 0 b t f  16  16  16  85  91   0   0 boolgt intltsel intltjoinsel ));
+DATA(insert OID =  85 ( "<>"	   PGUID 0 b t f  16  16  16  85  91   0   0 boolne neqsel neqjoinsel ));
+DATA(insert OID =  91 ( "="		   PGUID 0 b t t  16  16  16  91  85   0   0 booleq eqsel eqjoinsel ));
 #define BooleanEqualOperator   91
 
-DATA(insert OID =  92 (	"="		   PGUID 0 b t t  18  18  16  92 630 631 631 chareq eqsel eqjoinsel ));
-DATA(insert OID =  93 (	"="		   PGUID 0 b t t  19  19  16  93 643 660 660 nameeq eqsel eqjoinsel ));
-DATA(insert OID =  94 (	"="		   PGUID 0 b t t  21  21  16  94 519  95  95 int2eq eqsel eqjoinsel ));
-DATA(insert OID =  95 (	"<"		   PGUID 0 b t f  21  21  16 520 524   0   0 int2lt intltsel intltjoinsel ));
-DATA(insert OID =  96 (	"="		   PGUID 0 b t t  23  23  16  96 518  97  97 int4eq eqsel eqjoinsel ));
-DATA(insert OID =  97 (	"<"		   PGUID 0 b t f  23  23  16 521 525   0   0 int4lt intltsel intltjoinsel ));
-DATA(insert OID =  98 (	"="		   PGUID 0 b t t  25  25  16  98 531 664 664 texteq eqsel eqjoinsel ));
+DATA(insert OID =  92 ( "="		   PGUID 0 b t t  18  18  16  92 630 631 631 chareq eqsel eqjoinsel ));
+DATA(insert OID =  93 ( "="		   PGUID 0 b t t  19  19  16  93 643 660 660 nameeq eqsel eqjoinsel ));
+DATA(insert OID =  94 ( "="		   PGUID 0 b t t  21  21  16  94 519  95  95 int2eq eqsel eqjoinsel ));
+DATA(insert OID =  95 ( "<"		   PGUID 0 b t f  21  21  16 520 524   0   0 int2lt intltsel intltjoinsel ));
+DATA(insert OID =  96 ( "="		   PGUID 0 b t t  23  23  16  96 518  97  97 int4eq eqsel eqjoinsel ));
+DATA(insert OID =  97 ( "<"		   PGUID 0 b t f  23  23  16 521 525   0   0 int4lt intltsel intltjoinsel ));
+DATA(insert OID =  98 ( "="		   PGUID 0 b t t  25  25  16  98 531 664 664 texteq eqsel eqjoinsel ));
 
 DATA(insert OID = 329 (  "="	   PGUID 0 b t t  1000	1000  16  329 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 349 (  "="	   PGUID 0 b t t  1001	1001  16  349 0  0	0 array_eq eqsel eqjoinsel ));
@@ -142,19 +142,19 @@ DATA(insert OID = 399 (  "="	   PGUID 0 b t t  1026	1026  16  399 0  0	0 array_e
 DATA(insert OID = 400 (  "="	   PGUID 0 b t t  1027	1027  16  400 0  0	0 array_eq eqsel eqjoinsel ));
 DATA(insert OID = 401 (  "="	   PGUID 0 b t t  1034	1034  16  401 0  0	0 array_eq eqsel eqjoinsel ));
 
-DATA(insert OID = 410 (	"="		   PGUID 0 b t t  20  20  16 410 411 412 412 int8eq eqsel eqjoinsel ));
-DATA(insert OID = 411 (	"<>"	   PGUID 0 b t t  20  20  16 411 410 0 0 int8ne neqsel neqjoinsel ));
-DATA(insert OID = 412 (	"<"		   PGUID 0 b t f  20  20  16 415 415 0 0 int8lt intltsel intltjoinsel ));
-DATA(insert OID = 413 (	">"		   PGUID 0 b t f  20  20  16 414 414 0 0 int8gt intgtsel intgtjoinsel ));
-DATA(insert OID = 414 (	"<="	   PGUID 0 b t f  20  20  16 413 413 0 0 int8le intlesel intlejoinsel ));
-DATA(insert OID = 415 (	">="	   PGUID 0 b t f  20  20  16 412 412 0 0 int8ge intgesel intgejoinsel ));
+DATA(insert OID = 410 ( "="		   PGUID 0 b t t  20  20  16 410 411 412 412 int8eq eqsel eqjoinsel ));
+DATA(insert OID = 411 ( "<>"	   PGUID 0 b t t  20  20  16 411 410 0 0 int8ne neqsel neqjoinsel ));
+DATA(insert OID = 412 ( "<"		   PGUID 0 b t f  20  20  16 415 415 0 0 int8lt intltsel intltjoinsel ));
+DATA(insert OID = 413 ( ">"		   PGUID 0 b t f  20  20  16 414 414 0 0 int8gt intgtsel intgtjoinsel ));
+DATA(insert OID = 414 ( "<="	   PGUID 0 b t f  20  20  16 413 413 0 0 int8le intlesel intlejoinsel ));
+DATA(insert OID = 415 ( ">="	   PGUID 0 b t f  20  20  16 412 412 0 0 int8ge intgesel intgejoinsel ));
 
-DATA(insert OID = 416 (	"="		   PGUID 0 b t t  20  23  16  15  36 418 418 int84eq eqsel eqjoinsel ));
-DATA(insert OID = 417 (	"<>"	   PGUID 0 b t t  20  23  16  36  15 0 0 int84ne neqsel neqjoinsel ));
-DATA(insert OID = 418 (	"<"		   PGUID 0 b t f  20  23  16  82  82 0 0 int84lt intltsel intltjoinsel ));
-DATA(insert OID = 419 (	">"		   PGUID 0 b t f  20  23  16  80  80 0 0 int84gt intgtsel intgtjoinsel ));
-DATA(insert OID = 420 (	"<="	   PGUID 0 b t f  20  23  16  76  76 0 0 int84le intlesel intlejoinsel ));
-DATA(insert OID = 430 (	">="	   PGUID 0 b t f  20  23  16  37  37 0 0 int84ge intgesel intgejoinsel ));
+DATA(insert OID = 416 ( "="		   PGUID 0 b t t  20  23  16  15  36 418 418 int84eq eqsel eqjoinsel ));
+DATA(insert OID = 417 ( "<>"	   PGUID 0 b t t  20  23  16  36  15 0 0 int84ne neqsel neqjoinsel ));
+DATA(insert OID = 418 ( "<"		   PGUID 0 b t f  20  23  16  82  82 0 0 int84lt intltsel intltjoinsel ));
+DATA(insert OID = 419 ( ">"		   PGUID 0 b t f  20  23  16  80  80 0 0 int84gt intgtsel intgtjoinsel ));
+DATA(insert OID = 420 ( "<="	   PGUID 0 b t f  20  23  16  76  76 0 0 int84le intlesel intlejoinsel ));
+DATA(insert OID = 430 ( ">="	   PGUID 0 b t f  20  23  16  37  37 0 0 int84ge intgesel intgejoinsel ));
 
 DATA(insert OID = 484 (  "-"	   PGUID 0 l t f   0  20  20   0   0   0   0 int8um intltsel intltjoinsel ));
 DATA(insert OID = 485 (  "<<"	   PGUID 0 b t f 604 604  16   0   0   0   0 poly_left intltsel intltjoinsel ));
@@ -639,8 +639,7 @@ DATA(insert OID = 1617 (  "#"	  PGUID 0 b t f  628  628  600 1617  0 0 0 line_in
 /*
  * function prototypes
  */
-extern void
-OperatorCreate(char *operatorName,
+extern void OperatorCreate(char *operatorName,
 			   char *leftTypeName,
 			   char *rightTypeName,
 			   char *procedureName,
@@ -654,4 +653,4 @@ OperatorCreate(char *operatorName,
 			   char *leftSortName,
 			   char *rightSortName);
 
-#endif							/* PG_OPERATOR_H */
+#endif	 /* PG_OPERATOR_H */

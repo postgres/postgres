@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.8 1998/08/25 21:37:00 scrappy Exp $
+ * $Id: async.h,v 1.9 1998/09/01 04:35:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,4 +24,4 @@ extern void Async_Unlisten(char *relname, int pid);
 
 extern GlobalMemory notifyContext;
 
-#endif							/* ASYNC_H */
+#endif	 /* ASYNC_H */

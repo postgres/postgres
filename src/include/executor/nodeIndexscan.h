@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeIndexscan.h,v 1.6 1997/11/26 01:12:52 momjian Exp $
+ * $Id: nodeIndexscan.h,v 1.7 1998/09/01 04:35:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,4 +27,4 @@ extern bool ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent);
 extern int	ExecCountSlotsIndexScan(IndexScan *node);
 extern void ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif							/* NODEINDEXSCAN_H */
+#endif	 /* NODEINDEXSCAN_H */

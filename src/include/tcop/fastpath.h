@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fastpath.h,v 1.3 1997/09/08 02:39:18 momjian Exp $
+ * $Id: fastpath.h,v 1.4 1998/09/01 04:38:41 momjian Exp $
  *
  * NOTES
  *	  This information pulled out of tcop/fastpath.c and put
@@ -28,4 +28,4 @@
 
 extern int	HandleFunctionRequest(void);
 
-#endif							/* FASTPATH_H */
+#endif	 /* FASTPATH_H */

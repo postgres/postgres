@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sdir.h,v 1.3 1997/09/07 04:56:12 momjian Exp $
+ * $Id: sdir.h,v 1.4 1998/09/01 04:34:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,4 +54,4 @@ typedef enum ScanDirection
 #define ScanDirectionIsForward(direction) \
 	((bool) (direction == ForwardScanDirection))
 
-#endif							/* SDIR_H */
+#endif	 /* SDIR_H */

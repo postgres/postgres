@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.11 1998/09/01 03:25:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.12 1998/09/01 04:32:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ mminit()
 		return SM_FAIL;
 	}
 
-	if (IsUnderPostmaster) /* was IsPostmaster bjm */
+	if (IsUnderPostmaster)		/* was IsPostmaster bjm */
 	{
 		MemSet(mmcacheblk, 0, mmsize);
 		SpinRelease(MMCacheLock);
@@ -608,4 +608,4 @@ MMShmemSize()
 	return size;
 }
 
-#endif							/* STABLE_MEMORY_STORAGE */
+#endif	 /* STABLE_MEMORY_STORAGE */

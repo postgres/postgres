@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.8 1998/07/19 05:49:26 momjian Exp $
+ * $Id: rewriteManip.h,v 1.9 1998/09/01 04:38:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,22 +19,19 @@
 
 /* RewriteManip.c */
 void		OffsetVarNodes(Node *node, int offset);
-void
-ChangeVarNodes(Node *node, int old_varno, int new_varno,
+void ChangeVarNodes(Node *node, int old_varno, int new_varno,
 			   int sublevels_up);
 void		AddQual(Query *parsetree, Node *qual);
-void		AddHavingQual(Query *parsetree, Node *havingQual); 
+void		AddHavingQual(Query *parsetree, Node *havingQual);
 
 void		AddNotQual(Query *parsetree, Node *qual);
 void		FixResdomTypes(List *user_tlist);
 void		FixNew(RewriteInfo *info, Query *parsetree);
 
-void
-HandleRIRAttributeRule(Query *parsetree, List *rtable, List *targetlist,
+void HandleRIRAttributeRule(Query *parsetree, List *rtable, List *targetlist,
 					   int rt_index, int attr_num, int *modified,
 					   int *badpostquel);
-void
-HandleViewRule(Query *parsetree, List *rtable, List *targetlist,
+void HandleViewRule(Query *parsetree, List *rtable, List *targetlist,
 			   int rt_index, int *modified);
 
-#endif							/* REWRITEMANIP_H */
+#endif	 /* REWRITEMANIP_H */

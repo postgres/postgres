@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.23 1998/09/01 03:22:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.24 1998/09/01 04:27:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,39 +64,31 @@ typedef struct _teeInfo
 QueryTreeList *appendQlist(QueryTreeList *q1, QueryTreeList *q2);
 void		OffsetVarAttno(Node *node, int varno, int offset);
 
-static void
-appendTeeQuery(TeeInfo * teeInfo,
+static void appendTeeQuery(TeeInfo * teeInfo,
 			   QueryTreeList *q,
 			   char *teeNodeName);
 
-static Plan *
-replaceTeeScans(Plan *plan,
+static Plan *replaceTeeScans(Plan *plan,
 				Query *parsetree,
 				TeeInfo * teeInfo);
-static void
-replaceSeqScan(Plan *plan,
+static void replaceSeqScan(Plan *plan,
 			   Plan *parent,
 			   int rt_ind,
 			   Plan *tplan);
 
-static void
-tg_rewriteQuery(TgRecipe * r, TgNode * n,
+static void tg_rewriteQuery(TgRecipe * r, TgNode * n,
 				QueryTreeList *q,
 				QueryTreeList *inputQlist);
-static Node *
-tg_replaceNumberedParam(Node *expression,
+static Node *tg_replaceNumberedParam(Node *expression,
 						int pnum,
 						int rt_ind,
 						char *teeRelName);
-static Node *
-tg_rewriteParamsInExpr(Node *expression,
+static Node *tg_rewriteParamsInExpr(Node *expression,
 					   QueryTreeList *inputQlist);
-static QueryTreeList *
-tg_parseSubQuery(TgRecipe * r,
+static QueryTreeList *tg_parseSubQuery(TgRecipe * r,
 				 TgNode * n,
 				 TeeInfo * teeInfo);
-static QueryTreeList *
-tg_parseTeeNode(TgRecipe * r,
+static QueryTreeList *tg_parseTeeNode(TgRecipe * r,
 				TgNode * n,
 				int i,
 				QueryTreeList *qList,
@@ -193,7 +185,7 @@ beginRecipe(RecipeStmt *stmt)
 
 #ifdef DEBUG_RECIPE
 		elog(NOTICE, "beginRecipe: eyes[%d] = %s\n", i, e->nodeName);
-#endif							/* DEBUG_RECIPE */
+#endif	 /* DEBUG_RECIPE */
 
 		qList = tg_parseSubQuery(r, e->inNodes->val[0], teeInfo);
 
@@ -851,7 +843,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 #ifdef DEBUG_RECIPE
 					elog(NOTICE, "calling parser with %s", elem->src);
-#endif							/* DEBUG_RECIPE */
+#endif	 /* DEBUG_RECIPE */
 
 					parameterCount = getParamTypes(elem, typev);
 
@@ -894,7 +886,7 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 
 #ifdef DEBUG_RECIPE
 					elog(NOTICE, "calling parser with %s", newquery);
-#endif							/* DEBUG_RECIPE */
+#endif	 /* DEBUG_RECIPE */
 
 					qList = parser(newquery, typev, parameterCount);
 					if (qList->len > 1)
@@ -1032,8 +1024,8 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 				tupdesc = rel->rd_att;
 
 				relid = heap_create_with_catalog(
-										child->nodeElem->outTypes->val[0],
-										tupdesc, RELKIND_RELATION);
+									   child->nodeElem->outTypes->val[0],
+											  tupdesc, RELKIND_RELATION);
 			}
 			else
 			{
@@ -1056,8 +1048,8 @@ tg_parseSubQuery(TgRecipe * r, TgNode * n, TeeInfo * teeInfo)
 				else
 				{
 					relid = heap_create_with_catalog(
-							 child->nodeElem->outTypes->val[0],
-							tupdesc, RELKIND_RELATION);
+									   child->nodeElem->outTypes->val[0],
+											  tupdesc, RELKIND_RELATION);
 				}
 			}
 		}
@@ -1338,4 +1330,4 @@ replaceTeeScans(Plan *plan, Query *parsetree, TeeInfo * teeInfo)
 
 
 
-#endif							/* TIOGA */
+#endif	 /* TIOGA */

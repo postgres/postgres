@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_class.h,v 1.23 1998/08/24 01:14:13 momjian Exp $
+ * $Id: pg_class.h,v 1.24 1998/09/01 04:34:53 momjian Exp $
  *
  * NOTES
  *	  ``pg_relation'' is being replaced by ``pg_class''.  currently
@@ -163,4 +163,4 @@ DESCR("");
 #define		  RELKIND_SEQUENCE		  'S'		/* SEQUENCE relation */
 #define		  RELKIND_UNCATALOGED	  'u'		/* temporary heap */
 
-#endif							/* PG_RELATION_H */
+#endif	 /* PG_RELATION_H */

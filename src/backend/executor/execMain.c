@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.54 1998/09/01 03:22:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.55 1998/09/01 04:28:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,31 +54,25 @@
 #include "catalog/heap.h"
 #include "commands/trigger.h"
 
-void
-ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
+void ExecCheckPerms(CmdType operation, int resultRelation, List *rangeTable,
 			   Query *parseTree);
 
 
 /* decls for local routines only used within this module */
-static TupleDesc
-InitPlan(CmdType operation, Query *parseTree,
+static TupleDesc InitPlan(CmdType operation, Query *parseTree,
 		 Plan *plan, EState *estate);
 static void EndPlan(Plan *plan, EState *estate);
-static TupleTableSlot *
-ExecutePlan(EState *estate, Plan *plan,
+static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 			Query *parseTree, CmdType operation,
 			int numberTuples, ScanDirection direction,
 			void (*printfunc) ());
 static void ExecRetrieve(TupleTableSlot *slot, void (*printfunc) (),
 									 EState *estate);
-static void
-ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecAppend(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
-static void
-ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
-static void
-ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
+static void ExecReplace(TupleTableSlot *slot, ItemPointer tupleid,
 			EState *estate, Query *parseTree);
 
 /* end of local decls */
@@ -124,7 +118,7 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 			palloc(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 		memset(estate->es_param_exec_vals, 0, queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 	}
-	
+
 	estate->es_snapshot = SnapshotNow;
 
 	result = InitPlan(queryDesc->operation,
@@ -315,8 +309,8 @@ ExecCheckPerms(CmdType operation,
 
 		relid = rte->relid;
 		htup = SearchSysCacheTuple(RELOID,
-								  ObjectIdGetDatum(relid),
-								  0, 0, 0);
+								   ObjectIdGetDatum(relid),
+								   0, 0, 0);
 		if (!HeapTupleIsValid(htup))
 			elog(ERROR, "ExecCheckPerms: bogus RT relid: %d",
 				 relid);
@@ -521,19 +515,19 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 	 *	  NOTE: in the future we might want to initialize the junk
 	 *	  filter for all queries.
 	 * ----------------
-	 *        SELECT added by daveh@insightdist.com  5/20/98 to allow 
-	 *        ORDER/GROUP BY have an identifier missing from the target.
+	 *		  SELECT added by daveh@insightdist.com  5/20/98 to allow
+	 *		  ORDER/GROUP BY have an identifier missing from the target.
 	 */
 	{
-		bool	junk_filter_needed = false;
-		List	*tlist;
-		
+		bool		junk_filter_needed = false;
+		List	   *tlist;
+
 		if (operation == CMD_SELECT)
 		{
 			foreach(tlist, targetList)
 			{
-				TargetEntry	*tle = lfirst(tlist);
-	
+				TargetEntry *tle = lfirst(tlist);
+
 				if (tle->resdom->resjunk)
 				{
 					junk_filter_needed = true;
@@ -547,6 +541,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 			(operation == CMD_SELECT && junk_filter_needed))
 		{
 			JunkFilter *j = (JunkFilter *) ExecInitJunkFilter(targetList);
+
 			estate->es_junkFilter = j;
 
 			if (operation == CMD_SELECT)
@@ -555,7 +550,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		else
 			estate->es_junkFilter = NULL;
 	}
-	
+
 	/* ----------------
 	 *	initialize the "into" relation
 	 * ----------------
@@ -588,7 +583,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				tupdesc = CreateTupleDescCopy(tupType);
 
 				intoRelationId = heap_create_with_catalog(intoName,
-												tupdesc, RELKIND_RELATION);
+											  tupdesc, RELKIND_RELATION);
 
 				FreeTupleDesc(tupdesc);
 

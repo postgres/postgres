@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.25 1998/09/01 03:25:49 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.26 1998/09/01 04:32:26 momjian Exp $
  */
 
 #include <stdio.h>
@@ -34,6 +34,7 @@ static const char *num_word(Cash value);
 
 #ifdef USE_LOCALE
 static struct lconv *lconvert = NULL;
+
 #endif
 
 /* cash_in()
@@ -46,7 +47,7 @@ static struct lconv *lconvert = NULL;
  *	monetary values returned by localeconv() can be multiple
  *	bytes/characters. This code assumes one byte only. - tgl 97/04/14
  * XXX UNHACK Allow the currency symbol to be multi-byte.
- *  - thomas 1998-03-01
+ *	- thomas 1998-03-01
  */
 Cash *
 cash_in(const char *str)
@@ -77,11 +78,11 @@ cash_in(const char *str)
 	/* best guess is 2 in this case I think */
 	fpoint = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
 
-	dsymbol = ((*lconvert->mon_decimal_point != '\0')? *lconvert->mon_decimal_point: '.');
-	ssymbol = ((*lconvert->mon_thousands_sep != '\0')? *lconvert->mon_thousands_sep: ',');
-	csymbol = ((*lconvert->currency_symbol != '\0')? lconvert->currency_symbol: "$");
-	psymbol = ((*lconvert->positive_sign != '\0')? *lconvert->positive_sign: '+');
-	nsymbol = ((*lconvert->negative_sign != '\0')? lconvert->negative_sign: "-");
+	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
+	ssymbol = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
+	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
+	psymbol = ((*lconvert->positive_sign != '\0') ? *lconvert->positive_sign : '+');
+	nsymbol = ((*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-");
 #else
 	fpoint = 2;
 	dsymbol = '.';
@@ -92,27 +93,29 @@ cash_in(const char *str)
 #endif
 
 #ifdef CASHDEBUG
-printf( "cashin- precision '%d'; decimal '%c'; thousands '%c'; currency '%s'; positive '%c'; negative '%s'\n",
- fpoint, dsymbol, ssymbol, csymbol, psymbol, nsymbol);
+	printf("cashin- precision '%d'; decimal '%c'; thousands '%c'; currency '%s'; positive '%c'; negative '%s'\n",
+		   fpoint, dsymbol, ssymbol, csymbol, psymbol, nsymbol);
 #endif
 
 	/* we need to add all sorts of checking here.  For now just */
 	/* strip all leading whitespace and any leading currency symbol */
-	while (isspace(*s)) s++;
-	if (strncmp(s,csymbol,strlen(csymbol)) == 0) s += strlen(csymbol);
+	while (isspace(*s))
+		s++;
+	if (strncmp(s, csymbol, strlen(csymbol)) == 0)
+		s += strlen(csymbol);
 
 #ifdef CASHDEBUG
-printf( "cashin- string is '%s'\n", s);
+	printf("cashin- string is '%s'\n", s);
 #endif
 
 	/* a leading minus or paren signifies a negative number */
 	/* again, better heuristics needed */
-	if (strncmp(s,nsymbol,strlen(nsymbol)) == 0)
+	if (strncmp(s, nsymbol, strlen(nsymbol)) == 0)
 	{
 		sgn = -1;
 		s += strlen(nsymbol);
 #ifdef CASHDEBUG
-printf( "cashin- negative symbol; string is '%s'\n", s);
+		printf("cashin- negative symbol; string is '%s'\n", s);
 #endif
 	}
 	else if (*s == '(')
@@ -125,14 +128,16 @@ printf( "cashin- negative symbol; string is '%s'\n", s);
 		s++;
 
 #ifdef CASHDEBUG
-printf( "cashin- string is '%s'\n", s);
+	printf("cashin- string is '%s'\n", s);
 #endif
 
-	while (isspace(*s)) s++;
-	if (strncmp(s,csymbol,strlen(csymbol)) == 0) s += strlen(csymbol);
+	while (isspace(*s))
+		s++;
+	if (strncmp(s, csymbol, strlen(csymbol)) == 0)
+		s += strlen(csymbol);
 
 #ifdef CASHDEBUG
-printf( "cashin- string is '%s'\n", s);
+	printf("cashin- string is '%s'\n", s);
 #endif
 
 	for (;; s++)
@@ -184,7 +189,7 @@ printf( "cashin- string is '%s'\n", s);
 	*result = (value * sgn);
 
 #ifdef CASHDEBUG
-printf( "cashin- result is %d\n", *result);
+	printf("cashin- result is %d\n", *result);
 #endif
 
 	return result;
@@ -219,14 +224,14 @@ cash_out(Cash *in_value)
 		lconvert = localeconv();
 
 	mon_group = *lconvert->mon_grouping;
-	comma = ((*lconvert->mon_thousands_sep != '\0')? *lconvert->mon_thousands_sep: ',');
+	comma = ((*lconvert->mon_thousands_sep != '\0') ? *lconvert->mon_thousands_sep : ',');
 	/* frac_digits in the C locale seems to return CHAR_MAX */
 	/* best guess is 2 in this case I think */
 	points = ((lconvert->frac_digits != CHAR_MAX) ? lconvert->frac_digits : 2); /* int_frac_digits? */
 	convention = lconvert->n_sign_posn;
-	dsymbol = ((*lconvert->mon_decimal_point != '\0')? *lconvert->mon_decimal_point: '.');
-	csymbol = ((*lconvert->currency_symbol != '\0')? lconvert->currency_symbol: "$");
-	nsymbol = ((*lconvert->negative_sign != '\0')? lconvert->negative_sign: "-");
+	dsymbol = ((*lconvert->mon_decimal_point != '\0') ? *lconvert->mon_decimal_point : '.');
+	csymbol = ((*lconvert->currency_symbol != '\0') ? lconvert->currency_symbol : "$");
+	nsymbol = ((*lconvert->negative_sign != '\0') ? lconvert->negative_sign : "-");
 #else
 	mon_group = 3;
 	comma = ',';
@@ -273,8 +278,8 @@ cash_out(Cash *in_value)
 		value /= 10;
 	}
 
-	strncpy((buf+count-strlen(csymbol)+1),csymbol,strlen(csymbol));
-	count -= strlen(csymbol)-1;
+	strncpy((buf + count - strlen(csymbol) + 1), csymbol, strlen(csymbol));
+	count -= strlen(csymbol) - 1;
 
 	if (buf[LAST_DIGIT] == ',')
 		buf[LAST_DIGIT] = buf[LAST_PAREN];

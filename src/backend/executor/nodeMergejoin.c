@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.18 1998/07/19 10:05:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.19 1998/09/01 04:28:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -480,8 +480,8 @@ ExecMergeJoin(MergeJoin *node)
 				 * means that this is the first time ExecMergeJoin() has
 				 * been called and so we have to initialize the inner,
 				 * outer and marked tuples as well as various stuff in the
-				 * expression context.
-				 * ********************************
+				 * expression context. ********************************
+				 *
 				 */
 			case EXEC_MJ_INITIALIZE:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_INITIALIZE\n");
@@ -514,7 +514,7 @@ ExecMergeJoin(MergeJoin *node)
 
 				mergestate->mj_MarkedTupleSlot->ttc_tupleDescriptor =
 					innerTupleSlot->ttc_tupleDescriptor;
-				
+
 				/* ----------------
 				 *	initialize merge join state to skip inner tuples.
 				 * ----------------
@@ -526,8 +526,8 @@ ExecMergeJoin(MergeJoin *node)
 				 * ******************************** EXEC_MJ_JOINMARK means
 				 * we have just found a new outer tuple and a possible
 				 * matching inner tuple. This is the case after the
-				 * INITIALIZE, SKIPOUTER or SKIPINNER states. 
-				 * ********************************
+				 * INITIALIZE, SKIPOUTER or SKIPINNER states. ********************************
+				 *
 				 */
 			case EXEC_MJ_JOINMARK:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_JOINMARK\n");
@@ -655,8 +655,8 @@ ExecMergeJoin(MergeJoin *node)
 				break;
 
 				/*
-				 * ******************************** EXEC_MJ_TESTOUTER 
-				 * If the new outer tuple and the marked tuple satisify the
+				 * ******************************** EXEC_MJ_TESTOUTER If
+				 * the new outer tuple and the marked tuple satisify the
 				 * merge clause then we know we have duplicates in the
 				 * outer scan so we have to restore the inner scan to the
 				 * marked tuple and proceed to join the new outer tuples
@@ -680,7 +680,9 @@ ExecMergeJoin(MergeJoin *node)
 				 *
 				 * new outer tuple > marked tuple
 				 *
-				 * ****************************
+				***************************
+				 *
+				 *
 				 */
 			case EXEC_MJ_TESTOUTER:
 				MJ_printf("ExecMergeJoin: EXEC_MJ_TESTOUTER\n");
@@ -698,13 +700,14 @@ ExecMergeJoin(MergeJoin *node)
 
 				if (qualResult)
 				{
-					/* 
-					 *	the merge clause matched so now we juggle the slots
-					 *	back the way they were and proceed to JOINTEST.
+
+					/*
+					 * the merge clause matched so now we juggle the slots
+					 * back the way they were and proceed to JOINTEST.
 					 *
-					 *  I can't understand why we have to go to JOINTEST
-					 *  and compare outer tuple with the same inner one
-					 *  again -> go to JOINTUPLES...	- vadim 02/27/98
+					 * I can't understand why we have to go to JOINTEST and
+					 * compare outer tuple with the same inner one again
+					 * -> go to JOINTUPLES...	 - vadim 02/27/98
 					 */
 
 					ExecRestrPos(innerPlan);
@@ -738,7 +741,7 @@ ExecMergeJoin(MergeJoin *node)
 						return NULL;
 					}
 
-					/*	continue on to skip outer tuples */
+					/* continue on to skip outer tuples */
 					mergestate->mj_JoinState = EXEC_MJ_SKIPOUTER;
 				}
 				break;
@@ -756,7 +759,9 @@ ExecMergeJoin(MergeJoin *node)
 				 * we have to advance the outer scan until we find the outer
 				 * 8.
 				 *
-				****************************
+				**************************
+				 *
+				 *
 				 *
 				 *
 				 *
@@ -856,7 +861,9 @@ ExecMergeJoin(MergeJoin *node)
 				 * we have to advance the inner scan until we find the inner
 				 * 12.
 				 *
-				****************************
+				**************************
+				 *
+				 *
 				 *
 				 *
 				 *
@@ -988,10 +995,10 @@ bool
 ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 {
 	MergeJoinState *mergestate;
-	List		   *joinclauses;
-	RegProcedure	rightsortop;
-	RegProcedure	leftsortop;
-	RegProcedure	sortop;
+	List	   *joinclauses;
+	RegProcedure rightsortop;
+	RegProcedure leftsortop;
+	RegProcedure sortop;
 	TupleTableSlot *mjSlot;
 
 	List	   *OSortopI;
@@ -1042,7 +1049,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 	mjSlot->ttc_whichplan = -1;
 	mjSlot->ttc_descIsNew = true;
 	mergestate->mj_MarkedTupleSlot = mjSlot;
-	
+
 	/* ----------------
 	 *	get merge sort operators.
 	 *
@@ -1166,9 +1173,9 @@ ExecEndMergeJoin(MergeJoin *node)
 	 */
 	ExecClearTuple(mergestate->jstate.cs_ResultTupleSlot);
 	ExecClearTuple(mergestate->mj_MarkedTupleSlot);
-	pfree (mergestate->mj_MarkedTupleSlot);
+	pfree(mergestate->mj_MarkedTupleSlot);
 	mergestate->mj_MarkedTupleSlot = NULL;
-	
+
 	MJ1_printf("ExecEndMergeJoin: %s\n",
 			   "node processing ended");
 }
@@ -1185,12 +1192,12 @@ ExecReScanMergeJoin(MergeJoin *node, ExprContext *exprCtxt, Plan *parent)
 	mjSlot->ttc_tupleDescriptor = NULL;
 	mjSlot->ttc_whichplan = -1;
 	mjSlot->ttc_descIsNew = true;
-	
+
 	mergestate->mj_JoinState = EXEC_MJ_INITIALIZE;
 
 	/*
-	 * if chgParam of subnodes is not null then plans will be re-scanned by
-	 * first ExecProcNode.
+	 * if chgParam of subnodes is not null then plans will be re-scanned
+	 * by first ExecProcNode.
 	 */
 	if (((Plan *) node)->lefttree->chgParam == NULL)
 		ExecReScan(((Plan *) node)->lefttree, exprCtxt, (Plan *) node);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.16 1998/09/01 03:22:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.17 1998/09/01 04:27:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 #include <optimizer/prep.h>		/* for find_all_inheritors */
 #ifndef NO_SECURITY
 #include <utils/acl.h>
-#endif							/* !NO_SECURITY */
+#endif	 /* !NO_SECURITY */
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
 #else
@@ -73,7 +73,7 @@ renameatt(char *relname,
 				newatttup;
 	Relation	irelations[Num_pg_attr_indices];
 	Oid			relid;
-	
+
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
 	 * but this particular routine is recursive.
@@ -111,12 +111,10 @@ renameatt(char *relname,
 									 0, 0, 0);
 
 		if (!HeapTupleIsValid(reltup))
-		{
 			elog(ERROR, "renameatt: unknown relation: \"%s\"", relname);
-		}
 
 		myrelid = reltup->t_oid;
-		
+
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
 
@@ -127,7 +125,7 @@ renameatt(char *relname,
 		 */
 		foreach(child, children)
 		{
-			char	childname[NAMEDATALEN];
+			char		childname[NAMEDATALEN];
 
 			childrelid = lfirsti(child);
 			if (childrelid == myrelid)
@@ -142,10 +140,10 @@ renameatt(char *relname,
 			}
 			/* make copy of cache value, could disappear in call */
 			StrNCpy(childname,
-				((Form_pg_class) GETSTRUCT(reltup))->relname.data,
-				NAMEDATALEN);
+					((Form_pg_class) GETSTRUCT(reltup))->relname.data,
+					NAMEDATALEN);
 			/* no more recursion! */
-			renameatt(childname, oldattname, newattname,  userName, 0);
+			renameatt(childname, oldattname, newattname, userName, 0);
 		}
 	}
 
@@ -158,9 +156,9 @@ renameatt(char *relname,
 	relid = reltup->t_oid;
 
 	oldatttup = SearchSysCacheTupleCopy(ATTNAME,
-										 ObjectIdGetDatum(relid),
-										 PointerGetDatum(oldattname),
-										 0, 0);
+										ObjectIdGetDatum(relid),
+										PointerGetDatum(oldattname),
+										0, 0);
 	if (!HeapTupleIsValid(oldatttup))
 		elog(ERROR, "renameatt: attribute \"%s\" nonexistent", oldattname);
 
@@ -168,9 +166,9 @@ renameatt(char *relname,
 		elog(ERROR, "renameatt: system attribute \"%s\" not renamed", oldattname);
 
 	newatttup = SearchSysCacheTuple(ATTNAME,
-									 ObjectIdGetDatum(relid),
-									 PointerGetDatum(newattname),
-									 0, 0);
+									ObjectIdGetDatum(relid),
+									PointerGetDatum(newattname),
+									0, 0);
 	/* should not already exist */
 	if (HeapTupleIsValid(newatttup))
 	{
@@ -179,7 +177,7 @@ renameatt(char *relname,
 	}
 
 	StrNCpy((((Form_pg_attribute) (GETSTRUCT(oldatttup)))->attname.data),
-			   newattname, NAMEDATALEN);
+			newattname, NAMEDATALEN);
 
 	attrelation = heap_openr(AttributeRelationName);
 	heap_replace(attrelation, &oldatttup->t_ctid, oldatttup);
@@ -212,13 +210,13 @@ renameatt(char *relname,
 void
 renamerel(char *oldrelname, char *newrelname)
 {
-	Relation	relrelation;		/* for RELATION relation */
+	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	oldreltup,
 				newreltup;
 	char		oldpath[MAXPGPATH],
 				newpath[MAXPGPATH];
 	Relation	irelations[Num_pg_class_indices];
-	
+
 	if (IsSystemRelationName(oldrelname))
 		elog(ERROR, "renamerel: system relation \"%s\" not renamed",
 			 oldrelname);
@@ -228,14 +226,14 @@ renamerel(char *oldrelname, char *newrelname)
 			 newrelname);
 
 	oldreltup = SearchSysCacheTupleCopy(RELNAME,
-										 PointerGetDatum(oldrelname),
-										 0, 0, 0);
+										PointerGetDatum(oldrelname),
+										0, 0, 0);
 	if (!HeapTupleIsValid(oldreltup))
 		elog(ERROR, "renamerel: relation \"%s\" does not exist", oldrelname);
 
 	newreltup = SearchSysCacheTuple(RELNAME,
-									 PointerGetDatum(newrelname),
-									 0, 0, 0);
+									PointerGetDatum(newrelname),
+									0, 0, 0);
 	if (HeapTupleIsValid(newreltup))
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
@@ -246,7 +244,7 @@ renamerel(char *oldrelname, char *newrelname)
 		elog(ERROR, "renamerel: unable to rename file: %s", oldpath);
 
 	StrNCpy((((Form_pg_class) GETSTRUCT(oldreltup))->relname.data),
-				newrelname, NAMEDATALEN);
+			newrelname, NAMEDATALEN);
 
 	/* insert fixed rel tuple */
 	relrelation = heap_openr(RelationRelationName);

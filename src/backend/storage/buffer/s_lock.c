@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.8 1998/06/16 07:18:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.9 1998/09/01 04:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,12 @@
  * granularity.
  * note: total time to cycle through all 16 entries might be about .07 sec.
  */
-#define S_NSPINCYCLE    20
-#define S_MAX_BUSY      500 * S_NSPINCYCLE
+#define S_NSPINCYCLE	20
+#define S_MAX_BUSY		500 * S_NSPINCYCLE
 
-int	s_spincycle[S_NSPINCYCLE] =
-{     0,     0,     0,     0, 10000,     0,     0,     0, 10000,     0,
-      0, 10000,     0,     0, 10000,     0, 10000,     0, 10000, 10000
+int			s_spincycle[S_NSPINCYCLE] =
+{0, 0, 0, 0, 10000, 0, 0, 0, 10000, 0,
+	0, 10000, 0, 0, 10000, 0, 10000, 0, 10000, 10000
 };
 
 
@@ -111,11 +111,12 @@ success:					\n\
         	blr				\n\
 	");
 }
-#endif /* PPC */
+
+#endif	 /* PPC */
 
 
 
-#else /* defined(__GNUC__) */
+#else							/* defined(__GNUC__) */
 /***************************************************************************
  * All non gcc
  */
@@ -124,7 +125,8 @@ success:					\n\
 
 #if defined(sun3)
 static void
-tas_dummy()				/* really means: extern int tas(slock_t *lock); */
+tas_dummy()						/* really means: extern int tas(slock_t
+								 * *lock); */
 {
 	asm("LLA0:");
 	asm("   .data");
@@ -143,7 +145,8 @@ tas_dummy()				/* really means: extern int tas(slock_t *lock); */
 	asm("   rts");
 	asm("   .data");
 }
-#endif /* sun3 */
+
+#endif	 /* sun3 */
 
 
 
@@ -152,11 +155,13 @@ tas_dummy()				/* really means: extern int tas(slock_t *lock); */
  * sparc machines not using gcc
  */
 static void
-tas_dummy()				/* really means: extern int tas(slock_t *lock); */
+tas_dummy()						/* really means: extern int tas(slock_t
+								 * *lock); */
 {
 	asm(".seg \"data\"");
 	asm(".seg \"text\"");
 	asm("_tas:");
+
 	/*
 	 * Sparc atomic test and set (sparc calls it "atomic load-store")
 	 */
@@ -165,18 +170,18 @@ tas_dummy()				/* really means: extern int tas(slock_t *lock); */
 	asm("nop");
 }
 
-#endif /* NEED_SPARC_TAS_ASM */
+#endif	 /* NEED_SPARC_TAS_ASM */
 
 
 
 
 #if defined(NEED_I386_TAS_ASM)
 /* non gcc i386 based things */
-#endif /* NEED_I386_TAS_ASM */
+#endif	 /* NEED_I386_TAS_ASM */
 
 
 
-#endif /* not __GNUC__ */
+#endif	 /* not __GNUC__ */
 
 
 
@@ -188,7 +193,7 @@ tas_dummy()				/* really means: extern int tas(slock_t *lock); */
  * test program for verifying a port.
  */
 
-volatile slock_t	test_lock;
+volatile slock_t test_lock;
 
 void
 main()
@@ -219,5 +224,4 @@ main()
 
 }
 
-#endif /* S_LOCK_TEST */
-
+#endif	 /* S_LOCK_TEST */

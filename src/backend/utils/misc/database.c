@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.18 1998/09/01 03:26:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.19 1998/09/01 04:33:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,7 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 
 	return FALSE;
 }	/* GetDatabaseInfo() */
+
 #endif
 
 char *
@@ -268,14 +269,13 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 			 */
 			tup_db = (Form_pg_database) GETSTRUCT(tup);
 #ifdef MULTIBYTE
-			/* get encoding from template database.
-			   This is the "default for default" for
-			   create database command.
-			   */
-			if (strcmp("template1",tup_db->datname.data) == 0)
-			{
+
+			/*
+			 * get encoding from template database. This is the "default
+			 * for default" for create database command.
+			 */
+			if (strcmp("template1", tup_db->datname.data) == 0)
 				SetTemplateEncoding(tup_db->encoding);
-			}
 #endif
 			if (strcmp(name, tup_db->datname.data) == 0)
 			{

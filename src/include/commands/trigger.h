@@ -70,4 +70,4 @@ extern void ExecARDeleteTriggers(Relation rel, ItemPointer tupleid);
 extern HeapTuple ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple);
 extern void ExecARUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple tuple);
 
-#endif							/* TRIGGER_H */
+#endif	 /* TRIGGER_H */

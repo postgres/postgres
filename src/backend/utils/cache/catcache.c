@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.33 1998/09/01 03:26:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.34 1998/09/01 04:32:57 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -102,7 +102,7 @@ do { \
 		elog(DEBUG, "CatalogCacheInitializeCache: called w/relname %s", \
 			cache->cc_relname) \
 } while(0)
-			
+
 #define CatalogCacheInitializeCache_DEBUG2 \
 do { \
 		if (cache->cc_key[i] > 0) { \
@@ -665,7 +665,7 @@ do { \
 			 cp->cc_skey[i].sk_argument); \
 	} \
 } while(0)
-											  
+
 #else
 #define InitSysCache_DEBUG1
 #endif
@@ -894,7 +894,7 @@ SearchSysCache(struct catcache * cache,
 		CACHE3_elog(DEBUG, "SearchSysCache(%s): found in bucket %d",
 					RelationGetRelationName(relation), hash);
 		heap_close(relation);
-#endif							/* CACHEDEBUG */
+#endif	 /* CACHEDEBUG */
 
 		return ct->ct_tup;
 	}

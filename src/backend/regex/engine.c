@@ -77,7 +77,7 @@ struct match
 	pg_wchar   *beginp;			/* start of string -- virtual NUL precedes */
 	pg_wchar   *endp;			/* end of string -- virtual NUL here */
 	pg_wchar   *coldp;			/* can be no match starting before here */
-	pg_wchar   **lastpos;		/* [nplus+1] */
+	pg_wchar  **lastpos;		/* [nplus+1] */
 				STATEVARS;
 	states		st;				/* current states */
 	states		fresh;			/* states for a fresh start */
@@ -93,19 +93,19 @@ extern		"C"
 
 /* === engine.c === */
 	static int
-				matcher(struct re_guts * g, pg_wchar *string, size_t nmatch,
+				matcher(struct re_guts * g, pg_wchar * string, size_t nmatch,
 									regmatch_t *pmatch, int eflags);
 	static pg_wchar *
-				dissect(struct match * m, pg_wchar *start, pg_wchar *stop,
+				dissect(struct match * m, pg_wchar * start, pg_wchar * stop,
 									sopno startst, sopno stopst);
 	static pg_wchar *
-				backref(struct match * m, pg_wchar *start, pg_wchar *stop,
+				backref(struct match * m, pg_wchar * start, pg_wchar * stop,
 								 sopno startst, sopno stopst, sopno lev);
 	static pg_wchar *
-				fast(struct match * m, pg_wchar *start, pg_wchar *stop,
+				fast(struct match * m, pg_wchar * start, pg_wchar * stop,
 								 sopno startst, sopno stopst);
 	static pg_wchar *
-				slow(struct match * m, pg_wchar *start, pg_wchar *stop, sopno startst, sopno stopst);
+				slow(struct match * m, pg_wchar * start, pg_wchar * stop, sopno startst, sopno stopst);
 	static		states
 				step(struct re_guts * g, sopno start,
 							 sopno stop, states bef, int ch, states aft);
@@ -118,20 +118,20 @@ extern		"C"
 #define CODEMAX (BOL+5)			/* highest code used */
 
 #ifdef MULTIBYTE
-#  define NONCHAR(c)	((c) > 16777216)	/* 16777216 == 2^24 == 3 bytes */
-#  define NNONCHAR	(CODEMAX-16777216)
+#define NONCHAR(c)	  ((c) > 16777216)	/* 16777216 == 2^24 == 3 bytes */
+#define NNONCHAR  (CODEMAX-16777216)
 #else
-#  define NONCHAR(c)		((c) > CHAR_MAX)
-#  define NNONCHAR		(CODEMAX-CHAR_MAX)
+#define NONCHAR(c)		  ((c) > CHAR_MAX)
+#define NNONCHAR	  (CODEMAX-CHAR_MAX)
 #endif
 
 #ifdef REDEBUG
 	static void
-				print(struct match * m, pg_wchar *caption, states st, int ch, FILE *d);
+				print(struct match * m, pg_wchar * caption, states st, int ch, FILE *d);
 #endif
 #ifdef REDEBUG
 	static void
-				at(struct match * m, pg_wchar *title, pg_wchar *start, pg_wchar *stop,
+				at(struct match * m, pg_wchar * title, pg_wchar * start, pg_wchar * stop,
 							   sopno startst, sopno stopst);
 #endif
 #ifdef REDEBUG
@@ -163,20 +163,20 @@ extern		"C"
 static int						/* 0 success, REG_NOMATCH failure */
 matcher(g, string, nmatch, pmatch, eflags)
 struct re_guts *g;
-pg_wchar	   *string;
+pg_wchar   *string;
 size_t		nmatch;
-regmatch_t	*pmatch;
+regmatch_t *pmatch;
 int			eflags;
 {
-	pg_wchar	   *endp;
+	pg_wchar   *endp;
 	int			i;
 	struct match mv;
 	struct match *m = &mv;
-	pg_wchar	   *dp;
+	pg_wchar   *dp;
 	const sopno gf = g->firststate + 1; /* +1 for OEND */
 	const sopno gl = g->laststate;
-	pg_wchar	   *start;
-	pg_wchar	   *stop;
+	pg_wchar   *start;
+	pg_wchar   *stop;
 
 	/* simplify the situation where possible */
 	if (g->cflags & REG_NOSUB)
@@ -274,7 +274,7 @@ int			eflags;
 		{
 			if (g->nplus > 0 && m->lastpos == NULL)
 				m->lastpos = (pg_wchar **) malloc((g->nplus + 1) *
-											  sizeof(pg_wchar *));
+												  sizeof(pg_wchar *));
 			if (g->nplus > 0 && m->lastpos == NULL)
 			{
 				free(m->pmatch);
@@ -354,24 +354,24 @@ int			eflags;
 static pg_wchar *				/* == stop (success) always */
 dissect(m, start, stop, startst, stopst)
 struct match *m;
-pg_wchar	   *start;
-pg_wchar	   *stop;
+pg_wchar   *start;
+pg_wchar   *stop;
 sopno		startst;
 sopno		stopst;
 {
 	int			i;
 	sopno		ss;				/* start sop of current subRE */
 	sopno		es;				/* end sop of current subRE */
-	pg_wchar	   *sp;			/* start of string matched by it */
-	pg_wchar	   *stp;		/* string matched by it cannot pass here */
-	pg_wchar	   *rest;		/* start of rest of string */
-	pg_wchar	   *tail;		/* string unmatched by rest of RE */
+	pg_wchar   *sp;				/* start of string matched by it */
+	pg_wchar   *stp;			/* string matched by it cannot pass here */
+	pg_wchar   *rest;			/* start of rest of string */
+	pg_wchar   *tail;			/* string unmatched by rest of RE */
 	sopno		ssub;			/* start sop of subsubRE */
 	sopno		esub;			/* end sop of subsubRE */
-	pg_wchar	   *ssp;		/* start of string matched by subsubRE */
-	pg_wchar	   *sep;		/* end of string matched by subsubRE */
-	pg_wchar	   *oldssp;		/* previous ssp */
-	pg_wchar	   *dp;
+	pg_wchar   *ssp;			/* start of string matched by subsubRE */
+	pg_wchar   *sep;			/* end of string matched by subsubRE */
+	pg_wchar   *oldssp;			/* previous ssp */
+	pg_wchar   *dp;
 
 	AT("diss", start, stop, startst, stopst);
 	sp = start;
@@ -551,22 +551,22 @@ sopno		stopst;
  == static char *backref(struct match *m, char *start, \
  ==		char *stop, sopno startst, sopno stopst, sopno lev);
  */
-static pg_wchar *		/* == stop (success) or NULL (failure) */
+static pg_wchar *				/* == stop (success) or NULL (failure) */
 backref(m, start, stop, startst, stopst, lev)
 struct match *m;
-pg_wchar	   *start;
-pg_wchar	   *stop;
+pg_wchar   *start;
+pg_wchar   *stop;
 sopno		startst;
 sopno		stopst;
 sopno		lev;				/* PLUS nesting level */
 {
 	int			i;
 	sopno		ss;				/* start sop of current subRE */
-	pg_wchar	   *sp;			/* start of string matched by it */
+	pg_wchar   *sp;				/* start of string matched by it */
 	sopno		ssub;			/* start sop of subsubRE */
 	sopno		esub;			/* end sop of subsubRE */
-	pg_wchar	   *ssp;		/* start of string matched by subsubRE */
-	pg_wchar	   *dp;
+	pg_wchar   *ssp;			/* start of string matched by subsubRE */
+	pg_wchar   *dp;
 	size_t		len;
 	int			hard;
 	sop			s;
@@ -685,7 +685,7 @@ sopno		lev;				/* PLUS nesting level */
 		case OQUEST_:			/* to null or not */
 			dp = backref(m, sp, stop, ss + 1, stopst, lev);
 			if (dp != NULL)
-				return dp;	/* not */
+				return dp;		/* not */
 			return backref(m, sp, stop, ss + OPND(s) + 1, stopst, lev);
 			break;
 		case OPLUS_:
@@ -716,7 +716,7 @@ sopno		lev;				/* PLUS nesting level */
 					return dp;
 				/* that one missed, try next one */
 				if (OP(m->g->strip[esub]) == O_CH)
-					return NULL;		/* there is none */
+					return NULL;/* there is none */
 				esub++;
 				assert(OP(m->g->strip[esub]) == OOR2);
 				ssub = esub + 1;
@@ -765,23 +765,23 @@ sopno		lev;				/* PLUS nesting level */
  == static char *fast(struct match *m, char *start, \
  ==		char *stop, sopno startst, sopno stopst);
  */
-static pg_wchar *		/* where tentative match ended, or NULL */
+static pg_wchar *				/* where tentative match ended, or NULL */
 fast(m, start, stop, startst, stopst)
 struct match *m;
-pg_wchar	   *start;
-pg_wchar	   *stop;
+pg_wchar   *start;
+pg_wchar   *stop;
 sopno		startst;
 sopno		stopst;
 {
 	states		st = m->st;
 	states		fresh = m->fresh;
 	states		tmp = m->tmp;
-	pg_wchar	   *p = start;
+	pg_wchar   *p = start;
 	int			c = (start == m->beginp) ? OUT : *(start - 1);
 	int			lastc;			/* previous c */
 	int			flagch;
 	int			i;
-	pg_wchar	   *coldp;		/* last p after which no match was
+	pg_wchar   *coldp;			/* last p after which no match was
 								 * underway */
 
 	CLEAR(st);
@@ -860,23 +860,23 @@ sopno		stopst;
  == static char *slow(struct match *m, char *start, \
  ==		char *stop, sopno startst, sopno stopst);
  */
-static pg_wchar *					/* where it ended */
+static pg_wchar *				/* where it ended */
 slow(m, start, stop, startst, stopst)
 struct match *m;
-pg_wchar	   *start;
-pg_wchar	   *stop;
+pg_wchar   *start;
+pg_wchar   *stop;
 sopno		startst;
 sopno		stopst;
 {
 	states		st = m->st;
 	states		empty = m->empty;
 	states		tmp = m->tmp;
-	pg_wchar	   *p = start;
+	pg_wchar   *p = start;
 	int			c = (start == m->beginp) ? OUT : *(start - 1);
 	int			lastc;			/* previous c */
 	int			flagch;
 	int			i;
-	pg_wchar	   *matchp;	/* last p at which a match ended */
+	pg_wchar   *matchp;			/* last p at which a match ended */
 
 	AT("slow", start, stop, startst, stopst);
 	CLEAR(st);
@@ -1089,7 +1089,7 @@ states		aft;				/* states already known reachable after */
 static void
 print(m, caption, st, ch, d)
 struct match *m;
-pg_wchar	   *caption;
+pg_wchar   *caption;
 states		st;
 int			ch;
 FILE	   *d;
@@ -1123,9 +1123,9 @@ FILE	   *d;
 static void
 at(m, title, start, stop, startst, stopst)
 struct match *m;
-pg_wchar	   *title;
-pg_wchar	   *start;
-pg_wchar	   *stop;
+pg_wchar   *title;
+pg_wchar   *start;
+pg_wchar   *stop;
 sopno		startst;
 sopno		stopst;
 {
@@ -1152,16 +1152,17 @@ sopno		stopst;
  */
 
 
-static int pg_isprint(int c)
+static int
+pg_isprint(int c)
 {
 #ifdef MULTIBYTE
-  return(c >= 0 && c <= UCHAR_MAX && isprint(c));
+	return (c >= 0 && c <= UCHAR_MAX && isprint(c));
 #else
-  return(isprint(c));
+	return (isprint(c));
 #endif
 }
 
-static pg_wchar *					/* -> representation */
+static pg_wchar *				/* -> representation */
 pchar(ch)
 int			ch;
 {

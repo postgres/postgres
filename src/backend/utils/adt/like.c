@@ -23,7 +23,7 @@
 #include "utils/builtins.h"		/* where the function declarations go */
 #include "mb/pg_wchar.h"
 
-static int	like(pg_wchar *text, pg_wchar *p);
+static int	like(pg_wchar * text, pg_wchar * p);
 
 /*
  *	interface routines called by the function manager
@@ -40,18 +40,18 @@ static int	like(pg_wchar *text, pg_wchar *p);
 static bool
 fixedlen_like(char *s, struct varlena * p, int charlen)
 {
-	pg_wchar	   *sterm,
+	pg_wchar   *sterm,
 			   *pterm;
 	int			result;
-	int	len;
+	int			len;
 
 	if (!s || !p)
 		return FALSE;
 
 	/* be sure sterm is null-terminated */
 #ifdef MULTIBYTE
-	sterm = (pg_wchar *) palloc((charlen + 1)*sizeof(pg_wchar));
-	(void)pg_mb2wchar_with_len((unsigned char *)s,sterm,charlen);
+	sterm = (pg_wchar *) palloc((charlen + 1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) s, sterm, charlen);
 #else
 	sterm = (char *) palloc(charlen + 1);
 	StrNCpy(sterm, s, charlen + 1);
@@ -65,8 +65,8 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 	/* palloc the length of the text + the null character */
 	len = VARSIZE(p) - VARHDRSZ;
 #ifdef MULTIBYTE
-	pterm = (pg_wchar *) palloc((len + 1)*sizeof(pg_wchar));
-	(void)pg_mb2wchar_with_len((unsigned char *)VARDATA(p),pterm,len);
+	pterm = (pg_wchar *) palloc((len + 1) * sizeof(pg_wchar));
+	(void) pg_mb2wchar_with_len((unsigned char *) VARDATA(p), pterm, len);
 #else
 	pterm = (char *) palloc(len + 1);
 	memmove(pterm, VARDATA(p), len);
@@ -111,7 +111,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.19 $
+/*	$Revision: 1.20 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -146,7 +146,7 @@ textnlike(struct varlena * s, struct varlena * p)
 **	Match text and p, return LIKE_TRUE, LIKE_FALSE, or LIKE_ABORT.
 */
 static int
-DoMatch(pg_wchar *text, pg_wchar *p)
+DoMatch(pg_wchar * text, pg_wchar * p)
 {
 	int			matched;
 
@@ -189,7 +189,7 @@ DoMatch(pg_wchar *text, pg_wchar *p)
 **	User-level routine.  Returns TRUE or FALSE.
 */
 static int
-like(pg_wchar *text, pg_wchar *p)
+like(pg_wchar * text, pg_wchar * p)
 {
 	if (p[0] == '%' && p[1] == '\0')
 		return TRUE;

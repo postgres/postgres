@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datum.h,v 1.7 1998/02/26 04:43:57 momjian Exp $
+ * $Id: datum.h,v 1.8 1998/09/01 04:38:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,7 @@ extern void datumFree(Datum value, Oid type, bool byVal, Size len);
  * return true if thwo datums are equal, false otherwise.
  * XXX : See comments in the code for restrictions!
  */
-extern bool
-datumIsEqual(Datum value1, Datum value2, Oid type,
+extern bool datumIsEqual(Datum value1, Datum value2, Oid type,
 			 bool byVal, Size len);
 
-#endif							/* DATUM_H */
+#endif	 /* DATUM_H */

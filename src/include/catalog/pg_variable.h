@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_variable.h,v 1.4 1997/09/08 02:35:34 momjian Exp $
+ * $Id: pg_variable.h,v 1.5 1998/09/01 04:35:19 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code
@@ -37,4 +37,4 @@ typedef FormData_pg_variable *Form_pg_variable;
 #define Natts_pg_variable		1
 #define Anum_pg_variable_varfoo 1
 
-#endif							/* PG_VARIABLE_H */
+#endif	 /* PG_VARIABLE_H */

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dgux.h,v 1.3 1998/02/26 04:34:25 momjian Exp $
+ * $Id: dgux.h,v 1.4 1998/09/01 04:30:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,4 @@
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

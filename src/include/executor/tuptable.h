@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.7 1997/09/08 21:52:16 momjian Exp $
+ * $Id: tuptable.h,v 1.8 1998/09/01 04:36:13 momjian Exp $
  *
  * NOTES
  *	  The tuple table interface is getting pretty ugly.
@@ -75,4 +75,4 @@ typedef TupleTableData *TupleTable;
   - jolly
 */
 
-#endif							/* TUPTABLE_H */
+#endif	 /* TUPTABLE_H */

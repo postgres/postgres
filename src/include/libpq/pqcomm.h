@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.28 1998/08/29 04:05:43 momjian Exp $
+ * $Id: pqcomm.h,v 1.29 1998/09/01 04:36:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,11 +41,11 @@ typedef union SockAddr
 
 #if defined(SUN_LEN)
 #define UNIXSOCK_PATH(sun,port) \
- 	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), SUN_LEN(&(sun)))
+	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), SUN_LEN(&(sun)))
 #else
 #define UNIXSOCK_PATH(sun,port) \
- 	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), \
- 	 strlen((sun).sun_path)+ offsetof(struct sockaddr_un, sun_path))
+	(sprintf((sun).sun_path, "/tmp/.s.PGSQL.%d", (port)), \
+	 strlen((sun).sun_path)+ offsetof(struct sockaddr_un, sun_path))
 #endif
 
 /*
@@ -140,15 +140,16 @@ typedef ProtocolVersion MsgType;
 /* The cancel request code must not match any protocol version number
  * we're ever likely to use.  This random choice should do.
  */
-#define CANCEL_REQUEST_CODE	PG_PROTOCOL(1234,5678)
+#define CANCEL_REQUEST_CODE PG_PROTOCOL(1234,5678)
 
 typedef struct CancelRequestPacket
 {
 	/* Note that each field is stored in network byte order! */
-	MsgType	cancelRequestCode;		/* code to identify a cancel request */
-	uint32	backendPID;				/* PID of client's backend */
-	uint32	cancelAuthCode;			/* secret key to authorize cancel */
-} CancelRequestPacket;
+	MsgType		cancelRequestCode;		/* code to identify a cancel
+										 * request */
+	uint32		backendPID;		/* PID of client's backend */
+	uint32		cancelAuthCode; /* secret key to authorize cancel */
+}			CancelRequestPacket;
 
 
 /* in pqcompriv.c */
@@ -164,4 +165,4 @@ int			pqPutNBytes(const char *, size_t, FILE *);
 int			pqPutString(const char *, FILE *);
 int			pqPutByte(int, FILE *);
 
-#endif							/* PQCOMM_H */
+#endif	 /* PQCOMM_H */

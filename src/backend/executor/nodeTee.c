@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.22 1998/09/01 03:22:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.23 1998/09/01 04:28:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,8 +168,8 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 			bufferRel = heap_openr(teeState->tee_bufferRelname);
 		else
 			bufferRel = heap_open(
-				heap_create_with_catalog(teeState->tee_bufferRelname,
-										 tupType, RELKIND_RELATION));
+					heap_create_with_catalog(teeState->tee_bufferRelname,
+											 tupType, RELKIND_RELATION));
 	}
 	else
 	{
@@ -178,8 +178,8 @@ ExecInitTee(Tee *node, EState *currentEstate, Plan *parent)
 				newoid());
 /*		bufferRel = ExecCreatR(len, tupType, _TEMP_RELATION_ID); */
 		bufferRel = heap_open(
-			heap_create_with_catalog(teeState->tee_bufferRelname,
-									 tupType, RELKIND_RELATION));
+					heap_create_with_catalog(teeState->tee_bufferRelname,
+											 tupType, RELKIND_RELATION));
 	}
 
 	teeState->tee_bufferRel = bufferRel;
@@ -228,11 +228,11 @@ ExecCountSlotsTee(Tee *node)
 static void
 initTeeScanDescs(Tee *node)
 {
-	TeeState	   *teeState;
-	Relation		bufferRel;
-	ScanDirection	dir;
-	Snapshot		snapshot;
-	MemoryContext	orig;
+	TeeState   *teeState;
+	Relation	bufferRel;
+	ScanDirection dir;
+	Snapshot	snapshot;
+	MemoryContext orig;
 
 	teeState = node->teestate;
 	if (teeState->tee_leftScanDesc && teeState->tee_rightScanDesc)
@@ -250,18 +250,18 @@ initTeeScanDescs(Tee *node)
 	{
 		teeState->tee_leftScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-											snapshot,
-											0,	/* num scan keys */
-											NULL		/* scan keys */
+													snapshot,
+													0,	/* num scan keys */
+													NULL		/* scan keys */
 			);
 	}
 	if (teeState->tee_rightScanDesc == NULL)
 	{
 		teeState->tee_rightScanDesc = heap_beginscan(bufferRel,
 											ScanDirectionIsBackward(dir),
-											snapshot,
-											0, /* num scan keys */
-											NULL		/* scan keys */
+													 snapshot,
+													 0, /* num scan keys */
+													 NULL		/* scan keys */
 			);
 	}
 
@@ -365,7 +365,7 @@ ExecTee(Tee *node, Plan *parent)
 				HeapTuple	throwAway;
 
 				/* Buffer buffer; */
-				throwAway = heap_getnext(scanDesc,ScanDirectionIsBackward(dir));
+				throwAway = heap_getnext(scanDesc, ScanDirectionIsBackward(dir));
 			}
 
 			/*
@@ -406,7 +406,7 @@ ExecTee(Tee *node, Plan *parent)
 
 		result = ExecStoreTuple(heapTuple,		/* tuple to store */
 								slot,	/* slot to store in */
-								scanDesc->rs_cbuf, /* this tuple's buffer */
+								scanDesc->rs_cbuf,		/* this tuple's buffer */
 								false); /* don't free stuff from
 										 * heap_getnext */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.8 1998/09/01 03:23:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.9 1998/09/01 04:30:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  *
  */
 bool
-valid_or_clause(ClauseInfo *clauseinfo)
+valid_or_clause(ClauseInfo * clauseinfo)
 {
 	if (clauseinfo != NULL &&
 		!single_node((Node *) clauseinfo->clause) &&
@@ -49,7 +49,7 @@ get_actual_clauses(List *clauseinfo_list)
 {
 	List	   *temp = NIL;
 	List	   *result = NIL;
-	ClauseInfo	   *clause = (ClauseInfo *) NULL;
+	ClauseInfo *clause = (ClauseInfo *) NULL;
 
 	foreach(temp, clauseinfo_list)
 	{
@@ -93,7 +93,7 @@ get_relattvals(List *clauseinfo_list,
 	List	   *result1 = NIL;
 	List	   *result2 = NIL;
 	List	   *result3 = NIL;
-	ClauseInfo	   *temp = (ClauseInfo *) NULL;
+	ClauseInfo *temp = (ClauseInfo *) NULL;
 	List	   *i = NIL;
 
 	foreach(i, clauseinfo_list)
@@ -144,7 +144,7 @@ get_joinvars(Oid relid,
 
 	foreach(temp, clauseinfo_list)
 	{
-		ClauseInfo	   *clauseinfo = lfirst(temp);
+		ClauseInfo *clauseinfo = lfirst(temp);
 		Expr	   *clause = clauseinfo->clause;
 
 		if (IsA(get_leftop(clause), Var) &&
@@ -176,7 +176,7 @@ get_joinvars(Oid relid,
 List *
 get_opnos(List *clauseinfo_list)
 {
-	ClauseInfo	   *temp = (ClauseInfo *) NULL;
+	ClauseInfo *temp = (ClauseInfo *) NULL;
 	List	   *result = NIL;
 	List	   *i = NIL;
 

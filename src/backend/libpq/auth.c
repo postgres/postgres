@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.30 1998/09/01 03:22:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.31 1998/09/01 04:28:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ pg_krb4_recvauth(Port *port)
 	return STATUS_ERROR;
 }
 
-#endif							/* KRB4 */
+#endif	 /* KRB4 */
 
 
 #ifdef KRB5
@@ -320,7 +320,7 @@ pg_krb5_recvauth(Port *port)
 	return STATUS_ERROR;
 }
 
-#endif							/* KRB5 */
+#endif	 /* KRB5 */
 
 
 /*
@@ -422,7 +422,7 @@ be_recvauth(Port *port)
 	 */
 
 	if (hba_getauthmethod(&port->raddr, port->user, port->database,
-			port->auth_arg, &port->auth_method) != STATUS_OK)
+						port->auth_arg, &port->auth_method) != STATUS_OK)
 		PacketSendError(&port->pktInfo, "Missing or mis-configured pg_hba.conf file");
 
 	else if (PG_PROTOCOL_MAJOR(port->proto) == 0)

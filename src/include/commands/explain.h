@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: explain.h,v 1.6 1997/11/26 01:12:16 momjian Exp $
+ * $Id: explain.h,v 1.7 1998/09/01 04:35:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,4 +17,4 @@
 
 extern void ExplainQuery(Query *query, bool verbose, CommandDest dest);
 
-#endif							/* EXPLAIN_H */
+#endif	 /* EXPLAIN_H */

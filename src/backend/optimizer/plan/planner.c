@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.31 1998/09/01 03:23:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.32 1998/09/01 04:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,8 +49,7 @@
 #include "executor/executor.h"
 
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
-extern Plan *
-make_groupPlan(List **tlist, bool tuplePerGroup,
+extern Plan *make_groupPlan(List **tlist, bool tuplePerGroup,
 			   List *groupClause, Plan *subplan);
 
 /*****************************************************************************
@@ -96,10 +95,12 @@ union_planner(Query *parse)
 {
 	List	   *tlist = parse->targetList;
 
-	/* copy the original tlist, we will need the original one 
-	 * for the AGG node later on */
-	List    *new_tlist = new_unsorted_tlist(tlist);	
-	
+	/*
+	 * copy the original tlist, we will need the original one for the AGG
+	 * node later on
+	 */
+	List	   *new_tlist = new_unsorted_tlist(tlist);
+
 	List	   *rangetable = parse->rtable;
 
 	Plan	   *result_plan = (Plan *) NULL;
@@ -109,12 +110,12 @@ union_planner(Query *parse)
 
 	if (parse->unionClause)
 	{
-	  result_plan = (Plan *) plan_union_queries(parse);
-	  /* XXX do we need to do this? bjm 12/19/97 */	  	  
-	  tlist = preprocess_targetlist(tlist,
-					parse->commandType,
-					parse->resultRelation,
-					parse->rtable);
+		result_plan = (Plan *) plan_union_queries(parse);
+		/* XXX do we need to do this? bjm 12/19/97 */
+		tlist = preprocess_targetlist(tlist,
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
 	}
 	else if ((rt_index =
 			  first_inherit_rt_entry(rangetable)) != -1)
@@ -122,64 +123,65 @@ union_planner(Query *parse)
 		result_plan = (Plan *) plan_inherit_queries(parse, rt_index);
 		/* XXX do we need to do this? bjm 12/19/97 */
 		tlist = preprocess_targetlist(tlist,
-					      parse->commandType,
-					      parse->resultRelation,
-					      parse->rtable);
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
 	}
 	else
 	{
-	  List  **vpm = NULL;
-	  
-	  /* This is only necessary if aggregates are in use in queries like:
-	   * SELECT sid 
-	   * FROM part
-	   * GROUP BY sid
-	   * HAVING MIN(pid) > 1;  (pid is used but never selected for!!!)
-	   * because the function 'query_planner' creates the plan for the lefttree
-	   * of the 'GROUP' node and returns only those attributes contained in 'tlist'.
-	   * The original 'tlist' contains only 'sid' here and that's why we have to
-	   * to extend it to attributes which are not selected but are used in the 
-	   * havingQual. */
-	  	  
-	  /* 'check_having_qual_for_vars' takes the havingQual and the actual 'tlist'
-	   * as arguments and recursively scans the havingQual for attributes 
-	   * (VAR nodes) that are not contained in 'tlist' yet. If so, it creates
-	   * a new entry and attaches it to the list 'new_tlist' (consisting of the 
-	   * VAR node and the RESDOM node as usual with tlists :-)  ) */
-	  if (parse->hasAggs)
-	    {
-	      if (parse->havingQual != NULL)
+		List	  **vpm = NULL;
+
+		/*
+		 * This is only necessary if aggregates are in use in queries
+		 * like: SELECT sid FROM part GROUP BY sid HAVING MIN(pid) > 1;
+		 * (pid is used but never selected for!!!) because the function
+		 * 'query_planner' creates the plan for the lefttree of the
+		 * 'GROUP' node and returns only those attributes contained in
+		 * 'tlist'. The original 'tlist' contains only 'sid' here and
+		 * that's why we have to to extend it to attributes which are not
+		 * selected but are used in the havingQual.
+		 */
+
+		/*
+		 * 'check_having_qual_for_vars' takes the havingQual and the
+		 * actual 'tlist' as arguments and recursively scans the
+		 * havingQual for attributes (VAR nodes) that are not contained in
+		 * 'tlist' yet. If so, it creates a new entry and attaches it to
+		 * the list 'new_tlist' (consisting of the VAR node and the RESDOM
+		 * node as usual with tlists :-)  )
+		 */
+		if (parse->hasAggs)
 		{
-		  new_tlist = check_having_qual_for_vars(parse->havingQual,new_tlist);
+			if (parse->havingQual != NULL)
+				new_tlist = check_having_qual_for_vars(parse->havingQual, new_tlist);
 		}
-	    }
-	  
-	  new_tlist = preprocess_targetlist(new_tlist,
-					    parse->commandType,
-					    parse->resultRelation,
-					    parse->rtable);
-	  
-	  /* Here starts the original (pre having) code */
-	  tlist = preprocess_targetlist(tlist,
-					parse->commandType,
-					parse->resultRelation,
-					parse->rtable);
-	  
-	  if (parse->rtable != NULL)
-	    {
-	      vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
-	      memset(vpm, 0, length(parse->rtable) * sizeof(List *));
-	    }
-	  PlannerVarParam = lcons(vpm, PlannerVarParam);
-	  result_plan = query_planner(parse,
-				      parse->commandType,
-				      new_tlist,
-				      (List *) parse->qual);
-	  PlannerVarParam = lnext(PlannerVarParam);
-	  if (vpm != NULL)
-	    pfree(vpm);		 
+
+		new_tlist = preprocess_targetlist(new_tlist,
+										  parse->commandType,
+										  parse->resultRelation,
+										  parse->rtable);
+
+		/* Here starts the original (pre having) code */
+		tlist = preprocess_targetlist(tlist,
+									  parse->commandType,
+									  parse->resultRelation,
+									  parse->rtable);
+
+		if (parse->rtable != NULL)
+		{
+			vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
+			memset(vpm, 0, length(parse->rtable) * sizeof(List *));
+		}
+		PlannerVarParam = lcons(vpm, PlannerVarParam);
+		result_plan = query_planner(parse,
+									parse->commandType,
+									new_tlist,
+									(List *) parse->qual);
+		PlannerVarParam = lnext(PlannerVarParam);
+		if (vpm != NULL)
+			pfree(vpm);
 	}
-	
+
 	/*
 	 * If we have a GROUP BY clause, insert a group node (with the
 	 * appropriate sort node.)
@@ -209,11 +211,14 @@ union_planner(Query *parse)
 	 */
 	if (parse->hasAggs)
 	{
-	        int old_length=0, new_length=0;
-		
-		/* Create the AGG node but use 'tlist' not 'new_tlist' as target list because we
-		 * don't want the additional attributes (only used for the havingQual, see above)
-		 * to show up in the result */
+		int			old_length = 0,
+					new_length = 0;
+
+		/*
+		 * Create the AGG node but use 'tlist' not 'new_tlist' as target
+		 * list because we don't want the additional attributes (only used
+		 * for the havingQual, see above) to show up in the result
+		 */
 		result_plan = (Plan *) make_agg(tlist, result_plan);
 
 		/*
@@ -221,70 +226,84 @@ union_planner(Query *parse)
 		 * the result tuple of the subplans.
 		 */
 		((Agg *) result_plan)->aggs =
-		  set_agg_tlist_references((Agg *) result_plan); 
+			set_agg_tlist_references((Agg *) result_plan);
 
 
-		if(parse->havingQual!=NULL) 
-		  {
-		    List	   *clause;
-		    List	  **vpm = NULL;
-		    
-		    
-		    /* stuff copied from above to handle the use of attributes from outside
-		     * in subselects */
+		if (parse->havingQual != NULL)
+		{
+			List	   *clause;
+			List	  **vpm = NULL;
 
-		    if (parse->rtable != NULL)
-		      {
-			vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
-			memset(vpm, 0, length(parse->rtable) * sizeof(List *));
-		      }
-		    PlannerVarParam = lcons(vpm, PlannerVarParam);
-		    
-		    /* There is a subselect in the havingQual, so we have to process it
-                     * using the same function as for a subselect in 'where' */
-		    if (parse->hasSubLinks)
-		      {
-			parse->havingQual = SS_process_sublinks((Node *) parse->havingQual);
-		      }
-		    		    
-		    /* convert the havingQual to conjunctive normal form (cnf) */
-		    parse->havingQual = (Node * ) cnfify((Expr *)(Node *) parse->havingQual,true);
-		    
-		    /* Calculate the opfids from the opnos (=select the correct functions for
-		     * the used VAR datatypes) */
-		    parse->havingQual = (Node * ) fix_opids((List *) parse->havingQual);
-		    
-		    ((Agg *) result_plan)->plan.qual=(List *) parse->havingQual;
 
-		    /* Check every clause of the havingQual for aggregates used and append
-		     * them to result_plan->aggs */
-		    foreach(clause, ((Agg *) result_plan)->plan.qual)
-		      {
-			/* Make sure there are aggregates in the havingQual 
-			 * if so, the list must be longer after check_having_qual_for_aggs */
-			old_length=length(((Agg *) result_plan)->aggs);			
-			
-			((Agg *) result_plan)->aggs = nconc(((Agg *) result_plan)->aggs,
-			    check_having_qual_for_aggs((Node *) lfirst(clause),
-				       ((Agg *) result_plan)->plan.lefttree->targetlist,
-				       ((List *) parse->groupClause)));
+			/*
+			 * stuff copied from above to handle the use of attributes
+			 * from outside in subselects
+			 */
 
-			/* Have a look at the length of the returned list. If there is no
-			 * difference, no aggregates have been found and that means, that
-			 * the Qual belongs to the where clause */
-			if (((new_length=length(((Agg *) result_plan)->aggs)) == old_length) ||
-			    (new_length == 0))
-			  {
-			    elog(ERROR,"This could have been done in a where clause!!");
-			    return (Plan *)NIL;
-			  }
-		      }
-		    PlannerVarParam = lnext(PlannerVarParam);
-		    if (vpm != NULL)
-		      pfree(vpm);		
-		  }
-	}		  
-		
+			if (parse->rtable != NULL)
+			{
+				vpm = (List **) palloc(length(parse->rtable) * sizeof(List *));
+				memset(vpm, 0, length(parse->rtable) * sizeof(List *));
+			}
+			PlannerVarParam = lcons(vpm, PlannerVarParam);
+
+			/*
+			 * There is a subselect in the havingQual, so we have to
+			 * process it using the same function as for a subselect in
+			 * 'where'
+			 */
+			if (parse->hasSubLinks)
+				parse->havingQual = SS_process_sublinks((Node *) parse->havingQual);
+
+			/* convert the havingQual to conjunctive normal form (cnf) */
+			parse->havingQual = (Node *) cnfify((Expr *) (Node *) parse->havingQual, true);
+
+			/*
+			 * Calculate the opfids from the opnos (=select the correct
+			 * functions for the used VAR datatypes)
+			 */
+			parse->havingQual = (Node *) fix_opids((List *) parse->havingQual);
+
+			((Agg *) result_plan)->plan.qual = (List *) parse->havingQual;
+
+			/*
+			 * Check every clause of the havingQual for aggregates used
+			 * and append them to result_plan->aggs
+			 */
+			foreach(clause, ((Agg *) result_plan)->plan.qual)
+			{
+
+				/*
+				 * Make sure there are aggregates in the havingQual if so,
+				 * the list must be longer after
+				 * check_having_qual_for_aggs
+				 */
+				old_length = length(((Agg *) result_plan)->aggs);
+
+				((Agg *) result_plan)->aggs = nconc(((Agg *) result_plan)->aggs,
+					  check_having_qual_for_aggs((Node *) lfirst(clause),
+						((Agg *) result_plan)->plan.lefttree->targetlist,
+										 ((List *) parse->groupClause)));
+
+				/*
+				 * Have a look at the length of the returned list. If
+				 * there is no difference, no aggregates have been found
+				 * and that means, that the Qual belongs to the where
+				 * clause
+				 */
+				if (((new_length = length(((Agg *) result_plan)->aggs)) == old_length) ||
+					(new_length == 0))
+				{
+					elog(ERROR, "This could have been done in a where clause!!");
+					return (Plan *) NIL;
+				}
+			}
+			PlannerVarParam = lnext(PlannerVarParam);
+			if (vpm != NULL)
+				pfree(vpm);
+		}
+	}
+
 	/*
 	 * For now, before we hand back the plan, check to see if there is a
 	 * user-specified sort that needs to be done.  Eventually, this will
@@ -530,6 +549,3 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	/* success */
 	return;
 }
-
-
-

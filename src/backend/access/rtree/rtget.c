@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.11 1998/09/01 03:21:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.12 1998/09/01 04:27:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,7 @@
 #endif
 
 
-static OffsetNumber
-findnext(IndexScanDesc s, Page p, OffsetNumber n,
+static OffsetNumber findnext(IndexScanDesc s, Page p, OffsetNumber n,
 		 ScanDirection dir);
 static RetrieveIndexResult rtscancache(IndexScanDesc s, ScanDirection dir);
 static RetrieveIndexResult rtfirst(IndexScanDesc s, ScanDirection dir);

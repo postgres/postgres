@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: params.h,v 1.8 1998/02/26 04:41:58 momjian Exp $
+ * $Id: params.h,v 1.9 1998/09/01 04:36:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,4 +99,4 @@ typedef struct ParamExecData
 	bool		isnull;
 } ParamExecData;
 
-#endif							/* PARAMS_H */
+#endif	 /* PARAMS_H */

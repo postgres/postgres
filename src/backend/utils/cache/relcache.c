@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.49 1998/09/01 03:26:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.50 1998/09/01 04:33:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +81,7 @@
 #include "utils/syscache.h"
 
 
-static void
-RelationFlushRelation(Relation *relationPtr,
+static void RelationFlushRelation(Relation *relationPtr,
 					  bool onlyFlushReferenceCountZero);
 static Relation RelationNameCacheGetRelation(char *relationName);
 static void init_irels(void);
@@ -195,7 +194,7 @@ do { \
 		RELATION = NULL; \
 } while(0)
 
-#define RelationIdCacheLookup(ID, RELATION)	\
+#define RelationIdCacheLookup(ID, RELATION) \
 do { \
 	RelIdCacheEnt *hentry; \
 	bool found; \
@@ -233,8 +232,7 @@ do { \
 } while(0)
 
 /* non-export function prototypes */
-static void
-formrdesc(char *relationName, u_int natts,
+static void formrdesc(char *relationName, u_int natts,
 		  FormData_pg_attribute *att);
 
 #if 0							/* See comments at line 1304 */
@@ -246,14 +244,11 @@ static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_ind(RelationBuildDescInfo buildinfo);
 static Relation AllocateRelationDesc(u_int natts, Form_pg_class relp);
-static void
-RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
+static void RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 					   Relation relation, u_int natts);
-static void
-build_tupdesc_seq(RelationBuildDescInfo buildinfo,
+static void build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
-static void
-build_tupdesc_ind(RelationBuildDescInfo buildinfo,
+static void build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 				  Relation relation, u_int natts);
 static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo);
 static void IndexedAccessMethodInitialize(Relation relation);
@@ -596,11 +591,11 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 	for (i = 1; i <= relation->rd_rel->relnatts; i++)
 	{
 		atttup = (HeapTuple) AttributeNumIndexScan(attrel,
-							RelationGetRelid(relation), i);
+										  RelationGetRelid(relation), i);
 
 		if (!HeapTupleIsValid(atttup))
 			elog(ERROR, "cannot find attribute %d of relation %s", i,
-				relation->rd_rel->relname.data);
+				 relation->rd_rel->relname.data);
 		attp = (Form_pg_attribute) GETSTRUCT(atttup);
 
 		relation->rd_att->attrs[i - 1] =
@@ -714,7 +709,7 @@ RelationBuildRuleLock(Relation relation)
 	 *	add attribute data to relation->rd_att
 	 * ----------------
 	 */
-	while (HeapTupleIsValid(pg_rewrite_tuple=heap_getnext(pg_rewrite_scan, 0)))
+	while (HeapTupleIsValid(pg_rewrite_tuple = heap_getnext(pg_rewrite_scan, 0)))
 	{
 		bool		isnull;
 		Datum		ruleaction;
@@ -1094,7 +1089,7 @@ formrdesc(char *relationName,
 	RelationCacheInsert(relation);
 
 	RelationInitLockInfo(relation);
-	
+
 	/*
 	 * Determining this requires a scan on pg_class, but to do the scan
 	 * the rdesc for pg_class must already exist.  Therefore we must do
@@ -1689,8 +1684,8 @@ AttrDefaultFetch(Relation relation)
 
 	for (found = 0;;)
 	{
-		Buffer	buffer;
-		
+		Buffer		buffer;
+
 		indexRes = index_getnext(sd, ForwardScanDirection);
 		if (!indexRes)
 			break;
@@ -1708,29 +1703,29 @@ AttrDefaultFetch(Relation relation)
 				continue;
 			if (attrdef[i].adsrc != NULL)
 				elog(ERROR, "AttrDefaultFetch: second record found for attr %s in rel %s",
-					relation->rd_att->attrs[adform->adnum - 1]->attname.data,
-					relation->rd_rel->relname.data);
+				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
+					 relation->rd_rel->relname.data);
 
 			val = (struct varlena *) fastgetattr(tuple,
 												 Anum_pg_attrdef_adbin,
 												 adrel->rd_att, &isnull);
 			if (isnull)
 				elog(ERROR, "AttrDefaultFetch: adbin IS NULL for attr %s in rel %s",
-					relation->rd_att->attrs[adform->adnum - 1]->attname.data,
-					relation->rd_rel->relname.data);
+				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
+					 relation->rd_rel->relname.data);
 			attrdef[i].adbin = textout(val);
 			val = (struct varlena *) fastgetattr(tuple,
 												 Anum_pg_attrdef_adsrc,
 												 adrel->rd_att, &isnull);
 			if (isnull)
 				elog(ERROR, "AttrDefaultFetch: adsrc IS NULL for attr %s in rel %s",
-					relation->rd_att->attrs[adform->adnum - 1]->attname.data,
-					relation->rd_rel->relname.data);
+				relation->rd_att->attrs[adform->adnum - 1]->attname.data,
+					 relation->rd_rel->relname.data);
 			attrdef[i].adsrc = textout(val);
 			break;
 		}
 		ReleaseBuffer(buffer);
-		
+
 		if (i >= ndef)
 			elog(ERROR, "AttrDefaultFetch: unexpected record found for attr %d in rel %s",
 				 adform->adnum,
@@ -1777,8 +1772,8 @@ RelCheckFetch(Relation relation)
 
 	for (found = 0;;)
 	{
-		Buffer buffer;
-		
+		Buffer		buffer;
+
 		indexRes = index_getnext(sd, ForwardScanDirection);
 		if (!indexRes)
 			break;
@@ -1790,7 +1785,7 @@ RelCheckFetch(Relation relation)
 			continue;
 		if (found == ncheck)
 			elog(ERROR, "RelCheckFetch: unexpected record found for rel %s",
-				relation->rd_rel->relname.data);
+				 relation->rd_rel->relname.data);
 
 		rcname = (Name) fastgetattr(tuple,
 									Anum_pg_relcheck_rcname,
@@ -1982,7 +1977,8 @@ init_irels(void)
 #define SMD(i)	strat[0].strategyMapData[i].entry[0]
 
 		/* have to reinit the function pointers in the strategy maps */
-		for (i = 0; i < am->amstrategies * relform->relnatts; i++) {
+		for (i = 0; i < am->amstrategies * relform->relnatts; i++)
+		{
 			fmgr_info(SMD(i).sk_procedure,
 					  &(SMD(i).sk_func));
 			SMD(i).sk_nargs = SMD(i).sk_func.fn_nargs;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.59 1998/09/01 03:21:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.60 1998/09/01 04:27:31 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -65,32 +65,28 @@
 
 /* non-export function prototypes */
 static Oid
-RelationNameGetObjectId(char *relationName, Relation pg_class);
+			RelationNameGetObjectId(char *relationName, Relation pg_class);
 static Oid	GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
-static TupleDesc
-ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
+static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
 						 List *attributeList,
 						 int numatts, AttrNumber *attNums);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation);
-static void
-InitializeAttributeOids(Relation indexRelation,
+static void InitializeAttributeOids(Relation indexRelation,
 						int numatts,
 						Oid indexoid);
 static void
 			AppendAttributeTuples(Relation indexRelation, int numatts);
-static void
-UpdateIndexRelation(Oid indexoid, Oid heapoid,
+static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					FuncIndexInfo *funcInfo, int natts,
-				  AttrNumber *attNums, Oid *classOids, Node *predicate,
+					AttrNumber *attNums, Oid *classOids, Node *predicate,
 					List *attributeList, bool islossy, bool unique);
-static void
-DefaultBuild(Relation heapRelation, Relation indexRelation,
+static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 			 int numberOfAttributes, AttrNumber *attributeNumber,
 			 IndexStrategy indexStrategy, uint16 parameterCount,
-	   Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
+		Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
 
 /* ----------------------------------------------------------------
  *	  sysatts is a structure containing attribute tuple forms
@@ -147,12 +143,12 @@ RelationNameGetObjectId(char *relationName,
 
 	if (!IsBootstrapProcessingMode())
 	{
-		HeapTuple 	tuple;
-	
+		HeapTuple	tuple;
+
 		tuple = SearchSysCacheTuple(RELNAME,
 									PointerGetDatum(relationName),
 									0, 0, 0);
-	
+
 		if (HeapTupleIsValid(tuple))
 			return tuple->t_oid;
 		else
@@ -614,7 +610,9 @@ static void
 AppendAttributeTuples(Relation indexRelation, int numatts)
 {
 	Relation	pg_attribute;
-	HeapTuple	init_tuple, cur_tuple = NULL, new_tuple;
+	HeapTuple	init_tuple,
+				cur_tuple = NULL,
+				new_tuple;
 	bool		hasind;
 	Relation	idescs[Num_pg_attr_indices];
 
@@ -651,8 +649,8 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	value[Anum_pg_attribute_attcacheoff - 1] = Int32GetDatum(-1);
 
 	init_tuple = heap_addheader(Natts_pg_attribute,
-						   sizeof *(indexRelation->rd_att->attrs[0]),
-						   (char *) (indexRelation->rd_att->attrs[0]));
+								sizeof *(indexRelation->rd_att->attrs[0]),
+							 (char *) (indexRelation->rd_att->attrs[0]));
 
 	hasind = false;
 	if (!IsBootstrapProcessingMode() && pg_attribute->rd_rel->relhasindex)
@@ -666,12 +664,12 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	 * ----------------
 	 */
 	cur_tuple = heap_modifytuple(init_tuple,
-							 pg_attribute,
-							 value,
-							 nullv,
-							 replace);
+								 pg_attribute,
+								 value,
+								 nullv,
+								 replace);
 	pfree(init_tuple);
-	
+
 	heap_insert(pg_attribute, cur_tuple);
 	if (hasind)
 		CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, cur_tuple);
@@ -696,13 +694,13 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		value[Anum_pg_attribute_attnum - 1] = Int16GetDatum(i + 1);
 
 		new_tuple = heap_modifytuple(cur_tuple,
-									pg_attribute,
-									value,
-									nullv,
-									replace);
+									 pg_attribute,
+									 value,
+									 nullv,
+									 replace);
 		pfree(cur_tuple);
 
-		heap_insert(pg_attribute,new_tuple);
+		heap_insert(pg_attribute, new_tuple);
 		if (hasind)
 			CatalogIndexInsert(idescs, Num_pg_attr_indices, pg_attribute, new_tuple);
 
@@ -711,7 +709,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		 *	so we free the original and use the copy..
 		 * ----------------
 		 */
-		 cur_tuple = new_tuple;
+		cur_tuple = new_tuple;
 	}
 
 	if (cur_tuple)
@@ -898,10 +896,10 @@ UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
 	pg_index = heap_openr(IndexRelationName);
 
 	tuple = SearchSysCacheTuple(INDEXRELID,
-								  ObjectIdGetDatum(indexoid),
-								  0, 0, 0);
+								ObjectIdGetDatum(indexoid),
+								0, 0, 0);
 	Assert(HeapTupleIsValid(tuple));
-	
+
 	for (i = 0; i < Natts_pg_index; i++)
 	{
 		nulls[i] = heap_attisnull(tuple, i + 1) ? 'n' : ' ';
@@ -1103,7 +1101,7 @@ index_create(char *heapRelationName,
 		if (!HeapTupleIsValid(proc_tup))
 		{
 			func_error("index_create", FIgetname(funcInfo),
-					   FIgetnArgs(funcInfo), FIgetArglist(funcInfo), NULL);
+					 FIgetnArgs(funcInfo), FIgetArglist(funcInfo), NULL);
 		}
 		FIgetProcOid(funcInfo) = proc_tup->t_oid;
 	}
@@ -1178,7 +1176,7 @@ index_destroy(Oid indexId)
 	Relation	attributeRelation;
 	HeapTuple	tuple;
 	int16		attnum;
-	
+
 	Assert(OidIsValid(indexId));
 
 	/* why open it here?  bjm 1998/08/20 */
@@ -1206,12 +1204,12 @@ index_destroy(Oid indexId)
 	 */
 	attributeRelation = heap_openr(AttributeRelationName);
 
-	attnum = 1; /* indexes start at 1 */
+	attnum = 1;					/* indexes start at 1 */
 
 	while (HeapTupleIsValid(tuple = SearchSysCacheTupleCopy(ATTNUM,
-									ObjectIdGetDatum(indexId),
-									Int16GetDatum(attnum),
-									0, 0)))
+											   ObjectIdGetDatum(indexId),
+												   Int16GetDatum(attnum),
+															0, 0)))
 	{
 		heap_delete(attributeRelation, &tuple->t_ctid);
 		pfree(tuple);
@@ -1224,15 +1222,15 @@ index_destroy(Oid indexId)
 	 * ----------------
 	 */
 	tuple = SearchSysCacheTupleCopy(INDEXRELID,
-									  ObjectIdGetDatum(indexId),
-									  0, 0, 0);
+									ObjectIdGetDatum(indexId),
+									0, 0, 0);
 
 	if (!HeapTupleIsValid(tuple))
 		elog(NOTICE, "IndexRelationDestroy: %s's INDEX tuple missing",
 			 RelationGetRelationName(userindexRelation));
 
 	indexRelation = heap_openr(IndexRelationName);
-			         
+
 	heap_delete(indexRelation, &tuple->t_ctid);
 	pfree(tuple);
 	heap_close(indexRelation);
@@ -1281,12 +1279,12 @@ FormIndexDatum(int numberOfAttributes,
 	{
 		offset = AttrNumberGetAttrOffset(i);
 
-		datum[offset] =	PointerGetDatum(GetIndexValue(heapTuple,
-										  heapDescriptor,
-										  offset,
-										  attributeNumber,
-										  fInfo,
-										  &isNull));
+		datum[offset] = PointerGetDatum(GetIndexValue(heapTuple,
+													  heapDescriptor,
+													  offset,
+													  attributeNumber,
+													  fInfo,
+													  &isNull));
 
 		nullv[offset] = (isNull) ? 'n' : ' ';
 	}
@@ -1311,7 +1309,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	Datum		values[Natts_pg_class];
 	char		nulls[Natts_pg_class];
 	char		replace[Natts_pg_class];
-	HeapScanDesc	pg_class_scan = NULL;
+	HeapScanDesc pg_class_scan = NULL;
 
 	/* ----------------
 	 * This routine handles updates for both the heap and index relation
@@ -1356,14 +1354,14 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		ScanKeyData key[1];
 
 		ScanKeyEntryInitialize(&key[0], 0,
-								ObjectIdAttributeNumber,
-								F_OIDEQ,
-								ObjectIdGetDatum(relid));
+							   ObjectIdAttributeNumber,
+							   F_OIDEQ,
+							   ObjectIdGetDatum(relid));
 
 		pg_class_scan = heap_beginscan(pg_class, 0, SnapshotNow, 1, key);
 		tuple = heap_getnext(pg_class_scan, 0);
 	}
-	
+
 	if (!HeapTupleIsValid(tuple))
 	{
 		if (IsBootstrapProcessingMode())
@@ -1436,7 +1434,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		pfree(tuple);
 	else
 		heap_endscan(pg_class_scan);
-	
+
 	heap_close(pg_class);
 	heap_close(whichRel);
 }
@@ -1478,7 +1476,7 @@ DefaultBuild(Relation heapRelation,
 			 AttrNumber *attributeNumber,
 			 IndexStrategy indexStrategy,		/* not used */
 			 uint16 parameterCount,		/* not used */
-			 Datum *parameter, /* not used */
+			 Datum *parameter,	/* not used */
 			 FuncIndexInfoPtr funcInfo,
 			 PredInfo *predInfo)
 {
@@ -1543,7 +1541,7 @@ DefaultBuild(Relation heapRelation,
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
 		econtext = makeNode(ExprContext);
-					/* last parameter was junk being sent bjm 1998/08/17 */
+		/* last parameter was junk being sent bjm 1998/08/17 */
 		FillDummyExprContext(econtext, slot, heapDescriptor, InvalidBuffer);
 	}
 	else
@@ -1552,7 +1550,7 @@ DefaultBuild(Relation heapRelation,
 		tupleTable = 0;
 		slot = NULL;
 	}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* ----------------
 	 *	Ok, begin our scan of the base relation.
@@ -1560,7 +1558,7 @@ DefaultBuild(Relation heapRelation,
 	 */
 	scan = heap_beginscan(heapRelation, /* relation */
 						  0,	/* start at end */
-						  SnapshotNow,/* seeself */
+						  SnapshotNow,	/* seeself */
 						  0,	/* number of keys */
 						  (ScanKey) NULL);		/* scan key */
 
@@ -1591,7 +1589,7 @@ DefaultBuild(Relation heapRelation,
 				indtuples++;
 				continue;
 			}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -1605,7 +1603,7 @@ DefaultBuild(Relation heapRelation,
 			slot->val = heapTuple;
 			if (ExecQual((List *) predicate, econtext) == false)
 				continue;
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		indtuples++;
@@ -1643,7 +1641,7 @@ DefaultBuild(Relation heapRelation,
 	{
 #ifndef OMIT_PARTIAL_INDEX
 		ExecDestroyTupleTable(tupleTable, false);
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 	}
 
 	pfree(nullv);

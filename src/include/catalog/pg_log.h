@@ -9,7 +9,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_log.h,v 1.4 1997/09/08 02:35:18 momjian Exp $
+ * $Id: pg_log.h,v 1.5 1998/09/01 04:35:05 momjian Exp $
  *
  * NOTES
  *	  The structures and macros used by the transam/ code
@@ -37,4 +37,4 @@ typedef FormData_pg_log *Form_pg_log;
 #define Natts_pg_log			1
 #define Anum_pg_log_logfoo		1
 
-#endif							/* PG_LOG_H */
+#endif	 /* PG_LOG_H */

@@ -55,7 +55,7 @@
 
 /*
  *		@(#)cdefs.h		8.1 (Berkeley) 6/2/93
- *		$Id: cdefs.h,v 1.3 1997/09/07 05:00:14 momjian Exp $
+ *		$Id: cdefs.h,v 1.4 1998/09/01 04:37:51 momjian Exp $
  */
 
 #ifndef _CDEFS_H_
@@ -96,8 +96,8 @@
 #else
 #ifndef __GNUC__
 #define __inline				/* delete GCC keyword */
-#endif							/* !__GNUC__ */
-#endif							/* !__cplusplus */
+#endif	 /* !__GNUC__ */
+#endif	 /* !__cplusplus */
 
 #else							/* !(__STDC__ || __cplusplus) */
 #define __P(protos)		()		/* traditional C preprocessor */
@@ -123,8 +123,8 @@
 #define signed
 #define volatile
 #endif
-#endif							/* !__GNUC__ */
-#endif							/* !(__STDC__ || __cplusplus) */
+#endif	 /* !__GNUC__ */
+#endif	 /* !(__STDC__ || __cplusplus) */
 
 /*
  * GCC1 and some versions of GCC2 declare dead (non-returning) and
@@ -148,4 +148,4 @@
 #define __pure
 #endif
 
-#endif							/* !_CDEFS_H_ */
+#endif	 /* !_CDEFS_H_ */

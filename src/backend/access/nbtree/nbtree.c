@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.31 1998/09/01 03:21:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.32 1998/09/01 04:27:03 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -44,7 +44,7 @@ bool		BuildingBtree = false;		/* see comment in btbuild() */
 bool		FastBuild = true;	/* use sort/build instead of insertion
 								 * build */
 
-static void	_bt_restscan(IndexScanDesc scan);
+static void _bt_restscan(IndexScanDesc scan);
 
 /*
  *	btbuild() -- build a new btree index.
@@ -151,7 +151,7 @@ btbuild(Relation heap,
 		 */
 		usefast = false;
 	}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	/* start a heap scan */
 	/* build the index */
@@ -184,7 +184,7 @@ btbuild(Relation heap,
 				nitups++;
 				continue;
 			}
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -198,7 +198,7 @@ btbuild(Relation heap,
 			slot->val = htup;
 			if (ExecQual((List *) pred, econtext) == false)
 				continue;
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		nitups++;
@@ -283,7 +283,7 @@ btbuild(Relation heap,
 #ifndef OMIT_PARTIAL_INDEX
 		ExecDestroyTupleTable(tupleTable, true);
 		pfree(econtext);
-#endif							/* OMIT_PARTIAL_INDEX */
+#endif	 /* OMIT_PARTIAL_INDEX */
 	}
 
 	/*
@@ -361,14 +361,13 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	/*
 	 * See comments in btbuild.
 	 *
-	 * if (itup->t_info & INDEX_NULL_MASK)
-			return (InsertIndexResult) NULL;
+	 * if (itup->t_info & INDEX_NULL_MASK) return (InsertIndexResult) NULL;
 	 */
 
 	btitem = _bt_formitem(itup);
 
 	res = _bt_doinsert(rel, btitem,
-					 IndexIsUnique(RelationGetRelid(rel)), heapRel);
+					   IndexIsUnique(RelationGetRelid(rel)), heapRel);
 
 	pfree(btitem);
 	pfree(itup);
@@ -397,27 +396,26 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 
 	if (ItemPointerIsValid(&(scan->currentItemData)))
 	{
+
 		/*
 		 * Now we don't adjust scans on insertion (comments in
-		 * nbtscan.c:_bt_scandel()) and I hope that we will unlock
-		 * current index page before leaving index in LLL: this
-		 * means that current index tuple could be moved right
-		 * before we get here and we have to restore our scan
-		 * position. We save heap TID pointed by current index
-		 * tuple and use it. This will work untill we start
-		 * to re-use (move heap tuples) without vacuum...
-		 * 		- vadim 07/29/98
+		 * nbtscan.c:_bt_scandel()) and I hope that we will unlock current
+		 * index page before leaving index in LLL: this means that current
+		 * index tuple could be moved right before we get here and we have
+		 * to restore our scan position. We save heap TID pointed by
+		 * current index tuple and use it. This will work untill we start
+		 * to re-use (move heap tuples) without vacuum... - vadim 07/29/98
 		 */
 		_bt_restscan(scan);
 		res = _bt_next(scan, dir);
 	}
 	else
 		res = _bt_first(scan, dir);
-	
+
 	/* Save heap TID to use it in _bt_restscan */
 	if (res)
-		((BTScanOpaque)scan->opaque)->curHeapIptr = res->heap_iptr;
-	
+		((BTScanOpaque) scan->opaque)->curHeapIptr = res->heap_iptr;
+
 	return (char *) res;
 }
 
@@ -627,33 +625,34 @@ btdelete(Relation rel, ItemPointer tid)
 static void
 _bt_restscan(IndexScanDesc scan)
 {
-	Relation		rel = scan->relation;
-	BTScanOpaque	so = (BTScanOpaque) scan->opaque;
-	Buffer			buf = so->btso_curbuf;
-	Page			page = BufferGetPage(buf);
-	ItemPointer		current = &(scan->currentItemData);
-	OffsetNumber	offnum = ItemPointerGetOffsetNumber(current),
-					maxoff = PageGetMaxOffsetNumber(page);
-	BTPageOpaque	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
-	ItemPointerData	target = so->curHeapIptr;
-	BTItem			item;
-	BlockNumber		blkno;
+	Relation	rel = scan->relation;
+	BTScanOpaque so = (BTScanOpaque) scan->opaque;
+	Buffer		buf = so->btso_curbuf;
+	Page		page = BufferGetPage(buf);
+	ItemPointer current = &(scan->currentItemData);
+	OffsetNumber offnum = ItemPointerGetOffsetNumber(current),
+				maxoff = PageGetMaxOffsetNumber(page);
+	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	ItemPointerData target = so->curHeapIptr;
+	BTItem		item;
+	BlockNumber blkno;
 
 	if (maxoff >= offnum)
 	{
-		/* 
-		 * if the item is where we left it or has just moved right 
-		 * on this page, we're done 
+
+		/*
+		 * if the item is where we left it or has just moved right on this
+		 * page, we're done
 		 */
-		for ( ;
+		for (;
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
 		{
 			item = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 			if (item->bti_itup.t_tid.ip_blkid.bi_hi == \
-					target.ip_blkid.bi_hi && \
+				target.ip_blkid.bi_hi && \
 				item->bti_itup.t_tid.ip_blkid.bi_lo == \
-					target.ip_blkid.bi_lo && \
+				target.ip_blkid.bi_lo && \
 				item->bti_itup.t_tid.ip_posid == target.ip_posid)
 			{
 				current->ip_posid = offnum;
@@ -662,8 +661,8 @@ _bt_restscan(IndexScanDesc scan)
 		}
 	}
 
-	/* 
-	 * By here, the item we're looking for moved right at least one page 
+	/*
+	 * By here, the item we're looking for moved right at least one page
 	 */
 	for (;;)
 	{
@@ -678,15 +677,15 @@ _bt_restscan(IndexScanDesc scan)
 		opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 		/* see if it's on this page */
-		for (offnum = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY ;
+		for (offnum = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
 		{
 			item = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
 			if (item->bti_itup.t_tid.ip_blkid.bi_hi == \
-					target.ip_blkid.bi_hi && \
+				target.ip_blkid.bi_hi && \
 				item->bti_itup.t_tid.ip_blkid.bi_lo == \
-					target.ip_blkid.bi_lo && \
+				target.ip_blkid.bi_lo && \
 				item->bti_itup.t_tid.ip_posid == target.ip_posid)
 			{
 				ItemPointerSet(current, blkno, offnum);

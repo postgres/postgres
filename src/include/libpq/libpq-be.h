@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.11 1998/07/09 03:29:00 scrappy Exp $
+ * $Id: libpq-be.h,v 1.12 1998/09/01 04:36:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ typedef enum
 	WritingPacket
 } PacketState;
 
-typedef int (*PacketDoneProc) (void * arg, PacketLen pktlen, void * pktdata);
+typedef int (*PacketDoneProc) (void *arg, PacketLen pktlen, void *pktdata);
 
 typedef struct Packet
 {
@@ -76,11 +76,13 @@ typedef struct Packet
 	PacketLen	len;			/* Actual length */
 	int			nrtodo;			/* Bytes still to transfer */
 	char	   *ptr;			/* Buffer pointer */
-	PacketDoneProc	iodone;		/* I/O complete callback */
+	PacketDoneProc iodone;		/* I/O complete callback */
 	void	   *arg;			/* Argument to callback */
 
-	/* We declare the data buffer as a union of the allowed packet types,
-	 * mainly to ensure that enough space is allocated for the largest one.
+	/*
+	 * We declare the data buffer as a union of the allowed packet types,
+	 * mainly to ensure that enough space is allocated for the largest
+	 * one.
 	 */
 
 	union
@@ -143,4 +145,4 @@ void		PacketSendSetup(Packet *pkt, int nbytes, PacketDoneProc iodone, void *arg)
 int			PacketSendFragment(Packet *pkt, int sock);
 void		PacketSendError(Packet *pkt, char *errormsg);
 
-#endif							/* LIBPQ_BE_H */
+#endif	 /* LIBPQ_BE_H */

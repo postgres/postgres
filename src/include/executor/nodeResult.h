@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeResult.h,v 1.6 1998/02/13 03:43:39 vadim Exp $
+ * $Id: nodeResult.h,v 1.7 1998/09/01 04:36:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern int	ExecCountSlotsResult(Result *node);
 extern void ExecEndResult(Result *node);
 extern void ExecReScanResult(Result *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif							/* NODERESULT_H */
+#endif	 /* NODERESULT_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: palloc.h,v 1.5 1997/09/08 02:39:53 momjian Exp $
+ * $Id: palloc.h,v 1.6 1998/09/01 04:39:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,4 @@ extern void *repalloc(void *pointer, Size size);
 /* like strdup except uses palloc */
 extern char *pstrdup(char *pointer);
 
-#endif							/* PALLOC_H */
+#endif	 /* PALLOC_H */

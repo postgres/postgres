@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_statistic.h,v 1.4 1997/09/08 02:35:27 momjian Exp $
+ * $Id: pg_statistic.h,v 1.5 1998/09/01 04:35:15 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -57,4 +57,4 @@ typedef FormData_pg_statistic *Form_pg_statistic;
 #define Anum_pg_statistic_stalokey		4
 #define Anum_pg_statistic_stahikey		5
 
-#endif							/* PG_STATISTIC_H */
+#endif	 /* PG_STATISTIC_H */

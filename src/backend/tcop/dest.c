@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.22 1998/09/01 03:25:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.23 1998/09/01 04:32:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,8 +172,8 @@ NullCommand(CommandDest dest)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
-		case Remote:
+			case RemoteInternal:
+			case Remote:
 			{
 				/* ----------------
 				 *		tell the fe that we saw an empty query string
@@ -206,8 +206,8 @@ ReadyForQuery(CommandDest dest)
 {
 	switch (dest)
 	{
-		case RemoteInternal:
-		case Remote:
+			case RemoteInternal:
+			case Remote:
 			{
 				if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 					pq_putnchar("Z", 1);

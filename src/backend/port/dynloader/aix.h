@@ -1,5 +1,5 @@
 /*
- * $Id: aix.h,v 1.1 1997/12/19 22:58:26 scrappy Exp $
+ * $Id: aix.h,v 1.2 1998/09/01 04:30:51 momjian Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -53,4 +53,4 @@ extern		"C"
 #define  pg_dlclose(h)	dlclose(h)
 #define  pg_dlerror()	dlerror()
 
-#endif							/* __dlfcn_h__ */
+#endif	 /* __dlfcn_h__ */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sco.h,v 1.1 1997/12/20 03:38:19 scrappy Exp $
+ * $Id: sco.h,v 1.2 1998/09/01 04:31:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,4 +33,4 @@
 
 /* port.c */
 
-#endif							/* PORT_PROTOS_H */
+#endif	 /* PORT_PROTOS_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fs.h,v 1.6 1997/11/21 19:02:59 momjian Exp $
+ * $Id: libpq-fs.h,v 1.7 1998/09/01 04:36:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 #ifndef MAXNAMLEN
 #define MAXNAMLEN 255
-#endif							/* MAXNAMLEN */
+#endif	 /* MAXNAMLEN */
 
 struct pgdirent
 {
@@ -38,7 +38,7 @@ struct pgdirent
 #else							/* SYSV_DIRENT */
 #define D_NAMLEN(dp) \
 		((dp)->d_namlen)
-#endif							/* SYSV_DIRENT */
+#endif	 /* SYSV_DIRENT */
 
 /* for stat(2) */
 #ifndef S_IRUSR
@@ -71,7 +71,7 @@ struct pgdirent
 
 #define S_ISDIR( mode )			(((mode) & _S_IFMT) == _S_IFDIR)
 
-#endif							/* S_IRUSR */
+#endif	 /* S_IRUSR */
 
 /*
  * Inversion doesn't have links.
@@ -103,4 +103,4 @@ struct pgdirent
 #define PENOTEMPTY		 66		/* Directory not empty */
 #define PEPGIO			 99		/* postgres backend had problems */
 
-#endif							/* LIBPQ_FS_H */
+#endif	 /* LIBPQ_FS_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.33 1998/09/01 03:25:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.34 1998/09/01 04:32:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,23 +43,19 @@
 
 /*-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-*/
 static int	_ArrayCount(char *str, int *dim, int typdelim);
-static char *
-_ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
+static char *_ReadArrayStr(char *arrayStr, int nitems, int ndim, int *dim,
 			  FmgrInfo *inputproc, Oid typelem, int32 typmod,
 			  char typdelim, int typlen, bool typbyval,
 			  char typalign, int *nbytes);
 
 #ifdef LOARRAY
-static char *
-_ReadLOArray(char *str, int *nbytes, int *fd, bool *chunkFlag,
+static char *_ReadLOArray(char *str, int *nbytes, int *fd, bool *chunkFlag,
 			 int ndim, int *dim, int baseSize);
 
 #endif
-static void
-_CopyArrayEls(char **values, char *p, int nitems, int typlen,
+static void _CopyArrayEls(char **values, char *p, int nitems, int typlen,
 			  char typalign, bool typbyval);
-static void
-system_cache_lookup(Oid element_type, bool input, int *typlen,
+static void system_cache_lookup(Oid element_type, bool input, int *typlen,
 				 bool *typbyval, char *typdelim, Oid *typelem, Oid *proc,
 					char *typalign);
 static Datum _ArrayCast(char *value, bool byval, int len);
@@ -68,18 +64,15 @@ static Datum _ArrayCast(char *value, bool byval, int len);
 static char *_AdvanceBy1word(char *str, char **word);
 
 #endif
-static void
-_ArrayRange(int *st, int *endp, int bsize, char *destPtr,
+static void _ArrayRange(int *st, int *endp, int bsize, char *destPtr,
 			ArrayType *array, int from);
 static int	_ArrayClipCount(int *stI, int *endpI, ArrayType *array);
-static void
-_LOArrayRange(int *st, int *endp, int bsize, int srcfd,
+static void _LOArrayRange(int *st, int *endp, int bsize, int srcfd,
 			  int destfd, ArrayType *array, int isSrcLO, bool *isNull);
-static void
-_ReadArray(int *st, int *endp, int bsize, int srcfd, int destfd,
+static void _ReadArray(int *st, int *endp, int bsize, int srcfd, int destfd,
 		   ArrayType *array, int isDestLO, bool *isNull);
-static int  ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
-static int  SanityCheckInput(int ndim, int n, int *dim, int *lb, int *indx);
+static int	ArrayCastAndSet(char *src, bool typbyval, int typlen, char *dest);
+static int	SanityCheckInput(int ndim, int n, int *dim, int *lb, int *indx);
 static int	array_read(char *destptr, int eltsize, int nitems, char *srcptr);
 static char *array_seek(char *ptr, int eltsize, int nitems);
 
@@ -608,7 +601,8 @@ array_out(ArrayType *v, Oid element_type)
 	FmgrInfo	outputproc;
 	char		typalign;
 
-	char	   *p, *tmp, 
+	char	   *p,
+			   *tmp,
 			   *retval,
 			  **values,
 				delim[2];
@@ -698,9 +692,11 @@ array_out(ArrayType *v, Oid element_type)
 			 */
 			overall_length += 2;
 		}
-		for (tmp=values[i];*tmp;tmp++) {
+		for (tmp = values[i]; *tmp; tmp++)
+		{
 			overall_length += 1;
-			if (*tmp=='"') overall_length += 1;
+			if (*tmp == '"')
+				overall_length += 1;
 		}
 		overall_length += 1;
 	}
@@ -729,12 +725,14 @@ array_out(ArrayType *v, Oid element_type)
 		if (!typbyval)
 		{
 			strcat(p, "\"");
-			l=strlen(p);
-			for (tmp=values[k];*tmp;tmp++) {
-				if (*tmp=='"') p[l++]='\\';
-				p[l++]=*tmp;
-				}
-			p[l]='\0';
+			l = strlen(p);
+			for (tmp = values[k]; *tmp; tmp++)
+			{
+				if (*tmp == '"')
+					p[l++] = '\\';
+				p[l++] = *tmp;
+			}
+			p[l] = '\0';
 			strcat(p, "\"");
 		}
 		else

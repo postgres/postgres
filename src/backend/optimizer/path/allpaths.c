@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.22 1998/09/01 03:23:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.23 1998/09/01 04:29:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,10 @@ int32		_use_geqo_rels_ = GEQO_RELS;
 
 static void find_rel_paths(Query *root, List *rels);
 static List *find_join_paths(Query *root, List *outer_rels, int levels_needed);
+
 #ifdef OPTIMIZER_DEBUG
-static void debug_print_rel(Query *root, RelOptInfo *rel);
+static void debug_print_rel(Query *root, RelOptInfo * rel);
+
 #endif
 
 /*
@@ -76,6 +78,7 @@ find_paths(Query *root, List *rels)
 
 	if (levels_needed <= 1)
 	{
+
 		/*
 		 * Unsorted single relation, no more processing is required.
 		 */
@@ -83,6 +86,7 @@ find_paths(Query *root, List *rels)
 	}
 	else
 	{
+
 		/*
 		 * this means that joins or sorts are required. set selectivities
 		 * of clauses that have not been set by an index.
@@ -118,10 +122,10 @@ find_rel_paths(Query *root, List *rels)
 		sequential_scan_list = lcons(create_seqscan_path(rel), NIL);
 
 		rel_index_scan_list = find_index_paths(root,
-											 rel,
-											 find_relation_indices(root, rel),
-											 rel->clauseinfo,
-											 rel->joininfo);
+											   rel,
+										find_relation_indices(root, rel),
+											   rel->clauseinfo,
+											   rel->joininfo);
 
 		or_index_scan_list = create_or_index_paths(root, rel, rel->clauseinfo);
 
@@ -180,7 +184,8 @@ find_join_paths(Query *root, List *outer_rels, int levels_needed)
 	 *******************************************/
 
 	if ((_use_geqo_) && length(root->base_rel_list) >= _use_geqo_rels_)
-		return lcons(geqo(root), NIL);	/* returns *one* RelOptInfo, so lcons it */
+		return lcons(geqo(root), NIL);	/* returns *one* RelOptInfo, so
+										 * lcons it */
 
 	/*******************************************
 	 * rest will be deprecated in case of GEQO *
@@ -280,7 +285,7 @@ print_joinclauses(Query *root, List *clauses)
 
 	foreach(l, clauses)
 	{
-		ClauseInfo	   *c = lfirst(l);
+		ClauseInfo *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))
@@ -396,7 +401,7 @@ print_path(Query *root, Path *path, int indent)
 }
 
 static void
-debug_print_rel(Query *root, RelOptInfo *rel)
+debug_print_rel(Query *root, RelOptInfo * rel)
 {
 	List	   *l;
 
@@ -412,4 +417,4 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 	print_path(root, rel->cheapestpath, 1);
 }
 
-#endif							/* OPTIMIZER_DEBUG */
+#endif	 /* OPTIMIZER_DEBUG */

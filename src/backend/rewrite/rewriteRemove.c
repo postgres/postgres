@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.17 1998/09/01 03:24:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.18 1998/09/01 04:31:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,15 +36,15 @@ RewriteGetRuleEventRel(char *rulename)
 	Oid			eventrel;
 
 	htup = SearchSysCacheTuple(REWRITENAME,
-								PointerGetDatum(rulename),
-							  	0, 0, 0);
+							   PointerGetDatum(rulename),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "RewriteGetRuleEventRel: rule \"%s\" not found",
 			 rulename);
 	eventrel = ((Form_pg_rewrite) GETSTRUCT(htup))->ev_class;
 	htup = SearchSysCacheTuple(RELOID,
-							  PointerGetDatum(eventrel),
-							  0, 0, 0);
+							   PointerGetDatum(eventrel),
+							   0, 0, 0);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "RewriteGetRuleEventRel: class %d not found",
 			 eventrel);
@@ -87,6 +87,7 @@ RemoveRewriteRule(char *ruleName)
 	tuple = SearchSysCacheTupleCopy(REWRITENAME,
 									PointerGetDatum(ruleName),
 									0, 0, 0);
+
 	/*
 	 * complain if no rule with such name existed
 	 */
@@ -101,10 +102,10 @@ RemoveRewriteRule(char *ruleName)
 	 * relation's OID
 	 */
 	ruleId = tuple->t_oid;
-	eventRelationOidDatum =	heap_getattr(tuple,
-								 Anum_pg_rewrite_ev_class,
-								 RelationGetDescr(RewriteRelation),
-								 &isNull);
+	eventRelationOidDatum = heap_getattr(tuple,
+										 Anum_pg_rewrite_ev_class,
+									   RelationGetDescr(RewriteRelation),
+										 &isNull);
 	if (isNull)
 	{
 		/* XXX strange!!! */

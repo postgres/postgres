@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.15 1998/09/01 03:24:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.16 1998/09/01 04:30:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
-static void
-checkTargetTypes(ParseState *pstate, char *target_colname,
+static void checkTargetTypes(ParseState *pstate, char *target_colname,
 				 char *refname, char *colname);
 
 struct
@@ -191,10 +190,13 @@ addRangeTableEntry(ParseState *pstate,
 	if (pstate != NULL)
 	{
 		if (refnameRangeTablePosn(pstate, refname, &sublevels_up) != 0 &&
-			(!inFromCl || sublevels_up == 0)) {
-			if (!strcmp(refname, "*CURRENT*") || !strcmp(refname, "*NEW*")) {
-				int	rt_index = refnameRangeTablePosn(pstate, refname, &sublevels_up);
-				return (RangeTblEntry *)nth(rt_index - 1, pstate->p_rtable);
+			(!inFromCl || sublevels_up == 0))
+		{
+			if (!strcmp(refname, "*CURRENT*") || !strcmp(refname, "*NEW*"))
+			{
+				int			rt_index = refnameRangeTablePosn(pstate, refname, &sublevels_up);
+
+				return (RangeTblEntry *) nth(rt_index - 1, pstate->p_rtable);
 			}
 			elog(ERROR, "Table name %s specified more than once", refname);
 		}
@@ -438,12 +440,12 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 
 #if FALSE
 	if ((attrtype_id != attrtype_target)
-	 || (get_atttypmod(rte->relid, resdomno_id) !=
-		 get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target)))
+		|| (get_atttypmod(rte->relid, resdomno_id) !=
+	   get_atttypmod(pstate->p_target_relation->rd_id, resdomno_target)))
 	{
 		if (can_coerce_type(1, &attrtype_id, &attrtype_target))
 		{
-			Node *expr = coerce_type(pstate, expr, attrtype_id, attrtype_target);
+			Node	   *expr = coerce_type(pstate, expr, attrtype_id, attrtype_target);
 
 			elog(ERROR, "Type %s(%d) can be coerced to match target column %s(%d)",
 				 colname, get_atttypmod(rte->relid, resdomno_id),

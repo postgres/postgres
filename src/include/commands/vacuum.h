@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.15 1998/09/01 03:28:04 momjian Exp $
+ * $Id: vacuum.h,v 1.16 1998/09/01 04:35:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,11 @@ typedef struct VPageDescrData
 {
 	BlockNumber vpd_blkno;		/* BlockNumber of this Page */
 	Size		vpd_free;		/* FreeSpace on this Page */
-	uint16		vpd_offsets_used;	/* Number of OffNums used by vacuum */
-	uint16		vpd_offsets_free;	/* Number of OffNums free or to be free */
-	OffsetNumber vpd_offsets[1];	/* Array of its OffNums */
+	uint16		vpd_offsets_used;		/* Number of OffNums used by
+										 * vacuum */
+	uint16		vpd_offsets_free;		/* Number of OffNums free or to be
+										 * free */
+	OffsetNumber vpd_offsets[1];/* Array of its OffNums */
 } VPageDescrData;
 
 typedef VPageDescrData *VPageDescr;
@@ -43,7 +45,7 @@ typedef VPageDescrData *VPageDescr;
 typedef struct VPageListData
 {
 	int			vpl_empty_end_pages;	/* Number of "empty" end-pages */
-	int			vpl_num_pages;		/* Number of pages in vpl_pagedesc */
+	int			vpl_num_pages;	/* Number of pages in vpl_pagedesc */
 	VPageDescr *vpl_pagedesc;	/* Descriptions of pages */
 } VPageListData;
 
@@ -112,4 +114,4 @@ extern void vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec);
 
 #define ATTNVALS_SCALE	1000000000		/* XXX so it can act as a float4 */
 
-#endif							/* VACUUM_H */
+#endif	 /* VACUUM_H */

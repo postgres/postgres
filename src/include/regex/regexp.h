@@ -68,4 +68,4 @@ void pg95_regerror __P((const char *));
 
 __END_DECLS
 
-#endif							/* !_REGEXP_H_ */
+#endif	 /* !_REGEXP_H_ */

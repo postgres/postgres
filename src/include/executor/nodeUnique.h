@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeUnique.h,v 1.6 1998/02/23 06:27:56 vadim Exp $
+ * $Id: nodeUnique.h,v 1.7 1998/09/01 04:36:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,4 @@ extern int	ExecCountSlotsUnique(Unique *node);
 extern void ExecEndUnique(Unique *node);
 extern void ExecReScanUnique(Unique *node, ExprContext *exprCtxt, Plan *parent);
 
-#endif							/* NODEUNIQUE_H */
+#endif	 /* NODEUNIQUE_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.21 1998/09/01 03:26:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.22 1998/09/01 04:33:03 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -205,7 +205,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(FormData_pg_type, typalign) +sizeof(char),
+		offsetof(FormData_pg_type, typalign) + sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
 	{TypeRelationName,			/* TYPOID */
@@ -241,7 +241,7 @@ static struct cachedesc cacheinfo[] = {
 		sizeof(FormData_pg_opclass),
 		NULL,
 	NULL},
-	{IndexRelationName,			/* INDRELIDKEY */ /* never used */
+	{IndexRelationName,			/* INDRELIDKEY *//* never used */
 		2,
 		{
 			Anum_pg_index_indrelid,
@@ -438,6 +438,7 @@ InitCatalogCache()
 		}
 	}
 }
+
 /*
  * SearchSysCacheTupleCopy--
  *
@@ -445,11 +446,11 @@ InitCatalogCache()
  *	that the user is required to pfree().
  */
 HeapTuple
-SearchSysCacheTupleCopy(int cacheId,/* cache selection code */
-					Datum key1,
-					Datum key2,
-					Datum key3,
-					Datum key4)
+SearchSysCacheTupleCopy(int cacheId,	/* cache selection code */
+						Datum key1,
+						Datum key2,
+						Datum key3,
+						Datum key4)
 {
 	HeapTuple	cachetup;
 
@@ -457,9 +458,9 @@ SearchSysCacheTupleCopy(int cacheId,/* cache selection code */
 	if (PointerIsValid(cachetup))
 		return heap_copytuple(cachetup);
 	else
-		return cachetup; /* NULL */
+		return cachetup;		/* NULL */
 }
-					
+
 
 /*
  * SearchSysCacheTuple--
@@ -588,7 +589,7 @@ SearchSysCacheGetAttribute(int cacheId,
 		elog(DEBUG,
 			 "SearchSysCacheGetAttribute: Lookup in %s(%d) failed",
 			 cacheName, cacheId);
-#endif							/* defined(CACHEDEBUG) */
+#endif	 /* defined(CACHEDEBUG) */
 		return NULL;
 	}
 
@@ -623,6 +624,7 @@ SearchSysCacheGetAttribute(int cacheId,
 
 	if (isNull)
 	{
+
 		/*
 		 * Used to be an elog(DEBUG, ...) here and a claim that it should
 		 * be a FATAL error, I don't think either is warranted -mer 6/9/92
@@ -681,7 +683,7 @@ TypeDefaultRetrieve(Oid typId)
 #ifdef	CACHEDEBUG
 		elog(DEBUG, "TypeDefaultRetrieve: Lookup in %s(%d) failed",
 			 cacheinfo[TYPOID].name, TYPOID);
-#endif							/* defined(CACHEDEBUG) */
+#endif	 /* defined(CACHEDEBUG) */
 		return NULL;
 	}
 
@@ -700,7 +702,7 @@ TypeDefaultRetrieve(Oid typId)
 #ifdef	CACHEDEBUG
 		elog(DEBUG, "TypeDefaultRetrieve: No extractable typdefault in %s(%d)",
 			 cacheinfo[TYPOID].name, TYPOID);
-#endif							/* defined(CACHEDEBUG) */
+#endif	 /* defined(CACHEDEBUG) */
 		return NULL;
 	}
 

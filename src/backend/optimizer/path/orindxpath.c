@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.10 1998/09/01 03:23:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.11 1998/09/01 04:29:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,11 +32,10 @@
 
 
 static void
-best_or_subclause_indices(Query *root, RelOptInfo *rel, List *subclauses,
+best_or_subclause_indices(Query *root, RelOptInfo * rel, List *subclauses,
 List *indices, List *examined_indexids, Cost subcost, List *selectivities,
 						  List **indexids, Cost *cost, List **selecs);
-static void
-best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclause,
+static void best_or_subclause_index(Query *root, RelOptInfo * rel, Expr *subclause,
 				   List *indices, int *indexid, Cost *cost, Cost *selec);
 
 
@@ -52,14 +51,14 @@ best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclause,
  */
 List *
 create_or_index_paths(Query *root,
-					  RelOptInfo *rel, List *clauses)
+					  RelOptInfo * rel, List *clauses)
 {
 	List	   *t_list = NIL;
 	List	   *clist;
 
 	foreach(clist, clauses)
 	{
-		ClauseInfo	   *clausenode = (ClauseInfo *) (lfirst(clist));
+		ClauseInfo *clausenode = (ClauseInfo *) (lfirst(clist));
 
 		/*
 		 * Check to see if this clause is an 'or' clause, and, if so,
@@ -114,8 +113,8 @@ create_or_index_paths(Query *root,
 				 * processing	 -- JMH, 7/7/92
 				 */
 				pathnode->path.locclauseinfo =
-					set_difference(copyObject((Node *)rel->clauseinfo),
-								   lcons(clausenode,NIL));
+					set_difference(copyObject((Node *) rel->clauseinfo),
+								   lcons(clausenode, NIL));
 
 #if 0							/* fix xfunc */
 				/* add in cost for expensive functions!  -- JMH, 7/7/92 */
@@ -156,7 +155,7 @@ create_or_index_paths(Query *root,
  */
 static void
 best_or_subclause_indices(Query *root,
-						  RelOptInfo *rel,
+						  RelOptInfo * rel,
 						  List *subclauses,
 						  List *indices,
 						  List *examined_indexids,
@@ -166,9 +165,9 @@ best_or_subclause_indices(Query *root,
 						  Cost *cost,	/* return value */
 						  List **selecs)		/* return value */
 {
-	List *slist;
-	
-	foreach (slist, subclauses)
+	List	   *slist;
+
+	foreach(slist, subclauses)
 	{
 		int			best_indexid;
 		Cost		best_cost;
@@ -176,7 +175,7 @@ best_or_subclause_indices(Query *root,
 
 		best_or_subclause_index(root, rel, lfirst(slist), lfirst(indices),
 								&best_indexid, &best_cost, &best_selec);
-								
+
 		examined_indexids = lappendi(examined_indexids, best_indexid);
 		subcost += best_cost;
 		selectivities = lappend(selectivities, makeFloat(best_selec));
@@ -207,25 +206,25 @@ best_or_subclause_indices(Query *root,
  */
 static void
 best_or_subclause_index(Query *root,
-						RelOptInfo *rel,
+						RelOptInfo * rel,
 						Expr *subclause,
 						List *indices,
 						int *retIndexid,		/* return value */
 						Cost *retCost,	/* return value */
 						Cost *retSelec) /* return value */
 {
-	List *ilist;
-	bool first_run = true;
+	List	   *ilist;
+	bool		first_run = true;
 
 	/* if we don't match anything, return zeros */
 	*retIndexid = 0;
 	*retCost = 0.0;
 	*retSelec = 0.0;
-	
-	foreach (ilist, indices)
+
+	foreach(ilist, indices)
 	{
-		RelOptInfo		   *index = (RelOptInfo *) lfirst(ilist);
-		
+		RelOptInfo *index = (RelOptInfo *) lfirst(ilist);
+
 		Datum		value;
 		int			flag = 0;
 		Cost		subcost;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.23 1998/09/01 03:28:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.24 1998/09/01 04:40:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 #include <unistd.h>
 #endif
 #include <pwd.h>
-#endif /* WIN32 */
+#endif	 /* WIN32 */
 
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>
@@ -56,7 +56,8 @@
 
 struct authsvc
 {
-	char		name[NAMEDATALEN];	/* service nickname (for command line) */
+	char		name[NAMEDATALEN];		/* service nickname (for command
+										 * line) */
 	MsgType		msgtype;		/* startup packet header type */
 	int			allowed;		/* initially allowed (before command line
 								 * option parsing)? */
@@ -76,17 +77,17 @@ static struct authsvc authsvcs[] = {
 #ifdef KRB4
 	{"krb4", STARTUP_KRB4_MSG, 1},
 	{"kerberos", STARTUP_KRB4_MSG, 1},
-#endif							/* KRB4 */
+#endif	 /* KRB4 */
 #ifdef KRB5
 	{"krb5", STARTUP_KRB5_MSG, 1},
 	{"kerberos", STARTUP_KRB5_MSG, 1},
-#endif							/* KRB5 */
+#endif	 /* KRB5 */
 	{UNAUTHNAME, STARTUP_MSG,
 #if defined(KRB4) || defined(KRB5)
 		0
 #else							/* !(KRB4 || KRB5) */
 		1
-#endif							/* !(KRB4 || KRB5) */
+#endif	 /* !(KRB4 || KRB5) */
 	},
 	{"password", STARTUP_PASSWORD_MSG, 0}
 };
@@ -223,7 +224,7 @@ pg_krb4_sendauth(const char *PQerrormsg, int sock,
 	return STATUS_OK;
 }
 
-#endif							/* KRB4 */
+#endif	 /* KRB4 */
 
 #ifdef KRB5
 /*----------------------------------------------------------------
@@ -457,7 +458,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 	return code ? STATUS_ERROR : STATUS_OK;
 }
 
-#endif							/* KRB5 */
+#endif	 /* KRB5 */
 
 static int
 pg_password_sendauth(PGconn *conn, const char *password, AuthRequest areq)
@@ -521,7 +522,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			if (password == NULL || *password == '\0')
 			{
 				(void) sprintf(PQerrormsg,
-				 "fe_sendauth: no password supplied\n");
+							   "fe_sendauth: no password supplied\n");
 				return STATUS_ERROR;
 			}
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
@@ -607,10 +608,10 @@ fe_getauthname(char *PQerrormsg)
 		case STARTUP_MSG:
 			{
 #ifdef WIN32
-				char username[128];
-				DWORD namesize = sizeof(username) - 1;
+				char		username[128];
+				DWORD		namesize = sizeof(username) - 1;
 
-				if (GetUserName(username,&namesize)) 
+				if (GetUserName(username, &namesize))
 					name = username;
 #else
 				struct passwd *pw = getpwuid(geteuid());

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: backendid.h,v 1.4 1997/09/08 02:38:53 momjian Exp $
+ * $Id: backendid.h,v 1.5 1998/09/01 04:38:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,4 +29,4 @@ typedef int32 BackendTag;		/* unique backend identifier */
 extern BackendId MyBackendId;	/* backend id of this backend */
 extern BackendTag MyBackendTag; /* backend tag of this backend */
 
-#endif							/* BACKENDID_H */
+#endif	 /* BACKENDID_H */

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_mutation.h,v 1.5 1997/11/26 01:13:29 momjian Exp $
+ * $Id: geqo_mutation.h,v 1.6 1998/09/01 04:37:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,4 +25,4 @@
 
 extern void geqo_mutation(Gene *tour, int num_gene);
 
-#endif							/* GEQO_MUTATION_H */
+#endif	 /* GEQO_MUTATION_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.14 1998/09/01 03:26:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.15 1998/09/01 04:32:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,13 +73,13 @@ oidrand(Oid o, int32 X)
 		return true;
 
 	/*
-	 *	We do this because the cancel key is actually a random, so we don't
-	 *	want them to be able to request random numbers using our postmaster
-	 *	seeded value.
+	 * We do this because the cancel key is actually a random, so we don't
+	 * want them to be able to request random numbers using our postmaster
+	 * seeded value.
 	 */
 	if (!random_initialized)
 	{
-		srandom((unsigned int)time(NULL));
+		srandom((unsigned int) time(NULL));
 		random_initialized = true;
 	}
 

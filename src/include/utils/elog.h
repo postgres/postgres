@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.7 1998/01/07 21:06:50 momjian Exp $
+ * $Id: elog.h,v 1.8 1998/09/01 04:39:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,4 +42,4 @@ int			DebugFileOpen(void);
 
 #endif
 
-#endif							/* ELOG_H */
+#endif	 /* ELOG_H */

@@ -29,14 +29,11 @@
 /* routines defined and used here */
 static void gistregscan(IndexScanDesc s);
 static void gistdropscan(IndexScanDesc s);
-static void
-gistadjone(IndexScanDesc s, int op, BlockNumber blkno,
+static void gistadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		   OffsetNumber offnum);
-static void
-adjuststack(GISTSTACK *stk, BlockNumber blkno,
+static void adjuststack(GISTSTACK *stk, BlockNumber blkno,
 			OffsetNumber offnum);
-static void
-adjustiptr(IndexScanDesc s, ItemPointer iptr,
+static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 		   int op, BlockNumber blkno, OffsetNumber offnum);
 
 /*

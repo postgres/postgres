@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.18 1998/09/01 03:21:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.19 1998/09/01 04:27:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,14 +30,11 @@
 /* routines defined and used here */
 static void rtregscan(IndexScanDesc s);
 static void rtdropscan(IndexScanDesc s);
-static void
-rtadjone(IndexScanDesc s, int op, BlockNumber blkno,
+static void rtadjone(IndexScanDesc s, int op, BlockNumber blkno,
 		 OffsetNumber offnum);
-static void
-adjuststack(RTSTACK *stk, BlockNumber blkno,
+static void adjuststack(RTSTACK *stk, BlockNumber blkno,
 			OffsetNumber offnum);
-static void
-adjustiptr(IndexScanDesc s, ItemPointer iptr,
+static void adjustiptr(IndexScanDesc s, ItemPointer iptr,
 		   int op, BlockNumber blkno, OffsetNumber offnum);
 
 /*

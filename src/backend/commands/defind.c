@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.25 1998/09/01 03:21:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.26 1998/09/01 04:27:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,16 +41,13 @@
 
 /* non-export function prototypes */
 static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
-static void
-CheckPredExpr(Node *predicate, List *rangeTable,
+static void CheckPredExpr(Node *predicate, List *rangeTable,
 			  Oid baseRelOid);
 static void
 			CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
-static void
-FuncIndexArgs(IndexElem *funcIndex, AttrNumber *attNumP,
+static void FuncIndexArgs(IndexElem *funcIndex, AttrNumber *attNumP,
 			  Oid *argTypes, Oid *opOidP, Oid relId);
-static void
-NormIndexAttrs(List *attList, AttrNumber *attNumP,
+static void NormIndexAttrs(List *attList, AttrNumber *attNumP,
 			   Oid *opOidP, Oid relId);
 static char *GetDefaultOpClass(Oid atttypid);
 
@@ -197,7 +194,7 @@ DefineIndex(char *heapRelationName,
 	else
 	{
 		attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
-										  sizeof attributeNumberA[0]);
+											 sizeof attributeNumberA[0]);
 
 		classObjectId =
 			(Oid *) palloc(numberOfAttributes * sizeof classObjectId[0]);
@@ -468,7 +465,8 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			   Oid relId)
 {
 	List	   *rest;
-	HeapTuple	atttuple, tuple;
+	HeapTuple	atttuple,
+				tuple;
 
 	/*
 	 * process attributeList
@@ -485,9 +483,9 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			elog(ERROR, "missing attribute for define index");
 
 		atttuple = SearchSysCacheTupleCopy(ATTNAME,
-									ObjectIdGetDatum(relId),
-									PointerGetDatum(attribute->name),
-									0, 0);
+										   ObjectIdGetDatum(relId),
+										PointerGetDatum(attribute->name),
+										   0, 0);
 		if (!HeapTupleIsValid(atttuple))
 		{
 			elog(ERROR,
@@ -502,8 +500,8 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 		if (attribute->typename == NULL)
 		{
 			tuple = SearchSysCacheTuple(TYPOID,
-									  ObjectIdGetDatum(attform->atttypid),
-									  0, 0, 0);
+									 ObjectIdGetDatum(attform->atttypid),
+										0, 0, 0);
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "create index: type for attribute '%s' undefined",
 					 attribute->name);

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.46 1998/09/01 03:27:58 momjian Exp $
+ * $Id: pg_type.h,v 1.47 1998/09/01 04:35:18 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -67,8 +67,8 @@ CATALOG(pg_type) BOOTSTRAP
 	 * the I/O routines are written to expect pass by reference. Note that
 	 * float4 is written for pass by reference and has a declared length
 	 * of 4 bytes, so it looks like pass by reference must be consistant
-	 * with the declared length, and typbyval is used somewhere.
-	 * - tgl 1997-03-20).
+	 * with the declared length, and typbyval is used somewhere. - tgl
+	 * 1997-03-20).
 	 */
 	char		typtype;
 	bool		typisdefined;
@@ -166,7 +166,7 @@ DATA(insert OID = 19 (	name	   PGUID NAMEDATALEN NAMEDATALEN  f b t \054 0	18 na
 DESCR("31-character type for storing system identifiers");
 #define NAMEOID			19
 
-DATA(insert OID = 20 (  int8	   PGUID  8  20 f b t \054 0   0 int8in int8out int8in int8out d _null_ ));
+DATA(insert OID = 20 (	int8	   PGUID  8  20 f b t \054 0   0 int8in int8out int8in int8out d _null_ ));
 DESCR("eight-byte integer, >18 digits");
 #define INT8OID			20
 
@@ -374,8 +374,7 @@ DESCR("limited-range ISO-format date and time");
  */
 extern Oid	TypeGet(char *typeName, bool *defined);
 extern Oid	TypeShellMake(char *typeName);
-extern Oid
-TypeCreate(char *typeName,
+extern Oid TypeCreate(char *typeName,
 		   Oid relationOid,
 		   int16 internalSize,
 		   int16 externalSize,
@@ -392,4 +391,4 @@ extern void TypeRename(char *oldTypeName, char *newTypeName);
 extern char *makeArrayTypeName(char *typeName);
 
 
-#endif							/* PG_TYPE_H */
+#endif	 /* PG_TYPE_H */

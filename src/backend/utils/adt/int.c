@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.16 1998/09/01 03:26:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.17 1998/09/01 04:32:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ int2out(int16 sh)
 int16 *
 int28in(char *shs)
 {
-	int16		**result;
+	int16	  **result;
 	int			nums;
 
 	if (shs == NULL)

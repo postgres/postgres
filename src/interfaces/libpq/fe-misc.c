@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.19 1998/08/29 02:09:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.20 1998/09/01 04:40:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
 #if !defined(NO_UNISTD_H)
 #include <unistd.h>
 #endif
-#endif /* WIN32 */
+#endif	 /* WIN32 */
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -87,7 +87,7 @@ pqGetc(char *result, PGconn *conn)
 static int
 pqPutBytes(const char *s, int nbytes, PGconn *conn)
 {
-	int avail = conn->outBufSize - conn->outCount;
+	int			avail = conn->outBufSize - conn->outCount;
 
 	while (nbytes > avail)
 	{
@@ -117,10 +117,10 @@ int
 pqGets(char *s, int maxlen, PGconn *conn)
 {
 	/* Copy conn data to locals for faster search loop */
-	char	*inBuffer = conn->inBuffer;
-	int		inCursor = conn->inCursor;
-	int		inEnd = conn->inEnd;
-	int		slen;
+	char	   *inBuffer = conn->inBuffer;
+	int			inCursor = conn->inCursor;
+	int			inEnd = conn->inEnd;
+	int			slen;
 
 	while (inCursor < inEnd && inBuffer[inCursor])
 		inCursor++;
@@ -133,8 +133,8 @@ pqGets(char *s, int maxlen, PGconn *conn)
 		strcpy(s, inBuffer + conn->inCursor);
 	else
 	{
-		strncpy(s, inBuffer + conn->inCursor, maxlen-1);
-		s[maxlen-1] = '\0';
+		strncpy(s, inBuffer + conn->inCursor, maxlen - 1);
+		s[maxlen - 1] = '\0';
 	}
 
 	conn->inCursor = ++inCursor;
@@ -149,7 +149,7 @@ pqGets(char *s, int maxlen, PGconn *conn)
 int
 pqPuts(const char *s, PGconn *conn)
 {
-	if (pqPutBytes(s, strlen(s)+1, conn))
+	if (pqPutBytes(s, strlen(s) + 1, conn))
 		return EOF;
 
 	if (conn->Pfdebug)
@@ -170,7 +170,7 @@ pqGetnchar(char *s, int len, PGconn *conn)
 
 	memcpy(s, conn->inBuffer + conn->inCursor, len);
 	/* no terminating null */
-	
+
 	conn->inCursor += len;
 
 	if (conn->Pfdebug)
@@ -204,8 +204,8 @@ pqPutnchar(const char *s, int len, PGconn *conn)
 int
 pqGetInt(int *result, int bytes, PGconn *conn)
 {
-	uint16 tmp2;
-	uint32 tmp4;
+	uint16		tmp2;
+	uint32		tmp4;
 
 	switch (bytes)
 	{
@@ -244,19 +244,19 @@ pqGetInt(int *result, int bytes, PGconn *conn)
 int
 pqPutInt(int value, int bytes, PGconn *conn)
 {
-	uint16 tmp2;
-	uint32 tmp4;
+	uint16		tmp2;
+	uint32		tmp4;
 
 	switch (bytes)
 	{
 		case 2:
 			tmp2 = htons((uint16) value);
-			if (pqPutBytes((const char*) &tmp2, 2, conn))
+			if (pqPutBytes((const char *) &tmp2, 2, conn))
 				return EOF;
 			break;
 		case 4:
 			tmp4 = htonl((uint32) value);
-			if (pqPutBytes((const char*) &tmp4, 4, conn))
+			if (pqPutBytes((const char *) &tmp4, 4, conn))
 				return EOF;
 			break;
 		default:
@@ -278,8 +278,8 @@ pqPutInt(int value, int bytes, PGconn *conn)
 static int
 pqReadReady(PGconn *conn)
 {
-	fd_set			input_mask;
-	struct timeval	timeout;
+	fd_set		input_mask;
+	struct timeval timeout;
 
 	if (conn->sock < 0)
 		return 0;
@@ -288,7 +288,7 @@ pqReadReady(PGconn *conn)
 	FD_SET(conn->sock, &input_mask);
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
-	if (select(conn->sock+1, &input_mask, (fd_set *) NULL, (fd_set *) NULL,
+	if (select(conn->sock + 1, &input_mask, (fd_set *) NULL, (fd_set *) NULL,
 			   &timeout) < 0)
 	{
 		sprintf(conn->errorMessage,
@@ -302,17 +302,17 @@ pqReadReady(PGconn *conn)
 /* --------------------------------------------------------------------- */
 /* pqReadData: read more data, if any is available
  * Possible return values:
- *   1: successfully loaded at least one more byte
- *   0: no data is presently available, but no error detected
- *  -1: error detected (including EOF = connection closure);
- *      conn->errorMessage set
+ *	 1: successfully loaded at least one more byte
+ *	 0: no data is presently available, but no error detected
+ *	-1: error detected (including EOF = connection closure);
+ *		conn->errorMessage set
  * NOTE: callers must not assume that pointers or indexes into conn->inBuffer
  * remain valid across this call!
  */
 int
 pqReadData(PGconn *conn)
 {
-	int nread;
+	int			nread;
 
 	if (conn->sock < 0)
 	{
@@ -331,16 +331,19 @@ pqReadData(PGconn *conn)
 	}
 	else
 		conn->inStart = conn->inCursor = conn->inEnd = 0;
-	/* If the buffer is fairly full, enlarge it.
-	 * We need to be able to enlarge the buffer in case a single message
-	 * exceeds the initial buffer size.  We enlarge before filling the
-	 * buffer entirely so as to avoid asking the kernel for a partial packet.
-	 * The magic constant here should be at least one TCP packet.
+
+	/*
+	 * If the buffer is fairly full, enlarge it. We need to be able to
+	 * enlarge the buffer in case a single message exceeds the initial
+	 * buffer size.  We enlarge before filling the buffer entirely so as
+	 * to avoid asking the kernel for a partial packet. The magic constant
+	 * here should be at least one TCP packet.
 	 */
 	if (conn->inBufSize - conn->inEnd < 2000)
 	{
-		int newSize = conn->inBufSize * 2;
-		char * newBuf = (char *) realloc(conn->inBuffer, newSize);
+		int			newSize = conn->inBufSize * 2;
+		char	   *newBuf = (char *) realloc(conn->inBuffer, newSize);
+
 		if (newBuf)
 		{
 			conn->inBuffer = newBuf;
@@ -350,7 +353,7 @@ pqReadData(PGconn *conn)
 
 	/* OK, try to read some data */
 tryAgain:
-	nread = recv(conn->sock, conn->inBuffer + conn->inEnd, 
+	nread = recv(conn->sock, conn->inBuffer + conn->inEnd,
 				 conn->inBufSize - conn->inEnd, 0);
 	if (nread < 0)
 	{
@@ -376,22 +379,24 @@ tryAgain:
 		return 1;
 	}
 
-	/* A return value of 0 could mean just that no data is now available,
-	 * or it could mean EOF --- that is, the server has closed the connection.
-	 * Since we have the socket in nonblock mode, the only way to tell the
-	 * difference is to see if select() is saying that the file is ready.
-	 * Grumble.  Fortunately, we don't expect this path to be taken much,
-	 * since in normal practice we should not be trying to read data unless
-	 * the file selected for reading already.
+	/*
+	 * A return value of 0 could mean just that no data is now available,
+	 * or it could mean EOF --- that is, the server has closed the
+	 * connection. Since we have the socket in nonblock mode, the only way
+	 * to tell the difference is to see if select() is saying that the
+	 * file is ready. Grumble.	Fortunately, we don't expect this path to
+	 * be taken much, since in normal practice we should not be trying to
+	 * read data unless the file selected for reading already.
 	 */
-	if (! pqReadReady(conn))
+	if (!pqReadReady(conn))
 		return 0;				/* definitely no data available */
 
-	/* Still not sure that it's EOF,
-	 * because some data could have just arrived.
+	/*
+	 * Still not sure that it's EOF, because some data could have just
+	 * arrived.
 	 */
 tryAgain2:
-	nread = recv(conn->sock, conn->inBuffer + conn->inEnd, 
+	nread = recv(conn->sock, conn->inBuffer + conn->inEnd,
 				 conn->inBufSize - conn->inEnd, 0);
 	if (nread < 0)
 	{
@@ -417,22 +422,22 @@ tryAgain2:
 		return 1;
 	}
 
-	/* OK, we are getting a zero read even though select() says ready.
+	/*
+	 * OK, we are getting a zero read even though select() says ready.
 	 * This means the connection has been closed.  Cope.
 	 */
 	sprintf(conn->errorMessage,
 			"pqReadData() -- backend closed the channel unexpectedly.\n"
 			"\tThis probably means the backend terminated abnormally"
 			" before or while processing the request.\n");
-	conn->status = CONNECTION_BAD; /* No more connection to
-									* backend */
+	conn->status = CONNECTION_BAD;		/* No more connection to backend */
 #ifdef WIN32
 	closesocket(conn->sock);
 #else
 	close(conn->sock);
 #endif
 	conn->sock = -1;
-	
+
 	return -1;
 }
 
@@ -442,8 +447,8 @@ tryAgain2:
 int
 pqFlush(PGconn *conn)
 {
-	char * ptr = conn->outBuffer;
-	int len = conn->outCount;
+	char	   *ptr = conn->outBuffer;
+	int			len = conn->outCount;
 
 	if (conn->sock < 0)
 	{
@@ -455,10 +460,11 @@ pqFlush(PGconn *conn)
 	{
 		/* Prevent being SIGPIPEd if backend has closed the connection. */
 #ifndef WIN32
-		pqsigfunc oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
+		pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
+
 #endif
 
-		int sent = send(conn->sock, ptr, len, 0);
+		int			sent = send(conn->sock, ptr, len, 0);
 
 #ifndef WIN32
 		pqsignal(SIGPIPE, oldsighandler);
@@ -479,7 +485,7 @@ pqFlush(PGconn *conn)
 #endif
 				default:
 					sprintf(conn->errorMessage,
-							"pqFlush() --  couldn't send data: errno=%d\n%s\n",
+					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
 							errno, strerror(errno));
 					return EOF;
 			}
@@ -511,8 +517,8 @@ pqFlush(PGconn *conn)
 int
 pqWait(int forRead, int forWrite, PGconn *conn)
 {
-	fd_set	input_mask;
-	fd_set	output_mask;
+	fd_set		input_mask;
+	fd_set		output_mask;
 
 	if (conn->sock < 0)
 	{
@@ -521,14 +527,15 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 	}
 
 	/* loop in case select returns EINTR */
-	for (;;) {
+	for (;;)
+	{
 		FD_ZERO(&input_mask);
 		FD_ZERO(&output_mask);
 		if (forRead)
 			FD_SET(conn->sock, &input_mask);
 		if (forWrite)
 			FD_SET(conn->sock, &output_mask);
-		if (select(conn->sock+1, &input_mask, &output_mask, (fd_set *) NULL,
+		if (select(conn->sock + 1, &input_mask, &output_mask, (fd_set *) NULL,
 				   (struct timeval *) NULL) < 0)
 		{
 			if (errno == EINTR)

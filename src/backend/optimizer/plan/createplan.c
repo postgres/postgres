@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.31 1998/09/01 03:23:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.32 1998/09/01 04:29:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,44 +46,33 @@
 static List *switch_outer(List *clauses);
 static Scan *create_scan_node(Path *best_path, List *tlist);
 static Join *create_join_node(JoinPath *best_path, List *tlist);
-static SeqScan *
-create_seqscan_node(Path *best_path, List *tlist,
+static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
 					List *scan_clauses);
-static IndexScan *
-create_indexscan_node(IndexPath *best_path, List *tlist,
+static IndexScan *create_indexscan_node(IndexPath *best_path, List *tlist,
 					  List *scan_clauses);
-static NestLoop *
-create_nestloop_node(JoinPath *best_path, List *tlist,
+static NestLoop *create_nestloop_node(JoinPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
-static MergeJoin *
-create_mergejoin_node(MergePath *best_path, List *tlist,
+static MergeJoin *create_mergejoin_node(MergePath *best_path, List *tlist,
 					  List *clauses, Plan *outer_node, List *outer_tlist,
 					  Plan *inner_node, List *inner_tlist);
-static HashJoin *
-create_hashjoin_node(HashPath *best_path, List *tlist,
+static HashJoin *create_hashjoin_node(HashPath *best_path, List *tlist,
 					 List *clauses, Plan *outer_node, List *outer_tlist,
 					 Plan *inner_node, List *inner_tlist);
 static Node *fix_indxqual_references(Node *clause, Path *index_path);
-static Temp *
-make_temp(List *tlist, List *keys, Oid *operators,
+static Temp *make_temp(List *tlist, List *keys, Oid *operators,
 		  Plan *plan_node, int temptype);
-static IndexScan *
-make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
+static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, Cost cost);
-static NestLoop *
-make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
+static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
 			  Plan *righttree);
-static HashJoin *
-make_hashjoin(List *tlist, List *qpqual,
+static HashJoin *make_hashjoin(List *tlist, List *qpqual,
 			  List *hashclauses, Plan *lefttree, Plan *righttree);
 static Hash *make_hash(List *tlist, Var *hashkey, Plan *lefttree);
-static MergeJoin *
-make_mergejoin(List *tlist, List *qpqual,
+static MergeJoin *make_mergejoin(List *tlist, List *qpqual,
 			   List *mergeclauses, Oid opcode, Oid *rightorder,
 			   Oid *leftorder, Plan *righttree, Plan *lefttree);
-static Material *
-make_material(List *tlist, Oid tempid, Plan *lefttree,
+static Material *make_material(List *tlist, Oid tempid, Plan *lefttree,
 			  int keycount);
 
 /*
@@ -106,7 +95,7 @@ create_plan(Path *best_path)
 {
 	List	   *tlist;
 	Plan	   *plan_node = (Plan *) NULL;
-	RelOptInfo		   *parent_rel;
+	RelOptInfo *parent_rel;
 	int			size;
 	int			width;
 	int			pages;

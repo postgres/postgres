@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.33 1998/09/01 03:25:06 momjian Exp $
+ *	  $Id: fd.c,v 1.34 1998/09/01 04:31:45 momjian Exp $
  *
  * NOTES:
  *
@@ -220,7 +220,7 @@ _dump_lru()
 	elog(DEBUG, buf);
 }
 
-#endif							/* FDDEBUG */
+#endif	 /* FDDEBUG */
 
 static void
 Delete(File file)
