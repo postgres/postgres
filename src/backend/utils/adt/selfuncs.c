@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.60 2000/03/20 15:42:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.61 2000/03/23 00:55:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@
 /* default selectivity estimate for inequalities such as "A < b" */
 #define DEFAULT_INEQ_SEL  (1.0 / 3.0)
 
+static bool convert_string_to_scalar(char *str, int strlength,
+									 double *scaleval);
 static void getattproperties(Oid relid, AttrNumber attnum,
 							 Oid *typid,
 							 int *typlen,
@@ -472,9 +474,8 @@ scalargtjoinsel(Oid opid,
  * All numeric datatypes are simply converted to their equivalent
  * "double" values.
  *
- * String datatypes are converted to a crude scale using their first character
- * (only if it is in the ASCII range, to try to avoid problems with non-ASCII
- * collating sequences).
+ * String datatypes are converted by convert_string_to_scalar(),
+ * which is explained below.
  *
  * The several datatypes representing absolute times are all converted
  * to Timestamp, which is actually a double, and then we just use that
@@ -525,40 +526,25 @@ convert_to_scalar(Datum value, Oid typid,
 		 */
 		case CHAROID:
 		{
-			char		ch = DatumGetChar(value);
+			char	ch = DatumGetChar(value);
 
-			if (ch >= 0 && ch < 127)
-			{
-				*scaleval = (double) ch;
-				return true;
-			}
-			break;
+			return convert_string_to_scalar(&ch, 1, scaleval);
 		}
 		case BPCHAROID:
 		case VARCHAROID:
 		case TEXTOID:
-			if (VARSIZE(DatumGetPointer(value)) > VARHDRSZ)
-			{
-				char	ch = * (char *) VARDATA(DatumGetPointer(value));
+		{
+			char   *str = (char *) VARDATA(DatumGetPointer(value));
+			int		strlength = VARSIZE(DatumGetPointer(value)) - VARHDRSZ;
 
-				if (ch >= 0 && ch < 127)
-				{
-					*scaleval = (double) ch;
-					return true;
-				}
-			}
-			break;
+			return convert_string_to_scalar(str, strlength, scaleval);
+		}
 		case NAMEOID:
 		{
 			NameData   *nm = (NameData *) DatumGetPointer(value);
-			char		ch = NameStr(*nm)[0];
 
-			if (ch >= 0 && ch < 127)
-			{
-				*scaleval = (double) ch;
-				return true;
-			}
-			break;
+			return convert_string_to_scalar(NameStr(*nm), strlen(NameStr(*nm)),
+											scaleval);
 		}
 
 		/*
@@ -643,6 +629,88 @@ convert_to_scalar(Datum value, Oid typid,
 	/* Don't know how to convert */
 	return false;
 }
+
+/*
+ * Do convert_to_scalar()'s work for any character-string data type.
+ *
+ * String datatypes are converted to a scale that ranges from 0 to 1, where
+ * we visualize the bytes of the string as fractional base-256 digits.
+ * It's sufficient to consider the first few bytes, since double has only
+ * limited precision (and we can't expect huge accuracy in our selectivity
+ * predictions anyway!)
+ *
+ * If USE_LOCALE is defined, we must pass the string through strxfrm()
+ * before doing the computation, so as to generate correct locale-specific
+ * results.
+ */
+static bool
+convert_string_to_scalar(char *str, int strlength,
+						 double *scaleval)
+{
+	unsigned char   *sptr;
+	int				slen;
+#ifdef USE_LOCALE
+	char		   *rawstr;
+	char		   *xfrmstr;
+	size_t			xfrmsize;
+	size_t			xfrmlen;
+#endif
+	double			num,
+					denom;
+
+	if (strlength <= 0)
+	{
+		*scaleval = 0;			/* empty string has scalar value 0 */
+		return true;
+	}
+
+#ifdef USE_LOCALE
+	/* Need a null-terminated string to pass to strxfrm() */
+	rawstr = (char *) palloc(strlength + 1);
+	memcpy(rawstr, str, strlength);
+	rawstr[strlength] = '\0';
+
+	/* Guess that transformed string is not much bigger */
+	xfrmsize = strlength + 32;	/* arbitrary pad value here... */
+	xfrmstr = (char *) palloc(xfrmsize);
+	xfrmlen = strxfrm(xfrmstr, rawstr, xfrmsize);
+	if (xfrmlen >= xfrmsize)
+	{
+		/* Oops, didn't make it */
+		pfree(xfrmstr);
+		xfrmstr = (char *) palloc(xfrmlen+1);
+		xfrmlen = strxfrm(xfrmstr, rawstr, xfrmlen+1);
+	}
+	pfree(rawstr);
+
+	sptr = (unsigned char *) xfrmstr;
+	slen = xfrmlen;
+#else
+	sptr = (unsigned char *) str;
+	slen = strlength;
+#endif
+
+	/* No need to consider more than about 8 bytes (sizeof double) */
+	if (slen > 8)
+		slen = 8;
+
+	/* Convert initial characters to fraction */
+	num = 0.0;
+	denom = 256.0;
+	while (slen-- > 0)
+	{
+		num += ((double) (*sptr++)) / denom;
+		denom *= 256.0;
+	}
+
+#ifdef USE_LOCALE
+	pfree(xfrmstr);
+#endif
+
+	*scaleval = num;
+	return true;
+}
+
 
 /*
  * getattproperties
