@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.36 2004/03/23 22:57:09 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/fetch.sgml,v 1.37 2004/06/17 12:41:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -16,6 +16,11 @@ PostgreSQL documentation
 
  <indexterm zone="sql-fetch">
   <primary>FETCH</primary>
+ </indexterm>
+
+ <indexterm zone="sql-fetch">
+  <primary>cursor</primary>
+  <secondary>FETCH</secondary>
  </indexterm>
 
  <refsynopsisdiv>

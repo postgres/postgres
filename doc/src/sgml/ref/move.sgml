@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.27 2004/03/23 22:39:22 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/move.sgml,v 1.28 2004/06/17 12:41:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -16,6 +16,11 @@ PostgreSQL documentation
 
  <indexterm zone="sql-move">
   <primary>MOVE</primary>
+ </indexterm>
+
+ <indexterm zone="sql-move">
+  <primary>cursor</primary>
+  <secondary>MOVE</secondary>
  </indexterm>
 
  <refsynopsisdiv>
