@@ -58,7 +58,7 @@ has a command (<Command>\dd</Command>) to show these operators.
 
 <para>
 Operators have a precedence which is currently hardcoded into the parser.
-Most operators have the same precedence and are non-associative. This may lead
+Most operators have the same precedence and are left-associative. This may lead
 to non-intuitive behavior; for example the boolean operators "&lt;" and "&gt;"
 have a different precedence that the boolean operators "&lt;=" and "&gt;=".
 
