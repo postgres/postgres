@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.17 2001/02/18 18:34:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.18 2001/08/25 17:46:11 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -25,6 +25,7 @@ CanCreateDb=
 PwPrompt=
 Password=
 PSQLOPT=
+Encrypted=	# blank uses default
 
 # Check for echo -n vs echo \c
 
@@ -103,6 +104,12 @@ do
         --sysid=*)
                 SysID=`echo "$1" | sed 's/^--sysid=//'`
                 ;;
+        --encrypted)
+		Encrypted=t
+		;;
+        --unencrypted)
+		Encrypted=f
+		;;
         -i*)
                 SysID=`echo "$1" | sed 's/^-i//'`
                 ;;
@@ -226,6 +233,8 @@ SUBQUERY=
 [ "$CanCreateDb" = f ] && QUERY="$QUERY NOCREATEDB"
 [ "$CanAddUser" = t ] &&  QUERY="$QUERY CREATEUSER"
 [ "$CanAddUser" = f ] &&  QUERY="$QUERY NOCREATEUSER"
+[ "$Encrypted" = t ] &&   QUERY="$QUERY ENCRYPTED"
+[ "$Encrypted" = f ] &&   QUERY="$QUERY UNENCRYPTED"
 
 ${PATHNAME}psql -c "$QUERY" -d template1 $PSQLOPT
 if [ $? -ne 0 ]; then

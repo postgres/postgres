@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.17 2001/05/02 14:46:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.18 2001/08/25 17:46:11 momjian Exp $
 Postgres documentation
 -->
 
@@ -128,6 +128,26 @@ Postgres documentation
        <para>
        Allows you to pick a non-default user id for the new user. This is not
        necessary, but some people like it.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--encrypted</term>
+      <listitem>
+       <para>
+	Encrypts the user's password stored in the database. If not
+	specified, the default is used.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>--unencrypted</term>
+      <listitem>
+       <para>
+	Does not encrypt the user's password stored in the database. If
+	not specified, the default is used.
        </para>
       </listitem>
      </varlistentry>
