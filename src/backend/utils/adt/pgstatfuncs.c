@@ -19,7 +19,7 @@ extern Datum pg_stat_get_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_hit(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_mypid(PG_FUNCTION_ARGS);
+extern Datum backend_pid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_pid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_dbid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
@@ -213,7 +213,7 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 
 
 Datum
-pg_stat_get_backend_mypid(PG_FUNCTION_ARGS)
+backend_pid(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_INT32(MyProcPid);
 }

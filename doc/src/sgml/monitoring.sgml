@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.7 2002/03/22 19:20:14 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/monitoring.sgml,v 1.8 2002/07/31 01:49:12 momjian Exp $
 -->
 
 <chapter id="monitoring">
@@ -481,10 +481,18 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
+      <entry><function>backend_pid</function>()</entry>
+      <entry><type>integer</type></entry>
+      <entry>
+       Process ID of current backend
+      </entry>
+     </row>
+
+     <row>
       <entry><function>pg_stat_get_backend_pid</function>(<type>integer</type>)</entry>
       <entry><type>integer</type></entry>
       <entry>
-       PID of backend process
+       Process ID of all backend processes
       </entry>
      </row>
 
