@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Jun 9 21:54:54 EDT 2000
+   Last updated: Mon Nov 26 21:48:19 EST 2001
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -30,6 +30,7 @@
    14) Why don't we use threads in the backend?
    15) How are RPM's packaged?
    16) How are CVS branches handled?
+   17) How do I get involved in PostgreSQL development?
      _________________________________________________________________
    
   1) What tools are available for developers?
@@ -444,22 +445,22 @@ typedef struct nameData
        
   15) How are RPM's packaged?
   
-   This is from Lamar Owen:
+   This was written by Lamar Owen:
 As to how the RPMs are built -- to answer that question sanely requires
 me to know how much experience you have with the whole RPM paradigm.
 'How is the RPM built?' is a multifaceted question.  The obvious simple
 answer is that I maintain:
-        1.)     A set of patches to make certain portions of the source
-                tree 'behave' in the different environment of the RPMset;
-        2.)     The initscript;
-        3.)     Any other ancilliary scripts and files;
-        4.)     A README.rpm-dist document that tries to adequately document
-                both the differences between the RPM build and the WHY of the
-                differences, as well as useful RPM environment operations
-                (like, using syslog, upgrading, getting postmaster to
-                start at OS boot, etc);
-        5.)     The spec file that throws it all together.  This is not a
-                trivial undertaking in a package of this size.
+    1.) A set of patches to make certain portions of the source
+        tree 'behave' in the different environment of the RPMset;
+    2.) The initscript;
+    3.) Any other ancilliary scripts and files;
+    4.) A README.rpm-dist document that tries to adequately document
+        both the differences between the RPM build and the WHY of the
+        differences, as well as useful RPM environment operations
+        (like, using syslog, upgrading, getting postmaster to
+        start at OS boot, etc);
+    5.) The spec file that throws it all together.  This is not a
+        trivial undertaking in a package of this size.
 
 I then download and build on as many different canonical distributions
 as I can -- currently I am able to build on Red Hat 6.2, 7.0, and 7.1 on
@@ -582,9 +583,9 @@ snapshot whereas a branch is a changeable fileset.)  Rule of thumb is
 that names attached to four-number versions where the third number is
 zero represent branches, the others are just tags.  Here we can see that
 the extant branches are
-        REL7_1_STABLE
-        REL7_0_PATCHES
-        REL6_5_PATCHES
+    REL7_1_STABLE
+    REL7_0_PATCHES
+    REL6_5_PATCHES
 The next commit to the head will be revision 1.107, whereas any changes
 committed into the REL7_1_STABLE branch will have revision numbers like
 1.106.2.*, corresponding to the branch number 1.106.0.2 (don't ask where
@@ -601,17 +602,17 @@ stable branch, you'd better be doubly sure that it's correct.)
 Normally, to checkout the head branch, you just cd to the place you
 want to contain the toplevel "pgsql" directory and say
 
-        cvs ... checkout pgsql
+    cvs ... checkout pgsql
 
 To get a past branch, you cd to whereever you want it and say
 
-        cvs ... checkout -r BRANCHNAME pgsql
+    cvs ... checkout -r BRANCHNAME pgsql
 
 For example, just a couple days ago I did
 
-        mkdir ~postgres/REL7_1
-        cd ~postgres/REL7_1
-        cvs ... checkout -r REL7_1_STABLE pgsql
+    mkdir ~postgres/REL7_1
+    cd ~postgres/REL7_1
+    cvs ... checkout -r REL7_1_STABLE pgsql
 
 and now I have a maintenance copy of 7.1.*.
 
@@ -630,3 +631,58 @@ or two, so that we won't have to double-patch the first wave of fixes.
 
    Also, Ian Lance Taylor points out that branches and tags can be
    distiguished by using "cvs status -v".
+   
+  17) How go I get involved in PostgreSQL development?
+  
+   This was written by Lamar Owen:
+> If someone was interested in joining the development team, where would
+> they...
+> -  Find a description of the open source development process used by the
+> PostgreSQL team.
+
+Read HACKERS for six months (or a full release cycle, whichever is longer).
+Really.  HACKERS _is_the process.  The process is not well documented (AFAIK
+-- it may be somewhere that I am not aware of) -- and it changes continually.
+
+> -  Find the development environment (OS, system, compilers, etc)
+> required to develop code.
+
+Developers Corner on the website has links to this information.  The
+distribution tarball itself includes all the extra tools and documents that
+go beyond a good Unix-like development environment.  In general, a modern
+unix with a modern gcc, GNU make or equivalent, autoconf (of a particular
+version), and good working knowledge of those tools are required.
+
+> -  Find an area or two that needs some support.
+
+The TODO list.
+
+You've made the first step, by finding and subscribing to HACKERS.  Once you
+find an area to look at in the TODO, and have read the documentation on the
+internals, etc, then you check out a current CVS,write what you are going to
+write (keeping your CVS checkout up to date in the process), and make up a
+patch (as a context diff only) and send to the PATCHES list, prefereably.
+
+Discussion on the patch typically happens here.  If the patch adds a major
+feature, it would be a good idea to talk about it first on the HACKERS list,
+in order to increase the chances of it being accepted, as well as toavoid
+duplication of effort.  Note that experienced developers with a proven track
+record usually get the big jobs -- for more than one reason.  Also note that
+PostgreSQL is highly portable -- nonportable code will likely be dismissed
+out of  hand.
+
+Once your contributions get accepted, things move from there. Typically, you
+would be added as a developer on the list on the website when one of the
+other developers recommends it.  Membership on the steering committee is by
+invitation only, by the other steering committee members, from what I have
+gathered watching froma distance.
+
+I make these statements from having watched the process for over two years.
+
+To see a good example of how one goes about this, search the archives for the
+name 'Tom Lane' and see what his first post consisted of, and where he took
+things.  In particular, note that this hasn't been _that_ long ago -- and his
+bugfixing and general deep knowledge with this codebase is legendary.  Take a
+few days to read after him.  And pay special attention to both the sheer
+quantity as well as the painstaking quality of his work.  Both are in high
+demand.
