@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.51 2004/01/06 23:15:22 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.52 2004/01/09 04:58:09 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -135,6 +135,19 @@ static void pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len);
 static void pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len);
 static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
 
+/*
+ *	WIN32 doesn't allow descriptors returned by pipe() to be used in select(),
+ *	so for that platform we use socket() instead of pipe().
+ */
+#ifndef WIN32
+#define pgpipe(a)			pipe(a)
+#define piperead(a,b,c)		read(a,b,c)
+#define pipewrite(a,b,c)	write(a,b,c)
+#else
+/* pgpipe() is in /src/port */
+#define piperead(a,b,c)		recv(a,b,c,0)
+#define pipewrite(a,b,c)	send(a,b,c,0)
+#endif
 
 /* ------------------------------------------------------------
  * Public functions called from postmaster follow
@@ -1380,7 +1393,7 @@ pgstat_main(PGSTAT_FORK_ARGS)
 	 * two buffer processes competing to read from the UDP socket --- not
 	 * good.
 	 */
-	if (pipe(pgStatPipe) < 0)
+	if (pgpipe(pgStatPipe) < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
@@ -1595,7 +1608,7 @@ pgstat_mainChild(PGSTAT_FORK_ARGS)
 
 			while (nread < targetlen)
 			{
-				len = read(readPipe,
+				len = piperead(readPipe,
 						   ((char *) &msg) + nread,
 						   targetlen - nread);
 				if (len < 0)
@@ -1920,7 +1933,7 @@ pgstat_recvbuffer(void)
 			if (xfr > msg_have)
 				xfr = msg_have;
 			Assert(xfr > 0);
-			len = write(writePipe, msgbuffer + msg_send, xfr);
+			len = pipewrite(writePipe, msgbuffer + msg_send, xfr);
 			if (len < 0)
 			{
 				if (errno == EINTR || errno == EAGAIN)

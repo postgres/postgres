@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.309 2003/12/23 18:40:52 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.310 2004/01/09 04:58:09 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -924,7 +924,8 @@ esac
 case $host_os in mingw*)
 AC_LIBOBJ(dirmod)
 AC_LIBOBJ(copydir)
-AC_LIBOBJ(gettimeofday) ;;
+AC_LIBOBJ(gettimeofday)
+AC_LIBOBJ(pipe) ;;
 esac
 
 if test "$with_readline" = yes; then
