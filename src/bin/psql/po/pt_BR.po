@@ -4,10 +4,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-15 17:21-0200\n"
-"PO-Revision-Date: 2004-01-07 11:37-0200\n"
+"POT-Creation-Date: 2004-02-04 18:57-0200\n"
+"PO-Revision-Date: 2004-02-04 19:06-0200\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov.br>\n"
+"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov."
+"br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -67,7 +68,7 @@ msgid "Wrote history to file \"%s\".\n"
 msgstr "Histórico escrito para arquivo \"%s\".\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
-#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
+#: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:338 describe.c:51
 msgid "out of memory\n"
 msgstr "sem memória\n"
 
@@ -883,7 +884,7 @@ msgstr "Descrição"
 msgid "Large objects"
 msgstr "Objetos Grandes"
 
-#: mainloop.c:206
+#: mainloop.c:203
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Use \"\\q\" para sair do %s.\n"
@@ -1192,6 +1193,11 @@ msgstr "único, "
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "para tabela \"%s.%s\""
+
+#: describe.c:895
+#, c-format
+msgid ", predicate %s"
+msgstr ", predicado %s"
 
 #: describe.c:929
 #, c-format

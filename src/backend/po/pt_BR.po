@@ -4,10 +4,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-11-14 16:36-0200\n"
-"PO-Revision-Date: 2004-01-07 11:37-0200\n"
+"POT-Creation-Date: 2004-02-04 19:04-0200\n"
+"PO-Revision-Date: 2004-02-04 19:06-0200\n"
 "Last-Translator: Euler Taveira de Oliveira <euler@ufgnet.ufg.br>\n"
-"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov.br>\n"
+"Language-Team: Brazilian Portuguese <pgsqlbr-dev@lists.querencialivre.rs.gov."
+"br>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -955,47 +956,47 @@ msgstr "deve ser o dono da classe de operadores %s"
 msgid "must be owner of conversion %s"
 msgstr "deve ser o dono da conversão %s"
 
-#: catalog/aclchk.c:1029
+#: catalog/aclchk.c:1030
 #, c-format
 msgid "user with ID %u does not exist"
 msgstr "usuário com ID %u não existe"
 
-#: catalog/aclchk.c:1046 catalog/aclchk.c:1363
+#: catalog/aclchk.c:1047 catalog/aclchk.c:1369
 #, c-format
 msgid "relation with OID %u does not exist"
 msgstr "relação com OID %u não existe"
 
-#: catalog/aclchk.c:1141 catalog/aclchk.c:1542
+#: catalog/aclchk.c:1147 catalog/aclchk.c:1548
 #, c-format
 msgid "database with OID %u does not exist"
 msgstr "banco de dados com OID %u não existe"
 
-#: catalog/aclchk.c:1198 catalog/aclchk.c:1447 tcop/fastpath.c:231
+#: catalog/aclchk.c:1204 catalog/aclchk.c:1453 tcop/fastpath.c:231
 #, c-format
 msgid "function with OID %u does not exist"
 msgstr "função com OID %u não existe"
 
-#: catalog/aclchk.c:1253
+#: catalog/aclchk.c:1259
 #, c-format
 msgid "language with OID %u does not exist"
 msgstr "linguagem com OID %u não existe"
 
-#: catalog/aclchk.c:1313 catalog/aclchk.c:1475
+#: catalog/aclchk.c:1319 catalog/aclchk.c:1481
 #, c-format
 msgid "schema with OID %u does not exist"
 msgstr "esquema com OID %u não existe"
 
-#: catalog/aclchk.c:1391
+#: catalog/aclchk.c:1397
 #, c-format
 msgid "type with OID %u does not exist"
 msgstr "tipo com OID %u não existe"
 
-#: catalog/aclchk.c:1419
+#: catalog/aclchk.c:1425
 #, c-format
 msgid "operator with OID %u does not exist"
 msgstr "operador com OID %u não existe"
 
-#: catalog/aclchk.c:1503
+#: catalog/aclchk.c:1509
 #, c-format
 msgid "operator class with OID %u does not exist"
 msgstr "classe de operadores com OID %u não existe"
@@ -1132,13 +1133,13 @@ msgstr "não pode utilizar subconsulta na expressão padrão"
 msgid "cannot use aggregate function in default expression"
 msgstr "não pode utilizar função de agregação na expressão padrão"
 
-#: catalog/heap.c:1792 rewrite/rewriteHandler.c:560
+#: catalog/heap.c:1792 rewrite/rewriteHandler.c:558
 #, c-format
 msgid "column \"%s\" is of type %s but default expression is of type %s"
 msgstr "coluna \"%s\" é do tipo %s mas expressão padrão é do tipo %s"
 
 #: catalog/heap.c:1797 parser/analyze.c:2790 parser/parse_node.c:232
-#: parser/parse_target.c:425 rewrite/rewriteHandler.c:565
+#: parser/parse_target.c:425 rewrite/rewriteHandler.c:563
 msgid "You will need to rewrite or cast the expression."
 msgstr "Você precisará reescrever ou converter (cast) a expressão"
 
@@ -1635,38 +1636,38 @@ msgstr "codificação de destino \"%s\" não existe"
 msgid "conversion \"%s\" already exists in schema \"%s\""
 msgstr "conversão \"%s\" já existe no esquema \"%s\""
 
-#: commands/copy.c:192 commands/copy.c:204 commands/copy.c:237
-#: commands/copy.c:247
+#: commands/copy.c:193 commands/copy.c:205 commands/copy.c:238
+#: commands/copy.c:248
 msgid "COPY BINARY is not supported to stdout or from stdin"
 msgstr "COPY BINARY não é suportado para saída padrão ou da entrada padrão"
 
-#: commands/copy.c:300
+#: commands/copy.c:301
 #, c-format
 msgid "could not write to COPY file: %m"
 msgstr "não pôde escrever para arquivo COPY: %m"
 
-#: commands/copy.c:308
+#: commands/copy.c:309
 msgid "connection lost during COPY to stdout"
 msgstr "conexão perdida durante COPY para saída padrão"
 
-#: commands/copy.c:391 commands/copy.c:409 commands/copy.c:413
-#: commands/copy.c:473 commands/copy.c:522 tcop/fastpath.c:292
+#: commands/copy.c:392 commands/copy.c:410 commands/copy.c:414
+#: commands/copy.c:474 commands/copy.c:523 tcop/fastpath.c:292
 #: tcop/postgres.c:281 tcop/postgres.c:304
 msgid "unexpected EOF on client connection"
 msgstr "EOF inesperado na conexão do cliente"
 
-#: commands/copy.c:425
+#: commands/copy.c:426
 #, c-format
 msgid "COPY from stdin failed: %s"
 msgstr "COPY da entrada padrão falhou: %s"
 
-#: commands/copy.c:440
+#: commands/copy.c:441
 #, c-format
 msgid "unexpected message type 0x%02X during COPY from stdin"
 msgstr "tipo de mensagem inesperada 0x%02X durante COPY da entrada padrão"
 
-#: commands/copy.c:699 commands/copy.c:707 commands/copy.c:715
-#: commands/copy.c:723 commands/dbcommands.c:103 commands/dbcommands.c:111
+#: commands/copy.c:700 commands/copy.c:708 commands/copy.c:716
+#: commands/copy.c:724 commands/dbcommands.c:103 commands/dbcommands.c:111
 #: commands/dbcommands.c:119 commands/dbcommands.c:127
 #: commands/functioncmds.c:220 commands/functioncmds.c:228
 #: commands/functioncmds.c:236 commands/functioncmds.c:244
@@ -1680,23 +1681,23 @@ msgstr "tipo de mensagem inesperada 0x%02X durante COPY da entrada padrão"
 msgid "conflicting or redundant options"
 msgstr "opções conflitantes ou redundantes"
 
-#: commands/copy.c:734
+#: commands/copy.c:735
 msgid "cannot specify DELIMITER in BINARY mode"
 msgstr "não pode especificar DELIMITER no modo BINARY"
 
-#: commands/copy.c:739
+#: commands/copy.c:740
 msgid "cannot specify NULL in BINARY mode"
 msgstr "não pode especificar NULL no modo BINARY"
 
-#: commands/copy.c:757 executor/execMain.c:483 tcop/utility.c:260
+#: commands/copy.c:758 executor/execMain.c:483 tcop/utility.c:260
 msgid "transaction is read-only"
 msgstr "transação é somente leitura"
 
-#: commands/copy.c:768
+#: commands/copy.c:769
 msgid "must be superuser to COPY to or from a file"
 msgstr "deve ser super-usuário para utilizar COPY para ou de um arquivo"
 
-#: commands/copy.c:769
+#: commands/copy.c:770
 msgid ""
 "Anyone can COPY to stdout or from stdin. psql's \\copy command also works "
 "for anyone."
@@ -1704,163 +1705,163 @@ msgstr ""
 "Qualquer um pode utilizar COPY para saída padrão ou da entrada padrão. "
 "comando \\copy do psql também funciona para qualquer um."
 
-#: commands/copy.c:778
+#: commands/copy.c:779
 msgid "COPY delimiter must be a single character"
 msgstr "delimitador do COPY deve ser um caracter"
 
-#: commands/copy.c:786
+#: commands/copy.c:787
 #, c-format
 msgid "table \"%s\" does not have OIDs"
 msgstr "tabela \"%s\" não tem OIDs"
 
-#: commands/copy.c:816
+#: commands/copy.c:817
 #, c-format
 msgid "cannot copy to view \"%s\""
 msgstr "não pode copiar visão \"%s\""
 
-#: commands/copy.c:821
+#: commands/copy.c:822
 #, c-format
 msgid "cannot copy to sequence \"%s\""
 msgstr "não pode copiar sequência \"%s\""
 
-#: commands/copy.c:826
+#: commands/copy.c:827
 #, c-format
 msgid "cannot copy to non-table relation \"%s\""
 msgstr "não pode copiar para relação \"%s\" que não é uma tabela"
 
-#: commands/copy.c:845
+#: commands/copy.c:846
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "não pôde abrir arquivo \"%s\" para leitura: %m"
 
-#: commands/copy.c:854 commands/copy.c:916
+#: commands/copy.c:855 commands/copy.c:917
 #, c-format
 msgid "\"%s\" is a directory"
 msgstr "\"%s\" é um diretório"
 
-#: commands/copy.c:866
+#: commands/copy.c:867
 #, c-format
 msgid "cannot copy from view \"%s\""
 msgstr "não pode copiar visão \"%s\""
 
-#: commands/copy.c:871
+#: commands/copy.c:872
 #, c-format
 msgid "cannot copy from sequence \"%s\""
 msgstr "não pode copiar sequência \"%s\""
 
-#: commands/copy.c:876
+#: commands/copy.c:877
 #, c-format
 msgid "cannot copy from non-table relation \"%s\""
 msgstr "não pode copiar da relação \"%s\" que não é uma tabela"
 
-#: commands/copy.c:898
+#: commands/copy.c:899
 msgid "relative path not allowed for COPY to file"
 msgstr "caminho relativo não é permitido pelo COPY para um arquivo"
 
-#: commands/copy.c:907
+#: commands/copy.c:908
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "não pôde abrir arquivo \"%s\" para escrita: %m"
 
-#: commands/copy.c:1149
+#: commands/copy.c:1148
 #, c-format
 msgid "COPY %s, line %d, column %s"
 msgstr "COPY %s, linha %d, coluna %s"
 
-#: commands/copy.c:1152
+#: commands/copy.c:1151
 #, c-format
 msgid "COPY %s, line %d"
 msgstr "COPY %s, linha %d"
 
 #: commands/copy.c:1159
 #, c-format
-msgid "COPY %s, line %d, column %s: \"%.*s%s\""
-msgstr "COPY %s, linha %d, coluna %s: \"%.*s%s\""
+msgid "COPY %s, line %d, column %s: \"%s\""
+msgstr "COPY %s, linha %d, coluna %s: \"%s\""
 
 #: commands/copy.c:1186
 #, c-format
-msgid "COPY %s, line %d: \"%.*s%s\""
-msgstr "COPY %s, linha %d: \"%.*s%s\""
+msgid "COPY %s, line %d: \"%s\""
+msgstr "COPY %s, linha %d: \"%s\""
 
-#: commands/copy.c:1359
+#: commands/copy.c:1389
 msgid "COPY file signature not recognized"
 msgstr "assinatura de arquivo COPY desconhecida"
 
-#: commands/copy.c:1365
+#: commands/copy.c:1395
 msgid "invalid COPY file header (missing flags)"
 msgstr "cabeçalho de arquivo COPY inválido (faltando marcações)"
 
-#: commands/copy.c:1371
+#: commands/copy.c:1401
 msgid "unrecognized critical flags in COPY file header"
 msgstr "marcações críticas desconhecidas no cabeçalho do arquivo COPY"
 
-#: commands/copy.c:1377
+#: commands/copy.c:1407
 msgid "invalid COPY file header (missing length)"
 msgstr "cabeçalho de arquivo COPY inválido (faltando tamanho)"
 
-#: commands/copy.c:1385
+#: commands/copy.c:1415
 msgid "invalid COPY file header (wrong length)"
 msgstr "cabeçalho de arquivo COPY inválido (tamanho incorreto)"
 
-#: commands/copy.c:1462
+#: commands/copy.c:1492
 msgid "null OID in COPY data"
 msgstr "OID nulo em dados do COPY"
 
-#: commands/copy.c:1471 commands/copy.c:1554
+#: commands/copy.c:1501 commands/copy.c:1584
 msgid "invalid OID in COPY data"
 msgstr "OID inválido em dados do COPY"
 
-#: commands/copy.c:1491
+#: commands/copy.c:1521
 #, c-format
 msgid "missing data for column \"%s\""
 msgstr "faltando dados da coluna \"%s\""
 
-#: commands/copy.c:1523
+#: commands/copy.c:1553
 msgid "extra data after last expected column"
 msgstr "dados extra após última coluna esperada"
 
-#: commands/copy.c:1540
+#: commands/copy.c:1570
 #, c-format
 msgid "row field count is %d, expected %d"
 msgstr "quantidade de registros é %d, esperado %d"
 
-#: commands/copy.c:1756 commands/copy.c:1774
+#: commands/copy.c:1786 commands/copy.c:1804
 msgid "literal carriage return found in data"
 msgstr "retorno de carro encontrado em dado"
 
-#: commands/copy.c:1757 commands/copy.c:1775
+#: commands/copy.c:1787 commands/copy.c:1805
 msgid "Use \"\\r\" to represent carriage return."
 msgstr "Use \"\\r\" para representar retorno de carro."
 
-#: commands/copy.c:1792
+#: commands/copy.c:1822
 msgid "literal newline found in data"
 msgstr "nova linha encontrado nos dados"
 
-#: commands/copy.c:1793
+#: commands/copy.c:1823
 msgid "Use \"\\n\" to represent newline."
 msgstr "Utilize \"\\n\" para representar nova linha."
 
-#: commands/copy.c:1813 commands/copy.c:1829
+#: commands/copy.c:1843 commands/copy.c:1859
 msgid "end-of-copy marker does not match previous newline style"
 msgstr "marcador de fim-de-cópia não combina com estilo de nova linha anterior"
 
-#: commands/copy.c:1817 commands/copy.c:1823
+#: commands/copy.c:1847 commands/copy.c:1853
 msgid "end-of-copy marker corrupt"
 msgstr "marcador de fim-de-cópia corrompido"
 
-#: commands/copy.c:2034 commands/copy.c:2056
+#: commands/copy.c:2070 commands/copy.c:2092
 msgid "unexpected EOF in COPY data"
 msgstr "EOF inesperado em dados do COPY"
 
-#: commands/copy.c:2043
+#: commands/copy.c:2079
 msgid "invalid field size"
 msgstr "tamanho de campo inválido"
 
-#: commands/copy.c:2070
+#: commands/copy.c:2106
 msgid "incorrect binary data format"
 msgstr "formato de dados binário incorreto"
 
-#: commands/copy.c:2189 parser/parse_target.c:500
+#: commands/copy.c:2225 parser/parse_target.c:500
 #, c-format
 msgid "column \"%s\" specified more than once"
 msgstr "coluna \"%s\" especificada mais de uma vez"
@@ -2527,7 +2528,7 @@ msgid "setval: value %s is out of bounds for sequence \"%s\" (%s..%s)"
 msgstr "setval: valor %s está fora do intervalo da sequência \"%s\" (%s..%s)"
 
 #: commands/sequence.c:814 executor/execGrouping.c:328
-#: executor/execGrouping.c:388 executor/nodeIndexscan.c:1035 executor/spi.c:85
+#: executor/execGrouping.c:388 executor/nodeIndexscan.c:1043 executor/spi.c:85
 #: executor/spi.c:167 lib/dllist.c:43 lib/dllist.c:88 libpq/auth.c:633
 #: postmaster/pgstat.c:857 postmaster/pgstat.c:874 postmaster/pgstat.c:2271
 #: postmaster/pgstat.c:2334 postmaster/pgstat.c:2379 postmaster/pgstat.c:2430
@@ -2888,8 +2889,8 @@ msgstr "função de gatilho %u retornou valor nulo"
 msgid "BEFORE STATEMENT trigger cannot return a value"
 msgstr "gatilho BEFORE STATEMENT não pode retornar um valor"
 
-#: commands/trigger.c:1582 executor/execMain.c:1145 executor/execMain.c:1446
-#: executor/execMain.c:1582
+#: commands/trigger.c:1582 executor/execMain.c:1203 executor/execMain.c:1504
+#: executor/execMain.c:1640
 msgid "could not serialize access due to concurrent update"
 msgstr "não pôde serializar acesso devido a uma atualização concorrente"
 
@@ -3439,27 +3440,27 @@ msgstr "não pode mudar nome da coluna da visão \"%s\""
 msgid "cannot change data type of view column \"%s\""
 msgstr "não pode mudar tipo de dados da coluna da visão \"%s\""
 
-#: executor/execMain.c:865
+#: executor/execMain.c:866
 #, c-format
 msgid "cannot change sequence \"%s\""
 msgstr "não pode mudar sequência \"%s\""
 
-#: executor/execMain.c:871
+#: executor/execMain.c:872
 #, c-format
 msgid "cannot change TOAST relation \"%s\""
 msgstr "não pode mudar relação TOAST \"%s\""
 
-#: executor/execMain.c:877
+#: executor/execMain.c:878
 #, c-format
 msgid "cannot change view \"%s\""
 msgstr "não pode mudar visão \"%s\""
 
-#: executor/execMain.c:1714
+#: executor/execMain.c:1772
 #, c-format
 msgid "null value in column \"%s\" violates not-null constraint"
 msgstr "valor nulo na coluna \"%s\" viola a restrição não-nula"
 
-#: executor/execMain.c:1726
+#: executor/execMain.c:1784
 #, c-format
 msgid "new row for relation \"%s\" violates check constraint \"%s\""
 msgstr "novo registro da relação \"%s\" viola restrição de checagem \"%s\""
@@ -4196,7 +4197,7 @@ msgstr "%s: não pôde determinar nome de usuário (GetUserName falhou)\n"
 msgid "SELECT FOR UPDATE is not supported for inheritance queries"
 msgstr "SELECT FOR UPDATE não é suportado por consultas herdadas"
 
-#: optimizer/plan/initsplan.c:282 optimizer/prep/prepjointree.c:337
+#: optimizer/plan/initsplan.c:282 optimizer/prep/prepjointree.c:365
 msgid "UNION JOIN is not implemented"
 msgstr "UNION JOIN não está implementada"
 
@@ -4229,12 +4230,12 @@ msgstr "SELECT FOR UPDATE não é permitido com UNION/INTERSECT/EXCEPT"
 msgid "SELECT FOR UPDATE is not allowed in subqueries"
 msgstr "SELECT FOR UPDATE não é permitido em subconsultas"
 
-#: optimizer/util/clauses.c:2037
+#: optimizer/util/clauses.c:2047
 #, c-format
 msgid "SQL function \"%s\" during inlining"
 msgstr "função SQL \"%s\" durante expansão de linha"
 
-#: optimizer/util/clauses.c:2422 optimizer/util/clauses.c:2899
+#: optimizer/util/clauses.c:2432 optimizer/util/clauses.c:2909
 #: parser/parse_expr.c:1323
 #, c-format
 msgid "relation reference \"%s\" cannot be used in an expression"
@@ -4315,7 +4316,7 @@ msgstr ""
 "regras com condições WHERE só podem ter ações SELECT, INSERT, UPDATE ou "
 "DELETE"
 
-#: parser/analyze.c:1846 parser/analyze.c:1918 rewrite/rewriteHandler.c:176
+#: parser/analyze.c:1846 parser/analyze.c:1918 rewrite/rewriteHandler.c:174
 #: rewrite/rewriteManip.c:746 rewrite/rewriteManip.c:802
 msgid "conditional UNION/INTERSECT/EXCEPT statements are not implemented"
 msgstr "sentenças UNION/INTERSECT/EXCEPT condicionais não estão implementadas"
@@ -4476,11 +4477,11 @@ msgstr "agregação não é permitida na cláusula WHERE"
 msgid "aggregates not allowed in JOIN conditions"
 msgstr "agregação não é permitida nas condições JOIN"
 
-#: parser/parse_agg.c:145
+#: parser/parse_agg.c:143
 msgid "aggregates not allowed in GROUP BY clause"
 msgstr "agregação não é permitida na cláusula GROUP BY"
 
-#: parser/parse_agg.c:305
+#: parser/parse_agg.c:316
 #, c-format
 msgid ""
 "column \"%s.%s\" must appear in the GROUP BY clause or be used in an "
@@ -4489,7 +4490,7 @@ msgstr ""
 "coluna \"%s.%s\" deve aparecer na cláusula GROUP BY ou ser utilizada em uma "
 "função de agregação"
 
-#: parser/parse_agg.c:310
+#: parser/parse_agg.c:321
 #, c-format
 msgid "subquery uses ungrouped column \"%s.%s\" from outer query"
 msgstr "subconsulta utiliza coluna desagrupada \"%s.%s\" na consulta externa"
@@ -6083,37 +6084,37 @@ msgstr ""
 msgid "rule \"%s\" for relation \"%s\" does not exist"
 msgstr "regra \"%s\" para relação \"%s\" não existe"
 
-#: rewrite/rewriteHandler.c:458 rewrite/rewriteHandler.c:472
+#: rewrite/rewriteHandler.c:456 rewrite/rewriteHandler.c:470
 #, c-format
 msgid "multiple assignments to same column \"%s\""
 msgstr "atribuições múltiplas para mesma coluna \"%s\""
 
-#: rewrite/rewriteHandler.c:884 rewrite/rewriteHandler.c:1166
+#: rewrite/rewriteHandler.c:882 rewrite/rewriteHandler.c:1164
 #, c-format
 msgid "infinite recursion detected in rules for relation \"%s\""
 msgstr "recursão infinita detectada em regras para relação \"%s\""
 
-#: rewrite/rewriteHandler.c:1276
+#: rewrite/rewriteHandler.c:1274
 msgid "cannot insert into a view"
 msgstr "não pode inserir em uma visão"
 
-#: rewrite/rewriteHandler.c:1277
+#: rewrite/rewriteHandler.c:1275
 msgid "You need an unconditional ON INSERT DO INSTEAD rule."
 msgstr "Você precisa de uma regra incondicional ON INSERT DO INSTEAD."
 
-#: rewrite/rewriteHandler.c:1282
+#: rewrite/rewriteHandler.c:1280
 msgid "cannot update a view"
 msgstr "não pode atualizar uma visão"
 
-#: rewrite/rewriteHandler.c:1283
+#: rewrite/rewriteHandler.c:1281
 msgid "You need an unconditional ON UPDATE DO INSTEAD rule."
 msgstr "Você precisa de uma regra incondicional ON UPDATE DO INSTEAD."
 
-#: rewrite/rewriteHandler.c:1288
+#: rewrite/rewriteHandler.c:1286
 msgid "cannot delete from a view"
 msgstr "não pode apagar de uma visão"
 
-#: rewrite/rewriteHandler.c:1289
+#: rewrite/rewriteHandler.c:1287
 msgid "You need an unconditional ON DELETE DO INSTEAD rule."
 msgstr "Você precisa de uma regra incondicional ON DELETE DO INSTEAD."
 
@@ -6894,8 +6895,8 @@ msgid "date/time value \"current\" is no longer supported"
 msgstr "valor de data/hora \"current\" não é mais suportado"
 
 #: utils/adt/date.c:367 utils/adt/date.c:439 utils/adt/date.c:1001
-#: utils/adt/date.c:1038 utils/adt/date.c:1940 utils/adt/formatting.c:2850
-#: utils/adt/formatting.c:2875 utils/adt/formatting.c:2934
+#: utils/adt/date.c:1038 utils/adt/date.c:1940 utils/adt/formatting.c:2846
+#: utils/adt/formatting.c:2871 utils/adt/formatting.c:2930
 #: utils/adt/nabstime.c:630 utils/adt/nabstime.c:673 utils/adt/nabstime.c:703
 #: utils/adt/nabstime.c:746 utils/adt/timestamp.c:155
 #: utils/adt/timestamp.c:382 utils/adt/timestamp.c:1735
@@ -6955,7 +6956,7 @@ msgid "\"interval\" time zone \"%s\" not valid"
 msgstr "fuso horário \"%s\" de \"internal\" inválido"
 
 #: utils/adt/datetime.c:1491 utils/adt/datetime.c:2343
-#: utils/adt/formatting.c:3135
+#: utils/adt/formatting.c:3131
 #, c-format
 msgid "inconsistent use of year %04d and \"BC\""
 msgstr "uso inconsistente do ano %04d e \"BC\""
@@ -7089,77 +7090,77 @@ msgstr "não pode retornar logaritmo de número negativo"
 msgid "input is out of range"
 msgstr "entrada está fora do intervalo"
 
-#: utils/adt/formatting.c:972
+#: utils/adt/formatting.c:968
 msgid "\"9\" must be ahead of \"PR\""
 msgstr "\"9\" deve estar a frente de \"PR\""
 
-#: utils/adt/formatting.c:991
+#: utils/adt/formatting.c:987
 msgid "\"0\" must be ahead of \"PR\""
 msgstr "\"0\" deve estar a frente de \"PR\""
 
-#: utils/adt/formatting.c:1020
+#: utils/adt/formatting.c:1016
 msgid "multiple decimal points"
 msgstr "múltiplas casas decimais"
 
-#: utils/adt/formatting.c:1027 utils/adt/formatting.c:1132
+#: utils/adt/formatting.c:1023 utils/adt/formatting.c:1128
 msgid "cannot use \"V\" and decimal point together"
 msgstr "não pode utilizar \"V\" e casas decimais juntos"
 
-#: utils/adt/formatting.c:1042
+#: utils/adt/formatting.c:1038
 msgid "not unique \"S\""
 msgstr "\"S\" não é único"
 
-#: utils/adt/formatting.c:1049
+#: utils/adt/formatting.c:1045
 msgid "cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together"
 msgstr "não pode utilizar \"S\" e \"PL\"/\"MI\"/\"SG\"/\"PR\" juntos"
 
-#: utils/adt/formatting.c:1073
+#: utils/adt/formatting.c:1069
 msgid "cannot use \"S\" and \"MI\" together"
 msgstr "não pode utilizar \"S\" e \"MI\" juntos"
 
-#: utils/adt/formatting.c:1086
+#: utils/adt/formatting.c:1082
 msgid "cannot use \"S\" and \"PL\" together"
 msgstr "não pode utilizar \"S\" e \"PL\" juntos"
 
-#: utils/adt/formatting.c:1099
+#: utils/adt/formatting.c:1095
 msgid "cannot use \"S\" and \"SG\" together"
 msgstr "não pode utilizar \"S\" e \"SG\" juntos"
 
-#: utils/adt/formatting.c:1111
+#: utils/adt/formatting.c:1107
 msgid "cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together"
 msgstr "não pode utilizar \"PR\" e \"S\"/\"PL\"/\"MI\"/\"SG\" juntos"
 
-#: utils/adt/formatting.c:1141
+#: utils/adt/formatting.c:1137
 msgid "\"E\" is not supported"
 msgstr "\"E\" não é suportado"
 
-#: utils/adt/formatting.c:1411
+#: utils/adt/formatting.c:1407
 #, c-format
 msgid "\"%s\" is not a number"
 msgstr "\"%s\" não é um número"
 
-#: utils/adt/formatting.c:1674
+#: utils/adt/formatting.c:1670
 msgid "invalid AM/PM string"
 msgstr "cadeia de caracteres AM/PM inválida"
 
-#: utils/adt/formatting.c:2020
+#: utils/adt/formatting.c:2016
 msgid "\"TZ\"/\"tz\" not supported"
 msgstr "\"TZ\"/\"tz\" não é suportado"
 
-#: utils/adt/formatting.c:2030
+#: utils/adt/formatting.c:2026
 #, c-format
 msgid "invalid value for %s"
 msgstr "valor inválido para %s"
 
-#: utils/adt/formatting.c:3096
+#: utils/adt/formatting.c:3092
 msgid "AM/PM hour must be between 1 and 12"
 msgstr "hora AM/PM deve estar entre 1 e 12"
 
-#: utils/adt/formatting.c:3170
+#: utils/adt/formatting.c:3166
 msgid "cannot calculate day of year without year information"
 msgstr "não pode calcular dia do ano sem a informação do ano"
 
-#: utils/adt/formatting.c:3947
+#: utils/adt/formatting.c:3943
 msgid "\"RN\" not supported"
 msgstr "\"RN\" não é suportado"
 
@@ -7362,7 +7363,7 @@ msgid "invalid mask length: %d"
 msgstr "tamanho de máscara inválido: %d"
 
 #: utils/adt/not_in.c:64 utils/adt/regproc.c:1110 utils/adt/regproc.c:1115
-#: utils/adt/varlena.c:1618 utils/adt/varlena.c:1623
+#: utils/adt/varlena.c:1621 utils/adt/varlena.c:1626
 msgid "invalid name syntax"
 msgstr "sintaxe de nome inválida"
 
@@ -7817,21 +7818,21 @@ msgstr "valor muito longo para tipo character(%d)"
 msgid "value too long for type character varying(%d)"
 msgstr "valor muito longo para tipo character varying(%d)"
 
-#: utils/adt/varlena.c:579 utils/adt/varlena.c:643 utils/adt/varlena.c:1294
+#: utils/adt/varlena.c:579 utils/adt/varlena.c:643 utils/adt/varlena.c:1297
 msgid "negative substring length not allowed"
 msgstr "índice negativo não é permitido"
 
-#: utils/adt/varlena.c:1389 utils/adt/varlena.c:1420 utils/adt/varlena.c:1456
-#: utils/adt/varlena.c:1499
+#: utils/adt/varlena.c:1392 utils/adt/varlena.c:1423 utils/adt/varlena.c:1459
+#: utils/adt/varlena.c:1502
 #, c-format
 msgid "index %d out of valid range, 0..%d"
 msgstr "índice %d fora do intervalo válido, 0..%d"
 
-#: utils/adt/varlena.c:1511
+#: utils/adt/varlena.c:1514
 msgid "new bit must be 0 or 1"
 msgstr "novo bit deve ser 0 ou 1"
 
-#: utils/adt/varlena.c:2008
+#: utils/adt/varlena.c:2011
 msgid "field position must be greater than zero"
 msgstr "posição do campo deve ser maior do que zero"
 
@@ -9322,60 +9323,3 @@ msgstr "não pôde criar índice unique"
 #: utils/sort/tuplesort.c:2073
 msgid "Table contains duplicated values."
 msgstr "Tabela contem valores duplicados."
-
-#~ msgid "January"
-#~ msgstr "Janeiro"
-
-#~ msgid "February"
-#~ msgstr "Fevereiro"
-
-#~ msgid "March"
-#~ msgstr "Março"
-
-#~ msgid "April"
-#~ msgstr "Abril"
-
-#~ msgid "May"
-#~ msgstr "Maio"
-
-#~ msgid "June"
-#~ msgstr "Junho"
-
-#~ msgid "July"
-#~ msgstr "Julho"
-
-#~ msgid "August"
-#~ msgstr "Agosto"
-
-#~ msgid "September"
-#~ msgstr "Setembro"
-
-#~ msgid "October"
-#~ msgstr "Outubro"
-
-#~ msgid "November"
-#~ msgstr "Novembro"
-
-#~ msgid "December"
-#~ msgstr "Dezembro"
-
-#~ msgid "Sunday"
-#~ msgstr "Domingo"
-
-#~ msgid "Monday"
-#~ msgstr "Segunda"
-
-#~ msgid "Tuesday"
-#~ msgstr "Terça"
-
-#~ msgid "Wednesday"
-#~ msgstr "Quarta"
-
-#~ msgid "Thursday"
-#~ msgstr "Quinta"
-
-#~ msgid "Friday"
-#~ msgstr "Sexta"
-
-#~ msgid "Saturday"
-#~ msgstr "Sábado"
