@@ -845,7 +845,6 @@ Optional Features:
   --enable-debug          build with debugging symbols (-g)
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
-  --enable-odbc           build the ODBC driver package
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -871,9 +870,6 @@ Optional Packages:
   --with-openssl[=DIR]    build with OpenSSL support [/usr/local/ssl]
   --without-readline      do not use Readline
   --without-zlib          do not use Zlib
-  --with-unixodbc         build ODBC driver for unixODBC
-  --with-iodbc            build ODBC driver for iODBC
-  --with-odbcinst=DIR     default directory for odbcinst.ini sysconfdir
   --with-gnu-ld           assume the C compiler uses GNU ld default=no
 
 Some influential environment variables:
@@ -3472,162 +3468,6 @@ else
   with_zlib=yes
 
 fi;
-
-
-
-
-#
-# Optionally enable the building of the ODBC driver
-#
-
-# Old option name
-if test "${with_odbc+set}" = set && test "${enable_odbc+set}" != set; then
-  enable_odbc=$with_odbc
-fi
-
-echo "$as_me:$LINENO: checking whether to build the ODBC driver" >&5
-echo $ECHO_N "checking whether to build the ODBC driver... $ECHO_C" >&6
-
-
-# Check whether --enable-odbc or --disable-odbc was given.
-if test "${enable_odbc+set}" = set; then
-  enableval="$enable_odbc"
-
-  case $enableval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --enable-odbc option" >&5
-echo "$as_me: error: no argument expected for --enable-odbc option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  enable_odbc=no
-
-fi;
-
-
-
-
-# Check whether --with-unixodbc or --without-unixodbc was given.
-if test "${with_unixodbc+set}" = set; then
-  withval="$with_unixodbc"
-
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --with-unixodbc option" >&5
-echo "$as_me: error: no argument expected for --with-unixodbc option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  with_unixodbc=no
-
-fi;
-
-
-
-
-# Check whether --with-iodbc or --without-iodbc was given.
-if test "${with_iodbc+set}" = set; then
-  withval="$with_iodbc"
-
-  case $withval in
-    yes)
-      :
-      ;;
-    no)
-      :
-      ;;
-    *)
-      { { echo "$as_me:$LINENO: error: no argument expected for --with-iodbc option" >&5
-echo "$as_me: error: no argument expected for --with-iodbc option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-  esac
-
-else
-  with_iodbc=no
-
-fi;
-
-if test "$with_unixodbc" = yes && test "$with_iodbc" = yes; then
-  { { echo "$as_me:$LINENO: error: ODBC driver cannot be built for both unixODBC and iODBC" >&5
-echo "$as_me: error: ODBC driver cannot be built for both unixODBC and iODBC" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-if test "$with_unixodbc" = yes || test "$with_iodbc" = yes; then
-  enable_odbc=yes
-fi
-case $enable_odbc:$with_unixodbc:$with_iodbc in
-  yes:no:no)    echo "$as_me:$LINENO: result: yes (stand-alone)" >&5
-echo "${ECHO_T}yes (stand-alone)" >&6;;
-  yes:yes:no)   echo "$as_me:$LINENO: result: yes (unixODBC)" >&5
-echo "${ECHO_T}yes (unixODBC)" >&6
-
-cat >>confdefs.h <<\_ACEOF
-#define WITH_UNIXODBC 1
-_ACEOF
-
-                ;;
-  yes:no:yes)   echo "$as_me:$LINENO: result: yes (iODBC)" >&5
-echo "${ECHO_T}yes (iODBC)" >&6
-
-cat >>confdefs.h <<\_ACEOF
-#define WITH_IODBC 1
-_ACEOF
-
-                ;;
-  no:*)         echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6;;
-esac
-
-
-
-
-
-# Allow for overriding the default location of the odbcinst.ini
-# file which is normally ${sysconfdir} (i.e., ${prefix}/etc).
-
-
-
-# Check whether --with-odbcinst or --without-odbcinst was given.
-if test "${with_odbcinst+set}" = set; then
-  withval="$with_odbcinst"
-
-  case $withval in
-    yes)
-      { { echo "$as_me:$LINENO: error: argument required for --with-odbcinst option" >&5
-echo "$as_me: error: argument required for --with-odbcinst option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    no)
-      { { echo "$as_me:$LINENO: error: argument required for --with-odbcinst option" >&5
-echo "$as_me: error: argument required for --with-odbcinst option" >&2;}
-   { (exit 1); exit 1; }; }
-      ;;
-    *)
-      odbcinst_ini_dir=$withval
-      ;;
-  esac
-
-else
-  odbcinst_ini_dir="\${sysconfdir}"
-fi;
-
 
 
 
@@ -16459,10 +16299,6 @@ s,@with_krb5@,$with_krb5,;t t
 s,@krb_srvtab@,$krb_srvtab,;t t
 s,@with_pam@,$with_pam,;t t
 s,@with_openssl@,$with_openssl,;t t
-s,@enable_odbc@,$enable_odbc,;t t
-s,@with_unixodbc@,$with_unixodbc,;t t
-s,@with_iodbc@,$with_iodbc,;t t
-s,@odbcinst_ini_dir@,$odbcinst_ini_dir,;t t
 s,@ELF_SYS@,$ELF_SYS,;t t
 s,@AWK@,$AWK,;t t
 s,@FLEX@,$FLEX,;t t

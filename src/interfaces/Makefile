@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.46 2002/08/22 00:15:10 scrappy Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.47 2002/08/22 22:43:11 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,11 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 DIRS := libpq ecpg libpgeasy
 
-ALLDIRS := $(DIRS) odbc libpgtcl perl5 python jdbc
-
-ifeq ($(enable_odbc), yes)
-DIRS += odbc
-endif
+ALLDIRS := $(DIRS) libpgtcl perl5 python jdbc
 
 ifeq ($(with_tcl), yes)
 DIRS += libpgtcl

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.196 2002/08/22 00:15:06 scrappy Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.197 2002/08/22 22:43:08 scrappy Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -508,50 +508,6 @@ PGAC_ARG_BOOL(with, readline, yes,
 #
 PGAC_ARG_BOOL(with, zlib, yes,
               [  --without-zlib          do not use Zlib])
-
-
-
-#
-# Optionally enable the building of the ODBC driver
-#
- 
-# Old option name
-if test "${with_odbc+set}" = set && test "${enable_odbc+set}" != set; then
-  enable_odbc=$with_odbc
-fi
- 
-AC_MSG_CHECKING([whether to build the ODBC driver])
-PGAC_ARG_BOOL(enable, odbc, no, [  --enable-odbc           build the ODBC driver package])
-PGAC_ARG_BOOL(with, unixodbc, no, [  --with-unixodbc         build ODBC driver for unixODBC])
-PGAC_ARG_BOOL(with, iodbc, no, [  --with-iodbc            build ODBC driver for iODBC])
-if test "$with_unixodbc" = yes && test "$with_iodbc" = yes; then
-  AC_MSG_ERROR([ODBC driver cannot be built for both unixODBC and iODBC])
-fi
-if test "$with_unixodbc" = yes || test "$with_iodbc" = yes; then
-  enable_odbc=yes
-fi
-case $enable_odbc:$with_unixodbc:$with_iodbc in
-  yes:no:no)    AC_MSG_RESULT([yes (stand-alone)]);;
-  yes:yes:no)   AC_MSG_RESULT([yes (unixODBC)])
-                AC_DEFINE(WITH_UNIXODBC, 1, [Define to 1 to build with unixODBC support (--with-unixodbc)])
-                ;;
-  yes:no:yes)   AC_MSG_RESULT([yes (iODBC)])
-                AC_DEFINE(WITH_IODBC, 1, [Define to 1 to build with iODBC support (--with-iodbc)])
-                ;;
-  no:*)         AC_MSG_RESULT(no);;
-esac
-AC_SUBST([enable_odbc])
-AC_SUBST([with_unixodbc])
-AC_SUBST([with_iodbc])
-
-
-# Allow for overriding the default location of the odbcinst.ini
-# file which is normally ${sysconfdir} (i.e., ${prefix}/etc).
-PGAC_ARG_REQ(with, odbcinst,
-             [  --with-odbcinst=DIR     default directory for odbcinst.ini [sysconfdir]],
-             [odbcinst_ini_dir=$withval],
-             [odbcinst_ini_dir="\${sysconfdir}"])
-AC_SUBST([odbcinst_ini_dir])
 
 
 

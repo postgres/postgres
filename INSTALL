@@ -321,10 +321,6 @@ Installation Procedure
           the only good reason to select a non-default value is if you
           intend to run multiple PostgreSQL servers on the same machine.
 
-     --with-CXX
-
-          Build the C++ interface library.
-
      --with-perl
 
           Build the Perl interface module. The Perl interface will be
@@ -361,35 +357,6 @@ Installation Procedure
           automatically at their well-known locations, but if you want to
           use a different version of Tcl or Tk you can specify the directory
           in which to find them.
-
-     --enable-odbc
-
-          Build the ODBC driver. By default, the driver will be independent
-          of a driver manager. To work better with a driver manager already
-          installed on your system, use one of the following options in
-          addition to this one. More information can be found in the
-          Programmer's Guide.
-
-     --with-iodbc
-
-          Build the ODBC driver for use with iODBC.
-
-     --with-unixodbc
-
-          Build the ODBC driver for use with unixODBC.
-
-     --with-odbcinst=DIRECTORY
-
-          Specifies the directory where the ODBC driver will expect its
-          "odbcinst.ini" configuration file. The default is
-          "/usr/local/pgsql/etc" or whatever you specified as
-          "--sysconfdir". It should be arranged that the driver reads the
-          same file as the driver manager.
-
-          If either the option "--with-iodbc" or the option
-          "--with-unixodbc" is used, this option will be ignored because in
-          that case the driver manager handles the location of the
-          configuration file.
 
      --with-java
 

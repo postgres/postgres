@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.152 2002/07/27 20:10:04 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.153 2002/08/22 22:43:10 scrappy Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -111,8 +111,6 @@ override docdir := $(docdir)/postgresql
 endif
 endif
 
-odbcinst_ini_dir = @odbcinst_ini_dir@
-
 javadir := $(DESTDIR)$(datadir)/java
 localedir := @localedir@
 
@@ -129,9 +127,6 @@ with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
 with_tk		= @with_tk@
-enable_odbc	= @enable_odbc@
-with_iodbc	= @with_iodbc@
-with_unixodbc	= @with_unixodbc@
 MULTIBYTE	= @MULTIBYTE@
 enable_shared	= @enable_shared@
 enable_rpath	= @enable_rpath@
