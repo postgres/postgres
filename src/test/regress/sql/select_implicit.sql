@@ -7,17 +7,17 @@
 -- - thomas 1998-07-09
 
 -- load test data
-CREATE TABLE test_missing_target (a int, b int, c char(8));
-INSERT INTO test_missing_target VALUES (0, 1, 'XXXX');
-INSERT INTO test_missing_target VALUES (1, 2, 'AAAA');
-INSERT INTO test_missing_target VALUES (2, 2, 'AAAA');
-INSERT INTO test_missing_target VALUES (3, 3, 'BBBB');
-INSERT INTO test_missing_target VALUES (4, 3, 'BBBB');
-INSERT INTO test_missing_target VALUES (5, 3, 'bbbb');
-INSERT INTO test_missing_target VALUES (6, 4, 'cccc');
-INSERT INTO test_missing_target VALUES (7, 4, 'cccc');
-INSERT INTO test_missing_target VALUES (8, 4, 'CCCC');
-INSERT INTO test_missing_target VALUES (9, 4, 'CCCC');
+CREATE TABLE test_missing_target (a int, b int, c char(8), d char);
+INSERT INTO test_missing_target VALUES (0, 1, 'XXXX', 'A');
+INSERT INTO test_missing_target VALUES (1, 2, 'AAAA', 'b');
+INSERT INTO test_missing_target VALUES (2, 2, 'AAAA', 'c');
+INSERT INTO test_missing_target VALUES (3, 3, 'BBBB', 'D');
+INSERT INTO test_missing_target VALUES (4, 3, 'BBBB', 'e');
+INSERT INTO test_missing_target VALUES (5, 3, 'bbbb', 'F');
+INSERT INTO test_missing_target VALUES (6, 4, 'cccc', 'g');
+INSERT INTO test_missing_target VALUES (7, 4, 'cccc', 'h');
+INSERT INTO test_missing_target VALUES (8, 4, 'CCCC', 'I');
+INSERT INTO test_missing_target VALUES (9, 4, 'CCCC', 'j');
 
 
 --   w/ existing GROUP BY target
@@ -118,7 +118,7 @@ SELECT lower(test_missing_target.c), count(c)
   FROM test_missing_target GROUP BY lower(c) ORDER BY lower(c);
 
 --   w/o existing GROUP BY target
-SELECT a FROM test_missing_target ORDER BY upper(c);
+SELECT a FROM test_missing_target ORDER BY upper(d);
 
 --   w/o existing ORDER BY target
 SELECT count(b) FROM test_missing_target

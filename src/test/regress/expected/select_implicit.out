@@ -1,14 +1,14 @@
-QUERY: CREATE TABLE test_missing_target (a int, b int, c char(8));
-QUERY: INSERT INTO test_missing_target VALUES (0, 1, 'XXXX');
-QUERY: INSERT INTO test_missing_target VALUES (1, 2, 'AAAA');
-QUERY: INSERT INTO test_missing_target VALUES (2, 2, 'AAAA');
-QUERY: INSERT INTO test_missing_target VALUES (3, 3, 'BBBB');
-QUERY: INSERT INTO test_missing_target VALUES (4, 3, 'BBBB');
-QUERY: INSERT INTO test_missing_target VALUES (5, 3, 'bbbb');
-QUERY: INSERT INTO test_missing_target VALUES (6, 4, 'cccc');
-QUERY: INSERT INTO test_missing_target VALUES (7, 4, 'cccc');
-QUERY: INSERT INTO test_missing_target VALUES (8, 4, 'CCCC');
-QUERY: INSERT INTO test_missing_target VALUES (9, 4, 'CCCC');
+QUERY: CREATE TABLE test_missing_target (a int, b int, c char(8), d char);
+QUERY: INSERT INTO test_missing_target VALUES (0, 1, 'XXXX', 'A');
+QUERY: INSERT INTO test_missing_target VALUES (1, 2, 'AAAA', 'b');
+QUERY: INSERT INTO test_missing_target VALUES (2, 2, 'AAAA', 'c');
+QUERY: INSERT INTO test_missing_target VALUES (3, 3, 'BBBB', 'D');
+QUERY: INSERT INTO test_missing_target VALUES (4, 3, 'BBBB', 'e');
+QUERY: INSERT INTO test_missing_target VALUES (5, 3, 'bbbb', 'F');
+QUERY: INSERT INTO test_missing_target VALUES (6, 4, 'cccc', 'g');
+QUERY: INSERT INTO test_missing_target VALUES (7, 4, 'cccc', 'h');
+QUERY: INSERT INTO test_missing_target VALUES (8, 4, 'CCCC', 'I');
+QUERY: INSERT INTO test_missing_target VALUES (9, 4, 'CCCC', 'j');
 QUERY: SELECT c, count(*) FROM test_missing_target GROUP BY test_missing_target.c;
 c       |count
 --------+-----
@@ -210,9 +210,10 @@ cccc    |    4
 xxxx    |    1
 (4 rows)
 
-QUERY: SELECT a FROM test_missing_target ORDER BY upper(c);
+QUERY: SELECT a FROM test_missing_target ORDER BY upper(d);
 a
 -
+0
 1
 2
 3
@@ -222,7 +223,6 @@ a
 7
 8
 9
-0
 (10 rows)
 
 QUERY: SELECT count(b) FROM test_missing_target
