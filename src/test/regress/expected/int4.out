@@ -7,7 +7,7 @@ ERROR:  pg_atoi: error in "34.5": can't parse ".5"
 QUERY: INSERT INTO INT4_TBL(f1) VALUES ('2147483647');
 QUERY: INSERT INTO INT4_TBL(f1) VALUES ('-2147483647');
 QUERY: INSERT INTO INT4_TBL(f1) VALUES ('1000000000000');
-ERROR:  pg_atoi: error reading "1000000000000": Math result not representable
+ERROR:  pg_atoi: error reading "1000000000000": Numerical result out of range
 QUERY: INSERT INTO INT4_TBL(f1) VALUES ('asdf');
 ERROR:  pg_atoi: error in "asdf": can't parse "asdf"
 QUERY: SELECT '' AS five, INT4_TBL.*;
