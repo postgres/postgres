@@ -60,3 +60,9 @@ SELECT '' AS fortyfive, r1.*, r2.*
 SET DATESTYLE = 'postgres';
 
 SELECT '' AS ten, INTERVAL_TBL.*;
+
+-- test avg(interval), which is somewhat fragile since people have been
+-- known to change the allowed input syntax for type interval without
+-- updating pg_aggregate.agginitval
+
+select avg(f1) from interval_tbl;

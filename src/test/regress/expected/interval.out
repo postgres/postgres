@@ -212,3 +212,12 @@ SELECT '' AS ten, INTERVAL_TBL.*;
      | @ 5 mons 12 hours
 (10 rows)
 
+-- test avg(interval), which is somewhat fragile since people have been
+-- known to change the allowed input syntax for type interval without
+-- updating pg_aggregate.agginitval
+select avg(f1) from interval_tbl;
+                       avg                       
+-------------------------------------------------
+ @ 4 years 1 mon 10 days 4 hours 18 mins 23 secs
+(1 row)
+
