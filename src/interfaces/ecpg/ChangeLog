@@ -1510,6 +1510,10 @@ Fri Jun 20 15:34:29 CEST 2003
 
 	- For Informix compatibility we have to accept a "free <cursor>".
 	- Synced scan.l and pgc.l.
+	
+Sun Jun 22 11:20:29 CEST 2003
+
+	- Fixed missing '\0' in output char pointer.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

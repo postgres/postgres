@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.6 2003/06/19 09:52:11 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.7 2003/06/22 11:00:48 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -302,7 +302,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				{
 					if (varcharsize == 0)
 					{
-						strncpy((char *) ((long) var + offset * act_tuple), pval, strlen(pval));
+						strncpy((char *) ((long) var + offset * act_tuple), pval, strlen(pval)+1);
 					}
 					else
 					{
