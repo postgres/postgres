@@ -1,4 +1,3 @@
-
 /* the purpose of this file is to reduce the use of #ifdef's through
  * the code base by those porting the software, an dto facilitate the
  * eventual use of autoconf to build the server 
@@ -39,25 +38,36 @@
  * because it is used in both the prototypes as well as the definitions.
  * Note also the long name.  We expect that this won't collide with
  * other names causing compiler warnings.
-*/ 
+ */ 
 
 #ifndef       SIGNAL_ARGS
 #define SIGNAL_ARGS int postgres_signal_arg
 #endif
 
-# NAMEDATALEN is the max length for system identifiers (e.g. table names,
-# attribute names, function names, etc.)
-#
-# These MUST be set here.  DO NOT COMMENT THESE OUT
-# Setting these too high will result in excess space usage for system catalogs
-# Setting them too low will make the system unusable.
-# values between 16 and 64 that are multiples of four are recommended.
-#
-# NOTE also that databases with different NAMEDATALEN's cannot interoperate!
-# 
+/* NAMEDATALEN is the max length for system identifiers (e.g. table names,
+ * attribute names, function names, etc.)
+ *
+ * These MUST be set here.  DO NOT COMMENT THESE OUT
+ * Setting these too high will result in excess space usage for system catalogs
+ * Setting them too low will make the system unusable.
+ * values between 16 and 64 that are multiples of four are recommended.
+ *
+ * NOTE also that databases with different NAMEDATALEN's cannot interoperate!
+ */ 
 #define NAMEDATALEN 32
 # OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid) 
 #define OIDNAMELEN  36
+
+/* turn this on if you prefer European style dates instead of American
+ * style dates
+ */
+#define EUROPEAN_DATES FALSE
+
+/*
+ * If you do not plan to use Host based authentication,
+ * comment out the following line
+ */
+#define HBA
 
 /*
  * On architectures for which we have not implemented spinlocks (or
@@ -87,6 +97,18 @@
 /* #define LOARRAY */
 #define ESCAPE_PATCH
 #define ARRAY_PATCH
+#define NULL_PATCH
+#define OPENLINK_PATCHES
+
+/* This is the time, in seconds, at which a given backend server
+ * will wait on a lock before deciding to abort the transaction
+ * (this is what we do in lieu of deadlock detection).
+ *
+ * Low numbers are not recommended as they will tend to cause
+ * false aborts if many transactions are long-lived.
+ */
+#define DEADLOCK_TIMEOUT 60
+
 
 /* Fixes use of indexes infunctions */
 #define INDEXSCAN_PATCH 

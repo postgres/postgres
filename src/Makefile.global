@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.35 1996/09/23 18:17:42 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.36 1996/10/08 00:08:56 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -107,22 +107,6 @@ HEADERDIR=	$(POSTGRESDIR)/include
 # The port to run the postmaster on
 POSTPORT= 5432
 
-# NAMEDATALEN is the max length for system identifiers (e.g. table names, 
-# attribute names, function names, etc.)  
-#
-# These MUST be set here.  DO NOT COMMENT THESE OUT
-# Setting these too high will result in excess space usage for system catalogs
-# Setting them too low will make the system unusable.
-# values between 16 and 64 that are multiples of four are recommended.
-#
-# NOTE also that databases with different NAMEDATALEN's cannot interoperate!
-#
-NAMEDATALEN = 32
-# OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid)
-OIDNAMELEN = 36
-
-CFLAGS+= -DNAMEDATALEN=$(NAMEDATALEN) -DOIDNAMELEN=$(OIDNAMELEN)
-
 ##############################################################################
 #
 # FEATURES 
@@ -139,11 +123,6 @@ CDEBUG= -O
 # multi-byte types to generate a bus error.
 ENFORCE_ALIGNMENT= true
 
-# turn this on if you prefer European style dates instead of American
-# style dates
-#EUROPEAN_DATES = true
-
-# Comment out PROFILE to disable profiling.
 #
 #	XXX define on MIPS if you want to be able to use pixie.
 #	    note that this disables dynamic loading!
@@ -166,14 +145,6 @@ READLINE_LIB=  -L/home/tools/lib -lreadline
 # use the following if your readline has a separate history lib
 #HISTORY_INC=   -I/home/tools/include -I/home/tools/include/readline
 #HISTORY_LIB=   -L/home/tools/lib -lhistory
-
-# If you do not plan to use Host based authentication,
-# comment out the following line
-HBA = 1
- 
-ifdef HBA
-HBAFLAGS= -DHBA
-endif
 
 # If you plan to use Kerberos for authentication...
 #
@@ -288,25 +259,10 @@ CFLAGS+= $(CFLAGS_BE)
 LDADD+= $(LDADD_BE)
 LDFLAGS+= $(LDFLAGS_BE)
 
-# enable patches to array update code (moved to config.h)
-#CFLAGS += -DARRAY_PATCH
-# enable patches to null insert/update code
-CFLAGS += -DNULL_PATCH
-# enable patches for varchar and fsync
-CFLAGS += -DOPENLINK_PATCHES
-
 ##############################################################################
 #
 # Miscellaneous configuration
 #
-
-# This is the time, in seconds, at which a given backend server
-# will wait on a lock before deciding to abort the transaction
-# (this is what we do in lieu of deadlock detection).
-#
-# Low numbers are not recommended as they will tend to cause
-# false aborts if many transactions are long-lived.
-CFLAGS+= -DDEADLOCK_TIMEOUT=60
 
 srcdir=		$(SRCDIR)
 includedir=	$(HEADERDIR)
