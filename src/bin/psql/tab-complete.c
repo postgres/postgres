@@ -3,34 +3,44 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.19 2000/05/05 08:44:27 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.20 2000/06/25 14:25:51 petere Exp $
  */
 
-/*-----------
-  This file implements a somewhat more sophisticated readline "TAB completion"
-  in psql. It is not intended to be AI, to replace learning SQL, or to relieve
-  you from thinking about what you're doing. Also it does not always give you
-  all the syntactically legal completions, only those that are the most common
-  or the ones that the programmer felt most like implementing.
-
-  CAVEAT: Tab completion causes queries to be sent to the backend. The number
-  tuples returned gets limited, in most default installations to 101, but if
-  you still don't like this prospect, you can turn off tab completion in your
-  ~/.inputrc (or else ${INPUTRC}) file so:
-  $if psql
-  TAB: self-insert
-  $endif
-  See `man 3 readline` or `info readline` for the full details. Also, hence the
-
-  BUGS:
-  * If you split your queries across lines, this whole things gets confused.
-	(To fix this, one would have to read psql's query buffer rather than
-	readline's line buffer, which would require some major revisions of
-	things.)
-  * Table or attribute names with spaces in it will equally confuse it.
-  * Quotes, parenthesis, and other funny characters are not handled all that
-	gracefully.
--------------*/
+/*----------------------------------------------------------------------
+ * This file implements a somewhat more sophisticated readline "TAB
+ * completion" in psql. It is not intended to be AI, to replace
+ * learning SQL, or to relieve you from thinking about what you're
+ * doing. Also it does not always give you all the syntactically legal
+ * completions, only those that are the most common or the ones that
+ * the programmer felt most like implementing.
+ *
+ * CAVEAT: Tab completion causes queries to be sent to the backend.
+ * The number tuples returned gets limited, in most default
+ * installations to 101, but if you still don't like this prospect,
+ * you can turn off tab completion in your ~/.inputrc (or else
+ * ${INPUTRC}) file so:
+ *
+ *   $if psql
+ *   set disable-completion on
+ *   $endif
+ *
+ * See `man 3 readline' or `info readline' for the full details. Also,
+ * hence the
+ *
+ * BUGS:
+ *
+ * - If you split your queries across lines, this whole things gets
+ *   confused. (To fix this, one would have to read psql's query
+ *   buffer rather than readline's line buffer, which would require
+ *   some major revisions of things.)
+ *
+ * - Table or attribute names with spaces in it will equally confuse
+ *   it.
+ *
+ * - Quotes, parenthesis, and other funny characters are not handled
+ *   all that gracefully.
+ *----------------------------------------------------------------------
+ */
 
 #include "postgres.h"
 #include "tab-complete.h"
@@ -120,6 +130,7 @@ pgsql_thing_t words_after_create[] = {
 	{"AGGREGATE", "SELECT distinct aggname FROM pg_aggregate WHERE substr(aggname,1,%d)='%s'"},
 	{"DATABASE", "SELECT datname FROM pg_database WHERE substr(datname,1,%d)='%s'"},
 	{"FUNCTION", "SELECT distinct proname FROM pg_proc WHERE substr(proname,1,%d)='%s'"},
+	{"GROUP", "SELECT groname FROM pg_group WHERE substr(groname,1,%d)='%s'"},
 	{"INDEX", "SELECT relname FROM pg_class WHERE relkind='i' and substr(relname,1,%d)='%s'"},
 	{"OPERATOR", NULL},			/* Querying for this is probably not such
 								 * a good idea. */
@@ -138,11 +149,11 @@ pgsql_thing_t words_after_create[] = {
 
 /* The query to get a list of tables and a list of indexes, which are used at
    various places. */
-#define Query_for_list_of_tables words_after_create[7].query
-#define Query_for_list_of_indexes words_after_create[3].query
+#define Query_for_list_of_tables words_after_create[8].query
+#define Query_for_list_of_indexes words_after_create[4].query
 #define Query_for_list_of_databases words_after_create[1].query
 #define Query_for_list_of_attributes "SELECT a.attname FROM pg_attribute a, pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and substr(a.attname,1,%d)='%s' and c.relname='%s'"
-
+#define Query_for_list_of_users words_after_create[13].query
 
 /* A couple of macros to ease typing. You can use these to complete the given
    string with
@@ -179,25 +190,27 @@ psql_completion(char *text, int start, int end)
 			   *prev4_wd;
 
 	static char *sql_commands[] = {
-		"ABORT", "ALTER", "BEGIN", "CLOSE", "CLUSTER", "COMMIT", "COPY",
+		"ABORT", "ALTER", "BEGIN", "CLOSE", "CLUSTER", "COMMENT", "COMMIT", "COPY",
 		"CREATE", "DECLARE", "DELETE", "DROP", "EXPLAIN", "FETCH", "GRANT",
 		"INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "RESET",
-		"REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW", "UNLISTEN", "UPDATE",
+		"REVOKE", "ROLLBACK", "SELECT", "SET", "SHOW", "TRUNCATE", "UNLISTEN", "UPDATE",
 		"VACUUM", NULL
 	};
 
 	static char *pgsql_variables[] = {
 		/* these SET arguments are known in gram.y */
-		"TRANSACTION ISOLATION LEVEL",
+		"CONSTRAINTS",
 		"NAMES",
-		/* rest should match table in src/backend/commands/variable.c */
+		"TRANSACTION ISOLATION LEVEL",
+		/* these are treated in backend/commands/variable.c */
 		"DateStyle",
 		"TimeZone",
-		"effective_cache_size",
-		"random_page_cost",
-		"cpu_tuple_cost",
-		"cpu_index_tuple_cost",
-		"cpu_operator_cost",
+		"client_encoding",
+		"server_encoding",
+		"random_seed",
+		/* the rest should match USERSET and SUSET entries in
+		 * backend/utils/misc/guc.c, but feel free to leave out the
+		 * esoteric or debug settings */
 		"enable_seqscan",
 		"enable_indexscan",
 		"enable_tidscan",
@@ -205,13 +218,17 @@ psql_completion(char *text, int start, int end)
 		"enable_nestloop",
 		"enable_mergejoin",
 		"enable_hashjoin",
-		"GEQO",
-		"client_encoding",
-		"server_encoding",
-		"KSQO",
+		"geqo",
+		"ksqo",
+		"sql_inheritance",
+		"sort_mem",
+		"debug_level",
 		"max_expr_depth",
-		"XactIsoLevel",
-		"PG_Options",
+		"effective_cache_size",
+		"random_page_cost",
+		"cpu_tuple_cost",
+		"cpu_index_tuple_cost",
+		"cpu_operator_cost",
 		NULL
 	};
 
@@ -260,24 +277,40 @@ psql_completion(char *text, int start, int end)
 		matches = completion_matches(text, create_command_generator);
 
 /* ALTER */
-	/* complete with what you can alter (TABLE or USER) */
+	/* complete with what you can alter (TABLE, GROUP, USER) */
 	else if (strcasecmp(prev_wd, "ALTER") == 0)
 	{
-		char	   *list_ALTER[] = {"TABLE", "USER", NULL};
+		char	   *list_ALTER[] = {"GROUP", "TABLE", "USER", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
 	}
-	/* If we detect ALTER TABLE <name>, suggest either "ADD" or "RENAME" */
+	/* If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or RENAME */
 	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "TABLE") == 0)
 	{
-		char	   *list_ALTER2[] = {"ADD", "RENAME", NULL};
+		char	   *list_ALTER2[] = {"ADD", "ALTER", "RENAME", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER2);
 	}
-	/* If we have TABLE <sth> ADD|RENAME, provide list of columns */
+	/* If we have TABLE <sth> ALTER|RENAME, provide list of columns */
 	else if (strcasecmp(prev3_wd, "TABLE") == 0 &&
-			 (strcasecmp(prev_wd, "ADD") == 0 || strcasecmp(prev_wd, "RENAME") == 0))
+			 (strcasecmp(prev_wd, "ALTER") == 0 || strcasecmp(prev_wd, "RENAME") == 0))
 		COMPLETE_WITH_ATTR(prev2_wd);
+
+	/* complete ALTER GROUP <foo> with ADD or DROP */
+	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "GROUP") == 0)
+	{
+		char	   *list_ALTERGROUP[] = {"ADD", "DROP", NULL};
+		COMPLETE_WITH_LIST(list_ALTERGROUP);
+	}
+	/* complete ALTER GROUP <foo> ADD|DROP with USER */
+	else if (strcasecmp(prev4_wd, "ALTER") == 0 && strcasecmp(prev3_wd, "GROUP") == 0
+			 && (strcasecmp(prev_wd, "ADD")==0 || strcasecmp(prev_wd, "DROP")==0))
+		COMPLETE_WITH_CONST("USER");
+	/* complete {ALTER} GROUP <foo> ADD|DROP USER with a user name */
+	else if (strcasecmp(prev4_wd, "GROUP") == 0
+			 && (strcasecmp(prev2_wd, "ADD")==0 || strcasecmp(prev2_wd, "DROP")==0)
+			 && strcasecmp(prev_wd, "USER") == 0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_users);
 
 /* CLUSTER */
 	/* If the previous word is CLUSTER, produce list of indexes. */
@@ -303,6 +336,19 @@ psql_completion(char *text, int start, int end)
 		else
 			COMPLETE_WITH_QUERY(query_buffer);
 	}
+
+/* COMMENT */
+	else if (strcasecmp(prev_wd, "COMMENT")==0)
+		COMPLETE_WITH_CONST("ON");
+	else if (strcasecmp(prev2_wd, "COMMENT")==0 && strcasecmp(prev_wd, "ON")==0)
+	{
+		char * list_COMMENT[] =
+		{"DATABASE", "INDEX", "RULE", "SEQUENCE", "TABLE", "TYPE", "VIEW",
+		 "COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", NULL};
+		COMPLETE_WITH_LIST(list_COMMENT);
+	}
+	else if (strcasecmp(prev4_wd, "COMMENT")==0 && strcasecmp(prev3_wd, "ON")==0)
+		COMPLETE_WITH_CONST("IS");
 
 /* COPY */
 
@@ -510,6 +556,26 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 	/* (If you want more with LOCK, you better think about it yourself.) */
 
+/* NOTIFY */
+	else if (strcasecmp(prev_wd, "NOTIFY")==0)
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_listener WHERE substr(relname,1,%d)='%s'");
+
+/* REINDEX */
+	else if (strcasecmp(prev_wd, "REINDEX") == 0)
+	{
+		char *list_REINDEX[] = {"TABLE", "DATABASE", "INDEX", NULL};
+		COMPLETE_WITH_LIST(list_REINDEX);
+	}
+	else if (strcasecmp(prev2_wd, "REINDEX")==0)
+	{
+		if (strcasecmp(prev_wd, "TABLE")==0)
+			COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+		else if (strcasecmp(prev_wd, "DATABASE")==0)
+			COMPLETE_WITH_QUERY(Query_for_list_of_databases);
+		else if (strcasecmp(prev_wd, "INDEX")==0)
+			COMPLETE_WITH_QUERY(Query_for_list_of_indexes);
+	}
+
 /* SELECT */
 	/* naah . . . */
 
@@ -540,6 +606,12 @@ psql_completion(char *text, int start, int end)
 			 strcasecmp(prev2_wd, "LEVEL") == 0 &&
 			 strcasecmp(prev_wd, "READ") == 0)
 		COMPLETE_WITH_CONST("COMMITTED");
+	/* Complete SET CONSTRAINTS <foo> with DEFERRED|IMMEDIATE */
+	else if (strcasecmp(prev3_wd, "SET")==0 && strcasecmp(prev2_wd, "CONSTRAINTS")==0)
+	{
+		char *constraint_list[] = {"DEFERRED", "IMMEDIATE", NULL};
+		COMPLETE_WITH_LIST(constraint_list);
+	}
 	/* Complete SET <var> with "TO" */
 	else if (strcasecmp(prev2_wd, "SET") == 0 &&
 			 strcasecmp(prev4_wd, "UPDATE") != 0)
@@ -567,6 +639,14 @@ psql_completion(char *text, int start, int end)
 			COMPLETE_WITH_LIST(my_list);
 		}
 	}
+
+/* TRUNCATE */
+	else if (strcasecmp(prev_wd, "TRUNCATE")==0)
+		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
+
+/* UNLISTEN */
+	else if (strcasecmp(prev_wd, "UNLISTEN")==0)
+		COMPLETE_WITH_QUERY("SELECT relname FROM pg_listener WHERE substr(relname,1,%d)='%s' UNION SELECT '*'::text");
 
 /* UPDATE */
 	/* If prev. word is UPDATE suggest a list of tables */
