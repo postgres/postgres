@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.49 1999/11/22 17:56:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.50 1999/12/09 15:56:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1832,7 +1832,9 @@ _LOtransfer(char **destfd,
 			int isDestLO)
 {
 #define MAX_READ (512 * 1024)
+#if !defined(min)
 #define min(a, b) (a < b ? a : b)
+#endif
 	struct varlena *v = NULL;
 	int			tmp,
 				inc,

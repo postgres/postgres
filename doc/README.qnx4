@@ -1,0 +1,154 @@
+PostgresSQL on QNX 4
+--------------------
+
+PosgresSQL 6.5.2 could be ported to QNX 4.25.
+
+This port is an important step because PostgreSQL is now the only free
+relational database with full SQL and ODBC support available for QNX 4.
+The only commercial databases available are Empress RDBMS and Velocis
+Database Server (not supported for Digital Unix).
+
+The most expensive topics where the emulation of System V semaphore sets,
+shared memory and IPC and of some IEEE floating-point functionality. For
+the Watcom compiler spinlocks have been implemented using POSIX semaphores.
+A lot of make files had to be changed because $(LD) doesn't support the
+-r option on QNX 4.
+
+It is recomended to use the GNU C compiler instead of the Watcom compiler
+because the Watcom compiler doesn't support a int8 datatype (long or
+long long int) and it does not have a C++ frontend.
+It could be managed to build postgres using the Watcom compiler but it crashes
+quite early. These problems probably could be solved. The only advantage would
+be support of Tk and pgaccess. For the Watcom compiler some more modifications
+have to be made which are not described here.
+
+QNX 4 does not offer native support of shared libraries. Therefore the related
+functionality cannot be used. Shared library support could probably be
+implemented.
+
+QNX 4 does not support UNIX domain sockets. Connections can only be made
+with TCP/IP sockets. Therefore postmaster must always be started with the
+-i option. Furthermore it would be useful to set the PGHOST variable.
+
+Prerequisites:
+--------------
+
+The following prerequisites have been used:
+
+QNX 4.25
+GNU make
+flex-2.5.4a.tar.gz (flex)
+egcs111-qnx4-r20.tar[.gz] (GNU C)
+perl 5.004_04
+tcl8.0.3.tar.Z (Tcl)
+
+flex can be built without any problems using the Watcom or GNU C compilers.
+
+GNU C can be installed by
+/etc/install -u egcs111-qnx4-r20.tar[.gz]
+
+Although Tcl can be built after some slight code changes using the Watcom
+compiler, the GNU C compiler should be used instead. Otherwise it would be
+impossible to link postgres built with GNU C together with libtcl8.0.a built
+with the Watcom compiler.
+To make unix/tclUnixTest.c compilable uncomment
+#include <sys/resource.h>
+in it or
+touch /usr/include/sys/resource.h
+In unix/Makefile.in replace
+	( echo cd $(TOP_DIR)/tests\; source all ) | ./tcltest
+by
+	( echo cd ../tests\; source all ) | ./tcltest
+After that Tcl can be built and tested as stated in README.
+
+Tk cannot be built with GNU C due to the lack of a stack version of the
+X11 library. With the Watcom compiler Tk could be built but this is not useful
+because of the link problems mentioned above.
+
+Therefore the Tk interface and the pgaccess tool cannot be supported for a GNU C
+version of PostgreSQL on QNX 4.
+
+PostgreSQL:
+-----------
+
+On QNX 4 some headers are not in the directories expected. To avoid
+modifications of the code the following links should be made:
+
+ln -s /usr/local/bin/perl /usr/local/bin/perl5
+ln -s /usr/include/errno.h /usr/include/sys/errno.h
+ln -s /usr/include/ioctl.h /usr/include/sys/ioctl.h
+
+The sources can be unpacked by
+cd /usr/src
+gunzip -c postgresql-6.5.2.tar.gz | tar xvf -
+mv postgresql-6.5.2 pgsql
+gunzip -c postgresql-6.5.2-qnx4-gcc-patch.tar.gz | tar xvf -
+
+Furthermore the header files ipc.h, sem.h and shm.h must be installed.
+They are not available on QNX 4. stl_alloc.h must be modified
+(extern "C++" { ... }).
+su
+cd /usr
+gunzip -c qnx4-gcc-header-patch.tar.gz | tar xvf -
+exit
+Possibly the file
+/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++/stl_alloc.h
+must be copied to the right path in your environment.
+If this ist the case the path has to be adopted in src/Makefile.custom too
+(CXXFLAGS).
+
+If all prerequisites are available postgres can be built and installed by
+cd pgsql/src
+./configure --with-tcl --with-perl --with-x
+gmake all > make.log 2>&1
+gmake install > make.install.log 2>&1
+su
+cd interfaces/perl5
+gmake install
+exit
+
+All other steps can be carried out as stated in the INSTALL file.
+
+Regression tests:
+-----------------
+
+The majority of regression tests succeeded. The following tests failed:
+
+int2, int4:
+Error message "Result too large" instead of "Numerical result out of range".
+Can be ignored.
+
+int8, float4: 
+Exponent expression "e+nnn" instead of "e+nn". Can be ignored.
+
+float8:
+Exponent expression "e+nnn" instead of "e+nn" and some slight deviation
+in the last digit.
+Can be ignored.
+
+geometry:
+Some slight deviation in the last digit and "0" instead of "-0".
+Can be ignored.
+
+datetime, abstime, tinterval, horology:
+Differences for years outside the normal Unix range, e.g. 1968
+instead of 2105
+Can be ignored.
+
+create_function_2, triggers, misc, plpgsql:
+Error messages due to the lack of shared library support.
+
+rules:
+Subject of further investigation.
+
+numeric, numeric_big:
+ERROR:  Cannot create unique index. Table contains non-unique values
+Subject of further investigation.
+
+The reached state of this port should be sufficient for lot of applications.
+
+Have fun!
+
+Andreas Kardos
+kardos@repas-aeg.de
+1999-12-09

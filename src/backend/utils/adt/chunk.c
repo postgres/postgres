@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.23 1999/07/17 20:17:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.24 1999/12/09 15:56:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,12 @@
 #define MANY  10000
 #define MAXPAT 20
 #define quot_ceil(x,y)	(((x)+(y)-1)/(y))
+#if !defined(min)
 #define min(x,y)		(((x) < (y))? (x) : (y))
+#endif
+#if !defined(max)
 #define max(x,y)		(((x) > (y))? (x) : (y))
+#endif
 
 static CHUNK_INFO cInfo;
 
