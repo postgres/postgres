@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.66 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mainloop.c,v 1.67 2005/02/22 04:40:55 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -172,7 +172,7 @@ MainLoop(FILE *source)
 				if (count_eof < GetVariableNum(pset.vars, "IGNOREEOF", 0, 10, false))
 				{
 					if (!QUIET())
-						printf(gettext("Use \"\\q\" to leave %s.\n"), pset.progname);
+						printf(_("Use \"\\q\" to leave %s.\n"), pset.progname);
 					continue;
 				}
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.139 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.140 2005/02/22 04:40:51 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -121,7 +121,7 @@ HandleSlashCmds(PsqlScanState scan_state,
 	if (status == CMD_UNKNOWN)
 	{
 		if (pset.cur_cmd_interactive)
-			fprintf(stderr, gettext("Invalid command \\%s. Try \\? for help.\n"), cmd);
+			fprintf(stderr, _("Invalid command \\%s. Try \\? for help.\n"), cmd);
 		else
 			psql_error("invalid command \\%s\n", cmd);
 		status = CMD_ERROR;
@@ -609,7 +609,7 @@ exec_command(const char *cmd,
 		if (query_buf && query_buf->len > 0)
 			puts(query_buf->data);
 		else if (!quiet)
-			puts(gettext("Query buffer is empty."));
+			puts(_("Query buffer is empty."));
 		fflush(stdout);
 	}
 
@@ -643,7 +643,7 @@ exec_command(const char *cmd,
 		resetPQExpBuffer(query_buf);
 		psql_scan_reset(scan_state);
 		if (!quiet)
-			puts(gettext("Query buffer reset (cleared)."));
+			puts(_("Query buffer reset (cleared)."));
 	}
 
 	/* \s save history in a file or show it on the screen */
@@ -657,7 +657,7 @@ exec_command(const char *cmd,
 		success = saveHistory(fname ? fname : "/dev/tty");
 
 		if (success && !quiet && fname)
-			printf(gettext("Wrote history to file \"%s\".\n"), fname);
+			printf(_("Wrote history to file \"%s\".\n"), fname);
 		if (!fname)
 			putchar('\n');
 		free(fname);
@@ -739,9 +739,9 @@ exec_command(const char *cmd,
 		if (!quiet)
 		{
 			if (pset.timing)
-				puts(gettext("Timing is on."));
+				puts(_("Timing is on."));
 			else
-				puts(gettext("Timing is off."));
+				puts(_("Timing is off."));
 		}
 	}
 
@@ -970,7 +970,7 @@ do_connect(const char *new_dbname, const char *new_user)
 			PQfinish(pset.db);
 			if (oldconn)
 			{
-				fputs(gettext("Previous connection kept\n"), stderr);
+				fputs(_("Previous connection kept\n"), stderr);
 				pset.db = oldconn;
 			}
 			else
@@ -994,12 +994,12 @@ do_connect(const char *new_dbname, const char *new_user)
 		if (!QUIET())
 		{
 			if (userparam != new_user)	/* no new user */
-				printf(gettext("You are now connected to database \"%s\".\n"), dbparam);
+				printf(_("You are now connected to database \"%s\".\n"), dbparam);
 			else if (dbparam != new_dbname)		/* no new db */
-				printf(gettext("You are now connected as new user \"%s\".\n"), new_user);
+				printf(_("You are now connected as new user \"%s\".\n"), new_user);
 			else
 				/* both new */
-				printf(gettext("You are now connected to database \"%s\" as user \"%s\".\n"),
+				printf(_("You are now connected to database \"%s\" as user \"%s\".\n"),
 					   PQdb(pset.db), PQuser(pset.db));
 		}
 
@@ -1388,7 +1388,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		}
 
 		if (!quiet)
-			printf(gettext("Output format is %s.\n"), _align2string(popt->topt.format));
+			printf(_("Output format is %s.\n"), _align2string(popt->topt.format));
 	}
 
 	/* set border style/width */
@@ -1398,7 +1398,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.border = atoi(value);
 
 		if (!quiet)
-			printf(gettext("Border style is %d.\n"), popt->topt.border);
+			printf(_("Border style is %d.\n"), popt->topt.border);
 	}
 
 	/* set expanded/vertical mode */
@@ -1407,8 +1407,8 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		popt->topt.expanded = !popt->topt.expanded;
 		if (!quiet)
 			printf(popt->topt.expanded
-				   ? gettext("Expanded display is on.\n")
-				   : gettext("Expanded display is off.\n"));
+				   ? _("Expanded display is on.\n")
+				   : _("Expanded display is off.\n"));
 	}
 
 	/* null display */
@@ -1420,7 +1420,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->nullPrint = pg_strdup(value);
 		}
 		if (!quiet)
-			printf(gettext("Null display is \"%s\".\n"), popt->nullPrint ? popt->nullPrint : "");
+			printf(_("Null display is \"%s\".\n"), popt->nullPrint ? popt->nullPrint : "");
 	}
 
 	/* field separator for unaligned text */
@@ -1432,7 +1432,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.fieldSep = pg_strdup(value);
 		}
 		if (!quiet)
-			printf(gettext("Field separator is \"%s\".\n"), popt->topt.fieldSep);
+			printf(_("Field separator is \"%s\".\n"), popt->topt.fieldSep);
 	}
 
 	/* record separator for unaligned text */
@@ -1446,9 +1446,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (strcmp(popt->topt.recordSep, "\n") == 0)
-				printf(gettext("Record separator is <newline>."));
+				printf(_("Record separator is <newline>."));
 			else
-				printf(gettext("Record separator is \"%s\".\n"), popt->topt.recordSep);
+				printf(_("Record separator is \"%s\".\n"), popt->topt.recordSep);
 		}
 	}
 
@@ -1459,9 +1459,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.tuples_only)
-				puts(gettext("Showing only tuples."));
+				puts(_("Showing only tuples."));
 			else
-				puts(gettext("Tuples only is off."));
+				puts(_("Tuples only is off."));
 		}
 	}
 
@@ -1477,9 +1477,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->title)
-				printf(gettext("Title is \"%s\".\n"), popt->title);
+				printf(_("Title is \"%s\".\n"), popt->title);
 			else
-				printf(gettext("Title is unset.\n"));
+				printf(_("Title is unset.\n"));
 		}
 	}
 
@@ -1495,9 +1495,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.tableAttr)
-				printf(gettext("Table attribute is \"%s\".\n"), popt->topt.tableAttr);
+				printf(_("Table attribute is \"%s\".\n"), popt->topt.tableAttr);
 			else
-				printf(gettext("Table attributes unset.\n"));
+				printf(_("Table attributes unset.\n"));
 		}
 	}
 
@@ -1513,11 +1513,11 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.pager == 1)
-				puts(gettext("Pager is used for long output."));
+				puts(_("Pager is used for long output."));
 			else if (popt->topt.pager == 2)
-				puts(gettext("Pager is always used."));
+				puts(_("Pager is always used."));
 			else
-				puts(gettext("Pager usage is off."));
+				puts(_("Pager usage is off."));
 		}
 	}
 
@@ -1528,9 +1528,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->default_footer)
-				puts(gettext("Default footer is on."));
+				puts(_("Default footer is on."));
 			else
-				puts(gettext("Default footer is off."));
+				puts(_("Default footer is off."));
 		}
 	}
 

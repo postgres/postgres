@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.10 2004/12/31 22:03:03 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.11 2005/02/22 04:38:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
 #include "postgres.h"
 #include "port.h"
 #include <stdio.h>
-
-#define _(x) gettext((x))
 
 static const char *progname;
 

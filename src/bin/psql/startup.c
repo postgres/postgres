@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.112 2005/01/17 10:00:05 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.113 2005/02/22 04:40:58 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -37,6 +37,7 @@ int			optreset;
 #include "variables.h"
 
 #include "mb/pg_wchar.h"
+
 
 /*
  * Global psql options
@@ -135,7 +136,7 @@ main(int argc, char *argv[])
 	pset.vars = CreateVariableSpace();
 	if (!pset.vars)
 	{
-		fprintf(stderr, gettext("%s: out of memory\n"), pset.progname);
+		fprintf(stderr, _("%s: out of memory\n"), pset.progname);
 		exit(EXIT_FAILURE);
 	}
 	pset.popt.topt.format = PRINT_ALIGNED;
@@ -290,7 +291,7 @@ main(int argc, char *argv[])
 
 		if (!QUIET() && !pset.notty)
 		{
-			printf(gettext("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"
+			printf(_("Welcome to %s %s, the PostgreSQL interactive terminal.\n\n"
 						   "Type:  \\copyright for distribution terms\n"
 						   "       \\h for help with SQL commands\n"
 						   "       \\? for help with psql commands\n"
@@ -444,7 +445,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 					if (!result)
 					{
-						fprintf(stderr, gettext("%s: couldn't set printing parameter \"%s\"\n"), pset.progname, value);
+						fprintf(stderr, _("%s: couldn't set printing parameter \"%s\"\n"), pset.progname, value);
 						exit(EXIT_FAILURE);
 					}
 
@@ -490,7 +491,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 					{
 						if (!DeleteVariable(pset.vars, value))
 						{
-							fprintf(stderr, gettext("%s: could not delete variable \"%s\"\n"),
+							fprintf(stderr, _("%s: could not delete variable \"%s\"\n"),
 									pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
@@ -500,7 +501,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 						*equal_loc = '\0';
 						if (!SetVariable(pset.vars, value, equal_loc + 1))
 						{
-							fprintf(stderr, gettext("%s: could not set variable \"%s\"\n"),
+							fprintf(stderr, _("%s: could not set variable \"%s\"\n"),
 									pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
@@ -531,13 +532,13 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				/* unknown option reported by getopt */
 				else
 				{
-					fprintf(stderr, gettext("Try \"%s --help\" for more information.\n"),
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 							pset.progname);
 					exit(EXIT_FAILURE);
 				}
 				break;
 			default:
-				fprintf(stderr, gettext("Try \"%s --help\" for more information.\n"),
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 						pset.progname);
 				exit(EXIT_FAILURE);
 				break;
@@ -555,14 +556,14 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		else if (!options->username)
 			options->username = argv[optind];
 		else if (!QUIET())
-			fprintf(stderr, gettext("%s: warning: extra command-line argument \"%s\" ignored\n"),
+			fprintf(stderr, _("%s: warning: extra command-line argument \"%s\" ignored\n"),
 					pset.progname, argv[optind]);
 
 		optind++;
 	}
 
 	if (used_old_u_option && !QUIET())
-		fprintf(stderr, gettext("%s: Warning: The -u option is deprecated. Use -U.\n"), pset.progname);
+		fprintf(stderr, _("%s: Warning: The -u option is deprecated. Use -U.\n"), pset.progname);
 
 }
 
@@ -624,7 +625,7 @@ showVersion(void)
 	puts("psql (PostgreSQL) " PG_VERSION);
 
 #if defined(USE_READLINE)
-	puts(gettext("contains support for command-line editing"));
+	puts(_("contains support for command-line editing"));
 #endif
 }
 
@@ -647,7 +648,7 @@ printSSLInfo(void)
 		return;					/* no SSL */
 
 	SSL_get_cipher_bits(ssl, &sslbits);
-	printf(gettext("SSL connection (cipher: %s, bits: %i)\n\n"),
+	printf(_("SSL connection (cipher: %s, bits: %i)\n\n"),
 		   SSL_get_cipher(ssl), sslbits);
 }
 #endif
@@ -670,7 +671,7 @@ checkWin32Codepage(void)
 	concp = GetConsoleCP();
 	if (wincp != concp)
 	{
-			printf(gettext("Warning: Console code page (%u) differs from Windows code page (%u)\n"
+			printf(_("Warning: Console code page (%u) differs from Windows code page (%u)\n"
 					   "         8-bit characters may not work correctly. See psql reference\n"
 					   "         page \"Notes for Windows users\" for details.\n\n"),
 			   concp, wincp);

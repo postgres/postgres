@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.16 2005/01/08 22:51:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.17 2005/02/22 04:41:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,9 +168,9 @@ executeQuery(PGconn *conn, const char *query, const char *progname, bool echo)
 int
 check_yesno_response(const char *string)
 {
-	if (strcmp(string, gettext(PG_YESLETTER)) == 0)
+	if (strcmp(string, _(PG_YESLETTER)) == 0)
 		return 1;
-	else if (strcmp(string, gettext(PG_NOLETTER)) == 0)
+	else if (strcmp(string, _(PG_NOLETTER)) == 0)
 		return 0;
 	else
 		return -1;

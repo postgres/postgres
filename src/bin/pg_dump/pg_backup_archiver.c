@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.104 2005/01/26 19:44:43 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.105 2005/02/22 04:39:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1187,10 +1187,10 @@ static void
 _write_msg(const char *modulename, const char *fmt, va_list ap)
 {
 	if (modulename)
-		fprintf(stderr, "%s: [%s] ", progname, gettext(modulename));
+		fprintf(stderr, "%s: [%s] ", progname, _(modulename));
 	else
 		fprintf(stderr, "%s: ", progname);
-	vfprintf(stderr, gettext(fmt), ap);
+	vfprintf(stderr, _(fmt), ap);
 }
 
 void

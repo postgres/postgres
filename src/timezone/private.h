@@ -6,7 +6,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.9 2004/08/29 05:07:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/private.h,v 1.10 2005/02/22 04:43:23 momjian Exp $
  */
 
 /*
@@ -104,6 +104,7 @@ extern char *scheck(const char *string, const char *format);
 	((TYPE_BIT(type) - TYPE_SIGNED(type)) * 302 / 1000 + 1 + TYPE_SIGNED(type))
 #endif   /* !defined INT_STRLEN_MAXIMUM */
 
+#undef _(x)
 #define _(msgid) (msgid)
 
 /*

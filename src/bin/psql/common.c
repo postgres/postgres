@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.95 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.96 2005/02/22 04:40:52 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -75,7 +75,7 @@ pg_strdup(const char *string)
 
 	if (!string)
 	{
-		fprintf(stderr, gettext("%s: xstrdup: cannot duplicate null pointer (internal error)\n"),
+		fprintf(stderr, _("%s: xstrdup: cannot duplicate null pointer (internal error)\n"),
 				pset.progname);
 		exit(EXIT_FAILURE);
 	}
@@ -200,7 +200,7 @@ psql_error(const char *fmt,...)
 	if (pset.inputfile)
 		fprintf(stderr, "%s:%s:%u: ", pset.progname, pset.inputfile, pset.lineno);
 	va_start(ap, fmt);
-	vfprintf(stderr, gettext(fmt), ap);
+	vfprintf(stderr, _(fmt), ap);
 	va_end(ap);
 }
 
@@ -357,19 +357,19 @@ CheckConnection(void)
 			exit(EXIT_BADCONN);
 		}
 
-		fputs(gettext("The connection to the server was lost. Attempting reset: "), stderr);
+		fputs(_("The connection to the server was lost. Attempting reset: "), stderr);
 		PQreset(pset.db);
 		OK = ConnectionUp();
 		if (!OK)
 		{
-			fputs(gettext("Failed.\n"), stderr);
+			fputs(_("Failed.\n"), stderr);
 			PQfinish(pset.db);
 			pset.db = NULL;
 			ResetCancelConn();
 			UnsyncVariables();
 		}
 		else
-			fputs(gettext("Succeeded.\n"), stderr);
+			fputs(_("Succeeded.\n"), stderr);
 	}
 
 	return OK;
@@ -604,7 +604,7 @@ ReportSyntaxErrorPosition(const PGresult *result, const char *query)
 		wquery[qidx[iend]] = '\0';
 
 		/* Begin building the finished message. */
-		printfPQExpBuffer(&msg, gettext("LINE %d: "), loc_line);
+		printfPQExpBuffer(&msg, _("LINE %d: "), loc_line);
 		if (beg_trunc)
 			appendPQExpBufferStr(&msg, "...");
 
@@ -768,7 +768,7 @@ PrintNotifications(void)
 
 	while ((notify = PQnotifies(pset.db)))
 	{
-		fprintf(pset.queryFout, gettext("Asynchronous notification \"%s\" received from server process with PID %d.\n"),
+		fprintf(pset.queryFout, _("Asynchronous notification \"%s\" received from server process with PID %d.\n"),
 				notify->relname, notify->be_pid);
 		fflush(pset.queryFout);
 		PQfreemem(notify);
@@ -956,7 +956,7 @@ SendQuery(const char *query)
 	{
 		char		buf[3];
 
-		printf(gettext("***(Single step mode: verify command)*******************************************\n"
+		printf(_("***(Single step mode: verify command)*******************************************\n"
 					   "%s\n"
 					   "***(press return to proceed or enter x and return to cancel)********************\n"),
 			   query);
@@ -1007,7 +1007,7 @@ SendQuery(const char *query)
 
 	/* Possible microtiming output */
 	if (OK && pset.timing)
-		printf(gettext("Time: %.3f ms\n"), DIFF_MSEC(&after, &before));
+		printf(_("Time: %.3f ms\n"), DIFF_MSEC(&after, &before));
 
 	/* check for events that may occur during query execution */
 

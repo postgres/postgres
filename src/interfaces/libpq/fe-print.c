@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.58 2004/12/31 22:03:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.59 2005/02/22 04:42:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,10 +219,10 @@ PQprint(FILE *fout,
 			if (po->expanded)
 			{
 				if (po->align)
-					fprintf(fout, "%-*s%s Value\n",
-							fieldMaxLen - fs_len, "Field", po->fieldSep);
+					fprintf(fout, libpq_gettext("%-*s%s Value\n"),
+							fieldMaxLen - fs_len, libpq_gettext("Field"), po->fieldSep);
 				else
-					fprintf(fout, "%s%sValue\n", "Field", po->fieldSep);
+					fprintf(fout, libpq_gettext("%s%sValue\n"), libpq_gettext("Field"), po->fieldSep);
 			}
 			else
 			{
@@ -262,7 +262,7 @@ PQprint(FILE *fout,
 						  "<table %s><caption align=high>%d</caption>\n",
 							po->tableOpt ? po->tableOpt : "", i);
 				else
-					fprintf(fout, "-- RECORD %d --\n", i);
+					fprintf(fout, libpq_gettext("-- RECORD %d --\n"), i);
 			}
 			for (j = 0; j < nFields; j++)
 				do_field(po, res, i, j, fs_len, fields, nFields,

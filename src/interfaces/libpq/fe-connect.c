@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.302 2005/01/26 19:24:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.303 2005/02/22 04:42:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -740,9 +740,9 @@ update_db_info(PGconn *conn)
 					if (strncmp(old, "unix:", 5) != 0)
 					{
 						printfPQExpBuffer(&conn->errorMessage,
-										  "connectDBStart() -- "
-								"socket name can only be specified with "
-										  "non-TCP\n");
+										  libpq_gettext("connectDBStart() -- "
+										  "socket name can only be specified with "
+										  "non-TCP\n"));
 						return 1;
 					}
 					*tmp2 = '\0';
@@ -769,9 +769,9 @@ update_db_info(PGconn *conn)
 				if (strcmp(old + offset, "localhost") != 0)
 				{
 					printfPQExpBuffer(&conn->errorMessage,
-									  "connectDBStart() -- "
+									  libpq_gettext("connectDBStart() -- "
 									  "non-TCP access only possible on "
-									  "localhost\n");
+									  "localhost\n"));
 					return 1;
 				}
 			}
@@ -1514,7 +1514,7 @@ keep_going:						/* We will come back to here until there
 					{
 						/* Received error - probably protocol mismatch */
 						if (conn->Pfdebug)
-							fprintf(conn->Pfdebug, "Postmaster reports error, attempting fallback to pre-7.0.\n");
+							fprintf(conn->Pfdebug, libpq_gettext("Postmaster reports error, attempting fallback to pre-7.0.\n"));
 						if (conn->sslmode[0] == 'r')	/* "require" */
 						{
 							/* Require SSL, but server is too old */
@@ -2502,7 +2502,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 		f = fopen(serviceFile, "r");
 		if (f == NULL)
 		{
-			printfPQExpBuffer(errorMessage, "ERROR: Service file '%s' not found\n",
+			printfPQExpBuffer(errorMessage, libpq_gettext("ERROR: Service file '%s' not found\n"),
 							  serviceFile);
 			return 1;
 		}
@@ -2515,7 +2515,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 			{
 				fclose(f);
 				printfPQExpBuffer(errorMessage,
-						"ERROR: line %d too long in service file '%s'\n",
+						libpq_gettext("ERROR: line %d too long in service file '%s'\n"),
 								  linenr,
 								  serviceFile);
 				return 2;
@@ -2566,7 +2566,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					if (val == NULL)
 					{
 						printfPQExpBuffer(errorMessage,
-										  "ERROR: syntax error in service file '%s', line %d\n",
+										  libpq_gettext("ERROR: syntax error in service file '%s', line %d\n"),
 										  serviceFile,
 										  linenr);
 						fclose(f);
@@ -2593,7 +2593,7 @@ parseServiceInfo(PQconninfoOption *options, PQExpBuffer errorMessage)
 					if (!found_keyword)
 					{
 						printfPQExpBuffer(errorMessage,
-										  "ERROR: syntax error in service file '%s', line %d\n",
+										  libpq_gettext("ERROR: syntax error in service file '%s', line %d\n"),
 										  serviceFile,
 										  linenr);
 						fclose(f);

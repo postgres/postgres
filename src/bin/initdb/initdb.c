@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.74 2005/01/28 00:34:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.75 2005/02/22 04:38:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +64,6 @@
 int			optreset;
 #endif
 
-
-#define _(x) gettext((x))
 
 /* version string we expect back from postgres */
 #define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"

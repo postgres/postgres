@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/strerror.c,v 1.3 2003/11/29 22:41:31 pgsql Exp $ */
+/* $PostgreSQL: pgsql/src/port/strerror.c,v 1.4 2005/02/22 04:43:16 momjian Exp $ */
 
 /*
  * strerror - map error number to descriptive string
@@ -23,7 +23,7 @@ strerror(int errnum)
 
 	if (errnum < 0 || errnum > sys_nerr)
 	{
-		sprintf(buf, "unrecognized error %d", errnum);
+		sprintf(buf, _("unrecognized error %d"), errnum);
 		return buf;
 	}
 

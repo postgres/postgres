@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.444 2005/02/20 02:21:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.445 2005/02/22 04:36:36 momjian Exp $
  *
  * NOTES
  *
@@ -1065,35 +1065,35 @@ pmdaemonize(void)
 static void
 usage(const char *progname)
 {
-	printf(gettext("%s is the PostgreSQL server.\n\n"), progname);
-	printf(gettext("Usage:\n  %s [OPTION]...\n\n"), progname);
-	printf(gettext("Options:\n"));
+	printf(_("%s is the PostgreSQL server.\n\n"), progname);
+	printf(_("Usage:\n  %s [OPTION]...\n\n"), progname);
+	printf(_("Options:\n"));
 #ifdef USE_ASSERT_CHECKING
-	printf(gettext("  -A 1|0          enable/disable run-time assert checking\n"));
+	printf(_("  -A 1|0          enable/disable run-time assert checking\n"));
 #endif
-	printf(gettext("  -B NBUFFERS     number of shared buffers\n"));
-	printf(gettext("  -c NAME=VALUE   set run-time parameter\n"));
-	printf(gettext("  -d 1-5          debugging level\n"));
-	printf(gettext("  -D DATADIR      database directory\n"));
-	printf(gettext("  -F              turn fsync off\n"));
-	printf(gettext("  -h HOSTNAME     host name or IP address to listen on\n"));
-	printf(gettext("  -i              enable TCP/IP connections\n"));
-	printf(gettext("  -k DIRECTORY    Unix-domain socket location\n"));
+	printf(_("  -B NBUFFERS     number of shared buffers\n"));
+	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
+	printf(_("  -d 1-5          debugging level\n"));
+	printf(_("  -D DATADIR      database directory\n"));
+	printf(_("  -F              turn fsync off\n"));
+	printf(_("  -h HOSTNAME     host name or IP address to listen on\n"));
+	printf(_("  -i              enable TCP/IP connections\n"));
+	printf(_("  -k DIRECTORY    Unix-domain socket location\n"));
 #ifdef USE_SSL
-	printf(gettext("  -l              enable SSL connections\n"));
+	printf(_("  -l              enable SSL connections\n"));
 #endif
-	printf(gettext("  -N MAX-CONNECT  maximum number of allowed connections\n"));
-	printf(gettext("  -o OPTIONS      pass \"OPTIONS\" to each server process\n"));
-	printf(gettext("  -p PORT         port number to listen on\n"));
-	printf(gettext("  -S              silent mode (start in background without logging output)\n"));
-	printf(gettext("  --help          show this help, then exit\n"));
-	printf(gettext("  --version       output version information, then exit\n"));
+	printf(_("  -N MAX-CONNECT  maximum number of allowed connections\n"));
+	printf(_("  -o OPTIONS      pass \"OPTIONS\" to each server process\n"));
+	printf(_("  -p PORT         port number to listen on\n"));
+	printf(_("  -S              silent mode (start in background without logging output)\n"));
+	printf(_("  --help          show this help, then exit\n"));
+	printf(_("  --version       output version information, then exit\n"));
 
-	printf(gettext("\nDeveloper options:\n"));
-	printf(gettext("  -n              do not reinitialize shared memory after abnormal exit\n"));
-	printf(gettext("  -s              send SIGSTOP to all backend servers if one dies\n"));
+	printf(_("\nDeveloper options:\n"));
+	printf(_("  -n              do not reinitialize shared memory after abnormal exit\n"));
+	printf(_("  -s              send SIGSTOP to all backend servers if one dies\n"));
 
-	printf(gettext("\nPlease read the documentation for the complete list of run-time\n"
+	printf(_("\nPlease read the documentation for the complete list of run-time\n"
 				   "configuration settings and how to set them on the command line or in\n"
 				   "the configuration file.\n\n"
 				   "Report bugs to <pgsql-bugs@postgresql.org>.\n"));
@@ -1993,7 +1993,7 @@ reaper(SIGNAL_ARGS)
 			StartupPID = 0;
 			if (exitstatus != 0)
 			{
-				LogChildExit(LOG, gettext("startup process"),
+				LogChildExit(LOG, _("startup process"),
 							 pid, exitstatus);
 				ereport(LOG,
 						(errmsg("aborting startup due to startup process failure")));
@@ -2067,7 +2067,7 @@ reaper(SIGNAL_ARGS)
 			 * Any unexpected exit of the bgwriter is treated as a crash.
 			 */
 			HandleChildCrash(pid, exitstatus,
-							 gettext("background writer process"));
+							 _("background writer process"));
 			continue;
 		}
 
@@ -2080,7 +2080,7 @@ reaper(SIGNAL_ARGS)
 		{
 			PgArchPID = 0;
 			if (exitstatus != 0)
-				LogChildExit(LOG, gettext("archiver process"),
+				LogChildExit(LOG, _("archiver process"),
 							 pid, exitstatus);
 			if (XLogArchivingActive() &&
 				StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
@@ -2097,7 +2097,7 @@ reaper(SIGNAL_ARGS)
 		{
 			PgStatPID = 0;
 			if (exitstatus != 0)
-				LogChildExit(LOG, gettext("statistics collector process"),
+				LogChildExit(LOG, _("statistics collector process"),
 							 pid, exitstatus);
 			if (StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
 				PgStatPID = pgstat_start();
@@ -2111,7 +2111,7 @@ reaper(SIGNAL_ARGS)
 			/* for safety's sake, launch new logger *first* */
 			SysLoggerPID = SysLogger_Start();
 			if (exitstatus != 0)
-				LogChildExit(LOG, gettext("system logger process"),
+				LogChildExit(LOG, _("system logger process"),
 							 pid, exitstatus);
 			continue;
 		}
@@ -2178,7 +2178,7 @@ CleanupBackend(int pid,
 {
 	Dlelem	   *curr;
 
-	LogChildExit(DEBUG2, gettext("server process"), pid, exitstatus);
+	LogChildExit(DEBUG2, _("server process"), pid, exitstatus);
 
 	/*
 	 * If a backend dies in an ugly way (i.e. exit status not 0) then we
@@ -2188,7 +2188,7 @@ CleanupBackend(int pid,
 	 */
 	if (exitstatus != 0)
 	{
-		HandleChildCrash(pid, exitstatus, gettext("server process"));
+		HandleChildCrash(pid, exitstatus, _("server process"));
 		return;
 	}
 
@@ -2512,7 +2512,7 @@ report_fork_failure_to_client(Port *port, int errnum)
 
 	/* Format the error message packet (always V2 protocol) */
 	snprintf(buffer, sizeof(buffer), "E%s%s\n",
-			 gettext("could not fork new process for connection: "),
+			 _("could not fork new process for connection: "),
 			 strerror(errnum));
 
 	/* Set port to non-blocking.  Don't do send() if this fails */

@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.175 2005/01/12 16:38:17 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.176 2005/02/22 04:35:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,21 +308,21 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		switch (addr->ai_family)
 		{
 			case AF_INET:
-				familyDesc = gettext("IPv4");
+				familyDesc = _("IPv4");
 				break;
 #ifdef HAVE_IPV6
 			case AF_INET6:
-				familyDesc = gettext("IPv6");
+				familyDesc = _("IPv6");
 				break;
 #endif
 #ifdef HAVE_UNIX_SOCKETS
 			case AF_UNIX:
-				familyDesc = gettext("Unix");
+				familyDesc = _("Unix");
 				break;
 #endif
 			default:
 				snprintf(familyDescBuf, sizeof(familyDescBuf),
-						 gettext("unrecognized address family %d"),
+						 _("unrecognized address family %d"),
 						 addr->ai_family);
 				familyDesc = familyDescBuf;
 				break;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.111 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.112 2005/02/22 04:40:55 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -27,8 +27,6 @@
 #include "mbprint.h"
 #endif
 
-
-#define _(x) gettext((x))
 
 static bool describeOneTableDetails(const char *schemaname,
 						const char *relationname,

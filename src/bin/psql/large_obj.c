@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.35 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.36 2005/02/22 04:40:55 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -253,7 +253,7 @@ do_lo_list(void)
 			 "  pg_catalog.obj_description(loid, 'pg_largeobject') as \"%s\"\n"
 			 "FROM (SELECT DISTINCT loid FROM pg_catalog.pg_largeobject) x\n"
 			 "ORDER BY 1",
-			 gettext("Description"));
+			 _("Description"));
 
 	res = PSQLexec(buf, false);
 	if (!res)
@@ -261,7 +261,7 @@ do_lo_list(void)
 
 	myopt.topt.tuples_only = false;
 	myopt.nullPrint = NULL;
-	myopt.title = gettext("Large objects");
+	myopt.title = _("Large objects");
 
 	printQuery(res, &myopt, pset.queryFout);
 

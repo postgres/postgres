@@ -33,11 +33,13 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67 2005/01/14 16:25:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.68 2005/02/22 04:42:44 momjian Exp $
  *
  **********************************************************************/
 
 #include "postgres.h"
+/* Defined by Perl */
+#undef _(x)
 
 /* system stuff */
 #include <ctype.h>

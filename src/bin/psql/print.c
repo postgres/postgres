@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.54 2005/01/01 05:43:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.c,v 1.55 2005/02/22 04:40:57 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -28,6 +28,7 @@
 #include "libpq-fe.h"
 
 #include "mbprint.h"
+
 
 /*************************/
 /* Unaligned text		 */
@@ -227,14 +228,14 @@ print_aligned_text(const char *title, const char *const * headers,
 		widths = calloc(col_count, sizeof(*widths));
 		if (!widths)
 		{
-			fprintf(stderr, gettext("out of memory\n"));
+			fprintf(stderr, _("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 
 		head_w = calloc(col_count, sizeof(*head_w));
 		if (!head_w)
 		{
-			fprintf(stderr, gettext("out of memory\n"));
+			fprintf(stderr, _("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -253,7 +254,7 @@ print_aligned_text(const char *title, const char *const * headers,
 		cell_w = calloc(cell_count, sizeof(*cell_w));
 		if (!cell_w)
 		{
-			fprintf(stderr, gettext("out of memory\n"));
+			fprintf(stderr, _("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -425,7 +426,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 	if (cells[0] == NULL)
 	{
-		puts(gettext("(No rows)\n"));
+		puts(_("(No rows)\n"));
 		return;
 	}
 
@@ -437,7 +438,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		head_w = calloc(col_count, sizeof(*head_w));
 		if (!head_w)
 		{
-			fprintf(stderr, gettext("out of memory\n"));
+			fprintf(stderr, _("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -461,7 +462,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 		cell_w = calloc(cell_count, sizeof(*cell_w));
 		if (!cell_w)
 		{
-			fprintf(stderr, gettext("out of memory\n"));
+			fprintf(stderr, _("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -485,7 +486,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	divider = malloc(hwidth + dwidth + 10);
 	if (!divider)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 	divider[0] = '\0';
@@ -514,7 +515,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 				if (!record_str)
 				{
-					fprintf(stderr, gettext("out of memory\n"));
+					fprintf(stderr, _("out of memory\n"));
 					exit(EXIT_FAILURE);
 				}
 
@@ -532,7 +533,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 					if (!div_copy)
 					{
-						fprintf(stderr, gettext("out of memory\n"));
+						fprintf(stderr, _("out of memory\n"));
 						exit(EXIT_FAILURE);
 					}
 
@@ -1153,7 +1154,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	headers = calloc(nfields + 1, sizeof(*headers));
 	if (!headers)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 
@@ -1165,7 +1166,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	cells = calloc(ncells + 1, sizeof(*cells));
 	if (!cells)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 
@@ -1186,20 +1187,20 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		footers = calloc(2, sizeof(*footers));
 		if (!footers)
 		{
-			fprintf(stderr, gettext("out of memory\n"));
+			fprintf(stderr, _("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 
 		footers[0] = malloc(100);
 		if (!footers[0])
 		{
-			fprintf(stderr, gettext("out of memory\n"));
+			fprintf(stderr, _("out of memory\n"));
 			exit(EXIT_FAILURE);
 		}
 		if (PQntuples(result) == 1)
-			snprintf(footers[0], 100, gettext("(1 row)"));
+			snprintf(footers[0], 100, _("(1 row)"));
 		else
-			snprintf(footers[0], 100, gettext("(%d rows)"), PQntuples(result));
+			snprintf(footers[0], 100, _("(%d rows)"), PQntuples(result));
 	}
 	else
 		footers = NULL;
@@ -1208,7 +1209,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	align = calloc(nfields + 1, sizeof(*align));
 	if (!align)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, _("out of memory\n"));
 		exit(EXIT_FAILURE);
 	}
 

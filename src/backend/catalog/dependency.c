@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.41 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.42 2005/02/22 04:35:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1424,18 +1424,18 @@ getObjectDescription(const ObjectAddress *object)
 		case OCLASS_CLASS:
 			getRelationDescription(&buffer, object->objectId);
 			if (object->objectSubId != 0)
-				appendStringInfo(&buffer, gettext(" column %s"),
+				appendStringInfo(&buffer, _(" column %s"),
 							   get_relid_attribute_name(object->objectId,
 												   object->objectSubId));
 			break;
 
 		case OCLASS_PROC:
-			appendStringInfo(&buffer, gettext("function %s"),
+			appendStringInfo(&buffer, _("function %s"),
 							 format_procedure(object->objectId));
 			break;
 
 		case OCLASS_TYPE:
-			appendStringInfo(&buffer, gettext("type %s"),
+			appendStringInfo(&buffer, _("type %s"),
 							 format_type_be(object->objectId));
 			break;
 
@@ -1465,7 +1465,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				castForm = (Form_pg_cast) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, gettext("cast from %s to %s"),
+				appendStringInfo(&buffer, _("cast from %s to %s"),
 								 format_type_be(castForm->castsource),
 								 format_type_be(castForm->casttarget));
 
@@ -1502,13 +1502,13 @@ getObjectDescription(const ObjectAddress *object)
 
 				if (OidIsValid(con->conrelid))
 				{
-					appendStringInfo(&buffer, gettext("constraint %s on "),
+					appendStringInfo(&buffer, _("constraint %s on "),
 									 NameStr(con->conname));
 					getRelationDescription(&buffer, con->conrelid);
 				}
 				else
 				{
-					appendStringInfo(&buffer, gettext("constraint %s"),
+					appendStringInfo(&buffer, _("constraint %s"),
 									 NameStr(con->conname));
 				}
 
@@ -1527,7 +1527,7 @@ getObjectDescription(const ObjectAddress *object)
 				if (!HeapTupleIsValid(conTup))
 					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
-				appendStringInfo(&buffer, gettext("conversion %s"),
+				appendStringInfo(&buffer, _("conversion %s"),
 								 NameStr(((Form_pg_conversion) GETSTRUCT(conTup))->conname));
 				ReleaseSysCache(conTup);
 				break;
@@ -1564,7 +1564,7 @@ getObjectDescription(const ObjectAddress *object)
 				colobject.objectId = attrdef->adrelid;
 				colobject.objectSubId = attrdef->adnum;
 
-				appendStringInfo(&buffer, gettext("default for %s"),
+				appendStringInfo(&buffer, _("default for %s"),
 								 getObjectDescription(&colobject));
 
 				systable_endscan(adscan);
@@ -1582,14 +1582,14 @@ getObjectDescription(const ObjectAddress *object)
 				if (!HeapTupleIsValid(langTup))
 					elog(ERROR, "cache lookup failed for language %u",
 						 object->objectId);
-				appendStringInfo(&buffer, gettext("language %s"),
+				appendStringInfo(&buffer, _("language %s"),
 								 NameStr(((Form_pg_language) GETSTRUCT(langTup))->lanname));
 				ReleaseSysCache(langTup);
 				break;
 			}
 
 		case OCLASS_OPERATOR:
-			appendStringInfo(&buffer, gettext("operator %s"),
+			appendStringInfo(&buffer, _("operator %s"),
 							 format_operator(object->objectId));
 			break;
 
@@ -1623,7 +1623,7 @@ getObjectDescription(const ObjectAddress *object)
 				else
 					nspname = get_namespace_name(opcForm->opcnamespace);
 
-				appendStringInfo(&buffer, gettext("operator class %s for access method %s"),
+				appendStringInfo(&buffer, _("operator class %s for access method %s"),
 								 quote_qualified_identifier(nspname,
 											  NameStr(opcForm->opcname)),
 								 NameStr(amForm->amname));
@@ -1659,7 +1659,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				rule = (Form_pg_rewrite) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, gettext("rule %s on "),
+				appendStringInfo(&buffer, _("rule %s on "),
 								 NameStr(rule->rulename));
 				getRelationDescription(&buffer, rule->ev_class);
 
@@ -1694,7 +1694,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				trig = (Form_pg_trigger) GETSTRUCT(tup);
 
-				appendStringInfo(&buffer, gettext("trigger %s on "),
+				appendStringInfo(&buffer, _("trigger %s on "),
 								 NameStr(trig->tgname));
 				getRelationDescription(&buffer, trig->tgrelid);
 
@@ -1711,7 +1711,7 @@ getObjectDescription(const ObjectAddress *object)
 				if (!nspname)
 					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
-				appendStringInfo(&buffer, gettext("schema %s"), nspname);
+				appendStringInfo(&buffer, _("schema %s"), nspname);
 				break;
 			}
 
@@ -1755,40 +1755,40 @@ getRelationDescription(StringInfo buffer, Oid relid)
 	switch (relForm->relkind)
 	{
 		case RELKIND_RELATION:
-			appendStringInfo(buffer, gettext("table %s"),
+			appendStringInfo(buffer, _("table %s"),
 							 relname);
 			break;
 		case RELKIND_INDEX:
-			appendStringInfo(buffer, gettext("index %s"),
+			appendStringInfo(buffer, _("index %s"),
 							 relname);
 			break;
 		case RELKIND_SPECIAL:
-			appendStringInfo(buffer, gettext("special system relation %s"),
+			appendStringInfo(buffer, _("special system relation %s"),
 							 relname);
 			break;
 		case RELKIND_SEQUENCE:
-			appendStringInfo(buffer, gettext("sequence %s"),
+			appendStringInfo(buffer, _("sequence %s"),
 							 relname);
 			break;
 		case RELKIND_UNCATALOGED:
-			appendStringInfo(buffer, gettext("uncataloged table %s"),
+			appendStringInfo(buffer, _("uncataloged table %s"),
 							 relname);
 			break;
 		case RELKIND_TOASTVALUE:
-			appendStringInfo(buffer, gettext("toast table %s"),
+			appendStringInfo(buffer, _("toast table %s"),
 							 relname);
 			break;
 		case RELKIND_VIEW:
-			appendStringInfo(buffer, gettext("view %s"),
+			appendStringInfo(buffer, _("view %s"),
 							 relname);
 			break;
 		case RELKIND_COMPOSITE_TYPE:
-			appendStringInfo(buffer, gettext("composite type %s"),
+			appendStringInfo(buffer, _("composite type %s"),
 							 relname);
 			break;
 		default:
 			/* shouldn't get here */
-			appendStringInfo(buffer, gettext("relation %s"),
+			appendStringInfo(buffer, _("relation %s"),
 							 relname);
 			break;
 	}

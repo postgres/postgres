@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.100 2005/01/08 22:51:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/help.c,v 1.101 2005/02/22 04:40:55 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -30,8 +30,6 @@
 #include "settings.h"
 #include "common.h"
 #include "sql_help.h"
-
-#define _(x) gettext((x))
 
 /*
  * PLEASE:
@@ -346,8 +344,8 @@ helpSQL(const char *topic, unsigned short int pager)
 								  "Description: %s\n"
 								  "Syntax:\n%s\n\n"),
 						QL_HELP[i].cmd,
-						gettext(QL_HELP[i].help),
-						gettext(QL_HELP[i].syntax));
+						_(QL_HELP[i].help),
+						_(QL_HELP[i].syntax));
 				/* If we have an exact match, exit.  Fixes \h SELECT */
 				if (pg_strcasecmp(topic, QL_HELP[i].cmd) == 0)
 					break;

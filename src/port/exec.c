@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.37 2005/01/14 17:47:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.38 2005/02/22 04:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ find_my_exec(const char *argv0, char *retpath)
 
 	if (!getcwd(cwd, MAXPGPATH))
 	{
-		log_error(gettext("could not identify current directory: %s"),
+		log_error(_("could not identify current directory: %s"),
 				  strerror(errno));
 		return -1;
 	}
@@ -210,7 +210,7 @@ find_my_exec(const char *argv0, char *retpath)
 		if (validate_exec(retpath) == 0)
 			return resolve_symlinks(retpath);
 
-		log_error(gettext("invalid binary \"%s\""), retpath);
+		log_error(_("invalid binary \"%s\""), retpath);
 		return -1;
 	}
 
@@ -259,14 +259,14 @@ find_my_exec(const char *argv0, char *retpath)
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					log_error(gettext("could not read binary \"%s\""),
+					log_error(_("could not read binary \"%s\""),
 							  retpath);
 					break;
 			}
 		} while (*endp);
 	}
 
-	log_error(gettext("could not find a \"%s\" to execute"), argv0);
+	log_error(_("could not find a \"%s\" to execute"), argv0);
 	return -1;
 }
 
@@ -305,7 +305,7 @@ resolve_symlinks(char *path)
 	 */
 	if (!getcwd(orig_wd, MAXPGPATH))
 	{
-		log_error(gettext("could not identify current directory: %s"),
+		log_error(_("could not identify current directory: %s"),
 				  strerror(errno));
 		return -1;
 	}
@@ -321,7 +321,7 @@ resolve_symlinks(char *path)
 			*lsep = '\0';
 			if (chdir(path) == -1)
 			{
-				log_error(gettext("could not change directory to \"%s\""), path);
+				log_error(_("could not change directory to \"%s\""), path);
 				return -1;
 			}
 			fname = lsep + 1;
@@ -336,7 +336,7 @@ resolve_symlinks(char *path)
 		rllen = readlink(fname, link_buf, sizeof(link_buf));
 		if (rllen < 0 || rllen >= sizeof(link_buf))
 		{
-			log_error(gettext("could not read symbolic link \"%s\""), fname);
+			log_error(_("could not read symbolic link \"%s\""), fname);
 			return -1;
 		}
 		link_buf[rllen] = '\0';
@@ -348,7 +348,7 @@ resolve_symlinks(char *path)
 
 	if (!getcwd(path, MAXPGPATH))
 	{
-		log_error(gettext("could not identify current directory: %s"),
+		log_error(_("could not identify current directory: %s"),
 				  strerror(errno));
 		return -1;
 	}
@@ -357,7 +357,7 @@ resolve_symlinks(char *path)
 
 	if (chdir(orig_wd) == -1)
 	{
-		log_error(gettext("could not change directory to \"%s\""), orig_wd);
+		log_error(_("could not change directory to \"%s\""), orig_wd);
 		return -1;
 	}
 
@@ -584,13 +584,13 @@ pclose_check(FILE *stream)
 		perror("pclose failed");
 	}
 	else if (WIFEXITED(exitstatus))
-		log_error(gettext("child process exited with exit code %d"),
+		log_error(_("child process exited with exit code %d"),
 				  WEXITSTATUS(exitstatus));
 	else if (WIFSIGNALED(exitstatus))
-		log_error(gettext("child process was terminated by signal %d"),
+		log_error(_("child process was terminated by signal %d"),
 				  WTERMSIG(exitstatus));
 	else
-		log_error(gettext("child process exited with unrecognized status %d"),
+		log_error(_("child process exited with unrecognized status %d"),
 				  exitstatus);
 
 	return -1;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.441 2005/02/20 02:21:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.442 2005/02/22 04:37:17 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2120,35 +2120,35 @@ assign_max_stack_depth(int newval, bool doit, GucSource source)
 static void
 usage(const char *progname)
 {
-	printf(gettext("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n"), progname);
+	printf(_("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n"), progname);
 
-	printf(gettext("Usage:\n  %s [OPTION]... [DBNAME]\n\n"), progname);
-	printf(gettext("Options:\n"));
+	printf(_("Usage:\n  %s [OPTION]... [DBNAME]\n\n"), progname);
+	printf(_("Options:\n"));
 #ifdef USE_ASSERT_CHECKING
-	printf(gettext("  -A 1|0          enable/disable run-time assert checking\n"));
+	printf(_("  -A 1|0          enable/disable run-time assert checking\n"));
 #endif
-	printf(gettext("  -B NBUFFERS     number of shared buffers\n"));
-	printf(gettext("  -c NAME=VALUE   set run-time parameter\n"));
-	printf(gettext("  -d 0-5          debugging level (0 is off)\n"));
-	printf(gettext("  -D DATADIR      database directory\n"));
-	printf(gettext("  -e              use European date input format (DMY)\n"));
-	printf(gettext("  -E              echo query before execution\n"));
-	printf(gettext("  -F              turn fsync off\n"));
-	printf(gettext("  -N              do not use newline as interactive query delimiter\n"));
-	printf(gettext("  -o FILENAME     send stdout and stderr to given file\n"));
-	printf(gettext("  -P              disable system indexes\n"));
-	printf(gettext("  -s              show statistics after each query\n"));
-	printf(gettext("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
-	printf(gettext("  --describe-config  describe configuration parameters, then exit\n"));
-	printf(gettext("  --help          show this help, then exit\n"));
-	printf(gettext("  --version       output version information, then exit\n"));
-	printf(gettext("\nDeveloper options:\n"));
-	printf(gettext("  -f s|i|n|m|h    forbid use of some plan types\n"));
-	printf(gettext("  -i              do not execute queries\n"));
-	printf(gettext("  -O              allow system table structure changes\n"));
-	printf(gettext("  -t pa|pl|ex     show timings after each query\n"));
-	printf(gettext("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
-	printf(gettext("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
+	printf(_("  -B NBUFFERS     number of shared buffers\n"));
+	printf(_("  -c NAME=VALUE   set run-time parameter\n"));
+	printf(_("  -d 0-5          debugging level (0 is off)\n"));
+	printf(_("  -D DATADIR      database directory\n"));
+	printf(_("  -e              use European date input format (DMY)\n"));
+	printf(_("  -E              echo query before execution\n"));
+	printf(_("  -F              turn fsync off\n"));
+	printf(_("  -N              do not use newline as interactive query delimiter\n"));
+	printf(_("  -o FILENAME     send stdout and stderr to given file\n"));
+	printf(_("  -P              disable system indexes\n"));
+	printf(_("  -s              show statistics after each query\n"));
+	printf(_("  -S WORK-MEM     set amount of memory for sorts (in kB)\n"));
+	printf(_("  --describe-config  describe configuration parameters, then exit\n"));
+	printf(_("  --help          show this help, then exit\n"));
+	printf(_("  --version       output version information, then exit\n"));
+	printf(_("\nDeveloper options:\n"));
+	printf(_("  -f s|i|n|m|h    forbid use of some plan types\n"));
+	printf(_("  -i              do not execute queries\n"));
+	printf(_("  -O              allow system table structure changes\n"));
+	printf(_("  -t pa|pl|ex     show timings after each query\n"));
+	printf(_("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
+	printf(_("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 

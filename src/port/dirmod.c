@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.35 2005/02/13 16:50:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.36 2005/02/22 04:43:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include <w32api/winioctl.h>
 #endif
 #endif
+
 
 #ifndef FRONTEND
 
@@ -72,7 +73,7 @@ fe_palloc(Size size)
 
 	if ((res = malloc(size)) == NULL)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, _("out of memory\n"));
 		exit(1);
 	}
 	return res;
@@ -85,7 +86,7 @@ fe_pstrdup(const char *string)
 
 	if ((res = strdup(string)) == NULL)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, _("out of memory\n"));
 		exit(1);
 	}
 	return res;
@@ -98,7 +99,7 @@ fe_repalloc(void *pointer, Size size)
 
 	if ((res = realloc(pointer, size)) == NULL)
 	{
-		fprintf(stderr, gettext("out of memory\n"));
+		fprintf(stderr, _("out of memory\n"));
 		exit(1);
 	}
 	return res;
@@ -139,7 +140,7 @@ pgrename(const char *from, const char *to)
 				elog(LOG, "could not rename \"%s\" to \"%s\", continuing to try",
 					 from, to);
 #else
-				fprintf(stderr, "could not rename \"%s\" to \"%s\", continuing to try\n",
+				fprintf(stderr, _("could not rename \"%s\" to \"%s\", continuing to try\n"),
 						from, to);
 #endif
 			loops++;
@@ -149,7 +150,7 @@ pgrename(const char *from, const char *to)
 #ifndef FRONTEND
 		elog(LOG, "completed rename of \"%s\" to \"%s\"", from, to);
 #else
-		fprintf(stderr, "completed rename of \"%s\" to \"%s\"\n", from, to);
+		fprintf(stderr, _("completed rename of \"%s\" to \"%s\"\n"), from, to);
 #endif
 	return 0;
 }
@@ -175,7 +176,7 @@ pgunlink(const char *path)
 			elog(LOG, "could not unlink \"%s\", continuing to try",
 				 path);
 #else
-			fprintf(stderr, "could not unlink \"%s\", continuing to try\n",
+			fprintf(stderr, _("could not unlink \"%s\", continuing to try\n"),
 					path);
 #endif
 		loops++;
@@ -185,7 +186,7 @@ pgunlink(const char *path)
 #ifndef FRONTEND
 		elog(LOG, "completed unlink of \"%s\"", path);
 #else
-		fprintf(stderr, "completed unlink of \"%s\"\n", path);
+		fprintf(stderr, _("completed unlink of \"%s\"\n"), path);
 #endif
 	return 0;
 }
@@ -283,7 +284,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 				 errmsg("Error setting junction for %s: %s",
 						nativeTarget, msg)));
 #else
-		fprintf(stderr, "Error setting junction for %s: %s\n",
+		fprintf(stderr, _("Error setting junction for %s: %s\n"),
 				nativeTarget, msg);
 #endif
 		LocalFree(msg);
@@ -433,7 +434,7 @@ report_and_fail:
 #ifndef FRONTEND
 	elog(WARNING, "could not remove file or directory \"%s\": %m", filepath);
 #else
-	fprintf(stderr, "could not remove file or directory \"%s\": %s\n", filepath, strerror(errno));
+	fprintf(stderr, _("could not remove file or directory \"%s\": %s\n"), filepath, strerror(errno));
 #endif
 	fnames_cleanup(filenames);
 	return false;

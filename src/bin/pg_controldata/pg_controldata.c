@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.20 2004/09/23 00:47:44 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.21 2005/02/22 04:39:00 momjian Exp $
  */
 #include "postgres.h"
 
@@ -16,8 +16,6 @@
 #include <fcntl.h>
 
 #include "catalog/pg_control.h"
-
-#define _(x) gettext((x))
 
 
 static void

@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.155 2004/12/31 22:01:27 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.156 2005/02/22 04:37:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,7 +598,7 @@ errcode_for_socket_access(void)
 		char		   *fmtbuf; \
 		StringInfoData	buf; \
 		/* Internationalize the error format string */ \
-		fmt = gettext(fmt); \
+		fmt = _(fmt); \
 		/* Expand %m in format string */ \
 		fmtbuf = expand_fmt_string(fmt, edata); \
 		initStringInfo(&buf); \
@@ -1347,7 +1347,7 @@ log_line_prefix(StringInfo buf)
 					const char *username = MyProcPort->user_name;
 
 					if (username == NULL || *username == '\0')
-						username = gettext("[unknown]");
+						username = _("[unknown]");
 					appendStringInfo(buf, "%s", username);
 				}
 				break;
@@ -1357,7 +1357,7 @@ log_line_prefix(StringInfo buf)
 					const char *dbname = MyProcPort->database_name;
 
 					if (dbname == NULL || *dbname == '\0')
-						dbname = gettext("[unknown]");
+						dbname = _("[unknown]");
 					appendStringInfo(buf, "%s", dbname);
 				}
 				break;
@@ -1485,13 +1485,13 @@ send_message_to_server_log(ErrorData *edata)
 	if (edata->message)
 		append_with_tabs(&buf, edata->message);
 	else
-		append_with_tabs(&buf, gettext("missing error text"));
+		append_with_tabs(&buf, _("missing error text"));
 
 	if (edata->cursorpos > 0)
-		appendStringInfo(&buf, gettext(" at character %d"),
+		appendStringInfo(&buf, _(" at character %d"),
 						 edata->cursorpos);
 	else if (edata->internalpos > 0)
-		appendStringInfo(&buf, gettext(" at character %d"),
+		appendStringInfo(&buf, _(" at character %d"),
 						 edata->internalpos);
 
 	appendStringInfoChar(&buf, '\n');
@@ -1501,28 +1501,28 @@ send_message_to_server_log(ErrorData *edata)
 		if (edata->detail)
 		{
 			log_line_prefix(&buf);
-			appendStringInfoString(&buf, gettext("DETAIL:  "));
+			appendStringInfoString(&buf, _("DETAIL:  "));
 			append_with_tabs(&buf, edata->detail);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->hint)
 		{
 			log_line_prefix(&buf);
-			appendStringInfoString(&buf, gettext("HINT:  "));
+			appendStringInfoString(&buf, _("HINT:  "));
 			append_with_tabs(&buf, edata->hint);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->internalquery)
 		{
 			log_line_prefix(&buf);
-			appendStringInfoString(&buf, gettext("QUERY:  "));
+			appendStringInfoString(&buf, _("QUERY:  "));
 			append_with_tabs(&buf, edata->internalquery);
 			appendStringInfoChar(&buf, '\n');
 		}
 		if (edata->context)
 		{
 			log_line_prefix(&buf);
-			appendStringInfoString(&buf, gettext("CONTEXT:  "));
+			appendStringInfoString(&buf, _("CONTEXT:  "));
 			append_with_tabs(&buf, edata->context);
 			appendStringInfoChar(&buf, '\n');
 		}
@@ -1532,14 +1532,14 @@ send_message_to_server_log(ErrorData *edata)
 			if (edata->funcname && edata->filename)
 			{
 				log_line_prefix(&buf);
-				appendStringInfo(&buf, gettext("LOCATION:  %s, %s:%d\n"),
+				appendStringInfo(&buf, _("LOCATION:  %s, %s:%d\n"),
 								 edata->funcname, edata->filename,
 								 edata->lineno);
 			}
 			else if (edata->filename)
 			{
 				log_line_prefix(&buf);
-				appendStringInfo(&buf, gettext("LOCATION:  %s:%d\n"),
+				appendStringInfo(&buf, _("LOCATION:  %s:%d\n"),
 								 edata->filename, edata->lineno);
 			}
 		}
@@ -1552,7 +1552,7 @@ send_message_to_server_log(ErrorData *edata)
 	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
 	{
 		log_line_prefix(&buf);
-		appendStringInfoString(&buf, gettext("STATEMENT:  "));
+		appendStringInfoString(&buf, _("STATEMENT:  "));
 		append_with_tabs(&buf, debug_query_string);
 		appendStringInfoChar(&buf, '\n');
 	}
@@ -1678,7 +1678,7 @@ send_message_to_frontend(ErrorData *edata)
 		if (edata->message)
 			pq_sendstring(&msgbuf, edata->message);
 		else
-			pq_sendstring(&msgbuf, gettext("missing error text"));
+			pq_sendstring(&msgbuf, _("missing error text"));
 
 		if (edata->detail)
 		{
@@ -1754,13 +1754,13 @@ send_message_to_frontend(ErrorData *edata)
 		if (edata->message)
 			appendStringInfoString(&buf, edata->message);
 		else
-			appendStringInfoString(&buf, gettext("missing error text"));
+			appendStringInfoString(&buf, _("missing error text"));
 
 		if (edata->cursorpos > 0)
-			appendStringInfo(&buf, gettext(" at character %d"),
+			appendStringInfo(&buf, _(" at character %d"),
 							 edata->cursorpos);
 		else if (edata->internalpos > 0)
-			appendStringInfo(&buf, gettext(" at character %d"),
+			appendStringInfo(&buf, _(" at character %d"),
 							 edata->internalpos);
 
 		appendStringInfoChar(&buf, '\n');
@@ -1870,7 +1870,7 @@ useful_strerror(int errnum)
 		 * expanded.
 		 */
 		snprintf(errorstr_buf, sizeof(errorstr_buf),
-				 gettext("operating system error %d"), errnum);
+				 _("operating system error %d"), errnum);
 		str = errorstr_buf;
 	}
 
@@ -1893,29 +1893,29 @@ error_severity(int elevel)
 		case DEBUG3:
 		case DEBUG4:
 		case DEBUG5:
-			prefix = gettext("DEBUG");
+			prefix = _("DEBUG");
 			break;
 		case LOG:
 		case COMMERROR:
-			prefix = gettext("LOG");
+			prefix = _("LOG");
 			break;
 		case INFO:
-			prefix = gettext("INFO");
+			prefix = _("INFO");
 			break;
 		case NOTICE:
-			prefix = gettext("NOTICE");
+			prefix = _("NOTICE");
 			break;
 		case WARNING:
-			prefix = gettext("WARNING");
+			prefix = _("WARNING");
 			break;
 		case ERROR:
-			prefix = gettext("ERROR");
+			prefix = _("ERROR");
 			break;
 		case FATAL:
-			prefix = gettext("FATAL");
+			prefix = _("FATAL");
 			break;
 		case PANIC:
-			prefix = gettext("PANIC");
+			prefix = _("PANIC");
 			break;
 		default:
 			prefix = "???";
@@ -1956,7 +1956,7 @@ write_stderr(const char *fmt,...)
 {
 	va_list		ap;
 
-	fmt = gettext(fmt);
+	fmt = _(fmt);
 
 	va_start(ap, fmt);
 #ifndef WIN32

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.122 2005/01/12 21:37:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.123 2005/02/22 04:35:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ ClientAuthentication(Port *port)
 				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
 					errmsg("no pg_hba.conf entry for host \"%s\", user \"%s\", database \"%s\", %s",
 						   hostinfo, port->user_name, port->database_name,
-				   port->ssl ? gettext("SSL on") : gettext("SSL off"))));
+				   port->ssl ? _("SSL on") : _("SSL off"))));
 #else
 				ereport(FATAL,
 				   (errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
