@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.174 2000/10/24 21:33:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.175 2000/10/25 22:27:25 tgl Exp $
  *
  * NOTES
  *
@@ -262,7 +262,7 @@ static void InitSSL(void);
 #endif
 
 #ifdef CYR_RECODE
-void		GetCharSetByHost(char *, int, char *);
+extern void GetCharSetByHost(char *, int, char *);
 
 #endif
 
@@ -803,8 +803,27 @@ ServerLoop(void)
 		Port	   *port;
 		fd_set		rmask,
 					wmask;
+		struct timeval *timeout = (struct timeval *) NULL;
 #ifdef USE_SSL
-		bool		no_select = false;
+		struct timeval timeout_tv;
+
+		/*
+		 * If we are using SSL, there may be input data already read and
+		 * pending in SSL's input buffers.  If so, check for additional
+		 * input from other clients, but don't delay before processing.
+		 */
+		for (curr = DLGetHead(PortList); curr; curr = DLGetSucc(curr))
+		{
+			Port	   *port = (Port *) DLE_VAL(curr);
+
+			if (port->ssl && SSL_pending(port->ssl))
+			{
+				timeout_tv.tv_sec = 0;
+				timeout_tv.tv_usec = 0;
+				timeout = &timeout_tv;
+				break;
+			}
+		}
 #endif
 
 		/*
@@ -813,24 +832,9 @@ ServerLoop(void)
 		memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
 		memcpy((char *) &wmask, (char *) &writemask, sizeof(fd_set));
 
-#ifdef USE_SSL
-		for (curr = DLGetHead(PortList); curr; curr = DLGetSucc(curr))
-		{
-			if (((Port *) DLE_VAL(curr))->ssl &&
-				SSL_pending(((Port *) DLE_VAL(curr))->ssl) > 0)
-			{
-				no_select = true;
-				break;
-			}
-		}
-		if (no_select)
-			FD_ZERO(&rmask);	/* So we don't accept() anything below */
-#endif
-
 		PG_SETMASK(&UnBlockSig);
 
-		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL,
-				   (struct timeval *) NULL) < 0)
+		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL, timeout) < 0)
 		{
 			if (errno == EINTR || errno == EWOULDBLOCK)
 				continue;
@@ -894,8 +898,10 @@ ServerLoop(void)
 							   (void *) port);
 		}
 
-		/* Build up new masks for select(). */
-
+		/*
+		 * Scan active ports, processing any available input.  While we
+		 * are at it, build up new masks for next select().
+		 */
 		nSockets = initMasks(&readmask, &writemask);
 
 		curr = DLGetHead(PortList);
@@ -946,7 +952,7 @@ ServerLoop(void)
 				/*
 				 * Can't start backend if max backend count is exceeded.
 				 *
-				 * The same when shutdowning data base.
+				 * The same when data base is in startup/shutdown mode.
 				 */
 				if (Shutdown > NoShutdown)
 					PacketSendError(&port->pktInfo,
@@ -966,8 +972,8 @@ ServerLoop(void)
 					/*
 					 * If the backend start fails then keep the connection
 					 * open to report it.  Otherwise, pretend there is an
-					 * error to close the connection which will now be
-					 * managed by the backend.
+					 * error to close our descriptor for the connection,
+					 * which will now be managed by the backend.
 					 */
 					if (BackendStartup(port) != STATUS_OK)
 						PacketSendError(&port->pktInfo,
@@ -1067,22 +1073,23 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		char		SSLok;
 
 #ifdef USE_SSL
-                if (!EnableSSL || port->laddr.sa.sa_family != AF_INET)
-		        /* No SSL when disabled or on Unix sockets */
-   		        SSLok = 'N';
+		/* No SSL when disabled or on Unix sockets */
+		if (!EnableSSL || port->laddr.sa.sa_family != AF_INET)
+			SSLok = 'N';
 		else
-		        SSLok = 'S';		/* Support for SSL */
+			SSLok = 'S';		/* Support for SSL */
 #else
 		SSLok = 'N';			/* No support for SSL */
 #endif
 		if (send(port->sock, &SSLok, 1, 0) != 1)
 		{
 			perror("Failed to send SSL negotiation response");
-			return STATUS_ERROR;/* Close connection */
+			return STATUS_ERROR; /* Close connection */
 		}
 
 #ifdef USE_SSL
-		if (SSLok == 'S') {
+		if (SSLok == 'S')
+		{
 		  if (!(port->ssl = SSL_new(SSL_context)) ||
 		      !SSL_set_fd(port->ssl, port->sock) ||
 		      SSL_accept(port->ssl) <= 0)
