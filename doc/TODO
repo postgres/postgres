@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct 21 11:51:25 EDT 2003
+Last updated:		Wed Oct 22 13:14:35 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -94,6 +94,7 @@ Data Types
 * Add pg_get_acldef(), pg_get_typedefault(), and pg_get_attrdef()
 * Add ALTER DOMAIN, AGGREGATE, CONVERSION, SEQUENCE ... OWNER TO
 * Allow to_char to print localized month names (Karel)
+* Allow functions to have a search path specified at creation time
 
 
 * ARRAYS
@@ -513,7 +514,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1155 2003/10/21 15:51:41 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1155 2003/10/21 15:51:41 momjian Exp $
+* Change CVS $Id: TODO,v 1.1156 2003/10/22 17:14:39 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1156 2003/10/22 17:14:39 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
