@@ -552,7 +552,7 @@ AC_SUBST(BACKSLASH_C)
 
 AC_PROG_LEX
 if test "$LEX" = "flex"; then
-        $LEX --version 2> /dev/null | grep -s '2\.5\.3' >& /dev/null
+        $LEX --version 2> /dev/null | grep -s '2\.5\.3' > /dev/null 2>&1
         if test $? -eq 0 ; then
                 AC_MSG_WARN([
 ***
