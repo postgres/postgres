@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-O2 -m486
+CFLAGS:-O2 
 SHARED_LIB:-fpic
 ALL:
 SRCH_INC:/usr/include/ncurses /usr/include/readline
