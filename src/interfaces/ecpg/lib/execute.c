@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.25 2001/09/29 20:12:07 tgl Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.26 2001/10/01 12:02:28 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -370,40 +370,107 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 	return isarray;
 }
 
+
+bool
+ECPGstore_result(const PGresult *results, int act_field, 
+			const struct statement * stmt, struct variable *var)
+{	int		isarray,
+			act_tuple,
+			ntuples = PQntuples(results);
+	bool	status = true;
+				
+					isarray = ECPGis_type_an_array(PQftype(results, act_field), stmt, var);
+
+					if (!isarray)
+					{
+
+						/*
+						 * if we don't have enough space, we cannot read
+						 * all tuples
+						 */
+						if ((var->arrsize > 0 && ntuples > var->arrsize) || (var->ind_arrsize > 0 && ntuples > var->ind_arrsize))
+						{
+							ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
+									stmt->lineno, ntuples, var->arrsize);
+							ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL);
+							return false;
+						}
+					}
+					else
+					{
+
+						/*
+						 * since we read an array, the variable has to be
+						 * an array too
+						 */
+						if (var->arrsize == 0)
+						{
+							ECPGlog("ECPGexecute line %d: variable is not an array\n");
+							ECPGraise(stmt->lineno, ECPG_NO_ARRAY, NULL);
+							return false;
+						}
+					}
+
+					/*
+					 * allocate memory for NULL pointers
+					 */
+					if ((var->arrsize == 0 || var->varcharsize == 0) && var->value == NULL)
+					{
+						int			len = 0;
+
+						switch (var->type)
+						{
+							case ECPGt_char:
+							case ECPGt_unsigned_char:
+								var->varcharsize = 0;
+								/* check strlen for each tuple */
+								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+								{
+									int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+
+									if (len > var->varcharsize)
+										var->varcharsize = len;
+								}
+								var->offset *= var->varcharsize;
+								len = var->offset * ntuples;
+								break;
+							case ECPGt_varchar:
+								len = ntuples * (var->varcharsize + sizeof(int));
+								break;
+							default:
+								len = var->offset * ntuples;
+								break;
+						}
+						var->value = (void *) ecpg_alloc(len, stmt->lineno);
+						*((void **) var->pointer) = var->value;
+						add_mem(var->value, stmt->lineno);
+					}
+
+					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
+					{
+						if (!get_data(results, act_tuple, act_field, stmt->lineno,
+									var->type, var->ind_type, var->value,
+									  var->ind_value, var->varcharsize, var->offset, isarray))
+							status = false;
+					}
+	return status;
+}
+
 static bool
-ECPGexecute(struct statement * stmt)
+ECPGstore_input(const struct statement * stmt, const struct variable *var,
+			const char **tobeinserted_p, bool *malloced_p)
 {
-	bool		status = false;
-	char	   *copiedquery;
-	PGresult   *results;
-	PGnotify   *notify;
-	struct variable *var;
-
-	copiedquery = ecpg_strdup(stmt->command, stmt->lineno);
-
-	/*
-	 * Now, if the type is one of the fill in types then we take the
-	 * argument and enter that in the string at the first %s position.
-	 * Then if there are any more fill in types we fill in at the next and
-	 * so on.
-	 */
-	var = stmt->inlist;
-	while (var)
-	{
-		char	   *newcopy;
 		char	   *mallocedval = NULL;
-		char	   *tobeinserted = NULL;
-		char	   *p;
-		char		buff[20];
-		int			hostvarl = 0;
+		char	   *newcopy = NULL;
 
 		/*
 		 * Some special treatment is needed for records since we want
 		 * their contents to arrive in a comma-separated list on insert (I
 		 * think).
 		 */
-
-		buff[0] = '\0';
+		
+		*malloced_p=false;
+		*tobeinserted_p="";
 
 		/* check for null value and set input buffer accordingly */
 		switch (var->ind_type)
@@ -411,30 +478,30 @@ ECPGexecute(struct statement * stmt)
 			case ECPGt_short:
 			case ECPGt_unsigned_short:
 				if (*(short *) var->ind_value < 0)
-					strcpy(buff, "null");
+					*tobeinserted_p="null";
 				break;
 			case ECPGt_int:
 			case ECPGt_unsigned_int:
 				if (*(int *) var->ind_value < 0)
-					strcpy(buff, "null");
+					*tobeinserted_p="null";
 				break;
 			case ECPGt_long:
 			case ECPGt_unsigned_long:
 				if (*(long *) var->ind_value < 0L)
-					strcpy(buff, "null");
+					*tobeinserted_p="null";
 				break;
 #ifdef HAVE_LONG_LONG_INT_64
 			case ECPGt_long_long:
 			case ECPGt_unsigned_long_long:
 				if (*(long long int *) var->ind_value < (long long) 0)
-					strcpy(buff, "null");
+					*tobeinserted_p="null";
 				break;
 #endif	 /* HAVE_LONG_LONG_INT_64 */
 			default:
 				break;
 		}
 
-		if (*buff == '\0')
+		if (**tobeinserted_p == '\0')
 		{
 			switch (var->type)
 			{
@@ -456,7 +523,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%hd", *((short *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_int:
@@ -475,7 +543,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%d", *((int *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_unsigned_short:
@@ -494,7 +563,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%hu", *((unsigned short *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_unsigned_int:
@@ -513,7 +583,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%u", *((unsigned int *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_long:
@@ -532,7 +603,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%ld", *((long *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_unsigned_long:
@@ -551,7 +623,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%lu", *((unsigned long *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 #ifdef HAVE_LONG_LONG_INT_64
 				case ECPGt_long_long:
@@ -570,7 +643,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%lld", *((long long *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_unsigned_long_long:
@@ -589,7 +663,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%llu", *((unsigned long long *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 #endif	 /* HAVE_LONG_LONG_INT_64 */
 				case ECPGt_float:
@@ -608,7 +683,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%.14g", *((float *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_double:
@@ -627,7 +703,8 @@ ECPGexecute(struct statement * stmt)
 					else
 						sprintf(mallocedval, "%.14g", *((double *) var->value));
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_bool:
@@ -664,7 +741,8 @@ ECPGexecute(struct statement * stmt)
 							ECPGraise(stmt->lineno, ECPG_CONVERT_BOOL, "different size");
 					}
 
-					tobeinserted = mallocedval;
+					*tobeinserted_p = mallocedval;
+					*malloced_p = true;
 					break;
 
 				case ECPGt_char:
@@ -685,7 +763,8 @@ ECPGexecute(struct statement * stmt)
 
 						free(newcopy);
 
-						tobeinserted = mallocedval;
+						*tobeinserted_p = mallocedval;
+						*malloced_p = true;
 					}
 					break;
 				case ECPGt_char_variable:
@@ -698,7 +777,8 @@ ECPGexecute(struct statement * stmt)
 						strncpy(mallocedval, (char *) var->value, slen);
 						mallocedval[slen] = '\0';
 
-						tobeinserted = mallocedval;
+						*tobeinserted_p = mallocedval;
+						*malloced_p = true;
 					}
 					break;
 				case ECPGt_varchar:
@@ -718,7 +798,8 @@ ECPGexecute(struct statement * stmt)
 
 						free(newcopy);
 
-						tobeinserted = mallocedval;
+						*tobeinserted_p = mallocedval;
+						*malloced_p = true;
 					}
 					break;
 
@@ -729,9 +810,38 @@ ECPGexecute(struct statement * stmt)
 					break;
 			}
 		}
-		else
-			tobeinserted = buff;
+	return true;
+}
 
+static bool
+ECPGexecute(struct statement * stmt)
+{
+	bool		status = false;
+	char	   *copiedquery;
+	PGresult   *results;
+	PGnotify   *notify;
+	struct variable *var;
+
+	copiedquery = ecpg_strdup(stmt->command, stmt->lineno);
+
+	/*
+	 * Now, if the type is one of the fill in types then we take the
+	 * argument and enter that in the string at the first %s position.
+	 * Then if there are any more fill in types we fill in at the next and
+	 * so on.
+	 */
+	var = stmt->inlist;
+	while (var)
+	{
+		char 	   *newcopy = NULL;
+		const char *tobeinserted = NULL;
+		char	   *p;
+		bool	   malloced=FALSE;
+		int		   hostvarl = 0;
+
+		if (!ECPGstore_input(stmt, var, &tobeinserted, &malloced))
+			return false;
+			
 		/*
 		 * Now tobeinserted points to an area that is to be inserted at
 		 * the first %s
@@ -770,10 +880,10 @@ ECPGexecute(struct statement * stmt)
 		 * oldcopy and let the copiedquery get the var->value from the
 		 * newcopy.
 		 */
-		if (mallocedval != NULL)
+		if (malloced)
 		{
-			free(mallocedval);
-			mallocedval = NULL;
+			free((char*)tobeinserted);
+			tobeinserted = NULL;
 		}
 
 		free(copiedquery);
@@ -823,9 +933,7 @@ ECPGexecute(struct statement * stmt)
 		{
 				int			nfields,
 							ntuples,
-							act_tuple,
-							act_field,
-							isarray;
+							act_field;
 
 			case PGRES_TUPLES_OK:
 				nfields = PQnfields(results);
@@ -861,83 +969,9 @@ ECPGexecute(struct statement * stmt)
 						ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL);
 						return (false);
 					}
+					
+					status = ECPGstore_result(results, act_field, stmt, var);
 
-					isarray = ECPGis_type_an_array(PQftype(results, act_field), stmt, var);
-
-					if (!isarray)
-					{
-
-						/*
-						 * if we don't have enough space, we cannot read
-						 * all tuples
-						 */
-						if ((var->arrsize > 0 && ntuples > var->arrsize) || (var->ind_arrsize > 0 && ntuples > var->ind_arrsize))
-						{
-							ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
-									stmt->lineno, ntuples, var->arrsize);
-							ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL);
-							status = false;
-							break;
-						}
-					}
-					else
-					{
-
-						/*
-						 * since we read an array, the variable has to be
-						 * an array too
-						 */
-						if (var->arrsize == 0)
-						{
-							ECPGlog("ECPGexecute line %d: variable is not an array\n");
-							ECPGraise(stmt->lineno, ECPG_NO_ARRAY, NULL);
-							status = false;
-							break;
-						}
-					}
-
-					/*
-					 * allocate memory for NULL pointers
-					 */
-					if ((var->arrsize == 0 || var->varcharsize == 0) && var->value == NULL)
-					{
-						int			len = 0;
-
-						switch (var->type)
-						{
-							case ECPGt_char:
-							case ECPGt_unsigned_char:
-								var->varcharsize = 0;
-								/* check strlen for each tuple */
-								for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-								{
-									int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-
-									if (len > var->varcharsize)
-										var->varcharsize = len;
-								}
-								var->offset *= var->varcharsize;
-								len = var->offset * ntuples;
-								break;
-							case ECPGt_varchar:
-								len = ntuples * (var->varcharsize + sizeof(int));
-								break;
-							default:
-								len = var->offset * ntuples;
-								break;
-						}
-						var->value = (void *) ecpg_alloc(len, stmt->lineno);
-						*((void **) var->pointer) = var->value;
-						add_mem(var->value, stmt->lineno);
-					}
-
-					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
-					{
-						if (!get_data(results, act_tuple, act_field, stmt->lineno,
-									var->type, var->ind_type, var->value,
-									  var->ind_value, var->varcharsize, var->offset, isarray))
-							status = false;
-					}
 					var = var->next;
 				}
 
@@ -1006,26 +1040,23 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	va_list		args;
 	struct statement *stmt;
 	struct connection *con = get_connection(connection_name);
-	bool		status;
-	char	   	*oldlocale;
+	bool		status = true;
+	char	   	*locale;
 
 	/* Make sure we do NOT honor the locale for numeric input/output */
 	/* since the database wants the standard decimal point */
-	oldlocale = strdup(setlocale(LC_NUMERIC, NULL));
-	setlocale(LC_NUMERIC, "C");
+	locale = setlocale(LC_NUMERIC, "C");
 
 	if (!ecpg_init(con, connection_name, lineno))
 	{
-		setlocale(LC_NUMERIC, oldlocale);
-		free(oldlocale);
+		setlocale(LC_NUMERIC, locale);
 		return (false);
 	}
 
 	va_start(args, query);
 	if (create_statement(lineno, con, &stmt, query, args) == false)
 	{
-		setlocale(LC_NUMERIC, oldlocale);
-		free(oldlocale);
+		setlocale(LC_NUMERIC, locale);
 		return (false);
 	}
 	va_end(args);
@@ -1036,8 +1067,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 		free_statement(stmt);
 		ECPGlog("ECPGdo: not connected to %s\n", con->name);
 		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
-		setlocale(LC_NUMERIC, oldlocale);
-		free(oldlocale);
+		setlocale(LC_NUMERIC, locale);
 		return false;
 	}
 
@@ -1045,9 +1075,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	free_statement(stmt);
 
 	/* and reset locale value so our application is not affected */
-	setlocale(LC_NUMERIC, oldlocale);
-	free(oldlocale);
-
+	setlocale(LC_NUMERIC, locale);
 	return (status);
 }
 

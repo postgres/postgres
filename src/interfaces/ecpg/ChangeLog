@@ -1101,5 +1101,11 @@ Tue Sep 25 20:10:03 CEST 2001
 
 	- Synced preproc.y with gram.y.
 	- Changed locale handling.
+
+Mon Okt  1 13:49:40 CEST 2001
+
+	- Fixed truncate bug.
+	- Added patch by Christof Petig <christof.petig@wtal.de> to clean up
+	  ecpglib.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

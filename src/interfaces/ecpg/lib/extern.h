@@ -4,7 +4,7 @@
 /* Here are some methods used by the lib. */
 /* Returns a pointer to a string containing a simple type name. */
 void		free_auto_mem(void);
-bool get_data(PGresult *, int, int, int, enum ECPGttype type,
+bool get_data(const PGresult *, int, int, int, enum ECPGttype type,
 		 enum ECPGttype, void *, void *, long, long, bool);
 struct connection *get_connection(const char *);
 void		init_sqlca(void);
@@ -13,6 +13,7 @@ bool		ecpg_init(const struct connection *, const char *, const int);
 char	   *ecpg_strdup(const char *, int);
 const char *ECPGtype_name(enum ECPGttype);
 unsigned int ECPGDynamicType(Oid);
+
 
 /* A generic varchar type. */
 struct ECPGgeneric_varchar
@@ -63,3 +64,7 @@ struct descriptor
 
 PGresult **
 ECPGdescriptor_lvalue(int line, const char *descriptor);
+
+bool
+ECPGstore_result(const PGresult *results, int act_field, 
+			const struct statement * stmt, struct variable *var);

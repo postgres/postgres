@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.15 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.16 2001/10/01 12:02:28 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -12,7 +12,7 @@
 #include "sqlca.h"
 
 bool
-get_data(PGresult *results, int act_tuple, int act_field, int lineno,
+get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 		 enum ECPGttype type, enum ECPGttype ind_type,
 		 void *var, void *ind, long varcharsize, long offset,
 		 bool isarray)

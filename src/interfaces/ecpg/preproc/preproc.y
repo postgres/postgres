@@ -1552,7 +1552,7 @@ drop_type:	TABLE		{ $$ = make_str("table"); }
  *****************************************************************************/
 TruncateStmt:  TRUNCATE opt_table relation_name
                                {
-					$$ = cat2_str(make_str("drop table"), $3);
+					$$ = cat2_str(make_str("truncate table"), $3);
                                }
                        ;
 
