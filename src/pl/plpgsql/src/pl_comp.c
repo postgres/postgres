@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.57 2003/04/27 22:21:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.58 2003/05/05 16:46:27 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -141,7 +141,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	proc_source = DatumGetCString(DirectFunctionCall1(textout,
 								  PointerGetDatum(&procStruct->prosrc)));
-	plpgsql_setinput(proc_source, functype);
+	plpgsql_scanner_init(proc_source, functype);
+	pfree(proc_source);
 
 	plpgsql_error_funcname = pstrdup(NameStr(procStruct->proname));
 	plpgsql_error_lineno = 0;
@@ -258,7 +259,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					 * For tuple type parameters, we set up a record of
 					 * that type
 					 */
-					row = build_rowtype(typeStruct->typrelid);
+					row = plpgsql_build_rowtype(typeStruct->typrelid);
 
 					row->refname = strdup(buf);
 
@@ -495,6 +496,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
 		elog(ERROR, "plpgsql: parser returned %d ???", parse_rc);
+
+	plpgsql_scanner_finish();
 
 	/*
 	 * If that was successful, complete the functions info.
@@ -1200,7 +1203,7 @@ plpgsql_parse_wordrowtype(char *word)
 	/*
 	 * Build and return the complete row definition
 	 */
-	plpgsql_yylval.row = build_rowtype(classOid);
+	plpgsql_yylval.row = plpgsql_build_rowtype(classOid);
 
 	pfree(cp[0]);
 	pfree(cp[1]);
@@ -1241,7 +1244,7 @@ plpgsql_parse_dblwordrowtype(char *word)
 	/*
 	 * Build and return the complete row definition
 	 */
-	plpgsql_yylval.row = build_rowtype(classOid);
+	plpgsql_yylval.row = plpgsql_build_rowtype(classOid);
 
 	pfree(cp);
 
@@ -1252,7 +1255,7 @@ plpgsql_parse_dblwordrowtype(char *word)
  * Build a rowtype data structure given the pg_class OID.
  */
 PLpgSQL_row *
-build_rowtype(Oid classOid)
+plpgsql_build_rowtype(Oid classOid)
 {
 	PLpgSQL_row *row;
 	HeapTuple	classtup;
@@ -1494,6 +1497,6 @@ plpgsql_add_initdatums(int **varnos)
 void
 plpgsql_yyerror(const char *s)
 {
-	plpgsql_error_lineno = plpgsql_yylineno;
+	plpgsql_error_lineno = plpgsql_scanner_lineno();
 	elog(ERROR, "%s at or near \"%s\"", s, plpgsql_yytext);
 }

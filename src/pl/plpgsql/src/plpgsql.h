@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.35 2003/04/27 22:21:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.36 2003/05/05 16:46:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -573,13 +573,10 @@ extern PLpgSQL_datum **plpgsql_Datums;
 extern int	plpgsql_error_lineno;
 extern char *plpgsql_error_funcname;
 
-/* linkage to the real yytext and yylineno variables */
+/* linkage to the real yytext variable */
 extern char *plpgsql_base_yytext;
 
 #define plpgsql_yytext plpgsql_base_yytext
-extern int	plpgsql_base_yylineno;
-
-#define plpgsql_yylineno plpgsql_base_yylineno
 
 extern PLpgSQL_function *plpgsql_curr_compile;
 
@@ -601,7 +598,7 @@ extern int	plpgsql_parse_tripwordtype(char *word);
 extern int	plpgsql_parse_wordrowtype(char *word);
 extern int	plpgsql_parse_dblwordrowtype(char *word);
 extern PLpgSQL_type *plpgsql_parse_datatype(char *string);
-extern PLpgSQL_row *build_rowtype(Oid classOid);
+extern PLpgSQL_row *plpgsql_build_rowtype(Oid classOid);
 extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_yyerror(const char *s);
@@ -660,6 +657,8 @@ extern int	plpgsql_yyparse(void);
 extern int	plpgsql_base_yylex(void);
 extern int	plpgsql_yylex(void);
 extern void plpgsql_push_back_token(int token);
-extern void plpgsql_setinput(char *s, int functype);
+extern int	plpgsql_scanner_lineno(void);
+extern void plpgsql_scanner_init(const char *str, int functype);
+extern void plpgsql_scanner_finish(void);
 
 #endif   /* PLPGSQL_H */

@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.24 2002/11/07 06:06:17 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.25 2003/05/05 16:46:28 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -39,20 +39,26 @@
 #include "plpgsql.h"
 
 
-static char	*plpgsql_source;
-static int	plpgsql_bytes_left;
+/* No reason to constrain amount of data slurped */
+#define YY_READ_BUF_SIZE 16777216
+
+/* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
+#define fprintf(file, fmt, msg)  ereport(FATAL, (errmsg_internal("%s", msg)))
+
+/* Handles to the buffer that the lexer uses internally */
+static YY_BUFFER_STATE scanbufhandle;
+static char *scanbuf;
+
 static int	scanner_functype;
 static int	scanner_typereported;
 static int	pushback_token;
 static bool have_pushback_token;
 static int	lookahead_token;	
 static bool have_lookahead_token;
+static const char *cur_line_start;
+static int	cur_line_num;
 
 int	plpgsql_SpaceScanned = 0;
-
-static void plpgsql_input(char *buf, int *result, int max);
-
-#define YY_INPUT(buf,res,max)	plpgsql_input(buf, &res, max)
 %}
 
 %option 8bit
@@ -60,7 +66,6 @@ static void plpgsql_input(char *buf, int *result, int max);
 %option nounput
 %option noyywrap
 
-%option yylineno
 %option case-insensitive
 
 
@@ -78,11 +83,12 @@ space			[ \t\n\r\f]
 
 %%
     /* ----------
-     * Local variable in scanner to remember where
+     * Local variables in scanner to remember where
      * a string or comment started
      * ----------
      */
     int	start_lineno = 0;
+	char *start_charpos = NULL;
 
     /* ----------
      * Reset the state when entering the scanner
@@ -185,7 +191,7 @@ dump			{ return O_DUMP;			}
 {digit}+		{ return T_NUMBER;			}
 
 \".				{
-				plpgsql_error_lineno = yylineno;
+				plpgsql_error_lineno = plpgsql_scanner_lineno();
 				elog(ERROR, "unterminated quoted identifier");
 			}
 
@@ -201,7 +207,7 @@ dump			{ return O_DUMP;			}
      */
 --[^\r\n]*		;
 
-\/\*			{ start_lineno = yylineno;
+\/\*			{ start_lineno = plpgsql_scanner_lineno();
 			  BEGIN IN_COMMENT;
 			}
 <IN_COMMENT>\*\/	{ BEGIN INITIAL; plpgsql_SpaceScanned = 1; }
@@ -214,22 +220,30 @@ dump			{ return O_DUMP;			}
 
     /* ----------
      * Collect anything inside of ''s and return one STRING
+	 *
+	 * Hacking yytext/yyleng here lets us avoid using yymore(), which is
+	 * a win for performance.  It's safe because we know the underlying
+	 * input buffer is not changing.
      * ----------
      */
-'			{ start_lineno = yylineno;
+'			{
+			  start_lineno = plpgsql_scanner_lineno();
+			  start_charpos = yytext;
 			  BEGIN IN_STRING;
-			  yymore();
 			}
-<IN_STRING>\\.		|
-<IN_STRING>''		{ yymore();				}
-<IN_STRING>'		{ BEGIN INITIAL;
+<IN_STRING>\\.		{ }
+<IN_STRING>''		{ }
+<IN_STRING>'		{
+			  yyleng -= (yytext - start_charpos);
+			  yytext = start_charpos;
+			  BEGIN INITIAL;
 			  return T_STRING;
 			}
 <IN_STRING><<EOF>>	{
 				plpgsql_error_lineno = start_lineno;
 				elog(ERROR, "unterminated string");
 			}
-<IN_STRING>[^'\\]*	{ yymore();				}
+<IN_STRING>[^'\\]*	{ }
 
     /* ----------
      * Any unmatched character is returned as is
@@ -239,26 +253,6 @@ dump			{ return O_DUMP;			}
 
 %%
 
-
-static void
-plpgsql_input(char *buf, int *result, int max)
-{
-    int		n = max;
-
-    if (n > plpgsql_bytes_left)
-        n = plpgsql_bytes_left;
-
-    if (n == 0)
-	{
-        *result = YY_NULL;
-		return;
-    }
-
-    *result = n;
-    memcpy(buf, plpgsql_source, n);
-    plpgsql_source += n;
-    plpgsql_bytes_left -= n;
-}
 
 /*
  * This is the yylex routine called from outside. It exists to provide
@@ -319,17 +313,35 @@ plpgsql_push_back_token(int token)
 	have_pushback_token = true;
 }
 
+/*
+ * Get the line number at which the current token ends.  This substitutes
+ * for flex's very poorly implemented yylineno facility.
+ *
+ * We assume that flex has written a '\0' over the character following the
+ * current token in scanbuf.  So, we just have to count the '\n' characters
+ * before that.  We optimize this a little by keeping track of the last
+ * '\n' seen so far.
+ */
+int
+plpgsql_scanner_lineno(void)
+{
+	const char *c;
+
+	while ((c = strchr(cur_line_start, '\n')) != NULL)
+	{
+		cur_line_start = c + 1;
+		cur_line_num++;
+	}
+	return cur_line_num;
+}
 
 /*
- * Initialize the scanner for new input.
+ * Called before any actual parsing is done
  */
 void
-plpgsql_setinput(char *source, int functype)
+plpgsql_scanner_init(const char *str, int functype)
 {
-    yyrestart(NULL);
-    yylineno = 1;
-
-    plpgsql_source = source;
+	Size	slen;
 
 	/*----------
 	 * Hack: skip any initial newline, so that in the common coding layout
@@ -339,16 +351,47 @@ plpgsql_setinput(char *source, int functype)
 	 * we will think "line 1" is what the programmer thinks of as line 1.
 	 *----------
 	 */
-    if (*plpgsql_source == '\r')
-        plpgsql_source++;
-    if (*plpgsql_source == '\n')
-        plpgsql_source++;
+    if (*str == '\r')
+        str++;
+    if (*str == '\n')
+        str++;
 
-    plpgsql_bytes_left = strlen(plpgsql_source);
+	slen = strlen(str);
 
+	/*
+	 * Might be left over after ereport()
+	 */
+	if (YY_CURRENT_BUFFER)
+		yy_delete_buffer(YY_CURRENT_BUFFER);
+
+	/*
+	 * Make a scan buffer with special termination needed by flex.
+	 */
+	scanbuf = palloc(slen + 2);
+	memcpy(scanbuf, str, slen);
+	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
+	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
+
+	/* Other setup */
     scanner_functype     = functype;
     scanner_typereported = 0;
 
 	have_pushback_token = false;
 	have_lookahead_token = false;
+
+	cur_line_start = scanbuf;
+	cur_line_num = 1;
+
+	BEGIN(INITIAL);
+}
+
+
+/*
+ * Called after parsing is done to clean up after plpgsql_scanner_init()
+ */
+void
+plpgsql_scanner_finish(void)
+{
+	yy_delete_buffer(scanbufhandle);
+	pfree(scanbuf);
 }

@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.42 2003/04/27 22:21:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.43 2003/05/05 16:46:27 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -334,7 +334,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 							/* Composite type --- treat as rowtype */
 							PLpgSQL_row	   *row;
 
-							row = build_rowtype($3->typrelid);
+							row = plpgsql_build_rowtype($3->typrelid);
 							row->dtype		= PLPGSQL_DTYPE_ROW;
 							row->refname	= $1.name;
 							row->lineno		= $1.lineno;
@@ -486,7 +486,7 @@ decl_cursor_arglist : decl_cursor_arg
 
 						new->dtype = PLPGSQL_DTYPE_ROW;
 						new->refname = strdup("*internal*");
-						new->lineno = yylineno;
+						new->lineno = plpgsql_scanner_lineno();
 						new->rowtypeclass = InvalidOid;
 						/*
 						 * We make temporary fieldnames/varnos arrays that
@@ -553,7 +553,7 @@ decl_aliasitem	: T_WORD
 						nsi = plpgsql_ns_lookup(name, NULL);
 						if (nsi == NULL)
 						{
-							plpgsql_error_lineno = yylineno;
+							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							elog(ERROR, "function has no parameter %s", name);
 						}
 
@@ -578,7 +578,7 @@ decl_varname	: T_WORD
 						plpgsql_convert_ident(yytext, &name, 1);
 						/* name should be malloc'd for use as varname */
 						$$.name = strdup(name);
-						$$.lineno  = yylineno;
+						$$.lineno  = plpgsql_scanner_lineno();
 						pfree(name);
 					}
 				;
@@ -625,7 +625,7 @@ decl_defval		: ';'
 						PLpgSQL_dstring ds;
 						PLpgSQL_expr	*expr;
 
-						lno = yylineno;
+						lno = plpgsql_scanner_lineno();
 						expr = malloc(sizeof(PLpgSQL_expr));
 						plpgsql_dstring_init(&ds);
 						plpgsql_dstring_append(&ds, "SELECT ");
@@ -1034,7 +1034,7 @@ fori_varname	: T_VARIABLE
 						plpgsql_convert_ident(yytext, &name, 1);
 						/* name should be malloc'd for use as varname */
 						$$.name = strdup(name);
-						$$.lineno  = yylineno;
+						$$.lineno  = plpgsql_scanner_lineno();
 						pfree(name);
 					}
 				| T_WORD
@@ -1044,7 +1044,7 @@ fori_varname	: T_VARIABLE
 						plpgsql_convert_ident(yytext, &name, 1);
 						/* name should be malloc'd for use as varname */
 						$$.name = strdup(name);
-						$$.lineno  = yylineno;
+						$$.lineno  = plpgsql_scanner_lineno();
 						pfree(name);
 					}
 				;
@@ -1405,7 +1405,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 
 								if (tok != '(')
 								{
-									plpgsql_error_lineno = yylineno;
+									plpgsql_error_lineno = plpgsql_scanner_lineno();
 									elog(ERROR, "cursor %s has arguments",
 										 $3->refname);
 								}
@@ -1427,7 +1427,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 
 								if (strncmp(cp, "SELECT", 6) != 0)
 								{
-									plpgsql_error_lineno = yylineno;
+									plpgsql_error_lineno = plpgsql_scanner_lineno();
 									elog(ERROR, "expected 'SELECT (', got '%s' (internal error)",
 										 new->argquery->query);
 								}
@@ -1436,7 +1436,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 									cp++;
 								if (*cp != '(')
 								{
-									plpgsql_error_lineno = yylineno;
+									plpgsql_error_lineno = plpgsql_scanner_lineno();
 									elog(ERROR, "expected 'SELECT (', got '%s' (internal error)",
 										 new->argquery->query);
 								}
@@ -1454,13 +1454,13 @@ stmt_open		: K_OPEN lno cursor_varptr
 
 								if (tok == '(')
 								{
-									plpgsql_error_lineno = yylineno;
+									plpgsql_error_lineno = plpgsql_scanner_lineno();
 									elog(ERROR, "cursor %s has no arguments", $3->refname);
 								}
 								
 								if (tok != ';')
 								{
-									plpgsql_error_lineno = yylineno;
+									plpgsql_error_lineno = plpgsql_scanner_lineno();
 									elog(ERROR, "syntax error at \"%s\"", yytext);
 								}
 							}
@@ -1502,7 +1502,7 @@ cursor_varptr	: T_VARIABLE
 
 						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
 						{
-							plpgsql_error_lineno = yylineno;
+							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							elog(ERROR, "%s must be of type cursor or refcursor",
 								 ((PLpgSQL_var *) yylval.variable)->refname);
 						}
@@ -1517,7 +1517,7 @@ cursor_variable	: T_VARIABLE
 
 						if (((PLpgSQL_var *) yylval.variable)->datatype->typoid != REFCURSOROID)
 						{
-							plpgsql_error_lineno = yylineno;
+							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							elog(ERROR, "%s must be of type refcursor",
 								 ((PLpgSQL_var *) yylval.variable)->refname);
 						}
@@ -1583,8 +1583,7 @@ opt_lblname		: T_WORD
 
 lno				:
 					{
-						plpgsql_error_lineno = yylineno;
-						$$ = yylineno;
+						$$ = plpgsql_error_lineno = plpgsql_scanner_lineno();
 					}
 				;
 
@@ -1618,7 +1617,7 @@ read_sql_construct(int until,
 	char				buf[32];
 	PLpgSQL_expr		*expr;
 
-	lno = yylineno;
+	lno = plpgsql_scanner_lineno();
 	plpgsql_dstring_init(&ds);
 	plpgsql_dstring_append(&ds, (char *) sqlstart);
 
@@ -1690,7 +1689,7 @@ read_datatype(int tok)
 	bool				needspace = false;
 	int					parenlevel = 0;
 
-	lno = yylineno;
+	lno = plpgsql_scanner_lineno();
 
 	/* Often there will be a lookahead token, but if not, get one */
 	if (tok == YYEMPTY)
@@ -1769,14 +1768,14 @@ make_select_stmt(void)
 			break;
 		if (tok == 0)
 		{
-			plpgsql_error_lineno = yylineno;
+			plpgsql_error_lineno = plpgsql_scanner_lineno();
 			elog(ERROR, "unexpected end of file");
 		}
 		if (tok == K_INTO)
 		{
 			if (have_into)
 			{
-				plpgsql_error_lineno = yylineno;
+				plpgsql_error_lineno = plpgsql_scanner_lineno();
 				elog(ERROR, "INTO specified more than once");
 			}
 			tok = yylex();
@@ -1814,7 +1813,7 @@ make_select_stmt(void)
 								break;
 
 							default:
-								plpgsql_error_lineno = yylineno;
+								plpgsql_error_lineno = plpgsql_scanner_lineno();
 								elog(ERROR, "plpgsql: %s is not a variable",
 									 yytext);
 						}
@@ -1824,7 +1823,7 @@ make_select_stmt(void)
 					row = malloc(sizeof(PLpgSQL_row));
 					row->dtype = PLPGSQL_DTYPE_ROW;
 					row->refname = strdup("*internal*");
-					row->lineno = yylineno;
+					row->lineno = plpgsql_scanner_lineno();
 					row->rowtypeclass = InvalidOid;
 					row->nfields = nfields;
 					row->fieldnames = malloc(sizeof(char *) * nfields);
@@ -1945,7 +1944,7 @@ make_fetch_stmt(void)
 							break;
 
 						default:
-							plpgsql_error_lineno = yylineno;
+							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							elog(ERROR, "plpgsql: %s is not a variable",
 								 yytext);
 					}
@@ -1955,7 +1954,7 @@ make_fetch_stmt(void)
 				row = malloc(sizeof(PLpgSQL_row));
 				row->dtype = PLPGSQL_DTYPE_ROW;
 				row->refname = strdup("*internal*");
-				row->lineno = yylineno;
+				row->lineno = plpgsql_scanner_lineno();
 				row->rowtypeclass = InvalidOid;
 				row->nfields = nfields;
 				row->fieldnames = malloc(sizeof(char *) * nfields);
@@ -2028,7 +2027,7 @@ check_assignable(PLpgSQL_datum *datum)
 		case PLPGSQL_DTYPE_VAR:
 			if (((PLpgSQL_var *) datum)->isconst)
 			{
-				plpgsql_error_lineno = yylineno;
+				plpgsql_error_lineno = plpgsql_scanner_lineno();
 				elog(ERROR, "%s is declared CONSTANT",
 					 ((PLpgSQL_var *) datum)->refname);
 			}
