@@ -1,11 +1,11 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.6 2003/08/31 17:32:18 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/dml.sgml,v 1.7 2003/11/24 19:08:01 petere Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
 
- <comment>
+ <remark>
   This chapter is still quite incomplete.
- </comment>
+ </remark>
 
  <para>
   The previous chapter discussed how to create tables and other

@@ -1,8 +1,8 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.60 2003/11/04 09:55:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.61 2003/11/24 19:08:02 petere Exp $
 -->
 
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!entity % version SYSTEM "version.sgml">
 %version;

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.46 2003/09/12 22:17:22 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.47 2003/11/24 19:08:01 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -86,7 +86,7 @@
      <listitem>
       <para>
        This is the definition of DocBook itself.  We currently use
-       version 3.1; you cannot use later or earlier versions.  Note
+       version 4.2; you cannot use later or earlier versions.  Note
        that there is also an <acronym>XML</acronym> version of DocBook
        -- do not use that.
       </para>
@@ -206,15 +206,17 @@
       <para><filename>textproc/openjade</filename></para>
      </listitem>
      <listitem>
-      <para><filename>textproc/docbook-310</filename></para>
-     </listitem>
-     <listitem>
       <para><filename>textproc/iso8879</filename></para>
      </listitem>
      <listitem>
       <para><filename>textproc/dsssl-docbook-modular</filename></para>
      </listitem>
     </itemizedlist>
+    Apparently, there is no port for the DocBook V4.2 SGML DTD
+    available right now.  You will need to install it manually.
+   </para>
+
+   <para>
     A number of things from <filename>/usr/ports/print</filename>
     (<filename>tex</filename>, <filename>jadetex</filename>) might
     also be of interest.
@@ -225,7 +227,7 @@
     in <filename>/usr/local/share/sgml/catalog</filename>.  Be sure to
     have the following line in there:
 <programlisting>
-CATALOG "/usr/local/share/sgml/docbook/3.1/catalog"
+CATALOG "/usr/local/share/sgml/docbook/4.2/docbook.cat"
 </programlisting>
     If you do not want to edit the file you can also set the
     environment variable <envar>SGML_CATALOG_FILES</envar> to a
@@ -331,20 +333,20 @@ CATALOG "dsssl/catalog"
      <step>
       <para>
        Obtain the <ulink
-       url="http://www.oasis-open.org/docbook/sgml/3.1/docbk31.zip">DocBook
-       V3.1</ulink> distribution.
+       url="http://www.docbook.org/sgml/4.2/docbook-4.2.zip">DocBook
+       V4.2</ulink> distribution.
       </para>
      </step>
 
      <step>
       <para>
        Create the directory
-       <filename>/usr/local/share/sgml/docbook31</filename> and change
+       <filename>/usr/local/share/sgml/docbook-4.2</filename> and change
        to it. (The exact location is irrelevant, but this one is
        reasonable within the layout we are following here.)
 <screen>
-<prompt>$ </prompt><userinput>mkdir /usr/local/share/sgml/docbook31</userinput>
-<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook31</userinput>
+<prompt>$ </prompt><userinput>mkdir /usr/local/share/sgml/docbook-4.2</userinput>
+<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook-4.2</userinput>
 </screen>
       </para>
      </step>
@@ -353,7 +355,7 @@ CATALOG "dsssl/catalog"
       <para>
        Unpack the archive.
 <screen>
-<prompt>$ </prompt><userinput>unzip -a ...../docbk31.zip</userinput>
+<prompt>$ </prompt><userinput>unzip -a ...../docbook-4.2.zip</userinput>
 </screen>
        (The archive will unpack its files into the current directory.)
       </para>
@@ -366,7 +368,7 @@ CATALOG "dsssl/catalog"
        you told jade during installation) and put a line like this
        into it:
 <programlisting>
-CATALOG "docbook31/docbook.cat"
+CATALOG "docbook-4.2/docbook.cat"
 </programlisting>
       </para>
      </step>
@@ -388,7 +390,7 @@ CATALOG "docbook31/docbook.cat"
        character entities</ulink> archive, unpack it, and put the
        files in the same directory you put the DocBook files in.
 <screen>
-<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook31</userinput>
+<prompt>$ </prompt><userinput>cd /usr/local/share/sgml/docbook-4.2</userinput>
 <prompt>$ </prompt><userinput>unzip ...../ISOEnts.zip</userinput>
 </screen>
       </para>
@@ -504,7 +506,7 @@ CATALOG "docbook-dsssl--1.<replaceable>xx</>/catalog
 <computeroutput>
 checking for onsgmls... onsgmls
 checking for openjade... openjade
-checking for DocBook V3.1... yes
+checking for DocBook V4.2... yes
 checking for DocBook stylesheets... /usr/lib/sgml/stylesheets/nwalsh-modular
 checking for sgmlspl... sgmlspl
 </computeroutput>
@@ -512,7 +514,7 @@ checking for sgmlspl... sgmlspl
    If neither <filename>onsgmls</filename> nor
    <filename>nsgmls</filename> were found then you will not see the
    remaining 4 lines.  <filename>nsgmls</filename> is part of the Jade
-   package.  If <quote>DocBook V3.1</quote> was not found then you did
+   package.  If <quote>DocBook V4.2</quote> was not found then you did
    not install the DocBook DTD kit in a place where jade can find it,
    or you have not set up the catalog files correctly.  See the
    installation hints above.  The DocBook stylesheets are looked for
@@ -1034,7 +1036,7 @@ End:
      the first line look like this:
 
 <programlisting>
-&lt;!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook V3.1//EN"&gt;
+&lt;!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook V4.2//EN"&gt;
 </programlisting>
 
      This means that anything and everything that reads

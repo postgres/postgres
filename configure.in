@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.304 2003/11/24 14:52:57 petere Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.305 2003/11/24 19:08:01 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1236,7 +1236,7 @@ fi
 #
 PGAC_PROG_NSGMLS
 PGAC_PROG_JADE
-PGAC_CHECK_DOCBOOK(3.1)
+PGAC_CHECK_DOCBOOK(4.2)
 PGAC_PATH_DOCBOOK_STYLESHEETS
 PGAC_PATH_COLLATEINDEX
 AC_CHECK_PROGS(SGMLSPL, sgmlspl)

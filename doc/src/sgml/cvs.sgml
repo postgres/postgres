@@ -1,11 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.25 2003/06/11 15:28:55 tgl Exp $
-CVS code repository
-Thomas Lockhart
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.26 2003/11/24 19:08:01 petere Exp $
 -->
 
 <appendix id="cvs">
- <docinfo>
+ <appendixinfo>
   <authorgroup>
    <author>
     <firstname>Marc</firstname>
@@ -21,7 +19,7 @@ Thomas Lockhart
    </author>
   </authorgroup>
   <date>1999-05-20</date>
- </docinfo>
+ </appendixinfo>
 
  <title>The <productname>CVS</productname> Repository</title>
 

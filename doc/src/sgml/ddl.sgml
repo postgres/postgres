@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.23 2003/11/05 00:05:32 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.24 2003/11/24 19:08:01 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -956,8 +956,8 @@ CREATE TABLE order_items (
  <sect1 id="ddl-inherit">
   <title>Inheritance</title>
 
-  <comment>This section needs to be rethought.  Some of the
-  information should go into the following chapters.</comment>
+  <remark>This section needs to be rethought.  Some of the
+  information should go into the following chapters.</remark>
 
   <para>
    Let's create two tables. The capitals  table  contains

@@ -1,14 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.7 2003/11/01 01:56:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.8 2003/11/24 19:08:02 petere Exp $
 -->
 
 <chapter id="nls">
- <docinfo>
+ <chapterinfo>
   <author>
    <firstname>Peter</firstname>
    <surname>Eisentraut</surname>
   </author>
- </docinfo>
+ </chapterinfo>
 
  <title>Native Language Support</title>
 

@@ -17451,13 +17451,13 @@ fi
 done
 
 
-echo "$as_me:$LINENO: checking for DocBook V3.1" >&5
-echo $ECHO_N "checking for DocBook V3.1... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking for DocBook V4.2" >&5
+echo $ECHO_N "checking for DocBook V4.2... $ECHO_C" >&6
 if test "${pgac_cv_check_docbook+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.sgml <<EOF
-<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN">
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V4.2//EN">
 <book>
  <title>test</title>
  <chapter>

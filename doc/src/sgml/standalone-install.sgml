@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/standalone-install.sgml,v 2.4 2003/03/25 16:15:38 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/standalone-install.sgml,v 2.5 2003/11/24 19:08:02 petere Exp $ -->
 
 <!--
 This file helps in generating the INSTALL text file that lives in the
@@ -19,7 +19,7 @@ Running 'make INSTALL' in the doc/src/sgml directory will do 1 through
 3 for you.
 -->
 
-<!doctype chapter PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+<!DOCTYPE chapter PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
 <!entity % version SYSTEM "version.sgml">
 %version;

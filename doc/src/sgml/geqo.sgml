@@ -1,10 +1,10 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.24 2003/09/29 18:18:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.25 2003/11/24 19:08:02 petere Exp $
 Genetic Optimizer
 -->
 
  <chapter id="geqo">
-  <docinfo>
+  <chapterinfo>
    <author>
     <firstname>Martin</firstname>
     <surname>Utesch</surname>
@@ -26,7 +26,7 @@ Genetic Optimizer
     </affiliation>
    </author>
    <date>1997-10-02</date>
-  </docinfo>
+  </chapterinfo>
 
   <title id="geqo-title">Genetic Query Optimizer</title>
 
