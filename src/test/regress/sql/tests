@@ -58,5 +58,4 @@ hash_index
 select_views
 alter_table
 portals_p2
-setup_ruletest
-run_ruletest
+rules
