@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.108 2002/10/07 17:04:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.109 2002/11/02 15:54:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1206,13 +1206,12 @@ XLogFlush(XLogRecPtr record)
 
 	if (XLOG_DEBUG)
 	{
-		elog(LOG, "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X\n",
+		elog(LOG, "XLogFlush%s%s: request %X/%X; write %X/%X; flush %X/%X",
 			 (IsBootstrapProcessingMode()) ? "(bootstrap)" : "",
 			 (InRedo) ? "(redo)" : "",
 			 record.xlogid, record.xrecoff,
 			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
 			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
-		fflush(stderr);
 	}
 
 	/* Disabled during REDO */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.30 2002/09/04 20:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.31 2002/11/02 15:54:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,8 +174,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 			elog(DEBUG1, "FindExec: found \"%s\" using argv[0]", full_path);
 			return 0;
 		}
-		fprintf(stderr, "FindExec: invalid binary \"%s\"\n",
-				buf);
+		elog(LOG, "FindExec: invalid binary \"%s\"", buf);
 		return -1;
 	}
 
@@ -213,8 +212,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					fprintf(stderr, "FindExec: could not read binary \"%s\"\n",
-							buf);
+					elog(LOG, "FindExec: could not read binary \"%s\"", buf);
 					free(path);
 					return -1;
 			}
@@ -224,6 +222,6 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 		free(path);
 	}
 
-	fprintf(stderr, "FindExec: could not find a %s to execute...\n", binary_name);
+	elog(LOG, "FindExec: could not find a %s to execute", binary_name);
 	return -1;
 }

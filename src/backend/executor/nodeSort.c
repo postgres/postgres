@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.36 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.37 2002/11/02 15:54:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ ExecSort(Sort *node)
 		 * finally set the sorted flag to true
 		 */
 		sortstate->sort_Done = true;
-		SO1_printf(stderr, "ExecSort: sorting done.\n");
+		SO1_printf("ExecSort: %s\n", "sorting done");
 	}
 
 	SO1_printf("ExecSort: %s\n",
