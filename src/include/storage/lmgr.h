@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.18 1999/02/19 06:06:34 tgl Exp $
+ * $Id: lmgr.h,v 1.19 1999/05/07 01:23:05 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@
 #define ShareRowExclusiveLock	5
 #define ExclusiveLock			6
 #define AccessExclusiveLock		7
-
-#define ExtendLock				8
 
 extern LOCKMETHOD LockTableId;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.22 1999/02/13 23:18:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.23 1999/05/07 01:23:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,9 +79,6 @@ static MASK LockConflicts[] = {
 	(1 << RowExclusiveLock) | (1 << RowShareLock) | (1 << AccessExclusiveLock) | 
 	(1 << AccessShareLock),
 
-/* ExtendLock */
-	(1 << ExtendLock)
-
 };
 
 static int	LockPrios[] = {
@@ -92,8 +89,7 @@ static int	LockPrios[] = {
 	4,
 	5,
 	6,
-	7,
-	1
+	7
 };
 
 LOCKMETHOD	LockTableId = (LOCKMETHOD) NULL;

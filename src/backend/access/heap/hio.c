@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.18 1999/05/01 15:04:46 vadim Exp $
+ *	  $Id: hio.c,v 1.19 1999/05/07 01:22:53 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,14 +111,13 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	Item		item;
 
 	/*
-	 * Actually, we lock _relation_ here, not page, but I believe
-	 * that locking page is faster... Obviously, we could get rid
-	 * of ExtendLock mode at all and use ExclusiveLock mode on
-	 * page 0, as long as we use page-level locking for indices only,
-	 * but we are in 6.5-beta currently...	- vadim 05/01/99
+	 * Lock relation for extention. We can use LockPage here as long as 
+	 * in all other places we use page-level locking for indices only.
+	 * Alternatevely, we could define pseudo-table as we do for
+	 * transactions with XactLockTable.
 	 */
 	if (!relation->rd_myxactonly)
-		LockPage(relation, 0, ExtendLock);
+		LockPage(relation, 0, ExclusiveLock);
 
 	/*
 	 * XXX This does an lseek - VERY expensive - but at the moment it is
@@ -166,7 +165,7 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	}
 
 	if (!relation->rd_myxactonly)
-		UnlockPage(relation, 0, ExtendLock);
+		UnlockPage(relation, 0, ExclusiveLock);
 
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
