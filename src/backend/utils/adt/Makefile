@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.7 1997/03/14 23:19:50 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.8 1997/04/09 08:36:04 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ INCLUDE_OPT = -I../.. \
 
 CFLAGS+=$(INCLUDE_OPT)
 
-OBJS = acl.o arrayfuncs.o arrayutils.o bool.o char.o chunk.o date.o \
+OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o chunk.o date.o \
 	datum.o dt.o filename.o float.o geo_ops.o geo_selfuncs.o int.o \
 	misc.o nabstime.o name.o not_in.o numutils.o oid.o \
 	oidname.o oidint2.o oidint4.o oracle_compat.o regexp.o regproc.o  \
