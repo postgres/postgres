@@ -1,0 +1,467 @@
+Tue Mar 06 12:05:00 GMT 2001 peter@retep.org.uk
+        - Removed org.postgresql.xa.Test from the JDBC EE driver as it's an old
+          test class and prevented it from compiling.
+
+Fri Mar 02 10:00:00 GMT 2001 peter@retep.org.uk
+        - Fixed build.xml so that PGclob is not built in the JDBC1.2 driver
+
+
+Fri Feb 17 18:25:00 GMT 2001 peter@retep.org.uk
+        - Removed the last deprecation warnings from the Java2 driver. Now only
+          the old examples give deprecation warnings.
+        - Added a new class into core that (JDK1.3+) ensures all connections are
+          closed when the VM terminates.
+
+Fri Feb 17 15:11:00 GMT 2001 peter@retep.org.uk
+        - Reduced the object overhead in PreparedStatement by reusing the same
+          StringBuffer object throughout. Similarly SimpleDateStamp's are alse
+          reused in a thread save manner.
+        - Implemented in PreparedStatement: setNull(), setDate/Time/Timestamp
+          using Calendar, setBlob(), setCharacterStream()
+        - Clob's are now implemented in ResultSet & PreparedStatement!
+        - Implemented a lot of DatabaseMetaData & ResultSetMetaData methods.
+          We have about 18 unimplemented methods left in JDBC2 at the current
+          time.
+
+Web Feb 14 17:29:00 GMT 2001 peter@retep.org.uk
+        - Fixed bug in LargeObject & BlobOutputStream where the stream's output
+          was not flushed when either the stream or the blob were closed.
+        - Fixed PreparedStatement.setBinaryStream() where it ignored the length
+
+Tue Feb 13 16:33:00 GMT 2001 peter@retep.org.uk
+        - More TestCases implemented. Refined the test suite api's.
+        - Removed need for SimpleDateFormat in ResultSet.getDate() improving
+          performance.
+        - Rewrote ResultSet.getTime() so that it uses JDK api's better.
+
+Tue Feb 13 10:25:00 GMT 2001 peter@retep.org.uk
+        - Added MiscTest to hold reported problems from users.
+        - Fixed PGMoney.
+        - JBuilder4/JDBCExplorer now works with Money fields. Patched Field &
+          ResultSet (lots of methods) for this one. Also changed cash/money to
+          return type DOUBLE not DECIMAL. This broke JBuilder as zero scale
+          BigDecimal's can't have decimal places!
+        - When a Statement is reused, the previous ResultSet is now closed.
+        - Removed deprecated call in ResultSet.getTime()
+
+Thu Feb 08 18:53:00 GMT 2001 peter@retep.org.uk
+        - Changed a couple of settings in DatabaseMetaData where 7.1 now
+          supports those features
+        - Implemented the DatabaseMetaData TestCase.
+
+Wed Feb 07 18:06:00 GMT 2001 peter@retep.org.uk
+        - Added comment to Connection.isClosed() explaining why we deviate from
+          the JDBC2 specification.
+        - Fixed bug where the Isolation Level is lost while in autocommit mode.
+        - Fixed bug where several calls to getTransactionIsolationLevel()
+          returned the first call's result.
+
+Tue Feb 06 19:00:00 GMT 2001 peter@retep.org.uk
+        - Completed first two TestCase's for the test suite. JUnit is now
+          recognised by ant.
+
+Wed Jan 31 08:46:00 GMT 2001 peter@retep.org.uk
+        - Some minor additions to Statement to make our own extensions more
+          portable.
+        - Statement.close() will now call ResultSet.close() rather than just
+          dissasociating with it.
+
+Tue Jan 30 22:24:00 GMT 2001 peter@retep.org.uk
+        - Fixed bug where Statement.setMaxRows() was a global setting. Now
+          limited to just itself.
+        - Changed LargeObject.read(byte[],int,int) to return the actual number
+          of bytes read (used to be void).
+        - LargeObject now supports InputStream's!
+        - PreparedStatement.setBinaryStream() now works!
+        - ResultSet.getBinaryStream() now returns an InputStream that doesn't
+          copy the blob into memory first!
+        - Connection.isClosed() now tests to see if the connection is still alive
+          rather than if it thinks it's alive.
+Thu Jan 25 09:11:00 GMT 2001 peter@retep.org.uk
+        - Added an alternative constructor to PGSQLException so that debugging
+          some more osteric bugs is easier. If only 1 arg is supplied and it's
+          of type Exception, then that Exception's stacktrace is now included.
+
+Wed Jan 24 09:18:00 GMT 2001 peter@retep.org.uk
+	- Removed the 8k limit by setting it to 64k
+
+Fri Jan 19 08:47:00 GMT 2001 peter@retep.org.uk
+        - Applied patch submitted by John Schutz <schutz@austin.rr.com> that
+          fixed a bug with ANT's SQL functions (not needed for building but nice
+          to have fixed).
+
+Thu Jan 18 17:30:00 GMT 2001 peter@retep.org.uk
+        - Added new error message into errors.properties "postgresql.notsensitive"
+          This is used by jdbc2.ResultSet when a method is called that should
+          fetch the current value of a row from the database refreshRow() for
+          example.
+        - These methods no longer throw the not implemented but the new noupdate
+          error. This is in preparation for the Updateable ResultSet support
+          which will overide these methods by extending the existing class to
+          implement that functionality, but needed to show something other than
+          notimplemented:
+            moveToCurrentRow()
+            moveToInsertRow()
+            rowDeleted()
+            rowInserted()
+            all update*() methods, except those that took the column as a String
+            as they were already implemented to convert the String to an int.
+        - getFetchDirection() and setFetchDirection() now throws
+          "postgresql.notimp" as we only support one direction.
+          The CursorResultSet will overide this when its implemented.
+        - Created a new class under jdbc2 UpdateableResultSet which extends
+          ResultSet and overides the relevent update methods.
+          This allows us to implement them easily at a later date.
+        - In jdbc2.Connection, the following methods are now implemented:
+            createStatement(type,concurrency);
+            getTypeMap();
+            setTypeMap(Map);
+        - The JDBC2 type mapping scheme almost complete, just needs SQLInput &
+          SQLOutput to be implemented.
+        - Removed some Statement methods that somehow appeared in Connection.
+        - In jdbc2.Statement()
+            getResultSetConcurrency()
+            getResultSetType()
+            setResultSetConcurrency()
+            setResultSetType()
+        - Finally removed the old 6.5.x driver.
+
+Thu Jan 18 12:24:00 GMT 2001 peter@retep.org.uk
+        - These methods in org.postgresql.jdbc2.ResultSet are now implemented:
+            getBigDecimal(int) ie: without a scale (why did this get missed?)
+            getBlob(int)
+            getCharacterStream(int)
+            getConcurrency()
+            getDate(int,Calendar)
+            getFetchDirection()
+            getFetchSize()
+            getTime(int,Calendar)
+            getTimestamp(int,Calendar)
+            getType()
+          NB: Where int represents the column name, the associated version
+              taking a String were already implemented by calling the int
+              version.
+        - These methods no longer throw the not implemented but the new noupdate
+          error. This is in preparation for the Updateable ResultSet support
+          which will overide these methods by extending the existing class to
+          implement that functionality, but needed to show something other than
+          notimplemented:
+            cancelRowUpdates()
+            deleteRow()
+        - Added new error message into errors.properties "postgresql.noupdate"
+          This is used by jdbc2.ResultSet when an update method is called and
+          the ResultSet is not updateable. A new method notUpdateable() has been
+          added to that class to throw this exception, keeping the binary size
+          down.
+        - Added new error message into errors.properties "postgresql.psqlnotimp"
+          This is used instead of unimplemented when it's a feature in the
+          backend that is preventing this method from being implemented.
+        - Removed getKeysetSize() as its not part of the ResultSet API
+
+Thu Jan 18 09:46:00 GMT 2001 peter@retep.org.uk
+        - Applied modified patch from Richard Bullington-McGuire
+          <rbulling@microstate.com>. I had to modify it as some of the code
+          patched now exists in different classes, and some of it actually
+          patched obsolete code.
+
+Wed Jan 17 10:19:00 GMT 2001 peter@retep.org.uk
+        - Updated Implementation to include both ANT & JBuilder
+        - Updated README to reflect the changes since 7.0
+	- Created jdbc.jpr file which allows JBuilder to be used to edit the
+          source. JBuilder _CAN_NOT_ be used to compile. You must use ANT for
+          that. It's only to allow JBuilders syntax checking to improve the
+          drivers source. Refer to Implementation for more details
+
+Wed Dec 20 16:19:00 GMT 2000 peter@retep.org.uk
+	- Finished build.xml and updated Driver.java.in and buildDriver to
+	  match how Makefile and ANT operate.
+
+Tue Dec 19 17:30:00 GMT 2000 peter@retep.org.uk
+	- Finally created ant build.xml file
+
+Mon Nov 20 08:12:00 GMT 2000 peter@retep.org.uk
+	- Encoding patch to Connection by wrobell@posexperts.com.pl
+
+Tue Oct 17 15:35:00 BST 2000 petermount@maidstone.gov.uk
+	- Changed getTimestamp() again. This time Michael Stephenson's
+	  <mstephenson@tirin.openworld.co.uk> solution looked far better
+	  than the original solution put in June.
+
+Tue Oct 10 13:12:00 BST 2000 peter@retep.org.uk
+	- DatabaseMetaData.supportsAlterTableWithDropColumn() as psql doesn't
+	  support dropping of individual columns
+	- Merged in some last patches. Only 1 left, which may not be compatible
+	  with jdbc1
+	- Merged in my old retepsql project. Makefile now includes it.
+
+Mon Oct 02 12:30:00 BST 2000 peter@retep.org.uk
+	- Merged in byte[] array allocation changes submitted by Gunnar R|nning
+	  <gunnar@candleweb.no>
+
+Mon Sep 25 14:22:00 BST 2000 peter@retep.org.uk
+	- Removed the DriverClass kludge. Now the org.postgresql.Driver class
+	  is compiled from a template file, and now has both the connection
+	  class (ie jdbc1/jdbc2) and the current version's from Makefile.global
+
+Thu Jul 20 16:30:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Fixed DatabaseMetaData.getTableTypes()
+
+Tue Jun 06 12:00:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Added org/postgresql/DriverClass.java to the list of files removed
+	  by make clean (it's dynamically built)
+	- Fixed Statement, so that the update count is valid when an SQL
+	  DELETE operation is done.
+	- While fixing the update count, made it easier to get the OID of
+	  the last insert as well. Example is in example/basic.java
+
+Tue Jun 06 08:37:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Removed a hardwired 8K limit on query strings
+	- Added some missing org.'s in Connection that prevented
+	  the use of the geometric types.
+
+Thu Jun 01 07:26:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Removed timezone in getTimestamp() methods in ResultSet.
+
+Mon May 15 22:30:00 BST 2000 peter@retep.org.uk
+	- Fixed the message Makefile produces after compiling. It still said
+	  about the old Driver class, not the new package. Spotted by
+	  Joseph Shraibman <jks@p1.selectacast.net>
+
+Thu May 04 11:38:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Corrected incorrect date in CHANGELOG
+	- Fixed the ImageViewer example
+
+Wed May 03 16:47:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Fixed the Makefile so that postgresql.jar is built everytime
+	  the jdbc1 or jdbc2 rules are called.
+	- Fixed the threadsafe example. It had problems with autocommit
+
+Wed May 03 14:32:00 BST 2000 petermount@it.maidstone.gov.uk
+	- Rewrote the README file (the old one was 18 months old!)
+	- Added @deprecated tags to org.postgresql.jdbc2.ResultSet
+	  to clear some warnings issued during compilation.
+
+Wed Apr 12 22:14:00 BST 2000 peter@retep.org.uk
+	- Implemented the JDBC2 Blob interface, and ResultSet.getBlob().
+
+Wed Apr 12 20:20:00 BST 2000 peter@retep.org.uk
+	- Fixed bug in ResultSet.absolute(). Negative rows are now supported.
+	- Implemented ResultSet.relative(), afterLast().
+
+Tue Feb  1 21:40:00 GMT 2000 peter@retep.org.uk
+	- Finally imported the contributed javax extensions by Assaf Arkin
+	  arkin@exoffice.com
+
+Mon Jan 24 21:00:00 GMT 2000 peter@retep.org.uk
+	- Finally introduced the 7.0 additions to the core CVS repository.
+	- All source files are now under the org.postgresql package (previously
+	  they were under postgresql). The package lines now changed
+	  accordingly.
+	- The Makefile was rewritten so it should now work on machines that
+	  can't handle the $( ) syntax.
+	- Dutch translation by Arnout Kuiper (ajkuiper@wxs.nl)
+
+Mon Sep 13 23:56:00 BST 1999 peter@retep.org.uk
+	- PG_Stream.SendChar() optimised, increased default buffer size of
+	  output stream to 8k, and introduced an 8k buffer on the input stream
+	  Sverre H Huseby <sverrehu@online.no>
+	- Added a finalize() method to Connection class in both drivers so that
+	  the connection to the backend is really closed.
+	- Due to many JVM's not returning a meaningful value for java.version
+	  the decision for building the JDBC1.2 or JDBC2 driver is now a
+	  compile time option.
+	- Replaced $$(cmd...) with `cmd...` in the Makefile. This should allow
+	  the driver to compile when using shells other than Bash.
+
+Thu Sep  9 01:18:39 MEST 1999 jens@jens.de
+	- fixed bug in handling of DECIMAL type
+
+Wed Aug  4 00:25:18 CEST 1999 jens@jens.de
+	- updated ResultSetMetaData.getColumnDisplaySize() to return
+	  the actual display size
+	- updated driver to use postgresql FE/BE-protocol version 2
+
+Mon Aug  2 03:29:35 CEST 1999 jens@jens.de
+         - fixed bug in DatabaseMetaData.getPrimaryKeys()
+
+Sun Aug  1 18:05:42 CEST 1999 jens@jens.de
+        - added support for getTransactionIsolation and setTransactionIsolation
+
+Sun Jun 27 12:00:00 BST 1999
+	- Fixed typo in postgresql.Driver that prevented compilation
+	- Implemented getTimestamp() fix submitted by Philipp Matthias Hahn
+	  <pmhahn@titan.lahn.de>
+	- Cleaned up some comments in Connection
+
+Wed Jun 23 06:50:00 BST 1999
+	- Fixed error in errors.properties where the arguments are 0 based not
+	  1 based
+	- Fixed bug in postgresql.Driver where exception is thrown, then
+	  intercepted rather than being passed to the calling application.
+	- Removed the file postgresql/CallableStatement, as it's not used and
+	  really exists in the jdbc1 & jdbc2 sub packages only.
+
+Wed May 19 00:20:00 BST 1999
+	- Internationalisation now done. Surprising that there's 68 error
+	  messages in the driver ;-)
+
+Tue May 18 07:00:00 BST 1999
+	- Set the ImageViewer application to use transactions
+
+Tue May 18 00:00:00 BST 1999
+	- Just after committing, I realised why internationalisation isn't
+	  working. This is now fixed (in the Makefile).
+
+Mon May 17 23:40:00 BST 1999
+	- PG_Stream.close() now attempts to send the close connection message
+	  to the backend before closing the streams
+	- Added batch support in the JDBC2, supplied by Yutaka Tanida
+	  <yutaka@marin.or.jp>
+	- Removed the old datestyle code. Now the driver uses only ISO.
+	- Removed some files in the postgresql directory still in CVS that were
+	  moved since 6.4.x (DatabaseMetaData.java PreparedStatement.java
+	  ResultSetMetaData.java Statement.java)
+	- Internationalisation of the error messages is partially implemented,
+	  however it's not enabled as it only works when the jar file is
+	  _not_ used, and work needs to be done.
+
+Sun Apr 11 17:00:00 BST 1999
+	- getUpdateCount() now returns the actual update count (before it
+	  simply returned 1 for everything).
+	- added some updates to example.basic so it would test the new update
+	  count code.
+	- corrected typo in a comment in Statement.java
+
+Mon Jan 25 19:45:00 GMT 1999
+	- created subfolders example/corba and example/corba/idl to hold the
+	  new example showing how to hook CORBA and PostgreSQL via JDBC
+	- implemented some JDBC2 methods curtesy of Joachim.Gabler@t-online.de
+
+Sat Jan 23 10:30:00 GMT 1999
+	- Changed imports in postgresql.jdbc1.ResultSetMetaData as for some
+	  reason it didn't want to compile under jdk1.1.6
+
+Tue Dec 29 15:45:00 GMT 1998
+	- Refreshed the README (which was way out of date)
+
+Tue Dec 29 15:45:00 GMT 1998
+	- Finished adding the additional methods into the JDBC2 driver.
+	- Had to add some explicit package references for the JDK1.2 Javac to
+	  cope with the driver
+
+Tue Dec 29 12:40:00 GMT 1998
+	- Fixed package imports and some references to java.sql.ResultSet in
+	  various files. Compiled and tested the JDBC1 driver.
+
+Mon Dec 28 19:01:37 GMT 1998
+	- created a new package postgresql.jdbc2 which will contain the JDBC 2
+	  specific classes. A similar new package (postgresql.jdbc1) has been
+	  created to hold the JDBC 1 specific classes.
+	- modified Makefile to allow compilation of the JDBC 1 & 2 drivers,
+	  with the possibility of building a dual-spec driver.
+	- changed the version number in postgresql.Driver to 6.5
+	- modified postgresql.Driver class to initiate the correct driver when
+	  used under a 1.1 or 1.2+ JVM.
+	- postgresql.Connection and postgresql.jdbc2.Connection now extends the
+	  new class postgresql.ConnectionStub, which allows us to dynamically
+	  open the JDBC1 or JDBC2 drivers.
+	- enabled compilation of the driver under Win32 when using the Make
+	  from the CygWin package (Cygnus B20.1 was used).
+	- To make future development easier (now we have 2 specifications to
+	  work with) the following classes have moved from the postgresql to
+	  the postgresql.jdbc1 package:
+		CallableStatement	Connection
+		DatabaseMetaData	PreparedStatement
+		ResultSet		ResultSetMetaData
+		Statement
+	  Some of these classes have common code that is not dependent on
+	  either JDBC specification. These common code are still in the
+	  postgresql package.
+		Ie: postgresql.jdbc1.Connection extends postgresql.Connection
+		and postgresql.jdbc2.Connection extends postgresql.Connection
+
+Web Oct  7 22:00:00 BST 1998
+	- removed syncronised from Connection.ExecSQL(). See next entry.
+	- added new syncronised locking in the Connection.ExecSQL() and
+	  FastPath.fastpath() methods. They now lock against the PG_Steam
+	  object for the connection, which now provides full Thread Safety.
+	- Reposted ChangeLog as it's missing from CVS.
+
+Modifications done since 6.3.2 was released and Sun Aug 30 11:33:06 BST 1998
+
+	- Fixed PreparedStatement.setObject as it didn't handle shorts
+	- ResultSet.getDate() now handles null dates (returns null ratrher
+	  than a NullPointerException)
+	- ResultSetMetaData.getPrecision() new returns 0 for VARCHAR
+	- Field now caches the typename->oid in a Hashtable to speed things
+	  up. It removes the need for some unnecessary queries to the backend.
+	- PreparedStatement.toString() now returns the SQL statement that it
+	  will send to the backend. Before it did nothing.
+	- DatabaseMetaData.getTypeInfo() now does something.
+	- Connection now throws an exception if either of the user or password
+	  properties are missing, as they are required for JDBC to work.
+	  This occasionally occurs when the client uses the properties version
+	  of getConnection(), and is a common question on the email lists.
+
+Sun Aug 30 11:33:06 BST 1998
+
+	- Created ChangeLog file, and entered stuff done since 6.3.2 and today
+	- Change version number to 6.4 in Driver.java
+	- Added fix to DatabaseMetaData.getTables() submitted by
+	  Stefan Andreasen <stefan@linux.kapow.dk>
+	- Added fix to DatabaseMetaData.getColumns() to handle patterns
+	  submitted by Stefan Andreasen <stefan@linux.kapow.dk>
+	- Set TcpNoDelay on the connection, as this gives us a 10x speed
+	  improvement on FreeBSD (caused by a bug in their TCP Stack). They
+	  should fix the bug before 6.4 is released, but will keep this
+	  in here unless it causes more problems.
+	  Submitted by Jason Venner <jason@idiom.com>
+	- Removed a duplicate definition of fieldCache
+	- Added a more meaningful message when the connection is refused. It
+	  now says:
+		Connection refused. Check that the hostname and port is
+		correct, and that the postmaster is running with the -i flag,
+		which enables TCP/IP networking.
+	- Removed kludge in PreparedStatement.setDate() that acted as a
+	  temporary fix to a bug in SimpleDateFormat, as it broke date
+	  handling in JDK 1.1.6.
+	- Modified PG_Stream and Connection, so that outbound data is now
+	  buffered. This should give us a speed improvement, and reduce the
+	  ammount of network packets generated.
+	- Removed duplicate code and optimised PG_Stream.
+	- PG_Stream now returns a more meaningful message when the connection
+	  is broken by the backend. It now returns:
+		The backend has broken the connection. Possibly the action you
+		have attempted has caused it to close.
+	- Removed obsolete code from Connection.
+	- The error message returned when the authentication scheme is unknown
+	  has been extended. It now reads:
+		Authentication type ### not supported. Check that you have
+		configured the pg_hba.conf file to include the client's IP
+		address or Subnet, and is using a supported authentication
+		scheme.
+	- Connection.getMetaData() now caches the instance returned, so
+	  multiple calls will return the same instance.
+	- Created a test application that tests the DatabaseMetaData and
+	  ResultSetMetaData classes.
+	- Replaced getString(#).getBytes() with getBytes(#) which should speed
+	  things up, and reduce memory useage.
+	- Optimised DatabaseMetaData.getProcedures(), and implemented patterns
+	- Fixed NullPointerExceptions thrown when a field is null (Internal
+	  to the driver, not caused by results from the backend.
+	  DatabaseMetaData.getProcedures() is an example of a method that
+	  causes this):
+		- ResultSetMetaData.getColumnName() now returns field# where
+		  # is the column name.
+		- ResultSet.getObject() fixed
+		- Fixed bug in psql example that was affected by null fields
+		- DatabaseMetaData.getTables()
+	- DatabaseMetaData.getPrimaryKeys() ran a query with an ambiguous field
+	  fixed.
+	- getTypeInfo() optimised to increase speed and reduce memory useage
+	- ResultSetMetaData.isCurrency() optimised and is now smaller.
+	- Removed unnecessary code fromResultSetMetaData.getCatalogName()
+	  and getSchemaName().
+	- Created new class postgresql.util.PGmoney to map the money type
+	- Created new class postgresql.geometric.PGline to map the line type
+

@@ -1,0 +1,116 @@
+Retep Tools Implementation
+--------------------------
+
+
+The tools are designed to be put into a single jar file, but each one is
+executable either individually or part of one single application.
+
+To run the big application, you can either:
+
+  java -jar retepTools.jar
+
+or with the retepTools.jar in the classpath run:
+
+  java uk.org.retep.tools.Main
+
+Windows users: For you you can also double click the retepTools.jar as windows
+will automatically run javac for you.
+
+To run the individual tools, you must have the .jar file in your classpath and
+then run the relevant Main class.
+
+Tool                          Type        Class
+------------------------------------------------------------------------------
+pg_hba.conf Editor/repairer   Editor      uk.org.retep.util.hba.Main
+Properties Editor             Editor      uk.org.retep.util.proped.Main
+
+
+Layout of the classes
+---------------------
+
+Simply, tools that work on property files (Java properties, resource files,
+configuration settings - pg_hba.conf for example) go under uk.org.retep.util in
+their own package. Other utility classes (like PropertyIO) go in to the
+uk.org.retep.util.misc package except for certain ones where they are related.
+
+ie: TableModels. In swing you have JTable which uses a TableModel to display
+(and possibly update) some data. These go under uk.org.retep.util.models where
+you will find PropertiesTableModel for example. This one allows a Properties
+object to be displayed & updated.
+
+Come core classes like Logger, ExceptionDialog etc go into the main
+uk.org.retep.util package.
+
+Directory/Package                   Contents
+------------------------------------------------------------------------------
+uk.org.retep                        Home of the tools.properties file
+uk.org.retep.tools                  The main all-in-one application
+uk.org.retep.dtu                    The Data Transform Unit
+uk.org.retep.util                   Core utility classes
+uk.org.retep.util.hba               pg_hba.conf editor/repairer
+uk.org.retep.util.misc              Misc utility classes
+uk.org.retep.util.models            Swing table models
+uk.org.retep.util.proped            Property Editor
+uk.org.retep.util.xml.core          Basic XML Factory
+uk.org.retep.util.xml.jdbc          JDBC/XML interface
+uk.org.retep.util.xml.parser        Simple SAX parser
+
+Structure of a tool
+-------------------
+
+Each tool has at least 2 base classes, and an entry in the tools.properties
+file. For this example, I'll show you the Properties Editor:
+
+Base package      uk.org.retep.util.proped
+Main tool class   uk.org.retep.util.proped.PropertyEditor
+Standalone class  uk.org.retep.util.proped.Main
+
+The main tool class is the entry point used by the main application. Because
+they are used in a GUI, this class must extend javax.swing.JComponent and
+implement the uk.org.retep.tools.Tool interface. (NB: You will find I always
+use JPanel, but JComponent is used here so that any swing class can be used
+you are not limited to JPanel.)
+
+The standalone class is a basic static class that implements the main method.
+It should extend the uk.org.retep.misc.StandaloneApp class and be written along
+the lines of the following example:
+
+      import uk.org.retep.util.StandaloneApp;
+      import javax.swing.JComponent;
+
+      public class Main extends StandaloneApp
+      {
+        public Main(String[] args)
+        throws Exception
+        {
+          super(args);
+        }
+
+        public JComponent init()
+        throws Exception
+        {
+          // Your initialisation here. In this case the PropertyEditor
+          PropertyEditor panel = new PropertyEditor();
+
+          // do stuff here, ie load a file if supplied
+
+          // return the tool
+          return panel;
+        }
+
+        public static void main(String[] args)
+        throws Exception
+        {
+          Main main = new Main(args);
+          main.pack();
+          main.setVisible(true);
+        }
+      }
+
+you will find a template in the uk.org.retep.util.Main class. Simply copy this
+classes source, as it gives you the basic stub. Just add your own implementation
+if init() like the one above. Look at the full Main class for the
+PropertiesEditor to see how to get at the command line args.
+
+By convention, the standalone class is named Main.
+

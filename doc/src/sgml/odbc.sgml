@@ -1,0 +1,805 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/odbc.sgml,v 1.30 2002/03/22 19:20:16 petere Exp $
+-->
+
+ <chapter id="odbc">
+  <docinfo>
+   <authorgroup>
+    <author>
+     <firstname>Tim</firstname>
+     <surname>Goeke</surname>
+    </author>
+    <author>
+     <firstname>Thomas</firstname>
+     <surname>Lockhart</surname>
+    </author>
+   </authorgroup>
+   <date>1998-10-21</date>
+  </docinfo>
+
+  <title>ODBC Interface</title>
+
+  <indexterm zone="odbc">
+   <primary>ODBC</primary>
+  </indexterm>
+
+ <sect1 id="odbc-intro">
+  <title>Introduction</title>
+
+  <note>
+   <para>
+    Background information originally by Tim Goeke
+    (<email>tgoeke@xpressway.com</email>)
+   </para>
+  </note>
+
+  <para>
+   <acronym>ODBC</acronym> (Open Database Connectivity) is an abstract 
+   <acronym>API</acronym> 
+   that allows you to write applications that can interoperate
+   with various <acronym>RDBMS</acronym> servers.
+   <acronym>ODBC</acronym> provides a product-neutral interface 
+   between frontend applications and database servers,
+   allowing a user or developer to write applications that are 
+   portable between servers from different manufacturers..
+  </para>
+
+   <para>
+    The <acronym>ODBC</acronym> <acronym>API</acronym> matches up 
+    on the backend to an <acronym>ODBC</acronym>-compatible data source.
+    This could be anything from a text file to an Oracle or 
+    <productname>PostgreSQL</productname> <acronym>RDBMS</acronym>.
+   </para>
+
+   <para>
+    The backend access comes from <acronym>ODBC</acronym> drivers, 
+    or vendor-specific drivers that
+    allow data access.   <productname>psqlODBC</productname>, which is included in the <productname>PostgreSQL</> distribution, is such a driver,
+    along with others that are
+    available, such as the <productname>OpenLink</productname> <acronym>ODBC</acronym> drivers.
+   </para>
+
+   <para>
+    Once you write an <acronym>ODBC</acronym> application, 
+    you <emphasis>should</emphasis> be able to connect to <emphasis>any</emphasis>
+    back-end database, regardless of the vendor, as long as the database schema
+    is the same.
+   </para>
+
+   <para>
+    For example. you could have <productname>MS SQL Server</productname>
+    and <productname>PostgreSQL</productname> servers that have
+    exactly the same data.  Using <acronym>ODBC</acronym>, 
+    your Windows application would make exactly the
+    same calls and the back-end data source would look the same (to the Windows
+    application).
+   </para>
+  </sect1>
+
+  <sect1 id="odbc-install">
+   <title>Installation</title>
+
+   <para>
+    In order to make use of an <acronym>ODBC</> driver there must
+    exist a <firstterm>driver manager</> on the system where the
+    <acronym>ODBC</> driver is to be used.  There are two free
+    <acronym>ODBC</> driver managers for Unix-like operating systems
+    known to us: <indexterm><primary>iODBC</primary></indexterm>
+    <ulink url="http://www.iodbc.org"><productname>iODBC</></ulink>
+    and <indexterm><primary>unixODBC</primary></indexterm> <ulink
+    url="http://www.unixodbc.org"><productname>unixODBC</></ulink>.
+    Instructions for installing these driver managers are to be found
+    in the respective distribution.  Software that provides database
+    access through <acronym>ODBC</acronym> should provide its own
+    driver manager (which may well be one of these two).  Having said
+    that, any driver manager that you can find for your platform
+    should support the <productname>PostgreSQL</> <acronym>ODBC</>
+    driver, or any other <acronym>ODBC</> driver for that matter.
+   </para>
+
+   <note>
+    <para>
+     The <productname>unixODBC</> distribution ships with a
+     <productname>PostgreSQL</> <acronym>ODBC</> driver of its own,
+     which is similar to the one contained in the
+     <productname>PostgreSQL</> distribution.  It is up to you which
+     one you want to use.  We plan to coordinate the development of
+     both drivers better in the future.
+    </para>
+   </note>
+
+   <para>
+    To install the <acronym>ODBC</> you simply need to supply the
+    <option>--enable-odbc</> option to the <filename>configure</>
+    script when you are building the entire <productname>PostgreSQL</>
+    distribution. The library will then automatically be built and
+    installed with the rest of the programs. If you forget that option
+    or want to build the ODBC driver later you can change into the
+    directory <filename>src/interfaces/odbc</> and do <literal>make</>
+    and <literal>make install</> there.
+   </para>
+
+   <para>
+    It is also possible to build the driver to be specifically tuned
+    for use with <productname>iODBC</> or <productname>unixODBC</>.
+    This means in particular that the driver will use the driver
+    manager's routines to process the configuration files, which is
+    probably desirable since it creates a more consistent
+    <acronym>ODBC</> environment on your system.  If you want to do
+    that, then supply the <filename>configure</> options
+    <option>--with-iodbc</> or <option>--with-unixodbc</> (but not
+    both).
+   </para>
+
+   <para>
+    If you build a <quote>stand-alone</quote> driver (not tied to
+    <productname>iODBC</> or <productname>unixODBC</>), then you can
+    specify where the driver should look for the configuration file
+    <filename>odbcinst.ini</>.  By default it will be the directory
+    <filename>/usr/local/pgsql/etc/</>, or equivalent, depending on
+    what <option>--prefix</> and/or <option>--sysconfdir</> options
+    you supplied to <filename>configure</>.  To select a specific
+    location outside the <productname>PostgreSQL</> installation
+    layout, use the <option>--with-odbcinst</> option.  To be most
+    useful, it should be arranged that the driver and the driver
+    manager read the same configuration file.
+   </para>
+
+   <para>
+    <indexterm><primary>odbc.sql</></>
+    Additionally, you should install the ODBC catalog extensions.  That will
+    provide a number of functions mandated by the ODBC standard that are not
+    supplied by <productname>PostgreSQL</> by default. The file
+    <filename>/usr/local/pgsql/share/odbc.sql</> (in the default installation layout)
+    contains the appropriate definitions, which you can install as follows:
+<programlisting>
+psql -d template1 -f <replaceable>LOCATION</>/odbc.sql
+</programlisting>
+    where specifying <literal>template1</literal> as the target
+    database will ensure that all subsequent new databases will have
+    these same definitions.  If for any reason you want to remove
+    these functions again, run the file
+    <filename>odbc-drop.sql</filename> through
+    <command>psql</command>.
+   </para>
+  </sect1>
+
+  <sect1 id="odbc-config">
+   <title>Configuration Files</title>
+
+   <indexterm zone="odbc-config"><primary>.odbc.ini</></>
+
+   <para>
+    <filename>~/.odbc.ini</filename> contains user-specified access information 
+    for the <productname>psqlODBC</productname> driver. 
+    The file uses conventions typical for <productname>Windows</productname> 
+    Registry files.
+   </para>
+
+   <para>
+    The <filename>.odbc.ini</filename> file has three required sections. 
+    The first is <literal>[ODBC Data Sources]</literal>
+    which is a list of arbitrary names and descriptions for each database 
+    you wish to access. The second required section is the 
+    Data Source Specification and there will be one of these sections
+    for each database. 
+    Each section must be labeled with the name given in 
+    <literal>[ODBC Data Sources]</literal> and must contain the following entries: 
+
+<programlisting>
+Driver = <replaceable>prefix</replaceable>/lib/libpsqlodbc.so
+Database = <replaceable>DatabaseName</replaceable>
+Servername = localhost
+Port = 5432
+</programlisting>
+
+    <tip>
+     <para>
+      Remember that the <productname>PostgreSQL</productname> database name is
+      usually a single word, without path names of any sort. 
+      The <productname>PostgreSQL</productname> server manages the actual access
+      to the database, and you need only specify the name from the client.
+     </para>
+    </tip>
+
+    Other entries may be inserted to control the format of the display. 
+    The third required section is <literal>[ODBC]</literal> 
+    which must contain the <literal>InstallDir</literal> keyword 
+    and which may contain other options.
+   </para>
+
+   <para>
+    Here is an example <filename>.odbc.ini</filename> file, 
+    showing access information for three databases:
+
+<programlisting>
+[ODBC Data Sources]
+DataEntry = Read/Write Database
+QueryOnly = Read-only Database
+Test = Debugging Database
+Default = Postgres Stripped
+
+[DataEntry]
+ReadOnly = 0
+Servername = localhost
+Database = Sales
+
+[QueryOnly]
+ReadOnly = 1
+Servername = localhost
+Database = Sales
+
+[Test]
+Debug = 1
+CommLog = 1
+ReadOnly = 0
+Servername = localhost
+Username = tgl
+Password = "no$way"
+Port = 5432
+Database = test
+
+[Default]
+Servername = localhost
+Database = tgl
+Driver = /opt/postgres/current/lib/libpsqlodbc.so
+
+[ODBC]
+InstallDir = /opt/applix/axdata/axshlib
+</programlisting>
+   </para>
+  </sect1>
+
+  <sect1 id="odbc-windows">
+   <title><productname>Windows</productname> Applications</title>
+
+   <para>
+    In the real world, differences in drivers and the level of 
+    <acronym>ODBC</acronym> support
+    lessens the potential of <acronym>ODBC</acronym>:
+
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       Access, Delphi, and Visual Basic all support <acronym>ODBC</acronym> directly.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Under C++, such as Visual C++, 
+       you can use the C++ <acronym>ODBC</acronym> <acronym>API</acronym>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In Visual C++, you can use the <classname>CRecordSet</classname> class, which wraps the 
+       <acronym>ODBC</acronym> <acronym>API</acronym>
+       set within an <application>MFC</application> 4.2 class.  This is the easiest route if you are doing
+       Windows C++ development under Windows NT.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <sect2>
+    <title>Writing Applications</title>
+
+    <para>
+     <quote>
+      If I write an application for <productname>PostgreSQL</productname> 
+      can I write it using <acronym>ODBC</acronym> calls
+      to the <productname>PostgreSQL</productname> server, 
+      or is that only when another database program 
+      like MS SQL Server or Access needs to access the data?
+     </quote>
+    </para>
+    <para>
+     The <acronym>ODBC</acronym> <acronym>API</acronym>
+     is the way to go.
+     For <productname>Visual C++</productname> coding you can find out more at
+     Microsoft's web site or in your <productname>Visual C++</productname>
+     documentation.
+    </para>
+
+    <para>
+     Visual Basic and the other <acronym>RAD</acronym> tools have <classname>Recordset</classname> objects 
+     that use <acronym>ODBC</acronym>
+     directly to access data.  Using the data-aware controls, you can quickly
+     link to the <acronym>ODBC</acronym> back-end database 
+     (<emphasis>very</emphasis> quickly).
+    </para>
+
+    <para>
+     Playing around with <productname>MS Access</> will help you sort this out.  Try using
+     <menuchoice><guimenu>File</><guimenuitem>Get External Data</></menuchoice>.
+    </para>
+
+    <tip>
+     <para>
+      You'll have to set up a <acronym>DSN</acronym> first.
+     </para>
+    </tip>
+
+   </sect2>
+  </sect1>
+
+  <sect1 id="odbc-applixware">
+   <title><application>ApplixWare</application></title>
+
+   <indexterm zone="odbc-applixware">
+    <primary>Applixware</primary>
+   </indexterm>
+
+   <para>
+    <productname>Applixware</productname> has an 
+    <acronym>ODBC</acronym> database interface
+    supported on at least some platforms. 
+    <productname>Applixware</productname> 4.4.2 has been
+    demonstrated under Linux with <productname>PostgreSQL</productname> 7.0 
+    using the <productname>psqlODBC</productname>
+    driver contained in the <productname>PostgreSQL</productname> distribution.
+   </para>
+
+   <sect2>
+    <title>Configuration</title>
+
+    <para>
+     <productname>Applixware</productname> must be configured correctly
+     in order for it to
+     be able to access the <productname>PostgreSQL</productname>
+     <acronym>ODBC</acronym> software drivers.
+    </para>
+
+    <procedure>
+     <title>Enabling <application>Applixware</application> Database Access</title>
+
+     <para>
+      These instructions are for the 4.4.2 release of
+      <productname>Applixware</productname> on <productname>Linux</productname>.
+      Refer to the <citetitle>Linux Sys Admin</citetitle> on-line book
+      for more detailed information.
+     </para>
+
+     <step performance="required">
+      <para>
+       You must modify <filename>axnet.cnf</filename> so that
+       <filename>elfodbc</filename> can
+       find <filename>libodbc.so</filename>
+       (the <acronym>ODBC</acronym> driver manager) shared library.
+       This library is included with the <application>Applixware</application> distribution,
+       but <filename>axnet.cnf</filename> needs to be modified to point to the 
+       correct location.
+      </para>
+
+      <para>
+       As root, edit the file
+       <filename><replaceable>applixroot</replaceable>/applix/axdata/axnet.cnf</filename>.
+      </para>
+
+      <substeps>
+
+       <step performance="required">
+	<para>
+	 At the bottom of <filename>axnet.cnf</filename>,
+	 find the line that starts with
+
+<programlisting>
+#libFor elfodbc /ax/<replaceable>...</replaceable>
+</programlisting>
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Change line to read
+
+<programlisting>
+libFor elfodbc <replaceable>applixroot</replaceable>/applix/axdata/axshlib/lib
+</programlisting>
+
+	 which will tell <literal>elfodbc</literal> to look in this directory
+	 for the <acronym>ODBC</acronym> support library.
+	 Typically <productname>Applix</productname> is installed in
+	 <filename>/opt</filename> so the full path would be
+	 <filename>/opt/applix/axdata/axshlib/lib</filename>,
+	 but if you have installed <productname>Applix</productname>
+	 somewhere else then change the path accordingly.
+	</para>
+       </step>
+      </substeps>
+     </step>
+
+     <step performance="required">
+      <para>
+       Create <filename>.odbc.ini</filename> as 
+       described in <xref linkend="odbc-config">.  You may also want to add the flag
+
+<programlisting>
+TextAsLongVarchar=0
+</programlisting>
+
+       to the database-specific portion of <filename>.odbc.ini</filename>
+       so that text fields will not be shown as <literal>**BLOB**</literal>.
+      </para>
+     </step>
+    </procedure>
+
+    <procedure>
+     <title>Testing <application>Applixware</application> ODBC Connections</title>
+
+     <step performance="required">
+      <para>
+       Bring up <application>Applix Data</application>
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Select the <productname>PostgreSQL</productname> database of interest.
+      </para>
+
+      <substeps>
+
+       <step performance="required">
+	<para>
+	 Select <menuchoice><guimenu>Query</guimenu><guimenuitem>Choose Server</guimenuitem></menuchoice>.  
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Select <guimenuitem>ODBC</guimenuitem>, and click <guibutton>Browse</guibutton>.
+	 The database you configured in <filename>.odbc.ini</filename>
+	 should be shown.  Make sure that the <guilabel>Host:</guilabel> field
+	 is empty (if it is not, <literal>axnet</> will try to contact <literal>axnet</> on another machine
+	 to look for the database).
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Select the database in the box that was launched by <guibutton>Browse</guibutton>,
+	 then click <guibutton>OK</guibutton>.
+	</para>
+       </step>
+       <step performance="required">
+	<para>
+	 Enter user name and password in the login identification dialog,
+	 and click <guibutton>OK</guibutton>.
+	</para>
+       </step>
+      </substeps>
+
+      <para>
+       You should see <guilabel>Starting elfodbc server</guilabel>
+       in the lower left corner of the
+       data window.  If you get an error dialog box, see the debugging section
+       below.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       The <quote>Ready</quote> message will appear in the lower left corner of the data
+       window.  This indicates that you can now enter queries.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       Select a table from
+       <menuchoice><guimenu>Query</><guimenuitem>Choose
+       tables</></menuchoice>, and then select
+       <menuchoice><guimenu>Query</><guimenuitem>Query</></menuchoice>
+       to access the database.  The first 50 or so rows from the table
+       should appear.
+      </para>
+     </step>
+    </procedure>
+   </sect2>
+
+   <sect2>
+    <title>Common Problems</title>
+
+    <para>
+     The following messages can appear while trying to make an
+     <acronym>ODBC</acronym> connection through 
+     <productname>Applix Data</productname>:
+
+     <variablelist>
+      <varlistentry>
+       <term>
+	<computeroutput>Cannot launch gateway on server</computeroutput>
+       </term>
+       <listitem>
+	<para>
+	 <literal>elfodbc</literal> can't find <filename>libodbc.so</filename>.  
+	 Check your <filename>axnet.cnf</filename>.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>
+	Error from ODBC Gateway:
+	IM003::[iODBC][Driver Manager]Specified driver could not be loaded</computeroutput>
+       </term>
+       <listitem>
+	<para>
+	 <filename>libodbc.so</filename> cannot find the driver listed in
+	 <filename>.odbc.ini</filename>. Verify the settings.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	<computeroutput>Server: Broken Pipe</computeroutput>
+       </term>
+
+       <listitem>
+	<para>
+	 The driver process has terminated due to some other
+	 problem.  You might not have an up-to-date version
+	 of the <productname>PostgreSQL</productname>
+	 <acronym>ODBC</acronym> package.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>
+	<computeroutput>setuid to 256: failed to launch gateway</computeroutput>
+       </term>
+
+       <listitem>
+	<para>
+	 The September release of <application>Applixware</application> 4.4.1 (the first release with official
+	 <acronym>ODBC</acronym> support under Linux) shows problems when user names
+	 exceed eight (8) characters in length.
+	 Problem description contributed by Steve Campbell
+	 (<email>scampbell@lear.com</email>).
+	</para>
+       </listitem>
+      </varlistentry>
+
+     </variablelist>
+    </para>
+
+    <para>
+     <note>
+      <title>Author</title>
+
+      <para>
+       Contributed by Steve Campbell (<email>scampbell@lear.com</email>),
+       1998-10-20
+      </para>
+     </note>
+
+     The <application>axnet</application> program's security system
+     seems a little suspect. <application>axnet</application> does things
+     on behalf of the user and on a true
+     multiuser system it really should be run with root security 
+     (so it can read/write in each user's directory).  
+     I would hesitate to recommend this, however, since we have no idea what 
+     security holes this creates.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Debugging <application>Applixware</application> ODBC Connections</title>
+
+    <para>
+     One good tool for debugging connection problems uses the Unix system
+     utility <application>strace</application>.
+    </para>
+    <procedure>
+     <title>Debugging with <command>strace</command></title>
+
+     <step performance="required">
+      <para>
+       Start <application>Applixware</application>.
+      </para>
+     </step>
+     <step performance="required">
+      <para>
+       Start an <application>strace</application> on
+       the <literal>axnet</literal> process.  For example, if
+
+<screen>
+<prompt>$</prompt> <userinput>ps -aucx | grep ax</userinput>
+</screen>
+
+       shows
+
+<screen>
+cary   10432  0.0  2.6  1740   392  ?  S  Oct  9  0:00 axnet
+cary   27883  0.9 31.0 12692  4596  ?  S   10:24  0:04 axmain
+</screen>
+      </para>
+
+      <para>
+       Then run
+
+<screen>
+<prompt>$</prompt> <userinput>strace -f -s 1024 -p 10432</userinput>
+</screen>
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Check the <command>strace</command> output.
+      </para>
+      <note>
+       <title>Note from Cary</title>
+
+       <para>
+	Many of the error messages from <productname>Applixware</productname>
+	go to <filename>stderr</filename>, 
+	but I'm not sure where <filename>stderr</filename>
+	is sent, so <command>strace</command> is the way to find out.
+       </para>
+      </note>
+     </step>
+    </procedure>
+
+    <para>
+     For example, after getting
+     a <errorname>Cannot launch gateway on server</errorname>, 
+     I ran <command>strace</command> on <literal>axnet</literal> and got
+
+<screen>
+[pid 27947] open("/usr/lib/libodbc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 27947] open("/lib/libodbc.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+[pid 27947] write(2, "/usr2/applix/axdata/elfodbc: can't load library 'libodbc.so'\n", 61) = -1 EIO (I/O error)
+</screen>  
+     So what is happening is that <literal>applix elfodbc</literal> is searching for <filename>libodbc.so</filename>, but it
+     cannot find it.  That is why <filename>axnet.cnf</filename> needed to be changed.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Running the <application>Applixware</application> Demo</title>
+
+    <comment>I think the condition this refers to is gone. -- petere 2002-01-07</comment>
+
+    <para>
+     In order to go through the 
+     <citetitle>Applixware Data Tutorial</citetitle>, you need to create
+     the sample tables that the Tutorial refers to.  The ELF Macro used to
+     create the tables tries to use a NULL condition 
+     on many of the database columns,
+     and <productname>PostgreSQL</productname> does not currently allow this option.
+    </para>
+
+    <para>
+     To get around this problem, you can do the following:
+    </para>
+
+    <procedure>
+     <title>Modifying the <application>Applixware</application> Demo</title>
+
+     <step performance="required">
+      <para>
+       Copy <filename>/opt/applix/axdata/eng/Demos/sqldemo.am</filename>
+       to a local directory.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Edit this local copy of <filename>sqldemo.am</filename>:
+      </para>
+
+      <substeps>
+
+       <step performance="required">
+	<para>
+	 Search for <literal>null_clause = "NULL"</literal>.
+	</para>
+       </step>
+
+       <step performance="required">
+	<para>
+	 Change this to <literal>null_clause = ""</literal>.
+	</para>
+       </step>
+
+      </substeps>
+     </step>
+     <step performance="required">
+      <para>
+       Start <application>Applix Macro Editor</application>.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Open the <filename>sqldemo.am</filename> file from the <application>Macro Editor</application>.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Select <menuchoice><guimenu>File</><guimenuitem>Compile and Save</></menuchoice>.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Exit <application>Macro Editor</application>.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Start <application>Applix Data</application>.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Select <menuchoice><guimenu>*</><guimenuitem>Run Macro</guimenuitem></menuchoice>.
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       Enter the value <literal>sqldemo</literal>, then click <guibutton>OK</guibutton>.
+      </para>
+
+      <para>
+       You should see the progress in the status line of the data window
+       (in the lower left corner).
+      </para>
+     </step>
+
+     <step performance="required">
+      <para>
+       You should now be able to access the demo tables.
+      </para>
+     </step>
+    </procedure>
+   </sect2>
+
+   <sect2>
+    <title>Useful Macros</title>
+
+    <para>
+     You can add information about your
+     database login and password to the standard <application>Applix</application> start-up
+     macro file. This is an example 
+     <filename>~/axhome/macros/login.am</filename> file:
+
+<programlisting>
+macro login
+set_set_system_var@("sql_username@","tgl")
+set_system_var@("sql_passwd@","no$way")
+endmacro
+</programlisting>
+
+     <caution>
+      <para>
+       You should be careful about the file protections on any file containing
+       user name and password information.
+      </para>
+     </caution>
+    </para>
+   </sect2>
+
+  </sect1>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
+sgml-local-ecat-files:nil
+End:
+-->

@@ -1,0 +1,104 @@
+<chapter Id="failure">
+ <title>Database Failures</title>
+
+ <para>
+  Database failures (or the possibility of such) must be assumed to be
+  lurking, ready to strike at some time in the future. A prudent
+  database administrator will plan for the inevitability of failures
+  of all possible kinds, and will have appropriate plans and
+  procedures in place <emphasis>before</emphasis> the failure occurs.
+ </para>
+
+ <para>
+  Database recovery is necessary in the event of hardware or software
+  failure. There are several categories of failures; some of these
+  require relatively minor adjustments to the database, while others
+  may depend on the existence of previously prepared database dumps
+  and other recovery data sets. It should be emphasized that if your
+  data is important and/or difficult to regenerate, then you should
+  have considered and prepared for various failure scenarios.
+ </para>
+
+ <sect1 id="failure-disk-full">
+  <title>Disk Filled</title>
+
+  <para>
+   A filled data disk may result in subsequent corruption of database
+   indexes, but not of the fundamental data tables. If the WAL files
+   are on the same disk (as is the case for a default configuration)
+   then a filled disk during database initialization may result in
+   corrupted or incomplete WAL files. This failure condition is
+   detected and the database will refuse to start up. You must free
+   up additional space on the disk (or move the WAL area to another
+   disk; see <xref linkend="wal-configuration">) and then restart the
+   <application>postmaster</application> to recover from this condition.
+  </para>
+ </sect1>
+
+ <sect1 id="failure-disk-failed">
+  <title>Disk Failed</title>
+
+  <para>
+   Failure of any disk (or of a logical storage device such as a RAID
+   subsystem) involved with an active database will require
+   that the database be recovered from a previously prepared database
+   dump. This dump must be prepared using
+   <application>pg_dumpall</application>, and updates to the database
+   occurring after the database installation was dumped will be lost. 
+  </para>
+ </sect1>
+
+<!--
+ <sect1>
+  <title>File Corrupted</title>
+
+  <para>
+  </para>
+ </sect1>
+
+ <sect1>
+  <title>Table Corrupted</title>
+
+  <para>
+  </para>
+ </sect1>
+
+ <sect1>
+  <title></title>
+
+  <para>
+  </para>
+ </sect1>
+
+ <sect1>
+  <title></title>
+
+  <para>
+  </para>
+ </sect1>
+
+ <sect1>
+  <title></title>
+
+  <para>
+  </para>
+ </sect1>
+-->
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode:sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document: ("postgres.sgml" "set" "book" "chapter")
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-ecat-files:nil
+End:
+-->
