@@ -15,10 +15,18 @@ OBJ=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o \
 
 all:: ecpg
 
+# Rule that really do something.
+ecpg: $(OBJ)
+	$(CC) -o ecpg $(OBJ) $(LEXLIB) $(LDFLAGS)
+
 preproc.c preproc.h: preproc.y
 	$(YACC) $(YFLAGS) $<
 	mv y.tab.c preproc.c
 	mv y.tab.h preproc.h
+
+pgc.c: pgc.l
+	$(LEX) $<
+	mv lex.yy.c pgc.c
 
 clean:
 	rm -f *.o core a.out ecpg$(X) *~ *.output
@@ -33,19 +41,9 @@ install: all
 uninstall:
 	rm -f $(BINDIR)/ecpg
 
-# Rule that really do something.
-ecpg: $(OBJ)
-	$(CC) -o ecpg $(OBJ) $(LEXLIB) $(LDFLAGS)
-
-pgc.c: pgc.l
-	$(LEX) $<
-	sed -e 's/#define YY_BUF_SIZE .*/#define YY_BUF_SIZE 65536/' \
-		<lex.yy.c >pgc.c
-	rm -f lex.yy.c
-
-preproc.o : preproc.h ../include/ecpgtype.h keywords.c c_keywords.c ecpg_keywords.c
-type.o : ../include/ecpgtype.h
-pgc.o : ../include/ecpgtype.h keywords.c c_keywords.c ecpg_keywords.c preproc.h
+preproc.o: preproc.h ../include/ecpgtype.h keywords.c c_keywords.c ecpg_keywords.c
+type.o: ../include/ecpgtype.h
+pgc.o: ../include/ecpgtype.h keywords.c c_keywords.c ecpg_keywords.c preproc.h
 keywords.o: ../include/ecpgtype.h preproc.h
 c_keywords.o: ../include/ecpgtype.h preproc.h 
 ecpg_keywords.o: ../include/ecpgtype.h preproc.h 

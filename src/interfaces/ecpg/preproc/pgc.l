@@ -1,29 +1,40 @@
-
-/* This is a modified version of src/backend/parser/scan.l */
 %{
+/*-------------------------------------------------------------------------
+ *
+ * pgc.l
+ *	  lexical scanner for ecpg
+ *
+ * This is a modified version of src/backend/parser/scan.l
+ *
+ *
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.45 1999/10/22 23:14:50 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 #include <ctype.h>
 #include <sys/types.h>
 #include <limits.h>
 #include <errno.h>
 
 #include "postgres.h"
+
 #ifndef PATH_MAX
 #include <sys/param.h>
 #define PATH_MAX MAXPATHLEN
 #endif
+
 #include "miscadmin.h"
-#include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
 #include "parser/gramparse.h"
 #include "parser/scansup.h"
 #include "extern.h"
 #include "preproc.h"
 #include "utils/builtins.h"
-
-#ifdef  YY_READ_BUF_SIZE
-#undef  YY_READ_BUF_SIZE
-#endif
-#define YY_READ_BUF_SIZE	MAX_PARSE_BUFFER
 
 /* some versions of lex define this as a macro */
 #if defined(yywrap)
@@ -31,8 +42,20 @@
 #endif /* yywrap */
 
 extern YYSTYPE yylval;
-int llen;
-char literal[MAX_PARSE_BUFFER];
+
+/*
+ * literalbuf is used to accumulate literal values when multiple rules
+ * are needed to parse a single literal.  Call startlit to reset buffer
+ * to empty, addlit to add text.  Note that the buffer is permanently
+ * malloc'd to the largest size needed so far in the current run.
+ */
+static char	   *literalbuf = NULL;		/* expandable buffer */
+static int		literallen;		/* actual current length */
+static int		literalalloc;	/* current allocated buffer size */
+
+#define startlit()  (literalbuf[0] = '\0', literallen = 0)
+static void addlit(char *ytext, int yleng);
+
 int before_comment;
 
 struct _yy_buffer { YY_BUFFER_STATE 	buffer;
@@ -142,16 +165,14 @@ self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
 op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
 
-/* we do not allow unary minus in numbers.
- * instead we pass it verbatim to parser. there it gets
- * coerced via doNegate() -- Leon aug 20 1999
+/* we no longer allow unary minus in numbers. 
+ * instead we pass it separately to parser. there it gets
+ * coerced via doNegate() -- Leon aug 20 1999 
  */
+
 integer			{digit}+
 decimal			(({digit}*\.{digit}+)|({digit}+\.{digit}*))
-real			((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
-/*
-real			(((({digit}*\.{digit}+)|({digit}+\.{digit}*))([Ee][-+]?{digit}+)?)|({digit}+[Ee][-+]?{digit}+))
-*/
+real				((({digit}*\.{digit}+)|({digit}+\.{digit}*)|({digit}+))([Ee][-+]?{digit}+))
 
 param			\${integer}
 
@@ -200,25 +221,21 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 <SQL>{xbstart}		{
 					BEGIN(xb);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xb>{xbstop}	{
 					char* endptr;
 
 					BEGIN(SQL);
 					errno = 0;
-					yylval.ival = strtol((char *)literal,&endptr,2);
+					yylval.ival = strtol(literalbuf, &endptr, 2);
 					if (*endptr != '\0' || errno == ERANGE)
 						yyerror("ERROR: Bad binary integer input!");
 					return ICONST;
 				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						yyerror("ERROR: quoted string parse buffer exceeded");
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
+					addlit(yytext, yyleng);
 				}
 <xh>{xhcat}		|
 <xb>{xbcat}		{
@@ -226,15 +243,14 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 <SQL>{xhstart}		{
 					BEGIN(xh);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xh>{xhstop}	{
 					char* endptr;
 
 					BEGIN(SQL);
 					errno = 0;
-					yylval.ival = strtol((char *)literal,&endptr,16);
+					yylval.ival = strtol(literalbuf, &endptr, 16);
 					if (*endptr != '\0' || errno == ERANGE)
 						yyerror("ERROR: Bad hexadecimal integer input");
 					return ICONST;
@@ -242,21 +258,17 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 <SQL>{xqstart}		{
 					BEGIN(xq);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xq>{xqstop}	{
 					BEGIN(SQL);
-					yylval.str = mm_strdup(literal);
+					yylval.str = mm_strdup(literalbuf);
 					return SCONST;
 				}
 <xq>{xqdouble}	|
-<xq>{xqinside}  |
+<xq>{xqinside}	|
 <xq>{xqliteral} {
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						yyerror("ERROR: quoted string parse buffer exceeded");
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
+					addlit(yytext, yyleng);
 				}
 <xq>{xqcat}		{
 				}
@@ -264,35 +276,27 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 <SQL>{xdstart}		{
 					BEGIN(xd);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xd>{xdstop}	{
 					BEGIN(SQL);
-					yylval.str = mm_strdup(literal);
+					yylval.str = mm_strdup(literalbuf);
 					return CSTRING;
 				}
 <xd>{xdinside}	{
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						yyerror("ERROR: quoted string parse buffer exceeded");
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
+					addlit(yytext, yyleng);
 				}
 {xdstart}		{
 					BEGIN(xdc);
-					llen = 0;
-					*literal = '\0';
+					startlit();
 				}
 <xdc>{xdstop}	{
 					BEGIN(C);
-					yylval.str = mm_strdup(literal);
+					yylval.str = mm_strdup(literalbuf);
 					return CSTRING;
 				}
 <xdc>{xdcinside}	{
-					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						yyerror("ERROR: quoted string parse buffer exceeded");
-					memcpy(literal+llen, yytext, yyleng+1);
-					llen += yyleng;
+					addlit(yytext, yyleng);
 				}
 <SQL>{typecast}			{ 	return TYPECAST; }
 <SQL>{self}			{ /* 
@@ -324,24 +328,24 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					{
 						errno = 0;
 						yylval.str = mm_strdup((char*)yytext);
-                                                return SCONST;
+						return SCONST;
 					}
 					return ICONST;
 				}
-{decimal}   		        {
-                                        char* endptr;
+{decimal}		{
+					char* endptr;
 
-                                        if (strlen((char *)yytext) <= 17)
-                                        {
-                                                errno = 0;
-                                                yylval.dval = strtod((char *)yytext,&endptr);
+					if (strlen((char *)yytext) <= 17)
+					{
+						errno = 0;
+						yylval.dval = strtod((char *)yytext,&endptr);
 						if (*endptr != '\0' || errno == ERANGE)
 							yyerror("ERROR: Bad float8 input");
 						return FCONST;
-                                        }
-                                        yylval.str = mm_strdup((char*)yytext);
-                                        return SCONST;
-                                }
+					}
+					yylval.str = mm_strdup((char*)yytext);
+					return SCONST;
+				}
 <C,SQL>{real}			{
 					char* endptr;
 
@@ -420,7 +424,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					{
 						errno = 0;
 						yylval.str = mm_strdup((char*)yytext);
-                                                return SCONST;
+						return SCONST;
 					}
 					return ICONST;
 				}
@@ -486,8 +490,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <def_ident>{identifier}	{
 				old = mm_strdup(yytext);
 				BEGIN(def);
-				llen = 0;
-				*literal = '\0';
+				startlit();
 			}
 <def>{space}		/* eat the whitespace */
 <def>";"		{
@@ -498,8 +501,8 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
                                      if (strcmp(old, ptr->old) == 0)
                                      {
 					free(ptr->new);
-					/* ptr->new = mm_strdup(scanstr(literal));*/
-					ptr->new = mm_strdup(literal);
+					/* ptr->new = mm_strdup(scanstr(literalbuf));*/
+					ptr->new = mm_strdup(literalbuf);
                                      }
                                 }
 				if (ptr == NULL)
@@ -508,8 +511,8 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
                                         /* initial definition */
                                         this->old = old;
-                                        /* this->new = mm_strdup(scanstr(literal));*/
-                                        this->new = mm_strdup(literal);
+                                        /* this->new = mm_strdup(scanstr(literalbuf));*/
+                                        this->new = mm_strdup(literalbuf);
 					this->next = defines;
 					defines = this;
 				}
@@ -517,10 +520,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 				BEGIN(C);
 			}
 <def>[^";"]		{
-				if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-					yyerror("ERROR: define statement parse buffer exceeded");
-				memcpy(literal+llen, yytext, yyleng+1);
-				llen += yyleng;
+				addlit(yytext, yyleng);
 			}
 <C>{exec}{space}{sql}{space}{include}	{ BEGIN(incl); }
 <incl>{space}		/* eat the whitespace */
@@ -602,7 +602,32 @@ void
 lex_init(void)
 {
     braces_open = 0;
+
+	/* initialize literal buffer to a reasonable but expansible size */
+	if (literalbuf == NULL)
+	{
+		literalalloc = 128;
+		literalbuf = (char *) malloc(literalalloc);
+	}
+	startlit();
+
     BEGIN C;
+}
+
+static void
+addlit(char *ytext, int yleng)
+{
+	/* enlarge buffer if needed */
+	if ((literallen+yleng) >= literalalloc)
+	{
+		do {
+			literalalloc *= 2;
+		} while ((literallen+yleng) >= literalalloc);
+		literalbuf = (char *) realloc(literalbuf, literalalloc);
+	}
+	/* append data --- note we assume ytext is null-terminated */
+	memcpy(literalbuf+literallen, ytext, yleng+1);
+	literallen += yleng;
 }
 
 int yywrap(void) 
