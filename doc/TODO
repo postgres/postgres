@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Apr  4 17:16:23 EDT 2001
+Last updated:		Wed Apr  4 17:31:56 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -50,7 +50,6 @@ MISC
   another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to DELETE table allows UPDATE also
 * SELECT cash_out(1) causes crash
-* Write out a CRC with each data block, and verify it on reading
 
 ENHANCEMENTS
 ------------
