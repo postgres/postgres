@@ -528,13 +528,13 @@ ECPGexecute(struct statement * stmt)
 					{
 						int			slen = strlen((char *) var->value);
 
-						if (!(newcopy = ecpg_alloc(slen + 1, stmt->lineno)))
+						if (!(mallocedval = ecpg_alloc(slen + 1, stmt->lineno)))
 							return false;
 
-						strncpy(newcopy, (char *) var->value, slen);
-						newcopy[slen] = '\0';
+						strncpy(mallocedval, (char *) var->value, slen);
+						mallocedval[slen] = '\0';
 
-						tobeinserted = newcopy;
+						tobeinserted = mallocedval;
 					}
 					break;
 				case ECPGt_varchar:
@@ -1132,13 +1132,13 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		con->committed = true;
 
 		/* deallocate all prepared statements */
-		for (this = prep_stmts; this != NULL; this = this->next)
-		{
-			bool		b = ECPGdeallocate(lineno, this->name);
+		while(prep_stmts != NULL) {
+			bool		b = ECPGdeallocate(lineno, prep_stmts->name);
 
 			if (!b)
 				return false;
 		}
+			
 	}
 
 	return true;
@@ -1416,6 +1416,7 @@ ECPGdeallocate(int lineno, char *name)
 		else
 			prep_stmts = this->next;
 
+		free(this);
 		return true;
 	}
 	ECPGlog("deallocate_prepare: invalid statement name %s\n", name);
