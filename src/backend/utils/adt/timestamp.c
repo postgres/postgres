@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.72 2002/09/03 22:55:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.73 2002/09/04 20:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 
 #ifdef HAVE_INT64_TIMESTAMP
 static int64 time2t(const int hour, const int min, const int sec, const fsec_t fsec);
+
 #else
 static double time2t(const int hour, const int min, const int sec, const fsec_t fsec);
 #endif
@@ -155,7 +156,7 @@ static void
 AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	static const int64 TimestampScales[MAX_TIMESTAMP_PRECISION+1] = {
+	static const int64 TimestampScales[MAX_TIMESTAMP_PRECISION + 1] = {
 		INT64CONST(1000000),
 		INT64CONST(100000),
 		INT64CONST(10000),
@@ -165,7 +166,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		INT64CONST(1)
 	};
 
-	static const int64 TimestampOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+	static const int64 TimestampOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
 		INT64CONST(-500000),
 		INT64CONST(-50000),
 		INT64CONST(-5000),
@@ -174,8 +175,9 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		INT64CONST(-5),
 		INT64CONST(0)
 	};
+
 #else
-	static const double TimestampScales[MAX_TIMESTAMP_PRECISION+1] = {
+	static const double TimestampScales[MAX_TIMESTAMP_PRECISION + 1] = {
 		1,
 		10,
 		100,
@@ -185,7 +187,7 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		1000000
 	};
 
-	static const double TimestampOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+	static const double TimestampOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
 		0.5,
 		0.05,
 		0.005,
@@ -224,7 +226,10 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		}
 		else
 		{
-			/* Scale and truncate first, then add to help the rounding behavior */
+			/*
+			 * Scale and truncate first, then add to help the rounding
+			 * behavior
+			 */
 			*time = (rint((((double) *time) * TimestampScales[typmod]) + TimestampOffsets[typmod])
 					 / TimestampScales[typmod]);
 		}
@@ -450,7 +455,7 @@ static void
 AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	static const int64 IntervalScales[MAX_INTERVAL_PRECISION+1] = {
+	static const int64 IntervalScales[MAX_INTERVAL_PRECISION + 1] = {
 		INT64CONST(1000000),
 		INT64CONST(100000),
 		INT64CONST(10000),
@@ -460,7 +465,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		INT64CONST(1)
 	};
 
-	static const int64 IntervalOffsets[MAX_INTERVAL_PRECISION+1] = {
+	static const int64 IntervalOffsets[MAX_INTERVAL_PRECISION + 1] = {
 		INT64CONST(-500000),
 		INT64CONST(-50000),
 		INT64CONST(-5000),
@@ -469,8 +474,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		INT64CONST(-5),
 		INT64CONST(0)
 	};
+
 #else
-	static const double IntervalScales[MAX_INTERVAL_PRECISION+1] = {
+	static const double IntervalScales[MAX_INTERVAL_PRECISION + 1] = {
 		1,
 		10,
 		100,
@@ -480,7 +486,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		1000000
 	};
 
-	static const double IntervalOffsets[MAX_INTERVAL_PRECISION+1] = {
+	static const double IntervalOffsets[MAX_INTERVAL_PRECISION + 1] = {
 		0.5,
 		0.05,
 		0.005,
@@ -491,7 +497,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 	};
 #endif
 
-	/* Unspecified range and precision? Then not necessary to adjust.
+	/*
+	 * Unspecified range and precision? Then not necessary to adjust.
 	 * Setting typmod to -1 is the convention for all types.
 	 */
 	if (typmod != -1)
@@ -515,9 +522,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		}
 		/* YEAR TO MONTH */
 		else if (range == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
-		{
 			interval->time = 0;
-		}
 		else if (range == INTERVAL_MASK(DAY))
 		{
 			interval->month = 0;
@@ -532,6 +537,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		day;
+
 #else
 			double		day;
 #endif
@@ -551,6 +557,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		hour;
+
 #else
 			double		hour;
 #endif
@@ -570,6 +577,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		minute;
+
 #else
 			double		minute;
 #endif
@@ -613,15 +621,14 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 						   INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE) |
 						   INTERVAL_MASK(SECOND)))
-		{
 			interval->month = 0;
-		}
 		/* HOUR TO MINUTE */
 		else if (range == (INTERVAL_MASK(HOUR) |
 						   INTERVAL_MASK(MINUTE)))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		day;
+
 #else
 			double		day;
 #endif
@@ -644,6 +651,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		day;
+
 #else
 			double		day;
 #endif
@@ -662,6 +670,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		hour;
+
 #else
 			double		hour;
 #endif
@@ -706,7 +715,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			else
 			{
 				interval->time = (rint((((double) interval->time) + IntervalOffsets[precision])
-									   * IntervalScales[precision]) / IntervalScales[precision]);
+				* IntervalScales[precision]) / IntervalScales[precision]);
 			}
 #endif
 		}
@@ -756,6 +765,7 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
+
 #else
 	double		time;
 #endif
@@ -794,18 +804,19 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
+timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int		date,
-			date0;
-	int64	time;
+	int			date,
+				date0;
+	int64		time;
+
 #else
-	double	date,
-			date0;
-	double	time;
+	double		date,
+				date0;
+	double		time;
 #endif
-	time_t	utime;
+	time_t		utime;
 
 #if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
 	struct tm  *tx;
@@ -880,7 +891,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm *tm, fsec_t *fsec, char **tzn)
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			utime = ((dt / INT64CONST(1000000))
-					 + ((date0 - date2j(1970, 1, 1)) * INT64CONST(86400)));
+				   + ((date0 - date2j(1970, 1, 1)) * INT64CONST(86400)));
 #else
 			utime = (dt + ((date0 - date2j(1970, 1, 1)) * 86400));
 #endif
@@ -963,8 +974,9 @@ int
 tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int		date;
-	int64	time;
+	int			date;
+	int64		time;
+
 #else
 	double		date,
 				time;
@@ -996,6 +1008,7 @@ interval2tm(Interval span, struct tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
+
 #else
 	double		time;
 #endif
@@ -1040,9 +1053,9 @@ tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
 #ifdef HAVE_INT64_TIMESTAMP
 	span->time = ((((((((tm->tm_mday * INT64CONST(24))
-					  + tm->tm_hour) * INT64CONST(60))
-					+ tm->tm_min) * INT64CONST(60))
-				  + tm->tm_sec) * INT64CONST(1000000)) + fsec);
+						+ tm->tm_hour) * INT64CONST(60))
+					  + tm->tm_min) * INT64CONST(60))
+					+ tm->tm_sec) * INT64CONST(1000000)) + fsec);
 #else
 	span->time = ((((((tm->tm_mday * 24.0)
 					  + tm->tm_hour) * 60.0)
@@ -1060,6 +1073,7 @@ time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 {
 	return ((((((hour * 60) + min) * 60) + sec) * INT64CONST(1000000)) + fsec);
 }	/* time2t() */
+
 #else
 static double
 time2t(const int hour, const int min, const int sec, const fsec_t fsec)
@@ -1226,6 +1240,7 @@ interval_cmp_internal(Interval *interval1, Interval *interval2)
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		span1,
 				span2;
+
 #else
 	double		span1,
 				span2;
@@ -1532,9 +1547,7 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 	Timestamp	result;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
-	{
 		result = timestamp;
-	}
 	else
 	{
 		if (span->month != 0)
@@ -1702,9 +1715,11 @@ interval_smaller(PG_FUNCTION_ARGS)
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
+
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		span1,
 				span2;
+
 #else
 	double		span1,
 				span2;
@@ -1746,9 +1761,11 @@ interval_larger(PG_FUNCTION_ARGS)
 	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
 	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
+
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		span1,
 				span2;
+
 #else
 	double		span1,
 				span2;
@@ -1828,8 +1845,10 @@ interval_mul(PG_FUNCTION_ARGS)
 	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	Interval   *result;
+
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		months;
+
 #else
 	double		months;
 #endif
@@ -1868,6 +1887,7 @@ interval_div(PG_FUNCTION_ARGS)
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	float8		factor = PG_GETARG_FLOAT8(1);
 	Interval   *result;
+
 #ifndef HAVE_INT64_TIMESTAMP
 	double		months;
 #endif
@@ -1882,7 +1902,7 @@ interval_div(PG_FUNCTION_ARGS)
 	result->time = (span->time / factor);
 	/* evaluate fractional months as 30 days */
 	result->time += (((span->month - (result->month * factor))
-					  * INT64CONST(30) * INT64CONST(86400000000)) / factor);
+				   * INT64CONST(30) * INT64CONST(86400000000)) / factor);
 #else
 	months = (span->month / factor);
 	result->month = rint(months);
@@ -1928,8 +1948,8 @@ interval_accum(PG_FUNCTION_ARGS)
 	 * objects on machines where double requires 8-byte alignment. That
 	 * should be fixed, but in the meantime...
 	 *
-	 * Note: must use DatumGetPointer here, not DatumGetIntervalP,
-	 * else some compilers optimize into double-aligned load/store anyway.
+	 * Note: must use DatumGetPointer here, not DatumGetIntervalP, else some
+	 * compilers optimize into double-aligned load/store anyway.
 	 */
 	memcpy((void *) &sumX, DatumGetPointer(transdatums[0]), sizeof(Interval));
 	memcpy((void *) &N, DatumGetPointer(transdatums[1]), sizeof(Interval));
@@ -1970,8 +1990,8 @@ interval_avg(PG_FUNCTION_ARGS)
 	 * objects on machines where double requires 8-byte alignment. That
 	 * should be fixed, but in the meantime...
 	 *
-	 * Note: must use DatumGetPointer here, not DatumGetIntervalP,
-	 * else some compilers optimize into double-aligned load/store anyway.
+	 * Note: must use DatumGetPointer here, not DatumGetIntervalP, else some
+	 * compilers optimize into double-aligned load/store anyway.
 	 */
 	memcpy((void *) &sumX, DatumGetPointer(transdatums[0]), sizeof(Interval));
 	memcpy((void *) &N, DatumGetPointer(transdatums[1]), sizeof(Interval));
@@ -3131,29 +3151,29 @@ interval_part(PG_FUNCTION_ARGS)
 		{
 			switch (val)
 			{
-			case DTK_MICROSEC:
+				case DTK_MICROSEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * 1000000e0) + fsec);
+					result = ((tm->tm_sec * 1000000e0) + fsec);
 #else
-				result = (tm->tm_sec + fsec) * 1000000;
+					result = (tm->tm_sec + fsec) * 1000000;
 #endif
-				break;
+					break;
 
-			case DTK_MILLISEC:
+				case DTK_MILLISEC:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
+					result = ((tm->tm_sec * 1000e0) + (fsec / 1000e0));
 #else
-				result = (tm->tm_sec + fsec) * 1000;
+					result = (tm->tm_sec + fsec) * 1000;
 #endif
-				break;
+					break;
 
-			case DTK_SECOND:
+				case DTK_SECOND:
 #ifdef HAVE_INT64_TIMESTAMP
-				result = (tm->tm_sec + (fsec / 1000000e0));
+					result = (tm->tm_sec + (fsec / 1000000e0));
 #else
-				result = (tm->tm_sec + fsec);
+					result = (tm->tm_sec + fsec);
 #endif
-				break;
+					break;
 
 				case DTK_MINUTE:
 					result = tm->tm_min;
@@ -3234,7 +3254,7 @@ interval_part(PG_FUNCTION_ARGS)
 /* timestamp_zone()
  * Encode timestamp type with specified time zone.
  * Returns timestamp with time zone, with the input
- *  rotated from local time to the specified zone.
+ *	rotated from local time to the specified zone.
  */
 Datum
 timestamp_zone(PG_FUNCTION_ARGS)

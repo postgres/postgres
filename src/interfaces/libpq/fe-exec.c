@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.121 2002/08/24 15:00:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.122 2002/09/04 20:31:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 	for (i = binlen; i > 0; i--, vp++)
 	{
 		if (*vp == 0 || *vp >= 0x80)
-			len += 5;	/* '5' is for '\\ooo' */
+			len += 5;			/* '5' is for '\\ooo' */
 		else if (*vp == '\'')
 			len += 2;
 		else if (*vp == '\\')
@@ -155,7 +155,7 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 	{
 		if (*vp == 0 || *vp >= 0x80)
 		{
-			(void)sprintf(rp,"\\\\%03o",*vp);
+			(void) sprintf(rp, "\\\\%03o", *vp);
 			rp += 5;
 		}
 		else if (*vp == '\'')
@@ -181,7 +181,7 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 }
 
 /*
- *		PQunescapeBytea	- converts the null terminated string representation
+ *		PQunescapeBytea - converts the null terminated string representation
  *		of a bytea, strtext, into binary, filling a buffer. It returns a
  *		pointer to the buffer which is NULL on error, and the size of the
  *		buffer in retbuflen. The pointer may subsequently be used as an
@@ -204,72 +204,83 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 unsigned char *
 PQunescapeBytea(unsigned char *strtext, size_t *retbuflen)
 {
-	size_t buflen;
-	unsigned char *buffer, *sp, *bp;
-	unsigned int state=0;
+	size_t		buflen;
+	unsigned char *buffer,
+			   *sp,
+			   *bp;
+	unsigned int state = 0;
 
-	if(strtext == NULL)return NULL;
-	buflen = strlen(strtext); /* will shrink, also we discover if strtext */
-	buffer = (unsigned char *) malloc(buflen);   /* isn't NULL terminated */
-	if(buffer == NULL)return NULL;
-	for(bp = buffer, sp = strtext; *sp != '\0'; bp++, sp++)
+	if (strtext == NULL)
+		return NULL;
+	buflen = strlen(strtext);	/* will shrink, also we discover if
+								 * strtext */
+	buffer = (unsigned char *) malloc(buflen);	/* isn't NULL terminated */
+	if (buffer == NULL)
+		return NULL;
+	for (bp = buffer, sp = strtext; *sp != '\0'; bp++, sp++)
 	{
-		switch(state)
+		switch (state)
 		{
 			case 0:
-				if(*sp == '\\')state=1;
+				if (*sp == '\\')
+					state = 1;
 				*bp = *sp;
 				break;
 			case 1:
-				if(*sp == '\'') /* state=5 */
-				{ /* replace \' with 39 */
+				if (*sp == '\'')	/* state=5 */
+				{				/* replace \' with 39 */
 					bp--;
 					*bp = '\'';
 					buflen--;
-					state=0;
+					state = 0;
 				}
-				else if(*sp == '\\') /* state=6 */
-				{ /* replace \\ with 92 */
+				else if (*sp == '\\')	/* state=6 */
+				{				/* replace \\ with 92 */
 					bp--;
 					*bp = '\\';
 					buflen--;
-					state=0;
+					state = 0;
 				}
 				else
 				{
-					if(isdigit(*sp))state=2;
-					else state=0;
+					if (isdigit(*sp))
+						state = 2;
+					else
+						state = 0;
 					*bp = *sp;
 				}
 				break;
 			case 2:
-				if(isdigit(*sp))state=3;
-				else state=0;
+				if (isdigit(*sp))
+					state = 3;
+				else
+					state = 0;
 				*bp = *sp;
 				break;
 			case 3:
-				if(isdigit(*sp)) /* state=4 */
+				if (isdigit(*sp))		/* state=4 */
 				{
-					int v;
+					int			v;
+
 					bp -= 3;
-					sscanf(sp-2, "%03o", &v);
+					sscanf(sp - 2, "%03o", &v);
 					*bp = v;
 					buflen -= 3;
-					state=0;
+					state = 0;
 				}
 				else
 				{
 					*bp = *sp;
-					state=0;
+					state = 0;
 				}
 				break;
 		}
 	}
-	buffer = realloc(buffer,buflen);
+	buffer = realloc(buffer, buflen);
 	if (buffer == NULL)
 		return NULL;
 
-	*retbuflen=buflen;
+	*retbuflen = buflen;
 	return buffer;
 }
 
@@ -894,8 +905,8 @@ parseInput(PGconn *conn)
 			return;
 
 		/*
-		 * NOTIFY and WARNING messages can happen in any state besides COPY
-		 * OUT; always process them right away.
+		 * NOTIFY and WARNING messages can happen in any state besides
+		 * COPY OUT; always process them right away.
 		 *
 		 * Most other messages should only be processed while in BUSY state.
 		 * (In particular, in READY state we hold off further parsing
@@ -1508,13 +1519,13 @@ getNotify(PGconn *conn)
 		return EOF;
 
 	/*
-	 * Store the relation name right after the PQnotify structure so it can
-	 * all be freed at once.  We don't use NAMEDATALEN because we don't
-	 * want to tie this interface to a specific server name length.
+	 * Store the relation name right after the PQnotify structure so it
+	 * can all be freed at once.  We don't use NAMEDATALEN because we
+	 * don't want to tie this interface to a specific server name length.
 	 */
 	newNotify = (PGnotify *) malloc(sizeof(PGnotify) +
-				strlen(conn->workBuffer.data) + 1);
-	newNotify->relname = (char *)newNotify + sizeof(PGnotify);
+									strlen(conn->workBuffer.data) +1);
+	newNotify->relname = (char *) newNotify + sizeof(PGnotify);
 	strcpy(newNotify->relname, conn->workBuffer.data);
 	newNotify->be_pid = be_pid;
 	DLAddTail(conn->notifyList, DLNewElem(newNotify));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.52 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.53 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ void
 RemoveRewriteRuleById(Oid ruleOid)
 {
 	Relation	RewriteRelation;
-	ScanKeyData		skey[1];
-	SysScanDesc		rcscan;
+	ScanKeyData skey[1];
+	SysScanDesc rcscan;
 	Relation	event_relation;
 	HeapTuple	tuple;
 	Oid			eventRelationOid;

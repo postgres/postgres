@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.h,v 1.20 2002/07/20 04:59:10 momjian Exp $
+ * $Id: geqo_misc.h,v 1.21 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,6 @@ extern void print_edge_table(FILE *fp, Edge *edge_table, int num_gene);
 extern void geqo_print_rel(Query *root, RelOptInfo *rel);
 extern void geqo_print_path(Query *root, Path *path, int indent);
 extern void geqo_print_joinclauses(Query *root, List *clauses);
+#endif   /* GEQO_DEBUG */
 
-#endif	/* GEQO_DEBUG */
-
-#endif	/* GEQO_MISC_H */
+#endif   /* GEQO_MISC_H */

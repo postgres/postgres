@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.124 2002/07/19 00:17:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.125 2002/09/04 20:31:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,11 +131,12 @@ InitProcGlobal(int maxBackends)
 		ProcGlobal->freeProcs = INVALID_OFFSET;
 
 		/*
-		 * Pre-create the PGPROC structures and create a semaphore for each.
+		 * Pre-create the PGPROC structures and create a semaphore for
+		 * each.
 		 */
 		for (i = 0; i < maxBackends; i++)
 		{
-			PGPROC   *proc;
+			PGPROC	   *proc;
 
 			proc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
 			if (!proc)
@@ -147,8 +148,9 @@ InitProcGlobal(int maxBackends)
 		}
 
 		/*
-		 * Pre-allocate a PGPROC structure for dummy (checkpoint) processes,
-		 * too.  This does not get linked into the freeProcs list.
+		 * Pre-allocate a PGPROC structure for dummy (checkpoint)
+		 * processes, too.	This does not get linked into the freeProcs
+		 * list.
 		 */
 		DummyProc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
 		if (!DummyProc)
@@ -170,6 +172,7 @@ void
 InitProcess(void)
 {
 	SHMEM_OFFSET myOffset;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PROC_HDR *procglobal = ProcGlobal;
 
@@ -184,8 +187,8 @@ InitProcess(void)
 		elog(ERROR, "InitProcess: you already exist");
 
 	/*
-	 * Try to get a proc struct from the free list.  If this fails,
-	 * we must be out of PGPROC structures (not to mention semaphores).
+	 * Try to get a proc struct from the free list.  If this fails, we
+	 * must be out of PGPROC structures (not to mention semaphores).
 	 */
 	SpinLockAcquire(ProcStructLock);
 
@@ -209,8 +212,8 @@ InitProcess(void)
 	}
 
 	/*
-	 * Initialize all fields of MyProc, except for the semaphore which
-	 * was prepared for us by InitProcGlobal.
+	 * Initialize all fields of MyProc, except for the semaphore which was
+	 * prepared for us by InitProcGlobal.
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->errType = STATUS_OK;
@@ -638,7 +641,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 
 	/*
 	 * If someone wakes us between LWLockRelease and PGSemaphoreLock,
-	 * PGSemaphoreLock will not block.  The wakeup is "saved" by the
+	 * PGSemaphoreLock will not block.	The wakeup is "saved" by the
 	 * semaphore implementation.  Note also that if CheckDeadLock is
 	 * invoked but does not detect a deadlock, PGSemaphoreLock() will
 	 * continue to wait.  There used to be a loop here, but it was useless
@@ -930,12 +933,18 @@ bool
 enable_sig_alarm(int delayms, bool is_statement_timeout)
 {
 #ifndef __BEOS__
-	struct itimerval timeval, remaining;
+	struct itimerval timeval,
+				remaining;
+
 #else
-	bigtime_t	time_interval, remaining;
+	bigtime_t	time_interval,
+				remaining;
 #endif
 
-	/* Don't set timer if the statement timeout scheduled before next alarm. */
+	/*
+	 * Don't set timer if the statement timeout scheduled before next
+	 * alarm.
+	 */
 	if (alarm_is_statement_timeout &&
 		!is_statement_timeout &&
 		RemainingStatementTimeout <= delayms)
@@ -964,7 +973,7 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 #ifndef __BEOS__
 			/* We lose precision here because we convert to milliseconds */
 			RemainingStatementTimeout = remaining.it_value.tv_sec * 1000 +
-										remaining.it_value.tv_usec / 1000;
+				remaining.it_value.tv_usec / 1000;
 #else
 			RemainingStatementTimeout = remaining / 1000;
 #endif
@@ -983,7 +992,7 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 #ifndef __BEOS__
 				remaining.it_value.tv_sec = RemainingStatementTimeout / 1000;
 				remaining.it_value.tv_usec = (RemainingStatementTimeout % 1000) * 1000;
-			 	if (setitimer(ITIMER_REAL, &remaining, &timeval))
+				if (setitimer(ITIMER_REAL, &remaining, &timeval))
 					return false;
 				else
 					return true;
@@ -1020,10 +1029,12 @@ bool
 disable_sig_alarm(bool is_statement_timeout)
 {
 #ifndef __BEOS__
-	struct itimerval timeval, remaining;
+	struct itimerval timeval,
+				remaining;
+
 	MemSet(&timeval, 0, sizeof(struct itimerval));
 #else
-	bigtime_t time_interval = 0;
+	bigtime_t	time_interval = 0;
 #endif
 
 	if (!is_statement_timeout && RemainingStatementTimeout)
@@ -1034,7 +1045,7 @@ disable_sig_alarm(bool is_statement_timeout)
 			return false;
 		/* Add remaining time back because the timer didn't complete */
 		RemainingStatementTimeout += remaining.it_value.tv_sec * 1000 +
-									 remaining.it_value.tv_usec / 1000;
+			remaining.it_value.tv_usec / 1000;
 		/* Prepare to set timer */
 		timeval.it_value.tv_sec = RemainingStatementTimeout / 1000;
 		timeval.it_value.tv_usec = (RemainingStatementTimeout % 1000) * 1000;
@@ -1048,9 +1059,10 @@ disable_sig_alarm(bool is_statement_timeout)
 		/* Restore remaining statement timeout value */
 		alarm_is_statement_timeout = true;
 	}
+
 	/*
-	 *	Optimization: is_statement_timeout && RemainingStatementTimeout == 0
-	 *  does nothing.  This is for cases where no timeout was set.
+	 * Optimization: is_statement_timeout && RemainingStatementTimeout ==
+	 * 0 does nothing.	This is for cases where no timeout was set.
 	 */
 	if (!is_statement_timeout || RemainingStatementTimeout)
 	{
@@ -1097,4 +1109,3 @@ handle_sig_alarm(SIGNAL_ARGS)
 		disable_sig_alarm(false);
 	}
 }
-

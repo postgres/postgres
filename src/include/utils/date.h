@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: date.h,v 1.20 2002/06/20 20:29:52 momjian Exp $
+ * $Id: date.h,v 1.21 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@ typedef int32 DateADT;
 
 #ifdef HAVE_INT64_TIMESTAMP
 typedef int64 TimeADT;
+
 #else
 typedef float8 TimeADT;
 #endif
@@ -28,11 +29,13 @@ typedef float8 TimeADT;
 typedef struct
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int64		time;	/* all time units other than months and years */
+	int64		time;			/* all time units other than months and
+								 * years */
 #else
-	double		time;	/* all time units other than months and years */
+	double		time;			/* all time units other than months and
+								 * years */
 #endif
-	int32		zone;	/* numeric time zone, in seconds */
+	int32		zone;			/* numeric time zone, in seconds */
 } TimeTzADT;
 
 #ifdef HAVE_INT64_TIMESTAMP

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.98 2002/09/02 02:47:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.99 2002/09/04 20:31:28 momjian Exp $
  *
  * NOTES
  *
@@ -980,8 +980,10 @@ interval_reltime(PG_FUNCTION_ARGS)
 	RelativeTime time;
 	int			year,
 				month;
+
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		span;
+
 #else
 	double		span;
 #endif

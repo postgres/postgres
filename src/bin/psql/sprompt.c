@@ -3,13 +3,13 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.2 2002/07/06 20:14:58 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/Attic/sprompt.c,v 1.3 2002/09/04 20:31:36 momjian Exp $
  */
 
 
 /* This file is shared by psql and pg_dump. */
 
- 
+
 /*
  * simple_prompt
  *
@@ -28,7 +28,7 @@
 #include <termios.h>
 #endif
 
-bool prompt_state = false;
+bool		prompt_state = false;
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
 char *

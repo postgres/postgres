@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.52 2002/09/02 01:05:06 tgl Exp $
+ * $Id: bufpage.h,v 1.53 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,10 +94,10 @@ typedef uint16 LocationIndex;
  * disk page organization
  * space management information generic to any page
  *
- *		pd_lower   	- offset to start of free space.
- *		pd_upper   	- offset to end of free space.
- *		pd_special 	- offset to start of special space.
- *		pd_pagesize_version	- size in bytes and page layout version number.
+ *		pd_lower	- offset to start of free space.
+ *		pd_upper	- offset to end of free space.
+ *		pd_special	- offset to start of special space.
+ *		pd_pagesize_version - size in bytes and page layout version number.
  *
  * The page version number and page size are packed together into a single
  * uint16 field.  This is for historical reasons: before PostgreSQL 7.3,

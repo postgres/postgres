@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.2 2002/05/21 22:05:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.3 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,12 +134,12 @@ PerformPortalFetch(char *name,
 	 * Determine which direction to go in, and check to see if we're
 	 * already at the end of the available tuples in that direction.  If
 	 * so, set the direction to NoMovement to avoid trying to fetch any
-	 * tuples.  (This check exists because not all plan node types
-	 * are robust about being called again if they've already returned
-	 * NULL once.)  Then call the executor (we must not skip this, because
-	 * the destination needs to see a setup and shutdown even if no tuples
-	 * are available).  Finally, update the atStart/atEnd state depending
-	 * on the number of tuples that were retrieved.
+	 * tuples.	(This check exists because not all plan node types are
+	 * robust about being called again if they've already returned NULL
+	 * once.)  Then call the executor (we must not skip this, because the
+	 * destination needs to see a setup and shutdown even if no tuples are
+	 * available).	Finally, update the atStart/atEnd state depending on
+	 * the number of tuples that were retrieved.
 	 */
 	if (forward)
 	{
@@ -151,9 +151,9 @@ PerformPortalFetch(char *name,
 		ExecutorRun(queryDesc, estate, direction, (long) count);
 
 		if (estate->es_processed > 0)
-			portal->atStart = false; /* OK to back up now */
+			portal->atStart = false;	/* OK to back up now */
 		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atEnd = true;	/* we retrieved 'em all */
+			portal->atEnd = true;		/* we retrieved 'em all */
 	}
 	else
 	{
@@ -165,9 +165,9 @@ PerformPortalFetch(char *name,
 		ExecutorRun(queryDesc, estate, direction, (long) count);
 
 		if (estate->es_processed > 0)
-			portal->atEnd = false;	/* OK to go forward now */
+			portal->atEnd = false;		/* OK to go forward now */
 		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atStart = true; /* we retrieved 'em all */
+			portal->atStart = true;		/* we retrieved 'em all */
 	}
 
 	/* Return command status if wanted */

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.40 2002/08/26 17:53:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.41 2002/09/04 20:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ namein(PG_FUNCTION_ARGS)
 	if ((ermsg = pg_verifymbstr(s, len)))
 		elog(ERROR, "%s", ermsg);
 
-	len = pg_mbcliplen(s, len, NAMEDATALEN-1);
+	len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
 	result = (NameData *) palloc(NAMEDATALEN);
 	/* always keep it null-padded */
@@ -240,8 +240,8 @@ session_user(PG_FUNCTION_ARGS)
 Datum
 current_schema(PG_FUNCTION_ARGS)
 {
-	List   *search_path = fetch_search_path(false);
-	char   *nspname;
+	List	   *search_path = fetch_search_path(false);
+	char	   *nspname;
 
 	if (search_path == NIL)
 		PG_RETURN_NULL();
@@ -252,18 +252,18 @@ current_schema(PG_FUNCTION_ARGS)
 Datum
 current_schemas(PG_FUNCTION_ARGS)
 {
-	List   *search_path = fetch_search_path(PG_GETARG_BOOL(0));
-	int		nnames = length(search_path);
-	Datum  *names;
-	int		i;
-	ArrayType *array;
+	List	   *search_path = fetch_search_path(PG_GETARG_BOOL(0));
+	int			nnames = length(search_path);
+	Datum	   *names;
+	int			i;
+	ArrayType  *array;
 
 	/* +1 here is just to avoid palloc(0) error */
 	names = (Datum *) palloc((nnames + 1) * sizeof(Datum));
 	i = 0;
 	while (search_path)
 	{
-		char   *nspname;
+		char	   *nspname;
 
 		nspname = get_namespace_name((Oid) lfirsti(search_path));
 		names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
@@ -273,9 +273,9 @@ current_schemas(PG_FUNCTION_ARGS)
 
 	array = construct_array(names, nnames,
 							NAMEOID,
-							NAMEDATALEN, /* sizeof(Name) */
-							false, /* Name is not by-val */
-							'i'); /* alignment of Name */
+							NAMEDATALEN,		/* sizeof(Name) */
+							false,		/* Name is not by-val */
+							'i');		/* alignment of Name */
 
 	PG_RETURN_POINTER(array);
 }

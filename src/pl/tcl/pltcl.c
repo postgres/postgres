@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.60 2002/08/22 00:01:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.61 2002/09/04 20:31:48 momjian Exp $
  *
  **********************************************************************/
 
@@ -976,7 +976,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
 
 		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-					prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
+			prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
 
 		if (!uptodate)
 		{
@@ -1060,7 +1060,7 @@ compile_pltcl_function(Oid fn_oid, bool is_trigger)
 			if (typeStruct->typtype == 'p')
 			{
 				if (procStruct->prorettype == VOIDOID)
-					/* okay */;
+					 /* okay */ ;
 				else if (procStruct->prorettype == TRIGGEROID ||
 						 procStruct->prorettype == OPAQUEOID)
 				{

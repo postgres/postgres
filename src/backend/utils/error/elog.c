@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.102 2002/09/02 05:42:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.103 2002/09/04 20:31:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,7 @@ void
 elog(int lev, const char *fmt,...)
 {
 	va_list		ap;
+
 	/*
 	 * The expanded format and final output message are dynamically
 	 * allocated if necessary, but not if they fit in the "reasonable
@@ -103,22 +104,22 @@ elog(int lev, const char *fmt,...)
 	 * Note that we use malloc() not palloc() because we want to retain
 	 * control if we run out of memory.  palloc() would recursively call
 	 * elog(ERROR), which would be all right except if we are working on a
-	 * FATAL or PANIC error.	We'd lose track of the fatal condition
-	 * and report a mere ERROR to outer loop, which would be a Bad Thing.
-	 * So, we substitute an appropriate message in-place, without
-	 * downgrading the level if it's above ERROR.
+	 * FATAL or PANIC error.	We'd lose track of the fatal condition and
+	 * report a mere ERROR to outer loop, which would be a Bad Thing. So,
+	 * we substitute an appropriate message in-place, without downgrading
+	 * the level if it's above ERROR.
 	 */
 	char		fmt_fixedbuf[128];
 	char		msg_fixedbuf[256];
 	char	   *fmt_buf = fmt_fixedbuf;
 	char	   *msg_buf = msg_fixedbuf;
-	char		copylineno_buf[32];	/* for COPY line numbers */
+	char		copylineno_buf[32];		/* for COPY line numbers */
 	const char *errorstr;
 	const char *prefix;
 	const char *cp;
 	char	   *bp;
 	size_t		space_needed;
-	size_t		timestamp_size;	/* prefix len for timestamp+pid */
+	size_t		timestamp_size; /* prefix len for timestamp+pid */
 	bool		output_to_server = false;
 	bool		output_to_client = false;
 
@@ -206,13 +207,13 @@ elog(int lev, const char *fmt,...)
 	 * calculation simple, we only allow one %m.
 	 */
 	space_needed = timestamp_size + strlen(prefix) +
-				   strlen(fmt) + strlen(errorstr) + 1;
+		strlen(fmt) + strlen(errorstr) + 1;
 
 	if (copy_lineno)
 	{
 		/*
-		 * Prints the failure line of the COPY.  Wow, what a hack!  bjm
-		 * Translator:  Error message will be truncated at 31 characters.
+		 * Prints the failure line of the COPY.  Wow, what a hack!	bjm
+		 * Translator:	Error message will be truncated at 31 characters.
 		 */
 		snprintf(copylineno_buf, 32, gettext("copy: line %d, "), copy_lineno);
 		space_needed += strlen(copylineno_buf);
@@ -427,13 +428,14 @@ elog(int lev, const char *fmt,...)
 	if (msg_buf != msg_fixedbuf)
 		free(msg_buf);
 
-	/* If the user wants this elog() generating query logged,
-	 * do so. We only want to log if the query has been
-	 * written to debug_query_string. Also, avoid infinite loops.
+	/*
+	 * If the user wants this elog() generating query logged, do so. We
+	 * only want to log if the query has been written to
+	 * debug_query_string. Also, avoid infinite loops.
 	 */
 
-	if(lev != LOG && lev >= log_min_error_statement && debug_query_string)
-		elog(LOG,"statement: %s",debug_query_string);
+	if (lev != LOG && lev >= log_min_error_statement && debug_query_string)
+		elog(LOG, "statement: %s", debug_query_string);
 
 	/*
 	 * Perform error recovery action as specified by lev.
@@ -445,7 +447,8 @@ elog(int lev, const char *fmt,...)
 
 		/*
 		 * If we just reported a startup failure, the client will
-		 * disconnect on receiving it, so don't send any more to the client.
+		 * disconnect on receiving it, so don't send any more to the
+		 * client.
 		 */
 		if (!Warn_restart_ready && whereToSendOutput == Remote)
 			whereToSendOutput = None;
@@ -506,7 +509,7 @@ elog(int lev, const char *fmt,...)
 		proc_exit(2);
 	}
 
-	/* We reach here if lev <= WARNING.	OK to return to caller. */
+	/* We reach here if lev <= WARNING. OK to return to caller. */
 }
 
 
@@ -744,8 +747,8 @@ send_message_to_frontend(int type, const char *msg)
 	AssertArg(type <= ERROR);
 
 	pq_beginmessage(&buf);
-	pq_sendbyte(&buf, type != ERROR ? 'N' : 'E'); /* N is INFO, NOTICE,
-												   * or WARNING */
+	pq_sendbyte(&buf, type != ERROR ? 'N' : 'E');		/* N is INFO, NOTICE, or
+														 * WARNING */
 	pq_sendstring(&buf, msg);
 	pq_endmessage(&buf);
 
@@ -835,6 +838,3 @@ elog_message_prefix(int lev)
 	Assert(prefix != NULL);
 	return prefix;
 }
-
-
-

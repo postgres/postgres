@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.26 2002/08/30 00:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.27 2002/09/04 20:31:47 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -514,7 +514,7 @@ typedef struct
 	char	   *exitlabel;
 
 	Tuplestorestate *tuple_store;		/* SRFs accumulate results here */
-	MemoryContext	tuple_store_cxt;
+	MemoryContext tuple_store_cxt;
 	ReturnSetInfo *rsi;
 
 	int			trig_nargs;

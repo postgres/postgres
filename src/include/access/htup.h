@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.59 2002/09/02 01:05:06 tgl Exp $
+ * $Id: htup.h,v 1.60 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@
  * so that alterations in HeapTupleHeaderData layout won't change the
  * supported max number of columns.
  */
-#define MaxTupleAttributeNumber	1664	/* 8 * 208 */
+#define MaxTupleAttributeNumber 1664	/* 8 * 208 */
 
 /*----------
  * MaxHeapAttributeNumber limits the number of (user) columns in a table.
@@ -79,7 +79,7 @@
  *		valid		unneeded	valid		valid		invalid
  *
  * MOVED BY VACUUM FULL:
- *		valid		unneeded	maybe-valid	unneeded	valid
+ *		valid		unneeded	maybe-valid unneeded	valid
  *
  * This assumes that VACUUM FULL never tries to move a tuple whose Cmin or
  * Cmax is still interesting (ie, insert-in-progress or delete-in-progress).
@@ -89,26 +89,28 @@
  * time.  Nor do we need to store Cmax and Xvac at the same time.
  *
  * Following the fixed header fields, the nulls bitmap is stored (beginning
- * at t_bits).  The bitmap is *not* stored if t_infomask shows that there
+ * at t_bits).	The bitmap is *not* stored if t_infomask shows that there
  * are no nulls in the tuple.  If an OID field is present (as indicated by
  * t_infomask), then it is stored just before the user data, which begins at
- * the offset shown by t_hoff.  Note that t_hoff must be a multiple of
+ * the offset shown by t_hoff.	Note that t_hoff must be a multiple of
  * MAXALIGN.
  *----------
  */
 typedef struct HeapTupleHeaderData
 {
-	TransactionId	t_xmin;		/* inserting xact ID */
+	TransactionId t_xmin;		/* inserting xact ID */
 
-	union {
+	union
+	{
 		CommandId	t_cmin;		/* inserting command ID */
 		TransactionId t_xmax;	/* deleting xact ID */
-	} t_field2;
+	}			t_field2;
 
-	union {
+	union
+	{
 		CommandId	t_cmax;		/* deleting command ID */
 		TransactionId t_xvac;	/* VACUUM FULL xact ID */
-	} t_field3;
+	}			t_field3;
 
 	ItemPointerData t_ctid;		/* current TID of this or newer tuple */
 
@@ -139,8 +141,8 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define HEAP_HASEXTENDED		0x000C	/* the two above combined */
 #define HEAP_HASOID				0x0010	/* has an object-id field */
 /* bit 0x0020 is presently unused */
-#define HEAP_XMAX_IS_XMIN		0x0040	/* created and deleted in the
-										 * same transaction */
+#define HEAP_XMAX_IS_XMIN		0x0040	/* created and deleted in the same
+										 * transaction */
 #define HEAP_XMAX_UNLOGGED		0x0080	/* to lock tuple for update
 										 * without logging */
 #define HEAP_XMIN_COMMITTED		0x0100	/* t_xmin committed */
@@ -161,7 +163,7 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 /*
  * HeapTupleHeader accessor macros
  *
- * Note: beware of multiple evaluations of "tup" argument.  But the Set
+ * Note: beware of multiple evaluations of "tup" argument.	But the Set
  * macros evaluate their other argument only once.
  */
 

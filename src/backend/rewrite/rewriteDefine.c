@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.78 2002/09/02 02:13:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.79 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,8 +62,8 @@ InsertRule(char *rulname,
 	HeapTuple	tup,
 				oldtup;
 	Oid			rewriteObjectId;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 	bool		is_update = false;
 
 	/*
@@ -73,13 +73,13 @@ InsertRule(char *rulname,
 
 	i = 0;
 	namestrcpy(&rname, rulname);
-	values[i++] = NameGetDatum(&rname);				/* rulename */
-	values[i++] = ObjectIdGetDatum(eventrel_oid);	/* ev_class */
-	values[i++] = Int16GetDatum(evslot_index);		/* ev_attr */
-	values[i++] = CharGetDatum(evtype + '0');		/* ev_type */
-	values[i++] = BoolGetDatum(evinstead);			/* is_instead */
-	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(evqual));	/* ev_qual */
-	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));	/* ev_action */
+	values[i++] = NameGetDatum(&rname); /* rulename */
+	values[i++] = ObjectIdGetDatum(eventrel_oid);		/* ev_class */
+	values[i++] = Int16GetDatum(evslot_index);	/* ev_attr */
+	values[i++] = CharGetDatum(evtype + '0');	/* ev_type */
+	values[i++] = BoolGetDatum(evinstead);		/* is_instead */
+	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(evqual)); /* ev_qual */
+	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));		/* ev_action */
 
 	/*
 	 * Ready to store new pg_rewrite tuple
@@ -97,7 +97,7 @@ InsertRule(char *rulname,
 	if (HeapTupleIsValid(oldtup))
 	{
 		if (!replace)
-			elog(ERROR,"Attempt to insert rule \"%s\" failed: already exists",
+			elog(ERROR, "Attempt to insert rule \"%s\" failed: already exists",
 				 rulname);
 
 		/*
@@ -138,8 +138,8 @@ InsertRule(char *rulname,
 								   rewriteObjectId);
 
 	/*
-	 * Install dependency on rule's relation to ensure it will go away
-	 * on relation deletion.  If the rule is ON SELECT, make the dependency
+	 * Install dependency on rule's relation to ensure it will go away on
+	 * relation deletion.  If the rule is ON SELECT, make the dependency
 	 * implicit --- this prevents deleting a view's SELECT rule.  Other
 	 * kinds of rules can be AUTO.
 	 */
@@ -152,7 +152,7 @@ InsertRule(char *rulname,
 	referenced.objectSubId = 0;
 
 	recordDependencyOn(&myself, &referenced,
-					   (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
+		 (evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
 	/*
 	 * Also install dependencies on objects referenced in action and qual.
@@ -163,7 +163,7 @@ InsertRule(char *rulname,
 	if (event_qual != NULL)
 	{
 		/* Find query containing OLD/NEW rtable entries */
-		Query  *qry = (Query *) lfirst(action);
+		Query	   *qry = (Query *) lfirst(action);
 
 		qry = getInsertSelectQuery(qry, NULL);
 		recordDependencyOnExpr(&myself, event_qual, qry->rtable,
@@ -272,7 +272,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		 * event relation, ...
 		 */
 		i = 0;
-		foreach (tllist, query->targetList)
+		foreach(tllist, query->targetList)
 		{
 			TargetEntry *tle = (TargetEntry *) lfirst(tllist);
 			Resdom	   *resdom = tle->resdom;
@@ -289,11 +289,12 @@ DefineQueryRewrite(RuleStmt *stmt)
 			attname = NameStr(attr->attname);
 
 			/*
-			 * Disallow dropped columns in the relation.  This won't happen
-			 * in the cases we actually care about (namely creating a view
-			 * via CREATE TABLE then CREATE RULE).  Trying to cope with it
-			 * is much more trouble than it's worth, because we'd have to
-			 * modify the rule to insert dummy NULLs at the right positions.
+			 * Disallow dropped columns in the relation.  This won't
+			 * happen in the cases we actually care about (namely creating
+			 * a view via CREATE TABLE then CREATE RULE).  Trying to cope
+			 * with it is much more trouble than it's worth, because we'd
+			 * have to modify the rule to insert dummy NULLs at the right
+			 * positions.
 			 */
 			if (attr->attisdropped)
 				elog(ERROR, "cannot convert relation containing dropped columns to view");
@@ -343,11 +344,11 @@ DefineQueryRewrite(RuleStmt *stmt)
 			/*
 			 * In versions before 7.3, the expected name was _RETviewname.
 			 * For backwards compatibility with old pg_dump output, accept
-			 * that and silently change it to _RETURN.  Since this is just
+			 * that and silently change it to _RETURN.	Since this is just
 			 * a quick backwards-compatibility hack, limit the number of
 			 * characters checked to a few less than NAMEDATALEN; this
-			 * saves having to worry about where a multibyte character might
-			 * have gotten truncated.
+			 * saves having to worry about where a multibyte character
+			 * might have gotten truncated.
 			 */
 			if (strncmp(stmt->rulename, "_RET", 4) != 0 ||
 				strncmp(stmt->rulename + 4, event_obj->relname,

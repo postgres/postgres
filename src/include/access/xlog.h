@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.36 2002/08/30 16:50:50 momjian Exp $
+ * $Id: xlog.h,v 1.37 2002/09/04 20:31:37 momjian Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -217,6 +217,6 @@ extern XLogRecPtr GetRedoRecPtr(void);
 extern XLogRecPtr GetUndoRecPtr(void);
 
 extern const char *assign_xlog_sync_method(const char *method,
-										   bool doit, bool interactive);
+						bool doit, bool interactive);
 
 #endif   /* XLOG_H */

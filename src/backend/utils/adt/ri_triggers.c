@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.41 2002/09/02 06:11:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.42 2002/09/04 20:31:28 momjian Exp $
  *
  * ----------
  */
@@ -131,9 +131,9 @@ static void ri_BuildQueryKeyFull(RI_QueryKey *key, Oid constr_id,
 					 Relation fk_rel, Relation pk_rel,
 					 int argc, char **argv);
 static void ri_BuildQueryKeyPkCheck(RI_QueryKey *key, Oid constr_id,
-					 int32 constr_queryno,
-					 Relation pk_rel,
-					 int argc, char **argv);
+						int32 constr_queryno,
+						Relation pk_rel,
+						int argc, char **argv);
 static bool ri_KeysEqual(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 			 RI_QueryKey *key, int pairidx);
 static bool ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
@@ -141,8 +141,8 @@ static bool ri_AllKeysUnequal(Relation rel, HeapTuple oldtup, HeapTuple newtup,
 static bool ri_OneKeyEqual(Relation rel, int column, HeapTuple oldtup,
 			   HeapTuple newtup, RI_QueryKey *key, int pairidx);
 static bool ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue);
-static bool ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, 
-				Oid tgoid, int match_type, int tgnargs, char **tgargs);
+static bool ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row,
+				  Oid tgoid, int match_type, int tgnargs, char **tgargs);
 
 static void ri_InitHashTables(void);
 static void *ri_FetchPreparedPlan(RI_QueryKey *key);
@@ -205,8 +205,8 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the new
 	 * tuple.
 	 *
-	 * pk_rel is opened in RowShareLock mode since that's what our
-	 * eventual SELECT FOR UPDATE will get on it.
+	 * pk_rel is opened in RowShareLock mode since that's what our eventual
+	 * SELECT FOR UPDATE will get on it.
 	 */
 	fk_rel = trigdata->tg_relation;
 	pk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
@@ -223,11 +223,13 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 
 	/*
 	 * We should not even consider checking the row if it is no longer
-	 * valid since it was either deleted (doesn't matter) or updated
-	 * (in which case it'll be checked with its final values).
+	 * valid since it was either deleted (doesn't matter) or updated (in
+	 * which case it'll be checked with its final values).
 	 */
-	if (new_row) {
-		if (!HeapTupleSatisfiesItself(new_row->t_data)) {
+	if (new_row)
+	{
+		if (!HeapTupleSatisfiesItself(new_row->t_data))
+		{
 			heap_close(pk_rel, RowShareLock);
 			return PointerGetDatum(NULL);
 		}
@@ -263,7 +265,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 			 */
 			quoteRelationName(pkrelname, pk_rel);
 			snprintf(querystr, sizeof(querystr), "SELECT 1 FROM ONLY %s x FOR UPDATE OF x",
-					pkrelname);
+					 pkrelname);
 
 			/*
 			 * Prepare, save and remember the new plan.
@@ -418,9 +420,9 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 		for (i = 0; i < qkey.nkeypairs; i++)
 		{
 			quoteOneName(attname,
-						 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_PK_IDX]);
+			 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_PK_IDX]);
 			snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
-					querysep, attname, i+1);
+					 querysep, attname, i + 1);
 			querysep = "AND";
 			queryoids[i] = SPI_gettypeid(fk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_FK_IDX]);
@@ -521,32 +523,36 @@ RI_FKey_check_upd(PG_FUNCTION_ARGS)
 /* ----------
  * ri_Check_Pk_Match
  *
- * 	Check for matching value of old pk row in current state for
+ *	Check for matching value of old pk row in current state for
  * noaction triggers. Returns false if no row was found and a fk row
  * could potentially be referencing this row, true otherwise.
  * ----------
  */
 static bool
-ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type, int tgnargs, char **tgargs) {
-	void *qplan;
+ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type, int tgnargs, char **tgargs)
+{
+	void	   *qplan;
 	RI_QueryKey qkey;
-	bool isnull;
+	bool		isnull;
 	Datum		check_values[RI_MAX_NUMKEYS];
 	char		check_nulls[RI_MAX_NUMKEYS + 1];
-	int i;
+	int			i;
 	Oid			save_uid;
-	bool			result;
+	bool		result;
+
 	save_uid = GetUserId();
 
 	ri_BuildQueryKeyPkCheck(&qkey, tgoid,
-						 RI_PLAN_CHECK_LOOKUPPK, pk_rel,
-						 tgnargs, tgargs);
+							RI_PLAN_CHECK_LOOKUPPK, pk_rel,
+							tgnargs, tgargs);
 
 	switch (ri_NullCheck(pk_rel, old_row, &qkey, RI_KEYPAIR_PK_IDX))
 	{
 		case RI_KEYS_ALL_NULL:
+
 			/*
-			 * No check - nothing could have been referencing this row anyway.
+			 * No check - nothing could have been referencing this row
+			 * anyway.
 			 */
 			return true;
 
@@ -560,10 +566,10 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 			{
 				case RI_MATCH_TYPE_FULL:
 				case RI_MATCH_TYPE_UNSPECIFIED:
-					
+
 					/*
-					 * MATCH <unspecified>/FULL  - if ANY column is null, we
-					 * can't be matching to this row already.
+					 * MATCH <unspecified>/FULL  - if ANY column is null,
+					 * we can't be matching to this row already.
 					 */
 					return true;
 
@@ -619,9 +625,9 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 		for (i = 0; i < qkey.nkeypairs; i++)
 		{
 			quoteOneName(attname,
-						 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_PK_IDX]);
+			 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_PK_IDX]);
 			snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
-					querysep, attname, i+1);
+					 querysep, attname, i + 1);
 			querysep = "AND";
 			queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -644,7 +650,7 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 	{
 		check_values[i] = SPI_getbinval(old_row,
 										pk_rel->rd_att,
-										qkey.keypair[i][RI_KEYPAIR_PK_IDX],
+									  qkey.keypair[i][RI_KEYPAIR_PK_IDX],
 										&isnull);
 		if (isnull)
 			check_nulls[i] = 'n';
@@ -664,7 +670,7 @@ ri_Check_Pk_Match(Relation pk_rel, HeapTuple old_row, Oid tgoid, int match_type,
 
 	SetUserId(save_uid);
 
-	result = (SPI_processed!=0);
+	result = (SPI_processed != 0);
 
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(WARNING, "SPI_finish() failed in ri_Check_Pk_Match()");
@@ -736,8 +742,8 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 *
-	 * fk_rel is opened in RowShareLock mode since that's what our
-	 * eventual SELECT FOR UPDATE will get on it.
+	 * fk_rel is opened in RowShareLock mode since that's what our eventual
+	 * SELECT FOR UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -745,10 +751,11 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
 	if (ri_Check_Pk_Match(pk_rel, old_row, trigdata->tg_trigger->tgoid,
-			match_type, tgnargs, tgargs)) {
-		/* 
-		 * There's either another row, or no row could match this
-		 * one.  In either case, we don't need to do the check.
+						  match_type, tgnargs, tgargs))
+	{
+		/*
+		 * There's either another row, or no row could match this one.  In
+		 * either case, we don't need to do the check.
 		 */
 		heap_close(fk_rel, RowShareLock);
 		return PointerGetDatum(NULL);
@@ -800,7 +807,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
+							(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
 				const char *querysep;
@@ -823,7 +830,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
-							querysep, attname, i+1);
+							 querysep, attname, i + 1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -959,8 +966,8 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the new
 	 * and old tuple.
 	 *
-	 * fk_rel is opened in RowShareLock mode since that's what our
-	 * eventual SELECT FOR UPDATE will get on it.
+	 * fk_rel is opened in RowShareLock mode since that's what our eventual
+	 * SELECT FOR UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -969,10 +976,11 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 
 	match_type = ri_DetermineMatchType(tgargs[RI_MATCH_TYPE_ARGNO]);
 	if (ri_Check_Pk_Match(pk_rel, old_row, trigdata->tg_trigger->tgoid,
-			match_type, tgnargs, tgargs)) {
-		/* 
-		 * There's either another row, or no row could match this
-		 * one.  In either case, we don't need to do the check.
+						  match_type, tgnargs, tgargs))
+	{
+		/*
+		 * There's either another row, or no row could match this one.  In
+		 * either case, we don't need to do the check.
 		 */
 		heap_close(fk_rel, RowShareLock);
 		return PointerGetDatum(NULL);
@@ -1034,7 +1042,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
+							(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
 				const char *querysep;
@@ -1057,7 +1065,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
-							querysep, attname, i+1);
+							 querysep, attname, i + 1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -1241,7 +1249,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
+							(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
 				const char *querysep;
@@ -1264,7 +1272,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
-							querysep, attname, i+1);
+							 querysep, attname, i + 1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -1455,7 +1463,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
+												 (MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
 				char		qualstr[(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
@@ -1483,9 +1491,9 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = $%d",
-							querysep, attname, i+1);
+							 querysep, attname, i + 1);
 					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
-							qualsep, attname, j+1);
+							 qualsep, attname, j + 1);
 					querysep = ",";
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -1628,8 +1636,8 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the old
 	 * tuple.
 	 *
-	 * fk_rel is opened in RowShareLock mode since that's what our
-	 * eventual SELECT FOR UPDATE will get on it.
+	 * fk_rel is opened in RowShareLock mode since that's what our eventual
+	 * SELECT FOR UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -1682,7 +1690,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
+							(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
 				const char *querysep;
@@ -1705,7 +1713,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
-							querysep, attname, i+1);
+							 querysep, attname, i + 1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -1845,8 +1853,8 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 * Get the relation descriptors of the FK and PK tables and the new
 	 * and old tuple.
 	 *
-	 * fk_rel is opened in RowShareLock mode since that's what our
-	 * eventual SELECT FOR UPDATE will get on it.
+	 * fk_rel is opened in RowShareLock mode since that's what our eventual
+	 * SELECT FOR UPDATE will get on it.
 	 */
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
@@ -1910,7 +1918,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
+							(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
 				const char *querysep;
@@ -1933,7 +1941,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), " %s %s = $%d",
-							querysep, attname, i+1);
+							 querysep, attname, i + 1);
 					querysep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -2121,7 +2129,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 			if ((qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
+												 (MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
 				char		qualstr[(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
@@ -2149,9 +2157,9 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
-							querysep, attname);
+							 querysep, attname);
 					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
-							qualsep, attname, i+1);
+							 qualsep, attname, i + 1);
 					querysep = ",";
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -2365,7 +2373,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				(qplan = ri_FetchPreparedPlan(&qkey)) == NULL)
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
+												 (MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
 				char		qualstr[(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
@@ -2392,6 +2400,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
+
 					/*
 					 * MATCH <unspecified> - only change columns
 					 * corresponding to changed columns in pk_rel's key
@@ -2401,11 +2410,11 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 									  RI_KEYPAIR_PK_IDX))
 					{
 						snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
-								querysep, attname);
+								 querysep, attname);
 						querysep = ",";
 					}
 					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
-							qualsep, attname, i+1);
+							 qualsep, attname, i + 1);
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -2592,7 +2601,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 			 */
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
+												 (MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
 				char		qualstr[(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
@@ -2625,9 +2634,9 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
 					snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
-							querysep, attname);
+							 querysep, attname);
 					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
-							qualsep, attname, i+1);
+							 qualsep, attname, i + 1);
 					querysep = ",";
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
@@ -2861,7 +2870,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 			 */
 			{
 				char		querystr[MAX_QUOTED_REL_NAME_LEN + 100 +
-									(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
+												 (MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS * 2];
 				char		qualstr[(MAX_QUOTED_NAME_LEN + 32) * RI_MAX_NUMKEYS];
 				char		fkrelname[MAX_QUOTED_REL_NAME_LEN];
 				char		attname[MAX_QUOTED_NAME_LEN];
@@ -2893,6 +2902,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 				{
 					quoteOneName(attname,
 								 tgargs[RI_FIRST_ATTNAME_ARGNO + i * 2 + RI_KEYPAIR_FK_IDX]);
+
 					/*
 					 * MATCH <unspecified> - only change columns
 					 * corresponding to changed columns in pk_rel's key
@@ -2902,11 +2912,11 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 									  new_row, &qkey, RI_KEYPAIR_PK_IDX))
 					{
 						snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr), "%s %s = NULL",
-								querysep, attname);
+								 querysep, attname);
 						querysep = ",";
 					}
 					snprintf(qualstr + strlen(qualstr), sizeof(qualstr) - strlen(qualstr), " %s %s = $%d",
-							qualsep, attname, i+1);
+							 qualsep, attname, i + 1);
 					qualsep = "AND";
 					queryoids[i] = SPI_gettypeid(pk_rel->rd_att,
 									 qkey.keypair[i][RI_KEYPAIR_PK_IDX]);
@@ -3245,8 +3255,8 @@ ri_BuildQueryKeyFull(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
  */
 static void
 ri_BuildQueryKeyPkCheck(RI_QueryKey *key, Oid constr_id, int32 constr_queryno,
-					 Relation pk_rel,
-					 int argc, char **argv)
+						Relation pk_rel,
+						int argc, char **argv)
 {
 	int			i;
 	int			j;
@@ -3588,7 +3598,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 										  typeid, typeid, true);
 		if (!OidIsValid(opr_proc))
 			elog(ERROR,
-				 "ri_AttributesEqual(): cannot find '=' operator for type %u",
+			"ri_AttributesEqual(): cannot find '=' operator for type %u",
 				 typeid);
 
 		/*
@@ -3616,4 +3626,3 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 	return DatumGetBool(FunctionCall2(&(entry->oprfmgrinfo),
 									  oldvalue, newvalue));
 }
-

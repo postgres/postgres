@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteRemove.h,v 1.15 2002/07/12 18:43:19 tgl Exp $
+ * $Id: rewriteRemove.h,v 1.16 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 
 
 extern void RemoveRewriteRule(Oid owningRel, const char *ruleName,
-							  DropBehavior behavior);
+				  DropBehavior behavior);
 extern void RemoveRewriteRuleById(Oid ruleOid);
 
 #endif   /* REWRITEREMOVE_H */

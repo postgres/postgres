@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.24 2002/08/26 17:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.25 2002/09/04 20:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1138,8 +1138,8 @@ bitfromint8(PG_FUNCTION_ARGS)
 	VARBITLEN(result) = sizeof(a) * BITS_PER_BYTE;
 
 	/*
-	 * masks and shifts here are just too painful and we know that an int64
-	 * has got 8 bytes
+	 * masks and shifts here are just too painful and we know that an
+	 * int64 has got 8 bytes
 	 */
 	r = VARBITS(result);
 	r[0] = (bits8) ((a >> (7 * BITS_PER_BYTE)) & BITMASK);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.22 2002/08/10 20:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.23 2002/09/04 20:31:30 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog()
@@ -31,9 +31,7 @@ ExceptionalCondition(char *conditionName,
 	if (!PointerIsValid(conditionName)
 		|| !PointerIsValid(fileName)
 		|| !PointerIsValid(errorType))
-	{
 		fprintf(stderr, "TRAP: ExceptionalCondition: bad arguments\n");
-	}
 	else
 	{
 		fprintf(stderr, "TRAP: %s(\"%s\", File: \"%s\", Line: %d)\n",

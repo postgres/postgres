@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.89 2002/07/04 15:23:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.90 2002/09/04 20:31:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -408,8 +408,8 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
 
 	/*
 	 * For now, estimate function's cost at one operator eval per function
-	 * call.  Someday we should revive the function cost estimate columns in
-	 * pg_proc...
+	 * call.  Someday we should revive the function cost estimate columns
+	 * in pg_proc...
 	 */
 	cpu_per_tuple = cpu_operator_cost;
 
@@ -607,7 +607,7 @@ cost_mergejoin(Path *path, Query *root,
 	double		outer_rows,
 				inner_rows;
 	double		ntuples;
-	Selectivity	outerscansel,
+	Selectivity outerscansel,
 				innerscansel;
 	Path		sort_path;		/* dummy for result of cost_sort */
 
@@ -617,15 +617,15 @@ cost_mergejoin(Path *path, Query *root,
 	/*
 	 * A merge join will stop as soon as it exhausts either input stream.
 	 * Estimate fraction of the left and right inputs that will actually
-	 * need to be scanned.  We use only the first (most significant)
-	 * merge clause for this purpose.
+	 * need to be scanned.	We use only the first (most significant) merge
+	 * clause for this purpose.
 	 *
-	 * Since this calculation is somewhat expensive, and will be the same
-	 * for all mergejoin paths associated with the merge clause, we cache
-	 * the results in the RestrictInfo node.
+	 * Since this calculation is somewhat expensive, and will be the same for
+	 * all mergejoin paths associated with the merge clause, we cache the
+	 * results in the RestrictInfo node.
 	 */
 	firstclause = (RestrictInfo *) lfirst(mergeclauses);
-	if (firstclause->left_mergescansel < 0)	/* not computed yet? */
+	if (firstclause->left_mergescansel < 0)		/* not computed yet? */
 		mergejoinscansel(root, (Node *) firstclause->clause,
 						 &firstclause->left_mergescansel,
 						 &firstclause->right_mergescansel);
@@ -697,10 +697,10 @@ cost_mergejoin(Path *path, Query *root,
 	/*
 	 * The number of tuple comparisons needed depends drastically on the
 	 * number of equal keys in the two source relations, which we have no
-	 * good way of estimating.  (XXX could the MCV statistics help?)
-	 * Somewhat arbitrarily, we charge one tuple
-	 * comparison (one cpu_operator_cost) for each tuple in the two source
-	 * relations.  This is probably a lower bound.
+	 * good way of estimating.	(XXX could the MCV statistics help?)
+	 * Somewhat arbitrarily, we charge one tuple comparison (one
+	 * cpu_operator_cost) for each tuple in the two source relations.
+	 * This is probably a lower bound.
 	 */
 	run_cost += cpu_operator_cost * (outer_rows + inner_rows);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.53 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.54 2002/09/04 20:31:13 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -27,7 +27,7 @@
  *		Flag indicating that we are bootstrapping.
  *
  * Transaction ID generation is disabled during bootstrap; we just use
- * BootstrapTransactionId.  Also, the transaction ID status-check routines
+ * BootstrapTransactionId.	Also, the transaction ID status-check routines
  * are short-circuited; they claim that BootstrapTransactionId has already
  * committed, allowing tuples already inserted to be seen immediately.
  * ----------------

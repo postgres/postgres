@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.135 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.136 2002/09/04 20:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,14 +45,14 @@ static void make_arguments(ParseState *pstate,
 			   Oid *input_typeids,
 			   Oid *function_typeids);
 static int match_argtypes(int nargs,
-						  Oid *input_typeids,
-						  FuncCandidateList function_typeids,
-						  FuncCandidateList *candidates);
+			   Oid *input_typeids,
+			   FuncCandidateList function_typeids,
+			   FuncCandidateList *candidates);
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
 static FuncCandidateList func_select_candidate(int nargs, Oid *input_typeids,
-								  FuncCandidateList candidates);
+					  FuncCandidateList candidates);
 static void unknown_attribute(const char *schemaname, const char *relname,
-							  const char *attname);
+				  const char *attname);
 
 
 /*
@@ -111,8 +111,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	/*
 	 * check for column projection: if function has one argument, and that
 	 * argument is of complex type, and function name is not qualified,
-	 * then the "function call" could be a projection.  We also check
-	 * that there wasn't any aggregate decoration.
+	 * then the "function call" could be a projection.	We also check that
+	 * there wasn't any aggregate decoration.
 	 */
 	if (nargs == 1 && !agg_star && !agg_distinct && length(funcname) == 1)
 	{
@@ -123,7 +123,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		{
 			/* First arg is a relation. This could be a projection. */
 			retval = qualifiedNameToVar(pstate,
-										((RangeVar *) first_arg)->schemaname,
+									((RangeVar *) first_arg)->schemaname,
 										((RangeVar *) first_arg)->relname,
 										cname,
 										true);
@@ -144,9 +144,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-	 * Okay, it's not a column projection, so it must really be a function.
-	 * Extract arg type info and transform RangeVar arguments into varnodes
-	 * of the appropriate form.
+	 * Okay, it's not a column projection, so it must really be a
+	 * function. Extract arg type info and transform RangeVar arguments
+	 * into varnodes of the appropriate form.
 	 */
 	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -199,6 +199,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					toid = exprType(rte->funcexpr);
 					break;
 				default:
+
 					/*
 					 * RTE is a join or subselect; must fail for lack of a
 					 * named tuple type
@@ -209,7 +210,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					else
 						elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
 							 relname);
-					toid = InvalidOid; /* keep compiler quiet */
+					toid = InvalidOid;	/* keep compiler quiet */
 					break;
 			}
 
@@ -228,10 +229,10 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	/*
 	 * func_get_detail looks up the function in the catalogs, does
-	 * disambiguation for polymorphic functions, handles inheritance,
-	 * and returns the funcid and type and set or singleton status of
-	 * the function's return value.  it also returns the true argument
-	 * types to the function.
+	 * disambiguation for polymorphic functions, handles inheritance, and
+	 * returns the funcid and type and set or singleton status of the
+	 * function's return value.  it also returns the true argument types
+	 * to the function.
 	 */
 	fdresult = func_get_detail(funcname, fargs, nargs, oid_array,
 							   &funcid, &rettype, &retset,
@@ -263,13 +264,13 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		/*
 		 * Oops.  Time to die.
 		 *
-		 * If we are dealing with the attribute notation rel.function,
-		 * give an error message that is appropriate for that case.
+		 * If we are dealing with the attribute notation rel.function, give
+		 * an error message that is appropriate for that case.
 		 */
 		if (is_column)
 		{
-			char   *colname = strVal(lfirst(funcname));
-			Oid		relTypeId;
+			char	   *colname = strVal(lfirst(funcname));
+			Oid			relTypeId;
 
 			Assert(nargs == 1);
 			if (IsA(first_arg, RangeVar))
@@ -284,6 +285,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 				elog(ERROR, "Attribute \"%s\" not found in datatype %s",
 					 colname, format_type_be(relTypeId));
 		}
+
 		/*
 		 * Else generate a detailed complaint for a function
 		 */
@@ -351,7 +353,7 @@ static int
 match_argtypes(int nargs,
 			   Oid *input_typeids,
 			   FuncCandidateList function_typeids,
-			   FuncCandidateList *candidates) /* return value */
+			   FuncCandidateList *candidates)	/* return value */
 {
 	FuncCandidateList current_candidate;
 	FuncCandidateList next_candidate;
@@ -863,7 +865,7 @@ func_get_detail(List *funcname,
 		ftup = SearchSysCache(PROCOID,
 							  ObjectIdGetDatum(best_candidate->oid),
 							  0, 0, 0);
-		if (!HeapTupleIsValid(ftup)) /* should not happen */
+		if (!HeapTupleIsValid(ftup))	/* should not happen */
 			elog(ERROR, "function %u not found", best_candidate->oid);
 		pform = (Form_pg_proc) GETSTRUCT(ftup);
 		*rettype = pform->prorettype;
@@ -1172,7 +1174,7 @@ setup_field_select(Node *input, char *attname, Oid relid)
  * ParseComplexProjection -
  *	  handles function calls with a single argument that is of complex type.
  *	  If the function call is actually a column projection, return a suitably
- *	  transformed expression tree.  If not, return NULL.
+ *	  transformed expression tree.	If not, return NULL.
  *
  * NB: argument is expected to be transformed already, ie, not a RangeVar.
  */
@@ -1194,7 +1196,8 @@ ParseComplexProjection(ParseState *pstate,
 		return NULL;			/* funcname does not match any column */
 
 	/*
-	 * Check for special cases where we don't want to return a FieldSelect.
+	 * Check for special cases where we don't want to return a
+	 * FieldSelect.
 	 */
 	switch (nodeTag(first_arg))
 	{
@@ -1208,8 +1211,8 @@ ParseComplexProjection(ParseState *pstate,
 				 */
 				if (var->varattno == InvalidAttrNumber)
 				{
-					Oid		vartype;
-					int32	vartypmod;
+					Oid			vartype;
+					int32		vartypmod;
 
 					get_atttypetypmod(argrelid, attnum,
 									  &vartype, &vartypmod);
@@ -1313,7 +1316,7 @@ find_aggregate_func(const char *caller, List *aggname, Oid basetype)
 	ftup = SearchSysCache(PROCOID,
 						  ObjectIdGetDatum(oid),
 						  0, 0, 0);
-	if (!HeapTupleIsValid(ftup)) /* should not happen */
+	if (!HeapTupleIsValid(ftup))	/* should not happen */
 		elog(ERROR, "function %u not found", oid);
 	pform = (Form_pg_proc) GETSTRUCT(ftup);
 
@@ -1367,10 +1370,10 @@ LookupFuncName(List *funcname, int nargs, const Oid *argtypes)
 Oid
 LookupFuncNameTypeNames(List *funcname, List *argtypes, const char *caller)
 {
-	Oid		funcoid;
-	Oid		argoids[FUNC_MAX_ARGS];
-	int		argcount;
-	int		i;
+	Oid			funcoid;
+	Oid			argoids[FUNC_MAX_ARGS];
+	int			argcount;
+	int			i;
 
 	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	argcount = length(argtypes);

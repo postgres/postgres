@@ -2,11 +2,11 @@
  *
  * lockfuncs.c
  *		Set-returning functions to view the state of locks within the DB.
- * 
+ *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.6 2002/09/02 01:05:06 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/backend/utils/adt/lockfuncs.c,v 1.7 2002/09/04 20:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,19 +33,22 @@ typedef struct
 Datum
 pg_lock_status(PG_FUNCTION_ARGS)
 {
-	FuncCallContext	   *funcctx;
-	PG_Lock_Status	   *mystatus;
+	FuncCallContext *funcctx;
+	PG_Lock_Status *mystatus;
 	LockData   *lockData;
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		TupleDesc		tupdesc;
-		MemoryContext	oldcontext;
+		TupleDesc	tupdesc;
+		MemoryContext oldcontext;
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();
 
-		/* switch to memory context appropriate for multiple function calls */
+		/*
+		 * switch to memory context appropriate for multiple function
+		 * calls
+		 */
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* build tupdesc for result tuples */
@@ -67,8 +70,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		funcctx->slot = TupleDescGetSlot(tupdesc);
 
 		/*
-		 * Collect all the locking information that we will format
-		 * and send out as a result set.
+		 * Collect all the locking information that we will format and
+		 * send out as a result set.
 		 */
 		mystatus = (PG_Lock_Status *) palloc(sizeof(PG_Lock_Status));
 		funcctx->user_fctx = (void *) mystatus;
@@ -79,25 +82,25 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		MemoryContextSwitchTo(oldcontext);
 	}
 
-	funcctx	= SRF_PERCALL_SETUP();
+	funcctx = SRF_PERCALL_SETUP();
 	mystatus = (PG_Lock_Status *) funcctx->user_fctx;
 	lockData = mystatus->lockData;
 
 	while (mystatus->currIdx < lockData->nelements)
 	{
-		PROCLOCK		 *holder;
-		LOCK			 *lock;
-		PGPROC			 *proc;
-		bool			granted;
-		LOCKMODE		  mode;
-		Datum			values[6];
-		char			nulls[6];
-		HeapTuple		  tuple;
-		Datum			  result;
+		PROCLOCK   *holder;
+		LOCK	   *lock;
+		PGPROC	   *proc;
+		bool		granted;
+		LOCKMODE	mode;
+		Datum		values[6];
+		char		nulls[6];
+		HeapTuple	tuple;
+		Datum		result;
 
-		holder		= &(lockData->holders[mystatus->currIdx]);
-		lock		= &(lockData->locks[mystatus->currIdx]);
-		proc		= &(lockData->procs[mystatus->currIdx]);
+		holder = &(lockData->holders[mystatus->currIdx]);
+		lock = &(lockData->locks[mystatus->currIdx]);
+		proc = &(lockData->procs[mystatus->currIdx]);
 
 		/*
 		 * Look to see if there are any held lock modes in this PROCLOCK.
@@ -116,8 +119,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		}
 
 		/*
-		 * If no (more) held modes to report, see if PROC is waiting for
-		 * a lock on this lock.
+		 * If no (more) held modes to report, see if PROC is waiting for a
+		 * lock on this lock.
 		 */
 		if (!granted)
 		{
@@ -125,6 +128,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			{
 				/* Yes, so report it with proper mode */
 				mode = proc->waitLockMode;
+
 				/*
 				 * We are now done with this PROCLOCK, so advance pointer
 				 * to continue with next one on next call.
@@ -134,8 +138,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 			else
 			{
 				/*
-				 * Okay, we've displayed all the locks associated with this
-				 * PROCLOCK, proceed to the next one.
+				 * Okay, we've displayed all the locks associated with
+				 * this PROCLOCK, proceed to the next one.
 				 */
 				mystatus->currIdx++;
 				continue;
@@ -166,7 +170,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		values[3] = Int32GetDatum(proc->pid);
 		values[4] = DirectFunctionCall1(textin,
-									CStringGetDatum(GetLockmodeName(mode)));
+								 CStringGetDatum(GetLockmodeName(mode)));
 		values[5] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->slot->ttc_tupleDescriptor,

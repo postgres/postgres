@@ -10,7 +10,7 @@
  *	ie, until the next CommandCounterIncrement() or transaction commit.
  *	(See utils/time/tqual.c, and note that system catalogs are generally
  *	scanned under SnapshotNow rules by the system, or plain user snapshots
- *	for user queries.)  At the command boundary, the old tuple stops
+ *	for user queries.)	At the command boundary, the old tuple stops
  *	being valid and the new version, if any, becomes valid.  Therefore,
  *	we cannot simply flush a tuple from the system caches during heap_update()
  *	or heap_delete().  The tuple is still good at that point; what's more,
@@ -29,12 +29,12 @@
  *
  *	If we successfully complete the transaction, we have to broadcast all
  *	these invalidation events to other backends (via the SI message queue)
- *	so that they can flush obsolete entries from their caches.  Note we have
+ *	so that they can flush obsolete entries from their caches.	Note we have
  *	to record the transaction commit before sending SI messages, otherwise
  *	the other backends won't see our updated tuples as good.
  *
  *	In short, we need to remember until xact end every insert or delete
- *	of a tuple that might be in the system caches.  Updates are treated as
+ *	of a tuple that might be in the system caches.	Updates are treated as
  *	two events, delete + insert, for simplicity.  (There are cases where
  *	it'd be possible to record just one event, but we don't currently try.)
  *
@@ -74,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.54 2002/09/02 01:05:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.55 2002/09/04 20:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,7 @@ static InvalidationListHeader CurrentCmdInvalidMsgs;
 /* head of previous-commands event list */
 static InvalidationListHeader PriorCmdInvalidMsgs;
 
-static bool RelcacheInitFileInval; /* init file must be invalidated? */
+static bool RelcacheInitFileInval;		/* init file must be invalidated? */
 
 /*
  * Dynamically-registered callback functions.  Current implementation
@@ -395,6 +395,7 @@ RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 {
 	AddRelcacheInvalidationMessage(&CurrentCmdInvalidMsgs,
 								   dbId, relId);
+
 	/*
 	 * If the relation being invalidated is one of those cached in the
 	 * relcache init file, mark that we need to zap that file at commit.
@@ -505,10 +506,11 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
 	 */
 	if (!IsSystemRelation(relation))
 		return;
-	/* 
-	 * TOAST tuples can likewise be ignored here.
-	 * Note that TOAST tables are considered system relations
-	 * so they are not filtered by the above test.
+
+	/*
+	 * TOAST tuples can likewise be ignored here. Note that TOAST tables
+	 * are considered system relations so they are not filtered by the
+	 * above test.
 	 */
 	if (IsToastRelation(relation))
 		return;
@@ -573,12 +575,12 @@ AcceptInvalidationMessages(void)
  * If isCommit, we must send out the messages in our PriorCmdInvalidMsgs list
  * to the shared invalidation message queue.  Note that these will be read
  * not only by other backends, but also by our own backend at the next
- * transaction start (via AcceptInvalidationMessages).  This means that
+ * transaction start (via AcceptInvalidationMessages).	This means that
  * we can skip immediate local processing of anything that's still in
  * CurrentCmdInvalidMsgs, and just send that list out too.
  *
  * If not isCommit, we are aborting, and must locally process the messages
- * in PriorCmdInvalidMsgs.  No messages need be sent to other backends,
+ * in PriorCmdInvalidMsgs.	No messages need be sent to other backends,
  * since they'll not have seen our changed tuples anyway.  We can forget
  * about CurrentCmdInvalidMsgs too, since those changes haven't touched
  * the caches yet.
@@ -596,9 +598,9 @@ AtEOXactInvalidationMessages(bool isCommit)
 	if (isCommit)
 	{
 		/*
-		 * Relcache init file invalidation requires processing both
-		 * before and after we send the SI messages.  However, we need
-		 * not do anything unless we committed.
+		 * Relcache init file invalidation requires processing both before
+		 * and after we send the SI messages.  However, we need not do
+		 * anything unless we committed.
 		 */
 		if (RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(true);
@@ -694,7 +696,7 @@ CacheInvalidateRelcache(Oid relationId)
  *
  * NOTE: currently, the OID argument to the callback routine is not
  * provided for syscache callbacks; the routine doesn't really get any
- * useful info as to exactly what changed.  It should treat every call
+ * useful info as to exactly what changed.	It should treat every call
  * as a "cache flush" request.
  */
 void

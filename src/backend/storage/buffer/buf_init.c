@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.51 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.52 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,6 +231,7 @@ InitBufferPoolAccess(void)
 	BufferBlockPointers = (Block *) calloc(NBuffers, sizeof(Block));
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
+
 	/*
 	 * Convert shmem offsets into addresses as seen by this process. This
 	 * is just to speed up the BufferGetBlock() macro.

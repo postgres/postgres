@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.42 2002/08/14 02:45:10 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conv.c,v 1.43 2002/09/04 20:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,11 +52,12 @@ gb180302mic(unsigned char *gb18030, unsigned char *p, int len)
 			len--;
 			*p++ = c1;
 		}
-		else if(c1 >= 0x81 && c1 <= 0xfe)
+		else if (c1 >= 0x81 && c1 <= 0xfe)
 		{
 			c2 = *gb18030++;
-			
-			if(c2 >= 0x30 && c2 <= 0x69){
+
+			if (c2 >= 0x30 && c2 <= 0x69)
+			{
 				len -= 4;
 				*p++ = c1;
 				*p++ = c2;
@@ -64,13 +65,15 @@ gb180302mic(unsigned char *gb18030, unsigned char *p, int len)
 				*p++ = *gb18030++;
 				*p++ = *gb18030++;
 			}
-			else if ((c2 >=0x40 && c2 <= 0x7e) ||(c2 >=0x80 && c2 <= 0xfe)){
+			else if ((c2 >= 0x40 && c2 <= 0x7e) || (c2 >= 0x80 && c2 <= 0xfe))
+			{
 				len -= 2;
 				*p++ = c1;
 				*p++ = c2;
 				*p++ = *gb18030++;
 			}
-			else{	/*throw the strange code*/
+			else
+			{					/* throw the strange code */
 				len--;
 			}
 		}
@@ -92,39 +95,40 @@ mic2gb18030(unsigned char *mic, unsigned char *p, int len)
 	{
 		len -= pg_mic_mblen(mic++);
 
-		if (c1 <= 0x7f) /*ASCII*/
-		{					
+		if (c1 <= 0x7f)			/* ASCII */
 			*p++ = c1;
-		}
 		else if (c1 >= 0x81 && c1 <= 0xfe)
-		{		
+		{
 			c2 = *mic++;
-			
-			if((c2 >= 0x40 && c2 <= 0x7e) || (c2 >= 0x80 && c2 <= 0xfe)){
+
+			if ((c2 >= 0x40 && c2 <= 0x7e) || (c2 >= 0x80 && c2 <= 0xfe))
+			{
 				*p++ = c1;
 				*p++ = c2;
 			}
-			else if(c2 >= 0x30 && c2 <= 0x39){
+			else if (c2 >= 0x30 && c2 <= 0x39)
+			{
 				*p++ = c1;
 				*p++ = c2;
 				*p++ = *mic++;
 				*p++ = *mic++;
-			}	
-			else{
+			}
+			else
+			{
 				mic--;
 				pg_print_bogus_char(&mic, &p);
 				mic--;
 				pg_print_bogus_char(&mic, &p);
-			}		
+			}
 		}
-		else{
+		else
+		{
 			mic--;
 			pg_print_bogus_char(&mic, &p);
 		}
 	}
 	*p = '\0';
 }
-
 #endif
 
 /*
@@ -387,7 +391,7 @@ UtfToLocal(unsigned char *utf, unsigned char *iso,
  */
 void
 LocalToUtf(unsigned char *iso, unsigned char *utf,
-			 pg_local_to_utf *map, int size, int encoding, int len)
+		   pg_local_to_utf *map, int size, int encoding, int len)
 {
 	unsigned int iiso;
 	int			l;

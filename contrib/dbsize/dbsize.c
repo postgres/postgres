@@ -37,7 +37,7 @@ psnprintf(size_t len, const char *fmt,...)
 
 PG_FUNCTION_INFO_V1(database_size);
 
-Datum database_size(PG_FUNCTION_ARGS);
+Datum		database_size(PG_FUNCTION_ARGS);
 
 Datum
 database_size(PG_FUNCTION_ARGS)
@@ -97,7 +97,7 @@ database_size(PG_FUNCTION_ARGS)
 
 PG_FUNCTION_INFO_V1(relation_size);
 
-Datum relation_size(PG_FUNCTION_ARGS);
+Datum		relation_size(PG_FUNCTION_ARGS);
 
 Datum
 relation_size(PG_FUNCTION_ARGS)
@@ -111,7 +111,7 @@ relation_size(PG_FUNCTION_ARGS)
 	unsigned int segcount;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
-															 "relation_size"));
+													   "relation_size"));
 	relation = heap_openrv(relrv, AccessShareLock);
 
 	relnode = relation->rd_rel->relfilenode;

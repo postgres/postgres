@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.63 2002/08/11 21:17:35 tgl Exp $
+ * $Id: bufmgr.h,v 1.64 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,8 +148,8 @@ extern long *LocalRefCount;
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern int	ReleaseBuffer(Buffer buffer);
-extern void	WriteBuffer(Buffer buffer);
-extern void	WriteNoReleaseBuffer(Buffer buffer);
+extern void WriteBuffer(Buffer buffer);
+extern void WriteNoReleaseBuffer(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
 					 BlockNumber blockNum);
 
@@ -166,6 +166,7 @@ extern int	FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock);
 extern void DropRelationBuffers(Relation rel);
 extern void DropRelFileNodeBuffers(RelFileNode rnode, bool istemp);
 extern void DropBuffers(Oid dbid);
+
 #ifdef NOT_USED
 extern void PrintPinnedBufs(void);
 #endif

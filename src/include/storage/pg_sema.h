@@ -6,14 +6,14 @@
  * PostgreSQL requires counting semaphores (the kind that keep track of
  * multiple unlock operations, and will allow an equal number of subsequent
  * lock operations before blocking).  The underlying implementation is
- * not the same on every platform.  This file defines the API that must
+ * not the same on every platform.	This file defines the API that must
  * be provided by each port.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_sema.h,v 1.2 2002/06/20 20:29:52 momjian Exp $
+ * $Id: pg_sema.h,v 1.3 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,6 @@
 #include <semaphore.h>
 
 typedef sem_t *PGSemaphoreData;
-
 #endif
 
 #ifdef USE_UNNAMED_POSIX_SEMAPHORES
@@ -44,7 +43,6 @@ typedef sem_t *PGSemaphoreData;
 #include <semaphore.h>
 
 typedef sem_t PGSemaphoreData;
-
 #endif
 
 #ifdef USE_SYSV_SEMAPHORES
@@ -54,7 +52,6 @@ typedef struct PGSemaphoreData
 	int			semId;			/* semaphore set identifier */
 	int			semNum;			/* semaphore number within set */
 } PGSemaphoreData;
-
 #endif
 
 typedef PGSemaphoreData *PGSemaphore;
@@ -62,14 +59,19 @@ typedef PGSemaphoreData *PGSemaphore;
 
 /* Module initialization (called during postmaster start or shmem reinit) */
 extern void PGReserveSemaphores(int maxSemas, int port);
+
 /* Initialize a PGSemaphore structure to represent a sema with count 1 */
 extern void PGSemaphoreCreate(PGSemaphore sema);
+
 /* Reset a previously-initialized PGSemaphore to have count 0 */
 extern void PGSemaphoreReset(PGSemaphore sema);
+
 /* Lock a semaphore (decrement count), blocking if count would be < 0 */
 extern void PGSemaphoreLock(PGSemaphore sema, bool interruptOK);
+
 /* Unlock a semaphore (increment count) */
 extern void PGSemaphoreUnlock(PGSemaphore sema);
+
 /* Lock a semaphore only if able to do so without blocking */
 extern bool PGSemaphoreTryLock(PGSemaphore sema);
 

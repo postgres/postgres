@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.86 2002/08/05 03:29:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.87 2002/09/04 20:31:30 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -174,7 +174,7 @@ static const struct cachedesc cacheinfo[] = {
 			0
 	}},
 	{
-		CastRelationName,			/* CASTSOURCETARGET */
+		CastRelationName,		/* CASTSOURCETARGET */
 		CastSourceTargetIndex,
 		0,
 		2,
@@ -204,7 +204,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{ConversionRelationName, /* CONDEFAULT */
+	{ConversionRelationName,	/* CONDEFAULT */
 		ConversionDefaultIndex,
 		0,
 		4,
@@ -214,7 +214,7 @@ static const struct cachedesc cacheinfo[] = {
 			Anum_pg_conversion_contoencoding,
 			ObjectIdAttributeNumber,
 	}},
-	{ConversionRelationName, /* CONNAMENSP */
+	{ConversionRelationName,	/* CONNAMENSP */
 		ConversionNameNspIndex,
 		0,
 		2,
@@ -224,7 +224,7 @@ static const struct cachedesc cacheinfo[] = {
 			0,
 			0
 	}},
-	{ConversionRelationName, /* CONOID */
+	{ConversionRelationName,	/* CONOID */
 		ConversionOidIndex,
 		0,
 		1,
@@ -436,7 +436,8 @@ static const struct cachedesc cacheinfo[] = {
 	}}
 };
 
-static CatCache *SysCache[lengthof(cacheinfo)];
+static CatCache *SysCache[
+						  lengthof(cacheinfo)];
 static int	SysCacheSize = lengthof(cacheinfo);
 static bool CacheInitialized = false;
 
@@ -501,9 +502,7 @@ InitCatalogCachePhase2(void)
 	Assert(CacheInitialized);
 
 	for (cacheId = 0; cacheId < SysCacheSize; cacheId++)
-	{
 		InitCatCachePhase2(SysCache[cacheId]);
-	}
 }
 
 
@@ -531,7 +530,7 @@ SearchSysCache(int cacheId,
 			   Datum key4)
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		! PointerIsValid(SysCache[cacheId]))
+		!PointerIsValid(SysCache[cacheId]))
 		elog(ERROR, "SearchSysCache: Bad cache id %d", cacheId);
 
 	return SearchCatCache(SysCache[cacheId], key1, key2, key3, key4);
@@ -731,7 +730,7 @@ SearchSysCacheList(int cacheId, int nkeys,
 				   Datum key1, Datum key2, Datum key3, Datum key4)
 {
 	if (cacheId < 0 || cacheId >= SysCacheSize ||
-		! PointerIsValid(SysCache[cacheId]))
+		!PointerIsValid(SysCache[cacheId]))
 		elog(ERROR, "SearchSysCacheList: Bad cache id %d", cacheId);
 
 	return SearchCatCacheList(SysCache[cacheId], nkeys,

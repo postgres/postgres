@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portalcmds.h,v 1.1 2002/04/15 05:22:03 tgl Exp $
+ * $Id: portalcmds.h,v 1.2 2002/09/04 20:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  *		"ERROR" if portal not found.
  */
 extern void PerformPortalFetch(char *name, bool forward, int count,
-							   CommandDest dest, char *completionTag);
+				   CommandDest dest, char *completionTag);
 
 /*
  * PerformPortalClose
@@ -36,4 +36,4 @@ extern void PerformPortalClose(char *name, CommandDest dest);
 
 extern void PortalCleanup(Portal portal);
 
-#endif  /* PORTALCMDS_H */
+#endif   /* PORTALCMDS_H */

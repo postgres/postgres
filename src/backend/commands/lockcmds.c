@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.3 2002/06/20 20:29:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/lockcmds.c,v 1.4 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,8 @@ LockTableCommand(LockStmt *lockstmt)
 		Relation	rel;
 
 		/*
-		 * We don't want to open the relation until we've checked privilege.
-		 * So, manually get the relation OID.
+		 * We don't want to open the relation until we've checked
+		 * privilege. So, manually get the relation OID.
 		 */
 		reloid = RangeVarGetRelid(relation, false);
 

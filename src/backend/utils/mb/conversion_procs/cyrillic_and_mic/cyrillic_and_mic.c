@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.2 2002/08/22 00:01:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/cyrillic_and_mic/cyrillic_and_mic.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,12 +79,12 @@ static void mic2win1251(unsigned char *mic, unsigned char *p, int len);
 static void alt2mic(unsigned char *l, unsigned char *p, int len);
 static void mic2alt(unsigned char *mic, unsigned char *p, int len);
 
-Datum 
+Datum
 koi8r_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_KOI8R);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -95,12 +95,12 @@ koi8r_to_mic(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 mic_to_koi8r(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_KOI8R);
@@ -116,7 +116,7 @@ iso_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_ISO_8859_5);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -132,7 +132,7 @@ mic_to_iso(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_ISO_8859_5);
@@ -148,7 +148,7 @@ win1251_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1251);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -164,7 +164,7 @@ mic_to_win1251(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_WIN1251);
@@ -180,7 +180,7 @@ alt_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_ALT);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -196,7 +196,7 @@ mic_to_alt(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_ALT);
@@ -212,7 +212,7 @@ koi8r_to_win1251(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_KOI8R);
@@ -227,12 +227,12 @@ koi8r_to_win1251(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 win1251_to_koi8r(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1251);
@@ -252,7 +252,7 @@ koi8r_to_alt(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_KOI8R);
@@ -267,12 +267,12 @@ koi8r_to_alt(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 alt_to_koi8r(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_ALT);
@@ -287,12 +287,12 @@ alt_to_koi8r(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 alt_to_win1251(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_ALT);
@@ -307,12 +307,12 @@ alt_to_win1251(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 win1251_to_alt(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1251);
@@ -327,12 +327,12 @@ win1251_to_alt(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 iso_to_koi8r(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_ISO_8859_5);
@@ -347,12 +347,12 @@ iso_to_koi8r(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 koi8r_to_iso(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_KOI8R);
@@ -367,12 +367,12 @@ koi8r_to_iso(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 iso_to_win1251(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_ISO_8859_5);
@@ -387,12 +387,12 @@ iso_to_win1251(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 win1251_to_iso(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1251);
@@ -407,12 +407,12 @@ win1251_to_iso(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 iso_to_alt(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_ISO_8859_5);
@@ -427,12 +427,12 @@ iso_to_alt(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 alt_to_iso(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_ALT);
@@ -627,4 +627,3 @@ mic2alt(unsigned char *mic, unsigned char *p, int len)
 
 	mic2latin_with_table(mic, p, len, LC_KOI8_R, koi2alt);
 }
-

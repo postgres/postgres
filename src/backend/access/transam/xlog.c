@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.105 2002/09/02 02:47:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.106 2002/09/04 20:31:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,13 +131,13 @@ bool		InRecovery = false;
  *
  * Note that XLOG records inserted outside transaction control are not
  * reflected into MyLastRecPtr.  They do, however, cause MyXactMadeXLogEntry
- * to be set true.  The latter can be used to test whether the current xact
+ * to be set true.	The latter can be used to test whether the current xact
  * made any loggable changes (including out-of-xact changes, such as
  * sequence updates).
  *
  * When we insert/update/delete a tuple in a temporary relation, we do not
  * make any XLOG record, since we don't care about recovering the state of
- * the temp rel after a crash.  However, we will still need to remember
+ * the temp rel after a crash.	However, we will still need to remember
  * whether our transaction committed or aborted in that case.  So, we must
  * set MyXactMadeTempRelUpdate true to indicate that the XID will be of
  * interest later.
@@ -151,7 +151,7 @@ bool		MyXactMadeTempRelUpdate = false;
 /*
  * ProcLastRecPtr points to the start of the last XLOG record inserted by the
  * current backend.  It is updated for all inserts, transaction-controlled
- * or not.  ProcLastRecEnd is similar but points to end+1 of last record.
+ * or not.	ProcLastRecEnd is similar but points to end+1 of last record.
  */
 static XLogRecPtr ProcLastRecPtr = {0, 0};
 
@@ -162,7 +162,7 @@ XLogRecPtr	ProcLastRecEnd = {0, 0};
  * (which is almost but not quite the same as a pointer to the most recent
  * CHECKPOINT record).	We update this from the shared-memory copy,
  * XLogCtl->Insert.RedoRecPtr, whenever we can safely do so (ie, when we
- * hold the Insert lock).  See XLogInsert for details.  We are also allowed
+ * hold the Insert lock).  See XLogInsert for details.	We are also allowed
  * to update from XLogCtl->Insert.RedoRecPtr if we hold the info_lck;
  * see GetRedoRecPtr.
  */
@@ -766,7 +766,7 @@ begin:;
 		/*
 		 * We do not acquire SInvalLock here because of possible deadlock.
 		 * Anyone who wants to inspect other procs' logRec must acquire
-		 * WALInsertLock, instead.  A better solution would be a per-PROC
+		 * WALInsertLock, instead.	A better solution would be a per-PROC
 		 * spinlock, but no time for that before 7.2 --- tgl 12/19/01.
 		 */
 		MyProc->logRec = RecPtr;
@@ -1283,26 +1283,27 @@ XLogFlush(XLogRecPtr record)
 
 	/*
 	 * If we still haven't flushed to the request point then we have a
-	 * problem; most likely, the requested flush point is past end of XLOG.
-	 * This has been seen to occur when a disk page has a corrupted LSN.
+	 * problem; most likely, the requested flush point is past end of
+	 * XLOG. This has been seen to occur when a disk page has a corrupted
+	 * LSN.
 	 *
 	 * Formerly we treated this as a PANIC condition, but that hurts the
 	 * system's robustness rather than helping it: we do not want to take
 	 * down the whole system due to corruption on one data page.  In
-	 * particular, if the bad page is encountered again during recovery then
-	 * we would be unable to restart the database at all!  (This scenario
-	 * has actually happened in the field several times with 7.1 releases.
-	 * Note that we cannot get here while InRedo is true, but if the bad
-	 * page is brought in and marked dirty during recovery then
+	 * particular, if the bad page is encountered again during recovery
+	 * then we would be unable to restart the database at all!	(This
+	 * scenario has actually happened in the field several times with 7.1
+	 * releases. Note that we cannot get here while InRedo is true, but if
+	 * the bad page is brought in and marked dirty during recovery then
 	 * CreateCheckpoint will try to flush it at the end of recovery.)
 	 *
 	 * The current approach is to ERROR under normal conditions, but only
-	 * WARNING during recovery, so that the system can be brought up even if
-	 * there's a corrupt LSN.  Note that for calls from xact.c, the ERROR
-	 * will be promoted to PANIC since xact.c calls this routine inside a
-	 * critical section.  However, calls from bufmgr.c are not within
-	 * critical sections and so we will not force a restart for a bad LSN
-	 * on a data page.
+	 * WARNING during recovery, so that the system can be brought up even
+	 * if there's a corrupt LSN.  Note that for calls from xact.c, the
+	 * ERROR will be promoted to PANIC since xact.c calls this routine
+	 * inside a critical section.  However, calls from bufmgr.c are not
+	 * within critical sections and so we will not force a restart for a
+	 * bad LSN on a data page.
 	 */
 	if (XLByteLT(LogwrtResult.Flush, record))
 		elog(InRecovery ? WARNING : ERROR,
@@ -1565,7 +1566,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
 
 	XLByteToPrevSeg(endptr, _logId, _logSeg);
 	if ((endptr.xrecoff - 1) % XLogSegSize >=
-			 (uint32) (0.75 * XLogSegSize))
+		(uint32) (0.75 * XLogSegSize))
 	{
 		NextLogSeg(_logId, _logSeg);
 		use_existent = true;
@@ -1618,8 +1619,8 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 				/*
 				 * Before deleting the file, see if it can be recycled as
 				 * a future log segment.  We allow recycling segments up
-				 * to XLOGfileslop segments beyond the current
-				 * XLOG location.
+				 * to XLOGfileslop segments beyond the current XLOG
+				 * location.
 				 */
 				if (InstallXLogFileSegment(endlogId, endlogSeg, path,
 										   true, XLOGfileslop,
@@ -2196,7 +2197,7 @@ ReadControlFile(void)
 	if (ControlFile->catalog_version_no != CATALOG_VERSION_NO)
 		elog(PANIC,
 			 "The database cluster was initialized with CATALOG_VERSION_NO %d,\n"
-			 "\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n"
+		   "\tbut the backend was compiled with CATALOG_VERSION_NO %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->catalog_version_no, CATALOG_VERSION_NO);
 	if (ControlFile->blcksz != BLCKSZ)
@@ -2221,7 +2222,7 @@ ReadControlFile(void)
 
 	if (ControlFile->funcMaxArgs != FUNC_MAX_ARGS)
 		elog(PANIC,
-			 "The database cluster was initialized with FUNC_MAX_ARGS %d,\n"
+		  "The database cluster was initialized with FUNC_MAX_ARGS %d,\n"
 			 "\tbut the backend was compiled with FUNC_MAX_ARGS %d.\n"
 			 "\tIt looks like you need to recompile or initdb.",
 			 ControlFile->funcMaxArgs, FUNC_MAX_ARGS);
@@ -2235,21 +2236,21 @@ ReadControlFile(void)
 #else
 	if (ControlFile->enableIntTimes != FALSE)
 		elog(PANIC,
-			 "The database cluster was initialized with HAVE_INT64_TIMESTAMP\n"
-			 "\tbut the backend was compiled without HAVE_INT64_TIMESTAMP.\n"
+		"The database cluster was initialized with HAVE_INT64_TIMESTAMP\n"
+		 "\tbut the backend was compiled without HAVE_INT64_TIMESTAMP.\n"
 			 "\tIt looks like you need to recompile or initdb.");
 #endif
 
 	if (ControlFile->localeBuflen != LOCALE_NAME_BUFLEN)
 		elog(PANIC,
 			 "The database cluster was initialized with LOCALE_NAME_BUFLEN %d,\n"
-			 "\tbut the backend was compiled with LOCALE_NAME_BUFLEN %d.\n"
+		   "\tbut the backend was compiled with LOCALE_NAME_BUFLEN %d.\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->localeBuflen, LOCALE_NAME_BUFLEN);
 
 	if (setlocale(LC_COLLATE, ControlFile->lc_collate) == NULL)
 		elog(PANIC,
-			 "The database cluster was initialized with LC_COLLATE '%s',\n"
+		   "The database cluster was initialized with LC_COLLATE '%s',\n"
 			 "\twhich is not recognized by setlocale().\n"
 			 "\tIt looks like you need to initdb.",
 			 ControlFile->lc_collate);
@@ -3019,19 +3020,19 @@ CreateCheckPoint(bool shutdown)
 	}
 
 	/*
-	 * Get UNDO record ptr - this is oldest of PGPROC->logRec values. We do
-	 * this while holding insert lock to ensure that we won't miss any
+	 * Get UNDO record ptr - this is oldest of PGPROC->logRec values. We
+	 * do this while holding insert lock to ensure that we won't miss any
 	 * about-to-commit transactions (UNDO must include all xacts that have
 	 * commits after REDO point).
 	 *
 	 * XXX temporarily ifdef'd out to avoid three-way deadlock condition:
 	 * GetUndoRecPtr needs to grab SInvalLock to ensure that it is looking
-	 * at a stable set of proc records, but grabbing SInvalLock while holding
-	 * WALInsertLock is no good.  GetNewTransactionId may cause a WAL record
-	 * to be written while holding XidGenLock, and GetSnapshotData needs to
-	 * get XidGenLock while holding SInvalLock, so there's a risk of deadlock.
-	 * Need to find a better solution.  See pgsql-hackers discussion of
-	 * 17-Dec-01.
+	 * at a stable set of proc records, but grabbing SInvalLock while
+	 * holding WALInsertLock is no good.  GetNewTransactionId may cause a
+	 * WAL record to be written while holding XidGenLock, and
+	 * GetSnapshotData needs to get XidGenLock while holding SInvalLock,
+	 * so there's a risk of deadlock. Need to find a better solution.  See
+	 * pgsql-hackers discussion of 17-Dec-01.
 	 */
 #ifdef NOT_USED
 	checkPoint.undo = GetUndoRecPtr();
@@ -3298,9 +3299,7 @@ assign_xlog_sync_method(const char *method, bool doit, bool interactive)
 	}
 #endif
 	else
-	{
 		return NULL;
-	}
 
 	if (!doit)
 		return method;

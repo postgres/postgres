@@ -2,7 +2,7 @@
  *
  * PostgreSQL locale utilities
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.18 2002/08/09 22:52:04 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.19 2002/09/04 20:31:28 momjian Exp $
  *
  * Portions Copyright (c) 2002, PostgreSQL Global Development Group
  *
@@ -20,7 +20,7 @@
  *
  * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are also
  * settable at run-time.  However, we don't actually set those locale
- * categories permanently.  This would have bizzare effects like no
+ * categories permanently.	This would have bizzare effects like no
  * longer accepting standard floating-point literals in some locales.
  * Instead, we only set the locales briefly when needed, cache the
  * required information obtained from localeconv(), and set them back.
@@ -44,10 +44,10 @@ static bool CurrentLocaleConvValid = false;
 
 /* GUC storage area */
 
-char *locale_messages;
-char *locale_monetary;
-char *locale_numeric;
-char *locale_time;
+char	   *locale_messages;
+char	   *locale_monetary;
+char	   *locale_numeric;
+char	   *locale_time;
 
 
 /* GUC assign hooks */
@@ -60,7 +60,7 @@ char *locale_time;
 static const char *
 locale_xxx_assign(int category, const char *value, bool doit, bool interactive)
 {
-	char *save;
+	char	   *save;
 
 	save = setlocale(category, NULL);
 	if (!save)
@@ -104,7 +104,10 @@ locale_time_assign(const char *value, bool doit, bool interactive)
 const char *
 locale_messages_assign(const char *value, bool doit, bool interactive)
 {
-	/* LC_MESSAGES category does not exist everywhere, but accept it anyway */
+	/*
+	 * LC_MESSAGES category does not exist everywhere, but accept it
+	 * anyway
+	 */
 #ifdef LC_MESSAGES
 	if (doit)
 	{
@@ -113,15 +116,15 @@ locale_messages_assign(const char *value, bool doit, bool interactive)
 	}
 	else
 	{
-		char *save;
+		char	   *save;
 
 		save = setlocale(LC_MESSAGES, NULL);
 		if (!save)
 			return NULL;
-		
+
 		if (!setlocale(LC_MESSAGES, value))
 			return NULL;
-		
+
 		setlocale(LC_MESSAGES, save);
 	}
 #endif
@@ -161,7 +164,7 @@ lc_collate_is_c(void)
  * itself.)
  */
 static void
-free_struct_lconv(struct lconv *s)
+free_struct_lconv(struct lconv * s)
 {
 	if (s == NULL)
 		return;

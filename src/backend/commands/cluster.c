@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.89 2002/09/03 01:04:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.90 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static void swap_relfilenodes(Oid r1, Oid r2);
  *
  * This clusters the table by creating a new, clustered table and
  * swapping the relfilenodes of the new table and the old table, so
- * the OID of the original table is preserved.  Thus we do not lose
+ * the OID of the original table is preserved.	Thus we do not lose
  * GRANT, inheritance nor references to this table (this was a bug
  * in releases thru 7.3).
  *
@@ -111,11 +111,11 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 			 RelationGetRelationName(OldHeap));
 
 	/*
-	 * Disallow clustering system relations.  This will definitely NOT work
-	 * for shared relations (we have no way to update pg_class rows in other
-	 * databases), nor for nailed-in-cache relations (the relfilenode values
-	 * for those are hardwired, see relcache.c).  It might work for other
-	 * system relations, but I ain't gonna risk it.
+	 * Disallow clustering system relations.  This will definitely NOT
+	 * work for shared relations (we have no way to update pg_class rows
+	 * in other databases), nor for nailed-in-cache relations (the
+	 * relfilenode values for those are hardwired, see relcache.c).  It
+	 * might work for other system relations, but I ain't gonna risk it.
 	 */
 	if (IsSystemRelation(OldHeap))
 		elog(ERROR, "CLUSTER: cannot cluster system relation \"%s\"",
@@ -130,16 +130,20 @@ cluster(RangeVar *oldrelation, char *oldindexname)
 
 	/*
 	 * Create the new heap, using a temporary name in the same namespace
-	 * as the existing table.  NOTE: there is some risk of collision with user
-	 * relnames.  Working around this seems more trouble than it's worth; in
-	 * particular, we can't create the new heap in a different namespace from
-	 * the old, or we will have problems with the TEMP status of temp tables.
+	 * as the existing table.  NOTE: there is some risk of collision with
+	 * user relnames.  Working around this seems more trouble than it's
+	 * worth; in particular, we can't create the new heap in a different
+	 * namespace from the old, or we will have problems with the TEMP
+	 * status of temp tables.
 	 */
 	snprintf(NewHeapName, NAMEDATALEN, "pg_temp_%u", OIDOldHeap);
 
 	OIDNewHeap = make_new_heap(OIDOldHeap, NewHeapName);
 
-	/* We don't need CommandCounterIncrement() because make_new_heap did it. */
+	/*
+	 * We don't need CommandCounterIncrement() because make_new_heap did
+	 * it.
+	 */
 
 	/*
 	 * Copy the heap data into the new table in the desired order.
@@ -244,14 +248,14 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	while ((tuple = index_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		/*
-		 * We must copy the tuple because heap_insert() will overwrite
-		 * the commit-status fields of the tuple it's handed, and the
-		 * retrieved tuple will actually be in a disk buffer!  Thus,
-		 * the source relation would get trashed, which is bad news if
-		 * we abort later on.  (This was a bug in releases thru 7.0)
+		 * We must copy the tuple because heap_insert() will overwrite the
+		 * commit-status fields of the tuple it's handed, and the
+		 * retrieved tuple will actually be in a disk buffer!  Thus, the
+		 * source relation would get trashed, which is bad news if we
+		 * abort later on.	(This was a bug in releases thru 7.0)
 		 *
-		 * Note that the copied tuple will have the original OID, if any,
-		 * so this does preserve OIDs.
+		 * Note that the copied tuple will have the original OID, if any, so
+		 * this does preserve OIDs.
 		 */
 		HeapTuple	copiedTuple = heap_copytuple(tuple);
 
@@ -276,15 +280,15 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 static List *
 get_indexattr_list(Relation OldHeap, Oid OldIndex)
 {
-	List *indexes = NIL;
+	List	   *indexes = NIL;
 	List	   *indlist;
 
 	/* Ask the relcache to produce a list of the indexes of the old rel */
 	foreach(indlist, RelationGetIndexList(OldHeap))
 	{
-		Oid		indexOID = (Oid) lfirsti(indlist);
-		HeapTuple indexTuple;
-		HeapTuple classTuple;
+		Oid			indexOID = (Oid) lfirsti(indlist);
+		HeapTuple	indexTuple;
+		HeapTuple	classTuple;
 		Form_pg_index indexForm;
 		Form_pg_class classForm;
 		IndexAttrs *attrs;
@@ -320,7 +324,8 @@ get_indexattr_list(Relation OldHeap, Oid OldIndex)
 		ReleaseSysCache(classTuple);
 		ReleaseSysCache(indexTuple);
 
-		/* Cons the gathered data into the list.  We do not care about
+		/*
+		 * Cons the gathered data into the list.  We do not care about
 		 * ordering, and this is more efficient than append.
 		 */
 		indexes = lcons(attrs, indexes);
@@ -330,13 +335,13 @@ get_indexattr_list(Relation OldHeap, Oid OldIndex)
 }
 
 /*
- * Create new indexes and swap the filenodes with old indexes.  Then drop
+ * Create new indexes and swap the filenodes with old indexes.	Then drop
  * the new index (carrying the old index filenode along).
  */
 static void
 recreate_indexattr(Oid OIDOldHeap, List *indexes)
 {
-	List 	   *elem;
+	List	   *elem;
 
 	foreach(elem, indexes)
 	{
@@ -352,13 +357,13 @@ recreate_indexattr(Oid OIDOldHeap, List *indexes)
 		snprintf(newIndexName, NAMEDATALEN, "pg_temp_%u", attrs->indexOID);
 
 		/*
-		 * The new index will have primary and constraint status set to false,
-		 * but since we will only use its filenode it doesn't matter:
-		 * after the filenode swap the index will keep the constraint
-		 * status of the old index.
+		 * The new index will have primary and constraint status set to
+		 * false, but since we will only use its filenode it doesn't
+		 * matter: after the filenode swap the index will keep the
+		 * constraint status of the old index.
 		 */
 		newIndexOID = index_create(OIDOldHeap, newIndexName,
-								   attrs->indexInfo, attrs->accessMethodOID,
+								attrs->indexInfo, attrs->accessMethodOID,
 								   attrs->classOID, false,
 								   false, allowSystemTableMods);
 		CommandCounterIncrement();
@@ -369,8 +374,8 @@ recreate_indexattr(Oid OIDOldHeap, List *indexes)
 		CommandCounterIncrement();
 
 		/*
-		 * Make sure that indisclustered is correct: it should be set
-		 * only for the index we just clustered on.
+		 * Make sure that indisclustered is correct: it should be set only
+		 * for the index we just clustered on.
 		 */
 		pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
 		tuple = SearchSysCacheCopy(INDEXRELID,
@@ -392,13 +397,13 @@ recreate_indexattr(Oid OIDOldHeap, List *indexes)
 		object.classId = RelOid_pg_class;
 		object.objectId = newIndexOID;
 		object.objectSubId = 0;
-		
+
 		/*
-		 * The relation is local to our transaction and we know
-		 * nothing depends on it, so DROP_RESTRICT should be OK.
+		 * The relation is local to our transaction and we know nothing
+		 * depends on it, so DROP_RESTRICT should be OK.
 		 */
 		performDeletion(&object, DROP_RESTRICT);
-		
+
 		/* performDeletion does CommandCounterIncrement() at its end */
 	}
 }
@@ -473,7 +478,7 @@ swap_relfilenodes(Oid r1, Oid r2)
 	/* Update the tuples in pg_class */
 	simple_heap_update(relRelation, &reltup1->t_self, reltup1);
 	simple_heap_update(relRelation, &reltup2->t_self, reltup2);
-	
+
 	/* Keep system catalogs current */
 	indstate = CatalogOpenIndexes(relRelation);
 	CatalogIndexInsert(indstate, reltup1);
@@ -481,16 +486,17 @@ swap_relfilenodes(Oid r1, Oid r2)
 	CatalogCloseIndexes(indstate);
 
 	/*
-	 * If we have toast tables associated with the relations being swapped,
-	 * change their dependency links to re-associate them with their new
-	 * owning relations.  Otherwise the wrong one will get dropped ...
+	 * If we have toast tables associated with the relations being
+	 * swapped, change their dependency links to re-associate them with
+	 * their new owning relations.	Otherwise the wrong one will get
+	 * dropped ...
 	 *
-	 * NOTE: for now, we can assume the new table will have a TOAST table
-	 * if and only if the old one does.  This logic might need work if we
-	 * get smarter about dropped columns.
+	 * NOTE: for now, we can assume the new table will have a TOAST table if
+	 * and only if the old one does.  This logic might need work if we get
+	 * smarter about dropped columns.
 	 *
-	 * NOTE: at present, a TOAST table's only dependency is the one on
-	 * its owning table.  If more are ever created, we'd need to use something
+	 * NOTE: at present, a TOAST table's only dependency is the one on its
+	 * owning table.  If more are ever created, we'd need to use something
 	 * more selective than deleteDependencyRecordsFor() to get rid of only
 	 * the link we want.
 	 */
@@ -532,12 +538,12 @@ swap_relfilenodes(Oid r1, Oid r2)
 	}
 
 	/*
-	 * Blow away the old relcache entries now.  We need this kluge because
-	 * relcache.c indexes relcache entries by rd_node as well as OID.
-	 * It will get confused if it is asked to (re)build an entry with a new
+	 * Blow away the old relcache entries now.	We need this kluge because
+	 * relcache.c indexes relcache entries by rd_node as well as OID. It
+	 * will get confused if it is asked to (re)build an entry with a new
 	 * rd_node value when there is still another entry laying about with
-	 * that same rd_node value.  (Fortunately, since one of the entries
-	 * is local in our transaction, it's sufficient to clear out our own
+	 * that same rd_node value.  (Fortunately, since one of the entries is
+	 * local in our transaction, it's sufficient to clear out our own
 	 * relcache this way; the problem cannot arise for other backends when
 	 * they see our update on the non-local relation.)
 	 */

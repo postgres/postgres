@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.10 2001/11/12 17:44:14 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/main.c,v 1.11 2002/09/04 20:31:07 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -284,7 +284,7 @@ usage()
 	   "-p --password=<password>     password for connection to server\n"
 		 "-d --db=<database>           database name\n"
 		 "-t --host=<hostname>         server hostname\n"
-		 "-o --port=<port>             database server port (default: 5432)\n" 
+	"-o --port=<port>             database server port (default: 5432)\n"
 		 "-s --space=<dir>             directory with dump tree (for export/import)\n"
 		 "-i --import                  import large obj dump tree to DB\n"
 	"-e --export                  export (dump) large obj to dump tree\n"
@@ -301,7 +301,7 @@ usage()
 	   "-p <password>                password for connection to server\n"
 		 "-d <database>                database name\n"
 		 "-t <hostname>                server hostname\n"
-		 "-o <port>                    database server port (default: 5432)\n" 
+	"-o <port>                    database server port (default: 5432)\n"
 		 "-s <dir>                     directory with dump tree (for export/import)\n"
 		 "-i                           import large obj dump tree to DB\n"
 	"-e                           export (dump) large obj to dump tree\n"

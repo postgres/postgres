@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.59 2002/08/25 17:20:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.60 2002/09/04 20:31:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,9 +319,9 @@ nocache_index_getattr(IndexTuple tup,
 
 	/*
 	 * If slow is false, and we got here, we know that we have a tuple
-	 * with no nulls or var-widths before the target attribute. If possible,
-	 * we also want to initialize the remainder of the attribute cached
-	 * offset values.
+	 * with no nulls or var-widths before the target attribute. If
+	 * possible, we also want to initialize the remainder of the attribute
+	 * cached offset values.
 	 */
 	if (!slow)
 	{

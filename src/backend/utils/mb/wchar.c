@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.29 2002/09/03 21:45:43 petere Exp $
+ * $Id: wchar.c,v 1.30 2002/09/04 20:31:31 momjian Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -511,30 +511,31 @@ pg_uhc_mblen(const unsigned char *s)
 }
 
 /*
- *  * GB18030
- *   * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
- *    */
+ *	* GB18030
+ *	 * Added by Bill Huang <bhuang@redhat.com>,<bill_huanghb@ybb.ne.jp>
+ *	  */
 static int
 pg_gb18030_mblen(const unsigned char *s)
 {
-        int                     len;
-        if (*s <= 0x7f)
-        {                                                       /* ASCII */
-                len = 1;
-        }
-        else
-        {                                                       
-                if((*(s+1) >= 0x40 && *(s+1) <= 0x7e)|| (*(s+1) >= 0x80 && *(s+1) <= 0xfe))
-                        len = 2;
-                else if(*(s+1) >= 0x30 && *(s+1) <= 0x39)
-                        len = 4;
-                else
-                        len = 2;
-        }
-        return (len);
+	int			len;
+
+	if (*s <= 0x7f)
+	{							/* ASCII */
+		len = 1;
+	}
+	else
+	{
+		if ((*(s + 1) >= 0x40 && *(s + 1) <= 0x7e) || (*(s + 1) >= 0x80 && *(s + 1) <= 0xfe))
+			len = 2;
+		else if (*(s + 1) >= 0x30 && *(s + 1) <= 0x39)
+			len = 4;
+		else
+			len = 2;
+	}
+	return (len);
 }
 
-		
+
 pg_wchar_tbl pg_wchar_table[] = {
 	{pg_ascii2wchar_with_len, pg_ascii_mblen, 1},		/* 0; PG_SQL_ASCII	*/
 	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, 3},		/* 1; PG_EUC_JP */
@@ -543,7 +544,7 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_euctw2wchar_with_len, pg_euctw_mblen, 3},		/* 4; PG_EUC_TW */
 	{pg_johab2wchar_with_len, pg_johab_mblen, 3},		/* 5; PG_JOHAB */
 	{pg_utf2wchar_with_len, pg_utf_mblen, 3},	/* 6; PG_UNICODE */
-	{pg_mule2wchar_with_len, pg_mule_mblen, 3},	/* 7; PG_MULE_INTERNAL */
+	{pg_mule2wchar_with_len, pg_mule_mblen, 3}, /* 7; PG_MULE_INTERNAL */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 8; PG_LATIN1 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 9; PG_LATIN2 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 10; PG_LATIN3 */
@@ -569,7 +570,7 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{0, pg_gbk_mblen, 2},		/* 30; PG_GBK */
 	{0, pg_uhc_mblen, 2},		/* 31; PG_UHC */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 32; PG_WIN1250 */
-	{0, pg_gb18030_mblen, 2}       /* 33; PG_GB18030 */
+	{0, pg_gb18030_mblen, 2}	/* 33; PG_GB18030 */
 };
 
 /* returns the byte length of a word for mule internal code */

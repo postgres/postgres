@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.59 2002/07/19 00:17:40 momjian Exp $
+ * $Id: proc.h,v 1.60 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
  * Each backend has a PGPROC struct in shared memory.  There is also a list of
  * currently-unused PGPROC structs that will be reallocated to new backends.
  *
- * links: list link for any list the PGPROC is in.  When waiting for a lock,
+ * links: list link for any list the PGPROC is in.	When waiting for a lock,
  * the PGPROC is linked into that lock's waitProcs queue.  A recycled PGPROC
  * is linked into ProcGlobal's freeProcs list.
  */
@@ -61,7 +61,7 @@ struct PGPROC
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitHolder are NULL if not currently waiting. */
 	LOCK	   *waitLock;		/* Lock object we're sleeping on ... */
-	PROCLOCK	   *waitHolder;		/* Per-holder info for awaited lock */
+	PROCLOCK   *waitHolder;		/* Per-holder info for awaited lock */
 	LOCKMODE	waitLockMode;	/* type of lock we're waiting for */
 	LOCKMASK	heldLocks;		/* bitmask for lock types already held on
 								 * this lock object by this backend */

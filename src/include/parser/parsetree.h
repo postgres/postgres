@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.18 2002/06/20 20:29:52 momjian Exp $
+ * $Id: parsetree.h,v 1.19 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,6 @@ extern char *get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum);
  * type and typemod info for that attribute of that RTE.
  */
 extern void get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
-								   Oid *vartype, int32 *vartypmod);
+					   Oid *vartype, int32 *vartypmod);
 
 #endif   /* PARSETREE_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.200 2002/08/30 05:28:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.201 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,9 +184,9 @@ static char *conninfo_getval(PQconninfoOption *connOptions,
 static void defaultNoticeProcessor(void *arg, const char *message);
 static int parseServiceInfo(PQconninfoOption *options,
 				 PQExpBuffer errorMessage);
-char *pwdfMatchesString(char *buf, char *token);
+char	   *pwdfMatchesString(char *buf, char *token);
 char *PasswordFromFile(char *hostname, char *port, char *dbname,
-		char *username, char *pwdfile);
+				 char *username, char *pwdfile);
 
 /*
  *		Connecting to a Database
@@ -396,8 +396,8 @@ PQconndefaults(void)
  *	  PGPASSWORD   The user's password.
  *
  *	  PGPASSWORDFILE
- *	  			   A file that contains host:port:database:user:password
- *	  			   for authentication
+ *				   A file that contains host:port:database:user:password
+ *				   for authentication
  *
  *	  PGDATABASE   name of database to which to connect if <pgdatabase>
  *				   argument is NULL or a null string
@@ -497,14 +497,17 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	else
 		conn->dbName = strdup(dbName);
 
-	/* getPasswordFromFile mallocs its result, so we don't need strdup here */
+	/*
+	 * getPasswordFromFile mallocs its result, so we don't need strdup
+	 * here
+	 */
 	if (pwd)
 		conn->pgpass = strdup(pwd);
 	else if ((tmp = getenv("PGPASSWORD")) != NULL)
 		conn->pgpass = strdup(tmp);
 	else if ((tmp = PasswordFromFile(conn->pghost, conn->pgport,
-					conn->dbName, conn->pguser,
-					getenv("PGPASSWORDFILE"))) != NULL)
+									 conn->dbName, conn->pguser,
+									 getenv("PGPASSWORDFILE"))) != NULL)
 		conn->pgpass = tmp;
 	else
 		conn->pgpass = strdup(DefaultPassword);
@@ -978,9 +981,7 @@ retry2:
 		{
 			if (pqsecure_initialize(conn) == -1 ||
 				pqsecure_open_client(conn) == -1)
-			{
 				goto connect_errReturn;
-			}
 			/* SSL connection finished. Continue to send startup packet */
 		}
 		else if (SSLok == 'E')
@@ -1056,15 +1057,18 @@ connectDBComplete(PGconn *conn)
 {
 	PostgresPollingStatusType flag = PGRES_POLLING_WRITING;
 
-    struct timeval remains, *rp = NULL, finish_time, start_time;
+	struct timeval remains,
+			   *rp = NULL,
+				finish_time,
+				start_time;
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return 0;
 
-    /*
-     * Prepare to time calculations, if connect_timeout isn't zero.
-     */
-    if (conn->connect_timeout != NULL)
+	/*
+	 * Prepare to time calculations, if connect_timeout isn't zero.
+	 */
+	if (conn->connect_timeout != NULL)
 	{
 		remains.tv_sec = atoi(conn->connect_timeout);
 		if (!remains.tv_sec)
@@ -1137,12 +1141,12 @@ connectDBComplete(PGconn *conn)
 				conn->status = CONNECTION_BAD;
 				return 0;
 			}
-			if ((finish_time.tv_usec -= start_time.tv_usec) < 0 )
+			if ((finish_time.tv_usec -= start_time.tv_usec) < 0)
 			{
 				remains.tv_sec++;
 				finish_time.tv_usec += 1000000;
 			}
-			if ((remains.tv_usec -= finish_time.tv_usec) < 0 )
+			if ((remains.tv_usec -= finish_time.tv_usec) < 0)
 			{
 				remains.tv_sec--;
 				remains.tv_usec += 1000000;
@@ -1971,8 +1975,8 @@ freePGconn(PGconn *conn)
 		free(conn->pguser);
 	if (conn->pgpass)
 		free(conn->pgpass);
-      if (conn->connect_timeout)
-              free(conn->connect_timeout);
+	if (conn->connect_timeout)
+		free(conn->connect_timeout);
 	/* Note that conn->Pfdebug is not ours to close or free */
 	if (conn->notifyList)
 		DLFreeList(conn->notifyList);
@@ -2866,9 +2870,10 @@ defaultNoticeProcessor(void *arg, const char *message)
 char *
 pwdfMatchesString(char *buf, char *token)
 {
-	char   *tbuf,
-		   *ttok;
-	bool	bslash = false;
+	char	   *tbuf,
+			   *ttok;
+	bool		bslash = false;
+
 	if (buf == NULL || token == NULL)
 		return NULL;
 	tbuf = buf;
@@ -2883,7 +2888,7 @@ pwdfMatchesString(char *buf, char *token)
 			bslash = true;
 		}
 		if (*tbuf == ':' && *ttok == 0 && !bslash)
-			return tbuf+1;
+			return tbuf + 1;
 		bslash = false;
 		if (*ttok == 0)
 			return NULL;
@@ -2901,11 +2906,12 @@ pwdfMatchesString(char *buf, char *token)
 /* get a password from the password file. */
 char *
 PasswordFromFile(char *hostname, char *port, char *dbname,
-		char *username, char *pwdfile)
+				 char *username, char *pwdfile)
 {
-	FILE   *fp;
+	FILE	   *fp;
+
 #define LINELEN NAMEDATALEN*5
-	char	buf[LINELEN];
+	char		buf[LINELEN];
 	struct stat stat_buf;
 
 	if (pwdfile == NULL || strcmp(pwdfile, "") == 0)
@@ -2940,18 +2946,20 @@ PasswordFromFile(char *hostname, char *port, char *dbname,
 	if (fp == NULL)
 		return NULL;
 
-	while (!feof(fp)) {
-		char *t = buf,
-		     *ret;
+	while (!feof(fp))
+	{
+		char	   *t = buf,
+				   *ret;
+
 		fgets(buf, LINELEN - 1, fp);
 		if (strlen(buf) == 0)
 			continue;
 
 		buf[strlen(buf) - 1] = 0;
 		if ((t = pwdfMatchesString(t, hostname)) == NULL ||
-				(t = pwdfMatchesString(t, port)) == NULL ||
-				(t = pwdfMatchesString(t, dbname)) == NULL ||
-				(t = pwdfMatchesString(t, username)) == NULL)
+			(t = pwdfMatchesString(t, port)) == NULL ||
+			(t = pwdfMatchesString(t, dbname)) == NULL ||
+			(t = pwdfMatchesString(t, username)) == NULL)
 			continue;
 		ret = strdup(t);
 		fclose(fp);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.117 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.118 2002/09/04 20:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tideval);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
-									   Index scanrelid);
+				  Index scanrelid);
 static NestLoop *make_nestloop(List *tlist,
 			  List *joinclauses, List *otherclauses,
 			  Plan *lefttree, Plan *righttree,
@@ -206,8 +206,8 @@ create_scan_plan(Query *root, Path *best_path)
 
 		case T_FunctionScan:
 			plan = (Scan *) create_functionscan_plan(best_path,
-												tlist,
-												scan_clauses);
+													 tlist,
+													 scan_clauses);
 			break;
 
 		default:
@@ -1346,8 +1346,8 @@ make_functionscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid)
 {
-	FunctionScan   *node = makeNode(FunctionScan);
-	Plan		   *plan = &node->scan.plan;
+	FunctionScan *node = makeNode(FunctionScan);
+	Plan	   *plan = &node->scan.plan;
 
 	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;

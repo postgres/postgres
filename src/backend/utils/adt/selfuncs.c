@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.116 2002/09/03 21:45:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.117 2002/09/04 20:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -855,9 +855,12 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		return 0.0;
 	constval = ((Const *) other)->constvalue;
 
-	/* the right-hand const is type text or bytea for all supported operators */
+	/*
+	 * the right-hand const is type text or bytea for all supported
+	 * operators
+	 */
 	Assert(((Const *) other)->consttype == TEXTOID ||
-				((Const *) other)->consttype == BYTEAOID);
+		   ((Const *) other)->consttype == BYTEAOID);
 
 	/* divide pattern into fixed prefix and remainder */
 	patt = (Const *) other;
@@ -1860,11 +1863,12 @@ get_var_maximum(Query *root, Var *var, Oid sortop, Datum *max)
 	get_typlenbyval(var->vartype, &typLen, &typByVal);
 
 	/*
-	 * If there is a histogram, grab the last or first value as appropriate.
+	 * If there is a histogram, grab the last or first value as
+	 * appropriate.
 	 *
-	 * If there is a histogram that is sorted with some other operator
-	 * than the one we want, fail --- this suggests that there is data
-	 * we can't use.
+	 * If there is a histogram that is sorted with some other operator than
+	 * the one we want, fail --- this suggests that there is data we can't
+	 * use.
 	 */
 	if (get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
 						 STATISTIC_KIND_HISTOGRAM, sortop,
@@ -1873,14 +1877,14 @@ get_var_maximum(Query *root, Var *var, Oid sortop, Datum *max)
 	{
 		if (nvalues > 0)
 		{
-			tmax = datumCopy(values[nvalues-1], typByVal, typLen);
+			tmax = datumCopy(values[nvalues - 1], typByVal, typLen);
 			have_max = true;
 		}
 		free_attstatsslot(var->vartype, values, nvalues, NULL, 0);
 	}
 	else
 	{
-		Oid		rsortop = get_commutator(sortop);
+		Oid			rsortop = get_commutator(sortop);
 
 		if (OidIsValid(rsortop) &&
 			get_attstatsslot(statsTuple, var->vartype, var->vartypmod,
@@ -1907,8 +1911,8 @@ get_var_maximum(Query *root, Var *var, Oid sortop, Datum *max)
 	}
 
 	/*
-	 * If we have most-common-values info, look for a large MCV.  This
-	 * is needed even if we also have a histogram, since the histogram
+	 * If we have most-common-values info, look for a large MCV.  This is
+	 * needed even if we also have a histogram, since the histogram
 	 * excludes the MCVs.  However, usually the MCVs will not be the
 	 * extreme values, so avoid unnecessary data copying.
 	 */
@@ -1917,7 +1921,7 @@ get_var_maximum(Query *root, Var *var, Oid sortop, Datum *max)
 						 &values, &nvalues,
 						 NULL, NULL))
 	{
-		bool	large_mcv = false;
+		bool		large_mcv = false;
 		FmgrInfo	opproc;
 
 		fmgr_info(get_opcode(sortop), &opproc);
@@ -2724,7 +2728,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 		patt = DatumGetCString(DirectFunctionCall1(byteaout, patt_const->constvalue));
 		pattlen = toast_raw_datum_size(patt_const->constvalue) - VARHDRSZ;
 	}
-	
+
 	prefix = match = palloc(pattlen + 1);
 	match_pos = 0;
 
@@ -2760,8 +2764,8 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	match[match_pos] = '\0';
 	rest = &patt[pos];
 
-   *prefix_const = string_to_const(prefix, typeid);
-   *rest_const = string_to_const(rest, typeid);
+	*prefix_const = string_to_const(prefix, typeid);
+	*rest_const = string_to_const(rest, typeid);
 
 	pfree(patt);
 	pfree(match);
@@ -2807,8 +2811,8 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	{
 		rest = patt;
 
-	   *prefix_const = NULL;
-	   *rest_const = string_to_const(rest, typeid);
+		*prefix_const = NULL;
+		*rest_const = string_to_const(rest, typeid);
 
 		return Pattern_Prefix_None;
 	}
@@ -2824,8 +2828,8 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		{
 			rest = patt;
 
-		   *prefix_const = NULL;
-		   *rest_const = string_to_const(rest, typeid);
+			*prefix_const = NULL;
+			*rest_const = string_to_const(rest, typeid);
 
 			return Pattern_Prefix_None;
 		}
@@ -2898,14 +2902,14 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	{
 		rest = &patt[pos + 1];
 
-	   *prefix_const = string_to_const(prefix, typeid);
-	   *rest_const = string_to_const(rest, typeid);
+		*prefix_const = string_to_const(prefix, typeid);
+		*rest_const = string_to_const(rest, typeid);
 
 		return Pattern_Prefix_Exact;	/* pattern specifies exact match */
 	}
 
-   *prefix_const = string_to_const(prefix, typeid);
-   *rest_const = string_to_const(rest, typeid);
+	*prefix_const = string_to_const(prefix, typeid);
+	*rest_const = string_to_const(rest, typeid);
 
 	pfree(patt);
 	pfree(match);
@@ -3279,7 +3283,7 @@ pattern_selectivity(Const *patt, Pattern_Type ptype)
  * we must be able to generate another string "fop" that is greater
  * than all strings "foobar" starting with "foo".  Unfortunately, a
  * non-C locale may have arbitrary collation rules in which "fop" >
- * "foo" is not sufficient to ensure "fop" > "foobar".  Until we can
+ * "foo" is not sufficient to ensure "fop" > "foobar".	Until we can
  * come up with a more bulletproof way of generating the upper-bound
  * string, the optimization is disabled in all non-C locales.
  *
@@ -3356,8 +3360,8 @@ make_greater_string(const Const *str_const)
 			(*lastchar)++;
 			if (string_lessthan(str, workstr, datatype))
 			{
-				 /* Success! */
-				Const *workstr_const = string_to_const(workstr, datatype);
+				/* Success! */
+				Const	   *workstr_const = string_to_const(workstr, datatype);
 
 				pfree(str);
 				pfree(workstr);
@@ -3372,7 +3376,7 @@ make_greater_string(const Const *str_const)
 		if (datatype != BYTEAOID && pg_database_encoding_max_length() > 1)
 			len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
 		else
-			len -= - 1;
+			len -= -1;
 
 		if (datatype != BYTEAOID)
 			workstr[len] = '\0';

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.5 2002/08/11 21:17:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.6 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ recordDependencyOn(const ObjectAddress *depender,
 
 /*
  * Record multiple dependencies (of the same kind) for a single dependent
- * object.  This has a little less overhead than recording each separately.
+ * object.	This has a little less overhead than recording each separately.
  */
 void
 recordMultipleDependencies(const ObjectAddress *depender,
@@ -79,9 +79,9 @@ recordMultipleDependencies(const ObjectAddress *depender,
 	for (i = 0; i < nreferenced; i++, referenced++)
 	{
 		/*
-		 * If the referenced object is pinned by the system, there's no real
-		 * need to record dependencies on it.  This saves lots of space in
-		 * pg_depend, so it's worth the time taken to check.
+		 * If the referenced object is pinned by the system, there's no
+		 * real need to record dependencies on it.	This saves lots of
+		 * space in pg_depend, so it's worth the time taken to check.
 		 */
 		if (!isObjectPinned(referenced, dependDesc))
 		{
@@ -89,15 +89,15 @@ recordMultipleDependencies(const ObjectAddress *depender,
 			 * Record the Dependency.  Note we don't bother to check for
 			 * duplicate dependencies; there's no harm in them.
 			 */
-			values[Anum_pg_depend_classid - 1]	= ObjectIdGetDatum(depender->classId);
-			values[Anum_pg_depend_objid - 1]	= ObjectIdGetDatum(depender->objectId);
-			values[Anum_pg_depend_objsubid - 1]	= Int32GetDatum(depender->objectSubId);
+			values[Anum_pg_depend_classid - 1] = ObjectIdGetDatum(depender->classId);
+			values[Anum_pg_depend_objid - 1] = ObjectIdGetDatum(depender->objectId);
+			values[Anum_pg_depend_objsubid - 1] = Int32GetDatum(depender->objectSubId);
 
-			values[Anum_pg_depend_refclassid - 1]	= ObjectIdGetDatum(referenced->classId);
-			values[Anum_pg_depend_refobjid - 1]		= ObjectIdGetDatum(referenced->objectId);
-			values[Anum_pg_depend_refobjsubid - 1]	= Int32GetDatum(referenced->objectSubId);
+			values[Anum_pg_depend_refclassid - 1] = ObjectIdGetDatum(referenced->classId);
+			values[Anum_pg_depend_refobjid - 1] = ObjectIdGetDatum(referenced->objectId);
+			values[Anum_pg_depend_refobjsubid - 1] = Int32GetDatum(referenced->objectSubId);
 
-			values[Anum_pg_depend_deptype -1] = CharGetDatum((char) behavior);
+			values[Anum_pg_depend_deptype - 1] = CharGetDatum((char) behavior);
 
 			tup = heap_formtuple(dependDesc->rd_att, values, nulls);
 
@@ -130,11 +130,11 @@ recordMultipleDependencies(const ObjectAddress *depender,
 long
 deleteDependencyRecordsFor(Oid classId, Oid objectId)
 {
-	long			count = 0;
-	Relation		depRel;
-	ScanKeyData		key[2];
-	SysScanDesc		scan;
-	HeapTuple		tup;
+	long		count = 0;
+	Relation	depRel;
+	ScanKeyData key[2];
+	SysScanDesc scan;
+	HeapTuple	tup;
 
 	depRel = heap_openr(DependRelationName, RowExclusiveLock);
 
@@ -174,7 +174,7 @@ static bool
 isObjectPinned(const ObjectAddress *object, Relation rel)
 {
 	bool		ret = false;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	HeapTuple	tup;
 	ScanKeyData key[2];
 
@@ -192,13 +192,13 @@ isObjectPinned(const ObjectAddress *object, Relation rel)
 	/*
 	 * Since we won't generate additional pg_depend entries for pinned
 	 * objects, there can be at most one entry referencing a pinned
-	 * object.  Hence, it's sufficient to look at the first returned
+	 * object.	Hence, it's sufficient to look at the first returned
 	 * tuple; we don't need to loop.
 	 */
 	tup = systable_getnext(scan);
 	if (HeapTupleIsValid(tup))
 	{
-		Form_pg_depend	foundDep = (Form_pg_depend) GETSTRUCT(tup);
+		Form_pg_depend foundDep = (Form_pg_depend) GETSTRUCT(tup);
 
 		if (foundDep->deptype == DEPENDENCY_PIN)
 			ret = true;

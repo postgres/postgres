@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.23 2002/06/20 16:00:44 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.24 2002/09/04 20:31:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -123,7 +123,10 @@ parse_slash_copy(const char *args)
 			error = true;
 		else
 		{
-			/* Allows old COPY syntax for backward compatibility 2002-06-19 */
+			/*
+			 * Allows old COPY syntax for backward compatibility
+			 * 2002-06-19
+			 */
 			if (strcasecmp(token, "with") == 0)
 			{
 				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
@@ -165,7 +168,10 @@ parse_slash_copy(const char *args)
 		token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
 		if (token)
 		{
-			/* Allows old COPY syntax for backward compatibility 2002-06-19 */
+			/*
+			 * Allows old COPY syntax for backward compatibility
+			 * 2002-06-19
+			 */
 			if (strcasecmp(token, "using") == 0)
 			{
 				token = strtokx(NULL, " \t\n\r", NULL, '\\', NULL, NULL, pset.encoding);
@@ -212,10 +218,12 @@ parse_slash_copy(const char *args)
 					else
 						error = true;
 				}
-				else error = true;
+				else
+					error = true;
 			}
 		}
-		else error = true;
+		else
+			error = true;
 	}
 
 	free(line);
@@ -305,7 +313,7 @@ do_copy(const char *args)
 
 	/* make sure the specified file is not a directory */
 	fstat(fileno(copystream), &st);
-	if( S_ISDIR(st.st_mode) )
+	if (S_ISDIR(st.st_mode))
 	{
 		fclose(copystream);
 		psql_error("%s: cannot COPY TO/FROM a directory\n",

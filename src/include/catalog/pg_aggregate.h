@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_aggregate.h,v 1.39 2002/06/20 20:29:43 momjian Exp $
+ * $Id: pg_aggregate.h,v 1.40 2002/09/04 20:31:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -105,7 +105,7 @@ DATA(insert ( 2124	timetz_larger	-				1266	_null_ ));
 DATA(insert ( 2125	cashlarger		-				790		_null_ ));
 DATA(insert ( 2126	timestamp_larger	-			1114	_null_ ));
 DATA(insert ( 2127	timestamptz_larger	-			1184	_null_ ));
-DATA(insert ( 2128	interval_larger	-				1186	_null_ ));
+DATA(insert ( 2128	interval_larger -				1186	_null_ ));
 DATA(insert ( 2129	text_larger		-				25		_null_ ));
 DATA(insert ( 2130	numeric_larger	-				1700	_null_ ));
 
@@ -122,10 +122,10 @@ DATA(insert ( 2139	time_smaller	-				1083	_null_ ));
 DATA(insert ( 2140	timetz_smaller	-				1266	_null_ ));
 DATA(insert ( 2141	cashsmaller		-				790		_null_ ));
 DATA(insert ( 2142	timestamp_smaller	-			1114	_null_ ));
-DATA(insert ( 2143	timestamptz_smaller	-			1184	_null_ ));
+DATA(insert ( 2143	timestamptz_smaller -			1184	_null_ ));
 DATA(insert ( 2144	interval_smaller	-			1186	_null_ ));
 DATA(insert ( 2145	text_smaller	-				25		_null_ ));
-DATA(insert ( 2146	numeric_smaller	-				1700	_null_ ));
+DATA(insert ( 2146	numeric_smaller -				1700	_null_ ));
 
 /*
  * Using int8inc for count() is cheating a little, since it really only
@@ -137,8 +137,8 @@ DATA(insert ( 2147	int8inc		-					 20		0 ));
 DATA(insert ( 2148	int8_accum	numeric_variance	1231	"{0,0,0}" ));
 DATA(insert ( 2149	int4_accum	numeric_variance	1231	"{0,0,0}" ));
 DATA(insert ( 2150	int2_accum	numeric_variance	1231	"{0,0,0}" ));
-DATA(insert ( 2151	float4_accum	float8_variance	1022	"{0,0,0}" ));
-DATA(insert ( 2152	float8_accum	float8_variance	1022	"{0,0,0}" ));
+DATA(insert ( 2151	float4_accum	float8_variance 1022	"{0,0,0}" ));
+DATA(insert ( 2152	float8_accum	float8_variance 1022	"{0,0,0}" ));
 DATA(insert ( 2153	numeric_accum	numeric_variance	1231	"{0,0,0}" ));
 
 /* stddev */
@@ -153,11 +153,11 @@ DATA(insert ( 2159	numeric_accum	numeric_stddev	1231	"{0,0,0}" ));
  * prototypes for functions in pg_aggregate.c
  */
 extern void AggregateCreate(const char *aggName,
-							Oid aggNamespace,
-							List *aggtransfnName,
-							List *aggfinalfnName,
-							Oid aggBaseType,
-							Oid aggTransType,
-							const char *agginitval);
+				Oid aggNamespace,
+				List *aggtransfnName,
+				List *aggfinalfnName,
+				Oid aggBaseType,
+				Oid aggTransType,
+				const char *agginitval);
 
 #endif   /* PG_AGGREGATE_H */

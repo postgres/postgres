@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.74 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.75 2002/09/04 20:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,12 +108,15 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 					   add_base_rels_to_query(root, j->rarg));
 		/* the join's own rtindex is NOT added to result */
 		jrel = build_other_rel(root, j->rtindex);
+
 		/*
-		 * Mark the join's otherrel with outerjoinset = list of baserel ids
-		 * included in the join.  Note we must copy here because result list
-		 * is destructively modified by nconcs at higher levels.
+		 * Mark the join's otherrel with outerjoinset = list of baserel
+		 * ids included in the join.  Note we must copy here because
+		 * result list is destructively modified by nconcs at higher
+		 * levels.
 		 */
 		jrel->outerjoinset = listCopy(result);
+
 		/*
 		 * Safety check: join RTEs should not be SELECT FOR UPDATE targets
 		 */
@@ -172,8 +175,8 @@ add_vars_to_targetlist(Query *root, List *vars)
 		if (rel->reloptkind == RELOPT_OTHER_JOIN_REL)
 		{
 			/* Var is an alias */
-			Node   *expansion;
-			List   *varsused;
+			Node	   *expansion;
+			List	   *varsused;
 
 			expansion = flatten_join_alias_vars((Node *) var,
 												root->rtable, true);
@@ -196,7 +199,7 @@ add_vars_to_targetlist(Query *root, List *vars)
  * distribute_quals_to_rels
  *	  Recursively scan the query's join tree for WHERE and JOIN/ON qual
  *	  clauses, and add these to the appropriate RestrictInfo and JoinInfo
- *	  lists belonging to base RelOptInfos.  Also, base RelOptInfos are marked
+ *	  lists belonging to base RelOptInfos.	Also, base RelOptInfos are marked
  *	  with outerjoinset information, to aid in proper positioning of qual
  *	  clauses that appear above outer joins.
  *
@@ -400,7 +403,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	restrictinfo->right_sortop = InvalidOid;
 	restrictinfo->left_pathkey = NIL;	/* not computable yet */
 	restrictinfo->right_pathkey = NIL;
-	restrictinfo->left_mergescansel = -1; /* not computed until needed */
+	restrictinfo->left_mergescansel = -1;		/* not computed until
+												 * needed */
 	restrictinfo->right_mergescansel = -1;
 	restrictinfo->hashjoinoperator = InvalidOid;
 	restrictinfo->left_bucketsize = -1; /* not computed until needed */
@@ -419,7 +423,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * earlier by add_base_rels_to_query.
 	 *
 	 * We can combine this step with a cross-check that the clause contains
-	 * no relids not within its scope.  If the first crosscheck succeeds,
+	 * no relids not within its scope.	If the first crosscheck succeeds,
 	 * the clause contains no aliases and we needn't look more closely.
 	 */
 	if (!is_subseti(relids, qualscope))
@@ -763,10 +767,10 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	clause = makeNode(Expr);
 	clause->typeOid = BOOLOID;
 	clause->opType = OP_EXPR;
-	clause->oper = (Node *) makeOper(oprid(eq_operator),/* opno */
+	clause->oper = (Node *) makeOper(oprid(eq_operator),		/* opno */
 									 InvalidOid,		/* opid */
-									 BOOLOID,			/* opresulttype */
-									 false);			/* opretset */
+									 BOOLOID,	/* opresulttype */
+									 false);	/* opretset */
 	clause->args = makeList2(item1, item2);
 
 	ReleaseSysCache(eq_operator);

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.5 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/posix_sema.c,v 1.6 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,15 +95,15 @@ PosixSemaphoreCreate(void)
 	}
 
 	/*
-	 * Unlink the semaphore immediately, so it can't be accessed externally.
-	 * This also ensures that it will go away if we crash.
+	 * Unlink the semaphore immediately, so it can't be accessed
+	 * externally. This also ensures that it will go away if we crash.
 	 */
 	sem_unlink(semname);
 
 	return mySem;
 }
 
-#else /* !USE_NAMED_POSIX_SEMAPHORES */
+#else							/* !USE_NAMED_POSIX_SEMAPHORES */
 
 /*
  * PosixSemaphoreCreate
@@ -111,7 +111,7 @@ PosixSemaphoreCreate(void)
  * Attempt to create a new unnamed semaphore.
  */
 static void
-PosixSemaphoreCreate(sem_t *sem)
+PosixSemaphoreCreate(sem_t * sem)
 {
 	if (sem_init(sem, 1, 1) < 0)
 	{
@@ -120,15 +120,14 @@ PosixSemaphoreCreate(sem_t *sem)
 		proc_exit(1);
 	}
 }
-
-#endif /* USE_NAMED_POSIX_SEMAPHORES */
+#endif   /* USE_NAMED_POSIX_SEMAPHORES */
 
 
 /*
  * PosixSemaphoreKill	- removes a semaphore
  */
 static void
-PosixSemaphoreKill(sem_t *sem)
+PosixSemaphoreKill(sem_t * sem)
 {
 #ifdef USE_NAMED_POSIX_SEMAPHORES
 	/* Got to use sem_close for named semaphores */
@@ -149,7 +148,7 @@ PosixSemaphoreKill(sem_t *sem)
  *
  * This is called during postmaster start or shared memory reinitialization.
  * It should do whatever is needed to be able to support up to maxSemas
- * subsequent PGSemaphoreCreate calls.  Also, if any system resources
+ * subsequent PGSemaphoreCreate calls.	Also, if any system resources
  * are acquired here or in PGSemaphoreCreate, register an on_shmem_exit
  * callback to release them.
  *
@@ -197,7 +196,7 @@ ReleaseSemaphores(int status, Datum arg)
 void
 PGSemaphoreCreate(PGSemaphore sema)
 {
-	sem_t  *newsem;
+	sem_t	   *newsem;
 
 	/* Can't do this in a backend, because static state is postmaster's */
 	Assert(!IsUnderPostmaster);
@@ -260,21 +259,21 @@ PGSemaphoreLock(PGSemaphore sema, bool interruptOK)
 	 *
 	 * Each time around the loop, we check for a cancel/die interrupt. We
 	 * assume that if such an interrupt comes in while we are waiting, it
-	 * will cause the sem_wait() call to exit with errno == EINTR, so that we
-	 * will be able to service the interrupt (if not in a critical section
-	 * already).
+	 * will cause the sem_wait() call to exit with errno == EINTR, so that
+	 * we will be able to service the interrupt (if not in a critical
+	 * section already).
 	 *
 	 * Once we acquire the lock, we do NOT check for an interrupt before
 	 * returning.  The caller needs to be able to record ownership of the
 	 * lock before any interrupt can be accepted.
 	 *
 	 * There is a window of a few instructions between CHECK_FOR_INTERRUPTS
-	 * and entering the sem_wait() call.  If a cancel/die interrupt occurs in
-	 * that window, we would fail to notice it until after we acquire the
-	 * lock (or get another interrupt to escape the sem_wait()).  We can
-	 * avoid this problem by temporarily setting ImmediateInterruptOK to
-	 * true before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt in
-	 * this interval will execute directly.  However, there is a huge
+	 * and entering the sem_wait() call.  If a cancel/die interrupt occurs
+	 * in that window, we would fail to notice it until after we acquire
+	 * the lock (or get another interrupt to escape the sem_wait()).  We
+	 * can avoid this problem by temporarily setting ImmediateInterruptOK
+	 * to true before we do CHECK_FOR_INTERRUPTS; then, a die() interrupt
+	 * in this interval will execute directly.	However, there is a huge
 	 * pitfall: there is another window of a few instructions after the
 	 * sem_wait() before we are able to reset ImmediateInterruptOK.  If an
 	 * interrupt occurs then, we'll lose control, which means that the

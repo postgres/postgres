@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.58 2002/09/02 01:05:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.59 2002/09/04 20:31:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,7 +681,7 @@ ExecTypeFromTL(List *targetList, bool hasoid)
 TupleTableSlot *
 TupleDescGetSlot(TupleDesc tupdesc)
 {
-	TupleTableSlot	   *slot;
+	TupleTableSlot *slot;
 
 	/* Make a standalone slot */
 	slot = MakeTupleTableSlot();
@@ -701,19 +701,20 @@ TupleDescGetSlot(TupleDesc tupdesc)
 AttInMetadata *
 TupleDescGetAttInMetadata(TupleDesc tupdesc)
 {
-	int				natts = tupdesc->natts;
-	int				i;
-	Oid				atttypeid;
-	Oid				attinfuncid;
-	FmgrInfo	   *attinfuncinfo;
-	Oid			   *attelems;
-	int32		   *atttypmods;
-	AttInMetadata  *attinmeta;
+	int			natts = tupdesc->natts;
+	int			i;
+	Oid			atttypeid;
+	Oid			attinfuncid;
+	FmgrInfo   *attinfuncinfo;
+	Oid		   *attelems;
+	int32	   *atttypmods;
+	AttInMetadata *attinmeta;
 
 	attinmeta = (AttInMetadata *) palloc(sizeof(AttInMetadata));
 
 	/*
-	 * Gather info needed later to call the "in" function for each attribute
+	 * Gather info needed later to call the "in" function for each
+	 * attribute
 	 */
 	attinfuncinfo = (FmgrInfo *) palloc(natts * sizeof(FmgrInfo));
 	attelems = (Oid *) palloc(natts * sizeof(Oid));
@@ -741,14 +742,14 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 HeapTuple
 BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 {
-	TupleDesc			tupdesc = attinmeta->tupdesc;
-	int					natts = tupdesc->natts;
-	Datum			   *dvalues;
-	char			   *nulls;
-	int					i;
-	Oid					attelem;
-	int32				atttypmod;
-	HeapTuple			tuple;
+	TupleDesc	tupdesc = attinmeta->tupdesc;
+	int			natts = tupdesc->natts;
+	Datum	   *dvalues;
+	char	   *nulls;
+	int			i;
+	Oid			attelem;
+	int32		atttypmod;
+	HeapTuple	tuple;
 
 	dvalues = (Datum *) palloc(natts * sizeof(Datum));
 	nulls = (char *) palloc(natts * sizeof(char));
@@ -843,13 +844,14 @@ do_text_output_multiline(TupOutputState *tstate, char *text)
 {
 	while (*text)
 	{
-		char   *eol;
+		char	   *eol;
 
 		eol = strchr(text, '\n');
 		if (eol)
 			*eol++ = '\0';
 		else
-			eol = text + strlen(text);
+			eol = text +strlen(text);
+
 		do_tup_output(tstate, &text);
 		text = eol;
 	}

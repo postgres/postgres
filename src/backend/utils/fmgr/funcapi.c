@@ -7,7 +7,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.5 2002/08/30 19:56:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.6 2002/09/04 20:31:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,8 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 		 */
 		fcinfo->flinfo->fn_extra = retval;
 	}
-	else	/* second and subsequent calls */
+	else
+/* second and subsequent calls */
 	{
 		elog(ERROR, "init_MultiFuncCall may not be called more than once");
 
@@ -75,7 +76,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 
 /*
  * per_MultiFuncCall
- * 
+ *
  * Do Multi-function per-call setup
  */
 FuncCallContext *
@@ -87,8 +88,8 @@ per_MultiFuncCall(PG_FUNCTION_ARGS)
 	 * Clear the TupleTableSlot, if present.  This is for safety's sake:
 	 * the Slot will be in a long-lived context (it better be, if the
 	 * FuncCallContext is pointing to it), but in most usage patterns the
-	 * tuples stored in it will be in the function's per-tuple context.
-	 * So at the beginning of each call, the Slot will hold a dangling
+	 * tuples stored in it will be in the function's per-tuple context. So
+	 * at the beginning of each call, the Slot will hold a dangling
 	 * pointer to an already-recycled tuple.  We clear it out here.  (See
 	 * also the definition of TupleGetDatum() in funcapi.h!)
 	 */
@@ -109,8 +110,8 @@ end_MultiFuncCall(PG_FUNCTION_ARGS, FuncCallContext *funcctx)
 	fcinfo->flinfo->fn_extra = NULL;
 
 	/*
-	 * Caller is responsible to free up memory for individual
-	 * struct elements other than att_in_funcinfo and elements.
+	 * Caller is responsible to free up memory for individual struct
+	 * elements other than att_in_funcinfo and elements.
 	 */
 	if (funcctx->attinmeta != NULL)
 		pfree(funcctx->attinmeta);

@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.34 2002/09/03 21:45:43 petere Exp $
+ * $Id: mbutils.c,v 1.35 2002/09/04 20:31:31 momjian Exp $
  */
 #include "postgres.h"
 #include "access/xact.h"
@@ -27,15 +27,15 @@ static pg_enc2name *DatabaseEncoding = &pg_enc2name_tbl[PG_SQL_ASCII];
  * allocated in TopMemoryContext so that it survives outside
  * transactions. See SetClientEncoding() for more details.
  */
-static 	FmgrInfo		*ToServerConvPorc = NULL;
-static 	FmgrInfo		*ToClientConvPorc = NULL;
+static FmgrInfo *ToServerConvPorc = NULL;
+static FmgrInfo *ToClientConvPorc = NULL;
 
 /* Internal functions */
 static unsigned char *
-perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server);
+			perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server);
 
 static int
-cliplen(const unsigned char *str, int len, int limit);
+			cliplen(const unsigned char *str, int len, int limit);
 
 /*
  * Set the client encoding and save fmgrinfo for the converion
@@ -46,9 +46,10 @@ int
 SetClientEncoding(int encoding, bool doit)
 {
 	int			current_server_encoding;
-	Oid			to_server_proc, to_client_proc;
-	FmgrInfo	*to_server = NULL;
-	FmgrInfo	*to_client = NULL;
+	Oid			to_server_proc,
+				to_client_proc;
+	FmgrInfo   *to_server = NULL;
+	FmgrInfo   *to_client = NULL;
 	MemoryContext oldcontext;
 
 	current_server_encoding = GetDatabaseEncoding();
@@ -57,15 +58,15 @@ SetClientEncoding(int encoding, bool doit)
 		return (-1);
 
 	if (current_server_encoding == encoding ||
-		(current_server_encoding == PG_SQL_ASCII || encoding == PG_SQL_ASCII))
+	(current_server_encoding == PG_SQL_ASCII || encoding == PG_SQL_ASCII))
 	{
 		ClientEncoding = &pg_enc2name_tbl[encoding];
 		return 0;
 	}
 
-	/* XXX We cannot use FindDefaultConversionProc() while in
-	 * bootstrap or initprocessing mode since namespace functions will
-	 * not work.
+	/*
+	 * XXX We cannot use FindDefaultConversionProc() while in bootstrap or
+	 * initprocessing mode since namespace functions will not work.
 	 */
 	if (IsTransactionState())
 	{
@@ -76,8 +77,8 @@ SetClientEncoding(int encoding, bool doit)
 			return -1;
 
 		/*
-		 * load the fmgr info into TopMemoryContext so that it
-		 * survives outside transaction.
+		 * load the fmgr info into TopMemoryContext so that it survives
+		 * outside transaction.
 		 */
 		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 		to_server = palloc(sizeof(FmgrInfo));
@@ -94,7 +95,7 @@ SetClientEncoding(int encoding, bool doit)
 	{
 		ClientEncoding = &pg_enc2name_tbl[encoding];
 
-		if(ToServerConvPorc != NULL)
+		if (ToServerConvPorc != NULL)
 		{
 			if (ToServerConvPorc->fn_extra)
 				pfree(ToServerConvPorc->fn_extra);
@@ -102,7 +103,7 @@ SetClientEncoding(int encoding, bool doit)
 		}
 		ToServerConvPorc = to_server;
 
-		if(ToClientConvPorc != NULL)
+		if (ToClientConvPorc != NULL)
 		{
 			if (ToClientConvPorc->fn_extra)
 				pfree(ToClientConvPorc->fn_extra);
@@ -152,11 +153,11 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 						  int src_encoding, int dest_encoding)
 {
 	unsigned char *result;
-	Oid	proc;
+	Oid			proc;
 
 	if (!IsTransactionState())
 		return src;
-	
+
 	if (src_encoding == dest_encoding)
 		return src;
 
@@ -171,13 +172,14 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 		return src;
 	}
 
-	/* XXX we shoud avoid throwing errors in OidFuctionCall. Otherwise
-	 * we are going into inifinite loop!  So we have to make sure that
-	 * the function exists before calling OidFunctionCall.
+	/*
+	 * XXX we shoud avoid throwing errors in OidFuctionCall. Otherwise we
+	 * are going into inifinite loop!  So we have to make sure that the
+	 * function exists before calling OidFunctionCall.
 	 */
 	if (!SearchSysCacheExists(PROCOID,
-							 ObjectIdGetDatum(proc),
-							 0, 0, 0))
+							  ObjectIdGetDatum(proc),
+							  0, 0, 0))
 	{
 		elog(LOG, "default conversion proc %u for %s to %s not found in pg_proc",
 			 proc,
@@ -204,17 +206,17 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 Datum
 pg_convert(PG_FUNCTION_ARGS)
 {
-	Datum	string = PG_GETARG_DATUM(0);
-	Datum	dest_encoding_name = PG_GETARG_DATUM(1);
-	Datum	src_encoding_name = DirectFunctionCall1(
-	    namein, CStringGetDatum(DatabaseEncoding->name));
-	Datum	result;
+	Datum		string = PG_GETARG_DATUM(0);
+	Datum		dest_encoding_name = PG_GETARG_DATUM(1);
+	Datum		src_encoding_name = DirectFunctionCall1(
+						namein, CStringGetDatum(DatabaseEncoding->name));
+	Datum		result;
 
 	result = DirectFunctionCall3(
-	    pg_convert2, string, src_encoding_name, dest_encoding_name);
+			 pg_convert2, string, src_encoding_name, dest_encoding_name);
 
 	/* free memory allocated by namein */
-	pfree((void *)src_encoding_name);
+	pfree((void *) src_encoding_name);
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -235,7 +237,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 	unsigned char *result;
 	text	   *retval;
 	unsigned char *str;
-	int len;
+	int			len;
 
 	if (src_encoding < 0)
 		elog(ERROR, "Invalid source encoding name %s", src_encoding_name);
@@ -252,9 +254,11 @@ pg_convert2(PG_FUNCTION_ARGS)
 	if (result == NULL)
 		elog(ERROR, "Encoding conversion failed");
 
-	/* build text data type structre. we cannot use textin() here,
-	   since textin assumes that input string encoding is same as
-	   database encoding.  */
+	/*
+	 * build text data type structre. we cannot use textin() here, since
+	 * textin assumes that input string encoding is same as database
+	 * encoding.
+	 */
 	len = strlen(result) + VARHDRSZ;
 	retval = palloc(len);
 	VARATT_SIZEP(retval) = len;
@@ -262,7 +266,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 
 	if (result != str)
 		pfree(result);
-        pfree(str);
+	pfree(str);
 
 	/* free memory if allocated by the toaster */
 	PG_FREE_IF_COPY(string, 0);
@@ -301,18 +305,19 @@ pg_server_to_client(unsigned char *s, int len)
 }
 
 /*
- *  Perform default encoding conversion using cached FmgrInfo. Since
- *  this function does not access database at all, it is safe to call
- *  outside transactions. Explicit setting client encoding required
- *  before calling this function. Otherwise no conversion is
- *  performed.
+ *	Perform default encoding conversion using cached FmgrInfo. Since
+ *	this function does not access database at all, it is safe to call
+ *	outside transactions. Explicit setting client encoding required
+ *	before calling this function. Otherwise no conversion is
+ *	performed.
 */
 static unsigned char *
 perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server)
 {
 	unsigned char *result;
-	int src_encoding, dest_encoding;
-	FmgrInfo *flinfo;
+	int			src_encoding,
+				dest_encoding;
+	FmgrInfo   *flinfo;
 
 	if (is_client_to_server)
 	{
@@ -376,7 +381,7 @@ pg_mbstrlen(const unsigned char *mbstr)
 
 	/* optimization for single byte encoding */
 	if (pg_database_encoding_max_length() == 1)
-		return strlen((char *)mbstr);
+		return strlen((char *) mbstr);
 
 	while (*mbstr)
 	{
@@ -506,9 +511,9 @@ pg_client_encoding(PG_FUNCTION_ARGS)
 }
 
 static int
-cliplen(const unsigned char *str, int len, int limit) 
+cliplen(const unsigned char *str, int len, int limit)
 {
-	int	l = 0;
+	int			l = 0;
 	const unsigned char *s;
 
 	for (s = str; *s; s++, l++)

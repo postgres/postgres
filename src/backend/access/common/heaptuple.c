@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.81 2002/09/02 01:05:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.82 2002/09/04 20:31:08 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -326,9 +326,9 @@ nocachegetattr(HeapTuple tuple,
 
 	/*
 	 * If slow is false, and we got here, we know that we have a tuple
-	 * with no nulls or var-widths before the target attribute. If possible,
-	 * we also want to initialize the remainder of the attribute cached
-	 * offset values.
+	 * with no nulls or var-widths before the target attribute. If
+	 * possible, we also want to initialize the remainder of the attribute
+	 * cached offset values.
 	 */
 	if (!slow)
 	{
@@ -702,8 +702,8 @@ heap_modifytuple(HeapTuple tuple,
 							  nulls);
 
 	/*
-	 * copy the identification info of the old tuple: t_ctid, t_self,
-	 * and OID (if any)
+	 * copy the identification info of the old tuple: t_ctid, t_self, and
+	 * OID (if any)
 	 */
 	newTuple->t_data->t_ctid = tuple->t_data->t_ctid;
 	newTuple->t_self = tuple->t_self;

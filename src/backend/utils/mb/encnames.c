@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.9 2002/09/03 21:45:43 petere Exp $
+ * $Id: encnames.c,v 1.10 2002/09/04 20:31:31 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -55,12 +55,12 @@ pg_encname	pg_encname_tbl[] =
 								 * for Japanese, stdandard OSF */
 	{
 		"euckr", PG_EUC_KR
-	},							/* EUC-KR; Extended Unix Code for
-                                                                 * Korean , KS X 1001 standard */
+	},							/* EUC-KR; Extended Unix Code for Korean ,
+								 * KS X 1001 standard */
 	{
 		"euctw", PG_EUC_TW
 	},							/* EUC-TW; Extended Unix Code for
-
+								 *
 								 * traditional Chinese */
 	{
 		"gb18030", PG_GB18030
@@ -171,7 +171,7 @@ pg_encname	pg_encname_tbl[] =
 		"tcvn", PG_TCVN
 	},							/* TCVN; Vietnamese TCVN-5712 */
 	{
-		"tcvn5712",PG_TCVN
+		"tcvn5712", PG_TCVN
 	},							/* alias for TCVN */
 	{
 		"uhc", PG_UHC

@@ -44,7 +44,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.31 2002/06/20 20:29:52 momjian Exp $
+ * $Id: dest.h,v 1.32 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,10 +85,10 @@ struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
 	void		(*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
-								 DestReceiver *self);
+											 DestReceiver *self);
 	/* Initialization and teardown: */
 	void		(*setup) (DestReceiver *self, int operation,
-						  const char *portalName, TupleDesc typeinfo);
+							 const char *portalName, TupleDesc typeinfo);
 	void		(*cleanup) (DestReceiver *self);
 	/* Private fields might appear beyond this point... */
 };

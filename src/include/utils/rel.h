@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.62 2002/08/11 21:17:35 tgl Exp $
+ * $Id: rel.h,v 1.63 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,6 +113,7 @@ typedef struct RelationData
 								 * InvalidBlockNumber */
 	int			rd_refcnt;		/* reference count */
 	bool		rd_isnew;		/* rel was created in current xact */
+
 	/*
 	 * NOTE: rd_isnew should be relied on only for optimization purposes;
 	 * it is possible for new-ness to be "forgotten" (eg, after CLUSTER).

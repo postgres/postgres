@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.88 2002/08/19 15:08:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.89 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				p_target = nconc(p_target,
 								 ExpandAllTables(pstate));
 			}
-			else if (strcmp(strVal(nth(numnames-1, fields)), "*") == 0)
+			else if (strcmp(strVal(nth(numnames - 1, fields)), "*") == 0)
 			{
 				/*
 				 * Target item is relation.*, expand that table (eg.
@@ -136,21 +136,22 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						relname = strVal(lsecond(fields));
 						break;
 					case 4:
-					{
-						char   *name1 = strVal(lfirst(fields));
+						{
+							char	   *name1 = strVal(lfirst(fields));
 
-						/*
-						 * We check the catalog name and then ignore it.
-						 */
-						if (strcmp(name1, DatabaseName) != 0)
-							elog(ERROR, "Cross-database references are not implemented");
-						schemaname = strVal(lsecond(fields));
-						relname = strVal(lfirst(lnext(lnext(fields))));
-						break;
-					}
+							/*
+							 * We check the catalog name and then ignore
+							 * it.
+							 */
+							if (strcmp(name1, DatabaseName) != 0)
+								elog(ERROR, "Cross-database references are not implemented");
+							schemaname = strVal(lsecond(fields));
+							relname = strVal(lfirst(lnext(lnext(fields))));
+							break;
+						}
 					default:
 						elog(ERROR, "Invalid qualified name syntax (too many names)");
-						schemaname = NULL; /* keep compiler quiet */
+						schemaname = NULL;		/* keep compiler quiet */
 						relname = NULL;
 						break;
 				}
@@ -180,8 +181,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 			InsertDefault *newnode = makeNode(InsertDefault);
 
 			/*
-			 * If this is a DEFAULT element, we make a junk entry
-			 * which will get dropped on return to transformInsertStmt().
+			 * If this is a DEFAULT element, we make a junk entry which
+			 * will get dropped on return to transformInsertStmt().
 			 */
 			p_target = lappend(p_target, newnode);
 		}
@@ -385,7 +386,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 		for (i = 0; i < numcol; i++)
 		{
-			ResTarget	   *col;
+			ResTarget  *col;
 
 			if (attr[i]->attisdropped)
 				continue;
@@ -503,7 +504,7 @@ FigureColnameInternal(Node *node, char **name)
 	{
 		case T_ColumnRef:
 			{
-				char	 *cname = strVal(llast(((ColumnRef *) node)->fields));
+				char	   *cname = strVal(llast(((ColumnRef *) node)->fields));
 
 				if (strcmp(cname, "*") != 0)
 				{
@@ -514,7 +515,7 @@ FigureColnameInternal(Node *node, char **name)
 			break;
 		case T_ExprFieldSelect:
 			{
-				char	 *fname = strVal(llast(((ExprFieldSelect *) node)->fields));
+				char	   *fname = strVal(llast(((ExprFieldSelect *) node)->fields));
 
 				if (strcmp(fname, "*") != 0)
 				{

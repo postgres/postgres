@@ -3,7 +3,7 @@
  * user.h
  *
  *
- * $Id: user.h,v 1.18 2002/04/04 04:25:53 momjian Exp $
+ * $Id: user.h,v 1.19 2002/09/04 20:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 
 #define PWD_FILE	"pg_pwd"
 
-#define USER_GROUP_FILE	"pg_group"
+#define USER_GROUP_FILE "pg_group"
 
 
 extern char *group_getfilename(void);

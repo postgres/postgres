@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.49 2002/07/03 16:47:46 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.50 2002/09/04 20:31:36 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -396,15 +396,15 @@ MainLoop(FILE *source)
 
 					if (i < len)
 					{
-						thislen = PQmblen(line+i, pset.encoding);
+						thislen = PQmblen(line + i, pset.encoding);
 						goto rescan;	/* reparse the just substituted */
 					}
 				}
 				else
 				{
 					/*
-					 * if the variable doesn't exist we'll leave the string as
-					 * is ... move on ...
+					 * if the variable doesn't exist we'll leave the
+					 * string as is ... move on ...
 					 */
 				}
 			}

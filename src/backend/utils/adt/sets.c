@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.53 2002/09/02 01:05:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.54 2002/09/04 20:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,19 +54,19 @@ SetDefine(char *querystr, Oid elemType)
 	char		repl[Natts_pg_proc];
 
 	setoid = ProcedureCreate(procname,	/* changed below, after oid known */
-							 PG_CATALOG_NAMESPACE, /* XXX wrong */
+							 PG_CATALOG_NAMESPACE,		/* XXX wrong */
 							 false,		/* don't replace */
 							 true,		/* returnsSet */
 							 elemType,	/* returnType */
-							 SQLlanguageId,	/* language */
+							 SQLlanguageId,		/* language */
 							 F_FMGR_SQL_VALIDATOR,
 							 querystr,	/* prosrc */
 							 fileName,	/* probin */
 							 false,		/* not aggregate */
 							 false,		/* security invoker */
 							 false,		/* isStrict (irrelevant, no args) */
-							 PROVOLATILE_VOLATILE,	/* assume unsafe */
-							 0,			/* parameterCount */
+							 PROVOLATILE_VOLATILE,		/* assume unsafe */
+							 0, /* parameterCount */
 							 NULL);		/* parameterTypes */
 
 	/*

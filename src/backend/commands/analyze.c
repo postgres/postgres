@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.45 2002/08/26 18:45:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.46 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,10 +110,10 @@ typedef struct
 
 
 /* Default statistics target (GUC parameter) */
-int		default_statistics_target = 10;
+int			default_statistics_target = 10;
 
 
-static int elevel = -1;
+static int	elevel = -1;
 
 static MemoryContext anl_context = NULL;
 
@@ -163,9 +163,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		elevel = DEBUG1;
 
 	/*
-	 * Use the current context for storing analysis info.  vacuum.c ensures
-	 * that this context will be cleared when I return, thus releasing the
-	 * memory allocated here.
+	 * Use the current context for storing analysis info.  vacuum.c
+	 * ensures that this context will be cleared when I return, thus
+	 * releasing the memory allocated here.
 	 */
 	anl_context = CurrentMemoryContext;
 
@@ -219,7 +219,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * We can ANALYZE any table except pg_statistic. See update_attstats
 	 */
 	if (IsSystemNamespace(RelationGetNamespace(onerel)) &&
-		strcmp(RelationGetRelationName(onerel), StatisticRelationName) == 0)
+	 strcmp(RelationGetRelationName(onerel), StatisticRelationName) == 0)
 	{
 		relation_close(onerel, AccessShareLock);
 		return;
@@ -1042,11 +1042,15 @@ compute_minimal_stats(VacAttrStats *stats,
 			 */
 			int			f1 = nonnull_cnt - summultiple;
 			int			d = f1 + nmultiple;
-			double		numer, denom, stadistinct;
+			double		numer,
+						denom,
+						stadistinct;
 
-			numer = (double) numrows * (double) d;
+			numer = (double) numrows *(double) d;
+
 			denom = (double) (numrows - f1) +
-				(double) f1 * (double) numrows / totalrows;
+				(double) f1 *(double) numrows / totalrows;
+
 			stadistinct = numer / denom;
 			/* Clamp to sane range in case of roundoff error */
 			if (stadistinct < (double) d)
@@ -1361,11 +1365,15 @@ compute_scalar_stats(VacAttrStats *stats,
 			 */
 			int			f1 = ndistinct - nmultiple + toowide_cnt;
 			int			d = f1 + nmultiple;
-			double		numer, denom, stadistinct;
+			double		numer,
+						denom,
+						stadistinct;
 
-			numer = (double) numrows * (double) d;
+			numer = (double) numrows *(double) d;
+
 			denom = (double) (numrows - f1) +
-				(double) f1 * (double) numrows / totalrows;
+				(double) f1 *(double) numrows / totalrows;
+
 			stadistinct = numer / denom;
 			/* Clamp to sane range in case of roundoff error */
 			if (stadistinct < (double) d)
@@ -1666,7 +1674,7 @@ compare_mcvs(const void *a, const void *b)
  *		relation for ANALYZE (ie, ShareUpdateExclusiveLock instead
  *		of AccessShareLock); but that cure seems worse than the disease,
  *		especially now that ANALYZE doesn't start a new transaction
- *		for each relation.  The lock could be held for a long time...
+ *		for each relation.	The lock could be held for a long time...
  */
 static void
 update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.42 2002/08/29 07:22:27 ishii Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.43 2002/09/04 20:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,8 +850,8 @@ repeat(PG_FUNCTION_ARGS)
 	/* Check for integer overflow */
 	if (slen != 0 && count != 0)
 	{
-		int check = count * slen;
-		int check2 = check + VARHDRSZ;
+		int			check = count * slen;
+		int			check2 = check + VARHDRSZ;
 
 		if ((check / slen) != count || check2 <= check)
 			elog(ERROR, "Requested buffer is too large.");

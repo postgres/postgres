@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.50 2002/09/01 16:28:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.51 2002/09/04 20:31:47 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -216,7 +216,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			{
 				if (procStruct->prorettype == VOIDOID ||
 					procStruct->prorettype == RECORDOID)
-					/* okay */;
+					 /* okay */ ;
 				else if (procStruct->prorettype == TRIGGEROID ||
 						 procStruct->prorettype == OPAQUEOID)
 					elog(ERROR, "plpgsql functions cannot return type %s"
@@ -246,7 +246,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			{
 				char		buf[32];
 
-				snprintf(buf, sizeof(buf), "$%d", i + 1);	/* name for variable */
+				snprintf(buf, sizeof(buf), "$%d", i + 1);		/* name for variable */
 
 				/*
 				 * Get the parameters type
@@ -1138,7 +1138,7 @@ build_rowtype(Oid classOid)
 	PLpgSQL_row *row;
 	HeapTuple	classtup;
 	Form_pg_class classStruct;
-	const char  *relname;
+	const char *relname;
 	int			i;
 
 	/*
@@ -1178,7 +1178,7 @@ build_rowtype(Oid classOid)
 		Form_pg_attribute attrStruct;
 		HeapTuple	typetup;
 		Form_pg_type typeStruct;
-		const char	   *attname;
+		const char *attname;
 		PLpgSQL_var *var;
 
 		/*

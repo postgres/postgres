@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.170 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.171 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,9 @@ typedef enum CopyReadResult
 
 /* non-export function prototypes */
 static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
-				   FILE *fp, char *delim, char *null_print);
+	   FILE *fp, char *delim, char *null_print);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
-					 FILE *fp, char *delim, char *null_print);
+		 FILE *fp, char *delim, char *null_print);
 static Oid	GetInputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static char *CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result);
@@ -268,17 +268,17 @@ CopyDonePeek(FILE *fp, int c, bool pickup)
 void
 DoCopy(const CopyStmt *stmt)
 {
-	RangeVar *relation = stmt->relation;
-	char *filename = stmt->filename;
-	bool is_from = stmt->is_from;
-	bool pipe = (stmt->filename == NULL);
-	List *option;
-	List *attnamelist = stmt->attlist;
-	List *attnumlist;
-	bool binary = false;
-	bool oids = false;
-	char *delim = NULL;
-	char *null_print = NULL;
+	RangeVar   *relation = stmt->relation;
+	char	   *filename = stmt->filename;
+	bool		is_from = stmt->is_from;
+	bool		pipe = (stmt->filename == NULL);
+	List	   *option;
+	List	   *attnamelist = stmt->attlist;
+	List	   *attnumlist;
+	bool		binary = false;
+	bool		oids = false;
+	char	   *delim = NULL;
+	char	   *null_print = NULL;
 	FILE	   *fp;
 	Relation	rel;
 	AclMode		required_access = (is_from ? ACL_INSERT : ACL_SELECT);
@@ -336,7 +336,7 @@ DoCopy(const CopyStmt *stmt)
 
 	if (!null_print)
 		null_print = "\\N";
-	
+
 	/*
 	 * Open and lock the relation, using the appropriate lock type.
 	 */
@@ -512,8 +512,8 @@ DoCopy(const CopyStmt *stmt)
  * Copy from relation TO file.
  */
 static void
-CopyTo(Relation rel, List *attnumlist, bool binary, bool oids, 
-		 FILE *fp, char *delim, char *null_print)
+CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
+	   FILE *fp, char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
@@ -537,24 +537,23 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	/*
 	 * Get info about the columns we need to process.
 	 *
-	 * For binary copy we really only need isvarlena, but compute it
-	 * all...
+	 * For binary copy we really only need isvarlena, but compute it all...
 	 */
 	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
 	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
 	isvarlena = (bool *) palloc(num_phys_attrs * sizeof(bool));
 	foreach(cur, attnumlist)
 	{
-		int		attnum = lfirsti(cur);
+		int			attnum = lfirsti(cur);
 		Oid			out_func_oid;
 
-		if (!getTypeOutputInfo(attr[attnum-1]->atttypid,
-							   &out_func_oid, &elements[attnum-1],
-							   &isvarlena[attnum-1]))
+		if (!getTypeOutputInfo(attr[attnum - 1]->atttypid,
+							   &out_func_oid, &elements[attnum - 1],
+							   &isvarlena[attnum - 1]))
 			elog(ERROR, "COPY: couldn't lookup info for type %u",
-				 attr[attnum-1]->atttypid);
-		fmgr_info(out_func_oid, &out_functions[attnum-1]);
-		if (binary && attr[attnum-1]->attlen == -2)
+				 attr[attnum - 1]->atttypid);
+		fmgr_info(out_func_oid, &out_functions[attnum - 1]);
+		if (binary && attr[attnum - 1]->attlen == -2)
 			elog(ERROR, "COPY BINARY: cstring not supported");
 	}
 
@@ -597,7 +596,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			/* Send OID if wanted --- note fld_count doesn't include it */
 			if (oids)
 			{
-				Oid oid = HeapTupleGetOid(tuple);
+				Oid			oid = HeapTupleGetOid(tuple);
 
 				fld_size = sizeof(Oid);
 				CopySendData(&fld_size, sizeof(int16), fp);
@@ -610,7 +609,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			if (oids)
 			{
 				string = DatumGetCString(DirectFunctionCall1(oidout,
-								ObjectIdGetDatum(HeapTupleGetOid(tuple))));
+							  ObjectIdGetDatum(HeapTupleGetOid(tuple))));
 				CopySendString(string, fp);
 				pfree(string);
 				need_delim = true;
@@ -619,7 +618,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 		foreach(cur, attnumlist)
 		{
-			int		attnum = lfirsti(cur);
+			int			attnum = lfirsti(cur);
 			Datum		origvalue,
 						value;
 			bool		isnull;
@@ -653,25 +652,25 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 				 * (or for binary case, becase we must output untoasted
 				 * value).
 				 */
-				if (isvarlena[attnum-1])
+				if (isvarlena[attnum - 1])
 					value = PointerGetDatum(PG_DETOAST_DATUM(origvalue));
 				else
 					value = origvalue;
 
 				if (!binary)
 				{
-					string = DatumGetCString(FunctionCall3(&out_functions[attnum-1],
+					string = DatumGetCString(FunctionCall3(&out_functions[attnum - 1],
 														   value,
-										   ObjectIdGetDatum(elements[attnum-1]),
-									 Int32GetDatum(attr[attnum-1]->atttypmod)));
+								  ObjectIdGetDatum(elements[attnum - 1]),
+							Int32GetDatum(attr[attnum - 1]->atttypmod)));
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
 				else
 				{
-					fld_size = attr[attnum-1]->attlen;
+					fld_size = attr[attnum - 1]->attlen;
 					CopySendData(&fld_size, sizeof(int16), fp);
-					if (isvarlena[attnum-1])
+					if (isvarlena[attnum - 1])
 					{
 						/* varlena */
 						Assert(fld_size == -1);
@@ -679,7 +678,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 									 VARSIZE(value),
 									 fp);
 					}
-					else if (!attr[attnum-1]->attbyval)
+					else if (!attr[attnum - 1]->attbyval)
 					{
 						/* fixed-length pass-by-reference */
 						Assert(fld_size > 0);
@@ -734,13 +733,15 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
  * Copy FROM file to relation.
  */
 static void
-CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids, 
+CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 FILE *fp, char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
-	AttrNumber	num_phys_attrs, attr_count, num_defaults;
+	AttrNumber	num_phys_attrs,
+				attr_count,
+				num_defaults;
 	FmgrInfo   *in_functions;
 	Oid		   *elements;
 	int			i;
@@ -755,8 +756,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	TupleTableSlot *slot;
 	bool		file_has_oids;
 	int		   *defmap;
-	Node	  **defexprs; /* array of default att expressions */
-	ExprContext *econtext; /* used for ExecEvalExpr for default atts */
+	Node	  **defexprs;		/* array of default att expressions */
+	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
 
 	tupDesc = RelationGetDescr(rel);
@@ -787,9 +788,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	ExecSetSlotDescriptor(slot, tupDesc, false);
 
 	/*
-	 * pick up the input function and default expression (if any) for 
-	 * each attribute in the relation.  (We don't actually use the
-	 * input function if it's a binary copy.)
+	 * pick up the input function and default expression (if any) for each
+	 * attribute in the relation.  (We don't actually use the input
+	 * function if it's a binary copy.)
 	 */
 	defmap = (int *) palloc(sizeof(int) * num_phys_attrs);
 	defexprs = (Node **) palloc(sizeof(Node *) * num_phys_attrs);
@@ -874,13 +875,13 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 	while (!done)
 	{
-		bool	skip_tuple;
-		Oid		loaded_oid = InvalidOid;
+		bool		skip_tuple;
+		Oid			loaded_oid = InvalidOid;
 
 		CHECK_FOR_INTERRUPTS();
 
 		copy_lineno++;
-		
+
 		/* Reset the per-tuple exprcontext */
 		ResetPerTupleExprContext(estate);
 
@@ -894,8 +895,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 		if (!binary)
 		{
-			CopyReadResult	 result = NORMAL_ATTR;
-			char			*string;
+			CopyReadResult result = NORMAL_ATTR;
+			char	   *string;
 
 			if (file_has_oids)
 			{
@@ -918,14 +919,14 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 						elog(ERROR, "Invalid Oid");
 				}
 			}
-      
+
 			/*
 			 * Loop to read the user attributes on the line.
 			 */
 			foreach(cur, attnumlist)
 			{
-				int		attnum = lfirsti(cur);
-				int		m = attnum - 1;
+				int			attnum = lfirsti(cur);
+				int			m = attnum - 1;
 
 				/*
 				 * If prior attr on this line was ended by newline or EOF,
@@ -953,8 +954,8 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				{
 					values[m] = FunctionCall3(&in_functions[m],
 											  CStringGetDatum(string),
-										   	  ObjectIdGetDatum(elements[m]),
-									  		  Int32GetDatum(attr[m]->atttypmod));
+										   ObjectIdGetDatum(elements[m]),
+									  Int32GetDatum(attr[m]->atttypmod));
 					nulls[m] = ' ';
 				}
 			}
@@ -1009,7 +1010,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			i = 0;
 			foreach(cur, attnumlist)
 			{
-				int		attnum = lfirsti(cur);
+				int			attnum = lfirsti(cur);
 
 				i++;
 
@@ -1018,9 +1019,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					elog(ERROR, "COPY BINARY: unexpected EOF");
 				if (fld_size == 0)
 					continue;	/* it's NULL; nulls[attnum-1] already set */
-				if (fld_size != attr[attnum-1]->attlen)
+				if (fld_size != attr[attnum - 1]->attlen)
 					elog(ERROR, "COPY BINARY: sizeof(field %d) is %d, expected %d",
-						 i, (int) fld_size, (int) attr[attnum-1]->attlen);
+					  i, (int) fld_size, (int) attr[attnum - 1]->attlen);
 				if (fld_size == -1)
 				{
 					/* varlena field */
@@ -1039,9 +1040,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 								fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[attnum-1] = PointerGetDatum(varlena_ptr);
+					values[attnum - 1] = PointerGetDatum(varlena_ptr);
 				}
-				else if (!attr[attnum-1]->attbyval)
+				else if (!attr[attnum - 1]->attbyval)
 				{
 					/* fixed-length pass-by-reference */
 					Pointer		refval_ptr;
@@ -1051,7 +1052,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					CopyGetData(refval_ptr, fld_size, fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[attnum-1] = PointerGetDatum(refval_ptr);
+					values[attnum - 1] = PointerGetDatum(refval_ptr);
 				}
 				else
 				{
@@ -1059,29 +1060,28 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					Datum		datumBuf;
 
 					/*
-					 * We need this horsing around because we don't
-					 * know how shorter data values are aligned within
-					 * a Datum.
+					 * We need this horsing around because we don't know
+					 * how shorter data values are aligned within a Datum.
 					 */
 					Assert(fld_size > 0 && fld_size <= sizeof(Datum));
 					CopyGetData(&datumBuf, fld_size, fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[attnum-1] = fetch_att(&datumBuf, true, fld_size);
+					values[attnum - 1] = fetch_att(&datumBuf, true, fld_size);
 				}
 
-				nulls[attnum-1] = ' ';
+				nulls[attnum - 1] = ' ';
 			}
 		}
 
 		/*
-		 * Now compute and insert any defaults available for the
-		 * columns not provided by the input data.  Anything not
-		 * processed here or above will remain NULL.
+		 * Now compute and insert any defaults available for the columns
+		 * not provided by the input data.	Anything not processed here or
+		 * above will remain NULL.
 		 */
 		for (i = 0; i < num_defaults; i++)
 		{
-			bool isnull;
+			bool		isnull;
 
 			values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
 											 &isnull, NULL);
@@ -1093,7 +1093,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 * And now we can form the input tuple.
 		 */
 		tuple = heap_formtuple(tupDesc, values, nulls);
-  	
+
 		if (oids && file_has_oids)
 			HeapTupleSetOid(tuple, loaded_oid);
 
@@ -1464,14 +1464,14 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 static List *
 CopyGetAttnums(Relation rel, List *attnamelist)
 {
-	List		*attnums = NIL;
+	List	   *attnums = NIL;
 
 	if (attnamelist == NIL)
 	{
 		/* Generate default column list */
-		TupleDesc	 tupDesc = RelationGetDescr(rel);
+		TupleDesc	tupDesc = RelationGetDescr(rel);
 		Form_pg_attribute *attr = tupDesc->attrs;
-		int			 attr_count = tupDesc->natts;
+		int			attr_count = tupDesc->natts;
 		int			i;
 
 		for (i = 0; i < attr_count; i++)

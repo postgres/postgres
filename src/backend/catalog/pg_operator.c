@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.76 2002/08/22 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.77 2002/09/04 20:31:14 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -34,28 +34,28 @@
 
 
 static Oid OperatorGet(const char *operatorName,
-					   Oid operatorNamespace,
-					   Oid leftObjectId,
-					   Oid rightObjectId,
-					   bool *defined);
+			Oid operatorNamespace,
+			Oid leftObjectId,
+			Oid rightObjectId,
+			bool *defined);
 
 static Oid OperatorLookup(List *operatorName,
-						  Oid leftObjectId,
-						  Oid rightObjectId,
-						  bool *defined);
+			   Oid leftObjectId,
+			   Oid rightObjectId,
+			   bool *defined);
 
 static Oid OperatorShellMake(const char *operatorName,
-							 Oid operatorNamespace,
-							 Oid leftTypeId,
-							 Oid rightTypeId);
+				  Oid operatorNamespace,
+				  Oid leftTypeId,
+				  Oid rightTypeId);
 
 static void OperatorUpd(Oid baseId, Oid commId, Oid negId);
 
 static Oid get_other_operator(List *otherOp,
-							  Oid otherLeftTypeId, Oid otherRightTypeId,
-							  const char *operatorName, Oid operatorNamespace,
-							  Oid leftTypeId, Oid rightTypeId,
-							  bool isCommutator);
+				   Oid otherLeftTypeId, Oid otherRightTypeId,
+				   const char *operatorName, Oid operatorNamespace,
+				   Oid leftTypeId, Oid rightTypeId,
+				   bool isCommutator);
 
 static void makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid);
 
@@ -229,23 +229,23 @@ OperatorShellMake(const char *operatorName,
 	 */
 	i = 0;
 	namestrcpy(&oname, operatorName);
-	values[i++] = NameGetDatum(&oname);				/* oprname */
+	values[i++] = NameGetDatum(&oname); /* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = Int32GetDatum(GetUserId());		/* oprowner */
+	values[i++] = Int32GetDatum(GetUserId());	/* oprowner */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
-	values[i++] = BoolGetDatum(false);				/* oprcanhash */
-	values[i++] = ObjectIdGetDatum(leftTypeId);		/* oprleft */
-	values[i++] = ObjectIdGetDatum(rightTypeId);	/* oprright */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprresult */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprcom */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprnegate */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprlsortop */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprrsortop */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprltcmpop */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprgtcmpop */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprcode */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprrest */
-	values[i++] = ObjectIdGetDatum(InvalidOid);		/* oprjoin */
+	values[i++] = BoolGetDatum(false);	/* oprcanhash */
+	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
+	values[i++] = ObjectIdGetDatum(rightTypeId);		/* oprright */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprresult */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprcom */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprnegate */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprlsortop */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprrsortop */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprltcmpop */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprgtcmpop */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprcode */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprrest */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* oprjoin */
 
 	/*
 	 * open pg_operator
@@ -506,14 +506,14 @@ OperatorCreate(const char *operatorName,
 
 	i = 0;
 	namestrcpy(&oname, operatorName);
-	values[i++] = NameGetDatum(&oname);			/* oprname */
+	values[i++] = NameGetDatum(&oname); /* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
-	values[i++] = Int32GetDatum(GetUserId());		/* oprowner */
+	values[i++] = Int32GetDatum(GetUserId());	/* oprowner */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
-	values[i++] = BoolGetDatum(canHash);			/* oprcanhash */
-	values[i++] = ObjectIdGetDatum(leftTypeId);		/* oprleft */
-	values[i++] = ObjectIdGetDatum(rightTypeId);	/* oprright */
-	values[i++] = ObjectIdGetDatum(operResultType);	/* oprresult */
+	values[i++] = BoolGetDatum(canHash);		/* oprcanhash */
+	values[i++] = ObjectIdGetDatum(leftTypeId); /* oprleft */
+	values[i++] = ObjectIdGetDatum(rightTypeId);		/* oprright */
+	values[i++] = ObjectIdGetDatum(operResultType);		/* oprresult */
 
 	/*
 	 * Set up the other operators.	If they do not currently exist, create
@@ -528,16 +528,17 @@ OperatorCreate(const char *operatorName,
 										  operatorName, operatorNamespace,
 										  leftTypeId, rightTypeId,
 										  true);
+
 		/*
-		 * self-linkage to this operator; will fix below. Note
-		 * that only self-linkage for commutation makes sense.
+		 * self-linkage to this operator; will fix below. Note that only
+		 * self-linkage for commutation makes sense.
 		 */
 		if (!OidIsValid(commutatorId))
 			selfCommutator = true;
 	}
 	else
 		commutatorId = InvalidOid;
-	values[i++] = ObjectIdGetDatum(commutatorId);	/* oprcom */
+	values[i++] = ObjectIdGetDatum(commutatorId);		/* oprcom */
 
 	if (negatorName)
 	{
@@ -550,20 +551,20 @@ OperatorCreate(const char *operatorName,
 	}
 	else
 		negatorId = InvalidOid;
-	values[i++] = ObjectIdGetDatum(negatorId);		/* oprnegate */
+	values[i++] = ObjectIdGetDatum(negatorId);	/* oprnegate */
 
 	if (leftSortName)
 	{
 		/* left sort op takes left-side data type */
 		leftSortId = get_other_operator(leftSortName,
-									   leftTypeId, leftTypeId,
-									   operatorName, operatorNamespace,
-									   leftTypeId, rightTypeId,
-									   false);
+										leftTypeId, leftTypeId,
+										operatorName, operatorNamespace,
+										leftTypeId, rightTypeId,
+										false);
 	}
 	else
 		leftSortId = InvalidOid;
-	values[i++] = ObjectIdGetDatum(leftSortId);		/* oprlsortop */
+	values[i++] = ObjectIdGetDatum(leftSortId); /* oprlsortop */
 
 	if (rightSortName)
 	{
@@ -576,7 +577,7 @@ OperatorCreate(const char *operatorName,
 	}
 	else
 		rightSortId = InvalidOid;
-	values[i++] = ObjectIdGetDatum(rightSortId);	/* oprrsortop */
+	values[i++] = ObjectIdGetDatum(rightSortId);		/* oprrsortop */
 
 	if (ltCompareName)
 	{
@@ -589,7 +590,7 @@ OperatorCreate(const char *operatorName,
 	}
 	else
 		ltCompareId = InvalidOid;
-	values[i++] = ObjectIdGetDatum(ltCompareId);	/* oprltcmpop */
+	values[i++] = ObjectIdGetDatum(ltCompareId);		/* oprltcmpop */
 
 	if (gtCompareName)
 	{
@@ -602,11 +603,11 @@ OperatorCreate(const char *operatorName,
 	}
 	else
 		gtCompareId = InvalidOid;
-	values[i++] = ObjectIdGetDatum(gtCompareId);	/* oprgtcmpop */
+	values[i++] = ObjectIdGetDatum(gtCompareId);		/* oprgtcmpop */
 
-	values[i++] = ObjectIdGetDatum(procOid);		/* oprcode */
-	values[i++] = ObjectIdGetDatum(restOid);		/* oprrest */
-	values[i++] = ObjectIdGetDatum(joinOid);		/* oprjoin */
+	values[i++] = ObjectIdGetDatum(procOid);	/* oprcode */
+	values[i++] = ObjectIdGetDatum(restOid);	/* oprrest */
+	values[i++] = ObjectIdGetDatum(joinOid);	/* oprjoin */
 
 	pg_operator_desc = heap_openr(OperatorRelationName, RowExclusiveLock);
 
@@ -703,8 +704,8 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 		otherRightTypeId == rightTypeId)
 	{
 		/*
-		 * self-linkage to this operator; caller will fix later. Note
-		 * that only self-linkage for commutation makes sense.
+		 * self-linkage to this operator; caller will fix later. Note that
+		 * only self-linkage for commutation makes sense.
 		 */
 		if (!isCommutator)
 			elog(ERROR, "operator cannot be its own negator or sort operator");
@@ -868,9 +869,9 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 static void
 makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 {
-	Form_pg_operator	oper = (Form_pg_operator) GETSTRUCT(tuple);
-	ObjectAddress	myself,
-					referenced;
+	Form_pg_operator oper = (Form_pg_operator) GETSTRUCT(tuple);
+	ObjectAddress myself,
+				referenced;
 
 	myself.classId = pg_operator_relid;
 	myself.objectId = HeapTupleGetOid(tuple);
@@ -918,11 +919,11 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 	/*
 	 * NOTE: we do not consider the operator to depend on the associated
 	 * operators oprcom, oprnegate, oprlsortop, oprrsortop, oprltcmpop,
-	 * oprgtcmpop.  We would not want to delete this operator if those
-	 * go away, but only reset the link fields; which is not a function
-	 * that the dependency code can presently handle.  (Something could
-	 * perhaps be done with objectSubId though.)  For now, it's okay to
-	 * let those links dangle if a referenced operator is removed.
+	 * oprgtcmpop.	We would not want to delete this operator if those go
+	 * away, but only reset the link fields; which is not a function that
+	 * the dependency code can presently handle.  (Something could perhaps
+	 * be done with objectSubId though.)  For now, it's okay to let those
+	 * links dangle if a referenced operator is removed.
 	 */
 
 	/* Dependency on implementation function */

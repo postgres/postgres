@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.42 2002/08/22 00:01:49 tgl Exp $
+ * $Id: parse_func.h,v 1.43 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,14 +50,14 @@ extern FuncDetailCode func_get_detail(List *funcname, List *fargs,
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 
 extern void func_error(const char *caller, List *funcname,
-					   int nargs, const Oid *argtypes,
-					   const char *msg);
+		   int nargs, const Oid *argtypes,
+		   const char *msg);
 
-extern Oid	find_aggregate_func(const char *caller, List *aggname,
-								Oid basetype);
+extern Oid find_aggregate_func(const char *caller, List *aggname,
+					Oid basetype);
 
 extern Oid	LookupFuncName(List *funcname, int nargs, const Oid *argtypes);
-extern Oid	LookupFuncNameTypeNames(List *funcname, List *argtypes,
-									const char *caller);
+extern Oid LookupFuncNameTypeNames(List *funcname, List *argtypes,
+						const char *caller);
 
 #endif   /* PARSE_FUNC_H */

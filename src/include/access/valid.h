@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.28 2002/06/20 20:29:43 momjian Exp $
+ * $Id: valid.h,v 1.29 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ do \
  *		HeapTupleSatisfies
  *
  *	res is set TRUE if the HeapTuple satisfies the timequal and keytest,
- *	otherwise it is set FALSE.  Note that the hint bits in the HeapTuple's
+ *	otherwise it is set FALSE.	Note that the hint bits in the HeapTuple's
  *	t_infomask may be updated as a side effect.
  *
  *	on 8/21/92 mao says:  i rearranged the tests here to do keytest before

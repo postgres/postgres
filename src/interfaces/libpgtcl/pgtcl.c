@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.26 2002/09/02 21:51:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtcl.c,v 1.27 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ Pgtcl_Init(Tcl_Interp *interp)
 					  "pg_listen",
 					  Pg_listen,
 					  (ClientData) NULL, (Tcl_CmdDeleteProc *) NULL);
-	
+
 	Tcl_CreateCommand(interp,
 					  "pg_on_connection_loss",
 					  Pg_on_connection_loss,

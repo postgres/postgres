@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.26 2002/09/02 02:47:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.27 2002/09/04 20:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ userfntest(PG_FUNCTION_ARGS)
 Datum
 current_database(PG_FUNCTION_ARGS)
 {
-	Name   db;
+	Name		db;
 
 	db = (Name) palloc(NAMEDATALEN);
 

@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.26 2002/09/02 02:47:03 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.27 2002/09/04 20:31:24 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -431,7 +431,7 @@ pgstat_report_activity(char *what)
 		return;
 
 	len = strlen(what);
-	len = pg_mbcliplen((const unsigned char *)what, len, PGSTAT_ACTIVITY_SIZE - 1);
+	len = pg_mbcliplen((const unsigned char *) what, len, PGSTAT_ACTIVITY_SIZE - 1);
 
 	memcpy(msg.m_what, what, len);
 	msg.m_what[len] = '\0';
@@ -581,7 +581,7 @@ pgstat_vacuum_tabstat(void)
 		if (msg.m_nentries >= PGSTAT_NUM_TABPURGE)
 		{
 			len = offsetof(PgStat_MsgTabpurge, m_tableid[0])
-				+ msg.m_nentries * sizeof(Oid);
+				+msg.m_nentries * sizeof(Oid);
 
 			pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
 			pgstat_send(&msg, len);
@@ -596,7 +596,7 @@ pgstat_vacuum_tabstat(void)
 	if (msg.m_nentries > 0)
 	{
 		len = offsetof(PgStat_MsgTabpurge, m_tableid[0])
-			+ msg.m_nentries * sizeof(Oid);
+			+msg.m_nentries * sizeof(Oid);
 
 		pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_TABPURGE);
 		pgstat_send(&msg, len);
@@ -1793,7 +1793,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 		if (dbentry->tables == NULL)
 		{
 			elog(LOG, "PGSTAT: failed to initialize hash table for "
-					"new database entry");
+				 "new database entry");
 			exit(1);
 		}
 	}
@@ -1918,7 +1918,7 @@ pgstat_write_statsfile(void)
 								HASH_REMOVE, NULL) == NULL)
 				{
 					elog(LOG, "PGSTAT: database hash table corrupted "
-							"during cleanup - abort");
+						 "during cleanup - abort");
 					exit(1);
 				}
 			}
@@ -1954,9 +1954,9 @@ pgstat_write_statsfile(void)
 									HASH_REMOVE, NULL) == NULL)
 					{
 						elog(LOG, "PGSTAT: tables hash table for "
-								"database %d corrupted during "
-								"cleanup - abort",
-								dbentry->databaseid);
+							 "database %d corrupted during "
+							 "cleanup - abort",
+							 dbentry->databaseid);
 						exit(1);
 					}
 				}
@@ -2029,7 +2029,7 @@ pgstat_write_statsfile(void)
 							HASH_REMOVE, NULL) == NULL)
 			{
 				elog(LOG, "PGSTAT: dead backend hash table corrupted "
-						"during cleanup - abort");
+					 "during cleanup - abort");
 				exit(1);
 			}
 		}
@@ -2520,7 +2520,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 		if (tabentry == NULL)
 		{
 			elog(LOG, "PGSTAT: tables hash table out of memory for "
-					"database %d - abort", dbentry->databaseid);
+				 "database %d - abort", dbentry->databaseid);
 			exit(1);
 		}
 
@@ -2700,7 +2700,7 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	if (dbentry->tables == NULL)
 	{
 		elog(LOG, "PGSTAT: failed to reinitialize hash table for "
-				"database entry");
+			 "database entry");
 		exit(1);
 	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.123 2002/08/28 20:46:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.124 2002/09/04 20:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 
 
 static Node *pull_up_subqueries(Query *parse, Node *jtnode,
-								bool below_outer_join);
+				   bool below_outer_join);
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
 static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
@@ -301,16 +301,16 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 		 *
 		 * If we are inside an outer join, only pull up subqueries whose
 		 * targetlists are nullable --- otherwise substituting their tlist
-		 * entries for upper Var references would do the wrong thing
-		 * (the results wouldn't become NULL when they're supposed to).
-		 * XXX This could be improved by generating pseudo-variables for
-		 * such expressions; we'd have to figure out how to get the pseudo-
-		 * variables evaluated at the right place in the modified plan tree.
-		 * Fix it someday.
+		 * entries for upper Var references would do the wrong thing (the
+		 * results wouldn't become NULL when they're supposed to). XXX
+		 * This could be improved by generating pseudo-variables for such
+		 * expressions; we'd have to figure out how to get the pseudo-
+		 * variables evaluated at the right place in the modified plan
+		 * tree. Fix it someday.
 		 *
 		 * Note: even if the subquery itself is simple enough, we can't pull
-		 * it up if there is a reference to its whole tuple result.  Perhaps
-		 * a pseudo-variable is the answer here too.
+		 * it up if there is a reference to its whole tuple result.
+		 * Perhaps a pseudo-variable is the answer here too.
 		 */
 		if (rte->rtekind == RTE_SUBQUERY && is_simple_subquery(subquery) &&
 			(!below_outer_join || has_nullable_targetlist(subquery)) &&
@@ -336,8 +336,8 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 								   below_outer_join);
 
 			/*
-			 * Now make a modifiable copy of the subquery that we can
-			 * run OffsetVarNodes on.
+			 * Now make a modifiable copy of the subquery that we can run
+			 * OffsetVarNodes on.
 			 */
 			subquery = copyObject(subquery);
 
@@ -352,7 +352,8 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			 * Replace all of the top query's references to the subquery's
 			 * outputs with copies of the adjusted subtlist items, being
 			 * careful not to replace any of the jointree structure.
-			 * (This'd be a lot cleaner if we could use query_tree_mutator.)
+			 * (This'd be a lot cleaner if we could use
+			 * query_tree_mutator.)
 			 */
 			subtlist = subquery->targetList;
 			parse->targetList = (List *)
@@ -375,15 +376,16 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			}
 
 			/*
-			 * Now append the adjusted rtable entries to upper query.
-			 * (We hold off until after fixing the upper rtable entries;
-			 * no point in running that code on the subquery ones too.)
+			 * Now append the adjusted rtable entries to upper query. (We
+			 * hold off until after fixing the upper rtable entries; no
+			 * point in running that code on the subquery ones too.)
 			 */
 			parse->rtable = nconc(parse->rtable, subquery->rtable);
 
 			/*
 			 * Pull up any FOR UPDATE markers, too.  (OffsetVarNodes
-			 * already adjusted the marker values, so just nconc the list.)
+			 * already adjusted the marker values, so just nconc the
+			 * list.)
 			 */
 			parse->rowMarks = nconc(parse->rowMarks, subquery->rowMarks);
 
@@ -500,9 +502,9 @@ is_simple_subquery(Query *subquery)
 
 	/*
 	 * Don't pull up a subquery that has any set-returning functions in
-	 * its targetlist.  Otherwise we might well wind up inserting
-	 * set-returning functions into places where they mustn't go,
-	 * such as quals of higher queries.
+	 * its targetlist.	Otherwise we might well wind up inserting
+	 * set-returning functions into places where they mustn't go, such as
+	 * quals of higher queries.
 	 */
 	if (expression_returns_set((Node *) subquery->targetList))
 		return false;
@@ -724,8 +726,8 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 
 	/*
 	 * If the query has any join RTEs, try to replace join alias variables
-	 * with base-relation variables, to allow quals to be pushed down.
-	 * We must do this after sublink processing, since it does not recurse
+	 * with base-relation variables, to allow quals to be pushed down. We
+	 * must do this after sublink processing, since it does not recurse
 	 * into sublinks.
 	 *
 	 * The flattening pass is expensive enough that it seems worthwhile to

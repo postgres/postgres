@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.61 2002/08/13 17:22:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.62 2002/09/04 20:31:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ typedef struct
 
 
 static void fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
-								   bool ignore_security);
+					   bool ignore_security);
 static void fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
@@ -339,8 +339,8 @@ fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 
 	/*
 	 * If lookup of the PL handler function produced nonnull fn_extra,
-	 * complain --- it must be an oldstyle function! We no longer
-	 * support oldstyle PL handlers.
+	 * complain --- it must be an oldstyle function! We no longer support
+	 * oldstyle PL handlers.
 	 */
 	if (plfinfo.fn_extra != NULL)
 		elog(ERROR, "fmgr_info: language %u has old-style handler",

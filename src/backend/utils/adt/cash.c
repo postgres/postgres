@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.55 2002/09/03 21:45:42 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.56 2002/09/04 20:31:27 momjian Exp $
  */
 
 #include "postgres.h"
@@ -662,8 +662,8 @@ cash_words(PG_FUNCTION_ARGS)
 
 	m0 = val % 100;				/* cents */
 	m1 = (val / 100) % 1000;	/* hundreds */
-	m2 = (val / 100000) % 1000;	/* thousands */
-	m3 = val / 100000000 % 1000; /* millions */
+	m2 = (val / 100000) % 1000; /* thousands */
+	m3 = val / 100000000 % 1000;	/* millions */
 
 	if (m3)
 	{

@@ -73,7 +73,7 @@ main(int argc, char **argv)
 					SELECT	count(*)::int4 \
 						FROM \"%s\" t1, \"%s\" t2 \
 					WHERE t1.\"%s\" = t2.oid ",
-						relname, relname2, attname);
+						 relname, relname2, attname);
 			else
 				sprintf(query, 4000, "\
 					DECLARE c_matches BINARY CURSOR FOR \

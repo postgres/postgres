@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.70 2002/09/02 06:11:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.71 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,7 +415,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock,
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 			  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
 					 err_ret->e_data->length,
-					 (const char *)err_ret->e_data->data);
+					 (const char *) err_ret->e_data->data);
 #else
 #error "bogus configuration"
 #endif
@@ -619,7 +619,7 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			if (password == NULL || *password == '\0')
 			{
 				(void) snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-							   "fe_sendauth: no password supplied\n");
+								"fe_sendauth: no password supplied\n");
 				return STATUS_ERROR;
 			}
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)

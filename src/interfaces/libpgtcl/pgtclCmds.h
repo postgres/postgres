@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.27 2002/09/02 21:51:47 tgl Exp $
+ * $Id: pgtclCmds.h,v 1.28 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,6 +134,6 @@ extern int Pg_lo_export(
 extern int Pg_listen(
 		  ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 extern int Pg_on_connection_loss(
-			ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
+		   ClientData cData, Tcl_Interp *interp, int argc, char *argv[]);
 
 #endif   /* PGTCLCMDS_H */

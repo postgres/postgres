@@ -270,7 +270,7 @@ timetravel(PG_FUNCTION_ARGS)
 		for (i = 1; i <= natts; i++)
 		{
 			snprintf(sql + strlen(sql), sizeof(sql) - strlen(sql), "$%d%s",
-					i, (i < natts) ? ", " : ")");
+					 i, (i < natts) ? ", " : ")");
 			ctypes[i - 1] = SPI_gettypeid(tupdesc, i);
 		}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.33 2002/06/20 20:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.34 2002/09/04 20:31:19 momjian Exp $
  */
 #include "postgres.h"
 
@@ -233,7 +233,7 @@ makeRelabelType(Node *arg, Oid rtype, int32 rtypmod)
 RangeVar *
 makeRangeVar(char *schemaname, char *relname)
 {
-	RangeVar *r = makeNode(RangeVar);
+	RangeVar   *r = makeNode(RangeVar);
 
 	r->catalogname = NULL;
 	r->schemaname = schemaname;

@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.79 2002/09/02 06:11:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.80 2002/09/04 20:31:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -58,7 +58,7 @@ enum option_type
 };
 
 static char *scan_option(char **string, enum option_type type,
-						 char *quote, bool semicolon);
+			char *quote, bool semicolon);
 static char *unescape(const unsigned char *source, size_t len);
 
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
@@ -246,13 +246,13 @@ exec_command(const char *cmd,
 					opt2q;
 
 		/*
-		 * Ideally we should treat the arguments as SQL identifiers.  But for
-		 * backwards compatibility with 7.2 and older pg_dump files, we have
-		 * to take unquoted arguments verbatim (don't downcase them).
-		 * For now, double-quoted arguments may be stripped of double quotes
-		 * (as if SQL identifiers).  By 7.4 or so, pg_dump files can be
-		 * expected to double-quote all mixed-case \connect arguments,
-		 * and then we can get rid of OT_SQLIDHACK.
+		 * Ideally we should treat the arguments as SQL identifiers.  But
+		 * for backwards compatibility with 7.2 and older pg_dump files,
+		 * we have to take unquoted arguments verbatim (don't downcase
+		 * them). For now, double-quoted arguments may be stripped of
+		 * double quotes (as if SQL identifiers).  By 7.4 or so, pg_dump
+		 * files can be expected to double-quote all mixed-case \connect
+		 * arguments, and then we can get rid of OT_SQLIDHACK.
 		 */
 		opt1 = scan_option(&string, OT_SQLIDHACK, &opt1q, true);
 		opt2 = scan_option(&string, OT_SQLIDHACK, &opt2q, true);
@@ -723,9 +723,7 @@ exec_command(const char *cmd,
 		if (!quiet)
 		{
 			if (pset.timing)
-			{
 				puts(gettext(("Timing is on.")));
-			}
 			else
 			{
 				puts(gettext(("Timing is off.")));
@@ -733,7 +731,7 @@ exec_command(const char *cmd,
 			}
 		}
 	}
-  
+
 	/* \unset */
 	else if (strcmp(cmd, "unset") == 0)
 	{
@@ -931,8 +929,8 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 			/*
 			 * Next command: treat like end of line
 			 *
-			 * XXX this means we can't conveniently accept options that
-			 * start with a backslash; therefore, option processing that
+			 * XXX this means we can't conveniently accept options that start
+			 * with a backslash; therefore, option processing that
 			 * encourages use of backslashes is rather broken.
 			 */
 		case '\\':
@@ -1088,7 +1086,8 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 			 *
 			 * If we are processing the option as a SQL identifier, then
 			 * downcase unquoted letters and remove double-quotes --- but
-			 * doubled double-quotes become output double-quotes, per spec.
+			 * doubled double-quotes become output double-quotes, per
+			 * spec.
 			 *
 			 * Note that a string like FOO"BAR"BAZ will be converted to
 			 * fooBARbaz; this is somewhat inconsistent with the SQL spec,
@@ -1124,7 +1123,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 					else
 					{
 						if (*cp != '"')
-							break; /* whitespace or end of string */
+							break;		/* whitespace or end of string */
 						if (quote)
 							*quote = '"';
 						inquotes = true;
@@ -1150,12 +1149,12 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				/* Strip any trailing semi-colons if requested */
 				if (semicolon)
 				{
-					int		i;
+					int			i;
 
 					for (i = token_len - 1;
 						 i >= 0 && return_val[i] == ';';
 						 i--)
-						/* skip */;
+						 /* skip */ ;
 
 					if (i < 0)
 					{
@@ -1169,9 +1168,9 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 				}
 
 				/*
-				 * If SQL identifier processing was requested,
-				 * then we strip out excess double quotes and downcase
-				 * unquoted letters.
+				 * If SQL identifier processing was requested, then we
+				 * strip out excess double quotes and downcase unquoted
+				 * letters.
 				 */
 				if (type == OT_SQLID || type == OT_SQLIDHACK)
 				{
@@ -1189,7 +1188,7 @@ scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 							}
 							inquotes = !inquotes;
 							/* Collapse out quote at *cp */
-							memmove(cp, cp+1, strlen(cp));
+							memmove(cp, cp + 1, strlen(cp));
 							/* do not advance cp */
 						}
 						else
@@ -1550,8 +1549,8 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 		const char *tmpdirenv = getenv("TMPDIR");
 
 		snprintf(fnametmp, sizeof(fnametmp), "%s/psql.edit.%ld.%ld",
-				tmpdirenv ? tmpdirenv : "/tmp",
-				(long) geteuid(), (long) getpid());
+				 tmpdirenv ? tmpdirenv : "/tmp",
+				 (long) geteuid(), (long) getpid());
 #else
 		GetTempFileName(".", "psql", 0, fnametmp);
 #endif

@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.54 2002/08/27 04:55:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.55 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 
 List	   *parsetree;			/* result of parsing is left here */
 
-static Oid	*param_type_info;	/* state for param_type() */
+static Oid *param_type_info;	/* state for param_type() */
 static int	param_count;
 
 static int	lookahead_token;	/* one-token lookahead */

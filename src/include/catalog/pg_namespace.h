@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_namespace.h,v 1.7 2002/06/20 20:29:44 momjian Exp $
+ * $Id: pg_namespace.h,v 1.8 2002/09/04 20:31:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,7 +40,7 @@ CATALOG(pg_namespace)
 {
 	NameData	nspname;
 	int4		nspowner;
-    aclitem		nspacl[1];		/* VARIABLE LENGTH FIELD */
+	aclitem		nspacl[1];		/* VARIABLE LENGTH FIELD */
 } FormData_pg_namespace;
 
 /* ----------------

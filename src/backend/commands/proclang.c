@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.41 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.42 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,8 @@ void
 CreateProceduralLanguage(CreatePLangStmt *stmt)
 {
 	char		languageName[NAMEDATALEN];
-	Oid			procOid, valProcOid;
+	Oid			procOid,
+				valProcOid;
 	Oid			typev[FUNC_MAX_ARGS];
 	char		nulls[Natts_pg_language];
 	Datum		values[Natts_pg_language];
@@ -49,8 +50,8 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	HeapTuple	tup;
 	TupleDesc	tupDesc;
 	int			i;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 
 	/*
 	 * Check permission

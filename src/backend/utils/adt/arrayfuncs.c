@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.79 2002/08/26 17:53:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.80 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,27 +80,27 @@ static void system_cache_lookup(Oid element_type, bool input, int *typlen,
 					bool *typbyval, char *typdelim, Oid *typelem,
 					Oid *proc, char *typalign);
 static Datum ArrayCast(char *value, bool byval, int len);
-static int	ArrayCastAndSet(Datum src,
-							int typlen, bool typbyval, char typalign,
-							char *dest);
-static int	array_nelems_size(char *ptr, int nitems,
-							  int typlen, bool typbyval, char typalign);
+static int ArrayCastAndSet(Datum src,
+				int typlen, bool typbyval, char typalign,
+				char *dest);
+static int array_nelems_size(char *ptr, int nitems,
+				  int typlen, bool typbyval, char typalign);
 static char *array_seek(char *ptr, int nitems,
-						int typlen, bool typbyval, char typalign);
-static int	array_copy(char *destptr, int nitems, char *srcptr,
-					   int typlen, bool typbyval, char typalign);
+		   int typlen, bool typbyval, char typalign);
+static int array_copy(char *destptr, int nitems, char *srcptr,
+		   int typlen, bool typbyval, char typalign);
 static int array_slice_size(int ndim, int *dim, int *lb, char *arraydataptr,
-							int *st, int *endp,
-							int typlen, bool typbyval, char typalign);
+				 int *st, int *endp,
+				 int typlen, bool typbyval, char typalign);
 static void array_extract_slice(int ndim, int *dim, int *lb,
-								char *arraydataptr,
-								int *st, int *endp, char *destPtr,
-								int typlen, bool typbyval, char typalign);
+					char *arraydataptr,
+					int *st, int *endp, char *destPtr,
+					int typlen, bool typbyval, char typalign);
 static void array_insert_slice(int ndim, int *dim, int *lb,
-							   char *origPtr, int origdatasize,
-							   char *destPtr,
-							   int *st, int *endp, char *srcPtr,
-							   int typlen, bool typbyval, char typalign);
+				   char *origPtr, int origdatasize,
+				   char *destPtr,
+				   int *st, int *endp, char *srcPtr,
+				   int typlen, bool typbyval, char typalign);
 
 
 /*---------------------------------------------------------------------
@@ -422,28 +422,28 @@ ReadArrayStr(char *arrayStr,
 					elog(ERROR, "malformed array constant: %s", arrayStr);
 					break;
 				case '\\':
-				{
-					char   *cptr;
+					{
+						char	   *cptr;
 
-					/* Crunch the string on top of the backslash. */
-					for (cptr = ptr; *cptr != '\0'; cptr++)
-						*cptr = *(cptr + 1);
-					if (*ptr == '\0')
-						elog(ERROR, "malformed array constant: %s", arrayStr);
-					break;
-				}
+						/* Crunch the string on top of the backslash. */
+						for (cptr = ptr; *cptr != '\0'; cptr++)
+							*cptr = *(cptr + 1);
+						if (*ptr == '\0')
+							elog(ERROR, "malformed array constant: %s", arrayStr);
+						break;
+					}
 				case '\"':
-				{
-					char   *cptr;
+					{
+						char	   *cptr;
 
-					scanning_string = !scanning_string;
-					/* Crunch the string on top of the quote. */
-					for (cptr = ptr; *cptr != '\0'; cptr++)
-						*cptr = *(cptr + 1);
-					/* Back up to not miss following character. */
-					ptr--;
-					break;
-				}
+						scanning_string = !scanning_string;
+						/* Crunch the string on top of the quote. */
+						for (cptr = ptr; *cptr != '\0'; cptr++)
+							*cptr = *(cptr + 1);
+						/* Back up to not miss following character. */
+						ptr--;
+						break;
+					}
 				case '{':
 					if (!scanning_string)
 					{
@@ -452,9 +452,9 @@ ReadArrayStr(char *arrayStr,
 						nest_level++;
 						indx[nest_level - 1] = 0;
 						/* skip leading whitespace */
-						while (isspace((unsigned char) *(ptr+1)))
+						while (isspace((unsigned char) *(ptr + 1)))
 							ptr++;
-						itemstart = ptr+1;
+						itemstart = ptr + 1;
 					}
 					break;
 				case '}':
@@ -471,11 +471,11 @@ ReadArrayStr(char *arrayStr,
 						else
 						{
 							/*
-							 * tricky coding: terminate item value string at
-							 * first '}', but don't process it till we see
-							 * a typdelim char or end of array.  This handles
-							 * case where several '}'s appear successively
-							 * in a multidimensional array.
+							 * tricky coding: terminate item value string
+							 * at first '}', but don't process it till we
+							 * see a typdelim char or end of array.  This
+							 * handles case where several '}'s appear
+							 * successively in a multidimensional array.
 							 */
 							*ptr = '\0';
 							indx[nest_level - 1]++;
@@ -641,8 +641,8 @@ array_out(PG_FUNCTION_ARGS)
 
 	/*
 	 * Convert all values to string form, count total space needed
-	 * (including any overhead such as escaping backslashes),
-	 * and detect whether each item needs double quotes.
+	 * (including any overhead such as escaping backslashes), and detect
+	 * whether each item needs double quotes.
 	 */
 	values = (char **) palloc(nitems * sizeof(char *));
 	needquotes = (bool *) palloc(nitems * sizeof(bool));
@@ -665,7 +665,7 @@ array_out(PG_FUNCTION_ARGS)
 		nq = (values[i][0] == '\0');	/* force quotes for empty string */
 		for (tmp = values[i]; *tmp; tmp++)
 		{
-			char	ch = *tmp;
+			char		ch = *tmp;
 
 			overall_length += 1;
 			if (ch == '"' || ch == '\\')
@@ -716,7 +716,7 @@ array_out(PG_FUNCTION_ARGS)
 #ifndef TCL_ARRAYS
 			for (tmp = values[k]; *tmp; tmp++)
 			{
-				char	ch = *tmp;
+				char		ch = *tmp;
 
 				if (ch == '"' || ch == '\\')
 					*p++ = '\\';
@@ -919,8 +919,8 @@ array_get_slice(ArrayType *array,
 		elog(ERROR, "Slices of fixed-length arrays not implemented");
 
 		/*
-		 * fixed-length arrays -- these are assumed to be 1-d, 0-based
-		 * XXX where would we get the correct ELEMTYPE from?
+		 * fixed-length arrays -- these are assumed to be 1-d, 0-based XXX
+		 * where would we get the correct ELEMTYPE from?
 		 */
 		ndim = 1;
 		fixedDim[0] = arraylen / elmlen;
@@ -980,8 +980,9 @@ array_get_slice(ArrayType *array,
 	newarray->flags = 0;
 	newarray->elemtype = ARR_ELEMTYPE(array);
 	memcpy(ARR_DIMS(newarray), span, ndim * sizeof(int));
+
 	/*
-	 * Lower bounds of the new array are set to 1.  Formerly (before 7.3)
+	 * Lower bounds of the new array are set to 1.	Formerly (before 7.3)
 	 * we copied the given lowerIndx values ... but that seems confusing.
 	 */
 	newlb = ARR_LBOUND(newarray);
@@ -1513,9 +1514,7 @@ construct_array(Datum *elems, int nelems,
 
 	/* compute required space */
 	if (elmlen > 0)
-	{
 		nbytes = nelems * att_align(elmlen, elmalign);
-	}
 	else
 	{
 		Assert(!elmbyval);

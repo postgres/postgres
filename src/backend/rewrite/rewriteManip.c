@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.64 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.65 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 	}
 	if (IsA(node, JoinExpr))
 	{
-		JoinExpr *j = (JoinExpr *) node;
+		JoinExpr   *j = (JoinExpr *) node;
 
 		if (context->sublevels_up == 0)
 			j->rtindex += context->offset;
@@ -251,7 +251,7 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 	}
 	if (IsA(node, JoinExpr))
 	{
-		JoinExpr *j = (JoinExpr *) node;
+		JoinExpr   *j = (JoinExpr *) node;
 
 		if (context->sublevels_up == 0 &&
 			j->rtindex == context->rt_index)
@@ -429,7 +429,7 @@ rangeTableEntry_used_walker(Node *node,
 	}
 	if (IsA(node, JoinExpr))
 	{
-		JoinExpr *j = (JoinExpr *) node;
+		JoinExpr   *j = (JoinExpr *) node;
 
 		if (j->rtindex == context->rt_index &&
 			context->sublevels_up == 0)
@@ -573,10 +573,10 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	 * they've been pushed down to the SELECT.
 	 */
 	if (length(parsetree->rtable) >= 2 &&
-		strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
-			   "*OLD*") == 0 &&
-		strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
-			   "*NEW*") == 0)
+	 strcmp(rt_fetch(PRS2_OLD_VARNO, parsetree->rtable)->eref->aliasname,
+			"*OLD*") == 0 &&
+	 strcmp(rt_fetch(PRS2_NEW_VARNO, parsetree->rtable)->eref->aliasname,
+			"*NEW*") == 0)
 		return parsetree;
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (length(parsetree->jointree->fromlist) != 1)
@@ -589,10 +589,10 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 		  selectquery->commandType == CMD_SELECT))
 		elog(ERROR, "getInsertSelectQuery: expected to find SELECT subquery");
 	if (length(selectquery->rtable) >= 2 &&
-	 strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
-			"*OLD*") == 0 &&
-	 strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
-			"*NEW*") == 0)
+	strcmp(rt_fetch(PRS2_OLD_VARNO, selectquery->rtable)->eref->aliasname,
+		   "*OLD*") == 0 &&
+	strcmp(rt_fetch(PRS2_NEW_VARNO, selectquery->rtable)->eref->aliasname,
+		   "*NEW*") == 0)
 	{
 		if (subquery_ptr)
 			*subquery_ptr = &(selectrte->subquery);

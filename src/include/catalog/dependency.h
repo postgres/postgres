@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dependency.h,v 1.4 2002/08/11 21:17:35 tgl Exp $
+ * $Id: dependency.h,v 1.5 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@
  * DEPENDENCY_PIN ('p'): there is no dependent object; this type of entry
  * is a signal that the system itself depends on the referenced object,
  * and so that object must never be deleted.  Entries of this type are
- * created only during initdb.  The fields for the dependent object
+ * created only during initdb.	The fields for the dependent object
  * contain zeroes.
  *
  * Other dependency flavors may be needed in future.
@@ -60,10 +60,10 @@
 
 typedef enum DependencyType
 {
-	DEPENDENCY_NORMAL	= 'n',
-	DEPENDENCY_AUTO		= 'a',
-	DEPENDENCY_INTERNAL	= 'i',
-	DEPENDENCY_PIN		= 'p'
+	DEPENDENCY_NORMAL = 'n',
+	DEPENDENCY_AUTO = 'a',
+	DEPENDENCY_INTERNAL = 'i',
+	DEPENDENCY_PIN = 'p'
 } DependencyType;
 
 
@@ -72,31 +72,32 @@ typedef enum DependencyType
  */
 typedef struct ObjectAddress
 {
-	Oid		classId;		/* Class Id from pg_class */
-	Oid		objectId;		/* OID of the object */
-	int32	objectSubId;	/* Subitem within the object (column of table) */
+	Oid			classId;		/* Class Id from pg_class */
+	Oid			objectId;		/* OID of the object */
+	int32		objectSubId;	/* Subitem within the object (column of
+								 * table) */
 } ObjectAddress;
 
 
 /* in dependency.c */
 
 extern void performDeletion(const ObjectAddress *object,
-							DropBehavior behavior);
+				DropBehavior behavior);
 
 extern void recordDependencyOnExpr(const ObjectAddress *depender,
-								   Node *expr, List *rtable,
-								   DependencyType behavior);
+					   Node *expr, List *rtable,
+					   DependencyType behavior);
 
 /* in pg_depend.c */
 
 extern void recordDependencyOn(const ObjectAddress *depender,
-							   const ObjectAddress *referenced,
-							   DependencyType behavior);
+				   const ObjectAddress *referenced,
+				   DependencyType behavior);
 
 extern void recordMultipleDependencies(const ObjectAddress *depender,
-									   const ObjectAddress *referenced,
-									   int nreferenced,
-									   DependencyType behavior);
+						   const ObjectAddress *referenced,
+						   int nreferenced,
+						   DependencyType behavior);
 
 extern long deleteDependencyRecordsFor(Oid classId, Oid objectId);
 

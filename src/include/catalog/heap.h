@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.56 2002/09/02 01:05:06 tgl Exp $
+ * $Id: heap.h,v 1.57 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,19 +52,19 @@ extern void AddRelationRawConstraints(Relation rel,
 						  List *rawConstraints);
 
 extern Node *cookDefault(ParseState *pstate,
-						 Node *raw_default,
-						 Oid atttypid,
-						 int32 atttypmod,
-						 char *attname);
+			Node *raw_default,
+			Oid atttypid,
+			int32 atttypmod,
+			char *attname);
 
-extern int	RemoveRelConstraints(Relation rel, const char *constrName,
-								 DropBehavior behavior);
+extern int RemoveRelConstraints(Relation rel, const char *constrName,
+					 DropBehavior behavior);
 
 extern void DeleteRelationTuple(Oid relid);
 extern void DeleteAttributeTuples(Oid relid);
 extern void RemoveAttributeById(Oid relid, AttrNumber attnum);
 extern void RemoveAttrDefault(Oid relid, AttrNumber attnum,
-							  DropBehavior behavior, bool complain);
+				  DropBehavior behavior, bool complain);
 extern void RemoveAttrDefaultById(Oid attrdefId);
 
 extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,

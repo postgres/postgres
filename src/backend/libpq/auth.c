@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.89 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.90 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,6 @@ pg_krb4_recvauth(Port *port)
 	elog(LOG, "pg_krb4_recvauth: Kerberos not implemented on this server");
 	return STATUS_ERROR;
 }
-
 #endif   /* KRB4 */
 
 
@@ -310,7 +309,6 @@ pg_krb5_recvauth(Port *port)
 	elog(LOG, "pg_krb5_recvauth: Kerberos not implemented on this server");
 	return STATUS_ERROR;
 }
-
 #endif   /* KRB5 */
 
 
@@ -416,7 +414,7 @@ ClientAuthentication(Port *port)
 				if (port->raddr.sa.sa_family == AF_INET)
 					hostinfo = inet_ntoa(port->raddr.in.sin_addr);
 				elog(FATAL,
-					 "No pg_hba.conf entry for host %s, user %s, database %s",
+				"No pg_hba.conf entry for host %s, user %s, database %s",
 					 hostinfo, port->user, port->database);
 				break;
 			}
@@ -513,8 +511,8 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	pq_endmessage(&buf);
 
 	/*
-	 * Flush message so client will see it, except for AUTH_REQ_OK,
-	 * which need not be sent until we are ready for queries.
+	 * Flush message so client will see it, except for AUTH_REQ_OK, which
+	 * need not be sent until we are ready for queries.
 	 */
 	if (areq != AUTH_REQ_OK)
 		pq_flush();
@@ -688,7 +686,7 @@ CheckPAMAuth(Port *port, char *user, char *password)
 			 pam_strerror(pamh, retval));
 	}
 
-	pam_passwd = NULL;		/* Unset pam_passwd */
+	pam_passwd = NULL;			/* Unset pam_passwd */
 
 	return (retval == PAM_SUCCESS ? STATUS_OK : STATUS_ERROR);
 }
@@ -714,13 +712,14 @@ recv_and_check_password_packet(Port *port)
 		pfree(buf.data);
 		return STATUS_EOF;
 	}
+
 	/*
-	 * We don't actually use the password packet length the frontend
-	 * sent us; however, it's a reasonable sanity check to ensure that
-	 * we actually read as much data as we expected to.
+	 * We don't actually use the password packet length the frontend sent
+	 * us; however, it's a reasonable sanity check to ensure that we
+	 * actually read as much data as we expected to.
 	 *
-	 * The password packet size is the length of the buffer, plus the
-	 * size field itself (4 bytes), plus a 1-byte terminator.
+	 * The password packet size is the length of the buffer, plus the size
+	 * field itself (4 bytes), plus a 1-byte terminator.
 	 */
 	if (len != (buf.len + 4 + 1))
 		elog(LOG, "unexpected password packet size: read %d, expected %d",

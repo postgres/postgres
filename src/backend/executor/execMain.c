@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.177 2002/09/02 01:05:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.178 2002/09/04 20:31:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,14 +63,14 @@ static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 			ScanDirection direction,
 			DestReceiver *destfunc);
 static void ExecSelect(TupleTableSlot *slot,
-			 DestReceiver *destfunc,
-			 EState *estate);
+		   DestReceiver *destfunc,
+		   EState *estate);
 static void ExecInsert(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static void ExecDelete(TupleTableSlot *slot, ItemPointer tupleid,
 		   EState *estate);
 static void ExecUpdate(TupleTableSlot *slot, ItemPointer tupleid,
-			EState *estate);
+		   EState *estate);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckQueryPerms(CmdType operation, Query *parseTree,
@@ -116,9 +116,9 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 	/*
 	 * Make our own private copy of the current query snapshot data.
 	 *
-	 * This "freezes" our idea of which tuples are good and which are not
-	 * for the life of this query, even if it outlives the current command
-	 * and current snapshot.
+	 * This "freezes" our idea of which tuples are good and which are not for
+	 * the life of this query, even if it outlives the current command and
+	 * current snapshot.
 	 */
 	estate->es_snapshot = CopyQuerySnapshot();
 
@@ -353,12 +353,13 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 	Oid			userid;
 	AclResult	aclcheck_result;
 
-  	/*
+	/*
 	 * Only plain-relation RTEs need to be checked here.  Subquery RTEs
-	 * will be checked when ExecCheckPlanPerms finds the SubqueryScan node,
-	 * and function RTEs are checked by init_fcache when the function is
-	 * prepared for execution.  Join and special RTEs need no checks.
-  	 */
+	 * will be checked when ExecCheckPlanPerms finds the SubqueryScan
+	 * node, and function RTEs are checked by init_fcache when the
+	 * function is prepared for execution.	Join and special RTEs need no
+	 * checks.
+	 */
 	if (rte->rtekind != RTE_RELATION)
 		return;
 
@@ -1071,7 +1072,8 @@ lnext:	;
 
 			slot = ExecStoreTuple(newTuple,		/* tuple to store */
 								  junkfilter->jf_resultSlot,	/* dest slot */
-								  InvalidBuffer,	/* this tuple has no buffer */
+								  InvalidBuffer,		/* this tuple has no
+														 * buffer */
 								  true);		/* tuple should be pfreed */
 		}
 
@@ -1083,8 +1085,9 @@ lnext:	;
 		switch (operation)
 		{
 			case CMD_SELECT:
-				ExecSelect(slot,		/* slot containing tuple */
-						   destfunc,	/* destination's tuple-receiver obj */
+				ExecSelect(slot,	/* slot containing tuple */
+						   destfunc,	/* destination's tuple-receiver
+										 * obj */
 						   estate);
 				result = slot;
 				break;
@@ -1357,8 +1360,8 @@ ldelete:;
  */
 static void
 ExecUpdate(TupleTableSlot *slot,
-			ItemPointer tupleid,
-			EState *estate)
+		   ItemPointer tupleid,
+		   EState *estate)
 {
 	HeapTuple	tuple;
 	ResultRelInfo *resultRelInfo;

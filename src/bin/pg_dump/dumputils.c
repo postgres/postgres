@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.1 2002/08/27 18:57:26 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/dumputils.c,v 1.2 2002/09/04 20:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,15 +31,17 @@ fmtId(const char *rawid)
 {
 	static PQExpBuffer id_return = NULL;
 	const char *cp;
-	bool need_quotes = false;
+	bool		need_quotes = false;
 
 	if (id_return)				/* first time through? */
 		resetPQExpBuffer(id_return);
 	else
 		id_return = createPQExpBuffer();
 
-	/* These checks need to match the identifier production in scan.l.
-	 * Don't use islower() etc. */
+	/*
+	 * These checks need to match the identifier production in scan.l.
+	 * Don't use islower() etc.
+	 */
 
 	if (ScanKeywordLookup(rawid))
 		need_quotes = true;

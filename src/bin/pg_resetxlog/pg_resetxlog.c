@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.4 2002/09/02 02:47:07 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.5 2002/09/04 20:31:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,8 +220,8 @@ main(int argc, char *argv[])
 	if (ControlFile.state != DB_SHUTDOWNED && !force)
 	{
 		printf(_("The database server was not shut down cleanly.\n"
-				 "Resetting the transaction log may cause data to be lost.\n"
-				 "If you want to proceed anyway, use -f to force reset.\n"));
+			 "Resetting the transaction log may cause data to be lost.\n"
+			 "If you want to proceed anyway, use -f to force reset.\n"));
 		exit(1);
 	}
 
@@ -234,7 +234,7 @@ main(int argc, char *argv[])
 		ControlFile.checkPointCopy.nextXid = set_xid;
 
 	if (minXlogId > ControlFile.logId ||
-		(minXlogId == ControlFile.logId && minXlogSeg > ControlFile.logSeg))
+	 (minXlogId == ControlFile.logId && minXlogSeg > ControlFile.logSeg))
 	{
 		ControlFile.logId = minXlogId;
 		ControlFile.logSeg = minXlogSeg;
@@ -640,7 +640,7 @@ static void
 usage(void)
 {
 	printf(_("%s resets the PostgreSQL transaction log.\n\n"), progname);
-    printf(_("Usage:\n  %s [OPTIONS] DATADIR\n\n"), progname);
+	printf(_("Usage:\n  %s [OPTIONS] DATADIR\n\n"), progname);
 	printf(_("Options:\n"));
 	printf(_("  -f                force update to be done\n"));
 	printf(_("  -l FILEID,SEG     force minimum WAL starting location for new transaction log\n"));

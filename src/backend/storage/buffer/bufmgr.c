@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.131 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.132 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,7 @@ static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
 static int	BufferReplace(BufferDesc *bufHdr);
+
 #ifdef NOT_USED
 void		PrintBufferDescs(void);
 #endif
@@ -552,7 +553,7 @@ BufferAlloc(Relation reln,
 
 /*
  * write_buffer -- common functionality for
- *                 WriteBuffer and WriteNoReleaseBuffer
+ *				   WriteBuffer and WriteNoReleaseBuffer
  */
 static void
 write_buffer(Buffer buffer, bool release)
@@ -870,14 +871,14 @@ ShowBufferUsage(void)
 		localhitrate = (float) LocalBufferHitCount *100.0 / ReadLocalBufferCount;
 
 	appendStringInfo(&str,
-			"!\tShared blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
+					 "!\tShared blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
 			ReadBufferCount - BufferHitCount, BufferFlushCount, hitrate);
 	appendStringInfo(&str,
-			"!\tLocal  blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
-			ReadLocalBufferCount - LocalBufferHitCount, LocalBufferFlushCount, localhitrate);
+					 "!\tLocal  blocks: %10ld read, %10ld written, buffer hit rate = %.2f%%\n",
+					 ReadLocalBufferCount - LocalBufferHitCount, LocalBufferFlushCount, localhitrate);
 	appendStringInfo(&str,
-			"!\tDirect blocks: %10ld read, %10ld written\n",
-			NDirectFileRead, NDirectFileWrite);
+					 "!\tDirect blocks: %10ld read, %10ld written\n",
+					 NDirectFileRead, NDirectFileWrite);
 
 	return str.data;
 }
@@ -917,7 +918,7 @@ AtEOXact_Buffers(bool isCommit)
 			if (isCommit)
 				elog(WARNING,
 					 "Buffer Leak: [%03d] (freeNext=%d, freePrev=%d, "
-					 "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+				  "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
 					 i, buf->freeNext, buf->freePrev,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,

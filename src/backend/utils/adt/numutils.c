@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.53 2002/08/27 20:54:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.54 2002/09/04 20:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,8 @@ pg_atoi(char *s, int size, int c)
 	errno = 0;
 
 	/*
-	 * Some versions of strtol treat the empty string as an error, but some
-	 * seem not to.  Make an explicit test to be sure we catch it.
+	 * Some versions of strtol treat the empty string as an error, but
+	 * some seem not to.  Make an explicit test to be sure we catch it.
 	 */
 
 	if (s == (char *) NULL)

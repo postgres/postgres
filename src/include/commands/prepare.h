@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Id: prepare.h,v 1.1 2002/08/27 04:55:11 tgl Exp $
+ * $Id: prepare.h,v 1.2 2002/09/04 20:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,4 +26,4 @@ extern void DeallocateQuery(DeallocateStmt *stmt);
 
 extern List *FetchQueryParams(const char *plan_name);
 
-#endif /* PREPARE_H */
+#endif   /* PREPARE_H */

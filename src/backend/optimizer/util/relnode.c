@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.38 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.39 2002/09/04 20:31:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,16 +157,16 @@ make_base_rel(Query *root, int relid)
 	switch (rte->rtekind)
 	{
 		case RTE_RELATION:
-		{
-			/* Table --- retrieve statistics from the system catalogs */
-			bool		indexed;
+			{
+				/* Table --- retrieve statistics from the system catalogs */
+				bool		indexed;
 
-			get_relation_info(rte->relid,
-							  &indexed, &rel->pages, &rel->tuples);
-			if (indexed)
-				rel->indexlist = find_secondary_indexes(rte->relid);
-			break;
-		}
+				get_relation_info(rte->relid,
+								  &indexed, &rel->pages, &rel->tuples);
+				if (indexed)
+					rel->indexlist = find_secondary_indexes(rte->relid);
+				break;
+			}
 		case RTE_SUBQUERY:
 		case RTE_FUNCTION:
 			/* Subquery or function --- nothing to do here */
@@ -379,11 +379,11 @@ build_join_rel(Query *root,
 	 * of the outer and inner join relations and then merging the results
 	 * together.
 	 *
-	 * XXX right now we don't remove any irrelevant elements, we just
-	 * append the two tlists together.  Someday consider pruning vars from the
+	 * XXX right now we don't remove any irrelevant elements, we just append
+	 * the two tlists together.  Someday consider pruning vars from the
 	 * join's targetlist if they are needed only to evaluate restriction
-	 * clauses of this join, and will never be accessed at higher levels of
-	 * the plantree.
+	 * clauses of this join, and will never be accessed at higher levels
+	 * of the plantree.
 	 *
 	 * NOTE: the tlist order for a join rel will depend on which pair of
 	 * outer and inner rels we first try to build it from.	But the
@@ -396,12 +396,12 @@ build_join_rel(Query *root,
 
 	/*
 	 * If there are any alias variables attached to the matching join RTE,
-	 * attach them to the tlist too, so that they will be evaluated for use
-	 * at higher plan levels.
+	 * attach them to the tlist too, so that they will be evaluated for
+	 * use at higher plan levels.
 	 */
 	if (joinrterel)
 	{
-		List   *jrtetl;
+		List	   *jrtetl;
 
 		foreach(jrtetl, joinrterel->targetlist)
 		{

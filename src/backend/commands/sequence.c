@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.86 2002/09/03 18:50:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.87 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ typedef struct sequence_magic
  * rely on the relcache, since it's only, well, a cache, and may decide to
  * discard entries.)
  *
- * XXX We use linear search to find pre-existing SeqTable entries.  This is
+ * XXX We use linear search to find pre-existing SeqTable entries.	This is
  * good when only a small number of sequences are touched in a session, but
  * would suck with many different sequences.  Perhaps use a hashtable someday.
  */
@@ -81,9 +81,9 @@ static SeqTable seqtab = NULL;	/* Head of list of SeqTable items */
 
 
 static void init_sequence(const char *caller, RangeVar *relation,
-						  SeqTable *p_elm, Relation *p_rel);
+			  SeqTable *p_elm, Relation *p_rel);
 static Form_pg_sequence read_info(const char *caller, SeqTable elm,
-								  Relation rel, Buffer *buf);
+		  Relation rel, Buffer *buf);
 static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
 static void do_setval(RangeVar *sequence, int64 next, bool iscalled);
 
@@ -226,15 +226,15 @@ DefineSequence(CreateSeqStmt *seq)
 	 * Two special hacks here:
 	 *
 	 * 1. Since VACUUM does not process sequences, we have to force the tuple
-	 * to have xmin = FrozenTransactionId now.  Otherwise it would become
-	 * invisible to SELECTs after 2G transactions.  It is okay to do this
+	 * to have xmin = FrozenTransactionId now.	Otherwise it would become
+	 * invisible to SELECTs after 2G transactions.	It is okay to do this
 	 * because if the current transaction aborts, no other xact will ever
 	 * examine the sequence tuple anyway.
 	 *
 	 * 2. Even though heap_insert emitted a WAL log record, we have to emit
 	 * an XLOG_SEQ_LOG record too, since (a) the heap_insert record will
 	 * not have the right xmin, and (b) REDO of the heap_insert record
-	 * would re-init page and sequence magic number would be lost.  This
+	 * would re-init page and sequence magic number would be lost.	This
 	 * means two log records instead of one :-(
 	 */
 	LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
@@ -243,11 +243,12 @@ DefineSequence(CreateSeqStmt *seq)
 
 	{
 		/*
-		 * Note that the "tuple" structure is still just a local tuple record
-		 * created by heap_formtuple; its t_data pointer doesn't point at the
-		 * disk buffer.  To scribble on the disk buffer we need to fetch the
-		 * item pointer.  But do the same to the local tuple, since that will
-		 * be the source for the WAL log record, below.
+		 * Note that the "tuple" structure is still just a local tuple
+		 * record created by heap_formtuple; its t_data pointer doesn't
+		 * point at the disk buffer.  To scribble on the disk buffer we
+		 * need to fetch the item pointer.	But do the same to the local
+		 * tuple, since that will be the source for the WAL log record,
+		 * below.
 		 */
 		ItemId		itemId;
 		Item		item;
@@ -323,7 +324,7 @@ nextval(PG_FUNCTION_ARGS)
 	bool		logit = false;
 
 	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-																"nextval"));
+															 "nextval"));
 
 	/* open and AccessShareLock sequence */
 	init_sequence("nextval", sequence, &elm, &seqrel);
@@ -358,14 +359,14 @@ nextval(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Decide whether we should emit a WAL log record.  If so, force up
+	 * Decide whether we should emit a WAL log record.	If so, force up
 	 * the fetch count to grab SEQ_LOG_VALS more values than we actually
 	 * need to cache.  (These will then be usable without logging.)
 	 *
-	 * If this is the first nextval after a checkpoint, we must force
-	 * a new WAL record to be written anyway, else replay starting from the
+	 * If this is the first nextval after a checkpoint, we must force a new
+	 * WAL record to be written anyway, else replay starting from the
 	 * checkpoint would fail to advance the sequence past the logged
-	 * values.  In this case we may as well fetch extra values.
+	 * values.	In this case we may as well fetch extra values.
 	 */
 	if (log < fetch)
 	{
@@ -401,7 +402,8 @@ nextval(PG_FUNCTION_ARGS)
 					break;		/* stop fetching */
 				if (!seq->is_cycled)
 				{
-					char buf[100];
+					char		buf[100];
+
 					snprintf(buf, 100, INT64_FORMAT, maxv);
 					elog(ERROR, "%s.nextval: reached MAXVALUE (%s)",
 						 sequence->relname, buf);
@@ -421,7 +423,8 @@ nextval(PG_FUNCTION_ARGS)
 					break;		/* stop fetching */
 				if (!seq->is_cycled)
 				{
-					char buf[100];
+					char		buf[100];
+
 					snprintf(buf, 100, INT64_FORMAT, minv);
 					elog(ERROR, "%s.nextval: reached MINVALUE (%s)",
 						 sequence->relname, buf);
@@ -507,7 +510,7 @@ currval(PG_FUNCTION_ARGS)
 	int64		result;
 
 	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-																"currval"));
+															 "currval"));
 
 	/* open and AccessShareLock sequence */
 	init_sequence("currval", sequence, &elm, &seqrel);
@@ -560,7 +563,10 @@ do_setval(RangeVar *sequence, int64 next, bool iscalled)
 
 	if ((next < seq->min_value) || (next > seq->max_value))
 	{
-		char bufv[100], bufm[100], bufx[100];
+		char		bufv[100],
+					bufm[100],
+					bufx[100];
+
 		snprintf(bufv, 100, INT64_FORMAT, next);
 		snprintf(bufm, 100, INT64_FORMAT, seq->min_value);
 		snprintf(bufx, 100, INT64_FORMAT, seq->max_value);
@@ -632,7 +638,7 @@ setval(PG_FUNCTION_ARGS)
 	RangeVar   *sequence;
 
 	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-																"setval"));
+															  "setval"));
 
 	do_setval(sequence, next, true);
 
@@ -652,7 +658,7 @@ setval_and_iscalled(PG_FUNCTION_ARGS)
 	RangeVar   *sequence;
 
 	sequence = makeRangeVarFromNameList(textToQualifiedNameList(seqin,
-																"setval"));
+															  "setval"));
 
 	do_setval(sequence, next, iscalled);
 
@@ -672,7 +678,7 @@ init_sequence(const char *caller, RangeVar *relation,
 	TransactionId thisxid = GetCurrentTransactionId();
 	SeqTable	elm;
 	Relation	seqrel;
-	
+
 	/* Look to see if we already have a seqtable entry for relation */
 	for (elm = seqtab; elm != NULL; elm = elm->next)
 	{
@@ -697,9 +703,9 @@ init_sequence(const char *caller, RangeVar *relation,
 	 * Allocate new seqtable entry if we didn't find one.
 	 *
 	 * NOTE: seqtable entries remain in the list for the life of a backend.
-	 * If the sequence itself is deleted then the entry becomes wasted memory,
-	 * but it's small enough that this should not matter.
-	 */ 
+	 * If the sequence itself is deleted then the entry becomes wasted
+	 * memory, but it's small enough that this should not matter.
+	 */
 	if (elm == NULL)
 	{
 		/*
@@ -828,7 +834,9 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 
 	if (new->min_value >= new->max_value)
 	{
-		char bufm[100], bufx[100];
+		char		bufm[100],
+					bufx[100];
+
 		snprintf(bufm, 100, INT64_FORMAT, new->min_value);
 		snprintf(bufx, 100, INT64_FORMAT, new->max_value);
 		elog(ERROR, "DefineSequence: MINVALUE (%s) must be less than MAXVALUE (%s)",
@@ -847,7 +855,9 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 
 	if (new->last_value < new->min_value)
 	{
-		char bufs[100], bufm[100];
+		char		bufs[100],
+					bufm[100];
+
 		snprintf(bufs, 100, INT64_FORMAT, new->last_value);
 		snprintf(bufm, 100, INT64_FORMAT, new->min_value);
 		elog(ERROR, "DefineSequence: START value (%s) can't be less than MINVALUE (%s)",
@@ -855,7 +865,9 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 	}
 	if (new->last_value > new->max_value)
 	{
-		char bufs[100], bufm[100];
+		char		bufs[100],
+					bufm[100];
+
 		snprintf(bufs, 100, INT64_FORMAT, new->last_value);
 		snprintf(bufm, 100, INT64_FORMAT, new->max_value);
 		elog(ERROR, "DefineSequence: START value (%s) can't be greater than MAXVALUE (%s)",
@@ -866,7 +878,8 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		new->cache_value = 1;
 	else if ((new->cache_value = defGetInt64(cache_value)) <= 0)
 	{
-		char buf[100];
+		char		buf[100];
+
 		snprintf(buf, 100, INT64_FORMAT, new->cache_value);
 		elog(ERROR, "DefineSequence: CACHE (%s) can't be <= 0",
 			 buf);

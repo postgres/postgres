@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.25 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.26 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@ TidNext(TidScan *node)
 			return slot;		/* return empty slot */
 
 		/*
-		 * XXX shouldn't we check here to make sure tuple matches TID list?
-		 * In runtime-key case this is not certain, is it?
+		 * XXX shouldn't we check here to make sure tuple matches TID
+		 * list? In runtime-key case this is not certain, is it?
 		 */
 
 		ExecStoreTuple(estate->es_evTuple[node->scan.scanrelid - 1],
@@ -468,7 +468,7 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	currentRelation = heap_open(reloid, AccessShareLock);
 
 	scanstate->css_currentRelation = currentRelation;
-	scanstate->css_currentScanDesc = NULL; /* no heap scan here */
+	scanstate->css_currentScanDesc = NULL;		/* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.

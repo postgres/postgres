@@ -9,7 +9,7 @@
  *
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
- * $Id: funcapi.h,v 1.7 2002/08/30 19:56:49 tgl Exp $
+ * $Id: funcapi.h,v 1.8 2002/09/04 20:31:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,22 +35,22 @@
 typedef struct AttInMetadata
 {
 	/* full TupleDesc */
-	TupleDesc	   tupdesc;
+	TupleDesc	tupdesc;
 
 	/* array of attribute type input function finfo */
-	FmgrInfo	   *attinfuncs;
+	FmgrInfo   *attinfuncs;
 
 	/* array of attribute type typelem */
-	Oid			   *attelems;
+	Oid		   *attelems;
 
 	/* array of attribute typmod */
-	int32		   *atttypmods;
-}	AttInMetadata;
+	int32	   *atttypmods;
+} AttInMetadata;
 
 /*-------------------------------------------------------------------------
  *		Support struct to ease writing Set Returning Functions (SRFs)
  *-------------------------------------------------------------------------
- * 
+ *
  * This struct holds function context for Set Returning Functions.
  * Use fn_extra to hold a pointer to it across calls
  */
@@ -58,59 +58,60 @@ typedef struct FuncCallContext
 {
 	/*
 	 * Number of times we've been called before.
-	 * 
+	 *
 	 * call_cntr is initialized to 0 for you by SRF_FIRSTCALL_INIT(), and
 	 * incremented for you every time SRF_RETURN_NEXT() is called.
 	 */
-	uint32			call_cntr;
+	uint32		call_cntr;
 
 	/*
 	 * OPTIONAL maximum number of calls
 	 *
-	 * max_calls is here for convenience ONLY and setting it is OPTIONAL.
-	 * If not set, you must provide alternative means to know when the
+	 * max_calls is here for convenience ONLY and setting it is OPTIONAL. If
+	 * not set, you must provide alternative means to know when the
 	 * function is done.
 	 */
-	uint32			max_calls;
+	uint32		max_calls;
 
 	/*
 	 * OPTIONAL pointer to result slot
-	 * 
-	 * slot is for use when returning tuples (i.e. composite data types)
-	 * and is not needed when returning base (i.e. scalar) data types.
+	 *
+	 * slot is for use when returning tuples (i.e. composite data types) and
+	 * is not needed when returning base (i.e. scalar) data types.
 	 */
 	TupleTableSlot *slot;
 
 	/*
 	 * OPTIONAL pointer to misc user provided context info
-	 * 
+	 *
 	 * user_fctx is for use as a pointer to your own struct to retain
 	 * arbitrary context information between calls for your function.
 	 */
-	void		   *user_fctx;
+	void	   *user_fctx;
 
 	/*
-	 * OPTIONAL pointer to struct containing arrays of attribute type input
-	 * metainfo
-	 * 
+	 * OPTIONAL pointer to struct containing arrays of attribute type
+	 * input metainfo
+	 *
 	 * attinmeta is for use when returning tuples (i.e. composite data types)
 	 * and is not needed when returning base (i.e. scalar) data types. It
-	 * is ONLY needed if you intend to use BuildTupleFromCStrings() to create
-	 * the return tuple.
+	 * is ONLY needed if you intend to use BuildTupleFromCStrings() to
+	 * create the return tuple.
 	 */
-	AttInMetadata	   *attinmeta;
+	AttInMetadata *attinmeta;
 
 	/*
-	 * memory context used for structures which must live for multiple calls
+	 * memory context used for structures which must live for multiple
+	 * calls
 	 *
 	 * multi_call_memory_ctx is set by SRF_FIRSTCALL_INIT() for you, and used
 	 * by SRF_RETURN_DONE() for cleanup. It is the most appropriate memory
 	 * context for any memory that is to be re-used across multiple calls
 	 * of the SRF.
 	 */
-	MemoryContext	multi_call_memory_ctx;
+	MemoryContext multi_call_memory_ctx;
 
-}	FuncCallContext;
+} FuncCallContext;
 
 /*----------
  *	Support to ease writing Functions returning composite types
@@ -163,39 +164,37 @@ extern HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
  * Datum
  * my_Set_Returning_Function(PG_FUNCTION_ARGS)
  * {
- * 	FuncCallContext	   *funcctx;
- * 	Datum				result;
- *  MemoryContext		oldcontext;
- * 	<user defined declarations>
- * 
- * 	if (SRF_IS_FIRSTCALL())
- * 	{
- * 		funcctx = SRF_FIRSTCALL_INIT();
+ *	FuncCallContext    *funcctx;
+ *	Datum				result;
+ *	MemoryContext		oldcontext;
+ *	<user defined declarations>
+ *
+ *	if (SRF_IS_FIRSTCALL())
+ *	{
+ *		funcctx = SRF_FIRSTCALL_INIT();
  *		// switch context when allocating stuff to be used in later calls
  *		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
- * 		<user defined code>
- * 		<if returning composite>
- * 			<obtain slot>
- * 			funcctx->slot = slot;
- * 		<endif returning composite>
- * 		<user defined code>
+ *		<user defined code>
+ *		<if returning composite>
+ *			<obtain slot>
+ *			funcctx->slot = slot;
+ *		<endif returning composite>
+ *		<user defined code>
  *		// return to original context when allocating transient memory
  *		MemoryContextSwitchTo(oldcontext);
- *  }
- * 	<user defined code>
- * 	funcctx = SRF_PERCALL_SETUP();
- * 	<user defined code>
- * 
- * 	if (funcctx->call_cntr < funcctx->max_calls)
- * 	{
- * 		<user defined code>
- * 		<obtain result Datum>
- * 		SRF_RETURN_NEXT(funcctx, result);
- * 	}
- * 	else
- * 	{
- * 		SRF_RETURN_DONE(funcctx);
- * 	}
+ *	}
+ *	<user defined code>
+ *	funcctx = SRF_PERCALL_SETUP();
+ *	<user defined code>
+ *
+ *	if (funcctx->call_cntr < funcctx->max_calls)
+ *	{
+ *		<user defined code>
+ *		<obtain result Datum>
+ *		SRF_RETURN_NEXT(funcctx, result);
+ *	}
+ *	else
+ *		SRF_RETURN_DONE(funcctx);
  * }
  *
  *----------

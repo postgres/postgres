@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.39 2002/08/27 18:57:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.40 2002/09/04 20:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,7 +279,7 @@ ConnectDatabase(Archive *AHX,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(AH->connection) == CONNECTION_BAD)
 		die_horribly(AH, modulename, "connection to database \"%s\" failed: %s",
-					 PQdb(AH->connection), PQerrorMessage(AH->connection));
+				   PQdb(AH->connection), PQerrorMessage(AH->connection));
 
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);
@@ -598,8 +598,8 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 	appendPQExpBuffer(tblQry,
 					  "SELECT a.attname FROM "
 					  "pg_catalog.pg_attribute a, pg_catalog.pg_type t "
-					  "WHERE a.attnum > 0 AND a.attrelid = '%s'::pg_catalog.regclass "
-					  "AND a.atttypid = t.oid AND t.typname in ('oid', 'lo')",
+		 "WHERE a.attnum > 0 AND a.attrelid = '%s'::pg_catalog.regclass "
+				 "AND a.atttypid = t.oid AND t.typname in ('oid', 'lo')",
 					  tblName->data);
 
 	res = PQexec(AH->blobConnection, tblQry->data);
@@ -639,12 +639,12 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 		if (!uRes)
 			die_horribly(AH, modulename,
 					"could not update column \"%s\" of table \"%s\": %s",
-					attr, te->tag, PQerrorMessage(AH->blobConnection));
+					  attr, te->tag, PQerrorMessage(AH->blobConnection));
 
 		if (PQresultStatus(uRes) != PGRES_COMMAND_OK)
 			die_horribly(AH, modulename,
 				"error while updating column \"%s\" of table \"%s\": %s",
-					attr, te->tag, PQerrorMessage(AH->blobConnection));
+					  attr, te->tag, PQerrorMessage(AH->blobConnection));
 
 		PQclear(uRes);
 	}
@@ -686,7 +686,7 @@ InsertBlobXref(ArchiveHandle *AH, Oid old, Oid new)
 	PQExpBuffer qry = createPQExpBuffer();
 
 	appendPQExpBuffer(qry,
-					  "Insert Into %s(oldOid, newOid) Values ('%u', '%u');",
+				   "Insert Into %s(oldOid, newOid) Values ('%u', '%u');",
 					  BLOB_XREF_TABLE, old, new);
 
 	ExecuteSqlCommand(AH, qry, "could not create large object cross-reference entry", true);

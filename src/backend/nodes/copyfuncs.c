@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.210 2002/09/02 02:13:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.211 2002/09/04 20:31:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1518,7 +1518,7 @@ _copyAExpr(A_Expr *from)
 static ColumnRef *
 _copyColumnRef(ColumnRef *from)
 {
-	ColumnRef	   *newnode = makeNode(ColumnRef);
+	ColumnRef  *newnode = makeNode(ColumnRef);
 
 	Node_Copy(from, newnode, fields);
 	Node_Copy(from, newnode, indirection);
@@ -1529,7 +1529,7 @@ _copyColumnRef(ColumnRef *from)
 static ParamRef *
 _copyParamRef(ParamRef *from)
 {
-	ParamRef    *newnode = makeNode(ParamRef);
+	ParamRef   *newnode = makeNode(ParamRef);
 
 	newnode->number = from->number;
 	Node_Copy(from, newnode, fields);
@@ -1595,7 +1595,7 @@ _copyAIndices(A_Indices *from)
 static ExprFieldSelect *
 _copyExprFieldSelect(ExprFieldSelect *from)
 {
-	ExprFieldSelect	   *newnode = makeNode(ExprFieldSelect);
+	ExprFieldSelect *newnode = makeNode(ExprFieldSelect);
 
 	Node_Copy(from, newnode, arg);
 	Node_Copy(from, newnode, fields);
@@ -1688,7 +1688,7 @@ _copyRangeSubselect(RangeSubselect *from)
 static RangeFunction *
 _copyRangeFunction(RangeFunction *from)
 {
-	RangeFunction   *newnode = makeNode(RangeFunction);
+	RangeFunction *newnode = makeNode(RangeFunction);
 
 	Node_Copy(from, newnode, funccallnode);
 	Node_Copy(from, newnode, alias);
@@ -2223,7 +2223,7 @@ _copyTransactionStmt(TransactionStmt *from)
 static CompositeTypeStmt *
 _copyCompositeTypeStmt(CompositeTypeStmt *from)
 {
-	CompositeTypeStmt   *newnode = makeNode(CompositeTypeStmt);
+	CompositeTypeStmt *newnode = makeNode(CompositeTypeStmt);
 
 	Node_Copy(from, newnode, typevar);
 	Node_Copy(from, newnode, coldeflist);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.54 2002/08/22 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.55 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,8 @@ AggregateCreate(const char *aggName,
 	Oid			procOid;
 	TupleDesc	tupDesc;
 	int			i;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 
 	/* sanity checks */
 	if (!aggName)
@@ -85,12 +85,12 @@ AggregateCreate(const char *aggName,
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 	if (proc->prorettype != aggTransType)
 		elog(ERROR, "return type of transition function %s is not %s",
-			 NameListToString(aggtransfnName), format_type_be(aggTransType));
+		 NameListToString(aggtransfnName), format_type_be(aggTransType));
 
 	/*
 	 * If the transfn is strict and the initval is NULL, make sure input
-	 * type and transtype are the same (or at least binary-compatible),
-	 * so that it's OK to use the first input value as the initial
+	 * type and transtype are the same (or at least binary-compatible), so
+	 * that it's OK to use the first input value as the initial
 	 * transValue.
 	 */
 	if (proc->proisstrict && agginitval == NULL)
@@ -128,26 +128,29 @@ AggregateCreate(const char *aggName,
 
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the
-	 * aggregate.  (This could fail if there's already a conflicting entry.)
+	 * aggregate.  (This could fail if there's already a conflicting
+	 * entry.)
 	 */
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	fnArgs[0] = aggBaseType;
 
 	procOid = ProcedureCreate(aggName,
 							  aggNamespace,
-							  false,		/* no replacement */
-							  false,		/* doesn't return a set */
-							  finaltype,	/* returnType */
-							  INTERNALlanguageId,	/* languageObjectId */
+							  false,	/* no replacement */
+							  false,	/* doesn't return a set */
+							  finaltype,		/* returnType */
+							  INTERNALlanguageId,		/* languageObjectId */
 							  0,
-							  "aggregate_dummy",	/* placeholder proc */
-							  "-",			/* probin */
-							  true,			/* isAgg */
-							  false,		/* security invoker (currently not definable for agg) */
-							  false,		/* isStrict (not needed for agg) */
-							  PROVOLATILE_IMMUTABLE,	/* volatility (not needed for agg) */
-							  1,			/* parameterCount */
-							  fnArgs);		/* parameterTypes */
+							  "aggregate_dummy",		/* placeholder proc */
+							  "-",		/* probin */
+							  true,		/* isAgg */
+							  false,	/* security invoker (currently not
+										 * definable for agg) */
+							  false,	/* isStrict (not needed for agg) */
+							  PROVOLATILE_IMMUTABLE,	/* volatility (not
+														 * needed for agg) */
+							  1,	/* parameterCount */
+							  fnArgs);	/* parameterTypes */
 
 	/*
 	 * Okay to create the pg_aggregate entry.

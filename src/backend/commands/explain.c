@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.86 2002/09/02 01:05:04 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.87 2002/09/04 20:31:15 momjian Exp $
  *
  */
 
@@ -41,18 +41,18 @@ typedef struct ExplainState
 
 static StringInfo Explain_PlanToString(Plan *plan, ExplainState *es);
 static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
-							TupOutputState *tstate);
+				TupOutputState *tstate);
 static void explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
-							int indent, ExplainState *es);
+				int indent, ExplainState *es);
 static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
-						   int scanrelid, Plan *outer_plan,
-						   StringInfo str, int indent, ExplainState *es);
+			   int scanrelid, Plan *outer_plan,
+			   StringInfo str, int indent, ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel,
-							const char *outer_name, int outer_varno, Plan *outer_plan,
-							const char *inner_name, int inner_varno, Plan *inner_plan,
-							StringInfo str, int indent, ExplainState *es);
+				const char *outer_name, int outer_varno, Plan *outer_plan,
+				const char *inner_name, int inner_varno, Plan *inner_plan,
+				StringInfo str, int indent, ExplainState *es);
 static void show_sort_keys(List *tlist, int nkeys, const char *qlabel,
-						   StringInfo str, int indent, ExplainState *es);
+			   StringInfo str, int indent, ExplainState *es);
 static Node *make_ors_ands_explicit(List *orclauses);
 
 /*
@@ -189,7 +189,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 			do_text_output_multiline(tstate, f);
 			pfree(f);
 			if (es->printCost)
-				do_text_output_oneline(tstate, "");	/* separator line */
+				do_text_output_oneline(tstate, "");		/* separator line */
 		}
 	}
 
@@ -325,7 +325,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 				relation = index_open(lfirsti(l));
 				appendStringInfo(str, "%s%s",
 								 (++i > 1) ? ", " : "",
-								 quote_identifier(RelationGetRelationName(relation)));
+					quote_identifier(RelationGetRelationName(relation)));
 				index_close(relation);
 			}
 			/* FALL THRU */
@@ -335,7 +335,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			{
 				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
 											  es->rtable);
-				char   *relname;
+				char	   *relname;
 
 				/* Assume it's on a real relation */
 				Assert(rte->rtekind == RTE_RELATION);
@@ -347,7 +347,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 								 quote_identifier(relname));
 				if (strcmp(rte->eref->aliasname, relname) != 0)
 					appendStringInfo(str, " %s",
-									 quote_identifier(rte->eref->aliasname));
+								 quote_identifier(rte->eref->aliasname));
 			}
 			break;
 		case T_SubqueryScan:
@@ -365,10 +365,10 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 			{
 				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
 											  es->rtable);
-				Expr   *expr;
-				Func   *funcnode;
-				Oid		funcid;
-				char   *proname;
+				Expr	   *expr;
+				Func	   *funcnode;
+				Oid			funcid;
+				char	   *proname;
 
 				/* Assert it's on a RangeFunction */
 				Assert(rte->rtekind == RTE_FUNCTION);
@@ -384,7 +384,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 								 quote_identifier(proname));
 				if (strcmp(rte->eref->aliasname, proname) != 0)
 					appendStringInfo(str, " %s",
-									 quote_identifier(rte->eref->aliasname));
+								 quote_identifier(rte->eref->aliasname));
 			}
 			break;
 		default:
@@ -482,7 +482,7 @@ explain_outNode(StringInfo str, Plan *plan, Plan *outer_plan,
 		case T_SubqueryScan:
 			show_upper_qual(plan->qual,
 							"Filter",
-							"subplan", 1, ((SubqueryScan *) plan)->subplan,
+						  "subplan", 1, ((SubqueryScan *) plan)->subplan,
 							"", 0, NULL,
 							str, indent, es);
 			break;
@@ -662,14 +662,14 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 
 	/*
 	 * If we have an outer plan that is referenced by the qual, add it to
-	 * the deparse context.  If not, don't (so that we don't force prefixes
-	 * unnecessarily).
+	 * the deparse context.  If not, don't (so that we don't force
+	 * prefixes unnecessarily).
 	 */
 	if (outer_plan)
 	{
 		if (intMember(OUTER, pull_varnos(node)))
 			outercontext = deparse_context_for_subplan("outer",
-													   outer_plan->targetlist,
+												  outer_plan->targetlist,
 													   es->rtable);
 		else
 			outercontext = NULL;
@@ -760,10 +760,11 @@ show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 
 	/*
 	 * In this routine we expect that the plan node's tlist has not been
-	 * processed by set_plan_references().  Normally, any Vars will contain
-	 * valid varnos referencing the actual rtable.  But we might instead be
-	 * looking at a dummy tlist generated by prepunion.c; if there are
-	 * Vars with zero varno, use the tlist itself to determine their names.
+	 * processed by set_plan_references().	Normally, any Vars will
+	 * contain valid varnos referencing the actual rtable.	But we might
+	 * instead be looking at a dummy tlist generated by prepunion.c; if
+	 * there are Vars with zero varno, use the tlist itself to determine
+	 * their names.
 	 */
 	if (intMember(0, pull_varnos((Node *) tlist)))
 	{
@@ -811,7 +812,7 @@ show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 }
 
 /*
- * Indexscan qual lists have an implicit OR-of-ANDs structure.  Make it
+ * Indexscan qual lists have an implicit OR-of-ANDs structure.	Make it
  * explicit so deparsing works properly.
  */
 static Node *
@@ -823,13 +824,11 @@ make_ors_ands_explicit(List *orclauses)
 		return (Node *) make_ands_explicit(lfirst(orclauses));
 	else
 	{
-		List   *args = NIL;
-		List   *orptr;
+		List	   *args = NIL;
+		List	   *orptr;
 
 		foreach(orptr, orclauses)
-		{
 			args = lappend(args, make_ands_explicit(lfirst(orptr)));
-		}
 
 		return (Node *) make_orclause(args);
 	}

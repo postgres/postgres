@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.287 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.288 2002/09/04 20:31:24 momjian Exp $
  *
  * NOTES
  *
@@ -115,6 +115,7 @@
 sigset_t	UnBlockSig,
 			BlockSig,
 			AuthBlockSig;
+
 #else
 int			UnBlockSig,
 			BlockSig,
@@ -218,7 +219,8 @@ static int	Shutdown = NoShutdown;
 
 static bool FatalError = false; /* T if recovering from backend crash */
 
-bool ClientAuthInProgress = false;	/* T during new-client authentication */
+bool		ClientAuthInProgress = false;		/* T during new-client
+												 * authentication */
 
 /*
  * State for assigning random salts and cancel keys.
@@ -250,9 +252,9 @@ static void sigusr1_handler(SIGNAL_ARGS);
 static void dummy_handler(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static void LogChildExit(int lev, const char *procname,
-						 int pid, int exitstatus);
+			 int pid, int exitstatus);
 static int	DoBackend(Port *port);
-       void ExitPostmaster(int status);
+void		ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
@@ -271,7 +273,7 @@ static void SignalChildren(int signal);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[]);
 static pid_t SSDataBase(int xlop);
-       void
+void
 postmaster_error(const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 1, 2)));
@@ -281,11 +283,11 @@ __attribute__((format(printf, 1, 2)));
 #define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
 
 #ifdef USE_SSL
-extern int secure_initialize(void);
+extern int	secure_initialize(void);
 extern void secure_destroy(void);
-extern int secure_open_server(Port *);
+extern int	secure_open_server(Port *);
 extern void secure_close(Port *);
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 
 
 static void
@@ -293,6 +295,7 @@ checkDataDir(const char *checkdir)
 {
 	char		path[MAXPGPATH];
 	FILE	   *fp;
+
 #ifndef __CYGWIN__
 	struct stat stat_buf;
 #endif
@@ -311,9 +314,9 @@ checkDataDir(const char *checkdir)
 	/*
 	 * Check if the directory has group or world access.  If so, reject.
 	 *
-	 * XXX temporarily suppress check when on Windows, because there may
-	 * not be proper support for Unix-y file permissions.  Need to think
-	 * of a reasonable check to apply on Windows.
+	 * XXX temporarily suppress check when on Windows, because there may not
+	 * be proper support for Unix-y file permissions.  Need to think of a
+	 * reasonable check to apply on Windows.
 	 */
 #ifndef __CYGWIN__
 
@@ -329,8 +332,7 @@ checkDataDir(const char *checkdir)
 	if (stat_buf.st_mode & (S_IRWXG | S_IRWXO))
 		elog(FATAL, "data directory %s has group or world access; permissions should be u=rwx (0700)",
 			 checkdir);
-
-#endif /* !__CYGWIN__ */
+#endif   /* !__CYGWIN__ */
 
 	/* Look for PG_VERSION before looking for pg_control */
 	ValidatePgVersion(checkdir);
@@ -442,15 +444,16 @@ PostmasterMain(int argc, char *argv[])
 				potential_DataDir = optarg;
 				break;
 			case 'd':
-			{
-				/* Turn on debugging for the postmaster. */
-				char *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
-				sprintf(debugstr, "debug%s", optarg);
-				SetConfigOption("server_min_messages", debugstr,
-								PGC_POSTMASTER, PGC_S_ARGV);
-				pfree(debugstr);
-				break;
-			}
+				{
+					/* Turn on debugging for the postmaster. */
+					char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
+
+					sprintf(debugstr, "debug%s", optarg);
+					SetConfigOption("server_min_messages", debugstr,
+									PGC_POSTMASTER, PGC_S_ARGV);
+					pfree(debugstr);
+					break;
+				}
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -582,7 +585,7 @@ PostmasterMain(int argc, char *argv[])
 	 * Force an exit if ReservedBackends is not less than MaxBackends.
 	 */
 	if (ReservedBackends >= MaxBackends)
-		elog(FATAL,"superuser_reserved_connections must be less than max_connections.");
+		elog(FATAL, "superuser_reserved_connections must be less than max_connections.");
 
 	/*
 	 * Now that we are done processing the postmaster arguments, reset
@@ -598,7 +601,7 @@ PostmasterMain(int argc, char *argv[])
 		extern char **environ;
 		char	  **p;
 
-		elog(DEBUG2, "%s: PostmasterMain: initial environ dump:",	progname);
+		elog(DEBUG2, "%s: PostmasterMain: initial environ dump:", progname);
 		elog(DEBUG2, "-----------------------------------------");
 		for (p = environ; *p; ++p)
 			elog(DEBUG2, "\t%s", *p);
@@ -705,8 +708,8 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Set up signal handlers for the postmaster process.
 	 *
-	 * CAUTION: when changing this list, check for side-effects on the
-	 * signal handling setup of child processes.  See tcop/postgres.c,
+	 * CAUTION: when changing this list, check for side-effects on the signal
+	 * handling setup of child processes.  See tcop/postgres.c,
 	 * bootstrap/bootstrap.c, and postmaster/pgstat.c.
 	 */
 	pqinitmask();
@@ -737,8 +740,9 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * On many platforms, the first call of localtime() incurs significant
 	 * overhead to load timezone info from the system configuration files.
-	 * By doing it once in the postmaster, we avoid having to do it in every
-	 * started child process.  The savings are not huge, but they add up...
+	 * By doing it once in the postmaster, we avoid having to do it in
+	 * every started child process.  The savings are not huge, but they
+	 * add up...
 	 */
 	{
 		time_t		now = time(NULL);
@@ -783,6 +787,7 @@ pmdaemonize(int argc, char *argv[])
 {
 	int			i;
 	pid_t		pid;
+
 #ifdef LINUX_PROFILE
 	struct itimerval prof_itimer;
 #endif
@@ -1128,7 +1133,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 
 #ifdef USE_SSL
 		if (SSLok == 'S' && secure_open_server(port) == -1)
-				return STATUS_ERROR;
+			return STATUS_ERROR;
 #endif
 		/* regular startup packet, cancel, etc packet should follow... */
 		/* but not another SSL negotiation request */
@@ -1174,20 +1179,21 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		elog(FATAL, "no PostgreSQL user name specified in startup packet");
 
 	if (Db_user_namespace)
-    {
+	{
 		/*
-		 *	If user@, it is a global user, remove '@'.
-		 *	We only want to do this if there is an '@' at the end and no
-		 *	earlier in the user string or they may fake as a local user
-		 *	of another database attaching to this database.
+		 * If user@, it is a global user, remove '@'. We only want to do
+		 * this if there is an '@' at the end and no earlier in the user
+		 * string or they may fake as a local user of another database
+		 * attaching to this database.
 		 */
-		if (strchr(port->user, '@') == port->user + strlen(port->user)-1)
+		if (strchr(port->user, '@') == port->user + strlen(port->user) - 1)
 			*strchr(port->user, '@') = '\0';
 		else
 		{
 			/* Append '@' and dbname */
-			char hold_user[SM_DATABASE_USER+1];
-			snprintf(hold_user, SM_DATABASE_USER+1, "%s@%s", port->user,
+			char		hold_user[SM_DATABASE_USER + 1];
+
+			snprintf(hold_user, SM_DATABASE_USER + 1, "%s@%s", port->user,
 					 port->database);
 			strcpy(port->user, hold_user);
 		}
@@ -1263,7 +1269,7 @@ processCancelRequest(Port *port, void *pkt)
 			else
 				/* Right PID, wrong key: no way, Jose */
 				elog(DEBUG1, "bad key in cancel request for process %d",
-					backendPID);
+					 backendPID);
 			return;
 		}
 	}
@@ -1388,8 +1394,8 @@ reset_shared(unsigned short port)
 	 *
 	 * Note: in each "cycle of life" we will normally assign the same IPC
 	 * keys (if using SysV shmem and/or semas), since the port number is
-	 * used to determine IPC keys.  This helps ensure that we will clean up
-	 * dead IPC objects if the postmaster crashes and is restarted.
+	 * used to determine IPC keys.	This helps ensure that we will clean
+	 * up dead IPC objects if the postmaster crashes and is restarted.
 	 */
 	CreateSharedMemoryAndSemaphores(false, MaxBackends, port);
 }
@@ -1832,6 +1838,7 @@ BackendStartup(Port *port)
 {
 	Backend    *bn;				/* for backend cleanup */
 	pid_t		pid;
+
 #ifdef LINUX_PROFILE
 	struct itimerval prof_itimer;
 #endif
@@ -1866,11 +1873,13 @@ BackendStartup(Port *port)
 	fflush(stderr);
 
 #ifdef LINUX_PROFILE
+
 	/*
-	 * Linux's fork() resets the profiling timer in the child process.
-	 * If we want to profile child processes then we need to save and restore
-	 * the timer setting.  This is a waste of time if not profiling, however,
-	 * so only do it if commanded by specific -DLINUX_PROFILE switch.
+	 * Linux's fork() resets the profiling timer in the child process. If
+	 * we want to profile child processes then we need to save and restore
+	 * the timer setting.  This is a waste of time if not profiling,
+	 * however, so only do it if commanded by specific -DLINUX_PROFILE
+	 * switch.
 	 */
 	getitimer(ITIMER_PROF, &prof_itimer);
 #endif
@@ -1924,7 +1933,7 @@ BackendStartup(Port *port)
 
 	/* in parent, normal */
 	elog(DEBUG1, "BackendStartup: forked pid=%d socket=%d", (int) pid,
-		port->sock);
+		 port->sock);
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
@@ -1940,7 +1949,7 @@ BackendStartup(Port *port)
 
 /*
  * Try to report backend fork() failure to client before we close the
- * connection.  Since we do not care to risk blocking the postmaster on
+ * connection.	Since we do not care to risk blocking the postmaster on
  * this connection, we set the connection to non-blocking and try only once.
  *
  * This is grungy special-purpose code; we cannot use backend libpq since
@@ -1950,6 +1959,7 @@ static void
 report_fork_failure_to_client(Port *port, int errnum)
 {
 	char		buffer[1000];
+
 #ifdef __BEOS__
 	int			on = 1;
 #endif
@@ -1968,7 +1978,7 @@ report_fork_failure_to_client(Port *port, int errnum)
 		return;
 #endif
 
-	send(port->sock, buffer, strlen(buffer)+1, 0);
+	send(port->sock, buffer, strlen(buffer) + 1, 0);
 }
 
 
@@ -2033,7 +2043,7 @@ DoBackend(Port *port)
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
-	ClientAuthInProgress = true; /* limit visibility of log messages */
+	ClientAuthInProgress = true;	/* limit visibility of log messages */
 
 	/* We don't want the postmaster's proc_exit() handlers */
 	on_exit_reset();
@@ -2260,7 +2270,8 @@ DoBackend(Port *port)
 		elog(DEBUG2, "\t%s", av[i]);
 	elog(DEBUG2, ")");
 
-	ClientAuthInProgress = false; /* client_min_messages is active now */
+	ClientAuthInProgress = false;		/* client_min_messages is active
+										 * now */
 
 	return (PostgresMain(ac, av, port->user));
 }
@@ -2459,6 +2470,7 @@ SSDataBase(int xlop)
 {
 	pid_t		pid;
 	Backend    *bn;
+
 #ifdef LINUX_PROFILE
 	struct itimerval prof_itimer;
 #endif
@@ -2647,7 +2659,7 @@ CreateOptsFile(int argc, char *argv[])
 
 /*
  * This should be used only for reporting "interactive" errors (ie, errors
- * during startup.  Once the postmaster is launched, use elog.
+ * during startup.	Once the postmaster is launched, use elog.
  */
 void
 postmaster_error(const char *fmt,...)

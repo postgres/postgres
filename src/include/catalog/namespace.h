@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: namespace.h,v 1.19 2002/08/08 01:44:31 tgl Exp $
+ * $Id: namespace.h,v 1.20 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 /*
  *	This structure holds a list of possible functions or operators
- *	found by namespace lookup.  Each function/operator is identified
+ *	found by namespace lookup.	Each function/operator is identified
  *	by OID and by argument types; the list must be pruned by type
  *	resolution rules that are embodied in the parser, not here.
  */
@@ -30,7 +30,7 @@ typedef struct _FuncCandidateList
 	Oid			oid;			/* the function or operator's OID */
 	int			nargs;			/* number of arg types returned */
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
-} *FuncCandidateList;			/* VARIABLE LENGTH STRUCT */
+}	*FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
 
 /*
  *	This structure holds a list of opclass candidates found by namespace
@@ -45,7 +45,7 @@ typedef struct _OpclassCandidateList
 	Oid			opcintype;		/* type of input data for opclass */
 	bool		opcdefault;		/* T if opclass is default for opcintype */
 	Oid			opckeytype;		/* type of index data, or InvalidOid */
-} *OpclassCandidateList;
+}	*OpclassCandidateList;
 
 
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
@@ -67,8 +67,8 @@ extern Oid	OpclassnameGetOpcid(Oid amid, const char *opcname);
 extern bool OpclassIsVisible(Oid opcid);
 
 extern void DeconstructQualifiedName(List *names,
-									 char **nspname_p,
-									 char **objname_p);
+						 char **nspname_p,
+						 char **objname_p);
 extern Oid	LookupExplicitNamespace(const char *nspname);
 
 extern Oid	QualifiedNameGetCreationNamespace(List *names, char **objname_p);
@@ -80,8 +80,8 @@ extern bool isTempNamespace(Oid namespaceId);
 extern void PushSpecialNamespace(Oid namespaceId);
 extern void PopSpecialNamespace(Oid namespaceId);
 
-extern Oid FindConversionByName(List *conname);
-extern Oid FindDefaultConversionProc(int4 for_encoding, int4 to_encoding);
+extern Oid	FindConversionByName(List *conname);
+extern Oid	FindDefaultConversionProc(int4 for_encoding, int4 to_encoding);
 
 /* initialization & transaction cleanup code */
 extern void InitializeSearchPath(void);
@@ -91,7 +91,7 @@ extern void AtEOXact_Namespace(bool isCommit);
 extern char *namespace_search_path;
 
 extern const char *assign_search_path(const char *newval,
-									  bool doit, bool interactive);
+				   bool doit, bool interactive);
 
 extern List *fetch_search_path(bool includeImplicit);
 

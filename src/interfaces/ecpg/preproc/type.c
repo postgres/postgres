@@ -26,7 +26,7 @@ mm_strdup(const char *string)
 
 	if (new == NULL)
 		mmerror(OUT_OF_MEMORY, ET_FATAL, "Out of memory\n");
-		
+
 	return new;
 }
 
@@ -183,7 +183,7 @@ get_type(enum ECPGttype type)
 /* Dump a type.
    The type is dumped as:
    type-tag <comma>				   - enum ECPGttype
-   reference-to-variable <comma>   		   - char *
+   reference-to-variable <comma>		   - char *
    size <comma>					   - long size of this field (if varchar)
    arrsize <comma>				   - long number of elements in the arr
    offset <comma>				   - offset to the next element
@@ -208,7 +208,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const char *i
 		case ECPGt_array:
 			if (indicator_set && ind_type->type != ECPGt_array)
 				mmerror(INDICATOR_NOT_ARRAY, ET_FATAL, "Indicator for array/pointer has to be array/pointer.\n");
-			
+
 			switch (type->u.element->type)
 			{
 				case ECPGt_array:
@@ -223,7 +223,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type, const char *i
 						yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
 
 					ECPGdump_a_simple(o, name, type->u.element->type,
-						  type->u.element->size, type->size, NULL, prefix);
+						type->u.element->size, type->size, NULL, prefix);
 					if (ind_type != NULL)
 					{
 						if (ind_type->type == ECPGt_NO_INDICATOR)
@@ -325,7 +325,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * we have to use the pointer except for arrays with given
 				 * bounds
 				 */
-				if (arrsize > 0 && siz== NULL)
+				if (arrsize > 0 && siz == NULL)
 					sprintf(variable, "(%s%s)", prefix ? prefix : "", name);
 				else
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
@@ -376,24 +376,22 @@ ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, long arrsiz, 
 		sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);
 	else
 		sprintf(pbuf, "%s%s->", prefix ? prefix : "", name);
-		
+
 	prefix = pbuf;
 
 	if (ind_type == &ecpg_no_indicator)
-	{
 		ind_p = &struct_no_indicator;
-	}
 	else if (ind_type != NULL)
 	{
 		if (arrsiz == 1)
 			sprintf(ind_pbuf, "%s%s.", ind_prefix ? ind_prefix : "", ind_name);
 		else
 			sprintf(ind_pbuf, "%s%s->", ind_prefix ? ind_prefix : "", ind_name);
-					
+
 		ind_prefix = ind_pbuf;
 		ind_p = ind_type->u.members;
 	}
-	
+
 	for (p = type->u.members; p; p = p->next)
 	{
 		ECPGdump_a_type(o, p->name, p->type, (ind_p != NULL) ? ind_p->name : NULL, (ind_p != NULL) ? ind_p->type : NULL, prefix, ind_prefix, arrsiz, type->struct_sizeof, (ind_p != NULL) ? ind_type->struct_sizeof : NULL);

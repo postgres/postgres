@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.38 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.39 2002/09/04 20:31:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ static bool contain_var_clause_walker(Node *node, void *context);
 static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
-						flatten_join_alias_vars_context *context);
+								flatten_join_alias_vars_context *context);
 
 
 /*
@@ -317,7 +317,7 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * If force is TRUE then we will reduce all JOIN alias Vars to non-alias Vars
  * or expressions thereof (there may be COALESCE and/or type conversions
  * involved).  If force is FALSE we will not expand a Var to a non-Var
- * expression.  This is a hack to avoid confusing mergejoin planning, which
+ * expression.	This is a hack to avoid confusing mergejoin planning, which
  * currently cannot cope with non-Var join items --- we leave the join vars
  * as Vars till after planning is done, then expand them during setrefs.c.
  *
@@ -346,9 +346,9 @@ flatten_join_alias_vars_mutator(Node *node,
 		return NULL;
 	if (IsA(node, Var))
 	{
-		Var	   *var = (Var *) node;
+		Var		   *var = (Var *) node;
 		RangeTblEntry *rte;
-		Node   *newvar;
+		Node	   *newvar;
 
 		if (var->varlevelsup != 0)
 			return node;		/* no need to copy, really */
@@ -357,7 +357,7 @@ flatten_join_alias_vars_mutator(Node *node,
 			return node;
 		Assert(var->varattno > 0);
 		newvar = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
-		if (IsA(newvar, Var) || context->force)
+		if (IsA(newvar, Var) ||context->force)
 		{
 			/* expand it; recurse in case join input is itself a join */
 			return flatten_join_alias_vars_mutator(newvar, context);

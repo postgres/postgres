@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.48 2002/06/20 20:29:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/libpq/crypt.c,v 1.49 2002/09/04 20:31:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,9 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 			   *valuntil = NULL,
 			   *crypt_pwd;
 	int			retval = STATUS_ERROR;
-	List	   **line;
-	List		*token;
-	
+	List	  **line;
+	List	   *token;
+
 	if ((line = get_user_line(user)) == NULL)
 		return STATUS_ERROR;
 
@@ -50,7 +50,7 @@ md5_crypt_verify(const Port *port, const char *user, const char *pgpass)
 		if (token)
 			valuntil = lfirst(token);
 	}
-	
+
 	if (passwd == NULL || *passwd == '\0')
 		return STATUS_ERROR;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.76 2002/09/02 01:05:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.77 2002/09/04 20:31:13 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -91,22 +91,25 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 	foreach(j, grantees)
 	{
 		PrivGrantee *grantee = (PrivGrantee *) lfirst(j);
-		AclItem		aclitem;
+		AclItem aclitem;
 		uint32		idtype;
 
 		if (grantee->username)
 		{
-			aclitem.ai_id = get_usesysid(grantee->username);
+			aclitem.	ai_id = get_usesysid(grantee->username);
+
 			idtype = ACL_IDTYPE_UID;
 		}
 		else if (grantee->groupname)
 		{
-			aclitem.ai_id = get_grosysid(grantee->groupname);
+			aclitem.	ai_id = get_grosysid(grantee->groupname);
+
 			idtype = ACL_IDTYPE_GID;
 		}
 		else
 		{
-			aclitem.ai_id = ACL_ID_WORLD;
+			aclitem.	ai_id = ACL_ID_WORLD;
+
 			idtype = ACL_IDTYPE_WORLD;
 		}
 
@@ -376,7 +379,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 		char		replaces[Natts_pg_proc];
 
 		oid = LookupFuncNameTypeNames(func->funcname, func->funcargs,
-									  stmt->is_grant ? "GRANT" : "REVOKE");
+									stmt->is_grant ? "GRANT" : "REVOKE");
 
 		relation = heap_openr(ProcedureRelationName, RowExclusiveLock);
 		tuple = SearchSysCache(PROCOID,
@@ -569,8 +572,8 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 			aclcheck_error(ACLCHECK_NOT_OWNER, nspname);
 
 		/*
-		 * If there's no ACL, create a default using the pg_namespace.nspowner
-		 * field.
+		 * If there's no ACL, create a default using the
+		 * pg_namespace.nspowner field.
 		 */
 		aclDatum = SysCacheGetAttr(NAMESPACENAME, tuple,
 								   Anum_pg_namespace_nspacl,
@@ -1163,8 +1166,8 @@ pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode)
 	Acl		   *acl;
 
 	/*
-	 * If we have been assigned this namespace as a temp namespace,
-	 * assume we have all grantable privileges on it.
+	 * If we have been assigned this namespace as a temp namespace, assume
+	 * we have all grantable privileges on it.
 	 */
 	if (isTempNamespace(nsp_oid))
 		return ACLCHECK_OK;

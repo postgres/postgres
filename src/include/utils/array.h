@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.33 2002/08/26 17:54:02 tgl Exp $
+ * $Id: array.h,v 1.34 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,12 +105,12 @@ extern ArrayType *array_set_slice(ArrayType *array, int nSubscripts,
 extern Datum array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType);
 
 extern ArrayType *construct_array(Datum *elems, int nelems,
-								  Oid elmtype,
-								  int elmlen, bool elmbyval, char elmalign);
+				Oid elmtype,
+				int elmlen, bool elmbyval, char elmalign);
 extern void deconstruct_array(ArrayType *array,
-							  Oid elmtype,
-							  int elmlen, bool elmbyval, char elmalign,
-							  Datum **elemsp, int *nelemsp);
+				  Oid elmtype,
+				  int elmlen, bool elmbyval, char elmalign,
+				  Datum **elemsp, int *nelemsp);
 
 
 /*

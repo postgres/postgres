@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.42 2002/06/20 20:29:53 momjian Exp $
+ * $Id: tqual.h,v 1.43 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,8 +96,8 @@ typedef enum
 	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
 	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
 	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
-	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in
-									 * progress */
+	HEAPTUPLE_INSERT_IN_PROGRESS,		/* inserting xact is still in
+										 * progress */
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
@@ -107,8 +107,8 @@ extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple);
 extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple,
 						   Snapshot snapshot);
-extern int	HeapTupleSatisfiesUpdate(HeapTuple tuple,
-									 CommandId curcid);
+extern int HeapTupleSatisfiesUpdate(HeapTuple tuple,
+						 CommandId curcid);
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 						 TransactionId OldestXmin);
 

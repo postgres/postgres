@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.74 2002/08/30 23:59:46 tgl Exp $
+ * $Id: execnodes.h,v 1.75 2002/09/04 20:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ typedef struct ExprContext_CB
  */
 typedef struct ExprContext
 {
-	NodeTag			type;
+	NodeTag		type;
 
 	/* Tuples that Var nodes in expression may refer to */
 	TupleTableSlot *ecxt_scantuple;
@@ -102,16 +102,16 @@ typedef struct ExprContext
 	TupleTableSlot *ecxt_outertuple;
 
 	/* Memory contexts for expression evaluation --- see notes above */
-	MemoryContext	ecxt_per_query_memory;
-	MemoryContext	ecxt_per_tuple_memory;
+	MemoryContext ecxt_per_query_memory;
+	MemoryContext ecxt_per_tuple_memory;
 
 	/* Values to substitute for Param nodes in expression */
-	ParamExecData  *ecxt_param_exec_vals;	/* for PARAM_EXEC params */
-	ParamListInfo	ecxt_param_list_info;	/* for other param types */
+	ParamExecData *ecxt_param_exec_vals;		/* for PARAM_EXEC params */
+	ParamListInfo ecxt_param_list_info; /* for other param types */
 
 	/* Values to substitute for Aggref nodes in expression */
-	Datum		   *ecxt_aggvalues;	/* precomputed values for Aggref nodes */
-	bool		   *ecxt_aggnulls;	/* null flags for Aggref nodes */
+	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
+	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
 
 	/* Functions to call back when ExprContext is shut down */
 	ExprContext_CB *ecxt_callbacks;
@@ -155,7 +155,7 @@ typedef struct ReturnSetInfo
 	SetFunctionReturnMode returnMode;	/* actual return mode */
 	ExprDoneCond isDone;		/* status for ValuePerCall mode */
 	/* fields filled by function in Materialize return mode: */
-	Tuplestorestate *setResult;	/* holds the complete returned tuple set */
+	Tuplestorestate *setResult; /* holds the complete returned tuple set */
 	TupleDesc	setDesc;		/* actual descriptor for returned tuples */
 } ReturnSetInfo;
 
@@ -534,10 +534,10 @@ typedef struct SubqueryScanState
  */
 typedef struct FunctionScanState
 {
-	CommonScanState csstate;		/* its first field is NodeTag */
-	TupleDesc		tupdesc;
+	CommonScanState csstate;	/* its first field is NodeTag */
+	TupleDesc	tupdesc;
 	Tuplestorestate *tuplestorestate;
-	Node		   *funcexpr;
+	Node	   *funcexpr;
 } FunctionScanState;
 
 /* ----------------------------------------------------------------

@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.12 2001/12/21 15:22:09 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.13 2002/09/04 20:31:33 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -265,7 +265,7 @@ set_ps_display(const char *activity)
 
 #ifdef PS_USE_CLOBBER_ARGV
 	{
-		int		buflen;
+		int			buflen;
 
 		/* pad unused memory */
 		buflen = strlen(ps_buffer);

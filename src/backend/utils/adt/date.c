@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.71 2002/09/03 19:41:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.72 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,10 @@
 #include "utils/timestamp.h"
 
 
-int time2tm(TimeADT time, struct tm * tm, fsec_t *fsec);
-int timetz2tm(TimeTzADT *time, struct tm * tm, fsec_t *fsec, int *tzp);
-int tm2time(struct tm * tm, fsec_t fsec, TimeADT *result);
-int tm2timetz(struct tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
+int			time2tm(TimeADT time, struct tm * tm, fsec_t *fsec);
+int			timetz2tm(TimeTzADT *time, struct tm * tm, fsec_t *fsec, int *tzp);
+int			tm2time(struct tm * tm, fsec_t fsec, TimeADT *result);
+int			tm2timetz(struct tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
 static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 
 /*****************************************************************************
@@ -343,7 +343,7 @@ date_timestamptz(PG_FUNCTION_ARGS)
 
 	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
-		int		tz;
+		int			tz;
 
 		tm->tm_hour = 0;
 		tm->tm_min = 0;
@@ -494,6 +494,7 @@ Datum
 time_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
 #endif
@@ -529,7 +530,7 @@ tm2time(struct tm * tm, fsec_t fsec, TimeADT *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	*result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
-			   * INT64CONST(1000000)) + fsec);
+				* INT64CONST(1000000)) + fsec);
 #else
 	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 #endif
@@ -542,7 +543,7 @@ tm2time(struct tm * tm, fsec_t fsec, TimeADT *result)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
-time2tm(TimeADT time, struct tm *tm, fsec_t *fsec)
+time2tm(TimeADT time, struct tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	tm->tm_hour = (time / INT64CONST(3600000000));
@@ -610,7 +611,7 @@ static void
 AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	static const int64 TimeScales[MAX_TIMESTAMP_PRECISION+1] = {
+	static const int64 TimeScales[MAX_TIMESTAMP_PRECISION + 1] = {
 		INT64CONST(1000000),
 		INT64CONST(100000),
 		INT64CONST(10000),
@@ -620,7 +621,7 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		INT64CONST(1)
 	};
 
-	static const int64 TimeOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+	static const int64 TimeOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
 		INT64CONST(-500000),
 		INT64CONST(-50000),
 		INT64CONST(-5000),
@@ -629,8 +630,9 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		INT64CONST(-5),
 		INT64CONST(0)
 	};
+
 #else
-	static const double TimeScales[MAX_TIMESTAMP_PRECISION+1] = {
+	static const double TimeScales[MAX_TIMESTAMP_PRECISION + 1] = {
 		1,
 		10,
 		100,
@@ -640,7 +642,7 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		1000000
 	};
 
-	static const double TimeOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+	static const double TimeOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
 		0.5,
 		0.05,
 		0.005,
@@ -674,7 +676,10 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		}
 		else
 		{
-			/* Scale and truncate first, then add to help the rounding behavior */
+			/*
+			 * Scale and truncate first, then add to help the rounding
+			 * behavior
+			 */
 			*time = (rint((((double) *time) * TimeScales[typmod]) + TimeOffsets[typmod])
 					 / TimeScales[typmod]);
 		}
@@ -915,8 +920,10 @@ timestamp_time(PG_FUNCTION_ARGS)
 		elog(ERROR, "Unable to convert timestamp to time");
 
 #ifdef HAVE_INT64_TIMESTAMP
-	/* Could also do this with
-	 * time = (timestamp / 86400000000 * 86400000000) - timestamp;
+
+	/*
+	 * Could also do this with time = (timestamp / 86400000000 *
+	 * 86400000000) - timestamp;
 	 */
 	result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
 			   * INT64CONST(1000000)) + fsec);
@@ -948,8 +955,10 @@ timestamptz_time(PG_FUNCTION_ARGS)
 		elog(ERROR, "Unable to convert timestamptz to time");
 
 #ifdef HAVE_INT64_TIMESTAMP
-	/* Could also do this with
-	 * time = (timestamp / 86400000000 * 86400000000) - timestamp;
+
+	/*
+	 * Could also do this with time = (timestamp / 86400000000 *
+	 * 86400000000) - timestamp;
 	 */
 	result = ((((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec)
 			   * INT64CONST(1000000)) + fsec);
@@ -1349,7 +1358,7 @@ timetz_out(PG_FUNCTION_ARGS)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
-timetz2tm(TimeTzADT *time, struct tm *tm, fsec_t *fsec, int *tzp)
+timetz2tm(TimeTzADT *time, struct tm * tm, fsec_t *fsec, int *tzp)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	tm->tm_hour = (time->time / INT64CONST(3600000000));
@@ -1537,6 +1546,7 @@ timetz_pl_interval(PG_FUNCTION_ARGS)
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	TimeTzADT  *result;
+
 #ifndef HAVE_INT64_TIMESTAMP
 	TimeTzADT	time1;
 #endif
@@ -1569,6 +1579,7 @@ timetz_mi_interval(PG_FUNCTION_ARGS)
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
 	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	TimeTzADT  *result;
+
 #ifndef HAVE_INT64_TIMESTAMP
 	TimeTzADT	time1;
 #endif
@@ -1798,7 +1809,7 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result = (((date * INT64CONST(86400000000)) + time->time)
-		+ (time->zone * INT64CONST(1000000)));
+			  + (time->zone * INT64CONST(1000000)));
 #else
 	result = (((date * 86400.0) + time->time) + time->zone);
 #endif

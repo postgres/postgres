@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.88 2002/09/02 01:05:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.89 2002/09/04 20:31:09 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -114,8 +114,8 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 	{
 		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memcpy(desc->attrs[i],
-				tupdesc->attrs[i],
-				ATTRIBUTE_TUPLE_SIZE);
+			   tupdesc->attrs[i],
+			   ATTRIBUTE_TUPLE_SIZE);
 		desc->attrs[i]->attnotnull = false;
 		desc->attrs[i]->atthasdef = false;
 	}
@@ -148,8 +148,8 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	{
 		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memcpy(desc->attrs[i],
-				tupdesc->attrs[i],
-				ATTRIBUTE_TUPLE_SIZE);
+			   tupdesc->attrs[i],
+			   ATTRIBUTE_TUPLE_SIZE);
 	}
 	if (constr)
 	{
@@ -425,9 +425,8 @@ TupleDescInitEntry(TupleDesc desc,
 	 *
 	 * (Why not just make the atttypid point to the OID type, instead of the
 	 * type the query returns?	Because the executor uses the atttypid to
-	 * tell the front end what type will be returned,
-	 * and in the end the type returned will be the result of the query,
-	 * not an OID.)
+	 * tell the front end what type will be returned, and in the end the
+	 * type returned will be the result of the query, not an OID.)
 	 *
 	 * (Why not wait until the return type of the set is known (i.e., the
 	 * recursive call to the executor to execute the set has returned)

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.139 2002/09/03 21:45:42 petere Exp $
+ *	$Id: pqcomm.c,v 1.140 2002/09/04 20:31:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -469,10 +469,9 @@ pq_recvbuf(void)
 				continue;		/* Ok if interrupted */
 
 			/*
-			 * Careful: an elog() that tries to write to the client
-			 * would cause recursion to here, leading to stack overflow
-			 * and core dump!  This message must go *only* to the postmaster
-			 * log.
+			 * Careful: an elog() that tries to write to the client would
+			 * cause recursion to here, leading to stack overflow and core
+			 * dump!  This message must go *only* to the postmaster log.
 			 */
 			elog(COMMERROR, "pq_recvbuf: recv() failed: %m");
 			return EOF;
@@ -574,12 +573,12 @@ pq_getstring(StringInfo s)
 	s->data[0] = '\0';
 
 	/* Read until we get the terminating '\0' */
-	for(;;)
+	for (;;)
 	{
 		while (PqRecvPointer >= PqRecvLength)
 		{
-			if (pq_recvbuf())		/* If nothing in buffer, then recv some */
-				return EOF;			/* Failed to recv data */
+			if (pq_recvbuf())	/* If nothing in buffer, then recv some */
+				return EOF;		/* Failed to recv data */
 		}
 
 		for (i = PqRecvPointer; i < PqRecvLength; i++)
@@ -589,7 +588,7 @@ pq_getstring(StringInfo s)
 				/* does not copy the \0 */
 				appendBinaryStringInfo(s, PqRecvBuffer + PqRecvPointer,
 									   i - PqRecvPointer);
-				PqRecvPointer = i + 1; /* advance past \0 */
+				PqRecvPointer = i + 1;	/* advance past \0 */
 				return 0;
 			}
 		}
@@ -639,7 +638,7 @@ pq_putbytes(const char *s, size_t len)
 int
 pq_flush(void)
 {
-	static int last_reported_send_errno = 0;
+	static int	last_reported_send_errno = 0;
 
 	unsigned char *bufptr = PqSendBuffer;
 	unsigned char *bufend = PqSendBuffer + PqSendPointer;
@@ -656,13 +655,12 @@ pq_flush(void)
 				continue;		/* Ok if we were interrupted */
 
 			/*
-			 * Careful: an elog() that tries to write to the client
-			 * would cause recursion to here, leading to stack overflow
-			 * and core dump!  This message must go *only* to the postmaster
-			 * log.
+			 * Careful: an elog() that tries to write to the client would
+			 * cause recursion to here, leading to stack overflow and core
+			 * dump!  This message must go *only* to the postmaster log.
 			 *
-			 * If a client disconnects while we're in the midst of output,
-			 * we might write quite a bit of data before we get to a safe
+			 * If a client disconnects while we're in the midst of output, we
+			 * might write quite a bit of data before we get to a safe
 			 * query abort point.  So, suppress duplicate log messages.
 			 */
 			if (errno != last_reported_send_errno)
@@ -679,7 +677,7 @@ pq_flush(void)
 			return EOF;
 		}
 
-		last_reported_send_errno = 0; /* reset after any successful send */
+		last_reported_send_errno = 0;	/* reset after any successful send */
 		bufptr += r;
 	}
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: istrat.h,v 1.25 2002/06/20 20:29:43 momjian Exp $
+ * $Id: istrat.h,v 1.26 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
 #define IndexStrategyIsValid(s) PointerIsValid(s)
 
 extern ScanKey StrategyMapGetScanKeyEntry(StrategyMap map,
-										  StrategyNumber strategyNumber);
+						   StrategyNumber strategyNumber);
 extern StrategyMap IndexStrategyGetStrategyMap(IndexStrategy indexStrategy,
 					  StrategyNumber maxStrategyNum, AttrNumber attrNum);
 

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.4 2002/08/10 20:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ipc_test.c,v 1.5 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ int			MaxBackends = DEF_MAXBACKENDS;
 int			NBuffers = DEF_NBUFFERS;
 
 #ifndef assert_enabled
-bool         assert_enabled = true;
+bool		assert_enabled = true;
 #endif
 
 
@@ -87,7 +87,7 @@ shmem_exit(int code)
 }
 
 void
-on_shmem_exit(void (*function) (), Datum arg)
+			on_shmem_exit(void (*function) (), Datum arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		elog(FATAL, "Out of on_shmem_exit slots");
@@ -144,17 +144,17 @@ elog(int lev, const char *fmt,...)
 
 typedef struct MyStorage
 {
-	PGShmemHeader	header;
-	int				flag;
-	PGSemaphoreData	sem;
-} MyStorage;
+	PGShmemHeader header;
+	int			flag;
+	PGSemaphoreData sem;
+}	MyStorage;
 
 
 int
 main(int argc, char **argv)
 {
-	MyStorage	   *storage;
-	int				cpid;
+	MyStorage  *storage;
+	int			cpid;
 
 	printf("Creating shared memory ... ");
 	fflush(stdout);

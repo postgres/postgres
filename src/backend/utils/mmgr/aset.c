@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.47 2002/08/12 00:36:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.48 2002/09/04 20:31:33 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -206,6 +206,7 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static void AllocSetStats(MemoryContext context);
+
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
 #endif
@@ -223,7 +224,7 @@ static MemoryContextMethods AllocSetMethods = {
 	AllocSetGetChunkSpace,
 	AllocSetStats
 #ifdef MEMORY_CONTEXT_CHECKING
-	, AllocSetCheck
+	,AllocSetCheck
 #endif
 };
 

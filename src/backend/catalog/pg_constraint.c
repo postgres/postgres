@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.5 2002/08/26 17:53:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.6 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  *	Create a constraint table entry.
  *
  * Subsidiary records (such as triggers or indexes to implement the
- * constraint) are *not* created here.  But we do make dependency links
+ * constraint) are *not* created here.	But we do make dependency links
  * from the constraint to the things it depends on.
  */
 Oid
@@ -136,7 +136,7 @@ CreateConstraintEntry(const char *constraintName,
 	 */
 	if (conBin)
 		values[Anum_pg_constraint_conbin - 1] = DirectFunctionCall1(textin,
-										CStringGetDatum(conBin));
+												CStringGetDatum(conBin));
 	else
 		nulls[Anum_pg_constraint_conbin - 1] = 'n';
 
@@ -145,7 +145,7 @@ CreateConstraintEntry(const char *constraintName,
 	 */
 	if (conSrc)
 		values[Anum_pg_constraint_consrc - 1] = DirectFunctionCall1(textin,
-										CStringGetDatum(conSrc));	
+												CStringGetDatum(conSrc));
 	else
 		nulls[Anum_pg_constraint_consrc - 1] = 'n';
 
@@ -165,10 +165,10 @@ CreateConstraintEntry(const char *constraintName,
 	if (OidIsValid(relId))
 	{
 		/*
-		 * Register auto dependency from constraint to owning relation,
-		 * or to specific column(s) if any are mentioned.
+		 * Register auto dependency from constraint to owning relation, or
+		 * to specific column(s) if any are mentioned.
 		 */
-		ObjectAddress	relobject;
+		ObjectAddress relobject;
 
 		relobject.classId = RelOid_pg_class;
 		relobject.objectId = relId;
@@ -195,7 +195,7 @@ CreateConstraintEntry(const char *constraintName,
 		 * Register normal dependency from constraint to foreign relation,
 		 * or to specific column(s) if any are mentioned.
 		 */
-		ObjectAddress	relobject;
+		ObjectAddress relobject;
 
 		relobject.classId = RelOid_pg_class;
 		relobject.objectId = foreignRelId;
@@ -219,11 +219,11 @@ CreateConstraintEntry(const char *constraintName,
 	if (conExpr != NULL)
 	{
 		/*
-		 * Register dependencies from constraint to objects mentioned
-		 * in CHECK expression.  We gin up a rather bogus rangetable
-		 * list to handle any Vars in the constraint.
+		 * Register dependencies from constraint to objects mentioned in
+		 * CHECK expression.  We gin up a rather bogus rangetable list to
+		 * handle any Vars in the constraint.
 		 */
-		RangeTblEntry	rte;
+		RangeTblEntry rte;
 
 		MemSet(&rte, 0, sizeof(rte));
 		rte.type = T_RangeTblEntry;
@@ -271,7 +271,7 @@ ConstraintNameIsUsed(Oid relId, Oid relNamespace, const char *cname)
 
 	while (HeapTupleIsValid(tup = systable_getnext(conscan)))
 	{
-		Form_pg_constraint	con = (Form_pg_constraint) GETSTRUCT(tup);
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
 
 		if (con->conrelid == relId)
 		{
@@ -338,7 +338,7 @@ GenerateConstraintName(Oid relId, Oid relNamespace, int *counter)
 
 		while (HeapTupleIsValid(tup = systable_getnext(conscan)))
 		{
-			Form_pg_constraint	con = (Form_pg_constraint) GETSTRUCT(tup);
+			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
 
 			if (con->conrelid == relId)
 			{
@@ -366,7 +366,7 @@ ConstraintNameIsGenerated(const char *cname)
 {
 	if (cname[0] != '$')
 		return false;
-	if (strspn(cname+1, "0123456789") != strlen(cname+1))
+	if (strspn(cname + 1, "0123456789") != strlen(cname + 1))
 		return false;
 	return true;
 }
@@ -377,11 +377,11 @@ ConstraintNameIsGenerated(const char *cname)
 void
 RemoveConstraintById(Oid conId)
 {
-	Relation		conDesc;
-	ScanKeyData		skey[1];
-	SysScanDesc 	conscan;
-	HeapTuple		tup;
-	Form_pg_constraint	con;
+	Relation	conDesc;
+	ScanKeyData skey[1];
+	SysScanDesc conscan;
+	HeapTuple	tup;
+	Form_pg_constraint con;
 
 	conDesc = heap_openr(ConstraintRelationName, RowExclusiveLock);
 
@@ -399,8 +399,8 @@ RemoveConstraintById(Oid conId)
 	con = (Form_pg_constraint) GETSTRUCT(tup);
 
 	/*
-	 * If the constraint is for a relation, open and exclusive-lock
-	 * the relation it's for.
+	 * If the constraint is for a relation, open and exclusive-lock the
+	 * relation it's for.
 	 *
 	 * XXX not clear what we should lock, if anything, for other constraints.
 	 */
@@ -411,16 +411,16 @@ RemoveConstraintById(Oid conId)
 		rel = heap_open(con->conrelid, AccessExclusiveLock);
 
 		/*
-		 * We need to update the relcheck count if it is a check constraint
-		 * being dropped.  This update will force backends to rebuild
-		 * relcache entries when we commit.
+		 * We need to update the relcheck count if it is a check
+		 * constraint being dropped.  This update will force backends to
+		 * rebuild relcache entries when we commit.
 		 */
 		if (con->contype == CONSTRAINT_CHECK)
 		{
-			Relation		pgrel;
-			HeapTuple		relTup;
-			Form_pg_class	classForm;
-		
+			Relation	pgrel;
+			HeapTuple	relTup;
+			Form_pg_class classForm;
+
 			pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 			relTup = SearchSysCacheCopy(RELOID,
 										ObjectIdGetDatum(con->conrelid),

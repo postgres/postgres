@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.12 2002/07/19 00:17:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.13 2002/09/04 20:31:25 momjian Exp $
  *
  *	Interface:
  *
@@ -66,7 +66,7 @@ static void PrintLockQueue(LOCK *lock, const char *info);
  */
 
 /* Workspace for FindLockCycle */
-static PGPROC **visitedProcs;		/* Array of visited procs */
+static PGPROC **visitedProcs;	/* Array of visited procs */
 static int	nVisitedProcs;
 
 /* Workspace for TopoSort */
@@ -77,7 +77,7 @@ static int *afterConstraints;	/* List head for after-constraints */
 /* Output area for ExpandConstraints */
 static WAIT_ORDER *waitOrders;	/* Array of proposed queue rearrangements */
 static int	nWaitOrders;
-static PGPROC **waitOrderProcs;	/* Space for waitOrders queue contents */
+static PGPROC **waitOrderProcs; /* Space for waitOrders queue contents */
 
 /* Current list of constraints being considered */
 static EDGE *curConstraints;
@@ -377,7 +377,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 {
 	PGPROC	   *proc;
 	LOCK	   *lock;
-	PROCLOCK	   *holder;
+	PROCLOCK   *holder;
 	SHM_QUEUE  *lockHolders;
 	LOCKMETHODTABLE *lockMethodTable;
 	PROC_QUEUE *waitQueue;
@@ -428,7 +428,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	lockHolders = &(lock->lockHolders);
 
 	holder = (PROCLOCK *) SHMQueueNext(lockHolders, lockHolders,
-									 offsetof(PROCLOCK, lockLink));
+									   offsetof(PROCLOCK, lockLink));
 
 	while (holder)
 	{
@@ -452,7 +452,7 @@ FindLockCycleRecurse(PGPROC *checkProc,
 		}
 
 		holder = (PROCLOCK *) SHMQueueNext(lockHolders, &holder->lockLink,
-										 offsetof(PROCLOCK, lockLink));
+										   offsetof(PROCLOCK, lockLink));
 	}
 
 	/*

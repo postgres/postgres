@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.59 2002/08/15 16:36:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.60 2002/09/04 20:31:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ static f_smgr smgrsw[] = {
 	/* main memory */
 	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
 		mmread, mmwrite, mmblindwrt,
-		mmnblocks, NULL, mmcommit, mmabort, NULL},
+	mmnblocks, NULL, mmcommit, mmabort, NULL},
 #endif
 };
 

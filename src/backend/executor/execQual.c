@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.107 2002/09/02 01:05:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.108 2002/09/04 20:31:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static Datum ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOper(Expr *opClause, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalDistinct(Expr *opClause, ExprContext *econtext,
-			 bool *isNull, ExprDoneCond *isDone);
+				 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalFunc(Expr *funcClause, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 static ExprDoneCond ExecEvalFuncArgs(FunctionCallInfo fcinfo,
@@ -70,8 +70,8 @@ static Datum ExecEvalNullTest(NullTest *ntest, ExprContext *econtext,
 static Datum ExecEvalBooleanTest(BooleanTest *btest, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConstraintTest(ConstraintTest *constraint,
-									ExprContext *econtext,
-									bool *isNull, ExprDoneCond *isDone);
+					   ExprContext *econtext,
+					   bool *isNull, ExprDoneCond *isDone);
 
 
 /*----------
@@ -848,7 +848,7 @@ ExecMakeFunctionResult(FunctionCachePtr fcache,
  *		ExecMakeTableFunctionResult
  *
  * Evaluate a table function, producing a materialized result in a Tuplestore
- * object.  (If function returns an empty set, we just return NULL instead.)
+ * object.	(If function returns an empty set, we just return NULL instead.)
  */
 Tuplestorestate *
 ExecMakeTableFunctionResult(Expr *funcexpr,
@@ -871,13 +871,14 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 	bool		returnsTuple = false;
 
 	/* Extract data from function-call expression node */
-	if (!funcexpr || !IsA(funcexpr, Expr) || funcexpr->opType != FUNC_EXPR)
+	if (!funcexpr || !IsA(funcexpr, Expr) ||funcexpr->opType != FUNC_EXPR)
 		elog(ERROR, "ExecMakeTableFunctionResult: expression is not a function call");
 	func = (Func *) funcexpr->oper;
 	argList = funcexpr->args;
 
 	/*
-	 * get the fcache from the Func node. If it is NULL, then initialize it
+	 * get the fcache from the Func node. If it is NULL, then initialize
+	 * it
 	 */
 	fcache = func->func_fcache;
 	if (fcache == NULL)
@@ -892,7 +893,7 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 	 *
 	 * Note: ideally, we'd do this in the per-tuple context, but then the
 	 * argument values would disappear when we reset the context in the
-	 * inner loop.  So do it in caller context.  Perhaps we should make a
+	 * inner loop.	So do it in caller context.  Perhaps we should make a
 	 * separate context just to hold the evaluated arguments?
 	 */
 	MemSet(&fcinfo, 0, sizeof(fcinfo));
@@ -921,8 +922,9 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 	}
 
 	/*
-	 * Prepare a resultinfo node for communication.  We always do this even
-	 * if not expecting a set result, so that we can pass expectedDesc.
+	 * Prepare a resultinfo node for communication.  We always do this
+	 * even if not expecting a set result, so that we can pass
+	 * expectedDesc.
 	 */
 	fcinfo.resultinfo = (Node *) &rsinfo;
 	rsinfo.type = T_ReturnSetInfo;
@@ -948,8 +950,9 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 		HeapTuple	tuple;
 
 		/*
-		 * reset per-tuple memory context before each call of the function.
-		 * This cleans up any local memory the function may leak when called.
+		 * reset per-tuple memory context before each call of the
+		 * function. This cleans up any local memory the function may leak
+		 * when called.
 		 */
 		ResetExprContext(econtext);
 
@@ -964,18 +967,20 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 			/*
 			 * Check for end of result set.
 			 *
-			 * Note: if function returns an empty set, we don't build a 
+			 * Note: if function returns an empty set, we don't build a
 			 * tupdesc or tuplestore (since we can't get a tupdesc in the
 			 * function-returning-tuple case)
 			 */
 			if (rsinfo.isDone == ExprEndResult)
 				break;
+
 			/*
-			 * If first time through, build tupdesc and tuplestore for result
+			 * If first time through, build tupdesc and tuplestore for
+			 * result
 			 */
 			if (first_time)
 			{
-				Oid		funcrettype = funcexpr->typeOid;
+				Oid			funcrettype = funcexpr->typeOid;
 
 				oldcontext = MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
 				if (funcrettype == RECORDOID ||
@@ -1006,7 +1011,7 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 									   0,
 									   false);
 				}
-				tupstore = tuplestore_begin_heap(true, /* randomAccess */
+				tupstore = tuplestore_begin_heap(true,	/* randomAccess */
 												 SortMem);
 				MemoryContextSwitchTo(oldcontext);
 				rsinfo.setResult = tupstore;
@@ -1026,7 +1031,7 @@ ExecMakeTableFunctionResult(Expr *funcexpr,
 			}
 			else
 			{
-				char nullflag;
+				char		nullflag;
 
 				nullflag = fcinfo.isnull ? 'n' : ' ';
 				tuple = heap_formtuple(tupdesc, &result, &nullflag);
@@ -1180,7 +1185,7 @@ ExecEvalDistinct(Expr *opClause,
 				 bool *isNull,
 				 ExprDoneCond *isDone)
 {
-	bool result;
+	bool		result;
 	FunctionCachePtr fcache;
 	FunctionCallInfoData fcinfo;
 	ExprDoneCond argDone;

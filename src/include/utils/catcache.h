@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.44 2002/06/20 20:29:52 momjian Exp $
+ * $Id: catcache.h,v 1.45 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,9 +53,11 @@ typedef struct catcache
 	long		cc_hits;		/* # of matches against existing entry */
 	long		cc_neg_hits;	/* # of matches against negative entry */
 	long		cc_newloads;	/* # of successful loads of new entry */
+
 	/*
 	 * cc_searches - (cc_hits + cc_neg_hits + cc_newloads) is number of
-	 * failed searches, each of which will result in loading a negative entry
+	 * failed searches, each of which will result in loading a negative
+	 * entry
 	 */
 	long		cc_invals;		/* # of entries invalidated from cache */
 	long		cc_discards;	/* # of entries discarded due to overflow */
@@ -77,7 +79,7 @@ typedef struct catctup
 	 * elements in all the caches in LRU order, and the other lists just
 	 * the elements in one hashbucket of one cache, also in LRU order.
 	 *
-	 * The tuple may also be a member of at most one CatCList.  (If a single
+	 * The tuple may also be a member of at most one CatCList.	(If a single
 	 * catcache is list-searched with varying numbers of keys, we may have
 	 * to make multiple entries for the same tuple because of this
 	 * restriction.  Currently, that's not expected to be common, so we
@@ -86,15 +88,16 @@ typedef struct catctup
 	Dlelem		lrulist_elem;	/* list member of global LRU list */
 	Dlelem		cache_elem;		/* list member of per-bucket list */
 	struct catclist *c_list;	/* containing catclist, or NULL if none */
+
 	/*
 	 * A tuple marked "dead" must not be returned by subsequent searches.
 	 * However, it won't be physically deleted from the cache until its
 	 * refcount goes to zero.
 	 *
-	 * A negative cache entry is an assertion that there is no tuple
-	 * matching a particular key.  This is just as useful as a normal entry
-	 * so far as avoiding catalog searches is concerned.  Management of
-	 * positive and negative entries is identical.
+	 * A negative cache entry is an assertion that there is no tuple matching
+	 * a particular key.  This is just as useful as a normal entry so far
+	 * as avoiding catalog searches is concerned.  Management of positive
+	 * and negative entries is identical.
 	 */
 	int			refcount;		/* number of active references */
 	bool		dead;			/* dead but not yet removed? */
@@ -114,22 +117,22 @@ typedef struct catclist
 	 * A CatCList describes the result of a partial search, ie, a search
 	 * using only the first K key columns of an N-key cache.  We form the
 	 * keys used into a tuple (with other attributes NULL) to represent
-	 * the stored key set.  The CatCList object contains links to cache
+	 * the stored key set.	The CatCList object contains links to cache
 	 * entries for all the table rows satisfying the partial key.  (Note:
 	 * none of these will be negative cache entries.)
 	 *
-	 * A CatCList is only a member of a per-cache list; we do not do
-	 * separate LRU management for CatCLists.  Instead, a CatCList is
-	 * dropped from the cache as soon as any one of its member tuples
-	 * ages out due to tuple-level LRU management.
+	 * A CatCList is only a member of a per-cache list; we do not do separate
+	 * LRU management for CatCLists.  Instead, a CatCList is dropped from
+	 * the cache as soon as any one of its member tuples ages out due to
+	 * tuple-level LRU management.
 	 *
 	 * A list marked "dead" must not be returned by subsequent searches.
 	 * However, it won't be physically deleted from the cache until its
 	 * refcount goes to zero.  (Its member tuples must have refcounts at
 	 * least as large, so they won't go away either.)
 	 *
-	 * If "ordered" is true then the member tuples appear in the order of
-	 * the cache's underlying index.  This will be true in normal operation,
+	 * If "ordered" is true then the member tuples appear in the order of the
+	 * cache's underlying index.  This will be true in normal operation,
 	 * but might not be true during bootstrap or recovery operations.
 	 * (namespace.c is able to save some cycles when it is true.)
 	 */
@@ -141,7 +144,7 @@ typedef struct catclist
 	uint32		hash_value;		/* hash value for lookup keys */
 	HeapTupleData tuple;		/* header for tuple holding keys */
 	int			n_members;		/* number of member tuples */
-	CatCTup	   *members[1];		/* members --- VARIABLE LENGTH ARRAY */
+	CatCTup    *members[1];		/* members --- VARIABLE LENGTH ARRAY */
 } CatCList;						/* VARIABLE LENGTH STRUCT */
 
 
@@ -171,8 +174,8 @@ extern HeapTuple SearchCatCache(CatCache *cache,
 extern void ReleaseCatCache(HeapTuple tuple);
 
 extern CatCList *SearchCatCacheList(CatCache *cache, int nkeys,
-			   Datum v1, Datum v2,
-			   Datum v3, Datum v4);
+				   Datum v1, Datum v2,
+				   Datum v3, Datum v4);
 extern void ReleaseCatCacheList(CatCList *list);
 
 extern void ResetCatalogCaches(void);
@@ -181,6 +184,6 @@ extern void CatalogCacheIdInvalidate(int cacheId, uint32 hashValue,
 						 ItemPointer pointer);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-						void (*function) (int, uint32, ItemPointer, Oid));
+					   void (*function) (int, uint32, ItemPointer, Oid));
 
 #endif   /* CATCACHE_H */

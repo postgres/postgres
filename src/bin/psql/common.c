@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.43 2002/08/27 20:16:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.44 2002/09/04 20:31:35 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -295,7 +295,8 @@ SendQuery(const char *query)
 	bool		success = false;
 	PGresult   *results;
 	PGnotify   *notify;
-	struct timeval before,after;
+	struct timeval before,
+				after;
 	struct timezone tz;
 
 	if (!pset.db)
@@ -327,14 +328,10 @@ SendQuery(const char *query)
 
 	cancelConn = pset.db;
 	if (pset.timing)
-	{
 		gettimeofday(&before, &tz);
-	}
 	results = PQexec(pset.db, query);
 	if (pset.timing)
-	{
 		gettimeofday(&after, &tz);
-	}
 	if (PQresultStatus(results) == PGRES_COPY_IN)
 		copy_in_state = true;
 	/* keep cancel connection for copy out state */
@@ -467,7 +464,7 @@ SendQuery(const char *query)
 	/* Possible microtiming output */
 	if (pset.timing && success)
 		printf(gettext("Time: %.2f ms\n"),
-			   ((after.tv_sec-before.tv_sec)*1000000 + after.tv_usec - before.tv_usec) / 1000.0);
+			   ((after.tv_sec - before.tv_sec) * 1000000 + after.tv_usec - before.tv_usec) / 1000.0);
 
 	return success;
 }

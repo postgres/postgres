@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_constraint.h,v 1.2 2002/07/16 05:53:34 tgl Exp $
+ * $Id: pg_constraint.h,v 1.3 2002/09/04 20:31:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -37,10 +37,10 @@ CATALOG(pg_constraint)
 	 * conname + connamespace is deliberately not unique; we allow, for
 	 * example, the same name to be used for constraints of different
 	 * relations.  This is partly for backwards compatibility with past
-	 * Postgres practice, and partly because we don't want to have to obtain
-	 * a global lock to generate a globally unique name for a nameless
-	 * constraint.  We associate a namespace with constraint names only
-	 * for SQL92 compatibility.
+	 * Postgres practice, and partly because we don't want to have to
+	 * obtain a global lock to generate a globally unique name for a
+	 * nameless constraint.  We associate a namespace with constraint
+	 * names only for SQL92 compatibility.
 	 */
 	NameData	conname;		/* name of this constraint */
 	Oid			connamespace;	/* OID of namespace containing constraint */
@@ -57,16 +57,17 @@ CATALOG(pg_constraint)
 
 	/*
 	 * contypid links to the pg_type row for a domain if this is a domain
-	 * constraint.  Otherwise it's 0.
+	 * constraint.	Otherwise it's 0.
 	 *
-	 * For SQL-style global ASSERTIONs, both conrelid and contypid would
-	 * be zero.  This is not presently supported, however.
+	 * For SQL-style global ASSERTIONs, both conrelid and contypid would be
+	 * zero.  This is not presently supported, however.
 	 */
 	Oid			contypid;		/* domain this constraint constrains */
 
 	/*
 	 * These fields, plus confkey, are only meaningful for a foreign-key
-	 * constraint.  Otherwise confrelid is 0 and the char fields are spaces.
+	 * constraint.	Otherwise confrelid is 0 and the char fields are
+	 * spaces.
 	 */
 	Oid			confrelid;		/* relation referenced by foreign key */
 	char		confupdtype;	/* foreign key's ON UPDATE action */
@@ -143,31 +144,31 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 /*
  * prototypes for functions in pg_constraint.c
  */
-extern Oid	CreateConstraintEntry(const char *constraintName,
-								  Oid constraintNamespace,
-								  char constraintType,
-								  bool isDeferrable,
-								  bool isDeferred,
-								  Oid relId,
-								  const int16 *constraintKey,
-								  int constraintNKeys,
-								  Oid domainId,
-								  Oid foreignRelId,
-								  const int16 *foreignKey,
-								  int foreignNKeys,
-								  char foreignUpdateType,
-								  char foreignDeleteType,
-								  char foreignMatchType,
-								  Node *conExpr,
-								  const char *conBin,
-								  const char *conSrc);
+extern Oid CreateConstraintEntry(const char *constraintName,
+					  Oid constraintNamespace,
+					  char constraintType,
+					  bool isDeferrable,
+					  bool isDeferred,
+					  Oid relId,
+					  const int16 *constraintKey,
+					  int constraintNKeys,
+					  Oid domainId,
+					  Oid foreignRelId,
+					  const int16 *foreignKey,
+					  int foreignNKeys,
+					  char foreignUpdateType,
+					  char foreignDeleteType,
+					  char foreignMatchType,
+					  Node *conExpr,
+					  const char *conBin,
+					  const char *conSrc);
 
 extern void RemoveConstraintById(Oid conId);
 
 extern bool ConstraintNameIsUsed(Oid relId, Oid relNamespace,
-								 const char *cname);
+					 const char *cname);
 extern char *GenerateConstraintName(Oid relId, Oid relNamespace,
-									int *counter);
+					   int *counter);
 extern bool ConstraintNameIsGenerated(const char *cname);
 
 #endif   /* PG_CONSTRAINT_H */

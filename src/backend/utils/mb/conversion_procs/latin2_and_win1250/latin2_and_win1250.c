@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.2 2002/08/22 00:01:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin2_and_win1250/latin2_and_win1250.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,12 @@ static void mic2latin2(unsigned char *mic, unsigned char *p, int len);
 static void win12502mic(unsigned char *l, unsigned char *p, int len);
 static void mic2win1250(unsigned char *mic, unsigned char *p, int len);
 
-Datum 
+Datum
 latin2_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN2);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -63,12 +63,12 @@ latin2_to_mic(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 mic_to_latin2(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN2);
@@ -84,7 +84,7 @@ win1250_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1250);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -100,7 +100,7 @@ mic_to_win1250(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_WIN1250);
@@ -116,7 +116,7 @@ latin2_to_win1250(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN2);
@@ -136,7 +136,7 @@ win1250_to_latin2(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 	unsigned char *buf;
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN1250);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_control.h,v 1.9 2002/09/03 21:45:43 petere Exp $
+ * $Id: pg_control.h,v 1.10 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ typedef struct ControlFileData
 	uint32		funcMaxArgs;	/* maximum number of function arguments */
 
 	/* flag indicating internal format of timestamp, interval, time */
-	uint32		enableIntTimes;	/* int64 storage enabled? */
+	uint32		enableIntTimes; /* int64 storage enabled? */
 
 	/* active locales */
 	uint32		localeBuflen;

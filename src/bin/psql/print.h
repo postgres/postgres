@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.13 2002/07/15 01:56:25 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.14 2002/09/04 20:31:36 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -72,7 +72,7 @@ typedef struct _printQueryOpt
  *
  * It calls the printTable above with all the things set straight.
  */
-void printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout);
+void		printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout);
 
 #ifndef __CYGWIN__
 #define DEFAULT_PAGER "more"

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.38 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.39 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,11 +60,11 @@ static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static void CheckTupleType(Form_pg_class tuple_class);
 static bool needs_toast_table(Relation rel);
 static void validateForeignKeyConstraint(FkConstraint *fkconstraint,
-										 Relation rel, Relation pkrel);
-static Oid	createForeignKeyConstraint(Relation rel, Relation pkrel,
-									   FkConstraint *fkconstraint);
+							 Relation rel, Relation pkrel);
+static Oid createForeignKeyConstraint(Relation rel, Relation pkrel,
+						   FkConstraint *fkconstraint);
 static void createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
-									 Oid constrOid);
+						 Oid constrOid);
 static char *fkMatchTypeToString(char match_type);
 
 /* Used by attribute and relation renaming routines: */
@@ -114,9 +114,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	/*
 	 * Look up the namespace in which we are supposed to create the
-	 * relation.  Check we have permission to create there.
-	 * Skip check if bootstrapping, since permissions machinery may not
-	 * be working yet.
+	 * relation.  Check we have permission to create there. Skip check if
+	 * bootstrapping, since permissions machinery may not be working yet.
 	 */
 	namespaceId = RangeVarGetCreationNamespace(stmt->relation);
 
@@ -136,7 +135,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 */
 	schema = MergeAttributes(schema, stmt->inhRelations,
 							 stmt->relation->istemp,
-							 &inheritOids, &old_constraints, &parentHasOids);
+						 &inheritOids, &old_constraints, &parentHasOids);
 
 	numberOfAttributes = length(schema);
 	if (numberOfAttributes <= 0)
@@ -180,10 +179,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 			else
 			{
 				/*
-				 * Generate a constraint name.  NB: this should match the
+				 * Generate a constraint name.	NB: this should match the
 				 * form of names that GenerateConstraintName() may produce
-				 * for names added later.  We are assured that there is
-				 * no name conflict, because MergeAttributes() did not pass
+				 * for names added later.  We are assured that there is no
+				 * name conflict, because MergeAttributes() did not pass
 				 * back any names of this form.
 				 */
 				check[ncheck].ccname = (char *) palloc(NAMEDATALEN);
@@ -242,8 +241,8 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * CREATE TABLE.
 	 *
 	 * Another task that's conveniently done at this step is to add
-	 * dependency links between columns and supporting relations (such
-	 * as SERIAL sequences).
+	 * dependency links between columns and supporting relations (such as
+	 * SERIAL sequences).
 	 *
 	 * First, scan schema to find new column defaults.
 	 */
@@ -271,7 +270,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 		if (colDef->support != NULL)
 		{
 			/* Create dependency for supporting relation for this column */
-			ObjectAddress	colobject,
+			ObjectAddress colobject,
 						suppobject;
 
 			colobject.classId = RelOid_pg_class;
@@ -334,9 +333,9 @@ TruncateRelation(const RangeVar *relation)
 	Relation	rel;
 	Oid			relid;
 	Oid			toastrelid;
- 	ScanKeyData key;
- 	Relation	fkeyRel;
- 	SysScanDesc	fkeyScan;
+	ScanKeyData key;
+	Relation	fkeyRel;
+	SysScanDesc fkeyScan;
 	HeapTuple	tuple;
 
 	/* Grab exclusive lock in preparation for truncate */
@@ -366,8 +365,7 @@ TruncateRelation(const RangeVar *relation)
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
 
 	/*
-	 * Don't allow truncate on tables which are referenced
-	 * by foreign keys
+	 * Don't allow truncate on tables which are referenced by foreign keys
 	 */
 	fkeyRel = heap_openr(ConstraintRelationName, AccessShareLock);
 
@@ -380,8 +378,8 @@ TruncateRelation(const RangeVar *relation)
 								  SnapshotNow, 1, &key);
 
 	/*
-	 * First foreign key found with us as the reference
-	 * should throw an error.
+	 * First foreign key found with us as the reference should throw an
+	 * error.
 	 */
 	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
 	{
@@ -554,7 +552,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		/*
 		 * newattno[] will contain the child-table attribute numbers for
 		 * the attributes of this parent table.  (They are not the same
-		 * for parents after the first one, nor if we have dropped columns.)
+		 * for parents after the first one, nor if we have dropped
+		 * columns.)
 		 */
 		newattno = (AttrNumber *) palloc(tupleDesc->natts * sizeof(AttrNumber));
 
@@ -572,9 +571,10 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			 */
 			if (attribute->attisdropped)
 			{
-				/* 
-				 * change_varattnos_of_a_node asserts that this is greater than
-				 * zero, so if anything tries to use it, we should find out.
+				/*
+				 * change_varattnos_of_a_node asserts that this is greater
+				 * than zero, so if anything tries to use it, we should
+				 * find out.
 				 */
 				newattno[parent_attno - 1] = 0;
 				continue;
@@ -684,6 +684,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				Node	   *expr;
 
 				cdef->contype = CONSTR_CHECK;
+
 				/*
 				 * Do not inherit generated constraint names, since they
 				 * might conflict across multiple inheritance parents.
@@ -857,8 +858,8 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		return;
 
 	/*
-	 * Store INHERITS information in pg_inherits using direct ancestors only.
-	 * Also enter dependencies on the direct ancestors.
+	 * Store INHERITS information in pg_inherits using direct ancestors
+	 * only. Also enter dependencies on the direct ancestors.
 	 */
 	relation = heap_openr(InheritsRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
@@ -1076,7 +1077,7 @@ renameatt(Oid myrelid,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (!allowSystemTableMods 
+	if (!allowSystemTableMods
 		&& IsSystemRelation(targetrelation))
 		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
 			 RelationGetRelationName(targetrelation));
@@ -1141,8 +1142,8 @@ renameatt(Oid myrelid,
 			 oldattname);
 
 	/*
-	 * if the attribute is inherited, forbid the renaming, unless we
-	 * are already inside a recursive rename.
+	 * if the attribute is inherited, forbid the renaming, unless we are
+	 * already inside a recursive rename.
 	 */
 	if (attform->attisinherited && !recursing)
 		elog(ERROR, "renameatt: inherited attribute \"%s\" may not be renamed",
@@ -1233,7 +1234,8 @@ renameatt(Oid myrelid,
 							   true, false);
 	}
 
-	relation_close(targetrelation, NoLock); /* close rel but keep lock! */
+	relation_close(targetrelation, NoLock);		/* close rel but keep
+												 * lock! */
 }
 
 /*
@@ -1382,7 +1384,7 @@ update_ri_trigger_args(Oid relid,
 {
 	Relation	tgrel;
 	ScanKeyData skey[1];
-	SysScanDesc	trigscan;
+	SysScanDesc trigscan;
 	HeapTuple	tuple;
 	Datum		values[Natts_pg_trigger];
 	char		nulls[Natts_pg_trigger];
@@ -1577,8 +1579,8 @@ AlterTableAddColumn(Oid myrelid,
 	HeapTuple	typeTuple;
 	Form_pg_type tform;
 	int			attndims;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -1666,7 +1668,7 @@ AlterTableAddColumn(Oid myrelid,
 
 	if (colDef->is_not_null)
 		elog(ERROR, "Adding NOT NULL columns is not implemented."
-			 "\n\tAdd the column, then use ALTER TABLE ... SET NOT NULL.");
+		   "\n\tAdd the column, then use ALTER TABLE ... SET NOT NULL.");
 
 	pgclass = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -1678,8 +1680,9 @@ AlterTableAddColumn(Oid myrelid,
 			 RelationGetRelationName(rel));
 
 	/*
-	 * this test is deliberately not attisdropped-aware, since if one tries
-	 * to add a column matching a dropped column name, it's gonna fail anyway.
+	 * this test is deliberately not attisdropped-aware, since if one
+	 * tries to add a column matching a dropped column name, it's gonna
+	 * fail anyway.
 	 */
 	if (SearchSysCacheExists(ATTNAME,
 							 ObjectIdGetDatum(myrelid),
@@ -1706,7 +1709,7 @@ AlterTableAddColumn(Oid myrelid,
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	attributeTuple = heap_addheader(Natts_pg_attribute,
-	                                false,
+									false,
 									ATTRIBUTE_TUPLE_SIZE,
 									(void *) &attributeD);
 
@@ -1806,8 +1809,8 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 	HeapTuple	tuple;
 	AttrNumber	attnum;
 	Relation	attr_rel;
-	List	   	*indexoidlist;
-	List	   	*indexoidscan;
+	List	   *indexoidlist;
+	List	   *indexoidscan;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
@@ -1874,10 +1877,10 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid		indexoid = lfirsti(indexoidscan);
+		Oid			indexoid = lfirsti(indexoidscan);
 		HeapTuple	indexTuple;
-		Form_pg_index 	indexStruct;
-		int		i;
+		Form_pg_index indexStruct;
+		int			i;
 
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
@@ -1891,11 +1894,11 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 		if (indexStruct->indisprimary)
 		{
 			/*
-			 * Loop over each attribute in the primary key and
-			 * see if it matches the to-be-altered attribute
+			 * Loop over each attribute in the primary key and see if it
+			 * matches the to-be-altered attribute
 			 */
 			for (i = 0; i < INDEX_MAX_KEYS &&
-					 indexStruct->indkey[i] != InvalidAttrNumber; i++)
+				 indexStruct->indkey[i] != InvalidAttrNumber; i++)
 			{
 				if (indexStruct->indkey[i] == attnum)
 					elog(ERROR, "ALTER TABLE: Attribute \"%s\" is in a primary key", colName);
@@ -1913,7 +1916,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid, bool recurse,
 	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopyAttName(myrelid, colName);
-	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
 
@@ -1940,7 +1943,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 	HeapTuple	tuple;
 	AttrNumber	attnum;
 	Relation	attr_rel;
-	HeapScanDesc 	scan;
+	HeapScanDesc scan;
 	TupleDesc	tupdesc;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
@@ -2000,8 +2003,8 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 			 colName);
 
 	/*
-	 * Perform a scan to ensure that there are no NULL
-	 * values already in the relation
+	 * Perform a scan to ensure that there are no NULL values already in
+	 * the relation
 	 */
 	tupdesc = RelationGetDescr(rel);
 
@@ -2009,7 +2012,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Datum 		d;
+		Datum		d;
 		bool		isnull;
 
 		d = heap_getattr(tuple, attnum, tupdesc, &isnull);
@@ -2027,7 +2030,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid, bool recurse,
 	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
 	tuple = SearchSysCacheCopyAttName(myrelid, colName);
-	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
 
@@ -2153,7 +2156,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 {
 	Relation	rel;
 	int			newtarget = 1;
-	char        newstorage = 'p';
+	char		newstorage = 'p';
 	Relation	attrelation;
 	HeapTuple	tuple;
 	Form_pg_attribute attrtuple;
@@ -2200,7 +2203,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	else if (*flagType == 'M')
 	{
 		/* STORAGE */
-		char        *storagemode;
+		char	   *storagemode;
 
 		Assert(IsA(flagValue, String));
 		storagemode = strVal(flagValue);
@@ -2246,7 +2249,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 			if (childrelid == myrelid)
 				continue;
 			AlterTableAlterColumnFlags(childrelid,
-									   false, colName, flagValue, flagType);
+									false, colName, flagValue, flagType);
 		}
 	}
 
@@ -2263,6 +2266,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	if (attrtuple->attnum < 0)
 		elog(ERROR, "ALTER TABLE: cannot change system attribute \"%s\"",
 			 colName);
+
 	/*
 	 * Now change the appropriate field
 	 */
@@ -2306,7 +2310,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	AttrNumber	n;
 	TupleDesc	tupleDesc;
 	bool		success;
-	ObjectAddress	object;
+	ObjectAddress object;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
@@ -2336,8 +2340,9 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 			 colName);
 
 	/*
-	 * Make sure there will be at least one user column left in the relation
-	 * after we drop this one.  Zero-length tuples tend to confuse us.
+	 * Make sure there will be at least one user column left in the
+	 * relation after we drop this one.  Zero-length tuples tend to
+	 * confuse us.
 	 */
 	tupleDesc = RelationGetDescr(rel);
 
@@ -2355,7 +2360,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 
 	if (!success)
 		elog(ERROR, "ALTER TABLE: Cannot drop last column from table \"%s\"",
-			RelationGetRelationName(rel));
+			 RelationGetRelationName(rel));
 
 	/* Don't drop inherited columns */
 	if (tupleDesc->attrs[attnum - 1]->attisinherited && !recursing)
@@ -2363,8 +2368,8 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 			 colName);
 
 	/*
-	 * If we are asked to drop ONLY in this table (no recursion),
-	 * we need to mark the inheritors' attribute as non-inherited.
+	 * If we are asked to drop ONLY in this table (no recursion), we need
+	 * to mark the inheritors' attribute as non-inherited.
 	 */
 	if (!recurse && !recursing)
 	{
@@ -2378,14 +2383,14 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 		foreach(child, children)
 		{
-			Oid		childrelid = lfirsti(child);
-			Relation childrel;
+			Oid			childrelid = lfirsti(child);
+			Relation	childrel;
 			HeapTuple	tuple;
 
 			childrel = heap_open(childrelid, AccessExclusiveLock);
 
 			tuple = SearchSysCacheCopyAttName(childrelid, colName);
-			if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
 				elog(ERROR, "ALTER TABLE: relation %u has no column \"%s\"",
 					 childrelid, colName);
 
@@ -2407,7 +2412,7 @@ AlterTableDropColumn(Oid myrelid, bool recurse, bool recursing,
 	if (recurse)
 	{
 		List	   *child,
-			   *children;
+				   *children;
 
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(myrelid);
@@ -2495,8 +2500,8 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 	foreach(listptr, newConstraints)
 	{
 		/*
-		 * copy is because we may destructively alter the node below
-		 * by inserting a generated name; this name is not necessarily
+		 * copy is because we may destructively alter the node below by
+		 * inserting a generated name; this name is not necessarily
 		 * correct for children or parents.
 		 */
 		Node	   *newConstraint = copyObject(lfirst(listptr));
@@ -2533,16 +2538,16 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 								if (constr->name)
 								{
 									if (ConstraintNameIsUsed(RelationGetRelid(rel),
-															 RelationGetNamespace(rel),
-															 constr->name))
+											   RelationGetNamespace(rel),
+														   constr->name))
 										elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
 											 constr->name,
-											 RelationGetRelationName(rel));
+										   RelationGetRelationName(rel));
 								}
 								else
 									constr->name = GenerateConstraintName(RelationGetRelid(rel),
-																		  RelationGetNamespace(rel),
-																		  &counter);
+											   RelationGetNamespace(rel),
+															   &counter);
 
 								/*
 								 * We need to make a parse state and range
@@ -2552,8 +2557,8 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 								 */
 								pstate = make_parsestate(NULL);
 								rte = addRangeTableEntryForRelation(pstate,
-																	myrelid,
-											makeAlias(RelationGetRelationName(rel), NIL),
+																 myrelid,
+																	makeAlias(RelationGetRelationName(rel), NIL),
 																	false,
 																	true);
 								addRTEtoQuery(pstate, rte, true, true);
@@ -2657,23 +2662,23 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 					if (fkconstraint->constr_name)
 					{
 						if (ConstraintNameIsUsed(RelationGetRelid(rel),
-												 RelationGetNamespace(rel),
-												 fkconstraint->constr_name))
+											   RelationGetNamespace(rel),
+											  fkconstraint->constr_name))
 							elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
 								 fkconstraint->constr_name,
 								 RelationGetRelationName(rel));
 					}
 					else
 						fkconstraint->constr_name = GenerateConstraintName(RelationGetRelid(rel),
-																		   RelationGetNamespace(rel),
-																		   &counter);
+											   RelationGetNamespace(rel),
+															   &counter);
 
 					/*
 					 * Grab an exclusive lock on the pk table, so that
 					 * someone doesn't delete rows out from under us.
 					 * (Although a lesser lock would do for that purpose,
-					 * we'll need exclusive lock anyway to add triggers
-					 * to the pk table; trying to start with a lesser lock
+					 * we'll need exclusive lock anyway to add triggers to
+					 * the pk table; trying to start with a lesser lock
 					 * will just create a risk of deadlock.)
 					 */
 					pkrel = heap_openrv(fkconstraint->pktable,
@@ -2716,12 +2721,14 @@ AlterTableAddConstraint(Oid myrelid, bool recurse,
 														   fkconstraint);
 
 					/*
-					 * Create the triggers that will enforce the constraint.
+					 * Create the triggers that will enforce the
+					 * constraint.
 					 */
 					createForeignKeyTriggers(rel, fkconstraint, constrOid);
 
 					/*
-					 * Close pk table, but keep lock until we've committed.
+					 * Close pk table, but keep lock until we've
+					 * committed.
 					 */
 					heap_close(pkrel, NoLock);
 
@@ -2754,10 +2761,9 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	int			count;
 
 	/*
-	 * Scan through each tuple, calling RI_FKey_check_ins
-	 * (insert trigger) as if that tuple had just been
-	 * inserted.  If any of those fail, it should
-	 * elog(ERROR) and that's that.
+	 * Scan through each tuple, calling RI_FKey_check_ins (insert trigger)
+	 * as if that tuple had just been inserted.  If any of those fail, it
+	 * should elog(ERROR) and that's that.
 	 */
 	MemSet(&trig, 0, sizeof(trig));
 	trig.tgoid = InvalidOid;
@@ -2848,7 +2854,7 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 	i = 0;
 	foreach(l, fkconstraint->fk_attrs)
 	{
-		char *id = strVal(lfirst(l));
+		char	   *id = strVal(lfirst(l));
 		AttrNumber	attno;
 
 		attno = get_attnum(RelationGetRelid(rel), id);
@@ -2864,7 +2870,7 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 	i = 0;
 	foreach(l, fkconstraint->pk_attrs)
 	{
-		char *id = strVal(lfirst(l));
+		char	   *id = strVal(lfirst(l));
 		AttrNumber	attno;
 
 		attno = get_attnum(RelationGetRelid(pkrel), id);
@@ -2883,14 +2889,14 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 								 RelationGetRelid(rel),
 								 fkattr,
 								 fkcount,
-								 InvalidOid, /* not a domain constraint */
+								 InvalidOid,	/* not a domain constraint */
 								 RelationGetRelid(pkrel),
 								 pkattr,
 								 pkcount,
 								 fkconstraint->fk_upd_action,
 								 fkconstraint->fk_del_action,
 								 fkconstraint->fk_matchtype,
-								 NULL, /* no check constraint */
+								 NULL,	/* no check constraint */
 								 NULL,
 								 NULL);
 }
@@ -2910,7 +2916,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 				constrobj;
 
 	/*
-	 * Reconstruct a RangeVar for my relation (not passed in, unfortunately).
+	 * Reconstruct a RangeVar for my relation (not passed in,
+	 * unfortunately).
 	 */
 	myRel = makeRangeVar(get_namespace_name(RelationGetNamespace(rel)),
 						 RelationGetRelationName(rel));
@@ -2956,9 +2963,9 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->args = lappend(fk_trigger->args,
 							   makeString(myRel->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(fkconstraint->pktable->relname));
+							 makeString(fkconstraint->pktable->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
+			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
 	fk_attr = fkconstraint->fk_attrs;
 	pk_attr = fkconstraint->pk_attrs;
 	if (length(fk_attr) != length(pk_attr))
@@ -2983,8 +2990,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	CommandCounterIncrement();
 
 	/*
-	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the
-	 * ON DELETE action on the referenced table.
+	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the ON
+	 * DELETE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
 	fk_trigger->trigname = fkconstraint->constr_name;
@@ -3032,9 +3039,9 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->args = lappend(fk_trigger->args,
 							   makeString(myRel->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(fkconstraint->pktable->relname));
+							 makeString(fkconstraint->pktable->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
+			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
 	fk_attr = fkconstraint->fk_attrs;
 	pk_attr = fkconstraint->pk_attrs;
 	while (fk_attr != NIL)
@@ -3054,8 +3061,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	CommandCounterIncrement();
 
 	/*
-	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the
-	 * ON UPDATE action on the referenced table.
+	 * Build and execute a CREATE CONSTRAINT TRIGGER statement for the ON
+	 * UPDATE action on the referenced table.
 	 */
 	fk_trigger = makeNode(CreateTrigStmt);
 	fk_trigger->trigname = fkconstraint->constr_name;
@@ -3103,9 +3110,9 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 	fk_trigger->args = lappend(fk_trigger->args,
 							   makeString(myRel->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(fkconstraint->pktable->relname));
+							 makeString(fkconstraint->pktable->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
-							   makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
+			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
 	fk_attr = fkconstraint->fk_attrs;
 	pk_attr = fkconstraint->pk_attrs;
 	while (fk_attr != NIL)
@@ -3129,7 +3136,7 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 static char *
 fkMatchTypeToString(char match_type)
 {
-	switch (match_type) 
+	switch (match_type)
 	{
 		case FKCONSTR_MATCH_FULL:
 			return pstrdup("FULL");
@@ -3227,10 +3234,10 @@ AlterTableDropConstraint(Oid myrelid, bool recurse,
 void
 AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 {
-	Relation		target_rel;
-	Relation		class_rel;
-	HeapTuple		tuple;
-	Form_pg_class	tuple_class;
+	Relation	target_rel;
+	Relation	class_rel;
+	HeapTuple	tuple;
+	Form_pg_class tuple_class;
 
 	/* Get exclusive lock till end of transaction on the target table */
 	/* Use relation_open here so that we work on indexes... */
@@ -3250,8 +3257,8 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 	CheckTupleType(tuple_class);
 
 	/*
-	 * Okay, this is a valid tuple: change its ownership and
-	 * write to the heap.
+	 * Okay, this is a valid tuple: change its ownership and write to the
+	 * heap.
 	 */
 	tuple_class->relowner = newOwnerSysId;
 	simple_heap_update(class_rel, &tuple->t_self, tuple);
@@ -3267,16 +3274,15 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 	if (tuple_class->relkind == RELKIND_RELATION ||
 		tuple_class->relkind == RELKIND_TOASTVALUE)
 	{
-		List *index_oid_list, *i;
+		List	   *index_oid_list,
+				   *i;
 
 		/* Find all the indexes belonging to this relation */
 		index_oid_list = RelationGetIndexList(target_rel);
 
 		/* For each index, recursively change its ownership */
 		foreach(i, index_oid_list)
-		{
 			AlterTableOwner(lfirsti(i), newOwnerSysId);
-		}
 
 		freeList(index_oid_list);
 	}
@@ -3285,9 +3291,7 @@ AlterTableOwner(Oid relationOid, int32 newOwnerSysId)
 	{
 		/* If it has a toast table, recurse to change its ownership */
 		if (tuple_class->reltoastrelid != InvalidOid)
-		{
 			AlterTableOwner(tuple_class->reltoastrelid, newOwnerSysId);
-		}
 	}
 
 	heap_freetuple(tuple);
@@ -3355,7 +3359,7 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	 * We cannot allow toasting a shared relation after initdb (because
 	 * there's no way to mark it toasted in other databases' pg_class).
 	 * Unfortunately we can't distinguish initdb from a manually started
-	 * standalone backend.  However, we can at least prevent this mistake
+	 * standalone backend.	However, we can at least prevent this mistake
 	 * under normal multi-user operation.
 	 */
 	shared_relation = rel->rd_rel->relisshared;
@@ -3453,10 +3457,11 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	tupdesc->attrs[2]->attstorage = 'p';
 
 	/*
-	 * Note: the toast relation is placed in the regular pg_toast namespace
-	 * even if its master relation is a temp table.  There cannot be any
-	 * naming collision, and the toast rel will be destroyed when its master
-	 * is, so there's no need to handle the toast rel as temp.
+	 * Note: the toast relation is placed in the regular pg_toast
+	 * namespace even if its master relation is a temp table.  There
+	 * cannot be any naming collision, and the toast rel will be destroyed
+	 * when its master is, so there's no need to handle the toast rel as
+	 * temp.
 	 */
 	toast_relid = heap_create_with_catalog(toast_relname,
 										   PG_TOAST_NAMESPACE,
@@ -3471,12 +3476,12 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	/*
 	 * Create unique index on chunk_id, chunk_seq.
 	 *
-	 * NOTE: the normal TOAST access routines could actually function with 
-	 * a single-column index on chunk_id only. However, the slice access
+	 * NOTE: the normal TOAST access routines could actually function with a
+	 * single-column index on chunk_id only. However, the slice access
 	 * routines use both columns for faster access to an individual chunk.
-	 * In addition, we want it to be unique as a check against the 
+	 * In addition, we want it to be unique as a check against the
 	 * possibility of duplicate TOAST chunk OIDs. The index might also be
-	 * a little more efficient this way, since btree isn't all that happy 
+	 * a little more efficient this way, since btree isn't all that happy
 	 * with large numbers of equal keys.
 	 */
 
@@ -3516,8 +3521,8 @@ AlterTableCreateToastTable(Oid relOid, bool silent)
 	heap_freetuple(reltup);
 
 	/*
-	 * Register dependency from the toast table to the master, so that
-	 * the toast table will be deleted if the master is.
+	 * Register dependency from the toast table to the master, so that the
+	 * toast table will be deleted if the master is.
 	 */
 	baseobject.classId = RelOid_pg_class;
 	baseobject.objectId = relOid;

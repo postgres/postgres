@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.59 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.60 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 	Relation	description;
 	ScanKeyData skey[3];
 	int			nkeys;
-	SysScanDesc	sd;
+	SysScanDesc sd;
 	HeapTuple	oldtuple;
 
 	/* Use the index to search for all matching old tuples */
@@ -260,9 +260,7 @@ DeleteComments(Oid oid, Oid classoid, int32 subid)
 							SnapshotNow, nkeys, skey);
 
 	while ((oldtuple = systable_getnext(sd)) != NULL)
-	{
 		simple_heap_delete(description, &oldtuple->t_self);
-	}
 
 	/* Done */
 
@@ -357,8 +355,8 @@ CommentAttribute(List *qualname, char *comment)
 	nnames = length(qualname);
 	if (nnames < 2)
 		elog(ERROR, "CommentAttribute: must specify relation.attribute");
-	relname = ltruncate(nnames-1, listCopy(qualname));
-	attrname = strVal(nth(nnames-1, qualname));
+	relname = ltruncate(nnames - 1, listCopy(qualname));
+	attrname = strVal(nth(nnames - 1, qualname));
 
 	/* Open the containing relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relname);
@@ -521,13 +519,13 @@ CommentRule(List *qualname, char *comment)
 		else
 		{
 			elog(ERROR, "rule \"%s\" does not exist", rulename);
-			reloid = ruleoid = 0; /* keep compiler quiet */
+			reloid = ruleoid = 0;		/* keep compiler quiet */
 		}
 
 		if (HeapTupleIsValid(tuple = heap_getnext(scanDesc,
 												  ForwardScanDirection)))
 			elog(ERROR, "There are multiple rules \"%s\""
-				 "\n\tPlease specify a relation name as well as a rule name",
+			 "\n\tPlease specify a relation name as well as a rule name",
 				 rulename);
 
 		heap_endscan(scanDesc);
@@ -540,8 +538,8 @@ CommentRule(List *qualname, char *comment)
 	{
 		/* New-style: rule and relname both provided */
 		Assert(nnames >= 2);
-		relname = ltruncate(nnames-1, listCopy(qualname));
-		rulename = strVal(nth(nnames-1, qualname));
+		relname = ltruncate(nnames - 1, listCopy(qualname));
+		rulename = strVal(nth(nnames - 1, qualname));
 
 		/* Open the owning relation to ensure it won't go away meanwhile */
 		rel = makeRangeVarFromNameList(relname);
@@ -724,7 +722,7 @@ CommentTrigger(List *qualname, char *comment)
 	Relation	pg_trigger,
 				relation;
 	HeapTuple	triggertuple;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	ScanKeyData entry[2];
 	Oid			oid;
 
@@ -732,8 +730,8 @@ CommentTrigger(List *qualname, char *comment)
 	nnames = length(qualname);
 	if (nnames < 2)
 		elog(ERROR, "CommentTrigger: must specify relation and trigger");
-	relname = ltruncate(nnames-1, listCopy(qualname));
-	trigname = strVal(nth(nnames-1, qualname));
+	relname = ltruncate(nnames - 1, listCopy(qualname));
+	trigname = strVal(nth(nnames - 1, qualname));
 
 	/* Open the owning relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relname);
@@ -799,7 +797,7 @@ CommentConstraint(List *qualname, char *comment)
 	Relation	pg_constraint,
 				relation;
 	HeapTuple	tuple;
-	SysScanDesc	scan;
+	SysScanDesc scan;
 	ScanKeyData skey[1];
 	Oid			conOid = InvalidOid;
 
@@ -807,8 +805,8 @@ CommentConstraint(List *qualname, char *comment)
 	nnames = length(qualname);
 	if (nnames < 2)
 		elog(ERROR, "CommentConstraint: must specify relation and constraint");
-	relName = ltruncate(nnames-1, listCopy(qualname));
-	conName = strVal(nth(nnames-1, qualname));
+	relName = ltruncate(nnames - 1, listCopy(qualname));
+	conName = strVal(nth(nnames - 1, qualname));
 
 	/* Open the owning relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relName);
@@ -820,9 +818,9 @@ CommentConstraint(List *qualname, char *comment)
 		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(relation));
 
 	/*
-	 * Fetch the constraint tuple from pg_constraint.  There may be more than
-	 * one match, because constraints are not required to have unique names;
-	 * if so, error out.
+	 * Fetch the constraint tuple from pg_constraint.  There may be more
+	 * than one match, because constraints are not required to have unique
+	 * names; if so, error out.
 	 */
 	pg_constraint = heap_openr(ConstraintRelationName, AccessShareLock);
 
@@ -835,7 +833,7 @@ CommentConstraint(List *qualname, char *comment)
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 	{
-		Form_pg_constraint	con = (Form_pg_constraint) GETSTRUCT(tuple);
+		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
 		if (strcmp(NameStr(con->conname), conName) == 0)
 		{

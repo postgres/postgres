@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.69 2002/08/29 00:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.70 2002/09/04 20:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,11 @@
 #endif
 
 static void findParentsByOid(TableInfo *tblinfo, int numTables,
-							 InhInfo *inhinfo, int numInherits,
-							 const char *oid,
-							 int *numParentsPtr, int **parentIndexes);
+				 InhInfo *inhinfo, int numInherits,
+				 const char *oid,
+				 int *numParentsPtr, int **parentIndexes);
 static void flagInhTables(TableInfo *tbinfo, int numTables,
-			 InhInfo *inhinfo, int numInherits);
+			  InhInfo *inhinfo, int numInherits);
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
 			 InhInfo *inhinfo, int numInherits);
 static int	strInArray(const char *pattern, char **arr, int arr_size);

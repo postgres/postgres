@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.50 2002/06/11 13:40:50 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.51 2002/09/04 20:31:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,12 +68,12 @@ GetNewTransactionId(void)
 	 * might see a partially-set xid here.	But holding both locks at once
 	 * would be a nasty concurrency hit (and in fact could cause a
 	 * deadlock against GetSnapshotData).  So for now, assume atomicity.
-	 * Note that readers of PGPROC xid field should be careful to fetch the
-	 * value only once, rather than assume they can read it multiple times
-	 * and get the same answer each time.
+	 * Note that readers of PGPROC xid field should be careful to fetch
+	 * the value only once, rather than assume they can read it multiple
+	 * times and get the same answer each time.
 	 *
-	 * A solution to the atomic-store problem would be to give each PGPROC its
-	 * own spinlock used only for fetching/storing that PGPROC's xid.
+	 * A solution to the atomic-store problem would be to give each PGPROC
+	 * its own spinlock used only for fetching/storing that PGPROC's xid.
 	 * (SInvalLock would then mean primarily that PROCs couldn't be added/
 	 * removed while holding the lock.)
 	 */

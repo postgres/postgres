@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.81 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.82 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	i = 0;
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
-	values[i++] = ObjectIdGetDatum(typeNamespace); /* typnamespace */
+	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typowner */
 	values[i++] = Int16GetDatum(0);		/* typlen */
 	values[i++] = BoolGetDatum(false);	/* typbyval */
@@ -84,12 +84,12 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typelem */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typinput */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typoutput */
-	values[i++] = CharGetDatum('i');			/* typalign */
-	values[i++] = CharGetDatum('p');			/* typstorage */
-	values[i++] = BoolGetDatum(false);			/* typnotnull */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* typbasetype */
-	values[i++] = Int32GetDatum(-1);			/* typtypmod */
-	values[i++] = Int32GetDatum(0);				/* typndims */
+	values[i++] = CharGetDatum('i');	/* typalign */
+	values[i++] = CharGetDatum('p');	/* typstorage */
+	values[i++] = BoolGetDatum(false);	/* typnotnull */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typbasetype */
+	values[i++] = Int32GetDatum(-1);	/* typtypmod */
+	values[i++] = Int32GetDatum(0);		/* typndims */
 	nulls[i++] = 'n';			/* typdefaultbin */
 	nulls[i++] = 'n';			/* typdefault */
 
@@ -129,8 +129,8 @@ Oid
 TypeCreate(const char *typeName,
 		   Oid typeNamespace,
 		   Oid assignedTypeOid,
-		   Oid relationOid,			/* only for 'c'atalog typeType */
-		   char relationKind,		/* ditto */
+		   Oid relationOid,		/* only for 'c'atalog typeType */
+		   char relationKind,	/* ditto */
 		   int16 internalSize,
 		   char typeType,
 		   char typDelim,
@@ -138,13 +138,13 @@ TypeCreate(const char *typeName,
 		   Oid outputProcedure,
 		   Oid elementType,
 		   Oid baseType,
-		   const char *defaultTypeValue,	/* human readable rep */
+		   const char *defaultTypeValue,		/* human readable rep */
 		   const char *defaultTypeBin,	/* cooked rep */
 		   bool passedByValue,
 		   char alignment,
 		   char storage,
 		   int32 typeMod,
-		   int32 typNDims,			/* Array dimensions for baseType */
+		   int32 typNDims,		/* Array dimensions for baseType */
 		   bool typeNotNull)
 {
 	Relation	pg_type_desc;
@@ -158,8 +158,8 @@ TypeCreate(const char *typeName,
 	int			i;
 
 	/*
-	 * We assume that the caller validated the arguments individually,
-	 * but did not check for bad combinations.
+	 * We assume that the caller validated the arguments individually, but
+	 * did not check for bad combinations.
 	 *
 	 * Validate size specifications: either positive (fixed-length) or -1
 	 * (varlena) or -2 (cstring).  Pass-by-value types must have a fixed
@@ -195,27 +195,27 @@ TypeCreate(const char *typeName,
 	i = 0;
 	namestrcpy(&name, typeName);
 	values[i++] = NameGetDatum(&name);	/* typname */
-	values[i++] = ObjectIdGetDatum(typeNamespace);	/* typnamespace */
+	values[i++] = ObjectIdGetDatum(typeNamespace);		/* typnamespace */
 	values[i++] = Int32GetDatum(GetUserId());	/* typowner */
 	values[i++] = Int16GetDatum(internalSize);	/* typlen */
 	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
 	values[i++] = CharGetDatum(typeType);		/* typtype */
-	values[i++] = BoolGetDatum(true);			/* typisdefined */
+	values[i++] = BoolGetDatum(true);	/* typisdefined */
 	values[i++] = CharGetDatum(typDelim);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(typeType == 'c' ? relationOid : InvalidOid); /* typrelid */
-	values[i++] = ObjectIdGetDatum(elementType);	/* typelem */
-	values[i++] = ObjectIdGetDatum(inputProcedure);	/* typinput */
-	values[i++] = ObjectIdGetDatum(outputProcedure); /* typoutput */
+	values[i++] = ObjectIdGetDatum(elementType);		/* typelem */
+	values[i++] = ObjectIdGetDatum(inputProcedure);		/* typinput */
+	values[i++] = ObjectIdGetDatum(outputProcedure);	/* typoutput */
 	values[i++] = CharGetDatum(alignment);		/* typalign */
 	values[i++] = CharGetDatum(storage);		/* typstorage */
-	values[i++] = BoolGetDatum(typeNotNull);		/* typnotnull */
-	values[i++] = ObjectIdGetDatum(baseType);		/* typbasetype */
-	values[i++] = Int32GetDatum(typeMod);			/* typtypmod */
-	values[i++] = Int32GetDatum(typNDims);			/* typndims */
+	values[i++] = BoolGetDatum(typeNotNull);	/* typnotnull */
+	values[i++] = ObjectIdGetDatum(baseType);	/* typbasetype */
+	values[i++] = Int32GetDatum(typeMod);		/* typtypmod */
+	values[i++] = Int32GetDatum(typNDims);		/* typndims */
 
 	/*
-	 * initialize the default binary value for this type.  Check for
-	 * nulls of course.
+	 * initialize the default binary value for this type.  Check for nulls
+	 * of course.
 	 */
 	if (defaultTypeBin)
 		values[i] = DirectFunctionCall1(textin,
@@ -229,7 +229,7 @@ TypeCreate(const char *typeName,
 	 */
 	if (defaultTypeValue)
 		values[i] = DirectFunctionCall1(textin,
-										CStringGetDatum(defaultTypeValue));
+									  CStringGetDatum(defaultTypeValue));
 	else
 		nulls[i] = 'n';
 	i++;						/* typdefault */
@@ -291,8 +291,8 @@ TypeCreate(const char *typeName,
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
-		ObjectAddress	myself,
-						referenced;
+		ObjectAddress myself,
+					referenced;
 
 		myself.classId = RelOid_pg_type;
 		myself.objectId = typeObjectId;
@@ -321,13 +321,13 @@ TypeCreate(const char *typeName,
 
 		/*
 		 * If the type is a rowtype for a relation, mark it as internally
-		 * dependent on the relation, *unless* it is a stand-alone composite
-		 * type relation. For the latter case, we have to reverse the
-		 * dependency.
+		 * dependent on the relation, *unless* it is a stand-alone
+		 * composite type relation. For the latter case, we have to
+		 * reverse the dependency.
 		 *
-		 * In the former case, this allows the type to be auto-dropped
-		 * when the relation is, and not otherwise. And in the latter,
-		 * of course we get the opposite effect.
+		 * In the former case, this allows the type to be auto-dropped when
+		 * the relation is, and not otherwise. And in the latter, of
+		 * course we get the opposite effect.
 		 */
 		if (OidIsValid(relationOid))
 		{
@@ -342,11 +342,11 @@ TypeCreate(const char *typeName,
 		}
 
 		/*
-		 * If the type is an array type, mark it auto-dependent on the base
-		 * type.  (This is a compromise between the typical case where the
-		 * array type is automatically generated and the case where it is
-		 * manually created: we'd prefer INTERNAL for the former case and
-		 * NORMAL for the latter.)
+		 * If the type is an array type, mark it auto-dependent on the
+		 * base type.  (This is a compromise between the typical case
+		 * where the array type is automatically generated and the case
+		 * where it is manually created: we'd prefer INTERNAL for the
+		 * former case and NORMAL for the latter.)
 		 */
 		if (OidIsValid(elementType))
 		{

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.56 2002/04/28 17:20:03 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.57 2002/09/04 20:31:46 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -32,7 +32,7 @@ help(const char *progname)
 	/* printf is a macro some places; don't #ifdef inside its arguments */
 #ifdef YYDEBUG
 	printf("Usage:\n"
-	   "  %s [-d] [-I DIRECTORY] [-o OUTFILE] [-t] [-c] [-D symbol] file1 [file2...]\n\n",
+		   "  %s [-d] [-I DIRECTORY] [-o OUTFILE] [-t] [-c] [-D symbol] file1 [file2...]\n\n",
 		   progname);
 #else
 	printf("Usage:\n"
@@ -61,7 +61,7 @@ add_include_path(char *path)
 	include_paths = mm_alloc(sizeof(struct _include_path));
 	include_paths->path = path;
 	include_paths->next = ip;
-		
+
 }
 
 static void

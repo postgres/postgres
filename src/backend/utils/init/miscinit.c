@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.95 2002/09/02 02:47:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.96 2002/09/04 20:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,8 +176,8 @@ SetDataDir(const char *dir)
 	 * generating funny-looking paths to individual files.
 	 */
 	newlen = strlen(new);
-	if (newlen > 1 && new[newlen-1] == '/')
-		new[newlen-1] = '\0';
+	if (newlen > 1 && new[newlen - 1] == '/')
+		new[newlen - 1] = '\0';
 
 	if (DataDir)
 		free(DataDir);
@@ -470,7 +470,6 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 		pfree(ChArray[i]);
 	}
 }
-
 #endif   /* CYR_RECODE */
 
 
@@ -561,22 +560,22 @@ InitializeSessionUserId(const char *username)
 	AuthenticatedUserId = usesysid;
 	AuthenticatedUserIsSuperuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
 
-	SetSessionUserId(usesysid);	/* sets CurrentUserId too */
+	SetSessionUserId(usesysid); /* sets CurrentUserId too */
 
 	/* Record username as a config option too */
 	SetConfigOption("session_authorization", username,
 					PGC_BACKEND, PGC_S_OVERRIDE);
 
 	/*
-	 * Set up user-specific configuration variables.  This is a good
-	 * place to do it so we don't have to read pg_shadow twice during
-	 * session startup.
+	 * Set up user-specific configuration variables.  This is a good place
+	 * to do it so we don't have to read pg_shadow twice during session
+	 * startup.
 	 */
 	datum = SysCacheGetAttr(SHADOWNAME, userTup,
 							Anum_pg_shadow_useconfig, &isnull);
 	if (!isnull)
 	{
-		ArrayType *a = DatumGetArrayTypeP(datum);
+		ArrayType  *a = DatumGetArrayTypeP(datum);
 
 		ProcessGUCArray(a, PGC_S_USER);
 	}
@@ -952,7 +951,7 @@ RecordSharedMemoryInLockFile(unsigned long id1, unsigned long id2)
 	ptr++;
 
 	/*
-	 * Append key information.  Format to try to keep it the same length
+	 * Append key information.	Format to try to keep it the same length
 	 * always (trailing junk won't hurt, but might confuse humans).
 	 */
 	sprintf(ptr, "%9lu %9lu\n", id1, id2);

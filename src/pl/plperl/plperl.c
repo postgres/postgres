@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.32 2002/08/22 00:01:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.33 2002/09/04 20:31:47 momjian Exp $
  *
  **********************************************************************/
 
@@ -341,8 +341,8 @@ plperl_create_sub(char *s, bool trusted)
  *
  **********************************************************************/
 
-EXTERN_C void boot_DynaLoader(pTHX_ CV* cv);
-EXTERN_C void boot_SPI(pTHX_ CV* cv);
+EXTERN_C void boot_DynaLoader(pTHX_ CV * cv);
+EXTERN_C void boot_SPI(pTHX_ CV * cv);
 
 static void
 plperl_init_shared_libs(pTHX)
@@ -553,7 +553,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 * function's pg_proc entry without changing its OID.
 		 ************************************************************/
 		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-					prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
+			prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
 
 		if (!uptodate)
 		{
@@ -628,7 +628,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			if (typeStruct->typtype == 'p')
 			{
 				if (procStruct->prorettype == VOIDOID)
-					/* okay */;
+					 /* okay */ ;
 				else if (procStruct->prorettype == TRIGGEROID ||
 						 procStruct->prorettype == OPAQUEOID)
 				{

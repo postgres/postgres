@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.198 2002/09/03 21:45:44 petere Exp $
+ * $Id: builtins.h,v 1.199 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,14 +401,14 @@ extern char *deparse_expression(Node *expr, List *dpcontext,
 				   bool forceprefix);
 extern List *deparse_context_for(const char *aliasname, Oid relid);
 extern List *deparse_context_for_plan(int outer_varno, Node *outercontext,
-									  int inner_varno, Node *innercontext,
-									  List *rtable);
+						 int inner_varno, Node *innercontext,
+						 List *rtable);
 extern Node *deparse_context_for_rte(RangeTblEntry *rte);
 extern Node *deparse_context_for_subplan(const char *name, List *tlist,
-										 List *rtable);
+							List *rtable);
 extern const char *quote_identifier(const char *ident);
 extern char *quote_qualified_identifier(const char *namespace,
-										const char *ident);
+						   const char *ident);
 
 /* tid.c */
 extern void setLastTid(const ItemPointer tid);
@@ -473,7 +473,7 @@ extern Datum text_name(PG_FUNCTION_ARGS);
 extern int	varstr_cmp(char *arg1, int len1, char *arg2, int len2);
 extern List *textToQualifiedNameList(text *textval, const char *caller);
 extern bool SplitIdentifierString(char *rawstring, char separator,
-								  List **namelist);
+					  List **namelist);
 extern Datum replace_text(PG_FUNCTION_ARGS);
 extern Datum split_text(PG_FUNCTION_ARGS);
 extern Datum to_hex32(PG_FUNCTION_ARGS);

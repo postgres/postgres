@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.39 2002/06/20 20:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.40 2002/09/04 20:31:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,7 +519,7 @@ build_index_pathkeys(Query *root,
 
 		funcnode->funcid = index->indproc;
 		funcnode->funcresulttype = get_func_rettype(index->indproc);
-		funcnode->funcretset = false; /* can never be a set */
+		funcnode->funcretset = false;	/* can never be a set */
 		funcnode->func_fcache = NULL;
 
 		while (*indexkeys != 0)
@@ -769,22 +769,22 @@ find_mergeclauses_for_pathkeys(Query *root,
 
 		/*
 		 * We can match a pathkey against either left or right side of any
-		 * mergejoin clause.  (We examine both sides since we aren't told if
-		 * the given pathkeys are for inner or outer input path; no confusion
-		 * is possible.)  Furthermore, if there are multiple matching
-		 * clauses, take them all.  In plain inner-join scenarios we expect
-		 * only one match, because redundant-mergeclause elimination will
-		 * have removed any redundant mergeclauses from the input list.
-		 * However, in outer-join scenarios there might be multiple matches.
-		 * An example is
+		 * mergejoin clause.  (We examine both sides since we aren't told
+		 * if the given pathkeys are for inner or outer input path; no
+		 * confusion is possible.)	Furthermore, if there are multiple
+		 * matching clauses, take them all.  In plain inner-join scenarios
+		 * we expect only one match, because redundant-mergeclause
+		 * elimination will have removed any redundant mergeclauses from
+		 * the input list. However, in outer-join scenarios there might be
+		 * multiple matches. An example is
 		 *
-		 *		select * from a full join b on
-		 *		a.v1 = b.v1 and a.v2 = b.v2 and a.v1 = b.v2;
+		 * select * from a full join b on a.v1 = b.v1 and a.v2 = b.v2 and
+		 * a.v1 = b.v2;
 		 *
-		 * Given the pathkeys ((a.v1), (a.v2)) it is okay to return all
-		 * three clauses (in the order a.v1=b.v1, a.v1=b.v2, a.v2=b.v2)
-		 * and indeed we *must* do so or we will be unable to form a
-		 * valid plan.
+		 * Given the pathkeys ((a.v1), (a.v2)) it is okay to return all three
+		 * clauses (in the order a.v1=b.v1, a.v1=b.v2, a.v2=b.v2) and
+		 * indeed we *must* do so or we will be unable to form a valid
+		 * plan.
 		 */
 		foreach(j, restrictinfos)
 		{
@@ -812,8 +812,8 @@ find_mergeclauses_for_pathkeys(Query *root,
 			break;
 
 		/*
-		 * If we did find usable mergeclause(s) for this sort-key position,
-		 * add them to result list.
+		 * If we did find usable mergeclause(s) for this sort-key
+		 * position, add them to result list.
 		 */
 		mergeclauses = nconc(mergeclauses, matched_restrictinfos);
 	}

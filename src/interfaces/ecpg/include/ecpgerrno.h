@@ -54,12 +54,12 @@
   */
 #define ECPG_WARNING_QUERY_IGNORED	   -601
  /* WARNING:  PerformPortalClose: portal "*" not found */
-#define ECPG_WARNING_UNKNOWN_PORTAL	   -602
+#define ECPG_WARNING_UNKNOWN_PORTAL    -602
  /* WARNING:  BEGIN: already a transaction in progress */
-#define ECPG_WARNING_IN_TRANSACTION	   -603
+#define ECPG_WARNING_IN_TRANSACTION    -603
  /* WARNING:  AbortTransaction and not in in-progress state */
  /* WARNING:  COMMIT: no transaction in progress */
-#define ECPG_WARNING_NO_TRANSACTION	   -604
+#define ECPG_WARNING_NO_TRANSACTION    -604
  /* WARNING:  BlankPortalAssignName: portal * already exists */
 #define ECPG_WARNING_PORTAL_EXISTS	   -605
 

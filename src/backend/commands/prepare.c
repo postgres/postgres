@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.1 2002/08/27 04:55:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.2 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ typedef struct
 	List	   *query_list;		/* list of queries */
 	List	   *plan_list;		/* list of plans */
 	List	   *argtype_list;	/* list of parameter type OIDs */
-	MemoryContext	 context;	/* context containing this query */
+	MemoryContext context;		/* context containing this query */
 } QueryHashEntry;
 
 /*
@@ -47,7 +47,7 @@ static HTAB *prepared_queries = NULL;
 
 static void InitQueryHashTable(void);
 static void StoreQuery(const char *stmt_name, List *query_list,
-					   List *plan_list, List *argtype_list);
+		   List *plan_list, List *argtype_list);
 static QueryHashEntry *FetchQuery(const char *plan_name);
 static void RunQuery(QueryDesc *qdesc, EState *state);
 
@@ -58,9 +58,9 @@ static void RunQuery(QueryDesc *qdesc, EState *state);
 void
 PrepareQuery(PrepareStmt *stmt)
 {
-	List *plan_list = NIL;
-	List *query_list,
-		 *query_list_item;
+	List	   *plan_list = NIL;
+	List	   *query_list,
+			   *query_list_item;
 
 	if (!stmt->name)
 		elog(ERROR, "No statement name given");
@@ -73,8 +73,8 @@ PrepareQuery(PrepareStmt *stmt)
 
 	foreach(query_list_item, query_list)
 	{
-		Query *query = (Query *) lfirst(query_list_item);
-		Plan  *plan;
+		Query	   *query = (Query *) lfirst(query_list_item);
+		Plan	   *plan;
 
 		/* We can't generate plans for utility statements. */
 		if (query->commandType == CMD_UTILITY)
@@ -97,10 +97,10 @@ PrepareQuery(PrepareStmt *stmt)
 void
 ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 {
-	QueryHashEntry	*entry;
-	List		*l,
-				*query_list,
-				*plan_list;
+	QueryHashEntry *entry;
+	List	   *l,
+			   *query_list,
+			   *plan_list;
 	ParamListInfo paramLI = NULL;
 
 	/* Look it up in the hash table */
@@ -115,8 +115,8 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 	/* Evaluate parameters, if any */
 	if (entry->argtype_list != NIL)
 	{
-		int nargs = length(entry->argtype_list);
-		int i = 0;
+		int			nargs = length(entry->argtype_list);
+		int			i = 0;
 		ExprContext *econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
 		/* Parser should have caught this error, but check */
@@ -126,10 +126,10 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 		paramLI = (ParamListInfo) palloc((nargs + 1) * sizeof(ParamListInfoData));
 		MemSet(paramLI, 0, (nargs + 1) * sizeof(ParamListInfoData));
 
-		foreach (l, stmt->params)
+		foreach(l, stmt->params)
 		{
-			Node *n = lfirst(l);
-			bool isNull;
+			Node	   *n = lfirst(l);
+			bool		isNull;
 
 			paramLI[i].value = ExecEvalExprSwitchContext(n,
 														 econtext,
@@ -147,9 +147,9 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 	/* Execute each query */
 	foreach(l, query_list)
 	{
-		Query *query = lfirst(l);
-		Plan *plan = lfirst(plan_list);
-		bool is_last_query;
+		Query	   *query = lfirst(l);
+		Plan	   *plan = lfirst(plan_list);
+		bool		is_last_query;
 
 		plan_list = lnext(plan_list);
 		is_last_query = (plan_list == NIL);
@@ -158,8 +158,8 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 			ProcessUtility(query->utilityStmt, outputDest, NULL);
 		else
 		{
-			QueryDesc *qdesc;
-			EState	  *state;
+			QueryDesc  *qdesc;
+			EState	   *state;
 
 			if (Show_executor_stats)
 				ResetUsage();
@@ -185,11 +185,11 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 		}
 
 		/*
-		 * If we're processing multiple queries, we need to increment
-		 * the command counter between them. For the last query,
-		 * there's no need to do this, it's done automatically.
+		 * If we're processing multiple queries, we need to increment the
+		 * command counter between them. For the last query, there's no
+		 * need to do this, it's done automatically.
 		 */
-		if (! is_last_query)
+		if (!is_last_query)
 			CommandCounterIncrement();
 	}
 
@@ -202,7 +202,7 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 static void
 InitQueryHashTable(void)
 {
-	HASHCTL hash_ctl;
+	HASHCTL		hash_ctl;
 
 	MemSet(&hash_ctl, 0, sizeof(hash_ctl));
 
@@ -229,9 +229,9 @@ StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
 {
 	QueryHashEntry *entry;
 	MemoryContext oldcxt,
-				  entrycxt;
-	char key[HASH_KEY_LEN];
-	bool found;
+				entrycxt;
+	char		key[HASH_KEY_LEN];
+	bool		found;
 
 	/* Initialize the hash table, if necessary */
 	if (!prepared_queries)
@@ -258,10 +258,10 @@ StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
 	oldcxt = MemoryContextSwitchTo(entrycxt);
 
 	/*
-	 * We need to copy the data so that it is stored in the correct
-	 * memory context.  Do this before making hashtable entry, so that
-	 * an out-of-memory failure only wastes memory and doesn't leave us
-	 * with an incomplete (ie corrupt) hashtable entry.
+	 * We need to copy the data so that it is stored in the correct memory
+	 * context.  Do this before making hashtable entry, so that an
+	 * out-of-memory failure only wastes memory and doesn't leave us with
+	 * an incomplete (ie corrupt) hashtable entry.
 	 */
 	query_list = (List *) copyObject(query_list);
 	plan_list = (List *) copyObject(plan_list);
@@ -293,7 +293,7 @@ StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
 static QueryHashEntry *
 FetchQuery(const char *plan_name)
 {
-	char key[HASH_KEY_LEN];
+	char		key[HASH_KEY_LEN];
 	QueryHashEntry *entry;
 
 	/*
@@ -306,8 +306,8 @@ FetchQuery(const char *plan_name)
 
 	/*
 	 * We can't just use the statement name as supplied by the user: the
-	 * hash package is picky enough that it needs to be NULL-padded out
-	 * to the appropriate length to work correctly.
+	 * hash package is picky enough that it needs to be NULL-padded out to
+	 * the appropriate length to work correctly.
 	 */
 	MemSet(key, 0, sizeof(key));
 	strncpy(key, plan_name, sizeof(key));
@@ -344,7 +344,7 @@ FetchQueryParams(const char *plan_name)
 static void
 RunQuery(QueryDesc *qdesc, EState *state)
 {
-	TupleDesc tupdesc;
+	TupleDesc	tupdesc;
 
 	tupdesc = ExecutorStart(qdesc, state);
 
@@ -363,7 +363,7 @@ RunQuery(QueryDesc *qdesc, EState *state)
 void
 DeallocateQuery(DeallocateStmt *stmt)
 {
-	char key[HASH_KEY_LEN];
+	char		key[HASH_KEY_LEN];
 	QueryHashEntry *entry;
 
 	/*
@@ -376,18 +376,18 @@ DeallocateQuery(DeallocateStmt *stmt)
 
 	/*
 	 * We can't just use the statement name as supplied by the user: the
-	 * hash package is picky enough that it needs to be NULL-padded out
-	 * to the appropriate length to work correctly.
+	 * hash package is picky enough that it needs to be NULL-padded out to
+	 * the appropriate length to work correctly.
 	 */
 	MemSet(key, 0, sizeof(key));
 	strncpy(key, stmt->name, sizeof(key));
 
 	/*
 	 * First lookup the entry, so we can release all the subsidiary memory
-	 * it has allocated (when it's removed, hash_search() will return
-	 * a dangling pointer, so it needs to be done prior to HASH_REMOVE).
-	 * This requires an extra hash-table lookup, but DEALLOCATE
-	 * isn't exactly a performance bottleneck.
+	 * it has allocated (when it's removed, hash_search() will return a
+	 * dangling pointer, so it needs to be done prior to HASH_REMOVE).
+	 * This requires an extra hash-table lookup, but DEALLOCATE isn't
+	 * exactly a performance bottleneck.
 	 */
 	entry = (QueryHashEntry *) hash_search(prepared_queries,
 										   key,

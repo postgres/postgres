@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.120 2002/08/31 22:10:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.121 2002/09/04 20:31:28 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -124,29 +124,29 @@ static char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_c
  */
 static text *pg_do_getviewdef(Oid viewoid);
 static void decompile_column_index_array(Datum column_index_array, Oid relId,
-										 StringInfo buf);
+							 StringInfo buf);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
-						  TupleDesc resultDesc);
+			  TupleDesc resultDesc);
 static void get_select_query_def(Query *query, deparse_context *context,
-								 TupleDesc resultDesc);
+					 TupleDesc resultDesc);
 static void get_insert_query_def(Query *query, deparse_context *context);
 static void get_update_query_def(Query *query, deparse_context *context);
 static void get_delete_query_def(Query *query, deparse_context *context);
 static void get_utility_query_def(Query *query, deparse_context *context);
 static void get_basic_select_query(Query *query, deparse_context *context,
-								   TupleDesc resultDesc);
+					   TupleDesc resultDesc);
 static void get_setop_query(Node *setOp, Query *query,
-							deparse_context *context,
-							TupleDesc resultDesc);
+				deparse_context *context,
+				TupleDesc resultDesc);
 static Node *get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 bool force_colno,
 						 deparse_context *context);
 static void get_names_for_var(Var *var, deparse_context *context,
 				  char **schemaname, char **refname, char **attname);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
-										  deparse_context *context);
+					deparse_context *context);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_oper_expr(Expr *expr, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
@@ -159,7 +159,7 @@ static void get_from_clause(Query *query, deparse_context *context);
 static void get_from_clause_item(Node *jtnode, Query *query,
 					 deparse_context *context);
 static void get_from_clause_coldeflist(List *coldeflist,
-									   deparse_context *context);
+						   deparse_context *context);
 static void get_opclass_name(Oid opclass, Oid actual_datatype,
 				 StringInfo buf);
 static bool tleIsArrayAssign(TargetEntry *tle);
@@ -284,7 +284,7 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
 	text	   *ruledef;
 
 	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname,
-															   "get_viewdef"));
+														 "get_viewdef"));
 	viewoid = RangeVarGetRelid(viewrel, false);
 
 	ruledef = pg_do_getviewdef(viewoid);
@@ -425,8 +425,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	amrec = (Form_pg_am) GETSTRUCT(ht_am);
 
 	/*
-	 * Start the index definition.  Note that the index's name should never
-	 * be schema-qualified, but the indexed rel's name may be.
+	 * Start the index definition.	Note that the index's name should
+	 * never be schema-qualified, but the indexed rel's name may be.
 	 */
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
@@ -551,15 +551,15 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 Datum
 pg_get_constraintdef(PG_FUNCTION_ARGS)
 {
-	Oid				constraintId = PG_GETARG_OID(0);
-	text		   *result;
-	StringInfoData	buf;
-	int				len;
-	Relation		conDesc;
-	SysScanDesc		conscan;
-	ScanKeyData		skey[1];
-	HeapTuple		tup;
-	Form_pg_constraint	conForm;
+	Oid			constraintId = PG_GETARG_OID(0);
+	text	   *result;
+	StringInfoData buf;
+	int			len;
+	Relation	conDesc;
+	SysScanDesc conscan;
+	ScanKeyData skey[1];
+	HeapTuple	tup;
+	Form_pg_constraint conForm;
 
 	/*
 	 * Fetch the pg_constraint row.  There's no syscache for pg_constraint
@@ -584,111 +584,111 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 	switch (conForm->contype)
 	{
 		case CONSTRAINT_FOREIGN:
-		{
-			Datum			val;
-			bool			isnull;
-			const char	   *string;
+			{
+				Datum		val;
+				bool		isnull;
+				const char *string;
 
-			/* Start off the constraint definition */
-			appendStringInfo(&buf, "FOREIGN KEY (");
+				/* Start off the constraint definition */
+				appendStringInfo(&buf, "FOREIGN KEY (");
 
-			/* Fetch and build referencing-column list */
-			val = heap_getattr(tup, Anum_pg_constraint_conkey,
-							   RelationGetDescr(conDesc), &isnull);
-			if (isnull)
-				elog(ERROR, "pg_get_constraintdef: Null conkey for constraint %u",
-					 constraintId);
+				/* Fetch and build referencing-column list */
+				val = heap_getattr(tup, Anum_pg_constraint_conkey,
+								   RelationGetDescr(conDesc), &isnull);
+				if (isnull)
+					elog(ERROR, "pg_get_constraintdef: Null conkey for constraint %u",
+						 constraintId);
 
-			decompile_column_index_array(val, conForm->conrelid, &buf);
+				decompile_column_index_array(val, conForm->conrelid, &buf);
 
-			/* add foreign relation name */
-			appendStringInfo(&buf, ") REFERENCES %s(",
+				/* add foreign relation name */
+				appendStringInfo(&buf, ") REFERENCES %s(",
 							 generate_relation_name(conForm->confrelid));
 
-			/* Fetch and build referenced-column list */
-			val = heap_getattr(tup, Anum_pg_constraint_confkey,
-							   RelationGetDescr(conDesc), &isnull);
-			if (isnull)
-				elog(ERROR, "pg_get_constraintdef: Null confkey for constraint %u",
-					 constraintId);
+				/* Fetch and build referenced-column list */
+				val = heap_getattr(tup, Anum_pg_constraint_confkey,
+								   RelationGetDescr(conDesc), &isnull);
+				if (isnull)
+					elog(ERROR, "pg_get_constraintdef: Null confkey for constraint %u",
+						 constraintId);
 
-			decompile_column_index_array(val, conForm->confrelid, &buf);
+				decompile_column_index_array(val, conForm->confrelid, &buf);
 
-			appendStringInfo(&buf, ")");
+				appendStringInfo(&buf, ")");
 
-			/* Add match type */
-			switch (conForm->confmatchtype)
-			{
-				case FKCONSTR_MATCH_FULL:
-					string = " MATCH FULL";
-					break;
-				case FKCONSTR_MATCH_PARTIAL:
-					string = " MATCH PARTIAL";
-					break;
-				case FKCONSTR_MATCH_UNSPECIFIED:
-					string = "";
-					break;
-				default:
-					elog(ERROR, "pg_get_constraintdef: Unknown confmatchtype '%c' for constraint %u",
-						 conForm->confmatchtype, constraintId);
-					string = ""; /* keep compiler quiet */
-					break;
+				/* Add match type */
+				switch (conForm->confmatchtype)
+				{
+					case FKCONSTR_MATCH_FULL:
+						string = " MATCH FULL";
+						break;
+					case FKCONSTR_MATCH_PARTIAL:
+						string = " MATCH PARTIAL";
+						break;
+					case FKCONSTR_MATCH_UNSPECIFIED:
+						string = "";
+						break;
+					default:
+						elog(ERROR, "pg_get_constraintdef: Unknown confmatchtype '%c' for constraint %u",
+							 conForm->confmatchtype, constraintId);
+						string = "";	/* keep compiler quiet */
+						break;
+				}
+				appendStringInfo(&buf, "%s", string);
+
+				/* Add ON UPDATE and ON DELETE clauses */
+				switch (conForm->confupdtype)
+				{
+					case FKCONSTR_ACTION_NOACTION:
+						string = "NO ACTION";
+						break;
+					case FKCONSTR_ACTION_RESTRICT:
+						string = "RESTRICT";
+						break;
+					case FKCONSTR_ACTION_CASCADE:
+						string = "CASCADE";
+						break;
+					case FKCONSTR_ACTION_SETNULL:
+						string = "SET NULL";
+						break;
+					case FKCONSTR_ACTION_SETDEFAULT:
+						string = "SET DEFAULT";
+						break;
+					default:
+						elog(ERROR, "pg_get_constraintdef: Unknown confupdtype '%c' for constraint %u",
+							 conForm->confupdtype, constraintId);
+						string = "";	/* keep compiler quiet */
+						break;
+				}
+				appendStringInfo(&buf, " ON UPDATE %s", string);
+
+				switch (conForm->confdeltype)
+				{
+					case FKCONSTR_ACTION_NOACTION:
+						string = "NO ACTION";
+						break;
+					case FKCONSTR_ACTION_RESTRICT:
+						string = "RESTRICT";
+						break;
+					case FKCONSTR_ACTION_CASCADE:
+						string = "CASCADE";
+						break;
+					case FKCONSTR_ACTION_SETNULL:
+						string = "SET NULL";
+						break;
+					case FKCONSTR_ACTION_SETDEFAULT:
+						string = "SET DEFAULT";
+						break;
+					default:
+						elog(ERROR, "pg_get_constraintdef: Unknown confdeltype '%c' for constraint %u",
+							 conForm->confdeltype, constraintId);
+						string = "";	/* keep compiler quiet */
+						break;
+				}
+				appendStringInfo(&buf, " ON DELETE %s", string);
+
+				break;
 			}
-			appendStringInfo(&buf, "%s", string);
-
-			/* Add ON UPDATE and ON DELETE clauses */
-			switch (conForm->confupdtype)
-			{
-				case FKCONSTR_ACTION_NOACTION:
-					string = "NO ACTION";
-					break;
-				case FKCONSTR_ACTION_RESTRICT:
-					string = "RESTRICT";
-					break;
-				case FKCONSTR_ACTION_CASCADE:
-					string = "CASCADE";
-					break;
-				case FKCONSTR_ACTION_SETNULL:
-					string = "SET NULL";
-					break;
-				case FKCONSTR_ACTION_SETDEFAULT:
-					string = "SET DEFAULT";
-					break;
-				default:
-					elog(ERROR, "pg_get_constraintdef: Unknown confupdtype '%c' for constraint %u",
-						 conForm->confupdtype, constraintId);
-					string = ""; /* keep compiler quiet */
-					break;
-			}
-			appendStringInfo(&buf, " ON UPDATE %s", string);
-
-			switch (conForm->confdeltype)
-			{
-				case FKCONSTR_ACTION_NOACTION:
-					string = "NO ACTION";
-					break;
-				case FKCONSTR_ACTION_RESTRICT:
-					string = "RESTRICT";
-					break;
-				case FKCONSTR_ACTION_CASCADE:
-					string = "CASCADE";
-					break;
-				case FKCONSTR_ACTION_SETNULL:
-					string = "SET NULL";
-					break;
-				case FKCONSTR_ACTION_SETDEFAULT:
-					string = "SET DEFAULT";
-					break;
-				default:
-					elog(ERROR, "pg_get_constraintdef: Unknown confdeltype '%c' for constraint %u",
-						 conForm->confdeltype, constraintId);
-					string = ""; /* keep compiler quiet */
-					break;
-			}
-			appendStringInfo(&buf, " ON DELETE %s", string);
-
-			break;
-		}
 
 			/*
 			 * XXX Add more code here for other contypes
@@ -735,7 +735,7 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 	{
 		char	   *colName;
 
-		colName	= get_attname(relId, DatumGetInt16(keys[j]));
+		colName = get_attname(relId, DatumGetInt16(keys[j]));
 
 		if (j == 0)
 			appendStringInfo(buf, "%s",
@@ -875,7 +875,7 @@ deparse_expression(Node *expr, List *dpcontext, bool forceprefix)
  *
  * Given the reference name (alias) and OID of a relation, build deparsing
  * context for an expression referencing only that relation (as varno 1,
- * varlevelsup 0).  This is sufficient for many uses of deparse_expression.
+ * varlevelsup 0).	This is sufficient for many uses of deparse_expression.
  * ----------
  */
 List *
@@ -972,7 +972,7 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	foreach(tl, tlist)
 	{
 		TargetEntry *tle = lfirst(tl);
-		Resdom *resdom = tle->resdom;
+		Resdom	   *resdom = tle->resdom;
 
 		nattrs++;
 		Assert(resdom->resno == nattrs);
@@ -983,13 +983,13 @@ deparse_context_for_subplan(const char *name, List *tlist,
 		}
 		if (tle->expr && IsA(tle->expr, Var))
 		{
-			Var	   *var = (Var *) tle->expr;
+			Var		   *var = (Var *) tle->expr;
 
 			/* varno/varattno won't be any good, but varnoold might be */
 			if (var->varnoold > 0 && var->varnoold <= rtablelength)
 			{
 				RangeTblEntry *varrte = rt_fetch(var->varnoold, rtable);
-				char *varname;
+				char	   *varname;
 
 				varname = get_rte_attribute_name(varrte, var->varoattno);
 				attrs = lappend(attrs, makeString(varname));
@@ -1001,7 +1001,7 @@ deparse_context_for_subplan(const char *name, List *tlist,
 		attrs = lappend(attrs, makeString(pstrdup(buf)));
 	}
 
-	rte->rtekind = RTE_SPECIAL;	/* XXX */
+	rte->rtekind = RTE_SPECIAL; /* XXX */
 	rte->relid = InvalidOid;
 	rte->eref = makeAlias(name, attrs);
 	rte->inh = false;
@@ -1127,9 +1127,9 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		query = (Query *) lfirst(actions);
 
 		/*
-		 * If the action is INSERT...SELECT, OLD/NEW have been pushed
-		 * down into the SELECT, and that's what we need to look at.
-		 * (Ugly kluge ... try to fix this when we redesign querytrees.)
+		 * If the action is INSERT...SELECT, OLD/NEW have been pushed down
+		 * into the SELECT, and that's what we need to look at. (Ugly
+		 * kluge ... try to fix this when we redesign querytrees.)
 		 */
 		query = getInsertSelectQuery(query, NULL);
 
@@ -1434,13 +1434,13 @@ get_basic_select_query(Query *query, deparse_context *context,
 		get_rule_expr(tle->expr, context);
 
 		/*
-		 * Figure out what the result column should be called.  In the
+		 * Figure out what the result column should be called.	In the
 		 * context of a view, use the view's tuple descriptor (so as to
-		 * pick up the effects of any column RENAME that's been done on the
-		 * view).  Otherwise, just use what we can find in the TLE.
+		 * pick up the effects of any column RENAME that's been done on
+		 * the view).  Otherwise, just use what we can find in the TLE.
 		 */
 		if (resultDesc && colno <= resultDesc->natts)
-			colname = NameStr(resultDesc->attrs[colno-1]->attname);
+			colname = NameStr(resultDesc->attrs[colno - 1]->attname);
 		else
 			colname = tle->resdom->resname;
 
@@ -1751,8 +1751,8 @@ get_utility_query_def(Query *query, deparse_context *context)
 		NotifyStmt *stmt = (NotifyStmt *) query->utilityStmt;
 
 		appendStringInfo(buf, "NOTIFY %s",
-						 quote_qualified_identifier(stmt->relation->schemaname,
-													stmt->relation->relname));
+				   quote_qualified_identifier(stmt->relation->schemaname,
+											  stmt->relation->relname));
 	}
 	else
 		elog(ERROR, "get_utility_query_def: unexpected statement type");
@@ -1762,7 +1762,7 @@ get_utility_query_def(Query *query, deparse_context *context)
 /*
  * Get the schemaname, refname and attname for a (possibly nonlocal) Var.
  *
- * schemaname is usually returned as NULL.  It will be non-null only if
+ * schemaname is usually returned as NULL.	It will be non-null only if
  * use of the unqualified refname would find the wrong RTE.
  *
  * refname will be returned as NULL if the Var references an unnamed join.
@@ -1813,9 +1813,10 @@ get_names_for_var(Var *var, deparse_context *context,
 		if (rte->rtekind == RTE_RELATION)
 		{
 			/*
-			 * It's possible that use of the bare refname would find another
-			 * more-closely-nested RTE, or be ambiguous, in which case
-			 * we need to specify the schemaname to avoid these errors.
+			 * It's possible that use of the bare refname would find
+			 * another more-closely-nested RTE, or be ambiguous, in which
+			 * case we need to specify the schemaname to avoid these
+			 * errors.
 			 */
 			if (find_rte_by_refname(rte->eref->aliasname, context) != rte)
 				*schemaname =
@@ -1864,7 +1865,7 @@ find_rte_by_refname(const char *refname, deparse_context *context)
 			if (strcmp(rte->eref->aliasname, refname) == 0)
 			{
 				if (result)
-					return NULL; /* it's ambiguous */
+					return NULL;	/* it's ambiguous */
 				result = rte;
 			}
 		}
@@ -1964,8 +1965,8 @@ get_rule_expr(Node *node, deparse_context *context)
 						Assert(length(args) == 2);
 						{
 							/* binary operator */
-							Node   *arg1 = (Node *) lfirst(args);
-							Node   *arg2 = (Node *) lsecond(args);
+							Node	   *arg1 = (Node *) lfirst(args);
+							Node	   *arg2 = (Node *) lsecond(args);
 
 							get_rule_expr(arg1, context);
 							appendStringInfo(buf, " IS DISTINCT FROM ");
@@ -2007,10 +2008,11 @@ get_rule_expr(Node *node, deparse_context *context)
 						break;
 
 					case SUBPLAN_EXPR:
+
 						/*
-						 * We cannot see an already-planned subplan in rule
-						 * deparsing, only while EXPLAINing a query plan.
-						 * For now, just punt.
+						 * We cannot see an already-planned subplan in
+						 * rule deparsing, only while EXPLAINing a query
+						 * plan. For now, just punt.
 						 */
 						appendStringInfo(buf, "(subplan)");
 						break;
@@ -2089,6 +2091,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				ReleaseSysCache(typetup);
 				fieldname = get_relid_attribute_name(typrelid,
 													 fselect->fieldnum);
+
 				/*
 				 * If the argument is simple enough, we could emit
 				 * arg.fieldname, but most cases where FieldSelect is used
@@ -2108,7 +2111,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				get_rule_expr(relabel->arg, context);
 				appendStringInfo(buf, ")::%s",
 							format_type_with_typemod(relabel->resulttype,
-													 relabel->resulttypmod));
+												 relabel->resulttypmod));
 			}
 			break;
 
@@ -2246,8 +2249,8 @@ get_oper_expr(Expr *expr, deparse_context *context)
 	if (length(args) == 2)
 	{
 		/* binary operator */
-		Node   *arg1 = (Node *) lfirst(args);
-		Node   *arg2 = (Node *) lsecond(args);
+		Node	   *arg1 = (Node *) lfirst(args);
+		Node	   *arg2 = (Node *) lsecond(args);
 
 		get_rule_expr(arg1, context);
 		appendStringInfo(buf, " %s ",
@@ -2332,9 +2335,9 @@ get_func_expr(Expr *expr, deparse_context *context)
 		/*
 		 * Show typename with appropriate length decoration. Note that
 		 * since exprIsLengthCoercion succeeded, the function's output
-		 * type is the right thing to report.  Also note we don't need
-		 * to quote the result of format_type_with_typemod: it takes
-		 * care of double-quoting any identifier that needs it.
+		 * type is the right thing to report.  Also note we don't need to
+		 * quote the result of format_type_with_typemod: it takes care of
+		 * double-quoting any identifier that needs it.
 		 */
 		typdesc = format_type_with_typemod(rettype, coercedTypmod);
 		appendStringInfo(buf, ")::%s", typdesc);
@@ -2344,8 +2347,8 @@ get_func_expr(Expr *expr, deparse_context *context)
 	}
 
 	/*
-	 * Normal function: display as proname(args).  First we need to extract
-	 * the argument datatypes.
+	 * Normal function: display as proname(args).  First we need to
+	 * extract the argument datatypes.
 	 */
 	nargs = 0;
 	foreach(l, expr->args)
@@ -2354,7 +2357,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 		argtypes[nargs] = exprType((Node *) lfirst(l));
 		nargs++;
 	}
-	
+
 	appendStringInfo(buf, "%s(",
 					 generate_function_name(funcoid, nargs, argtypes));
 
@@ -2378,7 +2381,7 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	Oid			argtype = exprType(aggref->target);
 
 	appendStringInfo(buf, "%s(%s",
-					 generate_function_name(aggref->aggfnoid, 1, &argtype),
+				   generate_function_name(aggref->aggfnoid, 1, &argtype),
 					 aggref->aggdistinct ? "DISTINCT " : "");
 	if (aggref->aggstar)
 		appendStringInfo(buf, "*");
@@ -2438,8 +2441,8 @@ strip_type_coercion(Node *expr, Oid resultType)
 		}
 		/* See if function has is actually declared as a cast */
 		castTuple = SearchSysCache(CASTSOURCETARGET,
-								   ObjectIdGetDatum(procStruct->proargtypes[0]),
-								   ObjectIdGetDatum(procStruct->prorettype),
+							ObjectIdGetDatum(procStruct->proargtypes[0]),
+								ObjectIdGetDatum(procStruct->prorettype),
 								   0, 0);
 		if (!HeapTupleIsValid(castTuple))
 		{
@@ -2519,11 +2522,11 @@ get_const_expr(Const *constval, deparse_context *context)
 	if (constval->constisnull)
 	{
 		/*
-		 * Always label the type of a NULL constant to prevent misdecisions
-		 * about type when reparsing.
+		 * Always label the type of a NULL constant to prevent
+		 * misdecisions about type when reparsing.
 		 */
 		appendStringInfo(buf, "NULL::%s",
-						 format_type_with_typemod(constval->consttype, -1));
+					  format_type_with_typemod(constval->consttype, -1));
 		return;
 	}
 
@@ -2549,23 +2552,23 @@ get_const_expr(Const *constval, deparse_context *context)
 		case FLOAT4OID:
 		case FLOAT8OID:
 		case NUMERICOID:
-		{
-			/*
-			 * These types are printed without quotes unless they
-			 * contain values that aren't accepted by the scanner
-			 * unquoted (e.g., 'NaN').  Note that strtod() and friends
-			 * might accept NaN, so we can't use that to test.
-			 *
-			 * In reality we only need to defend against infinity and
-			 * NaN, so we need not get too crazy about pattern
-			 * matching here.
-			 */
-			if (strspn(extval, "0123456789 +-eE.") == strlen(extval))
-				appendStringInfo(buf, extval);
-			else
-				appendStringInfo(buf, "'%s'", extval);
-		}
-		break;
+			{
+				/*
+				 * These types are printed without quotes unless they
+				 * contain values that aren't accepted by the scanner
+				 * unquoted (e.g., 'NaN').	Note that strtod() and friends
+				 * might accept NaN, so we can't use that to test.
+				 *
+				 * In reality we only need to defend against infinity and
+				 * NaN, so we need not get too crazy about pattern
+				 * matching here.
+				 */
+				if (strspn(extval, "0123456789 +-eE.") == strlen(extval))
+					appendStringInfo(buf, extval);
+				else
+					appendStringInfo(buf, "'%s'", extval);
+			}
+			break;
 
 		case BITOID:
 		case VARBITOID:
@@ -2573,13 +2576,14 @@ get_const_expr(Const *constval, deparse_context *context)
 			break;
 
 		case BOOLOID:
-			if (strcmp(extval, "t")==0)
+			if (strcmp(extval, "t") == 0)
 				appendStringInfo(buf, "true");
 			else
 				appendStringInfo(buf, "false");
 			break;
 
 		default:
+
 			/*
 			 * We must quote any funny characters in the constant's
 			 * representation. XXX Any MULTIBYTE considerations here?
@@ -2665,9 +2669,10 @@ get_sublink_expr(Node *node, deparse_context *context)
 
 	/*
 	 * XXX we assume here that we can get away without qualifying the
-	 * operator name.  Since the name may imply multiple physical operators
-	 * it's rather difficult to do otherwise --- in fact, if the operators
-	 * are in different namespaces any attempt to qualify would surely fail.
+	 * operator name.  Since the name may imply multiple physical
+	 * operators it's rather difficult to do otherwise --- in fact, if the
+	 * operators are in different namespaces any attempt to qualify would
+	 * surely fail.
 	 */
 	switch (sublink->subLinkType)
 	{
@@ -2812,13 +2817,13 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			}
 		}
 		else if (rte->rtekind == RTE_RELATION &&
-				 strcmp(rte->eref->aliasname, get_rel_name(rte->relid)) != 0)
+			 strcmp(rte->eref->aliasname, get_rel_name(rte->relid)) != 0)
 		{
 			/*
-			 * Apparently the rel has been renamed since the rule was made.
-			 * Emit a fake alias clause so that variable references will
-			 * still work.  This is not a 100% solution but should work in
-			 * most reasonable situations.
+			 * Apparently the rel has been renamed since the rule was
+			 * made. Emit a fake alias clause so that variable references
+			 * will still work.  This is not a 100% solution but should
+			 * work in most reasonable situations.
 			 */
 			appendStringInfo(buf, " %s",
 							 quote_identifier(rte->eref->aliasname));
@@ -2981,7 +2986,7 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 	opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
 	if (actual_datatype != opcrec->opcintype || !opcrec->opcdefault)
 	{
-		/* Okay, we need the opclass name.  Do we need to qualify it? */
+		/* Okay, we need the opclass name.	Do we need to qualify it? */
 		opcname = NameStr(opcrec->opcname);
 		if (OpclassIsVisible(opclass))
 			appendStringInfo(buf, " %s", quote_identifier(opcname));
@@ -3031,9 +3036,10 @@ const char *
 quote_identifier(const char *ident)
 {
 	/*
-	 * Can avoid quoting if ident starts with a lowercase letter or underscore
-	 * and contains only lowercase letters, digits, and underscores, *and* is
-	 * not any SQL keyword.  Otherwise, supply quotes.
+	 * Can avoid quoting if ident starts with a lowercase letter or
+	 * underscore and contains only lowercase letters, digits, and
+	 * underscores, *and* is not any SQL keyword.  Otherwise, supply
+	 * quotes.
 	 */
 	int			nquotes = 0;
 	bool		safe;
@@ -3187,8 +3193,8 @@ generate_function_name(Oid funcid, int nargs, Oid *argtypes)
 
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
-	 * resolve the correct function given the unqualified func name
-	 * with the specified argtypes.
+	 * resolve the correct function given the unqualified func name with
+	 * the specified argtypes.
 	 */
 	p_result = func_get_detail(makeList1(makeString(proname)),
 							   NIL, nargs, argtypes,
@@ -3239,8 +3245,8 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
-	 * resolve the correct operator given the unqualified op name
-	 * with the specified argtypes.
+	 * resolve the correct operator given the unqualified op name with the
+	 * specified argtypes.
 	 */
 	switch (operform->oprkind)
 	{

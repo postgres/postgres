@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.80 2002/08/26 17:53:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.81 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1515,7 +1515,7 @@ float8_accum(PG_FUNCTION_ARGS)
 
 	result = construct_array(transdatums, 3,
 							 FLOAT8OID,
-							 sizeof(float8), false /*float8 byval*/, 'd');
+						 sizeof(float8), false /* float8 byval */ , 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }
@@ -1551,7 +1551,7 @@ float4_accum(PG_FUNCTION_ARGS)
 
 	result = construct_array(transdatums, 3,
 							 FLOAT8OID,
-							 sizeof(float8), false /*float8 byval*/, 'd');
+						 sizeof(float8), false /* float8 byval */ , 'd');
 
 	PG_RETURN_ARRAYTYPE_P(result);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.89 2002/09/02 01:05:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.90 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,19 +297,19 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 	/*
 	 * This is pretty grotty: we need to ensure that result tuples have
 	 * space for an OID iff they are going to be stored into a relation
-	 * that has OIDs.  We assume that estate->es_result_relation_info
-	 * is already set up to describe the target relation.  One reason
-	 * this is ugly is that all plan nodes in the plan tree will emit
-	 * tuples with space for an OID, though we really only need the topmost
-	 * plan to do so.
+	 * that has OIDs.  We assume that estate->es_result_relation_info is
+	 * already set up to describe the target relation.	One reason this is
+	 * ugly is that all plan nodes in the plan tree will emit tuples with
+	 * space for an OID, though we really only need the topmost plan to do
+	 * so.
 	 *
 	 * It would be better to have InitPlan adjust the topmost plan node's
 	 * output descriptor after plan tree initialization.  However, that
 	 * doesn't quite work because in an UPDATE that spans an inheritance
-	 * tree, some of the target relations may have OIDs and some not.
-	 * We have to make the decision on a per-relation basis as we initialize
-	 * each of the child plans of the topmost Append plan.  So, this is ugly
-	 * but it works, for now ...
+	 * tree, some of the target relations may have OIDs and some not. We
+	 * have to make the decision on a per-relation basis as we initialize
+	 * each of the child plans of the topmost Append plan.	So, this is
+	 * ugly but it works, for now ...
 	 */
 	ri = node->state->es_result_relation_info;
 	if (ri != NULL)
@@ -319,7 +319,7 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
 		if (rel != NULL)
 			hasoid = rel->rd_rel->relhasoids;
 	}
-		
+
 	tupDesc = ExecTypeFromTL(node->targetlist, hasoid);
 	ExecAssignResultType(commonstate, tupDesc, true);
 }
@@ -696,7 +696,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 					   nullv);
 
 		/*
-		 * The index AM does the rest.  Note we suppress unique-index
+		 * The index AM does the rest.	Note we suppress unique-index
 		 * checks if we are being called from VACUUM, since VACUUM may
 		 * need to move dead tuples that have the same keys as live ones.
 		 */
@@ -705,7 +705,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 							  nullv,	/* info on nulls */
 							  &(heapTuple->t_self),		/* tid of heap tuple */
 							  heapRelation,
-							  relationDescs[i]->rd_index->indisunique && !is_vacuum);
+				  relationDescs[i]->rd_index->indisunique && !is_vacuum);
 
 		/*
 		 * keep track of index inserts for debugging
@@ -753,7 +753,7 @@ RegisterExprContextCallback(ExprContext *econtext,
 							ExprContextCallbackFunction function,
 							Datum arg)
 {
-	ExprContext_CB   *ecxt_callback;
+	ExprContext_CB *ecxt_callback;
 
 	/* Save the info in appropriate memory context */
 	ecxt_callback = (ExprContext_CB *)
@@ -779,8 +779,8 @@ UnregisterExprContextCallback(ExprContext *econtext,
 							  ExprContextCallbackFunction function,
 							  Datum arg)
 {
-	ExprContext_CB   **prev_callback;
-	ExprContext_CB   *ecxt_callback;
+	ExprContext_CB **prev_callback;
+	ExprContext_CB *ecxt_callback;
 
 	prev_callback = &econtext->ecxt_callbacks;
 
@@ -792,9 +792,7 @@ UnregisterExprContextCallback(ExprContext *econtext,
 			pfree(ecxt_callback);
 		}
 		else
-		{
 			prev_callback = &ecxt_callback->next;
-		}
 	}
 }
 
@@ -807,7 +805,7 @@ UnregisterExprContextCallback(ExprContext *econtext,
 static void
 ShutdownExprContext(ExprContext *econtext)
 {
-	ExprContext_CB   *ecxt_callback;
+	ExprContext_CB *ecxt_callback;
 
 	/*
 	 * Call each callback function in reverse registration order.

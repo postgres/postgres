@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.50 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.51 2002/09/04 20:31:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 #include "executor/execdebug.h"
 
 
-static int _bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map);
+static int	_bt_getstrategynumber(RegProcedure sk_procedure, StrategyMap map);
 
 
 /*
@@ -178,7 +178,7 @@ _bt_formitem(IndexTuple itup)
  * example.
  *
  * Furthermore, we detect the case where the index is unique and we have
- * equality quals for all columns.  In this case there can be at most one
+ * equality quals for all columns.	In this case there can be at most one
  * (visible) matching tuple.  index_getnext uses this to avoid uselessly
  * continuing the scan after finding one match.
  *
@@ -439,8 +439,8 @@ _bt_orderkeys(IndexScanDesc scan)
 	so->numberOfKeys = new_numberOfKeys;
 
 	/*
-	 * If unique index and we have equality keys for all columns,
-	 * set keys_are_unique flag for higher levels.
+	 * If unique index and we have equality keys for all columns, set
+	 * keys_are_unique flag for higher levels.
 	 */
 	if (allEqualSoFar && relation->rd_index->indisunique &&
 		relation->rd_rel->relnatts == new_numberOfKeys)

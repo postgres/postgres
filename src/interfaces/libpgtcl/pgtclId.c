@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.34 2002/09/02 23:41:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.35 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,7 +289,7 @@ PgDelConnectionId(DRIVER_DEL_PROTO)
 	connid->conn = NULL;
 
 	/*
-	 * Kill the notifier channel, too.  We must not do this until after
+	 * Kill the notifier channel, too.	We must not do this until after
 	 * we've closed the libpq connection, because Tcl will try to close
 	 * the socket itself!
 	 *
@@ -653,8 +653,8 @@ PgNotifyTransferEvents(Pg_ConnectionId * connid)
 	 * This is also a good place to check for unexpected closure of the
 	 * connection (ie, backend crash), in which case we must shut down the
 	 * notify event source to keep Tcl from trying to select() on the now-
-	 * closed socket descriptor.  But don't kill on-connection-loss events;
-	 * in fact, register one.
+	 * closed socket descriptor.  But don't kill on-connection-loss
+	 * events; in fact, register one.
 	 */
 	if (PQsocket(connid->conn) < 0)
 		PgConnLossTransferEvents(connid);
@@ -678,9 +678,10 @@ PgConnLossTransferEvents(Pg_ConnectionId * connid)
 	}
 
 	/*
-	 * Shut down the notify event source to keep Tcl from trying to select()
-	 * on the now-closed socket descriptor.  And zap any unprocessed notify
-	 * events ... but not, of course, the connection-loss event.
+	 * Shut down the notify event source to keep Tcl from trying to
+	 * select() on the now-closed socket descriptor.  And zap any
+	 * unprocessed notify events ... but not, of course, the
+	 * connection-loss event.
 	 */
 	PgStopNotifyEventSource(connid, false);
 }
@@ -770,8 +771,8 @@ Pg_Notify_FileHandler(ClientData clientData, int mask)
 	else
 	{
 		/*
-		 * If there is no input but we have read-ready,
-		 * assume this means we lost the connection.
+		 * If there is no input but we have read-ready, assume this means
+		 * we lost the connection.
 		 */
 		PgConnLossTransferEvents(connid);
 	}

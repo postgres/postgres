@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.24 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.25 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ datumGetSize(Datum value, bool typByVal, int typLen)
 		else if (typLen == -2)
 		{
 			/* It is a cstring datatype */
-			char *s = (char *) DatumGetPointer(value);
+			char	   *s = (char *) DatumGetPointer(value);
 
 			if (!PointerIsValid(s))
 				elog(ERROR, "datumGetSize: Invalid Datum Pointer");
@@ -175,9 +175,9 @@ datumIsEqual(Datum value1, Datum value2, bool typByVal, int typLen)
 		/*
 		 * just compare the two datums. NOTE: just comparing "len" bytes
 		 * will not do the work, because we do not know how these bytes
-		 * are aligned inside the "Datum".  We assume instead that any
-		 * given datatype is consistent about how it fills extraneous
-		 * bits in the Datum.
+		 * are aligned inside the "Datum".	We assume instead that any
+		 * given datatype is consistent about how it fills extraneous bits
+		 * in the Datum.
 		 */
 		res = (value1 == value2);
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.35 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.36 2002/09/04 20:31:09 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -77,7 +77,7 @@ RelationGetIndexScan(Relation indexRelation,
 
 	scan->heapRelation = NULL;	/* may be set later */
 	scan->indexRelation = indexRelation;
-	scan->xs_snapshot = SnapshotNow; /* may be set later */
+	scan->xs_snapshot = SnapshotNow;	/* may be set later */
 	scan->numberOfKeys = nkeys;
 
 	/*
@@ -90,8 +90,8 @@ RelationGetIndexScan(Relation indexRelation,
 		scan->keyData = NULL;
 
 	scan->kill_prior_tuple = false;
-	scan->ignore_killed_tuples = true; /* default setting */
-	scan->keys_are_unique = false; /* may be set by amrescan */
+	scan->ignore_killed_tuples = true;	/* default setting */
+	scan->keys_are_unique = false;		/* may be set by amrescan */
 	scan->got_tuple = false;
 
 	scan->opaque = NULL;
@@ -201,6 +201,7 @@ systable_beginscan(Relation heapRelation,
 
 		/* We assume it's a system index, so index_openr is OK */
 		sysscan->irel = irel = index_openr(indexRelname);
+
 		/*
 		 * Change attribute numbers to be index column numbers.
 		 *
@@ -210,7 +211,7 @@ systable_beginscan(Relation heapRelation,
 		for (i = 0; i < nkeys; i++)
 		{
 			Assert(key[i].sk_attno == irel->rd_index->indkey[i]);
-			key[i].sk_attno = i+1;
+			key[i].sk_attno = i + 1;
 		}
 		sysscan->iscan = index_beginscan(heapRelation, irel, snapshot,
 										 nkeys, key);

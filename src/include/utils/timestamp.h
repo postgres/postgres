@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.28 2002/08/04 06:42:18 thomas Exp $
+ * $Id: timestamp.h,v 1.29 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,6 +36,7 @@
 #ifdef HAVE_INT64_TIMESTAMP
 typedef int64 Timestamp;
 typedef int64 TimestampTz;
+
 #else
 typedef double Timestamp;
 typedef double TimestampTz;
@@ -44,11 +45,14 @@ typedef double TimestampTz;
 typedef struct
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int64		time;	/* all time units other than months and years */
+	int64		time;			/* all time units other than months and
+								 * years */
 #else
-	double		time;	/* all time units other than months and years */
+	double		time;			/* all time units other than months and
+								 * years */
 #endif
-	int32		month;	/* months and years, after time for alignment */
+	int32		month;			/* months and years, after time for
+								 * alignment */
 } Interval;
 
 
@@ -109,8 +113,7 @@ typedef struct
 #define DT_NOBEGIN		(-DBL_MAX)
 #define DT_NOEND		(DBL_MAX)
 #endif
-
-#endif /* HAVE_INT64_TIMESTAMP */
+#endif   /* HAVE_INT64_TIMESTAMP */
 
 
 #define TIMESTAMP_NOBEGIN(j)	do {j = DT_NOBEGIN;} while (0)
@@ -131,7 +134,6 @@ typedef double fsec_t;
 
 #define TIME_PREC_INV 1000000.0
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
-
 #endif
 
 #define TIMESTAMP_MASK(b) (1 << (b))

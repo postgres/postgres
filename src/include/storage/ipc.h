@@ -4,14 +4,14 @@
  *	  POSTGRES inter-process communication definitions.
  *
  * This file is misnamed, as it no longer has much of anything directly
- * to do with IPC.  The functionality here is concerned with managing
+ * to do with IPC.	The functionality here is concerned with managing
  * exit-time cleanup for either a postmaster or a backend.
  *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.56 2002/06/20 20:29:52 momjian Exp $
+ * $Id: ipc.h,v 1.57 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ extern void on_exit_reset(void);
 
 /* ipci.c */
 extern void CreateSharedMemoryAndSemaphores(bool makePrivate,
-											int maxBackends,
-											int port);
+								int maxBackends,
+								int port);
 
 #endif   /* IPC_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.82 2002/08/31 22:10:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.83 2002/09/04 20:31:30 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -349,7 +349,7 @@ op_mergejoinable(Oid opno, Oid ltype, Oid rtype, Oid *leftOp, Oid *rightOp)
  *
  *		Returns the cross-type comparison operators (ltype "<" rtype and
  *		ltype ">" rtype) for an operator previously determined to be
- *		mergejoinable.  Optionally, fetches the regproc ids of these
+ *		mergejoinable.	Optionally, fetches the regproc ids of these
  *		operators, as well as their operator OIDs.
  */
 void
@@ -651,7 +651,7 @@ get_relname_relid(const char *relname, Oid relnamespace)
 Oid
 get_system_catalog_relid(const char *catname)
 {
-	Oid		relid;
+	Oid			relid;
 
 	relid = GetSysCacheOid(RELNAMENSP,
 						   PointerGetDatum(catname),
@@ -737,7 +737,7 @@ get_rel_namespace(Oid relid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
-		Oid		result;
+		Oid			result;
 
 		result = reltup->relnamespace;
 		ReleaseSysCache(tp);
@@ -766,7 +766,7 @@ get_rel_type_id(Oid relid)
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_class reltup = (Form_pg_class) GETSTRUCT(tp);
-		Oid		result;
+		Oid			result;
 
 		result = reltup->reltype;
 		ReleaseSysCache(tp);
@@ -1105,8 +1105,8 @@ getBaseTypeMod(Oid typid, int32 typmod)
 		/*
 		 * The typmod applied to a domain should always be -1.
 		 *
-		 * We substitute the domain's typmod as we switch attention to
-		 * the base type.
+		 * We substitute the domain's typmod as we switch attention to the
+		 * base type.
 		 */
 		Assert(typmod < 0);
 

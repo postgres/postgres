@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/rtree_gist.c,v 1.5 2002/05/28 15:24:53 tgl Exp $
+ *	$Header: /cvsroot/pgsql/contrib/rtree_gist/Attic/rtree_gist.c,v 1.6 2002/09/04 20:31:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,20 +161,23 @@ gbox_penalty(PG_FUNCTION_ARGS)
 	PG_RETURN_POINTER(result);
 }
 
-typedef struct {
-	BOX 	*key;
-	int 	pos;
-} KBsort;
+typedef struct
+{
+	BOX		   *key;
+	int			pos;
+}	KBsort;
 
 static int
-compare_KB(const void* a, const void* b) {
-	BOX *abox = ((KBsort*)a)->key; 
-	BOX *bbox = ((KBsort*)b)->key;
-	float sa = (abox->high.x - abox->low.x) * (abox->high.y - abox->low.y);
-	float sb = (bbox->high.x - bbox->low.x) * (bbox->high.y - bbox->low.y);
+compare_KB(const void *a, const void *b)
+{
+	BOX		   *abox = ((KBsort *) a)->key;
+	BOX		   *bbox = ((KBsort *) b)->key;
+	float		sa = (abox->high.x - abox->low.x) * (abox->high.y - abox->low.y);
+	float		sb = (bbox->high.x - bbox->low.x) * (bbox->high.y - bbox->low.y);
 
-	if ( sa==sb ) return 0;
-	return ( sa>sb ) ? 1 : -1;
+	if (sa == sb)
+		return 0;
+	return (sa > sb) ? 1 : -1;
 }
 
 /*
@@ -217,14 +220,14 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 	for (i = OffsetNumberNext(FirstOffsetNumber); i <= maxoff; i = OffsetNumberNext(i))
 	{
 		cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
-		if ( allisequal == true &&  (
-				pageunion.high.x != cur->high.x || 
-				pageunion.high.y != cur->high.y || 
-				pageunion.low.x != cur->low.x || 
-				pageunion.low.y != cur->low.y 
-			) ) 
+		if (allisequal == true && (
+								   pageunion.high.x != cur->high.x ||
+								   pageunion.high.y != cur->high.y ||
+								   pageunion.low.x != cur->low.x ||
+								   pageunion.low.y != cur->low.y
+								   ))
 			allisequal = false;
- 
+
 		if (pageunion.high.x < cur->high.x)
 			pageunion.high.x = cur->high.x;
 		if (pageunion.low.x > cur->low.x)
@@ -293,45 +296,53 @@ gbox_picksplit(PG_FUNCTION_ARGS)
 	{
 		cur = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
 		if (cur->low.x - pageunion.low.x < pageunion.high.x - cur->high.x)
-			ADDLIST(listL, unionL, posL,i);
+			ADDLIST(listL, unionL, posL, i);
 		else
-			ADDLIST(listR, unionR, posR,i);
+			ADDLIST(listR, unionR, posR, i);
 		if (cur->low.y - pageunion.low.y < pageunion.high.y - cur->high.y)
-			ADDLIST(listB, unionB, posB,i);
+			ADDLIST(listB, unionB, posB, i);
 		else
-			ADDLIST(listT, unionT, posT,i);
+			ADDLIST(listT, unionT, posT, i);
 	}
 
 	/* bad disposition, sort by ascending and resplit */
-	if ( (posR==0 || posL==0) && (posT==0 || posB==0) ) {
-		KBsort *arr = (KBsort*)palloc( sizeof(KBsort) * maxoff );
+	if ((posR == 0 || posL == 0) && (posT == 0 || posB == 0))
+	{
+		KBsort	   *arr = (KBsort *) palloc(sizeof(KBsort) * maxoff);
+
 		posL = posR = posB = posT = 0;
-		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i)) {
-			arr[i-1].key = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
-			arr[i-1].pos = i;
+		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+		{
+			arr[i - 1].key = DatumGetBoxP(((GISTENTRY *) VARDATA(entryvec))[i].key);
+			arr[i - 1].pos = i;
 		}
-		qsort( arr, maxoff, sizeof(KBsort), compare_KB );
-		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i)) {
-			cur = arr[i-1].key;
+		qsort(arr, maxoff, sizeof(KBsort), compare_KB);
+		for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+		{
+			cur = arr[i - 1].key;
 			if (cur->low.x - pageunion.low.x < pageunion.high.x - cur->high.x)
-				ADDLIST(listL, unionL, posL,arr[i-1].pos);
-			else if ( cur->low.x - pageunion.low.x == pageunion.high.x - cur->high.x ) {
-				if ( posL>posR )
-					ADDLIST(listR, unionR, posR,arr[i-1].pos);
+				ADDLIST(listL, unionL, posL, arr[i - 1].pos);
+			else if (cur->low.x - pageunion.low.x == pageunion.high.x - cur->high.x)
+			{
+				if (posL > posR)
+					ADDLIST(listR, unionR, posR, arr[i - 1].pos);
 				else
-					ADDLIST(listL, unionL, posL,arr[i-1].pos);
-			} else
-				ADDLIST(listR, unionR, posR,arr[i-1].pos);
+					ADDLIST(listL, unionL, posL, arr[i - 1].pos);
+			}
+			else
+				ADDLIST(listR, unionR, posR, arr[i - 1].pos);
 
 			if (cur->low.y - pageunion.low.y < pageunion.high.y - cur->high.y)
-				ADDLIST(listB, unionB, posB,arr[i-1].pos);
-			else if ( cur->low.y - pageunion.low.y == pageunion.high.y - cur->high.y ) {
-				if ( posB>posT )
-					ADDLIST(listT, unionT, posT,arr[i-1].pos);
+				ADDLIST(listB, unionB, posB, arr[i - 1].pos);
+			else if (cur->low.y - pageunion.low.y == pageunion.high.y - cur->high.y)
+			{
+				if (posB > posT)
+					ADDLIST(listT, unionT, posT, arr[i - 1].pos);
 				else
-					ADDLIST(listB, unionB, posB,arr[i-1].pos);
-			} else
-				ADDLIST(listT, unionT, posT,arr[i-1].pos);
+					ADDLIST(listB, unionB, posB, arr[i - 1].pos);
+			}
+			else
+				ADDLIST(listT, unionT, posT, arr[i - 1].pos);
 		}
 		pfree(arr);
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.12 2002/08/29 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.13 2002/09/04 20:31:16 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -49,7 +49,7 @@
 #include "utils/syscache.h"
 
 
-static Oid findTypeIOFunction(List *procname, Oid typeOid, bool isOutput);
+static Oid	findTypeIOFunction(List *procname, Oid typeOid, bool isOutput);
 
 /*
  * DefineType
@@ -101,15 +101,15 @@ DefineType(List *names, List *parameters)
 		if (strcasecmp(defel->defname, "internallength") == 0)
 			internalLength = defGetTypeLength(defel);
 		else if (strcasecmp(defel->defname, "externallength") == 0)
-			; /* ignored -- remove after 7.3 */
+			;					/* ignored -- remove after 7.3 */
 		else if (strcasecmp(defel->defname, "input") == 0)
 			inputName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "output") == 0)
 			outputName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "send") == 0)
-			; /* ignored -- remove after 7.3 */
+			;					/* ignored -- remove after 7.3 */
 		else if (strcasecmp(defel->defname, "receive") == 0)
-			; /* ignored -- remove after 7.3 */
+			;					/* ignored -- remove after 7.3 */
 		else if (strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
@@ -203,8 +203,9 @@ DefineType(List *names, List *parameters)
 	outputOid = findTypeIOFunction(outputName, typoid, true);
 
 	/*
-	 * Verify that I/O procs return the expected thing.  OPAQUE is an allowed,
-	 * but deprecated, alternative to the fully type-safe choices.
+	 * Verify that I/O procs return the expected thing.  OPAQUE is an
+	 * allowed, but deprecated, alternative to the fully type-safe
+	 * choices.
 	 */
 	resulttype = get_func_rettype(inputOid);
 	if (!(OidIsValid(typoid) && resulttype == typoid))
@@ -229,26 +230,26 @@ DefineType(List *names, List *parameters)
 	 * now have TypeCreate do all the real work.
 	 */
 	typoid =
-		TypeCreate(typeName,		/* type name */
-				   typeNamespace,	/* namespace */
-				   InvalidOid,		/* preassigned type oid (not done here) */
-				   InvalidOid,		/* relation oid (n/a here) */
-				   0,				/* relation kind (ditto) */
-				   internalLength,	/* internal size */
-				   'b',				/* type-type (base type) */
-				   delimiter,		/* array element delimiter */
-				   inputOid,		/* input procedure */
-				   outputOid,		/* output procedure */
-				   elemType,		/* element type ID */
-				   InvalidOid,		/* base type ID (only for domains) */
+		TypeCreate(typeName,	/* type name */
+				   typeNamespace,		/* namespace */
+				   InvalidOid,	/* preassigned type oid (not done here) */
+				   InvalidOid,	/* relation oid (n/a here) */
+				   0,			/* relation kind (ditto) */
+				   internalLength,		/* internal size */
+				   'b',			/* type-type (base type) */
+				   delimiter,	/* array element delimiter */
+				   inputOid,	/* input procedure */
+				   outputOid,	/* output procedure */
+				   elemType,	/* element type ID */
+				   InvalidOid,	/* base type ID (only for domains) */
 				   defaultValue,	/* default type value */
-				   NULL,			/* no binary form available */
-				   byValue,			/* passed by value */
-				   alignment,		/* required alignment */
-				   storage,			/* TOAST strategy */
-				   -1,				/* typMod (Domains only) */
-				   0,				/* Array Dimensions of typbasetype */
-				   false);			/* Type NOT NULL */
+				   NULL,		/* no binary form available */
+				   byValue,		/* passed by value */
+				   alignment,	/* required alignment */
+				   storage,		/* TOAST strategy */
+				   -1,			/* typMod (Domains only) */
+				   0,			/* Array Dimensions of typbasetype */
+				   false);		/* Type NOT NULL */
 
 	/*
 	 * When we create a base type (as opposed to a complex type) we need
@@ -392,7 +393,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	List	   *listptr;
 	Oid			basetypeoid;
 	Oid			domainoid;
-	Form_pg_type	baseType;
+	Form_pg_type baseType;
 
 	/* Convert list of names to a name and namespace */
 	domainNamespace = QualifiedNameGetCreationNamespace(stmt->domainname,
@@ -406,7 +407,7 @@ DefineDomain(CreateDomainStmt *stmt)
 
 	/*
 	 * Domainnames, unlike typenames don't need to account for the '_'
-	 * prefix.  So they can be one character longer.
+	 * prefix.	So they can be one character longer.
 	 */
 	if (strlen(domainName) > (NAMEDATALEN - 1))
 		elog(ERROR, "CREATE DOMAIN: domain names must be %d characters or less",
@@ -421,9 +422,10 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypeoid = HeapTupleGetOid(typeTup);
 
 	/*
-	 * Base type must be a plain base type.  Domains over pseudo types would
-	 * create a security hole.  Domains of domains might be made to work in
-	 * the future, but not today.  Ditto for domains over complex types.
+	 * Base type must be a plain base type.  Domains over pseudo types
+	 * would create a security hole.  Domains of domains might be made to
+	 * work in the future, but not today.  Ditto for domains over complex
+	 * types.
 	 */
 	typtype = baseType->typtype;
 	if (typtype != 'b')
@@ -450,13 +452,13 @@ DefineDomain(CreateDomainStmt *stmt)
 	outputProcedure = baseType->typoutput;
 
 	/* Inherited default value */
-	datum =	SysCacheGetAttr(TYPEOID, typeTup,
+	datum = SysCacheGetAttr(TYPEOID, typeTup,
 							Anum_pg_type_typdefault, &isnull);
 	if (!isnull)
 		defaultValue = DatumGetCString(DirectFunctionCall1(textout, datum));
 
 	/* Inherited default binary value */
-	datum =	SysCacheGetAttr(TYPEOID, typeTup,
+	datum = SysCacheGetAttr(TYPEOID, typeTup,
 							Anum_pg_type_typdefaultbin, &isnull);
 	if (!isnull)
 		defaultValueBin = DatumGetCString(DirectFunctionCall1(textout, datum));
@@ -469,11 +471,11 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypelem = baseType->typelem;
 
 	/*
-	 * Run through constraints manually to avoid the additional
-	 * processing conducted by DefineRelation() and friends.
+	 * Run through constraints manually to avoid the additional processing
+	 * conducted by DefineRelation() and friends.
 	 *
-	 * Besides, we don't want any constraints to be cooked.  We'll
-	 * do that when the table is created via MergeDomainAttributes().
+	 * Besides, we don't want any constraints to be cooked.  We'll do that
+	 * when the table is created via MergeDomainAttributes().
 	 */
 	foreach(listptr, schema)
 	{
@@ -482,77 +484,79 @@ DefineDomain(CreateDomainStmt *stmt)
 
 		switch (colDef->contype)
 		{
-			/*
-	 		 * The inherited default value may be overridden by the user
-			 * with the DEFAULT <expr> statement.
-			 *
-	 		 * We have to search the entire constraint tree returned as we
-			 * don't want to cook or fiddle too much.
-			 */
+				/*
+				 * The inherited default value may be overridden by the
+				 * user with the DEFAULT <expr> statement.
+				 *
+				 * We have to search the entire constraint tree returned as
+				 * we don't want to cook or fiddle too much.
+				 */
 			case CONSTR_DEFAULT:
 				if (defaultExpr)
 					elog(ERROR, "CREATE DOMAIN has multiple DEFAULT expressions");
 				/* Create a dummy ParseState for transformExpr */
 				pstate = make_parsestate(NULL);
+
 				/*
-				 * Cook the colDef->raw_expr into an expression.
-				 * Note: Name is strictly for error message
+				 * Cook the colDef->raw_expr into an expression. Note:
+				 * Name is strictly for error message
 				 */
 				defaultExpr = cookDefault(pstate, colDef->raw_expr,
 										  basetypeoid,
 										  stmt->typename->typmod,
 										  domainName);
+
 				/*
-				 * Expression must be stored as a nodeToString result,
-				 * but we also require a valid textual representation
-				 * (mainly to make life easier for pg_dump).
+				 * Expression must be stored as a nodeToString result, but
+				 * we also require a valid textual representation (mainly
+				 * to make life easier for pg_dump).
 				 */
 				defaultValue = deparse_expression(defaultExpr,
-								deparse_context_for(domainName,
-													InvalidOid),
-												   false);
+										  deparse_context_for(domainName,
+															  InvalidOid),
+												  false);
 				defaultValueBin = nodeToString(defaultExpr);
 				break;
 
-			/*
-			 * Find the NULL constraint.
-			 */
+				/*
+				 * Find the NULL constraint.
+				 */
 			case CONSTR_NOTNULL:
 				if (nullDefined)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
 				typNotNull = true;
 				nullDefined = true;
-		  		break;
+				break;
 
 			case CONSTR_NULL:
 				if (nullDefined)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
 				typNotNull = false;
 				nullDefined = true;
-		  		break;
+				break;
 
-		  	case CONSTR_UNIQUE:
-		  		elog(ERROR, "CREATE DOMAIN / UNIQUE indexes not supported");
-		  		break;
+			case CONSTR_UNIQUE:
+				elog(ERROR, "CREATE DOMAIN / UNIQUE indexes not supported");
+				break;
 
-		  	case CONSTR_PRIMARY:
-		  		elog(ERROR, "CREATE DOMAIN / PRIMARY KEY indexes not supported");
-		  		break;
+			case CONSTR_PRIMARY:
+				elog(ERROR, "CREATE DOMAIN / PRIMARY KEY indexes not supported");
+				break;
 
-		  	case CONSTR_CHECK:
-		  		elog(ERROR, "DefineDomain: CHECK Constraints not supported");
-		  		break;
+			case CONSTR_CHECK:
+				elog(ERROR, "DefineDomain: CHECK Constraints not supported");
+				break;
 
-		  	case CONSTR_ATTR_DEFERRABLE:
-		  	case CONSTR_ATTR_NOT_DEFERRABLE:
-		  	case CONSTR_ATTR_DEFERRED:
-		  	case CONSTR_ATTR_IMMEDIATE:
-		  		elog(ERROR, "DefineDomain: DEFERRABLE, NON DEFERRABLE, DEFERRED and IMMEDIATE not supported");
-		  		break;
+			case CONSTR_ATTR_DEFERRABLE:
+			case CONSTR_ATTR_NOT_DEFERRABLE:
+			case CONSTR_ATTR_DEFERRED:
+			case CONSTR_ATTR_IMMEDIATE:
+				elog(ERROR, "DefineDomain: DEFERRABLE, NON DEFERRABLE, DEFERRED and IMMEDIATE not supported");
+				break;
 
 			default:
-		  		elog(ERROR, "DefineDomain: unrecognized constraint node type");
-		  		break;
+				elog(ERROR, "DefineDomain: unrecognized constraint node type");
+				break;
 		}
 	}
 
@@ -560,33 +564,33 @@ DefineDomain(CreateDomainStmt *stmt)
 	 * Have TypeCreate do all the real work.
 	 */
 	domainoid =
-		TypeCreate(domainName,			/* type name */
+		TypeCreate(domainName,	/* type name */
 				   domainNamespace,		/* namespace */
-				   InvalidOid,			/* preassigned type oid (none here) */
-				   InvalidOid,			/* relation oid (n/a here) */
-				   0,					/* relation kind (ditto) */
+				   InvalidOid,	/* preassigned type oid (none here) */
+				   InvalidOid,	/* relation oid (n/a here) */
+				   0,			/* relation kind (ditto) */
 				   internalLength,		/* internal size */
-				   'd',					/* type-type (domain type) */
-				   delimiter,			/* array element delimiter */
+				   'd',			/* type-type (domain type) */
+				   delimiter,	/* array element delimiter */
 				   inputProcedure,		/* input procedure */
 				   outputProcedure,		/* output procedure */
-				   basetypelem,			/* element type ID */
-				   basetypeoid,			/* base type ID */
-				   defaultValue,		/* default type value (text) */
+				   basetypelem, /* element type ID */
+				   basetypeoid, /* base type ID */
+				   defaultValue,	/* default type value (text) */
 				   defaultValueBin,		/* default type value (binary) */
-				   byValue,				/* passed by value */
-				   alignment,			/* required alignment */
-				   storage,				/* TOAST strategy */
-				   stmt->typename->typmod, /* typeMod value */
-				   typNDims,			/* Array dimensions for base type */
-				   typNotNull);			/* Type NOT NULL */
+				   byValue,		/* passed by value */
+				   alignment,	/* required alignment */
+				   storage,		/* TOAST strategy */
+				   stmt->typename->typmod,		/* typeMod value */
+				   typNDims,	/* Array dimensions for base type */
+				   typNotNull); /* Type NOT NULL */
 
 	/*
 	 * Add any dependencies needed for the default expression.
 	 */
 	if (defaultExpr)
 	{
-		ObjectAddress	domobject;
+		ObjectAddress domobject;
 
 		domobject.classId = RelOid_pg_type;
 		domobject.objectId = domainoid;
@@ -678,10 +682,10 @@ findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 	if (isOutput)
 	{
 		/*
-		 * Output functions can take a single argument of the type,
-		 * or two arguments (data value, element OID).  The signature
-		 * may use OPAQUE in place of the actual type name; this is the
-		 * only possibility if the type doesn't yet exist as a shell.
+		 * Output functions can take a single argument of the type, or two
+		 * arguments (data value, element OID).  The signature may use
+		 * OPAQUE in place of the actual type name; this is the only
+		 * possibility if the type doesn't yet exist as a shell.
 		 *
 		 * Note: although we could throw a NOTICE in this routine if OPAQUE
 		 * is used, we do not because of the probability that it'd be
@@ -728,8 +732,8 @@ findTypeIOFunction(List *procname, Oid typeOid, bool isOutput)
 	else
 	{
 		/*
-		 * Input functions can take a single argument of type CSTRING,
-		 * or three arguments (string, element OID, typmod).  The signature
+		 * Input functions can take a single argument of type CSTRING, or
+		 * three arguments (string, element OID, typmod).  The signature
 		 * may use OPAQUE in place of CSTRING.
 		 */
 		MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -793,7 +797,7 @@ DefineCompositeType(const RangeVar *typevar, List *coldeflist)
 
 	if (coldeflist == NIL)
 		elog(ERROR, "attempted to define composite type relation with"
-					" no attrs");
+			 " no attrs");
 
 	/*
 	 * now create the parameters for keys/inheritance etc. All of them are

@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.43 2002/09/03 21:45:44 petere Exp $ */
+/* $Id: pg_wchar.h,v 1.44 2002/09/04 20:31:42 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -181,8 +181,8 @@ typedef enum pg_enc
 	/* followings are for client encoding only */
 	PG_SJIS,					/* Shift JIS (Winindows-932) */
 	PG_BIG5,					/* Big5 (Windows-950) */
-	PG_GBK,					/* GBK (Windows-936) */
-	PG_UHC,					/* UHC (Windows-949) */
+	PG_GBK,						/* GBK (Windows-936) */
+	PG_UHC,						/* UHC (Windows-949) */
 	PG_WIN1250,					/* windows-1250 */
 	PG_GB18030,					/* GB18030 */
 	_PG_LAST_ENCODING_			/* mark only */
@@ -293,7 +293,7 @@ extern int	pg_mbcharcliplen(const unsigned char *mbstr, int len, int imit);
 extern int	pg_encoding_max_length(int encoding);
 extern int	pg_database_encoding_max_length(void);
 
-extern void	SetDefaultClientEncoding(void);
+extern void SetDefaultClientEncoding(void);
 extern int	SetClientEncoding(int encoding, bool doit);
 extern int	pg_get_client_encoding(void);
 extern const char *pg_get_client_encoding_name(void);
@@ -307,8 +307,8 @@ extern int	pg_valid_server_encoding(const char *name);
 
 extern int	pg_utf_mblen(const unsigned char *);
 extern unsigned char *pg_do_encoding_conversion(unsigned char *src, int len,
-												int src_encoding,
-												int dest_encoding);
+						  int src_encoding,
+						  int dest_encoding);
 
 extern unsigned char *pg_client_to_server(unsigned char *s, int len);
 extern unsigned char *pg_server_to_client(unsigned char *s, int len);
@@ -317,19 +317,19 @@ extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void LocalToUtf(unsigned char *iso, unsigned char *utf,
-					   pg_local_to_utf *map, int size, int encoding, int len);
+		   pg_local_to_utf *map, int size, int encoding, int len);
 
 extern void UtfToLocal(unsigned char *utf, unsigned char *iso,
-					   pg_utf_to_local *map, int size, int len);
+		   pg_utf_to_local *map, int size, int len);
 
-extern char	   *pg_verifymbstr(const unsigned char *mbstr, int len);
+extern char *pg_verifymbstr(const unsigned char *mbstr, int len);
 
-extern void	pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
-extern void	pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);
-extern void	pg_print_bogus_char(unsigned char **mic, unsigned char **p);
-extern void	latin2mic(unsigned char *l, unsigned char *p, int len, int lc);
-extern void	mic2latin(unsigned char *mic, unsigned char *p, int len, int lc);
-extern void	latin2mic_with_table(unsigned char *l, unsigned char *p, int len, int lc, unsigned char *tab);
-extern void	mic2latin_with_table(unsigned char *mic, unsigned char *p, int len, int lc, unsigned char *tab);
+extern void pg_ascii2mic(unsigned char *src, unsigned char *dest, int len);
+extern void pg_mic2ascii(unsigned char *src, unsigned char *dest, int len);
+extern void pg_print_bogus_char(unsigned char **mic, unsigned char **p);
+extern void latin2mic(unsigned char *l, unsigned char *p, int len, int lc);
+extern void mic2latin(unsigned char *mic, unsigned char *p, int len, int lc);
+extern void latin2mic_with_table(unsigned char *l, unsigned char *p, int len, int lc, unsigned char *tab);
+extern void mic2latin_with_table(unsigned char *mic, unsigned char *p, int len, int lc, unsigned char *tab);
 
 #endif   /* PG_WCHAR_H */

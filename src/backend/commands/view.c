@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.70 2002/09/02 20:04:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/view.c,v 1.71 2002/09/04 20:31:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 	 * the (non-junk) targetlist items from the view's SELECT list.
 	 */
 	attrList = NIL;
-	foreach (t, tlist)
+	foreach(t, tlist)
 	{
 		TargetEntry *entry = lfirst(t);
 		Resdom	   *res = entry->resdom;
@@ -115,32 +115,32 @@ DefineVirtualRelation(const RangeVar *relation, List *tlist, bool replace)
 		 * Create a tuple descriptor to compare against the existing view,
 		 * and verify it matches.
 		 */
-	    descriptor = BuildDescForRelation(attrList);
+		descriptor = BuildDescForRelation(attrList);
 		checkViewTupleDesc(descriptor, rel->rd_att);
 
 		/*
 		 * Seems okay, so return the OID of the pre-existing view.
 		 */
-		relation_close(rel, NoLock); /* keep the lock! */
+		relation_close(rel, NoLock);	/* keep the lock! */
 
 		return viewOid;
 	}
 	else
 	{
 		/*
-		 * now create the parameters for keys/inheritance etc. All of them are
-		 * nil...
+		 * now create the parameters for keys/inheritance etc. All of them
+		 * are nil...
 		 */
 		createStmt->relation = (RangeVar *) relation;
 		createStmt->tableElts = attrList;
 		createStmt->inhRelations = NIL;
 		createStmt->constraints = NIL;
 		createStmt->hasoids = false;
-	
+
 		/*
-		 * finally create the relation (this will error out if there's
-		 * an existing view, so we don't need more code to complain
-		 * if "replace" is false).
+		 * finally create the relation (this will error out if there's an
+		 * existing view, so we don't need more code to complain if
+		 * "replace" is false).
 		 */
 		return DefineRelation(createStmt, RELKIND_VIEW);
 	}
@@ -179,6 +179,7 @@ checkViewTupleDesc(TupleDesc newdesc, TupleDesc olddesc)
 				 NameStr(oldattr->attname));
 		/* We can ignore the remaining attributes of an attribute... */
 	}
+
 	/*
 	 * We ignore the constraint fields.  The new view desc can't have any
 	 * constraints, and the only ones that could be on the old view are
@@ -316,8 +317,8 @@ DefineView(const RangeVar *view, Query *viewParse, bool replace)
 	/*
 	 * Create the view relation
 	 *
-	 * NOTE: if it already exists and replace is false, the xact will 
-	 * be aborted.
+	 * NOTE: if it already exists and replace is false, the xact will be
+	 * aborted.
 	 */
 
 	viewOid = DefineVirtualRelation(view, viewParse->targetList, replace);

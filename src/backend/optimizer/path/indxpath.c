@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.121 2002/09/02 06:22:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.122 2002/09/04 20:31:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1332,7 +1332,7 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 	test_oper = makeOper(test_op,		/* opno */
 						 InvalidOid,	/* opid */
 						 BOOLOID,		/* opresulttype */
-						 false);		/* opretset */
+						 false);	/* opretset */
 	replace_opid(test_oper);
 	test_expr = make_opclause(test_oper,
 							  (Var *) clause_const,
@@ -1712,7 +1712,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
 
 		case OID_BYTEA_LIKE_OP:
 			isIndexable = pattern_fixed_prefix(patt, Pattern_Type_Like,
-							  &prefix, &rest) != Pattern_Prefix_None;
+								  &prefix, &rest) != Pattern_Prefix_None;
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
@@ -1922,7 +1922,7 @@ expand_indexqual_conditions(List *indexquals)
 			case OID_CIDR_SUBEQ_OP:
 				resultquals = nconc(resultquals,
 									network_prefix_quals(leftop, expr_op,
-														 patt->constvalue));
+													  patt->constvalue));
 				break;
 
 			default:

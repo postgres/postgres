@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.54 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.55 2002/09/04 20:31:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ CreateQueryDesc(Query *parsetree,
 	qd->parsetree = parsetree;	/* parse tree */
 	qd->plantree = plantree;	/* plan */
 	qd->dest = dest;			/* output dest */
-	qd->portalName = portalName; /* name, if dest is a portal */
+	qd->portalName = portalName;	/* name, if dest is a portal */
 	qd->tupDesc = NULL;			/* until set by ExecutorStart */
 
 	return qd;
@@ -168,8 +168,8 @@ ProcessQuery(Query *parsetree,
 			 * SELECT INTO table (a/k/a CREATE AS ... SELECT).
 			 *
 			 * Override the normal communication destination; execMain.c
-			 * special-cases this case.  (Perhaps would be cleaner to
-			 * have an additional destination type?)
+			 * special-cases this case.  (Perhaps would be cleaner to have
+			 * an additional destination type?)
 			 */
 			dest = None;
 		}
@@ -186,7 +186,8 @@ ProcessQuery(Query *parsetree,
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		parsetree = copyObject(parsetree);
 		plan = copyObject(plan);
-		intoName = parsetree->into->relname;	/* use copied name in QueryDesc */
+		intoName = parsetree->into->relname;	/* use copied name in
+												 * QueryDesc */
 
 		/*
 		 * We stay in portal's memory context for now, so that query desc,
@@ -225,7 +226,7 @@ ProcessQuery(Query *parsetree,
 		/* Now we can return to caller's memory context. */
 		MemoryContextSwitchTo(oldContext);
 
-		/* Set completion tag.  SQL calls this operation DECLARE CURSOR */
+		/* Set completion tag.	SQL calls this operation DECLARE CURSOR */
 		if (completionTag)
 			strcpy(completionTag, "DECLARE CURSOR");
 
@@ -243,7 +244,7 @@ ProcessQuery(Query *parsetree,
 	 */
 	if (completionTag)
 	{
-		Oid		lastOid;
+		Oid			lastOid;
 
 		switch (operation)
 		{

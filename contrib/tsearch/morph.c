@@ -114,7 +114,7 @@ initmorph(void)
 		needinit[i] = false;
 
 	PGLC_current(&lc);
-	if ( lc.lc_ctype )
+	if (lc.lc_ctype)
 		for (i = 1; i < lengthof(dicts); i++)
 			if (strcmp(dicts[i].localename, lc.lc_ctype) == 0)
 			{

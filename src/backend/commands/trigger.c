@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.130 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.131 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
  * Create a trigger.  Returns the OID of the created trigger.
  *
  * forConstraint, if true, says that this trigger is being created to
- * implement a constraint.  The caller will then be expected to make
+ * implement a constraint.	The caller will then be expected to make
  * a pg_depend entry linking the trigger to that constraint (and thereby
  * to the owning relation(s)).
  */
@@ -69,7 +69,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	Relation	rel;
 	AclResult	aclresult;
 	Relation	tgrel;
-	SysScanDesc	tgscan;
+	SysScanDesc tgscan;
 	ScanKeyData key;
 	Relation	pgrel;
 	HeapTuple	tuple;
@@ -82,8 +82,8 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	char	   *trigname;
 	char	   *constrname;
 	Oid			constrrelid;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 
 	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
@@ -98,7 +98,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s",
-			stmt->relation->relname);
+			 stmt->relation->relname);
 
 	/* permission checks */
 
@@ -132,9 +132,9 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	/*
 	 * If trigger is an RI constraint, use specified trigger name as
-	 * constraint name and build a unique trigger name instead.
-	 * This is mainly for backwards compatibility with CREATE CONSTRAINT
-	 * TRIGGER commands.
+	 * constraint name and build a unique trigger name instead. This is
+	 * mainly for backwards compatibility with CREATE CONSTRAINT TRIGGER
+	 * commands.
 	 */
 	if (stmt->isconstraint)
 	{
@@ -183,10 +183,10 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	}
 
 	/*
-	 * Scan pg_trigger for existing triggers on relation.  We do this mainly
-	 * because we must count them; a secondary benefit is to give a nice
-	 * error message if there's already a trigger of the same name.  (The
-	 * unique index on tgrelid/tgname would complain anyway.)
+	 * Scan pg_trigger for existing triggers on relation.  We do this
+	 * mainly because we must count them; a secondary benefit is to give a
+	 * nice error message if there's already a trigger of the same name.
+	 * (The unique index on tgrelid/tgname would complain anyway.)
 	 *
 	 * NOTE that this is cool only because we have AccessExclusiveLock on the
 	 * relation, so the trigger set won't be changing underneath us.
@@ -241,13 +241,13 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = DirectFunctionCall1(namein,
-										CStringGetDatum(trigname));
+											  CStringGetDatum(trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
 	values[Anum_pg_trigger_tgenabled - 1] = BoolGetDatum(true);
 	values[Anum_pg_trigger_tgisconstraint - 1] = BoolGetDatum(stmt->isconstraint);
 	values[Anum_pg_trigger_tgconstrname - 1] = DirectFunctionCall1(namein,
-																   CStringGetDatum(constrname));
+											CStringGetDatum(constrname));
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
 	values[Anum_pg_trigger_tgdeferrable - 1] = BoolGetDatum(stmt->deferrable);
 	values[Anum_pg_trigger_tginitdeferred - 1] = BoolGetDatum(stmt->initdeferred);
@@ -354,8 +354,9 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	 * CREATE TRIGGER command, also make trigger be auto-dropped if its
 	 * relation is dropped or if the FK relation is dropped.  (Auto drop
 	 * is compatible with our pre-7.3 behavior.)  If the trigger is being
-	 * made for a constraint, we can skip the relation links; the dependency
-	 * on the constraint will indirectly depend on the relations.
+	 * made for a constraint, we can skip the relation links; the
+	 * dependency on the constraint will indirectly depend on the
+	 * relations.
 	 */
 	referenced.classId = RelOid_pg_proc;
 	referenced.objectId = funcoid;
@@ -389,10 +390,10 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 void
 DropTrigger(Oid relid, const char *trigname, DropBehavior behavior)
 {
-	Relation		tgrel;
-	ScanKeyData		skey[2];
-	SysScanDesc		tgscan;
-	HeapTuple		tup;
+	Relation	tgrel;
+	ScanKeyData skey[2];
+	SysScanDesc tgscan;
+	HeapTuple	tup;
 	ObjectAddress object;
 
 	/*
@@ -440,14 +441,14 @@ void
 RemoveTriggerById(Oid trigOid)
 {
 	Relation	tgrel;
-	SysScanDesc	tgscan;
-	ScanKeyData	skey[1];
+	SysScanDesc tgscan;
+	ScanKeyData skey[1];
 	HeapTuple	tup;
 	Oid			relid;
 	Relation	rel;
 	Relation	pgrel;
 	HeapTuple	tuple;
-	Form_pg_class	classForm;
+	Form_pg_class classForm;
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 
@@ -495,8 +496,8 @@ RemoveTriggerById(Oid trigOid)
 	 * rebuild relcache entries.
 	 *
 	 * Note this is OK only because we have AccessExclusiveLock on the rel,
-	 * so no one else is creating/deleting triggers on this rel at the same
-	 * time.
+	 * so no one else is creating/deleting triggers on this rel at the
+	 * same time.
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
@@ -545,7 +546,7 @@ renametrig(Oid relid,
 	Relation	targetrel;
 	Relation	tgrel;
 	HeapTuple	tuple;
-	SysScanDesc	tgscan;
+	SysScanDesc tgscan;
 	ScanKeyData key[2];
 
 	/*
@@ -555,10 +556,10 @@ renametrig(Oid relid,
 	targetrel = heap_open(relid, AccessExclusiveLock);
 
 	/*
-	 * Scan pg_trigger twice for existing triggers on relation.  We do this in
-	 * order to ensure a trigger does not exist with newname (The unique index
-	 * on tgrelid/tgname would complain anyway) and to ensure a trigger does
-	 * exist with oldname.
+	 * Scan pg_trigger twice for existing triggers on relation.  We do
+	 * this in order to ensure a trigger does not exist with newname (The
+	 * unique index on tgrelid/tgname would complain anyway) and to ensure
+	 * a trigger does exist with oldname.
 	 *
 	 * NOTE that this is cool only because we have AccessExclusiveLock on the
 	 * relation, so the trigger set won't be changing underneath us.
@@ -601,7 +602,7 @@ renametrig(Oid relid,
 		/*
 		 * Update pg_trigger tuple with new tgname.
 		 */
-		tuple = heap_copytuple(tuple); /* need a modifiable copy */
+		tuple = heap_copytuple(tuple);	/* need a modifiable copy */
 
 		namestrcpy(&((Form_pg_trigger) GETSTRUCT(tuple))->tgname, newname);
 
@@ -611,9 +612,10 @@ renametrig(Oid relid,
 		CatalogUpdateIndexes(tgrel, tuple);
 
 		/*
-		 * Invalidate relation's relcache entry so that other backends (and
-		 * this one too!) are sent SI message to make them rebuild relcache
-		 * entries.  (Ideally this should happen automatically...)
+		 * Invalidate relation's relcache entry so that other backends
+		 * (and this one too!) are sent SI message to make them rebuild
+		 * relcache entries.  (Ideally this should happen
+		 * automatically...)
 		 */
 		CacheInvalidateRelcache(relid);
 	}
@@ -649,17 +651,17 @@ RelationBuildTriggers(Relation relation)
 	int			found = 0;
 	Relation	tgrel;
 	ScanKeyData skey;
-	SysScanDesc	tgscan;
+	SysScanDesc tgscan;
 	HeapTuple	htup;
 
 	triggers = (Trigger *) MemoryContextAlloc(CacheMemoryContext,
 											  ntrigs * sizeof(Trigger));
 
 	/*
-	 * Note: since we scan the triggers using TriggerRelidNameIndex,
-	 * we will be reading the triggers in name order, except possibly
-	 * during emergency-recovery operations (ie, IsIgnoringSystemIndexes).
-	 * This in turn ensures that triggers will be fired in name order.
+	 * Note: since we scan the triggers using TriggerRelidNameIndex, we
+	 * will be reading the triggers in name order, except possibly during
+	 * emergency-recovery operations (ie, IsIgnoringSystemIndexes). This
+	 * in turn ensures that triggers will be fired in name order.
 	 */
 	ScanKeyEntryInitialize(&skey,
 						   (bits16) 0x0,
@@ -1528,17 +1530,17 @@ deferredTriggerInvokeEvents(bool immediate_only)
 
 	/*
 	 * If immediate_only is true, we remove fully-processed events from
-	 * the event queue to recycle space.  If immediate_only is false,
-	 * we are going to discard the whole event queue on return anyway,
-	 * so no need to bother with "retail" pfree's.
+	 * the event queue to recycle space.  If immediate_only is false, we
+	 * are going to discard the whole event queue on return anyway, so no
+	 * need to bother with "retail" pfree's.
 	 *
 	 * In a scenario with many commands in a transaction and many
-	 * deferred-to-end-of-transaction triggers, it could get annoying
-	 * to rescan all the deferred triggers at each command end.
-	 * To speed this up, we could remember the actual end of the queue at
-	 * EndQuery and examine only events that are newer. On state changes
-	 * we simply reset the saved position to the beginning of the queue
-	 * and process all events once with the new states.
+	 * deferred-to-end-of-transaction triggers, it could get annoying to
+	 * rescan all the deferred triggers at each command end. To speed this
+	 * up, we could remember the actual end of the queue at EndQuery and
+	 * examine only events that are newer. On state changes we simply
+	 * reset the saved position to the beginning of the queue and process
+	 * all events once with the new states.
 	 */
 
 	/* Make a per-tuple memory context for trigger function calls */
@@ -1559,8 +1561,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 		/*
 		 * Check if event is already completely done.
 		 */
-		if (! (event->dte_event & (TRIGGER_DEFERRED_DONE |
-								   TRIGGER_DEFERRED_CANCELED)))
+		if (!(event->dte_event & (TRIGGER_DEFERRED_DONE |
+								  TRIGGER_DEFERRED_CANCELED)))
 		{
 			MemoryContextReset(per_tuple_context);
 
@@ -1577,16 +1579,16 @@ deferredTriggerInvokeEvents(bool immediate_only)
 				 * should call it now.
 				 */
 				if (immediate_only &&
-					deferredTriggerCheckState(event->dte_item[i].dti_tgoid,
-											  event->dte_item[i].dti_state))
+				  deferredTriggerCheckState(event->dte_item[i].dti_tgoid,
+											event->dte_item[i].dti_state))
 				{
 					still_deferred_ones = true;
 					continue;
 				}
 
 				/*
-				 * So let's fire it... but first, open the correct relation
-				 * if this is not the same relation as before.
+				 * So let's fire it... but first, open the correct
+				 * relation if this is not the same relation as before.
 				 */
 				if (rel == NULL || rel->rd_id != event->dte_relid)
 				{
@@ -1596,14 +1598,14 @@ deferredTriggerInvokeEvents(bool immediate_only)
 						pfree(finfo);
 
 					/*
-					 * We assume that an appropriate lock is still held by the
-					 * executor, so grab no new lock here.
+					 * We assume that an appropriate lock is still held by
+					 * the executor, so grab no new lock here.
 					 */
 					rel = heap_open(event->dte_relid, NoLock);
 
 					/*
-					 * Allocate space to cache fmgr lookup info for triggers
-					 * of this relation.
+					 * Allocate space to cache fmgr lookup info for
+					 * triggers of this relation.
 					 */
 					finfo = (FmgrInfo *)
 						palloc(rel->trigdesc->numtriggers * sizeof(FmgrInfo));
@@ -1615,15 +1617,15 @@ deferredTriggerInvokeEvents(bool immediate_only)
 									   per_tuple_context);
 
 				event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
-			} /* end loop over items within event */
+			}					/* end loop over items within event */
 		}
 
 		/*
 		 * If it's now completely done, throw it away.
 		 *
 		 * NB: it's possible the trigger calls above added more events to the
-		 * queue, or that calls we will do later will want to add more,
-		 * so we have to be careful about maintaining list validity here.
+		 * queue, or that calls we will do later will want to add more, so
+		 * we have to be careful about maintaining list validity here.
 		 */
 		next_event = event->dte_next;
 
@@ -1724,6 +1726,7 @@ DeferredTriggerBeginXact(void)
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
 
 	deftrig_all_isset = false;
+
 	/*
 	 * If unspecified, constraints default to IMMEDIATE, per SQL
 	 */
@@ -1827,8 +1830,8 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 
 	/*
 	 * If called outside a transaction block, we can safely return: this
-	 * command cannot effect any subsequent transactions, and there
-	 * are no "session-level" trigger settings.
+	 * command cannot effect any subsequent transactions, and there are no
+	 * "session-level" trigger settings.
 	 */
 	if (!IsTransactionBlock())
 		return;
@@ -1879,7 +1882,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		{
 			char	   *cname = strVal(lfirst(l));
 			ScanKeyData skey;
-			SysScanDesc	tgscan;
+			SysScanDesc tgscan;
 			HeapTuple	htup;
 
 			/*
@@ -1892,7 +1895,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			 * Setup to scan pg_trigger by tgconstrname ...
 			 */
 			ScanKeyEntryInitialize(&skey, (bits16) 0x0,
-								   (AttrNumber) Anum_pg_trigger_tgconstrname,
+							   (AttrNumber) Anum_pg_trigger_tgconstrname,
 								   (RegProcedure) F_NAMEEQ,
 								   PointerGetDatum(cname));
 
@@ -1910,9 +1913,9 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 				Oid			constr_oid;
 
 				/*
-				 * If we found some, check that they fit the deferrability but
-				 * skip ON <event> RESTRICT ones, since they are silently
-				 * never deferrable.
+				 * If we found some, check that they fit the deferrability
+				 * but skip ON <event> RESTRICT ones, since they are
+				 * silently never deferrable.
 				 */
 				if (stmt->deferred && !pg_trigger->tgdeferrable &&
 					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
@@ -1971,11 +1974,11 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 
 	/*
 	 * SQL99 requires that when a constraint is set to IMMEDIATE, any
-	 * deferred checks against that constraint must be made when the
-	 * SET CONSTRAINTS command is executed -- i.e. the effects of the
-	 * SET CONSTRAINTS command applies retroactively. This happens "for
-	 * free" since we have already made the necessary modifications to
-	 * the constraints, and deferredTriggerEndQuery() is called by
+	 * deferred checks against that constraint must be made when the SET
+	 * CONSTRAINTS command is executed -- i.e. the effects of the SET
+	 * CONSTRAINTS command applies retroactively. This happens "for free"
+	 * since we have already made the necessary modifications to the
+	 * constraints, and deferredTriggerEndQuery() is called by
 	 * finish_xact_command().
 	 */
 }
@@ -2062,6 +2065,7 @@ DeferredTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 			break;
 
 		case TRIGGER_EVENT_UPDATE:
+
 			/*
 			 * Check if one of the referenced keys is changed.
 			 */

@@ -45,4 +45,3 @@ elog_ERROR(void)
 {
 	return ERROR;
 }
-

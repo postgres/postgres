@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.98 2002/09/02 01:05:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.99 2002/09/04 20:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include "utils/syscache.h"
 
 
-/* #define CACHEDEBUG */	/* turns DEBUG elogs on */
+ /* #define CACHEDEBUG */	/* turns DEBUG elogs on */
 
 /*
  * Constants related to size of the catcache.
@@ -102,6 +102,7 @@ static uint32 CatalogCacheComputeHashValue(CatCache *cache, int nkeys,
 							 ScanKey cur_skey);
 static uint32 CatalogCacheComputeTupleHashValue(CatCache *cache,
 								  HeapTuple tuple);
+
 #ifdef CATCACHE_STATS
 static void CatCachePrintStats(void);
 #endif
@@ -109,8 +110,8 @@ static void CatCacheRemoveCTup(CatCache *cache, CatCTup *ct);
 static void CatCacheRemoveCList(CatCache *cache, CatCList *cl);
 static void CatalogCacheInitializeCache(CatCache *cache);
 static CatCTup *CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
-										uint32 hashValue, Index hashIndex,
-										bool negative);
+						uint32 hashValue, Index hashIndex,
+						bool negative);
 static HeapTuple build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys);
 
 
@@ -325,8 +326,7 @@ CatCachePrintStats(void)
 		 cc_lsearches,
 		 cc_lhits);
 }
-
-#endif /* CATCACHE_STATS */
+#endif   /* CATCACHE_STATS */
 
 
 /*
@@ -372,7 +372,7 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
 	Assert(cl->my_cache == cache);
 
 	/* delink from member tuples */
-	for (i = cl->n_members; --i >= 0; )
+	for (i = cl->n_members; --i >= 0;)
 	{
 		CatCTup    *ct = cl->members[i];
 
@@ -397,11 +397,11 @@ CatCacheRemoveCList(CatCache *cache, CatCList *cl)
  *	item pointer.  Positive entries are deleted if they match the item
  *	pointer.  Negative entries must be deleted if they match the hash
  *	value (since we do not have the exact key of the tuple that's being
- *	inserted).  But this should only rarely result in loss of a cache
+ *	inserted).	But this should only rarely result in loss of a cache
  *	entry that could have been kept.
  *
  *	Note that it's not very relevant whether the tuple identified by
- *	the item pointer is being inserted or deleted.  We don't expect to
+ *	the item pointer is being inserted or deleted.	We don't expect to
  *	find matching positive entries in the one case, and we don't expect
  *	to find matching negative entries in the other; but we will do the
  *	right things in any case.
@@ -435,8 +435,8 @@ CatalogCacheIdInvalidate(int cacheId,
 
 		/*
 		 * We don't bother to check whether the cache has finished
-		 * initialization yet; if not, there will be no entries in it
-		 * so no problem.
+		 * initialization yet; if not, there will be no entries in it so
+		 * no problem.
 		 */
 
 		/*
@@ -819,7 +819,7 @@ InitCatCache(int id,
 	cp->id = id;
 	cp->cc_relname = relname;
 	cp->cc_indname = indname;
-	cp->cc_reloid = InvalidOid;	/* temporary */
+	cp->cc_reloid = InvalidOid; /* temporary */
 	cp->cc_relisshared = false; /* temporary */
 	cp->cc_tupdesc = (TupleDesc) NULL;
 	cp->cc_reloidattr = reloidattr;
@@ -1015,8 +1015,8 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 	{
 		/*
 		 * Since the OIDs of indexes aren't hardwired, it's painful to
-		 * figure out which is which.  Just force all pg_index searches
-		 * to be heap scans while building the relcaches.
+		 * figure out which is which.  Just force all pg_index searches to
+		 * be heap scans while building the relcaches.
 		 */
 		if (!criticalRelcachesBuilt)
 			return false;
@@ -1037,7 +1037,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 		if (!criticalRelcachesBuilt)
 		{
 			/* Looking for an OID comparison function? */
-			Oid		lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
+			Oid			lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
 
 			if (lookup_oid >= MIN_OIDCMP && lookup_oid <= MAX_OIDCMP)
 				return false;
@@ -1055,7 +1055,7 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
  *		if necessary (on the first access to a particular cache).
  *
  *		The result is NULL if not found, or a pointer to a HeapTuple in
- *		the cache.  The caller must not modify the tuple, and must call
+ *		the cache.	The caller must not modify the tuple, and must call
  *		ReleaseCatCache() when done with it.
  *
  * The search key values should be expressed as Datums of the key columns'
@@ -1077,7 +1077,7 @@ SearchCatCache(CatCache *cache,
 	Dlelem	   *elt;
 	CatCTup    *ct;
 	Relation	relation;
-	SysScanDesc	scandesc;
+	SysScanDesc scandesc;
 	HeapTuple	ntp;
 
 	/*
@@ -1134,18 +1134,18 @@ SearchCatCache(CatCache *cache,
 			continue;
 
 		/*
-		 * we found a match in the cache: move it to the front of the global
-		 * LRU list.  We also move it to the front of the list for its
-		 * hashbucket, in order to speed subsequent searches.  (The most
-		 * frequently accessed elements in any hashbucket will tend to be
-		 * near the front of the hashbucket's list.)
+		 * we found a match in the cache: move it to the front of the
+		 * global LRU list.  We also move it to the front of the list for
+		 * its hashbucket, in order to speed subsequent searches.  (The
+		 * most frequently accessed elements in any hashbucket will tend
+		 * to be near the front of the hashbucket's list.)
 		 */
 		DLMoveToFront(&ct->lrulist_elem);
 		DLMoveToFront(&ct->cache_elem);
 
 		/*
-		 * If it's a positive entry, bump its refcount and return it.
-		 * If it's negative, we can report failure to the caller.
+		 * If it's a positive entry, bump its refcount and return it. If
+		 * it's negative, we can report failure to the caller.
 		 */
 		if (!ct->negative)
 		{
@@ -1175,8 +1175,8 @@ SearchCatCache(CatCache *cache,
 
 	/*
 	 * Tuple was not found in cache, so we have to try to retrieve it
-	 * directly from the relation.  If found, we will add it to the
-	 * cache; if not found, we will add a negative cache entry instead.
+	 * directly from the relation.	If found, we will add it to the cache;
+	 * if not found, we will add a negative cache entry instead.
 	 *
 	 * NOTE: it is possible for recursive cache lookups to occur while
 	 * reading the relation --- for example, due to shared-cache-inval
@@ -1213,8 +1213,8 @@ SearchCatCache(CatCache *cache,
 
 	/*
 	 * If tuple was not found, we need to build a negative cache entry
-	 * containing a fake tuple.  The fake tuple has the correct key columns,
-	 * but nulls everywhere else.
+	 * containing a fake tuple.  The fake tuple has the correct key
+	 * columns, but nulls everywhere else.
 	 */
 	if (ct == NULL)
 	{
@@ -1307,7 +1307,7 @@ SearchCatCacheList(CatCache *cache,
 	List	   *ctlist;
 	int			nmembers;
 	Relation	relation;
-	SysScanDesc	scandesc;
+	SysScanDesc scandesc;
 	bool		ordered;
 	HeapTuple	ntp;
 	MemoryContext oldcxt;
@@ -1336,8 +1336,8 @@ SearchCatCacheList(CatCache *cache,
 
 	/*
 	 * compute a hash value of the given keys for faster search.  We don't
-	 * presently divide the CatCList items into buckets, but this still lets
-	 * us skip non-matching items quickly most of the time.
+	 * presently divide the CatCList items into buckets, but this still
+	 * lets us skip non-matching items quickly most of the time.
 	 */
 	lHashValue = CatalogCacheComputeHashValue(cache, nkeys, cur_skey);
 
@@ -1373,11 +1373,11 @@ SearchCatCacheList(CatCache *cache,
 
 		/*
 		 * we found a matching list: move each of its members to the front
-		 * of the global LRU list.  Also move the list itself to the front
-		 * of the cache's list-of-lists, to speed subsequent searches.
-		 * (We do not move the members to the fronts of their hashbucket
+		 * of the global LRU list.	Also move the list itself to the front
+		 * of the cache's list-of-lists, to speed subsequent searches. (We
+		 * do not move the members to the fronts of their hashbucket
 		 * lists, however, since there's no point in that unless they are
-		 * searched for individually.)  Also bump the members' refcounts.
+		 * searched for individually.)	Also bump the members' refcounts.
 		 */
 		for (i = 0; i < cl->n_members; i++)
 		{
@@ -1400,9 +1400,9 @@ SearchCatCacheList(CatCache *cache,
 	}
 
 	/*
-	 * List was not found in cache, so we have to build it by reading
-	 * the relation.  For each matching tuple found in the relation,
-	 * use an existing cache entry if possible, else build a new one.
+	 * List was not found in cache, so we have to build it by reading the
+	 * relation.  For each matching tuple found in the relation, use an
+	 * existing cache entry if possible, else build a new one.
 	 */
 	relation = heap_open(cache->cc_reloid, AccessShareLock);
 
@@ -1438,17 +1438,17 @@ SearchCatCacheList(CatCache *cache,
 			ct = (CatCTup *) DLE_VAL(elt);
 
 			if (ct->dead || ct->negative)
-				continue;			/* ignore dead and negative entries */
+				continue;		/* ignore dead and negative entries */
 
 			if (ct->hash_value != hashValue)
-				continue;			/* quickly skip entry if wrong hash val */
+				continue;		/* quickly skip entry if wrong hash val */
 
 			if (!ItemPointerEquals(&(ct->tuple.t_self), &(ntp->t_self)))
-				continue;			/* not same tuple */
+				continue;		/* not same tuple */
 
 			/*
-			 * Found a match, but can't use it if it belongs to another list
-			 * already
+			 * Found a match, but can't use it if it belongs to another
+			 * list already
 			 */
 			if (ct->c_list)
 				continue;
@@ -1498,7 +1498,7 @@ SearchCatCacheList(CatCache *cache,
 	cl->hash_value = lHashValue;
 	cl->n_members = nmembers;
 	/* The list is backwards because we built it with lcons */
-	for (i = nmembers; --i >= 0; )
+	for (i = nmembers; --i >= 0;)
 	{
 		cl->members[i] = ct = (CatCTup *) lfirst(ctlist);
 		Assert(ct->c_list == NULL);
@@ -1531,7 +1531,7 @@ ReleaseCatCacheList(CatCList *list)
 	Assert(list->cl_magic == CL_MAGIC);
 	Assert(list->refcount > 0);
 
-	for (i = list->n_members; --i >= 0; )
+	for (i = list->n_members; --i >= 0;)
 	{
 		CatCTup    *ct = list->members[i];
 
@@ -1558,7 +1558,7 @@ ReleaseCatCacheList(CatCList *list)
 /*
  * CatalogCacheCreateEntry
  *		Create a new CatCTup entry, copying the given HeapTuple and other
- *		supplied data into it.  The new entry is given refcount 1.
+ *		supplied data into it.	The new entry is given refcount 1.
  */
 static CatCTup *
 CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
@@ -1568,7 +1568,8 @@ CatalogCacheCreateEntry(CatCache *cache, HeapTuple ntp,
 	MemoryContext oldcxt;
 
 	/*
-	 * Allocate CatCTup header in cache memory, and copy the tuple there too.
+	 * Allocate CatCTup header in cache memory, and copy the tuple there
+	 * too.
 	 */
 	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
 	ct = (CatCTup *) palloc(sizeof(CatCTup));
@@ -1655,27 +1656,26 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 
 	for (i = 0; i < nkeys; i++)
 	{
-		int		attindex = cache->cc_key[i];
-		Datum	keyval = skeys[i].sk_argument;
+		int			attindex = cache->cc_key[i];
+		Datum		keyval = skeys[i].sk_argument;
 
 		if (attindex > 0)
 		{
 			/*
-			 * Here we must be careful in case the caller passed a
-			 * C string where a NAME is wanted: convert the given
-			 * argument to a correctly padded NAME.  Otherwise the
-			 * memcpy() done in heap_formtuple could fall off the
-			 * end of memory.
+			 * Here we must be careful in case the caller passed a C
+			 * string where a NAME is wanted: convert the given argument
+			 * to a correctly padded NAME.	Otherwise the memcpy() done in
+			 * heap_formtuple could fall off the end of memory.
 			 */
 			if (cache->cc_isname[i])
 			{
-				Name	newval = &tempNames[i];
+				Name		newval = &tempNames[i];
 
 				namestrcpy(newval, DatumGetCString(keyval));
 				keyval = NameGetDatum(newval);
 			}
-			values[attindex-1] = keyval;
-			nulls[attindex-1] = ' ';
+			values[attindex - 1] = keyval;
+			nulls[attindex - 1] = ' ';
 		}
 		else
 		{
@@ -1727,7 +1727,7 @@ build_dummy_tuple(CatCache *cache, int nkeys, ScanKey skeys)
 void
 PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-						 void (*function) (int, uint32, ItemPointer, Oid))
+						void (*function) (int, uint32, ItemPointer, Oid))
 {
 	CatCache   *ccp;
 	Oid			reloid;

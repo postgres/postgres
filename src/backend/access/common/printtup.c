@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.64 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.65 2002/09/04 20:31:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 
 
 static void printtup_setup(DestReceiver *self, int operation,
-						   const char *portalName, TupleDesc typeinfo);
+			   const char *portalName, TupleDesc typeinfo);
 static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
 static void printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
 static void printtup_cleanup(DestReceiver *self);
@@ -88,8 +88,8 @@ printtup_setup(DestReceiver *self, int operation,
 	pq_puttextmessage('P', portalName);
 
 	/*
-	 * if this is a retrieve, then we send back the tuple
-	 * descriptor of the tuples.
+	 * if this is a retrieve, then we send back the tuple descriptor of
+	 * the tuples.
 	 */
 	if (operation == CMD_SELECT)
 	{
@@ -100,7 +100,7 @@ printtup_setup(DestReceiver *self, int operation,
 
 		pq_beginmessage(&buf);
 		pq_sendbyte(&buf, 'T'); /* tuple descriptor message type */
-		pq_sendint(&buf, natts, 2);	/* # of attrs in tuples */
+		pq_sendint(&buf, natts, 2);		/* # of attrs in tuples */
 
 		for (i = 0; i < natts; ++i)
 		{

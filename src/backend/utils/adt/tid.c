@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.35 2002/08/29 00:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.36 2002/09/04 20:31:29 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -154,14 +154,16 @@ setLastTid(const ItemPointer tid)
  *		correspond to the CTID of a base relation.
  */
 static Datum
-currtid_for_view(Relation viewrel, ItemPointer tid) 
+currtid_for_view(Relation viewrel, ItemPointer tid)
 {
 	TupleDesc	att = RelationGetDescr(viewrel);
-	RuleLock	*rulelock;
-	RewriteRule	*rewrite;
-	int	i, natts = att->natts, tididx = -1;
+	RuleLock   *rulelock;
+	RewriteRule *rewrite;
+	int			i,
+				natts = att->natts,
+				tididx = -1;
 
-	for (i = 0; i < natts ; i++)
+	for (i = 0; i < natts; i++)
 	{
 		if (strcasecmp(NameStr(att->attrs[i]->attname), "ctid") == 0)
 		{
@@ -179,7 +181,7 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 		rewrite = rulelock->rules[i];
 		if (rewrite->event == CMD_SELECT)
 		{
-			Query	*query;
+			Query	   *query;
 			TargetEntry *tle;
 
 			if (length(rewrite->actions) != 1)
@@ -188,8 +190,9 @@ currtid_for_view(Relation viewrel, ItemPointer tid)
 			tle = (TargetEntry *) nth(tididx, query->targetList);
 			if (tle && tle->expr && nodeTag(tle->expr) == T_Var)
 			{
-				Var *var = (Var *) tle->expr;
+				Var		   *var = (Var *) tle->expr;
 				RangeTblEntry *rte;
+
 				if (var->varno > 0 && var->varno < INNER && var->varattno == SelfItemPointerAttributeNumber)
 				{
 					rte = (RangeTblEntry *) nth(var->varno - 1, query->rtable);
@@ -244,7 +247,7 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	Relation	rel;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
-														"currtid_byrelname"));
+												   "currtid_byrelname"));
 	rel = heap_openrv(relrv, AccessShareLock);
 	if (rel->rd_rel->relkind == RELKIND_VIEW)
 		return currtid_for_view(rel, tid);

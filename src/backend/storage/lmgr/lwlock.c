@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.12 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.13 2002/09/04 20:31:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,21 +211,21 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 	HOLD_INTERRUPTS();
 
 	/*
-	 * Loop here to try to acquire lock after each time we are signaled
-	 * by LWLockRelease.
+	 * Loop here to try to acquire lock after each time we are signaled by
+	 * LWLockRelease.
 	 *
-	 * NOTE: it might seem better to have LWLockRelease actually grant us
-	 * the lock, rather than retrying and possibly having to go back to
-	 * sleep.  But in practice that is no good because it means a process
-	 * swap for every lock acquisition when two or more processes are
-	 * contending for the same lock.  Since LWLocks are normally used to
-	 * protect not-very-long sections of computation, a process needs to
-	 * be able to acquire and release the same lock many times during a
-	 * single CPU time slice, even in the presence of contention.  The
-	 * efficiency of being able to do that outweighs the inefficiency of
-	 * sometimes wasting a process dispatch cycle because the lock is not
-	 * free when a released waiter finally gets to run.  See pgsql-hackers
-	 * archives for 29-Dec-01.
+	 * NOTE: it might seem better to have LWLockRelease actually grant us the
+	 * lock, rather than retrying and possibly having to go back to sleep.
+	 * But in practice that is no good because it means a process swap for
+	 * every lock acquisition when two or more processes are contending
+	 * for the same lock.  Since LWLocks are normally used to protect
+	 * not-very-long sections of computation, a process needs to be able
+	 * to acquire and release the same lock many times during a single CPU
+	 * time slice, even in the presence of contention.	The efficiency of
+	 * being able to do that outweighs the inefficiency of sometimes
+	 * wasting a process dispatch cycle because the lock is not free when
+	 * a released waiter finally gets to run.  See pgsql-hackers archives
+	 * for 29-Dec-01.
 	 */
 	for (;;)
 	{
@@ -290,12 +290,12 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		 *
 		 * Since we share the process wait semaphore with the regular lock
 		 * manager and ProcWaitForSignal, and we may need to acquire an
-		 * LWLock while one of those is pending, it is possible that we get
-		 * awakened for a reason other than being signaled by LWLockRelease.
-		 * If so, loop back and wait again.  Once we've gotten the LWLock,
-		 * re-increment the sema by the number of additional signals
-		 * received, so that the lock manager or signal manager will see
-		 * the received signal when it next waits.
+		 * LWLock while one of those is pending, it is possible that we
+		 * get awakened for a reason other than being signaled by
+		 * LWLockRelease. If so, loop back and wait again.	Once we've
+		 * gotten the LWLock, re-increment the sema by the number of
+		 * additional signals received, so that the lock manager or signal
+		 * manager will see the received signal when it next waits.
 		 */
 		LOG_LWDEBUG("LWLockAcquire", lockid, "waiting");
 
@@ -455,9 +455,7 @@ LWLockRelease(LWLockId lockid)
 			{
 				while (proc->lwWaitLink != NULL &&
 					   !proc->lwWaitLink->lwExclusive)
-				{
 					proc = proc->lwWaitLink;
-				}
 			}
 			/* proc is now the last PGPROC to be released */
 			lock->head = proc->lwWaitLink;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.95 2002/09/03 19:46:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.96 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,13 +42,13 @@ void		TrimTrailingZeros(char *str);
 
 int			day_tab[2][13] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
-	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
+{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
 
 char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-						"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
+"Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
 
 char	   *days[] = {"Sunday", "Monday", "Tuesday", "Wednesday",
-					  "Thursday", "Friday", "Saturday", NULL};
+"Thursday", "Friday", "Saturday", NULL};
 
 
 /*****************************************************************************
@@ -92,7 +92,7 @@ static datetkn datetktbl[] = {
 	{"acst", DTZ, NEG(16)},		/* Atlantic/Porto Acre */
 	{"act", TZ, NEG(20)},		/* Atlantic/Porto Acre */
 	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
-	{"abstime", IGNORE_DTF, 0},	/* for pre-v6.1 "Invalid Abstime" */
+	{"abstime", IGNORE_DTF, 0}, /* for pre-v6.1 "Invalid Abstime" */
 	{"adt", DTZ, NEG(12)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, POS(44)},	/* E. Australia */
 	{"aest", TZ, POS(40)},		/* Australia Eastern Std Time */
@@ -100,7 +100,7 @@ static datetkn datetktbl[] = {
 	{"ahst", TZ, NEG(40)},		/* Alaska-Hawaii Std Time */
 	{"akdt", DTZ, NEG(32)},		/* Alaska Daylight Time */
 	{"akst", DTZ, NEG(36)},		/* Alaska Standard Time */
-	{"allballs", RESERV, DTK_ZULU},	/* 00:00:00 */
+	{"allballs", RESERV, DTK_ZULU},		/* 00:00:00 */
 	{"almt", TZ, POS(24)},		/* Almaty Time */
 	{"almst", TZ, POS(28)},		/* Almaty Savings Time */
 	{"am", AMPM, AM},
@@ -112,14 +112,15 @@ static datetkn datetktbl[] = {
 	{"anast", DTZ, POS(52)},	/* Anadyr Summer Time (Russia) */
 	{"anat", TZ, POS(48)},		/* Anadyr Time (Russia) */
 #if 0
-aqtst
-aqtt
-arst
+	aqtst
+	aqtt
+	arst
 #endif
 	{"art", TZ, NEG(12)},		/* Argentina Time */
 #if 0
-ashst
-ast /* Atlantic Standard Time, Arabia Standard Time, Acre Standard Time */
+	ashst
+	ast							/* Atlantic Standard Time, Arabia Standard
+								 * Time, Acre Standard Time */
 #endif
 	{"apr", MONTH, 4},
 	{"april", MONTH, 4},
@@ -140,14 +141,14 @@ ast /* Atlantic Standard Time, Arabia Standard Time, Acre Standard Time */
 	{"bnt", TZ, POS(32)},		/* Brunei Darussalam Time */
 	{"bort", TZ, POS(32)},		/* Borneo Time (Indonesia) */
 #if 0
-bortst
-bost
+	bortst
+	bost
 #endif
 	{"bot", TZ, NEG(16)},		/* Bolivia Time */
 	{"bra", TZ, NEG(12)},		/* Brazil Time */
 #if 0
-brst
-brt
+	brst
+	brt
 #endif
 	{"bst", DTZ, POS(4)},		/* British Summer Time */
 #if 0
@@ -165,23 +166,23 @@ brt
 #endif
 	{"cdt", DTZ, NEG(20)},		/* Central Daylight Time */
 	{"cest", DTZ, POS(8)},		/* Central European Dayl.Time */
-	{"cet", TZ, POS(4)},			/* Central European Time */
+	{"cet", TZ, POS(4)},		/* Central European Time */
 	{"cetdst", DTZ, POS(8)},	/* Central European Dayl.Time */
-	{"chadt", DTZ, POS(55)},		/* Chatham Island Daylight Time (13:45) */
+	{"chadt", DTZ, POS(55)},	/* Chatham Island Daylight Time (13:45) */
 	{"chast", TZ, POS(51)},		/* Chatham Island Time (12:45) */
 #if 0
-ckhst
+	ckhst
 #endif
 	{"ckt", TZ, POS(48)},		/* Cook Islands Time */
 	{"clst", DTZ, NEG(12)},		/* Chile Summer Time */
 	{"clt", TZ, NEG(16)},		/* Chile Time */
 #if 0
-cost
+	cost
 #endif
 	{"cot", TZ, NEG(20)},		/* Columbia Time */
 	{"cst", TZ, NEG(24)},		/* Central Standard Time */
 #if 0
-cvst
+	cvst
 #endif
 	{"cvt", TZ, POS(28)},		/* Christmas Island Time (Indian Ocean) */
 	{"cxt", TZ, POS(28)},		/* Christmas Island Time (Indian Ocean) */
@@ -214,7 +215,7 @@ cvst
 	{"egst", DTZ, POS(0)},		/* East Greenland Summer Time */
 	{"egt", TZ, NEG(4)},		/* East Greenland Time */
 #if 0
-ehdt
+	ehdt
 #endif
 	{EPOCH, RESERV, DTK_EPOCH}, /* "epoch" reserved for system epoch time */
 	{"est", TZ, NEG(20)},		/* Eastern Standard Time */
@@ -225,8 +226,8 @@ ehdt
 	{"fkst", DTZ, NEG(12)},		/* Falkland Islands Summer Time */
 	{"fkt", TZ, NEG(8)},		/* Falkland Islands Time */
 #if 0
-fnst
-fnt
+	fnst
+	fnt
 #endif
 	{"fri", DOW, 5},
 	{"friday", DOW, 5},
@@ -238,7 +239,7 @@ fnt
 	{"get", TZ, POS(16)},		/* Georgia Time */
 	{"gft", TZ, NEG(12)},		/* French Guiana Time */
 #if 0
-ghst
+	ghst
 #endif
 	{"gilt", TZ, POS(48)},		/* Gilbert Islands Time */
 	{"gmt", TZ, POS(0)},		/* Greenwish Mean Time */
@@ -246,37 +247,37 @@ ghst
 	{"gyt", TZ, NEG(16)},		/* Guyana Time */
 	{"h", UNITS, DTK_HOUR},		/* "hour" */
 #if 0
-hadt
-hast
+	hadt
+	hast
 #endif
 	{"hdt", DTZ, NEG(36)},		/* Hawaii/Alaska Daylight Time */
 #if 0
-hkst
+	hkst
 #endif
 	{"hkt", TZ, POS(32)},		/* Hong Kong Time */
 #if 0
 	{"hmt", TZ, POS(12)},		/* Hellas ? ? */
-hovst
-hovt
+	hovst
+	hovt
 #endif
 	{"hst", TZ, NEG(40)},		/* Hawaii Std Time */
 #if 0
-hwt
+	hwt
 #endif
 	{"ict", TZ, POS(28)},		/* Indochina Time */
 	{"idle", TZ, POS(48)},		/* Intl. Date Line, East */
 	{"idlw", TZ, NEG(48)},		/* Intl. Date Line, West */
 #if 0
-idt /* Israeli, Iran, Indian Daylight Time */
+	idt							/* Israeli, Iran, Indian Daylight Time */
 #endif
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
-	{INVALID, RESERV, DTK_INVALID},	/* "invalid" reserved for bad time */
+	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for bad time */
 	{"iot", TZ, POS(20)},		/* Indian Chagos Time */
 	{"irkst", DTZ, POS(36)},	/* Irkutsk Summer Time */
 	{"irkt", TZ, POS(32)},		/* Irkutsk Time */
 	{"irt", TZ, POS(14)},		/* Iran Time */
 #if 0
-isst
+	isst
 #endif
 	{"ist", TZ, POS(8)},		/* Israel */
 	{"it", TZ, POS(14)},		/* Iran Time */
@@ -303,7 +304,8 @@ isst
 	{"lhdt", DTZ, POS(44)},		/* Lord Howe Daylight Time, Australia */
 	{"lhst", TZ, POS(42)},		/* Lord Howe Standard Time, Australia */
 	{"ligt", TZ, POS(40)},		/* From Melbourne, Australia */
-	{"lint", TZ, POS(56)},		/* Line Islands Time (Kiribati; +14 hours!) */
+	{"lint", TZ, POS(56)},		/* Line Islands Time (Kiribati; +14
+								 * hours!) */
 	{"lkt", TZ, POS(24)},		/* Lanka Time */
 	{"m", UNITS, DTK_MONTH},	/* "month" for ISO input */
 	{"magst", DTZ, POS(48)},	/* Magadan Summer Time */
@@ -325,7 +327,7 @@ isst
 	{"mon", DOW, 1},
 	{"monday", DOW, 1},
 #if 0
-most
+	most
 #endif
 	{"mpt", TZ, POS(40)},		/* North Mariana Islands Time */
 	{"msd", DTZ, POS(16)},		/* Moscow Summer Time */
@@ -336,7 +338,7 @@ most
 	{"mvt", TZ, POS(20)},		/* Maldives Island Time */
 	{"myt", TZ, POS(32)},		/* Malaysia Time */
 #if 0
-ncst
+	ncst
 #endif
 	{"nct", TZ, POS(44)},		/* New Caledonia Time */
 	{"ndt", DTZ, NEG(10)},		/* Nfld. Daylight Time */
@@ -361,7 +363,7 @@ ncst
 	{"on", IGNORE_DTF, 0},		/* "on" (throwaway) */
 	{"pdt", DTZ, NEG(28)},		/* Pacific Daylight Time */
 #if 0
-pest
+	pest
 #endif
 	{"pet", TZ, NEG(20)},		/* Peru Time */
 	{"petst", DTZ, POS(52)},	/* Petropavlovsk-Kamchatski Summer Time */
@@ -369,14 +371,14 @@ pest
 	{"pgt", TZ, POS(40)},		/* Papua New Guinea Time */
 	{"phot", TZ, POS(52)},		/* Phoenix Islands (Kiribati) Time */
 #if 0
-phst
+	phst
 #endif
 	{"pht", TZ, POS(32)},		/* Phillipine Time */
 	{"pkt", TZ, POS(20)},		/* Pakistan Time */
 	{"pm", AMPM, PM},
 	{"pmdt", DTZ, NEG(8)},		/* Pierre & Miquelon Daylight Time */
 #if 0
-pmst
+	pmst
 #endif
 	{"pont", TZ, POS(44)},		/* Ponape Time (Micronesia) */
 	{"pst", TZ, NEG(32)},		/* Pacific Standard Time */
@@ -387,14 +389,14 @@ pmst
 	{"s", UNITS, DTK_SECOND},	/* "seconds" for ISO input */
 	{"sadt", DTZ, POS(42)},		/* S. Australian Dayl. Time */
 #if 0
-samst
-samt
+	samst
+	samt
 #endif
 	{"sast", TZ, POS(38)},		/* South Australian Std Time */
 	{"sat", DOW, 6},
 	{"saturday", DOW, 6},
 #if 0
-sbt
+	sbt
 #endif
 	{"sct", DTZ, POS(16)},		/* Mahe Island Time */
 	{"sep", MONTH, 9},
@@ -402,14 +404,14 @@ sbt
 	{"september", MONTH, 9},
 	{"set", TZ, NEG(4)},		/* Seychelles Time ?? */
 #if 0
-sgt
+	sgt
 #endif
 	{"sst", DTZ, POS(8)},		/* Swedish Summer Time */
 	{"sun", DOW, 0},
 	{"sunday", DOW, 0},
 	{"swt", TZ, POS(4)},		/* Swedish Winter Time */
 #if 0
-syot
+	syot
 #endif
 	{"t", ISOTIME, DTK_TIME},	/* Filler for ISO time fields */
 	{"that", TZ, NEG(40)},		/* Tahiti Time */
@@ -424,11 +426,11 @@ syot
 	{TODAY, RESERV, DTK_TODAY}, /* midnight */
 	{TOMORROW, RESERV, DTK_TOMORROW},	/* tomorrow midnight */
 #if 0
-tost
+	tost
 #endif
 	{"tot", TZ, POS(52)},		/* Tonga Time */
 #if 0
-tpt
+	tpt
 #endif
 	{"truk", TZ, POS(40)},		/* Truk Time */
 	{"tue", DOW, 2},
@@ -436,7 +438,7 @@ tpt
 	{"tuesday", DOW, 2},
 	{"tvt", TZ, POS(48)},		/* Tuvalu Time */
 #if 0
-uct
+	uct
 #endif
 	{"ulast", DTZ, POS(36)},	/* Ulan Bator Summer Time */
 	{"ulat", TZ, POS(32)},		/* Ulan Bator Time */
@@ -451,13 +453,13 @@ uct
 	{"vlast", DTZ, POS(44)},	/* Vladivostok Summer Time */
 	{"vlat", TZ, POS(40)},		/* Vladivostok Time */
 #if 0
-vust
+	vust
 #endif
 	{"vut", TZ, POS(44)},		/* Vanuata Time */
 	{"wadt", DTZ, POS(32)},		/* West Australian DST */
 	{"wakt", TZ, POS(48)},		/* Wake Time */
 #if 0
-warst
+	warst
 #endif
 	{"wast", TZ, POS(28)},		/* West Australian Std Time */
 	{"wat", TZ, NEG(4)},		/* West Africa Time */
@@ -515,22 +517,22 @@ static datetkn deltatktbl[] = {
 	{"days", UNITS, DTK_DAY},	/* "days" relative */
 	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
 	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
-	{DDECADE, UNITS, DTK_DECADE},	/* "decade" relative */
-	{"decades", UNITS, DTK_DECADE},	/* "decades" relative */
+	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
+	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
 	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
 	{DHOUR, UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hours", UNITS, DTK_HOUR}, /* "hours" relative */
 	{"hr", UNITS, DTK_HOUR},	/* "hour" relative */
 	{"hrs", UNITS, DTK_HOUR},	/* "hours" relative */
-	{INVALID, RESERV, DTK_INVALID},	/* reserved for invalid time */
+	{INVALID, RESERV, DTK_INVALID},		/* reserved for invalid time */
 	{"m", UNITS, DTK_MINUTE},	/* "minute" relative */
-	{"microsecon", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
-	{"mil", UNITS, DTK_MILLENNIUM},			/* "millennium" relative */
-	{"millennia", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
-	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},	/* "millennium" relative */
-	{"millisecon", UNITS, DTK_MILLISEC},	/* relative */
-	{"mils", UNITS, DTK_MILLENNIUM},		/* "millennia" relative */
-	{"min", UNITS, DTK_MINUTE},		/* "minute" relative */
+	{"microsecon", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{"mil", UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
+	{"millennia", UNITS, DTK_MILLENNIUM},		/* "millennia" relative */
+	{DMILLENNIUM, UNITS, DTK_MILLENNIUM},		/* "millennium" relative */
+	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
+	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
+	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
 	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
 	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
 	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
@@ -545,19 +547,19 @@ static datetkn deltatktbl[] = {
 	{"mseconds", UNITS, DTK_MILLISEC},
 	{"msecs", UNITS, DTK_MILLISEC},
 	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
-	{DQUARTER, UNITS, DTK_QUARTER},	/* "quarter" relative */
-	{"reltime", IGNORE_DTF, 0},		/* pre-v6.1 "Undefined Reltime" */
+	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
+	{"reltime", IGNORE_DTF, 0}, /* pre-v6.1 "Undefined Reltime" */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},
 	{"seconds", UNITS, DTK_SECOND},
 	{"secs", UNITS, DTK_SECOND},
-	{DTIMEZONE, UNITS, DTK_TZ},		/* "timezone" time offset */
+	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
 	{"timezone", UNITS, DTK_TZ},	/* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
-	{"timezone_m", UNITS, DTK_TZ_MINUTE},	/* timezone minutes units */
+	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
-	{"us", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
+	{"us", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
 	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative */
@@ -679,16 +681,16 @@ TrimTrailingZeros(char *str)
 /* ParseDateTime()
  * Break string into tokens based on a date/time context.
  * Several field types are assigned:
- *  DTK_NUMBER - digits and (possibly) a decimal point
- *  DTK_DATE - digits and two delimiters, or digits and text
- *  DTK_TIME - digits, colon delimiters, and possibly a decimal point
- *  DTK_STRING - text (no digits)
- *  DTK_SPECIAL - leading "+" or "-" followed by text
- *  DTK_TZ - leading "+" or "-" followed by digits
+ *	DTK_NUMBER - digits and (possibly) a decimal point
+ *	DTK_DATE - digits and two delimiters, or digits and text
+ *	DTK_TIME - digits, colon delimiters, and possibly a decimal point
+ *	DTK_STRING - text (no digits)
+ *	DTK_SPECIAL - leading "+" or "-" followed by text
+ *	DTK_TZ - leading "+" or "-" followed by digits
  * Note that some field types can hold unexpected items:
- *  DTK_NUMBER can hold date fields (yy.ddd)
- *  DTK_STRING can hold months (January) and time zones (PST)
- *  DTK_DATE can hold Posix time zones (GMT-8)
+ *	DTK_NUMBER can hold date fields (yy.ddd)
+ *	DTK_STRING can hold months (January) and time zones (PST)
+ *	DTK_DATE can hold Posix time zones (GMT-8)
  */
 int
 ParseDateTime(char *timestr, char *lowstr,
@@ -723,17 +725,20 @@ ParseDateTime(char *timestr, char *lowstr,
 			else if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
 				/* save delimiting character to use later */
-				char *dp = cp;
+				char	   *dp = cp;
 
 				*lp++ = *cp++;
 				/* second field is all digits? then no embedded text month */
 				if (isdigit((unsigned char) *cp))
 				{
-					ftype[nf] = ((*dp == '.')? DTK_NUMBER: DTK_DATE);
+					ftype[nf] = ((*dp == '.') ? DTK_NUMBER : DTK_DATE);
 					while (isdigit((unsigned char) *cp))
 						*lp++ = *cp++;
 
-					/* insist that the delimiters match to get a three-field date. */
+					/*
+					 * insist that the delimiters match to get a
+					 * three-field date.
+					 */
 					if (*cp == *dp)
 					{
 						ftype[nf] = DTK_DATE;
@@ -749,13 +754,13 @@ ParseDateTime(char *timestr, char *lowstr,
 						*lp++ = tolower((unsigned char) *cp++);
 				}
 			}
-			/* otherwise, number only and will determine
-			 * year, month, day, or concatenated fields later...
+
+			/*
+			 * otherwise, number only and will determine year, month, day,
+			 * or concatenated fields later...
 			 */
 			else
-			{
 				ftype[nf] = DTK_NUMBER;
-			}
 		}
 		/* Leading decimal point? Then fractional seconds... */
 		else if (*cp == '.')
@@ -766,6 +771,7 @@ ParseDateTime(char *timestr, char *lowstr,
 
 			ftype[nf] = DTK_NUMBER;
 		}
+
 		/*
 		 * text? then date string, month, day of week, special, or
 		 * timezone
@@ -783,7 +789,7 @@ ParseDateTime(char *timestr, char *lowstr,
 			 */
 			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
-				char *dp = cp;
+				char	   *dp = cp;
 
 				ftype[nf] = DTK_DATE;
 				*lp++ = *cp++;
@@ -823,9 +829,7 @@ ParseDateTime(char *timestr, char *lowstr,
 			}
 			/* otherwise something wrong... */
 			else
-			{
 				return -1;
-			}
 		}
 		/* ignore punctuation but use as delimiter */
 		else if (ispunct((unsigned char) *cp))
@@ -836,9 +840,7 @@ ParseDateTime(char *timestr, char *lowstr,
 		}
 		/* otherwise, something is not right... */
 		else
-		{
 			return -1;
-		}
 
 		/* force in a delimiter after each field */
 		*lp++ = '\0';
@@ -880,7 +882,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			fmask = 0,
 				tmask,
 				type;
-	int			ptype = 0;	/* "prefix type" for ISO y2001m02d04 format */
+	int			ptype = 0;		/* "prefix type" for ISO y2001m02d04
+								 * format */
 	int			i;
 	int			val;
 	int			mer = HR24;
@@ -948,7 +951,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 					if (isdigit((unsigned char) *field[i]) || ptype != 0)
 					{
-						char *cp;
+						char	   *cp;
 
 						if (ptype != 0)
 						{
@@ -958,8 +961,10 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							ptype = 0;
 						}
 
-						/* Starts with a digit but we already have a time field?
-						 * Then we are in trouble with a date and time already...
+						/*
+						 * Starts with a digit but we already have a time
+						 * field? Then we are in trouble with a date and
+						 * time already...
 						 */
 						if ((fmask & DTK_TIME_M) == DTK_TIME_M)
 							return -1;
@@ -972,12 +977,18 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							return -1;
 						*cp = '\0';
 
-						/* Then read the rest of the field as a concatenated time */
+						/*
+						 * Then read the rest of the field as a
+						 * concatenated time
+						 */
 						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], fmask,
-														  &tmask, tm, fsec, &is2digits)) < 0)
+									  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 
-						/* modify tmask after returning from DecodeNumberField() */
+						/*
+						 * modify tmask after returning from
+						 * DecodeNumberField()
+						 */
 						tmask |= DTK_M(TZ);
 					}
 					else
@@ -990,9 +1001,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					}
 				}
 				else if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
-				{
 					return -1;
-				}
 				break;
 
 			case DTK_TIME:
@@ -1009,7 +1018,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 			case DTK_TZ:
 				{
-					int tz;
+					int			tz;
 
 					if (tzp == NULL)
 						return -1;
@@ -1038,6 +1047,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				break;
 
 			case DTK_NUMBER:
+
 				/*
 				 * Was this an "ISO date" with embedded field labels? An
 				 * example is "y2001m02d04" - thomas 2001-02-04
@@ -1048,7 +1058,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					int			val;
 
 					val = strtol(field[i], &cp, 10);
-					/* only a few kinds are allowed to have an embedded decimal */
+
+					/*
+					 * only a few kinds are allowed to have an embedded
+					 * decimal
+					 */
 					if (*cp == '.')
 						switch (ptype)
 						{
@@ -1071,7 +1085,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							break;
 
 						case DTK_MONTH:
-							/* already have a month and hour? then assume minutes */
+
+							/*
+							 * already have a month and hour? then assume
+							 * minutes
+							 */
 							if (((fmask & DTK_M(MONTH)) != 0)
 								&& ((fmask & DTK_M(HOUR)) != 0))
 							{
@@ -1105,7 +1123,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							tmask = DTK_M(SECOND);
 							if (*cp == '.')
 							{
-								double frac;
+								double		frac;
+
 								frac = strtod(cp, &cp);
 								if (*cp != '\0')
 									return -1;
@@ -1132,7 +1151,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							/* fractional Julian Day? */
 							if (*cp == '.')
 							{
-								double time;
+								double		time;
 
 								time = strtod(cp, &cp);
 								if (*cp != '\0')
@@ -1140,9 +1159,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time*86400000000), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400000000), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
-								dt2time((time*86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
 							break;
@@ -1150,7 +1169,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-															  &tmask, tm, fsec, &is2digits)) < 0)
+									  &tmask, tm, fsec, &is2digits)) < 0)
 								return -1;
 
 							if (tmask != DTK_TIME_M)
@@ -1167,8 +1186,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				}
 				else
 				{
-					char *cp;
-					int flen;
+					char	   *cp;
+					int			flen;
 
 					flen = strlen(field[i]);
 					cp = strchr(field[i], '.');
@@ -1182,26 +1201,25 @@ DecodeDateTime(char **field, int *ftype, int nf,
 					/* embedded decimal and several digits before? */
 					else if ((cp != NULL) && ((flen - strlen(cp)) > 2))
 					{
-						/* Interpret as a concatenated date or time
-						 * Set the type field to allow decoding other fields later.
-						 * Example: 20011223 or 040506
+						/*
+						 * Interpret as a concatenated date or time Set
+						 * the type field to allow decoding other fields
+						 * later. Example: 20011223 or 040506
 						 */
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-														  &tmask, tm, fsec, &is2digits)) < 0)
+									  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 					}
 					else if (flen > 4)
 					{
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-														 &tmask, tm, fsec, &is2digits)) < 0)
-						return -1;
+									  &tmask, tm, fsec, &is2digits)) < 0)
+							return -1;
 					}
 					/* otherwise it is a single date/time field... */
 					else if (DecodeNumber(flen, field[i], fmask,
-										  &tmask, tm, fsec, &is2digits) != 0)
-					{
+									  &tmask, tm, fsec, &is2digits) != 0)
 						return -1;
-					}
 				}
 				break;
 
@@ -1350,9 +1368,11 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						break;
 
 					case ISOTIME:
-						/* This is a filler field "t"
-						 * indicating that the next field is time.
-						 * Try to verify that this is sensible.
+
+						/*
+						 * This is a filler field "t" indicating that the
+						 * next field is time. Try to verify that this is
+						 * sensible.
 						 */
 						tmask = 0;
 
@@ -1362,9 +1382,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 						/***
 						 * We will need one of the following fields:
-						 *  DTK_NUMBER should be hhmmss.fff
-						 *  DTK_TIME should be hh:mm:ss.fff
-						 *  DTK_DATE should be hhmmss-zz
+						 *	DTK_NUMBER should be hhmmss.fff
+						 *	DTK_TIME should be hh:mm:ss.fff
+						 *	DTK_DATE should be hhmmss-zz
 						 ***/
 						if ((i >= (nf - 1))
 							|| ((ftype[i + 1] != DTK_NUMBER)
@@ -1522,34 +1542,38 @@ DetermineLocalTimeZone(struct tm * tm)
 				   date2j(1970, 1, 1));
 			mysec = tm->tm_sec + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
 			mytime = (time_t) mysec;
+
 			/*
-			 * Use localtime to convert that time_t to broken-down time, and
-			 * reassemble to get a representation of local time.
+			 * Use localtime to convert that time_t to broken-down time,
+			 * and reassemble to get a representation of local time.
 			 */
 			tmp = localtime(&mytime);
 			day = (date2j(tmp->tm_year + 1900, tmp->tm_mon + 1, tmp->tm_mday) -
 				   date2j(1970, 1, 1));
 			locsec = tmp->tm_sec + (tmp->tm_min + (day * 24 + tmp->tm_hour) * 60) * 60;
+
 			/*
-			 * The local time offset corresponding to that GMT time is
-			 * now computable as mysec - locsec.
+			 * The local time offset corresponding to that GMT time is now
+			 * computable as mysec - locsec.
 			 */
 			delta1 = mysec - locsec;
+
 			/*
-			 * However, if that GMT time and the local time we are actually
-			 * interested in are on opposite sides of a daylight-savings-time
-			 * transition, then this is not the time offset we want.  So,
-			 * adjust the time_t to be what we think the GMT time corresponding
-			 * to our target local time is, and repeat the localtime() call
-			 * and delta calculation.  We may have to do it twice before we
-			 * have a trustworthy delta.
+			 * However, if that GMT time and the local time we are
+			 * actually interested in are on opposite sides of a
+			 * daylight-savings-time transition, then this is not the time
+			 * offset we want.	So, adjust the time_t to be what we think
+			 * the GMT time corresponding to our target local time is, and
+			 * repeat the localtime() call and delta calculation.  We may
+			 * have to do it twice before we have a trustworthy delta.
 			 *
 			 * Note: think not to put a loop here, since if we've been given
-			 * an "impossible" local time (in the gap during a spring-forward
-			 * transition) we'd never get out of the loop.  Twice is enough
-			 * to give the behavior we want, which is that "impossible" times
-			 * are taken as standard time, while at a fall-back boundary
-			 * ambiguous times are also taken as standard.
+			 * an "impossible" local time (in the gap during a
+			 * spring-forward transition) we'd never get out of the loop.
+			 * Twice is enough to give the behavior we want, which is that
+			 * "impossible" times are taken as standard time, while at a
+			 * fall-back boundary ambiguous times are also taken as
+			 * standard.
 			 */
 			mysec += delta1;
 			mytime = (time_t) mysec;
@@ -1604,7 +1628,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	int			fmask = 0,
 				tmask,
 				type;
-	int			ptype = 0;	/* "prefix type" for ISO h04mm05s06 format */
+	int			ptype = 0;		/* "prefix type" for ISO h04mm05s06 format */
 	int			i;
 	int			val;
 	int			is2digits = FALSE;
@@ -1626,16 +1650,17 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 		switch (ftype[i])
 		{
 			case DTK_DATE:
-				/* Time zone not allowed?
-				 * Then should not accept dates or time zones
-				 * no matter what else!
+
+				/*
+				 * Time zone not allowed? Then should not accept dates or
+				 * time zones no matter what else!
 				 */
 				if (tzp == NULL)
 					return -1;
 
 				/* Under limited circumstances, we will accept a date... */
 				if ((i == 0) && (nf >= 2)
-					&& ((ftype[nf-1] == DTK_DATE)
+					&& ((ftype[nf - 1] == DTK_DATE)
 						|| (ftype[1] == DTK_TIME)))
 				{
 					if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
@@ -1646,15 +1671,20 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				{
 					if (isdigit((unsigned char) *field[i]))
 					{
-						char *cp;
+						char	   *cp;
 
-						/* Starts with a digit but we already have a time field?
-						 * Then we are in trouble with time already...
+						/*
+						 * Starts with a digit but we already have a time
+						 * field? Then we are in trouble with time
+						 * already...
 						 */
 						if ((fmask & DTK_TIME_M) == DTK_TIME_M)
 							return -1;
 
-						/* Should not get here and fail. Sanity check only... */
+						/*
+						 * Should not get here and fail. Sanity check
+						 * only...
+						 */
 						if ((cp = strchr(field[i], '-')) == NULL)
 							return -1;
 
@@ -1663,9 +1693,12 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							return -1;
 						*cp = '\0';
 
-						/* Then read the rest of the field as a concatenated time */
+						/*
+						 * Then read the rest of the field as a
+						 * concatenated time
+						 */
 						if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-														  &tmask, tm, fsec, &is2digits)) < 0)
+									  &tmask, tm, fsec, &is2digits)) < 0)
 							return -1;
 
 						tmask |= DTK_M(TZ);
@@ -1716,6 +1749,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				break;
 
 			case DTK_NUMBER:
+
 				/*
 				 * Was this an "ISO time" with embedded field labels? An
 				 * example is "h04m05s06" - thomas 2001-02-04
@@ -1739,7 +1773,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					}
 
 					val = strtol(field[i], &cp, 10);
-					/* only a few kinds are allowed to have an embedded decimal */
+
+					/*
+					 * only a few kinds are allowed to have an embedded
+					 * decimal
+					 */
 					if (*cp == '.')
 						switch (ptype)
 						{
@@ -1762,7 +1800,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							break;
 
 						case DTK_MONTH:
-							/* already have a month and hour? then assume minutes */
+
+							/*
+							 * already have a month and hour? then assume
+							 * minutes
+							 */
 							if (((fmask & DTK_M(MONTH)) != 0)
 								&& ((fmask & DTK_M(HOUR)) != 0))
 							{
@@ -1816,7 +1858,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 							j2date(val, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 							if (*cp == '.')
 							{
-								double time;
+								double		time;
 
 								time = strtod(cp, &cp);
 								if (*cp != '\0')
@@ -1824,9 +1866,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 								tmask |= DTK_TIME_M;
 #ifdef HAVE_INT64_TIMESTAMP
-								dt2time((time*86400000000), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400000000), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #else
-								dt2time((time*86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
+								dt2time((time * 86400), &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 #endif
 							}
 							break;
@@ -1834,7 +1876,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						case DTK_TIME:
 							/* previous field was "t" for ISO time */
 							if ((ftype[i] = DecodeNumberField(strlen(field[i]), field[i], (fmask | DTK_DATE_M),
-															  &tmask, tm, fsec, &is2digits)) < 0)
+									  &tmask, tm, fsec, &is2digits)) < 0)
 								return -1;
 
 							if (tmask != DTK_TIME_M)
@@ -1851,8 +1893,8 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 				}
 				else
 				{
-					char *cp;
-					int flen;
+					char	   *cp;
+					int			flen;
 
 					flen = strlen(field[i]);
 					cp = strchr(field[i], '.');
@@ -1860,8 +1902,11 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 					/* Embedded decimal? */
 					if (cp != NULL)
 					{
-						/* Under limited circumstances, we will accept a date... */
-						if ((i == 0) && ((nf >= 2) && (ftype[nf-1] == DTK_DATE)))
+						/*
+						 * Under limited circumstances, we will accept a
+						 * date...
+						 */
+						if ((i == 0) && ((nf >= 2) && (ftype[nf - 1] == DTK_DATE)))
 						{
 							if (DecodeDate(field[i], fmask, &tmask, tm) != 0)
 								return -1;
@@ -1869,31 +1914,28 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						/* embedded decimal and several digits before? */
 						else if ((flen - strlen(cp)) > 2)
 						{
-							/* Interpret as a concatenated date or time
-							 * Set the type field to allow decoding other fields later.
-							 * Example: 20011223 or 040506
+							/*
+							 * Interpret as a concatenated date or time
+							 * Set the type field to allow decoding other
+							 * fields later. Example: 20011223 or 040506
 							 */
 							if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-															  &tmask, tm, fsec, &is2digits)) < 0)
+									  &tmask, tm, fsec, &is2digits)) < 0)
 								return -1;
 						}
 						else
-						{
 							return -1;
-						}
 					}
 					else if (flen > 4)
 					{
 						if ((ftype[i] = DecodeNumberField(flen, field[i], fmask,
-														 &tmask, tm, fsec, &is2digits)) < 0)
-						return -1;
+									  &tmask, tm, fsec, &is2digits)) < 0)
+							return -1;
 					}
 					/* otherwise it is a single date/time field... */
 					else if (DecodeNumber(flen, field[i], fmask,
-										  &tmask, tm, fsec, &is2digits) != 0)
-					{
+									  &tmask, tm, fsec, &is2digits) != 0)
 						return -1;
-					}
 				}
 				break;
 
@@ -1987,9 +2029,9 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 						/***
 						 * We will need one of the following fields:
-						 *  DTK_NUMBER should be hhmmss.fff
-						 *  DTK_TIME should be hh:mm:ss.fff
-						 *  DTK_DATE should be hhmmss-zz
+						 *	DTK_NUMBER should be hhmmss.fff
+						 *	DTK_TIME should be hh:mm:ss.fff
+						 *	DTK_DATE should be hhmmss-zz
 						 ***/
 						if ((i >= (nf - 1))
 							|| ((ftype[i + 1] != DTK_NUMBER)
@@ -2051,9 +2093,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 			return -1;
 
 		if ((fmask & DTK_DATE_M) == 0)
-		{
 			GetCurrentDateTime(tmp);
-		}
 		else
 		{
 			tmp->tm_year = tm->tm_year;
@@ -2221,9 +2261,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 		*fsec = 0;
 	}
 	else if (*cp != ':')
-	{
 		return -1;
-	}
 	else
 	{
 		str = cp + 1;
@@ -2233,15 +2271,16 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
 		else if (*cp == '.')
 		{
 #ifdef HAVE_INT64_TIMESTAMP
-			char fstr[MAXDATELEN + 1];
+			char		fstr[MAXDATELEN + 1];
 
-			/* OK, we have at most six digits to work with.
-			 * Let's construct a string and then do the conversion
-			 * to an integer.
+			/*
+			 * OK, we have at most six digits to work with. Let's
+			 * construct a string and then do the conversion to an
+			 * integer.
 			 */
-			strncpy(fstr, (cp+1), 7);
-			strcpy((fstr+strlen(fstr)), "000000");
-			*(fstr+6) = '\0';
+			strncpy(fstr, (cp + 1), 7);
+			strcpy((fstr + strlen(fstr)), "000000");
+			*(fstr + 6) = '\0';
 			*fsec = strtol(fstr, &cp, 10);
 #else
 			str = cp;
@@ -2291,10 +2330,9 @@ DecodeNumber(int flen, char *str, int fmask,
 
 	if (*cp == '.')
 	{
-		/* More than two digits?
-		 * Then could be a date or a run-together time:
-		 *  2001.360
-		 *  20011225 040506.789
+		/*
+		 * More than two digits? Then could be a date or a run-together
+		 * time: 2001.360 20011225 040506.789
 		 */
 		if ((cp - str) > 2)
 			return DecodeNumberField(flen, str, (fmask | DTK_DATE_M),
@@ -2305,9 +2343,7 @@ DecodeNumber(int flen, char *str, int fmask,
 			return -1;
 	}
 	else if (*cp != '\0')
-	{
 		return -1;
-	}
 
 	/* Special case day of year? */
 	if ((flen == 3) && (fmask & DTK_M(YEAR))
@@ -2397,26 +2433,27 @@ DecodeNumber(int flen, char *str, int fmask,
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
+				int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
-	/* Have a decimal point?
-	 * Then this is a date or something with a seconds field...
+	/*
+	 * Have a decimal point? Then this is a date or something with a
+	 * seconds field...
 	 */
 	if ((cp = strchr(str, '.')) != NULL)
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-			char fstr[MAXDATELEN + 1];
+		char		fstr[MAXDATELEN + 1];
 
-			/* OK, we have at most six digits to care about.
-			 * Let's construct a string and then do the conversion
-			 * to an integer.
-			 */
-			strcpy(fstr, (cp+1));
-			strcpy((fstr+strlen(fstr)), "000000");
-			*(fstr+6) = '\0';
-			*fsec = strtol(fstr, NULL, 10);
+		/*
+		 * OK, we have at most six digits to care about. Let's construct a
+		 * string and then do the conversion to an integer.
+		 */
+		strcpy(fstr, (cp + 1));
+		strcpy((fstr + strlen(fstr)), "000000");
+		*(fstr + 6) = '\0';
+		*fsec = strtol(fstr, NULL, 10);
 #else
 		*fsec = strtod(cp, NULL);
 #endif
@@ -2515,9 +2552,7 @@ DecodeTimezone(char *str, int *tzp)
 
 	/* explicit delimiter? */
 	if (*cp == ':')
-	{
 		min = strtol((cp + 1), &cp, 10);
-	}
 	/* otherwise, might have run things together... */
 	else if ((*cp == '\0') && ((len = strlen(str)) > 3))
 	{
@@ -2531,9 +2566,7 @@ DecodeTimezone(char *str, int *tzp)
 			return -1;
 	}
 	else
-	{
 		min = 0;
-	}
 
 	tz = (hr * 60 + min) * 60;
 	if (*str == '-')
@@ -2794,7 +2827,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						tm->tm_min += val;
 						if (fval != 0)
 						{
-							int sec;
+							int			sec;
+
 							fval *= 60;
 							sec = fval;
 							tm->tm_sec += sec;
@@ -2811,7 +2845,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						tm->tm_hour += val;
 						if (fval != 0)
 						{
-							int sec;
+							int			sec;
+
 							fval *= 3600;
 							sec = fval;
 							tm->tm_sec += sec;
@@ -2828,7 +2863,8 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						tm->tm_mday += val;
 						if (fval != 0)
 						{
-							int sec;
+							int			sec;
+
 							fval *= 86400;
 							sec = fval;
 							tm->tm_sec += sec;
@@ -2845,8 +2881,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						tm->tm_mday += val * 7;
 						if (fval != 0)
 						{
-							int sec;
-							fval *= (7*86400);
+							int			sec;
+
+							fval *= (7 * 86400);
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -2862,8 +2899,9 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 						tm->tm_mon += val;
 						if (fval != 0)
 						{
-							int sec;
-							fval *= (30*86400);
+							int			sec;
+
+							fval *= (30 * 86400);
 							sec = fval;
 							tm->tm_sec += sec;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -2947,7 +2985,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 
 	if (*fsec != 0)
 	{
-		int		sec;
+		int			sec;
 
 #ifdef HAVE_INT64_TIMESTAMP
 		sec = (*fsec / INT64CONST(1000000));
@@ -3175,13 +3213,14 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 	int			day,
 				hour,
 				min;
+
 #ifndef HAVE_INT64_TIMESTAMP
 	fsec_t		sec;
 #endif
 
-	/* Why are we checking only the month field? Change this to an assert...
-	 * if ((tm->tm_mon < 1) || (tm->tm_mon > 12))
-	 *  return -1;
+	/*
+	 * Why are we checking only the month field? Change this to an
+	 * assert... if ((tm->tm_mon < 1) || (tm->tm_mon > 12)) return -1;
 	 */
 	Assert((tm->tm_mon >= 1) && (tm->tm_mon <= 12));
 
@@ -3195,16 +3234,15 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			/* Compatible with ISO-8601 date formats */
 
 			sprintf(str, "%04d-%02d-%02d %02d:%02d",
-					((tm->tm_year > 0)? tm->tm_year: -(tm->tm_year - 1)),
+				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
 					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal
-			 * point We will do up to 6 fractional digits, and we have
-			 * rounded any inputs to eliminate anything to the right
-			 * of 6 digits anyway. If there are no fractional seconds,
-			 * then do not bother printing a decimal point at all. -
-			 * thomas 2001-09-29
+			 * If we have fractional seconds, then include a decimal point
+			 * We will do up to 6 fractional digits, and we have rounded
+			 * any inputs to eliminate anything to the right of 6 digits
+			 * anyway. If there are no fractional seconds, then do not
+			 * bother printing a decimal point at all. - thomas 2001-09-29
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3219,22 +3257,16 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 				TrimTrailingZeros(str);
 			}
 			else
-			{
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-			}
 
 			if (tm->tm_year <= 0)
-			{
 				sprintf((str + strlen(str)), " BC");
-			}
 
 			/*
-			 * tzp == NULL indicates that we don't want *any* time
-			 * zone info in the output string.
-			 * *tzn != NULL indicates that we have alpha time zone
-			 * info available.
-			 * tm_isdst != -1 indicates that we have a valid time zone
-			 * translation.
+			 * tzp == NULL indicates that we don't want *any* time zone
+			 * info in the output string. *tzn != NULL indicates that we
+			 * have alpha time zone info available. tm_isdst != -1
+			 * indicates that we have a valid time zone translation.
 			 */
 			if ((tzp != NULL) && (tm->tm_isdst >= 0))
 			{
@@ -3253,16 +3285,15 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 				sprintf(str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
 
 			sprintf((str + 5), "/%04d %02d:%02d",
-					((tm->tm_year > 0)? tm->tm_year: -(tm->tm_year - 1)),
+				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal
-			 * point We will do up to 6 fractional digits, and we have
-			 * rounded any inputs to eliminate anything to the right
-			 * of 6 digits anyway. If there are no fractional seconds,
-			 * then do not bother printing a decimal point at all. -
-			 * thomas 2001-09-29
+			 * If we have fractional seconds, then include a decimal point
+			 * We will do up to 6 fractional digits, and we have rounded
+			 * any inputs to eliminate anything to the right of 6 digits
+			 * anyway. If there are no fractional seconds, then do not
+			 * bother printing a decimal point at all. - thomas 2001-09-29
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3277,14 +3308,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 				TrimTrailingZeros(str);
 			}
 			else
-			{
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-			}
 
 			if (tm->tm_year <= 0)
-			{
 				sprintf((str + strlen(str)), " BC");
-			}
 
 			if ((tzp != NULL) && (tm->tm_isdst >= 0))
 			{
@@ -3305,16 +3332,15 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
 
 			sprintf((str + 5), ".%04d %02d:%02d",
-					((tm->tm_year > 0)? tm->tm_year: -(tm->tm_year - 1)),
+				  ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)),
 					tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal
-			 * point We will do up to 6 fractional digits, and we have
-			 * rounded any inputs to eliminate anything to the right
-			 * of 6 digits anyway. If there are no fractional seconds,
-			 * then do not bother printing a decimal point at all. -
-			 * thomas 2001-09-29
+			 * If we have fractional seconds, then include a decimal point
+			 * We will do up to 6 fractional digits, and we have rounded
+			 * any inputs to eliminate anything to the right of 6 digits
+			 * anyway. If there are no fractional seconds, then do not
+			 * bother printing a decimal point at all. - thomas 2001-09-29
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3329,14 +3355,10 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 				TrimTrailingZeros(str);
 			}
 			else
-			{
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-			}
 
 			if (tm->tm_year <= 0)
-			{
 				sprintf((str + strlen(str)), " BC");
-			}
 
 			if ((tzp != NULL) && (tm->tm_isdst >= 0))
 			{
@@ -3369,12 +3391,11 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
 
 			/*
-			 * If we have fractional seconds, then include a decimal
-			 * point We will do up to 6 fractional digits, and we have
-			 * rounded any inputs to eliminate anything to the right
-			 * of 6 digits anyway. If there are no fractional seconds,
-			 * then do not bother printing a decimal point at all. -
-			 * thomas 2001-09-29
+			 * If we have fractional seconds, then include a decimal point
+			 * We will do up to 6 fractional digits, and we have rounded
+			 * any inputs to eliminate anything to the right of 6 digits
+			 * anyway. If there are no fractional seconds, then do not
+			 * bother printing a decimal point at all. - thomas 2001-09-29
 			 */
 #ifdef HAVE_INT64_TIMESTAMP
 			if (fsec != 0)
@@ -3389,16 +3410,12 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 				TrimTrailingZeros(str);
 			}
 			else
-			{
 				sprintf((str + strlen(str)), ":%02d", tm->tm_sec);
-			}
 
 			sprintf((str + strlen(str)), " %04d",
-					((tm->tm_year > 0)? tm->tm_year: -(tm->tm_year - 1)));
+				 ((tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1)));
 			if (tm->tm_year <= 0)
-			{
 				sprintf((str + strlen(str)), " BC");
-			}
 
 			if ((tzp != NULL) && (tm->tm_isdst >= 0))
 			{
@@ -3407,11 +3424,11 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 				else
 				{
 					/*
-					 * We have a time zone, but no string version. Use
-					 * the numeric form, but be sure to include a
-					 * leading space to avoid formatting something
-					 * which would be rejected by the date/time parser
-					 * later. - thomas 2001-10-19
+					 * We have a time zone, but no string version. Use the
+					 * numeric form, but be sure to include a leading
+					 * space to avoid formatting something which would be
+					 * rejected by the date/time parser later. - thomas
+					 * 2001-10-19
 					 */
 					hour = -(*tzp / 3600);
 					min = ((abs(*tzp) / 60) % 60);
@@ -3497,7 +3514,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
 #ifdef HAVE_INT64_TIMESTAMP
 					sprintf(cp, ":%02d", abs(tm->tm_sec));
 					cp += strlen(cp);
-					sprintf(cp, ".%06d", ((fsec >= 0)? fsec: -(fsec)));
+					sprintf(cp, ".%06d", ((fsec >= 0) ? fsec : -(fsec)));
 #else
 					fsec += tm->tm_sec;
 					sprintf(cp, ":%013.10f", fabs(fsec));

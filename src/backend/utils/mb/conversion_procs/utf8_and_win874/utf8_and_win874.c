@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win874/Attic/utf8_and_win874.c,v 1.2 2002/08/22 00:01:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win874/Attic/utf8_and_win874.c,v 1.3 2002/09/04 20:31:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,14 +39,14 @@ utf_to_win874(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_UTF8);
 	Assert(PG_GETARG_INT32(1) == PG_WIN874);
 	Assert(len > 0);
 
-	UtfToLocal(src, dest, ULmapWIN874, 
-		sizeof(ULmapWIN874) / sizeof(pg_utf_to_local), len);
+	UtfToLocal(src, dest, ULmapWIN874,
+			   sizeof(ULmapWIN874) / sizeof(pg_utf_to_local), len);
 
 	PG_RETURN_INT32(0);
 }
@@ -56,14 +56,14 @@ win874_to_utf(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_WIN874);
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len > 0);
 
 	LocalToUtf(src, dest, LUmapWIN874,
-		sizeof(LUmapWIN874) / sizeof(pg_local_to_utf), PG_WIN874, len);
+		  sizeof(LUmapWIN874) / sizeof(pg_local_to_utf), PG_WIN874, len);
 
 	PG_RETURN_INT32(0);
 }

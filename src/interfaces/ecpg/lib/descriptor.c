@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.22 2002/01/23 16:34:06 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.23 2002/09/04 20:31:46 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -58,7 +58,7 @@ ECPGget_desc_header(int lineno, char *desc_name, int *count)
 		return false;
 
 	*count = PQnfields(ECPGresult);
-	sqlca.sqlerrd[2]=1;
+	sqlca.sqlerrd[2] = 1;
 	ECPGlog("ECPGget_desc_header: found %d attributes.\n", *count);
 	return true;
 }
@@ -149,7 +149,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 	int			ntuples,
 				act_tuple;
 	struct variable data_var;
-	
+
 	va_start(args, index);
 	ECPGinit_sqlca();
 	ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
@@ -173,11 +173,11 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 	--index;
 
 	type = va_arg(args, enum ECPGdtype);
-	
-	memset (&data_var, 0, sizeof data_var);
-	data_var.type=ECPGt_EORT;
-	data_var.ind_type=ECPGt_NO_INDICATOR;
-	
+
+	memset(&data_var, 0, sizeof data_var);
+	data_var.type = ECPGt_EORT;
+	data_var.ind_type = ECPGt_NO_INDICATOR;
+
 	while (type != ECPGd_EODT)
 	{
 		char		type_str[20];
@@ -196,11 +196,11 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 		switch (type)
 		{
 			case (ECPGd_indicator):
-				data_var.ind_type=vartype;
-				data_var.ind_pointer=var;
-				data_var.ind_varcharsize=varcharsize;
-				data_var.ind_arrsize=arrsize;
-				data_var.ind_offset=offset;
+				data_var.ind_type = vartype;
+				data_var.ind_pointer = var;
+				data_var.ind_varcharsize = varcharsize;
+				data_var.ind_arrsize = arrsize;
+				data_var.ind_offset = offset;
 				if (data_var.ind_arrsize == 0 || data_var.ind_varcharsize == 0)
 					data_var.ind_value = *((void **) (data_var.ind_pointer));
 				else
@@ -208,11 +208,11 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 				break;
 
 			case ECPGd_data:
-				data_var.type=vartype;
-				data_var.pointer=var;
-				data_var.varcharsize=varcharsize;
-				data_var.arrsize=arrsize;
-				data_var.offset=offset;
+				data_var.type = vartype;
+				data_var.pointer = var;
+				data_var.varcharsize = varcharsize;
+				data_var.arrsize = arrsize;
+				data_var.offset = offset;
 				if (data_var.arrsize == 0 || data_var.varcharsize == 0)
 					data_var.value = *((void **) (data_var.pointer));
 				else
@@ -279,7 +279,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 
 				ECPGlog("ECPGget_desc: TYPE = %d\n", ECPGDynamicType_DDT(PQftype(ECPGresult, index)));
 				break;
-				
+
 			case ECPGd_cardinality:
 				if (!get_int_item(lineno, var, vartype, PQntuples(ECPGresult)))
 					return (false);
@@ -301,14 +301,15 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 					return false;
 				}
 				/* allocate storage if needed */
-				if (arrsize == 0 && var != NULL && *(void**)var == NULL)
+				if (arrsize == 0 && var != NULL && *(void **) var == NULL)
 				{
-					void *mem = (void *) ECPGalloc(offset * ntuples, lineno);
-					*(void **)var = mem;
+					void	   *mem = (void *) ECPGalloc(offset * ntuples, lineno);
+
+					*(void **) var = mem;
 					ECPGadd_mem(mem, lineno);
 					var = mem;
 				}
-	
+
 				for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 				{
 					if (!get_int_item(lineno, var, vartype, PQgetlength(ECPGresult, act_tuple, index)))
@@ -327,31 +328,31 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 		type = va_arg(args, enum ECPGdtype);
 	}
 
-	if (data_var.type!=ECPGt_EORT)
+	if (data_var.type != ECPGt_EORT)
 	{
 		struct statement stmt;
-		char       *oldlocale;
-		
+		char	   *oldlocale;
+
 		/* Make sure we do NOT honor the locale for numeric input */
 		/* since the database gives the standard decimal point */
 		oldlocale = strdup(setlocale(LC_NUMERIC, NULL));
 		setlocale(LC_NUMERIC, "C");
-		
-		memset (&stmt, 0, sizeof stmt);
-		stmt.lineno=lineno;
-		
+
+		memset(&stmt, 0, sizeof stmt);
+		stmt.lineno = lineno;
+
 		/* desparate try to guess something sensible */
-		stmt.connection=ECPGget_connection(NULL);
+		stmt.connection = ECPGget_connection(NULL);
 		ECPGstore_result(ECPGresult, index, &stmt, &data_var);
-		
+
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
 	}
-	else if (data_var.ind_type!=ECPGt_NO_INDICATOR)
+	else if (data_var.ind_type != ECPGt_NO_INDICATOR)
 	{
 		/*
-		 * this is like ECPGstore_result
-		 * but since we don't have a data variable at hand, we can't call it
+		 * this is like ECPGstore_result but since we don't have a data
+		 * variable at hand, we can't call it
 		 */
 		if (data_var.ind_arrsize > 0 && ntuples > data_var.ind_arrsize)
 		{
@@ -363,8 +364,9 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 		/* allocate storage if needed */
 		if (data_var.ind_arrsize == 0 && data_var.ind_pointer != NULL && data_var.ind_value == NULL)
 		{
-			void *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
-			*(void **)data_var.ind_pointer = mem;
+			void	   *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
+
+			*(void **) data_var.ind_pointer = mem;
 			ECPGadd_mem(mem, lineno);
 			data_var.ind_value = mem;
 		}
@@ -376,7 +378,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 			ECPGlog("ECPGget_desc: INDICATOR[%d] = %d\n", act_tuple, -PQgetisnull(ECPGresult, act_tuple, index));
 		}
 	}
-	sqlca.sqlerrd[2]=ntuples;
+	sqlca.sqlerrd[2] = ntuples;
 	return (true);
 }
 
@@ -409,16 +411,17 @@ ECPGallocate_desc(int line, const char *name)
 
 	ECPGinit_sqlca();
 	new = (struct descriptor *) ECPGalloc(sizeof(struct descriptor), line);
-	if (!new) return false;
+	if (!new)
+		return false;
 	new->next = all_descriptors;
 	new->name = ECPGalloc(strlen(name) + 1, line);
-	if (!new->name) 
+	if (!new->name)
 	{
 		ECPGfree(new);
 		return false;
 	}
 	new->result = PQmakeEmptyPGresult(NULL, 0);
-	if (!new->result) 
+	if (!new->result)
 	{
 		ECPGfree(new->name);
 		ECPGfree(new);

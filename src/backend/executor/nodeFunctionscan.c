@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.11 2002/09/02 01:05:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.12 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,13 +50,13 @@ static bool tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2);
 static TupleTableSlot *
 FunctionNext(FunctionScan *node)
 {
-	TupleTableSlot	   *slot;
-	EState			   *estate;
-	ScanDirection		direction;
-	Tuplestorestate	   *tuplestorestate;
-	FunctionScanState  *scanstate;
-	bool				should_free;
-	HeapTuple			heapTuple;
+	TupleTableSlot *slot;
+	EState	   *estate;
+	ScanDirection direction;
+	Tuplestorestate *tuplestorestate;
+	FunctionScanState *scanstate;
+	bool		should_free;
+	HeapTuple	heapTuple;
 
 	/*
 	 * get information from the estate and scan state
@@ -69,12 +69,13 @@ FunctionNext(FunctionScan *node)
 
 	/*
 	 * If first time through, read all tuples from function and put them
-	 * in a tuplestore. Subsequent calls just fetch tuples from tuplestore.
+	 * in a tuplestore. Subsequent calls just fetch tuples from
+	 * tuplestore.
 	 */
 	if (tuplestorestate == NULL)
 	{
-		ExprContext	   *econtext = scanstate->csstate.cstate.cs_ExprContext;
-		TupleDesc		funcTupdesc;
+		ExprContext *econtext = scanstate->csstate.cstate.cs_ExprContext;
+		TupleDesc	funcTupdesc;
 
 		scanstate->tuplestorestate = tuplestorestate =
 			ExecMakeTableFunctionResult((Expr *) scanstate->funcexpr,
@@ -83,9 +84,9 @@ FunctionNext(FunctionScan *node)
 										&funcTupdesc);
 
 		/*
-		 * If function provided a tupdesc, cross-check it.  We only really
-		 * need to do this for functions returning RECORD, but might as well
-		 * do it always.
+		 * If function provided a tupdesc, cross-check it.	We only really
+		 * need to do this for functions returning RECORD, but might as
+		 * well do it always.
 		 */
 		if (funcTupdesc &&
 			tupledesc_mismatch(scanstate->tupdesc, funcTupdesc))
@@ -98,7 +99,7 @@ FunctionNext(FunctionScan *node)
 	slot = scanstate->csstate.css_ScanTupleSlot;
 	if (tuplestorestate)
 		heapTuple = tuplestore_getheaptuple(tuplestorestate,
-											ScanDirectionIsForward(direction),
+									   ScanDirectionIsForward(direction),
 											&should_free);
 	else
 	{
@@ -135,11 +136,11 @@ ExecFunctionScan(FunctionScan *node)
 bool
 ExecInitFunctionScan(FunctionScan *node, EState *estate, Plan *parent)
 {
-	FunctionScanState  *scanstate;
-	RangeTblEntry	   *rte;
-	Oid					funcrettype;
-	char				functyptype;
-	TupleDesc			tupdesc = NULL;
+	FunctionScanState *scanstate;
+	RangeTblEntry *rte;
+	Oid			funcrettype;
+	char		functyptype;
+	TupleDesc	tupdesc = NULL;
 
 	/*
 	 * FunctionScan should not have any children.
@@ -266,8 +267,8 @@ ExecCountSlotsFunctionScan(FunctionScan *node)
 void
 ExecEndFunctionScan(FunctionScan *node)
 {
-	FunctionScanState  *scanstate;
-	EState			   *estate;
+	FunctionScanState *scanstate;
+	EState	   *estate;
 
 	/*
 	 * get information from node
@@ -308,7 +309,7 @@ ExecEndFunctionScan(FunctionScan *node)
 void
 ExecFunctionMarkPos(FunctionScan *node)
 {
-	FunctionScanState  *scanstate;
+	FunctionScanState *scanstate;
 
 	scanstate = (FunctionScanState *) node->scan.scanstate;
 
@@ -330,7 +331,7 @@ ExecFunctionMarkPos(FunctionScan *node)
 void
 ExecFunctionRestrPos(FunctionScan *node)
 {
-	FunctionScanState  *scanstate;
+	FunctionScanState *scanstate;
 
 	scanstate = (FunctionScanState *) node->scan.scanstate;
 
@@ -352,7 +353,7 @@ ExecFunctionRestrPos(FunctionScan *node)
 void
 ExecFunctionReScan(FunctionScan *node, ExprContext *exprCtxt, Plan *parent)
 {
-	FunctionScanState  *scanstate;
+	FunctionScanState *scanstate;
 
 	/*
 	 * get information from node

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.45 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.46 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,8 +83,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		elog(ERROR, "no empty local buffer.");
 
 	/*
-	 * this buffer is not referenced but it might still be dirty.
-	 * if that's the case, write it out before reusing it!
+	 * this buffer is not referenced but it might still be dirty. if
+	 * that's the case, write it out before reusing it!
 	 */
 	if (bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty)
 	{
@@ -108,9 +108,9 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/*
 	 * lazy memory allocation: allocate space on first use of a buffer.
 	 *
-	 * Note this path cannot be taken for a buffer that was previously
-	 * in use, so it's okay to do it (and possibly error out) before
-	 * marking the buffer as valid.
+	 * Note this path cannot be taken for a buffer that was previously in
+	 * use, so it's okay to do it (and possibly error out) before marking
+	 * the buffer as valid.
 	 */
 	if (bufHdr->data == (SHMEM_OFFSET) 0)
 	{

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.26 2002/06/20 20:29:53 momjian Exp $
+ * $Id: inval.h,v 1.27 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,10 +31,10 @@ extern void CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 extern void CacheInvalidateRelcache(Oid relationId);
 
 extern void CacheRegisterSyscacheCallback(int cacheid,
-										  CacheCallbackFunction func,
-										  Datum arg);
+							  CacheCallbackFunction func,
+							  Datum arg);
 
 extern void CacheRegisterRelcacheCallback(CacheCallbackFunction func,
-										  Datum arg);
+							  Datum arg);
 
 #endif   /* INVAL_H */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.98 2002/08/22 00:01:46 tgl Exp $
+ * $Id: pg_dump.h,v 1.99 2002/09/04 20:31:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,10 @@
  *
  * NOTE: the structures described here live for the entire pg_dump run;
  * and in most cases we make a struct for every object we can find in the
- * catalogs, not only those we are actually going to dump.  Hence, it's
+ * catalogs, not only those we are actually going to dump.	Hence, it's
  * best to store a minimal amount of per-object info in these structs,
  * and retrieve additional per-object info when and if we dump a specific
- * object.  In particular, try to avoid retrieving expensive-to-compute
+ * object.	In particular, try to avoid retrieving expensive-to-compute
  * information until it's known to be needed.
  */
 
@@ -60,7 +60,7 @@ typedef struct _funcInfo
 	char	   *usename;		/* name of owner, or empty string */
 	Oid			lang;
 	int			nargs;
-	char	   **argtypes;		/* OIDs */
+	char	  **argtypes;		/* OIDs */
 	char	   *prorettype;		/* OID */
 	char	   *proacl;
 	bool		dumped;			/* true if already dumped */
@@ -119,8 +119,9 @@ typedef struct _tableInfo
 	bool		dump;			/* true if we want to dump it */
 
 	/*
-	 * These fields are computed only if we decide the table is interesting
-	 * (it's either a table to dump, or a direct parent of a dumpable table).
+	 * These fields are computed only if we decide the table is
+	 * interesting (it's either a table to dump, or a direct parent of a
+	 * dumpable table).
 	 */
 	int			numatts;		/* number of attributes */
 	char	  **attnames;		/* the attribute names */
@@ -129,6 +130,7 @@ typedef struct _tableInfo
 	int		   *attstattarget;	/* attribute statistics targets */
 	bool	   *attisdropped;	/* true if attr is dropped; don't dump it */
 	bool	   *attisserial;	/* true if attr is serial or bigserial */
+
 	/*
 	 * Note: we need to store per-attribute notnull and default stuff for
 	 * all interesting tables so that we can tell which constraints were
@@ -214,20 +216,20 @@ extern InhInfo *getInherits(int *numInherits);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern void dumpDBComment(Archive *outfile);
 extern void dumpNamespaces(Archive *fout,
-						   NamespaceInfo *nsinfo, int numNamespaces);
+			   NamespaceInfo *nsinfo, int numNamespaces);
 extern void dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
 extern void dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs);
 extern void dumpFuncs(Archive *fout, FuncInfo finfo[], int numFuncs);
 extern void dumpCasts(Archive *fout, FuncInfo *finfo, int numFuncs,
-					  TypeInfo *tinfo, int numTypes);
+		  TypeInfo *tinfo, int numTypes);
 extern void dumpAggs(Archive *fout, AggInfo agginfo[], int numAggregates);
 extern void dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators);
 extern void dumpOpclasses(Archive *fout,
-						  OpclassInfo *opcinfo, int numOpclasses);
+			  OpclassInfo *opcinfo, int numOpclasses);
 extern void dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
-					   const bool aclsSkip,
-					   const bool schemaOnly, const bool dataOnly);
+		   const bool aclsSkip,
+		   const bool schemaOnly, const bool dataOnly);
 extern void dumpIndexes(Archive *fout, TableInfo *tbinfo, int numTables);
 
 /* sprompt.h */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.61 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.62 2002/09/04 20:31:09 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -272,8 +272,8 @@ index_beginscan(Relation heapRelation,
 										 PointerGetDatum(key)));
 
 	/*
-	 * Save additional parameters into the scandesc.  Everything else
-	 * was set up by RelationGetIndexScan.
+	 * Save additional parameters into the scandesc.  Everything else was
+	 * set up by RelationGetIndexScan.
 	 */
 	scan->heapRelation = heapRelation;
 	scan->xs_snapshot = snapshot;
@@ -293,7 +293,7 @@ index_beginscan(Relation heapRelation,
  *		index_rescan  - (re)start a scan of an index
  *
  * The caller may specify a new set of scankeys (but the number of keys
- * cannot change).  Note that this is also called when first starting
+ * cannot change).	Note that this is also called when first starting
  * an indexscan; see RelationGetIndexScan.
  * ----------------
  */
@@ -305,8 +305,8 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(rescan, amrescan);
 
-	scan->kill_prior_tuple = false;	/* for safety */
-	scan->keys_are_unique = false; /* may be set by amrescan */
+	scan->kill_prior_tuple = false;		/* for safety */
+	scan->keys_are_unique = false;		/* may be set by amrescan */
 	scan->got_tuple = false;
 
 	OidFunctionCall2(procedure,
@@ -375,7 +375,7 @@ index_restrpos(IndexScanDesc scan)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(restrpos, amrestrpos);
 
-	scan->kill_prior_tuple = false;	/* for safety */
+	scan->kill_prior_tuple = false;		/* for safety */
 	scan->got_tuple = false;
 
 	OidFunctionCall1(procedure, PointerGetDatum(scan));
@@ -385,7 +385,7 @@ index_restrpos(IndexScanDesc scan)
  *		index_getnext - get the next heap tuple from a scan
  *
  * The result is the next heap tuple satisfying the scan keys and the
- * snapshot, or NULL if no more matching tuples exist.  On success,
+ * snapshot, or NULL if no more matching tuples exist.	On success,
  * the buffer containing the heap tuple is pinned (the pin will be dropped
  * at the next index_getnext or index_endscan).  The index TID corresponding
  * to the heap tuple can be obtained if needed from scan->currentItemData.
@@ -409,8 +409,8 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	scan->kill_prior_tuple = false;
 
 	/*
-	 * Can skip entering the index AM if we already got a tuple
-	 * and it must be unique.
+	 * Can skip entering the index AM if we already got a tuple and it
+	 * must be unique.
 	 */
 	if (scan->keys_are_unique && scan->got_tuple)
 		return NULL;
@@ -454,9 +454,9 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		 * index AM to not return it on future indexscans.
 		 *
 		 * We told heap_fetch to keep a pin on the buffer, so we can
-		 * re-access the tuple here.  But we must re-lock the buffer first.
-		 * Also, it's just barely possible for an update of hint bits to
-		 * occur here.
+		 * re-access the tuple here.  But we must re-lock the buffer
+		 * first. Also, it's just barely possible for an update of hint
+		 * bits to occur here.
 		 */
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
 		sv_infomask = heapTuple->t_data->t_infomask;
@@ -497,7 +497,7 @@ bool
 index_getnext_indexitem(IndexScanDesc scan,
 						ScanDirection direction)
 {
-	bool found;
+	bool		found;
 
 	SCAN_CHECKS;
 
@@ -642,10 +642,11 @@ index_getprocinfo(Relation irel,
 		procId = loc[procindex];
 
 		/*
-		 * Complain if function was not found during IndexSupportInitialize.
-		 * This should not happen unless the system tables contain bogus
-		 * entries for the index opclass.  (If an AM wants to allow a
-		 * support function to be optional, it can use index_getprocid.)
+		 * Complain if function was not found during
+		 * IndexSupportInitialize. This should not happen unless the
+		 * system tables contain bogus entries for the index opclass.  (If
+		 * an AM wants to allow a support function to be optional, it can
+		 * use index_getprocid.)
 		 */
 		if (!RegProcedureIsValid(procId))
 			elog(ERROR, "Missing support function %d for attribute %d of index %s",

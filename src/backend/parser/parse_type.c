@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.49 2002/08/31 22:10:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.50 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ LookupTypeName(const TypeName *typename)
 		if (schemaname)
 		{
 			/* Look in specific schema only */
-			Oid		namespaceId;
+			Oid			namespaceId;
 
 			namespaceId = LookupExplicitNamespace(schemaname);
 			restype = GetSysCacheOid(TYPENAMENSP,
@@ -147,7 +147,7 @@ TypeNameToString(const TypeName *typename)
 	if (typename->names != NIL)
 	{
 		/* Emit possibly-qualified name as-is */
-		List		*l;
+		List	   *l;
 
 		foreach(l, typename->names)
 		{
@@ -218,7 +218,7 @@ typenameType(const TypeName *typename)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "Type \"%s\" does not exist",
 			 TypeNameToString(typename));
-	if (! ((Form_pg_type) GETSTRUCT(tup))->typisdefined)
+	if (!((Form_pg_type) GETSTRUCT(tup))->typisdefined)
 		elog(ERROR, "Type \"%s\" is only a shell",
 			 TypeNameToString(typename));
 	return (Type) tup;
@@ -431,7 +431,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	List	   *raw_parsetree_list;
 	SelectStmt *stmt;
 	ResTarget  *restarget;
-	TypeCast   *typecast;   
+	TypeCast   *typecast;
 	TypeName   *typename;
 
 	initStringInfo(&buf);

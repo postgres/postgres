@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/memory.c,v 1.8 2001/12/23 12:17:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/memory.c,v 1.9 2002/09/04 20:31:46 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -53,6 +53,7 @@ void
 ECPGadd_mem(void *ptr, int lineno)
 {
 	struct auto_mem *am = (struct auto_mem *) ECPGalloc(sizeof(struct auto_mem), lineno);
+
 	am->pointer = ptr;
 	am->next = auto_allocs;
 	auto_allocs = am;

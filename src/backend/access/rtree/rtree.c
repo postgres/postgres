@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.74 2002/06/25 17:26:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.75 2002/09/04 20:31:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,7 @@ rtinsert(PG_FUNCTION_ARGS)
 	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);

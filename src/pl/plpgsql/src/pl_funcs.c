@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.21 2002/08/30 00:28:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.22 2002/09/04 20:31:47 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -88,7 +88,8 @@ plpgsql_dstring_append(PLpgSQL_dstring * ds, char *str)
 	if (needed > ds->alloc)
 	{
 		/* might have to double more than once, if len is large */
-		do {
+		do
+		{
 			ds->alloc *= 2;
 		} while (needed > ds->alloc);
 		ds->value = repalloc(ds->value, ds->alloc);
@@ -324,9 +325,9 @@ plpgsql_ns_rename(char *oldname, char *newname)
  * truncate to NAMEDATALEN.
  *
  * There may be several identifiers separated by dots and optional
- * whitespace.  Each one is converted to a separate palloc'd string.
+ * whitespace.	Each one is converted to a separate palloc'd string.
  * The caller passes the expected number of identifiers, as well as
- * a char* array to hold them.  It is an error if we find the wrong
+ * a char* array to hold them.	It is an error if we find the wrong
  * number of identifiers (cf grammar processing of fori_varname).
  *
  * NOTE: the input string has already been accepted by the flex lexer,
@@ -347,7 +348,7 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 		int			i;
 
 		/* Process current identifier */
-		curident = palloc(strlen(s) + 1); /* surely enough room */
+		curident = palloc(strlen(s) + 1);		/* surely enough room */
 		cp = curident;
 
 		if (*s == '"')
@@ -392,9 +393,9 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 
 		if (i >= NAMEDATALEN)
 		{
-			int len;
+			int			len;
 
-			len = pg_mbcliplen(curident, i, NAMEDATALEN-1);
+			len = pg_mbcliplen(curident, i, NAMEDATALEN - 1);
 			curident[len] = '\0';
 		}
 

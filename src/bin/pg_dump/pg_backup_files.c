@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.17 2002/08/20 17:54:44 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.18 2002/09/04 20:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,12 +30,12 @@
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
-static size_t	_WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
+static size_t _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static size_t	_WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
-static size_t	_ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
+static size_t _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static size_t _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -107,7 +107,7 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
+	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
 	if (AH->lo_buf == NULL)
 		die_horribly(AH, modulename, "out of memory\n");
 

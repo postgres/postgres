@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.50 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.51 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
  *		This takes the mergeclause which is a qualification of the
  *		form ((= expr expr) (= expr expr) ...) and forms new lists
  *		of the forms ((< expr expr) (< expr expr) ...) and
- *		((> expr expr) (> expr expr) ...).  These lists will be used
+ *		((> expr expr) (> expr expr) ...).	These lists will be used
  *		by ExecMergeJoin() to determine if we should skip tuples.
  *		(We expect there to be suitable operators because the "=" operators
  *		were marked mergejoinable; however, there might be a different

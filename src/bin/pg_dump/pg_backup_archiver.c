@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.56 2002/08/27 18:57:26 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.57 2002/09/04 20:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,8 +170,8 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 	}
 
 	/*
-	 * Work out if we have an implied data-only restore. This can happen if
-	 * the dump was data only or if the user has used a toc list to
+	 * Work out if we have an implied data-only restore. This can happen
+	 * if the dump was data only or if the user has used a toc list to
 	 * exclude all of the schema data. All we do is look for schema
 	 * entries - if none are found then we set the dataOnly flag.
 	 *
@@ -453,10 +453,10 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 	oldSchema = strdup(AH->currSchema);
 
 	/*
-	 * Become superuser if possible, since they are the only ones
-	 * who can update pg_class.  If -S was not given, but we are allowed
-	 * to use SET SESSION AUTHORIZATION, assume the initial user identity
-	 * is a superuser.  Otherwise we just have to bull ahead anyway.
+	 * Become superuser if possible, since they are the only ones who can
+	 * update pg_class.  If -S was not given, but we are allowed to use
+	 * SET SESSION AUTHORIZATION, assume the initial user identity is a
+	 * superuser.  Otherwise we just have to bull ahead anyway.
 	 */
 	if (ropt->superuser)
 	{
@@ -465,9 +465,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 		_selectOutputSchema(AH, oldSchema);
 	}
 	else if (AH->ropt->use_setsessauth)
-	{
 		_doSetSessionAuth(AH, NULL);
-	}
 
 	ahlog(AH, 1, "disabling triggers\n");
 
@@ -499,9 +497,7 @@ _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *rop
 		_selectOutputSchema(AH, oldSchema);
 	}
 	else if (AH->ropt->use_setsessauth)
-	{
 		_doSetSessionAuth(AH, oldUser);
-	}
 	free(oldUser);
 	free(oldSchema);
 }
@@ -520,10 +516,10 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 	oldSchema = strdup(AH->currSchema);
 
 	/*
-	 * Become superuser if possible, since they are the only ones
-	 * who can update pg_class.  If -S was not given, but we are allowed
-	 * to use SET SESSION AUTHORIZATION, assume the initial user identity
-	 * is a superuser.  Otherwise we just have to bull ahead anyway.
+	 * Become superuser if possible, since they are the only ones who can
+	 * update pg_class.  If -S was not given, but we are allowed to use
+	 * SET SESSION AUTHORIZATION, assume the initial user identity is a
+	 * superuser.  Otherwise we just have to bull ahead anyway.
 	 */
 	if (ropt->superuser)
 	{
@@ -532,9 +528,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 		_selectOutputSchema(AH, oldSchema);
 	}
 	else if (AH->ropt->use_setsessauth)
-	{
 		_doSetSessionAuth(AH, NULL);
-	}
 
 	ahlog(AH, 1, "enabling triggers\n");
 
@@ -569,9 +563,7 @@ _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt
 		_selectOutputSchema(AH, oldSchema);
 	}
 	else if (AH->ropt->use_setsessauth)
-	{
 		_doSetSessionAuth(AH, oldUser);
-	}
 	free(oldUser);
 	free(oldSchema);
 }
@@ -814,7 +806,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 	if (AH->lo_buf_used > 0)
 	{
 		/* Write remaining bytes from the LO buffer */
-		size_t res;
+		size_t		res;
 
 		res = lo_write(AH->connection, AH->loFd, (void *) AH->lo_buf, AH->lo_buf_used);
 
@@ -822,7 +814,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 			  (unsigned long) AH->lo_buf_used, (unsigned long) res);
 		if (res != AH->lo_buf_used)
 			die_horribly(AH, modulename, "could not write to large object (result: %lu, expected: %lu)\n",
-						 (unsigned long) res, (unsigned long) AH->lo_buf_used);
+				   (unsigned long) res, (unsigned long) AH->lo_buf_used);
 		AH->lo_buf_used = 0;
 	}
 
@@ -1209,24 +1201,24 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 		if (AH->lo_buf_used + size * nmemb > AH->lo_buf_size)
 		{
 			/* Split LO buffer */
-			size_t remaining = AH->lo_buf_size - AH->lo_buf_used;
-			size_t slack = nmemb * size - remaining;
+			size_t		remaining = AH->lo_buf_size - AH->lo_buf_used;
+			size_t		slack = nmemb * size - remaining;
 
-			memcpy((char *)AH->lo_buf + AH->lo_buf_used, ptr, remaining);
+			memcpy((char *) AH->lo_buf + AH->lo_buf_used, ptr, remaining);
 			res = lo_write(AH->connection, AH->loFd, AH->lo_buf, AH->lo_buf_size);
 			ahlog(AH, 5, "wrote %lu bytes of large object data (result = %lu)\n",
 				  (unsigned long) AH->lo_buf_size, (unsigned long) res);
 			if (res != AH->lo_buf_size)
 				die_horribly(AH, modulename,
 							 "could not write to large object (result: %lu, expected: %lu)\n",
-							 (unsigned long) res, (unsigned long) AH->lo_buf_size);
-			memcpy(AH->lo_buf, (char *)ptr + remaining, slack);
+				   (unsigned long) res, (unsigned long) AH->lo_buf_size);
+			memcpy(AH->lo_buf, (char *) ptr + remaining, slack);
 			AH->lo_buf_used = slack;
 		}
 		else
 		{
 			/* LO Buffer is still large enough, buffer it */
-			memcpy((char *)AH->lo_buf + AH->lo_buf_used, ptr, size * nmemb);
+			memcpy((char *) AH->lo_buf + AH->lo_buf_used, ptr, size * nmemb);
 			AH->lo_buf_used += size * nmemb;
 		}
 
@@ -1635,7 +1627,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	AH->currUser = strdup("");	/* So it's valid, but we can free() it
 								 * later if necessary */
-	AH->currSchema = strdup(""); /* ditto */
+	AH->currSchema = strdup("");	/* ditto */
 
 	AH->toc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!AH->toc)
@@ -1957,10 +1949,13 @@ static void
 _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 {
 	PQExpBuffer cmd = createPQExpBuffer();
+
 	appendPQExpBuffer(cmd, "SET SESSION AUTHORIZATION ");
 	if (user)
-		/* SQL requires a string literal here.  Might as well be
-		 * correct. */
+
+		/*
+		 * SQL requires a string literal here.	Might as well be correct.
+		 */
 		appendStringLiteral(cmd, user, false);
 	else
 		appendPQExpBuffer(cmd, "DEFAULT");
@@ -1992,7 +1987,7 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
  * user, this won't do anything.
  *
  * If we're currently restoring right into a database, this will
- * actually establish a connection.	Otherwise it puts a \connect into
+ * actually establish a connection. Otherwise it puts a \connect into
  * the script output.
  */
 static void
@@ -2007,9 +2002,7 @@ _reconnectAsUser(ArchiveHandle *AH, const char *dbname, const char *user)
 	 * needed
 	 */
 	if (!dbname && AH->ropt->use_setsessauth)
-	{
 		_doSetSessionAuth(AH, user);
-	}
 	else if (AH->ropt && AH->ropt->noReconnect)
 	{
 		/* When -R was given, don't do anything. */

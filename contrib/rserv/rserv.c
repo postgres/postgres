@@ -128,8 +128,8 @@ _rserv_log_()
 		okey = key;
 
 	snprintf(sql, 8192, "update _RSERV_LOG_ set logid = %d, logtime = now(), "
-			"deleted = %d where reloid = %u and key = '%s'",
-			GetCurrentTransactionId(), deleted, rel->rd_id, okey);
+			 "deleted = %d where reloid = %u and key = '%s'",
+			 GetCurrentTransactionId(), deleted, rel->rd_id, okey);
 
 	if (debug)
 		elog(DEBUG3, sql);
@@ -147,10 +147,10 @@ _rserv_log_()
 	else if (SPI_processed == 0)
 	{
 		snprintf(sql, 8192, "insert into _RSERV_LOG_ "
-				"(reloid, logid, logtime, deleted, key) "
-				"values (%u, %d, now(), %d, '%s')",
-				rel->rd_id, GetCurrentTransactionId(),
-				deleted, okey);
+				 "(reloid, logid, logtime, deleted, key) "
+				 "values (%u, %d, now(), %d, '%s')",
+				 rel->rd_id, GetCurrentTransactionId(),
+				 deleted, okey);
 
 		if (debug)
 			elog(DEBUG3, sql);
@@ -172,9 +172,9 @@ _rserv_log_()
 			okey = newkey;
 
 		snprintf(sql, 8192, "insert into _RSERV_LOG_ "
-				"(reloid, logid, logtime, deleted, key) "
-				"values (%u, %d, now(), 0, '%s')",
-				rel->rd_id, GetCurrentTransactionId(), okey);
+				 "(reloid, logid, logtime, deleted, key) "
+				 "values (%u, %d, now(), 0, '%s')",
+				 rel->rd_id, GetCurrentTransactionId(), okey);
 
 		if (debug)
 			elog(DEBUG3, sql);
@@ -221,17 +221,17 @@ _rserv_sync_(int32 server)
 	for (xcnt = 0; xcnt < SerializableSnapshot->xcnt; xcnt++)
 	{
 		snprintf(buf + strlen(buf), 8192 - strlen(buf),
-				"%s%u", (xcnt) ? ", " : "",
-				SerializableSnapshot->xip[xcnt]);
+				 "%s%u", (xcnt) ? ", " : "",
+				 SerializableSnapshot->xip[xcnt]);
 	}
 
 	if ((ret = SPI_connect()) < 0)
 		elog(ERROR, "_rserv_sync_: SPI_connect returned %d", ret);
 
 	snprintf(sql, 8192, "insert into _RSERV_SYNC_ "
-			"(server, syncid, synctime, status, minid, maxid, active) "
+			 "(server, syncid, synctime, status, minid, maxid, active) "
 	  "values (%u, currval('_rserv_sync_seq_'), now(), 0, %d, %d, '%s')",
-			server, SerializableSnapshot->xmin, SerializableSnapshot->xmax, active);
+			 server, SerializableSnapshot->xmin, SerializableSnapshot->xmax, active);
 
 	ret = SPI_exec(sql, 0);
 

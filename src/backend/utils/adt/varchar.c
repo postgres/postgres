@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.93 2002/09/03 21:45:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.94 2002/09/04 20:31:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,6 +182,7 @@ bpchar(PG_FUNCTION_ARGS)
 
 	int			charlen;		/* number of charcters in the input string
 								 * + VARHDRSZ */
+
 	len = VARSIZE(source);
 
 	charlen = pg_mbstrlen_with_len(VARDATA(source), len - VARHDRSZ) + VARHDRSZ;

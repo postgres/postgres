@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.79 2002/08/10 19:01:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.80 2002/09/04 20:31:15 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -132,10 +132,11 @@ defGetInt64(DefElem *def)
 		case T_Integer:
 			return (int64) intVal(def->arg);
 		case T_Float:
+
 			/*
 			 * Values too large for int4 will be represented as Float
-			 * constants by the lexer.  Accept these if they are valid int8
-			 * strings.
+			 * constants by the lexer.	Accept these if they are valid
+			 * int8 strings.
 			 */
 			return DatumGetInt64(DirectFunctionCall1(int8in,
 									 CStringGetDatum(strVal(def->arg))));
@@ -188,14 +189,14 @@ defGetTypeName(DefElem *def)
 		case T_TypeName:
 			return (TypeName *) def->arg;
 		case T_String:
-		{
-			/* Allow quoted typename for backwards compatibility */
-			TypeName   *n = makeNode(TypeName);
+			{
+				/* Allow quoted typename for backwards compatibility */
+				TypeName   *n = makeNode(TypeName);
 
-			n->names = makeList1(def->arg);
-			n->typmod = -1;
-			return n;
-		}
+				n->names = makeList1(def->arg);
+				n->typmod = -1;
+				return n;
+			}
 		default:
 			elog(ERROR, "Define: argument of \"%s\" must be a type name",
 				 def->defname);

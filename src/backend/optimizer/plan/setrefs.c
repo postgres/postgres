@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.80 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.81 2002/09/04 20:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,7 +423,7 @@ join_references_mutator(Node *node,
 		resdom = tlist_member((Node *) var, context->outer_tlist);
 		if (resdom)
 		{
-			Var	   *newvar = (Var *) copyObject(var);
+			Var		   *newvar = (Var *) copyObject(var);
 
 			newvar->varno = OUTER;
 			newvar->varattno = resdom->resno;
@@ -432,7 +432,7 @@ join_references_mutator(Node *node,
 		resdom = tlist_member((Node *) var, context->inner_tlist);
 		if (resdom)
 		{
-			Var	   *newvar = (Var *) copyObject(var);
+			Var		   *newvar = (Var *) copyObject(var);
 
 			newvar->varno = INNER;
 			newvar->varattno = resdom->resno;

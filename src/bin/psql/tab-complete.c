@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.63 2002/09/02 06:19:38 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.64 2002/09/04 20:31:36 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -145,7 +145,8 @@ pgsql_thing_t words_after_create[] = {
 	{"FUNCTION", "SELECT DISTINCT proname FROM pg_catalog.pg_proc WHERE substr(proname,1,%d)='%s'"},
 	{"GROUP", "SELECT groname FROM pg_catalog.pg_group WHERE substr(groname,1,%d)='%s'"},
 	{"INDEX", Query_for_list_of_indexes},
-	{"OPERATOR", NULL},			/* Querying for this is probably not such a good idea. */
+	{"OPERATOR", NULL},			/* Querying for this is probably not such
+								 * a good idea. */
 	{"RULE", "SELECT rulename FROM pg_catalog.pg_rules WHERE substr(rulename,1,%d)='%s'"},
 	{"SCHEMA", "SELECT nspname FROM pg_catalog.pg_namespace WHERE substr(nspname,1,%d)='%s'"},
 	{"SEQUENCE", "SELECT relname FROM pg_catalog.pg_class WHERE relkind='S' and substr(relname,1,%d)='%s'"},
@@ -330,7 +331,8 @@ psql_completion(char *text, int start, int end)
 	}
 
 	/*
-	 * If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or RENAME
+	 * If we detect ALTER TABLE <name>, suggest either ADD, ALTER, or
+	 * RENAME
 	 */
 	else if (strcasecmp(prev3_wd, "ALTER") == 0 && strcasecmp(prev2_wd, "TABLE") == 0)
 	{
@@ -400,8 +402,8 @@ psql_completion(char *text, int start, int end)
 	{
 		char	   *list_COMMENT[] =
 		{"DATABASE", "INDEX", "RULE", "SCHEMA", "SEQUENCE", "TABLE", "TYPE", "VIEW",
-		 "COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", "CONSTRAINT",
-		 "DOMAIN", NULL};
+			"COLUMN", "AGGREGATE", "FUNCTION", "OPERATOR", "TRIGGER", "CONSTRAINT",
+		"DOMAIN", NULL};
 
 		COMPLETE_WITH_LIST(list_COMMENT);
 	}
@@ -604,7 +606,7 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev2_wd, "INSERT") == 0 && strcasecmp(prev_wd, "INTO") == 0)
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 	/* Complete "INSERT INTO <table> (" with attribute names */
-	else if (rl_line_buffer[start-1]=='(' && strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
+	else if (rl_line_buffer[start - 1] == '(' && strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
 		COMPLETE_WITH_ATTR(prev_wd);
 
 	/*
@@ -614,13 +616,15 @@ psql_completion(char *text, int start, int end)
 	else if (strcasecmp(prev3_wd, "INSERT") == 0 && strcasecmp(prev2_wd, "INTO") == 0)
 	{
 		char	   *list_INSERT[] = {"DEFAULT VALUES", "SELECT", "VALUES", NULL};
+
 		COMPLETE_WITH_LIST(list_INSERT);
 	}
 	/* Complete INSERT INTO <table> (attribs) with "VALUES" or "SELECT" */
 	else if (strcasecmp(prev4_wd, "INSERT") == 0 && strcasecmp(prev3_wd, "INTO") == 0 &&
-			 prev_wd[strlen(prev_wd)-1]==')')
+			 prev_wd[strlen(prev_wd) - 1] == ')')
 	{
 		char	   *list_INSERT[] = {"SELECT", "VALUES", NULL};
+
 		COMPLETE_WITH_LIST(list_INSERT);
 	}
 
@@ -631,25 +635,26 @@ psql_completion(char *text, int start, int end)
 /* LOCK */
 	/* Complete LOCK [TABLE] with a list of tables */
 	else if ((strcasecmp(prev_wd, "LOCK") == 0) ||
-			 (strcasecmp(prev_wd, "TABLE") == 0 && strcasecmp(prev2_wd, "LOCK")))
+	 (strcasecmp(prev_wd, "TABLE") == 0 && strcasecmp(prev2_wd, "LOCK")))
 		COMPLETE_WITH_QUERY(Query_for_list_of_tables);
 
 	/* For the following, handle the case of a single table only for now */
 
 	/* Complete LOCK [TABLE] <table> with "IN" */
-	else if ((strcasecmp(prev2_wd, "LOCK") == 0 && strcasecmp(prev_wd, "TABLE")) || 
+	else if ((strcasecmp(prev2_wd, "LOCK") == 0 && strcasecmp(prev_wd, "TABLE")) ||
 			 (strcasecmp(prev2_wd, "TABLE") == 0 && strcasecmp(prev3_wd, "LOCK") == 0))
-			COMPLETE_WITH_CONST("IN");
+		COMPLETE_WITH_CONST("IN");
 
 	/* Complete LOCK [TABLE] <table> IN with a lock mode */
 	else if (strcasecmp(prev_wd, "IN") == 0 &&
 			 (strcasecmp(prev3_wd, "LOCK") == 0 ||
-			  (strcasecmp(prev3_wd, "TABLE") == 0 && strcasecmp(prev3_wd, "LOCK"))))
+	(strcasecmp(prev3_wd, "TABLE") == 0 && strcasecmp(prev3_wd, "LOCK"))))
 	{
-			char	   *lock_modes[] = {"ACCESS SHARE MODE", "ROW SHARE MODE", "ROW EXCLUSIVE MODE", 
-										"SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE", "SHARE ROW EXCLUSIVE MODE",
-										"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE", NULL};
-			COMPLETE_WITH_LIST(lock_modes);
+		char	   *lock_modes[] = {"ACCESS SHARE MODE", "ROW SHARE MODE", "ROW EXCLUSIVE MODE",
+			"SHARE UPDATE EXCLUSIVE MODE", "SHARE MODE", "SHARE ROW EXCLUSIVE MODE",
+		"EXCLUSIVE MODE", "ACCESS EXCLUSIVE MODE", NULL};
+
+		COMPLETE_WITH_LIST(lock_modes);
 	}
 
 /* NOTIFY */
@@ -784,7 +789,7 @@ psql_completion(char *text, int start, int end)
 
 /* WHERE */
 	/* Simple case of the word before the where being the table name */
-	else if (strcasecmp(prev_wd, "WHERE") == 0) 
+	else if (strcasecmp(prev_wd, "WHERE") == 0)
 		COMPLETE_WITH_ATTR(prev2_wd);
 
 /* ... FROM ... */
@@ -1063,7 +1068,7 @@ previous_word(int point, int skip)
 	int			i,
 				start = 0,
 				end = -1,
-				inquotes=0;
+				inquotes = 0;
 	char	   *s;
 
 	while (skip-- >= 0)
@@ -1093,11 +1098,12 @@ previous_word(int point, int skip)
 		 * last character before any space going backwards from the end,
 		 * or it's simply character 0
 		 */
-		for (start = end; start > 0; start--) {
-				if (rl_line_buffer[start] == '"')
-						inquotes = !inquotes;
-				if ((rl_line_buffer[start - 1] == ' ') && inquotes==0)
-						break;
+		for (start = end; start > 0; start--)
+		{
+			if (rl_line_buffer[start] == '"')
+				inquotes = !inquotes;
+			if ((rl_line_buffer[start - 1] == ' ') && inquotes == 0)
+				break;
 		}
 
 		point = start;

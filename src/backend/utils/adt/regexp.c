@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.41 2002/06/20 20:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.42 2002/09/04 20:31:28 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -53,7 +53,7 @@ struct cached_re_str
 static int	rec = 0;			/* # of cached re's */
 static struct cached_re_str rev[MAX_CACHED_RES];		/* cached re's */
 static unsigned long lru;		/* system lru tag */
-static int pg_lastrec = 0;
+static int	pg_lastrec = 0;
 
 /* attempt to compile `re' as an re, then match it against text */
 /* cflags - flag to regcomp indicates case sensitivity */
@@ -70,9 +70,9 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 	re = DatumGetCString(DirectFunctionCall1(textout,
 											 PointerGetDatum(text_re)));
 
-	/* Find a previously compiled regular expression.
-	 * Run the cache as a ring buffer, starting the search
-	 * from the previous match if any.
+	/*
+	 * Find a previously compiled regular expression. Run the cache as a
+	 * ring buffer, starting the search from the previous match if any.
 	 */
 	i = pg_lastrec;
 	while (i < rec)
@@ -92,19 +92,16 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 		}
 		i++;
 
-		/* If we were not at the first slot to start,
-		 * then think about wrapping if necessary.
+		/*
+		 * If we were not at the first slot to start, then think about
+		 * wrapping if necessary.
 		 */
 		if (pg_lastrec != 0)
 		{
 			if (i >= rec)
-			{
 				i = 0;
-			}
 			else if (i == pg_lastrec)
-			{
 				break;
-			}
 		}
 	}
 
@@ -119,9 +116,7 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 		}
 	}
 	else
-	{
 		oldest = rec++;
-	}
 
 	/* if there was an old re, then de-allocate the space it used */
 	if (rev[oldest].cre_s != (char *) NULL)
@@ -148,6 +143,7 @@ RE_compile_and_execute(text *text_re, char *text, int cflags,
 	if (regcomp_result == 0)
 	{
 		pg_lastrec = oldest;
+
 		/*
 		 * use malloc/free for the cre_s field because the storage has to
 		 * persist across transactions
@@ -329,10 +325,11 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	sterm = (char *) palloc(len + 1);
 	memcpy(sterm, VARDATA(s), len);
 	sterm[len] = '\0';
-	/* We need the match info back from the pattern match
-	 * to be able to actually extract the substring.
-	 * It seems to be adequate to pass in a structure to return
-	 * only one result.
+
+	/*
+	 * We need the match info back from the pattern match to be able to
+	 * actually extract the substring. It seems to be adequate to pass in
+	 * a structure to return only one result.
 	 */
 	match = RE_compile_and_execute(p, sterm, REG_EXTENDED, nmatch, &pmatch);
 	pfree(sterm);
@@ -342,8 +339,8 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	{
 		return (DirectFunctionCall3(text_substr,
 									PointerGetDatum(s),
-									Int32GetDatum(pmatch.rm_so+1),
-									Int32GetDatum(pmatch.rm_eo-pmatch.rm_so)));
+									Int32GetDatum(pmatch.rm_so + 1),
+							Int32GetDatum(pmatch.rm_eo - pmatch.rm_so)));
 	}
 
 	PG_RETURN_NULL();

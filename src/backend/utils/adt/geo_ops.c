@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.64 2002/08/29 23:05:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.65 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1236,7 +1236,7 @@ path_in(PG_FUNCTION_ARGS)
 		depth++;
 	}
 
-	size = offsetof(PATH, p[0]) + sizeof(path->p[0]) * npts;
+	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
 	path->size = size;
@@ -2155,8 +2155,8 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 #endif
 
 	/*
-	 * Calculate distance to the line segment
-	 * or to the endpoints of the segment.
+	 * Calculate distance to the line segment or to the endpoints of the
+	 * segment.
 	 */
 
 	/* intersection is on the line segment? */
@@ -2397,9 +2397,7 @@ interpt_sl(LSEG *lseg, LINE *line)
 #endif
 		}
 		else
-		{
 			p = NULL;
-		}
 	}
 
 	return p;
@@ -3610,7 +3608,7 @@ path_add(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	base_size = sizeof(p1->p[0]) * (p1->npts + p2->npts);
-	size = offsetof(PATH, p[0]) + base_size;
+	size = offsetof(PATH, p[0]) +base_size;
 
 	/* Check for integer overflow */
 	if (base_size / sizeof(p1->p[0]) != (p1->npts + p2->npts) ||
@@ -4436,7 +4434,7 @@ circle_poly(PG_FUNCTION_ARGS)
 		elog(ERROR, "Unable to convert circle to polygon");
 
 	base_size = sizeof(poly->p[0]) * npts;
-	size = offsetof(POLYGON, p[0]) + base_size;
+	size = offsetof(POLYGON, p[0]) +base_size;
 
 	/* Check for integer overflow */
 	if (base_size / npts != sizeof(poly->p[0]) || size <= base_size)

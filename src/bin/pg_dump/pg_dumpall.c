@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.5 2002/09/02 22:18:56 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.6 2002/09/04 20:31:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,17 +45,17 @@ static void dumpUserConfig(PGconn *conn, const char *username);
 static void makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name);
 static void dumpDatabases(PGconn *conn);
 
-static int runPgDump(const char *dbname);
+static int	runPgDump(const char *dbname);
 static PGconn *connectDatabase(const char *dbname, const char *pghost, const char *pgport,
-							   const char *pguser, bool require_password);
+				const char *pguser, bool require_password);
 static PGresult *executeQuery(PGconn *conn, const char *query);
 static char *findPgDump(const char *argv0);
 
 
-char *pgdumploc;
+char	   *pgdumploc;
 PQExpBuffer pgdumpopts;
-bool output_clean = false;
-bool verbose = false;
+bool		output_clean = false;
+bool		verbose = false;
 
 
 
@@ -169,20 +169,20 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -W");
 				break;
 
-            default:
-                fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
-                exit(1);
+			default:
+				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				exit(1);
 		}
 	}
 
-    if (optind < argc)
-    {
-        fprintf(stderr,
+	if (optind < argc)
+	{
+		fprintf(stderr,
 				_("%s: too many command line options (first is '%s')\n"
 				  "Try '%s --help' for more information.\n"),
-                progname, argv[optind], progname);
-        exit(1);
-    }
+				progname, argv[optind], progname);
+		exit(1);
+	}
 
 
 	conn = connectDatabase("template1", pghost, pgport, pguser, force_password);
@@ -217,32 +217,32 @@ help(void)
 
 	printf(_("Options:\n"));
 #ifdef HAVE_GETOPT_LONG
-    printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
+	printf(_("  -c, --clean              clean (drop) schema prior to create\n"));
 	printf(_("  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D, --column-inserts     dump data as INSERT commands with column names\n"));
 	printf(_("  -g, --globals-only       only dump global objects, no databases\n"));
-    printf(_("  -h, --host=HOSTNAME      database server host name\n"));
+	printf(_("  -h, --host=HOSTNAME      database server host name\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
-    printf(_("  -p, --port=PORT          database server port number\n"));
-    printf(_("  -U, --username=NAME      connect as specified database user\n"));
+	printf(_("  -p, --port=PORT          database server port number\n"));
+	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -v, --verbose            verbose mode\n"));
-    printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
-#else /* not HAVE_GETOPT_LONG */
-    printf(_("  -c                       clean (drop) schema prior to create\n"));
+	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
+#else							/* not HAVE_GETOPT_LONG */
+	printf(_("  -c                       clean (drop) schema prior to create\n"));
 	printf(_("  -d                       dump data as INSERT, rather than COPY, commands\n"));
 	printf(_("  -D                       dump data as INSERT commands with column names\n"));
 	printf(_("  -g                       only dump global objects, no databases\n"));
-    printf(_("  -h HOSTNAME              database server host name\n"));
+	printf(_("  -h HOSTNAME              database server host name\n"));
 	printf(_("  -i                       proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
 	printf(_("  -o                       include OIDs in dump\n"));
-    printf(_("  -p PORT                  database server port number\n"));
-    printf(_("  -U NAME                  connect as specified database user\n"));
+	printf(_("  -p PORT                  database server port number\n"));
+	printf(_("  -U NAME                  connect as specified database user\n"));
 	printf(_("  -v                       verbose mode\n"));
-    printf(_("  -W                       force password prompt (should happen automatically)\n"));
-#endif /* not HAVE_GETOPT_LONG */
+	printf(_("  -W                       force password prompt (should happen automatically)\n"));
+#endif   /* not HAVE_GETOPT_LONG */
 
 	printf(_("\nThe SQL script will be written to the standard output.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
@@ -256,8 +256,8 @@ help(void)
 static void
 dumpUsers(PGconn *conn)
 {
-	PGresult *res;
-	int i;
+	PGresult   *res;
+	int			i;
 
 	printf("--\n-- Users\n--\n\n");
 	printf("DELETE FROM pg_shadow WHERE usesysid <> (SELECT datdba FROM pg_database WHERE datname = 'template0');\n\n");
@@ -283,12 +283,12 @@ dumpUsers(PGconn *conn)
 			appendStringLiteral(buf, PQgetvalue(res, i, 2), true);
 		}
 
-		if (strcmp(PQgetvalue(res, i, 3), "t")==0)
+		if (strcmp(PQgetvalue(res, i, 3), "t") == 0)
 			appendPQExpBuffer(buf, " CREATEDB");
 		else
 			appendPQExpBuffer(buf, " NOCREATEDB");
 
-		if (strcmp(PQgetvalue(res, i, 4), "t")==0)
+		if (strcmp(PQgetvalue(res, i, 4), "t") == 0)
 			appendPQExpBuffer(buf, " CREATEUSER");
 		else
 			appendPQExpBuffer(buf, " NOCREATEUSER");
@@ -316,8 +316,8 @@ dumpUsers(PGconn *conn)
 static void
 dumpGroups(PGconn *conn)
 {
-	PGresult *res;
-	int i;
+	PGresult   *res;
+	int			i;
 
 	printf("--\n-- Groups\n--\n\n");
 	printf("DELETE FROM pg_group;\n\n");
@@ -327,8 +327,8 @@ dumpGroups(PGconn *conn)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		PQExpBuffer buf = createPQExpBuffer();
-		char *val;
-		char *tok;
+		char	   *val;
+		char	   *tok;
 
 		appendPQExpBuffer(buf, "CREATE GROUP %s WITH SYSID %s;\n",
 						  fmtId(PQgetvalue(res, i, 0)),
@@ -338,9 +338,9 @@ dumpGroups(PGconn *conn)
 		tok = strtok(val, ",{}");
 		do
 		{
-			PGresult *res2;
+			PGresult   *res2;
 			PQExpBuffer buf2 = createPQExpBuffer();
-			int j;
+			int			j;
 
 			appendPQExpBuffer(buf2, "SELECT usename FROM pg_shadow WHERE usesysid = %s;", tok);
 			res2 = executeQuery(conn, buf2->data);
@@ -382,24 +382,27 @@ dumpGroups(PGconn *conn)
 static void
 dumpCreateDB(PGconn *conn)
 {
-	PGresult *res;
-	int i;
+	PGresult   *res;
+	int			i;
 
 	printf("--\n-- Database creation\n--\n\n");
 
-	/* Basically this query returns: dbname, dbowner, encoding, istemplate, dbpath */
+	/*
+	 * Basically this query returns: dbname, dbowner, encoding,
+	 * istemplate, dbpath
+	 */
 	res = executeQuery(conn, "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		PQExpBuffer buf = createPQExpBuffer();
-		char *dbname = PQgetvalue(res, i, 0);
-		char *dbowner = PQgetvalue(res, i, 1);
-		char *dbencoding = PQgetvalue(res, i, 2);
-		char *dbistemplate = PQgetvalue(res, i, 3);
-		char *dbpath = PQgetvalue(res, i, 4);
+		char	   *dbname = PQgetvalue(res, i, 0);
+		char	   *dbowner = PQgetvalue(res, i, 1);
+		char	   *dbencoding = PQgetvalue(res, i, 2);
+		char	   *dbistemplate = PQgetvalue(res, i, 3);
+		char	   *dbpath = PQgetvalue(res, i, 4);
 
-		if (strcmp(dbname, "template1")==0)
+		if (strcmp(dbname, "template1") == 0)
 			continue;
 
 		if (output_clean)
@@ -408,7 +411,7 @@ dumpCreateDB(PGconn *conn)
 		appendPQExpBuffer(buf, "CREATE DATABASE %s", fmtId(dbname));
 		appendPQExpBuffer(buf, " WITH OWNER = %s TEMPLATE = template0", fmtId(dbowner));
 
-		if (strcmp(dbpath, "")!=0)
+		if (strcmp(dbpath, "") != 0)
 		{
 			appendPQExpBuffer(buf, " LOCATION = ");
 			appendStringLiteral(buf, dbpath, true);
@@ -419,7 +422,7 @@ dumpCreateDB(PGconn *conn)
 
 		appendPQExpBuffer(buf, ";\n");
 
-		if (strcmp(dbistemplate, "t")==0)
+		if (strcmp(dbistemplate, "t") == 0)
 		{
 			appendPQExpBuffer(buf, "UPDATE pg_database SET datistemplate = 't' WHERE datname = ");
 			appendStringLiteral(buf, dbname, true);
@@ -444,9 +447,9 @@ static void
 dumpDatabaseConfig(PGconn *conn, const char *dbname)
 {
 	PQExpBuffer buf = createPQExpBuffer();
-	int count = 1;
+	int			count = 1;
 
-	for(;;)
+	for (;;)
 	{
 		PGresult   *res;
 
@@ -480,9 +483,9 @@ static void
 dumpUserConfig(PGconn *conn, const char *username)
 {
 	PQExpBuffer buf = createPQExpBuffer();
-	int count = 1;
+	int			count = 1;
 
-	for(;;)
+	for (;;)
 	{
 		PGresult   *res;
 
@@ -515,8 +518,8 @@ dumpUserConfig(PGconn *conn, const char *username)
 static void
 makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name)
 {
-	char *pos;
-	char *mine;
+	char	   *pos;
+	char	   *mine;
 	PQExpBuffer buf = createPQExpBuffer();
 
 	mine = strdup(arrayitem);
@@ -543,15 +546,16 @@ makeAlterConfigCommand(const char *arrayitem, const char *type, const char *name
 static void
 dumpDatabases(PGconn *conn)
 {
-	PGresult *res;
-	int i;
+	PGresult   *res;
+	int			i;
 
 	res = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;");
 	for (i = 0; i < PQntuples(res); i++)
 	{
-		int ret;
+		int			ret;
 
-		char *dbname = PQgetvalue(res, i, 0);
+		char	   *dbname = PQgetvalue(res, i, 0);
+
 		if (verbose)
 			fprintf(stderr, _("%s: dumping database \"%s\"...\n"), progname, dbname);
 
@@ -576,7 +580,7 @@ static int
 runPgDump(const char *dbname)
 {
 	PQExpBuffer cmd = createPQExpBuffer();
-	int ret;
+	int			ret;
 
 	appendPQExpBuffer(cmd, "%s %s -X use-set-session-authorization -Fp %s",
 					  pgdumploc, pgdumpopts->data, dbname);
@@ -644,7 +648,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
 		fprintf(stderr, _("%s: could not connect to database %s: %s\n"),
-					progname, dbname, PQerrorMessage(conn));
+				progname, dbname, PQerrorMessage(conn));
 		exit(0);
 	}
 
@@ -659,7 +663,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 static PGresult *
 executeQuery(PGconn *conn, const char *query)
 {
-	PGresult *res;
+	PGresult   *res;
 
 	res = PQexec(conn, query);
 	if (!res ||
@@ -696,7 +700,8 @@ findPgDump(const char *argv0)
 		appendPQExpBuffer(cmd, "pg_dump");
 	else
 	{
-		char *dir = strdup(argv0);
+		char	   *dir = strdup(argv0);
+
 		*(dir + (last - argv0)) = '\0';
 		appendPQExpBuffer(cmd, "%s/pg_dump", dir);
 	}
@@ -704,15 +709,15 @@ findPgDump(const char *argv0)
 	result = strdup(cmd->data);
 
 	appendPQExpBuffer(cmd, " -V >/dev/null 2>&1");
-	if (system(cmd->data)==0)
+	if (system(cmd->data) == 0)
 		goto end;
 
 	result = BINDIR "/pg_dump";
-	if (system(BINDIR "/pg_dump -V >/dev/null 2>&1")==0)
+	if (system(BINDIR "/pg_dump -V >/dev/null 2>&1") == 0)
 		goto end;
 
 	fprintf(stderr, _("%s: could not find pg_dump\n"
-					  "Make sure it is in the path or in the same directory as %s.\n"),
+		"Make sure it is in the path or in the same directory as %s.\n"),
 			progname, progname);
 	exit(1);
 

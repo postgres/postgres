@@ -1,7 +1,7 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.8 2002/08/29 17:14:31 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgstattuple/pgstattuple.c,v 1.9 2002/09/04 20:31:08 momjian Exp $
  *
- * Copyright (c) 2001,2002  Tatsuo Ishii
+ * Copyright (c) 2001,2002	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose, without fee, and without a
@@ -71,12 +71,12 @@ pgstattuple(PG_FUNCTION_ARGS)
 	double		dead_tuple_percent;
 	uint64		free_space = 0; /* free/reusable space in bytes */
 	double		free_percent;	/* free/reusable space in % */
-	TupleDesc			tupdesc;
-	TupleTableSlot	   *slot;
-	AttInMetadata	   *attinmeta;
-	char			  **values;
-	int					i;
-	Datum				result;
+	TupleDesc	tupdesc;
+	TupleTableSlot *slot;
+	AttInMetadata *attinmeta;
+	char	  **values;
+	int			i;
+	Datum		result;
 
 	/*
 	 * Build a tuple description for a pgstattupe_type tuple
@@ -94,7 +94,7 @@ pgstattuple(PG_FUNCTION_ARGS)
 
 	/* open relation */
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
-															 "pgstattuple"));
+														 "pgstattuple"));
 	rel = heap_openrv(relrv, AccessShareLock);
 
 	nblocks = RelationGetNumberOfBlocks(rel);
@@ -116,7 +116,7 @@ pgstattuple(PG_FUNCTION_ARGS)
 
 		/*
 		 * To avoid physically reading the table twice, try to do the
-		 * free-space scan in parallel with the heap scan.  However,
+		 * free-space scan in parallel with the heap scan.	However,
 		 * heap_getnext may find no tuples on a given page, so we cannot
 		 * simply examine the pages returned by the heap scan.
 		 */
@@ -142,7 +142,7 @@ pgstattuple(PG_FUNCTION_ARGS)
 
 	heap_close(rel, AccessShareLock);
 
-	table_len = (uint64)nblocks *BLCKSZ;
+	table_len = (uint64) nblocks *BLCKSZ;
 
 	if (nblocks == 0)
 	{
@@ -158,15 +158,13 @@ pgstattuple(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Prepare a values array for storage in our slot.
-	 * This should be an array of C strings which will
-	 * be processed later by the appropriate "in" functions.
+	 * Prepare a values array for storage in our slot. This should be an
+	 * array of C strings which will be processed later by the appropriate
+	 * "in" functions.
 	 */
 	values = (char **) palloc(NCOLUMNS * sizeof(char *));
-	for (i=0;i<NCOLUMNS;i++)
-	{
+	for (i = 0; i < NCOLUMNS; i++)
 		values[i] = (char *) palloc(NCHARS * sizeof(char));
-	}
 	i = 0;
 	snprintf(values[i++], NCHARS, "%lld", table_len);
 	snprintf(values[i++], NCHARS, "%lld", tuple_count);
@@ -177,19 +175,17 @@ pgstattuple(PG_FUNCTION_ARGS)
 	snprintf(values[i++], NCHARS, "%.2f", dead_tuple_percent);
 	snprintf(values[i++], NCHARS, "%lld", free_space);
 	snprintf(values[i++], NCHARS, "%.2f", free_percent);
-    
+
 	/* build a tuple */
 	tuple = BuildTupleFromCStrings(attinmeta, values);
-    
+
 	/* make the tuple into a datum */
 	result = TupleGetDatum(slot, tuple);
-    
+
 	/* Clean up */
-	for (i=0;i<NCOLUMNS;i++)
-	{
+	for (i = 0; i < NCOLUMNS; i++)
 		pfree(values[i]);
-	}
 	pfree(values);
-    
+
 	PG_RETURN_DATUM(result);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.115 2002/09/03 21:45:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.116 2002/09/04 20:31:31 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -124,13 +124,14 @@ ReverifyMyDatabase(const char *name)
 			 name);
 
 	/*
-	 * OK, we're golden.  Only other to-do item is to save the
-	 * encoding info out of the pg_database tuple.
+	 * OK, we're golden.  Only other to-do item is to save the encoding
+	 * info out of the pg_database tuple.
 	 */
 	SetDatabaseEncoding(dbform->encoding);
 	/* If we have no other source of client_encoding, use server encoding */
 	SetConfigOption("client_encoding", GetDatabaseEncodingName(),
 					PGC_BACKEND, PGC_S_DEFAULT);
+
 	/*
 	 * Set up database-specific configuration variables.
 	 */
@@ -143,7 +144,7 @@ ReverifyMyDatabase(const char *name)
 							 RelationGetDescr(pgdbrel), &isnull);
 		if (!isnull)
 		{
-			ArrayType *a = DatumGetArrayTypeP(datum);
+			ArrayType  *a = DatumGetArrayTypeP(datum);
 
 			ProcessGUCArray(a, PGC_S_DATABASE);
 		}
@@ -277,8 +278,8 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 
 	/*
-	 * Set up my per-backend PGPROC struct in shared memory.	(We need to
-	 * know MyDatabaseId before we can do this, since it's entered into
+	 * Set up my per-backend PGPROC struct in shared memory.	(We need
+	 * to know MyDatabaseId before we can do this, since it's entered into
 	 * the PGPROC struct.)
 	 */
 	InitProcess();
@@ -304,9 +305,9 @@ InitPostgres(const char *dbname, const char *username)
 	AmiTransactionOverride(bootstrap);
 
 	/*
-	 * Initialize the relation descriptor cache.  This must create
-	 * at least the minimum set of "nailed-in" cache entries.  No
-	 * catalog access happens here.
+	 * Initialize the relation descriptor cache.  This must create at
+	 * least the minimum set of "nailed-in" cache entries.	No catalog
+	 * access happens here.
 	 */
 	RelationCacheInitialize();
 
@@ -367,25 +368,26 @@ InitPostgres(const char *dbname, const char *username)
 		ReverifyMyDatabase(dbname);
 
 	/*
-	 * Final phase of relation cache startup: write a new cache file
-	 * if necessary.  This is done after ReverifyMyDatabase to avoid
-	 * writing a cache file into a dead database.
+	 * Final phase of relation cache startup: write a new cache file if
+	 * necessary.  This is done after ReverifyMyDatabase to avoid writing
+	 * a cache file into a dead database.
 	 */
 	RelationCacheInitializePhase3();
 
 	/*
-	 * Initialize various default states that can't be set up until
-	 * we've selected the active user and done ReverifyMyDatabase.
+	 * Initialize various default states that can't be set up until we've
+	 * selected the active user and done ReverifyMyDatabase.
 	 */
 
 	/* set default namespace search path */
 	InitializeSearchPath();
 
 	/*
-	 * Set up process-exit callback to do pre-shutdown cleanup.  This should
-	 * be last because we want shmem_exit to call this routine before the exit
-	 * callbacks that are registered by buffer manager, lock manager, etc.
-	 * We need to run this code before we close down database access!
+	 * Set up process-exit callback to do pre-shutdown cleanup.  This
+	 * should be last because we want shmem_exit to call this routine
+	 * before the exit callbacks that are registered by buffer manager,
+	 * lock manager, etc. We need to run this code before we close down
+	 * database access!
 	 */
 	on_shmem_exit(ShutdownPostgres, 0);
 
@@ -395,10 +397,11 @@ InitPostgres(const char *dbname, const char *username)
 
 	/*
 	 * Check a normal user hasn't connected to a superuser reserved slot.
-	 * Do this here since we need the user information and that only happens
-	 * after we've started bringing the shared memory online. So we wait
-	 * until we've registered exit handlers and potentially shut an open
-	 * transaction down for an as safety conscious rejection as possible.
+	 * Do this here since we need the user information and that only
+	 * happens after we've started bringing the shared memory online. So
+	 * we wait until we've registered exit handlers and potentially shut
+	 * an open transaction down for an as safety conscious rejection as
+	 * possible.
 	 */
 	if (CountEmptyBackendSlots() < ReservedBackends && !superuser())
 		elog(ERROR, "Non-superuser connection limit exceeded");

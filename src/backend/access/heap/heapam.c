@@ -8,12 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.147 2002/09/02 01:05:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.148 2002/09/04 20:31:09 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
  *		relation_open	- open any relation by relation OID
- *		relation_openrv	- open any relation specified by a RangeVar
+ *		relation_openrv - open any relation specified by a RangeVar
  *		relation_openr	- open a system relation by name
  *		relation_close	- close any relation
  *		heap_open		- open a heap relation by relation OID
@@ -306,7 +306,7 @@ heapgettup(Relation relation,
 		{
 			if (ItemIdIsUsed(lpp))
 			{
-				bool	valid;
+				bool		valid;
 
 				tuple->t_datamcxt = NULL;
 				tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
@@ -985,8 +985,8 @@ heap_fetch(Relation relation,
 		*userbuf = buffer;
 
 		/*
-		 * Count the successful fetch in *pgstat_info if given,
-		 * otherwise in the relation's default statistics area.
+		 * Count the successful fetch in *pgstat_info if given, otherwise
+		 * in the relation's default statistics area.
 		 */
 		if (pgstat_info != NULL)
 			pgstat_count_heap_fetch(pgstat_info);
@@ -1120,6 +1120,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		/* this is redundant with an Assert in HeapTupleSetOid */
 		Assert(tup->t_data->t_infomask & HEAP_HASOID);
 #endif
+
 		/*
 		 * If the object id of this tuple has already been assigned, trust
 		 * the caller.	There are a couple of ways this can happen.  At
@@ -1224,10 +1225,10 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 	WriteBuffer(buffer);
 
 	/*
-	 * If tuple is cachable, mark it for invalidation from the caches in case
-	 * we abort.  Note it is OK to do this after WriteBuffer releases the
-	 * buffer, because the "tup" data structure is all in local memory,
-	 * not in the shared buffer.
+	 * If tuple is cachable, mark it for invalidation from the caches in
+	 * case we abort.  Note it is OK to do this after WriteBuffer releases
+	 * the buffer, because the "tup" data structure is all in local
+	 * memory, not in the shared buffer.
 	 */
 	CacheInvalidateHeapTuple(relation, tup);
 
@@ -1379,6 +1380,7 @@ l1:
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 #ifdef TUPLE_TOASTER_ACTIVE
+
 	/*
 	 * If the relation has toastable attributes, we need to delete no
 	 * longer needed items there too.  We have to do this before
@@ -1728,10 +1730,10 @@ l2:
 	WriteBuffer(buffer);
 
 	/*
-	 * If new tuple is cachable, mark it for invalidation from the caches in
-	 * case we abort.  Note it is OK to do this after WriteBuffer releases
-	 * the buffer, because the "newtup" data structure is all in local
-	 * memory, not in the shared buffer.
+	 * If new tuple is cachable, mark it for invalidation from the caches
+	 * in case we abort.  Note it is OK to do this after WriteBuffer
+	 * releases the buffer, because the "newtup" data structure is all in
+	 * local memory, not in the shared buffer.
 	 */
 	CacheInvalidateHeapTuple(relation, newtup);
 
@@ -2045,16 +2047,16 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	xlhdr.hdr.mask = newtup->t_data->t_infomask;
 	if (move)					/* remember xmin & xmax */
 	{
-		TransactionId xid[2];   /* xmax, xmin */
+		TransactionId xid[2];	/* xmax, xmin */
 
 		if (newtup->t_data->t_infomask & (HEAP_XMAX_INVALID |
-		                                  HEAP_MARKED_FOR_UPDATE))
+										  HEAP_MARKED_FOR_UPDATE))
 			xid[0] = InvalidTransactionId;
 		else
 			xid[0] = HeapTupleHeaderGetXmax(newtup->t_data);
 		xid[1] = HeapTupleHeaderGetXmin(newtup->t_data);
 		memcpy((char *) &xlhdr + hsize,
-		       (char *) xid,
+			   (char *) xid,
 			   2 * sizeof(TransactionId));
 		hsize += 2 * sizeof(TransactionId);
 	}
@@ -2143,7 +2145,7 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	PageRepairFragmentation(page, NULL);
 
 	PageSetLSN(page, lsn);
-	PageSetSUI(page, ThisStartUpID); /* prev sui */
+	PageSetSUI(page, ThisStartUpID);	/* prev sui */
 	UnlockAndWriteBuffer(buffer);
 }
 
@@ -2463,11 +2465,11 @@ newsame:;
 
 		if (move)
 		{
-			TransactionId xid[2];   /* xmax, xmin */
-			
+			TransactionId xid[2];		/* xmax, xmin */
+
 			hsize = SizeOfHeapUpdate + SizeOfHeapHeader;
 			memcpy((char *) xid,
-			       (char *) xlrec + hsize, 2 * sizeof(TransactionId));
+				   (char *) xlrec + hsize, 2 * sizeof(TransactionId));
 			htup->t_infomask = xlhdr.mask;
 			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED |
 								  HEAP_XMIN_INVALID |

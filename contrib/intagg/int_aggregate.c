@@ -11,7 +11,7 @@
  * This file is the property of the Digital Music Network (DMN).
  * It is being made available to users of the PostgreSQL system
  * under the BSD license.
- * 
+ *
  * NOTE: This module requires sizeof(void *) to be the same as sizeof(int)
  */
 #include "postgres.h"
@@ -45,31 +45,31 @@
 
 typedef struct
 {
-	ArrayType a;
-	int 	items;
-	int 	lower;
-	int4	array[1];
-}PGARRAY;
+	ArrayType	a;
+	int			items;
+	int			lower;
+	int4		array[1];
+}	PGARRAY;
 
 /* This is used to keep track of our position during enumeration */
 typedef struct callContext
 {
-	PGARRAY *p;
-	int num;
-	int flags;
-}CTX;
+	PGARRAY    *p;
+	int			num;
+	int			flags;
+}	CTX;
 
 #define TOASTED		1
-#define START_NUM 	8
+#define START_NUM	8
 #define PGARRAY_SIZE(n) (sizeof(PGARRAY) + ((n-1)*sizeof(int4)))
 
-static PGARRAY * GetPGArray(int4 state, int fAdd);
-static PGARRAY *ShrinkPGArray(PGARRAY *p);
+static PGARRAY *GetPGArray(int4 state, int fAdd);
+static PGARRAY *ShrinkPGArray(PGARRAY * p);
 
-Datum int_agg_state(PG_FUNCTION_ARGS);
-Datum int_agg_final_count(PG_FUNCTION_ARGS);
-Datum int_agg_final_array(PG_FUNCTION_ARGS);
-Datum int_enum(PG_FUNCTION_ARGS);
+Datum		int_agg_state(PG_FUNCTION_ARGS);
+Datum		int_agg_final_count(PG_FUNCTION_ARGS);
+Datum		int_agg_final_array(PG_FUNCTION_ARGS);
+Datum		int_enum(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(int_agg_state);
 PG_FUNCTION_INFO_V1(int_agg_final_count);
@@ -80,20 +80,21 @@ PG_FUNCTION_INFO_V1(int_enum);
  * Manage the aggregation state of the array
  * You need to specify the correct memory context, or it will vanish!
  */
-static PGARRAY * GetPGArray(int4 state, int fAdd)
+static PGARRAY *
+GetPGArray(int4 state, int fAdd)
 {
-	PGARRAY *p = (PGARRAY *) state;
+	PGARRAY    *p = (PGARRAY *) state;
 
-	if(!state)
+	if (!state)
 	{
 		/* New array */
-		int cb = PGARRAY_SIZE(START_NUM);
+		int			cb = PGARRAY_SIZE(START_NUM);
 
 		p = (PGARRAY *) MemoryContextAlloc(TopTransactionContext, cb);
 
-		if(!p)
+		if (!p)
 		{
-			elog(ERROR,"Integer aggregator, cant allocate TopTransactionContext memory");
+			elog(ERROR, "Integer aggregator, cant allocate TopTransactionContext memory");
 			return 0;
 		}
 
@@ -104,22 +105,22 @@ static PGARRAY * GetPGArray(int4 state, int fAdd)
 		p->a.elemtype = INT4OID;
 #endif
 		p->items = 0;
-		p->lower= START_NUM;
+		p->lower = START_NUM;
 	}
-	else if(fAdd)
-	{	/* Ensure array has space */
-		if(p->items >= p->lower)
+	else if (fAdd)
+	{							/* Ensure array has space */
+		if (p->items >= p->lower)
 		{
-			PGARRAY *pn;
-			int n = p->lower + p->lower;
-			int cbNew = PGARRAY_SIZE(n);
+			PGARRAY    *pn;
+			int			n = p->lower + p->lower;
+			int			cbNew = PGARRAY_SIZE(n);
 
 			pn = (PGARRAY *) repalloc(p, cbNew);
 
-			if(!pn)
-			{	/* Realloc failed! Reallocate new block. */
+			if (!pn)
+			{					/* Realloc failed! Reallocate new block. */
 				pn = (PGARRAY *) MemoryContextAlloc(TopTransactionContext, cbNew);
-				if(!pn)
+				if (!pn)
 				{
 					elog(ERROR, "Integer aggregator, REALLY REALLY can't alloc memory");
 					return (PGARRAY *) NULL;
@@ -136,24 +137,29 @@ static PGARRAY * GetPGArray(int4 state, int fAdd)
 }
 
 /* Shrinks the array to its actual size and moves it into the standard
- * memory allocation context, frees working memory  */
-static PGARRAY *ShrinkPGArray(PGARRAY *p)
+ * memory allocation context, frees working memory	*/
+static PGARRAY *
+ShrinkPGArray(PGARRAY * p)
 {
-	PGARRAY *pnew=NULL;
-	if(p)
+	PGARRAY    *pnew = NULL;
+
+	if (p)
 	{
 		/* get target size */
-		int cb = PGARRAY_SIZE(p->items);
+		int			cb = PGARRAY_SIZE(p->items);
 
 		/* use current transaction context */
 		pnew = palloc(cb);
 
-		if(pnew)
+		if (pnew)
 		{
-			/* Fix up the fields in the new structure, so Postgres understands */
+			/*
+			 * Fix up the fields in the new structure, so Postgres
+			 * understands
+			 */
 			memcpy(pnew, p, cb);
 			pnew->a.size = cb;
-			pnew->a.ndim=1;
+			pnew->a.ndim = 1;
 			pnew->a.flags = 0;
 #ifndef PG_7_2
 			pnew->a.elemtype = INT4OID;
@@ -161,79 +167,72 @@ static PGARRAY *ShrinkPGArray(PGARRAY *p)
 			pnew->lower = 0;
 		}
 		else
-		{
 			elog(ERROR, "Integer aggregator, can't allocate memory");
-		}
 		pfree(p);
 	}
 	return pnew;
 }
 
 /* Called for each iteration during an aggregate function */
-Datum int_agg_state(PG_FUNCTION_ARGS)
+Datum
+int_agg_state(PG_FUNCTION_ARGS)
 {
-	int4 state = PG_GETARG_INT32(0);
-	int4 value = PG_GETARG_INT32(1);
+	int4		state = PG_GETARG_INT32(0);
+	int4		value = PG_GETARG_INT32(1);
 
-	PGARRAY *p = GetPGArray(state, 1);
-	if(!p)
-	{
-		elog(ERROR,"No aggregate storage");
-	}
-	else if(p->items >= p->lower)
-	{
-		elog(ERROR,"aggregate storage too small");
-	}
+	PGARRAY    *p = GetPGArray(state, 1);
+
+	if (!p)
+		elog(ERROR, "No aggregate storage");
+	else if (p->items >= p->lower)
+		elog(ERROR, "aggregate storage too small");
 	else
-	{
-		p->array[p->items++]= value;
-	}
+		p->array[p->items++] = value;
 	PG_RETURN_INT32(p);
 }
 
 /* This is the final function used for the integer aggregator. It returns all the integers
  * collected as a one dimentional integer array */
-Datum int_agg_final_array(PG_FUNCTION_ARGS)
+Datum
+int_agg_final_array(PG_FUNCTION_ARGS)
 {
-	PGARRAY *pnew = ShrinkPGArray(GetPGArray(PG_GETARG_INT32(0),0));
-	if(pnew)
-	{
+	PGARRAY    *pnew = ShrinkPGArray(GetPGArray(PG_GETARG_INT32(0), 0));
+
+	if (pnew)
 		PG_RETURN_POINTER(pnew);
-	}
 	else
-	{
 		PG_RETURN_NULL();
-	}
 }
 
 /* This function accepts an array, and returns one item for each entry in the array */
-Datum int_enum(PG_FUNCTION_ARGS)
+Datum
+int_enum(PG_FUNCTION_ARGS)
 {
-	PGARRAY *p = (PGARRAY *) PG_GETARG_POINTER(0);
-	CTX *pc;
-	ReturnSetInfo *rsi = (ReturnSetInfo *)fcinfo->resultinfo;
+	PGARRAY    *p = (PGARRAY *) PG_GETARG_POINTER(0);
+	CTX		   *pc;
+	ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
 
 	if (!rsi || !IsA(rsi, ReturnSetInfo))
 		elog(ERROR, "No ReturnSetInfo sent! function must be declared returning a 'setof' integer");
 
-	if(!p)
+	if (!p)
 	{
 		elog(WARNING, "No data sent");
 		PG_RETURN_NULL();
 	}
 
-	if(!fcinfo->context)
+	if (!fcinfo->context)
 	{
 		/* Allocate a working context */
 		pc = (CTX *) palloc(sizeof(CTX));
 
 		/* Don't copy atribute if you don't need too */
-		if(VARATT_IS_EXTENDED(p) )
+		if (VARATT_IS_EXTENDED(p))
 		{
 			/* Toasted!!! */
 			pc->p = (PGARRAY *) PG_DETOAST_DATUM_COPY(p);
 			pc->flags = TOASTED;
-			if(!pc->p)
+			if (!pc->p)
 			{
 				elog(ERROR, "Error in toaster!!! no detoasting");
 				PG_RETURN_NULL();
@@ -246,25 +245,26 @@ Datum int_enum(PG_FUNCTION_ARGS)
 			pc->flags = 0;
 		}
 		fcinfo->context = (Node *) pc;
-		pc->num=0;
+		pc->num = 0;
 	}
-	else /* use an existing one */
-	{
+	else
+/* use an existing one */
 		pc = (CTX *) fcinfo->context;
-	}
 	/* Are we done yet? */
-	if(pc->num >= pc->p->items)
+	if (pc->num >= pc->p->items)
 	{
 		/* We are done */
-		if(pc->flags & TOASTED)
+		if (pc->flags & TOASTED)
 			pfree(pc->p);
 		pfree(fcinfo->context);
 		fcinfo->context = NULL;
-		rsi->isDone = ExprEndResult ;
+		rsi->isDone = ExprEndResult;
 	}
-	else	/* nope, return the next value */
+	else
+/* nope, return the next value */
 	{
-		int val = pc->p->array[pc->num++];
+		int			val = pc->p->array[pc->num++];
+
 		rsi->isDone = ExprMultipleResult;
 		PG_RETURN_INT32(val);
 	}

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.25 2002/08/28 20:46:24 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.26 2002/09/04 20:31:28 momjian Exp $
  */
 
 #include "postgres.h"
@@ -81,7 +81,7 @@ macaddr_out(PG_FUNCTION_ARGS)
 	result = (char *) palloc(32);
 
 	snprintf(result, 32, "%02x:%02x:%02x:%02x:%02x:%02x",
-			addr->a, addr->b, addr->c, addr->d, addr->e, addr->f);
+			 addr->a, addr->b, addr->c, addr->d, addr->e, addr->f);
 
 	PG_RETURN_CSTRING(result);
 }

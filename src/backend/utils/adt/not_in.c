@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.31 2002/08/02 18:15:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.32 2002/09/04 20:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,8 +60,8 @@ int4notin(PG_FUNCTION_ARGS)
 	nnames = length(names);
 	if (nnames < 2)
 		elog(ERROR, "int4notin: must provide relationname.attributename");
-	attribute = strVal(nth(nnames-1, names));
-	names = ltruncate(nnames-1, names);
+	attribute = strVal(nth(nnames - 1, names));
+	names = ltruncate(nnames - 1, names);
 	relrv = makeRangeVarFromNameList(names);
 
 	/* Open the relation and get a relation descriptor */

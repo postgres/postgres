@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.140 2002/09/02 01:05:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.141 2002/09/04 20:31:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ usage(void)
 {
 	fprintf(stderr,
 			gettext("Usage:\n"
-	"  postgres -boot [-d level] [-D datadir] [-F] [-o file] [-x num] dbname\n"
+					"  postgres -boot [-d level] [-D datadir] [-F] [-o file] [-x num] dbname\n"
 					"  -d 1-5           debug mode\n"
 					"  -D datadir       data directory\n"
 					"  -F               turn off fsync\n"
@@ -235,9 +235,7 @@ BootstrapMain(int argc, char *argv[])
 	 * If we are running under the postmaster, this is done already.
 	 */
 	if (!IsUnderPostmaster)
-	{
 		MemoryContextInit();
-	}
 
 	/*
 	 * process command arguments
@@ -260,18 +258,19 @@ BootstrapMain(int argc, char *argv[])
 				potential_DataDir = optarg;
 				break;
 			case 'd':
-			{
-				/* Turn on debugging for the bootstrap process. */
-				char *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
-				sprintf(debugstr, "debug%s", optarg);
-				SetConfigOption("server_min_messages", debugstr,
-								PGC_POSTMASTER, PGC_S_ARGV);
-				SetConfigOption("client_min_messages", debugstr,
-								PGC_POSTMASTER, PGC_S_ARGV);
-				pfree(debugstr);
+				{
+					/* Turn on debugging for the bootstrap process. */
+					char	   *debugstr = palloc(strlen("debug") + strlen(optarg) + 1);
+
+					sprintf(debugstr, "debug%s", optarg);
+					SetConfigOption("server_min_messages", debugstr,
+									PGC_POSTMASTER, PGC_S_ARGV);
+					SetConfigOption("client_min_messages", debugstr,
+									PGC_POSTMASTER, PGC_S_ARGV);
+					pfree(debugstr);
+					break;
+				}
 				break;
-			}
-			break;
 			case 'F':
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
@@ -391,7 +390,8 @@ BootstrapMain(int argc, char *argv[])
 				InitDummyProcess();		/* needed to get LWLocks */
 			CreateDummyCaches();
 			CreateCheckPoint(false);
-			SetSavedRedoRecPtr(); /* pass redo ptr back to postmaster */
+			SetSavedRedoRecPtr();		/* pass redo ptr back to
+										 * postmaster */
 			proc_exit(0);		/* done */
 
 		case BS_XLOG_STARTUP:
@@ -587,7 +587,7 @@ DefineAttr(char *name, char *type, int attnum)
 
 	namestrcpy(&attrtypes[attnum]->attname, name);
 	elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
-	attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
+	attrtypes[attnum]->attnum = 1 + attnum;		/* fillatt */
 
 	typeoid = gettype(type);
 
@@ -640,14 +640,15 @@ DefineAttr(char *name, char *type, int attnum)
 	}
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
+
 	/*
-	 * Mark as "not null" if type is fixed-width and prior columns are too.
-	 * This corresponds to case where column can be accessed directly via
-	 * C struct declaration.
+	 * Mark as "not null" if type is fixed-width and prior columns are
+	 * too. This corresponds to case where column can be accessed directly
+	 * via C struct declaration.
 	 */
 	if (attlen > 0)
 	{
-		int		i;
+		int			i;
 
 		for (i = 0; i < attnum; i++)
 		{
@@ -829,7 +830,7 @@ cleanup()
  * and not an OID at all, until the first reference to a type not known in
  * Procid[].  At that point it will read and cache pg_type in the Typ array,
  * and subsequently return a real OID (and set the global pointer Ap to
- * point at the found row in Typ).  So caller must check whether Typ is
+ * point at the found row in Typ).	So caller must check whether Typ is
  * still NULL to determine what the return value is!
  * ----------------
  */

@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.52 2002/09/02 02:47:04 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.53 2002/09/04 20:31:28 momjian Exp $
  *
  * ----------
  */
@@ -152,7 +152,7 @@ static void add_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void sub_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void mul_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void div_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
-static int select_div_scale(NumericVar *var1, NumericVar *var2);
+static int	select_div_scale(NumericVar *var1, NumericVar *var2);
 static void mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result);
 static void ceil_var(NumericVar *var, NumericVar *result);
 static void floor_var(NumericVar *var, NumericVar *result);
@@ -1906,7 +1906,7 @@ numeric_variance(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		mul_var(&vN, &vNminus1, &vNminus1);	/* N * (N - 1) */
+		mul_var(&vN, &vNminus1, &vNminus1);		/* N * (N - 1) */
 		div_dscale = select_div_scale(&vsumX2, &vNminus1);
 		div_var(&vsumX2, &vNminus1, &vsumX);	/* variance */
 		vsumX.dscale = div_dscale;
@@ -1985,7 +1985,7 @@ numeric_stddev(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		mul_var(&vN, &vNminus1, &vNminus1); /* N * (N - 1) */
+		mul_var(&vN, &vNminus1, &vNminus1);		/* N * (N - 1) */
 		div_dscale = select_div_scale(&vsumX2, &vNminus1);
 		div_var(&vsumX2, &vNminus1, &vsumX);	/* variance */
 		vsumX.dscale = div_dscale;

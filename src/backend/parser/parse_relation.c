@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.78 2002/08/29 00:17:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.79 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,14 +36,14 @@
 static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 						const char *refname);
 static Node *scanNameSpaceForRelid(ParseState *pstate, Node *nsnode,
-								   Oid relid);
+					  Oid relid);
 static void scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 						 RangeTblEntry *rte1, const char *aliasname1);
 static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 				 char *colname);
 static bool isForUpdate(ParseState *pstate, char *refname);
 static bool get_rte_attribute_is_dropped(RangeTblEntry *rte,
-										 AttrNumber attnum);
+							 AttrNumber attnum);
 static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
@@ -64,7 +64,7 @@ static void warnAutoRange(ParseState *pstate, RangeVar *relation);
  *
  * A qualified refname (schemaname != NULL) can only match a relation RTE
  * that (a) has no alias and (b) is for the same relation identified by
- * schemaname.refname.  In this case we convert schemaname.refname to a
+ * schemaname.refname.	In this case we convert schemaname.refname to a
  * relation OID and search by relid, rather than by alias name.  This is
  * peculiar, but it's what SQL92 says to do.
  */
@@ -189,7 +189,7 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 
 /*
  * Recursively search a namespace for a relation RTE matching the
- * given relation OID.  Return the node if a unique match, or NULL
+ * given relation OID.	Return the node if a unique match, or NULL
  * if no match.  Raise error if multiple matches (which shouldn't
  * happen if the namespace was checked correctly when it was created).
  *
@@ -313,9 +313,7 @@ checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 		List	   *l;
 
 		foreach(l, (List *) namespace1)
-		{
 			checkNameSpaceConflicts(pstate, lfirst(l), namespace2);
-		}
 	}
 	else
 		elog(ERROR, "checkNameSpaceConflicts: unexpected node type %d",
@@ -353,6 +351,7 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 			if (strcmp(j->alias->aliasname, aliasname1) == 0)
 				elog(ERROR, "Table name \"%s\" specified more than once",
 					 aliasname1);
+
 			/*
 			 * Tables within an aliased join are invisible from outside
 			 * the join, according to the scope rules of SQL92 (the join
@@ -368,9 +367,7 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 		List	   *l;
 
 		foreach(l, (List *) nsnode)
-		{
 			scanNameSpaceForConflict(pstate, lfirst(l), rte1, aliasname1);
-		}
 	}
 	else
 		elog(ERROR, "scanNameSpaceForConflict: unexpected node type %d",
@@ -438,16 +435,16 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	 * Scan the user column names (or aliases) for a match. Complain if
 	 * multiple matches.
 	 *
-	 * Note: because eref->colnames may include names of dropped columns,
-	 * we need to check for non-droppedness before accepting a match.
-	 * This takes an extra cache lookup, but we can skip the lookup most
-	 * of the time by exploiting the knowledge that dropped columns are
-	 * assigned dummy names starting with '.', which is an unusual choice
-	 * for actual column names.
+	 * Note: because eref->colnames may include names of dropped columns, we
+	 * need to check for non-droppedness before accepting a match. This
+	 * takes an extra cache lookup, but we can skip the lookup most of the
+	 * time by exploiting the knowledge that dropped columns are assigned
+	 * dummy names starting with '.', which is an unusual choice for
+	 * actual column names.
 	 *
-	 * Should the user try to fool us by altering pg_attribute.attname
-	 * for a dropped column, we'll still catch it by virtue of the checks
-	 * in get_rte_attribute_type(), which is called by make_var().  That
+	 * Should the user try to fool us by altering pg_attribute.attname for a
+	 * dropped column, we'll still catch it by virtue of the checks in
+	 * get_rte_attribute_type(), which is called by make_var().  That
 	 * routine has to do a cache lookup anyway, so the check there is
 	 * cheap.
 	 */
@@ -456,7 +453,7 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 		attnum++;
 		if (strcmp(strVal(lfirst(c)), colname) == 0)
 		{
-			if (colname[0] == '.' && /* see note above */
+			if (colname[0] == '.' &&	/* see note above */
 				get_rte_attribute_is_dropped(rte, attnum))
 				continue;
 			if (result)
@@ -903,8 +900,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	if (coldeflist != NIL)
 	{
 		/*
-		 * we *only* allow a coldeflist for functions returning a
-		 * RECORD pseudo-type
+		 * we *only* allow a coldeflist for functions returning a RECORD
+		 * pseudo-type
 		 */
 		if (funcrettype != RECORDOID)
 			elog(ERROR, "A column definition list is only allowed for functions returning RECORD");
@@ -935,14 +932,14 @@ addRangeTableEntryForFunction(ParseState *pstate,
 				 funcrettype);
 
 		/*
-		 * Get the rel's relcache entry.  This access ensures that we have an
-		 * up-to-date relcache entry for the rel.
+		 * Get the rel's relcache entry.  This access ensures that we have
+		 * an up-to-date relcache entry for the rel.
 		 */
 		rel = relation_open(funcrelid, AccessShareLock);
 
 		/*
-		 * Since the rel is open anyway, let's check that the number of column
-		 * aliases is reasonable.
+		 * Since the rel is open anyway, let's check that the number of
+		 * column aliases is reasonable.
 		 */
 		maxattrs = RelationGetNumberOfAttributes(rel);
 		if (maxattrs < numaliases)
@@ -960,16 +957,16 @@ addRangeTableEntryForFunction(ParseState *pstate,
 
 		/*
 		 * Drop the rel refcount, but keep the access lock till end of
-		 * transaction so that the table can't be deleted or have its schema
-		 * modified underneath us.
+		 * transaction so that the table can't be deleted or have its
+		 * schema modified underneath us.
 		 */
 		relation_close(rel, NoLock);
 	}
 	else if (functyptype == 'b' || functyptype == 'd')
 	{
 		/*
-		 * Must be a base data type, i.e. scalar.
-		 * Just add one alias column named for the function.
+		 * Must be a base data type, i.e. scalar. Just add one alias
+		 * column named for the function.
 		 */
 		if (numaliases > 1)
 			elog(ERROR, "Too many column aliases specified for function %s",
@@ -1270,17 +1267,17 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		case RTE_FUNCTION:
 			{
 				/* Function RTE */
-				Oid	funcrettype = exprType(rte->funcexpr);
-				char functyptype = get_typtype(funcrettype);
-				List *coldeflist = rte->coldeflist;
+				Oid			funcrettype = exprType(rte->funcexpr);
+				char		functyptype = get_typtype(funcrettype);
+				List	   *coldeflist = rte->coldeflist;
 
 				if (functyptype == 'c')
 				{
 					/*
-					 * Composite data type, i.e. a table's row type
-					 * Same as ordinary relation RTE
+					 * Composite data type, i.e. a table's row type Same
+					 * as ordinary relation RTE
 					 */
-					Oid	funcrelid = typeidTypeRelid(funcrettype);
+					Oid			funcrelid = typeidTypeRelid(funcrettype);
 					Relation	rel;
 					int			maxattrs;
 					int			numaliases;
@@ -1373,10 +1370,10 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 							atttypid = typenameTypeId(colDef->typename);
 
 							varnode = makeVar(rtindex,
-											attnum,
-											atttypid,
-											-1,
-											sublevels_up);
+											  attnum,
+											  atttypid,
+											  -1,
+											  sublevels_up);
 
 							*colvars = lappend(*colvars, varnode);
 						}
@@ -1495,9 +1492,9 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 
 	/*
 	 * If the RTE is a relation, go to the system catalogs not the
-	 * eref->colnames list.  This is a little slower but it will give
-	 * the right answer if the column has been renamed since the eref
-	 * list was built (which can easily happen for rules).
+	 * eref->colnames list.  This is a little slower but it will give the
+	 * right answer if the column has been renamed since the eref list was
+	 * built (which can easily happen for rules).
 	 */
 	if (rte->rtekind == RTE_RELATION)
 	{
@@ -1509,7 +1506,8 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	}
 
 	/*
-	 * Otherwise use the column name from eref.  There should always be one.
+	 * Otherwise use the column name from eref.  There should always be
+	 * one.
 	 */
 	if (attnum > 0 && attnum <= length(rte->eref->colnames))
 		return strVal(nth(attnum - 1, rte->eref->colnames));
@@ -1544,13 +1542,14 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					elog(ERROR, "Relation \"%s\" does not have attribute %d",
 						 get_rel_name(rte->relid), attnum);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
 				/*
 				 * If dropped column, pretend it ain't there.  See notes
 				 * in scanRTEForColumn.
 				 */
 				if (att_tup->attisdropped)
 					elog(ERROR, "Relation \"%s\" has no column \"%s\"",
-						 get_rel_name(rte->relid), NameStr(att_tup->attname));
+					get_rel_name(rte->relid), NameStr(att_tup->attname));
 				*vartype = att_tup->atttypid;
 				*vartypmod = att_tup->atttypmod;
 				ReleaseSysCache(tp);
@@ -1579,19 +1578,19 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		case RTE_FUNCTION:
 			{
 				/* Function RTE */
-				Oid funcrettype = exprType(rte->funcexpr);
-				char functyptype = get_typtype(funcrettype);
-				List *coldeflist = rte->coldeflist;
+				Oid			funcrettype = exprType(rte->funcexpr);
+				char		functyptype = get_typtype(funcrettype);
+				List	   *coldeflist = rte->coldeflist;
 
 				if (functyptype == 'c')
 				{
 					/*
-					 * Composite data type, i.e. a table's row type
-					 * Same as ordinary relation RTE
+					 * Composite data type, i.e. a table's row type Same
+					 * as ordinary relation RTE
 					 */
-					Oid funcrelid = typeidTypeRelid(funcrettype);
-					HeapTuple			tp;
-					Form_pg_attribute	att_tup;
+					Oid			funcrelid = typeidTypeRelid(funcrettype);
+					HeapTuple	tp;
+					Form_pg_attribute att_tup;
 
 					if (!OidIsValid(funcrelid))
 						elog(ERROR, "Invalid typrelid for complex type %u",
@@ -1606,9 +1605,10 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 						elog(ERROR, "Relation \"%s\" does not have attribute %d",
 							 get_rel_name(funcrelid), attnum);
 					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+
 					/*
-					 * If dropped column, pretend it ain't there.  See notes
-					 * in scanRTEForColumn.
+					 * If dropped column, pretend it ain't there.  See
+					 * notes in scanRTEForColumn.
 					 */
 					if (att_tup->attisdropped)
 						elog(ERROR, "Relation \"%s\" has no column \"%s\"",
@@ -1639,11 +1639,14 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 			break;
 		case RTE_JOIN:
 			{
-				/* Join RTE --- get type info from join RTE's alias variable */
-				Node   *aliasvar;
+				/*
+				 * Join RTE --- get type info from join RTE's alias
+				 * variable
+				 */
+				Node	   *aliasvar;
 
 				Assert(attnum > 0 && attnum <= length(rte->joinaliasvars));
-				aliasvar = (Node *) nth(attnum-1, rte->joinaliasvars);
+				aliasvar = (Node *) nth(attnum - 1, rte->joinaliasvars);
 				*vartype = exprType(aliasvar);
 				*vartypmod = exprTypmod(aliasvar);
 			}
@@ -1661,7 +1664,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 static bool
 get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 {
-	bool result;
+	bool		result;
 
 	switch (rte->rtekind)
 	{
@@ -1698,11 +1701,11 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 				if (OidIsValid(funcrelid))
 				{
 					/*
-					 * Composite data type, i.e. a table's row type
-					 * Same as ordinary relation RTE
+					 * Composite data type, i.e. a table's row type Same
+					 * as ordinary relation RTE
 					 */
-					HeapTuple			tp;
-					Form_pg_attribute	att_tup;
+					HeapTuple	tp;
+					Form_pg_attribute att_tup;
 
 					tp = SearchSysCache(ATTNUM,
 										ObjectIdGetDatum(funcrelid),
@@ -1748,7 +1751,7 @@ attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
-		Form_pg_attribute	att = rd->rd_att->attrs[i];
+		Form_pg_attribute att = rd->rd_att->attrs[i];
 
 		if (namestrcmp(&(att->attname), attname) == 0 && !att->attisdropped)
 			return i + 1;

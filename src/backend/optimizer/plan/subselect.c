@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.54 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.55 2002/09/04 20:31:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -369,7 +369,7 @@ make_subplan(SubLink *slink)
 			}
 			if (use_material)
 			{
-				Plan   *matplan;
+				Plan	   *matplan;
 
 				matplan = (Plan *) make_material(plan->targetlist, plan);
 				/* kluge --- see comments above */
@@ -663,8 +663,8 @@ SS_finalize_plan(Plan *plan, List *rtable)
 		case T_Append:
 			foreach(lst, ((Append *) plan)->appendplans)
 				results.paramids = set_unioni(results.paramids,
-								 SS_finalize_plan((Plan *) lfirst(lst),
-												  rtable));
+								   SS_finalize_plan((Plan *) lfirst(lst),
+													rtable));
 			break;
 
 		case T_NestLoop:

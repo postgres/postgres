@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.34 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.35 2002/09/04 20:31:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ gistgettuple(PG_FUNCTION_ARGS)
 {
 	IndexScanDesc s = (IndexScanDesc) PG_GETARG_POINTER(0);
 	ScanDirection dir = (ScanDirection) PG_GETARG_INT32(1);
-	bool res;
+	bool		res;
 
 	/* if we have it cached in the scan desc, just return the value */
 	if (gistscancache(s, dir))

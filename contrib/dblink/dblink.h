@@ -74,6 +74,6 @@ extern Datum dblink_build_sql_delete(PG_FUNCTION_ARGS);
 extern Datum dblink_build_sql_update(PG_FUNCTION_ARGS);
 extern Datum dblink_current_query(PG_FUNCTION_ARGS);
 
-extern char	*debug_query_string;
+extern char *debug_query_string;
 
 #endif   /* DBLINK_H */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.12 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.13 2002/09/04 20:31:25 momjian Exp $
  *
  *
  * NOTES:
@@ -850,7 +850,7 @@ insert_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page, Size spaceAvail,
 			FSMChunk   *newChunk;
 
 			if ((newChunk = FreeSpaceMap->freeChunks) == NULL)
-				return false;		/* can't do it */
+				return false;	/* can't do it */
 			FreeSpaceMap->freeChunks = newChunk->next;
 			FreeSpaceMap->numFreeChunks--;
 			newChunk->next = NULL;
@@ -874,21 +874,25 @@ insert_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page, Size spaceAvail,
 			}
 		}
 
-		/* Try to insert it the easy way, ie, just move down subsequent data */
+		/*
+		 * Try to insert it the easy way, ie, just move down subsequent
+		 * data
+		 */
 		if (chunk &&
 			push_fsm_page_entry(page, spaceAvail, chunk, chunkRelIndex))
 		{
 			fsmrel->numPages++;
-			fsmrel->nextPage++;		/* don't return same page twice running */
+			fsmrel->nextPage++; /* don't return same page twice running */
 			return true;
 		}
 
 		/*
-		 * There is space available, but evidently it's before the place where
-		 * the page entry needs to go.	Compact the list and try again. This
-		 * will require us to redo the search for the appropriate place.
-		 * Furthermore, compact_fsm_page_list deletes empty end chunks, so
-		 * we may need to repeat the action of grabbing a new end chunk.
+		 * There is space available, but evidently it's before the place
+		 * where the page entry needs to go.  Compact the list and try
+		 * again. This will require us to redo the search for the
+		 * appropriate place. Furthermore, compact_fsm_page_list deletes
+		 * empty end chunks, so we may need to repeat the action of
+		 * grabbing a new end chunk.
 		 */
 		compact_fsm_page_list(fsmrel);
 		if (lookup_fsm_page_entry(fsmrel, page, &chunk, &chunkRelIndex))

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.86 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.87 2002/09/04 20:31:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
 /* Max size of username ident server can return */
 
 /* This is used to separate values in multi-valued column strings */
-#define MULTI_VALUE_SEP	"\001"
+#define MULTI_VALUE_SEP "\001"
 
 /*
  * These variables hold the pre-parsed contents of the hba and ident
@@ -54,14 +54,16 @@
  */
 static List *hba_lines = NIL;	/* pre-parsed contents of hba file */
 static List *ident_lines = NIL; /* pre-parsed contents of ident file */
-static List *group_lines = NIL;	/* pre-parsed contents of group file */
-static List *user_lines = NIL;	/* pre-parsed contents of user password file */
+static List *group_lines = NIL; /* pre-parsed contents of group file */
+static List *user_lines = NIL;	/* pre-parsed contents of user password
+								 * file */
 
 /* sorted entries so we can do binary search lookups */
-static List **user_sorted = NULL;	/* sorted user list, for bsearch() */
-static List **group_sorted = NULL;	/* sorted group list, for bsearch() */
-static int  user_length;
-static int  group_length;
+static List **user_sorted = NULL;		/* sorted user list, for bsearch() */
+static List **group_sorted = NULL;		/* sorted group list, for
+										 * bsearch() */
+static int	user_length;
+static int	group_length;
 
 static List *tokenize_file(FILE *file);
 static char *tokenize_inc_file(const char *inc_filename);
@@ -78,14 +80,14 @@ isblank(const char c)
 
 
 /*
- *   Grab one token out of fp. Tokens are strings of non-blank
- *   characters bounded by blank characters, beginning of line, and
- *   end of line. Blank means space or tab. Return the token as
- *   *buf. Leave file positioned to character immediately after the
- *   token or EOF, whichever comes first. If no more tokens on line,
- *   return null string as *buf and position file to beginning of
- *   next line or EOF, whichever comes first. Allow spaces in quoted
- *   strings. Terminate on unquoted commas. Handle comments.
+ *	 Grab one token out of fp. Tokens are strings of non-blank
+ *	 characters bounded by blank characters, beginning of line, and
+ *	 end of line. Blank means space or tab. Return the token as
+ *	 *buf. Leave file positioned to character immediately after the
+ *	 token or EOF, whichever comes first. If no more tokens on line,
+ *	 return null string as *buf and position file to beginning of
+ *	 next line or EOF, whichever comes first. Allow spaces in quoted
+ *	 strings. Terminate on unquoted commas. Handle comments.
  */
 void
 next_token(FILE *fp, char *buf, const int bufsz)
@@ -102,8 +104,8 @@ next_token(FILE *fp, char *buf, const int bufsz)
 	if (c != EOF && c != '\n')
 	{
 		/*
-		 * Build a token in buf of next characters up to EOF, EOL, unquoted
-		 * comma, or unquoted whitespace.
+		 * Build a token in buf of next characters up to EOF, EOL,
+		 * unquoted comma, or unquoted whitespace.
 		 */
 		while (c != EOF && c != '\n' &&
 			   (!isblank(c) || in_quote == true))
@@ -156,9 +158,9 @@ next_token(FILE *fp, char *buf, const int bufsz)
 }
 
 /*
- *   Tokenize file and handle file inclusion and comma lists. We have
- *   to  break  apart  the  commas  to  expand  any  file names then
- *   reconstruct with commas.
+ *	 Tokenize file and handle file inclusion and comma lists. We have
+ *	 to  break	apart  the	commas	to	expand	any  file names then
+ *	 reconstruct with commas.
  */
 static char *
 next_token_expand(FILE *file)
@@ -174,17 +176,17 @@ next_token_expand(FILE *file)
 		if (!*buf)
 			break;
 
-		if (buf[strlen(buf)-1] == ',')
+		if (buf[strlen(buf) - 1] == ',')
 		{
 			trailing_comma = true;
-			buf[strlen(buf)-1] = '\0';
+			buf[strlen(buf) - 1] = '\0';
 		}
 		else
 			trailing_comma = false;
 
 		/* Is this referencing a file? */
 		if (buf[0] == '@')
-			incbuf = tokenize_inc_file(buf+1);
+			incbuf = tokenize_inc_file(buf + 1);
 		else
 			incbuf = pstrdup(buf);
 
@@ -238,7 +240,7 @@ tokenize_inc_file(const char *inc_filename)
 {
 	char	   *inc_fullname;
 	FILE	   *inc_file;
-	List 	   *inc_lines;
+	List	   *inc_lines;
 	List	   *line;
 	char	   *comma_str = pstrdup("");
 
@@ -279,7 +281,7 @@ tokenize_inc_file(const char *inc_filename)
 				strcat(comma_str, MULTI_VALUE_SEP);
 			}
 			comma_str = repalloc(comma_str,
-						strlen(comma_str) + strlen(lfirst(token)) + 1);
+						  strlen(comma_str) + strlen(lfirst(token)) + 1);
 			strcat(comma_str, lfirst(token));
 		}
 	}
@@ -341,9 +343,9 @@ tokenize_file(FILE *file)
 static int
 user_group_qsort_cmp(const void *list1, const void *list2)
 {
-						/* first node is line number */
-	char	   *user1 = lfirst(lnext(*(List **)list1));
-	char	   *user2 = lfirst(lnext(*(List **)list2));
+	/* first node is line number */
+	char	   *user1 = lfirst(lnext(*(List **) list1));
+	char	   *user2 = lfirst(lnext(*(List **) list2));
 
 	return strcmp(user1, user2);
 }
@@ -357,8 +359,8 @@ user_group_qsort_cmp(const void *list1, const void *list2)
 static int
 user_group_bsearch_cmp(const void *user, const void *list)
 {
-						/* first node is line number */
-	char	   *user2 = lfirst(lnext(*(List **)list));
+	/* first node is line number */
+	char	   *user2 = lfirst(lnext(*(List **) list));
 
 	return strcmp(user, user2);
 }
@@ -371,24 +373,24 @@ static List **
 get_group_line(const char *group)
 {
 	return (List **) bsearch((void *) group,
-							(void *) group_sorted,
-							group_length,
-							sizeof(List *),
-							user_group_bsearch_cmp);
+							 (void *) group_sorted,
+							 group_length,
+							 sizeof(List *),
+							 user_group_bsearch_cmp);
 }
 
 
 /*
  * Lookup a user name in the pg_shadow file
  */
-List **
+List	  **
 get_user_line(const char *user)
 {
 	return (List **) bsearch((void *) user,
-							(void *) user_sorted,
-							user_length,
-							sizeof(List *),
-							user_group_bsearch_cmp);
+							 (void *) user_sorted,
+							 user_length,
+							 sizeof(List *),
+							 user_group_bsearch_cmp);
 }
 
 
@@ -398,13 +400,14 @@ get_user_line(const char *user)
 static int
 check_group(char *group, char *user)
 {
-	List	   **line, *l;
+	List	  **line,
+			   *l;
 
 	if ((line = get_group_line(group)) != NULL)
 	{
 		foreach(l, lnext(lnext(*line)))
 			if (strcmp(lfirst(l), user) == 0)
-				return 1;
+			return 1;
 	}
 
 	return 0;
@@ -416,17 +419,17 @@ check_group(char *group, char *user)
 static int
 check_user(char *user, char *param_str)
 {
-	char *tok;
+	char	   *tok;
 
 	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
 	{
 		if (tok[0] == '+')
 		{
-			if (check_group(tok+1, user))
+			if (check_group(tok + 1, user))
 				return 1;
 		}
 		else if (strcmp(tok, user) == 0 ||
-			strcmp(tok, "all") == 0)
+				 strcmp(tok, "all") == 0)
 			return 1;
 	}
 
@@ -439,7 +442,7 @@ check_user(char *user, char *param_str)
 static int
 check_db(char *dbname, char *user, char *param_str)
 {
-	char *tok;
+	char	   *tok;
 
 	for (tok = strtok(param_str, MULTI_VALUE_SEP); tok != NULL; tok = strtok(NULL, MULTI_VALUE_SEP))
 	{
@@ -744,7 +747,7 @@ void
 load_group()
 {
 	FILE	   *group_file;
-	List		*line;
+	List	   *line;
 
 	if (group_lines)
 		free_lines(&group_lines);
@@ -761,7 +764,7 @@ load_group()
 	group_length = length(group_lines);
 	if (group_length)
 	{
-		int i = 0;
+		int			i = 0;
 
 		group_sorted = palloc(group_length * sizeof(List *));
 
@@ -799,7 +802,7 @@ load_user()
 	user_length = length(user_lines);
 	if (user_length)
 	{
-		int i = 0;
+		int			i = 0;
 
 		user_sorted = palloc(user_length * sizeof(List *));
 
@@ -825,7 +828,7 @@ load_hba(void)
 {
 	int			bufsize;
 	FILE	   *file;			/* The config file we have to read */
-	char	   *conf_file;	/* The name of the config file */
+	char	   *conf_file;		/* The name of the config file */
 
 	if (hba_lines)
 		free_lines(&hba_lines);
@@ -935,8 +938,8 @@ check_ident_usermap(const char *usermap_name,
 	if (usermap_name[0] == '\0')
 	{
 		elog(LOG, "check_ident_usermap: hba configuration file does not "
-			 "have the usermap field filled in in the entry that pertains "
-			 "to this connection.  That field is essential for Ident-based "
+		   "have the usermap field filled in in the entry that pertains "
+		  "to this connection.  That field is essential for Ident-based "
 			 "authentication.");
 		found_entry = false;
 	}
@@ -999,7 +1002,7 @@ load_ident(void)
 /*
  *	Parse the string "*ident_response" as a response from a query to an Ident
  *	server.  If it's a normal response indicating a user name, return true
- *	and store the user name at *ident_user.	If it's anything else,
+ *	and store the user name at *ident_user. If it's anything else,
  *	return false.
  */
 static bool
@@ -1140,7 +1143,7 @@ ident_inet(const struct in_addr remote_ip_addr,
 		if (rc != 0)
 		{
 			/* save_errno is in case inet_ntoa changes errno */
-			int		save_errno = errno;
+			int			save_errno = errno;
 
 			elog(LOG, "Unable to connect to Ident server on the host which is "
 				 "trying to connect to Postgres "
@@ -1157,12 +1160,13 @@ ident_inet(const struct in_addr remote_ip_addr,
 			snprintf(ident_query, 80, "%d,%d\n",
 					 ntohs(remote_port), ntohs(local_port));
 			/* loop in case send is interrupted */
-			do {
+			do
+			{
 				rc = send(sock_fd, ident_query, strlen(ident_query), 0);
 			} while (rc < 0 && errno == EINTR);
 			if (rc < 0)
 			{
-				int		save_errno = errno;
+				int			save_errno = errno;
 
 				elog(LOG, "Unable to send query to Ident server on the host which is "
 					 "trying to connect to Postgres (Host %s, Port %d), "
@@ -1179,11 +1183,11 @@ ident_inet(const struct in_addr remote_ip_addr,
 						  sizeof(ident_response) - 1, 0);
 				if (rc < 0)
 				{
-					int		save_errno = errno;
+					int			save_errno = errno;
 
 					elog(LOG, "Unable to receive response from Ident server "
 						 "on the host which is "
-						 "trying to connect to Postgres (Host %s, Port %d), "
+					 "trying to connect to Postgres (Host %s, Port %d), "
 						 "even though we successfully sent our query to it: %s",
 						 inet_ntoa(remote_ip_addr), IDENT_PORT,
 						 strerror(save_errno));
@@ -1369,4 +1373,3 @@ hba_getauthmethod(hbaPort *port)
 	else
 		return STATUS_ERROR;
 }
-

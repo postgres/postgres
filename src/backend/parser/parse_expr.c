@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.127 2002/08/31 22:10:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.128 2002/09/04 20:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -194,7 +194,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							 */
 							if (Transform_null_equals &&
 								length(a->name) == 1 &&
-								strcmp(strVal(lfirst(a->name)), "=") == 0 &&
+							 strcmp(strVal(lfirst(a->name)), "=") == 0 &&
 								(exprIsNullConstant(a->lexpr) ||
 								 exprIsNullConstant(a->rexpr)))
 							{
@@ -213,9 +213,9 @@ transformExpr(ParseState *pstate, Node *expr)
 							else
 							{
 								Node	   *lexpr = transformExpr(pstate,
-																a->lexpr);
+															   a->lexpr);
 								Node	   *rexpr = transformExpr(pstate,
-																a->rexpr);
+															   a->rexpr);
 
 								result = (Node *) make_op(a->name,
 														  lexpr,
@@ -277,41 +277,48 @@ transformExpr(ParseState *pstate, Node *expr)
 															  a->lexpr);
 							Node	   *rexpr = transformExpr(pstate,
 															  a->rexpr);
+
 							result = (Node *) make_op(a->name,
 													  lexpr,
 													  rexpr);
-							((Expr *)result)->opType = DISTINCT_EXPR;
+							((Expr *) result)->opType = DISTINCT_EXPR;
 						}
 						break;
 					case OF:
 						{
-							List *telem;
-							A_Const *n;
-							Oid ltype, rtype;
-							bool matched = FALSE;
+							List	   *telem;
+							A_Const    *n;
+							Oid			ltype,
+										rtype;
+							bool		matched = FALSE;
 
-							/* Checking an expression for match to type.
+							/*
+							 * Checking an expression for match to type.
 							 * Will result in a boolean constant node.
 							 */
 							Node	   *lexpr = transformExpr(pstate,
 															  a->lexpr);
+
 							ltype = exprType(lexpr);
 							foreach(telem, (List *) a->rexpr)
 							{
 								rtype = LookupTypeName(lfirst(telem));
 								matched = (rtype == ltype);
-								if (matched) break;
+								if (matched)
+									break;
 							}
 
-							/* Expect two forms: equals or not equals.
-							 * Flip the sense of the result for not equals.
+							/*
+							 * Expect two forms: equals or not equals.
+							 * Flip the sense of the result for not
+							 * equals.
 							 */
 							if (strcmp(strVal(lfirst(a->name)), "!=") == 0)
-								matched = (! matched);
+								matched = (!matched);
 
 							n = makeNode(A_Const);
 							n->val.type = T_String;
-							n->val.val.str = (matched? "t": "f");
+							n->val.val.str = (matched ? "t" : "f");
 							n->typename = SystemTypeName("bool");
 
 							result = transformExpr(pstate, (Node *) n);
@@ -411,7 +418,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 					/* Combining operators other than =/<> is dubious... */
 					if (length(left_list) != 1 &&
-						strcmp(opname, "=") != 0 && strcmp(opname, "<>") != 0)
+					strcmp(opname, "=") != 0 && strcmp(opname, "<>") != 0)
 						elog(ERROR, "Row comparison cannot use operator %s",
 							 opname);
 
@@ -453,7 +460,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						if (opform->oprresult != BOOLOID)
 							elog(ERROR, "%s has result type of %s, but must return %s"
 								 " to be used with quantified predicate subquery",
-								 opname, format_type_be(opform->oprresult),
+							   opname, format_type_be(opform->oprresult),
 								 format_type_be(BOOLOID));
 
 						if (get_func_retset(opform->oprcode))
@@ -613,7 +620,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					default:
 						elog(ERROR, "transformExpr: unexpected booltesttype %d",
 							 (int) b->booltesttype);
-						clausename = NULL;	/* keep compiler quiet */
+						clausename = NULL;		/* keep compiler quiet */
 				}
 
 				b->arg = transformExpr(pstate, b->arg);
@@ -624,14 +631,14 @@ transformExpr(ParseState *pstate, Node *expr)
 				break;
 			}
 
-		/*********************************************
-		 * Quietly accept node types that may be presented when we are
-		 * called on an already-transformed tree.
-		 *
-		 * Do any other node types need to be accepted?  For now we are
-		 * taking a conservative approach, and only accepting node
-		 * types that are demonstrably necessary to accept.
-		 *********************************************/
+			/*********************************************
+			 * Quietly accept node types that may be presented when we are
+			 * called on an already-transformed tree.
+			 *
+			 * Do any other node types need to be accepted?  For now we are
+			 * taking a conservative approach, and only accepting node
+			 * types that are demonstrably necessary to accept.
+			 *********************************************/
 		case T_Expr:
 		case T_Var:
 		case T_Const:
@@ -705,146 +712,148 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	switch (numnames)
 	{
 		case 1:
-		{
-			char   *name = strVal(lfirst(cref->fields));
-
-			/* Try to identify as an unqualified column */
-			node = colnameToVar(pstate, name);
-
-			if (node == NULL)
 			{
-				/*
-				 * Not known as a column of any range-table entry, so
-				 * try to find the name as a relation ... but not if
-				 * subscripts appear.  Note also that only relations
-				 * already entered into the rangetable will be recognized.
-				 *
-				 * This is a hack for backwards compatibility with PostQUEL-
-				 * inspired syntax.  The preferred form now is "rel.*".
-				 */
-				int		levels_up;
+				char	   *name = strVal(lfirst(cref->fields));
 
-				if (cref->indirection == NIL &&
-					refnameRangeTblEntry(pstate, NULL, name,
-										 &levels_up) != NULL)
+				/* Try to identify as an unqualified column */
+				node = colnameToVar(pstate, name);
+
+				if (node == NULL)
+				{
+					/*
+					 * Not known as a column of any range-table entry, so
+					 * try to find the name as a relation ... but not if
+					 * subscripts appear.  Note also that only relations
+					 * already entered into the rangetable will be
+					 * recognized.
+					 *
+					 * This is a hack for backwards compatibility with
+					 * PostQUEL- inspired syntax.  The preferred form now
+					 * is "rel.*".
+					 */
+					int			levels_up;
+
+					if (cref->indirection == NIL &&
+						refnameRangeTblEntry(pstate, NULL, name,
+											 &levels_up) != NULL)
+					{
+						rv = makeNode(RangeVar);
+						rv->relname = name;
+						rv->inhOpt = INH_DEFAULT;
+						node = (Node *) rv;
+					}
+					else
+						elog(ERROR, "Attribute \"%s\" not found", name);
+				}
+				break;
+			}
+		case 2:
+			{
+				char	   *name1 = strVal(lfirst(cref->fields));
+				char	   *name2 = strVal(lsecond(cref->fields));
+
+				/* Whole-row reference? */
+				if (strcmp(name2, "*") == 0)
 				{
 					rv = makeNode(RangeVar);
-					rv->relname = name;
+					rv->relname = name1;
 					rv->inhOpt = INH_DEFAULT;
 					node = (Node *) rv;
+					break;
 				}
-				else
-					elog(ERROR, "Attribute \"%s\" not found", name);
-			}
-			break;
-		}
-		case 2:
-		{
-			char   *name1 = strVal(lfirst(cref->fields));
-			char   *name2 = strVal(lsecond(cref->fields));
 
-			/* Whole-row reference? */
-			if (strcmp(name2, "*") == 0)
-			{
-				rv = makeNode(RangeVar);
-				rv->relname = name1;
-				rv->inhOpt = INH_DEFAULT;
-				node = (Node *) rv;
+				/* Try to identify as a once-qualified column */
+				node = qualifiedNameToVar(pstate, NULL, name1, name2, true);
+				if (node == NULL)
+				{
+					/*
+					 * Not known as a column of any range-table entry, so
+					 * try it as a function call.  Here, we will create an
+					 * implicit RTE for tables not already entered.
+					 */
+					rv = makeNode(RangeVar);
+					rv->relname = name1;
+					rv->inhOpt = INH_DEFAULT;
+					node = ParseFuncOrColumn(pstate,
+											 makeList1(makeString(name2)),
+											 makeList1(rv),
+											 false, false, true);
+				}
 				break;
 			}
-
-			/* Try to identify as a once-qualified column */
-			node = qualifiedNameToVar(pstate, NULL, name1, name2, true);
-			if (node == NULL)
-			{
-				/*
-				 * Not known as a column of any range-table entry, so
-				 * try it as a function call.  Here, we will create an
-				 * implicit RTE for tables not already entered.
-				 */
-				rv = makeNode(RangeVar);
-				rv->relname = name1;
-				rv->inhOpt = INH_DEFAULT;
-				node = ParseFuncOrColumn(pstate,
-										 makeList1(makeString(name2)),
-										 makeList1(rv),
-										 false, false, true);
-			}
-			break;
-		}
 		case 3:
-		{
-			char   *name1 = strVal(lfirst(cref->fields));
-			char   *name2 = strVal(lsecond(cref->fields));
-			char   *name3 = strVal(lfirst(lnext(lnext(cref->fields))));
-
-			/* Whole-row reference? */
-			if (strcmp(name3, "*") == 0)
 			{
-				rv = makeNode(RangeVar);
-				rv->schemaname = name1;
-				rv->relname = name2;
-				rv->inhOpt = INH_DEFAULT;
-				node = (Node *) rv;
+				char	   *name1 = strVal(lfirst(cref->fields));
+				char	   *name2 = strVal(lsecond(cref->fields));
+				char	   *name3 = strVal(lfirst(lnext(lnext(cref->fields))));
+
+				/* Whole-row reference? */
+				if (strcmp(name3, "*") == 0)
+				{
+					rv = makeNode(RangeVar);
+					rv->schemaname = name1;
+					rv->relname = name2;
+					rv->inhOpt = INH_DEFAULT;
+					node = (Node *) rv;
+					break;
+				}
+
+				/* Try to identify as a twice-qualified column */
+				node = qualifiedNameToVar(pstate, name1, name2, name3, true);
+				if (node == NULL)
+				{
+					/* Try it as a function call */
+					rv = makeNode(RangeVar);
+					rv->schemaname = name1;
+					rv->relname = name2;
+					rv->inhOpt = INH_DEFAULT;
+					node = ParseFuncOrColumn(pstate,
+											 makeList1(makeString(name3)),
+											 makeList1(rv),
+											 false, false, true);
+				}
 				break;
 			}
-
-			/* Try to identify as a twice-qualified column */
-			node = qualifiedNameToVar(pstate, name1, name2, name3, true);
-			if (node == NULL)
-			{
-				/* Try it as a function call */
-				rv = makeNode(RangeVar);
-				rv->schemaname = name1;
-				rv->relname = name2;
-				rv->inhOpt = INH_DEFAULT;
-				node = ParseFuncOrColumn(pstate,
-										 makeList1(makeString(name3)),
-										 makeList1(rv),
-										 false, false, true);
-			}
-			break;
-		}
 		case 4:
-		{
-			char   *name1 = strVal(lfirst(cref->fields));
-			char   *name2 = strVal(lsecond(cref->fields));
-			char   *name3 = strVal(lfirst(lnext(lnext(cref->fields))));
-			char   *name4 = strVal(lfirst(lnext(lnext(lnext(cref->fields)))));
-
-			/*
-			 * We check the catalog name and then ignore it.
-			 */
-			if (strcmp(name1, DatabaseName) != 0)
-				elog(ERROR, "Cross-database references are not implemented");
-
-			/* Whole-row reference? */
-			if (strcmp(name4, "*") == 0)
 			{
-				rv = makeNode(RangeVar);
-				rv->schemaname = name2;
-				rv->relname = name3;
-				rv->inhOpt = INH_DEFAULT;
-				node = (Node *) rv;
+				char	   *name1 = strVal(lfirst(cref->fields));
+				char	   *name2 = strVal(lsecond(cref->fields));
+				char	   *name3 = strVal(lfirst(lnext(lnext(cref->fields))));
+				char	   *name4 = strVal(lfirst(lnext(lnext(lnext(cref->fields)))));
+
+				/*
+				 * We check the catalog name and then ignore it.
+				 */
+				if (strcmp(name1, DatabaseName) != 0)
+					elog(ERROR, "Cross-database references are not implemented");
+
+				/* Whole-row reference? */
+				if (strcmp(name4, "*") == 0)
+				{
+					rv = makeNode(RangeVar);
+					rv->schemaname = name2;
+					rv->relname = name3;
+					rv->inhOpt = INH_DEFAULT;
+					node = (Node *) rv;
+					break;
+				}
+
+				/* Try to identify as a twice-qualified column */
+				node = qualifiedNameToVar(pstate, name2, name3, name4, true);
+				if (node == NULL)
+				{
+					/* Try it as a function call */
+					rv = makeNode(RangeVar);
+					rv->schemaname = name2;
+					rv->relname = name3;
+					rv->inhOpt = INH_DEFAULT;
+					node = ParseFuncOrColumn(pstate,
+											 makeList1(makeString(name4)),
+											 makeList1(rv),
+											 false, false, true);
+				}
 				break;
 			}
-
-			/* Try to identify as a twice-qualified column */
-			node = qualifiedNameToVar(pstate, name2, name3, name4, true);
-			if (node == NULL)
-			{
-				/* Try it as a function call */
-				rv = makeNode(RangeVar);
-				rv->schemaname = name2;
-				rv->relname = name3;
-				rv->inhOpt = INH_DEFAULT;
-				node = ParseFuncOrColumn(pstate,
-										 makeList1(makeString(name4)),
-										 makeList1(rv),
-										 false, false, true);
-			}
-			break;
-		}
 		default:
 			elog(ERROR, "Invalid qualified name syntax (too many names)");
 			node = NULL;		/* keep compiler quiet */
@@ -1095,8 +1104,9 @@ exprIsLengthCoercion(Node *expr, int32 *coercedTypmod)
 	}
 
 	/*
-	 * Furthermore, the name and namespace of the function must be the same
-	 * as its result type's name/namespace (cf. find_coercion_function).
+	 * Furthermore, the name and namespace of the function must be the
+	 * same as its result type's name/namespace (cf.
+	 * find_coercion_function).
 	 */
 	typeTuple = SearchSysCache(TYPEOID,
 							   ObjectIdGetDatum(procStruct->prorettype),
@@ -1206,7 +1216,7 @@ parser_typecast_expression(ParseState *pstate,
 	{
 		expr = CoerceTargetExpr(pstate, expr, inputType,
 								targetType, typename->typmod,
-								true); /* explicit coercion */
+								true);	/* explicit coercion */
 		if (expr == NULL)
 			elog(ERROR, "Cannot cast type '%s' to '%s'",
 				 format_type_be(inputType),

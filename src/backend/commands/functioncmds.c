@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.18 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.19 2002/09/04 20:31:15 momjian Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -61,7 +61,7 @@
  * allow a shell type to be used, or even created if the specified return type
  * doesn't exist yet.  (Without this, there's no way to define the I/O procs
  * for a new type.)  But SQL function creation won't cope, so error out if
- * the target language is SQL.  (We do this here, not in the SQL-function
+ * the target language is SQL.	(We do this here, not in the SQL-function
  * validator, so as not to produce a WARNING and then an ERROR for the same
  * condition.)
  */
@@ -69,7 +69,7 @@ static void
 compute_return_type(TypeName *returnType, Oid languageOid,
 					Oid *prorettype_p, bool *returnsSet_p)
 {
-	Oid		rettype;
+	Oid			rettype;
 
 	rettype = LookupTypeName(returnType);
 
@@ -87,7 +87,7 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 	}
 	else
 	{
-		char      *typnam = TypeNameToString(returnType);
+		char	   *typnam = TypeNameToString(returnType);
 		Oid			namespaceId;
 		AclResult	aclresult;
 		char	   *typname;
@@ -184,41 +184,41 @@ compute_attributes_sql_style(const List *options,
 							 bool *security_definer)
 {
 	const List *option;
-	DefElem *as_item = NULL;
-	DefElem *language_item = NULL;
-	DefElem *volatility_item = NULL;
-	DefElem *strict_item = NULL;
-	DefElem *security_item = NULL;
+	DefElem    *as_item = NULL;
+	DefElem    *language_item = NULL;
+	DefElem    *volatility_item = NULL;
+	DefElem    *strict_item = NULL;
+	DefElem    *security_item = NULL;
 
 	foreach(option, options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "as")==0)
+		if (strcmp(defel->defname, "as") == 0)
 		{
 			if (as_item)
 				elog(ERROR, "conflicting or redundant options");
 			as_item = defel;
 		}
-		else if (strcmp(defel->defname, "language")==0)
+		else if (strcmp(defel->defname, "language") == 0)
 		{
 			if (language_item)
 				elog(ERROR, "conflicting or redundant options");
 			language_item = defel;
 		}
-		else if (strcmp(defel->defname, "volatility")==0)
+		else if (strcmp(defel->defname, "volatility") == 0)
 		{
 			if (volatility_item)
 				elog(ERROR, "conflicting or redundant options");
 			volatility_item = defel;
 		}
-		else if (strcmp(defel->defname, "strict")==0)
+		else if (strcmp(defel->defname, "strict") == 0)
 		{
 			if (strict_item)
 				elog(ERROR, "conflicting or redundant options");
 			strict_item = defel;
 		}
-		else if (strcmp(defel->defname, "security")==0)
+		else if (strcmp(defel->defname, "security") == 0)
 		{
 			if (security_item)
 				elog(ERROR, "conflicting or redundant options");
@@ -229,7 +229,7 @@ compute_attributes_sql_style(const List *options,
 	}
 
 	if (as_item)
-		*as = (List *)as_item->arg;
+		*as = (List *) as_item->arg;
 	else
 		elog(ERROR, "no function body specified");
 
@@ -240,11 +240,11 @@ compute_attributes_sql_style(const List *options,
 
 	if (volatility_item)
 	{
-		if (strcmp(strVal(volatility_item->arg), "immutable")==0)
+		if (strcmp(strVal(volatility_item->arg), "immutable") == 0)
 			*volatility_p = PROVOLATILE_IMMUTABLE;
-		else if (strcmp(strVal(volatility_item->arg), "stable")==0)
+		else if (strcmp(strVal(volatility_item->arg), "stable") == 0)
 			*volatility_p = PROVOLATILE_STABLE;
-		else if (strcmp(strVal(volatility_item->arg), "volatile")==0)
+		else if (strcmp(strVal(volatility_item->arg), "volatile") == 0)
 			*volatility_p = PROVOLATILE_VOLATILE;
 		else
 			elog(ERROR, "invalid volatility");
@@ -386,7 +386,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 
 	/* override attributes from explicit list */
 	compute_attributes_sql_style(stmt->options,
-								 &as_clause, &language, &volatility, &isStrict, &security);
+			   &as_clause, &language, &volatility, &isStrict, &security);
 
 	/* Convert language name to canonical case */
 	case_translate_language_name(language, languageName);
@@ -439,13 +439,12 @@ CreateFunction(CreateFunctionStmt *stmt)
 	if (languageOid == INTERNALlanguageId)
 	{
 		/*
-		 * In PostgreSQL versions before 6.5, the SQL name of the
-		 * created function could not be different from the internal
-		 * name, and "prosrc" wasn't used.  So there is code out there
-		 * that does CREATE FUNCTION xyz AS '' LANGUAGE 'internal'.
-		 * To preserve some modicum of backwards compatibility, accept
-		 * an empty "prosrc" value as meaning the supplied SQL
-		 * function name.
+		 * In PostgreSQL versions before 6.5, the SQL name of the created
+		 * function could not be different from the internal name, and
+		 * "prosrc" wasn't used.  So there is code out there that does
+		 * CREATE FUNCTION xyz AS '' LANGUAGE 'internal'. To preserve some
+		 * modicum of backwards compatibility, accept an empty "prosrc"
+		 * value as meaning the supplied SQL function name.
 		 */
 		if (strlen(prosrc_str) == 0)
 			prosrc_str = funcname;
@@ -488,7 +487,7 @@ void
 RemoveFunction(RemoveFuncStmt *stmt)
 {
 	List	   *functionName = stmt->funcname;
-	List	   *argTypes = stmt->args; /* list of TypeName nodes */
+	List	   *argTypes = stmt->args;	/* list of TypeName nodes */
 	Oid			funcOid;
 	HeapTuple	tup;
 	ObjectAddress object;
@@ -496,13 +495,13 @@ RemoveFunction(RemoveFuncStmt *stmt)
 	/*
 	 * Find the function, do permissions and validity checks
 	 */
-	funcOid = LookupFuncNameTypeNames(functionName, argTypes, 
+	funcOid = LookupFuncNameTypeNames(functionName, argTypes,
 									  "RemoveFunction");
 
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(funcOid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))	/* should not happen */
+	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "RemoveFunction: couldn't find tuple for function %s",
 			 NameListToString(functionName));
 
@@ -557,7 +556,7 @@ RemoveFunctionById(Oid funcOid)
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(funcOid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))	/* should not happen */
+	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "RemoveFunctionById: couldn't find tuple for function %u",
 			 funcOid);
 
@@ -579,7 +578,7 @@ RemoveFunctionById(Oid funcOid)
 		tup = SearchSysCache(AGGFNOID,
 							 ObjectIdGetDatum(funcOid),
 							 0, 0, 0);
-		if (!HeapTupleIsValid(tup))	/* should not happen */
+		if (!HeapTupleIsValid(tup))		/* should not happen */
 			elog(ERROR, "RemoveFunctionById: couldn't find pg_aggregate tuple for %u",
 				 funcOid);
 
@@ -611,7 +610,7 @@ CreateCast(CreateCastStmt *stmt)
 	int			i;
 
 	ObjectAddress myself,
-		referenced;
+				referenced;
 
 	sourcetypeid = LookupTypeName(stmt->sourcetype);
 	if (!OidIsValid(sourcetypeid))
@@ -693,10 +692,10 @@ CreateCast(CreateCastStmt *stmt)
 	}
 
 	/* ready to go */
-	values[Anum_pg_cast_castsource-1] = ObjectIdGetDatum(sourcetypeid);
-	values[Anum_pg_cast_casttarget-1] = ObjectIdGetDatum(targettypeid);
-	values[Anum_pg_cast_castfunc-1] = ObjectIdGetDatum(funcid);
-	values[Anum_pg_cast_castimplicit-1] = BoolGetDatum(stmt->implicit);
+	values[Anum_pg_cast_castsource - 1] = ObjectIdGetDatum(sourcetypeid);
+	values[Anum_pg_cast_casttarget - 1] = ObjectIdGetDatum(targettypeid);
+	values[Anum_pg_cast_castfunc - 1] = ObjectIdGetDatum(funcid);
+	values[Anum_pg_cast_castimplicit - 1] = BoolGetDatum(stmt->implicit);
 
 	for (i = 0; i < Natts_pg_cast; ++i)
 		nulls[i] = ' ';
@@ -760,9 +759,9 @@ DropCast(DropCastStmt *stmt)
 			 TypeNameToString(stmt->targettype));
 
 	tuple = SearchSysCache(CASTSOURCETARGET,
-						 ObjectIdGetDatum(sourcetypeid),
-						 ObjectIdGetDatum(targettypeid),
-						 0, 0);
+						   ObjectIdGetDatum(sourcetypeid),
+						   ObjectIdGetDatum(targettypeid),
+						   0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cast from type %s to type %s does not exist",
 			 TypeNameToString(stmt->sourcetype),

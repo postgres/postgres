@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.4 2002/08/22 00:01:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/aggregatecmds.c,v 1.5 2002/09/04 20:31:14 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -110,8 +110,8 @@ DefineAggregate(List *names, List *parameters)
 	 * We have historically allowed the command to look like basetype = 'ANY'
 	 * so we must do a case-insensitive comparison for the name ANY.  Ugh.
 	 *
-	 * basetype can be a pseudo-type, but transtype can't, since we need
-	 * to be able to store values of the transtype.
+	 * basetype can be a pseudo-type, but transtype can't, since we need to
+	 * be able to store values of the transtype.
 	 */
 	if (strcasecmp(TypeNameToString(baseType), "ANY") == 0)
 		baseTypeId = ANYOID;
@@ -127,10 +127,10 @@ DefineAggregate(List *names, List *parameters)
 	 * Most of the argument-checking is done inside of AggregateCreate
 	 */
 	AggregateCreate(aggName,	/* aggregate name */
-					aggNamespace,	/* namespace */
+					aggNamespace,		/* namespace */
 					transfuncName,		/* step function name */
 					finalfuncName,		/* final function name */
-					baseTypeId,	/* type of data being aggregated */
+					baseTypeId, /* type of data being aggregated */
 					transTypeId,	/* transition data type */
 					initval);	/* initial condition */
 }
@@ -154,8 +154,8 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	 * if a basetype is passed in, then attempt to find an aggregate for
 	 * that specific type.
 	 *
-	 * else attempt to find an aggregate with a basetype of ANYOID.
-	 * This means that the aggregate is to apply to all basetypes (eg, COUNT).
+	 * else attempt to find an aggregate with a basetype of ANYOID. This
+	 * means that the aggregate is to apply to all basetypes (eg, COUNT).
 	 */
 	if (aggType)
 		basetypeID = typenameTypeId(aggType);
@@ -170,7 +170,7 @@ RemoveAggregate(RemoveAggrStmt *stmt)
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(procOid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))	/* should not happen */
+	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "RemoveAggregate: couldn't find pg_proc tuple for %s",
 			 NameListToString(aggName));
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.114 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.115 2002/09/04 20:31:25 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -127,9 +127,9 @@ inline static void
 PROCLOCK_PRINT(const char *where, const PROCLOCK *holderP)
 {
 	if (
-	 (((PROCLOCK_LOCKMETHOD(*holderP) == DEFAULT_LOCKMETHOD && Trace_locks)
-	   || (PROCLOCK_LOCKMETHOD(*holderP) == USER_LOCKMETHOD && Trace_userlocks))
-	  && (((LOCK *) MAKE_PTR(holderP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
+	(((PROCLOCK_LOCKMETHOD(*holderP) == DEFAULT_LOCKMETHOD && Trace_locks)
+	  || (PROCLOCK_LOCKMETHOD(*holderP) == USER_LOCKMETHOD && Trace_userlocks))
+	 && (((LOCK *) MAKE_PTR(holderP->tag.lock))->tag.relId >= (Oid) Trace_lock_oidmin))
 		|| (Trace_lock_table && (((LOCK *) MAKE_PTR(holderP->tag.lock))->tag.relId == Trace_lock_table))
 		)
 		elog(LOG,
@@ -310,7 +310,7 @@ LockMethodTableInit(char *tabName,
 	Assert(lockMethodTable->lockHash->hash == tag_hash);
 
 	/*
-	 * allocate a hash table for PROCLOCK structs.  This is used to store
+	 * allocate a hash table for PROCLOCK structs.	This is used to store
 	 * per-lock-holder information.
 	 */
 	info.keysize = sizeof(PROCLOCKTAG);
@@ -434,8 +434,8 @@ bool
 LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait)
 {
-	PROCLOCK	   *holder;
-	PROCLOCKTAG	holdertag;
+	PROCLOCK   *holder;
+	PROCLOCKTAG holdertag;
 	HTAB	   *holderTable;
 	bool		found;
 	LOCK	   *lock;
@@ -507,7 +507,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	/*
 	 * Create the hash key for the holder table.
 	 */
-	MemSet(&holdertag, 0, sizeof(PROCLOCKTAG));	/* must clear padding,
+	MemSet(&holdertag, 0, sizeof(PROCLOCKTAG)); /* must clear padding,
 												 * needed */
 	holdertag.lock = MAKE_OFFSET(lock);
 	holdertag.proc = MAKE_OFFSET(MyProc);
@@ -518,8 +518,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 */
 	holderTable = lockMethodTable->holderHash;
 	holder = (PROCLOCK *) hash_search(holderTable,
-									(void *) &holdertag,
-									HASH_ENTER, &found);
+									  (void *) &holdertag,
+									  HASH_ENTER, &found);
 	if (!holder)
 	{
 		LWLockRelease(masterLock);
@@ -645,8 +645,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 				SHMQueueDelete(&holder->lockLink);
 				SHMQueueDelete(&holder->procLink);
 				holder = (PROCLOCK *) hash_search(holderTable,
-												(void *) holder,
-												HASH_REMOVE, NULL);
+												  (void *) holder,
+												  HASH_REMOVE, NULL);
 				if (!holder)
 					elog(WARNING, "LockAcquire: remove holder, table corrupted");
 			}
@@ -808,13 +808,13 @@ static void
 LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc, int *myHolding)
 {
 	SHM_QUEUE  *procHolders = &(proc->procHolders);
-	PROCLOCK	   *holder;
+	PROCLOCK   *holder;
 	int			i;
 
 	MemSet(myHolding, 0, MAX_LOCKMODES * sizeof(int));
 
 	holder = (PROCLOCK *) SHMQueueNext(procHolders, procHolders,
-									 offsetof(PROCLOCK, procLink));
+									   offsetof(PROCLOCK, procLink));
 
 	while (holder)
 	{
@@ -825,7 +825,7 @@ LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc, int *myHolding)
 		}
 
 		holder = (PROCLOCK *) SHMQueueNext(procHolders, &holder->procLink,
-										 offsetof(PROCLOCK, procLink));
+										   offsetof(PROCLOCK, procLink));
 	}
 }
 
@@ -978,8 +978,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	LOCK	   *lock;
 	LWLockId	masterLock;
 	LOCKMETHODTABLE *lockMethodTable;
-	PROCLOCK	   *holder;
-	PROCLOCKTAG	holdertag;
+	PROCLOCK   *holder;
+	PROCLOCKTAG holdertag;
 	HTAB	   *holderTable;
 	bool		wakeupNeeded = false;
 
@@ -1025,7 +1025,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	/*
 	 * Find the holder entry for this holder.
 	 */
-	MemSet(&holdertag, 0, sizeof(PROCLOCKTAG));	/* must clear padding,
+	MemSet(&holdertag, 0, sizeof(PROCLOCKTAG)); /* must clear padding,
 												 * needed */
 	holdertag.lock = MAKE_OFFSET(lock);
 	holdertag.proc = MAKE_OFFSET(MyProc);
@@ -1033,8 +1033,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 	holderTable = lockMethodTable->holderHash;
 	holder = (PROCLOCK *) hash_search(holderTable,
-									(void *) &holdertag,
-									HASH_FIND_SAVE, NULL);
+									  (void *) &holdertag,
+									  HASH_FIND_SAVE, NULL);
 	if (!holder)
 	{
 		LWLockRelease(masterLock);
@@ -1135,8 +1135,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		SHMQueueDelete(&holder->lockLink);
 		SHMQueueDelete(&holder->procLink);
 		holder = (PROCLOCK *) hash_search(holderTable,
-										(void *) &holder,
-										HASH_REMOVE_SAVED, NULL);
+										  (void *) &holder,
+										  HASH_REMOVE_SAVED, NULL);
 		if (!holder)
 		{
 			LWLockRelease(masterLock);
@@ -1171,8 +1171,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 			   bool allxids, TransactionId xid)
 {
 	SHM_QUEUE  *procHolders = &(proc->procHolders);
-	PROCLOCK	   *holder;
-	PROCLOCK	   *nextHolder;
+	PROCLOCK   *holder;
+	PROCLOCK   *nextHolder;
 	LWLockId	masterLock;
 	LOCKMETHODTABLE *lockMethodTable;
 	int			i,
@@ -1199,7 +1199,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
 	holder = (PROCLOCK *) SHMQueueNext(procHolders, procHolders,
-									 offsetof(PROCLOCK, procLink));
+									   offsetof(PROCLOCK, procLink));
 
 	while (holder)
 	{
@@ -1207,7 +1207,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 
 		/* Get link first, since we may unlink/delete this holder */
 		nextHolder = (PROCLOCK *) SHMQueueNext(procHolders, &holder->procLink,
-											 offsetof(PROCLOCK, procLink));
+										   offsetof(PROCLOCK, procLink));
 
 		Assert(holder->tag.proc == MAKE_OFFSET(proc));
 
@@ -1249,7 +1249,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 					 * Read comments in LockRelease
 					 */
 					if (!wakeupNeeded &&
-					lockMethodTable->conflictTab[i] & lock->waitMask)
+						lockMethodTable->conflictTab[i] & lock->waitMask)
 						wakeupNeeded = true;
 				}
 			}
@@ -1287,9 +1287,9 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 		 * remove the holder entry from the hashtable
 		 */
 		holder = (PROCLOCK *) hash_search(lockMethodTable->holderHash,
-										(void *) holder,
-										HASH_REMOVE,
-										NULL);
+										  (void *) holder,
+										  HASH_REMOVE,
+										  NULL);
 		if (!holder)
 		{
 			LWLockRelease(masterLock);
@@ -1340,8 +1340,7 @@ LockShmemSize(int maxBackends)
 
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 	size += maxBackends * MAXALIGN(sizeof(PGPROC));		/* each MyProc */
-	size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LOCKMETHODTABLE)); /* each
-																 * lockMethodTable */
+	size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LOCKMETHODTABLE));		/* each lockMethodTable */
 
 	/* lockHash table */
 	size += hash_estimate_size(max_table_size, sizeof(LOCK));
@@ -1375,11 +1374,11 @@ LockShmemSize(int maxBackends)
 LockData *
 GetLockStatusData(void)
 {
-	LockData	*data;
-	HTAB		*holderTable;
-	PROCLOCK	*holder;
+	LockData   *data;
+	HTAB	   *holderTable;
+	PROCLOCK   *holder;
 	HASH_SEQ_STATUS seqstat;
-	int i;
+	int			i;
 
 	data = (LockData *) palloc(sizeof(LockData));
 
@@ -1400,10 +1399,10 @@ GetLockStatusData(void)
 	hash_seq_init(&seqstat, holderTable);
 
 	i = 0;
-	while ( (holder = hash_seq_search(&seqstat)) )
+	while ((holder = hash_seq_search(&seqstat)))
 	{
-		PGPROC	*proc = (PGPROC *) MAKE_PTR(holder->tag.proc);
-		LOCK	*lock = (LOCK *) MAKE_PTR(holder->tag.lock);
+		PGPROC	   *proc = (PGPROC *) MAKE_PTR(holder->tag.proc);
+		LOCK	   *lock = (LOCK *) MAKE_PTR(holder->tag.lock);
 
 		data->holderaddrs[i] = MAKE_OFFSET(holder);
 		memcpy(&(data->holders[i]), holder, sizeof(PROCLOCK));
@@ -1439,7 +1438,7 @@ DumpLocks(void)
 {
 	PGPROC	   *proc;
 	SHM_QUEUE  *procHolders;
-	PROCLOCK	   *holder;
+	PROCLOCK   *holder;
 	LOCK	   *lock;
 	int			lockmethod = DEFAULT_LOCKMETHOD;
 	LOCKMETHODTABLE *lockMethodTable;
@@ -1459,7 +1458,7 @@ DumpLocks(void)
 		LOCK_PRINT("DumpLocks: waiting on", proc->waitLock, 0);
 
 	holder = (PROCLOCK *) SHMQueueNext(procHolders, procHolders,
-									 offsetof(PROCLOCK, procLink));
+									   offsetof(PROCLOCK, procLink));
 
 	while (holder)
 	{
@@ -1471,7 +1470,7 @@ DumpLocks(void)
 		LOCK_PRINT("DumpLocks", lock, 0);
 
 		holder = (PROCLOCK *) SHMQueueNext(procHolders, &holder->procLink,
-										 offsetof(PROCLOCK, procLink));
+										   offsetof(PROCLOCK, procLink));
 	}
 }
 
@@ -1482,7 +1481,7 @@ void
 DumpAllLocks(void)
 {
 	PGPROC	   *proc;
-	PROCLOCK	   *holder;
+	PROCLOCK   *holder;
 	LOCK	   *lock;
 	int			lockmethod = DEFAULT_LOCKMETHOD;
 	LOCKMETHODTABLE *lockMethodTable;

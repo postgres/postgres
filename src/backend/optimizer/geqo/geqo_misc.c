@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.33 2002/07/20 04:59:10 momjian Exp $
+ * $Id: geqo_misc.c,v 1.34 2002/09/04 20:31:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,4 +250,4 @@ geqo_print_rel(Query *root, RelOptInfo *rel)
 	geqo_print_path(root, rel->cheapest_total_path, 1);
 }
 
-#endif	/* GEQO_DEBUG */
+#endif   /* GEQO_DEBUG */

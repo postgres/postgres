@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.236 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.237 2002/09/04 20:31:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ typedef struct VRelStats
 
 static MemoryContext vac_context = NULL;
 
-static int elevel = -1;
+static int	elevel = -1;
 
 static TransactionId OldestXmin;
 static TransactionId FreezeLimit;
@@ -204,8 +204,9 @@ vacuum(VacuumStmt *vacstmt)
 										ALLOCSET_DEFAULT_MAXSIZE);
 
 	/*
-	 * If we are running only ANALYZE, we don't need per-table transactions,
-	 * but we still need a memory context with table lifetime.
+	 * If we are running only ANALYZE, we don't need per-table
+	 * transactions, but we still need a memory context with table
+	 * lifetime.
 	 */
 	if (vacstmt->analyze && !vacstmt->vacuum)
 		anl_context = AllocSetContextCreate(QueryContext,
@@ -221,29 +222,29 @@ vacuum(VacuumStmt *vacstmt)
 	 * Formerly, there was code here to prevent more than one VACUUM from
 	 * executing concurrently in the same database.  However, there's no
 	 * good reason to prevent that, and manually removing lockfiles after
-	 * a vacuum crash was a pain for dbadmins.  So, forget about lockfiles,
-	 * and just rely on the locks we grab on each target table
+	 * a vacuum crash was a pain for dbadmins.	So, forget about
+	 * lockfiles, and just rely on the locks we grab on each target table
 	 * to ensure that there aren't two VACUUMs running on the same table
 	 * at the same time.
 	 */
 
 	/*
-	 * The strangeness with committing and starting transactions here is due
-	 * to wanting to run each table's VACUUM as a separate transaction, so
-	 * that we don't hold locks unnecessarily long.  Also, if we are doing
-	 * VACUUM ANALYZE, the ANALYZE part runs as a separate transaction from
-	 * the VACUUM to further reduce locking.
+	 * The strangeness with committing and starting transactions here is
+	 * due to wanting to run each table's VACUUM as a separate
+	 * transaction, so that we don't hold locks unnecessarily long.  Also,
+	 * if we are doing VACUUM ANALYZE, the ANALYZE part runs as a separate
+	 * transaction from the VACUUM to further reduce locking.
 	 *
 	 * vacuum_rel expects to be entered with no transaction active; it will
 	 * start and commit its own transaction.  But we are called by an SQL
 	 * command, and so we are executing inside a transaction already.  We
 	 * commit the transaction started in PostgresMain() here, and start
-	 * another one before exiting to match the commit waiting for us back in
-	 * PostgresMain().
+	 * another one before exiting to match the commit waiting for us back
+	 * in PostgresMain().
 	 *
 	 * In the case of an ANALYZE statement (no vacuum, just analyze) it's
-	 * okay to run the whole thing in the outer transaction, and so we skip
-	 * transaction start/stop operations.
+	 * okay to run the whole thing in the outer transaction, and so we
+	 * skip transaction start/stop operations.
 	 */
 	if (vacstmt->vacuum)
 	{
@@ -254,22 +255,23 @@ vacuum(VacuumStmt *vacstmt)
 			 *
 			 * Compute the initially applicable OldestXmin and FreezeLimit
 			 * XIDs, so that we can record these values at the end of the
-			 * VACUUM. Note that individual tables may well be processed with
-			 * newer values, but we can guarantee that no (non-shared)
-			 * relations are processed with older ones.
+			 * VACUUM. Note that individual tables may well be processed
+			 * with newer values, but we can guarantee that no
+			 * (non-shared) relations are processed with older ones.
 			 *
-			 * It is okay to record non-shared values in pg_database, even though
-			 * we may vacuum shared relations with older cutoffs, because only
-			 * the minimum of the values present in pg_database matters.  We
-			 * can be sure that shared relations have at some time been
-			 * vacuumed with cutoffs no worse than the global minimum; for, if
-			 * there is a backend in some other DB with xmin = OLDXMIN that's
-			 * determining the cutoff with which we vacuum shared relations,
-			 * it is not possible for that database to have a cutoff newer
-			 * than OLDXMIN recorded in pg_database.
+			 * It is okay to record non-shared values in pg_database, even
+			 * though we may vacuum shared relations with older cutoffs,
+			 * because only the minimum of the values present in
+			 * pg_database matters.  We can be sure that shared relations
+			 * have at some time been vacuumed with cutoffs no worse than
+			 * the global minimum; for, if there is a backend in some
+			 * other DB with xmin = OLDXMIN that's determining the cutoff
+			 * with which we vacuum shared relations, it is not possible
+			 * for that database to have a cutoff newer than OLDXMIN
+			 * recorded in pg_database.
 			 */
 			vacuum_set_xid_limits(vacstmt, false,
-								  &initialOldestXmin, &initialFreezeLimit);
+								&initialOldestXmin, &initialFreezeLimit);
 		}
 
 		/* matches the StartTransaction in PostgresMain() */
@@ -281,7 +283,7 @@ vacuum(VacuumStmt *vacstmt)
 	 */
 	foreach(cur, vrl)
 	{
-		Oid		relid = (Oid) lfirsti(cur);
+		Oid			relid = (Oid) lfirsti(cur);
 
 		if (vacstmt->vacuum)
 			vacuum_rel(relid, vacstmt, RELKIND_RELATION);
@@ -290,10 +292,11 @@ vacuum(VacuumStmt *vacstmt)
 			MemoryContext old_context = NULL;
 
 			/*
-			 * If we vacuumed, use new transaction for analyze.  Otherwise,
-			 * we can use the outer transaction, but we still need to call
-			 * analyze_rel in a memory context that will be cleaned up on
-			 * return (else we leak memory while processing multiple tables).
+			 * If we vacuumed, use new transaction for analyze.
+			 * Otherwise, we can use the outer transaction, but we still
+			 * need to call analyze_rel in a memory context that will be
+			 * cleaned up on return (else we leak memory while processing
+			 * multiple tables).
 			 */
 			if (vacstmt->vacuum)
 				StartTransactionCommand(true);
@@ -320,16 +323,17 @@ vacuum(VacuumStmt *vacstmt)
 		/* here, we are not in a transaction */
 
 		/*
-		 * This matches the CommitTransaction waiting for us in PostgresMain().
-		 * We tell xact.c not to chain the upcoming commit, so that a VACUUM
-		 * doesn't start a transaction block, even when autocommit is off.
+		 * This matches the CommitTransaction waiting for us in
+		 * PostgresMain(). We tell xact.c not to chain the upcoming
+		 * commit, so that a VACUUM doesn't start a transaction block,
+		 * even when autocommit is off.
 		 */
 		StartTransactionCommand(true);
 
 		/*
-		 * If we did a database-wide VACUUM, update the database's pg_database
-		 * row with info about the transaction IDs used, and try to truncate
-		 * pg_clog.
+		 * If we did a database-wide VACUUM, update the database's
+		 * pg_database row with info about the transaction IDs used, and
+		 * try to truncate pg_clog.
 		 */
 		if (vacstmt->relation == NULL)
 		{
@@ -366,7 +370,7 @@ getrels(const RangeVar *vacrel, const char *stmttype)
 	if (vacrel)
 	{
 		/* Process specific relation */
-		Oid		relid;
+		Oid			relid;
 
 		relid = RangeVarGetRelid(vacrel, false);
 
@@ -517,9 +521,9 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 
 	/*
 	 * Invalidate the tuple in the catcaches; this also arranges to flush
-	 * the relation's relcache entry.  (If we fail to commit for some reason,
-	 * no flush will occur, but no great harm is done since there are no
-	 * noncritical state updates here.)
+	 * the relation's relcache entry.  (If we fail to commit for some
+	 * reason, no flush will occur, but no great harm is done since there
+	 * are no noncritical state updates here.)
 	 */
 	CacheInvalidateHeapTuple(rd, &rtup);
 
@@ -647,8 +651,8 @@ vac_truncate_clog(TransactionId vacuumXID, TransactionId frozenXID)
 	heap_close(relation, AccessShareLock);
 
 	/*
-	 * Do not truncate CLOG if we seem to have suffered wraparound already;
-	 * the computed minimum XID might be bogus.
+	 * Do not truncate CLOG if we seem to have suffered wraparound
+	 * already; the computed minimum XID might be bogus.
 	 */
 	if (vacuumAlreadyWrapped)
 	{
@@ -740,7 +744,8 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	 *
 	 * We allow the user to vacuum a table if he is superuser, the table
 	 * owner, or the database owner (but in the latter case, only if it's
-	 * not a shared relation).	pg_class_ownercheck includes the superuser case.
+	 * not a shared relation).	pg_class_ownercheck includes the superuser
+	 * case.
 	 *
 	 * Note we choose to treat permissions failure as a WARNING and keep
 	 * trying to vacuum the rest of the DB --- is this appropriate?
@@ -1581,21 +1586,23 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * by "recent" transactions then we have to move all chain of
 			 * tuples to another places.
 			 *
-			 * NOTE: this test is not 100% accurate: it is possible for
-			 * a tuple to be an updated one with recent xmin, and yet not
-			 * have a corresponding tuple in the vtlinks list.  Presumably
+			 * NOTE: this test is not 100% accurate: it is possible for a
+			 * tuple to be an updated one with recent xmin, and yet not
+			 * have a corresponding tuple in the vtlinks list.	Presumably
 			 * there was once a parent tuple with xmax matching the xmin,
 			 * but it's possible that that tuple has been removed --- for
-			 * example, if it had xmin = xmax then HeapTupleSatisfiesVacuum
-			 * would deem it removable as soon as the xmin xact completes.
+			 * example, if it had xmin = xmax then
+			 * HeapTupleSatisfiesVacuum would deem it removable as soon as
+			 * the xmin xact completes.
 			 *
 			 * To be on the safe side, we abandon the repair_frag process if
-			 * we cannot find the parent tuple in vtlinks.  This may be overly
-			 * conservative; AFAICS it would be safe to move the chain.
+			 * we cannot find the parent tuple in vtlinks.	This may be
+			 * overly conservative; AFAICS it would be safe to move the
+			 * chain.
 			 */
 			if (((tuple.t_data->t_infomask & HEAP_UPDATED) &&
 			 !TransactionIdPrecedes(HeapTupleHeaderGetXmin(tuple.t_data),
-			                        OldestXmin)) ||
+									OldestXmin)) ||
 				(!(tuple.t_data->t_infomask & (HEAP_XMAX_INVALID |
 											   HEAP_MARKED_FOR_UPDATE)) &&
 				 !(ItemPointerEquals(&(tuple.t_self),
@@ -1626,7 +1633,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (vacrelstats->vtlinks == NULL)
 				{
 					elog(WARNING, "Parent item in update-chain not found - can't continue repair_frag");
-					break;	/* out of walk-along-page loop */
+					break;		/* out of walk-along-page loop */
 				}
 
 				vtmove = (VTupleMove) palloc(100 * sizeof(VTupleMoveData));
@@ -1638,7 +1645,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				 * we have to move to the end of chain.
 				 */
 				while (!(tp.t_data->t_infomask & (HEAP_XMAX_INVALID |
-												  HEAP_MARKED_FOR_UPDATE)) &&
+											  HEAP_MARKED_FOR_UPDATE)) &&
 					   !(ItemPointerEquals(&(tp.t_self),
 										   &(tp.t_data->t_ctid))))
 				{
@@ -1704,7 +1711,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						{
 							/* can't move item anywhere */
 							chain_move_failed = true;
-							break; /* out of check-all-items loop */
+							break;		/* out of check-all-items loop */
 						}
 						to_item = i;
 						to_vacpage = fraged_pages->pagedesc[to_item];
@@ -1732,8 +1739,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					/* At beginning of chain? */
 					if (!(tp.t_data->t_infomask & HEAP_UPDATED) ||
-					    TransactionIdPrecedes(HeapTupleHeaderGetXmin(tp.t_data),
-					                          OldestXmin))
+						TransactionIdPrecedes(HeapTupleHeaderGetXmin(tp.t_data),
+											  OldestXmin))
 						break;
 
 					/* No, move to tuple with prior row version */
@@ -1749,14 +1756,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						/* see discussion above */
 						elog(WARNING, "Parent item in update-chain not found - can't continue repair_frag");
 						chain_move_failed = true;
-						break; /* out of check-all-items loop */
+						break;	/* out of check-all-items loop */
 					}
 					tp.t_self = vtlp->this_tid;
 					Pbuf = ReadBuffer(onerel,
-									  ItemPointerGetBlockNumber(&(tp.t_self)));
+								ItemPointerGetBlockNumber(&(tp.t_self)));
 					Ppage = BufferGetPage(Pbuf);
 					Pitemid = PageGetItemId(Ppage,
-											ItemPointerGetOffsetNumber(&(tp.t_self)));
+							   ItemPointerGetOffsetNumber(&(tp.t_self)));
 					/* this can't happen since we saw tuple earlier: */
 					if (!ItemIdIsUsed(Pitemid))
 						elog(ERROR, "Parent itemid marked as unused");
@@ -1768,25 +1775,24 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 											 &(Ptp.t_data->t_ctid)));
 
 					/*
-					 * Read above about cases when
-					 * !ItemIdIsUsed(Citemid) (child item is
-					 * removed)... Due to the fact that at the moment
-					 * we don't remove unuseful part of update-chain,
-					 * it's possible to get too old parent row here.
-					 * Like as in the case which caused this problem,
-					 * we stop shrinking here. I could try to find
-					 * real parent row but want not to do it because
-					 * of real solution will be implemented anyway,
-					 * later, and we are too close to 6.5 release. -
-					 * vadim 06/11/99
+					 * Read above about cases when !ItemIdIsUsed(Citemid)
+					 * (child item is removed)... Due to the fact that at
+					 * the moment we don't remove unuseful part of
+					 * update-chain, it's possible to get too old parent
+					 * row here. Like as in the case which caused this
+					 * problem, we stop shrinking here. I could try to
+					 * find real parent row but want not to do it because
+					 * of real solution will be implemented anyway, later,
+					 * and we are too close to 6.5 release. - vadim
+					 * 06/11/99
 					 */
 					if (!(TransactionIdEquals(HeapTupleHeaderGetXmax(Ptp.t_data),
-											  HeapTupleHeaderGetXmin(tp.t_data))))
+									 HeapTupleHeaderGetXmin(tp.t_data))))
 					{
 						ReleaseBuffer(Pbuf);
 						elog(WARNING, "Too old parent tuple found - can't continue repair_frag");
 						chain_move_failed = true;
-						break; /* out of check-all-items loop */
+						break;	/* out of check-all-items loop */
 					}
 					tp.t_datamcxt = Ptp.t_datamcxt;
 					tp.t_data = Ptp.t_data;
@@ -1795,7 +1801,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						ReleaseBuffer(Cbuf);
 					Cbuf = Pbuf;
 					freeCbuf = true;
-				} /* end of check-all-items loop */
+				}				/* end of check-all-items loop */
 
 				if (freeCbuf)
 					ReleaseBuffer(Cbuf);
@@ -1804,9 +1810,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (chain_move_failed)
 				{
 					/*
-					 * Undo changes to offsets_used state.  We don't bother
-					 * cleaning up the amount-free state, since we're not
-					 * going to do any further tuple motion.
+					 * Undo changes to offsets_used state.	We don't
+					 * bother cleaning up the amount-free state, since
+					 * we're not going to do any further tuple motion.
 					 */
 					for (i = 0; i < num_vtmove; i++)
 					{
@@ -1939,7 +1945,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					}
 					else
 					{
-						/* No XLOG record, but still need to flag that XID exists on disk */
+						/*
+						 * No XLOG record, but still need to flag that XID
+						 * exists on disk
+						 */
 						MyXactMadeTempRelUpdate = true;
 					}
 
@@ -1985,7 +1994,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					WriteBuffer(cur_buffer);
 					WriteBuffer(Cbuf);
-				} /* end of move-the-tuple-chain loop */
+				}				/* end of move-the-tuple-chain loop */
 
 				cur_buffer = InvalidBuffer;
 				pfree(vtmove);
@@ -1993,7 +2002,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				/* advance to next tuple in walk-along-page loop */
 				continue;
-			} /* end of is-tuple-in-chain test */
+			}					/* end of is-tuple-in-chain test */
 
 			/* try to find new page for this tuple */
 			if (cur_buffer == InvalidBuffer ||
@@ -2031,10 +2040,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			/*
 			 * register invalidation of source tuple in catcaches.
 			 *
-			 * (Note: we do not need to register the copied tuple,
-			 * because we are not changing the tuple contents and
-			 * so there cannot be any need to flush negative
-			 * catcache entries.)
+			 * (Note: we do not need to register the copied tuple, because we
+			 * are not changing the tuple contents and so there cannot be
+			 * any need to flush negative catcache entries.)
 			 */
 			CacheInvalidateHeapTuple(onerel, &tuple);
 
@@ -2090,7 +2098,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			}
 			else
 			{
-				/* No XLOG record, but still need to flag that XID exists on disk */
+				/*
+				 * No XLOG record, but still need to flag that XID exists
+				 * on disk
+				 */
 				MyXactMadeTempRelUpdate = true;
 			}
 
@@ -2116,8 +2127,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		}						/* walk along page */
 
 		/*
-		 * If we broke out of the walk-along-page loop early (ie, still have
-		 * offnum <= maxoff), then we failed to move some tuple off
+		 * If we broke out of the walk-along-page loop early (ie, still
+		 * have offnum <= maxoff), then we failed to move some tuple off
 		 * this page.  No point in shrinking any more, so clean up and
 		 * exit the per-page loop.
 		 */
@@ -2126,7 +2137,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			OffsetNumber off;
 
 			/*
-			 * Fix vacpage state for any unvisited tuples remaining on page
+			 * Fix vacpage state for any unvisited tuples remaining on
+			 * page
 			 */
 			for (off = OffsetNumberNext(offnum);
 				 off <= maxoff;
@@ -2389,7 +2401,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			}
 			else
 			{
-				/* No XLOG record, but still need to flag that XID exists on disk */
+				/*
+				 * No XLOG record, but still need to flag that XID exists
+				 * on disk
+				 */
 				MyXactMadeTempRelUpdate = true;
 			}
 

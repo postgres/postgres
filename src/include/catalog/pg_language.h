@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.19 2002/07/24 19:11:12 petere Exp $
+ * $Id: pg_language.h,v 1.20 2002/09/04 20:31:37 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -38,7 +38,7 @@ CATALOG(pg_language)
 	bool		lanpltrusted;	/* PL is trusted */
 	Oid			lanplcallfoid;	/* Call handler for PL */
 	Oid			lanvalidator;	/* optional validation function */
-    aclitem		lanacl[1];		/* Access privileges */
+	aclitem		lanacl[1];		/* Access privileges */
 } FormData_pg_language;
 
 /* ----------------

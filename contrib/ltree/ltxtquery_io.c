@@ -1,5 +1,5 @@
 /*
- * txtquery io 
+ * txtquery io
  * Teodor Sigaev <teodor@stack.net>
  */
 
@@ -8,44 +8,47 @@
 #include "crc32.h"
 
 PG_FUNCTION_INFO_V1(ltxtq_in);
-Datum	   ltxtq_in(PG_FUNCTION_ARGS);
+Datum		ltxtq_in(PG_FUNCTION_ARGS);
+
 PG_FUNCTION_INFO_V1(ltxtq_out);
-Datum	   ltxtq_out(PG_FUNCTION_ARGS);
+Datum		ltxtq_out(PG_FUNCTION_ARGS);
 
 
 /* parser's states */
 #define WAITOPERAND 1
 #define INOPERAND 2
-#define WAITOPERATOR    3
+#define WAITOPERATOR	3
 
 /*
  * node of query tree, also used
  * for storing polish notation in parser
  */
-typedef struct NODE {
-	int4	    type;
-	int4	    val;
-	int2	    distance;
-	int2	    length;
-	uint16	    flag;
+typedef struct NODE
+{
+	int4		type;
+	int4		val;
+	int2		distance;
+	int2		length;
+	uint16		flag;
 	struct NODE *next;
-}       NODE;
+}	NODE;
 
-typedef struct {
-	char       *buf;
-	int4	    state;
-	int4	    count;
+typedef struct
+{
+	char	   *buf;
+	int4		state;
+	int4		count;
 	/* reverse polish notation in list (for temprorary usage) */
-	NODE       *str;
+	NODE	   *str;
 	/* number in str */
-	int4	    num;
+	int4		num;
 
 	/* user-friendly operand */
-	int4	    lenop;
-	int4	    sumlen;
-	char       *op;
-	char       *curop;
-}       QPRS_STATE;
+	int4		lenop;
+	int4		sumlen;
+	char	   *op;
+	char	   *curop;
+}	QPRS_STATE;
 
 /*
  * get token from query string
@@ -70,27 +73,31 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 					(state->buf)++;
 					return OPEN;
 				}
-				else if ( ISALNUM(*(state->buf)) )
+				else if (ISALNUM(*(state->buf)))
 				{
 					state->state = INOPERAND;
 					*strval = state->buf;
 					*lenval = 1;
 					*flag = 0;
-				} else if ( !isspace((unsigned int)*(state->buf)) )
-					elog(ERROR,"Operand syntax error");
+				}
+				else if (!isspace((unsigned int) *(state->buf)))
+					elog(ERROR, "Operand syntax error");
 				break;
 			case INOPERAND:
-				if ( ISALNUM(*(state->buf)) ) {
-					if ( *flag )
-						elog(ERROR,"Modificators syntax error");
+				if (ISALNUM(*(state->buf)))
+				{
+					if (*flag)
+						elog(ERROR, "Modificators syntax error");
 					(*lenval)++;
-				} else if ( *(state->buf) == '%' ) {
+				}
+				else if (*(state->buf) == '%')
 					*flag |= LVAR_SUBLEXEM;
-				} else if ( *(state->buf) == '@' ) {
+				else if (*(state->buf) == '@')
 					*flag |= LVAR_INCASE;
-				} else if ( *(state->buf) == '*' ) {
+				else if (*(state->buf) == '*')
 					*flag |= LVAR_ANYEND;
-				} else {
+				else
+				{
 					state->state = WAITOPERATOR;
 					return VAL;
 				}
@@ -129,7 +136,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, uint1
 static void
 pushquery(QPRS_STATE * state, int4 type, int4 val, int4 distance, int4 lenval, uint16 flag)
 {
-	NODE       *tmp = (NODE *) palloc(sizeof(NODE));
+	NODE	   *tmp = (NODE *) palloc(sizeof(NODE));
 
 	tmp->type = type;
 	tmp->val = val;
@@ -159,7 +166,7 @@ pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, uint16 flag
 
 	while (state->curop - state->op + lenval + 1 >= state->lenop)
 	{
-		int4	    tmp = state->curop - state->op;
+		int4		tmp = state->curop - state->op;
 
 		state->lenop *= 2;
 		state->op = (char *) repalloc((void *) state->op, state->lenop);
@@ -173,26 +180,27 @@ pushval_asis(QPRS_STATE * state, int type, char *strval, int lenval, uint16 flag
 	return;
 }
 
-#define STACKDEPTH      32
+#define STACKDEPTH		32
 /*
  * make polish notaion of query
  */
 static int4
 makepol(QPRS_STATE * state)
 {
-	int4	    val,
+	int4		val,
 				type;
-	int4	    lenval;
-	char       *strval;
-	int4	    stack[STACKDEPTH];
-	int4	    lenstack = 0;
-	uint16	    flag;
+	int4		lenval;
+	char	   *strval;
+	int4		stack[STACKDEPTH];
+	int4		lenstack = 0;
+	uint16		flag;
 
-	while ((type = gettoken_query(state, &val, &lenval, &strval,&flag)) != END) {
+	while ((type = gettoken_query(state, &val, &lenval, &strval, &flag)) != END)
+	{
 		switch (type)
 		{
 			case VAL:
-				pushval_asis(state, VAL, strval, lenval,flag);
+				pushval_asis(state, VAL, strval, lenval, flag);
 				while (lenstack && (stack[lenstack - 1] == (int4) '&' ||
 									stack[lenstack - 1] == (int4) '!'))
 				{
@@ -236,7 +244,8 @@ makepol(QPRS_STATE * state)
 
 		}
 	}
-	while (lenstack) {
+	while (lenstack)
+	{
 		lenstack--;
 		pushquery(state, OPR, stack[lenstack], 0, 0, 0);
 	};
@@ -259,8 +268,8 @@ findoprnd(ITEM * ptr, int4 *pos)
 	}
 	else
 	{
-		ITEM       *curitem = &ptr[*pos];
-		int4	    tmp = *pos;
+		ITEM	   *curitem = &ptr[*pos];
+		int4		tmp = *pos;
 
 		(*pos)++;
 		findoprnd(ptr, pos);
@@ -276,16 +285,16 @@ findoprnd(ITEM * ptr, int4 *pos)
 static ltxtquery *
 queryin(char *buf)
 {
-	QPRS_STATE      state;
-	int4	    i;
+	QPRS_STATE	state;
+	int4		i;
 	ltxtquery  *query;
-	int4	    commonlen;
-	ITEM       *ptr;
-	NODE       *tmp;
-	int4	    pos = 0;
+	int4		commonlen;
+	ITEM	   *ptr;
+	NODE	   *tmp;
+	int4		pos = 0;
 
 #ifdef BS_DEBUG
-	char	    pbuf[16384],
+	char		pbuf[16384],
 			   *cur;
 #endif
 
@@ -351,12 +360,12 @@ ltxtq_in(PG_FUNCTION_ARGS)
  */
 typedef struct
 {
-	ITEM       *curpol;
-	char       *buf;
-	char       *cur;
-	char       *op;
-	int4	    buflen;
-}       INFIX;
+	ITEM	   *curpol;
+	char	   *buf;
+	char	   *cur;
+	char	   *op;
+	int4		buflen;
+}	INFIX;
 
 #define RESIZEBUF(inf,addsize) \
 while( ( inf->cur - inf->buf ) + addsize + 1 >= inf->buflen ) \
@@ -376,23 +385,27 @@ infix(INFIX * in, bool first)
 {
 	if (in->curpol->type == VAL)
 	{
-		char       *op = in->op + in->curpol->distance;
+		char	   *op = in->op + in->curpol->distance;
 
 		RESIZEBUF(in, in->curpol->length * 2 + 5);
-		while (*op) {
+		while (*op)
+		{
 			*(in->cur) = *op;
 			op++;
 			in->cur++;
 		}
-		if ( in->curpol->flag & LVAR_SUBLEXEM ) {
+		if (in->curpol->flag & LVAR_SUBLEXEM)
+		{
 			*(in->cur) = '%';
 			in->cur++;
 		}
-		if ( in->curpol->flag & LVAR_INCASE ) {
+		if (in->curpol->flag & LVAR_INCASE)
+		{
 			*(in->cur) = '@';
 			in->cur++;
 		}
-		if ( in->curpol->flag & LVAR_ANYEND ) {
+		if (in->curpol->flag & LVAR_ANYEND)
+		{
 			*(in->cur) = '*';
 			in->cur++;
 		}
@@ -401,7 +414,7 @@ infix(INFIX * in, bool first)
 	}
 	else if (in->curpol->val == (int4) '!')
 	{
-		bool	    isopr = false;
+		bool		isopr = false;
 
 		RESIZEBUF(in, 1);
 		*(in->cur) = '!';
@@ -425,8 +438,8 @@ infix(INFIX * in, bool first)
 	}
 	else
 	{
-		int4	    op = in->curpol->val;
-		INFIX	   nrm;
+		int4		op = in->curpol->val;
+		INFIX		nrm;
 
 		in->curpol++;
 		if (op == (int4) '|' && !first)
@@ -467,7 +480,7 @@ Datum
 ltxtq_out(PG_FUNCTION_ARGS)
 {
 	ltxtquery  *query = PG_GETARG_LTXTQUERY(0);
-	INFIX	   nrm;
+	INFIX		nrm;
 
 	if (query->size == 0)
 		elog(ERROR, "Empty");
@@ -481,4 +494,3 @@ ltxtq_out(PG_FUNCTION_ARGS)
 	PG_FREE_IF_COPY(query, 0);
 	PG_RETURN_POINTER(nrm.buf);
 }
-

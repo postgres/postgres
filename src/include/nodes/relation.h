@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.66 2002/08/19 15:08:47 tgl Exp $
+ * $Id: relation.h,v 1.67 2002/09/04 20:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef enum CostSelector
  * single RT indexes; but they are not part of the join tree, and are stored
  * in other_rel_list not base_rel_list.  An otherrel is created for each
  * join RTE as an aid in processing Vars that refer to the join's outputs,
- * but it serves no other purpose in planning.  It is important not to
+ * but it serves no other purpose in planning.	It is important not to
  * confuse this otherrel with the joinrel that represents the matching set
  * of base relations.
  *
@@ -71,7 +71,7 @@ typedef enum CostSelector
  * comprising the best plans for the individual child tables.
  *
  * Parts of this data structure are specific to various scan and join
- * mechanisms.  It didn't seem worth creating new node types for them.
+ * mechanisms.	It didn't seem worth creating new node types for them.
  *
  *		relids - List of base-relation identifiers; it is a base relation
  *				if there is just one, a join relation if more than one
@@ -126,7 +126,7 @@ typedef enum CostSelector
  *					side of an outer join, the list of all relids
  *					participating in the highest such outer join; else NIL.
  *					For a join otherrel: the list of all baserel relids
- *					syntactically within the join.  Otherwise, unused.
+ *					syntactically within the join.	Otherwise, unused.
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
  *		innerjoin - List of Path nodes that represent indices that may be used
@@ -571,8 +571,8 @@ typedef struct RestrictInfo
 	List	   *right_pathkey;	/* canonical pathkey for right side */
 
 	/* cache space for mergeclause processing; -1 if not yet set */
-	Selectivity left_mergescansel;	/* fraction of left side to scan */
-	Selectivity right_mergescansel;	/* fraction of right side to scan */
+	Selectivity left_mergescansel;		/* fraction of left side to scan */
+	Selectivity right_mergescansel;		/* fraction of right side to scan */
 
 	/* valid if clause is hashjoinable, else InvalidOid: */
 	Oid			hashjoinoperator;		/* copy of clause operator */

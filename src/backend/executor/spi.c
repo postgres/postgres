@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.73 2002/09/02 01:05:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.74 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -433,6 +433,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	if (i == natts)				/* no errors in *attnum */
 	{
 		mtuple = heap_formtuple(rel->rd_att, v, n);
+
 		/*
 		 * copy the identification info of the old tuple: t_ctid, t_self,
 		 * and OID (if any)
@@ -1098,7 +1099,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 				ParamListInfo paramLI;
 
 				paramLI = (ParamListInfo) palloc((nargs + 1) *
-												 sizeof(ParamListInfoData));
+											  sizeof(ParamListInfoData));
 				MemSet(paramLI, 0, (nargs + 1) * sizeof(ParamListInfoData));
 
 				state->es_param_list_info = paramLI;
@@ -1266,9 +1267,9 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 		ExecutorRun(querydesc, estate, direction, (long) count);
 
 		if (estate->es_processed > 0)
-			portal->atStart = false; /* OK to back up now */
+			portal->atStart = false;	/* OK to back up now */
 		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atEnd = true;	/* we retrieved 'em all */
+			portal->atEnd = true;		/* we retrieved 'em all */
 	}
 	else
 	{
@@ -1280,9 +1281,9 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 		ExecutorRun(querydesc, estate, direction, (long) count);
 
 		if (estate->es_processed > 0)
-			portal->atEnd = false;	/* OK to go forward now */
+			portal->atEnd = false;		/* OK to go forward now */
 		if (count <= 0 || (int) estate->es_processed < count)
-			portal->atStart = true; /* we retrieved 'em all */
+			portal->atStart = true;		/* we retrieved 'em all */
 	}
 
 	_SPI_current->processed = estate->es_processed;

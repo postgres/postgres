@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.7 2002/08/15 02:58:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.8 2002/09/04 20:31:06 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -82,7 +82,7 @@ pglo_import(LODumpMaster * pgLO)
 		 * UPDATE oid in tab
 		 */
 		snprintf(Qbuff, QUERY_BUFSIZ,
-			"UPDATE \"%s\" SET \"%s\"=%u WHERE \"%s\"=%u",
+				 "UPDATE \"%s\" SET \"%s\"=%u WHERE \"%s\"=%u",
 			loa.lo_table, loa.lo_attr, new_oid, loa.lo_attr, loa.lo_oid);
 
 		/* fprintf(stderr, Qbuff); */

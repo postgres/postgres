@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.74 2002/09/02 01:05:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.75 2002/09/04 20:31:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,8 @@
 #include "utils/syscache.h"
 
 static void parseNameAndArgTypes(const char *string, const char *caller,
-								 bool allowNone,
-								 List **names, int *nargs, Oid *argtypes);
+					 bool allowNone,
+					 List **names, int *nargs, Oid *argtypes);
 
 
 /*****************************************************************************
@@ -87,7 +87,7 @@ regprocin(PG_FUNCTION_ARGS)
 
 	/*
 	 * In bootstrap mode we assume the given name is not schema-qualified,
-	 * and just search pg_proc for a unique match.  This is needed for
+	 * and just search pg_proc for a unique match.	This is needed for
 	 * initializing other system catalogs (pg_namespace may not exist yet,
 	 * and certainly there are no schemas other than pg_catalog).
 	 */
@@ -96,7 +96,7 @@ regprocin(PG_FUNCTION_ARGS)
 		int			matches = 0;
 		Relation	hdesc;
 		ScanKeyData skey[1];
-		SysScanDesc	sysscan;
+		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
 		ScanKeyEntryInitialize(&skey[0], 0x0,
@@ -127,8 +127,8 @@ regprocin(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: parse the name into components and see if it
-	 * matches any pg_proc entries in the current search path.
+	 * Normal case: parse the name into components and see if it matches
+	 * any pg_proc entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(pro_name_or_oid, "regprocin");
 	clist = FuncnameGetCandidates(names, -1);
@@ -175,17 +175,15 @@ regprocout(PG_FUNCTION_ARGS)
 		 * output anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
-		{
 			result = pstrdup(proname);
-		}
 		else
 		{
 			char	   *nspname;
 			FuncCandidateList clist;
 
 			/*
-			 * Would this proc be found (uniquely!) by regprocin?
-			 * If not, qualify it.
+			 * Would this proc be found (uniquely!) by regprocin? If not,
+			 * qualify it.
 			 */
 			clist = FuncnameGetCandidates(makeList1(makeString(proname)), -1);
 			if (clist != NULL && clist->next == NULL &&
@@ -250,10 +248,10 @@ regprocedurein(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Else it's a name and arguments.  Parse the name and arguments,
-	 * look up potential matches in the current namespace search list,
-	 * and scan to see which one exactly matches the given argument
-	 * types.  (There will not be more than one match.)
+	 * Else it's a name and arguments.  Parse the name and arguments, look
+	 * up potential matches in the current namespace search list, and scan
+	 * to see which one exactly matches the given argument types.  (There
+	 * will not be more than one match.)
 	 *
 	 * XXX at present, this code will not work in bootstrap mode, hence this
 	 * datatype cannot be used for any system column that needs to receive
@@ -308,8 +306,8 @@ format_procedure(Oid procedure_oid)
 		initStringInfo(&buf);
 
 		/*
-		 * Would this proc be found (given the right args) by regprocedurein?
-		 * If not, we need to qualify it.
+		 * Would this proc be found (given the right args) by
+		 * regprocedurein? If not, we need to qualify it.
 		 */
 		if (FunctionIsVisible(procedure_oid))
 			nspname = NULL;
@@ -320,7 +318,7 @@ format_procedure(Oid procedure_oid)
 						 quote_qualified_identifier(nspname, proname));
 		for (i = 0; i < nargs; i++)
 		{
-			Oid		thisargtype = procform->proargtypes[i];
+			Oid			thisargtype = procform->proargtypes[i];
 
 			if (i > 0)
 				appendStringInfoChar(&buf, ',');
@@ -401,7 +399,7 @@ regoperin(PG_FUNCTION_ARGS)
 
 	/*
 	 * In bootstrap mode we assume the given name is not schema-qualified,
-	 * and just search pg_operator for a unique match.  This is needed for
+	 * and just search pg_operator for a unique match.	This is needed for
 	 * initializing other system catalogs (pg_namespace may not exist yet,
 	 * and certainly there are no schemas other than pg_catalog).
 	 */
@@ -410,7 +408,7 @@ regoperin(PG_FUNCTION_ARGS)
 		int			matches = 0;
 		Relation	hdesc;
 		ScanKeyData skey[1];
-		SysScanDesc	sysscan;
+		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
 		ScanKeyEntryInitialize(&skey[0], 0x0,
@@ -441,8 +439,8 @@ regoperin(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: parse the name into components and see if it
-	 * matches any pg_operator entries in the current search path.
+	 * Normal case: parse the name into components and see if it matches
+	 * any pg_operator entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(opr_name_or_oid, "regoperin");
 	clist = OpernameGetCandidates(names, '\0');
@@ -489,16 +487,14 @@ regoperout(PG_FUNCTION_ARGS)
 		 * output anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
-		{
 			result = pstrdup(oprname);
-		}
 		else
 		{
 			FuncCandidateList clist;
 
 			/*
-			 * Would this oper be found (uniquely!) by regoperin?
-			 * If not, qualify it.
+			 * Would this oper be found (uniquely!) by regoperin? If not,
+			 * qualify it.
 			 */
 			clist = OpernameGetCandidates(makeList1(makeString(oprname)),
 										  '\0');
@@ -511,7 +507,7 @@ regoperout(PG_FUNCTION_ARGS)
 
 				nspname = get_namespace_name(operform->oprnamespace);
 				nspname = quote_identifier(nspname);
-				result = (char *) palloc(strlen(nspname)+strlen(oprname)+2);
+				result = (char *) palloc(strlen(nspname) + strlen(oprname) + 2);
 				sprintf(result, "%s.%s", nspname, oprname);
 			}
 		}
@@ -520,7 +516,10 @@ regoperout(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		/* If OID doesn't match any pg_operator entry, return it numerically */
+		/*
+		 * If OID doesn't match any pg_operator entry, return it
+		 * numerically
+		 */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", oprid);
 	}
@@ -570,10 +569,10 @@ regoperatorin(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Else it's a name and arguments.  Parse the name and arguments,
-	 * look up potential matches in the current namespace search list,
-	 * and scan to see which one exactly matches the given argument
-	 * types.  (There will not be more than one match.)
+	 * Else it's a name and arguments.  Parse the name and arguments, look
+	 * up potential matches in the current namespace search list, and scan
+	 * to see which one exactly matches the given argument types.  (There
+	 * will not be more than one match.)
 	 *
 	 * XXX at present, this code will not work in bootstrap mode, hence this
 	 * datatype cannot be used for any system column that needs to receive
@@ -637,8 +636,8 @@ format_operator(Oid operator_oid)
 		initStringInfo(&buf);
 
 		/*
-		 * Would this oper be found (given the right args) by regoperatorin?
-		 * If not, we need to qualify it.
+		 * Would this oper be found (given the right args) by
+		 * regoperatorin? If not, we need to qualify it.
 		 */
 		if (!OperatorIsVisible(operator_oid))
 		{
@@ -667,7 +666,10 @@ format_operator(Oid operator_oid)
 	}
 	else
 	{
-		/* If OID doesn't match any pg_operator entry, return it numerically */
+		/*
+		 * If OID doesn't match any pg_operator entry, return it
+		 * numerically
+		 */
 		result = (char *) palloc(NAMEDATALEN);
 		snprintf(result, NAMEDATALEN, "%u", operator_oid);
 	}
@@ -715,12 +717,12 @@ regclassin(PG_FUNCTION_ARGS)
 	/* Numeric OID? */
 	if (class_name_or_oid[0] >= '0' &&
 		class_name_or_oid[0] <= '9' &&
-		strspn(class_name_or_oid, "0123456789") == strlen(class_name_or_oid))
+	strspn(class_name_or_oid, "0123456789") == strlen(class_name_or_oid))
 	{
 		Oid			searchOid;
 
 		searchOid = DatumGetObjectId(DirectFunctionCall1(oidin,
-									  CStringGetDatum(class_name_or_oid)));
+									CStringGetDatum(class_name_or_oid)));
 		result = GetSysCacheOid(RELOID,
 								ObjectIdGetDatum(searchOid),
 								0, 0, 0);
@@ -741,7 +743,7 @@ regclassin(PG_FUNCTION_ARGS)
 	{
 		Relation	hdesc;
 		ScanKeyData skey[1];
-		SysScanDesc	sysscan;
+		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
 		ScanKeyEntryInitialize(&skey[0], 0x0,
@@ -767,8 +769,8 @@ regclassin(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: parse the name into components and see if it
-	 * matches any pg_class entries in the current search path.
+	 * Normal case: parse the name into components and see if it matches
+	 * any pg_class entries in the current search path.
 	 */
 	names = stringToQualifiedNameList(class_name_or_oid, "regclassin");
 
@@ -808,16 +810,14 @@ regclassout(PG_FUNCTION_ARGS)
 		 * output anyway.)
 		 */
 		if (IsBootstrapProcessingMode())
-		{
 			result = pstrdup(classname);
-		}
 		else
 		{
 			char	   *nspname;
 
 			/*
-			 * Would this class be found by regclassin?
-			 * If not, qualify it.
+			 * Would this class be found by regclassin? If not, qualify
+			 * it.
 			 */
 			if (RelationIsVisible(classid))
 				nspname = NULL;
@@ -894,7 +894,7 @@ regtypein(PG_FUNCTION_ARGS)
 	{
 		Relation	hdesc;
 		ScanKeyData skey[1];
-		SysScanDesc	sysscan;
+		SysScanDesc sysscan;
 		HeapTuple	tuple;
 
 		ScanKeyEntryInitialize(&skey[0], 0x0,
@@ -920,8 +920,8 @@ regtypein(PG_FUNCTION_ARGS)
 	}
 
 	/*
-	 * Normal case: invoke the full parser to deal with special cases
-	 * such as array syntax.
+	 * Normal case: invoke the full parser to deal with special cases such
+	 * as array syntax.
 	 */
 	parseTypeString(typ_name_or_oid, &result, &typmod);
 
@@ -964,9 +964,7 @@ regtypeout(PG_FUNCTION_ARGS)
 			result = pstrdup(typname);
 		}
 		else
-		{
 			result = format_type_be(typid);
-		}
 
 		ReleaseSysCache(typetup);
 	}
@@ -1003,7 +1001,7 @@ stringToQualifiedNameList(const char *string, const char *caller)
 
 	foreach(l, namelist)
 	{
-		char   *curname = (char *) lfirst(l);
+		char	   *curname = (char *) lfirst(l);
 
 		result = lappend(result, makeString(pstrdup(curname)));
 	}
@@ -1020,7 +1018,7 @@ stringToQualifiedNameList(const char *string, const char *caller)
 
 /*
  * Given a C string, parse it into a qualified function or operator name
- * followed by a parenthesized list of type names.  Reduce the
+ * followed by a parenthesized list of type names.	Reduce the
  * type names to an array of OIDs (returned into *nargs and *argtypes;
  * the argtypes array should be of size FUNC_MAX_ARGS).  The function or
  * operator name is returned to *names as a List of Strings.

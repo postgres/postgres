@@ -4,7 +4,7 @@
  *	  POSTGRES inter-process communication definitions.
  *
  * This file is misnamed, as it no longer has much of anything directly
- * to do with IPC.  The functionality here is concerned with managing
+ * to do with IPC.	The functionality here is concerned with managing
  * exit-time cleanup for either a postmaster or a backend.
  *
  *
@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.80 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.81 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

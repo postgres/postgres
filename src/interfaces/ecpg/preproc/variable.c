@@ -242,7 +242,7 @@ dump_variables(struct arguments * list, int mode)
 
 	/* Then the current element and its indicator */
 	ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
-			   list->indicator->name, list->indicator->type, NULL, NULL, 0, NULL, NULL);
+					list->indicator->name, list->indicator->type, NULL, NULL, 0, NULL, NULL);
 
 	/* Then release the list element. */
 	if (mode != 0)
@@ -318,16 +318,17 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 
 		*dimension = type_dimension;
 	}
-	
-	if (pointer_len>2)
-	{	snprintf(errortext, sizeof(errortext), "No multilevel (more than 2) pointer supported %d",pointer_len);
-	    mmerror(PARSE_ERROR, ET_FATAL, errortext);
+
+	if (pointer_len > 2)
+	{
+		snprintf(errortext, sizeof(errortext), "No multilevel (more than 2) pointer supported %d", pointer_len);
+		mmerror(PARSE_ERROR, ET_FATAL, errortext);
 /*		mmerror(PARSE_ERROR, ET_FATAL, "No multilevel (more than 2) pointer supported %d",pointer_len);*/
 	}
-	if (pointer_len>1 && type_enum!=ECPGt_char && type_enum!=ECPGt_unsigned_char)
+	if (pointer_len > 1 && type_enum != ECPGt_char && type_enum != ECPGt_unsigned_char)
 		mmerror(PARSE_ERROR, ET_FATAL, "No pointer to pointer supported for this type");
 
-	if (pointer_len>1 && (*length >= 0 || *dimension >= 0))
+	if (pointer_len > 1 && (*length >= 0 || *dimension >= 0))
 		mmerror(PARSE_ERROR, ET_FATAL, "No multi-dimensional array support");
 
 	if (*length >= 0 && *dimension >= 0 && pointer_len)
@@ -364,14 +365,14 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 		case ECPGt_char:
 		case ECPGt_unsigned_char:
 			/* char ** */
-			if (pointer_len==2)
+			if (pointer_len == 2)
 			{
 				*length = *dimension = 0;
 				break;
 			}
-			
+
 			/* pointer has to get length 0 */
-			if (pointer_len==1)
+			if (pointer_len == 1)
 				*length = 0;
 
 			/* one index is the string length */

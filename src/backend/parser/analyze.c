@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.247 2002/09/02 06:11:42 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.248 2002/09/04 20:31:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,8 @@ typedef struct
 	List	   *tables;			/* CREATE TABLE items */
 	List	   *views;			/* CREATE VIEW items */
 	List	   *grants;			/* GRANT items */
-	List	   *fwconstraints;	/* Forward referencing FOREIGN KEY constraints */
+	List	   *fwconstraints;	/* Forward referencing FOREIGN KEY
+								 * constraints */
 	List	   *alters;			/* Generated ALTER items (from the above) */
 	List	   *ixconstraints;	/* index-creating constraints */
 	List	   *blist;			/* "before list" of things to do before
@@ -84,13 +85,13 @@ typedef struct
 
 
 static Query *transformStmt(ParseState *pstate, Node *stmt,
-						List **extras_before, List **extras_after);
+			  List **extras_before, List **extras_after);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
-						List **extras_before, List **extras_after);
+					List **extras_before, List **extras_after);
 static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt,
-						List **extras_before, List **extras_after);
+				  List **extras_before, List **extras_after);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
@@ -98,7 +99,7 @@ static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt);
 static Query *transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
-						List **extras_before, List **extras_after);
+					List **extras_before, List **extras_after);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 						List **extras_before, List **extras_after);
 static void transformColumnDefinition(ParseState *pstate,
@@ -139,6 +140,7 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 {
 	List	   *result = NIL;
 	ParseState *pstate = make_parsestate(parentParseState);
+
 	/* Lists to return extra commands from transformation */
 	List	   *extras_before = NIL;
 	List	   *extras_after = NIL;
@@ -163,13 +165,13 @@ parse_analyze(Node *parseTree, ParseState *parentParseState)
 	}
 
 	/*
-	 * Make sure that only the original query is marked original.
-	 * We have to do this explicitly since recursive calls of parse_analyze
-	 * will have set originalQuery in some of the added-on queries.
+	 * Make sure that only the original query is marked original. We have
+	 * to do this explicitly since recursive calls of parse_analyze will
+	 * have set originalQuery in some of the added-on queries.
 	 */
 	foreach(listscan, result)
 	{
-		Query  *q = lfirst(listscan);
+		Query	   *q = lfirst(listscan);
 
 		q->originalQuery = (q == query);
 	}
@@ -194,7 +196,7 @@ release_pstate_resources(ParseState *pstate)
  */
 static Query *
 transformStmt(ParseState *pstate, Node *parseTree,
-			  List **extras_before,	List **extras_after)
+			  List **extras_before, List **extras_after)
 {
 	Query	   *result = NULL;
 
@@ -205,7 +207,7 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			 */
 		case T_CreateStmt:
 			result = transformCreateStmt(pstate, (CreateStmt *) parseTree,
-									extras_before, extras_after);
+										 extras_before, extras_after);
 			break;
 
 		case T_IndexStmt:
@@ -214,7 +216,7 @@ transformStmt(ParseState *pstate, Node *parseTree,
 
 		case T_RuleStmt:
 			result = transformRuleStmt(pstate, (RuleStmt *) parseTree,
-									extras_before, extras_after);
+									   extras_before, extras_after);
 			break;
 
 		case T_ViewStmt:
@@ -222,7 +224,7 @@ transformStmt(ParseState *pstate, Node *parseTree,
 				ViewStmt   *n = (ViewStmt *) parseTree;
 
 				n->query = transformStmt(pstate, (Node *) n->query,
-									extras_before, extras_after);
+										 extras_before, extras_after);
 
 				/*
 				 * If a list of column names was given, run through and
@@ -270,14 +272,14 @@ transformStmt(ParseState *pstate, Node *parseTree,
 				result = makeNode(Query);
 				result->commandType = CMD_UTILITY;
 				n->query = transformStmt(pstate, (Node *) n->query,
-								extras_before, extras_after);
+										 extras_before, extras_after);
 				result->utilityStmt = (Node *) parseTree;
 			}
 			break;
 
 		case T_AlterTableStmt:
 			result = transformAlterTableStmt(pstate, (AlterTableStmt *) parseTree,
-										extras_before, extras_after);
+											 extras_before, extras_after);
 			break;
 
 		case T_PrepareStmt:
@@ -293,7 +295,7 @@ transformStmt(ParseState *pstate, Node *parseTree,
 			 */
 		case T_InsertStmt:
 			result = transformInsertStmt(pstate, (InsertStmt *) parseTree,
-										extras_before, extras_after);
+										 extras_before, extras_after);
 			break;
 
 		case T_DeleteStmt:
@@ -341,7 +343,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 
 	/* set up range table with just the result rel */
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
-										 interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 										 true);
 
 	qry->distinctClause = NIL;
@@ -434,10 +436,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 
 		/*
 		 * Note: we are not expecting that extras_before and extras_after
-		 * are going to be used by the transformation of the SELECT statement.
+		 * are going to be used by the transformation of the SELECT
+		 * statement.
 		 */
 		selectQuery = transformStmt(sub_pstate, stmt->selectStmt,
-								extras_before, extras_after);
+									extras_before, extras_after);
 
 		release_pstate_resources(sub_pstate);
 		pfree(sub_pstate);
@@ -525,7 +528,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		ResTarget   *col;
+		ResTarget  *col;
 
 		if (icolumns == NIL || attnos == NIL)
 			elog(ERROR, "INSERT has more expressions than target columns");
@@ -541,7 +544,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 			Assert(IsA(col, ResTarget));
 			Assert(!tle->resdom->resjunk);
 			updateTargetListEntry(pstate, tle, col->name, lfirsti(attnos),
-							  col->indirection);
+								  col->indirection);
 		}
 		else
 		{
@@ -555,9 +558,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	}
 
 	/*
-	 * Ensure that the targetlist has the same number of  entries
-	 * that were present in the columns list.  Don't do the check
-	 * for select statements.
+	 * Ensure that the targetlist has the same number of  entries that
+	 * were present in the columns list.  Don't do the check for select
+	 * statements.
 	 */
 	if (stmt->cols != NIL && (icolumns != NIL || attnos != NIL))
 		elog(ERROR, "INSERT has more target columns than expressions");
@@ -780,8 +783,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	q->utilityStmt = (Node *) stmt;
 	stmt->tableElts = cxt.columns;
 	stmt->constraints = cxt.ckconstraints;
-	*extras_before = nconc (*extras_before, cxt.blist);
-	*extras_after = nconc (cxt.alist, *extras_after);
+	*extras_before = nconc(*extras_before, cxt.blist);
+	*extras_after = nconc(cxt.alist, *extras_after);
 
 	return q;
 }
@@ -839,7 +842,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		snamespace = get_namespace_name(RangeVarGetCreationNamespace(cxt->relation));
 
 		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
-			 cxt->stmtType, sname, cxt->relation->relname, column->colname);
+		  cxt->stmtType, sname, cxt->relation->relname, column->colname);
 
 		/*
 		 * Build a CREATE SEQUENCE command to create the sequence object,
@@ -1213,9 +1216,10 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 	/*
 	 * Scan the index list and remove any redundant index specifications.
-	 * This can happen if, for instance, the user writes UNIQUE PRIMARY KEY.
-	 * A strict reading of SQL92 would suggest raising an error instead,
-	 * but that strikes me as too anal-retentive. - tgl 2001-02-14
+	 * This can happen if, for instance, the user writes UNIQUE PRIMARY
+	 * KEY. A strict reading of SQL92 would suggest raising an error
+	 * instead, but that strikes me as too anal-retentive. - tgl
+	 * 2001-02-14
 	 *
 	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate
 	 * pre-existing indexes, too.
@@ -1279,7 +1283,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			iparam = lfirst(index->indexParams);
 			index->idxname = CreateIndexName(cxt->relation->relname,
 											 iparam->name ? iparam->name :
-											 strVal(llast(iparam->funcname)),
+										 strVal(llast(iparam->funcname)),
 											 "key", cxt->alist);
 		}
 		if (index->idxname == NULL)		/* should not happen */
@@ -1352,7 +1356,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					IndexElem  *ielem = lfirst(attr);
 					char	   *iname = ielem->name;
 
-					Assert(iname); /* no func index here */
+					Assert(iname);		/* no func index here */
 					fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs,
 													 makeString(iname));
 					if (attnum >= INDEX_MAX_KEYS)
@@ -1417,7 +1421,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 							elog(ERROR, "Can only have %d keys in a foreign key",
 								 INDEX_MAX_KEYS);
 						pktypoid[attnum++] = transformFkeyGetColType(cxt,
-																	 pkattr);
+																 pkattr);
 					}
 					if (found)
 						break;
@@ -1444,8 +1448,8 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			 * fktypoid[i] is the foreign key table's i'th element's type
 			 * pktypoid[i] is the primary key table's i'th element's type
 			 *
-			 * We let oper() do our work for us, including elog(ERROR) if
-			 * the types don't compare with =
+			 * We let oper() do our work for us, including elog(ERROR) if the
+			 * types don't compare with =
 			 */
 			Operator	o = oper(makeList1(makeString("=")),
 								 fktypoid[i], pktypoid[i], false);
@@ -1462,7 +1466,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		{
 			AlterTableStmt *alterstmt = makeNode(AlterTableStmt);
 
-			alterstmt->subtype = 'c'; /* preprocessed add constraint */
+			alterstmt->subtype = 'c';	/* preprocessed add constraint */
 			alterstmt->relation = cxt->relation;
 			alterstmt->name = NULL;
 			alterstmt->def = (Node *) makeList1(fkconstraint);
@@ -1528,7 +1532,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
  */
 static Query *
 transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
-				List **extras_before, List **extras_after)
+				  List **extras_before, List **extras_after)
 {
 	Query	   *qry;
 	RangeTblEntry *oldrte;
@@ -1658,7 +1662,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 
 			/* Transform the rule action statement */
 			top_subqry = transformStmt(sub_pstate, action,
-								extras_before, extras_after);
+									   extras_before, extras_after);
 
 			/*
 			 * We cannot support utility-statement actions (eg NOTIFY)
@@ -2015,8 +2019,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	}
 
 	/*
-	 * Any column names from CREATE TABLE AS need to be attached to both the
-	 * top level and the leftmost subquery.  We do not do this earlier
+	 * Any column names from CREATE TABLE AS need to be attached to both
+	 * the top level and the leftmost subquery.  We do not do this earlier
 	 * because we do *not* want the targetnames list to be affected.
 	 */
 	if (intoColNames)
@@ -2299,7 +2303,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	pstate->p_is_update = true;
 
 	qry->resultRelation = setTargetTable(pstate, stmt->relation,
-										 interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 										 true);
 
 	/*
@@ -2445,6 +2449,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 			break;
 
 		case 'c':
+
 			/*
 			 * Already-transformed ADD CONSTRAINT, so just make it look
 			 * like the standard case.
@@ -2466,12 +2471,12 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 static Query *
 transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 {
-	Query	*result = makeNode(Query);
-	List	*extras_before	= NIL,
-			*extras_after	= NIL;
-	List	*argtype_oids = NIL; /* argtype OIDs in a list */
-	Oid		*argtoids = NULL;	/* as an array for parser_param_set */
-	int		nargs;
+	Query	   *result = makeNode(Query);
+	List	   *extras_before = NIL,
+			   *extras_after = NIL;
+	List	   *argtype_oids = NIL;		/* argtype OIDs in a list */
+	Oid		   *argtoids = NULL;	/* as an array for parser_param_set */
+	int			nargs;
 
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
@@ -2481,15 +2486,15 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 
 	if (nargs)
 	{
-		List *l;
-		int i = 0;
+		List	   *l;
+		int			i = 0;
 
 		argtoids = (Oid *) palloc(nargs * sizeof(Oid));
 
-		foreach (l, stmt->argtypes)
+		foreach(l, stmt->argtypes)
 		{
-			TypeName *tn = lfirst(l);
-			Oid toid = typenameTypeId(tn);
+			TypeName   *tn = lfirst(l);
+			Oid			toid = typenameTypeId(tn);
 
 			argtype_oids = lappendi(argtype_oids, toid);
 			argtoids[i++] = toid;
@@ -2499,12 +2504,12 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	stmt->argtype_oids = argtype_oids;
 
 	/*
-	 * We need to adjust the parameters expected by the
-	 * rest of the system, so that $1, ... $n are parsed properly.
+	 * We need to adjust the parameters expected by the rest of the
+	 * system, so that $1, ... $n are parsed properly.
 	 *
-	 * This is somewhat of a hack; however, the main parser interface
-	 * only allows parameters to be specified when working with a
-	 * raw query string, which is not helpful here.
+	 * This is somewhat of a hack; however, the main parser interface only
+	 * allows parameters to be specified when working with a raw query
+	 * string, which is not helpful here.
 	 */
 	parser_param_set(argtoids, nargs);
 
@@ -2524,8 +2529,8 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 static Query *
 transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 {
-	Query *result = makeNode(Query);
-	List   *paramtypes;
+	Query	   *result = makeNode(Query);
+	List	   *paramtypes;
 
 	result->commandType = CMD_UTILITY;
 	result->utilityStmt = (Node *) stmt;
@@ -2534,20 +2539,20 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 
 	if (stmt->params || paramtypes)
 	{
-		int nparams = length(stmt->params);
-		int nexpected = length(paramtypes);
-		List *l;
-		int i = 1;
+		int			nparams = length(stmt->params);
+		int			nexpected = length(paramtypes);
+		List	   *l;
+		int			i = 1;
 
 		if (nparams != nexpected)
 			elog(ERROR, "Wrong number of parameters, expected %d but got %d",
 				 nexpected, nparams);
 
-		foreach (l, stmt->params)
+		foreach(l, stmt->params)
 		{
-			Node *expr = lfirst(l);
-			Oid expected_type_id,
-				given_type_id;
+			Node	   *expr = lfirst(l);
+			Oid			expected_type_id,
+						given_type_id;
 
 			expr = transformExpr(pstate, expr);
 
@@ -2571,7 +2576,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 
 				if (!expr)
 					elog(ERROR, "Parameter $%d of type %s cannot be coerced into the expected type %s"
-								"\n\tYou will need to rewrite or cast the expression",
+					"\n\tYou will need to rewrite or cast the expression",
 						 i,
 						 format_type_be(given_type_id),
 						 format_type_be(expected_type_id));
@@ -2833,7 +2838,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 
 		pktypoid[attnum++] = attnumTypeId(pkrel, pkattno);
 		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs,
-										 makeString(pstrdup(NameStr(*attnumAttName(pkrel, pkattno)))));
+		   makeString(pstrdup(NameStr(*attnumAttName(pkrel, pkattno)))));
 	}
 
 	ReleaseSysCache(indexTuple);
@@ -3145,8 +3150,8 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 						elp->relation->schemaname = cxt.schemaname;
 					else if (strcmp(cxt.schemaname, elp->relation->schemaname) != 0)
 						elog(ERROR, "New table specifies a schema (%s)"
-							" different from the one being created (%s)",
-							elp->relation->schemaname, cxt.schemaname);
+							 " different from the one being created (%s)",
+							 elp->relation->schemaname, cxt.schemaname);
 
 					/*
 					 * XXX todo: deal with constraints
@@ -3158,14 +3163,14 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 
 			case T_ViewStmt:
 				{
-					ViewStmt *elp = (ViewStmt *) element;
+					ViewStmt   *elp = (ViewStmt *) element;
 
 					if (elp->view->schemaname == NULL)
 						elp->view->schemaname = cxt.schemaname;
 					else if (strcmp(cxt.schemaname, elp->view->schemaname) != 0)
 						elog(ERROR, "New view specifies a schema (%s)"
-							" different from the one being created (%s)",
-							elp->view->schemaname, cxt.schemaname);
+							 " different from the one being created (%s)",
+							 elp->view->schemaname, cxt.schemaname);
 
 					/*
 					 * XXX todo: deal with references between views

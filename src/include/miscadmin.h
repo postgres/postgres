@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.108 2002/09/02 02:47:07 momjian Exp $
+ * $Id: miscadmin.h,v 1.109 2002/09/04 20:31:36 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -293,7 +293,7 @@ extern bool CreateDataDirLockFile(const char *datadir, bool amPostmaster);
 extern bool CreateSocketLockFile(const char *socketfile, bool amPostmaster);
 extern void TouchSocketLockFile(void);
 extern void RecordSharedMemoryInLockFile(unsigned long id1,
-										 unsigned long id2);
+							 unsigned long id2);
 
 extern void ValidatePgVersion(const char *path);
 

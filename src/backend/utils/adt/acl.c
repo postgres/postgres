@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.78 2002/09/03 22:17:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.79 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,15 +36,15 @@ static const char *aclparse(const char *s, AclItem *aip, unsigned *modechg);
 static bool aclitemeq(const AclItem *a1, const AclItem *a2);
 static bool aclitemgt(const AclItem *a1, const AclItem *a2);
 
-static Oid convert_table_name(text *tablename);
+static Oid	convert_table_name(text *tablename);
 static AclMode convert_table_priv_string(text *priv_type_text);
-static Oid convert_database_name(text *databasename);
+static Oid	convert_database_name(text *databasename);
 static AclMode convert_database_priv_string(text *priv_type_text);
-static Oid convert_function_name(text *functionname);
+static Oid	convert_function_name(text *functionname);
 static AclMode convert_function_priv_string(text *priv_type_text);
-static Oid convert_language_name(text *languagename);
+static Oid	convert_language_name(text *languagename);
 static AclMode convert_language_priv_string(text *priv_type_text);
-static Oid convert_schema_name(text *schemaname);
+static Oid	convert_schema_name(text *schemaname);
 static AclMode convert_schema_priv_string(text *priv_type_text);
 
 
@@ -413,7 +413,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 			owner_default = ACL_ALL_RIGHTS_RELATION;
 			break;
 		case ACL_OBJECT_DATABASE:
-			world_default = ACL_CREATE_TEMP; /* not NO_RIGHTS! */
+			world_default = ACL_CREATE_TEMP;	/* not NO_RIGHTS! */
 			owner_default = ACL_ALL_RIGHTS_DATABASE;
 			break;
 		case ACL_OBJECT_FUNCTION:
@@ -430,7 +430,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 			break;
 		default:
 			elog(ERROR, "acldefault: bogus objtype %d", (int) objtype);
-			world_default = ACL_NO_RIGHTS; /* keep compiler quiet */
+			world_default = ACL_NO_RIGHTS;		/* keep compiler quiet */
 			owner_default = ACL_NO_RIGHTS;
 			break;
 	}
@@ -819,7 +819,7 @@ convert_table_name(text *tablename)
 	RangeVar   *relrv;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(tablename,
-													"has_table_privilege"));
+												 "has_table_privilege"));
 
 	return RangeVarGetRelid(relrv, false);
 }
@@ -834,7 +834,7 @@ convert_table_priv_string(text *priv_type_text)
 	char	   *priv_type;
 
 	priv_type = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(priv_type_text)));
+									   PointerGetDatum(priv_type_text)));
 
 	/*
 	 * Return mode from priv_type string
@@ -1030,7 +1030,7 @@ convert_database_name(text *databasename)
 	Oid			oid;
 
 	dbname = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(databasename)));
+										 PointerGetDatum(databasename)));
 
 	oid = get_database_oid(dbname);
 	if (!OidIsValid(oid))
@@ -1049,7 +1049,7 @@ convert_database_priv_string(text *priv_type_text)
 	char	   *priv_type;
 
 	priv_type = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(priv_type_text)));
+									   PointerGetDatum(priv_type_text)));
 
 	/*
 	 * Return mode from priv_type string
@@ -1233,10 +1233,10 @@ convert_function_name(text *functionname)
 	Oid			oid;
 
 	funcname = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(functionname)));
+										 PointerGetDatum(functionname)));
 
 	oid = DatumGetObjectId(DirectFunctionCall1(regprocedurein,
-											   CStringGetDatum(funcname)));
+											 CStringGetDatum(funcname)));
 
 	if (!OidIsValid(oid))
 		elog(ERROR, "function \"%s\" does not exist", funcname);
@@ -1254,7 +1254,7 @@ convert_function_priv_string(text *priv_type_text)
 	char	   *priv_type;
 
 	priv_type = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(priv_type_text)));
+									   PointerGetDatum(priv_type_text)));
 
 	/*
 	 * Return mode from priv_type string
@@ -1432,7 +1432,7 @@ convert_language_name(text *languagename)
 	Oid			oid;
 
 	langname = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(languagename)));
+										 PointerGetDatum(languagename)));
 
 	oid = GetSysCacheOid(LANGNAME,
 						 CStringGetDatum(langname),
@@ -1453,7 +1453,7 @@ convert_language_priv_string(text *priv_type_text)
 	char	   *priv_type;
 
 	priv_type = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(priv_type_text)));
+									   PointerGetDatum(priv_type_text)));
 
 	/*
 	 * Return mode from priv_type string
@@ -1631,7 +1631,7 @@ convert_schema_name(text *schemaname)
 	Oid			oid;
 
 	nspname = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(schemaname)));
+										   PointerGetDatum(schemaname)));
 
 	oid = GetSysCacheOid(NAMESPACENAME,
 						 CStringGetDatum(nspname),
@@ -1652,7 +1652,7 @@ convert_schema_priv_string(text *priv_type_text)
 	char	   *priv_type;
 
 	priv_type = DatumGetCString(DirectFunctionCall1(textout,
-											PointerGetDatum(priv_type_text)));
+									   PointerGetDatum(priv_type_text)));
 
 	/*
 	 * Return mode from priv_type string

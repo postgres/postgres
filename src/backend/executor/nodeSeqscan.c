@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.36 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.37 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,8 +284,9 @@ ExecEndSeqScan(SeqScan *node)
 	 * close the heap relation.
 	 *
 	 * Currently, we do not release the AccessShareLock acquired by
-	 * InitScanRelation.  This lock should be held till end of transaction.
-	 * (There is a faction that considers this too much locking, however.)
+	 * InitScanRelation.  This lock should be held till end of
+	 * transaction. (There is a faction that considers this too much
+	 * locking, however.)
 	 */
 	heap_close(relation, NoLock);
 

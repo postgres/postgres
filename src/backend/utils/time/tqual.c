@@ -6,7 +6,7 @@
  * NOTE: all the HeapTupleSatisfies routines will update the tuple's
  * "hint" status bits if we see that the inserting or deleting transaction
  * has now committed or aborted.  The caller is responsible for noticing any
- * change in t_infomask and scheduling a disk write if so.  Note that the
+ * change in t_infomask and scheduling a disk write if so.	Note that the
  * caller must hold at least a shared buffer context lock on the buffer
  * containing the tuple.  (VACUUM FULL assumes it's sufficient to have
  * exclusive lock on the containing relation, instead.)
@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.59 2002/09/02 01:05:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.60 2002/09/04 20:31:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,7 +309,7 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple)
  * This is a simplified version that only checks for VACUUM moving conditions.
  * It's appropriate for TOAST usage because TOAST really doesn't want to do
  * its own time qual checks; if you can see the main table row that contains
- * a TOAST reference, you should be able to see the TOASTed value.  However,
+ * a TOAST reference, you should be able to see the TOASTed value.	However,
  * vacuuming a TOAST table is independent of the main table, and in case such
  * a vacuum fails partway through, we'd better do this much checking.
  *
@@ -412,7 +412,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 				return HeapTupleInvisible;		/* inserted after scan
 												 * started */
 
-			if (tuple->t_infomask & HEAP_XMAX_INVALID)		/* xid invalid */
+			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
 				return HeapTupleMayBeUpdated;
 
 			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
@@ -430,7 +430,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 		else if (!TransactionIdDidCommit(HeapTupleHeaderGetXmin(tuple)))
 		{
 			if (TransactionIdDidAbort(HeapTupleHeaderGetXmin(tuple)))
-				tuple->t_infomask |= HEAP_XMIN_INVALID;	/* aborted */
+				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
 			return HeapTupleInvisible;
 		}
 		else
@@ -439,7 +439,7 @@ HeapTupleSatisfiesUpdate(HeapTuple htuple, CommandId curcid)
 
 	/* by here, the inserting transaction has committed */
 
-	if (tuple->t_infomask & HEAP_XMAX_INVALID)		/* xid invalid or aborted */
+	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
 		return HeapTupleMayBeUpdated;
 
 	if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
@@ -701,7 +701,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 	 * when...
 	 */
 	if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmin(tuple),
-	                                 snapshot->xmin))
+									 snapshot->xmin))
 	{
 		uint32		i;
 
@@ -712,7 +712,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 		for (i = 0; i < snapshot->xcnt; i++)
 		{
 			if (TransactionIdEquals(HeapTupleHeaderGetXmin(tuple),
-			                        snapshot->xip[i]))
+									snapshot->xip[i]))
 				return false;
 		}
 	}
@@ -752,7 +752,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot)
 		uint32		i;
 
 		if (TransactionIdFollowsOrEquals(HeapTupleHeaderGetXmax(tuple),
-		                                 snapshot->xmax))
+										 snapshot->xmax))
 			return true;
 		for (i = 0; i < snapshot->xcnt; i++)
 		{
@@ -867,7 +867,8 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 				return HEAPTUPLE_LIVE;
 			if (TransactionIdDidCommit(HeapTupleHeaderGetXmax(tuple)))
 				tuple->t_infomask |= HEAP_XMAX_COMMITTED;
-			else				/* it's either aborted or crashed */
+			else
+/* it's either aborted or crashed */
 				tuple->t_infomask |= HEAP_XMAX_INVALID;
 		}
 		return HEAPTUPLE_LIVE;
@@ -902,7 +903,7 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 	 */
 
 	if (TransactionIdEquals(HeapTupleHeaderGetXmin(tuple),
-	                        HeapTupleHeaderGetXmax(tuple)))
+							HeapTupleHeaderGetXmax(tuple)))
 	{
 		/*
 		 * inserter also deleted it, so it was never visible to anyone

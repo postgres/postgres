@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: print.h,v 1.18 2002/06/20 20:29:51 momjian Exp $
+ * $Id: print.h,v 1.19 2002/09/04 20:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@
 extern void print(void *obj);
 extern void pprint(void *obj);
 extern void elog_node_display(int lev, const char *title,
-							  void *obj, bool pretty);
+				  void *obj, bool pretty);
 extern char *format_node_dump(const char *dump);
 extern char *pretty_format_node_dump(const char *dump);
 extern void print_rt(List *rtable);

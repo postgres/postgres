@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.74 2002/08/05 03:29:17 tgl Exp $
+ * $Id: indexing.h,v 1.75 2002/09/04 20:31:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ typedef struct ResultRelInfo *CatalogIndexState;
 extern CatalogIndexState CatalogOpenIndexes(Relation heapRel);
 extern void CatalogCloseIndexes(CatalogIndexState indstate);
 extern void CatalogIndexInsert(CatalogIndexState indstate,
-							   HeapTuple heapTuple);
+				   HeapTuple heapTuple);
 extern void CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple);
 
 

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.3 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.4 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 		 * Else complain and abort
 		 */
 		fprintf(stderr, "IpcMemoryCreate: shmget(key=%d, size=%u, 0%o) failed: %s\n",
-				(int) memKey, size, (IPC_CREAT | IPC_EXCL | IPCProtection),
+			  (int) memKey, size, (IPC_CREAT | IPC_EXCL | IPCProtection),
 				strerror(errno));
 
 		if (errno == EINVAL)
@@ -147,7 +147,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 	/* use intimate shared memory on SPARC Solaris */
 	memAddress = shmat(shmid, 0, SHM_SHARE_MMU);
 #else
- 	memAddress = shmat(shmid, 0, 0);
+	memAddress = shmat(shmid, 0, 0);
 #endif
 
 	if (memAddress == (void *) -1)
@@ -283,11 +283,11 @@ PrivateMemoryDelete(int status, Datum memaddr)
  * the storage.
  *
  * Dead Postgres segments are recycled if found, but we do not fail upon
- * collision with non-Postgres shmem segments.  The idea here is to detect and
+ * collision with non-Postgres shmem segments.	The idea here is to detect and
  * re-use keys that may have been assigned by a crashed postmaster or backend.
  *
  * The port number is passed for possible use as a key (for SysV, we use
- * it to generate the starting shmem key).  In a standalone backend,
+ * it to generate the starting shmem key).	In a standalone backend,
  * zero will be passed.
  */
 PGShmemHeader *
@@ -328,7 +328,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 		/* use intimate shared memory on SPARC Solaris */
 		memAddress = shmat(shmid, 0, SHM_SHARE_MMU);
 #else
- 		memAddress = shmat(shmid, 0, 0);
+		memAddress = shmat(shmid, 0, 0);
 #endif
 
 		if (memAddress == (void *) -1)

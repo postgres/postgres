@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.29 2002/09/02 02:47:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.30 2002/09/04 20:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ ValidateBinary(char *path)
 			is_x = buf.st_mode & S_IXGRP;
 			if (!(is_r && is_x))
 				elog(DEBUG2, "ValidateBinary: \"%s\" is not group read/execute",
-					path);
+					 path);
 			return is_x ? (is_r ? 0 : -2) : -1;
 		}
 	}
@@ -123,7 +123,7 @@ ValidateBinary(char *path)
 	is_x = buf.st_mode & S_IXOTH;
 	if (!(is_r && is_x))
 		elog(DEBUG2, "ValidateBinary: \"%s\" is not other read/execute",
-			path);
+			 path);
 	return is_x ? (is_r ? 0 : -2) : -1;
 }
 
@@ -207,7 +207,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 				case 0: /* found ok */
 					strncpy(full_path, buf, MAXPGPATH);
 					elog(DEBUG1, "FindExec: found \"%s\" using PATH",
-						full_path);
+						 full_path);
 					free(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */

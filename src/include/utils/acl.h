@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.46 2002/07/29 22:14:11 tgl Exp $
+ * $Id: acl.h,v 1.47 2002/09/04 20:31:45 momjian Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -177,7 +177,7 @@ typedef enum
  */
 extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
 extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
-					   unsigned modechg);
+		   unsigned modechg);
 
 /*
  * SQL functions (from acl.c)

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.176 2002/09/02 02:13:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.177 2002/09/04 20:31:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,17 +207,19 @@ ProcessUtility(Node *parsetree,
 						BeginTransactionBlock();
 						break;
 
-					/*
-					 * START TRANSACTION, as defined by SQL99: Identical to BEGIN,
-					 * except that it takes a few additional options.
-					 */
+						/*
+						 * START TRANSACTION, as defined by SQL99:
+						 * Identical to BEGIN, except that it takes a few
+						 * additional options.
+						 */
 					case START:
 						{
 							BeginTransactionBlock();
 
 							/*
-							 * Currently, the only option that can be set by
-							 * START TRANSACTION is the isolation level.
+							 * Currently, the only option that can be set
+							 * by START TRANSACTION is the isolation
+							 * level.
 							 */
 							if (stmt->options)
 							{
@@ -285,8 +287,8 @@ ProcessUtility(Node *parsetree,
 										RELKIND_RELATION);
 
 				/*
-				 * Let AlterTableCreateToastTable decide if this one needs a
-				 * secondary relation too.
+				 * Let AlterTableCreateToastTable decide if this one needs
+				 * a secondary relation too.
 				 */
 				CommandCounterIncrement();
 				AlterTableCreateToastTable(relOid, true);
@@ -300,7 +302,7 @@ ProcessUtility(Node *parsetree,
 
 				foreach(arg, stmt->objects)
 				{
-					List   *names = (List *) lfirst(arg);
+					List	   *names = (List *) lfirst(arg);
 					RangeVar   *rel;
 
 					switch (stmt->removeType)
@@ -335,7 +337,11 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case DROP_DOMAIN:
-							/* RemoveDomain does its own permissions checks */
+
+							/*
+							 * RemoveDomain does its own permissions
+							 * checks
+							 */
 							RemoveDomain(names, stmt->behavior);
 							break;
 
@@ -344,7 +350,11 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case DROP_SCHEMA:
-							/* RemoveSchema does its own permissions checks */
+
+							/*
+							 * RemoveSchema does its own permissions
+							 * checks
+							 */
 							RemoveSchema(names, stmt->behavior);
 							break;
 					}
@@ -359,7 +369,7 @@ ProcessUtility(Node *parsetree,
 
 		case T_TruncateStmt:
 			{
-				TruncateStmt	*stmt = (TruncateStmt *) parsetree;
+				TruncateStmt *stmt = (TruncateStmt *) parsetree;
 
 				TruncateRelation(stmt->relation);
 			}
@@ -398,7 +408,7 @@ ProcessUtility(Node *parsetree,
 		case T_RenameStmt:
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
-				Oid		relid;
+				Oid			relid;
 
 				CheckOwnership(stmt->relation, true);
 
@@ -407,44 +417,44 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->renameType)
 				{
 					case RENAME_TABLE:
-					{
-						/*
-						 * RENAME TABLE requires that we (still) hold CREATE
-						 * rights on the containing namespace, as well as
-						 * ownership of the table.
-						 */
-						Oid			namespaceId = get_rel_namespace(relid);
-						AclResult	aclresult;
+						{
+							/*
+							 * RENAME TABLE requires that we (still) hold
+							 * CREATE rights on the containing namespace,
+							 * as well as ownership of the table.
+							 */
+							Oid			namespaceId = get_rel_namespace(relid);
+							AclResult	aclresult;
 
-						aclresult = pg_namespace_aclcheck(namespaceId,
-														  GetUserId(),
-														  ACL_CREATE);
-						if (aclresult != ACLCHECK_OK)
-							aclcheck_error(aclresult,
-										   get_namespace_name(namespaceId));
+							aclresult = pg_namespace_aclcheck(namespaceId,
+															  GetUserId(),
+															  ACL_CREATE);
+							if (aclresult != ACLCHECK_OK)
+								aclcheck_error(aclresult,
+										get_namespace_name(namespaceId));
 
-						renamerel(relid, stmt->newname);
-						break;
-					}
+							renamerel(relid, stmt->newname);
+							break;
+						}
 					case RENAME_COLUMN:
 						renameatt(relid,
-								  stmt->oldname,	/* old att name */
-								  stmt->newname,	/* new att name */
-								  interpretInhOption(stmt->relation->inhOpt),	/* recursive? */
-								  false);			/* recursing already? */
+								  stmt->oldname,		/* old att name */
+								  stmt->newname,		/* new att name */
+							  interpretInhOption(stmt->relation->inhOpt),		/* recursive? */
+								  false);		/* recursing already? */
 						break;
 					case RENAME_TRIGGER:
 						renametrig(relid,
-								   stmt->oldname,	/* old att name */
-								   stmt->newname);	/* new att name */
+								   stmt->oldname,		/* old att name */
+								   stmt->newname);		/* new att name */
 						break;
 					case RENAME_RULE:
 						elog(ERROR, "ProcessUtility: Invalid target for RENAME: %d",
-								stmt->renameType);
+							 stmt->renameType);
 						break;
 					default:
 						elog(ERROR, "ProcessUtility: Invalid target for RENAME: %d",
-								stmt->renameType);
+							 stmt->renameType);
 				}
 			}
 			break;
@@ -454,7 +464,7 @@ ProcessUtility(Node *parsetree,
 		case T_AlterTableStmt:
 			{
 				AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
-				Oid		relid;
+				Oid			relid;
 
 				relid = RangeVarGetRelid(stmt->relation, false);
 
@@ -465,74 +475,80 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->subtype)
 				{
 					case 'A':	/* ADD COLUMN */
+
 						/*
-						 * Recursively add column to table and,
-						 * if requested, to descendants
+						 * Recursively add column to table and, if
+						 * requested, to descendants
 						 */
 						AlterTableAddColumn(relid,
-											interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 											false,
 											(ColumnDef *) stmt->def);
 						break;
 					case 'T':	/* ALTER COLUMN DEFAULT */
+
 						/*
 						 * Recursively alter column default for table and,
 						 * if requested, for descendants
 						 */
 						AlterTableAlterColumnDefault(relid,
-													 interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 													 stmt->name,
 													 stmt->def);
 						break;
 					case 'N':	/* ALTER COLUMN DROP NOT NULL */
 						AlterTableAlterColumnDropNotNull(relid,
-										interpretInhOption(stmt->relation->inhOpt),
-													stmt->name);
+							  interpretInhOption(stmt->relation->inhOpt),
+														 stmt->name);
 						break;
 					case 'O':	/* ALTER COLUMN SET NOT NULL */
 						AlterTableAlterColumnSetNotNull(relid,
-										interpretInhOption(stmt->relation->inhOpt),
-													stmt->name);
+							  interpretInhOption(stmt->relation->inhOpt),
+														stmt->name);
 						break;
 					case 'S':	/* ALTER COLUMN STATISTICS */
-					case 'M':   /* ALTER COLUMN STORAGE */
+					case 'M':	/* ALTER COLUMN STORAGE */
+
 						/*
-						 * Recursively alter column statistics for table and,
-						 * if requested, for descendants
+						 * Recursively alter column statistics for table
+						 * and, if requested, for descendants
 						 */
 						AlterTableAlterColumnFlags(relid,
-												   interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 												   stmt->name,
 												   stmt->def,
 												   &(stmt->subtype));
 						break;
 					case 'D':	/* DROP COLUMN */
-						 /*
-						 * Recursively drop column from table and,
-						 * if requested, from descendants
+
+						/*
+						 * Recursively drop column from table and, if
+						 * requested, from descendants
 						 */
 						AlterTableDropColumn(relid,
-											 interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 											 false,
 											 stmt->name,
 											 stmt->behavior);
 						break;
 					case 'C':	/* ADD CONSTRAINT */
+
 						/*
-						 * Recursively add constraint to table and,
-						 * if requested, to descendants
+						 * Recursively add constraint to table and, if
+						 * requested, to descendants
 						 */
 						AlterTableAddConstraint(relid,
-												interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 												(List *) stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
+
 						/*
-						 * Recursively drop constraint from table and,
-						 * if requested, from descendants
+						 * Recursively drop constraint from table and, if
+						 * requested, from descendants
 						 */
 						AlterTableDropConstraint(relid,
-												 interpretInhOption(stmt->relation->inhOpt),
+							  interpretInhOption(stmt->relation->inhOpt),
 												 stmt->name,
 												 stmt->behavior);
 						break;
@@ -585,7 +601,7 @@ ProcessUtility(Node *parsetree,
 
 		case T_CompositeTypeStmt:		/* CREATE TYPE (composite) */
 			{
-				CompositeTypeStmt   *stmt = (CompositeTypeStmt *) parsetree;
+				CompositeTypeStmt *stmt = (CompositeTypeStmt *) parsetree;
 
 				DefineCompositeType(stmt->typevar, stmt->coldeflist);
 			}
@@ -599,7 +615,7 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_CreateFunctionStmt:	/* CREATE FUNCTION */
+		case T_CreateFunctionStmt:		/* CREATE FUNCTION */
 			CreateFunction((CreateFunctionStmt *) parsetree);
 			break;
 
@@ -609,10 +625,10 @@ ProcessUtility(Node *parsetree,
 
 				CheckOwnership(stmt->relation, true);
 
-				DefineIndex(stmt->relation,				/* relation */
-							stmt->idxname,				/* index name */
-							stmt->accessMethod, 		/* am name */
-							stmt->indexParams,			/* parameters */
+				DefineIndex(stmt->relation,		/* relation */
+							stmt->idxname,		/* index name */
+							stmt->accessMethod, /* am name */
+							stmt->indexParams,	/* parameters */
 							stmt->unique,
 							stmt->primary,
 							stmt->isconstraint,
@@ -740,7 +756,7 @@ ProcessUtility(Node *parsetree,
 		case T_DropPropertyStmt:
 			{
 				DropPropertyStmt *stmt = (DropPropertyStmt *) parsetree;
-				Oid		relId;
+				Oid			relId;
 
 				relId = RangeVarGetRelid(stmt->relation, false);
 

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.60 2002/08/25 17:20:01 tgl Exp $
+ * $Id: postgres.h,v 1.61 2002/09/04 20:31:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  *	in the backend environment, but are of no interest outside the backend.
  *
  *	Simple type definitions live in c.h, where they are shared with
- *	postgres_fe.h.  We do that since those type definitions are needed by
+ *	postgres_fe.h.	We do that since those type definitions are needed by
  *	frontend modules that want to deal with binary data transmission to or
  *	from the backend.  Type definitions in this file should be for
  *	representations that never escape the backend, such as Datum or

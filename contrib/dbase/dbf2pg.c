@@ -309,7 +309,7 @@ do_create(PGconn *conn, char *table, dbhead * dbh)
 				{
 					strcat(query, " varchar");
 					snprintf(t, 20, "(%d)",
-							dbh->db_fields[i].db_flen);
+							 dbh->db_fields[i].db_flen);
 					strcat(query, t);
 				}
 				else
@@ -468,8 +468,8 @@ do_inserts(PGconn *conn, char *table, dbhead * dbh)
 					if ((strlen(foo) == 8) && isinteger(foo))
 					{
 						snprintf(pgdate, 11, "%c%c%c%c-%c%c-%c%c",
-								foo[0], foo[1], foo[2], foo[3],
-								foo[4], foo[5], foo[6], foo[7]);
+								 foo[0], foo[1], foo[2], foo[3],
+								 foo[4], foo[5], foo[6], foo[7]);
 						strcat(query, pgdate);
 					}
 					else

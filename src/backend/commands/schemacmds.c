@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.5 2002/07/18 16:47:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.6 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,15 +61,17 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		owner_name = authId;
 		/* The following will error out if user does not exist */
 		owner_userid = get_usesysid(owner_name);
+
 		/*
-		 * Set the current user to the requested authorization so
-		 * that objects created in the statement have the requested
-		 * owner.  (This will revert to session user on error or at
-		 * the end of this routine.)
+		 * Set the current user to the requested authorization so that
+		 * objects created in the statement have the requested owner.
+		 * (This will revert to session user on error or at the end of
+		 * this routine.)
 		 */
 		SetUserId(owner_userid);
 	}
-	else /* not superuser */
+	else
+/* not superuser */
 	{
 		owner_userid = saved_userid;
 		owner_name = GetUserNameFromId(owner_userid);
@@ -98,17 +100,17 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 
 	/*
 	 * Temporarily make the new namespace be the front of the search path,
-	 * as well as the default creation target namespace.  This will be undone
-	 * at the end of this routine, or upon error.
+	 * as well as the default creation target namespace.  This will be
+	 * undone at the end of this routine, or upon error.
 	 */
 	PushSpecialNamespace(namespaceId);
 
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command,
 	 * and reorganize them into a sequentially executable order with no
-	 * forward references.  Note that the result is still a list of raw
-	 * parsetrees in need of parse analysis --- we cannot, in general,
-	 * run analyze.c on one statement until we have actually executed the
+	 * forward references.	Note that the result is still a list of raw
+	 * parsetrees in need of parse analysis --- we cannot, in general, run
+	 * analyze.c on one statement until we have actually executed the
 	 * prior ones.
 	 */
 	parsetree_list = analyzeCreateSchemaStmt(stmt);
@@ -171,12 +173,12 @@ RemoveSchema(List *names, DropBehavior behavior)
 		aclcheck_error(ACLCHECK_NOT_OWNER, namespaceName);
 
 	/*
-	 * Do the deletion.  Objects contained in the schema are removed
-	 * by means of their dependency links to the schema.
+	 * Do the deletion.  Objects contained in the schema are removed by
+	 * means of their dependency links to the schema.
 	 *
-	 * XXX currently, index opclasses don't have creation/deletion
-	 * commands, so they will not get removed when the containing
-	 * schema is removed.  This is annoying but not fatal.
+	 * XXX currently, index opclasses don't have creation/deletion commands,
+	 * so they will not get removed when the containing schema is removed.
+	 * This is annoying but not fatal.
 	 */
 	object.classId = get_system_catalog_relid(NamespaceRelationName);
 	object.objectId = namespaceId;

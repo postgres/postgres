@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.55 2002/08/27 18:28:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.56 2002/09/04 20:31:35 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -70,13 +70,13 @@ usage(void)
 			psql_error("could not get current user name: %s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
-#else /* WIN32 */
+#else							/* WIN32 */
 		char		buf[128];
 		DWORD		bufsize = sizeof(buf) - 1;
 
 		if (GetUserName(buf, &bufsize))
 			user = buf;
-#endif /* WIN32 */
+#endif   /* WIN32 */
 	}
 
 /* If this " is the start of the string then it ought to end there to fit in 80 columns >> " */
@@ -161,7 +161,8 @@ struct winsize
 void
 slashUsage(bool pager)
 {
-	FILE	   *output, *pagerfd = NULL;
+	FILE	   *output,
+			   *pagerfd = NULL;
 
 	/* check whether we need / can / are supposed to use pager */
 	if (pager
@@ -202,10 +203,14 @@ slashUsage(bool pager)
 		output = stdout;
 
 	/* if you add/remove a line here, change the row test above */
-    /*      if this " is the start of the string then it ought to end there to fit in 80 columns >> " */
+
+	/*
+	 * if this " is the start of the string then it ought to end there to
+	 * fit in 80 columns >> "
+	 */
 	fprintf(output, _(" \\a             toggle between unaligned and aligned output mode\n"));
 	fprintf(output, _(" \\c[onnect] [DBNAME|- [USER]]\n"
-					"                connect to new database (currently \"%s\")\n"),
+		 "                connect to new database (currently \"%s\")\n"),
 			PQdb(pset.db));
 	fprintf(output, _(" \\C [STRING]    set table title, or unset if none\n"));
 	fprintf(output, _(" \\cd [DIR]      change the current working directory\n"));
@@ -234,11 +239,11 @@ slashUsage(bool pager)
 	fprintf(output, _(" \\i FILE        execute commands from file\n"));
 	fprintf(output, _(" \\l             list all databases\n"));
 	fprintf(output, _(" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
-					"                large object operations\n"));
+					  "                large object operations\n"));
 	fprintf(output, _(" \\o FILE        send all query results to file or |pipe\n"));
 	fprintf(output, _(" \\p             show the contents of the query buffer\n"));
 	fprintf(output, _(" \\pset NAME [VALUE]  set table output option (NAME := {format|border|expanded|\n"
-					"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"));
+					  "                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(output, _(" \\q             quit psql\n"));
 	fprintf(output, _(" \\qecho [STRING]  write string to query output stream (see \\o)\n"));
 	fprintf(output, _(" \\r             reset (clear) the query buffer\n"));

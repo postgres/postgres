@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: conversioncmds.h,v 1.2 2002/07/25 10:07:13 ishii Exp $
+ * $Id: conversioncmds.h,v 1.3 2002/09/04 20:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,4 +20,4 @@
 extern void CreateConversionCommand(CreateConversionStmt *parsetree);
 extern void DropConversionCommand(List *conversion_name, DropBehavior behavior);
 
-#endif  /* CONVERSIONCMDS_H */
+#endif   /* CONVERSIONCMDS_H */

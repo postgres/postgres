@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.195 2002/09/03 16:00:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.196 2002/09/04 20:31:14 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -320,13 +320,13 @@ UpdateRelationRelation(Relation indexRelation)
 
 	/* XXX Natts_pg_class_fixed is a hack - see pg_class.h */
 	tuple = heap_addheader(Natts_pg_class_fixed,
-	                       true,
+						   true,
 						   CLASS_TUPLE_SIZE,
 						   (void *) indexRelation->rd_rel);
 
 	/*
-	 * the new tuple must have the oid already chosen for the index.
-	 * sure would be embarrassing to do this sort of thing in polite company.
+	 * the new tuple must have the oid already chosen for the index. sure
+	 * would be embarrassing to do this sort of thing in polite company.
 	 */
 	HeapTupleSetOid(tuple, RelationGetRelid(indexRelation));
 	simple_heap_insert(pg_class, tuple);
@@ -391,7 +391,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 		Assert(indexTupDesc->attrs[i]->attcacheoff == -1);
 
 		new_tuple = heap_addheader(Natts_pg_attribute,
-		                           false,
+								   false,
 								   ATTRIBUTE_TUPLE_SIZE,
 								   (void *) indexTupDesc->attrs[i]);
 
@@ -478,7 +478,7 @@ UpdateIndexRelation(Oid indexoid,
 	 * form a tuple to insert into pg_index
 	 */
 	tuple = heap_addheader(Natts_pg_index,
-	                       false,
+						   false,
 						   itupLen,
 						   (void *) indexForm);
 
@@ -532,8 +532,8 @@ index_create(Oid heapRelationId,
 	heapRelation = heap_open(heapRelationId, ShareLock);
 
 	/*
-	 * The index will be in the same namespace as its parent table,
-	 * and is shared across databases if and only if the parent is.
+	 * The index will be in the same namespace as its parent table, and is
+	 * shared across databases if and only if the parent is.
 	 */
 	namespaceId = RelationGetNamespace(heapRelation);
 	shared_relation = heapRelation->rd_rel->relisshared;
@@ -554,7 +554,7 @@ index_create(Oid heapRelationId,
 	 * We cannot allow indexing a shared relation after initdb (because
 	 * there's no way to make the entry in other databases' pg_class).
 	 * Unfortunately we can't distinguish initdb from a manually started
-	 * standalone backend.  However, we can at least prevent this mistake
+	 * standalone backend.	However, we can at least prevent this mistake
 	 * under normal multi-user operation.
 	 */
 	if (shared_relation && IsUnderPostmaster)
@@ -577,6 +577,7 @@ index_create(Oid heapRelationId,
 												classObjectId);
 
 	indexTupDesc->tdhasoid = false;
+
 	/*
 	 * create the index relation's relcache entry and physical disk file.
 	 * (If we fail further down, it's the smgr's responsibility to remove
@@ -643,20 +644,20 @@ index_create(Oid heapRelationId,
 	 * Register constraint and dependencies for the index.
 	 *
 	 * If the index is from a CONSTRAINT clause, construct a pg_constraint
-	 * entry.  The index is then linked to the constraint, which in turn is
-	 * linked to the table.  If it's not a CONSTRAINT, make the dependency
-	 * directly on the table.
+	 * entry.  The index is then linked to the constraint, which in turn
+	 * is linked to the table.	If it's not a CONSTRAINT, make the
+	 * dependency directly on the table.
 	 *
-	 * We don't need a dependency on the namespace, because there'll be
-	 * an indirect dependency via our parent table.
+	 * We don't need a dependency on the namespace, because there'll be an
+	 * indirect dependency via our parent table.
 	 *
-	 * During bootstrap we can't register any dependencies, and we don't
-	 * try to make a constraint either.
+	 * During bootstrap we can't register any dependencies, and we don't try
+	 * to make a constraint either.
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
-		ObjectAddress	myself,
-						referenced;
+		ObjectAddress myself,
+					referenced;
 
 		myself.classId = RelOid_pg_class;
 		myself.objectId = indexoid;
@@ -674,25 +675,25 @@ index_create(Oid heapRelationId,
 			else
 			{
 				elog(ERROR, "index_create: constraint must be PRIMARY or UNIQUE");
-				constraintType = 0;	/* keep compiler quiet */
+				constraintType = 0;		/* keep compiler quiet */
 			}
 
 			conOid = CreateConstraintEntry(indexRelationName,
 										   namespaceId,
 										   constraintType,
-										   false, /* isDeferrable */
-										   false, /* isDeferred */
+										   false,		/* isDeferrable */
+										   false,		/* isDeferred */
 										   heapRelationId,
 										   indexInfo->ii_KeyAttrNumbers,
 										   indexInfo->ii_NumKeyAttrs,
-										   InvalidOid, /* no domain */
-										   InvalidOid, /* no foreign key */
+										   InvalidOid,	/* no domain */
+										   InvalidOid,	/* no foreign key */
 										   NULL,
 										   0,
 										   ' ',
 										   ' ',
 										   ' ',
-										   NULL, /* no check constraint */
+										   NULL,		/* no check constraint */
 										   NULL,
 										   NULL);
 
@@ -807,6 +808,7 @@ index_drop(Oid indexId)
 	 * fix RELATION relation
 	 */
 	DeleteRelationTuple(indexId);
+
 	/*
 	 * fix ATTRIBUTE relation
 	 */
@@ -839,11 +841,12 @@ index_drop(Oid indexId)
 	smgrunlink(DEFAULT_SMGR, userIndexRelation);
 
 	/*
-	 * We are presently too lazy to attempt to compute the new correct value
-	 * of relhasindex (the next VACUUM will fix it if necessary).  So there is
-	 * no need to update the pg_class tuple for the owning relation.
-	 * But we must send out a shared-cache-inval notice on the owning relation
-	 * to ensure other backends update their relcache lists of indexes.
+	 * We are presently too lazy to attempt to compute the new correct
+	 * value of relhasindex (the next VACUUM will fix it if necessary).
+	 * So there is no need to update the pg_class tuple for the owning
+	 * relation. But we must send out a shared-cache-inval notice on the
+	 * owning relation to ensure other backends update their relcache
+	 * lists of indexes.
 	 */
 	CacheInvalidateRelcache(heapId);
 
@@ -1640,7 +1643,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * transaction.)
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
-							HeapTupleHeaderGetXmin(heapTuple->t_data)))
+							  HeapTupleHeaderGetXmin(heapTuple->t_data)))
 						elog(ERROR, "IndexBuildHeapScan: concurrent insert in progress");
 					indexIt = true;
 					tupleIsAlive = true;
@@ -1655,7 +1658,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					 * transaction.)
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
-							HeapTupleHeaderGetXmax(heapTuple->t_data)))
+							  HeapTupleHeaderGetXmax(heapTuple->t_data)))
 						elog(ERROR, "IndexBuildHeapScan: concurrent delete in progress");
 					indexIt = true;
 					tupleIsAlive = false;
@@ -1798,12 +1801,12 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	/*
 	 * Open our index relation and get an exclusive lock on it.
 	 *
-	 * Note: doing this before opening the parent heap relation means
-	 * there's a possibility for deadlock failure against another xact
-	 * that is doing normal accesses to the heap and index.  However,
-	 * it's not real clear why you'd be needing to do REINDEX on a table
-	 * that's in active use, so I'd rather have the protection of making
-	 * sure the index is locked down.
+	 * Note: doing this before opening the parent heap relation means there's
+	 * a possibility for deadlock failure against another xact that is
+	 * doing normal accesses to the heap and index.  However, it's not
+	 * real clear why you'd be needing to do REINDEX on a table that's in
+	 * active use, so I'd rather have the protection of making sure the
+	 * index is locked down.
 	 */
 	iRel = index_open(indexId);
 	if (iRel == NULL)

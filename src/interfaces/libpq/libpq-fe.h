@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.85 2002/06/20 20:29:54 momjian Exp $
+ * $Id: libpq-fe.h,v 1.86 2002/09/04 20:31:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ typedef struct pg_result PGresult;
  */
 typedef struct pgNotify
 {
-	char		*relname;		/* name of relation containing data */
+	char	   *relname;		/* name of relation containing data */
 	int			be_pid;			/* process id of backend */
 } PGnotify;
 
@@ -252,7 +252,7 @@ extern size_t PQescapeString(char *to, const char *from, size_t length);
 extern unsigned char *PQescapeBytea(unsigned char *bintext, size_t binlen,
 			  size_t *bytealen);
 extern unsigned char *PQunescapeBytea(unsigned char *strtext,
-			  size_t *retbuflen);
+				size_t *retbuflen);
 
 
 /* Simple synchronous query */

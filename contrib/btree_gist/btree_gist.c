@@ -299,11 +299,12 @@ gts_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		TSKEY	   *r = (TSKEY *) palloc(sizeof(TSKEY));
+
 		retval = palloc(sizeof(GISTENTRY));
 		r->lower = r->upper = *(Timestamp *) (entry->key);
 		gistentryinit(*retval, PointerGetDatum(r),
-			  entry->rel, entry->page,
-			  entry->offset, sizeof(TSKEY), FALSE);
+					  entry->rel, entry->page,
+					  entry->offset, sizeof(TSKEY), FALSE);
 	}
 	else
 		retval = entry;
@@ -398,8 +399,8 @@ gts_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 timestamp_mi,
-									  TimestampGetDatumFast(newentry->upper),
-								   TimestampGetDatumFast(origentry->upper)));
+								  TimestampGetDatumFast(newentry->upper),
+							   TimestampGetDatumFast(origentry->upper)));
 
 	/* see interval_larger */
 	*result = Max(intr->time + intr->month * (30.0 * 86400), 0);
@@ -407,8 +408,8 @@ gts_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 timestamp_mi,
-									 TimestampGetDatumFast(origentry->lower),
-									TimestampGetDatumFast(newentry->lower)));
+								 TimestampGetDatumFast(origentry->lower),
+								TimestampGetDatumFast(newentry->lower)));
 
 	/* see interval_larger */
 	*result += Max(intr->time + intr->month * (30.0 * 86400), 0);
@@ -473,8 +474,8 @@ tskey_cmp(const void *a, const void *b)
 	return DatumGetInt32(
 						 DirectFunctionCall2(
 											 timestamp_cmp,
-				  TimestampGetDatumFast(((TSKEY *) (((RIX *) a)->r))->lower),
-				   TimestampGetDatumFast(((TSKEY *) (((RIX *) b)->r))->lower)
+			  TimestampGetDatumFast(((TSKEY *) (((RIX *) a)->r))->lower),
+			   TimestampGetDatumFast(((TSKEY *) (((RIX *) b)->r))->lower)
 											 )
 		);
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.18 2002/03/06 06:10:35 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.19 2002/09/04 20:31:46 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -154,10 +154,10 @@ ECPGnoticeProcessor(void *arg, const char *message)
 		message++;
 	ECPGlog("WARNING: %s", message);
 
-	/* WARNING:	(transaction aborted): queries ignored until END */
+	/* WARNING: (transaction aborted): queries ignored until END */
 
 	/*
-	 * WARNING:	current transaction is aborted, queries ignored until end
+	 * WARNING: current transaction is aborted, queries ignored until end
 	 * of transaction block
 	 */
 	if (strstr(message, "queries ignored") && strstr(message, "transaction")
@@ -167,7 +167,7 @@ ECPGnoticeProcessor(void *arg, const char *message)
 		return;
 	}
 
-	/* WARNING:	PerformPortalClose: portal "*" not found */
+	/* WARNING: PerformPortalClose: portal "*" not found */
 	if ((!strncmp(message, "PerformPortalClose: portal", 26)
 		 || !strncmp(message, "PerformPortalFetch: portal", 26))
 		&& strstr(message + 26, "not found"))
@@ -176,16 +176,16 @@ ECPGnoticeProcessor(void *arg, const char *message)
 		return;
 	}
 
-	/* WARNING:	BEGIN: already a transaction in progress */
+	/* WARNING: BEGIN: already a transaction in progress */
 	if (!strncmp(message, "BEGIN: already a transaction in progress", 40))
 	{
 		ECPGnoticeProcessor_raise(ECPG_WARNING_IN_TRANSACTION, message);
 		return;
 	}
 
-	/* WARNING:	AbortTransaction and not in in-progress state */
-	/* WARNING:	COMMIT: no transaction in progress */
-	/* WARNING:	ROLLBACK: no transaction in progress */
+	/* WARNING: AbortTransaction and not in in-progress state */
+	/* WARNING: COMMIT: no transaction in progress */
+	/* WARNING: ROLLBACK: no transaction in progress */
 	if (!strncmp(message, "AbortTransaction and not in in-progress state", 45)
 		|| !strncmp(message, "COMMIT: no transaction in progress", 34)
 		|| !strncmp(message, "ROLLBACK: no transaction in progress", 36))
@@ -194,7 +194,7 @@ ECPGnoticeProcessor(void *arg, const char *message)
 		return;
 	}
 
-	/* WARNING:	BlankPortalAssignName: portal * already exists */
+	/* WARNING: BlankPortalAssignName: portal * already exists */
 	if (!strncmp(message, "BlankPortalAssignName: portal", 29)
 		&& strstr(message + 29, "already exists"))
 	{
@@ -205,54 +205,54 @@ ECPGnoticeProcessor(void *arg, const char *message)
 	/* these are harmless - do nothing */
 
 	/*
-	 * WARNING:	CREATE TABLE / PRIMARY KEY will create implicit index '*'
+	 * WARNING: CREATE TABLE / PRIMARY KEY will create implicit index '*'
 	 * for table '*'
 	 */
 
 	/*
-	 * WARNING:	ALTER TABLE ... ADD CONSTRAINT will create implicit
+	 * WARNING: ALTER TABLE ... ADD CONSTRAINT will create implicit
 	 * trigger(s) for FOREIGN KEY check(s)
 	 */
 
 	/*
-	 * WARNING:	CREATE TABLE will create implicit sequence '*' for SERIAL
+	 * WARNING: CREATE TABLE will create implicit sequence '*' for SERIAL
 	 * column '*.*'
 	 */
 
 	/*
-	 * WARNING:	CREATE TABLE will create implicit trigger(s) for FOREIGN
+	 * WARNING: CREATE TABLE will create implicit trigger(s) for FOREIGN
 	 * KEY check(s)
 	 */
 	if ((!strncmp(message, "CREATE TABLE", 12) || !strncmp(message, "ALTER TABLE", 11))
 		&& strstr(message + 11, "will create implicit"))
 		return;
 
-	/* WARNING:	QUERY PLAN: */
+	/* WARNING: QUERY PLAN: */
 	if (!strncmp(message, "QUERY PLAN:", 11))	/* do we really see these? */
 		return;
 
 	/*
-	 * WARNING:	DROP TABLE implicitly drops referential integrity trigger
+	 * WARNING: DROP TABLE implicitly drops referential integrity trigger
 	 * from table "*"
 	 */
 	if (!strncmp(message, "DROP TABLE implicitly drops", 27))
 		return;
 
 	/*
-	 * WARNING:	Caution: DROP INDEX cannot be rolled back, so don't abort
+	 * WARNING: Caution: DROP INDEX cannot be rolled back, so don't abort
 	 * now
 	 */
 	if (strstr(message, "cannot be rolled back"))
 		return;
 
 	/* these and other unmentioned should set sqlca.sqlwarn[2] */
-	/* WARNING:	The ':' operator is deprecated.  Use exp(x) instead. */
-	/* WARNING:	Rel *: Uninitialized page 0 - fixing */
-	/* WARNING:	PortalHeapMemoryFree: * not in alloc set! */
-	/* WARNING:	Too old parent tuple found - can't continue vc_repair_frag */
-	/* WARNING:	identifier "*" will be truncated to "*" */
-	/* WARNING:	InvalidateSharedInvalid: cache state reset */
-	/* WARNING:	RegisterSharedInvalid: SI buffer overflow */
+	/* WARNING: The ':' operator is deprecated.  Use exp(x) instead. */
+	/* WARNING: Rel *: Uninitialized page 0 - fixing */
+	/* WARNING: PortalHeapMemoryFree: * not in alloc set! */
+	/* WARNING: Too old parent tuple found - can't continue vc_repair_frag */
+	/* WARNING: identifier "*" will be truncated to "*" */
+	/* WARNING: InvalidateSharedInvalid: cache state reset */
+	/* WARNING: RegisterSharedInvalid: SI buffer overflow */
 	sqlca.sqlwarn[2] = 'W';
 	sqlca.sqlwarn[0] = 'W';
 }
@@ -388,9 +388,7 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 
 		}
 		else
-		{
 			realname = strdup(dbname);
-		}
 	}
 	else
 		realname = strdup(dbname);

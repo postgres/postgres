@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.66 2002/08/31 17:14:28 tgl Exp $
+ * $Id: lock.h,v 1.67 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,8 @@ typedef struct LOCK
 	/* data */
 	int			grantMask;		/* bitmask for lock types already granted */
 	int			waitMask;		/* bitmask for lock types awaited */
-	SHM_QUEUE	lockHolders;	/* list of PROCLOCK objects assoc. with lock */
+	SHM_QUEUE	lockHolders;	/* list of PROCLOCK objects assoc. with
+								 * lock */
 	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on lock */
 	int			requested[MAX_LOCKMODES];		/* counts of requested
 												 * locks */
@@ -191,7 +192,7 @@ typedef struct PROCLOCKTAG
 typedef struct PROCLOCK
 {
 	/* tag */
-	PROCLOCKTAG	tag;			/* unique identifier of holder object */
+	PROCLOCKTAG tag;			/* unique identifier of holder object */
 
 	/* data */
 	int			holding[MAX_LOCKMODES]; /* count of locks currently held */
@@ -205,7 +206,7 @@ typedef struct PROCLOCK
 
 /*
  * This struct holds information passed from lmgr internals to the lock
- * listing user-level functions (lockfuncs.c).  For each PROCLOCK in the
+ * listing user-level functions (lockfuncs.c).	For each PROCLOCK in the
  * system, the SHMEM_OFFSET, PROCLOCK itself, and associated PGPROC and
  * LOCK objects are stored.  (Note there will often be multiple copies
  * of the same PGPROC or LOCK.)  We do not store the SHMEM_OFFSET of the
@@ -213,11 +214,11 @@ typedef struct PROCLOCK
  */
 typedef struct
 {
-	int		  nelements;	/* The length of each of the arrays */
+	int			nelements;		/* The length of each of the arrays */
 	SHMEM_OFFSET *holderaddrs;
-	PROCLOCK *holders;
-	PGPROC	 *procs;
-	LOCK	 *locks;
+	PROCLOCK   *holders;
+	PGPROC	   *procs;
+	LOCK	   *locks;
 } LockData;
 
 /*

@@ -1,7 +1,7 @@
 /* ----------
  * pg_lzcompress.c -
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.14 2001/11/17 06:09:30 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.15 2002/09/04 20:31:28 momjian Exp $
  *
  *		This is an implementation of LZ compression for PostgreSQL.
  *		It uses a simple history table and generates 2-3 byte tags
@@ -184,7 +184,7 @@
  * Local definitions
  * ----------
  */
-#define PGLZ_HISTORY_LISTS		8192 /* must be power of 2 */
+#define PGLZ_HISTORY_LISTS		8192	/* must be power of 2 */
 #define PGLZ_HISTORY_MASK		(PGLZ_HISTORY_LISTS - 1)
 #define PGLZ_HISTORY_SIZE		4096
 #define PGLZ_MAX_MATCH			273
@@ -202,7 +202,7 @@
  */
 typedef struct PGLZ_HistEntry
 {
-	struct PGLZ_HistEntry *next; /* links for my hash key's list */
+	struct PGLZ_HistEntry *next;	/* links for my hash key's list */
 	struct PGLZ_HistEntry *prev;
 	int			hindex;			/* my current hash key */
 	char	   *pos;			/* my input position */
@@ -418,8 +418,8 @@ pglz_find_match(PGLZ_HistEntry **hstart, char *input, char *end,
 		 * the best so far. And if we already have a match of 16 or more
 		 * bytes, it's worth the call overhead to use memcmp() to check if
 		 * this match is equal for the same size. After that we must
-		 * fallback to character by character comparison to know the
-		 * exact position where the diff occured.
+		 * fallback to character by character comparison to know the exact
+		 * position where the diff occured.
 		 */
 		thislen = 0;
 		if (len >= 16)
@@ -559,9 +559,8 @@ pglz_compress(char *source, int32 slen, PGLZ_Header *dest, PGLZ_Strategy *strate
 		good_drop = 100;
 
 	/*
-	 * Initialize the history lists to empty.  We do not need to zero
-	 * the hist_entries[] array; its entries are initialized as they
-	 * are used.
+	 * Initialize the history lists to empty.  We do not need to zero the
+	 * hist_entries[] array; its entries are initialized as they are used.
 	 */
 	memset((void *) hist_start, 0, sizeof(hist_start));
 

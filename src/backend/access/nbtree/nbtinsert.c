@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.95 2002/08/06 02:36:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.96 2002/09/04 20:31:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,14 +119,14 @@ top:
 	 *
 	 * NOTE: obviously, _bt_check_unique can only detect keys that are
 	 * already in the index; so it cannot defend against concurrent
-	 * insertions of the same key.  We protect against that by means
-	 * of holding a write lock on the target page.  Any other would-be
+	 * insertions of the same key.	We protect against that by means of
+	 * holding a write lock on the target page.  Any other would-be
 	 * inserter of the same key must acquire a write lock on the same
 	 * target page, so only one would-be inserter can be making the check
-	 * at one time.  Furthermore, once we are past the check we hold
-	 * write locks continuously until we have performed our insertion,
-	 * so no later inserter can fail to see our insertion.  (This
-	 * requires some care in _bt_insertonpg.)
+	 * at one time.  Furthermore, once we are past the check we hold write
+	 * locks continuously until we have performed our insertion, so no
+	 * later inserter can fail to see our insertion.  (This requires some
+	 * care in _bt_insertonpg.)
 	 *
 	 * If we must wait for another xact, we release the lock while waiting,
 	 * and then must start over completely.
@@ -205,15 +205,16 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 		if (offset <= maxoff)
 		{
 			/*
-			 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's how we
-			 * handling NULLs - and so we must not use _bt_compare in real
-			 * comparison, but only for ordering/finding items on pages. -
-			 * vadim 03/24/97
+			 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
+			 * how we handling NULLs - and so we must not use _bt_compare
+			 * in real comparison, but only for ordering/finding items on
+			 * pages. - vadim 03/24/97
 			 */
 			if (!_bt_isequal(itupdesc, page, offset, natts, itup_scankey))
 				break;			/* we're past all the equal tuples */
 
 			curitemid = PageGetItemId(page, offset);
+
 			/*
 			 * We can skip the heap fetch if the item is marked killed.
 			 */
@@ -226,10 +227,11 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 				{
 					/* it is a duplicate */
 					TransactionId xwait =
-						(TransactionIdIsValid(SnapshotDirty->xmin)) ?
-						SnapshotDirty->xmin : SnapshotDirty->xmax;
+					(TransactionIdIsValid(SnapshotDirty->xmin)) ?
+					SnapshotDirty->xmin : SnapshotDirty->xmax;
 
 					ReleaseBuffer(hbuffer);
+
 					/*
 					 * If this tuple is being updated by other transaction
 					 * then we have to wait for its commit/abort.
@@ -252,8 +254,8 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 				{
 					/*
 					 * Hmm, if we can't see the tuple, maybe it can be
-					 * marked killed.  This logic should match index_getnext
-					 * and btgettuple.
+					 * marked killed.  This logic should match
+					 * index_getnext and btgettuple.
 					 */
 					uint16		sv_infomask;
 
@@ -421,7 +423,7 @@ _bt_insertonpg(Relation rel,
 		{
 			/* step right one page */
 			BlockNumber rblkno = lpageop->btpo_next;
-			Buffer	rbuf;
+			Buffer		rbuf;
 
 			/*
 			 * must write-lock next page before releasing write lock on

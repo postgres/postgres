@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.15 2002/01/07 02:29:15 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.16 2002/09/04 20:31:46 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -84,7 +84,7 @@ ECPGraise(int line, int code, const char *str)
 
 		case ECPG_ARRAY_INSERT:
 			snprintf(sqlca.sqlerrm.sqlerrmc, sizeof(sqlca.sqlerrm.sqlerrmc),
-					 "Trying to insert an array of variables in line %d.", line);
+			 "Trying to insert an array of variables in line %d.", line);
 			break;
 
 		case ECPG_NO_CONN:

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.110 2002/09/02 02:47:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.111 2002/09/04 20:31:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ extern bool Password_encryption;
 
 static void CheckPgUserAclNotNull(void);
 static void UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
-								  List *members);
+					  List *members);
 static IdList *IdListToArray(List *members);
 static List *IdArrayToList(IdList *oldarray);
 
@@ -52,7 +52,8 @@ static List *IdArrayToList(IdList *oldarray);
  *	Outputs string in quotes, with double-quotes duplicated.
  *	We could use quote_ident(), but that expects a TEXT argument.
  */
-static void fputs_quote(char *str, FILE *fp)
+static void
+fputs_quote(char *str, FILE *fp)
 {
 	fputc('"', fp);
 	while (*str)
@@ -79,7 +80,7 @@ group_getfilename(void)
 	char	   *pfnam;
 
 	bufsize = strlen(DataDir) + strlen("/global/") +
-			  strlen(USER_GROUP_FILE) + 1;
+		strlen(USER_GROUP_FILE) + 1;
 	pfnam = (char *) palloc(bufsize);
 	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, USER_GROUP_FILE);
 
@@ -99,7 +100,7 @@ user_getfilename(void)
 	char	   *pfnam;
 
 	bufsize = strlen(DataDir) + strlen("/global/") +
-			  strlen(PWD_FILE) + 1;
+		strlen(PWD_FILE) + 1;
 	pfnam = (char *) palloc(bufsize);
 	snprintf(pfnam, bufsize, "%s/global/%s", DataDir, PWD_FILE);
 
@@ -125,8 +126,8 @@ write_group_file(Relation urel, Relation grel)
 
 	/*
 	 * Create a temporary filename to be renamed later.  This prevents the
-	 * backend from clobbering the pg_group file while the postmaster might
-	 * be reading from it.
+	 * backend from clobbering the pg_group file while the postmaster
+	 * might be reading from it.
 	 */
 	filename = group_getfilename();
 	bufsize = strlen(filename) + 12;
@@ -143,14 +144,16 @@ write_group_file(Relation urel, Relation grel)
 	scan = heap_beginscan(grel, SnapshotSelf, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		Datum		datum, grolist_datum;
+		Datum		datum,
+					grolist_datum;
 		bool		isnull;
 		char	   *groname;
 		IdList	   *grolist_p;
 		AclId	   *aidp;
-		int			i, j,
+		int			i,
+					j,
 					num;
-		char 	   *usename;
+		char	   *usename;
 		bool		first_user = true;
 
 		datum = heap_getattr(tuple, Anum_pg_group_groname, dsc, &isnull);
@@ -199,8 +202,8 @@ write_group_file(Relation urel, Relation grel)
 					continue;
 				}
 
-				/* File format is:
-				 *		"dbname"	"user1" "user2" "user3"
+				/*
+				 * File format is: "dbname"    "user1" "user2" "user3"
 				 */
 				if (first_user)
 				{
@@ -833,8 +836,8 @@ AlterUserSet(AlterUserSetStmt *stmt)
 	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
 
 	/*
-	 * RowExclusiveLock is sufficient, because we don't need to update
-	 * the flat password file.
+	 * RowExclusiveLock is sufficient, because we don't need to update the
+	 * flat password file.
 	 */
 	rel = heap_openr(ShadowRelationName, RowExclusiveLock);
 	oldtuple = SearchSysCache(SHADOWNAME,
@@ -844,23 +847,23 @@ AlterUserSet(AlterUserSetStmt *stmt)
 		elog(ERROR, "user \"%s\" does not exist", stmt->user);
 
 	if (!(superuser()
-		  || ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
+	 || ((Form_pg_shadow) GETSTRUCT(oldtuple))->usesysid == GetUserId()))
 		elog(ERROR, "permission denied");
 
 	for (i = 0; i < Natts_pg_shadow; i++)
 		repl_repl[i] = ' ';
 
-	repl_repl[Anum_pg_shadow_useconfig-1] = 'r';
-	if (strcmp(stmt->variable, "all")==0 && valuestr == NULL)
+	repl_repl[Anum_pg_shadow_useconfig - 1] = 'r';
+	if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
 		/* RESET ALL */
-		repl_null[Anum_pg_shadow_useconfig-1] = 'n';
+		repl_null[Anum_pg_shadow_useconfig - 1] = 'n';
 	else
 	{
-		Datum datum;
-		bool isnull;
-		ArrayType *array;
+		Datum		datum;
+		bool		isnull;
+		ArrayType  *array;
 
-		repl_null[Anum_pg_shadow_useconfig-1] = ' ';
+		repl_null[Anum_pg_shadow_useconfig - 1] = ' ';
 
 		datum = SysCacheGetAttr(SHADOWNAME, oldtuple,
 								Anum_pg_shadow_useconfig, &isnull);
@@ -872,7 +875,7 @@ AlterUserSet(AlterUserSetStmt *stmt)
 		else
 			array = GUCArrayDelete(array, stmt->variable);
 
-		repl_val[Anum_pg_shadow_useconfig-1] = PointerGetDatum(array);
+		repl_val[Anum_pg_shadow_useconfig - 1] = PointerGetDatum(array);
 	}
 
 	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
@@ -1253,12 +1256,12 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 								 * create user */
 	{
 		/*
-		 * convert the to be added usernames to sysids and add them to
-		 * the list
+		 * convert the to be added usernames to sysids and add them to the
+		 * list
 		 */
 		foreach(item, stmt->listUsers)
 		{
-			int32	sysid;
+			int32		sysid;
 
 			if (strcmp(tag, "ALTER GROUP") == 0)
 			{
@@ -1282,6 +1285,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 			if (!intMember(sysid, newlist))
 				newlist = lappendi(newlist, sysid);
 			else
+
 				/*
 				 * we silently assume here that this error will only come
 				 * up in a ALTER GROUP statement
@@ -1306,8 +1310,8 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		else
 		{
 			/*
-			 * convert the to be dropped usernames to sysids and
-			 * remove them from the list
+			 * convert the to be dropped usernames to sysids and remove
+			 * them from the list
 			 */
 			foreach(item, stmt->listUsers)
 			{
@@ -1375,7 +1379,7 @@ UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
 	new_record_repl[Anum_pg_group_grolist - 1] = 'r';
 
 	tuple = heap_modifytuple(group_tuple, group_rel,
-							 new_record, new_record_nulls, new_record_repl);
+						  new_record, new_record_nulls, new_record_repl);
 
 	simple_heap_update(group_rel, &group_tuple->t_self, tuple);
 
@@ -1401,12 +1405,10 @@ IdListToArray(List *members)
 	newarray->elemtype = INT4OID;
 	ARR_NDIM(newarray) = 1;		/* one dimensional array */
 	ARR_LBOUND(newarray)[0] = 1;	/* axis starts at one */
-	ARR_DIMS(newarray)[0] = nmembers; /* axis is this long */
+	ARR_DIMS(newarray)[0] = nmembers;	/* axis is this long */
 	i = 0;
 	foreach(item, members)
-	{
 		((int *) ARR_DATA_PTR(newarray))[i++] = lfirsti(item);
-	}
 
 	return newarray;
 }

@@ -14,7 +14,8 @@ struct ECPGtype
 	long		size;			/* For array it is the number of elements.
 								 * For varchar it is the maxsize of the
 								 * area. */
-	char		*struct_sizeof;		/* For a struct this is the sizeof() type as string */
+	char	   *struct_sizeof;	/* For a struct this is the sizeof() type
+								 * as string */
 	union
 	{
 		struct ECPGtype *element;		/* For an array this is the type
@@ -90,7 +91,7 @@ struct this_type
 	char	   *type_str;
 	int			type_dimension;
 	int			type_index;
-	char *			type_sizeof;
+	char	   *type_sizeof;
 };
 
 struct _include_path

@@ -100,7 +100,7 @@ typedef char *BITVECP;
 static void
 printarr(ArrayType *a, int num)
 {
-	StringInfoData	bbb;
+	StringInfoData bbb;
 	char	   *cur;
 	int			l;
 	int		   *d;
@@ -108,9 +108,7 @@ printarr(ArrayType *a, int num)
 	d = ARRPTR(a);
 	initStringInfo(&bbb);
 	for (l = 0; l < min(num, ARRNELEMS(a)); l++)
-	{
 		appendStringInfo(&bbb, "%d ", d[l]);
-	}
 	elog(DEBUG3, "\t\t%s", bbb.data);
 	pfree(bbb.data);
 }
@@ -125,7 +123,6 @@ printbitvec(BITVEC bv)
 
 	elog(DEBUG3, "BV: %s", str);
 }
-
 #endif
 
 /*
@@ -163,78 +160,78 @@ static ArrayType *_int_common_union(bytea *entryvec,
 /*
 ** GiST support methods
 */
-PG_FUNCTION_INFO_V1( g_int_consistent );
-PG_FUNCTION_INFO_V1( g_int_compress );
-PG_FUNCTION_INFO_V1( g_int_decompress );
-PG_FUNCTION_INFO_V1( g_int_penalty );
-PG_FUNCTION_INFO_V1( g_int_picksplit );
-PG_FUNCTION_INFO_V1( g_int_union );
-PG_FUNCTION_INFO_V1( g_int_same );
+PG_FUNCTION_INFO_V1(g_int_consistent);
+PG_FUNCTION_INFO_V1(g_int_compress);
+PG_FUNCTION_INFO_V1(g_int_decompress);
+PG_FUNCTION_INFO_V1(g_int_penalty);
+PG_FUNCTION_INFO_V1(g_int_picksplit);
+PG_FUNCTION_INFO_V1(g_int_union);
+PG_FUNCTION_INFO_V1(g_int_same);
 
-Datum	g_int_consistent(PG_FUNCTION_ARGS);
-Datum	g_int_compress(PG_FUNCTION_ARGS);
-Datum	g_int_decompress(PG_FUNCTION_ARGS);
-Datum	g_int_penalty(PG_FUNCTION_ARGS);
-Datum	g_int_picksplit(PG_FUNCTION_ARGS);
-Datum	g_int_union(PG_FUNCTION_ARGS);
-Datum	g_int_same(PG_FUNCTION_ARGS);
+Datum		g_int_consistent(PG_FUNCTION_ARGS);
+Datum		g_int_compress(PG_FUNCTION_ARGS);
+Datum		g_int_decompress(PG_FUNCTION_ARGS);
+Datum		g_int_penalty(PG_FUNCTION_ARGS);
+Datum		g_int_picksplit(PG_FUNCTION_ARGS);
+Datum		g_int_union(PG_FUNCTION_ARGS);
+Datum		g_int_same(PG_FUNCTION_ARGS);
 
 
 /*
 ** R-tree support functions
 */
-static bool		inner_int_contains(ArrayType *a, ArrayType *b);
-static bool		inner_int_overlap(ArrayType *a, ArrayType *b);
-static ArrayType  *inner_int_union(ArrayType *a, ArrayType *b);
-static ArrayType  *inner_int_inter(ArrayType *a, ArrayType *b);
-static void		rt__int_size(ArrayType *a, float *sz);
+static bool inner_int_contains(ArrayType *a, ArrayType *b);
+static bool inner_int_overlap(ArrayType *a, ArrayType *b);
+static ArrayType *inner_int_union(ArrayType *a, ArrayType *b);
+static ArrayType *inner_int_inter(ArrayType *a, ArrayType *b);
+static void rt__int_size(ArrayType *a, float *sz);
 
-PG_FUNCTION_INFO_V1( _int_different );
-PG_FUNCTION_INFO_V1( _int_same );
-PG_FUNCTION_INFO_V1( _int_contains );
-PG_FUNCTION_INFO_V1( _int_contained );
-PG_FUNCTION_INFO_V1( _int_overlap );
-PG_FUNCTION_INFO_V1( _int_union );
-PG_FUNCTION_INFO_V1( _int_inter );
+PG_FUNCTION_INFO_V1(_int_different);
+PG_FUNCTION_INFO_V1(_int_same);
+PG_FUNCTION_INFO_V1(_int_contains);
+PG_FUNCTION_INFO_V1(_int_contained);
+PG_FUNCTION_INFO_V1(_int_overlap);
+PG_FUNCTION_INFO_V1(_int_union);
+PG_FUNCTION_INFO_V1(_int_inter);
 
-Datum	_int_different(PG_FUNCTION_ARGS);
-Datum	_int_same(PG_FUNCTION_ARGS);
-Datum	_int_contains(PG_FUNCTION_ARGS);
-Datum	_int_contained(PG_FUNCTION_ARGS);
-Datum	_int_overlap(PG_FUNCTION_ARGS);
-Datum	_int_union(PG_FUNCTION_ARGS);
-Datum	_int_inter(PG_FUNCTION_ARGS);
+Datum		_int_different(PG_FUNCTION_ARGS);
+Datum		_int_same(PG_FUNCTION_ARGS);
+Datum		_int_contains(PG_FUNCTION_ARGS);
+Datum		_int_contained(PG_FUNCTION_ARGS);
+Datum		_int_overlap(PG_FUNCTION_ARGS);
+Datum		_int_union(PG_FUNCTION_ARGS);
+Datum		_int_inter(PG_FUNCTION_ARGS);
 
 /*
 ** _intbig methods
 */
-PG_FUNCTION_INFO_V1( g_intbig_consistent );
-PG_FUNCTION_INFO_V1( g_intbig_compress );
-PG_FUNCTION_INFO_V1( g_intbig_decompress );
-PG_FUNCTION_INFO_V1( g_intbig_penalty );
-PG_FUNCTION_INFO_V1( g_intbig_picksplit );
-PG_FUNCTION_INFO_V1( g_intbig_union );
-PG_FUNCTION_INFO_V1( g_intbig_same );
+PG_FUNCTION_INFO_V1(g_intbig_consistent);
+PG_FUNCTION_INFO_V1(g_intbig_compress);
+PG_FUNCTION_INFO_V1(g_intbig_decompress);
+PG_FUNCTION_INFO_V1(g_intbig_penalty);
+PG_FUNCTION_INFO_V1(g_intbig_picksplit);
+PG_FUNCTION_INFO_V1(g_intbig_union);
+PG_FUNCTION_INFO_V1(g_intbig_same);
 
-Datum	g_intbig_consistent(PG_FUNCTION_ARGS);
-Datum	g_intbig_compress(PG_FUNCTION_ARGS);
-Datum	g_intbig_decompress(PG_FUNCTION_ARGS);
-Datum	g_intbig_penalty(PG_FUNCTION_ARGS);
-Datum	g_intbig_picksplit(PG_FUNCTION_ARGS);
-Datum	g_intbig_union(PG_FUNCTION_ARGS);
-Datum	g_intbig_same(PG_FUNCTION_ARGS);
+Datum		g_intbig_consistent(PG_FUNCTION_ARGS);
+Datum		g_intbig_compress(PG_FUNCTION_ARGS);
+Datum		g_intbig_decompress(PG_FUNCTION_ARGS);
+Datum		g_intbig_penalty(PG_FUNCTION_ARGS);
+Datum		g_intbig_picksplit(PG_FUNCTION_ARGS);
+Datum		g_intbig_union(PG_FUNCTION_ARGS);
+Datum		g_intbig_same(PG_FUNCTION_ARGS);
 
 static bool _intbig_contains(ArrayType *a, ArrayType *b);
 static bool _intbig_overlap(ArrayType *a, ArrayType *b);
 static ArrayType *_intbig_union(ArrayType *a, ArrayType *b);
 
-static ArrayType *	_intbig_inter(ArrayType *a, ArrayType *b);
+static ArrayType *_intbig_inter(ArrayType *a, ArrayType *b);
 static void rt__intbig_size(ArrayType *a, float *sz);
 
 
 
 /*****************************************************************************
- *		 	Boolean Search
+ *			Boolean Search
  *****************************************************************************/
 
 #define BooleanSearchStrategy	20
@@ -243,17 +240,19 @@ static void rt__intbig_size(ArrayType *a, float *sz);
  * item in polish notation with back link
  * to left operand
  */
-typedef struct ITEM {
-	int2    type;
-	int2	left;
-	int4    val;
-} ITEM;
+typedef struct ITEM
+{
+	int2		type;
+	int2		left;
+	int4		val;
+}	ITEM;
 
-typedef struct {
-	int4	len;
-	int4	size;
-	char	data[1];
-} QUERYTYPE;
+typedef struct
+{
+	int4		len;
+	int4		size;
+	char		data[1];
+}	QUERYTYPE;
 
 #define HDRSIZEQT	( 2*sizeof(int4) )
 #define COMPUTESIZE(size)	( HDRSIZEQT + size * sizeof(ITEM) )
@@ -261,20 +260,20 @@ typedef struct {
 
 PG_FUNCTION_INFO_V1(bqarr_in);
 PG_FUNCTION_INFO_V1(bqarr_out);
-Datum   bqarr_in(PG_FUNCTION_ARGS);
-Datum   bqarr_out(PG_FUNCTION_ARGS);
+Datum		bqarr_in(PG_FUNCTION_ARGS);
+Datum		bqarr_out(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(boolop);
-Datum   boolop(PG_FUNCTION_ARGS);
+Datum		boolop(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(rboolop);
-Datum   rboolop(PG_FUNCTION_ARGS);
+Datum		rboolop(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(querytree);
-Datum   querytree(PG_FUNCTION_ARGS);
+Datum		querytree(PG_FUNCTION_ARGS);
 
-static bool signconsistent( QUERYTYPE *query, BITVEC sign, bool leaf );
-static bool execconsistent( QUERYTYPE *query, ArrayType *array, bool leaf );
+static bool signconsistent(QUERYTYPE * query, BITVEC sign, bool leaf);
+static bool execconsistent(QUERYTYPE * query, ArrayType *array, bool leaf);
 
 /*****************************************************************************
  *						   GiST functions
@@ -287,21 +286,22 @@ static bool execconsistent( QUERYTYPE *query, ArrayType *array, bool leaf );
 ** corresponding to strategy in the pg_amop table.
 */
 Datum
-g_int_consistent(PG_FUNCTION_ARGS) {
-	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
-	ArrayType *query = ( ArrayType * )PG_GETARG_POINTER(1);
+g_int_consistent(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	ArrayType  *query = (ArrayType *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 
-	if ( strategy == BooleanSearchStrategy )
-		PG_RETURN_BOOL(execconsistent( (QUERYTYPE*)query,
-						(ArrayType *) DatumGetPointer(entry->key),
-						ISLEAFKEY( (ArrayType *) DatumGetPointer(entry->key) ) ) );
+	if (strategy == BooleanSearchStrategy)
+		PG_RETURN_BOOL(execconsistent((QUERYTYPE *) query,
+							   (ArrayType *) DatumGetPointer(entry->key),
+				  ISLEAFKEY((ArrayType *) DatumGetPointer(entry->key))));
 
 	/* XXX are we sure it's safe to scribble on the query object here? */
 	/* XXX what about toasted input? */
 	/* sort query for fast search, key is already sorted */
-	if ( ARRISVOID( query ) )
+	if (ARRISVOID(query))
 		PG_RETURN_BOOL(false);
 	PREPAREARR(query);
 
@@ -312,28 +312,28 @@ g_int_consistent(PG_FUNCTION_ARGS) {
 									   query);
 			break;
 		case RTSameStrategyNumber:
-			if ( GIST_LEAF(entry) )
+			if (GIST_LEAF(entry))
 				DirectFunctionCall3(
-					g_int_same,
-					entry->key,
-					PointerGetDatum(query),
-					PointerGetDatum(&retval)
-				);
+									g_int_same,
+									entry->key,
+									PointerGetDatum(query),
+									PointerGetDatum(&retval)
+					);
 			else
 				retval = inner_int_contains((ArrayType *) DatumGetPointer(entry->key),
-										query);
+											query);
 			break;
 		case RTContainsStrategyNumber:
 			retval = inner_int_contains((ArrayType *) DatumGetPointer(entry->key),
 										query);
 			break;
 		case RTContainedByStrategyNumber:
-			if ( GIST_LEAF(entry) )
+			if (GIST_LEAF(entry))
 				retval = inner_int_contains(query,
-					(ArrayType *) DatumGetPointer(entry->key) );
+							  (ArrayType *) DatumGetPointer(entry->key));
 			else
 				retval = inner_int_overlap((ArrayType *) DatumGetPointer(entry->key),
-									   query);
+										   query);
 			break;
 		default:
 			retval = FALSE;
@@ -344,11 +344,11 @@ g_int_consistent(PG_FUNCTION_ARGS) {
 Datum
 g_int_union(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER( _int_common_union(
-		(bytea *) PG_GETARG_POINTER(0),
-		(int *) PG_GETARG_POINTER(1),
-		inner_int_union
-	) );
+	PG_RETURN_POINTER(_int_common_union(
+										(bytea *) PG_GETARG_POINTER(0),
+										(int *) PG_GETARG_POINTER(1),
+										inner_int_union
+										));
 }
 
 /*
@@ -357,7 +357,7 @@ g_int_union(PG_FUNCTION_ARGS)
 Datum
 g_int_compress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 	ArrayType  *r;
 	int			len;
@@ -366,26 +366,29 @@ g_int_compress(PG_FUNCTION_ARGS)
 				min,
 				cand;
 
-	if (entry->leafkey) {
+	if (entry->leafkey)
+	{
 		r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
 		PREPAREARR(r);
 		r->flags |= LEAFKEY;
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 		PG_RETURN_POINTER(retval);
 	}
 
 	r = (ArrayType *) PG_DETOAST_DATUM(entry->key);
-	if ( ISLEAFKEY( r ) || ARRISVOID(r) ) {
-		if ( r != (ArrayType*)DatumGetPointer(entry->key) )
+	if (ISLEAFKEY(r) || ARRISVOID(r))
+	{
+		if (r != (ArrayType *) DatumGetPointer(entry->key))
 			pfree(r);
 		PG_RETURN_POINTER(entry);
 	}
 
-	if ( (len=ARRNELEMS(r)) >= 2 * MAXNUMRANGE) {	/* compress */
-		if ( r == (ArrayType*)DatumGetPointer( entry->key) )
+	if ((len = ARRNELEMS(r)) >= 2 * MAXNUMRANGE)
+	{							/* compress */
+		if (r == (ArrayType *) DatumGetPointer(entry->key))
 			r = (ArrayType *) PG_DETOAST_DATUM_COPY(entry->key);
 		r = resize_intArrayType(r, 2 * (len));
 
@@ -411,11 +414,11 @@ g_int_compress(PG_FUNCTION_ARGS)
 		r = resize_intArrayType(r, len);
 		retval = palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(r),
-				  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 		PG_RETURN_POINTER(retval);
-	} else {
-		PG_RETURN_POINTER(entry);
 	}
+	else
+		PG_RETURN_POINTER(entry);
 
 	PG_RETURN_POINTER(entry);
 }
@@ -423,7 +426,7 @@ g_int_compress(PG_FUNCTION_ARGS)
 Datum
 g_int_decompress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 	ArrayType  *r;
 	int		   *dr,
@@ -436,17 +439,18 @@ g_int_decompress(PG_FUNCTION_ARGS)
 
 	in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 
-	if ( ARRISVOID(in) ) {
+	if (ARRISVOID(in))
 		PG_RETURN_POINTER(entry);
-	}
 
 	lenin = ARRNELEMS(in);
 
-	if (lenin < 2 * MAXNUMRANGE || ISLEAFKEY( in ) ) { /* not comressed value */
-		if ( in != (ArrayType *) DatumGetPointer(entry->key)) {
+	if (lenin < 2 * MAXNUMRANGE || ISLEAFKEY(in))
+	{							/* not comressed value */
+		if (in != (ArrayType *) DatumGetPointer(entry->key))
+		{
 			retval = palloc(sizeof(GISTENTRY));
 			gistentryinit(*retval, PointerGetDatum(in),
-				entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
+			 entry->rel, entry->page, entry->offset, VARSIZE(in), FALSE);
 
 			PG_RETURN_POINTER(retval);
 		}
@@ -468,7 +472,7 @@ g_int_decompress(PG_FUNCTION_ARGS)
 		pfree(in);
 	retval = palloc(sizeof(GISTENTRY));
 	gistentryinit(*retval, PointerGetDatum(r),
-		entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
 	PG_RETURN_POINTER(retval);
 }
@@ -479,26 +483,26 @@ g_int_decompress(PG_FUNCTION_ARGS)
 Datum
 g_int_penalty(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER( _int_common_penalty(
-		(GISTENTRY *)PG_GETARG_POINTER(0),
-		(GISTENTRY *)PG_GETARG_POINTER(1),
-		(float *)    PG_GETARG_POINTER(2),
-		inner_int_union, rt__int_size
-	) );
+	PG_RETURN_POINTER(_int_common_penalty(
+									  (GISTENTRY *) PG_GETARG_POINTER(0),
+									  (GISTENTRY *) PG_GETARG_POINTER(1),
+										  (float *) PG_GETARG_POINTER(2),
+										  inner_int_union, rt__int_size
+										  ));
 }
 
 
 Datum
 g_int_picksplit(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER( _int_common_picksplit(
-		(bytea *)PG_GETARG_POINTER(0),
-		(GIST_SPLITVEC *)PG_GETARG_POINTER(1),
-		inner_int_union,
-		inner_int_inter,
-		rt__int_size,
-		0.01
-	) );
+	PG_RETURN_POINTER(_int_common_picksplit(
+										  (bytea *) PG_GETARG_POINTER(0),
+								  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
+											inner_int_union,
+											inner_int_inter,
+											rt__int_size,
+											0.01
+											));
 }
 
 /*
@@ -509,21 +513,24 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 Datum
 g_int_same(PG_FUNCTION_ARGS)
 {
-	ArrayType	*a = (ArrayType*)PointerGetDatum(PG_GETARG_POINTER(0));
-	ArrayType	*b = (ArrayType*)PointerGetDatum(PG_GETARG_POINTER(1));
-	bool *result = (bool *)PG_GETARG_POINTER(2);
-	int4 n = ARRNELEMS(a);
-	int4 *da, *db;
+	ArrayType  *a = (ArrayType *) PointerGetDatum(PG_GETARG_POINTER(0));
+	ArrayType  *b = (ArrayType *) PointerGetDatum(PG_GETARG_POINTER(1));
+	bool	   *result = (bool *) PG_GETARG_POINTER(2);
+	int4		n = ARRNELEMS(a);
+	int4	   *da,
+			   *db;
 
-	if ( n != ARRNELEMS(b) ) {
+	if (n != ARRNELEMS(b))
+	{
 		*result = false;
 		PG_RETURN_POINTER(result);
 	}
 	*result = TRUE;
 	da = ARRPTR(a);
 	db = ARRPTR(b);
-	while(n--)
-		if (*da++ != *db++) {
+	while (n--)
+		if (*da++ != *db++)
+		{
 			*result = FALSE;
 			break;
 		}
@@ -534,20 +541,20 @@ g_int_same(PG_FUNCTION_ARGS)
 Datum
 _int_contained(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL( DatumGetBool(
-		DirectFunctionCall2(
-			_int_contains,
-			PointerGetDatum(PG_GETARG_POINTER(1)),
-			PointerGetDatum(PG_GETARG_POINTER(0))
-		)
-	));
+	PG_RETURN_BOOL(DatumGetBool(
+								DirectFunctionCall2(
+													_int_contains,
+								   PointerGetDatum(PG_GETARG_POINTER(1)),
+									PointerGetDatum(PG_GETARG_POINTER(0))
+													)
+								));
 }
 
 Datum
 _int_contains(PG_FUNCTION_ARGS)
 {
-	ArrayType *a = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	ArrayType *b = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	bool		res;
 
 	if (ARRISVOID(a) || ARRISVOID(b))
@@ -558,7 +565,7 @@ _int_contains(PG_FUNCTION_ARGS)
 	res = inner_int_contains(a, b);
 	pfree(a);
 	pfree(b);
-	PG_RETURN_BOOL( res );
+	PG_RETURN_BOOL(res);
 }
 
 static bool
@@ -607,20 +614,20 @@ inner_int_contains(ArrayType *a, ArrayType *b)
 Datum
 _int_different(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_BOOL( ! DatumGetBool(
-		DirectFunctionCall2(
-			_int_same,
-			PointerGetDatum(PG_GETARG_POINTER(0)),
-			PointerGetDatum(PG_GETARG_POINTER(1))
-		)
-	));
+	PG_RETURN_BOOL(!DatumGetBool(
+								 DirectFunctionCall2(
+													 _int_same,
+								   PointerGetDatum(PG_GETARG_POINTER(0)),
+									PointerGetDatum(PG_GETARG_POINTER(1))
+													 )
+								 ));
 }
 
 Datum
 _int_same(PG_FUNCTION_ARGS)
 {
-	ArrayType *a = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	ArrayType *b = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	int			na,
 				nb;
 	int			n;
@@ -664,8 +671,8 @@ _int_same(PG_FUNCTION_ARGS)
 Datum
 _int_overlap(PG_FUNCTION_ARGS)
 {
-	ArrayType *a = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	ArrayType *b = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	bool		result;
 
 	if (ARRISVOID(a) || ARRISVOID(b))
@@ -679,7 +686,7 @@ _int_overlap(PG_FUNCTION_ARGS)
 	pfree(a);
 	pfree(b);
 
-	PG_RETURN_BOOL( result );
+	PG_RETURN_BOOL(result);
 }
 
 static bool
@@ -719,8 +726,8 @@ inner_int_overlap(ArrayType *a, ArrayType *b)
 Datum
 _int_union(PG_FUNCTION_ARGS)
 {
-	ArrayType *a = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	ArrayType *b = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	ArrayType  *result;
 
 	if (!ARRISVOID(a))
@@ -735,10 +742,10 @@ _int_union(PG_FUNCTION_ARGS)
 	if (b)
 		pfree(b);
 
-	PG_RETURN_POINTER( result );
+	PG_RETURN_POINTER(result);
 }
 
-static ArrayType  *
+static ArrayType *
 inner_int_union(ArrayType *a, ArrayType *b)
 {
 	ArrayType  *r = NULL;
@@ -794,8 +801,8 @@ inner_int_union(ArrayType *a, ArrayType *b)
 Datum
 _int_inter(PG_FUNCTION_ARGS)
 {
-	ArrayType *a = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	ArrayType *b = (ArrayType *)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
 	ArrayType  *result;
 
 	if (ARRISVOID(a) || ARRISVOID(b))
@@ -809,10 +816,10 @@ _int_inter(PG_FUNCTION_ARGS)
 	pfree(a);
 	pfree(b);
 
-	PG_RETURN_POINTER( result );
+	PG_RETURN_POINTER(result);
 }
 
-static ArrayType  *
+static ArrayType *
 inner_int_inter(ArrayType *a, ArrayType *b)
 {
 	ArrayType  *r;
@@ -874,9 +881,9 @@ rt__int_size(ArrayType *a, float *size)
 static bool
 isort(int4 *a, int len)
 {
-	int4			tmp,
+	int4		tmp,
 				index;
-	int4		   *cur,
+	int4	   *cur,
 			   *end;
 	bool		r = FALSE;
 
@@ -1030,16 +1037,16 @@ rt__intbig_size(ArrayType *a, float *sz)
 	BITVECP		bv = SIGPTR(a);
 
 	LOOPBYTE(
-		len +=
-			GETBITBYTE(bv,0) +
-			GETBITBYTE(bv,1) +
-			GETBITBYTE(bv,2) +
-			GETBITBYTE(bv,3) +
-			GETBITBYTE(bv,4) +
-			GETBITBYTE(bv,5) +
-			GETBITBYTE(bv,6) +
-			GETBITBYTE(bv,7) ;
-		bv = (BITVECP) ( ((char*)bv) + 1 );
+			 len +=
+			 GETBITBYTE(bv, 0) +
+			 GETBITBYTE(bv, 1) +
+			 GETBITBYTE(bv, 2) +
+			 GETBITBYTE(bv, 3) +
+			 GETBITBYTE(bv, 4) +
+			 GETBITBYTE(bv, 5) +
+			 GETBITBYTE(bv, 6) +
+			 GETBITBYTE(bv, 7);
+	bv = (BITVECP) (((char *) bv) + 1);
 	);
 
 	*sz = (float) len;
@@ -1089,9 +1096,9 @@ _intbig_inter(ArrayType *a, ArrayType *b)
 Datum
 g_intbig_same(PG_FUNCTION_ARGS)
 {
-	ArrayType *a = (ArrayType *)PG_GETARG_POINTER(0);
-	ArrayType *b = (ArrayType *)PG_GETARG_POINTER(1);
-	bool *result = (bool *)PG_GETARG_POINTER(2);
+	ArrayType  *a = (ArrayType *) PG_GETARG_POINTER(0);
+	ArrayType  *b = (ArrayType *) PG_GETARG_POINTER(1);
+	bool	   *result = (bool *) PG_GETARG_POINTER(2);
 	BITVECP		da,
 				db;
 	int			i;
@@ -1100,59 +1107,62 @@ g_intbig_same(PG_FUNCTION_ARGS)
 	db = SIGPTR(b);
 
 	LOOPBYTE(
-	if (da[i] != db[i])
-	{
+			 if (da[i] != db[i])
+			 {
 		*result = FALSE;
-		PG_RETURN_POINTER( result );
+		PG_RETURN_POINTER(result);
 	}
 	);
 
 	*result = TRUE;
-	PG_RETURN_POINTER( result );
+	PG_RETURN_POINTER(result);
 }
 
 Datum
 g_intbig_compress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	GISTENTRY  *retval;
 	ArrayType  *r,
 			   *in;
-	bool maycompress = true;
-	int i;
+	bool		maycompress = true;
+	int			i;
 
 	if (DatumGetPointer(entry->key) != NULL)
 		in = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 	else
 		in = NULL;
 
-	if (!entry->leafkey) {
+	if (!entry->leafkey)
+	{
 		LOOPBYTE(
-			if ( ( ((char*)ARRPTR(in))[i] & 0xff ) != 0xff ) {
-				maycompress = false;
-				break;
-			}
+				 if ((((char *) ARRPTR(in))[i] & 0xff) != 0xff)
+				 {
+			maycompress = false;
+			break;
+		}
 		);
-		if ( maycompress ) {
+		if (maycompress)
+		{
 			retval = palloc(sizeof(GISTENTRY));
 			r = new_intArrayType(1);
 			gistentryinit(*retval, PointerGetDatum(r),
-				entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
-			PG_RETURN_POINTER( retval );
+			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
+			PG_RETURN_POINTER(retval);
 		}
-		PG_RETURN_POINTER( entry );
+		PG_RETURN_POINTER(entry);
 	}
 
 	retval = palloc(sizeof(GISTENTRY));
-	r = new_intArrayType( SIGLENINT );
+	r = new_intArrayType(SIGLENINT);
 
 	if (ARRISVOID(in))
 	{
 		gistentryinit(*retval, PointerGetDatum(r),
 			  entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 		if (in != (ArrayType *) DatumGetPointer(entry->key))
-				pfree(in);
-		PG_RETURN_POINTER (retval);
+			pfree(in);
+		PG_RETURN_POINTER(retval);
 	}
 
 	gensign(SIGPTR(r),
@@ -1160,104 +1170,108 @@ g_intbig_compress(PG_FUNCTION_ARGS)
 			ARRNELEMS(in));
 
 	LOOPBYTE(
-		if( ( ((char*)ARRPTR(in))[i] & 0xff ) != 0xff ) {
-			maycompress = false;
-			break;
-		}
+			 if ((((char *) ARRPTR(in))[i] & 0xff) != 0xff)
+			 {
+		maycompress = false;
+		break;
+	}
 	);
 
-	if ( maycompress ) {
+	if (maycompress)
+	{
 		pfree(r);
 		r = new_intArrayType(1);
 	}
 
 	gistentryinit(*retval, PointerGetDatum(r), entry->rel, entry->page, entry->offset, VARSIZE(r), FALSE);
 
-	if ( in != (ArrayType *) DatumGetPointer(entry->key))
-			pfree(in);
+	if (in != (ArrayType *) DatumGetPointer(entry->key))
+		pfree(in);
 
-	PG_RETURN_POINTER (retval);
+	PG_RETURN_POINTER(retval);
 }
 
 Datum
 g_intbig_decompress(PG_FUNCTION_ARGS)
 {
-	GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
 	ArrayType  *key;
 
 	key = (ArrayType *) PG_DETOAST_DATUM(entry->key);
 
-	if ( key != (ArrayType *) DatumGetPointer(entry->key))
+	if (key != (ArrayType *) DatumGetPointer(entry->key))
 	{
 		GISTENTRY  *retval;
 
 		retval = palloc(sizeof(GISTENTRY));
 
 		gistentryinit(*retval, PointerGetDatum(key),
-			entry->rel, entry->page, entry->offset, (key) ? VARSIZE(key) : 0, FALSE);
-		PG_RETURN_POINTER( retval );
+					  entry->rel, entry->page, entry->offset, (key) ? VARSIZE(key) : 0, FALSE);
+		PG_RETURN_POINTER(retval);
 	}
-	if ( ARRNELEMS(key) == 1 ) {
+	if (ARRNELEMS(key) == 1)
+	{
 		GISTENTRY  *retval;
 		ArrayType  *newkey;
 
 		retval = palloc(sizeof(GISTENTRY));
 		newkey = new_intArrayType(SIGLENINT);
-		MemSet( (void*)ARRPTR(newkey), 0xff, SIGLEN );
+		MemSet((void *) ARRPTR(newkey), 0xff, SIGLEN);
 
 		gistentryinit(*retval, PointerGetDatum(newkey),
-			entry->rel, entry->page, entry->offset, VARSIZE(newkey), FALSE);
-		PG_RETURN_POINTER( retval );
+		 entry->rel, entry->page, entry->offset, VARSIZE(newkey), FALSE);
+		PG_RETURN_POINTER(retval);
 	}
-	PG_RETURN_POINTER( entry );
+	PG_RETURN_POINTER(entry);
 }
 
 Datum
 g_intbig_picksplit(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER( _int_common_picksplit(
-		(bytea *)PG_GETARG_POINTER(0),
-		(GIST_SPLITVEC *)PG_GETARG_POINTER(1),
-		_intbig_union,
-		_intbig_inter,
-		rt__intbig_size,
-		0.1
-	) );
+	PG_RETURN_POINTER(_int_common_picksplit(
+										  (bytea *) PG_GETARG_POINTER(0),
+								  (GIST_SPLITVEC *) PG_GETARG_POINTER(1),
+											_intbig_union,
+											_intbig_inter,
+											rt__intbig_size,
+											0.1
+											));
 }
 
 Datum
 g_intbig_union(PG_FUNCTION_ARGS)
 {
-		PG_RETURN_POINTER( _int_common_union(
-				(bytea *) PG_GETARG_POINTER(0),
-				(int *) PG_GETARG_POINTER(1),
-				_intbig_union
-		) );
+	PG_RETURN_POINTER(_int_common_union(
+										(bytea *) PG_GETARG_POINTER(0),
+										(int *) PG_GETARG_POINTER(1),
+										_intbig_union
+										));
 }
 
 Datum
 g_intbig_penalty(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_POINTER( _int_common_penalty(
-		(GISTENTRY *)PG_GETARG_POINTER(0),
-		(GISTENTRY *)PG_GETARG_POINTER(1),
-		(float *)    PG_GETARG_POINTER(2),
-		_intbig_union, rt__intbig_size
-	) );
+	PG_RETURN_POINTER(_int_common_penalty(
+									  (GISTENTRY *) PG_GETARG_POINTER(0),
+									  (GISTENTRY *) PG_GETARG_POINTER(1),
+										  (float *) PG_GETARG_POINTER(2),
+										  _intbig_union, rt__intbig_size
+										  ));
 }
 
 Datum
-g_intbig_consistent(PG_FUNCTION_ARGS) {
-		GISTENTRY *entry = (GISTENTRY *)PG_GETARG_POINTER(0);
-		ArrayType *query = ( ArrayType * )PG_GETARG_POINTER(1);
-		StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
+g_intbig_consistent(PG_FUNCTION_ARGS)
+{
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	ArrayType  *query = (ArrayType *) PG_GETARG_POINTER(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		retval;
 	ArrayType  *q;
 
-	if ( strategy == BooleanSearchStrategy )
-		PG_RETURN_BOOL(signconsistent( (QUERYTYPE*)query,
-						SIGPTR((ArrayType *) DatumGetPointer(entry->key)),
-						false ) );
+	if (strategy == BooleanSearchStrategy)
+		PG_RETURN_BOOL(signconsistent((QUERYTYPE *) query,
+					   SIGPTR((ArrayType *) DatumGetPointer(entry->key)),
+									  false));
 
 	/* XXX what about toasted input? */
 	if (ARRISVOID(query))
@@ -1274,13 +1288,13 @@ g_intbig_consistent(PG_FUNCTION_ARGS) {
 			retval = _intbig_overlap((ArrayType *) DatumGetPointer(entry->key), q);
 			break;
 		case RTSameStrategyNumber:
-			if ( GIST_LEAF(entry) )
+			if (GIST_LEAF(entry))
 				DirectFunctionCall3(
-					g_intbig_same,
-					entry->key,
-					PointerGetDatum(q),
-					PointerGetDatum(&retval)
-				);
+									g_intbig_same,
+									entry->key,
+									PointerGetDatum(q),
+									PointerGetDatum(&retval)
+					);
 			else
 				retval = _intbig_contains((ArrayType *) DatumGetPointer(entry->key), q);
 			break;
@@ -1305,7 +1319,7 @@ g_intbig_consistent(PG_FUNCTION_ARGS) {
 ** The GiST Union method for _intments
 ** returns the minimal set that encloses all the entries in entryvec
 */
-static ArrayType  *
+static ArrayType *
 _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 {
 	int			numranges,
@@ -1323,7 +1337,7 @@ _int_common_union(bytea *entryvec, int *sizep, formarray unionf)
 	for (i = 1; i < numranges; i++)
 	{
 		out = (*unionf) (tmp, (ArrayType *)
-						 DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key));
+			  DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key));
 		if (i > 1 && tmp)
 			pfree(tmp);
 		tmp = out;
@@ -1376,17 +1390,19 @@ _int_common_penalty(GISTENTRY *origentry, GISTENTRY *newentry, float *result,
 	return (result);
 }
 
-typedef struct {
-	OffsetNumber	pos;
+typedef struct
+{
+	OffsetNumber pos;
 	float		cost;
 } SPLITCOST;
 
 static int
-comparecost( const void *a, const void *b ) {
-	if ( ((SPLITCOST*)a)->cost == ((SPLITCOST*)b)->cost )
+comparecost(const void *a, const void *b)
+{
+	if (((SPLITCOST *) a)->cost == ((SPLITCOST *) b)->cost)
 		return 0;
 	else
-		return ( ((SPLITCOST*)a)->cost > ((SPLITCOST*)b)->cost ) ? 1 : -1;
+		return (((SPLITCOST *) a)->cost > ((SPLITCOST *) b)->cost) ? 1 : -1;
 }
 
 /*
@@ -1426,7 +1442,7 @@ _int_common_picksplit(bytea *entryvec,
 	OffsetNumber *left,
 			   *right;
 	OffsetNumber maxoff;
-	SPLITCOST	*costvector;
+	SPLITCOST  *costvector;
 
 #ifdef GIST_DEBUG
 	elog(DEBUG3, "--------picksplit %d", (VARSIZE(entryvec) - VARHDRSZ) / sizeof(GISTENTRY));
@@ -1478,7 +1494,8 @@ _int_common_picksplit(bytea *entryvec,
 	v->spl_nleft = 0;
 	right = v->spl_right;
 	v->spl_nright = 0;
-	if ( seed_1 == 0 || seed_2 == 0 ) {
+	if (seed_1 == 0 || seed_2 == 0)
+	{
 		seed_1 = 1;
 		seed_2 = 2;
 	}
@@ -1491,22 +1508,24 @@ _int_common_picksplit(bytea *entryvec,
 	(*sizef) (datum_r, &size_r);
 
 	maxoff = OffsetNumberNext(maxoff);
+
 	/*
-		 * sort entries
+	 * sort entries
 	 */
-	costvector=(SPLITCOST*)palloc( sizeof(SPLITCOST)*maxoff );
-	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i)) {
-		costvector[i-1].pos = i;
+	costvector = (SPLITCOST *) palloc(sizeof(SPLITCOST) * maxoff);
+	for (i = FirstOffsetNumber; i <= maxoff; i = OffsetNumberNext(i))
+	{
+		costvector[i - 1].pos = i;
 		datum_alpha = (ArrayType *) DatumGetPointer(((GISTENTRY *) VARDATA(entryvec))[i].key);
-		union_d = (*unionf)(datum_l, datum_alpha);
-		(*sizef)(union_d, &size_alpha);
-		pfree( union_d );
-		union_d = (*unionf)(datum_r, datum_alpha);
-		(*sizef)(union_d, &size_beta);
-		pfree( union_d );
-		costvector[i-1].cost = abs( (size_alpha - size_l) - (size_beta - size_r) );
+		union_d = (*unionf) (datum_l, datum_alpha);
+		(*sizef) (union_d, &size_alpha);
+		pfree(union_d);
+		union_d = (*unionf) (datum_r, datum_alpha);
+		(*sizef) (union_d, &size_beta);
+		pfree(union_d);
+		costvector[i - 1].cost = abs((size_alpha - size_l) - (size_beta - size_r));
 	}
-	qsort( (void*)costvector, maxoff, sizeof(SPLITCOST), comparecost );
+	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 
 	/*
 	 * Now split up the regions between the two seeds.	An important
@@ -1521,7 +1540,8 @@ _int_common_picksplit(bytea *entryvec,
 	 */
 
 
-	for (j = 0; j < maxoff; j++) {
+	for (j = 0; j < maxoff; j++)
+	{
 		i = costvector[j].pos;
 
 		/*
@@ -1574,7 +1594,7 @@ _int_common_picksplit(bytea *entryvec,
 			v->spl_nright++;
 		}
 	}
-	pfree( costvector );
+	pfree(costvector);
 	*right = *left = FirstOffsetNumber;
 
 	datum_l->flags &= ~LEAFKEY;
@@ -1589,19 +1609,19 @@ _int_common_picksplit(bytea *entryvec,
 }
 
 /*****************************************************************************
- *	 	BoolSearch
+ *		BoolSearch
  *****************************************************************************/
 
 
-#define END     0
-#define ERR     1
-#define VAL     2
-#define OPR     3
-#define OPEN    4
-#define CLOSE   5
+#define END		0
+#define ERR		1
+#define VAL		2
+#define OPR		3
+#define OPEN	4
+#define CLOSE	5
 
 /* parser's states */
-#define WAITOPERAND	1
+#define WAITOPERAND 1
 #define WAITENDOPERAND	2
 #define WAITOPERATOR	3
 
@@ -1609,75 +1629,94 @@ _int_common_picksplit(bytea *entryvec,
  * node of query tree, also used
  * for storing polish notation in parser
  */
-typedef struct NODE {
-	int4	type;
-	int4	val;
-	struct NODE 	*next;
-} NODE;
+typedef struct NODE
+{
+	int4		type;
+	int4		val;
+	struct NODE *next;
+}	NODE;
 
-typedef struct {
-	char *buf;
-	int4	state;
-	int4  count;
-	/* reverse polish notation in list (for temprorary usage)*/
-	NODE	*str;
+typedef struct
+{
+	char	   *buf;
+	int4		state;
+	int4		count;
+	/* reverse polish notation in list (for temprorary usage) */
+	NODE	   *str;
 	/* number in str */
-	int4	num;
-} WORKSTATE;
+	int4		num;
+}	WORKSTATE;
 
 /*
  * get token from query string
  */
 static int4
-gettoken( WORKSTATE* state, int4* val ) {
-	char nnn[16], *curnnn;
+gettoken(WORKSTATE * state, int4 *val)
+{
+	char		nnn[16],
+			   *curnnn;
 
-	curnnn=nnn;
-	while(1) {
-		switch(state->state) {
+	curnnn = nnn;
+	while (1)
+	{
+		switch (state->state)
+		{
 			case WAITOPERAND:
-				curnnn=nnn;
-				if ( (*(state->buf)>='0' && *(state->buf)<='9') ||
-						*(state->buf)=='-' ) {
+				curnnn = nnn;
+				if ((*(state->buf) >= '0' && *(state->buf) <= '9') ||
+					*(state->buf) == '-')
+				{
 					state->state = WAITENDOPERAND;
 					*curnnn = *(state->buf);
 					curnnn++;
-				} else if ( *(state->buf) == '!' ) {
+				}
+				else if (*(state->buf) == '!')
+				{
 					(state->buf)++;
-					*val = (int4)'!';
+					*val = (int4) '!';
 					return OPR;
-				} else if ( *(state->buf) == '(' ) {
+				}
+				else if (*(state->buf) == '(')
+				{
 					state->count++;
 					(state->buf)++;
 					return OPEN;
-				} else if ( *(state->buf) != ' ' )
+				}
+				else if (*(state->buf) != ' ')
 					return ERR;
 				break;
 			case WAITENDOPERAND:
-				if ( *(state->buf)>='0' && *(state->buf)<='9' ) {
+				if (*(state->buf) >= '0' && *(state->buf) <= '9')
+				{
 					*curnnn = *(state->buf);
 					curnnn++;
-				} else {
+				}
+				else
+				{
 					*curnnn = '\0';
-					*val=(int4)atoi( nnn );
+					*val = (int4) atoi(nnn);
 					state->state = WAITOPERATOR;
-					return ( state->count && *(state->buf) == '\0' )
+					return (state->count && *(state->buf) == '\0')
 						? ERR : VAL;
 				}
 				break;
 			case WAITOPERATOR:
-				if ( *(state->buf) == '&' || *(state->buf) == '|' ) {
+				if (*(state->buf) == '&' || *(state->buf) == '|')
+				{
 					state->state = WAITOPERAND;
 					*val = (int4) *(state->buf);
 					(state->buf)++;
 					return OPR;
-				} else if ( *(state->buf) == ')' ) {
+				}
+				else if (*(state->buf) == ')')
+				{
 					(state->buf)++;
 					state->count--;
-					return ( state->count <0 ) ? ERR : CLOSE;
-				} else if ( *(state->buf) == '\0' ) {
-					return ( state->count ) ? ERR : END;
-				} else if ( *(state->buf) != ' ' )
+					return (state->count < 0) ? ERR : CLOSE;
+				}
+				else if (*(state->buf) == '\0')
+					return (state->count) ? ERR : END;
+				else if (*(state->buf) != ' ')
 					return ERR;
 				break;
 			default:
@@ -1693,10 +1732,12 @@ gettoken( WORKSTATE* state, int4* val ) {
  * push new one in polish notation reverse view
  */
 static void
-pushquery( WORKSTATE *state, int4 type, int4 val ) {
-	NODE    *tmp = (NODE*)palloc(sizeof(NODE));
-	tmp->type=type;
-	tmp->val =val;
+pushquery(WORKSTATE * state, int4 type, int4 val)
+{
+	NODE	   *tmp = (NODE *) palloc(sizeof(NODE));
+
+	tmp->type = type;
+	tmp->val = val;
 	tmp->next = state->str;
 	state->str = tmp;
 	state->num++;
@@ -1708,82 +1749,95 @@ pushquery( WORKSTATE *state, int4 type, int4 val ) {
  * make polish notaion of query
  */
 static int4
-makepol(WORKSTATE *state) {
-	int4 val,type;
-	int4	stack[STACKDEPTH];
-	int4	lenstack=0;
+makepol(WORKSTATE * state)
+{
+	int4		val,
+				type;
+	int4		stack[STACKDEPTH];
+	int4		lenstack = 0;
 
-	while( (type=gettoken(state, &val))!=END ) {
-		switch(type) {
+	while ((type = gettoken(state, &val)) != END)
+	{
+		switch (type)
+		{
 			case VAL:
 				pushquery(state, type, val);
-				while ( lenstack && (stack[ lenstack-1 ] == (int4)'&' ||
-						stack[ lenstack-1 ] == (int4)'!') ) {
+				while (lenstack && (stack[lenstack - 1] == (int4) '&' ||
+									stack[lenstack - 1] == (int4) '!'))
+				{
 					lenstack--;
-					pushquery(state, OPR, stack[ lenstack ]);
+					pushquery(state, OPR, stack[lenstack]);
 				}
 				break;
 			case OPR:
-				if ( lenstack && val == (int4) '|' ) {
+				if (lenstack && val == (int4) '|')
 					pushquery(state, OPR, val);
-				} else {
-					if ( lenstack == STACKDEPTH )
-						elog(ERROR,"Stack too short");
-					stack[ lenstack ] = val;
+				else
+				{
+					if (lenstack == STACKDEPTH)
+						elog(ERROR, "Stack too short");
+					stack[lenstack] = val;
 					lenstack++;
 				}
 				break;
 			case OPEN:
-				if ( makepol( state ) == ERR ) return ERR;
-				if ( lenstack && (stack[ lenstack-1 ] == (int4)'&' ||
-						stack[ lenstack-1 ] == (int4)'!') ) {
+				if (makepol(state) == ERR)
+					return ERR;
+				if (lenstack && (stack[lenstack - 1] == (int4) '&' ||
+								 stack[lenstack - 1] == (int4) '!'))
+				{
 					lenstack--;
-					pushquery(state, OPR, stack[ lenstack ]);
+					pushquery(state, OPR, stack[lenstack]);
 				}
 				break;
 			case CLOSE:
-				while ( lenstack ) {
+				while (lenstack)
+				{
 					lenstack--;
-					pushquery(state, OPR, stack[ lenstack ]);
+					pushquery(state, OPR, stack[lenstack]);
 				};
 				return END;
 				break;
 			case ERR:
 			default:
-				elog(ERROR,"Syntax error");
+				elog(ERROR, "Syntax error");
 				return ERR;
 
 		}
 	}
 
-	while (lenstack) {
+	while (lenstack)
+	{
 		lenstack--;
-		pushquery(state, OPR, stack[ lenstack ]);
+		pushquery(state, OPR, stack[lenstack]);
 	};
 	return END;
 }
 
-typedef struct {
-	int4 *arrb;
-	int4 *arre;
-} CHKVAL;
+typedef struct
+{
+	int4	   *arrb;
+	int4	   *arre;
+}	CHKVAL;
 
 /*
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_arr( void *checkval, int4 val ) {
-	int4      *StopLow = ((CHKVAL*)checkval)->arrb;
-	int4      *StopHigh = ((CHKVAL*)checkval)->arre;
-	int4      *StopMiddle;
+checkcondition_arr(void *checkval, int4 val)
+{
+	int4	   *StopLow = ((CHKVAL *) checkval)->arrb;
+	int4	   *StopHigh = ((CHKVAL *) checkval)->arre;
+	int4	   *StopMiddle;
 
 	/* Loop invariant: StopLow <= val < StopHigh */
 
-	while (StopLow < StopHigh) {
+	while (StopLow < StopHigh)
+	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
 		if (*StopMiddle == val)
 			return (true);
-		else if (*StopMiddle < val )
+		else if (*StopMiddle < val)
 			StopLow = StopMiddle + 1;
 		else
 			StopHigh = StopMiddle;
@@ -1792,29 +1846,36 @@ checkcondition_arr( void *checkval, int4 val ) {
 }
 
 static bool
-checkcondition_bit( void *checkval, int4 val ) {
-	return GETBIT( checkval, HASHVAL( val ) );
+checkcondition_bit(void *checkval, int4 val)
+{
+	return GETBIT(checkval, HASHVAL(val));
 }
 
 /*
  * check for boolean condition
  */
 static bool
-execute( ITEM* curitem, void *checkval, bool calcnot, bool (*chkcond)(void *checkval, int4 val )) {
+execute(ITEM * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, int4 val))
+{
 
-	if (  curitem->type == VAL ) {
-		return (*chkcond)( checkval, curitem->val );
-	} else if ( curitem->val == (int4)'!' ) {
-		return ( calcnot ) ?
-			( ( execute(curitem - 1, checkval, calcnot, chkcond) ) ? false : true )
+	if (curitem->type == VAL)
+		return (*chkcond) (checkval, curitem->val);
+	else if (curitem->val == (int4) '!')
+	{
+		return (calcnot) ?
+			((execute(curitem - 1, checkval, calcnot, chkcond)) ? false : true)
 			: true;
-	} else if ( curitem->val == (int4)'&' ) {
-		if ( execute(curitem + curitem->left, checkval, calcnot, chkcond) )
+	}
+	else if (curitem->val == (int4) '&')
+	{
+		if (execute(curitem + curitem->left, checkval, calcnot, chkcond))
 			return execute(curitem - 1, checkval, calcnot, chkcond);
 		else
 			return false;
-	} else { /* |-operator */
-		if ( execute(curitem + curitem->left, checkval, calcnot, chkcond) )
+	}
+	else
+	{							/* |-operator */
+		if (execute(curitem + curitem->left, checkval, calcnot, chkcond))
 			return true;
 		else
 			return execute(curitem - 1, checkval, calcnot, chkcond);
@@ -1826,86 +1887,98 @@ execute( ITEM* curitem, void *checkval, bool calcnot, bool (*chkcond)(void *chec
  * signconsistent & execconsistent called by *_consistent
  */
 static bool
-signconsistent( QUERYTYPE *query, BITVEC sign, bool calcnot ) {
+signconsistent(QUERYTYPE * query, BITVEC sign, bool calcnot)
+{
 	return execute(
-		GETQUERY(query) + query->size-1 ,
-		(void*)sign, calcnot,
-		checkcondition_bit
+				   GETQUERY(query) + query->size - 1,
+				   (void *) sign, calcnot,
+				   checkcondition_bit
 	);
 }
 
 static bool
-execconsistent( QUERYTYPE *query, ArrayType *array, bool calcnot ) {
-	CHKVAL  chkval;
+execconsistent(QUERYTYPE * query, ArrayType *array, bool calcnot)
+{
+	CHKVAL		chkval;
 
 	chkval.arrb = ARRPTR(array);
 	chkval.arre = chkval.arrb + ARRNELEMS(array);
 	return execute(
-		GETQUERY(query) + query->size-1 ,
-		(void*)&chkval, calcnot,
-		checkcondition_arr
-	);
+				   GETQUERY(query) + query->size - 1,
+				   (void *) &chkval, calcnot,
+				   checkcondition_arr
+		);
 }
 
 /*
  * boolean operations
  */
 Datum
-rboolop(PG_FUNCTION_ARGS) {
+rboolop(PG_FUNCTION_ARGS)
+{
 	return DirectFunctionCall2(
-		boolop,
-		PG_GETARG_DATUM(1),
-		PG_GETARG_DATUM(0)
+							   boolop,
+							   PG_GETARG_DATUM(1),
+							   PG_GETARG_DATUM(0)
 	);
 }
 
 Datum
-boolop(PG_FUNCTION_ARGS) {
-	ArrayType *val = ( ArrayType * )PG_DETOAST_DATUM_COPY(PG_GETARG_POINTER(0));
-	QUERYTYPE *query = ( QUERYTYPE * )PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
-	CHKVAL  chkval;
-	bool result;
+boolop(PG_FUNCTION_ARGS)
+{
+	ArrayType  *val = (ArrayType *) PG_DETOAST_DATUM_COPY(PG_GETARG_POINTER(0));
+	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(1));
+	CHKVAL		chkval;
+	bool		result;
 
-	if ( ARRISVOID( val ) ) {
+	if (ARRISVOID(val))
+	{
 		pfree(val);
-		PG_FREE_IF_COPY(query,1);
-		PG_RETURN_BOOL( false );
+		PG_FREE_IF_COPY(query, 1);
+		PG_RETURN_BOOL(false);
 	}
 
 	PREPAREARR(val);
 	chkval.arrb = ARRPTR(val);
 	chkval.arre = chkval.arrb + ARRNELEMS(val);
 	result = execute(
-		GETQUERY(query) + query->size-1 ,
-		&chkval, true,
-		checkcondition_arr
-	);
+					 GETQUERY(query) + query->size - 1,
+					 &chkval, true,
+					 checkcondition_arr
+		);
 	pfree(val);
 
-	PG_FREE_IF_COPY(query,1);
-	PG_RETURN_BOOL( result );
+	PG_FREE_IF_COPY(query, 1);
+	PG_RETURN_BOOL(result);
 }
 
 static void
-findoprnd( ITEM *ptr, int4 *pos ) {
+findoprnd(ITEM * ptr, int4 *pos)
+{
 #ifdef BS_DEBUG
-	elog(DEBUG3, ( ptr[*pos].type == OPR ) ?
-		"%d  %c" : "%d  %d ", *pos, ptr[*pos].val );
+	elog(DEBUG3, (ptr[*pos].type == OPR) ?
+		 "%d  %c" : "%d  %d ", *pos, ptr[*pos].val);
 #endif
-	if ( ptr[*pos].type == VAL ) {
+	if (ptr[*pos].type == VAL)
+	{
 		ptr[*pos].left = 0;
 		(*pos)--;
-	} else if ( ptr[*pos].val == (int4)'!' ) {
+	}
+	else if (ptr[*pos].val == (int4) '!')
+	{
 		ptr[*pos].left = -1;
 		(*pos)--;
-		findoprnd( ptr, pos );
-	} else {
-		ITEM *curitem = &ptr[*pos];
-		int4 tmp = *pos;
+		findoprnd(ptr, pos);
+	}
+	else
+	{
+		ITEM	   *curitem = &ptr[*pos];
+		int4		tmp = *pos;
+
 		(*pos)--;
-		findoprnd(ptr,pos);
+		findoprnd(ptr, pos);
 		curitem->left = *pos - tmp;
-		findoprnd(ptr,pos);
+		findoprnd(ptr, pos);
 	}
 }
 
@@ -1914,71 +1987,76 @@ findoprnd( ITEM *ptr, int4 *pos ) {
  * input
  */
 Datum
-bqarr_in(PG_FUNCTION_ARGS) {
-	char *buf=(char*)PG_GETARG_POINTER(0);
-	WORKSTATE state;
-	int4 i;
-	QUERYTYPE	*query;
-	int4 commonlen;
-	ITEM *ptr;
-	NODE *tmp;
-	int4 pos=0;
+bqarr_in(PG_FUNCTION_ARGS)
+{
+	char	   *buf = (char *) PG_GETARG_POINTER(0);
+	WORKSTATE	state;
+	int4		i;
+	QUERYTYPE  *query;
+	int4		commonlen;
+	ITEM	   *ptr;
+	NODE	   *tmp;
+	int4		pos = 0;
+
 #ifdef BS_DEBUG
-	StringInfoData	pbuf;
+	StringInfoData pbuf;
 #endif
 
 	state.buf = buf;
 	state.state = WAITOPERAND;
 	state.count = 0;
 	state.num = 0;
-	state.str=NULL;
+	state.str = NULL;
 
 	/* make polish notation (postfix, but in reverse order) */
-	makepol( &state );
+	makepol(&state);
 	if (!state.num)
-		elog( ERROR,"Empty query");
+		elog(ERROR, "Empty query");
 
 	commonlen = COMPUTESIZE(state.num);
-	query = (QUERYTYPE*) palloc( commonlen );
+	query = (QUERYTYPE *) palloc(commonlen);
 	query->len = commonlen;
 	query->size = state.num;
 	ptr = GETQUERY(query);
 
-	for(i=state.num-1; i>=0; i-- ) {
+	for (i = state.num - 1; i >= 0; i--)
+	{
 		ptr[i].type = state.str->type;
 		ptr[i].val = state.str->val;
 		tmp = state.str->next;
-		pfree( state.str );
+		pfree(state.str);
 		state.str = tmp;
 	}
 
-	pos = query->size-1;
-	findoprnd( ptr, &pos );
+	pos = query->size - 1;
+	findoprnd(ptr, &pos);
 #ifdef BS_DEBUG
 	initStringInfo(&pbuf);
-	for( i=0;i<query->size;i++ ) {
-		if ( ptr[i].type == OPR )
+	for (i = 0; i < query->size; i++)
+	{
+		if (ptr[i].type == OPR)
 			appendStringInfo(&pbuf, "%c(%d) ", ptr[i].val, ptr[i].left);
 		else
-			appendStringInfo(&pbuf, "%d ", ptr[i].val );
+			appendStringInfo(&pbuf, "%d ", ptr[i].val);
 	}
-	elog(DEBUG3,"POR: %s", pbuf.data);
+	elog(DEBUG3, "POR: %s", pbuf.data);
 	pfree(pbuf.data);
 #endif
 
-	PG_RETURN_POINTER( query );
+	PG_RETURN_POINTER(query);
 }
 
 
 /*
  * out function
  */
-typedef struct {
-	ITEM    *curpol;
-	char *buf;
-	char *cur;
-	int4 buflen;
-} INFIX;
+typedef struct
+{
+	ITEM	   *curpol;
+	char	   *buf;
+	char	   *cur;
+	int4		buflen;
+}	INFIX;
 
 #define RESIZEBUF(inf,addsize) while( ( inf->cur - inf->buf ) + addsize + 1 >= inf->buflen ) { \
 	int4 len = inf->cur - inf->buf; \
@@ -1988,94 +2066,106 @@ typedef struct {
 }
 
 static void
-infix(INFIX *in, bool first) {
-	if ( in->curpol->type == VAL ) {
+infix(INFIX * in, bool first)
+{
+	if (in->curpol->type == VAL)
+	{
 		RESIZEBUF(in, 11);
-		sprintf(in->cur, "%d", in->curpol->val );
-		in->cur = strchr( in->cur, '\0' );
+		sprintf(in->cur, "%d", in->curpol->val);
+		in->cur = strchr(in->cur, '\0');
 		in->curpol--;
-	} else if ( in->curpol->val == (int4)'!' ) {
-		bool isopr = false;
+	}
+	else if (in->curpol->val == (int4) '!')
+	{
+		bool		isopr = false;
+
 		RESIZEBUF(in, 1);
 		*(in->cur) = '!';
 		in->cur++;
 		*(in->cur) = '\0';
 		in->curpol--;
-		if ( in->curpol->type == OPR ) {
+		if (in->curpol->type == OPR)
+		{
 			isopr = true;
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, "( ");
-			in->cur = strchr( in->cur, '\0' );
+			in->cur = strchr(in->cur, '\0');
 		}
-		infix( in, isopr );
-		if ( isopr ) {
+		infix(in, isopr);
+		if (isopr)
+		{
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, " )");
-			in->cur = strchr( in->cur, '\0' );
+			in->cur = strchr(in->cur, '\0');
 		}
-	} else {
-		int4 op = in->curpol->val;
-		INFIX   nrm;
+	}
+	else
+	{
+		int4		op = in->curpol->val;
+		INFIX		nrm;
 
 		in->curpol--;
-		if ( op == (int4)'|' && ! first) {
+		if (op == (int4) '|' && !first)
+		{
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, "( ");
-			in->cur = strchr( in->cur, '\0' );
+			in->cur = strchr(in->cur, '\0');
 		}
 
 		nrm.curpol = in->curpol;
 		nrm.buflen = 16;
-		nrm.cur = nrm.buf = (char*)palloc( sizeof(char) * nrm.buflen );
+		nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
 
 		/* get right operand */
-		infix( &nrm, false );
+		infix(&nrm, false);
 
 		/* get & print left operand */
 		in->curpol = nrm.curpol;
-		infix( in, false );
+		infix(in, false);
 
-		/* print operator & right operand*/
-		RESIZEBUF(in, 3 + (nrm.cur - nrm.buf) );
+		/* print operator & right operand */
+		RESIZEBUF(in, 3 + (nrm.cur - nrm.buf));
 		sprintf(in->cur, " %c %s", op, nrm.buf);
-		in->cur = strchr( in->cur, '\0' );
-		pfree( nrm.buf );
+		in->cur = strchr(in->cur, '\0');
+		pfree(nrm.buf);
 
-		if ( op == (int4)'|' && ! first) {
+		if (op == (int4) '|' && !first)
+		{
 			RESIZEBUF(in, 2);
 			sprintf(in->cur, " )");
-			in->cur = strchr( in->cur, '\0' );
+			in->cur = strchr(in->cur, '\0');
 		}
 	}
 }
 
 
 Datum
-bqarr_out(PG_FUNCTION_ARGS) {
-	QUERYTYPE       *query = (QUERYTYPE*)PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
-	INFIX   nrm;
+bqarr_out(PG_FUNCTION_ARGS)
+{
+	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
+	INFIX		nrm;
 
-	if ( query->size == 0 )
-		elog(ERROR,"Empty");
+	if (query->size == 0)
+		elog(ERROR, "Empty");
 	nrm.curpol = GETQUERY(query) + query->size - 1;
 	nrm.buflen = 32;
-	nrm.cur = nrm.buf = (char*)palloc( sizeof(char) * nrm.buflen );
+	nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
 	*(nrm.cur) = '\0';
-	infix( &nrm, true );
+	infix(&nrm, true);
 
-	PG_FREE_IF_COPY(query,0);
-	PG_RETURN_POINTER( nrm.buf );
+	PG_FREE_IF_COPY(query, 0);
+	PG_RETURN_POINTER(nrm.buf);
 }
 
 static int4
-countdroptree( ITEM *q, int4 pos ) {
-	if ( q[pos].type == VAL ) {
+countdroptree(ITEM * q, int4 pos)
+{
+	if (q[pos].type == VAL)
 		return 1;
-	} else if ( q[pos].val == (int4)'!' ) {
-		return 1+countdroptree(q, pos-1);
-	} else {
-		return 1 + countdroptree(q, pos-1) + countdroptree(q, pos + q[pos].left);
-	}
+	else if (q[pos].val == (int4) '!')
+		return 1 + countdroptree(q, pos - 1);
+	else
+		return 1 + countdroptree(q, pos - 1) + countdroptree(q, pos + q[pos].left);
 }
 
 /*
@@ -2084,137 +2174,161 @@ countdroptree( ITEM *q, int4 pos ) {
  * we can modify query tree for clearing
  */
 static int4
-shorterquery( ITEM *q, int4 len ) {
-	int4 index,posnot,poscor;
-	bool notisleft = false;
-	int4 drop,i;
+shorterquery(ITEM * q, int4 len)
+{
+	int4		index,
+				posnot,
+				poscor;
+	bool		notisleft = false;
+	int4		drop,
+				i;
 
 	/* out all '!' */
-	do {
-		index=0;
-		drop=0;
+	do
+	{
+		index = 0;
+		drop = 0;
 		/* find ! */
-		for(posnot=0; posnot < len; posnot++)
-			if ( q[posnot].type == OPR  && q[posnot].val == (int4)'!') {
-				index=1;
+		for (posnot = 0; posnot < len; posnot++)
+			if (q[posnot].type == OPR && q[posnot].val == (int4) '!')
+			{
+				index = 1;
 				break;
 			}
 
-		if ( posnot == len )
+		if (posnot == len)
 			return len;
 
 		/* last operator is ! */
-		if ( posnot == len-1 )
+		if (posnot == len - 1)
 			return 0;
 
 		/* find operator for this operand */
-		for( poscor=posnot+1; poscor<len; poscor++) {
-			if ( q[poscor].type == OPR ) {
-				if ( poscor == posnot+1 ) {
+		for (poscor = posnot + 1; poscor < len; poscor++)
+		{
+			if (q[poscor].type == OPR)
+			{
+				if (poscor == posnot + 1)
+				{
 					notisleft = false;
 					break;
-				} else if ( q[poscor].left + poscor == posnot ) {
+				}
+				else if (q[poscor].left + poscor == posnot)
+				{
 					notisleft = true;
 					break;
 				}
 			}
 		}
-		if ( q[poscor].val == (int4)'!' ) {
+		if (q[poscor].val == (int4) '!')
+		{
 			drop = countdroptree(q, poscor);
-			q[poscor-1].type=VAL;
-			for(i=poscor+1;i<len;i++)
-				if ( q[i].type == OPR && q[i].left + i <= poscor )
+			q[poscor - 1].type = VAL;
+			for (i = poscor + 1; i < len; i++)
+				if (q[i].type == OPR && q[i].left + i <= poscor)
 					q[i].left += drop - 2;
-			memcpy( (void*)&q[poscor-drop+1],
-				(void*)&q[poscor-1],
-				sizeof(ITEM) * ( len - (poscor-1) ));
+			memcpy((void *) &q[poscor - drop + 1],
+				   (void *) &q[poscor - 1],
+				   sizeof(ITEM) * (len - (poscor - 1)));
 			len -= drop - 2;
-		} else if ( q[poscor].val == (int4)'|' ) {
+		}
+		else if (q[poscor].val == (int4) '|')
+		{
 			drop = countdroptree(q, poscor);
-			q[poscor-1].type=VAL;
-			q[poscor].val=(int4)'!';
-			q[poscor].left=-1;
-			for(i=poscor+1;i<len;i++)
-				if ( q[i].type == OPR && q[i].left + i < poscor )
+			q[poscor - 1].type = VAL;
+			q[poscor].val = (int4) '!';
+			q[poscor].left = -1;
+			for (i = poscor + 1; i < len; i++)
+				if (q[i].type == OPR && q[i].left + i < poscor)
 					q[i].left += drop - 2;
-			memcpy( (void*)&q[poscor-drop+1],
-				(void*)&q[poscor-1],
-				sizeof(ITEM) * ( len - (poscor-1) ));
+			memcpy((void *) &q[poscor - drop + 1],
+				   (void *) &q[poscor - 1],
+				   sizeof(ITEM) * (len - (poscor - 1)));
 			len -= drop - 2;
-		} else { /* &-operator */
+		}
+		else
+		{						/* &-operator */
 			if (
-					(notisleft && q[poscor-1].type == OPR &&
-						q[poscor-1].val == (int4)'!' ) ||
-					(!notisleft && q[poscor+q[poscor].left].type == OPR &&
-						q[poscor+q[poscor].left].val == (int4)'!' )
-				) { /* drop subtree */
+				(notisleft && q[poscor - 1].type == OPR &&
+				 q[poscor - 1].val == (int4) '!') ||
+				(!notisleft && q[poscor + q[poscor].left].type == OPR &&
+				 q[poscor + q[poscor].left].val == (int4) '!')
+				)
+			{					/* drop subtree */
 				drop = countdroptree(q, poscor);
-				q[poscor-1].type=VAL;
-				q[poscor].val=(int4)'!';
-				q[poscor].left=-1;
-				for(i=poscor+1;i<len;i++)
-					if ( q[i].type == OPR && q[i].left + i < poscor )
+				q[poscor - 1].type = VAL;
+				q[poscor].val = (int4) '!';
+				q[poscor].left = -1;
+				for (i = poscor + 1; i < len; i++)
+					if (q[i].type == OPR && q[i].left + i < poscor)
 						q[i].left += drop - 2;
-				memcpy( (void*)&q[poscor-drop+1],
-					(void*)&q[poscor-1],
-					sizeof(ITEM) * ( len - (poscor-1) ));
+				memcpy((void *) &q[poscor - drop + 1],
+					   (void *) &q[poscor - 1],
+					   sizeof(ITEM) * (len - (poscor - 1)));
 				len -= drop - 2;
-			} else { /* drop only operator */
-				int4 subtreepos = ( notisleft ) ?
-					poscor-1 : poscor+q[poscor].left;
-				int4 subtreelen = countdroptree( q, subtreepos );
+			}
+			else
+			{					/* drop only operator */
+				int4		subtreepos = (notisleft) ?
+				poscor - 1 : poscor + q[poscor].left;
+				int4		subtreelen = countdroptree(q, subtreepos);
+
 				drop = countdroptree(q, poscor);
-				for(i=poscor+1;i<len;i++)
-					if ( q[i].type == OPR && q[i].left + i < poscor )
+				for (i = poscor + 1; i < len; i++)
+					if (q[i].type == OPR && q[i].left + i < poscor)
 						q[i].left += drop - subtreelen;
-				memcpy( (void*)&q[ subtreepos+1 ],
-					(void*)&q[poscor+1],
-					sizeof(ITEM)*( len - (poscor-1) ) );
-				memcpy( (void*)&q[ poscor-drop+1 ],
-					(void*)&q[subtreepos-subtreelen+1],
-					sizeof(ITEM)*( len - (drop-subtreelen) ) );
+				memcpy((void *) &q[subtreepos + 1],
+					   (void *) &q[poscor + 1],
+					   sizeof(ITEM) * (len - (poscor - 1)));
+				memcpy((void *) &q[poscor - drop + 1],
+					   (void *) &q[subtreepos - subtreelen + 1],
+					   sizeof(ITEM) * (len - (drop - subtreelen)));
 				len -= drop - subtreelen;
 			}
 		}
-	} while( index );
+	} while (index);
 	return len;
 }
 
 
 Datum
-querytree(PG_FUNCTION_ARGS) {
-	QUERYTYPE       *query = (QUERYTYPE*)PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
-	INFIX   nrm;
-	text 	*res;
-	ITEM	*q;
-	int4	len;
+querytree(PG_FUNCTION_ARGS)
+{
+	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_POINTER(0));
+	INFIX		nrm;
+	text	   *res;
+	ITEM	   *q;
+	int4		len;
 
-	if ( query->size == 0 )
-		elog(ERROR,"Empty");
+	if (query->size == 0)
+		elog(ERROR, "Empty");
 
-	q = (ITEM*)palloc( sizeof(ITEM) * query->size );
-	memcpy( (void*)q, GETQUERY(query), sizeof(ITEM) * query->size );
-	len = shorterquery( q, query->size );
-	PG_FREE_IF_COPY(query,0);
+	q = (ITEM *) palloc(sizeof(ITEM) * query->size);
+	memcpy((void *) q, GETQUERY(query), sizeof(ITEM) * query->size);
+	len = shorterquery(q, query->size);
+	PG_FREE_IF_COPY(query, 0);
 
-	if ( len == 0 ) {
-		res = (text*) palloc( 1 + VARHDRSZ );
+	if (len == 0)
+	{
+		res = (text *) palloc(1 + VARHDRSZ);
 		VARATT_SIZEP(res) = 1 + VARHDRSZ;
-		*((char*)VARDATA(res)) = 'T';
-	} else {
+		*((char *) VARDATA(res)) = 'T';
+	}
+	else
+	{
 		nrm.curpol = q + len - 1;
 		nrm.buflen = 32;
-		nrm.cur = nrm.buf = (char*)palloc( sizeof(char) * nrm.buflen );
+		nrm.cur = nrm.buf = (char *) palloc(sizeof(char) * nrm.buflen);
 		*(nrm.cur) = '\0';
-		infix( &nrm, true );
+		infix(&nrm, true);
 
-		res = (text*) palloc( nrm.cur-nrm.buf + VARHDRSZ );
-		VARATT_SIZEP(res) = nrm.cur-nrm.buf + VARHDRSZ;
-		strncpy( VARDATA(res), nrm.buf, nrm.cur-nrm.buf );
+		res = (text *) palloc(nrm.cur - nrm.buf + VARHDRSZ);
+		VARATT_SIZEP(res) = nrm.cur - nrm.buf + VARHDRSZ;
+		strncpy(VARDATA(res), nrm.buf, nrm.cur - nrm.buf);
 	}
 	pfree(q);
 
-	PG_RETURN_POINTER( res );
+	PG_RETURN_POINTER(res);
 }
 
 /*
@@ -2225,72 +2339,84 @@ static ArrayType *intarray_add_elem(ArrayType *a, int32 elem);
 static ArrayType *intarray_concat_arrays(ArrayType *a, ArrayType *b);
 static ArrayType *int_to_intset(int32 elem);
 
-PG_FUNCTION_INFO_V1( intset );
-PG_FUNCTION_INFO_V1( icount );
-PG_FUNCTION_INFO_V1( sort );
-PG_FUNCTION_INFO_V1( sort_asc );
-PG_FUNCTION_INFO_V1( sort_desc );
-PG_FUNCTION_INFO_V1( uniq );
-PG_FUNCTION_INFO_V1( idx );
-PG_FUNCTION_INFO_V1( subarray );
-PG_FUNCTION_INFO_V1( intarray_push_elem );
-PG_FUNCTION_INFO_V1( intarray_push_array );
-PG_FUNCTION_INFO_V1( intarray_del_elem );
-PG_FUNCTION_INFO_V1( intset_union_elem );
-PG_FUNCTION_INFO_V1( intset_subtract );
-Datum intset(PG_FUNCTION_ARGS);
-Datum icount(PG_FUNCTION_ARGS);
-Datum sort(PG_FUNCTION_ARGS);
-Datum sort_asc(PG_FUNCTION_ARGS);
-Datum sort_desc(PG_FUNCTION_ARGS);
-Datum uniq(PG_FUNCTION_ARGS);
-Datum idx(PG_FUNCTION_ARGS);
-Datum subarray(PG_FUNCTION_ARGS);
-Datum intarray_push_elem(PG_FUNCTION_ARGS);
-Datum intarray_push_array(PG_FUNCTION_ARGS);
-Datum intarray_del_elem(PG_FUNCTION_ARGS);
-Datum intset_union_elem(PG_FUNCTION_ARGS);
-Datum intset_subtract(PG_FUNCTION_ARGS);
+PG_FUNCTION_INFO_V1(intset);
+PG_FUNCTION_INFO_V1(icount);
+PG_FUNCTION_INFO_V1(sort);
+PG_FUNCTION_INFO_V1(sort_asc);
+PG_FUNCTION_INFO_V1(sort_desc);
+PG_FUNCTION_INFO_V1(uniq);
+PG_FUNCTION_INFO_V1(idx);
+PG_FUNCTION_INFO_V1(subarray);
+PG_FUNCTION_INFO_V1(intarray_push_elem);
+PG_FUNCTION_INFO_V1(intarray_push_array);
+PG_FUNCTION_INFO_V1(intarray_del_elem);
+PG_FUNCTION_INFO_V1(intset_union_elem);
+PG_FUNCTION_INFO_V1(intset_subtract);
+Datum		intset(PG_FUNCTION_ARGS);
+Datum		icount(PG_FUNCTION_ARGS);
+Datum		sort(PG_FUNCTION_ARGS);
+Datum		sort_asc(PG_FUNCTION_ARGS);
+Datum		sort_desc(PG_FUNCTION_ARGS);
+Datum		uniq(PG_FUNCTION_ARGS);
+Datum		idx(PG_FUNCTION_ARGS);
+Datum		subarray(PG_FUNCTION_ARGS);
+Datum		intarray_push_elem(PG_FUNCTION_ARGS);
+Datum		intarray_push_array(PG_FUNCTION_ARGS);
+Datum		intarray_del_elem(PG_FUNCTION_ARGS);
+Datum		intset_union_elem(PG_FUNCTION_ARGS);
+Datum		intset_subtract(PG_FUNCTION_ARGS);
 
 static int32
-intarray_match_first(ArrayType *a, int32 elem) {
-	int32 *aa, c, i;
-	c  = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+intarray_match_first(ArrayType *a, int32 elem)
+{
+	int32	   *aa,
+				c,
+				i;
+
+	c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
 	aa = ARRPTR(a);
 	for (i = 0; i < c; i++)
-		if (aa[i] == elem) return (i + 1);
+		if (aa[i] == elem)
+			return (i + 1);
 	return 0;
 }
 
 static ArrayType *
-intarray_add_elem(ArrayType *a, int32 elem) {
-	ArrayType *result;
-	int32 *r;
-	int32 c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+intarray_add_elem(ArrayType *a, int32 elem)
+{
+	ArrayType  *result;
+	int32	   *r;
+	int32		c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+
 	result = new_intArrayType(c + 1);
 	r = ARRPTR(result);
-	if (c > 0) memcpy(r, ARRPTR(a), c * sizeof(int32));
+	if (c > 0)
+		memcpy(r, ARRPTR(a), c * sizeof(int32));
 	r[c] = elem;
 	return result;
 }
 
 static ArrayType *
-intarray_concat_arrays(ArrayType *a, ArrayType *b) {
-	ArrayType *result;
-	int32 ac = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
-	int32 bc = (ARRISVOID(b)) ? 0 : ARRNELEMS(b);
-	result = new_intArrayType(ac+bc);
-	if ( ac )
+intarray_concat_arrays(ArrayType *a, ArrayType *b)
+{
+	ArrayType  *result;
+	int32		ac = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+	int32		bc = (ARRISVOID(b)) ? 0 : ARRNELEMS(b);
+
+	result = new_intArrayType(ac + bc);
+	if (ac)
 		memcpy(ARRPTR(result), ARRPTR(a), ac * sizeof(int32));
-	if ( bc )
+	if (bc)
 		memcpy(ARRPTR(result) + ac, ARRPTR(b), bc * sizeof(int32));
 	return result;
 }
 
 static ArrayType *
-int_to_intset(int32 n) {
-	ArrayType *result;
-	int32 *aa;
+int_to_intset(int32 n)
+{
+	ArrayType  *result;
+	int32	   *aa;
+
 	result = new_intArrayType(1);
 	aa = ARRPTR(result);
 	aa[0] = n;
@@ -2298,67 +2424,82 @@ int_to_intset(int32 n) {
 }
 
 static int
-compASC(const void *a, const void *b) {
-	if ( *(int4*)a == *(int4*)b ) return 0;
-	return ( *(int4*)a > *(int4*)b ) ? 1 : -1;
+compASC(const void *a, const void *b)
+{
+	if (*(int4 *) a == *(int4 *) b)
+		return 0;
+	return (*(int4 *) a > *(int4 *) b) ? 1 : -1;
 }
 
 static int
-compDESC(const void *a, const void *b) {
-	if ( *(int4*)a == *(int4*)b ) return 0;
-	return ( *(int4*)a < *(int4*)b ) ? 1 : -1;
+compDESC(const void *a, const void *b)
+{
+	if (*(int4 *) a == *(int4 *) b)
+		return 0;
+	return (*(int4 *) a < *(int4 *) b) ? 1 : -1;
 }
 
-#define QSORT(a, direction) 					\
+#define QSORT(a, direction)						\
 if (ARRNELEMS(a) > 1)						\
-	qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4), 	\
+	qsort((void*)ARRPTR(a), ARRNELEMS(a),sizeof(int4),	\
 		(direction) ? compASC : compDESC )
 
 #define UNIX_UNIQ(a) a = resize_intArrayType(a, unix_uniq(ARRPTR(a), ARRNELEMS(a)))
 
 static int32
-unix_uniq(int32 *array, int32 count) {
-	register int32 i, k = 0;
+unix_uniq(int32 *array, int32 count)
+{
+	register int32 i,
+				k = 0;
+
 	for (i = 1; i < count; i++)
-		if (array[k] != array[i]) {
+		if (array[k] != array[i])
+		{
 			k++;
-			if (i > k) array[k] = array[i];
+			if (i > k)
+				array[k] = array[i];
 		}
-	return (k+1);
+	return (k + 1);
 }
 
 Datum
-intset(PG_FUNCTION_ARGS) {
-  PG_RETURN_POINTER(int_to_intset(PG_GETARG_INT32(0)));
+intset(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_POINTER(int_to_intset(PG_GETARG_INT32(0)));
 }
 
 Datum
-icount(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	int32 count = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+icount(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	int32		count = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_INT32(count);
 }
 
 Datum
-sort(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	text *dirstr = ( fcinfo->nargs==2 ) ? PG_GETARG_TEXT_P(1) : NULL;
-	int32 dc = ( dirstr ) ? VARSIZE(dirstr)-VARHDRSZ : 0;
-	char *d = ( dirstr ) ? VARDATA(dirstr) : NULL;
-	int dir = -1;
-	if (ARRISVOID(a) || ARRNELEMS(a) < 2) PG_RETURN_POINTER(a);
+sort(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	text	   *dirstr = (fcinfo->nargs == 2) ? PG_GETARG_TEXT_P(1) : NULL;
+	int32		dc = (dirstr) ? VARSIZE(dirstr) - VARHDRSZ : 0;
+	char	   *d = (dirstr) ? VARDATA(dirstr) : NULL;
+	int			dir = -1;
 
-	if (dirstr==NULL || (dc == 3
-	 && (d[0] == 'A' || d[0] == 'a')
-	 && (d[1] == 'S' || d[1] == 's')
-	 && (d[2] == 'C' || d[2] == 'c')))
+	if (ARRISVOID(a) || ARRNELEMS(a) < 2)
+		PG_RETURN_POINTER(a);
+
+	if (dirstr == NULL || (dc == 3
+						   && (d[0] == 'A' || d[0] == 'a')
+						   && (d[1] == 'S' || d[1] == 's')
+						   && (d[2] == 'C' || d[2] == 'c')))
 		dir = 1;
 	else if (dc == 4
-	 && (d[0] == 'D' || d[0] == 'd')
-	 && (d[1] == 'E' || d[1] == 'e')
-	 && (d[2] == 'S' || d[2] == 's')
-	 && (d[3] == 'C' || d[3] == 'c'))
+			 && (d[0] == 'D' || d[0] == 'd')
+			 && (d[1] == 'E' || d[1] == 'e')
+			 && (d[2] == 'S' || d[2] == 's')
+			 && (d[3] == 'C' || d[3] == 'c'))
 		dir = 0;
 	if (dir == -1)
 		elog(ERROR, "Invalid second parameter in function sort. It must be 'ASC' or 'DESC'.");
@@ -2367,97 +2508,116 @@ sort(PG_FUNCTION_ARGS) {
 }
 
 Datum
-sort_asc(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	if (ARRISVOID(a)) PG_RETURN_POINTER(a);
+sort_asc(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+
+	if (ARRISVOID(a))
+		PG_RETURN_POINTER(a);
 	QSORT(a, 1);
 	PG_RETURN_POINTER(a);
 }
 
 Datum
-sort_desc(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	if (ARRISVOID(a)) PG_RETURN_POINTER(a);
+sort_desc(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+
+	if (ARRISVOID(a))
+		PG_RETURN_POINTER(a);
 	QSORT(a, 0);
 	PG_RETURN_POINTER(a);
 }
 
 Datum
-uniq(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	if (ARRISVOID(a) || ARRNELEMS(a) < 2) PG_RETURN_POINTER(a);
+uniq(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+
+	if (ARRISVOID(a) || ARRNELEMS(a) < 2)
+		PG_RETURN_POINTER(a);
 	UNIX_UNIQ(a);
 	PG_RETURN_POINTER(a);
 }
 
 Datum
-idx(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	int32 result = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
-	if (result) result = intarray_match_first(a, PG_GETARG_INT32(1));
+idx(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	int32		result = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+
+	if (result)
+		result = intarray_match_first(a, PG_GETARG_INT32(1));
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_INT32(result);
 }
 
 Datum
-subarray(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	ArrayType *result;
-	int32 start = ( PG_GETARG_INT32(1) > 0 ) ? PG_GETARG_INT32(1)-1 : PG_GETARG_INT32(1);
-	int32 len = ( fcinfo->nargs==3 ) ? PG_GETARG_INT32(2) : 0;
-	int32 end = 0;
-	int32 c;
+subarray(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType  *result;
+	int32		start = (PG_GETARG_INT32(1) > 0) ? PG_GETARG_INT32(1) - 1 : PG_GETARG_INT32(1);
+	int32		len = (fcinfo->nargs == 3) ? PG_GETARG_INT32(2) : 0;
+	int32		end = 0;
+	int32		c;
 
-	if ( ARRISVOID(a) ) {
+	if (ARRISVOID(a))
+	{
 		PG_FREE_IF_COPY(a, 0);
-		PG_RETURN_POINTER( new_intArrayType(0) );
+		PG_RETURN_POINTER(new_intArrayType(0));
 	}
 
 	c = ARRNELEMS(a);
-	
-	if ( start < 0 )
+
+	if (start < 0)
 		start = c + start;
 
-	if ( len < 0 )
+	if (len < 0)
 		end = c + len;
-	else if ( len == 0 )
+	else if (len == 0)
 		end = c;
 	else
 		end = start + len;
 
-	if ( end > c )
-		end = c; 
+	if (end > c)
+		end = c;
 
-	if ( start < 0 )
+	if (start < 0)
 		start = 0;
 
-	if ( start >= end || end <= 0 ) { 
+	if (start >= end || end <= 0)
+	{
 		PG_FREE_IF_COPY(a, 0);
-		PG_RETURN_POINTER( new_intArrayType(0) );
+		PG_RETURN_POINTER(new_intArrayType(0));
 	}
 
 
-	result = new_intArrayType(end-start);
-	if (end-start > 0) 
-		memcpy(ARRPTR(result), ARRPTR(a) + start, (end-start) * sizeof(int32));
+	result = new_intArrayType(end - start);
+	if (end - start > 0)
+		memcpy(ARRPTR(result), ARRPTR(a) + start, (end - start) * sizeof(int32));
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_POINTER(result);
 }
 
 Datum
-intarray_push_elem(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	ArrayType *result;
+intarray_push_elem(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType  *result;
+
 	result = intarray_add_elem(a, PG_GETARG_INT32(1));
 	PG_FREE_IF_COPY(a, 0);
 	PG_RETURN_POINTER(result);
 }
 
 Datum
-intarray_push_array(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	ArrayType *b = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
-	ArrayType *result;
+intarray_push_array(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(1)));
+	ArrayType  *result;
+
 	result = intarray_concat_arrays(a, b);
 	PG_FREE_IF_COPY(a, 0);
 	PG_FREE_IF_COPY(b, 1);
@@ -2465,25 +2625,34 @@ intarray_push_array(PG_FUNCTION_ARGS) {
 }
 
 Datum
-intarray_del_elem(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	int32 c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
-	int32 *aa = ARRPTR(a);
-	int32 n = 0, i;
-	int32 elem = PG_GETARG_INT32(1);
+intarray_del_elem(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	int32		c = (ARRISVOID(a)) ? 0 : ARRNELEMS(a);
+	int32	   *aa = ARRPTR(a);
+	int32		n = 0,
+				i;
+	int32		elem = PG_GETARG_INT32(1);
+
 	for (i = 0; i < c; i++)
-		if (aa[i] != elem) {
-			if (i > n) aa[n++] = aa[i];
-			else n++;
+		if (aa[i] != elem)
+		{
+			if (i > n)
+				aa[n++] = aa[i];
+			else
+				n++;
 		}
-	if (c > 0) a = resize_intArrayType(a, n);
+	if (c > 0)
+		a = resize_intArrayType(a, n);
 	PG_RETURN_POINTER(a);
 }
 
 Datum
-intset_union_elem(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
-	ArrayType *result;
+intset_union_elem(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM(PG_GETARG_DATUM(0)));
+	ArrayType  *result;
+
 	result = intarray_add_elem(a, PG_GETARG_INT32(1));
 	PG_FREE_IF_COPY(a, 0);
 	QSORT(result, 1);
@@ -2492,27 +2661,44 @@ intset_union_elem(PG_FUNCTION_ARGS) {
 }
 
 Datum
-intset_subtract(PG_FUNCTION_ARGS) {
-	ArrayType *a = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
-	ArrayType *b = (ArrayType*)DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
-	ArrayType *result;
-	int32 ca = ARRISVOID(a);
-	int32 cb = ARRISVOID(b);
-	int32 *aa, *bb, *r;
-	int32 n = 0, i = 0, k = 0;
-	QSORT(a, 1); UNIX_UNIQ(a); ca = ARRNELEMS(a);
-	QSORT(b, 1); UNIX_UNIQ(b); cb = ARRNELEMS(b);
+intset_subtract(PG_FUNCTION_ARGS)
+{
+	ArrayType  *a = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(0)));
+	ArrayType  *b = (ArrayType *) DatumGetPointer(PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(1)));
+	ArrayType  *result;
+	int32		ca = ARRISVOID(a);
+	int32		cb = ARRISVOID(b);
+	int32	   *aa,
+			   *bb,
+			   *r;
+	int32		n = 0,
+				i = 0,
+				k = 0;
+
+	QSORT(a, 1);
+	UNIX_UNIQ(a);
+	ca = ARRNELEMS(a);
+	QSORT(b, 1);
+	UNIX_UNIQ(b);
+	cb = ARRNELEMS(b);
 	result = new_intArrayType(ca);
 	aa = ARRPTR(a);
 	bb = ARRPTR(b);
 	r = ARRPTR(result);
-	while (i < ca) {
-		if (k == cb || aa[i] < bb[k]) r[n++] = aa[i++];
-		else if (aa[i] == bb[k]) { i++; k++; }
-		else k++;
+	while (i < ca)
+	{
+		if (k == cb || aa[i] < bb[k])
+			r[n++] = aa[i++];
+		else if (aa[i] == bb[k])
+		{
+			i++;
+			k++;
+		}
+		else
+			k++;
 	}
 	result = resize_intArrayType(result, n);
-	pfree(a); pfree(b);
+	pfree(a);
+	pfree(b);
 	PG_RETURN_POINTER(result);
 }
-

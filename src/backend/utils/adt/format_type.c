@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.33 2002/08/29 07:22:26 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.34 2002/09/04 20:31:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,9 @@
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
 
 static char *format_type_internal(Oid type_oid, int32 typemod,
-								  bool typemod_given, bool allow_invalid);
-static char *psnprintf(size_t len, const char *fmt, ...)
+					 bool typemod_given, bool allow_invalid);
+static char *
+psnprintf(size_t len, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
 __attribute__((format(printf, 2, 3)));
 
@@ -47,14 +48,14 @@ __attribute__((format(printf, 2, 3)));
  * double quoted if it contains funny characters or matches a keyword.
  *
  * If typemod is NULL then we are formatting a type name in a context where
- * no typemod is available, eg a function argument or result type.  This
+ * no typemod is available, eg a function argument or result type.	This
  * yields a slightly different result from specifying typemod = -1 in some
  * cases.  Given typemod = -1 we feel compelled to produce an output that
  * the parser will interpret as having typemod -1, so that pg_dump will
- * produce CREATE TABLE commands that recreate the original state.  But
+ * produce CREATE TABLE commands that recreate the original state.	But
  * given NULL typemod, we assume that the parser's interpretation of
  * typemod doesn't matter, and so we are willing to output a slightly
- * "prettier" representation of the same type.  For example, type = bpchar
+ * "prettier" representation of the same type.	For example, type = bpchar
  * and typemod = NULL gets you "character", whereas typemod = -1 gets you
  * "bpchar" --- the former will be interpreted as character(1) by the
  * parser, which does not yield typemod -1.
@@ -77,9 +78,7 @@ format_type(PG_FUNCTION_ARGS)
 	type_oid = PG_GETARG_OID(0);
 
 	if (PG_ARGISNULL(1))
-	{
 		result = format_type_internal(type_oid, -1, false, true);
-	}
 	else
 	{
 		typemod = PG_GETARG_INT32(1);
@@ -141,7 +140,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 
 	/*
 	 * Check if it's an array (and not a domain --- we don't want to show
-	 * the substructure of a domain type).  Fixed-length array types such
+	 * the substructure of a domain type).	Fixed-length array types such
 	 * as "name" shouldn't get deconstructed either.
 	 */
 	array_base_type = typeform->typelem;
@@ -171,15 +170,15 @@ format_type_internal(Oid type_oid, int32 typemod,
 		is_array = false;
 
 	/*
-	 * See if we want to special-case the output for certain built-in types.
-	 * Note that these special cases should all correspond to special
-	 * productions in gram.y, to ensure that the type name will be taken as
-	 * a system type, not a user type of the same name.
+	 * See if we want to special-case the output for certain built-in
+	 * types. Note that these special cases should all correspond to
+	 * special productions in gram.y, to ensure that the type name will be
+	 * taken as a system type, not a user type of the same name.
 	 *
-	 * If we do not provide a special-case output here, the type name will
-	 * be handled the same way as a user type name --- in particular, it
-	 * will be double-quoted if it matches any lexer keyword.  This behavior
-	 * is essential for some cases, such as types "bit" and "char".
+	 * If we do not provide a special-case output here, the type name will be
+	 * handled the same way as a user type name --- in particular, it will
+	 * be double-quoted if it matches any lexer keyword.  This behavior is
+	 * essential for some cases, such as types "bit" and "char".
 	 */
 	buf = NULL;					/* flag for no special case */
 
@@ -277,36 +276,36 @@ format_type_internal(Oid type_oid, int32 typemod,
 					case INTERVAL_MASK(SECOND):
 						fieldstr = " second";
 						break;
-					case INTERVAL_MASK(YEAR)
-					  | INTERVAL_MASK(MONTH):
+						case INTERVAL_MASK(YEAR)
+					| INTERVAL_MASK(MONTH):
 						fieldstr = " year to month";
 						break;
-					case INTERVAL_MASK(DAY)
-					  | INTERVAL_MASK(HOUR):
+						case INTERVAL_MASK(DAY)
+					| INTERVAL_MASK(HOUR):
 						fieldstr = " day to hour";
 						break;
-					case INTERVAL_MASK(DAY)
-					  | INTERVAL_MASK(HOUR)
-					  | INTERVAL_MASK(MINUTE):
+						case INTERVAL_MASK(DAY)
+							| INTERVAL_MASK(HOUR)
+					| INTERVAL_MASK(MINUTE):
 						fieldstr = " day to minute";
 						break;
-					case INTERVAL_MASK(DAY)
-					  | INTERVAL_MASK(HOUR)
-					  | INTERVAL_MASK(MINUTE)
-					  | INTERVAL_MASK(SECOND):
+						case INTERVAL_MASK(DAY)
+							| INTERVAL_MASK(HOUR)
+							| INTERVAL_MASK(MINUTE)
+					| INTERVAL_MASK(SECOND):
 						fieldstr = " day to second";
 						break;
-					case INTERVAL_MASK(HOUR)
-					  | INTERVAL_MASK(MINUTE):
+						case INTERVAL_MASK(HOUR)
+					| INTERVAL_MASK(MINUTE):
 						fieldstr = " hour to minute";
 						break;
-					case INTERVAL_MASK(HOUR)
-					  | INTERVAL_MASK(MINUTE)
-					  | INTERVAL_MASK(SECOND):
+						case INTERVAL_MASK(HOUR)
+							| INTERVAL_MASK(MINUTE)
+					| INTERVAL_MASK(SECOND):
 						fieldstr = " hour to second";
 						break;
-					case INTERVAL_MASK(MINUTE)
-					  | INTERVAL_MASK(SECOND):
+						case INTERVAL_MASK(MINUTE)
+					| INTERVAL_MASK(SECOND):
 						fieldstr = " minute to second";
 						break;
 					case INTERVAL_FULL_RANGE:
@@ -382,9 +381,9 @@ format_type_internal(Oid type_oid, int32 typemod,
 	{
 		/*
 		 * Default handling: report the name as it appears in the catalog.
-		 * Here, we must qualify the name if it is not visible in the search
-		 * path, and we must double-quote it if it's not a standard identifier
-		 * or if it matches any keyword.
+		 * Here, we must qualify the name if it is not visible in the
+		 * search path, and we must double-quote it if it's not a standard
+		 * identifier or if it matches any keyword.
 		 */
 		char	   *nspname;
 		char	   *typname;
@@ -518,7 +517,7 @@ oidvectortypes(PG_FUNCTION_ARGS)
 
 /* snprintf into a palloc'd string */
 static char *
-psnprintf(size_t len, const char *fmt, ...)
+psnprintf(size_t len, const char *fmt,...)
 {
 	va_list		ap;
 	char	   *buf;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.104 2002/09/03 22:17:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.105 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,14 +79,14 @@ createdb(const CreatedbStmt *stmt)
 	int32		datdba;
 	List	   *option;
 	DefElem    *downer = NULL;
-	DefElem	   *dpath = NULL;
-	DefElem	   *dtemplate = NULL;
-	DefElem	   *dencoding = NULL;
+	DefElem    *dpath = NULL;
+	DefElem    *dtemplate = NULL;
+	DefElem    *dencoding = NULL;
 	char	   *dbname = stmt->dbname;
 	char	   *dbowner = NULL;
 	char	   *dbpath = NULL;
 	char	   *dbtemplate = NULL;
-	int		    encoding = -1;
+	int			encoding = -1;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -133,7 +133,7 @@ createdb(const CreatedbStmt *stmt)
 
 	/* obtain sysid of proposed owner */
 	if (dbowner)
-		datdba = get_usesysid(dbowner);	/* will elog if no such user */
+		datdba = get_usesysid(dbowner); /* will elog if no such user */
 	else
 		datdba = GetUserId();
 
@@ -185,7 +185,7 @@ createdb(const CreatedbStmt *stmt)
 	 */
 	if (!src_istemplate)
 	{
-		if (!superuser() && GetUserId() != src_owner )
+		if (!superuser() && GetUserId() != src_owner)
 			elog(ERROR, "CREATE DATABASE: permission to copy \"%s\" denied",
 				 dbtemplate);
 	}
@@ -226,10 +226,10 @@ createdb(const CreatedbStmt *stmt)
 	 * database), and resolve alternate physical location if one is
 	 * specified.
 	 *
-	 * If an alternate location is specified but is the same as the
-	 * normal path, just drop the alternate-location spec (this seems
-	 * friendlier than erroring out).  We must test this case to avoid
-	 * creating a circular symlink below.
+	 * If an alternate location is specified but is the same as the normal
+	 * path, just drop the alternate-location spec (this seems friendlier
+	 * than erroring out).	We must test this case to avoid creating a
+	 * circular symlink below.
 	 */
 	nominal_loc = GetDatabasePath(dboid);
 	alt_loc = resolve_alt_dbpath(dbpath, dboid);
@@ -328,11 +328,12 @@ createdb(const CreatedbStmt *stmt)
 	/* do not set datpath to null, GetRawDatabaseInfo won't cope */
 	new_record[Anum_pg_database_datpath - 1] =
 		DirectFunctionCall1(textin, CStringGetDatum(dbpath ? dbpath : ""));
+
 	/*
 	 * We deliberately set datconfig and datacl to defaults (NULL), rather
 	 * than copying them from the template database.  Copying datacl would
-	 * be a bad idea when the owner is not the same as the template's owner.
-	 * It's more debatable whether datconfig should be copied.
+	 * be a bad idea when the owner is not the same as the template's
+	 * owner. It's more debatable whether datconfig should be copied.
 	 */
 	new_record_nulls[Anum_pg_database_datconfig - 1] = 'n';
 	new_record_nulls[Anum_pg_database_datacl - 1] = 'n';
@@ -495,7 +496,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	HeapTuple	tuple,
 				newtuple;
 	Relation	rel;
-	ScanKeyData	scankey;
+	ScanKeyData scankey;
 	HeapScanDesc scan;
 	Datum		repl_val[Natts_pg_database];
 	char		repl_null[Natts_pg_database];
@@ -512,25 +513,25 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		elog(ERROR, "database \"%s\" does not exist", stmt->dbname);
 
 	if (!(superuser()
-		  || ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
+		|| ((Form_pg_database) GETSTRUCT(tuple))->datdba == GetUserId()))
 		elog(ERROR, "permission denied");
 
 	MemSet(repl_repl, ' ', sizeof(repl_repl));
-	repl_repl[Anum_pg_database_datconfig-1] = 'r';
+	repl_repl[Anum_pg_database_datconfig - 1] = 'r';
 
-	if (strcmp(stmt->variable, "all")==0 && valuestr == NULL)
+	if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
 	{
 		/* RESET ALL */
-		repl_null[Anum_pg_database_datconfig-1] = 'n';
-		repl_val[Anum_pg_database_datconfig-1] = (Datum) 0;
+		repl_null[Anum_pg_database_datconfig - 1] = 'n';
+		repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
 	}
 	else
 	{
-		Datum datum;
-		bool isnull;
-		ArrayType *a;
+		Datum		datum;
+		bool		isnull;
+		ArrayType  *a;
 
-		repl_null[Anum_pg_database_datconfig-1] = ' ';
+		repl_null[Anum_pg_database_datconfig - 1] = ' ';
 
 		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
 							 RelationGetDescr(rel), &isnull);
@@ -542,7 +543,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		else
 			a = GUCArrayDelete(a, stmt->variable);
 
-		repl_val[Anum_pg_database_datconfig-1] = PointerGetDatum(a);
+		repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(a);
 	}
 
 	newtuple = heap_modifytuple(tuple, rel, repl_val, repl_null, repl_repl);

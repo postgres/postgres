@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.66 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.67 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,7 @@ ShmemAlloc(Size size)
 {
 	uint32		newFree;
 	void	   *newSpace;
+
 	/* use volatile pointer to prevent code rearrangement */
 	volatile PGShmemHeader *shmemseghdr = ShmemSegHdr;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.107 2002/08/31 22:10:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.108 2002/09/04 20:31:22 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -43,7 +43,7 @@ typedef struct
 {
 	Query	   *query;
 	List	   *groupClauses;
-}	check_subplans_for_ungrouped_vars_context;
+} check_subplans_for_ungrouped_vars_context;
 
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
@@ -51,7 +51,7 @@ static bool expression_returns_set_walker(Node *node, void *context);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
-					check_subplans_for_ungrouped_vars_context * context);
+					 check_subplans_for_ungrouped_vars_context *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
 static Node *eval_const_expressions_mutator(Node *node, void *context);
@@ -479,7 +479,7 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, Expr))
 	{
-		Expr   *expr = (Expr *) node;
+		Expr	   *expr = (Expr *) node;
 
 		switch (expr->opType)
 		{
@@ -633,7 +633,7 @@ check_subplans_for_ungrouped_vars(Query *query)
 
 static bool
 check_subplans_for_ungrouped_vars_walker(Node *node,
-					 check_subplans_for_ungrouped_vars_context * context)
+					  check_subplans_for_ungrouped_vars_context *context)
 {
 	List	   *gl;
 
@@ -786,11 +786,11 @@ contain_mutable_functions_walker(Node *node, void *context)
  *	  Recursively search for volatile functions within a clause.
  *
  * Returns true if any volatile function (or operator implemented by a
- * volatile function) is found.	This test prevents invalid conversions
+ * volatile function) is found. This test prevents invalid conversions
  * of volatile expressions into indexscan quals.
  *
  * XXX we do not examine sublinks/subplans to see if they contain uses of
- * volatile functions.  It's not real clear if that is correct or not...
+ * volatile functions.	It's not real clear if that is correct or not...
  */
 bool
 contain_volatile_functions(Node *clause)
@@ -837,7 +837,7 @@ contain_volatile_functions_walker(Node *node, void *context)
  *	  of the current query level and no uses of volatile functions.
  *	  Such a clause is not necessarily a true constant: it can still contain
  *	  Params and outer-level Vars, not to mention functions whose results
- *	  may vary from one statement to the next.  However, the clause's value
+ *	  may vary from one statement to the next.	However, the clause's value
  *	  will be constant over any one scan of the current query, so it can be
  *	  used as an indexscan key or (if a top-level qual) can be pushed up to
  *	  become a gating qual.
@@ -1143,7 +1143,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 		 * expression_tree_mutator directly rather than recursing to self.
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
-												eval_const_expressions_mutator,
+										  eval_const_expressions_mutator,
 												(void *) context);
 
 		switch (expr->opType)
@@ -1166,13 +1166,14 @@ eval_const_expressions_mutator(Node *node, void *context)
 				break;
 			case DISTINCT_EXPR:
 				{
-					List *arg;
-					bool has_null_input = false;
-					bool all_null_input = true;
-					bool has_nonconst_input = false;
+					List	   *arg;
+					bool		has_null_input = false;
+					bool		all_null_input = true;
+					bool		has_nonconst_input = false;
 
 					/*
-					 * Check for constant inputs and especially constant-NULL inputs.
+					 * Check for constant inputs and especially
+					 * constant-NULL inputs.
 					 */
 					Assert(length(args) == 2);
 					foreach(arg, args)
@@ -1183,9 +1184,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 							all_null_input &= ((Const *) lfirst(arg))->constisnull;
 						}
 						else
-						{
 							has_nonconst_input = true;
-						}
 					}
 					/* all nulls? then not distinct */
 					if (all_null_input)
@@ -1206,18 +1205,23 @@ eval_const_expressions_mutator(Node *node, void *context)
 						bool		const_is_null;
 
 						Oper	   *oper = (Oper *) expr->oper;
-						replace_opid(oper);		/* OK to scribble on input to this extent */
+
+						replace_opid(oper);		/* OK to scribble on input
+												 * to this extent */
 						result_typeid = oper->opresulttype;
 
 						/*
-						 * OK, looks like we can simplify this operator/function.
+						 * OK, looks like we can simplify this
+						 * operator/function.
 						 *
-						 * We use the executor's routine ExecEvalExpr() to avoid duplication of
-						 * code and ensure we get the same result as the executor would get.
+						 * We use the executor's routine ExecEvalExpr() to
+						 * avoid duplication of code and ensure we get the
+						 * same result as the executor would get.
 						 *
-						 * Build a new Expr node containing the already-simplified arguments. The
-						 * only other setup needed here is the replace_opid() that we already
-						 * did for the OP_EXPR case.
+						 * Build a new Expr node containing the
+						 * already-simplified arguments. The only other
+						 * setup needed here is the replace_opid() that we
+						 * already did for the OP_EXPR case.
 						 */
 						newexpr = makeNode(Expr);
 						newexpr->typeOid = expr->typeOid;
@@ -1229,17 +1233,22 @@ eval_const_expressions_mutator(Node *node, void *context)
 						get_typlenbyval(result_typeid, &resultTypLen, &resultTypByVal);
 
 						/*
-						 * It is OK to pass a dummy econtext because none of the
-						 * ExecEvalExpr() code used in this situation will use econtext.  That
-						 * might seem fortuitous, but it's not so unreasonable --- a constant
-						 * expression does not depend on context, by definition, n'est ce pas?
+						 * It is OK to pass a dummy econtext because none
+						 * of the ExecEvalExpr() code used in this
+						 * situation will use econtext.  That might seem
+						 * fortuitous, but it's not so unreasonable --- a
+						 * constant expression does not depend on context,
+						 * by definition, n'est ce pas?
 						 */
 						econtext = MakeExprContext(NULL, CurrentMemoryContext);
 
 						const_val = ExecEvalExprSwitchContext((Node *) newexpr, econtext,
-															  &const_is_null, NULL);
+												   &const_is_null, NULL);
 
-						/* Must copy result out of sub-context used by expression eval */
+						/*
+						 * Must copy result out of sub-context used by
+						 * expression eval
+						 */
 						if (!const_is_null)
 							const_val = datumCopy(const_val, resultTypByVal, resultTypLen);
 
@@ -1250,8 +1259,8 @@ eval_const_expressions_mutator(Node *node, void *context)
 						 * Make the constant result node.
 						 */
 						return (Node *) makeConst(result_typeid, resultTypLen,
-												  const_val, const_is_null,
-												  resultTypByVal, false, false);
+												const_val, const_is_null,
+										   resultTypByVal, false, false);
 					}
 					break;
 				}
@@ -1952,6 +1961,7 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker(join->quals, context))
 					return true;
+
 				/*
 				 * alias clause, using list are deemed uninteresting.
 				 */

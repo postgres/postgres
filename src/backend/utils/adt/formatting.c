@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.53 2002/04/21 19:48:12 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.54 2002/09/04 20:31:27 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -2438,9 +2438,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				sscanf(inout, "%03d", &tmfc->year);
 
 				/*
-				 * 3-digit year:
-				 *	'100' ... '999' = 1100 ... 1999
-				 *	'000' ... '099' = 2000 ... 2099
+				 * 3-digit year: '100' ... '999' = 1100 ... 1999 '000' ...
+				 * '099' = 2000 ... 2099
 				 */
 				if (tmfc->year >= 100)
 					tmfc->year += 1000;
@@ -2469,9 +2468,8 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 				sscanf(inout, "%02d", &tmfc->year);
 
 				/*
-				 * 2-digit year:
-				 * '00' ... '69'  = 2000 ... 2069
-				 * '70' ... '99'  = 1970 ... 1999
+				 * 2-digit year: '00' ... '69'	= 2000 ... 2069 '70' ...
+				 * '99'  = 1970 ... 1999
 				 */
 				if (tmfc->year < 70)
 					tmfc->year += 2000;

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.3 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_sema.c,v 1.4 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,19 +58,20 @@ typedef int IpcSemaphoreId;		/* semaphore ID returned by semget(2) */
 #define PGSemaMagic		537		/* must be less than SEMVMX */
 
 
-static IpcSemaphoreId *mySemaSets; /* IDs of sema sets acquired so far */
+static IpcSemaphoreId *mySemaSets;		/* IDs of sema sets acquired so
+										 * far */
 static int	numSemaSets;		/* number of sema sets acquired so far */
 static int	maxSemaSets;		/* allocated size of mySemaSets array */
-static IpcSemaphoreKey nextSemaKey; /* next key to try using */
+static IpcSemaphoreKey nextSemaKey;		/* next key to try using */
 static int	nextSemaNumber;		/* next free sem num in last sema set */
 
 
 static IpcSemaphoreId InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
-												 int numSems);
+						   int numSems);
 static void IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum,
-								   int value);
+					   int value);
 static void IpcSemaphoreKill(IpcSemaphoreId semId);
-static int IpcSemaphoreGetValue(IpcSemaphoreId semId, int semNum);
+static int	IpcSemaphoreGetValue(IpcSemaphoreId semId, int semNum);
 static pid_t IpcSemaphoreGetLastPID(IpcSemaphoreId semId, int semNum);
 static IpcSemaphoreId IpcSemaphoreCreate(int numSems);
 static void ReleaseSemaphores(int status, Datum arg);
@@ -113,7 +114,7 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey, int numSems)
 		 * Else complain and abort
 		 */
 		fprintf(stderr, "IpcSemaphoreCreate: semget(key=%d, num=%d, 0%o) failed: %s\n",
-				(int) semKey, numSems, (IPC_CREAT | IPC_EXCL | IPCProtection),
+		   (int) semKey, numSems, (IPC_CREAT | IPC_EXCL | IPCProtection),
 				strerror(errno));
 
 		if (errno == ENOSPC)
@@ -154,7 +155,7 @@ IpcSemaphoreInitialize(IpcSemaphoreId semId, int semNum, int value)
 		if (errno == ERANGE)
 			fprintf(stderr,
 					"You possibly need to raise your kernel's SEMVMX value to be at least\n"
-					"%d.  Look into the PostgreSQL documentation for details.\n",
+			"%d.  Look into the PostgreSQL documentation for details.\n",
 					value);
 
 		proc_exit(1);
@@ -221,7 +222,7 @@ IpcSemaphoreCreate(int numSems)
 	PGSemaphoreData mysema;
 
 	/* Loop till we find a free IPC key */
-	for (nextSemaKey++; ; nextSemaKey++)
+	for (nextSemaKey++;; nextSemaKey++)
 	{
 		pid_t		creatorPID;
 
@@ -296,12 +297,12 @@ IpcSemaphoreCreate(int numSems)
  *
  * This is called during postmaster start or shared memory reinitialization.
  * It should do whatever is needed to be able to support up to maxSemas
- * subsequent PGSemaphoreCreate calls.  Also, if any system resources
+ * subsequent PGSemaphoreCreate calls.	Also, if any system resources
  * are acquired here or in PGSemaphoreCreate, register an on_shmem_exit
  * callback to release them.
  *
  * The port number is passed for possible use as a key (for SysV, we use
- * it to generate the starting semaphore key).  In a standalone backend,
+ * it to generate the starting semaphore key).	In a standalone backend,
  * zero will be passed.
  *
  * In the SysV implementation, we acquire semaphore sets on-demand; the
@@ -311,14 +312,15 @@ IpcSemaphoreCreate(int numSems)
 void
 PGReserveSemaphores(int maxSemas, int port)
 {
-	maxSemaSets = (maxSemas + SEMAS_PER_SET-1) / SEMAS_PER_SET;
+	maxSemaSets = (maxSemas + SEMAS_PER_SET - 1) / SEMAS_PER_SET;
 	mySemaSets = (IpcSemaphoreId *)
 		malloc(maxSemaSets * sizeof(IpcSemaphoreId));
 	if (mySemaSets == NULL)
 		elog(PANIC, "Out of memory in PGReserveSemaphores");
 	numSemaSets = 0;
 	nextSemaKey = port * 1000;
-	nextSemaNumber = SEMAS_PER_SET;	/* force sema set alloc on 1st call */
+	nextSemaNumber = SEMAS_PER_SET;		/* force sema set alloc on 1st
+										 * call */
 
 	on_shmem_exit(ReleaseSemaphores, 0);
 }
@@ -359,7 +361,7 @@ PGSemaphoreCreate(PGSemaphore sema)
 		nextSemaNumber = 0;
 	}
 	/* Assign the next free semaphore in the current set */
-	sema->semId = mySemaSets[numSemaSets-1];
+	sema->semId = mySemaSets[numSemaSets - 1];
 	sema->semNum = nextSemaNumber++;
 	/* Initialize it to count 1 */
 	IpcSemaphoreInitialize(sema->semId, sema->semNum, 1);

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.62 2002/09/01 16:28:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.63 2002/09/04 20:31:47 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -98,7 +98,7 @@ static int exec_stmt_exit(PLpgSQL_execstate * estate,
 static int exec_stmt_return(PLpgSQL_execstate * estate,
 				 PLpgSQL_stmt_return * stmt);
 static int exec_stmt_return_next(PLpgSQL_execstate * estate,
-				 PLpgSQL_stmt_return_next * stmt);
+					  PLpgSQL_stmt_return_next * stmt);
 static int exec_stmt_raise(PLpgSQL_execstate * estate,
 				PLpgSQL_stmt_raise * stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate * estate,
@@ -108,9 +108,9 @@ static int exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 static int exec_stmt_dynfors(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_dynfors * stmt);
 
-static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
-								 PLpgSQL_function *func,
-								 ReturnSetInfo *rsi);
+static void plpgsql_estate_setup(PLpgSQL_execstate * estate,
+					 PLpgSQL_function * func,
+					 ReturnSetInfo *rsi);
 static void exec_eval_cleanup(PLpgSQL_execstate * estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate * estate,
@@ -144,7 +144,7 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtypelem,
 				int32 reqtypmod,
 				bool *isnull);
-static void exec_init_tuple_store(PLpgSQL_execstate *estate);
+static void exec_init_tuple_store(PLpgSQL_execstate * estate);
 static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
 static void exec_set_found(PLpgSQL_execstate * estate, bool state);
 
@@ -991,7 +991,8 @@ exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
 		 * depending on whether at least one row was returned).
 		 *
 		 * This cannot share code with the assignment case since we do not
-		 * wish to constrain the discarded result to be only one row/column.
+		 * wish to constrain the discarded result to be only one
+		 * row/column.
 		 */
 		int			rc;
 
@@ -1248,7 +1249,7 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 				break;
 		}
 
-		found = true;	/* looped at least once */
+		found = true;			/* looped at least once */
 
 		/*
 		 * Execute the statements
@@ -1256,7 +1257,7 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 		rc = exec_stmts(estate, stmt->body);
 
 		if (rc == PLPGSQL_RC_RETURN)
-			break;						/* return from function */
+			break;				/* return from function */
 		else if (rc == PLPGSQL_RC_EXIT)
 		{
 			if (estate->exitlabel == NULL)
@@ -1271,9 +1272,9 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 			}
 
 			/*
-			 * otherwise, we processed a labelled exit that does not
-			 * match the current statement's label, if any: return
-			 * RC_EXIT so that the EXIT continues to recurse upward.
+			 * otherwise, we processed a labelled exit that does not match
+			 * the current statement's label, if any: return RC_EXIT so
+			 * that the EXIT continues to recurse upward.
 			 */
 
 			break;
@@ -1289,10 +1290,10 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
 	}
 
 	/*
-	 * Set the FOUND variable to indicate the result of executing the
-	 * loop (namely, whether we looped one or more times). This must be
-	 * set here so that it does not interfere with the value of the
-	 * FOUND variable inside the loop processing itself.
+	 * Set the FOUND variable to indicate the result of executing the loop
+	 * (namely, whether we looped one or more times). This must be set
+	 * here so that it does not interfere with the value of the FOUND
+	 * variable inside the loop processing itself.
 	 */
 	exec_set_found(estate, found);
 
@@ -1346,7 +1347,7 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	if (n == 0)
 		exec_move_row(estate, rec, row, NULL, NULL);
 	else
-		found = true;	/* processed at least one tuple */
+		found = true;			/* processed at least one tuple */
 
 	/*
 	 * Now do the loop
@@ -1388,9 +1389,10 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 					}
 
 					/*
-					 * otherwise, we processed a labelled exit that does not
-					 * match the current statement's label, if any: return
-					 * RC_EXIT so that the EXIT continues to recurse upward.
+					 * otherwise, we processed a labelled exit that does
+					 * not match the current statement's label, if any:
+					 * return RC_EXIT so that the EXIT continues to
+					 * recurse upward.
 					 */
 				}
 
@@ -1414,10 +1416,10 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
 	SPI_cursor_close(portal);
 
 	/*
-	 * Set the FOUND variable to indicate the result of executing the
-	 * loop (namely, whether we looped one or more times). This must be
-	 * set here so that it does not interfere with the value of the
-	 * FOUND variable inside the loop processing itself.
+	 * Set the FOUND variable to indicate the result of executing the loop
+	 * (namely, whether we looped one or more times). This must be set
+	 * here so that it does not interfere with the value of the FOUND
+	 * variable inside the loop processing itself.
 	 */
 	exec_set_found(estate, found);
 
@@ -1579,14 +1581,14 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 
 /*
  * Notes:
- *  - the tuple store must be created in a sufficiently long-lived
- *    memory context, as the same store must be used within the executor
- *    after the PL/PgSQL call returns. At present, the code uses
- *    TopTransactionContext.
+ *	- the tuple store must be created in a sufficiently long-lived
+ *	  memory context, as the same store must be used within the executor
+ *	  after the PL/PgSQL call returns. At present, the code uses
+ *	  TopTransactionContext.
  */
 static int
-exec_stmt_return_next(PLpgSQL_execstate *estate,
-					  PLpgSQL_stmt_return_next *stmt)
+exec_stmt_return_next(PLpgSQL_execstate * estate,
+					  PLpgSQL_stmt_return_next * stmt)
 {
 	TupleDesc	tupdesc;
 	int			natts;
@@ -1601,7 +1603,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 
 	/* rettupdesc will be filled by exec_init_tuple_store */
 	tupdesc = estate->rettupdesc;
-	natts	= tupdesc->natts;
+	natts = tupdesc->natts;
 
 	if (stmt->rec)
 	{
@@ -1613,15 +1615,15 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	}
 	else if (stmt->row)
 	{
-		Datum	*dvalues;
-		char	*nulls;
-		int		 i;
+		Datum	   *dvalues;
+		char	   *nulls;
+		int			i;
 
 		if (natts != stmt->row->nfields)
 			elog(ERROR, "Wrong record type supplied in RETURN NEXT");
 
-		dvalues	= (Datum *) palloc(natts * sizeof(Datum));
-		nulls	= (char *) palloc(natts * sizeof(char));
+		dvalues = (Datum *) palloc(natts * sizeof(Datum));
+		nulls = (char *) palloc(natts * sizeof(char));
 		MemSet(dvalues, 0, natts * sizeof(Datum));
 		MemSet(nulls, 'n', natts);
 
@@ -1645,10 +1647,10 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 	}
 	else if (stmt->expr)
 	{
-		Datum	retval;
-		bool	isNull;
-		Oid		rettype;
-		char	nullflag;
+		Datum		retval;
+		bool		isNull;
+		Oid			rettype;
+		char		nullflag;
 
 		if (natts != 1)
 			elog(ERROR, "Wrong result type supplied in RETURN NEXT");
@@ -1661,9 +1663,9 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		/* coerce type if needed */
 		if (!isNull && rettype != tupdesc->attrs[0]->atttypid)
 		{
-			Oid targType = tupdesc->attrs[0]->atttypid;
-			Oid typInput;
-			Oid typElem;
+			Oid			targType = tupdesc->attrs[0]->atttypid;
+			Oid			typInput;
+			Oid			typElem;
 			FmgrInfo	finfo_input;
 
 			getTypeInputInfo(targType, &typInput, &typElem);
@@ -1708,7 +1710,7 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 }
 
 static void
-exec_init_tuple_store(PLpgSQL_execstate *estate)
+exec_init_tuple_store(PLpgSQL_execstate * estate)
 {
 	ReturnSetInfo *rsi = estate->rsi;
 	MemoryContext oldcxt;
@@ -1895,8 +1897,8 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
  * ----------
  */
 static void
-plpgsql_estate_setup(PLpgSQL_execstate *estate,
-					 PLpgSQL_function *func,
+plpgsql_estate_setup(PLpgSQL_execstate * estate,
+					 PLpgSQL_function * func,
 					 ReturnSetInfo *rsi)
 {
 	estate->retval = (Datum) 0;
@@ -2124,6 +2126,7 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
 		case SPI_OK_UPDATE:
+
 			/*
 			 * If the INSERT, DELETE, or UPDATE query affected at least
 			 * one tuple, set the magic 'FOUND' variable to true. This
@@ -2228,25 +2231,25 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 		case SPI_OK_SELINTO:
 
 			/*
-			 * We want to disallow SELECT INTO for now, because its behavior
-			 * is not consistent with SELECT INTO in a normal plpgsql
-			 * context. (We need to reimplement EXECUTE to parse the string
-			 * as a plpgsql command, not just feed it to SPI_exec.)
-			 * However, CREATE AS should be allowed ... and since it produces
-			 * the same parsetree as SELECT INTO, there's no way to tell
-			 * the difference except to look at the source text.  Wotta
-			 * kluge!
+			 * We want to disallow SELECT INTO for now, because its
+			 * behavior is not consistent with SELECT INTO in a normal
+			 * plpgsql context. (We need to reimplement EXECUTE to parse
+			 * the string as a plpgsql command, not just feed it to
+			 * SPI_exec.) However, CREATE AS should be allowed ... and
+			 * since it produces the same parsetree as SELECT INTO,
+			 * there's no way to tell the difference except to look at the
+			 * source text.  Wotta kluge!
 			 */
-		{
-			char   *ptr;
+			{
+				char	   *ptr;
 
-			for (ptr = querystr; *ptr; ptr++)
-				if (!isspace((unsigned char) *ptr))
-					break;
-			if (*ptr == 'S' || *ptr == 's')
-				elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
-			break;
-		}
+				for (ptr = querystr; *ptr; ptr++)
+					if (!isspace((unsigned char) *ptr))
+						break;
+				if (*ptr == 'S' || *ptr == 's')
+					elog(ERROR, "EXECUTE of SELECT ... INTO is not implemented yet");
+				break;
+			}
 
 		default:
 			elog(ERROR, "unexpected error %d in EXECUTE of query '%s'",
@@ -2399,9 +2402,10 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 					}
 
 					/*
-					 * otherwise, we processed a labelled exit that does not
-					 * match the current statement's label, if any: return
-					 * RC_EXIT so that the EXIT continues to recurse upward.
+					 * otherwise, we processed a labelled exit that does
+					 * not match the current statement's label, if any:
+					 * return RC_EXIT so that the EXIT continues to
+					 * recurse upward.
 					 */
 				}
 
@@ -2425,10 +2429,10 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	SPI_cursor_close(portal);
 
 	/*
-	 * Set the FOUND variable to indicate the result of executing the
-	 * loop (namely, whether we looped one or more times). This must be
-	 * set here so that it does not interfere with the value of the
-	 * FOUND variable inside the loop processing itself.
+	 * Set the FOUND variable to indicate the result of executing the loop
+	 * (namely, whether we looped one or more times). This must be set
+	 * here so that it does not interfere with the value of the FOUND
+	 * variable inside the loop processing itself.
 	 */
 	exec_set_found(estate, found);
 

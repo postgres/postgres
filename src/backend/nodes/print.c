@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.56 2002/06/20 20:29:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.57 2002/09/04 20:31:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -97,7 +97,7 @@ char *
 format_node_dump(const char *dump)
 {
 #define LINELEN		78
-	char		line[LINELEN+1];
+	char		line[LINELEN + 1];
 	StringInfoData str;
 	int			i;
 	int			j;
@@ -118,13 +118,13 @@ format_node_dump(const char *dump)
 		}
 		else
 		{
-			for (k = j-1; k > 0; k--)
+			for (k = j - 1; k > 0; k--)
 				if (line[k] == ' ')
 					break;
 			if (k > 0)
 			{
 				/* back up; will reprint all after space */
-				i -= (j-k-1);
+				i -= (j - k - 1);
 				j = k;
 			}
 		}
@@ -153,7 +153,7 @@ pretty_format_node_dump(const char *dump)
 #define INDENTSTOP	3
 #define MAXINDENT	60
 #define LINELEN		78
-	char		line[LINELEN+1];
+	char		line[LINELEN + 1];
 	StringInfoData str;
 	int			indentLev;
 	int			indentDist;
@@ -182,7 +182,7 @@ pretty_format_node_dump(const char *dump)
 					}
 					/* print the } at indentDist */
 					line[indentDist] = '}';
-					line[indentDist+1] = '\0';
+					line[indentDist + 1] = '\0';
 					appendStringInfo(&str, "%s\n", line);
 					/* outdent */
 					if (indentLev > 0)

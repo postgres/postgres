@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.28 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.29 2002/09/04 20:31:09 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -45,7 +45,7 @@ static HashScanList HashScans = (HashScanList) NULL;
 
 
 static void _hash_scandel(IndexScanDesc scan,
-						  BlockNumber blkno, OffsetNumber offno);
+			  BlockNumber blkno, OffsetNumber offno);
 
 
 /*
@@ -158,7 +158,7 @@ _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 		 * then step backwards (affecting current), then exchange again.
 		 */
 		ItemPointerData tmpitem;
-		Buffer tmpbuf;
+		Buffer		tmpbuf;
 
 		tmpitem = *mark;
 		*mark = *current;

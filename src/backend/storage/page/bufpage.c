@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.49 2002/09/02 02:47:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.50 2002/09/04 20:31:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ PageAddItem(Page page,
 		else
 		{
 			if (offsetNumber < limit)
-				needshuffle = true; /* need to move existing linp's */
+				needshuffle = true;		/* need to move existing linp's */
 		}
 	}
 	else
@@ -378,8 +378,8 @@ PageGetFreeSpace(Page page)
 	int			space;
 
 	/*
-	 * Use signed arithmetic here so that we behave sensibly if
-	 * pd_lower > pd_upper.
+	 * Use signed arithmetic here so that we behave sensibly if pd_lower >
+	 * pd_upper.
 	 */
 	space = (int) ((PageHeader) page)->pd_upper -
 		(int) ((PageHeader) page)->pd_lower;
@@ -440,9 +440,9 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 
 	/*
 	 * First, we want to get rid of the pd_linp entry for the index tuple.
-	 * We copy all subsequent linp's back one slot in the array.
-	 * We don't use PageGetItemId, because we are manipulating the _array_,
-	 * not individual linp's.
+	 * We copy all subsequent linp's back one slot in the array. We don't
+	 * use PageGetItemId, because we are manipulating the _array_, not
+	 * individual linp's.
 	 */
 	nbytes = phdr->pd_lower -
 		((char *) &phdr->pd_linp[offidx + 1] - (char *) phdr);
@@ -480,7 +480,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	if (!PageIsEmpty(page))
 	{
 		nline--;				/* there's one less than when we started */
-		for (i = nline; --i >= 0; )
+		for (i = nline; --i >= 0;)
 		{
 			if (PageGetItemId(phdr, i + 1)->lp_off <= offset)
 				PageGetItemId(phdr, i + 1)->lp_off += size;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bsdi.h,v 1.16 2002/06/20 20:29:33 momjian Exp $
+ * $Id: bsdi.h,v 1.17 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,6 @@ do { \
 	dld_unlink_by_file(handle, 1); \
 	free(handle); \
 } while (0)
-
 #endif   /* not HAVE_DLOPEN */
 
 #endif   /* PORT_PROTOS_H */

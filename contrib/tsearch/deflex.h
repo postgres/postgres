@@ -12,12 +12,12 @@
 #define HOST		6
 #define SCIENTIFIC	7
 #define VERSIONNUMBER	8
-#define PARTHYPHENWORD 	9	
-#define CYRPARTHYPHENWORD 	10	
-#define LATPARTHYPHENWORD 	11	
-#define SPACE 		12
-#define TAG 		13
-#define HTTP 		14
+#define PARTHYPHENWORD	9
+#define CYRPARTHYPHENWORD	10
+#define LATPARTHYPHENWORD	11
+#define SPACE		12
+#define TAG			13
+#define HTTP		14
 #define HYPHENWORD	15
 #define LATHYPHENWORD	16
 #define CYRHYPHENWORD	17
@@ -25,10 +25,9 @@
 #define FILEPATH	19
 #define DECIMAL		20
 #define SIGNEDINT	21
-#define UNSIGNEDINT	22
+#define UNSIGNEDINT 22
 #define HTMLENTITY	23
 
 extern const char *descr[];
 
 #endif
-

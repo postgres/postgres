@@ -1966,9 +1966,9 @@ pgquery_dictresult(pgqueryobject * self, PyObject * args)
 												 * one */
 								s++;
 
-							for (k = 0; 
-								*s && k < sizeof(cashbuf)/sizeof(cashbuf[0])-1; 
-								s++)
+							for (k = 0;
+								 *s && k < sizeof(cashbuf) / sizeof(cashbuf[0]) - 1;
+								 s++)
 							{
 								if (*s != ',')
 									cashbuf[k++] = *s;

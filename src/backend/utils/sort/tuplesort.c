@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.26 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.27 2002/09/04 20:31:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1854,8 +1854,8 @@ comparetup_index(Tuplesortstate *state, const void *a, const void *b)
 	 * otherwise the sort algorithm wouldn't have checked whether one must
 	 * appear before the other.
 	 *
-	 * Some rather brain-dead implementations of qsort will sometimes
-	 * call the comparison routine to compare a value to itself.  (At this
+	 * Some rather brain-dead implementations of qsort will sometimes call
+	 * the comparison routine to compare a value to itself.  (At this
 	 * writing only QNX 4 is known to do such silly things.)  Don't raise
 	 * a bogus error in that case.
 	 */

@@ -11,8 +11,8 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.10 2002/07/20 05:43:31 momjian Exp $
- *	  
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.11 2002/09/04 20:31:47 momjian Exp $
+ *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
  *	  SSH tunnels provide anonymous confidentiality, the presumption
@@ -21,27 +21,27 @@
  *	  anonymous connections will use SSH tunnels.
  *
  *	  This code verifies the server certificate, to detect simple
- *	  "man-in-the-middle" and "impersonation" attacks.  The 
+ *	  "man-in-the-middle" and "impersonation" attacks.	The
  *	  server certificate, or better yet the CA certificate used
  *	  to sign the server certificate, should be present in the
  *	  "$HOME/.postgresql/root.crt" file.  If this file isn't
- *	  readable, or the server certificate can't be validated, 
+ *	  readable, or the server certificate can't be validated,
  *	  pqsecure_open_client() will return an error code.
  *
  *	  Additionally, the server certificate's "common name" must
  *	  resolve to the other end of the socket.  This makes it
  *	  substantially harder to pull off a "man-in-the-middle" or
  *	  "impersonation" attack even if the server's private key
- *	  has been stolen.  This check limits acceptable network
+ *	  has been stolen.	This check limits acceptable network
  *	  layers to Unix sockets (weird, but legal), TCPv4 and TCPv6.
  *
  *	  Unfortunately neither the current front- or back-end handle
  *	  failure gracefully, resulting in the backend hiccupping.
  *	  This points out problems in each (the frontend shouldn't even
  *	  try to do SSL if pqsecure_initialize() fails, and the backend
- *	  shouldn't crash/recover if an SSH negotiation fails.  The 
+ *	  shouldn't crash/recover if an SSH negotiation fails.  The
  *	  backend definitely needs to be fixed, to prevent a "denial
- *	  of service" attack, but I don't know enough about how the 
+ *	  of service" attack, but I don't know enough about how the
  *	  backend works (especially that pre-SSL negotiation) to identify
  *	  a fix.
  *
@@ -49,7 +49,7 @@
  *
  *	  Unlike the server's static private key, the client's
  *	  static private key ($HOME/.postgresql/postgresql.key)
- *	  should normally be stored encrypted.  However we still
+ *	  should normally be stored encrypted.	However we still
  *	  support EPH since it's useful for other reasons.
  *
  *	  ...
@@ -61,9 +61,9 @@
  *	  keeping it closed to everyone else.
  *
  *	  The user's certificate and private key are located in
- *	    $HOME/.postgresql/postgresql.crt
+ *		$HOME/.postgresql/postgresql.crt
  *	  and
- *	    $HOME/.postgresql/postgresql.key
+ *		$HOME/.postgresql/postgresql.key
  *	  respectively.
  *
  *	  ...
@@ -118,19 +118,19 @@
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #include <openssl/e_os.h>
-#endif /* USE_SSL */
+#endif   /* USE_SSL */
 
 
 #ifdef USE_SSL
-static int verify_cb(int ok, X509_STORE_CTX *ctx);
-static int verify_peer(PGconn *);
-static DH *load_dh_file(int keylength);
-static DH *load_dh_buffer(const char *, size_t);
-static DH *tmp_dh_cb(SSL *s, int is_export, int keylength);
-static int client_cert_cb(SSL *, X509 **, EVP_PKEY **);
-static int initialize_SSL(PGconn *);
+static int	verify_cb(int ok, X509_STORE_CTX *ctx);
+static int	verify_peer(PGconn *);
+static DH  *load_dh_file(int keylength);
+static DH  *load_dh_buffer(const char *, size_t);
+static DH  *tmp_dh_cb(SSL *s, int is_export, int keylength);
+static int	client_cert_cb(SSL *, X509 **, EVP_PKEY **);
+static int	initialize_SSL(PGconn *);
 static void destroy_SSL(void);
-static int open_client_SSL(PGconn *);
+static int	open_client_SSL(PGconn *);
 static void close_SSL(PGconn *);
 static const char *SSLerrmessage(void);
 #endif
@@ -140,7 +140,7 @@ static SSL_CTX *SSL_context = NULL;
 #endif
 
 /* ------------------------------------------------------------ */
-/*                       Hardcoded values                       */
+/*						 Hardcoded values						*/
 /* ------------------------------------------------------------ */
 
 /*
@@ -148,7 +148,7 @@ static SSL_CTX *SSL_context = NULL;
  *	As discussed above, EDH protects the confidentiality of
  *	sessions even if the static private key is compromised,
  *	so we are *highly* motivated to ensure that we can use
- *	EDH even if the user... or an attacker... deletes the 
+ *	EDH even if the user... or an attacker... deletes the
  *	$HOME/.postgresql/dh*.pem files.
  *
  *	It's not critical that users have EPH keys, but it doesn't
@@ -193,16 +193,16 @@ KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 -----END DH PARAMETERS-----\n";
 
 /* ------------------------------------------------------------ */
-/*           Procedures common to all secure sessions           */
+/*			 Procedures common to all secure sessions			*/
 /* ------------------------------------------------------------ */
 
 /*
  *	Initialize global context
  */
 int
-pqsecure_initialize (PGconn *conn)
+pqsecure_initialize(PGconn *conn)
 {
-	int r = 0;
+	int			r = 0;
 
 #ifdef USE_SSL
 	r = initialize_SSL(conn);
@@ -215,7 +215,7 @@ pqsecure_initialize (PGconn *conn)
  *	Destroy global context
  */
 void
-pqsecure_destroy (void)
+pqsecure_destroy(void)
 {
 #ifdef USE_SSL
 	destroy_SSL();
@@ -225,10 +225,10 @@ pqsecure_destroy (void)
 /*
  *	Attempt to negotiate secure session.
  */
-int 
-pqsecure_open_client (PGconn *conn)
+int
+pqsecure_open_client(PGconn *conn)
 {
-	int r = 0;
+	int			r = 0;
 
 #ifdef USE_SSL
 	r = open_client_SSL(conn);
@@ -241,7 +241,7 @@ pqsecure_open_client (PGconn *conn)
  *	Close secure session.
  */
 void
-pqsecure_close (PGconn *conn)
+pqsecure_close(PGconn *conn)
 {
 #ifdef USE_SSL
 	if (conn->ssl)
@@ -253,9 +253,9 @@ pqsecure_close (PGconn *conn)
  *	Read data from a secure connection.
  */
 ssize_t
-pqsecure_read (PGconn *conn, void *ptr, size_t len)
+pqsecure_read(PGconn *conn, void *ptr, size_t len)
 {
-	ssize_t n;
+	ssize_t		n;
 
 #ifdef USE_SSL
 	if (conn->ssl)
@@ -263,30 +263,30 @@ pqsecure_read (PGconn *conn, void *ptr, size_t len)
 		n = SSL_read(conn->ssl, ptr, len);
 		switch (SSL_get_error(conn->ssl, n))
 		{
-		case SSL_ERROR_NONE:
-			break;
-		case SSL_ERROR_WANT_READ:
-			break;
-		case SSL_ERROR_SYSCALL:
-			SOCK_ERRNO = get_last_socket_error();
-			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("SSL SYSCALL error: %s\n"), 
-				SOCK_STRERROR(SOCK_ERRNO));
-			break;
-		case SSL_ERROR_SSL:
-			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("SSL error: %s\n"), SSLerrmessage());
-			/* fall through */
-		case SSL_ERROR_ZERO_RETURN:
-			pqsecure_close(conn);
-			SOCK_ERRNO = ECONNRESET;
-			n = -1;
-			break;
+			case SSL_ERROR_NONE:
+				break;
+			case SSL_ERROR_WANT_READ:
+				break;
+			case SSL_ERROR_SYSCALL:
+				SOCK_ERRNO = get_last_socket_error();
+				printfPQExpBuffer(&conn->errorMessage,
+								libpq_gettext("SSL SYSCALL error: %s\n"),
+								  SOCK_STRERROR(SOCK_ERRNO));
+				break;
+			case SSL_ERROR_SSL:
+				printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
+				/* fall through */
+			case SSL_ERROR_ZERO_RETURN:
+				pqsecure_close(conn);
+				SOCK_ERRNO = ECONNRESET;
+				n = -1;
+				break;
 		}
 	}
 	else
 #endif
-	n = recv(conn->sock, ptr, len, 0);
+		n = recv(conn->sock, ptr, len, 0);
 
 	return n;
 }
@@ -295,12 +295,12 @@ pqsecure_read (PGconn *conn, void *ptr, size_t len)
  *	Write data to a secure connection.
  */
 ssize_t
-pqsecure_write (PGconn *conn, const void *ptr, size_t len)
+pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
-	ssize_t n;
+	ssize_t		n;
 
 #ifndef WIN32
-	pqsigfunc oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
+	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
 #endif
 
 #ifdef USE_SSL
@@ -309,30 +309,30 @@ pqsecure_write (PGconn *conn, const void *ptr, size_t len)
 		n = SSL_write(conn->ssl, ptr, len);
 		switch (SSL_get_error(conn->ssl, n))
 		{
-		case SSL_ERROR_NONE:
-			break;
-		case SSL_ERROR_WANT_WRITE:
-			break;
-		case SSL_ERROR_SYSCALL:
-			SOCK_ERRNO = get_last_socket_error();
-			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("SSL SYSCALL error: %s\n"),
-				SOCK_STRERROR(SOCK_ERRNO));
-			break;
-		case SSL_ERROR_SSL:
-			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("SSL error: %s\n"), SSLerrmessage());
-			/* fall through */
-		case SSL_ERROR_ZERO_RETURN:
-			pqsecure_close(conn);
-			SOCK_ERRNO = ECONNRESET;
-			n = -1;
-			break;
+			case SSL_ERROR_NONE:
+				break;
+			case SSL_ERROR_WANT_WRITE:
+				break;
+			case SSL_ERROR_SYSCALL:
+				SOCK_ERRNO = get_last_socket_error();
+				printfPQExpBuffer(&conn->errorMessage,
+								libpq_gettext("SSL SYSCALL error: %s\n"),
+								  SOCK_STRERROR(SOCK_ERRNO));
+				break;
+			case SSL_ERROR_SSL:
+				printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("SSL error: %s\n"), SSLerrmessage());
+				/* fall through */
+			case SSL_ERROR_ZERO_RETURN:
+				pqsecure_close(conn);
+				SOCK_ERRNO = ECONNRESET;
+				n = -1;
+				break;
 		}
 	}
 	else
 #endif
-	n = send(conn->sock, ptr, len, 0);
+		n = send(conn->sock, ptr, len, 0);
 
 #ifndef WIN32
 	pqsignal(SIGPIPE, oldsighandler);
@@ -342,7 +342,7 @@ pqsecure_write (PGconn *conn, const void *ptr, size_t len)
 }
 
 /* ------------------------------------------------------------ */
-/*                        SSL specific code                     */
+/*						  SSL specific code						*/
 /* ------------------------------------------------------------ */
 #ifdef USE_SSL
 /*
@@ -357,7 +357,7 @@ pqsecure_write (PGconn *conn, const void *ptr, size_t len)
  *	for now we accept the default checks.
  */
 static int
-verify_cb (int ok, X509_STORE_CTX *ctx)
+verify_cb(int ok, X509_STORE_CTX *ctx)
 {
 	return ok;
 }
@@ -367,13 +367,13 @@ verify_cb (int ok, X509_STORE_CTX *ctx)
  *	This function is not thread-safe due to gethostbyname2().
  */
 static int
-verify_peer (PGconn *conn)
+verify_peer(PGconn *conn)
 {
 	struct hostent *h = NULL;
 	struct sockaddr addr;
 	struct sockaddr_in *sin;
-	socklen_t len;
-	char **s;
+	socklen_t	len;
+	char	  **s;
 	unsigned long l;
 
 	/* get the address on the other side of the socket */
@@ -381,8 +381,8 @@ verify_peer (PGconn *conn)
 	if (getpeername(conn->sock, &addr, &len) == -1)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("error querying socket: %s\n"), 
-			SOCK_STRERROR(SOCK_ERRNO));
+						  libpq_gettext("error querying socket: %s\n"),
+						  SOCK_STRERROR(SOCK_ERRNO));
 		return -1;
 	}
 
@@ -394,31 +394,33 @@ verify_peer (PGconn *conn)
 	if ((h = gethostbyname2(conn->peer_cn, addr.sa_family)) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("error getting information about host (%s): %s\n"),
-			conn->peer_cn, hstrerror(h_errno));
+		libpq_gettext("error getting information about host (%s): %s\n"),
+						  conn->peer_cn, hstrerror(h_errno));
 		return -1;
 	}
 
 	/* does the address match? */
 	switch (addr.sa_family)
 	{
-	case AF_INET:
-		sin = (struct sockaddr_in *) &addr;
-		for (s = h->h_addr_list; *s != NULL; s++)
-		{
-			if (!memcmp(&sin->sin_addr.s_addr, *s, h->h_length))
-				return 0;
-		}
-		break;
+		case AF_INET:
+			sin = (struct sockaddr_in *) & addr;
+			for (s = h->h_addr_list; *s != NULL; s++)
+			{
+				if (!memcmp(&sin->sin_addr.s_addr, *s, h->h_length))
+					return 0;
+			}
+			break;
 
-	default:
-		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("sorry, this protocol not yet supported\n"));
-		return -1;
+		default:
+			printfPQExpBuffer(&conn->errorMessage,
+			  libpq_gettext("sorry, this protocol not yet supported\n"));
+			return -1;
 	}
 
-	/* the prior test should be definitive, but in practice
-	 * it sometimes fails.  So we also check the aliases.  */
+	/*
+	 * the prior test should be definitive, but in practice it sometimes
+	 * fails.  So we also check the aliases.
+	 */
 	for (s = h->h_aliases; *s != NULL; s++)
 	{
 		if (strcasecmp(conn->peer_cn, *s) == 0)
@@ -428,20 +430,20 @@ verify_peer (PGconn *conn)
 	/* generate protocol-aware error message */
 	switch (addr.sa_family)
 	{
-	case AF_INET:
-		sin = (struct sockaddr_in *) &addr;
-		l = ntohl(sin->sin_addr.s_addr);
-		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext(
-				"server common name '%s' does not resolve to %ld.%ld.%ld.%ld\n"),
-			conn->peer_cn, (l >> 24) % 0x100, (l >> 16) % 0x100,
-			(l >> 8) % 0x100, l % 0x100);
-		break;
-	default:
-		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext(
-				"server common name '%s' does not resolve to peer address\n"),
-			conn->peer_cn);
+		case AF_INET:
+			sin = (struct sockaddr_in *) & addr;
+			l = ntohl(sin->sin_addr.s_addr);
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext(
+											"server common name '%s' does not resolve to %ld.%ld.%ld.%ld\n"),
+					 conn->peer_cn, (l >> 24) % 0x100, (l >> 16) % 0x100,
+							  (l >> 8) % 0x100, l % 0x100);
+			break;
+		default:
+			printfPQExpBuffer(&conn->errorMessage,
+							  libpq_gettext(
+			"server common name '%s' does not resolve to peer address\n"),
+							  conn->peer_cn);
 	}
 
 	return -1;
@@ -451,24 +453,24 @@ verify_peer (PGconn *conn)
  *	Load precomputed DH parameters.
  *
  *	To prevent "downgrade" attacks, we perform a number of checks
- *	to verify that the DBA-generated DH parameters file contains 
+ *	to verify that the DBA-generated DH parameters file contains
  *	what we expect it to contain.
  */
-static DH *
-load_dh_file (int keylength)
+static DH  *
+load_dh_file(int keylength)
 {
 	struct passwd *pwd;
-	FILE *fp;
-	char fnbuf[2048];
-	DH *dh = NULL;
-	int codes;
+	FILE	   *fp;
+	char		fnbuf[2048];
+	DH		   *dh = NULL;
+	int			codes;
 
 	if ((pwd = getpwuid(getuid())) == NULL)
 		return NULL;
 
 	/* attempt to open file.  It's not an error if it doesn't exist. */
 	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/dh%d.pem",
-		pwd->pw_dir, keylength);
+			 pwd->pw_dir, keylength);
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 		return NULL;
 
@@ -478,27 +480,19 @@ load_dh_file (int keylength)
 	fclose(fp);
 
 	/* is the prime the correct size? */
-	if (dh != NULL && 8*DH_size(dh) < keylength)
-	{
+	if (dh != NULL && 8 * DH_size(dh) < keylength)
 		dh = NULL;
-	}
 
 	/* make sure the DH parameters are usable */
 	if (dh != NULL)
 	{
 		if (DH_check(dh, &codes))
-		{
 			return NULL;
-		}
 		if (codes & DH_CHECK_P_NOT_PRIME)
-		{
 			return NULL;
-		}
-		if ((codes & DH_NOT_SUITABLE_GENERATOR) && 
+		if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
 			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
-		{
 			return NULL;
-		}
 	}
 
 	return dh;
@@ -510,11 +504,11 @@ load_dh_file (int keylength)
  *	To prevent problems if the DH parameters files don't even
  *	exist, we can load DH parameters hardcoded into this file.
  */
-static DH *
-load_dh_buffer (const char *buffer, size_t len)
+static DH  *
+load_dh_buffer(const char *buffer, size_t len)
 {
-	BIO *bio;
-	DH *dh = NULL;
+	BIO		   *bio;
+	DH		   *dh = NULL;
 
 	bio = BIO_new_mem_buf((char *) buffer, len);
 	if (bio == NULL)
@@ -538,62 +532,60 @@ load_dh_buffer (const char *buffer, size_t len)
  *	the OpenSSL library can efficiently generate random keys from
  *	the information provided.
  */
-static DH *
-tmp_dh_cb (SSL *s, int is_export, int keylength)
+static DH  *
+tmp_dh_cb(SSL *s, int is_export, int keylength)
 {
-	DH *r = NULL;
-	static DH *dh = NULL;
-	static DH *dh512 = NULL;
-	static DH *dh1024 = NULL;
-	static DH *dh2048 = NULL;
-	static DH *dh4096 = NULL;
+	DH		   *r = NULL;
+	static DH  *dh = NULL;
+	static DH  *dh512 = NULL;
+	static DH  *dh1024 = NULL;
+	static DH  *dh2048 = NULL;
+	static DH  *dh4096 = NULL;
 
 	switch (keylength)
 	{
-	case 512:
-		if (dh512 == NULL)
-			dh512 = load_dh_file(keylength);
-		if (dh512 == NULL)
-			dh512 = load_dh_buffer(file_dh512, sizeof file_dh512);
-		r = dh512;
-		break;
+		case 512:
+			if (dh512 == NULL)
+				dh512 = load_dh_file(keylength);
+			if (dh512 == NULL)
+				dh512 = load_dh_buffer(file_dh512, sizeof file_dh512);
+			r = dh512;
+			break;
 
-	case 1024:
-		if (dh1024 == NULL)
-			dh1024 = load_dh_file(keylength);
-		if (dh1024 == NULL)
-			dh1024 = load_dh_buffer(file_dh1024, sizeof file_dh1024);
-		r = dh1024;
-		break;
+		case 1024:
+			if (dh1024 == NULL)
+				dh1024 = load_dh_file(keylength);
+			if (dh1024 == NULL)
+				dh1024 = load_dh_buffer(file_dh1024, sizeof file_dh1024);
+			r = dh1024;
+			break;
 
-	case 2048:
-		if (dh2048 == NULL)
-			dh2048 = load_dh_file(keylength);
-		if (dh2048 == NULL)
-			dh2048 = load_dh_buffer(file_dh2048, sizeof file_dh2048);
-		r = dh2048;
-		break;
+		case 2048:
+			if (dh2048 == NULL)
+				dh2048 = load_dh_file(keylength);
+			if (dh2048 == NULL)
+				dh2048 = load_dh_buffer(file_dh2048, sizeof file_dh2048);
+			r = dh2048;
+			break;
 
-	case 4096:
-		if (dh4096 == NULL)
-			dh4096 = load_dh_file(keylength);
-		if (dh4096 == NULL)
-			dh4096 = load_dh_buffer(file_dh4096, sizeof file_dh4096);
-		r = dh4096;
-		break;
+		case 4096:
+			if (dh4096 == NULL)
+				dh4096 = load_dh_file(keylength);
+			if (dh4096 == NULL)
+				dh4096 = load_dh_buffer(file_dh4096, sizeof file_dh4096);
+			r = dh4096;
+			break;
 
-	default:
-		if (dh == NULL)
-			dh = load_dh_file(keylength);
-		r = dh;
+		default:
+			if (dh == NULL)
+				dh = load_dh_file(keylength);
+			r = dh;
 	}
 
 	/* this may take a long time, but it may be necessary... */
-	if (r == NULL || 8*DH_size(r) < keylength)
-	{
+	if (r == NULL || 8 * DH_size(r) < keylength)
 		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
-	}
-	
+
 	return r;
 }
 
@@ -605,39 +597,40 @@ tmp_dh_cb (SSL *s, int is_export, int keylength)
  *	Returns 1 on success, 0 on no data, -1 on error.
  */
 static int
-client_cert_cb (SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 {
 	struct passwd *pwd;
-	struct stat buf, buf2;
-	char fnbuf[2048];
-	FILE *fp;
-	PGconn *conn = (PGconn *) SSL_get_app_data(ssl);
-	int (*cb)() = NULL; /* how to read user password */
+	struct stat buf,
+				buf2;
+	char		fnbuf[2048];
+	FILE	   *fp;
+	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
+	int			(*cb) () = NULL;	/* how to read user password */
 
 	if ((pwd = getpwuid(getuid())) == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
-			libpq_gettext("unable to get user information\n"));
+		printfPQExpBuffer(&conn->errorMessage,
+					  libpq_gettext("unable to get user information\n"));
 		return -1;
 	}
 
 	/* read the user certificate */
 	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/postgresql.crt",
-		pwd->pw_dir);
+			 pwd->pw_dir);
 	if (stat(fnbuf, &buf) == -1)
 		return 0;
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
-			libpq_gettext("unable to open certificate (%s): %s\n"),
-			fnbuf, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+				  libpq_gettext("unable to open certificate (%s): %s\n"),
+						  fnbuf, strerror(errno));
 		return -1;
 	}
 	if (PEM_read_X509(fp, x509, NULL, NULL) == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
-			libpq_gettext("unable to read certificate (%s): %s\n"),
-			fnbuf, SSLerrmessage());
+		printfPQExpBuffer(&conn->errorMessage,
+				  libpq_gettext("unable to read certificate (%s): %s\n"),
+						  fnbuf, SSLerrmessage());
 		fclose(fp);
 		return -1;
 	}
@@ -645,44 +638,44 @@ client_cert_cb (SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 	/* read the user key */
 	snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/postgresql.key",
-		pwd->pw_dir);
+			 pwd->pw_dir);
 	if (stat(fnbuf, &buf) == -1)
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
-			libpq_gettext("certificate present, but not private key (%s)\n"),
-			fnbuf);
+		printfPQExpBuffer(&conn->errorMessage,
+		libpq_gettext("certificate present, but not private key (%s)\n"),
+						  fnbuf);
 		X509_free(*x509);
 		return 0;
 	}
 	if (!S_ISREG(buf.st_mode) || (buf.st_mode & 0077) ||
 		buf.st_uid != getuid())
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
-			libpq_gettext("private key has bad permissions (%s)\n"), fnbuf);
+		printfPQExpBuffer(&conn->errorMessage,
+		 libpq_gettext("private key has bad permissions (%s)\n"), fnbuf);
 		X509_free(*x509);
 		return -1;
 	}
 	if ((fp = fopen(fnbuf, "r")) == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
-			libpq_gettext("unable to open private key file (%s): %s\n"),
-			fnbuf, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+			 libpq_gettext("unable to open private key file (%s): %s\n"),
+						  fnbuf, strerror(errno));
 		X509_free(*x509);
 		return -1;
 	}
 	if (fstat(fileno(fp), &buf2) == -1 ||
 		buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
+		printfPQExpBuffer(&conn->errorMessage,
 			libpq_gettext("private key changed under us (%s)\n"), fnbuf);
 		X509_free(*x509);
 		return -1;
 	}
 	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
-			libpq_gettext("unable to read private key (%s): %s\n"),
-			fnbuf, SSLerrmessage());
+		printfPQExpBuffer(&conn->errorMessage,
+				  libpq_gettext("unable to read private key (%s): %s\n"),
+						  fnbuf, SSLerrmessage());
 		X509_free(*x509);
 		fclose(fp);
 		return -1;
@@ -692,9 +685,9 @@ client_cert_cb (SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	/* verify that the cert and key go together */
 	if (!X509_check_private_key(*x509, *pkey))
 	{
-		printfPQExpBuffer(&conn->errorMessage, 
+		printfPQExpBuffer(&conn->errorMessage,
 			libpq_gettext("certificate/private key mismatch (%s): %s\n"),
-			fnbuf, SSLerrmessage());
+						  fnbuf, SSLerrmessage());
 		X509_free(*x509);
 		EVP_PKEY_free(*pkey);
 		return -1;
@@ -707,11 +700,11 @@ client_cert_cb (SSL *ssl, X509 **x509, EVP_PKEY **pkey)
  *	Initialize global SSL context.
  */
 static int
-initialize_SSL (PGconn *conn)
+initialize_SSL(PGconn *conn)
 {
 	struct stat buf;
 	struct passwd *pwd;
-	char fnbuf[2048];
+	char		fnbuf[2048];
 
 	if (!SSL_context)
 	{
@@ -721,7 +714,7 @@ initialize_SSL (PGconn *conn)
 		if (!SSL_context)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not create SSL context: %s\n"),
+					 libpq_gettext("could not create SSL context: %s\n"),
 							  SSLerrmessage());
 			return -1;
 		}
@@ -730,25 +723,25 @@ initialize_SSL (PGconn *conn)
 	if ((pwd = getpwuid(getuid())) != NULL)
 	{
 		snprintf(fnbuf, sizeof fnbuf, "%s/.postgresql/root.crt",
-			pwd->pw_dir);
+				 pwd->pw_dir);
 		if (stat(fnbuf, &buf) == -1)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not read  root cert list(%s): %s"),
-				fnbuf, strerror(errno));
+				 libpq_gettext("could not read  root cert list(%s): %s"),
+							  fnbuf, strerror(errno));
 			return -1;
 		}
 		if (!SSL_CTX_load_verify_locations(SSL_context, fnbuf, 0))
 		{
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not read root cert list (%s): %s"),
-				fnbuf, SSLerrmessage());
+				 libpq_gettext("could not read root cert list (%s): %s"),
+							  fnbuf, SSLerrmessage());
 			return -1;
 		}
 	}
 
-	SSL_CTX_set_verify(SSL_context, 
-		SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_cb);
+	SSL_CTX_set_verify(SSL_context,
+		   SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_cb);
 	SSL_CTX_set_verify_depth(SSL_context, 1);
 
 	/* set up empheral DH keys */
@@ -765,7 +758,7 @@ initialize_SSL (PGconn *conn)
  *	Destroy global SSL context.
  */
 static void
-destroy_SSL (void)
+destroy_SSL(void)
 {
 	if (SSL_context)
 	{
@@ -778,9 +771,9 @@ destroy_SSL (void)
  *	Attempt to negotiate SSL connection.
  */
 static int
-open_client_SSL (PGconn *conn)
+open_client_SSL(PGconn *conn)
 {
-	int r;
+	int			r;
 
 	if (!(conn->ssl = SSL_new(SSL_context)) ||
 		!SSL_set_app_data(conn->ssl, conn) ||
@@ -788,21 +781,24 @@ open_client_SSL (PGconn *conn)
 		SSL_connect(conn->ssl) <= 0)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("could not establish SSL connection: %s\n"),
+			   libpq_gettext("could not establish SSL connection: %s\n"),
 						  SSLerrmessage());
 		close_SSL(conn);
 		return -1;
 	}
 
 	/* check the certificate chain of the server */
-	/* this eliminates simple man-in-the-middle attacks and
-	 * simple impersonations */
+
+	/*
+	 * this eliminates simple man-in-the-middle attacks and simple
+	 * impersonations
+	 */
 	r = SSL_get_verify_result(conn->ssl);
 	if (r != X509_V_OK)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("certificate could not be validated: %s\n"),
-			X509_verify_cert_error_string(r));
+			   libpq_gettext("certificate could not be validated: %s\n"),
+						  X509_verify_cert_error_string(r));
 		close_SSL(conn);
 		return -1;
 	}
@@ -812,24 +808,27 @@ open_client_SSL (PGconn *conn)
 	if (conn->peer == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-			libpq_gettext("certificate could not be obtained: %s\n"),
-			SSLerrmessage());
+				libpq_gettext("certificate could not be obtained: %s\n"),
+						  SSLerrmessage());
 		close_SSL(conn);
 		return -1;
 	}
 
 	X509_NAME_oneline(X509_get_subject_name(conn->peer),
-		conn->peer_dn, sizeof(conn->peer_dn));
-	conn->peer_dn[sizeof(conn->peer_dn)-1] = '\0';
+					  conn->peer_dn, sizeof(conn->peer_dn));
+	conn->peer_dn[sizeof(conn->peer_dn) - 1] = '\0';
 
 	X509_NAME_get_text_by_NID(X509_get_subject_name(conn->peer),
-		NID_commonName, conn->peer_cn, SM_USER);
+							  NID_commonName, conn->peer_cn, SM_USER);
 	conn->peer_cn[SM_USER] = '\0';
 
 	/* verify that the common name resolves to peer */
-	/* this is necessary to eliminate man-in-the-middle attacks
-	 * and impersonations where the attacker somehow learned
-	 * the server's private key */
+
+	/*
+	 * this is necessary to eliminate man-in-the-middle attacks and
+	 * impersonations where the attacker somehow learned the server's
+	 * private key
+	 */
 	if (verify_peer(conn) == -1)
 	{
 		close_SSL(conn);
@@ -843,7 +842,7 @@ open_client_SSL (PGconn *conn)
  *	Close SSL connection.
  */
 static void
-close_SSL (PGconn *conn)
+close_SSL(PGconn *conn)
 {
 	if (conn->ssl)
 	{
@@ -863,9 +862,9 @@ close_SSL (PGconn *conn)
 static const char *
 SSLerrmessage(void)
 {
-	unsigned long	errcode;
-	const char	   *errreason;
-	static char		errbuf[32];
+	unsigned long errcode;
+	const char *errreason;
+	static char errbuf[32];
 
 	errcode = ERR_get_error();
 	if (errcode == 0)
@@ -888,4 +887,4 @@ PQgetssl(PGconn *conn)
 	return conn->ssl;
 }
 
-#endif /* USE_SSL */
+#endif   /* USE_SSL */

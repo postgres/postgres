@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.51 2002/09/02 02:47:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.52 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,8 @@ ReceiveSharedInvalidMessages(
 		 * The routines later in this file that use shared mode are okay with
 		 * this, because they aren't looking at the ProcState fields
 		 * associated with SI message transfer; they only use the
-		 * ProcState array as an easy way to find all the PGPROC structures.
+		 * ProcState array as an easy way to find all the PGPROC
+		 * structures.
 		 */
 		LWLockAcquire(SInvalLock, LW_SHARED);
 		getResult = SIGetDataEntry(shmInvalBuffer, MyBackendId, &data);
@@ -380,9 +381,9 @@ GetSnapshotData(bool serializable)
 			 * running a transaction, and xacts started since we read the
 			 * next transaction ID.  There's no need to store XIDs above
 			 * what we got from ReadNewTransactionId, since we'll treat
-			 * them as running anyway.  We also assume that such xacts can't
-			 * compute an xmin older than ours, so they needn't be considered
-			 * in computing globalxmin.
+			 * them as running anyway.	We also assume that such xacts
+			 * can't compute an xmin older than ours, so they needn't be
+			 * considered in computing globalxmin.
 			 */
 			if (proc == MyProc ||
 				!TransactionIdIsNormal(xid) ||
@@ -411,9 +412,9 @@ GetSnapshotData(bool serializable)
 	Assert(TransactionIdIsValid(MyProc->xmin));
 
 	/*
-	 * Update globalxmin to include actual process xids.  This is a slightly
-	 * different way of computing it than GetOldestXmin uses, but should give
-	 * the same result.
+	 * Update globalxmin to include actual process xids.  This is a
+	 * slightly different way of computing it than GetOldestXmin uses, but
+	 * should give the same result.
 	 */
 	if (TransactionIdPrecedes(xmin, globalxmin))
 		globalxmin = xmin;
@@ -551,7 +552,7 @@ BackendIdGetProc(BackendId procId)
 int
 CountEmptyBackendSlots(void)
 {
-	int count;
+	int			count;
 
 	LWLockAcquire(SInvalLock, LW_SHARED);
 

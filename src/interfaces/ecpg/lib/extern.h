@@ -6,7 +6,7 @@
 void		ECPGadd_mem(void *ptr, int lineno);
 
 bool ECPGget_data(const PGresult *, int, int, int, enum ECPGttype type,
-		 enum ECPGttype, char *, char *, long, long, long, bool);
+			 enum ECPGttype, char *, char *, long, long, long, bool);
 struct connection *ECPGget_connection(const char *);
 void		ECPGinit_sqlca(void);
 char	   *ECPGalloc(long, int);

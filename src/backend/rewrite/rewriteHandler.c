@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.107 2002/08/29 06:05:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.108 2002/09/04 20:31:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ static Query *rewriteRuleAction(Query *parsetree,
 static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void rewriteTargetList(Query *parsetree, Relation target_relation);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
-										TargetEntry *prior_tle);
+					TargetEntry *prior_tle);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
@@ -239,7 +239,7 @@ adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
  * then junk fields (these in no particular order).
  *
  * We must do items 1 and 2 before firing rewrite rules, else rewritten
- * references to NEW.foo will produce wrong or incomplete results.  Item 3
+ * references to NEW.foo will produce wrong or incomplete results.	Item 3
  * is not needed for rewriting, but will be needed by the planner, and we
  * can do it essentially for free while handling items 1 and 2.
  */
@@ -261,7 +261,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
-		Form_pg_attribute att_tup = target_relation->rd_att->attrs[attrno-1];
+		Form_pg_attribute att_tup = target_relation->rd_att->attrs[attrno - 1];
 		TargetEntry *new_tle = NULL;
 
 		/* We can ignore deleted attributes */
@@ -269,7 +269,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 			continue;
 
 		/*
-		 * Look for targetlist entries matching this attr.  We match by
+		 * Look for targetlist entries matching this attr.	We match by
 		 * resno, but the resname should match too.
 		 *
 		 * Junk attributes are not candidates to be matched.
@@ -291,9 +291,9 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 		if (new_tle == NULL && commandType == CMD_INSERT)
 		{
 			/*
-			 * Didn't find a matching tlist entry; if it's an INSERT,
-			 * look for a default value, and add a tlist entry computing
-			 * the default if we find one.
+			 * Didn't find a matching tlist entry; if it's an INSERT, look
+			 * for a default value, and add a tlist entry computing the
+			 * default if we find one.
 			 */
 			Node	   *new_expr;
 
@@ -303,7 +303,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 				new_tle = makeTargetEntry(makeResdom(attrno,
 													 att_tup->atttypid,
 													 att_tup->atttypmod,
-													 pstrdup(NameStr(att_tup->attname)),
+									  pstrdup(NameStr(att_tup->attname)),
 													 false),
 										  new_expr);
 		}
@@ -448,30 +448,28 @@ build_column_default(Relation rel, int attrno)
 	if (expr == NULL)
 	{
 		/*
-		 * No per-column default, so look for a default for the type itself.
+		 * No per-column default, so look for a default for the type
+		 * itself.
 		 */
 		if (att_tup->attisset)
 		{
 			/*
-			 * Set attributes are represented as OIDs no matter what the set
-			 * element type is, and the element type's default is irrelevant
-			 * too.
+			 * Set attributes are represented as OIDs no matter what the
+			 * set element type is, and the element type's default is
+			 * irrelevant too.
 			 */
 		}
 		else
-		{
 			expr = get_typdefault(atttype);
-		}
 	}
 
 	if (expr == NULL)
 		return NULL;			/* No default anywhere */
 
 	/*
-	 * Make sure the value is coerced to the target column
-	 * type (might not be right type yet if it's not a
-	 * constant!)  This should match the parser's processing of
-	 * non-defaulted expressions --- see
+	 * Make sure the value is coerced to the target column type (might not
+	 * be right type yet if it's not a constant!)  This should match the
+	 * parser's processing of non-defaulted expressions --- see
 	 * updateTargetListEntry().
 	 */
 	exprtype = exprType(expr);
@@ -482,8 +480,8 @@ build_column_default(Relation rel, int attrno)
 								atttype, atttypmod, false);
 
 		/*
-		 * This really shouldn't fail; should have checked the
-		 * default's type when it was created ...
+		 * This really shouldn't fail; should have checked the default's
+		 * type when it was created ...
 		 */
 		if (expr == NULL)
 			elog(ERROR, "Column \"%s\" is of type %s"
@@ -495,8 +493,8 @@ build_column_default(Relation rel, int attrno)
 	}
 
 	/*
-	 * If the column is a fixed-length type, it may need a
-	 * length coercion as well as a type coercion.
+	 * If the column is a fixed-length type, it may need a length coercion
+	 * as well as a type coercion.
 	 */
 	expr = coerce_type_typmod(NULL, expr, atttype, atttypmod);
 

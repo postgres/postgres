@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.96 2002/08/18 18:46:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.97 2002/09/04 20:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,8 @@
 static char *clauseText[] = {"ORDER BY", "GROUP BY", "DISTINCT ON"};
 
 static void extractRemainingColumns(List *common_colnames,
-					 List *src_colnames, List *src_colvars,
-					 List **res_colnames, List **res_colvars);
+						List *src_colnames, List *src_colvars,
+						List **res_colnames, List **res_colvars);
 static Node *transformJoinUsingClause(ParseState *pstate,
 						 List *leftVars, List *rightVars);
 static Node *transformJoinOnClause(ParseState *pstate, JoinExpr *j,
@@ -51,11 +51,11 @@ static RangeTblRef *transformTableEntry(ParseState *pstate, RangeVar *r);
 static RangeTblRef *transformRangeSubselect(ParseState *pstate,
 						RangeSubselect *r);
 static RangeTblRef *transformRangeFunction(ParseState *pstate,
-										   RangeFunction *r);
+					   RangeFunction *r);
 static Node *transformFromClauseItem(ParseState *pstate, Node *n,
 						List **containedRels);
 static Node *buildMergedJoinVar(JoinType jointype,
-								Var *l_colvar, Var *r_colvar);
+				   Var *l_colvar, Var *r_colvar);
 static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
@@ -85,9 +85,9 @@ transformFromClause(ParseState *pstate, List *frmList)
 
 	/*
 	 * The grammar will have produced a list of RangeVars,
-	 * RangeSubselects, RangeFunctions, and/or JoinExprs. Transform each one
-	 * (possibly adding entries to the rtable), check for duplicate refnames,
-	 * and then add it to the joinlist and namespace.
+	 * RangeSubselects, RangeFunctions, and/or JoinExprs. Transform each
+	 * one (possibly adding entries to the rtable), check for duplicate
+	 * refnames, and then add it to the joinlist and namespace.
 	 */
 	foreach(fl, frmList)
 	{
@@ -466,13 +466,14 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	funcname = strVal(llast(((FuncCall *) r->funccallnode)->funcname));
 
 	/*
-	 * Transform the raw FuncCall node.  This is a bit tricky because we don't
-	 * want the function expression to be able to see any FROM items already
-	 * created in the current query (compare to transformRangeSubselect).
-	 * But it does need to be able to see any further-up parent states.
-	 * So, temporarily make the current query level have an empty namespace.
-	 * NOTE: this code is OK only because the expression can't legally alter
-	 * the namespace by causing implicit relation refs to be added.
+	 * Transform the raw FuncCall node.  This is a bit tricky because we
+	 * don't want the function expression to be able to see any FROM items
+	 * already created in the current query (compare to
+	 * transformRangeSubselect). But it does need to be able to see any
+	 * further-up parent states. So, temporarily make the current query
+	 * level have an empty namespace. NOTE: this code is OK only because
+	 * the expression can't legally alter the namespace by causing
+	 * implicit relation refs to be added.
 	 */
 	save_namespace = pstate->p_namespace;
 	pstate->p_namespace = NIL;
@@ -482,18 +483,18 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	pstate->p_namespace = save_namespace;
 
 	/*
-	 * We still need to check that the function parameters don't refer
-	 * to any other rels.  That could happen despite our hack on the namespace
-	 * if fully-qualified names are used.  So, check there are no local
-	 * Var references in the transformed expression.  (Outer references
-	 * are OK, and are ignored here.)
+	 * We still need to check that the function parameters don't refer to
+	 * any other rels.	That could happen despite our hack on the
+	 * namespace if fully-qualified names are used.  So, check there are
+	 * no local Var references in the transformed expression.  (Outer
+	 * references are OK, and are ignored here.)
 	 */
 	if (pull_varnos(funcexpr) != NIL)
 		elog(ERROR, "FROM function expression may not refer to other relations of same query level");
 
 	/*
-	 * Disallow aggregate functions in the expression.  (No reason to postpone
-	 * this check until parseCheckAggregates.)
+	 * Disallow aggregate functions in the expression.	(No reason to
+	 * postpone this check until parseCheckAggregates.)
 	 */
 	if (pstate->p_hasAggs)
 	{
@@ -503,8 +504,9 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 
 	/*
 	 * Insist we have a bare function call (explain.c is the only place
-	 * that depends on this, I think).  If this fails, it's probably because
-	 * transformExpr interpreted the function notation as a type coercion.
+	 * that depends on this, I think).	If this fails, it's probably
+	 * because transformExpr interpreted the function notation as a type
+	 * coercion.
 	 */
 	if (!funcexpr ||
 		!IsA(funcexpr, Expr) ||
@@ -596,8 +598,8 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		j->rarg = transformFromClauseItem(pstate, j->rarg, &r_containedRels);
 
 		/*
-		 * Generate combined list of relation indexes for possible use
-		 * by transformJoinOnClause below.
+		 * Generate combined list of relation indexes for possible use by
+		 * transformJoinOnClause below.
 		 */
 		my_containedRels = nconc(l_containedRels, r_containedRels);
 
@@ -893,6 +895,7 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 	switch (jointype)
 	{
 		case JOIN_INNER:
+
 			/*
 			 * We can use either var; prefer non-coerced one if available.
 			 */
@@ -912,25 +915,25 @@ buildMergedJoinVar(JoinType jointype, Var *l_colvar, Var *r_colvar)
 			res_node = r_node;
 			break;
 		case JOIN_FULL:
-		{
-			/*
-			 * Here we must build a COALESCE expression to ensure that
-			 * the join output is non-null if either input is.
-			 */
-			CaseExpr   *c = makeNode(CaseExpr);
-			CaseWhen   *w = makeNode(CaseWhen);
-			NullTest   *n = makeNode(NullTest);
+			{
+				/*
+				 * Here we must build a COALESCE expression to ensure that
+				 * the join output is non-null if either input is.
+				 */
+				CaseExpr   *c = makeNode(CaseExpr);
+				CaseWhen   *w = makeNode(CaseWhen);
+				NullTest   *n = makeNode(NullTest);
 
-			n->arg = l_node;
-			n->nulltesttype = IS_NOT_NULL;
-			w->expr = (Node *) n;
-			w->result = l_node;
-			c->casetype = outcoltype;
-			c->args = makeList1(w);
-			c->defresult = r_node;
-			res_node = (Node *) c;
-			break;
-		}
+				n->arg = l_node;
+				n->nulltesttype = IS_NOT_NULL;
+				w->expr = (Node *) n;
+				w->result = l_node;
+				c->casetype = outcoltype;
+				c->args = makeList1(w);
+				c->defresult = r_node;
+				res_node = (Node *) c;
+				break;
+			}
 		default:
 			elog(ERROR, "buildMergedJoinVar: unexpected jointype %d",
 				 (int) jointype);

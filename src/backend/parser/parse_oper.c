@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.58 2002/07/20 05:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.59 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,10 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 
-static Oid	binary_oper_exact(Oid arg1, Oid arg2,
-							  FuncCandidateList candidates);
-static Oid	oper_select_candidate(int nargs, Oid *input_typeids,
-								  FuncCandidateList candidates);
+static Oid binary_oper_exact(Oid arg1, Oid arg2,
+				  FuncCandidateList candidates);
+static Oid oper_select_candidate(int nargs, Oid *input_typeids,
+					  FuncCandidateList candidates);
 static void op_error(List *op, Oid arg1, Oid arg2);
 static void unary_op_error(List *op, Oid arg, bool is_left_op);
 
@@ -52,7 +52,7 @@ Oid
 LookupOperName(List *opername, Oid oprleft, Oid oprright)
 {
 	FuncCandidateList clist;
-	char	oprkind;
+	char		oprkind;
 
 	if (!OidIsValid(oprleft))
 		oprkind = 'l';
@@ -85,9 +85,9 @@ Oid
 LookupOperNameTypeNames(List *opername, TypeName *oprleft,
 						TypeName *oprright, const char *caller)
 {
-	Oid		operoid;
-	Oid		leftoid,
-			rightoid;
+	Oid			operoid;
+	Oid			leftoid,
+				rightoid;
 
 	if (oprleft == NULL)
 		leftoid = InvalidOid;
@@ -652,7 +652,10 @@ oper(List *opname, Oid ltypeId, Oid rtypeId, bool noError)
 			 * Otherwise, search for the most suitable candidate.
 			 */
 
-			/* Unspecified type for one of the arguments? then use the other */
+			/*
+			 * Unspecified type for one of the arguments? then use the
+			 * other
+			 */
 			if (rtypeId == InvalidOid)
 				rtypeId = ltypeId;
 			else if (ltypeId == InvalidOid)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.70 2002/09/02 02:47:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.71 2002/09/04 20:31:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ sort_inner_and_outer(Query *root,
 		default:
 			elog(ERROR, "sort_inner_and_outer: unexpected join type %d",
 				 (int) jointype);
-			useallclauses = false;	/* keep compiler quiet */
+			useallclauses = false;		/* keep compiler quiet */
 			break;
 	}
 

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.12 2002/01/18 15:51:00 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.13 2002/09/04 20:31:46 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -90,8 +90,10 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
 	{
-		/* if we are not in autocommit mode, already have committed 
-		 * the transaction and get another commit, just ignore it */
+		/*
+		 * if we are not in autocommit mode, already have committed the
+		 * transaction and get another commit, just ignore it
+		 */
 		if (!con->committed || con->autocommit)
 		{
 			if ((res = PQexec(con->connection, transaction)) == NULL)

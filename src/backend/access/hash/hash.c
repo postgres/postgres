@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.59 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.60 2002/09/04 20:31:09 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -164,6 +164,7 @@ hashinsert(PG_FUNCTION_ARGS)
 	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
@@ -213,7 +214,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
 	Page		page;
 	OffsetNumber offnum;
-	bool res;
+	bool		res;
 
 	/*
 	 * If we've already initialized this scan, we can just advance it in
@@ -228,18 +229,21 @@ hashgettuple(PG_FUNCTION_ARGS)
 		if (scan->kill_prior_tuple)
 		{
 			/*
-			 * Yes, so mark it by setting the LP_DELETE bit in the item flags.
+			 * Yes, so mark it by setting the LP_DELETE bit in the item
+			 * flags.
 			 */
 			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
 			page = BufferGetPage(so->hashso_curbuf);
 			PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
+
 			/*
 			 * Since this can be redone later if needed, it's treated the
-			 * same as a commit-hint-bit status update for heap tuples:
-			 * we mark the buffer dirty but don't make a WAL log entry.
+			 * same as a commit-hint-bit status update for heap tuples: we
+			 * mark the buffer dirty but don't make a WAL log entry.
 			 */
 			SetBufferCommitInfoNeedsSave(so->hashso_curbuf);
 		}
+
 		/*
 		 * Now continue the scan.
 		 */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.58 2002/08/06 02:36:35 tgl Exp $
+ * $Id: buf_internals.h,v 1.59 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,12 +150,12 @@ typedef struct _bmtrace
 
 
 /* counters in buf_init.c */
-extern long int	ReadBufferCount;
-extern long int	ReadLocalBufferCount;
-extern long int	BufferHitCount;
-extern long int	LocalBufferHitCount;
-extern long int	BufferFlushCount;
-extern long int	LocalBufferFlushCount;
+extern long int ReadBufferCount;
+extern long int ReadLocalBufferCount;
+extern long int BufferHitCount;
+extern long int LocalBufferHitCount;
+extern long int BufferFlushCount;
+extern long int LocalBufferFlushCount;
 
 
 /*
@@ -185,7 +185,7 @@ extern BufferDesc *LocalBufferDescriptors;
 
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
 				 bool *foundPtr);
-extern void	WriteLocalBuffer(Buffer buffer, bool release);
+extern void WriteLocalBuffer(Buffer buffer, bool release);
 extern void AtEOXact_LocalBuffers(bool isCommit);
 
 #endif   /* BUFMGR_INTERNALS_H */

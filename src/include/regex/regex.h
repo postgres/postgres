@@ -101,10 +101,10 @@ typedef struct
 
 extern int	pg_regcomp(regex_t *preg, const char *pattern, int cflags);
 extern size_t pg_regerror(int errcode, const regex_t *preg,
-						  char *errbuf, size_t errbuf_size);
+			char *errbuf, size_t errbuf_size);
 extern int pg_regexec(const regex_t *preg, const char *string,
-					  size_t nmatch,
-					  regmatch_t *pmatch, int eflags);
+		   size_t nmatch,
+		   regmatch_t *pmatch, int eflags);
 extern void pg_regfree(regex_t *preg);
 
 #endif   /* !_REGEX_H_ */

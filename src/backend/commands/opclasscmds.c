@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.4 2002/08/22 00:01:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/opclasscmds.c,v 1.5 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@
 
 
 static void storeOperators(Oid opclassoid, int numOperators,
-						   Oid *operators, bool *recheck);
+			   Oid *operators, bool *recheck);
 static void storeProcedures(Oid opclassoid, int numProcs, Oid *procedures);
 
 
@@ -68,8 +68,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	AclResult	aclresult;
 	NameData	opcName;
 	int			i;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 
 	/* Convert list of names to a name and namespace */
 	namespaceoid = QualifiedNameGetCreationNamespace(stmt->opclassname,
@@ -107,9 +107,9 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	storageoid = InvalidOid;
 
 	/*
-	 * Create work arrays to hold info about operators and procedures.
-	 * We do this mainly so that we can detect duplicate strategy
-	 * numbers and support-proc numbers.
+	 * Create work arrays to hold info about operators and procedures. We
+	 * do this mainly so that we can detect duplicate strategy numbers and
+	 * support-proc numbers.
 	 */
 	operators = (Oid *) palloc(sizeof(Oid) * numOperators);
 	MemSet(operators, 0, sizeof(Oid) * numOperators);
@@ -141,11 +141,11 @@ DefineOpClass(CreateOpClassStmt *stmt)
 						 item->number);
 				if (item->args != NIL)
 				{
-					TypeName *typeName1 = (TypeName *) lfirst(item->args);
-					TypeName *typeName2 = (TypeName *) lsecond(item->args);
+					TypeName   *typeName1 = (TypeName *) lfirst(item->args);
+					TypeName   *typeName2 = (TypeName *) lsecond(item->args);
 
 					operOid = LookupOperNameTypeNames(item->name,
-													  typeName1, typeName2,
+													typeName1, typeName2,
 													  "DefineOpClass");
 					/* No need to check for error */
 				}
@@ -221,8 +221,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	rel = heap_openr(OperatorClassRelationName, RowExclusiveLock);
 
 	/*
-	 * Make sure there is no existing opclass of this name (this is
-	 * just to give a more friendly error message than "duplicate key").
+	 * Make sure there is no existing opclass of this name (this is just
+	 * to give a more friendly error message than "duplicate key").
 	 */
 	if (SearchSysCacheExists(CLAAMNAMENSP,
 							 ObjectIdGetDatum(amoid),
@@ -233,12 +233,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 			 opcname, stmt->amname);
 
 	/*
-	 * If we are creating a default opclass, check there isn't one already.
-	 * (XXX should we restrict this test to visible opclasses?)
+	 * If we are creating a default opclass, check there isn't one
+	 * already. (XXX should we restrict this test to visible opclasses?)
 	 */
 	if (stmt->isDefault)
 	{
-		ScanKeyData	skey[1];
+		ScanKeyData skey[1];
 		SysScanDesc scan;
 
 		ScanKeyEntryInitialize(&skey[0], 0x0,
@@ -276,11 +276,11 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	values[i++] = ObjectIdGetDatum(amoid);		/* opcamid */
 	namestrcpy(&opcName, opcname);
 	values[i++] = NameGetDatum(&opcName);		/* opcname */
-	values[i++] = ObjectIdGetDatum(namespaceoid);	/* opcnamespace */
+	values[i++] = ObjectIdGetDatum(namespaceoid);		/* opcnamespace */
 	values[i++] = Int32GetDatum(GetUserId());	/* opcowner */
 	values[i++] = ObjectIdGetDatum(typeoid);	/* opcintype */
-	values[i++] = BoolGetDatum(stmt->isDefault);	/* opcdefault */
-	values[i++] = ObjectIdGetDatum(storageoid);	/* opckeytype */
+	values[i++] = BoolGetDatum(stmt->isDefault);		/* opcdefault */
+	values[i++] = ObjectIdGetDatum(storageoid); /* opckeytype */
 
 	tup = heap_formtuple(rel->rd_att, values, nulls);
 
@@ -291,8 +291,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 	heap_freetuple(tup);
 
 	/*
-	 * Now add tuples to pg_amop and pg_amproc tying in the
-	 * operators and functions.
+	 * Now add tuples to pg_amop and pg_amproc tying in the operators and
+	 * functions.
 	 */
 	storeOperators(opclassoid, numOperators, operators, recheck);
 	storeProcedures(opclassoid, numProcs, procedures);
@@ -358,11 +358,12 @@ static void
 storeOperators(Oid opclassoid, int numOperators,
 			   Oid *operators, bool *recheck)
 {
-	Relation		rel;
-	Datum			values[Natts_pg_amop];
-	char			nulls[Natts_pg_amop];
-	HeapTuple		tup;
-	int				i, j;
+	Relation	rel;
+	Datum		values[Natts_pg_amop];
+	char		nulls[Natts_pg_amop];
+	HeapTuple	tup;
+	int			i,
+				j;
 
 	rel = heap_openr(AccessMethodOperatorRelationName, RowExclusiveLock);
 
@@ -378,9 +379,9 @@ storeOperators(Oid opclassoid, int numOperators,
 		}
 
 		i = 0;
-		values[i++] = ObjectIdGetDatum(opclassoid);			/* amopclaid */
-		values[i++] = Int16GetDatum(j + 1);					/* amopstrategy */
-		values[i++] = BoolGetDatum(recheck[j]);		/* amopreqcheck */
+		values[i++] = ObjectIdGetDatum(opclassoid);		/* amopclaid */
+		values[i++] = Int16GetDatum(j + 1);		/* amopstrategy */
+		values[i++] = BoolGetDatum(recheck[j]); /* amopreqcheck */
 		values[i++] = ObjectIdGetDatum(operators[j]);	/* amopopr */
 
 		tup = heap_formtuple(rel->rd_att, values, nulls);
@@ -401,11 +402,12 @@ storeOperators(Oid opclassoid, int numOperators,
 static void
 storeProcedures(Oid opclassoid, int numProcs, Oid *procedures)
 {
-	Relation		rel;
-	Datum			values[Natts_pg_amproc];
-	char			nulls[Natts_pg_amproc];
-	HeapTuple		tup;
-	int				i, j;
+	Relation	rel;
+	Datum		values[Natts_pg_amproc];
+	char		nulls[Natts_pg_amproc];
+	HeapTuple	tup;
+	int			i,
+				j;
 
 	rel = heap_openr(AccessMethodProcedureRelationName, RowExclusiveLock);
 
@@ -421,9 +423,9 @@ storeProcedures(Oid opclassoid, int numProcs, Oid *procedures)
 		}
 
 		i = 0;
-		values[i++] = ObjectIdGetDatum(opclassoid);			/* amopclaid */
-		values[i++] = Int16GetDatum(j + 1);					/* amprocnum */
-		values[i++] = ObjectIdGetDatum(procedures[j]);		/* amproc */
+		values[i++] = ObjectIdGetDatum(opclassoid);		/* amopclaid */
+		values[i++] = Int16GetDatum(j + 1);		/* amprocnum */
+		values[i++] = ObjectIdGetDatum(procedures[j]);	/* amproc */
 
 		tup = heap_formtuple(rel->rd_att, values, nulls);
 
@@ -445,14 +447,15 @@ storeProcedures(Oid opclassoid, int numProcs, Oid *procedures)
 void
 RemoveOpClass(RemoveOpClassStmt *stmt)
 {
-	Oid			amID, opcID;
+	Oid			amID,
+				opcID;
 	char	   *schemaname;
 	char	   *opcname;
 	HeapTuple	tuple;
 	ObjectAddress object;
 
 	/*
-	 *	Get the access method's OID.
+	 * Get the access method's OID.
 	 */
 	amID = GetSysCacheOid(AMNAME,
 						  CStringGetDatum(stmt->amname),
@@ -471,7 +474,7 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 	if (schemaname)
 	{
 		/* Look in specific schema only */
-		Oid		namespaceId;
+		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
 		tuple = SearchSysCache(CLAAMNAMENSP,
@@ -523,10 +526,10 @@ RemoveOpClass(RemoveOpClassStmt *stmt)
 void
 RemoveOpClassById(Oid opclassOid)
 {
-	Relation		rel;
-	HeapTuple		tup;
-	ScanKeyData		skey[1];
-	SysScanDesc		scan;
+	Relation	rel;
+	HeapTuple	tup;
+	ScanKeyData skey[1];
+	SysScanDesc scan;
 
 	/*
 	 * First remove the pg_opclass entry itself.
@@ -536,7 +539,7 @@ RemoveOpClassById(Oid opclassOid)
 	tup = SearchSysCache(CLAOID,
 						 ObjectIdGetDatum(opclassOid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))	/* should not happen */
+	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "RemoveOpClassById: couldn't find pg_class entry %u",
 			 opclassOid);
 
@@ -559,9 +562,7 @@ RemoveOpClassById(Oid opclassOid)
 							  SnapshotNow, 1, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
 		simple_heap_delete(rel, &tup->t_self);
-	}
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
@@ -579,9 +580,7 @@ RemoveOpClassById(Oid opclassOid)
 							  SnapshotNow, 1, skey);
 
 	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
 		simple_heap_delete(rel, &tup->t_self);
-	}
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);

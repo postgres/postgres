@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.31 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.32 2002/09/04 20:31:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,8 +383,8 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	 * information for the new "clean" tuple.
 	 *
 	 * Note: we use memory on the stack to optimize things when we are
-	 * dealing with a small number of attributes. for large tuples we
-	 * just use palloc.
+	 * dealing with a small number of attributes. for large tuples we just
+	 * use palloc.
 	 */
 	if (cleanLength > 64)
 	{

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.32 2002/06/20 20:29:52 momjian Exp $
+ * $Id: datetime.h,v 1.33 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@
 #define ABS_BEFORE		18
 #define ABS_AFTER		19
 /* generic fields to help with parsing */
-#define ISODATE	20
-#define ISOTIME	21
+#define ISODATE 20
+#define ISOTIME 21
 /* reserved for unrecognized string values */
 #define UNKNOWN_FIELD	31
 
@@ -277,8 +277,8 @@ extern int DecodeTimeOnly(char **field, int *ftype,
 			   struct tm * tm, fsec_t *fsec, int *tzp);
 
 extern int DecodeInterval(char **field, int *ftype,
-				int nf, int *dtype,
-				struct tm * tm, fsec_t *fsec);
+			   int nf, int *dtype,
+			   struct tm * tm, fsec_t *fsec);
 
 extern int	DetermineLocalTimeZone(struct tm * tm);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.70 2002/07/18 02:02:29 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71 2002/09/04 20:31:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,8 +111,8 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 			 * Easiest way to get the current DEFAULT state is to fetch
 			 * the DEFAULT string from guc.c and recursively parse it.
 			 *
-			 * We can't simply "return assign_datestyle(...)" because we
-			 * need to handle constructs like "DEFAULT, ISO".
+			 * We can't simply "return assign_datestyle(...)" because we need
+			 * to handle constructs like "DEFAULT, ISO".
 			 */
 			int			saveDateStyle = DateStyle;
 			bool		saveEuroDates = EuroDates;
@@ -164,7 +164,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 		return value;
 
 	/*
-	 * Prepare the canonical string to return.  GUC wants it malloc'd.
+	 * Prepare the canonical string to return.	GUC wants it malloc'd.
 	 */
 	result = (char *) malloc(32);
 	if (!result)
@@ -188,8 +188,8 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 	strcat(result, newEuroDates ? ", EURO" : ", US");
 
 	/*
-	 * Finally, it's safe to assign to the global variables;
-	 * the assignment cannot fail now.
+	 * Finally, it's safe to assign to the global variables; the
+	 * assignment cannot fail now.
 	 */
 	DateStyle = newDateStyle;
 	EuroDates = newEuroDates;
@@ -203,7 +203,7 @@ assign_datestyle(const char *value, bool doit, bool interactive)
 const char *
 show_datestyle(void)
 {
-	static char		buf[64];
+	static char buf[64];
 
 	switch (DateStyle)
 	{
@@ -270,6 +270,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 			return NULL;
 		}
 		*endptr = '\0';
+
 		/*
 		 * Try to parse it.  XXX an invalid interval format will result in
 		 * elog, which is not desirable for GUC.  We did what we could to
@@ -277,9 +278,9 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		 * coming in from postgresql.conf might contain anything.
 		 */
 		interval = DatumGetIntervalP(DirectFunctionCall3(interval_in,
-														 CStringGetDatum(val),
-														 ObjectIdGetDatum(InvalidOid),
-														 Int32GetDatum(-1)));
+													CStringGetDatum(val),
+											ObjectIdGetDatum(InvalidOid),
+													 Int32GetDatum(-1)));
 		pfree(val);
 		if (interval->month != 0)
 		{
@@ -318,8 +319,8 @@ assign_timezone(const char *value, bool doit, bool interactive)
 			 * available under Solaris, among others. Apparently putenv()
 			 * called as below clears the process-specific environment
 			 * variables.  Other reasonable arguments to putenv() (e.g.
-			 * "TZ=", "TZ", "") result in a core dump (under Linux anyway).
-			 * - thomas 1998-01-26
+			 * "TZ=", "TZ", "") result in a core dump (under Linux
+			 * anyway). - thomas 1998-01-26
 			 */
 			if (doit)
 			{
@@ -339,13 +340,14 @@ assign_timezone(const char *value, bool doit, bool interactive)
 			 * Otherwise assume it is a timezone name.
 			 *
 			 * XXX unfortunately we have no reasonable way to check whether a
-			 * timezone name is good, so we have to just assume that it is.
+			 * timezone name is good, so we have to just assume that it
+			 * is.
 			 */
 			if (doit)
 			{
 				strcpy(tzbuf, "TZ=");
-				strncat(tzbuf, value, sizeof(tzbuf)-4);
-				if (putenv(tzbuf) != 0)	/* shouldn't happen? */
+				strncat(tzbuf, value, sizeof(tzbuf) - 4);
+				if (putenv(tzbuf) != 0) /* shouldn't happen? */
 					elog(LOG, "assign_timezone: putenv failed");
 				tzset();
 				HasCTZSet = false;
@@ -360,7 +362,7 @@ assign_timezone(const char *value, bool doit, bool interactive)
 		return value;
 
 	/*
-	 * Prepare the canonical string to return.  GUC wants it malloc'd.
+	 * Prepare the canonical string to return.	GUC wants it malloc'd.
 	 */
 	result = (char *) malloc(sizeof(tzbuf));
 	if (!result)
@@ -372,13 +374,9 @@ assign_timezone(const char *value, bool doit, bool interactive)
 				 (double) CTimeZone / 3600.0);
 	}
 	else if (tzbuf[0] == 'T')
-	{
 		strcpy(result, tzbuf + 3);
-	}
 	else
-	{
 		strcpy(result, "UNKNOWN");
-	}
 
 	return result;
 }
@@ -399,7 +397,7 @@ show_timezone(void)
 		interval.time = CTimeZone;
 
 		tzn = DatumGetCString(DirectFunctionCall1(interval_out,
-												  IntervalPGetDatum(&interval)));
+										  IntervalPGetDatum(&interval)));
 	}
 	else
 		tzn = getenv("TZ");
@@ -422,11 +420,20 @@ assign_XactIsoLevel(const char *value, bool doit, bool interactive)
 		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL must be called before any query");
 
 	if (strcmp(value, "serializable") == 0)
-		{ if (doit) XactIsoLevel = XACT_SERIALIZABLE; }
+	{
+		if (doit)
+			XactIsoLevel = XACT_SERIALIZABLE;
+	}
 	else if (strcmp(value, "read committed") == 0)
-		{ if (doit) XactIsoLevel = XACT_READ_COMMITTED; }
+	{
+		if (doit)
+			XactIsoLevel = XACT_READ_COMMITTED;
+	}
 	else if (strcmp(value, "default") == 0)
-		{ if (doit) XactIsoLevel = DefaultXactIsoLevel; }
+	{
+		if (doit)
+			XactIsoLevel = DefaultXactIsoLevel;
+	}
 	else
 		return NULL;
 
@@ -475,11 +482,12 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
 	encoding = pg_valid_client_encoding(value);
 	if (encoding < 0)
 		return NULL;
-		
-	/* XXX SetClientEncoding depends on namespace functions which are
-	 * not available at startup time. So we accept requested client
-	 * encoding anyway which might not be valid (e.g. no conversion
-	 * procs available).
+
+	/*
+	 * XXX SetClientEncoding depends on namespace functions which are not
+	 * available at startup time. So we accept requested client encoding
+	 * anyway which might not be valid (e.g. no conversion procs
+	 * available).
 	 */
 	if (SetClientEncoding(encoding, doit) < 0)
 	{

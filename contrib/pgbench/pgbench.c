@@ -1,10 +1,10 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.18 2002/08/15 02:58:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.19 2002/09/04 20:31:08 momjian Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2000-2002  Tatsuo Ishii
+ * Copyright (c) 2000-2002	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -88,8 +88,8 @@ typedef struct
 	int			state;			/* state No. */
 	int			cnt;			/* xacts count */
 	int			ecnt;			/* error count */
-	int			listen;			/* 0 indicates that an async query
-								 * has been sent */
+	int			listen;			/* 0 indicates that an async query has
+								 * been sent */
 	int			aid;			/* account id for this transaction */
 	int			bid;			/* branch id for this transaction */
 	int			tid;			/* teller id for this transaction */
@@ -241,15 +241,19 @@ doOne(CState * state, int n, int debug, int ttype)
 				discard_response(st);
 				break;
 			case 6:				/* response to "end" */
-				/* transaction finished: record the time it took in the log */
+
+				/*
+				 * transaction finished: record the time it took in the
+				 * log
+				 */
 				if (use_log)
 				{
-					long long diff;
+					long long	diff;
 					struct timeval now;
 
 					gettimeofday(&now, 0);
 					diff = (now.tv_sec - st->txn_begin.tv_sec) * 1000000 +
-						   (now.tv_usec - st->txn_begin.tv_usec);
+						(now.tv_usec - st->txn_begin.tv_usec);
 
 					fprintf(LOGFILE, "%d %d %lld\n", st->id, st->cnt, diff);
 				}
@@ -318,19 +322,19 @@ doOne(CState * state, int n, int debug, int ttype)
 		case 3:
 			if (ttype == 0)
 			{
-			    snprintf(sql, 256, "update tellers set tbalance = tbalance + %d where tid = %d\n",
-				    st->delta, st->tid);
-			    break;
+				snprintf(sql, 256, "update tellers set tbalance = tbalance + %d where tid = %d\n",
+						 st->delta, st->tid);
+				break;
 			}
 		case 4:
 			if (ttype == 0)
 			{
-			    snprintf(sql, 256, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
-			    break;
+				snprintf(sql, 256, "update branches set bbalance = bbalance + %d where bid = %d", st->delta, st->bid);
+				break;
 			}
 		case 5:
 			snprintf(sql, 256, "insert into history(tid,bid,aid,delta,mtime) values(%d,%d,%d,%d,'now')",
-					st->tid, st->bid, st->aid, st->delta);
+					 st->tid, st->bid, st->aid, st->delta);
 			break;
 		case 6:
 			strcpy(sql, "end");
@@ -513,7 +517,7 @@ init(void)
 	for (i = 0; i < ntellers * tps; i++)
 	{
 		snprintf(sql, 256, "insert into tellers(tid,bid,tbalance) values (%d,%d,0)"
-				,i + 1, i / ntellers + 1);
+				 ,i + 1, i / ntellers + 1);
 		res = PQexec(con, sql);
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
@@ -577,6 +581,7 @@ init(void)
 			}
 
 #ifdef NOT_USED
+
 			/*
 			 * do a checkpoint to purge the old WAL logs
 			 */
@@ -586,7 +591,7 @@ init(void)
 				fprintf(stderr, "%s", PQerrorMessage(con));
 				exit(1);
 			}
-#endif /* NOT_USED */
+#endif   /* NOT_USED */
 		}
 	}
 
@@ -614,7 +619,7 @@ printResults(
 				t2;
 	int			i;
 	int			normal_xacts = 0;
-	char	*s;
+	char	   *s;
 
 	for (i = 0; i < nclients; i++)
 		normal_xacts += state[i].cnt;
@@ -626,11 +631,11 @@ printResults(
 	t2 = normal_xacts * 1000000.0 / t2;
 
 	if (ttype == 0)
-	    s = "TPC-B (sort of)";
+		s = "TPC-B (sort of)";
 	else if (ttype == 2)
-	    s = "Update only accounts";
+		s = "Update only accounts";
 	else
-	    s = "SELECT only";
+		s = "SELECT only";
 
 	printf("transaction type: %s\n", s);
 	printf("scaling factor: %d\n", tps);
@@ -655,8 +660,9 @@ main(int argc, char **argv)
 										 * testing? */
 	int			is_full_vacuum = 0;		/* do full vacuum before testing? */
 	int			debug = 0;		/* debug flag */
-	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
-								 * 2: skip update of branches and tellers */
+	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT
+								 * only, 2: skip update of branches and
+								 * tellers */
 
 	static CState *state;		/* status of clients */
 
@@ -789,7 +795,7 @@ main(int argc, char **argv)
 
 	if (use_log)
 	{
-		char logpath[64];
+		char		logpath[64];
 
 		snprintf(logpath, 64, "pgbench_log.%d", getpid());
 		LOGFILE = fopen(logpath, "w");

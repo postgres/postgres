@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.27 2002/09/03 18:50:54 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.28 2002/09/04 20:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,12 +32,12 @@
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
-static size_t	_WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
+static size_t _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static size_t	_WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
-static size_t	_ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
+static size_t _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static size_t _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -107,13 +107,13 @@ static int	tarPrintf(ArchiveHandle *AH, TAR_MEMBER *th, const char *fmt,...);
 static void _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th);
 static int	_tarChecksum(char *th);
 static TAR_MEMBER *_tarPositionTo(ArchiveHandle *AH, const char *filename);
-static size_t	tarRead(void *buf, size_t len, TAR_MEMBER *th);
-static size_t	tarWrite(const void *buf, size_t len, TAR_MEMBER *th);
+static size_t tarRead(void *buf, size_t len, TAR_MEMBER *th);
+static size_t tarWrite(const void *buf, size_t len, TAR_MEMBER *th);
 static void _tarWriteHeader(TAR_MEMBER *th);
 static int	_tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th);
-static size_t	_tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh);
+static size_t _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh);
 
-static size_t	_scriptOut(ArchiveHandle *AH, const void *buf, size_t len);
+static size_t _scriptOut(ArchiveHandle *AH, const void *buf, size_t len);
 
 /*
  *	Initializer
@@ -152,7 +152,7 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
+	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
 	if (AH->lo_buf == NULL)
 		die_horribly(AH, modulename, "out of memory\n");
 
@@ -537,7 +537,7 @@ tarWrite(const void *buf, size_t len, TAR_MEMBER *th)
 
 	if (res != len)
 		die_horribly(th->AH, modulename,
-					 "could not write to tar member (wrote %lu, attempted %lu)\n",
+			"could not write to tar member (wrote %lu, attempted %lu)\n",
 					 (unsigned long) res, (unsigned long) len);
 
 	th->pos += res;
@@ -1025,7 +1025,9 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 
 	if (len != th->fileLen)
 	{
-		char buf1[100], buf2[100];
+		char		buf1[100],
+					buf2[100];
+
 		snprintf(buf1, 100, INT64_FORMAT, (int64) len);
 		snprintf(buf2, 100, INT64_FORMAT, (int64) th->pos);
 		die_horribly(AH, modulename, "actual file length (%s) does not match expected (%s)\n",
@@ -1060,7 +1062,9 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 	/* Go to end of current file, if any */
 	if (ctx->tarFHpos != 0)
 	{
-		char buf1[100], buf2[100];
+		char		buf1[100],
+					buf2[100];
+
 		snprintf(buf1, 100, INT64_FORMAT, (int64) ctx->tarFHpos);
 		snprintf(buf2, 100, INT64_FORMAT, (int64) ctx->tarNextMember);
 		ahlog(AH, 4, "moving from position %s to next member at file position %s\n",
@@ -1071,7 +1075,8 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 	}
 
 	{
-		char buf[100];
+		char		buf[100];
+
 		snprintf(buf, 100, INT64_FORMAT, (int64) ctx->tarFHpos);
 		ahlog(AH, 4, "now at file position %s\n", buf);
 	}
@@ -1138,7 +1143,9 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 #if 0
 		if (ftello(ctx->tarFH) != ctx->tarFHpos)
 		{
-			char buf1[100], buf2[100];
+			char		buf1[100],
+						buf2[100];
+
 			snprintf(buf1, 100, INT64_FORMAT, (int64) ftello(ctx->tarFH));
 			snprintf(buf2, 100, INT64_FORMAT, (int64) ftello(ctx->tarFHpos));
 			die_horribly(AH, modulename,
@@ -1188,7 +1195,8 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 	sscanf(&h[148], "%8o", &sum);
 
 	{
-		char buf[100];
+		char		buf[100];
+
 		snprintf(buf, 100, INT64_FORMAT, (int64) hPos);
 		ahlog(AH, 3, "TOC Entry %s at %s (length %lu, checksum %d)\n",
 			  &tag[0], buf, (unsigned long) len, sum);
@@ -1196,7 +1204,8 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 
 	if (chk != sum)
 	{
-		char buf[100];
+		char		buf[100];
+
 		snprintf(buf, 100, INT64_FORMAT, (int64) ftello(ctx->tarFH));
 		die_horribly(AH, modulename,
 					 "corrupt tar header found in %s "

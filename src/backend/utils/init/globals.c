@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.66 2002/08/12 00:36:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.67 2002/09/04 20:31:31 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -39,6 +39,7 @@ struct Port *MyProcPort;
 long		MyCancelKey;
 
 char	   *DataDir = NULL;
+
  /*
   * The PGDATA directory user says to use, or defaults to via environment
   * variable.  NULL if no option given and no environment variable set

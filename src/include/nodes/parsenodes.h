@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.205 2002/09/02 02:13:02 tgl Exp $
+ * $Id: parsenodes.h,v 1.206 2002/09/04 20:31:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,8 @@ typedef struct Query
 								 * statement */
 
 	int			resultRelation; /* target relation (index into rtable) */
-	RangeVar   *into;			/* target relation or portal (cursor) 
-								 * for portal just name is meaningful */
+	RangeVar   *into;			/* target relation or portal (cursor) for
+								 * portal just name is meaningful */
 	bool		isPortal;		/* is this a retrieve into portal? */
 	bool		isBinary;		/* binary portal? */
 
@@ -110,7 +110,7 @@ typedef struct Query
  * actual type OID is given by typeid, otherwise typeid is unused.
  *
  * If pct_type is TRUE, then names is actually a field name and we look up
- * the type of that field.  Otherwise (the normal case), names is a type
+ * the type of that field.	Otherwise (the normal case), names is a type
  * name possibly qualified with schema and database name.
  */
 typedef struct TypeName
@@ -272,7 +272,7 @@ typedef struct ConstraintTest
 {
 	NodeTag		type;
 	Node	   *arg;			/* input expression */
-	ConstraintTestType testtype; /* test type */
+	ConstraintTestType testtype;	/* test type */
 	char	   *name;			/* name of constraint (for error msgs) */
 	Node	   *check_expr;		/* for CHECK test, a boolean expression */
 } ConstraintTest;
@@ -421,7 +421,7 @@ typedef struct RangeFunction
  *
  * For a plain index, each 'name' is an attribute name in the heap relation;
  * 'funcname' and 'args' are NIL.  For a functional index, only one IndexElem
- * is allowed.  It has name = NULL, funcname = name of function and args =
+ * is allowed.	It has name = NULL, funcname = name of function and args =
  * list of attribute names that are the function's arguments.
  */
 typedef struct IndexElem
@@ -524,7 +524,7 @@ typedef struct RangeTblEntry
 	/*
 	 * XXX the fields applicable to only some rte kinds should be merged
 	 * into a union.  I didn't do this yet because the diffs would impact
-	 * a lot of code that is being actively worked on.  FIXME later.
+	 * a lot of code that is being actively worked on.	FIXME later.
 	 */
 
 	/*
@@ -550,8 +550,8 @@ typedef struct RangeTblEntry
 	 * joinaliasvars is a list of Vars or COALESCE expressions corresponding
 	 * to the columns of the join result.  An alias Var referencing column
 	 * K of the join result can be replaced by the K'th element of
-	 * joinaliasvars --- but to simplify the task of reverse-listing aliases
-	 * correctly, we do not do that until planning time.
+	 * joinaliasvars --- but to simplify the task of reverse-listing
+	 * aliases correctly, we do not do that until planning time.
 	 */
 	JoinType	jointype;		/* type of join */
 	List	   *joinaliasvars;	/* list of alias-var expansions */
@@ -780,7 +780,7 @@ typedef struct AlterTableStmt
 								 *	N = alter column drop not null
 								 *	O = alter column set not null
 								 *	S = alter column statistics
-								 *  M = alter column storage
+								 *	M = alter column storage
 								 *	D = drop column
 								 *	C = add constraint
 								 *	c = pre-processed add constraint
@@ -825,7 +825,7 @@ typedef enum GrantObjectType
 #define ACL_EXECUTE		(1<<7)	/* for functions */
 #define ACL_USAGE		(1<<8)	/* for languages and namespaces */
 #define ACL_CREATE		(1<<9)	/* for namespaces and databases */
-#define ACL_CREATE_TEMP	(1<<10)	/* for databases */
+#define ACL_CREATE_TEMP (1<<10) /* for databases */
 #define N_ACL_RIGHTS	11		/* 1 plus the last 1<<x */
 #define ACL_ALL_RIGHTS	(-1)	/* all-privileges marker in GRANT list */
 #define ACL_NO_RIGHTS	0
@@ -835,8 +835,9 @@ typedef struct GrantStmt
 	NodeTag		type;
 	bool		is_grant;		/* true = GRANT, false = REVOKE */
 	GrantObjectType objtype;	/* kind of object being operated on */
-	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs nodes,
-								 * or plain names (as Value strings) */
+	List	   *objects;		/* list of RangeVar nodes, FuncWithArgs
+								 * nodes, or plain names (as Value
+								 * strings) */
 	List	   *privileges;		/* integer list of privilege codes */
 	List	   *grantees;		/* list of PrivGrantee nodes */
 } GrantStmt;
@@ -881,8 +882,8 @@ typedef struct CopyStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
-	List	   *attlist;		/* List of column names (as Strings),
-								 * or NIL for all columns */
+	List	   *attlist;		/* List of column names (as Strings), or
+								 * NIL for all columns */
 	bool		is_from;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
 	List	   *options;		/* List of DefElem nodes */
@@ -949,7 +950,8 @@ typedef struct Constraint
 	char	   *name;			/* name, or NULL if unnamed */
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
-	List	   *keys;			/* String nodes naming referenced column(s) */
+	List	   *keys;			/* String nodes naming referenced
+								 * column(s) */
 } Constraint;
 
 /* ----------
@@ -962,7 +964,7 @@ typedef struct Constraint
  *
  * If skip_validation is true then we skip checking that the existing rows
  * in the table satisfy the constraint, and just install the catalog entries
- * for the constraint.  This is currently used only during CREATE TABLE
+ * for the constraint.	This is currently used only during CREATE TABLE
  * (when we know the table must be empty).
  * ----------
  */
@@ -988,7 +990,7 @@ typedef struct FkConstraint
 	char		fk_del_action;	/* ON DELETE action */
 	bool		deferrable;		/* DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY DEFERRED */
-	bool		skip_validation; /* skip validation of existing rows? */
+	bool		skip_validation;	/* skip validation of existing rows? */
 } FkConstraint;
 
 /* ----------------------
@@ -1028,7 +1030,8 @@ typedef struct CreatePLangStmt
 	NodeTag		type;
 	char	   *plname;			/* PL name */
 	List	   *plhandler;		/* PL call handler function (qual. name) */
-	List	   *plvalidator;	/* optional validator function (qual. name) */
+	List	   *plvalidator;	/* optional validator function (qual.
+								 * name) */
 	bool		pltrusted;		/* PL is trusted */
 } CreatePLangStmt;
 
@@ -1172,10 +1175,10 @@ typedef struct CreateOpClassItem
 #define DROP_SEQUENCE 2
 #define DROP_VIEW	  3
 #define DROP_INDEX	  4
-#define DROP_TYPE     5
-#define DROP_DOMAIN	  6
-#define DROP_CONVERSION	  7
-#define DROP_SCHEMA	  8
+#define DROP_TYPE	  5
+#define DROP_DOMAIN   6
+#define DROP_CONVERSION   7
+#define DROP_SCHEMA   8
 
 typedef struct DropStmt
 {
@@ -1612,11 +1615,11 @@ typedef struct ReindexStmt
 typedef struct CreateConversionStmt
 {
 	NodeTag		type;
-	List		*conversion_name;		/* Name of the conversion */
-	char		*for_encoding_name;		/* source encoding name */
-	char		*to_encoding_name;		/* destiname encoding name */
-	List		*func_name;				/* qualified conversion function name */
-	bool		def;				/* is this a default conversion? */
+	List	   *conversion_name;	/* Name of the conversion */
+	char	   *for_encoding_name;		/* source encoding name */
+	char	   *to_encoding_name;		/* destiname encoding name */
+	List	   *func_name;		/* qualified conversion function name */
+	bool		def;			/* is this a default conversion? */
 } CreateConversionStmt;
 
 /* ----------------------
@@ -1651,11 +1654,11 @@ typedef struct DropCastStmt
  */
 typedef struct PrepareStmt
 {
-	NodeTag		 type;
-	char		*name;			/* Name of plan, arbitrary */
-	List		*argtypes;		/* Types of parameters (TypeNames) */
-	List		*argtype_oids;	/* Types of parameters (OIDs) */
-	Query		*query;			/* The query itself */
+	NodeTag		type;
+	char	   *name;			/* Name of plan, arbitrary */
+	List	   *argtypes;		/* Types of parameters (TypeNames) */
+	List	   *argtype_oids;	/* Types of parameters (OIDs) */
+	Query	   *query;			/* The query itself */
 } PrepareStmt;
 
 
@@ -1666,10 +1669,10 @@ typedef struct PrepareStmt
 
 typedef struct ExecuteStmt
 {
-	NodeTag		 type;
-	char		*name;			/* The name of the plan to execute */
-	RangeVar	*into;			/* Optional table to store results in */
-	List		*params;		/* Values to assign to parameters */
+	NodeTag		type;
+	char	   *name;			/* The name of the plan to execute */
+	RangeVar   *into;			/* Optional table to store results in */
+	List	   *params;			/* Values to assign to parameters */
 } ExecuteStmt;
 
 

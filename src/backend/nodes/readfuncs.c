@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.131 2002/08/31 22:10:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.132 2002/09/04 20:31:20 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1459,7 +1459,8 @@ _readRangeVar(void)
 
 	local_node = makeNode(RangeVar);
 
-	local_node->catalogname = NULL;	/* not currently saved in output format */
+	local_node->catalogname = NULL;		/* not currently saved in output
+										 * format */
 
 	token = pg_strtok(&length); /* eat :relation */
 	token = pg_strtok(&length); /* get schemaname */
@@ -1468,11 +1469,11 @@ _readRangeVar(void)
 	token = pg_strtok(&length); /* eat "." */
 	token = pg_strtok(&length); /* get relname */
 	local_node->relname = nullable_string(token, length);
-	
+
 	token = pg_strtok(&length); /* eat :inhopt */
 	token = pg_strtok(&length); /* get inhopt */
 	local_node->inhOpt = (InhOption) atoi(token);
-	
+
 	token = pg_strtok(&length); /* eat :istemp */
 	token = pg_strtok(&length); /* get istemp */
 	local_node->istemp = strtobool(token);
@@ -1493,10 +1494,10 @@ _readColumnRef(void)
 	local_node = makeNode(ColumnRef);
 
 	token = pg_strtok(&length); /* eat :fields */
-	local_node->fields = nodeRead(true); /* now read it */
+	local_node->fields = nodeRead(true);		/* now read it */
 
 	token = pg_strtok(&length); /* eat :indirection */
-	local_node->indirection = nodeRead(true); /* now read it */
+	local_node->indirection = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1515,7 +1516,7 @@ _readColumnDef(void)
 	local_node->colname = nullable_string(token, length);
 
 	token = pg_strtok(&length); /* eat :typename */
-	local_node->typename = nodeRead(true); /* now read it */
+	local_node->typename = nodeRead(true);		/* now read it */
 
 	token = pg_strtok(&length); /* eat :is_inherited */
 	token = pg_strtok(&length); /* get :is_inherited */
@@ -1526,7 +1527,7 @@ _readColumnDef(void)
 	local_node->is_not_null = strtobool(token);
 
 	token = pg_strtok(&length); /* eat :raw_default */
-	local_node->raw_default = nodeRead(true); /* now read it */
+	local_node->raw_default = nodeRead(true);	/* now read it */
 
 	token = pg_strtok(&length); /* eat :cooked_default */
 	token = pg_strtok(&length); /* now read it */
@@ -1536,7 +1537,7 @@ _readColumnDef(void)
 	local_node->constraints = nodeRead(true);	/* now read it */
 
 	token = pg_strtok(&length); /* eat :support */
-	local_node->support = nodeRead(true); /* now read it */
+	local_node->support = nodeRead(true);		/* now read it */
 
 	return local_node;
 }
@@ -1544,7 +1545,7 @@ _readColumnDef(void)
 static TypeName *
 _readTypeName(void)
 {
-	TypeName  *local_node;
+	TypeName   *local_node;
 	char	   *token;
 	int			length;
 
@@ -1574,7 +1575,7 @@ _readTypeName(void)
 	local_node->typmod = atoi(token);
 
 	token = pg_strtok(&length); /* eat :arrayBounds */
-	local_node->arrayBounds = nodeRead(true); /* now read it */
+	local_node->arrayBounds = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1582,20 +1583,20 @@ _readTypeName(void)
 static ExprFieldSelect *
 _readExprFieldSelect(void)
 {
-	ExprFieldSelect  *local_node;
+	ExprFieldSelect *local_node;
 	char	   *token;
 	int			length;
 
 	local_node = makeNode(ExprFieldSelect);
 
 	token = pg_strtok(&length); /* eat :arg */
-	local_node->arg = nodeRead(true); /* now read it */
+	local_node->arg = nodeRead(true);	/* now read it */
 
 	token = pg_strtok(&length); /* eat :fields */
-	local_node->fields = nodeRead(true); /* now read it */
+	local_node->fields = nodeRead(true);		/* now read it */
 
 	token = pg_strtok(&length); /* eat :indirection */
-	local_node->indirection = nodeRead(true); /* now read it */
+	local_node->indirection = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1614,7 +1615,7 @@ _readAlias(void)
 	local_node->aliasname = debackslash(token, length);
 
 	token = pg_strtok(&length); /* eat :colnames */
-	local_node->colnames = nodeRead(true); /* now read it */
+	local_node->colnames = nodeRead(true);		/* now read it */
 
 	return local_node;
 }
@@ -1671,7 +1672,7 @@ _readRangeTblEntry(void)
 			local_node->jointype = (JoinType) atoi(token);
 
 			token = pg_strtok(&length); /* eat :joinaliasvars */
-			local_node->joinaliasvars = nodeRead(true);	/* now read it */
+			local_node->joinaliasvars = nodeRead(true); /* now read it */
 			break;
 
 		default:

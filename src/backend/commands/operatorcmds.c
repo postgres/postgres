@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.6 2002/07/24 19:11:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.7 2002/09/04 20:31:15 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -62,7 +62,7 @@ DefineOperator(List *names, List *parameters)
 	char	   *oprName;
 	Oid			oprNamespace;
 	AclResult	aclresult;
-	bool		canHash = false;		/* operator hashes */
+	bool		canHash = false;	/* operator hashes */
 	bool		canMerge = false;		/* operator merges */
 	List	   *functionName = NIL;		/* function for operator */
 	TypeName   *typeName1 = NULL;		/* first type name */
@@ -74,7 +74,7 @@ DefineOperator(List *names, List *parameters)
 	List	   *negatorName = NIL;		/* optional negator operator name */
 	List	   *restrictionName = NIL;	/* optional restrict. sel.
 										 * procedure */
-	List	   *joinName = NIL;			/* optional join sel. procedure */
+	List	   *joinName = NIL; /* optional join sel. procedure */
 	List	   *leftSortName = NIL;		/* optional left sort operator */
 	List	   *rightSortName = NIL;	/* optional right sort operator */
 	List	   *ltCompareName = NIL;	/* optional < compare operator */
@@ -173,7 +173,7 @@ DefineOperator(List *names, List *parameters)
 	 * now have OperatorCreate do all the work..
 	 */
 	OperatorCreate(oprName,		/* operator name */
-				   oprNamespace, /* namespace */
+				   oprNamespace,	/* namespace */
 				   typeId1,		/* left type id */
 				   typeId2,		/* right type id */
 				   functionName,	/* function for operator */
@@ -185,9 +185,9 @@ DefineOperator(List *names, List *parameters)
 				   joinName,	/* optional join sel. procedure name */
 				   canHash,		/* operator hashes */
 				   leftSortName,	/* optional left sort operator */
-				   rightSortName,	/* optional right sort operator */
-				   ltCompareName,	/* optional < comparison op */
-				   gtCompareName);	/* optional < comparison op */
+				   rightSortName,		/* optional right sort operator */
+				   ltCompareName,		/* optional < comparison op */
+				   gtCompareName);		/* optional < comparison op */
 }
 
 
@@ -198,9 +198,9 @@ DefineOperator(List *names, List *parameters)
 void
 RemoveOperator(RemoveOperStmt *stmt)
 {
-	List *operatorName = stmt->opname;
-	TypeName *typeName1 = (TypeName *) lfirst(stmt->args);
-	TypeName *typeName2 = (TypeName *) lsecond(stmt->args);
+	List	   *operatorName = stmt->opname;
+	TypeName   *typeName1 = (TypeName *) lfirst(stmt->args);
+	TypeName   *typeName2 = (TypeName *) lsecond(stmt->args);
 	Oid			operOid;
 	HeapTuple	tup;
 	ObjectAddress object;
@@ -211,7 +211,7 @@ RemoveOperator(RemoveOperStmt *stmt)
 	tup = SearchSysCache(OPEROID,
 						 ObjectIdGetDatum(operOid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))	/* should not happen */
+	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "RemoveOperator: failed to find tuple for operator '%s'",
 			 NameListToString(operatorName));
 
@@ -247,7 +247,7 @@ RemoveOperatorById(Oid operOid)
 	tup = SearchSysCache(OPEROID,
 						 ObjectIdGetDatum(operOid),
 						 0, 0, 0);
-	if (!HeapTupleIsValid(tup))	/* should not happen */
+	if (!HeapTupleIsValid(tup)) /* should not happen */
 		elog(ERROR, "RemoveOperatorById: failed to find tuple for operator %u",
 			 operOid);
 

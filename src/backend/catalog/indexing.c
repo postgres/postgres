@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.101 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.102 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ CatalogOpenIndexes(Relation heapRel)
 	resultRelInfo = makeNode(ResultRelInfo);
 	resultRelInfo->ri_RangeTableIndex = 1;		/* dummy */
 	resultRelInfo->ri_RelationDesc = heapRel;
-	resultRelInfo->ri_TrigDesc = NULL; /* we don't fire triggers */
+	resultRelInfo->ri_TrigDesc = NULL;	/* we don't fire triggers */
 
 	ExecOpenIndices(resultRelInfo);
 
@@ -132,14 +132,14 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
  * CatalogUpdateIndexes - do all the indexing work for a new catalog tuple
  *
  * This is a convenience routine for the common case where we only need
- * to insert or update a single tuple in a system catalog.  Avoid using it for
+ * to insert or update a single tuple in a system catalog.	Avoid using it for
  * multiple tuples, since opening the indexes and building the index info
  * structures is moderately expensive.
  */
 void
 CatalogUpdateIndexes(Relation heapRel, HeapTuple heapTuple)
 {
-	CatalogIndexState	indstate;
+	CatalogIndexState indstate;
 
 	indstate = CatalogOpenIndexes(heapRel);
 	CatalogIndexInsert(indstate, heapTuple);

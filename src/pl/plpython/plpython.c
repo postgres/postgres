@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.20 2002/08/22 00:01:50 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.21 2002/09/04 20:31:48 momjian Exp $
  *
  *********************************************************************
  */
@@ -189,8 +189,8 @@ static void PLy_init_safe_interp(void);
 static void PLy_init_plpy(void);
 
 /* Helper functions used during initialization */
-static int  populate_methods(PyObject *klass, PyMethodDef *methods);
-static PyObject *build_tuple(char* string_list[], int len);
+static int	populate_methods(PyObject * klass, PyMethodDef * methods);
+static PyObject *build_tuple(char *string_list[], int len);
 
 /* error handler.  collects the current Python exception, if any,
  * and appends it to the error and sends it to elog
@@ -250,7 +250,7 @@ static void PLy_input_tuple_funcs(PLyTypeInfo *, TupleDesc);
 
 /* RExec methods
  */
-static PyObject *PLy_r_open(PyObject *self, PyObject* args);
+static PyObject *PLy_r_open(PyObject * self, PyObject * args);
 
 /* conversion functions
  */
@@ -333,9 +333,9 @@ static char *PLy_ok_sys_names_list[] = {
 
 /* Python exceptions
  */
-static PyObject   *PLy_exc_error = NULL;
-static PyObject   *PLy_exc_fatal = NULL;
-static PyObject   *PLy_exc_spi_error = NULL;
+static PyObject *PLy_exc_error = NULL;
+static PyObject *PLy_exc_fatal = NULL;
+static PyObject *PLy_exc_spi_error = NULL;
 
 /* some globals for the python module
  */
@@ -408,9 +408,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		else
 			PLy_restart_in_progress += 1;
 		if (proc)
-		{
 			Py_DECREF(proc->me);
-		}
 		RERAISE_EXC();
 	}
 
@@ -1676,6 +1674,7 @@ static PyObject *PLy_plan_status(PyObject *, PyObject *);
 static PyObject *PLy_result_new(void);
 static void PLy_result_dealloc(PyObject *);
 static PyObject *PLy_result_getattr(PyObject *, char *);
+
 #ifdef NOT_USED
 /* Appear to be unused */
 static PyObject *PLy_result_fetch(PyObject *, PyObject *);
@@ -1770,6 +1769,7 @@ static PyTypeObject PLy_ResultType = {
 	0,							/* tp_xxx4 */
 	PLy_result_doc,				/* tp_doc */
 };
+
 #ifdef NOT_USED
 /* Appear to be unused */
 static PyMethodDef PLy_result_methods[] = {
@@ -1923,6 +1923,7 @@ PLy_result_getattr(PyObject * self, char *attr)
 {
 	return NULL;
 }
+
 #ifdef NOT_USED
 /* Appear to be unused */
 PyObject *
@@ -2043,7 +2044,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_prepare.");
-		PLy_elog(WARNING,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
 
@@ -2232,7 +2233,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_error,
 							"Unknown error in PLy_spi_execute_plan");
-		PLy_elog(WARNING,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
 
@@ -2298,7 +2299,7 @@ PLy_spi_execute_query(char *query, int limit)
 		if ((!PLy_restart_in_progress) && (!PyErr_Occurred()))
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_execute_query.");
-		PLy_elog(WARNING,"in function %s:",PLy_procedure_name(PLy_last_procedure));
+		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
 		RERAISE_EXC();
 	}
 
@@ -2496,11 +2497,11 @@ PLy_init_plpy(void)
 }
 
 /*
- *  New RExec methods
+ *	New RExec methods
  */
 
-PyObject*
-PLy_r_open(PyObject *self, PyObject* args)
+PyObject *
+PLy_r_open(PyObject * self, PyObject * args)
 {
 	PyErr_SetString(PyExc_IOError, "can't open files in restricted mode");
 	return NULL;
@@ -2508,20 +2509,22 @@ PLy_r_open(PyObject *self, PyObject* args)
 
 
 static PyMethodDef PLy_r_exec_methods[] = {
-	{"r_open", (PyCFunction)PLy_r_open, METH_VARARGS, NULL},
+	{"r_open", (PyCFunction) PLy_r_open, METH_VARARGS, NULL},
 	{NULL, NULL, 0, NULL}
 };
 
 /*
- *  Init new RExec
+ *	Init new RExec
  */
 
 void
 PLy_init_safe_interp(void)
 {
-	PyObject   *rmod, *rexec, *rexec_dict;
+	PyObject   *rmod,
+			   *rexec,
+			   *rexec_dict;
 	char	   *rname = "rexec";
-	int	    len;
+	int			len;
 
 	enter();
 
@@ -2554,31 +2557,33 @@ PLy_init_safe_interp(void)
 		PLy_elog(ERROR, "Unable to get RExec object.");
 
 
-	rexec_dict = ((PyClassObject*)rexec)->cl_dict;
+	rexec_dict = ((PyClassObject *) rexec)->cl_dict;
 
 	/*
 	 * tweak the list of permitted modules, posix and sys functions
 	 */
 	PyDict_SetItemString(rexec_dict, "ok_builtin_modules", PLy_importable_modules);
-	PyDict_SetItemString(rexec_dict, "ok_posix_names",     PLy_ok_posix_names);
-	PyDict_SetItemString(rexec_dict, "ok_sys_names",       PLy_ok_sys_names);
+	PyDict_SetItemString(rexec_dict, "ok_posix_names", PLy_ok_posix_names);
+	PyDict_SetItemString(rexec_dict, "ok_sys_names", PLy_ok_sys_names);
 
 	/*
 	 * change the r_open behavior
 	 */
-	if( populate_methods(rexec, PLy_r_exec_methods) )
+	if (populate_methods(rexec, PLy_r_exec_methods))
 		PLy_elog(ERROR, "Failed to update RExec methods.");
 }
 
 /* Helper function to build tuples from string lists */
 static
-PyObject *build_tuple(char* string_list[], int len)
+PyObject *
+build_tuple(char *string_list[], int len)
 {
-	PyObject *tup = PyTuple_New(len);
-	int i;
+	PyObject   *tup = PyTuple_New(len);
+	int			i;
+
 	for (i = 0; i < len; i++)
 	{
-		PyObject *m = PyString_FromString(string_list[i]);
+		PyObject   *m = PyString_FromString(string_list[i]);
 
 		PyTuple_SetItem(tup, i, m);
 	}
@@ -2587,30 +2592,32 @@ PyObject *build_tuple(char* string_list[], int len)
 
 /* Helper function for populating a class with method wrappers. */
 static int
-populate_methods(PyObject *klass, PyMethodDef *methods)
+populate_methods(PyObject * klass, PyMethodDef * methods)
 {
 	if (!klass || !methods)
 		return 0;
 
-	for ( ; methods->ml_name; ++methods) {
+	for (; methods->ml_name; ++methods)
+	{
 
 		/* get a wrapper for the built-in function */
-		PyObject *func = PyCFunction_New(methods, NULL);
-		PyObject *meth;
-		int status;
+		PyObject   *func = PyCFunction_New(methods, NULL);
+		PyObject   *meth;
+		int			status;
 
 		if (!func)
 			return -1;
 
 		/* turn the function into an unbound method */
-		if (!(meth = PyMethod_New(func, NULL, klass))) {
+		if (!(meth = PyMethod_New(func, NULL, klass)))
+		{
 			Py_DECREF(func);
 			return -1;
 		}
 
 		/* add method to dictionary */
-		status = PyDict_SetItemString( ((PyClassObject*)klass)->cl_dict,
-						methods->ml_name, meth);
+		status = PyDict_SetItemString(((PyClassObject *) klass)->cl_dict,
+									  methods->ml_name, meth);
 		Py_DECREF(meth);
 		Py_DECREF(func);
 
@@ -2746,11 +2753,12 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
  * another plpython procedure )
  */
 
-char *PLy_procedure_name(PLyProcedure *proc)
+char *
+PLy_procedure_name(PLyProcedure * proc)
 {
-		if ( proc == NULL )
-			return "<unknown procedure>";
-		return proc->proname;
+	if (proc == NULL)
+		return "<unknown procedure>";
+	return proc->proname;
 }
 
 /* output a python traceback/exception via the postgresql elog

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.5 2002/08/06 05:40:45 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.6 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,13 @@
  * Add a new tuple to pg_coversion.
  * ---------------
  */
-Oid	ConversionCreate(const char *conname, Oid connamespace,
-							 int32 conowner,
-							 int4 conforencoding, int4 contoencoding,
-							 Oid conproc, bool def)
+Oid
+ConversionCreate(const char *conname, Oid connamespace,
+				 int32 conowner,
+				 int4 conforencoding, int4 contoencoding,
+				 Oid conproc, bool def)
 {
-	int i;
+	int			i;
 	Relation	rel;
 	TupleDesc	tupDesc;
 	HeapTuple	tup;
@@ -49,8 +50,8 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
 	Datum		values[Natts_pg_conversion];
 	NameData	cname;
 	Oid			oid;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 
 	/* sanity checks */
 	if (!conname)
@@ -58,20 +59,22 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
 
 	/* make sure there is no existing conversion of same name */
 	if (SearchSysCacheExists(CONNAMESP,
-							PointerGetDatum(conname),
-							ObjectIdGetDatum(connamespace),
-							 0,0))
+							 PointerGetDatum(conname),
+							 ObjectIdGetDatum(connamespace),
+							 0, 0))
 		elog(ERROR, "conversion name \"%s\" already exists", conname);
 
 	if (def)
 	{
-		/* make sure there is no existing default
-		   <for encoding><to encoding> pair in this name space */
+		/*
+		 * make sure there is no existing default <for encoding><to
+		 * encoding> pair in this name space
+		 */
 		if (FindDefaultConversion(connamespace,
 								  conforencoding,
 								  contoencoding))
 			elog(ERROR, "default conversion for %s to %s already exists",
-				 pg_encoding_to_char(conforencoding),pg_encoding_to_char(contoencoding));
+				 pg_encoding_to_char(conforencoding), pg_encoding_to_char(contoencoding));
 	}
 
 	/* open pg_conversion */
@@ -129,8 +132,9 @@ Oid	ConversionCreate(const char *conname, Oid connamespace,
  * Drop a conversion and do dependency check.
  * ---------------
  */
-void	ConversionDrop(const char *conname, Oid connamespace,
-					   int32 conowner, DropBehavior behavior)
+void
+ConversionDrop(const char *conname, Oid connamespace,
+			   int32 conowner, DropBehavior behavior)
 {
 	Relation	rel;
 	TupleDesc	tupDesc;
@@ -138,8 +142,8 @@ void	ConversionDrop(const char *conname, Oid connamespace,
 	HeapScanDesc scan;
 	ScanKeyData scanKeyData;
 	Form_pg_conversion body;
-	ObjectAddress	object;
-	Oid	myoid;
+	ObjectAddress object;
+	Oid			myoid;
 
 	/* sanity checks */
 	if (!conname)
@@ -156,12 +160,12 @@ void	ConversionDrop(const char *conname, Oid connamespace,
 	tupDesc = rel->rd_att;
 
 	scan = heap_beginscan(rel, SnapshotNow,
-							  1, &scanKeyData);
+						  1, &scanKeyData);
 
 	/* search for the target tuple */
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
 	{
-		body = (Form_pg_conversion)GETSTRUCT(tuple);
+		body = (Form_pg_conversion) GETSTRUCT(tuple);
 		if (!strncmp(NameStr(body->conname), conname, NAMEDATALEN))
 			break;
 	}
@@ -172,12 +176,12 @@ void	ConversionDrop(const char *conname, Oid connamespace,
 		return;
 	}
 
-	if (!superuser() && ((Form_pg_conversion)GETSTRUCT(tuple))->conowner != GetUserId())
+	if (!superuser() && ((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
 		elog(ERROR, "permission denied");
 
 	myoid = HeapTupleGetOid(tuple);
 	heap_endscan(scan);
- 	heap_close(rel, AccessShareLock);
+	heap_close(rel, AccessShareLock);
 
 	/*
 	 * Do the deletion
@@ -215,7 +219,7 @@ RemoveConversionById(Oid conversionOid)
 	tupDesc = rel->rd_att;
 
 	scan = heap_beginscan(rel, SnapshotNow,
-							  1, &scanKeyData);
+						  1, &scanKeyData);
 
 	/* search for the target tuple */
 	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
@@ -233,28 +237,29 @@ RemoveConversionById(Oid conversionOid)
  * If found, returns the procedure's oid, otherwise InvalidOid.
  * ---------------
  */
-Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
+Oid
+FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
 {
-	CatCList	*catlist;
+	CatCList   *catlist;
 	HeapTuple	tuple;
 	Form_pg_conversion body;
-	Oid proc = InvalidOid;
-	int	i;
+	Oid			proc = InvalidOid;
+	int			i;
 
 	/* Check we have usage rights in target namespace */
 	if (pg_namespace_aclcheck(name_space, GetUserId(), ACL_USAGE) != ACLCHECK_OK)
 		return proc;
 
 	catlist = SearchSysCacheList(CONDEFAULT, 3,
-							   ObjectIdGetDatum(name_space),
-							   Int32GetDatum(for_encoding),
-							   Int32GetDatum(to_encoding),
-							   0);
+								 ObjectIdGetDatum(name_space),
+								 Int32GetDatum(for_encoding),
+								 Int32GetDatum(to_encoding),
+								 0);
 
 	for (i = 0; i < catlist->n_members; i++)
 	{
 		tuple = &catlist->members[i]->tuple;
-		body = (Form_pg_conversion)GETSTRUCT(tuple);
+		body = (Form_pg_conversion) GETSTRUCT(tuple);
 		if (body->condefault == TRUE)
 		{
 			proc = body->conproc;
@@ -272,22 +277,23 @@ Oid FindDefaultConversion(Oid name_space, int4 for_encoding, int4 to_encoding)
  * Returns conversion oid.
  * ---------------
  */
-Oid FindConversion(const char *conname, Oid connamespace)
+Oid
+FindConversion(const char *conname, Oid connamespace)
 {
 	HeapTuple	tuple;
-	Oid procoid;
-	Oid conoid;
+	Oid			procoid;
+	Oid			conoid;
 	AclResult	aclresult;
 
 	/* search pg_conversion by connamespace and conversion name */
 	tuple = SearchSysCache(CONNAMESP,
 						   PointerGetDatum(conname),
 						   ObjectIdGetDatum(connamespace),
-						   0,0);
+						   0, 0);
 
 	if (!HeapTupleIsValid(tuple))
 		return InvalidOid;
-	procoid = ((Form_pg_conversion)GETSTRUCT(tuple))->conproc;
+	procoid = ((Form_pg_conversion) GETSTRUCT(tuple))->conproc;
 	conoid = HeapTupleGetOid(tuple);
 
 	ReleaseSysCache(tuple);
@@ -318,7 +324,7 @@ pg_convert3(PG_FUNCTION_ARGS)
 	text	   *retval;
 	unsigned char *str;
 	unsigned char *result;
-	int len;
+	int			len;
 
 	if (!OidIsValid(convoid))
 		elog(ERROR, "Conversion does not exist");
@@ -331,13 +337,13 @@ pg_convert3(PG_FUNCTION_ARGS)
 
 	tuple = SearchSysCache(CONOID,
 						   ObjectIdGetDatum(convoid),
-						   0,0,0);
+						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "Conversion %u search from syscache failed", convoid);
 
 	result = palloc(len * 4 + 1);
 
-	body = (Form_pg_conversion)GETSTRUCT(tuple);
+	body = (Form_pg_conversion) GETSTRUCT(tuple);
 	OidFunctionCall5(body->conproc,
 					 Int32GetDatum(body->conforencoding),
 					 Int32GetDatum(body->contoencoding),
@@ -347,9 +353,11 @@ pg_convert3(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(tuple);
 
-	/* build text data type structre. we cannot use textin() here,
-	   since textin assumes that input string encoding is same as
-	   database encoding.  */
+	/*
+	 * build text data type structre. we cannot use textin() here, since
+	 * textin assumes that input string encoding is same as database
+	 * encoding.
+	 */
 	len = strlen(result) + VARHDRSZ;
 	retval = palloc(len);
 	VARATT_SIZEP(retval) = len;

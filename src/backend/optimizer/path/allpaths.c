@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.87 2002/08/29 16:03:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.88 2002/09/04 20:31:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,14 +43,14 @@ static void set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 static void set_subquery_pathlist(Query *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(Query *root, RelOptInfo *rel,
-						RangeTblEntry *rte);
+					  RangeTblEntry *rte);
 static RelOptInfo *make_one_rel_by_joins(Query *root, int levels_needed,
 					  List *initial_rels);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery);
 static bool recurse_pushdown_safe(Node *setOp, Query *topquery);
 static void subquery_push_qual(Query *subquery, Index rti, Node *qual);
 static void recurse_push_qual(Node *setOp, Query *topquery,
-							  Index rti, Node *qual);
+				  Index rti, Node *qual);
 
 
 /*
@@ -304,9 +304,10 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	 *
 	 * There are several cases where we cannot push down clauses.
 	 * Restrictions involving the subquery are checked by
-	 * subquery_is_pushdown_safe().  Also, we do not push down clauses that
-	 * contain subselects, mainly because I'm not sure it will work correctly
-	 * (the subplan hasn't yet transformed sublinks to subselects).
+	 * subquery_is_pushdown_safe().  Also, we do not push down clauses
+	 * that contain subselects, mainly because I'm not sure it will work
+	 * correctly (the subplan hasn't yet transformed sublinks to
+	 * subselects).
 	 *
 	 * Non-pushed-down clauses will get evaluated as qpquals of the
 	 * SubqueryScan node.
@@ -542,7 +543,7 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
  * quals into it, because that would change the results.  For subqueries
  * using UNION/UNION ALL/INTERSECT/INTERSECT ALL, we can push the quals
  * into each component query, so long as all the component queries share
- * identical output types.  (That restriction could probably be relaxed,
+ * identical output types.	(That restriction could probably be relaxed,
  * but it would take much more code to include type coercion code into
  * the quals, and I'm also concerned about possible semantic gotchas.)
  */
@@ -633,14 +634,14 @@ subquery_push_qual(Query *subquery, Index rti, Node *qual)
 	else
 	{
 		/*
-		 * We need to replace Vars in the qual (which must refer
-		 * to outputs of the subquery) with copies of the
-		 * subquery's targetlist expressions.  Note that at this
-		 * point, any uplevel Vars in the qual should have been
-		 * replaced with Params, so they need no work.
+		 * We need to replace Vars in the qual (which must refer to
+		 * outputs of the subquery) with copies of the subquery's
+		 * targetlist expressions.	Note that at this point, any uplevel
+		 * Vars in the qual should have been replaced with Params, so they
+		 * need no work.
 		 *
-		 * This step also ensures that when we are pushing into a setop
-		 * tree, each component query gets its own copy of the qual.
+		 * This step also ensures that when we are pushing into a setop tree,
+		 * each component query gets its own copy of the qual.
 		 */
 		qual = ResolveNew(qual, rti, 0,
 						  subquery->targetList,
@@ -649,10 +650,9 @@ subquery_push_qual(Query *subquery, Index rti, Node *qual)
 											 qual);
 
 		/*
-		 * We need not change the subquery's hasAggs or
-		 * hasSublinks flags, since we can't be pushing down any
-		 * aggregates that weren't there before, and we don't push
-		 * down subselects at all.
+		 * We need not change the subquery's hasAggs or hasSublinks flags,
+		 * since we can't be pushing down any aggregates that weren't
+		 * there before, and we don't push down subselects at all.
 		 */
 	}
 }

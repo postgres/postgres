@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.5 2002/09/02 22:18:26 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.6 2002/09/04 20:31:34 momjian Exp $
  */
 #include "postgres.h"
 
@@ -127,11 +127,11 @@ main(int argc, char *argv[])
 	if (!EQ_CRC64(crc, ControlFile.crc))
 		printf(_("WARNING: Calculated CRC checksum does not match value stored in file.\n"
 				 "Either the file is corrupt, or it has a different layout than this program\n"
-				 "is expecting.  The results below are untrustworthy.\n\n"));
+			 "is expecting.  The results below are untrustworthy.\n\n"));
 
 	/*
-	 * Use variable for format to suppress overly-anal-retentive gcc warning
-	 * about %c
+	 * Use variable for format to suppress overly-anal-retentive gcc
+	 * warning about %c
 	 */
 	strftime(pgctime_str, sizeof(pgctime_str), strftime_fmt,
 			 localtime(&(ControlFile.time)));

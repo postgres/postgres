@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.35 2002/09/02 01:05:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.36 2002/09/04 20:31:09 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -46,7 +46,7 @@ static void toast_insert_or_update(Relation rel, HeapTuple newtup,
 static Datum toast_save_datum(Relation rel, Datum value);
 static varattrib *toast_fetch_datum(varattrib *attr);
 static varattrib *toast_fetch_datum_slice(varattrib *attr,
-										  int32 sliceoffset, int32 length);
+						int32 sliceoffset, int32 length);
 
 
 /* ----------
@@ -165,73 +165,68 @@ heap_tuple_untoast_attr(varattrib *attr)
 /* ----------
  * heap_tuple_untoast_attr_slice -
  *
- *      Public entry point to get back part of a toasted value 
- *      from compression or external storage.
+ *		Public entry point to get back part of a toasted value
+ *		from compression or external storage.
  * ----------
  */
-varattrib  *
+varattrib *
 heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelength)
 {
 	varattrib  *preslice;
 	varattrib  *result;
-	int32  attrsize;
-	
+	int32		attrsize;
+
 	if (VARATT_IS_COMPRESSED(attr))
 	{
-		varattrib *tmp;
-		
+		varattrib  *tmp;
+
 		if (VARATT_IS_EXTERNAL(attr))
-		{
 			tmp = toast_fetch_datum(attr);
-		}
 		else
 		{
-			tmp = attr; /* compressed in main tuple */
+			tmp = attr;			/* compressed in main tuple */
 		}
-		
+
 		preslice = (varattrib *) palloc(attr->va_content.va_external.va_rawsize
 										+ VARHDRSZ);
 		VARATT_SIZEP(preslice) = attr->va_content.va_external.va_rawsize + VARHDRSZ;
 		pglz_decompress((PGLZ_Header *) tmp, VARATT_DATA(preslice));
-		
-		if (tmp != attr) 
+
+		if (tmp != attr)
 			pfree(tmp);
 	}
-	else 	
+	else
 	{
 		/* Plain value */
 		if (VARATT_IS_EXTERNAL(attr))
-		{   
+		{
 			/* fast path */
 			return (toast_fetch_datum_slice(attr, sliceoffset, slicelength));
 		}
 		else
-		{
 			preslice = attr;
-		}
 	}
-	
+
 	/* slicing of datum for compressed cases and plain value */
-	
+
 	attrsize = VARSIZE(preslice) - VARHDRSZ;
-	if (sliceoffset >= attrsize) 
+	if (sliceoffset >= attrsize)
 	{
 		sliceoffset = 0;
 		slicelength = 0;
 	}
-	
+
 	if (((sliceoffset + slicelength) > attrsize) || slicelength < 0)
-	{
 		slicelength = attrsize - sliceoffset;
-	}
-	
+
 	result = (varattrib *) palloc(slicelength + VARHDRSZ);
 	VARATT_SIZEP(result) = slicelength + VARHDRSZ;
-	
+
 	memcpy(VARDATA(result), VARDATA(preslice) + sliceoffset, slicelength);
-	
-	if (preslice != attr) pfree(preslice);
-	
+
+	if (preslice != attr)
+		pfree(preslice);
+
 	return result;
 }
 
@@ -1053,9 +1048,9 @@ toast_fetch_datum(varattrib *attr)
 	/*
 	 * Read the chunks by index
 	 *
-	 * Note that because the index is actually on (valueid, chunkidx)
-	 * we will see the chunks in chunkidx order, even though we didn't
-	 * explicitly ask for it.
+	 * Note that because the index is actually on (valueid, chunkidx) we will
+	 * see the chunks in chunkidx order, even though we didn't explicitly
+	 * ask for it.
 	 */
 	nextidx = 0;
 
@@ -1146,45 +1141,44 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	varattrib  *result;
 	int32		attrsize;
 	int32		residx;
-	int32       nextidx;
-	int		    numchunks;
-	int		    startchunk;
-	int		    endchunk;
+	int32		nextidx;
+	int			numchunks;
+	int			startchunk;
+	int			endchunk;
 	int32		startoffset;
 	int32		endoffset;
-	int         totalchunks;
+	int			totalchunks;
 	Pointer		chunk;
 	bool		isnull;
 	int32		chunksize;
-	int32       chcpystrt;
-	int32       chcpyend;
+	int32		chcpystrt;
+	int32		chcpyend;
 
 	attrsize = attr->va_content.va_external.va_extsize;
 	totalchunks = ((attrsize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
 
-	if (sliceoffset >= attrsize) 
+	if (sliceoffset >= attrsize)
 	{
-	    sliceoffset = 0;
-	    length = 0;
+		sliceoffset = 0;
+		length = 0;
 	}
 
 	if (((sliceoffset + length) > attrsize) || length < 0)
-	{
-	    length = attrsize - sliceoffset;
-	}
+		length = attrsize - sliceoffset;
 
 	result = (varattrib *) palloc(length + VARHDRSZ);
 	VARATT_SIZEP(result) = length + VARHDRSZ;
 
 	if (VARATT_IS_COMPRESSED(attr))
 		VARATT_SIZEP(result) |= VARATT_FLAG_COMPRESSED;
-	
-	if (length == 0) return (result); /* Can save a lot of work at this point! */
+
+	if (length == 0)
+		return (result);		/* Can save a lot of work at this point! */
 
 	startchunk = sliceoffset / TOAST_MAX_CHUNK_SIZE;
 	endchunk = (sliceoffset + length - 1) / TOAST_MAX_CHUNK_SIZE;
-	numchunks = (endchunk - startchunk ) + 1;
- 
+	numchunks = (endchunk - startchunk) + 1;
+
 	startoffset = sliceoffset % TOAST_MAX_CHUNK_SIZE;
 	endoffset = (sliceoffset + length - 1) % TOAST_MAX_CHUNK_SIZE;
 
@@ -1204,33 +1198,34 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 						   (bits16) 0,
 						   (AttrNumber) 1,
 						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+			  ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+
 	/*
 	 * Now dependent on number of chunks:
 	 */
-	
-	if (numchunks == 1) 
+
+	if (numchunks == 1)
 	{
-	    ScanKeyEntryInitialize(&toastkey[1],
+		ScanKeyEntryInitialize(&toastkey[1],
 							   (bits16) 0,
 							   (AttrNumber) 2,
 							   (RegProcedure) F_INT4EQ,
 							   Int32GetDatum(startchunk));
-	    nscankeys = 2;
+		nscankeys = 2;
 	}
 	else
 	{
-	    ScanKeyEntryInitialize(&toastkey[1],
+		ScanKeyEntryInitialize(&toastkey[1],
 							   (bits16) 0,
 							   (AttrNumber) 2,
 							   (RegProcedure) F_INT4GE,
 							   Int32GetDatum(startchunk));
-	    ScanKeyEntryInitialize(&toastkey[2],
+		ScanKeyEntryInitialize(&toastkey[2],
 							   (bits16) 0,
 							   (AttrNumber) 2,
 							   (RegProcedure) F_INT4LE,
 							   Int32GetDatum(endchunk));
-	    nscankeys = 3;
+		nscankeys = 3;
 	}
 
 	/*
@@ -1279,21 +1274,23 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 		 */
 		chcpystrt = 0;
 		chcpyend = chunksize - 1;
-		if (residx == startchunk) chcpystrt = startoffset;
-		if (residx == endchunk) chcpyend = endoffset;
-		
-		memcpy(((char *) VARATT_DATA(result)) + 
-		       (residx * TOAST_MAX_CHUNK_SIZE - sliceoffset) +chcpystrt,
+		if (residx == startchunk)
+			chcpystrt = startoffset;
+		if (residx == endchunk)
+			chcpyend = endoffset;
+
+		memcpy(((char *) VARATT_DATA(result)) +
+			   (residx * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
 			   VARATT_DATA(chunk) + chcpystrt,
 			   (chcpyend - chcpystrt) + 1);
-		
+
 		nextidx++;
 	}
 
 	/*
 	 * Final checks that we successfully fetched the datum
 	 */
-	if ( nextidx != (endchunk + 1))
+	if (nextidx != (endchunk + 1))
 		elog(ERROR, "missing chunk number %d for toast value %u",
 			 nextidx,
 			 attr->va_content.va_external.va_valueid);

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.38 2002/07/20 08:24:18 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.39 2002/09/04 20:31:46 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -89,7 +89,7 @@ quote_postgres(char *arg, int lineno)
 
 	res[ri++] = '\'';
 	res[ri] = '\0';
-	
+
 	return res;
 }
 
@@ -168,7 +168,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 			var->next = NULL;
 
 			if (var->ind_type != ECPGt_NO_INDICATOR
-					&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
+				&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
 				var->ind_value = *((char **) (var->ind_pointer));
 			else
 				var->ind_value = var->ind_pointer;
@@ -390,14 +390,12 @@ ECPGstore_result(const PGresult *results, int act_field,
 				{
 					/* special mode for handling char**foo=0 */
 					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-					{
 						len += strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
-					}
 					len *= var->offset; /* should be 1, but YMNK */
-					len += (ntuples+1) * sizeof(char *);
+					len += (ntuples + 1) * sizeof(char *);
 
 					ECPGlog("ECPGstore_result: line %d: allocating %d bytes for %d tuples (char**=0)",
-						stmt->lineno,len, ntuples);
+							stmt->lineno, len, ntuples);
 				}
 				else
 				{
@@ -405,7 +403,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 					/* check strlen for each tuple */
 					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 					{
-						int	len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+						int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
 
 						if (len > var->varcharsize)
 							var->varcharsize = len;
@@ -427,31 +425,34 @@ ECPGstore_result(const PGresult *results, int act_field,
 	}
 
 	/* allocate indicator variable if needed */
-	if ((var->ind_arrsize == 0 || var->ind_varcharsize == 0) && var->ind_value == NULL && var->ind_pointer!=NULL)
+	if ((var->ind_arrsize == 0 || var->ind_varcharsize == 0) && var->ind_value == NULL && var->ind_pointer != NULL)
 	{
-		int	len = var->ind_offset * ntuples;
+		int			len = var->ind_offset * ntuples;
+
 		var->ind_value = (char *) ECPGalloc(len, stmt->lineno);
 		*((char **) var->ind_pointer) = var->ind_value;
 		ECPGadd_mem(var->ind_value, stmt->lineno);
 	}
-	
+
 	/* fill the variable with the tuple(s) */
-	if (!var->varcharsize && !var->arrsize && 
-				(var->type==ECPGt_char || var->type==ECPGt_unsigned_char))
+	if (!var->varcharsize && !var->arrsize &&
+		(var->type == ECPGt_char || var->type == ECPGt_unsigned_char))
 	{
 		/* special mode for handling char**foo=0 */
-		
+
 		/* filling the array of (char*)s */
-		char **current_string = (char**) var->value;
+		char	  **current_string = (char **) var->value;
+
 		/* storing the data (after the last array element) */
-		char *current_data_location = (char*) &current_string[ntuples+1];
-		
+		char	   *current_data_location = (char *) &current_string[ntuples + 1];
+
 		for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 		{
-			int len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+			int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+
 			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
-						  var->type, var->ind_type, current_data_location,
-					 var->ind_value, len, 0, 0, isarray))
+						 var->type, var->ind_type, current_data_location,
+							  var->ind_value, len, 0, 0, isarray))
 				status = false;
 			else
 			{
@@ -460,7 +461,7 @@ ECPGstore_result(const PGresult *results, int act_field,
 				current_string++;
 			}
 		}
-		
+
 		/* terminate the list */
 		*current_string = NULL;
 	}
@@ -469,8 +470,8 @@ ECPGstore_result(const PGresult *results, int act_field,
 		for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 		{
 			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
-						  var->type, var->ind_type, var->value,
-					 var->ind_value, var->varcharsize, var->offset, var->ind_offset, isarray))
+							  var->type, var->ind_type, var->value,
+							  var->ind_value, var->varcharsize, var->offset, var->ind_offset, isarray))
 				status = false;
 		}
 	}
@@ -484,9 +485,9 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 	char	   *mallocedval = NULL;
 	char	   *newcopy = NULL;
 
-	/* 
-	 * arrays are not possible unless the attribute is an array too
-	 * FIXME: we do not know if the attribute is an array here
+	/*
+	 * arrays are not possible unless the attribute is an array too FIXME:
+	 * we do not know if the attribute is an array here
 	 */
 
 /*	 if (var->arrsize > 1 && ...)
@@ -494,7 +495,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 		ECPGraise(stmt->lineno, ECPG_ARRAY_INSERT, NULL);
 		return false;
 	 }*/
-	 
+
 	/*
 	 * Some special treatment is needed for records since we want their
 	 * contents to arrive in a comma-separated list on insert (I think).
@@ -1116,7 +1117,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 
 	/* initialize auto_mem struct */
 	ECPGclear_auto_mem();
-	
+
 	status = ECPGexecute(stmt);
 	free_statement(stmt);
 

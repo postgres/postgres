@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.95 2002/06/20 20:29:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.96 2002/09/04 20:31:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,6 +294,7 @@ gistinsert(PG_FUNCTION_ARGS)
 	Datum	   *datum = (Datum *) PG_GETARG_POINTER(1);
 	char	   *nulls = (char *) PG_GETARG_POINTER(2);
 	ItemPointer ht_ctid = (ItemPointer) PG_GETARG_POINTER(3);
+
 #ifdef NOT_USED
 	Relation	heapRel = (Relation) PG_GETARG_POINTER(4);
 	bool		checkUnique = PG_GETARG_BOOL(5);
@@ -494,13 +495,13 @@ gistlayerinsert(Relation r, BlockNumber blkno,
 		/* key is modified, so old version must be deleted */
 		ItemPointerSet(&oldtid, blkno, child);
 		gistdelete(r, &oldtid);
-	
+
 		/*
-		 * if child was splitted, new key for child will be inserted
-		 * in the end list of child, so we must say to any scans
-		 * that page is changed beginning from 'child' offset
+		 * if child was splitted, new key for child will be inserted in
+		 * the end list of child, so we must say to any scans that page is
+		 * changed beginning from 'child' offset
 		 */
-		if ( ret & SPLITED )
+		if (ret & SPLITED)
 			gistadjscans(r, GISTOP_SPLIT, blkno, child);
 	}
 
@@ -615,7 +616,7 @@ gistwritebuffer(Relation r, Page page, IndexTuple *itup,
 static int
 gistnospace(Page page, IndexTuple *itvec, int len)
 {
-	unsigned int			size = 0;
+	unsigned int size = 0;
 	int			i;
 
 	for (i = 0; i < len; i++)
@@ -679,7 +680,7 @@ gistunion(Relation r, IndexTuple *itvec, int len, GISTSTATE *giststate)
 
 	needfree = (bool *) palloc(((len == 1) ? 2 : len) * sizeof(bool));
 	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-	storage = (char*)palloc( ((len == 1) ? 2 : len) * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
+	storage = (char *) palloc(((len == 1) ? 2 : len) * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
 	evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
 
 	for (j = 0; j < r->rd_att->natts; j++)
@@ -786,7 +787,7 @@ gistgetadjusted(Relation r, IndexTuple oldtup, IndexTuple addtup, GISTSTATE *gis
 	int			j;
 
 	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-	storage = (char*) palloc( 2 * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
+	storage = (char *) palloc(2 * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
 	evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
 	VARATT_SIZEP(evec) = 2 * sizeof(GISTENTRY) + VARHDRSZ;
 	ev0p = &((GISTENTRY *) VARDATA(evec))[0];
@@ -911,7 +912,7 @@ gistunionsubkey(Relation r, GISTSTATE *giststate, IndexTuple *itvec, GIST_SPLITV
 
 		needfree = (bool *) palloc(((len == 1) ? 2 : len) * sizeof(bool));
 		/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-		storage = (char*)palloc( ((len == 1) ? 2 : len) * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
+		storage = (char *) palloc(((len == 1) ? 2 : len) * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
 		evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
 
 		for (j = 1; j < r->rd_att->natts; j++)
@@ -1098,7 +1099,7 @@ gistadjsubkey(Relation r,
 	v->spl_nright = curlen;
 
 	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
-	storage = (char*)palloc( 2 * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
+	storage = (char *) palloc(2 * sizeof(GISTENTRY) + MAXALIGN(VARHDRSZ));
 	evec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
 	VARATT_SIZEP(evec) = 2 * sizeof(GISTENTRY) + VARHDRSZ;
 	ev0p = &((GISTENTRY *) VARDATA(evec))[0];
@@ -1276,7 +1277,7 @@ gistSplit(Relation r,
 	/* workaround for 64-bit: ensure GISTENTRY array is maxaligned */
 	storage = palloc(MAXALIGN(VARHDRSZ) + (*len + 1) * sizeof(GISTENTRY));
 	entryvec = (bytea *) (storage + MAXALIGN(VARHDRSZ) - VARHDRSZ);
-	decompvec = (bool *) palloc( (*len + 1) * sizeof(bool));
+	decompvec = (bool *) palloc((*len + 1) * sizeof(bool));
 	VARATT_SIZEP(entryvec) = (*len + 1) * sizeof(GISTENTRY) + VARHDRSZ;
 	for (i = 1; i <= *len; i++)
 	{

@@ -76,4 +76,5 @@ enum ECPGdtype
 
 #ifdef __cplusplus
 }
+
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.82 2002/09/01 02:27:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.83 2002/09/04 20:31:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@
 
 static Oid	PreferredType(CATEGORY category, Oid type);
 static bool find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
-								  bool isExplicit,
-								  Oid *funcid);
+					  bool isExplicit,
+					  Oid *funcid);
 static Oid	find_typmod_coercion_function(Oid typeId);
 static Node *build_func_call(Oid funcid, Oid rettype, List *args);
 
@@ -71,8 +71,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * XXX if the typinput function is not cachable, we really ought to
 		 * postpone evaluation of the function call until runtime. But
 		 * there is no way to represent a typinput function call as an
-		 * expression tree, because C-string values are not Datums.
-		 * (XXX This *is* possible as of 7.3, do we want to do it?)
+		 * expression tree, because C-string values are not Datums. (XXX
+		 * This *is* possible as of 7.3, do we want to do it?)
 		 */
 		Const	   *con = (Const *) node;
 		Const	   *newcon = makeNode(Const);
@@ -91,10 +91,11 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 													   con->constvalue));
 
 			/*
-			 * If target is a domain, use the typmod it applies to the base
-			 * type.  Note that we call stringTypeDatum using the domain's
-			 * pg_type row, though.  This works because the domain row has
-			 * the same typinput and typelem as the base type --- ugly...
+			 * If target is a domain, use the typmod it applies to the
+			 * base type.  Note that we call stringTypeDatum using the
+			 * domain's pg_type row, though.  This works because the
+			 * domain row has the same typinput and typelem as the base
+			 * type --- ugly...
 			 */
 			if (targetTyptype == 'd')
 				atttypmod = getBaseTypeMod(targetTypeId, atttypmod);
@@ -127,11 +128,12 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		if (OidIsValid(funcId))
 		{
 			/*
-			 * Generate an expression tree representing run-time application
-			 * of the conversion function.  If we are dealing with a domain
-			 * target type, the conversion function will yield the base type.
+			 * Generate an expression tree representing run-time
+			 * application of the conversion function.	If we are dealing
+			 * with a domain target type, the conversion function will
+			 * yield the base type.
 			 */
-			Oid		baseTypeId = getBaseType(targetTypeId);
+			Oid			baseTypeId = getBaseType(targetTypeId);
 
 			result = build_func_call(funcId, baseTypeId, makeList1(node));
 
@@ -147,19 +149,20 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			}
 
 			/*
-			 * If the input is a constant, apply the type conversion function
-			 * now instead of delaying to runtime.	(We could, of course, just
-			 * leave this to be done during planning/optimization; but it's a
-			 * very frequent special case, and we save cycles in the rewriter
-			 * if we fold the expression now.)
+			 * If the input is a constant, apply the type conversion
+			 * function now instead of delaying to runtime.  (We could, of
+			 * course, just leave this to be done during
+			 * planning/optimization; but it's a very frequent special
+			 * case, and we save cycles in the rewriter if we fold the
+			 * expression now.)
 			 *
 			 * Note that no folding will occur if the conversion function is
 			 * not marked 'immutable'.
 			 *
 			 * HACK: if constant is NULL, don't fold it here.  This is needed
 			 * by make_subplan(), which calls this routine on placeholder
-			 * Const nodes that mustn't be collapsed.  (It'd be a lot cleaner
-			 * to make a separate node type for that purpose...)
+			 * Const nodes that mustn't be collapsed.  (It'd be a lot
+			 * cleaner to make a separate node type for that purpose...)
 			 */
 			if (IsA(node, Const) &&
 				!((Const *) node)->constisnull)
@@ -168,21 +171,23 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		else
 		{
 			/*
-			 * We don't need to do a physical conversion, but we do need to
-			 * attach a RelabelType node so that the expression will be seen
-			 * to have the intended type when inspected by higher-level code.
+			 * We don't need to do a physical conversion, but we do need
+			 * to attach a RelabelType node so that the expression will be
+			 * seen to have the intended type when inspected by
+			 * higher-level code.
 			 *
 			 * Also, domains may have value restrictions beyond the base type
 			 * that must be accounted for.
 			 */
 			result = coerce_type_constraints(pstate, node,
 											 targetTypeId, true);
+
 			/*
 			 * XXX could we label result with exprTypmod(node) instead of
-			 * default -1 typmod, to save a possible length-coercion later?
-			 * Would work if both types have same interpretation of typmod,
-			 * which is likely but not certain (wrong if target is a domain,
-			 * in any case).
+			 * default -1 typmod, to save a possible length-coercion
+			 * later? Would work if both types have same interpretation of
+			 * typmod, which is likely but not certain (wrong if target is
+			 * a domain, in any case).
 			 */
 			result = (Node *) makeRelabelType(result, targetTypeId, -1);
 		}
@@ -190,9 +195,9 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	else if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
 		/*
-		 * Input class type is a subclass of target, so nothing to do
-		 * --- except relabel the type.  This is binary compatibility
-		 * for complex types.
+		 * Input class type is a subclass of target, so nothing to do ---
+		 * except relabel the type.  This is binary compatibility for
+		 * complex types.
 		 */
 		result = (Node *) makeRelabelType(node, targetTypeId, -1);
 	}
@@ -254,12 +259,15 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 		if (targetTypeId == ANYOID)
 			continue;
 
-		/* if target is ANYARRAY and source is a varlena array type, accept */
+		/*
+		 * if target is ANYARRAY and source is a varlena array type,
+		 * accept
+		 */
 		if (targetTypeId == ANYARRAYOID)
 		{
-			Oid typOutput;
-			Oid typElem;
-			bool typIsVarlena;
+			Oid			typOutput;
+			Oid			typElem;
+			bool		typIsVarlena;
 
 			if (getTypeOutputInfo(inputTypeId, &typOutput, &typElem,
 								  &typIsVarlena))
@@ -267,10 +275,11 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 				if (OidIsValid(typElem) && typIsVarlena)
 					continue;
 			}
+
 			/*
-			 * Otherwise reject; this assumes there are no explicit coercions
-			 * to ANYARRAY.  If we don't reject then parse_coerce would have
-			 * to repeat the above test.
+			 * Otherwise reject; this assumes there are no explicit
+			 * coercions to ANYARRAY.  If we don't reject then
+			 * parse_coerce would have to repeat the above test.
 			 */
 			return false;
 		}
@@ -301,15 +310,15 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 
 /*
  * Create an expression tree to enforce the constraints (if any)
- * that should be applied by the type.  Currently this is only
+ * that should be applied by the type.	Currently this is only
  * interesting for domain types.
  */
 Node *
 coerce_type_constraints(ParseState *pstate, Node *arg,
 						Oid typeId, bool applyTypmod)
 {
-	char   *notNull = NULL;
-	int32	typmod = -1;
+	char	   *notNull = NULL;
+	int32		typmod = -1;
 
 	for (;;)
 	{
@@ -351,9 +360,9 @@ coerce_type_constraints(ParseState *pstate, Node *arg,
 		arg = coerce_type_typmod(pstate, arg, typeId, typmod);
 
 	/*
-	 * Only need to add one NOT NULL check regardless of how many 
-	 * domains in the stack request it.  The topmost domain that
-	 * requested it is used as the constraint name.
+	 * Only need to add one NOT NULL check regardless of how many domains
+	 * in the stack request it.  The topmost domain that requested it is
+	 * used as the constraint name.
 	 */
 	if (notNull)
 	{
@@ -361,11 +370,11 @@ coerce_type_constraints(ParseState *pstate, Node *arg,
 
 		r->arg = arg;
 		r->testtype = CONSTR_TEST_NOTNULL;
-		r->name	= notNull;
+		r->name = notNull;
 		r->check_expr = NULL;
 
 		arg = (Node *) r;
-	}	
+	}
 
 	return arg;
 }
@@ -904,7 +913,7 @@ build_func_call(Oid funcid, Oid rettype, List *args)
 	funcnode = makeNode(Func);
 	funcnode->funcid = funcid;
 	funcnode->funcresulttype = rettype;
-	funcnode->funcretset = false; /* only possible case here */
+	funcnode->funcretset = false;		/* only possible case here */
 	funcnode->func_fcache = NULL;
 
 	expr = makeNode(Expr);

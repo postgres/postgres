@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.65 2002/09/02 02:47:02 momjian Exp $
+ *	$Id: nodeHash.c,v 1.66 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 #include "utils/lsyscache.h"
 
 
-static uint32	hashFunc(Datum key, int typLen, bool byVal);
+static uint32 hashFunc(Datum key, int typLen, bool byVal);
 
 /* ----------------------------------------------------------------
  *		ExecHash
@@ -639,11 +639,11 @@ hashFunc(Datum key, int typLen, bool byVal)
 	{
 		/*
 		 * If it's a by-value data type, just hash the whole Datum value.
-		 * This assumes that datatypes narrower than Datum are consistently
-		 * padded (either zero-extended or sign-extended, but not random
-		 * bits) to fill Datum; see the XXXGetDatum macros in postgres.h.
-		 * NOTE: it would not work to do hash_any(&key, len) since this
-		 * would get the wrong bytes on a big-endian machine.
+		 * This assumes that datatypes narrower than Datum are
+		 * consistently padded (either zero-extended or sign-extended, but
+		 * not random bits) to fill Datum; see the XXXGetDatum macros in
+		 * postgres.h. NOTE: it would not work to do hash_any(&key, len)
+		 * since this would get the wrong bytes on a big-endian machine.
 		 */
 		k = (unsigned char *) &key;
 		typLen = sizeof(Datum);
@@ -658,14 +658,14 @@ hashFunc(Datum key, int typLen, bool byVal)
 		else if (typLen == -1)
 		{
 			/*
-			 * It's a varlena type, so 'key' points to a
-			 * "struct varlena".	NOTE: VARSIZE returns the
-			 * "real" data length plus the sizeof the "vl_len" attribute of
-			 * varlena (the length information). 'key' points to the beginning
-			 * of the varlena struct, so we have to use "VARDATA" to find the
-			 * beginning of the "real" data.  Also, we have to be careful to
-			 * detoast the datum if it's toasted.  (We don't worry about
-			 * freeing the detoasted copy; that happens for free when the
+			 * It's a varlena type, so 'key' points to a "struct varlena".
+			 * NOTE: VARSIZE returns the "real" data length plus the
+			 * sizeof the "vl_len" attribute of varlena (the length
+			 * information). 'key' points to the beginning of the varlena
+			 * struct, so we have to use "VARDATA" to find the beginning
+			 * of the "real" data.	Also, we have to be careful to detoast
+			 * the datum if it's toasted.  (We don't worry about freeing
+			 * the detoasted copy; that happens for free when the
 			 * per-tuple memory context is reset in ExecHashGetBucket.)
 			 */
 			struct varlena *vkey = PG_DETOAST_DATUM(key);

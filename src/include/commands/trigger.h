@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.37 2002/07/12 18:43:19 tgl Exp $
+ * $Id: trigger.h,v 1.38 2002/09/04 20:31:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,22 +77,23 @@ typedef struct TriggerData
 
 /*
  * RI trigger function arguments are stored in pg_trigger.tgargs bytea
- * 
- *   constrname\0fkrel\0pkrel\0matchtype\0fkatt\0pkatt\0fkatt\0pkatt\0...
+ *
+ *	 constrname\0fkrel\0pkrel\0matchtype\0fkatt\0pkatt\0fkatt\0pkatt\0...
  *
  * There are one or more pairs of fkatt/pkatt names.
  *
  * The relation names are no longer of much use since they are not
  * guaranteed unique; they are present only for backwards compatibility.
  * Use the tgrelid and tgconstrrelid fields to identify the referenced
- * relations, instead.  (But note that which is which will depend on which
+ * relations, instead.	(But note that which is which will depend on which
  * trigger you are looking at!)
  */
 #define RI_CONSTRAINT_NAME_ARGNO		0
 #define RI_FK_RELNAME_ARGNO				1
 #define RI_PK_RELNAME_ARGNO				2
 #define RI_MATCH_TYPE_ARGNO				3
-#define RI_FIRST_ATTNAME_ARGNO			4 /* first attname pair starts here */
+#define RI_FIRST_ATTNAME_ARGNO			4		/* first attname pair
+												 * starts here */
 
 #define RI_KEYPAIR_FK_IDX				0
 #define RI_KEYPAIR_PK_IDX				1
@@ -104,7 +105,7 @@ typedef struct TriggerData
 extern Oid	CreateTrigger(CreateTrigStmt *stmt, bool forConstraint);
 
 extern void DropTrigger(Oid relid, const char *trigname,
-						DropBehavior behavior);
+			DropBehavior behavior);
 extern void RemoveTriggerById(Oid trigOid);
 
 extern void renametrig(Oid relid, const char *oldname, const char *newname);

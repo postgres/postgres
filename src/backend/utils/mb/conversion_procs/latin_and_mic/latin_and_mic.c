@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.2 2002/08/22 00:01:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mb/conversion_procs/latin_and_mic/latin_and_mic.c,v 1.3 2002/09/04 20:31:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,12 @@ static void mic2latin3(unsigned char *mic, unsigned char *p, int len);
 static void latin42mic(unsigned char *l, unsigned char *p, int len);
 static void mic2latin4(unsigned char *mic, unsigned char *p, int len);
 
-Datum 
+Datum
 latin1_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN1);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -63,12 +63,12 @@ latin1_to_mic(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 mic_to_latin1(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN1);
@@ -79,12 +79,12 @@ mic_to_latin1(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 latin3_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN3);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -95,12 +95,12 @@ latin3_to_mic(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 mic_to_latin3(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN3);
@@ -111,12 +111,12 @@ mic_to_latin3(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum 
+Datum
 latin4_to_mic(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_LATIN4);
 	Assert(PG_GETARG_INT32(1) == PG_MULE_INTERNAL);
@@ -127,11 +127,12 @@ latin4_to_mic(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum mic_to_latin4(PG_FUNCTION_ARGS)
+Datum
+mic_to_latin4(PG_FUNCTION_ARGS)
 {
 	unsigned char *src = PG_GETARG_CSTRING(2);
 	unsigned char *dest = PG_GETARG_CSTRING(3);
-	int len = PG_GETARG_INT32(4);
+	int			len = PG_GETARG_INT32(4);
 
 	Assert(PG_GETARG_INT32(0) == PG_MULE_INTERNAL);
 	Assert(PG_GETARG_INT32(1) == PG_LATIN4);
@@ -172,4 +173,3 @@ mic2latin4(unsigned char *mic, unsigned char *p, int len)
 {
 	mic2latin(mic, p, len, LC_ISO8859_4);
 }
-

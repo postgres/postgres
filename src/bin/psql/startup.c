@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.63 2002/08/27 20:16:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.64 2002/09/04 20:31:36 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -11,7 +11,7 @@
 
 #ifndef WIN32
 #include <unistd.h>
-#else /* WIN32 */
+#else							/* WIN32 */
 #include <io.h>
 #include <windows.h>
 #include <win32.h>
@@ -541,7 +541,11 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				}
 				break;
 #ifndef HAVE_GETOPT_LONG
-			/* FreeBSD has a broken getopt that causes this test to fail. */
+
+				/*
+				 * FreeBSD has a broken getopt that causes this test to
+				 * fail.
+				 */
 			case '-':
 				fprintf(stderr,
 						gettext("%s was compiled without support for long options.\n"

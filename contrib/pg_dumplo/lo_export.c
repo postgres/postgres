@@ -1,7 +1,7 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.9 2002/08/15 02:58:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_export.c,v 1.10 2002/09/04 20:31:06 momjian Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
@@ -142,7 +142,7 @@ pglo_export(LODumpMaster * pgLO)
 			{
 
 				snprintf(path, BUFSIZ, "%s/%s/%s", pgLO->space, pgLO->db,
-						ll->lo_table);
+						 ll->lo_table);
 
 				if (mkdir(path, DIR_UMASK) == -1)
 				{
@@ -154,7 +154,7 @@ pglo_export(LODumpMaster * pgLO)
 				}
 
 				snprintf(path, BUFSIZ, "%s/%s/%s/%s", pgLO->space, pgLO->db,
-						ll->lo_table, ll->lo_attr);
+						 ll->lo_table, ll->lo_attr);
 
 				if (mkdir(path, DIR_UMASK) == -1)
 				{
@@ -187,7 +187,7 @@ pglo_export(LODumpMaster * pgLO)
 				}
 
 				snprintf(path, BUFSIZ, "%s/%s/%s/%s/%s", pgLO->space,
-						pgLO->db, ll->lo_table, ll->lo_attr, val);
+						 pgLO->db, ll->lo_table, ll->lo_attr, val);
 
 				if (lo_export(pgLO->conn, lo, path) < 0)
 					fprintf(stderr, "%s: lo_export failed:\n%s", progname,

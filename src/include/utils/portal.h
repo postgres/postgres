@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: portal.h,v 1.34 2002/06/20 20:29:53 momjian Exp $
+ * $Id: portal.h,v 1.35 2002/09/04 20:31:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ typedef struct PortalData
 #define PortalGetQueryDesc(portal)	((portal)->queryDesc)
 #define PortalGetTupleDesc(portal)	((portal)->attinfo)
 #define PortalGetState(portal)		((portal)->state)
-#define PortalGetHeapMemory(portal)	((portal)->heap)
+#define PortalGetHeapMemory(portal) ((portal)->heap)
 
 /*
  * estimate of the maximum number of open portals a user would have,

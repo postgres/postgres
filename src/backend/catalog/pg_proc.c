@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.92 2002/09/02 01:05:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.93 2002/09/04 20:31:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@
 
 
 static void checkretval(Oid rettype, char fn_typtype, List *queryTreeList);
-Datum fmgr_internal_validator(PG_FUNCTION_ARGS);
-Datum fmgr_c_validator(PG_FUNCTION_ARGS);
-Datum fmgr_sql_validator(PG_FUNCTION_ARGS);
+Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
+Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
+Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
 
 
 /* ----------------------------------------------------------------
@@ -73,8 +73,8 @@ ProcedureCreate(const char *procedureName,
 	TupleDesc	tupDesc;
 	Oid			retval;
 	bool		is_update;
-	ObjectAddress	myself,
-					referenced;
+	ObjectAddress myself,
+				referenced;
 
 	/*
 	 * sanity checks
@@ -153,16 +153,16 @@ ProcedureCreate(const char *procedureName,
 	i = 0;
 	namestrcpy(&procname, procedureName);
 	values[i++] = NameGetDatum(&procname);		/* proname */
-	values[i++] = ObjectIdGetDatum(procNamespace); /* pronamespace */
+	values[i++] = ObjectIdGetDatum(procNamespace);		/* pronamespace */
 	values[i++] = Int32GetDatum(GetUserId());	/* proowner */
-	values[i++] = ObjectIdGetDatum(languageObjectId); /* prolang */
-	values[i++] = BoolGetDatum(isAgg);			/* proisagg */
-	values[i++] = BoolGetDatum(security_definer); /* prosecdef */
+	values[i++] = ObjectIdGetDatum(languageObjectId);	/* prolang */
+	values[i++] = BoolGetDatum(isAgg);	/* proisagg */
+	values[i++] = BoolGetDatum(security_definer);		/* prosecdef */
 	values[i++] = BoolGetDatum(isStrict);		/* proisstrict */
 	values[i++] = BoolGetDatum(returnsSet);		/* proretset */
 	values[i++] = CharGetDatum(volatility);		/* provolatile */
-	values[i++] = UInt16GetDatum(parameterCount); /* pronargs */
-	values[i++] = ObjectIdGetDatum(returnType);	/* prorettype */
+	values[i++] = UInt16GetDatum(parameterCount);		/* pronargs */
+	values[i++] = ObjectIdGetDatum(returnType); /* prorettype */
 	values[i++] = PointerGetDatum(typev);		/* proargtypes */
 	values[i++] = DirectFunctionCall1(textin,	/* prosrc */
 									  CStringGetDatum(prosrc));
@@ -213,8 +213,8 @@ ProcedureCreate(const char *procedureName,
 		}
 
 		/* do not change existing ownership or permissions, either */
-		replaces[Anum_pg_proc_proowner-1] = ' ';
-		replaces[Anum_pg_proc_proacl-1] = ' ';
+		replaces[Anum_pg_proc_proowner - 1] = ' ';
+		replaces[Anum_pg_proc_proacl - 1] = ' ';
 
 		/* Okay, do it... */
 		tup = heap_modifytuple(oldtup, rel, values, nulls, replaces);
@@ -228,7 +228,7 @@ ProcedureCreate(const char *procedureName,
 		/* Creating a new procedure */
 
 		/* start out with empty permissions */
-		nulls[Anum_pg_proc_proacl-1] = 'n';
+		nulls[Anum_pg_proc_proacl - 1] = 'n';
 
 		tup = heap_formtuple(tupDesc, values, nulls);
 		simple_heap_insert(rel, tup);
@@ -332,7 +332,8 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 	tlist = parse->targetList;
 
 	/*
-	 * The last query must be a SELECT if and only if return type isn't VOID.
+	 * The last query must be a SELECT if and only if return type isn't
+	 * VOID.
 	 */
 	if (rettype == VOIDOID)
 	{
@@ -360,8 +361,8 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 
 		/*
 		 * For base-type returns, the target list should have exactly one
-		 * entry, and its type should agree with what the user declared. (As
-		 * of Postgres 7.2, we accept binary-compatible types too.)
+		 * entry, and its type should agree with what the user declared.
+		 * (As of Postgres 7.2, we accept binary-compatible types too.)
 		 */
 		if (tlistlen != 1)
 			elog(ERROR, "function declared to return %s returns multiple columns in final SELECT",
@@ -378,11 +379,11 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 		Assert(typerelid != InvalidOid);
 
 		/*
-		 * If the target list is of length 1, and the type of the varnode in
-		 * the target list matches the declared return type, this is okay.
-		 * This can happen, for example, where the body of the function is
-		 * 'SELECT func2()', where func2 has the same return type as the
-		 * function that's calling it.
+		 * If the target list is of length 1, and the type of the varnode
+		 * in the target list matches the declared return type, this is
+		 * okay. This can happen, for example, where the body of the
+		 * function is 'SELECT func2()', where func2 has the same return
+		 * type as the function that's calling it.
 		 */
 		if (tlistlen == 1)
 		{
@@ -392,15 +393,15 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 		}
 
 		/*
-		 * Otherwise verify that the targetlist matches the return tuple type.
-		 * This part of the typechecking is a hack. We look up the relation
-		 * that is the declared return type, and scan the non-deleted
-		 * attributes to ensure that they match the datatypes of the
-		 * non-resjunk columns.
+		 * Otherwise verify that the targetlist matches the return tuple
+		 * type. This part of the typechecking is a hack. We look up the
+		 * relation that is the declared return type, and scan the
+		 * non-deleted attributes to ensure that they match the datatypes
+		 * of the non-resjunk columns.
 		 */
 		reln = relation_open(typerelid, AccessShareLock);
 		relnatts = reln->rd_rel->relnatts;
-		rellogcols = 0;				/* we'll count nondeleted cols as we go */
+		rellogcols = 0;			/* we'll count nondeleted cols as we go */
 		colindex = 0;
 
 		foreach(tlistitem, tlist)
@@ -413,7 +414,8 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 			if (tle->resdom->resjunk)
 				continue;
 
-			do {
+			do
+			{
 				colindex++;
 				if (colindex > relnatts)
 					elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
@@ -453,8 +455,8 @@ checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
 		Assert(typerelid == InvalidOid);
 
 		/*
-		 * For RECORD return type, defer this check until we get the
-		 * first tuple.
+		 * For RECORD return type, defer this check until we get the first
+		 * tuple.
 		 */
 	}
 	else
@@ -532,7 +534,7 @@ fmgr_c_validator(PG_FUNCTION_ARGS)
 	if (isnull)
 		elog(ERROR, "null probin");
 	probin = DatumGetCString(DirectFunctionCall1(textout, tmp));
-	
+
 	(void) load_external_function(probin, prosrc, true, &libraryhandle);
 	(void) fetch_finfo_record(libraryhandle, prosrc);
 

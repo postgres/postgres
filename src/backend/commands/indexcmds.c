@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.86 2002/08/30 22:18:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.87 2002/09/04 20:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,9 +117,9 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Verify we (still) have CREATE rights in the rel's namespace.
-	 * (Presumably we did when the rel was created, but maybe not anymore.)
-	 * Skip check if bootstrapping, since permissions machinery may not
-	 * be working yet.
+	 * (Presumably we did when the rel was created, but maybe not
+	 * anymore.) Skip check if bootstrapping, since permissions machinery
+	 * may not be working yet.
 	 */
 	if (!IsBootstrapProcessingMode())
 	{
@@ -254,8 +254,8 @@ CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 		elog(ERROR, "Cannot use aggregate in index predicate");
 
 	/*
-	 * A predicate using mutable functions is probably wrong, for the
-	 * same reasons that we don't allow a functional index to use one.
+	 * A predicate using mutable functions is probably wrong, for the same
+	 * reasons that we don't allow a functional index to use one.
 	 */
 	if (contain_mutable_functions((Node *) predList))
 		elog(ERROR, "Functions in index predicate must be marked isImmutable");
@@ -432,7 +432,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	if (schemaname)
 	{
 		/* Look in specific schema only */
-		Oid		namespaceId;
+		Oid			namespaceId;
 
 		namespaceId = LookupExplicitNamespace(schemaname);
 		tuple = SearchSysCache(CLAAMNAMENSP,
@@ -458,15 +458,15 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 			 NameListToString(attribute->opclass), accessMethodName);
 
 	/*
-	 * Verify that the index operator class accepts this
-	 * datatype.  Note we will accept binary compatibility.
+	 * Verify that the index operator class accepts this datatype.	Note
+	 * we will accept binary compatibility.
 	 */
 	opClassId = HeapTupleGetOid(tuple);
 	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
 
 	if (!IsBinaryCompatible(attrType, opInputType))
 		elog(ERROR, "operator class \"%s\" does not accept data type %s",
-			 NameListToString(attribute->opclass), format_type_be(attrType));
+		 NameListToString(attribute->opclass), format_type_be(attrType));
 
 	ReleaseSysCache(tuple);
 
@@ -547,7 +547,7 @@ RemoveIndex(RangeVar *relation, DropBehavior behavior)
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 		elog(ERROR, "relation \"%s\" is of type \"%c\"",
-			 relation->relname, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
+		 relation->relname, ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 
 	ReleaseSysCache(tuple);
 
@@ -704,7 +704,7 @@ ReindexDatabase(const char *dbname, bool force, bool all)
 	relcnt = relalc = 0;
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		char relkind;
+		char		relkind;
 
 		if (!all)
 		{

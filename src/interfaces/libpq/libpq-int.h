@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.56 2002/09/03 21:45:44 petere Exp $
+ * $Id: libpq-int.h,v 1.57 2002/09/04 20:31:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,9 @@
 #include <sys/types.h>
 
 #if defined(WIN32) && (!defined(ssize_t))
-  typedef int ssize_t; /* ssize_t doesn't exist in VC (atleast not VC6) */
-#endif 
+typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
+								 * not VC6) */
+#endif
 
 /* We assume libpq-fe.h has already been included. */
 #include "postgres_fe.h"
@@ -278,8 +279,8 @@ struct pg_conn
 	bool		require_ssl;	/* Require SSL to make connection */
 	SSL		   *ssl;			/* SSL status, if have SSL connection */
 	X509	   *peer;			/* X509 cert of server */
-	char		peer_dn[256+1]; /* peer distinguished name */
-	char		peer_cn[SM_USER+1]; /* peer common name */
+	char		peer_dn[256 + 1];		/* peer distinguished name */
+	char		peer_cn[SM_USER + 1];	/* peer common name */
 #endif
 
 	/* Buffer for current error message */
@@ -290,7 +291,7 @@ struct pg_conn
 
 	int			client_encoding;	/* encoding id */
 
-      char *connect_timeout;
+	char	   *connect_timeout;
 };
 
 /* String descriptions of the ExecStatusTypes.
@@ -337,15 +338,15 @@ extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqSendSome(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-extern int  pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval* timeout);
+extern int	pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval * timeout);
 extern int	pqReadReady(PGconn *conn);
 extern int	pqWriteReady(PGconn *conn);
 
 /* === in fe-secure.c === */
 
-extern int pqsecure_initialize(PGconn *);
+extern int	pqsecure_initialize(PGconn *);
 extern void pqsecure_destroy(void);
-extern int pqsecure_open_client(PGconn *);
+extern int	pqsecure_open_client(PGconn *);
 extern void pqsecure_close(PGconn *);
 extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);

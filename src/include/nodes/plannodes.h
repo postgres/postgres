@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.57 2002/06/20 20:29:51 momjian Exp $
+ * $Id: plannodes.h,v 1.58 2002/09/04 20:31:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ typedef struct SubqueryScan
  */
 typedef struct FunctionScan
 {
-	Scan				scan;
+	Scan		scan;
 	/* no other fields needed at present */
 	/* scan.scanstate actually points at a FunctionScanState node */
 } FunctionScan;

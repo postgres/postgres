@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.70 2002/06/23 21:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.71 2002/09/04 20:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,22 +165,21 @@ IndexNext(IndexScan *node)
 		while ((tuple = index_getnext(scandesc, direction)) != NULL)
 		{
 			/*
-			 * store the scanned tuple in the scan tuple slot of the
-			 * scan state.  Note: we pass 'false' because tuples
-			 * returned by amgetnext are pointers onto disk pages and
-			 * must not be pfree()'d.
+			 * store the scanned tuple in the scan tuple slot of the scan
+			 * state.  Note: we pass 'false' because tuples returned by
+			 * amgetnext are pointers onto disk pages and must not be
+			 * pfree()'d.
 			 */
-			ExecStoreTuple(tuple,	/* tuple to store */
+			ExecStoreTuple(tuple,		/* tuple to store */
 						   slot,	/* slot to store in */
-						   scandesc->xs_cbuf, /* buffer containing tuple */
-						   false);	/* don't pfree */
+						   scandesc->xs_cbuf,	/* buffer containing tuple */
+						   false);		/* don't pfree */
 
 			/*
 			 * We must check to see if the current tuple was already
-			 * matched by an earlier index, so we don't double-report
-			 * it. We do this by passing the tuple through ExecQual
-			 * and checking for failure with all previous
-			 * qualifications.
+			 * matched by an earlier index, so we don't double-report it.
+			 * We do this by passing the tuple through ExecQual and
+			 * checking for failure with all previous qualifications.
 			 */
 			if (indexstate->iss_IndexPtr > 0)
 			{
@@ -485,8 +484,9 @@ ExecEndIndexScan(IndexScan *node)
 	 * close the heap relation.
 	 *
 	 * Currently, we do not release the AccessShareLock acquired by
-	 * ExecInitIndexScan.  This lock should be held till end of transaction.
-	 * (There is a faction that considers this too much locking, however.)
+	 * ExecInitIndexScan.  This lock should be held till end of
+	 * transaction. (There is a faction that considers this too much
+	 * locking, however.)
 	 */
 	heap_close(relation, NoLock);
 
@@ -1009,7 +1009,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		elog(ERROR, "indexes of the relation %u was inactivated", reloid);
 
 	scanstate->css_currentRelation = currentRelation;
-	scanstate->css_currentScanDesc = NULL; /* no heap scan here */
+	scanstate->css_currentScanDesc = NULL;		/* no heap scan here */
 
 	/*
 	 * get the scan type from the relation descriptor.

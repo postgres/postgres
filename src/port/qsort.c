@@ -1,9 +1,9 @@
 /*
- *  Copied from NetBSD CVS, 2002-07-19, bjm
- *  Add do ... while() macro fix
- *  Remove __inline, _DIAGASSERTs, __P
+ *	Copied from NetBSD CVS, 2002-07-19, bjm
+ *	Add do ... while() macro fix
+ *	Remove __inline, _DIAGASSERTs, __P
  *
- *  $Header: /cvsroot/pgsql/src/port/qsort.c,v 1.2 2002/08/12 15:24:07 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/port/qsort.c,v 1.3 2002/09/04 20:31:48 momjian Exp $
  */
 
 /*	$NetBSD: qsort.c,v 1.12 1999/09/20 04:39:40 lukem Exp $ */
@@ -46,9 +46,9 @@
 #include <sys/types.h>
 
 
-static char *med3 (char *, char *, char *,
-				   int (*) (const void *, const void *));
-static void swapfunc (char *, char *, size_t, int);
+static char *med3(char *, char *, char *,
+	 int (*) (const void *, const void *));
+static void swapfunc(char *, char *, size_t, int);
 
 #define min(a, b)	((a) < (b) ? (a) : (b))
 

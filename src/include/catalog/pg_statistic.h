@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_statistic.h,v 1.17 2002/08/25 17:20:01 tgl Exp $
+ * $Id: pg_statistic.h,v 1.18 2002/09/04 20:31:42 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -43,11 +43,11 @@ CATALOG(pg_statistic) BKI_WITHOUT_OIDS
 	/*
 	 * stawidth is the average width in bytes of non-null entries.	For
 	 * fixed-width datatypes this is of course the same as the typlen, but
-	 * for var-width types it is more useful.  Note that this is the average
-	 * width of the data as actually stored, post-TOASTing (eg, for a
-	 * moved-out-of-line value, only the size of the pointer object is
-	 * counted).  This is the appropriate definition for the primary use
-	 * of the statistic, which is to estimate sizes of in-memory hash
+	 * for var-width types it is more useful.  Note that this is the
+	 * average width of the data as actually stored, post-TOASTing (eg,
+	 * for a moved-out-of-line value, only the size of the pointer object
+	 * is counted).  This is the appropriate definition for the primary
+	 * use of the statistic, which is to estimate sizes of in-memory hash
 	 * tables of tuples.
 	 */
 	int4		stawidth;

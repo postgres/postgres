@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.20 2002/08/20 17:54:44 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.21 2002/09/04 20:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,12 +36,12 @@
 
 static void _ArchiveEntry(ArchiveHandle *AH, TocEntry *te);
 static void _StartData(ArchiveHandle *AH, TocEntry *te);
-static size_t	_WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
+static size_t _WriteData(ArchiveHandle *AH, const void *data, size_t dLen);
 static void _EndData(ArchiveHandle *AH, TocEntry *te);
 static int	_WriteByte(ArchiveHandle *AH, const int i);
 static int	_ReadByte(ArchiveHandle *);
-static size_t	_WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
-static size_t	_ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
+static size_t _WriteBuf(ArchiveHandle *AH, const void *buf, size_t len);
+static size_t _ReadBuf(ArchiveHandle *AH, void *buf, size_t len);
 static void _CloseArchive(ArchiveHandle *AH);
 static void _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _WriteExtraToc(ArchiveHandle *AH, TocEntry *te);
@@ -147,7 +147,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 
 	/* Initialize LO buffering */
 	AH->lo_buf_size = LOBBUFSIZE;
-	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
+	AH->lo_buf = (void *) malloc(LOBBUFSIZE);
 	if (AH->lo_buf == NULL)
 		die_horribly(AH, modulename, "out of memory\n");
 
@@ -567,7 +567,7 @@ _PrintData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-						 "could not read data block - expected %lu, got %lu\n",
+				   "could not read data block - expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
@@ -695,7 +695,7 @@ _skipData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-						 "could not read data block - expected %lu, got %lu\n",
+				   "could not read data block - expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
@@ -956,8 +956,8 @@ _DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush)
 			if (zp->avail_out < zlibOutSize)
 			{
 				/*
-				 * printf("Wrote %lu byte deflated chunk\n", (unsigned long) (zlibOutSize -
-				 * zp->avail_out));
+				 * printf("Wrote %lu byte deflated chunk\n", (unsigned
+				 * long) (zlibOutSize - zp->avail_out));
 				 */
 				WriteInt(AH, zlibOutSize - zp->avail_out);
 				if (fwrite(out, 1, zlibOutSize - zp->avail_out, AH->FH) != (zlibOutSize - zp->avail_out))

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.55 2002/08/31 22:10:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.56 2002/09/04 20:31:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,8 @@ expand_targetlist(List *tlist, int command_type,
 
 	/*
 	 * The rewriter should have already ensured that the TLEs are in
-	 * correct order; but we have to insert TLEs for any missing attributes.
+	 * correct order; but we have to insert TLEs for any missing
+	 * attributes.
 	 *
 	 * Scan the tuple description in the relation's relcache entry to make
 	 * sure we have all the user attributes in the right order.
@@ -161,14 +162,14 @@ expand_targetlist(List *tlist, int command_type,
 			/*
 			 * Didn't find a matching tlist entry, so make one.
 			 *
-			 * For INSERT, generate a NULL constant.  (We assume the
-			 * rewriter would have inserted any available default value.)
-			 * Also, if the column isn't dropped, apply any domain constraints
-			 * that might exist --- this is to catch domain NOT NULL.
+			 * For INSERT, generate a NULL constant.  (We assume the rewriter
+			 * would have inserted any available default value.) Also, if
+			 * the column isn't dropped, apply any domain constraints that
+			 * might exist --- this is to catch domain NOT NULL.
 			 *
 			 * For UPDATE, generate a Var reference to the existing value of
-			 * the attribute, so that it gets copied to the new tuple.
-			 * But generate a NULL for dropped columns (we want to drop any
+			 * the attribute, so that it gets copied to the new tuple. But
+			 * generate a NULL for dropped columns (we want to drop any
 			 * old values).
 			 */
 			Oid			atttype = att_tup->atttypid;
@@ -181,13 +182,13 @@ expand_targetlist(List *tlist, int command_type,
 					new_expr = (Node *) makeConst(atttype,
 												  att_tup->attlen,
 												  (Datum) 0,
-												  true,		/* isnull */
+												  true, /* isnull */
 												  att_tup->attbyval,
-												  false,	/* not a set */
+												  false,		/* not a set */
 												  false);
 					if (!att_tup->attisdropped)
 						new_expr = coerce_type_constraints(NULL, new_expr,
-														   atttype, false);
+														 atttype, false);
 					break;
 				case CMD_UPDATE:
 					/* Insert NULLs for dropped columns */
@@ -215,7 +216,7 @@ expand_targetlist(List *tlist, int command_type,
 			new_tle = makeTargetEntry(makeResdom(attrno,
 												 atttype,
 												 atttypmod,
-												 pstrdup(NameStr(att_tup->attname)),
+									  pstrdup(NameStr(att_tup->attname)),
 												 false),
 									  new_expr);
 		}

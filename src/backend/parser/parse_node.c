@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.67 2002/08/26 17:53:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.68 2002/09/04 20:31:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,8 +135,8 @@ make_op(List *opname, Node *ltree, Node *rtree)
 
 	newop = makeOper(oprid(tup),	/* opno */
 					 InvalidOid,	/* opid */
-					 opform->oprresult,	/* opresulttype */
-					 get_func_retset(opform->oprcode));	/* opretset */
+					 opform->oprresult, /* opresulttype */
+					 get_func_retset(opform->oprcode)); /* opretset */
 
 	result = makeNode(Expr);
 	result->typeOid = opform->oprresult;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.67 2002/09/02 23:41:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.68 2002/09/04 20:31:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1577,7 +1577,10 @@ Pg_lo_import(ClientData cData, Tcl_Interp *interp, int argc, char *argv[])
 	lobjId = lo_import(conn, filename);
 	if (lobjId == InvalidOid)
 	{
-		/* What is the maximum size of this? FIXME if this is not a good quess */
+		/*
+		 * What is the maximum size of this? FIXME if this is not a good
+		 * quess
+		 */
 		snprintf(interp->result, 128, "Pg_lo_import of '%s' failed", filename);
 		return TCL_ERROR;
 	}
@@ -2040,10 +2043,10 @@ Pg_on_connection_loss(ClientData cData, Tcl_Interp *interp, int argc, char *argv
 	if (callback)
 	{
 		/*
-		 * Start the notify event source if it isn't already running.
-		 * The notify source will cause Tcl to watch read-ready on the
-		 * connection socket, so that we find out quickly if the connection
-		 * drops.
+		 * Start the notify event source if it isn't already running. The
+		 * notify source will cause Tcl to watch read-ready on the
+		 * connection socket, so that we find out quickly if the
+		 * connection drops.
 		 */
 		PgStartNotifyEventSource(connid);
 	}

@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.78 2002/08/29 07:22:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.79 2002/09/04 20:31:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,18 +104,20 @@ pqPutc(char c, PGconn *conn)
 static int
 pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 {
-	/* Strategy to handle blocking and non-blocking connections: Fill
-	 * the output buffer and flush it repeatedly until either all data
-	 * has been sent or is at least queued in the buffer.
+	/*
+	 * Strategy to handle blocking and non-blocking connections: Fill the
+	 * output buffer and flush it repeatedly until either all data has
+	 * been sent or is at least queued in the buffer.
 	 *
-	 * For non-blocking connections, grow the buffer if not all data
-	 * fits into it and the buffer can't be sent because the socket
-	 * would block.
+	 * For non-blocking connections, grow the buffer if not all data fits
+	 * into it and the buffer can't be sent because the socket would
+	 * block.
 	 */
 
 	while (nbytes)
 	{
-		size_t avail, remaining;
+		size_t		avail,
+					remaining;
 
 		/* fill the output buffer */
 		avail = Max(conn->outBufSize - conn->outCount, 0);
@@ -125,36 +127,40 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 		s += remaining;
 		nbytes -= remaining;
 
-		/* if the data didn't fit completely into the buffer, try to
-		 * flush the buffer */
+		/*
+		 * if the data didn't fit completely into the buffer, try to flush
+		 * the buffer
+		 */
 		if (nbytes)
 		{
-			int send_result = pqSendSome(conn);
+			int			send_result = pqSendSome(conn);
 
 			/* if there were errors, report them */
 			if (send_result < 0)
 				return EOF;
 
-			/* if not all data could be sent, increase the output
-			 * buffer, put the rest of s into it and return
-			 * successfully. This case will only happen in a
-			 * non-blocking connection
+			/*
+			 * if not all data could be sent, increase the output buffer,
+			 * put the rest of s into it and return successfully. This
+			 * case will only happen in a non-blocking connection
 			 */
 			if (send_result > 0)
 			{
-				/* try to grow the buffer.
-				 * FIXME: The new size could be chosen more
-				 * intelligently.
+				/*
+				 * try to grow the buffer. FIXME: The new size could be
+				 * chosen more intelligently.
 				 */
-				size_t buflen = conn->outCount + nbytes;
+				size_t		buflen = conn->outCount + nbytes;
+
 				if (buflen > conn->outBufSize)
 				{
-					char * newbuf = realloc(conn->outBuffer, buflen);
+					char	   *newbuf = realloc(conn->outBuffer, buflen);
+
 					if (!newbuf)
 					{
 						/* realloc failed. Probably out of memory */
 						printfPQExpBuffer(&conn->errorMessage,
-								"cannot allocate memory for output buffer\n");
+						   "cannot allocate memory for output buffer\n");
 						return EOF;
 					}
 					conn->outBuffer = newbuf;
@@ -169,9 +175,11 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 			}
 		}
 
-		/* pqSendSome was able to send all data. Continue with the next
-		 * chunk of s. */
-	} /* while */
+		/*
+		 * pqSendSome was able to send all data. Continue with the next
+		 * chunk of s.
+		 */
+	}							/* while */
 
 	return 0;
 }
@@ -484,7 +492,7 @@ pqReadData(PGconn *conn)
 	/* OK, try to read some data */
 retry3:
 	nread = pqsecure_read(conn, conn->inBuffer + conn->inEnd,
-						 conn->inBufSize - conn->inEnd);
+						  conn->inBufSize - conn->inEnd);
 	if (nread < 0)
 	{
 		if (SOCK_ERRNO == EINTR)
@@ -676,7 +684,7 @@ pqSendSome(PGconn *conn)
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 							"server closed the connection unexpectedly\n"
-				   "\tThis probably means the server terminated abnormally\n"
+													"\tThis probably means the server terminated abnormally\n"
 						 "\tbefore or while processing the request.\n"));
 
 					/*
@@ -754,9 +762,7 @@ int
 pqFlush(PGconn *conn)
 {
 	if (pqSendSome(conn))
-	{
 		return EOF;
-	}
 	return 0;
 }
 
@@ -773,18 +779,18 @@ pqFlush(PGconn *conn)
 int
 pqWait(int forRead, int forWrite, PGconn *conn)
 {
-      return pqWaitTimed( forRead, forWrite, conn, (const struct timeval *) NULL);
+	return pqWaitTimed(forRead, forWrite, conn, (const struct timeval *) NULL);
 }
 
 int
-pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval *timeout)
+pqWaitTimed(int forRead, int forWrite, PGconn *conn, const struct timeval * timeout)
 {
 	fd_set		input_mask;
 	fd_set		output_mask;
 	fd_set		except_mask;
 
-      struct timeval  tmp_timeout;
-      struct timeval  *ptmp_timeout = NULL;
+	struct timeval tmp_timeout;
+	struct timeval *ptmp_timeout = NULL;
 
 	if (conn->sock < 0)
 	{
@@ -814,17 +820,18 @@ retry5:
 			FD_SET(conn->sock, &output_mask);
 		FD_SET(conn->sock, &except_mask);
 
-              if (NULL != timeout)
+		if (NULL != timeout)
 		{
-              /*
-               * select may modify timeout argument on some platforms use copy
-               */
-                      tmp_timeout = *timeout;
-                      ptmp_timeout = &tmp_timeout;
-              }
-              if (select(conn->sock + 1, &input_mask, &output_mask,
-                            &except_mask, ptmp_timeout) < 0)
-              {
+			/*
+			 * select may modify timeout argument on some platforms use
+			 * copy
+			 */
+			tmp_timeout = *timeout;
+			ptmp_timeout = &tmp_timeout;
+		}
+		if (select(conn->sock + 1, &input_mask, &output_mask,
+				   &except_mask, ptmp_timeout) < 0)
+		{
 			if (SOCK_ERRNO == EINTR)
 				goto retry5;
 			printfPQExpBuffer(&conn->errorMessage,
@@ -884,4 +891,5 @@ libpq_gettext(const char *msgid)
 
 	return dgettext("libpq", msgid);
 }
+
 #endif   /* ENABLE_NLS */
