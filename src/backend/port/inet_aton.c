@@ -1,4 +1,4 @@
-/* $Id: inet_aton.c,v 1.15 1998/09/01 03:24:28 momjian Exp $
+/* $Id: inet_aton.c,v 1.16 1999/02/07 22:07:02 tgl Exp $
  *
  *	This inet_aton() function was taken from the GNU C library and
  *	incorporated into Postgres for those systems which do not have this
@@ -41,6 +41,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.  */
+
+#include "config.h"
 
 #include <sys/types.h>
 #include <netinet/in.h>

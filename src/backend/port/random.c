@@ -1,8 +1,10 @@
-/* $Id: random.c,v 1.5 1998/09/01 03:24:30 momjian Exp $ */
+/* $Id: random.c,v 1.6 1999/02/07 22:07:02 tgl Exp $ */
 
+#include <stdlib.h>
 #include <math.h>				/* for pow() prototype */
-
 #include <errno.h>
+
+#include "config.h"
 #include "rusagestub.h"
 
 long

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.21 1998/10/08 18:30:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.22 1999/02/07 22:06:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,8 @@ load_file(char *filename)
 	handle_load(filename, (char *) NULL);
 }
 
-/* Is this used? bjm 1998/10/08 */
+/* Is this used? bjm 1998/10/08   No. tgl 1999/02/07 */
+#ifdef NOT_USED
 func_ptr
 trigger_dynamic(char *filename, char *funcname)
 {
@@ -287,3 +288,4 @@ trigger_dynamic(char *filename, char *funcname)
 
 	return trigger_fn;
 }
+#endif
