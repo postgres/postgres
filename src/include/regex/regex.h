@@ -40,6 +40,7 @@
 #ifndef _REGEX_H_
 #define _REGEX_H_
 
+#include "postgres.h"
 #include <sys/types.h>
 #include "mb/pg_wchar.h"
 

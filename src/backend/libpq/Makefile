@@ -4,7 +4,7 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.16 1999/12/13 22:32:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.17 2000/01/19 02:58:52 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,10 +17,6 @@ CFLAGS += -I..
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 LDFLAGS+= $(KRBLIBS)
-endif
-
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS = be-dumpdata.o be-fsstubs.o be-pqexec.o portal.o portalbuf.o \

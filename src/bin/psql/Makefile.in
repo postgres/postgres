@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.19 1999/11/27 19:43:20 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.20 2000/01/19 02:59:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,10 +22,6 @@ CFLAGS:= -I$(LIBPQDIR) $(CFLAGS)
 ifdef KRBVERS
 LDFLAGS+= $(KRBLIBS)
 CFLAGS+= $(KRBFLAGS)
-endif
-
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS=command.o common.o help.o input.o stringutils.o mainloop.o \

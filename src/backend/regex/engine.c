@@ -37,6 +37,8 @@
  *		@(#)engine.c	8.5 (Berkeley) 3/20/94
  */
 
+#include "postgres.h"
+
 /*
  * The matching engine and friends.  This file is #included by regexec.c
  * after suitable #defines of a variety of macros used herein, so that

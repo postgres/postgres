@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.48 2000/01/18 05:08:29 ishii Exp $
+ * $Id: miscadmin.h,v 1.49 2000/01/19 02:59:02 petere Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -21,6 +21,8 @@
  */
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
+
+#include "postgres.h"
 
 #include "utils/trace.h"
 

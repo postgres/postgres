@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.135 2000/01/18 18:09:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.136 2000/01/19 02:58:59 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -608,9 +608,9 @@ main(int argc, char **argv)
      */
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acdDh:nNoOp:st:uvxzV?\037", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDf:h:nNoOp:st:uvxzV?\037", long_options, &optindex)) != -1)
 #else
-    while ((c = getopt(argc, argv, "acdDh:nNoOp:st:uvxzV?")) != -1)
+    while ((c = getopt(argc, argv, "acdDf:h:nNoOp:st:uvxzV?-")) != -1)
 #endif
 	{
 		switch (c)
@@ -630,6 +630,10 @@ main(int argc, char **argv)
 				dumpData = true;
 				attrNames = true;
 				break;
+            case 'f':
+                fprintf(stderr, "%s: The -f option is obsolete. You can achieve the same by writing %s > %s.\n",
+                        progname, progname, optarg);
+                exit(1);
 			case '\037':		/* output file name, see note above */
 				filename = optarg;
 				break;
@@ -695,9 +699,26 @@ main(int argc, char **argv)
                 exit(0);
                 break;
 			case '?':
-				help(progname);
-                exit(0);
+                /* getopt returns '?' on unknown argument. That's not
+                   quite what we want */
+                if (strcmp(argv[optind-1], "-?")==0)
+                {
+                    help(progname);
+                    exit(1);
+                }
+                else
+                {
+                    fputs("Try -? for help.\n", stderr);
+                    exit(1);
+                }
 				break;
+#ifndef HAVE_GETOPT_LONG
+			case '-':
+				fprintf(stderr, "%s was compiled without support for long options.\n"
+						"Use -? for help on invocation options.\n", progname);
+				exit(1);
+				break;
+#endif
 			default:
                 fprintf(stderr, "%s: unknown option -%c\nTry -? for help.\n", progname, c);
                 exit(1);

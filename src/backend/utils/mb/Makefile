@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.6 2000/01/13 01:08:14 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/mb/Makefile,v 1.7 2000/01/19 02:58:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,9 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
-endif
 
 OBJS = common.o conv.o mbutils.o wchar.o wstrcmp.o wstrncmp.o variable.o \
        big5.o

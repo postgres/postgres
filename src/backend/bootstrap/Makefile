@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.20 2000/01/16 20:04:53 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.21 2000/01/19 02:58:51 petere Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -22,9 +22,6 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 CFLAGS += -I..
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
-endif
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error

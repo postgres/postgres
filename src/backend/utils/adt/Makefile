@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.31 2000/01/07 17:22:47 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.32 2000/01/19 02:58:56 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,10 +21,6 @@ endif
 ifeq ($(CC), egcs)
 CFLAGS+= -mieee
 endif
-endif
-
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS = acl.o arrayfuncs.o arrayutils.o bool.o cash.o char.o chunk.o \

@@ -42,6 +42,8 @@ static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 
 #endif	 /* LIBC_SCCS and not lint */
 
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>

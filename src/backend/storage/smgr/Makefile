@@ -4,7 +4,7 @@
 #    Makefile for storage/smgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Makefile,v 1.10 1999/12/13 22:34:09 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/smgr/Makefile,v 1.11 2000/01/19 02:58:55 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
-
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
-endif
 
 OBJS = md.o mm.o smgr.o smgrtype.o
 

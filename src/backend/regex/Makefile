@@ -4,7 +4,7 @@
 #    Makefile for regex
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.11 1999/12/13 22:33:23 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.12 2000/01/19 02:58:53 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,6 @@ DEBUGOBJ =
 OBJS = regcomp.o regerror.o regexec.o regfree.o
 
 ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
 DEBUGOBJ += ../utils/mb/SUBSYS.o
 endif
 

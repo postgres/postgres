@@ -7,14 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.22 1999/12/22 04:12:54 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/Makefile,v 1.23 2000/01/19 02:58:59 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ..
 include ../Makefile.global
 
-DIRS = pg_id pg_version psql pg_dump pg_passwd \
+DIRS = pg_version psql pg_dump pg_passwd \
  	scripts initdb initlocation ipcclean \
 	pg_ctl
 

@@ -37,7 +37,7 @@
  *		@(#)utils.h		8.3 (Berkeley) 3/20/94
  */
 
-#include "config.h"
+#include "postgres.h"
 
 /* utility definitions */
 #define DUPMAX			100000000		/* xxx is this right? */

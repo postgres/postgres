@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.23 1999/12/13 22:33:03 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.24 2000/01/19 02:58:53 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,10 +15,6 @@ CFLAGS += -I..
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
-endif
-
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \

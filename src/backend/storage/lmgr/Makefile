@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.11 1999/12/13 22:33:54 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.12 2000/01/19 02:58:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,9 +12,6 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
-endif
 
 OBJS = lmgr.o lock.o proc.o
 

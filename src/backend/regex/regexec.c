@@ -42,6 +42,8 @@ static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 
 #endif	 /* LIBC_SCCS and not lint */
 
+#include "postgres.h"
+
 /*
  * the outer shell of regexec()
  *

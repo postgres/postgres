@@ -37,6 +37,8 @@
  *		@(#)regex2.h	8.4 (Berkeley) 3/20/94
  */
 
+#include "postgres.h"
+
 /*
  * First, the stuff that ends up in the outside-world include file
 */

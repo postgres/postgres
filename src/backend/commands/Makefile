@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.22 1999/12/13 22:32:38 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.23 2000/01/19 02:58:51 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,10 +12,6 @@ SRCDIR = ../..
 include ../../Makefile.global
 
 CFLAGS += -I..
-
-ifdef MULTIBYTE
-CFLAGS+= $(MBFLAGS)
-endif
 
 OBJS = async.o creatinh.o command.o comment.o copy.o indexcmds.o define.o \
        remove.o rename.o vacuum.o view.o cluster.o \
