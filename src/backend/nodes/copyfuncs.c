@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.77 1999/04/19 01:43:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.78 1999/04/27 09:49:36 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -514,7 +514,7 @@ _copyUnique(Unique *from)
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	if (newnode->uniqueAttr)
+	if (from->uniqueAttr)
 		newnode->uniqueAttr = pstrdup(from->uniqueAttr);
 	else
 		newnode->uniqueAttr = NULL;
