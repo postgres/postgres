@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.20 1998/09/01 04:29:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.21 1999/02/02 23:53:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -422,11 +422,11 @@ _equalMergePath(MergePath *a, MergePath *b)
 
 	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
 		return false;
-	if (!equal((a->path_mergeclauses), (b->path_mergeclauses)))
+	if (!equal(a->path_mergeclauses, b->path_mergeclauses))
 		return false;
-	if (!equal((a->outersortkeys), (b->outersortkeys)))
+	if (!equal(a->outersortkeys, b->outersortkeys))
 		return false;
-	if (!equal((a->innersortkeys), (b->innersortkeys)))
+	if (!equal(a->innersortkeys, b->innersortkeys))
 		return false;
 	return true;
 }

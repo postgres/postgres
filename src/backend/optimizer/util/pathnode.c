@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.13 1998/09/21 15:41:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.14 1999/02/02 23:53:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,18 +157,13 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 	List	   *temp = NIL;
 	Path	   *retval = NULL;
 
-	/*
-	 * XXX - added the following two lines which weren't int the lisp
-	 * planner, but otherwise, doesn't seem to work for the case where
-	 * new_path is 'nil
-	 */
 	foreach(temp, unique_paths)
 	{
 		path = (Path *) lfirst(temp);
 
-		if ((equal_path_path_ordering(&new_path->p_ordering,
-									  &path->p_ordering) &&
-			 samekeys(new_path->keys, path->keys)))
+		if (samekeys(path->keys, new_path->keys) &&
+			equal_path_path_ordering(&path->p_ordering,
+									 &new_path->p_ordering))
 		{
 			old_path = path;
 			break;

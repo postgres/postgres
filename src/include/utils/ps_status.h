@@ -31,6 +31,7 @@ char *ps_status_buffer = NULL;
 		ps_status_buffer = (argv)[0]; \
 		sprintf(ps_status_buffer, "%s %s %s %s ", execname, username, hostname, dbname); \
 		ps_status_buffer += strlen(ps_status_buffer); \
+		ps_status_buffer[0] = '\0'; \
 	}
 
 #define PS_CLEAR_STATUS() \
@@ -41,7 +42,7 @@ char *ps_status_buffer = NULL;
 		if (ps_status_buffer) \
 		{ \
 			PS_CLEAR_STATUS(); \
-			strcat(ps_status_buffer, status); \
+			strcpy(ps_status_buffer, status); \
 		} \
 	}
 
