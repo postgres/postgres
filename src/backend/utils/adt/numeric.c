@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.16.2.1 1999/08/02 05:24:55 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.16.2.2 2000/01/16 00:44:06 tgl Exp $
  *
  * ----------
  */
@@ -250,10 +250,41 @@ numeric_out(Numeric num)
 	set_var_from_num(num, &x);
 
 	/* ----------
+	 * Check if we must round up before printing the value and
+	 * do so.
+	 * ----------
+	 */
+	i = x.dscale + x.weight + 1;
+	if (i >= 0 && x.ndigits > i)
+	{
+		int		carry = (x.digits[i] > 4) ? 1 : 0;
+
+		x.ndigits = i;
+
+		while (carry)
+		{
+			carry += x.digits[--i];
+			x.digits[i] = carry % 10;
+			carry /= 10;
+		}
+
+		if (i < 0)
+		{
+			Assert(i == -1);	/* better not have added more than 1 digit */
+			Assert(x.digits > (NumericDigit *) (x.buf + 1));
+			x.digits--;
+			x.ndigits++;
+			x.weight++;
+		}
+	}
+	else
+		x.ndigits = MAX(0, MIN(i, x.ndigits));
+
+	/* ----------
 	 * Allocate space for the result
 	 * ----------
 	 */
-	str = palloc(x.dscale + MAX(0, x.weight) + 5);
+	str = palloc(MAX(0, x.dscale) + MAX(0, x.weight) + 4);
 	cp = str;
 
 	/* ----------
@@ -262,33 +293,6 @@ numeric_out(Numeric num)
 	 */
 	if (x.sign == NUMERIC_NEG)
 		*cp++ = '-';
-
-	/* ----------
-	 * Check if we must round up before printing the value and
-	 * do so.
-	 * ----------
-	 */
-	if (x.dscale < x.rscale && (x.dscale + x.weight + 1) < x.ndigits)
-	{
-		int			j;
-		int			carry;
-
-		j = x.dscale + x.weight + 1;
-		carry = (x.digits[j] > 4) ? 1 : 0;
-
-		while (carry)
-		{
-			j--;
-			carry += x.digits[j];
-			x.digits[j] = carry % 10;
-			carry /= 10;
-		}
-		if (j < 0)
-		{
-			x.digits--;
-			x.weight++;
-		}
-	}
 
 	/* ----------
 	 * Output all digits before the decimal point
@@ -2212,7 +2216,8 @@ set_var_from_str(char *str, NumericVar *dest)
 
 	if (*cp == 'e' || *cp == 'E')
 	{
-		/* Handle ...Ennn */
+		/* XXX Should handle ...Ennn */
+		elog(ERROR, "Bad numeric input format '%s'", str);
 	}
 
 	while (dest->ndigits > 0 && *(dest->digits) == 0)
@@ -2378,20 +2383,14 @@ apply_typmod(NumericVar *var, int32 typmod)
 	scale = typmod & 0xffff;
 	maxweight = precision - scale;
 
-	if (var->weight >= maxweight)
-	{
-		free_allvars();
-		elog(ERROR, "overflow on numeric "
-			 "ABS(value) >= 10^%d for field with precision %d scale %d",
-			 var->weight, precision, scale);
-	}
-
+	/* Round to target scale */
 	i = scale + var->weight + 1;
 	if (i >= 0 && var->ndigits > i)
 	{
-		long		carry = (var->digits[i] > 4) ? 1 : 0;
+		int		carry = (var->digits[i] > 4) ? 1 : 0;
 
 		var->ndigits = i;
+
 		while (carry)
 		{
 			carry += var->digits[--i];
@@ -2401,6 +2400,8 @@ apply_typmod(NumericVar *var, int32 typmod)
 
 		if (i < 0)
 		{
+			Assert(i == -1);	/* better not have added more than 1 digit */
+			Assert(var->digits > (NumericDigit *) (var->buf + 1));
 			var->digits--;
 			var->ndigits++;
 			var->weight++;
@@ -2410,16 +2411,33 @@ apply_typmod(NumericVar *var, int32 typmod)
 		var->ndigits = MAX(0, MIN(i, var->ndigits));
 
 	/* ----------
-	 * Check for overflow again - rounding could have raised the
-	 * weight.
+	 * Check for overflow - note we can't do this before rounding,
+	 * because rounding could raise the weight.  Also note that the
+	 * var's weight could be inflated by leading zeroes, which will
+	 * be stripped before storage but perhaps might not have been yet.
+	 * In any case, we must recognize a true zero, whose weight doesn't
+	 * mean anything.
 	 * ----------
 	 */
 	if (var->weight >= maxweight)
 	{
-		free_allvars();
-		elog(ERROR, "overflow on numeric "
-			 "ABS(value) >= 10^%d for field with precision %d scale %d",
-			 var->weight, precision, scale);
+		/* Determine true weight; and check for all-zero result */
+		int		tweight = var->weight;
+
+		for (i = 0; i < var->ndigits; i++)
+		{
+			if (var->digits[i])
+				break;
+			tweight--;
+		}
+		
+		if (tweight >= maxweight && i < var->ndigits)
+		{
+			free_allvars();
+			elog(ERROR, "overflow on numeric "
+				 "ABS(value) >= 10^%d for field with precision %d scale %d",
+				 tweight, precision, scale);
+		}
 	}
 
 	var->rscale = scale;

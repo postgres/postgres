@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.20.2.1 1999/08/02 05:56:55 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.20.2.2 2000/01/16 00:44:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,10 @@ AggNameGetInitVal(char *aggName, Oid basetype, int xfuncno, bool *isNull)
 		pfree(strInitVal);
 		elog(ERROR, "AggNameGetInitVal: cache lookup failed on aggregate transition function return type");
 	}
-	initVal = fmgr(((Form_pg_type) GETSTRUCT(tup))->typinput, strInitVal, -1);
+	initVal = fmgr(((Form_pg_type) GETSTRUCT(tup))->typinput,
+				   strInitVal,
+				   ((Form_pg_type) GETSTRUCT(tup))->typelem,
+				   -1);
 	pfree(strInitVal);
 	return initVal;
 }
