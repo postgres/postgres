@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.12 1999/09/11 19:06:25 tgl Exp $
+ * $Id: elog.h,v 1.13 1999/09/27 15:48:12 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,9 @@
 #define ERROR	(-1)			/* user error - return to known state */
 #define FATAL	1				/* fatal error - abort process */
 #define REALLYFATAL	2			/* take down the other backends with me */
+#define	STOP	REALLYFATAL
 #define DEBUG	(-2)			/* debug message */
+#define	LOG		DEBUG
 #define NOIND	(-3)			/* debug message, don't indent as far */
 
 extern void elog(int lev, const char *fmt, ...);

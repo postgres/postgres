@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.117 1999/09/27 03:13:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.118 1999/09/27 15:47:43 vadim Exp $
  *
  * NOTES
  *
@@ -204,9 +204,10 @@ static int	SendStop = false;
 
 static bool NetServer = false;	/* if not zero, postmaster listen for
 								 * non-local connections */
+#ifdef USE_SSL
 static bool SecureNetServer = false; /* if not zero, postmaster listens for only SSL
                                       * non-local connections */
-
+#endif
 
 /*
  * GH: For !HAVE_SIGPROCMASK (NEXTSTEP), TRH implemented an
@@ -990,12 +991,17 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 
 	/* Could add additional special packet types here */
 
-	/* Any SSL negotiation must have taken place here, so drop the connection
-	 * ASAP if we require SSL */
-	if (SecureNetServer && !port->ssl) {
-	  PacketSendError(&port->pktInfo, "Backend requires secure connection.");
-	  return STATUS_OK;
+#ifdef USE_SSL
+	/* 
+	 * Any SSL negotiation must have taken place here, so drop the connection
+	 * ASAP if we require SSL
+	 */
+	if (SecureNetServer && !port->ssl)
+	{
+		PacketSendError(&port->pktInfo, "Backend requires secure connection.");
+		return STATUS_OK;
 	}
+#endif
 
 	/* Check we can handle the protocol the frontend is using. */
 
@@ -1832,6 +1838,7 @@ CountChildren(void)
 }
 
 
+#ifdef USE_SSL
 /*
  * Initialize SSL library and structures
  */
@@ -1860,3 +1867,4 @@ static void InitSSL(void) {
     exit(1);
   }
 }
+#endif

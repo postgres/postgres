@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.66 1999/09/23 17:02:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.67 1999/09/27 15:47:54 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,13 +220,13 @@ ProcessUtility(Node *parsetree,
 				 relname);
 			  }			  
 			  
-			  rel = heap_openr(relname);
+			  rel = heap_openr(relname, AccessExclusiveLock);
 			  if (RelationIsValid(rel)) {
 			    if (rel->rd_rel->relkind == RELKIND_SEQUENCE) {
 			      elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence", 
 				   relname);
 			    }			    
-			    heap_close(rel);
+			    heap_close(rel, NoLock);
 			  }
 #ifndef NO_SECURITY
 			  if (!pg_ownercheck(userName, relname, RELNAME)) {

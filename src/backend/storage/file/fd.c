@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.47 1999/07/17 20:17:42 momjian Exp $
+ *	  $Id: fd.c,v 1.48 1999/09/27 15:47:49 vadim Exp $
  *
  * NOTES:
  *
@@ -49,6 +49,7 @@
 #include "miscadmin.h"
 #include "storage/fd.h"
 
+bool	ReleaseDataFile(void);
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.
  * This will open several extra files in addition to those used by
@@ -408,6 +409,19 @@ ReleaseLruFile()
 	 */
 	Assert(VfdCache[0].lruMoreRecently != 0);
 	LruDelete(VfdCache[0].lruMoreRecently);
+}
+
+bool
+ReleaseDataFile()
+{
+	DO_DB(elog(DEBUG, "ReleaseDataFile. Opened %d", nfile));
+
+	if (nfile <= 0)
+		return(false);
+	Assert(VfdCache[0].lruMoreRecently != 0);
+	LruDelete(VfdCache[0].lruMoreRecently);
+
+	return(true);
 }
 
 static File
