@@ -4,9 +4,21 @@
  *	Generic trigger procedures for referential integrity constraint
  *	checks.
  *
- *	1999 Jan Wieck
+ *	Note about memory management: the private hashtables kept here live
+ *	across query and transaction boundaries, in fact they live as long as
+ *	the backend does.  This works because the hashtable structures
+ *	themselves are allocated by dynahash.c in its permanent DynaHashCxt,
+ *	and the parse/plan node trees they point to are copied into
+ *	TopMemoryContext using SPI_saveplan().  This is pretty ugly, since there
+ *	is no way to free a no-longer-needed plan tree, but then again we don't
+ *	yet have any bookkeeping that would allow us to detect that a plan isn't
+ *	needed anymore.  Improve it someday.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.20 2000/12/22 18:35:09 tgl Exp $
+ *
+ * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
+ * Copyright 1999 Jan Wieck
+ *
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.21 2001/02/15 21:57:43 tgl Exp $
  *
  * ----------
  */
