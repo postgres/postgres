@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.11 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.12 2000/07/21 04:42:28 momjian Exp $
 Postgres documentation
 -->
 
@@ -209,8 +209,8 @@ NOTIFY
    <application>psql</application>:
 
 <programlisting>
-=> LISTEN virtual;
-=> NOTIFY virtual;
+LISTEN virtual;
+NOTIFY virtual;
 Asynchronous NOTIFY 'virtual' from backend with pid '8448' received. 
 </programlisting>
   </para>
