@@ -6,7 +6,7 @@
 #include <limits.h>
 
 #include <ecpgtype.h>
-#include <compatlib.h>
+#include <ecpg_informix.h>
 #include <pgtypes_error.h>
 #include <pgtypes_date.h>
 #include <pgtypes_numeric.h>
