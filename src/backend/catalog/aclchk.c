@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.88 2003/09/04 15:53:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.89 2003/10/05 21:49:12 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -78,7 +78,8 @@ dumpacl(Acl *acl)
 static Acl *
 merge_acl_with_grant(Acl *old_acl, bool is_grant,
 					 List *grantees, AclMode privileges,
-					 bool grant_option, DropBehavior behavior)
+					 bool grant_option, DropBehavior behavior,
+					 AclId owner_uid)
 {
 	unsigned	modechg;
 	List	   *j;
@@ -97,12 +98,15 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 		AclItem		aclitem;
 		uint32		idtype;
 		Acl		   *newer_acl;
+		bool		grantee_is_owner = false;
 
 		if (grantee->username)
 		{
 			aclitem.ai_grantee = get_usesysid(grantee->username);
 
 			idtype = ACL_IDTYPE_UID;
+
+			grantee_is_owner = (aclitem.ai_grantee == owner_uid && owner_uid != InvalidOid);
 		}
 		else if (grantee->groupname)
 		{
@@ -129,11 +133,16 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
 					 errmsg("grant options can only be granted to individual users")));
 
+		if (!is_grant && grant_option && grantee_is_owner)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+					 errmsg("cannot revoke grant options from owner")));
+
 		aclitem.ai_grantor = GetUserId();
 
 		ACLITEM_SET_PRIVS_IDTYPE(aclitem,
-				(is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
-				(grant_option || !is_grant) ? privileges : ACL_NO_RIGHTS,
+								 (is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
+								 (grant_option || (!is_grant && !grantee_is_owner)) ? privileges : ACL_NO_RIGHTS,
 								 idtype);
 
 		newer_acl = aclinsert3(new_acl, &aclitem, modechg, behavior);
@@ -257,7 +266,8 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									 stmt->grant_option, stmt->behavior);
+									   stmt->grant_option, stmt->behavior,
+									   pg_class_tuple->relowner);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -355,7 +365,8 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									 stmt->grant_option, stmt->behavior);
+									   stmt->grant_option, stmt->behavior,
+									   pg_database_tuple->datdba);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -451,7 +462,8 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									 stmt->grant_option, stmt->behavior);
+									   stmt->grant_option, stmt->behavior,
+									   pg_proc_tuple->proowner);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -550,7 +562,8 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									 stmt->grant_option, stmt->behavior);
+									   stmt->grant_option, stmt->behavior,
+									   InvalidOid);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -646,7 +659,8 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
 									   stmt->grantees, privileges,
-									 stmt->grant_option, stmt->behavior);
+									   stmt->grant_option, stmt->behavior,
+									   pg_namespace_tuple->nspowner);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
