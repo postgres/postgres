@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.169 2004/11/27 21:56:04 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.170 2004/12/02 15:32:52 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -3952,24 +3952,6 @@ There is no good reason to call <function>fe_setauthsvc</function> at all.
 not thread-safe.<indexterm><primary>crypt</><secondary>thread
 safety</></> It is better to use the <literal>md5</literal> method,
 which is thread-safe on all platforms.
-</para>
-
-<para>
-<application>libpq</application> must ignore <literal>SIGPIPE</> signals
-generated internally by <function>send()</> calls to backend processes.
-When <productname>PostgreSQL</> is configured without
-<literal>--enable-thread-safety</>, <application>libpq</> sets
-<literal>SIGPIPE</> to <literal>SIG_IGN</> before each
-<function>send()</> call and restores the original signal handler after
-completion. When <literal>--enable-thread-safety</> is used,
-<application>libpq</> installs its own <literal>SIGPIPE</> handler
-before the first database connection.  This handler uses thread-local
-storage to determine if a <literal>SIGPIPE</> signal has been generated
-by a libpq <function>send()</>. If an application wants to install
-its own <literal>SIGPIPE</> signal handler, it should call
-<function>PQinSend()</> to determine if it should ignore the
-<literal>SIGPIPE</> signal. This function is available in both
-thread-safe and non-thread-safe versions of <application>libpq</>.
 </para>
 
 <para>

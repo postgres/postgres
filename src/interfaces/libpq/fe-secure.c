@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.57 2004/11/20 00:35:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.58 2004/12/02 15:32:54 momjian Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -150,12 +150,6 @@ static void SSLerrfree(char *buf);
 bool		pq_initssllib = true;
 
 static SSL_CTX *SSL_context = NULL;
-#endif
-
-#ifdef ENABLE_THREAD_SAFETY
-static void sigpipe_handler_ignore_send(int signo);
-pthread_key_t pq_thread_in_send = 0;	/* initializer needed on Darwin */
-static pqsigfunc pq_pipe_handler;
 #endif
 
 /* ------------------------------------------------------------ */
@@ -379,9 +373,12 @@ ssize_t
 pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 {
 	ssize_t		n;
-
+	
 #ifdef ENABLE_THREAD_SAFETY
-	pthread_setspecific(pq_thread_in_send, "t");
+	sigset_t	osigmask;
+	bool		sigpipe_pending;
+	
+	pq_block_sigpipe(&osigmask, &sigpipe_pending);
 #else
 #ifndef WIN32
 	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
@@ -452,9 +449,14 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	else
 #endif
 		n = send(conn->sock, ptr, len, 0);
+		/*
+		 *	Possible optimization:  if sigpending() turns out to be an
+		 *	expensive operation, we can set sigpipe_pending = 'true'
+		 *	here if errno != EPIPE, avoiding a sigpending call.
+		 */
 
 #ifdef ENABLE_THREAD_SAFETY
-	pthread_setspecific(pq_thread_in_send, "f");
+	pq_reset_sigpipe(&osigmask, sigpipe_pending);
 #else
 #ifndef WIN32
 	pqsignal(SIGPIPE, oldsighandler);
@@ -1216,65 +1218,77 @@ PQgetssl(PGconn *conn)
 }
 #endif   /* USE_SSL */
 
-
 #ifdef ENABLE_THREAD_SAFETY
-#ifndef WIN32
 /*
- *	Check SIGPIPE handler and perhaps install our own.
+ *	Block SIGPIPE for this thread.  This prevents send()/write() from exiting
+ *	the application.
  */
-void
-pq_check_sigpipe_handler(void)
+int
+pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending)
 {
-	pthread_key_create(&pq_thread_in_send, NULL);
+	sigset_t sigpipe_sigset;
+	sigset_t sigset;
+	int		 ret;
+	
+	sigemptyset(&sigpipe_sigset);
+	sigaddset(&sigpipe_sigset, SIGPIPE);
 
-	/*
-	 * Find current pipe handler and chain on to it.
-	 */
-	pq_pipe_handler = pqsignalinquire(SIGPIPE);
-	pqsignal(SIGPIPE, sigpipe_handler_ignore_send);
-}
+	/* Block SIGPIPE and save previous mask for later reset */
+	ret = pthread_sigmask(SIG_BLOCK, &sigpipe_sigset, osigset);
 
-/*
- *	Threaded SIGPIPE signal handler
- */
-void
-sigpipe_handler_ignore_send(int signo)
-{
-	/*
-	 * If we have gotten a SIGPIPE outside send(), chain or exit if we are
-	 * at the end of the chain. Synchronous signals are delivered to the
-	 * thread that caused the signal.
-	 */
-	if (!PQinSend())
+	/* We can have a pending SIGPIPE only if it was blocked before */
+	if (sigismember(osigset, SIGPIPE))
 	{
-		if (pq_pipe_handler == SIG_DFL) /* not set by application */
-			exit(128 + SIGPIPE);	/* typical return value for SIG_DFL */
+		/* Is there a pending SIGPIPE? */
+		if (sigpending(&sigset) != 0)
+			return -1;
+	
+		if (sigismember(&sigset, SIGPIPE))
+			*sigpipe_pending = true;
 		else
-			(*pq_pipe_handler) (signo); /* call original handler */
+			*sigpipe_pending = false;
 	}
+	else
+		*sigpipe_pending = false;
+	
+	return ret;
 }
-#endif
-#endif
-
+	
 /*
- *	Indicates whether the current thread is in send()
- *	For use by SIGPIPE signal handlers;  they should
- *	ignore SIGPIPE when libpq is in send().  This means
- *	that the backend has died unexpectedly.
+ *	Discard any pending SIGPIPE and reset the signal mask.
+ *	We might be discarding a blocked SIGPIPE that we didn't generate,
+ *	but we document that you can't keep blocked SIGPIPE calls across
+ *	libpq function calls.
  */
-pqbool
-PQinSend(void)
+int
+pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending)
 {
-#ifdef ENABLE_THREAD_SAFETY
-	return (pthread_getspecific(pq_thread_in_send) /* has it been set? */ &&
-			*(char *) pthread_getspecific(pq_thread_in_send) == 't') ? true : false;
-#else
+	int	signo;
+	sigset_t sigset;
 
-	/*
-	 * No threading: our code ignores SIGPIPE around send(). Therefore, we
-	 * can't be in send() if we are checking from a SIGPIPE signal
-	 * handler.
-	 */
-	return false;
-#endif
+	/* Clear SIGPIPE only if none was pending */
+	if (!sigpipe_pending)
+	{
+		if (sigpending(&sigset) != 0)
+			return -1;
+	
+		/*
+		 *	Discard pending and blocked SIGPIPE
+		 */
+		if (sigismember(&sigset, SIGPIPE))
+		{
+			sigset_t sigpipe_sigset;
+			
+			sigemptyset(&sigpipe_sigset);
+			sigaddset(&sigpipe_sigset, SIGPIPE);
+	
+			sigwait(&sigpipe_sigset, &signo);
+			if (signo != SIGPIPE)
+				return -1;
+		}
+	}
+	
+	/* Restore saved block mask */
+	return pthread_sigmask(SIG_SETMASK, osigset, NULL);
 }
+#endif

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.387 2004/11/30 06:13:04 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.388 2004/12/02 15:32:50 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1174,6 +1174,13 @@ AC_CHECK_TYPES(sig_atomic_t, [], [], [#include <signal.h>])
 
 
 PGAC_FUNC_POSIX_SIGNALS
+if test "$pgac_cv_func_posix_signals" != yes -a "$enable_thread_safety" = yes; then
+  AC_MSG_ERROR([
+*** Thread-safety requires POSIX signals, which are not supported by your
+*** operating system.
+])
+fi
+
 if test $ac_cv_func_fseeko = yes; then
 AC_SYS_LARGEFILE
 fi

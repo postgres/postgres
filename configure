@@ -17431,6 +17431,18 @@ _ACEOF
 fi
 HAVE_POSIX_SIGNALS=$pgac_cv_func_posix_signals
 
+if test "$pgac_cv_func_posix_signals" != yes -a "$enable_thread_safety" = yes; then
+  { { echo "$as_me:$LINENO: error:
+*** Thread-safety requires POSIX signals, which are not supported by your
+*** operating system.
+" >&5
+echo "$as_me: error:
+*** Thread-safety requires POSIX signals, which are not supported by your
+*** operating system.
+" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
 if test $ac_cv_func_fseeko = yes; then
 # Check whether --enable-largefile or --disable-largefile was given.
 if test "${enable_largefile+set}" = set; then

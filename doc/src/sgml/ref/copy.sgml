@@ -1,7 +1,8 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.60 2004/11/27 21:56:05 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.61 2004/12/02 15:32:53 momjian Exp $
 PostgreSQL documentation
 -->
+
 
 <refentry id="SQL-COPY">
  <refmeta>

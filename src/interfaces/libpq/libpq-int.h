@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.96 2004/10/30 23:11:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.97 2004/12/02 15:32:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 
 #ifdef ENABLE_THREAD_SAFETY
 #include <pthread.h>
+#include <signal.h>
 #endif
 
 #ifdef WIN32_CLIENT_ONLY
@@ -475,13 +476,13 @@ extern void pqsecure_close(PGconn *);
 extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
 
-#ifdef ENABLE_THREAD_SAFETY
-extern void pq_check_sigpipe_handler(void);
-extern pthread_key_t pq_thread_in_send;
-#endif
-
 #ifdef USE_SSL
 extern bool pq_initssllib;
+#endif
+
+#ifdef ENABLE_THREAD_SAFETY
+int pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
+int pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending);
 #endif
 
 /*

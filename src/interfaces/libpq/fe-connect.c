@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.290 2004/12/01 23:42:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.291 2004/12/02 15:32:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -865,15 +865,6 @@ connectDBStart(PGconn *conn)
 	struct addrinfo hint;
 	const char *node = NULL;
 	int			ret;
-
-#ifdef ENABLE_THREAD_SAFETY
-#ifndef WIN32
-	static pthread_once_t check_sigpipe_once = PTHREAD_ONCE_INIT;
-
-	/* Check only on first connection request */
-	pthread_once(&check_sigpipe_once, pq_check_sigpipe_handler);
-#endif
-#endif
 
 	if (!conn)
 		return 0;

@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.55 2004/11/09 15:57:57 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.56 2004/12/02 15:32:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,11 @@ PQprint(FILE *fout,
 		int			total_line_length = 0;
 		int			usePipe = 0;
 		char	   *pagerenv;
-
+#ifdef ENABLE_THREAD_SAFETY
+		sigset_t	osigset;
+		bool		sigpipe_masked = false;
+		bool		sigpipe_pending;
+#endif
 #if !defined(ENABLE_THREAD_SAFETY) && !defined(WIN32)
 		pqsigfunc	oldsigpipehandler = NULL;
 #endif
@@ -189,7 +193,8 @@ PQprint(FILE *fout,
 				{
 					usePipe = 1;
 #ifdef ENABLE_THREAD_SAFETY
-					pthread_setspecific(pq_thread_in_send, "t");
+					pq_block_sigpipe(&osigset, &sigpipe_pending);
+					sigpipe_masked = true;
 #else
 #ifndef WIN32
 					oldsigpipehandler = pqsignal(SIGPIPE, SIG_IGN);
@@ -311,7 +316,8 @@ PQprint(FILE *fout,
 			pclose(fout);
 #endif
 #ifdef ENABLE_THREAD_SAFETY
-			pthread_setspecific(pq_thread_in_send, "f");
+			if (sigpipe_masked)
+				pq_reset_sigpipe(&osigset, sigpipe_pending);
 #else
 #ifndef WIN32
 			pqsignal(SIGPIPE, oldsigpipehandler);
