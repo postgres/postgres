@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.47 2003/02/09 06:56:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.48 2003/03/06 22:54:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1698,7 +1698,7 @@ RemoveTempRelations(Oid tempNamespaceId)
 	object.objectId = tempNamespaceId;
 	object.objectSubId = 0;
 
-	deleteWhatDependsOn(&object);
+	deleteWhatDependsOn(&object, false);
 }
 
 /*

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.22 2003/02/16 02:30:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.23 2003/03/06 22:54:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,12 +97,14 @@ static void findAutoDeletableObjects(const ObjectAddress *object,
 									 Relation depRel);
 static bool recursiveDeletion(const ObjectAddress *object,
 				  DropBehavior behavior,
+				  int msglevel,
 				  const ObjectAddress *callingObject,
 				  ObjectAddresses *oktodelete,
 				  Relation depRel);
 static bool deleteDependentObjects(const ObjectAddress *object,
 								   const char *objDescription,
 								   DropBehavior behavior,
+								   int msglevel,
 								   ObjectAddresses *oktodelete,
 								   Relation depRel);
 static void doDeletion(const ObjectAddress *object);
@@ -164,7 +166,8 @@ performDeletion(const ObjectAddress *object,
 
 	findAutoDeletableObjects(object, &oktodelete, depRel);
 
-	if (!recursiveDeletion(object, behavior, NULL, &oktodelete, depRel))
+	if (!recursiveDeletion(object, behavior, NOTICE,
+						   NULL, &oktodelete, depRel))
 		elog(ERROR, "Cannot drop %s because other objects depend on it"
 			 "\n\tUse DROP ... CASCADE to drop the dependent objects too",
 			 objDescription);
@@ -183,10 +186,12 @@ performDeletion(const ObjectAddress *object,
  * CASCADE.
  *
  * This is currently used only to clean out the contents of a schema
- * (namespace): the passed object is a namespace.
+ * (namespace): the passed object is a namespace.  We normally want this
+ * to be done silently, so there's an option to suppress NOTICE messages.
  */
 void
-deleteWhatDependsOn(const ObjectAddress *object)
+deleteWhatDependsOn(const ObjectAddress *object,
+					bool showNotices)
 {
 	char	   *objDescription;
 	Relation	depRel;
@@ -218,7 +223,9 @@ deleteWhatDependsOn(const ObjectAddress *object)
 	 * stuff dependent on the given object.
 	 */
 	if (!deleteDependentObjects(object, objDescription,
-								DROP_CASCADE, &oktodelete, depRel))
+								DROP_CASCADE,
+								showNotices ? NOTICE : DEBUG1,
+								&oktodelete, depRel))
 		elog(ERROR, "Failed to drop all objects depending on %s",
 			 objDescription);
 
@@ -342,7 +349,7 @@ findAutoDeletableObjects(const ObjectAddress *object,
  * depRel is the already-open pg_depend relation.
  *
  *
- * In RESTRICT mode, we perform all the deletions anyway, but elog a NOTICE
+ * In RESTRICT mode, we perform all the deletions anyway, but elog a message
  * and return FALSE if we find a restriction violation.  performDeletion
  * will then abort the transaction to nullify the deletions.  We have to
  * do it this way to (a) report all the direct and indirect dependencies
@@ -370,6 +377,7 @@ findAutoDeletableObjects(const ObjectAddress *object,
 static bool
 recursiveDeletion(const ObjectAddress *object,
 				  DropBehavior behavior,
+				  int msglevel,
 				  const ObjectAddress *callingObject,
 				  ObjectAddresses *oktodelete,
 				  Relation depRel)
@@ -518,18 +526,17 @@ recursiveDeletion(const ObjectAddress *object,
 				 getObjectDescription(&owningObject));
 		else if (behavior == DROP_RESTRICT)
 		{
-			elog(NOTICE, "%s depends on %s",
+			elog(msglevel, "%s depends on %s",
 				 getObjectDescription(&owningObject),
 				 objDescription);
 			ok = false;
 		}
 		else
-			elog(NOTICE, "Drop cascades to %s",
+			elog(msglevel, "Drop cascades to %s",
 				 getObjectDescription(&owningObject));
 
-		if (!recursiveDeletion(&owningObject, behavior,
-							   object,
-							   oktodelete, depRel))
+		if (!recursiveDeletion(&owningObject, behavior, msglevel,
+							   object, oktodelete, depRel))
 			ok = false;
 
 		pfree(objDescription);
@@ -546,7 +553,8 @@ recursiveDeletion(const ObjectAddress *object,
 	 * constraint.
 	 */
 	if (!deleteDependentObjects(object, objDescription,
-								behavior, oktodelete, depRel))
+								behavior, msglevel,
+								oktodelete, depRel))
 		ok = false;
 
 	/*
@@ -613,6 +621,7 @@ static bool
 deleteDependentObjects(const ObjectAddress *object,
 					   const char *objDescription,
 					   DropBehavior behavior,
+					   int msglevel,
 					   ObjectAddresses *oktodelete,
 					   Relation depRel)
 {
@@ -664,18 +673,17 @@ deleteDependentObjects(const ObjectAddress *object,
 						 getObjectDescription(&otherObject));
 				else if (behavior == DROP_RESTRICT)
 				{
-					elog(NOTICE, "%s depends on %s",
+					elog(msglevel, "%s depends on %s",
 						 getObjectDescription(&otherObject),
 						 objDescription);
 					ok = false;
 				}
 				else
-					elog(NOTICE, "Drop cascades to %s",
+					elog(msglevel, "Drop cascades to %s",
 						 getObjectDescription(&otherObject));
 
-				if (!recursiveDeletion(&otherObject, behavior,
-									   object,
-									   oktodelete, depRel))
+				if (!recursiveDeletion(&otherObject, behavior, msglevel,
+									   object, oktodelete, depRel))
 					ok = false;
 				break;
 			case DEPENDENCY_AUTO:
@@ -689,9 +697,8 @@ deleteDependentObjects(const ObjectAddress *object,
 				elog(DEBUG1, "Drop auto-cascades to %s",
 					 getObjectDescription(&otherObject));
 
-				if (!recursiveDeletion(&otherObject, behavior,
-									   object,
-									   oktodelete, depRel))
+				if (!recursiveDeletion(&otherObject, behavior, msglevel,
+									   object, oktodelete, depRel))
 					ok = false;
 				break;
 			case DEPENDENCY_PIN:
