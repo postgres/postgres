@@ -1067,5 +1067,9 @@ Thu Mar 29 10:23:05 CEST 2001
 Mon Apr  2 10:16:10 CEST 2001
 
 	- Synced scan.l and pgc.l.
+
+Thu Apr  5 10:11:35 CEST 2001
+
+	- Fixed long long problem.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

@@ -31,12 +31,10 @@ ECPGtype_name(enum ECPGttype typ)
 			return "long";
 		case ECPGt_unsigned_long:
 			return "unsigned long";
-#ifdef HAVE_LONG_LONG_INT_64
 		case ECPGt_long_long:
 			return "long long";
 		case ECPGt_unsigned_long_long:
 			return "unsigned long long";
-#endif	 /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_float:
 			return "float";
 		case ECPGt_double:
