@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.67 2001/05/08 19:00:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.68 2001/09/04 00:22:34 petere Exp $
  *
  * NOTES
  *
@@ -596,9 +596,8 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 					"2. The requested shared memory segment was too small for your system.\n"
 					"   You need to lower the SHMMIN parameter in your kernel.\n\n"
 					"3. The requested shared memory segment already exists but is of the\n"
-					"   wrong size.  This is most likely the case if an old version of\n"
-					"   PostgreSQL crashed and didn't clean up.  The `ipcclean' utility\n"
-					"   can be used to remedy this.\n\n"
+					"   wrong size.  This can occur if some other application on your system\n"
+					"   is also using shared memory.\n\n"
 					"The PostgreSQL Administrator's Guide contains more information about\n"
 					"shared memory configuration.\n\n",
 					size);

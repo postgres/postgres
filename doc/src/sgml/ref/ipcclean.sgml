@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.4 2001/09/03 12:57:50 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/ipcclean.sgml,v 1.5 2001/09/04 00:22:34 petere Exp $
 Postgres documentation
 -->
 
@@ -28,35 +28,36 @@ Postgres documentation
  <refsect1 id="R1-APP-IPCCLEAN-1">
   <title>Description</title>
   <para>
-   <application>ipcclean</application>
-   cleans up shared memory and semaphore space from aborted backends by
-   deleting all instances owned by user <literal>postgres</literal>.
-   Only the DBA
-   should execute this program as it can cause bizarre behavior (i.e.,
-   crashes) if run during multi-user execution.  This program should be
-   executed if messages such as
-
-   <computeroutput>
-semget: No space left on device
-   </computeroutput>
-
-   are encountered when starting up the 
-   <application>postmaster</application> or the backend server.
+   <command>ipcclean</command> removes all shared memory segments and
+   semaphore sets owned by the current user.  It is intended to be
+   used for cleaning up after a crashed
+   <productname>PostgreSQL</productname> server (<xref
+   linkend="app-postmaster">).  Note that immediately restarting the
+   server will also clean up shared memory and semaphores, so this
+   command is of little real utility.
   </para>
 
   <para>
-   If this command is executed while <application>postmaster</application>
-   is running, the shared memory and semaphores allocated by the
-   <application>postmaster</application>
-   will be deleted.  This will result in a general failure of the
-   backend servers started by that
+   Only the database administrator should execute this program as it
+   can cause bizarre behavior (i.e., crashes) if run during multiuser
+   execution.  If this command is executed while a
+   <application>postmaster</application> is running, the shared memory
+   and semaphores allocated by the
+   <application>postmaster</application> will be deleted.  This will
+   result in a general failure of the backend servers started by that
    <application>postmaster</application>.
   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
 
   <para>
-   This script is a hack, but in the many years since it was written, no
-   one has come up with an equally effective and portable solution.
-   Suggestions are welcome.
+   This script is a hack, but in the many years since it was written,
+   no one has come up with an equally effective and portable solution.
+   Since the <application>postmaster</application> can now clean up by
+   itself, it is unlikely that <command>ipcclean</command> will be
+   improved upon in the future.
   </para>
 
   <para>
@@ -66,6 +67,7 @@ semget: No space left on device
    Therefore, it may not work on your particular OS.
   </para>
  </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file
