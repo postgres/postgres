@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.165 2004/04/05 03:11:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.166 2004/05/21 05:07:56 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1828,7 +1828,7 @@ xact_desc(char *buf, uint8 xl_info, char *rec)
 	if (info == XLOG_XACT_COMMIT)
 	{
 		xl_xact_commit *xlrec = (xl_xact_commit *) rec;
-		struct tm  *tm = localtime(&xlrec->xtime);
+		struct pg_tm  *tm = pg_localtime(&xlrec->xtime);
 
 		sprintf(buf + strlen(buf), "commit: %04u-%02u-%02u %02u:%02u:%02u",
 				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
@@ -1838,7 +1838,7 @@ xact_desc(char *buf, uint8 xl_info, char *rec)
 	else if (info == XLOG_XACT_ABORT)
 	{
 		xl_xact_abort *xlrec = (xl_xact_abort *) rec;
-		struct tm  *tm = localtime(&xlrec->xtime);
+		struct pg_tm  *tm = pg_localtime(&xlrec->xtime);
 
 		sprintf(buf + strlen(buf), "abort: %04u-%02u-%02u %02u:%02u:%02u",
 				tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,

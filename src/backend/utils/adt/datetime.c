@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.127 2004/05/07 00:24:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.128 2004/05/21 05:08:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,15 +27,16 @@
 
 static int DecodeNumber(int flen, char *field, bool haveTextMonth,
 			 int fmask, int *tmask,
-			 struct tm * tm, fsec_t *fsec, int *is2digits);
+			 struct pg_tm * tm, fsec_t *fsec, int *is2digits);
 static int DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask,
-				  struct tm * tm, fsec_t *fsec, int *is2digits);
+				  struct pg_tm * tm, fsec_t *fsec, int *is2digits);
 static int DecodeTime(char *str, int fmask, int *tmask,
-		   struct tm * tm, fsec_t *fsec);
+		   struct pg_tm * tm, fsec_t *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
+static int	DecodePosixTimezone(char *str, int *tzp);
 static datetkn *datebsearch(char *key, datetkn *base, unsigned int nel);
-static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
+static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
 
 
@@ -913,7 +914,7 @@ ParseDateTime(const char *timestr, char *lowstr,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-			   int *dtype, struct tm * tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
 	int			fmask = 0,
 				tmask,
@@ -1566,9 +1567,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 
 /* DetermineLocalTimeZone()
  *
- * Given a struct tm in which tm_year, tm_mon, tm_mday, tm_hour, tm_min, and
+ * Given a struct pg_tm in which tm_year, tm_mon, tm_mday, tm_hour, tm_min, and
  * tm_sec fields are set, attempt to determine the applicable local zone
- * (ie, regular or daylight-savings time) at that time.  Set the struct tm's
+ * (ie, regular or daylight-savings time) at that time.  Set the struct pg_tm's
  * tm_isdst field accordingly, and return the actual timezone offset.
  *
  * Note: this subroutine exists because mktime() has such a spectacular
@@ -1577,7 +1578,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * mktime() anywhere else.
  */
 int
-DetermineLocalTimeZone(struct tm * tm)
+DetermineLocalTimeZone(struct pg_tm * tm)
 {
 	int			tz;
 
@@ -1600,7 +1601,7 @@ DetermineLocalTimeZone(struct tm * tm)
 					delta1,
 					delta2;
 		time_t		mytime;
-		struct tm  *tx;
+		struct pg_tm  *tx;
 
 		day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
 		mysec = tm->tm_sec + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
@@ -1610,7 +1611,7 @@ DetermineLocalTimeZone(struct tm * tm)
 		 * Use localtime to convert that time_t to broken-down time,
 		 * and reassemble to get a representation of local time.
 		 */
-		tx = localtime(&mytime);
+		tx = pg_localtime(&mytime);
 		if (!tx)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -1624,7 +1625,6 @@ DetermineLocalTimeZone(struct tm * tm)
 		 * computable as mysec - locsec.
 		 */
 		delta1 = mysec - locsec;
-
 		/*
 		 * However, if that GMT time and the local time we are
 		 * actually interested in are on opposite sides of a
@@ -1635,7 +1635,7 @@ DetermineLocalTimeZone(struct tm * tm)
 		 */
 		mysec += delta1;
 		mytime = (time_t) mysec;
-		tx = localtime(&mytime);
+		tx = pg_localtime(&mytime);
 		if (!tx)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -1660,7 +1660,7 @@ DetermineLocalTimeZone(struct tm * tm)
 		{
 			mysec += (delta2 - delta1);
 			mytime = (time_t) mysec;
-			tx = localtime(&mytime);
+			tx = pg_localtime(&mytime);
 			if (!tx)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
@@ -1698,7 +1698,7 @@ DetermineLocalTimeZone(struct tm * tm)
  */
 int
 DecodeTimeOnly(char **field, int *ftype, int nf,
-			   int *dtype, struct tm * tm, fsec_t *fsec, int *tzp)
+			   int *dtype, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
 	int			fmask = 0,
 				tmask,
@@ -2201,7 +2201,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	/* timezone not specified? then find local timezone if possible */
 	if ((tzp != NULL) && (!(fmask & DTK_M(TZ))))
 	{
-		struct tm	tt,
+		struct pg_tm	tt,
 				   *tmp = &tt;
 
 		/*
@@ -2236,7 +2236,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
  * Insist on a complete set of fields.
  */
 static int
-DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
+DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 {
 	fsec_t		fsec;
 	int			nf = 0;
@@ -2394,7 +2394,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
  *	can be used to represent time spans.
  */
 static int
-DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
+DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
 {
 	char	   *cp;
 
@@ -2461,7 +2461,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm * tm, fsec_t *fsec)
  */
 static int
 DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
-			 int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
+			 int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
 {
 	int			val;
 	char	   *cp;
@@ -2651,7 +2651,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct tm * tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
 {
 	char	   *cp;
 
@@ -2797,10 +2797,8 @@ DecodeTimezone(char *str, int *tzp)
  * - thomas 2000-03-15
  *
  * Return 0 if okay (and set *tzp), a DTERR code if not okay.
- *
- * NB: this must *not* ereport on failure; see commands/variable.c.
  */
-int
+static int
 DecodePosixTimezone(char *str, int *tzp)
 {
 	int			val,
@@ -2911,7 +2909,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
  *	preceding an hh:mm:ss field. - thomas 1998-04-30
  */
 int
-DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fsec_t *fsec)
+DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, fsec_t *fsec)
 {
 	int			is_before = FALSE;
 	char	   *cp;
@@ -3365,7 +3363,7 @@ datebsearch(char *key, datetkn *base, unsigned int nel)
  * Encode date as local time.
  */
 int
-EncodeDateOnly(struct tm * tm, int style, char *str)
+EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 {
 	if ((tm->tm_mon < 1) || (tm->tm_mon > 12))
 		return -1;
@@ -3425,7 +3423,7 @@ EncodeDateOnly(struct tm * tm, int style, char *str)
  * Encode time fields only.
  */
 int
-EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str)
+EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 {
 	if ((tm->tm_hour < 0) || (tm->tm_hour > 24))
 		return -1;
@@ -3478,7 +3476,7 @@ EncodeTimeOnly(struct tm * tm, fsec_t fsec, int *tzp, int style, char *str)
  *	European - dd/mm/yyyy
  */
 int
-EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
+EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, char *str)
 {
 	int			day,
 				hour,
@@ -3709,7 +3707,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
  * - thomas 1998-04-30
  */
 int
-EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
+EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 {
 	int			is_before = FALSE;
 	int			is_nonzero = FALSE;

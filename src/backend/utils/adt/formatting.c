@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.74 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.75 2004/05/21 05:08:02 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -70,7 +70,6 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <sys/time.h>
 #include <unistd.h>
 #include <math.h>
 #include <float.h>
@@ -410,7 +409,7 @@ typedef struct
  */
 typedef struct TmToChar
 {
-	struct tm	tm;				/* classic 'tm' struct */
+	struct pg_tm	tm;				/* classic 'tm' struct */
 	fsec_t		fsec;			/* fractional seconds */
 	char	   *tzn;			/* timezone */
 } TmToChar;
@@ -897,7 +896,7 @@ static int	dch_global(int arg, char *inout, int suf, int flag, FormatNode *node,
 static int	dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static int	dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data);
 static void do_to_timestamp(text *date_txt, text *fmt,
-							struct tm *tm, fsec_t *fsec);
+							struct pg_tm *tm, fsec_t *fsec);
 static char *fill_str(char *str, int c, int max);
 static FormatNode *NUM_cache(int len, NUMDesc *Num, char *pars_str, bool *shouldFree);
 static char *int_to_roman(int number);
@@ -1695,7 +1694,7 @@ static int
 dch_time(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 {
 	char	   *p_inout = inout;
-	struct tm  *tm = NULL;
+	struct pg_tm  *tm = NULL;
 	TmFromChar *tmfc = NULL;
 	TmToChar   *tmtc = NULL;
 
@@ -2057,7 +2056,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			   *p_inout;
 	int			i,
 				len;
-	struct tm  *tm = NULL;
+	struct pg_tm  *tm = NULL;
 	TmFromChar *tmfc = NULL;
 	TmToChar   *tmtc = NULL;
 
@@ -2768,7 +2767,7 @@ static text *
 datetime_to_char_body(TmToChar *tmtc, text *fmt)
 {
 	FormatNode *format;
-	struct tm  *tm = NULL;
+	struct pg_tm  *tm = NULL;
 	char	   *fmt_str,
 		   *result;
 	bool	incache;
@@ -2962,7 +2961,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	Timestamp	result;
 	int			tz;
-	struct tm	tm;
+	struct pg_tm	tm;
 	fsec_t		fsec;
 
 	do_to_timestamp(date_txt, fmt, &tm, &fsec);
@@ -2988,7 +2987,7 @@ to_date(PG_FUNCTION_ARGS)
 	text	   *date_txt = PG_GETARG_TEXT_P(0);
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	DateADT		result;
-	struct tm	tm;
+	struct pg_tm	tm;
 	fsec_t		fsec;
 
 	do_to_timestamp(date_txt, fmt, &tm, &fsec);
@@ -3001,12 +3000,12 @@ to_date(PG_FUNCTION_ARGS)
 /*
  * do_to_timestamp: shared code for to_timestamp and to_date
  *
- * Parse the 'date_txt' according to 'fmt', return results as a struct tm
+ * Parse the 'date_txt' according to 'fmt', return results as a struct pg_tm
  * and fractional seconds.
  */
 static void
 do_to_timestamp(text *date_txt, text *fmt,
-				struct tm *tm, fsec_t *fsec)
+				struct pg_tm *tm, fsec_t *fsec)
 {
 	FormatNode *format;
 	TmFromChar	tmfc;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.94 2004/05/07 00:24:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.95 2004/05/21 05:07:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,29 +17,18 @@
 #include "postgres.h"
 
 #include <ctype.h>
-#include <time.h>
 
 #include "access/xact.h"
 #include "catalog/pg_shadow.h"
 #include "commands/variable.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
+#include "pgtime.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 #include "mb/pg_wchar.h"
-
-/*
- * Some systems have tzname[] but don't declare it in <time.h>.  Use this
- * to duplicate the test in AC_STRUCT_TIMEZONE.
- */
-#ifdef HAVE_TZNAME
-#ifndef tzname					/* For SGI.  */
-extern char *tzname[];
-#endif
-#endif
-
 
 /*
  * DATESTYLE
@@ -238,149 +227,6 @@ assign_datestyle(const char *value, bool doit, GucSource source)
  */
 
 /*
- * Storage for TZ env var is allocated with an arbitrary size of 64 bytes.
- */
-#define TZBUF_LEN	64
-
-static char tzbuf[TZBUF_LEN];
-
-/*
- * First time through, we remember the original environment TZ value, if any.
- */
-static bool have_saved_tz = false;
-static char orig_tzbuf[TZBUF_LEN];
-
-/*
- * Convenience subroutine for assigning the value of TZ
- */
-static void
-set_tz(const char *tz)
-{
-	strcpy(tzbuf, "TZ=");
-	strncpy(tzbuf + 3, tz, sizeof(tzbuf) - 4);
-	if (putenv(tzbuf) != 0)		/* shouldn't happen? */
-		elog(LOG, "could not set TZ environment variable");
-	tzset();
-}
-
-/*
- * Remove any value of TZ we have established
- *
- * Note: this leaves us with *no* value of TZ in the environment, and
- * is therefore only appropriate for reverting to that state, not for
- * reverting to a state where TZ was set to something else.
- */
-static void
-clear_tz(void)
-{
-	/*
-	 * unsetenv() works fine, but is BSD, not POSIX, and is not available
-	 * under Solaris, among others. Apparently putenv() called as below
-	 * clears the process-specific environment variables.  Other
-	 * reasonable arguments to putenv() (e.g. "TZ=", "TZ", "") result in a
-	 * core dump (under Linux anyway). - thomas 1998-01-26
-	 */
-	if (tzbuf[0] == 'T')
-	{
-		strcpy(tzbuf, "=");
-		if (putenv(tzbuf) != 0)
-			elog(LOG, "could not clear TZ environment variable");
-		tzset();
-	}
-}
-
-/*
- * Check whether tzset() succeeded
- *
- * Unfortunately, tzset doesn't offer any well-defined way to detect that the
- * value of TZ was bad.  Often it will just select UTC (GMT) as the effective
- * timezone.  We use the following heuristics:
- *
- * If tzname[1] is a nonempty string, *or* the global timezone variable is
- * not zero, then tzset must have recognized the TZ value as something
- * different from UTC.	Return true.
- *
- * Otherwise, check to see if the TZ name is a known spelling of "UTC"
- * (ie, appears in our internal tables as a timezone equivalent to UTC).
- * If so, accept it.
- *
- * This will reject nonstandard spellings of UTC unless tzset() chose to
- * set tzname[1] as well as tzname[0].	The glibc version of tzset() will
- * do so, but on other systems we may be tightening the spec a little.
- *
- * Another problem is that on some platforms (eg HPUX), if tzset thinks the
- * input is bogus then it will adopt the system default timezone, which we
- * really can't tell is not the intended translation of the input.
- *
- * Still, it beats failing to detect bad TZ names at all, and a silent
- * failure mode of adopting the system-wide default is much better than
- * a silent failure mode of adopting UTC.
- *
- * NB: this must NOT ereport(ERROR).  The caller must get control back so that
- * it can restore the old value of TZ if we don't like the new one.
- */
-static bool
-tzset_succeeded(const char *tz)
-{
-	char	   *tztmp;
-	int			tzval;
-
-	/*
-	 * Check first set of heuristics to say that tzset definitely worked.
-	 */
-#ifdef HAVE_TZNAME
-	if (tzname[1] && tzname[1][0] != '\0')
-		return true;
-#endif
-	if (TIMEZONE_GLOBAL != 0)
-		return true;
-
-	/*
-	 * Check for known spellings of "UTC".	Note we must downcase the
-	 * input before passing it to DecodePosixTimezone().
-	 */
-	tztmp = downcase_truncate_identifier(tz, strlen(tz), false);
-	if (DecodePosixTimezone(tztmp, &tzval) == 0)
-		if (tzval == 0)
-			return true;
-
-	return false;
-}
-
-/*
- * Check whether timezone is acceptable.
- *
- * What we are doing here is checking for leap-second-aware timekeeping.
- * We need to reject such TZ settings because they'll wreak havoc with our
- * date/time arithmetic.
- *
- * NB: this must NOT ereport(ERROR).  The caller must get control back so that
- * it can restore the old value of TZ if we don't like the new one.
- */
-static bool
-tz_acceptable(void)
-{
-	struct tm	tt;
-	time_t		time2000;
-
-	/*
-	 * To detect leap-second timekeeping, compute the time_t value for
-	 * local midnight, 2000-01-01.	Insist that this be a multiple of 60;
-	 * any partial-minute offset has to be due to leap seconds.
-	 */
-	MemSet(&tt, 0, sizeof(tt));
-	tt.tm_year = 100;
-	tt.tm_mon = 0;
-	tt.tm_mday = 1;
-	tt.tm_isdst = -1;
-	time2000 = mktime(&tt);
-	if ((time2000 % 60) != 0)
-		return false;
-
-	return true;
-}
-
-/*
  * assign_timezone: GUC assign_hook for timezone
  */
 const char *
@@ -389,21 +235,6 @@ assign_timezone(const char *value, bool doit, GucSource source)
 	char	   *result;
 	char	   *endptr;
 	double		hours;
-
-	/*
-	 * On first call, see if there is a TZ in the original environment.
-	 * Save that value permanently.
-	 */
-	if (!have_saved_tz)
-	{
-		char	   *orig_tz = getenv("TZ");
-
-		if (orig_tz)
-			StrNCpy(orig_tzbuf, orig_tz, sizeof(orig_tzbuf));
-		else
-			orig_tzbuf[0] = '\0';
-		have_saved_tz = true;
-	}
 
 	/*
 	 * Check for INTERVAL 'foo'
@@ -476,36 +307,21 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		{
 			/*
 			 * UNKNOWN is the value shown as the "default" for TimeZone in
-			 * guc.c.  We interpret it as meaning the original TZ
-			 * inherited from the environment.	Note that if there is an
-			 * original TZ setting, we will return that rather than
+			 * guc.c.  We interpret it as being a complete no-op; we don't
+			 * change the timezone setting.  Note that if there is a known
+			 * timezone setting, we will return that name rather than
 			 * UNKNOWN as the canonical spelling.
+			 *
+			 * During GUC initialization, since the timezone library isn't
+			 * set up yet, pg_get_current_timezone will return NULL and we
+			 * will leave the setting as UNKNOWN.  If this isn't overridden
+			 * from the config file then pg_timezone_initialize() will
+			 * eventually select a default value from the environment.
 			 */
-			if (doit)
-			{
-				bool		ok;
+			const char *curzone = pg_get_current_timezone();
 
-				/* Revert to original setting of TZ, whatever it was */
-				if (orig_tzbuf[0])
-				{
-					set_tz(orig_tzbuf);
-					ok = tzset_succeeded(orig_tzbuf) && tz_acceptable();
-				}
-				else
-				{
-					clear_tz();
-					ok = tz_acceptable();
-				}
-
-				if (ok)
-					HasCTZSet = false;
-				else
-				{
-					/* Bogus, so force UTC (equivalent to INTERVAL 0) */
-					CTimeZone = 0;
-					HasCTZSet = true;
-				}
-			}
+			if (curzone)
+				value = curzone;
 		}
 		else
 		{
@@ -514,22 +330,22 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 *
 			 * We have to actually apply the change before we can have any
 			 * hope of checking it.  So, save the old value in case we
-			 * have to back out.  Note that it's possible the old setting
-			 * is in tzbuf, so we'd better copy it.
+			 * have to back out.  We have to copy since pg_get_current_timezone
+			 * returns a pointer to its static state.
 			 */
-			char		save_tzbuf[TZBUF_LEN];
+			const char *cur_tz;
 			char	   *save_tz;
 			bool		known,
 						acceptable;
 
-			save_tz = getenv("TZ");
-			if (save_tz)
-				StrNCpy(save_tzbuf, save_tz, sizeof(save_tzbuf));
+			cur_tz = pg_get_current_timezone();
+			if (cur_tz)
+				save_tz = pstrdup(cur_tz);
+			else
+				save_tz = NULL;
 
-			set_tz(value);
-
-			known = tzset_succeeded(value);
-			acceptable = tz_acceptable();
+			known = pg_tzset(value);
+			acceptable = known ? tz_acceptable() : false;
 
 			if (doit && known && acceptable)
 			{
@@ -544,9 +360,9 @@ assign_timezone(const char *value, bool doit, GucSource source)
 				 * a fixed offset, we still are.
 				 */
 				if (save_tz)
-					set_tz(save_tzbuf);
-				else
-					clear_tz();
+					pg_tzset(save_tz);
+				else			/* TZ library not initialized yet */
+					select_default_timezone();
 				/* Complain if it was bad */
 				if (!known)
 				{
@@ -578,17 +394,16 @@ assign_timezone(const char *value, bool doit, GucSource source)
 	/*
 	 * Prepare the canonical string to return.	GUC wants it malloc'd.
 	 */
-	result = (char *) malloc(sizeof(tzbuf));
-	if (!result)
-		return NULL;
-
 	if (HasCTZSet)
-		snprintf(result, sizeof(tzbuf), "%.5f",
+	{
+		result = (char *) malloc(64);
+		if (!result)
+			return NULL;
+		snprintf(result, 64, "%.5f",
 				 (double) (-CTimeZone) / 3600.0);
-	else if (tzbuf[0] == 'T')
-		strcpy(result, tzbuf + 3);
+	}
 	else
-		strcpy(result, "UNKNOWN");
+		result = strdup(value);
 
 	return result;
 }
@@ -599,7 +414,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 const char *
 show_timezone(void)
 {
-	char	   *tzn;
+	const char	   *tzn;
 
 	if (HasCTZSet)
 	{
@@ -612,7 +427,7 @@ show_timezone(void)
 										  IntervalPGetDatum(&interval)));
 	}
 	else
-		tzn = getenv("TZ");
+		tzn = pg_get_current_timezone();
 
 	if (tzn != NULL)
 		return tzn;

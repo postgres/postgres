@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.43 2004/01/23 23:54:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_main.c,v 1.44 2004/05/21 05:07:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 
 #include "postgres.h"
 
-#include <time.h>
 #include <math.h>
 
 #include "optimizer/geqo.h"
@@ -32,6 +31,7 @@
 #include "optimizer/geqo_mutation.h"
 #include "optimizer/geqo_pool.h"
 #include "optimizer/geqo_selection.h"
+#include "pgtime.h"
 
 
 /*

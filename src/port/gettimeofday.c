@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/port/gettimeofday.c,v 1.3 2003/11/29 19:52:13 pgsql Exp $
+ * $PostgreSQL: pgsql/src/port/gettimeofday.c,v 1.4 2004/05/21 05:08:05 tgl Exp $
  *
  * Copyright (c) 2003 SRA, Inc.
  * Copyright (c) 2003 SKC, Inc.
@@ -25,7 +25,8 @@
 
 #include "postgres.h"
 
-#include "sys/time.h"
+#include <sys/time.h>
+
 
 /* FILETIME of Jan 1 1970 00:00:00. */
 static const unsigned __int64 epoch = 116444736000000000L;

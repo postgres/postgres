@@ -9,13 +9,11 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.33 2004/02/24 22:06:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootscanner.l,v 1.34 2004/05/21 05:07:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-#include <time.h>
 
 #include "access/attnum.h"
 #include "access/htup.h"
@@ -31,6 +29,7 @@
 #include "nodes/pg_list.h"
 #include "nodes/primnodes.h"
 #include "parser/scansup.h"
+#include "pgtime.h"
 #include "rewrite/prs2lock.h"
 #include "storage/block.h"
 #include "storage/fd.h"

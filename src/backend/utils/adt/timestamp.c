@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.105 2004/05/07 00:24:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.106 2004/05/21 05:08:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	Timestamp	result;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	int			tz;
 	int			dtype;
@@ -137,7 +137,7 @@ timestamp_out(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	char	   *result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char	   *tzn = NULL;
@@ -296,7 +296,7 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	TimestampTz result;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	int			tz;
 	int			dtype;
@@ -364,7 +364,7 @@ timestamptz_out(PG_FUNCTION_ARGS)
 	TimestampTz dt = PG_GETARG_TIMESTAMPTZ(0);
 	char	   *result;
 	int			tz;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char	   *tzn;
@@ -456,7 +456,7 @@ interval_in(PG_FUNCTION_ARGS)
 	int32		typmod = PG_GETARG_INT32(2);
 	Interval   *result;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	int			dtype;
 	int			nf;
@@ -520,7 +520,7 @@ interval_out(PG_FUNCTION_ARGS)
 {
 	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	char	   *result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char		buf[MAXDATELEN + 1];
@@ -933,23 +933,19 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
-timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
+timestamp2tm(Timestamp dt, int *tzp, struct pg_tm * tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int			date,
 				date0;
 	int64		time;
-
 #else
 	double		date,
 				date0;
 	double		time;
 #endif
 	time_t		utime;
-
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-	struct tm  *tx;
-#endif
+	struct pg_tm  *tx;
 
 	date0 = POSTGRES_EPOCH_JDATE;
 
@@ -1006,10 +1002,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 		{
 			*tzp = CTimeZone;
 			tm->tm_isdst = 0;
-#if defined(HAVE_TM_ZONE)
 			tm->tm_gmtoff = CTimeZone;
 			tm->tm_zone = NULL;
-#endif
 			if (tzn != NULL)
 				*tzn = NULL;
 		}
@@ -1027,46 +1021,20 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 			utime = (dt + ((date0 - UNIX_EPOCH_JDATE) * 86400));
 #endif
 
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
-			tx = localtime(&utime);
+			tx = pg_localtime(&utime);
 			tm->tm_year = tx->tm_year + 1900;
 			tm->tm_mon = tx->tm_mon + 1;
 			tm->tm_mday = tx->tm_mday;
 			tm->tm_hour = tx->tm_hour;
 			tm->tm_min = tx->tm_min;
-#if NOT_USED
-/* XXX HACK
- * Argh! My Linux box puts in a 1 second offset for dates less than 1970
- *	but only if the seconds field was non-zero. So, don't copy the seconds
- *	field and instead carry forward from the original - thomas 97/06/18
- * Note that Linux uses the standard freeware zic package as do
- *	many other platforms so this may not be Linux/ix86-specific.
- * Still shows a problem on my up to date Linux box - thomas 2001-01-17
- */
 			tm->tm_sec = tx->tm_sec;
-#endif
 			tm->tm_isdst = tx->tm_isdst;
-
-#if defined(HAVE_TM_ZONE)
 			tm->tm_gmtoff = tx->tm_gmtoff;
 			tm->tm_zone = tx->tm_zone;
 
-			*tzp = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
+			*tzp = -(tm->tm_gmtoff);
 			if (tzn != NULL)
 				*tzn = (char *) tm->tm_zone;
-#elif defined(HAVE_INT_TIMEZONE)
-			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-			if (tzn != NULL)
-				*tzn = tzname[(tm->tm_isdst > 0)];
-#endif
-
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-			*tzp = 0;
-			/* Mark this as *no* time zone available */
-			tm->tm_isdst = -1;
-			if (tzn != NULL)
-				*tzn = NULL;
-#endif
 		}
 		else
 		{
@@ -1096,12 +1064,11 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
  * Returns -1 on failure (value out of range).
  */
 int
-tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
+tm2timestamp(struct pg_tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int			date;
 	int64		time;
-
 #else
 	double		date,
 				time;
@@ -1135,11 +1102,10 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
  * Convert a interval data type to a tm structure.
  */
 int
-interval2tm(Interval span, struct tm * tm, fsec_t *fsec)
+interval2tm(Interval span, struct pg_tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
-
 #else
 	double		time;
 #endif
@@ -1179,7 +1145,7 @@ interval2tm(Interval span, struct tm * tm, fsec_t *fsec)
 }
 
 int
-tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
+tm2interval(struct pg_tm * tm, fsec_t fsec, Interval *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1251,12 +1217,12 @@ interval_finite(PG_FUNCTION_ARGS)
  *---------------------------------------------------------*/
 
 void
-GetEpochTime(struct tm * tm)
+GetEpochTime(struct pg_tm * tm)
 {
-	struct tm  *t0;
+	struct pg_tm  *t0;
 	time_t		epoch = 0;
 
-	t0 = gmtime(&epoch);
+	t0 = pg_gmtime(&epoch);
 
 	tm->tm_year = t0->tm_year;
 	tm->tm_mon = t0->tm_mon;
@@ -1276,7 +1242,7 @@ Timestamp
 SetEpochTimestamp(void)
 {
 	Timestamp	dt;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	GetEpochTime(tm);
@@ -1896,7 +1862,7 @@ timestamp_pl_interval(PG_FUNCTION_ARGS)
 	{
 		if (span->month != 0)
 		{
-			struct tm	tt,
+			struct pg_tm	tt,
 					   *tm = &tt;
 			fsec_t		fsec;
 
@@ -1974,7 +1940,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 	{
 		if (span->month != 0)
 		{
-			struct tm	tt,
+			struct pg_tm	tt,
 					   *tm = &tt;
 			fsec_t		fsec;
 
@@ -2296,11 +2262,11 @@ timestamp_age(PG_FUNCTION_ARGS)
 	fsec_t		fsec,
 				fsec1,
 				fsec2;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
-	struct tm	tt1,
+	struct pg_tm	tt1,
 			   *tm1 = &tt1;
-	struct tm	tt2,
+	struct pg_tm	tt2,
 			   *tm2 = &tt2;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2407,11 +2373,11 @@ timestamptz_age(PG_FUNCTION_ARGS)
 	fsec_t		fsec,
 				fsec1,
 				fsec2;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
-	struct tm	tt1,
+	struct pg_tm	tt1,
 			   *tm1 = &tt1;
-	struct tm	tt2,
+	struct pg_tm	tt2,
 			   *tm2 = &tt2;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -2702,7 +2668,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2806,7 +2772,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	char	   *lowunits;
 	fsec_t		fsec;
 	char	   *tzn;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -2909,7 +2875,7 @@ interval_trunc(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	result = (Interval *) palloc(sizeof(Interval));
@@ -3142,7 +3108,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -3355,7 +3321,7 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	double		dummy;
 	fsec_t		fsec;
 	char	   *tzn;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
@@ -3544,7 +3510,7 @@ interval_part(PG_FUNCTION_ARGS)
 				val;
 	char	   *lowunits;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	lowunits = downcase_truncate_identifier(VARDATA(units),
@@ -3755,7 +3721,7 @@ static TimestampTz
 timestamp2timestamptz(Timestamp timestamp)
 {
 	TimestampTz result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			tz;
@@ -3788,7 +3754,7 @@ timestamptz_timestamp(PG_FUNCTION_ARGS)
 {
 	TimestampTz timestamp = PG_GETARG_TIMESTAMPTZ(0);
 	Timestamp	result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	char	   *tzn;

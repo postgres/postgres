@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.412 2004/05/19 21:17:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.413 2004/05/21 05:07:58 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -21,8 +21,6 @@
 
 #include <unistd.h>
 #include <signal.h>
-#include <time.h>
-#include <sys/time.h>
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -48,6 +46,7 @@
 #include "optimizer/planner.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
+#include "pgtime.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
@@ -2145,7 +2144,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	char		stack_base;
 	StringInfoData	input_message;
 	volatile bool send_rfq = true;
-
+	
 	/*
 	 * Catch standard options before doing much else.  This even works on
 	 * systems without getopt_long.
@@ -2565,6 +2564,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 #endif
 	} else
 		ProcessConfigFile(PGC_POSTMASTER);
+
+	/* If timezone is not set, determine what the OS uses */
+	pg_timezone_initialize();
 
 	/*
 	 * Set up signal handlers and masks.

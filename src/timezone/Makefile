@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.9 2004/05/18 04:10:33 momjian Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.10 2004/05/21 05:08:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,13 +12,17 @@ subdir = src/timezone
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS= asctime.o difftime.o localtime.o pgtz.o
-ZICOBJS= zic.o ialloc.o scheck.o localtime.o asctime.o pgtz.o
+# files to build into backend
+OBJS= localtime.o strftime.o pgtz.o
 
-TZDATA := africa antarctica asia australasia europe northamerica southamerica pacificnew etcetera factory backward systemv solar87 solar88 solar89
+# files needed to build zic utility program
+ZICOBJS= zic.o ialloc.o scheck.o localtime.o
+
+# timezone data files
+TZDATA := africa antarctica asia australasia europe northamerica southamerica \
+	pacificnew etcetera factory backward systemv solar87 solar88 solar89
 TZDATAFILES := $(TZDATA:%=data/%)
 
-ifeq ($(USE_PGTZ), yes)
 all: SUBSYS.o submake-libpgport zic
 
 SUBSYS.o: $(OBJS)
@@ -31,6 +35,4 @@ install: all installdirs
 	./zic -d $(DESTDIR)$(datadir)/timezone $(TZDATAFILES)
 
 clean distclean maintainer-clean:
-	rm -f SUBSYS.o $(OBJS) $(ZICOBJS)
-endif
-
+	rm -f SUBSYS.o zic $(OBJS) $(ZICOBJS)

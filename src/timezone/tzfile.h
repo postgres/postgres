@@ -16,30 +16,11 @@
 */
 
 /*
-** ID
-*/
-
-#ifndef lint
-#ifndef NOID
-static char	tzfilehid[] = "@(#)tzfile.h	7.14";
-#endif /* !defined NOID */
-#endif /* !defined lint */
-
-/*
 ** Information about time zone files.
 */
 
-#ifndef TZDIR
-#define TZDIR	"/usr/local/etc/zoneinfo" /* Time zone object file directory */
-#endif /* !defined TZDIR */
-
-#ifndef TZDEFAULT
 #define TZDEFAULT	"localtime"
-#endif /* !defined TZDEFAULT */
-
-#ifndef TZDEFRULES
 #define TZDEFRULES	"posixrules"
-#endif /* !defined TZDEFRULES */
 
 /*
 ** Each file begins with. . .
@@ -88,7 +69,6 @@ struct tzhead {
 ** exceed any of the limits below.
 */
 
-#ifndef TZ_MAX_TIMES
 /*
 ** The TZ_MAX_TIMES value below is enough to handle a bit more than a
 ** year's worth of solar time (corrected daily to the nearest second) or
@@ -96,29 +76,13 @@ struct tzhead {
 ** (where there are three time zone transitions every fourth year).
 */
 #define TZ_MAX_TIMES	370
-#endif /* !defined TZ_MAX_TIMES */
 
-#ifndef TZ_MAX_TYPES
-#ifndef NOSOLAR
 #define TZ_MAX_TYPES	256 /* Limited by what (unsigned char)'s can hold */
-#endif /* !defined NOSOLAR */
-#ifdef NOSOLAR
-/*
-** Must be at least 14 for Europe/Riga as of Jan 12 1995,
-** as noted by Earl Chew <earl@hpato.aus.hp.com>.
-*/
-#define TZ_MAX_TYPES	20	/* Maximum number of local time types */
-#endif /* !defined NOSOLAR */
-#endif /* !defined TZ_MAX_TYPES */
 
-#ifndef TZ_MAX_CHARS
 #define TZ_MAX_CHARS	50	/* Maximum number of abbreviation characters */
 				/* (limited by what unsigned chars can hold) */
-#endif /* !defined TZ_MAX_CHARS */
 
-#ifndef TZ_MAX_LEAPS
 #define TZ_MAX_LEAPS	50	/* Maximum number of leap second corrections */
-#endif /* !defined TZ_MAX_LEAPS */
 
 #define SECSPERMIN	60
 #define MINSPERHOUR	60
@@ -162,27 +126,5 @@ struct tzhead {
 */
 
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
-
-#ifndef USG
-
-/*
-** Use of the underscored variants may cause problems if you move your code to
-** certain System-V-based systems; for maximum portability, use the
-** underscore-free variants.  The underscored variants are provided for
-** backward compatibility only; they may disappear from future versions of
-** this file.
-*/
-
-#define SECS_PER_MIN	SECSPERMIN
-#define MINS_PER_HOUR	MINSPERHOUR
-#define HOURS_PER_DAY	HOURSPERDAY
-#define DAYS_PER_WEEK	DAYSPERWEEK
-#define DAYS_PER_NYEAR	DAYSPERNYEAR
-#define DAYS_PER_LYEAR	DAYSPERLYEAR
-#define SECS_PER_HOUR	SECSPERHOUR
-#define SECS_PER_DAY	SECSPERDAY
-#define MONS_PER_YEAR	MONSPERYEAR
-
-#endif /* !defined USG */
 
 #endif /* !defined TZFILE_H */

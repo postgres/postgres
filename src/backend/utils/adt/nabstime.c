@@ -10,21 +10,20 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.120 2004/05/05 17:28:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.121 2004/05/21 05:08:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <ctype.h>
-#include <time.h>
-#include <sys/time.h>
 #include <float.h>
 #include <limits.h>
 
 #include "access/xact.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "pgtime.h"
 #include "utils/builtins.h"
 
 
@@ -76,8 +75,8 @@
  * Function prototypes -- internal to this file only
  */
 
-static AbsoluteTime tm2abstime(struct tm * tm, int tz);
-static void reltime2tm(RelativeTime time, struct tm * tm);
+static AbsoluteTime tm2abstime(struct pg_tm * tm, int tz);
+static void reltime2tm(RelativeTime time, struct pg_tm * tm);
 static int istinterval(char *i_string,
 			AbsoluteTime *i_start,
 			AbsoluteTime *i_end);
@@ -142,10 +141,10 @@ AbsoluteTimeUsecToTimestampTz(AbsoluteTime sec, int usec)
 /*
  * GetCurrentDateTime()
  *
- * Get the transaction start time ("now()") broken down as a struct tm.
+ * Get the transaction start time ("now()") broken down as a struct pg_tm.
  */
 void
-GetCurrentDateTime(struct tm * tm)
+GetCurrentDateTime(struct pg_tm * tm)
 {
 	int			tz;
 
@@ -155,11 +154,11 @@ GetCurrentDateTime(struct tm * tm)
 /*
  * GetCurrentTimeUsec()
  *
- * Get the transaction start time ("now()") broken down as a struct tm,
+ * Get the transaction start time ("now()") broken down as a struct pg_tm,
  * including fractional seconds and timezone offset.
  */
 void
-GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)
+GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp)
 {
 	int			tz;
 	int			usec;
@@ -177,10 +176,10 @@ GetCurrentTimeUsec(struct tm * tm, fsec_t *fsec, int *tzp)
 
 
 void
-abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
+abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
 {
 	time_t		time = (time_t) _time;
-	struct tm  *tx;
+	struct pg_tm  *tx;
 
 	/*
 	 * If HasCTZSet is true then we have a brute force time zone
@@ -191,9 +190,9 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 		time -= CTimeZone;
 
 	if ((!HasCTZSet) && (tzp != NULL))
-		tx = localtime(&time);
+		tx = pg_localtime(&time);
 	else
-		tx = gmtime(&time);
+		tx = pg_gmtime(&time);
 
 	tm->tm_year = tx->tm_year + 1900;
 	tm->tm_mon = tx->tm_mon + 1;
@@ -203,7 +202,6 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 	tm->tm_sec = tx->tm_sec;
 	tm->tm_isdst = tx->tm_isdst;
 
-#if defined(HAVE_TM_ZONE)
 	tm->tm_gmtoff = tx->tm_gmtoff;
 	tm->tm_zone = tx->tm_zone;
 
@@ -248,66 +246,6 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
 	}
 	else
 		tm->tm_isdst = -1;
-#elif defined(HAVE_INT_TIMEZONE)
-	if (tzp != NULL)
-	{
-		/*
-		 * We have a brute force time zone per SQL99? Then use it without
-		 * change since we have already rotated to the time zone.
-		 */
-		if (HasCTZSet)
-		{
-			*tzp = CTimeZone;
-			tm->tm_isdst = 0;
-			if (tzn != NULL)
-				*tzn = NULL;
-		}
-		else
-		{
-			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
-
-			if (tzn != NULL)
-			{
-				/*
-				 * Copy no more than MAXTZLEN bytes of timezone to tzn, in
-				 * case it contains an error message, which doesn't fit in
-				 * the buffer
-				 */
-				StrNCpy(*tzn, tzname[tm->tm_isdst], MAXTZLEN + 1);
-				if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
-					ereport(WARNING,
-							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("invalid time zone name: \"%s\"",
-									tzname[tm->tm_isdst])));
-			}
-		}
-	}
-	else
-		tm->tm_isdst = -1;
-#else							/* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
-	if (tzp != NULL)
-	{
-		/*
-		 * We have a brute force time zone per SQL99? Then use it without
-		 * change since we have already rotated to the time zone.
-		 */
-		if (HasCTZSet)
-		{
-			*tzp = CTimeZone;
-			if (tzn != NULL)
-				*tzn = NULL;
-		}
-		else
-		{
-			/* default to UTC */
-			*tzp = 0;
-			if (tzn != NULL)
-				*tzn = NULL;
-		}
-	}
-	else
-		tm->tm_isdst = -1;
-#endif
 }
 
 
@@ -316,7 +254,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char **tzn)
  * Note that tm has full year (not 1900-based) and 1-based month.
  */
 static AbsoluteTime
-tm2abstime(struct tm * tm, int tz)
+tm2abstime(struct pg_tm * tm, int tz)
 {
 	int			day;
 	AbsoluteTime sec;
@@ -362,7 +300,7 @@ abstimein(PG_FUNCTION_ARGS)
 	AbsoluteTime result;
 	fsec_t		fsec;
 	int			tz = 0;
-	struct tm	date,
+	struct pg_tm	date,
 			   *tm = &date;
 	int			dterr;
 	char	   *field[MAXDATEFIELDS];
@@ -428,7 +366,7 @@ abstimeout(PG_FUNCTION_ARGS)
 	char	   *result;
 	int			tz;
 	double		fsec = 0;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 	char		zone[MAXDATELEN + 1],
@@ -611,7 +549,7 @@ timestamp_abstime(PG_FUNCTION_ARGS)
 	AbsoluteTime result;
 	fsec_t		fsec;
 	int			tz;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_IS_NOBEGIN(timestamp))
@@ -642,7 +580,7 @@ abstime_timestamp(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	Timestamp	result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	int			tz;
 	char		zone[MAXDATELEN + 1],
@@ -687,7 +625,7 @@ timestamptz_abstime(PG_FUNCTION_ARGS)
 	TimestampTz timestamp = PG_GETARG_TIMESTAMP(0);
 	AbsoluteTime result;
 	fsec_t		fsec;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 
 	if (TIMESTAMP_IS_NOBEGIN(timestamp))
@@ -715,7 +653,7 @@ abstime_timestamptz(PG_FUNCTION_ARGS)
 {
 	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	TimestampTz result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	int			tz;
 	char		zone[MAXDATELEN + 1],
@@ -763,7 +701,7 @@ reltimein(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
 	RelativeTime result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	fsec_t		fsec;
 	int			dtype;
@@ -811,7 +749,7 @@ reltimeout(PG_FUNCTION_ARGS)
 {
 	RelativeTime time = PG_GETARG_RELATIVETIME(0);
 	char	   *result;
-	struct tm	tt,
+	struct pg_tm	tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
@@ -849,7 +787,7 @@ reltimesend(PG_FUNCTION_ARGS)
 
 
 static void
-reltime2tm(RelativeTime time, struct tm * tm)
+reltime2tm(RelativeTime time, struct pg_tm * tm)
 {
 	double		dtime = time;
 
@@ -1732,8 +1670,8 @@ timeofday(PG_FUNCTION_ARGS)
 
 	gettimeofday(&tp, &tpz);
 	tt = (time_t) tp.tv_sec;
-	strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
-			 localtime(&tt));
+	pg_strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
+			 pg_localtime(&tt));
 	snprintf(buf, sizeof(buf), templ, tp.tv_usec);
 
 	len = VARHDRSZ + strlen(buf);

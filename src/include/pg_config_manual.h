@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.12 2004/03/24 22:40:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.13 2004/05/21 05:08:03 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -150,14 +150,6 @@
 #if !defined(__QNX__) && !defined(__BEOS__) && \
 	!defined(__CYGWIN__) && !defined(WIN32)
 #define HAVE_WORKING_LINK 1
-#endif
-
-/*
- * Define this if your operating system has _timezone rather than timezone
- */
-#if defined(__CYGWIN__) || defined(WIN32)
-#define HAVE_INT_TIMEZONE		/* has int _timezone */
-#define HAVE_UNDERSCORE_TIMEZONE 1
 #endif
 
 /*

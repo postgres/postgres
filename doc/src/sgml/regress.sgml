@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.39 2004/03/15 16:11:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.40 2004/05/21 05:07:55 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -378,20 +378,19 @@ testname/platformpattern=comparisonfilename
    </para>
 
    <para>
-    For example: some systems using older time zone libraries fail to apply
-    daylight-saving corrections to dates before 1970, causing
-    pre-1970 <acronym>PDT</acronym> times to be displayed in <acronym>PST</acronym> instead.  This causes a
-    few differences in the <filename>horology</> regression test.
+    For example: some systems interpret very small floating-point values
+    as zero, rather than reporting an underflow error.  This causes a
+    few differences in the <filename>float8</> regression test.
     Therefore, we provide a variant comparison file,
-    <filename>horology-no-DST-before-1970.out</filename>, which includes
+    <filename>float8-small-is-zero.out</filename>, which includes
     the results to be expected on these systems.  To silence the bogus
-    <quote>failure</quote> message on <systemitem>HPUX</systemitem> platforms,
-    <filename>resultmap</filename> includes
+    <quote>failure</quote> message on <systemitem>OpenBSD</systemitem>
+    platforms, <filename>resultmap</filename> includes
 <programlisting>
-horology/.*-hpux=horology-no-DST-before-1970
+float8/i.86-.*-openbsd=float8-small-is-zero
 </programlisting>
     which will trigger on any machine for which the output of
-    <command>config.guess</command> includes <literal>-hpux</literal>.
+    <command>config.guess</command> matches <literal>i.86-.*-openbsd</literal>.
     Other lines
     in <filename>resultmap</> select the variant comparison file for other
     platforms where it's appropriate.

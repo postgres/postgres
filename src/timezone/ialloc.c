@@ -1,46 +1,30 @@
-#ifndef lint
-#ifndef NOID
-static char	elsieid[] = "@(#)ialloc.c	8.29";
-#endif /* !defined NOID */
-#endif /* !defined lint */
-
-/*LINTLIBRARY*/
+#include "postgres.h"
 
 #include "private.h"
 
+
 #define nonzero(n)	(((n) == 0) ? 1 : (n))
 
-char *
-imalloc(n)
-const int	n;
+char *imalloc(const int n)
 {
 	return malloc((size_t) nonzero(n));
 }
 
-char *
-icalloc(nelem, elsize)
-int	nelem;
-int	elsize;
+char *icalloc(int nelem, int elsize)
 {
 	if (nelem == 0 || elsize == 0)
 		nelem = elsize = 1;
 	return calloc((size_t) nelem, (size_t) elsize);
 }
 
-void *
-irealloc(pointer, size)
-void * const	pointer;
-const int	size;
+void *irealloc(void *pointer, const int size)
 {
 	if (pointer == NULL)
 		return imalloc(size);
 	return realloc((void *) pointer, (size_t) nonzero(size));
 }
 
-char *
-icatalloc(old, new)
-char * const		old;
-const char * const	new;
+char *icatalloc(char *old, const char *new)
 {
 	register char *	result;
 	register int	oldsize, newsize;
@@ -57,24 +41,18 @@ const char * const	new;
 	return result;
 }
 
-char *
-icpyalloc(string)
-const char * const	string;
+char *icpyalloc(const char *string)
 {
 	return icatalloc((char *) NULL, string);
 }
 
-void
-ifree(p)
-char * const	p;
+void ifree(char *p)
 {
 	if (p != NULL)
 		(void) free(p);
 }
 
-void
-icfree(p)
-char * const	p;
+void icfree(char *p)
 {
 	if (p != NULL)
 		(void) free(p);

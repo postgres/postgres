@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.392 2004/05/19 19:11:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.393 2004/05/21 05:07:57 tgl Exp $
  *
  * NOTES
  *
@@ -66,11 +66,9 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <time.h>
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -99,6 +97,7 @@
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
 #include "nodes/nodes.h"
+#include "pgtime.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -636,6 +635,10 @@ PostmasterMain(int argc, char *argv[])
 	SetDataDir(potential_DataDir);
 
 	ProcessConfigFile(PGC_POSTMASTER);
+	
+	/* If timezone is not set, determine what the OS uses */
+	pg_timezone_initialize();
+
 #ifdef EXEC_BACKEND
 	write_nondefault_variables(PGC_POSTMASTER);
 #endif
@@ -906,7 +909,7 @@ PostmasterMain(int argc, char *argv[])
 	{
 		time_t		now = time(NULL);
 
-		(void) localtime(&now);
+		(void) pg_localtime(&now);
 	}
 
 	/*
@@ -2704,8 +2707,8 @@ SubPostmasterMain(int argc, char* argv[])
 	DataDir			= strdup(argv[argc++]);
 
 	/* Read in file-based context */
-	read_nondefault_variables();
 	read_backend_variables(backendID,&port);
+	read_nondefault_variables();
 
 	/* Remaining initialization */
 	pgstat_init_forkexec_backend();
@@ -3356,6 +3359,8 @@ write_backend_variables(Port *port)
 	write_var(debug_flag,fp);
 	write_var(PostmasterPid,fp);
 
+	fwrite((void *)my_exec_path, MAXPGPATH, 1, fp);
+
 	/* Release file */
 	if (FreeFile(fp))
 	{
@@ -3417,6 +3422,8 @@ read_backend_variables(unsigned long id, Port *port)
 	read_var(PreAuthDelay,fp);
 	read_var(debug_flag,fp);
 	read_var(PostmasterPid,fp);
+
+	fread((void *)my_exec_path, MAXPGPATH, 1, fp);
 
 	/* Release file */
 	FreeFile(fp);

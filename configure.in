@@ -1,12 +1,12 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.355 2004/05/20 23:49:41 pgsql Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.356 2004/05/21 05:07:54 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
 dnl 0. Initialization and options processing
 dnl 1. Programs
 dnl 2. Libraries
-dnl 3. Header files 
+dnl 3. Header files
 dnl 4. Types
 dnl 5. Structures
 dnl 6. Compiler characteristics
@@ -895,7 +895,7 @@ AC_LIBOBJ(open)
 AC_LIBOBJ(rand) ;;
 esac
 
-# Win32 can't to rename or unlink on an open file
+# Win32 can't do rename or unlink on an open file
 case $host_os in mingw*|cygwin*)
 AC_LIBOBJ(dirmod) ;;
 esac

@@ -12014,7 +12014,7 @@ LIBOBJS="$LIBOBJS open.$ac_objext"
 LIBOBJS="$LIBOBJS rand.$ac_objext" ;;
 esac
 
-# Win32 can't to rename or unlink on an open file
+# Win32 can't do rename or unlink on an open file
 case $host_os in mingw*|cygwin*)
 LIBOBJS="$LIBOBJS dirmod.$ac_objext" ;;
 esac

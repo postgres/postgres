@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.164 2004/05/07 00:24:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.165 2004/05/21 05:08:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -307,18 +307,6 @@ typedef unsigned long int uint64;
 /* Select timestamp representation (float8 or int64) */
 #if defined(USE_INTEGER_DATETIMES) && !defined(INT64_IS_BUSTED)
 #define HAVE_INT64_TIMESTAMP
-#endif
-
-/* Global variable holding time zone information. */
-#if defined(USE_PGTZ) && !defined(FRONTEND)
-#define TIMEZONE_GLOBAL pg_timezone
-#else
-#ifndef HAVE_UNDERSCORE_TIMEZONE
-#define TIMEZONE_GLOBAL timezone
-#else
-#define TIMEZONE_GLOBAL _timezone
-#define tzname _tzname			/* should be in time.h? */
-#endif
 #endif
 
 /* sig_atomic_t is required by ANSI C, but may be missing on old platforms */

@@ -1,17 +1,9 @@
-#ifndef lint
-#ifndef NOID
-static char	elsieid[] = "@(#)scheck.c	8.15";
-#endif /* !defined lint */
-#endif /* !defined NOID */
-
-/*LINTLIBRARY*/
+#include "postgres.h"
 
 #include "private.h"
 
-char *
-scheck(string, format)
-const char * const	string;
-const char * const	format;
+
+char *scheck(const char *string, const char *format)
 {
 	register char *		fbuf;
 	register const char *	fp;
