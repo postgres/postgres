@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.4 1996/10/31 08:32:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.5 1996/11/03 12:35:02 scrappy Exp $
  *
  * NOTES
  *    many of the old access method routines have been turned into
@@ -46,42 +46,12 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"   
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
- 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include <time.h>
-#include "utils/nabstime.h"
-#include "access/htup.h"
-
-#include "utils/tqual.h"
-#include "storage/buf.h"
 #include "access/relscan.h"
- 
 #include "access/itup.h"
-
 #include "access/sdir.h"
 
-#include "lib/dllist.h"
-#include "lib/fstack.h"
-#include "utils/memutils.h"
-#include "nodes/memnodes.h"
 #include "utils/catcache.h"
 
-#include "access/funcindex.h"
 #include "access/genam.h"
 
 #include "utils/palloc.h"
@@ -92,8 +62,6 @@
 # include <string.h>
 #endif
 
-#include <stdio.h>
-#include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
 /* ----------------------------------------------------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.4 1996/10/25 09:55:36 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.5 1996/11/03 12:35:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,17 +17,6 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
 #include "utils/rel.h"
 
 #include "storage/buf.h"
@@ -50,6 +39,12 @@
 
 #include "storage/ipc.h"
 #include "storage/bufmgr.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
 
 static InsertIndexResult _bt_insertonpg(Relation rel, Buffer buf, BTStack stack, int keysz, ScanKey scankey, BTItem btitem, BTItem afteritem);
 static Buffer _bt_split(Relation rel, Buffer buf);

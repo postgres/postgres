@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.6 1996/10/31 08:28:51 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.7 1996/11/03 12:34:50 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -75,44 +75,13 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
-
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include <time.h>
-#include "utils/nabstime.h"
-#include "access/htup.h"
-
-#include "utils/tqual.h"
-#include "storage/buf.h"
 #include "access/relscan.h"
-
-#include "storage/itemid.h"
-
-#include "storage/item.h"
-#include "storage/page.h"
 #include "storage/bufpage.h"
 
 #include "access/heapam.h"
 
-#include <sys/types.h>
-#include "storage/backendid.h"
 #include "miscadmin.h"
 
-#include "access/valid.h"
 #include "utils/relcache.h"
 
 #ifndef HAVE_MEMMOVE
@@ -121,18 +90,14 @@
 # include <string.h>
 #endif
 
-#include <stdio.h>
-#include "storage/ipc.h" 
+#include "access/valid.h"
+
 #include "storage/bufmgr.h"
 
 #include "utils/palloc.h"
 
 #include "access/hio.h"
 
-#include "storage/spin.h"
-#include "utils/hsearch.h"
-#include "storage/shmem.h"
-#include "storage/lock.h"  
 #include "storage/lmgr.h"
 
 #include "storage/smgr.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.5 1996/10/30 06:08:01 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.6 1996/11/03 12:35:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,12 @@
 #include "access/sdir.h"
 #include "access/nbtree.h"
 #include "access/genam.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
 
 #include "fmgr.h"
 

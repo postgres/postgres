@@ -7,56 +7,25 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.6 1996/10/31 08:24:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.7 1996/11/03 12:34:38 scrappy Exp $
  *
  * NOTES
  *    Overflow pages look like ordinary relation pages.
  *
  *-------------------------------------------------------------------------
  */
-
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-
 #include "postgres.h"
  
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h" 
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
- 
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "utils/nabstime.h"
-#include "access/htup.h"
-#include "access/itup.h"  
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/buf.h"
-#include "storage/page.h"
-#include "storage/bufpage.h"
-#include "access/sdir.h"
-#include "access/funcindex.h"
-#include "utils/tqual.h"
 #include "access/relscan.h"
 #include "access/hash.h"
-
-#include "storage/ipc.h"
 #include "storage/bufmgr.h"
-
-
 #include "utils/memutils.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
 
 static OverflowPageAddress _hash_getovfladdr(Relation rel, Buffer *metabufp);
 static uint32 _hash_firstfreebit(uint32 map);

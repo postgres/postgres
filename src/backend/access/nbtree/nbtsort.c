@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.5 1996/10/23 07:39:11 scrappy Exp $
+ *    $Id: nbtsort.c,v 1.6 1996/11/03 12:35:22 scrappy Exp $
  *
  * NOTES
  *
@@ -53,17 +53,6 @@
 
 #include "postgres.h"
 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"
-#include "storage/fd.h"
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "nodes/nodes.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
 #include "utils/rel.h"
 
 #include "storage/block.h"
@@ -82,6 +71,12 @@
 #include "access/relscan.h"
 #include "access/sdir.h"
 #include "access/nbtree.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
 
 #include "storage/ipc.h"
 #include "storage/bufmgr.h"
