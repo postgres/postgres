@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.15 1999/07/15 23:03:40 momjian Exp $
+ * $Id: bootstrap.h,v 1.16 2000/01/20 05:34:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,5 +55,8 @@ extern char *MapArrayTypeName(char *s);
 extern char *CleanUpStr(char *s);
 extern int	EnterString(char *str);
 extern void build_indices(void);
+
+extern int	Int_yylex(void);
+extern void Int_yyerror(const char *str);
 
 #endif	 /* BOOTSTRAP_H */
