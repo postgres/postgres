@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.16 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.17 2001/05/02 14:46:33 momjian Exp $
 Postgres documentation
 -->
 
@@ -60,7 +60,7 @@ Postgres documentation
       <term>-e, --echo</term>
       <listitem>
        <para>
-        Echo the queries that <application>createdb</application> generates
+        Echo the queries that <application>createuser</application> generates
 	and sends to the backend.
        </para>
       </listitem>
