@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.23 2001/09/13 15:55:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.24 2001/10/11 20:25:42 momjian Exp $
 -->
 
  <chapter id="ecpg">
@@ -327,6 +327,16 @@ struct sqlca
 	<para>
 	 <productname>Postgres</productname> returned <symbol>PGRES_EMPTY_QUERY</symbol>, probably
 	 because the query indeed was empty.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><computeroutput>-209, NULL value without indicator in line %d.</computeroutput></term>
+       <listitem>
+	<para>
+	 <productname>Postgres</productname> returned <symbol>ECPG_MISSING_INDICATOR</symbol>
+	 because a NULL was returned and no NULL indicator variable was supplied.
 	</para>
        </listitem>
       </varlistentry>
