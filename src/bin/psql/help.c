@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.47 2002/03/11 18:22:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.48 2002/03/11 18:26:20 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "help.h"
@@ -206,7 +206,7 @@ slashUsage(void)
 	fprintf(fout, _(" \\do            list operators\n"));
 	fprintf(fout, _(" \\dT            list data types\n"));
 	fprintf(fout, _(" \\du [PATTERN]  lists all configured users or only those that match pattern\n"));
-	fprintf(fout, _(" \\e [FILE]      edit the current query buffer or file with external editor\n"));
+	fprintf(fout, _(" \\e [FILE]      edit the query buffer or file with external editor\n"));
 	fprintf(fout, _(" \\echo TEXT     write text to standard output\n"));
 	fprintf(fout, _(" \\encoding ENCODING  set client encoding\n"));
 	fprintf(fout, _(" \\f [SEPARATOR] set field separator, or unset if none\n"));
@@ -219,7 +219,7 @@ slashUsage(void)
 	fprintf(fout, _(" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
 					"                 large object operations\n"));
 	fprintf(fout, _(" \\o FILE        send all query results to file or |pipe\n"));
-	fprintf(fout, _(" \\p             show the content of the current query buffer\n"));
+	fprintf(fout, _(" \\p             show the content of the query buffer\n"));
 	fprintf(fout, _(" \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
 					"                 fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"));
 	fprintf(fout, _(" \\q             quit psql\n"));
@@ -233,7 +233,7 @@ slashUsage(void)
 	fprintf(fout, _(" \\timing        toggle timing of queries (currently %s)\n"),
 			ON(pset.timing));
 	fprintf(fout, _(" \\unset NAME    unset (delete) internal variable\n"));
-	fprintf(fout, _(" \\w FILE        write current query buffer to file\n"));
+	fprintf(fout, _(" \\w FILE        write query buffer to file\n"));
 	fprintf(fout, _(" \\x             toggle expanded output (currently %s)\n"),
 			ON(pset.popt.topt.expanded));
 	fprintf(fout, _(" \\z             list table access privileges\n"));
