@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.9 1997/01/18 17:36:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.10 1997/01/24 18:17:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,28 +68,28 @@
 extern double	atof(const char *p);
 #endif
 
-#ifdef NEED_CBRT
+#ifndef HAVE_CBRT
 # define cbrt my_cbrt
   static double   cbrt(double x);
-#else /* NEED_CBRT */
-# if !defined(next)
+#else 
+# if !defined(nextstep)
    extern double   cbrt(double x);
 # endif
-#endif /* NEED_CBRT */
+#endif 
 
-#ifdef NEED_RINT
-#define rint my_rint
-static double   rint(double x);
-#else /* NEED_RINT */
-extern double   rint(double x);
-#endif /* NEED_RINT */
+#ifndef HAVE_RINT
+# define rint my_rint
+  static double   rint(double x);
+#else 
+  extern double   rint(double x);
+#endif 
 
-#ifdef NEED_ISINF
-#define isinf my_isinf
-static int	isinf(double x);
-#else /* NEED_ISINF */
-extern int	isinf(double x);
-#endif /* NEED_ISINF */
+#ifndef HAVE_ISINF
+# define isinf my_isinf
+  static int	isinf(double x);
+#else 
+  extern int	isinf(double x);
+#endif 
 
 #endif 
 /* ========== USER I/O ROUTINES ========== */
@@ -1125,7 +1125,7 @@ long float84ge(float64 arg1, float32 arg2)
 
 /* From "fdlibm" @ netlib.att.com */
 
-#ifdef NEED_RINT
+#ifndef HAVE_RINT
 
 /* @(#)s_rint.c 5.1 93/09/24 */
 /*
@@ -1211,9 +1211,9 @@ static double rint(double x)
     return w-TWO52[sx];
 }
 
-#endif /* NEED_RINT */
+#endif /* !HAVE_RINT */
 
-#ifdef NEED_CBRT
+#ifndef HAVE_CBRT
 
 static
     double
@@ -1226,9 +1226,9 @@ double x;
     return(isneg ? -tmpres : tmpres);
 }
 
-#endif /* NEED_CBRT */
+#endif /* !HAVE_CBRT */
 
-#ifdef NEED_ISINF
+#ifndef HAVE_ISINF
 
 #if defined(aix)
 #ifdef CLASS_CONFLICT
@@ -1318,4 +1318,4 @@ double d;
 }
 #endif /* irix5 */
 
-#endif /* NEED_ISINF */
+#endif /* !HAVE_ISINF */

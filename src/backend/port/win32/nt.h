@@ -26,7 +26,7 @@ struct sembuf
 };
 
 #define USE_POSIX_TIME
-#define NEED_RINT
+#undef HAVE_RINT
 
 #define MAXHOSTNAMELEN	12	/* where is the official definition of this? */
 #define MAXPATHLEN _MAX_PATH	/* in winsock.h */
