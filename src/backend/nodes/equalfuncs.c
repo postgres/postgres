@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.10 1997/09/08 21:44:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.11 1998/01/05 03:31:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ _equalParam(Param *a, Param *b)
 			return (true);
 			break;
 		default:
-			elog(WARN, "_equalParam: Invalid paramkind value: %d",
+			elog(ABORT, "_equalParam: Invalid paramkind value: %d",
 				 a->paramkind);
 	}
 

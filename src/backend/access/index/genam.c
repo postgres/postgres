@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.9 1997/09/08 02:20:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.10 1998/01/05 03:29:32 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -101,7 +101,7 @@ RelationGetIndexScan(Relation relation,
 	IndexScanDesc scan;
 
 	if (!RelationIsValid(relation))
-		elog(WARN, "RelationGetIndexScan: relation invalid");
+		elog(ABORT, "RelationGetIndexScan: relation invalid");
 
 	scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
 
@@ -150,7 +150,7 @@ IndexScanRestart(IndexScanDesc scan,
 				 ScanKey key)
 {
 	if (!IndexScanIsValid(scan))
-		elog(WARN, "IndexScanRestart: invalid scan");
+		elog(ABORT, "IndexScanRestart: invalid scan");
 
 	ItemPointerSetInvalid(&scan->previousItemData);
 	ItemPointerSetInvalid(&scan->currentItemData);
@@ -191,7 +191,7 @@ void
 IndexScanEnd(IndexScanDesc scan)
 {
 	if (!IndexScanIsValid(scan))
-		elog(WARN, "IndexScanEnd: invalid scan");
+		elog(ABORT, "IndexScanEnd: invalid scan");
 
 	pfree(scan);
 }
@@ -274,7 +274,7 @@ void
 IndexScanRestorePosition(IndexScanDesc scan)
 {
 	if (scan->flags & ScanUnmarked)
-		elog(WARN, "IndexScanRestorePosition: no mark to restore");
+		elog(ABORT, "IndexScanRestorePosition: no mark to restore");
 
 	scan->previousItemData = scan->previousMarkData;
 	scan->currentItemData = scan->currentMarkData;

@@ -10,9 +10,9 @@ QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('6 years');
 QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months');
 QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('5 months 12 hours');
 QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('badly formatted timespan');
-WARN:Bad timespan external representation 'badly formatted timespan'
+ERROR:  Bad timespan external representation 'badly formatted timespan'
 QUERY: INSERT INTO TIMESPAN_TBL (f1) VALUES ('@ 30 eons ago');
-WARN:Bad timespan external representation '@ 30 eons ago'
+ERROR:  Bad timespan external representation '@ 30 eons ago'
 QUERY: SELECT '' AS ten, TIMESPAN_TBL.*;
 ten|f1                           
 ---+-----------------------------

@@ -83,7 +83,7 @@ gistrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 
 	if (!IndexScanIsValid(s))
 	{
-		elog(WARN, "gistrescan: invalid scan.");
+		elog(ABORT, "gistrescan: invalid scan.");
 		return;
 	}
 
@@ -281,7 +281,7 @@ gistdropscan(IndexScanDesc s)
 	}
 
 	if (l == (GISTScanList) NULL)
-		elog(WARN, "GiST scan list corrupted -- cannot find 0x%lx", s);
+		elog(ABORT, "GiST scan list corrupted -- cannot find 0x%lx", s);
 
 	if (prev == (GISTScanList) NULL)
 		GISTScans = l->gsl_next;
@@ -397,7 +397,7 @@ adjustiptr(IndexScanDesc s,
 					break;
 
 				default:
-					elog(WARN, "Bad operation in GiST scan adjust: %d", op);
+					elog(ABORT, "Bad operation in GiST scan adjust: %d", op);
 			}
 		}
 	}

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.13 1997/09/08 21:41:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.14 1998/01/05 03:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ rtrescan(IndexScanDesc s, bool fromEnd, ScanKey key)
 
 	if (!IndexScanIsValid(s))
 	{
-		elog(WARN, "rtrescan: invalid scan.");
+		elog(ABORT, "rtrescan: invalid scan.");
 		return;
 	}
 
@@ -284,7 +284,7 @@ rtdropscan(IndexScanDesc s)
 	}
 
 	if (l == (RTScanList) NULL)
-		elog(WARN, "rtree scan list corrupted -- cannot find 0x%lx", s);
+		elog(ABORT, "rtree scan list corrupted -- cannot find 0x%lx", s);
 
 	if (prev == (RTScanList) NULL)
 		RTScans = l->rtsl_next;
@@ -400,7 +400,7 @@ adjustiptr(IndexScanDesc s,
 					break;
 
 				default:
-					elog(WARN, "Bad operation in rtree scan adjust: %d", op);
+					elog(ABORT, "Bad operation in rtree scan adjust: %d", op);
 			}
 		}
 	}

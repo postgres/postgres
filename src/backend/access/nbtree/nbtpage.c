@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.13 1997/09/18 20:19:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.14 1998/01/05 03:29:50 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -97,7 +97,7 @@ _bt_metapinit(Relation rel)
 
 	if ((nblocks = RelationGetNumberOfBlocks(rel)) != 0)
 	{
-		elog(WARN, "Cannot initialize non-empty btree %s",
+		elog(ABORT, "Cannot initialize non-empty btree %s",
 			 RelationGetRelationName(rel));
 	}
 
@@ -146,20 +146,20 @@ _bt_checkmeta(Relation rel)
 	op = (BTPageOpaque) PageGetSpecialPointer(metap);
 	if (!(op->btpo_flags & BTP_META))
 	{
-		elog(WARN, "Invalid metapage for index %s",
+		elog(ABORT, "Invalid metapage for index %s",
 			 RelationGetRelationName(rel));
 	}
 	metad = BTPageGetMeta(metap);
 
 	if (metad->btm_magic != BTREE_MAGIC)
 	{
-		elog(WARN, "Index %s is not a btree",
+		elog(ABORT, "Index %s is not a btree",
 			 RelationGetRelationName(rel));
 	}
 
 	if (metad->btm_version != BTREE_VERSION)
 	{
-		elog(WARN, "Version mismatch on %s:  version %d file, version %d code",
+		elog(ABORT, "Version mismatch on %s:  version %d file, version %d code",
 			 RelationGetRelationName(rel),
 			 metad->btm_version, BTREE_VERSION);
 	}
@@ -204,13 +204,13 @@ _bt_getroot(Relation rel, int access)
 
 	if (metad->btm_magic != BTREE_MAGIC)
 	{
-		elog(WARN, "Index %s is not a btree",
+		elog(ABORT, "Index %s is not a btree",
 			 RelationGetRelationName(rel));
 	}
 
 	if (metad->btm_version != BTREE_VERSION)
 	{
-		elog(WARN, "Version mismatch on %s:  version %d file, version %d code",
+		elog(ABORT, "Version mismatch on %s:  version %d file, version %d code",
 			 RelationGetRelationName(rel),
 			 metad->btm_version, BTREE_VERSION);
 	}

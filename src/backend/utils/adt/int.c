@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.10 1997/11/17 16:24:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.11 1998/01/05 03:34:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,9 +232,9 @@ int16
 i4toi2(int32 arg1)
 {
 	if (arg1 < SHRT_MIN)
-		elog(WARN, "i4toi2: '%d' causes int2 underflow", arg1);
+		elog(ABORT, "i4toi2: '%d' causes int2 underflow", arg1);
 	if (arg1 > SHRT_MAX)
-		elog(WARN, "i4toi2: '%d' causes int2 overflow", arg1);
+		elog(ABORT, "i4toi2: '%d' causes int2 overflow", arg1);
 
 	return ((int16) arg1);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.4 1998/01/04 04:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.5 1998/01/05 03:32:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 	{
 		first_arg = lfirst(fargs);
 		if (first_arg == NULL)
-			elog(WARN, "function '%s' does not allow NULL input", funcname);
+			elog(ERROR, "function '%s' does not allow NULL input", funcname);
 	}
 
 	/*
@@ -184,7 +184,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 					heap_close(rd);
 				}
 				else
-					elog(WARN,
+					elog(ERROR,
 						 "Type '%s' is not a relation type",
 						 typeidTypeName(toid));
 				argrelid = typeidTypeRelid(toid);
@@ -195,7 +195,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 				 */
 				if ((get_attnum(argrelid, funcname) == InvalidAttrNumber)
 					&& strcmp(funcname, "*"))
-					elog(WARN, "Functions on sets are not yet supported");
+					elog(ERROR, "Functions on sets are not yet supported");
 			}
 
 			if (retval)
@@ -286,7 +286,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 			if (exprType(pair) == UNKNOWNOID &&
 				!IsA(pair, Const))
 			{
-				elog(WARN, "ParseFunc: no function named '%s' that takes in an unknown type as argument #%d", funcname, nargs);
+				elog(ERROR, "ParseFunc: no function named '%s' that takes in an unknown type as argument #%d", funcname, nargs);
 			}
 			else
 				toid = exprType(pair);
@@ -329,7 +329,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	if (!exists)
-		elog(WARN, "no such attribute or function '%s'", funcname);
+		elog(ERROR, "no such attribute or function '%s'", funcname);
 
 	/* got it */
 	funcnode = makeNode(Func);
@@ -387,7 +387,7 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 		Assert(length(fargs) == 1);
 		seq = (Const *) lfirst(fargs);
 		if (!IsA((Node *) seq, Const))
-			elog(WARN, "%s: only constant sequence names are acceptable", funcname);
+			elog(ERROR, "%s: only constant sequence names are acceptable", funcname);
 		seqname = lower ((text*)DatumGetPointer(seq->constvalue));
 		pfree (DatumGetPointer(seq->constvalue));
 		seq->constvalue = PointerGetDatum (seqname);
@@ -396,13 +396,13 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 		if ((aclcheck_result = pg_aclcheck(seqrel, GetPgUserName(),
 			   ((funcid == SeqNextValueRegProcedure) ? ACL_WR : ACL_RD)))
 			!= ACLCHECK_OK)
-			elog(WARN, "%s.%s: %s",
+			elog(ERROR, "%s.%s: %s",
 			  seqrel, funcname, aclcheck_error_strings[aclcheck_result]);
 
 		pfree(seqrel);
 
 		if (funcid == SeqNextValueRegProcedure && pstate->p_in_where_clause)
-			elog(WARN, "nextval of a sequence in WHERE disallowed");
+			elog(ERROR, "nextval of a sequence in WHERE disallowed");
 	}
 
 	expr = makeNode(Expr);
@@ -441,7 +441,7 @@ funcid_get_rettype(Oid funcid)
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(func_tuple))
-		elog(WARN, "function  %d does not exist", funcid);
+		elog(ERROR, "function  %d does not exist", funcid);
 
 	funcrettype = (Oid)
 		((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
@@ -721,7 +721,7 @@ func_get_detail(char *funcname,
 		{
 			tp = typeidType(oid_array[0]);
 			if (typeTypeFlag(tp) == 'c')
-				elog(WARN, "no such attribute or function \"%s\"",
+				elog(ERROR, "no such attribute or function \"%s\"",
 					 funcname);
 		}
 		func_error("func_get_detail", funcname, nargs, oid_array);
@@ -883,7 +883,7 @@ static int find_inheritors(Oid relid, Oid **supervec)
 
 			/* save the type id, rather than the relation id */
 			if ((rd = heap_open(qentry->sqe_relid)) == (Relation) NULL)
-				elog(WARN, "relid %d does not exist", qentry->sqe_relid);
+				elog(ERROR, "relid %d does not exist", qentry->sqe_relid);
 			qentry->sqe_relid = typeTypeId(typenameType(RelationGetRelationName(rd)->data));
 			heap_close(rd);
 
@@ -1029,7 +1029,7 @@ setup_tlist(char *attname, Oid relid)
 
 	attno = get_attnum(relid, attname);
 	if (attno < 0)
-		elog(WARN, "cannot reference attribute '%s' of tuple params/return values for functions", attname);
+		elog(ERROR, "cannot reference attribute '%s' of tuple params/return values for functions", attname);
 
 	typeid = get_atttype(relid, attno);
 	resnode = makeResdom(1,
@@ -1130,7 +1130,7 @@ ParseComplexProjection(ParseState *pstate,
 					}
 					else
 					{
-						elog(WARN,
+						elog(ERROR,
 							 "Function '%s' has bad returntype %d",
 							 funcname, argtype);
 					}
@@ -1200,7 +1200,7 @@ ParseComplexProjection(ParseState *pstate,
 
 				}
 
-				elog(WARN, "Function '%s' has bad returntype %d",
+				elog(ERROR, "Function '%s' has bad returntype %d",
 					 funcname, argtype);
 				break;
 			}
@@ -1267,7 +1267,7 @@ func_error(char *caller, char *funcname, int nargs, Oid *argtypes)
 		ptr += strlen(ptr);
 	}
 
-	elog(WARN, "%s: function %s(%s) does not exist", caller, funcname, p);
+	elog(ERROR, "%s: function %s(%s) does not exist", caller, funcname, p);
 }
 
 

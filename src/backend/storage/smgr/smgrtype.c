@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.5 1997/09/08 21:47:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.6 1998/01/05 03:33:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ smgrin(char *s)
 		if (strcmp(s, StorageManager[i].smgr_name) == 0)
 			return ((int2) i);
 	}
-	elog(WARN, "smgrin: illegal storage manager name %s", s);
+	elog(ABORT, "smgrin: illegal storage manager name %s", s);
 	return 0;
 }
 
@@ -59,7 +59,7 @@ smgrout(int2 i)
 	char	   *s;
 
 	if (i >= NStorageManagers || i < 0)
-		elog(WARN, "Illegal storage manager id %d", i);
+		elog(ABORT, "Illegal storage manager id %d", i);
 
 	s = (char *) palloc(strlen(StorageManager[i].smgr_name) + 1);
 	strcpy(s, StorageManager[i].smgr_name);

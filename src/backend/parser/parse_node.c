@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.4 1997/12/29 05:13:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.5 1998/01/05 03:32:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,7 +126,7 @@ disallow_setop(char *op, Type optype, Node *operand)
 	{
 		elog(NOTICE, "An operand to the '%s' operator returns a set of %s,",
 			 op, typeTypeName(optype));
-		elog(WARN, "but '%s' takes single values, not sets.",
+		elog(ERROR, "but '%s' takes single values, not sets.",
 			 op);
 	}
 }
@@ -268,7 +268,7 @@ make_var(ParseState *pstate, char *refname, char *attrname, Oid *type_id)
 
 	rd = heap_open(rte->relid);
 
-	attid = attnameAttNum(rd, attrname); /* could elog(WARN) */
+	attid = attnameAttNum(rd, attrname); /* could elog(ERROR) */
 	vartypeid = attnumTypeId(rd, attid);
 
 	varnode = makeVar(vnum, attid, vartypeid, vnum, attid);
@@ -311,7 +311,7 @@ make_array_ref(Node *expr,
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(WARN, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
 			 typearray);
 
 	/* get the array type struct from the type tuple */
@@ -319,7 +319,7 @@ make_array_ref(Node *expr,
 
 	if (type_struct_array->typelem == InvalidOid)
 	{
-		elog(WARN, "make_array_ref: type %s is not an array",
+		elog(ERROR, "make_array_ref: type %s is not an array",
 			 (Name) &(type_struct_array->typname.data[0]));
 	}
 
@@ -328,7 +328,7 @@ make_array_ref(Node *expr,
 							ObjectIdGetDatum(type_struct_array->typelem),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple))
-		elog(WARN, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
 			 typearray);
 
 	type_struct_element = (TypeTupleForm) GETSTRUCT(type_tuple);
@@ -393,7 +393,7 @@ make_array_set(Expr *target_expr,
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(WARN, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
 			 typearray);
 
 	/* get the array type struct from the type tuple */
@@ -401,7 +401,7 @@ make_array_set(Expr *target_expr,
 
 	if (type_struct_array->typelem == InvalidOid)
 	{
-		elog(WARN, "make_array_ref: type %s is not an array",
+		elog(ERROR, "make_array_ref: type %s is not an array",
 			 (Name) &(type_struct_array->typname.data[0]));
 	}
 	/* get the type tuple for the element type */
@@ -410,7 +410,7 @@ make_array_set(Expr *target_expr,
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(WARN, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
 			 typearray);
 
 	type_struct_element = (TypeTupleForm) GETSTRUCT(type_tuple);

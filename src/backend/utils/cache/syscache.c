@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.10 1997/10/28 15:03:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.11 1998/01/05 03:34:32 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -371,7 +371,7 @@ InitCatalogCache()
 							 cacheinfo[cacheId].iScanFunc);
 			if (!PointerIsValid((char *) SysCache[cacheId]))
 			{
-				elog(WARN,
+				elog(ABORT,
 					 "InitCatalogCache: Can't init cache %.16s(%d)",
 					 cacheinfo[cacheId].name,
 					 cacheId);
@@ -402,7 +402,7 @@ SearchSysCacheTuple(int cacheId,		/* cache selection code */
 
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 	{
-		elog(WARN, "SearchSysCacheTuple: Bad cache id %d", cacheId);
+		elog(ABORT, "SearchSysCacheTuple: Bad cache id %d", cacheId);
 		return ((HeapTuple) NULL);
 	}
 
@@ -423,7 +423,7 @@ SearchSysCacheTuple(int cacheId,		/* cache selection code */
 							 cacheinfo[cacheId].iScanFunc);
 			if (!PointerIsValid(SysCache[cacheId]))
 			{
-				elog(WARN,
+				elog(ABORT,
 					 "InitCatalogCache: Can't init cache %.16s(%d)",
 					 cacheinfo[cacheId].name,
 					 cacheId);
@@ -469,7 +469,7 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
 
 	if (!PointerIsValid(returnStruct))
 	{
-		elog(WARN, "SearchSysCacheStruct: No receiving struct");
+		elog(ABORT, "SearchSysCacheStruct: No receiving struct");
 		return (0);
 	}
 	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
@@ -537,7 +537,7 @@ SearchSysCacheGetAttribute(int cacheId,
 	}
 	else
 	{
-		elog(WARN,
+		elog(ABORT,
 			 "SearchSysCacheGetAttribute: Bad attr # %d in %s(%d)",
 			 attributeNumber, cacheName, cacheId);
 		return (NULL);

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.33 1998/01/01 05:48:14 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.34 1998/01/05 03:33:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,24 +183,24 @@ ProcessUtility(Node * parsetree,
 				{
 					relname = strVal(lfirst(arg));
 					if (IsSystemRelationName(relname))
-						elog(WARN, "class \"%s\" is a system catalog",
+						elog(ABORT, "class \"%s\" is a system catalog",
 							 relname);
 					rel = heap_openr(relname);
 					if (RelationIsValid(rel))
 					{
 						if (stmt->sequence &&
 							rel->rd_rel->relkind != RELKIND_SEQUENCE)
-							elog(WARN, "Use DROP TABLE to drop table '%s'",
+							elog(ABORT, "Use DROP TABLE to drop table '%s'",
 								 relname);
 						if (!(stmt->sequence) &&
 							rel->rd_rel->relkind == RELKIND_SEQUENCE)
-							elog(WARN, "Use DROP SEQUENCE to drop sequence '%s'",
+							elog(ABORT, "Use DROP SEQUENCE to drop sequence '%s'",
 								 relname);
 						heap_close(rel);
 					}
 #ifndef NO_SECURITY
 					if (!pg_ownercheck(userName, relname, RELNAME))
-						elog(WARN, "you do not own class \"%s\"",
+						elog(ABORT, "you do not own class \"%s\"",
 							 relname);
 #endif
 				}
@@ -263,11 +263,11 @@ ProcessUtility(Node * parsetree,
 
 				relname = stmt->relname;
 				if (IsSystemRelationName(relname))
-					elog(WARN, "class \"%s\" is a system catalog",
+					elog(ABORT, "class \"%s\" is a system catalog",
 						 relname);
 #ifndef NO_SECURITY
 				if (!pg_ownercheck(userName, relname, RELNAME))
-					elog(WARN, "you do not own class \"%s\"",
+					elog(ABORT, "you do not own class \"%s\"",
 						 relname);
 #endif
 
@@ -327,7 +327,7 @@ ProcessUtility(Node * parsetree,
 				{
 					relname = strVal(lfirst(i));
 					if (!pg_ownercheck(userName, relname, RELNAME))
-						elog(WARN, "you do not own class \"%s\"",
+						elog(ABORT, "you do not own class \"%s\"",
 							 relname);
 				}
 #endif
@@ -413,7 +413,7 @@ ProcessUtility(Node * parsetree,
 				relname = stmt->object->relname;
 				aclcheck_result = pg_aclcheck(relname, userName, ACL_RU);
 				if (aclcheck_result != ACLCHECK_OK)
-					elog(WARN, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
+					elog(ABORT, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
 #endif
 				commandTag = "CREATE";
 				CHECK_IF_ABORTED();
@@ -453,11 +453,11 @@ ProcessUtility(Node * parsetree,
 					case INDEX:
 						relname = stmt->name;
 						if (IsSystemRelationName(relname))
-							elog(WARN, "class \"%s\" is a system catalog index",
+							elog(ABORT, "class \"%s\" is a system catalog index",
 								 relname);
 #ifndef NO_SECURITY
 						if (!pg_ownercheck(userName, relname, RELNAME))
-							elog(WARN, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+							elog(ABORT, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 						RemoveIndex(relname);
 						break;
@@ -472,7 +472,7 @@ ProcessUtility(Node * parsetree,
 							aclcheck_result = pg_aclcheck(relationName, userName, ACL_RU);
 							if (aclcheck_result != ACLCHECK_OK)
 							{
-								elog(WARN, "%s: %s", relationName, aclcheck_error_strings[aclcheck_result]);
+								elog(ABORT, "%s: %s", relationName, aclcheck_error_strings[aclcheck_result]);
 							}
 #endif
 							RemoveRewriteRule(rulename);
@@ -494,7 +494,7 @@ ProcessUtility(Node * parsetree,
 							ruleName = MakeRetrieveViewRuleName(viewName);
 							relationName = RewriteGetRuleEventRel(ruleName);
 							if (!pg_ownercheck(userName, relationName, RELNAME))
-								elog(WARN, "%s: %s", relationName, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+								elog(ABORT, "%s: %s", relationName, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 							pfree(ruleName);
 #endif
 							RemoveView(viewName);
@@ -546,7 +546,7 @@ ProcessUtility(Node * parsetree,
 
 		case T_VersionStmt:
 			{
-				elog(WARN, "CREATE VERSION is not currently implemented");
+				elog(ABORT, "CREATE VERSION is not currently implemented");
 			}
 			break;
 
@@ -609,7 +609,7 @@ ProcessUtility(Node * parsetree,
 				filename = stmt->filename;
 				closeAllVfds();
 				if ((fp = AllocateFile(filename, "r")) == NULL)
-					elog(WARN, "LOAD: could not open file %s", filename);
+					elog(ABORT, "LOAD: could not open file %s", filename);
 				FreeFile(fp);
 				load_file(filename);
 			}
@@ -754,7 +754,7 @@ ProcessUtility(Node * parsetree,
 			 *
 			 */
 		default:
-			elog(WARN, "ProcessUtility: command #%d unsupported",
+			elog(ABORT, "ProcessUtility: command #%d unsupported",
 				 nodeTag(parsetree));
 			break;
 	}

@@ -101,7 +101,7 @@ QUERY: INSERT INTO BOOLTBL2 (f1) VALUES ('False'::bool);
 QUERY: INSERT INTO BOOLTBL2 (f1) VALUES ('FALSE'::bool);
 QUERY: INSERT INTO BOOLTBL2 (f1)
    VALUES ('XXX'::bool);
-WARN:Bad boolean external representation 'XXX'
+ERROR:  Bad boolean external representation 'XXX'
 QUERY: SELECT '' AS f_4, BOOLTBL2.*;
 f_4|f1
 ---+--

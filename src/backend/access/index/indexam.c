@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.17 1997/09/12 04:07:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.18 1998/01/05 03:29:34 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -103,13 +103,13 @@ Assert(RelationIsValid(relation)); \
 #define GET_REL_PROCEDURE(x,y) \
 		 procedure = relation->rd_am->y; \
 		 if (! RegProcedureIsValid(procedure)) \
-		 elog(WARN, "index_%s: invalid %s regproc", \
+		 elog(ABORT, "index_%s: invalid %s regproc", \
 			  CppAsString(x), CppAsString(y))
 
 #define GET_SCAN_PROCEDURE(x,y) \
 		 procedure = scan->relation->rd_am->y; \
 		 if (! RegProcedureIsValid(procedure)) \
-		 elog(WARN, "index_%s: invalid %s regproc", \
+		 elog(ABORT, "index_%s: invalid %s regproc", \
 			  CppAsString(x), CppAsString(y))
 
 

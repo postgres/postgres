@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.21 1997/11/20 23:21:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.22 1998/01/05 03:31:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -499,7 +499,7 @@ ExecSetTypeInfo(int index,
 	 */
 	att = typeInfo[index];
 	if (att == NULL)
-		elog(WARN, "ExecSetTypeInfo: trying to assign through NULL");
+		elog(ABORT, "ExecSetTypeInfo: trying to assign through NULL");
 
 	/* ----------------
 	 *	assign values to the tuple descriptor, being careful not
@@ -1219,7 +1219,7 @@ setVarAttrLenForCreateTable(TupleDesc tupType, List *targetList,
 				heap_close(rd);
 			}
 			else
-				elog(WARN, "setVarAttrLenForCreateTable: can't get length for variable-length field");
+				elog(ABORT, "setVarAttrLenForCreateTable: can't get length for variable-length field");
 		}
 		tl = lnext(tl);
 	}

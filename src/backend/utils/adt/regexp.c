@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.11 1997/10/25 01:10:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.12 1998/01/05 03:34:14 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -157,7 +157,7 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 		rev[oldest].cre_s = (char *) NULL;
 		pg95_regerror(regcomp_result, &rev[oldest].cre_re, errMsg,
 					  sizeof(errMsg));
-		elog(WARN, "regcomp failed with error %s", errMsg);
+		elog(ABORT, "regcomp failed with error %s", errMsg);
 	}
 
 	/* not reached */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.7 1997/11/24 05:08:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.8 1998/01/05 03:32:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,13 +39,13 @@ RewriteGetRuleEventRel(char *rulename)
 	htp = SearchSysCacheTuple(REWRITENAME, PointerGetDatum(rulename),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
-		elog(WARN, "RewriteGetRuleEventRel: rule \"%s\" not found",
+		elog(ABORT, "RewriteGetRuleEventRel: rule \"%s\" not found",
 			 rulename);
 	eventrel = ((Form_pg_rewrite) GETSTRUCT(htp))->ev_class;
 	htp = SearchSysCacheTuple(RELOID, PointerGetDatum(eventrel),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
-		elog(WARN, "RewriteGetRuleEventRel: class %d not found",
+		elog(ABORT, "RewriteGetRuleEventRel: class %d not found",
 			 eventrel);
 	return ((Form_pg_class) GETSTRUCT(htp))->relname.data;
 }
@@ -99,7 +99,7 @@ RemoveRewriteRule(char *ruleName)
 	if (!HeapTupleIsValid(tuple))
 	{
 		heap_close(RewriteRelation);
-		elog(WARN, "No rule with name = '%s' was found.\n", ruleName);
+		elog(ABORT, "No rule with name = '%s' was found.\n", ruleName);
 	}
 
 	/*
@@ -116,7 +116,7 @@ RemoveRewriteRule(char *ruleName)
 	if (isNull)
 	{
 		/* XXX strange!!! */
-		elog(WARN, "RemoveRewriteRule: null event target relation!");
+		elog(ABORT, "RemoveRewriteRule: null event target relation!");
 	}
 	eventRelationOid = DatumGetObjectId(eventRelationOidDatum);
 

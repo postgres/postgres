@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.28 1997/12/16 05:04:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.29 1998/01/05 03:32:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ AtomValueGetString(int atomval)
 		if (ScanKeywords[i].value == atomval)
 			return (ScanKeywords[i].name);
 
-	elog(WARN, "AtomGetString called with bogus atom # : %d", atomval);
+	elog(ERROR, "AtomGetString called with bogus atom # : %d", atomval);
 	return (NULL);
 }
 

@@ -5,12 +5,12 @@ QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(-3.0,4.0)');
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(5.1, 34.5)');
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(-5.0,-12.0)');
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('asdfasdf');
-WARN:Bad point external representation 'asdfasdf'
+ERROR:  Bad point external representation 'asdfasdf'
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('10.0,10.0');
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
-WARN:Bad point external representation '(10.0 10.0)'
+ERROR:  Bad point external representation '(10.0 10.0)'
 QUERY: INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
-WARN:Bad point external representation '(10.0,10.0'
+ERROR:  Bad point external representation '(10.0,10.0'
 QUERY: SELECT '' AS six, POINT_TBL.*;
 six|f1        
 ---+----------

@@ -6,11 +6,11 @@ QUERY: INSERT INTO CIRCLE_TBL VALUES ('((1,2),3)');
 QUERY: INSERT INTO CIRCLE_TBL VALUES ('<(100,200),10>');
 QUERY: INSERT INTO CIRCLE_TBL VALUES ('<(100,0),100>');
 QUERY: INSERT INTO CIRCLE_TBL VALUES ('<(-100,0),-100>');
-WARN:Bad circle external representation '<(-100,0),-100>'
+ERROR:  Bad circle external representation '<(-100,0),-100>'
 QUERY: INSERT INTO CIRCLE_TBL VALUES ('1abc,3,5');
-WARN:Bad circle external representation '1abc,3,5'
+ERROR:  Bad circle external representation '1abc,3,5'
 QUERY: INSERT INTO CIRCLE_TBL VALUES ('(3,(1,2),3)');
-WARN:Bad circle external representation '(3,(1,2),3)'
+ERROR:  Bad circle external representation '(3,(1,2),3)'
 QUERY: SELECT * FROM CIRCLE_TBL;
 f1            
 --------------

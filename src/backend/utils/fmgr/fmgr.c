@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.7 1997/10/28 15:05:32 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.8 1998/01/05 03:34:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ fmgr_pl(Oid func_id,
 										 0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
 	{
-		elog(WARN, "fmgr_pl(): Cache lookup of procedure %ld failed.",
+		elog(ABORT, "fmgr_pl(): Cache lookup of procedure %ld failed.",
 			 ObjectIdGetDatum(func_id));
 	}
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
@@ -62,7 +62,7 @@ fmgr_pl(Oid func_id,
 										0, 0, 0);
 	if (!HeapTupleIsValid(languageTuple))
 	{
-		elog(WARN, "fmgr_pl(): Cache lookup of language %ld for procedure %ld failed.",
+		elog(ABORT, "fmgr_pl(): Cache lookup of language %ld for procedure %ld failed.",
 			 ObjectIdGetDatum(procedureStruct->prolang),
 			 ObjectIdGetDatum(func_id));
 	}
@@ -72,7 +72,7 @@ fmgr_pl(Oid func_id,
 	fmgr_info(languageStruct->lanplcallfoid, &plcall_fn, &plcall_nargs);
 	if (plcall_fn == NULL)
 	{
-		elog(WARN, "fmgr_pl(): failed to load PL handler for procedure %ld.",
+		elog(ABORT, "fmgr_pl(): failed to load PL handler for procedure %ld.",
 			 ObjectIdGetDatum(func_id));
 	}
 
@@ -163,7 +163,7 @@ fmgr_c(func_ptr user_fn,
 									  values->data[8]);
 			break;
 		default:
-			elog(WARN, "fmgr_c: function %d: too many arguments (%d > %d)",
+			elog(ABORT, "fmgr_c: function %d: too many arguments (%d > %d)",
 				 func_id, n_arguments, MAXFMGRARGS);
 			break;
 	}
@@ -188,7 +188,7 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 											 0, 0, 0);
 		if (!HeapTupleIsValid(procedureTuple))
 		{
-			elog(WARN, "fmgr_info: function %d: cache lookup failed\n",
+			elog(ABORT, "fmgr_info: function %d: cache lookup failed\n",
 				 procedureId);
 		}
 		procedureStruct = (FormData_pg_proc *)
@@ -205,7 +205,7 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 			case INTERNALlanguageId:
 				user_fn = fmgr_lookupByName(procedureStruct->proname.data);
 				if (!user_fn)
-					elog(WARN, "fmgr_info: function %s: not in internal table",
+					elog(ABORT, "fmgr_info: function %s: not in internal table",
 						 procedureStruct->proname.data);
 				break;
 			case ClanguageId:
@@ -228,7 +228,7 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 													0, 0, 0);
 				if (!HeapTupleIsValid(languageTuple))
 				{
-					elog(WARN, "fmgr_info: %s %ld",
+					elog(ABORT, "fmgr_info: %s %ld",
 						 "Cache lookup for language %d failed",
 						 ObjectIdGetDatum(procedureStruct->prolang));
 				}
@@ -241,7 +241,7 @@ fmgr_info(Oid procedureId, func_ptr * function, int *nargs)
 				}
 				else
 				{
-					elog(WARN, "fmgr_info: function %d: unknown language %d",
+					elog(ABORT, "fmgr_info: function %d: unknown language %d",
 						 procedureId, language);
 				}
 				break;
@@ -282,7 +282,7 @@ fmgr(Oid procedureId,...)
 
 	if (pronargs > MAXFMGRARGS)
 	{
-		elog(WARN, "fmgr: function %d: too many arguments (%d > %d)",
+		elog(ABORT, "fmgr: function %d: too many arguments (%d > %d)",
 			 procedureId, pronargs, MAXFMGRARGS);
 	}
 	for (i = 0; i < pronargs; ++i)
@@ -317,7 +317,7 @@ fmgr_ptr(func_ptr user_fn, Oid func_id,...)
 	n_arguments = va_arg(pvar, int);
 	if (n_arguments > MAXFMGRARGS)
 	{
-		elog(WARN, "fmgr_ptr: function %d: too many arguments (%d > %d)",
+		elog(ABORT, "fmgr_ptr: function %d: too many arguments (%d > %d)",
 			 func_id, n_arguments, MAXFMGRARGS);
 	}
 	for (i = 0; i < n_arguments; ++i)

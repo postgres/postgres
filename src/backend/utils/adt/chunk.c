@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.11 1997/12/06 22:57:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.12 1998/01/05 03:33:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ _ChunkArray(int fd,
 	else
 		cfd = LOopen(chunkfile, O_RDONLY);
 	if (cfd < 0)
-		elog(WARN, "Unable to open chunk file");
+		elog(ABORT, "Unable to open chunk file");
 #endif
 
 	strcpy(cInfo.lo_name, chunkfile);
@@ -148,11 +148,11 @@ GetChunkSize(FILE *fd,
 	 */
 	fscanf(fd, "%d", &N);
 	if (N > MAXPAT)
-		elog(WARN, "array_in: too many access pattern elements");
+		elog(ABORT, "array_in: too many access pattern elements");
 	for (i = 0; i < N; i++)
 		for (j = 0; j < ndim + 1; j++)
 			if (fscanf(fd, "%d ", &(A[i][j])) == EOF)
-				elog(WARN, "array_in: bad access pattern input");
+				elog(ABORT, "array_in: bad access pattern input");
 
 	/*
 	 * estimate chunk size
@@ -413,12 +413,12 @@ seek_and_read(int pos, int size, char buff[], int fp, int from)
 
 	/* Assuming only one file */
 	if (lo_lseek(fp, pos, from) < 0)
-		elog(WARN, "File seek error");
+		elog(ABORT, "File seek error");
 #ifdef LOARRAY
 	v = (struct varlena *) LOread(fp, size);
 #endif
 	if (VARSIZE(v) - VARHDRSZ < size)
-		elog(WARN, "File read error");
+		elog(ABORT, "File read error");
 	memmove(buff, VARDATA(v), size);
 	pfree(v);
 	return (1);

@@ -8,9 +8,9 @@ QUERY: INSERT INTO PATH_TBL VALUES ('[1,2,3, 4]');
 QUERY: INSERT INTO PATH_TBL VALUES ('[11,12,13,14]');
 QUERY: INSERT INTO PATH_TBL VALUES ('(11,12,13,14)');
 QUERY: INSERT INTO PATH_TBL VALUES ('[(,2),(3,4)]');
-WARN:Bad path external representation '[(,2),(3,4)]'
+ERROR:  Bad path external representation '[(,2),(3,4)]'
 QUERY: INSERT INTO PATH_TBL VALUES ('[(1,2),(3,4)');
-WARN:Bad path external representation '[(1,2),(3,4)'
+ERROR:  Bad path external representation '[(1,2),(3,4)'
 QUERY: SELECT f1 FROM PATH_TBL;
 f1                       
 -------------------------

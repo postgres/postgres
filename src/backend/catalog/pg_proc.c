@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.11 1997/12/11 17:36:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.12 1998/01/05 03:30:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,13 +87,13 @@ ProcedureCreate(char *procedureName,
 		Value	   *t = lfirst(x);
 
 		if (parameterCount == 8)
-			elog(WARN, "Procedures cannot take more than 8 arguments");
+			elog(ABORT, "Procedures cannot take more than 8 arguments");
 
 		if (strcmp(strVal(t), "opaque") == 0)
 		{
 			if (strcmp(languageName, "sql") == 0)
 			{
-				elog(WARN, "ProcedureDefine: sql functions cannot take type \"opaque\"");
+				elog(ABORT, "ProcedureDefine: sql functions cannot take type \"opaque\"");
 			}
 			toid = 0;
 		}
@@ -103,7 +103,7 @@ ProcedureCreate(char *procedureName,
 
 			if (!OidIsValid(toid))
 			{
-				elog(WARN, "ProcedureCreate: arg type '%s' is not defined",
+				elog(ABORT, "ProcedureCreate: arg type '%s' is not defined",
 					 strVal(t));
 			}
 
@@ -124,7 +124,7 @@ ProcedureCreate(char *procedureName,
 							  0);
 
 	if (HeapTupleIsValid(tup))
-		elog(WARN, "ProcedureCreate: procedure %s already exists with same arguments",
+		elog(ABORT, "ProcedureCreate: procedure %s already exists with same arguments",
 			 procedureName);
 
 	if (!strcmp(languageName, "sql"))
@@ -152,7 +152,7 @@ ProcedureCreate(char *procedureName,
 							  0, 0, 0);
 
 	if (!HeapTupleIsValid(tup))
-		elog(WARN, "ProcedureCreate: no such language %s",
+		elog(ABORT, "ProcedureCreate: no such language %s",
 			 languageName);
 
 	languageObjectId = tup->t_oid;
@@ -161,7 +161,7 @@ ProcedureCreate(char *procedureName,
 	{
 		if (strcmp(languageName, "sql") == 0)
 		{
-			elog(WARN, "ProcedureCreate: sql functions cannot return type \"opaque\"");
+			elog(ABORT, "ProcedureCreate: sql functions cannot return type \"opaque\"");
 		}
 		typeObjectId = 0;
 	}
@@ -181,7 +181,7 @@ ProcedureCreate(char *procedureName,
 			typeObjectId = TypeShellMake(returnTypeName);
 			if (!OidIsValid(typeObjectId))
 			{
-				elog(WARN, "ProcedureCreate: could not create type '%s'",
+				elog(ABORT, "ProcedureCreate: could not create type '%s'",
 					 returnTypeName);
 			}
 		}
@@ -202,7 +202,7 @@ ProcedureCreate(char *procedureName,
 		defined &&
 		(relid = typeidTypeRelid(toid)) != 0 &&
 		get_attnum(relid, procedureName) != InvalidAttrNumber)
-		elog(WARN, "method %s already an attribute of type %s",
+		elog(ABORT, "method %s already an attribute of type %s",
 			 procedureName, strVal(lfirst(argList)));
 
 

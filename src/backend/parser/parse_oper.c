@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.4 1998/01/01 05:44:54 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.5 1998/01/05 03:32:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,7 +367,7 @@ oper(char *op, Oid arg1, Oid arg2, bool noWarnings)
 					elog(NOTICE, "there is more than one operator %s for types", op);
 					elog(NOTICE, "%s and %s. You will have to retype this query",
 						 typeTypeName(tp1), typeTypeName(tp2));
-					elog(WARN, "using an explicit cast");
+					elog(ERROR, "using an explicit cast");
 				}
 				return (NULL);
 			}
@@ -473,7 +473,7 @@ right_oper(char *op, Oid arg)
 		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'r');
 		if (ncandidates == 0)
 		{
-			elog(WARN,
+			elog(ERROR,
 				 "Can't find right op: %s for type %d", op, arg);
 			return (NULL);
 		}
@@ -490,7 +490,7 @@ right_oper(char *op, Oid arg)
 		{
 			elog(NOTICE, "there is more than one right operator %s", op);
 			elog(NOTICE, "you will have to retype this query");
-			elog(WARN, "using an explicit cast");
+			elog(ERROR, "using an explicit cast");
 			return (NULL);
 		}
 	}
@@ -518,7 +518,7 @@ left_oper(char *op, Oid arg)
 		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'l');
 		if (ncandidates == 0)
 		{
-			elog(WARN,
+			elog(ERROR,
 				 "Can't find left op: %s for type %d", op, arg);
 			return (NULL);
 		}
@@ -535,7 +535,7 @@ left_oper(char *op, Oid arg)
 		{
 			elog(NOTICE, "there is more than one left operator %s", op);
 			elog(NOTICE, "you will have to retype this query");
-			elog(WARN, "using an explicit cast");
+			elog(ERROR, "using an explicit cast");
 			return (NULL);
 		}
 	}
@@ -575,7 +575,7 @@ op_error(char *op, Oid arg1, Oid arg2)
 	}
 	else
 	{
-		elog(WARN, "left hand side of operator %s has an unknown type, probably a bad attribute name", op);
+		elog(ERROR, "left hand side of operator %s has an unknown type, probably a bad attribute name", op);
 	}
 
 	if (typeidIsValid(arg2))
@@ -584,7 +584,7 @@ op_error(char *op, Oid arg1, Oid arg2)
 	}
 	else
 	{
-		elog(WARN, "right hand side of operator %s has an unknown type, probably a bad attribute name", op);
+		elog(ERROR, "right hand side of operator %s has an unknown type, probably a bad attribute name", op);
 	}
 
 #if FALSE
@@ -592,10 +592,10 @@ op_error(char *op, Oid arg1, Oid arg2)
 		 op, typeTypeName(tp1), typeTypeName(tp2));
 	elog(NOTICE, "You will either have to retype this query using an");
 	elog(NOTICE, "explicit cast, or you will have to define the operator");
-	elog(WARN, "%s for %s and %s using CREATE OPERATOR",
+	elog(ERROR, "%s for %s and %s using CREATE OPERATOR",
 		 op, typeTypeName(tp1), typeTypeName(tp2));
 #endif
-	elog(WARN, "There is no operator '%s' for types '%s' and '%s'"
+	elog(ERROR, "There is no operator '%s' for types '%s' and '%s'"
 		"\n\tYou will either have to retype this query using an explicit cast,"
 		"\n\tor you will have to define the operator using CREATE OPERATOR",
 		op, typeTypeName(tp1), typeTypeName(tp2));

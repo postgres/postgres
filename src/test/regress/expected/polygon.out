@@ -4,15 +4,15 @@ QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(3.0,1.0),(3.0,3.0),(1.0,0.0)');
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,0.0)');
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,1.0),(0.0,1.0)');
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('0.0');
-WARN:Bad polygon external representation '0.0'
+ERROR:  Bad polygon external representation '0.0'
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0 0.0');
-WARN:Bad polygon external representation '(0.0 0.0'
+ERROR:  Bad polygon external representation '(0.0 0.0'
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2)');
-WARN:Bad polygon external representation '(0,1,2)'
+ERROR:  Bad polygon external representation '(0,1,2)'
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2,3');
-WARN:Bad polygon external representation '(0,1,2,3'
+ERROR:  Bad polygon external representation '(0,1,2,3'
 QUERY: INSERT INTO POLYGON_TBL(f1) VALUES ('asdf');
-WARN:Bad polygon external representation 'asdf'
+ERROR:  Bad polygon external representation 'asdf'
 QUERY: SELECT '' AS four, POLYGON_TBL.*;
 four|f1                 
 ----+-------------------

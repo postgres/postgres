@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.3 1997/11/20 23:23:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.4 1998/01/05 03:34:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ GetDatabaseInfo(char *name, Oid *owner, char *path)
 
 	scan = heap_beginscan(dbrel, 0, false, 1, &scanKey);
 	if (!HeapScanIsValid(scan))
-		elog(WARN, "GetDatabaseInfo: cannot begin scan of %s", DatabaseRelationName);
+		elog(ABORT, "GetDatabaseInfo: cannot begin scan of %s", DatabaseRelationName);
 
 	/*
 	 * Since we're going to close the relation, copy the tuple.

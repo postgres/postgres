@@ -5,13 +5,13 @@ QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('-34.84');
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e40');
-WARN:Bad float4 input format -- overflow
+ERROR:  Bad float4 input format -- overflow
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e40');
-WARN:Bad float4 input format -- overflow
+ERROR:  Bad float4 input format -- overflow
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-40');
-WARN:Bad float4 input format -- underflow
+ERROR:  Bad float4 input format -- underflow
 QUERY: INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-40');
-WARN:Bad float4 input format -- underflow
+ERROR:  Bad float4 input format -- underflow
 QUERY: SELECT '' AS five, FLOAT4_TBL.*;
 five|f1         
 ----+-----------
@@ -108,7 +108,7 @@ three|f1         |x
 (3 rows)
 
 QUERY: SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
-WARN:float4div: divide by zero error
+ERROR:  float4div: divide by zero error
 QUERY: SELECT '' AS five, FLOAT4_TBL.*;
 five|f1         
 ----+-----------

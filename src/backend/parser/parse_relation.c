@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.4 1998/01/04 04:31:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.5 1998/01/05 03:32:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 			{
 				if (!pstate->p_is_insert ||
 					rte != pstate->p_target_rangetblentry)
-					elog(WARN, "Column %s is ambiguous", colname);
+					elog(ERROR, "Column %s is ambiguous", colname);
 			}
 			else
 				rte_result = rte;
@@ -155,7 +155,7 @@ addRangeTableEntry(ParseState *pstate,
 
 	if (pstate != NULL &&
 		refnameRangeTableEntry(pstate->p_rtable, refname) != NULL)
-		elog(WARN, "Table name %s specified more than once", refname);
+		elog(ERROR, "Table name %s specified more than once", refname);
 
 	rte->relname = pstrdup(relname);
 	rte->refname = pstrdup(refname);
@@ -163,7 +163,7 @@ addRangeTableEntry(ParseState *pstate,
 	relation = heap_openr(relname);
 	if (relation == NULL)
 	{
-		elog(WARN, "%s: %s",
+		elog(ERROR, "%s: %s",
 			 relname, aclcheck_error_strings[ACLCHECK_NO_CLASS]);
 	}
 
@@ -216,7 +216,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 
 	if (rdesc == NULL)
 	{
-		elog(WARN, "Unable to expand all -- heap_open failed on %s",
+		elog(ERROR, "Unable to expand all -- heap_open failed on %s",
 			 rte->refname);
 		return NIL;
 	}
@@ -274,7 +274,7 @@ attnameAttNum(Relation rd, char *a)
 			return (special_attr[i].code);
 
 	/* on failure */
-	elog(WARN, "Relation %s does not have attribute %s",
+	elog(ERROR, "Relation %s does not have attribute %s",
 		 RelationGetRelationName(rd), a);
 	return 0;  /* lint */
 }
@@ -319,7 +319,7 @@ attnumAttName(Relation rd, int attrno)
 				return (name);
 			}
 		}
-		elog(WARN, "Illegal attr no %d for relation %s",
+		elog(ERROR, "Illegal attr no %d for relation %s",
 			 attrno, RelationGetRelationName(rd));
 	}
 	else if (attrno >= 1 && attrno <= RelationGetNumberOfAttributes(rd))
@@ -329,7 +329,7 @@ attnumAttName(Relation rd, int attrno)
 	}
 	else
 	{
-		elog(WARN, "Illegal attr no %d for relation %s",
+		elog(ERROR, "Illegal attr no %d for relation %s",
 			 attrno, RelationGetRelationName(rd));
 	}
 
@@ -380,7 +380,7 @@ handleTargetColname(ParseState *pstate, char **resname,
 			pstate->p_insert_columns = lnext(pstate->p_insert_columns);
 		}
 		else
-			elog(WARN, "insert: more expressions than target columns");
+			elog(ERROR, "insert: more expressions than target columns");
 	}
 	if (pstate->p_is_insert || pstate->p_is_update)
 		checkTargetTypes(pstate, *resname, refname, colname);
@@ -410,13 +410,13 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 	{
 		rte = colnameRangeTableEntry(pstate, colname);
 		if (rte == (RangeTblEntry *) NULL)
-			elog(WARN, "attribute %s not found", colname);
+			elog(ERROR, "attribute %s not found", colname);
 		refname = rte->refname;
 	}
 
 /*
 	if (pstate->p_is_insert && rte == pstate->p_target_rangetblentry)
-		elog(WARN, "%s not available in this context", colname);
+		elog(ERROR, "%s not available in this context", colname);
 */
 	rd = heap_open(rte->relid);
 
@@ -427,13 +427,13 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
 	attrtype_target = attnumTypeId(pstate->p_target_relation, resdomno_target);
 
 	if (attrtype_id != attrtype_target)
-		elog(WARN, "Type of %s does not match target column %s",
+		elog(ERROR, "Type of %s does not match target column %s",
 			 colname, target_colname);
 
 	if ((attrtype_id == BPCHAROID || attrtype_id == VARCHAROID) &&
 		rd->rd_att->attrs[resdomno_id - 1]->attlen !=
 	pstate->p_target_relation->rd_att->attrs[resdomno_target - 1]->attlen)
-		elog(WARN, "Length of %s does not match length of target column %s",
+		elog(ERROR, "Length of %s does not match length of target column %s",
 			 colname, target_colname);
 
 	heap_close(rd);

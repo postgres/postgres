@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.22 1997/12/04 23:15:28 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.23 1998/01/05 03:30:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ DefineRelation(CreateStmt *stmt)
 	List	   *constraints;
 
 	if (strlen(stmt->relname) >= NAMEDATALEN)
-		elog(WARN, "the relation name %s is >= %d characters long", stmt->relname,
+		elog(ABORT, "the relation name %s is >= %d characters long", stmt->relname,
 			 NAMEDATALEN);
 	StrNCpy(relname, stmt->relname, NAMEDATALEN);	/* make full length for
 														 * copy */
@@ -78,7 +78,7 @@ DefineRelation(CreateStmt *stmt)
 	numberOfAttributes = length(schema);
 	if (numberOfAttributes <= 0)
 	{
-		elog(WARN, "DefineRelation: %s",
+		elog(ABORT, "DefineRelation: %s",
 			 "please inherit from a relation or define an attribute");
 	}
 
@@ -108,7 +108,7 @@ DefineRelation(CreateStmt *stmt)
 					for (i = 0; i < ncheck; i++)
 					{
 						if (strcmp(check[i].ccname, cdef->name) == 0)
-							elog(WARN, "DefineRelation: name (%s) of CHECK constraint duplicated", cdef->name);
+							elog(ABORT, "DefineRelation: name (%s) of CHECK constraint duplicated", cdef->name);
 					}
 					check[ncheck].ccname = cdef->name;
 				}
@@ -218,7 +218,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 
 			if (!strcmp(coldef->colname, restdef->colname))
 			{
-				elog(WARN, "attribute '%s' duplicated",
+				elog(ABORT, "attribute '%s' duplicated",
 					 coldef->colname);
 			}
 		}
@@ -231,7 +231,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		{
 			if (!strcmp(strVal(lfirst(entry)), strVal(lfirst(rest))))
 			{
-				elog(WARN, "relation '%s' duplicated",
+				elog(ABORT, "relation '%s' duplicated",
 					 strVal(lfirst(entry)));
 			}
 		}
@@ -252,12 +252,12 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		relation = heap_openr(name);
 		if (relation == NULL)
 		{
-			elog(WARN,
+			elog(ABORT,
 			"MergeAttr: Can't inherit from non-existent superclass '%s'", name);
 		}
 		if (relation->rd_rel->relkind == 'S')
 		{
-			elog(WARN, "MergeAttr: Can't inherit from sequence superclass '%s'", name);
+			elog(ABORT, "MergeAttr: Can't inherit from sequence superclass '%s'", name);
 		}
 		tupleDesc = RelationGetTupleDescriptor(relation);
 		constr = tupleDesc->constr;
@@ -567,7 +567,7 @@ checkAttrExists(char *attributeName, char *attributeType, List *schema)
 			 */
 			if (strcmp(attributeType, def->typename->name) != 0)
 			{
-				elog(WARN, "%s and %s conflict for %s",
+				elog(ABORT, "%s and %s conflict for %s",
 					 attributeType, def->typename->name, attributeName);
 			}
 			return 1;

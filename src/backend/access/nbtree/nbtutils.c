@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.15 1997/09/18 20:19:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.16 1998/01/05 03:29:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 
 	cur = &key[0];
 	if (cur->sk_attno != 1)
-		elog(WARN, "_bt_orderkeys: key(s) for attribute 1 missed");
+		elog(ABORT, "_bt_orderkeys: key(s) for attribute 1 missed");
 
 	if (numberOfKeys == 1)
 	{
@@ -159,7 +159,7 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
 		{
 			if (cur->sk_attno != attno + 1 && i < numberOfKeys)
 			{
-				elog(WARN, "_bt_orderkeys: key(s) for attribute %d missed", attno + 1);
+				elog(ABORT, "_bt_orderkeys: key(s) for attribute %d missed", attno + 1);
 			}
 
 			/*
@@ -296,7 +296,7 @@ _bt_formitem(IndexTuple itup)
 	/*
 	 * see comments in btbuild
 	 *
-	 * if (itup->t_info & INDEX_NULL_MASK) elog(WARN, "btree indices cannot
+	 * if (itup->t_info & INDEX_NULL_MASK) elog(ABORT, "btree indices cannot
 	 * include null keys");
 	 */
 

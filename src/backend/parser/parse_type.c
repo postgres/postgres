@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.2 1997/11/26 01:11:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.3 1998/01/05 03:32:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ typeidTypeName(Oid id)
 	if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
-		elog(WARN, "type id lookup of %ud failed", id);
+		elog(ERROR, "type id lookup of %ud failed", id);
 		return (NULL);
 	}
 	typetuple = (TypeTupleForm) GETSTRUCT(tup);
@@ -60,7 +60,7 @@ typeidType(Oid id)
 	if (!(tup = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
-		elog(WARN, "type id lookup of %ud failed", id);
+		elog(ERROR, "type id lookup of %ud failed", id);
 		return (NULL);
 	}
 	return ((Type) tup);
@@ -74,12 +74,12 @@ typenameType(char *s)
 
 	if (s == NULL)
 	{
-		elog(WARN, "type(): Null type");
+		elog(ERROR, "type(): Null type");
 	}
 
 	if (!(tup = SearchSysCacheTuple(TYPNAME, PointerGetDatum(s), 0, 0, 0)))
 	{
-		elog(WARN, "type name lookup of %s failed", s);
+		elog(ERROR, "type name lookup of %s failed", s);
 	}
 	return ((Type) tup);
 }
@@ -89,7 +89,7 @@ Oid
 typeTypeId(Type tp)
 {
 	if (tp == NULL)
-		elog(WARN, "typeTypeId() called with NULL type struct");
+		elog(ERROR, "typeTypeId() called with NULL type struct");
 	return (tp->t_oid);
 }
 
@@ -159,7 +159,7 @@ typeidRetoutfunc(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(WARN, "typeidRetoutfunc: Invalid type - oid = %u", type_id);
+		elog(ERROR, "typeidRetoutfunc: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	outfunc = type->typoutput;
@@ -177,7 +177,7 @@ typeidTypeRelid(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(WARN, "typeidTypeRelid: Invalid type - oid = %u", type_id);
+		elog(ERROR, "typeidTypeRelid: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	infunc = type->typrelid;
@@ -204,7 +204,7 @@ typeidTypElem(Oid type_id)
 										  ObjectIdGetDatum(type_id),
 										  0, 0, 0)))
 	{
-		elog(WARN, "type id lookup of %u failed", type_id);
+		elog(ERROR, "type id lookup of %u failed", type_id);
 	}
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 
@@ -225,7 +225,7 @@ GetArrayElementType(Oid typearray)
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(WARN, "GetArrayElementType: Cache lookup failed for type %d",
+		elog(ERROR, "GetArrayElementType: Cache lookup failed for type %d",
 			 typearray);
 
 	/* get the array type struct from the type tuple */
@@ -233,7 +233,7 @@ GetArrayElementType(Oid typearray)
 
 	if (type_struct_array->typelem == InvalidOid)
 	{
-		elog(WARN, "GetArrayElementType: type %s is not an array",
+		elog(ERROR, "GetArrayElementType: type %s is not an array",
 			 (Name) &(type_struct_array->typname.data[0]));
 	}
 
@@ -252,7 +252,7 @@ typeidRetinfunc(Oid type_id)
 									ObjectIdGetDatum(type_id),
 									0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
-		elog(WARN, "typeidRetinfunc: Invalid type - oid = %u", type_id);
+		elog(ERROR, "typeidRetinfunc: Invalid type - oid = %u", type_id);
 
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 	infunc = type->typinput;
@@ -273,7 +273,7 @@ FindDelimiter(char *typename)
 										  PointerGetDatum(typename),
 										  0, 0, 0)))
 	{
-		elog(WARN, "type name lookup of %s failed", typename);
+		elog(ERROR, "type name lookup of %s failed", typename);
 	}
 	type = (TypeTupleForm) GETSTRUCT(typeTuple);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.11 1997/11/07 06:30:20 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.12 1998/01/05 03:33:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ boolin(char *b)
 			break;
 	}
 
-	elog(WARN,"Bad boolean external representation '%s'", b);
+	elog(ABORT,"Bad boolean external representation '%s'", b);
 	/* not reached */
 	return (FALSE);
 } /* boolin() */

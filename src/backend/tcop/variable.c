@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *  'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.24 1997/12/04 23:17:13 thomas Exp $
+ * $Id: variable.c,v 1.25 1998/01/05 03:33:50 momjian Exp $
  *
  */
 
@@ -53,7 +53,7 @@ get_token(char **tok, char **val, const char *str)
 	while (isspace(*str))
 		str++;
 	if (*str == ',' || *str == '=')
-		elog(WARN, "Syntax error near (%s): empty setting", str);
+		elog(ABORT, "Syntax error near (%s): empty setting", str);
 
 	/* end of string? then return NULL */
 	if (!(*str))
@@ -94,7 +94,7 @@ get_token(char **tok, char **val, const char *str)
 	}
 	else if ((val == NULL) || (*str != '='))
 	{
-		elog(WARN, "Syntax error near (%s)", str);
+		elog(ABORT, "Syntax error near (%s)", str);
 	};
 
 	str++;						/* '=': get value */
@@ -105,7 +105,7 @@ get_token(char **tok, char **val, const char *str)
 		str++;
 
 	if (*str == ',' || !(*str))
-		elog(WARN, "Syntax error near (=%s)", str);
+		elog(ABORT, "Syntax error near (=%s)", str);
 
 	start = str;
 
@@ -131,7 +131,7 @@ get_token(char **tok, char **val, const char *str)
 	if (*str == ',')
 		return (++str);
 
-	elog(WARN, "Syntax error near (%s)", str);
+	elog(ABORT, "Syntax error near (%s)", str);
 
 	return str;
 }
@@ -172,10 +172,10 @@ parse_geqo(const char *value)
 
 	rest = get_token(&tok, &val, value);
 	if (tok == NULL)
-		elog(WARN, "Value undefined");
+		elog(ABORT, "Value undefined");
 
 	if ((rest) && (*rest != '\0'))
-		elog(WARN, "Unable to parse '%s'", value);
+		elog(ABORT, "Unable to parse '%s'", value);
 
 	if (strcasecmp(tok, "on") == 0)
 	{
@@ -185,7 +185,7 @@ parse_geqo(const char *value)
 		{
 			geqo_rels = pg_atoi(val, sizeof(int32), '\0');
 			if (geqo_rels <= 1)
-				elog(WARN, "Bad value for # of relations (%s)", val);
+				elog(ABORT, "Bad value for # of relations (%s)", val);
 			PFREE(val);
 		}
 		_use_geqo_ = true;
@@ -194,11 +194,11 @@ parse_geqo(const char *value)
 	else if (strcasecmp(tok, "off") == 0)
 	{
 		if ((val != NULL) && (*val != '\0'))
-			elog(WARN, "%s does not allow a parameter", tok);
+			elog(ABORT, "%s does not allow a parameter", tok);
 		_use_geqo_ = false;
 	}
 	else
-		elog(WARN, "Bad value for GEQO (%s)", value);
+		elog(ABORT, "Bad value for GEQO (%s)", value);
 
 	PFREE(tok);
 	return TRUE;
@@ -242,7 +242,7 @@ parse_r_plans(const char *value)
 	else if (strcasecmp(value, "off") == 0)
 		_use_right_sided_plans_ = false;
 	else
-		elog(WARN, "Bad value for Right-sided Plans (%s)", value);
+		elog(ABORT, "Bad value for Right-sided Plans (%s)", value);
 
 	return TRUE;
 }
@@ -392,7 +392,7 @@ parse_date(const char *value)
 		}
 		else
 		{
-			elog(WARN, "Bad value for date style (%s)", tok);
+			elog(ABORT, "Bad value for date style (%s)", tok);
 		}
 		PFREE(tok);
 	}
@@ -490,7 +490,7 @@ parse_timezone(const char *value)
 		strcpy(tzbuf, "TZ=");
 		strcat(tzbuf, tok);
 		if (putenv(tzbuf) != 0)
-			elog(WARN, "Unable to set TZ environment variable to %s", tok);
+			elog(ABORT, "Unable to set TZ environment variable to %s", tok);
 
 		tzset();
 		PFREE(tok);
@@ -528,13 +528,13 @@ reset_timezone()
 		strcpy(tzbuf, "TZ=");
 		strcat(tzbuf, TZvalue);
 		if (putenv(tzbuf) != 0)
-			elog(WARN, "Unable to set TZ environment variable to %s", TZvalue);
+			elog(ABORT, "Unable to set TZ environment variable to %s", TZvalue);
 	}
 	else
 	{
 		strcpy(tzbuf, "=");
 		if (putenv(tzbuf) != 0)
-			elog(WARN, "Unable to clear TZ environment variable", NULL);
+			elog(ABORT, "Unable to clear TZ environment variable", NULL);
 	}
 	tzset();
 

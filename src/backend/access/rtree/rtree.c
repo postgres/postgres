@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.19 1997/11/20 23:20:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.20 1998/01/05 03:30:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ rtbuild(Relation heap,
 	 */
 
 	if (oldPred == NULL && (nb = RelationGetNumberOfBlocks(index)) != 0)
-		elog(WARN, "%s already contains data", index->rd_rel->relname.data);
+		elog(ABORT, "%s already contains data", index->rd_rel->relname.data);
 
 	/* initialize the root page (if this is a new index) */
 	if (oldPred == NULL)
@@ -664,7 +664,7 @@ rtintinsert(Relation r,
 	 */
 
 	if (IndexTupleSize(old) != IndexTupleSize(ltup))
-		elog(WARN, "Variable-length rtree keys are not supported.");
+		elog(ABORT, "Variable-length rtree keys are not supported.");
 
 	/* install pointer to left child */
 	memmove(old, ltup, IndexTupleSize(ltup));

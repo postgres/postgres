@@ -4,10 +4,10 @@ QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('1235/9873');
 QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('987/-1234');
 QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('123456');
 QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('123456/1234568901234567890');
-WARN:pg_atoi: error reading "1234568901234567890": Math result not representable
+ERROR:  pg_atoi: error reading "1234568901234567890": Math result not representable
 QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('');
 QUERY: INSERT INTO OIDINT4_TBL(f1) VALUES ('asdfasd');
-WARN:pg_atoi: error in "asdfasd": can't parse "asdfasd"
+ERROR:  pg_atoi: error in "asdfasd": can't parse "asdfasd"
 QUERY: SELECT '' AS five, OIDINT4_TBL.*;
 five|f1       
 ----+---------

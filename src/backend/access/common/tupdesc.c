@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.29 1997/11/25 21:58:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.30 1998/01/05 03:29:01 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -321,7 +321,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 *	RelationNameCreateHeapRelation() calls BuildDesc() which
 	 *	calls this routine and since EMP does not exist yet, the
 	 *	system cache lookup below fails.  That's fine, but rather
-	 *	then doing a elog(WARN) we just leave that information
+	 *	then doing a elog(ABORT) we just leave that information
 	 *	uninitialized, return false, then fix things up later.
 	 *	-cim 6/14/90
 	 * ----------------
@@ -508,7 +508,7 @@ BuildDescForRelation(List *schema, char *relname)
 				TupleDescMakeSelfReference(desc, attnum, relname);
 			}
 			else
-				elog(WARN, "DefineRelation: no such type %s",
+				elog(ABORT, "DefineRelation: no such type %s",
 					 typename);
 		}
 

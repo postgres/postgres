@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.7 1998/01/04 04:31:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.8 1998/01/05 03:32:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,7 +647,7 @@ deepRewriteQuery(Query *parsetree)
 
 	if (++numQueryRewriteInvoked > REWRITE_INVOKE_MAX)
 	{
-		elog(WARN, "query rewritten %d times, may contain cycles",
+		elog(ABORT, "query rewritten %d times, may contain cycles",
 			 numQueryRewriteInvoked - 1);
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.16 1997/09/18 20:21:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.17 1998/01/05 03:33:04 momjian Exp $
  *
  * NOTES
  *
@@ -89,7 +89,7 @@ PrivateMemoryCreate(IpcMemoryKey memKey,
 	IpcPrivateMem[memid].id = memid;
 	IpcPrivateMem[memid].memptr = malloc(size);
 	if (IpcPrivateMem[memid].memptr == NULL)
-		elog(WARN, "PrivateMemoryCreate: not enough memory to malloc");
+		elog(ABORT, "PrivateMemoryCreate: not enough memory to malloc");
 	MemSet(IpcPrivateMem[memid].memptr, 0, size);		/* XXX PURIFY */
 
 	return (memid++);

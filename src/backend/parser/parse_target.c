@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.4 1998/01/04 04:31:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.5 1998/01/05 03:32:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 						if (exprType(expr) != UNKNOWNOID ||
 							!IsA(expr, Const))
-							elog(WARN, "yyparse: string constant expected");
+							elog(ERROR, "yyparse: string constant expected");
 
 						val = (char *) textout((struct varlena *)
 										   ((Const *) expr)->constvalue);
@@ -116,14 +116,14 @@ transformTargetList(ParseState *pstate, List *targetlist)
 
 							aind->uidx = transformExpr(pstate, aind->uidx, EXPR_COLUMN_FIRST);
 							if (!IsA(aind->uidx, Const))
-								elog(WARN,
+								elog(ERROR,
 									 "Array Index for Append should be a constant");
 							uindx[i] = ((Const *) aind->uidx)->constvalue;
 							if (aind->lidx != NULL)
 							{
 								aind->lidx = transformExpr(pstate, aind->lidx, EXPR_COLUMN_FIRST);
 								if (!IsA(aind->lidx, Const))
-									elog(WARN,
+									elog(ERROR,
 										 "Array Index for Append should be a constant");
 								lindx[i] = ((Const *) aind->lidx)->constvalue;
 							}
@@ -132,7 +132,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 								lindx[i] = 1;
 							}
 							if (lindx[i] > uindx[i])
-								elog(WARN, "yyparse: lower index cannot be greater than upper index");
+								elog(ERROR, "yyparse: lower index cannot be greater than upper index");
 							sprintf(str, "[%d:%d]", lindx[i], uindx[i]);
 							str += strlen(str);
 							i++;
@@ -143,7 +143,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 						resdomno = attnameAttNum(rd, res->name);
 						ndims = attnumAttNelems(rd, resdomno);
 						if (i != ndims)
-							elog(WARN, "yyparse: array dimensions do not match");
+							elog(ERROR, "yyparse: array dimensions do not match");
 						constval = makeNode(Value);
 						constval->type = T_String;
 						constval->val.str = save_str;
@@ -290,7 +290,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				}
 			default:
 				/* internal error */
-				elog(WARN,
+				elog(ERROR,
 					 "internal error: do not know how to transform targetlist");
 				break;
 		}
@@ -334,7 +334,7 @@ make_targetlist_expr(ParseState *pstate,
 	Resdom	   *resnode;
 
 	if (expr == NULL)
-		elog(WARN, "make_targetlist_expr: invalid use of NULL expression");
+		elog(ERROR, "make_targetlist_expr: invalid use of NULL expression");
 
 	type_id = exprType(expr);
 	if (type_id == InvalidOid)
@@ -417,7 +417,7 @@ make_targetlist_expr(ParseState *pstate,
 			else if ((attrtype == FLOAT4OID) && (type_id == FLOAT8OID))
 				lfirst(expr) = lispInteger(FLOAT4OID);
 			else
-				elog(WARN, "unequal type in tlist : %s \n", colname);
+				elog(ERROR, "unequal type in tlist : %s \n", colname);
 		}
 
 		Input_is_string = false;
@@ -449,7 +449,7 @@ make_targetlist_expr(ParseState *pstate,
 			else
 			{
 				/* currently, we can't handle casting of expressions */
-				elog(WARN, "parser: attribute '%s' is of type '%s' but expression is of type '%s'",
+				elog(ERROR, "parser: attribute '%s' is of type '%s' but expression is of type '%s'",
 					 colname,
 					 typeidTypeName(attrtype),
 					 typeidTypeName(type_id));
@@ -564,7 +564,7 @@ makeTargetNames(ParseState *pstate, List *cols)
 			attnameAttNum(pstate->p_target_relation, name);
 			foreach(nxt, lnext(tl))
 				if (!strcmp(name, ((Ident *) lfirst(nxt))->name))
-					elog (WARN, "Attribute '%s' should be specified only once", name);
+					elog(ERROR, "Attribute '%s' should be specified only once", name);
 		}
 	}
 	
@@ -596,7 +596,7 @@ expandAllTables(ParseState *pstate)
 
 	/* this should not happen */
 	if (rtable == NULL)
-		elog(WARN, "cannot expand: null p_rtable");
+		elog(ERROR, "cannot expand: null p_rtable");
 
 	/*
 	 * go through the range table and make a list of range table entries

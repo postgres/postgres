@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.20 1997/11/26 03:54:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.21 1998/01/05 03:31:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
 				return (Datum) NULL;
 		}
 		if (i != j)
-			elog(WARN,
+			elog(ABORT,
 				 "ExecEvalArrayRef: upper and lower indices mismatch");
 		lIndex = lower.indx;
 	}
@@ -429,7 +429,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 						 */
 						if (strcmp(paramList->name, thisParameterName) != 0)
 						{
-							elog(WARN,
+							elog(ABORT,
 								 "ExecEvalParam: new/old params with same id & diff names");
 						}
 					}
@@ -439,7 +439,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 					/*
 					 * oops! this is not supposed to happen!
 					 */
-					elog(WARN, "ExecEvalParam: invalid paramkind %d",
+					elog(ABORT, "ExecEvalParam: invalid paramkind %d",
 						 thisParameterKind);
 			}
 			if (!matchFound)
@@ -456,7 +456,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 		 * ooops! we couldn't find this parameter in the parameter list.
 		 * Signal an error
 		 */
-		elog(WARN, "ExecEvalParam: Unknown value for parameter %s",
+		elog(ABORT, "ExecEvalParam: Unknown value for parameter %s",
 			 thisParameterName);
 	}
 
@@ -510,13 +510,13 @@ GetAttributeByNum(TupleTableSlot *slot,
 	Datum		retval;
 
 	if (!AttributeNumberIsValid(attrno))
-		elog(WARN, "GetAttributeByNum: Invalid attribute number");
+		elog(ABORT, "GetAttributeByNum: Invalid attribute number");
 
 	if (!AttrNumberIsForUserDefinedAttr(attrno))
-		elog(WARN, "GetAttributeByNum: cannot access system attributes here");
+		elog(ABORT, "GetAttributeByNum: cannot access system attributes here");
 
 	if (isNull == (bool *) NULL)
-		elog(WARN, "GetAttributeByNum: a NULL isNull flag was passed");
+		elog(ABORT, "GetAttributeByNum: a NULL isNull flag was passed");
 
 	if (TupIsNull(slot))
 	{
@@ -557,10 +557,10 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	int			i;
 
 	if (attname == NULL)
-		elog(WARN, "GetAttributeByName: Invalid attribute name");
+		elog(ABORT, "GetAttributeByName: Invalid attribute name");
 
 	if (isNull == (bool *) NULL)
-		elog(WARN, "GetAttributeByName: a NULL isNull flag was passed");
+		elog(ABORT, "GetAttributeByName: a NULL isNull flag was passed");
 
 	if (TupIsNull(slot))
 	{
@@ -584,7 +584,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 	}
 
 	if (attrno == InvalidAttrNumber)
-		elog(WARN, "GetAttributeByName: attribute %s not found", attname);
+		elog(ABORT, "GetAttributeByName: attribute %s not found", attname);
 
 	retval = heap_getattr(slot->val,
 						  slot->ttc_buffer,
@@ -696,7 +696,7 @@ ExecMakeFunctionResult(Node *node,
 		bool		argDone;
 
 		if (fcache->nargs > MAXFMGRARGS)
-			elog(WARN, "ExecMakeFunctionResult: too many arguments");
+			elog(ABORT, "ExecMakeFunctionResult: too many arguments");
 
 		/*
 		 * If the setArg in the fcache is set we have an argument
@@ -1232,13 +1232,13 @@ ExecEvalExpr(Node *expression,
 						retDatum = (Datum) ExecEvalNot(expr, econtext, isNull);
 						break;
 					default:
-						elog(WARN, "ExecEvalExpr: unknown expression type");
+						elog(ABORT, "ExecEvalExpr: unknown expression type");
 						break;
 				}
 				break;
 			}
 		default:
-			elog(WARN, "ExecEvalExpr: unknown expression type");
+			elog(ABORT, "ExecEvalExpr: unknown expression type");
 			break;
 	}
 

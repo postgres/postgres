@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.13 1997/09/18 20:19:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.14 1998/01/05 03:29:20 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -65,7 +65,7 @@ _hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf)
 	oaddr = _hash_getovfladdr(rel, metabufp);
 	if (oaddr == InvalidOvflAddress)
 	{
-		elog(WARN, "_hash_addovflpage: problem with _hash_getovfladdr.");
+		elog(ABORT, "_hash_addovflpage: problem with _hash_getovfladdr.");
 	}
 	ovflblkno = OADDR_TO_BLKNO(OADDR_OF(SPLITNUM(oaddr), OPAGENUM(oaddr)));
 	Assert(BlockNumberIsValid(ovflblkno));
@@ -172,7 +172,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	{
 		if (++splitnum >= NCACHED)
 		{
-			elog(WARN, OVMSG);
+			elog(ABORT, OVMSG);
 		}
 		metap->OVFL_POINT = splitnum;
 		metap->SPARES[splitnum] = metap->SPARES[splitnum - 1];
@@ -190,7 +190,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 		free_page++;
 		if (free_page >= NCACHED)
 		{
-			elog(WARN, OVMSG);
+			elog(ABORT, OVMSG);
 		}
 
 		/*
@@ -206,7 +206,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 		if (_hash_initbitmap(rel, metap, OADDR_OF(splitnum, offset),
 							 1, free_page))
 		{
-			elog(WARN, "overflow_page: problem with _hash_initbitmap.");
+			elog(ABORT, "overflow_page: problem with _hash_initbitmap.");
 		}
 		metap->SPARES[splitnum]++;
 		offset++;
@@ -214,7 +214,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 		{
 			if (++splitnum >= NCACHED)
 			{
-				elog(WARN, OVMSG);
+				elog(ABORT, OVMSG);
 			}
 			metap->OVFL_POINT = splitnum;
 			metap->SPARES[splitnum] = metap->SPARES[splitnum - 1];
@@ -262,7 +262,7 @@ found:
 	offset = (i ? bit - metap->SPARES[i - 1] : bit);
 	if (offset >= SPLITMASK)
 	{
-		elog(WARN, OVMSG);
+		elog(ABORT, OVMSG);
 	}
 
 	/* initialize this page */

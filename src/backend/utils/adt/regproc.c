@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.10 1997/11/20 23:23:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.11 1998/01/05 03:34:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ regprocin(char *proname)
 	proc = heap_openr(ProcedureRelationName);
 	if (!RelationIsValid(proc))
 	{
-		elog(WARN, "regprocin: could not open %s",
+		elog(ABORT, "regprocin: could not open %s",
 			 ProcedureRelationName);
 		return (0);
 	}
@@ -59,7 +59,7 @@ regprocin(char *proname)
 	if (!HeapScanIsValid(procscan))
 	{
 		heap_close(proc);
-		elog(WARN, "regprocin: could not being scan of %s",
+		elog(ABORT, "regprocin: could not being scan of %s",
 			 ProcedureRelationName);
 		return (0);
 	}
@@ -104,7 +104,7 @@ regprocout(RegProcedure proid)
 	proc = heap_openr(ProcedureRelationName);
 	if (!RelationIsValid(proc))
 	{
-		elog(WARN, "regprocout: could not open %s",
+		elog(ABORT, "regprocout: could not open %s",
 			 ProcedureRelationName);
 		return (0);
 	}
@@ -118,7 +118,7 @@ regprocout(RegProcedure proid)
 	if (!HeapScanIsValid(procscan))
 	{
 		heap_close(proc);
-		elog(WARN, "regprocout: could not being scan of %s",
+		elog(ABORT, "regprocout: could not being scan of %s",
 			 ProcedureRelationName);
 		return (0);
 	}
@@ -176,7 +176,7 @@ oid8types(Oid (*oidArray)[])
 	type = heap_openr(TypeRelationName);
 	if (!RelationIsValid(type))
 	{
-		elog(WARN, "int8typeout: could not open %s",
+		elog(ABORT, "int8typeout: could not open %s",
 			 TypeRelationName);
 		return (0);
 	}
@@ -196,7 +196,7 @@ oid8types(Oid (*oidArray)[])
 			if (!HeapScanIsValid(typescan))
 			{
 				heap_close(type);
-				elog(WARN, "int8typeout: could not being scan of %s",
+				elog(ABORT, "int8typeout: could not being scan of %s",
 					 TypeRelationName);
 				return (0);
 			}

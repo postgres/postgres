@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.20 1997/11/02 15:24:11 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.21 1998/01/05 03:28:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 	int			numberOfAttributes = tupleDescriptor->natts;
 
 	if (numberOfAttributes > MaxIndexAttributeNumber)
-		elog(WARN, "index_formtuple: numberOfAttributes of %d > %d",
+		elog(ABORT, "index_formtuple: numberOfAttributes of %d > %d",
 			 numberOfAttributes, MaxIndexAttributeNumber);
 
 
@@ -103,7 +103,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 	 */
 
 	if (size & 0xE000)
-		elog(WARN, "index_formtuple: data takes %d bytes: too big", size);
+		elog(ABORT, "index_formtuple: data takes %d bytes: too big", size);
 
 
 	infomask |= size;
@@ -314,7 +314,7 @@ fastgetiattr(IndexTuple tup,
 						off = (att[j]->attalign == 'd') ?
 							DOUBLEALIGN(off) : LONGALIGN(off);
 					else
-						elog(WARN, "fastgetiattr: attribute %d has len %d",
+						elog(ABORT, "fastgetiattr: attribute %d has len %d",
 							 j, att[j]->attlen);
 					break;
 
@@ -382,7 +382,7 @@ fastgetiattr(IndexTuple tup,
 							DOUBLEALIGN(off) + att[i]->attlen :
 							LONGALIGN(off) + att[i]->attlen;
 					else
-						elog(WARN, "fastgetiattr2: attribute %d has len %d",
+						elog(ABORT, "fastgetiattr2: attribute %d has len %d",
 							 i, att[i]->attlen);
 
 					break;
@@ -409,7 +409,7 @@ fastgetiattr(IndexTuple tup,
 				break;
 			default:
 				if (att[attnum]->attlen < sizeof(int32))
-					elog(WARN, "fastgetattr3: attribute %d has len %d",
+					elog(ABORT, "fastgetattr3: attribute %d has len %d",
 						 attnum, att[attnum]->attlen);
 				if (att[attnum]->attalign == 'd')
 					off = DOUBLEALIGN(off);

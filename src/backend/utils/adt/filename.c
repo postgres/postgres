@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.11 1997/10/25 01:10:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.12 1998/01/05 03:34:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ filename_in(char *file)
 
 			if ((pw = getpwnam(userName)) == NULL)
 			{
-				elog(WARN, "User %s is not a Unix user on the db server.",
+				elog(ABORT, "User %s is not a Unix user on the db server.",
 					 userName);
 			}
 
@@ -77,7 +77,7 @@ filename_in(char *file)
 			/* printf("name: %s\n"); */
 			if ((pw = getpwnam(name)) == NULL)
 			{
-				elog(WARN, "No such user: %s\n", name);
+				elog(ABORT, "No such user: %s\n", name);
 				ind = 0;
 			}
 			else
@@ -112,7 +112,7 @@ filename_in(char *file)
 		}
 		else
 		{
-			elog(WARN, "Couldn't find %s in your environment", environment);
+			elog(ABORT, "Couldn't find %s in your environment", environment);
 		}
 	}
 	else
@@ -132,6 +132,6 @@ filename_out(char *s)
 		return ((char *) NULL);
 	ret = (char *) palloc(strlen(s) + 1);
 	if (!ret)
-		elog(WARN, "filename_out: palloc failed");
+		elog(ABORT, "filename_out: palloc failed");
 	return (strcpy(ret, s));
 }

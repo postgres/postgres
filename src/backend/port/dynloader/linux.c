@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.4 1998/01/02 03:40:04 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.5 1998/01/05 03:32:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ void	   *
 pg_dlopen(char *filename)
 {
 #ifndef HAVE_DLD_H
-	elog(WARN, "dynamic load not supported");
+	elog(ABORT, "dynamic load not supported");
 	return (NULL);
 #else
 	static int	dl_initialized = 0;

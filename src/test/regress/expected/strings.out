@@ -10,8 +10,8 @@ first line - next line - third line
 QUERY: SELECT 'first line'
 ' - next line' /* this comment is not allowed here */
 ' - third line';
-WARN:parser: parse error at or near "'"
+ERROR:  parser: parse error at or near "'"
 QUERY: SELECT text(f1) FROM CHAR_TBL;
-WARN:func_get_detail: function text(bpchar) does not exist
+ERROR:  func_get_detail: function text(bpchar) does not exist
 QUERY: SELECT text(f1) FROM VARCHAR_TBL;
-WARN:func_get_detail: function text(varchar) does not exist
+ERROR:  func_get_detail: function text(varchar) does not exist

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.19 1997/11/28 17:26:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.20 1998/01/05 03:30:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ cluster(char oldrelname[], char oldindexname[])
 	OldHeap = heap_openr(oldrelname);
 	if (!RelationIsValid(OldHeap))
 	{
-		elog(WARN, "cluster: unknown relation: \"%s\"",
+		elog(ABORT, "cluster: unknown relation: \"%s\"",
 			 oldrelname);
 	}
 	OIDOldHeap = OldHeap->rd_id;/* Get OID for the index scan	*/
@@ -133,7 +133,7 @@ cluster(char oldrelname[], char oldindexname[])
 	OldIndex = index_openr(oldindexname);		/* Open old index relation	*/
 	if (!RelationIsValid(OldIndex))
 	{
-		elog(WARN, "cluster: unknown index: \"%s\"",
+		elog(ABORT, "cluster: unknown index: \"%s\"",
 			 oldindexname);
 	}
 	OIDOldIndex = OldIndex->rd_id;		/* OID for the index scan		  */
@@ -218,7 +218,7 @@ copy_heap(Oid OIDOldHeap)
 	OIDNewHeap = heap_create_with_catalog(NewName, tupdesc);
 
 	if (!OidIsValid(OIDNewHeap))
-		elog(WARN, "clusterheap: cannot create temporary heap relation\n");
+		elog(ABORT, "clusterheap: cannot create temporary heap relation\n");
 
 	NewHeap = heap_open(OIDNewHeap);
 

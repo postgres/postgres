@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.83 1998/01/04 04:31:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.84 1998/01/05 03:32:18 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -590,17 +590,17 @@ alter_clause:  ADD opt_column columnDef
 					Node *lp = lfirst($3);
 
 					if (length($3) != 1)
-						elog(WARN,"ALTER TABLE/ADD() allows one column only",NULL);
+						elog(ABORT,"ALTER TABLE/ADD() allows one column only",NULL);
 					$$ = lp;
 				}
 			| DROP opt_column ColId
-				{	elog(WARN,"ALTER TABLE/DROP COLUMN not yet implemented",NULL); }
+				{	elog(ABORT,"ALTER TABLE/DROP COLUMN not yet implemented",NULL); }
 			| ALTER opt_column ColId SET DEFAULT default_expr
-				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented",NULL); }
+				{	elog(ABORT,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented",NULL); }
 			| ALTER opt_column ColId DROP DEFAULT
-				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented",NULL); }
+				{	elog(ABORT,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented",NULL); }
 			| ADD ConstraintElem
-				{	elog(WARN,"ALTER TABLE/ADD CONSTRAINT not yet implemented",NULL); }
+				{	elog(ABORT,"ALTER TABLE/ADD CONSTRAINT not yet implemented",NULL); }
 		;
 
 
@@ -811,11 +811,11 @@ default_expr:  AexprConst
 			| default_expr '*' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
 			| default_expr '=' default_expr
-				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(ABORT,"boolean expressions not supported in DEFAULT",NULL); }
 			| default_expr '<' default_expr
-				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(ABORT,"boolean expressions not supported in DEFAULT",NULL); }
 			| default_expr '>' default_expr
-				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(ABORT,"boolean expressions not supported in DEFAULT",NULL); }
 			| ':' default_expr
 				{	$$ = lcons( makeString( ":"), $2); }
 			| ';' default_expr
@@ -848,7 +848,7 @@ default_expr:  AexprConst
 			| default_expr Op default_expr
 				{
 					if (!strcmp("<=", $2) || !strcmp(">=", $2))
-						elog(WARN,"boolean expressions not supported in DEFAULT",NULL);
+						elog(ABORT,"boolean expressions not supported in DEFAULT",NULL);
 					$$ = nconc( $1, lcons( makeString( $2), $3));
 				}
 			| Op default_expr
@@ -1200,13 +1200,13 @@ TriggerOneEvent:		INSERT	{ $$ = 'i'; }
 TriggerForSpec:  FOR name name
 				{
 						if ( strcmp ($2, "each") != 0 )
-								elog(WARN,"parser: syntax error near %s",$2);
+								elog(ABORT,"parser: syntax error near %s",$2);
 						if ( strcmp ($3, "row") == 0 )
 								$$ = TRUE;
 						else if ( strcmp ($3, "statement") == 0 )
 								$$ = FALSE;
 						else
-								elog(WARN,"parser: syntax error near %s",$3);
+								elog(ABORT,"parser: syntax error near %s",$3);
 				}
 		;
 
@@ -1379,7 +1379,7 @@ opt_direction:	FORWARD							{ $$ = FORWARD; }
 
 fetch_how_many:  Iconst
 			   { $$ = $1;
-				 if ($1 <= 0) elog(WARN,"Please specify nonnegative count for fetch",NULL); }
+				 if ($1 <= 0) elog(ABORT,"Please specify nonnegative count for fetch",NULL); }
 		| ALL							{ $$ = 0; /* 0 means fetch all tuples*/ }
 		| /*EMPTY*/						{ $$ = 1; /*default*/ }
 		;
@@ -1597,7 +1597,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
 				{
 					RecipeStmt *n;
 					if (!IsTransactionBlock())
-						elog(WARN,"EXECUTE RECIPE may only be used in begin/end transaction blocks",NULL);
+						elog(ABORT,"EXECUTE RECIPE may only be used in begin/end transaction blocks",NULL);
 
 					n = makeNode(RecipeStmt);
 					n->recipeName = $3;
@@ -1725,7 +1725,7 @@ MathOp:	'+'				{ $$ = "+"; }
 
 oper_argtypes:	name
 				{
-				   elog(WARN,"parser: argument type missing (use NONE for unary operators)",NULL);
+				   elog(ABORT,"parser: argument type missing (use NONE for unary operators)",NULL);
 				}
 		| name ',' name
 				{ $$ = makeList(makeString($1), makeString($3), -1); }
@@ -2063,7 +2063,7 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 					n->vacrel = $4;
 					n->va_spec = $5;
 					if ( $5 != NIL && !$4 )
-						elog(WARN,"parser: syntax error at or near \"(\"",NULL);
+						elog(ABORT,"parser: syntax error at or near \"(\"",NULL);
 					$$ = (Node *)n;
 				}
 		;
@@ -2240,7 +2240,7 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 					 *							-- mao
 					 */
 					if (!IsTransactionBlock())
-						elog(WARN,"Named portals may only be used in begin/end transaction blocks",NULL);
+						elog(ABORT,"Named portals may only be used in begin/end transaction blocks",NULL);
 
 					n->portalname = $2;
 					n->binary = $3;
@@ -2444,7 +2444,7 @@ having_clause:  HAVING a_expr					{ $$ = $2; }
 from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
 				{
 					$$ = NIL;
-					elog(WARN,"JOIN not yet implemented",NULL);
+					elog(ABORT,"JOIN not yet implemented",NULL);
 				}
 		| FROM from_list						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NIL; }
@@ -2453,7 +2453,7 @@ from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
 from_list:	from_list ',' from_val
 				{ $$ = lappend($1, $3); }
 		| from_val CROSS JOIN from_val
-				{ elog(WARN,"CROSS JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"CROSS JOIN not yet implemented",NULL); }
 		| from_val
 				{ $$ = lcons($1, NIL); }
 		;
@@ -2480,19 +2480,19 @@ from_val:  relation_expr AS ColLabel
 
 join_expr:  NATURAL join_expr					{ $$ = NULL; }
 		| FULL join_outer
-				{ elog(WARN,"FULL OUTER JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"FULL OUTER JOIN not yet implemented",NULL); }
 		| LEFT join_outer
-				{ elog(WARN,"LEFT OUTER JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"LEFT OUTER JOIN not yet implemented",NULL); }
 		| RIGHT join_outer
-				{ elog(WARN,"RIGHT OUTER JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"RIGHT OUTER JOIN not yet implemented",NULL); }
 		| OUTER_P
-				{ elog(WARN,"OUTER JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"OUTER JOIN not yet implemented",NULL); }
 		| INNER_P
-				{ elog(WARN,"INNER JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"INNER JOIN not yet implemented",NULL); }
 		| UNION
-				{ elog(WARN,"UNION JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"UNION JOIN not yet implemented",NULL); }
 		| /*EMPTY*/
-				{ elog(WARN,"INNER JOIN not yet implemented",NULL); }
+				{ elog(ABORT,"INNER JOIN not yet implemented",NULL); }
 		;
 
 join_outer:  OUTER_P							{ $$ = NULL; }
@@ -2653,13 +2653,13 @@ Numeric:  FLOAT opt_float
 opt_float:  '(' Iconst ')'
 				{
 					if ($2 < 1)
-						elog(WARN,"precision for FLOAT must be at least 1",NULL);
+						elog(ABORT,"precision for FLOAT must be at least 1",NULL);
 					else if ($2 < 7)
 						$$ = xlateSqlType("float4");
 					else if ($2 < 16)
 						$$ = xlateSqlType("float8");
 					else
-						elog(WARN,"precision for FLOAT must be less than 16",NULL);
+						elog(ABORT,"precision for FLOAT must be less than 16",NULL);
 				}
 		| /*EMPTY*/
 				{
@@ -2670,14 +2670,14 @@ opt_float:  '(' Iconst ')'
 opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 != 9)
-						elog(WARN,"NUMERIC precision %d must be 9",$2);
+						elog(ABORT,"NUMERIC precision %d must be 9",$2);
 					if ($4 != 0)
-						elog(WARN,"NUMERIC scale %d must be zero",$4);
+						elog(ABORT,"NUMERIC scale %d must be zero",$4);
 				}
 		| '(' Iconst ')'
 				{
 					if ($2 != 9)
-						elog(WARN,"NUMERIC precision %d must be 9",$2);
+						elog(ABORT,"NUMERIC precision %d must be 9",$2);
 				}
 		| /*EMPTY*/
 				{
@@ -2688,15 +2688,15 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 opt_decimal:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 > 9)
-						elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$2);
+						elog(ABORT,"DECIMAL precision %d exceeds implementation limit of 9",$2);
 					if ($4 != 0)
-						elog(WARN,"DECIMAL scale %d must be zero",$4);
+						elog(ABORT,"DECIMAL scale %d must be zero",$4);
 					$$ = NULL;
 				}
 		| '(' Iconst ')'
 				{
 					if ($2 > 9)
-						elog(WARN,"DECIMAL precision %d exceeds implementation limit of 9",$2);
+						elog(ABORT,"DECIMAL precision %d exceeds implementation limit of 9",$2);
 					$$ = NULL;
 				}
 		| /*EMPTY*/
@@ -2722,14 +2722,14 @@ Character:  character '(' Iconst ')'
 					else
 						yyerror("parse error");
 					if ($3 < 1)
-						elog(WARN,"length for '%s' type must be at least 1",$1);
+						elog(ABORT,"length for '%s' type must be at least 1",$1);
 					else if ($3 > 4096)
 						/* we can store a char() of length up to the size
 						 * of a page (8KB) - page headers and friends but
 						 * just to be safe here...	- ay 6/95
 						 * XXX note this hardcoded limit - thomas 1997-07-13
 						 */
-						elog(WARN,"length for type '%s' cannot exceed 4096",$1);
+						elog(ABORT,"length for type '%s' cannot exceed 4096",$1);
 
 					/* we actually implement this sort of like a varlen, so
 					 * the first 4 bytes is the length. (the difference
@@ -2762,7 +2762,7 @@ character:  CHARACTER opt_varying opt_charset opt_collate
 						}
 					};
 					if ($4 != NULL)
-					elog(WARN,"COLLATE %s not yet implemented",$4);
+					elog(ABORT,"COLLATE %s not yet implemented",$4);
 					$$ = type;
 				}
 		| CHAR opt_varying						{ $$ = xlateSqlType($2? "varchar": "char"); }
@@ -3098,7 +3098,7 @@ a_expr:  attr opt_indirection
 		 */
 		| EXISTS '(' SubSelect ')'
 				{
-					elog(WARN,"EXISTS not yet implemented",NULL);
+					elog(ABORT,"EXISTS not yet implemented",NULL);
 					$$ = $3;
 				}
 		| EXTRACT '(' extract_list ')'
@@ -3428,7 +3428,7 @@ trim_list:  a_expr FROM expr_list
 
 in_expr:  SubSelect
 				{
-					elog(WARN,"IN (SUBSELECT) not yet implemented",NULL);
+					elog(ABORT,"IN (SUBSELECT) not yet implemented",NULL);
 					$$ = $1;
 				}
 		| in_expr_nodes
@@ -3445,7 +3445,7 @@ in_expr_nodes:  AexprConst
 
 not_in_expr:  SubSelect
 				{
-					elog(WARN,"NOT IN (SUBSELECT) not yet implemented",NULL);
+					elog(ABORT,"NOT IN (SUBSELECT) not yet implemented",NULL);
 					$$ = $1;
 				}
 		| not_in_expr_nodes
@@ -3606,7 +3606,7 @@ relation_name:	SpecialRuleRelation
 					/* disallow refs to variable system tables */
 					if (strcmp(LogRelationName, $1) == 0
 					   || strcmp(VariableRelationName, $1) == 0)
-						elog(WARN,"%s cannot be accessed by users",$1);
+						elog(ABORT,"%s cannot be accessed by users",$1);
 					else
 						$$ = $1;
 					StrNCpy(saved_relname, $1, NAMEDATALEN);
@@ -3765,14 +3765,14 @@ SpecialRuleRelation:  CURRENT
 					if (QueryIsRule)
 						$$ = "*CURRENT*";
 					else
-						elog(WARN,"CURRENT used in non-rule query",NULL);
+						elog(ABORT,"CURRENT used in non-rule query",NULL);
 				}
 		| NEW
 				{
 					if (QueryIsRule)
 						$$ = "*NEW*";
 					else
-						elog(WARN,"NEW used in non-rule query",NULL);
+						elog(ABORT,"NEW used in non-rule query",NULL);
 				}
 		;
 
@@ -3800,7 +3800,7 @@ makeRowExpr(char *opr, List *largs, List *rargs)
 	Node *larg, *rarg;
 
 	if (length(largs) != length(rargs))
-		elog(WARN,"Unequal number of entries in row expression",NULL);
+		elog(ABORT,"Unequal number of entries in row expression",NULL);
 
 	if (lnext(largs) != NIL)
 		expr = makeRowExpr(opr,lnext(largs),lnext(rargs));
@@ -3828,7 +3828,7 @@ makeRowExpr(char *opr, List *largs, List *rargs)
 	}
 	else
 	{
-		elog(WARN,"Operator '%s' not implemented for row expressions",opr);
+		elog(ABORT,"Operator '%s' not implemented for row expressions",opr);
 	}
 
 #if FALSE
@@ -3858,7 +3858,7 @@ mapTargetColumns(List *src, List *dst)
 	ResTarget *d;
 
 	if (length(src) != length(dst))
-		elog(WARN,"CREATE TABLE/AS SELECT has mismatched column count",NULL);
+		elog(ABORT,"CREATE TABLE/AS SELECT has mismatched column count",NULL);
 
 	while ((src != NIL) && (dst != NIL))
 	{
@@ -4069,7 +4069,7 @@ makeConstantList( A_Const *n)
 {
 	char *defval = NULL;
 	if (nodeTag(n) != T_A_Const) {
-		elog(WARN,"Cannot handle non-constant parameter",NULL);
+		elog(ABORT,"Cannot handle non-constant parameter",NULL);
 
 	} else if (n->val.type == T_Float) {
 		defval = (char*) palloc(20+1);
@@ -4086,7 +4086,7 @@ makeConstantList( A_Const *n)
 		strcat( defval, "'");
 
 	} else {
-		elog(WARN,"Internal error in makeConstantList(): cannot encode node",NULL);
+		elog(ABORT,"Internal error in makeConstantList(): cannot encode node",NULL);
 	};
 
 #ifdef PARSEDEBUG

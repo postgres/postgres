@@ -4,9 +4,9 @@ QUERY: INSERT INTO BOX_TBL (f1) VALUES ('(1.0,1.0,3.0,3.0)');
 QUERY: INSERT INTO BOX_TBL (f1) VALUES ('(2.5, 2.5, 2.5,3.5)');
 QUERY: INSERT INTO BOX_TBL (f1) VALUES ('(3.0, 3.0,3.0,3.0)');
 QUERY: INSERT INTO BOX_TBL (f1) VALUES ('(2.3, 4.5)');
-WARN:Bad box external representation '(2.3, 4.5)'
+ERROR:  Bad box external representation '(2.3, 4.5)'
 QUERY: INSERT INTO BOX_TBL (f1) VALUES ('asdfasdf(ad');
-WARN:Bad box external representation 'asdfasdf(ad'
+ERROR:  Bad box external representation 'asdfasdf(ad'
 QUERY: SELECT '' AS four, BOX_TBL.*;
 four|f1                 
 ----+-------------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.14 1997/11/02 15:24:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.15 1998/01/05 03:30:10 momjian Exp $
  *
  * NOTES
  *	  This file contains support functions for the high
@@ -68,7 +68,7 @@ TransComputeBlockNumber(Relation relation,		/* relation to test */
 	if (relation == LogRelation)
 		itemsPerBlock = TP_NumXidStatusPerBlock;
 	else
-		elog(WARN, "TransComputeBlockNumber: unknown relation");
+		elog(ABORT, "TransComputeBlockNumber: unknown relation");
 
 	/* ----------------
 	 *	warning! if the transaction id's get too large

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.11 1997/09/08 21:47:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.12 1998/01/05 03:33:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ smgrcreate(int16 which, Relation reln)
 	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
-		elog(WARN, "cannot open %s",
+		elog(ABORT, "cannot open %s",
 			 &(reln->rd_rel->relname.data[0]));
 
 	return (fd);
@@ -149,7 +149,7 @@ smgrunlink(int16 which, Relation reln)
 	int			status;
 
 	if ((status = (*(smgrsw[which].smgr_unlink)) (reln)) == SM_FAIL)
-		elog(WARN, "cannot unlink %s",
+		elog(ABORT, "cannot unlink %s",
 			 &(reln->rd_rel->relname.data[0]));
 
 	return (status);
@@ -169,7 +169,7 @@ smgrextend(int16 which, Relation reln, char *buffer)
 	status = (*(smgrsw[which].smgr_extend)) (reln, buffer);
 
 	if (status == SM_FAIL)
-		elog(WARN, "%s: cannot extend",
+		elog(ABORT, "%s: cannot extend",
 			 &(reln->rd_rel->relname.data[0]));
 
 	return (status);
@@ -187,7 +187,7 @@ smgropen(int16 which, Relation reln)
 	int			fd;
 
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
-		elog(WARN, "cannot open %s",
+		elog(ABORT, "cannot open %s",
 			 &(reln->rd_rel->relname.data[0]));
 
 	return (fd);
@@ -209,7 +209,7 @@ int
 smgrclose(int16 which, Relation reln)
 {
 	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
-		elog(WARN, "cannot close %s",
+		elog(ABORT, "cannot close %s",
 			 &(reln->rd_rel->relname.data[0]));
 
 	return (SM_SUCCESS);
@@ -233,7 +233,7 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_read)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(WARN, "cannot read block %d of %s",
+		elog(ABORT, "cannot read block %d of %s",
 			 blocknum, &(reln->rd_rel->relname.data[0]));
 
 	return (status);
@@ -255,7 +255,7 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_write)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(WARN, "cannot write block %d of %s",
+		elog(ABORT, "cannot write block %d of %s",
 			 blocknum, &(reln->rd_rel->relname.data[0]));
 
 	return (status);
@@ -272,7 +272,7 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 	status = (*(smgrsw[which].smgr_flush)) (reln, blocknum, buffer);
 
 	if (status == SM_FAIL)
-		elog(WARN, "cannot flush block %d of %s to stable store",
+		elog(ABORT, "cannot flush block %d of %s to stable store",
 			 blocknum, &(reln->rd_rel->relname.data[0]));
 
 	return (status);
@@ -310,7 +310,7 @@ smgrblindwrt(int16 which,
 											   blkno, buffer);
 
 	if (status == SM_FAIL)
-		elog(WARN, "cannot write block %d of %s [%s] blind",
+		elog(ABORT, "cannot write block %d of %s [%s] blind",
 			 blkno, relstr, dbstr);
 
 	pfree(dbstr);
@@ -332,7 +332,7 @@ smgrnblocks(int16 which, Relation reln)
 	int			nblocks;
 
 	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
-		elog(WARN, "cannot count blocks for %s",
+		elog(ABORT, "cannot count blocks for %s",
 			 &(reln->rd_rel->relname.data[0]));
 
 	return (nblocks);
@@ -354,7 +354,7 @@ smgrtruncate(int16 which, Relation reln, int nblocks)
 	if (smgrsw[which].smgr_truncate)
 	{
 		if ((newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks)) < 0)
-			elog(WARN, "cannot truncate %s to %d blocks",
+			elog(ABORT, "cannot truncate %s to %d blocks",
 				 &(reln->rd_rel->relname.data[0]), nblocks);
 	}
 
@@ -406,7 +406,7 @@ bool
 smgriswo(int16 smgrno)
 {
 	if (smgrno < 0 || smgrno >= NSmgr)
-		elog(WARN, "illegal storage manager number %d", smgrno);
+		elog(ABORT, "illegal storage manager number %d", smgrno);
 
 	return (smgrwo[smgrno]);
 }

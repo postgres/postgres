@@ -6,9 +6,9 @@ QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 34 year');
 QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 3 months');
 QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 14 seconds ago');
 QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('badly formatted reltime');
-WARN:Bad reltime external representation 'badly formatted reltime'
+ERROR:  Bad reltime external representation 'badly formatted reltime'
 QUERY: INSERT INTO RELTIME_TBL (f1) VALUES ('@ 30 eons ago');
-WARN:Bad reltime external representation '@ 30 eons ago'
+ERROR:  Bad reltime external representation '@ 30 eons ago'
 QUERY: SELECT '' AS six, RELTIME_TBL.*;
 six|f1           
 ---+-------------

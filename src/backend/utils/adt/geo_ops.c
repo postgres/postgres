@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.26 1997/09/25 14:09:04 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.27 1998/01/05 03:34:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,7 +294,7 @@ path_encode(bool closed, int npts, Point *pt)
 	{
 		*cp++ = LDELIM;
 		if (!pair_encode(pt->x, pt->y, cp))
-			elog(WARN, "Unable to format path", NULL);
+			elog(ABORT, "Unable to format path", NULL);
 		cp += strlen(cp);
 		*cp++ = RDELIM;
 		*cp++ = DELIM;
@@ -364,11 +364,11 @@ box_in(char *str)
 				y;
 
 	if (!PointerIsValid(str))
-		elog(WARN, " Bad (null) box external representation", NULL);
+		elog(ABORT, " Bad (null) box external representation", NULL);
 
 	if ((!path_decode(FALSE, 2, str, &isopen, &s, &(box->high)))
 		|| (*s != '\0'))
-		elog(WARN, "Bad box external representation '%s'", str);
+		elog(ABORT, "Bad box external representation '%s'", str);
 
 	/* reorder corners if necessary... */
 	if (box->high.x < box->low.x)
@@ -1058,10 +1058,10 @@ path_in(char *str)
 	int			depth = 0;
 
 	if (!PointerIsValid(str))
-		elog(WARN, "Bad (null) path external representation");
+		elog(ABORT, "Bad (null) path external representation");
 
 	if ((npts = pair_count(str, ',')) <= 0)
-		elog(WARN, "Bad path external representation '%s'", str);
+		elog(ABORT, "Bad path external representation '%s'", str);
 
 	s = str;
 	while (isspace(*s))
@@ -1082,7 +1082,7 @@ path_in(char *str)
 
 	if ((!path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
 		&& (!((depth == 0) && (*s == '\0'))) && !((depth >= 1) && (*s == RDELIM)))
-		elog(WARN, "Bad path external representation '%s'", str);
+		elog(ABORT, "Bad path external representation '%s'", str);
 
 	path->closed = (!isopen);
 
@@ -1367,10 +1367,10 @@ point_in(char *str)
 	char	   *s;
 
 	if (!PointerIsValid(str))
-		elog(WARN, "Bad (null) point external representation");
+		elog(ABORT, "Bad (null) point external representation");
 
 	if (!pair_decode(str, &x, &y, &s) || (strlen(s) > 0))
-		elog(WARN, "Bad point external representation '%s'", str);
+		elog(ABORT, "Bad point external representation '%s'", str);
 
 	point = PALLOCTYPE(Point);
 
@@ -1549,13 +1549,13 @@ lseg_in(char *str)
 	char	   *s;
 
 	if (!PointerIsValid(str))
-		elog(WARN, " Bad (null) lseg external representation", NULL);
+		elog(ABORT, " Bad (null) lseg external representation", NULL);
 
 	lseg = PALLOCTYPE(LSEG);
 
 	if ((!path_decode(TRUE, 2, str, &isopen, &s, &(lseg->p[0])))
 		|| (*s != '\0'))
-		elog(WARN, "Bad lseg external representation '%s'", str);
+		elog(ABORT, "Bad lseg external representation '%s'", str);
 
 	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
 
@@ -2037,7 +2037,7 @@ dist_cpoly(CIRCLE *circle, POLYGON *poly)
 	LSEG		seg;
 
 	if (!PointerIsValid(circle) || !PointerIsValid(poly))
-		elog(WARN, "Invalid (null) input for distance", NULL);
+		elog(ABORT, "Invalid (null) input for distance", NULL);
 
 	if (point_inside(&(circle->center), poly->npts, poly->p))
 	{
@@ -2242,7 +2242,7 @@ Point *
 close_pb(Point *pt, BOX *box)
 {
 	/* think about this one for a while */
-	elog(WARN, "close_pb not implemented", NULL);
+	elog(ABORT, "close_pb not implemented", NULL);
 
 	return (NULL);
 }
@@ -2273,7 +2273,7 @@ Point *
 close_sb(LSEG *lseg, BOX *box)
 {
 	/* think about this one for a while */
-	elog(WARN, "close_sb not implemented", NULL);
+	elog(ABORT, "close_sb not implemented", NULL);
 
 	return (NULL);
 }
@@ -2282,7 +2282,7 @@ Point *
 close_lb(LINE *line, BOX *box)
 {
 	/* think about this one for a while */
-	elog(WARN, "close_lb not implemented", NULL);
+	elog(ABORT, "close_lb not implemented", NULL);
 
 	return (NULL);
 }
@@ -2531,7 +2531,7 @@ make_bound_box(POLYGON *poly)
 	}
 	else
 	{
-		elog(WARN, "Unable to create bounding box for empty polygon", NULL);
+		elog(ABORT, "Unable to create bounding box for empty polygon", NULL);
 	}
 }
 
@@ -2553,10 +2553,10 @@ poly_in(char *str)
 	char	   *s;
 
 	if (!PointerIsValid(str))
-		elog(WARN, " Bad (null) polygon external representation");
+		elog(ABORT, " Bad (null) polygon external representation");
 
 	if ((npts = pair_count(str, ',')) <= 0)
-		elog(WARN, "Bad polygon external representation '%s'", str);
+		elog(ABORT, "Bad polygon external representation '%s'", str);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
 	poly = PALLOC(size);
@@ -2567,7 +2567,7 @@ poly_in(char *str)
 
 	if ((!path_decode(FALSE, npts, str, &isopen, &s, &(poly->p[0])))
 		|| (*s != '\0'))
-		elog(WARN, "Bad polygon external representation '%s'", str);
+		elog(ABORT, "Bad polygon external representation '%s'", str);
 
 	make_bound_box(poly);
 
@@ -2870,7 +2870,7 @@ point_div(Point *p1, Point *p2)
 	div = (p2->x * p2->x) + (p2->y * p2->y);
 
 	if (div == 0.0)
-		elog(WARN, "point_div:  divide by 0.0 error");
+		elog(ABORT, "point_div:  divide by 0.0 error");
 
 	result->x = ((p1->x * p2->x) + (p1->y * p2->y)) / div;
 	result->y = ((p2->x * p1->y) - (p2->y * p1->x)) / div;
@@ -3139,7 +3139,7 @@ path_center(PATH *path)
 	if (!PointerIsValid(path))
 		return (NULL);
 
-	elog(WARN, "path_center not implemented", NULL);
+	elog(ABORT, "path_center not implemented", NULL);
 
 	result = PALLOCTYPE(Point);
 	result = NULL;
@@ -3158,7 +3158,7 @@ path_poly(PATH *path)
 		return (NULL);
 
 	if (!path->closed)
-		elog(WARN, "Open path cannot be converted to polygon", NULL);
+		elog(ABORT, "Open path cannot be converted to polygon", NULL);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * path->npts);
 	poly = PALLOC(size);
@@ -3197,7 +3197,7 @@ upgradepath(PATH *path)
 		return (NULL);
 
 	if (!isoldpath(path))
-		elog(WARN, "upgradepath: path already upgraded?", NULL);
+		elog(ABORT, "upgradepath: path already upgraded?", NULL);
 
 	npts = (path->npts - 1);
 	size = offsetof(PATH, p[0]) +(sizeof(path->p[0]) * npts);
@@ -3463,7 +3463,7 @@ circle_in(char *str)
 	int			depth = 0;
 
 	if (!PointerIsValid(str))
-		elog(WARN, " Bad (null) circle external representation", NULL);
+		elog(ABORT, " Bad (null) circle external representation", NULL);
 
 	circle = PALLOCTYPE(CIRCLE);
 
@@ -3483,7 +3483,7 @@ circle_in(char *str)
 	}
 
 	if (!pair_decode(s, &circle->center.x, &circle->center.y, &s))
-		elog(WARN, "Bad circle external representation '%s'", str);
+		elog(ABORT, "Bad circle external representation '%s'", str);
 
 	if (*s == DELIM)
 		s++;
@@ -3491,7 +3491,7 @@ circle_in(char *str)
 		s++;
 
 	if ((!single_decode(s, &circle->radius, &s)) || (circle->radius < 0))
-		elog(WARN, "Bad circle external representation '%s'", str);
+		elog(ABORT, "Bad circle external representation '%s'", str);
 
 	while (depth > 0)
 	{
@@ -3505,12 +3505,12 @@ circle_in(char *str)
 		}
 		else
 		{
-			elog(WARN, "Bad circle external representation '%s'", str);
+			elog(ABORT, "Bad circle external representation '%s'", str);
 		}
 	}
 
 	if (*s != '\0')
-		elog(WARN, "Bad circle external representation '%s'", str);
+		elog(ABORT, "Bad circle external representation '%s'", str);
 
 	return (circle);
 }								/* circle_in() */
@@ -3532,13 +3532,13 @@ circle_out(CIRCLE *circle)
 	*cp++ = LDELIM_C;
 	*cp++ = LDELIM;
 	if (!pair_encode(circle->center.x, circle->center.y, cp))
-		elog(WARN, "Unable to format circle", NULL);
+		elog(ABORT, "Unable to format circle", NULL);
 
 	cp += strlen(cp);
 	*cp++ = RDELIM;
 	*cp++ = DELIM;
 	if (!single_encode(circle->radius, cp))
-		elog(WARN, "Unable to format circle", NULL);
+		elog(ABORT, "Unable to format circle", NULL);
 
 	cp += strlen(cp);
 	*cp++ = RDELIM_C;
@@ -4000,7 +4000,7 @@ circle_poly(int npts, CIRCLE *circle)
 		return (NULL);
 
 	if (FPzero(circle->radius) || (npts < 2))
-		elog(WARN, "Unable to convert circle to polygon", NULL);
+		elog(ABORT, "Unable to convert circle to polygon", NULL);
 
 	size = offsetof(POLYGON, p[0]) +(sizeof(poly->p[0]) * npts);
 	poly = PALLOC(size);
@@ -4036,7 +4036,7 @@ poly_circle(POLYGON *poly)
 		return (NULL);
 
 	if (poly->npts < 2)
-		elog(WARN, "Unable to convert polygon to circle", NULL);
+		elog(ABORT, "Unable to convert polygon to circle", NULL);
 
 	circle = PALLOCTYPE(CIRCLE);
 
@@ -4059,7 +4059,7 @@ poly_circle(POLYGON *poly)
 	circle->radius /= poly->npts;
 
 	if (FPzero(circle->radius))
-		elog(WARN, "Unable to convert polygon to circle", NULL);
+		elog(ABORT, "Unable to convert polygon to circle", NULL);
 
 	return (circle);
 }								/* poly_circle() */

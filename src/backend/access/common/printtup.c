@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.20 1997/12/08 04:42:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.21 1998/01/05 03:29:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ typtoout(Oid type)
 		return ((Oid)
 				((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
 
-	elog(WARN, "typtoout: Cache lookup of type %d failed", type);
+	elog(ABORT, "typtoout: Cache lookup of type %d failed", type);
 	return (InvalidOid);
 }
 
@@ -62,7 +62,7 @@ gettypelem(Oid type)
 		return ((Oid)
 				((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
 
-	elog(WARN, "typtoout: Cache lookup of type %d failed", type);
+	elog(ABORT, "typtoout: Cache lookup of type %d failed", type);
 	return (InvalidOid);
 }
 

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.12 1997/11/24 05:09:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.13 1998/01/05 03:34:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,7 @@ getattdisbursion(Oid relid, AttrNumber attnum)
 							  0, 0);
 	if (!HeapTupleIsValid(atp))
 	{
-		elog(WARN, "getattdisbursion: no attribute tuple %d %d",
+		elog(ABORT, "getattdisbursion: no attribute tuple %d %d",
 			 relid, attnum);
 		return (0);
 	}
@@ -304,7 +304,7 @@ getattdisbursion(Oid relid, AttrNumber attnum)
 	 */
 	if (!HeapTupleIsValid(atp))
 	{
-		elog(WARN, "getattdisbursion: no relation tuple %d", relid);
+		elog(ABORT, "getattdisbursion: no relation tuple %d", relid);
 		return (0);
 	}
 	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
@@ -357,7 +357,7 @@ gethilokey(Oid relid,
 		*low = "n";
 
 		/*
-		 * XXX			elog(WARN, "gethilokey: statistic tuple not
+		 * XXX			elog(ABORT, "gethilokey: statistic tuple not
 		 * found");
 		 */
 		return;
@@ -417,9 +417,9 @@ btreesel(Oid operatorObjectId,
 	}
 
 	if (!PointerIsValid(result))
-		elog(WARN, "Btree Selectivity: bad pointer");
+		elog(ABORT, "Btree Selectivity: bad pointer");
 	if (*result < 0.0 || *result > 1.0)
-		elog(WARN, "Btree Selectivity: bad value %lf", *result);
+		elog(ABORT, "Btree Selectivity: bad value %lf", *result);
 
 	return (result);
 }
@@ -465,7 +465,7 @@ btreenpage(Oid operatorObjectId,
 							  0, 0, 0);
 	if (!HeapTupleIsValid(atp))
 	{
-		elog(WARN, "btreenpage: no index tuple %d", indexrelid);
+		elog(ABORT, "btreenpage: no index tuple %d", indexrelid);
 		return (0);
 	}
 
@@ -503,7 +503,7 @@ hashsel(Oid operatorObjectId,
 								  0, 0, 0);
 		if (!HeapTupleIsValid(atp))
 		{
-			elog(WARN, "hashsel: no index tuple %d", indexrelid);
+			elog(ABORT, "hashsel: no index tuple %d", indexrelid);
 			return (0);
 		}
 		ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
@@ -530,9 +530,9 @@ hashsel(Oid operatorObjectId,
 	}
 
 	if (!PointerIsValid(result))
-		elog(WARN, "Hash Table Selectivity: bad pointer");
+		elog(ABORT, "Hash Table Selectivity: bad pointer");
 	if (*result < 0.0 || *result > 1.0)
-		elog(WARN, "Hash Table Selectivity: bad value %lf", *result);
+		elog(ABORT, "Hash Table Selectivity: bad value %lf", *result);
 
 	return (result);
 
@@ -559,7 +559,7 @@ hashnpage(Oid operatorObjectId,
 							  0, 0, 0);
 	if (!HeapTupleIsValid(atp))
 	{
-		elog(WARN, "hashsel: no index tuple %d", indexrelid);
+		elog(ABORT, "hashsel: no index tuple %d", indexrelid);
 		return (0);
 	}
 

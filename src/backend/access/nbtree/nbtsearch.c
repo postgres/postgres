@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.27 1997/10/22 19:02:52 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.28 1998/01/05 03:29:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,7 +617,7 @@ _bt_compare(Relation rel,
 		 */
 		if (!P_RIGHTMOST(opaque))
 		{
-			elog(WARN, "_bt_compare: invalid comparison to high key");
+			elog(ABORT, "_bt_compare: invalid comparison to high key");
 		}
 
 #if 0
@@ -839,7 +839,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	/* _bt_orderkeys disallows it, but it's place to add some code latter */
 	if (so->keyData[0].sk_flags & SK_ISNULL)
 	{
-		elog(WARN, "_bt_first: btree doesn't support is(not)null, yet");
+		elog(ABORT, "_bt_first: btree doesn't support is(not)null, yet");
 		return ((RetrieveIndexResult) NULL);
 	}
 	proc = index_getprocid(rel, 1, BTORDER_PROC);
@@ -1331,7 +1331,7 @@ _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	 * us up less often since they're only done by the vacuum daemon.
 	 */
 
-	elog(WARN, "btree synchronization error:  concurrent update botched scan");
+	elog(ABORT, "btree synchronization error:  concurrent update botched scan");
 
 	return (false);
 }
@@ -1416,7 +1416,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	if (ScanDirectionIsForward(dir))
 	{
 		if (!P_LEFTMOST(opaque))/* non-leftmost page ? */
-			elog(WARN, "_bt_endpoint: leftmost page (%u) has not leftmost flag", blkno);
+			elog(ABORT, "_bt_endpoint: leftmost page (%u) has not leftmost flag", blkno);
 		start = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 
 		/*
@@ -1440,7 +1440,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		if (PageIsEmpty(page))
 		{
 			if (start != P_HIKEY)		/* non-rightmost page */
-				elog(WARN, "_bt_endpoint: non-rightmost page (%u) is empty", blkno);
+				elog(ABORT, "_bt_endpoint: non-rightmost page (%u) is empty", blkno);
 
 			/*
 			 * It's left- & right- most page - root page, - and it's
@@ -1512,7 +1512,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	}
 	else
 	{
-		elog(WARN, "Illegal scan direction %d", dir);
+		elog(ABORT, "Illegal scan direction %d", dir);
 	}
 
 	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, start));

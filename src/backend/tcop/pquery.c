@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.11 1997/09/18 20:22:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.12 1998/01/05 03:33:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,7 +166,7 @@ ProcessPortal(char *portalName,
 	 */
 
 	if (PortalNameIsSpecial(portalName))
-		elog(WARN,
+		elog(ABORT,
 			 "The portal name %s is reserved for internal use",
 			 portalName);
 

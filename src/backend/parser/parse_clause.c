@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.6 1997/12/29 04:31:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.7 1998/01/05 03:32:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
 	pstate->p_in_where_clause = false;
 	if (exprType(qual) != BOOLOID)
 	{
-		elog(WARN,
+		elog(ERROR,
 			 "where clause must return type bool, not %s",
 			 typeidTypeName(exprType(qual)));
 	}
@@ -170,7 +170,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 					if (real_rtable_pos == test_rtable_pos)
 					{
 						if (target_result != NULL)
-							elog(WARN, "Order/Group By '%s' is ambiguous", sortgroupby->name);
+							elog(ERROR, "Order/Group By '%s' is ambiguous", sortgroupby->name);
 						else
 							target_result = target;
 					}
@@ -178,7 +178,7 @@ find_targetlist_entry(ParseState *pstate, SortGroupBy *sortgroupby, List *tlist)
 				else
 				{
 					if (target_result != NULL)
-						elog(WARN, "Order/Group By '%s' is ambiguous", sortgroupby->name);
+						elog(ERROR, "Order/Group By '%s' is ambiguous", sortgroupby->name);
 					else
 						target_result = target;
 				}
@@ -208,7 +208,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 		restarget = find_targetlist_entry(pstate, lfirst(grouplist), targetlist);
 
 		if (restarget == NULL)
-			elog(WARN, "The field being grouped by must appear in the target list");
+			elog(ERROR, "The field being grouped by must appear in the target list");
 
 		grpcl->entry = restarget;
 		resdom = restarget->resdom;
@@ -267,7 +267,7 @@ transformSortClause(ParseState *pstate,
 		
 		restarget = find_targetlist_entry(pstate, sortby, targetlist);
 		if (restarget == NULL)
-			elog(WARN, "The field being ordered by must appear in the target list");
+			elog(ERROR, "The field being ordered by must appear in the target list");
 
 		sortcl->resdom = resdom = restarget->resdom;
 		sortcl->opoid = oprid(oper(sortby->useOp,
@@ -349,7 +349,7 @@ transformSortClause(ParseState *pstate,
 			}
 			if (i == NIL)
 			{
-				elog(WARN, "The field specified in the UNIQUE ON clause is not in the targetlist");
+				elog(ERROR, "The field specified in the UNIQUE ON clause is not in the targetlist");
 			}
 			s = sortlist;
 			foreach(s, sortlist)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.18 1997/11/28 17:27:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.19 1998/01/05 03:30:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 		typeId1 = TypeGet(typeName1, &defined);
 		if (!OidIsValid(typeId1))
 		{
-			elog(WARN, "RemoveOperator: type '%s' does not exist", typeName1);
+			elog(ABORT, "RemoveOperator: type '%s' does not exist", typeName1);
 			return;
 		}
 	}
@@ -75,7 +75,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 		typeId2 = TypeGet(typeName2, &defined);
 		if (!OidIsValid(typeId2))
 		{
-			elog(WARN, "RemoveOperator: type '%s' does not exist", typeName2);
+			elog(ABORT, "RemoveOperator: type '%s' does not exist", typeName2);
 			return;
 		}
 	}
@@ -105,7 +105,7 @@ RemoveOperator(char *operatorName,		/* operator name */
 		if (!pg_ownercheck(userName,
 						   (char *) ObjectIdGetDatum(tup->t_oid),
 						   OPROID))
-			elog(WARN, "RemoveOperator: operator '%s': permission denied",
+			elog(ABORT, "RemoveOperator: operator '%s': permission denied",
 				 operatorName);
 #endif
 		ItemPointerCopy(&tup->t_ctid, &itemPointerData);
@@ -115,20 +115,20 @@ RemoveOperator(char *operatorName,		/* operator name */
 	{
 		if (OidIsValid(typeId1) && OidIsValid(typeId2))
 		{
-			elog(WARN, "RemoveOperator: binary operator '%s' taking '%s' and '%s' does not exist",
+			elog(ABORT, "RemoveOperator: binary operator '%s' taking '%s' and '%s' does not exist",
 				 operatorName,
 				 typeName1,
 				 typeName2);
 		}
 		else if (OidIsValid(typeId1))
 		{
-			elog(WARN, "RemoveOperator: right unary operator '%s' taking '%s' does not exist",
+			elog(ABORT, "RemoveOperator: right unary operator '%s' taking '%s' does not exist",
 				 operatorName,
 				 typeName1);
 		}
 		else
 		{
-			elog(WARN, "RemoveOperator: left unary operator '%s' taking '%s' does not exist",
+			elog(ABORT, "RemoveOperator: left unary operator '%s' taking '%s' does not exist",
 				 operatorName,
 				 typeName2);
 		}
@@ -272,7 +272,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 #ifndef NO_SECURITY
 	userName = GetPgUserName();
 	if (!pg_ownercheck(userName, typeName, TYPNAME))
-		elog(WARN, "RemoveType: type '%s': permission denied",
+		elog(ABORT, "RemoveType: type '%s': permission denied",
 			 typeName);
 #endif
 
@@ -290,7 +290,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 	{
 		heap_endscan(scan);
 		heap_close(relation);
-		elog(WARN, "RemoveType: type '%s' does not exist",
+		elog(ABORT, "RemoveType: type '%s' does not exist",
 			 typeName);
 	}
 	typeOid = tup->t_oid;
@@ -308,7 +308,7 @@ RemoveType(char *typeName)		/* type name to be removed */
 
 	if (!HeapTupleIsValid(tup))
 	{
-		elog(WARN, "RemoveType: type '%s': array stub not found",
+		elog(ABORT, "RemoveType: type '%s': array stub not found",
 			 typeName);
 	}
 	typeOid = tup->t_oid;
@@ -364,7 +364,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 
 			if (!HeapTupleIsValid(tup))
 			{
-				elog(WARN, "RemoveFunction: type '%s' not found", typename);
+				elog(ABORT, "RemoveFunction: type '%s' not found", typename);
 			}
 			argList[i] = tup->t_oid;
 		}
@@ -380,7 +380,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	userName = GetPgUserName();
 	if (!pg_func_ownercheck(userName, functionName, nargs, argList))
 	{
-		elog(WARN, "RemoveFunction: function '%s': permission denied",
+		elog(ABORT, "RemoveFunction: function '%s': permission denied",
 			 functionName);
 	}
 #endif
@@ -420,7 +420,7 @@ RemoveFunction(char *functionName,		/* function name to be removed */
 	/* ok, function has been found */
 
 	if (the_proc->prolang == INTERNALlanguageId)
-		elog(WARN, "RemoveFunction: function \"%s\" is built-in",
+		elog(ABORT, "RemoveFunction: function \"%s\" is built-in",
 			 functionName);
 
 	ItemPointerCopy(&tup->t_ctid, &itemPointerData);
@@ -457,7 +457,7 @@ RemoveAggregate(char *aggName, char *aggType)
 		basetypeID = TypeGet(aggType, &defined);
 		if (!OidIsValid(basetypeID))
 		{
-			elog(WARN, "RemoveAggregate: type '%s' does not exist", aggType);
+			elog(ABORT, "RemoveAggregate: type '%s' does not exist", aggType);
 		}
 	}
 	else
@@ -473,12 +473,12 @@ RemoveAggregate(char *aggName, char *aggType)
 	{
 		if (aggType)
 		{
-			elog(WARN, "RemoveAggregate: aggregate '%s' on type '%s': permission denied",
+			elog(ABORT, "RemoveAggregate: aggregate '%s' on type '%s': permission denied",
 				 aggName, aggType);
 		}
 		else
 		{
-			elog(WARN, "RemoveAggregate: aggregate '%s': permission denied",
+			elog(ABORT, "RemoveAggregate: aggregate '%s': permission denied",
 				 aggName);
 		}
 	}
@@ -505,12 +505,12 @@ RemoveAggregate(char *aggName, char *aggType)
 		heap_close(relation);
 		if (aggType)
 		{
-			elog(WARN, "RemoveAggregate: aggregate '%s' for '%s' does not exist",
+			elog(ABORT, "RemoveAggregate: aggregate '%s' for '%s' does not exist",
 				 aggName, aggType);
 		}
 		else
 		{
-			elog(WARN, "RemoveAggregate: aggregate '%s' for all types does not exist",
+			elog(ABORT, "RemoveAggregate: aggregate '%s' for all types does not exist",
 				 aggName);
 		}
 	}

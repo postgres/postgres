@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.24 1997/09/26 20:32:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.25 1998/01/05 03:34:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,9 +161,9 @@ CheckFloat4Val(double val)
 	return;
 #else
 	if (fabs(val) > FLOAT4_MAX)
-		elog(WARN, "Bad float4 input format -- overflow");
+		elog(ABORT, "Bad float4 input format -- overflow");
 	if (val != 0.0 && fabs(val) < FLOAT4_MIN)
-		elog(WARN, "Bad float4 input format -- underflow");
+		elog(ABORT, "Bad float4 input format -- underflow");
 	return;
 #endif							/* UNSAFE_FLOATS */
 }
@@ -186,9 +186,9 @@ CheckFloat8Val(double val)
 	return;
 #else
 	if (fabs(val) > FLOAT8_MAX)
-		elog(WARN, "Bad float8 input format -- overflow");
+		elog(ABORT, "Bad float8 input format -- overflow");
 	if (val != 0.0 && fabs(val) < FLOAT8_MIN)
-		elog(WARN, "Bad float8 input format -- underflow");
+		elog(ABORT, "Bad float8 input format -- underflow");
 	return;
 #endif							/* UNSAFE_FLOATS */
 }
@@ -210,7 +210,7 @@ float4in(char *num)
 	errno = 0;
 	val = strtod(num, &endptr);
 	if (*endptr != '\0' || errno == ERANGE)
-		elog(WARN, "Bad float4 input format '%s'", num);
+		elog(ABORT, "Bad float4 input format '%s'", num);
 
 	/*
 	 * if we get here, we have a legal double, still need to check to see
@@ -257,7 +257,7 @@ float8in(char *num)
 	errno = 0;
 	val = strtod(num, &endptr);
 	if (*endptr != '\0' || errno == ERANGE)
-		elog(WARN, "Bad float8 input format '%s'", num);
+		elog(ABORT, "Bad float8 input format '%s'", num);
 
 	CheckFloat8Val(val);
 	*result = val;
@@ -515,7 +515,7 @@ float4div(float32 arg1, float32 arg2)
 		return (float32) NULL;
 
 	if (*arg2 == 0.0)
-		elog(WARN, "float4div: divide by zero error");
+		elog(ABORT, "float4div: divide by zero error");
 
 	val = *arg1 / *arg2;
 
@@ -609,7 +609,7 @@ float8div(float64 arg1, float64 arg2)
 	result = (float64) palloc(sizeof(float64data));
 
 	if (*arg2 == 0.0)
-		elog(WARN, "float8div: divide by zero error");
+		elog(ABORT, "float8div: divide by zero error");
 
 	val = *arg1 / *arg2;
 	CheckFloat8Val(val);
@@ -806,10 +806,10 @@ dtoi4(float64 num)
 	int32		result;
 
 	if (!PointerIsValid(num))
-		elog(WARN, "dtoi4: unable to convert null", NULL);
+		elog(ABORT, "dtoi4: unable to convert null", NULL);
 
 	if ((*num < INT_MIN) || (*num > INT_MAX))
-		elog(WARN, "dtoi4: integer out of range", NULL);
+		elog(ABORT, "dtoi4: integer out of range", NULL);
 
 	result = rint(*num);
 	return (result);
@@ -825,10 +825,10 @@ dtoi2(float64 num)
 	int16		result;
 
 	if (!PointerIsValid(num))
-		elog(WARN, "dtoi2: unable to convert null", NULL);
+		elog(ABORT, "dtoi2: unable to convert null", NULL);
 
 	if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
-		elog(WARN, "dtoi2: integer out of range", NULL);
+		elog(ABORT, "dtoi2: integer out of range", NULL);
 
 	result = rint(*num);
 	return (result);
@@ -874,10 +874,10 @@ ftoi4(float32 num)
 	int32		result;
 
 	if (!PointerIsValid(num))
-		elog(WARN, "ftoi4: unable to convert null", NULL);
+		elog(ABORT, "ftoi4: unable to convert null", NULL);
 
 	if ((*num < INT_MIN) || (*num > INT_MAX))
-		elog(WARN, "ftoi4: integer out of range", NULL);
+		elog(ABORT, "ftoi4: integer out of range", NULL);
 
 	result = rint(*num);
 	return (result);
@@ -893,10 +893,10 @@ ftoi2(float32 num)
 	int16		result;
 
 	if (!PointerIsValid(num))
-		elog(WARN, "ftoi2: unable to convert null", NULL);
+		elog(ABORT, "ftoi2: unable to convert null", NULL);
 
 	if ((*num < SHRT_MIN) || (*num > SHRT_MAX))
-		elog(WARN, "ftoi2: integer out of range", NULL);
+		elog(ABORT, "ftoi2: integer out of range", NULL);
 
 	result = rint(*num);
 	return (result);
@@ -1052,7 +1052,7 @@ dpow(float64 arg1, float64 arg2)
 #else
 	if (!finite(*result))
 #endif
-		elog(WARN, "pow() result is out of range");
+		elog(ABORT, "pow() result is out of range");
 
 	CheckFloat8Val(*result);
 	return (result);
@@ -1083,7 +1083,7 @@ dexp(float64 arg1)
 #else
 	if (!finite(*result))
 #endif
-		elog(WARN, "exp() result is out of range");
+		elog(ABORT, "exp() result is out of range");
 
 	CheckFloat8Val(*result);
 	return (result);
@@ -1107,9 +1107,9 @@ dlog1(float64 arg1)
 
 	tmp = *arg1;
 	if (tmp == 0.0)
-		elog(WARN, "can't take log of zero");
+		elog(ABORT, "can't take log of zero");
 	if (tmp < 0)
-		elog(WARN, "can't take log of a negative number");
+		elog(ABORT, "can't take log of a negative number");
 	*result = (float64data) log(tmp);
 
 	CheckFloat8Val(*result);
@@ -1185,7 +1185,7 @@ float48div(float32 arg1, float64 arg2)
 	result = (float64) palloc(sizeof(float64data));
 
 	if (*arg2 == 0.0)
-		elog(WARN, "float48div: divide by zero");
+		elog(ABORT, "float48div: divide by zero");
 
 	*result = *arg1 / *arg2;
 	CheckFloat8Val(*result);
@@ -1255,7 +1255,7 @@ float84div(float64 arg1, float32 arg2)
 	result = (float64) palloc(sizeof(float64data));
 
 	if (*arg2 == 0.0)
-		elog(WARN, "float48div: divide by zero");
+		elog(ABORT, "float48div: divide by zero");
 
 	*result = *arg1 / *arg2;
 	CheckFloat8Val(*result);

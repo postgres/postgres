@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.35 1997/11/20 23:21:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.36 1998/01/05 03:30:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,15 +115,15 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 	rel = heap_openr(relname);
 	if (rel == NULL)
-		elog(WARN, "COPY command failed.  Class %s "
+		elog(ABORT, "COPY command failed.  Class %s "
 			 "does not exist.", relname);
 
 	result = pg_aclcheck(relname, UserName, required_access);
 	if (result != ACLCHECK_OK)
-		elog(WARN, "%s: %s", relname, aclcheck_error_strings[result]);
+		elog(ABORT, "%s: %s", relname, aclcheck_error_strings[result]);
 	/* Above should not return */
 	else if (!superuser() && !pipe)
-		elog(WARN, "You must have Postgres superuser privilege to do a COPY "
+		elog(ABORT, "You must have Postgres superuser privilege to do a COPY "
 			 "directly to or from a file.  Anyone can COPY to stdout or "
 			 "from stdin.  Psql's \\copy command also works for anyone.");
 	/* Above should not return. */
@@ -132,7 +132,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 		if (from)
 		{						/* copy from file to database */
 			if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-				elog(WARN, "You can't change sequence relation %s", relname);
+				elog(ABORT, "You can't change sequence relation %s", relname);
 			if (pipe)
 			{
 				if (IsUnderPostmaster)
@@ -147,7 +147,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 			{
 				fp = AllocateFile(filename, "r");
 				if (fp == NULL)
-					elog(WARN, "COPY command, running in backend with "
+					elog(ABORT, "COPY command, running in backend with "
 						 "effective uid %d, could not open file '%s' for "
 						 "reading.  Errno = %s (%d).",
 						 geteuid(), filename, strerror(errno), errno);
@@ -175,7 +175,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 				fp = AllocateFile(filename, "w");
 				umask(oumask);
 				if (fp == NULL)
-					elog(WARN, "COPY command, running in backend with "
+					elog(ABORT, "COPY command, running in backend with "
 						 "effective uid %d, could not open file '%s' for "
 						 "writing.  Errno = %s (%d).",
 						 geteuid(), filename, strerror(errno), errno);
@@ -560,7 +560,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					loaded_oid = oidin(string);
 					if (loaded_oid < BootstrapObjectIdData)
-						elog(WARN, "COPY TEXT: Invalid Oid");
+						elog(ABORT, "COPY TEXT: Invalid Oid");
 				}
 			}
 			for (i = 0; i < attr_count && !done; i++)
@@ -594,10 +594,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 						!(rel->rd_att->attrs[i]->attbyval))
 					{
 #ifdef COPY_DEBUG
-						elog(WARN,
+						elog(ABORT,
 						 "copy from: line %d - Bad file format", lineno);
 #else
-						elog(WARN, "copy from: Bad file format");
+						elog(ABORT, "copy from: Bad file format");
 #endif
 					}
 				}
@@ -622,7 +622,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 				{
 					fread(&loaded_oid, sizeof(int32), 1, fp);
 					if (loaded_oid < BootstrapObjectIdData)
-						elog(WARN, "COPY BINARY: Invalid Oid");
+						elog(ABORT, "COPY BINARY: Invalid Oid");
 				}
 				fread(&null_ct, sizeof(int32), 1, fp);
 				if (null_ct > 0)
@@ -661,7 +661,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 								ptr += sizeof(int32);
 								break;
 							default:
-								elog(WARN, "COPY BINARY: impossible size!");
+								elog(ABORT, "COPY BINARY: impossible size!");
 								break;
 						}
 					}
@@ -837,7 +837,7 @@ GetOutputFunction(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
 
-	elog(WARN, "GetOutputFunction: Cache lookup of type %d failed", type);
+	elog(ABORT, "GetOutputFunction: Cache lookup of type %d failed", type);
 	return (InvalidOid);
 }
 
@@ -854,7 +854,7 @@ GetTypeElement(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
 
-	elog(WARN, "GetOutputFunction: Cache lookup of type %d failed", type);
+	elog(ABORT, "GetOutputFunction: Cache lookup of type %d failed", type);
 	return (InvalidOid);
 }
 
@@ -870,7 +870,7 @@ GetInputFunction(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typinput);
 
-	elog(WARN, "GetInputFunction: Cache lookup of type %d failed", type);
+	elog(ABORT, "GetInputFunction: Cache lookup of type %d failed", type);
 	return (InvalidOid);
 }
 
@@ -886,7 +886,7 @@ IsTypeByVal(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typbyval);
 
-	elog(WARN, "GetInputFunction: Cache lookup of type %d failed", type);
+	elog(ABORT, "GetInputFunction: Cache lookup of type %d failed", type);
 
 	return (InvalidOid);
 }
@@ -1125,7 +1125,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 				case '.':
 					c = getc(fp);
 					if (c != '\n')
-						elog(WARN, "CopyReadAttribute - end of record marker corrupted");
+						elog(ABORT, "CopyReadAttribute - end of record marker corrupted");
 					return (NULL);
 					break;
 			}
@@ -1143,7 +1143,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 		if (!done)
 			attribute[i++] = c;
 		if (i == EXT_ATTLEN - 1)
-			elog(WARN, "CopyReadAttribute - attribute length too long");
+			elog(ABORT, "CopyReadAttribute - attribute length too long");
 	}
 	attribute[i] = '\0';
 	return (&attribute[0]);

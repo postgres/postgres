@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.7 1997/09/08 02:30:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.8 1998/01/05 03:34:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ datumGetSize(Datum value, Oid type, bool byVal, Size len)
 		}
 		else
 		{
-			elog(WARN,
+			elog(ABORT,
 				 "datumGetSize: Error: type=%ld, byVaL with len=%d",
 				 (long) type, len);
 		}
@@ -78,7 +78,7 @@ datumGetSize(Datum value, Oid type, bool byVal, Size len)
 			s = (struct varlena *) DatumGetPointer(value);
 			if (!PointerIsValid(s))
 			{
-				elog(WARN,
+				elog(ABORT,
 					 "datumGetSize: Invalid Datum Pointer");
 			}
 			size = (Size) VARSIZE(s);
@@ -132,7 +132,7 @@ datumCopy(Datum value, Oid type, bool byVal, Size len)
 		s = (char *) palloc(realSize);
 		if (s == NULL)
 		{
-			elog(WARN, "datumCopy: out of memory\n");
+			elog(ABORT, "datumCopy: out of memory\n");
 		}
 		memmove(s, DatumGetPointer(value), realSize);
 		res = (Datum) s;

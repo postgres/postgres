@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.60 1997/12/29 05:13:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.61 1998/01/05 03:32:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,7 +478,7 @@ printf("transformCreateStmt- found constraint(s) on column %s\n",column->colname
 printf("transformCreateStmt- found NOT NULL constraint on column %s\n",column->colname);
 #endif
 								if (column->is_not_null)
-									elog(WARN,"CREATE TABLE/NOT NULL already specified"
+									elog(ERROR,"CREATE TABLE/NOT NULL already specified"
 										" for %s.%s", stmt->relname, column->colname);
 								column->is_not_null = TRUE;
 								break;
@@ -488,7 +488,7 @@ printf("transformCreateStmt- found NOT NULL constraint on column %s\n",column->c
 printf("transformCreateStmt- found DEFAULT clause on column %s\n",column->colname);
 #endif
 								if (column->defval != NULL)
-									elog(WARN,"CREATE TABLE/DEFAULT multiple values specified"
+									elog(ERROR,"CREATE TABLE/DEFAULT multiple values specified"
 										" for %s.%s", stmt->relname, column->colname);
 								column->defval = constraint->def;
 								break;
@@ -525,7 +525,7 @@ printf("transformCreateStmt- found CHECK clause on column %s\n",column->colname)
 								break;
 
 							default:
-								elog(WARN,"parser: internal error; unrecognized constraint",NULL);
+								elog(ERROR,"parser: internal error; unrecognized constraint",NULL);
 								break;
 						}
 						clist = lnext(clist);
@@ -569,16 +569,16 @@ printf("transformCreateStmt- found CHECK clause\n");
 
 					case CONSTR_NOTNULL:
 					case CONSTR_DEFAULT:
-						elog(WARN,"parser: internal error; illegal context for constraint",NULL);
+						elog(ERROR,"parser: internal error; illegal context for constraint",NULL);
 						break;
 					default:
-						elog(WARN,"parser: internal error; unrecognized constraint",NULL);
+						elog(ERROR,"parser: internal error; unrecognized constraint",NULL);
 						break;
 				}
 				break;
 
 			default:
-				elog(WARN,"parser: internal error; unrecognized node",NULL);
+				elog(ERROR,"parser: internal error; unrecognized node",NULL);
 		}
 
 		elements = lnext(elements);
@@ -601,7 +601,7 @@ printf("transformCreateStmt- found CHECK clause\n");
 	{
 		constraint = lfirst(dlist);
 		if (nodeTag(constraint) != T_Constraint)
-			elog(WARN,"parser: internal error; unrecognized deferred node",NULL);
+			elog(ERROR,"parser: internal error; unrecognized deferred node",NULL);
 
 #if PARSEDEBUG
 printf("transformCreateStmt- found deferred constraint %s\n",
@@ -610,12 +610,12 @@ printf("transformCreateStmt- found deferred constraint %s\n",
 
 		if (constraint->contype == CONSTR_PRIMARY)
 			if (have_pkey)
-				elog(WARN,"CREATE TABLE/PRIMARY KEY multiple primary keys"
+				elog(ERROR,"CREATE TABLE/PRIMARY KEY multiple primary keys"
 					" for table %s are not legal", stmt->relname);
 			else 
 				have_pkey = TRUE;
 		else if (constraint->contype != CONSTR_UNIQUE)
-			elog(WARN,"parser: internal error; unrecognized deferred constraint",NULL);
+			elog(ERROR,"parser: internal error; unrecognized deferred constraint",NULL);
 
 #if PARSEDEBUG
 printf("transformCreateStmt- found deferred %s clause\n",
@@ -630,7 +630,7 @@ printf("transformCreateStmt- found deferred %s clause\n",
 		else if (constraint->contype == CONSTR_PRIMARY)
 		{
 			if (have_pkey)
-				elog(WARN,"CREATE TABLE/PRIMARY KEY multiple keys for table %s are not legal", stmt->relname);
+				elog(ERROR,"CREATE TABLE/PRIMARY KEY multiple keys for table %s are not legal", stmt->relname);
 
 			have_pkey = TRUE;
 			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
@@ -664,7 +664,7 @@ printf("transformCreateStmt- check column %s for key match\n", column->colname);
 				columns = lnext(columns);
 			}
 			if (column == NULL)
-				elog(WARN,"parser: column '%s' in key does not exist",key->name);
+				elog(ERROR,"parser: column '%s' in key does not exist",key->name);
 
 			if (constraint->contype == CONSTR_PRIMARY)
 			{
@@ -687,7 +687,7 @@ printf("transformCreateStmt- mark column %s as NOT NULL\n", column->colname);
 		}
 
 		if (index->idxname == NULL)
-			elog(WARN,"parser: unable to construct implicit index for table %s"
+			elog(ERROR,"parser: unable to construct implicit index for table %s"
 				"; name too long", stmt->relname);
 		else
 			elog(NOTICE,"CREATE TABLE/%s will create implicit index %s for table %s",

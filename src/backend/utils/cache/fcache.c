@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.7 1997/09/08 21:48:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.8 1998/01/05 03:34:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ GetDynamicFuncArgType(Var *arg, ExprContext *econtext)
 	tup = SearchSysCacheTuple(TYPNAME, PointerGetDatum(relname),
 							  0, 0, 0);
 	if (!tup)
-		elog(WARN, "Lookup failed on type tuple for class %s",
+		elog(ABORT, "Lookup failed on type tuple for class %s",
 			 relname);
 
 	return tup->t_oid;
@@ -100,14 +100,14 @@ init_fcache(Oid foid,
 	retval = (FunctionCachePtr) palloc(sizeof(FunctionCache));
 
 	if (!use_syscache)
-		elog(WARN, "what the ????, init the fcache without the catalogs?");
+		elog(ABORT, "what the ????, init the fcache without the catalogs?");
 
 	procedureTuple = SearchSysCacheTuple(PROOID,
 										 ObjectIdGetDatum(foid),
 										 0, 0, 0);
 
 	if (!HeapTupleIsValid(procedureTuple))
-		elog(WARN,
+		elog(ABORT,
 			 "init_fcache: %s %d",
 			 "Cache lookup failed for procedure", foid);
 
@@ -128,7 +128,7 @@ init_fcache(Oid foid,
 									0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))
-		elog(WARN,
+		elog(ABORT,
 			 "init_fcache: %s %d",
 			 "Cache lookup failed for type",
 			 (procedureStruct)->prorettype);
@@ -311,6 +311,6 @@ setFcache(Node *node, Oid foid, List *argList, ExprContext *econtext)
 	}
 	else
 	{
-		elog(WARN, "init_fcache: node must be Oper or Func!");
+		elog(ABORT, "init_fcache: node must be Oper or Func!");
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.5 1998/01/04 04:31:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.6 1998/01/05 03:32:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,7 +208,7 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
 		if (tle->resdom->resno == grpcl->entry->resdom->resno)
 		{
 			if (contain_agg_clause((Node *) expr))
-				elog(WARN, "parser: aggregates not allowed in GROUP BY clause");
+				elog(ERROR, "parser: aggregates not allowed in GROUP BY clause");
 			return TRUE;
 		}
 	}
@@ -248,7 +248,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * non-group column in target list may fail.)
 	 */
 	if (contain_agg_clause(qry->qual))
-		elog(WARN, "parser: aggregates not allowed in WHERE clause");
+		elog(ERROR, "parser: aggregates not allowed in WHERE clause");
 
 	/*
 	 * the target list can only contain aggregates, group columns and
@@ -259,7 +259,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 		TargetEntry *tle = lfirst(tl);
 
 		if (!tleIsAggOrGroupCol(tle, qry->groupClause))
-			elog(WARN,
+			elog(ERROR,
 				 "parser: illegal use of aggregates or non-group column in target list");
 	}
 
@@ -271,7 +271,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
  * Need to change here when we get HAVING works. Currently
  * qry->havingQual is NULL.		- vadim 04/05/97
 	if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause))
-		elog(WARN,
+		elog(ERROR,
 			 "parser: illegal use of aggregates or non-group column in HAVING clause");
  */
 	return;
@@ -295,7 +295,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 									  0, 0);
 	if (!HeapTupleIsValid(theAggTuple))
 	{
-		elog(WARN, "aggregate %s does not exist", aggname);
+		elog(ERROR, "aggregate %s does not exist", aggname);
 	}
 
 	/*
@@ -346,7 +346,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 				break;
 			}
 			if (first_valid_rte == NULL)
-				elog(WARN, "Can't find column to do aggregate(*) on.");
+				elog(ERROR, "Can't find column to do aggregate(*) on.");
 				
 			attr->relname = first_valid_rte->refname;
 			attr->attrs = lcons(makeString(
@@ -379,7 +379,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 			tp1 = typeidType(basetype);
 			tp2 = typeidType(vartype);
 			elog(NOTICE, "Aggregate type mismatch:");
-			elog(WARN, "%s works on %s, not %s", aggname,
+			elog(ERROR, "%s works on %s, not %s", aggname,
 				 typeTypeName(tp1), typeTypeName(tp2));
 		}
 	}
@@ -411,11 +411,11 @@ agg_error(char *caller, char *aggname, Oid basetypeID)
 
 	if (basetypeID == InvalidOid)
 	{
-		elog(WARN, "%s: aggregate '%s' for all types does not exist", caller, aggname);
+		elog(ERROR, "%s: aggregate '%s' for all types does not exist", caller, aggname);
 	}
 	else
 	{
-		elog(WARN, "%s: aggregate '%s' for '%s' does not exist", caller, aggname,
+		elog(ERROR, "%s: aggregate '%s' for '%s' does not exist", caller, aggname,
 			 typeidTypeName(basetypeID));
 	}
 }

@@ -3,12 +3,12 @@ QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('1234,abcd');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('1235,efgh');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('987,XXXX');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('123456');
-WARN:Bad input data for type oidname
+ERROR:  Bad input data for type oidname
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('123456,abcdefghijklmnopqrsutvwyz');
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('');
-WARN:Bad input data for type oidname
+ERROR:  Bad input data for type oidname
 QUERY: INSERT INTO OIDNAME_TBL(f1) VALUES ('asdfasd');
-WARN:Bad input data for type oidname
+ERROR:  Bad input data for type oidname
 QUERY: SELECT '' AS four, OIDNAME_TBL.*;
 four|f1                              
 ----+--------------------------------

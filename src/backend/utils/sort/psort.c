@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.28 1997/11/24 05:09:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.29 1998/01/05 03:34:56 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -205,7 +205,7 @@ inittapes(Sort * node)
 	PS(node)->Tape[0].tp_prev = tp;
 
 	if (PS(node)->TapeRange <= 1)
-		elog(WARN, "inittapes: Could only allocate %d < 3 tapes\n",
+		elog(ABORT, "inittapes: Could only allocate %d < 3 tapes\n",
 			 PS(node)->TapeRange + 1);
 
 	PS(node)->Level = 1;
@@ -1009,7 +1009,7 @@ gettape()
 
 	file = AllocateFile(tp->tl_name, "w+");
 	if (file == NULL)
-		elog(WARN, "Open: %s in %s line %d, %s", tp->tl_name,
+		elog(ABORT, "Open: %s in %s line %d, %s", tp->tl_name,
 			 __FILE__, __LINE__, strerror(errno));
 
 	tp->tl_fd = fileno(file);
@@ -1034,7 +1034,7 @@ resettape(FILE * file)
 	for (tp = Tapes; tp != NULL && tp->tl_fd != fd; tp = tp->tl_next)
 		;
 	if (tp == NULL)
-		elog(WARN, "resettape: tape not found");
+		elog(ABORT, "resettape: tape not found");
 
 	file = freopen(tp->tl_name, "w+", file);
 	if (file == NULL)

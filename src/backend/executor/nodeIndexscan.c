@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.11 1997/11/20 23:21:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.12 1998/01/05 03:31:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -641,7 +641,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 			op = (Oper *) clause->oper;
 			if (!IsA(op, Oper))
-				elog(WARN, "ExecInitIndexScan: op not an Oper!");
+				elog(ABORT, "ExecInitIndexScan: op not an Oper!");
 
 			opid = op->opid;
 
@@ -757,7 +757,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 * ----------------
 				 */
 				if (scanvar == LEFT_OP)
-					elog(WARN, "ExecInitIndexScan: %s",
+					elog(ABORT, "ExecInitIndexScan: %s",
 						 "both left and right op's are rel-vars");
 
 				/* ----------------
@@ -810,7 +810,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 				 * ----------------
 				 */
 				if (scanvar == LEFT_OP)
-					elog(WARN, "ExecInitIndexScan: %s",
+					elog(ABORT, "ExecInitIndexScan: %s",
 						 "both left and right ops are rel-vars");
 
 				varattno = 1;
@@ -836,7 +836,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			 * ----------------
 			 */
 			if (scanvar == NO_OP)
-				elog(WARN, "ExecInitIndexScan: %s",
+				elog(ABORT, "ExecInitIndexScan: %s",
 					 "neither leftop nor rightop refer to scan relation");
 
 			/* ----------------

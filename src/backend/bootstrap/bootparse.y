@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.10 1997/12/17 18:21:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.11 1998/01/05 03:30:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,10 +203,10 @@ InsertStmt:
 		  LPAREN  tuplelist RPAREN
 				{
 					if (num_tuples_read != numattr)
-						elog(WARN,"incorrect number of values for tuple");
+						elog(ABORT,"incorrect number of values for tuple");
 					if (reldesc == (Relation)NULL)
 					{
-						elog(WARN,"must OPEN RELATION before INSERT\n");
+						elog(ABORT,"must OPEN RELATION before INSERT\n");
 						err_out();
 					}
 					if (DebugMode)

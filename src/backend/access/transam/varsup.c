@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.13 1997/11/02 15:24:45 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.14 1998/01/05 03:30:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ VariableRelationGetNextXid(TransactionId *xidP)
 	if (!BufferIsValid(buf))
 	{
 		SpinRelease(OidGenLockId);
-		elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
+		elog(ABORT, "VariableRelationGetNextXid: ReadBuffer failed");
 	}
 
 	var = (VariableRelationContents) BufferGetBlock(buf);
@@ -112,7 +112,7 @@ VariableRelationPutNextXid(TransactionId xid)
 	if (!BufferIsValid(buf))
 	{
 		SpinRelease(OidGenLockId);
-		elog(WARN, "VariableRelationPutNextXid: ReadBuffer failed");
+		elog(ABORT, "VariableRelationPutNextXid: ReadBuffer failed");
 	}
 
 	var = (VariableRelationContents) BufferGetBlock(buf);
@@ -164,7 +164,7 @@ VariableRelationGetNextOid(Oid *oid_return)
 	if (!BufferIsValid(buf))
 	{
 		SpinRelease(OidGenLockId);
-		elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
+		elog(ABORT, "VariableRelationGetNextXid: ReadBuffer failed");
 	}
 
 	var = (VariableRelationContents) BufferGetBlock(buf);
@@ -224,7 +224,7 @@ VariableRelationPutNextOid(Oid *oidP)
 	if (!PointerIsValid(oidP))
 	{
 		SpinRelease(OidGenLockId);
-		elog(WARN, "VariableRelationPutNextOid: invalid oid pointer");
+		elog(ABORT, "VariableRelationPutNextOid: invalid oid pointer");
 	}
 
 	/* ----------------
@@ -237,7 +237,7 @@ VariableRelationPutNextOid(Oid *oidP)
 	if (!BufferIsValid(buf))
 	{
 		SpinRelease(OidGenLockId);
-		elog(WARN, "VariableRelationPutNextOid: ReadBuffer failed");
+		elog(ABORT, "VariableRelationPutNextOid: ReadBuffer failed");
 	}
 
 	var = (VariableRelationContents) BufferGetBlock(buf);

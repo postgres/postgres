@@ -170,7 +170,7 @@ ExecAgg(Agg *node)
 									   ObjectIdGetDatum(agg->basetype),
 									   0, 0);
 		if (!HeapTupleIsValid(aggTuple))
-			elog(WARN, "ExecAgg: cache lookup failed for aggregate \"%s\"(%s)",
+			elog(ABORT, "ExecAgg: cache lookup failed for aggregate \"%s\"(%s)",
 				 aggname,
 				 typeidTypeName(agg->basetype));
 		aggp = (Form_pg_aggregate) GETSTRUCT(aggTuple);
@@ -204,7 +204,7 @@ ExecAgg(Agg *node)
 			 * ------------------------------------------
 			 */
 			if (isNull2)
-				elog(WARN, "ExecAgg: agginitval2 is null");
+				elog(ABORT, "ExecAgg: agginitval2 is null");
 		}
 
 		if (OidIsValid(xfn1_oid))
@@ -305,7 +305,7 @@ ExecAgg(Agg *node)
 										  &isNull, &isDone);
 					break;
 				default:
-					elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
+					elog(ABORT, "ExecAgg: Bad Agg->Target for Agg %d", i);
 			}
 
 			if (isNull && !aggregates[i]->usenulls)
@@ -355,7 +355,7 @@ ExecAgg(Agg *node)
 
 							break;
 						default:
-							elog(WARN, "ExecAgg: Bad Agg->Target for Agg %d", i);
+							elog(ABORT, "ExecAgg: Bad Agg->Target for Agg %d", i);
 					}
 					if (attlen == -1)
 					{
@@ -443,7 +443,7 @@ ExecAgg(Agg *node)
 				args[0] = (char *) value2[i];
 			}
 			else
-				elog(WARN, "ExecAgg: no valid transition functions??");
+				elog(ABORT, "ExecAgg: no valid transition functions??");
 			value1[i] =
 				(Datum) fmgr_c(aggfns->finalfn, aggfns->finalfn_oid,
 							   aggfns->finalfn_nargs, (FmgrValues *) args,
@@ -462,7 +462,7 @@ ExecAgg(Agg *node)
 			value1[i] = value2[i];
 		}
 		else
-			elog(WARN, "ExecAgg: no valid transition functions??");
+			elog(ABORT, "ExecAgg: no valid transition functions??");
 	}
 
 	/*

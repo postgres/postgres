@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.21 1997/11/20 23:21:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.22 1998/01/05 03:30:39 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -294,11 +294,11 @@ PerformAddAttribute(char *relationName,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (IsSystemRelationName(relationName))
-		elog(WARN, "PerformAddAttribute: class \"%s\" is a system catalog",
+		elog(ABORT, "PerformAddAttribute: class \"%s\" is a system catalog",
 			 relationName);
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(userName, relationName, RELNAME))
-		elog(WARN, "PerformAddAttribute: you do not own class \"%s\"",
+		elog(ABORT, "PerformAddAttribute: you do not own class \"%s\"",
 			 relationName);
 #endif
 
@@ -306,9 +306,9 @@ PerformAddAttribute(char *relationName,
 	 * we can't add a not null attribute
 	 */
 	if (colDef->is_not_null)
-		elog(WARN, "Can't add a NOT NULL attribute to an existing relation");
+		elog(ABORT, "Can't add a NOT NULL attribute to an existing relation");
 	if (colDef->defval)
-		elog(WARN, "ADD ATTRIBUTE: DEFAULT not yet implemented");
+		elog(ABORT, "ADD ATTRIBUTE: DEFAULT not yet implemented");
 
 	/*
 	 * if the first element in the 'schema' list is a "*" then we are
@@ -331,7 +331,7 @@ PerformAddAttribute(char *relationName,
 			relrdesc = heap_openr(relationName);
 			if (!RelationIsValid(relrdesc))
 			{
-				elog(WARN, "PerformAddAttribute: unknown relation: \"%s\"",
+				elog(ABORT, "PerformAddAttribute: unknown relation: \"%s\"",
 					 relationName);
 			}
 			myrelid = relrdesc->rd_id;
@@ -353,7 +353,7 @@ PerformAddAttribute(char *relationName,
 				relrdesc = heap_open(childrelid);
 				if (!RelationIsValid(relrdesc))
 				{
-					elog(WARN, "PerformAddAttribute: can't find catalog entry for inheriting class with oid %d",
+					elog(ABORT, "PerformAddAttribute: can't find catalog entry for inheriting class with oid %d",
 						 childrelid);
 				}
 				PerformAddAttribute((relrdesc->rd_rel->relname).data,
@@ -369,7 +369,7 @@ PerformAddAttribute(char *relationName,
 	if (!PointerIsValid(reltup))
 	{
 		heap_close(relrdesc);
-		elog(WARN, "PerformAddAttribute: relation \"%s\" not found",
+		elog(ABORT, "PerformAddAttribute: relation \"%s\" not found",
 			 relationName);
 	}
 
@@ -378,7 +378,7 @@ PerformAddAttribute(char *relationName,
 	 */
 	if (((Form_pg_class) GETSTRUCT(reltup))->relkind == RELKIND_INDEX)
 	{
-		elog(WARN, "PerformAddAttribute: index relation \"%s\" not changed",
+		elog(ABORT, "PerformAddAttribute: index relation \"%s\" not changed",
 			 relationName);
 		return;
 	}
@@ -389,7 +389,7 @@ PerformAddAttribute(char *relationName,
 	{
 		pfree(reltup);			/* XXX temp */
 		heap_close(relrdesc);	/* XXX temp */
-		elog(WARN, "PerformAddAttribute: relations limited to %d attributes",
+		elog(ABORT, "PerformAddAttribute: relations limited to %d attributes",
 			 MaxHeapAttributeNumber);
 		return;
 	}
@@ -450,7 +450,7 @@ PerformAddAttribute(char *relationName,
 			heap_endscan(attsdesc);		/* XXX temp */
 			heap_close(attrdesc);		/* XXX temp */
 			heap_close(relrdesc);		/* XXX temp */
-			elog(WARN, "PerformAddAttribute: attribute \"%s\" already exists in class \"%s\"",
+			elog(ABORT, "PerformAddAttribute: attribute \"%s\" already exists in class \"%s\"",
 				 key[1].sk_argument,
 				 relationName);
 			return;
@@ -478,7 +478,7 @@ PerformAddAttribute(char *relationName,
 
 		if (!HeapTupleIsValid(typeTuple))
 		{
-			elog(WARN, "Add: type \"%s\" nonexistent", p);
+			elog(ABORT, "Add: type \"%s\" nonexistent", p);
 		}
 		namestrcpy(&(attribute->attname), (char *) key[1].sk_argument);
 		attribute->atttypid = typeTuple->t_oid;

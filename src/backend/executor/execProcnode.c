@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.5 1997/09/08 21:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.6 1998/01/05 03:31:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -368,7 +368,7 @@ ExecCountSlotsNode(Plan *node)
 			return ExecCountSlotsTee((Tee *) node);
 
 		default:
-			elog(WARN, "ExecCountSlotsNode: node not yet supported: %d",
+			elog(ABORT, "ExecCountSlotsNode: node not yet supported: %d",
 				 nodeTag(node));
 			break;
 	}

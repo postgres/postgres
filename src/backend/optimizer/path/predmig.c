@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.6 1997/09/08 21:45:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.7 1998/01/05 03:31:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 	/* sanity check */
 	if ((!streamroot && laststream) ||
 		(streamroot && !laststream))
-		elog(WARN, "called xfunc_predmig with bad inputs");
+		elog(ABORT, "called xfunc_predmig with bad inputs");
 	if (streamroot)
 		Assert(xfunc_check_stream(streamroot));
 
@@ -333,7 +333,7 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 		 orignode = (Stream) get_downstream(orignode))
 		 /* empty body in for loop */ ;
 	if (!orignode)
-		elog(WARN, "Didn't find matching node in original stream");
+		elog(ABORT, "Didn't find matching node in original stream");
 
 
 	/* pull up this node as far as it should go */
@@ -790,14 +790,14 @@ xfunc_check_stream(Stream node)
 	{
 		if ((Stream) get_upstream((Stream) get_downstream(temp)) != temp)
 		{
-			elog(WARN, "bad pointers in stream");
+			elog(ABORT, "bad pointers in stream");
 			return (false);
 		}
 		if (!is_clause(temp))
 		{
 			if ((tmp = xfunc_num_relids(temp)) >= numrelids)
 			{
-				elog(WARN, "Joins got reordered!");
+				elog(ABORT, "Joins got reordered!");
 				return (false);
 			}
 			numrelids = tmp;

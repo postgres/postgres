@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.13 1997/12/22 05:42:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.14 1998/01/05 03:32:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -407,7 +407,7 @@ make_groupPlan(List **tlist,
 
 	if (length(glc) != 0)
 	{
-		elog(WARN, "group attribute disappeared from target list");
+		elog(ABORT, "group attribute disappeared from target list");
 	}
 
 	/*

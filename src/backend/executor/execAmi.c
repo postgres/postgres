@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.12 1997/11/28 04:40:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execAmi.c,v 1.13 1998/01/05 03:31:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,7 +313,7 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 			break;
 
 		default:
-			elog(WARN, "ExecReScan: not a seqscan or indexscan node.");
+			elog(ABORT, "ExecReScan: not a seqscan or indexscan node.");
 			return;
 	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.5 1998/01/04 04:53:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.6 1998/01/05 03:32:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,12 +69,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 						uexpr = transformExpr(pstate, ai->uidx, precedence);	/* must exists */
 						if (exprType(uexpr) != INT4OID)
-							elog(WARN, "array index expressions must be int4's");
+							elog(ERROR, "array index expressions must be int4's");
 						if (ai->lidx != NULL)
 						{
 							lexpr = transformExpr(pstate, ai->lidx, precedence);
 							if (exprType(lexpr) != INT4OID)
-								elog(WARN, "array index expressions must be int4's");
+								elog(ERROR, "array index expressions must be int4's");
 						}
 #if 0
 						pfree(ai->uidx);
@@ -125,7 +125,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				toid = param_type(paramno);
 				if (!OidIsValid(toid))
 				{
-					elog(WARN, "Parameter '$%d' is out of range", paramno);
+					elog(ERROR, "Parameter '$%d' is out of range", paramno);
 				}
 				param = makeNode(Param);
 				param->paramkind = PARAM_NUM;
@@ -178,11 +178,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
-								elog(WARN, "left-hand side of AND is type '%s', not bool",
+								elog(ERROR, "left-hand side of AND is type '%s', not bool",
 									typeidTypeName(exprType(lexpr)));
 
 							if (exprType(rexpr) != BOOLOID)
-								elog(WARN, "right-hand side of AND is type '%s', not bool",
+								elog(ERROR, "right-hand side of AND is type '%s', not bool",
 									typeidTypeName(exprType(rexpr)));
 
 							expr->typeOid = BOOLOID;
@@ -198,10 +198,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
-								elog(WARN, "left-hand side of OR is type '%s', not bool",
+								elog(ERROR, "left-hand side of OR is type '%s', not bool",
 									 typeidTypeName(exprType(lexpr)));
 							if (exprType(rexpr) != BOOLOID)
-								elog(WARN, "right-hand side of OR is type '%s', not bool",
+								elog(ERROR, "right-hand side of OR is type '%s', not bool",
 									 typeidTypeName(exprType(rexpr)));
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
@@ -215,7 +215,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(rexpr) != BOOLOID)
-								elog(WARN, "argument to NOT is type '%s', not bool",
+								elog(ERROR, "argument to NOT is type '%s', not bool",
 									 typeidTypeName(exprType(rexpr)));
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
@@ -251,7 +251,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			}
 		default:
 			/* should not reach here */
-			elog(WARN, "transformExpr: does not know how to transform node %d",
+			elog(ERROR, "transformExpr: does not know how to transform node %d",
 				 nodeTag(expr));
 			break;
 	}
@@ -305,7 +305,7 @@ transformIdent(ParseState *pstate, Node *expr, int precedence)
 	}
 
 	if (result == NULL)
-		elog(WARN, "attribute '%s' not found", ident->name);
+		elog(ERROR, "attribute '%s' not found", ident->name);
 
 	return result;
 }
@@ -350,7 +350,7 @@ exprType(Node *expr)
 			type = UNKNOWNOID;
 			break;
 		default:
-			elog(WARN, "exprType: don't know how to get type for %d node",
+			elog(ERROR, "exprType: don't know how to get type for %d node",
 				 nodeTag(expr));
 			break;
 	}
@@ -426,7 +426,7 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
 			sprintf(const_string, "%ld", expr->val.ival);
 			break;
 		default:
-			elog(WARN,
+			elog(ERROR,
 			"parser_typecast: cannot cast this expression to type '%s'",
 				 typename->name);
 	}
@@ -488,7 +488,7 @@ parser_typecast(Value *expr, TypeName *typename, int typlen)
 			break;
 
 		default:
-			elog(WARN, "unknown type %d", CInteger(lfirst(expr)));
+			elog(ERROR, "unknown type %d", CInteger(lfirst(expr)));
 	}
 #endif
 
@@ -612,7 +612,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int typlen)
 			const_string = (char *) textout((struct varlena *) const_string);
 			break;
 		default:
-			elog(WARN, "unknown type %u", exprType);
+			elog(ERROR, "unknown type %u", exprType);
 	}
 
 	if (!exprType)

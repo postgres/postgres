@@ -5,7 +5,7 @@ QUERY: INSERT INTO OID_TBL(f1) VALUES ('987');
 QUERY: INSERT INTO OID_TBL(f1) VALUES ('-1040');
 QUERY: INSERT INTO OID_TBL(f1) VALUES ('');
 QUERY: INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
-WARN:pg_atoi: error in "asdfasd": can't parse "asdfasd"
+ERROR:  pg_atoi: error in "asdfasd": can't parse "asdfasd"
 QUERY: SELECT '' AS five, OID_TBL.*;
 five|   f1
 ----+-----

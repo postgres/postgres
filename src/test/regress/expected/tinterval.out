@@ -11,10 +11,10 @@ QUERY: INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["Feb 15 1990 12:15:03" "current"]');
 QUERY: INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["bad time specifications" ""]');
-WARN:Bad abstime external representation 'bad time specifications'
+ERROR:  Bad abstime external representation 'bad time specifications'
 QUERY: INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["" "infinity"]');
-WARN:Bad abstime external representation ''
+ERROR:  Bad abstime external representation ''
 QUERY: SELECT '' AS five, TINTERVAL_TBL.*;
 five|f1                                                             
 ----+---------------------------------------------------------------

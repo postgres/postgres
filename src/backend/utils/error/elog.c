@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.20 1997/11/09 04:43:35 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.21 1998/01/05 03:34:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ elog(int lev, const char *fmt,...)
 				i = 0;
 			if (i > 30)
 				i = i % 30;
-			cp = "DEBUG:";
+			cp = "DEBUG:  ";
 			break;
 		case DEBUG:
 			i = ElogDebugIndentLevel;
@@ -170,12 +170,12 @@ elog(int lev, const char *fmt,...)
 	}
 #endif							/* !PG_STANDALONE */
 
-	if (lev == WARN)
+	if (lev == ERROR || lev == ABORT)
 	{
-		extern int	InWarn;
+		extern int	InErrorOrAbort;
 
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
-		if (!InWarn)
+		if (!InErrorOrAbort)
 		{
 			kill(getpid(), 1);	/* abort to traffic cop */
 			pause();

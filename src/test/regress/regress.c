@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.17 1997/11/10 15:43:26 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.18 1998/01/05 03:35:14 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -372,7 +372,7 @@ funny_dup17()
 			SPI_gettype(tupdesc, 1));
 
 	if ((ret = SPI_exec(sql, 0)) < 0)
-		elog(WARN, "funny_dup17 (fired %s) on level %3d: SPI_exec (insert ...) returned %d",
+		elog(ABORT, "funny_dup17 (fired %s) on level %3d: SPI_exec (insert ...) returned %d",
 			 when, *level, ret);
 
 	inserted = SPI_processed;
@@ -384,7 +384,7 @@ funny_dup17()
 			SPI_gettype(tupdesc, 1));
 
 	if ((ret = SPI_exec(sql, 0)) < 0)
-		elog(WARN, "funny_dup17 (fired %s) on level %3d: SPI_exec (select ...) returned %d",
+		elog(ABORT, "funny_dup17 (fired %s) on level %3d: SPI_exec (select ...) returned %d",
 			 when, *level, ret);
 
 	if (SPI_processed > 0)
@@ -444,11 +444,11 @@ ttdummy()
 	int			i;
 
 	if (!CurrentTriggerData)
-		elog(WARN, "ttdummy: triggers are not initialized");
+		elog(ABORT, "ttdummy: triggers are not initialized");
 	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
-		elog(WARN, "ttdummy: can't process STATEMENT events");
+		elog(ABORT, "ttdummy: can't process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
-		elog(WARN, "ttdummy: must be fired before event");
+		elog(ABORT, "ttdummy: must be fired before event");
 	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
 		elog (WARN, "ttdummy: can't process INSERT event");
 	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
@@ -469,7 +469,7 @@ ttdummy()
 	trigger = CurrentTriggerData->tg_trigger;
 
 	if (trigger->tgnargs != 2)
-		elog(WARN, "ttdummy (%s): invalid (!= 2) number of arguments %d", 
+		elog(ABORT, "ttdummy (%s): invalid (!= 2) number of arguments %d", 
 				relname, trigger->tgnargs);
 	
 	args = trigger->tgargs;
@@ -482,28 +482,28 @@ ttdummy()
 	{
 		attnum[i] = SPI_fnumber (tupdesc, args[i]);
 		if ( attnum[i] < 0 )
-			elog(WARN, "ttdummy (%s): there is no attribute %s", relname, args[i]);
+			elog(ABORT, "ttdummy (%s): there is no attribute %s", relname, args[i]);
 		if (SPI_gettypeid (tupdesc, attnum[i]) != INT4OID)
-			elog(WARN, "ttdummy (%s): attributes %s and %s must be of abstime type", 
+			elog(ABORT, "ttdummy (%s): attributes %s and %s must be of abstime type", 
 					relname, args[0], args[1]);
 	}
 	
 	oldon = SPI_getbinval (trigtuple, tupdesc, attnum[0], &isnull);
 	if (isnull)
-		elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[0]);
+		elog(ABORT, "ttdummy (%s): %s must be NOT NULL", relname, args[0]);
 	
 	oldoff = SPI_getbinval (trigtuple, tupdesc, attnum[1], &isnull);
 	if (isnull)
-		elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
+		elog(ABORT, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
 	
 	if (newtuple != NULL)						/* UPDATE */
 	{
 		newon = SPI_getbinval (newtuple, tupdesc, attnum[0], &isnull);
 		if (isnull)
-			elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[0]);
+			elog(ABORT, "ttdummy (%s): %s must be NOT NULL", relname, args[0]);
 		newoff = SPI_getbinval (newtuple, tupdesc, attnum[1], &isnull);
 		if (isnull)
-			elog(WARN, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
+			elog(ABORT, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
 		
 		if ( oldon != newon || oldoff != newoff )
 			elog (WARN, "ttdummy (%s): you can't change %s and/or %s columns (use set_ttdummy)",
@@ -530,7 +530,7 @@ ttdummy()
 	
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
-		elog(WARN, "ttdummy (%s): SPI_connect returned %d", relname, ret);
+		elog(ABORT, "ttdummy (%s): SPI_connect returned %d", relname, ret);
 	
 	/* Fetch tuple values and nulls */
 	cvals = (Datum *) palloc (natts * sizeof (Datum));
@@ -581,11 +581,11 @@ ttdummy()
 		/* Prepare plan for query */
 		pplan = SPI_prepare(sql, natts, ctypes);
 		if (pplan == NULL)
-			elog(WARN, "ttdummy (%s): SPI_prepare returned %d", relname, SPI_result);
+			elog(ABORT, "ttdummy (%s): SPI_prepare returned %d", relname, SPI_result);
 		
 		pplan = SPI_saveplan(pplan);
 		if (pplan == NULL)
-			elog(WARN, "ttdummy (%s): SPI_saveplan returned %d", relname, SPI_result);
+			elog(ABORT, "ttdummy (%s): SPI_saveplan returned %d", relname, SPI_result);
 		
 		splan = pplan;
 	}
@@ -593,7 +593,7 @@ ttdummy()
 	ret = SPI_execp(splan, cvals, cnulls, 0);
 	
 	if (ret < 0)
-		elog(WARN, "ttdummy (%s): SPI_execp returned %d", relname, ret);
+		elog(ABORT, "ttdummy (%s): SPI_execp returned %d", relname, ret);
 	
 	/* Tuple to return to upper Executor ... */
 	if (newtuple)									/* UPDATE */

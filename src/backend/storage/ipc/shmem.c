@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.14 1997/09/18 20:21:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.15 1998/01/05 03:33:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,7 +418,7 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 	{
 
 		SpinRelease(BindingLock);
-		elog(WARN, "ShmemInitPID: BindingTable corrupted");
+		elog(ABORT, "ShmemInitPID: BindingTable corrupted");
 		return (FALSE);
 
 	}
@@ -469,7 +469,7 @@ ShmemPIDDestroy(int pid)
 	if (!result)
 	{
 
-		elog(WARN, "ShmemPIDDestroy: PID table corrupted");
+		elog(ABORT, "ShmemPIDDestroy: PID table corrupted");
 		return (INVALID_OFFSET);
 
 	}
@@ -555,7 +555,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 
 		SpinRelease(BindingLock);
 
-		elog(WARN, "ShmemInitStruct: Binding Table corrupted");
+		elog(ABORT, "ShmemInitStruct: Binding Table corrupted");
 		return (NULL);
 
 	}
@@ -640,6 +640,6 @@ TransactionIdIsInProgress(TransactionId xid)
 	}
 
 	SpinRelease(BindingLock);
-	elog(WARN, "TransactionIdIsInProgress: BindingTable corrupted");
+	elog(ABORT, "TransactionIdIsInProgress: BindingTable corrupted");
 	return (false);
 }

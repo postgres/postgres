@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.8 1997/12/23 03:27:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.9 1998/01/05 03:31:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ prune_rel_paths(List *rel_list)
 			rel->size = compute_joinrel_size(cheapest);
 		}
 		else
-			elog(WARN, "non JoinPath called");
+			elog(ABORT, "non JoinPath called");
 	}
 }
 

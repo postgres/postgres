@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.23 1997/11/21 18:03:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.24 1998/01/05 03:29:29 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -295,7 +295,7 @@ heapgettup(Relation relation,
 
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
-			elog(WARN, "heapgettup: failed ReadBuffer");
+			elog(ABORT, "heapgettup: failed ReadBuffer");
 #endif
 
 		dp = (Page) BufferGetPage(*b);
@@ -334,7 +334,7 @@ heapgettup(Relation relation,
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
 		{
-			elog(WARN, "heapgettup: failed ReadBuffer");
+			elog(ABORT, "heapgettup: failed ReadBuffer");
 		}
 #endif
 
@@ -381,7 +381,7 @@ heapgettup(Relation relation,
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
 		{
-			elog(WARN, "heapgettup: failed ReadBuffer");
+			elog(ABORT, "heapgettup: failed ReadBuffer");
 		}
 #endif
 
@@ -477,7 +477,7 @@ heapgettup(Relation relation,
 #ifndef NO_BUFFERISVALID
 		if (!BufferIsValid(*b))
 		{
-			elog(WARN, "heapgettup: failed ReadBuffer");
+			elog(ABORT, "heapgettup: failed ReadBuffer");
 		}
 #endif
 		dp = (Page) BufferGetPage(*b);
@@ -545,7 +545,7 @@ heap_open(Oid relationId)
 
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 	{
-		elog(WARN, "%s is an index relation", r->rd_rel->relname.data);
+		elog(ABORT, "%s is an index relation", r->rd_rel->relname.data);
 	}
 
 	return (r);
@@ -574,7 +574,7 @@ heap_openr(char *relationName)
 
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 	{
-		elog(WARN, "%s is an index relation", r->rd_rel->relname.data);
+		elog(ABORT, "%s is an index relation", r->rd_rel->relname.data);
 	}
 
 	return (r);
@@ -626,7 +626,7 @@ heap_beginscan(Relation relation,
 	 * ----------------
 	 */
 	if (RelationIsValid(relation) == false)
-		elog(WARN, "heap_beginscan: !RelationIsValid(relation)");
+		elog(ABORT, "heap_beginscan: !RelationIsValid(relation)");
 
 	/* ----------------
 	 * set relation level read lock
@@ -808,7 +808,7 @@ heap_getnext(HeapScanDesc scandesc,
 	 * ----------------
 	 */
 	if (sdesc == NULL)
-		elog(WARN, "heap_getnext: NULL relscan");
+		elog(ABORT, "heap_getnext: NULL relscan");
 
 	/* ----------------
 	 *	initialize return buffer to InvalidBuffer
@@ -1051,7 +1051,7 @@ heap_fetch(Relation relation,
 #ifndef NO_BUFFERISVALID
 	if (!BufferIsValid(buffer))
 	{
-		elog(WARN, "heap_fetch: %s relation: ReadBuffer(%lx) failed",
+		elog(ABORT, "heap_fetch: %s relation: ReadBuffer(%lx) failed",
 			 &relation->rd_rel->relname, (long) tid);
 	}
 #endif
@@ -1216,7 +1216,7 @@ heap_delete(Relation relation, ItemPointer tid)
 #ifndef NO_BUFFERISVALID
 	if (!BufferIsValid(b))
 	{							/* XXX L_SH better ??? */
-		elog(WARN, "heap_delete: failed ReadBuffer");
+		elog(ABORT, "heap_delete: failed ReadBuffer");
 	}
 #endif							/* NO_BUFFERISVALID */
 
@@ -1249,7 +1249,7 @@ heap_delete(Relation relation, ItemPointer tid)
 		/* XXX call something else */
 		ReleaseBuffer(b);
 
-		elog(WARN, "heap_delete: (am)invalid tid");
+		elog(ABORT, "heap_delete: (am)invalid tid");
 	}
 
 	/* ----------------
@@ -1329,7 +1329,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	if (!BufferIsValid(buffer))
 	{
 		/* XXX L_SH better ??? */
-		elog(WARN, "amreplace: failed ReadBuffer");
+		elog(ABORT, "amreplace: failed ReadBuffer");
 	}
 #endif							/* NO_BUFFERISVALID */
 
@@ -1385,7 +1385,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple tup)
 	if (!tuple)
 	{
 		ReleaseBuffer(buffer);
-		elog(WARN, "heap_replace: (am)invalid otid");
+		elog(ABORT, "heap_replace: (am)invalid otid");
 	}
 
 	/* XXX order problems if not atomic assignment ??? */

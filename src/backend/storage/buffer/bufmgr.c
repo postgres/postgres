@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.29 1997/11/21 18:11:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.30 1998/01/05 03:32:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,7 +444,7 @@ BufferAlloc(Relation reln,
 
 		/*
 		 * But it can return buf == NULL if we are in aborting transaction
-		 * now and so elog(WARN,...) in GetFreeBuffer will not abort
+		 * now and so elog(ABORT,...) in GetFreeBuffer will not abort
 		 * again.
 		 */
 		if (buf == NULL)
@@ -834,7 +834,7 @@ FlushBuffer(Buffer buffer, bool release)
 
 	if (status == SM_FAIL)
 	{
-		elog(WARN, "FlushBuffer: cannot flush block %u of the relation %s",
+		elog(ABORT, "FlushBuffer: cannot flush block %u of the relation %s",
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
 		return (STATUS_ERROR);
 	}
@@ -1009,7 +1009,7 @@ BufferSync()
 					UnpinBuffer(bufHdr);
 					if (bufHdr->flags & BM_IO_ERROR)
 					{
-						elog(WARN, "BufferSync: write error %u for %s",
+						elog(ABORT, "BufferSync: write error %u for %s",
 							 bufHdr->tag.blockNum, bufHdr->sb_relname);
 					}
 					if (reln != (Relation) NULL)
@@ -1054,7 +1054,7 @@ BufferSync()
 				if (status == SM_FAIL)
 				{
 					bufHdr->flags |= BM_IO_ERROR;
-					elog(WARN, "BufferSync: cannot write %u for %s",
+					elog(ABORT, "BufferSync: cannot write %u for %s",
 						 bufHdr->tag.blockNum, bufHdr->sb_relname);
 				}
 				BufferFlushCount++;

@@ -64,7 +64,7 @@ CreateProceduralLanguage(CreatePLangStmt * stmt)
 	 */
 	if (!superuser())
 	{
-		elog(WARN, "Only users with Postgres superuser privilege are "
+		elog(ABORT, "Only users with Postgres superuser privilege are "
 			 "permitted to create procedural languages");
 	}
 
@@ -80,7 +80,7 @@ CreateProceduralLanguage(CreatePLangStmt * stmt)
 								  0, 0, 0);
 	if (HeapTupleIsValid(langTup))
 	{
-		elog(WARN, "Language %s already exists", languageName);
+		elog(ABORT, "Language %s already exists", languageName);
 	}
 
 	/* ----------------
@@ -96,12 +96,12 @@ CreateProceduralLanguage(CreatePLangStmt * stmt)
 								  0);
 	if (!HeapTupleIsValid(procTup))
 	{
-		elog(WARN, "PL handler function %s() doesn't exist",
+		elog(ABORT, "PL handler function %s() doesn't exist",
 			 stmt->plhandler);
 	}
 	if (((Form_pg_proc) GETSTRUCT(procTup))->prorettype != InvalidOid)
 	{
-		elog(WARN, "PL handler function %s() isn't of return type Opaque",
+		elog(ABORT, "PL handler function %s() isn't of return type Opaque",
 			 stmt->plhandler);
 	}
 
@@ -155,7 +155,7 @@ DropProceduralLanguage(DropPLangStmt * stmt)
 	 */
 	if (!superuser())
 	{
-		elog(WARN, "Only users with Postgres superuser privilege are "
+		elog(ABORT, "Only users with Postgres superuser privilege are "
 			 "permitted to drop procedural languages");
 	}
 
@@ -171,12 +171,12 @@ DropProceduralLanguage(DropPLangStmt * stmt)
 								  0, 0, 0);
 	if (!HeapTupleIsValid(langTup))
 	{
-		elog(WARN, "Language %s doesn't exist", languageName);
+		elog(ABORT, "Language %s doesn't exist", languageName);
 	}
 
 	if (!((Form_pg_language) GETSTRUCT(langTup))->lanispl)
 	{
-		elog(WARN, "Language %s isn't a created procedural language",
+		elog(ABORT, "Language %s isn't a created procedural language",
 			 languageName);
 	}
 
@@ -195,7 +195,7 @@ DropProceduralLanguage(DropPLangStmt * stmt)
 
 	if (!HeapTupleIsValid(tup))
 	{
-		elog(WARN, "Language with name '%s' not found", languageName);
+		elog(ABORT, "Language with name '%s' not found", languageName);
 	}
 
 	heap_delete(rdesc, &(tup->t_ctid));
