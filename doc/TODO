@@ -48,7 +48,7 @@ MISC
   promotion occurs
 * Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
-* Permission to UPDATE table allows DELETE also
+* Permission to DELETE table allows UPDATE also
 
 ENHANCEMENTS
 ------------
