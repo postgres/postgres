@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.6 1996/07/25 06:21:11 julian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.7 1996/07/27 02:55:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,11 @@
 #include "libpq/pqcomm.h"
 #include "libpq-fe.h"
 #include <signal.h>
+#include <sys/ioctl.h>
+
+#ifdef TIOCGWINSZ
+struct winsize screen_size;
+#endif
 
 /* the tuples array in a PGresGroup  has to grow to accommodate the tuples */
 /* returned.  Each time, we grow by this much: */
@@ -644,10 +649,7 @@ fill (int length, int max, char filler, FILE *fp)
 
 /*
  * PQdisplayTuples()
- *
- * a better version of PQprintTuples()
- * that can optionally do padding of fields with spaces and use different
- * field separators 
+ * kept for backward compatibility
  */
 void
 PQdisplayTuples(PGresult *res,
@@ -660,13 +662,10 @@ PQdisplayTuples(PGresult *res,
 {
 #define DEFAULT_FIELD_SEP " "
 
-    char *pager;
     int i, j;
     int nFields;
     int nTuples;
     int fLength[MAX_FIELDS];
-    int usePipe = 0;
-    int total_line_length = 0;
 
     if (fieldSep == NULL)
 	fieldSep == DEFAULT_FIELD_SEP;
@@ -691,29 +690,8 @@ PQdisplayTuples(PGresult *res,
 		    fLength[j] = PQgetlength(res,i,j);
 	    }
 	}
-        for (j=0  ; j < nFields; j++)
-            total_line_length += fLength[j];
-        total_line_length += nFields * strlen(fieldSep) + 2;    /* delimiters */
     }
-
-    /* Use the pager only if the number of tuples is big enough */
-    pager=getenv("PAGER");
-    if ((nTuples > 20)
-    &&  (fp == stdout)
-    &&  (pager != NULL)
-    &&  isatty(fileno(stdout))
-    &&  (nTuples * (total_line_length / 80 + 1) >= 24
-           - (printHeader != 0) * (total_line_length / 80 + 1) * 2
-           - 1 /* newline at end of tuple list */ - (quiet == 0))) {
-	fp = popen(pager, "w");
-	if (fp) {
-	    usePipe = 1;
-	    signal(SIGPIPE, SIG_IGN);
-	} else {
-	    fp = stdout;
-	}
-    }
-
+    
     if (printHeader) {
 	/* first, print out the attribute names */
 	for (i=0; i < nFields; i++) {
@@ -749,10 +727,6 @@ PQdisplayTuples(PGresult *res,
 		 (PQntuples(res) == 1) ? "" : "s");
   
     fflush(fp);
-    if (usePipe) {
-	pclose(fp);
-	signal(SIGPIPE, SIG_DFL);
-    }
 }
 
 
@@ -760,11 +734,8 @@ PQdisplayTuples(PGresult *res,
 /*
  * PQprintTuples()
  *
- * This is the routine that prints out the tuples that
- * are returned from the backend.
- * Right now all columns are of fixed length,
- * this should be changed to allow wrap around for
- * tuples values that are wider.
+ * kept for backward compatibility
+ *
  */
 void
 PQprintTuples(PGresult *res,
@@ -833,6 +804,8 @@ PQprintTuples(PGresult *res,
 }
 
 /*
+ * PQprint()
+ *
  * new PQprintTuples routine (proff@suburbia.net)
  * PQprintOpt is a typedef (structure) that containes
  * various flags and options. consult libpq-fe.h for
@@ -860,6 +833,10 @@ PQprint(FILE *fout,
 	char *border=NULL;
         int numFieldName;
 	int fs_len=strlen(po->fieldSep);
+ 	int total_line_length = 0;
+ 	int usePipe = 0;
+ 	char *pagerenv;
+
     	nTups = PQntuples(res);
 	if (!(fieldNames=(char **)calloc(nFields, sizeof (char *))))
 	{
@@ -876,7 +853,8 @@ PQprint(FILE *fout,
 		perror("calloc");
 		exit(1);
 	}
-	for (numFieldName=0; po->fieldName && po->fieldName[numFieldName]; numFieldName++);
+	for (numFieldName=0; po->fieldName && po->fieldName[numFieldName]; numFieldName++)
+		;
 	for (j=0; j < nFields; j++)
 	{
 		int len;
@@ -891,7 +869,48 @@ PQprint(FILE *fout,
 		len+=fs_len;
 		if (len>fieldMaxLen)
 			fieldMaxLen=len;
+		total_line_length += len;
 	}
+ 
+	total_line_length += nFields * strlen(po->fieldSep) + 1;
+ 
+	if (fout == NULL) 
+		fout = stdout;
+	if (po->pager && fout == stdout && isatty(fileno(stdout))) {
+		/* try to pipe to the pager program if possible */
+#ifdef TIOCGWINSZ
+		if (ioctl(fileno(stdout),TIOCGWINSZ,&screen_size) == -1)
+		{
+#endif
+			screen_size.ws_row = 24;
+			screen_size.ws_col = 80;
+#ifdef TIOCGWINSZ
+		}
+#endif
+		pagerenv=getenv("PAGER");
+		if (pagerenv != NULL &&
+		   !po->html3 &&
+		   ((po->expanded &&
+			nTups * (nFields+1) >= screen_size.ws_row) ||
+		    (!po->expanded &&
+			nTups * (total_line_length / screen_size.ws_col + 1) *
+				( 1 + (po->standard != 0)) >=
+			screen_size.ws_row -
+			(po->header != 0) *
+				(total_line_length / screen_size.ws_col + 1) * 2
+ 			/*- 1 */ /* newline at end of tuple list */
+			/*- (quiet == 0)*/
+			)))
+		{
+			fout = popen(pagerenv, "w");
+			if (fout) {
+				usePipe = 1;
+				signal(SIGPIPE, SIG_IGN);
+			} else
+				fout = stdout;
+		}
+	}
+ 
 	if (!po->expanded && (po->align || po->html3))
 	{
 		if (!(fields=(char **)calloc(nFields*(nTups+1), sizeof(char *))))
@@ -1114,6 +1133,10 @@ efield:
 	free(fieldMax);
 	free(fieldNotNum);
 	free(fieldNames);
+	if (usePipe) {
+		pclose(fout);
+		signal(SIGPIPE, SIG_DFL);
+	}
 	if (border)
 		free(border);
 	if (po->html3 && !po->expanded)

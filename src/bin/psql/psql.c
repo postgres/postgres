@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.8 1996/07/27 02:40:45 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.9 1996/07/27 02:55:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ usage(char* progname)
   fprintf(stderr,"\t -S                      single line mode (i.e. query terminated by newline)\n");
   fprintf(stderr,"\t -t                      turn off printing of attribute headers\n");
   fprintf(stderr,"\t -T html                 set html3.0 table command options (cf. -H)\n");
-  fprintf(stderr,"\t -x                      turn on expanded output (field names on left)");
+  fprintf(stderr,"\t -x                      turn on expanded output (field names on left)\n");
   exit(1);
 }
 
@@ -1131,6 +1131,7 @@ main(int argc, char** argv)
   settings.opt.header = 1;
   settings.queryFout = stdout;
   settings.opt.fieldSep=dupstr(DEFAULT_FIELD_SEP);
+  settings.opt.pager = 1;
   if (!isatty(0) || !isatty(1))
   	settings.quiet = settings.notty = 1;
   else

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.3 1996/07/23 03:35:14 scrappy Exp $
+ * $Id: libpq-fe.h,v 1.4 1996/07/27 02:55:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,7 @@ struct _PQprintOpt {
     bool standard;       /* old brain dead format */
     bool html3;          /* output html tables */
     bool expanded;       /* expand tables */
+	bool pager;			 /* use pager for output if needed */
     char *fieldSep;      /* field separator */
     char *tableOpt;	 /* insert to HTML <table ...> */
     char *caption;       /* HTML <caption> */
