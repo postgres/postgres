@@ -1289,6 +1289,7 @@ AC_OUTPUT(
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile
+	interfaces/ecpg/preproc/Makefile
 	interfaces/libpq++/Makefile
 	interfaces/libpgeasy/Makefile
 	interfaces/libpgtcl/Makefile

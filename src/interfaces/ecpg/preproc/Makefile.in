@@ -14,6 +14,13 @@ OBJ=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o output.o\
 
 all:: ecpg
 
+ifneq (@SNPRINTF@,)
+OBJS+=$(SRCDIR)/backend/port/snprintf.o
+
+$(SRCDIR)/backend/port/snprintf.o:
+	$(MAKE) -C $(SRCDIR)/backend/port snprintf.o
+endif
+
 # Rule that really do something.
 ecpg: $(OBJ)
 	$(CC) -o ecpg $(OBJ) $(LEXLIB) $(LDFLAGS)
