@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.95 2002/08/04 19:48:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.96 2002/08/18 18:46:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 					List *tlist, int clause);
 static List *addTargetToSortList(TargetEntry *tle, List *sortlist,
 					List *targetlist, List *opname);
-static bool exprIsInSortList(Node *expr, List *sortList, List *targetList);
+static bool targetIsInSortList(TargetEntry *tle, List *sortList);
 
 
 /*
@@ -1138,7 +1138,7 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 								  targetlist, GROUP_CLAUSE);
 
 		/* avoid making duplicate grouplist entries */
-		if (!exprIsInSortList(tle->expr, glist, targetlist))
+		if (!targetIsInSortList(tle, glist))
 		{
 			GroupClause *grpcl = makeNode(GroupClause);
 
@@ -1333,7 +1333,7 @@ addTargetToSortList(TargetEntry *tle, List *sortlist, List *targetlist,
 					List *opname)
 {
 	/* avoid making duplicate sortlist entries */
-	if (!exprIsInSortList(tle->expr, sortlist, targetlist))
+	if (!targetIsInSortList(tle, sortlist))
 	{
 		SortClause *sortcl = makeNode(SortClause);
 
@@ -1382,23 +1382,28 @@ assignSortGroupRef(TargetEntry *tle, List *tlist)
 }
 
 /*
- * exprIsInSortList
- *		Is the given expression already in the sortlist?
- *		Note we will say 'yes' if it is equal() to any sortlist item,
- *		even though that might be a different targetlist member.
+ * targetIsInSortList
+ *		Is the given target item already in the sortlist?
  *
- * Works for both SortClause and GroupClause lists.
+ * Works for both SortClause and GroupClause lists.  Note that the main
+ * reason we need this routine (and not just a quick test for nonzeroness
+ * of ressortgroupref) is that a TLE might be in only one of the lists.
  */
 static bool
-exprIsInSortList(Node *expr, List *sortList, List *targetList)
+targetIsInSortList(TargetEntry *tle, List *sortList)
 {
+	Index		ref = tle->resdom->ressortgroupref;
 	List	   *i;
+
+	/* no need to scan list if tle has no marker */
+	if (ref == 0)
+		return false;
 
 	foreach(i, sortList)
 	{
 		SortClause *scl = (SortClause *) lfirst(i);
 
-		if (equal(expr, get_sortgroupclause_expr(scl, targetList)))
+		if (scl->tleSortGroupRef == ref)
 			return true;
 	}
 	return false;
