@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.115 2000/12/16 13:03:25 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.116 2000/12/29 20:39:06 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -305,15 +305,17 @@ $(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_
 # Remake config.h from config.h.in if the latter changed.
 # config.status will not change the timestamp on config.h if it
 # doesn't change, so as to avoid recompiling the entire tree
-# unnecessarily. Therefore config.status will update a timestamp file
-# everytime it runs so that we don't trigger this rule everytime.
+# unnecessarily. Therefore we make config.status update a timestamp file
+# stamp-h everytime it runs, so that we don't trigger this rule everytime.
+# (We do trigger the null rule for stamp-h to config.h everytime; so it's
+# important for that rule to be null!)
 #
 # Of course you need to turn on dependency tracking to get any
-# dependencies on config.h
+# dependencies on config.h.
 $(top_builddir)/src/include/config.h: $(top_builddir)/src/include/stamp-h
+
 $(top_builddir)/src/include/stamp-h: $(top_srcdir)/src/include/config.h.in $(top_builddir)/config.status
 	cd $(top_builddir) && CONFIG_FILES= CONFIG_HEADERS=src/include/config.h ./config.status
-	echo >$@
 
 # When configure changes, rerun configure with the same options as
 # last time. To change configure, you need to run autoconf manually.

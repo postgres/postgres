@@ -1128,13 +1128,14 @@ if test x"$abs_top_srcdir" != x"$abs_top_builddir"; then
   AC_MSG_RESULT(done)
 fi
 
-# (see Makefile.global)
-echo >src/include/stamp-h
-
 AC_OUTPUT(
 [
   GNUmakefile
   src/GNUmakefile
   src/Makefile.global
   src/backend/port/Makefile
+],
+[
+# Update timestamp for config.h (see Makefile.global)
+echo >src/include/stamp-h
 ])
