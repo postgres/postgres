@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Feb  9 10:15:00 EST 2001
+Last updated:		Fri Feb  9 10:20:44 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -202,6 +202,7 @@ CLIENTS
 * allow psql \d to show temporary table structure
 * add XML interface capability
 * -Allow dumping of users/groups separately
+* Add a global RESET command for use with connection pooling
 
 REFERENTIAL INTEGRITY
 
