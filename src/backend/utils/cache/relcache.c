@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.77 1999/11/16 04:13:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.78 1999/11/17 23:51:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ typedef struct relnamecacheent
 do { \
 	RelIdCacheEnt *idhentry; RelNameCacheEnt *namehentry; \
 	char *relname; Oid reloid; bool found; \
-	relname = RelationGetRelationName(RELATION); \
+	relname = RelationGetPhysicalRelationName(RELATION); \
 	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
 											   relname, \
 											   HASH_ENTER, \
@@ -186,7 +186,7 @@ do { \
 do { \
 	RelNameCacheEnt *namehentry; RelIdCacheEnt *idhentry; \
 	char *relname; Oid reloid; bool found; \
-	relname = RelationGetRelationName(RELATION); \
+	relname = RelationGetPhysicalRelationName(RELATION); \
 	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
 											   relname, \
 											   HASH_REMOVE, \
@@ -1840,8 +1840,7 @@ RelCheckFetch(Relation relation)
 
 	if (found < ncheck)
 		elog(ERROR, "RelCheckFetch: %d record not found for rel %s",
-			 ncheck - found,
-			 RelationGetRelationName(relation));
+			 ncheck - found, RelationGetRelationName(relation));
 
 	index_endscan(sd);
 	pfree(sd);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.28 1999/11/07 23:08:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.29 1999/11/17 23:51:21 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -561,7 +561,7 @@ RegisterInvalid(bool send)
 #ifdef	INVALIDDEBUG
 #define RelationInvalidateHeapTuple_DEBUG1 \
 elog(DEBUG, "RelationInvalidateHeapTuple(%s, [%d,%d])", \
-	 RelationGetRelationName(relation), \
+	 RelationGetPhysicalRelationName(relation), \
 	 ItemPointerGetBlockNumber(&tuple->t_ctid), \
 	 ItemPointerGetOffsetNumber(&tuple->t_ctid))
 #else

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.35 1999/09/18 19:07:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.36 1999/11/17 23:51:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ RelationInitLockInfo(Relation relation)
 	Assert(RelationIsValid(relation));
 	Assert(OidIsValid(RelationGetRelid(relation)));
 
-	relname = (char *) RelationGetRelationName(relation);
+	relname = (char *) RelationGetPhysicalRelationName(relation);
 
 	relation->rd_lockInfo.lockRelId.relId = RelationGetRelid(relation);
 
