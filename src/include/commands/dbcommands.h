@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.5 1997/11/07 06:38:09 thomas Exp $
+ * $Id: dbcommands.h,v 1.1 1997/11/24 05:32:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.1 1997/11/24 05:20:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.2 1997/11/24 05:32:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@
 #include "catalog/pg_user.h"
 #include "catalog/pg_database.h"
 #include "utils/syscache.h"
-#include "parser/dbcommands.h"
+#include "commands/dbcommands.h"
 #include "tcop/tcopprot.h"
 #include "storage/bufmgr.h"
 #include "storage/lmgr.h"

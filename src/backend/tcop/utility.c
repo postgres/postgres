@@ -9,12 +9,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.30 1997/11/21 19:02:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.31 1997/11/24 05:32:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "parser/dbcommands.h"
 #include "access/xact.h"
 #include "access/heapam.h"
 #include "catalog/catalog.h"
@@ -25,6 +24,7 @@
 #include "commands/command.h"
 #include "commands/copy.h"
 #include "commands/creatinh.h"
+#include "commands/dbcommands.h"
 #include "commands/sequence.h"
 #include "commands/defrem.h"
 #include "commands/rename.h"
