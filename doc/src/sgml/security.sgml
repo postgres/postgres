@@ -523,6 +523,90 @@ jolly=>
     </para>
    </sect2>
   </sect1>
+
+  <sect1>
+   <title>Secure TCP/IP Connection</title>
+
+   <para>
+    <note>
+     <title>Author</title>
+     <para>
+      From e-mail by
+      <ulink url="selkovjr@mcs.anl.gov">Gene Selkov, Jr.</ulink>
+      written on 1999-09-08 in response to a
+      question from Eric Marsden.
+     </para>
+    </note>
+   </para>
+
+   <para>
+    One can use <productname>ssh</productname> to encrypt the network
+    connection between clients and a
+    <productname>Postgres</productname> server. Done properly, this
+    should lead to an adequately secure network connection.
+   </para>
+
+   <para>
+    The documentation for <productname>ssh</productname> provides most 
+    of the information to get started.
+    Please refer to
+    <ulink url="http://www.heimhardt.de/htdocs/ssh.html">http://www.heimhardt.de/htdocs/ssh.html</ulink>
+    for better insight.
+   </para>
+
+   <para>
+    A step-by-step explanation can be done in just two steps.
+   </para>
+
+   <procedure>
+    <title>Running a secure tunnel via ssh</title>
+
+    <para>
+     A step-by-step explanation can be done in just two steps.
+    </para>
+
+    <step performance="required" id="establish-tunnel">
+     <para>
+      Establish a tunnel to the backend machine, like this:
+
+      <programlisting>
+ssh -L 3333:wit.mcs.anl.gov:5432 postgres@wit.mcs.anl.gov
+      </programlisting>
+
+      The first number in the -L argument, 3333, is the port number of
+      your end of the tunnel. The second number, 5432, is the remote
+      end of the tunnel -- the port number your backend is using. The
+      name or the address in between the port numbers belongs to the
+      server machine, as does the last argument to ssh that also includes
+      the optional user name. Without the user name, ssh will try the
+      name you are currently logged on as on the client machine. You can
+      use any user name the server machine will accept, not necessarily
+      those related to postgres.
+     </para>
+    </step>
+
+    <step performance="required">
+     <para>
+      Now that you have a running ssh session, you can connect a
+      postgres client to your local host at the port number you
+      specified in the previous step. If it's
+      <application>psql</application>, you will need another shell
+      because the shell session you used in
+      <xref linkend="establish-tunnel"> is now occupied with
+      <application>ssh</application>.
+
+      <programlisting>
+psql -h localhost -p 3333 -d mpw
+      </programlisting>
+
+      Note that you have to specify the <option>-h</option> argument
+      to cause your client to use the TCP socket instead of the Unix
+      socket. You can omit the port argument if you chose 5432 as your
+      end of the tunnel.
+     </para>
+    </step>
+   </procedure>
+  </sect1>
 </chapter>
 
 <!-- Keep this comment at the end of the file
