@@ -814,7 +814,7 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.1 2000/03/07 15:10:56 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.2 2000/03/17 23:26:31 tgl Exp $
  */
 
 PGconn *ECPG_internal_get_connection(char *name);
@@ -826,7 +826,7 @@ extern struct descriptor
    struct descriptor *next;
 } *all_descriptors;
 
-// like ECPGexecute
+/* like ECPGexecute */
 static bool execute_descriptor(int lineno,const char *query
 							,struct connection *con,PGresult **resultptr)
 {

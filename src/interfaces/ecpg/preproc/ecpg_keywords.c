@@ -61,7 +61,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"section", SQL_SECTION},
 	{"short", SQL_SHORT},
 	{"signed", SQL_SIGNED},
-	{"sql",SQL_SQL}, // strange thing, used for into sql descriptor MYDESC;
+	{"sql",SQL_SQL}, /* strange thing, used for into sql descriptor MYDESC; */
 	{"sqlerror", SQL_SQLERROR},
 	{"sqlprint", SQL_SQLPRINT},
 	{"sqlwarning", SQL_SQLWARNING},

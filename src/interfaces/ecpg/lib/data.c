@@ -185,7 +185,7 @@ get_data(PGresult *results, int act_tuple, int act_field, int lineno,
 				}
 				else if (pval[0] == '\0' && PQgetisnull(results, act_tuple, act_field))
 				{
-					// NULL is valid
+					/* NULL is valid */
 					break;
 				}
 			}

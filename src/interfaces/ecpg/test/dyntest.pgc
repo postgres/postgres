@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.5 2000/03/03 13:24:06 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.6 2000/03/17 23:26:36 tgl Exp $
  */
 
 #include <stdio.h>
@@ -139,7 +139,7 @@ int main(int argc,char **argv)
      			break;
      	   	case SQL3_NUMERIC:
      	   	case SQL3_DECIMAL:
-     	        if (SCALE==0) // we might even print leading zeros "%0*d"
+     	        if (SCALE==0) /* we might even print leading zeros "%0*d" */
      	        {  exec sql get descriptor MYDESC value :INDEX :INTVAR=data;
      	           printf("%*d",PRECISION,INTVAR);
      	        }
