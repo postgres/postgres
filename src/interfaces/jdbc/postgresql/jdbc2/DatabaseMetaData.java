@@ -2152,20 +2152,21 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   public java.sql.ResultSet getPrimaryKeys(String catalog, String schema, String table) throws SQLException
   {
     return connection.createStatement().executeQuery("SELECT " +
-						     " '' as TABLE_CAT," +
-						     " '' AS TABLE_SCHEM," +
-						     " bc.relname AS TABLE_NAME," +
-						     " a.attname AS COLUMN_NAME," +
-						     " a.attnum as KEY_SEQ," +
-						     " ic.relname as PK_NAME" +
-						     " from pg_class bc, pg_class ic, pg_index i, pg_attribute a, pg_type t" +
-						     " where bc.relkind = 'r'"+
-						     " and upper(bc.relname) = upper('test')" +
-						     " and i.indrelid = bc.oid" +
-						     " and i.indexrelid = ic.oid  and a.attrelid = ic.oid"+
-						     " and i.indisprimary='t'"+
-						     " order by table_name, pk_name,key_seq;"
-						     );
+                                                     "'' as TABLE_CAT," +
+                                                     "'' AS TABLE_SCHEM," +
+                                                     "bc.relname AS TABLE_NAME," +
+                                                     "a.attname AS COLUMN_NAME," +
+                                                     "a.attnum as KEY_SEQ,"+
+                                                     "ic.relname as PK_NAME " +
+                                                     " FROM pg_class bc, pg_class ic, pg_index i, pg_attribute a" +
+                                                     " WHERE bc.relkind = 'r' " + //    -- not indices
+                                                     "  and upper(bc.relname) = upper('"+table+"')" +
+                                                     "  and i.indrelid = bc.oid" +
+                                                     "  and i.indexrelid = ic.oid" +
+                                                     "  and ic.oid = a.attrelid" +
+                                                     "  and i.indisprimary='t' " +
+                                                     " ORDER BY table_name, pk_name, key_seq"
+                                                     );
   }
   
   /**
