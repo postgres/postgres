@@ -1253,3 +1253,44 @@ select * from p1;
 drop table p1 cascade;
 NOTICE:  Drop cascades to table c1
 NOTICE:  Drop cascades to constraint p1_a1 on table c1
+-- test that operations with a dropped column do not try to reference
+-- its datatype
+create domain mytype as text;
+create temp table foo (f1 text, f2 mytype, f3 text);
+insert into foo values('aa','bb','cc');
+select * from foo;
+ f1 | f2 | f3 
+----+----+----
+ aa | bb | cc
+(1 row)
+
+drop domain mytype cascade;
+NOTICE:  Drop cascades to table foo column f2
+select * from foo;
+ f1 | f3 
+----+----
+ aa | cc
+(1 row)
+
+insert into foo values('qq','rr');
+select * from foo;
+ f1 | f3 
+----+----
+ aa | cc
+ qq | rr
+(2 rows)
+
+update foo set f3 = 'zz';
+select * from foo;
+ f1 | f3 
+----+----
+ aa | zz
+ qq | zz
+(2 rows)
+
+select f3,max(f1) from foo group by f3;
+ f3 | max 
+----+-----
+ zz | qq
+(1 row)
+

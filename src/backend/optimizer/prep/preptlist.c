@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.60 2003/02/03 21:15:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.61 2003/05/12 00:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,15 @@ expand_targetlist(List *tlist, int command_type,
 			 * the attribute, so that it gets copied to the new tuple. But
 			 * generate a NULL for dropped columns (we want to drop any
 			 * old values).
+			 *
+			 * When generating a NULL constant for a dropped column, we label
+			 * it INT4 (any other guaranteed-to-exist datatype would do as
+			 * well).  We can't label it with the dropped column's datatype
+			 * since that might not exist anymore.  It does not really
+			 * matter what we claim the type is, since NULL is NULL --- its
+			 * representation is datatype-independent.  This could perhaps
+			 * confuse code comparing the finished plan to the target
+			 * relation, however.
 			 */
 			Oid			atttype = att_tup->atttypid;
 			int32		atttypmod = att_tup->atttypmod;
@@ -179,31 +188,52 @@ expand_targetlist(List *tlist, int command_type,
 			switch (command_type)
 			{
 				case CMD_INSERT:
-					new_expr = (Node *) makeConst(atttype,
-												  att_tup->attlen,
-												  (Datum) 0,
-												  true, /* isnull */
-												  att_tup->attbyval);
 					if (!att_tup->attisdropped)
+					{
+						new_expr = (Node *) makeConst(atttype,
+													  att_tup->attlen,
+													  (Datum) 0,
+													  true, /* isnull */
+													  att_tup->attbyval);
 						new_expr = coerce_to_domain(new_expr,
 													InvalidOid,
 													atttype,
 													COERCE_IMPLICIT_CAST);
+					}
+					else
+					{
+						/* Insert NULL for dropped column */
+						new_expr = (Node *) makeConst(INT4OID,
+													  sizeof(int32),
+													  (Datum) 0,
+													  true, /* isnull */
+													  true /* byval */);
+						/* label resdom with INT4, too */
+						atttype = INT4OID;
+						atttypmod = -1;
+					}
 					break;
 				case CMD_UPDATE:
-					/* Insert NULLs for dropped columns */
-					if (att_tup->attisdropped)
-						new_expr = (Node *) makeConst(atttype,
-													  att_tup->attlen,
-													  (Datum) 0,
-													  true,		/* isnull */
-													  att_tup->attbyval);
-					else
+					if (!att_tup->attisdropped)
+					{
 						new_expr = (Node *) makeVar(result_relation,
 													attrno,
 													atttype,
 													atttypmod,
 													0);
+					}
+					else
+					{
+						/* Insert NULL for dropped column */
+						new_expr = (Node *) makeConst(INT4OID,
+													  sizeof(int32),
+													  (Datum) 0,
+													  true, /* isnull */
+													  true /* byval */);
+						/* label resdom with INT4, too */
+						atttype = INT4OID;
+						atttypmod = -1;
+					}
 					break;
 				default:
 					elog(ERROR, "expand_targetlist: unexpected command_type");

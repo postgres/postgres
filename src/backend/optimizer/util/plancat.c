@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.81 2003/05/11 20:25:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.82 2003/05/12 00:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,14 +62,28 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 	relation = heap_open(relationObjectId, AccessShareLock);
 
 	/*
-	 * Make list of physical Vars.  Note we do NOT ignore dropped columns;
-	 * the intent is to model the physical tuples of the relation.
+	 * Make list of physical Vars.  But if there are any dropped columns,
+	 * punt and set varlist to NIL.  (XXX Ideally we would like to include
+	 * dropped columns so that the varlist models the physical tuples
+	 * of the relation.  However this creates problems for ExecTypeFromTL,
+	 * which may be asked to build a tupdesc for a tlist that includes vars
+	 * of no-longer-existent types.  In theory we could dig out the required
+	 * info from the pg_attribute entries of the relation, but that data is
+	 * not readily available to ExecTypeFromTL.  For now, punt and don't
+	 * apply the physical-tlist optimization when there are dropped cols.)
 	 */
 	numattrs = RelationGetNumberOfAttributes(relation);
 
 	for (attrno = 1; attrno <= numattrs; attrno++)
 	{
 		Form_pg_attribute att_tup = relation->rd_att->attrs[attrno - 1];
+
+		if (att_tup->attisdropped)
+		{
+			/* found a dropped col, so punt */
+			varlist = NIL;
+			break;
+		}
 
 		varlist = lappend(varlist,
 						  makeVar(varno,

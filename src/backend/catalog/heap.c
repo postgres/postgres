@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.243 2003/05/08 22:19:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.244 2003/05/12 00:17:02 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -76,7 +76,7 @@ static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
 static void SetRelationNumChecks(Relation rel, int numchecks);
-static void RemoveStatistics(Relation rel);
+static void RemoveStatistics(Relation rel, AttrNumber attnum);
 
 
 /* ----------------------------------------------------------------
@@ -925,8 +925,9 @@ DeleteAttributeTuples(Oid relid)
  *		RemoveAttributeById
  *
  * This is the guts of ALTER TABLE DROP COLUMN: actually mark the attribute
- * deleted in pg_attribute.  (Everything else needed, such as getting rid
- * of any pg_attrdef entry, is handled by dependency.c.)
+ * deleted in pg_attribute.  We also remove pg_statistic entries for it.
+ * (Everything else needed, such as getting rid of any pg_attrdef entry,
+ * is handled by dependency.c.)
  */
 void
 RemoveAttributeById(Oid relid, AttrNumber attnum)
@@ -960,6 +961,16 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	/* Mark the attribute as dropped */
 	attStruct->attisdropped = true;
 
+	/*
+	 * Set the type OID to invalid.  A dropped attribute's type link cannot
+	 * be relied on (once the attribute is dropped, the type might be too).
+	 * Fortunately we do not need the type row --- the only really essential
+	 * information is the type's typlen and typalign, which are preserved in
+	 * the attribute's attlen and attalign.  We set atttypid to zero here
+	 * as a means of catching code that incorrectly expects it to be valid.
+	 */
+	attStruct->atttypid = InvalidOid;
+
 	/* Remove any NOT NULL constraint the column may have */
 	attStruct->attnotnull = false;
 
@@ -983,6 +994,8 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	 */
 
 	heap_close(attr_rel, RowExclusiveLock);
+
+	RemoveStatistics(rel, attnum);
 
 	relation_close(rel, NoLock);
 }
@@ -1158,7 +1171,7 @@ heap_drop_with_catalog(Oid rid)
 	/*
 	 * delete statistics
 	 */
-	RemoveStatistics(rel);
+	RemoveStatistics(rel, 0);
 
 	/*
 	 * delete attribute tuples
@@ -1819,27 +1832,45 @@ RemoveRelConstraints(Relation rel, const char *constrName,
 }
 
 
+/*
+ * RemoveStatistics --- remove entries in pg_statistic for a rel or column
+ *
+ * If attnum is zero, remove all entries for rel; else remove only the one
+ * for that column.
+ */
 static void
-RemoveStatistics(Relation rel)
+RemoveStatistics(Relation rel, AttrNumber attnum)
 {
 	Relation	pgstatistic;
 	SysScanDesc scan;
-	ScanKeyData key;
+	ScanKeyData key[2];
+	int			nkeys;
 	HeapTuple	tuple;
 
 	pgstatistic = heap_openr(StatisticRelationName, RowExclusiveLock);
 
-	ScanKeyEntryInitialize(&key, 0x0,
+	ScanKeyEntryInitialize(&key[0], 0x0,
 						   Anum_pg_statistic_starelid, F_OIDEQ,
 						   ObjectIdGetDatum(RelationGetRelid(rel)));
 
+	if (attnum == 0)
+		nkeys = 1;
+	else
+	{
+		ScanKeyEntryInitialize(&key[1], 0x0,
+							   Anum_pg_statistic_staattnum, F_INT2EQ,
+							   Int16GetDatum(attnum));
+		nkeys = 2;
+	}
+
 	scan = systable_beginscan(pgstatistic, StatisticRelidAttnumIndex, true,
-							  SnapshotNow, 1, &key);
+							  SnapshotNow, nkeys, key);
 
 	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		simple_heap_delete(pgstatistic, &tuple->t_self);
 
 	systable_endscan(scan);
+
 	heap_close(pgstatistic, RowExclusiveLock);
 }
 
