@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.67 2000/10/21 15:43:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.68 2000/11/16 05:50:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,8 +348,8 @@ _bt_insertonpg(Relation rel,
 	 * itemsz doesn't include the ItemId.
 	 */
 	if (itemsz > (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
-		elog(ERROR, "btree: index item size %u exceeds maximum %lu",
-			 itemsz,
+		elog(ERROR, "btree: index item size %lu exceeds maximum %lu",
+			 (unsigned long)itemsz,
 			 (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
 
 	/*

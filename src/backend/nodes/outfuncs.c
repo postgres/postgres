@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.132 2000/11/12 00:36:57 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.133 2000/11/16 05:51:00 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -688,8 +688,8 @@ _outFjoin(StringInfo str, Fjoin *node)
 	appendStringInfo(str, " :innerNode ");
 	_outNode(str, node->fj_innerNode);
 
-	appendStringInfo(str, " :results @ 0x%x :alwaysdone",
-					 (int) node->fj_results);
+	appendStringInfo(str, " :results @ 0x%p :alwaysdone",
+					 node->fj_results);
 
 	for (i = 0; i < node->fj_nNodes; i++)
 		appendStringInfo(str, (node->fj_alwaysDone[i]) ? "true" : "false");
@@ -1284,15 +1284,15 @@ static void
 _outStream(StringInfo str, Stream *node)
 {
 	appendStringInfo(str,
-					 " STREAM :pathptr @ 0x%x :cinfo @ 0x%x :clausetype %d :upstream @ 0x%x ",
-					 (int) node->pathptr,
-					 (int) node->cinfo,
-					 (int) node->clausetype,
-					 (int) node->upstream);
+					 " STREAM :pathptr @ %p :cinfo @ %p :clausetype %p :upstream @ %p ",
+					 node->pathptr,
+					 node->cinfo,
+					 node->clausetype,
+					 node->upstream);
 
 	appendStringInfo(str,
-		   " :downstream @ 0x%x :groupup %d :groupcost %f :groupsel %f ",
-					 (int) node->downstream,
+		   " :downstream @ %p :groupup %d :groupcost %f :groupsel %f ",
+					 node->downstream,
 					 node->groupup,
 					 node->groupcost,
 					 node->groupsel);

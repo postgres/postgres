@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.33 2000/09/07 09:58:35 vadim Exp $
+ *	  $Id: hio.c,v 1.34 2000/11/16 05:50:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,8 +91,8 @@ RelationGetBufferForTuple(Relation relation, Size len)
 	 * If we're gonna fail for oversize tuple, do it right away
 	 */
 	if (len > MaxTupleSize)
-		elog(ERROR, "Tuple is too big: size %u, max size %ld",
-			 len, MaxTupleSize);
+		elog(ERROR, "Tuple is too big: size %lu, max size %ld",
+			 (unsigned long)len, MaxTupleSize);
 
 	if (!relation->rd_myxactonly)
 		LockPage(relation, 0, ExclusiveLock);
@@ -139,7 +139,8 @@ RelationGetBufferForTuple(Relation relation, Size len)
 		if (len > PageGetFreeSpace(pageHeader))
 		{
 			/* We should not get here given the test at the top */
-			elog(STOP, "Tuple is too big: size %u", len);
+			elog(STOP, "Tuple is too big: size %lu",
+				(unsigned long)len);
 		}
 	}
 

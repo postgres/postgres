@@ -1,10 +1,15 @@
 #if defined(__i386__)
-#define NEED_I386_TAS_ASM
+typedef unsigned char slock_t;
 #define HAS_TEST_AND_SET
 #endif
 
 #if defined(__sparc__)
 #define NEED_SPARC_TAS_ASM
+#define HAS_TEST_AND_SET
+#endif
+
+#if defined(__alpha__)
+typedef long int slock_t;
 #define HAS_TEST_AND_SET
 #endif
 
@@ -25,5 +30,3 @@
 #if defined(__mips__)
 /* #	undef HAS_TEST_AND_SET */
 #endif
-
-typedef unsigned char slock_t;

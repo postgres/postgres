@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.171 2000/10/28 16:20:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.172 2000/11/16 05:50:59 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -950,12 +950,13 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	}
 
 	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
-Tup %u: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; \
-Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. %s",
+Tup %u: Vac %u, Keep/VTL %u/%u, Crash %u, UnUsed %u, MinLen %lu, MaxLen %lu; \
+Re-using: Free/Avail. Space %lu/%lu; EndEmpty/Avail. Pages %u/%u. %s",
 		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
 		 new_pages, num_tuples, tups_vacuumed,
 		 nkeep, vacrelstats->num_vtlinks, ncrash,
-		 nunused, min_tlen, max_tlen, free_size, usable_free_size,
+		 nunused, (unsigned long)min_tlen, (unsigned long)max_tlen,
+		 (unsigned long)free_size, (unsigned long)usable_free_size,
 		 empty_end_pages, fraged_pages->num_pages,
 		 show_rusage(&ru0));
 
@@ -1484,8 +1485,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 										 InvalidOffsetNumber, LP_USED);
 					if (newoff == InvalidOffsetNumber)
 					{
-						elog(STOP, "moving chain: failed to add item with len = %u to page %u",
-							 tuple_len, destvacpage->blkno);
+						elog(STOP, "moving chain: failed to add item with len = %lu to page %u",
+							 (unsigned long)tuple_len, destvacpage->blkno);
 					}
 					newitemid = PageGetItemId(ToPage, newoff);
 					pfree(newtup.t_data);
@@ -1636,8 +1637,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			if (newoff == InvalidOffsetNumber)
 			{
 				elog(ERROR, "\
-failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
-					 tuple_len, cur_page->blkno, cur_page->free,
+failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
+					 (unsigned long)tuple_len, cur_page->blkno, (unsigned long)cur_page->free,
 				 cur_page->offsets_used, cur_page->offsets_free);
 			}
 			newitemid = PageGetItemId(ToPage, newoff);

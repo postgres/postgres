@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.31 2000/07/12 05:15:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.32 2000/11/16 05:51:02 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -876,8 +876,8 @@ AllocSetCheck(MemoryContext context)
 			 * Check chunk size
 			 */
 			if (chsize < (1 << ALLOC_MINBITS))
-				elog(ERROR, "AllocSetCheck(): %s: bad size '%d' for chunk %p in block %p",
-						name, chsize, chunk, block);
+				elog(ERROR, "AllocSetCheck(): %s: bad size '%lu' for chunk %p in block %p",
+						name, (unsigned long)chsize, chunk, block);
 						
 			/* single-chunk block */
 			if (chsize >= ALLOC_BIGCHUNK_LIMIT &&
@@ -891,9 +891,9 @@ AllocSetCheck(MemoryContext context)
 			if (dsize < chsize && *chdata_end != 0x7F)
 			{
 				fprintf(stderr, "\n--- Leak %p ---\n", chdata_end);
-				fprintf(stderr, "Chunk dump size: %ld (chunk-header %ld + chunk-size: %d), data must be: %d\n--- dump begin ---\n", 
+				fprintf(stderr, "Chunk dump size: %ld (chunk-header %ld + chunk-size: %lu), data must be: %lu\n--- dump begin ---\n", 
 					chsize + ALLOC_CHUNKHDRSZ, 
-					ALLOC_CHUNKHDRSZ, chsize, dsize);
+					ALLOC_CHUNKHDRSZ, (unsigned long)chsize, (unsigned long)dsize);
 					
 				fwrite((void *) chunk, chsize+ALLOC_CHUNKHDRSZ, sizeof(char), stderr);
 				fputs("\n--- dump end ---\n", stderr);
@@ -909,9 +909,9 @@ AllocSetCheck(MemoryContext context)
 							*chdata_end != 0x7F) {
 				
 				fprintf(stderr, "\n--- Leak %p ---\n", chdata_end);
-				fprintf(stderr, "Dump size: %ld (chunk-header %ld + chunk-size: %d + block-freespace: %ld), data must be: %d\n--- dump begin ---\n", 
+				fprintf(stderr, "Dump size: %ld (chunk-header %ld + chunk-size: %lu + block-freespace: %ld), data must be: %lu\n--- dump begin ---\n", 
 					chsize + ALLOC_CHUNKHDRSZ + blk_free, 
-					ALLOC_CHUNKHDRSZ, chsize, blk_free, dsize);
+					ALLOC_CHUNKHDRSZ, (unsigned long)chsize, blk_free, (unsigned long)dsize);
 					
 				fwrite((void *) chunk, chsize+ALLOC_CHUNKHDRSZ+blk_free, sizeof(char), stderr);
 				fputs("\n--- dump end ---\n", stderr);

@@ -1,1 +1,7 @@
-CFLAGS='-O2 -m486 -pipe'
+CFLAGS='-pipe'
+
+case $host_cpu in
+  alpha*)   CFLAGS="$CFLAGS -O";;
+  i386*)    CFLAGS="$CFLAGS -O2";;
+esac
+

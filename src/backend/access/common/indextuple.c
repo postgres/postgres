@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.45 2000/09/23 22:40:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.46 2000/11/16 05:50:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,8 @@ index_formtuple(TupleDesc tupleDescriptor,
 	 */
 
 	if ((size & INDEX_SIZE_MASK) != size)
-		elog(ERROR, "index_formtuple: data takes %d bytes: too big", size);
+		elog(ERROR, "index_formtuple: data takes %lu bytes: too big",
+			(unsigned long)size);
 
 	infomask |= size;
 

@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.57 2000/08/10 02:33:20 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.58 2000/11/16 05:50:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,8 +346,8 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 	 * during creation of an index, we don't go through there.
 	 */
 	if (btisz > (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
-		elog(ERROR, "btree: index item size %d exceeds maximum %ld",
-			 btisz,
+		elog(ERROR, "btree: index item size %lu exceeds maximum %ld",
+			 (unsigned long)btisz,
 			 (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) /3 - sizeof(ItemIdData));
 
 	if (pgspc < btisz || pgspc < state->btps_full)

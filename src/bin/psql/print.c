@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.13 2000/04/12 17:16:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.14 2000/11/16 05:51:03 momjian Exp $
  */
 #include "postgres.h"
 #include "print.h"
@@ -250,7 +250,7 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		if (strlen(title) >= total_w)
 			fprintf(fout, "%s\n", title);
 		else
-			fprintf(fout, "%-*s%s\n", (total_w - strlen(title)) / 2, "", title);
+			fprintf(fout, "%-*s%s\n", (int)(total_w - strlen(title)) / 2, "", title);
 	}
 
 	/* print headers */

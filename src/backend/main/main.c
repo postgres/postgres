@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.33 2000/10/21 22:36:11 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.34 2000/11/16 05:51:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include <pwd.h>
 #include <unistd.h>
 
-#if defined(__alpha) && !defined(linux)
+#if defined(__alpha) && !defined(linux) && !defined(__FreeBSD__)
 #include <sys/sysinfo.h>
 #include "machine/hal_sysinfo.h"
 #define ASSEMBLER
