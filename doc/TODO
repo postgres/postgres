@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun May 25 22:56:38 EDT 2003
+Last updated:		Mon May 26 14:36:44 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -69,7 +69,7 @@ Data Types
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
 * Allow INET subnet tests using non-constants
-* Add now("transaction|statement|clock") functionality
+* Add transaction_timestamp(), statement_timestamp(), clock_timestamp() functionality
 * -Add GUC variables to control floating number output digits (Pedro Ferreira)
 * Have sequence dependency track use of DEFAULT sequences, seqname.nextval
 * Disallow changing default expression of a SERIAL column
