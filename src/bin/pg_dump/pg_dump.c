@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.199 2001/04/03 08:52:59 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.200 2001/04/04 06:47:30 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -121,6 +121,11 @@
  *		because placeholder types will have an OID less than the
  *		OID of the type functions, but type must be created after 
  *		the functions.
+ *
+ * Modifications - 4-Apr-2001 - pjw@rhyme.com.au
+ *
+ *	  - Don't dump CHECK constraints with same source and names both
+ *		starting with '$'.
  *
  *-------------------------------------------------------------------------
  */
@@ -2068,58 +2073,14 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		else
 			tblinfo[i].viewdef = NULL;
 
-		/*
+		/* 
+		 * Get non-inherited CHECK constraints, if any.
+		 *
 		 * Exclude inherited CHECKs from CHECK constraints total. If a
 		 * constraint matches by name and condition with a constraint
-		 * belonging to a parent class, we assume it was inherited.
+		 * belonging to a parent class (OR conditions match and both
+	     * names start with '$', we assume it was inherited.
 		 */
-		if (tblinfo[i].ncheck > 0)
-		{
-			PGresult   *res2;
-			int			ntups2;
-
-			if (g_verbose)
-				fprintf(stderr, "%s excluding inherited CHECK constraints "
-						"for relation: '%s' %s\n",
-						g_comment_start,
-						tblinfo[i].relname,
-						g_comment_end);
-
-			/*
-			 * XXXX: Use LOJ maybe - need to compare with subsequent query
-			 * for non-inherited
-			 */
-			resetPQExpBuffer(query);
-			appendPQExpBuffer(query, "SELECT rcname from pg_relcheck, pg_inherits as i "
-							  "where rcrelid = '%s'::oid "
-							  " and rcrelid = i.inhrelid"
-							  " and exists "
-							  "  (select * from pg_relcheck as c "
-							  "    where c.rcname = pg_relcheck.rcname "
-							  "      and c.rcsrc = pg_relcheck.rcsrc "
-							  "      and c.rcrelid = i.inhparent) ",
-							  tblinfo[i].oid);
-			res2 = PQexec(g_conn, query->data);
-			if (!res2 ||
-				PQresultStatus(res2) != PGRES_TUPLES_OK)
-			{
-				fprintf(stderr, "getTables(): SELECT (for inherited CHECK) failed.  "
-						"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
-				exit_nicely(g_conn);
-			}
-			ntups2 = PQntuples(res2);
-			tblinfo[i].ncheck -= ntups2;
-			if (tblinfo[i].ncheck < 0)
-			{
-				fprintf(stderr, "getTables(): found more inherited CHECKs than total for "
-						"relation %s\n",
-						tblinfo[i].relname);
-				exit_nicely(g_conn);
-			}
-			PQclear(res2);
-		}
-
-		/* Get non-inherited CHECK constraints, if any */
 		if (tblinfo[i].ncheck > 0)
 		{
 			PGresult   *res2;
@@ -2136,13 +2097,16 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "SELECT rcname, rcsrc from pg_relcheck "
-							  "where rcrelid = '%s'::oid "
+							  " where rcrelid = '%s'::oid "
 							  "   and not exists "
-				   "  (select * from pg_relcheck as c, pg_inherits as i "
-							  "   where i.inhrelid = pg_relcheck.rcrelid "
-							  "     and c.rcname = pg_relcheck.rcname "
-							  "     and c.rcsrc = pg_relcheck.rcsrc "
-							  "     and c.rcrelid = i.inhparent) "
+							  "  (select * from pg_relcheck as c, pg_inherits as i "
+							  "    where i.inhrelid = pg_relcheck.rcrelid "
+							  "      and (c.rcname = pg_relcheck.rcname "
+							  "          or (    c.rcname[0] = '$' "
+							  "              and pg_relcheck.rcname[0] = '$')"
+							  "          )"
+							  "      and c.rcsrc = pg_relcheck.rcsrc "
+							  "      and c.rcrelid = i.inhparent) "
 							  " Order By oid ",
 							  tblinfo[i].oid);
 			res2 = PQexec(g_conn, query->data);
@@ -2154,12 +2118,17 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 				exit_nicely(g_conn);
 			}
 			ntups2 = PQntuples(res2);
-			if (ntups2 != tblinfo[i].ncheck)
+			if (ntups2 > tblinfo[i].ncheck)
 			{
-				fprintf(stderr, "getTables(): relation '%s': %d CHECKs were expected, but got %d\n",
+				fprintf(stderr, "getTables(): relation '%s': a maximum of %d CHECKs "
+									"were expected, but got %d\n",
 						tblinfo[i].relname, tblinfo[i].ncheck, ntups2);
 				exit_nicely(g_conn);
 			}
+
+			/* Set ncheck to the number of *non-inherited* CHECK constraints */
+			tblinfo[i].ncheck = ntups2;
+
 			i_rcname = PQfnumber(res2, "rcname");
 			i_rcsrc = PQfnumber(res2, "rcsrc");
 			tblinfo[i].check_expr = (char **) malloc(ntups2 * sizeof(char *));
@@ -3897,7 +3866,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 				if (numParents > 0)
 				{
-					appendPQExpBuffer(q, "\ninherits (");
+					appendPQExpBuffer(q, "\nINHERITS (");
 					for (k = 0; k < numParents; k++)
 					{
 						appendPQExpBuffer(q, "%s%s",

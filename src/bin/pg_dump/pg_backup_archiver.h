@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.29 2001/04/03 08:52:59 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.30 2001/04/04 06:47:30 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -68,7 +68,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 5
-#define K_VERS_REV 1 
+#define K_VERS_REV 2 
 
 /* Data block types */
 #define BLK_DATA 1
