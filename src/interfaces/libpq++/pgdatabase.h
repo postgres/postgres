@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *  $Id: pgdatabase.h,v 1.6 2000/01/26 05:58:48 momjian Exp $
+ *  $Id: pgdatabase.h,v 1.7 2000/03/30 05:30:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
  
 #include "pgconnection.h"
 
-#include <stdlib.h>
 
 // ****************************************************************
 //

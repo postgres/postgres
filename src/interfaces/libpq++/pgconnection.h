@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.4 2000/03/02 02:00:58 momjian Exp $
+ * $Id: pgconnection.h,v 1.5 2000/03/30 05:30:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,14 +21,23 @@
 #ifndef PGCONN_H
 #define PGCONN_H
 
-#include <stdio.h>
+extern "C" {
+#include "config.h"
+}
+
+#ifdef HAVE_CXX_STRING_HEADER
 #include <string>
+#endif
 
 extern "C" {
+#include "postgres.h"
 #include "libpq-fe.h"
 }
 
+#ifdef HAVE_NAMESPACE_STD
 using namespace std;
+#endif
+
 
 // ****************************************************************
 //
