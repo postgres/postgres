@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.14 1998/01/13 04:05:11 scrappy Exp $
+ * $Id: bufpage.h,v 1.15 1998/01/13 14:56:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,9 +272,7 @@ typedef enum
  */
 /* XXX dig out of buffer descriptor */
 #define BufferGetPageSize(buffer) \
-	(AssertMacro(BufferIsValid(buffer)) ? \
-	 AssertMacro(PageSizeIsValid(pageSize)) ? \
-	 ((Size)BLCKSZ) : false : false)
+	(AssertMacro(BufferIsValid(buffer)) ? (Size)BLCKSZ : false)
 
 /*
  * BufferGetPage --
