@@ -452,6 +452,9 @@ AC_ARG_WITH(CXX,
     [   AC_PROG_CXX])
 AC_SUBST(HAVECXX)
 
+dnl make sure we revert to C compiler, not C++, for subsequent tests
+AC_LANG_C
+
 dnl Figure out how to invoke "install" and what install options to use.
 
 AC_PROG_INSTALL
