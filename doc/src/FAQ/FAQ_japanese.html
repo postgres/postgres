@@ -7,7 +7,7 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問(FAQ)</H1>
 <P>
-原文最終更新日:		Tue Mar 13 09:41:02 EST 2001
+原文最終更新日:		Mon Apr  9 15:27:47 EDT 2001
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
@@ -35,7 +35,7 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2001年03月20日
+  最終更新日:	2001年04月15日
   翻訳者:	桑村 潤 (<A HREF="mailto:juk@jp.postgresql.org">Jun Kuwamura &lt;juk@jp.postgresql.org&gt;</A>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -206,27 +206,31 @@ MODIFICATIONS.
 <P>
 
 <small><PRE>
-    [訳注：
 	POSTGRESQL データベース管理システム
 
-	部分著作権 (c) 1996-2001, PostgreSQL国際開発チーム
-	部分著作権 (c) 1994-6 カリフォルニア大学本校
+	部分的著作権 (c) 1996-2001, PostgreSQL国際開発チーム
+	部分的著作権 (c) 1994-6 カリフォルニア大学本校
 
-	このソフトウェアとその文書を、如何なる目的でも、無料で、使用許諾書無しに、
-	使用、複写、修正、そして、配布することへの許可を、上記の著作権表示、この段
-	落、および、これに続く二つの段落が、すべての複写に添付される限りにおいて、
-	ここにそれを認めます．
 
-	たとえカリフォルニア大学が以下のような損害の可能性について言及していた
-	としても．このソフトウェア及び文書の使用上，直接的・間接的・特別・偶然
-	もしくは必然的に，生じた失われた利益を含む損害に於いて，いずれの当事者
-	に対してもカリフォルニア大学は一切の責任を負いません．
+	  本ソフトウェアおよびその文書一式は上記の著作権表示と、この文章
+	およびこれに続く二つの段落が全ての複製に添付されている限りにおい
+	て、使用、複製、修正および配付の許可を、いかなる目的であっも、無
+	償でかつ同意書無しに行なえることをここに認めます。
+	
+	  カリフォルニア大学は、いかなる当事者にたいしても、利益の壊失を
+	含む、直接的、間接的、特別、偶然あるいは必然的にかかわらず生じた
+	損害について、たとえカリフォルニア大学がこれらの損害について訴追
+	を受けていたとしても、一切の責任を負いません。
+	
+	  カリフォルニア大学は、商用目的における暗黙の保証と、特定目的で
+	の適合性に関してはもとより、これらに限らず、いかなる保証も放棄す
+	ることを明言します。以下に用意されたソフトウェアは「そのまま」を
+	基本原理とし、カリフォルニア大学はそれを維持、支援、更新、改良あ
+	るいは修正する義務を負いません。
 
-	カリフォルニア大学は，特定目的のための商用性及び適合性の暗黙の保証を含
-	む，しかしそれに限定されることのない，いかなる保証も明確に放棄します．
-	ここにおいて用意されたソフトウェアは「あるがまま」ということを前提とし，
-	カリフォルニア大学は維持・補助・更新・改良・修正を用意する義務を負いま
-	せん．
+    [訳注：
+	著作権に関する正文は上記の英語による表記です。日本語訳はあくまで
+	参考です。
     ]
 </PRE></small>
 
@@ -569,7 +573,7 @@ PostgreSQLの使用は、商用でも非商用でも、すべて無料です。上記に示してあ
 
 <P> たぶん彼らは、商用品質のサポートの必要な人々に売っていると思いますが、フリーウェア版はいつでも入手可能のようです。質問は、<A HREF="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>にお願いします。
 
-<A HREF="http://www.PostgreSQL.org/docs/programmer/odbc.html">
+<A HREF="http://www.postgresql.org/docs/programmer/odbc.html">
 Programmer's Guide</A>
 の <font size=-1>ODBC</font> の章もご覧ください。
 
@@ -677,6 +681,7 @@ Programmer's Guide</A>
 </H4>
 
 <P> カーネルが共有メモリーを持つ設定になっていなかったか、でなければ、カーネルに対して使える共有メモリーの大きさを大きく設定する必要があります。具体的な大きさは、使っているアーキテクチャと<I>postmaster</I> を走らせるときに設定するバッファの数とバックエンドプロセスに依存します。ほとんどのシステムでは、既定値のバッファサイズのままで、少なくとも約1MBが必要です。
+PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があります。</P>
 
 <P>
 <H4><A NAME="3.4">3.4</A>)	<I>postmasterを</I>走らせようとすると、<I>IpcSemaphoreCreate</I> エラーが出ます。なぜですか？
@@ -684,6 +689,7 @@ Programmer's Guide</A>
 
 <P>もしエラーメッセージが<I>IpcSemaphoreCreate: semget failed (No space left on device)</I>であれば、カーネルが十分なセマフォを使えるように構成されていません。Postgresは潜在的なバックエンドプロセス毎に一つのセマフォを必要とします。とりあえずの解決策は<I>postmaster</I>を起動するときに、バックエンドプロセスの数をより少なく制限をすることです。既定値の32より小さな数のパラメータを<I>-N</I>で使います。より恒久的な解決策は、カーネルの<font size=-1>SEMMNS</font> と <font size=-1>SEMMNI</font> パラメータを増やすことです。
 <P>もし、エラーメッセージがなにか他のものであれば、カーネルの構成でまったくセマフォのサポートをしていないかもしれません。
+PostgreSQL Administrator's Gide に共有メモリーとセマフォについての情報の詳細があります。</P>
 
 <P>
 
@@ -765,6 +771,20 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 <P> 問い合わせ実行モジュールによって生成された一時的なファイルです。例えば、もし <font size=-1>ORDER BY</font> 句を満たすためにバックエンドの <I>-S</I> パラメータで許可した値よりも大きなスペースがソートの際に必要だとすると、溢れたデータを保持するために一時的なファイルがいくつか生成されます。
 <P>
 一時的なファイルは自動的に消し去られるはずですが、もし、ソートの途中でバックエンドが潰れてしまうとそうなりません。もし、そのときバックエンドがひとつも走ってなければ、pg_tempNNN.NNファイルを消しても安全です。
+
+
+<small><PRE>
+    [訳注：
+	 SYSLOGD 経由でログを出力するには、まず、configure を --enable-syslog 
+	付きで走らせた後、コンパイルとインストールを行ないます。
+	 次に、syslog.conf に local0.* の 出力先を指定し(環境変数で変更可能)、
+	syslogd に HUP シグナルを送って初期化しておきます。そして、
+	$PGDATA/pg_options に syslog=2 を加えて、 postmaster を -S 
+	オプション付きにてサーバモードで起動します。(バージョン 7.1 からは 
+	pg_options は postgresql.conf になっています。)
+    ]
+</PRE></small>
+
 
 <P>
 <P>
@@ -1157,25 +1177,7 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 <pre> SELECT *
  FROM t1 LEFT OUTER JOIN t2 USING (col);</pre>
 
-これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の
-結合されなかった行(t2 と一致しなかった行)も返しています。<font size=-1>RIGHT</font> 結合は t2 の結合されなかった行を加えるでしょう。<font size=-1>FULL</font> 結合は、一致した行に t1 と t2 からは結合されなかった行を返すでしょう。<font size=-1>OUTER</font> という言葉はオプションで <font size=-1>LEFT</font>, <font size=-1>RIGHT</font>, または <font size=-1>FULL</font> などの結合を仮定されています。
-
-
-
-
-
-
-
-
-
-+These identical queries join t1.col to t2.col, and also return any unjoined
-+rows in t1 (those with no match in t2). A <font size=-1>RIGHT</font> join
-+would add unjoined rows of t2. A <font size=-1>FULL</font> join would return
-+the matched rows plus all unjoined rows from t1 and t2. The word <font size=-1>OUTER</font>
-+is optional and is assumed in <font size=-1>LEFT</font>, <font size=-1>RIGHT</font>,
-+and <font size=-1>FULL</font> joins. Ordinary joins are called <font size=-1>INNER</font>
-+joins.
-
+これらの象徴的な問い合わせでは t1.col を t2.col と結合して、t1 の結合されなかった行(t2 と一致しなかった行)も返しています。<font size=-1>RIGHT</font> 結合は t2 の結合されなかった行を加えるでしょう。<font size=-1>FULL</font> 結合は、一致した行に t1 と t2 からは結合されなかった行を返すでしょう。<font size=-1>OUTER</font> という言葉はオプションで <font size=-1>LEFT</font>, <font size=-1>RIGHT</font>, または <font size=-1>FULL</font> などの結合を仮定されています。
 
 以前のリリースでは外部結合(outer join)を<font size=-1>UNION</font> と <font size=-1>NOT IN</font> を使ってシミュレートできます。
 たとえば、<i>tab1</i> と <i>tab2</i> を結合するときは、次の問い合わせで二つのテーブルを<i>外部</i>結合します。
