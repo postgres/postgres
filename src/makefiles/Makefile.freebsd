@@ -8,6 +8,6 @@
 ifdef ELF_SYSTEM
 	$(LD) -x -Bshareable -o $@ $@.pic
 else
-        $(LD) -x -Bshareable -Bforcearchive -o $@ $@.pic
+	$(LD) -x -Bshareable -Bforcearchive -o $@ $@.pic
 endif
 
