@@ -659,7 +659,7 @@ then
 	tk_libs="tk8.0 tk80 tk4.2 tk42 tk"
 	for tk_lib in $tk_libs; do
 		if test -z "$TK_LIB"; then
-			AC_CHECK_LIB($tk_lib, main, TK_LIB=$tk_lib)
+			AC_CHECK_LIB($tk_lib, main, TK_LIB=$tk_lib,, $TCL_LIB $X_PRE_LIBS $X_LIBS $X11_LIBS)
 		fi
 	done
 	if test -z "$TK_LIB"; then

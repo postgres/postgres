@@ -3371,7 +3371,7 @@ else
 fi
 rm -f conftest*
 
-if test $ac_cv_prog_gcc = yes; then
+if test x$ac_cv_prog_gcc = xyes; then
     echo $ac_n "checking whether ${CC-cc} needs -traditional""... $ac_c" 1>&6
 echo "configure:3377: checking whether ${CC-cc} needs -traditional" >&5
 if eval "test \"`echo '$''{'ac_cv_prog_gcc_traditional'+set}'`\" = set"; then
@@ -5617,7 +5617,7 @@ if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
   ac_save_LIBS="$LIBS"
-LIBS="-l$tk_lib  $LIBS"
+LIBS="-l$tk_lib $TCL_LIB $X_PRE_LIBS $X_LIBS $X11_LIBS $LIBS"
 cat > conftest.$ac_ext <<EOF
 #line 5623 "configure"
 #include "confdefs.h"
