@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.68 2002/06/20 20:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.69 2002/08/04 06:44:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,10 @@ timestamp_in(PG_FUNCTION_ARGS)
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad timestamp external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
@@ -251,7 +254,11 @@ timestamptz_in(PG_FUNCTION_ARGS)
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad timestamp with time zone"
+			 " external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
@@ -359,7 +366,7 @@ interval_in(PG_FUNCTION_ARGS)
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
-	char		lowstr[MAXDATELEN + 1];
+	char		lowstr[MAXDATELEN + MAXDATEFIELDS];
 
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
@@ -368,6 +375,9 @@ interval_in(PG_FUNCTION_ARGS)
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
 	fsec = 0;
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad interval external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))
@@ -436,8 +446,6 @@ interval_scale(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
-#define MASK(b) (1 << (b))
-
 static void
 AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 {
@@ -483,31 +491,34 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 	};
 #endif
 
+	/* Unspecified range and precision? Then not necessary to adjust.
+	 * Setting typmod to -1 is the convention for all types.
+	 */
 	if (typmod != -1)
 	{
-		int			range = ((typmod >> 16) & 0x7FFF);
-		int			precision = (typmod & 0xFFFF);
+		int			range = INTERVAL_RANGE(typmod);
+		int			precision = INTERVAL_PRECISION(typmod);
 
-		if (range == 0x7FFF)
+		if (range == INTERVAL_FULL_RANGE)
 		{
 			/* Do nothing... */
 		}
-		else if (range == MASK(YEAR))
+		else if (range == INTERVAL_MASK(YEAR))
 		{
 			interval->month = ((interval->month / 12) * 12);
 			interval->time = 0;
 		}
-		else if (range == MASK(MONTH))
+		else if (range == INTERVAL_MASK(MONTH))
 		{
 			interval->month %= 12;
 			interval->time = 0;
 		}
 		/* YEAR TO MONTH */
-		else if (range == (MASK(YEAR) | MASK(MONTH)))
+		else if (range == (INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH)))
 		{
 			interval->time = 0;
 		}
-		else if (range == MASK(DAY))
+		else if (range == INTERVAL_MASK(DAY))
 		{
 			interval->month = 0;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -517,7 +528,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->time = (((int) (interval->time / 86400)) * 86400);
 #endif
 		}
-		else if (range == MASK(HOUR))
+		else if (range == INTERVAL_MASK(HOUR))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		day;
@@ -536,7 +547,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->time = (((int) (interval->time / 3600)) * 3600.0);
 #endif
 		}
-		else if (range == MASK(MINUTE))
+		else if (range == INTERVAL_MASK(MINUTE))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		hour;
@@ -555,7 +566,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			interval->time = (((int) (interval->time / 60)) * 60);
 #endif
 		}
-		else if (range == MASK(SECOND))
+		else if (range == INTERVAL_MASK(SECOND))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		minute;
@@ -573,7 +584,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 		}
 		/* DAY TO HOUR */
-		else if (range == (MASK(DAY) | MASK(HOUR)))
+		else if (range == (INTERVAL_MASK(DAY) |
+						   INTERVAL_MASK(HOUR)))
 		{
 			interval->month = 0;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -584,7 +596,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 		}
 		/* DAY TO MINUTE */
-		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE)))
+		else if (range == (INTERVAL_MASK(DAY) |
+						   INTERVAL_MASK(HOUR) |
+						   INTERVAL_MASK(MINUTE)))
 		{
 			interval->month = 0;
 #ifdef HAVE_INT64_TIMESTAMP
@@ -595,12 +609,16 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 		}
 		/* DAY TO SECOND */
-		else if (range == (MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
+		else if (range == (INTERVAL_MASK(DAY) |
+						   INTERVAL_MASK(HOUR) |
+						   INTERVAL_MASK(MINUTE) |
+						   INTERVAL_MASK(SECOND)))
 		{
 			interval->month = 0;
 		}
 		/* HOUR TO MINUTE */
-		else if (range == (MASK(HOUR) | MASK(MINUTE)))
+		else if (range == (INTERVAL_MASK(HOUR) |
+						   INTERVAL_MASK(MINUTE)))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		day;
@@ -620,7 +638,9 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 		}
 		/* HOUR TO SECOND */
-		else if (range == (MASK(HOUR) | MASK(MINUTE) | MASK(SECOND)))
+		else if (range == (INTERVAL_MASK(HOUR) |
+						   INTERVAL_MASK(MINUTE) |
+						   INTERVAL_MASK(SECOND)))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		day;
@@ -637,7 +657,8 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 #endif
 		}
 		/* MINUTE TO SECOND */
-		else if (range == (MASK(MINUTE) | MASK(SECOND)))
+		else if (range == (INTERVAL_MASK(MINUTE) |
+						   INTERVAL_MASK(SECOND)))
 		{
 #ifdef HAVE_INT64_TIMESTAMP
 			int64		hour;
@@ -657,7 +678,7 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 			elog(ERROR, "AdjustIntervalForTypmod(): internal coding error");
 
 		/* Need to adjust precision? If not, don't even try! */
-		if (precision != 0xFFFF)
+		if (precision != INTERVAL_FULL_PRECISION)
 		{
 			if ((precision < 0) || (precision > MAX_INTERVAL_PRECISION))
 				elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",

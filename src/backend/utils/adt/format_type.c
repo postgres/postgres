@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.30 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.31 2002/08/04 06:44:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,6 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
-
-
-#define MASK(b) (1 << (b))
 
 #define MAX_INT32_LEN 11
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
@@ -258,52 +255,63 @@ format_type_internal(Oid type_oid, int32 typemod,
 		case INTERVALOID:
 			if (with_typemod)
 			{
-				int			fields = typemod >> 16;
-				int			precision = typemod & 0xFFFF;
+				int			fields = INTERVAL_RANGE(typemod);
+				int			precision = INTERVAL_PRECISION(typemod);
 				const char *fieldstr;
 
 				switch (fields)
 				{
-					case MASK(YEAR):
+					case INTERVAL_MASK(YEAR):
 						fieldstr = " year";
 						break;
-					case MASK(MONTH):
+					case INTERVAL_MASK(MONTH):
 						fieldstr = " month";
 						break;
-					case MASK(DAY):
+					case INTERVAL_MASK(DAY):
 						fieldstr = " day";
 						break;
-					case MASK(HOUR):
+					case INTERVAL_MASK(HOUR):
 						fieldstr = " hour";
 						break;
-					case MASK(MINUTE):
+					case INTERVAL_MASK(MINUTE):
 						fieldstr = " minute";
 						break;
-					case MASK(SECOND):
+					case INTERVAL_MASK(SECOND):
 						fieldstr = " second";
 						break;
-					case MASK(YEAR) | MASK(MONTH):
+					case INTERVAL_MASK(YEAR)
+					  | INTERVAL_MASK(MONTH):
 						fieldstr = " year to month";
 						break;
-					case MASK(DAY) | MASK(HOUR):
+					case INTERVAL_MASK(DAY)
+					  | INTERVAL_MASK(HOUR):
 						fieldstr = " day to hour";
 						break;
-					case MASK(DAY) | MASK(HOUR) | MASK(MINUTE):
+					case INTERVAL_MASK(DAY)
+					  | INTERVAL_MASK(HOUR)
+					  | INTERVAL_MASK(MINUTE):
 						fieldstr = " day to minute";
 						break;
-					case MASK(DAY) | MASK(HOUR) | MASK(MINUTE) | MASK(SECOND):
+					case INTERVAL_MASK(DAY)
+					  | INTERVAL_MASK(HOUR)
+					  | INTERVAL_MASK(MINUTE)
+					  | INTERVAL_MASK(SECOND):
 						fieldstr = " day to second";
 						break;
-					case MASK(HOUR) | MASK(MINUTE):
+					case INTERVAL_MASK(HOUR)
+					  | INTERVAL_MASK(MINUTE):
 						fieldstr = " hour to minute";
 						break;
-					case MASK(HOUR) | MASK(MINUTE) | MASK(SECOND):
+					case INTERVAL_MASK(HOUR)
+					  | INTERVAL_MASK(MINUTE)
+					  | INTERVAL_MASK(SECOND):
 						fieldstr = " hour to second";
 						break;
-					case MASK(MINUTE) | MASK(SECOND):
+					case INTERVAL_MASK(MINUTE)
+					  | INTERVAL_MASK(SECOND):
 						fieldstr = " minute to second";
 						break;
-					case 0x7FFF:
+					case INTERVAL_FULL_RANGE:
 						fieldstr = "";
 						break;
 					default:
@@ -311,7 +319,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 						fieldstr = "";
 						break;
 				}
-				if (precision != 0xFFFF)
+				if (precision != INTERVAL_FULL_PRECISION)
 					buf = psnprintf(100, "interval(%d)%s",
 									precision, fieldstr);
 				else

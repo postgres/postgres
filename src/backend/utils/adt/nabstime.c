@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.95 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.96 2002/08/04 06:44:47 thomas Exp $
  *
  * NOTES
  *
@@ -486,8 +486,8 @@ nabstimein(PG_FUNCTION_ARGS)
 	int			nf,
 				ftype[MAXDATEFIELDS];
 
-	if (strlen(str) > MAXDATELEN)
-		elog(ERROR, "Bad (length) abstime external representation '%s'", str);
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad abstime external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
@@ -849,8 +849,8 @@ reltimein(PG_FUNCTION_ARGS)
 				ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
 
-	if (strlen(str) > MAXDATELEN)
-		elog(ERROR, "Bad (length) reltime external representation '%s'", str);
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad reltime external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeInterval(field, ftype, nf, &dtype, tm, &fsec) != 0))

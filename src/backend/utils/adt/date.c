@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.69 2002/06/20 20:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.70 2002/08/04 06:44:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,9 @@ date_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad date external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
@@ -518,6 +521,9 @@ time_in(PG_FUNCTION_ARGS)
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad time external representation (too long) '%s'", str);
+
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, NULL) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
@@ -606,37 +612,85 @@ time_scale(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMEADT(result);
 }
 
+/* AdjustTimeForTypmod()
+ * Force the precision of the time value to a specified value.
+ * Uses *exactly* the same code as in AdjustTimestampForTypemod()
+ * but we make a separate copy because those types do not
+ * have a fundamental tie together but rather a coincidence of
+ * implementation. - thomas
+ */
 static void
 AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 {
+#ifdef HAVE_INT64_TIMESTAMP
+	static const int64 TimeScales[MAX_TIMESTAMP_PRECISION+1] = {
+		INT64CONST(1000000),
+		INT64CONST(100000),
+		INT64CONST(10000),
+		INT64CONST(1000),
+		INT64CONST(100),
+		INT64CONST(10),
+		INT64CONST(1)
+	};
+
+	static const int64 TimeOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+		INT64CONST(-500000),
+		INT64CONST(-50000),
+		INT64CONST(-5000),
+		INT64CONST(-500),
+		INT64CONST(-50),
+		INT64CONST(-5),
+		INT64CONST(0)
+	};
+#else
+	static const double TimeScales[MAX_TIMESTAMP_PRECISION+1] = {
+		1,
+		10,
+		100,
+		1000,
+		10000,
+		100000,
+		1000000
+	};
+
+	static const double TimeOffsets[MAX_TIMESTAMP_PRECISION+1] = {
+		0.5,
+		0.05,
+		0.005,
+		0.0005,
+		0.00005,
+		0.000005,
+		0.0000005
+	};
+#endif
+
 	if ((typmod >= 0) && (typmod <= MAX_TIME_PRECISION))
 	{
 #ifdef HAVE_INT64_TIMESTAMP
-		static int64 TimeScale = INT64CONST(1000000);
-#else
-		static double TimeScale = 1;
-#endif
-		static int32 TimeTypmod = 0;
-
-		if (typmod != TimeTypmod)
+		/* we have different truncation behavior depending on sign */
+		if (*time >= INT64CONST(0))
 		{
-#ifdef HAVE_INT64_TIMESTAMP
-			TimeScale = pow(10.0, (MAX_TIME_PRECISION-typmod));
-#else
-			TimeScale = pow(10.0, typmod);
-#endif
-			TimeTypmod = typmod;
+			*time = ((*time / TimeScales[typmod])
+					 * TimeScales[typmod]);
 		}
-
-#ifdef HAVE_INT64_TIMESTAMP
-		*time = ((*time / TimeScale) * TimeScale);
-		if (*time >= INT64CONST(86400000000))
-			*time -= INT64CONST(86400000000);
+		else
+		{
+			*time = (((*time + TimeOffsets[typmod]) / TimeScales[typmod])
+					 * TimeScales[typmod]);
+		}
 #else
-		*time = (rint(((double) *time) * TimeScale) / TimeScale);
-
-		if (*time >= 86400)
-			*time -= 86400;
+		/* we have different truncation behavior depending on sign */
+		if (*time >= 0)
+		{
+			*time = (rint(((double) *time) * TimeScales[typmod])
+					 / TimeScales[typmod]);
+		}
+		else
+		{
+			/* Scale and truncate first, then add to help the rounding behavior */
+			*time = (rint((((double) *time) * TimeScales[typmod]) + TimeOffsets[typmod])
+					 / TimeScales[typmod]);
+		}
 #endif
 	}
 
@@ -1268,6 +1322,10 @@ timetz_in(PG_FUNCTION_ARGS)
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
+
+	if (strlen(str) >= sizeof(lowstr))
+		elog(ERROR, "Bad time with time zone"
+			 " external representation (too long) '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
