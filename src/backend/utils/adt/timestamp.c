@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.59 2001/10/25 05:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.60 2001/11/21 18:29:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1570,9 +1570,12 @@ interval_accum(PG_FUNCTION_ARGS)
 	 * buggy array code: it won't ensure proper alignment of Interval
 	 * objects on machines where double requires 8-byte alignment. That
 	 * should be fixed, but in the meantime...
+	 *
+	 * Note: must use DatumGetPointer here, not DatumGetIntervalP,
+	 * else some compilers optimize into double-aligned load/store anyway.
 	 */
-	memcpy(&sumX, DatumGetIntervalP(transdatums[0]), sizeof(Interval));
-	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
+	memcpy((void *) &sumX, DatumGetPointer(transdatums[0]), sizeof(Interval));
+	memcpy((void *) &N, DatumGetPointer(transdatums[1]), sizeof(Interval));
 
 	newsum = DatumGetIntervalP(DirectFunctionCall2(interval_pl,
 												IntervalPGetDatum(&sumX),
@@ -1609,9 +1612,12 @@ interval_avg(PG_FUNCTION_ARGS)
 	 * buggy array code: it won't ensure proper alignment of Interval
 	 * objects on machines where double requires 8-byte alignment. That
 	 * should be fixed, but in the meantime...
+	 *
+	 * Note: must use DatumGetPointer here, not DatumGetIntervalP,
+	 * else some compilers optimize into double-aligned load/store anyway.
 	 */
-	memcpy(&sumX, DatumGetIntervalP(transdatums[0]), sizeof(Interval));
-	memcpy(&N, DatumGetIntervalP(transdatums[1]), sizeof(Interval));
+	memcpy((void *) &sumX, DatumGetPointer(transdatums[0]), sizeof(Interval));
+	memcpy((void *) &N, DatumGetPointer(transdatums[1]), sizeof(Interval));
 
 	/* SQL92 defines AVG of no values to be NULL */
 	if (N.time == 0)
