@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.177 2002/10/19 00:25:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.177.2.1 2002/12/01 17:33:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1470,9 +1470,8 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	char	   *string;
 	char		c;
 	char		delimc = delim[0];
-
 	bool		same_encoding;
-	char	   *string_start;
+	char	   *string_start = NULL;
 	int			mblen;
 	int			i;
 
@@ -1481,12 +1480,12 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	{
 		string = (char *) pg_server_to_client((unsigned char *) server_string,
 											  strlen(server_string));
-		string_start = string;
+		if (string != server_string)
+			string_start = string;
 	}
 	else
 	{
 		string = server_string;
-		string_start = NULL;
 	}
 
 	for (; (c = *string) != '\0'; string += mblen)
