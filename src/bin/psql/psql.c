@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.171 1999/02/21 03:49:39 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.172 1999/03/15 02:18:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -761,10 +761,34 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 		}
 
 		/*
-		 * Display the information
+		 * Extract the veiw name and veiw definition from pg_views.
+                 * -Ryan 2/14/99
 		 */
 
-		fprintf(fout, "\nTable    = %s\n", table);
+		descbuf[0] = '\0';
+		strcat(descbuf, "SELECT viewname, definition ");
+		strcat(descbuf, "FROM pg_views ");
+		strcat(descbuf, "WHERE viewname like '");
+		strcat(descbuf, table);
+		strcat(descbuf, "' ");
+		if(!(res2 = PSQLexec(pset, descbuf)))
+		  return -1;
+
+		/*
+		 * Display the information
+		 */
+		if(PQntuples(res2)) {
+		  /*
+		   * display the query.
+		   * -Ryan 2/14/99
+		   */
+		  fprintf(fout, "\nView    = %s\n", table);
+		  fprintf(fout, "Query   = %s\n", PQgetvalue(res2, 0, 1));
+		} else {
+		  fprintf(fout, "\nTable    = %s\n", table);
+		}
+		PQclear(res2);
+
 		fprintf(fout, "+----------------------------------+----------------------------------+-------+\n");
 		fprintf(fout, "|              Field               |              Type                | Length|\n");
 		fprintf(fout, "+----------------------------------+----------------------------------+-------+\n");
