@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freespace.h,v 1.7 2002/06/20 20:29:52 momjian Exp $
+ * $Id: freespace.h,v 1.8 2002/09/20 19:56:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,16 @@
 
 #include "storage/block.h"
 #include "storage/relfilenode.h"
+
+
+/*
+ * exported types
+ */
+typedef struct PageFreeSpaceInfo
+{
+	BlockNumber		blkno;		/* which page in relation */
+	Size			avail;		/* space available on this page */
+} PageFreeSpaceInfo;
 
 
 extern int	MaxFSMRelations;
@@ -37,10 +47,8 @@ extern BlockNumber RecordAndGetPageWithFreeSpace(RelFileNode *rel,
 							  Size spaceNeeded);
 extern void MultiRecordFreeSpace(RelFileNode *rel,
 					 BlockNumber minPage,
-					 BlockNumber maxPage,
 					 int nPages,
-					 BlockNumber *pages,
-					 Size *spaceAvail);
+					 PageFreeSpaceInfo *pageSpaces);
 extern void FreeSpaceMapForgetRel(RelFileNode *rel);
 extern void FreeSpaceMapForgetDatabase(Oid dbid);
 

@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.237 2002/09/04 20:31:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.238 2002/09/20 19:56:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1321,9 +1321,10 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		pfree(vtlinks);
 	}
 
-	elog(elevel, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; \
-Tup %.0f: Vac %.0f, Keep/VTL %.0f/%u, UnUsed %.0f, MinLen %lu, MaxLen %lu; \
-Re-using: Free/Avail. Space %.0f/%.0f; EndEmpty/Avail. Pages %u/%u.\n\t%s",
+	elog(elevel, "Pages %u: Changed %u, reaped %u, Empty %u, New %u; "
+		 "Tup %.0f: Vac %.0f, Keep/VTL %.0f/%u, UnUsed %.0f, MinLen %lu, "
+		 "MaxLen %lu; Re-using: Free/Avail. Space %.0f/%.0f; "
+		 "EndEmpty/Avail. Pages %u/%u.\n\t%s",
 		 nblocks, changed_pages, vacuum_pages->num_pages, empty_pages,
 		 new_pages, num_tuples, tups_vacuumed,
 		 nkeep, vacrelstats->num_vtlinks,
@@ -2597,8 +2598,8 @@ scan_index(Relation indrel, double num_tuples)
 	{
 		if (stats->num_index_tuples > num_tuples ||
 			!vac_is_partial_index(indrel))
-			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
-\n\tRecreate the index.",
+			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f)."
+				 "\n\tRecreate the index.",
 				 RelationGetRelationName(indrel),
 				 stats->num_index_tuples, num_tuples);
 	}
@@ -2651,8 +2652,8 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	{
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			!vac_is_partial_index(indrel))
-			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f).\
-\n\tRecreate the index.",
+			elog(WARNING, "Index %s: NUMBER OF INDEX' TUPLES (%.0f) IS NOT THE SAME AS HEAP' (%.0f)."
+				 "\n\tRecreate the index.",
 				 RelationGetRelationName(indrel),
 				 stats->num_index_tuples, num_tuples);
 	}
@@ -2731,35 +2732,32 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 {
 	int			nPages = fraged_pages->num_pages;
 	int			i;
-	BlockNumber *pages;
-	Size	   *spaceAvail;
+	PageFreeSpaceInfo *pageSpaces;
 
 	/* +1 to avoid palloc(0) */
-	pages = (BlockNumber *) palloc((nPages + 1) * sizeof(BlockNumber));
-	spaceAvail = (Size *) palloc((nPages + 1) * sizeof(Size));
+	pageSpaces = (PageFreeSpaceInfo *)
+		palloc((nPages + 1) * sizeof(PageFreeSpaceInfo));
 
 	for (i = 0; i < nPages; i++)
 	{
-		pages[i] = fraged_pages->pagedesc[i]->blkno;
-		spaceAvail[i] = fraged_pages->pagedesc[i]->free;
+		pageSpaces[i].blkno = fraged_pages->pagedesc[i]->blkno;
+		pageSpaces[i].avail = fraged_pages->pagedesc[i]->free;
 
 		/*
 		 * fraged_pages may contain entries for pages that we later
 		 * decided to truncate from the relation; don't enter them into
-		 * the map!
+		 * the free space map!
 		 */
-		if (pages[i] >= rel_pages)
+		if (pageSpaces[i].blkno >= rel_pages)
 		{
 			nPages = i;
 			break;
 		}
 	}
 
-	MultiRecordFreeSpace(&onerel->rd_node,
-						 0, MaxBlockNumber,
-						 nPages, pages, spaceAvail);
-	pfree(pages);
-	pfree(spaceAvail);
+	MultiRecordFreeSpace(&onerel->rd_node, 0, nPages, pageSpaces);
+
+	pfree(pageSpaces);
 }
 
 /* Copy a VacPage structure */

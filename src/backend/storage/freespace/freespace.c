@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.13 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.14 2002/09/20 19:56:01 tgl Exp $
  *
  *
  * NOTES:
@@ -99,6 +99,7 @@ struct FSMRelation
 								 * about */
 	int			numChunks;		/* number of FSMChunks allocated to rel */
 	FSMChunk   *relChunks;		/* linked list of page info chunks */
+	FSMChunk   *lastChunk;		/* last chunk in linked list */
 };
 
 /*
@@ -142,6 +143,7 @@ static bool lookup_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page,
 static bool insert_fsm_page_entry(FSMRelation *fsmrel,
 					  BlockNumber page, Size spaceAvail,
 					  FSMChunk *chunk, int chunkRelIndex);
+static bool append_fsm_chunk(FSMRelation *fsmrel);
 static bool push_fsm_page_entry(BlockNumber page, Size spaceAvail,
 					FSMChunk *chunk, int chunkRelIndex);
 static void delete_fsm_page_entry(FSMRelation *fsmrel, FSMChunk *chunk,
@@ -359,21 +361,20 @@ RecordAndGetPageWithFreeSpace(RelFileNode *rel,
  * MultiRecordFreeSpace - record available-space info about multiple pages
  *		of a relation in one call.
  *
- * First, if minPage <= maxPage, the FSM must discard any entries it has for
- * pages in that page number range (inclusive).  This allows obsolete info
- * to be discarded.  Second, if nPages > 0, record the page numbers and free
- * space amounts in the given arrays.  As with RecordFreeSpace, the FSM is at
- * liberty to discard some of the information.	However, it *must* discard
- * previously stored info in the minPage..maxPage range (for example, this
- * case is used to remove info about deleted pages during relation truncation).
+ * First, the FSM must discard any entries it has for pages >= minPage.
+ * This allows obsolete info to be discarded (for example, it is used when
+ * truncating a relation).  Any entries before minPage should be kept.
+ *
+ * Second, if nPages > 0, record the page numbers and free space amounts in
+ * the given pageSpaces[] array.  As with RecordFreeSpace, the FSM is at
+ * liberty to discard some of this information.  The pageSpaces[] array must
+ * be sorted in order by blkno, and may not contain entries before minPage.
  */
 void
 MultiRecordFreeSpace(RelFileNode *rel,
 					 BlockNumber minPage,
-					 BlockNumber maxPage,
 					 int nPages,
-					 BlockNumber *pages,
-					 Size *spaceAvail)
+					 PageFreeSpaceInfo *pageSpaces)
 {
 	FSMRelation *fsmrel;
 	int			i;
@@ -383,59 +384,64 @@ MultiRecordFreeSpace(RelFileNode *rel,
 	if (fsmrel)
 	{
 		/*
-		 * Remove entries in specified range
+		 * Remove entries >= minPage
 		 */
-		if (minPage <= maxPage)
+		FSMChunk   *chunk;
+		int			chunkRelIndex;
+
+		/* Use lookup to locate first entry >= minPage */
+		lookup_fsm_page_entry(fsmrel, minPage, &chunk, &chunkRelIndex);
+		/* Set free space to 0 for each page >= minPage */
+		while (chunk)
 		{
-			FSMChunk   *chunk;
-			int			chunkRelIndex;
-			bool		done;
+			int			numPages = chunk->numPages;
 
-			/* Use lookup to locate first entry >= minPage */
-			lookup_fsm_page_entry(fsmrel, minPage, &chunk, &chunkRelIndex);
-			/* Set free space to 0 for each page within range */
-			done = false;
-			while (chunk && !done)
-			{
-				int			numPages = chunk->numPages;
-
-				for (; chunkRelIndex < numPages; chunkRelIndex++)
-				{
-					if (chunk->pages[chunkRelIndex] > maxPage)
-					{
-						done = true;
-						break;
-					}
-					chunk->bytes[chunkRelIndex] = 0;
-				}
-				chunk = chunk->next;
-				chunkRelIndex = 0;
-			}
-			/* Now compact out the zeroed entries */
-			compact_fsm_page_list(fsmrel);
+			for (i = chunkRelIndex; i < numPages; i++)
+				chunk->bytes[i] = 0;
+			chunk = chunk->next;
+			chunkRelIndex = 0;
 		}
+		/* Now compact out the zeroed entries, along with any other junk */
+		compact_fsm_page_list(fsmrel);
 
 		/*
 		 * Add new entries, if appropriate.
 		 *
-		 * XXX we could probably be smarter about this than doing it
-		 * completely separately for each one.	FIXME later.
-		 *
-		 * One thing we can do is short-circuit the process entirely if a
-		 * page (a) has too little free space to be recorded, and (b) is
-		 * within the minPage..maxPage range --- then we deleted any old
-		 * entry above, and we aren't going to make a new one. This is
-		 * particularly useful since in most cases, all the passed pages
-		 * will in fact be in the minPage..maxPage range.
+		 * This can be much cheaper than a full fsm_record_free_space()
+		 * call because we know we are appending to the end of the relation.
 		 */
 		for (i = 0; i < nPages; i++)
 		{
-			BlockNumber page = pages[i];
-			Size		avail = spaceAvail[i];
+			BlockNumber page = pageSpaces[i].blkno;
+			Size		avail = pageSpaces[i].avail;
+			FSMChunk   *chunk;
 
-			if (avail >= fsmrel->threshold ||
-				page < minPage || page > maxPage)
-				fsm_record_free_space(fsmrel, page, avail);
+			/* Check caller provides sorted data */
+			if (i > 0 ? (page <= pageSpaces[i-1].blkno) : (page < minPage))
+				elog(ERROR, "MultiRecordFreeSpace: data not in page order");
+
+			/* Ignore pages too small to fit */
+			if (avail < fsmrel->threshold)
+				continue;
+
+			/* Get another chunk if needed */
+			/* We may need to loop if acquire_fsm_free_space() fails */
+			while ((chunk = fsmrel->lastChunk) == NULL ||
+				   chunk->numPages >= CHUNKPAGES)
+			{
+				if (!append_fsm_chunk(fsmrel))
+					acquire_fsm_free_space();
+			}
+
+			/* Recheck in case threshold was raised by acquire */
+			if (avail < fsmrel->threshold)
+				continue;
+
+			/* Okay to store */
+			chunk->pages[chunk->numPages] = page;
+			chunk->bytes[chunk->numPages] = (ItemLength) avail;
+			chunk->numPages++;
+			fsmrel->numPages++;
 		}
 	}
 	LWLockRelease(FreeSpaceLock);
@@ -538,6 +544,7 @@ create_fsm_rel(RelFileNode *rel)
 		fsmrel->numPages = 0;
 		fsmrel->numChunks = 0;
 		fsmrel->relChunks = NULL;
+		fsmrel->lastChunk = NULL;
 		/* Discard lowest-priority existing rel, if we are over limit */
 		if (FreeSpaceMap->numRels >= MaxFSMRelations)
 			delete_fsm_rel(FreeSpaceMap->relListTail);
@@ -847,29 +854,12 @@ insert_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page, Size spaceAvail,
 		if (fsmrel->numPages >= fsmrel->numChunks * CHUNKPAGES)
 		{
 			/* No free space within chunk list, so need another chunk */
-			FSMChunk   *newChunk;
-
-			if ((newChunk = FreeSpaceMap->freeChunks) == NULL)
+			if (!append_fsm_chunk(fsmrel))
 				return false;	/* can't do it */
-			FreeSpaceMap->freeChunks = newChunk->next;
-			FreeSpaceMap->numFreeChunks--;
-			newChunk->next = NULL;
-			newChunk->numPages = 0;
-			if (fsmrel->relChunks == NULL)
-				fsmrel->relChunks = newChunk;
-			else
-			{
-				FSMChunk   *priorChunk = fsmrel->relChunks;
-
-				while (priorChunk->next != NULL)
-					priorChunk = priorChunk->next;
-				priorChunk->next = newChunk;
-			}
-			fsmrel->numChunks++;
 			if (chunk == NULL)
 			{
 				/* Original search found that new page belongs at end */
-				chunk = newChunk;
+				chunk = fsmrel->lastChunk;
 				chunkRelIndex = 0;
 			}
 		}
@@ -898,6 +888,38 @@ insert_fsm_page_entry(FSMRelation *fsmrel, BlockNumber page, Size spaceAvail,
 		if (lookup_fsm_page_entry(fsmrel, page, &chunk, &chunkRelIndex))
 			elog(ERROR, "insert_fsm_page_entry: entry already exists!");
 	}
+}
+
+/*
+ * Add one chunk to a FSMRelation's chunk list, if possible.
+ *
+ * Returns TRUE if successful, FALSE if no space available.  Note that on
+ * success, the new chunk is easily accessible via fsmrel->lastChunk.
+ */
+static bool
+append_fsm_chunk(FSMRelation *fsmrel)
+{
+	FSMChunk   *newChunk;
+
+	/* Remove a chunk from the freelist */
+	if ((newChunk = FreeSpaceMap->freeChunks) == NULL)
+		return false;			/* can't do it */
+	FreeSpaceMap->freeChunks = newChunk->next;
+	FreeSpaceMap->numFreeChunks--;
+
+	/* Initialize chunk to empty */
+	newChunk->next = NULL;
+	newChunk->numPages = 0;
+
+	/* Link it into FSMRelation */
+	if (fsmrel->relChunks == NULL)
+		fsmrel->relChunks = newChunk;
+	else
+		fsmrel->lastChunk->next = newChunk;
+	fsmrel->lastChunk = newChunk;
+	fsmrel->numChunks++;
+
+	return true;
 }
 
 /*
@@ -1016,6 +1038,7 @@ compact_fsm_page_list(FSMRelation *fsmrel)
 		fsmrel->numPages = 0;
 		fsmrel->numChunks = 0;
 		fsmrel->relChunks = NULL;
+		fsmrel->lastChunk = NULL;
 		free_chunk_chain(dstChunk);
 	}
 	else
@@ -1026,6 +1049,7 @@ compact_fsm_page_list(FSMRelation *fsmrel)
 		dstChunk->numPages = dstIndex;
 		free_chunk_chain(dstChunk->next);
 		dstChunk->next = NULL;
+		fsmrel->lastChunk = dstChunk;
 	}
 }
 

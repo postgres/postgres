@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.19 2002/09/04 20:31:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.20 2002/09/20 19:56:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,9 +87,8 @@ typedef struct LVRelStats
 	/* We use a simple array until it fills up, then convert to heap */
 	bool		fs_is_heap;		/* are we using heap organization? */
 	int			num_free_pages; /* current # of entries */
-	int			max_free_pages; /* # slots allocated in arrays */
-	BlockNumber *free_pages;	/* array or heap of block numbers */
-	Size	   *free_spaceavail;	/* array or heap of available space */
+	int			max_free_pages; /* # slots allocated in array */
+	PageFreeSpaceInfo *free_pages;	/* array or heap of blkno/avail */
 } LVRelStats;
 
 
@@ -119,6 +118,7 @@ static bool lazy_tid_reaped(ItemPointer itemptr, void *state);
 static bool dummy_tid_reaped(ItemPointer itemptr, void *state);
 static void lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats);
 static int	vac_cmp_itemptr(const void *left, const void *right);
+static int	vac_cmp_page_spaces(const void *left, const void *right);
 
 
 /*
@@ -432,8 +432,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			lazy_scan_index(Irel[i], vacrelstats);
 	}
 
-	elog(elevel, "Pages %u: Changed %u, Empty %u; \
-Tup %.0f: Vac %.0f, Keep %.0f, UnUsed %.0f.\n\tTotal %s",
+	elog(elevel, "Pages %u: Changed %u, Empty %u; Tup %.0f: Vac %.0f, Keep %.0f, UnUsed %.0f.\n\tTotal %s",
 		 nblocks, changed_pages, empty_pages,
 		 num_tuples, tups_vacuumed, nkeep, nunused,
 		 vac_show_rusage(&ru0));
@@ -662,8 +661,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 {
 	BlockNumber old_rel_pages = vacrelstats->rel_pages;
 	BlockNumber new_rel_pages;
-	BlockNumber *pages;
-	Size	   *spaceavail;
+	PageFreeSpaceInfo *pageSpaces;
 	int			n;
 	int			i,
 				j;
@@ -736,20 +734,20 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 * Drop free-space info for removed blocks; these must not get entered
 	 * into the FSM!
 	 */
-	pages = vacrelstats->free_pages;
-	spaceavail = vacrelstats->free_spaceavail;
+	pageSpaces = vacrelstats->free_pages;
 	n = vacrelstats->num_free_pages;
 	j = 0;
 	for (i = 0; i < n; i++)
 	{
-		if (pages[i] < new_rel_pages)
+		if (pageSpaces[i].blkno < new_rel_pages)
 		{
-			pages[j] = pages[i];
-			spaceavail[j] = spaceavail[i];
+			pageSpaces[j] = pageSpaces[i];
 			j++;
 		}
 	}
 	vacrelstats->num_free_pages = j;
+	/* We destroyed the heap ordering, so mark array unordered */
+	vacrelstats->fs_is_heap = false;
 
 	/*
 	 * We keep the exclusive lock until commit (perhaps not necessary)?
@@ -913,10 +911,8 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	vacrelstats->fs_is_heap = false;
 	vacrelstats->num_free_pages = 0;
 	vacrelstats->max_free_pages = maxpages;
-	vacrelstats->free_pages = (BlockNumber *)
-		palloc(maxpages * sizeof(BlockNumber));
-	vacrelstats->free_spaceavail = (Size *)
-		palloc(maxpages * sizeof(Size));
+	vacrelstats->free_pages = (PageFreeSpaceInfo *)
+		palloc(maxpages * sizeof(PageFreeSpaceInfo));
 }
 
 /*
@@ -946,8 +942,7 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 					   BlockNumber page,
 					   Size avail)
 {
-	BlockNumber *pages;
-	Size	   *spaceavail;
+	PageFreeSpaceInfo *pageSpaces;
 	int			n;
 
 	/* Ignore pages with little free space */
@@ -955,15 +950,14 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 		return;
 
 	/* Copy pointers to local variables for notational simplicity */
-	pages = vacrelstats->free_pages;
-	spaceavail = vacrelstats->free_spaceavail;
+	pageSpaces = vacrelstats->free_pages;
 	n = vacrelstats->max_free_pages;
 
 	/* If we haven't filled the array yet, just keep adding entries */
 	if (vacrelstats->num_free_pages < n)
 	{
-		pages[vacrelstats->num_free_pages] = page;
-		spaceavail[vacrelstats->num_free_pages] = avail;
+		pageSpaces[vacrelstats->num_free_pages].blkno = page;
+		pageSpaces[vacrelstats->num_free_pages].avail = avail;
 		vacrelstats->num_free_pages++;
 		return;
 	}
@@ -971,7 +965,7 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	/*----------
 	 * The rest of this routine works with "heap" organization of the
 	 * free space arrays, wherein we maintain the heap property
-	 *			spaceavail[(j-1) div 2] <= spaceavail[j]  for 0 < j < n.
+	 *			avail[(j-1) div 2] <= avail[j]  for 0 < j < n.
 	 * In particular, the zero'th element always has the smallest available
 	 * space and can be discarded to make room for a new page with more space.
 	 * See Knuth's discussion of heap-based priority queues, sec 5.2.3;
@@ -991,8 +985,8 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 
 		while (--l >= 0)
 		{
-			BlockNumber R = pages[l];
-			Size		K = spaceavail[l];
+			BlockNumber R = pageSpaces[l].blkno;
+			Size		K = pageSpaces[l].avail;
 			int			i;		/* i is where the "hole" is */
 
 			i = l;
@@ -1002,23 +996,22 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 
 				if (j >= n)
 					break;
-				if (j + 1 < n && spaceavail[j] > spaceavail[j + 1])
+				if (j + 1 < n && pageSpaces[j].avail > pageSpaces[j + 1].avail)
 					j++;
-				if (K <= spaceavail[j])
+				if (K <= pageSpaces[j].avail)
 					break;
-				pages[i] = pages[j];
-				spaceavail[i] = spaceavail[j];
+				pageSpaces[i] = pageSpaces[j];
 				i = j;
 			}
-			pages[i] = R;
-			spaceavail[i] = K;
+			pageSpaces[i].blkno = R;
+			pageSpaces[i].avail = K;
 		}
 
 		vacrelstats->fs_is_heap = true;
 	}
 
 	/* If new page has more than zero'th entry, insert it into heap */
-	if (avail > spaceavail[0])
+	if (avail > pageSpaces[0].avail)
 	{
 		/*
 		 * Notionally, we replace the zero'th entry with the new data, and
@@ -1034,16 +1027,15 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 
 			if (j >= n)
 				break;
-			if (j + 1 < n && spaceavail[j] > spaceavail[j + 1])
+			if (j + 1 < n && pageSpaces[j].avail > pageSpaces[j + 1].avail)
 				j++;
-			if (avail <= spaceavail[j])
+			if (avail <= pageSpaces[j].avail)
 				break;
-			pages[i] = pages[j];
-			spaceavail[i] = spaceavail[j];
+			pageSpaces[i] = pageSpaces[j];
 			i = j;
 		}
-		pages[i] = page;
-		spaceavail[i] = avail;
+		pageSpaces[i].blkno = page;
+		pageSpaces[i].avail = avail;
 	}
 }
 
@@ -1085,16 +1077,17 @@ dummy_tid_reaped(ItemPointer itemptr, void *state)
 static void
 lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats)
 {
+	PageFreeSpaceInfo *pageSpaces = vacrelstats->free_pages;
+	int			nPages = vacrelstats->num_free_pages;
+
 	/*
-	 * Since MultiRecordFreeSpace doesn't currently impose any
-	 * restrictions on the ordering of the input, we can just pass it the
-	 * arrays as-is, whether they are in heap or linear order.
+	 * Sort data into order, as required by MultiRecordFreeSpace.
 	 */
-	MultiRecordFreeSpace(&onerel->rd_node,
-						 0, MaxBlockNumber,
-						 vacrelstats->num_free_pages,
-						 vacrelstats->free_pages,
-						 vacrelstats->free_spaceavail);
+	if (nPages > 1)
+		qsort(pageSpaces, nPages, sizeof(PageFreeSpaceInfo),
+			  vac_cmp_page_spaces);
+
+	MultiRecordFreeSpace(&onerel->rd_node, 0, nPages, pageSpaces);
 }
 
 /*
@@ -1124,5 +1117,18 @@ vac_cmp_itemptr(const void *left, const void *right)
 	if (loff > roff)
 		return 1;
 
+	return 0;
+}
+
+static int
+vac_cmp_page_spaces(const void *left, const void *right)
+{
+	PageFreeSpaceInfo *linfo = (PageFreeSpaceInfo *) left;
+	PageFreeSpaceInfo *rinfo = (PageFreeSpaceInfo *) right;
+
+	if (linfo->blkno < rinfo->blkno)
+		return -1;
+	else if (linfo->blkno > rinfo->blkno)
+		return 1;
 	return 0;
 }
