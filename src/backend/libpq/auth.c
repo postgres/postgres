@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.121 2004/12/31 21:59:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.122 2005/01/12 21:37:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -150,6 +150,10 @@ pg_krb4_recvauth(Port *port)
  */
 
 #include <krb5.h>
+/* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
+#if !defined(__COM_ERR_H) && !defined(__COM_ERR_H__)
+#include <com_err.h>
+#endif
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication

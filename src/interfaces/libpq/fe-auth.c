@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.98 2005/01/04 23:18:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.99 2005/01/12 21:37:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,6 +243,10 @@ pg_krb4_sendauth(char *PQerrormsg, int sock,
  */
 
 #include <krb5.h>
+/* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
+#if !defined(__COM_ERR_H) && !defined(__COM_ERR_H__)
+#include <com_err.h>
+#endif
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication
