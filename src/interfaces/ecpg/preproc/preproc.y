@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.305 2005/02/02 15:37:43 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.306 2005/02/09 11:26:44 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1580,7 +1580,7 @@ CreateAsStmt:  CREATE OptTemp TABLE qualified_name OptCreateAs WithOidsAs
 			if (FoundInto == 1)
 				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE / AS SELECT may not specify INTO");
 
-			$$ = cat_str(8, make_str("create"), $2, make_str("table"), $4, $5, $6, $8);
+			$$ = cat_str(7, make_str("create"), $2, make_str("table"), $4, $5, $6, $8);
 		}
 		;
 
