@@ -74,18 +74,18 @@ ERROR:  check_fkeys_pkey_exist: tuple references non-existing key in pkeys
 -- no key in fkeys2
 insert into fkeys values (60, '6', 4);
 ERROR:  check_fkeys_pkey2_exist: tuple references non-existing key in fkeys2
-NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 delete from pkeys where pkey1 = 30 and pkey2 = '3';
-ERROR:  check_fkeys2_fkey_restrict: tuple referenced in fkeys
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
-NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
+ERROR:  check_fkeys2_fkey_restrict: tuple referenced in fkeys
 delete from pkeys where pkey1 = 40 and pkey2 = '4';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
+NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
 update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 50 and pkey2 = '5';
+NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 ERROR:  check_fkeys2_fkey_restrict: tuple referenced in fkeys
+update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys are deleted
 NOTICE:  check_pkeys_fkey_cascade: 1 tuple(s) of fkeys2 are deleted
-update pkeys set pkey1 = 7, pkey2 = '70' where pkey1 = 10 and pkey2 = '1';
 DROP TABLE pkeys;
 DROP TABLE fkeys;
 DROP TABLE fkeys2;

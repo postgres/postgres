@@ -92,11 +92,11 @@ ERROR:  renameatt: attribute "oid" exists
 -- TRANSACTION STUFF
  
 -- not in a xact 
-NOTICE:  UserAbortTransactionBlock and not in in-progress state
 abort;
+NOTICE:  UserAbortTransactionBlock and not in in-progress state
 -- not in a xact 
-NOTICE:  EndTransactionBlock and not inprogress/abort state 
 end;
+NOTICE:  EndTransactionBlock and not inprogress/abort state 
 --
 -- DEFINE AGGREGATE
  

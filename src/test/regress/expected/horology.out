@@ -572,8 +572,8 @@ DROP TABLE TEMP_DATETIME;
 -- formats
 --
 SET DateStyle TO 'US,Postgres';
-NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 SELECT '' AS sixty_two, d1 AS us_postgres FROM DATETIME_TBL;
  sixty_two |           us_postgres           
 -----------+---------------------------------
@@ -734,8 +734,8 @@ SELECT '' AS eight, f1 AS us_iso FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'US,SQL';
-NOTICE:  DateStyle is SQL with US (NonEuropean) conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is SQL with US (NonEuropean) conventions
 SELECT '' AS sixty_two, d1 AS us_sql FROM DATETIME_TBL;
  sixty_two |           us_sql           
 -----------+----------------------------
@@ -816,8 +816,8 @@ SELECT '' AS eight, f1 AS us_sql FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'European,Postgres';
-NOTICE:  DateStyle is Postgres with European conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is Postgres with European conventions
 INSERT INTO DATETIME_TBL VALUES('13/06/1957');
 SELECT count(*) as one FROM DATETIME_TBL WHERE d1 = 'Jun 13 1957';
  one 
@@ -906,8 +906,8 @@ SELECT '' AS eight, f1 AS european_postgres FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'European,ISO';
-NOTICE:  DateStyle is ISO with European conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is ISO with European conventions
 SELECT '' AS sixty_three, d1 AS european_iso FROM DATETIME_TBL;
  sixty_three |       european_iso        
 -------------+---------------------------
@@ -989,8 +989,8 @@ SELECT '' AS eight, f1 AS european_iso FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'European,SQL';
-NOTICE:  DateStyle is SQL with European conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is SQL with European conventions
 SELECT '' AS sixty_three, d1 AS european_sql FROM DATETIME_TBL;
  sixty_three |        european_sql        
 -------------+----------------------------
@@ -1072,14 +1072,14 @@ SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 (8 rows)
 
 RESET DateStyle;
-NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 --
 -- formats
 --
 SET DateStyle TO 'US,Postgres';
-NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 SELECT '' AS sixty_two, d1 AS us_postgres FROM DATETIME_TBL;
  sixty_two |           us_postgres           
 -----------+---------------------------------
@@ -1242,8 +1242,8 @@ SELECT '' AS eight, f1 AS us_iso FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'US,SQL';
-NOTICE:  DateStyle is SQL with US (NonEuropean) conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is SQL with US (NonEuropean) conventions
 SELECT '' AS sixty_two, d1 AS us_sql FROM DATETIME_TBL;
  sixty_two |           us_sql           
 -----------+----------------------------
@@ -1325,8 +1325,8 @@ SELECT '' AS eight, f1 AS us_sql FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'European,Postgres';
-NOTICE:  DateStyle is Postgres with European conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is Postgres with European conventions
 INSERT INTO DATETIME_TBL VALUES('13/06/1957');
 SELECT count(*) as one FROM DATETIME_TBL WHERE d1 = 'Jun 13 1957';
  one 
@@ -1416,8 +1416,8 @@ SELECT '' AS eight, f1 AS european_postgres FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'European,ISO';
-NOTICE:  DateStyle is ISO with European conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is ISO with European conventions
 SELECT '' AS sixty_three, d1 AS european_iso FROM DATETIME_TBL;
  sixty_three |       european_iso        
 -------------+---------------------------
@@ -1500,8 +1500,8 @@ SELECT '' AS eight, f1 AS european_iso FROM ABSTIME_TBL;
 (8 rows)
 
 SET DateStyle TO 'European,SQL';
-NOTICE:  DateStyle is SQL with European conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is SQL with European conventions
 SELECT '' AS sixty_three, d1 AS european_sql FROM DATETIME_TBL;
  sixty_three |        european_sql        
 -------------+----------------------------
@@ -1584,5 +1584,5 @@ SELECT '' AS eight, f1 AS european_sql FROM ABSTIME_TBL;
 (8 rows)
 
 RESET DateStyle;
-NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions
 SHOW DateStyle;
+NOTICE:  DateStyle is Postgres with US (NonEuropean) conventions

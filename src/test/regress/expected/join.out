@@ -127,20 +127,20 @@ ERROR:  JOIN expressions are not yet implemented
 -- Outer joins
 --
 SELECT '' AS "xxx", *
-NOTICE:  OUTER JOIN not yet implemented
   FROM JOIN1_TBL OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  OUTER JOIN not yet implemented
 ERROR:  JOIN expressions are not yet implemented
 SELECT '' AS "xxx", *
-NOTICE:  LEFT OUTER JOIN not yet implemented
   FROM JOIN1_TBL LEFT OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  LEFT OUTER JOIN not yet implemented
 ERROR:  JOIN expressions are not yet implemented
 SELECT '' AS "xxx", *
-NOTICE:  RIGHT OUTER JOIN not yet implemented
   FROM JOIN1_TBL RIGHT OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  RIGHT OUTER JOIN not yet implemented
 ERROR:  JOIN expressions are not yet implemented
 SELECT '' AS "xxx", *
-NOTICE:  FULL OUTER JOIN not yet implemented
   FROM JOIN1_TBL FULL OUTER JOIN JOIN2_TBL USING (i);
+NOTICE:  FULL OUTER JOIN not yet implemented
 ERROR:  JOIN expressions are not yet implemented
 --
 -- More complicated constructs

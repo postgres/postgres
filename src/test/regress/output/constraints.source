@@ -180,8 +180,8 @@ CREATE TABLE tmp (xd INT, yd TEXT, zd INT);
 INSERT INTO tmp VALUES (null, 'Y', null);
 INSERT INTO tmp VALUES (5, '!check failed', null);
 INSERT INTO tmp VALUES (null, 'try again', null);
-NOTICE:  insert_seq.nextval: sequence was re-created
 INSERT INTO INSERT_TBL(y) select yd from tmp;
+NOTICE:  insert_seq.nextval: sequence was re-created
 SELECT '' AS three, * FROM INSERT_TBL;
  three | x |       y       | z  
 -------+---+---------------+----
@@ -250,8 +250,8 @@ SELECT * FROM COPY_TBL;
 --
 -- Primary keys
 --
-NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
 CREATE TABLE PRIMARY_TBL (i int PRIMARY KEY, t text);
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
 INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 INSERT INTO PRIMARY_TBL VALUES (1, 'three');
@@ -271,8 +271,8 @@ SELECT '' AS four, * FROM PRIMARY_TBL;
 
 DROP TABLE PRIMARY_TBL;
 CREATE TABLE PRIMARY_TBL (i int, t text,
-NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
 	PRIMARY KEY(i,t));
+NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' for table 'primary_tbl'
 INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 INSERT INTO PRIMARY_TBL VALUES (1, 'three');
@@ -294,8 +294,8 @@ DROP TABLE PRIMARY_TBL;
 --
 -- Unique keys
 --
-NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
 CREATE TABLE UNIQUE_TBL (i int UNIQUE, t text);
+NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');
@@ -317,8 +317,8 @@ SELECT '' AS five, * FROM UNIQUE_TBL;
 
 DROP TABLE UNIQUE_TBL;
 CREATE TABLE UNIQUE_TBL (i int, t text,
-NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
 	UNIQUE(i,t));
+NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for table 'unique_tbl'
 INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 INSERT INTO UNIQUE_TBL VALUES (1, 'three');

@@ -4,8 +4,8 @@
 CREATE FUNCTION widget_in(opaque)
    RETURNS widget
    AS '_OBJWD_/regress_DLSUFFIX_'
-NOTICE:  ProcedureCreate: type 'widget' is not yet defined
    LANGUAGE 'c';
+NOTICE:  ProcedureCreate: type 'widget' is not yet defined
 CREATE FUNCTION widget_out(opaque)
    RETURNS opaque
    AS '_OBJWD_/regress_DLSUFFIX_'
