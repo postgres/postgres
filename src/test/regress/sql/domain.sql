@@ -6,8 +6,8 @@ comment on domain domaindroptest is 'About to drop this..';
 
 create domain basetypetest domaindroptest;
 
+drop domain domaindroptest cascade;
 drop domain domaindroptest;
-drop domain domaindroptest restrict;
 
 
 -- TEST Domains.
@@ -31,11 +31,16 @@ INSERT INTO basictest values ('88', 'haha', 'short text', '123.12'); -- Bad varc
 INSERT INTO basictest values ('88', 'haha', 'short', '123.1212');    -- Truncate numeric
 select * from basictest;
 
+-- check that domains inherit operations from base types
+-- XXX shouldn't have to quote the constant here
+select testtext || testvarchar as concat, testnumeric + '42' as sum
+from basictest;
+
 drop table basictest;
 drop domain domainvarchar restrict;
 drop domain domainnumeric restrict;
 drop domain domainint4 restrict;
-drop domain domaintext restrict;
+drop domain domaintext;
 
 
 -- Array Test
@@ -51,6 +56,8 @@ INSERT INTO domarrtest values ('{{2,2}{2,2}}', '{{"a","b"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a","b"}{"c","d"}{"e"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a"}{"c"}}');
 INSERT INTO domarrtest values (NULL, '{{"a","b"}{"c","d","e"}}');
+select * from domarrtest;
+select testint4arr[1], testtextarr[2:2] from domarrtest;
 
 drop table domarrtest;
 drop domain domainint4arr restrict;

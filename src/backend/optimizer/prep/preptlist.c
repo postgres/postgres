@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.49 2002/03/19 02:18:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.50 2002/03/20 19:44:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,9 +355,9 @@ build_column_default(Relation rel, int attrno)
 	Form_pg_attribute att_tup = rd_att->attrs[attrno - 1];
 	Oid			atttype = att_tup->atttypid;
 	int32		atttypmod = att_tup->atttypmod;
-	int16		typlen;
-	bool		typbyval;
-	Node	   *expr;
+	int16		typlen = att_tup->attlen;
+	bool		typbyval = att_tup->attbyval;
+	Node	   *expr = NULL;
 
 	/*
 	 * Scan to see if relation has a default for this column.
@@ -371,110 +371,86 @@ build_column_default(Relation rel, int attrno)
 		{
 			if (attrno == defval[ndef].adnum)
 			{
-				Oid			type_id;
-
 				/*
 				 * Found it, convert string representation to node tree.
 				 */
 				expr = stringToNode(defval[ndef].adbin);
-
-				/*
-				 * Make sure the value is coerced to the target column
-				 * type (might not be right type yet if it's not a
-				 * constant!) This should match the parser's processing of
-				 * non-defaulted expressions --- see
-				 * updateTargetListEntry().
-				 */
-				type_id = exprType(expr);
-
-				if (type_id != atttype)
-				{
-					expr = CoerceTargetExpr(NULL, expr, type_id,
-											getBaseType(atttype), atttypmod);
-
-					/*
-					 * This really shouldn't fail; should have checked the
-					 * default's type when it was created ...
-					 */
-					if (expr == NULL)
-						elog(ERROR, "Column \"%s\" is of type %s"
-							 " but default expression is of type %s"
-							 "\n\tYou will need to rewrite or cast the expression",
-							 NameStr(att_tup->attname),
-							 format_type_be(atttype),
-							 format_type_be(type_id));
-				}
-
-				/*
-				 * If the column is a fixed-length type, it may need a
-				 * length coercion as well as a type coercion.
-				 */
-				expr = coerce_type_typmod(NULL, expr,
-										  atttype, atttypmod);
-				return expr;
+				break;
 			}
 		}
 	}
 
-	/*
-	 * No per-column default, so look for a default for the type itself.
-	 * If there isn't one, we generate a NULL constant of the correct
-	 * type.
-	 */
-	if (att_tup->attisset)
+	if (expr == NULL)
 	{
 		/*
-		 * Set attributes are represented as OIDs no matter what the set
-		 * element type is, and the element type's default is irrelevant
-		 * too.
+		 * No per-column default, so look for a default for the type itself.
 		 */
-		typlen = sizeof(Oid);
-		typbyval = true;
+		if (att_tup->attisset)
+		{
+			/*
+			 * Set attributes are represented as OIDs no matter what the set
+			 * element type is, and the element type's default is irrelevant
+			 * too.
+			 */
+			typlen = sizeof(Oid);
+			typbyval = true;
+		}
+		else
+		{
+			expr = get_typdefault(atttype);
+		}
+	}
 
+	if (expr == NULL)
+	{
+		/*
+		 * No default anywhere, so generate a NULL constant.
+		 */
 		expr = (Node *) makeConst(atttype,
 								  typlen,
 								  (Datum) 0,
-								  true,
+								  true,			/* isnull */
 								  typbyval,
-								  false,           /* not a set */
+								  false,		/* not a set */
 								  false);
 	}
 	else
 	{
-#ifdef	_DROP_COLUMN_HACK__
-		if (COLUMN_IS_DROPPED(att_tup))
+		Oid			exprtype;
+
+		/*
+		 * Make sure the value is coerced to the target column
+		 * type (might not be right type yet if it's not a
+		 * constant!)  This should match the parser's processing of
+		 * non-defaulted expressions --- see
+		 * updateTargetListEntry().
+		 */
+		exprtype = exprType(expr);
+
+		if (exprtype != atttype)
 		{
+			expr = CoerceTargetExpr(NULL, expr, exprtype,
+									atttype, atttypmod);
 
-			expr = (Node *) makeConst(atttype,
-									  typlen,
-									  (Datum) 0,
-									  true,
-									  typbyval,
-									  false,           /* not a set */
-									  false);
+			/*
+			 * This really shouldn't fail; should have checked the
+			 * default's type when it was created ...
+			 */
+			if (expr == NULL)
+				elog(ERROR, "Column \"%s\" is of type %s"
+					 " but default expression is of type %s"
+					 "\n\tYou will need to rewrite or cast the expression",
+					 NameStr(att_tup->attname),
+					 format_type_be(atttype),
+					 format_type_be(exprtype));
 		}
-		else
-#endif   /* _DROP_COLUMN_HACK__ */
-			expr = get_typdefault(atttype, atttypmod);
 
-		if (expr == NULL) {
-				expr = (Node *) makeConst(atttype,
-										  typlen,
-										  (Datum) 0,
-										  true,
-										  typbyval,
-										  false,		/* not a set */
-										  false);
-		}
-		get_typlenbyval(atttype, &typlen, &typbyval);
+		/*
+		 * If the column is a fixed-length type, it may need a
+		 * length coercion as well as a type coercion.
+		 */
+		expr = coerce_type_typmod(NULL, expr, atttype, atttypmod);
 	}
-
-	/*
-	 * If the column is a fixed-length type, it may need a length coercion
-	 * as well as a type coercion, as well as direction to the final type.
-	 */
-	expr = coerce_type_typmod(NULL, expr,
-							  atttype, atttypmod);
 
 	return expr;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.63 2002/03/06 06:09:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.64 2002/03/20 19:43:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,8 +314,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 
 	for (i = 0; i < nargs; i++)
 	{
-		if (argTypes[i] != true_typeids[i] &&
-			!IS_BINARY_COMPATIBLE(argTypes[i], true_typeids[i]))
+		if (!IsBinaryCompatible(argTypes[i], true_typeids[i]))
 			func_error("DefineIndex", funcIndex->name, nargs, argTypes,
 					   "Index function must be binary-compatible with table datatype");
 	}
@@ -418,8 +417,7 @@ GetAttrOpClass(IndexElem *attribute, Oid attrType,
 	opInputType = ((Form_pg_opclass) GETSTRUCT(tuple))->opcintype;
 	ReleaseSysCache(tuple);
 
-	if (attrType != opInputType &&
-		!IS_BINARY_COMPATIBLE(attrType, opInputType))
+	if (!IsBinaryCompatible(attrType, opInputType))
 		elog(ERROR, "operator class \"%s\" does not accept data type %s",
 			 attribute->class, format_type_be(attrType));
 
@@ -470,7 +468,7 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 				nexact++;
 				exactOid = tuple->t_data->t_oid;
 			}
-			else if (IS_BINARY_COMPATIBLE(opclass->opcintype, attrType))
+			else if (IsBinaryCompatible(opclass->opcintype, attrType))
 			{
 				ncompatible++;
 				compatibleOid = tuple->t_data->t_oid;

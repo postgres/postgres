@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.113 2002/03/02 21:39:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.114 2002/03/20 19:44:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -900,9 +900,9 @@ indexable_operator(Expr *clause, Oid opclass, bool indexkey_on_left)
 	 */
 	if (ltype == indexkeytype && rtype == indexkeytype)
 		return InvalidOid;		/* no chance for a different operator */
-	if (ltype != indexkeytype && !IS_BINARY_COMPATIBLE(ltype, indexkeytype))
+	if (!IsBinaryCompatible(ltype, indexkeytype))
 		return InvalidOid;
-	if (rtype != indexkeytype && !IS_BINARY_COMPATIBLE(rtype, indexkeytype))
+	if (!IsBinaryCompatible(rtype, indexkeytype))
 		return InvalidOid;
 
 	/*

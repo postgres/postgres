@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.170 2002/03/19 02:18:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.171 2002/03/20 19:43:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2026,6 +2026,7 @@ _copyDropStmt(DropStmt *from)
 
 	Node_Copy(from, newnode, names);
 	newnode->removeType = from->removeType;
+	newnode->behavior = from->behavior;
 
 	return newnode;
 }
@@ -2238,7 +2239,6 @@ _copyCreateDomainStmt(CreateDomainStmt *from)
 
 	if (from->domainname)
 		newnode->domainname = pstrdup(from->domainname);
-
 	Node_Copy(from, newnode, typename);
 	Node_Copy(from, newnode, constraints);
 

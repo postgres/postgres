@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.70 2002/03/19 02:18:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.71 2002/03/20 19:43:44 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -483,38 +483,29 @@ DefineAggregate(char *aggName, List *parameters)
 void
 DefineDomain(CreateDomainStmt *stmt)
 {
-	int16		internalLength = -1;	/* int2 */
-	int16		externalLength = -1;	/* int2 */
-	char	   *inputName = NULL;
-	char	   *outputName = NULL;
-	char	   *sendName = NULL;
-	char	   *receiveName = NULL;
-
-	/*
-	 * Domains store the external representation in defaultValue
-	 * and the interal Node representation in defaultValueBin
-	 */
-	char	   *defaultValue = NULL;
-	char	   *defaultValueBin = NULL;
-
-	bool		byValue = false;
-	char		delimiter = DEFAULT_TYPDELIM;
-	char		alignment = 'i';	/* default alignment */
-	char		storage = 'p';	/* default TOAST storage method */
+	int16		internalLength;
+	int16		externalLength;
+	char	   *inputName;
+	char	   *outputName;
+	char	   *sendName;
+	char	   *receiveName;
+	bool		byValue;
+	char		delimiter;
+	char		alignment;
+	char		storage;
 	char		typtype;
 	Datum		datum;
+	bool		isnull;
+	char	   *defaultValue = NULL;
+	char	   *defaultValueBin = NULL;
 	bool		typNotNull = false;
+	Oid			basetypelem;
 	char		*elemName = NULL;
 	int32		typNDims = 0;	/* No array dimensions by default */
-
-	bool		isnull;
-	Relation	pg_type_rel;
-	TupleDesc	pg_type_dsc;
 	HeapTuple	typeTup;
 	char	   *typeName = stmt->typename->name;
-
-	List	   *listptr;
 	List	   *schema = stmt->constraints;
+	List	   *listptr;
 
 	/*
 	 * Domainnames, unlike typenames don't need to account for the '_'
@@ -524,25 +515,13 @@ DefineDomain(CreateDomainStmt *stmt)
 		elog(ERROR, "CREATE DOMAIN: domain names must be %d characters or less",
 			 NAMEDATALEN - 1);
 
-
 	/* Test for existing Domain (or type) of that name */
-	typeTup = SearchSysCache( TYPENAME
-							, PointerGetDatum(stmt->domainname)
-							, 0, 0, 0
-							);
-
+	typeTup = SearchSysCache(TYPENAME,
+							 PointerGetDatum(stmt->domainname),
+							 0, 0, 0);
 	if (HeapTupleIsValid(typeTup))
-	{
-		elog(ERROR, "CREATE DOMAIN: domain or type  %s already exists",
+		elog(ERROR, "CREATE DOMAIN: domain or type %s already exists",
 			 stmt->domainname);
-	}
-
-	/*
-	 * Get the information about old types
-	 */
-	pg_type_rel = heap_openr(TypeRelationName, RowExclusiveLock);
-	pg_type_dsc = RelationGetDescr(pg_type_rel);
-
 
 	/*
 	 * When the type is an array for some reason we don't actually receive
@@ -555,22 +534,12 @@ DefineDomain(CreateDomainStmt *stmt)
 		typNDims = length(stmt->typename->arrayBounds);
 	}
 
-
-	typeTup = SearchSysCache( TYPENAME
-							, PointerGetDatum(typeName)
-							, 0, 0, 0
-							);
-
+	typeTup = SearchSysCache(TYPENAME,
+							 PointerGetDatum(typeName),
+							 0, 0, 0);
 	if (!HeapTupleIsValid(typeTup))
-	{
 		elog(ERROR, "CREATE DOMAIN: type %s does not exist",
 			 stmt->typename->name);
-	}
-
-
-	/* Check that this is a basetype */
-	typtype = DatumGetChar(heap_getattr(typeTup, Anum_pg_type_typtype, pg_type_dsc, &isnull));
-	Assert(!isnull);
 
 	/*
 	 * What we really don't want is domains of domains.  This could cause all sorts
@@ -578,15 +547,19 @@ DefineDomain(CreateDomainStmt *stmt)
 	 *
 	 * With testing, we may determine complex types should be allowed
 	 */
-	if (typtype != 'b') {
-		elog(ERROR, "DefineDomain: %s is not a basetype", stmt->typename->name);
-	}
+	typtype = ((Form_pg_type) GETSTRUCT(typeTup))->typtype;
+	if (typtype != 'b')
+		elog(ERROR, "DefineDomain: %s is not a basetype",
+			 stmt->typename->name);
 
 	/* passed by value */
 	byValue = ((Form_pg_type) GETSTRUCT(typeTup))->typbyval;
 
 	/* Required Alignment */
 	alignment = ((Form_pg_type) GETSTRUCT(typeTup))->typalign;
+
+	/* TOAST Strategy */
+	storage = ((Form_pg_type) GETSTRUCT(typeTup))->typstorage;
 
 	/* Storage Length */
 	internalLength = ((Form_pg_type) GETSTRUCT(typeTup))->typlen;
@@ -597,70 +570,66 @@ DefineDomain(CreateDomainStmt *stmt)
 	/* Array element Delimiter */
 	delimiter = ((Form_pg_type) GETSTRUCT(typeTup))->typdelim;
 
+	/*
+	 * XXX this is pretty bogus: should be passing function OIDs to
+	 * TypeCreate, not names which aren't unique.
+	 */
+
 	/* Input Function Name */
-	datum = heap_getattr(typeTup, Anum_pg_type_typinput, pg_type_dsc, &isnull);
+	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typinput, &isnull);
 	Assert(!isnull);
 
 	inputName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
 
 	/* Output Function Name */
-	datum = heap_getattr(typeTup, Anum_pg_type_typoutput, pg_type_dsc, &isnull);
+	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typoutput, &isnull);
 	Assert(!isnull);
 
 	outputName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
 
 	/* ReceiveName */
-	datum = heap_getattr(typeTup, Anum_pg_type_typreceive, pg_type_dsc, &isnull);
+	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typreceive, &isnull);
 	Assert(!isnull);
 
 	receiveName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
 
 	/* SendName */
-	datum = heap_getattr(typeTup, Anum_pg_type_typsend, pg_type_dsc, &isnull);
+	datum = SysCacheGetAttr(TYPENAME, typeTup, Anum_pg_type_typsend, &isnull);
 	Assert(!isnull);
 
 	sendName = DatumGetCString(DirectFunctionCall1(regprocout, datum));
 
-	/* TOAST Strategy */
-	storage =  ((Form_pg_type) GETSTRUCT(typeTup))->typstorage;
-	Assert(!isnull);
-
 	/* Inherited default value */
-	datum = 			heap_getattr(typeTup, Anum_pg_type_typdefault, pg_type_dsc, &isnull);
-	if (!isnull) {
-		defaultValue = 	DatumGetCString(DirectFunctionCall1(textout, datum));
-	}
+	datum =	SysCacheGetAttr(TYPENAME, typeTup,
+							Anum_pg_type_typdefault, &isnull);
+	if (!isnull)
+		defaultValue = DatumGetCString(DirectFunctionCall1(textout, datum));
 
 	/* Inherited default binary value */
-	datum = 			heap_getattr(typeTup, Anum_pg_type_typdefaultbin, pg_type_dsc, &isnull);
-	if (!isnull) {
-		defaultValueBin = 	DatumGetCString(DirectFunctionCall1(textout, datum));
-	}
+	datum =	SysCacheGetAttr(TYPENAME, typeTup,
+							Anum_pg_type_typdefaultbin, &isnull);
+	if (!isnull)
+		defaultValueBin = DatumGetCString(DirectFunctionCall1(textout, datum));
 
 	/*
 	 * Pull out the typelem name of the parent OID.
 	 *
 	 * This is what enables us to make a domain of an array
 	 */
-	datum = 			heap_getattr(typeTup, Anum_pg_type_typelem, pg_type_dsc, &isnull);
-	Assert(!isnull);
-
-	if (DatumGetObjectId(datum) != InvalidOid) {
+	basetypelem = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
+	if (basetypelem != InvalidOid)
+	{
 		HeapTuple tup;
 
-		tup = SearchSysCache( TYPEOID
-							, datum
-							, 0, 0, 0
-							);
-
-		elemName = NameStr(((Form_pg_type) GETSTRUCT(tup))->typname);
-
+		tup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(basetypelem),
+							 0, 0, 0);
+		elemName = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(tup))->typname));
 		ReleaseSysCache(tup);
 	}
 
-
 	/*
-	 * Run through constraints manually avoids the additional
+	 * Run through constraints manually to avoid the additional
 	 * processing conducted by DefineRelation() and friends.
 	 *
 	 * Besides, we don't want any constraints to be cooked.  We'll
@@ -668,20 +637,13 @@ DefineDomain(CreateDomainStmt *stmt)
 	 */
 	foreach(listptr, schema)
 	{
+		Constraint *colDef = lfirst(listptr);
 		bool nullDefined = false;
 		Node	   *expr;
-		Constraint *colDef = lfirst(listptr);
-
-		/* Used for the statement transformation */
 		ParseState *pstate;
 
-		/*
-		 * Create a dummy ParseState and insert the target relation as its
-		 * sole rangetable entry.  We need a ParseState for transformExpr.
-		 */
-		pstate = make_parsestate(NULL);
-
-		switch(colDef->contype) {
+		switch (colDef->contype)
+		{
 			/*
 	 		 * The inherited default value may be overridden by the user
 			 * with the DEFAULT <expr> statement.
@@ -690,27 +652,26 @@ DefineDomain(CreateDomainStmt *stmt)
 			 * don't want to cook or fiddle too much.
 			 */
 			case CONSTR_DEFAULT:
-
+				/* Create a dummy ParseState for transformExpr */
+				pstate = make_parsestate(NULL);
 				/*
-				 * Cook the colDef->raw_expr into an expression to ensure
-				 * that it can be done.  We store the text version of the
-				 * raw value.
-				 *
+				 * Cook the colDef->raw_expr into an expression.
 				 * Note: Name is strictly for error message
 				 */
-				expr = cookDefault(pstate, colDef->raw_expr
-								, typeTup->t_data->t_oid
-								, stmt->typename->typmod
-								, stmt->typename->name);
-
-				/* Binary default required */
+				expr = cookDefault(pstate, colDef->raw_expr,
+								   typeTup->t_data->t_oid,
+								   stmt->typename->typmod,
+								   stmt->typename->name);
+				/*
+				 * Expression must be stored as a nodeToString result,
+				 * but we also require a valid textual representation
+				 * (mainly to make life easier for pg_dump).
+				 */
 				defaultValue = deparse_expression(expr,
 								deparse_context_for(stmt->domainname,
 													InvalidOid),
 												   false);
-
 				defaultValueBin = nodeToString(expr);
-
 				break;
 
 			/*
@@ -723,7 +684,6 @@ DefineDomain(CreateDomainStmt *stmt)
 					typNotNull = true;
 					nullDefined = true;
 				}
-
 		  		break;
 
 			case CONSTR_NULL:
@@ -733,31 +693,31 @@ DefineDomain(CreateDomainStmt *stmt)
 					typNotNull = false;
 					nullDefined = true;
 				}
-
 		  		break;
 
 		  	case CONSTR_UNIQUE:
-		  		elog(ERROR, "CREATE DOMAIN / UNIQUE indecies not supported");
+		  		elog(ERROR, "CREATE DOMAIN / UNIQUE indexes not supported");
 		  		break;
 
 		  	case CONSTR_PRIMARY:
-		  		elog(ERROR, "CREATE DOMAIN / PRIMARY KEY indecies not supported");
+		  		elog(ERROR, "CREATE DOMAIN / PRIMARY KEY indexes not supported");
 		  		break;
 
-
 		  	case CONSTR_CHECK:
-
-		  		elog(ERROR, "defineDomain: CHECK Constraints not supported");
+		  		elog(ERROR, "DefineDomain: CHECK Constraints not supported");
 		  		break;
 
 		  	case CONSTR_ATTR_DEFERRABLE:
 		  	case CONSTR_ATTR_NOT_DEFERRABLE:
 		  	case CONSTR_ATTR_DEFERRED:
 		  	case CONSTR_ATTR_IMMEDIATE:
-		  		elog(ERROR, "defineDomain: DEFERRABLE, NON DEFERRABLE, DEFERRED and IMMEDIATE not supported");
+		  		elog(ERROR, "DefineDomain: DEFERRABLE, NON DEFERRABLE, DEFERRED and IMMEDIATE not supported");
+		  		break;
+
+			default:
+		  		elog(ERROR, "DefineDomain: unrecognized constraint node type");
 		  		break;
 		}
-
 	}
 
 	/*
@@ -776,8 +736,8 @@ DefineDomain(CreateDomainStmt *stmt)
 			   sendName,			/* send procedure */
 			   elemName,			/* element type name */
 			   typeName,			/* base type name */
-			   defaultValue,		/* default type value */
-			   defaultValueBin,		/* default type value */
+			   defaultValue,		/* default type value (text) */
+			   defaultValueBin,		/* default type value (binary) */
 			   byValue,				/* passed by value */
 			   alignment,			/* required alignment */
 			   storage,				/* TOAST strategy */
@@ -789,9 +749,7 @@ DefineDomain(CreateDomainStmt *stmt)
 	 * Now we can clean up.
 	 */
 	ReleaseSysCache(typeTup);
-	heap_close(pg_type_rel, NoLock);
 }
-
 
 /*
  * DefineType
@@ -808,8 +766,6 @@ DefineType(char *typeName, List *parameters)
 	char	   *sendName = NULL;
 	char	   *receiveName = NULL;
 	char	   *defaultValue = NULL;
-	char	   *defaultValueBin = NULL;
-	Node	   *defaultRaw = (Node *) NULL;
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
 	char	   *shadow_type;
@@ -851,7 +807,7 @@ DefineType(char *typeName, List *parameters)
 		else if (strcasecmp(defel->defname, "element") == 0)
 			elemName = defGetString(defel);
 		else if (strcasecmp(defel->defname, "default") == 0)
-			defaultRaw = defel->arg;
+			defaultValue = defGetString(defel);
 		else if (strcasecmp(defel->defname, "passedbyvalue") == 0)
 			byValue = true;
 		else if (strcasecmp(defel->defname, "alignment") == 0)
@@ -911,32 +867,6 @@ DefineType(char *typeName, List *parameters)
 	if (outputName == NULL)
 		elog(ERROR, "Define: \"output\" unspecified");
 
-
-	if (defaultRaw) {
-		Node   *expr;
-		ParseState *pstate;
-
-		/*
-		 * Create a dummy ParseState and insert the target relation as its
-		 * sole rangetable entry.  We need a ParseState for transformExpr.
-		 */
-		pstate = make_parsestate(NULL);
-
-		expr = cookDefault(pstate, defaultRaw,
-						   InvalidOid,
-						   -1,
-						   typeName);
-
-		/* Binary default required */
-		defaultValue = deparse_expression(expr,
-						deparse_context_for(typeName,
-											InvalidOid),
-										   false);
-
-		defaultValueBin = nodeToString(expr);
-	}
-
-
 	/*
 	 * now have TypeCreate do all the real work.
 	 */
@@ -952,9 +882,9 @@ DefineType(char *typeName, List *parameters)
 			   receiveName,		/* receive procedure */
 			   sendName,		/* send procedure */
 			   elemName,		/* element type name */
-			   NULL,			/* base type name (Non-zero for domains) */
+			   NULL,			/* base type name (only for domains) */
 			   defaultValue,	/* default type value */
-			   defaultValueBin,	/* default type value (Binary form) */
+			   NULL,			/* no binary form available */
 			   byValue,			/* passed by value */
 			   alignment,		/* required alignment */
 			   storage,			/* TOAST strategy */

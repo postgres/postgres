@@ -3,9 +3,9 @@ create domain domaindroptest int4;
 comment on domain domaindroptest is 'About to drop this..';
 create domain basetypetest domaindroptest;
 ERROR:  DefineDomain: domaindroptest is not a basetype
+drop domain domaindroptest cascade;
+ERROR:  DROP DOMAIN does not support the CASCADE keyword
 drop domain domaindroptest;
-ERROR:  parser: parse error at or near ";"
-drop domain domaindroptest restrict;
 -- TEST Domains.
 create domain domainvarchar varchar(5);
 create domain domainnumeric numeric(8,2);
@@ -29,11 +29,21 @@ select * from basictest;
  88       | haha     | short       | 123.12
 (2 rows)
 
+-- check that domains inherit operations from base types
+-- XXX shouldn't have to quote the constant here
+select testtext || testvarchar as concat, testnumeric + '42' as sum
+from basictest;
+  concat   |  sum   
+-----------+--------
+ hahashort | 165.12
+ hahashort | 165.12
+(2 rows)
+
 drop table basictest;
 drop domain domainvarchar restrict;
 drop domain domainnumeric restrict;
 drop domain domainint4 restrict;
-drop domain domaintext restrict;
+drop domain domaintext;
 -- Array Test
 create domain domainint4arr int4[1];
 create domain domaintextarr text[2][3];
@@ -46,6 +56,26 @@ INSERT INTO domarrtest values ('{{2,2}{2,2}}', '{{"a","b"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a","b"}{"c","d"}{"e"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a"}{"c"}}');
 INSERT INTO domarrtest values (NULL, '{{"a","b"}{"c","d","e"}}');
+select * from domarrtest;
+  testint4arr  |     testtextarr     
+---------------+---------------------
+ {2,2}         | {{a,c},{"",d}}
+ {{2,2},{0,2}} | {{a,b}}
+ {2,2}         | {{a},{c},{e}}
+ {2,2}         | {{c},{""}}
+               | {{a,c,""},{"",d,e}}
+(5 rows)
+
+select testint4arr[1], testtextarr[2:2] from domarrtest;
+ testint4arr | testtextarr 
+-------------+-------------
+           2 | {{"",d}}
+             | 
+           2 | {{c}}
+           2 | {{""}}
+             | {{"",d,e}}
+(5 rows)
+
 drop table domarrtest;
 drop domain domainint4arr restrict;
 drop domain domaintextarr restrict;

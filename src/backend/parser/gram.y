@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.293 2002/03/19 12:52:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.294 2002/03/20 19:44:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -135,8 +135,7 @@ static void doNegateFloat(Value *v);
 		ClosePortalStmt, ClusterStmt, CommentStmt, ConstraintsSetStmt,
 		CopyStmt, CreateAsStmt, CreateDomainStmt, CreateGroupStmt, CreatePLangStmt,
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateTrigStmt,
-		CreateUserStmt, CreatedbStmt, CursorStmt,
-		DefineStmt, DeleteStmt,
+		CreateUserStmt, CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
 		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropTrigStmt,
 		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
@@ -151,7 +150,7 @@ static void doNegateFloat(Value *v);
 				simple_select
 
 %type <node>    alter_column_default
-%type <ival>    drop_behavior
+%type <ival>    drop_behavior, opt_drop_behavior
 
 %type <list>	createdb_opt_list, createdb_opt_item
 %type <boolean>	opt_equal
@@ -1181,6 +1180,10 @@ drop_behavior: CASCADE					{ $$ = CASCADE; }
 		| RESTRICT						{ $$ = RESTRICT; }
         ;
 
+opt_drop_behavior: CASCADE				{ $$ = CASCADE; }
+		| RESTRICT						{ $$ = RESTRICT; }
+		| /* EMPTY */					{ $$ = RESTRICT; /* default */ }
+        ;
 
 
 /*****************************************************************************
@@ -2030,22 +2033,13 @@ def_list:  def_elem							{ $$ = makeList1($1); }
 		| def_list ',' def_elem				{ $$ = lappend($1, $3); }
 		;
 
-def_elem:  DEFAULT '=' b_expr
-				{
-					$$ = makeNode(DefElem);
-					$$->defname = "default";
-					if (exprIsNullConstant($3))
-						$$->arg = (Node *)NULL;
-					else
-						$$->arg = $3;
-				}
-		| ColId '=' def_arg
+def_elem:  ColLabel '=' def_arg
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
 					$$->arg = (Node *)$3;
 				}
-		| ColId
+		| ColLabel
 				{
 					$$ = makeNode(DefElem);
 					$$->defname = $1;
@@ -2069,18 +2063,10 @@ def_arg:  func_return  					{  $$ = (Node *)$1; }
  *
  *****************************************************************************/
 
-DropStmt:  DROP drop_type name_list
+DropStmt:  DROP drop_type name_list opt_drop_behavior
 				{
 					DropStmt *n = makeNode(DropStmt);
 					n->removeType = $2;
-					n->names = $3;
-					n->behavior = RESTRICT;		/* Restricted by default */
-					$$ = (Node *)n;
-				}
-		| DROP DOMAIN_P name_list drop_behavior
-				{	
-					DropStmt *n = makeNode(DropStmt);
-					n->removeType = DROP_DOMAIN_P;
 					n->names = $3;
 					n->behavior = $4;
 					$$ = (Node *)n;
@@ -2092,7 +2078,8 @@ drop_type: TABLE								{ $$ = DROP_TABLE; }
 		| VIEW									{ $$ = DROP_VIEW; }
 		| INDEX									{ $$ = DROP_INDEX; }
 		| RULE									{ $$ = DROP_RULE; }
-		| TYPE_P								{ $$ = DROP_TYPE_P; }
+		| TYPE_P								{ $$ = DROP_TYPE; }
+		| DOMAIN_P								{ $$ = DROP_DOMAIN; }
 		;
 
 /*****************************************************************************
@@ -3194,22 +3181,6 @@ createdb_opt_item:  LOCATION opt_equal Sconst
 				}
 		;
 
-
-/*****************************************************************************
- *
- *		DROP DATABASE
- *
- *
- *****************************************************************************/
-
-DropdbStmt:	DROP DATABASE database_name
-				{
-					DropdbStmt *n = makeNode(DropdbStmt);
-					n->dbname = $3;
-					$$ = (Node *)n;
-				}
-		;
-
 /*
  *	Though the equals sign doesn't match other WITH options, pg_dump uses
  *  equals for backward compability, and it doesn't seem worth remove it.
@@ -3221,8 +3192,22 @@ opt_equal: '='								{ $$ = TRUE; }
 
 /*****************************************************************************
  *
- *		ALTER DATABASE
+ *		DROP DATABASE
  *
+ *****************************************************************************/
+
+DropdbStmt:	DROP DATABASE database_name
+				{
+					DropdbStmt *n = makeNode(DropdbStmt);
+					n->dbname = $3;
+					$$ = (Node *)n;
+				}
+		;
+
+
+/*****************************************************************************
+ *
+ *		ALTER DATABASE
  *
  *****************************************************************************/
 

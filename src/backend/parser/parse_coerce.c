@@ -8,25 +8,31 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.67 2002/03/19 02:18:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.68 2002/03/20 19:44:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/pg_proc.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
 
 Oid			DemoteType(Oid inType);
 Oid			PromoteTypeToNext(Oid inType);
 
 static Oid	PreferredType(CATEGORY category, Oid type);
+static Node *build_func_call(Oid funcid, Oid rettype, List *args);
+static Oid	find_coercion_function(Oid targetTypeId, Oid inputTypeId,
+								   Oid secondArgType);
 
 
 /* coerce_type()
@@ -87,32 +93,28 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		result = (Node *) newcon;
 	}
-	else if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
+	else if (IsBinaryCompatible(inputTypeId, targetTypeId))
 	{
 		/*
 		 * We don't really need to do a conversion, but we do need to
 		 * attach a RelabelType node so that the expression will be seen
 		 * to have the intended type when inspected by higher-level code.
-		 */
-		RelabelType *relabel = makeNode(RelabelType);
-
-		relabel->arg = node;
-		relabel->resulttype = targetTypeId;
-
-		/*
+		 *
 		 * XXX could we label result with exprTypmod(node) instead of
 		 * default -1 typmod, to save a possible length-coercion later?
 		 * Would work if both types have same interpretation of typmod,
 		 * which is likely but not certain.
 		 */
-		relabel->resulttypmod = -1;
-
-		result = (Node *) relabel;
+		result = (Node *) makeRelabelType(node, targetTypeId, -1);
 	}
 	else if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
-		/* Input class type is a subclass of target, so nothing to do */
-		result = node;
+		/*
+		 * Input class type is a subclass of target, so nothing to do
+		 * --- except relabel the type.  This is binary compatibility
+		 * for complex types.
+		 */
+		result = (Node *) makeRelabelType(node, targetTypeId, -1);
 	}
 	else
 	{
@@ -121,21 +123,24 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * (caller should have determined that there is one), and generate
 		 * an expression tree representing run-time application of the
 		 * conversion function.
+		 *
+		 * For domains, we use the coercion function for the base type.
 		 */
-		FuncCall   *n = makeNode(FuncCall);
+		Oid			baseTypeId = getBaseType(targetTypeId);
+		Oid			funcId;
 
-		n->funcname = typeidTypeName(targetTypeId);
-		n->args = makeList1(node);
-		n->agg_star = false;
-		n->agg_distinct = false;
+		funcId = find_coercion_function(baseTypeId,
+										getBaseType(inputTypeId),
+										InvalidOid);
+		if (!OidIsValid(funcId))
+			elog(ERROR, "coerce_type: no conversion function from %s to %s",
+				 format_type_be(inputTypeId), format_type_be(targetTypeId));
 
-		result = transformExpr(pstate, (Node *) n, EXPR_COLUMN_FIRST);
+		result = build_func_call(funcId, baseTypeId, makeList1(node));
 
-		/* safety check that we got the right thing */
-		if (exprType(result) != targetTypeId)
-			elog(ERROR, "coerce_type: conversion function %s produced %s",
-				 typeidTypeName(targetTypeId),
-				 typeidTypeName(exprType(result)));
+		/* if domain, relabel with domain type ID */
+		if (targetTypeId != baseTypeId)
+			result = (Node *) makeRelabelType(result, targetTypeId, -1);
 
 		/*
 		 * If the input is a constant, apply the type conversion function
@@ -152,7 +157,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		 * nodes that mustn't be collapsed.  (It'd be a lot cleaner to
 		 * make a separate node type for that purpose...)
 		 */
-		if (IsA(node, Const) &&!((Const *) node)->constisnull)
+		if (IsA(node, Const) &&
+			!((Const *) node)->constisnull)
 			result = eval_const_expressions(result);
 	}
 
@@ -169,23 +175,18 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
  *
  * Notes:
  * This uses the same mechanism as the CAST() SQL construct in gram.y.
- * We should also check the function return type on candidate conversion
- *	routines just to be safe but we do not do that yet...
- * - thomas 1998-03-31
  */
 bool
 can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 {
 	int			i;
-	HeapTuple	ftup;
-	Form_pg_proc pform;
-	Oid			oid_array[FUNC_MAX_ARGS];
 
 	/* run through argument list... */
 	for (i = 0; i < nargs; i++)
 	{
 		Oid			inputTypeId = input_typeids[i];
 		Oid			targetTypeId = func_typeids[i];
+		Oid			funcId;
 
 		/* no problem if same type */
 		if (inputTypeId == targetTypeId)
@@ -195,7 +196,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		 * one of the known-good transparent conversions? then drop
 		 * through...
 		 */
-		if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
+		if (IsBinaryCompatible(inputTypeId, targetTypeId))
 			continue;
 
 		/* don't know what to do for the output type? then quit... */
@@ -232,25 +233,14 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		 * Else, try for explicit conversion using functions: look for a
 		 * single-argument function named with the target type name and
 		 * accepting the source type.
+		 *
+		 * If either type is a domain, use its base type instead.
 		 */
-		MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
-		oid_array[0] = inputTypeId;
-
-		ftup = SearchSysCache(PROCNAME,
-						   PointerGetDatum(typeidTypeName(targetTypeId)),
-							  Int32GetDatum(1),
-							  PointerGetDatum(oid_array),
-							  0);
-		if (!HeapTupleIsValid(ftup))
+		funcId = find_coercion_function(getBaseType(targetTypeId),
+										getBaseType(inputTypeId),
+										InvalidOid);
+		if (!OidIsValid(funcId))
 			return false;
-		/* Make sure the function's result type is as expected, too */
-		pform = (Form_pg_proc) GETSTRUCT(ftup);
-		if (pform->prorettype != targetTypeId)
-		{
-			ReleaseSysCache(ftup);
-			return false;
-		}
-		ReleaseSysCache(ftup);
 	}
 
 	return true;
@@ -277,8 +267,8 @@ Node *
 coerce_type_typmod(ParseState *pstate, Node *node,
 				   Oid targetTypeId, int32 atttypmod)
 {
-	char	   *funcname;
-	Oid			oid_array[FUNC_MAX_ARGS];
+	Oid			baseTypeId;
+	Oid			funcId;
 
 	/*
 	 * A negative typmod is assumed to mean that no coercion is wanted.
@@ -286,30 +276,28 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	if (atttypmod < 0 || atttypmod == exprTypmod(node))
 		return node;
 
-	funcname = typeidTypeName(targetTypeId);
-	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	oid_array[0] = targetTypeId;
-	oid_array[1] = INT4OID;
+	/* If given type is a domain, use base type instead */
+	baseTypeId = getBaseType(targetTypeId);
 
-	/* attempt to find with arguments exactly as specified... */
-	if (SearchSysCacheExists(PROCNAME,
-							 PointerGetDatum(funcname),
-							 Int32GetDatum(2),
-							 PointerGetDatum(oid_array),
-							 0))
+	funcId = find_coercion_function(baseTypeId, baseTypeId, INT4OID);
+
+	if (OidIsValid(funcId))
 	{
-		A_Const    *cons = makeNode(A_Const);
-		FuncCall   *func = makeNode(FuncCall);
+		Const	   *cons;
 
-		cons->val.type = T_Integer;
-		cons->val.val.ival = atttypmod;
+		cons = makeConst(INT4OID,
+						 sizeof(int32),
+						 Int32GetDatum(atttypmod),
+						 false,
+						 true,
+						 false,
+						 false);
 
-		func->funcname = funcname;
-		func->args = makeList2(node, cons);
-		func->agg_star = false;
-		func->agg_distinct = false;
+		node = build_func_call(funcId, baseTypeId, makeList2(node, cons));
 
-		node = transformExpr(pstate, (Node *) func, EXPR_COLUMN_FIRST);
+		/* relabel if it's domain case */
+		if (targetTypeId != baseTypeId)
+			node = (Node *) makeRelabelType(node, targetTypeId, atttypmod);
 	}
 
 	return node;
@@ -532,6 +520,64 @@ TypeCategory(Oid inType)
 }	/* TypeCategory() */
 
 
+/* IsBinaryCompatible()
+ *		Check if two types are binary-compatible.
+ *
+ * This notion allows us to cheat and directly exchange values without
+ * going through the trouble of calling a conversion function.
+ *
+ * XXX This should be moved to system catalog lookups
+ * to allow for better type extensibility.
+ */
+
+/*
+ * This macro describes hard-coded knowledge of binary compatibility
+ * for built-in types.
+ */
+#define IS_BINARY_COMPATIBLE(a,b) \
+		  (((a) == BPCHAROID && (b) == TEXTOID) \
+		|| ((a) == BPCHAROID && (b) == VARCHAROID) \
+		|| ((a) == VARCHAROID && (b) == TEXTOID) \
+		|| ((a) == VARCHAROID && (b) == BPCHAROID) \
+		|| ((a) == TEXTOID && (b) == BPCHAROID) \
+		|| ((a) == TEXTOID && (b) == VARCHAROID) \
+		|| ((a) == OIDOID && (b) == INT4OID) \
+		|| ((a) == OIDOID && (b) == REGPROCOID) \
+		|| ((a) == INT4OID && (b) == OIDOID) \
+		|| ((a) == INT4OID && (b) == REGPROCOID) \
+		|| ((a) == REGPROCOID && (b) == OIDOID) \
+		|| ((a) == REGPROCOID && (b) == INT4OID) \
+		|| ((a) == ABSTIMEOID && (b) == INT4OID) \
+		|| ((a) == INT4OID && (b) == ABSTIMEOID) \
+		|| ((a) == RELTIMEOID && (b) == INT4OID) \
+		|| ((a) == INT4OID && (b) == RELTIMEOID) \
+		|| ((a) == INETOID && (b) == CIDROID) \
+		|| ((a) == CIDROID && (b) == INETOID) \
+		|| ((a) == BITOID && (b) == VARBITOID) \
+		|| ((a) == VARBITOID && (b) == BITOID))
+
+bool
+IsBinaryCompatible(Oid type1, Oid type2)
+{
+	if (type1 == type2)
+		return true;
+	if (IS_BINARY_COMPATIBLE(type1, type2))
+		return true;
+	/*
+	 * Perhaps the types are domains; if so, look at their base types
+	 */
+	if (OidIsValid(type1))
+		type1 = getBaseType(type1);
+	if (OidIsValid(type2))
+		type2 = getBaseType(type2);
+	if (type1 == type2)
+		return true;
+	if (IS_BINARY_COMPATIBLE(type1, type2))
+		return true;
+	return false;
+}
+
+
 /* IsPreferredType()
  * Check if this type is a preferred type.
  * XXX This should be moved to system catalog lookups
@@ -606,31 +652,81 @@ PreferredType(CATEGORY category, Oid type)
 	return result;
 }	/* PreferredType() */
 
+/*
+ * find_coercion_function
+ *		Look for a coercion function between two types.
+ *
+ * A coercion function must be named after (the internal name of) its
+ * result type, and must accept exactly the specified input type.
+ *
+ * This routine is also used to look for length-coercion functions, which
+ * are similar but accept a second argument.  secondArgType is the type
+ * of the second argument (normally INT4OID), or InvalidOid if we are
+ * looking for a regular coercion function.
+ *
+ * If a function is found, return its pg_proc OID; else return InvalidOid.
+ */
+static Oid
+find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType)
+{
+	char	   *funcname;
+	Oid			oid_array[FUNC_MAX_ARGS];
+	int			nargs;
+	HeapTuple	ftup;
+	Form_pg_proc pform;
+	Oid			funcid;
+
+	funcname = typeidTypeName(targetTypeId);
+	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	oid_array[0] = inputTypeId;
+	if (OidIsValid(secondArgType))
+	{
+		oid_array[1] = secondArgType;
+		nargs = 2;
+	}
+	else
+		nargs = 1;
+
+	ftup = SearchSysCache(PROCNAME,
+						  PointerGetDatum(funcname),
+						  Int32GetDatum(nargs),
+						  PointerGetDatum(oid_array),
+						  0);
+	if (!HeapTupleIsValid(ftup))
+		return InvalidOid;
+	/* Make sure the function's result type is as expected, too */
+	pform = (Form_pg_proc) GETSTRUCT(ftup);
+	if (pform->prorettype != targetTypeId)
+	{
+		ReleaseSysCache(ftup);
+		return InvalidOid;
+	}
+	funcid = ftup->t_data->t_oid;
+	ReleaseSysCache(ftup);
+	return funcid;
+}
 
 /*
- * If the targetTypeId is a domain, we really want to coerce
- * the tuple to the domain type -- not the domain itself
+ * Build an expression tree representing a function call.
+ *
+ * The argument expressions must have been transformed already.
  */
-Oid
-getBaseType(Oid inType)
+static Node *
+build_func_call(Oid funcid, Oid rettype, List *args)
 {
-	HeapTuple	tup;
-	Form_pg_type typTup;
+	Func	   *funcnode;
+	Expr	   *expr;
 
-	tup = SearchSysCache(TYPEOID,
-						 ObjectIdGetDatum(inType),
-						 0, 0, 0);
+	funcnode = makeNode(Func);
+	funcnode->funcid = funcid;
+	funcnode->functype = rettype;
+	funcnode->func_fcache = NULL;
 
-	typTup = ((Form_pg_type) GETSTRUCT(tup));
+	expr = makeNode(Expr);
+	expr->typeOid = rettype;
+	expr->opType = FUNC_EXPR;
+	expr->oper = (Node *) funcnode;
+	expr->args = args;
 
-	/*
-	 * Assume that typbasetype exists and is a base type, where inType
-	 * was a domain
-	 */
-	if (typTup->typtype == 'd')
-		inType = typTup->typbasetype;
-
-	ReleaseSysCache(tup);
-
-	return inType;
+	return (Node *) expr;
 }

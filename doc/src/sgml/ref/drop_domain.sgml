@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.3 2002/03/19 02:18:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.4 2002/03/20 19:43:28 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,7 +23,7 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]
+DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]  [ CASCADE | RESTRICT ]
   </synopsis>
 
   <refsect2 id="R2-SQL-DROPDOMAIN-1">
@@ -40,6 +40,25 @@ DROP DOMAIN <replaceable class="PARAMETER">domainname</replaceable> [, ...]
       <listitem>
        <para>
 	The name of an existing domain.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>CASCADE</></term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the domain.  This
+	behavior is not currently supported.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>RESTRICT</></term>
+      <listitem>
+       <para>
+        Do not drop dependent objects.  This is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -117,7 +136,7 @@ ERROR:  RemoveDomain: type '<replaceable class="parameter">domainname</replaceab
    To remove the <type>box</type> domain:
 
 <programlisting>
-DROP DOMAIN box RESTRICT;
+DROP DOMAIN box;
 </programlisting>
   </para>
  </refsect1>
@@ -134,9 +153,8 @@ DROP DOMAIN box RESTRICT;
 <synopsis>
 DROP DOMAIN <replaceable>name</replaceable> { CASCADE | RESTRICT }
 </synopsis>
-   <productname>PostgreSQL</productname> enforces the existance of
-   RESTRICT or CASCADE but ignores their enforcement against the
-   system tables.
+   <productname>PostgreSQL</productname> accepts only the RESTRICT
+   option, and currently does not check for existence of dependent objects.
   </para>
  </refsect1>
 

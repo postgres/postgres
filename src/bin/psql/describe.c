@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.46 2002/03/19 02:32:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.47 2002/03/20 19:44:45 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1053,7 +1053,7 @@ listDomains(const char *name)
 
 	snprintf(buf, sizeof(buf),
 		 "SELECT t.typname as \"%s\",\n"
-		 "       format_type( t.typbasetype, t.typmod) as \"%s\",\n"
+		 "       format_type( t.typbasetype, t.typtypmod) as \"%s\",\n"
 		 "       CASE WHEN t.typnotnull AND t.typdefault IS NOT NULL THEN 'not null default '||t.typdefault\n"
 		 "            WHEN t.typnotnull AND t.typdefault IS NULL THEN 'not null'\n"
 		 "            WHEN NOT t.typnotnull AND t.typdefault IS NOT NULL THEN 'default '||t.typdefault\n"

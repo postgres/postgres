@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.134 2002/03/19 02:58:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.135 2002/03/20 19:44:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,12 +276,12 @@ ProcessUtility(Node *parsetree,
 							}
 							break;
 
-						case DROP_TYPE_P:
+						case DROP_TYPE:
 							/* RemoveType does its own permissions checks */
 							RemoveType(relname);
 							break;
 
-						case DROP_DOMAIN_P:
+						case DROP_DOMAIN:
 							/* RemoveDomain does its own permissions checks */
 							RemoveDomain(relname, stmt->behavior);
 							break;

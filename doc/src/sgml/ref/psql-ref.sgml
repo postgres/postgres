@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.64 2002/03/19 02:32:19 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.65 2002/03/20 19:43:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -419,21 +419,10 @@ testdb=>
         <term><literal>\dD</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
         <listitem>
         <para>
-        Lists all database domains.
+        Lists all available domains (derived types).
+	If <replaceable class="parameter">pattern</replaceable>
+	(a regular expression) is specified, only matching domains are shown.
         </para>
-
-        <para>
-        Descriptions for objects can be generated with the <command>COMMENT ON</command>
-        <acronym>SQL</acronym> command.
-	</para>
-
-        <note>
-        <para>
-        <productname>PostgreSQL</productname> stores the object descriptions in the
-        pg_description system table.
-        </para>
-        </note>
-
         </listitem>
       </varlistentry>
 

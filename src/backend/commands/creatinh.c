@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.87 2002/03/19 02:58:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.88 2002/03/20 19:43:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static List *MergeDomainAttributes(List *schema);
 
+
 /* ----------------------------------------------------------------
  *		DefineRelation
  *				Creates a new relation.
@@ -71,9 +72,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	StrNCpy(relname, stmt->relname, NAMEDATALEN);
 
 	/*
-	 * Inherit domain attributes into the known columns before table inheritance
-	 * applies it's changes otherwise we risk adding double constraints
-	 * to a domain thats inherited.
+	 * Merge domain attributes into the known columns before processing table
+	 * inheritance.  Otherwise we risk adding double constraints to a
+	 * domain-type column that's inherited.
 	 */
 	schema = MergeDomainAttributes(schema);
 
@@ -273,11 +274,8 @@ TruncateRelation(const char *relname)
 /*
  * MergeDomainAttributes
  *      Returns a new table schema with the constraints, types, and other
- *      attributes of the domain resolved for fields using the domain as
- *		their type.
- *
- * Defaults are pulled out by the table attribute as required, similar to
- * how all types defaults are processed.
+ *      attributes of domains resolved for fields using a domain as
+ *      their type.
  */
 static List *
 MergeDomainAttributes(List *schema)
@@ -295,34 +293,25 @@ MergeDomainAttributes(List *schema)
 		HeapTuple  tuple;
 		Form_pg_type typeTup;
 
-
 		tuple = SearchSysCache(TYPENAME,
 							   CStringGetDatum(coldef->typename->name),
 							   0,0,0);
-
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "MergeDomainAttributes: Type %s does not exist",
 				 coldef->typename->name);
-
 		typeTup = (Form_pg_type) GETSTRUCT(tuple);
-		if (typeTup->typtype == 'd') {
-			/*
-			 * This is a domain, lets force the properties of the domain on to
-			 * the new column.
-			 */
 
-			/* Enforce the typmod value */
-			coldef->typename->typmod = typeTup->typmod;
-
-			/* Enforce type NOT NULL || column definition NOT NULL -> NOT NULL */
-			coldef->is_not_null |= typeTup->typnotnull;
-
-			/* Enforce the element type in the event the domain is an array
-			 *
-			 * BUG: How do we fill out arrayBounds and attrname from typelem and typNDimms?
-			 */
-
+		if (typeTup->typtype == 'd')
+		{
+			/* Force the column to have the correct typmod. */
+			coldef->typename->typmod = typeTup->typtypmod;
+			/* XXX more to do here? */
 		}
+
+		/* Enforce type NOT NULL || column definition NOT NULL -> NOT NULL */
+		/* Currently only used for domains, but could be valid for all */
+		coldef->is_not_null |= typeTup->typnotnull;
+
 		ReleaseSysCache(tuple);
 	}
 

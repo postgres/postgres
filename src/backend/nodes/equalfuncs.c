@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.118 2002/03/19 02:18:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.119 2002/03/20 19:44:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,6 +877,8 @@ _equalDropStmt(DropStmt *a, DropStmt *b)
 	if (!equal(a->names, b->names))
 		return false;
 	if (a->removeType != b->removeType)
+		return false;
+	if (a->behavior != b->behavior)
 		return false;
 
 	return true;

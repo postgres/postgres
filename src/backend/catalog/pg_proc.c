@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.65 2002/03/06 06:09:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.66 2002/03/20 19:43:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,7 +423,7 @@ checkretval(Oid rettype, List *queryTreeList)
 				 format_type_be(rettype));
 
 		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
-		if (restype != rettype && !IS_BINARY_COMPATIBLE(restype, rettype))
+		if (!IsBinaryCompatible(restype, rettype))
 			elog(ERROR, "return type mismatch in function: declared to return %s, returns %s",
 				 format_type_be(rettype), format_type_be(restype));
 
@@ -440,7 +440,7 @@ checkretval(Oid rettype, List *queryTreeList)
 	if (tlistlen == 1)
 	{
 		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
-		if (restype == rettype || IS_BINARY_COMPATIBLE(restype, rettype))
+		if (IsBinaryCompatible(restype, rettype))
 			return;
 	}
 
@@ -470,7 +470,7 @@ checkretval(Oid rettype, List *queryTreeList)
 			continue;
 		tletype = exprType(tle->expr);
 		atttype = reln->rd_att->attrs[i]->atttypid;
-		if (tletype != atttype && !IS_BINARY_COMPATIBLE(tletype, atttype))
+		if (!IsBinaryCompatible(tletype, atttype))
 			elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
 				 format_type_be(rettype),
 				 format_type_be(tletype),

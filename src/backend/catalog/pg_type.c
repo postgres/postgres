@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.68 2002/03/19 02:18:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.69 2002/03/20 19:43:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,13 +179,11 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	values[i++] = CharGetDatum('i');			/* 15 */
 	values[i++] = CharGetDatum('p');			/* 16 */
 	values[i++] = BoolGetDatum(false);			/* 17 */
-	values[i++] = Int32GetDatum(-1);			/* 18 */
-	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 19 */
+	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 18 */
+	values[i++] = Int32GetDatum(-1);			/* 19 */
 	values[i++] = Int32GetDatum(0);				/* 20 */
-	values[i++] = DirectFunctionCall1(textin,
-									  CStringGetDatum(typeName));		/* 21 */
-	values[i++] = DirectFunctionCall1(textin,
-									  CStringGetDatum(typeName));		/* 22 */
+	nulls[i++] = 'n';			/* 21 */
+	nulls[i++] = 'n';			/* 22 */
 
 	/*
 	 * create a new type tuple with FormHeapTuple
@@ -288,7 +286,7 @@ TypeCreate(char *typeName,
 		   char storage,
 		   int32 typeMod,
 		   int32 typNDims,			/* Array dimensions for baseTypeName */
-		   bool typeNotNull)		/* binary default representation (cooked) */
+		   bool typeNotNull)
 {
 	int			i,
 				j;
@@ -452,21 +450,10 @@ TypeCreate(char *typeName,
 	 */
 	values[i++] = CharGetDatum(storage);		/* 16 */
 
-	/*
-	 * set the typenotnull value
-	 */
-	values[i++] = BoolGetDatum(typeNotNull);	/* 17 */
-
-	/*
-	 * set the typemod value
-	 */
-	values[i++] = Int32GetDatum(typeMod);			/* 18 */
-
-	values[i++] = ObjectIdGetDatum(baseObjectId);	/* 19 */
-
-	/*
-	 * Dimension number for an array base type
-	 */
+	/* set typnotnull, typbasetype, typtypmod, typndims */
+	values[i++] = BoolGetDatum(typeNotNull);		/* 17 */
+	values[i++] = ObjectIdGetDatum(baseObjectId);	/* 18 */
+	values[i++] = Int32GetDatum(typeMod);			/* 19 */
 	values[i++] = Int32GetDatum(typNDims);			/* 20 */
 
 	/*
@@ -475,17 +462,17 @@ TypeCreate(char *typeName,
 	 */
 	if (defaultTypeBin)
 		values[i] = DirectFunctionCall1(textin,
-									  CStringGetDatum(defaultTypeBin));
+										CStringGetDatum(defaultTypeBin));
 	else
 		nulls[i] = 'n';
-	i++;										/* 21 */
+	i++;						/* 21 */
 
 	/*
 	 * initialize the default value for this type.
 	 */
 	if (defaultTypeValue)
 		values[i] = DirectFunctionCall1(textin,
-									  CStringGetDatum(defaultTypeValue));
+										CStringGetDatum(defaultTypeValue));
 	else
 		nulls[i] = 'n';
 	i++;						/* 22 */

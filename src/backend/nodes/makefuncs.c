@@ -8,16 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.26 2001/03/22 03:59:32 momjian Exp $
- *
- * NOTES
- *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
- *	  them are rarely used. Now we don't generate them any more. If you want
- *	  one, you have to write it yourself.
- *
- * HISTORY
- *	  AUTHOR			DATE			MAJOR EVENT
- *	  Andrew Yu			Oct 20, 1994	file creation
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.27 2002/03/20 19:44:04 tgl Exp $
  */
 #include "postgres.h"
 
@@ -183,4 +174,20 @@ makeAttr(char *relname, char *attname)
 	a->indirection = NULL;
 
 	return a;
+}
+
+/*
+ * makeRelabelType -
+ *	  creates a RelabelType node
+ */
+RelabelType *
+makeRelabelType(Node *arg, Oid rtype, int32 rtypmod)
+{
+	RelabelType *r = makeNode(RelabelType);
+
+	r->arg = arg;
+	r->resulttype = rtype;
+	r->resulttypmod = rtypmod;
+
+	return r;
 }

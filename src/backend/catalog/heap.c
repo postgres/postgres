@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.188 2002/03/19 02:58:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.189 2002/03/20 19:43:34 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -705,7 +705,7 @@ AddNewRelationType(char *typeName, Oid new_rel_oid, Oid new_type_oid)
 			   true,			/* passed by value */
 			   'i',				/* default alignment - same as for OID */
 			   'p',				/* Not TOASTable */
-			   -1,				/* Type mod length */
+			   -1,				/* typmod */
 			   0,				/* array dimensions for typBaseType */
 			   false);			/* Type NOT NULL */
 }
@@ -1589,10 +1589,7 @@ AddRelationRawConstraints(Relation rel,
 	RangeTblEntry *rte;
 	int			numchecks;
 	List	   *listptr;
-
-	/* Probably shouldn't be null by default */
-	Node	   *expr = NULL;
-
+	Node	   *expr;
 
 	/*
 	 * Get info about existing constraints.
@@ -1624,17 +1621,11 @@ AddRelationRawConstraints(Relation rel,
 	foreach(listptr, rawColDefaults)
 	{
 		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(listptr);
-
-
 		Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
 
-		expr = cookDefault(pstate, colDef->raw_default
-						, atp->atttypid, atp->atttypmod
-						, NameStr(atp->attname));
-
-		/*
-		 * OK, store it.
-		 */
+		expr = cookDefault(pstate, colDef->raw_default,
+						   atp->atttypid, atp->atttypmod,
+						   NameStr(atp->attname));
 		StoreAttrDefault(rel, colDef->attnum, nodeToString(expr));
 	}
 
@@ -1646,7 +1637,6 @@ AddRelationRawConstraints(Relation rel,
 	{
 		Constraint *cdef = (Constraint *) lfirst(listptr);
 		char	   *ccname;
-		Node	   *expr;
 
 		if (cdef->contype != CONSTR_CHECK || cdef->raw_expr == NULL)
 			continue;
@@ -1851,17 +1841,21 @@ SetRelationNumChecks(Relation rel, int numchecks)
  * Take a raw default and convert it to a cooked format ready for
  * storage.
  *
- * Parse state, attypid, attypmod and attname are required for
- * CoerceTargetExpr() and more importantly transformExpr().
+ * Parse state should be set up to recognize any vars that might appear
+ * in the expression.  (Even though we plan to reject vars, it's more
+ * user-friendly to give the correct error message than "unknown var".)
+ *
+ * If atttypid is not InvalidOid, check that the expression is coercible
+ * to the specified type.  atttypmod is needed in this case, and attname
+ * is used in the error message if any.
  */
 Node *
 cookDefault(ParseState *pstate,
 			Node *raw_default,
 			Oid atttypid,
 			int32 atttypmod,
-			char *attname) {
-
-	Oid			type_id;
+			char *attname)
+{
 	Node		*expr;
 
 	Assert(raw_default != NULL);
@@ -1896,22 +1890,20 @@ cookDefault(ParseState *pstate,
 	 * will actually do the coercion, to ensure we don't accept an
 	 * unusable default expression.
 	 */
-	type_id = exprType(expr);
-	if (type_id != InvalidOid && atttypid != InvalidOid) {
-		if (type_id != atttypid) {
+	if (OidIsValid(atttypid))
+	{
+		Oid		type_id = exprType(expr);
 
-			/* Try coercing to the base type of the domain if available */
+		if (type_id != atttypid)
+		{
 			if (CoerceTargetExpr(pstate, expr, type_id,
-								 getBaseType(atttypid),
-								 atttypmod) == NULL) {
-
+								 atttypid, atttypmod) == NULL)
 				elog(ERROR, "Column \"%s\" is of type %s"
-					" but default expression is of type %s"
-					"\n\tYou will need to rewrite or cast the expression",
+					 " but default expression is of type %s"
+					 "\n\tYou will need to rewrite or cast the expression",
 					 attname,
 					 format_type_be(atttypid),
 					 format_type_be(type_id));
-			}
 		}
 	}
 

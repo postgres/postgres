@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.3 2002/03/19 02:18:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.4 2002/03/20 19:43:28 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,13 +23,14 @@ PostgreSQL documentation
    <date>2002-02-24</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> <replaceable class="parameter">data_type</replaceable>  [ DEFAULT <replaceable>default_expr</> ] [ <replaceable class="PARAMETER">column_constraint</replaceable> [, ... ] ]
+CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> [AS] <replaceable class="parameter">data_type</replaceable>
+    [ DEFAULT <replaceable>default_expr</> ]
+    [ <replaceable class="PARAMETER">constraint</replaceable> [, ... ] ]
+
+where <replaceable class="PARAMETER">constraint</replaceable> is:
+
 [ CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> ]
-{ NOT NULL | NULL <!-- |  UNIQUE | PRIMARY KEY |
-  CHECK (<replaceable class="PARAMETER">expression</replaceable>) |
-  REFERENCES <replaceable class="PARAMETER">reftable</replaceable> [ ( <replaceable class="PARAMETER">refcolumn</replaceable> ) ] [ MATCH FULL | MATCH PARTIAL ]
-    [ ON DELETE <replaceable class="parameter">action</replaceable> ] [ ON UPDATE <replaceable class="parameter">action</replaceable> ] --> }
-<!-- [ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ] -->
+{ NOT NULL | NULL }
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEDOMAIN-1">
@@ -67,23 +68,26 @@ CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> <replaceab
       <replaceable>default_expr</replaceable></literal></term>
       <listitem>
        <para>
-        The <literal>DEFAULT</> clause assigns a default data value for
-        the column whose column definition it appears within.  The value
-        is any variable-free expression (subselects and cross-references
-        to other columns in the current table are not allowed).  The
+        The <literal>DEFAULT</> clause specifies a default value for
+	columns of the domain data type.  The value
+        is any variable-free expression (but subselects are not allowed).
+	The
         data type of the default expression must match the data type of the
         domain.
        </para>
 
        <para>
         The default expression will be used in any insert operation that
-        does not specify a value for the domain.  If there is no default
+        does not specify a value for the column.  If there is no default
         for a domain, then the default is NULL.
        </para>
 
        <note>
         <para>
-         The default of a column will be tested before that of the domain.
+         If a default value is specified for a particular column, it
+	 overrides any default associated with the domain.  In turn,
+	 the domain default overrides any default value associated with
+	 the underlying data type.
         </para>
        </note>
       </listitem>
@@ -93,7 +97,7 @@ CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> <replaceab
       <term><literal>CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable></literal></term>
       <listitem>
        <para>
-        An optional name for a domain.  If not specified,
+        An optional name for a constraint.  If not specified,
         the system generates a name.
        </para>
       </listitem>
@@ -103,7 +107,7 @@ CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> <replaceab
       <term><literal>NOT NULL</></term>
       <listitem>
        <para>
-        The column is not allowed to contain NULL values.  This is
+        Values of this domain are not allowed to be NULL.  This is
         equivalent to the column constraint <literal>CHECK (<replaceable
         class="PARAMETER">column</replaceable> NOT NULL)</literal>.
        </para>
@@ -114,7 +118,7 @@ CREATE DOMAIN <replaceable class="parameter">domainname</replaceable> <replaceab
       <term><literal>NULL</></term>
       <listitem>
        <para>
-        The column is allowed to contain NULL values. This is the default.
+        Values of this domain are allowed to be NULL.  This is the default.
        </para>
 
        <para>
@@ -175,7 +179,7 @@ CREATE DOMAIN
    Domains are useful for abstracting common fields between tables into
    a single location for maintenance.  An email address column may be used
    in several tables, all with the same properties.  Define a domain and
-   use that rather than setting up each tables constraints individually.
+   use that rather than setting up each table's constraints individually.
   </para>
  </refsect1>
 
@@ -195,9 +199,9 @@ CREATE TABLE countrylist (id INT4, country country_code);
   <title>Compatibility</title>
 
   <para>
-   This <command>CREATE DOMAIN</command> command is a
-   <productname>PostgreSQL</productname> extension.  CHECK and FOREIGN KEY
-   constraints are currently unsupported.
+   SQL99 defines CREATE DOMAIN, but says that the only allowed constraint
+   type is CHECK constraints.  CHECK constraints for domains are not yet
+   supported by <productname>PostgreSQL</productname>.
   </para>
  </refsect1>
 

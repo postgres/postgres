@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.45 2002/03/19 02:58:19 momjian Exp $
+ * $Id: heap.h,v 1.46 2002/03/20 19:44:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,11 +47,11 @@ extern void AddRelationRawConstraints(Relation rel,
 						  List *rawColDefaults,
 						  List *rawConstraints);
 
-extern Node *cookDefault(ParseState *pstate
-						, Node *raw_default
-						, Oid atttypid
-						, int32 atttypmod
-						, char *attname);
+extern Node *cookDefault(ParseState *pstate,
+						 Node *raw_default,
+						 Oid atttypid,
+						 int32 atttypmod,
+						 char *attname);
 
 extern int	RemoveCheckConstraint(Relation rel, const char *constrName, bool inh);
 

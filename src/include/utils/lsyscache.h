@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.43 2002/03/19 02:18:24 momjian Exp $
+ * $Id: lsyscache.h,v 1.44 2002/03/20 19:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,8 @@ extern int16 get_typlen(Oid typid);
 extern bool get_typbyval(Oid typid);
 extern void get_typlenbyval(Oid typid, int16 *typlen, bool *typbyval);
 extern char get_typstorage(Oid typid);
-extern Node *get_typdefault(Oid typid, int32 atttypmod);
+extern Node *get_typdefault(Oid typid);
+extern Oid getBaseType(Oid typid);
 extern int32 get_typavgwidth(Oid typid, int32 typmod);
 extern int32 get_attavgwidth(Oid relid, AttrNumber attnum);
 extern bool get_attstatsslot(HeapTuple statstuple,

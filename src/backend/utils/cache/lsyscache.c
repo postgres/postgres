@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.63 2002/03/19 02:18:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.64 2002/03/20 19:44:42 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -23,7 +23,7 @@
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
-#include "parser/parse_coerce.h"
+#include "nodes/makefuncs.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -818,19 +818,19 @@ get_typstorage(Oid typid)
 
 /*
  * get_typdefault
- *
  *	  Given a type OID, return the type's default value, if any.
- *	  Returns FALSE if there is no default (effectively, default is NULL).
- *	  The result points to palloc'd storage for pass-by-reference types.
+ *
+ *	  The result is a palloc'd expression node tree, or NULL if there
+ *	  is no defined default for the datatype.
+ *
+ * NB: caller should be prepared to coerce result to correct datatype;
+ * the returned expression tree might produce something of the wrong type.
  */
 Node *
-get_typdefault(Oid typid, int32 atttypmod)
+get_typdefault(Oid typid)
 {
 	HeapTuple	typeTuple;
 	Form_pg_type type;
-	Oid			typinput;
-	Oid			typbasetype;
-	char		typtype;
 	Datum		datum;
 	bool		isNull;
 	Node	   *expr;
@@ -838,48 +838,102 @@ get_typdefault(Oid typid, int32 atttypmod)
 	typeTuple = SearchSysCache(TYPEOID,
 							   ObjectIdGetDatum(typid),
 							   0, 0, 0);
-
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "get_typdefault: failed to lookup type %u", typid);
-
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
 
-	typinput = type->typinput;
-	typbasetype = type->typbasetype;
-	typtype = type->typtype;
-
 	/*
-	 * typdefaultbin is potentially null, so don't try to access it as a
-	 * struct field. Must do it the hard way with SysCacheGetAttr.
+	 * typdefault and typdefaultbin are potentially null, so don't try to
+	 * access 'em as struct fields. Must do it the hard way with
+	 * SysCacheGetAttr.
 	 */
 	datum = SysCacheGetAttr(TYPEOID,
 							typeTuple,
 							Anum_pg_type_typdefaultbin,
 							&isNull);
 
-	ReleaseSysCache(typeTuple);
-	if (isNull)
-		return (Node *) NULL;
+	if (!isNull)
+	{
+		/* We have an expression default */
+		expr = stringToNode(DatumGetCString(DirectFunctionCall1(textout,
+																datum)));
+	}
+	else
+	{
+		/* Perhaps we have a plain literal default */
+		datum = SysCacheGetAttr(TYPEOID,
+								typeTuple,
+								Anum_pg_type_typdefault,
+								&isNull);
 
-	/* Convert Datum to a Node */
-	expr = stringToNode(DatumGetCString(
-						DirectFunctionCall1(textout, datum)));
+		if (!isNull)
+		{
+			char	   *strDefaultVal;
 
-
-	/*
-	 * Ensure we goto the basetype before the domain type.
-	 *
-	 * Prevents scenarios like the below from failing:
-	 * CREATE DOMAIN dom text DEFAULT random();
-	 *
-	 */
-	if (typbasetype != InvalidOid) {
-		expr = coerce_type(NULL, expr, typid,
-						  typbasetype, atttypmod);
+			/* Convert text datum to C string */
+			strDefaultVal = DatumGetCString(DirectFunctionCall1(textout,
+																datum));
+			/* Convert C string to a value of the given type */
+			datum = OidFunctionCall3(type->typinput,
+									 CStringGetDatum(strDefaultVal),
+									 ObjectIdGetDatum(type->typelem),
+									 Int32GetDatum(-1));
+			/* Build a Const node containing the value */
+			expr = (Node *) makeConst(typid,
+									  type->typlen,
+									  datum,
+									  false,
+									  type->typbyval,
+									  false,	/* not a set */
+									  false);
+			pfree(strDefaultVal);
+		}
+		else
+		{
+			/* No default */
+			expr = NULL;
+		}
 	}
 
+	ReleaseSysCache(typeTuple);
 
 	return expr;
+}
+
+/*
+ * getBaseType
+ *		If the given type is a domain, return its base type;
+ *		otherwise return the type's own OID.
+ */
+Oid
+getBaseType(Oid typid)
+{
+	/*
+	 * We loop to find the bottom base type in a stack of domains.
+	 */
+	for (;;)
+	{
+		HeapTuple	tup;
+		Form_pg_type typTup;
+
+		tup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(typid),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "getBaseType: failed to lookup type %u", typid);
+		typTup = (Form_pg_type) GETSTRUCT(tup);
+		if (typTup->typtype != 'd')
+		{
+			/* Not a domain, so done */
+			ReleaseSysCache(tup);
+			break;
+		}
+
+		typid = typTup->typbasetype;
+		ReleaseSysCache(tup);
+	}
+
+	return typid;
 }
 
 /*
