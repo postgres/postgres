@@ -631,6 +631,9 @@ AC_CHECK_FUNCS(fp_class fp_class_d class)
 AC_CHECK_FUNCS(sigprocmask waitpid setsid fcvt)
 dnl We use our snprintf.c emulation if either snprintf() or vsnprintf()
 dnl is missing.  Yes, there are machines that have only one.
+dnl We may also decide to use snprintf.c if snprintf() is present but does
+dnl not have working "long long int" support -- see below.
+SNPRINTF=''
 AC_CHECK_FUNC(snprintf,
 	      AC_DEFINE(HAVE_SNPRINTF),
 	      SNPRINTF='snprintf.o')
@@ -701,38 +704,37 @@ fi
 AC_SUBST(HPUXMATHLIB)
 
 dnl Check to see if we have a working 64-bit integer type.
-dnl This has to be done after checking for snprintf, because
-dnl if the platform has snprintf then we need to know if snprintf
-dnl works with 64-bit ints.  However, if we are supplying our own
-dnl snprintf then we expect that it will work as long as the basic
-dnl 64-bit math operations work.  NOTE that we will supply our own
-dnl snprintf if either snprintf or vsnprintf is missing.
+dnl This breaks down into two steps:
+dnl (1) figure out if the compiler has a 64-bit int type with working
+dnl arithmetic, and if so
+dnl (2) see whether snprintf() can format the type correctly.  (Currently,
+dnl snprintf is the only library routine we really need for int8 support.)
+dnl It's entirely possible to have a compiler that handles a 64-bit type
+dnl when the C library doesn't; this is fairly likely when using gcc on
+dnl an older platform, for example.
+dnl If there is no native snprintf() or it does not handle the 64-bit type,
+dnl we force our own version of snprintf() to be used instead.
+dnl Note this test must be run after our initial check for snprintf/vsnprintf.
 
+HAVE_LONG_INT_64=0
 AC_MSG_CHECKING(whether 'long int' is 64 bits)
-AC_TRY_RUN([#include <stdio.h>
-typedef long int int64;
-#define INT64_FORMAT "%ld"
+AC_TRY_RUN([typedef long int int64;
 
+/* These are globals to discourage the compiler from folding all the
+ * arithmetic tests down to compile-time constants.
+ */
 int64 a = 20000001;
 int64 b = 40000005;
 
 int does_int64_work()
 {
   int64 c,d;
-  char buf[100];
 
   if (sizeof(int64) != 8)
     return 0;			/* doesn't look like the right size */
 
-  /* we do perfunctory checks on multiply and divide,
-   * and also test snprintf if the platform provides snprintf.
-   */
+  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
   c = a * b;
-#if defined(HAVE_SNPRINTF) && defined(HAVE_VSNPRINTF)
-  snprintf(buf, 100, INT64_FORMAT, c);
-  if (strcmp(buf, "800000140000005") != 0)
-    return 0;			/* either multiply or snprintf is busted */
-#endif
   d = (c + b) / b;
   if (d != a+1)
     return 0;
@@ -741,46 +743,83 @@ int does_int64_work()
 main() {
   exit(! does_int64_work());
 }],
-	[AC_DEFINE(HAVE_LONG_INT_64) AC_MSG_RESULT(yes)],
+	[HAVE_LONG_INT_64=1
+	 AC_DEFINE(HAVE_LONG_INT_64)
+	 AC_MSG_RESULT(yes)],
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
+HAVE_LONG_LONG_INT_64=0
+if [[ $HAVE_LONG_INT_64 -eq 0 ]] ; then
 AC_MSG_CHECKING(whether 'long long int' is 64 bits)
-AC_TRY_RUN([#include <stdio.h>
+AC_TRY_RUN([typedef long long int int64;
+
+/* These are globals to discourage the compiler from folding all the
+ * arithmetic tests down to compile-time constants.
+ */
+int64 a = 20000001;
+int64 b = 40000005;
+
+int does_int64_work()
+{
+  int64 c,d;
+
+  if (sizeof(int64) != 8)
+    return 0;			/* doesn't look like the right size */
+
+  /* Do perfunctory checks to see if 64-bit arithmetic seems to work */
+  c = a * b;
+  d = (c + b) / b;
+  if (d != a+1)
+    return 0;
+  return 1;
+}
+main() {
+  exit(! does_int64_work());
+}],
+	[HAVE_LONG_LONG_INT_64=1
+	 AC_DEFINE(HAVE_LONG_LONG_INT_64)
+	 AC_MSG_RESULT(yes)],
+	AC_MSG_RESULT(no),
+	AC_MSG_RESULT(assuming not on target machine))
+fi
+
+dnl If we found "long int" is 64 bits, assume snprintf handles it.
+dnl If we found we need to use "long long int", better check.
+
+if [[ x$SNPRINTF = x -a $HAVE_LONG_LONG_INT_64 -eq 1 ]] ; then
+    AC_MSG_CHECKING(whether snprintf handles 'long long int')
+    AC_TRY_RUN([#include <stdio.h>
 typedef long long int int64;
 #define INT64_FORMAT "%lld"
 
 int64 a = 20000001;
 int64 b = 40000005;
 
-int does_int64_work()
+int does_int64_snprintf_work()
 {
-  int64 c,d;
+  int64 c;
   char buf[100];
 
   if (sizeof(int64) != 8)
     return 0;			/* doesn't look like the right size */
 
-  /* we do perfunctory checks on multiply and divide,
-   * and also test snprintf if the platform provides snprintf.
-   */
   c = a * b;
-#if defined(HAVE_SNPRINTF) && defined(HAVE_VSNPRINTF)
   snprintf(buf, 100, INT64_FORMAT, c);
   if (strcmp(buf, "800000140000005") != 0)
     return 0;			/* either multiply or snprintf is busted */
-#endif
-  d = (c + b) / b;
-  if (d != a+1)
-    return 0;
   return 1;
 }
 main() {
-  exit(! does_int64_work());
+  exit(! does_int64_snprintf_work());
 }],
-	[AC_DEFINE(HAVE_LONG_LONG_INT_64) AC_MSG_RESULT(yes)],
-	AC_MSG_RESULT(no),
-	AC_MSG_RESULT(assuming not on target machine))
+	AC_MSG_RESULT(yes),
+	[SNPRINTF='snprintf.o'
+	 AC_MSG_RESULT(no)],
+	[SNPRINTF='snprintf.o'
+	 AC_MSG_RESULT(assuming not on target machine)])
+fi
+
 
 dnl Check to see if platform has POSIX signal interface.
 dnl NOTE: if this test fails then POSIX signals definitely don't work.
