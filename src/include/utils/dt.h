@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.9 1997/05/23 05:10:03 thomas Exp $
+ * $Id: dt.h,v 1.10 1997/06/03 14:07:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,7 +173,7 @@ typedef struct {
  * Bit mask definitions for time parsing.
  */
 
-#define DTK_M(t)	(0x01 << t)
+#define DTK_M(t)	(0x01 << (t))
 
 #define DTK_DATE_M	(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M	(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
@@ -241,7 +241,7 @@ typedef struct {
 #define TIMESPAN_NOT_FINITE(j)	TIMESPAN_IS_INVALID(j)
 
 #define TIME_PREC 1e-6
-#define JROUND(j) (rint(((double) j)/TIME_PREC)*TIME_PREC)
+#define JROUND(j) (rint(((double) (j))/TIME_PREC)*TIME_PREC)
 
 /*
  * dt.c prototypes 
