@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.107.2.1 2002/12/02 05:21:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.107.2.2 2004/11/18 01:19:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,6 +575,14 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	heap_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
+
+	/*
+	 * Force dirty buffers out to disk, so that newly-connecting backends
+	 * will see the altered database tuple in pg_database right away.
+	 * (They'll see an uncommitted deletion, but they don't care; see
+	 * GetRawDatabaseInfo.)
+	 */
+	BufferSync();
 }
 
 
