@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.10 1998/02/26 04:33:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scansup.c,v 1.11 1999/02/07 23:59:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,8 @@
  * if the string passed in has escaped codes, map the escape codes to actual
  * chars
  *
- * also, remove leading and ending quotes '"' if any
- *
- * the string passed in must be non-null
- *
  * the string returned is a pointer to static storage and should NOT
- * be freed by the CALLER.
+ * be freed by the caller.
  * ----------------
  */
 
@@ -55,76 +51,59 @@ scanstr(char *s)
 	{
 		if (s[i] == '\'')
 		{
-			i = i + 1;
-			if (s[i] == '\'')
-				newStr[j] = '\'';
+			/* Note: if scanner is working right, unescaped quotes can only
+			 * appear in pairs, so there should be another character.
+			 */
+			i++;
+			newStr[j] = s[i];
 		}
-		else
+		else if (s[i] == '\\')
 		{
-			if (s[i] == '\\')
+			i++;
+			switch (s[i])
 			{
-				i = i + 1;
-				switch (s[i])
-				{
-					case '\\':
-						newStr[j] = '\\';
-						break;
-					case 'b':
-						newStr[j] = '\b';
-						break;
-					case 'f':
-						newStr[j] = '\f';
-						break;
-					case 'n':
-						newStr[j] = '\n';
-						break;
-					case 'r':
-						newStr[j] = '\r';
-						break;
-					case 't':
-						newStr[j] = '\t';
-						break;
-					case '"':
-						newStr[j] = '"';
-						break;
-					case '\'':
-						newStr[j] = '\'';
-						break;
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-						{
-							char		octal[4];
-							int			k;
-							long		octVal;
+				case 'b':
+					newStr[j] = '\b';
+					break;
+				case 'f':
+					newStr[j] = '\f';
+					break;
+				case 'n':
+					newStr[j] = '\n';
+					break;
+				case 'r':
+					newStr[j] = '\r';
+					break;
+				case 't':
+					newStr[j] = '\t';
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					{
+						int			k;
+						long		octVal = 0;
 
-							for (k = 0;
+						for (k = 0;
 							 s[i + k] >= '0' && s[i + k] <= '7' && k < 3;
-								 k++)
-								octal[k] = s[i + k];
-							i += k - 1;
-							octal[3] = '\0';
-
-							octVal = strtol(octal, 0, 8);
-/*						elog (NOTICE, "octal = %s octVal = %d, %od", octal, octVal, octVal);*/
-							if (octVal <= 0377)
-							{
-								newStr[j] = ((char) octVal);
-								break;
-							}
-						}
-					default:
-						newStr[j] = s[i];
-				}				/* switch */
-			}					/* s[i] == '\\' */
-			else
-				newStr[j] = s[i];
-		}
+							 k++)
+							octVal = (octVal << 3) + (s[i + k] - '0');
+						i += k - 1;
+						newStr[j] = ((char) octVal);
+					}
+					break;
+				default:
+					newStr[j] = s[i];
+					break;
+			}					/* switch */
+		}						/* s[i] == '\\' */
+		else
+			newStr[j] = s[i];
 		j++;
 	}
 	newStr[j] = '\0';
