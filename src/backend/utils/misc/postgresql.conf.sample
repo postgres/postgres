@@ -314,7 +314,7 @@
 #add_missing_from = true
 #regex_flavor = advanced	# advanced, extended, or basic
 #sql_inheritance = true
-#default_with_oids = true
+#default_with_oids = false
 
 # - Other Platforms & Clients -
 

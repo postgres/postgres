@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.307 2005/03/04 20:21:05 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.308 2005/03/13 09:36:30 neilc Exp $
 -->
 
 <chapter Id="runtime">
@@ -3587,23 +3587,18 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         newly-created tables, if neither <literal>WITH OIDS</literal>
         nor <literal>WITHOUT OIDS</literal> is specified. It also
         determines whether OIDs will be included in tables created by
-        <command>SELECT INTO</command>. In
-        <productname>PostgreSQL</productname> &version;
-        <varname>default_with_oids</varname> defaults to true. This is
-        also the behavior of previous versions of
-        <productname>PostgreSQL</productname>. However, assuming that
-        tables will contain OIDs by default is not encouraged. This
-        option will probably default to false in a future release of
-        <productname>PostgreSQL</productname>.
+        <command>SELECT INTO</command>. In <productname>PostgreSQL</>
+        8.1 <varname>default_with_oids</> is disabled by default; in
+        prior versions of PostgreSQL, it was true by default.
        </para>
 
        <para>
-        To ease compatibility with applications that make use of OIDs,
-        this option should left enabled. To ease compatibility with
-        future versions of <productname>PostgreSQL</productname>, this
-        option should be disabled, and applications that require OIDs
-        on certain tables should explicitly specify <literal>WITH
-        OIDS</literal> when those tables are created.
+        The use of OIDs in user tables is considered deprecated, so
+        most installations should leave this variable disabled.
+        Applications that require OIDs for a particular table should
+        specify <literal>WITH OIDS</literal> when creating the
+        table. This variable can be enabled for compatibility with old
+        applications that do not follow this behavior.
        </para>
       </listitem>
      </varlistentry>

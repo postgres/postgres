@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.61 2005/02/14 00:54:26 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.62 2005/03/13 09:36:30 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1299,7 +1299,8 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
      the <acronym>SQL</acronym> engine, and <varname>RESULT_OID</>,
      the OID of the last row inserted by the most recent
      <acronym>SQL</acronym> command.  Note that <varname>RESULT_OID</>
-     is only useful after an <command>INSERT</command> command.
+     is only useful after an <command>INSERT</command> command into a
+     table containing OIDs.
     </para>
 
     <para>

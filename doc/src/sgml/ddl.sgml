@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.39 2005/01/22 22:56:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.40 2005/03/13 09:36:30 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -868,11 +868,10 @@ CREATE TABLE order_items (
        <primary>OID</primary>
        <secondary>column</secondary>
       </indexterm>
-      The object identifier (object ID) of a row.  This is a serial
-      number that is automatically added by
-      <productname>PostgreSQL</productname> to all table rows (unless
-      the table was created using <literal>WITHOUT OIDS</literal>, in which
-      case this column is not present).  This column is of type
+      The object identifier (object ID) of a row. This column is only
+      present if the table was created using <literal>WITH
+      OIDS</literal>, or if the <xref linkend="guc-default-with-oids">
+      configuration variable was enabled. This column is of type
       <type>oid</type> (same name as the column); see <xref
       linkend="datatype-oid"> for more information about the type.
      </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.34 2005/01/22 22:56:36 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.35 2005/03/13 09:36:30 neilc Exp $
 -->
 
  <chapter id="pltcl">
@@ -400,8 +400,9 @@ $$ LANGUAGE pltcl;
       <listitem>
        <para>
         Returns the OID of the row inserted by the last
-        <function>spi_exec</> or <function>spi_execp</>,
-        if the command was a single-row <command>INSERT</>.  (If not, you get zero.)
+        <function>spi_exec</> or <function>spi_execp</>, if the
+        command was a single-row <command>INSERT</> and the modified
+        table contained OIDs.  (If not, you get zero.)
        </para>
       </listitem>
      </varlistentry>

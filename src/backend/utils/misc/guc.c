@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.254 2005/03/04 20:21:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.255 2005/03/13 09:36:31 neilc Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ bool		Australian_timezones = false;
 
 bool		Password_encryption = true;
 
-bool		default_with_oids = true;
+bool		default_with_oids = false;
 
 int			log_min_error_statement = PANIC;
 int			log_min_messages = NOTICE;
@@ -801,11 +801,11 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"default_with_oids", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("By default, newly-created tables should have OIDs."),
+			gettext_noop("Create new tables with OIDs by default."),
 			NULL
 		},
 		&default_with_oids,
-		true, NULL, NULL
+		false, NULL, NULL
 	},
 	{
 		{"redirect_stderr", PGC_POSTMASTER, LOGGING_WHERE,

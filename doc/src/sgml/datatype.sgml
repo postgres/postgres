@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.155 2005/01/22 22:56:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.156 2005/03/13 09:36:30 neilc Exp $
 -->
 
  <chapter id="datatype">
@@ -2980,12 +2980,12 @@ SELECT * FROM test;
    <para>
     Object identifiers (OIDs) are used internally by
     <productname>PostgreSQL</productname> as primary keys for various
-    system tables.  An OID system column is also added to user-created
-    tables, unless <literal>WITHOUT OIDS</literal> is specified when
-    the table is created, or the <xref linkend="guc-default-with-oids">
-    configuration variable is set to false.  Type <type>oid</>
-    represents an object identifier.  There are also several alias
-    types for <type>oid</>: <type>regproc</>, <type>regprocedure</>,
+    system tables.  OIDs are not added to user-created tables, unless
+    <literal>WITH OIDS</literal> is specified when the table is
+    created, or the <xref linkend="guc-default-with-oids">
+    configuration variable is enabled.  Type <type>oid</> represents
+    an object identifier.  There are also several alias types for
+    <type>oid</>: <type>regproc</>, <type>regprocedure</>,
     <type>regoper</>, <type>regoperator</>, <type>regclass</>, and
     <type>regtype</>. <xref linkend="datatype-oid-table"> shows an
     overview.
@@ -3000,28 +3000,11 @@ SELECT * FROM test;
     references to system tables.
    </para>
 
-   <note>
-    <para>
-     OIDs are included by default in user-created tables in
-     <productname>PostgreSQL</productname> &version;. However, this
-     behavior is likely to change in a future version of
-     <productname>PostgreSQL</productname>. Eventually, user-created
-     tables will not include an OID system column unless <literal>WITH
-     OIDS</literal> is specified when the table is created, or the
-     <varname>default_with_oids</varname> configuration variable is set
-     to true. If your application requires the presence of an OID
-     system column in a table, it should specify <literal>WITH
-     OIDS</literal> when that table is created to ensure compatibility
-     with future releases of <productname>PostgreSQL</productname>.
-    </para>
-   </note>
-
    <para>
     The <type>oid</> type itself has few operations beyond comparison.
-    It can be cast to
-    integer, however, and then manipulated using the standard integer
-    operators.  (Beware of possible signed-versus-unsigned confusion
-    if you do this.)
+    It can be cast to integer, however, and then manipulated using the
+    standard integer operators.  (Beware of possible
+    signed-versus-unsigned confusion if you do this.)
    </para>
 
    <para>
