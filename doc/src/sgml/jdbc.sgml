@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.14 2000/10/16 02:20:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.15 2000/10/27 22:28:23 momjian Exp $
 -->
 
  <chapter id="jdbc">
@@ -197,7 +197,7 @@ Class.forName("org.postgresql.Driver");
     using the -D argument. Example:
 
     <programlisting>
-% java -Djdbc.drivers=postgresql.Driver example.ImageViewer
+% java -Djdbc.drivers=org.postgresql.Driver example.ImageViewer
     </programlisting>
 
     In this example, the JVM will attempt to load the driver as part of it's
