@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.218 2004/07/12 00:09:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.219 2004/07/12 02:22:51 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1471,7 +1471,7 @@ static struct config_string ConfigureNamesString[] =
 						 "the specified file.")
 		},
 		&Dynamic_library_path,
-		"$libdir", assign_canonical_path, NULL
+		"$libdir", NULL, NULL
 	},
 
 	{
