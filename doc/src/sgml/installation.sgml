@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.37 2001/02/17 16:52:53 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.38 2001/02/19 22:25:43 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -682,8 +682,32 @@ su - postgres
         <para>
          Compiles all programs and libraries with debugging symbols.
          This means that you can run the programs through a debugger
-         to analyze problems. This option is not recommended for
-         production use.
+         to analyze problems. This enlarges the size of the installed
+	 executables considerably, and on non-gcc compilers it usually
+	 also disables compiler optimization, causing slowdowns. However,
+	 having the symbols available is extremely helpful for dealing
+	 with any problems that may arise.  Currently, this option is
+	 considered of marginal value for production installations, but
+	 you should have it on if you are doing development work or
+	 running a beta version.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>--enable-cassert</term>
+       <listitem>
+        <para>
+	 Enables <firstterm>assertion</> checks in the server, which test for
+	 many <quote>can't happen</> conditions.  This is invaluable for
+	 code development purposes, but the tests slow things down a little.
+	 Also, having the tests turned on won't necessarily enhance the
+	 stability of your server!  The assertion checks are not categorized
+	 for severity, and so what might be a relatively harmless bug will
+	 still lead to postmaster restarts if it triggers an assertion
+	 failure.  Currently, this option is not recommended for
+         production use, but you should have it on for development work
+	 or when running a beta version.
         </para>
        </listitem>
       </varlistentry>
