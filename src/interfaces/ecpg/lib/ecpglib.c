@@ -24,7 +24,7 @@
 #include <libpq-fe.h>
 #include <libpq/pqcomm.h>
 
-static PGconn *simple_connection;
+static PGconn *simple_connection = NULL;
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 static int	committed = true;
