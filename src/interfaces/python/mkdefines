@@ -1,0 +1,11 @@
+#! /usr/local/bin/python
+
+import string
+
+# change this if you have it somewhere else
+for l in open("/usr/local/pgsql/src/include/catalog/pg_type.h").readlines():
+	tokens = string.split(l)
+	if len(tokens) == 0 or tokens[0] != "#define": continue
+
+	if tokens[1] in ('CASHOID', 'INT2OID', 'INT4OID', 'OIDOID', 'FLOAT4OID', 'FLOAT8OID'):
+		print l,

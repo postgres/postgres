@@ -10,34 +10,30 @@ def doconnect(dbname = None, host = None, port = None, opt = None, tty = None):
 
 # list all databases on the server 
 def ListDB(pgcnx):
-	result = pgcnx.query("select datname from pg_database")
 	list = []
-	for node in result:
-		list.append(result[i][0])
+	for node in pgcnx.query("SELECT datname FROM pg_database").getresult():
+		list.append(node[0])
 	return list
 
 # list all tables (classes) in the selected database
 def ListTables(pgcnx):
-	result = pgcnx.query("select relname from pg_class "	\
-		"where relkind = 'r' "				\
-		"  and relname !~ '^Inv' "			\
-		"  and relname !~ '^pg_'")
 	list = []
-	for node in result:
+	for node in pgcnx.query("""SELECT relname FROM pg_class
+				WHERE relkind = 'r' AND
+					relname !~ '^Inv' AND
+					relname !~ '^pg_'""").getresult():
 		list.append(node[0])
 	return list
 
 # list table fields (attribute) in given table
 def ListAllFields(pgcnx, table):
-	result = pgcnx.query("select c.relname, a.attname, t.typname " \
-		"from pg_class c, pg_attribute a, pg_type t "	\
-		"where c.relname = '%s' "			\
-		"  and a.attnum > 0"				\
-		"  and a.attrelid = c.oid"			\
-		"  and a.atttypid = t.oid "			\
-		"order by relname, attname" % table)
-	# personnal preference ... so I leave the original query
 	list = []
-	for node in result:
+	for node in pgcnx.query("""SELECT c.relname, a.attname, t.typname
+							FROM pg_class c, pg_attribute a, pg_type t
+							WHERE c.relname = '%s' AND
+								a.attnum > 0 AND
+								a.attrelid = c.oid AND
+								a.atttypid = t.oid
+							ORDER BY relname, attname""" % table).getresult():
 		list.append(node[1], node[2])
 	return list
