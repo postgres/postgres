@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.39 2004/01/15 16:14:26 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.40 2004/02/06 19:36:18 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include "access/xact.h"
+#include "miscadmin.h"
 
 #ifndef MAX
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
@@ -237,6 +238,12 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck)
 				strategy_get_from = STRAT_LIST_T2;
 		}
 
+		/*
+		 * Do the cost accounting for vacuum
+		 */
+		if (VacuumCostActive)
+			VacuumCostBalance += VacuumCostPageMiss;
+
 		/* report cache miss */
 		return NULL;
 	}
@@ -250,6 +257,8 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck)
 	 * Count hits
 	 */
 	StrategyControl->num_hit[cdb->list]++;
+	if (VacuumCostActive)
+		VacuumCostBalance += VacuumCostPageHit;
 
 	/*
 	 * If this is a T2 hit, we simply move the CDB to the

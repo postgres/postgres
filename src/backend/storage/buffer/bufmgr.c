@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.155 2004/02/04 01:24:53 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.156 2004/02/06 19:36:18 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,6 +575,12 @@ write_buffer(Buffer buffer, bool release)
 
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 	Assert(bufHdr->refcount > 0);
+
+	/*
+	 * If the buffer is not dirty yet, do vacuum cost accounting.
+	 */
+	if (!(bufHdr->flags & BM_DIRTY) && VacuumCostActive)
+		VacuumCostBalance += VacuumCostPageDirty;
 
 	bufHdr->flags |= (BM_DIRTY | BM_JUST_DIRTIED);
 

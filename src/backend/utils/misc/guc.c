@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.185 2004/02/04 01:24:53 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.186 2004/02/06 19:36:18 wieck Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1045,6 +1045,51 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&maintenance_work_mem,
 		16384, 1024, INT_MAX / 1024, NULL, NULL
+	},
+
+	{
+		{"vacuum_cost_page_hit", PGC_USERSET, RESOURCES,
+			gettext_noop("Vacuum cost for a page found in the buffer cache."),
+			NULL
+		},
+		&VacuumCostPageHit,
+		1, 0, 10000, NULL, NULL
+	},
+
+	{
+		{"vacuum_cost_page_miss", PGC_USERSET, RESOURCES,
+			gettext_noop("Vacuum cost for a page not found in the buffer cache."),
+			NULL
+		},
+		&VacuumCostPageMiss,
+		10, 0, 10000, NULL, NULL
+	},
+
+	{
+		{"vacuum_cost_page_dirty", PGC_USERSET, RESOURCES,
+			gettext_noop("Vacuum cost for a page dirtied by vacuum."),
+			NULL
+		},
+		&VacuumCostPageDirty,
+		20, 0, 10000, NULL, NULL
+	},
+
+	{
+		{"vacuum_cost_limit", PGC_USERSET, RESOURCES,
+			gettext_noop("Vacuum cost amount available before napping."),
+			NULL
+		},
+		&VacuumCostLimit,
+		200, 1, 10000, NULL, NULL
+	},
+
+	{
+		{"vacuum_cost_naptime", PGC_USERSET, RESOURCES,
+			gettext_noop("Vacuum cost naptime in milliseconds."),
+			NULL
+		},
+		&VacuumCostNaptime,
+		0, 0, 1000, NULL, NULL
 	},
 
 	{

@@ -60,6 +60,12 @@
 #maintenance_work_mem = 16384	# min 1024, size in KB
 #debug_shared_buffers = 0	# 0-600 seconds
 
+#vacuum_cost_page_hit = 1	# 0-10000 credits
+#vacuum_cost_page_miss = 10	# 0-10000 credits
+#vacuum_cost_page_dirty = 20	# 0-10000 credits
+#vacuum_cost_limit = 200		# 0-10000 credits
+#vacuum_cost_naptime = 50	# 0-1000 milliseconds
+
 # - Background writer -
 #bgwriter_delay = 200		# 10-5000 milliseconds
 #bgwriter_percent = 1		# 0-100% of dirty buffers

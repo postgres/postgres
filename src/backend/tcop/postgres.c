@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.388 2004/02/03 17:34:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.389 2004/02/06 19:36:18 wieck Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2706,6 +2706,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		InError = false;
 		xact_started = false;
+
+		/*
+		 * Clear flag that causes accounting for cost based vacuum.
+		 */
+		VacuumCostActive = false;
 
 		/*
 		 * If we were handling an extended-query-protocol message,

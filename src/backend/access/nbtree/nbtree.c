@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.110 2004/02/03 17:34:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtree.c,v 1.111 2004/02/06 19:36:17 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -585,6 +585,26 @@ btbulkdelete(PG_FUNCTION_ARGS)
 			BlockNumber nextpage;
 
 			CHECK_FOR_INTERRUPTS();
+
+			/*
+			 * If we're called by a cost based vacuum, do the
+			 * napping in case the balance exceeded the limit.
+			 */
+			if (VacuumCostActive && !InterruptPending &&
+					VacuumCostBalance >= VacuumCostLimit)
+			{
+				int		msec;
+
+				msec = VacuumCostNaptime * VacuumCostBalance / VacuumCostLimit;
+				if (msec < VacuumCostNaptime * 4)
+					PG_MSLEEP(msec);
+				else
+					PG_MSLEEP(VacuumCostNaptime * 4);
+
+				VacuumCostBalance = 0;
+
+				CHECK_FOR_INTERRUPTS();
+			}
 
 			ndeletable = 0;
 			page = BufferGetPage(buf);
