@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Sat Jan  1 12:29:09 EST 2005
+Last updated:		Sun Jan  2 16:08:00 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -895,6 +895,7 @@ Source Code
 * Allow cross-compiling by generating the zic database on the target system
 * Improve NLS maintenace of libpgport messages linked onto applications
 * Allow ecpg to work with MSVC and BCC
+* Allow building with directories containing spaces
 
 
 * Win32
