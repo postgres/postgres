@@ -7,16 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.12 2004/05/20 15:38:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.13 2004/05/21 16:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef FRONTEND
 #include "postgres.h"
-#define malloc(l)	palloc(l)
-#define free(p)		pfree(p)
-#define strdup(p)	pstrdup(p)
 #else
 #include "postgres_fe.h"
 #endif
@@ -24,13 +21,18 @@
 #include <grp.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
-#include <sys/wait.h>
-
-#define _(x) gettext((x))
-
 #include "miscadmin.h"
+
+#define _(x) gettext(x)
+
+#ifdef FRONTEND
+#undef pstrdup
+#define pstrdup(p)	strdup(p)
+#define pfree(p)	free(p)
+#endif
 
 /* $PATH (or %PATH%) path separator */
 #ifdef WIN32
@@ -58,7 +60,9 @@
 #define log_error(str, param)	fprintf(stderr, (str), (param))
 #endif
 
+
 static void win32_make_absolute(char *path);
+
 
 /*
  * validate_exec -- validate "path" as an executable file
@@ -243,7 +247,7 @@ find_my_exec(const char *argv0, char *retpath)
 	 */
 	if ((p = getenv("PATH")) && *p)
 	{
-		path = strdup(p);		/* make a modifiable copy */
+		path = pstrdup(p);		/* make a modifiable copy */
 		for (startp = path, endp = strchr(path, PATHSEP);
 			 startp && *startp;
 			 startp = endp + 1, endp = strchr(startp, PATHSEP))
@@ -263,19 +267,19 @@ find_my_exec(const char *argv0, char *retpath)
 			{
 				case 0: /* found ok */
 					win32_make_absolute(retpath);
-					free(path);
+					pfree(path);
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
 					log_error("could not read binary \"%s\"", retpath);
-					free(path);
+					pfree(path);
 					return -1;
 			}
 			if (!endp)			/* last one */
 				break;
 		}
-		free(path);
+		pfree(path);
 	}
 
 	log_error("could not find a \"%s\" to execute", argv0);
@@ -296,8 +300,9 @@ find_my_exec(const char *argv0, char *retpath)
  * Find our binary directory, then make sure the "target" executable
  * is the proper version.
  */
-int find_other_exec(const char *argv0, char const *target,
-					const char *versionstr, char *retpath)
+int
+find_other_exec(const char *argv0, const char *target,
+				const char *versionstr, char *retpath)
 {
 	char		cmd[MAXPGPATH];
 	char		line[100];
@@ -380,8 +385,6 @@ pclose_check(FILE *stream)
 /*
  * Windows doesn't like relative paths to executables (other things work fine)
  * so we call its builtin function to expand them. Elsewhere this is a NOOP
- *
- * Returns malloc'ed memory.
  */
 static void
 win32_make_absolute(char *path)
@@ -391,14 +394,11 @@ win32_make_absolute(char *path)
 
 	if (_fullpath(abspath, path, MAXPGPATH) == NULL)
 	{
-		log_error("Win32 path expansion failed:  %s", strerror(errno));
+		log_error("Win32 path expansion failed: %s", strerror(errno));
 		StrNCpy(abspath, path, MAXPGPATH);
 	}
 	canonicalize_path(abspath);
 
 	StrNCpy(path, abspath, MAXPGPATH);
 #endif
-	return;
 }
-
-
