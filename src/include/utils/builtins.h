@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.76 1999/03/14 16:44:01 momjian Exp $
+ * $Id: builtins.h,v 1.77 1999/03/15 03:24:31 tgl Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -331,7 +331,7 @@ extern int32 userfntest(int i);
 #define NonNullValue(v,b) nonnullvalue(v,b)
 
 /* not_in.c */
-extern bool int4notin(int16 not_in_arg, char *relation_and_attr);
+extern bool int4notin(int32 not_in_arg, char *relation_and_attr);
 extern bool oidnotin(Oid the_oid, char *compare);
 
 /* oid.c */

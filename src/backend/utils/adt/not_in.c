@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.14 1999/02/13 23:19:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.15 1999/03/15 03:24:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,11 +36,10 @@ static int	my_varattno(Relation rd, char *a);
  * ----------------------------------------------------------------
  */
 bool
-int4notin(int16 not_in_arg, char *relation_and_attr)
+int4notin(int32 not_in_arg, char *relation_and_attr)
 {
 	Relation	relation_to_scan;
-	int			left_side_argument,
-				integer_value;
+	int32		integer_value;
 	HeapTuple	current_tuple;
 	HeapScanDesc scan_descriptor;
 	bool		dummy,
@@ -48,47 +47,55 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 	int			attrid;
 	char	   *relation,
 			   *attribute;
-	char		my_copy[32];
+	char		my_copy[NAMEDATALEN*2+2];
 	Datum		value;
-	NameData	relNameData;
-	ScanKeyData skeyData;
 
-	strcpy(my_copy, relation_and_attr);
+	strncpy(my_copy, relation_and_attr, sizeof(my_copy));
+	my_copy[sizeof(my_copy)-1] = '\0';
 
 	relation = (char *) strtok(my_copy, ".");
 	attribute = (char *) strtok(NULL, ".");
-
-
-	/* fetch tuple OID */
-
-	left_side_argument = not_in_arg;
+	if (attribute == NULL)
+	{
+		elog(ERROR, "int4notin: must provide relationname.attributename");
+	}
 
 	/* Open the relation and get a relation descriptor */
 
-	namestrcpy(&relNameData, relation);
-	relation_to_scan = heap_openr(relNameData.data);
-	attrid = my_varattno(relation_to_scan, attribute);
+	relation_to_scan = heap_openr(relation);
+	if (!RelationIsValid(relation_to_scan))
+	{
+		elog(ERROR, "int4notin: unknown relation %s",
+			 relation);
+	}
 
-	/* the last argument should be a ScanKey, not an integer! - jolly */
-	/* it looks like the arguments are out of order, too */
-	/* but skeyData is never initialized! does this work?? - ay 2/95 */
+	/* Find the column to search */
+
+	attrid = my_varattno(relation_to_scan, attribute);
+	if (attrid < 0)
+	{
+		elog(ERROR, "int4notin: unknown attribute %s for relation %s",
+			 attribute, relation);
+	}
+
 	scan_descriptor = heap_beginscan(relation_to_scan, false, SnapshotNow,
-									 0, &skeyData);
+									 0, (ScanKey) NULL);
 
 	retval = true;
 
 	/* do a scan of the relation, and do the check */
-	while (HeapTupleIsValid(current_tuple = heap_getnext(scan_descriptor, 0)) &&
-		   retval)
+	while (HeapTupleIsValid(current_tuple = heap_getnext(scan_descriptor, 0)))
 	{
 		value = heap_getattr(current_tuple,
 							 (AttrNumber) attrid,
 							 RelationGetDescr(relation_to_scan),
 							 &dummy);
-
-		integer_value = DatumGetInt16(value);
-		if (left_side_argument == integer_value)
+		integer_value = DatumGetInt32(value);
+		if (not_in_arg == integer_value)
+		{
 			retval = false;
+			break;				/* can stop scanning now */
+		}
 	}
 
 	/* close the relation */
