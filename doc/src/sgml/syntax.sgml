@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.56 2002/01/07 02:29:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.57 2002/01/09 23:38:06 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -370,7 +370,7 @@ REAL '1.23'  -- string style
 '<replaceable>string</replaceable>'::<replaceable>type</replaceable>
 CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 </synopsis>
-     The value inside the string is passed to the input conversion
+     The string's text is passed to the input conversion
      routine for the type called <replaceable>type</replaceable>. The
      result is a constant of the indicated type.  The explicit type
      cast may be omitted if there is no ambiguity as to the type the
@@ -383,25 +383,23 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      It is also possible to specify a type coercion using a function-like
      syntax:
 <synopsis>
-<replaceable>typename</replaceable> ( <replaceable>value</replaceable> )
+<replaceable>typename</replaceable> ( '<replaceable>string</replaceable>' )
 </synopsis>
-     although this only works for types whose names are also valid as
-     function names.  For example, <literal>double precision</literal>
-     can't be used this way, but the equivalent <literal>float8</literal>
-     can.  Also, the names <literal>interval</>, <literal>time</>, and
-     <literal>timestamp</> can only be used in this context if they are
-     double-quoted, because of parser conflicts.  Therefore, the use of
-     the function-like cast syntax leads to inconsistencies and should
-     probably be avoided in new applications.
+     but not all type names may be used in this way; see <xref
+     linkend="sql-syntax-type-casts"> for details.
     </para>
 
     <para>
      The <literal>::</literal>, <literal>CAST()</literal>, and
-     function-call syntaxes can also be used to specify the type of
-     arbitrary expressions, but the form
-     <replaceable>type</replaceable>
-     '<replaceable>string</replaceable>' can only be used to specify
-     the type of a literal constant.
+     function-call syntaxes can also be used to specify runtime type
+     conversions of arbitrary expressions, as discussed in <xref
+     linkend="sql-syntax-type-casts">.  But the form
+     <replaceable>type</replaceable> '<replaceable>string</replaceable>'
+     can only be used to specify the type of a literal constant.
+     Another restriction on
+     <replaceable>type</replaceable> '<replaceable>string</replaceable>'
+     is that it does not work for array types; use <literal>::</literal>
+     or <literal>CAST()</literal> to specify the type of an array constant.
     </para>
    </sect3>
 
@@ -793,32 +791,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <listitem>
      <para>
-      A column reference
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      An operator invocation:
-      <simplelist>
-       <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> <replaceable>expression</replaceable> (binary infix operator)</member>
-       <member><replaceable>operator</replaceable> <replaceable>expression</replaceable> (unary prefix operator)</member>
-       <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> (unary postfix operator)</member>
-      </simplelist>
-      where <replaceable>operator</replaceable> follows the syntax
-      rules of <xref linkend="sql-syntax-operators"> or is one of the
-      tokens <token>AND</token>, <token>OR</token>, and
-      <token>NOT</token>.  Which particular operators exist and whether
-      they are unary or binary depends on what operators have been
-      defined by the system or the user.  <xref linkend="functions">
-      describes the built-in operators.
-     </para>
-    </listitem>
-
-    <listitem>
-<synopsis>( <replaceable>expression</replaceable> )</synopsis>
-     <para>
-      Parentheses are used to group subexpressions and override precedence.
+      A column reference.
      </para>
     </listitem>
 
@@ -830,27 +803,38 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 
     <listitem>
      <para>
-      A function call
+      An operator invocation.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      An aggregate expression
+      A function call.
      </para>
     </listitem>
 
     <listitem>
      <para>
-      A scalar subquery.  This is an ordinary
-      <command>SELECT</command> in parentheses that returns exactly one
-      row with one column.  It is an error to use a subquery that
-      returns more than one row or more than one column in the context
-      of a value expression.  (But if, during a particular execution, the
-      subquery returns no rows, the scalar result is taken to be NULL.)
-      The subquery can refer to variables from the surrounding query,
-      which will act as constants during any one evaluation of the subquery.
-      See also <xref linkend="functions-subquery">.
+      An aggregate expression.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A type cast.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A scalar subquery.
+     </para>
+    </listitem>
+
+    <listitem>
+<synopsis>( <replaceable>expression</replaceable> )</synopsis>
+     <para>
+      Parentheses are used to group subexpressions and override precedence.
      </para>
     </listitem>
    </itemizedlist>
@@ -885,14 +869,14 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     the key words <literal>NEW</literal> or <literal>OLD</literal>.
     (NEW and OLD can only appear in the action portion of a rule,
     while other correlation names can be used in any SQL statement.)
-    The correlation name can be omitted if the column name is unique
+    The correlation name and separating dot may be omitted if the column name
+    is unique 
     across all the tables being used in the current query.  If
     <replaceable>column</replaceable> is of an array type, then the
     optional <replaceable>subscript</replaceable> selects a specific
-    element in the array.  If no subscript is provided, then the whole
-    array is selected.  Refer to the description of the particular
-    commands in the <citetitle>PostgreSQL Reference Manual</citetitle>
-    for the allowed syntax in each case.
+    element or elements in the array.  If no subscript is provided, then the
+    whole array is selected.  (See <xref linkend="arrays"> for more about
+    arrays.)
    </para>
   </sect2>
 
@@ -920,6 +904,26 @@ CREATE FUNCTION dept (text) RETURNS dept
 
     Here the <literal>$1</literal> will be replaced by the first
     function argument when the function is invoked.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Operator Invocations</title>
+
+   <para>
+    There are three possible syntaxes for an operator invocation:
+    <simplelist>
+     <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> <replaceable>expression</replaceable> (binary infix operator)</member>
+     <member><replaceable>operator</replaceable> <replaceable>expression</replaceable> (unary prefix operator)</member>
+     <member><replaceable>expression</replaceable> <replaceable>operator</replaceable> (unary postfix operator)</member>
+    </simplelist>
+    where the <replaceable>operator</replaceable> token follows the syntax
+    rules of <xref linkend="sql-syntax-operators"> or is one of the
+    tokens <token>AND</token>, <token>OR</token>, and
+    <token>NOT</token>.  Which particular operators exist and whether
+    they are unary or binary depends on what operators have been
+    defined by the system or the user.  <xref linkend="functions">
+    describes the built-in operators.
    </para>
   </sect2>
 
@@ -973,7 +977,7 @@ sqrt(2)
 
     where <replaceable>aggregate_name</replaceable> is a previously
     defined aggregate, and <replaceable>expression</replaceable> is
-    any expression that does not itself contain an aggregate
+    any value expression that does not itself contain an aggregate
     expression.
    </para>
 
@@ -1003,6 +1007,90 @@ sqrt(2)
     The predefined aggregate functions are described in <xref
     linkend="functions-aggregate">.  Other aggregate functions may be added
     by the user. 
+   </para>
+  </sect2>
+
+  <sect2 id="sql-syntax-type-casts">
+   <title>Type Casts</title>
+
+    <indexterm>
+     <primary>data types</primary>
+     <secondary>type casts</secondary>
+    </indexterm>
+
+   <para>
+    A type cast specifies a conversion from one datatype to another.
+    <productname>PostgreSQL</productname> accepts two equivalent syntaxes
+    for type casts:
+<synopsis>
+CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> )
+<replaceable>expression</replaceable>::<replaceable>type</replaceable>
+</synopsis>
+    The <literal>CAST</> syntax conforms to SQL92; the syntax with
+    <literal>::</literal> is historical <productname>PostgreSQL</productname>
+    usage.
+   </para>
+
+   <para>
+    When a cast is applied to a value expression of a known type, it
+    represents a run-time type conversion.  The cast will succeed only
+    if a suitable type conversion function is available.  Notice that this
+    is subtly different from the use of casts with constants, as shown in
+    <xref linkend="sql-syntax-constants-generic">.  A cast applied to an
+    unadorned string literal represents the initial assignment of a type
+    to a literal constant value, and so it will succeed for any type
+    (if the string literal's contents are acceptable input syntax for the
+    datatype).
+   </para>
+
+   <para>
+    An explicit type cast may be omitted if there is no ambiguity as to the
+    type that a value expression must produce (for example, when it is
+    assigned to a table column); the system will automatically apply a
+    type cast in such cases.
+   </para>
+
+   <para>
+    It is also possible to specify a type cast using a function-like
+    syntax:
+<synopsis>
+<replaceable>typename</replaceable> ( <replaceable>expression</replaceable> )
+</synopsis>
+    However, this only works for types whose names are also valid as
+    function names.  For example, <literal>double precision</literal>
+    can't be used this way, but the equivalent <literal>float8</literal>
+    can.  Also, the names <literal>interval</>, <literal>time</>, and
+    <literal>timestamp</> can only be used in this fashion if they are
+    double-quoted, because of parser conflicts.  Therefore, the use of
+    the function-like cast syntax leads to inconsistencies and should
+    probably be avoided in new applications.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Scalar Subqueries</title>
+
+   <para>
+    A scalar subquery is an ordinary
+    <command>SELECT</command> in parentheses that returns exactly one
+    row with one column.  The <command>SELECT</command> query is executed
+    and the single returned value is used in the surrounding value expression.
+    It is an error to use a query that
+    returns more than one row or more than one column as a scalar subquery.
+    (But if, during a particular execution, the subquery returns no rows,
+    there is no error; the scalar result is taken to be NULL.)
+    The subquery can refer to variables from the surrounding query,
+    which will act as constants during any one evaluation of the subquery.
+    See also <xref linkend="functions-subquery">.
+   </para>
+
+   <para>
+    For example, the following finds the largest city population in each
+    state:
+<programlisting>
+SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
+FROM states;
+</programlisting>
    </para>
   </sect2>
 
