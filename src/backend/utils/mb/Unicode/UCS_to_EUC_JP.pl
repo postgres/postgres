@@ -2,7 +2,7 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Id: UCS_to_EUC_JP.pl,v 1.1 2000/10/30 10:40:29 ishii Exp $
+# $Id: UCS_to_EUC_JP.pl,v 1.2 2001/04/16 06:10:18 ishii Exp $
 #
 # Generate UTF-8 <--> EUC_JP code conversion tables from
 # map files provided by Unicode organization.
@@ -48,7 +48,7 @@ while( <FILE> ){
 	( $c, $u, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		if( $array{ $utf } ne "" ){
 			printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
@@ -77,7 +77,7 @@ while( <FILE> ){
 	( $s, $c, $u, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		if( $array{ $utf } ne "" ){
 			printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
@@ -105,7 +105,7 @@ while( <FILE> ){
 	( $c, $u, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		if( $array{ $utf } ne "" ){
 			printf STDERR "Warning: duplicate unicode: %04x\n",$ucs;
@@ -160,7 +160,7 @@ while( <FILE> ){
 	( $c, $u, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		if( $array{ $code } ne "" ){
 			printf STDERR "Warning: duplicate code: %04x\n",$ucs;
@@ -190,7 +190,7 @@ while( <FILE> ){
 	( $s, $c, $u, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		if( $array{ $code } ne "" ){
 			printf STDERR "Warning: duplicate code: %04x\n",$ucs;
@@ -219,7 +219,7 @@ while( <FILE> ){
 	( $c, $u, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		if( $array{ $code } ne "" ){
 			printf STDERR "Warning: duplicate code: %04x\n",$ucs;

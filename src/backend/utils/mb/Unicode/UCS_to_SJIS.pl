@@ -2,7 +2,7 @@
 #
 # Copyright 2001 by PostgreSQL Global Development Group
 #
-# $Id: UCS_to_SJIS.pl,v 1.2 2001/02/23 08:44:33 ishii Exp $
+# $Id: UCS_to_SJIS.pl,v 1.3 2001/04/16 06:10:18 ishii Exp $
 #
 # Generate UTF-8 <--> SJIS code conversion tables from
 # map files provided by Unicode organization.
@@ -34,7 +34,7 @@ while( <FILE> ){
     ( $c, $u, $rest ) = split;
   $ucs = hex($u);
   $code = hex($c);
-  if( $code >= 0x80 && $ucs >= 0x100 ){
+  if( $code >= 0x80 && $ucs >= 0x0080 ){
     $utf = &ucs2utf($ucs);
     if((( $code >= 0xed40 )
 	&& ( $code <= 0xeefc ))
@@ -100,7 +100,7 @@ while( <FILE> ){
 	( $c, $u, $rest ) = split;
 	$ucs = hex($u);
 	$code = hex($c);
-	if( $code >= 0x80 && $ucs >= 0x100 ){
+	if( $code >= 0x80 && $ucs >= 0x0080 ){
 		$utf = &ucs2utf($ucs);
 		$count++;
 
