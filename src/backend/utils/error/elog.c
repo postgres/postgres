@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.149 2004/09/05 02:01:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.150 2004/09/05 03:42:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -862,10 +862,42 @@ getinternalerrposition(void)
 
 
 /*
- * elog_finish --- finish up for old-style API
+ * elog_start --- startup for old-style API
  *
- * The elog() macro already called errstart, but with ERROR rather than
- * the true elevel.
+ * All that we do here is stash the hidden filename/lineno/funcname
+ * arguments into a stack entry.
+ *
+ * We need this to be separate from elog_finish because there's no other
+ * portable way to deal with inserting extra arguments into the elog call.
+ * (If macros with variable numbers of arguments were portable, it'd be
+ * easy, but they aren't.)
+ */
+void
+elog_start(const char *filename, int lineno, const char *funcname)
+{
+	ErrorData  *edata;
+
+	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
+	{
+		/*
+		 * Wups, stack not big enough.	We treat this as a PANIC condition
+		 * because it suggests an infinite loop of errors during error
+		 * recovery.
+		 */
+		errordata_stack_depth = -1;		/* make room on stack */
+		ereport(PANIC, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
+	}
+
+	edata = &errordata[errordata_stack_depth];
+	edata->filename = filename;
+	edata->lineno = lineno;
+	edata->funcname = funcname;
+	/* errno is saved now so that error parameter eval can't change it */
+	edata->saved_errno = errno;
+}
+
+/*
+ * elog_finish --- finish up for old-style API
  */
 void
 elog_finish(int elevel, const char *fmt,...)
@@ -876,8 +908,7 @@ elog_finish(int elevel, const char *fmt,...)
 	CHECK_STACK_DEPTH();
 
 	/*
-	 * We need to redo errstart() because the elog macro had to call it
-	 * with bogus elevel.
+	 * Do errstart() to see if we actually want to report the message.
 	 */
 	errordata_stack_depth--;
 	errno = edata->saved_errno;

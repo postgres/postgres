@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.75 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.76 2004/09/05 03:42:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,8 +153,9 @@ extern int	getinternalerrposition(void);
  *		elog(ERROR, "portal \"%s\" not found", stmt->portalname);
  *----------
  */
-#define elog	errstart(ERROR, __FILE__, __LINE__, PG_FUNCNAME_MACRO), elog_finish
+#define elog	elog_start(__FILE__, __LINE__, PG_FUNCNAME_MACRO), elog_finish
 
+extern void elog_start(const char *filename, int lineno, const char *funcname);
 extern void
 elog_finish(int elevel, const char *fmt,...)
 /* This extension allows gcc to check the format string for consistency with
