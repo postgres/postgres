@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.168 2000/10/03 03:11:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.169 2000/10/08 09:25:36 ishii Exp $
  *
  * NOTES
  *
@@ -194,7 +194,7 @@ static int	SendStop = false;
 
 bool NetServer = false;	/* listen on TCP/IP */
 bool EnableSSL = false;
-
+bool SilentMode = false;	/* silent mode (-S) */
 
 static pid_t StartupPID = 0,
 			ShutdownPID = 0;
@@ -302,7 +302,6 @@ PostmasterMain(int argc, char *argv[])
 {
 	int			opt;
 	int			status;
-	int			silentflag = 0;
 	char		original_extraoptions[MAXPGPATH];
 
 	IsUnderPostmaster = true;	/* so that backends know this */
@@ -501,7 +500,7 @@ PostmasterMain(int argc, char *argv[])
 				 * it's most badly needed on SysV-derived systems like
 				 * SVR4 and HP-UX.
 				 */
-				silentflag = 1;
+				SilentMode = true;
 				break;
 			case 's':
 
@@ -601,7 +600,7 @@ PostmasterMain(int argc, char *argv[])
 	BackendList = DLNewList();
 	PortList = DLNewList();
 
-	if (silentflag)
+	if (SilentMode)
 		pmdaemonize(argc, argv);
 	else
 	{

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.26 2000/09/30 16:58:20 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.27 2000/10/08 09:25:35 ishii Exp $
 -->
 
 <Chapter Id="runtime">
@@ -958,6 +958,21 @@ env PGOPTIONS='--geqo=off' psql
         Sets the number of shared memory buffers the database server
         will use. The default is 64. Each buffer is typically 8192
         bytes. This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>SILENT_MODE (<type>bool</type>)</term>
+      <listitem>
+       <para>
+	    Runs postmaster silently. If this option is set, postmaser
+        will automatically run in background and any controlling ttys
+        are disassociated, thus no message is put to stdout or
+        stderr(same effect as postmaster's -S option). Unless some
+        logging systems such as syslog is enabled, using this option
+        is discouraged since it makes difficult to find error
+        messages.
        </para>
       </listitem>
      </varlistentry>

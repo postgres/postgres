@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.11 2000/09/06 19:54:47 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.12 2000/10/08 09:25:37 ishii Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -162,6 +162,7 @@ ConfigureNamesBool[] =
 	{"tcpip_socket",            PGC_POSTMASTER, &NetServer,             false},
 	{"ssl",                     PGC_POSTMASTER, &EnableSSL,             false},
 	{"fsync",                   PGC_USERSET,    &enableFsync,           true},
+	{"silent_mode",             PGC_POSTMASTER, &SilentMode,            false},
 
 	{"log_connections",         PGC_SIGHUP,     &Log_connections,       false},
 	{"log_timestamp",           PGC_SIGHUP,     &Log_timestamp,         false},
