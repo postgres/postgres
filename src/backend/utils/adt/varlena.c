@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.78 2001/11/19 19:15:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.79 2002/03/05 05:33:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,49 +332,71 @@ textcat(PG_FUNCTION_ARGS)
  * Changed behavior if starting position is less than one to conform to SQL92 behavior.
  * Formerly returned the entire string; now returns a portion.
  * - Thomas Lockhart 1998-12-10
+ * Now uses faster TOAST-slicing interface
+ * - John Gray 2002-02-22
  */
 Datum
 text_substr(PG_FUNCTION_ARGS)
 {
-	text	   *string = PG_GETARG_TEXT_P(0);
+	text	   *string;
 	int32		m = PG_GETARG_INT32(1);
 	int32		n = PG_GETARG_INT32(2);
-	text	   *ret;
-	int			len;
-
+	int32       sm;
+	int32       sn;
+	int         eml = 1;
 #ifdef MULTIBYTE
 	int			i;
+	int			len;
+	text	   *ret;
 	char	   *p;
-#endif
-
-	len = VARSIZE(string) - VARHDRSZ;
-#ifdef MULTIBYTE
-	len = pg_mbstrlen_with_len(VARDATA(string), len);
-#endif
-
-	/* starting position after the end of the string? */
-	if (m > len)
-	{
-		m = 1;
-		n = 0;
-	}
+#endif 
 
 	/*
 	 * starting position before the start of the string? then offset into
 	 * the string per SQL92 spec...
 	 */
-	else if (m < 1)
+	if (m < 1)
 	{
 		n += (m - 1);
 		m = 1;
 	}
+	/* Check for m > octet length is made in TOAST access routine */
 
 	/* m will now become a zero-based starting position */
+	sm = m - 1;
+	sn = n;
+
+#ifdef MULTIBYTE
+	eml = pg_database_encoding_max_length ();
+
+	if (eml > 1)
+	{
+		sm = 0;
+		sn = (m + n) * eml + 3; /* +3 to avoid mb characters overhanging slice end */
+	}
+#endif 
+
+	string = PG_GETARG_TEXT_P_SLICE (0, sm, sn);
+
+	if (eml == 1) 
+	{
+		PG_RETURN_TEXT_P (string);
+	}
+#ifndef MULTIBYTE
+	PG_RETURN_NULL();   /* notreached: suppress compiler warning */
+#endif
+#ifdef MULTIBYTE
+	len = pg_mbstrlen_with_len (VARDATA (string), sn - 3);
+
+	if (m > len)
+	{
+		m = 1;
+		n = 0;
+	}
 	m--;
 	if (((m + n) > len) || (n < 0))
 		n = (len - m);
 
-#ifdef MULTIBYTE
 	p = VARDATA(string);
 	for (i = 0; i < m; i++)
 		p += pg_mblen(p);
@@ -382,7 +404,6 @@ text_substr(PG_FUNCTION_ARGS)
 	for (i = 0; i < n; i++)
 		p += pg_mblen(p);
 	n = p - (VARDATA(string) + m);
-#endif
 
 	ret = (text *) palloc(VARHDRSZ + n);
 	VARATT_SIZEP(ret) = VARHDRSZ + n;
@@ -390,6 +411,7 @@ text_substr(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(ret), VARDATA(string) + m, n);
 
 	PG_RETURN_TEXT_P(ret);
+#endif
 }
 
 /*
@@ -740,26 +762,14 @@ byteacat(PG_FUNCTION_ARGS)
 Datum
 bytea_substr(PG_FUNCTION_ARGS)
 {
-	bytea	   *string = PG_GETARG_BYTEA_P(0);
 	int32		m = PG_GETARG_INT32(1);
 	int32		n = PG_GETARG_INT32(2);
-	bytea	   *ret;
-	int			len;
-
-	len = VARSIZE(string) - VARHDRSZ;
-
-	/* starting position after the end of the string? */
-	if (m > len)
-	{
-		m = 1;
-		n = 0;
-	}
 
 	/*
 	 * starting position before the start of the string? then offset into
 	 * the string per SQL92 spec...
 	 */
-	else if (m < 1)
+	if (m < 1)
 	{
 		n += (m - 1);
 		m = 1;
@@ -767,15 +777,8 @@ bytea_substr(PG_FUNCTION_ARGS)
 
 	/* m will now become a zero-based starting position */
 	m--;
-	if (((m + n) > len) || (n < 0))
-		n = (len - m);
 
-	ret = (bytea *) palloc(VARHDRSZ + n);
-	VARATT_SIZEP(ret) = VARHDRSZ + n;
-
-	memcpy(VARDATA(ret), VARDATA(string) + m, n);
-
-	PG_RETURN_BYTEA_P(ret);
+	PG_RETURN_BYTEA_P(PG_GETARG_BYTEA_P_SLICE (0, m, n));
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.57 2001/11/05 17:46:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.58 2002/03/05 05:33:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1519,4 +1519,11 @@ pg_detoast_datum_copy(struct varlena * datum)
 		memcpy(result, datum, len);
 		return result;
 	}
+}
+
+struct varlena *
+pg_detoast_datum_slice(struct varlena * datum, int32 first, int32 count)
+{
+	/* Only get the specified portion from the toast rel */
+	return (struct varlena *) heap_tuple_untoast_attr_slice((varattrib *) datum, first, count);
 }

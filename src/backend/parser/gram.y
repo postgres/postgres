@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.283 2002/03/02 21:39:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.284 2002/03/05 05:33:14 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -364,7 +364,7 @@ static void doNegateFloat(Value *v);
 		OFFSET, OIDS, OPERATOR, OWNER, PASSWORD, PROCEDURAL,
 		REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SETOF, SHARE, SHOW, START, STATEMENT,
-		STATISTICS, STDIN, STDOUT, SYSID,
+		STATISTICS, STDIN, STDOUT, STORAGE, SYSID,
 		TEMP, TEMPLATE, TOAST, TRUNCATE, TRUSTED, 
 		UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
@@ -1115,6 +1115,17 @@ AlterTableStmt:
 					n->inhOpt = $3->inhOpt;
 					n->name = $6;
 					n->def = (Node *) makeInteger($9);
+					$$ = (Node *)n;
+				}
+/* ALTER TABLE <relation> ALTER [COLUMN] <colname> SET STORAGE <storagemode> */
+        | ALTER TABLE relation_expr ALTER opt_column ColId SET STORAGE ColId
+                {
+					AlterTableStmt *n = makeNode(AlterTableStmt);
+					n->subtype = 'M';
+					n->relname = $3->relname;
+					n->inhOpt = $3->inhOpt;
+					n->name = $6;
+					n->def = (Node *) makeString($9);
 					$$ = (Node *)n;
 				}
 /* ALTER TABLE <relation> DROP [COLUMN] <colname> {RESTRICT|CASCADE} */
@@ -5959,6 +5970,7 @@ unreserved_keyword:
 		| STATISTICS					{ $$ = "statistics"; }
 		| STDIN							{ $$ = "stdin"; }
 		| STDOUT						{ $$ = "stdout"; }
+        | STORAGE                       { $$ = "storage"; }
 		| SYSID							{ $$ = "sysid"; }
 		| TEMP							{ $$ = "temp"; }
 		| TEMPLATE						{ $$ = "template"; }

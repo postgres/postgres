@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.13 2001/11/05 17:46:31 momjian Exp $
+ * $Id: tuptoaster.h,v 1.14 2002/03/05 05:33:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,17 @@ extern varattrib *heap_tuple_fetch_attr(varattrib *attr);
  * ----------
  */
 extern varattrib *heap_tuple_untoast_attr(varattrib *attr);
+
+/* ----------
+ * heap_tuple_untoast_attr_slice() -
+ *
+ *      Fetches only the specified portion of an attribute.
+ *      (Handles all cases for attribute storage)
+ * ----------
+ */
+extern varattrib *heap_tuple_untoast_attr_slice(varattrib *attr, 
+												int32 sliceoffset,
+												int32 slicelength);
 
 /* ----------
  * toast_compress_datum -

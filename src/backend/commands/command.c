@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.157 2002/03/02 21:39:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.158 2002/03/05 05:33:08 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -714,20 +714,27 @@ drop_default(Oid relid, int16 attnum)
 
 
 /*
- * ALTER TABLE ALTER COLUMN SET STATISTICS
+ * ALTER TABLE ALTER COLUMN SET STATISTICS / STORAGE
  */
 void
-AlterTableAlterColumnStatistics(const char *relationName,
+AlterTableAlterColumnFlags(const char *relationName,
 								bool inh, const char *colName,
-								Node *statsTarget)
+								Node *flagValue, const char *flagType)
 {
 	Relation	rel;
 	Oid			myrelid;
-	int			newtarget;
+	int			newtarget = 1;
+	char        newstorage = 'x';
+	char        *storagemode;
 	Relation	attrelation;
 	HeapTuple	tuple;
 
-	/* we allow this on system tables */
+	/* we allow statistics case for system tables */
+
+	if (*flagType =='M' && !allowSystemTableMods && IsSystemRelationName(relationName))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 relationName);
+
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
 		elog(ERROR, "ALTER TABLE: permission denied");
@@ -741,6 +748,50 @@ AlterTableAlterColumnStatistics(const char *relationName,
 
 	myrelid = RelationGetRelid(rel);
 	heap_close(rel, NoLock);	/* close rel, but keep lock! */
+
+	
+	/*
+	 * Check the supplied parameters before anything else
+	 */
+	if (*flagType == 'S')           /*
+									 * STATISTICS
+									 */
+	{
+		Assert(IsA(flagValue, Integer));
+		newtarget = intVal(flagValue);
+		
+		/*
+		 * Limit target to sane range (should we raise an error instead?)
+		 */
+		if (newtarget < 0)
+			newtarget = 0;
+		else if (newtarget > 1000)
+			newtarget = 1000;
+	}
+	else if (*flagType == 'M')      /*
+									 * STORAGE
+									 */
+	{
+		Assert(IsA(flagValue, Value));
+		
+		storagemode = strVal(flagValue);
+		if (strcasecmp(storagemode, "plain") == 0)
+			newstorage = 'p';
+		else if (strcasecmp(storagemode, "external") == 0)
+			newstorage = 'e';
+		else if (strcasecmp(storagemode, "extended") == 0)
+			newstorage = 'x';
+		else if (strcasecmp(storagemode, "main") == 0)
+			newstorage = 'm';
+		else
+			elog(ERROR, "ALTER TABLE: \"%s\" storage not recognized",
+				 storagemode);
+	}
+	else
+	{
+		elog(ERROR, "ALTER TABLE: Invalid column flag: %c",
+			 (int) *flagType);
+	}
 
 	/*
 	 * Propagate to children if desired
@@ -765,22 +816,13 @@ AlterTableAlterColumnStatistics(const char *relationName,
 			if (childrelid == myrelid)
 				continue;
 			rel = heap_open(childrelid, AccessExclusiveLock);
-			AlterTableAlterColumnStatistics(RelationGetRelationName(rel),
-											false, colName, statsTarget);
+			AlterTableAlterColumnFlags(RelationGetRelationName(rel),
+											false, colName, flagValue, flagType);
 			heap_close(rel, AccessExclusiveLock);
 		}
 	}
 
 	/* -= now do the thing on this relation =- */
-
-	Assert(IsA(statsTarget, Integer));
-	newtarget = intVal(statsTarget);
-
-	/* Limit target to sane range (should we raise an error instead?) */
-	if (newtarget < 0)
-		newtarget = 0;
-	else if (newtarget > 1000)
-		newtarget = 1000;
 
 	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
@@ -795,9 +837,22 @@ AlterTableAlterColumnStatistics(const char *relationName,
 	if (((Form_pg_attribute) GETSTRUCT(tuple))->attnum < 0)
 		elog(ERROR, "ALTER TABLE: cannot change system attribute \"%s\"",
 			 colName);
-
-	((Form_pg_attribute) GETSTRUCT(tuple))->attstattarget = newtarget;
-
+	/*
+	 * Now change the appropriate field
+	 */
+	if (*flagType == 'S')
+		((Form_pg_attribute) GETSTRUCT(tuple))->attstattarget = newtarget;
+	else
+	{
+		if ((newstorage == 'p') ||
+			(((Form_pg_attribute) GETSTRUCT(tuple))->attlen == -1))
+			((Form_pg_attribute) GETSTRUCT(tuple))->attstorage = newstorage;
+		else
+		{
+			elog(ERROR,
+				 "ALTER TABLE: Fixed-length columns can only have storage \"plain\"");
+		}
+	}
 	simple_heap_update(attrelation, &tuple->t_self, tuple);
 
 	/* keep system catalog indices current */

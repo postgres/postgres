@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.27 2002/01/16 20:29:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.28 2002/03/05 05:33:06 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -47,6 +47,8 @@ static void toast_insert_or_update(Relation rel, HeapTuple newtup,
 					   HeapTuple oldtup);
 static Datum toast_save_datum(Relation rel, Datum value);
 static varattrib *toast_fetch_datum(varattrib *attr);
+static varattrib *toast_fetch_datum_slice(varattrib *attr,
+										  int32 sliceoffset, int32 length);
 
 
 /* ----------
@@ -158,6 +160,80 @@ heap_tuple_untoast_attr(varattrib *attr)
 		 */
 		return attr;
 
+	return result;
+}
+
+
+/* ----------
+ * heap_tuple_untoast_attr_slice -
+ *
+ *      Public entry point to get back part of a toasted value 
+ *      from compression or external storage.
+ * ----------
+ */
+varattrib  *
+heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelength)
+{
+	varattrib  *preslice;
+	varattrib  *result;
+	int32  attrsize;
+	
+	if (VARATT_IS_COMPRESSED(attr))
+	{
+		varattrib *tmp;
+		
+		if (VARATT_IS_EXTERNAL(attr))
+		{
+			tmp = toast_fetch_datum(attr);
+		}
+		else
+		{
+			tmp = attr; /* compressed in main tuple */
+		}
+		
+		preslice = (varattrib *) palloc(attr->va_content.va_external.va_rawsize
+										+ VARHDRSZ);
+		VARATT_SIZEP(preslice) = attr->va_content.va_external.va_rawsize + VARHDRSZ;
+		pglz_decompress((PGLZ_Header *) tmp, VARATT_DATA(preslice));
+		
+		if (tmp != attr) 
+			pfree(tmp);
+	}
+	else 	
+	{
+		/* Plain value */
+		if (VARATT_IS_EXTERNAL(attr))
+		{   
+			/* fast path */
+			return (toast_fetch_datum_slice(attr, sliceoffset, slicelength));
+		}
+		else
+		{
+			preslice = attr;
+		}
+	}
+	
+	/* slicing of datum for compressed cases and plain value */
+	
+	attrsize = VARSIZE(preslice) - VARHDRSZ;
+	if (sliceoffset >= attrsize) 
+	{
+		sliceoffset = 0;
+		slicelength = 0;
+	}
+	
+	if (((sliceoffset + slicelength) > attrsize) || slicelength < 0)
+	{
+		slicelength = attrsize - sliceoffset;
+	}
+	
+	result = (varattrib *) palloc(slicelength + VARHDRSZ);
+	VARATT_SIZEP(result) = slicelength + VARHDRSZ;
+	
+	memcpy(VARDATA(result), VARDATA(preslice) + sliceoffset, slicelength);
+	
+	if (preslice != attr) pfree(preslice);
+	
 	return result;
 }
 
@@ -981,7 +1057,7 @@ toast_fetch_datum(varattrib *attr)
 		VARATT_SIZEP(result) |= VARATT_FLAG_COMPRESSED;
 
 	/*
-	 * Open the toast relation and it's index
+	 * Open the toast relation and its index
 	 */
 	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
 						 AccessShareLock);
@@ -1067,6 +1143,200 @@ toast_fetch_datum(varattrib *attr)
 	 * Final checks that we successfully fetched the datum
 	 */
 	if (nextidx != numchunks)
+		elog(ERROR, "missing chunk number %d for toast value %u",
+			 nextidx,
+			 attr->va_content.va_external.va_valueid);
+
+	/*
+	 * End scan and close relations
+	 */
+	index_endscan(toastscan);
+	index_close(toastidx);
+	heap_close(toastrel, AccessShareLock);
+
+	return result;
+}
+
+/* ----------
+ * toast_fetch_datum_slice -
+ *
+ *	Reconstruct a segment of a varattrib from the chunks saved
+ *	in the toast relation
+ * ----------
+ */
+static varattrib *
+toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
+{
+	Relation	toastrel;
+	Relation	toastidx;
+	ScanKeyData toastkey[3];
+	IndexScanDesc toastscan;
+	HeapTupleData toasttup;
+	HeapTuple	ttup;
+	TupleDesc	toasttupDesc;
+	RetrieveIndexResult indexRes;
+	Buffer		buffer;
+
+	varattrib  *result;
+	int32		attrsize;
+	int32       nscankeys;
+	int32		residx;
+	int32       nextidx;
+	int		    numchunks;
+	int		    startchunk;
+	int		    endchunk;
+	int32		startoffset;
+	int32		endoffset;
+	int         totalchunks;
+	Pointer		chunk;
+	bool		isnull;
+	int32		chunksize;
+	int32       chcpystrt;
+	int32       chcpyend;
+
+	attrsize = attr->va_content.va_external.va_extsize;
+	totalchunks = ((attrsize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
+
+	if (sliceoffset >= attrsize) 
+	  {
+	    sliceoffset = 0;
+	    length = 0;
+	  }
+
+	if (((sliceoffset + length) > attrsize) || length < 0)
+	  {
+	    length = attrsize - sliceoffset;
+	  }
+
+	result = (varattrib *) palloc(length + VARHDRSZ);
+	VARATT_SIZEP(result) = length + VARHDRSZ;
+
+	if (VARATT_IS_COMPRESSED(attr))
+		VARATT_SIZEP(result) |= VARATT_FLAG_COMPRESSED;
+	
+	if (length == 0) return (result); /* Can save a lot of work at this point! */
+
+	startchunk = sliceoffset / TOAST_MAX_CHUNK_SIZE;
+	endchunk = (sliceoffset + length - 1) / TOAST_MAX_CHUNK_SIZE;
+	numchunks = (endchunk - startchunk ) + 1;
+ 
+	startoffset = sliceoffset % TOAST_MAX_CHUNK_SIZE;
+	endoffset = (sliceoffset + length - 1) % TOAST_MAX_CHUNK_SIZE;
+
+	/*
+	 * Open the toast relation and it's index
+	 */
+	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
+						 AccessShareLock);
+	toasttupDesc = toastrel->rd_att;
+	toastidx = index_open(toastrel->rd_rel->reltoastidxid);
+
+	/*
+	 * Setup a scan key to fetch from the index. This is either two keys
+	 * or three depending on the number of chunks.
+	 */
+	ScanKeyEntryInitialize(&toastkey[0],
+						   (bits16) 0,
+						   (AttrNumber) 1,
+						   (RegProcedure) F_OIDEQ,
+						   ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+	/*
+	 * Now dependent on number of chunks:
+	 */
+	
+	if (numchunks == 1) 
+	{
+	    ScanKeyEntryInitialize(&toastkey[1],
+							   (bits16) 0,
+							   (AttrNumber) 2,
+							   (RegProcedure) F_INT4EQ,
+							   Int32GetDatum(startchunk));
+	    nscankeys = 2;
+	}
+	else
+	{
+	    ScanKeyEntryInitialize(&toastkey[1],
+							   (bits16) 0,
+							   (AttrNumber) 2,
+							   (RegProcedure) F_INT4GE,
+							   Int32GetDatum(startchunk));
+	    ScanKeyEntryInitialize(&toastkey[2],
+							   (bits16) 0,
+							   (AttrNumber) 2,
+							   (RegProcedure) F_INT4LE,
+							   Int32GetDatum(endchunk));
+	    nscankeys = 3;
+	}
+
+	/*
+	 * Read the chunks by index
+	 *
+	 * The index is on (valueid, chunkidx) so they will come in order
+	 */
+	nextidx = startchunk;
+	toastscan = index_beginscan(toastidx, false, nscankeys, &toastkey[0]);
+	while ((indexRes = index_getnext(toastscan, ForwardScanDirection)) != NULL)
+	{
+		toasttup.t_self = indexRes->heap_iptr;
+		heap_fetch(toastrel, SnapshotToast, &toasttup, &buffer, toastscan);
+		pfree(indexRes);
+
+		if (toasttup.t_data == NULL)
+			continue;
+		ttup = &toasttup;
+
+		/*
+		 * Have a chunk, extract the sequence number and the data
+		 */
+		residx = DatumGetInt32(heap_getattr(ttup, 2, toasttupDesc, &isnull));
+		Assert(!isnull);
+		chunk = DatumGetPointer(heap_getattr(ttup, 3, toasttupDesc, &isnull));
+		Assert(!isnull);
+		chunksize = VARATT_SIZE(chunk) - VARHDRSZ;
+
+		/*
+		 * Some checks on the data we've found
+		 */
+		if ((residx != nextidx) || (residx > endchunk) || (residx < startchunk))
+			elog(ERROR, "unexpected chunk number %d (expected %d) for toast value %u",
+				 residx, nextidx,
+				 attr->va_content.va_external.va_valueid);
+		if (residx < totalchunks - 1)
+		{
+			if (chunksize != TOAST_MAX_CHUNK_SIZE)
+				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
+					 chunksize, residx,
+					 attr->va_content.va_external.va_valueid);
+		}
+		else
+		{
+			if ((residx * TOAST_MAX_CHUNK_SIZE + chunksize) != attrsize)
+				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
+					 chunksize, residx,
+					 attr->va_content.va_external.va_valueid);
+		}
+
+		/*
+		 * Copy the data into proper place in our result
+		 */
+		chcpystrt = 0;
+		chcpyend = chunksize - 1;
+		if (residx == startchunk) chcpystrt = startoffset;
+		if (residx == endchunk) chcpyend = endoffset;
+		
+		memcpy(((char *) VARATT_DATA(result)) + 
+		       (residx * TOAST_MAX_CHUNK_SIZE - sliceoffset) +chcpystrt,
+			   VARATT_DATA(chunk) + chcpystrt,
+			   (chcpyend - chcpystrt) + 1);
+		
+		ReleaseBuffer(buffer);
+		nextidx++;
+	}
+
+	/*
+	 * Final checks that we successfully fetched the datum
+	 */
+	if ( nextidx != (endchunk + 1))
 		elog(ERROR, "missing chunk number %d for toast value %u",
 			 nextidx,
 			 attr->va_content.va_external.va_valueid);

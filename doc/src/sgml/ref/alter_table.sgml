@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.38 2002/02/17 13:29:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.39 2002/03/05 05:33:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -30,6 +30,8 @@ ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     class="PARAMETER">value</replaceable> | DROP DEFAULT }
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STATISTICS <replaceable class="PARAMETER">integer</replaceable>
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> SET STORAGE {PLAIN | EXTERNAL | EXTENDED | MAIN}
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
     class="PARAMETER">newcolumn</replaceable>
@@ -169,6 +171,17 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    The <literal>ALTER COLUMN SET STATISTICS</literal> form allows you to
    set the statistics-gathering target for subsequent
    <xref linkend="sql-analyze" endterm="sql-analyze-title"> operations.
+   The <literal>ALTER COLUMN SET STORAGE</literal> form allows the
+   column storage mode to be set. This controls whether this column is
+   held inline or in a supplementary table, and whether the data
+   should be compressed or not. <literal>PLAIN</literal> must be used
+   for fixed-length values such as <literal>INTEGER</literal> and is
+   inline, uncompressed. <literal>MAIN</literal> is for inline,
+   compressible data. <literal>EXTERNAL</literal> is for external,
+   uncompressed data and <literal>EXTENDED</literal> is for external,
+   compressed data. The use of <literal>EXTERNAL</literal> will make
+   substring operations on a column faster, at the penalty of
+   increased storage space.
    The <literal>RENAME</literal> clause causes the name of a table,
    column, index, or sequence to change without changing any of the
    data. The data will remain of the same type and size after the

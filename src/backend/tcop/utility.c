@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.128 2002/03/01 22:45:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.129 2002/03/05 05:33:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -425,10 +425,12 @@ ProcessUtility(Node *parsetree,
 													 stmt->def);
 						break;
 					case 'S':	/* ALTER COLUMN STATISTICS */
-						AlterTableAlterColumnStatistics(stmt->relname,
+					case 'M':   /* ALTER COLUMN STORAGE */
+						AlterTableAlterColumnFlags(stmt->relname,
 										interpretInhOption(stmt->inhOpt),
 														stmt->name,
-														stmt->def);
+														stmt->def,
+												        &(stmt->subtype));
 						break;
 					case 'D':	/* DROP COLUMN */
 						AlterTableDropColumn(stmt->relname,

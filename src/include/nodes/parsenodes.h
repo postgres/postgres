@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.155 2002/03/01 22:45:18 petere Exp $
+ * $Id: parsenodes.h,v 1.156 2002/03/05 05:33:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,7 @@ typedef struct AlterTableStmt
 								 *	A = add column
 								 *	T = alter column default
 								 *	S = alter column statistics
+								 *  M = alter column storage
 								 *	D = drop column
 								 *	C = add constraint
 								 *	X = drop constraint

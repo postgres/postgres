@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.47 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.48 2002/03/05 05:33:00 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -1294,6 +1294,35 @@ concat_text(PG_FUNCTION_ARGS)
      one has verified that the argument isn't NULL.
      To return a NULL result, execute <function>PG_RETURN_NULL()</function>;
      this works in both strict and nonstrict functions.
+    </para>
+
+    <para>
+    Other options provided in the new-style interface are two
+     variants of the
+     <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
+     macros. The first of these,
+     <function>PG_GETARG_<replaceable>xxx</replaceable>_COPY()</function>
+     guarantees to return a copy of the specified parameter which is
+     safe for writing into. (The normal macros will sometimes return a
+     pointer to the value which must not be written to. Using the
+     <function>PG_GETARG_<replaceable>xxx</replaceable>_COPY()</function>
+     macros guarantees a writable result.)
+    </para>
+
+    <para>
+    The second variant consists of the
+    <function>PG_GETARG_<replaceable>xxx</replaceable>_SLICE()</function>
+    macros which take three parameters. The first is the number of the
+    parameter (as above). The second and third are the offset and
+    length of the segment to be returned. Offsets are counted from
+    zero, and a negative length requests that the remainder of the
+    value be returned. These routines provide more efficient access to
+    parts of large values in the case where they have storage type
+    "external". (The storage type of a column can be specified using
+    <command>ALTER TABLE <repaceable>tablename</replaceable> ALTER
+    COLUMN <replaceable>colname</replaceable> SET STORAGE
+    <replaceable>storagetype</replaceable>. Storage type is one of
+    plain, external, extended or main.)
     </para>
 
     <para>
