@@ -5,6 +5,7 @@ i386-pc-bsdi3.0=bsdi-3.0
 i386-unknown-freebsd=freebsd
 i386-unknown-netbsd=netbsd
 i586-pc-sco3.2v=sco
+i586-pc-sco3.2v5.0.2=sco
 mips-sgi-irix=irix
 sparc-sun-solaris=sparc_solaris-gcc
 i386-pc-linux-gnu=linux-elf
