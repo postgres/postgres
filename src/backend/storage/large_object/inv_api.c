@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.40 1998/09/04 18:21:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.41 1998/10/06 03:55:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,8 +669,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 		} while (tuple == (HeapTuple) NULL);
 
 		/* remember this tid -- we may need it for later reads/writes */
-		ItemPointerCopy(&(res->heap_iptr), &(obj_desc->htid));
-		pfree(res);
+ 		ItemPointerCopy(&tuple->t_ctid, &obj_desc->htid);
 	}
 	else
 	{
