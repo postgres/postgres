@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.37 2000/01/10 17:14:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.38 2000/01/11 02:30:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ ProcedureCreate(char *procedureName,
 	{
 		Value	   *t = lfirst(x);
 
-		if (parameterCount == FUNC_MAX_ARGS)
+		if (parameterCount > FUNC_MAX_ARGS)
 			elog(ERROR, "Procedures cannot take more than %d arguments",FUNC_MAX_ARGS);
 
 		if (strcmp(strVal(t), "opaque") == 0)
