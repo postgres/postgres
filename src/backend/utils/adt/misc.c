@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.11 1997/12/19 02:07:59 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.12 1998/02/24 03:47:26 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,6 @@
 #include "utils/datum.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
-
-#ifndef HAVE_RANDOM
-#  include "port-protos.h"		/* For random(), sometimes */
-#endif
-
 
 /*-------------------------------------------------------------------------
  * Check if data is Null
