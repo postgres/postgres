@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.40 1999/05/25 22:04:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.41 1999/06/07 15:14:54 vadim Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -618,16 +618,19 @@ _bt_restscan(IndexScanDesc scan)
 	Relation	rel = scan->relation;
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	Buffer		buf = so->btso_curbuf;
-	Page		page = BufferGetPage(buf);
+	Page		page;
 	ItemPointer current = &(scan->currentItemData);
 	OffsetNumber offnum = ItemPointerGetOffsetNumber(current),
-				maxoff = PageGetMaxOffsetNumber(page);
-	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+				maxoff;
+	BTPageOpaque opaque;
 	ItemPointerData target = so->curHeapIptr;
 	BTItem		item;
 	BlockNumber blkno;
 
-	LockBuffer(buf, BT_READ);
+	LockBuffer(buf, BT_READ);		/* lock buffer first! */
+	page = BufferGetPage(buf);
+	maxoff = PageGetMaxOffsetNumber(page);
+	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/*
 	 * We use this as flag when first index tuple on page is deleted but
