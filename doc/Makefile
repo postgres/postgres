@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.9 1998/05/29 13:14:25 thomas Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.10 1998/10/06 05:44:05 thomas Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -45,6 +45,7 @@ beforeinstall::
 
 install::
 	$(MAKE) all
+	$(MAKE) man
 
 all:: beforeinstall $(MODULES)
 
@@ -53,6 +54,9 @@ clean::
 
 distclean::
 	$(MAKE) clean
+
+man:
+	$(MAKE) -C $(SRCDIR) install-man
 
 #
 # Generic production rules
