@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog_utils.h,v 1.7 1997/01/22 01:44:02 momjian Exp $
+ * $Id: catalog_utils.h,v 1.8 1997/02/07 16:24:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ extern bool tbyval(Type t);
 extern char *tname(Type t);
 extern int tbyvalue(Type t);
 extern Oid oprid(Operator op);
-extern Operator oper(char *op, Oid arg1, Oid arg2);
+extern Operator oper(char *op, Oid arg1, Oid arg2, bool noWarnings);
 extern Operator right_oper(char *op, Oid arg);
 extern Operator left_oper(char *op, Oid arg);
 extern int varattno(Relation rd, char *a);

@@ -6,12 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.5 1997/01/13 03:44:54 momjian Exp $
+ * $Id: vacuum.h,v 1.6 1997/02/07 16:23:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	VACUUM_H
 #define	VACUUM_H
+
+#include <access/funcindex.h>
+#include <catalog/pg_index.h>
 
 typedef struct VAttListData {
     int			val_dummy;
@@ -38,23 +41,46 @@ typedef struct VPageListData {
 
 typedef VPageListData	*VPageList;
 
+typedef struct {
+    FuncIndexInfo	finfo;
+    FuncIndexInfo	*finfoP;
+    IndexTupleForm	tform;
+    int			natts;
+} IndDesc;
+
+typedef struct {
+    AttributeTupleForm attr;
+    Datum best, guess1, guess2, max, min;
+    int16 best_len, guess1_len, guess2_len, max_len, min_len;
+    int32 best_cnt, guess1_cnt, guess1_hits, guess2_hits, null_cnt,nonnull_cnt;
+    int32 max_cnt, min_cnt;
+    regproc cmpeq, cmplt, cmpgt, outfunc;
+    bool initialized;
+} VacAttrStats;
+
 typedef struct VRelListData {
     Oid			vrl_relid;
-    VAttList		vrl_attlist;
-    int			vrl_ntups;
-    int			vrl_npages;
-    Size		vrl_min_tlen;
-    Size		vrl_max_tlen;
-    bool		vrl_hasindex;
     struct VRelListData	*vrl_next;
 } VRelListData;
 
 typedef VRelListData	*VRelList;
+
+typedef struct VRelStats {
+    Oid			relid;
+    int			ntups;
+    int			npages;
+    Size		min_tlen;
+    Size		max_tlen;
+    bool		hasindex;
+    int			natts;
+    VacAttrStats	*vacattrstats;
+} VRelStats;
 
 extern bool VacuumRunning;
 
 extern void vc_abort(void);
 extern void vacuum(char *vacrel, bool verbose);
 
+#define ATTNVALS_SCALE 	1000000000 /* XXX so it can act as a float4 */
 
 #endif	/* VACUUM_H */

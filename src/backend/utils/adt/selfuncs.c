@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.4 1996/11/03 06:53:08 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.5 1997/02/07 16:23:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "utils/lsyscache.h"	/* for get_oprrest() */
 #include "catalog/pg_statistic.h"
 
+#include "commands/vacuum.h" /* for ATTNVALS_SCALE */
 
 /* N is not a valid var/constant or relation id */
 #define	NONVALUE(N)	((N) == -1)
@@ -68,7 +69,7 @@ eqsel(Oid opid,
 	if (nvals == 0)
 	    *result = 0.0;
 	else
-	    *result = 1.0 / nvals;
+	    *result = ((float64data)nvals) / ((float64data)ATTNVALS_SCALE);
     }
     return(result);
 }
@@ -125,7 +126,7 @@ intltsel(Oid opid,
 	    if (nvals == 0)
 		*result = 1.0 / 3.0;
 	    else
-		*result = 3.0 / nvals;
+		*result = 3.0 * ((float64data)nvals) / ((float64data)ATTNVALS_SCALE);
 	}else {
 	    bottom = high - low;
 	    if (bottom == 0)
@@ -192,7 +193,7 @@ eqjoinsel(Oid opid,
 	if (max == 0)
 	    *result = 1.0;
 	else
-	    *result = 1.0 / max;
+	    *result = ((float64data)max) / ((float64data)ATTNVALS_SCALE);
     }
     return(result);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.20 1997/01/22 01:42:54 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.21 1997/02/07 16:22:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1486,7 +1486,7 @@ any_ordering_op(int restype)
     Operator order_op;
     Oid order_opid;
     
-    order_op = oper("<",restype,restype);
+    order_op = oper("<",restype,restype,false);
     order_opid = oprid(order_op);
     
     return order_opid;
@@ -1554,7 +1554,7 @@ transformSortClause(ParseState *pstate,
 	sortcl->resdom = resdom = restarget->resdom;
 	sortcl->opoid = oprid(oper(sortby->useOp,
 				   resdom->restype,
-				   resdom->restype));
+				   resdom->restype,false));
 	if (sortlist == NIL) {
 	    s = sortlist = lcons(sortcl, NIL);
 	}else {

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.15 1997/01/22 01:43:08 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/catalog_utils.c,v 1.16 1997/02/07 16:23:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -473,7 +473,7 @@ binary_oper_select_candidate(Oid arg1,
 /* Given operator, types of arg1, and arg2, return oper struct */
 /* arg1, arg2 --typeids */
 Operator
-oper(char *op, Oid arg1, Oid arg2)
+oper(char *op, Oid arg1, Oid arg2, bool noWarnings)
 {
     HeapTuple tup;
     CandidateList candidates;
@@ -492,7 +492,8 @@ oper(char *op, Oid arg1, Oid arg2)
 	    /*
 	     * no operators of the desired types found
 	     */
-	    op_error(op, arg1, arg2);
+	    if (!noWarnings)
+		op_error(op, arg1, arg2);
 	    return(NULL);
 	} else if (ncandidates == 1) {
 	    /*
@@ -523,11 +524,12 @@ oper(char *op, Oid arg1, Oid arg2)
 		/* we chose none of them */
 		tp1 = get_id_type(arg1);
 		tp2 = get_id_type(arg2);
-		elog(NOTICE, "there is more than one operator %s for types", op);
-		elog(NOTICE, "%s and %s. You will have to retype this query",
-		     tname(tp1), tname(tp2));
-		elog(WARN, "using an explicit cast");
-		
+		if (!noWarnings) {
+		    elog(NOTICE, "there is more than one operator %s for types", op);
+		    elog(NOTICE, "%s and %s. You will have to retype this query",
+		        tname(tp1), tname(tp2));
+		    elog(WARN, "using an explicit cast");
+		}
 		return(NULL);
 	    }
 	}
