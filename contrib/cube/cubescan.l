@@ -3,18 +3,16 @@
 ** A scanner for EMP-style numeric ranges 
 */
 
-#define YYSTYPE char *
-#define yylval cube_yylval
-
 #include "postgres.h"
 
-#include "cubeparse.h"
 #include "buffer.h"
 
 
-/* flex screws a couple symbols when used with the -P otion; fix those */
+/* flex screws a couple symbols when used with the -P option; fix those */
 #define YY_DECL int cube_yylex YY_PROTO(( void )); \
 int cube_yylex YY_PROTO(( void ))
+#define yylval cube_yylval
+
 
 /* redefined YY_INPUT reads byte-wise from the memory area defined in buffer.c */
 #undef YY_INPUT

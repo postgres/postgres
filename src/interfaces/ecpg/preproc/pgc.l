@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.100 2002/10/21 13:09:31 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.100.2.1 2002/11/07 06:06:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include <errno.h>
 
 #include "extern.h"
-#include "preproc.h"
 
 
 extern YYSTYPE yylval;

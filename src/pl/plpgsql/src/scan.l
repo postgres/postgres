@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.23 2002/09/12 00:24:09 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.23.2.1 2002/11/07 06:06:39 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -37,7 +37,6 @@
  **********************************************************************/
 
 #include "plpgsql.h"
-#include "pl.tab.h"
 
 
 static char	*plpgsql_source;

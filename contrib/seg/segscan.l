@@ -5,11 +5,10 @@
 
 #include "postgres.h"
 
-#include "segparse.h"
 #include "buffer.h"
 
 
-/* flex screws a couple symbols when used with the -P otion; fix those */
+/* flex screws a couple symbols when used with the -P option; fix those */
 #define YY_DECL int seg_yylex YY_PROTO(( void )); \
 int seg_yylex YY_PROTO(( void ))
 #define yylval seg_yylval
