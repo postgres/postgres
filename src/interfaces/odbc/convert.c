@@ -21,6 +21,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "psqlodbc.h"
 #ifdef MULTIBYTE
 #include "multibyte.h"
 #endif
@@ -938,6 +939,26 @@ into_table_from(const char *stmt)
 	return isspace((unsigned char) stmt[4]);
 }
 
+/*----------
+ *	Check if the statement is	
+ *	SELECT ... FOR UPDATE .....
+ *	This isn't really a strict check but ...
+ *---------- 
+ */
+static BOOL
+table_for_update(const char *stmt, int *endpos)
+{
+	const char *wstmt = stmt;
+	while (isspace((unsigned char) *(++wstmt)));
+	if (! *wstmt)
+		return FALSE;
+	if (strnicmp(wstmt, "update", 6))
+		return FALSE;
+	wstmt += 6;
+	*endpos = wstmt - stmt;
+	return !wstmt[0] || isspace((unsigned char) wstmt[0]);
+}
+
 /*
  *	This function inserts parameters into an SQL statements.
  *	It will also modify a SELECT statement for use with declare/fetch cursors.
@@ -968,14 +989,17 @@ copy_statement_with_parameters(StatementClass *stmt)
 	Oid			lobj_oid;
 	int			lobj_fd,
 				retval;
-	BOOL	check_select_into = FALSE; /* select into check */
+	BOOL	check_cursor_ok = FALSE; /* check cursor restriction */
 	BOOL	proc_no_param = TRUE;
-	unsigned int	declare_pos;
+	unsigned int	declare_pos = 0;
 	ConnectionClass	*conn = SC_get_conn(stmt);
 	ConnInfo	*ci = &(conn->connInfo);
-	BOOL	prepare_dummy_cursor = FALSE;
+	BOOL		prepare_dummy_cursor = FALSE;
+	char	token_save[32];
+	int	token_len;
+	BOOL	prev_token_end;
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	BOOL ins_ctrl = FALSE;
+	BOOL search_from_pos = FALSE;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 #ifdef	PREPARE_TRIAL
 	prepare_dummy_cursor = stmt->pre_executing;
@@ -1012,7 +1036,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		else if (!stmt->ti || stmt->ntab != 1)
     			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-		else ins_ctrl = TRUE;
+		else search_from_pos = TRUE;
 	}
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 
@@ -1021,7 +1045,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 		sprintf(stmt->cursor_name, "SQL_CUR%p", stmt);
 	oldstmtlen = strlen(old_statement);
 	CVT_INIT(oldstmtlen);
+
 	stmt->miscinfo = 0;
+	token_len = 0;
+	prev_token_end = TRUE;
 	/* For selects, prepend a declare cursor to the statement */
 	if (stmt->statement_type == STMT_TYPE_SELECT)
 	{
@@ -1035,10 +1062,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 			}
 			else if (ci->drivers.use_declarefetch)
 				SC_set_fetchcursor(stmt);
-			sprintf(new_statement, "%s declare %s cursor for ",
+			sprintf(new_statement, "%sdeclare %s cursor for ",
 				 new_statement, stmt->cursor_name);
 			npos = strlen(new_statement);
-			check_select_into = TRUE;
+			check_cursor_ok = TRUE;
 			declare_pos = npos;
 		}
 	}
@@ -1176,28 +1203,68 @@ copy_statement_with_parameters(StatementClass *stmt)
 				in_escape = TRUE;
 			else if (oldchar == '\"')
 				in_dquote = TRUE;
-			else if (check_select_into && /* select into check */
-    				 opos > 0 &&
-    				 isspace((unsigned char) old_statement[opos - 1]) &&
-    				 into_table_from(&old_statement[opos]))
+			else 
 			{
-				stmt->statement_type = STMT_TYPE_CREATE;
-				SC_no_pre_executable(stmt);
-				SC_no_fetchcursor(stmt);
-				stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
-				memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
-				npos -= declare_pos;
-			}
+				if (isspace(oldchar))
+				{
+					if (!prev_token_end)
+					{
+						prev_token_end = TRUE;
+						token_save[token_len] = '\0';
+						if (token_len == 4)
+						{
+							if (check_cursor_ok &&
+    				 			   into_table_from(&old_statement[opos - token_len]))
+							{
+								stmt->statement_type = STMT_TYPE_CREATE;
+								SC_no_pre_executable(stmt);
+								SC_no_fetchcursor(stmt);
+								stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+								memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
+								npos -= declare_pos;
+							}
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-			else if (ins_ctrl && /* select into check */
-    				 opos > 0 &&
-    				 isspace((unsigned char) old_statement[opos - 1]) &&
-    				 strnicmp(&old_statement[opos], "from", 4) == 0)
-			{
-				ins_ctrl = FALSE;
-				CVT_APPEND_STR(", CTID, OID ");
-			}
+							else if (search_from_pos && /* where's from clause */
+    				 				 strnicmp(token_save, "from", 4) == 0)
+							{
+								search_from_pos = FALSE;
+								npos -= 5;
+								CVT_APPEND_STR(", CTID, OID from");
+							}
 #endif /* DRIVER_CURSOR_IMPLEMENT */
+						}
+						if (token_len == 3)
+						{
+							int	endpos;
+							if (check_cursor_ok &&
+    				 			    strnicmp(token_save, "for", 3) == 0 &&
+    				 			    table_for_update(&old_statement[opos], &endpos))
+							{
+								SC_no_fetchcursor(stmt);
+								stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+								if (prepare_dummy_cursor)
+								{
+									npos -= 4;
+									opos += endpos;
+								}
+								else
+								{
+									memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
+									npos -= declare_pos;
+								}
+							}
+						}
+					}	
+				}
+				else if (prev_token_end)
+				{
+					prev_token_end = FALSE;
+					token_save[0] = oldchar;
+					token_len = 1;
+				}
+				else
+					token_save[token_len++] = oldchar;
+			} 
 			CVT_APPEND_CHAR(oldchar);
 			continue;
 		}
@@ -1634,7 +1701,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 	}
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
-	if (ins_ctrl)
+	if (search_from_pos)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 #ifdef	PREPARE_TRIAL
@@ -2142,7 +2209,7 @@ decode(const char *in, char *out)
  *-------
  */
 int
-convert_lo(StatementClass *stmt, void *value, Int2 fCType, PTR rgbValue,
+convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
 		   SDWORD cbValueMax, SDWORD *pcbValue)
 {
 	Oid			oid;

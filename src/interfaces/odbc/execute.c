@@ -458,11 +458,11 @@ PGAPI_Cancel(
 	static char *func = "PGAPI_Cancel";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	RETCODE		result;
+	ConnInfo *ci;
 
 #ifdef WIN32
 	HMODULE		hmodule;
 	FARPROC		addr;
-	ConnInfo *ci;
 
 #endif
 

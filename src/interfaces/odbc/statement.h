@@ -232,10 +232,10 @@ struct StatementClass_
 /*	misc info */
 #define SC_set_pre_executable(a) (a->miscinfo |= 1L)
 #define SC_no_pre_executable(a)	(a->miscinfo &= ~1L)
-#define SC_is_pre_executable(a)	(a->miscinfo & 1L != 0)
+#define SC_is_pre_executable(a)	((a->miscinfo & 1L) != 0)
 #define SC_set_fetchcursor(a)	(a->miscinfo |= 2L)
 #define SC_no_fetchcursor(a)	(a->miscinfo &= ~2L)
-#define SC_is_fetchcursor(a)	(a->miscinfo & 2L != 0)
+#define SC_is_fetchcursor(a)	((a->miscinfo & 2L) != 0)
 
 /*	Statement prototypes */
 StatementClass *SC_Constructor(void);

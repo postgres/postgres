@@ -29,8 +29,8 @@ typedef struct
 	int			ss;
 } SIMPLE_TIME;
 
-int			copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, const void *value, int col);
-int copy_and_convert_field(StatementClass *stmt, Int4 field_type, const void *value, Int2 fCType,
+int			copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col);
+int copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType,
 					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue);
 
 int			copy_statement_with_parameters(StatementClass *stmt);

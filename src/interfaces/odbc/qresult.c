@@ -32,8 +32,6 @@
 #define FALSE	(BOOL)0
 #endif
 
-extern GLOBAL_VALUES globals;
-
 
 /*
  *	Used for building a Manual Result only
@@ -119,7 +117,7 @@ QR_Constructor()
 		rv->cursor = NULL;
 		rv->aborted = FALSE;
 
-		rv->cache_size = globals.fetch_max;
+		rv->cache_size = 0;
 		rv->rowset_size = 1;
 	}
 
