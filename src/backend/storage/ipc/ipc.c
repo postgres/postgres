@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.57 2000/12/11 00:49:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.58 2000/12/30 01:20:55 tgl Exp $
  *
  * NOTES
  *
@@ -272,9 +272,14 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		/*
 		 * Fail quietly if error indicates a collision with existing set.
 		 * One would expect EEXIST, given that we said IPC_EXCL, but perhaps
-		 * we could get a permission violation instead?
+		 * we could get a permission violation instead?  Also, EIDRM might
+		 * occur if an old set is slated for destruction but not gone yet.
 		 */
-		if (errno == EEXIST || errno == EACCES)
+		if (errno == EEXIST || errno == EACCES
+#ifdef EIDRM
+			|| errno == EIDRM
+#endif
+			)
 			return -1;
 		/*
 		 * Else complain and abort
@@ -516,9 +521,14 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 		/*
 		 * Fail quietly if error indicates a collision with existing segment.
 		 * One would expect EEXIST, given that we said IPC_EXCL, but perhaps
-		 * we could get a permission violation instead?
+		 * we could get a permission violation instead?  Also, EIDRM might
+		 * occur if an old seg is slated for destruction but not gone yet.
 		 */
-		if (errno == EEXIST || errno == EACCES)
+		if (errno == EEXIST || errno == EACCES
+#ifdef EIDRM
+			|| errno == EIDRM
+#endif
+			)
 			return NULL;
 		/*
 		 * Else complain and abort
