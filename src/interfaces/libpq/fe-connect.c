@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.51 1997/12/04 20:26:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.52 1997/12/04 20:32:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,7 +572,7 @@ connectDB(PGconn *conn)
 	if (connect(port->sock, (struct sockaddr *) & port->raddr, len) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
-					   "connectDB() failed: Is the postmaster accepting%s connections at '%s' on port '%s'?\n",
+					   "connectDB() failed: Is the postmaster running and accepting%s connections at '%s' on port '%s'?\n",
 					   conn->pghost ? " TCP/IP(with -i)" : "",
 					   conn->pghost ? conn->pghost : "UNIX Socket",
 					   conn->pgport);
