@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.51 2002/03/22 19:20:33 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.52 2002/06/20 16:57:00 momjian Exp $
 -->
 
  <chapter id="xfunc">
@@ -188,6 +188,7 @@ SELECT clean_EMP();
  1
 </screen>
     </para>
+
    </sect2>
 
    <sect2>
@@ -407,21 +408,53 @@ SELECT getname(new_emp());
    </sect2>
 
    <sect2>
-    <title><acronym>SQL</acronym> Functions Returning Sets</title>
+    <title><acronym>SQL</acronym> Table Functions (Functions Returning Sets)</title>
 
     <para>
-     As previously mentioned, an SQL function may be declared as
-     returning <literal>SETOF <replaceable>sometype</></literal>.
-     In this case the function's final <command>SELECT</> query is executed to
-     completion, and each row it outputs is returned as an element
-     of the set.
+     A table function is one that may be used in the <command>FROM</command>
+     clause of a query. All SQL Language functions may be used in this manner.
+     If the function is defined to return a base type, the table function
+     produces a one column result set. If the function is defined to
+     return <literal>SETOF <replaceable>sometype</></literal>, the table
+     function returns multiple rows. To illustrate a SQL table function,
+     consider the following, which returns <literal>SETOF</literal> a
+     composite type:
+
+<programlisting>
+CREATE TABLE foo (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
+INSERT INTO foo VALUES(1,1,'Joe');
+INSERT INTO foo VALUES(1,2,'Ed');
+INSERT INTO foo VALUES(2,1,'Mary');
+CREATE FUNCTION getfoo(int) RETURNS setof foo AS '
+    SELECT * FROM foo WHERE fooid = $1;
+' LANGUAGE SQL;
+SELECT * FROM getfoo(1) AS t1;
+</programlisting>
+
+<screen>
+ fooid | foosubid | fooname
+-------+----------+---------
+     1 |        1 | Joe
+     1 |        2 | Ed
+(2 rows)
+</screen>
     </para>
 
     <para>
-     Functions returning sets may only be called in the target list
-     of a <command>SELECT</> query.  For each row that the <command>SELECT</> generates by itself,
-     the function returning set is invoked, and an output row is generated
-     for each element of the function's result set.  An example:
+     When an SQL function is declared as returning <literal>SETOF
+     <replaceable>sometype</></literal>, the function's final
+     <command>SELECT</> query is executed to completion, and each row it
+     outputs is returned as an element of the set.
+    </para>
+
+    <para>
+     Functions returning sets may also currently be called in the target list
+     of a <command>SELECT</> query.  For each row that the <command>SELECT</>
+     generates by itself, the function returning set is invoked, and an output
+     row is generated for each element of the function's result set. Note,
+     however, that this capability is deprecated and may be removed in future
+     releases. The following is an example function returning a set from the
+     target list:
 
 <programlisting>
 CREATE FUNCTION listchildren(text) RETURNS SETOF text AS
@@ -1620,6 +1653,54 @@ CREATE FUNCTION test(int, int) RETURNS int
    </para>
   </sect1>
 
+  <sect1 id="xfunc-tablefunctions">
+   <title>Table Functions</title>
+
+   <indexterm zone="xfunc-tablefunctions"><primary>function</></>
+
+   <para>
+    Table functions are functions that produce a set of rows, made up of
+    either base (scalar) data types, or composite (multi-column) data types.
+    They are used like a table, view, or subselect in the <literal>FROM</>
+    clause of a query. Columns returned by table functions may be included in
+    <literal>SELECT</>, <literal>JOIN</>, or <literal>WHERE</> clauses in the
+    same manner as a table, view, or subselect column.
+   </para>
+
+   <para>
+    If a table function returns a base data type, the single result column
+    is named for the function. If the function returns a composite type, the
+    result columns get the same names as the individual attributes of the type.
+   </para>
+
+   <para>
+    A table function may be aliased in the <literal>FROM</> clause, but it also
+    may be left unaliased. If a function is used in the FROM clause with no
+    alias, the function name is used as the relation name.
+   </para>
+
+   <para>
+    Table functions work wherever tables do in <literal>SELECT</> statements.
+    For example
+<programlisting>
+CREATE TABLE foo (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
+CREATE FUNCTION getfoo(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
+SELECT * FROM getfoo(1) AS t1;
+SELECT * FROM foo where foosubid in (select foosubid from getfoo(foo.fooid) z where z.fooid = foo.fooid);
+CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
+SELECT * FROM vw_getfoo;
+</programlisting>
+    are all valid statements.
+   </para>
+
+   <para>
+    Currently, table functions are supported as SQL language functions
+    (<xref linkend="xfunc-sql">) and C language functions
+    (<xref linkend="xfunc-c">). See these individual sections for more
+    details.
+   </para>
+
+  </sect1>
 
   <sect1 id="xfunc-plhandler">
    <title>Procedural Language Handlers</title>
