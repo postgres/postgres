@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.190 2004/07/31 00:45:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.191 2004/07/31 17:57:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,6 +225,14 @@ BootstrapMain(int argc, char *argv[])
 	if (!IsUnderPostmaster)
 		MemoryContextInit();
 
+	/* Compute paths, if we didn't inherit them from postmaster */
+	if (my_exec_path[0] == '\0')
+	{
+		if (find_my_exec(argv[0], my_exec_path) < 0)
+			elog(FATAL, "%s: could not locate my own executable path",
+				 argv[0]);
+	}
+
 	/*
 	 * process command arguments
 	 */
@@ -262,7 +270,6 @@ BootstrapMain(int argc, char *argv[])
 					SetConfigOption("client_min_messages", debugstr,
 									PGC_POSTMASTER, PGC_S_ARGV);
 					pfree(debugstr);
-					break;
 				}
 				break;
 			case 'F':
