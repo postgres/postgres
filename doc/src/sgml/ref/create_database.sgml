@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.24 2002/02/24 20:20:18 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.25 2002/02/25 02:53:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -24,10 +24,10 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
-    [ WITH [ OWNER [ = ] <replaceable class="parameter">dbowner</replaceable> ]
-           [ LOCATION [ = ] '<replaceable class="parameter">dbpath</replaceable>' ]
-           [ TEMPLATE [ = ] <replaceable class="parameter">template</replaceable> ]
-           [ ENCODING [ = ] <replaceable class="parameter">encoding</replaceable> ] ]
+    [ WITH [ OWNER <replaceable class="parameter">dbowner</replaceable> ]
+           [ LOCATION '<replaceable class="parameter">dbpath</replaceable>' ]
+           [ TEMPLATE <replaceable class="parameter">template</replaceable> ]
+           [ ENCODING <replaceable class="parameter">encoding</replaceable> ] ]
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEDATABASE-1">
@@ -186,11 +186,10 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
 
   <para>
    Normally, the creator becomes the owner of the new database.
-   A different owner may be specified by using the <option>OWNER</>
-   clause (but only superusers may create databases on behalf of other users).
-   To create a database owned by oneself, either superuser privilege
-   or CREATEDB privilege is required.  A superuser may create a database
-   for another user, even if that user has no special privileges himself.
+   Superusers can create databases owned by other users using the
+   <option>OWNER</> clause. They can even create databases owned by
+   users with no special privileges. Non-superusers with CREATEDB
+   privilege can only create databases owned by themselves.
   </para>
 
   <para>
