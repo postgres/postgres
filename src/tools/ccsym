@@ -9,4 +9,4 @@ do
         -A*) /bin/test "2.7.2.1" && echo "$i" | /usr/bin/sed 's/^-A\(.*\)(\(.*\))/\1=\2/';;
         esac
 done
-/bin/rm -f try.c
+/bin/rm -f tmp.*
