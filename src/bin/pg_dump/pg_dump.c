@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.286 2002/08/18 21:05:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.287 2002/08/19 19:33:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2056,6 +2056,8 @@ getTables(int *numTables)
 	int			i_relhasindex;
 	int			i_relhasrules;
 	int			i_relhasoids;
+	int			i_owning_tab;
+	int			i_owning_col;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
@@ -2071,20 +2073,34 @@ getTables(int *numTables)
 	 *
 	 * Note: in this phase we should collect only a minimal amount of
 	 * information about each table, basically just enough to decide if
-	 * it is interesting.
+	 * it is interesting.  We must fetch all tables in this phase because
+	 * otherwise we cannot correctly identify inherited columns, serial
+	 * columns, etc.
 	 */
 
 	if (g_fout->remoteVersion >= 70300)
 	{
+		/*
+		 * Left join to pick up dependency info linking sequences to their
+		 * serial column, if any
+		 */
 		appendPQExpBuffer(query,
-						  "SELECT pg_class.oid, relname, relacl, relkind, "
+						  "SELECT c.oid, relname, relacl, relkind, "
 						  "relnamespace, "
 						  "(select usename from pg_user where relowner = usesysid) as usename, "
 						  "relchecks, reltriggers, "
-						  "relhasindex, relhasrules, relhasoids "
-						  "from pg_class "
+						  "relhasindex, relhasrules, relhasoids, "
+						  "d.refobjid as owning_tab, "
+						  "d.refobjsubid as owning_col "
+						  "from pg_class c "
+						  "left join pg_depend d on "
+						  "(c.relkind = '%c' and "
+						  "d.classid = c.tableoid and d.objid = c.oid and "
+						  "d.objsubid = 0 and "
+						  "d.refclassid = c.tableoid and d.deptype = 'i') "
 						  "where relkind in ('%c', '%c', '%c') "
-						  "order by oid",
+						  "order by c.oid",
+						  RELKIND_SEQUENCE,
 						  RELKIND_RELATION, RELKIND_SEQUENCE, RELKIND_VIEW);
 	}
 	else if (g_fout->remoteVersion >= 70200)
@@ -2095,7 +2111,9 @@ getTables(int *numTables)
 						  "0::oid as relnamespace, "
 						  "(select usename from pg_user where relowner = usesysid) as usename, "
 						  "relchecks, reltriggers, "
-						  "relhasindex, relhasrules, relhasoids "
+						  "relhasindex, relhasrules, relhasoids, "
+						  "NULL::oid as owning_tab, "
+						  "NULL::int4 as owning_col "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -2109,7 +2127,10 @@ getTables(int *numTables)
 						  "0::oid as relnamespace, "
 						  "(select usename from pg_user where relowner = usesysid) as usename, "
 						  "relchecks, reltriggers, "
-						  "relhasindex, relhasrules, 't'::bool as relhasoids "
+						  "relhasindex, relhasrules, "
+						  "'t'::bool as relhasoids, "
+						  "NULL::oid as owning_tab, "
+						  "NULL::int4 as owning_col "
 						  "from pg_class "
 						  "where relkind in ('%c', '%c', '%c') "
 						  "order by oid",
@@ -2131,7 +2152,10 @@ getTables(int *numTables)
 						  "0::oid as relnamespace, "
 						  "(select usename from pg_user where relowner = usesysid) as usename, "
 						  "relchecks, reltriggers, "
-						  "relhasindex, relhasrules, 't'::bool as relhasoids "
+						  "relhasindex, relhasrules, "
+						  "'t'::bool as relhasoids, "
+						  "NULL::oid as owning_tab, "
+						  "NULL::int4 as owning_col "
 						  "from pg_class c "
 						  "where relkind in ('%c', '%c') "
 						  "order by oid",
@@ -2175,6 +2199,8 @@ getTables(int *numTables)
 	i_relhasindex = PQfnumber(res, "relhasindex");
 	i_relhasrules = PQfnumber(res, "relhasrules");
 	i_relhasoids = PQfnumber(res, "relhasoids");
+	i_owning_tab = PQfnumber(res, "owning_tab");
+	i_owning_col = PQfnumber(res, "owning_col");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2190,13 +2216,28 @@ getTables(int *numTables)
 		tblinfo[i].hasoids = (strcmp(PQgetvalue(res, i, i_relhasoids), "t") == 0);
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].ntrig = atoi(PQgetvalue(res, i, i_reltriggers));
+		if (PQgetisnull(res, i, i_owning_tab))
+		{
+			tblinfo[i].owning_tab = NULL;
+			tblinfo[i].owning_col = 0;
+		}
+		else
+		{
+			tblinfo[i].owning_tab = strdup(PQgetvalue(res, i, i_owning_tab));
+			tblinfo[i].owning_col = atoi(PQgetvalue(res, i, i_owning_col));
+		}
 
 		/* other fields were zeroed above */
 
 		/*
-		 * Decide whether we want to dump this table.
+		 * Decide whether we want to dump this table.  Sequences owned
+		 * by serial columns are never dumpable on their own; we will
+		 * transpose their owning table's dump flag to them below.
 		 */
-		selectDumpableTable(&tblinfo[i]);
+		if (tblinfo[i].owning_tab == NULL)
+			selectDumpableTable(&tblinfo[i]);
+		else
+			tblinfo[i].dump = false;
 		tblinfo[i].interesting = tblinfo[i].dump;
 
 		/*
@@ -2314,7 +2355,8 @@ void
 getTableAttrs(TableInfo *tblinfo, int numTables)
 {
 	int			i,
-				j;
+				j,
+				k;
 	PQExpBuffer q = createPQExpBuffer();
 	int			i_attname;
 	int			i_atttypname;
@@ -2329,23 +2371,25 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 	for (i = 0; i < numTables; i++)
 	{
+		TableInfo *tbinfo = &tblinfo[i];
+
 		/* Don't bother to collect info for sequences */
-		if (tblinfo[i].relkind == RELKIND_SEQUENCE)
+		if (tbinfo->relkind == RELKIND_SEQUENCE)
 			continue;
 
 		/* Don't bother to collect info for type relations */
-		if (tblinfo[i].relkind == RELKIND_COMPOSITE_TYPE)
+		if (tbinfo->relkind == RELKIND_COMPOSITE_TYPE)
 			continue;
 
 		/* Don't bother with uninteresting tables, either */
-		if (!tblinfo[i].interesting)
+		if (!tbinfo->interesting)
 			continue;
 
 		/*
 		 * Make sure we are in proper schema for this table; this allows
 		 * correct retrieval of formatted type names and default exprs
 		 */
-		selectSourceSchema(tblinfo[i].relnamespace->nspname);
+		selectSourceSchema(tbinfo->relnamespace->nspname);
 
 		/* find all the user attributes and their types */
 
@@ -2359,7 +2403,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		 */
 		if (g_verbose)
 			write_msg(NULL, "finding the columns and types for table %s\n",
-					  tblinfo[i].relname);
+					  tbinfo->relname);
 
 		resetPQExpBuffer(q);
 
@@ -2372,7 +2416,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "where attrelid = '%s'::pg_catalog.oid "
 							  "and attnum > 0::pg_catalog.int2 "
 							  "order by attrelid, attnum",
-							  tblinfo[i].oid);
+							  tbinfo->oid);
 		}
 		else if (g_fout->remoteVersion >= 70100)
 		{
@@ -2388,7 +2432,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "where attrelid = '%s'::oid "
 							  "and attnum > 0::int2 "
 							  "order by attrelid, attnum",
-							  tblinfo[i].oid);
+							  tbinfo->oid);
 		}
 		else
 		{
@@ -2400,7 +2444,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 							  "where attrelid = '%s'::oid "
 							  "and attnum > 0::int2 "
 							  "order by attrelid, attnum",
-							  tblinfo[i].oid);
+							  tbinfo->oid);
 		}
 
 		res = PQexec(g_conn, q->data);
@@ -2421,34 +2465,36 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_atthasdef = PQfnumber(res, "atthasdef");
 		i_attisdropped = PQfnumber(res, "attisdropped");
 
-		tblinfo[i].numatts = ntups;
-		tblinfo[i].attnames = (char **) malloc(ntups * sizeof(char *));
-		tblinfo[i].atttypnames = (char **) malloc(ntups * sizeof(char *));
-		tblinfo[i].atttypmod = (int *) malloc(ntups * sizeof(int));
-		tblinfo[i].attstattarget = (int *) malloc(ntups * sizeof(int));
-		tblinfo[i].attisdropped = (bool *) malloc(ntups * sizeof(bool));
-		tblinfo[i].notnull = (bool *) malloc(ntups * sizeof(bool));
-		tblinfo[i].adef_expr = (char **) malloc(ntups * sizeof(char *));
-		tblinfo[i].inhAttrs = (bool *) malloc(ntups * sizeof(bool));
-		tblinfo[i].inhAttrDef = (bool *) malloc(ntups * sizeof(bool));
-		tblinfo[i].inhNotNull = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->numatts = ntups;
+		tbinfo->attnames = (char **) malloc(ntups * sizeof(char *));
+		tbinfo->atttypnames = (char **) malloc(ntups * sizeof(char *));
+		tbinfo->atttypmod = (int *) malloc(ntups * sizeof(int));
+		tbinfo->attstattarget = (int *) malloc(ntups * sizeof(int));
+		tbinfo->attisdropped = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->attisserial = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->notnull = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->adef_expr = (char **) malloc(ntups * sizeof(char *));
+		tbinfo->inhAttrs = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->inhAttrDef = (bool *) malloc(ntups * sizeof(bool));
+		tbinfo->inhNotNull = (bool *) malloc(ntups * sizeof(bool));
 		hasdefaults = false;
 
 		for (j = 0; j < ntups; j++)
 		{
-			tblinfo[i].attnames[j] = strdup(PQgetvalue(res, j, i_attname));
-			tblinfo[i].atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
-			tblinfo[i].atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
-			tblinfo[i].attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
-			tblinfo[i].attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
-			tblinfo[i].notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
-			tblinfo[i].adef_expr[j] = NULL;	/* fix below */
+			tbinfo->attnames[j] = strdup(PQgetvalue(res, j, i_attname));
+			tbinfo->atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
+			tbinfo->atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
+			tbinfo->attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
+			tbinfo->attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
+			tbinfo->attisserial[j] = false; /* fix below */
+			tbinfo->notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
+			tbinfo->adef_expr[j] = NULL;	/* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
 				hasdefaults = true;
 			/* these flags will be set in flagInhAttrs() */
-			tblinfo[i].inhAttrs[j] = false;
-			tblinfo[i].inhAttrDef[j] = false;
-			tblinfo[i].inhNotNull[j] = false;
+			tbinfo->inhAttrs[j] = false;
+			tbinfo->inhAttrDef[j] = false;
+			tbinfo->inhNotNull[j] = false;
 		}
 
 		PQclear(res);
@@ -2459,7 +2505,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 			if (g_verbose)
 				write_msg(NULL, "finding DEFAULT expressions for table %s\n",
-						  tblinfo[i].relname);
+						  tbinfo->relname);
 
 			resetPQExpBuffer(q);
 			if (g_fout->remoteVersion >= 70300)
@@ -2468,7 +2514,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 								  "pg_catalog.pg_get_expr(adbin, adrelid) AS adsrc "
 								  "FROM pg_catalog.pg_attrdef "
 								  "WHERE adrelid = '%s'::pg_catalog.oid",
-								  tblinfo[i].oid);
+								  tbinfo->oid);
 			}
 			else if (g_fout->remoteVersion >= 70200)
 			{
@@ -2476,14 +2522,14 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 								  "pg_get_expr(adbin, adrelid) AS adsrc "
 								  "FROM pg_attrdef "
 								  "WHERE adrelid = '%s'::oid",
-								  tblinfo[i].oid);
+								  tbinfo->oid);
 			}
 			else
 			{
 				/* no pg_get_expr, so must rely on adsrc */
 				appendPQExpBuffer(q, "SELECT adnum, adsrc FROM pg_attrdef "
 								  "WHERE adrelid = '%s'::oid",
-								  tblinfo[i].oid);
+								  tbinfo->oid);
 			}
 			res = PQexec(g_conn, q->data);
 			if (!res ||
@@ -2502,12 +2548,50 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 				if (adnum <= 0 || adnum > ntups)
 				{
 					write_msg(NULL, "bogus adnum value %d for table %s\n",
-							  adnum, tblinfo[i].relname);
+							  adnum, tbinfo->relname);
 					exit_nicely();
 				}
-				tblinfo[i].adef_expr[adnum-1] = strdup(PQgetvalue(res, j, 1));
+				tbinfo->adef_expr[adnum-1] = strdup(PQgetvalue(res, j, 1));
 			}
 			PQclear(res);
+		}
+
+		/*
+		 * Check to see if any columns are serial columns.  Our first quick
+		 * filter is that it must be integer or bigint with a default.  If
+		 * so, we scan to see if we found a sequence linked to this column.
+		 * If we did, mark the column and sequence appropriately.
+		 */
+		for (j = 0; j < ntups; j++)
+		{
+			/*
+			 * Note assumption that format_type will show these types as
+			 * exactly "integer" and "bigint" regardless of schema path.
+			 * This is correct in 7.3 but needs to be watched.
+			 */
+			if (strcmp(tbinfo->atttypnames[j], "integer") != 0 &&
+				strcmp(tbinfo->atttypnames[j], "bigint") != 0)
+				continue;
+			if (tbinfo->adef_expr[j] == NULL)
+				continue;
+			for (k = 0; k < numTables; k++)
+			{
+				TableInfo *seqinfo = &tblinfo[k];
+
+				if (seqinfo->owning_tab != NULL &&
+					strcmp(seqinfo->owning_tab, tbinfo->oid) == 0 &&
+					seqinfo->owning_col == j+1)
+				{
+					/*
+					 * Found a match.  Copy the table's interesting and
+					 * dumpable flags to the sequence.
+					 */
+					tbinfo->attisserial[j] = true;
+					seqinfo->interesting = tbinfo->interesting;
+					seqinfo->dump = tbinfo->dump;
+					break;
+				}
+			}
 		}
 	}
 
@@ -4884,11 +4968,26 @@ dumpACL(Archive *fout, const char *type, const char *name,
 static void
 dumpTableACL(Archive *fout, TableInfo *tbinfo)
 {
-	char *tmp = strdup(fmtId(tbinfo->relname));
-	dumpACL(fout, "TABLE", tmp, tbinfo->relname,
+	char *namecopy = strdup(fmtId(tbinfo->relname));
+	char *dumpoid;
+
+	/*
+	 * Choose OID to use for sorting ACL into position.  For a view, sort
+	 * by the view OID; for a serial sequence, sort by the owning table's
+	 * OID; otherwise use the table's own OID.
+	 */
+	if (tbinfo->viewoid != NULL)
+		dumpoid = tbinfo->viewoid;
+	else if (tbinfo->owning_tab != NULL)
+		dumpoid = tbinfo->owning_tab;
+	else
+		dumpoid = tbinfo->oid;
+
+	dumpACL(fout, "TABLE", namecopy, tbinfo->relname,
 			tbinfo->relnamespace->nspname, tbinfo->usename, tbinfo->relacl,
-			tbinfo->viewoid != NULL ? tbinfo->viewoid : tbinfo->oid);
-	free(tmp);
+			dumpoid);
+
+	free(namecopy);
 }
 
 
@@ -4902,7 +5001,10 @@ dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 {
 	int			i;
 
-	/* Dump sequences first, in case they are referenced in table defn's */
+	/*
+	 * Dump non-serial sequences first, in case they are referenced in
+	 * table defn's
+	 */
 	for (i = 0; i < numTables; i++)
 	{
 		TableInfo	   *tbinfo = &tblinfo[i];
@@ -4910,7 +5012,7 @@ dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 		if (tbinfo->relkind != RELKIND_SEQUENCE)
 			continue;
 
-		if (tbinfo->dump)
+		if (tbinfo->dump && tbinfo->owning_tab == NULL)
 		{
 			dumpOneSequence(fout, tbinfo, schemaOnly, dataOnly);
 			if (!dataOnly && !aclsSkip)
@@ -4935,6 +5037,25 @@ dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,
 				if (!aclsSkip)
 					dumpTableACL(fout, tbinfo);
 			}
+		}
+	}
+
+	/*
+	 * Dump serial sequences last (we will not emit any CREATE commands,
+	 * but we do have to think about ACLs and setval operations).
+	 */
+	for (i = 0; i < numTables; i++)
+	{
+		TableInfo	   *tbinfo = &tblinfo[i];
+
+		if (tbinfo->relkind != RELKIND_SEQUENCE)
+			continue;
+
+		if (tbinfo->dump && tbinfo->owning_tab != NULL)
+		{
+			dumpOneSequence(fout, tbinfo, schemaOnly, dataOnly);
+			if (!dataOnly && !aclsSkip)
+				dumpTableACL(fout, tbinfo);
 		}
 	}
 }
@@ -5089,24 +5210,48 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 					appendPQExpBuffer(q, ",");
 				appendPQExpBuffer(q, "\n    ");
 
-				/* Attr name & type */
+				/* Attribute name */
 				appendPQExpBuffer(q, "%s ",
 								  fmtId(tbinfo->attnames[j]));
 
-				/* If no format_type, fake it */
+				/* Attribute type */
 				if (g_fout->remoteVersion >= 70100)
-					appendPQExpBuffer(q, "%s", tbinfo->atttypnames[j]);
+				{
+					char	*typname = tbinfo->atttypnames[j];
+
+					if (tbinfo->attisserial[j])
+					{
+						if (strcmp(typname, "integer") == 0)
+							typname = "serial";
+						else if (strcmp(typname, "bigint") == 0)
+							typname = "bigserial";
+					}
+					appendPQExpBuffer(q, "%s", typname);
+				}
 				else
+				{
+					/* If no format_type, fake it */
 					appendPQExpBuffer(q, "%s",
 									  myFormatType(tbinfo->atttypnames[j],
 												   tbinfo->atttypmod[j]));
+				}
 
-				/* Default value */
-				if (tbinfo->adef_expr[j] != NULL && !tbinfo->inhAttrDef[j])
+				/* Default value --- suppress if inherited or serial */
+				if (tbinfo->adef_expr[j] != NULL &&
+					!tbinfo->inhAttrDef[j] &&
+					!tbinfo->attisserial[j])
 					appendPQExpBuffer(q, " DEFAULT %s",
 									  tbinfo->adef_expr[j]);
 
-				/* Not Null constraint */
+				/*
+				 * Not Null constraint --- suppress if inherited
+				 *
+				 * Note: we could suppress this for serial columns since
+				 * SERIAL implies NOT NULL.  We choose not to for forward
+				 * compatibility, since there has been some talk of making
+				 * SERIAL not imply NOT NULL, in which case the explicit
+				 * specification would be needed.
+				 */
 				if (tbinfo->notnull[j] && !tbinfo->inhNotNull[j])
 					appendPQExpBuffer(q, " NOT NULL");
 
@@ -5708,15 +5853,17 @@ dumpOneSequence(Archive *fout, TableInfo *tbinfo,
 	called = (strcmp(PQgetvalue(res, 0, 7), "t") == 0);
 
 	/*
-	 * The logic we use for restoring sequences is as follows: -   Add a
-	 * basic CREATE SEQUENCE statement (use last_val for start if called
-	 * is false, else use min_val for start_val).
+	 * The logic we use for restoring sequences is as follows:
+	 *
+	 * Add a basic CREATE SEQUENCE statement (use last_val for start if
+	 * called is false, else use min_val for start_val).  Skip this if the
+	 * sequence came from a SERIAL column.
 	 *
 	 * Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff we load
-	 * data
+	 * data.  We do this for serial sequences too.
 	 */
 
-	if (!dataOnly)
+	if (!dataOnly && tbinfo->owning_tab == NULL)
 	{
 		resetPQExpBuffer(delqry);
 

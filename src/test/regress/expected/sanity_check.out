@@ -59,11 +59,10 @@ SELECT relname, relhasindex
  pg_trigger          | t
  pg_type             | t
  road                | t
- serialtest          | t
  shighway            | t
  tenk1               | t
  tenk2               | t
-(53 rows)
+(52 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

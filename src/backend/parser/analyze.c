@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.241 2002/08/19 15:08:47 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.242 2002/08/19 19:33:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,11 +877,6 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		column->constraints = lappend(column->constraints, constraint);
 
 		constraint = makeNode(Constraint);
-		constraint->contype = CONSTR_UNIQUE;
-		constraint->name = NULL;	/* assign later */
-		column->constraints = lappend(column->constraints, constraint);
-
-		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_NOTNULL;
 		column->constraints = lappend(column->constraints, constraint);
 	}
@@ -1209,10 +1204,9 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 	/*
 	 * Scan the index list and remove any redundant index specifications.
-	 * This can happen if, for instance, the user writes SERIAL PRIMARY
-	 * KEY or SERIAL UNIQUE.  A strict reading of SQL92 would suggest
-	 * raising an error instead, but that strikes me as too
-	 * anal-retentive. - tgl 2001-02-14
+	 * This can happen if, for instance, the user writes UNIQUE PRIMARY KEY.
+	 * A strict reading of SQL92 would suggest raising an error instead,
+	 * but that strikes me as too anal-retentive. - tgl 2001-02-14
 	 *
 	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate
 	 * pre-existing indexes, too.
@@ -1262,7 +1256,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 
 	/*
 	 * Finally, select unique names for all not-previously-named indices,
-	 * and display WARNING messages.
+	 * and display NOTICE messages.
 	 *
 	 * XXX in ALTER TABLE case, we fail to consider name collisions against
 	 * pre-existing indexes.

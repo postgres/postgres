@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.98 2002/08/13 20:40:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.99 2002/08/19 19:33:33 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -665,14 +665,17 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
 <programlisting>
 CREATE SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq;
 CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
-    <replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') UNIQUE NOT NULL
+    <replaceable class="parameter">colname</replaceable> integer DEFAULT nextval('<replaceable class="parameter">tablename</replaceable>_<replaceable class="parameter">colname</replaceable>_seq') NOT NULL
 );
 </programlisting>
 
      Thus, we have created an integer column and arranged for its default
-     values to be assigned from a sequence generator.  UNIQUE and NOT NULL
-     constraints are applied to ensure that explicitly-inserted values
-     will never be duplicates, either.
+     values to be assigned from a sequence generator.  A <literal>NOT NULL</>
+     constraint is applied to ensure that a NULL value cannot be explicitly
+     inserted, either.  In most cases you would also want to attach a
+     <literal>UNIQUE</> or <literal>PRIMARY KEY</> constraint to prevent
+     duplicate values from being inserted by accident, but this is
+     not automatic.
     </para>
 
     <para>
@@ -685,20 +688,23 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     </para>
 
     <para>
-     Implicit sequences supporting the <type>serial</type> types are
-     not automatically dropped when a table containing a serial type
-     is dropped. So, the following commands executed in order will likely fail:
-
-<programlisting>
-CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
-DROP TABLE <replaceable class="parameter">tablename</replaceable>;
-CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceable class="parameter">colname</replaceable> SERIAL);
-</programlisting>
-
-     The sequence will remain in the database until explicitly dropped using
-     <command>DROP SEQUENCE</command>.  (This annoyance will probably be
-     fixed in some future release.)
+     The sequence created by a <type>serial</type> type is automatically
+     dropped when
+     the owning column is dropped, and cannot be dropped otherwise.
+     (This was not true in <productname>PostgreSQL</productname> releases
+     before 7.3.  Note that this automatic drop linkage will not occur for a
+     sequence created by reloading a dump from a pre-7.3 database; the dump
+     file does not contain the information needed to establish the dependency
+     link.)
     </para>
+
+    <note><para>
+     Prior to <productname>PostgreSQL</productname> 7.3, <type>serial</type>
+     implied <literal>UNIQUE</literal>.  This is no longer automatic.  If
+     you wish a serial column to be <literal>UNIQUE</literal> or a 
+     <literal>PRIMARY KEY</literal> it must now be specified, same as with
+     any other datatype.
+    </para></note>
    </sect2>
   </sect1>
 

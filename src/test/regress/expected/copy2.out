@@ -6,7 +6,6 @@ CREATE TABLE x (
 	e text
 );
 NOTICE:  CREATE TABLE will create implicit sequence 'x_a_seq' for SERIAL column 'x.a'
-NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'x_a_key' for table 'x'
 CREATE FUNCTION fn_x_before () RETURNS OPAQUE AS '
   BEGIN
 		NEW.e := ''before trigger fired''::text;
