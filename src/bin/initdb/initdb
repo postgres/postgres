@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.41 1998/04/06 00:28:53 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb,v 1.1 1998/04/06 01:05:52 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
