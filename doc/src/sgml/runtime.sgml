@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.289 2004/10/17 22:01:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.290 2004/11/04 19:08:30 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -583,7 +583,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
          Specifies the main server configuration file
-	 (customarily called <filename>postgresql.conf</>).
+         (customarily called <filename>postgresql.conf</>).
          This option can only be set on the postmaster command line.
        </para>
       </listitem>
@@ -615,8 +615,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
          Specifies that the <application>postmaster</> should create an
-	 additional process-id (PID) file for use by server administration
-	 programs.
+         additional process-id (PID) file for use by server administration
+         programs.
          This option can only be set at server start.
        </para>
       </listitem>
@@ -1666,9 +1666,20 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <listitem>
        <para>
         Sets the planner's assumption about the effective size of the
-        disk cache (that is, the portion of the kernel's disk cache
-        that will be used for <productname>PostgreSQL</productname>
-        data files). This is measured in disk pages, which are
+        disk cache that is available to a single index scan.  This is
+        factored into estimates of the cost of using an index; a higher
+        value makes it more likely index scans will be used, a lower
+        value makes it more likely sequential scans will be used. When
+        setting this parameter you should consider both
+        <productname>PostgreSQL</productname>'s shared buffers and the
+        portion of the kernel's disk cache that will be used for
+        <productname>PostgreSQL</productname> data files.  Also, take into
+        account the expected number of concurrent queries using different
+        indexes, since they will have to share the available space.
+        This parameter has no effect on the size of shared memory
+        allocated by PostgreSQL, nor does it reserve kernel disk cache;
+        it is used only for estimation purposes.
+        The value is measured in disk pages, which are
         normally 8192 bytes each. The default is 1000.
        </para>
       </listitem>
@@ -1678,7 +1689,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>random_page_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
-        Sets the query planner's estimate of the cost of a
+        Sets the planner's estimate of the cost of a
         nonsequentially fetched disk page. This is measured as a
         multiple of the cost of a sequential page fetch. A higher
         value makes it more likely a sequential scan will be used, a
@@ -1692,7 +1703,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>cpu_tuple_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
-        Sets the query planner's estimate of the cost of processing
+        Sets the planner's estimate of the cost of processing
         each row during a query. This is measured as a fraction of
         the cost of a sequential page fetch. The default is 0.01.
        </para>
@@ -1703,7 +1714,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
       <term><varname>cpu_index_tuple_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
-        Sets the query planner's estimate of the cost of processing
+        Sets the planner's estimate of the cost of processing
         each index row during an index scan. This is measured as a
         fraction of the cost of a sequential page fetch. The default
         is 0.001.

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.246 2004/10/22 19:48:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.247 2004/11/04 19:08:42 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1344,7 +1344,7 @@ static struct config_real ConfigureNamesReal[] =
 						 "pages, which are normally 8 kB each.")
 		},
 		&effective_cache_size,
-		DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL
+		DEFAULT_EFFECTIVE_CACHE_SIZE, 1, DBL_MAX, NULL, NULL
 	},
 	{
 		{"random_page_cost", PGC_USERSET, QUERY_TUNING_COST,
