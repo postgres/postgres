@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.12 2004/11/18 17:13:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.13 2004/12/02 22:40:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@
 #define PGARCH_AUTOWAKE_INTERVAL 60		/* How often to force a poll of
 										 * the archive status directory;
 										 * in seconds. */
-#define PGARCH_RESTART_INTERVAL 60		/* How often to attempt to restart
+#define PGARCH_RESTART_INTERVAL 10		/* How often to attempt to restart
 										 * a failed archiver; in seconds. */
 
 /* ----------
