@@ -1,24 +1,22 @@
 /* -------------------------------------------------------------------------
  * pg_dumplo
  *
- * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.8 2002/09/04 20:31:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/lo_import.c,v 1.9 2002/09/05 21:01:16 tgl Exp $
  *
  *					Karel Zak 1999-2000
  * -------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#include "postgres_fe.h"
+
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
-#include <libpq-fe.h>
-#include <libpq/libpq-fs.h>
+#include "libpq-fe.h"
+#include "libpq/libpq-fs.h"
 
 #include "pg_dumplo.h"
 
