@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.32 2004/08/29 04:13:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.33 2004/09/22 19:13:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ typedef struct HashJoinTupleData
 
 typedef HashJoinTupleData *HashJoinTuple;
 
-typedef struct HashTableData
+typedef struct HashJoinTableData
 {
 	int			nbuckets;		/* buckets in use during this batch */
 	int			totalbuckets;	/* total number of (virtual) buckets */
@@ -56,6 +56,8 @@ typedef struct HashTableData
 
 	int			nbatch;			/* number of batches; 0 means 1-pass join */
 	int			curbatch;		/* current batch #, or 0 during 1st pass */
+
+	bool		hashNonEmpty;	/* did inner plan produce any rows? */
 
 	/*
 	 * all these arrays are allocated for the life of the hash join, but
@@ -90,8 +92,8 @@ typedef struct HashTableData
 
 	MemoryContext hashCxt;		/* context for whole-hash-join storage */
 	MemoryContext batchCxt;		/* context for this-batch-only storage */
-} HashTableData;
+} HashJoinTableData;
 
-typedef HashTableData *HashJoinTable;
+typedef HashJoinTableData *HashJoinTable;
 
 #endif   /* HASHJOIN_H */

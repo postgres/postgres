@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.86 2004/08/29 04:12:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.87 2004/09/22 19:13:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,8 @@
 /* ----------------------------------------------------------------
  *		ExecHash
  *
- *		build hash table for hashjoin, all do partitioning if more
- *		than one batches are required.
+ *		build hash table for hashjoin, doing partitioning if more
+ *		than one batch is required.
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
@@ -81,6 +81,7 @@ ExecHash(HashState *node)
 		slot = ExecProcNode(outerNode);
 		if (TupIsNull(slot))
 			break;
+		hashtable->hashNonEmpty = true;
 		econtext->ecxt_innertuple = slot;
 		ExecHashTableInsert(hashtable, econtext, hashkeys);
 		ExecClearTuple(slot);
@@ -189,7 +190,7 @@ ExecEndHash(HashState *node)
 /* ----------------------------------------------------------------
  *		ExecHashTableCreate
  *
- *		create a hashtable in shared memory for hashjoin.
+ *		create an empty hashtable data structure for hashjoin.
  * ----------------------------------------------------------------
  */
 HashJoinTable
@@ -226,12 +227,13 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	 * The hashtable control block is just palloc'd from the executor's
 	 * per-query memory context.
 	 */
-	hashtable = (HashJoinTable) palloc(sizeof(HashTableData));
+	hashtable = (HashJoinTable) palloc(sizeof(HashJoinTableData));
 	hashtable->nbuckets = nbuckets;
 	hashtable->totalbuckets = totalbuckets;
 	hashtable->buckets = NULL;
 	hashtable->nbatch = nbatch;
 	hashtable->curbatch = 0;
+	hashtable->hashNonEmpty = false;
 	hashtable->innerBatchFile = NULL;
 	hashtable->outerBatchFile = NULL;
 	hashtable->innerBatchSize = NULL;
