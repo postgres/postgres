@@ -1,16 +1,16 @@
 #define USE_POSIX_TIME
 
-#if defined(i386)
+#if defined(__i386__)
 #define NEED_I386_TAS_ASM
 #define HAS_TEST_AND_SET
 #endif
 
-#if defined(sparc)
+#if defined(__sparc__)
 #define NEED_SPARC_TAS_ASM
 #define HAS_TEST_AND_SET
 #endif
 
-#if defined(vax)
+#if defined(__vax__)
 #define NEED_VAX_TAS_ASM
 #define HAS_TEST_AND_SET
 #endif

@@ -1,7 +1,7 @@
-#if defined(i386)
+#if defined(__i386__)
 #define NEED_I386_TAS_ASM
 #endif
-#if defined(sparc)
+#if defined(__sparc__)
 #define NEED_SPARC_TAS_ASM
 #endif
 #define USE_POSIX_TIME

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.58 1999/07/01 19:47:25 momjian Exp $
+ * $Id: c.h,v 1.59 1999/07/13 20:00:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -759,7 +759,7 @@ extern char *vararg_format(const char *fmt,...);
 #endif	 /* hpux */
 #endif
 
-#if defined(sun) && defined(sparc) && !defined(__SVR4)
+#if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 #define memmove(d, s, l)		bcopy(s, d, l)
 #include <unistd.h>
 #include <varargs.h>

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.9 1999/05/25 22:43:49 momjian Exp $
+ * $Id: libpq-int.h,v 1.10 1999/07/13 20:00:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,7 @@ extern int	pqWait(int forRead, int forWrite, PGconn *conn);
 
 /* supply an implementation of strerror() macro if system doesn't have it */
 #ifndef strerror
-#if defined(sun) && defined(sparc) && !defined(__SVR4)
+#if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 extern char *sys_errlist[];
 
 #define strerror(A) (sys_errlist[(A)])
