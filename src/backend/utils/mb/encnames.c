@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.23 2005/03/07 04:30:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.24 2005/03/13 01:26:30 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -177,9 +177,6 @@ pg_encname	pg_encname_tbl[] =
 	{
 		"unicode", PG_UTF8
 	},							/* alias for UTF8 */
-	{
-		"utf-8", PG_UTF8
-	},							/* UTF8; RFC2279 */
 	{
 		"utf8", PG_UTF8
 	},							/* alias for UTF8 */
