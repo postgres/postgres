@@ -7,7 +7,7 @@
 DROP TABLE INET_TBL;
 CREATE TABLE INET_TBL (c cidr, i inet);
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.226/24');
-INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.0/24', '192.168.1.226');
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.0/26', '192.168.1.226');
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.0/24');
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.0/25');
 INSERT INTO INET_TBL (c, i) VALUES ('192.168.1', '192.168.1.255/24');
@@ -24,10 +24,10 @@ INSERT INTO INET_TBL (c, i) VALUES ('10:23::f1', '10:23::f1/64');
 INSERT INTO INET_TBL (c, i) VALUES ('10:23::8000/113', '10:23::ffff');
 INSERT INTO INET_TBL (c, i) VALUES ('::ffff:1.2.3.4', '::4.3.2.1/24');
 -- check that CIDR rejects invalid input:
-INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/24', '192.168.1.226');
+INSERT INTO INET_TBL (c, i) VALUES ('192.168.1.2/30', '192.168.1.226');
 INSERT INTO INET_TBL (c, i) VALUES ('1234::1234::1234', '::1.2.3.4');
 -- check that CIDR rejects invalid input when converting from text:
-INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/24'), '192.168.1.226');
+INSERT INTO INET_TBL (c, i) VALUES (cidr('192.168.1.2/30'), '192.168.1.226');
 INSERT INTO INET_TBL (c, i) VALUES (cidr('ffff:ffff:ffff:ffff::/24'), '::192.168.1.226');
 SELECT '' AS ten, c AS cidr, i AS inet FROM INET_TBL;
 
