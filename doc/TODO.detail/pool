@@ -639,3 +639,683 @@ impact on existing clients.
 
 			regards, tom lane
 
+From pgsql-hackers-owner+M16940@postgresql.org Sun Dec 23 23:06:28 2001
+Return-path: <pgsql-hackers-owner+M16940@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBO46R429655
+	for <pgman@candle.pha.pa.us>; Sun, 23 Dec 2001 23:06:27 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBO40oN57016;
+	Sun, 23 Dec 2001 22:00:50 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16940@postgresql.org)
+Received: from relay.pair.com (relay1.pair.com [209.68.1.20])
+	by postgresql.org (8.11.3/8.11.4) with SMTP id fBID0um78493
+	for <pgsql-hackers@postgresql.org>; Tue, 18 Dec 2001 08:00:56 -0500 (EST)
+	(envelope-from ml@augustz.com)
+Received: (qmail 79914 invoked from network); 18 Dec 2001 13:00:58 -0000
+Received: from acz01997-2.pomona.edu (HELO Microsoft) (134.173.91.3)
+  by relay1.pair.com with SMTP; 18 Dec 2001 13:00:58 -0000
+X-pair-Authenticated: 134.173.91.3
+From: "August Zajonc" <ml@augustz.com>
+To: <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Connection Pooling, a year later
+Date: Tue, 18 Dec 2001 05:00:57 -0800
+Message-ID: <OJEJIPPNGKHEBGFEHPLMAEPGCCAA.ml@augustz.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook IMO, Build 9.0.2416 (9.0.2911.0)
+Importance: Normal
+X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I feel there was a reasonably nice client side attempt at this using a
+worker pool model or something. Can't seem to track it down at this moment.
+Also would spread queries in different ways to get a hot backup equivalent
+etc. It was slick.
+
+The key is that pgsql be able to support a very significant number of
+transactions. Be neat to see some numbers on your attempt.
+
+Site I used to run had 6 front end webservers running PHP apps. Each
+persistent connection (a requirement to avoid overhead of set-up/teardowns)
+lived as long as the httpd process lived, even if idle. That meant at 250
+processes per server we had a good 1500 connections clicking over. Our
+feeling was that rather than growing to 3,000 connections as the frontend
+grew, why not pool those connections off each machine down to perhaps
+75/machine worker threads that actually did the work.
+
+Looks like that's not an issue if these backends suck up few resources.
+Doing something similar with MySQL we'd experiance problems if we got into
+the 2,000 connection range. (kernel/system limits bumped plenty high).
+
+While we are on TODO's I would like to point out that some way to fully
+vacume (ie recover deleted and changed) while a db is in full swing is
+critical to larger installtions. We did 2 billion queries between reboots on
+a quad zeon MySQL box, and those are real user based queries not data loads
+or anything like that. At 750-1000 queries/second bringing the database down
+or seriously degrading its performance is not a good option.
+
+Enjoy playing with pgsql as always....
+
+- AZ
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From dhogaza@pacifier.com Tue Dec 18 11:15:06 2001
+Return-path: <dhogaza@pacifier.com>
+Received: from asteroid.pacifier.com ([199.2.117.154])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBIGF5419342
+	for <pgman@candle.pha.pa.us>; Tue, 18 Dec 2001 11:15:05 -0500 (EST)
+Received: from pacifier.com (dsl-dhogaza.pacifier.net [207.202.226.68])
+	by asteroid.pacifier.com (8.11.2/8.11.1) with ESMTP id fBIGEGe29925;
+	Tue, 18 Dec 2001 08:14:17 -0800 (PST)
+Message-ID: <3C1F6B81.10500@pacifier.com>
+Date: Tue, 18 Dec 2001 08:14:57 -0800
+From: Don Baccus <dhogaza@pacifier.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.6) Gecko/20011120
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: mlw <markw@mohawksoft.com>, owensmk@earthlink.net,
+   pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] Connection Pooling, a year later
+References: <200112180342.fBI3g4s23880@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+
+
+> It would just be nice to have it done internally rather than have all
+> the clients do it, iff it can be done cleanly.
+
+Serious client applications that need it already do it.  Firing up an 
+Oracle or most other db's isn't that lightweight a deal, either, it's 
+not useful only for PG..
+
+Personally I'd just view it as getting in the way, but then I use a 
+webserver that's provided connection pooling for client threads for the 
+last seven years ...
+
+I agree with Tom that the client seems to be the best place to do this.
+
+Among other things it isn't that difficult.  If you know how to fire up 
+one connection, you know how to fire up N of them and adding logic to 
+pool them afterwards is easy enough.
+-- 
+Don Baccus
+Portland, OR
+http://donb.photo.net, http://birdnotes.net, http://openacs.org
+
+
+From dhogaza@pacifier.com Tue Dec 18 11:24:33 2001
+Return-path: <dhogaza@pacifier.com>
+Received: from asteroid.pacifier.com ([199.2.117.154])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBIGOW421363
+	for <pgman@candle.pha.pa.us>; Tue, 18 Dec 2001 11:24:33 -0500 (EST)
+Received: from pacifier.com (dsl-dhogaza.pacifier.net [207.202.226.68])
+	by asteroid.pacifier.com (8.11.2/8.11.1) with ESMTP id fBIGNne00442;
+	Tue, 18 Dec 2001 08:23:49 -0800 (PST)
+Message-ID: <3C1F6DBF.2040000@pacifier.com>
+Date: Tue, 18 Dec 2001 08:24:31 -0800
+From: Don Baccus <dhogaza@pacifier.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.6) Gecko/20011120
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+cc: mlw <markw@mohawksoft.com>, owensmk@earthlink.net,
+   pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] Connection Pooling, a year later
+References: <200112180357.fBI3vBm24991@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Status: OR
+
+Bruce Momjian wrote:
+
+
+> Yes, that is assuming you are using PHP.  If you are using something
+> else, you connection pooling in there too.  All those client interfaces
+> reimplementing connection pooling seems like a waste to me.
+
+
+Effective pooling's pretty specific to your environment, though, so any 
+general mechanism would have to provide a wide-ranging suite of 
+parameters governing the number to pool, how long each handle should 
+live, what to do if a handle's released by a client while in the midst 
+of a transaction (AOLserver rolls back the transaction, other clients 
+might want to do something else, i.e. fire a callback or the like), etc etc.
+
+I think it would be fairly complex and for those high-throughput 
+applications already written with client-side pooling no improvement.
+
+And those are the only applications that need it.
+
+-- 
+Don Baccus
+Portland, OR
+http://donb.photo.net, http://birdnotes.net, http://openacs.org
+
+
+From pgsql-hackers-owner+M16726@postgresql.org Tue Dec 18 11:48:16 2001
+Return-path: <pgsql-hackers-owner+M16726@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBIGmG422658
+	for <pgman@candle.pha.pa.us>; Tue, 18 Dec 2001 11:48:16 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBIGkFN40986;
+	Tue, 18 Dec 2001 10:46:15 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16726@postgresql.org)
+Received: from comet.pacifier.com ([199.2.117.155])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBIGYZm93404
+	for <pgsql-hackers@postgresql.org>; Tue, 18 Dec 2001 11:34:35 -0500 (EST)
+	(envelope-from dhogaza@pacifier.com)
+Received: from pacifier.com (dsl-dhogaza.pacifier.net [207.202.226.68])
+	by comet.pacifier.com (8.11.2/8.11.1) with ESMTP id fBIGXCX29823;
+	Tue, 18 Dec 2001 08:33:12 -0800 (PST)
+Message-ID: <3C1F6FF1.9030606@pacifier.com>
+Date: Tue, 18 Dec 2001 08:33:53 -0800
+From: Don Baccus <dhogaza@pacifier.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.6) Gecko/20011120
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: Mark Pritchard <mark@tangent.net.au>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Connection Pooling, a year later
+References: <EGECIAPHKLJFDEJBGGOBGEIJFNAA.mark@tangent.net.au>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Mark Pritchard wrote:
+
+>>I think it is the startup cost that most people want to avoid, and our's
+>>is higher than most db's that use threads; at least I think so.
+>>
+>>It would just be nice to have it done internally rather than have all
+>>the clients do it, iff it can be done cleanly.
+>>
+> 
+> I'd add that client side connection pooling isn't effective in some cases
+> anyway - one application we work with has 4 physical application servers
+> running around 6 applications. Each of the applications was written by a
+> different vendor, and thus a pool size of five gives you 120 open
+> connections.
+
+Tuning a central pooling mechanism to run well in this kind of situation 
+isn't going to be a trivial task, either.  The next thing you'll want is 
+some way to prioritize the various clients so your more serious 
+applications have a better chance of getting a pool.
+
+Or you'll want to set up subpools so they don't compete with each other, 
+in effect replicating what's done now, but adding more complexity to the 
+central service.
+
+-- 
+Don Baccus
+Portland, OR
+http://donb.photo.net, http://birdnotes.net, http://openacs.org
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From oleg@sai.msu.su Tue Dec 18 12:05:51 2001
+Return-path: <oleg@sai.msu.su>
+Received: from ra.sai.msu.su (ra.sai.msu.su [158.250.29.2])
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBIH5h423591
+	for <pgman@candle.pha.pa.us>; Tue, 18 Dec 2001 12:05:43 -0500 (EST)
+Received: from ra (ra [158.250.29.2])
+	by ra.sai.msu.su (8.9.3/8.9.3) with ESMTP id UAA18592;
+	Tue, 18 Dec 2001 20:05:26 +0300 (GMT)
+Date: Tue, 18 Dec 2001 20:05:26 +0300 (GMT)
+From: Oleg Bartunov <oleg@sai.msu.su>
+X-X-Sender: <megera@ra.sai.msu.su>
+To: Don Baccus <dhogaza@pacifier.com>
+cc: Bruce Momjian <pgman@candle.pha.pa.us>, mlw <markw@mohawksoft.com>,
+   <owensmk@earthlink.net>, <pgsql-hackers@postgresql.org>,
+   Tom Lane <tgl@sss.pgh.pa.us>
+Subject: Re: [HACKERS] Connection Pooling, a year later
+In-Reply-To: <3C1F6DBF.2040000@pacifier.com>
+Message-ID: <Pine.GSO.4.33.0112182000400.12230-100000@ra.sai.msu.su>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Status: OR
+
+Does schema support will resolve this discussion ?
+If I understand correctly, initial arguments for connection pooling
+was restriction in number of persistent connections. it's right in
+current postgresql that if one wants keep connection for performance
+reason to several databases the total number of connections will
+doubled, trippled and so on. But if I understand schema support will
+eventually put away these problem because we could keep only one
+pool of connections to the *one* database.
+
+	Oleg
+
+On Tue, 18 Dec 2001, Don Baccus wrote:
+
+> Bruce Momjian wrote:
+>
+>
+> > Yes, that is assuming you are using PHP.  If you are using something
+> > else, you connection pooling in there too.  All those client interfaces
+> > reimplementing connection pooling seems like a waste to me.
+>
+>
+> Effective pooling's pretty specific to your environment, though, so any
+> general mechanism would have to provide a wide-ranging suite of
+> parameters governing the number to pool, how long each handle should
+> live, what to do if a handle's released by a client while in the midst
+> of a transaction (AOLserver rolls back the transaction, other clients
+> might want to do something else, i.e. fire a callback or the like), etc etc.
+>
+> I think it would be fairly complex and for those high-throughput
+> applications already written with client-side pooling no improvement.
+>
+> And those are the only applications that need it.
+>
+>
+
+	Regards,
+		Oleg
+_____________________________________________________________
+Oleg Bartunov, sci.researcher, hostmaster of AstroNet,
+Sternberg Astronomical Institute, Moscow University (Russia)
+Internet: oleg@sai.msu.su, http://www.sai.msu.su/~megera/
+phone: +007(095)939-16-83, +007(095)939-23-83
+
+
+From pgsql-hackers-owner+M16748@postgresql.org Tue Dec 18 15:11:46 2001
+Return-path: <pgsql-hackers-owner+M16748@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBIKBj405415
+	for <pgman@candle.pha.pa.us>; Tue, 18 Dec 2001 15:11:45 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBIKB0N47430;
+	Tue, 18 Dec 2001 14:11:00 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16748@postgresql.org)
+Received: from candle.pha.pa.us (216-55-132-35.dialup.tnt01.san-diego.abac.net [216.55.132.35])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBIJulm05030
+	for <pgsql-hackers@postgresql.org>; Tue, 18 Dec 2001 14:56:47 -0500 (EST)
+	(envelope-from pgman@candle.pha.pa.us)
+Received: (from pgman@localhost)
+	by candle.pha.pa.us (8.11.6/8.10.1) id fBIJuVB04553;
+	Tue, 18 Dec 2001 14:56:31 -0500 (EST)
+From: Bruce Momjian <pgman@candle.pha.pa.us>
+Message-ID: <200112181956.fBIJuVB04553@candle.pha.pa.us>
+Subject: Re: [HACKERS] Connection Pooling, a year later
+In-Reply-To: <3C1F6ED6.6080107@pacifier.com> "from Don Baccus at Dec 18, 2001
+	08:29:10 am"
+To: Don Baccus <dhogaza@pacifier.com>
+Date: Tue, 18 Dec 2001 14:56:31 -0500 (EST)
+cc: Christopher Kings-Lynne <chriskl@familyhealth.com.au>,
+   mlw <markw@mohawksoft.com>, owensmk@earthlink.net,
+   pgsql-hackers@postgresql.org, Tom Lane <tgl@sss.pgh.pa.us>
+X-Mailer: ELM [version 2.4ME+ PL90 (25)]
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Bruce Momjian wrote:
+> 
+> 
+> > 
+> > The trick for that is to call COMMIT before you pass the backend to a
+> > new person.
+> 
+> 
+> The failure to COMMIT is a programmer error - ROLLBACK's much safer.  At 
+>   least that's what we decided in the AOLserver community, and that's 
+> what the drivers for Oracle and PG (the two I maintain) implement.
+
+
+Then you can issue a "BEGIN;ROLLBACK;" when you pass the session to the
+next user, and "RESET ALL;" of course.
+
+> > Now, if you want to abort a left-over transaction, you can
+> > do an ABORT but that is going to show up in the server logs because an
+> > ABORT without a transaction causes an error message.
+> 
+> 
+> The connection pooling mechanism needs to track the transaction state 
+> and only ROLLBACK a handle that's not in autocommit state or in the 
+> midst of a BEGIN/END transaction (again, Oracle vs. PG)..
+
+Seems like a lot of work to keep track of transaction state in the
+client;  seems easier to just unconditionally issue the begin;rollback.
+
+-- 
+  Bruce Momjian                        |  http://candle.pha.pa.us
+  pgman@candle.pha.pa.us               |  (610) 853-3000
+  +  If your life is a hard drive,     |  830 Blythe Avenue
+  +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M16793@postgresql.org Wed Dec 19 00:46:50 2001
+Return-path: <pgsql-hackers-owner+M16793@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBJ5kn426988
+	for <pgman@candle.pha.pa.us>; Wed, 19 Dec 2001 00:46:49 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBJ5gnN63439;
+	Tue, 18 Dec 2001 23:42:49 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16793@postgresql.org)
+Received: from deborah.paradise.net.nz (deborah.paradise.net.nz [203.96.152.32])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBJ5Uvm41224
+	for <pgsql-hackers@postgresql.org>; Wed, 19 Dec 2001 00:30:58 -0500 (EST)
+	(envelope-from andrew@catalyst.net.nz)
+Received: from heidegger.catalyst.net.nz (203-96-145-108.adsl.paradise.net.nz [203.96.145.108])
+	by deborah.paradise.net.nz (Postfix) with ESMTP
+	id D1C7CD194D; Wed, 19 Dec 2001 18:31:01 +1300 (NZDT)
+Received: from 127.0.0.1 (ident=unknown) by heidegger.catalyst.net.nz
+	with esmtp (MasqMail 0.1.15) id 16GZJK-5NU-00; Wed, 19 Dec 2001
+	18:30:34 +1300
+Subject: Re: [HACKERS] Connection Pooling, a year later
+From: Andrew McMillan <andrew@catalyst.net.nz>
+To: owensmk@earthlink.net
+cc: pgsql-hackers@postgresql.org
+In-Reply-To: <200112180028.fBI0Sum06915@postgresql.org>
+References: <200112180028.fBI0Sum06915@postgresql.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+X-Mailer: Evolution/1.0 (Preview Release)
+Date: 19 Dec 2001 18:30:34 +1300
+Message-ID: <1008739834.25608.33.camel@kant.mcmillan.net.nz>
+MIME-Version: 1.0
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Tue, 2001-12-18 at 13:46, Michael Owens wrote:
+> 
+> By having the postmaster map multiple clients to a fixed number of backends, 
+> you achieve the happy medium: You never exceed the ideal number of active 
+> backends, and at the same time you are not limited to only accepting a fixed 
+> number of connections. Accepting connections can now be based on load 
+> (however you wish to define it), not number.  You now make decisions based on 
+> utlization.
+> 
+> If it were shown that even half of a backend's life consisted of idle time, 
+> leasing out that idle time to another active connection would potentially 
+> double the average number of simultaneous requests without (theoretically) 
+> incurring any significant degradation in performance.
+> 
+
+Have you looked at the client-side connection pooling solutions out
+there?
+
+DBBalancer ( http://dbbalancer.sourceforge.net/ ) tries to sit very
+transparently between your application and PostgreSQL, letting you
+implement connection pooling with almost no application changes.
+
+There was another one I came across too, but that one requires you to
+make more wide-reaching changes to the application.
+
+In my applications I have found DBBalancer to be roughly the same level
+of performance as PHP persistent connections, but a lot fewer
+connections are needed in the pool because they are only needed when
+Apache is delivering dynamic content - not the associated static
+stylesheets and images.
+
+Regards,
+					Andrew.
+-- 
+--------------------------------------------------------------------
+Andrew @ Catalyst .Net.NZ Ltd, PO Box 11-053, Manners St, Wellington
+WEB: http://catalyst.net.nz/        PHYS: Level 2, 150-154 Willis St
+DDI: +64(4)916-7201    MOB: +64(21)635-694    OFFICE: +64(4)499-2267
+       Are you enrolled at http://schoolreunions.co.nz/ yet?
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://archives.postgresql.org
+
+From pgsql-hackers-owner+M16834@postgresql.org Wed Dec 19 14:17:47 2001
+Return-path: <pgsql-hackers-owner+M16834@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBJJHk404096
+	for <pgman@candle.pha.pa.us>; Wed, 19 Dec 2001 14:17:46 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBJJENN87550;
+	Wed, 19 Dec 2001 13:14:23 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16834@postgresql.org)
+Received: from asteroid.pacifier.com ([199.2.117.154])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBJJ55m16181
+	for <pgsql-hackers@postgresql.org>; Wed, 19 Dec 2001 14:05:05 -0500 (EST)
+	(envelope-from dhogaza@pacifier.com)
+Received: from pacifier.com (dsl-dhogaza.pacifier.net [207.202.226.68])
+	by asteroid.pacifier.com (8.11.2/8.11.1) with ESMTP id fBJJ3fe20585;
+	Wed, 19 Dec 2001 11:03:41 -0800 (PST)
+Message-ID: <3C20E4B9.8090200@pacifier.com>
+Date: Wed, 19 Dec 2001 11:04:25 -0800
+From: Don Baccus <dhogaza@pacifier.com>
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:0.9.6) Gecko/20011120
+X-Accept-Language: en-us
+MIME-Version: 1.0
+To: owensmk@earthlink.net
+cc: Andrew McMillan <andrew@catalyst.net.nz>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Connection Pooling, a year later
+References: <200112180028.fBI0Sum06915@postgresql.org> <1008739834.25608.33.camel@kant.mcmillan.net.nz> <E16Gl55-0005ug-00@swan.prod.itd.earthlink.net>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Michael Owens wrote:
+
+> As long as each client's call is composed of a standalone transaction, there 
+> is no problem with external connection pools. But what about when a client's 
+> transactions spans two or more calls, such as SELECT FOR UPDATE? Then pooling 
+> is not safe: it offers no assurance of what may be interjected into an open 
+> transaction between calls. For example, each is a separate call to a shared 
+> connection:
+> 
+> Client A:  BEGIN WORK; SELECT last_name from customer for update where <X>;
+> 
+> Client B:  BEGIN WORK; SELECT street from customer for update where <Y>;
+> 
+> Client A:  update customer set lastname=<modified value> where <X>; COMMIT 
+> WORK;
+> 
+> 
+> Now, isn't Client B's write lock gone with Client A's commit? Yet Client A's 
+> lock is still hanging around. While Client B's commit will close it, Client B 
+> has lost the assurance of its lock, defeating the purpose of SELECT FOR 
+> UPDATE.
+> 
+> If this is corrent, then external connection pools limit what you can do with 
+> the database to a single call. Any transaction spanning more than one call is 
+> unsafe, because it is not isolated from other clients sharing the same 
+> connection.
+
+
+The general idea is that you grab a handle and hold onto it until you're 
+done.  This makes the above scenario impossible.
+
+Forgetting to commit or rollback before relenquishing the handle is 
+another scenario that can lead to problems but that's already been 
+discussed in detail.
+
+-- 
+Don Baccus
+Portland, OR
+http://donb.photo.net, http://birdnotes.net, http://openacs.org
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M16838@postgresql.org Wed Dec 19 15:17:32 2001
+Return-path: <pgsql-hackers-owner+M16838@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBJKHV408663
+	for <pgman@candle.pha.pa.us>; Wed, 19 Dec 2001 15:17:32 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBJKDNN89347;
+	Wed, 19 Dec 2001 14:13:23 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16838@postgresql.org)
+Received: from gull.prod.itd.earthlink.net (gull.mail.pas.earthlink.net [207.217.120.84])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBJKA2m62023
+	for <pgsql-hackers@postgresql.org>; Wed, 19 Dec 2001 15:10:03 -0500 (EST)
+	(envelope-from owensmk@earthlink.net)
+Received: from sdn-ar-004txfworp179.dialsprint.net ([158.252.142.219] helo=there)
+	by gull.prod.itd.earthlink.net with smtp (Exim 3.33 #1)
+	id 16Gn2K-0005YP-00; Wed, 19 Dec 2001 12:09:57 -0800
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Michael Owens <owensmk@earthlink.net>
+Reply-To: owensmk@earthlink.net
+To: Don Baccus <dhogaza@pacifier.com>
+Subject: Re: [HACKERS] Connection Pooling, a year later
+Date: Wed, 19 Dec 2001 14:28:14 -0600
+X-Mailer: KMail [version 1.3.1]
+cc: Andrew McMillan <andrew@catalyst.net.nz>, pgsql-hackers@postgresql.org
+References: <200112180028.fBI0Sum06915@postgresql.org> <E16Gl55-0005ug-00@swan.prod.itd.earthlink.net> <3C20E4B9.8090200@pacifier.com>
+In-Reply-To: <3C20E4B9.8090200@pacifier.com>
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
+Message-ID: <E16Gn2K-0005YP-00@gull.prod.itd.earthlink.net>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Wednesday 19 December 2001 01:04 pm, Don Baccus wrote:
+
+
+> The general idea is that you grab a handle and hold onto it until you're
+> done.  This makes the above scenario impossible.
+>
+> Forgetting to commit or rollback before relenquishing the handle is
+> another scenario that can lead to problems but that's already been
+> discussed in detail.
+
+But then the shared connection is unshared, sitting idle while the client 
+works in between calls, thus introducing idle time among a fixed number of 
+connections. The server is doing less than it could.
+
+I agree that this connection pool has improved things in eliminating backend 
+startup time. But idle time still exists for the clients performing multiple 
+calls, proportional to the product of the number of multiple call clients and 
+the number of calls they make, plus the idle time between them.
+
+However this probably only ever happens on update. Inserts and selects can be 
+done in one call. And, I suppose updates comprise only a small fraction of 
+the requests sent to the database. Even then, you can probably eliminate some 
+multiple calls by using things such as procedures.
+
+Factoring all that in, you can probably do as well by optimizing your 
+particular database/application than by writing code.
+
+I relent. Thanks for your thoughts.
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M16855@postgresql.org Thu Dec 20 01:02:51 2001
+Return-path: <pgsql-hackers-owner+M16855@postgresql.org>
+Received: from rs.postgresql.org (server1.pgsql.org [64.39.15.238] (may be forged))
+	by candle.pha.pa.us (8.11.6/8.10.1) with ESMTP id fBK62o404294
+	for <pgman@candle.pha.pa.us>; Thu, 20 Dec 2001 01:02:50 -0500 (EST)
+Received: from postgresql.org (postgresql.org [64.49.215.8])
+	by rs.postgresql.org (8.11.6/8.11.6) with ESMTP id fBK5xnN05417;
+	Wed, 19 Dec 2001 23:59:49 -0600 (CST)
+	(envelope-from pgsql-hackers-owner+M16855@postgresql.org)
+Received: from deborah.paradise.net.nz (deborah.paradise.net.nz [203.96.152.32])
+	by postgresql.org (8.11.3/8.11.4) with ESMTP id fBK5mvm47263
+	for <pgsql-hackers@postgresql.org>; Thu, 20 Dec 2001 00:48:57 -0500 (EST)
+	(envelope-from andrew@catalyst.net.nz)
+Received: from heidegger.catalyst.net.nz (203-96-145-94.adsl.paradise.net.nz [203.96.145.94])
+	by deborah.paradise.net.nz (Postfix) with ESMTP
+	id 7407FD2B76; Thu, 20 Dec 2001 18:49:01 +1300 (NZDT)
+Received: from 127.0.0.1 (ident=unknown) by heidegger.catalyst.net.nz
+	with esmtp (MasqMail 0.1.15) id 16GrRk-2Ry-00; Thu, 20 Dec 2001
+	13:52:28 +1300
+Subject: Re: [HACKERS] Connection Pooling, a year later
+From: Andrew McMillan <andrew@catalyst.net.nz>
+To: owensmk@earthlink.net
+cc: pgsql-hackers@postgresql.org
+In-Reply-To: <E16Gl55-0005ug-00@swan.prod.itd.earthlink.net>
+References: <200112180028.fBI0Sum06915@postgresql.org>
+	<1008739834.25608.33.camel@kant.mcmillan.net.nz> 
+	<E16Gl55-0005ug-00@swan.prod.itd.earthlink.net>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+X-Mailer: Evolution/1.0 (Preview Release)
+Date: 20 Dec 2001 13:52:28 +1300
+Message-ID: <1008809548.24470.48.camel@kant.mcmillan.net.nz>
+MIME-Version: 1.0
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Thu, 2001-12-20 at 07:22, Michael Owens wrote:
+> As long as each client's call is composed of a standalone transaction, there 
+> is no problem with external connection pools. But what about when a client's 
+> transactions spans two or more calls, such as SELECT FOR UPDATE? Then pooling 
+> is not safe: it offers no assurance of what may be interjected into an open 
+> transaction between calls. For example, each is a separate call to a shared 
+> connection:
+> 
+> Client A:  BEGIN WORK; SELECT last_name from customer for update where <X>;
+> 
+> Client B:  BEGIN WORK; SELECT street from customer for update where <Y>;
+> 
+> Client A:  update customer set lastname=<modified value> where <X>; COMMIT 
+> WORK;
+> 
+> 
+> Now, isn't Client B's write lock gone with Client A's commit? Yet Client A's 
+> lock is still hanging around. While Client B's commit will close it, Client B 
+> has lost the assurance of its lock, defeating the purpose of SELECT FOR 
+> UPDATE.
+> 
+> If this is corrent, then external connection pools limit what you can do with 
+> the database to a single call. Any transaction spanning more than one call is 
+> unsafe, because it is not isolated from other clients sharing the same 
+> connection.
+
+Oh, I see.  You are absolutely correct that client-side pooling wouldn't
+work in that situation of course.
+
+As an application developer nobody has forced me into such a corner yet,
+however.  Long running transactions are something I avoid like the
+plague.
+
+Cheers,
+					Andrew.
+-- 
+--------------------------------------------------------------------
+Andrew @ Catalyst .Net.NZ Ltd, PO Box 11-053, Manners St, Wellington
+WEB: http://catalyst.net.nz/        PHYS: Level 2, 150-154 Willis St
+DDI: +64(4)916-7201    MOB: +64(21)635-694    OFFICE: +64(4)499-2267
+       Are you enrolled at http://schoolreunions.co.nz/ yet?
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
