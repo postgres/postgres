@@ -34,6 +34,9 @@
  *
  *	  - Check results of IO routines more carefully.
  *
+ * Modifications - 27-Jan-2001 - pjw@rhyme.com.au
+ *	  - When dropping the schema, reconnect as owner of each object.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -180,6 +183,9 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 			reqs = _tocEntryRequired(te, ropt);
 			if ( ( (reqs & 1) != 0) && te->dropStmt) {  /* We want the schema */
 				ahlog(AH, 1, "Dropping %s %s\n", te->desc, te->name);
+				/* Reconnect if necessary */
+				_reconnectAsOwner(AH, "-", te);
+				/* Drop it */
 				ahprintf(AH, "%s", te->dropStmt);
 			}
 			te = te->prev;
