@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.41 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.42 2002/08/11 00:08:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	if (attr_cnt <= 0)
 	{
-		relation_close(onerel, NoLock);
+		relation_close(onerel, AccessShareLock);
 		return;
 	}
 
@@ -1644,6 +1644,15 @@ compare_mcvs(const void *a, const void *b)
  *		This could possibly be made to work, but it's not worth the trouble.
  *		Note analyze_rel() has seen to it that we won't come here when
  *		vacuuming pg_statistic itself.
+ *
+ *		Note: if two backends concurrently try to analyze the same relation,
+ *		the second one is likely to fail here with a "tuple concurrently
+ *		updated" error.  This is slightly annoying, but no real harm is done.
+ *		We could prevent the problem by using a stronger lock on the
+ *		relation for ANALYZE (ie, ShareUpdateExclusiveLock instead
+ *		of AccessShareLock); but that cure seems worse than the disease,
+ *		especially now that ANALYZE doesn't start a new transaction
+ *		for each relation.  The lock could be held for a long time...
  */
 static void
 update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
@@ -1651,12 +1660,7 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 	Relation	sd;
 	int			attno;
 
-	/*
-	 * We use an ExclusiveLock on pg_statistic to ensure that only one
-	 * backend is writing it at a time --- without that, we might have to
-	 * deal with concurrent updates here, and it's not worth the trouble.
-	 */
-	sd = heap_openr(StatisticRelationName, ExclusiveLock);
+	sd = heap_openr(StatisticRelationName, RowExclusiveLock);
 
 	for (attno = 0; attno < natts; attno++)
 	{
@@ -1789,6 +1793,5 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 		heap_freetuple(stup);
 	}
 
-	/* close rel, but hold lock till upcoming commit */
-	heap_close(sd, NoLock);
+	heap_close(sd, RowExclusiveLock);
 }
