@@ -40,8 +40,3 @@
 #ifndef        index
 #define index  strchr
 #endif
-
-#ifndef HAVE_RUSAGE
-#define                HAVE_RUSAGE     1
-#endif
-
