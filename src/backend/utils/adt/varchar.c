@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.44 1999/05/03 19:10:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.45 1999/05/19 17:53:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,8 +81,8 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	else
 		len = atttypmod - VARHDRSZ;
 
-	if (len > 4096)
-		elog(ERROR, "bpcharin: length of char() must be less than 4096");
+	if (len > BLCKSZ - 128)
+		elog(ERROR, "bpcharin: length of char() must be less than %d",BLCKSZ-128);
 
 	result = (char *) palloc(atttypmod);
 	VARSIZE(result) = atttypmod;
@@ -151,8 +151,8 @@ bpchar(char *s, int32 len)
 
 	rlen = len - VARHDRSZ;
 
-	if (rlen > 4096)
-		elog(ERROR, "bpchar: length of char() must be less than 4096");
+	if (rlen > BLCKSZ - 128)
+		elog(ERROR, "bpchar: length of char() must be less than %d",BLCKSZ-128);
 
 #ifdef STRINGDEBUG
 	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
@@ -330,8 +330,8 @@ varcharin(char *s, int dummy, int32 atttypmod)
 	if (atttypmod != -1 && len > atttypmod)
 		len = atttypmod;		/* clip the string at max length */
 
-	if (len > 4096)
-		elog(ERROR, "varcharin: length of char() must be less than 4096");
+	if (len > BLCKSZ - 128)
+		elog(ERROR, "varcharin: length of char() must be less than %d",BLCKSZ-128);
 
 	result = (char *) palloc(len);
 	VARSIZE(result) = len;
@@ -398,8 +398,8 @@ varchar(char *s, int32 slen)
 	len = slen - VARHDRSZ;
 #endif
 
-	if (len > 4096)
-		elog(ERROR, "varchar: length of varchar() must be less than 4096");
+	if (len > BLCKSZ-128)
+		elog(ERROR, "varchar: length of varchar() must be less than BLCKSZ-128");
 
 	result = (char *) palloc(slen);
 	VARSIZE(result) = slen;

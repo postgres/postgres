@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.77 1999/05/17 01:01:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.78 1999/05/19 17:53:10 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3403,13 +3403,8 @@ Character:  character '(' Iconst ')'
 
 					if ($3 < 1)
 						elog(ERROR,"length for '%s' type must be at least 1",$1);
-					else if ($3 > 4096)
-						/* we can store a char() of length up to the size
-						 * of a page (8KB) - page headers and friends but
-						 * just to be safe here...	- ay 6/95
-						 * XXX note this hardcoded limit - thomas 1997-07-13
-						 */
-						elog(ERROR,"length for type '%s' cannot exceed 4096",$1);
+					else if ($3 > BLCKSZ - 128)
+						elog(ERROR,"length for type '%s' cannot exceed %d",$1, BLCKSZ-128);
 
 					/* we actually implement this sort of like a varlen, so
 					 * the first 4 bytes is the length. (the difference

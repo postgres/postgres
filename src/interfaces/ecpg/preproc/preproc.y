@@ -3355,13 +3355,12 @@ Character:  character '(' Iconst ')'
 						sprintf(errortext, "length for '%s' type must be at least 1",$1);
 						yyerror(errortext);
 					}
-					else if (atol($3) > 4096) {
+					else if (atol($3) > BLCKSZ - 128) {
 						/* we can store a char() of length up to the size
 						 * of a page (8KB) - page headers and friends but
 						 * just to be safe here...	- ay 6/95
-						 * XXX note this hardcoded limit - thomas 1997-07-13
 						 */
-						sprintf(errortext, "length for type '%s' cannot exceed 4096",$1);
+						sprintf(errortext, "length for type '%s' cannot exceed %d",BLCKSZ-128);
 						yyerror(errortext);
 					}
 
