@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.39 1996/10/13 13:46:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.40 1996/10/19 06:33:55 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -130,6 +130,8 @@ CFLAGS+= -DNAMEDATALEN=$(NAMEDATALEN) -DOIDNAMELEN=$(OIDNAMELEN)
 # To disable a feature, comment out the entire definition
 # (that is, prepend '#', don't set it to "0" or "no").
 
+HAVE_Cplusplus= false
+
 # Comment out CDEBUG to turn off debugging and sanity-checking.
 #
 #	XXX on MIPS, use -g3 if you want to compile with -O
@@ -152,7 +154,7 @@ ENFORCE_ALIGNMENT= true
 #    and READLINE_LIBDIR to reflect the location of the readline and history
 #    headers and libraries.
 #
-USE_READLINE= true
+USE_READLINE= false
 
 # directories for the readline and history libraries.
 READLINE_INC=  -I/home/tools/include

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.7 1996/10/07 23:53:47 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.8 1996/10/19 06:33:52 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
@@ -28,6 +28,9 @@ XARGS = xargs
 .DEFAULT all:
 	$(MAKE) -C backend $@
 	$(MAKE) -C libpq $@
+ifeq ($(HAVE_Cplusplus), true)
+	$(MAKE) -C libpq++ $@
+endif
 ifeq ($(USE_TCL), true)
 	$(MAKE) -C libpgtcl $@
 endif
