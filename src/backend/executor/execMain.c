@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.169 2002/06/26 22:16:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.170 2002/07/11 21:36:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1223,7 +1223,7 @@ ExecInsert(TupleTableSlot *slot,
 	 * Check the constraints of the tuple
 	 */
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecAppend", resultRelInfo, slot, estate);
+		ExecConstraints("ExecInsert", resultRelInfo, slot, estate);
 
 	/*
 	 * insert the tuple
@@ -1369,7 +1369,7 @@ ExecUpdate(TupleTableSlot *slot,
 	 */
 	if (IsBootstrapProcessingMode())
 	{
-		elog(WARNING, "ExecReplace: replace can't run without transactions");
+		elog(WARNING, "ExecUpdate: UPDATE can't run without transactions");
 		return;
 	}
 
@@ -1420,7 +1420,7 @@ ExecUpdate(TupleTableSlot *slot,
 	 */
 lreplace:;
 	if (resultRelationDesc->rd_att->constr)
-		ExecConstraints("ExecReplace", resultRelInfo, slot, estate);
+		ExecConstraints("ExecUpdate", resultRelInfo, slot, estate);
 
 	/*
 	 * replace the heap tuple
