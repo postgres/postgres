@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.1.1.1 1996/07/09 06:21:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.2 1996/08/13 01:32:26 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -114,7 +114,7 @@ DataFill(char *data,
 	 Datum value[],
 	 char nulls[],
 	 char *infomask,
-	 bits8 bit[])
+	 bits8 *bit)
 {
     bits8	*bitP;
     int		bitmask;
