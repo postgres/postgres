@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Dec  8 08:04:13 EST 2003
+Last updated:		Sat Dec 13 15:01:57 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -351,7 +351,7 @@ Fsync
 Cache
 =====
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
-* Add free-behind capability for large sequential scans (fadvise)
+* Add free-behind capability for large sequential scans [fadvise]
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching
 * Make blind writes go through the file descriptor cache
 * Cache last known per-tuple offsets to speed long tuple access
@@ -461,7 +461,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1179 2003/12/08 13:04:14 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1179 2003/12/08 13:04:14 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1180 2003/12/13 20:02:01 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1180 2003/12/13 20:02:01 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
