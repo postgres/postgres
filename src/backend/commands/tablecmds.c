@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.21 2002/07/15 16:33:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.22 2002/07/16 05:53:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2708,6 +2708,7 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 								 fkconstraint->fk_upd_action,
 								 fkconstraint->fk_del_action,
 								 fkconstraint->fk_matchtype,
+								 NULL, /* no check constraint */
 								 NULL,
 								 NULL);
 }

@@ -292,14 +292,16 @@ from (select oid from pg_class where relname = 'atest1') as t1;
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
 
+DROP VIEW atestv1;
+DROP VIEW atestv2;
+-- this should cascade to drop atestv4
+DROP VIEW atestv3 CASCADE;
+-- this should complain "does not exist"
+DROP VIEW atestv4;
+
 DROP TABLE atest1;
 DROP TABLE atest2;
 DROP TABLE atest3;
-
-DROP VIEW atestv1;
-DROP VIEW atestv2;
-DROP VIEW atestv3;
-DROP VIEW atestv4;
 
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;

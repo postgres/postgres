@@ -544,13 +544,19 @@ from (select oid from pg_class where relname = 'atest1') as t1;
 \c regression
 DROP FUNCTION testfunc2(int);
 DROP FUNCTION testfunc4(boolean);
+DROP VIEW atestv1;
+DROP VIEW atestv2;
+-- this should cascade to drop atestv4
+DROP VIEW atestv3 CASCADE;
+NOTICE:  Drop cascades to rule _RETURN on view atestv3
+NOTICE:  Drop cascades to rule _RETURN on view atestv4
+NOTICE:  Drop cascades to view atestv4
+-- this should complain "does not exist"
+DROP VIEW atestv4;
+ERROR:  view "atestv4" does not exist
 DROP TABLE atest1;
 DROP TABLE atest2;
 DROP TABLE atest3;
-DROP VIEW atestv1;
-DROP VIEW atestv2;
-DROP VIEW atestv3;
-DROP VIEW atestv4;
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;
 DROP USER regressuser1;

@@ -61,6 +61,7 @@ SELECT * FROM vw_getfoo;
 (1 row)
 
 -- sql, proretset = t, prorettype = b
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof int AS 'SELECT fooid FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
@@ -70,7 +71,6 @@ SELECT * FROM getfoo(1) AS t1;
       1
 (2 rows)
 
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  getfoo 
@@ -80,6 +80,7 @@ SELECT * FROM vw_getfoo;
 (2 rows)
 
 -- sql, proretset = t, prorettype = b
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof text AS 'SELECT fooname FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
@@ -89,7 +90,6 @@ SELECT * FROM getfoo(1) AS t1;
  Ed
 (2 rows)
 
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  getfoo 
@@ -99,6 +99,7 @@ SELECT * FROM vw_getfoo;
 (2 rows)
 
 -- sql, proretset = f, prorettype = c
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
@@ -107,7 +108,6 @@ SELECT * FROM getfoo(1) AS t1;
      1 |        1 | Joe
 (1 row)
 
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname 
@@ -116,6 +116,7 @@ SELECT * FROM vw_getfoo;
 (1 row)
 
 -- sql, proretset = t, prorettype = c
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
@@ -125,7 +126,6 @@ SELECT * FROM getfoo(1) AS t1;
      1 |        2 | Ed
 (2 rows)
 
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname 
@@ -135,6 +135,7 @@ SELECT * FROM vw_getfoo;
 (2 rows)
 
 -- plpgsql, proretset = f, prorettype = b
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS int AS 'DECLARE fooint int; BEGIN SELECT fooid into fooint FROM foo WHERE fooid = $1; RETURN fooint; END;' LANGUAGE 'plpgsql';
 SELECT * FROM getfoo(1) AS t1;
@@ -143,7 +144,6 @@ SELECT * FROM getfoo(1) AS t1;
       1
 (1 row)
 
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  getfoo 
@@ -152,6 +152,7 @@ SELECT * FROM vw_getfoo;
 (1 row)
 
 -- plpgsql, proretset = f, prorettype = c
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1; RETURN footup; END;' LANGUAGE 'plpgsql';
 SELECT * FROM getfoo(1) AS t1;
@@ -160,7 +161,6 @@ SELECT * FROM getfoo(1) AS t1;
      1 |        1 | Joe
 (1 row)
 
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
  fooid | foosubid | fooname 
@@ -168,11 +168,11 @@ SELECT * FROM vw_getfoo;
      1 |        1 | Joe
 (1 row)
 
-DROP TABLE foo2;
-DROP FUNCTION foot(int);
-DROP TABLE foo;
-DROP FUNCTION getfoo(int);
 DROP VIEW vw_getfoo;
+DROP FUNCTION getfoo(int);
+DROP FUNCTION foot(int);
+DROP TABLE foo2;
+DROP TABLE foo;
 -- Rescan tests --
 CREATE TABLE foorescan (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'foorescan_pkey' for table 'foorescan'
@@ -339,10 +339,10 @@ SELECT * FROM fooview2 AS fv WHERE fv.maxsubid = 5;
   5008 |        5
 (6 rows)
 
-DROP TABLE foorescan;
-DROP FUNCTION foorescan(int,int);
 DROP VIEW vw_foorescan;
-DROP TABLE barrescan;
-DROP FUNCTION foorescan(int);
 DROP VIEW fooview1;
 DROP VIEW fooview2;
+DROP FUNCTION foorescan(int,int);
+DROP FUNCTION foorescan(int);
+DROP TABLE foorescan;
+DROP TABLE barrescan;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dependency.h,v 1.1 2002/07/12 18:43:19 tgl Exp $
+ * $Id: dependency.h,v 1.2 2002/07/16 05:53:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,10 +83,19 @@ typedef struct ObjectAddress
 extern void performDeletion(const ObjectAddress *object,
 							DropBehavior behavior);
 
+extern void recordDependencyOnExpr(const ObjectAddress *depender,
+								   Node *expr, List *rtable,
+								   DependencyType behavior);
+
 /* in pg_depend.c */
 
 extern void recordDependencyOn(const ObjectAddress *depender,
 							   const ObjectAddress *referenced,
 							   DependencyType behavior);
+
+extern void recordMultipleDependencies(const ObjectAddress *depender,
+									   const ObjectAddress *referenced,
+									   int nreferenced,
+									   DependencyType behavior);
 
 #endif   /* DEPENDENCY_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.1 2002/07/12 18:43:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_depend.c,v 1.2 2002/07/16 05:53:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,12 +39,29 @@ recordDependencyOn(const ObjectAddress *depender,
 				   const ObjectAddress *referenced,
 				   DependencyType behavior)
 {
+	recordMultipleDependencies(depender, referenced, 1, behavior);
+}
+
+/*
+ * Record multiple dependencies (of the same kind) for a single dependent
+ * object.  This has a little less overhead than recording each separately.
+ */
+void
+recordMultipleDependencies(const ObjectAddress *depender,
+						   const ObjectAddress *referenced,
+						   int nreferenced,
+						   DependencyType behavior)
+{
 	Relation	dependDesc;
 	HeapTuple	tup;
 	int			i;
 	char		nulls[Natts_pg_depend];
 	Datum		values[Natts_pg_depend];
 	Relation	idescs[Num_pg_depend_indices];
+	bool		indices_opened = false;
+
+	if (nreferenced <= 0)
+		return;					/* nothing to do */
 
 	/*
 	 * During bootstrap, do nothing since pg_depend may not exist yet.
@@ -55,44 +72,51 @@ recordDependencyOn(const ObjectAddress *depender,
 
 	dependDesc = heap_openr(DependRelationName, RowExclusiveLock);
 
-	/*
-	 * If the referenced object is pinned by the system, there's no real
-	 * need to record dependencies on it.  This saves lots of space in
-	 * pg_depend, so it's worth the time taken to check.
-	 */
-	if (!isObjectPinned(referenced, dependDesc))
+	memset(nulls, ' ', sizeof(nulls));
+
+	for (i = 0; i < nreferenced; i++, referenced++)
 	{
 		/*
-		 * Record the Dependency.  Note we don't bother to check for
-		 * duplicate dependencies; there's no harm in them.
+		 * If the referenced object is pinned by the system, there's no real
+		 * need to record dependencies on it.  This saves lots of space in
+		 * pg_depend, so it's worth the time taken to check.
 		 */
-		for (i = 0; i < Natts_pg_depend; ++i)
+		if (!isObjectPinned(referenced, dependDesc))
 		{
-			nulls[i] = ' ';
-			values[i] = (Datum) 0;
+			/*
+			 * Record the Dependency.  Note we don't bother to check for
+			 * duplicate dependencies; there's no harm in them.
+			 */
+			values[Anum_pg_depend_classid - 1]	= ObjectIdGetDatum(depender->classId);
+			values[Anum_pg_depend_objid - 1]	= ObjectIdGetDatum(depender->objectId);
+			values[Anum_pg_depend_objsubid - 1]	= Int32GetDatum(depender->objectSubId);
+
+			values[Anum_pg_depend_refclassid - 1]	= ObjectIdGetDatum(referenced->classId);
+			values[Anum_pg_depend_refobjid - 1]		= ObjectIdGetDatum(referenced->objectId);
+			values[Anum_pg_depend_refobjsubid - 1]	= Int32GetDatum(referenced->objectSubId);
+
+			values[Anum_pg_depend_deptype -1] = CharGetDatum((char) behavior);
+
+			tup = heap_formtuple(dependDesc->rd_att, values, nulls);
+
+			simple_heap_insert(dependDesc, tup);
+
+			/*
+			 * Keep indices current
+			 */
+			if (!indices_opened)
+			{
+				CatalogOpenIndices(Num_pg_depend_indices, Name_pg_depend_indices, idescs);
+				indices_opened = true;
+			}
+			CatalogIndexInsert(idescs, Num_pg_depend_indices, dependDesc, tup);
+
+			heap_freetuple(tup);
 		}
-
-		values[Anum_pg_depend_classid - 1]	= ObjectIdGetDatum(depender->classId);
-		values[Anum_pg_depend_objid - 1]	= ObjectIdGetDatum(depender->objectId);
-		values[Anum_pg_depend_objsubid - 1]	= Int32GetDatum(depender->objectSubId);
-
-		values[Anum_pg_depend_refclassid - 1]	= ObjectIdGetDatum(referenced->classId);
-		values[Anum_pg_depend_refobjid - 1]		= ObjectIdGetDatum(referenced->objectId);
-		values[Anum_pg_depend_refobjsubid - 1]	= Int32GetDatum(referenced->objectSubId);
-
-		values[Anum_pg_depend_deptype -1] = CharGetDatum((char) behavior);
-
-		tup = heap_formtuple(dependDesc->rd_att, values, nulls);
-
-		simple_heap_insert(dependDesc, tup);
-
-		/*
-		 * Keep indices current
-		 */
-		CatalogOpenIndices(Num_pg_depend_indices, Name_pg_depend_indices, idescs);
-		CatalogIndexInsert(idescs, Num_pg_depend_indices, dependDesc, tup);
-		CatalogCloseIndices(Num_pg_depend_indices, idescs);
 	}
+
+	if (indices_opened)
+		CatalogCloseIndices(Num_pg_depend_indices, idescs);
 
 	heap_close(dependDesc, RowExclusiveLock);
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.2 2002/07/15 16:33:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.3 2002/07/16 05:53:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,8 @@
 #include "commands/trigger.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
+#include "optimizer/clauses.h"
+#include "parser/parsetree.h"
 #include "rewrite/rewriteRemove.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -51,14 +53,56 @@ typedef enum ObjectClasses
 	OCLASS_LANGUAGE,			/* pg_language */
 	OCLASS_OPERATOR,			/* pg_operator */
 	OCLASS_REWRITE,				/* pg_rewrite */
-	OCLASS_TRIGGER				/* pg_trigger */
+	OCLASS_TRIGGER,				/* pg_trigger */
+	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClasses;
+
+/* expansible list of ObjectAddresses */
+typedef struct ObjectAddresses
+{
+	ObjectAddress  *refs;		/* => palloc'd array */
+	int				numrefs;	/* current number of references */
+	int				maxrefs;	/* current size of palloc'd array */
+	struct ObjectAddresses *link; /* list link for use in recursion */
+} ObjectAddresses;
+
+/* for find_expr_references_walker */
+typedef struct
+{
+	ObjectAddresses	addrs;		/* addresses being accumulated */
+	List		   *rtables;	/* list of rangetables to resolve Vars */
+} find_expr_references_context;
+
+
+/*
+ * Because not all system catalogs have predetermined OIDs, we build a table
+ * mapping between ObjectClasses and OIDs.  This is done at most once per
+ * backend run, to minimize lookup overhead.
+ */
+static bool	object_classes_initialized = false;
+static Oid	object_classes[MAX_OCLASS];
+
 
 static bool recursiveDeletion(const ObjectAddress *object,
 							  DropBehavior behavior,
-							  int recursionLevel,
+							  const ObjectAddress *callingObject,
+							  ObjectAddresses *pending,
 							  Relation depRel);
 static void doDeletion(const ObjectAddress *object);
+static bool find_expr_references_walker(Node *node,
+										find_expr_references_context *context);
+static void eliminate_duplicate_dependencies(ObjectAddresses *addrs);
+static int	object_address_comparator(const void *a, const void *b);
+static void init_object_addresses(ObjectAddresses *addrs);
+static void add_object_address(ObjectClasses oclass, Oid objectId, int32 subId,
+							   ObjectAddresses *addrs);
+static void add_exact_object_address(const ObjectAddress *object,
+									 ObjectAddresses *addrs);
+static void del_object_address(const ObjectAddress *object,
+							   ObjectAddresses *addrs);
+static void del_object_address_by_index(int index, ObjectAddresses *addrs);
+static void term_object_addresses(ObjectAddresses *addrs);
+static void init_object_classes(void);
 static ObjectClasses getObjectClass(const ObjectAddress *object);
 static char *getObjectDescription(const ObjectAddress *object);
 static void getRelationDescription(StringInfo buffer, Oid relid);
@@ -93,7 +137,7 @@ performDeletion(const ObjectAddress *object,
 	 */
 	depRel = heap_openr(DependRelationName, RowExclusiveLock);
 
-	if (!recursiveDeletion(object, behavior, 0, depRel))
+	if (!recursiveDeletion(object, behavior, NULL, NULL, depRel))
 		elog(ERROR, "Cannot drop %s because other objects depend on it"
 			 "\n\tUse DROP ... CASCADE to drop the dependent objects too",
 			 objDescription);
@@ -107,28 +151,58 @@ performDeletion(const ObjectAddress *object,
 /*
  * recursiveDeletion: delete a single object for performDeletion.
  *
- * Returns TRUE if successful, FALSE if not.  recursionLevel is 0 at the
- * outer level, >0 when deleting a dependent object.
+ * Returns TRUE if successful, FALSE if not.
+ *
+ * callingObject is NULL at the outer level, else identifies the object that
+ * we recursed from (the reference object that someone else needs to delete).
+ * pending is a linked list of objects that outer recursion levels want to
+ * delete.  We remove the target object from any outer-level list it may
+ * appear in.
+ * depRel is the already-open pg_depend relation.
  *
  * In RESTRICT mode, we perform all the deletions anyway, but elog a NOTICE
  * and return FALSE if we find a restriction violation.  performDeletion
  * will then abort the transaction to nullify the deletions.  We have to
  * do it this way to (a) report all the direct and indirect dependencies
  * while (b) not going into infinite recursion if there's a cycle.
+ *
+ * This is even more complex than one could wish, because it is possible for
+ * the same pair of objects to be related by both NORMAL and AUTO (or IMPLICIT)
+ * dependencies.  (Since one or both paths might be indirect, it's very hard
+ * to prevent this; we must cope instead.)  If there is an AUTO/IMPLICIT
+ * deletion path then we should perform the deletion, and not fail because
+ * of the NORMAL dependency.  So, when we hit a NORMAL dependency we don't
+ * immediately decide we've failed; instead we stick the NORMAL dependent
+ * object into a list of pending deletions.  If we find a legal path to delete
+ * that object later on, the recursive call will remove it from our pending
+ * list.  After we've exhausted all such possibilities, we remove the
+ * remaining pending objects anyway, but emit a notice and prepare to return
+ * FALSE.  (We have to do it this way because the dependent objects *must* be
+ * removed before we can remove the object they depend on.)
+ *
+ * Note: in the case where the AUTO path is traversed first, we will never
+ * see the NORMAL dependency path because of the pg_depend removals done in
+ * recursive executions of step 1.  The pending list is necessary essentially
+ * just to make the behavior independent of the order in which pg_depend
+ * entries are visited.
  */
 static bool
 recursiveDeletion(const ObjectAddress *object,
 				  DropBehavior behavior,
-				  int recursionLevel,
+				  const ObjectAddress *callingObject,
+				  ObjectAddresses *pending,
 				  Relation depRel)
 {
 	bool			ok = true;
 	char		   *objDescription;
+	ObjectAddresses	mypending;
 	ScanKeyData		key[3];
 	int				nkeys;
 	SysScanDesc		scan;
 	HeapTuple		tup;
 	ObjectAddress	otherObject;
+	ObjectAddress	owningObject;
+	bool			amOwned = false;
 
 	/*
 	 * Get object description for possible use in messages.  Must do this
@@ -137,10 +211,16 @@ recursiveDeletion(const ObjectAddress *object,
 	objDescription = getObjectDescription(object);
 
 	/*
+	 * Initialize list of restricted objects, and set up chain link.
+	 */
+	init_object_addresses(&mypending);
+	mypending.link = pending;
+
+	/*
 	 * Step 1: find and remove pg_depend records that link from this
 	 * object to others.  We have to do this anyway, and doing it first
 	 * ensures that we avoid infinite recursion in the case of cycles.
-	 * Also, some dependency types require an error here.
+	 * Also, some dependency types require extra processing here.
 	 *
 	 * When dropping a whole object (subId = 0), remove all pg_depend
 	 * records for its sub-objects too.
@@ -180,17 +260,48 @@ recursiveDeletion(const ObjectAddress *object,
 				break;
 			case DEPENDENCY_INTERNAL:
 				/*
-				 * Disallow direct DROP of an object that is part of the
-				 * implementation of another object.  (We just elog here,
-				 * rather than issuing a notice and continuing, since
-				 * no other dependencies are likely to be interesting.)
+				 * This object is part of the internal implementation
+				 * of another object.  We have three cases:
+				 *
+				 * 1. At the outermost recursion level, disallow the DROP.
+				 * (We just elog here, rather than considering this drop
+				 * to be pending, since no other dependencies are likely
+				 * to be interesting.)
 				 */
-				if (recursionLevel == 0)
+				if (callingObject == NULL)
+				{
+					char *otherObjDesc = getObjectDescription(&otherObject);
+
 					elog(ERROR, "Cannot drop %s because %s requires it"
-						 "\n\tYou may DROP the other object instead",
-						 objDescription,
-						 getObjectDescription(&otherObject));
-				break;
+						 "\n\tYou may drop %s instead",
+						 objDescription, otherObjDesc, otherObjDesc);
+				}
+				/*
+				 * 2. When recursing from the other end of this dependency,
+				 * it's okay to continue with the deletion.  This holds when
+				 * recursing from a whole object that includes the nominal
+				 * other end as a component, too.
+				 */
+				if (callingObject->classId == otherObject.classId &&
+					callingObject->objectId == otherObject.objectId &&
+					(callingObject->objectSubId == otherObject.objectSubId ||
+					 callingObject->objectSubId == 0))
+					break;
+				/*
+				 * 3. When recursing from anyplace else, transform this
+				 * deletion request into a delete of the other object.
+				 * (This will be an error condition iff RESTRICT mode.)
+				 * In this case we finish deleting my dependencies except
+				 * for the INTERNAL link, which will be needed to cause
+				 * the owning object to recurse back to me.
+				 */
+				if (amOwned)	/* shouldn't happen */
+					elog(ERROR, "recursiveDeletion: multiple INTERNAL dependencies for %s",
+						 objDescription);
+				owningObject = otherObject;
+				amOwned = true;
+				/* "continue" bypasses the simple_heap_delete call below */
+				continue;
 			case DEPENDENCY_PIN:
 				/*
 				 * Should not happen; PIN dependencies should have zeroes
@@ -217,6 +328,34 @@ recursiveDeletion(const ObjectAddress *object,
 	 * a dependency loop (which is perfectly legal).
 	 */
 	CommandCounterIncrement();
+
+	/*
+	 * If we found we are owned by another object, ask it to delete itself
+	 * instead of proceeding.
+	 */
+	if (amOwned)
+	{
+		if (behavior == DROP_RESTRICT)
+		{
+			elog(NOTICE, "%s depends on %s",
+				 getObjectDescription(&owningObject),
+				 objDescription);
+			ok = false;
+		}
+		else
+			elog(NOTICE, "Drop cascades to %s",
+				 getObjectDescription(&owningObject));
+
+		if (!recursiveDeletion(&owningObject, behavior,
+							   object,
+							   pending, depRel))
+			ok = false;
+
+		pfree(objDescription);
+		term_object_addresses(&mypending);
+
+		return ok;
+	}
 
 	/*
 	 * Step 2: scan pg_depend records that link to this object, showing
@@ -268,18 +407,24 @@ recursiveDeletion(const ObjectAddress *object,
 			case DEPENDENCY_NORMAL:
 				if (behavior == DROP_RESTRICT)
 				{
-					elog(NOTICE, "%s depends on %s",
-						 getObjectDescription(&otherObject),
-						 objDescription);
-					ok = false;
+					/*
+					 * We've found a restricted object (or at least one
+					 * that's not deletable along this path).  Log for later
+					 * processing.  (Note it's okay if the same object gets
+					 * into mypending multiple times.)
+					 */
+					add_exact_object_address(&otherObject, &mypending);
 				}
 				else
+				{
 					elog(NOTICE, "Drop cascades to %s",
 						 getObjectDescription(&otherObject));
 
-				if (!recursiveDeletion(&otherObject, behavior,
-									   recursionLevel + 1, depRel))
-					ok = false;
+					if (!recursiveDeletion(&otherObject, behavior,
+										   object,
+										   &mypending, depRel))
+						ok = false;
+				}
 				break;
 			case DEPENDENCY_AUTO:
 			case DEPENDENCY_INTERNAL:
@@ -292,7 +437,8 @@ recursiveDeletion(const ObjectAddress *object,
 					 getObjectDescription(&otherObject));
 
 				if (!recursiveDeletion(&otherObject, behavior,
-									   recursionLevel + 1, depRel))
+									   object,
+									   &mypending, depRel))
 					ok = false;
 				break;
 			case DEPENDENCY_PIN:
@@ -313,6 +459,36 @@ recursiveDeletion(const ObjectAddress *object,
 	systable_endscan(scan);
 
 	/*
+	 * If we found no restricted objects, or got rid of them all via other
+	 * paths, we're in good shape.  Otherwise continue step 2 by processing
+	 * the remaining restricted objects.
+	 */
+	if (mypending.numrefs > 0)
+	{
+		/*
+		 * Successively extract and delete each remaining object.
+		 * Note that the right things will happen if some of these objects
+		 * depend on others: we'll report/delete each one exactly once.
+		 */
+		while (mypending.numrefs > 0)
+		{
+			ObjectAddress	otherObject = mypending.refs[0];
+
+			del_object_address_by_index(0, &mypending);
+
+			elog(NOTICE, "%s depends on %s",
+				 getObjectDescription(&otherObject),
+				 objDescription);
+			if (!recursiveDeletion(&otherObject, behavior,
+								   object,
+								   &mypending, depRel))
+				ok = false;
+		}
+
+		ok = false;
+	}
+
+	/*
 	 * We do not need CommandCounterIncrement here, since if step 2 did
 	 * anything then each recursive call will have ended with one.
 	 */
@@ -329,6 +505,11 @@ recursiveDeletion(const ObjectAddress *object,
 	DeleteComments(object->objectId, object->classId, object->objectSubId);
 
 	/*
+	 * If this object is mentioned in any caller's pending list, remove it.
+	 */
+	del_object_address(object, pending);
+
+	/*
 	 * CommandCounterIncrement here to ensure that preceding changes
 	 * are all visible.
 	 */
@@ -338,6 +519,7 @@ recursiveDeletion(const ObjectAddress *object,
 	 * And we're done!
 	 */
 	pfree(objDescription);
+	term_object_addresses(&mypending);
 
 	return ok;
 }
@@ -422,6 +604,387 @@ doDeletion(const ObjectAddress *object)
 }
 
 /*
+ * recordDependencyOnExpr - find expression dependencies
+ *
+ * This is used to find the dependencies of rules, constraint expressions,
+ * etc.
+ *
+ * Given an expression or query in node-tree form, find all the objects
+ * it refers to (tables, columns, operators, functions, etc).  Record
+ * a dependency of the specified type from the given depender object
+ * to each object mentioned in the expression.
+ *
+ * rtable is the rangetable to be used to interpret Vars with varlevelsup=0.
+ * It can be NIL if no such variables are expected.
+ *
+ * XXX is it important to create dependencies on the datatypes mentioned in
+ * the expression?  In most cases this would be redundant (eg, a ref to an
+ * operator indirectly references its input and output datatypes), but I'm
+ * not quite convinced there are no cases where we need it.
+ */
+void
+recordDependencyOnExpr(const ObjectAddress *depender,
+					   Node *expr, List *rtable,
+					   DependencyType behavior)
+{
+	find_expr_references_context	context;
+
+	init_object_addresses(&context.addrs);
+
+	/* Set up interpretation for Vars at varlevelsup = 0 */
+	context.rtables = makeList1(rtable);
+
+	/* Scan the expression tree for referenceable objects */
+	find_expr_references_walker(expr, &context);
+
+	/* Remove any duplicates */
+	eliminate_duplicate_dependencies(&context.addrs);
+
+	/* And record 'em */
+	recordMultipleDependencies(depender,
+							   context.addrs.refs, context.addrs.numrefs,
+							   behavior);
+
+	term_object_addresses(&context.addrs);
+}
+
+/*
+ * Recursively search an expression tree for object references.
+ */
+static bool
+find_expr_references_walker(Node *node,
+							find_expr_references_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		int			levelsup;
+		List	   *rtable,
+				   *rtables;
+		RangeTblEntry *rte;
+
+		/* Find matching rtable entry, or complain if not found */
+		levelsup = var->varlevelsup;
+		rtables = context->rtables;
+		while (levelsup--)
+		{
+			if (rtables == NIL)
+				break;
+			rtables = lnext(rtables);
+		}
+		if (rtables == NIL)
+			elog(ERROR, "find_expr_references_walker: bogus varlevelsup %d",
+				 var->varlevelsup);
+		rtable = lfirst(rtables);
+		if (var->varno <= 0 || var->varno > length(rtable))
+			elog(ERROR, "find_expr_references_walker: bogus varno %d",
+				 var->varno);
+		rte = rt_fetch(var->varno, rtable);
+		/* If it's a plain relation, reference this column */
+		if (rte->rtekind == RTE_RELATION)
+			add_object_address(OCLASS_CLASS, rte->relid, var->varattno,
+							   &context->addrs);
+		return false;
+	}
+	if (IsA(node, Expr))
+	{
+		Expr	   *expr = (Expr *) node;
+
+		if (expr->opType == OP_EXPR)
+		{
+			Oper	   *oper = (Oper *) expr->oper;
+
+			add_object_address(OCLASS_OPERATOR, oper->opno, 0,
+							   &context->addrs);
+		}
+		else if (expr->opType == FUNC_EXPR)
+		{
+			Func	   *func = (Func *) expr->oper;
+
+			add_object_address(OCLASS_PROC, func->funcid, 0,
+							   &context->addrs);
+		}
+		/* fall through to examine arguments */
+	}
+	if (IsA(node, Aggref))
+	{
+		Aggref	   *aggref = (Aggref *) node;
+
+		add_object_address(OCLASS_PROC, aggref->aggfnoid, 0,
+						   &context->addrs);
+		/* fall through to examine arguments */
+	}
+	if (is_subplan(node))
+	{
+		/* Extra work needed here if we ever need this case */
+		elog(ERROR, "find_expr_references_walker: already-planned subqueries not supported");
+	}
+	if (IsA(node, Query))
+	{
+		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
+		Query	   *query = (Query *) node;
+		List	   *rtable;
+		bool		result;
+
+		/*
+		 * Add whole-relation refs for each plain relation mentioned in the
+		 * subquery's rtable.  (Note: query_tree_walker takes care of
+		 * recursing into RTE_FUNCTION and RTE_SUBQUERY RTEs, so no need
+		 * to do that here.)
+		 */
+		foreach(rtable, query->rtable)
+		{
+			RangeTblEntry *rte = (RangeTblEntry *) lfirst(rtable);
+
+			if (rte->rtekind == RTE_RELATION)
+				add_object_address(OCLASS_CLASS, rte->relid, 0,
+								   &context->addrs);
+		}
+
+		/* Examine substructure of query */
+		context->rtables = lcons(query->rtable, context->rtables);
+		result = query_tree_walker(query,
+								   find_expr_references_walker,
+								   (void *) context, true);
+		context->rtables = lnext(context->rtables);
+		return result;
+	}
+	return expression_tree_walker(node, find_expr_references_walker,
+								  (void *) context);
+}
+
+/*
+ * Given an array of dependency references, eliminate any duplicates.
+ */
+static void
+eliminate_duplicate_dependencies(ObjectAddresses *addrs)
+{
+	ObjectAddress  *priorobj;
+	int			oldref,
+				newrefs;
+
+	if (addrs->numrefs <= 1)
+		return;					/* nothing to do */
+
+	/* Sort the refs so that duplicates are adjacent */
+	qsort((void *) addrs->refs, addrs->numrefs, sizeof(ObjectAddress),
+		  object_address_comparator);
+
+	/* Remove dups */
+	priorobj = addrs->refs;
+	newrefs = 1;
+	for (oldref = 1; oldref < addrs->numrefs; oldref++)
+	{
+		ObjectAddress  *thisobj = addrs->refs + oldref;
+
+		if (priorobj->classId == thisobj->classId &&
+			priorobj->objectId == thisobj->objectId)
+		{
+			if (priorobj->objectSubId == thisobj->objectSubId)
+				continue;		/* identical, so drop thisobj */
+			/*
+			 * If we have a whole-object reference and a reference to a
+			 * part of the same object, we don't need the whole-object
+			 * reference (for example, we don't need to reference both
+			 * table foo and column foo.bar).  The whole-object reference
+			 * will always appear first in the sorted list.
+			 */
+			if (priorobj->objectSubId == 0)
+			{
+				/* replace whole ref with partial */
+				priorobj->objectSubId = thisobj->objectSubId;
+				continue;
+			}
+		}
+		/* Not identical, so add thisobj to output set */
+		priorobj++;
+		priorobj->classId = thisobj->classId;
+		priorobj->objectId = thisobj->objectId;
+		priorobj->objectSubId = thisobj->objectSubId;
+		newrefs++;
+	}
+
+	addrs->numrefs = newrefs;
+}
+
+/*
+ * qsort comparator for ObjectAddress items
+ */
+static int
+object_address_comparator(const void *a, const void *b)
+{
+	const ObjectAddress *obja = (const ObjectAddress *) a;
+	const ObjectAddress *objb = (const ObjectAddress *) b;
+
+	if (obja->classId < objb->classId)
+		return -1;
+	if (obja->classId > objb->classId)
+		return 1;
+	if (obja->objectId < objb->objectId)
+		return -1;
+	if (obja->objectId > objb->objectId)
+		return 1;
+	/*
+	 * We sort the subId as an unsigned int so that 0 will come first.
+	 * See logic in eliminate_duplicate_dependencies.
+	 */
+	if ((unsigned int) obja->objectSubId < (unsigned int) objb->objectSubId)
+		return -1;
+	if ((unsigned int) obja->objectSubId > (unsigned int) objb->objectSubId)
+		return 1;
+	return 0;
+}
+
+/*
+ * Routines for handling an expansible array of ObjectAddress items.
+ *
+ * init_object_addresses: initialize an ObjectAddresses array.
+ */
+static void
+init_object_addresses(ObjectAddresses *addrs)
+{
+	/* Initialize array to empty */
+	addrs->numrefs = 0;
+	addrs->maxrefs = 32;		/* arbitrary initial array size */
+	addrs->refs = (ObjectAddress *)
+		palloc(addrs->maxrefs * sizeof(ObjectAddress));
+	addrs->link = NULL;
+
+	/* Initialize object_classes[] if not done yet */
+	/* This will be needed by add_object_address() */
+	if (!object_classes_initialized)
+		init_object_classes();
+}
+
+/*
+ * Add an entry to an ObjectAddresses array.
+ *
+ * It is convenient to specify the class by ObjectClass rather than directly
+ * by catalog OID.
+ */
+static void
+add_object_address(ObjectClasses oclass, Oid objectId, int32 subId,
+				   ObjectAddresses *addrs)
+{
+	ObjectAddress  *item;
+
+	/* enlarge array if needed */
+	if (addrs->numrefs >= addrs->maxrefs)
+	{
+		addrs->maxrefs *= 2;
+		addrs->refs = (ObjectAddress *)
+			repalloc(addrs->refs, addrs->maxrefs * sizeof(ObjectAddress));
+	}
+	/* record this item */
+	item = addrs->refs + addrs->numrefs;
+	item->classId = object_classes[oclass];
+	item->objectId = objectId;
+	item->objectSubId = subId;
+	addrs->numrefs++;
+}
+
+/*
+ * Add an entry to an ObjectAddresses array.
+ *
+ * As above, but specify entry exactly.
+ */
+static void
+add_exact_object_address(const ObjectAddress *object,
+						 ObjectAddresses *addrs)
+{
+	ObjectAddress  *item;
+
+	/* enlarge array if needed */
+	if (addrs->numrefs >= addrs->maxrefs)
+	{
+		addrs->maxrefs *= 2;
+		addrs->refs = (ObjectAddress *)
+			repalloc(addrs->refs, addrs->maxrefs * sizeof(ObjectAddress));
+	}
+	/* record this item */
+	item = addrs->refs + addrs->numrefs;
+	*item = *object;
+	addrs->numrefs++;
+}
+
+/*
+ * If an ObjectAddresses array contains any matches for the given object,
+ * remove it/them.  Also, do the same in any linked ObjectAddresses arrays.
+ */
+static void
+del_object_address(const ObjectAddress *object,
+				   ObjectAddresses *addrs)
+{
+	for (; addrs != NULL; addrs = addrs->link)
+	{
+		int			i;
+
+		/* Scan backwards to simplify deletion logic. */
+		for (i = addrs->numrefs-1; i >= 0; i--)
+		{
+			ObjectAddress  *thisobj = addrs->refs + i;
+
+			if (object->classId == thisobj->classId &&
+				object->objectId == thisobj->objectId)
+			{
+				/*
+				 * Delete if exact match, or if thisobj is a subobject of
+				 * the passed-in object.
+				 */
+				if (object->objectSubId == thisobj->objectSubId ||
+					object->objectSubId == 0)
+					del_object_address_by_index(i, addrs);
+			}
+		}
+	}
+}
+
+/*
+ * Remove an entry (specified by array index) from an ObjectAddresses array.
+ * The end item in the list is moved down to fill the hole.
+ */
+static void
+del_object_address_by_index(int index, ObjectAddresses *addrs)
+{
+	Assert(index >= 0 && index < addrs->numrefs);
+	addrs->refs[index] = addrs->refs[addrs->numrefs - 1];
+	addrs->numrefs--;
+}
+
+/*
+ * Clean up when done with an ObjectAddresses array.
+ */
+static void
+term_object_addresses(ObjectAddresses *addrs)
+{
+	pfree(addrs->refs);
+}
+
+/*
+ * Initialize the object_classes[] table.
+ *
+ * Although some of these OIDs aren't compile-time constants, they surely
+ * shouldn't change during a backend's run.  So, we look them up the
+ * first time through and then cache them.
+ */
+static void
+init_object_classes(void)
+{
+	object_classes[OCLASS_CLASS] = RelOid_pg_class;
+	object_classes[OCLASS_PROC] = RelOid_pg_proc;
+	object_classes[OCLASS_TYPE] = RelOid_pg_type;
+	object_classes[OCLASS_CONSTRAINT] = get_system_catalog_relid(ConstraintRelationName);
+	object_classes[OCLASS_DEFAULT] = get_system_catalog_relid(AttrDefaultRelationName);
+	object_classes[OCLASS_LANGUAGE] = get_system_catalog_relid(LanguageRelationName);
+	object_classes[OCLASS_OPERATOR] = get_system_catalog_relid(OperatorRelationName);
+	object_classes[OCLASS_REWRITE] = get_system_catalog_relid(RewriteRelationName);
+	object_classes[OCLASS_TRIGGER] = get_system_catalog_relid(TriggerRelationName);
+	object_classes_initialized = true;
+}
+
+/*
  * Determine the class of a given object identified by objectAddress.
  *
  * This function is needed just because some of the system catalogs do
@@ -430,14 +993,6 @@ doDeletion(const ObjectAddress *object)
 static ObjectClasses
 getObjectClass(const ObjectAddress *object)
 {
-	static bool reloids_initialized = false;
-	static Oid	reloid_pg_constraint;
-	static Oid	reloid_pg_attrdef;
-	static Oid	reloid_pg_language;
-	static Oid	reloid_pg_operator;
-	static Oid	reloid_pg_rewrite;
-	static Oid	reloid_pg_trigger;
-
 	/* Easy for the bootstrapped catalogs... */
 	switch (object->classId)
 	{
@@ -456,48 +1011,36 @@ getObjectClass(const ObjectAddress *object)
 
 	/*
 	 * Handle cases where catalog's OID is not hardwired.
-	 *
-	 * Although these OIDs aren't compile-time constants, they surely
-	 * shouldn't change during a backend's run.  So, look them up the
-	 * first time through and then cache them.
 	 */
-	if (!reloids_initialized)
-	{
-		reloid_pg_constraint = get_system_catalog_relid(ConstraintRelationName);
-		reloid_pg_attrdef = get_system_catalog_relid(AttrDefaultRelationName);
-		reloid_pg_language = get_system_catalog_relid(LanguageRelationName);
-		reloid_pg_operator = get_system_catalog_relid(OperatorRelationName);
-		reloid_pg_rewrite = get_system_catalog_relid(RewriteRelationName);
-		reloid_pg_trigger = get_system_catalog_relid(TriggerRelationName);
-		reloids_initialized = true;
-	}
+	if (!object_classes_initialized)
+		init_object_classes();
 
-	if (object->classId == reloid_pg_constraint)
+	if (object->classId == object_classes[OCLASS_CONSTRAINT])
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_CONSTRAINT;
 	}
-	if (object->classId == reloid_pg_attrdef)
+	if (object->classId == object_classes[OCLASS_DEFAULT])
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_DEFAULT;
 	}
-	if (object->classId == reloid_pg_language)
+	if (object->classId == object_classes[OCLASS_LANGUAGE])
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_LANGUAGE;
 	}
-	if (object->classId == reloid_pg_operator)
+	if (object->classId == object_classes[OCLASS_OPERATOR])
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_OPERATOR;
 	}
-	if (object->classId == reloid_pg_rewrite)
+	if (object->classId == object_classes[OCLASS_REWRITE])
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_REWRITE;
 	}
-	if (object->classId == reloid_pg_trigger)
+	if (object->classId == object_classes[OCLASS_TRIGGER])
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_TRIGGER;

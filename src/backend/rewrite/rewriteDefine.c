@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.74 2002/07/12 18:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.75 2002/07/16 05:53:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,11 @@ InsertRule(char *rulname,
 		   Oid eventrel_oid,
 		   AttrNumber evslot_index,
 		   bool evinstead,
-		   char *evqual,
-		   char *actiontree)
+		   Node *event_qual,
+		   List *action)
 {
+	char	   *evqual = nodeToString(event_qual);
+	char	   *actiontree = nodeToString((Node *) action);
 	int			i;
 	Datum		values[Natts_pg_rewrite];
 	char		nulls[Natts_pg_rewrite];
@@ -123,6 +125,21 @@ InsertRule(char *rulname,
 	recordDependencyOn(&myself, &referenced,
 		(evtype == CMD_SELECT) ? DEPENDENCY_INTERNAL : DEPENDENCY_AUTO);
 
+	/*
+	 * Also install dependencies on objects referenced in action and qual.
+	 */
+	recordDependencyOnExpr(&myself, (Node *) action, NIL,
+						   DEPENDENCY_NORMAL);
+	if (event_qual != NULL)
+	{
+		/* Find query containing OLD/NEW rtable entries */
+		Query  *qry = (Query *) lfirst(action);
+
+		qry = getInsertSelectQuery(qry, NULL);
+		recordDependencyOnExpr(&myself, event_qual, qry->rtable,
+							   DEPENDENCY_NORMAL);
+	}
+
 	heap_close(pg_rewrite_desc, RowExclusiveLock);
 
 	return rewriteObjectId;
@@ -141,8 +158,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 	Oid			ruleId;
 	int			event_attno;
 	Oid			event_attype;
-	char	   *actionP,
-			   *event_qualP;
 	List	   *l;
 	Query	   *query;
 	AclResult	aclresult;
@@ -342,16 +357,13 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
 	{
-		event_qualP = nodeToString(event_qual);
-		actionP = nodeToString(action);
-
 		ruleId = InsertRule(stmt->rulename,
 							event_type,
 							ev_relid,
 							event_attno,
 							is_instead,
-							event_qualP,
-							actionP);
+							event_qual,
+							action);
 
 		/*
 		 * Set pg_class 'relhasrules' field TRUE for event relation. If

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.207 2002/07/15 16:33:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.208 2002/07/16 05:53:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1157,10 +1157,15 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 	colobject.objectSubId = attnum;
 
 	recordDependencyOn(&defobject, &colobject, DEPENDENCY_AUTO);
+
+	/*
+	 * Record dependencies on objects used in the expression, too.
+	 */
+	recordDependencyOnExpr(&defobject, expr, NIL, DEPENDENCY_NORMAL);
 }
 
 /*
- * Store a constraint expression for the given relation.
+ * Store a check-constraint expression for the given relation.
  * The expression must be presented as a nodeToString() string.
  *
  * Caller is responsible for updating the count of constraints
@@ -1191,6 +1196,10 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 
 	/*
 	 * Find columns of rel that are used in ccbin
+	 *
+	 * NB: pull_var_clause is okay here only because we don't allow
+	 * subselects in check constraints; it would fail to examine the
+	 * contents of subselects.
 	 */
 	varList = pull_var_clause(expr, false);
 	keycount = length(varList);
@@ -1226,8 +1235,8 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 						  false, 	/* Is Deferrable */
 						  false,	/* Is Deferred */
 						  RelationGetRelid(rel), /* relation */
-						  attNos,	/* List of attributes in the constraint */
-						  keycount,	/* # attributes in the constraint */
+						  attNos,	/* attrs in the constraint */
+						  keycount,	/* # attrs in the constraint */
 						  InvalidOid, /* not a domain constraint */
 						  InvalidOid, /* Foreign key fields */
 						  NULL,
@@ -1235,6 +1244,7 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 						  ' ',
 						  ' ',
 						  ' ',
+						  expr,		/* Tree form check constraint */
 						  ccbin,	/* Binary form check constraint */
 						  ccsrc);	/* Source form check constraint */
 

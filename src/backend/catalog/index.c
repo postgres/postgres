@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.183 2002/07/14 21:08:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.184 2002/07/16 05:53:33 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -712,7 +712,8 @@ index_create(Oid heapRelationId,
 										   ' ',
 										   ' ',
 										   ' ',
-										   NULL, /* Constraint Bin & Src */
+										   NULL, /* no check constraint */
+										   NULL,
 										   NULL);
 
 			referenced.classId = get_system_catalog_relid(ConstraintRelationName);

@@ -32,58 +32,58 @@ CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 
 -- sql, proretset = t, prorettype = b
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof int AS 'SELECT fooid FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 
 -- sql, proretset = t, prorettype = b
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof text AS 'SELECT fooname FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 
 -- sql, proretset = f, prorettype = c
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 
 -- sql, proretset = t, prorettype = c
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS setof foo AS 'SELECT * FROM foo WHERE fooid = $1;' LANGUAGE SQL;
 SELECT * FROM getfoo(1) AS t1;
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 
 -- plpgsql, proretset = f, prorettype = b
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS int AS 'DECLARE fooint int; BEGIN SELECT fooid into fooint FROM foo WHERE fooid = $1; RETURN fooint; END;' LANGUAGE 'plpgsql';
 SELECT * FROM getfoo(1) AS t1;
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 
 -- plpgsql, proretset = f, prorettype = c
+DROP VIEW vw_getfoo;
 DROP FUNCTION getfoo(int);
 CREATE FUNCTION getfoo(int) RETURNS foo AS 'DECLARE footup foo%ROWTYPE; BEGIN SELECT * into footup FROM foo WHERE fooid = $1; RETURN footup; END;' LANGUAGE 'plpgsql';
 SELECT * FROM getfoo(1) AS t1;
-DROP VIEW vw_getfoo;
 CREATE VIEW vw_getfoo AS SELECT * FROM getfoo(1);
 SELECT * FROM vw_getfoo;
 
-DROP TABLE foo2;
-DROP FUNCTION foot(int);
-DROP TABLE foo;
-DROP FUNCTION getfoo(int);
 DROP VIEW vw_getfoo;
+DROP FUNCTION getfoo(int);
+DROP FUNCTION foot(int);
+DROP TABLE foo2;
+DROP TABLE foo;
 
 -- Rescan tests --
 CREATE TABLE foorescan (fooid int, foosubid int, fooname text, primary key(fooid,foosubid));
@@ -172,10 +172,10 @@ SELECT * FROM fooview1 AS fv WHERE fv.fooid = 5004;
 CREATE VIEW fooview2 AS SELECT b.fooid, max(f.foosubid) AS maxsubid FROM barrescan b, foorescan f WHERE f.fooid = b.fooid AND b.fooid IN (SELECT fooid FROM foorescan(b.fooid)) GROUP BY b.fooid ORDER BY 1,2;
 SELECT * FROM fooview2 AS fv WHERE fv.maxsubid = 5;
 
-DROP TABLE foorescan;
-DROP FUNCTION foorescan(int,int);
 DROP VIEW vw_foorescan;
-DROP TABLE barrescan;
-DROP FUNCTION foorescan(int);
 DROP VIEW fooview1;
 DROP VIEW fooview2;
+DROP FUNCTION foorescan(int,int);
+DROP FUNCTION foorescan(int);
+DROP TABLE foorescan;
+DROP TABLE barrescan;
