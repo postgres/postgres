@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.36 2000/12/07 02:47:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.37 2001/03/14 16:50:37 tgl Exp $
  *
  * ----------
  */
@@ -3355,16 +3355,19 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	init_var(&tmp);
 
 	/* ----------
-	 * We do it by fiddling around with global_rscale and truncating
-	 * the result of the division.
+	 * We do this using the equation
+	 *		mod(x,y) = x - trunc(x/y)*y
+	 * We fiddle a bit with global_rscale to control result precision.
 	 * ----------
 	 */
 	save_global_rscale = global_rscale;
 	global_rscale = var2->rscale + 2;
 
 	div_var(var1, var2, &tmp);
+
+	/* do trunc() by forgetting digits to the right of the decimal point */
+	tmp.ndigits = MAX(0, MIN(tmp.ndigits, tmp.weight + 1));
 	tmp.rscale = var2->rscale;
-	tmp.ndigits = MAX(0, MIN(tmp.ndigits, tmp.weight + tmp.rscale + 1));
 
 	global_rscale = var2->rscale;
 	mul_var(var2, &tmp, &tmp);
