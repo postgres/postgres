@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.22 1999/02/13 23:19:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.23 1999/05/10 00:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ oid8in(char *oidString)
 		return NULL;
 
 	result = (Oid *) palloc(sizeof(Oid[8]));
-	if ((nums = sscanf(oidString, "%d%d%d%d%d%d%d%d",
+	if ((nums = sscanf(oidString, "%u%u%u%u%u%u%u%u",
 					   &result[0],
 					   &result[1],
 					   &result[2],

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.41 1999/05/05 21:38:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.42 1999/05/10 00:45:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1475,7 +1475,7 @@ system_cache_lookup(Oid element_type,
 
 	if (!HeapTupleIsValid(typeTuple))
 	{
-		elog(ERROR, "array_out: Cache lookup failed for type %d\n",
+		elog(ERROR, "array_out: Cache lookup failed for type %u\n",
 			 element_type);
 		return;
 	}
@@ -1882,7 +1882,7 @@ _array_newLO(int *fd, int flag)
 	char		saveName[NAME_LEN];
 
 	p = (char *) palloc(NAME_LEN);
-	sprintf(p, "/Arry.%d", newoid());
+	sprintf(p, "/Arry.%u", newoid());
 	strcpy(saveName, p);
 #ifdef LOARRAY
 	if ((*fd = LOcreat(saveName, 0600, flag)) < 0)

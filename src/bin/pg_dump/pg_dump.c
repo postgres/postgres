@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.104 1999/05/04 15:47:35 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.105 1999/05/10 00:46:18 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -709,7 +709,7 @@ main(int argc, char **argv)
 	if (!dataOnly)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s last builtin oid is %d %s\n",
+			fprintf(stderr, "%s last builtin oid is %u %s\n",
 					g_comment_start, g_last_builtin_oid, g_comment_end);
 		tblinfo = dumpSchema(g_fout, &numTables, tablename, aclsOption);
 	}
@@ -1343,7 +1343,7 @@ getFuncs(int *numFuncs)
 			"SELECT pg_proc.oid, proname, prolang, pronargs, prorettype, "
 			"proretset, proargtypes, prosrc, probin, usename "
 			"from pg_proc, pg_user "
-			"where pg_proc.oid > '%d'::oid and proowner = usesysid",
+			"where pg_proc.oid > '%u'::oid and proowner = usesysid",
 			g_last_builtin_oid);
 
 	res = PQexec(g_conn, query);
@@ -1969,7 +1969,7 @@ getIndices(int *numIndices)
 			"a.amname as indamname, i.indisunique "
 			"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 			"where t1.oid = i.indexrelid and t2.oid = i.indrelid "
-			"and t1.relam = a.oid and i.indexrelid > '%d'::oid "
+			"and t1.relam = a.oid and i.indexrelid > '%u'::oid "
 			"and t2.relname !~ '^pg_' and t1.relkind != 'l'",
 			g_last_builtin_oid);
 
@@ -2249,7 +2249,7 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 		PQclear(res);
 
 		sprintf(query, "SELECT lanname FROM pg_language "
-				"WHERE oid = %d",
+				"WHERE oid = %u",
 				finfo[i].lang);
 		res = PQexec(g_conn, query);
 		if (!res ||
@@ -3070,7 +3070,7 @@ setMaxOid(FILE *fout)
 	}
 	PQclear(res);
 	if (g_verbose)
-		fprintf(stderr, "%s maximum system oid is %d %s\n",
+		fprintf(stderr, "%s maximum system oid is %u %s\n",
 				g_comment_start, max_oid, g_comment_end);
 	fprintf(fout, "CREATE TABLE pgdump_oid (dummy int4);\n");
 	fprintf(fout, "COPY pgdump_oid WITH OIDS FROM stdin;\n");

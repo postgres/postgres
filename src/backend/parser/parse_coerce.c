@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.11 1999/02/21 03:49:03 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.12 1999/05/10 00:45:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,8 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 	Datum		val;
 
 #ifdef PARSEDEBUG
-	printf("coerce_type: argument types are %d -> %d\n",
-		   inputTypeId, targetTypeId);
+	printf("coerce_type: argument types are %d -> %u\n",
+		 inputTypeId, targetTypeId);
 #endif
 
 	if (targetTypeId == InvalidOid)
@@ -129,7 +129,7 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId)
 	else
 	{
 #ifdef PARSEDEBUG
-		printf("coerce_type: argument type IDs %d match\n", inputTypeId);
+		printf("coerce_type: argument type IDs %u match\n", inputTypeId);
 #endif
 
 		result = node;
@@ -165,7 +165,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 	for (i = 0; i < nargs; i++)
 	{
 #ifdef PARSEDEBUG
-		printf("can_coerce_type: argument #%d types are %d -> %d\n",
+		printf("can_coerce_type: argument #%d types are %u -> %u\n",
 			   i, input_typeids[i], func_typeids[i]);
 #endif
 		if (input_typeids[i] != func_typeids[i])
@@ -187,7 +187,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			else if (func_typeids[i] == InvalidOid)
 			{
 #ifdef PARSEDEBUG
-				printf("can_coerce_type: output OID func_typeids[%d] is zero\n", i);
+				printf("can_coerce_type: output OID func_typeids[%u] is zero\n", i);
 #endif
 				return false;
 			}
@@ -196,7 +196,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			else if (input_typeids[i] == InvalidOid)
 			{
 #ifdef PARSEDEBUG
-				printf("can_coerce_type: input OID input_typeids[%d] is zero\n", i);
+				printf("can_coerce_type: input OID input_typeids[%u] is zero\n", i);
 #endif
 				return false;
 			}
@@ -243,7 +243,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 			else
 			{
 #ifdef PARSEDEBUG
-				printf("can_coerce_type: argument #%d type is %d (UNKNOWN)\n",
+				printf("can_coerce_type: argument #%d type is %u (UNKNOWN)\n",
 					   i, input_typeids[i]);
 #endif
 			}
@@ -266,7 +266,7 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids)
 		else
 		{
 #ifdef PARSEDEBUG
-			printf("can_coerce_type: argument #%d type IDs %d match\n",
+			printf("can_coerce_type: argument #%d type IDs %u match\n",
 				   i, input_typeids[i]);
 #endif
 		}

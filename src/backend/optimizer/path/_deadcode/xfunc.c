@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.1 1999/02/18 00:49:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.2 1999/05/10 00:45:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,7 +497,7 @@ xfunc_func_expense(LispValue node, LispValue args)
 							   ObjectIdGetDatum(funcid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
-		elog(ERROR, "Cache lookup failed for procedure %d", funcid);
+		elog(ERROR, "Cache lookup failed for procedure %u", funcid);
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
 
 	/*
@@ -612,7 +612,7 @@ xfunc_width(LispValue clause)
 							 ObjectIdGetDatum(get_vartype((Var) clause)),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
-			elog(ERROR, "Cache lookup failed for type %d",
+			elog(ERROR, "Cache lookup failed for type %u",
 				 get_vartype((Var) clause));
 		type = (Form_pg_type) GETSTRUCT(tupl);
 		if (get_varattno((Var) clause) == 0)
@@ -675,7 +675,7 @@ xfunc_width(LispValue clause)
 					   ObjectIdGetDatum(get_opno((Oper) get_op(clause))),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
-			elog(ERROR, "Cache lookup failed for procedure %d",
+			elog(ERROR, "Cache lookup failed for procedure %u",
 				 get_opno((Oper) get_op(clause)));
 		return (xfunc_func_width
 		((RegProcedure) (((Form_pg_operator) (GETSTRUCT(tupl)))->oprcode),
@@ -1306,7 +1306,7 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 							   ObjectIdGetDatum(funcid),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tupl))
-		elog(ERROR, "Cache lookup failed for procedure %d", funcid);
+		elog(ERROR, "Cache lookup failed for procedure %u", funcid);
 	proc = (Form_pg_proc) GETSTRUCT(tupl);
 
 	/* if function returns a tuple, get the width of that */
@@ -1324,7 +1324,7 @@ xfunc_func_width(RegProcedure funcid, LispValue args)
 								   ObjectIdGetDatum(proc->prorettype),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(tupl))
-			elog(ERROR, "Cache lookup failed for type %d", proc->prorettype);
+			elog(ERROR, "Cache lookup failed for type %u", proc->prorettype);
 		type = (Form_pg_type) GETSTRUCT(tupl);
 		/* if the type length is known, return that */
 		if (type->typlen != -1)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.50 1999/03/28 20:32:17 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.51 1999/05/10 00:45:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1828,7 +1828,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 		tb = &TraceBuf[i];
 		if (tb->bmt_op != BMT_NOTUSED)
 		{
-			fprintf(fp, "     [%3d]%spid %d buf %2d for <%d,%d,%d> ",
+			fprintf(fp, "     [%3d]%spid %d buf %2d for <%d,%u,%d> ",
 					i, (i == cur ? " ---> " : "\t"),
 					tb->bmt_pid, tb->bmt_buf,
 					tb->bmt_dbid, tb->bmt_relid, tb->bmt_blkno);
@@ -1859,7 +1859,7 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 	}
 
 	fprintf(fp, "\noperation causing error:\n");
-	fprintf(fp, "\tpid %d buf %d for <%d,%d,%d> ",
+	fprintf(fp, "\tpid %d buf %d for <%d,%u,%d> ",
 			getpid(), bufNo, dbId, relId, blkNo);
 
 	switch (allocType)

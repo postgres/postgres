@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.26 1999/03/23 16:50:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.27 1999/05/10 00:45:13 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -140,7 +140,7 @@ print_rt(List *rtable)
 	{
 		RangeTblEntry *rte = lfirst(l);
 
-		printf("%d\t%s(%s)\t%d\t%d\t%s\n",
+		printf("%d\t%s(%s)\t%u\t%d\t%s\n",
 			   i, rte->relname, rte->refname, rte->relid,
 			   rte->inFromCl,
 			   (rte->inh ? "inh" : ""));

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.27 1999/03/14 16:06:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.28 1999/05/10 00:46:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,8 +299,7 @@ pg_krb5_init(void)
 	if (code = krb5_cc_resolve(tktbuf, &ccache))
 	{
 		(void) sprintf(PQerrormsg,
-				  "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n",
-					   code);
+				  "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n", code);
 		com_err("pg_krb5_init", code, "in krb5_cc_resolve");
 		return (krb5_ccache) NULL;
 	}
@@ -329,16 +328,14 @@ pg_krb5_authname(const char *PQerrormsg)
 	if (code = krb5_cc_get_principal(ccache, &principal))
 	{
 		(void) sprintf(PQerrormsg,
-		"pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n",
-					   code);
+		"pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n", code);
 		com_err("pg_krb5_authname", code, "in krb5_cc_get_principal");
 		return (char *) NULL;
 	}
 	if (code = krb5_unparse_name(principal, &authname))
 	{
 		(void) sprintf(PQerrormsg,
-			"pg_krb5_authname: Kerberos error %d in krb5_unparse_name\n",
-					   code);
+			"pg_krb5_authname: Kerberos error %d in krb5_unparse_name\n", code);
 		com_err("pg_krb5_authname", code, "in krb5_unparse_name");
 		krb5_free_principal(principal);
 		return (char *) NULL;
@@ -387,8 +384,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 	if (code = krb5_cc_get_principal(ccache, &client))
 	{
 		(void) sprintf(PQerrormsg,
-		"pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n",
-					   code);
+		"pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n", code);
 		com_err("pg_krb5_sendauth", code, "in krb5_cc_get_principal");
 		return STATUS_ERROR;
 	}
@@ -415,8 +411,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 	if (code = krb5_parse_name(servbuf, &server))
 	{
 		(void) sprintf(PQerrormsg,
-			  "pg_krb5_sendauth: Kerberos error %d in krb5_parse_name\n",
-					   code);
+			  "pg_krb5_sendauth: Kerberos error %d in krb5_parse_name\n", code);
 		com_err("pg_krb5_sendauth", code, "in krb5_parse_name");
 		krb5_free_principal(client);
 		return STATUS_ERROR;
@@ -448,8 +443,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 		else
 		{
 			(void) sprintf(PQerrormsg,
-				"pg_krb5_sendauth: Kerberos error %d in krb5_sendauth\n",
-						   code);
+				"pg_krb5_sendauth: Kerberos error %d in krb5_sendauth\n", code);
 			com_err("pg_krb5_sendauth", code, "in krb5_sendauth");
 		}
 	}
@@ -624,7 +618,7 @@ fe_getauthname(char *PQerrormsg)
 		default:
 			(void) sprintf(PQerrormsg,
 				   "fe_getauthname: invalid authentication system: %d\n",
-						   authsvc);
+						authsvc);
 			break;
 	}
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.11 1999/02/13 23:18:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.12 1999/05/10 00:45:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -486,7 +486,7 @@ connectTee(TgRecipe * r, TgNodePtr fromNode, TgNodePtr toNode,
 	tn = malloc(sizeof(TgNode));
 	/* generate a name for the tee node table */
 	tn->nodeName = malloc(50);
-	sprintf(tn->nodeName, "tee_%d", newoid());
+	sprintf(tn->nodeName, "tee_%u", newoid());
 /*	  tn->nodeName = NULL; */
 
 	tn->nodeType = TG_TEE_NODE;

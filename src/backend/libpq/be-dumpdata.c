@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: be-dumpdata.c,v 1.22 1999/02/13 23:15:39 momjian Exp $
+ *  $Id: be-dumpdata.c,v 1.23 1999/05/10 00:45:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ be_newportal(void)
 	if (be_portalcnt == 0)
 		be_portaloid = newoid();
 	be_portalcnt++;
-	snprintf(buf, PortalNameLength, "be_%d_%d", be_portaloid, be_portalcnt);
+	snprintf(buf, PortalNameLength, "be_%u_%d", be_portaloid, be_portalcnt);
 
 	/* ----------------
 	 *	initialize the new portal entry and keep track

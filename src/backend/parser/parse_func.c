@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.42 1999/03/16 20:15:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.43 1999/05/10 00:45:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,7 +651,7 @@ funcid_get_rettype(Oid funcid)
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(func_tuple))
-		elog(ERROR, "Function OID %d does not exist", funcid);
+		elog(ERROR, "Function OID %u does not exist", funcid);
 
 	funcrettype = (Oid)
 		((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
@@ -1183,7 +1183,7 @@ find_inheritors(Oid relid, Oid **supervec)
 
 			/* save the type id, rather than the relation id */
 			if ((rd = heap_open(qentry->sqe_relid)) == (Relation) NULL)
-				elog(ERROR, "Relid %d does not exist", qentry->sqe_relid);
+				elog(ERROR, "Relid %u does not exist", qentry->sqe_relid);
 			qentry->sqe_relid = typeTypeId(typenameType(RelationGetRelationName(rd)->data));
 			heap_close(rd);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.36 1999/02/13 23:14:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.37 1999/05/10 00:44:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ CatalogHasIndex(char *catName, Oid catId)
 
 	if (!HeapTupleIsValid(htup))
 	{
-		elog(NOTICE, "CatalogHasIndex: no relation with oid %d", catId);
+		elog(NOTICE, "CatalogHasIndex: no relation with oid %u", catId);
 		return false;
 	}
 

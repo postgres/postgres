@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.77 1999/04/15 04:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.78 1999/05/10 00:44:54 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -761,10 +761,10 @@ AddNewRelationType(char *typeName, Oid new_rel_oid)
 							  typeLen(typeidType(OIDOID)),		/* external size */
 							  'c',		/* type-type (catalog) */
 							  ',',		/* default array delimiter */
-							  "int4in", /* input procedure */
-							  "int4out",		/* output procedure */
-							  "int4in", /* receive procedure */
-							  "int4out",		/* send procedure */
+							  "oidin", /* input procedure */
+							  "oidout",		/* output procedure */
+							  "oidin", /* receive procedure */
+							  "oidout",		/* send procedure */
 							  NULL,		/* array element type - irrelevent */
 							  "-",		/* default type value */
 							  (bool) 1, /* passed by value */
@@ -973,7 +973,7 @@ RelationRemoveInheritance(Relation relation)
 		heap_endscan(scan);
 		heap_close(catalogRelation);
 
-		elog(ERROR, "Relation '%d' inherits '%s'",
+		elog(ERROR, "Relation '%u' inherits '%s'",
 			 ((Form_pg_inherits) GETSTRUCT(tuple))->inhrel,
 			 RelationGetRelationName(relation));
 	}
@@ -1235,7 +1235,7 @@ DeleteTypeTuple(Relation rel)
 		heap_endscan(pg_attribute_scan);
 		heap_close(pg_attribute_desc);
 
-		elog(ERROR, "DeleteTypeTuple: att of type %s exists in relation %d",
+		elog(ERROR, "DeleteTypeTuple: att of type %s exists in relation %u",
 			 &rel->rd_rel->relname, relid);
 	}
 	heap_endscan(pg_attribute_scan);

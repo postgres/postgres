@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.53 1999/05/06 01:30:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.54 1999/05/10 00:45:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,8 +367,7 @@ create_indexscan_node(IndexPath *best_path,
 										 ObjectIdGetDatum(lfirsti(ixid)),
 										 0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "create_plan: index %d not found",
-				 lfirsti(ixid));
+			elog(ERROR, "create_plan: index %u not found", lfirsti(ixid));
 		index = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (index->indislossy)
 			lossy = TRUE;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.49 1999/05/04 00:00:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.50 1999/05/10 00:45:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,7 +720,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 
 	/* by here, the function is declared to return some type */
 	if ((typ = typeidType(rettype)) == NULL)
-		elog(ERROR, "can't find return type %d for function\n", rettype);
+		elog(ERROR, "can't find return type %u for function\n", rettype);
 
 	/*
 	 * test 3:	if the function is declared to return a value, then the
@@ -770,7 +770,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	reln = heap_open(typeTypeRelid(typ));
 
 	if (!RelationIsValid(reln))
-		elog(ERROR, "cannot open relation relid %d", typeTypeRelid(typ));
+		elog(ERROR, "cannot open relation relid %u", typeTypeRelid(typ));
 
 	relid = reln->rd_id;
 	relnatts = reln->rd_rel->relnatts;
@@ -918,7 +918,7 @@ need_sortplan(List *sortcls, Plan *plan)
 	htup = SearchSysCacheTuple(INDEXRELID,
 			ObjectIdGetDatum(indexId), 0, 0, 0);
 	if (!HeapTupleIsValid(htup)) {
-		elog(ERROR, "cache lookup for index %d failed", indexId);
+		elog(ERROR, "cache lookup for index %u failed", indexId);
 	}
 	index_tup = (Form_pg_index) GETSTRUCT(htup);
 

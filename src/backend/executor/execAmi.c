@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: execAmi.c,v 1.33 1999/03/23 16:50:47 momjian Exp $
+ *  $Id: execAmi.c,v 1.34 1999/05/10 00:45:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,7 +496,7 @@ ExecCreatR(TupleDesc tupType,
 {
 	Relation	relDesc;
 
-	EU3_printf("ExecCreatR: %s type=%d oid=%d\n",
+	EU3_printf("ExecCreatR: %s type=%d oid=%u\n",
 			   "entering: ", tupType, relationOid);
 	CXT1_printf("ExecCreatR: context is %d\n", CurrentMemoryContext);
 

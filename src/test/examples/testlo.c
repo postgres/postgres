@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.10 1999/02/13 23:22:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/test/examples/testlo.c,v 1.11 1999/05/10 00:46:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,7 @@ pickout(PGconn *conn, Oid lobjId, int start, int len)
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
 	{
-		fprintf(stderr, "can't open large object %d",
-				lobjId);
+		fprintf(stderr, "can't open large object %u", lobjId);
 	}
 
 	lo_lseek(conn, lobj_fd, start, SEEK_SET);
@@ -115,8 +114,7 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
 	{
-		fprintf(stderr, "can't open large object %d",
-				lobjId);
+		fprintf(stderr, "can't open large object %u", lobjId);
 	}
 
 	lo_lseek(conn, lobj_fd, start, SEEK_SET);
@@ -157,8 +155,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
 	lobj_fd = lo_open(conn, lobjId, INV_READ);
 	if (lobj_fd < 0)
 	{
-		fprintf(stderr, "can't open large object %d",
-				lobjId);
+		fprintf(stderr, "can't open large object %u", lobjId);
 	}
 
 	/*
@@ -239,7 +236,7 @@ main(int argc, char **argv)
 	if (lobjOid == 0)
 		fprintf(stderr, "%s\n", PQerrorMessage(conn));
 /*
-	printf("\tas large object %d.\n", lobjOid);
+	printf("\tas large object %u.\n", lobjOid);
 
 	printf("picking out bytes 1000-2000 of the large object\n");
 	pickout(conn, lobjOid, 1000, 1000);

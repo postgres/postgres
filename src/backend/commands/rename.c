@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.22 1999/03/17 22:52:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.23 1999/05/10 00:44:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ renameatt(char *relname,
 										 0, 0, 0);
 			if (!HeapTupleIsValid(reltup))
 			{
-				elog(ERROR, "renameatt: can't find catalog entry for inheriting class with oid %d",
+				elog(ERROR, "renameatt: can't find catalog entry for inheriting class with oid %u",
 					 childrelid);
 			}
 			/* make copy of cache value, could disappear in call */

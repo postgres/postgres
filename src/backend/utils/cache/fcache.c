@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.21 1999/02/13 23:19:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.22 1999/05/10 00:46:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ init_fcache(Oid foid,
 
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR,
-			 "init_fcache: %s %d",
+			 "init_fcache: %s %u",
 			 "Cache lookup failed for procedure", foid);
 
 	/* ----------------
@@ -130,7 +130,7 @@ init_fcache(Oid foid,
 
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR,
-			 "init_fcache: %s %d",
+			 "init_fcache: %s %u",
 			 "Cache lookup failed for type",
 			 (procedureStruct)->prorettype);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.21 1999/02/13 23:19:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.22 1999/05/10 00:46:07 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -215,7 +215,7 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
 	 * ----------------
 	 */
 #ifdef	INVALIDDEBUG
-	elog(DEBUG, "RelationRegisterLocalInvalid(%d, %d)", relationId,
+	elog(DEBUG, "RelationRegisterLocalInvalid(%u, %u)", relationId,
 		 objectId);
 #endif	 /* defined(INVALIDDEBUG) */
 
@@ -359,7 +359,7 @@ elog(DEBUG,\
 	 ItemPointerGetOffsetNumber(&message->any.catalog.pointerData))
 #define InvalidationMessageRegisterSharedInvalid_DEBUG2 \
 	 elog(DEBUG, \
-		  "InvalidationMessageRegisterSharedInvalid(r, %d, %d)", \
+		  "InvalidationMessageRegisterSharedInvalid(r, %u, %u)", \
 		  message->any.relation.relationId, \
 		  message->any.relation.objectId)
 #else
@@ -409,7 +409,7 @@ elog(DEBUG, "InvalidationMessageCacheInvalidate(c, %d, %d, [%d, %d])",\
 	 ItemPointerGetBlockNumber(&message->any.catalog.pointerData),\
 	 ItemPointerGetOffsetNumber(&message->any.catalog.pointerData))
 #define InvalidationMessageCacheInvalidate_DEBUG2 \
-	 elog(DEBUG, "InvalidationMessageCacheInvalidate(r, %d, %d)", \
+	 elog(DEBUG, "InvalidationMessageCacheInvalidate(r, %u, %u)", \
 		  message->any.relation.relationId, \
 		  message->any.relation.objectId)
 #else

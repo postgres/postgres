@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.10 1999/05/03 19:10:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.11 1999/05/10 00:45:59 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -373,7 +373,7 @@ pg_get_indexdef(Oid indexrelid)
 	ht_idx = SearchSysCacheTuple(INDEXRELID,
 			ObjectIdGetDatum(indexrelid), 0, 0, 0);
 	if (!HeapTupleIsValid(ht_idx))
-		elog(ERROR, "syscache lookup for index %d failed", indexrelid);
+		elog(ERROR, "syscache lookup for index %u failed", indexrelid);
 	idxrec = (Form_pg_index)GETSTRUCT(ht_idx);
 
 	/* ----------
@@ -383,7 +383,7 @@ pg_get_indexdef(Oid indexrelid)
 	ht_idxrel = SearchSysCacheTuple(RELOID,
 			ObjectIdGetDatum(idxrec->indexrelid), 0, 0, 0);
 	if (!HeapTupleIsValid(ht_idxrel))
-		elog(ERROR, "syscache lookup for relid %d failed", idxrec->indexrelid);
+		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indexrelid);
 	idxrelrec = (Form_pg_class)GETSTRUCT(ht_idxrel);
 
 	/* ----------
@@ -393,7 +393,7 @@ pg_get_indexdef(Oid indexrelid)
 	ht_indrel = SearchSysCacheTuple(RELOID,
 			ObjectIdGetDatum(idxrec->indrelid), 0, 0, 0);
 	if (!HeapTupleIsValid(ht_indrel))
-		elog(ERROR, "syscache lookup for relid %d failed", idxrec->indrelid);
+		elog(ERROR, "syscache lookup for relid %u failed", idxrec->indrelid);
 	indrelrec = (Form_pg_class)GETSTRUCT(ht_indrel);
 
 	/* ----------
@@ -459,9 +459,9 @@ pg_get_indexdef(Oid indexrelid)
 			spi_nulls[1] = '\0';
 			spirc = SPI_execp(plan_getopclass, spi_args, spi_nulls, 1);
 			if (spirc != SPI_OK_SELECT)
-				elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[keyno]);
+				elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[keyno]);
 			if (SPI_processed != 1)
-				elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[keyno]);
+				elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[keyno]);
 			spi_tup = SPI_tuptable->vals[0];
 			spi_ttc = SPI_tuptable->tupdesc;
 			spi_fno = SPI_fnumber(spi_ttc, "opcname");
@@ -483,7 +483,7 @@ pg_get_indexdef(Oid indexrelid)
 		proctup = SearchSysCacheTuple(PROOID,
 								ObjectIdGetDatum(idxrec->indproc), 0, 0, 0);
 		if (!HeapTupleIsValid(proctup))
-			elog(ERROR, "cache lookup for proc %d failed", idxrec->indproc);
+			elog(ERROR, "cache lookup for proc %u failed", idxrec->indproc);
 
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 		strcat(buf, "\"");
@@ -497,9 +497,9 @@ pg_get_indexdef(Oid indexrelid)
 		spi_nulls[1] = '\0';
 		spirc = SPI_execp(plan_getopclass, spi_args, spi_nulls, 1);
 		if (spirc != SPI_OK_SELECT)
-			elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[0]);
+			elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[0]);
 		if (SPI_processed != 1)
-			elog(ERROR, "failed to get pg_opclass tuple %d", idxrec->indclass[0]);
+			elog(ERROR, "failed to get pg_opclass tuple %u", idxrec->indclass[0]);
 		spi_tup = SPI_tuptable->vals[0];
 		spi_ttc = SPI_tuptable->tupdesc;
 		spi_fno = SPI_fnumber(spi_ttc, "opcname");
@@ -1424,7 +1424,7 @@ get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 	proctup = SearchSysCacheTuple(PROOID,
 								ObjectIdGetDatum(func->funcid), 0, 0, 0);
 	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup for proc %d failed", func->funcid);
+		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
 
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 	proname = nameout(&(procStruct->proname));
@@ -1516,7 +1516,7 @@ get_tle_expr(QryHier *qh, int rt_index, TargetEntry *tle, bool varprefix)
 	proctup = SearchSysCacheTuple(PROOID,
 								ObjectIdGetDatum(func->funcid), 0, 0, 0);
 	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "cache lookup for proc %d failed", func->funcid);
+		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
 
 	procStruct = (Form_pg_proc) GETSTRUCT(proctup);
 
@@ -1676,7 +1676,7 @@ get_relation_name(Oid relid)
 	classtup = SearchSysCacheTuple(RELOID,
 								   ObjectIdGetDatum(relid), 0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
-		elog(ERROR, "cache lookup of relation %d failed", relid);
+		elog(ERROR, "cache lookup of relation %u failed", relid);
 
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	return nameout(&(classStruct->relname));
@@ -1697,7 +1697,7 @@ get_attribute_name(Oid relid, int2 attnum)
 	atttup = SearchSysCacheTuple(ATTNUM,
 						  ObjectIdGetDatum(relid), (Datum) attnum, 0, 0);
 	if (!HeapTupleIsValid(atttup))
-		elog(ERROR, "cache lookup of attribute %d in relation %d failed",
+		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 			 attnum, relid);
 
 	attStruct = (Form_pg_attribute) GETSTRUCT(atttup);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.20 1999/03/17 22:52:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.21 1999/05/10 00:44:53 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -549,8 +549,7 @@ pg_ownercheck(char *usename,
 			owner_id = ((Form_pg_type) GETSTRUCT(tuple))->typowner;
 			break;
 		default:
-			elog(ERROR, "pg_ownercheck: invalid cache id: %d",
-				 cacheid);
+			elog(ERROR, "pg_ownercheck: invalid cache id: %d", cacheid);
 			break;
 	}
 

@@ -1162,7 +1162,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 							   0, 0, 0);
 	itupform = (Form_pg_index) GETSTRUCT(htup);
 	if (!HeapTupleIsValid(htup))
-		elog(ERROR, "initGISTstate: index %d not found",
+		elog(ERROR, "initGISTstate: index %u not found",
 			 RelationGetRelid(index));
 	giststate->haskeytype = itupform->indhaskeytype;
 	if (giststate->haskeytype)
@@ -1174,7 +1174,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 								   0, 0);
 		if (!HeapTupleIsValid(htup))
 		{
-			elog(ERROR, "initGISTstate: no attribute tuple %d %d",
+			elog(ERROR, "initGISTstate: no attribute tuple %u %d",
 				 itupform->indexrelid, FirstOffsetNumber);
 			return;
 		}

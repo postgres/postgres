@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.39 1999/02/13 23:19:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.40 1999/05/10 00:46:03 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -183,7 +183,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	cache->relationId = RelationGetRelid(relation);
 	tupdesc = cache->cc_tupdesc = RelationGetDescr(relation);
 
-	CACHE3_elog(DEBUG, "CatalogCacheInitializeCache: relid %d, %d keys",
+	CACHE3_elog(DEBUG, "CatalogCacheInitializeCache: relid %u, %d keys",
 				cache->relationId, cache->cc_nkeys);
 
 	/* ----------------
@@ -650,7 +650,7 @@ SystemCacheRelationFlushed(Oid relId)
 #ifdef CACHEDEBUG
 #define InitSysCache_DEBUG1 \
 do { \
-	elog(DEBUG, "InitSysCache: rid=%d id=%d nkeys=%d size=%d\n", \
+	elog(DEBUG, "InitSysCache: rid=%u id=%d nkeys=%d size=%d\n", \
 		cp->relationId, cp->id, cp->cc_nkeys, cp->cc_size); \
 	for (i = 0; i < nkeys; i += 1) \
 	{ \

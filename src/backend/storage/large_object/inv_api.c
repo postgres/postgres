@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.51 1999/03/14 16:08:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.52 1999/05/10 00:45:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,8 +119,8 @@ inv_create(int flags)
 	file_oid = newoid() + 1;
 
 	/* come up with some table names */
-	sprintf(objname, "xinv%d", file_oid);
-	sprintf(indname, "xinx%d", file_oid);
+	sprintf(objname, "xinv%u", file_oid);
+	sprintf(indname, "xinx%u", file_oid);
 
 	if (RelnameFindRelid(objname) != InvalidOid)
 	{

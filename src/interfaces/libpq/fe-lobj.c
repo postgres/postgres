@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.19 1999/02/13 23:22:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.20 1999/05/10 00:46:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,7 +419,7 @@ lo_import(PGconn *conn, char *filename)
 	if (lobj == -1)
 	{
 		sprintf(conn->errorMessage,
-				"lo_import: could not open inv object oid %d", lobjOid);
+				"lo_import: could not open inv object oid %u", lobjOid);
 		return InvalidOid;
 	}
 
@@ -464,7 +464,7 @@ lo_export(PGconn *conn, Oid lobjId, char *filename)
 	if (lobj == -1)
 	{
 		sprintf(conn->errorMessage,
-				"lo_export: can't open inv object %d", lobjId);
+				"lo_export: can't open inv object %u", lobjId);
 		return -1;
 	}
 

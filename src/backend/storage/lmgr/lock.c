@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.50 1999/05/07 01:23:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.51 1999/05/10 00:45:43 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -83,7 +83,7 @@ static int WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode);
 
 #define LOCK_PRINT_AUX(where,lock,type) \
 	TPRINTF(TRACE_ALL, \
-		 "%s: lock(%x) tbl(%d) rel(%d) db(%d) obj(%u) mask(%x) " \
+		 "%s: lock(%x) tbl(%d) rel(%u) db(%d) obj(%u) mask(%x) " \
 		 "hold(%d,%d,%d,%d,%d)=%d " \
 		 "act(%d,%d,%d,%d,%d)=%d wait(%d) type(%s)", \
 		 where, \

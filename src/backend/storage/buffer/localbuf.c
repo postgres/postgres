@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.21 1999/02/13 23:18:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.22 1999/05/10 00:45:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		{
 
 #ifdef LBDEBUG
-			fprintf(stderr, "LB ALLOC (%d,%d) %d\n",
+			fprintf(stderr, "LB ALLOC (%u,%d) %d\n",
 					RelationGetRelid(reln), blockNum, -i - 1);
 #endif
 			LocalRefCount[i]++;
@@ -91,7 +91,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	}
 
 #ifdef LBDEBUG
-	fprintf(stderr, "LB ALLOC (%d,%d) %d\n",
+	fprintf(stderr, "LB ALLOC (%u,%d) %d\n",
 			RelationGetRelid(reln), blockNum, -nextFreeLocalBuf - 1);
 #endif
 

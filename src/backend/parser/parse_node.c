@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.24 1999/02/13 23:17:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.25 1999/05/10 00:45:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,7 +256,7 @@ make_array_ref(Node *expr,
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %u\n",
 			 typearray);
 
 	/* get the array type struct from the type tuple */
@@ -271,7 +271,7 @@ make_array_ref(Node *expr,
 							ObjectIdGetDatum(type_struct_array->typelem),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(type_tuple))
-		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %u\n",
 			 typearray);
 
 	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple);
@@ -338,7 +338,7 @@ make_array_set(Expr *target_expr,
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %u\n",
 			 typearray);
 
 	/* get the array type struct from the type tuple */
@@ -353,7 +353,7 @@ make_array_set(Expr *target_expr,
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
+		elog(ERROR, "make_array_ref: Cache lookup failed for type %u\n",
 			 typearray);
 
 	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple);

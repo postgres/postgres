@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.35 1999/02/15 16:29:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.36 1999/05/10 00:45:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,7 +229,7 @@ regprocout(RegProcedure proid)
 			if (!isnull)
 				StrNCpy(result, s, NAMEDATALEN);
 			else
-				elog(FATAL, "regprocout: null procedure %d", proid);
+				elog(FATAL, "regprocout: null procedure %u", proid);
 		}
 		else
 		{

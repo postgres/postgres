@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.41 1999/02/13 23:22:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.42 1999/05/10 00:46:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1190,7 +1190,7 @@ Pg_lo_import(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 		sprintf(interp->result, "Pg_lo_import of '%s' failed", filename);
 		return TCL_ERROR;
 	}
-	sprintf(interp->result, "%d", lobjId);
+	sprintf(interp->result, "%u", lobjId);
 	return TCL_OK;
 }
 
@@ -1228,7 +1228,7 @@ Pg_lo_export(ClientData cData, Tcl_Interp * interp, int argc, char *argv[])
 	retval = lo_export(conn, lobjId, filename);
 	if (retval == -1)
 	{
-		sprintf(interp->result, "Pg_lo_export %d %s failed", lobjId, filename);
+		sprintf(interp->result, "Pg_lo_export %u %s failed", lobjId, filename);
 		return TCL_ERROR;
 	}
 	return TCL_OK;

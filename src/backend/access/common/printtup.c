@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.44 1999/04/25 19:27:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.45 1999/05/10 00:44:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ getTypeOutAndElem(Oid type, Oid* typOutput, Oid* typElem)
 		return OidIsValid(*typOutput);
 	}
 
-	elog(ERROR, "getTypeOutAndElem: Cache lookup of type %d failed", type);
+	elog(ERROR, "getTypeOutAndElem: Cache lookup of type %u failed", type);
 
 	*typOutput = InvalidOid;
 	*typElem = InvalidOid;

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.3 1999/01/28 11:48:31 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.4 1999/05/10 00:46:31 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -703,7 +703,7 @@ plpgsql_dumptree(PLpgSQL_function * func)
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) d;
 
-					printf("VAR %-16s type %s (typoid %d) atttypmod %d\n",
+					printf("VAR %-16s type %s (typoid %u) atttypmod %d\n",
 						   var->refname, var->datatype->typname,
 						   var->datatype->typoid,
 						   var->datatype->atttypmod);

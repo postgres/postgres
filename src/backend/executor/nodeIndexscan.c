@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.34 1999/04/13 17:18:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.35 1999/05/10 00:45:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,8 +703,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		run_keys = (n_keys <= 0) ? NULL :
 			(int *) palloc(n_keys * sizeof(int));
 
-		CXT1_printf("ExecInitIndexScan: context is %d\n",
-					CurrentMemoryContext);
+		CXT1_printf("ExecInitIndexScan: context is %d\n",CurrentMemoryContext);
 
 		/* ----------------
 		 *	for each opclause in the given qual,

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.79 1999/04/25 03:19:15 tgl Exp $
+ *  $Id: outfuncs.c,v 1.80 1999/05/10 00:45:10 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -197,7 +197,7 @@ _outQuery(StringInfo str, Query *node)
 	}
 
 	appendStringInfo(str, 
-	" :resultRelation %d :into %s :isPortal %s :isBinary %s :isTemp %s :unionall %s ",
+	" :resultRelation %u :into %s :isPortal %s :isBinary %s :isTemp %s :unionall %s ",
 			node->resultRelation,
 			stringStringInfo(node->into),
 			node->isPortal ? "true" : "false",
@@ -333,7 +333,7 @@ _outAppend(StringInfo str, Append *node)
 	_outNode(str, node->unionrtables);
 
 	appendStringInfo(str, 
-		" :inheritrelid %d :inheritrtable ", 
+		" :inheritrelid %u :inheritrtable ", 
 		node->inheritrelid);
 	_outNode(str, node->inheritrtable);
 
@@ -425,7 +425,7 @@ _outScan(StringInfo str, Scan *node)
 	appendStringInfo(str, " SCAN ");
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :scanrelid %d ", node->scanrelid);
+	appendStringInfo(str, " :scanrelid %u ", node->scanrelid);
 }
 
 /*
@@ -437,7 +437,7 @@ _outSeqScan(StringInfo str, SeqScan *node)
 	appendStringInfo(str, " SEQSCAN ");
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :scanrelid %d ", node->scanrelid);
+	appendStringInfo(str, " :scanrelid %u ", node->scanrelid);
 }
 
 /*
@@ -449,7 +449,7 @@ _outIndexScan(StringInfo str, IndexScan *node)
 	appendStringInfo(str, " INDEXSCAN ");
 	_outPlanInfo(str, (Plan *) node);
 
-	appendStringInfo(str, " :scanrelid %d :indxid ", node->scan.scanrelid);
+	appendStringInfo(str, " :scanrelid %u :indxid ", node->scan.scanrelid);
 	_outIntList(str, node->indxid);
 
 	appendStringInfo(str, " :indxqual ");
@@ -1108,13 +1108,13 @@ static void
 _outMergeOrder(StringInfo str, MergeOrder *node)
 {
 	appendStringInfo(str, 
-			" MERGEORDER :join_operator %d :left_operator %d :right_operator %d ",
+			" MERGEORDER :join_operator %u :left_operator %u :right_operator %u ",
 			node->join_operator,
 			node->left_operator,
 			node->right_operator);
 
 	appendStringInfo(str, 
-			" :left_type %d :right_type %d ",
+			" :left_type %u :right_type %u ",
 			node->left_type, 
 			node->right_type);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.26 1999/02/21 03:49:17 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.27 1999/05/10 00:45:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ InsertRule(char *rulname,
 
 	template = "INSERT INTO pg_rewrite \
 (rulename, ev_type, ev_class, ev_attr, ev_action, ev_qual, is_instead) VALUES \
-('%s', %d::char, %d::oid, %d::int2, '%s'::text, '%s'::text, \
+('%s', %d::char, %u::oid, %d::int2, '%s'::text, '%s'::text, \
  '%s'::bool);";
 	if (strlen(template) + strlen(rulname) + strlen(actionbuf) +
 		strlen(qualbuf) + 20 /* fudge fac */ > RULE_PLAN_SIZE)

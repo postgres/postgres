@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.19 1999/02/23 07:53:01 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.20 1999/05/10 00:45:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ GetArrayElementType(Oid typearray)
 									 0, 0, 0);
 
 	if (!HeapTupleIsValid(type_tuple))
-		elog(ERROR, "GetArrayElementType: Cache lookup failed for type %d",
+		elog(ERROR, "GetArrayElementType: Cache lookup failed for type %u",
 			 typearray);
 
 	/* get the array type struct from the type tuple */

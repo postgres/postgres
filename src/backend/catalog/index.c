@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.70 1999/02/13 23:14:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.71 1999/05/10 00:44:55 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1279,7 +1279,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	whichRel = RelationIdGetRelation(relid);
 
 	if (!RelationIsValid(whichRel))
-		elog(ERROR, "UpdateStats: cannot open relation id %d", relid);
+		elog(ERROR, "UpdateStats: cannot open relation id %u", relid);
 
 	/* ----------------
 	 * Find the RELATION relation tuple for the given relation.
@@ -1679,7 +1679,7 @@ IndexIsUnique(Oid indexId)
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ERROR, "IndexIsUnique: can't find index id %d",
+		elog(ERROR, "IndexIsUnique: can't find index id %u",
 			 indexId);
 	}
 	index = (Form_pg_index) GETSTRUCT(tuple);
@@ -1722,7 +1722,7 @@ IndexIsUniqueNoCache(Oid indexId)
 	/* NO CACHE */
 	tuple = heap_getnext(scandesc, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "IndexIsUniqueNoCache: can't find index id %d", indexId);
+		elog(ERROR, "IndexIsUniqueNoCache: can't find index id %u", indexId);
 
 	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);

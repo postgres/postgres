@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.58 1999/04/20 02:19:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.59 1999/05/10 00:44:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,7 +630,7 @@ InsertOneTuple(Oid objectid)
 
 	if (DebugMode)
 	{
-		printf("InsertOneTuple oid %d, %d attrs\n", objectid, numattr);
+		printf("InsertOneTuple oid %u, %d attrs\n", objectid, numattr);
 		fflush(stdout);
 	}
 
@@ -644,7 +644,7 @@ InsertOneTuple(Oid objectid)
 	pfree(tuple);
 	if (DebugMode)
 	{
-		printf("End InsertOneTuple, objectid=%d\n", objectid);
+		printf("End InsertOneTuple, objectid=%u\n", objectid);
 		fflush(stdout);
 	}
 
@@ -686,7 +686,7 @@ InsertOneValue(Oid objectid, char *value, int i)
 		ap = *app;
 		if (ap == NULL)
 		{
-			printf("Unable to find atttypid in Typ list! %d\n",
+			printf("Unable to find atttypid in Typ list! %u\n",
 				   reldesc->rd_att->attrs[i]->atttypid
 				);
 			Assert(0);
@@ -707,7 +707,7 @@ InsertOneValue(Oid objectid, char *value, int i)
 	{
 		typeindex = attrtypes[i]->atttypid - FIRST_TYPE_OID;
 		if (DebugMode)
-			printf("Typ == NULL, typeindex = %d idx = %d\n", typeindex, i);
+			printf("Typ == NULL, typeindex = %u idx = %d\n", typeindex, i);
 		values[i] = fmgr(Procid[typeindex].inproc, value,
 						 Procid[typeindex].elem, -1);
 		prt = fmgr(Procid[typeindex].outproc, values[i],

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.60 1999/05/01 19:09:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.61 1999/05/10 00:46:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,7 @@ BuildDescInfoError(RelationBuildDescInfo buildinfo)
 	switch (buildinfo.infotype)
 	{
 		case INFO_RELID:
-			sprintf(errBuf, "(relation id %d)", buildinfo.i.info_id);
+			sprintf(errBuf, "(relation id %u)", buildinfo.i.info_id);
 			break;
 		case INFO_RELNAME:
 			sprintf(errBuf, "(relation name %s)", buildinfo.i.info_name);
@@ -545,7 +545,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	}
 
 	if (need > 0)
-		elog(ERROR, "catalog is missing %d attribute%s for relid %d",
+		elog(ERROR, "catalog is missing %d attribute%s for relid %u",
 			 need, (need == 1 ? "" : "s"), RelationGetRelid(relation));
 
 	/* ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.31 1999/05/09 15:00:18 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.32 1999/05/10 00:45:09 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -68,7 +68,7 @@ lo_open(Oid lobjId, int mode)
 	MemoryContext currentContext;
 
 #if FSDB
-	elog(NOTICE, "LOopen(%d,%d)", lobjId, mode);
+	elog(NOTICE, "LOopen(%u,%d)", lobjId, mode);
 #endif
 
 	if (fscxt == NULL)
@@ -81,7 +81,7 @@ lo_open(Oid lobjId, int mode)
 	{							/* lookup failed */
 		MemoryContextSwitchTo(currentContext);
 #if FSDB
-		elog(NOTICE, "cannot open large object %d", lobjId);
+		elog(NOTICE, "cannot open large object %u", lobjId);
 #endif
 		return -1;
 	}
@@ -375,8 +375,7 @@ lo_export(Oid lobjId, text *filename)
 	lobj = inv_open(lobjId, INV_READ);
 	if (lobj == NULL)
 	{
-		elog(ERROR, "lo_export: can't open inv object %d",
-			 lobjId);
+		elog(ERROR, "lo_export: can't open inv object %u", lobjId);
 	}
 
 	/*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.25 1999/02/21 03:49:33 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.26 1999/05/10 00:46:07 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -140,7 +140,7 @@ get_attisset(Oid relid, char *attname)
 								PointerGetDatum(attname),
 								0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "get_attisset: no attribute %s in relation %d",
+		elog(ERROR, "get_attisset: no attribute %s in relation %u",
 			 attname, relid);
 	if (heap_attisnull(tuple, attno))
 		return false;
@@ -218,7 +218,7 @@ get_opname(Oid opno)
 	{
 		/* don't throw an error anymore; we want to continue... */
 #ifdef NOT_USED
-		elog(ERROR, "can't look up operator %d\n", opno);
+		elog(ERROR, "can't look up operator %u\n", opno);
 #endif
 		return NULL;
 	}

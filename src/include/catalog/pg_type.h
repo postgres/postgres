@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.59 1999/05/03 19:10:20 momjian Exp $
+ * $Id: pg_type.h,v 1.60 1999/05/10 00:46:20 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -198,7 +198,7 @@ DATA(insert OID = 25 (	text	   PGUID -1  -1 f b t \054 0  18 textin textout text
 DESCR("native variable-length string");
 #define TEXTOID			25
 
-DATA(insert OID = 26 (	oid		   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
+DATA(insert OID = 26 (	oid		   PGUID  4  10 t b t \054 0   0 oidin oidout oidin oidout i _null_ ));
 DESCR("object identifier type");
 #define OIDOID			26
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.2 1999/03/14 05:23:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.3 1999/05/10 00:44:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,8 +164,7 @@ DefineIndex(char *heapRelationName,
 		if (nargs > INDEX_MAX_KEYS)
 		{
 			elog(ERROR,
-				 "Too many args to function, limit of %d",
-				 INDEX_MAX_KEYS);
+				 "Too many args to function, limit of %d", INDEX_MAX_KEYS);
 		}
 
 		FIsetnArgs(&fInfo, nargs);
@@ -514,7 +513,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			if (attribute->class == NULL)
 			{
 				elog(ERROR,
-					 "Can't find a default operator class for type %d.",
+					 "Can't find a default operator class for type %u.",
 					 attform->atttypid);
 			}
 		}

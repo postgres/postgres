@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.23 1998/12/13 23:54:40 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.24 1999/05/10 00:45:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,7 +631,7 @@ right_oper(char *op, Oid arg)
 		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'r');
 		if (ncandidates == 0)
 		{
-			elog(ERROR, "Can't find right op '%s' for type %d", op, arg);
+			elog(ERROR, "Can't find right op '%s' for type %u", op, arg);
 			return NULL;
 		}
 		else if (ncandidates == 1)
@@ -693,7 +693,7 @@ left_oper(char *op, Oid arg)
 		ncandidates = unary_oper_get_candidates(op, arg, &candidates, 'l');
 		if (ncandidates == 0)
 		{
-			elog(ERROR, "Can't find left op '%s' for type %d", op, arg);
+			elog(ERROR, "Can't find left op '%s' for type %u", op, arg);
 			return NULL;
 		}
 		else if (ncandidates == 1)

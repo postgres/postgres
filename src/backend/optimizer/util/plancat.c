@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.28 1999/03/18 19:59:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.29 1999/05/10 00:45:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ relation_info(Query *root, Index relid,
 	}
 	else
 	{
-		elog(ERROR, "RelationCatalogInformation: Relation %d not found",
+		elog(ERROR, "RelationCatalogInformation: Relation %u not found",
 			 relationObjectId);
 	}
 
@@ -217,7 +217,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 										UInt16GetDatum(amstrategy),
 										0);
 		if (!HeapTupleIsValid(amopTuple))
-			elog(ERROR, "index_info: no amop %d %d %d",
+			elog(ERROR, "index_info: no amop %u %u %d",
 				 relam, index->indclass[i], amstrategy);
 		info->orderOprs[i] = ((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
 	}
@@ -521,7 +521,7 @@ IndexSelectivity(Oid indexrelid,
 								 ObjectIdGetDatum(indexrelid),
 								 0, 0, 0);
 	if (!HeapTupleIsValid(indRel))
-		elog(ERROR, "IndexSelectivity: index %d not found",
+		elog(ERROR, "IndexSelectivity: index %u not found",
 			 indexrelid);
 	relam = ((Form_pg_class) GETSTRUCT(indRel))->relam;
 
@@ -529,7 +529,7 @@ IndexSelectivity(Oid indexrelid,
 									 ObjectIdGetDatum(indexrelid),
 									 0, 0, 0);
 	if (!HeapTupleIsValid(indexTuple))
-		elog(ERROR, "IndexSelectivity: index %d not found",
+		elog(ERROR, "IndexSelectivity: index %u not found",
 			 indexrelid);
 	index = (Form_pg_index) GETSTRUCT(indexTuple);
 
@@ -572,7 +572,7 @@ IndexSelectivity(Oid indexrelid,
 			 * clause and so had no variable to match to the index key ...
 			 * if not we are in trouble.
 			 */
-			elog(NOTICE, "IndexSelectivity: no key %d in index %d",
+			elog(NOTICE, "IndexSelectivity: no key %d in index %u",
 				 varAttributeNumbers[n], indexrelid);
 			continue;
 		}
@@ -583,7 +583,7 @@ IndexSelectivity(Oid indexrelid,
 										ObjectIdGetDatum(relam),
 										0);
 		if (!HeapTupleIsValid(amopTuple))
-			elog(ERROR, "IndexSelectivity: no amop %d %d",
+			elog(ERROR, "IndexSelectivity: no amop %u %u",
 				 indclass, operatorObjectIds[n]);
 		amop = (Form_pg_amop) GETSTRUCT(amopTuple);
 

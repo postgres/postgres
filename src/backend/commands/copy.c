@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.75 1999/05/03 19:09:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.76 1999/05/10 00:44:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -926,7 +926,7 @@ GetOutputFunction(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typoutput;
 
-	elog(ERROR, "GetOutputFunction: Cache lookup of type %d failed", type);
+	elog(ERROR, "GetOutputFunction: Cache lookup of type %u failed", type);
 	return InvalidOid;
 }
 
@@ -958,7 +958,7 @@ GetInputFunction(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typinput;
 
-	elog(ERROR, "GetInputFunction: Cache lookup of type %d failed", type);
+	elog(ERROR, "GetInputFunction: Cache lookup of type %u failed", type);
 	return InvalidOid;
 }
 
@@ -974,7 +974,7 @@ IsTypeByVal(Oid type)
 	if (HeapTupleIsValid(typeTuple))
 		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typbyval;
 
-	elog(ERROR, "GetInputFunction: Cache lookup of type %d failed", type);
+	elog(ERROR, "GetInputFunction: Cache lookup of type %u failed", type);
 
 	return InvalidOid;
 }

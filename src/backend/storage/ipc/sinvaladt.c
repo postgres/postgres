@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.17 1999/02/19 06:06:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.18 1999/05/10 00:45:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,8 +145,7 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 	{
 		if (segInOutP->procState[index].tag == backendTag)
 		{
-			elog(FATAL, "SIAssignBackendId: tag %d found twice",
-				 backendTag);
+			elog(FATAL, "SIAssignBackendId: tag %d found twice", backendTag);
 		}
 	}
 
@@ -155,15 +154,10 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 	if (stateP->tag != InvalidBackendTag)
 	{
 		if (stateP->tag == backendTag)
-		{
-			elog(NOTICE, "SIAssignBackendId: reusing tag %d",
-				 backendTag);
-		}
+			elog(NOTICE, "SIAssignBackendId: reusing tag %d", backendTag);
 		else
 		{
-			elog(NOTICE,
-				 "SIAssignBackendId: discarding tag %d",
-				 stateP->tag);
+			elog(NOTICE, "SIAssignBackendId: discarding tag %d", stateP->tag);
 			return InvalidBackendTag;
 		}
 	}

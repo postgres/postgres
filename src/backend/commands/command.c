@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.43 1999/04/13 19:04:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.44 1999/05/10 00:44:56 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -368,7 +368,7 @@ PerformAddAttribute(char *relationName,
 				rel = heap_open(childrelid);
 				if (!RelationIsValid(rel))
 				{
-					elog(ERROR, "PerformAddAttribute: can't find catalog entry for inheriting class with oid %d",
+					elog(ERROR, "PerformAddAttribute: can't find catalog entry for inheriting class with oid %u",
 						 childrelid);
 				}
 				PerformAddAttribute((rel->rd_rel->relname).data,

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.82 1999/03/23 16:50:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.83 1999/05/10 00:45:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -459,8 +459,7 @@ ExecCheckPerms(CmdType operation,
 								   ObjectIdGetDatum(relid),
 								   0, 0, 0);
 		if (!HeapTupleIsValid(htup))
-			elog(ERROR, "ExecCheckPerms: bogus RT relid: %d",
-				 relid);
+			elog(ERROR, "ExecCheckPerms: bogus RT relid: %u", relid);
 		StrNCpy(rname.data,
 				((Form_pg_class) GETSTRUCT(htup))->relname.data,
 				NAMEDATALEN);
@@ -520,8 +519,7 @@ ExecCheckPerms(CmdType operation,
 								   ObjectIdGetDatum(relid),
 								   0, 0, 0);
 			if (!HeapTupleIsValid(htup))
-				elog(ERROR, "ExecCheckPerms: bogus RT relid: %d",
-					 relid);
+				elog(ERROR, "ExecCheckPerms: bogus RT relid: %u", relid);
 			StrNCpy(rname.data,
 					((Form_pg_class) GETSTRUCT(htup))->relname.data,
 					NAMEDATALEN);

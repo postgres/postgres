@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.23 1999/02/13 23:19:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.24 1999/05/10 00:46:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 										 0, 0, 0);
 	if (!HeapTupleIsValid(procedureTuple))
 	{
-		elog(ERROR, "fmgr: Cache lookup failed for procedure %d\n",
+		elog(ERROR, "fmgr: Cache lookup failed for procedure %u\n",
 			 procedureId);
 		return (func_ptr) NULL;
 	}
@@ -104,7 +104,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	if (!PointerIsValid(probinattr) /* || isnull */ )
 	{
 		heap_close(rel);
-		elog(ERROR, "fmgr: Could not extract probin for %d from %s",
+		elog(ERROR, "fmgr: Could not extract probin for %u from %s",
 			 procedureId, ProcedureRelationName);
 		return (func_ptr) NULL;
 	}

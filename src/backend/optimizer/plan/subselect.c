@@ -311,8 +311,7 @@ _finalize_primnode(void *expr, List **subplan)
 		}
 	}
 	else
-		elog(ERROR, "_finalize_primnode: can't handle node %d",
-			 nodeTag(expr));
+		elog(ERROR, "_finalize_primnode: can't handle node %d", nodeTag(expr));
 
 	return result;
 }
@@ -543,8 +542,7 @@ SS_pull_subplan(Node *expr)
 	else if (is_subplan(expr))
 		return lcons(((Expr *) expr)->oper, NULL);
 	else
-		elog(ERROR, "SS_pull_subplan: can't handle node %d",
-			 nodeTag(expr));
+		elog(ERROR, "SS_pull_subplan: can't handle node %d", nodeTag(expr));
 
 	return result;
 }

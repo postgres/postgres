@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.35 1999/04/23 00:50:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.36 1999/05/10 00:44:56 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -787,7 +787,7 @@ OperatorDef(char *operatorName,
 			setheapoverride(false);
 		}
 		else
-			elog(ERROR, "OperatorDef: no operator %d", operatorObjectId);
+			elog(ERROR, "OperatorDef: no operator %u", operatorObjectId);
 
 		heap_endscan(pg_operator_scan);
 	}

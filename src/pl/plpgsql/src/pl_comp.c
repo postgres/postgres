@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.5 1999/01/28 11:48:31 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.6 1999/05/10 00:46:29 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -182,7 +182,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			if (!HeapTupleIsValid(typeTup))
 			{
 				plpgsql_comperrinfo();
-				elog(ERROR, "cache lookup for return type %d failed",
+				elog(ERROR, "cache lookup for return type %u failed",
 					 procStruct->prorettype);
 			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
@@ -213,7 +213,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 				if (!HeapTupleIsValid(typeTup))
 				{
 					plpgsql_comperrinfo();
-					elog(ERROR, "cache lookup for argument type %d failed",
+					elog(ERROR, "cache lookup for argument type %u failed",
 						 procStruct->proargtypes[i]);
 				}
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
@@ -451,7 +451,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 			break;
 
 		default:
-			elog(ERROR, "unknown function type %d in plpgsql_compile()",
+			elog(ERROR, "unknown function type %u in plpgsql_compile()",
 				 functype);
 			break;
 	}
@@ -1074,7 +1074,7 @@ plpgsql_parse_dblwordtype(char *string)
 	if (!HeapTupleIsValid(typetup))
 	{
 		plpgsql_comperrinfo();
-		elog(ERROR, "cache lookup for type %d of %s.%s failed",
+		elog(ERROR, "cache lookup for type %u of %s.%s failed",
 			 attrStruct->atttypid, word1, word2);
 	}
 
@@ -1189,7 +1189,7 @@ plpgsql_parse_wordrowtype(char *string)
 		if (!HeapTupleIsValid(typetup))
 		{
 			plpgsql_comperrinfo();
-			elog(ERROR, "cache lookup for type %d of %s.%s failed",
+			elog(ERROR, "cache lookup for type %u of %s.%s failed",
 				 attrStruct->atttypid, word1,
 				 nameout(&(attrStruct->attname)));
 		}

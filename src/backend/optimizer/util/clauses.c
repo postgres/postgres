@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.32 1999/03/01 00:10:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.33 1999/05/10 00:45:24 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -786,7 +786,7 @@ CommuteClause(Node *clause)
 		get_operator_tuple(get_commutator(((Oper *) ((Expr *) clause)->oper)->opno));
 
 	if (heapTup == (HeapTuple) NULL)
-		elog(ERROR, "CommuteClause: no commutator for operator %d",
+		elog(ERROR, "CommuteClause: no commutator for operator %u",
 			 ((Oper *) ((Expr *) clause)->oper)->opno);
 
 	commuTup = (Form_pg_operator) GETSTRUCT(heapTup);
