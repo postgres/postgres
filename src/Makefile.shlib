@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.57 2002/04/10 16:45:25 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.shlib,v 1.58 2002/05/24 18:10:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -400,7 +400,10 @@ endif # enable_shared
 clean-lib:
 	rm -f lib$(NAME).a
 ifeq ($(enable_shared), yes)
-	rm -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX)
+	rm -f lib$(NAME)$(DLSUFFIX) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+ifdef EXPSUFF
+	rm -f lib$(NAME)$(EXPSUFF)
+endif
 endif
 ifeq ($(PORTNAME), win)
 	rm -rf $(NAME).def

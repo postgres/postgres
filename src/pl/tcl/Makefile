@@ -2,7 +2,7 @@
 #
 # Makefile for the pltcl shared object
 #
-# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.37 2002/01/23 18:45:41 tgl Exp $
+# $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.38 2002/05/24 18:10:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -10,7 +10,6 @@ subdir = src/pl/tcl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
--include Makefile.tcldefs
 
 # Find out whether Tcl was built as a shared library --- if not, we
 # can't link a shared library that depends on it, and have to forget
@@ -27,71 +26,39 @@ endif
 endif
 
 
-# Change following to how shared library that contains references to
-# libtcl must get built on your system. Since these definitions come
-# from the tclConfig.sh script, they should work if the shared build
-# of tcl was successful on this system. However, tclConfig.sh lies to
-# us a little bit (at least in versions 7.6 through 8.0.4) --- it
-# doesn't mention -lc in TCL_LIBS, but you still need it on systems
-# that want to hear about dependent libraries...
+# The following attempts to figure out what libraries need to be
+# linked with pltcl.  The information comes from the tclConfig.sh
+# file, but it's mostly bogus.  This just might work.
 
 ifneq ($(TCL_SHLIB_LD_LIBS),)
 # link command for a shared lib must mention shared libs it uses
-SHLIB_EXTRA_LIBS=$(TCL_LIBS) -lc
+SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
 else
 ifeq ($(PORTNAME), hpux)
 # link command for a shared lib must mention shared libs it uses,
 # even though Tcl doesn't think so...
-SHLIB_EXTRA_LIBS=$(TCL_LIBS) -lc
+SHLIB_LINK = $(TCL_LIB_SPEC) $(TCL_LIBS) -lc
 else
 # link command for a shared lib must NOT mention shared libs it uses
-SHLIB_EXTRA_LIBS=
+SHLIB_LINK = $(TCL_LIB_SPEC)
 endif
 endif
 
-%$(TCL_SHLIB_SUFFIX): %.o
-	$(TCL_SHLIB_LD) -o $@ $< $(TCL_LIB_SPEC) $(SHLIB_EXTRA_LIBS)
 
+NAME = pltcl
+SO_MAJOR_VERSION = 2
+SO_MINOR_VERSION = 0
+OBJS = pltcl.o
 
-CC = $(TCL_CC)
-
-# Since we are using Tcl's choice of C compiler, which might not be
-# the same one selected for Postgres, do NOT use CFLAGS from
-# Makefile.global. Instead use TCL's CFLAGS plus necessary -I
-# directives.
-
-# Can choose either TCL_CFLAGS_OPTIMIZE or TCL_CFLAGS_DEBUG here, as
-# needed
-override CPPFLAGS += $(TCL_DEFS)
-override CFLAGS = $(TCL_CFLAGS_OPTIMIZE) $(TCL_SHLIB_CFLAGS)
-
-
-#
-# DLOBJS is the dynamically-loaded object file.
-#
-DLOBJS= pltcl$(DLSUFFIX)
-
-INFILES= $(DLOBJS) 
-
-#
-# plus exports files
-#
-ifdef EXPSUFF
-INFILES+= $(DLOBJS:.o=$(EXPSUFF))
-endif
-
-
-# Provide dummy targets for the case where we can't build the shared library.
+include $(top_srcdir)/src/Makefile.shlib
 
 ifeq ($(TCL_SHARED_BUILD), 1)
 
-all: $(INFILES)
+all: all-lib
 	$(MAKE) -C modules $@
 
-pltcl$(DLSUFFIX): pltcl.o
-
 install: all installdirs
-	$(INSTALL_SHLIB) $(DLOBJS) $(DESTDIR)$(pkglibdir)/$(DLOBJS)
+	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
 	$(MAKE) -C modules $@
 
 installdirs:
@@ -99,21 +66,19 @@ installdirs:
 	$(MAKE) -C modules $@
 
 uninstall:
-	rm -f $(DESTDIR)$(pkglibdir)/$(DLOBJS)
+	rm -f $(DESTDIR)$(pkglibdir)/$(NAME)$(DLSUFFIX)
 	$(MAKE) -C modules $@
 
 else # TCL_SHARED_BUILD = 0
 
-all install:
+# Provide dummy targets for the case where we can't build the shared library.
+all:
 	@echo "*****"; \
 	 echo "* Cannot build pltcl because Tcl is not a shared library; skipping it."; \
 	 echo "*****"
 
 endif # TCL_SHARED_BUILD = 0
 
-Makefile.tcldefs: mkMakefile.tcldefs.sh
-	$(SHELL) $< '$(TCL_CONFIG_SH)' '$@'
-
-clean distclean maintainer-clean:
-	rm -f $(INFILES) pltcl.o Makefile.tcldefs
+clean distclean maintainer-clean: clean-lib
+	rm -f $(OBJS)
 	$(MAKE) -C modules $@

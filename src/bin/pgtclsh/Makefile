@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.37 2001/02/20 19:20:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.38 2002/05/24 18:10:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,13 +14,6 @@ subdir = src/bin/pgtclsh
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-#
-# Include definitions from the tclConfig.sh file
-#
--include Makefile.tcldefs
-ifeq ($(with_tk), yes)
--include Makefile.tkdefs
-endif
 
 libpgtcl_srcdir = $(top_srcdir)/src/interfaces/libpgtcl
 libpgtcl_builddir = $(top_builddir)/src/interfaces/libpgtcl
@@ -61,14 +54,5 @@ installdirs:
 uninstall:
 	rm -f $(DESTDIR)$(bindir)/pgtclsh $(DESTDIR)$(bindir)/pgtksh
 
-Makefile.tcldefs: mkMakefile.tcldefs.sh
-	$(SHELL) $< '$(TCL_CONFIG_SH)' '$@'
-
-Makefile.tkdefs: mkMakefile.tkdefs.sh
-	$(SHELL) $< '$(TK_CONFIG_SH)' '$@'
-
 clean distclean maintainer-clean:
-	rm -f pgtclAppInit.o pgtkAppInit.o Makefile.tcldefs Makefile.tkdefs pgtclsh pgtksh
-
-dep depend:
-	$(CC) -MM $(CFLAGS) *.c > depend
+	rm -f pgtclAppInit.o pgtkAppInit.o pgtclsh pgtksh

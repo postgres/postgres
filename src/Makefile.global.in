@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.146 2002/04/14 17:23:20 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.147 2002/05/24 18:10:17 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -147,9 +147,16 @@ python_configdir	= @python_configdir@
 
 krb_srvtab = @krb_srvtab@
 
-TCL_CONFIG_SH = @TCL_CONFIG_SH@
-TK_CONFIG_SH = @TK_CONFIG_SH@
-TCLSH		= @TCLSH@
+TCLSH			= @TCLSH@
+TCL_LIB_FILE		= @TCL_LIB_FILE@
+TCL_LIBS		= @TCL_LIBS@
+TCL_LIB_SPEC		= @TCL_LIB_SPEC@
+TCL_SHARED_BUILD	= @TCL_SHARED_BUILD@
+TCL_SHLIB_LD_LIBS	= @TCL_SHLIB_LD_LIBS@
+
+TK_LIBS			= @TK_LIBS@
+TK_LIB_SPEC		= @TK_LIB_SPEC@
+TK_XINCLUDES		= @TK_XINCLUDES@
 
 have_docbook	= @have_docbook@
 DOCBOOKSTYLE	= @DOCBOOKSTYLE@

@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.184 2002/05/05 00:03:28 tgl Exp $
-
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.185 2002/05/24 18:10:17 petere Exp $
+dnl
 dnl Developers, please strive to achieve this order:
 dnl
 dnl 0. Initialization and options processing
@@ -14,7 +14,9 @@ dnl 7. Functions, global variables
 dnl 8. System services
 dnl
 dnl Read the Autoconf manual for details.
-
+dnl
+m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
+dnl
 dnl The GNU folks apparently haven't heard that some people don't use
 dnl Texinfo. Use this sorcery to use "docdir" instead of "infodir".
 m4_define([info], [doc])
@@ -1201,11 +1203,15 @@ fi
 # Check for Tcl configuration script tclConfig.sh
 if test "$with_tcl" = yes; then
     PGAC_PATH_TCLCONFIGSH([$with_tclconfig])
+    PGAC_EVAL_TCLCONFIGSH([$TCL_CONFIG_SH],
+                          [TCL_LIB_FILE,TCL_LIBS,TCL_LIB_SPEC,TCL_SHARED_BUILD])
+    AC_SUBST(TCL_SHLIB_LD_LIBS)dnl don't want to double-evaluate that one
 fi
 
 # Check for Tk configuration script tkConfig.sh
 if test "$with_tk" = yes; then
     PGAC_PATH_TKCONFIGSH([$with_tkconfig $with_tclconfig])
+    PGAC_EVAL_TCLCONFIGSH([$TK_CONFIG_SH], [TK_LIBS,TK_LIB_SPEC,TK_XINCLUDES])
 fi
 
 

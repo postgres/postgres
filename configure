@@ -16405,7 +16405,13 @@ fi
 
 
 
-fi
+    . "$TCL_CONFIG_SH"
+eval TCL_LIB_FILE=\"$TCL_LIB_FILE\"
+eval TCL_LIBS=\"$TCL_LIBS\"
+eval TCL_LIB_SPEC=\"$TCL_LIB_SPEC\"
+eval TCL_SHARED_BUILD=\"$TCL_SHARED_BUILD\"
+
+    fi
 
 # Check for Tk configuration script tkConfig.sh
 if test "$with_tk" = yes; then
@@ -16443,6 +16449,11 @@ echo "${ECHO_T}$TK_CONFIG_SH" >&6
 fi
 
 
+
+    . "$TK_CONFIG_SH"
+eval TK_LIBS=\"$TK_LIBS\"
+eval TK_LIB_SPEC=\"$TK_LIB_SPEC\"
+eval TK_XINCLUDES=\"$TK_XINCLUDES\"
 
 fi
 
@@ -17435,7 +17446,15 @@ s,@XGETTEXT@,$XGETTEXT,;t t
 s,@localedir@,$localedir,;t t
 s,@TCLSH@,$TCLSH,;t t
 s,@TCL_CONFIG_SH@,$TCL_CONFIG_SH,;t t
+s,@TCL_LIB_FILE@,$TCL_LIB_FILE,;t t
+s,@TCL_LIBS@,$TCL_LIBS,;t t
+s,@TCL_LIB_SPEC@,$TCL_LIB_SPEC,;t t
+s,@TCL_SHARED_BUILD@,$TCL_SHARED_BUILD,;t t
+s,@TCL_SHLIB_LD_LIBS@,$TCL_SHLIB_LD_LIBS,;t t
 s,@TK_CONFIG_SH@,$TK_CONFIG_SH,;t t
+s,@TK_LIBS@,$TK_LIBS,;t t
+s,@TK_LIB_SPEC@,$TK_LIB_SPEC,;t t
+s,@TK_XINCLUDES@,$TK_XINCLUDES,;t t
 s,@NSGMLS@,$NSGMLS,;t t
 s,@JADE@,$JADE,;t t
 s,@have_docbook@,$have_docbook,;t t
