@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.102 2004/04/01 22:51:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.103 2004/04/01 23:52:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,19 +282,14 @@ float4in(PG_FUNCTION_ARGS)
 	errno = 0;
 	val = strtod(num, &endptr);
 
-	if (errno == ERANGE)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("\"%s\" is out of range for type real",
-						orig_num)));
-
 	/* did we not see anything that looks like a double? */
-	if (num == endptr)
+	if (endptr == num || errno != 0)
 	{
 		/*
 		 * C99 requires that strtod() accept NaN and [-]Infinity, but
-		 * not all platforms support that yet. Therefore, we check for
-		 * these inputs ourselves.
+		 * not all platforms support that yet (and some accept them but
+		 * set ERANGE anyway...)  Therefore, we check for these inputs
+		 * ourselves.
 		 */
 		if (strncasecmp(num, "NaN", 3) == 0)
 		{
@@ -311,6 +306,11 @@ float4in(PG_FUNCTION_ARGS)
 			val = - get_float4_infinity();
 			endptr = num + 9;
 		}
+		else if (errno == ERANGE)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("\"%s\" is out of range for type real",
+							orig_num)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
@@ -447,19 +447,14 @@ float8in(PG_FUNCTION_ARGS)
 	errno = 0;
 	val = strtod(num, &endptr);
 
-	if (errno == ERANGE)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("\"%s\" is out of range for type double precision",
-						orig_num)));
-
 	/* did we not see anything that looks like a double? */
-	if (num == endptr)
+	if (endptr == num || errno != 0)
 	{
 		/*
 		 * C99 requires that strtod() accept NaN and [-]Infinity, but
-		 * not all platforms support that yet. Therefore, we check for
-		 * these inputs ourselves.
+		 * not all platforms support that yet (and some accept them but
+		 * set ERANGE anyway...)  Therefore, we check for these inputs
+		 * ourselves.
 		 */
 		if (strncasecmp(num, "NaN", 3) == 0)
 		{
@@ -476,6 +471,11 @@ float8in(PG_FUNCTION_ARGS)
 			val = - get_float8_infinity();
 			endptr = num + 9;
 		}
+		else if (errno == ERANGE)
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("\"%s\" is out of range for type double precision",
+							orig_num)));
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
