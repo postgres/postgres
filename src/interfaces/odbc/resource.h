@@ -24,8 +24,6 @@
 #define DRV_OPTIMIZER                   1019
 #define DS_CONNSETTINGS                 1020
 #define IDC_DRIVER                      1021
-#define DS_UNKNOWN_MAX                  1023
-#define DS_UNKNOWN_DONTKNOW             1024
 #define DRV_CONNSETTINGS                1031
 #define DRV_UNIQUEINDEX                 1032
 #define DRV_UNKNOWN_MAX                 1035
@@ -34,7 +32,6 @@
 #define IDC_DESCTEXT                    1039
 #define DRV_MSG_LABEL                   1040
 #define DRV_UNKNOWN_LONGEST             1041
-#define DS_UNKNOWN_LONGEST              1042
 #define DRV_TEXT_LONGVARCHAR            1043
 #define DRV_UNKNOWNS_LONGVARCHAR        1044
 #define DRV_CACHE_SIZE                  1045
@@ -48,6 +45,9 @@
 #define DS_ROWVERSIONING                1052
 #define DRV_PARSE                       1052
 #define IDC_OPTIONS                     1054
+#define DRV_KSQO                        1055
+#define DS_PG64                         1057
+#define DS_PG63                         1058
 
 // Next default values for new objects
 // 
@@ -55,7 +55,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        104
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1055
+#define _APS_NEXT_CONTROL_VALUE         1060
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

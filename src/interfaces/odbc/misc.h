@@ -26,7 +26,7 @@
 	portion of the registry.  You may have to manually add this key.
 	This logfile is intended for development use, not for an end user!
 */
-#define MY_LOG
+// #define MY_LOG
 
 
 /*	Uncomment Q_LOG to compile in the qlog() statements (Communications log, i.e. CommLog).
@@ -39,41 +39,33 @@
 
 
 #ifdef MY_LOG
-  #define MYLOGFILE	"mylog_"
-  #ifndef WIN32
-    #define MYLOGDIR	"/tmp"
-  #else
-    #define MYLOGDIR	"c:"
-  #endif
-  void mylog();	/* prototype */
+#define MYLOGFILE	"mylog_"
+#ifndef WIN32
+#define MYLOGDIR	"/tmp"
 #else
-  #ifndef WIN32
-    #define mylog(args...)	/* GNU convention for variable arguments */
-  #else
-    #define mylog    // mylog
-  #endif
+#define MYLOGDIR	"c:"
+#endif
+void mylog();	/* prototype */
+#else
+#define mylog    // mylog
 #endif
 
 #ifdef Q_LOG
-  #define QLOGFILE	"psqlodbc_"
-  #ifndef WIN32
-    #define QLOGDIR		"/tmp"
-  #else
-    #define QLOGDIR		"c:"
-  #endif
-  void qlog();	/* prototype */
+#define QLOGFILE	"psqlodbc_"
+#ifndef WIN32
+#define QLOGDIR		"/tmp"
 #else
-  #ifndef WIN32
-    #define qlog(args...)	/* GNU convention for variable arguments */
-  #else
-    #define qlog    // qlog
-  #endif
+#define QLOGDIR		"c:"
+#endif
+void qlog();	/* prototype */
+#else
+#define qlog    // qlog
 #endif
 
 #ifndef WIN32
-#define DIRSEPARATOR	"/"
+#define DIRSEPERATOR	"/"
 #else
-#define DIRSEPARATOR	"\\"
+#define DIRSEPERATOR	"\\"
 #endif
 
 void remove_newlines(char *string);

@@ -129,7 +129,7 @@ RETCODE SQL_API SQLExecDirect(
         SDWORD    cbSqlStr)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
-RETCODE SQL_API result;
+RETCODE result;
 static char *func = "SQLExecDirect";
 
 	mylog( "%s: entering...\n", func);

@@ -472,8 +472,9 @@ static char *func="CC_connect";
 			globals.unknown_sizes, 
 			globals.max_varchar_size, 
 			globals.max_longvarchar_size);
-		qlog("                disable_optimizer=%d, unique_index=%d, use_declarefetch=%d\n",
+		qlog("                disable_optimizer=%d, ksqo=%d, unique_index=%d, use_declarefetch=%d\n",
 			globals.disable_optimizer,
+			globals.ksqo,
 			globals.unique_index,
 			globals.use_declarefetch);
 		qlog("                text_as_longvarchar=%d, unknowns_as_longvarchar=%d, bools_as_char=%d\n",
@@ -542,7 +543,11 @@ static char *func="CC_connect";
 			// Send length of Authentication Block
 			SOCK_put_int(sock, 4+sizeof(StartupPacket), 4); 
 
-			sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LATEST);
+			if ( PROTOCOL_63(ci))
+				sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_63);
+			else
+				sp.protoVersion = (ProtocolVersion) htonl(PG_PROTOCOL_LATEST);
+
 			strncpy(sp.database, ci->database, SM_DATABASE);
 			strncpy(sp.user, ci->username, SM_USER);
 
@@ -913,22 +918,41 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 
 				SOCK_put_string(sock, "Q ");
 				SOCK_flush_output(sock);
-				while(!clear) {
-					SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-					mylog("send_query: read command '%s'\n", cmdbuffer);
-					clear = (cmdbuffer[0] == 'I');
 
-					if (cmdbuffer[0] == 'N')
-						qlog("NOTICE from backend during send_query: '%s'\n", &cmdbuffer[1]);
-					else if (cmdbuffer[0] == 'E')
-						qlog("ERROR from backend during send_query: '%s'\n", &cmdbuffer[1]);
-					else if (cmdbuffer[0] == 'C')
-						qlog("Command response: '%s'\n", &cmdbuffer[1]);
+				while( ! clear) {
+					id = SOCK_get_char(sock);
+					switch(id) {
+					case 'I':
+						(void) SOCK_get_char(sock);
+						clear = TRUE;
+						break;
+					case 'Z':
+						break;
+					case 'C':
+						SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+						qlog("Command response: '%s'\n", cmdbuffer);
+						break;
+					case 'N':
+						SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+						qlog("NOTICE from backend during clear: '%s'\n", cmdbuffer);
+						break;
+					case 'E':
+						SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
+						qlog("ERROR from backend during clear: '%s'\n", cmdbuffer);
+						break;
+					}
 				}
-
+				
 				mylog("send_query: returning res = %u\n", res);
 				return res;
 			}
+		case 'K':	/* Secret key (6.4 protocol) */
+			(void)SOCK_get_int(sock, 4); /* pid */
+			(void)SOCK_get_int(sock, 4); /* key */
+
+			break;
+		case 'Z':	/* Backend is ready for new query (6.4) */
+			break;
 		case 'N' : /* NOTICE: */
 			SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 
@@ -1206,6 +1230,16 @@ static char *func="CC_send_settings";
 			status = FALSE;
 
 		mylog("%s: result %d, status %d from set geqo\n", func, result, status);
+	
+	}
+
+	/*	KSQO */
+	if (globals.ksqo) {
+		result = SQLExecDirect(hstmt, "set ksqo to 'ON'", SQL_NTS);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+			status = FALSE;
+
+		mylog("%s: result %d, status %d from set ksqo\n", func, result, status);
 	
 	}
 

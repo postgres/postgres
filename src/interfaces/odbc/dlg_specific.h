@@ -59,6 +59,7 @@
 #define INI_COMMLOG       "CommLog"			/* Communication to backend logging */
 #define INI_PROTOCOL      "Protocol"		/* What protocol (6.2) */
 #define INI_OPTIMIZER     "Optimizer"		/* Use backend genetic optimizer */
+#define INI_KSQO          "Ksqo"            /* Keyset query optimization */
 #define INI_CONNSETTINGS  "ConnSettings"	/* Anything to send to backend on successful connection */
 #define INI_UNIQUEINDEX   "UniqueIndex"		/* Recognize unique indexes */
 #define INI_UNKNOWNSIZES  "UnknownSizes"	/* How to handle unknown result set sizes */
@@ -93,6 +94,7 @@
 #define DEFAULT_UNKNOWNSASLONGVARCHAR	0
 #define DEFAULT_BOOLSASCHAR				1
 #define DEFAULT_OPTIMIZER				1		// disable
+#define DEFAULT_KSQO					1		// on
 #define DEFAULT_UNIQUEINDEX				0		// dont recognize
 #define DEFAULT_COMMLOG					0		// dont log
 #define DEFAULT_DEBUG					0

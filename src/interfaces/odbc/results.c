@@ -855,7 +855,7 @@ mylog("SQLFetch: stmt = %u, stmt->result= %u\n", stmt, stmt->result);
 				value = QR_get_value_backend_row(res, stmt->currTuple, lf);
 			}
 
-			mylog("value = '%s'\n", (value==NULL)?"<NULL>":value);
+			mylog("value = '%s'\n", value);
 
 			retval = copy_and_convert_field_bindinfo(stmt, type, value, lf);
 

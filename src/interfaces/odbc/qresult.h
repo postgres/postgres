@@ -72,12 +72,13 @@ struct QResultClass_ {
 #define QR_get_fieldname(self, fieldno_)	(CI_get_fieldname(self->fields, fieldno_))
 #define QR_get_fieldsize(self, fieldno_)	(CI_get_fieldsize(self->fields, fieldno_))    
 #define QR_get_display_size(self, fieldno_)	(CI_get_display_size(self->fields, fieldno_))    
+#define QR_get_atttypmod(self, fieldno_)	(CI_get_atttypmod(self->fields, fieldno_))    
 #define QR_get_field_type(self, fieldno_)   (CI_get_oid(self->fields, fieldno_))
 
 /*	These functions are used only for manual result sets */
 #define QR_get_num_tuples(self)				(self->manual_tuples ? TL_get_num_tuples(self->manual_tuples) : self->fcount)
 #define QR_add_tuple(self, new_tuple)		(TL_add_tuple(self->manual_tuples, new_tuple))
-#define QR_set_field_info(self, field_num, name, adtid, adtsize)  (CI_set_field_info(self->fields, field_num, name, adtid, adtsize))
+#define QR_set_field_info(self, field_num, name, adtid, adtsize)  (CI_set_field_info(self->fields, field_num, name, adtid, adtsize, -1))
 
 /* status macros */
 #define QR_command_successful(self)		( !(self->status == PGRES_BAD_RESPONSE || self->status == PGRES_NONFATAL_ERROR || self->status == PGRES_FATAL_ERROR))

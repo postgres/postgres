@@ -242,6 +242,9 @@ mylog("getCharPrecision: type=%d, col=%d, unknown = %d\n", type,col,handle_unkno
 	}
 
 	/*	Size is unknown -- handle according to parameter */
+	if (QR_get_atttypmod(result, col) > -1)
+		return QR_get_atttypmod(result, col);
+
 	if (type == PG_TYPE_BPCHAR || handle_unknown_size_as == UNKNOWNS_AS_LONGEST) {
 		p = QR_get_display_size(result, col);
 		mylog("getCharPrecision: LONGEST: p = %d\n", p);

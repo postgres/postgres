@@ -14,6 +14,8 @@
 #include "config.h"
 #endif
 
+#include "psqlodbc.h"
+
 #ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
@@ -24,7 +26,6 @@
 #include <sqlext.h>
 #endif
 
-#include "psqlodbc.h"
 
 typedef enum {
     CONN_NOT_CONNECTED,      /* Connection has not been established */
@@ -100,10 +101,11 @@ typedef enum {
 typedef unsigned int ProtocolVersion;
 
 #define PG_PROTOCOL(major, minor)	(((major) << 16) | (minor))
-#define PG_PROTOCOL_LATEST		PG_PROTOCOL(1, 0)
-#define PG_PROTOCOL_EARLIEST	PG_PROTOCOL(0, 0)
+#define PG_PROTOCOL_LATEST		PG_PROTOCOL(2, 0)
+#define PG_PROTOCOL_63			PG_PROTOCOL(1, 0)
+#define PG_PROTOCOL_62			PG_PROTOCOL(0, 0)
 
-/*	This startup packet is to support latest Postgres protocol (6.3) */
+/*	This startup packet is to support latest Postgres protocol (6.4, 6.3) */
 typedef struct _StartupPacket
 {
 	ProtocolVersion	protoVersion;
@@ -154,6 +156,8 @@ typedef struct {
 /*	Macro to determine is the connection using 6.2 protocol? */
 #define PROTOCOL_62(conninfo_)		(strncmp((conninfo_)->protocol, PG62, strlen(PG62)) == 0)
 
+/*	Macro to determine is the connection using 6.3 protocol? */
+#define PROTOCOL_63(conninfo_)		(strncmp((conninfo_)->protocol, PG63, strlen(PG63)) == 0)
 
 
 /*	This is used to store cached table information in the connection */

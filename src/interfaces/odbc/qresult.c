@@ -186,8 +186,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 	if (conn != NULL) {
 		self->conn = conn;
 
-		mylog("QR_fetch_tuples: cursor = '%s', self->cursor=%u\n", 
-		(cursor==NULL)?"":cursor, self->cursor);
+		mylog("QR_fetch_tuples: cursor = '%s', self->cursor=%u\n", cursor, self->cursor);
 
 		if (self->cursor)
 			free(self->cursor);
@@ -203,7 +202,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 
 		//	Read the field attributes.
 		//	$$$$ Should do some error control HERE! $$$$
-		if ( CI_read_fields(self->fields, CC_get_socket(self->conn))) {
+		if ( CI_read_fields(self->fields, self->conn)) {
 			self->status = PGRES_FIELDS_OK;
 			self->num_fields = CI_get_num_fields(self->fields);
 		}
@@ -236,7 +235,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 		//	Always have to read the field attributes.
 		//	But we dont have to reallocate memory for them!
 
-		if ( ! CI_read_fields(NULL, CC_get_socket(self->conn))) {
+		if ( ! CI_read_fields(NULL, self->conn)) {
 			self->status = PGRES_BAD_RESPONSE;
 			QR_set_message(self, "Error reading field information");
 			return FALSE;
@@ -369,6 +368,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 	for ( ; ;) {
 
 		id = SOCK_get_char(sock);
+
 		switch (id) {
 		case 'T': /* Tuples within tuples cannot be handled */
 			self->status = PGRES_BAD_RESPONSE;
@@ -441,6 +441,8 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 			continue;
 
 		default: /* this should only happen if the backend dumped core */
+			mylog("QR_next_tuple: Unexpected result from backend: id = '%c' (%d)\n", id, id);
+			qlog("QR_next_tuple: Unexpected result from backend: id = '%c' (%d)\n", id, id);
 			QR_set_message(self, "Unexpected result from backend. It probably crashed");
 			self->status = PGRES_FATAL_ERROR;
 			CC_set_no_trans(self->conn);

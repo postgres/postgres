@@ -87,6 +87,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 
 		CheckDlgButton(hdlg, DRV_COMMLOG, globals.commlog);
 		CheckDlgButton(hdlg, DRV_OPTIMIZER, globals.disable_optimizer);
+		CheckDlgButton(hdlg, DRV_KSQO, globals.ksqo);
 		CheckDlgButton(hdlg, DRV_UNIQUEINDEX, globals.unique_index);
 		CheckDlgButton(hdlg, DRV_READONLY, globals.readonly);
 		CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, globals.use_declarefetch);
@@ -128,6 +129,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 
 			globals.commlog = IsDlgButtonChecked(hdlg, DRV_COMMLOG);
 			globals.disable_optimizer = IsDlgButtonChecked(hdlg, DRV_OPTIMIZER);
+			globals.ksqo = IsDlgButtonChecked(hdlg, DRV_KSQO);
 			globals.unique_index = IsDlgButtonChecked(hdlg, DRV_UNIQUEINDEX);
 			globals.readonly = IsDlgButtonChecked(hdlg, DRV_READONLY);
 			globals.use_declarefetch = IsDlgButtonChecked(hdlg, DRV_USEDECLAREFETCH);
@@ -168,6 +170,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 		case IDDEFAULTS:
 			CheckDlgButton(hdlg, DRV_COMMLOG, DEFAULT_COMMLOG);
 			CheckDlgButton(hdlg, DRV_OPTIMIZER, DEFAULT_OPTIMIZER);
+			CheckDlgButton(hdlg, DRV_KSQO, DEFAULT_KSQO);
 			CheckDlgButton(hdlg, DRV_UNIQUEINDEX, DEFAULT_UNIQUEINDEX);
 			CheckDlgButton(hdlg, DRV_READONLY, DEFAULT_READONLY);
 			CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, DEFAULT_USEDECLAREFETCH);
@@ -238,8 +241,11 @@ char buf[128];
 		/*	Protocol */
 		if (strncmp(ci->protocol, PG62, strlen(PG62)) == 0)
 			CheckDlgButton(hdlg, DS_PG62, 1);
-		else
-			CheckDlgButton(hdlg, DS_PG62, 0);
+		else if (strncmp(ci->protocol, PG63, strlen(PG63)) == 0)
+			CheckDlgButton(hdlg, DS_PG63, 1);
+		else 
+			CheckDlgButton(hdlg, DS_PG64, 1);
+
 
 
 		CheckDlgButton(hdlg, DS_SHOWOIDCOLUMN, atoi(ci->show_oid_column));
@@ -273,10 +279,10 @@ char buf[128];
 			/*	Protocol */
 			if ( IsDlgButtonChecked(hdlg, DS_PG62))
 				strcpy(ci->protocol, PG62);
-			else 
+			else if ( IsDlgButtonChecked(hdlg, DS_PG63))
+				strcpy(ci->protocol, PG63);
+			else
 				ci->protocol[0] = '\0';
-
-
 
 			sprintf(ci->show_system_tables, "%d", IsDlgButtonChecked(hdlg, DS_SHOWSYSTEMTABLES));
 
@@ -634,6 +640,13 @@ char temp[256];
 	else if ( ! override)
 		globals.disable_optimizer = DEFAULT_OPTIMIZER;
 
+	//	KSQO is stored in the driver section only
+	SQLGetPrivateProfileString(section, INI_KSQO, "", 
+				temp, sizeof(temp), filename);
+	if ( temp[0] ) 
+		globals.ksqo = atoi(temp);
+	else if ( ! override)
+		globals.ksqo = DEFAULT_KSQO;
 
 	//	Recognize Unique Index is stored in the driver section only
 	SQLGetPrivateProfileString(section, INI_UNIQUEINDEX, "", 
@@ -768,6 +781,10 @@ char tmp[128];
 	sprintf(tmp, "%d", globals.disable_optimizer);
 	SQLWritePrivateProfileString(DBMS_NAME,
 		INI_OPTIMIZER, tmp, ODBCINST_INI);
+
+	sprintf(tmp, "%d", globals.ksqo);
+	SQLWritePrivateProfileString(DBMS_NAME,
+		INI_KSQO, tmp, ODBCINST_INI);
 
 	sprintf(tmp, "%d", globals.unique_index);
 	SQLWritePrivateProfileString(DBMS_NAME,

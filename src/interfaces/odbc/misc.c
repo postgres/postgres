@@ -44,7 +44,7 @@ generate_filename(char* dirname,char* prefix,char* filename)
 		return;
 
 	strcpy(filename,dirname);
-	strcat(filename,DIRSEPARATOR);
+	strcat(filename,DIRSEPERATOR);
 	if(prefix != 0)
 		strcat(filename,prefix);
 #ifndef WIN32

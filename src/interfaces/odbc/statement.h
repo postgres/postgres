@@ -14,6 +14,8 @@
 #include "config.h"
 #endif
 
+#include "psqlodbc.h"
+
 #ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
@@ -22,7 +24,6 @@
 #include <sql.h>
 #endif
 
-#include "psqlodbc.h"
 
 #ifndef FALSE
 #define FALSE	(BOOL)0

@@ -33,6 +33,7 @@ typedef double SDOUBLE;
 
 typedef UInt4 Oid;
 
+# define ODBCVER   0x0200
 
 /* Limits */
 #define MAX_MESSAGE_LEN				8192
@@ -69,8 +70,8 @@ typedef UInt4 Oid;
 /* Driver stuff */
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.30.0250 PostgreSQL 6.3"
-#define POSTGRESDRIVERVERSION  "06.30.0250"
+#define DBMS_VERSION           "06.40.0001 PostgreSQL 6.4"
+#define POSTGRESDRIVERVERSION  "06.40.0001"
 
 #ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
@@ -79,7 +80,7 @@ typedef UInt4 Oid;
 #endif
 
 #define PG62	"6.2"		/* "Protocol" key setting to force Postgres 6.2 */
-
+#define PG63	"6.3"		/* "Protocol" key setting to force postgres 6.3 */
 
 typedef struct ConnectionClass_ ConnectionClass;
 typedef struct StatementClass_ StatementClass;
@@ -106,6 +107,7 @@ typedef struct GlobalValues_
 	char				debug;
 	char				commlog;
 	char				disable_optimizer;
+	char				ksqo;
 	char				unique_index;
 	char				readonly;
 	char				use_declarefetch;

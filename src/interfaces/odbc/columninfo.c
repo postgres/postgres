@@ -13,6 +13,7 @@
  */
 
 #include "columninfo.h"
+#include "connection.h"
 #include "socket.h"
 #include <stdlib.h>
 #include <malloc.h>
@@ -31,6 +32,7 @@ ColumnInfoClass *rv;
 		rv->adtid = NULL;
 		rv->adtsize = NULL;
 		rv->display_size = NULL;
+		rv->atttypmod = NULL;
 	}
 
 	return rv;
@@ -49,14 +51,19 @@ CI_Destructor(ColumnInfoClass *self)
 	If self is null, then just read, don't store.
 */
 char
-CI_read_fields(ColumnInfoClass *self, SocketClass *sock)
+CI_read_fields(ColumnInfoClass *self, ConnectionClass *conn)
 {
 Int2 lf;
 int new_num_fields;
 Oid new_adtid;
 Int2 new_adtsize;
+Int4 new_atttypmod = -1;
 char new_field_name[MAX_MESSAGE_LEN+1];
+SocketClass *sock;
+ConnInfo *ci;
 
+	sock = CC_get_socket(conn);
+	ci = &conn->connInfo;
 
 	/* at first read in the number of fields that are in the query */
 	new_num_fields = (Int2) SOCK_get_int(sock, sizeof(Int2));
@@ -74,10 +81,23 @@ char new_field_name[MAX_MESSAGE_LEN+1];
 		new_adtid = (Oid) SOCK_get_int(sock, 4);
 		new_adtsize = (Int2) SOCK_get_int(sock, 2);
 
-		mylog("CI_read_fields: fieldname='%s', adtid=%d, adtsize=%d\n", new_field_name, new_adtid, new_adtsize);
+		/*	If 6.4 protocol, then read the atttypmod field */
+		if ( ! PROTOCOL_63(ci) && ! PROTOCOL_62(ci)) {
+
+			mylog("READING ATTTYPMOD\n");
+			new_atttypmod = (Int4) SOCK_get_int(sock, 4);
+
+			/*	Subtract the header length */
+			new_atttypmod -= 4;
+			if (new_atttypmod < 0)
+				new_atttypmod = -1;
+
+		}
+
+		mylog("CI_read_fields: fieldname='%s', adtid=%d, adtsize=%d, atttypmod=%d\n", new_field_name, new_adtid, new_adtsize, new_atttypmod);
 
 		if (self)
-			CI_set_field_info(self, lf, new_field_name, new_adtid, new_adtsize);
+			CI_set_field_info(self, lf, new_field_name, new_adtid, new_adtsize, new_atttypmod);
 	}
 
 	return (SOCK_get_errcode(sock) == 0);
@@ -101,6 +121,8 @@ int num_fields = self->num_fields;
 	free(self->adtid);
 	free(self->adtsize);
 	free(self->display_size);
+
+	free(self->atttypmod);
 }
 
 void
@@ -114,11 +136,12 @@ CI_set_num_fields(ColumnInfoClass *self, int new_num_fields)
 	self->adtid = (Oid *) malloc (sizeof(Oid) * self->num_fields);
 	self->adtsize = (Int2 *) malloc (sizeof(Int2) * self->num_fields);
 	self->display_size = (Int2 *) malloc(sizeof(Int2) * self->num_fields);
+	self->atttypmod = (Int4 *) malloc(sizeof(Int4) * self->num_fields);
 }
 
 void
 CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name, 
-                                      Oid new_adtid, Int2 new_adtsize)
+                                      Oid new_adtid, Int2 new_adtsize, Int4 new_atttypmod)
 {
     
 	// check bounds
@@ -130,6 +153,7 @@ CI_set_field_info(ColumnInfoClass *self, int field_num, char *new_name,
 	self->name[field_num] = strdup(new_name);  
 	self->adtid[field_num] = new_adtid;
 	self->adtsize[field_num] = new_adtsize;
+	self->atttypmod[field_num] = new_atttypmod;
 
 	self->display_size[field_num] = 0;
 }
