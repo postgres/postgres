@@ -1068,7 +1068,6 @@ function is no longer actively supported.
 </para>
 </listitem>
 
-</listitem>
 <listitem>
 <para>
 <function>PQclear</function>
