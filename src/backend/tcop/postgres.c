@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.392 2004/02/17 04:09:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.393 2004/02/21 06:29:58 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3240,8 +3240,9 @@ log_disconnections(int code, Datum arg)
 		snprintf(session_time,sizeof(session_time),"negative!");
 	else
 		/* for stricter accuracy here we could round - this is close enough */
-		snprintf(session_time, sizeof(session_time),"%d:%02d:%02d.%02ld",
-				 hours, minutes, seconds, end.tv_usec/10000);
+		snprintf(session_time, sizeof(session_time),
+			 "%d:%02d:%02d.%02d",
+			 hours, minutes, seconds, (int) (end.tv_usec/10000));
       
 	ereport(
 		LOG,

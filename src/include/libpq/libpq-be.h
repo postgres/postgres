@@ -11,20 +11,21 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.40 2004/02/17 03:54:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.41 2004/02/21 06:29:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LIBPQ_BE_H
 #define LIBPQ_BE_H
 
-#include "libpq/hba.h"
-#include "libpq/pqcomm.h"
-
+#include <sys/time.h>
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #endif
+
+#include "libpq/hba.h"
+#include "libpq/pqcomm.h"
 
 
 typedef enum CAC_state
