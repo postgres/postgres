@@ -24,7 +24,7 @@
     at a  given  site  and  you  automatically  become  the
     database  administrator  of  the database you just created.  
     Database names must  have  an  alphabetic  first
-    character and are limited to 16 characters in length.
+    character and are limited to 31 characters in length.
     Not  every  user has authorization to become a database
     administrator.  If <productname>Postgres</productname> 
     refuses to create databases
