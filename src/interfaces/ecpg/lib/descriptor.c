@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.20 2001/12/23 12:17:41 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.21 2002/01/11 14:43:11 meskes Exp $
  */
 
 #include "postgres_fe.h"
@@ -10,6 +10,7 @@
 #include "ecpglib.h"
 #include "ecpgerrno.h"
 #include "extern.h"
+#include "sqlca.h"
 #include "sql3types.h"
 
 struct descriptor *all_descriptors = NULL;
@@ -49,12 +50,15 @@ ECPGDynamicType_DDT(Oid type)
 bool
 ECPGget_desc_header(int lineno, char *desc_name, int *count)
 {
-	PGresult   *ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
+	PGresult   *ECPGresult;
 
+	ECPGinit_sqlca();
+	ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
 	if (!ECPGresult)
 		return false;
 
 	*count = PQnfields(ECPGresult);
+	sqlca.sqlerrd[2]=1;
 	ECPGlog("ECPGget_desc_header: found %d attributes.\n", *count);
 	return true;
 }
@@ -140,13 +144,15 @@ bool
 ECPGget_desc(int lineno, char *desc_name, int index,...)
 {
 	va_list		args;
-	PGresult   *ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
+	PGresult   *ECPGresult;
 	enum ECPGdtype type;
 	int			ntuples,
 				act_tuple;
 	struct variable data_var;
 	
 	va_start(args, index);
+	ECPGinit_sqlca();
+	ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
 	if (!ECPGresult)
 		return (false);
 
@@ -359,7 +365,7 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 			ECPGlog("ECPGget_desc: INDICATOR[%d] = %d\n", act_tuple, -PQgetisnull(ECPGresult, act_tuple, index));
 		}
 	}
-	
+	sqlca.sqlerrd[2]=ntuples;
 	return (true);
 }
 
@@ -369,6 +375,7 @@ ECPGdeallocate_desc(int line, const char *name)
 	struct descriptor *i;
 	struct descriptor **lastptr = &all_descriptors;
 
+	ECPGinit_sqlca();
 	for (i = all_descriptors; i; lastptr = &i->next, i = i->next)
 	{
 		if (!strcmp(name, i->name))
@@ -387,11 +394,26 @@ ECPGdeallocate_desc(int line, const char *name)
 bool
 ECPGallocate_desc(int line, const char *name)
 {
-	struct descriptor *new = (struct descriptor *) ECPGalloc(sizeof(struct descriptor), line);
+	struct descriptor *new;
 
+	ECPGinit_sqlca();
+	new = (struct descriptor *) ECPGalloc(sizeof(struct descriptor), line);
+	if (!new) return false;
 	new->next = all_descriptors;
 	new->name = ECPGalloc(strlen(name) + 1, line);
+	if (!new->name) 
+	{
+		ECPGfree(new);
+		return false;
+	}
 	new->result = PQmakeEmptyPGresult(NULL, 0);
+	if (!new->result) 
+	{
+		ECPGfree(new->name);
+		ECPGfree(new);
+		ECPGraise(line, ECPG_OUT_OF_MEMORY, NULL);
+		return false;
+	}
 	strcpy(new->name, name);
 	all_descriptors = new;
 	return true;

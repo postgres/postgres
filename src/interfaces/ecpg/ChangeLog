@@ -1196,5 +1196,10 @@ Tue Jan  8 15:16:37 CET 2002
 Thu Jan 10 11:12:14 CET 2002
 
 	- Include sqlca.h automatically.
+
+Fri Jan 11 15:43:39 CET 2002
+
+	- clear sqlca on : [de]allocate descriptor  & get descriptor and set
+	  sqlca.sqlerrd[2] accordingly (Christof).
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.
