@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.36 1997/01/27 22:37:48 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.37 1997/02/06 06:15:49 scrappy Exp $
  *
  * NOTES
  *
@@ -86,7 +86,7 @@
 #if defined(DBX_VERSION)
 # define FORK() (0)
 #else
-# if defined(NO_VFORK)
+# ifndef HAVE_VFORK)
 #  define FORK() fork()
 # else
 #  define FORK() vfork()

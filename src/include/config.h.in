@@ -59,6 +59,9 @@
 /* Set to 1 if you have kill() */
 #undef HAVE_KILL
 
+/* Set to 1 if you have vfork() */
+#undef HAVE_VFORK
+
 /* Set to 1 if you have sysconf() */
 #undef HAVE_SYSCONF
 
@@ -81,7 +84,6 @@
 #if defined(aix)
 #  define CLASS_CONFLICT 
 #  define DISABLE_XOPEN_NLS 
-#  define HAVE_SYS_SELECT_H
 #  define HAVE_ANSI_CPP
 #  define HAS_TEST_AND_SET
    typedef unsigned int slock_t;
@@ -135,7 +137,6 @@
 #if defined(i386_solaris) 
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
-#  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
@@ -146,7 +147,6 @@
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define NO_EMPTY_STMTS
-#  define NO_VFORK
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
 #  include <abi_mutex.h>
@@ -193,7 +193,6 @@
 #if defined(sparc_solaris)
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
-#  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define USE_POSIX_TIME
 #  define SYSV_DIRENT
@@ -209,7 +208,6 @@ typedef unsigned char slock_t;
 #if defined(svr4) 
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
-#  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define SYSV_DIRENT
 #endif
