@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.50 2002/08/22 04:45:11 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.51 2002/08/29 07:22:26 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,7 @@
 
 #include <ctype.h>
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 #include "utils/builtins.h"
 
 
@@ -38,7 +36,6 @@ static int MatchBytea(unsigned char *t, int tlen,
 		   unsigned char *p, int plen);
 static text *do_like_escape(text *, text *);
 
-#ifdef MULTIBYTE
 static int MBMatchText(unsigned char *t, int tlen,
 			unsigned char *p, int plen);
 static int MBMatchTextIC(unsigned char *t, int tlen,
@@ -107,9 +104,7 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 	c2[0] = tolower(c2[0]);
 	return (c1[0] == c2[0]);
 }
-#endif
 
-#ifdef MULTIBYTE
 #define CHAREQ(p1, p2) wchareq(p1, p2)
 #define ICHAREQ(p1, p2) iwchareq(p1, p2)
 #define NextChar(p, plen) \
@@ -132,7 +127,6 @@ iwchareq(unsigned char *p1, unsigned char *p2)
 #undef MatchText
 #undef MatchTextIC
 #undef do_like_escape
-#endif
 
 #define CHAREQ(p1, p2) (*(p1) == *(p2))
 #define ICHAREQ(p1, p2) (tolower(*(p1)) == tolower(*(p2)))
@@ -164,14 +158,10 @@ namelike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 	else
 		result = (MBMatchText(s, slen, p, plen) == LIKE_TRUE);
-#else
-	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -192,14 +182,10 @@ namenlike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 	else
 		result = (MBMatchText(s, slen, p, plen) != LIKE_TRUE);
-#else
-	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -220,14 +206,10 @@ textlike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
 	else
 		result = (MBMatchText(s, slen, p, plen) == LIKE_TRUE);
-#else
-	result = (MatchText(s, slen, p, plen) == LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -248,14 +230,10 @@ textnlike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
 	else
 		result = (MBMatchText(s, slen, p, plen) != LIKE_TRUE);
-#else
-	result = (MatchText(s, slen, p, plen) != LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -322,14 +300,10 @@ nameiclike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 	else
 		result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);
-#else
-	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -350,14 +324,10 @@ nameicnlike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 	else
 		result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);
-#else
-	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -378,14 +348,10 @@ texticlike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
 	else
 		result = (MBMatchTextIC(s, slen, p, plen) == LIKE_TRUE);
-#else
-	result = (MatchTextIC(s, slen, p, plen) == LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -406,14 +372,10 @@ texticnlike(PG_FUNCTION_ARGS)
 	p = VARDATA(pat);
 	plen = (VARSIZE(pat) - VARHDRSZ);
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
 	else
 		result = (MBMatchTextIC(s, slen, p, plen) != LIKE_TRUE);
-#else
-	result = (MatchTextIC(s, slen, p, plen) != LIKE_TRUE);
-#endif
 
 	PG_RETURN_BOOL(result);
 }
@@ -429,14 +391,10 @@ like_escape(PG_FUNCTION_ARGS)
 	text	   *esc = PG_GETARG_TEXT_P(1);
 	text	   *result;
 
-#ifdef MULTIBYTE
 	if (pg_database_encoding_max_length() == 1)
 		result = do_like_escape(pat, esc);
 	else
 		result = MB_do_like_escape(pat, esc);
-#else
-	result = do_like_escape(pat, esc);
-#endif
 
 	PG_RETURN_TEXT_P(result);
 }

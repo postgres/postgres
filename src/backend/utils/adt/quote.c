@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.7 2002/04/04 04:25:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/quote.c,v 1.8 2002/08/29 07:22:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,102 +69,6 @@ quote_literal(PG_FUNCTION_ARGS)
  * MULTIBYTE dependant internal functions follow
  *
  */
-
-
-#ifndef MULTIBYTE
-
-/* Check if a given identifier needs quoting */
-static bool
-quote_ident_required(text *iptr)
-{
-	char	   *cp;
-	char	   *ep;
-
-	cp = VARDATA(iptr);
-	ep = VARDATA(iptr) + VARSIZE(iptr) - VARHDRSZ;
-
-	if (cp >= ep)
-		return true;
-
-	if (!(*cp == '_' || (*cp >= 'a' && *cp <= 'z')))
-		return true;
-
-	while ((++cp) < ep)
-	{
-		if (*cp >= 'a' && *cp <= 'z')
-			continue;
-		if (*cp >= '0' && *cp <= '9')
-			continue;
-		if (*cp == '_')
-			continue;
-
-		return true;
-	}
-
-	return false;
-}
-
-/* Return a properly quoted identifier */
-static text *
-do_quote_ident(text *iptr)
-{
-	text	   *result;
-	char	   *cp1;
-	char	   *cp2;
-	int			len;
-
-	len = VARSIZE(iptr) - VARHDRSZ;
-	result = (text *) palloc(len * 2 + VARHDRSZ + 2);
-
-	cp1 = VARDATA(iptr);
-	cp2 = VARDATA(result);
-
-	*cp2++ = '"';
-	while (len-- > 0)
-	{
-		if (*cp1 == '"')
-			*cp2++ = '"';
-		*cp2++ = *cp1++;
-	}
-	*cp2++ = '"';
-
-	VARATT_SIZEP(result) = cp2 - ((char *) result);
-
-	return result;
-}
-
-/* Return a properly quoted literal value */
-static text *
-do_quote_literal(text *lptr)
-{
-	text	   *result;
-	char	   *cp1;
-	char	   *cp2;
-	int			len;
-
-	len = VARSIZE(lptr) - VARHDRSZ;
-	result = (text *) palloc(len * 2 + VARHDRSZ + 2);
-
-	cp1 = VARDATA(lptr);
-	cp2 = VARDATA(result);
-
-	*cp2++ = '\'';
-	while (len-- > 0)
-	{
-		if (*cp1 == '\'')
-			*cp2++ = '\'';
-		if (*cp1 == '\\')
-			*cp2++ = '\\';
-		*cp2++ = *cp1++;
-	}
-	*cp2++ = '\'';
-
-	VARATT_SIZEP(result) = cp2 - ((char *) result);
-
-	return result;
-}
-
-#else
 
 /* Check if a given identifier needs quoting (MULTIBYTE version) */
 static bool
@@ -285,5 +189,3 @@ do_quote_literal(text *lptr)
 
 	return result;
 }
-
-#endif

@@ -91,13 +91,7 @@ static void p_b_cclass(struct parse * p, cset *cs);
 static void p_b_eclass(struct parse * p, cset *cs);
 static pg_wchar p_b_symbol(struct parse * p);
 static char p_b_coll_elem(struct parse * p, int endc);
-
-#ifdef MULTIBYTE
 static unsigned char othercase(int ch);
-
-#else
-static char othercase(int ch);
-#endif
 static void bothcases(struct parse * p, int ch);
 static void ordinary(struct parse * p, int ch);
 static void nonnewline(struct parse * p);
@@ -184,10 +178,7 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 	struct parse *p = &pa;
 	int			i;
 	size_t		len;
-
-#ifdef MULTIBYTE
 	pg_wchar   *wcp;
-#endif
 
     if ( cclasses == NULL )
         cclasses = cclass_init();
@@ -204,29 +195,19 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 
 	if (cflags & REG_PEND)
 	{
-#ifdef MULTIBYTE
 		wcp = preg->patsave;
 		if (preg->re_endp < wcp)
 			return REG_INVARG;
 		len = preg->re_endp - wcp;
-#else
-		if (preg->re_endp < pattern)
-			return REG_INVARG;
-		len = preg->re_endp - pattern;
-#endif
 	}
 	else
 	{
-#ifdef MULTIBYTE
 		wcp = (pg_wchar *) malloc((strlen(pattern) + 1) * sizeof(pg_wchar));
 		if (wcp == NULL)
 			return REG_ESPACE;
 		preg->patsave = wcp;
 		(void) pg_mb2wchar((unsigned char *) pattern, wcp);
 		len = pg_wchar_strlen(wcp);
-#else
-		len = strlen((char *) pattern);
-#endif
 	}
 
 	/* do the mallocs early so failure handling is easy */
@@ -246,12 +227,7 @@ pg_regcomp(regex_t *preg, const char *pattern, int cflags)
 
 	/* set things up */
 	p->g = g;
-#ifdef MULTIBYTE
 	p->next = wcp;
-#else
-	p->next = (pg_wchar *) pattern;		/* convenience; we do not modify
-										 * it */
-#endif
 	p->end = p->next + len;
 	p->error = 0;
 	p->ncsalloc = 0;
@@ -591,11 +567,7 @@ p_simp_re(struct parse * p,
 	if (c == '\\')
 	{
 		REQUIRE(MORE(), REG_EESCAPE);
-#ifdef MULTIBYTE
 		c = BACKSL | (pg_wchar) GETNEXT();
-#else
-		c = BACKSL | (unsigned char) GETNEXT();
-#endif
 	}
 	switch (c)
 	{
@@ -736,27 +708,17 @@ p_bracket(struct parse * p)
 	cset	   *cs = allocset(p);
 	int			invert = 0;
 
-#ifdef MULTIBYTE
 	pg_wchar	sp1[] = {'[', ':', '<', ':', ']', ']'};
 	pg_wchar	sp2[] = {'[', ':', '>', ':', ']', ']'};
-#endif
 
 	/* Dept of Truly Sickening Special-Case Kludges */
-#ifdef MULTIBYTE
 	if (p->next + 5 < p->end && pg_wchar_strncmp(p->next, sp1, 6) == 0)
-#else
-	if (p->next + 5 < p->end && strncmp(p->next, "[:<:]]", 6) == 0)
-#endif
 	{
 		EMIT(OBOW, 0);
 		NEXTn(6);
 		return;
 	}
-#ifdef MULTIBYTE
 	if (p->next + 5 < p->end && pg_wchar_strncmp(p->next, sp2, 6) == 0)
-#else
-	if (p->next + 5 < p->end && strncmp(p->next, "[:>:]]", 6) == 0)
-#endif
 	{
 		EMIT(OEOW, 0);
 		NEXTn(6);
@@ -881,10 +843,10 @@ p_b_term(struct parse * p, cset *cs)
 				finish = start;
 /* xxx what about signed chars here... */
 			REQUIRE(start <= finish, REG_ERANGE);
-#ifdef MULTIBYTE
+
 			if (CHlc(start) != CHlc(finish))
 				SETERROR(REG_ERANGE);
-#endif
+
 			for (i = start; i <= finish; i++)
 				CHadd(cs, i);
 			break;
@@ -906,13 +868,11 @@ p_b_cclass(struct parse * p, cset *cs)
 	while (MORE() && pg_isalpha(PEEK()))
 		NEXT();
 	len = p->next - sp;
+
 	for (cp = cclasses; cp->name != NULL; cp++)
-#ifdef MULTIBYTE
 		if (pg_char_and_wchar_strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
-#else
-		if (strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
-#endif
 			break;
+
 	if (cp->name == NULL)
 	{
 		/* oops, didn't find it */
@@ -977,13 +937,11 @@ p_b_coll_elem(struct parse * p, int endc)
 		return 0;
 	}
 	len = p->next - sp;
+
 	for (cp = cnames; cp->name != NULL; cp++)
-#ifdef MULTIBYTE
 		if (pg_char_and_wchar_strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
-#else
-		if (strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
-#endif
 			return cp->code;	/* known name */
+
 	if (len == 1)
 		return *sp;				/* single character */
 	SETERROR(REG_ECOLLATE);		/* neither */
@@ -993,33 +951,17 @@ p_b_coll_elem(struct parse * p, int endc)
 /*
  * othercase - return the case counterpart of an alphabetic
  */
-#ifdef MULTIBYTE
 static unsigned char			/* if no counterpart, return ch */
-#else
-static char						/* if no counterpart, return ch */
-#endif
 othercase(int ch)
 {
 	assert(pg_isalpha(ch));
 	if (pg_isupper(ch))
-#ifdef MULTIBYTE
 		return (unsigned char) tolower((unsigned char) ch);
-#else
-		return tolower((unsigned char) ch);
-#endif
 	else if (pg_islower(ch))
-#ifdef MULTIBYTE
 		return (unsigned char) toupper((unsigned char) ch);
-#else
-		return toupper((unsigned char) ch);
-#endif
 	else
 /* peculiar, but could happen */
-#ifdef MULTIBYTE
 		return (unsigned char) ch;
-#else
-		return ch;
-#endif
 }
 
 /*
@@ -1058,11 +1000,7 @@ ordinary(struct parse * p, int ch)
 		bothcases(p, ch);
 	else
 	{
-#ifdef MULTIBYTE
 		EMIT(OCHAR, (pg_wchar) ch);
-#else
-		EMIT(OCHAR, (unsigned char) ch);
-#endif
 		if (ch >= CHAR_MIN && ch <= CHAR_MAX && cap[ch] == 0)
 			cap[ch] = p->g->ncategories++;
 	}
@@ -1633,11 +1571,7 @@ findmust(struct parse * p, struct re_guts * g)
 		return;
 
 	/* turn it into a character string */
-#ifdef MULTIBYTE
 	g->must = (pg_wchar *) malloc((size_t) (g->mlen + 1) * sizeof(pg_wchar));
-#else
-	g->must = malloc((size_t) g->mlen + 1);
-#endif
 	if (g->must == NULL)
 	{							/* argh; just forget it */
 		g->mlen = 0;
@@ -1697,91 +1631,55 @@ pluscount(struct parse * p, struct re_guts * g)
 static int
 pg_isdigit(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && isdigit((unsigned char) c));
-#else
-	return (isdigit((unsigned char) c));
-#endif
 }
 
 static int
 pg_isalpha(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && isalpha((unsigned char) c));
-#else
-	return (isalpha((unsigned char) c));
-#endif
 }
 
 static int
 pg_isalnum(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && isalnum((unsigned char) c));
-#else
-	return (isalnum((unsigned char) c));
-#endif
 }
 
 static int
 pg_isupper(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && isupper((unsigned char) c));
-#else
-	return (isupper((unsigned char) c));
-#endif
 }
 
 static int
 pg_islower(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && islower((unsigned char) c));
-#else
-	return (islower((unsigned char) c));
-#endif
 }
 
 static int
 pg_iscntrl(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && iscntrl((unsigned char) c));
-#else
-	return (iscntrl((unsigned char) c));
-#endif
 }
 
 static int
 pg_isgraph(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && isgraph((unsigned char) c));
-#else
-	return (isgraph((unsigned char) c));
-#endif
 }
 
 static int
 pg_isprint(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
-#else
-	return (isprint((unsigned char) c));
-#endif
 }
 
 static int
 pg_ispunct(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && ispunct((unsigned char) c));
-#else
-	return (ispunct((unsigned char) c));
-#endif
 }
 
 static struct cclass *

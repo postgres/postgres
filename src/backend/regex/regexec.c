@@ -154,10 +154,8 @@ pg_regexec(const regex_t *preg, const char *string, size_t nmatch,
 {
 	struct re_guts *g = preg->re_g;
 
-#ifdef MULTIBYTE
 	pg_wchar   *str;
 	int			sts;
-#endif
 
 #ifdef REDEBUG
 #define  GOODFLAGS(f)	 (f)
@@ -172,7 +170,6 @@ pg_regexec(const regex_t *preg, const char *string, size_t nmatch,
 		return REG_BADPAT;
 	eflags = GOODFLAGS(eflags);
 
-#ifdef MULTIBYTE
 	str = (pg_wchar *) malloc((strlen(string) + 1) * sizeof(pg_wchar));
 	if (!str)
 		return (REG_ESPACE);
@@ -183,12 +180,4 @@ pg_regexec(const regex_t *preg, const char *string, size_t nmatch,
 		sts = lmatcher(g, str, nmatch, pmatch, eflags);
 	free((char *) str);
 	return (sts);
-
-#else
-
-	if (g->nstates <= CHAR_BIT * sizeof(states1) && !(eflags & REG_LARGE))
-		return smatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags);
-	else
-		return lmatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags);
-#endif
 }

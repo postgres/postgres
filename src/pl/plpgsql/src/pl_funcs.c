@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.19 2002/08/08 01:36:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.20 2002/08/29 07:22:30 ishii Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -46,9 +46,7 @@
 #include "plpgsql.h"
 #include "pl.tab.h"
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 
 /* ----------
@@ -404,11 +402,7 @@ plpgsql_convert_ident(const char *s, char **output, int numidents)
 		{
 			int len;
 
-#ifdef MULTIBYTE
 			len = pg_mbcliplen(curident, i, NAMEDATALEN-1);
-#else
-			len = NAMEDATALEN-1;
-#endif
 			curident[len] = '\0';
 		}
 

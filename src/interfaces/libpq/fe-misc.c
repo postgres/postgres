@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.77 2002/08/17 12:33:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.78 2002/08/29 07:22:30 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,10 +50,7 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "pqsignal.h"
-
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 #define DONOTICE(conn,message) \
 	((*(conn)->noticeHook) ((conn)->noticeArg, (message)))
@@ -847,7 +844,6 @@ retry5:
  * to be in fe-print.c but that file is doomed.
  */
 
-#ifdef MULTIBYTE
 /*
  * returns the byte length of the word beginning s, using the
  * specified encoding.
@@ -872,23 +868,6 @@ PQenv2encoding(void)
 		encoding = pg_char_to_encoding(str);
 	return (encoding);
 }
-
-#else
-
-/* Provide a default definition in case someone calls it anyway */
-int
-PQmblen(const unsigned char *s, int encoding)
-{
-	(void) s;
-	(void) encoding;
-	return 1;
-}
-int
-PQenv2encoding(void)
-{
-	return 0;
-}
-#endif   /* MULTIBYTE */
 
 
 #ifdef ENABLE_NLS

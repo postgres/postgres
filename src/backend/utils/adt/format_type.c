@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.32 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.33 2002/08/29 07:22:26 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,7 @@
 #include "utils/numeric.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 #define MAX_INT32_LEN 11
 #define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
@@ -433,14 +431,11 @@ type_maximum_size(Oid type_oid, int32 typemod)
 		case BPCHAROID:
 		case VARCHAROID:
 			/* typemod includes varlena header */
-#ifdef MULTIBYTE
+
 			/* typemod is in characters not bytes */
 			return (typemod - VARHDRSZ) *
 				pg_encoding_max_length(GetDatabaseEncoding())
 				+ VARHDRSZ;
-#else
-			return typemod;
-#endif
 
 		case NUMERICOID:
 			/* precision (ie, max # of digits) is in upper bits of typmod */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.91 2002/08/26 17:53:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.92 2002/08/29 07:22:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,9 +21,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 
 /*
@@ -76,37 +74,26 @@ bpcharin(PG_FUNCTION_ARGS)
 				maxlen;
 	int			i;
 
-#ifdef MULTIBYTE
 	int			charlen;		/* number of charcters in the input string */
 	char	   *ermsg;
-#endif
 
 	len = strlen(s);
-#ifdef MULTIBYTE
+
 	if ((ermsg = pg_verifymbstr(s, len)))
 		elog(ERROR, "%s", ermsg);
 
 	charlen = pg_mbstrlen(s);
-#endif
+
 
 	/* If typmod is -1 (or invalid), use the actual string length */
 	if (atttypmod < (int32) VARHDRSZ)
-#ifdef MULTIBYTE
 		maxlen = charlen;
-#else
-		maxlen = len;
-#endif
 	else
 		maxlen = atttypmod - VARHDRSZ;
 
-#ifdef MULTIBYTE
 	if (charlen > maxlen)
-#else
-	if (len > maxlen)
-#endif
 	{
 		/* Verify that extra characters are spaces, and clip them off */
-#ifdef MULTIBYTE
 		size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
 
 		/*
@@ -125,15 +112,7 @@ bpcharin(PG_FUNCTION_ARGS)
 		 * the number of CHARACTERS!
 		 */
 		maxlen = len;
-#else
-		if (strspn(s + maxlen, " ") == len - maxlen)
-			len = maxlen;
-		else
-			elog(ERROR, "value too long for type character(%d)",
-				 (int) maxlen);
-#endif
 	}
-#ifdef MULTIBYTE
 	else
 	{
 		/*
@@ -142,7 +121,6 @@ bpcharin(PG_FUNCTION_ARGS)
 		 */
 		maxlen = len + (maxlen - charlen);
 	}
-#endif
 
 	result = palloc(maxlen + VARHDRSZ);
 	VARATT_SIZEP(result) = maxlen + VARHDRSZ;
@@ -202,26 +180,19 @@ bpchar(PG_FUNCTION_ARGS)
 	char	   *s;
 	int			i;
 
-#ifdef MULTIBYTE
 	int			charlen;		/* number of charcters in the input string
 								 * + VARHDRSZ */
-#endif
-
 	len = VARSIZE(source);
-#ifdef MULTIBYTE
+
 	charlen = pg_mbstrlen_with_len(VARDATA(source), len - VARHDRSZ) + VARHDRSZ;
-#endif
+
 	/* No work if typmod is invalid or supplied data matches it already */
 	if (maxlen < (int32) VARHDRSZ || len == maxlen)
 		PG_RETURN_BPCHAR_P(source);
-#ifdef MULTIBYTE
+
 	if (charlen > maxlen)
-#else
-	if (len > maxlen)
-#endif
 	{
 		/* Verify that extra characters are spaces, and clip them off */
-#ifdef MULTIBYTE
 		size_t		maxmblen;
 
 		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
@@ -239,16 +210,7 @@ bpchar(PG_FUNCTION_ARGS)
 		 * length+VARHDRSZ, not the number of CHARACTERS!
 		 */
 		maxlen = len;
-#else
-		for (i = maxlen - VARHDRSZ; i < len - VARHDRSZ; i++)
-			if (*(VARDATA(source) + i) != ' ')
-				elog(ERROR, "value too long for type character(%d)",
-					 maxlen - VARHDRSZ);
-
-		len = maxlen;
-#endif
 	}
-#ifdef MULTIBYTE
 	else
 	{
 		/*
@@ -257,7 +219,6 @@ bpchar(PG_FUNCTION_ARGS)
 		 */
 		maxlen = len + (maxlen - charlen);
 	}
-#endif
 
 	s = VARDATA(source);
 
@@ -408,29 +369,22 @@ varcharin(PG_FUNCTION_ARGS)
 	size_t		len,
 				maxlen;
 
-#ifdef MULTIBYTE
 	char	   *ermsg;
-#endif
 
 	len = strlen(s);
-#ifdef MULTIBYTE
+
 	if ((ermsg = pg_verifymbstr(s, len)))
 		elog(ERROR, "%s", ermsg);
-#endif
+
 	maxlen = atttypmod - VARHDRSZ;
 
 	if (atttypmod >= (int32) VARHDRSZ && len > maxlen)
 	{
 		/* Verify that extra characters are spaces, and clip them off */
-#ifdef MULTIBYTE
 		size_t		mbmaxlen = pg_mbcharcliplen(s, len, maxlen);
 
 		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
 			len = mbmaxlen;
-#else
-		if (strspn(s + maxlen, " ") == len - maxlen)
-			len = maxlen;
-#endif
 		else
 			elog(ERROR, "value too long for type character varying(%d)",
 				 (int) maxlen);
@@ -493,7 +447,6 @@ varchar(PG_FUNCTION_ARGS)
 
 	/* only reach here if string is too long... */
 
-#ifdef MULTIBYTE
 	{
 		size_t		maxmblen;
 
@@ -508,15 +461,6 @@ varchar(PG_FUNCTION_ARGS)
 
 		len = maxmblen;
 	}
-#else
-	for (i = maxlen - VARHDRSZ; i < len - VARHDRSZ; i++)
-		if (*(VARDATA(source) + i) != ' ')
-			elog(ERROR, "value too long for type character varying(%d)",
-				 maxlen - VARHDRSZ);
-
-	/* clip extra spaces */
-	len = maxlen;
-#endif
 
 	result = palloc(len);
 	VARATT_SIZEP(result) = len;
@@ -584,7 +528,6 @@ bpcharlen(PG_FUNCTION_ARGS)
 {
 	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
 
-#ifdef MULTIBYTE
 	/* optimization for single byte encoding */
 	if (pg_database_encoding_max_length() <= 1)
 		PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
@@ -592,9 +535,6 @@ bpcharlen(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(
 			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
 		);
-#else
-	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
-#endif
 }
 
 Datum
@@ -796,7 +736,6 @@ varcharlen(PG_FUNCTION_ARGS)
 {
 	VarChar    *arg = PG_GETARG_VARCHAR_P(0);
 
-#ifdef MULTIBYTE
 	/* optimization for single byte encoding */
 	if (pg_database_encoding_max_length() <= 1)
 		PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
@@ -804,9 +743,6 @@ varcharlen(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(
 			  pg_mbstrlen_with_len(VARDATA(arg), VARSIZE(arg) - VARHDRSZ)
 		);
-#else
-	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
-#endif
 }
 
 Datum

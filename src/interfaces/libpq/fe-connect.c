@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.197 2002/08/27 16:21:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.198 2002/08/29 07:22:29 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,9 +45,7 @@
 #include <crypt.h>
 #endif
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 #ifdef WIN32
 static int
@@ -157,11 +155,9 @@ static const struct EnvironmentOptions
 	{
 		"PGTZ", "timezone"
 	},
-#ifdef MULTIBYTE
 	{
 		"PGCLIENTENCODING", "client_encoding"
 	},
-#endif
 	/* internal performance-related settings */
 	{
 		"PGGEQO", "geqo"
@@ -1584,12 +1580,7 @@ PQsetenvStart(PGconn *conn)
 		conn->setenv_state != SETENV_STATE_IDLE)
 		return false;
 
-#ifdef MULTIBYTE
 	conn->setenv_state = SETENV_STATE_ENCODINGS_SEND;
-#else
-	conn->setenv_state = SETENV_STATE_OPTION_SEND;
-#endif
-
 	conn->next_eo = EnvironmentOptions;
 
 	return true;
@@ -1606,9 +1597,7 @@ PQsetenvPoll(PGconn *conn)
 {
 	PGresult   *res;
 
-#ifdef MULTIBYTE
 	static const char envname[] = "PGCLIENTENCODING";
-#endif
 
 	if (conn == NULL || conn->status == CONNECTION_BAD)
 		return PGRES_POLLING_FAILED;
@@ -1617,9 +1606,7 @@ PQsetenvPoll(PGconn *conn)
 	switch (conn->setenv_state)
 	{
 			/* These are reading states */
-#ifdef MULTIBYTE
 		case SETENV_STATE_ENCODINGS_WAIT:
-#endif
 		case SETENV_STATE_OPTION_WAIT:
 			{
 				/* Load waiting data */
@@ -1634,9 +1621,7 @@ PQsetenvPoll(PGconn *conn)
 			}
 
 			/* These are writing states, so we just proceed. */
-#ifdef MULTIBYTE
 		case SETENV_STATE_ENCODINGS_SEND:
-#endif
 		case SETENV_STATE_OPTION_SEND:
 			break;
 
@@ -1660,7 +1645,6 @@ keep_going:						/* We will come back to here until there
 	switch (conn->setenv_state)
 	{
 
-#ifdef MULTIBYTE
 		case SETENV_STATE_ENCODINGS_SEND:
 			{
 				const char *env;
@@ -1734,7 +1718,6 @@ keep_going:						/* We will come back to here until there
 				conn->setenv_state = SETENV_STATE_OPTION_SEND;
 				goto keep_going;
 			}
-#endif
 
 		case SETENV_STATE_OPTION_SEND:
 			{
@@ -2788,9 +2771,6 @@ PQclientEncoding(const PGconn *conn)
 int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
-
-#ifdef MULTIBYTE
-
 	char		qbuf[128];
 	static char query[] = "set client_encoding to '%s'";
 	PGresult   *res;
@@ -2822,9 +2802,6 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	}
 	PQclear(res);
 	return (status);
-#else
-        return -1; /* Multibyte support isn't compiled in */
-#endif
 }
 
 void

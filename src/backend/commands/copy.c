@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.168 2002/08/29 00:17:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.169 2002/08/29 07:22:21 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,10 +39,7 @@
 #include "utils/relcache.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 #define ISOCTAL(c) (((c) >= '0') && ((c) <= '7'))
 #define OCTVALUE(c) ((c) - '0')
@@ -85,11 +82,8 @@ static bool fe_eof;
  */
 static StringInfoData attribute_buf;
 
-#ifdef MULTIBYTE
 static int	client_encoding;
 static int	server_encoding;
-#endif
-
 
 /*
  * Internal communications functions
@@ -387,10 +381,9 @@ DoCopy(const CopyStmt *stmt)
 	 * Set up variables to avoid per-attribute overhead.
 	 */
 	initStringInfo(&attribute_buf);
-#ifdef MULTIBYTE
+
 	client_encoding = pg_get_client_encoding();
 	server_encoding = GetDatabaseEncoding();
-#endif
 
 	if (is_from)
 	{							/* copy from file to database */
@@ -1231,14 +1224,12 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 {
 	int			c;
 	int			delimc = (unsigned char) delim[0];
-#ifdef MULTIBYTE
 	int			mblen;
 	unsigned char s[2];
 	char	   *cvt;
 	int			j;
 
 	s[1] = 0;
-#endif
 
 	/* reset attribute_buf to empty */
 	attribute_buf.len = 0;
@@ -1354,7 +1345,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 			}
 		}
 		appendStringInfoCharMacro(&attribute_buf, c);
-#ifdef MULTIBYTE
+
 		/* XXX shouldn't this be done even when encoding is the same? */
 		if (client_encoding != server_encoding)
 		{
@@ -1372,12 +1363,10 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 				appendStringInfoCharMacro(&attribute_buf, c);
 			}
 		}
-#endif
 	}
 
 copy_eof:
 
-#ifdef MULTIBYTE
 	if (client_encoding != server_encoding)
 	{
 		cvt = (char *) pg_client_to_server((unsigned char *) attribute_buf.data,
@@ -1391,7 +1380,6 @@ copy_eof:
 			pfree(cvt);
 		}
 	}
-#endif
 
 	return attribute_buf.data;
 }
@@ -1403,14 +1391,11 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 	char		c;
 	char		delimc = delim[0];
 
-#ifdef MULTIBYTE
 	bool		same_encoding;
 	char	   *string_start;
 	int			mblen;
 	int			i;
-#endif
 
-#ifdef MULTIBYTE
 	same_encoding = (server_encoding == client_encoding);
 	if (!same_encoding)
 	{
@@ -1423,19 +1408,11 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 		string = server_string;
 		string_start = NULL;
 	}
-#else
-	string = server_string;
-#endif
 
-#ifdef MULTIBYTE
 	for (; (c = *string) != '\0'; string += mblen)
-#else
-	for (; (c = *string) != '\0'; string++)
-#endif
 	{
-#ifdef MULTIBYTE
 		mblen = 1;
-#endif
+
 		switch (c)
 		{
 			case '\b':
@@ -1463,7 +1440,7 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 				if (c == delimc)
 					CopySendChar('\\', fp);
 				CopySendChar(c, fp);
-#ifdef MULTIBYTE
+
 				/* XXX shouldn't this be done even when encoding is same? */
 				if (!same_encoding)
 				{
@@ -1472,15 +1449,12 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 					for (i = 1; i < mblen; i++)
 						CopySendChar(string[i], fp);
 				}
-#endif
 				break;
 		}
 	}
 
-#ifdef MULTIBYTE
 	if (string_start)
 		pfree(string_start);	/* pfree pg_server_to_client result */
-#endif
 }
 
 /*

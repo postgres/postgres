@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.100 2002/08/18 03:35:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.101 2002/08/29 07:22:23 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,10 +26,7 @@
 #include "parser/keywords.h"
 #include "parser/parse.h"
 #include "utils/builtins.h"
-
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 /* No reason to constrain amount of data slurped */
 #define YY_READ_BUF_SIZE 16777216
@@ -402,12 +399,9 @@ other			.
 					if (literallen >= NAMEDATALEN)
 					{
 						int len;
-#ifdef MULTIBYTE
+
 						len = pg_mbcliplen(literalbuf, literallen,
 										   NAMEDATALEN-1);
-#else
-						len = NAMEDATALEN-1;
-#endif
 						elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
 							 literalbuf, len, literalbuf);
 						literalbuf[len] = '\0';
@@ -562,11 +556,8 @@ other			.
 					if (i >= NAMEDATALEN)
                     {
 						int len;
-#ifdef MULTIBYTE
+
 						len = pg_mbcliplen(ident, i, NAMEDATALEN-1);
-#else
-						len = NAMEDATALEN-1;
-#endif
                         elog(NOTICE, "identifier \"%s\" will be truncated to \"%.*s\"",
                              ident, len, ident);
 						ident[len] = '\0';

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.41 2002/08/22 05:05:19 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/oracle_compat.c,v 1.42 2002/08/29 07:22:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,7 @@
 
 #include "utils/builtins.h"
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 /********************************************************************
  *
@@ -172,9 +170,7 @@ lpad(PG_FUNCTION_ARGS)
 				s1len,
 				s2len;
 
-#ifdef MULTIBYTE
 	int			bytelen;
-#endif
 
 	/* Negative len is silently taken as zero */
 	if (len < 0)
@@ -188,16 +184,14 @@ lpad(PG_FUNCTION_ARGS)
 	if (s2len < 0)
 		s2len = 0;				/* shouldn't happen */
 
-#ifdef MULTIBYTE
 	s1len = pg_mbstrlen_with_len(VARDATA(string1), s1len);
-#endif
+
 	if (s1len > len)
 		s1len = len;			/* truncate string1 to len chars */
 
 	if (s2len <= 0)
 		len = s1len;			/* nothing to pad with, so don't pad */
 
-#ifdef MULTIBYTE
 	bytelen = pg_database_encoding_max_length() * len;
 
 	/* check for integer overflow */
@@ -205,16 +199,13 @@ lpad(PG_FUNCTION_ARGS)
 		elog(ERROR, "Requested length too large");
 
 	ret = (text *) palloc(VARHDRSZ + bytelen);
-#else
-	ret = (text *) palloc(VARHDRSZ + len);
-#endif
+
 	m = len - s1len;
 
 	ptr2 = VARDATA(string2);
 	ptr2end = ptr2 + s2len;
 	ptr_ret = VARDATA(ret);
 
-#ifdef MULTIBYTE
 	while (m--)
 	{
 		int			mlen = pg_mblen(ptr2);
@@ -225,18 +216,9 @@ lpad(PG_FUNCTION_ARGS)
 		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
 			ptr2 = VARDATA(string2);
 	}
-#else
-	while (m--)
-	{
-		*ptr_ret++ = *ptr2++;
-		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
-			ptr2 = VARDATA(string2);
-	}
-#endif
 
 	ptr1 = VARDATA(string1);
 
-#ifdef MULTIBYTE
 	while (s1len--)
 	{
 		int			mlen = pg_mblen(ptr1);
@@ -245,10 +227,6 @@ lpad(PG_FUNCTION_ARGS)
 		ptr_ret += mlen;
 		ptr1 += mlen;
 	}
-#else
-	while (s1len--)
-		*ptr_ret++ = *ptr1++;
-#endif
 
 	VARATT_SIZEP(ret) = ptr_ret - (char *) ret;
 
@@ -287,9 +265,7 @@ rpad(PG_FUNCTION_ARGS)
 				s1len,
 				s2len;
 
-#ifdef MULTIBYTE
 	int			bytelen;
-#endif
 
 	/* Negative len is silently taken as zero */
 	if (len < 0)
@@ -303,9 +279,7 @@ rpad(PG_FUNCTION_ARGS)
 	if (s2len < 0)
 		s2len = 0;				/* shouldn't happen */
 
-#ifdef MULTIBYTE
 	s1len = pg_mbstrlen_with_len(VARDATA(string1), s1len);
-#endif
 
 	if (s1len > len)
 		s1len = len;			/* truncate string1 to len chars */
@@ -313,7 +287,6 @@ rpad(PG_FUNCTION_ARGS)
 	if (s2len <= 0)
 		len = s1len;			/* nothing to pad with, so don't pad */
 
-#ifdef MULTIBYTE
 	bytelen = pg_database_encoding_max_length() * len;
 
 	/* Check for integer overflow */
@@ -321,15 +294,11 @@ rpad(PG_FUNCTION_ARGS)
 		elog(ERROR, "Requested length too large");
 
 	ret = (text *) palloc(VARHDRSZ + bytelen);
-#else
-	ret = (text *) palloc(VARHDRSZ + len);
-#endif
 	m = len - s1len;
 
 	ptr1 = VARDATA(string1);
 	ptr_ret = VARDATA(ret);
 
-#ifdef MULTIBYTE
 	while (s1len--)
 	{
 		int			mlen = pg_mblen(ptr1);
@@ -338,15 +307,10 @@ rpad(PG_FUNCTION_ARGS)
 		ptr_ret += mlen;
 		ptr1 += mlen;
 	}
-#else
-	while (s1len--)
-		*ptr_ret++ = *ptr1++;
-#endif
 
 	ptr2 = VARDATA(string2);
 	ptr2end = ptr2 + s2len;
 
-#ifdef MULTIBYTE
 	while (m--)
 	{
 		int			mlen = pg_mblen(ptr2);
@@ -357,14 +321,6 @@ rpad(PG_FUNCTION_ARGS)
 		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
 			ptr2 = VARDATA(string2);
 	}
-#else
-	while (m--)
-	{
-		*ptr_ret++ = *ptr2++;
-		if (ptr2 == ptr2end)	/* wrap around at end of s2 */
-			ptr2 = VARDATA(string2);
-	}
-#endif
 
 	VARATT_SIZEP(ret) = ptr_ret - (char *) ret;
 
@@ -399,13 +355,11 @@ btrim(PG_FUNCTION_ARGS)
 			   *end2;
 	int			m;
 
-#ifdef MULTIBYTE
 	char	  **mp;
 	int			mplen;
 	char	   *p;
 	int			mblen;
 	int			len;
-#endif
 
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
 		(VARSIZE(set) - VARHDRSZ) <= 0)
@@ -413,7 +367,6 @@ btrim(PG_FUNCTION_ARGS)
 
 	ptr = VARDATA(string);
 
-#ifdef MULTIBYTE
 	len = m;
 	mp = (char **) palloc(len * sizeof(char *));
 	p = ptr;
@@ -428,12 +381,8 @@ btrim(PG_FUNCTION_ARGS)
 		len -= mblen;
 	}
 	mplen--;
-#else
-	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
-#endif
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
-#ifdef MULTIBYTE
 	while (m > 0)
 	{
 		int			str_len = pg_mblen(ptr);
@@ -475,37 +424,6 @@ btrim(PG_FUNCTION_ARGS)
 		m -= str_len;
 	}
 	pfree(mp);
-#else
-	while (m > 0)
-	{
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			if (*ptr == *ptr2)
-				break;
-			++ptr2;
-		}
-		if (ptr2 > end2)
-			break;
-		ptr++;
-		m--;
-	}
-
-	while (m > 0)
-	{
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			if (*end == *ptr2)
-				break;
-			++ptr2;
-		}
-		if (ptr2 > end2)
-			break;
-		end--;
-		m--;
-	}
-#endif
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
@@ -619,7 +537,6 @@ ltrim(PG_FUNCTION_ARGS)
 	ptr = VARDATA(string);
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
-#ifdef MULTIBYTE
 	while (m > 0)
 	{
 		int			str_len = pg_mblen(ptr);
@@ -639,22 +556,6 @@ ltrim(PG_FUNCTION_ARGS)
 		ptr += str_len;
 		m -= str_len;
 	}
-#else
-	while (m > 0)
-	{
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			if (*ptr == *ptr2)
-				break;
-			++ptr2;
-		}
-		if (ptr2 > end2)
-			break;
-		ptr++;
-		m--;
-	}
-#endif
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
@@ -691,13 +592,11 @@ rtrim(PG_FUNCTION_ARGS)
 			   *end2;
 	int			m;
 
-#ifdef MULTIBYTE
 	char	  **mp;
 	int			mplen;
 	char	   *p;
 	int			mblen;
 	int			len;
-#endif
 
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0 ||
 		(VARSIZE(set) - VARHDRSZ) <= 0)
@@ -705,7 +604,6 @@ rtrim(PG_FUNCTION_ARGS)
 
 	ptr = VARDATA(string);
 
-#ifdef MULTIBYTE
 	len = m;
 	mp = (char **) palloc(len * sizeof(char *));
 	p = ptr;
@@ -720,12 +618,8 @@ rtrim(PG_FUNCTION_ARGS)
 		len -= mblen;
 	}
 	mplen--;
-#else
-	end = VARDATA(string) + VARSIZE(string) - VARHDRSZ - 1;
-#endif
 	end2 = VARDATA(set) + VARSIZE(set) - VARHDRSZ - 1;
 
-#ifdef MULTIBYTE
 	while (m > 0)
 	{
 		int			str_len;
@@ -747,22 +641,6 @@ rtrim(PG_FUNCTION_ARGS)
 		m -= str_len;
 	}
 	pfree(mp);
-#else
-	while (m > 0)
-	{
-		ptr2 = VARDATA(set);
-		while (ptr2 <= end2)
-		{
-			if (*end == *ptr2)
-				break;
-			++ptr2;
-		}
-		if (ptr2 > end2)
-			break;
-		end--;
-		m--;
-	}
-#endif
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARATT_SIZEP(ret) = VARHDRSZ + m;
 	memcpy(VARDATA(ret), ptr, m);
@@ -805,13 +683,11 @@ translate(PG_FUNCTION_ARGS)
 				retlen,
 				i;
 
-#ifdef MULTIBYTE
 	int			str_len;
 	int			estimate_len;
 	int			len;
 	int			source_len;
 	int			from_index;
-#endif
 
 	if ((m = VARSIZE(string) - VARHDRSZ) <= 0)
 		PG_RETURN_TEXT_P(string);
@@ -821,20 +697,15 @@ translate(PG_FUNCTION_ARGS)
 	tolen = VARSIZE(to) - VARHDRSZ;
 	to_ptr = VARDATA(to);
 
-#ifdef MULTIBYTE
 	str_len = VARSIZE(string);
 	estimate_len = (tolen * 1.0 / fromlen + 0.5) * str_len;
 	estimate_len = estimate_len > str_len ? estimate_len : str_len;
 	result = (text *) palloc(estimate_len);
-#else
-	result = (text *) palloc(VARSIZE(string));
-#endif
 
 	source = VARDATA(string);
 	target = VARDATA(result);
 	retlen = 0;
 
-#ifdef MULTIBYTE
 	while (m > 0)
 	{
 		source_len = pg_mblen(source);
@@ -880,37 +751,6 @@ translate(PG_FUNCTION_ARGS)
 		source += source_len;
 		m -= source_len;
 	}
-#else
-	while (m-- > 0)
-	{
-		char		rep = *source++;
-
-		for (i = 0; i < fromlen; i++)
-		{
-			if (from_ptr[i] == rep)
-				break;
-		}
-		if (i < fromlen)
-		{
-			if (i < tolen)
-			{
-				/* substitute */
-				*target++ = to_ptr[i];
-				retlen++;
-			}
-			else
-			{
-				/* discard */
-			}
-		}
-		else
-		{
-			/* no match, so copy */
-			*target++ = rep;
-			retlen++;
-		}
-	}
-#endif
 
 	VARATT_SIZEP(result) = retlen + VARHDRSZ;
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.245 2002/08/28 20:46:23 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.246 2002/08/29 07:22:22 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,9 +42,7 @@
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 
 /* State shared by transformCreateSchemaStmt and its subroutines */
@@ -634,12 +632,10 @@ makeObjectName(char *name1, char *name2, char *typename)
 			name2chars--;
 	}
 
-#ifdef MULTIBYTE
 	if (name1)
 		name1chars = pg_mbcliplen(name1, name1chars, name1chars);
 	if (name2)
 		name2chars = pg_mbcliplen(name2, name2chars, name2chars);
-#endif
 
 	/* Now construct the string using the chosen lengths */
 	name = palloc(name1chars + name2chars + overhead + 1);

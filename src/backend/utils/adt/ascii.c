@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.12 2001/11/05 17:46:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.13 2002/08/29 07:22:26 ishii Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
  *
@@ -17,46 +17,6 @@
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
 #include "utils/ascii.h"
-
-/* ----------
- * even if MULTIBYTE is not enabled, these functions must exist
- * since pg_proc.h has references to them.
- * ----------
- */
-#ifndef MULTIBYTE
-
-static void multibyte_error(void);
-
-static void
-multibyte_error(void)
-{
-	elog(ERROR, "Multi-byte support is not enabled");
-}
-
-Datum
-to_ascii_encname(PG_FUNCTION_ARGS)
-{
-	multibyte_error();
-	return 0;					/* keep compiler quiet */
-}
-
-Datum
-to_ascii_enc(PG_FUNCTION_ARGS)
-{
-	multibyte_error();
-	return 0;					/* keep compiler quiet */
-}
-
-Datum
-to_ascii_default(PG_FUNCTION_ARGS)
-{
-	multibyte_error();
-	return 0;					/* keep compiler quiet */
-}
-
-
-#else							/* with MULTIBYTE */
-
 
 static text *encode_to_ascii(text *data, int enc);
 
@@ -190,5 +150,3 @@ to_ascii_default(PG_FUNCTION_ARGS)
 		  )
 		);
 }
-
-#endif   /* MULTIBYTE */

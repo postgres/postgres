@@ -3,7 +3,7 @@
  * client encoding and server internal encoding.
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.32 2002/08/19 04:08:08 ishii Exp $
+ * $Id: mbutils.c,v 1.33 2002/08/29 07:22:28 ishii Exp $
  */
 #include "postgres.h"
 #include "access/xact.h"
@@ -33,6 +33,9 @@ static 	FmgrInfo		*ToClientConvPorc = NULL;
 /* Internal functions */
 static unsigned char *
 perform_default_encoding_conversion(unsigned char *src, int len, bool is_client_to_server);
+
+static int
+cliplen(const unsigned char *str, int len, int limit);
 
 /*
  * Set the client encoding and save fmgrinfo for the converion
@@ -371,6 +374,10 @@ pg_mbstrlen(const unsigned char *mbstr)
 {
 	int			len = 0;
 
+	/* optimization for single byte encoding */
+	if (pg_database_encoding_max_length() == 1)
+		return strlen((char *)mbstr);
+
 	while (*mbstr)
 	{
 		mbstr += pg_mblen(mbstr);
@@ -409,6 +416,10 @@ pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
 	int			clen = 0;
 	int			l;
 
+	/* optimization for single byte encoding */
+	if (pg_database_encoding_max_length() == 1)
+		return cliplen(mbstr, len, limit);
+
 	while (len > 0 && *mbstr)
 	{
 		l = pg_mblen(mbstr);
@@ -424,7 +435,7 @@ pg_mbcliplen(const unsigned char *mbstr, int len, int limit)
 }
 
 /*
- * Similar to pg_mbcliplen but the limit parameter specifies the
+ * Similar to pg_mbcliplen except the limit parameter specifies the
  * character length, not the byte length.  */
 int
 pg_mbcharcliplen(const unsigned char *mbstr, int len, int limit)
@@ -432,6 +443,10 @@ pg_mbcharcliplen(const unsigned char *mbstr, int len, int limit)
 	int			clen = 0;
 	int			nch = 0;
 	int			l;
+
+	/* optimization for single byte encoding */
+	if (pg_database_encoding_max_length() == 1)
+		return cliplen(mbstr, len, limit);
 
 	while (len > 0 && *mbstr)
 	{
@@ -488,4 +503,18 @@ pg_client_encoding(PG_FUNCTION_ARGS)
 {
 	Assert(ClientEncoding);
 	return DirectFunctionCall1(namein, CStringGetDatum(ClientEncoding->name));
+}
+
+static int
+cliplen(const unsigned char *str, int len, int limit) 
+{
+	int	l = 0;
+	const unsigned char *s;
+
+	for (s = str; *s; s++, l++)
+	{
+		if (l >= len || l >= limit)
+			return l;
+	}
+	return (s - str);
 }

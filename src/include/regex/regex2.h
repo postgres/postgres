@@ -113,18 +113,13 @@ typedef struct
 {
 	uch		   *ptr;			/* -> uch [csetsize] */
 	uch			mask;			/* bit within array */
-#ifdef MULTIBYTE
 	pg_wchar	hash;			/* hash code */
 	unsigned int lc;			/* leading character (character-set) */
-#else
-	uch			hash;			/* hash code */
-#endif
 	size_t		smultis;
 	char	   *multis;			/* -> char[smulti]	ab\0cd\0ef\0\0 */
 } cset;
 
 /* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
-#ifdef MULTIBYTE
 #define CHlc(c) (((unsigned)(c)&0xff0000)>>16)
 #define CHadd(cs, c)	((cs)->ptr[(unsigned)(c)&0xffff] |= (cs)->mask, (cs)->hash += (unsigned)(c)&0xffff,\
 			 (cs)->lc = CHlc(c))
@@ -135,15 +130,6 @@ typedef struct
 														 * fns */
 #define MCsub(p, cs, cp)		mcsub(p, cs, cp)
 #define MCin(p, cs, cp) mcin(p, cs, cp)
-#else
-#define CHadd(cs, c)	((cs)->ptr[(uch)(c)] |= (cs)->mask, (cs)->hash += (c))
-#define CHsub(cs, c)	((cs)->ptr[(uch)(c)] &= ~(cs)->mask, (cs)->hash -= (c))
-#define CHIN(cs, c)		((cs)->ptr[(uch)(c)] & (cs)->mask)
-#define MCadd(p, cs, cp)		mcadd(p, cs, cp)		/* regcomp() internal
-														 * fns */
-#define MCsub(p, cs, cp)		mcsub(p, cs, cp)
-#define MCin(p, cs, cp) mcin(p, cs, cp)
-#endif
 
 /* stuff for character categories */
 typedef unsigned char cat_t;
@@ -182,16 +168,7 @@ struct re_guts
 };
 
 /* misc utilities */
-#ifdef MULTIBYTE
 #define OUT		  (16777216+1)	/* 16777216 == 2^24 == 3 bytes */
-#else
-#define OUT		  (CHAR_MAX+1)	/* a non-character value */
-#endif
 
-#ifdef MULTIBYTE
 #define ISWORD(c)	(((c) >= 0 && (c) <= UCHAR_MAX) && \
 			 (isalnum((unsigned char) (c)) || (c) == '_'))
-#else
-#define ISWORD(c)	(isalnum((unsigned char) (c)) || (c) == '_')
-
-#endif

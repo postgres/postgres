@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.99 2002/08/09 16:45:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.100 2002/08/29 07:22:21 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"		/* encoding check */
-#endif
 
 
 /* non-export function prototypes */
@@ -214,13 +212,9 @@ createdb(const CreatedbStmt *stmt)
 	if (encoding < 0)
 		encoding = src_encoding;
 
-#ifdef MULTIBYTE
 	/* Some encodings are client only */
 	if (!PG_VALID_BE_ENCODING(encoding))
 		elog(ERROR, "CREATE DATABASE: invalid backend encoding");
-#else
-	Assert(encoding == 0);		/* zero is PG_SQL_ASCII */
-#endif
 
 	/*
 	 * Preassign OID for pg_database tuple, so that we can compute db

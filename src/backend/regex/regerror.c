@@ -171,12 +171,9 @@ regatoi(const regex_t *preg, char *localbuf)
 	struct rerr *r;
 
 	for (r = rerrs; r->code != 0; r++)
-#ifdef MULTIBYTE
 		if (pg_char_and_wchar_strcmp(r->name, preg->re_endp) == 0)
-#else
-		if (strcmp(r->name, preg->re_endp) == 0)
-#endif
 			break;
+
 	if (r->code == 0)
 		return "0";
 

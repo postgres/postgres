@@ -108,13 +108,8 @@ static states step(struct re_guts * g, sopno start,
 #define EOW		(BOL+5)
 #define CODEMAX (BOL+5)			/* highest code used */
 
-#ifdef MULTIBYTE
 #define NONCHAR(c)	  ((c) > 16777216)	/* 16777216 == 2^24 == 3 bytes */
 #define NNONCHAR  (CODEMAX-16777216)
-#else
-#define NONCHAR(c)		  ((c) > CHAR_MAX)
-#define NNONCHAR	  (CODEMAX-CHAR_MAX)
-#endif
 
 #ifdef REDEBUG
 static void print(struct match * m, pg_wchar *caption, states st, int ch,
@@ -168,11 +163,7 @@ matcher(struct re_guts * g, pg_wchar *string, size_t nmatch,
 	else
 	{
 		start = string;
-#ifdef MULTIBYTE
 		stop = start + pg_wchar_strlen(start);
-#else
-		stop = start + strlen(start);
-#endif
 	}
 	if (stop < start)
 		return REG_INVARG;
@@ -182,11 +173,7 @@ matcher(struct re_guts * g, pg_wchar *string, size_t nmatch,
 	{
 		for (dp = start; dp < stop; dp++)
 			if (*dp == g->must[0] && stop - dp >= g->mlen &&
-#ifdef MULTIBYTE
 				memcmp(dp, g->must, (size_t) (g->mlen * sizeof(pg_wchar))) == 0
-#else
-				memcmp(dp, g->must, (size_t) g->mlen) == 0
-#endif
 				)
 				break;
 		if (dp == stop)			/* we didn't find g->must */
@@ -1090,11 +1077,7 @@ pchar(int ch)
 static int
 pg_isprint(int c)
 {
-#ifdef MULTIBYTE
 	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
-#else
-	return (isprint((unsigned char) c));
-#endif
 }
 #endif
 #endif

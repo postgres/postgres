@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.196 2002/08/29 00:17:06 tgl Exp $
+ * $Id: builtins.h,v 1.197 2002/08/29 07:22:29 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -661,9 +661,7 @@ extern Datum RI_FKey_setnull_upd(PG_FUNCTION_ARGS);
 extern Datum RI_FKey_setdefault_del(PG_FUNCTION_ARGS);
 extern Datum RI_FKey_setdefault_upd(PG_FUNCTION_ARGS);
 
-/* even if MULTIBYTE is not enabled, these functions are necessary
- * since pg_proc.h has references to them.
- */
+/* multibyte support functions */
 extern Datum getdatabaseencoding(PG_FUNCTION_ARGS);
 extern Datum database_character_set(PG_FUNCTION_ARGS);
 extern Datum pg_client_encoding(PG_FUNCTION_ARGS);

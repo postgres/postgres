@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.113 2002/08/22 00:01:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.114 2002/08/29 07:22:27 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3250,12 +3250,8 @@ make_greater_string(const char *str, Oid datatype)
 		 * Truncate off the last character, which might be more than 1
 		 * byte in MULTIBYTE case.
 		 */
-#ifdef MULTIBYTE
 		len = pg_mbcliplen((const unsigned char *) workstr, len, len - 1);
 		workstr[len] = '\0';
-#else
-		*lastchar = '\0';
-#endif
 	}
 
 	/* Failed... */

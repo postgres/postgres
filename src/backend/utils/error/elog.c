@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.99 2002/06/20 20:29:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.100 2002/08/29 07:22:28 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,7 @@
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 
-#ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
-#endif
 
 int			server_min_messages;
 char	   *server_min_messages_str = NULL;
@@ -694,14 +692,14 @@ write_syslog(int level, const char *line)
 				*strchr(buf, '\n') = '\0';
 
 			l = strlen(buf);
-#ifdef MULTIBYTE
+
 			/* trim to multibyte letter boundary */
 			buflen = pg_mbcliplen(buf, l, l);
 			if (buflen <= 0)
 				return;
 			buf[buflen] = '\0';
 			l = strlen(buf);
-#endif
+
 			/* already word boundary? */
 			if (isspace((unsigned char) line[l]) || line[l] == '\0')
 				buflen = l;

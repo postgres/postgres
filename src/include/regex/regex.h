@@ -52,10 +52,7 @@ typedef struct
 	size_t		re_nsub;		/* number of parenthesized subexpressions */
 	const pg_wchar *re_endp;	/* end pointer for REG_PEND */
 	struct re_guts *re_g;		/* none of your business :-) */
-#ifdef MULTIBYTE
 	pg_wchar   *patsave;		/* me too :-) */
-#endif
-
 } regex_t;
 
 typedef struct
