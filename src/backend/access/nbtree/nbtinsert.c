@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.3 1996/10/23 07:39:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.4 1996/10/25 09:55:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -815,7 +815,8 @@ _bt_itemcmp(Relation rel,
 
 /*
  *	_bt_updateitem() -- updates the key of the item identified by the
- *			    oid with the key of newItem (done in place)
+ *			    oid with the key of newItem (done in place if
+ *			    possible)
  *
  */
 static void
@@ -829,14 +830,17 @@ _bt_updateitem(Relation rel,
     OffsetNumber maxoff;
     OffsetNumber i;
     ItemPointerData itemPtrData;
-    BTItem item;
+    BTItem item, itemCopy;
     IndexTuple oldIndexTuple, newIndexTuple;
+    int newSize, oldSize, first;
     
     page = BufferGetPage(buf);
     maxoff = PageGetMaxOffsetNumber(page);
     
     /* locate item on the page */
-    i = P_HIKEY;
+    first = P_RIGHTMOST((BTPageOpaque) PageGetSpecialPointer(page)) \
+        ? P_HIKEY : P_FIRSTKEY;
+    i = first;
     do {
 	item = (BTItem) PageGetItem(page, PageGetItemId(page, i));
 	i = OffsetNumberNext(i);
@@ -849,9 +853,46 @@ _bt_updateitem(Relation rel,
     
     oldIndexTuple = &(item->bti_itup);
     newIndexTuple = &(newItem->bti_itup);
-    
-    /* keep the original item pointer */
-    ItemPointerCopy(&(oldIndexTuple->t_tid), &itemPtrData);
-    CopyIndexTuple(newIndexTuple, &oldIndexTuple);
-    ItemPointerCopy(&itemPtrData, &(oldIndexTuple->t_tid));
+    oldSize = DOUBLEALIGN(IndexTupleSize(oldIndexTuple));
+    newSize = DOUBLEALIGN(IndexTupleSize(newIndexTuple));
+#ifdef NBTINSERT_PATCH_DEBUG
+    printf("_bt_updateitem: newSize=%d, oldSize=%d\n", newSize, oldSize);
+#endif    
+
+    /*
+     * If new and old item have the same size do the update in place
+     * and return.
+     */ 
+    if (oldSize == newSize) {
+	/* keep the original item pointer */
+	ItemPointerCopy(&(oldIndexTuple->t_tid), &itemPtrData);
+	CopyIndexTuple(newIndexTuple, &oldIndexTuple);
+	ItemPointerCopy(&itemPtrData, &(oldIndexTuple->t_tid));
+	return;
+    }
+
+    /* 
+     * If new and old items have different size the update in place
+     * is not possible. In this case the old item is deleted and the
+     * new one is inserted.
+     * The new insertion should be done using _bt_insertonpg which
+     * would also takes care of the page splitting if needed, but
+     * unfortunately it doesn't work, so PageAddItem is used instead.
+     * There is the possibility that there is not enough space in the
+     * page and the item is not inserted.
+     */
+    itemCopy = palloc(newSize);
+    memmove((char *) itemCopy, (char *) newItem, newSize);
+    itemCopy->bti_oid = item->bti_oid;
+    newIndexTuple = &(itemCopy->bti_itup);
+    ItemPointerCopy(&(oldIndexTuple->t_tid), &(newIndexTuple->t_tid));
+
+    /*
+     * Get the offset number of the item then delete it and insert
+     * the new item in the same place.
+     */
+    i = OffsetNumberPrev(i);
+    PageIndexTupleDelete(page, i);
+    PageAddItem(page, (Item) itemCopy, newSize, i, LP_USED);
+    pfree(itemCopy);
 }
