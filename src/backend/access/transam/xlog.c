@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.110 2002/11/08 20:23:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.111 2003/01/25 03:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1471,7 +1471,7 @@ InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 					   bool use_lock)
 {
 	char		path[MAXPGPATH];
-	int			fd;
+	struct stat stat_buf;
 
 	XLogFileName(path, log, seg);
 
@@ -1489,10 +1489,8 @@ InstallXLogFileSegment(uint32 log, uint32 seg, char *tmppath,
 	else
 	{
 		/* Find a free slot to put it in */
-		while ((fd = BasicOpenFile(path, O_RDWR | PG_BINARY,
-								   S_IRUSR | S_IWUSR)) >= 0)
+		while (stat(path, &stat_buf) == 0)
 		{
-			close(fd);
 			if (--max_advance < 0)
 			{
 				/* Failed to find a free slot within specified range */
