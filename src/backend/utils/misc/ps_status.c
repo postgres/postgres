@@ -5,7 +5,7 @@
  * to contain some useful information. Differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.2 2000/07/09 13:14:11 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.3 2001/03/20 22:31:54 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -44,7 +44,7 @@ extern char **environ;
  * PS_USE_PS_STRINGS
  *     assign PS_STRINGS->ps_argvstr = "string"
  *     (some BSD systems)
- * PS_USE_CHANCE_ARGV
+ * PS_USE_CHANGE_ARGV
  *     assign argv[0] = "string"
  *     (some other BSD systems)
  * PS_USE_CLOBBER_ARGV
@@ -189,64 +189,68 @@ init_ps_display(int argc, char *argv[],
 void
 set_ps_display(const char * value)
 {
+#ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
 	if (!IsUnderPostmaster)
 		return;
 
-#ifndef PS_USE_NONE
+# ifdef PS_USE_CLOBBER_ARGV
+	/* If ps_buffer is a pointer, it might still be null */
 	if (!ps_buffer)
 		return;
+# endif
+
+	/* Update ps_buffer to contain both fixed part and value */
+	StrNCpy(ps_buffer + ps_buffer_fixed_size, value,
+			ps_buffer_size - ps_buffer_fixed_size);
+
+	/* Transmit new setting to kernel, if necessary */
+
 # ifdef PS_USE_SETPROCTITLE
-	setproctitle("%s%s", ps_buffer, value);
+	setproctitle("%s", ps_buffer);
+# endif
 
-# else /* not PS_USE_SETPROCTITLE */
-	{
-		size_t vallen = strlen(value);
-
-		strncpy(ps_buffer + ps_buffer_fixed_size, value,
-				ps_buffer_size - ps_buffer_fixed_size);
-
-		if (ps_buffer_fixed_size + vallen >= ps_buffer_size)
-			ps_buffer[ps_buffer_size - 1] = 0;
-		else
-			ps_buffer[ps_buffer_fixed_size + vallen] = 0;
-
-#  ifdef PS_USE_PSTAT
+# ifdef PS_USE_PSTAT
 		{
 			union pstun pst;
 
 			pst.pst_command = ps_buffer;
 			pstat(PSTAT_SETCMD, pst, strlen(ps_buffer), 0, 0);
 		}
-#  endif /* PS_USE_PSTAT */
+# endif /* PS_USE_PSTAT */
 
-#  ifdef PS_USE_PS_STRINGS
+# ifdef PS_USE_PS_STRINGS
 		PS_STRINGS->ps_nargvstr = 1;
 		PS_STRINGS->ps_argvstr = ps_buffer;
-#  endif /* PS_USE_PS_STRINGS */
+# endif /* PS_USE_PS_STRINGS */
 
-#  ifdef PS_USE_CLOBBER_ARGV
+# ifdef PS_USE_CLOBBER_ARGV
 		{
 			char * cp;
 			/* pad unused memory */
-			for(cp = ps_buffer + ps_buffer_fixed_size + vallen;
+			for(cp = ps_buffer + strlen(ps_buffer);
 				cp < ps_buffer + ps_buffer_size;
 				cp++)
 				*cp = PS_PADDING;
 		}
-#  endif /* PS_USE_CLOBBER_ARGV */
-	}
-# endif /* not USE_SETPROCTITLE */
+# endif /* PS_USE_CLOBBER_ARGV */
+
 #endif /* not PS_USE_NONE */
 }
 
 
 /*
  * Returns what's currently in the ps display, in case someone needs
- * it.
+ * it.  Note that only the variable part is returned.
  */
 const char *
 get_ps_display(void)
 {
+#ifdef PS_USE_CLOBBER_ARGV
+	/* If ps_buffer is a pointer, it might still be null */
+	if (!ps_buffer)
+		return "";
+#endif
+
 	return ps_buffer + ps_buffer_fixed_size;
 }
