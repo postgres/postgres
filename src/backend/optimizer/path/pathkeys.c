@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.46 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.47 2003/02/15 20:12:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,6 +366,31 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
 	return new_pathkeys;
 }
 
+
+/*
+ * count_canonical_peers
+ *	  Given a PathKeyItem, find the equi_key_list subset it is a member of,
+ *	  if any.  If so, return the number of other members of the set.
+ *	  If not, return 0 (without actually adding it to our equi_key_list).
+ *
+ * This is a hack to support the rather bogus heuristics in
+ * build_subquery_pathkeys.
+ */
+static int
+count_canonical_peers(Query *root, PathKeyItem *item)
+{
+	List	   *cursetlink;
+
+	foreach(cursetlink, root->equi_key_list)
+	{
+		List	   *curset = lfirst(cursetlink);
+
+		if (member(item, curset))
+			return length(curset) - 1;
+	}
+	return 0;
+}
+
 /****************************************************************************
  *		PATHKEY COMPARISONS
  ****************************************************************************/
@@ -597,6 +622,9 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
  *
  * If 'scandir' is BackwardScanDirection, attempt to build pathkeys
  * representing a backwards scan of the index.	Return NIL if can't do it.
+ *
+ * We generate the full pathkeys list whether or not all are useful for the
+ * current query.  Caller should do truncate_useless_pathkeys().
  */
 List *
 build_index_pathkeys(Query *root,
@@ -699,9 +727,10 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 
 	foreach(temp, rel->targetlist)
 	{
-		Var		   *tle_var = get_expr(lfirst(temp));
+		Var		   *tle_var = (Var *) ((TargetEntry *) lfirst(temp))->expr;
 
-		if (IsA(tle_var, Var) &&tle_var->varattno == varattno)
+		if (IsA(tle_var, Var) &&
+			tle_var->varattno == varattno)
 			return tle_var;
 	}
 
@@ -712,6 +741,112 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 	type_mod = get_atttypmod(reloid, varattno);
 
 	return makeVar(relid, varattno, vartypeid, type_mod, 0);
+}
+
+/*
+ * build_subquery_pathkeys
+ *	  Build a pathkeys list that describes the ordering of a subquery's
+ *	  result (in the terms of the outer query).  The subquery must already
+ *	  have been planned, so that its query_pathkeys field has been set.
+ *
+ * It is not necessary for caller to do truncate_useless_pathkeys(),
+ * because we select keys in a way that takes usefulness of the keys into
+ * account.
+ */
+List *
+build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
+{
+	List	   *retval = NIL;
+	int			retvallen = 0;
+	int			outer_query_keys = length(root->query_pathkeys);
+	List	   *l;
+
+	foreach(l, subquery->query_pathkeys)
+	{
+		List	   *sub_pathkey = (List *) lfirst(l);
+		List	   *j;
+		PathKeyItem *best_item = NULL;
+		int			best_score = 0;
+		List	   *cpathkey;
+
+		/*
+		 * The sub_pathkey could contain multiple elements (representing
+		 * knowledge that multiple items are effectively equal).  Each
+		 * element might match none, one, or more of the output columns
+		 * that are visible to the outer query.  This means we may have
+		 * multiple possible representations of the sub_pathkey in the
+		 * context of the outer query.  Ideally we would generate them all
+		 * and put them all into a pathkey list of the outer query, thereby
+		 * propagating equality knowledge up to the outer query.  Right now
+		 * we cannot do so, because the outer query's canonical pathkey
+		 * sets are already frozen when this is called.  Instead we prefer
+		 * the one that has the highest "score" (number of canonical pathkey
+		 * peers, plus one if it matches the outer query_pathkeys).
+		 * This is the most likely to be useful in the outer query.
+		 */
+		foreach(j, sub_pathkey)
+		{
+			PathKeyItem *sub_item = (PathKeyItem *) lfirst(j);
+			Node   *sub_key = sub_item->key;
+			List   *k;
+
+			foreach(k, subquery->targetList)
+			{
+				TargetEntry *tle = (TargetEntry *) lfirst(k);
+
+				if (!tle->resdom->resjunk &&
+					equal(tle->expr, sub_key))
+				{
+					/* Found a representation for this sub_key */
+					Var	   *outer_var;
+					PathKeyItem *outer_item;
+					int		score;
+
+					outer_var = makeVar(rel->relid,
+										tle->resdom->resno,
+										tle->resdom->restype,
+										tle->resdom->restypmod,
+										0);
+					outer_item = makePathKeyItem((Node *) outer_var,
+												 sub_item->sortop);
+					/* score = # of mergejoin peers */
+					score = count_canonical_peers(root, outer_item);
+					/* +1 if it matches the proper query_pathkeys item */
+					if (retvallen < outer_query_keys &&
+						member(outer_item,
+							   nth(retvallen, root->query_pathkeys)))
+						score++;
+					if (score > best_score)
+					{
+						best_item = outer_item;
+						best_score = score;
+					}
+				}
+			}
+		}
+
+		/*
+		 * If we couldn't find a representation of this sub_pathkey,
+		 * we're done (we can't use the ones to its right, either).
+		 */
+		if (!best_item)
+			break;
+
+		/* Canonicalize the chosen item (we did not before) */
+		cpathkey = make_canonical_pathkey(root, best_item);
+
+		/*
+		 * Eliminate redundant ordering info; could happen if outer
+		 * query equijoins subquery keys...
+		 */
+		if (!ptrMember(cpathkey, retval))
+		{
+			retval = lappend(retval, cpathkey);
+			retvallen++;
+		}
+	}
+
+	return retval;
 }
 
 /*

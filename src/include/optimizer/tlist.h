@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.33 2003/01/20 18:55:06 tgl Exp $
+ * $Id: tlist.h,v 1.34 2003/02/15 20:12:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@ extern TargetEntry *create_tl_element(Var *var, int resdomno);
 extern List *new_unsorted_tlist(List *targetlist);
 extern List *flatten_tlist(List *tlist);
 extern List *add_to_flat_tlist(List *tlist, List *vars);
-
-extern Var *get_expr(TargetEntry *tle);
 
 extern TargetEntry *get_sortgroupclause_tle(SortClause *sortClause,
 						List *targetList);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.146 2003/02/09 23:57:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.147 2003/02/15 20:12:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -469,6 +469,9 @@ inheritance_planner(Query *parse, List *inheritlist)
 	/* Save the target-relations list for the executor, too */
 	parse->resultRelations = inheritlist;
 
+	/* Mark result as unordered (probably unnecessary) */
+	parse->query_pathkeys = NIL;
+
 	return (Plan *) make_append(subplans, true, tlist);
 }
 
@@ -491,7 +494,8 @@ inheritance_planner(Query *parse, List *inheritlist)
  * The normal case is to pass -1, but some callers pass values >= 0 to
  * override this routine's determination of the appropriate fraction.
  *
- * Returns a query plan.
+ * Returns a query plan.  Also, parse->query_pathkeys is returned as the
+ * actual output ordering of the plan (in pathkey format).
  *--------------------
  */
 static Plan *
@@ -1191,10 +1195,13 @@ grouping_planner(Query *parse, double tuple_fraction)
 	if (parse->sortClause)
 	{
 		if (!pathkeys_contained_in(sort_pathkeys, current_pathkeys))
+		{
 			result_plan = (Plan *) make_sort_from_sortclauses(parse,
 															  tlist,
 															  result_plan,
 															  parse->sortClause);
+			current_pathkeys = sort_pathkeys;
+		}
 	}
 
 	/*
@@ -1231,6 +1238,12 @@ grouping_planner(Query *parse, double tuple_fraction)
 										  parse->limitOffset,
 										  parse->limitCount);
 	}
+
+	/*
+	 * Return the actual output ordering in query_pathkeys for possible
+	 * use by an outer query level.
+	 */
+	parse->query_pathkeys = current_pathkeys;
 
 	return result_plan;
 }

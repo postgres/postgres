@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.54 2003/01/20 18:54:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.55 2003/02/15 20:12:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,15 +202,6 @@ add_to_flat_tlist(List *tlist, List *vars)
 		}
 	}
 	return tlist;
-}
-
-Var *
-get_expr(TargetEntry *tle)
-{
-	Assert(tle != NULL);
-	Assert(tle->expr != NULL);
-
-	return (Var *) tle->expr;
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.96 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.97 2003/02/15 20:12:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,6 +291,7 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte)
 {
 	Query	   *subquery = rte->subquery;
+	List	   *pathkeys;
 
 	/*
 	 * If there are any restriction clauses that have been attached to the
@@ -351,8 +352,11 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
+	/* Convert subquery pathkeys to outer representation */
+	pathkeys = build_subquery_pathkeys(root, rel, subquery);
+
 	/* Generate appropriate path */
-	add_path(rel, create_subqueryscan_path(rel));
+	add_path(rel, create_subqueryscan_path(rel, pathkeys));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
