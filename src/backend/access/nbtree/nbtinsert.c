@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.71 2000/12/28 13:00:07 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.72 2000/12/29 20:47:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,12 +518,17 @@ _bt_insertonpg(Relation rel,
 	}
 	else
 	{
+		START_CRIT_CODE;
+		_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
+		itup_off = newitemoff;
+		itup_blkno = BufferGetBlockNumber(buf);
 		/* XLOG stuff */
 		{
 			xl_btree_insert		xlrec;
 			uint8				flag = XLOG_BTREE_INSERT;
 			XLogRecPtr			recptr;
 			XLogRecData			rdata[2];
+			BTItemData			truncitem;
 
 			xlrec.target.node = rel->rd_node;
 			ItemPointerSet(&(xlrec.target.tid), BufferGetBlockNumber(buf), newitemoff);
@@ -535,8 +540,7 @@ _bt_insertonpg(Relation rel,
 			/* Read comments in _bt_pgaddtup */
 			if (!(P_ISLEAF(lpageop)) && newitemoff == P_FIRSTDATAKEY(lpageop))
 			{
-				BTItemData	truncitem = *btitem;
-
+				truncitem = *btitem;
 				truncitem.bti_itup.t_info = sizeof(BTItemData);
 				rdata[1].data = (char*)&truncitem;
 				rdata[1].len = sizeof(BTItemData);
@@ -559,9 +563,7 @@ _bt_insertonpg(Relation rel,
 			PageSetSUI(page, ThisStartUpID);
 		}
 
-		_bt_pgaddtup(rel, page, itemsz, btitem, newitemoff, "page");
-		itup_off = newitemoff;
-		itup_blkno = BufferGetBlockNumber(buf);
+		END_CRIT_CODE;
 		/* Write out the updated page and release pin/lock */
 		_bt_wrtbuf(rel, buf);
 	}
@@ -600,7 +602,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 				oopaque;
 	Buffer		sbuf = 0;
 	Page		spage = 0;
-	BTPageOpaque sopaque;
 	Size		itemsz;
 	ItemId		itemid;
 	BTItem		item;
@@ -821,6 +822,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 		if (!P_RIGHTMOST(ropaque))
 		{
+			BTPageOpaque	sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
+			sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
+
 			rdata[2].next = &(rdata[3]);
 			rdata[3].buffer = sbuf;
 			rdata[3].data = NULL;
@@ -856,14 +860,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 	PageRestoreTempPage(leftpage, origpage);
 
+	/* write and release the old right sibling */
 	if (!P_RIGHTMOST(ropaque))
-	{
-		sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
-		sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
-
-		/* write and release the old right sibling */
 		_bt_wrtbuf(rel, sbuf);
-	}
 	END_CRIT_CODE;
 
 	/* split's done */
