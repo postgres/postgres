@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.92 2002/08/06 02:36:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.93 2002/11/12 15:26:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,8 +434,12 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
 	{
 		/*
-		 * If we are at EOF, return zeroes without complaining. (XXX Is
-		 * this still necessary/a good idea??)
+		 * If we are at or past EOF, return zeroes without complaining.
+		 * Also substitute zeroes if we found a partial block at EOF.
+		 *
+		 * XXX this is really ugly, bad design.  However the current
+		 * implementation of hash indexes requires it, because hash index
+		 * pages are initialized out-of-order.
 		 */
 		if (nbytes == 0 ||
 			(nbytes > 0 && mdnblocks(reln) == blocknum))
