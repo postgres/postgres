@@ -17,7 +17,14 @@
  *
  */
 
+/* Make stuff compile faster by excluding not used stuff */
+
 #define WIN32_LEAN_AND_MEAN
+#define WIN32_EXTRA_LEAN
+#define VC_EXTRALEAN
+#define NOGDI
+#define NOCRYPT
+
 #include <windows.h>
 #include <winsock.h>
 #include <stdio.h>

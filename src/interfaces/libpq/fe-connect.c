@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.189 2002/07/18 02:02:30 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.190 2002/07/20 05:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2717,6 +2717,9 @@ PQclientEncoding(const PGconn *conn)
 int
 PQsetClientEncoding(PGconn *conn, const char *encoding)
 {
+
+#ifdef MULTIBYTE
+
 	char		qbuf[128];
 	static char query[] = "set client_encoding to '%s'";
 	PGresult   *res;
@@ -2748,6 +2751,9 @@ PQsetClientEncoding(PGconn *conn, const char *encoding)
 	}
 	PQclear(res);
 	return (status);
+#else
+        return -1; /* Multibyte support isn't compiled in */
+#endif
 }
 
 void

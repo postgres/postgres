@@ -12,13 +12,17 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.51 2002/06/20 20:29:54 momjian Exp $
+ * $Id: libpq-int.h,v 1.52 2002/07/20 05:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef LIBPQ_INT_H
 #define LIBPQ_INT_H
+
+#if defined(WIN32) && (!defined(ssize_t))
+  typedef int ssize_t; /* ssize_t doesn't exist in VC (atleast not VC6) */
+#endif 
 
 /* We assume libpq-fe.h has already been included. */
 #include "postgres_fe.h"

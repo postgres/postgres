@@ -1,4 +1,5 @@
-#include <winsock.h>
+#ifndef __win32_h_included
+#define __win32_h_included
 
 /*
  * strcasecmp() is not in Windows, stricmp is, though
@@ -34,3 +35,6 @@
  * support for handling Windows Socket errors
  */
 extern const char *winsock_strerror(int eno);
+
+
+#endif

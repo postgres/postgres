@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.67 2002/06/20 20:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.68 2002/07/20 05:43:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -714,7 +714,7 @@ fe_getauthname(char *PQerrormsg)
 		char		username[128];
 		DWORD		namesize = sizeof(username) - 1;
 
-		if (GetUserNameFromId(username, &namesize))
+		if (GetUserName(username, &namesize))
 			name = username;
 #else
 		struct passwd *pw = getpwuid(geteuid());

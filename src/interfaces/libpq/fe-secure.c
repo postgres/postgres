@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.9 2002/06/23 20:30:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.10 2002/07/20 05:43:31 momjian Exp $
  *	  
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -110,7 +110,9 @@
 #include "strdup.h"
 #endif
 
+#ifndef WIN32
 #include <pwd.h>
+#endif
 #include <sys/stat.h>
 
 #ifdef USE_SSL

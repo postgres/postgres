@@ -30,6 +30,15 @@ CFG=Release
 !ERROR An invalid configuration was specified.
 !ENDIF
 
+!IFDEF DEBUG
+OPT=/Od
+LOPT=/debug
+DEBUGDEF=/D _DEBUG
+!ELSE
+OPT=/O2
+LOPT=
+DEBUGDEF=/D NDEBUG
+!ENDIF
 
 !IF "$(OS)" == "Windows_NT"
 NULL=
@@ -62,6 +71,7 @@ CLEAN :
 	-@erase "$(INTDIR)\fe-lobj.obj"
 	-@erase "$(INTDIR)\fe-misc.obj"
 	-@erase "$(INTDIR)\fe-print.obj"
+	-@erase "$(INTDIR)\fe-secure.obj"
 	-@erase "$(INTDIR)\pqexpbuffer.obj"
 	-@erase "$(OUTDIR)\libpqdll.obj"
 	-@erase "$(OUTDIR)\win32.obj"
@@ -80,7 +90,7 @@ CLEAN :
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /MD /W3 /GX /O2 /I "..\..\include" /D "FRONTEND" /D "NDEBUG" /D\
+CPP_PROJ=/nologo /MD /W3 /GX $(OPT) /I "..\..\include" /D "FRONTEND" $(DEBUGDEF) /D\
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
 
@@ -95,7 +105,7 @@ CPP_OBJS=.\Release/
 CPP_SBRS=.
 	
 LIB32=link.exe -lib
-LIB32_FLAGS=/nologo /out:"$(OUTDIR)\libpq.lib" 
+LIB32_FLAGS=$(LOPT) /nologo /out:"$(OUTDIR)\libpq.lib" 
 LIB32_OBJS= \
 	"$(OUTDIR)\win32.obj" \
 	"$(INTDIR)\dllist.obj" \
@@ -106,6 +116,7 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-lobj.obj" \
 	"$(INTDIR)\fe-misc.obj" \
 	"$(INTDIR)\fe-print.obj" \
+	"$(INTDIR)\fe-secure.obj" \
 	"$(INTDIR)\pqexpbuffer.obj"
 
 !IFDEF MULTIBYTE
@@ -116,7 +127,7 @@ RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
 LINK32=link.exe
 LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib wsock32.lib\
- /nologo /subsystem:windows /dll /incremental:no\
+ /nologo /subsystem:windows /dll $(LOPT) /incremental:no\
  /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:I386 /out:"$(OUTDIR)\libpq.dll"\
  /implib:"$(OUTDIR)\libpqdll.lib"  /def:libpqdll.def
 LINK32_OBJS= \
