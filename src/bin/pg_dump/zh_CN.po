@@ -1,12 +1,12 @@
 # simplified Chinese translation file for pg_dump and friends
 # Weiping He <laser@zhengmai.com.cn>, 2001.
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/zh_CN.po,v 1.2 2001/11/21 05:45:31 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/zh_CN.po,v 1.3 2001/11/26 17:56:32 momjian Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-11-18 00:25+0800\n"
-"PO-Revision-Date: 2001-10-08 23:32:24+0800\n"
+"POT-Creation-Date: 2001-11-25 18:48+0800\n"
+"PO-Revision-Date: 2001-11-26 20:34:44+0800\n"
 "Last-Translator: Weiping He <laser@zhengmai.com.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
 "MIME-Version: 1.0\n"
