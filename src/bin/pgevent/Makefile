@@ -31,7 +31,7 @@ install-lib: $(NAME)
 uninstall-lib:
 	rm -f $(DESTDIR)$(libdir)/$(NAME)
 
-clean:
+clean distclean:
 	rm -f $(OBJS) $(NAME)
 
 clean-lib:
