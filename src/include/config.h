@@ -65,5 +65,17 @@
 /*------------------------------------------------------*/
 /* #define UNSAFE_FLOATS */
 
+/*
+
+There is a bug in the function executor. The backend crashes while trying to
+execute an sql function containing an utility command (create, notify, ...).
+The bug is part in the planner, which returns a number of plans different
+than the number of commands if there are utility commands in the query, and
+in part in the function executor which assumes that all commands are normal
+query commands and causes a SIGSEGV trying to execute commands without plan.
+
+*/
+#define FUNC_UTIL_PATCH
+
 #endif /* CONFIG_H */
 
