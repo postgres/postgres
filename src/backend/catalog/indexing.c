@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.4 1996/11/06 07:31:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.5 1996/11/11 14:02:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,8 +269,6 @@ CatalogIndexFetchTuple(Relation heapRelation,
     }
     
     index_endscan(sd);
-    if (sd->opaque)
-	pfree(sd->opaque);
     pfree(sd);
     return (tuple);
 }
