@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Jan 30 21:44:35 EST 2005</P>
+    <P>Last updated: Mon Jan 31 15:40:24 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -428,8 +428,8 @@
     RHDB Admin (<a
     href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhd
     b/ </a>), TORA (<a
-    href="http://www.globecom.net/tora/">http://www.globecom.net/tora/</
-    a>, partly commercial), and Rekall (<a
+    href="http://www.globecom.net/tora/">http://www.globecom.net/tora/</a>, 
+    partly commercial), and Rekall (<a
     href="http://www.rekallrevealed.org/">
     http://www.rekallrevealed.org/</a>). There is also PhpPgAdmin (<a
     href="http://phppgadmin.sourceforge.net/">
@@ -457,48 +457,64 @@
     <P>By default, PostgreSQL only allows connections from the local
     machine using Unix domain sockets or TCP/IP connections. Other
     machines will not be able to connect unless you modify
-    listen_addresses in the postgresql.conf <B>and</B> enable
-    host-based authentication by modifying the file
-    <I>$PGDATA/pg_hba.conf</I> accordingly.</P>
+    <I>listen_addresses</I> in the <I>postgresql.conf</I> file, enable
+    host-based authentication by modifying the
+    <I>$PGDATA/pg_hba.conf</I> file, and restart the server.</P>
 
     <H4><A name="3.3">3.3</A>) How do I tune the database engine for
     better performance?</H4>
 
-    <P>Certainly, indexes can speed up queries. The
-    <SMALL>EXPLAIN ANALYZE</SMALL> command allows you to see how
-    PostgreSQL is interpreting your query, and which indexes are
-    being used.</P>
+    <P>There are three major areas for potential performance
+    improvement:</P>
+    
+    <DL>
+    <DT><B>Query Changes</B></DT>
 
-    <P>If you are doing many <SMALL>INSERTs</SMALL>, consider doing
-    them in a large batch using the <SMALL>COPY</SMALL> command. This
-    is much faster than individual <SMALL>INSERTS</SMALL>. Second,
-    statements not in a <SMALL>BEGIN WORK/COMMIT</SMALL> transaction
-    block are considered to be in their own transaction. Consider
-    performing several statements in a single transaction block. This
-    reduces the transaction overhead. Also, consider dropping and
-    recreating indexes when making large data changes.</P>
+    <DD>This involves modifying queries to obtain better
+    performance:
+    <ul>
+    <li>Creation of indexes, including expression and partial
+    indexes</li>
+    <li>Use of COPY instead of multiple <SMALL>INSERT</SMALL>s</li>
+    <li>Grouping of multiple statements into a single transaction to
+    reduce commit overhead</li>
+    <li>Use of <SMALL>CLUSTER</SMALL> when retrieving many rows from an
+    index</li>
+    <li>Use of <SMALL>LIMIT</SMALL> for returning a subset of a query's
+    output</li>
+    <li>Use of Prepared queries</li>
+    <li>Use of <SMALL>ANALYZE</SMALL> to maintain accurate optimizer
+    statistics</li>
+    <li>Regular use of <SMALL>VACUUM</SMALL> or <I>pg_autovacuum</I>
+    <li>Dropping of indexes during large data changes</li>
+    </ul><BR>
+    <BR>
+    </DD>
 
-    <P>There are several tuning options in the <a href=
+    <DT><B>Server Configuration</B></DT>
+
+    <DD>A number of <I>postgresql.conf</I> settings affect performance.
+    For more details, see <a href=
     "http://www.postgresql.org/docs/current/static/runtime.html">
-    Administration Guide/Server Run-time Environment/Run-time Configuration</a>.
-    You can disable <I>fsync()</I> by using <i>fsync</I> option. This will
-    prevent <I>fsync()</I>s from flushing to disk after every
-    transaction.</P>
+    Administration Guide/Server Run-time Environment/Run-time
+    Configuration</a> for a full listing, and for commentary see <a
+    href="http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html">
+    http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_conf_e.html</a>
+    and <a href="http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html">
+    http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html</a>.
+    <BR>
+    <BR>
+    </DD>
 
-    <P>You can use the <I>shared_buffers</I> option to
-    increase the number of shared memory buffers used by the backend
-    processes. If you make this parameter too high, the
-    <I>postmaster</I> may not start because you have exceeded your
-    kernel's limit on shared memory space. Each buffer is 8K and the
-    default is 1000 buffers.</P>
+    <DT><B>Hardware Selection</B></DT>
 
-    <P>You can also use the <I>sort_mem</I> (from PostgreSQL 8.0: <I>work_mem</I>)
-    options to increase the maximum amount of memory used by the backend
-    processes for each temporary sort. The default is 1024 (i.e. 1MB).</P>
-
-    <P>You can also use the <SMALL>CLUSTER</SMALL> command to group
-    data in tables to match an index. See the <SMALL>CLUSTER</SMALL>
-    manual page for more details.</P>
+    <DD>The effect of hardware on performance is detailed in <a
+    href="http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html">
+    http://candle.pha.pa.us/main/writings/pgsql/hw_performance/index.html</a>.
+    <BR>
+    <BR>
+    </DD>
+    </DL>
 
     <H4><A name="3.4">3.4</A>) What debugging features are
     available?</H4>
@@ -1196,5 +1212,3 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     compiler compute the dependencies automatically.</P>
   </BODY>
 </HTML>
-
-           

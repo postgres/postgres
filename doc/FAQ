@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 30 21:44:35 EST 2005
+   Last updated: Mon Jan 31 15:40:24 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -346,41 +346,41 @@
    By default, PostgreSQL only allows connections from the local machine
    using Unix domain sockets or TCP/IP connections. Other machines will
    not be able to connect unless you modify listen_addresses in the
-   postgresql.conf and enable host-based authentication by modifying the
-   file $PGDATA/pg_hba.conf accordingly.
+   postgresql.conf file, enable host-based authentication by modifying
+   the $PGDATA/pg_hba.conf file, and restart the server.
    
     3.3) How do I tune the database engine for better performance?
     
-   Certainly, indexes can speed up queries. The EXPLAIN ANALYZE command
-   allows you to see how PostgreSQL is interpreting your query, and which
-   indexes are being used.
+   There are three major areas for potential performance improvement:
    
-   If you are doing many INSERTs, consider doing them in a large batch
-   using the COPY command. This is much faster than individual INSERTS.
-   Second, statements not in a BEGIN WORK/COMMIT transaction block are
-   considered to be in their own transaction. Consider performing several
-   statements in a single transaction block. This reduces the transaction
-   overhead. Also, consider dropping and recreating indexes when making
-   large data changes.
-   
-   There are several tuning options in the Administration Guide/Server
-   Run-time Environment/Run-time Configuration. You can disable fsync()
-   by using fsync option. This will prevent fsync()s from flushing to
-   disk after every transaction.
-   
-   You can use the shared_buffers option to increase the number of shared
-   memory buffers used by the backend processes. If you make this
-   parameter too high, the postmaster may not start because you have
-   exceeded your kernel's limit on shared memory space. Each buffer is 8K
-   and the default is 1000 buffers.
-   
-   You can also use the sort_mem (from PostgreSQL 8.0: work_mem) options
-   to increase the maximum amount of memory used by the backend processes
-   for each temporary sort. The default is 1024 (i.e. 1MB).
-   
-   You can also use the CLUSTER command to group data in tables to match
-   an index. See the CLUSTER manual page for more details.
-   
+   Query Changes
+          This involves modifying queries to obtain better performance:
+          
+          + Creation of indexes, including expression and partial indexes
+          + Use of COPY instead of multiple INSERTs
+          + Grouping of multiple statements into a single transaction to
+            reduce commit overhead
+          + Use of CLUSTER when retrieving many rows from an index
+          + Use of LIMIT for returning a subset of a query's output
+          + Use of Prepared queries
+          + Use of ANALYZE to maintain accurate optimizer statistics
+          + Regular use of VACUUM or pg_autovacuum
+          + Dropping of indexes during large data changes
+            
+   Server Configuration
+          A number of postgresql.conf settings affect performance. For
+          more details, see Administration Guide/Server Run-time
+          Environment/Run-time Configuration for a full listing, and for
+          commentary see
+          http://www.varlena.com/varlena/GeneralBits/Tidbits/annotated_co
+          nf_e.html and
+          http://www.varlena.com/varlena/GeneralBits/Tidbits/perf.html.
+          
+   Hardware Selection
+          The effect of hardware on performance is detailed in
+          http://candle.pha.pa.us/main/writings/pgsql/hw_performance/inde
+          x.html.
+          
     3.4) What debugging features are available?
     
    PostgreSQL has several features that report status information that
