@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.20 2001/03/23 04:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.21 2001/03/25 00:45:20 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -745,7 +745,10 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	Datum		t_values[3];
 	char		t_nulls[3];
 	varattrib  *result;
-	char		chunk_data[VARHDRSZ + TOAST_MAX_CHUNK_SIZE];
+	struct {
+		struct varlena	hdr;
+		char			data[TOAST_MAX_CHUNK_SIZE];
+	}			chunk_data;
 	int32		chunk_size;
 	int32		chunk_seq = 0;
 	char	   *data_p;
@@ -780,7 +783,7 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 	 * Initialize constant parts of the tuple data
 	 */
 	t_values[0] = ObjectIdGetDatum(result->va_content.va_external.va_valueid);
-	t_values[2] = PointerGetDatum(chunk_data);
+	t_values[2] = PointerGetDatum(&chunk_data);
 	t_nulls[0] = ' ';
 	t_nulls[1] = ' ';
 	t_nulls[2] = ' ';
@@ -813,8 +816,8 @@ toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value)
 		 * Build a tuple
 		 */
 		t_values[1] = Int32GetDatum(chunk_seq++);
-		VARATT_SIZEP(chunk_data) = chunk_size + VARHDRSZ;
-		memcpy(VARATT_DATA(chunk_data), data_p, chunk_size);
+		VARATT_SIZEP(&chunk_data) = chunk_size + VARHDRSZ;
+		memcpy(VARATT_DATA(&chunk_data), data_p, chunk_size);
 		toasttup = heap_formtuple(toasttupDesc, t_values, t_nulls);
 		if (!HeapTupleIsValid(toasttup))
 			elog(ERROR, "Failed to build TOAST tuple");
