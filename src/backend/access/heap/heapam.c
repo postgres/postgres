@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.79 2000/07/04 17:11:40 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.80 2000/07/21 10:31:30 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1274,6 +1274,10 @@ Oid
 heap_insert(Relation relation, HeapTuple tup)
 {
 	Buffer buffer;
+#ifndef TOAST_INDICES
+	HeapTupleHeader plaintdata = NULL;
+	int32			plaintlen = 0;
+#endif
 
 	/* increment access statistics */
 	tup->tableOid = relation->rd_id;
@@ -1309,7 +1313,11 @@ heap_insert(Relation relation, HeapTuple tup)
 	 */
     if (HeapTupleHasExtended(tup) ||
 				(MAXALIGN(tup->t_len) > (MaxTupleSize / 4)))
+#ifdef TOAST_INDICES
 		heap_tuple_toast_attrs(relation, tup, NULL);
+#else
+		heap_tuple_toast_attrs(relation, tup, NULL, &plaintdata, &plaintlen);
+#endif
 #endif
 
 	/* Find buffer for this tuple */
@@ -1347,6 +1355,16 @@ heap_insert(Relation relation, HeapTuple tup)
 	if (IsSystemRelationName(RelationGetRelationName(relation)))
 		RelationMark4RollbackHeapTuple(relation, tup);
 
+#ifndef TOAST_INDICES
+    if (plaintdata != NULL && tup->t_data != plaintdata)
+	{
+		if (tup->t_datamcxt != NULL && (char *) (tup->t_data) !=
+					((char *) tup + HEAPTUPLESIZE))
+			pfree(tup->t_data);
+	    tup->t_data = plaintdata;
+		tup->t_len  = plaintlen;
+	}
+#endif
 	return tup->t_data->t_oid;
 }
 
@@ -1461,7 +1479,11 @@ l1:
 	 * ----------
 	 */
 	if (HeapTupleHasExtended(&tp))
+#ifdef TOAST_INDICES
 		heap_tuple_toast_attrs(relation, NULL, &(tp));
+#else
+		heap_tuple_toast_attrs(relation, NULL, &(tp), NULL, NULL);
+#endif
 #endif
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
@@ -1486,6 +1508,10 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	PageHeader	dp;
 	Buffer		buffer, newbuf;
 	int			result;
+#ifndef TOAST_INDICES
+	HeapTupleHeader plaintdata = NULL;
+	int32			plaintlen  = 0;
+#endif
 
 	newtup->tableOid = relation->rd_id;
 	/* increment access statistics */
@@ -1574,7 +1600,11 @@ l2:
 	if (HeapTupleHasExtended(&oldtup) || 
 			HeapTupleHasExtended(newtup) ||
 			(MAXALIGN(newtup->t_len) > (MaxTupleSize / 4)))
+#ifdef TOAST_INDICES
 		heap_tuple_toast_attrs(relation, newtup, &oldtup);
+#else
+		heap_tuple_toast_attrs(relation, newtup, &oldtup, &plaintdata, &plaintlen);
+#endif
 #endif
 
 	/* Find buffer for new tuple */
@@ -1636,6 +1666,17 @@ l2:
 	/* invalidate caches */
 	RelationInvalidateHeapTuple(relation, &oldtup);
 	RelationMark4RollbackHeapTuple(relation, newtup);
+
+#ifndef TOAST_INDICES
+    if (plaintdata != NULL && newtup->t_data != plaintdata)
+	{
+		if (newtup->t_datamcxt != NULL && (char *) (newtup->t_data) !=
+					((char *) newtup + HEAPTUPLESIZE))
+			pfree(newtup->t_data);
+	    newtup->t_data = plaintdata;
+		newtup->t_len  = plaintlen;
+	}
+#endif
 
 	return HeapTupleMayBeUpdated;
 }

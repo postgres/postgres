@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.7 2000/07/11 12:32:03 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.8 2000/07/21 10:31:30 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -43,8 +43,14 @@
 
 static void			toast_delete(Relation rel, HeapTuple oldtup);
 static void			toast_delete_datum(Relation rel, Datum value);
+#ifdef TOAST_INDICES
 static void			toast_insert_or_update(Relation rel, HeapTuple newtup,
 								HeapTuple oldtup);
+#else
+static void			toast_insert_or_update(Relation rel, HeapTuple newtup,
+								HeapTuple oldtup, HeapTupleHeader *plaintdata,
+								int32 *plaintlen);
+#endif
 static Datum		toast_compress_datum(Datum value);
 static Datum		toast_save_datum(Relation rel, Oid mainoid, int16 attno, Datum value);
 								
@@ -59,6 +65,7 @@ static varattrib   *toast_fetch_datum(varattrib *attr);
  *	Calls the appropriate event specific action.
  * ----------
  */
+#ifdef TOAST_INDICES
 void
 heap_tuple_toast_attrs(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 {
@@ -67,6 +74,17 @@ heap_tuple_toast_attrs(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	else
 		toast_insert_or_update(rel, newtup, oldtup);
 }
+#else
+void
+heap_tuple_toast_attrs(Relation rel, HeapTuple newtup, 
+			HeapTuple oldtup, HeapTupleHeader *plaintdata, int32 *plaintlen)
+{
+	if (newtup == NULL)
+		toast_delete(rel, oldtup);
+	else
+		toast_insert_or_update(rel, newtup, oldtup, plaintdata, plaintlen);
+}
+#endif
 
 
 /* ----------
@@ -181,7 +199,12 @@ toast_delete(Relation rel, HeapTuple oldtup)
  * ----------
  */
 static void
+#ifdef TOAST_INDICES
 toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
+#else
+toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
+				HeapTupleHeader *plaintdata, int32 *plaintlen)
+#endif
 {
 	TupleDesc			tupleDesc;
 	Form_pg_attribute  *att;
@@ -204,6 +227,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	bool				toast_free[MaxHeapAttributeNumber];
 	bool				toast_delold[MaxHeapAttributeNumber];
 
+#ifndef TOAST_INDICES
+	bool				need_plain  = false;
+	Datum				toast_plains[MaxHeapAttributeNumber];
+	bool				toast_freeplain[MaxHeapAttributeNumber];
+#endif
+
 	/* ----------
 	 * Get the tuple descriptor, the number of and attribute
 	 * descriptors and the location of the tuple values.
@@ -217,10 +246,11 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	 * Then collect information about the values given
 	 * ----------
 	 */
-	memset(toast_action, ' ', numAttrs * sizeof(char));
-	memset(toast_nulls,  ' ', numAttrs * sizeof(char));
-	memset(toast_free,   0,   numAttrs * sizeof(bool));
-	memset(toast_delold, 0,   numAttrs * sizeof(bool));
+	memset(toast_action,    ' ', numAttrs * sizeof(char));
+	memset(toast_nulls,     ' ', numAttrs * sizeof(char));
+	memset(toast_free,      0,   numAttrs * sizeof(bool));
+	memset(toast_freeplain, 0,   numAttrs * sizeof(bool));
+	memset(toast_delold,    0,   numAttrs * sizeof(bool));
 	for (i = 0; i < numAttrs; i++)
 	{
 		varattrib	   *old_value;
@@ -270,6 +300,25 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 					 */
 					toast_action[i] = 'p';
 					toast_sizes[i] = VARATT_SIZE(toast_values[i]);
+
+#ifndef TOAST_INDICES
+					/* ----------
+					 * But the tuple returned by the heap-am
+					 * function must not contain external references.
+					 * So we have to construct another plain tuple
+					 * later.
+					 * ----------
+					 */
+					if (att[i]->attstorage == 'x' || att[i]->attstorage == 'm')
+						toast_plains[i] = PointerGetDatum(
+								toast_fetch_datum(new_value));
+					else
+						toast_plains[i] = PointerGetDatum(
+								heap_tuple_untoast_attr(new_value));
+					toast_freeplain[i] = true;
+					need_plain = true;
+#endif
+
 					continue;
 				}
 			}
@@ -320,10 +369,17 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			{
 				toast_values[i] = PointerGetDatum(heap_tuple_untoast_attr(
 					(varattrib *)DatumGetPointer(toast_values[i])));
+#ifndef TOAST_INDICES
+				toast_plains[i] = toast_values[i];
+#endif
 				toast_free[i] = true;
 				need_change = true;
 				need_free = true;
 			}
+#ifndef TOAST_INDICES
+			else
+				toast_plains[i] = toast_values[i];
+#endif
 
 			/* ----------
 			 * Remember the size of this attribute
@@ -339,6 +395,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			 */
 			toast_action[i] = 'p';
 			toast_sizes[i]  = att[i]->attlen;
+#ifndef TOAST_INDICES
+			toast_plains[i] = toast_values[i];
+#endif
 		}
 	}
 
@@ -397,6 +456,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		old_value			= toast_values[i];
 
 		toast_values[i]		= toast_compress_datum(toast_values[i]);
+#ifndef TOAST_INDICES
+		toast_plains[i]		= toast_values[i];
+#endif
 									
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
@@ -454,8 +516,14 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 									newtup->t_data->t_oid,
 									i + 1,
 									toast_values[i]);
+#ifndef TOAST_INDICES
+		need_plain = true;
+		if (toast_free[i])
+			toast_freeplain[i] = true;
+#else
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
+#endif
 
 		toast_free[i]		= true;
 		toast_sizes[i]		= VARATT_SIZE(toast_values[i]);
@@ -506,6 +574,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		old_value			= toast_values[i];
 
 		toast_values[i]		= toast_compress_datum(toast_values[i]);
+#ifndef TOAST_INDICES
+		toast_plains[i]		= toast_values[i];
+#endif
 									
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
@@ -562,8 +633,14 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 									newtup->t_data->t_oid,
 									i + 1,
 									toast_values[i]);
+#ifndef TOAST_INDICES
+		need_plain = true;
+		if (toast_free[i])
+			toast_freeplain[i] = true;
+#else
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
+#endif
 
 		toast_free[i]		= true;
 		toast_sizes[i]		= VARATT_SIZE(toast_values[i]);
@@ -637,14 +714,77 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 	}
 
 
+#ifndef TOAST_INDICES
+	/* ----------
+	 * In the case we toasted any values, we need to build
+	 * a new heap tuple with the changed values.
+	 * ----------
+	 */
+	if (need_plain)
+	{
+		int32			new_len;
+		MemoryContext	oldcxt;
+
+		/* ----------
+		 * Calculate the new size of the tuple
+		 * ----------
+		 */
+		new_len = offsetof(HeapTupleHeaderData, t_bits);
+		if (has_nulls)
+			new_len += BITMAPLEN(numAttrs);
+		new_len = MAXALIGN(new_len);
+		new_len += ComputeDataSize(tupleDesc, toast_plains, toast_nulls);
+
+		/* ----------
+		 * Switch to the memory context of the HeapTuple structure
+		 * and allocate the new tuple.
+		 * ----------
+		 */
+		oldcxt = MemoryContextSwitchTo(newtup->t_datamcxt);
+		*plaintdata = palloc(new_len);
+		*plaintlen  = new_len;
+
+		/* ----------
+		 * Put the tuple header and the changed values into place
+		 * ----------
+		 */
+		memcpy(*plaintdata, newtup->t_data, newtup->t_data->t_hoff);
+
+		DataFill((char *)(MAXALIGN((long)(*plaintdata) +
+						offsetof(HeapTupleHeaderData, t_bits) + 
+						((has_nulls) ? BITMAPLEN(numAttrs) : 0))),
+				tupleDesc,
+				toast_plains,
+				toast_nulls,
+				&((*plaintdata)->t_infomask),
+				has_nulls ? (*plaintdata)->t_bits : NULL);
+
+		/* ----------
+		 * Switch back to the old memory context
+		 * ----------
+		 */
+		MemoryContextSwitchTo(oldcxt);
+	}
+#endif
+
+
 	/* ----------
 	 * Free allocated temp values
 	 * ----------
 	 */
 	if (need_free)
 		for (i = 0; i < numAttrs; i++)
+#ifndef TOAST_INDICES
+		{
 			if (toast_free[i])
 				pfree(DatumGetPointer(toast_values[i]));
+			if (toast_freeplain[i])
+				pfree(DatumGetPointer(toast_plains[i]));
+		}
+#else
+			if (toast_free[i])
+				pfree(DatumGetPointer(toast_values[i]));
+#endif
 
 	/* ----------
 	 * Delete external values from the old tuple
