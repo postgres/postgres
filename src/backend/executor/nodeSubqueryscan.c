@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.6 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.7 2001/05/08 19:47:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,7 +267,18 @@ ExecSubqueryReScan(SubqueryScan *node, ExprContext *exprCtxt, Plan *parent)
 		return;
 	}
 
-	ExecReScan(node->subplan, NULL, node->subplan);
+	/*
+	 * ExecReScan doesn't know about my subplan, so I have to do
+	 * changed-parameter signaling myself.
+	 */
+	if (node->scan.plan.chgParam != NULL)
+		SetChangedParamList(node->subplan, node->scan.plan.chgParam);
+	/*
+	 * if chgParam of subnode is not null then plan will be re-scanned by
+	 * first ExecProcNode.
+	 */
+	if (node->subplan->chgParam == NULL)
+		ExecReScan(node->subplan, NULL, node->subplan);
 
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
 }
