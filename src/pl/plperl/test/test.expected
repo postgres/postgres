@@ -1,0 +1,224 @@
+checkpoint;
+CREATE OR REPLACE FUNCTION perl_int(int) RETURNS INTEGER AS $$
+return undef;
+$$ LANGUAGE plperl;
+SELECT perl_int(11);
+ perl_int 
+----------
+         
+(1 row)
+
+SELECT * FROM perl_int(42);
+ perl_int 
+----------
+         
+(1 row)
+
+CREATE OR REPLACE FUNCTION perl_int(int) RETURNS INTEGER AS $$
+return $_[0] + 1;
+$$ LANGUAGE plperl;
+SELECT perl_int(11);
+ perl_int 
+----------
+       12
+(1 row)
+
+SELECT * FROM perl_int(42);
+ perl_int 
+----------
+       43
+(1 row)
+
+CREATE OR REPLACE FUNCTION perl_set_int(int) RETURNS SETOF INTEGER AS $$
+return undef;
+$$ LANGUAGE plperl;
+SELECT perl_set_int(5);
+ perl_set_int 
+--------------
+(0 rows)
+
+SELECT * FROM perl_set_int(5);
+ perl_set_int 
+--------------
+(0 rows)
+
+CREATE OR REPLACE FUNCTION perl_set_int(int) RETURNS SETOF INTEGER AS $$
+return [0..$_[0]];
+$$ LANGUAGE plperl;
+SELECT perl_set_int(5);
+ perl_set_int 
+--------------
+            0
+            1
+            2
+            3
+            4
+            5
+(6 rows)
+
+SELECT * FROM perl_set_int(5);
+ perl_set_int 
+--------------
+            0
+            1
+            2
+            3
+            4
+            5
+(6 rows)
+
+CREATE TYPE testrowperl AS (f1 integer, f2 text, f3 text);
+CREATE OR REPLACE FUNCTION perl_row() RETURNS testrowperl AS $$
+    return undef;
+$$ LANGUAGE plperl;
+SELECT perl_row();
+ perl_row 
+----------
+ 
+(1 row)
+
+SELECT * FROM perl_row();
+ f1 | f2 | f3 
+----+----+----
+    |    | 
+(1 row)
+
+CREATE OR REPLACE FUNCTION perl_row() RETURNS testrowperl AS $$
+    return {f2 => 'hello', f1 => 1, f3 => 'world'};
+$$ LANGUAGE plperl;
+SELECT perl_row();
+    perl_row     
+-----------------
+ (1,hello,world)
+(1 row)
+
+SELECT * FROM perl_row();
+ f1 |  f2   |  f3   
+----+-------+-------
+  1 | hello | world
+(1 row)
+
+CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
+    return undef;
+$$  LANGUAGE plperl;
+SELECT perl_set();
+ perl_set 
+----------
+(0 rows)
+
+SELECT * FROM perl_set();
+ f1 | f2 | f3 
+----+----+----
+(0 rows)
+
+CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
+    return [
+        { f1 => 1, f2 => 'Hello', f3 =>  'World' },
+        undef,
+        { f1 => 3, f2 => 'Hello', f3 =>  'PL/Perl' }
+    ];
+$$  LANGUAGE plperl;
+SELECT perl_set();
+ERROR:  plperl: check your return value structure
+SELECT * FROM perl_set();
+ERROR:  plperl: check your return value structure
+CREATE OR REPLACE FUNCTION perl_set() RETURNS SETOF testrowperl AS $$
+    return [
+        { f1 => 1, f2 => 'Hello', f3 =>  'World' },
+        { f1 => 2, f2 => 'Hello', f3 =>  'PostgreSQL' },
+        { f1 => 3, f2 => 'Hello', f3 =>  'PL/Perl' }
+    ];
+$$  LANGUAGE plperl;
+SELECT perl_set();
+       perl_set       
+----------------------
+ (1,Hello,World)
+ (2,Hello,PostgreSQL)
+ (3,Hello,PL/Perl)
+(3 rows)
+
+SELECT * FROM perl_set();
+ f1 |  f2   |     f3     
+----+-------+------------
+  1 | Hello | World
+  2 | Hello | PostgreSQL
+  3 | Hello | PL/Perl
+(3 rows)
+
+CREATE OR REPLACE FUNCTION perl_record() RETURNS record AS $$
+    return undef;
+$$ LANGUAGE plperl;
+SELECT perl_record();
+ perl_record 
+-------------
+ 
+(1 row)
+
+SELECT * FROM perl_record();
+ERROR:  a column definition list is required for functions returning "record"
+SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text);
+ f1 | f2 | f3 
+----+----+----
+    |    | 
+(1 row)
+
+CREATE OR REPLACE FUNCTION perl_record() RETURNS record AS $$
+    return {f2 => 'hello', f1 => 1, f3 => 'world'};
+$$ LANGUAGE plperl;
+SELECT perl_record();
+ERROR:  could not determine row description for function returning record
+SELECT * FROM perl_record();
+ERROR:  a column definition list is required for functions returning "record"
+SELECT * FROM perl_record() AS (f1 integer, f2 text, f3 text);
+ f1 |  f2   |  f3   
+----+-------+-------
+  1 | hello | world
+(1 row)
+
+CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
+    return undef;
+$$  LANGUAGE plperl;
+SELECT perl_record_set();
+ perl_record_set 
+-----------------
+(0 rows)
+
+SELECT * FROM perl_record_set();
+ERROR:  a column definition list is required for functions returning "record"
+SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
+ f1 | f2 | f3 
+----+----+----
+(0 rows)
+
+CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
+    return [
+        { f1 => 1, f2 => 'Hello', f3 =>  'World' },
+        undef,
+        { f1 => 3, f2 => 'Hello', f3 =>  'PL/Perl' }
+    ];
+$$  LANGUAGE plperl;
+SELECT perl_record_set();
+ERROR:  could not determine row description for function returning record
+SELECT * FROM perl_record_set();
+ERROR:  a column definition list is required for functions returning "record"
+SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
+ERROR:  plperl: check your return value structure
+CREATE OR REPLACE FUNCTION perl_record_set() RETURNS SETOF record AS $$
+    return [
+        { f1 => 1, f2 => 'Hello', f3 =>  'World' },
+        { f1 => 2, f2 => 'Hello', f3 =>  'PostgreSQL' },
+        { f1 => 3, f2 => 'Hello', f3 =>  'PL/Perl' }
+    ];
+$$  LANGUAGE plperl;
+SELECT perl_record_set();
+ERROR:  could not determine row description for function returning record
+SELECT * FROM perl_record_set();
+ERROR:  a column definition list is required for functions returning "record"
+SELECT * FROM perl_record_set() AS (f1 integer, f2 text, f3 text);
+ f1 |  f2   |     f3     
+----+-------+------------
+  1 | Hello | World
+  2 | Hello | PostgreSQL
+  3 | Hello | PL/Perl
+(3 rows)
+

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+DBNAME=plperl_test
+export DBNAME
+
+echo "**** Destroy old database $DBNAME ****"
+dropdb $DBNAME
+
+sleep 1
+
+echo "**** Create test database $DBNAME ****"
+createdb $DBNAME
+
+echo "**** Create procedural language plperl ****"
+createlang plperl $DBNAME
+
+echo "**** Running test queries ****"
+psql -q -n -e $DBNAME <test_queries.sql > test.out 2>&1
+
+if diff test.expected test.out >/dev/null 2>&1 ; then
+    echo "    Tests passed O.K."
+    rm test.out
+else
+    echo "    Tests failed - look at diffs between"
+    echo "    test.expected and test.out"
+fi
