@@ -169,7 +169,7 @@
         In INSERT queries the targetlist describes the new rows that
 	should go into the resultrelation. Missing columns of the 
 	resultrelation will be added by the optimizer with a constant
-	NULL expression. It are the expressions in the VALUES clause
+	NULL expression. It is the expressions in the VALUES clause
 	or the ones from the SELECT clause on INSERT ... SELECT.
     </Para>
 
@@ -178,7 +178,7 @@
 	replace the old ones. Here now the optimizer will add missing
 	columns by inserting expressions that put the values from the
 	old rows into the new one. And it will add the special entry
-	like for DELETE too. It are the expressions from the
+	like for DELETE too. It is the expressions from the
 	SET attribute = expression part of the query.
     </Para>
 
