@@ -19,7 +19,7 @@
   have considered and prepared for various failure scenarios.
  </para>
 
- <sect1>
+ <sect1 id="failure-disk-full">
   <title>Disk Filled</title>
 
   <para>
@@ -35,7 +35,7 @@
   </para>
  </sect1>
 
- <sect1>
+ <sect1 id="failure-disk-failed">
   <title>Disk Failed</title>
 
   <para>
