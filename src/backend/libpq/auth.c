@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.102 2003/06/12 07:36:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.103 2003/06/25 01:19:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,6 +430,13 @@ ClientAuthentication(Port *port)
 			}
 
 		case uaKrb4:
+			/* Kerberos 4 only seems to work with AF_INET. */
+			if (port->raddr.addr.ss_family != AF_INET
+				|| port->laddr.addr.ss_family != AF_INET)
+			{
+				elog(FATAL,
+					"Unsupported protocol for Kerberos 4");
+			}
 			sendAuthRequest(port, AUTH_REQ_KRB4);
 			status = pg_krb4_recvauth(port);
 			break;

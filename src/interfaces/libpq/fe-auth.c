@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.80 2003/06/14 17:49:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.81 2003/06/25 01:19:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -357,10 +357,7 @@ pg_krb5_authname(char *PQerrormsg)
  *					   the server
  */
 static int
-pg_krb5_sendauth(char *PQerrormsg, int sock,
-				 struct sockaddr_in * laddr,
-				 struct sockaddr_in * raddr,
-				 const char *hostname)
+pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname)
 {
 	krb5_error_code retval;
 	int			ret;
@@ -594,9 +591,10 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		case AUTH_REQ_KRB4:
 #ifdef KRB4
-			if (pg_krb4_sendauth(PQerrormsg, conn->sock, &conn->laddr.in,
-								 &conn->raddr.in,
-								 hostname) != STATUS_OK)
+			if (pg_krb4_sendauth(PQerrormsg, conn->sock,
+				(struct sockaddr_in *)&conn->laddr.addr,
+				(struct sockaddr_in *)&conn->raddr.addr,
+				hostname) != STATUS_OK)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					libpq_gettext("Kerberos 4 authentication failed\n"));
@@ -611,9 +609,8 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 
 		case AUTH_REQ_KRB5:
 #ifdef KRB5
-			if (pg_krb5_sendauth(PQerrormsg, conn->sock, &conn->laddr.in,
-								 &conn->raddr.in,
-								 hostname) != STATUS_OK)
+			if (pg_krb5_sendauth(PQerrormsg, conn->sock,
+				hostname) != STATUS_OK)
 			{
 				snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 					libpq_gettext("Kerberos 5 authentication failed\n"));
