@@ -45,11 +45,11 @@ case "$1" in
 	fi
 	echo -n "Starting postgres: "
 # force full login to get path names
-# my postgres runs CSH/TCSH so use proper syntax in redirection...
+# my postgres runs SH/BASH so use proper syntax in redirection...
 	if [ ${USE_SYSLOG} = "yes" ]; then
-		su - ${PGACCOUNT} -c "(${POSTMASTER} ${PGOPTS} |& logger -p ${FACILITY}.notice) &" > /dev/null&
+		su - ${PGACCOUNT} -c "(${POSTMASTER} ${PGOPTS} 2>&1 | logger -p ${FACILITY}.notice) &" > /dev/null 2>&1 &
 	else
-		su - ${PGACCOUNT} -c "${POSTMASTER} ${PGOPTS} >>&! ${PGLOGFILE} &" > /dev/null&
+		su - ${PGACCOUNT} -c "${POSTMASTER} ${PGOPTS} 2>>&1 ${PGLOGFILE} &" > /dev/null 2>&1 &
 	fi
 	sleep 5
 	pid=`pidof ${POSTMASTER}`
