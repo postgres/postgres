@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.109 2000/05/19 03:22:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.110 2000/05/20 23:11:28 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,6 +41,7 @@
 #include "parser/parse_func.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
+#include "utils/catcache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "utils/temprel.h"
@@ -432,7 +433,6 @@ AccessMethodObjectIdGetForm(Oid accessMethodObjectId)
 static void
 ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 {
-	extern GlobalMemory CacheCxt;
 	MemoryContext oldcxt;
 
 	/* ----------------
@@ -880,7 +880,6 @@ InitIndexStrategy(int numatts,
 	uint16		amsupport;
 	Oid			attrelid;
 	Size		strsize;
-	extern GlobalMemory CacheCxt;
 
 	/* ----------------
 	 *	get information from the index relation descriptor
