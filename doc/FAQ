@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 30 21:39:39 EST 2005
+   Last updated: Sun Jan 30 21:42:21 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -316,10 +316,10 @@
    A nice introduction to Database-backed Web pages can be seen at:
    http://www.webreview.com
    
-   For Web integration, PHP is an excellent interface. It is at
-   http://www.php.net.
+   For Web integration, PHP (http://www.php.net) is an excellent
+   interface.
    
-   For complex cases, many use the Perl interface and CGI.pm or mod_perl.
+   For complex cases, many use the Perl and CGI.pm or mod_perl.
    
     2.3) Does PostgreSQL have a graphical user interface?
     
