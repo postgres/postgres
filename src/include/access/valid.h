@@ -7,20 +7,18 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/valid.h,v 1.34 2004/08/29 04:13:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/valid.h,v 1.35 2004/10/15 22:40:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VALID_H
 #define VALID_H
 
-/* ----------------
+/*
  *		HeapKeyTest
  *
- *		Test a heap tuple with respect to a scan key.
- * ----------------
+ *		Test a heap tuple to see if it satisfies a scan key.
  */
-
 #define HeapKeyTest(tuple, \
 					tupdesc, \
 					nkeys, \
@@ -28,9 +26,7 @@
 					result) \
 do \
 { \
-/* We use underscores to protect the variable passed in as parameters */ \
-/* We use two underscore here because this macro is included in the \
-   macro below */ \
+	/* Use underscores to protect the variables passed in as parameters */ \
 	int			__cur_nkeys = (nkeys); \
 	ScanKey		__cur_keys = (keys); \
  \
@@ -41,19 +37,18 @@ do \
 		bool	__isnull; \
 		Datum	__test; \
  \
+		if (__cur_keys->sk_flags & SK_ISNULL) \
+		{ \
+			(result) = false; \
+			break; \
+		} \
+ \
 		__atp = heap_getattr((tuple), \
 							 __cur_keys->sk_attno, \
 							 (tupdesc), \
 							 &__isnull); \
  \
 		if (__isnull) \
-		{ \
-			/* XXX eventually should check if SK_ISNULL */ \
-			(result) = false; \
-			break; \
-		} \
- \
-		if (__cur_keys->sk_flags & SK_ISNULL) \
 		{ \
 			(result) = false; \
 			break; \
@@ -70,7 +65,7 @@ do \
 	} \
 } while (0)
 
-/* ----------------
+/*
  *		HeapTupleSatisfies
  *
  *	res is set TRUE if the HeapTuple satisfies the timequal and keytest,
@@ -83,7 +78,6 @@ do \
  *	least likely to fail, too.	we should really add the time qual test to
  *	the restriction and optimize it in the normal way.	this has interactions
  *	with joey's expensive function work.
- * ----------------
  */
 #define HeapTupleSatisfies(tuple, \
 						   relation, \
@@ -95,24 +89,13 @@ do \
 						   res) \
 do \
 { \
-/* We use underscores to protect the variable passed in as parameters */ \
 	if ((key) != NULL) \
-		HeapKeyTest(tuple, RelationGetDescr(relation), \
-						   (nKeys), (key), (res)); \
+		HeapKeyTest(tuple, RelationGetDescr(relation), nKeys, key, res); \
 	else \
 		(res) = true; \
  \
-	if (res) \
-	{ \
-		if ((relation)->rd_rel->relkind != RELKIND_UNCATALOGED) \
-		{ \
-			uint16	_infomask = (tuple)->t_data->t_infomask; \
-			\
-			(res) = HeapTupleSatisfiesVisibility((tuple), (snapshot)); \
-			if ((tuple)->t_data->t_infomask != _infomask) \
-				SetBufferCommitInfoNeedsSave(buffer); \
-		} \
-	} \
+	if ((res) && (relation)->rd_rel->relkind != RELKIND_UNCATALOGED) \
+		(res) = HeapTupleSatisfiesVisibility(tuple, snapshot, buffer); \
 } while (0)
 
 #endif   /* VALID_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.240 2004/10/01 17:11:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.241 2004/10/15 22:39:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1472,18 +1472,16 @@ IndexBuildHeapScan(Relation heapRelation,
 		{
 			/* do our own time qual check */
 			bool		indexIt;
-			uint16		sv_infomask;
 
 			/*
-			 * HeapTupleSatisfiesVacuum may update tuple's hint status
-			 * bits. We could possibly get away with not locking the
-			 * buffer here, since caller should hold ShareLock on the
-			 * relation, but let's be conservative about it.
+			 * We could possibly get away with not locking the buffer here,
+			 * since caller should hold ShareLock on the relation, but let's
+			 * be conservative about it.
 			 */
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
-			sv_infomask = heapTuple->t_data->t_infomask;
 
-			switch (HeapTupleSatisfiesVacuum(heapTuple->t_data, OldestXmin))
+			switch (HeapTupleSatisfiesVacuum(heapTuple->t_data, OldestXmin,
+											 scan->rs_cbuf))
 			{
 				case HEAPTUPLE_DEAD:
 					indexIt = false;
@@ -1543,10 +1541,6 @@ IndexBuildHeapScan(Relation heapRelation,
 					indexIt = tupleIsAlive = false;		/* keep compiler quiet */
 					break;
 			}
-
-			/* check for hint-bit update by HeapTupleSatisfiesVacuum */
-			if (sv_infomask != heapTuple->t_data->t_infomask)
-				SetBufferCommitInfoNeedsSave(scan->rs_cbuf);
 
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 

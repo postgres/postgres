@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.177 2004/09/06 17:31:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.178 2004/10/15 22:39:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,14 +477,14 @@ write_buffer(Buffer buffer, bool release)
 {
 	BufferDesc *bufHdr;
 
+	if (!BufferIsValid(buffer))
+		elog(ERROR, "bad buffer id: %d", buffer);
+
 	if (BufferIsLocal(buffer))
 	{
 		WriteLocalBuffer(buffer, release);
 		return;
 	}
-
-	if (BAD_BUFFER_ID(buffer))
-		elog(ERROR, "bad buffer id: %d", buffer);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -1465,6 +1465,9 @@ ReleaseBuffer(Buffer buffer)
 {
 	BufferDesc *bufHdr;
 
+	if (!BufferIsValid(buffer))
+		elog(ERROR, "bad buffer id: %d", buffer);
+
 	ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
 
 	if (BufferIsLocal(buffer))
@@ -1473,9 +1476,6 @@ ReleaseBuffer(Buffer buffer)
 		LocalRefCount[-buffer - 1]--;
 		return;
 	}
-
-	if (BAD_BUFFER_ID(buffer))
-		elog(ERROR, "bad buffer id: %d", buffer);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -1503,17 +1503,16 @@ ReleaseBuffer(Buffer buffer)
 void
 IncrBufferRefCount(Buffer buffer)
 {
+	Assert(BufferIsValid(buffer));
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 	ResourceOwnerRememberBuffer(CurrentResourceOwner, buffer);
 	if (BufferIsLocal(buffer))
 	{
-		Assert(buffer >= -NLocBuffer);
 		Assert(LocalRefCount[-buffer - 1] > 0);
 		LocalRefCount[-buffer - 1]++;
 	}
 	else
 	{
-		Assert(!BAD_BUFFER_ID(buffer));
 		Assert(PrivateRefCount[buffer - 1] > 0);
 		PrivateRefCount[buffer - 1]++;
 	}
@@ -1606,9 +1605,12 @@ ReleaseAndReadBuffer_Debug(char *file,
  *
  *	Mark a buffer dirty when we have updated tuple commit-status bits in it.
  *
- * This is similar to WriteNoReleaseBuffer, except that we have not made a
- * critical change that has to be flushed to disk before xact commit --- the
- * status-bit update could be redone by someone else just as easily.
+ * This is essentially the same as WriteNoReleaseBuffer.  We preserve the
+ * distinction as a way of documenting that the caller has not made a critical
+ * data change --- the status-bit update could be redone by someone else just
+ * as easily.  Therefore, no WAL log record need be generated, whereas calls
+ * to WriteNoReleaseBuffer really ought to be associated with a WAL-entry-
+ * creating action.
  *
  * This routine might get called many times on the same page, if we are making
  * the first scan after commit of an xact that added/deleted many tuples.
@@ -1623,14 +1625,14 @@ SetBufferCommitInfoNeedsSave(Buffer buffer)
 {
 	BufferDesc *bufHdr;
 
+	if (!BufferIsValid(buffer))
+		elog(ERROR, "bad buffer id: %d", buffer);
+
 	if (BufferIsLocal(buffer))
 	{
 		WriteLocalBuffer(buffer, false);
 		return;
 	}
-
-	if (BAD_BUFFER_ID(buffer))
-		elog(ERROR, "bad buffer id: %d", buffer);
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -1662,7 +1664,6 @@ UnlockBuffers(void)
 		if (buflocks == 0)
 			continue;
 
-		Assert(BufferIsValid(i + 1));
 		buf = &(BufferDescriptors[i]);
 
 		HOLD_INTERRUPTS();		/* don't want to die() partway through... */

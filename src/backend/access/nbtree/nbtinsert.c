@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.116 2004/08/29 05:06:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.117 2004/10/15 22:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,19 +261,13 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
 					 * marked killed.  This logic should match
 					 * index_getnext and btgettuple.
 					 */
-					uint16		sv_infomask;
-
 					LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
-					sv_infomask = htup.t_data->t_infomask;
-					if (HeapTupleSatisfiesVacuum(htup.t_data,
-												 RecentGlobalXmin) ==
-						HEAPTUPLE_DEAD)
+					if (HeapTupleSatisfiesVacuum(htup.t_data, RecentGlobalXmin,
+												 hbuffer) == HEAPTUPLE_DEAD)
 					{
 						curitemid->lp_flags |= LP_DELETE;
 						SetBufferCommitInfoNeedsSave(buf);
 					}
-					if (sv_infomask != htup.t_data->t_infomask)
-						SetBufferCommitInfoNeedsSave(hbuffer);
 					LockBuffer(hbuffer, BUFFER_LOCK_UNLOCK);
 					ReleaseBuffer(hbuffer);
 				}

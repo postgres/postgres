@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * tqual.h
- *	  POSTGRES "time" qualification definitions, ie, tuple visibility rules.
+ *	  POSTGRES "time qualification" definitions, ie, tuple visibility rules.
  *
  *	  Should be moved/renamed...	- vadim 07/28/98
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.53 2004/09/16 18:35:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.54 2004/10/15 22:40:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/htup.h"
 #include "access/xact.h"
+#include "storage/buf.h"
 
 
 /*
@@ -72,23 +73,23 @@ extern TransactionId RecentGlobalXmin;
  *		Assumes heap tuple is valid.
  *		Beware of multiple evaluations of snapshot argument.
  */
-#define HeapTupleSatisfiesVisibility(tuple, snapshot) \
+#define HeapTupleSatisfiesVisibility(tuple, snapshot, buffer) \
 ((snapshot) == SnapshotNow ? \
-	HeapTupleSatisfiesNow((tuple)->t_data) \
+	HeapTupleSatisfiesNow((tuple)->t_data, buffer) \
 : \
 	((snapshot) == SnapshotSelf ? \
-		HeapTupleSatisfiesItself((tuple)->t_data) \
+		HeapTupleSatisfiesItself((tuple)->t_data, buffer) \
 	: \
 		((snapshot) == SnapshotAny ? \
 			true \
 		: \
 			((snapshot) == SnapshotToast ? \
-				HeapTupleSatisfiesToast((tuple)->t_data) \
+				HeapTupleSatisfiesToast((tuple)->t_data, buffer) \
 			: \
 				((snapshot) == SnapshotDirty ? \
-					HeapTupleSatisfiesDirty((tuple)->t_data) \
+					HeapTupleSatisfiesDirty((tuple)->t_data, buffer) \
 				: \
-					HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot) \
+					HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot, buffer) \
 				) \
 			) \
 		) \
@@ -108,21 +109,20 @@ typedef enum
 	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
 	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
 	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
-	HEAPTUPLE_INSERT_IN_PROGRESS,		/* inserting xact is still in
-										 * progress */
+	HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still in progress */
 	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
-extern bool HeapTupleSatisfiesItself(HeapTupleHeader tuple);
-extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple);
-extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple);
-extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple);
+extern bool HeapTupleSatisfiesItself(HeapTupleHeader tuple, Buffer buffer);
+extern bool HeapTupleSatisfiesNow(HeapTupleHeader tuple, Buffer buffer);
+extern bool HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer);
+extern bool HeapTupleSatisfiesToast(HeapTupleHeader tuple, Buffer buffer);
 extern bool HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple,
-						   Snapshot snapshot);
+						   Snapshot snapshot, Buffer buffer);
 extern int HeapTupleSatisfiesUpdate(HeapTupleHeader tuple,
-						 CommandId curcid);
+						 CommandId curcid, Buffer buffer);
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
-						 TransactionId OldestXmin);
+						 TransactionId OldestXmin, Buffer buffer);
 
 extern Snapshot GetTransactionSnapshot(void);
 extern Snapshot GetLatestSnapshot(void);

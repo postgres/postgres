@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.294 2004/10/07 14:19:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.295 2004/10/15 22:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1190,6 +1190,12 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		buf = ReadBuffer(onerel, blkno);
 		page = BufferGetPage(buf);
 
+		/*
+		 * We don't bother to do LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE)
+		 * because we assume that holding exclusive lock on the relation
+		 * will keep other backends from looking at the page.
+		 */
+
 		vacpage->blkno = blkno;
 		vacpage->offsets_used = 0;
 		vacpage->offsets_free = 0;
@@ -1235,7 +1241,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			 offnum <= maxoff;
 			 offnum = OffsetNumberNext(offnum))
 		{
-			uint16		sv_infomask;
 			ItemId		itemid = PageGetItemId(page, offnum);
 			bool		tupgone = false;
 
@@ -1255,9 +1260,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
-			sv_infomask = tuple.t_data->t_infomask;
-
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
+			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin, buf))
 			{
 				case HEAPTUPLE_DEAD:
 					tupgone = true;		/* we can delete the tuple */
@@ -1347,10 +1350,6 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					Assert(false);
 					break;
 			}
-
-			/* check for hint-bit update by HeapTupleSatisfiesVacuum */
-			if (sv_infomask != tuple.t_data->t_infomask)
-				pgchanged = true;
 
 			if (tupgone)
 			{

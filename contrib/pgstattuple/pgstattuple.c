@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.16 2004/08/29 05:06:37 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.17 2004/10/15 22:39:38 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -134,7 +134,10 @@ pgstattuple_real(Relation rel)
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
-		if (HeapTupleSatisfiesNow(tuple->t_data))
+		/* must hold a buffer lock to call HeapTupleSatisfiesNow */
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
+
+		if (HeapTupleSatisfiesNow(tuple->t_data, scan->rs_cbuf))
 		{
 			tuple_len += tuple->t_len;
 			tuple_count++;
@@ -144,6 +147,8 @@ pgstattuple_real(Relation rel)
 			dead_tuple_len += tuple->t_len;
 			dead_tuple_count++;
 		}
+
+		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 		/*
 		 * To avoid physically reading the table twice, try to do the
@@ -156,7 +161,9 @@ pgstattuple_real(Relation rel)
 		while (block <= tupblock)
 		{
 			buffer = ReadBuffer(rel, block);
+			LockBuffer(buffer, BUFFER_LOCK_SHARE);
 			free_space += PageGetFreeSpace((Page) BufferGetPage(buffer));
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buffer);
 			block++;
 		}

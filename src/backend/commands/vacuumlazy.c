@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.46 2004/09/30 23:21:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.47 2004/10/15 22:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			 offnum = OffsetNumberNext(offnum))
 		{
 			ItemId		itemid;
-			uint16		sv_infomask;
 
 			itemid = PageGetItemId(page, offnum);
 
@@ -307,9 +306,8 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
 			tupgone = false;
-			sv_infomask = tuple.t_data->t_infomask;
 
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
+			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin, buf))
 			{
 				case HEAPTUPLE_DEAD:
 					tupgone = true;		/* we can delete the tuple */
@@ -364,10 +362,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					break;
 			}
 
-			/* check for hint-bit update by HeapTupleSatisfiesVacuum */
-			if (sv_infomask != tuple.t_data->t_infomask)
-				pgchanged = true;
-
 			if (tupgone)
 			{
 				lazy_record_dead_tuple(vacrelstats, &(tuple.t_self));
@@ -399,9 +393,9 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 		if (pgchanged)
-			SetBufferCommitInfoNeedsSave(buf);
-
-		ReleaseBuffer(buf);
+			WriteBuffer(buf);
+		else
+			ReleaseBuffer(buf);
 	}
 
 	/* save stats for use later */
@@ -790,8 +784,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		Page		page;
 		OffsetNumber offnum,
 					maxoff;
-		bool		pgchanged,
-					tupgone,
+		bool		tupgone,
 					hastup;
 
 		vacuum_delay_point();
@@ -813,7 +806,6 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 			continue;
 		}
 
-		pgchanged = false;
 		hastup = false;
 		maxoff = PageGetMaxOffsetNumber(page);
 		for (offnum = FirstOffsetNumber;
@@ -821,7 +813,6 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 			 offnum = OffsetNumberNext(offnum))
 		{
 			ItemId		itemid;
-			uint16		sv_infomask;
 
 			itemid = PageGetItemId(page, offnum);
 
@@ -834,9 +825,8 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
 
 			tupgone = false;
-			sv_infomask = tuple.t_data->t_infomask;
 
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
+			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin, buf))
 			{
 				case HEAPTUPLE_DEAD:
 					tupgone = true;		/* we can delete the tuple */
@@ -862,10 +852,6 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 					break;
 			}
 
-			/* check for hint-bit update by HeapTupleSatisfiesVacuum */
-			if (sv_infomask != tuple.t_data->t_infomask)
-				pgchanged = true;
-
 			if (!tupgone)
 			{
 				hastup = true;
@@ -875,10 +861,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
-		if (pgchanged)
-			WriteBuffer(buf);
-		else
-			ReleaseBuffer(buf);
+		ReleaseBuffer(buf);
 
 		/* Done scanning if we found a tuple here */
 		if (hastup)

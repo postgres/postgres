@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.75 2004/09/30 23:21:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.76 2004/10/15 22:39:46 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -497,7 +497,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 	for (;;)
 	{
 		bool		found;
-		uint16		sv_infomask;
 
 		pgstat_count_index_scan(&scan->xs_pgstat_info);
 
@@ -541,19 +540,14 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		 * index AM to not return it on future indexscans.
 		 *
 		 * We told heap_release_fetch to keep a pin on the buffer, so we can
-		 * re-access the tuple here.  But we must re-lock the buffer
-		 * first. Also, it's just barely possible for an update of hint
-		 * bits to occur here.
+		 * re-access the tuple here.  But we must re-lock the buffer first.
 		 */
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_SHARE);
-		sv_infomask = heapTuple->t_data->t_infomask;
 
-		if (HeapTupleSatisfiesVacuum(heapTuple->t_data, RecentGlobalXmin) ==
-			HEAPTUPLE_DEAD)
+		if (HeapTupleSatisfiesVacuum(heapTuple->t_data, RecentGlobalXmin,
+									 scan->xs_cbuf) == HEAPTUPLE_DEAD)
 			scan->kill_prior_tuple = true;
 
-		if (sv_infomask != heapTuple->t_data->t_infomask)
-			SetBufferCommitInfoNeedsSave(scan->xs_cbuf);
 		LockBuffer(scan->xs_cbuf, BUFFER_LOCK_UNLOCK);
 	}
 
