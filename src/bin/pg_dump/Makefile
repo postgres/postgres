@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.16 2000/06/28 18:29:16 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.17 2000/07/03 16:35:39 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,10 +17,16 @@ OBJS= pg_dump.o common.o $(STRDUP)
 CFLAGS+= -I$(LIBPQDIR)
 
 
-all: submake pg_dump$(X)
+all: submake pg_dump pg_dumpall
 
-pg_dump$(X): $(OBJS) $(LIBPQDIR)/libpq.a
+pg_dump: $(OBJS) $(LIBPQDIR)/libpq.a
 	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPQ) $(LDFLAGS)
+
+pg_dumpall: pg_dumpall.sh
+	sed -e 's:__VERSION__:$(VERSION):g' \
+	    -e 's:__MULTIBYTE__:$(MULTIBYTE):g' \
+	    -e 's:__bindir__:$(bindir):g' \
+	  < $< > $@
 
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o
@@ -44,7 +50,7 @@ depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
 clean distclean maintainer-clean:
-	rm -f pg_dump$(X) $(OBJS) 
+	rm -f pg_dump$(X) $(OBJS) pg_dumpall
 
 ifeq (depend,$(wildcard depend))
 include depend
