@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 12 12:47:59 EST 2001
+Last updated:		Fri Jan 12 12:57:38 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -161,27 +161,29 @@ COMMANDS
 * Auto-destroy sequence on DROP of table with SERIAL (Ryan)
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow INSERT/UPDATE of system-generated oid value for a row
+* Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
+* Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
+* -Allow multi-level query trees for INSERT INTO ... SELECT
+* -Allow ORDER BY...LIMIT in INSERT INTO ... SELECT (Tom)
 * -Allow ESCAPE '\' at the end of LIKE for ANSI compliance (Thomas)
 * -Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE [like]
 * Allow RULE recompilation
 * -Support UNION/INTERSECT/EXCEPT in sub-selects
 * -Allow DELETE and UPDATE to use inheritance
-* Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
-* Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
 * Allow BINARY option to SELECT, like we do with DECLARE
 * MOVE 0 should not move to end of cursor
 * Overhaul ACL (access control) code
-* -Allow ORDER BY...LIMIT in INSERT INTO ... SELECT (Tom)
 * Add SHOW command to display locks
 
 CLIENTS
 
 * Make NULL's come out at the beginning or end depending on the
   ORDER BY direction
-* Update reltuples from COPY command
-* Allow COPY to specify column names
-* Allow COPY to dump/load CSV format
+* COPY
+	* Update reltuples in COPY
+	* Allow specification of column names
+	* Allow dump/load of CSV format
 * fix array handling for ECPG
 * -add pg_dump option to dump type names as standard ANSI types
 * -make pg_dump dump in oid order, so dependencies are resolved (Philip)
@@ -215,7 +217,7 @@ EXOTIC FEATURES
 * Incremental backups
 * Allow SQL92 schemas
 
-MISC
+MISCELLANEOUS
 
 * Increase identifier length(NAMEDATALEN) if small performance hit
 * Create a background process for each database that runs while
@@ -237,9 +239,7 @@ MISC
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Overhaul bufmgr/lockmgr/transaction manager
 * -redesign UNION structures to have separarate target lists
-* -Allow multi-level query trees for INSERT INTO ... SELECT
 * -Use IPC_EXCL when creating shared memory and semaphores (Tom)
-* have pg_upgrade use pg_ctl to stop/start postmaster
 * Encrpyt passwords in pg_shadow table using MD5 (Vince)
 * -Use flock() to prevent multiple postmasters on the same port (Tom)
 * Allow Java server-side programming
@@ -287,14 +287,14 @@ MISC
 * -In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
 * allow configuration of maximum number of open files
 * Remove pg_listener index
-* -Redesign ANALYZE in VACUUM so it can be run separately without locks
-* Make ANALYZE a separate command
 * Gather more accurate dispersion statistics using indexes
 * Improve statistics storage in pg_class [performance]
-* Improve VACUUM speed with indexes [vacuum]
-* Reduce VACUUM lock time by moving tuples with read lock, then write
-  lock and truncate table [vacuum]
-* -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
+* VACUUM
+	* Improve speed with indexes [vacuum]
+	* Reduce lock time by moving tuples with read lock, then write
+	  lock and truncate table [vacuum]
+	* -Redesign ANALYZE in VACUUM so it can be run separately without locks
+	* Make ANALYZE a separate command
 * Add connection pooling [pool]
 * Allow persistent backends [persistent]
 * Create a transaction processor to aid in persistent connections and
@@ -310,8 +310,9 @@ SOURCE CODE
 * Remove SET KSQO option now that OR processing is improved (Tom)
 * -Use macros to define NT open() file parameters, remove NT-specific defines
 * -Change CURRENT to OLD internally for rules (Bruce)
-* replace the use of fprint(stderr, ...) with elog() in backend code
+* Replace the use of fprint(stderr, ...) with elog() in backend code
 * -Allow libedit to be used in place of libreadline
+* -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 
 ---------------------------------------------------------------------------
 
