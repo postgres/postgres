@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.102 2000/10/02 19:42:46 petere Exp $
+ *	$Id: pqcomm.c,v 1.103 2000/10/02 21:45:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ static char sock_path[MAXPGPATH];
  * If a Unix socket is used for communication, explicitly close it.
  */
 static void
-StreamDoUnlink()
+StreamDoUnlink(void)
 {
 	Assert(sock_path[0]);
 	unlink(sock_path);

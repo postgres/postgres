@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.38 2000/10/02 19:42:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.39 2000/10/02 21:45:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 
 #include "storage/smgr.h"
 
-static void smgrshutdown(int dummy);
+static void smgrshutdown(void);
 
 typedef struct f_smgr
 {
@@ -118,7 +118,7 @@ smgrinit()
 }
 
 static void
-smgrshutdown(int dummy)
+smgrshutdown(void)
 {
 	int			i;
 

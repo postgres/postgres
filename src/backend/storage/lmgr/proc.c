@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.80 2000/10/02 19:42:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.81 2000/10/02 21:45:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.80 2000/10/02 19:42:48 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.81 2000/10/02 21:45:32 petere Exp $
  */
 #include "postgres.h"
 
@@ -88,7 +88,7 @@ static PROC_HDR *ProcGlobal = NULL;
 
 PROC	   *MyProc = NULL;
 
-static void ProcKill(int exitStatus, int pid);
+static void ProcKill(int exitStatus, Datum pid);
 static void ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum);
 static void ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
 
@@ -396,7 +396,7 @@ ProcRemove(int pid)
  *		this process. Release any of its held spin locks.
  */
 static void
-ProcKill(int exitStatus, int pid)
+ProcKill(int exitStatus, Datum pid)
 {
 	PROC	   *proc;
 	SHMEM_OFFSET location;
@@ -416,7 +416,7 @@ ProcKill(int exitStatus, int pid)
 
 	proc = (PROC *) MAKE_PTR(location);
 
-	Assert(proc == MyProc || pid != MyProcPid);
+	Assert(proc == MyProc || (int)pid != MyProcPid);
 
 	MyProc = NULL;
 

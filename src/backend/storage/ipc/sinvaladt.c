@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.33 2000/10/02 19:42:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.34 2000/10/02 21:45:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ SISeg	   *shmInvalBuffer;
 
 static void SISegmentAttach(IpcMemoryId shmid);
 static void SISegInit(SISeg *segP, int maxBackends);
-static void CleanupInvalidationState(int status, SISeg *segP);
+static void CleanupInvalidationState(int status, Datum arg);
 static void SISetProcStateInvalid(SISeg *segP);
 
 /*
@@ -200,11 +200,14 @@ SIBackendInit(SISeg *segP)
  *
  * This function is called via on_shmem_exit() during backend shutdown,
  * so the caller has NOT acquired the lock for us.
+ *
+ * arg is really of type "SISeg*".
  */
 static void
-CleanupInvalidationState(int status,
-						 SISeg *segP)
+CleanupInvalidationState(int status, Datum arg)
 {
+	SISeg *segP = (void*) DatumGetPointer(arg);
+
 	Assert(PointerIsValid(segP));
 
 	SpinAcquire(SInvalLock);
