@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.1 1996/08/28 07:27:53 scrappy Exp $
+ * $Id: tcopprot.h,v 1.2 1996/11/04 12:07:04 scrappy Exp $
  *
  * OLD COMMENTS
  *    This file was created so that other c files could get the two
@@ -18,9 +18,8 @@
 #ifndef TCOPPROT_H
 #define TCOPPROT_H
 
-#include "tcop/dest.h"
-#include "nodes/pg_list.h"
-#include "parser/parse_query.h"
+#include <executor/execdesc.h>
+#include <parser/parse_query.h>
 
 #ifndef BOOTSTRAP_INCLUDE
 extern List *pg_plan(char *query_string, Oid *typev, int nargs,

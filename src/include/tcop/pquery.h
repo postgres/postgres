@@ -6,15 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pquery.h,v 1.1 1996/08/28 07:27:51 scrappy Exp $
+ * $Id: pquery.h,v 1.2 1996/11/04 12:07:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PQUERY_H
 #define PQUERY_H
 
-#include "executor/execdesc.h"
-#include "tcop/dest.h"
+#include <executor/execdesc.h>
 
 /* moved to execdesc.h 
 extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
