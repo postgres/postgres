@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.24 2001/07/12 17:42:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.25 2001/09/26 21:35:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -210,11 +210,11 @@ static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 
 %%
 
-pl_function		: T_FUNCTION comp_optsect pl_block
+pl_function		: T_FUNCTION comp_optsect pl_block opt_semi
 					{
 						yylval.program = (PLpgSQL_stmt_block *)$3;
 					}
-				| T_TRIGGER comp_optsect pl_block
+				| T_TRIGGER comp_optsect pl_block opt_semi
 					{
 						yylval.program = (PLpgSQL_stmt_block *)$3;
 					}
@@ -234,7 +234,11 @@ comp_option		: O_OPTION O_DUMP
 					}
 				;
 
-pl_block		: decl_sect K_BEGIN lno proc_sect K_END ';'
+opt_semi		:
+				| ';'
+				;
+
+pl_block		: decl_sect K_BEGIN lno proc_sect K_END
 					{
 						PLpgSQL_stmt_block *new;
 
@@ -704,7 +708,7 @@ proc_stmts		: proc_stmts proc_stmt
 						}
 				;
 
-proc_stmt		: pl_block
+proc_stmt		: pl_block ';'
 						{ $$ = $1; }
 				| stmt_assign
 						{ $$ = $1; }
