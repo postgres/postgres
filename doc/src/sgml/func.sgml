@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.120 2002/09/02 05:53:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.121 2002/09/11 02:56:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -743,7 +743,7 @@ PostgreSQL documentation
        <entry><function>atan2</function>(<replaceable>x</replaceable>,
         <replaceable>y</replaceable>)</entry>
        <entry>inverse tangent of
-        <replaceable>a</replaceable>/<replaceable>x</replaceable></entry>
+        <replaceable>x</replaceable>/<replaceable>y</replaceable></entry>
       </row>
 
       <row>
