@@ -1,18 +1,31 @@
->perl Makefile.pl
->make
+README for PL/Perl                                          2000.10.24
 
-copy the resulting library somewhere that
-the postgresql backend can see it. assume
-that path is /usr/local/pgsql/modules/plperl.so
+PREREQUISITES
+======================================================================
++ Perl must be built as a shared library.
++ when compiling Postgres, use the --with-perl option.  Alternatively,
+  you can build plperl separately in an already-configured source tree:
+  cd to $POSTGRES_SRC/src/pl/plperl/ and do "gmake all install".
 
-CREATE FUNCTION plperl_call_handler() RETURNS opaque
-AS '/usr/local/pgsql/modules/plperl.so' LANGUAGE 'C';
+CONFIGURING
+======================================================================
++ as postgres super user:
+  createlang plperl [database]
 
-CREATE TRUSTED PROCEDURAL LANGUAGE 'plperl'
-HANDLER plperl_call_handler
-LANCOMPILER 'PL/Perl';
+NOTES ON USAGE
+======================================================================
++ Use q[], qq[], and qw[] instead of single quotes in 
+  function definitions.
++ When using escape sequences, you must backslash your
+  backslashes, e.g.
+    $alphanum =~ s/\W//g;  # Wrong!  Will replace capital W's
+    $alphanum =~ s/\\W//g; # Right!  Will replace non-word chars
++ Arguments to the function are available in @_
++ If argument is declared as a tuple, then tuple is represented as a
+  hash reference.
 
--- here is simple example
+EXAMPLES
+======================================================================
 CREATE FUNCTION addints(int4, int4) RETURNS int4 AS '
 return $_[0] + $_[1]
 ' LANGUAGE 'plperl';
@@ -37,5 +50,3 @@ return 1;
 ' LANGUAGE 'plperl';
 
 SELECT badfunc();
-
-
