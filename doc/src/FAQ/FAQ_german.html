@@ -1,0 +1,1136 @@
+<HTML>
+<HEAD>
+<TITLE>PostgreSQL FAQ</title>
+</HEAD>
+<BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#FF0000" VLINK="#A00000" ALINK="#0000FF">
+<H1>
+H&auml;ufig gestellte Fragen (FAQ) zu PostgreSQL
+</H1>
+<P>
+Last updated:		Sat Jul 10 00:37:57 EDT 1999
+<P>
+Current maintainer:	Bruce Momjian (<a
+href="mailto:maillist@candle.pha.pa.us">maillist@candle.pha.pa.us</a>)	<BR>
+<P>
+Deutsche &Uuml;bersetzung von Karsten Schulz (<A HREF="mailto:schulz@linux-systemhaus.de">schulz@linux-systemhaus.de</a>)	<BR>
+<P>
+Letzte Aktualisierung der deutschen &Uuml;bersetzung:	Don, den 05.08.1999, 09:00 CET
+<P>
+Die aktuellste Version dieses Dokuments kann auf der PostgreSQL Website <A HREF="http://www.Postgresql.org">http://www.PostgreSQL.org</A> angesehen werden.
+<P>
+Linux-spezifische Fragen werden in <a href="http://www.PostgreSQL.org/docs/faq-linux.html">http://www.PostgreSQL.org/docs/faq-linux.html</a>
+beantwortet (deutsche &Uuml;bersetzung in Arbeit!).<P>
+
+Irix-spezifische Fragen werden in <a
+href="http://www.PostgreSQL.org/docs/faq-irix.html">http://www.PostgreSQL.org/docs/faq-irix.html</a> beantwortet.
+<P>
+
+HPUX-spezifische Fragen werden in <a
+href="http://www.PostgreSQL.org/docs/faq-hpux.shtml">http://www.PostgreSQL.org/docs/faq-hpux.shtml</a> beantwortet.
+<P>
+
+<HR><P>
+
+<H2><CENTER>Allgemeine Fragen</CENTER></H2>
+
+<a href="#1.1">1.1</a>)	Was ist PostgreSQL?<BR>
+<a href="#1.2">1.2</a>)	Welches Copyright liegt auf PostgreSQL?<BR>
+<a href="#1.3">1.3</a>)	Auf welchen Unix-Plattformen l&auml;uft PostgreSQL?<BR>
+<a href="#1.4">1.4</a>)	Welche Nicht-Unix-Versionen sind verf&uuml;gbar?<BR>
+<a href="#1.5">1.5</a>)	Woher bekomme ich PostgreSQL?<BR>
+<a href="#1.6">1.6</a>)	Wo bekomme ich Support f&uuml;r PostgreSQL?<BR>
+<a href="#1.7">1.7</a>)	Was ist die neueste Version von PostgreSQL?<BR>
+<a href="#1.8">1.8</a>)	Welche Dokumente sind f&uuml;r PostgreSQL verf&uuml;gbar?<BR>
+<a href="#1.9">1.9</a>)	Wie erfahre ich etwas &uuml;ber bekannte Fehler oder fehlende Eigenschaften von PostgreSQL?<BR>
+<a href="#1.10">1.10</a>)	Wie kann ich SQL lernen?<BR>
+<a href="#1.11">1.11</a>)	Ist PostgreSQL Y2K (Jahr 2000) f&auml;hig?<BR>
+<a href="#1.12">1.12</a>)	Wie kann ich am Entwicklerteam teilnehmen?<BR>
+<a href="#1.13">1.13</a>)	Wie sende ich einen Fehler-Bericht?<BR>
+<a href="#1.14">1.14</a>)	Wie l&auml;uft PostgreSQL im Vergleich zu anderen Datenbanksystemen?<BR>
+
+
+<H2><CENTER>Fragen zu Benutzerprogrammen</CENTER></H2>
+
+<a href="#2.1">2.1</a>)	Gibt es ODBC-Treiber f&uuml;r PostgreSQL?<BR>
+<a href="#2.2">2.2</a>)	Welche Werkzeuge gibt es, um PostgreSQL-Datenbanken &uuml;ber Webseiten
+verf&uuml;gbar zu machen?<BR>
+<a href="#2.3">2.3</a>)	Hat PostgreSQL eine grafische Benutzerschnittstelle?
+Einen Report-Generator? Eine eingebaute Query-Schnittstelle?<BR>
+<a href="#2.4">2.4</a>)	Welche Sprachen sind f&uuml;r die Kommunikation mit PostgreSQL verf&uuml;gbar?<BR>
+
+
+<H2><CENTER>Administrative Fragen</CENTER></H2>
+
+<a href="#3.1">3.1</a>)	Warum schl&auml;gt initdb fehl?<BR>
+<a href="#3.2">3.2</a>)	Wie installiere ich PostgreSQL woanders als in /usr/local/pgsql?<BR>
+<a href="#3.3">3.3</a>)	Wenn ich den postmaster starte, bekomme ich einen <I>Bad System Call</I> oder eine <I>core dumped</I> Meldung. Warum?<BR>
+<a href="#3.4">3.4</a>)	Wenn ich versuche, den postmaster zu starten, bekomme ich eine <I>IpcMemoryCreate</I> Fehlermeldungen. Warum?<BR>
+<a href="#3.5">3.5</a>)	Wenn ich versuche, den postmaster zu starten, bekomme ich eine <I>IpcSemaphoreCreate</I> Fehlermeldungen. Warum?<BR>
+<a href="#3.6">3.6</a>)	Wie verhindere ich, da&szlig; andere Hosts auf meine PostgreSQL Datenbanken zugreifen?<BR>
+<a href="#3.7">3.7</a>)	Warum kann ich mich nicht von einer anderen Maschine mit meiner Datenbank verbinden?<BR>
+<a href="#3.8">3.8</a>)	Warum kann ich nicht als <I>root</I> auf die Datenbank zugreifen?<BR>
+<a href="#3.9">3.9</a>)	Alle meine Server st&uuml;rzen bei gleichzeitigem Tabellenzugriff ab. Warum?<BR>
+<a href="#3.10">3.10</a>)	Wie optimiere ich die Datenbankmaschine f&uuml;r bessere Leistung?<BR>
+<a href="#3.11">3.11</a>)	Welche Debugging/Fehlersuch-Hilfsmittel sind f&uuml;r PostgreSQL verf&uuml;gbar?<BR>
+<a href="#3.12">3.12</a>)	Ich bekomme die Meldung "Sorry, too many clients", wenn ich eine Verbindung versuche.  Warum?<BR>
+<a href="#3.13">3.13</a>)	Was sind die pg_psort.XXX Dateien in meinem Datenbank-Verzeichnis?<BR>
+<a href="#3.14">3.14</a>)	Wie richte ich eine Benutzergruppe (pg_group) ein?<BR>
+
+<H2><CENTER>Fragen zum Betrieb</CENTER></H2>
+
+<a href="#4.1">4.1</a>)	Das System scheint Kommata, Dezimalpunkte und Datumsformate durcheinanderzubringen.<BR>
+<a href="#4.2">4.2</a>)	Was ist der genauer Unterschied zwischen Binary Cursors und Normal Cursors?<BR>
+<a href="#4.3">4.3</a>)	Wie w&auml;hle ich per <I>SELECT</I> nur die ersten paar Zeilen in einem Query aus?<BR>
+
+<a href="#4.4">4.4</a>)	Wie bekomme ich eine Liste der Tabellen oder anderen Dingen, die ich in <I>psql</I> sehen kann<BR>
+<a href="#4.5">4.5</a>)	Wie entferne ich eine Spalte von einer Tabelle?<BR>
+
+<a href="#4.6">4.6</a>)	Was ist die Maximalgr&ouml;&szlig;e f&uuml;r eine Zeile, eine Tabelle, eine Datenbank?<BR>
+<a href="#4.7">4.7</a>)	Wieviel Plattenplatz ben&ouml;tigt eine Datenbank zur Speicherung einer Datendatei mit zeilenweisen Datens&auml;tzen?<BR>
+
+<a href="#4.8">4.8</a>)	Wie finde ich heraus, welche Indizes oder Operationen in der Datenbank definiert sind?<BR>
+<a href="#4.9">4.9</a>)	Meine Queries sind langsam oder nutzen die Indizes nicht. Warum?<BR>
+<a href="#4.10">4.10</a>)	Auf welche Weise kann ich sehen, wie der Query-Optimierer meine Abfrage auswertet?<BR>
+<a href="#4.11">4.11</a>)	Was ist ein R-Tree Index?<BR>
+<a href="#4.12">4.12</a>)	Was ist "Genetic Query Optimization"?<BR>
+
+<a href="#4.13">4.13</a>)	Wie verfahre ich bei der Suche mit regul&auml;ren Ausdr&uuml;cken und bei
+							einer Suche mit Ignorierung der Gro&szlig;- und Kleinschreibweisen?<BR>
+<a href="#4.14">4.14</a>)	Wie ermittle ich in einem Query, da&szlig; ein Feld NULL ist?<BR>
+<a href="#4.15">4.15</a>)	Was ist der Unterschied zwischen den verschiedenen CHAR-Typen?<BR>
+<a href="#4.16">4.16</a>)	Wie erzeuge ich ein serielles Feld mit automatischer Erh&ouml;hung des Inhalts?<BR>
+
+<a href="#4.17">4.17</a>)	Was ist ein Oid? Was ist ein Tid?<BR>
+<a href="#4.18">4.18</a>)	Was ist die Bedeutung der verschiedenen Ausdr&uuml;cke, die in PostgreSQL benutzt werden (z.B. attribute, class,...)?<BR>
+
+<a href="#4.19">4.19</a>)	Wieso bekomme ich einen Fehler: "FATAL:  palloc failure: memory exhausted?"<BR>
+<a href="#4.20">4.20</a>)	Wie kann ich feststellen, welche PostgreSQL-Version ich laufen habe?<BR>
+<a href="#4.21">4.21</a>)	Beim Arbeiten mit "Large-Objects" kommt die Fehlermeldung: <I>invalid large obj descriptor.</I>  Warum?<BR>
+
+<H2><CENTER>PostgreSQL erweitern</CENTER></H2>
+
+<a href="#5.1">5.1</a>)	Ich habe eine benutzerdefinierte Funktion geschrieben.  Wenn ich sie in <I>psql</I> aufrufe, kommt ein <I>core dump</I>. Warum?<BR>
+<a href="#5.2">5.2</a>)	Was bedeutet die Meldung: <I>NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!</I>?<BR>
+<a href="#5.3">5.3</a>)	Wie kann ich ein paar elegante neue Feldtypen und Funktionen zu PostgreSQL beitragen?<BR>
+<a href="#5.4">5.4</a>)	Wie schreibe ich eine Funktion in C, die ein Tuple zur&uuml;ckliefert?<BR>
+<a href="#5.5">5.5</a>)	Ich habe eine der Quellendateien ge&auml;ndert. Warum macht sich die &Auml;nderung beim erneuten Compilerlauf nicht bemerkbar?<BR>
+
+<HR>
+
+<H2><CENTER>Allgemeine Fragen</CENTER></H2>
+<H4><a
+name="1.1">1.1</a>)	Was ist PostgreSQL?</H4><P>
+
+PostgreSQL ist eine Verbesserung des POSTGRES-Datenbank-Managementsystems, ein
+"Next-Generation" DBMS-Forschungsprototyp. W&auml;hrend PostgreSQL das leistungsf&auml;hige Datenmodell und
+die reichhaltigen Datentypen von POSTGRES beibeh&auml;lt, ersetzt es die PostQuel-Abfragesprache durch
+eine ausgedehnte Teilmenge von SQL. PostgreSQL ist frei und der komplette Quellcode ist verf&uuml;gbar. 
+<P>
+
+Die PostgreSQL-Entwicklung wird von einem Team von Internet-Entwickler durchgef&uuml;hrt, die alle an
+der PostgreSQL-Entwicklungs-Mailingliste teilnehmen. Der aktuelle Koordinator ist Marc G. Fournier
+(<a href="mailto:scrappy@postgreSQL.org">scrappy@postgreSQL.org</a>) (siehe unten, wie
+man sich anmelden kann). Dieses Team ist jetzt f&uuml;r alle aktuellen und zuk&uuml;nftigen Entwicklungen von PostgreSQL
+verantwortlich. 
+
+<P>
+
+
+Die Autoren von PostgreSQL 1.01 waren Andrew Yu und Jolly Chen. Viele andere haben zur Portierung,
+zu den Tests, zur Fehlersuche und zur Verbesserung des Codes beigetragen.
+Der urspr&uuml;ngliche Postgres-Code, von dem PostgreSQL abstammt, ist auf die Bem&uuml;hungen von
+vielen Studierenden und Diplomanden, sowie Programmierern, die unter
+der Weisung des Professors Michael Stonebraker an der Universit&auml;t von Kalifornien, Berkeley
+arbeiteteten, zur&uuml;ckzuf&uuml;hren.
+
+<P>
+
+Der urspr&uuml;ngliche Name der Software bei Berkeley war Postgres. Als die SQL-Funktionalit&auml;t 1995
+hinzugef&uuml;gt wurde, wurde sein Name zu Postgres95 ge&auml;ndert. Der Name wurde Ende 1996 zu
+PostgreSQL ge&auml;ndert. 
+<P>
+
+<H4><a name="1.2">1.2</a>)	Welches Copyright liegt auf PostgreSQL?</H4><P>
+
+PostgreSQL steht unter folgendem COPYRIGHT (Originaltext):<P>
+
+PostgreSQL Data Base Management System<P>
+
+Copyright (c) 1994-6 Regents of the University of California<P>
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose, without fee, and without a written
+agreement is hereby granted, provided that the above copyright notice
+and this paragraph and the following two paragraphs appear in all
+copies.<P>
+
+IN NO EVENT SHALL THE UNIVERSITY OF CALIFORNIA BE LIABLE TO ANY PARTY
+FOR DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+INCLUDING LOST PROFITS, ARISING OUT OF THE USE OF THIS SOFTWARE AND ITS
+DOCUMENTATION, EVEN IF THE UNIVERSITY OF CALIFORNIA HAS BEEN ADVISED OF
+THE POSSIBILITY OF SUCH DAMAGE.<P>
+
+THE UNIVERSITY OF CALIFORNIA SPECIFICALLY DISCLAIMS ANY WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE.  THE SOFTWARE PROVIDED HEREUNDER
+IS ON AN "AS IS" BASIS, AND THE UNIVERSITY OF CALIFORNIA HAS NO
+OBLIGATIONS TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
+MODIFICATIONS.<P>
+
+Es gilt die Copyright-Klausel im Original! Informativ folgt hier eine
+&Uuml;bersetzung. Die &Uuml;bersetzung besitzt keinerlei rechtlichen Status.
+Insbesondere kann sich niemand auf diese &Uuml;bersetzung berufen:
+<BR><P>
+
+PostgreSQL Datenbank Management System<P> 
+
+Copyright (c) 1994-6 Regents of the University of California<P>
+
+Die Erlaubnis, diese Software und seine Unterlagen f&uuml;r jeden m&ouml;glichen Zweck, ohne Geb&uuml;hr und ohne
+eine schriftliche Vereinbarung zu benutzen, zu kopieren, zu &auml;ndern und zu verteilen wird hiermit
+bewilligt, vorausgesetzt da&szlig; der oben genannte Urheberrechtsvermerk und dieser Paragraph und die
+folgenden zwei Paragraphen in allen Kopien erscheinen. <P>
+
+IN KEINEM FALL IST DIE UNIVERSIT&Auml;T VON KALIFORNIEN GEGEN&Uuml;BER JEDEM M&Ouml;GLICHEN BETEILIGTEN F&Uuml;R DIE DIREKTEN,
+INDIREKTEN, SPEZIELLEN, BEIL&Auml;UFIGEN ODER FOLGESCH&Auml;DEN, EINSCHLIE&szlig;LICH DER VERLORENEN PROFITE
+VERANTWORTLICH, DIE AUS DEM GEBRAUCH VON DIESER SOFTWARE UND SEINEN UNTERLAGEN
+HERAUS ENTSTEHEN, SELBST WENN DIE UNIVERSIT&Auml;T VON KALIFORNIEN VON DER M&Ouml;GLICHKEIT SOLCHEN SCHADENS
+BENACHRICHTIGT WORDEN IST. <P>
+
+DIE UNIVERSIT&Auml;T VON KALIFORNIEN LEHNT SPEZIELL ALLE M&Ouml;GLICHE GARANTIEN AB,
+EINSCHLIESSLICH, ABER NICHT BEGRENZT AUF, DIE IMPLIZIERTEN GARANTIEN VON
+GESCH&Auml;FTSNUTZEN UND EIGNUNG ZU EINEM BESTIMMTEN ZWECK. DIE SOFTWARE, DIE
+NACHSTEHEND BEREITGESTELLT WIRD, BASIERT AUF EINER "SO WIE SIE IST"-GRUNDLAGE, UND DIE UNIVERSIT&Auml;T
+VON KALIFORNIEN HAT KEINE VERPFLICHTUNGEN, WARTUNG, SUPPORT,
+AKTUALISIERUNGSVORG&Auml;NGE, VERBESSERUNGEN ODER &Auml;NDERUNGEN ZUR VERF&Uuml;GUNG
+ZU STELLEN. 
+
+<H4><a name="1.3">1.3</a>)	Auf welchen Unix-Plattformen l&auml;uft PostgreSQL?</H4><P>
+
+Die Autoren haben PostgreSQL auf folgenden Plattformen kompiliert und getestet
+(einige dieser Kompilierungen ben&ouml;tigen den C-Compiler gcc):
+<UL>
+<LI>   aix -           IBM auf AIX 3.2.5 or 4.x
+<LI>   alpha -         DEC Alpha AXP auf Digital Unix 2.0, 3.2, 4.0
+<LI>   BSD44_derived - OS abgeleitet von 4.4-lite BSD (NetBSD, FreeBSD)
+<LI>   bsdi -          BSD/OS 2.x, 3.x, 4.x
+<LI>   dgux -          DG/UX 5.4R4.11
+<LI>   hpux -          HP PA-RISC auf HP-UX 9.*, 10.*
+<LI>   i386_solaris -  i386 Solaris
+<LI>   irix5 -         SGI MIPS auf IRIX 5.3
+<LI>   linux -         Intel i86
+                       Alpha
+                       SPARC
+                       PPC
+                       M68k
+<LI>   sco -           SCO 3.2v5
+					   Unixware
+<LI>   sparc_solaris - SUN SPARC auf Solaris 2.4, 2.5, 2.5.1
+<LI>   sunos4 -        SUN SPARC auf SunOS 4.1.3
+<LI>   svr4 -          Intel x86 auf Intel SVR4 and MIPS
+<LI>   ultrix4 -       DEC MIPS auf Ultrix 4.4
+</UL>
+<P>
+
+<H4><a name="1.4">1.4</a>)	Welche Nicht-Unix-Versionen sind verf&uuml;gbar?</H4><P>
+
+Es ist m&ouml;glich, die libpq C-Bibliothek, psql und andere Schnittstellen und Binaries zu
+kompilieren, um sie auf der MS-Windows-Plattform laufen zu lassen.
+In diesem Fall l&auml;uft der Client auf MS-Windows und steht &uuml;ber TCP/IP mit einem
+Server in Verbindung, der auf einer unserer unterst&uuml;tzten Unixplattformen l&auml;uft. 
+
+Es gibt die Datei <I>win31.mak</I> in der Distribution, um die Win32 libpq-Bibliothek und psql
+zu erzeugen.<P>
+
+Der Datenbankserver arbeitet jetzt auch unter Benutzung der Cygnus Unix/NT-Porting-Bibliotheken
+auf Windows NT. Siehe auch pgsql/doc/README.NT in der Distribution.<P>
+
+Es gibt eine weitere Portierung, die U/Win benutzt bei <A HREF="http://surya.wipro.com/uwin/ported.html">http://surya.wipro.com/uwin/ported.html.</A>
+
+
+<H4><a name="1.5">1.5</a>)	Woher bekomme ich PostgreSQL?</H4><P>
+Die erste Anlaufadresse f&uuml;r PostgreSQL ist der ftp-Server <a href="ftp://ftp.postgreSQL.org/pub">ftp://ftp.postgreSQL.org/pub</a>
+<P>
+
+Die entsprechenden Spiegelserver sind auf der Hauptwebseite aufgelistet.
+
+<H4><a name="1.6">1.6</a>)	Wo bekomme ich Support f&uuml;r PostgreSQL?</H4><P>
+
+Es gibt keinen offiziellen Support f&uuml;r PostgreSQL von der Universit&auml;t von Kalifornien, Berkeley. Der
+Support wird durch freiwilligen Einsatz geleistet.
+<P>
+
+Die Mailing-Liste ist: <a href="mailto:pgsql-general@postgreSQL.org">pgsql-general@postgreSQL.org</a>.
+Die Liste ist f&uuml;r PostgreSQL betreffende Themen vorbehalten. Um sich anzumelden, sende eine
+Email mit folgenden Zeilen im Text (nicht in der Betreffzeile):
+
+<PRE>
+<CODE>
+	subscribe
+	end
+</CODE>
+</PRE><P>
+
+an <a href="mailto:pgsql-general-request@postgreSQL.org">pgsql-general-request@postgreSQL.org</a>.<P>
+
+Es gibt auch eine Digest-Liste (Eine Liste, die Mails zusammengefasst sendet).
+Um sich an dieser Digestliste anzumelden, sende eine Email an:
+<a href="mailto:pgsql-general-digest-request@postgreSQL.org">pgsql-general-digest-request@postgreSQL.org</a>
+mit folgendem Text:
+
+<PRE>
+<CODE>
+	subscribe
+	end
+</CODE>
+</PRE>
+
+Die Digests werden an die Mitglieder der Liste geschickt, wenn ca. 30kB an Mails
+zusammengekommen sind.<P>
+
+Die Bug-Mailingliste ist verf&uuml;bar. Um sich an dieser Liste anzumelden,
+sende eine Email an <a href="mailto:bugs-request@postgreSQL.org">bugs-request@postgreSQL.org</a>
+mit folgendem Text:<P>
+
+<PRE>
+<CODE>
+	subscribe
+	end
+</CODE>
+</PRE>
+
+Es gibt ebenfalls eine Entwickler-Diskussionsliste.  Um sich an dieser Liste anzumelden,
+sende eine Email an <a href="mailto:hackers-request@postgreSQL.org">hackers-request@postgreSQL.org</a>
+mit diesem Text:<P>
+
+<PRE>
+<CODE>
+	subscribe
+	end
+</CODE>
+</PRE><P>
+
+Weitere Mailinglisten und Informationen zu PostgreSQL k&ouml;nnen auf der PostgreSQL-Homepage im WWW
+gefunden werden:
+<BLOCKQUOTE>
+<a href="http://postgreSQL.org">http://postgreSQL.org</a>
+</BLOCKQUOTE><P>
+
+Es gibt au&szlig;erdem einen IRC-Channel im EFNet, Kanal #PostgreSQL.
+Bruce nutzt den Unix-Befehl: <CODE>irc -c '#PostgreSQL' "$USER" irc.phoenix.net</CODE> um teilzunehmen<P> 
+
+Kommerzieller Support f&uuml;r PostgreSQL ist bei <a href="http://www.pgsql.com">http://www.pgsql.com/</a> verf&uuml;gbar<P>
+
+
+<H4><a name="1.7">1.7</a>)	Was ist die neueste Version von PostgreSQL?</H4><P>
+
+Das neueste Release von PostgreSQL ist die Version 6.5.<P>
+
+Wir planen alle 4 Monate Hauptreleases herauszugeben.<P>
+
+
+<H4><a name="1.8">1.8</a>)	Welche Dokumente sind f&uuml;r PostgreSQL verf&uuml;gbar?	</H4><P>
+
+Einige Handb&uuml;cher, Man-Pages und einige kleine Testprogramme sind in der Distribution enthalten.
+Siehe im /doc-Verzeichnis.<P>
+
+<I>psql</I> 
+hat einige nette \d-Befehle, um Informationen &uuml;ber Typen, Operatoren, Funktionen, Aggregate, usw. zu zeigen. <P>
+
+Die Website enth&auml;lt sogar noch mehr Unterlagen.<P>
+
+<H4><a name="1.9">1.9</a>)	Wie erfahre ich etwas &uuml;ber bekannte Fehler oder fehlende Eigenschaften von PostgreSQL?
+</H4><P>
+
+
+PostgreSQL unterst&uuml;tzt eine ausgedehnte Untermenge von SQL-92.
+Siehe unser <a href="http://www.postgreSQL.org/docs/todo.html">TODO</a>
+f&uuml;r eine Auflistung der bekannten Fehler, fehlende Eigenschaften und zuk&uuml;nftige Pl&auml;ne.<P>
+
+
+<H4><a name="1.10">1.10</a>)	Wie kann ich SQL lernen?</H4><P>
+
+Es gibt nette SQL-Tutorials bei <a href="http://w3.one.net/~jhoffman/sqltut.htm">
+http://w3.one.net/~jhoffman/sqltut.htm</a> und bei <a href="http://ourworld.compuserve.com/homepages/Graeme_Birchall/DB2_COOK.HTM">
+http://ourworld.compuserve.com/homepages/Graeme_Birchall/DB2_COOK.HTM.</a><P>
+
+Viele unserer User m&ouml;gen <I>The Practical SQL Handbook</I>, Bowman et al.,
+Addison Wesley.<P>
+
+
+<H4><a name="1.11">1.11</a>)	Ist PostgreSQL Y2K (Jahr 2000) f&auml;hig?</H4><P>
+
+Ja, wir k&ouml;nnen Datumsangaben nach dem Jahr 2000 n.Chr. und vor 2000 v.Chr. leicht 
+verarbeiten.<P>
+
+<H4><a name="1.12">1.12</a>)	Wie kann ich am Entwicklerteam teilnehmen?</H4><P>
+
+Zuerst lade die neuesten Quellen herunter und lies die PostgreSQL-Entwicklerunterlagen
+auf unserer Website oder in der Distribution. Zweitens melde Dich zu den Mailinglisten
+pgsql-hackers und pgsql-patches an. Drittens sende qualitativ hochwertige Programm&auml;nderungen
+an die pgsql-patches Mailingliste.<P>
+
+Es gibt ungef&auml;hr ein Dutzend Leute, die das <I>commit</I>-Recht im PostgreSQL-CVS Archiv haben.
+Alle haben so viele hochwertige Patches eingebracht, da&szlig; es schwer f&uuml;r die 
+CVS-Verwalter war, mitzuhalten. Und wir hatten das Vertrauen, da&szlig;
+die &Auml;nderungen, die sie festlegten, sehr wahrscheinlich von hoher Qualit&auml;t sind. <P>
+
+<H4><a name="1.13">1.13</a>)	Wie sende ich einen Fehler-Bericht?</H4><P>
+
+F&uuml;lle die "Fehler-Vorlage"-Datei (bug.template im doc-Verzeichnis) aus und sende sie an: 
+<a href="mailto:bugs@postgreSQL.org">bugs@postgreSQL.org</a><P>
+
+&Uuml;berpr&uuml;fe auch den ftp-Server <a href="ftp://ftp.postgreSQL.org/pub">ftp://ftp.postgreSQL.org/pub</a>,
+um nachzusehen, ob es eine neuere PostgreSQL-Version oder neue Patches gibt.
+<P>
+
+
+<H4><a name="1.14">1.14</a>)	Wie l&auml;uft PostgreSQL im Vergleich zu anderen Datenbanksystemen?</H4><P>
+
+Es gibt verschiedene Methoden, Software zu messen: Eigenschaften, Leistung,
+Zuverl&auml;ssigkeit, Support und Preis.<P>
+
+<DL>
+<DT> <B>Eigenschaften</B>
+<DD>
+
+PostgreSQL hat die meisten Eigenschaften, die in gro&szlig;en kommerziellen DBMS's, wie
+Transaktionen, Sub-SELECTs, Trigger, Views und verfeinertes Locking, vorhanden sind.
+Wir haben einige Eigenschaften, die andere nicht haben, wie benutzerbestimmte Typen, Vererbung,
+Regeln, und die Multi-Versionen-Steuerung zum Verringern von konkurrierenden Locks.
+Wir haben keine referentielle Integrit&auml;t von externen Schl&uuml;sseln oder Outer Joins,
+aber wir arbeiten an diesen Dingen f&uuml;r unser n&auml;chstes Release.<P>
+
+<DT> <B>Leistung</B>
+<DD>
+
+PostgreSQL l&auml;uft in zwei Modi. Im normalen <I>fsync</I>-Modus wird jede komplette Transaktion
+auf die Platte geschrieben und garantiert, da&szlig;, selbst wenn das Betriebssystem abst&uuml;rzt und
+der Strom ausf&auml;llt, die Daten sicher gespeichert wurden. 
+In diesem Modus sind wir langsamer als die meisten kommerziellen Datenbanken,
+zum Teil, weil wenige von ihnen solch eine konservatives Methode der Datenspeicherung in ihren
+Standardbetriebsmodi betreiben.<P>
+
+Im <I>no-fsync</I>-Modus sind wir normalerweise schneller als kommerzielle Datenbanken. In
+diesem Modus kann ein Betriebssystemabsturz jedoch Datenkorruption zur Folge haben.
+Wir arbeiten daran, einen Zwischenmodus zur Verf&uuml;gung zu stellen, der unter weniger Leistungseinbu&szlig;e
+leidet als der <I>fsync</I>-Modus und die Datenintegrit&auml;t innerhalb 30 Sekunden 
+im Falle eines Betriebssystemabsturzes erlaubt. Der Modus ist durch den Datenbankverwalter
+ausw&auml;hlbar.<P>
+
+Im Vergleich zu MySQL oder schlankeren Datenbanksystemen sind wir hinsichtlich INSERTs/UPDATEs langsamer,
+weil wir einen Transaktions-Overhead haben.
+Selbstverst&auml;ndlich hat MySQL kaum eine der Eigenschaften, die oben im Kapitel <I>Eigenschaften</I> erw&auml;hnt werden.
+PostgreSQL ist f&uuml;r Flexibilit&auml;t und gute Eigenschaften designed, trotzdem fahren wir fort,
+die Leistung durch Profiling und Quellcodeanalyse zu verbessern.<P> 
+
+
+
+<DT> <B>Zuverl&auml;ssigkeit</B>
+<DD>
+
+Wir stellen fest, da&szlig; ein DBMS zuverl&auml;ssig sein mu&szlig;, oder es ist wertlos. Wir bem&uuml;hen uns,
+gut gepr&uuml;ften, best&auml;ndigen Code freizugeben, der nur ein Minimum an Programmfehler hat.
+Jede Freigabe hat mindestens einen Monat Betatestphase hinter sich, und unsere Freigabehistorie zeigt,
+da&szlig; wir stabile, solide Versionen freigeben, die im Produktionsbetrieb
+genutzt werden k&ouml;nnen. Wir glauben, da&szlig; wir im Vergleich mit anderer
+Datenbanksoftware vorteilhaft dastehen.<P>
+
+<DT> <B>Support</B>
+<DD>
+
+Unsere Mailingliste stellt eine gro&szlig;e Gruppe Entwickler und Benutzer zur Behebung aller
+m&ouml;glichen anzutreffenden Probleme zur Verf&uuml;gung.
+
+Wir k&ouml;nnen nicht immer eine Fehlerbehebung garantieren, 
+kommerzielle DBMS's tun dies aber auch nicht. 
+
+Direkter Zugriff zu den Entwicklern, zur Benutzergemeinschaft, zu den Handb&uuml;chern und zum Quellcode bietet h&auml;ufig 
+h&ouml;herwertigen PostgreSQL-Support im Vergleich zu anderen DBMS's. 
+
+Es gibt den kommerziellen "Pro-Ereignis"-Support,
+der f&uuml;r diejenigen bereitgestellt wird, die ihn ben&ouml;tigen. (siehe Support-Faq), <P>
+
+<DT> <B>Preis</B>
+<DD>
+PostgrSQL ist frei verf&uuml;gbar, sowohl f&uuml;r die kommerzielle, wie f&uuml;r die nicht-kommerzielle
+Nutzung. Du kannst Deinen Code fast ohne Beschr&auml;nkungen zu unserem hinzuf&uuml;gen. Die einzigen 
+Beschr&auml;nkungen werden in der BSD-artigen Lizenz weiter oben aufgef&uuml;hrt.
+</DL>
+
+
+<HR>
+
+<H2><CENTER>Fragen zu Benutzerprogrammen</CENTER></H2>
+
+
+
+<H4><a name="2.1">2.1</a>)	Gibt es ODBC-Treiber f&uuml;r PostgreSQL?</H4><P>
+
+Es sind zwei ODBC-Treiber verf&uuml;gbar: PostODBC und OpenLink ODBC.<P>
+
+PostODBC ist in der Distribution enthalten. Mehr Informationen k&ouml;nnen unter
+<a href="http://www.insightdist.com/psqlodbc">http://www.insightdist.com/psqlodbc</a> abgerufen werden.<P>
+
+OpenLink ODBC kann unter <a href="http://www.openlinksw.com/">http://www.openlinksw.com</a>
+geholt werden.
+Die Software arbeitet mit OpenLinks Standard-ODBC-Client, so da&szlig; PostgreSQL-ODBC auf
+jeder Client-Plattform zur Verf&uuml;gung steht, die unterst&uuml;tzt wird (Win, Mac, Unix, VMS).<P>
+
+Sie werden dieses Produkt wahrscheinlich an Leute verkaufen, die kommerziellen Qualit&auml;ts-Support
+brauchen, aber es wird immer eine Freeware-Version verf&uuml;gbar sein.
+Fragen dazu bitte an <a href="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</a>.<P>
+
+
+
+<H4><a name="2.2">2.2</a>)	Welche Werkzeuge gibt es, um PostgreSQL-Datenbanken &uuml;ber Webseiten
+verf&uuml;gbar zu machen?</H4><P>
+
+Eine nette Einf&uuml;hrung zu Datenbank-gest&uuml;tzten Webseiten kann unter 
+<a href="http://www.webtools.com">http://www.webtools.com</a> abgerufen werden.<P>
+
+Eine weitere gibt es bei <a href="http://www.phone.net/home/mwm/hotlist/">
+http://www.phone.net/home/mwm/hotlist/.</a><P>
+
+F&uuml;r die Web-Integration ist PHP eine ausgezeichnete Schnittstelle.
+PHP gibt es bei <a href="http://www.php.net">http://www.php.net</a><P>
+
+PHP ist hervorragend f&uuml;r einfache Anbindungen geeignet. F&uuml;r komplexere
+Aufgaben nutzen viele die Perl-Schnittstelle mit CGI.pm.<P>
+
+Einen WWW-Gateway, basierend auf WDB, kann man bei 
+<a href="http://www.eol.ists.ca/~dunlop/wdb-p95">http://www.eol.ists.ca/~dunlop/wdb-p95</a> herunterladen.
+
+<H4><a name="2.3">2.3</a>)	Hat PostgreSQL eine grafische Benutzerschnittstelle?
+Einen Report-Generator? Eine eingebaute Query-Schnittstelle?</H4><P>
+
+Wir haben eine nette grafische Benutzerschnittstelle mit Namen 
+<I>pgaccess,</I> welche in der Distribution enthalten ist.
+<I>pgaccess</I> hat auch einen Reportgenerator.  Die Webpage liegt hier: 
+<A HREF="http://www.flex.ro/pgaccess">http://www.flex.ro/pgaccess</A><P>
+
+In der Distribution gibt es au&szlig;erdem <I>ecpg,</I>,
+welches eine eingebundene SQL-Query-Schnittstelle f&uuml;r C zur Verf&uuml;gung stellt.
+
+
+<H4><a name="2.4">2.4</a>)	Welche Sprachen sind f&uuml;r die Kommunikation mit PostgreSQL verf&uuml;gbar?</H4><P>
+
+Wir haben:
+<UL>
+<LI>C(libpq)
+<LI>C++(libpq++)
+<LI>Embedded C(ecpg)
+<LI>Java(jdbc)
+<LI>Perl(perl5)
+<LI>ODBC(odbc)
+<LI>Python(PyGreSQL)
+<LI>TCL(libpgtcl)
+<LI>ein rohes C/4GL(contrib/pginterface)
+<LI>Embedded HTML(<a href="http://www.php.net">PHP from http://www.php.net</a>)	
+</UL><P>
+
+<HR>
+
+<H2><CENTER>Administrative Fragen</CENTER></H2><P>
+
+
+<H4><a name="3.1">3.1</a>)	Warum schl&auml;gt initdb fehl?</H4><P>
+
+<UL>
+<LI> 
+&uuml;berpr&uuml;fe, da&szlig; keine Binaries vorheriger Versionen in Deinem Pfad
+(PATH-Variable) sind.
+(Wenn Du die Meldung siehst: <CODE>WARN:heap_modifytuple: repl is \  9</CODE>, ist das das Problem.)
+<Li> &uuml;berpr&uuml;fe, da&szlig; der Pfad richtig gesetzt ist
+<LI> &uuml;berpr&uuml;fe, ob der User <I>postgres</I> der Eigent&uuml;mer der entsprechenden Dateien ist
+</UL><P>
+
+
+<H4><a name="3.2">3.2</a>)	Wie installiere ich PostgreSQL woanders als in /usr/local/pgsql?</H4><P>
+
+Der einfachste Weg ist mittels der --prefix Option beim configure den Pfad anzugeben.
+Falls Du das vergessen haben solltest, kannst Du die Datei Makefile.global &auml;ndern und
+POSTGRESDIR entsprechend anpassen, oder Du erzeugst ein Makefile.custom und definierst POSTGRESDIR dort.
+<P>
+
+
+<H4><a name="3.3">3.3</a>)	Wenn ich den postmaster starte, bekomme ich einen <I>Bad System Call</I> oder eine <I>core dumped</I> Meldung. Warum?</H4><P>
+
+Das kann verschiedene Ursachen haben. &Uuml;berpr&uuml;fe zuerst, ob Dein Kernel System V Extensions
+enth&auml;lt. PostgreSQL ben&ouml;tigt die Kernel-Unterst&uuml;tzung f&uuml;r Shared Memory und Semaphoren.
+<P>
+
+
+<H4><a name="3.4">3.4</a>)	Wenn ich versuche, den postmaster zu starten, bekomme ich <I>IpcMemoryCreate</I> Fehlermeldungen. Warum?</H4><P>
+
+Du hast entweder den Kernel nicht f&uuml;r Shared Memory konfiguriert, oder Du mu&szlig;t den
+Shared Memory Bereich vergr&ouml;&szlig;ern.
+Die genaue Gr&ouml;&szlig;e h&auml;ngt von Deiner Systemarchitektur ab und mit wievielen
+Puffern und Serverprozessen Du postmaster konfiguriert hast.
+F&uuml;r die meisten Systeme, mit Standardangaben f&uuml;r Puffer und Prozessen ben&ouml;tigst
+Du ein Minimum von ca. 1 MB.
+
+
+<H4><a name="3.5">3.5</a>)	Wenn ich versuche, den postmaster zu starten, bekomme ich <I>IpcSemaphoreCreate</I> Fehlermeldungen. Warum?</H4><P>
+
+Falls die Fehlermeldung <I>IpcSemaphoreCreate: semget failed (No space
+left on device)</I> lautet, dann ist Dein Kernel mit zu wenig Semaphoren konfiguriert.
+
+Postgres ben&ouml;tigt eine Semaphore pro m&ouml;glichen Backend-Prozess.
+Eine Zwischenl&ouml;sung w&auml;re, postmaster mit einer geringeren Anzahl an Backend-Prozessen zu starten.
+Benutze dazu die <I>-N</I> Option mit einem Wert kleiner als die standardm&auml;&szlig;igen 32.
+
+Eine dauerhafte L&ouml;sung w&auml;re es, die Kernel-Parameter 
+<I>SEMMNS</I> und <I>SEMMNI</I> zu erh&ouml;hen.<P>
+
+Falls die Fehlermeldung anders aussieht, hast Du m&ouml;glicherweise keine Semaphoren-Unterst&uuml;tzung
+in Deinem Kernel aktiviert.<P>
+
+
+<H4><a name="3.6">3.6</a>)	Wie verhindere ich, da&szlig; andere Hosts auf meine PostgreSQL Datenbanken zugreifen?</H4><P>
+
+Die Standardeinstellung ist, da&szlig; PostgreSQL Verbindungen von der lokalen Maschine &uuml;ber
+Unix-Domain-Sockets erlaubt. Andere Maschinen werden keine Verbindung aufbauen k&ouml;nnen, bis
+der <I>postmaster</I> mit der <I>-i</I> Option gestartet ist und die Host-basierte Authentizierung
+in der Datei <I>$PGDATA/pg_hba.conf</I> entsprechend angepasst ist.
+Das erlaubt TCP/IP-Verbindungen.
+<P>
+
+<H4><a name="3.7">3.7</a>)	Warum kann ich mich nicht von einer anderen Maschine mit meiner Datenbank verbinden?</H4><P>
+
+Die Standardeinstellung erlaubt nur Unix-Domain-Socket-Verbindungen der lokalen Maschine.
+Um TCP/IP Verbindungen zu erm&ouml;glichen, stelle sicher, da&szlig; der postmaster
+mit der <I>-i</I> Option gestartet wurde, und f&uuml;ge einen passenden Host-Eintrag in die Datei
+<I>pgsql/data/pg_hba.conf</I> ein.  Siehe auch die <I>pg_hba.conf</I> Man-Page.<P>
+
+
+<H4><a name="3.8">3.8</a>)	Warum kann ich nicht als <I>root</I> auf die Datenbank zugreifen?</H4><P>
+
+Du solltest keine Datenbank-Benutzer mit der User-ID 0 (root) erzeugen.
+Sie werden auf keine Datenbank zugreifen k&ouml;nnen. Das ist eine Sicherheitsma&szlig;nahme,
+wegen der M&ouml;glichkeit Objekt-Module dynamisch in die Datenbank zu linken.
+<P>
+
+
+<H4><a name="3.9">3.9</a>)	Alle meine Server st&uuml;rzen bei gleichzeitigem Tabellenzugriff ab. Warum?</H4><P>
+
+Dieses Problem kann durch einen Kernel verursacht werden, der ohne Support f&uuml;r Semaphoren
+konfiguriert wurde.
+
+
+<H4><a name="3.10">3.10</a>)	Wie optimiere ich die Datenbankmaschine f&uuml;r bessere Leistung?</H4><P>
+
+Sicherlich k&ouml;nnen Indizes Abfragen beschleunigen. Der <I>explain</I> Befehl
+erlaubt Dir zu sehen, wie PostgreSQL Deine Abfrage interpretiert und welche Indizes
+benutzt werden.
+<P>
+
+Wenn Du eine Menge <I>INSERTs</I> machst, &uuml;berpr&uuml;fe, ob Du sie als Stapelverarbeitung
+mit dem <I>copy</I>-Befehl abarbeiten kannst.
+Das ist viel schneller als einzelne <I>INSERTs</I>.
+
+Zweitens, SQL-Statements, die nicht in einem <I>begin work/commit</I> Transaktions-Block eingegeben werden,
+werden als eigene Transaktion behandelt. &Uuml;berpr&uuml;fe, ob die Statements nicht
+in einen einzelnen Transaktions-Block zusammengefasst werden k&ouml;nnen. Das reduziert den Transaktions-Overhead.
+
+Du kannst auch erw&auml;gen, Indizes zu l&ouml;schen und neu zu erstellen, wenn Du gro&szlig;e
+Datenmengen &auml;nderst.<P>
+
+Es gibt verschiedene Tuning-Ma&szlig;nahmen, die man ergreifen kann.
+Du kannst fsync() abschalten, indem Du beim Starten des postmasters die Optionen <I>-o -F</I> angibst.
+Das hindert fsync()´s daran, nach jeder Transaktion die Daten auf die Platte zu schreiben.
+
+Du kannst auch mit der -B Option des postmasters die Anzahl der Shared Memory Puffer f&uuml;r den Backend-Prozess erh&ouml;hen.
+Falls Du diesen Wert zu hoch einstellst, kann es sein, da&szlig; der postmaster nicht startet, weil 
+der Shared Memory Speicherplatz Deines Kernels aufgebraucht wird.
+Jeder Puffer ist 8 kB gro&szlig; und es gibt standardm&auml;&szlig;ig 64 Puffer.<P>
+
+Du kannst ebenfalls die -S Option des Backends nutzen, um die Gr&ouml;&szlig;e des Speicherplatzes f&uuml;r 
+tempor&auml;res Sortieren zu erh&ouml;hen.
+Der -S Wert wird in Kilobyte gemessen und ist standardm&auml;&szlig;ig auf 512 kB festgelegt. Es w&auml;re
+jedoch unklug, den Wert zu hoch anzugeben, da ein Query m&ouml;glicherweise Speicherplatzmangel verursacht,
+wenn es viele gleichzeitige Sortierungen durchf&uuml;hren mu&szlig;.<P>
+
+Der <I>cluster</I> Befehl kann benutzt werden, um Daten in Basistabellen zu gruppieren, so da&szlig; sie 
+auf einen Index zusammengebracht werden. Siehe auch die cluster(l) Man-Page f&uuml;r weitere Details.
+
+
+<H4><a name="3.11">3.11</a>)	Welche Debugging/Fehlersuch-Hilfsmittel sind f&uuml;r PostgreSQL verf&uuml;gbar?</H4><P>
+
+PostgreSQL hat einige M&ouml;glichkeiten, Statusinformationen zu berichten, die 
+n&uuml;tzlich f&uuml;r die Fehlersuche sein k&ouml;nnen.<P>
+
+Erstens, wenn beim configure-Lauf die Option --enable-cassert angegeben wurde,
+verfolgen viele <I>assert()´s</I> den Fortschritt des Backends und halten das Programm
+an, wenn etwas Unerwartetes passiert.
+<P>
+
+Postmaster und postgres, haben mehrere Fehlersuch-Optionen zur Verf&uuml;gung.
+Stelle zuerst sicher, da&szlig; Du den Standard-Output und Fehlerkanal in eine Datei umleitest, wenn Du den postmaster startest, :
+<PRE>
+<CODE>
+	cd /usr/local/pgsql
+	./bin/postmaster &gt;server.log 2&gt;&1 &
+</CODE>
+</PRE><P>
+
+Das erzeugt eine server.log Datei im PostgreSQL-Verzeichnis.
+Diese Datei enth&auml;lt n&uuml;tzliche Informationen &uuml;ber Probleme oder Fehler, die im Server
+aufgetreten sind. Postmaster hat eine -d Option, die noch detailliertere Informationen liefert.
+Zur -d Option wird eine Nummer angegeben, die den Debug-Level - also die Menge der berichteten Information - angibt.
+Achtung, hohe Debug-Level erzeugen schnell gro&szlig;e Logdateien!
+<P>
+
+Du kannst tats&auml;chlich das Postgres-Backend auf der Kommandozeile
+laufen lassen und SQL-Statements direkt eingeben.
+Diese Vorgehensweise wird aber <B>nur</B> zur Fehlersuche empfohlen.
+Beachte, da&szlig; ein Zeilenumbruch das SQL-Statement beendet, nicht das Semikolon.
+Wenn Du PostgreSQL mit Debugging-Symbolen kompiliert hast, kannst Du einen Debugger
+benutzen, um zu beobachten, was passiert.
+Da das Backend nicht vom postmaster gestartet wurde, l&auml;uft es nicht in der
+gleichen Umgebung und deshalb k&ouml;nnen einige locking/backend Operationen 
+nicht reproduziert werden.
+Einige Betriebssysteme k&ouml;nnen sich an einen Backend-Prozess direkt
+anh&auml;ngen, um Probleme zu diagnostizieren.
+<P>
+
+Das Programm postgres hat -s, -A und -t Optionen, die bei der Fehlersuche
+und Leistungsmessung sehr n&uuml;tzlich sein k&ouml;nnen.
+
+Du kannst das Paket auch mit Profiling kompilieren, um zu sehen, welche Funktionen wieviel 
+Ausf&uuml;hrungszeit beanspruchen.
+Das Backend Profil wird im Verzeichnis pgsql/data/base/dbname abgelegt.
+Das Client Profil wird in das aktuelle Verzeichnis abgelegt.
+<P>
+
+
+<H4><a name="3.12">3.12</a>)	Ich bekomme die Meldung "Sorry, too many clients", wenn ich eine Verbindung versuche.  Warum?</H4><P>
+
+Du mu&szlig;t die Grenze des postmasters, die festlegt,
+ wieviele gleichzeitige Backend-Prozesse gestartet werden k&ouml;nnen, hochsetzen.<P>
+
+In Postgres 6.5 sind das normalerweise 32 Prozesse. Du kannst diesen Wert dadurch erh&ouml;hen,
+da&szlig; Du den postmaster mit einem entsprechenden <I>-N</I> Wert neu startest.
+In der Standardkonfiguration kannst Du <I>-N</I> auf maximal 1024 setzen.
+Falls Du mehr brauchst, erh&ouml;he <I>MAXBACKENDS</I> in <I>include/config.h</I> und
+kompiliere das Paket neu.
+Du kannst den Standardwert von <I>-N</I> w&auml;hrend der Konfiguration 
+setzen, indem Du <I>--with-maxbackends</I> angibst.
+
+Anmerkung: Falls Du <I>-N</I> gr&ouml;&szlig;er als 32 einstellst, solltest
+Du <I>-B</I> auf einen Wert, h&ouml;her als 64 setzen.
+F&uuml;r eine hohe Anzahl an Backend-Prozessen, solltest Du m&ouml;glicherweise einige
+Unix-Kernel Parameter ebenfalls erh&ouml;hen.
+Folgendes Parameter solltest Du pr&uuml;fen:
+die Maximalgr&ouml;&szlig;e der Shared Memory Blocks <I>SHMMAX,</I>
+die Maximalanzahl der Semaphoren <I>SEMMNS</I> und <I>SEMMNI,
+</I> die maximale Anzahl von Prozessen <I>NPROC,</I> 
+die maximale Anzahl von Prozessen pro User <I>MAXUPRC,</I>
+und die Maximalzahl der ge&ouml;ffneten Dateien <I>NFILE</I> und <I>NINODE.</I>
+
+Der Grund f&uuml;r die Begrenzung der erlaubten Backend-Prozesse liegt darin, da&szlig; 
+verhindert werden soll, da&szlig; das System seine freien Ressourcen aufbraucht.
+<P>
+
+In den Postgres-Versionen vor 6.5 war die maximale Anzahl von Backends auf
+64 festgelegt und eine &Auml;nderung setzte eine erneute Kompilierung voraus,
+bei der die Konstante MaxBackendId in <I>include/storage/sinvaladt.h.</I>
+entsprechend angepasst wurde.<P>
+
+<H4><a name="3.13">3.13</a>)	Was sind die pg_psort.XXX Dateien in meinem Datenbank-Verzeichnis?</H4><P>
+
+Dies sind tempor&auml;re Dateien, die durch den Query-Ausf&uuml;hrer erzeugt werden.
+Wenn zum Beispiel eine Sortierung durchgef&uuml;hrt werden mu&szlig;, um ein <I>ORDER BY</I>
+auszuf&uuml;hren, und diese Sortierung mehr Platz ben&ouml;tigt, als mit dem Backend-Parameter -S
+erlaubt wurde, dann werden diese tempor&auml;ren Dateien erzeugt, um die Daten dort zu halten.
+<P>
+
+Die tempor&auml;ren Dateien sollten automatisch gel&ouml;scht werden, falls das Backend jedoch
+w&auml;hrend einer Sortierung abst&uuml;rzt, bleiben sie erhalten.
+Wenn zu diesem Zeitpunkt keine Transaktion l&auml;uft, kannst Du die
+pg_tempNNN.NN Dateien ohne Gefahr l&ouml;schen.<P>
+
+<H4><a name="3.14">3.14</a>)	Wie richte ich eine Benutzergruppe (pg_group) ein?</H4><P>
+
+Zur Zeit gibt es keine einfache Schnittstelle, um Benutzergruppen einzurichten
+Du mu&szlig;t explizit die pg_group-Tabelle mittels INSERT/UPDATE modifizieren.
+Zum Beispiel:
+
+<PRE>
+<CODE>
+	jolly=&gt; INSERT into pg_group (groname, grosysid, grolist)
+	jolly=&gt;     values ('posthackers', '1234', '{5443, 8261}');
+	INSERT 548224
+	jolly=&gt; grant INSERT on foo to group posthackers;
+	CHANGE
+	jolly=&gt;
+</CODE>
+</PRE><P>
+
+	Die Felder in pg_group sind:
+<UL>
+<LI> groname:  der Gruppenname.  Dieser Name sollte rein alphanumerisch sein. Keine Unterstriche oder andere Punktionen
+<LI>		grosysid: die Gruppen-ID.  Die Gruppen-ID ist ein int4-Feld. Sie sollte eindeutig f&uuml;r jede Gruppe sein.
+<LI>		grolist:   die Liste der pg_user IDs, die zu dieser Gruppe geh&ouml;ren. (int4[].)
+</UL><P>
+
+
+<HR>
+
+<H2><CENTER>Fragen zum Betrieb</CENTER></H2><P>
+
+
+<H4><a name="4.1">4.1</a>)	Das System scheint Kommata, Dezimalpunkte und Datumsformate durcheinanderzubringen.</H4><P>
+
+&Uuml;berpr&uuml;fe die Konfiguration Deiner Locale-Einstellung. PostgreSQL benutzt die 
+Einstellungen des jeweiligen Users und nicht die des postmaster Prozesses.
+Es gibt postgres und psql SET Befehle, um das Datumsformat zu kontrollieren.
+Setzte diese entsprechend Deiner Arbeitsumgebung.
+<P>
+
+
+<H4><a name="4.2">4.2</a>)	Was ist der genauer Unterschied zwischen Binary Cursors und Normal Cursors?</H4><P>
+
+Vgl. die <I>declare</I> Man-Page f&uuml;r eine Beschreibung.<P>
+
+<H4><a name="4.3">4.3</a>)	Wie w&auml;hle ich per <I>SELECT</I> nur die ersten paar Zeilen in einem Query aus?</H4><P>
+
+Vgl. die <I>fetch</I> Man-Page, oder benutze SELECT ... LIMIT....<P>
+
+Das verhindert nur, da&szlig; alle Ergebniszeilen zum Client &uuml;bermittelt werden.
+Die komplette Abfrage mu&szlig; abgearbeitet werden, selbst wenn Du nur die ersten paar Zeilen haben m&ouml;chtest.
+Ziehe ein Query in Erw&auml;gung, das ein <I>ORDER BY</I> benutzt. Es gibt keine M&ouml;glichkeit Zeilen
+zur&uuml;ckzuliefern, bevor nicht die komplette Abfrage abgearbeitet ist.
+<P>
+
+<H4><a name="4.4">4.4</a>)	Wie bekomme ich eine Liste der Tabellen oder anderen Dingen, die ich in <I>psql</I> sehen kann<BR></H4><P>
+
+Du kannst Dir die Datei pgsql/src/bin/psql/psql.c mit dem Quellcode f&uuml;r <I>psql</I> ansehen.
+Sie enth&auml;lt die SQL-Befehle, die die Backslash-Kommandos (\) ausf&uuml;hren.
+Seit Postgres 6.5 kannst Du <I>psql</I> auch mit der <I>-E</I> Option starten. Dadurch gibt
+<I>psql</I> die Queries aus, die es bei der Ausf&uuml;hrung der Befehle benutzt.
+<P>
+
+
+<H4><a name="4.5">4.5</a>)	Wie entferne ich eine Spalte von einer Tabelle?</H4><P>
+
+Wir unterst&uuml;tzen  <I>alter table drop column</I> nicht, aber mache es so:
+<PRE> <CODE>
+	SELECT ...  -- w&auml;hle alle Spalten au&szlig;er die, die Du entfernen willst
+	INTO TABLE new_table
+	FROM old_table;
+	DROP TABLE old_table;
+	ALTER TABLE new_table RENAME TO old_table;
+</CODE>
+</PRE><P>
+
+
+<H4><a name="4.6">4.6</a>)	Was ist die Maximalgr&ouml;&szlig;e f&uuml;r eine Zeile, eine Tabelle, eine Datenbank?</H4><P>
+
+Zeilen sind auf 8 kB begrenzt, aber das kann ge&auml;ndert werden, indem Du in
+<I>include/config.h</I> die Konstante <I>BLCKSZ</I> &auml;nderst.
+Um Attribute mit mehr als 8 kB zu nutzen, kannst Du auch das "Large Object Interface" benutzen.<P>
+Zeilen &uuml;berschreiten keine 8 kB-Grenzen. Eine Zeile mit 5 kB wird 8 kB Speicherplatz ben&ouml;tigen.
+<P>
+
+Tabellen- und Datenbankgr&ouml;&szlig;en haben keine Grenzen. Es gibt viele Datenbanken mit zig Gigabytes und
+wahrscheinlich einige mit hunderten Gigabyte.
+
+<H4><a name="4.7">4.7</a>)	Wieviel Plattenplatz ben&ouml;tigt eine Datenbank zur Speicherung einer Datendatei mit zeilenweisen Datens&auml;tzen?<BR></H4><P>
+
+Eine Postgres Datenbank kann ungef&auml;hr sechseinhalb mal soviel Platz brauchen,
+wie eine einfache Textdatei.<P>
+
+Betrachten wir eine Datei mit 300.000 Zeilen, mit jeweil zwei Integern pro Zeile.
+Die einfache Textdatei ben&ouml;tigt 2,4 MB Speicherplatz.
+Die Gr&ouml;&szlig;e der Postgres Datenbankdatei, die diese Daten enth&auml;lt, liegt 
+ungef&auml;hr bei 14 MB.
+
+<PRE>
+    36 Bytes: jeder Zeilenkopf (ungef&auml;hr)
+   + 8 Bytes: zwei Integer-Felder @ jedes 4 Bytes
+   + 4 Bytes: Zeiger auf den Datensatz
+   -----------------------------------------------
+    48 Bytes pro Zeile
+
+   Die Gr&ouml;&szlig;e einer Datenseite in PostgreSQL ist 8192 Bytes (8 KB), also:
+
+   8192 Bytes pro Seite
+   ---------------------   =  171 Zeilen pro Seite (aufgerundet)
+     48 Bytes pro Zeile
+
+   300000 Datenzeilen
+   -----------------------  =  1755 Datenbankseiten
+      171 Zeilen pro Seite
+
+1755 Datenbankseiten * 8192 Bytes pro Seite  =  14,376,960 Bytes (14MB)
+</PRE></P>
+
+Indizes haben nicht einen solchen Overhead, sie beinhalten jedoch die Daten, die sie
+indizieren und k&ouml;nnen so auch sehr gro&szlig; werden.
+<P>
+
+<H4><a name="4.8">4.8</a>)	Wie finde ich heraus, welche Indizes oder Operationen in der Datenbank definiert sind?</H4><P>
+
+<I>psql</I> hat eine Vielzahl von Backslash Befehlen, um solche Informationen zu zeigen.
+Benutze \?, um sie zu sehen.
+<P>
+
+Schaue Dir auch die Datei <I>pgsql/src/tutorial/syscat.source.</I>  an.
+Sie illustriert viele der <I>SELECT</I>s, die ben&ouml;tigt werden, um diese Informationen
+von der Datenbank-Systemtabelle zu erhalten
+<P>
+
+
+<H4><a name="4.9">4.9</a>)	Meine Queries sind langsam oder nutzen die Indizes nicht. Warum?</H4><P>
+
+PostgeSQL pflegt automatische Statistiken nicht. 
+Um die Statistiken zu aktualisieren, mu&szlig;t Du ein explizites <I>vacuum</I> eingeben.
+Nach dieser Aktualisierung wei&szlig; der Optimierer
+wieviele Zeilen in der Tabelle sind und kann besser entscheiden, ob Indizes benutzt werden sollten.
+Der Optimierer benutzt keine Indizes, wenn die Tabelle klein ist, weil ein sequentieller Suchlauf
+dann schneller sein w&uuml;rde.<P>
+
+Benutze den Befehl <I> vacuum analyze</I> f&uuml;r die spaltenspezifische Optimierung.
+ <I>Vacuum analyze</I> ist f&uuml;r komplexe Multi-Join-Abfragen wichtig, damit der Optimierer
+die Anzahl der Zeilen von jeder Tabelle sch&auml;tzen und dann die passende Join-Reihenfolge
+w&auml;hlen kann.
+Das Backend verfolgt die Spaltenstatistik nicht selbst, so da&szlig; <I>vacuum analyze</I>
+regelm&auml;&szlig;ig aufgerufen werden sollte.
+<P>
+
+Indizes werden nicht f&uuml;r <I>ORDER BY</I> Operationen benutzt.<P>
+
+Bei der Nutzung von Wildcard-Operatoren wie <I>LIKE</I> oder <I>~,</I>&nbsp; k&ouml;nnen Indizes
+nur benutzt werden, wenn die Suche mit dem Anfang eines Strings startet.
+Um also Indizes zu nutzen, sollten <I>LIKE</I>-Suchen nicht mit 
+<I>%,</I> und <I>~</I>&nbsp; beginnen (Die Sucheparameter regul&auml;rer Ausdr&uuml;cke sollten
+mit <I>^.</I>&nbsp; beginnen.
+
+<H4><a name="4.10">4.10</a>)	Auf welche Weise kann ich sehen, wie der Query-Optimierer meine Abfrage auswertet?</H4><P>
+
+Vgl. die <I>EXPLAIN</I> Man-Page.<P>
+
+<H4><a name="4.11">4.11</a>)	Was ist ein R-Tree Index?</H4><P>
+
+Ein R-Tree Index wird benutzt, um r&auml;umliche Daten zu indizieren.
+Ein Hash-Index kann nicht f&uuml;r Bereichssuchen genutzt werden.
+Ein B-Tree Index kann nur f&uuml;r Bereichssuchen in eindimensionalen Daten
+genutzt werden. R-Trees k&ouml;nnen multi-dimensionale Daten abhandeln.
+Ein Beispiel: Wenn ein R-Tree Index auf ein Attribut vom Typ <I>POINT</I>
+gebildet wird, dann kann das System Abfragen wie z.B. "Zeige alle Punkte,
+die sich in einem umgebenden Rechteck befinden" effizienter beantworten.
+<P>
+
+Die kanonische Ver&ouml;ffentlichung , die das originale R-Tree Design beschreibt ist:
+<P>
+
+Guttman, A. "R-Trees: A Dynamic Index Structure for Spatial Searching."
+Proc of the 1984 ACM SIGMOD Int'l Conf on Mgmt of Data, 45-57.<P>
+
+Du kannst dieses Werk ebenfalls in Stonebraker's "Readings in Database
+Systems" finden.<P>
+
+Die eingebauten R-Trees k&ouml;nnen Polygone und Rechtecke verarbeiten.
+Theoretisch k&ouml;nnen R-Trees auf eine hohe Anzahl von Dimensionen erweitert werden.
+Praktisch bedingt diese Erweiterung eine Menge Arbeit und wir haben derzeit
+keinerlei Dokumentation dar&uuml;ber, wie das zu machen w&auml;re.
+<P>
+
+
+<H4><a name="4.12">4.12</a>)	Was ist "Genetic Query Optimization"?</H4><P>
+
+Das GEQO-Modul in PostgreSQL soll dazu dienen, das Optimierungsproblem beim
+Joining vieler Tabellen auf der Basis genetischer Algorithmen (GA) zu l&ouml;sen.
+Es erlaubt die Behandlung von gro&szlig;en Join-Queries ohne ersch&ouml;pfende Suche.
+<P>
+F&uuml;r weitere Informationen siehe die Dokumentation.
+
+
+<H4><a name="4.13">4.13</a>)	Wie verfahre ich bei der Suche mit regul&auml;ren Ausdr&uuml;cken und bei einer Suche mit Ignorierung der Gro&szlig;- und Kleinschreibweisen?</H4><P>
+
+<I>~</I> und <I>~*</I>&nbsp; sind wahrscheinlich das, was Du willst.
+Vgl. psql's  <I>\do</I> Befehl. <P>
+
+
+<H4><a name="4.14">4.14</a>)	Wie ermittle ich in einem Query, da&szlig; ein Feld NULL ist?</H4><P>
+
+Du testest die Spalte mit IS NULL und IS NOT NULL.<P>
+
+
+<H4><a name="4.15">4.15</a>)	Was ist der Unterschied zwischen den verschiedenen CHAR-Typen?</H4>
+
+<PRE>
+Typ             interner Name   Bemerkungen
+--------------------------------------------------
+CHAR            char            1 Zeichen
+CHAR(#)         bpchar          mit Leerzeichen gef&uuml;llt bis zur angegebenen L&auml;nge
+VARCHAR(#)      varchar         Die Gr&ouml;&szlig;e legt die Maximall&auml;nge fest, kein Ausf&uuml;llen mit Leerzeichen
+TEXT            text            Die L&auml;nge wird nur durch die maximale Zeilenl&auml;nge beschr&auml;nkt
+BYTEA           bytea           Bytearray mit variabler L&auml;nge
+</PRE><P>
+
+Du mu&szlig;t die internen Namen benutzen, wenn Du interne Operationen durchf&uuml;hren willst.
+<P>
+
+Die letzten vier Typen sind "varlena"-Typen (d.h. die ersten vier Bytes geben die L&auml;nge an, gefolgt 
+von den Daten).
+<I>CHAR(#)</I> belegt die maximale Anzahl von Bytes, unabh&auml;ngig davon, wieviele Daten im 
+Feld gespeichert werden.
+<I>TEXT, VARCHAR(#)</I> und <I>BYTEA</I> haben alle eine variable L&auml;nge auf dem Datentr&auml;ger,
+deshalb gibt es einen leichten Geschwindigkeitsnachteil bei der Nutzung dieser Typen.
+Genauer, der Nachteil gilt f&uuml;r den Zugriff auf alle Spalten nach der ersten Spalte dieses Typs.
+<P>
+
+
+<H4><a name="4.16">4.16</a>)	Wie erzeuge ich ein serielles Feld mit automatischer Erh&ouml;hung des Inhalts?</H4><P>
+
+PostgreSQL unterst&uuml;tzt einen <I>SERIAL</I> Datentyp. Er erzeugt automatisch eine
+Sequenz und einen Index auf die Spalte. Siehe die <I>create_sequence</I> Man-Page
+f&uuml;r weitere Informationen &uuml;ber Sequenzen.
+
+Du kannst aber auch das <I>Oid</I> Feld jeder Zeile als eindeutigen Wert nutzen.
+Jedoch mu&szlig;t Du, falls Du Deine Datenbank einmal komplett ausgeben und wieder einlesen willst,
+die <I>pg_dump's -o</I> oder die <I>copy with oids</I> Option benutzen, um die Oids zu retten.<P>
+
+<H4><a name="4.17">4.17</a>)	Was ist ein Oid? Was ist ein Tid?</H4><P>
+
+Oids sind PostgreSQLs Antwort auf eindeutige Zeilen-IDs. Jede Zeile, die in PostgreSQL
+erzeugt wird, bekommt eine eindeutige Oid. Alle Oids, die w&auml;hrend initdb erzeugt werden, sind kleiner
+als 16384 (nach <I>backend/access/transam.h</I>). 
+Alle Oids, die durch den Benutzer erzeugt werden, sind gleich oder gr&ouml;&szlig;er als dieser Wert.
+Standardm&auml;&szlig;ig sind all diese Oids nicht nur innerhalb einer Tabelle oder Datenbank, sondern
+in der gesamten PostgreSQL Installation eindeutig.
+<P>
+PostgreSQL benutzt Oids in seinen internen Systemtabellen, um Zeilen zwischen den Tabellen zu 
+verbinden. Diese Oids k&ouml;nnen zur Identifikation spezifischer Benutzerzeilen und in Joins 
+genutzt werden.
+Es wird empfohlen, den Spaltentyp OID zu nutzen, um Oids-Werte zu speichern.
+Siehe die <I>sql(l)</I> Man-Page, um die anderen internen Spalten kennenzulernen.
+Du kannst einen Index auf ein Oid-Feld erzeugen, um schnelleren Zugriff zu erreichen.
+<P>
+
+Oids werden allen neuen Zeilen von einem zentralen Bereich, der von allen Datenbanken
+genutzt wird, zugewiesen. Es gibt keinen Grund, warum Du nicht die Oid &auml;ndern, oder eine Kopie der 
+Tabelle mit den originalen Oids anlegen k&ouml;nntest. 
+<PRE>
+        CREATE TABLE new_table(old_oid oid, mycol int);
+        SELECT INTO new SELECT old_oid, mycol FROM old;
+        COPY new TO '/tmp/pgtable';
+        DELETE FROM new;
+        COPY new WITH OIDS FROM '/tmp/pgtable';
+<!--
+	CREATE TABLE new_table (mycol int);
+	INSERT INTO new_table (oid, mycol) SELECT oid, mycol FROM old_table;
+-->
+</PRE><P>
+
+Tids werden genutzt, um spezifische physische Zeilen mit Block und 
+Versatzwert zu identifizieren. Tids &auml;ndern sich, wenn Zeilen ge&auml;ndert oder
+neu geladen werden. Sie werden von Index-Eintr&auml;gen genutzt, um die 
+Zeilen physisch zu adressieren.
+
+<H4><a name="4.18">4.18</a>)	Was ist die Bedeutung der verschiedenen Ausdr&uuml;cke, die in PostgreSQL benutzt werden (z.B. attribute, class,...)?</H4><P>
+
+Einige der Quelltexte und die &auml;ltere Dokumentation nutzen allgemeine Begriffe.
+Hier sind einige aufgef&uuml;hrt:
+
+<UL>
+<LI> row, record, tuple
+<LI> attribute, field, column
+<LI> table, class
+<LI> retrieve, SELECT
+<LI> replace, UPDATE
+<LI> append, INSERT
+<LI> oid, serial value
+<LI> portal, cursor
+<LI> range variable, table name, table alias
+</UL><P>
+
+<H4><a name="4.19">4.19</a>)	Wieso bekomme ich einen Fehler: "FATAL:  palloc failure: memory exhausted?"<BR></H4><P>
+
+M&ouml;glicherweise ist der virtuelle Speicher verbraucht oder Dein Kernel hat
+eine niedrige Grenze f&uuml;r bestimmte Ressourcen.
+Versuche dieses, bevor Du den postmaster startest:
+
+<PRE>
+<CODE>
+	ulimit -d 65536
+	limit datasize 64m
+</CODE>
+</PRE>
+
+Je nach Deiner eingesetzten Shell mag nur einer dieser Befehle funktionieren.
+Aber es wird die Grenze des Datensegments f&uuml;r Prozesse erh&ouml;hen und vielleicht 
+l&auml;uft so Dein Query durch.
+Dieser Befehl wirkt sich auf den aktuellen Prozess und alle seine Unterprozesse 
+aus, die nach diesem Befehl gestartet werden. Falls Du ein Problem mit dem SQL-CLient hast,
+weil das Backend zu viele Daten zur&uuml;ckliefert, versuche diesen Befehl, bevor Du den 
+SQL-Client startest.
+<P>
+
+<H4><a name="4.20">4.20</a>)	Wie kann ich feststellen, welche PostgreSQL-Version ich laufen habe?<BR></H4><P>
+
+Gib in <I>psql</I> <CODE>SELECT version();</CODE> ein<P>
+
+<H4><a name="4.21">4.21</a>)	Beim Arbeiten mit "large-object" kommt die Fehlermeldung: <I>invalid large obj descriptor.</I>  Warum?<BR></H4><P>
+
+Du solltest die Befehle <CODE>BEGIN WORK</CODE> und <CODE>COMMIT
+</CODE> bei jeden Gebrauch von Large Objects benutzen. Also um
+<CODE>lo_open</CODE> ... <CODE>lo_close.</CODE><P>
+
+Die Dokumentation hat schon immer darauf hingewiesen, da&szlig; 
+<I>lo_open</I> in eine Transaktion eingebunden werden mu&szlig;, aber die PostgreSQL Versionen vor 6.5 
+haben diese Regel nicht erzwungen.
+Statt dessen scheiterten sie gelegentlich, wenn Du diese Regel gebrochen hattest.<P>
+
+Das aktuelle PostgreSQL erzwingt diese Regel, indem es die Handles der Large Objects
+beim COMMIT der Transaktion schlie&szlig;t, was sofort nach dem <I>lo_open</I> passiert,
+wenn Du nicht innerhalb einer Transaktion bist.
+So f&uuml;hrt der erste Versuch, etwas mit dem Large Object zu machen zu einem
+<I>invalid large obj descriptor</I>.
+Also wird der Code, der bisher benutzt wurde, nun diese Fehlermeldung erzeugen, wenn Du
+keine Transaktionen benutzt hast.
+<P>
+Falls Du eine Client-Schnittstelle wie ODBC benutzt, kann es sein, da&szlig; Du 
+<CODE>auto-commit off</CODE> setzen mu&szlig;t.<P>
+
+<HR>
+
+<H2><CENTER>PostgreSQL erweitern</CENTER></H2><P>
+
+
+<H4><a name="5.1">5.1</a>)	Ich habe eine benutzerdefinierte Funktion geschrieben.  Wenn ich sie in <I>psql</I> aufrufe, kommt ein <I>core dump</I>. Warum?</H4><P>
+
+Dieses Problem kann viele Ursachen haben. Teste deine Funktion zuerst in einem 
+Extra-Testprogramm. Stelle au&szlig;erdem sicher, da&szlig; Deine Funktion nicht etwa elog-Nachrichten sendet, wenn der Client Daten erwartet,
+wie in den type_in() oder type_out() Funktionen<P>
+
+
+<H4><a name="5.2">5.2</a>)	Was bedeutet die Meldung: <I>NOTICE:PortalHeapMemoryFree: 0x402251d0 not in alloc set!</I>?</H4><P>
+
+Du <I>pfree</I>st etwas, das Du nicht <I>palloc</I>t hast!
+Stelle sicher, da&szlig; Du nicht <I>malloc/free</I> und <I>palloc/pfree</I> durcheinanderw&uuml;rfelst.
+
+
+<H4><a name="5.3">5.3</a>)	Wie kann ich ein paar elegante neue Feldtypen und Funktionen zu PostgreSQL beitragen?
+</H4><P>
+
+Sende Deine Erweiterungen zur pgsql-hackers Mailing Liste, 
+und sie werden eventuell im <I>contrib/</I> Verzeichnis enden.<P>
+
+
+<H4><a name="5.4">5.4</a>)	Wie schreibe ich eine Funktion in C, die einen Tuple zur&uuml;ckliefert?</H4><P>
+
+Das erfordert derart extreme Genialit&auml;t, da&szlig; die Autoren es niemals versucht haben,
+obwohl es im Prinzip zu machen w&auml;re.<P>
+
+<H4><a name="5.5">5.5</a>)	Ich habe eine der Quellendateien ge&auml;ndert. Warum macht sich die &Auml;nderung beim erneuten Compilerlauf nicht bemerkbar?</H4><P>
+
+Die Makefiles finden nicht die richtigen Abh&auml;ngigkeiten. Du mu&szlig;t ein <I>make clean</I> und dann ein weiteres <I>make</I> machen.
+
+
+</BODY>
+</HTML>
+
+

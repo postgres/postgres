@@ -1,0 +1,168 @@
+<PRE>
+=======================================================
+Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
+Sun Solaris Specific
+TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
+=======================================================
+last updated:        Thu Sep 21 9:30:00 CET 1999
+
+current maintainer:  Marc Liyanage (liyanage@access.ch)
+original author:     Marc Liyanage (liyanage@access.ch)
+
+
+
+Contents:
+
+1.1) What tools do I need to build and install PostgreSQL on Solaris?
+1.2) What else do I have to do before building PostgreSQL? 
+1.3) Why am I getting "IpcMemoryCreate" errors when I try
+     to run postmaster?
+1.4) Why am I getting "Can't tell what username to use" errors
+     when I try to run initdb?
+
+A)   Contributors
+
+
+
+Notes:
+
+- The commands given here are for the bash shell. If you use
+  a different shell, you'll have to change the commands accordingly,
+  especially these regarding environment variables.
+
+- These instructions are written for Solaris 2.6
+
+
+
+----------------------------------------------------------------------
+Section 1:  Building and Installing PostgreSQL
+----------------------------------------------------------------------
+
+1.1) What tools do I need to build and install PostgreSQL on Solaris?
+
+You will need
+
+- GNU flex 2.5.4 or better (the lex included in Solaris 2.6 won't work)
+- GNU bison (the yacc included in Solaris 2.6 won't work)
+- GNU zip (gzip and especially zcat for installing the docs)
+- GNU make
+- GNU readline library
+
+We also used
+
+- GNU cc (gcc 2.8.1)
+
+If you like Solaris packages, you can find these tools here:
+http://www.sunfreeware.com
+
+If you prefer sources, look here:
+http://www.gnu.org/order/ftp.html
+
+
+
+
+1.2) What else do I have to do before building PostgreSQL?
+
+Shared libraries
+----------------
+
+The default installation procedure puts the shared libraries
+into "/usr/local/pgsql/lib", but the dynamic loader won't
+find them there at runtime unless you use some hack like
+symlinking the libraries in /usr/lib or setting LD_LIBRARY_PATH
+for every user that will use the DB system.
+
+The first time you'll encounter this problem is usually when
+running "initdb". It will fail with something like
+   
+   ld.so.1: pg_id: fatal: libpq.so: open failed: No such file or directory  
+   
+We recommend that you store the path of the directory containing
+the libraries in the environment variable LD_RUN_PATH *before*
+starting the build. This will cause the linker to store this
+path in the binaries.
+
+Do this:
+
+# export LD_RUN_PATH=/usr/local/pgsql/lib
+
+(or wherever you choose to put the libraries)
+
+There is some good information about this here:
+http://www.visi.com/~barr/ldpath.html
+
+
+zcat
+----
+
+If
+
+- both the original solaris zcat as well as the recommended
+  GNU zcat are installed on the system (e.g. the former in /usr/bin and
+  the latter in /usr/local/bin) and 
+- configure (or "which zcat") finds the wrong one
+
+then configure needs to be told where GNU zcat can be found.
+
+Failure to do so will cause configure to select the wrong one
+and the "gmake install" command in the "doc" subdirectory
+(step 12 in the INSTALL file) will fail because Solaris
+zcat cannot handle the .gz compressed documentation files.
+
+To fix this, type
+
+# export GZCAT=/usr/local/bin/zcat
+
+(or wherever your GNU zcat lives)
+
+before running configure.
+
+
+
+
+1.3) Why am I getting "IpcMemoryCreate" errors when I try
+     to run the postmaster?
+
+(See also 3.4 in the main FAQ file)
+
+Under Solaris 2.6 and probably others, the default shared memory
+maximum segment size kernel parameter is set too low. The solution
+is to put something like the following line into /etc/system and
+reboot the system.
+
+set shmsys:shminfo_shmmax=0x7fffffff
+
+Excellent info regarding shared memory under Solaris can be found here:
+http://www.sunworld.com/swol-09-1997/swol-09-insidesolaris.html
+
+
+
+
+1.4) Why am I getting "Can't tell what username to use" errors
+     when I try to run initdb?
+
+Put something like this into the .bash_profile startup script
+of the postgres user (see also step 17 in the INSTALL file):
+
+export USER=postgres
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------
+Section A:  Contributors
+----------------------------------------------------------------------
+
+- Jose Luis Rodriguez Garcia
+  Suggested to change the shmmax parameter in 1.3 from 0xffffffff to 0x7fffffff
+  because the value is a signed integer in Solaris versions prior to 2.6.
+
+
+
+</PRE>
+

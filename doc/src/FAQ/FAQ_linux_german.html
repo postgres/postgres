@@ -1,0 +1,748 @@
+<HTML>
+<HEAD>
+<TITLE>Linux PostgreSQL FAQ (german)</TITLE>
+   <META NAME="Author" CONTENT="Karsten Schulz">
+   <META NAME="GENERATOR" CONTENT="all pages hand-made by Karsten Schulz, using NEdit (Linux)">
+   <META http-equiv="content-type" CONTENT="text/html;CHARSET=iso8859-1">
+   <META NAME="robots" CONTENT="index">
+   <META NAME="robots" CONTENT="follow">
+   <META NAME="description" CONTENT="Die deutsche &Uuml;bersetzung der Linux-spezifischen FAQ zum Datenbanksystem PostgreSQL">
+   <META NAME="keywords" CONTENT="Linux, FAQ, DB, PostgreSQL, SQL, deutsch, german">     
+   <LINK REV=MADE HREF="mailto:schulz@Linux-Systemhaus.de" TITLE="Karsten Schulz">
+</HEAD>
+<BODY BGCOLOR="#FFFFFF">
+
+<CENTER><H1>H&auml;ufig gestellte Fragen (FAQ) zu PostgreSQL &gt;= V6.1, Linux-spezifisch</H1>
+<STRONG>Bitte Zusammen mit der normalen FAQ lesen!</STRONG></CENTER>
+
+<HR>
+<TABLE BORDER=0>
+<TR>
+	<TD>Letztes Update des Originals:</TD>
+	<TD>Tue Aug 10 11:15:00 BST 1999</TD>
+</TR>
+<TR>
+	<TD>Original-FAQ gepflegt durch:</TD>
+	<TD>Andrew C.R. Martin (<A HREF="mailto:martin@biochem.ucl.ac.uk">martin@biochem.ucl.ac.uk</A>)</TD>
+</TR>
+<TR>
+	<TD>Original Autor:</TD>
+	<TD>Andrew C.R. Martin (<A HREF="mailto:martin@biochem.ucl.ac.uk">martin@biochem.ucl.ac.uk</A>)</TD>
+</TR>
+<TR>
+	<TD COLSPAN=2>&nbsp;</TD>
+</TR>
+<TR>
+	<TD>Letztes Update der &Uuml;bersetzung:</TD>
+	<TD>Mo, 23. August 1999, 10:00 CEST</TD>
+</TR>
+<TR>
+	<TD>&Uuml;bersetzer:</TD>
+	<TD>Karsten Schulz (<A HREF="mailto:schulz@linux-systemhaus.de">schulz@linux-systemhaus.de</A>)</TD>
+</TR>
+</TABLE>
+<HR>
+<P>
+&Auml;nderungen in dieser Version (* = ge&auml;ndert, + = neu, - = entfernt)
+<P>
+
+<A HREF="#3.11">+3.11)</A> Wieso bekomme ich einen Fehler wie: <EM>IpcMemoryCreate: shmget failed (Permission denied)</EM>?<BR>
+
+<H2>Diese Datei ist ungef&auml;hr wie folgt unterteilt:</H2>
+
+<A HREF="#1.">1.*)</A> PostgreSQL kompilieren<BR>
+<A HREF="#2.">2.*)</A> Hilfs- und Zusatzprogramme kompilieren<BR>
+<A HREF="#3.">3.*)</A> Laufzeit Probleme<BR>
+<P><BR>
+
+
+<H2>Beantwortete Fragen:</H2>
+<A NAME="1.">&nbsp;</A><H3><A HREF="#Sec1">PostgreSQL kompilieren</A></H3>
+
+
+<A HREF="#1.1">1.1)</A> Welche Anpassungen m&uuml;ssen in src/Makefile.global oder src/Makefile.custom gemacht werden
+	und gibt es weitere notwendige &Auml;nderungen?<BR>
+<A HREF="#1.2">1.2)</A> Warum habe ich Probleme mit der fehlenden Bibliothek libreadline?<BR>
+<A HREF="#1.3">1.3)</A> [REDHAT] Warum habe ich Probleme mit der fehlenden Bibliothek libdl und der fehlenden dlfcn.h?<BR>
+<A HREF="#1.4">1.4)</A> [SLACKWARE 3.1] Warum habe ich Probleme mit der fehlenden Bibliothek libdl und der fehlenden dlfcn.h?<BR>
+<A HREF="#1.5">1.5)</A> Die Kompilierung des Backends schl&auml;gt mit der Meldung fehl, da&szlig; die Include-Datei dlfcn.h fehlen w&uuml;rde.<BR>
+<A HREF="#1.6">1.6)</A> GCC meldet, da&szlig; er die Option -fpic ignorieren w&uuml;rde.<BR>
+<A HREF="#1.7">1.7)</A> Ich bekomme Warnungen, wie: <EM>warning: cast from pointer to integer of different size</EM><BR>
+<A HREF="#1.8">1.8)</A> [SuSE-Linux 4.2-5.3] Wo sind curses und termcap?<BR>
+<A HREF="#1.9">1.9)</A> Warum bekomme ich Probleme mit ld.so?<BR>
+<A HREF="#1.10">1.10)</A> Wieso bekomme ich <EM>yy_flush_buffer undefined</EM> Fehler?<BR>
+<A HREF="#1.11">1.11)</A> Wie kompiliere ich PostgreSQL auf einem a.out System?<BR>
+<A HREF="#1.12">1.12)</A> Warum scheitert make mit der Meldung:<BR><EM>
+        yacc -d /disk2/PostgreSQL/src/backend/parser/gram.y
+        make: /usr/bin/make: cannot execute binary file</EM><BR>
+<A HREF="#1.13">1.13)</A> Was sind die Bez&uuml;ge in der Bibliothek X11_LIB zu libsocket und libnsl in der Datei src/Makefile.global?<BR>
+<A HREF="#1.14">1.14)</A> [DEBIAN] Wo ist die Bibliothek libtermcap?<BR>
+<A HREF="#1.15">1.15)</A> [REDHAT] Kann ich PostgreSQL als RPM-Archiv bekommen?<BR>
+<A HREF="#1.16">1.16)</A> W&auml;hrend ich versuche eine Entwickler-Version unter Linux zu kompilieren, bricht der Vorgang mit folgender
+							Fehlermeldung ab:<BR><EM>
+        In file included from /usr/include/sys/sem.h:8,<BR>
+                 from ipc.c:37:<BR>
+        /usr/include/asm/bitops.h:32: warning: no previous prototype for Set_bit'<BR>
+        ....<BR>
+        make: *** [ipc.o] Error 1</EM><BR>
+<A HREF="#1.17">1.17)</A> Beim Kompilieren von PostgreSQL bricht der gcc mit einer Signal 11 Meldung ab.<BR>
+<A HREF="#1.18">1.18)</A> Kann ich Version 6.1.1 unter MkLinux installieren?<BR>
+<A HREF="#1.19">1.19)</A> Warum stoppt make oder bricht sonstwie ab?<BR>
+<A HREF="#1.20">1.20)</A> Wie kann ich f&uuml;r die Prozessoren 486 oder Pentium optimieren?<BR>
+<A HREF="#1.21">1.21)</A> Wieso bekomme ich seltsame Ergebnisse beim Drucken von Zeiten (z.B. beim Regressionstest 'timespan')?<BR>
+<A HREF="#1.22">1.22)</A> Warum bekomme ich keine shared libraries f&uuml;r libpq, wenn ich Version 6.3.2 kompiliere?<BR>
+<A HREF="#1.23">1.23)</A> Warum scheitert der Kompilierungslauf mit Nachrichten, da&szlig; F_BOOLIN, F_BOOLOUT und F_BYTEAIN nicht deklariert seien?<BR>
+		
+<P>
+
+<A NAME="2.">&nbsp;</A><H3><A HREF="#Sec2">Hilfs- und Zusatzprogramme kompilieren</A></H3>
+
+<A HREF="#2.1">2.1)</A> Der Linker findet die Bibliothek libX11 nicht, wenn pgtclsh kompiliert werden soll.<BR>
+
+
+<A NAME="3.">&nbsp;</A><H3><A HREF="#Sec3">Laufzeit Probleme</A></H3>
+
+<A HREF="#3.1">3.1)</A> Ich bekomme die Fehlermeldung <EM>_fUnKy_POSTPORT_sTuFf_ undefined</EM>, wenn Skripts wie createuser laufen.<BR>
+<A HREF="#3.2">3.2)</A> Nachdem ich postmaster starte, meldet das System <EM>Bad system call (Core dumped)</EM><BR>
+<A HREF="#3.3">3.3)</A> Wenn ich versuche, den Postmaster zu starten, bekomme ich eine Fehlermeldung wie:<BR><EM>
+        Failed Assertion("!(file != 0):(null)", File:<BR>
+        "/usr/local/PostgreSQL/src/backend/storage/file/fd.c", Line: 257)<BR>
+        !(file != 0) (0)<BR>
+        initdb: could not create template database<BR>
+        initdb: cleaning up.</EM><BR>
+<A HREF="#3.4">3.4)</A> Warum funktioniert createuser nicht?<BR>
+<A HREF="#3.5">3.5)</A> Wieso bekomme ich einen Fehler, wie:<BR><EM>
+        IpcMemoryCreate: memKey=155356396 , size=760632 ,<BR>
+        permission=384IpcMemoryCreate: shmget(..., create, ...)<BR>
+        failed: Invalid argument</EM><BR>
+<A HREF="#3.6">3.6)</A> Wieso scheitert der Aufruf von psql mit: <EM>psql: can't load library 'libpq.so.1</EM><BR>
+<A HREF="#3.7">3.7)</A> Andere seltsame Verhaltensweisen<BR>
+<A HREF="#3.8">3.8)</A> Wenn PostgreSQL beim Systemhalt lief, f&uuml;hrt Linux beim Neustart jedesmal einen Filesystemcheck (fsck) durch<BR>
+<A HREF="#3.9">3.9)</A> Warum dauert Query 32 in den RegressionsTests so lange?<BR>
+<A HREF="#3.10">3.10)</A> Warum bekomme ich lustige Rundungsergebnisse in einigen Datums/Zeit-Berechnungen, wie:<BR><EM>
+           select '4 hours'::timespan;<BR>
+        liefert '3 hours 59 minutes 60 seconds'</EM>?<BR>
+<A HREF="#3.11">+3.11)</A> Wieso bekomme ich einen Fehler wie: <EM>IpcMemoryCreate: shmget failed (Permission denied)</EM>?<BR>
+
+<P>
+
+<H3><A NAME="Sec1">Abschnitt 1: PostgreSQL kompilieren</A></H3>
+
+<H4><A NAME="1.1">1.1)</A> Welche Anpassungen m&uuml;ssen in src/Makefile.global oder src/Makefile.custom gemacht werden
+		und gibt es weitere notwendige &Auml;nderungen?</H4>
+
+&Auml;nderungen an den Makefiles werden am einfachsten dadurch gemacht, indem das <EM>customize shellscript</EM>
+im src-Verzeichnis aufgerufen wird, das ein Makefile.custom erzeugt.
+<P>
+Die einzige andere &Auml;nderung, die evtl. zu machen w&auml;re, ist Flex zu ersetzen, wenn Du die Version 2.5.3 hast.
+Diese Version hat einen Fehler, der sich durch das Scheitern des createuser-Programms &auml;u&szlig;ert.
+(siehe dazu auch <A HREF="#3.4">Frage 3.4</A>).
+<P>
+Falls Du die Makefiles manuell &auml;nderst, <STRONG>musst</STRONG> Du die
+folgende Variable setzen:<BR><BR>
+<PRE>
+PORTNAME= linux
+</PRE>
+
+Du musst auch die folgende Variable &auml;ndern, damit sie auf Deine
+Installation passt:
+<PRE>
+POSTGRESDIR
+</PRE>
+Falls Du die <EM>USE_TCL</EM>-Option aktivierst, musst Du folgende Variablen setzen:<BR><BR>
+
+<PRE>
+TCL_INCDIR=
+TCL_LIBDIR=
+TCL_LIB=
+TK_INCDIR=
+TK_LIBDIR=
+TK_LIB=
+X11_INCDIR=
+X11_LIBDIR=
+X11_LIB=
+</PRE>
+
+Auf meinem Slackware 3.0 System sind das:
+<PRE>
+TCL_INCDIR=     /usr/include/tcl
+TCL_LIBDIR=     /usr/lib
+TCL_LIB=        -ltcl
+TK_INCDIR=      /usr/include/tcl
+TK_LIBDIR=      /usr/lib
+TK_LIB=         -ltk
+X11_INCDIR=     /usr/include/X11
+X11_LIBDIR=     /usr/X386/lib
+X11_LIB=        -lX11
+</PRE>
+<P>
+Du solltest auch alle weiteren &Auml;nderungen durchf&uuml;hren, die in der 
+Datei INSTALL und in Makefile.global dokumentiert sind.
+
+<H4><A NAME="1.2">1.2)</A> Warum habe ich Probleme mit der fehlenden Bibliothek libreadline?</H4>
+Linux Systeme kommen in der Regel nicht mit einer installierten GNU readline Bibliothek.
+Stelle entweder sicher, da&szlig; Du die readline-Optionen in src/Makefile.global oder
+src/Makefile.custom nicht aktivierst oder installiere die GNU readline Bibliothek.<BR>
+Hinweis: Debian Linux (wie FreeBSD) kommt mit einer installierten GNU readline Bibliothek.
+
+<H4><A NAME="1.3">1.3)</A> [REDHAT] Warum habe ich Probleme mit der fehlenden Bibliothek libdl und der fehlenden dlfcn.h?</H4>
+Das Problem erscheint dadurch, da&szlig; in der letzten Phase des Kompilierungsvorgangs Funktionen wie
+dlopen(), dlclose(), etc. nicht gelinkt werden k&ouml;nnen.
+<P>
+Die libdl Bibliothek wird zum dynamischen Linken von Benutzerfunktionen zur Laufzeit
+benutzt. Aus irgendwelchen Gr&uuml;nden wurde diese Bibliothek mit der RedHat-Distribution
+nicht ausgeliefert. Anscheinend ist dies in der letzten RedHat 4.0 (Colgate) ge&auml;ndert worden.
+<P>
+RedHat hat nun ein neues ld.so RPM-Archiv auf ihrem ftp-Server. Hole Dir einfach:
+<P>
+<A HREF="ftp://ftp.redhat.com/pub/redhat/devel/i386/RedHat/RPMS/">ftp://ftp.redhat.com/pub/redhat/devel/i386/RedHat/RPMS/ld.so-1.7.14-4.i386.rpm</A>
+<P>
+Installiere das RPM-Archiv wie &uuml;blich und gut ist!
+<P>
+Hinweis: Du mu&szlig;t <EM>configure</EM> und <EM>make clean</EM> nach der Installation
+der Bibliothek und vor dem erneuten Kompilieren laufen lassen.
+<P>
+Es gab einen Bericht &uuml;ber ein zerst&ouml;rtes System, weil Programme auf 
+diese Bibliothek w&auml;hrend des Updates zugegriffen haben (alles in allem nicht
+weiter &uuml;berraschend). Konsequenterweise ist es eine gute Idee, das System vor der 
+Installation zu rebooten, um so wenige Programme wie m&ouml;glich w&auml;hrend 
+des Updates laufen zu haben. In den Single-User-Mode zu gehen ist wahrscheinlich 
+auch eine gute Idee!
+<P>
+Wenn Du lieber den harten Weg gehen willst, kannst Du die Bibliothek und
+die Header-Dateien von:
+<P>
+<A HREF="ftp://tsx-11.mit.edu/pub/linux/packages/GCC/">ftp://tsx-11.mit.edu/pub/linux/packages/GCC/ld.so-1.7.14.tar.gz</A>
+<P>
+holen. Alternativ findest Du vorkompilierte Binaries in
+distributions/debian/buzz/binary-i386/base/ld.so-1.7.14-4.deb auf dem gleichen
+ftp-Server oder folge den Instruktionen bei <A HREF="#1.2">Frage 1.2</A>, die den gleichen Fehler
+f&uuml;r Slackware 3.1 behandelt.
+<P>
+Mache es aber nur auf diese Weise, wenn Du wei&szlig;t, was Du tust!
+
+
+<H4><A NAME="1.4">1.4)</A> [SLACKWARE 3.1] Warum habe ich Probleme mit der fehlenden Bibliothek libdl und der fehlenden dlfcn.h?</H4>
+Das Problem erscheint dadurch, da&szlig; in der letzten Phase des Kompilierungsvorgangs Funktionen wie
+dlopen(), dlclose(), etc. nicht gelinkt werden k&ouml;nnen.
+<P>
+Siehe die Antwort zu <A HREF="#1.3">Frage 1.3</A>.
+<P>
+Slackware bis Version 3.0 war mit dieser Bibliothek und der Include-Datei ausgestattet und ab sp&auml;ten
+3.1er-Versionen scheinen sie auch wieder da zu sein. Aber in fr&uuml;hen 3.1er-Versionen (vor dem 09.09.96)
+fehlten sie und es wurden viele CD-ROMs von diesen ersten 3.1.er-Versionen gepresst.
+<P>
+Es gab einen Bericht &uuml;ber ein zerst&ouml;rtes System, weil Programme auf 
+diese Bibliothek w&auml;hrend des Updates zugegriffen haben (alles in allem nicht
+weiter &uuml;berraschend). Konsequenterweise ist es eine gute Idee, das System vor der 
+Installation zu rebooten, um so wenige Programme wie m&ouml;glich w&auml;hrend 
+des Updates laufen zu haben. In den Single-User-Mode zu gehen ist wahrscheinlich 
+auch eine gute Idee!
+<P>
+Der einfachste Weg, den Fehler zu beseitigen ist, die Datei ldso.tgz von der a4-Diskette einer
+aktuelleren Slackware zu nehmen, diese Datei im Wurzelverzeichnis (/) zu entpacken und dann ein
+<PRE>sh install/doinst.sh</PRE>
+durchzuf&uuml;hren. Danach ein <PRE>ldconfig</PRE>durchf&uuml;hren.
+<P>
+Hinweis: Du mu&szlig;t <EM>configure</EM> und <EM>make clean</EM> nach der Installation
+der Bibliothek und vor dem erneuten Kompilieren laufen lassen.
+<P>
+Falls Du manuell installieren m&ouml;chtest, installiere zuerst die Datei dlfcn.h in /usr/include.
+Dann die libdl.so.1.7.14 (oder was immer die letzte Version ist) in /lib. Dann f&uuml;hre
+folgende Befehle aus:
+<PRE>
+cd /lib
+ln -sf libdl.so.1.7.14 libdl.so.1
+ln -sf libdl.so.1 libdl.so
+</PRE>
+Auf manchen Systemen (je nach Deiner gcc-Konfiguration) k&ouml;nnen noch folgende
+Befehle notwendig sein:
+<PRE>
+cd /usr/lib
+ln -sf /lib/libdl.so .
+</PRE>
+Und zum Schlu&szlig; noch ein <PRE>ldconfig</PRE>
+<P>
+Hinweis: Du mu&szlig;t <EM>configure</EM> und <EM>make clean</EM> nach der Installation
+der Bibliothek und vor dem erneuten Kompilieren laufen lassen.
+
+<H4><A NAME="1.5">1.5)</A> Die Kompilierung des Backends schl&auml;gt mit der Meldung fehl, da&szlig; die Include-Datei dlfcn.h fehlen w&uuml;rde.</H4>
+Siehe die Antworten zu den Fragen <A HREF="#1.3">1.3</A> und <A HREF="#1.4">1.4</A>.
+Und vergiss nicht, falls Du ein a.out-System benutzt, da&szlig; Du das dld-Paket installiert haben mu&szlig;
+(welches bei den meisten a.out-Systemen nicht dabei ist), um dlfcn.h zu haben. Siehe <A HREF="#1.11">Frage 1.11</A>.
+
+<H4><A NAME="1.6">1.6)</A> GCC meldet, da&szlig; er die Option -fpic ignorieren w&uuml;rde.</H4>
+Fr&uuml;here Versionen des gcc nahmen entweder <CODE>-fpic</CODE> oder <CODE>-fPIC</CODE> an. 
+Es scheint, da&szlig; neuere Versionen (V2.7.2?) <CODE>-fPIC</CODE> erfordern.
+Falls Du ein ELF-System benutzt, kannst das alles ignoriert werden, da <CODE>-fPIC</CODE>
+als Standardvorgabe voreingestellt ist.
+
+Du kannst diese Angabe korrigieren, indem Du  CFLAGS_SL in der Datei src/Makefile.global
+&auml;nderst.
+
+
+<H4><A NAME="1.7">1.7)</A> Ich bekomme Warnungen, wie: <EM>warning: cast from pointer to integer of different size</EM></H4>
+Diese Warnungen wurden in fr&uuml;heren Versionen von Postgres95 gesichtet und k&ouml;nnen ignoriert werden.
+PostgreSQL V6.0 sollte ohne Warnungen kompiliert werden, au&szlig;er jenen, die sich auf System-Header-Dateien beziehen
+(welche auch ignoriert werden k&ouml;nnen).
+
+
+<H4><A NAME="1.8">1.8)</A> [SuSE-Linux 4.2-5.3] Wo sind curses und termcap?</H4>
+SuSE-Linux 4.2 hat ncurses, nicht curses. Version 4.4 scheint beide Bibliotheken zu haben.
+Bei SuSE-Linux ist au&szlig;erdem die termcap-Bibliothek in /usr/lib/termcap/ und nicht in /usr/lib.
+
+<H5>PostgreSQL (bis Version V6.0)</H5>
+Setze den Wert f&uuml;r CURSES_LIB in src/Makefile.custom auf -lncurses (oder erledige das durch das <EM>customize script</EM>.
+F&uuml;ge folgende Zeile zur Datei src/Makefile.custom hinzu:
+<PRE>
+LDADD_BE+= -L/usr/lib/termcap
+</PRE>
+M&ouml;glicherweise mu&szlig;t Du in der Datei src/bin/psql/Makefile folgende &Auml;nderung durchf&uuml;hren:
+<PRE>
+ifeq ($(PORTNAME), linux)
+  LD_ADD+=
+</PRE>
+&auml;ndern in:
+<PRE>
+ifeq ($(PORTNAME), linux)
+  LD_ADD+= -ltermcap
+</PRE>
+
+<H5>PostgreSQL (V6.1)</H5>
+Das Konfigurationsscript wei&szlig; nicht, da&szlig; es auch in /usr/lib/termcap nach der termcap-Bibliothek schauen soll.
+Du solltest dieses Verzeichnis angeben, wenn es nach zus&auml;tzlichen Such-Verzeichnissen fragt.
+<P>
+Falls das nicht funkitoniert (Ich habe SuSE nicht, um das zu testen), dann solltest Du nach dem <EM>./configure</EM>-Lauf
+die Datei src/Makefile.global &auml;ndern und in die LDFLAGS-Zeile den Eintrag -ltermcap (nach -lreadline) hinzuf&uuml;gen.
+(Alternativ kannst Du auch die Datei src/Makefile.custom &auml;ndern, bevor Du <EM>./configure</EM> aufrufst.)
+<P>
+Einige SuSE-Versionen liefern nur ncurses, deshalb kann es sein, da&szlig; Du die
+Benutzung von ncurses statt curses erzwingen mu&szlig;t, indem Du -lcurses in -lncurses &auml;nderst.
+(best&auml;tigt f&uuml;r SuSE 5.1)
+<P>
+<H5>PostgreSQL (V6.4)</H5>
+In PostgreSQL V6.4 &uuml;berpr&uuml;ft <CODE>configure</CODE> sowohl das Vorhandensein von
+curses, als auch das von ncurses.
+In der Zwischenzeit kannst Du den patch von <A HREF="mailto:ke@suse.de">Karl Eichwalder (ke@suse.de)</A>
+anwenden:
+<P>
+<A HREF="http://www.PostgreSQL.ORG/mhonarc/pgsql-patches/msg00407.html">http://www.PostgreSQL.ORG/mhonarc/pgsql-patches/msg00407.html</A><BR>
+oder (mit deutschen Bemerkungen):<BR>
+<A HREF="http://www.suse.de/Support/sdb/ke_postgresql-632.html">http://www.suse.de/Support/sdb/ke_postgresql-632.html</A>
+<P>
+Es gab au&szlig;erdem einen Bericht, da&szlig; beim Update von SuSE 5.0 auf SuSE 5.2 der Link
+von libtermcap.so.2.0.8 auf libtermcap.so nicht gesetzt wurde:
+<PRE>
+cd /usr/lib
+ln -s libtermcap.so.2.0.8 libtermcap.so
+</PRE>
+
+<H4><A NAME="1.9">1.9)</A> Warum bekomme ich Probleme mit ld.so?</H4>
+
+Falls Du Probleme mit ld.so bekommst - eine andere Bibliothek, die im ELF-System f&uuml;r dynamisches Laden 
+ben&ouml;tigt wird - dann hast Du Deine Systeminstallation oder wahrscheinlicher ein Linux-Update durcheinandergebracht
+
+Siehe die Fragen <A HREF="#1.3">1.3</A>/<A HREF="#1.4">1.4</A>. M&ouml;glicherweise mu&szlig;t Du ld.so.x.y.z in /lib installieren
+und ldconfig laufen lassen. Die aktuellste Version des ld-Packages ist 1.7.14. Zum Zeitpunkt des Schreibens dieser FAQ ist die Version 1.8 noch experimental.
+
+<H4><A NAME="1.10">1.10)</A> Wieso bekomme ich <EM>yy_flush_buffer undefined</EM> Fehler?</H4>
+Das ist nicht wirklich Linux-spezifisch, aber es tritt h&auml;ufiger auf alten Linux-Systemen auf.
+Du brauchst eine aktuelle Version von flex (2.5.2. oder neuer), um PostgreSQL zu kompilieren. Beachte, da&szlig; flex 2.5.3. 
+einen Bug hat, siehe auch <A HREF="3.4">Frage 3.4</A>.
+
+<H4><A NAME="1.11">1.11)</A> Wie kompiliere ich PostgreSQL auf einem a.out System?</H4>
+Als erstes mu&szlig;t Du die dld-Bibliothek installieren. Diese gibt es auf Sunsite unter 
+Linux/libs/dld.3.2.7.tar.gz (<A HREF="ftp://sunsite.unc.edu/pub/Linux/libs/">ftp://sunsite.unc.edu/pub/Linux/libs/dld.3.2.7.tar.gz</A>).
+<P>
+Dann f&uuml;ge folgende Zeile in src/Makefile.custom hinzu:
+<PRE>
+LINUX_ELF=
+</PRE>
+oder benutze das <EM>customize Skript</EM>
+
+<H4><A NAME="1.12">1.12)</A> Warum scheitert make mit der Meldung:<BR><EM>
+        yacc -d /disk2/PostgreSQL/src/backend/parser/gram.y
+        make: /usr/bin/make: cannot execute binary file</EM></H4>
+
+Das war ein Problem in fr&uuml;hreren Versionen von Postgres95. Standardm&auml;&szlig;ig benutzt PostgreSQL <CODE>bison -y</CODE>
+anstatt <CODE>yacc</CODE>.
+<P>
+yacc ist normalerweise als Skript implementiert, das <CODE>bison -y</CODE> aufruft. Aus verschiedenen Gr&uuml;nden ist 
+<EM>make</EM> nicht in der Lage, das Skript auszuf&uuml;hren (verschiedene Versionen von make? Verschiedene Versionen der bash?)
+<P>
+Um das zu beheben, &auml;ndere einfach die Datei src/mk/port/postgres.mk.linux am Ende. Die Zeile:
+<PRE>
+# YACC = bison -y
+</PRE>
+wird zu:
+<PRE>
+YACC = bison -y
+</PRE>
+
+
+<H4><A NAME="1.13">1.13)</A> Was sind die Bez&uuml;ge in der Bibliothek X11_LIB zu libsocket und libnsl in der Datei src/Makefile.global?</H4>
+Das war ein Problem in Version 1.08 (Sun Solaris spezifisch). Sie sind behoben in 1.09 und 6.0
+
+<H4><A NAME="1.14">1.14)</A> [DEBIAN] Wo ist die Bibliothek libtermcap?</H4>
+Debian Linux kommt ohne die termcap-Bibliothek und benutzt ncurses (welche terminfo benutzt).
+Es gibt keinen Grund, die CURSES_LIB-Variable in src/bin/psql/Makefile zu &auml;ndern, da Debian
+einen Link von libncurses auf libcurses bereitstellt (im Gegensatz zu SuSE, siehe <A HREF="1.8">Frage 1.8</A>)
+<P>
+Du kannst die Datei src/bin/psql/Makefile wie folgt &auml;ndern:
+<PRE>
+ifeq ($(PORTNAME), linux)
+  LD_ADD+= -ltermcap
+</PRE>
+in
+<PRE>
+ifeq ($(PORTNAME), linux)
+  LD_ADD+=
+ </PRE>
+ 
+
+<H4><A NAME="1.15">1.15)</A> [REDHAT] Kann ich PostgreSQL als RPM-Archiv bekommen?</H4>
+Ja! <A HREF="mailto:mimo@lodz.pdi.net">Michal Mosiewicz</A> (<A HREF="http://www.pdi.lodz.pl/~mimo">http://www.pdi.lodz.pl/~mimo</A>)
+hat ein RPM f&uuml;r PostgreSQL V6.0 auf Intel Architekturen zusammengestellt, 
+welches er nach <A HREF="ftp://ftp.redhat.org/pub/Incoming/">ftp://ftp.redhat.org/pub/Incoming/Postgres-6.0-1.i386.rpm</A>
+hochgeladen hat.
+<P>
+Das ist eine vorkompilierte Version, das Quelltext-RPM stammt vom 03.02.1997.
+
+
+
+<H4><A NAME="1.16">1.16)</A> W&auml;hrend ich versuche eine Entwickler-Version unter Linux zu kompilieren, bricht der Vorgang mit folgender
+							Fehlermeldung ab:<BR><EM>
+        In file included from /usr/include/sys/sem.h:8,<BR>
+                 from ipc.c:37:<BR>
+        /usr/include/asm/bitops.h:32: warning: no previous prototype for Set_bit'<BR>
+        ....<BR>
+        make: *** [ipc.o] Error 1</EM></H4>
+
+Das Problem ist, da&szlig; Linux keine Prototypen f&uuml;r diese Inline-Funktionen bereith&auml;lt. Die L&ouml;sung
+liegt darin, das Makefile in .../src/backend/storage/ipc/ zu &auml;ndern:
+&Auml;ndere die Zeile:
+<PRE>
+CFLAGS+=$(INCLUDE_OPT)
+</PRE>
+in
+<PRE>
+CFLAGS+=$(INCLUDE_OPT) -Wno-error
+</PRE>
+Mache dasselbe dann im ../src/backend/storage/lmgr Verzeichnis.
+
+
+<H4><A NAME="1.17">1.17)</A> Beim Kompilieren von PostgreSQL bricht der gcc mit einer Signal 11 Meldung ab.</H4>
+Oder genauer: <EM>gcc: Internal compiler error: program cc1 got fatal signal 11</EM>
+<P>
+Das k&ouml;nnen Hardware/Speicherprobleme sein. PostgreSQL ist ein gro&szlig;es Programm und gro&szlig;e 
+gcc-Kompilierungsl&auml;fe (wie eben PostgreSQL oder eine Kernel-Kompilierung) beanspruchen den Hauptspeicher
+wie wenig andere Programme. Dadurch k&ouml;nnen Fehler auftreten, die in normalen Situationen nicht erscheinen.
+Niedrigere Betriebssysteme beanspruchen die Hardware ebenfalls nicht in diesem Ma&szlig;e, deshalb kann es sein, da&szlig; Du niemals
+Probleme unter DOS/Windows siehst.
+<P>
+Mehr Information zu diesem Problem gibt es unter <A HREF="http://www.BitWizard.nl/sig11/">http://www.BitWizard.nl/sig11/</A> und 
+in deutsch unter <A HREF="http://www.suse.de/sdb/de/html/kfr_58.html">http://www.suse.de/sdb/de/html/kfr_58.html</A>.
+<P>Laut dieser Sig11-FAQ scheint es ein spezielles Problem mit dem RedHat 5.0 gcc auf einem Cyrix-Prozessor zu geben.
+Siehe bitte dort nach den Details nach.
+
+<H4><A NAME="1.18">1.18)</A> Kann ich Version 6.1.1 unter MkLinux installieren?</H4>
+<A HREF="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</A> hat das unter MkLinux DR2.1 update2 geschafft, nachdem der kleine Patch
+von <A HREF="ftp://ftp.sra.co.jp/pub/cmd/postgres/6.1.1/">ftp://ftp.sra.co.jp/pub/cmd/postgres/6.1.1/mklinux.patch.gz</A>
+eingespielt wurde.
+
+
+<H4><A NAME="1.19">1.19)</A> Warum stoppt make oder bricht sonstwie ab?</H4>
+Es gibt eine Reihe von Reports dar&uuml;ber, da&szlig; gmake zu fr&uuml;h aussteigt oder mit einem Segmentation Fault aussteigt.
+Das letzte Problem wurde von gmake 3.74 berichtet. Ein Update auf 3.76.1 l&ouml;ste dieses Problem.
+Wie auch immer, 3.74 arbeitet bei vielen Leuten zur vollsten Zufriedenheit. Kurz gesagt, upgrade
+Deinen gmake auf die aktuellste Version, bevor Du dieses Problem meldest.
+
+<H4><A NAME="1.20">1.20)</A> Wie kann ich f&uuml;r die Prozessoren 486 oder Pentium optimieren?</H4>
+Die Standard-Compilerflags f&uuml;hren keine Optimierung f&uuml;r den 486er oder den Pentium-Prozessor durch.
+Um diese Optimierung zu aktivieren, f&uuml;ge wahlweise <U>eine</U> der folgenden Zeilen
+der Datei Makefile.custom hinzu:
+<PRE>
+CFLAGS+= -m486
+</PRE>
+oder
+<PRE>
+CFLAGS+= -mpentium
+</PRE>
+oder
+<PRE>
+CFLAGS+= -mpentiumpro
+</PRE>
+
+<H4><A NAME="1.21">1.21)</A> Wieso bekomme ich seltsame Ergebnisse beim Drucken von Zeiten (z.B. beim Regressionstest 'timespan')?</H4>
+Die Zeit erscheint z.B. als: "4 hours 59 mins 60.00 secs" und nicht als "5 hours"
+<P>
+Das ist ein Problem mit der glibc2-Bibliothek, die mit RedHat 5.0 ausgeliefert wird. Update Deine glibc auf die aktuellste RedHat-Version 
+f&uuml;r v5.0/Hurricane. Alle Versionen vor glibc-2.9.7 scheinen dieses Problem zu haben.
+        
+<H4><A NAME="1.22">1.22)</A> Warum bekomme ich keine shared libraries f&uuml;r libpq, wenn ich Version 6.3.2 kompiliere?</H4>
+Es gab eine Last-Minute-&Auml;nderung der Linux-Konfiguration f&uuml;r Version 6.3.2. 
+Siehe f&uuml;r einige Fehlerbehebungen und einen Linux-ELF-Patch in <A HREF="ftp://postgresql.org/pub/patches/">ftp://postgresql.org/pub/patches/</A> nach.
+
+<H4><A NAME="1.23">1.23)</A> Warum scheitert der Kompilierungslauf mit Nachrichten, da&szlig; F_BOOLIN, F_BOOLOUT und F_BYTEAIN nicht deklariert seien?</H4>
+Die komplette Meldung sieht ungef&auml;hr so aus:
+<PRE>
+	   -I/usr/include/readline -O2 -Wall -Wmissing-prototypes -I..
+        -Wno-error -c bootstrap.c -o bootstrap.o
+        bootstrap.c:160: `F_BOOLIN' undeclared here (not in a function)
+        bootstrap.c:160: initializer element for `Procid[0].inproc' is not
+        constant
+        bootstrap.c:160: `F_BOOLOUT' undeclared here (not in a function)
+        bootstrap.c:160: initializer element for `Procid[0].outproc' is not
+        constant
+        bootstrap.c:161: `F_BYTEAIN' undeclared here (not in a function)
+        bootstrap.c:161: initializer element for `Procid[1].inproc' is not
+        constant
+</PRE>
+Solange Du nicht wei&szlig;t, warum das passiert, ist dieses Problem ziemlich kniffelig, da diese
+Konstanten anscheinend nirgendwo definiert werden.
+<P>
+Die L&ouml;sung ist daf&uuml;r zu sorgen, da&szlig; der cpp in Deinem Pfad erreichbar ist, bevor
+make gestartet wird.
+<P>
+Auf Redhat 5.1, ist cpp in /usr/lib/gcc-lib/i386-redhat-linux/2.7.2.3
+
+
+
+
+<H3><A NAME="Sec2">Abschnitt 2: Hilfs- und Zusatzprogramme kompilieren</A></H3>
+
+<H4><A NAME="2.1">2.1)</A> Der Linker findet die Bibliothek libX11 nicht, wenn pgtclsh kompiliert werden soll.</H4>
+F&uuml;ge folgende Zeile in src/Makefile.custom hinzu:
+<PRE>
+X11_LIBDIR = /usr/X11R6/lib
+</PRE>
+
+<H3><A NAME="Sec3">Abschnitt 3: Laufzeit Probleme</A></H3>
+
+<H4><A NAME="3.1">3.1)</A> Ich bekomme die Fehlermeldung <EM>_fUnKy_POSTPORT_sTuFf_ undefined</EM>, wenn Skripts wie createuser laufen.</H4>
+Das ist ein Fehler in Versionen 1.06-1.07 und ist ab Version 1.08 und h&ouml;her behoben.
+
+<H4><A NAME="3.2">3.2)</A> Nachdem ich postmaster starte, meldet das System <EM>Bad system call (Core dumped)</EM></H4>
+Diese Fehlermeldung deutet an, da&szlig; Du keinen Shared-Memory-Support in den Kernel einkompiliert hast.
+Der Kernel mu&szlig; mit dieser Option neu kompiliert werden, um diese Eigenschaft hinzuzuf&uuml;gen.
+
+<H4><A NAME="3.3">3.3)</A> Wenn ich versuche, den Postmaster zu starten, bekomme ich eine Fehlermeldung wie:<BR><EM>
+        Failed Assertion("!(file != 0):(null)", File:<BR>
+        "/usr/local/PostgreSQL/src/backend/storage/file/fd.c", Line: 257)<BR>
+        !(file != 0) (0)<BR>
+        initdb: could not create template database<BR>
+        initdb: cleaning up.</EM></H4>
+
+Deine Berechtigungen f&uuml;r die Datei /dev/null sind falsch gesetzt.
+ein <CODE>ls -l /dev/null</CODE> sollte folgende Ausgabe zeigen:
+<PRE>
+crw-rw-rw-  1 root  wheel    2,   2 Oct  8 18:41 /dev/null
+</PRE>
+Korrigiere die Berechtigungen mit:
+<PRE>
+chmod a+rw /dev/null
+</PRE>
+
+<H4><A NAME="3.4">3.4)</A> Warum funktioniert createuser nicht?</H4>
+Es gibt ein Problem mit Version 2.5.3 des GNU flex und createuser. Die M&ouml;glichkeiten, diesen Fehler zu beheben sind:
+Entweder auf die flex-Version 2.5.3 zu gehen, auf Version 2.5.4 zu gehen, oder 
+den Patch nach doc/README.flex einzuspielen.
+<P>
+Die Version 2.5.4. gibt es unter <A HREF="ftp://prep.ai.mit.edu/pub/gnu/">ftp://prep.ai.mit.edu/pub/gnu/flex-2.5.4.tar.gz</A>.
+
+
+<H4><A NAME="3.5">3.5)</A> Wieso bekomme ich einen Fehler, wie:<BR><EM>
+        IpcMemoryCreate: memKey=155356396 , size=760632 ,<BR>
+        permission=384IpcMemoryCreate: shmget(..., create, ...)<BR>
+        failed: Invalid argument</EM></H4>
+
+Du hast keine IPC-Unterst&uuml;tzung in Deinen Linux-Kernel einkompiliert.
+Der Kernel mu&szlig; mit dieser Option neu kompiliert werden, um diese Eigenschaft hinzuzuf&uuml;gen.
+
+<H4><A NAME="3.6">3.6)</A> Wieso scheitert der Aufruf von psql mit: <EM>psql: can't load library 'libpq.so.1</EM></H4>
+Psql wurde mit dynamischen Zugriff auf die libpq-bibliothek kompiliert.
+Um dieses Problem zu l&ouml;sen, solltest Du Dich als root anmelden und die Datei /etc/ld.so.conf editieren.
+F&uuml;ge eine Zeile am Ende hinzu, die den Namen des PostgreSQL-Bibliotheken-Verzeichnis enth&auml;lt (das
+lib-Verzeichnis im PostgreSQL-Installationsverzeichnis) und rufe den Befehl <CODE>/sbin/ldconfig -v</CODE> auf.
+
+Alternativ (und falls Du keinen root-Zugriff hast) kannst Du die LD_LIBRARY_PATH-Variable
+benutzen.
+Die LD_LIBRARY_PATH-Variable enth&auml;lt eine durch Doppelpunkt getrennte Liste mit Suchpfaden f&uuml;r
+Shared-Bibliotheken. Diese Liste wird durchsucht, bevor auf die Informationen von ldconfig zugegriffen wird.
+Unter der bash sieht das ganze so aus:
+<PRE>
+export LD_LIBRARY_PATH='PathToPGSQL'/lib
+</PRE>
+unter der tcsh so:
+<PRE>
+setenv LD_LIBRARY_PATH 'PathToPGSQL'/lib
+</PRE>
+wobei 'PathToPGSQL' das Installationsverzeichnis von PostgreSQL ist.
+Hinweis: der ldd-Befehl dient dazu, sich die dynamischen Bibliotheken f&uuml;r eine bestimmte
+ausf&uuml;hrbare Datei anzeigen zu lassen.
+
+
+<H4><A NAME="3.7">3.7)</A> Andere seltsame Verhaltensweisen</H4>
+Ich bin mir nicht sicher, welche Symptome alle auftreten k&ouml;nnen, au&szlig;er da&szlig; gar nichts richtig funktioniert,
+aber es stellte sich heraus, da&szlig; man sorgsam darauf achten sollte, da&szlig; die richtige Version der libpq-Bibliothek
+geladen wird. Falls Du alte Versionen in Deinem Bibliothekspfad hast (z.B. in /usr/lib) k&ouml;nnen diese statt der
+neueren Version geladen werden. Schaffe diese alten Versionen beiseite und siehe im &uuml;brigen
+<A HREF="3.6">Frage 3.6</A> f&uuml;r weitere Details bez&uuml;glich dem Laden von Bibliotheken.
+
+<H4><A NAME="3.8">3.8)</A> Wenn PostgreSQL beim Systemhalt lief, f&uuml;hrt Linux beim Neustart jedesmal einen Filesystemcheck (fsck) durch</H4>
+Es gab dar&uuml;ber einige Berichte und es scheint, da&szlig; dies passiert, wenn PostgreSQL von der /etc/inittab 
+gestartet wird, wie im INSTALL-Dokument beschrieben.
+<P>
+Deshalb wird Dir empfohlen, den postmaster von einem rc-Skript aus zu starten.
+Unter einem Slackware-artigem System w&uuml;rdest Du /etc/rc.d/rc.local modifizieren,
+um den postmaster zu starten.
+<P>
+Unter RedHat-artigen Systemen w&uuml;rdest Du ein SysV-artiges Skript in /etc/rc.d/rc3.d 
+basierend auf der /etc/rc.d/init.d Schablonen-Datei erstellen.
+<P>
+Es gibt eine Beispieldatei unter dem Verzeichnis contrib/linux/postgres.init.
+<P>
+Hier ist noch ein anderes Beispiel von <A HREF="mailto:john@intelligent.co.uk">John Robinson</A>
+welches Du entsprechend anpassen kannst.
+
+<PRE>
+#!/bin/sh
+#
+# postgreSQL.init This shell script takes care of starting and stopping
+#               the PostgreSQL postmaster.
+#
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+        # Start daemons.
+        echo -n "Starting postgres Postmaster daemon:"
+        if [ -z "`pidofproc postmaster`" ]
+        then
+                su postgres -c "/usr/local/pgsql/bin/postmaster -D /home/postgreSQL/data -p 5432 &"
+                echo -n " postmaster"
+        else
+                echo -n " (already running)"
+        fi
+        echo
+        touch /var/lock/subsys/postgres
+        ;;
+  stop)
+        # Stop daemons.
+        echo -n "Shutting down postgres Postmaster daemon: "
+        killall -TERM postmaster 2&gt;/dev/null
+        killall -TERM postgres 2&gt;/dev/null
+        echo
+        rm -f /var/lock/subsys/postgres
+        ;;
+  *)
+        echo "Usage: postgres {start|stop}"
+        exit 1
+esac
+
+exit 0
+</PRE>
+
+
+<H4><A NAME="3.9">3.9)</A> Warum dauert Query 32 in den RegressionsTests so lange?</H4>
+Das passiert wegen eines Fehlers in den Regressions-Skripten auf Linux-Kisten.
+Es gibt - soweit ich wei&szlig; - zwei M&ouml;glichkeiten, diese Fehler zu umgehen
+(die Information stammt von <A HREF="mailto:t-ishii@sra.co.jp">Tatsuo Ishii</A>):
+<P>
+1. &auml;ndere folgende Zeile in regress.sh:
+<PRE>
+time postgres -texecutor -tplanner -Q bench &lt; bench.sql
+</PRE>
+in
+<PRE>
+postgres -texecutor -tplanner -Q bench &lt; bench.sql
+</PRE>
+2. nachdem der Test gelaufen ist, entferne eine Zeile ganz am Ende der Datei bench.out,
+die ungef&auml;hr so aussieht:
+<PRE>
+85.86user 114.47system 4:49.20elapsed 69%CPU (0avgtext+0avgdata 0maxresident)k
+</PRE>
+dann gib folgendes auf der Befehlszeile ein:
+<PRE>
+sh ./perquery &lt; bench.out &gt; & bench.out.perquery
+</PRE>
+
+
+
+<H4><A NAME="#3.10">3.10)</A> Warum bekomme ich lustige Rundungsergebnisse in einigen Datums/Zeit-Berechnungen, wie:<BR><EM>
+           select '4 hours'::timespan;<BR>
+        liefert '3 hours 59 minutes 60 seconds'</EM>?</H4>
+
+Du benutzt neue glibc2-Bibliotheken in einer Version kleiner als 2.0.7. Das ist ein mathematisches Rundungsproblem.
+Aktualisiere Deine Bibliothek.
+
+
+<H4><A NAME="3.11">3.11)</A> Wieso bekomme ich einen Fehler wie: <EM>IpcMemoryCreate: shmget failed (Permission denied)</EM>?</H4>
+Im Detail erscheint der Fehler mit dieser Meldung:<BR>
+<PRE>
+In detail, a message like this may appear:
+IpcMemoryCreate: shmget failed (Permission denied) 
+key=5432010, size=120, permission=700
+IpcMemoryAttach: shmat failed (Permission denied) id=0
+FATAL 1:  AttachSLockMemory: could not attach segment
+</PRE>
+Dieser Fehler wird durch nicht gel&ouml;schte Segmente im <EM>shared memory</EM> verursacht.
+(Du kannst sie mit dem Programm <EM>ipcs</EM> sehen.
+Benutze das Programm <EM>ipcrm</EM>, um sie zu l&ouml;schen.
+<HR>
+<P><BR>
+<P><BR>
+<CENTER>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=2>
+<TR>
+	<TH COLSPAN=2>Author of the english version</TH>
+</TR>
+<TR>
+	<TD ALIGN=LEFT>Dr. Andrew C.R. Martin</TD>
+	<TD ALIGN=RIGHT>University College London</TD>
+</TR>
+<TR>
+	<TD ALIGN=LEFT>EMAIL: (Work) martin@biochem.ucl.ac.uk</TD>
+	<TD ALIGN=RIGHT>(Home) andrew@stagleys.demon.co.uk</TD>
+</TR>
+<TR>
+	<TD ALIGN=CENTER COLSPAN=2>URL:   http://www.biochem.ucl.ac.uk/~martin</TD>
+</TR>
+<TR>
+	<TD ALIGN=LEFT>Tel:   (Work) +44(0)171 419 3890</TD>
+	<TD ALIGN=RIGHT>(Home) +44(0)1372 275775</TD>
+</TR>
+</TABLE>
+<P>
+<TABLE BORDER=0 CELLSPACING=2 CELLPADDING=2>
+<TR>
+	<TH COLSPAN=2>Translator of the german version</TH>
+</TR>
+<TR>
+	<TD ALIGN=LEFT>Karsten Schulz</TD>
+	<TD ALIGN=RIGHT>Linux Systemhaus Schulz</TD>
+</TR>
+<TR>
+	<TD ALIGN=LEFT>EMAIL: (Work) schulz@Linux-Systemhaus.de</TD>
+	<TD ALIGN=RIGHT>(Home) kaschu@t800.ping.de</TD>
+</TR>
+<TR>
+	<TD ALIGN=CENTER COLSPAN=2>URL:   http://www.Linux-Systemhaus.de/</TD>
+</TR>
+<TR>
+	<TD ALIGN=LEFT>Tel:   (Work) +49 231 3944432</TD>
+	<TD ALIGN=RIGHT>(Fax) +49 231 3944435</TD>
+</TR>
+</TABLE>
+</CENTER>
+</BODY>
+</HTML>

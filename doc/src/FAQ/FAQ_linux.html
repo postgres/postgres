@@ -1,0 +1,704 @@
+<PRE>
+=======================================================
+Frequently Asked Questions (FAQ) for PostgreSQL >= V6.1
+Linux Specific
+TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
+=======================================================
+last updated:           Fri Jun 19 13:35:00 BST 1998
+
+current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
+original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
+
+
+Changes in this version (* = modified, + = new, - = removed):
+
++1.23)  Why does the compile fail with messages about F_BOOLIN, F_BOOLOUT
+        and F_BYTEAIN being undeclared?
+
+This file is divided approximately as follows:
+1.*)    Installing PostgreSQL
+2.*)    Compiling accessory programs
+3.*)    Runtime Problems
+
+
+Questions answered:
+1.1)    What changes do I need to make to src/Makefile.global or
+        src/Makefile.custom and are there any other changes needed?
+1.2)    Why do I get problems with missing libreadline?
+1.3)    [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
+1.4)    [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
+1.5)    My compile of the backend dies complaining about the include file
+        dlfcn.h missing
+1.6)    GCC complains about an ignored option -fpic
+1.7)    I get warnings of the form
+        warning: cast from pointer to integer of different size
+1.8)    [SuSE-Linux 4.2-4.4] Where is curses and termcap?
+1.9)    Why do I get problems with ld.so?
+1.10)   Why do I get `yy_flush_buffer undefined' errors?
+1.11)   How do I compile PostgreSQL on an a.out system?
+1.12)   Why does make fail with:
+        yacc -d /disk2/PostgreSQL/src/backend/parser/gram.y
+        make: /usr/bin/make: cannot execute binary file
+1.13)   What are the references in X11_LIB to libsocket and libnsl in
+        src/Makefile.global?
+1.14)   [DEBIAN] Where is libtermcap?
+1.15)   [REDHAT] Can I get PostgreSQL as an RPM?
+1.16)   While trying to compile a development version under Linux, compilation
+        fails with a message like:
+        In file included from /usr/include/sys/sem.h:8,
+                 from ipc.c:37:
+        /usr/include/asm/bitops.h:32: warning: no previous prototype for Set_bit'
+        ....
+        make: *** [ipc.o] Error 1
+1.17)   When compiling postgres, gcc reports signal 11 and aborts.
+1.18)   Can I install 6.1.1 under MkLinux?
+1.19)   Why does make exit or crash?
+1.20)   How can I optimise for 486 or pentium processors
+1.21)   Why do I get strange results with printing times (for example
+        in the regression test 'timespan')?
+1.22)   Why don't I get any shared libraries for libpq when I compile
+        6.3.2?
+1.23)   Why does the compile fail with messages about F_BOOLIN, F_BOOLOUT
+        and F_BYTEAIN being undeclared?
+2.1)    The linker fails to find libX11 when compiling pgtclsh
+3.1)    I get an error reporting _fUnKy_POSTPORT_sTuFf_ undefined when 
+        running scripts like createuser
+3.2)    I run postmaster and after that system says 'Bad system call(Core 
+        dumped)'
+3.3)    When I try to start the Postmaster, why do I get an error of the form
+        Failed Assertion("!(file != 0):(null)", File:
+        "/usr/local/PostgreSQL/src/backend/storage/file/fd.c", Line: 257)
+        !(file != 0) (0)
+        initdb: could not create template database
+        initdb: cleaning up.
+3.4)    Why doesn't createuser work?
+3.5)    Why do I get an error like:
+        IpcMemoryCreate: memKey=155356396 , size=760632 ,
+        permission=384IpcMemoryCreate: shmget(..., create, ...)
+        failed: Invalid argument
+3.6)    Why does psql fail with:
+        psql: can't load library 'libpq.so.1'
+3.7)    Other strange behaviour
+3.8)    When PostgreSQL is running when the system is shutdown, Linux
+        always fsck's the disk when rebooted.
+3.9)    Why does Query 32 in the regression tests take so long?
+3.10)   Why do I get funny rounding results in some date/time arithmetic,
+        such as
+           select '4 hours'::timespan;
+        returning '3 hours 59 minutes 60 seconds'?
+
+----------------------------------------------------------------------
+Section 1:      Compiling PostgreSQL
+----------------------------------------------------------------------
+
+1.1)    What changes do I need to make to src/Makefile.global or
+        src/Makefile.custom and are there any other changes needed?
+
+	Changes to the makefiles are most easily made by running the 
+        customize shell script in the src directory which will write a
+	Makefile.custom for you.
+
+        The only other change you may have to make is to replace 
+        Flex if you have version 2.5.3 which has a bug which generally
+        manifests itself as createuser failing (See Question 3.4)
+
+        If you modify the makefiles by hand, you *must* set the 
+        following variable:
+                PORTNAME=       linux
+
+        You will also need to change the following to match your own
+        installation:
+                POSTGRESDIR
+
+        If you switch on the USE_TCL option, you will need to set these:
+                TCL_INCDIR=
+                TCL_LIBDIR=
+                TCL_LIB=
+                TK_INCDIR=
+                TK_LIBDIR=
+                TK_LIB=
+                X11_INCDIR=
+                X11_LIBDIR=
+                X11_LIB=
+
+        On my Slackware3.0 system, these are:
+                TCL_INCDIR=     /usr/include/tcl
+                TCL_LIBDIR=     /usr/lib
+                TCL_LIB=        -ltcl
+                TK_INCDIR=      /usr/include/tcl
+                TK_LIBDIR=      /usr/lib
+                TK_LIB=         -ltk
+                X11_INCDIR=     /usr/include/X11
+                X11_LIBDIR=     /usr/X386/lib
+                X11_LIB=        -lX11
+ 
+        You may also make any other changes you need as documented in
+        the INSTALL file and in Makefile.global
+
+
+1.2)    Why do I get problems with missing libreadline?
+
+        Linux systems generally don't come with the GNU readline library
+        installed. Either ensure you do not activate the readline options
+        in src/Makefile.global or src/Makefile.custom or install the GNU 
+        readline library.
+
+        Note that Debian Linux (like FreeBSD) does come with readline
+        installed.
+
+1.3)    [REDHAT] Why do I get problems with missing libdl and dlfcn.h?
+
+        This manifests itself as being unable to link with functions
+        such as dlopen(), dlclose(), etc. during the last phase of the
+        compilation.
+
+        The libdl library is used for dynamic linking of user-supplied
+        functions at run-time. For some reason this library was missed out
+        from the Redhat distribution. It seems that the latest Redhat 4.0
+        (Colgate) fixes this.
+
+        RedHat now have a new ld.so RPM package on their FTP site.
+        Simply grab:
+
+                ftp://ftp.redhat.com/pub/redhat/devel/i386/RedHat/RPMS/ld.so-1.7.14-4.i386.rpm
+
+        Install the RPM file in the usual way and off you go!
+
+        NOTE! You will have to re-run configure and do a make clean
+        after installing the library and before recompiling.
+
+        There has been one report of a corrupted system resulting from
+        programs accessing these libraries while updating them (not
+        altogether surprising). Consequently it is a good idea to reboot 
+        the system before installing the new libraries and to
+        have as little running as possible during this upgrade. Going
+        into single-user mode is probably a good idea!
+
+        If you want to do it the hard way, you can obtain the library and the 
+        header file from:
+        
+                ftp://tsx-11.mit.edu/pub/linux/packages/GCC/ld.so-1.7.14.tar.gz
+
+        Alternatively, you may find precompiled binaries in 
+        distributions/debian/buzz/binary-i386/base/ld.so-1.7.14-4.deb
+        on the same site, or follow the instructions given for question 1.2 for
+        correcting the same error with early releases of Slackware 3.1.
+        Don't use this method unless you know what you are doing!
+
+
+
+1.4)    [SLACKWARE 3.1] Why do I get problems with missing libdl and dlfcn.h?
+
+        This manifests itself as being unable to link with functions
+        such as dlopen(), dlclose(), etc. during the last phase of the
+        compilation.
+
+        See the answer to question 1.3. Slackware up to version 3.0 was 
+        supplied with this library and include file and they seem to be
+        back in again in the latest versions of 3.1, but the early 3.1
+        releases (before 9th September 1996) had them missing and many 
+        CD-ROM versions will have been pressed from the first 3.1 releases.
+
+        There has been one report of a corrupted system resulting from
+        programs accessing these libraries while updating them (not
+        altogether surprising). Consequently it is a good idea to reboot 
+        the system before installing the new libraries and to
+        have as little running as possible during this upgrade. Going
+        into single-user mode is probably a good idea!
+
+        The easiest fix is to obtain the file ldso.tgz from the a4 disk of
+        a more recent Slackware distribution and unpack this file
+        from the root (/) directory, then do
+
+                sh install/doinst.sh
+
+        to complete the installation. Follow this with
+
+                ldconfig
+
+        NOTE! You will have to re-run configure and do a make clean
+        after installing the library and before recompiling.
+
+        If you want to install manually, you must first install the file
+        dlfcn.h in /usr/include.
+
+        Second, install the file libdl.so.1.7.14 (or whatever the latest
+        release is) in /lib, then do:
+
+                cd /lib
+                ln -sf libdl.so.1.7.14 libdl.so.1
+                ln -sf libdl.so.1 libdl.so
+
+        On some systems (depending on your GCC configuration) it may be
+        necessary to do:
+
+                cd /usr/lib
+                ln -sf /lib/libdl.so .
+
+        Finally
+
+                ldconfig
+
+        NOTE! You will have to re-run configure and do a make clean
+        after installing the library and before recompiling.
+
+
+1.5)    My compile of the backend dies complaining about the include file 
+        dlfcn.h missing
+
+        See the answer to question 1.3/1.4. Don't forget that if you are using
+        an a.out system you must first have installed the dld package
+        (which is not supplied with most a.out systems) to have dlfcn.h
+        at all. See Question 1.11.
+
+
+1.6)    GCC complains about an ignored option -fpic
+
+        Earlier versions of GCC accepted either -fpic or -fPIC.
+        It appears that more recent versions (V2.7.2?) require -fPIC. 
+        If you are using an ELF version of Linux, this can safely be 
+        ignored as -fPIC is the default.
+
+        You can correct this by editing src/Makefile.global and 
+        changing CFLAGS_SL
+
+
+1.7)    I get warnings of the form 
+        warning: cast from pointer to integer of different size
+
+        These were seen in earlier versions of Postgres95 and could
+        safely be ignored. PostgreSQL V6.0 should compile with no warnings
+        except those related to system header files (which can also
+        be safely ignored).
+
+1.8)    [SuSE-Linux 4.2-4.4] Where is curses and termcap?
+
+        SuSE-Linux 4.2 has ncurses but not curses. 4.4 appears to have both.
+        SuSE-Linux also has the termcap library is in /usr/lib/termcap 
+        instead of in /usr/lib.
+
+        PostgreSQL (up to V6.0)
+        -----------------------
+        Set the value of CURSES_LIB in src/Makefile.custom to -lncurses 
+        (or do this through the customize script).
+        Add the following line to src/Makefile.custom:
+
+                LDADD_BE+= -L/usr/lib/termcap
+
+        You may need to edit src/bin/psql/Makefile and change:
+                ifeq ($(PORTNAME), linux)
+                   LD_ADD+=
+        to:
+                ifeq ($(PORTNAME), linux)
+                   LD_ADD+= -ltermcap
+
+        PostgreSQL (V6.1)
+        -----------------
+        The configure script doesn't know to look in /usr/lib/termcap for
+        the termcap library, so you should specify this as one of the
+        library directories when asked for additional directories to
+        search.
+
+        If this doesn't work (I don't have SuSE to verify that it does)
+        then after running configure, you need to edit
+        src/Makefile.global and add -ltermcap to the LDFLAGS line
+        (after -lreadline). (Alternatively, you can modify 
+        src/Makefile.custom before running configure.)
+
+        Some versions of SuSE provide only ncurses, so you may need
+        to force use of ncurses rather than curses by changing 
+        -lcurses to -lncurses. (Reported true for SuSE 5.1)
+
+
+1.9)    Why do I get problems with ld.so?
+
+        If you get problems with ld.so, another library required under
+        ELF for dynamic loading, then you have messed up your installation
+        or (more likely) upgrade of Linux.
+
+        See the answers to Question 1.3/1.4. You may need to install
+        ld.so.x.y.z in /lib and run ldconfig.
+
+        The most recent stable release of the ld package is 1.7.14
+        At the time of writing, 1.8.x versions of ld are experimental.
+
+1.10)   Why do I get `yy_flush_buffer undefined' errors?
+
+        This isn't really Linux specific, but is common on older Linux
+        installations. You must have a recent version of flex (2.5.2 or later)
+        to compile PostgreSQL. Note that flex 2.5.3 has a bug: see
+        Question 3.4.
+
+1.11)   How do I compile PostgreSQL on an a.out system?
+
+        First, you must install the dld library. This may be obtained
+        from Sunsite as:
+        Linux/libs/dld.3.2.7.tar.gz
+        (ftp://sunsite.unc.edu/pub/Linux/libs/dld.3.2.7.tar.gz)
+
+        Second, add the following line to src/Makefile.custom:
+                LINUX_ELF=
+        (or use the customize script)
+
+1.12)   Why does make fail with:
+        yacc -d /disk2/PostgreSQL/src/backend/parser/gram.y
+        make: /usr/bin/make: cannot execute binary file
+
+        This was a problem in earlier versions of Postgres95. The default
+        for PostgreSQL is to use bison -y rather than yacc.
+
+        yacc is generally implemented as a script which invokes bison -y
+        For some reason (certain versions of make? certain versions of 
+        bash?) make is unable to execute this script file.
+
+        To correct this, simply edit src/mk/port/postgres.mk.linux
+        and, at the end of the file, change:
+                # YACC = bison -y
+        to
+                YACC = bison -y
+
+1.13)   What are the references in X11_LIB to libsocket and libnsl in
+        src/Makefile.global?
+
+        This was a problem in 1.08 (they are Sun Solaris specific). 
+        It is fixed in 1.09 and 6.0
+
+1.14)   [DEBIAN] Where is libtermcap?
+
+        Debian Linux comes without the termcap library and uses ncurses
+        (which uses terminfo instead). There is no need to change the 
+        CURSES_LIB variable in src/bin/psql/Makefile since Debian provides 
+        a link from libncurses to libcurses (unlike SuSE-Linux --- see
+        Question 1.8).
+
+        You may need to edit src/bin/psql/Makefile and comment out the
+        change:
+                ifeq ($(PORTNAME), linux)
+                   LD_ADD+= -ltermcap
+        to:
+                ifeq ($(PORTNAME), linux)
+                   LD_ADD+=
+
+
+1.15)   [REDHAT] Can I get PostgreSQL as an RPM?
+
+        Yes! Michal Mosiewicz <mimo@lodz.pdi.net>
+        (http://www.pdi.lodz.pl/~mimo) has kindly put together an RPM
+        for PostgreSQL V6.0 on Intel architectures which he has uploaded to 
+        ftp://ftp.redhat.org/pub/Incoming/Postgres-6.0-1.i386.rpm
+
+        This is a pre-compiled version, the source RPM is on its
+        was as I write (3rd Feb 1997).
+
+1.16)   While trying to compile a development version under Linux, compilation
+        fails with a message like:
+        In file included from /usr/include/sys/sem.h:8,
+                 from ipc.c:37:
+        /usr/include/asm/bitops.h:32: warning: no previous prototype for Set_bit'
+        ....
+        make: *** [ipc.o] Error 1
+
+        The problem is that Linux provides no prototypes for these
+        inline functions. The solution is to go into the 
+        .../src/backend/storage/ipc directory and edit the Makefile.
+        Change the line
+           CFLAGS+=$(INCLUDE_OPT)
+        to
+           CFLAGS+=$(INCLUDE_OPT) -Wno-error
+
+        Do the same in the ../src/backend/storage/lmgr directory.
+
+1.17)   When compiling postgres, gcc reports signal 11 and aborts.
+        More specifically:
+           gcc: Internal compiler error: program cc1 got fatal 
+                signal 11
+
+        This may be a hardware/memory problem. PortgreSQL is a big
+        program, and large gcc compilations (such as building
+        PostgreSQL or bebuilding the kernel) stress memory like 
+        few other programs, resulting in errors that do not occur
+        in normal operation. Lesser operating systems are also
+        unlikely to stress the hardware to this degree so you
+        may never see any problems under DOS/Windows.
+
+        More information on this problem at:
+           http://www.bitwizard.nl/sig11
+
+        From this Sig11 FAQ, there appears to be a specific problem
+        with Redhat 5.0 gcc running on Cyrix processors. See the
+        URL above for more details!
+
+1.18)   Can I install 6.1.1 under MkLinux?
+
+        Tatsuo Ishii <t-ishii@sra.co.jp> has done this under 
+        MkLinux DR2.1 update2 after a small patch available from:
+        ftp://ftp.sra.co.jp/pub/cmd/postgres/6.1.1/mklinux.patch.gz
+
+1.19)   Why does make exit or crash?
+
+        There have been a couple of reports of gmake either just
+        exiting early or seg faulting. The latter problem was reported
+        with gmake 3.74 - upgrading to 3.76.1 solved the problem. 
+        However, 3.74 is known to work fine in other people's setups.
+        In short, try upgrading gmake to the latest version you can 
+        find before reporting this as a problem
+
+1.20)   How can I optimise for 486 or pentium processors
+
+        The default compiler flags perform no optimisation for 486
+        or Pentium processors. To add such optimisation, edit
+        Makefile.custom and add:
+
+           CFLAGS+= -m486
+
+        or (for the new compilers that most people are not yet running)
+
+           CFLAGS+= -mpentium
+        or
+           CFLAGS+= -mpentiumpro
+
+1.21)   Why do I get strange results with printing times (for example
+        in the regression test 'timespan')?
+        The times are appearing as: '4 hours 59 mins 60.00 secs'
+        instead of '5 hours'
+
+        This is a problem with the glibc2 library which comes with
+        Redhat 5.0. Update your glibc to the latest RedHat version 
+        for v5.0/hurricane. Anything prior to glibc-2.0.7 is likely 
+        to have the problem.
+        
+1.22)   Why don't I get any shared libraries for libpq when I compile
+        6.3.2?
+
+        There was some last minute breakage of the Linux configuration for
+        v6.3.2. Look in ftp://postgresql.org/pub/patches/ for a few fix-ups,
+        including a linux_elf patch. 
+
+1.23)   Why does the compile fail with messages about F_BOOLIN, F_BOOLOUT
+        and F_BYTEAIN being undeclared?
+
+        The actual messages are something like:
+
+        -I/usr/include/readline -O2 -Wall -Wmissing-prototypes -I..
+        -Wno-error -c bootstrap.c -o bootstrap.o
+        bootstrap.c:160: `F_BOOLIN' undeclared here (not in a function)
+        bootstrap.c:160: initializer element for `Procid[0].inproc' is not
+        constant
+        bootstrap.c:160: `F_BOOLOUT' undeclared here (not in a function)
+        bootstrap.c:160: initializer element for `Procid[0].outproc' is not
+        constant
+        bootstrap.c:161: `F_BYTEAIN' undeclared here (not in a function)
+        bootstrap.c:161: initializer element for `Procid[1].inproc' is not
+        constant
+
+        This is tricky unless you know why it happens, as these constants 
+        don't seem to be defined anywhere.
+
+        The solution is to make sure that cpp is included in your path 
+        before you start the make. 
+
+        On Redhat 5.1, cpp is in /usr/lib/gcc-lib/i386-redhat-linux/2.7.2.3
+
+
+
+----------------------------------------------------------------------
+Section 2:      Compiling accessory programs
+----------------------------------------------------------------------
+
+2.1)    The linker fails to find libX11 when compiling pgtclsh
+
+        Add the following to src/Makefile.custom
+                X11_LIBDIR = /usr/X11R6/lib
+
+
+----------------------------------------------------------------------
+Section 3:      Runtime Problems
+----------------------------------------------------------------------
+
+3.1)    I get an error reporting _fUnKy_POSTPORT_sTuFf_ undefined when 
+        running scripts like createuser
+
+        This is a bug in V1.06-V1.07 of Postgres and is fixed in V1.08
+        and above.
+
+3.2)    I run postmaster and after that system says 'Bad system call(Core 
+        dumped)'
+
+        This indicates that you have not compiled shared memory support 
+        into your kernel. You need to recompile the Linux kernel to add this 
+        feature.
+
+
+3.3)    When I try to start the Postmaster, why do I get an error of the form
+        Failed Assertion("!(file != 0):(null)", File: 
+        "/usr/local/PostgreSQL/src/backend/storage/file/fd.c", Line: 257)
+        !(file != 0) (0)
+        initdb: could not create template database
+        initdb: cleaning up.
+
+        Your permissions on the file /dev/null are wrong. 
+
+        ls -l /dev/null should give you something like:
+
+                crw-rw-rw-  1 root  wheel    2,   2 Oct  8 18:41 /dev/null
+
+        Correct the permissions using:
+
+                chmod a+rw /dev/null
+
+3.4)    Why doesn't createuser work?
+
+        There is a problem with Version 2.5.3 of GNU flex and createuser. 
+        Your options are to downgrade flex to V2.5.2, upgrade to V2.5.4
+        or apply a patch to V2.5.3 which is supplied in doc/README.flex
+        You may obtain V2.5.4 from
+        ftp://prep.ai.mit.edu/pub/gnu/flex-2.5.4.tar.gz
+
+3.5)    Why do I get an error like:
+        IpcMemoryCreate: memKey=155356396 , size=760632 ,
+        permission=384IpcMemoryCreate: shmget(..., create, ...)
+        failed: Invalid argument
+
+        You haven't build IPC support into your Linux kernel. You
+        will have to rebuild the kernel and switch on this option.
+
+3.6)    Why does psql fail with:
+        psql: can't load library 'libpq.so.1'
+
+	Psql has been compiled to link dynamically with the libpq
+	library.
+
+	To solve this, you should log in as root and edit the file
+		/etc/ld.so.conf
+	Add a single line at the end which gives the name of the
+	PostgreSQL library directory (the lib subdirectory of your
+	PostgreSQL installation) and run
+		/sbin/ldconfig -v
+
+        Alternatively, (and if you don't have root access), you may
+        use the LD_LIBRARY_PATH environment variable.
+
+        The LD_LIBRARY_PATH variable contains a colon separated list of
+        paths to be searched for shared libraries.  This list is 
+        searched before the libraries specified by ldconfig.
+
+        Therefore under Bash, you would do something like:
+                export LD_LIBRARY_PATH='PathToPGSQL'/lib
+        or, using tcsh
+                setenv LD_LIBRARY_PATH 'PathToPGSQL'/lib
+        replacing 'PathToPGSQL' with the appropriate path to your top level
+        PostgreSQL directory
+
+        Note that the ldd command can be used on a dynamically linked
+        executable to list the paths to all the shared libraries upon
+        which the executable depends.
+
+
+3.7)    Other strange behaviour
+
+        I'm not sure what the symptoms might be except for nothing 
+        working properly, but it has been pointed out that one needs
+        to be careful that the dynamic loader loads the correct version
+        of the libpq library. If you have old versions lying around
+        in your library path (for example in /usr/lib) these may get
+        loaded instead of the new version you intended to load. Make
+        sure you get them out of the way and look at Q3.6 for 
+        details of loading libraries.
+
+3.8)    When PostgreSQL is running when the system is shutdown, Linux
+        always fsck's the disk when rebooted.
+
+        There have been some reports of this happening and it seems
+        to be a result of running PostgreSQL from /etc/inittab as
+        suggested in the INSTALL document.
+
+        You are therefore recommended to start the postmaster from an
+        rc script. Under a Slackware-like release, you would modify
+        /etc/rc.d/rc.local to start the postmaster. Under a RedHat-like
+        release you should create a SysV style script in 
+        /etc/rc.d/rc3.d based on the /etc/rc.d/init.d skeleton file.
+
+        There's a sample file in contrib/linux/postgres.init
+
+        Here's another sample file supplied by John Robinson 
+        <john@intelligent.co.uk> which you should modify as needed:
+
+#!/bin/sh
+#
+# postgreSQL.init This shell script takes care of starting and stopping
+#               the PostgreSQL postmaster.
+#
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+# See how we were called.
+case "$1" in
+  start)
+        # Start daemons.
+        echo -n "Starting postgres Postmaster daemon:"
+        if [ -z "`pidofproc postmaster`" ]
+        then
+                su postgres -c "/usr/local/pgsql/bin/postmaster -D /home/postgreSQL/data -p 5432 &"
+                echo -n " postmaster"
+        else
+                echo -n " (already running)"
+        fi
+        echo
+        touch /var/lock/subsys/postgres
+        ;;
+  stop)
+        # Stop daemons.
+        echo -n "Shutting down postgres Postmaster daemon: "
+        killall -TERM postmaster 2>/dev/null
+        killall -TERM postgres 2>/dev/null
+        echo
+        rm -f /var/lock/subsys/postgres
+        ;;
+  *)
+        echo "Usage: postgres {start|stop}"
+        exit 1
+esac
+
+exit 0
+
+
+
+3.9)    Why does Query 32 in the regression tests take so long?
+
+        This is due to a bug in regression scripts which only happens
+        on linux boxes. There are two workarounds as far as I know
+        (information from Tatsuo Ishii <t-ishii@sra.co.jp>):
+
+        1. change following in regress.sh:
+                time postgres -texecutor -tplanner -Q bench < bench.sql
+        to:
+                postgres -texecutor -tplanner -Q bench < bench.sql
+
+        2. after running the test, remove a line at the very end of
+        bench.out something like:
+                85.86user 114.47system 4:49.20elapsed 69%CPU (0avgtext+0avgdata 0maxresident)k
+        then type:
+                sh ./perquery < bench.out > & bench.out.perquery
+
+
+
+3.10)   Why do I get funny rounding results in some date/time arithmetic,
+        such as
+           select '4 hours'::timespan;
+        returning '3 hours 59 minutes 60 seconds'?
+
+        You are running the new glibc2 libraries and have a version earlier than
+        2.0.7. It is a math rounding problem in the library. Upgrade your library.
+----------------------------------------------------------------------------
+Dr. Andrew C.R. Martin                             University College London
+EMAIL: (Work) martin@biochem.ucl.ac.uk    (Home) andrew@stagleys.demon.co.uk
+URL:   http://www.biochem.ucl.ac.uk/~martin
+Tel:   (Work) +44(0)171 419 3890                    (Home) +44(0)1372 275775
+</PRE>
