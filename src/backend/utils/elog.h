@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.1.1.1 1996/07/09 06:22:01 scrappy Exp $
+ * $Id: elog.h,v 1.2 1996/08/13 01:27:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,6 @@
 /* uncomment the following if you want your elog's to be timestamped */
 /* #define ELOG_TIMESTAMPS */
 
-extern void elog(int lev, char *fmt, ...);
+extern void elog(int lev, const char *fmt, ...);
 
 #endif	/* ELOG_H */
