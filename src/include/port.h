@@ -6,14 +6,16 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.7 2003/06/14 14:35:42 momjian Exp $
+ * $Id: port.h,v 1.8 2003/06/24 00:44:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 /* for thread.c */
 #include <pwd.h>
 #include <netdb.h>
+#endif
 
 /* Portable path handling for Unix/Win32 */
 bool is_absolute_path(const char *filename);
