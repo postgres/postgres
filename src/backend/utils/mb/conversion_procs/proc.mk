@@ -16,6 +16,6 @@ uninstall: uninstall-lib
 clean distclean maintainer-clean: clean-lib
 	$(RM) $(OBJS)
 
-include $(top_builddir)/src/Makefile.shlib
+include $(top_srcdir)/src/Makefile.shlib
 
 all: $(shlib)

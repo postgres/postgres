@@ -1,11 +1,12 @@
 #-------------------------------------------------------------------------
 #
-# $Id: Makefile,v 1.1 2002/08/14 02:45:10 ishii Exp $
+# $Id: Makefile,v 1.2 2002/08/21 21:33:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
+subdir = src/backend/utils/mb/conversion_procs/utf8_and_cyrillic
 top_builddir = ../../../../../..
 include $(top_builddir)/src/Makefile.global
 
 NAME		:= utf8_and_cyrillic
 
-include ../proc.mk
+include $(srcdir)/../proc.mk
