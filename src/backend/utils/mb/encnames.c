@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.10 2002/09/04 20:31:31 momjian Exp $
+ * $Id: encnames.c,v 1.10.2.1 2002/12/09 17:45:17 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -407,7 +407,12 @@ clean_encoding_name(char *key, char *newkey)
 	for (p = key, np = newkey; *p != '\0'; p++)
 	{
 		if (isalnum((unsigned char) *p))
-			*np++ = tolower((unsigned char) *p);
+		{
+			if (*p >= 'A' && *p <= 'Z')
+				*np++ = *p + 'a' - 'A';
+			else
+				*np++ = *p;
+		}
 	}
 	*np = '\0';
 	return newkey;
