@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.1 2003/12/19 14:21:43 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.2 2004/01/22 19:09:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1144,11 +1144,33 @@ dumpDatabase(Archive *AH)
 	selectSourceSchema("pg_catalog");
 
 	/* Get the database owner and parameters from pg_database */
-	appendPQExpBuffer(dbQry, "select (select usename from pg_user where usesysid = datdba) as dba,"
-					  " pg_encoding_to_char(encoding) as encoding,"
-					  " datpath from pg_database"
-					  " where datname = ");
-	appendStringLiteral(dbQry, datname, true);
+	if (g_fout->remoteVersion >= 70100)
+	{
+		appendPQExpBuffer(dbQry, "SELECT "
+						  "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
+						  "pg_encoding_to_char(encoding) as encoding, "
+						  "datpath "
+						  "FROM pg_database "
+						  "WHERE datname = ");
+		appendStringLiteral(dbQry, datname, true);
+	}
+	else
+	{
+		/*
+		 * In 7.0, datpath is either the same as datname, or the user-given
+		 * location with "/" and the datname appended.  We must strip this
+		 * junk off to produce a correct LOCATION value.
+		 */
+		appendPQExpBuffer(dbQry, "SELECT "
+						  "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
+						  "pg_encoding_to_char(encoding) as encoding, "
+						  "CASE WHEN length(datpath) > length(datname) THEN "
+						  "substr(datpath,1,length(datpath)-length(datname)-1) "
+						  "ELSE '' END as datpath "
+						  "FROM pg_database "
+						  "WHERE datname = ");
+		appendStringLiteral(dbQry, datname, true);
+	}
 
 	res = PQexec(g_conn, dbQry->data);
 	if (!res ||
