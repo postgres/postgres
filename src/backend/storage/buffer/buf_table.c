@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.11 1998/06/15 19:29:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.12 1998/06/30 19:09:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ InitBufTable()
 	hash_flags = (HASH_ELEM | HASH_FUNCTION);
 
 
-	SharedBufHash = (HTAB *) ShmemInitHash("Shared Buf Lookup Table",
+	SharedBufHash = (HTAB *) ShmemInitHash("Shared Buffer Lookup Table",
 										   NBuffers, NBuffers,
 										   &info, hash_flags);
 
