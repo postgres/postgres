@@ -96,7 +96,7 @@ Migration to version 7.3
      * TIMESTAMP and TIME data types now default to WITHOUT TIMEZONE
 
      * Pre-7.3 databases loaded into 7.3 will not have the new object
-       dependencies for SERIAL, UNIQUE contraints, and foreign keys. See
+       dependencies for SERIAL, UNIQUE constraints, and foreign keys. See
        /contrib/adddepend for a detailed description and a script that
        will add the such dependencies.
 
@@ -104,7 +104,7 @@ Migration to version 7.3
 
 Changes
 
-2002-09-02
+2002-09-23
 
 Server Operation
 ================
@@ -133,6 +133,7 @@ Fix GEQO optimizer bug (Neil Conway)
 Make WITHOUT OID actually save four bytes per row (Manfred Koizar)
 Add GUC default_statistics_target variable to specify ANALYZE buckets (Neil)
 Use local buffer cache for temporary tables so no WAL overhead (Tom)
+Improve free space map performance on large tables (Stephen Marshall, Tom)
 
 Privileges
 ==========
@@ -224,6 +225,8 @@ Prevent inherited columns from being removed or renamed (Alvaro Herrera)
 Add CREATE OR REPLACE VIEW, CREATE OR REPLACE RULE (Gavin, Neil, Tom)
 Fix foreign key constraints to not error on intermediate db states (Stephan)
 Propagate column or table renaming to foreign key constraints
+Add CREATE OR REPLACE VIEW (Gavin, Neil, Tom)
+Add CREATE OR REPLACE RULE (Gavin, Neil, Tom)
 
 Utility Commands
 ================
@@ -279,7 +282,7 @@ Limit timestamp data types to 6 decimal places of precision (Thomas)
 Change timezone conversion functions from timetz() to timezone() (Thomas)
 Add GUC variables datestyle and timezone (Tom)
 Add OVERLAY(), which allows substitution of a substring in a string (Thomas)
-Add SIMILAR TO as a synonym for our existing operator "~" (Thomas)
+Add SIMILAR TO as a synonym for our existing operator "~" (Thomas, Tom)
 Add regular expression SUBSTRING(string FROM pat FOR escape) (Thomas)
 Add LOCALTIME and LOCALTIMESTAMP functions (Thomas)
 Add named composite types using CREATE TYPE typename AS (column) (Joe)
@@ -303,10 +306,14 @@ Increase maximum number of function parameters to 32 (Bruce)
 No longer automatically create index for SERIAL column (Tom)
 Add current_database() (Rod)
 Fix cash_words() to not overflow buffer (Tom)
-Add functions replace(), split(), to_hex() (Joe)
+Add functions replace(), split_part(), to_hex() (Joe)
 Fix LIKE for bytea as a right-hand argument (Joe)
 Prevent crashes caused by SELECT cash_out(2)
 Triggers are now fired in alphabetical order (Tom)
+Add /contrib/adddepend to handle pre-7.3 object dependencies (Rod)
+Allow better casting when INSERTing/UPDATing values (Tom)
+Fix to_char(1,'FM999.99') to return a period (Karel)
+Fix trigger/type/language functions returning OPAQUE to return proper type (Tom)
 
 Internationalization
 ====================
@@ -366,6 +373,7 @@ Add jdbc query cancel capability
 Add refresh row to jdbc (Dave)
 Fix jdbc MD5 encryption handling for multibyte servers (Jun Kawai)
 Add JDBC support for prepared statements (Barry)
+Add support for new prepared statements
 
 ECPG
 ====
@@ -381,6 +389,7 @@ Move /interfaces/odbc to http://gborg.postgresql.org (Marc)
 Move /interfaces/libpgeasy to http://gborg.postgresql.org (Marc, Bruce)
 Move /interfaces/perl5 to http://gborg.postgresql.org (Marc, Bruce)
 Remove /bin/pgaccess from main tree, now at http://www.pgaccess.org (Bruce)
+Add pg_on_connection_loss command to libpgtcl (Gerhard Hintermayer, Tom)
 
 Build and Install
 =================
@@ -399,6 +408,10 @@ Fix for Win9x DLL creation (Magnus Naeslund)
 Fix for link() usage by WAL code on Win32, Netware, BeOS (Jason Tishler)
 Add sys/types.h to c.h, remove from main files (Peter, Bruce)
 Fix AIX hang on SMP machines (Tomoyuki Niijima)
+AIX SMP hang fix (Tomoyuki Niijima)
+Fix pre-1970 date handling on newer glibc libraries (Tom)
+Fix PowerPC SMP locking (Tom)
+Prevent gcc -ffast-math from being used (Tom)
 
 Source Code
 ===========
@@ -430,6 +443,7 @@ Remove OPAQUE and create specific subtypes (Tom)
 Cleanups in array internal handling (Joe, Tom)
 Disallow pg_atoi('') (Bruce)
 Remove GUC parameter wal_files because WAL files are now recycled (Bruce)
+Add version numbers to heap pages (Tom)
 
 
 Contrib
