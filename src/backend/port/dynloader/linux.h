@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * port-protos.h--
- *	  port-specific prototypes for SunOS 4
+ *	  port-specific prototypes for Linux
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: linux.h,v 1.1 1997/12/20 02:36:18 scrappy Exp $
+ * $Id: linux.h,v 1.2 1998/01/01 06:02:04 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,13 @@
 
 #include "fmgr.h"				/* for func_ptr */
 #include "utils/dynamic_loader.h"
-#ifdef LINUX_ELF
+#ifdef __ELF__
 #include "dlfcn.h"
 #endif
 
 /* dynloader.c */
 
-#ifndef LINUX_ELF
+#ifndef __ELF__
 #ifndef HAVE_DLD_H
 #define pg_dlsym(handle, funcname)		(NULL)
 #define pg_dlclose(handle)			   ({})
@@ -39,4 +39,4 @@
 
 /* port.c */
 
-#endif							/* PORT_PROTOS_H */
+#endif /* PORT_PROTOS_H */
