@@ -475,11 +475,11 @@ have.
 <ListItem>
 <Para>
 The standard syntax of the FETCH command is:
-
+</para>
 <Para>
 FETCH [direction] [amount] IN|FROM <Replaceable>cursor name</Replaceable>.
 </Para>
-
+<para>
 <Application>ORACLE</Application>, however, does not use the keywords IN
 resp. FROM. This feature cannot be added since it would create parsing
 conflicts.
@@ -487,7 +487,6 @@ conflicts.
 </ListItem>
 </VarListEntry>
 </VariableList>
-</Para>
 </sect1>
 
 <Sect1>
@@ -699,30 +698,37 @@ following ways:
 <VariableList>
 <VarListEntry>
 <Term>dbname[@server][:port][as <Replaceable>connection name</Replaceable>][user <Replaceable>user name</Replaceable>]</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 
 <VarListEntry>
 <Term>tcp:postgresql://server[:port][/dbname][as <Replaceable>connection name</Replaceable>][user <Replaceable>user name</Replaceable>]</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 
 <VarListEntry>
 <Term>unix:postgresql://server[:port][/dbname][as <Replaceable>connection name</Replaceable>][user <Replaceable>user name</Replaceable>]</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 
 <VarListEntry>
 <Term><Replaceable>character variable</Replaceable>[as <Replaceable>connection name</Replaceable>][user <Replaceable>user name</Replaceable>]</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 
 <VarListEntry>
 <Term><Replaceable>character string</Replaceable>[as <Replaceable>connection name</Replaceable>][<Replaceable>user</Replaceable>]</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 
 <VarListEntry>
 <Term>default</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 
 <VarListEntry>
 <Term>user</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 </VariableList>
 </Para>
@@ -732,15 +738,19 @@ There are also different ways to specify the user name:
 <VariableList>
 <VarListEntry>
 <Term><Replaceable>userid</Replaceable></Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 <VarListEntry>
 <Term><Replaceable>userid</Replaceable>/<Replaceable>password</Replaceable></Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 <VarListEntry>
 <Term><Replaceable>userid</Replaceable> identified by <Replaceable>password</Replaceable></Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 <VarListEntry>
 <Term><Replaceable>userid</Replaceable> using <Replaceable>password</Replaceable></Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 </VariableList>
 </Para>
@@ -768,22 +778,26 @@ following ways:
 <VariableList>
 <VarListEntry>
 <Term><Replaceable>connection name</Replaceable></Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 <VarListEntry>
 <Term>default</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 <VarListEntry>
 <Term>current</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 <VarListEntry>
 <Term>all</Term>
+<listitem><para></para></listitem>
 </VarListEntry>
 </VariableList>
 </Para>
 </ListItem>
 </VarListEntry>
 
-WARNING: FROM HERE ON THE TEXT IS OUTDATED!
+<!--WARNING: FROM HERE ON THE TEXT IS OUTDATED!-->
 <VarListEntry>
 <Term>Open cursor statement</Term>
 <ListItem>
@@ -829,7 +843,7 @@ ECPGrollback(__LINE__);
 </ListItem>
 </VarListEntry>
 
-STARTING HERE IT IS OKAY AGAIN!
+<!--STARTING HERE IT IS OKAY AGAIN!-->
 <VarListEntry>
 <Term>Other statements</Term>
 <ListItem>
