@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.3 2002/09/14 19:59:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.4 2002/09/20 03:45:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,14 +76,7 @@ PrepareQuery(PrepareStmt *stmt)
 		Query	   *query = (Query *) lfirst(query_list_item);
 		Plan	   *plan;
 
-		/* We can't generate plans for utility statements. */
-		if (query->commandType == CMD_UTILITY)
-			plan = NULL;
-		else
-		{
-			/* Call the query planner to generate a plan. */
-			plan = planner(query);
-		}
+		plan = pg_plan_query(query);
 
 		plan_list = lappend(plan_list, plan);
 	}

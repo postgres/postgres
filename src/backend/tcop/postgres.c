@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.292 2002/09/16 01:24:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.293 2002/09/20 03:45:08 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -486,7 +486,7 @@ pg_plan_query(Query *querytree)
 	if (Show_planner_stats)
 		ResetUsage();
 
-	/* call that optimizer */
+	/* call the optimizer */
 	plan = planner(querytree);
 
 	if (Show_planner_stats)
@@ -1691,7 +1691,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.292 $ $Date: 2002/09/16 01:24:41 $\n");
+		puts("$Revision: 1.293 $ $Date: 2002/09/20 03:45:08 $\n");
 	}
 
 	/*
@@ -2080,7 +2080,7 @@ ShowUsage(const char *title)
 #endif   /* HAVE_GETRUSAGE */
 
 	bufusage = ShowBufferUsage();
-	appendStringInfo(&str, "! postgres usage stats:\n%s", bufusage);
+	appendStringInfo(&str, "! buffer usage stats:\n%s", bufusage);
 	pfree(bufusage);
 
 	/* remove trailing newline */
