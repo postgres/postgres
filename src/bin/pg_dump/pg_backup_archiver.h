@@ -17,14 +17,17 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.27 2001/03/22 04:00:12 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.28 2001/04/01 05:42:51 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
- *
- *		Initial version.
+ *	-	Initial version.
  *
  * Modifications - 15-Sep-2000 - pjw@rhyme.com.au
  *	-	Added braceDepth to sqlparseInfo to handle braces in rule definitions.
+ *
+ * Modifications - 31-Mar-2001 - pjw@rhyme.com.au (1.50)
+ *	-	Make dependencies work on ArchiveEntry calls so that UDTs will
+ *		dump in correct order.
  *
  *-------------------------------------------------------------------------
  */
@@ -64,8 +67,8 @@ typedef z_stream *z_streamp;
 #include "libpq-fe.h"
 
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 4
-#define K_VERS_REV 30
+#define K_VERS_MINOR 5
+#define K_VERS_REV 0
 
 /* Data block types */
 #define BLK_DATA 1
@@ -77,7 +80,8 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_2 (( (1 * 256 + 2) * 256 + 0) * 256 + 0)		/* Allow No ZLIB */
 #define K_VERS_1_3 (( (1 * 256 + 3) * 256 + 0) * 256 + 0)		/* BLOBs */
 #define K_VERS_1_4 (( (1 * 256 + 4) * 256 + 0) * 256 + 0)		/* Date & name in header */
-#define K_VERS_MAX (( (1 * 256 + 4) * 256 + 255) * 256 + 0)
+#define K_VERS_1_5 (( (1 * 256 + 5) * 256 + 0) * 256 + 0)		/* Handle dependencies */
+#define K_VERS_MAX (( (1 * 256 + 5) * 256 + 255) * 256 + 0)
 
 /* No of BLOBs to restore in 1 TX */
 #define BLOB_BATCH_SIZE 100
@@ -94,8 +98,8 @@ typedef int (*WriteDataPtr) (struct _archiveHandle * AH, const void *data, int d
 typedef void (*EndDataPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef void (*StartBlobsPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
-typedef void (*StartBlobPtr) (struct _archiveHandle * AH, struct _tocEntry * te, int oid);
-typedef void (*EndBlobPtr) (struct _archiveHandle * AH, struct _tocEntry * te, int oid);
+typedef void (*StartBlobPtr) (struct _archiveHandle * AH, struct _tocEntry * te, Oid oid);
+typedef void (*EndBlobPtr) (struct _archiveHandle * AH, struct _tocEntry * te, Oid oid);
 typedef void (*EndBlobsPtr) (struct _archiveHandle * AH, struct _tocEntry * te);
 
 typedef int (*WriteBytePtr) (struct _archiveHandle * AH, const int i);
@@ -184,8 +188,8 @@ typedef struct _archiveHandle
 	ReadBufPtr ReadBufPtr;		/* Read a buffer of input from the archive */
 	ClosePtr ClosePtr;			/* Close the archive */
 	WriteExtraTocPtr WriteExtraTocPtr;	/* Write extra TOC entry data
-										 * associated with */
-	/* the current archive format */
+										 * associated with 
+										 * the current archive format */
 	ReadExtraTocPtr ReadExtraTocPtr;	/* Read extr info associated with
 										 * archie format */
 	PrintExtraTocPtr PrintExtraTocPtr;	/* Extra TOC info for format */
@@ -244,15 +248,18 @@ typedef struct _tocEntry
 	int			id;
 	int			hadDumper;		/* Archiver was passed a dumper routine
 								 * (used in restore) */
-	char	   *oid;
-	int			oidVal;
 	char	   *name;
 	char	   *desc;
 	char	   *defn;
 	char	   *dropStmt;
 	char	   *copyStmt;
 	char	   *owner;
-	char	  **depOid;
+	char       *oid;			/* Oid of source of entry */
+	Oid			oidVal;			/* Value of above */
+	const char *((*depOid)[]);
+	Oid			maxDepOidVal;	/* Value of largest OID in deps */
+	Oid			maxOidVal;		/* Max of entry OID and max dep OID */ 
+
 	int			printed;		/* Indicates if entry defn has been dumped */
 	DataDumperPtr dataDumper;	/* Routine to dump data for object */
 	void	   *dataDumperArg;	/* Arg for above routine */
@@ -282,11 +289,11 @@ extern int	TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt);
 extern int	WriteInt(ArchiveHandle *AH, int i);
 extern int	ReadInt(ArchiveHandle *AH);
 extern char *ReadStr(ArchiveHandle *AH);
-extern int	WriteStr(ArchiveHandle *AH, char *s);
+extern int	WriteStr(ArchiveHandle *AH, const char *s);
 
 extern void StartRestoreBlobs(ArchiveHandle *AH);
-extern void StartRestoreBlob(ArchiveHandle *AH, int oid);
-extern void EndRestoreBlob(ArchiveHandle *AH, int oid);
+extern void StartRestoreBlob(ArchiveHandle *AH, Oid oid);
+extern void EndRestoreBlob(ArchiveHandle *AH, Oid oid);
 extern void EndRestoreBlobs(ArchiveHandle *AH);
 
 extern void InitArchiveFmt_Custom(ArchiveHandle *AH);

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.197 2001/03/23 04:49:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.198 2001/04/01 05:42:51 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -115,6 +115,13 @@
  *		quoting problems in trigger enable/disable code for mixed case
  *		table names, and avoids commands like 'pg_restore -t '"TblA"''
  *
+ * Modifications - 31-Mar-2001 - pjw@rhyme.com.au
+ *
+ *	  - Dump dependency information in dumpType. This is necessary
+ *		because placeholder types will have an OID less than the
+ *		OID of the type functions, but type must be created after 
+ *		the functions.
+ *
  *-------------------------------------------------------------------------
  */
 
@@ -151,9 +158,6 @@
 
 #include "pg_dump.h"
 #include "pg_backup.h"
-
-#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
-
 
 typedef enum _formatLiteralOptions
 {
@@ -2939,6 +2943,10 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 	PQExpBuffer q = createPQExpBuffer();
 	PQExpBuffer delq = createPQExpBuffer();
 	int			funcInd;
+	const char *((*deps)[]);
+	int			depIdx = 0;
+
+	deps = malloc(sizeof(char*) * 10);
 
 	for (i = 0; i < numTypes; i++)
 	{
@@ -2962,11 +2970,17 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		 */
 		funcInd = findFuncByName(finfo, numFuncs, tinfo[i].typinput);
 		if (funcInd != -1)
+		{
+			(*deps)[depIdx++] = strdup(finfo[funcInd].oid);
 			dumpOneFunc(fout, finfo, funcInd, tinfo, numTypes);
+		}
 
 		funcInd = findFuncByName(finfo, numFuncs, tinfo[i].typoutput);
 		if (funcInd != -1)
+		{
+			(*deps)[depIdx++] = strdup(finfo[funcInd].oid);
 			dumpOneFunc(fout, finfo, funcInd, tinfo, numTypes);
+		}
 
 		appendPQExpBuffer(delq, "DROP TYPE %s;\n", fmtId(tinfo[i].typname, force_quotes));
 
@@ -3004,13 +3018,17 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 
 			appendPQExpBuffer(q, ", element = %s, delimiter = ", elemType);
 			formatStringLiteral(q, tinfo[i].typdelim, CONV_ALL);
+
+			(*deps)[depIdx++] = strdup(tinfo[i].typelem);
 		}
 		if (tinfo[i].passedbyvalue)
 			appendPQExpBuffer(q, ",passedbyvalue);\n");
 		else
 			appendPQExpBuffer(q, ");\n");
 
-		ArchiveEntry(fout, tinfo[i].oid, tinfo[i].typname, "TYPE", NULL,
+		(*deps)[depIdx++] = NULL; /* End of List */
+
+		ArchiveEntry(fout, tinfo[i].oid, tinfo[i].typname, "TYPE", deps,
 				  q->data, delq->data, "", tinfo[i].usename, NULL, NULL);
 
 		/*** Dump Type Comments ***/

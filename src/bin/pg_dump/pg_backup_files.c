@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.9 2001/03/23 01:27:12 pjw Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.10 2001/04/01 05:42:51 pjw Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -54,8 +54,8 @@ static void _ReadExtraToc(ArchiveHandle *AH, TocEntry *te);
 static void _PrintExtraToc(ArchiveHandle *AH, TocEntry *te);
 
 static void _StartBlobs(ArchiveHandle *AH, TocEntry *te);
-static void _StartBlob(ArchiveHandle *AH, TocEntry *te, int oid);
-static void _EndBlob(ArchiveHandle *AH, TocEntry *te, int oid);
+static void _StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
+static void _EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid);
 static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
 
 #define K_STD_BUF_SIZE 1024
@@ -490,7 +490,7 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
  * Must save the passed OID for retrieval at restore-time.
  */
 static void
-_StartBlob(ArchiveHandle *AH, TocEntry *te, int oid)
+_StartBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
@@ -528,7 +528,7 @@ _StartBlob(ArchiveHandle *AH, TocEntry *te, int oid)
  *
  */
 static void
-_EndBlob(ArchiveHandle *AH, TocEntry *te, int oid)
+_EndBlob(ArchiveHandle *AH, TocEntry *te, Oid oid)
 {
 	lclTocEntry *tctx = (lclTocEntry *) te->formatData;
 
