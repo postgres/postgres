@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.9 2001/10/30 05:38:56 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/misc.c,v 1.10 2001/11/14 11:11:49 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -40,15 +40,15 @@ static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 
 void
-init_sqlca(void)
+ECPGinit_sqlca(void)
 {
 	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
 }
 
 bool
-ecpg_init(const struct connection * con, const char *connection_name, const int lineno)
+ECPGinit(const struct connection * con, const char *connection_name, const int lineno)
 {
-	init_sqlca();
+	ECPGinit_sqlca();
 	if (con == NULL)
 	{
 		ECPGraise(lineno, ECPG_NO_CONN, connection_name ? connection_name : "NULL");
@@ -61,9 +61,9 @@ ecpg_init(const struct connection * con, const char *connection_name, const int 
 bool
 ECPGstatus(int lineno, const char *connection_name)
 {
-	struct connection *con = get_connection(connection_name);
+	struct connection *con = ECPGget_connection(connection_name);
 
-	if (!ecpg_init(con, connection_name, lineno))
+	if (!ECPGinit(con, connection_name, lineno))
 		return (false);
 
 	/* are we connected? */
@@ -80,9 +80,9 @@ bool
 ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 {
 	PGresult   *res;
-	struct connection *con = get_connection(connection_name);
+	struct connection *con = ECPGget_connection(connection_name);
 
-	if (!ecpg_init(con, connection_name, lineno))
+	if (!ECPGinit(con, connection_name, lineno))
 		return (false);
 
 	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con->name);

@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.31 2001/08/11 10:52:09 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.32 2001/11/14 11:11:49 meskes Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -8,7 +8,7 @@ override CPPFLAGS := -I$(srcdir)/../include $(CPPFLAGS)
 
 ECPG = ../preproc/ecpg -I$(srcdir)/../include
 
-TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init
+TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init testdynalloc
 
 all: $(TESTS)
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.5 2001/11/05 17:46:37 momjian Exp $
+ * $Id: pg_type.h,v 1.6 2001/11/14 11:11:49 meskes Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -62,7 +62,8 @@
 #define VARCHAROID		1043
 #define DATEOID			1082
 #define TIMEOID			1083
-#define TIMESTAMPOID	1184
+#define TIMESTAMPOID	1114
+#define TIMESTAMPTZOID	1184
 #define INTERVALOID		1186
 #define TIMETZOID		1266
 #define ZPBITOID	 1560

@@ -1146,5 +1146,9 @@ Sun Oct 21 14:19:42 CEST 2001
 Fri Nov  2 16:16:25 CET 2001
 
 	- Synced preproc.y with gram.y.
+
+Wed Nov 14 11:50:27 CET 2001
+
+	- Added several patches by Christof Petig <christof.petig@wtal.de>.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

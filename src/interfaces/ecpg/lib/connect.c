@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.14 2001/10/31 04:49:44 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.15 2001/11/14 11:11:49 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -12,7 +12,7 @@ static struct connection *all_connections = NULL,
 		   *actual_connection = NULL;
 
 struct connection *
-get_connection(const char *connection_name)
+ECPGget_connection(const char *connection_name)
 {
 	struct connection *con = all_connections;
 
@@ -63,10 +63,10 @@ ecpg_finish(struct connection * act)
 bool
 ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 {
-	struct connection *con = get_connection(connection_name);
+	struct connection *con = ECPGget_connection(connection_name);
 	PGresult   *results;
 
-	if (!ecpg_init(con, connection_name, lineno))
+	if (!ECPGinit(con, connection_name, lineno))
 		return (false);
 
 	ECPGlog("ECPGsetcommit line %d action = %s connection = %s\n", lineno, mode, con->name);
@@ -106,9 +106,9 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 bool
 ECPGsetconn(int lineno, const char *connection_name)
 {
-	struct connection *con = get_connection(connection_name);
+	struct connection *con = ECPGget_connection(connection_name);
 
-	if (!ecpg_init(con, connection_name, lineno))
+	if (!ECPGinit(con, connection_name, lineno))
 		return (false);
 
 	actual_connection = con;
@@ -269,9 +269,9 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 			   *realname = NULL,
 			   *options = NULL;
 
-	init_sqlca();
+	ECPGinit_sqlca();
 
-	if ((this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno)) == NULL)
+	if ((this = (struct connection *) ECPGalloc(sizeof(struct connection), lineno)) == NULL)
 		return false;
 
 	if (dbname == NULL && connection_name == NULL)
@@ -393,9 +393,9 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 
 	/* add connection to our list */
 	if (connection_name != NULL)
-		this->name = ecpg_strdup(connection_name, lineno);
+		this->name = ECPGstrdup(connection_name, lineno);
 	else
-		this->name = ecpg_strdup(realname, lineno);
+		this->name = ECPGstrdup(realname, lineno);
 
 	this->cache_head = NULL;
 
@@ -465,7 +465,7 @@ ECPGdisconnect(int lineno, const char *connection_name)
 
 	if (strcmp(connection_name, "ALL") == 0)
 	{
-		init_sqlca();
+		ECPGinit_sqlca();
 		for (con = all_connections; con;)
 		{
 			struct connection *f = con;
@@ -476,9 +476,9 @@ ECPGdisconnect(int lineno, const char *connection_name)
 	}
 	else
 	{
-		con = get_connection(connection_name);
+		con = ECPGget_connection(connection_name);
 
-		if (!ecpg_init(con, connection_name, lineno))
+		if (!ECPGinit(con, connection_name, lineno))
 			return (false);
 		else
 			ecpg_finish(con);

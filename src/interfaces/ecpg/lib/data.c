@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.18 2001/11/05 17:46:37 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/data.c,v 1.19 2001/11/14 11:11:49 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -12,14 +12,14 @@
 #include "sqlca.h"
 
 bool
-get_data(const PGresult *results, int act_tuple, int act_field, int lineno,
+ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 		 enum ECPGttype type, enum ECPGttype ind_type,
 		 void *var, void *ind, long varcharsize, long offset,
 		 bool isarray)
 {
 	char	   *pval = (char *) PQgetvalue(results, act_tuple, act_field);
 
-	ECPGlog("get_data line %d: RESULT: %s\n", lineno, pval ? pval : "");
+	ECPGlog("ECPGget_data line %d: RESULT: %s\n", lineno, pval ? pval : "");
 
 	/* pval is a pointer to the value */
 	/* let's check is it really is an array if it should be one */

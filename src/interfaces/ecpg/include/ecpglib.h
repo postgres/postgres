@@ -67,6 +67,8 @@ void		ECPGraise(int line, int code, const char *str);
 bool		ECPGget_desc_header(int, char *, int *);
 bool		ECPGget_desc(int, char *, int,...);
 
+/* dynamic result allocation */
+	void		ECPGfree_auto_mem(void);
 
 #ifdef __cplusplus
 }

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.12 2001/10/18 20:32:58 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.13 2001/11/14 11:11:49 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -154,7 +154,7 @@ ECPGraise(int line, int code, const char *str)
 	ECPGlog("raising sqlcode %d in line %d, '%s'.\n", code, line, sqlca.sqlerrm.sqlerrmc);
 
 	/* free all memory we have allocated for the user */
-	free_auto_mem();
+	ECPGfree_auto_mem();
 }
 
 /* print out an error message */

@@ -1,9 +1,10 @@
 /* dynamic SQL support routines
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.18 2001/11/05 17:46:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/descriptor.c,v 1.19 2001/11/14 11:11:49 meskes Exp $
  */
 
 #include "postgres_fe.h"
+#include "pg_type.h"
 
 #include "ecpgtype.h"
 #include "ecpglib.h"
@@ -30,14 +31,16 @@ ECPGDynamicType_DDT(Oid type)
 {
 	switch (type)
 	{
-		case 1082:
-			return SQL3_DDT_DATE;		/* date */
-		case 1083:
-			return SQL3_DDT_TIME;		/* time */
-		case 1184:
-			return SQL3_DDT_TIMESTAMP_WITH_TIME_ZONE;	/* datetime */
-		case 1296:
-			return SQL3_DDT_TIMESTAMP_WITH_TIME_ZONE;	/* timestamp */
+		case DATEOID:
+			return SQL3_DDT_DATE;
+		case TIMEOID:
+			return SQL3_DDT_TIME;
+		case TIMESTAMPOID:
+			return SQL3_DDT_TIMESTAMP;
+		case TIMESTAMPTZOID:
+			return SQL3_DDT_TIMESTAMP_WITH_TIME_ZONE;
+		case TIMETZOID:
+			return SQL3_DDT_TIME_WITH_TIME_ZONE;
 		default:
 			return SQL3_DDT_ILLEGAL;
 	}
@@ -139,11 +142,10 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 	va_list		args;
 	PGresult   *ECPGresult = ECPGresultByDescriptor(lineno, desc_name);
 	enum ECPGdtype type;
-	bool		Indicator_seen = false,
-				Data_seen = false;
 	int			ntuples,
 				act_tuple;
-
+	struct variable data_var;
+	
 	va_start(args, index);
 	if (!ECPGresult)
 		return (false);
@@ -165,7 +167,11 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 	--index;
 
 	type = va_arg(args, enum ECPGdtype);
-
+	
+	memset (&data_var, 0, sizeof data_var);
+	data_var.type=ECPGt_EORT;
+	data_var.ind_type=ECPGt_NO_INDICATOR;
+	
 	while (type != ECPGd_EODT)
 	{
 		char		type_str[20];
@@ -184,26 +190,27 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 		switch (type)
 		{
 			case (ECPGd_indicator):
+				data_var.ind_type=vartype;
+				data_var.ind_pointer=var;
+				data_var.ind_varcharsize=varcharsize;
+				data_var.ind_arrsize=arrsize;
+				data_var.ind_offset=offset;
+				if (data_var.ind_arrsize == 0 || data_var.ind_varcharsize == 0)
+					data_var.ind_value = *((void **) (data_var.ind_pointer));
+				else
+					data_var.ind_value = data_var.ind_pointer;
+				break;
 
-				/*
-				 * this is like ECPGexecute missing : allocate arrays,
-				 * perhaps this should go into a common function !!
-				 */
-				if (ntuples > arrsize)
-				{
-					ECPGlog("ECPGget_desc line %d: Incorrect number of matches: %d don't fit into array of %d\n",
-							lineno, ntuples, arrsize);
-					ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL);
-					return false;
-				}
-				Indicator_seen = true;
-				for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-				{
-					if (!get_int_item(lineno, var, vartype, -PQgetisnull(ECPGresult, act_tuple, index)))
-						return (false);
-					var = (char *) var + offset;
-					ECPGlog("ECPGget_desc: INDICATOR[%d] = %d\n", act_tuple, -PQgetisnull(ECPGresult, act_tuple, index));
-				}
+			case ECPGd_data:
+				data_var.type=vartype;
+				data_var.pointer=var;
+				data_var.varcharsize=varcharsize;
+				data_var.arrsize=arrsize;
+				data_var.offset=offset;
+				if (data_var.arrsize == 0 || data_var.varcharsize == 0)
+					data_var.value = *((void **) (data_var.pointer));
+				else
+					data_var.value = data_var.pointer;
 				break;
 
 			case ECPGd_name:
@@ -239,29 +246,6 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 				ECPGlog("ECPGget_desc: PRECISION = %d\n", PQfmod(ECPGresult, index) >> 16);
 				break;
 
-			case ECPGd_ret_length:
-			case ECPGd_ret_octet:
-
-				/*
-				 * this is like ECPGexecute missing : allocate arrays,
-				 * perhaps this should go into a common function !!
-				 */
-				if (ntuples > arrsize)
-				{
-					ECPGlog("ECPGget_desc line %d: Incorrect number of matches: %d don't fit into array of %d\n",
-							lineno, ntuples, arrsize);
-					ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL);
-					return false;
-				}
-				for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
-				{
-					if (!get_int_item(lineno, var, vartype, PQgetlength(ECPGresult, act_tuple, index)))
-						return (false);
-					var = (char *) var + offset;
-					ECPGlog("ECPGget_desc: RETURNED[%d] = %d\n", act_tuple, PQgetlength(ECPGresult, act_tuple, index));
-				}
-				break;
-
 			case ECPGd_octet:
 				if (!get_int_item(lineno, var, vartype, PQfsize(ECPGresult, index)))
 					return (false);
@@ -289,36 +273,43 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 
 				ECPGlog("ECPGget_desc: TYPE = %d\n", ECPGDynamicType_DDT(PQftype(ECPGresult, index)));
 				break;
-			case ECPGd_data:
+				
+			case ECPGd_cardinality:
+				if (!get_int_item(lineno, var, vartype, PQntuples(ECPGresult)))
+					return (false);
+
+				ECPGlog("ECPGget_desc: CARDINALITY = %d\n", PQntuples(ECPGresult));
+				break;
+
+			case ECPGd_ret_length:
+			case ECPGd_ret_octet:
 
 				/*
-				 * this is like ECPGexecute missing : allocate arrays,
-				 * perhaps this should go into a common function !!
+				 * this is like ECPGstore_result
 				 */
-				if (ntuples > arrsize)
+				if (arrsize > 0 && ntuples > arrsize)
 				{
 					ECPGlog("ECPGget_desc line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 							lineno, ntuples, arrsize);
 					ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL);
 					return false;
 				}
-				Data_seen = true;
+				/* allocate storage if needed */
+				if (arrsize == 0 && var != NULL && *(void**)var == NULL)
+				{
+					void *mem = (void *) ECPGalloc(offset * ntuples, lineno);
+					*(void **)var = mem;
+					ECPGadd_mem(mem, lineno);
+					var = mem;
+				}
+	
 				for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 				{
-					if (PQgetisnull(ECPGresult, act_tuple, index))
-						continue;		/* do not touch data on null value */
-					if (!get_data(ECPGresult, act_tuple, index, lineno,
-								  vartype, ECPGt_NO_INDICATOR, var, NULL,
-								  varcharsize, offset, false))
+					if (!get_int_item(lineno, var, vartype, PQgetlength(ECPGresult, act_tuple, index)))
 						return (false);
+					var = (char *) var + offset;
+					ECPGlog("ECPGget_desc: RETURNED[%d] = %d\n", act_tuple, PQgetlength(ECPGresult, act_tuple, index));
 				}
-				break;
-
-			case ECPGd_cardinality:
-				if (!get_int_item(lineno, var, vartype, PQntuples(ECPGresult)))
-					return (false);
-
-				ECPGlog("ECPGget_desc: CARDINALITY = %d\n", PQntuples(ECPGresult));
 				break;
 
 			default:
@@ -330,18 +321,45 @@ ECPGget_desc(int lineno, char *desc_name, int index,...)
 		type = va_arg(args, enum ECPGdtype);
 	}
 
-	if (Data_seen && !Indicator_seen)
+	if (data_var.type!=ECPGt_EORT)
 	{
+		struct statement stmt;
+		memset (&stmt, 0, sizeof stmt);
+		stmt.lineno=lineno;
+		/* desparate try to guess something sensible */
+		stmt.connection=ECPGget_connection(NULL);
+		ECPGstore_result(ECPGresult, index, &stmt, &data_var);
+	}
+	else if (data_var.ind_type!=ECPGt_NO_INDICATOR)
+	{
+		/*
+		 * this is like ECPGstore_result
+		 * but since we don't have a data variable at hand, we can't call it
+		 */
+		if (data_var.ind_arrsize > 0 && ntuples > data_var.ind_arrsize)
+		{
+			ECPGlog("ECPGget_desc line %d: Incorrect number of matches (indicator): %d don't fit into array of %d\n",
+					lineno, ntuples, data_var.ind_arrsize);
+			ECPGraise(lineno, ECPG_TOO_MANY_MATCHES, NULL);
+			return false;
+		}
+		/* allocate storage if needed */
+		if (data_var.ind_arrsize == 0 && data_var.ind_pointer != NULL && data_var.ind_value == NULL)
+		{
+			void *mem = (void *) ECPGalloc(data_var.ind_offset * ntuples, lineno);
+			*(void **)data_var.ind_pointer = mem;
+			ECPGadd_mem(mem, lineno);
+			data_var.ind_value = mem;
+		}
 		for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
 		{
-			if (PQgetisnull(ECPGresult, act_tuple, index))
-			{
-				ECPGraise(lineno, ECPG_MISSING_INDICATOR, NULL);
+			if (!get_int_item(lineno, data_var.ind_value, data_var.ind_type, -PQgetisnull(ECPGresult, act_tuple, index)))
 				return (false);
-			}
+			data_var.ind_value = (char *) data_var.ind_value + data_var.ind_offset;
+			ECPGlog("ECPGget_desc: INDICATOR[%d] = %d\n", act_tuple, -PQgetisnull(ECPGresult, act_tuple, index));
 		}
 	}
-
+	
 	return (true);
 }
 
@@ -369,10 +387,10 @@ ECPGdeallocate_desc(int line, const char *name)
 bool
 ECPGallocate_desc(int line, const char *name)
 {
-	struct descriptor *new = (struct descriptor *) ecpg_alloc(sizeof(struct descriptor), line);
+	struct descriptor *new = (struct descriptor *) ECPGalloc(sizeof(struct descriptor), line);
 
 	new->next = all_descriptors;
-	new->name = ecpg_alloc(strlen(name) + 1, line);
+	new->name = ECPGalloc(strlen(name) + 1, line);
 	new->result = PQmakeEmptyPGresult(NULL, 0);
 	strcpy(new->name, name);
 	all_descriptors = new;

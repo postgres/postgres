@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/memory.c,v 1.6 2001/10/05 17:37:07 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/memory.c,v 1.7 2001/11/14 11:11:49 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -8,7 +8,7 @@
 #include "extern.h"
 
 char *
-ecpg_alloc(long size, int lineno)
+ECPGalloc(long size, int lineno)
 {
 	char	   *new = (char *) calloc(1L, size);
 
@@ -23,7 +23,7 @@ ecpg_alloc(long size, int lineno)
 }
 
 char *
-ecpg_strdup(const char *string, int lineno)
+ECPGstrdup(const char *string, int lineno)
 {
 	char	   *new = strdup(string);
 

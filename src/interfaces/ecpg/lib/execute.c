@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.31 2001/11/05 17:46:37 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.32 2001/11/14 11:11:49 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -55,22 +55,6 @@ struct sqlca sqlca =
 	}
 };
 
-struct variable
-{
-	enum ECPGttype type;
-	void	   *value;
-	void	   *pointer;
-	long		varcharsize;
-	long		arrsize;
-	long		offset;
-	enum ECPGttype ind_type;
-	void	   *ind_value;
-	long		ind_varcharsize;
-	long		ind_arrsize;
-	long		ind_offset;
-	struct variable *next;
-};
-
 /* keep a list of memory we allocated for the user */
 static struct auto_mem
 {
@@ -78,17 +62,17 @@ static struct auto_mem
 	struct auto_mem *next;
 }	*auto_allocs = NULL;
 
-static void
-add_mem(void *ptr, int lineno)
+void
+ECPGadd_mem(void *ptr, int lineno)
 {
-	struct auto_mem *am = (struct auto_mem *) ecpg_alloc(sizeof(struct auto_mem), lineno);
-
+	struct auto_mem *am = (struct auto_mem *) ECPGalloc(sizeof(struct auto_mem), lineno);
+	am->pointer = ptr;
 	am->next = auto_allocs;
 	auto_allocs = am;
 }
 
 void
-free_auto_mem(void)
+ECPGfree_auto_mem(void)
 {
 	struct auto_mem *am;
 
@@ -112,7 +96,7 @@ static
 char *
 quote_postgres(char *arg, int lineno)
 {
-	char	   *res = (char *) ecpg_alloc(2 * strlen(arg) + 3, lineno);
+	char	   *res = (char *) ECPGalloc(2 * strlen(arg) + 3, lineno);
 	int			i,
 				ri = 0;
 
@@ -168,7 +152,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 	struct variable **list = &((*stmt)->inlist);
 	enum ECPGttype type;
 
-	if (!(*stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno)))
+	if (!(*stmt = (struct statement *) ECPGalloc(sizeof(struct statement), lineno)))
 		return false;
 
 	(*stmt)->command = query;
@@ -188,7 +172,7 @@ create_statement(int lineno, struct connection * connection, struct statement **
 			struct variable *var,
 					   *ptr;
 
-			if (!(var = (struct variable *) ecpg_alloc(sizeof(struct variable), lineno)))
+			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
 				return false;
 
 			var->type = type;
@@ -212,11 +196,17 @@ create_statement(int lineno, struct connection * connection, struct statement **
 				var->value = var->pointer;
 
 			var->ind_type = va_arg(ap, enum ECPGttype);
-			var->ind_value = va_arg(ap, void *);
+			var->ind_pointer = va_arg(ap, void *);
 			var->ind_varcharsize = va_arg(ap, long);
 			var->ind_arrsize = va_arg(ap, long);
 			var->ind_offset = va_arg(ap, long);
 			var->next = NULL;
+
+			if (var->ind_type!=ECPGt_NO_INDICATOR
+					&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
+				var->ind_value = *((void **) (var->ind_pointer));
+			else
+				var->ind_value = var->ind_pointer;
 
 			for (ptr = *list; ptr && ptr->next; ptr = ptr->next);
 
@@ -285,7 +275,7 @@ static void
 ECPGtypeinfocache_push(struct ECPGtype_information_cache ** cache, int oid, bool isarray, int lineno)
 {
 	struct ECPGtype_information_cache *new_entry
-	= (struct ECPGtype_information_cache *) ecpg_alloc(sizeof(struct ECPGtype_information_cache), lineno);
+	= (struct ECPGtype_information_cache *) ECPGalloc(sizeof(struct ECPGtype_information_cache), lineno);
 
 	new_entry->oid = oid;
 	new_entry->isarray = isarray;
@@ -347,6 +337,7 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), DATEOID, false, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMEOID, false, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMESTAMPOID, false, stmt->lineno);
+		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMESTAMPTZOID, false, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), INTERVALOID, false, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), TIMETZOID, false, stmt->lineno);
 		ECPGtypeinfocache_push(&(stmt->connection->cache_head), ZPBITOID, false, stmt->lineno);
@@ -360,7 +351,7 @@ ECPGis_type_an_array(int type, const struct statement * stmt, const struct varia
 			return cache_entry->isarray;
 	}
 
-	array_query = (char *) ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt->lineno);
+	array_query = (char *) ECPGalloc(strlen("select typelem from pg_type where oid=") + 11, stmt->lineno);
 	sprintf(array_query, "select typelem from pg_type where oid=%d", type);
 	query = PQexec(stmt->connection->connection, array_query);
 	free(array_query);
@@ -430,17 +421,33 @@ ECPGstore_result(const PGresult *results, int act_field,
 		{
 			case ECPGt_char:
 			case ECPGt_unsigned_char:
-				var->varcharsize = 0;
-				/* check strlen for each tuple */
-				for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+				if (!var->varcharsize && !var->arrsize)
 				{
-					int			len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+					/* special mode for handling char**foo=0 */
+					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+					{
+						len += strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+					}
+					len *= var->offset; /* should be 1, but YMNK */
+					len += (ntuples+1) * sizeof(char *);
 
-					if (len > var->varcharsize)
-						var->varcharsize = len;
+					ECPGlog("ECPGstore_result: line %d: allocating %d bytes for %d tuples (char**=0)",
+						stmt->lineno,len, ntuples);
 				}
-				var->offset *= var->varcharsize;
-				len = var->offset * ntuples;
+				else
+				{
+					var->varcharsize = 0;
+					/* check strlen for each tuple */
+					for (act_tuple = 0; act_tuple < ntuples; act_tuple++)
+					{
+						int	len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+
+						if (len > var->varcharsize)
+							var->varcharsize = len;
+					}
+					var->offset *= var->varcharsize;
+					len = var->offset * ntuples;
+				}
 				break;
 			case ECPGt_varchar:
 				len = ntuples * (var->varcharsize + sizeof(int));
@@ -449,17 +456,58 @@ ECPGstore_result(const PGresult *results, int act_field,
 				len = var->offset * ntuples;
 				break;
 		}
-		var->value = (void *) ecpg_alloc(len, stmt->lineno);
+		var->value = (void *) ECPGalloc(len, stmt->lineno);
 		*((void **) var->pointer) = var->value;
-		add_mem(var->value, stmt->lineno);
+		ECPGadd_mem(var->value, stmt->lineno);
 	}
-
-	for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
+	/* allocate indicator variable if needed */
+	if ((var->ind_arrsize == 0 || var->ind_varcharsize == 0) && var->ind_value == NULL && var->ind_pointer!=NULL)
 	{
-		if (!get_data(results, act_tuple, act_field, stmt->lineno,
-					  var->type, var->ind_type, var->value,
-				 var->ind_value, var->varcharsize, var->offset, isarray))
-			status = false;
+		int	len = var->ind_offset * ntuples;
+		var->ind_value = (void *) ECPGalloc(len, stmt->lineno);
+		*((void **) var->ind_pointer) = var->ind_value;
+		ECPGadd_mem(var->ind_value, stmt->lineno);
+	}
+	
+	/* fill the variable with the tuple(s) */
+
+	if (!var->varcharsize && !var->arrsize && 
+				(var->type==ECPGt_char || var->type==ECPGt_unsigned_char))
+	{
+		/* special mode for handling char**foo=0 */
+		
+		/* filling the array of (char*)s */
+		char **current_string = (char**) var->value;
+		/* storing the data (after the last array element) */
+		char *current_data_location = (char*) &current_string[ntuples+1];
+		
+		for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
+		{
+			int len = strlen(PQgetvalue(results, act_tuple, act_field)) + 1;
+			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
+						  var->type, var->ind_type, current_data_location,
+					 var->ind_value, len, 0, isarray))
+				status = false;
+			else
+			{
+				*current_string = current_data_location;
+				current_data_location += len;
+				current_string++;
+			}
+		}
+		
+		/* terminate the list */
+		*current_string = NULL;
+	}
+	else
+	{
+		for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
+		{
+			if (!ECPGget_data(results, act_tuple, act_field, stmt->lineno,
+						  var->type, var->ind_type, var->value,
+					 var->ind_value, var->varcharsize, var->offset, isarray))
+				status = false;
+		}
 	}
 	return status;
 }
@@ -515,7 +563,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				int			element;
 
 			case ECPGt_short:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -535,7 +583,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_int:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -555,7 +603,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_short:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -575,7 +623,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_int:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -595,7 +643,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_long:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -615,7 +663,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_long:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -635,7 +683,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 #ifdef HAVE_LONG_LONG_INT_64
 			case ECPGt_long_long:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 25, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -655,7 +703,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_unsigned_long_long:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 25, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 25, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -675,7 +723,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 			case ECPGt_float:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -695,7 +743,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_double:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -715,7 +763,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				break;
 
 			case ECPGt_bool:
-				if (!(mallocedval = ecpg_alloc(var->arrsize * 20, stmt->lineno)))
+				if (!(mallocedval = ECPGalloc(var->arrsize * 20, stmt->lineno)))
 					return false;
 
 				if (var->arrsize > 1)
@@ -758,7 +806,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					/* set slen to string length if type is char * */
 					int			slen = (var->varcharsize == 0) ? strlen((char *) var->value) : var->varcharsize;
 
-					if (!(newcopy = ecpg_alloc(slen + 1, stmt->lineno)))
+					if (!(newcopy = ECPGalloc(slen + 1, stmt->lineno)))
 						return false;
 
 					strncpy(newcopy, (char *) var->value, slen);
@@ -778,7 +826,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				{
 					int			slen = strlen((char *) var->value);
 
-					if (!(mallocedval = ecpg_alloc(slen + 1, stmt->lineno)))
+					if (!(mallocedval = ECPGalloc(slen + 1, stmt->lineno)))
 						return false;
 
 					strncpy(mallocedval, (char *) var->value, slen);
@@ -793,7 +841,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					struct ECPGgeneric_varchar *variable =
 					(struct ECPGgeneric_varchar *) (var->value);
 
-					if (!(newcopy = (char *) ecpg_alloc(variable->len + 1, stmt->lineno)))
+					if (!(newcopy = (char *) ECPGalloc(variable->len + 1, stmt->lineno)))
 						return false;
 
 					strncpy(newcopy, variable->arr, variable->len);
@@ -829,7 +877,7 @@ ECPGexecute(struct statement * stmt)
 	PGnotify   *notify;
 	struct variable *var;
 
-	copiedquery = ecpg_strdup(stmt->command, stmt->lineno);
+	copiedquery = ECPGstrdup(stmt->command, stmt->lineno);
 
 	/*
 	 * Now, if the type is one of the fill in types then we take the
@@ -853,7 +901,7 @@ ECPGexecute(struct statement * stmt)
 		 * Now tobeinserted points to an area that is to be inserted at
 		 * the first %s
 		 */
-		if (!(newcopy = (char *) ecpg_alloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
+		if (!(newcopy = (char *) ECPGalloc(strlen(copiedquery) + strlen(tobeinserted) + 1, stmt->lineno)))
 			return false;
 
 		strcpy(newcopy, copiedquery);
@@ -1054,7 +1102,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 {
 	va_list		args;
 	struct statement *stmt;
-	struct connection *con = get_connection(connection_name);
+	struct connection *con = ECPGget_connection(connection_name);
 	bool		status;
 	char	   *oldlocale;
 
@@ -1063,7 +1111,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	oldlocale = strdup(setlocale(LC_NUMERIC, NULL));
 	setlocale(LC_NUMERIC, "C");
 
-	if (!ecpg_init(con, connection_name, lineno))
+	if (!ECPGinit(con, connection_name, lineno))
 	{
 		setlocale(LC_NUMERIC, oldlocale);
 		free(oldlocale);

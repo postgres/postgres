@@ -3,14 +3,15 @@
 
 /* Here are some methods used by the lib. */
 /* Returns a pointer to a string containing a simple type name. */
-void		free_auto_mem(void);
-bool get_data(const PGresult *, int, int, int, enum ECPGttype type,
+void		ECPGadd_mem(void *ptr, int lineno);
+
+bool ECPGget_data(const PGresult *, int, int, int, enum ECPGttype type,
 		 enum ECPGttype, void *, void *, long, long, bool);
-struct connection *get_connection(const char *);
-void		init_sqlca(void);
-char	   *ecpg_alloc(long, int);
-bool		ecpg_init(const struct connection *, const char *, const int);
-char	   *ecpg_strdup(const char *, int);
+struct connection *ECPGget_connection(const char *);
+void		ECPGinit_sqlca(void);
+char	   *ECPGalloc(long, int);
+bool		ECPGinit(const struct connection *, const char *, const int);
+char	   *ECPGstrdup(const char *, int);
 const char *ECPGtype_name(enum ECPGttype);
 unsigned int ECPGDynamicType(Oid);
 
@@ -60,6 +61,23 @@ struct descriptor
 	char	   *name;
 	PGresult   *result;
 	struct descriptor *next;
+};
+
+struct variable
+{
+	enum ECPGttype type;
+	void	   *value;
+	void	   *pointer;
+	long		varcharsize;
+	long		arrsize;
+	long		offset;
+	enum ECPGttype ind_type;
+	void	   *ind_value;
+	void	   *ind_pointer;
+	long		ind_varcharsize;
+	long		ind_arrsize;
+	long		ind_offset;
+	struct variable *next;
 };
 
 PGresult  **
