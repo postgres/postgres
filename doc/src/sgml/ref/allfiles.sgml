@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.39 2002/04/25 21:47:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.40 2002/07/18 16:47:22 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -79,6 +79,7 @@ Complete list of usable sgml source files in this directory.
 <!entity dropLanguage       system "drop_language.sgml">
 <!entity dropOperator       system "drop_operator.sgml">
 <!entity dropRule           system "drop_rule.sgml">
+<!entity dropSchema         system "drop_schema.sgml">
 <!entity dropSequence       system "drop_sequence.sgml">
 <!entity dropTable          system "drop_table.sgml">
 <!entity dropTrigger        system "drop_trigger.sgml">

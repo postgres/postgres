@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.77 2002/07/16 22:12:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.78 2002/07/18 16:47:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,6 +267,12 @@ ProcedureCreate(const char *procedureName,
 	myself.classId = RelOid_pg_proc;
 	myself.objectId = retval;
 	myself.objectSubId = 0;
+
+	/* dependency on namespace */
+	referenced.classId = get_system_catalog_relid(NamespaceRelationName);
+	referenced.objectId = procNamespace;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
 	/* dependency on implementation language */
 	referenced.classId = get_system_catalog_relid(LanguageRelationName);

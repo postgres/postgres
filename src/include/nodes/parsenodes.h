@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.190 2002/07/18 04:43:51 momjian Exp $
+ * $Id: parsenodes.h,v 1.191 2002/07/18 16:47:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1136,7 +1136,7 @@ typedef struct CreateDomainStmt
 } CreateDomainStmt;
 
 /* ----------------------
- *		Drop Table|Sequence|View|Index|Type|Domain Statement
+ *		Drop Table|Sequence|View|Index|Type|Domain|Conversion|Schema Statement
  * ----------------------
  */
 
@@ -1147,6 +1147,7 @@ typedef struct CreateDomainStmt
 #define DROP_TYPE     5
 #define DROP_DOMAIN	  6
 #define DROP_CONVERSION	  7
+#define DROP_SCHEMA	  8
 
 typedef struct DropStmt
 {

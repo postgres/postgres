@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.28 2002/04/25 21:47:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.29 2002/07/18 16:47:22 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -88,6 +88,7 @@ PostgreSQL Reference Manual
    &dropLanguage;
    &dropOperator;
    &dropRule;
+   &dropSchema;
    &dropSequence;
    &dropTable;
    &dropTrigger;

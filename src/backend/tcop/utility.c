@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.162 2002/07/12 18:43:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.163 2002/07/18 16:47:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,11 +252,7 @@ ProcessUtility(Node *parsetree,
 			 * relation and attribute manipulation
 			 */
 		case T_CreateSchemaStmt:
-			{
-				CreateSchemaStmt  *stmt = (CreateSchemaStmt *) parsetree;
-
-				CreateSchemaCommand(stmt);
-			}
+			CreateSchemaCommand((CreateSchemaStmt *) parsetree);
 			break;
 
 		case T_CreateStmt:
@@ -322,17 +318,20 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case DROP_CONVERSION:
-							/* RemoveDomain does its own permissions checks */
+							/* does its own permissions checks */
 							DropConversionCommand(names);
+							break;
+
+						case DROP_SCHEMA:
+							/* RemoveSchema does its own permissions checks */
+							RemoveSchema(names, stmt->behavior);
 							break;
 					}
 
 					/*
-					 * Make sure subsequent loop iterations will see
-					 * results of this one; needed if removing multiple
-					 * rules for same table, for example.
+					 * We used to need to do CommandCounterIncrement()
+					 * here, but now it's done inside performDeletion().
 					 */
-					CommandCounterIncrement();
 				}
 			}
 			break;

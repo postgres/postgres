@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.184 2002/07/16 05:53:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.185 2002/07/18 16:47:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -669,6 +669,9 @@ index_create(Oid heapRelationId,
 	 * entry.  The index is then linked to the constraint, which in turn is
 	 * linked to the table.  If it's not a CONSTRAINT, make the dependency
 	 * directly on the table.
+	 *
+	 * We don't need a dependency on the namespace, because there'll be
+	 * an indirect dependency via our parent table.
 	 *
 	 * During bootstrap we can't register any dependencies, and we don't
 	 * try to make a constraint either.

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.344 2002/07/18 04:43:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.345 2002/07/18 16:47:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -132,7 +132,7 @@ static void doNegateFloat(Value *v);
 }
 
 %type <node>	stmt, schema_stmt,
-		AlterDatabaseSetStmt, AlterGroupStmt, AlterSchemaStmt,
+		AlterDatabaseSetStmt, AlterGroupStmt,
 		AlterTableStmt, AlterUserStmt, AlterUserSetStmt,
 		AnalyzeStmt, ClosePortalStmt, ClusterStmt, CommentStmt,
 		ConstraintsSetStmt, CopyStmt, CreateAsStmt,
@@ -140,7 +140,7 @@ static void doNegateFloat(Value *v);
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt,
 		CreateAssertStmt, CreateTrigStmt, CreateUserStmt,
 		CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
-		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt,
+		DropGroupStmt, DropPLangStmt, DropStmt,
 		DropAssertStmt, DropTrigStmt, DropRuleStmt,
 		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt,
@@ -468,7 +468,6 @@ stmtmulti:	stmtmulti ';' stmt
 stmt :
 			AlterDatabaseSetStmt
 			| AlterGroupStmt
-			| AlterSchemaStmt
 			| AlterTableStmt
 			| AlterUserStmt
 			| AlterUserSetStmt
@@ -488,7 +487,6 @@ stmt :
 			| ClusterStmt
 			| DefineStmt
 			| DropStmt
-			| DropSchemaStmt
 			| TruncateStmt
 			| CommentStmt
 			| DropGroupStmt
@@ -746,7 +744,6 @@ DropGroupStmt:
  *
  * Manipulate a schema
  *
- *
  *****************************************************************************/
 
 CreateSchemaStmt:
@@ -770,20 +767,6 @@ CreateSchemaStmt:
 					n->authid = NULL;
 					n->schemaElts = $4;
 					$$ = (Node *)n;
-				}
-		;
-
-AlterSchemaStmt:
-			ALTER SCHEMA ColId
-				{
-					elog(ERROR, "ALTER SCHEMA not yet supported");
-				}
-		;
-
-DropSchemaStmt:
-			DROP SCHEMA ColId opt_drop_behavior
-				{
-					elog(ERROR, "DROP SCHEMA not yet supported");
 				}
 		;
 
@@ -2306,6 +2289,7 @@ drop_type:	TABLE									{ $$ = DROP_TABLE; }
 			| TYPE_P								{ $$ = DROP_TYPE; }
 			| DOMAIN_P								{ $$ = DROP_DOMAIN; }
 			| CONVERSION_P							{ $$ = DROP_CONVERSION; }
+			| SCHEMA								{ $$ = DROP_SCHEMA; }
 		;
 
 any_name_list:

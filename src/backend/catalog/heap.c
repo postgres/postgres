@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.209 2002/07/16 22:12:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.210 2002/07/18 16:47:22 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -741,6 +741,25 @@ heap_create_with_catalog(const char *relname,
 	 */
 	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att,
 						  relhasoids, relkind);
+
+	/*
+	 * make a dependency link to force the relation to be deleted if
+	 * its namespace is.  Skip this in bootstrap mode, since we don't
+	 * make dependencies while bootstrapping.
+	 */
+	if (!IsBootstrapProcessingMode())
+	{
+		ObjectAddress	myself,
+						referenced;
+
+		myself.classId = RelOid_pg_class;
+		myself.objectId = new_rel_oid;
+		myself.objectSubId = 0;
+		referenced.classId = get_system_catalog_relid(NamespaceRelationName);
+		referenced.objectId = relnamespace;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	/*
 	 * store constraints and defaults passed in the tupdesc, if any.

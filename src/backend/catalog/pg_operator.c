@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.71 2002/07/16 22:12:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.72 2002/07/18 16:47:23 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -907,7 +907,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
  * Create dependencies for a new operator (either a freshly inserted
  * complete operator, a new shell operator, or a just-updated shell).
  *
- * NB: the OidIsValid tests in this routine are *all* necessary, in case
+ * NB: the OidIsValid tests in this routine are necessary, in case
  * the given operator is a shell.
  */
 static void
@@ -923,6 +923,15 @@ makeOperatorDependencies(HeapTuple tuple, Oid pg_operator_relid)
 
 	/* In case we are updating a shell, delete any existing entries */
 	deleteDependencyRecordsFor(myself.classId, myself.objectId);
+
+	/* Dependency on namespace */
+	if (OidIsValid(oper->oprnamespace))
+	{
+		referenced.classId = get_system_catalog_relid(NamespaceRelationName);
+		referenced.objectId = oper->oprnamespace;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
 
 	/* Dependency on left type */
 	if (OidIsValid(oper->oprleft))

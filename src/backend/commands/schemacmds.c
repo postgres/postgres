@@ -1,20 +1,23 @@
 /*-------------------------------------------------------------------------
  *
  * schemacmds.c
- *	  schema creation command support code
+ *	  schema creation/manipulation commands
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.4 2002/06/11 13:40:50 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.5 2002/07/18 16:47:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/catname.h"
+#include "catalog/dependency.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
 #include "commands/schemacmds.h"
@@ -23,6 +26,7 @@
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 
 
 /*
@@ -138,4 +142,71 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 
 	/* Reset current user */
 	SetUserId(saved_userid);
+}
+
+
+/*
+ *	RemoveSchema
+ *		Removes a schema.
+ */
+void
+RemoveSchema(List *names, DropBehavior behavior)
+{
+	char	   *namespaceName;
+	Oid			namespaceId;
+	ObjectAddress object;
+
+	if (length(names) != 1)
+		elog(ERROR, "Schema name may not be qualified");
+	namespaceName = strVal(lfirst(names));
+
+	namespaceId = GetSysCacheOid(NAMESPACENAME,
+								 CStringGetDatum(namespaceName),
+								 0, 0, 0);
+	if (!OidIsValid(namespaceId))
+		elog(ERROR, "Schema \"%s\" does not exist", namespaceName);
+
+	/* Permission check */
+	if (!pg_namespace_ownercheck(namespaceId, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, namespaceName);
+
+	/*
+	 * Do the deletion.  Objects contained in the schema are removed
+	 * by means of their dependency links to the schema.
+	 *
+	 * XXX currently, index opclasses don't have creation/deletion
+	 * commands, so they will not get removed when the containing
+	 * schema is removed.  This is annoying but not fatal.
+	 */
+	object.classId = get_system_catalog_relid(NamespaceRelationName);
+	object.objectId = namespaceId;
+	object.objectSubId = 0;
+
+	performDeletion(&object, behavior);
+}
+
+
+/*
+ * Guts of schema deletion.
+ */
+void
+RemoveSchemaById(Oid schemaOid)
+{
+	Relation	relation;
+	HeapTuple	tup;
+
+	relation = heap_openr(NamespaceRelationName, RowExclusiveLock);
+
+	tup = SearchSysCache(NAMESPACEOID,
+						 ObjectIdGetDatum(schemaOid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "RemoveSchemaById: schema %u not found",
+			 schemaOid);
+
+	simple_heap_delete(relation, &tup->t_self);
+
+	ReleaseSysCache(tup);
+
+	heap_close(relation, RowExclusiveLock);
 }

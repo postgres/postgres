@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.3 2002/07/16 05:53:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.4 2002/07/18 16:47:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,12 +25,14 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
 #include "catalog/pg_language.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/defrem.h"
 #include "commands/proclang.h"
+#include "commands/schemacmds.h"
 #include "commands/trigger.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
@@ -54,6 +56,7 @@ typedef enum ObjectClasses
 	OCLASS_OPERATOR,			/* pg_operator */
 	OCLASS_REWRITE,				/* pg_rewrite */
 	OCLASS_TRIGGER,				/* pg_trigger */
+	OCLASS_SCHEMA,				/* pg_namespace */
 	MAX_OCLASS					/* MUST BE LAST */
 } ObjectClasses;
 
@@ -597,6 +600,10 @@ doDeletion(const ObjectAddress *object)
 			RemoveTriggerById(object->objectId);
 			break;
 
+		case OCLASS_SCHEMA:
+			RemoveSchemaById(object->objectId);
+			break;
+
 		default:
 			elog(ERROR, "doDeletion: Unsupported object class %u",
 				 object->classId);
@@ -981,6 +988,7 @@ init_object_classes(void)
 	object_classes[OCLASS_OPERATOR] = get_system_catalog_relid(OperatorRelationName);
 	object_classes[OCLASS_REWRITE] = get_system_catalog_relid(RewriteRelationName);
 	object_classes[OCLASS_TRIGGER] = get_system_catalog_relid(TriggerRelationName);
+	object_classes[OCLASS_SCHEMA] = get_system_catalog_relid(NamespaceRelationName);
 	object_classes_initialized = true;
 }
 
@@ -1044,6 +1052,11 @@ getObjectClass(const ObjectAddress *object)
 	{
 		Assert(object->objectSubId == 0);
 		return OCLASS_TRIGGER;
+	}
+	if (object->classId == object_classes[OCLASS_SCHEMA])
+	{
+		Assert(object->objectSubId == 0);
+		return OCLASS_SCHEMA;
 	}
 
 	elog(ERROR, "getObjectClass: Unknown object class %u",
@@ -1262,6 +1275,22 @@ getObjectDescription(const ObjectAddress *object)
 
 			systable_endscan(tgscan);
 			heap_close(trigDesc, AccessShareLock);
+			break;
+		}
+
+		case OCLASS_SCHEMA:
+		{
+			HeapTuple		schemaTup;
+
+			schemaTup = SearchSysCache(NAMESPACEOID,
+									   ObjectIdGetDatum(object->objectId),
+									   0, 0, 0);
+			if (!HeapTupleIsValid(schemaTup))
+				elog(ERROR, "getObjectDescription: Schema %u does not exist",
+					 object->objectId);
+			appendStringInfo(&buffer, "schema %s",
+							 NameStr(((Form_pg_namespace) GETSTRUCT(schemaTup))->nspname));
+			ReleaseSysCache(schemaTup);
 			break;
 		}
 
