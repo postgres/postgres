@@ -15,7 +15,7 @@
  *	use header files that are otherwise internal to Postgres to interface
  *	with the backend.
  *
- * $Id: postgres_ext.h,v 1.12 2003/03/18 17:21:07 momjian Exp $
+ * $Id: postgres_ext.h,v 1.13 2003/08/27 00:33:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,5 +46,22 @@ typedef unsigned int Oid;
  * NOTE that databases with different NAMEDATALEN's cannot interoperate!
  */
 #define NAMEDATALEN 64
+
+
+/*
+ * Identifiers of error message fields.  Kept here to keep common
+ * between frontend and backend, and also to export them to libpq
+ * applications.
+ */
+#define PG_DIAG_SEVERITY		'S'
+#define PG_DIAG_SQLSTATE		'C'
+#define PG_DIAG_MESSAGE_PRIMARY	'M'
+#define PG_DIAG_MESSAGE_DETAIL	'D'
+#define PG_DIAG_MESSAGE_HINT	'H'
+#define PG_DIAG_STATEMENT_POSITION 'P'
+#define PG_DIAG_CONTEXT			'W'
+#define PG_DIAG_SOURCE_FILE		'F'
+#define PG_DIAG_SOURCE_LINE		'L'
+#define PG_DIAG_SOURCE_FUNCTION	'R'
 
 #endif

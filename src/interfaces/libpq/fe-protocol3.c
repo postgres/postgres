@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.8 2003/08/13 18:56:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.9 2003/08/27 00:33:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -614,19 +614,19 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	 * Now build the "overall" error message for PQresultErrorMessage.
 	 */
 	resetPQExpBuffer(&workBuf);
-	val = PQresultErrorField(res, 'S'); /* Severity */
+	val = PQresultErrorField(res, PG_DIAG_SEVERITY);
 	if (val)
 		appendPQExpBuffer(&workBuf, "%s:  ", val);
 	if (conn->verbosity == PQERRORS_VERBOSE)
 	{
-		val = PQresultErrorField(res, 'C');		/* SQLSTATE Code */
+		val = PQresultErrorField(res, PG_DIAG_SQLSTATE);
 		if (val)
 			appendPQExpBuffer(&workBuf, "%s: ", val);
 	}
-	val = PQresultErrorField(res, 'M'); /* Primary message */
+	val = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
 	if (val)
 		appendPQExpBufferStr(&workBuf, val);
-	val = PQresultErrorField(res, 'P'); /* Position */
+	val = PQresultErrorField(res, PG_DIAG_STATEMENT_POSITION);
 	if (val)
 	{
 		/* translator: %s represents a digit string */
@@ -635,13 +635,13 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	appendPQExpBufferChar(&workBuf, '\n');
 	if (conn->verbosity != PQERRORS_TERSE)
 	{
-		val = PQresultErrorField(res, 'D');		/* Detail */
+		val = PQresultErrorField(res, PG_DIAG_MESSAGE_DETAIL);
 		if (val)
 			appendPQExpBuffer(&workBuf, libpq_gettext("DETAIL:  %s\n"), val);
-		val = PQresultErrorField(res, 'H');		/* Hint */
+		val = PQresultErrorField(res, PG_DIAG_MESSAGE_HINT);
 		if (val)
 			appendPQExpBuffer(&workBuf, libpq_gettext("HINT:  %s\n"), val);
-		val = PQresultErrorField(res, 'W');		/* Where */
+		val = PQresultErrorField(res, PG_DIAG_CONTEXT);
 		if (val)
 			appendPQExpBuffer(&workBuf, libpq_gettext("CONTEXT:  %s\n"), val);
 	}
@@ -650,9 +650,9 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 		const char *valf;
 		const char *vall;
 
-		valf = PQresultErrorField(res, 'F');	/* File */
-		vall = PQresultErrorField(res, 'L');	/* Line */
-		val = PQresultErrorField(res, 'R');		/* Routine */
+		valf = PQresultErrorField(res, PG_DIAG_SOURCE_FILE);
+		vall = PQresultErrorField(res, PG_DIAG_SOURCE_LINE);
+		val = PQresultErrorField(res, PG_DIAG_SOURCE_FUNCTION);
 		if (val || valf || vall)
 		{
 			appendPQExpBufferStr(&workBuf, libpq_gettext("LOCATION:  "));

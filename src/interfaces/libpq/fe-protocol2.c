@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.6 2003/08/04 02:40:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.7 2003/08/27 00:33:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -828,7 +828,7 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	{
 		/* what comes before the colon is severity */
 		*splitp = '\0';
-		pqSaveMessageField(res, 'S', workBuf.data);
+		pqSaveMessageField(res, PG_DIAG_SEVERITY, workBuf.data);
 		startp = splitp + 3;
 	}
 	else
@@ -841,16 +841,16 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	{
 		/* what comes before the newline is primary message */
 		*splitp++ = '\0';
-		pqSaveMessageField(res, 'M', startp);
+		pqSaveMessageField(res, PG_DIAG_MESSAGE_PRIMARY, startp);
 		/* the rest is detail; strip any leading whitespace */
 		while (*splitp && isspace((unsigned char) *splitp))
 			splitp++;
-		pqSaveMessageField(res, 'D', splitp);
+		pqSaveMessageField(res, PG_DIAG_MESSAGE_DETAIL, splitp);
 	}
 	else
 	{
 		/* single-line message, so all primary */
-		pqSaveMessageField(res, 'M', startp);
+		pqSaveMessageField(res, PG_DIAG_MESSAGE_PRIMARY, startp);
 	}
 
 	/*
