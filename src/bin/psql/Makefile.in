@@ -1,0 +1,60 @@
+#-------------------------------------------------------------------------
+#
+# Makefile.inc--
+#    Makefile for bin/psql
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.1 1997/01/24 02:35:27 scrappy Exp $
+#
+#-------------------------------------------------------------------------
+
+SRCDIR= ../..
+include ../../Makefile.global
+
+INCLUDE_OPT:= -I$(LIBPQDIR) \
+              -I../../include 
+
+CFLAGS+= $(INCLUDE_OPT)
+
+LD_ADD+= @READLINE_LIB@ @HISTORY_LIB@ @CURSES_LIB@ @TERMCAP_LIB@
+
+OBJS= psql.o stringutils.o 
+
+ifneq ($(USE_READLINE), true)
+OBJS+= rlstubs.o
+endif
+
+ifeq ($(PORTNAME), ultrix4)
+OBJS+= ../../utils/strdup.o
+endif
+
+all: submake psql
+
+psql: $(OBJS) $(LIBPQDIR)/libpq.a
+	$(CC) $(LDFLAGS) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+
+../../utils/strdup.o:
+	$(MAKE) -C ../../utils strdup.o
+
+.PHONY: submake
+submake:
+	$(MAKE) -C $(LIBPQDIR) libpq.a
+
+install: psql
+	$(INSTALL) $(INSTL_EXE_OPTS) psql $(DESTDIR)$(BINDIR)/psql
+
+depend dep:
+	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+
+clean: 
+	rm -f psql $(OBJS) 
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif
+
+
+
