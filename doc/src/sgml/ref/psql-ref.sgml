@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.48 2001/05/06 17:21:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.49 2001/05/06 17:38:31 petere Exp $
 Postgres documentation
 -->
 
@@ -1292,6 +1292,12 @@ Access permissions for database "test"
       After the file is processed, <application>psql</application> terminates.
       This is in many ways equivalent to the internal command <command>\i</command>.
       </para>
+
+      <para>
+       If <replaceable>filename</replaceable> is <literal>-</literal>
+       (hyphen), then standard input is read.
+      </para>
+
       <para>
       Using this option is subtly different from writing
       <literal>psql &lt; <replaceable class="parameter">filename</replaceable></literal>.

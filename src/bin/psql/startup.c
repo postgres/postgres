@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.46 2001/03/23 00:36:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.47 2001/05/06 17:38:32 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -230,7 +230,7 @@ main(int argc, char *argv[])
 	/*
 	 * process file given by -f
 	 */
-	if (options.action == ACT_FILE)
+	if (options.action == ACT_FILE && strcmp(options.action_string, "-")!=0)
 	{
 		if (!options.no_psqlrc)
 			process_psqlrc();
@@ -290,6 +290,8 @@ main(int argc, char *argv[])
 			process_psqlrc();
 		if (!pset.notty)
 			initializeInput(options.no_readline ? 0 : 1);
+		if (options.action_string) /* -f - was used */
+			pset.inputfile = "<stdin>";
 		successResult = MainLoop(stdin);
 	}
 
