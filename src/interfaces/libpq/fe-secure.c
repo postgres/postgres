@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.15.2.6 2003/08/04 17:25:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-secure.c,v 1.15.2.7 2003/08/22 21:57:44 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -269,6 +269,9 @@ pqsecure_read(PGconn *conn, void *ptr, size_t len)
 			case SSL_ERROR_NONE:
 				break;
 			case SSL_ERROR_WANT_READ:
+				/* WANT_READ simply means no data available */
+				n = 0;
+				break;
 			case SSL_ERROR_WANT_WRITE:
 				/* XXX to support nonblock I/O, we should return 0 here */
 				goto rloop;
