@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.15 2002/10/21 20:34:09 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.16 2003/04/07 01:29:25 petere Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -17,11 +17,18 @@
   <literal>createlang plpython <replaceable>dbname</></literal>.
  </para>
 
+  <tip>
+   <para>
+    If a language is installed into <literal>template1</>, all subsequently
+    created databases will have the language installed automatically.
+   </para>
+  </tip>
+
  <note>
   <para>
    Users of source packages must specially enable the build of
-   PL/Python during the installation process (refer to the
-   installation instructions for more information).  Users of binary
+   PL/Python during the installation process.  (Refer to the
+   installation instructions for more information.)  Users of binary
    packages might find PL/Python in a separate subpackage.
   </para>
  </note>
@@ -30,11 +37,11 @@
   <title>PL/Python Functions</title>
 
   <para>
-   The Python code you write gets transformed into a function.  E.g.,
+   The Python code you write gets transformed into a Python function.  E.g.,
 <programlisting>
 CREATE FUNCTION myfunc(text) RETURNS text
     AS 'return args[0]'
-    LANGUAGE 'plpython';
+    LANGUAGE plpython;
 </programlisting>
 
    gets transformed into
@@ -49,7 +56,7 @@ def __plpython_procedure_myfunc_23456():
 
   <para>
    If you do not provide a return value, Python returns the default
-   <symbol>None</symbol> which may or may not be what you want.  The
+   <symbol>None</symbol>. The
    language module translates Python's <symbol>None</symbol> into the
    SQL null value.
   </para>
@@ -60,8 +67,8 @@ def __plpython_procedure_myfunc_23456():
    <function>myfunc</function> example, <varname>args[0]</> contains
    whatever was passed in as the text argument.  For
    <literal>myfunc2(text, integer)</literal>, <varname>args[0]</>
-   would contain the <type>text</type> variable and
-   <varname>args[1]</varname> the <type>integer</type> variable.
+   would contain the <type>text</type> argument and
+   <varname>args[1]</varname> the <type>integer</type> argument.
   </para>
 
   <para>
@@ -95,14 +102,14 @@ def __plpython_procedure_myfunc_23456():
    <literal>TD["level"]</> contains one of <literal>ROW</>,
    <literal>STATEMENT</>, and <literal>UNKNOWN</>.
    <literal>TD["name"]</> contains the trigger name, and
-   <literal>TD["relid"]</> contains the relation ID of the table on
+   <literal>TD["relid"]</> contains the OID of the table on
    which the trigger occurred.  If the trigger was called with
    arguments they are available in <literal>TD["args"][0]</> to
    <literal>TD["args"][(n-1)]</>.
   </para>
 
   <para>
-   If the <literal>TD["when"]</literal> is <literal>BEFORE</>, you may
+   If <literal>TD["when"]</literal> is <literal>BEFORE</>, you may
    return <literal>None</literal> or <literal>"OK"</literal> from the
    Python function to indicate the row is unmodified,
    <literal>"SKIP"</> to abort the event, or <literal>"MODIFY"</> to
@@ -147,10 +154,10 @@ def __plpython_procedure_myfunc_23456():
    optional limit argument causes that query to be run and the result
    to be returned in a result object.  The result object emulates a
    list or dictionary object.  The result object can be accessed by
-   row number and field name.  It has these additional methods:
-   <function>nrows()</function> which returns the number of rows
+   row number and column name.  It has these additional methods:
+   <function>nrows</function> which returns the number of rows
    returned by the query, and <function>status</function> which is the
-   <function>SPI_exec</function> return variable.  The result object
+   <function>SPI_exec()</function> return value.  The result object
    can be modified.
   </para>
 
@@ -161,27 +168,27 @@ rv = plpy.execute("SELECT * FROM my_table", 5)
 </programlisting>
    returns up to 5 rows from <literal>my_table</literal>.  If
    <literal>my_table</literal> has a column
-   <literal>my_field</literal>, it would be accessed as
+   <literal>my_column</literal>, it would be accessed as
 <programlisting>
-foo = rv[i]["my_field"]
+foo = rv[i]["my_column"]
 </programlisting>
   </para>
 
   <para>
-   The second function <function>plpy.prepare</function> is called
-   with a query string and a list of argument types if you have bind
-   variables in the query.  For example:
+   The second function, <function>plpy.prepare</function>, prepares the
+   execution plan for a query.  It is called with a query string and a
+   list of parameter types, if you have parameter references in the
+   query.  For example:
 <programlisting>
 plan = plpy.prepare("SELECT last_name FROM my_users WHERE first_name = $1", [ "text" ])
 </programlisting>
    <literal>text</literal> is the type of the variable you will be
-   passing as <literal>$1</literal>.  After preparing a statement, you
+   passing for <literal>$1</literal>.  After preparing a statement, you
    use the function <function>plpy.execute</function> to run it:
 <programlisting>
 rv = plpy.execute(plan, [ "name" ], 5)
 </programlisting>
-   The limit argument is optional in the call to
-   <function>plpy.execute</function>.
+   The third argument is the limit and is optional.
   </para>
 
   <para>
@@ -190,7 +197,7 @@ rv = plpy.execute(plan, [ "name" ], 5)
    in the immediate termination of that function by the server; it is
    not possible to trap error conditions using Python <literal>try
    ... catch</literal> constructs.  For example, a syntax error in an
-   SQL statement passed to the <literal>plpy.execute()</literal> call
+   SQL statement passed to the <literal>plpy.execute</literal> call
    will terminate the function.  This behavior may be changed in a
    future release.
   </para>
@@ -199,22 +206,19 @@ rv = plpy.execute(plan, [ "name" ], 5)
    When you prepare a plan using the PL/Python module it is
    automatically saved.  Read the SPI documentation (<xref
    linkend="spi">) for a description of what this means.
-  </para>
-
-  <para>
    In order to make effective use of this across function calls
    one needs to use one of the persistent storage dictionaries
-   <literal>SD</literal> or <literal>GD</literal>, see
-   <xref linkend="plpython-funcs">. For example:
+   <literal>SD</literal> or <literal>GD</literal> (see
+   <xref linkend="plpython-funcs">). For example:
 <programlisting>
-CREATE FUNCTION usesavedplan ( ) RETURNS TRIGGER AS '
-   if SD.has_key("plan"):
-      plan = SD["plan"]
-   else:
-      plan = plpy.prepare("SELECT 1")
-      SD["plan"] = plan
-   # rest of function
-' LANGUAGE 'plpython';
+CREATE FUNCTION usesavedplan() RETURNS trigger AS '
+    if SD.has_key("plan"):
+        plan = SD["plan"]
+    else:
+        plan = plpy.prepare("SELECT 1")
+        SD["plan"] = plan
+    # rest of function
+' LANGUAGE plpython;
 </programlisting>
   </para>
  </sect1>

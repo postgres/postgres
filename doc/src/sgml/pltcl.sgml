@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.22 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.23 2003/04/07 01:29:25 petere Exp $
 -->
 
  <chapter id="pltcl">
@@ -20,10 +20,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.22 2002/09/21 18:32:53 peter
    trigger procedures.
   </para>
 
-  <para>
-   This package was originally written by Jan Wieck.
-  </para>
-
   <!-- **** PL/Tcl overview **** -->
 
   <sect1 id="pltcl-overview">
@@ -38,19 +34,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.22 2002/09/21 18:32:53 peter
     Tcl interpreter. In addition to the limited command set of safe Tcl, only
     a few commands are available to access the database via SPI and to raise
     messages via <function>elog()</>. There is no way to access internals of the
-    database backend or to gain OS-level access under the permissions of the
-    <productname>PostgreSQL</productname> user ID, as a C function can do.
+    database server or to gain OS-level access under the permissions of the
+    <productname>PostgreSQL</productname> server process, as a C function can do.
     Thus, any unprivileged database user may be
     permitted to use this language.
    </para>
    <para>
-    The other, implementation restriction is that Tcl procedures cannot
+    The other, implementation restriction is that Tcl functions cannot
     be used to create input/output functions for new data types.
    </para>
    <para>
     Sometimes it is desirable to write Tcl functions that are not restricted
-    to safe Tcl --- for example, one might want a Tcl function that sends
-    mail.  To handle these cases, there is a variant of <application>PL/Tcl</> called <literal>PL/TclU</>
+    to safe Tcl.  For example, one might want a Tcl function that sends
+    email.  To handle these cases, there is a variant of <application>PL/Tcl</> called <literal>PL/TclU</>
     (for untrusted Tcl).  This is the exact same language except that a full
     Tcl interpreter is used.  <emphasis>If <application>PL/TclU</> is used, it must be
     installed as an untrusted procedural language</emphasis> so that only
@@ -66,7 +62,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.22 2002/09/21 18:32:53 peter
     library directory if Tcl/Tk support is specified
     in the configuration step of the installation procedure.  To install
     <application>PL/Tcl</> and/or <application>PL/TclU</> in a particular database, use the
-    <filename>createlang</filename> script, for example
+    <command>createlang</command> program, for example
     <literal>createlang pltcl <replaceable>dbname</></literal> or
     <literal>createlang pltclu <replaceable>dbname</></literal>.
    </para>
@@ -74,58 +70,59 @@ $Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.22 2002/09/21 18:32:53 peter
 
   <!-- **** PL/Tcl description **** -->
 
-  <sect1 id="pltcl-description">
-   <title>Description</title>
-
-   <sect2>
+   <sect1 id="pltcl-functions">
     <title>PL/Tcl Functions and Arguments</title>
 
     <para>
-     To create a function in the <application>PL/Tcl</> language, use the standard syntax
+     To create a function in the <application>PL/Tcl</> language, use the standard syntax:
 
-     <programlisting>
+<programlisting>
 CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types</replaceable>) RETURNS <replaceable>return-type</replaceable> AS '
     # PL/Tcl function body
-' LANGUAGE 'pltcl';
-     </programlisting>
+' LANGUAGE pltcl;
+</programlisting>
 
-     <application>PL/TclU</> is the same, except that the language should be specified as
+     <application>PL/TclU</> is the same, except that the language has to be specified as
      <literal>pltclu</>.
     </para>
 
     <para>
      The body of the function is simply a piece of Tcl script.
      When the function is called, the argument values are passed as
-     variables <literal>$1</literal> ... <literal>$n</literal> to the
+     variables <literal>$1</literal> ... <literal>$<replaceable>n</replaceable></literal> to the
      Tcl script.  The result is returned
      from the Tcl code in the usual way, with a <literal>return</literal>
-     statement.  For example, a function
+     statement.
+    </para>
+
+    <para>
+     For example, a function
      returning the greater of two integer values could be defined as:
 
-     <programlisting>
-CREATE FUNCTION tcl_max (integer, integer) RETURNS integer AS '
+<programlisting>
+CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS '
     if {$1 > $2} {return $1}
     return $2
-' LANGUAGE 'pltcl' WITH (isStrict);
-     </programlisting>
+' LANGUAGE pltcl STRICT;
+</programlisting>
 
-     Note the clause <literal>WITH (isStrict)</>, which saves us from
-     having to think about NULL input values: if a NULL is passed, the
-     function will not be called at all, but will just return a NULL
+     Note the clause <literal>STRICT</>, which saves us from
+     having to think about null input values: if a null value is passed, the
+     function will not be called at all, but will just return a null
      result automatically.
     </para>
 
     <para>
-     In a non-strict function,
-     if the actual value of an argument is NULL, the corresponding
-     <literal>$n</literal> variable will be set to an empty string.
-     To detect whether a particular argument is NULL, use the function
+     In a nonstrict function,
+     if the actual value of an argument is null, the corresponding
+     <literal>$<replaceable>n</replaceable></literal> variable will be set to an empty string.
+     To detect whether a particular argument is null, use the function
      <literal>argisnull</>.  For example, suppose that we wanted <function>tcl_max</function>
-     with one null and one non-null argument to return the non-null
-     argument, rather than NULL:
+     with one null and one nonnull argument to return the nonnull
+     argument, rather than null:
 
-     <programlisting>
-CREATE FUNCTION tcl_max (integer, integer) RETURNS integer AS '
+<programlisting>
+CREATE FUNCTION tcl_max(integer, integer) RETURNS integer AS '
     if {[argisnull 1]} {
         if {[argisnull 2]} { return_null }
         return $2
@@ -133,8 +130,8 @@ CREATE FUNCTION tcl_max (integer, integer) RETURNS integer AS '
     if {[argisnull 2]} { return $1 }
     if {$1 > $2} {return $1}
     return $2
-' LANGUAGE 'pltcl';
-     </programlisting>
+' LANGUAGE pltcl;
+</programlisting>
     </para>
 
     <para>
@@ -145,15 +142,19 @@ CREATE FUNCTION tcl_max (integer, integer) RETURNS integer AS '
     </para>
 
     <para>
-     Composite-type arguments are passed to the procedure as Tcl arrays.
-     The element names of the array are the attribute names of the composite
-     type. If an attribute in the passed row
-     has the NULL value, it will not appear in the array! Here is
-     an example that defines the overpaid_2 function (as found in the
-     older <productname>PostgreSQL</productname> documentation) in PL/Tcl:
+     Composite-type arguments are passed to the function as Tcl
+     arrays.  The element names of the array are the attribute names
+     of the composite type. If an attribute in the passed row has the
+     null value, it will not appear in the array. Here is an example:
 
-     <programlisting>
-CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
+<programlisting>
+CREATE TABLE employee (
+    name text,
+    salary integer,
+    age integer
+);
+
+CREATE FUNCTION overpaid(employee) RETURNS boolean AS '
     if {200000.0 < $1(salary)} {
         return "t"
     }
@@ -161,110 +162,109 @@ CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
         return "t"
     }
     return "f"
-' LANGUAGE 'pltcl';
-     </programlisting>
+' LANGUAGE pltcl;
+</programlisting>
     </para>
 
     <para>
-     There is not currently any support for returning a composite-type
+     There is currently no support for returning a composite-type
      result value.
     </para>
 
-   </sect2>
+   </sect1>
 
-   <sect2>
+   <sect1 id="pltcl-data">
     <title>Data Values in PL/Tcl</title>
 
     <para>
-     The argument values supplied to a PL/Tcl function's script are simply
+     The argument values supplied to a PL/Tcl function's code are simply
      the input arguments converted to text form (just as if they had been
-     displayed by a SELECT statement).  Conversely, the <literal>return</>
+     displayed by a <command>SELECT</> statement).  Conversely, the <literal>return</>
      command will accept any string that is acceptable input format for
      the function's declared return type.  So, the PL/Tcl programmer can
      manipulate data values as if they were just text.
     </para>
 
-   </sect2>
+   </sect1>
 
-   <sect2>
+   <sect1 id="pltcl-global">
     <title>Global Data in PL/Tcl</title>
 
     <para>
      Sometimes it
-     is useful to have some global status data that is held between two
-     calls to a procedure or is shared between different procedures.
+     is useful to have some global data that is held between two
+     calls to a function or is shared between different functions.
      This is easily done since
-     all PL/Tcl procedures executed in one backend share the same
+     all PL/Tcl functions executed in one session share the same
      safe Tcl interpreter.  So, any global Tcl variable is accessible to
-     all PL/Tcl procedure calls, and will persist for the duration of the
-     SQL client connection.  (Note that <application>PL/TclU</> functions likewise share
+     all PL/Tcl function calls and will persist for the duration of the
+     SQL session.  (Note that <application>PL/TclU</> functions likewise share
      global data, but they are in a different Tcl interpreter and cannot
      communicate with PL/Tcl functions.)
     </para>
     <para>
-     To help protect PL/Tcl procedures from unintentionally interfering
+     To help protect PL/Tcl functions from unintentionally interfering
      with each other, a global
-     array is made available to each procedure via the <function>upvar</>
-     command. The global name of this variable is the procedure's internal
-     name and the local name is <literal>GD</>.  It is recommended that
+     array is made available to each function via the <function>upvar</>
+     command. The global name of this variable is the function's internal
+     name, and the local name is <literal>GD</>.  It is recommended that
      <literal>GD</> be used
-     for private status data of a procedure.  Use regular Tcl global variables
+     for private data of a function.  Use regular Tcl global variables
      only for values that you specifically intend to be shared among multiple
-     procedures.
+     functions.
     </para>
 
     <para>
      An example of using <literal>GD</> appears in the
      <function>spi_execp</function> example below.
     </para>
-   </sect2>
+   </sect1>
 
-   <sect2>
+   <sect1 id="pltcl-dbaccess">
     <title>Database Access from PL/Tcl</title>
 
     <para>
      The following commands are available to access the database from
-     the body of a PL/Tcl procedure:
-    </para>
+     the body of a PL/Tcl function:
 
     <variablelist>
 
      <varlistentry>
-      <term><function>spi_exec</function> <literal>?-count <replaceable>n</replaceable>? ?-array <replaceable>name</replaceable>? <replaceable>query</replaceable> ?<replaceable>loop-body</replaceable>?</literal></term>
+      <term><function>spi_exec</function> <literal>?-count <replaceable>n</replaceable>? ?-array <replaceable>name</replaceable>? <replaceable>command</replaceable> ?<replaceable>loop-body</replaceable>?</literal></term>
       <listitem>
        <para>
-	Execute an SQL query given as a string.  An error in the query
-	causes an error to be raised.  Otherwise, the command's return value
+	Executes an SQL command given as a string.  An error in the command
+	causes an error to be raised.  Otherwise, the return value of <function>spi_exec</function>
 	is the number of rows processed (selected, inserted, updated, or
-	deleted) by the query, or zero if the query is a utility
-	statement.  In addition, if the query is a SELECT statement, the
+	deleted) by the command, or zero if the command is a utility
+	statement.  In addition, if the command is a <command>SELECT</> statement, the
 	values of the selected columns are placed in Tcl variables as
 	described below.
        </para>
        <para>
 	The optional <literal>-count</> value tells
 	<function>spi_exec</function> the maximum number of rows
-	to process in the query.  The effect of this is comparable to
-	setting up the query as a cursor and then saying <literal>FETCH n</>.
+	to process in the command.  The effect of this is comparable to
+	setting up a query as a cursor and then saying <literal>FETCH <replaceable>n</></>.
        </para>
        <para>
-	If the query is a <literal>SELECT</> statement, the values of the statement's
+	If the command is a <command>SELECT</> statement, the values of the
 	result columns are placed into Tcl variables named after the columns.
         If the <literal>-array</> option is given, the column values are
-	instead stored into the named associative array, with the SELECT
+	instead stored into the named associative array, with the
 	column names used as array indexes.
        </para>
        <para>
-        If the query is a SELECT statement and no <replaceable>loop-body</>
+        If the command is a <command>SELECT</> statement and no <replaceable>loop-body</>
 	script is given, then only the first row of results are stored into
-	Tcl variables; remaining rows, if any, are ignored.  No store occurs
+	Tcl variables; remaining rows, if any, are ignored.  No storing occurs
 	if the 
-	SELECT returns no rows (this case can be detected by checking the
-	result of <function>spi_exec</function>).  For example,
+	query returns no rows.  (This case can be detected by checking the
+	result of <function>spi_exec</function>.)  For example,
 
-	<programlisting>
+<programlisting>
 spi_exec "SELECT count(*) AS cnt FROM pg_proc"
-	</programlisting>
+</programlisting>
 
 	will set the Tcl variable <literal>$cnt</> to the number of rows in
 	the <structname>pg_proc</> system catalog.
@@ -272,23 +272,23 @@ spi_exec "SELECT count(*) AS cnt FROM pg_proc"
        <para>
         If the optional <replaceable>loop-body</> argument is given, it is
 	a piece of Tcl script that is executed once for each row in the
-	SELECT result (note: <replaceable>loop-body</> is ignored if the given
-	query is not a SELECT).  The values of the current row's fields
+	query result.  (<replaceable>loop-body</> is ignored if the given
+	command is not a <command>SELECT</>.)  The values of the current row's columns
 	are stored into Tcl variables before each iteration.  For example,
 
-	<programlisting>
+<programlisting>
 spi_exec -array C "SELECT * FROM pg_class" {
     elog DEBUG "have table $C(relname)"
 }
-	</programlisting>
+</programlisting>
 
-	will print a DEBUG log message for every row of pg_class.  This
+	will print a log message for every row of <literal>pg_class</>.  This
 	feature works similarly to other Tcl looping constructs; in
 	particular <literal>continue</> and <literal>break</> work in the
 	usual way inside the loop body.
        </para>
        <para>
-        If a field of a SELECT result is NULL, the target
+        If a column of a query result is null, the target
 	variable for it is <quote>unset</> rather than being set.
        </para>
       </listitem>
@@ -299,18 +299,18 @@ spi_exec -array C "SELECT * FROM pg_class" {
       <listitem>
        <para>
 	Prepares and saves a query plan for later execution.  The saved plan
-	will be retained for the life of the current backend.
+	will be retained for the life of the current session.
        </para>
        <para>
-        The query may use <firstterm>arguments</>, which are placeholders for
+        The query may use parameters, that is, placeholders for
 	values to be supplied whenever the plan is actually executed.
-	In the query string, refer to arguments
-	by the symbols <literal>$1</literal> ... <literal>$n</literal>.
-	If the query uses arguments, the names of the argument types
+	In the query string, refer to parameters
+	by the symbols <literal>$1</literal> ... <literal>$<replaceable>n</replaceable></literal>.
+	If the query uses parameters, the names of the parameter types
 	must be given as a Tcl list.  (Write an empty list for
-	<replaceable>typelist</replaceable> if no arguments are used.)
-	Presently, the argument types must be identified by the internal
-	type names shown in pg_type; for example <literal>int4</> not
+	<replaceable>typelist</replaceable> if no parameters are used.)
+	Presently, the parameter types must be identified by the internal
+	type names shown in the system table <literal>pg_type</>; for example <literal>int4</> not
 	<literal>integer</>.
        </para>
        <para>
@@ -325,24 +325,24 @@ spi_exec -array C "SELECT * FROM pg_class" {
       <term><function>spi_execp</> <literal>?-count <replaceable>n</replaceable>? ?-array <replaceable>name</replaceable>? ?-nulls <replaceable>string</replaceable>? <replaceable>queryid</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</literal></term>
       <listitem>
        <para>
-	Execute a query previously prepared with <function>spi_prepare</>.
+	Executes a query previously prepared with <function>spi_prepare</>.
 	<replaceable>queryid</replaceable> is the ID returned by
-	<function>spi_prepare</>.  If the query references arguments,
-	a <replaceable>value-list</replaceable> must be supplied: this
-	is a Tcl list of actual values for the arguments.  This must be
-	the same length as the argument type list previously given to
+	<function>spi_prepare</>.  If the query references parameters,
+	a <replaceable>value-list</replaceable> must be supplied.  This
+	is a Tcl list of actual values for the parameters.  The list must be
+	the same length as the parameter type list previously given to
 	<function>spi_prepare</>.  Omit <replaceable>value-list</replaceable>
-	if the query has no arguments.
+	if the query has no parameters.
        </para>
        <para>
 	The optional value for <literal>-nulls</> is a string of spaces and
 	<literal>'n'</> characters telling <function>spi_execp</function>
-	which of the arguments are null values. If given, it must have exactly the
+	which of the parameters are null values. If given, it must have exactly the
 	same length as the <replaceable>value-list</replaceable>.  If it
-	is not given, all the argument values are non-NULL.
+	is not given, all the parameter values are nonnull.
        </para>
        <para>
-        Except for the way in which the query and its arguments are specified,
+        Except for the way in which the query and its parameters are specified,
 	<function>spi_execp</> works just like <function>spi_exec</>.
         The <literal>-count</>, <literal>-array</>, and
 	<replaceable>loop-body</replaceable> options are the same,
@@ -351,7 +351,7 @@ spi_exec -array C "SELECT * FROM pg_class" {
        <para>
 	Here's an example of a PL/Tcl function using a prepared plan:
 
-	<programlisting>
+<programlisting>
 CREATE FUNCTION t1_count(integer, integer) RETURNS integer AS '
     if {![ info exists GD(plan) ]} {
         # prepare the saved plan on the first call
@@ -361,14 +361,14 @@ CREATE FUNCTION t1_count(integer, integer) RETURNS integer AS '
     }
     spi_execp -count 1 $GD(plan) [ list $1 $2 ]
     return $cnt
-' LANGUAGE 'pltcl';
-	</programlisting>
+' LANGUAGE pltcl;
+</programlisting>
 
 	Note that each backslash that Tcl should see must be doubled when
 	we type in the function, since the main parser processes
-	backslashes too in CREATE FUNCTION.  We need backslashes inside
+	backslashes, too, in <command>CREATE FUNCTION</>.  We need backslashes inside
 	the query string given to <function>spi_prepare</> to ensure that
-	the <literal>$n</> markers will be passed through to
+	the <literal>$<replaceable>n</replaceable></> markers will be passed through to
 	<function>spi_prepare</> as-is, and not
 	replaced by Tcl variable substitution.
        </para>
@@ -383,8 +383,8 @@ CREATE FUNCTION t1_count(integer, integer) RETURNS integer AS '
       <listitem>
        <para>
 	Returns the OID of the row inserted by the last
-	<function>spi_exec</>'d or <function>spi_execp</>'d query,
-	if that query was a single-row INSERT.  (If not, you get zero.)
+	<function>spi_exec</> or <function>spi_execp</>,
+	if the command was a single-row <command>INSERT</>.  (If not, you get zero.)
        </para>
       </listitem>
      </varlistentry>
@@ -395,18 +395,18 @@ CREATE FUNCTION t1_count(integer, integer) RETURNS integer AS '
        <para>
 	Duplicates all occurrences of single quote and backslash characters
 	in the given string.  This may be used to safely quote strings
-	that are to be inserted into SQL queries given
+	that are to be inserted into SQL commands given
 	to <function>spi_exec</function> or
 	<function>spi_prepare</function>.
-	For example, think about a query string like
+	For example, think about an SQL command string like
 
 <programlisting>
 "SELECT '$val' AS ret"
 </programlisting>
 
-	where the Tcl variable val actually contains
+	where the Tcl variable <literal>val</> actually contains
 	<literal>doesn't</literal>. This would result
-	in the final query string
+	in the final command string
 
 <programlisting>
 SELECT 'doesn't' AS ret
@@ -415,21 +415,21 @@ SELECT 'doesn't' AS ret
 	which would cause a parse error during
 	<function>spi_exec</function> or
 	<function>spi_prepare</function>.
-	The submitted query should contain
+	The submitted command should contain
 
 <programlisting>
 SELECT 'doesn''t' AS ret
 </programlisting>
 
-	which can be formed in PL/Tcl as
+	which can be formed in PL/Tcl using
 
 <programlisting>
 "SELECT '[ quote $val ]' AS ret"
 </programlisting>
 
         One advantage of <function>spi_execp</function> is that you don't
-	have to quote argument values like this, since the arguments are never
-	parsed as part of an SQL query string.
+	have to quote parameter values like this, since the parameters are never
+	parsed as part of an SQL command string.
        </para>
       </listitem>
      </varlistentry>
@@ -441,26 +441,27 @@ SELECT 'doesn''t' AS ret
       <term><function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
        <para>
-	Emit a log or error message. Possible levels are
+	Emits a log or error message. Possible levels are
 	<literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
 	<literal>NOTICE</>, <literal>WARNING</>, <literal>ERROR</>, and
 	<literal>FATAL</>. Most simply emit the given message just like
-	the <literal>elog</> backend C function. <literal>ERROR</>
+	the <literal>elog</> C function. <literal>ERROR</>
 	raises an error condition: further execution of the function is
 	abandoned, and the current transaction is aborted.
 	<literal>FATAL</> aborts the transaction and causes the current
-	backend to shut down (there is probably no good reason to use
+	session to shut down.  (There is probably no good reason to use
 	this error level in PL/Tcl functions, but it's provided for
-	completeness).
+	completeness.)
        </para>
       </listitem>
      </varlistentry>
 
     </variablelist>
+    </para>
 
-   </sect2>
+   </sect1>
 
-   <sect2>
+   <sect1 id="pltcl-trigger">
     <title>Trigger Procedures in PL/Tcl</title>
 
     <indexterm>
@@ -469,8 +470,8 @@ SELECT 'doesn''t' AS ret
     </indexterm>
 
     <para>
-     Trigger procedures can be written in PL/Tcl.  As is customary in
-     <productname>PostgreSQL</productname>, a procedure that's to be called
+     Trigger procedures can be written in PL/Tcl.
+     <productname>PostgreSQL</productname> requires that a procedure that is to be called
      as a trigger must be declared as a function with no arguments
      and a return type of <literal>trigger</>.
     </para>
@@ -481,16 +482,16 @@ SELECT 'doesn''t' AS ret
      <variablelist>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$TG_name</replaceable></term>
+       <term><varname>$TG_name</varname></term>
        <listitem>
 	<para>
-	 The name of the trigger from the CREATE TRIGGER statement.
+	 The name of the trigger from the <command>CREATE TRIGGER</command> statement.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$TG_relid</replaceable></term>
+       <term><varname>$TG_relid</varname></term>
        <listitem>
 	<para>
 	 The object ID of the table that caused the trigger procedure
@@ -500,20 +501,20 @@ SELECT 'doesn''t' AS ret
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$TG_relatts</replaceable></term>
+       <term><varname>$TG_relatts</varname></term>
        <listitem>
 	<para>
-	 A Tcl list of the table field names, prefixed with an empty list
-         element. So looking up an element name in the list with <application>Tcl</>'s
+	 A Tcl list of the table column names, prefixed with an empty list
+         element. So looking up a column name in the list with <application>Tcl</>'s
          <function>lsearch</> command returns the element's number starting
-	 with 1 for the first column, the same way the fields are customarily
+	 with 1 for the first column, the same way the columns are customarily
 	 numbered in <productname>PostgreSQL</productname>.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$TG_when</replaceable></term>
+       <term><varname>$TG_when</varname></term>
        <listitem>
 	<para>
 	 The string <literal>BEFORE</> or <literal>AFTER</> depending on the
@@ -523,7 +524,7 @@ SELECT 'doesn''t' AS ret
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$TG_level</replaceable></term>
+       <term><varname>$TG_level</varname></term>
        <listitem>
 	<para>
 	 The string <literal>ROW</> or <literal>STATEMENT</> depending on the
@@ -533,44 +534,46 @@ SELECT 'doesn''t' AS ret
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$TG_op</replaceable></term>
+       <term><varname>$TG_op</varname></term>
        <listitem>
 	<para>
-	 The string <literal>INSERT</>, <literal>UPDATE</> or
+	 The string <literal>INSERT</>, <literal>UPDATE</>, or
 	 <literal>DELETE</> depending on the type of trigger call.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$NEW</replaceable></term>
+       <term><varname>$NEW</varname></term>
        <listitem>
 	<para>
-	 An associative array containing the values of the new table row for
-	 INSERT/UPDATE actions, or empty for DELETE.  The array is indexed
-	 by field name.  Fields that are NULL will not appear in the array!
+	 An associative array containing the values of the new table
+	 row for <command>INSERT</> or <command>UPDATE</> actions, or
+	 empty for <command>DELETE</>.  The array is indexed by column
+	 name.  Columns that are null will not appear in the array.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$OLD</replaceable></term>
+       <term><varname>$OLD</varname></term>
        <listitem>
 	<para>
-	 An associative array containing the values of the old table row for
-	 UPDATE/DELETE actions, or empty for INSERT.  The array is indexed
-	 by field name.  Fields that are NULL will not appear in the array!
+	 An associative array containing the values of the old table
+	 row for <command>UPDATE</> or <command>DELETE</> actions, or
+	 empty for <command>INSERT</>.  The array is indexed by column
+	 name.  Columns that are null will not appear in the array.
 	</para>
        </listitem>
       </varlistentry>
 
       <varlistentry>
-       <term><replaceable class="Parameter">$args</replaceable></term>
+       <term><varname>$args</varname></term>
        <listitem>
 	<para>
 	 A Tcl list of the arguments to the procedure as given in the
-	 CREATE TRIGGER statement. These arguments are also accessible as
-	 <literal>$1</literal> ... <literal>$n</literal> in the procedure body.
+	 <command>CREATE TRIGGER</command> statement. These arguments are also accessible as
+	 <literal>$1</literal> ... <literal>$<replaceable>n</replaceable></literal> in the procedure body.
 	</para>
        </listitem>
       </varlistentry>
@@ -582,22 +585,22 @@ SELECT 'doesn''t' AS ret
      The return value from a trigger procedure can be one of the strings
      <literal>OK</> or <literal>SKIP</>, or a list as returned by the
      <literal>array get</> Tcl command. If the return value is <literal>OK</>,
-     the operation (INSERT/UPDATE/DELETE) that fired the trigger will proceed
+     the operation (<command>INSERT</>/<command>UPDATE</>/<command>DELETE</>) that fired the trigger will proceed
      normally. <literal>SKIP</> tells the trigger manager to silently suppress
      the operation for this row. If a list is returned, it tells PL/Tcl to
      return a modified row to the trigger manager that will be inserted
-     instead of the one given in $NEW (this works for INSERT/UPDATE
-     only). Needless to say that all this is only meaningful when the trigger
-     is BEFORE and FOR EACH ROW; otherwise the return value is ignored.
+     instead of the one given in <varname>$NEW</>.  (This works for <command>INSERT</> and <command>UPDATE</>
+     only.) Needless to say that all this is only meaningful when the trigger
+     is <literal>BEFORE</> and <command>FOR EACH ROW</>; otherwise the return value is ignored.
     </para>
     <para>
      Here's a little example trigger procedure that forces an integer value
      in a table to keep track of the number of updates that are performed on the
      row. For new rows inserted, the value is initialized to 0 and then
-     incremented on every update operation:
+     incremented on every update operation.
 
-     <programlisting>
-CREATE FUNCTION trigfunc_modcount() RETURNS TRIGGER AS '
+<programlisting>
+CREATE FUNCTION trigfunc_modcount() RETURNS trigger AS '
     switch $TG_op {
         INSERT {
             set NEW($1) 0
@@ -611,24 +614,24 @@ CREATE FUNCTION trigfunc_modcount() RETURNS TRIGGER AS '
         }
     }
     return [array get NEW]
-' LANGUAGE 'pltcl';
+' LANGUAGE pltcl;
 
 CREATE TABLE mytab (num integer, description text, modcnt integer);
 
 CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     FOR EACH ROW EXECUTE PROCEDURE trigfunc_modcount('modcnt');
-     </programlisting>
+</programlisting>
 
      Notice that the trigger procedure itself does not know the column
      name; that's supplied from the trigger arguments.  This lets the
-     trigger procedure be re-used with different tables.
+     trigger procedure be reused with different tables.
     </para>
-   </sect2>
+   </sect1>
 
-   <sect2>
-       <title> Modules and the <function>unknown</> command</title>
+   <sect1 id="pltcl-unknown">
+       <title>Modules and the <function>unknown</> command</title>
        <para>
-	PL/Tcl has support for auto-loading Tcl code when used.
+	PL/Tcl has support for autoloading Tcl code when used.
 	It recognizes a special table, <literal>pltcl_modules</>, which
 	is presumed to contain modules of Tcl code.  If this table
 	exists, the module <literal>unknown</> is fetched from the table
@@ -638,7 +641,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
        <para>
         While the <literal>unknown</> module could actually contain any
 	initialization script you need, it normally defines a Tcl
-	<quote>unknown</> procedure that is invoked whenever Tcl does
+	<function>unknown</> procedure that is invoked whenever Tcl does
 	not recognize an invoked procedure name.  <application>PL/Tcl</>'s standard version
 	of this procedure tries to find a module in <literal>pltcl_modules</>
 	that will define the required procedure.  If one is found, it is
@@ -653,7 +656,7 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
 	support scripts to maintain these tables:
 	<command>pltcl_loadmod</>, <command>pltcl_listmod</>,
 	<command>pltcl_delmod</>, as well as source for the standard
-	unknown module <filename>share/unknown.pltcl</>.  This module
+	<literal>unknown</> module in <filename>share/unknown.pltcl</>.  This module
 	must be loaded
 	into each database initially to support the autoloading mechanism.
        </para>
@@ -662,9 +665,9 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
 	must be readable by all, but it is wise to make them owned and
 	writable only by the database administrator.
        </para>
-   </sect2>
+   </sect1>
 
-   <sect2>
+   <sect1 id="pltcl-procnames">
     <title>Tcl Procedure Names</title>
 
     <para>
@@ -674,16 +677,14 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
      differ. Tcl, however, requires all procedure names to be distinct.
      PL/Tcl deals with this by making the internal Tcl procedure names contain
      the object 
-     ID of the procedure's <structname>pg_proc</> row as part of their name. Thus,
+     ID of the function from the system table <structname>pg_proc</> as part of their name. Thus,
      <productname>PostgreSQL</productname> functions with the same name
-     and different argument types will be different Tcl procedures too.  This
+     and different argument types will be different Tcl procedures, too.  This
      is not normally a concern for a PL/Tcl programmer, but it might be visible
      when debugging.
     </para>
 
-   </sect2>
-
-  </sect1>
+   </sect1>
  </chapter>
 
 <!-- Keep this comment at the end of the file

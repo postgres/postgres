@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.18 2002/09/21 18:32:53 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.19 2003/04/07 01:29:25 petere Exp $
 -->
 
  <chapter id="plperl">
@@ -34,8 +34,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/plperl.sgml,v 2.18 2002/09/21 18:32:53 pete
   <note>
    <para>
     Users of source packages must specially enable the build of
-    PL/Perl during the installation process (refer to the installation
-    instructions for more information).  Users of binary packages
+    PL/Perl during the installation process.  (Refer to the installation
+    instructions for more information.)  Users of binary packages
     might find PL/Perl in a separate subpackage.
    </para>
   </note>
@@ -57,8 +57,12 @@ CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types
    Arguments and results are handled as in any other Perl subroutine:
    Arguments are passed in <varname>@_</varname>, and a result value
    is returned with <literal>return</> or as the last expression
-   evaluated in the function.  For example, a function returning the
-   greater of two integer values could be defined as:
+   evaluated in the function.
+  </para>
+
+  <para>
+   For example, a function returning the greater of two integer values
+   could be defined as:
 
 <programlisting>
 CREATE FUNCTION perl_max (integer, integer) RETURNS integer AS '
@@ -145,7 +149,7 @@ SELECT name, empcomp(employee) FROM employee;
   <title>Data Values in PL/Perl</title>
 
   <para>
-   The argument values supplied to a PL/Perl function's script are
+   The argument values supplied to a PL/Perl function's code are
    simply the input arguments converted to text form (just as if they
    had been displayed by a <literal>SELECT</literal> statement).
    Conversely, the <literal>return</> command will accept any string
@@ -206,8 +210,8 @@ SELECT name, empcomp(employee) FROM employee;
    environment. This includes file handle operations,
    <literal>require</literal>, and <literal>use</literal> (for
    external modules).  There is no way to access internals of the
-   database backend process or to gain OS-level access with the
-   permissions of the <productname>PostgreSQL</productname> user ID,
+   database server process or to gain OS-level access with the
+   permissions of the server process,
    as a C function can do.  Thus, any unprivileged database user may
    be permitted to use this language.
   </para>
@@ -227,7 +231,7 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
 
   <para>
    Sometimes it is desirable to write Perl functions that are not
-   restricted --- for example, one might want a Perl function that
+   restricted.  For example, one might want a Perl function that
    sends mail.  To handle these cases, PL/Perl can also be installed
    as an <quote>untrusted</> language (usually called
    <application>PL/PerlU</application>).  In this case the full Perl language is
@@ -255,7 +259,7 @@ CREATE FUNCTION badfunc() RETURNS integer AS '
 
   <para>
    The following features are currently missing from PL/Perl, but they
-   would make welcome contributions:
+   would make welcome contributions.
 
    <itemizedlist>
     <listitem>

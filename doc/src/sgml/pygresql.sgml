@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.9 2002/12/12 22:49:27 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/pygresql.sgml,v 1.10 2003/04/07 01:29:25 petere Exp $ -->
 
 <chapter id="pygresql">
  <title><application>PyGreSQL</application> - <application>Python</application> Interface</title>
@@ -334,13 +334,10 @@ make && make install
   <acronym>API</acronym> at <ulink
   url="http://www.python.org/topics/database/DatabaseAPI-2.0.html"
   >http://www.python.org/topics/database/DatabaseAPI-2.0.html</ulink>.
- </para>
-
- <para>
   A tutorial-like introduction to the <acronym>DB-API</acronym> can be
   found at <ulink
   url="http://www2.linuxjournal.com/lj-issues/issue49/2605.html"
-  >http://www2.linuxjournal.com/lj-issues/issue49/2605.html</ulink>
+  >http://www2.linuxjournal.com/lj-issues/issue49/2605.html</ulink>.
  </para>
 
  <sect1 id="pygresql-pg">
@@ -365,16 +362,15 @@ make && make install
 
     <listitem>
      <para>
-      <classname>pgqueryobject</classname> that handles query results.
+      <classname>pgqueryobject</classname>, which handles query results.
      </para>
     </listitem>
    </itemizedlist>
   </para>
 
   <para>
-   If you want to see a simple example of the use of some of these
-   functions, see <ulink url="http://www.druid.net/rides"
-   >http://www.druid.net/rides</ulink> where you can find a link at the
+   If you want to see a simple example of the use this module,
+   see <ulink url="http://www.druid.net/rides"></ulink> where you can find a link at the
    bottom to the actual <application>Python</application> code for the
    page.
   </para>
@@ -395,9 +391,9 @@ make && make install
       <term><varname>INV_WRITE</varname></term>
       <listitem>
        <para>
-        large objects access modes, used by
+        Large objects access modes, used by
         <function>(pgobject.)locreate</function> and
-        <function>(pglarge.)open</function>.
+        <function>(pglarge.)open</function>
        </para>
       </listitem>
      </varlistentry>
@@ -408,7 +404,7 @@ make && make install
       <term><varname>SEEK_END</varname></term>
       <listitem>
        <para>
-        positional flags, used by <function>(pglarge.)seek</function>.
+        Positional flags, used by <function>(pglarge.)seek</function>
        </para>
       </listitem>
      </varlistentry>
@@ -418,7 +414,7 @@ make && make install
       <term><varname>__version__</varname></term>
       <listitem>
        <para>
-        constants that give the current version
+        Constants that give the current version
        </para>
       </listitem>
      </varlistentry>
@@ -443,13 +439,13 @@ make && make install
    to handle general connection parameters without heavy code in your
    programs. You can prompt the user for a value, put it in the
    default variable, and forget it, without having to modify your
-   environment. The support for default variables can be disabled by
+   environment. The support for default variables can be disabled at build time by
    setting the <option>-DNO_DEF_VAR</option> option in the Python
    <filename>Setup</> file. Methods relative to this are specified by the tag [DV].
   </para>
 
   <para>
-   All variables are set to <symbol>None</symbol> at module
+   All default values are set to <symbol>None</symbol> at module
    initialization, specifying that standard environment variables
    should be used.
   </para>
@@ -478,7 +474,7 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
        <term><parameter>dbname</parameter></term>
 
        <listitem>
-        <para>Name of connected database (string/<symbol>None</>).</para>
+        <para>Name of connected database (string/<symbol>None</>)</para>
        </listitem>
       </varlistentry>
 
@@ -486,7 +482,7 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
        <term><parameter>host</parameter></term>
 
        <listitem>
-        <para>Name of the server host (string/<symbol>None</>).</para>
+        <para>Name of the server host (string/<symbol>None</>)</para>
        </listitem>
       </varlistentry>
 
@@ -494,7 +490,7 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
        <term><parameter>port</parameter></term>
 
        <listitem>
-        <para>Port used by the database server (integer/-1).</para>
+        <para>Port used by the database server (integer/-1)</para>
        </listitem>
       </varlistentry>
 
@@ -503,7 +499,7 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
 
        <listitem>
         <para>
-         Options for the server (string/<symbol>None</>).
+         Options for the server (string/<symbol>None</>)
         </para>
        </listitem>
       </varlistentry>
@@ -513,8 +509,8 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
 
        <listitem>
         <para>
-         File or tty for optional debug output from backend
-         (string/<symbol>None</>).
+         File or TTY for optional debug output from server
+         (string/<symbol>None</>)
         </para>
        </listitem>
       </varlistentry>
@@ -524,7 +520,7 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
 
        <listitem>
         <para>
-         <productname>PostgreSQL</productname> user (string/<symbol>None</>).
+         <productname>PostgreSQL</productname> user (string/<symbol>None</>)
         </para>
        </listitem>
       </varlistentry>
@@ -533,7 +529,7 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
        <term><parameter>passwd</parameter></term>
 
        <listitem>
-        <para>Password for user (string/<symbol>None</>).</para>
+        <para>Password for user (string/<symbol>None</>)</para>
        </listitem>
       </varlistentry>
      </variablelist>
@@ -601,12 +597,11 @@ connect(<optional><parameter>dbname</parameter></optional>, <optional><parameter
 
     <para>
      This method opens a connection to a specified database on a given
-     <productname>PostgreSQL</productname> server. You can use
-     key words here, as described in the
-     <application>Python</application> tutorial.  The names of the
+     <productname>PostgreSQL</productname> server. The arguments can be
+     given using key words here.  The names of the
      key words are the name of the parameters given in the syntax
      line. For a precise description of the parameters, please refer
-     to the <productname>PostgreSQL</productname> user manual.
+     to <xref linkend="libpq">.
     </para>
    </refsect1>
       

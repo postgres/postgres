@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.30 2003/03/13 01:30:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.31 2003/04/07 01:29:25 petere Exp $
 -->
 
  <appendix id="datetime-appendix">
@@ -210,7 +210,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.30 2003/03/13 01:30:27 pe
   </sect1>
 
 
-  <sect1>
+  <sect1 id="datetime-keywords">
    <title>Date/Time Key Words</title>
 
    <para>
