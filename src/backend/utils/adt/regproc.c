@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.49 2000/01/10 17:14:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.50 2000/01/11 02:46:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,7 @@ oidvectortypes(Oid *oidArray)
 	}
 
 	result = (text *) palloc(NAMEDATALEN * FUNC_MAX_ARGS +
-							 FUNC_MAX_ARGS + VARHDRSZ);
+							 FUNC_MAX_ARGS + VARHDRSZ + 1);
 	*VARDATA(result) = '\0';
 
 	for (num = 0; num < FUNC_MAX_ARGS; num++)
