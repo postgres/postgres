@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.3 1996/07/15 19:22:12 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.4 1996/07/22 23:00:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,8 +476,8 @@ mdblindwrt(char *dbstr,
     if (write(fd, buffer, BLCKSZ) != BLCKSZ || (pg_fsync(fd) < 0))
 #else
     if (write(fd, buffer, BLCKSZ) != BLCKSZ || fsync(fd) < 0)
-	status = SM_FAIL;
 #endif
+	status = SM_FAIL;
 
     if (close(fd) < 0)
 	status = SM_FAIL;

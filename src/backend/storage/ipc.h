@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.2 1996/07/20 08:35:24 scrappy Exp $
+ * $Id: ipc.h,v 1.3 1996/07/22 22:59:43 scrappy Exp $
  *
  * NOTES
  *    This file is very architecture-specific.  This stuff should actually
@@ -30,19 +30,47 @@
  * atomic test-and-set instruction).  However, we have only written
  * spinlock code for the architectures listed.
  */
-#if (defined(PORTNAME_aix) || \
+#if defined(PORTNAME_aix) || \
     defined(PORTNAME_alpha) || \
+    defined(PORTNAME_BSD44_derived) || \
+    defined(PORTNAME_bsdi) || \
     defined(PORTNAME_hpux) || \
+    defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_irix5) || \
+    defined(PORTNAME_linux) || \
     defined(PORTNAME_next) || \
     defined(PORTNAME_sparc) || \
-    defined(PORTNAME_sparc_solaris) || \
-    (defined(__i386__) && defined(__GNUC__))) && \
-    !defined(PORTNAME_i386_solaris)
+    defined(PORTNAME_sparc_solaris)
 #define HAS_TEST_AND_SET
 #endif
 
 #if defined(HAS_TEST_AND_SET)
+
+#if defined(PORTNAME_aix)
+/*
+ * The AIX C library has the cs(3) builtin for compare-and-set that 
+ * operates on ints.
+ */
+typedef unsigned int	slock_t;
+#else /* aix */
+
+#if defined(PORTNAME_alpha)
+#include <sys/mman.h>
+typedef msemaphore	slock_t;
+#else /* alpha */
+
+#if defined(PORTNAME_hpux)
+/*
+ * The PA-RISC "semaphore" for the LDWCX instruction is 4 bytes aligned
+ * to a 16-byte boundary.
+ */
+typedef struct { int sem[4]; } slock_t;
+#else /* hpux */
+
+#if defined(PORTNAME_irix5)
+#include <abi_mutex.h>
+typedef abilock_t	slock_t;
+#else /* irix5 */
 
 #if defined(PORTNAME_next)
 /*
@@ -51,50 +79,32 @@
  */
 #undef NEVER	/* definition in cthreads.h conflicts with parse.h */
 #include <mach/cthreads.h>
-
 typedef struct mutex	slock_t;
 #else /* next */
-#if defined(PORTNAME_aix)
-/*
- * The AIX C library has the cs(3) builtin for compare-and-set that 
- * operates on ints.
- */
-typedef unsigned int	slock_t;
-#else /* aix */
-#if defined(PORTNAME_alpha)
-#include <sys/mman.h>
-typedef msemaphore	slock_t;
-#else /* alpha */
-#if defined(PORTNAME_hpux)
-/*
- * The PA-RISC "semaphore" for the LDWCX instruction is 4 bytes aligned
- * to a 16-byte boundary.
- */
-typedef struct { int sem[4]; } slock_t;
-#else /* hpux */
-#if defined(PORTNAME_irix5)
-#include <abi_mutex.h>
-typedef abilock_t	slock_t;
-#else /* irix5 */
+
 /*
  * On all other architectures spinlocks are a single byte.
  */
 typedef unsigned char   slock_t;
+
+#endif /* next */
 #endif /* irix5 */
 #endif /* hpux */
 #endif /* alpha */
 #endif /* aix */
-#endif /* next */
 
 extern void S_LOCK(slock_t *lock);
 extern void S_UNLOCK(slock_t *lock);
 extern void S_INIT_LOCK(slock_t *lock);
 
-#if defined(PORTNAME_hpux) || defined(PORTNAME_alpha) || defined(PORTNAME_irix5) || defined(PORTNAME_next)
+#if defined(PORTNAME_alpha) || \
+    defined(PORTNAME_hpux) || \
+    defined(PORTNAME_irix5) || \
+    defined(PORTNAME_next)
 extern int S_LOCK_FREE(slock_t *lock);
-#else /* PORTNAME_hpux */
+#else
 #define S_LOCK_FREE(lock)	((*lock) == 0)
-#endif /* PORTNAME_hpux */
+#endif
 
 #endif /* HAS_TEST_AND_SET */
 
@@ -108,9 +118,10 @@ extern int S_LOCK_FREE(slock_t *lock);
     defined(PORTNAME_aix) || \
     defined(PORTNAME_alpha) || \
     defined(PORTNAME_hpux) || \
+    defined(PORTNAME_i386_solaris) || \
     defined(PORTNAME_sparc_solaris) || \
-    defined(WIN32) || \
-    defined(PORTNAME_ultrix4)
+    defined(PORTNAME_ultrix4) || \
+    defined(WIN32)
 union semun {
     int val;
     struct semid_ds *buf;

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/aix/Attic/Makefile.inc,v 1.1.1.1 1996/07/09 06:21:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/aix/Attic/Makefile.inc,v 1.2 1996/07/22 22:59:27 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,9 +26,11 @@ HEADERS+= dlfcn.h machine.h port-protos.h
 
 SUBSRCS+= dlfcn.c 
 
+MKLDEXPORT=$(POSTGRESDIR)/src/backend/port/aix/mkldexport.sh
+
 ${PROG}.exp: ${PROG}.noexp
 	mv -f $(objdir)/${PROG}.noexp $(objdir)/${PROG}
-	$(CURDIR)/port/aix/mkldexport.sh $(objdir)/${PROG} ${BINDIR} > $(objdir)/${PROG}.exp
+	$(MKLDEXPORT) $(objdir)/${PROG} ${BINDIR} > $(objdir)/${PROG}.exp
 	mv -f $(objdir)/${PROG} $(objdir)/${PROG}.noexp
 
 ${PROG}.noexp: ${OBJS}

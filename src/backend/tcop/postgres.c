@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.3 1996/07/19 06:13:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.4 1996/07/22 23:00:26 scrappy Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -701,12 +701,12 @@ her exceeded legal ranges or was a divide by zero");
 
 static void usage(char* progname)
 {
-    fprintf(stderr, 
-	    "Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-m portno] [\t -o filename]\n",
-	    progname);
 #ifdef OPENLINK_PATCHES
     fprintf(stderr,"\t[-P portno] [-t tracetype] [-x opttype] [-bCEiLFNopQSs] [dbname]\n");
 #else
+    fprintf(stderr, 
+	    "Usage: %s [-B nbufs] [-d lvl] ] [-f plantype] \t[-m portno] [\t -o filename]\n",
+	    progname);
     fprintf(stderr,"\t[-P portno] [-t tracetype] [-x opttype] [-bCEiLNopQSs] [dbname]\n");
 #endif
     fprintf(stderr, "    b: consider bushy plan trees during optimization\n");
@@ -714,12 +714,12 @@ static void usage(char* progname)
     fprintf(stderr, "    C: supress version info\n");
     fprintf(stderr, "    d: set debug level\n");
     fprintf(stderr, "    E: echo query before execution\n");
-    fprintf(stderr, "    f: forbid plantype generation\n");
-    fprintf(stderr, "    i: don't execute the query, just show the plan tree\n");
-    fprintf(stderr, "    L: turn off locking\n");
 #ifdef OPENLINK_PATCHES
     fprintf(stderr, "    F: turn off fsync\n");
 #endif
+    fprintf(stderr, "    f: forbid plantype generation\n");
+    fprintf(stderr, "    i: don't execute the query, just show the plan tree\n");
+    fprintf(stderr, "    L: turn off locking\n");
     fprintf(stderr, "    m: set up a listening backend at portno to support multiple front-ends\n");
     fprintf(stderr, "    M: start as postmaster\n");
     fprintf(stderr, "    N: don't use newline as query delimiter\n");
@@ -867,6 +867,16 @@ PostgresMain(int argc, char *argv[])
 	    flagE = 1;
 	    break;
 	    
+#ifdef OPENLINK_PATCHES
+        case 'F':
+            /* --------------------
+             *  turn off fsync
+             * --------------------
+             */
+            fsyncOff = 1;
+            break;
+#endif
+
 	case 'f':
 	    /* -----------------
 	     *    f - forbid generation of certain plans
@@ -904,17 +914,7 @@ PostgresMain(int argc, char *argv[])
 	     */
 	    lockingOff = 1;
 	    break;
-
-#ifdef OPENLINK_PATCHES
-	case 'F':
-	    /* --------------------
-	     *  turn off fsync
-	     * --------------------
-	     */
-	    fsyncOff = 1;
-	    break;
-#endif
-
+	    
 	case 'm':
 	    /* start up a listening backend that can respond to 
 	       multiple front-ends.  (Note:  all the front-end connections
@@ -1223,7 +1223,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.3 $ $Date: 1996/07/19 06:13:42 $");
+	puts("$Revision: 1.4 $ $Date: 1996/07/22 23:00:26 $");
     }
     
     /* ----------------

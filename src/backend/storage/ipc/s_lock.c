@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.3 1996/07/16 07:13:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.4 1996/07/22 23:00:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,8 +70,7 @@ S_INIT_LOCK(slock_t *lock)
 int
  S_LOCK_FREE(slock_t *lock)
 {
- 	/* For Mach, we have to delve inside the entrails of `struct  
-mutex'.  Ick! */
+/* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
  	return (lock->lock == 0);
 }
 
@@ -159,9 +158,10 @@ S_LOCK_FREE(slock_t *lock)
  * Solaris 2
  */
 
-#if defined(PORTNAME_sparc_solaris)
+#if defined(PORTNAME_i386_solaris) || \
+    defined(PORTNAME_sparc_solaris)
 
-/* defined in port/.../tas.s */
+/* for xxxxx_solaris, this is defined in port/.../tas.s */
 extern int tas(slock_t *lock);
 
 void
@@ -183,7 +183,7 @@ S_INIT_LOCK(slock_t *lock)
     S_UNLOCK(lock);
 }
 
-#endif /* PORTNAME_sparc_solaris */
+#endif /* PORTNAME_i86pc_solaris || PORTNAME_sparc_solaris */
 
 /*
  * AIX (POWER)
@@ -266,7 +266,7 @@ S_LOCK_FREE(slock_t *lock)
  * sun3
  */
  
-#if (defined(sun) && ! defined(sparc))
+#if (defined(sun3) && ! defined(sparc))
 
 void    
 S_LOCK(slock_t *lock)
@@ -381,8 +381,10 @@ S_INIT_LOCK(unsigned char *addr)
  * Linux and friends
  */
 
-#if defined(PORTNAME_linux) || defined(PORTNAME_BSD44_derived) ||  defined(PORTNAME_bsdi) || defined(PORTNAME_bsdi_2_1)
-
+#if defined(PORTNAME_BSD44_derived) || \
+    defined(PORTNAME_bsdi) || \
+    defined(PORTNAME_bsdi_2_1) || \
+    defined(PORTNAME_linux)
 
 int
 tas(slock_t *m)
@@ -411,7 +413,7 @@ S_INIT_LOCK(slock_t *lock)
     S_UNLOCK(lock);
 }
 
-#endif /* PORTNAME_linux || PORTNAME_BSD44_derived || PORTNAME_bsdi || PORTNAME_bsdi_2_1 */
+#endif /* linux and friends */
 
 
 #endif /* HAS_TEST_AND_SET */
