@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.175 2004/08/30 02:54:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.176 2004/10/02 22:39:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -320,8 +320,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 * grouping_planner.
 	 */
 	if (parse->resultRelation &&
-		(lst = expand_inherited_rtentry(parse, parse->resultRelation,
-										false)) != NIL)
+		(lst = expand_inherited_rtentry(parse, parse->resultRelation)) != NIL)
 		plan = inheritance_planner(parse, lst);
 	else
 		plan = grouping_planner(parse, tuple_fraction);
@@ -513,7 +512,6 @@ inheritance_planner(Query *parse, List *inheritlist)
 	{
 		int			childRTindex = lfirst_int(l);
 		Oid			childOID = getrelid(childRTindex, parse->rtable);
-		int			subrtlength;
 		Query	   *subquery;
 		Plan	   *subplan;
 
@@ -526,22 +524,40 @@ inheritance_planner(Query *parse, List *inheritlist)
 		subplans = lappend(subplans, subplan);
 
 		/*
-		 * It's possible that additional RTEs got added to the rangetable
-		 * due to expansion of inherited source tables (see allpaths.c).
-		 * If so, we must copy 'em back to the main parse tree's rtable.
+		 * XXX my goodness this next bit is ugly.  Really need to think about
+		 * ways to rein in planner's habit of scribbling on its input.
 		 *
-		 * XXX my goodness this is ugly.  Really need to think about ways to
-		 * rein in planner's habit of scribbling on its input.
+		 * Planning of the subquery might have modified the rangetable,
+		 * either by addition of RTEs due to expansion of inherited source
+		 * tables, or by changes of the Query structures inside subquery
+		 * RTEs.  We have to ensure that this gets propagated back to the
+		 * master copy.  However, if we aren't done planning yet, we also
+		 * need to ensure that subsequent calls to grouping_planner have
+		 * virgin sub-Queries to work from.  So, if we are at the last
+		 * list entry, just copy the subquery rangetable back to the master
+		 * copy; if we are not, then extend the master copy by adding
+		 * whatever the subquery added.  (We assume these added entries
+		 * will go untouched by the future grouping_planner calls.  We are
+		 * also effectively assuming that sub-Queries will get planned
+		 * identically each time, or at least that the impacts on their
+		 * rangetables will be the same each time.  Did I say this is ugly?)
 		 */
-		subrtlength = list_length(subquery->rtable);
-		if (subrtlength > mainrtlength)
+		if (lnext(l) == NULL)
+			parse->rtable = subquery->rtable;
+		else
 		{
-			List	   *subrt;
+			int		subrtlength = list_length(subquery->rtable);
 
-			subrt = list_copy_tail(subquery->rtable, mainrtlength);
-			parse->rtable = list_concat(parse->rtable, subrt);
-			mainrtlength = subrtlength;
+			if (subrtlength > mainrtlength)
+			{
+				List	   *subrt;
+
+				subrt = list_copy_tail(subquery->rtable, mainrtlength);
+				parse->rtable = list_concat(parse->rtable, subrt);
+				mainrtlength = subrtlength;
+			}
 		}
+
 		/* Save preprocessed tlist from first rel for use in Append */
 		if (tlist == NIL)
 			tlist = subplan->targetlist;

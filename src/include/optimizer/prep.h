@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.45 2004/08/29 04:13:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/prep.h,v 1.46 2004/10/02 22:39:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,7 @@ extern Plan *plan_set_operations(Query *parse, List **sortClauses);
 
 extern List *find_all_inheritors(Oid parentrel);
 
-extern List *expand_inherited_rtentry(Query *parse, Index rti,
-						 bool dup_parent);
+extern List *expand_inherited_rtentry(Query *parse, Index rti);
 
 extern Node *adjust_inherited_attrs(Node *node,
 					   Index old_rt_index, Oid old_relid,

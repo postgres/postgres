@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.116 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.117 2004/10/02 22:39:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -705,24 +705,23 @@ find_all_inheritors(Oid parentrel)
  *		whole inheritance set (parent and children).
  *		If not, return NIL.
  *
- * When dup_parent is false, the initially given RT index is part of the
- * returned list (if any).	When dup_parent is true, the given RT index
- * is *not* in the returned list; a duplicate RTE will be made for the
- * parent table.
+ * Note that the original RTE is considered to represent the whole
+ * inheritance set.  The first member of the returned list is an RTE
+ * for the same table, but with inh = false, to represent the parent table
+ * in its role as a simple member of the set.  The original RT index is
+ * never a member of the returned list.
  *
  * A childless table is never considered to be an inheritance set; therefore
  * the result will never be a one-element list.  It'll be either empty
  * or have two or more elements.
  *
- * NOTE: after this routine executes, the specified RTE will always have
- * its inh flag cleared, whether or not there were any children.  This
- * ensures we won't expand the same RTE twice, which would otherwise occur
- * for the case of an inherited UPDATE/DELETE target relation.
- *
- * XXX probably should convert the result type to Relids?
+ * Note: there are cases in which this routine will be invoked multiple
+ * times on the same RTE.  We will generate a separate set of child RTEs
+ * for each invocation.  This is somewhat wasteful but seems not worth
+ * trying to avoid.
  */
 List *
-expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
+expand_inherited_rtentry(Query *parse, Index rti)
 {
 	RangeTblEntry *rte = rt_fetch(rti, parse->rtable);
 	Oid			parentOID;
@@ -734,12 +733,14 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 	if (!rte->inh)
 		return NIL;
 	Assert(rte->rtekind == RTE_RELATION);
-	/* Always clear the parent's inh flag, see above comments */
-	rte->inh = false;
 	/* Fast path for common case of childless table */
 	parentOID = rte->relid;
 	if (!has_subclass(parentOID))
+	{
+		/* Clear flag to save repeated tests if called again */
+		rte->inh = false;
 		return NIL;
+	}
 	/* Scan for all members of inheritance set */
 	inhOIDs = find_all_inheritors(parentOID);
 
@@ -749,36 +750,41 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 	 * table once had a child but no longer does.
 	 */
 	if (list_length(inhOIDs) < 2)
+	{
+		/* Clear flag to save repeated tests if called again */
+		rte->inh = false;
 		return NIL;
-	/* OK, it's an inheritance set; expand it */
-	if (dup_parent)
-		inhRTIs = NIL;
-	else
-		inhRTIs = list_make1_int(rti);	/* include original RTE in result */
+	}
 
+	/* OK, it's an inheritance set; expand it */
+	inhRTIs = NIL;
 	foreach(l, inhOIDs)
 	{
 		Oid			childOID = lfirst_oid(l);
 		RangeTblEntry *childrte;
 		Index		childRTindex;
 
-		/* parent will be in the list too; skip it if not dup requested */
-		if (childOID == parentOID && !dup_parent)
-			continue;
-
 		/*
 		 * Build an RTE for the child, and attach to query's rangetable
 		 * list. We copy most fields of the parent's RTE, but replace
-		 * relation real name and OID.	Note that inh will be false at
-		 * this point.
+		 * relation OID, and set inh = false.
 		 */
 		childrte = copyObject(rte);
 		childrte->relid = childOID;
+		childrte->inh = false;
 		parse->rtable = lappend(parse->rtable, childrte);
 		childRTindex = list_length(parse->rtable);
-
 		inhRTIs = lappend_int(inhRTIs, childRTindex);
 	}
+
+	/*
+	 * The executor will check the parent table's access permissions when
+	 * it examines the parent's inheritlist entry.  There's no need to
+	 * check twice, so turn off access check bits in the original RTE.
+	 * (If we are invoked more than once, extra copies of the child RTEs
+	 * will also not cause duplicate permission checks.)
+	 */
+	rte->requiredPerms = 0;
 
 	return inhRTIs;
 }

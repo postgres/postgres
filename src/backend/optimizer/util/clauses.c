@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.180 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.181 2004/10/02 22:39:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3254,10 +3254,20 @@ query_tree_mutator(Query *query,
 					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
 					MUTATE(newrte->subquery, newrte->subquery, Query *);
 				}
+				else
+				{
+					/* else, copy RT subqueries as-is */
+					newrte->subquery = copyObject(rte->subquery);
+				}
 				break;
 			case RTE_JOIN:
 				if (!(flags & QTW_IGNORE_JOINALIASES))
 					MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);
+				else
+				{
+					/* else, copy join aliases as-is */
+					newrte->joinaliasvars = copyObject(rte->joinaliasvars);
+				}
 				break;
 			case RTE_FUNCTION:
 				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
