@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.112 2003/01/27 23:55:38 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.113 2003/01/28 18:04:02 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -2834,6 +2834,7 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 ArrayType *
 GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 {
+	const char *varname;
 	Datum		datum;
 	char	   *newval;
 	ArrayType  *a;
@@ -2845,6 +2846,10 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 	set_config_option(name, value,
 					  superuser() ? PGC_SUSET : PGC_USERSET,
 					  PGC_S_SESSION, false, false);
+
+	/* convert name to canonical spelling, so we can use plain strcmp */
+	(void) GetConfigOptionByName(name, &varname);
+	name = varname;
 
 	newval = palloc(strlen(name) + 1 + strlen(value) + 1);
 	sprintf(newval, "%s=%s", name, value);
@@ -2909,6 +2914,7 @@ GUCArrayAdd(ArrayType *array, const char *name, const char *value)
 ArrayType *
 GUCArrayDelete(ArrayType *array, const char *name)
 {
+	const char *varname;
 	ArrayType  *newarray;
 	int			i;
 	int			index;
@@ -2919,6 +2925,10 @@ GUCArrayDelete(ArrayType *array, const char *name)
 	set_config_option(name, NULL,
 					  superuser() ? PGC_SUSET : PGC_USERSET,
 					  PGC_S_SESSION, false, false);
+
+	/* convert name to canonical spelling, so we can use plain strcmp */
+	(void) GetConfigOptionByName(name, &varname);
+	name = varname;
 
 	/* if array is currently null, then surely nothing to delete */
 	if (!array)
