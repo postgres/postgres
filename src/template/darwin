@@ -4,7 +4,3 @@ CC="$CC -no-cpp-precomp"
 
 # Select appropriate semaphore support
 USE_NAMED_POSIX_SEMAPHORES=1
-
-THREAD_SUPPORT=yes
-NEED_REENTRANT_FUNCS=no
-
