@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.1 1999/07/22 15:09:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.2 2000/05/30 18:00:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -73,7 +73,7 @@ pg_guest:/nB7.w5Auq.BY:93001
   <para>
    Supply the password file to the pg_passwd command.
    In the case described above, after changing the working directory to
-   <envar>PGDATA</envar>, the following command execution specify
+   <envar>PGDATA</envar>, the following command execution specifies
    the new password for <literal>pg_guest</literal>:
 
    <programlisting>
