@@ -260,7 +260,7 @@ normal_rand(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, Float8GetDatum(result));
 	}
 	else
-/* do when there is no more left */
+	/* do when there is no more left */
 		SRF_RETURN_DONE(funcctx);
 }
 
@@ -643,7 +643,7 @@ crosstab(PG_FUNCTION_ARGS)
 		}
 	}
 	else
-/* do when there is no more left */
+	/* do when there is no more left */
 	{
 		/* release SPI related resources */
 		SPI_finish();

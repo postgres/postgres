@@ -65,7 +65,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		parse_params(params, paramstr);
 	}
 	else
-/* No parameters */
+	/* No parameters */
 		params[0] = NULL;
 
 	/* Setup parser */

@@ -48,8 +48,8 @@
 
 
 /*
- * $Revision: 1.3 $
- * $Id: dmetaphone.c,v 1.3 2004/08/29 05:06:35 momjian Exp $
+ * $Revision: 1.4 $
+ * $Id: dmetaphone.c,v 1.4 2004/10/07 15:21:49 momjian Exp $
  */
 
 
@@ -950,7 +950,7 @@ DoubleMetaphone(char *str, char **codes)
 					current += 2;
 				}
 				else
-/* also takes care of 'HH' */
+					/* also takes care of 'HH' */
 					current += 1;
 				break;
 

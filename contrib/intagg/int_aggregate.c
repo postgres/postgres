@@ -229,7 +229,7 @@ int_enum(PG_FUNCTION_ARGS)
 		pc->num = 0;
 	}
 	else
-/* use an existing one */
+	/* use an existing one */
 		pc = (CTX *) fcinfo->context;
 	/* Are we done yet? */
 	if (pc->num >= pc->p->items)
@@ -242,7 +242,7 @@ int_enum(PG_FUNCTION_ARGS)
 		rsi->isDone = ExprEndResult;
 	}
 	else
-/* nope, return the next value */
+	/* nope, return the next value */
 	{
 		int			val = pc->p->array[pc->num++];
 

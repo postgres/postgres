@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.28 2004/09/27 23:58:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.29 2004/10/07 15:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,8 +277,7 @@ find_my_exec(const char *argv0, char *retpath)
 	log_error("could not find a \"%s\" to execute", argv0);
 	return -1;
 
-#if 0
-
+#if NOT_USED
 	/*
 	 * Win32 has a native way to find the executable name, but the above
 	 * method works too.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.23 2004/08/29 04:13:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdebug.h,v 1.24 2004/10/07 15:21:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ extern int	NIndexTupleInserted;
 #define IncrIndexProcessed()	NIndexTupleProcessed++
 #define IncrIndexInserted()		NIndexTupleInserted++
 #else
-/*								stop compiler warnings */
+/* stop compiler warnings */
 #define IncrRetrieved()			(void)(0)
 #define IncrAppended()			(void)(0)
 #define IncrDeleted()			(void)(0)

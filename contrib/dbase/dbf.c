@@ -505,7 +505,7 @@ dbf_put_record(dbhead * dbh, field * rec, u_long where)
 	if (write(dbh->db_fd, data, dbh->db_rlen) != dbh->db_rlen)
 		return DBF_ERROR;
 
-/* There's a 0x1A at the end of a dbf-file */
+	/* There's a 0x1A at the end of a dbf-file */
 	if (where == dbh->db_records)
 	{
 		if (write(dbh->db_fd, &end, 1) != 1)

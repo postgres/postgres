@@ -233,7 +233,7 @@ timetravel(PG_FUNCTION_ARGS)
 		/* end of INSERT */
 	}
 
-/* UPDATE/DELETE: */
+	/* UPDATE/DELETE: */
 	oldtimeon = SPI_getbinval(trigtuple, tupdesc, attnum[a_time_on], &isnull);
 	if (isnull)
 		elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[a_time_on]);
@@ -402,7 +402,7 @@ timetravel(PG_FUNCTION_ARGS)
 		/* SPI_pfree(tmptuple); */
 	}
 	else
-/* DELETE case */
+		/* DELETE case */
 		rettuple = trigtuple;
 
 	SPI_finish();				/* don't forget say Bye to SPI mgr */

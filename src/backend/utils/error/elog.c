@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.151 2004/09/22 03:55:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.152 2004/10/07 15:21:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1972,7 +1972,7 @@ write_stderr(const char *fmt,...)
 		write_eventlog(EVENTLOG_ERROR_TYPE, errbuf);
 	}
 	else
-/* Not running as service, write to stderr */
+		/* Not running as service, write to stderr */
 		vfprintf(stderr, fmt, ap);
 #endif
 	va_end(ap);

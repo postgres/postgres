@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.44 2004/08/29 05:06:53 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.45 2004/10/07 15:21:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,7 +340,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 								 * Future: DO SEEK(0) and retry. */
 				die_horribly(AH, modulename, "could not find file %s in archive\n", filename);
 			else
-/* Any file OK, non left, so return NULL */
+				/* Any file OK, non left, so return NULL */
 				return NULL;
 		}
 
@@ -1104,7 +1104,7 @@ _tarPositionTo(ArchiveHandle *AH, const char *filename)
 		if (filename)
 			die_horribly(AH, modulename, "could not find header for file %s in tar archive\n", filename);
 		else
-/* We're just scanning the archibe for the next file, so return null */
+		/* We're just scanning the archibe for the next file, so return null */
 		{
 			free(th);
 			return NULL;

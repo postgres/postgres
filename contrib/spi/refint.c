@@ -495,7 +495,7 @@ check_foreign_key(PG_FUNCTION_ARGS)
 
 				}
 				else
-/* DELETE */
+					/* DELETE */
 					snprintf(sql, sizeof(sql), "delete from %s where ", relname);
 
 			}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.6 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.7 2004/10/07 15:21:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ record_in(PG_FUNCTION_ARGS)
 			if (*ptr == ',')
 				ptr++;
 			else
-/* *ptr must be ')' */
+				/* *ptr must be ')' */
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 					  errmsg("malformed record literal: \"%s\"", string),

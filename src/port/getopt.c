@@ -119,7 +119,7 @@ const char *ostr;
 			return BADCH;
 		}
 		else
-/* white space */
+			/* white space */
 			optarg = nargv[optind];
 		place = EMSG;
 		++optind;

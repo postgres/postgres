@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.125 2004/08/29 05:06:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.126 2004/10/07 15:21:56 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -982,7 +982,7 @@ do_connect(const char *new_dbname, const char *new_user)
 			else if (dbparam != new_dbname)		/* no new db */
 				printf(gettext("You are now connected as new user \"%s\".\n"), new_user);
 			else
-/* both new */
+				/* both new */
 				printf(gettext("You are now connected to database \"%s\" as user \"%s\".\n"),
 					   PQdb(pset.db), PQuser(pset.db));
 		}
