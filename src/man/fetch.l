@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.5 1998/01/11 22:17:35 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.6 1998/03/23 15:09:29 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 fetch - fetch instance(s) from a cursor
@@ -34,33 +34,33 @@ commands to update data.
 Cursors may only be used inside of transaction blocks marked by 
 .IR begin (l)
 and
-.IR end (l)
+.IR commit (l)
 because the data that they store spans multiple user queries.
 .SH EXAMPLE
 .nf
 --
 --set up and use a cursor 
 --
-begin 
-   declare mycursor cursor for 
-   select * from pg-user;
+begin work;
+declare mycursor cursor for 
+    select * from pg-user;
 --
 --Fetch all the instances available in the cursor FOO
 --
-  fetch all in FOO;
+fetch all in FOO;
 --
 --Fetch 5 instances backward in the cursor FOO
 --
-  fetch backward 5 in FOO;
+fetch backward 5 in FOO;
 --
 --close
 --
-  close foo;
-end;
+close foo;
+commit;
 .fi
 .SH "SEE ALSO"
 begin(l),
-end(l),
+commit(l),
 close(l),
 move(l),
 select(l).

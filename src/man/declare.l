@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/declare.l,v 1.3 1998/01/22 23:05:18 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/declare.l,v 1.4 1998/03/23 15:09:26 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 declare - declare a cursor
@@ -35,5 +35,5 @@ For an example, see the fetch(l) manual page.
 .SH "SEE ALSO"
 fetch(l),
 begin(l),
-end(l),
+commit(l),
 select(l).

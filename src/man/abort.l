@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/abort.l,v 1.3 1998/01/11 22:17:01 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/abort.l,v 1.4 1998/03/23 15:09:22 momjian Exp $
 .TH ABORT SQL 01/23/93 PostgreSQL PostgreSQL
 .\" XXX This .XA has to go after the .TH so that the index page number goes
 .\"	in the right place...
@@ -19,5 +19,5 @@ is functionally equivalent to
 .IR "rollback".
 .SH "SEE ALSO"
 begin(l),
-end(l),
+commit(l),
 rollback(l).

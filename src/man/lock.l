@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.4 1998/03/18 15:48:57 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/lock.l,v 1.5 1998/03/23 15:09:34 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 lock - exclusive lock a table
@@ -34,8 +34,8 @@ begin work;
 lock table mytable;
 select * from mytable;
 update mytable set (x = 100);
-end work;
+commit;
 .SH "SEE ALSO"
 begin(l),
-end(l),
+commit(l),
 select(l).

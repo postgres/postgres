@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/commit.l,v 1.3 1998/01/11 22:17:10 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/commit.l,v 1.4 1998/03/23 15:09:25 momjian Exp $
 .TH COMMIT SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 commit - commit the current transaction 
@@ -19,5 +19,5 @@ command
 .SH "SEE ALSO"
 abort(l),
 begin(l),
-end(l),
+commit(l),
 rollback(l).

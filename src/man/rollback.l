@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/rollback.l,v 1.3 1998/01/11 22:17:57 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/rollback.l,v 1.4 1998/03/23 15:09:43 momjian Exp $
 .TH ROLLBACK SQL 01/20/96 PostgreSQL PostgreSQL
 .\" XXX This .XA has to go after the .TH so that the index page number goes
 .\"	in the right place...
@@ -21,4 +21,4 @@ command.
 .SH "SEE ALSO"
 abort(l),
 begin(l),
-end(l).
+commit(l).
