@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.8 2003/08/04 02:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/tstoreReceiver.c,v 1.9 2003/08/06 17:46:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,9 +78,9 @@ CreateTuplestoreDestReceiver(Tuplestorestate *tStore,
 	TStoreState *self = (TStoreState *) palloc(sizeof(TStoreState));
 
 	self->pub.receiveTuple = tstoreReceiveTuple;
-	self->pub.startup = tstoreStartupReceiver;
-	self->pub.shutdown = tstoreShutdownReceiver;
-	self->pub.destroy = tstoreDestroyReceiver;
+	self->pub.rStartup = tstoreStartupReceiver;
+	self->pub.rShutdown = tstoreShutdownReceiver;
+	self->pub.rDestroy = tstoreDestroyReceiver;
 	self->pub.mydest = Tuplestore;
 
 	self->tstore = tStore;

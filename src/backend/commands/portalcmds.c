@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.21 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.22 2003/08/06 17:46:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,7 +335,7 @@ PersistHoldablePortal(Portal portal)
 	/* Fetch the result set into the tuplestore */
 	ExecutorRun(queryDesc, ForwardScanDirection, 0L);
 
-	(*queryDesc->dest->destroy) (queryDesc->dest);
+	(*queryDesc->dest->rDestroy) (queryDesc->dest);
 	queryDesc->dest = NULL;
 
 	/*

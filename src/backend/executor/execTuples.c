@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.69 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.70 2003/08/06 17:46:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -764,7 +764,7 @@ begin_tup_output_tupdesc(DestReceiver *dest, TupleDesc tupdesc)
 	tstate->metadata = TupleDescGetAttInMetadata(tupdesc);
 	tstate->dest = dest;
 
-	(*tstate->dest->startup) (tstate->dest, (int) CMD_SELECT, tupdesc);
+	(*tstate->dest->rStartup) (tstate->dest, (int) CMD_SELECT, tupdesc);
 
 	return tstate;
 }
@@ -817,7 +817,7 @@ do_text_output_multiline(TupOutputState *tstate, char *text)
 void
 end_tup_output(TupOutputState *tstate)
 {
-	(*tstate->dest->shutdown) (tstate->dest);
+	(*tstate->dest->rShutdown) (tstate->dest);
 	/* note that destroying the dest is not ours to do */
 	/* XXX worth cleaning up the attinmetadata? */
 	pfree(tstate);

@@ -30,18 +30,18 @@
  * CreateDestReceiver returns a receiver object appropriate to the specified
  * destination.  The executor, as well as utility statements that can return
  * tuples, are passed the resulting DestReceiver* pointer.	Each executor run
- * or utility execution calls the receiver's startup method, then the
- * receiveTuple method (zero or more times), then the shutdown method.
+ * or utility execution calls the receiver's rStartup method, then the
+ * receiveTuple method (zero or more times), then the rShutdown method.
  * The same receiver object may be re-used multiple times; eventually it is
- * destroyed by calling its destroy method.
+ * destroyed by calling its rDestroy method.
  *
  * The DestReceiver object returned by CreateDestReceiver may be a statically
  * allocated object (for destination types that require no local state),
- * in which case destroy is a no-op.  Alternatively it can be a palloc'd
+ * in which case rDestroy is a no-op.  Alternatively it can be a palloc'd
  * object that has DestReceiver as its first field and contains additional
  * fields (see printtup.c for an example).	These additional fields are then
  * accessible to the DestReceiver functions by casting the DestReceiver*
- * pointer passed to them.	The palloc'd object is pfree'd by the destroy
+ * pointer passed to them.	The palloc'd object is pfree'd by the rDestroy
  * method.	Note that the caller of CreateDestReceiver should take care to
  * do so in a memory context that is long-lived enough for the receiver
  * object not to disappear while still needed.
@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.40 2003/08/04 02:40:15 momjian Exp $
+ * $Id: dest.h,v 1.41 2003/08/06 17:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ typedef enum
  *		pointers that the executor must call.
  *
  * Note: the receiveTuple routine must be passed a TupleDesc identical to the
- * one given to the startup routine.  The reason for passing it again is just
+ * one given to the rStartup routine.  The reason for passing it again is just
  * that some destinations would otherwise need dynamic state merely to
  * remember the tupledesc pointer.
  * ----------------
@@ -107,12 +107,12 @@ struct _DestReceiver
 											 TupleDesc typeinfo,
 											 DestReceiver *self);
 	/* Per-executor-run initialization and shutdown: */
-	void		(*startup) (DestReceiver *self,
+	void		(*rStartup) (DestReceiver *self,
 										int operation,
 										TupleDesc typeinfo);
-	void		(*shutdown) (DestReceiver *self);
+	void		(*rShutdown) (DestReceiver *self);
 	/* Destroy the receiver object itself (if dynamically allocated) */
-	void		(*destroy) (DestReceiver *self);
+	void		(*rDestroy) (DestReceiver *self);
 	/* CommandDest code for this receiver */
 	CommandDest mydest;
 	/* Private fields might appear beyond this point... */

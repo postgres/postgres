@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.356 2003/08/04 04:03:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.357 2003/08/06 17:46:45 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -878,7 +878,7 @@ exec_simple_query(const char *query_string)
 						 receiver,
 						 completionTag);
 
-		(*receiver->destroy) (receiver);
+		(*receiver->rDestroy) (receiver);
 
 		PortalDrop(portal, false);
 
@@ -1590,7 +1590,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 						  receiver,
 						  completionTag);
 
-	(*receiver->destroy) (receiver);
+	(*receiver->rDestroy) (receiver);
 
 	if (completed)
 	{
@@ -2643,7 +2643,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.356 $ $Date: 2003/08/04 04:03:06 $\n");
+		puts("$Revision: 1.357 $ $Date: 2003/08/06 17:46:45 $\n");
 	}
 
 	/*

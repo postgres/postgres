@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.70 2003/08/04 02:40:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.71 2003/08/06 17:46:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -457,7 +457,7 @@ PortalRun(Portal portal, long count,
 				treceiver = CreateDestReceiver(Tuplestore, portal);
 				PortalRunUtility(portal, lfirst(portal->parseTrees),
 								 treceiver, NULL);
-				(*treceiver->destroy) (treceiver);
+				(*treceiver->rDestroy) (treceiver);
 				portal->portalUtilReady = true;
 			}
 
@@ -666,7 +666,7 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
 {
 	long		current_tuple_count = 0;
 
-	(*dest->startup) (dest, CMD_SELECT, portal->tupDesc);
+	(*dest->rStartup) (dest, CMD_SELECT, portal->tupDesc);
 
 	if (direction == NoMovementScanDirection)
 	{
@@ -708,7 +708,7 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
 		}
 	}
 
-	(*dest->shutdown) (dest);
+	(*dest->rShutdown) (dest);
 
 	return (uint32) current_tuple_count;
 }

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.214 2003/08/04 02:39:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.215 2003/08/06 17:46:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
-	(*dest->startup) (dest, operation, queryDesc->tupDesc);
+	(*dest->rStartup) (dest, operation, queryDesc->tupDesc);
 
 	/*
 	 * run plan
@@ -235,7 +235,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	/*
 	 * shutdown receiver
 	 */
-	(*dest->shutdown) (dest);
+	(*dest->rShutdown) (dest);
 
 	MemoryContextSwitchTo(oldcontext);
 
