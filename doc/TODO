@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 30 12:13:04 EST 1998
+Last updated:		Fri Nov  6 22:17:33 EST 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -82,6 +82,7 @@ RELIABILITY
 * allow UPDATE using aggregate to affect all rows, not just one
 * computations in views fail:
 	create view test as select usesysid * usesysid from pg_shadow;
+* views containing aggregates sometimes fail(Jan)
 
 ENHANCEMENTS
 ------------
@@ -180,6 +181,7 @@ ENHANCEMENTS
 * allow chaining of pages to allow >8k tuples
 * no min/max for oid type
 * remove un-needed conversion functions
+* redesign the function call interface to handle NULLs better(Jan)
 
 PERFORMANCE
 -----------
@@ -303,11 +305,9 @@ feature, see /doc/README.mb(Tatsuo)
 /contrib/noupdate code to revoke update permission on a column
 Libpq can now be compiled on win32(Magnus)
 Add PQsetdbLogin() in libpq
-Two styles we agreed upon for database descriptors(Thomas)
 New 8-byte integer type, checked by configure for OS support(Thomas)
-Better support for quited table/column names(Thomas)
-Surround table and column names with double-quotes(Thomas) in generated 
-	sql code to preserve case (SQL92 syntax)(Thomas)
+Better support for quoted table/column names(Thomas)
+Surround table and column names with double-quotes in pg_dump(Thomas)
 PQreset() now works with passwords(Tom)
 Handle case of GROUP BY target list column number out of range(David)
 Allow UNION in subselects
@@ -355,8 +355,6 @@ New rewrite system fixes many problems with rules and views(Jan)
 	* handle subselects
 	* handle aggregates on views
 	* handle insert into select from view works
-	* 
-
 System indexes are now multi-key(Bruce)
 Oidint2, oidint4, and oidname types are removed(Bruce)
 Use system cache for more system table lookups(Bruce)
@@ -421,4 +419,3 @@ smarter TCL/TK configuration checking(Billy)
 smarter perl configuration(Brook)
 configure uses supplied install-sh if no install script found(Tom)
 new Makefile.shlib for shared library configuration(Tom)
-
