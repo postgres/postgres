@@ -51,6 +51,7 @@
 #include "pgtypes.h"
 #include "lobj.h"
 #include "connection.h"
+#include "pgapifunc.h"
 
 #ifndef WIN32
 #ifndef HAVE_STRICMP
@@ -973,6 +974,9 @@ copy_statement_with_parameters(StatementClass *stmt)
 				retval;
 	BOOL	check_select_into = FALSE; /* select into check */
 	unsigned int	declare_pos;
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	BOOL ins_ctrl = FALSE;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 
 
 	if (!old_statement)
@@ -1003,9 +1007,27 @@ copy_statement_with_parameters(StatementClass *stmt)
 		check_select_into = TRUE;
 		declare_pos = npos;
 	}
-
 	param_number = -1;
 
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	if (stmt->statement_type != STMT_TYPE_SELECT)
+	{
+		stmt->options.cursor_type = SQL_CURSOR_FORWARD_ONLY;
+		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+	}
+	else if (stmt->options.cursor_type == SQL_CURSOR_FORWARD_ONLY)
+    		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+	else if (stmt->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
+	{
+		if (stmt->parse_status == STMT_PARSE_NONE)
+			parse_statement(stmt);
+		if (stmt->parse_status != STMT_PARSE_COMPLETE)
+			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+		else if (!stmt->ti || stmt->ntab != 1)
+    			stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+		else ins_ctrl = TRUE;
+	}
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 #ifdef MULTIBYTE
 	multibyte_init();
 #endif
@@ -1136,9 +1158,20 @@ copy_statement_with_parameters(StatementClass *stmt)
     				 into_table_from(&old_statement[opos]))
 			{
 				stmt->statement_type = STMT_TYPE_CREATE;
+				stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 				memmove(new_statement, new_statement + declare_pos, npos - declare_pos);
 				npos -= declare_pos;
 			}
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+			else if (ins_ctrl && /* select into check */
+    				 opos > 0 &&
+    				 isspace((unsigned char) old_statement[opos - 1]) &&
+    				 strnicmp(&old_statement[opos], "from", 4) == 0)
+			{
+				ins_ctrl = FALSE;
+				CVT_APPEND_STR(", CTID, OID ");
+			}
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 			CVT_APPEND_CHAR(oldchar);
 			continue;
 		}
@@ -1574,6 +1607,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 									   NULL, 0, NULL);
 	}
 
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	if (ins_ctrl)
+		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 	return SQL_SUCCESS;
 }
 
@@ -1715,6 +1752,14 @@ parse_datetime(char *buf, SIMPLE_TIME *st)
 
 	y = m = d = hh = mm = ss = 0;
 
+	/* escape sequence ? */
+	if (buf[0] == '{')
+	{
+		while (*(++buf) && *buf != '\'');
+		if (!(*buf))
+			return FALSE;
+		buf++;
+	}
 	if (buf[4] == '-')			/* year first */
 		nf = sscanf(buf, "%4d-%2d-%2d %2d:%2d:%2d", &y, &m, &d, &hh, &mm, &ss);
 	else
@@ -1835,13 +1880,18 @@ convert_special_chars(char *si, char *dst, int used)
 
 	for (i = 0; i < max; i++)
 	{
+#ifdef MULTIBYTE
+		if (multibyte_char_check(si[i]) != 0)
+		{
+			if (p)
+				p[out] = si[i];
+			out++;
+			continue;
+		}
+#endif
 		if (si[i] == '\r' && si[i + 1] == '\n')
 			continue;
-#ifdef MULTIBYTE
-		else if (multibyte_char_check(si[i]) == 0 && (si[i] == '\'' || si[i] == '\\'))
-#else
 		else if (si[i] == '\'' || si[i] == '\\')
-#endif
 		{
 			if (p)
 				p[out++] = '\\';

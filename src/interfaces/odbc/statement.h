@@ -49,6 +49,8 @@ typedef enum
 	STMT_EXECUTING				/* statement execution is still going on */
 } STMT_Status;
 
+#define STMT_ROW_VERSION_CHANGED					(-4)
+#define STMT_POS_BEFORE_RECORDSET					(-3)
 #define STMT_TRUNCATED							(-2)
 #define STMT_INFO_ONLY							(-1)	/* not an error message,
 														 * just a notification
@@ -83,6 +85,7 @@ typedef enum
 #define STMT_OPERATION_INVALID					25
 #define STMT_PROGRAM_TYPE_OUT_OF_RANGE			26
 #define STMT_BAD_ERROR							27
+#define STMT_INVALID_OPTION_IDENTIFIER					28
 
 /* statement types */
 enum

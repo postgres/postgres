@@ -33,11 +33,12 @@
 #include "sql.h"
 #include "sqlext.h"
 #endif
+#include "pgapifunc.h"
 
 
 /*		Bind parameters on a statement handle */
 RETCODE SQL_API
-SQLBindParameter(
+PGAPI_BindParameter(
 				 HSTMT hstmt,
 				 UWORD ipar,
 				 SWORD fParamType,
@@ -50,7 +51,7 @@ SQLBindParameter(
 				 SDWORD FAR *pcbValue)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
-	static char *func = "SQLBindParameter";
+	static char *func = "PGAPI_BindParameter";
 
 	mylog("%s: entering...\n", func);
 
@@ -155,7 +156,7 @@ SQLBindParameter(
 	if (stmt->status == STMT_PREMATURE)
 		SC_recycle_statement(stmt);
 
-	mylog("SQLBindParamater: ipar=%d, paramType=%d, fCType=%d, fSqlType=%d, cbColDef=%d, ibScale=%d, rgbValue=%d, *pcbValue = %d, data_at_exec = %d\n", ipar, fParamType, fCType, fSqlType, cbColDef, ibScale, rgbValue, pcbValue ? *pcbValue : -777, stmt->parameters[ipar].data_at_exec);
+	mylog("PGAPI_BindParamater: ipar=%d, paramType=%d, fCType=%d, fSqlType=%d, cbColDef=%d, ibScale=%d, rgbValue=%d, *pcbValue = %d, data_at_exec = %d\n", ipar, fParamType, fCType, fSqlType, cbColDef, ibScale, rgbValue, pcbValue ? *pcbValue : -777, stmt->parameters[ipar].data_at_exec);
 
 	return SQL_SUCCESS;
 }
@@ -163,7 +164,7 @@ SQLBindParameter(
 
 /*	Associate a user-supplied buffer with a database column. */
 RETCODE SQL_API
-SQLBindCol(
+PGAPI_BindCol(
 		   HSTMT hstmt,
 		   UWORD icol,
 		   SWORD fCType,
@@ -172,11 +173,12 @@ SQLBindCol(
 		   SDWORD FAR *pcbValue)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
-	static char *func = "SQLBindCol";
+	static char *func = "PGAPI_BindCol";
 
 	mylog("%s: entering...\n", func);
 
-	mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
+	mylog("**** PGAPI_BindCol: stmt = %u, icol = %d\n", stmt, icol);
+mylog("**** : fCType=%d rgb=%x valusMax=%d pcb=%x\n", fCType, rgbValue, cbValueMax, pcbValue);
 
 	if (!stmt)
 	{
@@ -275,7 +277,7 @@ SQLBindCol(
  *	data type (most likely varchar).
  */
 RETCODE SQL_API
-SQLDescribeParam(
+PGAPI_DescribeParam(
 				 HSTMT hstmt,
 				 UWORD ipar,
 				 SWORD FAR *pfSqlType,
@@ -284,7 +286,7 @@ SQLDescribeParam(
 				 SWORD FAR *pfNullable)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
-	static char *func = "SQLDescribeParam";
+	static char *func = "PGAPI_DescribeParam";
 
 	mylog("%s: entering...\n", func);
 
@@ -297,7 +299,7 @@ SQLDescribeParam(
 
 	if ((ipar < 1) || (ipar > stmt->parameters_allocated))
 	{
-		stmt->errormsg = "Invalid parameter number for SQLDescribeParam.";
+		stmt->errormsg = "Invalid parameter number for PGAPI_DescribeParam.";
 		stmt->errornumber = STMT_BAD_PARAMETER_NUMBER_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
@@ -328,15 +330,18 @@ SQLDescribeParam(
 
 /*	Sets multiple values (arrays) for the set of parameter markers. */
 RETCODE SQL_API
-SQLParamOptions(
+PGAPI_ParamOptions(
 				HSTMT hstmt,
 				UDWORD crow,
 				UDWORD FAR *pirow)
 {
-	static char *func = "SQLParamOptions";
+	static char *func = "PGAPI_ParamOptions";
+	StatementClass	*stmt = (StatementClass *) hstmt;
 
 	mylog("%s: entering...\n", func);
 
+	stmt->errornumber = CONN_UNSUPPORTED_OPTION;
+	stmt->errormsg = "Function not implemented";
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
 }
@@ -352,14 +357,14 @@ SQLParamOptions(
  *	If the statement does not have parameters, it should just return 0.
  */
 RETCODE SQL_API
-SQLNumParams(
+PGAPI_NumParams(
 			 HSTMT hstmt,
 			 SWORD FAR *pcpar)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	char		in_quote = FALSE;
 	unsigned int i;
-	static char *func = "SQLNumParams";
+	static char *func = "PGAPI_NumParams";
 
 	mylog("%s: entering...\n", func);
 
@@ -382,7 +387,7 @@ SQLNumParams(
 	if (!stmt->statement)
 	{
 		/* no statement has been allocated */
-		stmt->errormsg = "SQLNumParams called with no statement ready.";
+		stmt->errormsg = "PGAPI_NumParams called with no statement ready.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;

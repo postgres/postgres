@@ -19,6 +19,7 @@
 #include "statement.h"
 #include <stdlib.h>
 #include <string.h>
+#include "pgapifunc.h"
 
 extern GLOBAL_VALUES globals;
 
@@ -27,11 +28,11 @@ ConnectionClass *conns[MAX_CONNECTIONS];
 
 
 RETCODE SQL_API
-SQLAllocEnv(HENV FAR *phenv)
+PGAPI_AllocEnv(HENV FAR *phenv)
 {
-	static char *func = "SQLAllocEnv";
+	static char *func = "PGAPI_AllocEnv";
 
-	mylog("**** in SQLAllocEnv ** \n");
+	mylog("**** in PGAPI_AllocEnv ** \n");
 
 	/*
 	 * Hack for systems on which none of the constructor-making techniques
@@ -51,18 +52,18 @@ SQLAllocEnv(HENV FAR *phenv)
 		return SQL_ERROR;
 	}
 
-	mylog("** exit SQLAllocEnv: phenv = %u **\n", *phenv);
+	mylog("** exit PGAPI_AllocEnv: phenv = %u **\n", *phenv);
 	return SQL_SUCCESS;
 }
 
 
 RETCODE SQL_API
-SQLFreeEnv(HENV henv)
+PGAPI_FreeEnv(HENV henv)
 {
-	static char *func = "SQLFreeEnv";
+	static char *func = "PGAPI_FreeEnv";
 	EnvironmentClass *env = (EnvironmentClass *) henv;
 
-	mylog("**** in SQLFreeEnv: env = %u ** \n", env);
+	mylog("**** in PGAPI_FreeEnv: env = %u ** \n", env);
 
 	if (env && EN_Destructor(env))
 	{
@@ -78,7 +79,7 @@ SQLFreeEnv(HENV henv)
 
 /*		Returns the next SQL error information. */
 RETCODE SQL_API
-SQLError(
+PGAPI_Error(
 		 HENV henv,
 		 HDBC hdbc,
 		 HSTMT hstmt,
@@ -91,7 +92,7 @@ SQLError(
 	char	   *msg;
 	int			status;
 
-	mylog("**** SQLError: henv=%u, hdbc=%u, hstmt=%u <%d>\n", henv, hdbc, hstmt, cbErrorMsgMax);
+	mylog("**** PGAPI_Error: henv=%u, hdbc=%u, hstmt=%u <%d>\n", henv, hdbc, hstmt, cbErrorMsgMax);
 
 	if (cbErrorMsgMax < 0)
 		return SQL_ERROR;
@@ -140,6 +141,10 @@ SQLError(
 				switch (status)
 				{
 						/* now determine the SQLSTATE to be returned */
+					case STMT_ROW_VERSION_CHANGED:
+						strcpy(szSqlState, "01001");
+						/* data truncated */
+						break;
 					case STMT_TRUNCATED:
 						strcpy(szSqlState, "01004");
 						/* data truncated */
@@ -206,10 +211,13 @@ SQLError(
 						strcpy(szSqlState, "07006");
 						break;
 					case STMT_INVALID_CURSOR_STATE_ERROR:
-						strcpy(szSqlState, "24000");
+						 strcpy(szSqlState, "24000");
 						break;
 					case STMT_OPTION_VALUE_CHANGED:
 						strcpy(szSqlState, "01S02");
+						break;
+					case STMT_POS_BEFORE_RECORDSET:
+						strcpy(szSqlState, "01S06");
 						break;
 					case STMT_INVALID_CURSOR_NAME:
 						strcpy(szSqlState, "34000");
@@ -229,6 +237,9 @@ SQLError(
 						break;
 					case STMT_OPERATION_INVALID:
 						strcpy(szSqlState, "S1011");
+						break;
+					case STMT_INVALID_OPTION_IDENTIFIER:
+						strcpy(szSqlState, "HY092");
 						break;
 					case STMT_EXEC_ERROR:
 					default:

@@ -34,6 +34,7 @@
 #include "connection.h"
 #include "statement.h"
 #include "qresult.h"
+#include "pgapifunc.h"
 
 
 extern GLOBAL_VALUES globals;
@@ -72,34 +73,23 @@ set_statement_option(ConnectionClass *conn,
 			 * positioned update isn't supported so cursor concurrency is
 			 * read-only
 			 */
-			if (conn)
-				conn->stmtOptions.scroll_concurrency = vParam;
-			if (stmt)
-				stmt->options.scroll_concurrency = vParam;
-			break;
-
-			/*----------
-			 * if (globals.lie)
-			 * {
-			 *		if (conn)
-			 *			conn->stmtOptions.scroll_concurrency = vParam;
-			 *		if (stmt)
-			 *			stmt->options.scroll_concurrency = vParam;
-			 *		} else {
-			 *			if (conn)
-			 *				conn->stmtOptions.scroll_concurrency =
-			 *					SQL_CONCUR_READ_ONLY;
-			 *			if (stmt)
-			 *				stmt->options.scroll_concurrency =
-			 *					SQL_CONCUR_READ_ONLY;
-			 *
-			 *			if (vParam != SQL_CONCUR_READ_ONLY)
-			 *				changed = TRUE;
-			 *		}
-			 *		break;
-			 *	}
-			 *----------
-			 */
+			mylog("SetStmtOption(): SQL_CONCURRENCY = %d\n", vParam);
+			if (globals.lie || vParam == SQL_CONCUR_READ_ONLY || vParam == SQL_CONCUR_ROWVER)
+			{
+				if (conn)
+			 		conn->stmtOptions.scroll_concurrency = vParam;
+			 	if (stmt)
+			 		stmt->options.scroll_concurrency = vParam;
+			}
+			else 
+			{
+			 	if (conn)
+			 		conn->stmtOptions.scroll_concurrency = SQL_CONCUR_ROWVER;
+			 	if (stmt)
+			 		stmt->options.scroll_concurrency = SQL_CONCUR_ROWVER;
+			 	changed = TRUE;
+			 }
+			 break;
 
 		case SQL_CURSOR_TYPE:
 
@@ -296,19 +286,18 @@ set_statement_option(ConnectionClass *conn,
 
 /* Implements only SQL_AUTOCOMMIT */
 RETCODE SQL_API
-SQLSetConnectOption(
+PGAPI_SetConnectOption(
 					HDBC hdbc,
 					UWORD fOption,
 					UDWORD vParam)
 {
-	static char *func = "SQLSetConnectOption";
+	static char *func = "PGAPI_SetConnectOption";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	char		changed = FALSE;
 	RETCODE		retval;
 	int			i;
 
-	mylog("%s: entering...\n", func);
-
+	mylog("%s: entering fOption = %d vParam = %d\n", func, fOption, vParam);
 	if (!conn)
 	{
 		CC_log_error(func, "", NULL);
@@ -372,7 +361,7 @@ SQLSetConnectOption(
 				return SQL_ERROR;
 			}
 
-			mylog("SQLSetConnectOption: AUTOCOMMIT: transact_status=%d, vparam=%d\n", conn->transact_status, vParam);
+			mylog("PGAPI_SetConnectOption: AUTOCOMMIT: transact_status=%d, vparam=%d\n", conn->transact_status, vParam);
 
 			switch (vParam)
 			{
@@ -441,12 +430,12 @@ SQLSetConnectOption(
 
 /* This function just can tell you whether you are in Autcommit mode or not */
 RETCODE SQL_API
-SQLGetConnectOption(
+PGAPI_GetConnectOption(
 					HDBC hdbc,
 					UWORD fOption,
 					PTR pvParam)
 {
-	static char *func = "SQLGetConnectOption";
+	static char *func = "PGAPI_GetConnectOption";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 
 	mylog("%s: entering...\n", func);
@@ -517,12 +506,12 @@ SQLGetConnectOption(
 
 
 RETCODE SQL_API
-SQLSetStmtOption(
+PGAPI_SetStmtOption(
 				 HSTMT hstmt,
 				 UWORD fOption,
 				 UDWORD vParam)
 {
-	static char *func = "SQLSetStmtOption";
+	static char *func = "PGAPI_SetStmtOption";
 	StatementClass *stmt = (StatementClass *) hstmt;
 
 	mylog("%s: entering...\n", func);
@@ -543,12 +532,12 @@ SQLSetStmtOption(
 
 
 RETCODE SQL_API
-SQLGetStmtOption(
+PGAPI_GetStmtOption(
 				 HSTMT hstmt,
 				 UWORD fOption,
 				 PTR pvParam)
 {
-	static char *func = "SQLGetStmtOption";
+	static char *func = "PGAPI_GetStmtOption";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	QResultClass *res;
 

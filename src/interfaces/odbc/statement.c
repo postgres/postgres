@@ -34,6 +34,7 @@
 #include <windows.h>
 #include <sql.h>
 #endif
+#include "pgapifunc.h"
 
 extern GLOBAL_VALUES globals;
 
@@ -91,10 +92,10 @@ static struct
 
 
 RETCODE SQL_API
-SQLAllocStmt(HDBC hdbc,
+PGAPI_AllocStmt(HDBC hdbc,
 			 HSTMT FAR *phstmt)
 {
-	static char *func = "SQLAllocStmt";
+	static char *func = "PGAPI_AllocStmt";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	StatementClass *stmt;
 
@@ -108,7 +109,7 @@ SQLAllocStmt(HDBC hdbc,
 
 	stmt = SC_Constructor();
 
-	mylog("**** SQLAllocStmt: hdbc = %u, stmt = %u\n", hdbc, stmt);
+	mylog("**** PGAPI_AllocStmt: hdbc = %u, stmt = %u\n", hdbc, stmt);
 
 	if (!stmt)
 	{
@@ -143,10 +144,10 @@ SQLAllocStmt(HDBC hdbc,
 
 
 RETCODE SQL_API
-SQLFreeStmt(HSTMT hstmt,
+PGAPI_FreeStmt(HSTMT hstmt,
 			UWORD fOption)
 {
-	static char *func = "SQLFreeStmt";
+	static char *func = "PGAPI_FreeStmt";
 	StatementClass *stmt = (StatementClass *) hstmt;
 
 	mylog("%s: entering...hstmt=%u, fOption=%d\n", func, hstmt, fOption);
@@ -205,7 +206,7 @@ SQLFreeStmt(HSTMT hstmt,
 		SC_free_params(stmt, STMT_FREE_PARAMS_ALL);
 	else
 	{
-		stmt->errormsg = "Invalid option passed to SQLFreeStmt.";
+		stmt->errormsg = "Invalid option passed to PGAPI_FreeStmt.";
 		stmt->errornumber = STMT_OPTION_OUT_OF_RANGE_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
@@ -570,7 +571,7 @@ SC_pre_execute(StatementClass *self)
 			self->pre_executing = TRUE;
 			self->inaccurate_result = FALSE;
 
-			SQLExecute(self);
+			PGAPI_Execute(self);
 
 			self->pre_executing = old_pre_executing;
 
@@ -713,13 +714,13 @@ SC_fetch(StatementClass *self)
 	static char *func = "SC_fetch";
 	QResultClass *res = self->result;
 	int			retval,
-				result;
+				result, updret;
 	Int2		num_cols,
 				lf;
 	Oid			type;
 	char	   *value;
 	ColumnInfoClass *ci;
-
+extern	WORD	addrow;
 	/* TupleField *tupleField; */
 
 	self->last_fetch_count = 0;
@@ -741,7 +742,7 @@ SC_fetch(StatementClass *self)
 			return SQL_NO_DATA_FOUND;
 		}
 
-		mylog("**** SQLFetch: manual_result\n");
+		mylog("**** SC_fetch: manual_result\n");
 		(self->currTuple)++;
 	}
 	else
@@ -750,14 +751,14 @@ SC_fetch(StatementClass *self)
 		retval = QR_next_tuple(res);
 		if (retval < 0)
 		{
-			mylog("**** SQLFetch: end_tuples\n");
+			mylog("**** SC_fetch: end_tuples\n");
 			return SQL_NO_DATA_FOUND;
 		}
 		else if (retval > 0)
 			(self->currTuple)++;/* all is well */
 		else
 		{
-			mylog("SQLFetch: error\n");
+			mylog("SC_fetch: error\n");
 			self->errornumber = STMT_EXEC_ERROR;
 			self->errormsg = "Error fetching next row";
 			SC_log_error(func, "", self);
@@ -785,6 +786,17 @@ SC_fetch(StatementClass *self)
 			 SQL_C_ULONG, self->bookmark.buffer, 0, self->bookmark.used);
 	}
 
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	updret = 0;
+	if (self->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
+	{
+		if (!QR_get_value_backend_row(res, self->currTuple, num_cols - 1))
+			updret = SQL_ROW_DELETED;
+		num_cols -= 2;
+	}
+	if (!self->options.retrieve_data) /* data isn't required */
+		return updret ? updret + 10 : SQL_SUCCESS;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 	for (lf = 0; lf < num_cols; lf++)
 	{
 		mylog("fetch: cols=%d, lf=%d, self = %u, self->bindings = %u, buffer[] = %u\n", num_cols, lf, self, self->bindings, self->bindings[lf].buffer);
@@ -865,6 +877,10 @@ SC_fetch(StatementClass *self)
 		}
 	}
 
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+	if (updret)
+		result = updret + 10;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 	return result;
 }
 
@@ -910,7 +926,7 @@ SC_execute(StatementClass *self)
 
 		ok = QR_command_successful(res);
 
-		mylog("SQLExecute: ok = %d, status = %d\n", ok, QR_get_status(res));
+		mylog("SC_exec: begin ok = %d, status = %d\n", ok, QR_get_status(res));
 
 		QR_Destructor(res);
 
@@ -1066,7 +1082,7 @@ SC_execute(StatementClass *self)
 	{	/* get the return value of the procedure call */
 		RETCODE	ret;
 		HSTMT hstmt = (HSTMT) self;
-		ret = SQLBindCol(hstmt, 1, self->parameters[0].CType, self->parameters[0].buffer, self->parameters[0].buflen, self->parameters[0].used);
+		ret = PGAPI_BindCol(hstmt, 1, self->parameters[0].CType, self->parameters[0].buffer, self->parameters[0].buflen, self->parameters[0].used);
 		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) 
 			SC_fetch(hstmt);
 		else
@@ -1075,7 +1091,7 @@ SC_execute(StatementClass *self)
 			self->errormsg = "BindCol to Procedure return failed.";
 		}
 		if (ret == SQL_SUCCESS || ret == SQL_SUCCESS_WITH_INFO) 
-			SQLBindCol(hstmt, 1, self->parameters[0].CType, NULL, 0, NULL);
+			PGAPI_BindCol(hstmt, 1, self->parameters[0].CType, NULL, 0, NULL);
 		else
 		{
 			self->errornumber = STMT_EXEC_ERROR;

@@ -53,6 +53,28 @@ SQLSetPos @68
 SQLSetScrollOptions @69
 SQLTablePrivileges @70
 SQLBindParameter @72
+
+SQLAllocHandle @80
+SQLBindParam @81
+SQLCloseCursor @82
+SQLColAttribute @83
+SQLCopyDesc @84
+SQLEndTran @85
+SQLFetchScroll @86
+SQLFreeHandle @87
+SQLGetDescField @88
+SQLGetDescRec @89
+SQLGetDiagField @90
+SQLGetDiagRec @91
+SQLGetEnvAttr @92
+SQLGetConnectAttr @93
+SQLGetStmtAttr @94
+SQLSetConnectAttr @95
+SQLSetDescField @96
+SQLSetDescRec @97
+SQLSetEnvAttr @98
+SQLSetStmtAttr @99
+
 SQLDummyOrdinal @199
 dconn_FDriverConnectProc @200
 DllMain @201

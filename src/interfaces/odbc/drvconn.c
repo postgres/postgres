@@ -42,6 +42,7 @@
 #include <odbcinst.h>
 #include "resource.h"
 #endif
+#include "pgapifunc.h"
 
 #ifndef TRUE
 #define TRUE	(BOOL)1
@@ -67,7 +68,7 @@ extern GLOBAL_VALUES globals;
 
 
 RETCODE SQL_API
-SQLDriverConnect(
+PGAPI_DriverConnect(
 				 HDBC hdbc,
 				 HWND hwnd,
 				 UCHAR FAR *szConnStrIn,
@@ -77,7 +78,7 @@ SQLDriverConnect(
 				 SWORD FAR *pcbConnStrOut,
 				 UWORD fDriverCompletion)
 {
-	static char *func = "SQLDriverConnect";
+	static char *func = "PGAPI_DriverConnect";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	ConnInfo   *ci;
 
@@ -103,8 +104,8 @@ SQLDriverConnect(
 
 	make_string(szConnStrIn, cbConnStrIn, connStrIn);
 
-	mylog("**** SQLDriverConnect: fDriverCompletion=%d, connStrIn='%s'\n", fDriverCompletion, connStrIn);
-	qlog("conn=%u, SQLDriverConnect( in)='%s', fDriverCompletion=%d\n", conn, connStrIn, fDriverCompletion);
+	mylog("**** PGAPI_DriverConnect: fDriverCompletion=%d, connStrIn='%s'\n", fDriverCompletion, connStrIn);
+	qlog("conn=%u, PGAPI_DriverConnect( in)='%s', fDriverCompletion=%d\n", conn, connStrIn, fDriverCompletion);
 
 	ci = &(conn->connInfo);
 
@@ -241,10 +242,10 @@ dialog:
 		*pcbConnStrOut = len;
 
 	mylog("szConnStrOut = '%s'\n", szConnStrOut);
-	qlog("conn=%u, SQLDriverConnect(out)='%s'\n", conn, szConnStrOut);
+	qlog("conn=%u, PGAPI_DriverConnect(out)='%s'\n", conn, szConnStrOut);
 
 
-	mylog("SQLDRiverConnect: returning %d\n", result);
+	mylog("PGAPI_DRiverConnect: returning %d\n", result);
 	return result;
 }
 

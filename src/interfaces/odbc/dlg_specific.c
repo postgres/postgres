@@ -38,6 +38,7 @@
 #ifdef MULTIBYTE
 #include "multibyte.h"
 #endif
+#include "pgapifunc.h"
 
 #ifndef BOOL
 #define BOOL	int

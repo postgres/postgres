@@ -34,6 +34,7 @@
 #include "connection.h"
 #include "qresult.h"
 #include "pgtypes.h"
+#include "pgapifunc.h"
 
 #ifdef MULTIBYTE
 #include "multibyte.h"
@@ -75,7 +76,7 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 		i++;
 	}
 
-	if (s[0] == '\0')
+	if (s[i] == '\0')
 	{
 		token[0] = '\0';
 		return NULL;
@@ -92,6 +93,13 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 	while (!isspace((unsigned char) s[i]) && s[i] != ',' &&
 		   s[i] != '\0' && out != smax)
 	{
+#ifdef MULTIBYTE
+		if (multibyte_char_check(s[i]) != 0)
+		{
+			token[out++] = s[i++];
+			continue;
+		}
+#endif			
 		/* Handle quoted stuff */
 		if (out == 0 && (s[i] == '\"' || s[i] == '\''))
 		{
@@ -110,15 +118,17 @@ getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dqu
 			i++;				/* dont return the quote */
 			while (s[i] != '\0' && out != smax)
 			{
+#ifdef MULTIBYTE
+				if (multibyte_char_check(s[i]) != 0)
+				{
+					token[out++] = s[i++];
+					continue;
+				}
+#endif			
 				if (s[i] == qc && !in_escape)
 					break;
-#ifdef MULTIBYTE
-				if (multibyte_char_check(s[i]) == 0 && s[i] == '\\' && !in_escape)
-				{
-#else
 				if (s[i] == '\\' && !in_escape)
 				{
-#endif
 					in_escape = TRUE;
 				}
 				else
@@ -269,11 +279,12 @@ parse_statement(StatementClass *stmt)
 				dquote,
 				numeric,
 				unquoted;
-	char	   *ptr;
+	char	   *ptr, *pptr = NULL;
 	char		in_select = FALSE,
 				in_distinct = FALSE,
 				in_on = FALSE,
 				in_from = FALSE,
+				from_found = FALSE,
 				in_where = FALSE,
 				in_table = FALSE;
 	char		in_field = FALSE,
@@ -285,6 +296,7 @@ parse_statement(StatementClass *stmt)
 				i,
 				k = 0,
 				n,
+				first_where = 0,
 				blevel = 0;
 	FIELD_INFO **fi;
 	TABLE_INFO **ti;
@@ -303,11 +315,106 @@ parse_statement(StatementClass *stmt)
 	stmt->nfld = 0;
 	stmt->ntab = 0;
 
-	while ((ptr = getNextToken(ptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL)
+#ifdef MULTIBYTE
+	multibyte_init();
+#endif
+	while (pptr = ptr, (ptr = getNextToken(pptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL)
 	{
 		unquoted = !(quote || dquote);
 
 		mylog("unquoted=%d, quote=%d, dquote=%d, numeric=%d, delim='%c', token='%s', ptr='%s'\n", unquoted, quote, dquote, numeric, delim, token, ptr);
+
+		if (in_select && unquoted && blevel == 0)
+		{
+			if (!stricmp(token, "distinct"))
+			{
+				in_distinct = TRUE;
+
+				mylog("DISTINCT\n");
+				continue;
+			}
+			if (!stricmp(token, "into"))
+			{
+				in_select = FALSE;
+				mylog("INTO\n");
+				stmt->statement_type = STMT_TYPE_CREATE;
+				stmt->parse_status = STMT_PARSE_FATAL;
+				return FALSE;
+			}
+			if (!stricmp(token, "from"))
+			{
+				in_select = FALSE;
+				in_from = TRUE;
+				if (!from_found &&
+				    (!strnicmp(pptr, "from", 4)))
+				{
+					mylog("First ");
+					from_found = TRUE;
+				}
+
+				mylog("FROM\n");
+				continue;
+			}
+		}
+		if (unquoted && blevel == 0)
+		{
+			if ((!stricmp(token, "where") ||
+				!stricmp(token, "union") ||
+				!stricmp(token, "intersect") ||
+				!stricmp(token, "except") ||
+				!stricmp(token, "order") ||
+				!stricmp(token, "group") ||
+				!stricmp(token, "having")))
+			{
+				in_select = FALSE;
+				in_from = FALSE;
+				in_where = TRUE;
+
+				if (!first_where &&
+				    (!stricmp(token, "where")))
+					first_where = ptr - stmt->statement;
+				    
+				mylog("WHERE...\n");
+				break;
+			}
+		}
+		if (in_select && (in_expr || in_func))
+		{
+			/* just eat the expression */
+			mylog("in_expr=%d or func=%d\n", in_expr, in_func);
+			if (!unquoted)
+				continue;
+
+			if (token[0] == '(')
+			{
+				blevel++;
+				mylog("blevel++ = %d\n", blevel);
+			}
+			else if (token[0] == ')')
+			{
+				blevel--;
+				mylog("blevel-- = %d\n", blevel);
+			}
+			if (blevel == 0)
+			{
+				if (delim == ',')
+				{
+					mylog("**** Got comma in_expr/func\n");
+					in_func = FALSE;
+					in_expr = FALSE;
+					in_field = FALSE;
+				}
+				else if (!stricmp(token, "as"))
+				{
+					mylog("got AS in_expr\n");
+					in_func = FALSE;
+					in_expr = FALSE;
+					in_as = TRUE;
+					in_field = TRUE;
+				}
+			}
+			continue;
+		}
 
 		if (unquoted && !stricmp(token, "select"))
 		{
@@ -316,46 +423,6 @@ parse_statement(StatementClass *stmt)
 			mylog("SELECT\n");
 			continue;
 		}
-
-		if (unquoted && in_select && !stricmp(token, "distinct"))
-		{
-			in_distinct = TRUE;
-
-			mylog("DISTINCT\n");
-			continue;
-		}
-
-		if (unquoted && !stricmp(token, "into"))
-		{
-			in_select = FALSE;
-
-			mylog("INTO\n");
-			continue;
-		}
-
-		if (unquoted && !stricmp(token, "from"))
-		{
-			in_select = FALSE;
-			in_from = TRUE;
-
-			mylog("FROM\n");
-			continue;
-		}
-
-		if (unquoted && (!stricmp(token, "where") ||
-						 !stricmp(token, "union") ||
-						 !stricmp(token, "order") ||
-						 !stricmp(token, "group") ||
-						 !stricmp(token, "having")))
-		{
-			in_select = FALSE;
-			in_from = FALSE;
-			in_where = TRUE;
-
-			mylog("WHERE...\n");
-			break;
-		}
-
 		if (in_select)
 		{
 			if (in_distinct)
@@ -376,41 +443,6 @@ parse_statement(StatementClass *stmt)
 				}
 				mylog("done distinct\n");
 				in_distinct = FALSE;
-			}
-
-			if (in_expr || in_func)
-			{
-				/* just eat the expression */
-				mylog("in_expr=%d or func=%d\n", in_expr, in_func);
-				if (quote || dquote)
-					continue;
-
-				if (in_expr && blevel == 0 && delim == ',')
-				{
-					mylog("**** in_expr and Got comma\n");
-					in_expr = FALSE;
-					in_field = FALSE;
-				}
-				else if (token[0] == '(')
-				{
-					blevel++;
-					mylog("blevel++ = %d\n", blevel);
-				}
-				else if (token[0] == ')')
-				{
-					blevel--;
-					mylog("blevel-- = %d\n", blevel);
-				}
-				if (blevel == 0)
-				{
-					if (delim == ',')
-					{
-						in_func = FALSE;
-						in_expr = FALSE;
-						in_field = FALSE;
-					}
-				}
-				continue;
 			}
 
 			if (!in_field)
@@ -447,6 +479,7 @@ parse_statement(StatementClass *stmt)
 				if (quote)
 				{
 					fi[stmt->nfld++]->quote = TRUE;
+in_expr = TRUE;
 					continue;
 				}
 				else if (numeric)
@@ -619,8 +652,12 @@ parse_statement(StatementClass *stmt)
 		else if (fi[i]->quote)
 		{						/* handle as text */
 			fi[i]->ti = NULL;
+			/*
 			fi[i]->type = PG_TYPE_TEXT;
 			fi[i]->precision = 0;
+			the following may be better */
+			fi[i]->type = PG_TYPE_UNKNOWN;
+			fi[i]->precision = 254;
 			continue;
 		}
 		/* it's a dot, resolve to table or alias */
@@ -680,12 +717,12 @@ parse_statement(StatementClass *stmt)
 
 		if (!found)
 		{
-			mylog("PARSE: Getting SQLColumns for table[%d]='%s'\n", i, ti[i]->name);
+			mylog("PARSE: Getting PG_Columns for table[%d]='%s'\n", i, ti[i]->name);
 
-			result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
+			result = PGAPI_AllocStmt(stmt->hdbc, &hcol_stmt);
 			if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 			{
-				stmt->errormsg = "SQLAllocStmt failed in parse_statement for columns.";
+				stmt->errormsg = "PGAPI_AllocStmt failed in parse_statement for columns.";
 				stmt->errornumber = STMT_NO_MEMORY_ERROR;
 				stmt->parse_status = STMT_PARSE_FATAL;
 				return FALSE;
@@ -694,10 +731,10 @@ parse_statement(StatementClass *stmt)
 			col_stmt = (StatementClass *) hcol_stmt;
 			col_stmt->internal = TRUE;
 
-			result = SQLColumns(hcol_stmt, "", 0, "", 0,
+			result = PGAPI_Columns(hcol_stmt, "", 0, "", 0,
 						ti[i]->name, (SWORD) strlen(ti[i]->name), "", 0);
 
-			mylog("        Past SQLColumns\n");
+			mylog("        Past PG_Columns\n");
 			if (result == SQL_SUCCESS)
 			{
 				mylog("      Success\n");
@@ -736,12 +773,12 @@ parse_statement(StatementClass *stmt)
 
 				conn->ntables++;
 
-				SQLFreeStmt(hcol_stmt, SQL_DROP);
+				PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 				mylog("Created col_info table='%s', ntables=%d\n", ti[i]->name, conn->ntables);
 			}
 			else
 			{
-				SQLFreeStmt(hcol_stmt, SQL_DROP);
+				PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 				break;
 			}
 		}
@@ -751,7 +788,7 @@ parse_statement(StatementClass *stmt)
 		mylog("associate col_info: i=%d, k=%d\n", i, k);
 	}
 
-	mylog("Done SQLColumns\n");
+	mylog("Done PG_Columns\n");
 
 	/*
 	 * Now resolve the fields to point to column info

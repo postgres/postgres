@@ -290,6 +290,7 @@ QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 			QR_set_message(self, "Could not get memory for tuple cache.");
 			return FALSE;
 		}
+		self->count_allocated = tuple_size;
 
 		self->inTuples = TRUE;
 
@@ -464,7 +465,8 @@ QR_next_tuple(QResultClass *self)
 				self->fetch_count++;
 			}
 
-			self->backend_tuples = (TupleField *) realloc(self->backend_tuples, self->num_fields * sizeof(TupleField) * self->cache_size);
+			if (self->cache_size > self->count_allocated)
+				self->backend_tuples = (TupleField *) realloc(self->backend_tuples, self->num_fields * sizeof(TupleField) * self->cache_size);
 			if (!self->backend_tuples)
 			{
 				self->status = PGRES_FATAL_ERROR;
@@ -524,19 +526,21 @@ QR_next_tuple(QResultClass *self)
 			case 'B':			/* Tuples in binary format */
 			case 'D':			/* Tuples in ASCII format  */
 
-				if (!globals.use_declarefetch && self->fcount > 0 && !(self->fcount % TUPLE_MALLOC_INC))
+				if (!globals.use_declarefetch && self->fcount >= self->count_allocated)
 				{
-					size_t		old_size = self->fcount * self->num_fields * sizeof(TupleField);
+					int tuple_size = self->count_allocated;
 
-					mylog("REALLOC: old_size = %d\n", old_size);
-
-					self->backend_tuples = (TupleField *) realloc(self->backend_tuples, old_size + (self->num_fields * sizeof(TupleField) * TUPLE_MALLOC_INC));
+					mylog("REALLOC: old_count = %d, size = %d\n", tuple_size, self->num_fields * sizeof(TupleField) * tuple_size);
+					tuple_size *= 2;
+					self->backend_tuples = (TupleField *) realloc(self->backend_tuples,
+						 tuple_size * self->num_fields * sizeof(TupleField));
 					if (!self->backend_tuples)
 					{
 						self->status = PGRES_FATAL_ERROR;
 						QR_set_message(self, "Out of memory while reading tuples.");
 						return FALSE;
 					}
+					self->count_allocated = tuple_size;
 				}
 
 				if (!QR_read_tuple(self, (char) (id == 0)))

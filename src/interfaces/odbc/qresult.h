@@ -46,6 +46,7 @@ struct QResultClass_
 								 * (backend) */
 
 	/* Stuff for declare/fetch tuples */
+	int			count_allocated; /* m(re)alloced count */
 	int			fetch_count;	/* logical rows read so far */
 	int			fcount;			/* actual rows read in the fetch */
 	int			currTuple;

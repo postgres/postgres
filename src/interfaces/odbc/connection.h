@@ -264,6 +264,7 @@ struct ConnectionClass_
 	HINSTANCE	translation_handle;
 	DataSourceToDriverProc DataSourceToDriver;
 	DriverToDataSourceProc DriverToDataSource;
+	Int2		driver_version; /* prepared for ODBC3.0 */
 	char		transact_status;/* Is a transaction is currently in
 								 * progress */
 	char		errormsg_created;		/* has an informative error msg

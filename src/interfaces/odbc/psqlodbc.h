@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.44 2001/06/27 07:38:07 inoue Exp $
+ * $Id: psqlodbc.h,v 1.45 2001/08/18 04:30:47 inoue Exp $
  *
  */
 
@@ -163,6 +163,9 @@ typedef struct StatementOptions_
 	int			bind_size;		/* size of each structure if using Row
 								 * Binding */
 	int			use_bookmarks;
+	UInt4			*rowsFetched;
+	UInt2			*rowStatusArray;
+	void			*bookmark_ptr;
 } StatementOptions;
 
 /*	Used to pass extra query info to send_query */

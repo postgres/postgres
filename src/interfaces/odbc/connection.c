@@ -36,6 +36,7 @@
 #ifdef WIN32
 #include <odbcinst.h>
 #endif
+#include "pgapifunc.h"
 
 #define STMT_INCREMENT 16		/* how many statement holders to allocate
 								 * at a time */
@@ -46,13 +47,13 @@ extern GLOBAL_VALUES globals;
 
 
 RETCODE SQL_API
-SQLAllocConnect(
+PGAPI_AllocConnect(
 				HENV henv,
 				HDBC FAR *phdbc)
 {
 	EnvironmentClass *env = (EnvironmentClass *) henv;
 	ConnectionClass *conn;
-	static char *func = "SQLAllocConnect";
+	static char *func = "PGAPI_AllocConnect";
 
 	mylog("%s: entering...\n", func);
 
@@ -85,7 +86,7 @@ SQLAllocConnect(
 
 
 RETCODE SQL_API
-SQLConnect(
+PGAPI_Connect(
 		   HDBC hdbc,
 		   UCHAR FAR *szDSN,
 		   SWORD cbDSN,
@@ -96,7 +97,7 @@ SQLConnect(
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	ConnInfo   *ci;
-	static char *func = "SQLConnect";
+	static char *func = "PGAPI_Connect";
 
 	mylog("%s: entering...\n", func);
 
@@ -141,7 +142,7 @@ SQLConnect(
 
 
 RETCODE SQL_API
-SQLBrowseConnect(
+PGAPI_BrowseConnect(
 				 HDBC hdbc,
 				 UCHAR FAR *szConnStrIn,
 				 SWORD cbConnStrIn,
@@ -149,7 +150,7 @@ SQLBrowseConnect(
 				 SWORD cbConnStrOutMax,
 				 SWORD FAR *pcbConnStrOut)
 {
-	static char *func = "SQLBrowseConnect";
+	static char *func = "PGAPI_BrowseConnect";
 
 	mylog("%s: entering...\n", func);
 
@@ -159,11 +160,11 @@ SQLBrowseConnect(
 
 /* Drop any hstmts open on hdbc and disconnect from database */
 RETCODE SQL_API
-SQLDisconnect(
+PGAPI_Disconnect(
 			  HDBC hdbc)
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
-	static char *func = "SQLDisconnect";
+	static char *func = "PGAPI_Disconnect";
 
 
 	mylog("%s: entering...\n", func);
@@ -197,11 +198,11 @@ SQLDisconnect(
 
 
 RETCODE SQL_API
-SQLFreeConnect(
+PGAPI_FreeConnect(
 			   HDBC hdbc)
 {
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
-	static char *func = "SQLFreeConnect";
+	static char *func = "PGAPI_FreeConnect";
 
 	mylog("%s: entering...\n", func);
 	mylog("**** in %s: hdbc=%u\n", func, hdbc);
@@ -272,6 +273,7 @@ CC_Constructor()
 		rv->translation_handle = NULL;
 		rv->DataSourceToDriver = NULL;
 		rv->DriverToDataSource = NULL;
+		rv->driver_version = ODBCVER;
 		memset(rv->pg_version, 0, sizeof(rv->pg_version));
 		rv->pg_version_number = .0;
 		rv->pg_version_major = 0;
@@ -1409,7 +1411,7 @@ CC_send_settings(ConnectionClass *self)
  *	has not transitioned to "connected" yet.
  */
 
-	result = SQLAllocStmt(self, &hstmt);
+	result = PGAPI_AllocStmt(self, &hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		return FALSE;
 	stmt = (StatementClass *) hstmt;
@@ -1417,7 +1419,7 @@ CC_send_settings(ConnectionClass *self)
 	stmt->internal = TRUE;		/* ensure no BEGIN/COMMIT/ABORT stuff */
 
 	/* Set the Datestyle to the format the driver expects it to be in */
-	result = SQLExecDirect(hstmt, "set DateStyle to 'ISO'", SQL_NTS);
+	result = PGAPI_ExecDirect(hstmt, "set DateStyle to 'ISO'", SQL_NTS);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		status = FALSE;
 
@@ -1426,7 +1428,7 @@ CC_send_settings(ConnectionClass *self)
 	/* Disable genetic optimizer based on global flag */
 	if (globals.disable_optimizer)
 	{
-		result = SQLExecDirect(hstmt, "set geqo to 'OFF'", SQL_NTS);
+		result = PGAPI_ExecDirect(hstmt, "set geqo to 'OFF'", SQL_NTS);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 			status = FALSE;
 
@@ -1437,7 +1439,7 @@ CC_send_settings(ConnectionClass *self)
 	/* KSQO */
 	if (globals.ksqo)
 	{
-		result = SQLExecDirect(hstmt, "set ksqo to 'ON'", SQL_NTS);
+		result = PGAPI_ExecDirect(hstmt, "set ksqo to 'ON'", SQL_NTS);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 			status = FALSE;
 
@@ -1452,7 +1454,7 @@ CC_send_settings(ConnectionClass *self)
 		ptr = strtok(cs, ";");
 		while (ptr)
 		{
-			result = SQLExecDirect(hstmt, ptr, SQL_NTS);
+			result = PGAPI_ExecDirect(hstmt, ptr, SQL_NTS);
 			if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 				status = FALSE;
 
@@ -1471,7 +1473,7 @@ CC_send_settings(ConnectionClass *self)
 		ptr = strtok(cs, ";");
 		while (ptr)
 		{
-			result = SQLExecDirect(hstmt, ptr, SQL_NTS);
+			result = PGAPI_ExecDirect(hstmt, ptr, SQL_NTS);
 			if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 				status = FALSE;
 
@@ -1484,7 +1486,7 @@ CC_send_settings(ConnectionClass *self)
 	}
 
 
-	SQLFreeStmt(hstmt, SQL_DROP);
+	PGAPI_FreeStmt(hstmt, SQL_DROP);
 
 	return status;
 }
@@ -1509,36 +1511,36 @@ CC_lookup_lo(ConnectionClass *self)
  *	This function must use the local odbc API functions since the odbc state
  *	has not transitioned to "connected" yet.
  */
-	result = SQLAllocStmt(self, &hstmt);
+	result = PGAPI_AllocStmt(self, &hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		return;
 	stmt = (StatementClass *) hstmt;
 
-	result = SQLExecDirect(hstmt, "select oid from pg_type where typname='" PG_TYPE_LO_NAME "'", SQL_NTS);
+	result = PGAPI_ExecDirect(hstmt, "select oid from pg_type where typname='" PG_TYPE_LO_NAME "'", SQL_NTS);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		SQLFreeStmt(hstmt, SQL_DROP);
+		PGAPI_FreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = SQLFetch(hstmt);
+	result = PGAPI_Fetch(hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		SQLFreeStmt(hstmt, SQL_DROP);
+		PGAPI_FreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = SQLGetData(hstmt, 1, SQL_C_SLONG, &self->lobj_type, sizeof(self->lobj_type), NULL);
+	result = PGAPI_GetData(hstmt, 1, SQL_C_SLONG, &self->lobj_type, sizeof(self->lobj_type), NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		SQLFreeStmt(hstmt, SQL_DROP);
+		PGAPI_FreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
 	mylog("Got the large object oid: %d\n", self->lobj_type);
 	qlog("    [ Large Object oid = %d ]\n", self->lobj_type);
 
-	result = SQLFreeStmt(hstmt, SQL_DROP);
+	result = PGAPI_FreeStmt(hstmt, SQL_DROP);
 }
 
 
@@ -1594,30 +1596,30 @@ CC_lookup_pg_version(ConnectionClass *self)
  *	This function must use the local odbc API functions since the odbc state
  *	has not transitioned to "connected" yet.
  */
-	result = SQLAllocStmt(self, &hstmt);
+	result = PGAPI_AllocStmt(self, &hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		return;
 	stmt = (StatementClass *) hstmt;
 
 	/* get the server's version if possible	 */
-	result = SQLExecDirect(hstmt, "select version()", SQL_NTS);
+	result = PGAPI_ExecDirect(hstmt, "select version()", SQL_NTS);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		SQLFreeStmt(hstmt, SQL_DROP);
+		PGAPI_FreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = SQLFetch(hstmt);
+	result = PGAPI_Fetch(hstmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		SQLFreeStmt(hstmt, SQL_DROP);
+		PGAPI_FreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = SQLGetData(hstmt, 1, SQL_C_CHAR, self->pg_version, MAX_INFO_STRING, NULL);
+	result = PGAPI_GetData(hstmt, 1, SQL_C_CHAR, self->pg_version, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		SQLFreeStmt(hstmt, SQL_DROP);
+		PGAPI_FreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
@@ -1639,7 +1641,7 @@ CC_lookup_pg_version(ConnectionClass *self)
 	qlog("    [ PostgreSQL version string = '%s' ]\n", self->pg_version);
 	qlog("    [ PostgreSQL version number = '%1.1f' ]\n", self->pg_version_number);
 
-	result = SQLFreeStmt(hstmt, SQL_DROP);
+	result = PGAPI_FreeStmt(hstmt, SQL_DROP);
 }
 
 

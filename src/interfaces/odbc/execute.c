@@ -36,17 +36,18 @@
 #include "bind.h"
 #include "pgtypes.h"
 #include "lobj.h"
+#include "pgapifunc.h"
 
 extern GLOBAL_VALUES globals;
 
 
 /*		Perform a Prepare on the SQL statement */
 RETCODE SQL_API
-SQLPrepare(HSTMT hstmt,
+PGAPI_Prepare(HSTMT hstmt,
 		   UCHAR FAR *szSqlStr,
 		   SDWORD cbSqlStr)
 {
-	static char *func = "SQLPrepare";
+	static char *func = "PGAPI_Prepare";
 	StatementClass *self = (StatementClass *) hstmt;
 
 	mylog("%s: entering...\n", func);
@@ -66,31 +67,31 @@ SQLPrepare(HSTMT hstmt,
 	switch (self->status)
 	{
 		case STMT_PREMATURE:
-			mylog("**** SQLPrepare: STMT_PREMATURE, recycle\n");
+			mylog("**** PGAPI_Prepare: STMT_PREMATURE, recycle\n");
 			SC_recycle_statement(self); /* recycle the statement, but do
 										 * not remove parameter bindings */
 			break;
 
 		case STMT_FINISHED:
-			mylog("**** SQLPrepare: STMT_FINISHED, recycle\n");
+			mylog("**** PGAPI_Prepare: STMT_FINISHED, recycle\n");
 			SC_recycle_statement(self); /* recycle the statement, but do
 										 * not remove parameter bindings */
 			break;
 
 		case STMT_ALLOCATED:
-			mylog("**** SQLPrepare: STMT_ALLOCATED, copy\n");
+			mylog("**** PGAPI_Prepare: STMT_ALLOCATED, copy\n");
 			self->status = STMT_READY;
 			break;
 
 		case STMT_READY:
-			mylog("**** SQLPrepare: STMT_READY, change SQL\n");
+			mylog("**** PGAPI_Prepare: STMT_READY, change SQL\n");
 			break;
 
 		case STMT_EXECUTING:
-			mylog("**** SQLPrepare: STMT_EXECUTING, error!\n");
+			mylog("**** PGAPI_Prepare: STMT_EXECUTING, error!\n");
 
 			self->errornumber = STMT_SEQUENCE_ERROR;
-			self->errormsg = "SQLPrepare(): The handle does not point to a statement that is ready to be executed";
+			self->errormsg = "PGAPI_Prepare(): The handle does not point to a statement that is ready to be executed";
 			SC_log_error(func, "", self);
 
 			return SQL_ERROR;
@@ -132,14 +133,14 @@ SQLPrepare(HSTMT hstmt,
 
 /*		Performs the equivalent of SQLPrepare, followed by SQLExecute. */
 RETCODE SQL_API
-SQLExecDirect(
+PGAPI_ExecDirect(
 			  HSTMT hstmt,
 			  UCHAR FAR *szSqlStr,
 			  SDWORD cbSqlStr)
 {
 	StatementClass *stmt = (StatementClass *) hstmt;
 	RETCODE		result;
-	static char *func = "SQLExecDirect";
+	static char *func = "PGAPI_ExecDirect";
 
 	mylog("%s: entering...\n", func);
 
@@ -188,21 +189,21 @@ SQLExecDirect(
 		return SQL_ERROR;
 	}
 
-	mylog("%s: calling SQLExecute...\n", func);
+	mylog("%s: calling PGAPI_Execute...\n", func);
 
-	result = SQLExecute(hstmt);
+	result = PGAPI_Execute(hstmt);
 
-	mylog("%s: returned %hd from SQLExecute\n", func, result);
+	mylog("%s: returned %hd from PGAPI_Execute\n", func, result);
 	return result;
 }
 
 
 /*	Execute a prepared SQL statement */
 RETCODE SQL_API
-SQLExecute(
+PGAPI_Execute(
 		   HSTMT hstmt)
 {
-	static char *func = "SQLExecute";
+	static char *func = "PGAPI_Execute";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	ConnectionClass *conn;
 	int			i,
@@ -349,12 +350,12 @@ SQLExecute(
 
 
 RETCODE SQL_API
-SQLTransact(
+PGAPI_Transact(
 			HENV henv,
 			HDBC hdbc,
 			UWORD fType)
 {
-	static char *func = "SQLTransact";
+	static char *func = "PGAPI_Transact";
 	extern ConnectionClass *conns[];
 	ConnectionClass *conn;
 	QResultClass *res;
@@ -381,7 +382,7 @@ SQLTransact(
 			conn = conns[lf];
 
 			if (conn && conn->henv == henv)
-				if (SQLTransact(henv, (HDBC) conn, fType) != SQL_SUCCESS)
+				if (PGAPI_Transact(henv, (HDBC) conn, fType) != SQL_SUCCESS)
 					return SQL_ERROR;
 		}
 		return SQL_SUCCESS;
@@ -396,7 +397,7 @@ SQLTransact(
 	else
 	{
 		conn->errornumber = CONN_INVALID_ARGUMENT_NO;
-		conn->errormsg = "SQLTransact can only be called with SQL_COMMIT or SQL_ROLLBACK as parameter";
+		conn->errormsg = "PGAPI_Transact can only be called with SQL_COMMIT or SQL_ROLLBACK as parameter";
 		CC_log_error(func, "", conn);
 		return SQL_ERROR;
 	}
@@ -404,7 +405,7 @@ SQLTransact(
 	/* If manual commit and in transaction, then proceed. */
 	if (!CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
 	{
-		mylog("SQLTransact: sending on conn %d '%s'\n", conn, stmt_string);
+		mylog("PGAPI_Transact: sending on conn %d '%s'\n", conn, stmt_string);
 
 		res = CC_send_query(conn, stmt_string, NULL);
 		CC_set_no_trans(conn);
@@ -430,10 +431,10 @@ SQLTransact(
 
 
 RETCODE SQL_API
-SQLCancel(
+PGAPI_Cancel(
 		  HSTMT hstmt)			/* Statement to cancel. */
 {
-	static char *func = "SQLCancel";
+	static char *func = "PGAPI_Cancel";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	RETCODE		result;
 
@@ -476,12 +477,12 @@ SQLCancel(
 			result = addr((char *) (stmt->phstmt) - 96, SQL_CLOSE);
 		}
 		else
-			result = SQLFreeStmt(hstmt, SQL_CLOSE);
+			result = PGAPI_FreeStmt(hstmt, SQL_CLOSE);
 #else
-		result = SQLFreeStmt(hstmt, SQL_CLOSE);
+		result = PGAPI_FreeStmt(hstmt, SQL_CLOSE);
 #endif
 
-		mylog("SQLCancel:  SQLFreeStmt returned %d\n", result);
+		mylog("PGAPI_Cancel:  PGAPI_FreeStmt returned %d\n", result);
 
 		SC_clear_error(hstmt);
 		return SQL_SUCCESS;
@@ -509,7 +510,7 @@ SQLCancel(
  *	observing buffer limits and truncation.
  */
 RETCODE SQL_API
-SQLNativeSql(
+PGAPI_NativeSql(
 			 HDBC hdbc,
 			 UCHAR FAR *szSqlStrIn,
 			 SDWORD cbSqlStrIn,
@@ -517,7 +518,7 @@ SQLNativeSql(
 			 SDWORD cbSqlStrMax,
 			 SDWORD FAR *pcbSqlStr)
 {
-	static char *func = "SQLNativeSql";
+	static char *func = "PGAPI_NativeSql";
 	int			len = 0;
 	char	   *ptr;
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -552,7 +553,8 @@ SQLNativeSql(
 	if (pcbSqlStr)
 		*pcbSqlStr = len;
 
-	free(ptr);
+	if (cbSqlStrIn)
+		free(ptr);
 
 	return result;
 }
@@ -563,11 +565,11 @@ SQLNativeSql(
  *	Used in conjuction with SQLPutData.
  */
 RETCODE SQL_API
-SQLParamData(
+PGAPI_ParamData(
 			 HSTMT hstmt,
 			 PTR FAR *prgbValue)
 {
-	static char *func = "SQLParamData";
+	static char *func = "PGAPI_ParamData";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	int			i,
 				retval;
@@ -672,12 +674,12 @@ SQLParamData(
  *	Used in conjunction with SQLParamData.
  */
 RETCODE SQL_API
-SQLPutData(
+PGAPI_PutData(
 		   HSTMT hstmt,
 		   PTR rgbValue,
 		   SDWORD cbValue)
 {
-	static char *func = "SQLPutData";
+	static char *func = "PGAPI_PutData";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	int			old_pos,
 				retval;
@@ -704,7 +706,7 @@ SQLPutData(
 
 	if (!stmt->put_data)
 	{							/* first call */
-		mylog("SQLPutData: (1) cbValue = %d\n", cbValue);
+		mylog("PGAPI_PutData: (1) cbValue = %d\n", cbValue);
 
 		stmt->put_data = TRUE;
 
@@ -712,7 +714,7 @@ SQLPutData(
 		if (!current_param->EXEC_used)
 		{
 			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			stmt->errormsg = "Out of memory in SQLPutData (1)";
+			stmt->errormsg = "Out of memory in PGAPI_PutData (1)";
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
@@ -790,7 +792,7 @@ SQLPutData(
 				if (!current_param->EXEC_buffer)
 				{
 					stmt->errornumber = STMT_NO_MEMORY_ERROR;
-					stmt->errormsg = "Out of memory in SQLPutData (2)";
+					stmt->errormsg = "Out of memory in PGAPI_PutData (2)";
 					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}
@@ -807,7 +809,7 @@ SQLPutData(
 					if (!current_param->EXEC_buffer)
 					{
 						stmt->errornumber = STMT_NO_MEMORY_ERROR;
-						stmt->errormsg = "Out of memory in SQLPutData (2)";
+						stmt->errormsg = "Out of memory in PGAPI_PutData (2)";
 						SC_log_error(func, "", stmt);
 						return SQL_ERROR;
 					}
@@ -822,7 +824,7 @@ SQLPutData(
 					if (!current_param->EXEC_buffer)
 					{
 						stmt->errornumber = STMT_NO_MEMORY_ERROR;
-						stmt->errormsg = "Out of memory in SQLPutData (2)";
+						stmt->errormsg = "Out of memory in PGAPI_PutData (2)";
 						SC_log_error(func, "", stmt);
 						return SQL_ERROR;
 					}
@@ -834,7 +836,7 @@ SQLPutData(
 	else
 	{
 		/* calling SQLPutData more than once */
-		mylog("SQLPutData: (>1) cbValue = %d\n", cbValue);
+		mylog("PGAPI_PutData: (>1) cbValue = %d\n", cbValue);
 
 		if (current_param->SQLType == SQL_LONGVARBINARY)
 		{
@@ -854,7 +856,7 @@ SQLPutData(
 				if (!buffer)
 				{
 					stmt->errornumber = STMT_NO_MEMORY_ERROR;
-					stmt->errormsg = "Out of memory in SQLPutData (3)";
+					stmt->errormsg = "Out of memory in PGAPI_PutData (3)";
 					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}
@@ -880,7 +882,7 @@ SQLPutData(
 				if (!buffer)
 				{
 					stmt->errornumber = STMT_NO_MEMORY_ERROR;
-					stmt->errormsg = "Out of memory in SQLPutData (3)";
+					stmt->errormsg = "Out of memory in PGAPI_PutData (3)";
 					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}

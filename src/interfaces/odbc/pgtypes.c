@@ -329,7 +329,8 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 {
 	switch (type)
 	{
-			case PG_TYPE_CHAR:return "char";
+		case PG_TYPE_CHAR:
+			return "char";
 		case PG_TYPE_CHAR2:
 			return "char2";
 		case PG_TYPE_CHAR4:
@@ -399,7 +400,7 @@ getNumericScale(StatementClass *stmt, Int4 type, int col)
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
-	mylog("getNumericScale: type=%d, col=%d, unknown = %d\n", type, col);
+	mylog("getNumericScale: type=%d, col=%d\n", type, col);
 
 	if (col < 0)
 		return PG_NUMERIC_MAX_SCALE;
@@ -436,7 +437,7 @@ getNumericPrecision(StatementClass *stmt, Int4 type, int col)
 	QResultClass *result;
 	ColumnInfoClass *flds;
 
-	mylog("getNumericPrecision: type=%d, col=%d, unknown = %d\n", type, col);
+	mylog("getNumericPrecision: type=%d, col=%d\n", type, col);
 
 	if (col < 0)
 		return PG_NUMERIC_MAX_PRECISION;
@@ -598,7 +599,8 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
-			return 19;
+			/*return 19;*/
+return 21;
 
 		case PG_TYPE_BOOL:
 			return 1;

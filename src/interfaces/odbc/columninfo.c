@@ -17,6 +17,7 @@
 #include "socket.h"
 #include <stdlib.h>
 #include <string.h>
+#include "pgapifunc.h"
 
 ColumnInfoClass *
 CI_Constructor()

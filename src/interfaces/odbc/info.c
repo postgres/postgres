@@ -33,6 +33,8 @@
 #include <windows.h>
 #include <sql.h>
 #include <sqlext.h>
+
+#include <odbcinst.h>
 #endif
 
 #include "tuple.h"
@@ -45,6 +47,7 @@
 #include "bind.h"
 #include "misc.h"
 #include "pgtypes.h"
+#include "pgapifunc.h"
 
 
 /*	Trigger related stuff for SQLForeign Keys */
@@ -57,15 +60,16 @@
 extern GLOBAL_VALUES globals;
 
 
+
 RETCODE SQL_API
-SQLGetInfo(
+PGAPI_GetInfo(
 		   HDBC hdbc,
 		   UWORD fInfoType,
 		   PTR rgbInfoValue,
 		   SWORD cbInfoValueMax,
 		   SWORD FAR *pcbInfoValue)
 {
-	static char *func = "SQLGetInfo";
+	static char *func = "PGAPI_GetInfo";
 	ConnectionClass *conn = (ConnectionClass *) hdbc;
 	ConnInfo   *ci;
 	char	   *p = NULL,
@@ -165,11 +169,19 @@ SQLGetInfo(
 		case SQL_CURSOR_COMMIT_BEHAVIOR:		/* ODBC 1.0 */
 			len = 2;
 			value = SQL_CB_CLOSE;
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+			if (!globals.use_declarefetch)
+				value = SQL_CB_PRESERVE;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_CURSOR_ROLLBACK_BEHAVIOR:		/* ODBC 1.0 */
 			len = 2;
 			value = SQL_CB_CLOSE;
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+			if (!globals.use_declarefetch)
+				value = SQL_CB_PRESERVE;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_DATA_SOURCE_NAME:		/* ODBC 1.0 */
@@ -218,6 +230,28 @@ SQLGetInfo(
 
 		case SQL_DRIVER_ODBC_VER:
 			p = DRIVER_ODBC_VER;
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+			{
+				static char dver[32];
+				SQLGetPrivateProfileString(DBMS_NAME,
+				 "DriverODBCVer", "", dver, sizeof(dver), "odbcinst.ini");
+				if (dver[0])
+				{
+					int	major, minor;
+					mylog("REIGISTRY_ODBC_VER = %s\n", dver)
+;
+					if (sscanf(dver, "%x.%x", &major, &minor) >= 2)
+					{
+						Int2	drv_ver = (major << 8) + minor;
+						if (drv_ver > ODBCVER)
+						{
+							conn->driver_version = drv_ver;
+							p = dver;
+						}
+					}
+				}
+			}
+#endif /* DRIVER_CURSOR_IMPLEMENT */
 			break;
 
 		case SQL_DRIVER_VER:	/* ODBC 1.0 */
@@ -648,8 +682,9 @@ SQLGetInfo(
 			break;
 
 		default:
+return PGAPI_GetInfo30(hdbc, fInfoType, rgbInfoValue, cbInfoValueMax,pcbInfoValue);
 			/* unrecognized key */
-			conn->errormsg = "Unrecognized key passed to SQLGetInfo.";
+			conn->errormsg = "Unrecognized key passed to PGAPI_GetInfo.";
 			conn->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
 			CC_log_error(func, "", conn);
 			return SQL_ERROR;
@@ -657,7 +692,7 @@ SQLGetInfo(
 
 	result = SQL_SUCCESS;
 
-	mylog("SQLGetInfo: p='%s', len=%d, value=%d, cbMax=%d\n", p ? p : "<NULL>", len, value, cbInfoValueMax);
+	mylog("%s: p='%s', len=%d, value=%d, cbMax=%d\n", func, p ? p : "<NULL>", len, value, cbInfoValueMax);
 
 	/*
 	 * NOTE, that if rgbInfoValue is NULL, then no warnings or errors
@@ -701,11 +736,11 @@ SQLGetInfo(
 
 
 RETCODE SQL_API
-SQLGetTypeInfo(
+PGAPI_GetTypeInfo(
 			   HSTMT hstmt,
 			   SWORD fSqlType)
 {
-	static char *func = "SQLGetTypeInfo";
+	static char *func = "PGAPI_GetTypeInfo";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	TupleNode  *row;
 	int			i;
@@ -795,14 +830,15 @@ SQLGetTypeInfo(
 
 
 RETCODE SQL_API
-SQLGetFunctions(
+/*SQLGetFunctions(*/
+PGAPI_GetFunctions(
 				HDBC hdbc,
 				UWORD fFunction,
 				UWORD FAR *pfExists)
 {
-	static char *func = "SQLGetFunctions";
+	static char *func = "PGAPI_GetFunctions";
 
-	mylog("%s: entering...%u\n", func);
+	mylog("%s: entering...%u\n", func, fFunction);
 
 	if (fFunction == SQL_API_ALL_FUNCTIONS)
 	{
@@ -1077,7 +1113,7 @@ SQLGetFunctions(
 
 
 RETCODE SQL_API
-SQLTables(
+PGAPI_Tables(
 		  HSTMT hstmt,
 		  UCHAR FAR *szTableQualifier,
 		  SWORD cbTableQualifier,
@@ -1088,7 +1124,7 @@ SQLTables(
 		  UCHAR FAR *szTableType,
 		  SWORD cbTableType)
 {
-	static char *func = "SQLTables";
+	static char *func = "PGAPI_Tables";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	StatementClass *tbl_stmt;
 	TupleNode  *row;
@@ -1127,11 +1163,11 @@ SQLTables(
 	conn = (ConnectionClass *) (stmt->hdbc);
 	ci = &stmt->hdbc->connInfo;
 
-	result = SQLAllocStmt(stmt->hdbc, &htbl_stmt);
+	result = PGAPI_AllocStmt(stmt->hdbc, &htbl_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
-		stmt->errormsg = "Couldn't allocate statement for SQLTables result.";
+		stmt->errormsg = "Couldn't allocate statement for PGAPI_Tables result.";
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
@@ -1225,55 +1261,55 @@ SQLTables(
 	strcat(tables_query, " and usesysid = relowner");
 	strcat(tables_query, " order by relname");
 
-	result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+	result = PGAPI_ExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(htbl_stmt, 1, SQL_C_CHAR,
+	result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_CHAR,
 						table_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(htbl_stmt, 2, SQL_C_CHAR,
+	result = PGAPI_BindCol(htbl_stmt, 2, SQL_C_CHAR,
 						table_owner, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
-	result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
+	result = PGAPI_BindCol(htbl_stmt, 3, SQL_C_CHAR,
 						relkind_or_hasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
 	stmt->result = QR_Constructor();
 	if (!stmt->result)
 	{
-		stmt->errormsg = "Couldn't allocate memory for SQLTables result.";
+		stmt->errormsg = "Couldn't allocate memory for PGAPI_Tables result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
@@ -1294,7 +1330,7 @@ SQLTables(
 	QR_set_field_info(stmt->result, 4, "REMARKS", PG_TYPE_TEXT, 254);
 
 	/* add the tuples */
-	result = SQLFetch(htbl_stmt);
+	result = PGAPI_Fetch(htbl_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
 
@@ -1359,7 +1395,7 @@ SQLTables(
 			 * set_tuplefield_string(&row->tuple[1], table_owner);
 			 */
 
-			mylog("SQLTables: table_name = '%s'\n", table_name);
+			mylog("%s: table_name = '%s'\n", func, table_name);
 
 			set_tuplefield_string(&row->tuple[1], "");
 			set_tuplefield_string(&row->tuple[2], table_name);
@@ -1368,14 +1404,14 @@ SQLTables(
 
 			QR_add_tuple(stmt->result, row);
 		}
-		result = SQLFetch(htbl_stmt);
+		result = PGAPI_Fetch(htbl_stmt);
 	}
 	if (result != SQL_NO_DATA_FOUND)
 	{
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
@@ -1390,14 +1426,14 @@ SQLTables(
 	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
-	SQLFreeStmt(htbl_stmt, SQL_DROP);
-	mylog("SQLTables(): EXIT,  stmt=%u\n", stmt);
+	PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+	mylog("%s: EXIT,  stmt=%u\n", func, stmt);
 	return SQL_SUCCESS;
 }
 
 
 RETCODE SQL_API
-SQLColumns(
+PGAPI_Columns(
 		   HSTMT hstmt,
 		   UCHAR FAR *szTableQualifier,
 		   SWORD cbTableQualifier,
@@ -1408,7 +1444,7 @@ SQLColumns(
 		   UCHAR FAR *szColumnName,
 		   SWORD cbColumnName)
 {
-	static char *func = "SQLColumns";
+	static char *func = "PGAPI_Columns";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	TupleNode  *row;
 	HSTMT		hcol_stmt;
@@ -1469,146 +1505,146 @@ SQLColumns(
 	 */
 	strcat(columns_query, " order by attnum");
 
-	result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
+	result = PGAPI_AllocStmt(stmt->hdbc, &hcol_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
-		stmt->errormsg = "Couldn't allocate statement for SQLColumns result.";
+		stmt->errormsg = "Couldn't allocate statement for PGAPI_Columns result.";
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 	col_stmt = (StatementClass *) hcol_stmt;
 
-	mylog("SQLColumns: hcol_stmt = %u, col_stmt = %u\n", hcol_stmt, col_stmt);
+	mylog("%s: hcol_stmt = %u, col_stmt = %u\n", func, hcol_stmt, col_stmt);
 
-	result = SQLExecDirect(hcol_stmt, columns_query,
+	result = PGAPI_ExecDirect(hcol_stmt, columns_query,
 						   strlen(columns_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 1, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 1, SQL_C_CHAR,
 						table_owner, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 2, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 2, SQL_C_CHAR,
 						table_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 3, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 3, SQL_C_CHAR,
 						field_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 4, SQL_C_LONG,
+	result = PGAPI_BindCol(hcol_stmt, 4, SQL_C_LONG,
 						&field_type, 4, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 5, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 5, SQL_C_CHAR,
 						field_type_name, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 6, SQL_C_SHORT,
+	result = PGAPI_BindCol(hcol_stmt, 6, SQL_C_SHORT,
 						&field_number, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 7, SQL_C_LONG,
+	result = PGAPI_BindCol(hcol_stmt, 7, SQL_C_LONG,
 						&field_length, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 8, SQL_C_LONG,
+	result = PGAPI_BindCol(hcol_stmt, 8, SQL_C_LONG,
 						&mod_length, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 9, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 9, SQL_C_CHAR,
 						not_null, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 10, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 10, SQL_C_CHAR,
 						relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
 	stmt->result = QR_Constructor();
 	if (!stmt->result)
 	{
-		stmt->errormsg = "Couldn't allocate memory for SQLColumns result.";
+		stmt->errormsg = "Couldn't allocate memory for PGAPI_Columns result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
@@ -1640,7 +1676,7 @@ SQLColumns(
 	QR_set_field_info(stmt->result, 12, "DISPLAY_SIZE", PG_TYPE_INT4, 4);
 	QR_set_field_info(stmt->result, 13, "FIELD_TYPE", PG_TYPE_INT4, 4);
 
-	result = SQLFetch(hcol_stmt);
+	result = PGAPI_Fetch(hcol_stmt);
 
 	/*
 	 * Only show oid if option AND there are other columns AND it's not
@@ -1712,7 +1748,7 @@ SQLColumns(
 		 *
 		 *----------
 		 */
-		qlog("SQLColumns: table='%s',field_name='%s',type=%d,sqltype=%d,name='%s'\n",
+		qlog("PGAPI_Columns: table='%s',field_name='%s',type=%d,sqltype=%d,name='%s'\n",
 			 table_name, field_name, field_type, pgtype_to_sqltype, field_type_name);
 
 		useStaticPrecision = TRUE;
@@ -1729,7 +1765,7 @@ SQLColumns(
 				precision = (mod_length >> 16) & 0xffff;
 				scale = mod_length & 0xffff;
 
-				mylog("SQLColumns: field type is NUMERIC: field_type = %d, mod_length=%d, precision=%d, scale=%d\n", field_type, mod_length, precision, scale);
+				mylog("%s: field type is NUMERIC: field_type = %d, mod_length=%d, precision=%d, scale=%d\n", func, field_type, mod_length, precision, scale);
 
 				set_tuplefield_int4(&row->tuple[7], precision + 2);		/* sign+dec.point */
 				set_tuplefield_int4(&row->tuple[6], precision);
@@ -1749,7 +1785,7 @@ SQLColumns(
 			if (mod_length > globals.max_varchar_size || mod_length <= 0)
 				mod_length = globals.max_varchar_size;
 
-			mylog("SQLColumns: field type is VARCHAR,BPCHAR: field_type = %d, mod_length = %d\n", field_type, mod_length);
+			mylog("%s: field type is VARCHAR,BPCHAR: field_type = %d, mod_length = %d\n", func, field_type, mod_length);
 
 			set_tuplefield_int4(&row->tuple[7], mod_length);
 			set_tuplefield_int4(&row->tuple[6], mod_length);
@@ -1759,7 +1795,7 @@ SQLColumns(
 
 		if (useStaticPrecision)
 		{
-			mylog("SQLColumns: field type is OTHER: field_type = %d, pgtype_length = %d\n", field_type, pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
+			mylog("%s: field type is OTHER: field_type = %d, pgtype_length = %d\n", func, field_type, pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 
 			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, field_type, PG_STATIC, PG_STATIC));
 			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, field_type, PG_STATIC, PG_STATIC));
@@ -1775,7 +1811,7 @@ SQLColumns(
 		QR_add_tuple(stmt->result, row);
 
 
-		result = SQLFetch(hcol_stmt);
+		result = PGAPI_Fetch(hcol_stmt);
 
 	}
 	if (result != SQL_NO_DATA_FOUND)
@@ -1783,7 +1819,7 @@ SQLColumns(
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
@@ -1828,14 +1864,14 @@ SQLColumns(
 	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
-	SQLFreeStmt(hcol_stmt, SQL_DROP);
-	mylog("SQLColumns(): EXIT,  stmt=%u\n", stmt);
+	PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
+	mylog("%s: EXIT,  stmt=%u\n", func, stmt);
 	return SQL_SUCCESS;
 }
 
 
 RETCODE SQL_API
-SQLSpecialColumns(
+PGAPI_SpecialColumns(
 				  HSTMT hstmt,
 				  UWORD fColType,
 				  UCHAR FAR *szTableQualifier,
@@ -1847,7 +1883,7 @@ SQLSpecialColumns(
 				  UWORD fScope,
 				  UWORD fNullable)
 {
-	static char *func = "SQLSpecialColumns";
+	static char *func = "PGAPI_SpecialColumns";
 	TupleNode  *row;
 	StatementClass *stmt = (StatementClass *) hstmt;
 	ConnInfo   *ci;
@@ -1879,7 +1915,7 @@ SQLSpecialColumns(
 	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
 
 
-	result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
+	result = PGAPI_AllocStmt(stmt->hdbc, &hcol_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -1889,32 +1925,32 @@ SQLSpecialColumns(
 	}
 	col_stmt = (StatementClass *) hcol_stmt;
 
-	mylog("SQLSpecialColumns: hcol_stmt = %u, col_stmt = %u\n", hcol_stmt, col_stmt);
+	mylog("%s: hcol_stmt = %u, col_stmt = %u\n", func, hcol_stmt, col_stmt);
 
-	result = SQLExecDirect(hcol_stmt, columns_query,
+	result = PGAPI_ExecDirect(hcol_stmt, columns_query,
 						   strlen(columns_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(hcol_stmt, 1, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 1, SQL_C_CHAR,
 						relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLFetch(hcol_stmt);
-	SQLFreeStmt(hcol_stmt, SQL_DROP);
+	result = PGAPI_Fetch(hcol_stmt);
+	PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 
 	stmt->result = QR_Constructor();
 	extend_bindings(stmt, 8);
@@ -1975,13 +2011,13 @@ SQLSpecialColumns(
 	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
-	mylog("SQLSpecialColumns(): EXIT,  stmt=%u\n", stmt);
+	mylog("%s: EXIT,  stmt=%u\n", func, stmt);
 	return SQL_SUCCESS;
 }
 
 
 RETCODE SQL_API
-SQLStatistics(
+PGAPI_Statistics(
 			  HSTMT hstmt,
 			  UCHAR FAR *szTableQualifier,
 			  SWORD cbTableQualifier,
@@ -1992,7 +2028,7 @@ SQLStatistics(
 			  UWORD fUnique,
 			  UWORD fAccuracy)
 {
-	static char *func = "SQLStatistics";
+	static char *func = "PGAPI_Statistics";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	char		index_query[INFO_INQUIRY_LEN];
 	HSTMT		hindx_stmt;
@@ -2035,7 +2071,7 @@ SQLStatistics(
 	stmt->result = QR_Constructor();
 	if (!stmt->result)
 	{
-		stmt->errormsg = "Couldn't allocate memory for SQLStatistics result.";
+		stmt->errormsg = "Couldn't allocate memory for PGAPI_Statistics result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
@@ -2072,7 +2108,7 @@ SQLStatistics(
 	table_name = make_string(szTableName, cbTableName, NULL);
 	if (!table_name)
 	{
-		stmt->errormsg = "No table name passed to SQLStatistics.";
+		stmt->errormsg = "No table name passed to PGAPI_Statistics.";
 		stmt->errornumber = STMT_INTERNAL_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
@@ -2082,10 +2118,10 @@ SQLStatistics(
 	 * we need to get a list of the field names first, so we can return
 	 * them later.
 	 */
-	result = SQLAllocStmt(stmt->hdbc, &hcol_stmt);
+	result = PGAPI_AllocStmt(stmt->hdbc, &hcol_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		stmt->errormsg = "SQLAllocStmt failed in SQLStatistics for columns.";
+		stmt->errormsg = "PGAPI_AllocStmt failed in PGAPI_Statistics for columns.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		goto SEEYA;
 	}
@@ -2097,7 +2133,7 @@ SQLStatistics(
 	 * being shown. This would throw everything off.
 	 */
 	col_stmt->internal = TRUE;
-	result = SQLColumns(hcol_stmt, "", 0, "", 0,
+	result = PGAPI_Columns(hcol_stmt, "", 0, "", 0,
 						table_name, (SWORD) strlen(table_name), "", 0);
 	col_stmt->internal = FALSE;
 
@@ -2106,21 +2142,21 @@ SQLStatistics(
 		stmt->errormsg = col_stmt->errormsg;	/* "SQLColumns failed in
 												 * SQLStatistics."; */
 		stmt->errornumber = col_stmt->errornumber;		/* STMT_EXEC_ERROR; */
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		goto SEEYA;
 	}
-	result = SQLBindCol(hcol_stmt, 4, SQL_C_CHAR,
+	result = PGAPI_BindCol(hcol_stmt, 4, SQL_C_CHAR,
 						column_name, MAX_INFO_STRING, &column_name_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		goto SEEYA;
 
 	}
 
-	result = SQLFetch(hcol_stmt);
+	result = PGAPI_Fetch(hcol_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
 		total_columns++;
@@ -2132,9 +2168,9 @@ SQLStatistics(
 			(char *) malloc(strlen(column_name) + 1);
 		strcpy(column_names[total_columns - 1], column_name);
 
-		mylog("SQLStatistics: column_name = '%s'\n", column_name);
+		mylog("%s: column_name = '%s'\n", func, column_name);
 
-		result = SQLFetch(hcol_stmt);
+		result = PGAPI_Fetch(hcol_stmt);
 	}
 
 	if (result != SQL_NO_DATA_FOUND || total_columns == 0)
@@ -2143,18 +2179,18 @@ SQLStatistics(
 														 * names in
 														 * SQLStatistics."; */
 		stmt->errornumber = col_stmt->errornumber;
-		SQLFreeStmt(hcol_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 		goto SEEYA;
 
 	}
 
-	SQLFreeStmt(hcol_stmt, SQL_DROP);
+	PGAPI_FreeStmt(hcol_stmt, SQL_DROP);
 
 	/* get a list of indexes on this table */
-	result = SQLAllocStmt(stmt->hdbc, &hindx_stmt);
+	result = PGAPI_AllocStmt(stmt->hdbc, &hindx_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
-		stmt->errormsg = "SQLAllocStmt failed in SQLStatistics for indices.";
+		stmt->errormsg = "PGAPI_AllocStmt failed in SQLStatistics for indices.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		goto SEEYA;
 
@@ -2170,7 +2206,7 @@ SQLStatistics(
 			" and c.relam = a.oid"
 			, table_name);
 
-	result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
+	result = PGAPI_ExecDirect(hindx_stmt, index_query, strlen(index_query));
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		/*
@@ -2180,79 +2216,79 @@ SQLStatistics(
 		stmt->errormsg = SC_create_errormsg(hindx_stmt);
 
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 	}
 
 	/* bind the index name column */
-	result = SQLBindCol(hindx_stmt, 1, SQL_C_CHAR,
+	result = PGAPI_BindCol(hindx_stmt, 1, SQL_C_CHAR,
 						index_name, MAX_INFO_STRING, &index_name_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
 												 * in SQLStatistics."; */
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 
 	}
 	/* bind the vector column */
-	result = SQLBindCol(hindx_stmt, 2, SQL_C_DEFAULT,
+	result = PGAPI_BindCol(hindx_stmt, 2, SQL_C_DEFAULT,
 						fields_vector, 32, &fields_vector_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
 												 * in SQLStatistics."; */
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 
 	}
 	/* bind the "is unique" column */
-	result = SQLBindCol(hindx_stmt, 3, SQL_C_CHAR,
+	result = PGAPI_BindCol(hindx_stmt, 3, SQL_C_CHAR,
 						isunique, sizeof(isunique), NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
 												 * in SQLStatistics."; */
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 	}
 
 	/* bind the "is clustered" column */
-	result = SQLBindCol(hindx_stmt, 4, SQL_C_CHAR,
+	result = PGAPI_BindCol(hindx_stmt, 4, SQL_C_CHAR,
 						isclustered, sizeof(isclustered), NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
 												 * in SQLStatistics."; */
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 
 	}
 
 	/* bind the "is hash" column */
-	result = SQLBindCol(hindx_stmt, 5, SQL_C_CHAR,
+	result = PGAPI_BindCol(hindx_stmt, 5, SQL_C_CHAR,
 						ishash, sizeof(ishash), NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;	/* "Couldn't bind column
 												 * in SQLStatistics."; */
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 
 	}
 
-	result = SQLBindCol(hindx_stmt, 6, SQL_C_CHAR,
+	result = PGAPI_BindCol(hindx_stmt, 6, SQL_C_CHAR,
 						relhasrules, MAX_INFO_STRING, NULL);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = indx_stmt->errormsg;
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 	}
 
@@ -2292,7 +2328,7 @@ SQLStatistics(
 		QR_add_tuple(stmt->result, row);
 	}
 
-	result = SQLFetch(hindx_stmt);
+	result = PGAPI_Fetch(hindx_stmt);
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
 		/* If only requesting unique indexs, then just return those. */
@@ -2333,17 +2369,17 @@ SQLStatistics(
 				if (fields_vector[i] == OID_ATTNUM)
 				{
 					set_tuplefield_string(&row->tuple[8], "oid");
-					mylog("SQLStatistics: column name = oid\n");
+					mylog("%s: column name = oid\n", func);
 				}
 				else if (fields_vector[i] < 0 || fields_vector[i] > total_columns)
 				{
 					set_tuplefield_string(&row->tuple[8], "UNKNOWN");
-					mylog("SQLStatistics: column name = UNKNOWN\n");
+					mylog("%s: column name = UNKNOWN\n", func);
 				}
 				else
 				{
 					set_tuplefield_string(&row->tuple[8], column_names[fields_vector[i] - 1]);
-					mylog("SQLStatistics: column name = '%s'\n", column_names[fields_vector[i] - 1]);
+					mylog("%s: column name = '%s'\n", func, column_names[fields_vector[i] - 1]);
 				}
 
 				set_tuplefield_string(&row->tuple[9], "A");
@@ -2356,18 +2392,18 @@ SQLStatistics(
 			}
 		}
 
-		result = SQLFetch(hindx_stmt);
+		result = PGAPI_Fetch(hindx_stmt);
 	}
 	if (result != SQL_NO_DATA_FOUND)
 	{
 		/* "SQLFetch failed in SQLStatistics."; */
 		stmt->errormsg = SC_create_errormsg(hindx_stmt);
 		stmt->errornumber = indx_stmt->errornumber;
-		SQLFreeStmt(hindx_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 		goto SEEYA;
 	}
 
-	SQLFreeStmt(hindx_stmt, SQL_DROP);
+	PGAPI_FreeStmt(hindx_stmt, SQL_DROP);
 
 	/*
 	 * also, things need to think that this statement is finished so the
@@ -2389,7 +2425,7 @@ SEEYA:
 		free(column_names[i]);
 	free(column_names);
 
-	mylog("SQLStatistics(): EXIT, %s, stmt=%u\n", error ? "error" : "success", stmt);
+	mylog("%s: EXIT, %s, stmt=%u\n", func, error ? "error" : "success", stmt);
 
 	if (error)
 	{
@@ -2402,7 +2438,7 @@ SEEYA:
 
 
 RETCODE SQL_API
-SQLColumnPrivileges(
+PGAPI_ColumnPrivileges(
 					HSTMT hstmt,
 					UCHAR FAR *szTableQualifier,
 					SWORD cbTableQualifier,
@@ -2413,7 +2449,7 @@ SQLColumnPrivileges(
 					UCHAR FAR *szColumnName,
 					SWORD cbColumnName)
 {
-	static char *func = "SQLColumnPrivileges";
+	static char *func = "PGAPI_ColumnPrivileges";
 
 	mylog("%s: entering...\n", func);
 
@@ -2430,7 +2466,7 @@ SQLColumnPrivileges(
  *	Retrieve the primary key columns for the specified table.
  */
 RETCODE SQL_API
-SQLPrimaryKeys(
+PGAPI_PrimaryKeys(
 			   HSTMT hstmt,
 			   UCHAR FAR *szTableQualifier,
 			   SWORD cbTableQualifier,
@@ -2439,7 +2475,7 @@ SQLPrimaryKeys(
 			   UCHAR FAR *szTableName,
 			   SWORD cbTableName)
 {
-	static char *func = "SQLPrimaryKeys";
+	static char *func = "PGAPI_PrimaryKeys";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	ConnectionClass *conn;
 	TupleNode  *row;
@@ -2467,7 +2503,7 @@ SQLPrimaryKeys(
 	stmt->result = QR_Constructor();
 	if (!stmt->result)
 	{
-		stmt->errormsg = "Couldn't allocate memory for SQLPrimaryKeys result.";
+		stmt->errormsg = "Couldn't allocate memory for PGAPI_PrimaryKeys result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
@@ -2492,7 +2528,7 @@ SQLPrimaryKeys(
 	QR_set_field_info(stmt->result, 5, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
 
 
-	result = SQLAllocStmt(stmt->hdbc, &htbl_stmt);
+	result = PGAPI_AllocStmt(stmt->hdbc, &htbl_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -2506,21 +2542,21 @@ SQLPrimaryKeys(
 	make_string(szTableName, cbTableName, pktab);
 	if (pktab[0] == '\0')
 	{
-		stmt->errormsg = "No Table specified to SQLPrimaryKeys.";
+		stmt->errormsg = "No Table specified to PGAPI_PrimaryKeys.";
 		stmt->errornumber = STMT_INTERNAL_ERROR;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	result = SQLBindCol(htbl_stmt, 1, SQL_C_CHAR,
+	result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_CHAR,
 						attname, MAX_INFO_STRING, &attname_len);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
@@ -2563,19 +2599,19 @@ SQLPrimaryKeys(
 				" order by ia.attnum", pktab);
 				break;
 		}
-		mylog("SQLPrimaryKeys: tables_query='%s'\n", tables_query);
+		mylog("%s: tables_query='%s'\n", func, tables_query);
 
-		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+		result = PGAPI_ExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = SC_create_errormsg(htbl_stmt);
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLFetch(htbl_stmt);
+		result = PGAPI_Fetch(htbl_stmt);
 		if (result != SQL_NO_DATA_FOUND)
 			break;
 	}
@@ -2602,7 +2638,7 @@ SQLPrimaryKeys(
 
 		mylog(">> primaryKeys: pktab = '%s', attname = '%s', seq = %d\n", pktab, attname, seq);
 
-		result = SQLFetch(htbl_stmt);
+		result = PGAPI_Fetch(htbl_stmt);
 	}
 
 	if (result != SQL_NO_DATA_FOUND)
@@ -2610,11 +2646,11 @@ SQLPrimaryKeys(
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	SQLFreeStmt(htbl_stmt, SQL_DROP);
+	PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 
 
 	/*
@@ -2628,13 +2664,13 @@ SQLPrimaryKeys(
 	stmt->rowset_start = -1;
 	stmt->current_col = -1;
 
-	mylog("SQLPrimaryKeys(): EXIT, stmt=%u\n", stmt);
+	mylog("%s: EXIT, stmt=%u\n", func, stmt);
 	return SQL_SUCCESS;
 }
 
 
 RETCODE SQL_API
-SQLForeignKeys(
+PGAPI_ForeignKeys(
 			   HSTMT hstmt,
 			   UCHAR FAR *szPkTableQualifier,
 			   SWORD cbPkTableQualifier,
@@ -2649,7 +2685,7 @@ SQLForeignKeys(
 			   UCHAR FAR *szFkTableName,
 			   SWORD cbFkTableName)
 {
-	static char *func = "SQLForeignKeys";
+	static char *func = "PGAPI_ForeignKeys";
 	StatementClass *stmt = (StatementClass *) hstmt;
 	TupleNode  *row;
 	HSTMT		htbl_stmt,
@@ -2698,7 +2734,7 @@ SQLForeignKeys(
 	stmt->result = QR_Constructor();
 	if (!stmt->result)
 	{
-		stmt->errormsg = "Couldn't allocate memory for SQLForeignKeys result.";
+		stmt->errormsg = "Couldn't allocate memory for PGAPI_ForeignKeys result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
@@ -2745,11 +2781,11 @@ SQLForeignKeys(
 	stmt->current_col = -1;
 
 
-	result = SQLAllocStmt(stmt->hdbc, &htbl_stmt);
+	result = PGAPI_AllocStmt(stmt->hdbc, &htbl_stmt);
 	if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 	{
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
-		stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys result.";
+		stmt->errormsg = "Couldn't allocate statement for PGAPI_ForeignKeys result.";
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
@@ -2798,84 +2834,84 @@ SQLForeignKeys(
 				"AND (pg_trigger_1.tgconstrname=pt.tgconstrname))",
 				fk_table_needed);
 
-		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+		result = PGAPI_ExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = SC_create_errormsg(htbl_stmt);
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 1, SQL_C_BINARY,
+		result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_BINARY,
 							trig_args, sizeof(trig_args), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 2, SQL_C_SHORT,
+		result = PGAPI_BindCol(htbl_stmt, 2, SQL_C_SHORT,
 							&trig_nargs, 0, NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 3, SQL_C_CHAR,
 						 trig_deferrable, sizeof(trig_deferrable), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 4, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 4, SQL_C_CHAR,
 					 trig_initdeferred, sizeof(trig_initdeferred), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 5, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 5, SQL_C_CHAR,
 							upd_rule, sizeof(upd_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 6, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 6, SQL_C_CHAR,
 							del_rule, sizeof(del_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLFetch(htbl_stmt);
+		result = PGAPI_Fetch(htbl_stmt);
 		if (result == SQL_NO_DATA_FOUND)
 			return SQL_SUCCESS;
 
@@ -2884,27 +2920,27 @@ SQLForeignKeys(
 			stmt->errormsg = SC_create_errormsg(htbl_stmt);
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		keyresult = SQLAllocStmt(stmt->hdbc, &hpkey_stmt);
+		keyresult = PGAPI_AllocStmt(stmt->hdbc, &hpkey_stmt);
 		if ((keyresult != SQL_SUCCESS) && (keyresult != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys (pkeys) result.";
+			stmt->errormsg = "Couldn't allocate statement for PGAPI_ForeignKeys (pkeys) result.";
 			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
 
-		keyresult = SQLBindCol(hpkey_stmt, 4, SQL_C_CHAR,
+		keyresult = PGAPI_BindCol(hpkey_stmt, 4, SQL_C_CHAR,
 							   pkey, sizeof(pkey), NULL);
 		if (keyresult != SQL_SUCCESS)
 		{
 			stmt->errornumber = STMT_NO_MEMORY_ERROR;
-			stmt->errormsg = "Couldn't bindcol for primary keys for SQLForeignKeys result.";
+			stmt->errormsg = "Couldn't bindcol for primary keys for PGAPI_ForeignKeys result.";
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(hpkey_stmt, SQL_DROP);
+			PGAPI_FreeStmt(hpkey_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
@@ -2927,23 +2963,23 @@ SQLForeignKeys(
 				/* If it doesn't match, then continue */
 				if (strcmp(pk_table, pk_table_needed))
 				{
-					result = SQLFetch(htbl_stmt);
+					result = PGAPI_Fetch(htbl_stmt);
 					continue;
 				}
 			}
 
-			keyresult = SQLPrimaryKeys(hpkey_stmt, NULL, 0, NULL, 0, pk_table, SQL_NTS);
+			keyresult = PGAPI_PrimaryKeys(hpkey_stmt, NULL, 0, NULL, 0, pk_table, SQL_NTS);
 			if (keyresult != SQL_SUCCESS)
 			{
 				stmt->errornumber = STMT_NO_MEMORY_ERROR;
-				stmt->errormsg = "Couldn't get primary keys for SQLForeignKeys result.";
+				stmt->errormsg = "Couldn't get primary keys for PGAPI_ForeignKeys result.";
 				SC_log_error(func, "", stmt);
-				SQLFreeStmt(hpkey_stmt, SQL_DROP);
+				PGAPI_FreeStmt(hpkey_stmt, SQL_DROP);
 				return SQL_ERROR;
 			}
 
 			/* Check that the key listed is the primary key */
-			keyresult = SQLFetch(hpkey_stmt);
+			keyresult = PGAPI_Fetch(hpkey_stmt);
 
 			/* Get to first primary key */
 			pkey_ptr = trig_args;
@@ -2962,7 +2998,7 @@ SQLForeignKeys(
 				for (k = 0; k < 2; k++)
 					pkey_ptr += strlen(pkey_ptr) + 1;
 
-				keyresult = SQLFetch(hpkey_stmt);
+				keyresult = PGAPI_Fetch(hpkey_stmt);
 			}
 
 			/* Set to first fk column */
@@ -3045,9 +3081,9 @@ SQLForeignKeys(
 				}
 			}
 
-			result = SQLFetch(htbl_stmt);
+			result = PGAPI_Fetch(htbl_stmt);
 		}
-		SQLFreeStmt(hpkey_stmt, SQL_DROP);
+		PGAPI_FreeStmt(hpkey_stmt, SQL_DROP);
 	}
 
 	/*
@@ -3087,83 +3123,83 @@ SQLForeignKeys(
 				"		)",
 				pk_table_needed);
 
-		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+		result = PGAPI_ExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = SC_create_errormsg(htbl_stmt);
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 1, SQL_C_BINARY,
+		result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_BINARY,
 							trig_args, sizeof(trig_args), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 2, SQL_C_SHORT,
+		result = PGAPI_BindCol(htbl_stmt, 2, SQL_C_SHORT,
 							&trig_nargs, 0, NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 3, SQL_C_CHAR,
 						 trig_deferrable, sizeof(trig_deferrable), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 4, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 4, SQL_C_CHAR,
 					 trig_initdeferred, sizeof(trig_initdeferred), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 5, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 5, SQL_C_CHAR,
 							upd_rule, sizeof(upd_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLBindCol(htbl_stmt, 6, SQL_C_CHAR,
+		result = PGAPI_BindCol(htbl_stmt, 6, SQL_C_CHAR,
 							del_rule, sizeof(del_rule), NULL);
 		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
 		{
 			stmt->errormsg = tbl_stmt->errormsg;
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
-		result = SQLFetch(htbl_stmt);
+		result = PGAPI_Fetch(htbl_stmt);
 		if (result == SQL_NO_DATA_FOUND)
 			return SQL_SUCCESS;
 
@@ -3172,7 +3208,7 @@ SQLForeignKeys(
 			stmt->errormsg = SC_create_errormsg(htbl_stmt);
 			stmt->errornumber = tbl_stmt->errornumber;
 			SC_log_error(func, "", stmt);
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 			return SQL_ERROR;
 		}
 
@@ -3273,27 +3309,27 @@ SQLForeignKeys(
 					fkey_ptr += strlen(fkey_ptr) + 1;
 				}
 			}
-			result = SQLFetch(htbl_stmt);
+			result = PGAPI_Fetch(htbl_stmt);
 		}
 	}
 	else
 	{
-		stmt->errormsg = "No tables specified to SQLForeignKeys.";
+		stmt->errormsg = "No tables specified to PGAPI_ForeignKeys.";
 		stmt->errornumber = STMT_INTERNAL_ERROR;
 		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	SQLFreeStmt(htbl_stmt, SQL_DROP);
+	PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
 
-	mylog("SQLForeignKeys(): EXIT, stmt=%u\n", stmt);
+	mylog("PGAPI_ForeignKeys(): EXIT, stmt=%u\n", stmt);
 	return SQL_SUCCESS;
 }
 
 
 RETCODE SQL_API
-SQLProcedureColumns(
+PGAPI_ProcedureColumns(
 					HSTMT hstmt,
 					UCHAR FAR *szProcQualifier,
 					SWORD cbProcQualifier,
@@ -3304,7 +3340,7 @@ SQLProcedureColumns(
 					UCHAR FAR *szColumnName,
 					SWORD cbColumnName)
 {
-	static char *func = "SQLProcedureColumns";
+	static char *func = "PGAPI_ProcedureColumns";
 
 	mylog("%s: entering...\n", func);
 
@@ -3314,7 +3350,7 @@ SQLProcedureColumns(
 
 
 RETCODE SQL_API
-SQLProcedures(
+PGAPI_Procedures(
 			  HSTMT hstmt,
 			  UCHAR FAR *szProcQualifier,
 			  SWORD cbProcQualifier,
@@ -3323,7 +3359,7 @@ SQLProcedures(
 			  UCHAR FAR *szProcName,
 			  SWORD cbProcName)
 {
-	static char *func = "SQLProcedures";
+	static char *func = "PGAPI_Procedures";
 
 	mylog("%s: entering...\n", func);
 
@@ -3333,7 +3369,7 @@ SQLProcedures(
 
 
 RETCODE SQL_API
-SQLTablePrivileges(
+PGAPI_TablePrivileges(
 				   HSTMT hstmt,
 				   UCHAR FAR *szTableQualifier,
 				   SWORD cbTableQualifier,
@@ -3342,10 +3378,29 @@ SQLTablePrivileges(
 				   UCHAR FAR *szTableName,
 				   SWORD cbTableName)
 {
-	static char *func = "SQLTablePrivileges";
+	StatementClass	*stmt = (StatementClass *) hstmt;
+	static char *func = "PGAPI_TablePrivileges";
+	Int2		result_cols;
 
 	mylog("%s: entering...\n", func);
 
+	/*
+ 	* a statement is actually executed, so we'll have to do this
+ 	* ourselves.
+ 	*/
+	result_cols = 7;
+	extend_bindings(stmt, result_cols);
+
+	/* set the field names */
+	QR_set_num_fields(stmt->result, result_cols);
+	QR_set_field_info(stmt->result, 0, "TABLE_CAT", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 1, "TABLE_SCHEM", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 3, "GRANTOR", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 4, "GRANTEE", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 5, "PRIVILEGE", PG_TYPE_TEXT, MAX_INFO_STRING);
+	QR_set_field_info(stmt->result, 6, "IS_GRANTABLE", PG_TYPE_TEXT, MAX_INFO_STRING);
+                                                             
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
 }
