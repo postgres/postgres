@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.39 2000/04/12 17:17:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.40 2000/05/27 03:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "win32.h"
 #else
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
@@ -234,7 +235,8 @@ pg_krb4_sendauth(const char *PQerrormsg, int sock,
  *----------------------------------------------------------------
  */
 
-#include "krb5/krb5.h"
+#include <krb5.h>
+#include <com_err.h>
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication
@@ -250,7 +252,7 @@ pg_krb4_sendauth(const char *PQerrormsg, int sock,
  *	   and we can't afford to punt.
  */
 static char *
-pg_an_to_ln(const char *aname)
+pg_an_to_ln(char *aname)
 {
 	char	   *p;
 
@@ -261,197 +263,160 @@ pg_an_to_ln(const char *aname)
 
 
 /*
- * pg_krb5_init -- initialization performed before any Kerberos calls are made
- *
- * With v5, we can no longer set the ticket (credential cache) file name;
- * we now have to provide a file handle for the open (well, "resolved")
- * ticket file everywhere.
- *
+ * Various krb5 state which is not connection specfic, and a flag to
+ * indicate whether we have initialised it yet.
  */
+static int pg_krb5_initialised;
+static krb5_context pg_krb5_context;
+static krb5_ccache pg_krb5_ccache;
+static krb5_principal pg_krb5_client;
+static char *pg_krb5_name;
+
+
 static int
-			krb5_ccache
-pg_krb5_init(void)
+pg_krb5_init(char *PQerrormsg)
 {
-	krb5_error_code code;
-	char	   *realm,
-			   *defname;
-	char		tktbuf[MAXPGPATH];
-	static krb5_ccache ccache = (krb5_ccache) NULL;
+	krb5_error_code retval;
 
-	if (ccache)
-		return ccache;
+	if (pg_krb5_initialised)
+		return STATUS_OK;
 
-	/*
-	 * If the user set PGREALM, then we use a ticket file with a special
-	 * name: <usual-ticket-file-name>@<PGREALM-value>
-	 */
-	if (!(defname = krb5_cc_default_name()))
-	{
-		(void) sprintf(PQerrormsg,
-					   "pg_krb5_init: krb5_cc_default_name failed\n");
-		return (krb5_ccache) NULL;
-	}
-	strcpy(tktbuf, defname);
-	if (realm = getenv("PGREALM"))
-	{
-		strcat(tktbuf, "@");
-		strcat(tktbuf, realm);
+	retval = krb5_init_context(&pg_krb5_context);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_init: krb5_init_context: %s",
+				 error_message(retval));
+		return STATUS_ERROR;
 	}
 
-	if (code = krb5_cc_resolve(tktbuf, &ccache))
-	{
-		(void) sprintf(PQerrormsg,
-		   "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n", code);
-		com_err("pg_krb5_init", code, "in krb5_cc_resolve");
-		return (krb5_ccache) NULL;
-	}
-	return ccache;
+	retval = krb5_cc_default(pg_krb5_context, &pg_krb5_ccache);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_init: krb5_cc_default: %s",
+				 error_message(retval));
+		krb5_free_context(pg_krb5_context);
+		return STATUS_ERROR;
+    }
+
+    retval = krb5_cc_get_principal(pg_krb5_context, pg_krb5_ccache, 
+								   &pg_krb5_client);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_init: krb5_cc_get_principal: %s",
+				 error_message(retval));
+		krb5_cc_close(pg_krb5_context, pg_krb5_ccache);
+		krb5_free_context(pg_krb5_context);
+		return STATUS_ERROR;
+    }
+
+    retval = krb5_unparse_name(pg_krb5_context, pg_krb5_client, &pg_krb5_name);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_init: krb5_unparse_name: %s",
+				 error_message(retval));
+		krb5_free_principal(pg_krb5_context, pg_krb5_client);
+		krb5_cc_close(pg_krb5_context, pg_krb5_ccache);
+		krb5_free_context(pg_krb5_context);
+		return STATUS_ERROR;
+	}	
+
+	pg_krb5_name = pg_an_to_ln(pg_krb5_name);
+
+	pg_krb5_initialised = 1;
+	return STATUS_OK;
 }
+
 
 /*
  * pg_krb5_authname -- returns a pointer to static space containing whatever
  *					   name the user has authenticated to the system
- *
- * We obtain this information by digging around in the ticket file.
- */
+  */
 static const char *
-pg_krb5_authname(const char *PQerrormsg)
+pg_krb5_authname(char *PQerrormsg)
 {
-	krb5_ccache ccache;
-	krb5_principal principal;
-	krb5_error_code code;
-	static char *authname = (char *) NULL;
+	if (pg_krb5_init(PQerrormsg) != STATUS_OK)
+		return NULL;
 
-	if (authname)
-		return authname;
-
-	ccache = pg_krb5_init();	/* don't free this */
-
-	if (code = krb5_cc_get_principal(ccache, &principal))
-	{
-		(void) sprintf(PQerrormsg,
-					   "pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n", code);
-		com_err("pg_krb5_authname", code, "in krb5_cc_get_principal");
-		return (char *) NULL;
-	}
-	if (code = krb5_unparse_name(principal, &authname))
-	{
-		(void) sprintf(PQerrormsg,
-					   "pg_krb5_authname: Kerberos error %d in krb5_unparse_name\n", code);
-		com_err("pg_krb5_authname", code, "in krb5_unparse_name");
-		krb5_free_principal(principal);
-		return (char *) NULL;
-	}
-	krb5_free_principal(principal);
-	return pg_an_to_ln(authname);
+	return pg_krb5_name;
 }
+
 
 /*
  * pg_krb5_sendauth -- client routine to send authentication information to
  *					   the server
- *
- * This routine does not do mutual authentication, nor does it return enough
- * information to do encrypted connections.  But then, if we want to do
- * encrypted connections, we'll have to redesign the whole RPC mechanism
- * anyway.
- *
- * Server hostnames are canonicalized v4-style, i.e., all domain suffixes
- * are simply chopped off.	Hence, we are assuming that you've entered your
- * server instances as
- *		<value-of-PG_KRB_SRVNAM>/<canonicalized-hostname>
- * in the PGREALM (or local) database.	This is probably a bad assumption.
  */
 static int
-pg_krb5_sendauth(const char *PQerrormsg, int sock,
+pg_krb5_sendauth(char *PQerrormsg, int sock,
 				 struct sockaddr_in * laddr,
 				 struct sockaddr_in * raddr,
 				 const char *hostname)
 {
-	char		servbuf[MAXHOSTNAMELEN + 1 +
-									sizeof(PG_KRB_SRVNAM)];
-	const char *hostp;
-	const char *realm;
-	krb5_error_code code;
-	krb5_principal client,
-				server;
-	krb5_ccache ccache;
-	krb5_error *error = (krb5_error *) NULL;
+	krb5_error_code retval;
+	int ret;
+	krb5_principal server;
+	krb5_auth_context auth_context = NULL;
+    krb5_error *err_ret = NULL;
+	int flags;
 
-	ccache = pg_krb5_init();	/* don't free this */
+	ret = pg_krb5_init(PQerrormsg);
+	if (ret != STATUS_OK)
+		return ret;
 
-	/*
-	 * set up client -- this is easy, we can get it out of the ticket
-	 * file.
-	 */
-	if (code = krb5_cc_get_principal(ccache, &client))
-	{
-		(void) sprintf(PQerrormsg,
-					   "pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n", code);
-		com_err("pg_krb5_sendauth", code, "in krb5_cc_get_principal");
+	retval = krb5_sname_to_principal(pg_krb5_context, hostname, PG_KRB_SRVNAM, 
+									 KRB5_NT_SRV_HST, &server);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_sendauth: krb5_sname_to_principal: %s",
+				 error_message(retval));
 		return STATUS_ERROR;
 	}
 
-	/*
-	 * set up server -- canonicalize as described above
+	/* 
+	 * libpq uses a non-blocking socket. But kerberos needs a blocking
+	 * socket, and we have to block somehow to do mutual authentication
+	 * anyway. So we temporarily make it blocking.
 	 */
-	strcpy(servbuf, PG_KRB_SRVNAM);
-	*(hostp = servbuf + (sizeof(PG_KRB_SRVNAM) - 1)) = '/';
-	if (hostname || *hostname)
-		strncpy(++hostp, hostname, MAXHOSTNAMELEN);
-	else
-	{
-		if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)
-			strcpy(hostp, "localhost");
-	}
-	if (hostp = strchr(hostp, '.'))
-		*hostp = '\0';
-	if (realm = getenv("PGREALM"))
-	{
-		strcat(servbuf, "@");
-		strcat(servbuf, realm);
-	}
-	if (code = krb5_parse_name(servbuf, &server))
-	{
-		(void) sprintf(PQerrormsg,
-		"pg_krb5_sendauth: Kerberos error %d in krb5_parse_name\n", code);
-		com_err("pg_krb5_sendauth", code, "in krb5_parse_name");
-		krb5_free_principal(client);
+	flags = fcntl(sock, F_GETFL);
+	if (flags < 0 || fcntl(sock, F_SETFL, (long)(flags & ~O_NONBLOCK))) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_sendauth: fcntl: %s", strerror(errno));
+		krb5_free_principal(pg_krb5_context, server);
 		return STATUS_ERROR;
 	}
 
-	/*
-	 * The only thing we want back from krb5_sendauth is an error status
-	 * and any error messages.
-	 */
-	if (code = krb5_sendauth((krb5_pointer) & sock,
-							 PG_KRB5_VERSION,
-							 client,
-							 server,
-							 (krb5_flags) 0,
-							 (krb5_checksum *) NULL,
-							 (krb5_creds *) NULL,
-							 ccache,
-							 (krb5_int32 *) NULL,
-							 (krb5_keyblock **) NULL,
-							 &error,
-							 (krb5_ap_rep_enc_part **) NULL))
-	{
-		if ((code == KRB5_SENDAUTH_REJECTED) && error)
-		{
-			(void) sprintf(PQerrormsg,
-				  "pg_krb5_sendauth: authentication rejected: \"%*s\"\n",
-						   error->text.length, error->text.data);
+	retval = krb5_sendauth(pg_krb5_context, &auth_context,
+						   (krb5_pointer) &sock, PG_KRB_SRVNAM,
+						   pg_krb5_client, server,
+						   AP_OPTS_MUTUAL_REQUIRED,
+						   NULL, 0,		/* no creds, use ccache instead */
+						   pg_krb5_ccache, &err_ret, NULL, NULL);
+	if (retval) {
+		if (retval == KRB5_SENDAUTH_REJECTED && err_ret) {
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					 "pg_krb5_sendauth: authentication rejected: \"%*s\"",
+					 err_ret->text.length, err_ret->text.data);
 		}
-		else
-		{
-			(void) sprintf(PQerrormsg,
-						   "pg_krb5_sendauth: Kerberos error %d in krb5_sendauth\n", code);
-			com_err("pg_krb5_sendauth", code, "in krb5_sendauth");
+		else {
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					 "pg_krb5_sendauth: krb5_sendauth: %s",
+					 error_message(retval));
 		}
+			
+		if (err_ret)
+			krb5_free_error(pg_krb5_context, err_ret);
+		
+		ret = STATUS_ERROR;
 	}
-	krb5_free_principal(client);
-	krb5_free_principal(server);
-	return code ? STATUS_ERROR : STATUS_OK;
+
+	krb5_free_principal(pg_krb5_context, server);
+	
+	if (fcntl(sock, F_SETFL, (long)flags)) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_sendauth: fcntl: %s", strerror(errno));
+		ret = STATUS_ERROR;
+	}
+
+	return ret;
 }
 
 #endif	 /* KRB5 */

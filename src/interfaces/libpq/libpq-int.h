@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.23 2000/04/12 17:17:15 momjian Exp $
+ * $Id: libpq-int.h,v 1.24 2000/05/27 03:39:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
  * POSTGRES backend dependent Constants.
  */
 
+#define PQERRORMSG_LENGTH 1024
 #define CMDSTATUS_LEN 40
 
 /*

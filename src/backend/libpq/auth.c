@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.44 2000/04/12 17:15:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.45 2000/05/27 03:39:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,8 @@ pg_krb4_recvauth(Port *port)
  *----------------------------------------------------------------
  */
 
-#include "krb5/krb5.h"
+#include <krb5.h>
+#include <com_err.h>
 
 /*
  * pg_an_to_ln -- return the local name corresponding to an authentication
@@ -174,6 +175,64 @@ pg_an_to_ln(char *aname)
 	return aname;
 }
 
+
+/*
+ * Various krb5 state which is not connection specfic, and a flag to
+ * indicate whether we have initialised it yet.
+ */
+static int pg_krb5_initialised;
+static krb5_context pg_krb5_context;
+static krb5_keytab pg_krb5_keytab;
+static krb5_principal pg_krb5_server;
+
+
+static int
+pg_krb5_init(void)
+{
+	krb5_error_code retval;
+
+	if (pg_krb5_initialised)
+		return STATUS_OK;
+
+	retval = krb5_init_context(&pg_krb5_context);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_init: krb5_init_context returned"
+				 " Kerberos error %d\n", retval);
+		com_err("postgres", retval, "while initializing krb5");
+		return STATUS_ERROR;
+	}
+
+	retval = krb5_kt_resolve(pg_krb5_context, PG_KRB_SRVTAB, &pg_krb5_keytab);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_init: krb5_kt_resolve returned"
+				 " Kerberos error %d\n", retval);
+	    com_err("postgres", retval, "while resolving keytab file %s",
+				PG_KRB_SRVTAB);
+		krb5_free_context(pg_krb5_context);
+		return STATUS_ERROR;
+	}
+
+    retval = krb5_sname_to_principal(pg_krb5_context, NULL, PG_KRB_SRVNAM, 
+									 KRB5_NT_SRV_HST, &pg_krb5_server);
+	if (retval) {
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				 "pg_krb5_init: krb5_sname_to_principal returned"
+				 " Kerberos error %d\n", retval);
+	    com_err("postgres", retval, 
+				"while getting server principal for service %s",
+				PG_KRB_SRVTAB);
+		krb5_kt_close(pg_krb5_context, pg_krb5_keytab);
+		krb5_free_context(pg_krb5_context);
+		return STATUS_ERROR;
+	}
+
+	pg_krb5_initialised = 1;
+	return STATUS_OK;
+}
+
+
 /*
  * pg_krb5_recvauth -- server routine to receive authentication information
  *					   from the client
@@ -182,122 +241,68 @@ pg_an_to_ln(char *aname)
  * packet to the authenticated name, as described in pg_krb4_recvauth.	This
  * is a bit more problematic in v5, as described above in pg_an_to_ln.
  *
- * In addition, as described above in pg_krb5_sendauth, we still need to
- * canonicalize the server name v4-style before constructing a principal
- * from it.  Again, this is kind of iffy.
- *
- * Finally, we need to tangle with the fact that v5 doesn't let you explicitly
- * set server keytab file names -- you have to feed lower-level routines a
- * function to retrieve the contents of a keytab, along with a single argument
- * that allows them to open the keytab.  We assume that a server keytab is
- * always a real file so we can allow people to specify their own filenames.
- * (This is important because the POSTGRES keytab needs to be readable by
- * non-root users/groups; the v4 tools used to force you do dump a whole
- * host's worth of keys into a file, effectively forcing you to use one file,
- * but kdb5_edit allows you to select which principals to dump.  Yay!)
+ * We have our own keytab file because postgres is unlikely to run as root,
+ * and so cannot read the default keytab.
  */
 static int
 pg_krb5_recvauth(Port *port)
 {
-	char		servbuf[MAXHOSTNAMELEN + 1 +
-									sizeof(PG_KRB_SRVNAM)];
-	char	   *hostp,
-			   *kusername = (char *) NULL;
-	krb5_error_code code;
-	krb5_principal client,
-				server;
-	krb5_address sender_addr;
-	krb5_rdreq_key_proc keyproc = (krb5_rdreq_key_proc) NULL;
-	krb5_pointer keyprocarg = (krb5_pointer) NULL;
+	krb5_error_code retval;
+	int ret;
+	krb5_auth_context auth_context = NULL;
+	krb5_ticket *ticket;
+    char *kusername;
 
-	/*
-	 * Set up server side -- since we have no ticket file to make this
-	 * easy, we construct our own name and parse it.  See note on
-	 * canonicalization above.
-	 */
-	strcpy(servbuf, PG_KRB_SRVNAM);
-	*(hostp = servbuf + (sizeof(PG_KRB_SRVNAM) - 1)) = '/';
-	if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)
-		strcpy(hostp, "localhost");
-	if (hostp = strchr(hostp, '.'))
-		*hostp = '\0';
-	if (code = krb5_parse_name(servbuf, &server))
-	{
+	ret = pg_krb5_init();
+	if (ret != STATUS_OK)
+		return ret;
+
+	retval = krb5_recvauth(pg_krb5_context, &auth_context,
+						   (krb5_pointer)&port->sock, PG_KRB_SRVNAM,
+						   pg_krb5_server, 0, pg_krb5_keytab, &ticket);
+	if (retval) {
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		"pg_krb5_recvauth: Kerberos error %d in krb5_parse_name\n", code);
-		com_err("pg_krb5_recvauth", code, "in krb5_parse_name");
+				 "pg_krb5_recvauth: krb5_recvauth returned"
+				 " Kerberos error %d\n", retval);
+	    com_err("postgres", retval, "from krb5_recvauth");
 		return STATUS_ERROR;
-	}
-
-	/*
-	 * krb5_sendauth needs this to verify the address in the client
-	 * authenticator.
-	 */
-	sender_addr.addrtype = port->raddr.in.sin_family;
-	sender_addr.length = sizeof(port->raddr.in.sin_addr);
-	sender_addr.contents = (krb5_octet *) & (port->raddr.in.sin_addr);
-
-	if (strcmp(PG_KRB_SRVTAB, ""))
-	{
-		keyproc = krb5_kt_read_service_key;
-		keyprocarg = PG_KRB_SRVTAB;
-	}
-
-	if (code = krb5_recvauth((krb5_pointer) & port->sock,
-							 PG_KRB5_VERSION,
-							 server,
-							 &sender_addr,
-							 (krb5_pointer) NULL,
-							 keyproc,
-							 keyprocarg,
-							 (char *) NULL,
-							 (krb5_int32 *) NULL,
-							 &client,
-							 (krb5_ticket **) NULL,
-							 (krb5_authenticator **) NULL))
-	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-		 "pg_krb5_recvauth: Kerberos error %d in krb5_recvauth\n", code);
-		com_err("pg_krb5_recvauth", code, "in krb5_recvauth");
-		krb5_free_principal(server);
-		return STATUS_ERROR;
-	}
-	krb5_free_principal(server);
+	}						   
 
 	/*
 	 * The "client" structure comes out of the ticket and is therefore
 	 * authenticated.  Use it to check the username obtained from the
 	 * postmaster startup packet.
+	 *
+	 * I have no idea why this is considered necessary.
 	 */
-	if ((code = krb5_unparse_name(client, &kusername)))
-	{
+    retval = krb5_unparse_name(pg_krb5_context, 
+							   ticket->enc_part2->client, &kusername);
+	if (retval) {
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_recvauth: Kerberos error %d in krb5_unparse_name\n", code);
-		com_err("pg_krb5_recvauth", code, "in krb5_unparse_name");
-		krb5_free_principal(client);
+				 "pg_krb5_recvauth: krb5_unparse_name returned"
+				 " Kerberos error %d\n", retval);
+	    com_err("postgres", retval, "while unparsing client name");
+		krb5_free_ticket(pg_krb5_context, ticket);
+		krb5_auth_con_free(pg_krb5_context, auth_context);
 		return STATUS_ERROR;
 	}
-	krb5_free_principal(client);
-	if (!kusername)
-	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_recvauth: could not decode username\n");
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return STATUS_ERROR;
-	}
+
 	kusername = pg_an_to_ln(kusername);
-	if (strncmp(username, kusername, SM_USER))
+	if (strncmp(port->user, kusername, SM_USER))
 	{
 		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
-				 "pg_krb5_recvauth: name \"%s\" != \"%s\"\n", port->user, kusername);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		pfree(kusername);
-		return STATUS_ERROR;
+				 "pg_krb5_recvauth: user name \"%s\" != krb5 name \"%s\"\n", 
+				 port->user, kusername);
+		ret = STATUS_ERROR;
 	}
-	pfree(kusername);
-	return STATUS_OK;
+	else
+		ret = STATUS_OK;
+	
+	krb5_free_ticket(pg_krb5_context, ticket);
+	krb5_auth_con_free(pg_krb5_context, auth_context);
+	free(kusername);
+
+	return ret;
 }
 
 #else

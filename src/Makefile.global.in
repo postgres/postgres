@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.71 2000/05/23 02:12:46 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.72 2000/05/27 03:39:31 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -120,7 +120,7 @@ ENFORCE_ALIGNMENT= true
 # Set KRBVERS to "4" for Kerberos v4, "5" for Kerberos v5.
 # XXX Edit the default Kerberos variables below!
 #
-#KRBVERS= 5
+KRBVERS=5
 
 # Globally pass Kerberos file locations.
 # these are used in the postmaster and all libpq applications.
@@ -132,9 +132,9 @@ ENFORCE_ALIGNMENT= true
 # PG_KRB_SRVTAB is the location of the server's keytab file.
 #
 ifdef KRBVERS
-KRBINCS= -I/usr/athena/include
-KRBLIBS= -L/usr/athena/lib
-KRBFLAGS+= $(KRBINCS) -DPG_KRB_SRVNAM='"postgres_dbms"'
+KRBINCS= -I/usr/krb5/include
+KRBLIBS= -L/usr/krb5/lib
+KRBFLAGS+= $(KRBINCS) -DPG_KRB_SRVNAM='"postgres"'
    ifeq ($(KRBVERS), 4)
 KRBFLAGS+= -DKRB4
 KRBFLAGS+= -DPG_KRB_SRVTAB='"/etc/srvtab"'
@@ -142,8 +142,8 @@ KRBLIBS+= -lkrb -ldes
    else
    ifeq ($(KRBVERS), 5)
 KRBFLAGS+= -DKRB5
-KRBFLAGS+= -DPG_KRB_SRVTAB='"FILE:/krb5/srvtab.postgres"'
-KRBLIBS+= -lkrb5 -lcrypto -lcom_err -lisode
+KRBFLAGS+= -DPG_KRB_SRVTAB='"FILE:/usr/local/postgres/krb5.keytab"'
+KRBLIBS+= -lkrb5 -lcrypto -lcom_err
    endif
    endif
 endif
