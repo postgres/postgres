@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.4 1996/07/22 21:56:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.5 1996/09/10 06:41:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -290,6 +290,9 @@ int32
 text_lt(struct varlena *arg1, struct varlena *arg2) 
 {
     int len;
+#ifdef UNSIGNED_CHAR_TEXT
+    unsigned
+#endif
     char *a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
@@ -318,6 +321,9 @@ int32
 text_le(struct varlena *arg1, struct varlena *arg2) 
 {
     int len;
+#ifdef UNSIGNED_CHAR_TEXT
+    unsigned
+#endif
     char *a1p, *a2p;
     
     if (arg1 == NULL || arg2 == NULL)
