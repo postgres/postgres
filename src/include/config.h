@@ -55,7 +55,7 @@
  * NOTE also that databases with different NAMEDATALEN's cannot interoperate!
  */ 
 #define NAMEDATALEN 32
-# OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid) 
+/* OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid) */
 #define OIDNAMELEN  36
 
 /* turn this on if you prefer European style dates instead of American
