@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.31 2004/03/05 00:47:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.32 2004/03/05 01:00:45 momjian Exp $
 -->
 
 <chapter id="spi">
@@ -695,7 +695,7 @@ Oid SPI_getargtypeid(void * <parameter>plan</parameter>, int <parameter>argIndex
 
 <!-- *********************************************** -->
 
-<refentry id="spi-spi-is_cursor_plan">
+<refentry id="spi-spi-is-cursor-plan">
  <refmeta>
   <refentrytitle>SPI_is_cursor_plan</refentrytitle>
  </refmeta>
