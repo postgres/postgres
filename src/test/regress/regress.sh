@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.12 1997/11/14 15:57:12 thomas Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.13 1997/12/16 16:01:05 thomas Exp $
 #
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
@@ -22,8 +22,8 @@ FRONTEND="psql -n -e -q"
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
-echo "The time zone is now set to PST/PDT explicitly by the regression test"
-echo "client frontend. Please report any apparent problems to"
+echo "The time zone is now set to PST8PDT explicitly by this regression test"
+echo " client frontend. Please report any apparent problems to"
 echo "   ports@postgresql.org"
 echo "See regress/README for more information."
 echo ""
