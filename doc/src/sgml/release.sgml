@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.236 2003/11/04 20:54:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.237 2003/11/10 22:27:00 momjian Exp $
 -->
 
 <appendix id="release">
@@ -821,7 +821,7 @@ zero-row record variable (Tom)</para></listitem>
 <listitem><para>Allow polymorphic PL/pgSQL functions (Tom, Joe)</para></listitem>
 <listitem><para>Allow polymorphic SQL functions (Joe)</para>
    <para>
-    bjm ??
+    Allow functions to accept arbitrary data types for input, and return arbitrary types.
    </para>
    </listitem>
 <listitem><para>Improved compiled function caching mechanism in PL/pgSQL with full
