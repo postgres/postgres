@@ -13,11 +13,9 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
+ *
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/inet_net_ntop.c,v 1.17 2003/11/10 19:40:46 momjian Exp $
  */
-
-#if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_ntop.c,v 1.16 2003/08/04 00:43:25 momjian Exp $";
-#endif
 
 #include "postgres.h"
 
