@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.3 2002/09/12 00:18:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.4 2002/09/27 17:51:10 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -153,7 +153,7 @@ fi
 for db in $dbname
 do
 	[ "$alldb" ] && echo "Clustering $db"
-	query="SELECT nspname, pg_class.relname, pg_class_2.relname FROM pg_class, pg_class AS pg_class_2 JOIN pg_namespace ON (pg_namespace.oid=relnamespace), pg_index WHERE pg_class.oid=pg_index.indrelid AND pg_class_2.oid=pg_index.indexrelid AND pg_index.indisclustered"
+	query="SELECT nspname, pg_class.relname, pg_class_2.relname FROM pg_class, pg_class AS pg_class_2 JOIN pg_namespace ON (pg_namespace.oid=relnamespace), pg_index WHERE pg_class.oid=pg_index.indrelid AND pg_class_2.oid=pg_index.indexrelid AND pg_index.indisclustered AND pg_class.relowner=(SELECT usesysid FROM pg_user WHERE usename=current_user)"
 	if [ -z "$table" ]; then
 		tables=`${PATHNAME}psql $db $PSQLOPT -F: -P format=unaligned -t -c "$query"`
 	else
