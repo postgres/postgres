@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.75 2003/03/28 16:34:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.76 2003/04/03 20:18:16 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -67,7 +67,7 @@ extern char *filename_completion_function();
 #endif
 
 #ifdef HAVE_RL_COMPLETION_MATCHES
-#define completion_matches(x, y) rl_completion_matches((x), ((rl_compentry_func_t *)(y)))
+#define completion_matches rl_completion_matches
 #endif
 
 #define BUF_SIZE 2048
@@ -76,12 +76,13 @@ extern char *filename_completion_function();
 
 /* Forward declaration of functions */
 static char **psql_completion(char *text, int start, int end);
-static char *create_command_generator(char *text, int state);
-static char *complete_from_query(char *text, int state);
-static char *complete_from_schema_query(char *text, int state);
-static char *_complete_from_query(int is_schema_query, char *text, int state);
-static char *complete_from_const(char *text, int state);
-static char *complete_from_list(char *text, int state);
+static char *create_command_generator(const char *text, int state);
+static char *complete_from_query(const char *text, int state);
+static char *complete_from_schema_query(const char *text, int state);
+static char *_complete_from_query(int is_schema_query,
+								  const char *text, int state);
+static char *complete_from_const(const char *text, int state);
+static char *complete_from_list(const char *text, int state);
 
 static PGresult *exec_query(char *query);
 char	   *quote_file_name(char *text, int match_type, char *quote_pointer);
@@ -1357,7 +1358,7 @@ psql_completion(char *text, int start, int end)
    as defined above.
 */
 static char *
-create_command_generator(char *text, int state)
+create_command_generator(const char *text, int state)
 {
 	static int	list_index,
 				string_length;
@@ -1383,13 +1384,13 @@ create_command_generator(char *text, int state)
 /* The following two functions are wrappers for _complete_from_query */
 
 static char *
-complete_from_query(char *text, int state)
+complete_from_query(const char *text, int state)
 {
   return _complete_from_query(0, text, state);
 }
 
 static char *
-complete_from_schema_query(char *text, int state)
+complete_from_schema_query(const char *text, int state)
 {
   return _complete_from_query(1, text, state);
 }
@@ -1412,7 +1413,7 @@ complete_from_schema_query(char *text, int state)
 */
 
 static char *
-_complete_from_query(int is_schema_query, char *text, int state)
+_complete_from_query(int is_schema_query, const char *text, int state)
 {
 	static int	list_index,
 				string_length;
@@ -1421,7 +1422,7 @@ _complete_from_query(int is_schema_query, char *text, int state)
 	const char *item;
 
 	/*
-	 * If this ist the first time for this completion, we fetch a list of
+	 * If this is the first time for this completion, we fetch a list of
 	 * our "things" from the backend.
 	 */
 	if (state == 0)
@@ -1471,7 +1472,7 @@ _complete_from_query(int is_schema_query, char *text, int state)
    SQL words that can appear at certain spot.
 */
 static char *
-complete_from_list(char *text, int state)
+complete_from_list(const char *text, int state)
 {
 	static int	string_length,
 				list_index,
@@ -1531,7 +1532,7 @@ complete_from_list(char *text, int state)
    The string to be passed must be in completion_charp.
 */
 static char *
-complete_from_const(char *text, int state)
+complete_from_const(const char *text, int state)
 {
 	(void) text;				/* We don't care about what was entered
 								 * already. */
