@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.206 2001/10/31 04:49:43 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.207 2001/11/02 20:23:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -345,9 +345,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	List	   *icolumns;
 	List	   *attrnos;
 	List	   *attnos;
-	int			numuseratts;
 	List	   *tl;
-	TupleDesc	rd_att;
 
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
@@ -488,7 +486,6 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/*
 	 * Prepare columns for assignment to target table.
 	 */
-	numuseratts = 0;
 	attnos = attrnos;
 	foreach(tl, qry->targetList)
 	{
@@ -501,65 +498,15 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		id = (Ident *) lfirst(icolumns);
 		updateTargetListEntry(pstate, tle, id->name, lfirsti(attnos),
 							  id->indirection);
-		numuseratts++;
 		icolumns = lnext(icolumns);
 		attnos = lnext(attnos);
 	}
 
 	/*
-	 * It is possible that the targetlist has fewer entries than were in
-	 * the columns list.  We do not consider this an error (perhaps we
-	 * should, if the columns list was explictly given?).  We must
-	 * truncate the attrnos list to only include the attrs actually
-	 * provided, else we will fail to apply defaults for them below.
+	 * XXX It is possible that the targetlist has fewer entries than were in
+	 * the columns list.  We do not consider this an error.  Perhaps we
+	 * should, if the columns list was explicitly given?
 	 */
-	if (icolumns != NIL)
-		attrnos = ltruncate(numuseratts, attrnos);
-
-	/*
-	 * Add targetlist items to assign DEFAULT values to any columns that
-	 * have defaults and were not assigned to by the user.
-	 *
-	 * XXX wouldn't it make more sense to do this further downstream, after
-	 * the rule rewriter?  As is, altering a column default will not
-	 * change the behavior of INSERTs in already-defined rules.
-	 */
-	rd_att = pstate->p_target_relation->rd_att;
-	if (rd_att->constr && rd_att->constr->num_defval > 0)
-	{
-		Form_pg_attribute *att = rd_att->attrs;
-		AttrDefault *defval = rd_att->constr->defval;
-		int			ndef = rd_att->constr->num_defval;
-
-		while (--ndef >= 0)
-		{
-			AttrNumber	attrno = defval[ndef].adnum;
-			Form_pg_attribute thisatt = att[attrno - 1];
-			TargetEntry *te;
-
-			if (intMember((int) attrno, attrnos))
-				continue;		/* there was a user-specified value */
-
-			/*
-			 * No user-supplied value, so add a targetentry with DEFAULT
-			 * expr and correct data for the target column.
-			 */
-			te = makeTargetEntry(makeResdom(attrno,
-											thisatt->atttypid,
-											thisatt->atttypmod,
-									  pstrdup(NameStr(thisatt->attname)),
-											false),
-								 stringToNode(defval[ndef].adbin));
-			qry->targetList = lappend(qry->targetList, te);
-
-			/*
-			 * Make sure the value is coerced to the target column type
-			 * (might not be right type if it's not a constant!)
-			 */
-			updateTargetListEntry(pstate, te, te->resdom->resname, attrno,
-								  NIL);
-		}
-	}
 
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;

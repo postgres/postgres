@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.179 2001/10/25 05:49:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.180 2001/11/02 20:23:02 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1651,9 +1651,9 @@ AddRelationRawConstraints(Relation rel,
 		 * column's type.  We store the expression without coercion,
 		 * however, to avoid premature coercion in cases like
 		 *
-		 * CREATE TABLE tbl (fld datetime DEFAULT 'now');
+		 * CREATE TABLE tbl (fld datetime DEFAULT 'now'::text);
 		 *
-		 * NB: this should match the code in updateTargetListEntry() that
+		 * NB: this should match the code in optimizer/prep/preptlist.c that
 		 * will actually do the coercion, to ensure we don't accept an
 		 * unusable default expression.
 		 */

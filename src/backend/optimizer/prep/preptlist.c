@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.44 2001/10/25 05:49:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.45 2001/11/02 20:23:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,10 @@
 #include "nodes/makefuncs.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_target.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
 
@@ -35,6 +39,7 @@ static List *expand_targetlist(List *tlist, int command_type,
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
 					int attrno);
+static Node *build_column_default(Relation rel, int attrno);
 
 
 /*
@@ -168,6 +173,7 @@ expand_targetlist(List *tlist, int command_type,
 			{
 				new_tle = process_matched_tle(old_tle, new_tle, attrno);
 				tlistentry_used[old_tlist_index] = true;
+				/* keep scanning to detect multiple assignments to attr */
 			}
 			old_tlist_index++;
 		}
@@ -177,97 +183,44 @@ expand_targetlist(List *tlist, int command_type,
 			/*
 			 * Didn't find a matching tlist entry, so make one.
 			 *
-			 * For INSERT, generate a constant of the default value for the
-			 * attribute type, or NULL if no default value.
+			 * For INSERT, generate an appropriate default value.
 			 *
 			 * For UPDATE, generate a Var reference to the existing value of
 			 * the attribute, so that it gets copied to the new tuple.
 			 */
 			Oid			atttype = att_tup->atttypid;
 			int32		atttypmod = att_tup->atttypmod;
+			Node	   *new_expr;
 
 			switch (command_type)
 			{
 				case CMD_INSERT:
-					{
-						bool		hasdefault;
-						Datum		typedefault;
-						int16		typlen;
-						bool		typbyval;
-						Const	   *def_const;
-
-						if (att_tup->attisset)
-						{
-							/*
-							 * Set attributes are represented as OIDs no
-							 * matter what the set element type is, and
-							 * the element type's default is irrelevant
-							 * too.
-							 */
-							hasdefault = false;
-							typedefault = (Datum) 0;
-							typlen = sizeof(Oid);
-							typbyval = true;
-						}
-						else
-						{
-#ifdef	_DROP_COLUMN_HACK__
-							if (COLUMN_IS_DROPPED(att_tup))
-							{
-								hasdefault = false;
-								typedefault = (Datum) 0;
-							}
-							else
-#endif	 /* _DROP_COLUMN_HACK__ */
-								hasdefault = get_typdefault(atttype,
-															&typedefault);
-
-							get_typlenbyval(atttype, &typlen, &typbyval);
-						}
-
-						def_const = makeConst(atttype,
-											  typlen,
-											  typedefault,
-											  !hasdefault,
-											  typbyval,
-											  false,	/* not a set */
-											  false);
-
-						new_tle = makeTargetEntry(makeResdom(attrno,
-															 atttype,
-															 -1,
-													   pstrdup(attrname),
-															 false),
-												  (Node *) def_const);
-						break;
-					}
+					new_expr = build_column_default(rel, attrno);
+					break;
 				case CMD_UPDATE:
-					{
-						Var		   *temp_var;
-
 #ifdef	_DROP_COLUMN_HACK__
-						if (COLUMN_IS_DROPPED(att_tup))
-							temp_var = (Var *) makeNullConst(atttype);
-						else
+					if (COLUMN_IS_DROPPED(att_tup))
+						new_expr = (Node *) makeNullConst(atttype);
+					else
 #endif	 /* _DROP_COLUMN_HACK__ */
-							temp_var = makeVar(result_relation,
-											   attrno,
-											   atttype,
-											   atttypmod,
-											   0);
-
-						new_tle = makeTargetEntry(makeResdom(attrno,
-															 atttype,
-															 atttypmod,
-													   pstrdup(attrname),
-															 false),
-												  (Node *) temp_var);
-						break;
-					}
+						new_expr = (Node *) makeVar(result_relation,
+													attrno,
+													atttype,
+													atttypmod,
+													0);
+					break;
 				default:
 					elog(ERROR, "expand_targetlist: unexpected command_type");
+					new_expr = NULL; /* keep compiler quiet */
 					break;
 			}
+
+			new_tle = makeTargetEntry(makeResdom(attrno,
+												 atttype,
+												 atttypmod,
+												 pstrdup(attrname),
+												 false),
+									  new_expr);
 		}
 
 		new_tlist = lappend(new_tlist, new_tle);
@@ -384,4 +337,130 @@ process_matched_tle(TargetEntry *src_tle,
 	resdom = (Resdom *) copyObject((Node *) resdom);
 	resdom->resno = attrno;
 	return makeTargetEntry(resdom, (Node *) newexpr);
+}
+
+
+/*
+ * Make an expression tree for the default value for a column.
+ *
+ * This is used to fill in missing attributes in an INSERT targetlist.
+ * We look first to see if the column has a default value expression.
+ * If not, generate a constant of the default value for the attribute type,
+ * or a NULL if the type has no default value either.
+ */
+static Node *
+build_column_default(Relation rel, int attrno)
+{
+	TupleDesc	rd_att = rel->rd_att;
+	Form_pg_attribute att_tup = rd_att->attrs[attrno - 1];
+	Oid			atttype = att_tup->atttypid;
+	int32		atttypmod = att_tup->atttypmod;
+	bool		hasdefault;
+	Datum		typedefault;
+	int16		typlen;
+	bool		typbyval;
+	Node	   *expr;
+
+	/*
+	 * Scan to see if relation has a default for this column.
+	 */
+	if (rd_att->constr && rd_att->constr->num_defval > 0)
+	{
+		AttrDefault *defval = rd_att->constr->defval;
+		int			ndef = rd_att->constr->num_defval;
+
+		while (--ndef >= 0)
+		{
+			if (attrno == defval[ndef].adnum)
+			{
+				Oid		type_id;
+
+				/*
+				 * Found it, convert string representation to node tree.
+				 */
+				expr = stringToNode(defval[ndef].adbin);
+
+				/*
+				 * Make sure the value is coerced to the target column type
+				 * (might not be right type yet if it's not a constant!)
+				 * This should match the parser's processing of non-defaulted
+				 * expressions --- see updateTargetListEntry().
+				 */
+				type_id = exprType(expr);
+
+				if (type_id != atttype)
+				{
+					expr = CoerceTargetExpr(NULL, expr, type_id,
+											atttype, atttypmod);
+					/*
+					 * This really shouldn't fail; should have checked the
+					 * default's type when it was created ...
+					 */
+					if (expr == NULL)
+						elog(ERROR, "Column \"%s\" is of type %s"
+							 " but default expression is of type %s"
+							 "\n\tYou will need to rewrite or cast the expression",
+							 NameStr(att_tup->attname),
+							 format_type_be(atttype),
+							 format_type_be(type_id));
+				}
+
+				/*
+				 * If the column is a fixed-length type, it may need a
+				 * length coercion as well as a type coercion.
+				 */
+				expr = coerce_type_typmod(NULL, expr,
+										  atttype, atttypmod);
+				return expr;
+			}
+		}
+	}
+
+	/*
+	 * No per-column default, so look for a default for the type itself.
+	 * If there isn't one, we generate a NULL constant of the correct type.
+	 */
+	if (att_tup->attisset)
+	{
+		/*
+		 * Set attributes are represented as OIDs no matter what the set
+		 * element type is, and the element type's default is irrelevant too.
+		 */
+		hasdefault = false;
+		typedefault = (Datum) 0;
+		typlen = sizeof(Oid);
+		typbyval = true;
+	}
+	else
+	{
+#ifdef	_DROP_COLUMN_HACK__
+		if (COLUMN_IS_DROPPED(att_tup))
+		{
+			hasdefault = false;
+			typedefault = (Datum) 0;
+		}
+		else
+#endif	 /* _DROP_COLUMN_HACK__ */
+			hasdefault = get_typdefault(atttype, &typedefault);
+
+		get_typlenbyval(atttype, &typlen, &typbyval);
+	}
+
+	expr = (Node *) makeConst(atttype,
+							  typlen,
+							  typedefault,
+							  !hasdefault,
+							  typbyval,
+							  false, /* not a set */
+							  false);
+
+	/*
+	 * If the column is a fixed-length type, it may need a length coercion
+	 * as well as a type coercion.  But NULLs don't need that.
+	 */
+	if (hasdefault)
+		expr = coerce_type_typmod(NULL, expr,
+								  atttype, atttypmod);
+
+	return expr;
 }
