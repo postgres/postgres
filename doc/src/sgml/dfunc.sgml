@@ -1,6 +1,8 @@
  <chapter id="dfunc">
   <title id="dfunc-title">Linking Dynamically-Loaded Functions</title>
 
+  <para>
+
 <!--
 .SH "Compiling Dynamically-Loaded C Functions"
 .PP
@@ -100,19 +102,23 @@ You should look at the Postgres User's Manual for an explanation of this
 procedure.
 -->
 
-  <para>
    After you have created and  registered  a  user-defined
-   function,  your  work  is  essentially done.  <productname>Postgres</productname>,
-   however, must load the object code (e.g., a <filename>.o</filename> file, or
+   function,  your  work  is  essentially done.
+   <productname>Postgres</productname>,
+   however, must load the object code
+   (e.g., a <literal>.o</literal> file, or
    a  shared  library)  that implements your function.  As
-   previously mentioned, <productname>Postgres</productname> loads your code at  
+   previously mentioned, <productname>Postgres</productname>
+   loads your code at  
    runtime,  as  required.  In order to allow your code to be
    dynamically loaded, you may have to compile  and  
    link-edit  it  in  a  special  way.   This  section  briefly
    describes how to  perform  the  compilation  and  
    link-editing  required before you can load your user-defined
-   functions into a running <productname>Postgres</productname>  server.   Note  that
+   functions into a running <productname>Postgres</productname>  server.
+   Note  that
    this process has  changed  as  of  Version  4.2.
+  </para>
 
 <!--
    <tip>
@@ -123,7 +129,8 @@ procedure.
      and alignment of executable instructions within memory, etc.
      on the part of the person writing the dynamic loader.   Such
      loaders tended to be slow and buggy.  As of Version 4.2, the
-     <productname>Postgres</productname> dynamic loading mechanism has been rewritten to use
+     <productname>Postgres</productname> dynamic loading mechanism
+  has been rewritten to use
      the dynamic loading mechanism provided by the operating 
      system.  This approach is generally faster, more  reliable  and
      more  portable  than our previous dynamic loading mechanism.
@@ -131,7 +138,8 @@ procedure.
      Unix use a dynamic loading mechanism to implement shared 
      libraries and must therefore provide a fast and reliable 
      mechanism.   On  the  other  hand, the object file must be 
-     postprocessed a bit before it can be loaded into  <productname>Postgres</productname>.   We
+     postprocessed a bit before it can be loaded into 
+ <productname>Postgres</productname>.   We
      hope  that  the large increase in speed and reliability will
      make up for the slight decrease in convenience.
     </para>
