@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.3 2000/01/26 05:58:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/tutorial/Attic/beard.c,v 1.4 2000/06/09 01:11:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,10 @@ beard(Oid picture)
 	char		buf[BUFSIZE];
 	int			cc;
 
-	if ((pic_fd = lo_open(picture, INV_READ)) == -1)
+	pic_fd = DatumGetInt32(DirectFunctionCall2(lo_open,
+											   ObjectIdGetDatum(picture),
+											   Int32GetDatum(INV_READ)));
+	if (pic_fd < 0)
 		elog(ERROR, "Cannot access picture large object");
 
 	if (lo_read(pic_fd, (char *) &ihdr, sizeof(ihdr)) != sizeof(ihdr))
@@ -45,21 +48,31 @@ beard(Oid picture)
 	/*
 	 * new large object
 	 */
-	if ((beard = lo_creat(INV_MD)) == 0)		/* ?? is this right? */
+	beard = DatumGetObjectId(DirectFunctionCall1(lo_creat,
+												 Int32GetDatum(INV_MD)));
+	if (beard == InvalidOid)
 		elog(ERROR, "Cannot create new large object");
 
-	if ((beard_fd = lo_open(beard, INV_WRITE)) == -1)
+	beard_fd = DatumGetInt32(DirectFunctionCall2(lo_open,
+												 ObjectIdGetDatum(beard),
+												 Int32GetDatum(INV_WRITE)));
+	if (beard_fd < 0)
 		elog(ERROR, "Cannot access beard large object");
 
-	lo_lseek(pic_fd, beardOffset, SET_CUR);
+	if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+										  Int32GetDatum(pic_fd),
+										  Int32GetDatum(beardOffset),
+										  Int32GetDatum(SEEK_SET))) < 0)
+		elog(ERROR, "Cannot seek in picture large object");
+
 	while ((cc = lo_read(pic_fd, buf, BUFSIZE)) > 0)
 	{
 		if (lo_write(beard_fd, buf, cc) != cc)
 			elog(ERROR, "error while writing large object");
 	}
 
-	lo_close(pic_fd);
-	lo_close(beard_fd);
+	DirectFunctionCall1(lo_close, Int32GetDatum(pic_fd));
+	DirectFunctionCall1(lo_close, Int32GetDatum(beard_fd));
 
 	return beard;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.136 2000/06/05 07:28:59 tgl Exp $
+ * $Id: pg_proc.h,v 1.137 2000/06/09 01:11:10 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -500,77 +500,77 @@ DESCR("convert float4 to int2");
 DATA(insert OID = 239 (  line_distance	   PGUID 11 f t t t 2 f 701 "628 628" 100 0 0 100  line_distance - ));
 DESCR("distance between");
 
-DATA(insert OID = 240 (  nabstimein		   PGUID 11 f t f t 1 f 702 "0" 100 0 0 100  nabstimein - ));
+DATA(insert OID = 240 (  nabstimein		   PGUID 12 f t f t 1 f 702 "0" 100 0 0 100  nabstimein - ));
 DESCR("(internal)");
-DATA(insert OID = 241 (  nabstimeout	   PGUID 11 f t f t 1 f 23  "0" 100 0 0 100  nabstimeout - ));
+DATA(insert OID = 241 (  nabstimeout	   PGUID 12 f t f t 1 f 23  "0" 100 0 0 100  nabstimeout - ));
 DESCR("(internal)");
-DATA(insert OID = 242 (  reltimein		   PGUID 11 f t f t 1 f 703 "0" 100 0 0 100  reltimein - ));
+DATA(insert OID = 242 (  reltimein		   PGUID 12 f t f t 1 f 703 "0" 100 0 0 100  reltimein - ));
 DESCR("(internal)");
-DATA(insert OID = 243 (  reltimeout		   PGUID 11 f t f t 1 f 23  "0" 100 0 0 100  reltimeout - ));
+DATA(insert OID = 243 (  reltimeout		   PGUID 12 f t f t 1 f 23  "0" 100 0 0 100  reltimeout - ));
 DESCR("(internal)");
-DATA(insert OID = 244 (  timepl			   PGUID 11 f t f t 2 f 702 "702 703" 100 0 0 100  timepl - ));
+DATA(insert OID = 244 (  timepl			   PGUID 12 f t f t 2 f 702 "702 703" 100 0 0 100  timepl - ));
 DESCR("addition");
-DATA(insert OID = 245 (  timemi			   PGUID 11 f t f t 2 f 702 "702 703" 100 0 0 100  timemi - ));
+DATA(insert OID = 245 (  timemi			   PGUID 12 f t f t 2 f 702 "702 703" 100 0 0 100  timemi - ));
 DESCR("subtract");
-DATA(insert OID = 246 (  tintervalin	   PGUID 11 f t f t 1 f 704 "0" 100 0 0 100  tintervalin - ));
+DATA(insert OID = 246 (  tintervalin	   PGUID 12 f t f t 1 f 704 "0" 100 0 0 100  tintervalin - ));
 DESCR("(internal)");
-DATA(insert OID = 247 (  tintervalout	   PGUID 11 f t f t 1 f 23  "0" 100 0 0 100  tintervalout - ));
+DATA(insert OID = 247 (  tintervalout	   PGUID 12 f t f t 1 f 23  "0" 100 0 0 100  tintervalout - ));
 DESCR("(internal)");
-DATA(insert OID = 248 (  intinterval	   PGUID 11 f t f t 2 f 16 "702 704" 100 0 0 100	intinterval - ));
+DATA(insert OID = 248 (  intinterval	   PGUID 12 f t f t 2 f 16 "702 704" 100 0 0 100	intinterval - ));
 DESCR("abstime in tinterval");
-DATA(insert OID = 249 (  tintervalrel	   PGUID 11 f t f t 1 f 703 "704" 100 0 0 100  tintervalrel - ));
+DATA(insert OID = 249 (  tintervalrel	   PGUID 12 f t f t 1 f 703 "704" 100 0 0 100  tintervalrel - ));
 DESCR("");
-DATA(insert OID = 250 (  timenow		   PGUID 11 f t f t 0 f 702 "0" 100 0 0 100  timenow - ));
+DATA(insert OID = 250 (  timenow		   PGUID 12 f t f t 0 f 702 "0" 100 0 0 100  timenow - ));
 DESCR("Current date and time (abstime)");
-DATA(insert OID = 251 (  abstimeeq		   PGUID 11 f t f t 2 f 16 "702 702" 100 0 0 100	abstimeeq - ));
+DATA(insert OID = 251 (  abstimeeq		   PGUID 12 f t f t 2 f 16 "702 702" 100 0 0 100	abstimeeq - ));
 DESCR("equal");
-DATA(insert OID = 252 (  abstimene		   PGUID 11 f t f t 2 f 16 "702 702" 100 0 0 100	abstimene - ));
+DATA(insert OID = 252 (  abstimene		   PGUID 12 f t f t 2 f 16 "702 702" 100 0 0 100	abstimene - ));
 DESCR("not equal");
-DATA(insert OID = 253 (  abstimelt		   PGUID 11 f t f t 2 f 16 "702 702" 100 0 0 100	abstimelt - ));
+DATA(insert OID = 253 (  abstimelt		   PGUID 12 f t f t 2 f 16 "702 702" 100 0 0 100	abstimelt - ));
 DESCR("less-than");
-DATA(insert OID = 254 (  abstimegt		   PGUID 11 f t f t 2 f 16 "702 702" 100 0 0 100	abstimegt - ));
+DATA(insert OID = 254 (  abstimegt		   PGUID 12 f t f t 2 f 16 "702 702" 100 0 0 100	abstimegt - ));
 DESCR("greater-than");
-DATA(insert OID = 255 (  abstimele		   PGUID 11 f t f t 2 f 16 "702 702" 100 0 0 100	abstimele - ));
+DATA(insert OID = 255 (  abstimele		   PGUID 12 f t f t 2 f 16 "702 702" 100 0 0 100	abstimele - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 256 (  abstimege		   PGUID 11 f t f t 2 f 16 "702 702" 100 0 0 100	abstimege - ));
+DATA(insert OID = 256 (  abstimege		   PGUID 12 f t f t 2 f 16 "702 702" 100 0 0 100	abstimege - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 257 (  reltimeeq		   PGUID 11 f t t t 2 f 16 "703 703" 100 0 0 100	reltimeeq - ));
+DATA(insert OID = 257 (  reltimeeq		   PGUID 12 f t t t 2 f 16 "703 703" 100 0 0 100	reltimeeq - ));
 DESCR("equal");
-DATA(insert OID = 258 (  reltimene		   PGUID 11 f t t t 2 f 16 "703 703" 100 0 0 100	reltimene - ));
+DATA(insert OID = 258 (  reltimene		   PGUID 12 f t t t 2 f 16 "703 703" 100 0 0 100	reltimene - ));
 DESCR("not equal");
-DATA(insert OID = 259 (  reltimelt		   PGUID 11 f t t t 2 f 16 "703 703" 100 0 0 100	reltimelt - ));
+DATA(insert OID = 259 (  reltimelt		   PGUID 12 f t t t 2 f 16 "703 703" 100 0 0 100	reltimelt - ));
 DESCR("less-than");
-DATA(insert OID = 260 (  reltimegt		   PGUID 11 f t t t 2 f 16 "703 703" 100 0 0 100	reltimegt - ));
+DATA(insert OID = 260 (  reltimegt		   PGUID 12 f t t t 2 f 16 "703 703" 100 0 0 100	reltimegt - ));
 DESCR("greater-than");
-DATA(insert OID = 261 (  reltimele		   PGUID 11 f t t t 2 f 16 "703 703" 100 0 0 100	reltimele - ));
+DATA(insert OID = 261 (  reltimele		   PGUID 12 f t t t 2 f 16 "703 703" 100 0 0 100	reltimele - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 262 (  reltimege		   PGUID 11 f t t t 2 f 16 "703 703" 100 0 0 100	reltimege - ));
+DATA(insert OID = 262 (  reltimege		   PGUID 12 f t t t 2 f 16 "703 703" 100 0 0 100	reltimege - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 263 (  tintervalsame	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalsame - ));
+DATA(insert OID = 263 (  tintervalsame	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalsame - ));
 DESCR("same as");
-DATA(insert OID = 264 (  tintervalct	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalct - ));
+DATA(insert OID = 264 (  tintervalct	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalct - ));
 DESCR("less-than");
-DATA(insert OID = 265 (  tintervalov	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalov - ));
+DATA(insert OID = 265 (  tintervalov	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalov - ));
 DESCR("overlaps");
-DATA(insert OID = 266 (  tintervalleneq    PGUID 11 f t f t 2 f 16 "704 703" 100 0 0 100	tintervalleneq - ));
+DATA(insert OID = 266 (  tintervalleneq    PGUID 12 f t f t 2 f 16 "704 703" 100 0 0 100	tintervalleneq - ));
 DESCR("length equal");
-DATA(insert OID = 267 (  tintervallenne    PGUID 11 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenne - ));
+DATA(insert OID = 267 (  tintervallenne    PGUID 12 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenne - ));
 DESCR("length not equal to");
-DATA(insert OID = 268 (  tintervallenlt    PGUID 11 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenlt - ));
+DATA(insert OID = 268 (  tintervallenlt    PGUID 12 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenlt - ));
 DESCR("length less-than");
-DATA(insert OID = 269 (  tintervallengt    PGUID 11 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallengt - ));
+DATA(insert OID = 269 (  tintervallengt    PGUID 12 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallengt - ));
 DESCR("length greater-than");
-DATA(insert OID = 270 (  tintervallenle    PGUID 11 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenle - ));
+DATA(insert OID = 270 (  tintervallenle    PGUID 12 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenle - ));
 DESCR("length less-than-or-equal");
-DATA(insert OID = 271 (  tintervallenge    PGUID 11 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenge - ));
+DATA(insert OID = 271 (  tintervallenge    PGUID 12 f t f t 2 f 16 "704 703" 100 0 0 100	tintervallenge - ));
 DESCR("length greater-than-or-equal");
-DATA(insert OID = 272 (  tintervalstart    PGUID 11 f t f t 1 f 702 "704" 100 0 0 100  tintervalstart - ));
+DATA(insert OID = 272 (  tintervalstart    PGUID 12 f t f t 1 f 702 "704" 100 0 0 100  tintervalstart - ));
 DESCR("start of interval");
-DATA(insert OID = 273 (  tintervalend	   PGUID 11 f t f t 1 f 702 "704" 100 0 0 100  tintervalend - ));
+DATA(insert OID = 273 (  tintervalend	   PGUID 12 f t f t 1 f 702 "704" 100 0 0 100  tintervalend - ));
 DESCR("");
-DATA(insert OID = 274 (  timeofday		   PGUID 11 f t f t 0 f 25 "0" 100 0 0 100  timeofday - ));
+DATA(insert OID = 274 (  timeofday		   PGUID 12 f t f t 0 f 25 "0" 100 0 0 100  timeofday - ));
 DESCR("Current date and time with microseconds");
-DATA(insert OID = 275 (  isfinite		   PGUID 11 f t f t 1 f 16 "702" 100 0 0 100	abstime_finite - ));
+DATA(insert OID = 275 (  isfinite		   PGUID 12 f t f t 1 f 16 "702" 100 0 0 100	abstime_finite - ));
 DESCR("");
 
 DATA(insert OID = 276 (  int2fac		   PGUID 12 f t t t 1 f 23 "21" 100 0 0 100  int2fac - ));
@@ -748,7 +748,7 @@ DATA(insert OID = 356 (  btoidcmp		   PGUID 12 f t t t 2 f 23 "26 26" 100 0 0 10
 DESCR("btree less-equal-greater");
 DATA(insert OID = 404 (  btoidvectorcmp    PGUID 12 f t t t 2 f 23 "30 30" 100 0 0 100  btoidvectorcmp - ));
 DESCR("btree less-equal-greater");
-DATA(insert OID = 357 (  btabstimecmp	   PGUID 11 f t f t 2 f 23 "702 702" 100 0 0 100	btabstimecmp - ));
+DATA(insert OID = 357 (  btabstimecmp	   PGUID 12 f t f t 2 f 23 "702 702" 100 0 0 100	btabstimecmp - ));
 DESCR("btree less-equal-greater");
 DATA(insert OID = 358 (  btcharcmp		   PGUID 12 f t t t 2 f 23 "18 18" 100 0 0 100  btcharcmp - ));
 DESCR("btree less-equal-greater");
@@ -894,9 +894,9 @@ DESCR("convert float8 to int8");
 
 /* OIDS 600 - 699 */
 
-DATA(insert OID = 1285 (  int4notin		   PGUID 11 f t f t 2 f 16 "23 0" 100 0 0 100  int4notin - ));
+DATA(insert OID = 1285 (  int4notin		   PGUID 12 f t f t 2 f 16 "23 25" 100 0 0 100  int4notin - ));
 DESCR("not in");
-DATA(insert OID = 1286 (  oidnotin		   PGUID 11 f t f t 2 f 16 "26 0" 100 0 0 100  oidnotin - ));
+DATA(insert OID = 1286 (  oidnotin		   PGUID 12 f t f t 2 f 16 "26 25" 100 0 0 100  oidnotin - ));
 DESCR("not in");
 DATA(insert OID = 1287 (  int44in		   PGUID 12 f t t t 1 f 22 "0" 100 0 0 100  int44in - ));
 DESCR("(internal)");
@@ -918,7 +918,7 @@ DESCR("truncate char()");
 DATA(insert OID = 669 (  varchar		   PGUID 11 f t t t 2 f 1043 "1043 23" 100 0 0 100  varchar - ));
 DESCR("truncate varchar()");
 
-DATA(insert OID = 676 (  mktinterval	   PGUID 11 f t f t 2 f 704 "702 702" 100 0 0 100 mktinterval - ));
+DATA(insert OID = 676 (  mktinterval	   PGUID 12 f t f t 2 f 704 "702 702" 100 0 0 100 mktinterval - ));
 DESCR("convert to tinterval");
 DATA(insert OID = 619 (  oidvectorne	   PGUID 12 f t t t 2 f 16 "30 30" 100 0 0 100  oidvectorne - ));
 DESCR("less-than");
@@ -1012,9 +1012,9 @@ DESCR("storage manager");
 DATA(insert OID = 763 (  smgrne			   PGUID 12 f t f t 2 f 16 "210 210" 100 0 0 100	smgrne - ));
 DESCR("storage manager");
 
-DATA(insert OID = 764 (  lo_import		   PGUID 11 f t f t 1 f 26 "25" 100 0 0 100  lo_import - ));
+DATA(insert OID = 764 (  lo_import		   PGUID 12 f t f t 1 f 26 "25" 100 0 0 100  lo_import - ));
 DESCR("large object import");
-DATA(insert OID = 765 (  lo_export		   PGUID 11 f t f t 2 f 23 "26 25" 100 0 0 100  lo_export - ));
+DATA(insert OID = 765 (  lo_export		   PGUID 12 f t f t 2 f 23 "26 25" 100 0 0 100  lo_export - ));
 DESCR("large object export");
 
 DATA(insert OID = 766 (  int4inc		   PGUID 12 f t t t 1 f 23 "23" 100 0 0 100  int4inc - ));
@@ -1051,17 +1051,17 @@ DESCR("gist(internal)");
 DATA(insert OID = 782 (  gistbuild		   PGUID 11 f t f t 9 f 23 "0" 100 0 0 100  gistbuild - ));
 DESCR("gist(internal)");
 
-DATA(insert OID = 784 (  tintervaleq	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervaleq - ));
+DATA(insert OID = 784 (  tintervaleq	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervaleq - ));
 DESCR("equal");
-DATA(insert OID = 785 (  tintervalne	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalne - ));
+DATA(insert OID = 785 (  tintervalne	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalne - ));
 DESCR("not equal");
-DATA(insert OID = 786 (  tintervallt	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervallt - ));
+DATA(insert OID = 786 (  tintervallt	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervallt - ));
 DESCR("less-than");
-DATA(insert OID = 787 (  tintervalgt	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalgt - ));
+DATA(insert OID = 787 (  tintervalgt	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalgt - ));
 DESCR("greater-than");
-DATA(insert OID = 788 (  tintervalle	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalle - ));
+DATA(insert OID = 788 (  tintervalle	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalle - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 789 (  tintervalge	   PGUID 11 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalge - ));
+DATA(insert OID = 789 (  tintervalge	   PGUID 12 f t f t 2 f 16 "704 704" 100 0 0 100	tintervalge - ));
 DESCR("greater-than-or-equal");
 
 /* OIDS 800 - 899 */
@@ -1204,19 +1204,19 @@ DESCR("bool is true (not false or unknown)");
 DATA(insert OID = 951 (  isfalse		   PGUID 12 f t t f 1 f 16 "16" 100 0 0 100  isfalse - ));
 DESCR("bool is false (not true or unknown)");
 
-DATA(insert OID = 952 (  lo_open		   PGUID 11 f t f t 2 f 23 "26 23" 100 0 0 100  lo_open - ));
+DATA(insert OID = 952 (  lo_open		   PGUID 12 f t f t 2 f 23 "26 23" 100 0 0 100  lo_open - ));
 DESCR("large object open");
-DATA(insert OID = 953 (  lo_close		   PGUID 11 f t f t 1 f 23 "23" 100 0 0 100  lo_close - ));
+DATA(insert OID = 953 (  lo_close		   PGUID 12 f t f t 1 f 23 "23" 100 0 0 100  lo_close - ));
 DESCR("large object close");
-DATA(insert OID = 954 (  loread			   PGUID 11 f t f t 2 f 17 "23 23" 100 0 0 100  loread - ));
+DATA(insert OID = 954 (  loread			   PGUID 12 f t f t 2 f 17 "23 23" 100 0 0 100  loread - ));
 DESCR("large object read");
-DATA(insert OID = 955 (  lowrite		   PGUID 11 f t f t 2 f 23 "23 17" 100 0 0 100  lowrite - ));
+DATA(insert OID = 955 (  lowrite		   PGUID 12 f t f t 2 f 23 "23 17" 100 0 0 100  lowrite - ));
 DESCR("large object write");
-DATA(insert OID = 956 (  lo_lseek		   PGUID 11 f t f t 3 f 23 "23 23 23" 100 0 0 100  lo_lseek - ));
+DATA(insert OID = 956 (  lo_lseek		   PGUID 12 f t f t 3 f 23 "23 23 23" 100 0 0 100  lo_lseek - ));
 DESCR("large object seek");
-DATA(insert OID = 957 (  lo_creat		   PGUID 11 f t f t 1 f 26 "23" 100 0 0 100  lo_creat - ));
+DATA(insert OID = 957 (  lo_creat		   PGUID 12 f t f t 1 f 26 "23" 100 0 0 100  lo_creat - ));
 DESCR("large object create");
-DATA(insert OID = 958 (  lo_tell		   PGUID 11 f t f t 1 f 23 "23" 100 0 0 100  lo_tell - ));
+DATA(insert OID = 958 (  lo_tell		   PGUID 12 f t f t 1 f 23 "23" 100 0 0 100  lo_tell - ));
 DESCR("large object position");
 
 DATA(insert OID = 959 (  on_pl			   PGUID 11 f t t t 2 f  16 "600 628" 100 0 10 100  on_pl - ));
@@ -1230,7 +1230,7 @@ DESCR("closest point to line segment on line");
 DATA(insert OID = 963 (  close_lb		   PGUID 11 f t t t 2 f 600 "628 603" 100 0 10 100  close_lb - ));
 DESCR("closest point to line on box");
 
-DATA(insert OID = 964 (  lo_unlink		   PGUID 11 f t f t 1 f  23 "26" 100 0 0 100	lo_unlink - ));
+DATA(insert OID = 964 (  lo_unlink		   PGUID 12 f t f t 1 f  23 "26" 100 0 0 100	lo_unlink - ));
 DESCR("large object unlink(delete)");
 DATA(insert OID = 972 (  regproctooid	   PGUID 12 f t t t 1 f  26 "24" 100 0 0 100	regproctooid - ));
 DESCR("get oid for regproc");
@@ -1302,7 +1302,7 @@ DATA(insert OID = 1036 (  aclremove		   PGUID 11 f t f t 2 f 1034 "1034 1033" 10
 DESCR("subtract");
 DATA(insert OID = 1037 (  aclcontains	   PGUID 11 f t f t 2 f 16 "1034 1033" 100 0 0 100  aclcontains - ));
 DESCR("matches regex., case-sensitive");
-DATA(insert OID = 1038 (  seteval		   PGUID 11 f t f t 1 f 23 "26" 100 0 0 100  seteval - ));
+DATA(insert OID = 1038 (  seteval		   PGUID 12 f t f t 1 f 23 "26" 100 0 0 100  seteval - ));
 DESCR("");
 DATA(insert OID = 1044 (  bpcharin		   PGUID 11 f t t t 3 f 1042 "0 0 23" 100 0 0 100 bpcharin - ));
 DESCR("(internal)");
@@ -1345,54 +1345,54 @@ DESCR("hash");
 DATA(insert OID = 1081 (  hashvarchar	   PGUID 11 f t t t 1 f 23 "1043" 100 0 0 100  hashvarchar - ));
 DESCR("hash");
 
-DATA(insert OID = 1084 (  date_in		   PGUID 11 f t f t 1 f 1082 "0" 100 0 0 100	date_in - ));
+DATA(insert OID = 1084 (  date_in		   PGUID 12 f t f t 1 f 1082 "0" 100 0 0 100	date_in - ));
 DESCR("(internal)");
-DATA(insert OID = 1085 (  date_out		   PGUID 11 f t f t 1 f 23 "0" 100 0 0 100  date_out - ));
+DATA(insert OID = 1085 (  date_out		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  date_out - ));
 DESCR("(internal)");
-DATA(insert OID = 1086 (  date_eq		   PGUID 11 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_eq - ));
+DATA(insert OID = 1086 (  date_eq		   PGUID 12 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_eq - ));
 DESCR("equal");
-DATA(insert OID = 1087 (  date_lt		   PGUID 11 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_lt - ));
+DATA(insert OID = 1087 (  date_lt		   PGUID 12 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_lt - ));
 DESCR("less-than");
-DATA(insert OID = 1088 (  date_le		   PGUID 11 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_le - ));
+DATA(insert OID = 1088 (  date_le		   PGUID 12 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 1089 (  date_gt		   PGUID 11 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_gt - ));
+DATA(insert OID = 1089 (  date_gt		   PGUID 12 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 1090 (  date_ge		   PGUID 11 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_ge - ));
+DATA(insert OID = 1090 (  date_ge		   PGUID 12 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 1091 (  date_ne		   PGUID 11 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_ne - ));
+DATA(insert OID = 1091 (  date_ne		   PGUID 12 f t t t 2 f 16 "1082 1082" 100 0 0 100  date_ne - ));
 DESCR("not equal");
-DATA(insert OID = 1092 (  date_cmp		   PGUID 11 f t t t 2 f 23 "1082 1082" 100 0 0 100  date_cmp - ));
+DATA(insert OID = 1092 (  date_cmp		   PGUID 12 f t t t 2 f 23 "1082 1082" 100 0 0 100  date_cmp - ));
 DESCR("less-equal-greater");
 
 /* OIDS 1100 - 1199 */
 
-DATA(insert OID = 1102 (  time_lt		   PGUID 11 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_lt - ));
+DATA(insert OID = 1102 (  time_lt		   PGUID 12 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_lt - ));
 DESCR("less-than");
-DATA(insert OID = 1103 (  time_le		   PGUID 11 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_le - ));
+DATA(insert OID = 1103 (  time_le		   PGUID 12 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 1104 (  time_gt		   PGUID 11 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_gt - ));
+DATA(insert OID = 1104 (  time_gt		   PGUID 12 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 1105 (  time_ge		   PGUID 11 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_ge - ));
+DATA(insert OID = 1105 (  time_ge		   PGUID 12 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 1106 (  time_ne		   PGUID 11 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_ne - ));
+DATA(insert OID = 1106 (  time_ne		   PGUID 12 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_ne - ));
 DESCR("not equal");
-DATA(insert OID = 1107 (  time_cmp		   PGUID 11 f t t t 2 f 23 "1083 1083" 100 0 0 100  time_cmp - ));
+DATA(insert OID = 1107 (  time_cmp		   PGUID 12 f t t t 2 f 23 "1083 1083" 100 0 0 100  time_cmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 1138 (  date_larger	   PGUID 11 f t t t 2 f 1082 "1082 1082" 100 0 0 100	date_larger - ));
+DATA(insert OID = 1138 (  date_larger	   PGUID 12 f t t t 2 f 1082 "1082 1082" 100 0 0 100	date_larger - ));
 DESCR("larger of two");
-DATA(insert OID = 1139 (  date_smaller	   PGUID 11 f t t t 2 f 1082 "1082 1082" 100 0 0 100	date_smaller - ));
+DATA(insert OID = 1139 (  date_smaller	   PGUID 12 f t t t 2 f 1082 "1082 1082" 100 0 0 100	date_smaller - ));
 DESCR("smaller of two");
-DATA(insert OID = 1140 (  date_mi		   PGUID 11 f t t t 2 f 23 "1082 1082" 100 0 0 100  date_mi - ));
+DATA(insert OID = 1140 (  date_mi		   PGUID 12 f t t t 2 f 23 "1082 1082" 100 0 0 100  date_mi - ));
 DESCR("subtract");
-DATA(insert OID = 1141 (  date_pli		   PGUID 11 f t t t 2 f 1082 "1082 23" 100 0 0 100  date_pli - ));
+DATA(insert OID = 1141 (  date_pli		   PGUID 12 f t t t 2 f 1082 "1082 23" 100 0 0 100  date_pli - ));
 DESCR("addition");
-DATA(insert OID = 1142 (  date_mii		   PGUID 11 f t t t 2 f 1082 "1082 23" 100 0 0 100  date_mii - ));
+DATA(insert OID = 1142 (  date_mii		   PGUID 12 f t t t 2 f 1082 "1082 23" 100 0 0 100  date_mii - ));
 DESCR("subtract");
-DATA(insert OID = 1143 (  time_in		   PGUID 11 f t f t 1 f 1083 "0" 100 0 0 100	time_in - ));
+DATA(insert OID = 1143 (  time_in		   PGUID 12 f t f t 1 f 1083 "0" 100 0 0 100	time_in - ));
 DESCR("(internal)");
-DATA(insert OID = 1144 (  time_out		   PGUID 11 f t f t 1 f 23 "0" 100 0 0 100  time_out - ));
+DATA(insert OID = 1144 (  time_out		   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  time_out - ));
 DESCR("(internal)");
-DATA(insert OID = 1145 (  time_eq		   PGUID 11 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_eq - ));
+DATA(insert OID = 1145 (  time_eq		   PGUID 12 f t t t 2 f 16 "1083 1083" 100 0 0 100  time_eq - ));
 DESCR("equal");
 
 DATA(insert OID = 1146 (  circle_add_pt    PGUID 11 f t t t 2 f 718 "718 600" 100 0 0 100  circle_add_pt - ));
@@ -1404,100 +1404,100 @@ DESCR("multiply");
 DATA(insert OID = 1149 (  circle_div_pt    PGUID 11 f t t t 2 f 718 "718 600" 100 0 0 100  circle_div_pt - ));
 DESCR("divide");
 
-DATA(insert OID = 1150 (  timestamp_in	   PGUID 11 f t f t 1 f 1184 "0" 100 0 0 100	timestamp_in - ));
+DATA(insert OID = 1150 (  timestamp_in	   PGUID 12 f t f t 1 f 1184 "0" 100 0 0 100	timestamp_in - ));
 DESCR("(internal)");
-DATA(insert OID = 1151 (  timestamp_out    PGUID 11 f t f t 1 f	23 "0" 100 0 0 100	timestamp_out - ));
+DATA(insert OID = 1151 (  timestamp_out    PGUID 12 f t f t 1 f	23 "0" 100 0 0 100	timestamp_out - ));
 DESCR("(internal)");
-DATA(insert OID = 1152 (  timestamp_eq	   PGUID 11 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_eq - ));
+DATA(insert OID = 1152 (  timestamp_eq	   PGUID 12 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_eq - ));
 DESCR("equal");
-DATA(insert OID = 1153 (  timestamp_ne	   PGUID 11 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_ne - ));
+DATA(insert OID = 1153 (  timestamp_ne	   PGUID 12 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_ne - ));
 DESCR("not equal");
-DATA(insert OID = 1154 (  timestamp_lt	   PGUID 11 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_lt - ));
+DATA(insert OID = 1154 (  timestamp_lt	   PGUID 12 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_lt - ));
 DESCR("less-than");
-DATA(insert OID = 1155 (  timestamp_le	   PGUID 11 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_le - ));
+DATA(insert OID = 1155 (  timestamp_le	   PGUID 12 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 1156 (  timestamp_ge	   PGUID 11 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_ge - ));
+DATA(insert OID = 1156 (  timestamp_ge	   PGUID 12 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 1157 (  timestamp_gt	   PGUID 11 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_gt - ));
+DATA(insert OID = 1157 (  timestamp_gt	   PGUID 12 f t f t 2 f	16 "1184 1184" 100 0 0 100	timestamp_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 1159 (  timezone		   PGUID 11 f t f t 2 f	25 "25 1184" 100 0 0 100  timestamp_zone - ));
+DATA(insert OID = 1159 (  timezone		   PGUID 12 f t f t 2 f	25 "25 1184" 100 0 0 100  timestamp_zone - ));
 DESCR("time zone");
 
-DATA(insert OID = 1160 (  interval_in	   PGUID 11 f t f t 1 f 1186 "0" 100 0 0 100	interval_in - ));
+DATA(insert OID = 1160 (  interval_in	   PGUID 12 f t f t 1 f 1186 "0" 100 0 0 100	interval_in - ));
 DESCR("(internal)");
-DATA(insert OID = 1161 (  interval_out	   PGUID 11 f t f t 1 f 23 "0" 100 0 0 100  interval_out - ));
+DATA(insert OID = 1161 (  interval_out	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  interval_out - ));
 DESCR("(internal)");
-DATA(insert OID = 1162 (  interval_eq	   PGUID 11 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_eq - ));
+DATA(insert OID = 1162 (  interval_eq	   PGUID 12 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_eq - ));
 DESCR("equal");
-DATA(insert OID = 1163 (  interval_ne	   PGUID 11 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_ne - ));
+DATA(insert OID = 1163 (  interval_ne	   PGUID 12 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_ne - ));
 DESCR("not equal");
-DATA(insert OID = 1164 (  interval_lt	   PGUID 11 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_lt - ));
+DATA(insert OID = 1164 (  interval_lt	   PGUID 12 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_lt - ));
 DESCR("less-than");
-DATA(insert OID = 1165 (  interval_le	   PGUID 11 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_le - ));
+DATA(insert OID = 1165 (  interval_le	   PGUID 12 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 1166 (  interval_ge	   PGUID 11 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_ge - ));
+DATA(insert OID = 1166 (  interval_ge	   PGUID 12 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 1167 (  interval_gt	   PGUID 11 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_gt - ));
+DATA(insert OID = 1167 (  interval_gt	   PGUID 12 f t f t 2 f 16 "1186 1186" 100 0 0 100  interval_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 1168 (  interval_um	   PGUID 11 f t f t 1 f 1186 "1186" 100 0 0 100  interval_um - ));
+DATA(insert OID = 1168 (  interval_um	   PGUID 12 f t f t 1 f 1186 "1186" 100 0 0 100  interval_um - ));
 DESCR("subtract");
-DATA(insert OID = 1169 (  interval_pl	   PGUID 11 f t f t 2 f 1186 "1186 1186" 100 0 0 100	interval_pl - ));
+DATA(insert OID = 1169 (  interval_pl	   PGUID 12 f t f t 2 f 1186 "1186 1186" 100 0 0 100	interval_pl - ));
 DESCR("addition");
-DATA(insert OID = 1170 (  interval_mi	   PGUID 11 f t f t 2 f 1186 "1186 1186" 100 0 0 100	interval_mi - ));
+DATA(insert OID = 1170 (  interval_mi	   PGUID 12 f t f t 2 f 1186 "1186 1186" 100 0 0 100	interval_mi - ));
 DESCR("subtract");
-DATA(insert OID = 1171 (  date_part		   PGUID 11 f t f t 2 f  701 "25 1184" 100 0 0 100  timestamp_part - ));
+DATA(insert OID = 1171 (  date_part		   PGUID 12 f t f t 2 f  701 "25 1184" 100 0 0 100  timestamp_part - ));
 DESCR("extract field from timestamp");
-DATA(insert OID = 1172 (  date_part		   PGUID 11 f t f t 2 f  701 "25 1186" 100 0 0 100  interval_part - ));
+DATA(insert OID = 1172 (  date_part		   PGUID 12 f t f t 2 f  701 "25 1186" 100 0 0 100  interval_part - ));
 DESCR("extract field from interval");
 
-DATA(insert OID = 1173 (  timestamp		   PGUID 11 f t f t 1 f 1184	"702" 100 0 0 100  abstime_timestamp - ));
+DATA(insert OID = 1173 (  timestamp		   PGUID 12 f t f t 1 f 1184 "702" 100 0 0 100  abstime_timestamp - ));
 DESCR("convert abstime to timestamp");
-DATA(insert OID = 1174 (  timestamp		   PGUID 11 f t f t 1 f 1184 "1082" 100 0 0 100  date_timestamp - ));
+DATA(insert OID = 1174 (  timestamp		   PGUID 12 f t f t 1 f 1184 "1082" 100 0 0 100  date_timestamp - ));
 DESCR("convert date to timestamp");
-DATA(insert OID = 1176 (  timestamp		   PGUID 11 f t f t 2 f 1184 "1082 1083" 100 0 0 100	datetime_timestamp - ));
+DATA(insert OID = 1176 (  timestamp		   PGUID 12 f t f t 2 f 1184 "1082 1083" 100 0 0 100	datetime_timestamp - ));
 DESCR("convert date and time to timestamp");
-DATA(insert OID = 1177 (  interval		   PGUID 11 f t f t 1 f 1186	"703" 100 0 0 100  reltime_interval - ));
+DATA(insert OID = 1177 (  interval		   PGUID 12 f t f t 1 f 1186 "703" 100 0 0 100  reltime_interval - ));
 DESCR("convert reltime to interval");
-DATA(insert OID = 1178 (  date			   PGUID 11 f t f t 1 f 1082 "1184" 100 0 0 100  timestamp_date - ));
+DATA(insert OID = 1178 (  date			   PGUID 12 f t f t 1 f 1082 "1184" 100 0 0 100  timestamp_date - ));
 DESCR("convert timestamp to date");
-DATA(insert OID = 1179 (  date			   PGUID 11 f t f t 1 f 1082	"702" 100 0 0 100  abstime_date - ));
+DATA(insert OID = 1179 (  date			   PGUID 12 f t f t 1 f 1082 "702" 100 0 0 100  abstime_date - ));
 DESCR("convert abstime to date");
-DATA(insert OID = 1180 (  abstime		   PGUID 11 f t f t 1 f  702 "1184" 100 0 0 100  timestamp_abstime - ));
+DATA(insert OID = 1180 (  abstime		   PGUID 12 f t f t 1 f  702 "1184" 100 0 0 100  timestamp_abstime - ));
 DESCR("convert timestamp to abstime");
 
-DATA(insert OID = 1188 (  timestamp_mi		PGUID 11 f t f t 2 f 1186 "1184 1184" 100 0 0 100  timestamp_mi - ));
+DATA(insert OID = 1188 (  timestamp_mi		PGUID 12 f t f t 2 f 1186 "1184 1184" 100 0 0 100  timestamp_mi - ));
 DESCR("subtract");
-DATA(insert OID = 1189 (  timestamp_pl_span PGUID 11 f t f t 2 f 1184 "1184 1186" 100 0 0 100  timestamp_pl_span - ));
+DATA(insert OID = 1189 (  timestamp_pl_span PGUID 12 f t f t 2 f 1184 "1184 1186" 100 0 0 100  timestamp_pl_span - ));
 DESCR("plus");
-DATA(insert OID = 1190 (  timestamp_mi_span PGUID 11 f t f t 2 f 1184 "1184 1186" 100 0 0 100  timestamp_mi_span - ));
+DATA(insert OID = 1190 (  timestamp_mi_span PGUID 12 f t f t 2 f 1184 "1184 1186" 100 0 0 100  timestamp_mi_span - ));
 DESCR("minus");
-DATA(insert OID = 1191 (  timestamp			PGUID 11 f t f t 1 f 1184 "25" 100 0 0 100  text_timestamp - ));
+DATA(insert OID = 1191 (  timestamp			PGUID 12 f t f t 1 f 1184 "25" 100 0 0 100  text_timestamp - ));
 DESCR("convert text to timestamp");
-DATA(insert OID = 1192 (  text				PGUID 11 f t f t 1 f	 25 "1184" 100 0 0 100	timestamp_text - ));
+DATA(insert OID = 1192 (  text				PGUID 12 f t f t 1 f	 25 "1184" 100 0 0 100	timestamp_text - ));
 DESCR("convert timestamp to text");
-DATA(insert OID = 1193 (  text				PGUID 11 f t f t 1 f	 25 "1186" 100 0 0 100	interval_text - ));
+DATA(insert OID = 1193 (  text				PGUID 12 f t f t 1 f	 25 "1186" 100 0 0 100	interval_text - ));
 DESCR("convert interval to text");
-DATA(insert OID = 1194 (  reltime			PGUID 11 f t f t 1 f	703 "1186" 100 0 0 100	interval_reltime - ));
+DATA(insert OID = 1194 (  reltime			PGUID 12 f t f t 1 f	703 "1186" 100 0 0 100	interval_reltime - ));
 DESCR("convert interval to reltime");
-DATA(insert OID = 1195 (  timestamp_smaller PGUID 11 f t f t 2 f 1184 "1184 1184" 100 0 0 100  timestamp_smaller - ));
+DATA(insert OID = 1195 (  timestamp_smaller PGUID 12 f t f t 2 f 1184 "1184 1184" 100 0 0 100  timestamp_smaller - ));
 DESCR("smaller of two");
-DATA(insert OID = 1196 (  timestamp_larger	PGUID 11 f t f t 2 f 1184 "1184 1184" 100 0 0 100  timestamp_larger - ));
+DATA(insert OID = 1196 (  timestamp_larger	PGUID 12 f t f t 2 f 1184 "1184 1184" 100 0 0 100  timestamp_larger - ));
 DESCR("larger of two");
-DATA(insert OID = 1197 (  interval_smaller	PGUID 11 f t f t 2 f 1186 "1186 1186" 100 0 0 100  interval_smaller - ));
+DATA(insert OID = 1197 (  interval_smaller	PGUID 12 f t f t 2 f 1186 "1186 1186" 100 0 0 100  interval_smaller - ));
 DESCR("smaller of two");
-DATA(insert OID = 1198 (  interval_larger	PGUID 11 f t f t 2 f 1186 "1186 1186" 100 0 0 100  interval_larger - ));
+DATA(insert OID = 1198 (  interval_larger	PGUID 12 f t f t 2 f 1186 "1186 1186" 100 0 0 100  interval_larger - ));
 DESCR("larger of two");
-DATA(insert OID = 1199 (  age				PGUID 11 f t f t 2 f 1186 "1184 1184" 100 0 0 100  timestamp_age - ));
+DATA(insert OID = 1199 (  age				PGUID 12 f t f t 2 f 1186 "1184 1184" 100 0 0 100  timestamp_age - ));
 DESCR("date difference preserving months and years");
 
 /* OIDS 1200 - 1299 */
 
-DATA(insert OID = 1200 (  reltime		   PGUID 11 f t t t 1 f  703 "23" 100 0 0 100  int4reltime - ));
+DATA(insert OID = 1200 (  reltime		   PGUID 12 f t t t 1 f  703 "23" 100 0 0 100  int4reltime - ));
 DESCR("convert int4 to reltime");
 
-DATA(insert OID = 1217 (  date_trunc	   PGUID 11 f t f t 2 f 1184 "25 1184" 100 0 0 100  timestamp_trunc - ));
+DATA(insert OID = 1217 (  date_trunc	   PGUID 12 f t f t 2 f 1184 "25 1184" 100 0 0 100  timestamp_trunc - ));
 DESCR("truncate timestamp to specified units");
-DATA(insert OID = 1218 (  date_trunc	   PGUID 11 f t f t 2 f 1186 "25 1186" 100 0 0 100  interval_trunc - ));
+DATA(insert OID = 1218 (  date_trunc	   PGUID 12 f t f t 2 f 1186 "25 1186" 100 0 0 100  interval_trunc - ));
 DESCR("truncate interval to specified units");
 
 DATA(insert OID = 1230 (  int8abs		   PGUID 11 f t t t 1 f 20 "20" 100 0 0 100  int8abs - ));
@@ -1522,12 +1522,12 @@ DESCR("absolute value");
 DATA(insert OID = 1253 (  int2abs		   PGUID 12 f t t t 1 f 21 "21" 100 0 0 100  int2abs - ));
 DESCR("absolute value");
 
-DATA(insert OID = 1263 (  interval		   PGUID 11 f t f t 1 f 1186 "25" 100 0 0 100  text_interval - ));
+DATA(insert OID = 1263 (  interval		   PGUID 12 f t f t 1 f 1186 "25" 100 0 0 100  text_interval - ));
 DESCR("convert text to interval");
 
-DATA(insert OID = 1271 (  overlaps		   PGUID 11 f t t t 4 f 16 "1266 1266 1266 1266" 100 0 1 0  overlaps_timetz - ));
+DATA(insert OID = 1271 (  overlaps		   PGUID 12 f t t t 4 f 16 "1266 1266 1266 1266" 100 0 1 0  overlaps_timetz - ));
 DESCR("SQL92 interval comparison");
-DATA(insert OID = 1272 (  datetime_pl	   PGUID 11 f t f t 2 f 1184 "1082 1083" 100 0 0 100	datetime_timestamp - ));
+DATA(insert OID = 1272 (  datetime_pl	   PGUID 12 f t f t 2 f 1184 "1082 1083" 100 0 0 100	datetime_timestamp - ));
 DESCR("convert date and time to timestamp");
 
 DATA(insert OID = 1274 (  int84pl		   PGUID 11 f t t t 2 f 20 "20 23" 100 0 0 100  int84pl - ));
@@ -1559,18 +1559,18 @@ DESCR("truncate _varchar()");
 
 DATA(insert OID = 1292 ( tideq			   PGUID 11 f t f t 2 f 16 "27 27" 100 0 0 100  tideq - ));
 DESCR("equal");
-DATA(insert OID = 1293 ( currtid		   PGUID 11 f t f t 2 f 27 "26 27" 100 0 0 100  currtid_byreloid - ));
+DATA(insert OID = 1293 ( currtid		   PGUID 12 f t f t 2 f 27 "26 27" 100 0 0 100  currtid_byreloid - ));
 DESCR("latest tid of a tuple");
-DATA(insert OID = 1294 ( currtid2		   PGUID 11 f t f t 2 f 27 "25 27" 100 0 0 100  currtid_byrelname - ));
+DATA(insert OID = 1294 ( currtid2		   PGUID 12 f t f t 2 f 27 "25 27" 100 0 0 100  currtid_byrelname - ));
 DESCR("latest tid of a tuple");
 
 DATA(insert OID = 1296 (  timedate_pl	   PGUID 14 f t f t 2 f 1184 "1083 1082" 100 0 0 100	"select datetime_pl($2, $1)" - ));
 DESCR("convert time and date to timestamp");
-DATA(insert OID = 1297 (  datetimetz_pl    PGUID 11 f t f t 2 f 1184 "1082 1266" 100 0 0 100	datetimetz_timestamp - ));
+DATA(insert OID = 1297 (  datetimetz_pl    PGUID 12 f t f t 2 f 1184 "1082 1266" 100 0 0 100	datetimetz_timestamp - ));
 DESCR("convert date and time with time zone to timestamp");
 DATA(insert OID = 1298 (  timetzdate_pl    PGUID 14 f t f t 2 f 1184 "1266 1082" 100 0 0 100	"select datetimetz_pl($2, $1)" - ));
 DESCR("convert time with time zone and date to timestamp");
-DATA(insert OID = 1299 (  now			   PGUID 11 f t f t 0 f 1184 "0" 100 0 0 100	now - ));
+DATA(insert OID = 1299 (  now			   PGUID 12 f t f t 0 f 1184 "0" 100 0 0 100	now - ));
 DESCR("current transaction time");
 
 /* OIDS 1300 - 1399 */
@@ -1584,7 +1584,7 @@ DESCR("restriction selectivity for containment comparison operators");
 DATA(insert OID = 1303 (  contjoinsel	   PGUID 12 f t f t 5 f 701 "26 26 21 26 21" 100 0 0 100	contjoinsel - ));
 DESCR("join selectivity for containment comparison operators");
 
-DATA(insert OID = 1304 ( overlaps			 PGUID 11 f t t t 4 f 16 "1184 1184 1184 1184" 100 0 1 0	overlaps_timestamp - ));
+DATA(insert OID = 1304 ( overlaps			 PGUID 12 f t t t 4 f 16 "1184 1184 1184 1184" 100 0 1 0	overlaps_timestamp - ));
 DESCR("SQL92 interval comparison");
 DATA(insert OID = 1305 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1186" 100 0 1 0	"select overlaps($1, ($1 + $2), $3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
@@ -1593,7 +1593,7 @@ DESCR("SQL92 interval comparison");
 DATA(insert OID = 1307 ( overlaps			 PGUID 14 f t t t 4 f 16 "1184 1186 1184 1184" 100 0 1 0	"select overlaps($1, ($1 + $2), $3, $4)" - ));
 DESCR("SQL92 interval comparison");
 
-DATA(insert OID = 1308 ( overlaps			 PGUID 11 f t t t 4 f 16 "1083 1083 1083 1083" 100 0 1 0	overlaps_time - ));
+DATA(insert OID = 1308 ( overlaps			 PGUID 12 f t t t 4 f 16 "1083 1083 1083 1083" 100 0 1 0	overlaps_time - ));
 DESCR("SQL92 interval comparison");
 DATA(insert OID = 1309 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1186" 100 0 1 0	"select overlaps($1, ($1 + $2), $3, ($3 + $4))" - ));
 DESCR("SQL92 interval comparison");
@@ -1602,11 +1602,11 @@ DESCR("SQL92 interval comparison");
 DATA(insert OID = 1311 ( overlaps			 PGUID 14 f t t t 4 f 16 "1083 1186 1083 1083" 100 0 1 0	"select overlaps($1, ($1 + $2), $3, $4)" - ));
 DESCR("SQL92 interval comparison");
 
-DATA(insert OID = 1314 (  timestamp_cmp		 PGUID 11 f t f t 2 f   23 "1184 1184" 100 0 0 100  timestamp_cmp - ));
+DATA(insert OID = 1314 (  timestamp_cmp		 PGUID 12 f t f t 2 f   23 "1184 1184" 100 0 0 100  timestamp_cmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 1315 (  interval_cmp		 PGUID 11 f t f t 2 f   23 "1186 1186" 100 0 0 100  interval_cmp - ));
+DATA(insert OID = 1315 (  interval_cmp		 PGUID 12 f t f t 2 f   23 "1186 1186" 100 0 0 100  interval_cmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 1316 (  time				 PGUID 11 f t f t 1 f 1083 "1184" 100 0 0 100  timestamp_time - ));
+DATA(insert OID = 1316 (  time				 PGUID 12 f t f t 1 f 1083 "1184" 100 0 0 100  timestamp_time - ));
 DESCR("convert timestamp to time");
 
 DATA(insert OID = 1317 (  length			 PGUID 11 f t t t 1 f   23 "25" 100 0 1 0  textlen - ));
@@ -1616,7 +1616,7 @@ DESCR("character length");
 DATA(insert OID = 1319 (  length			 PGUID 11 f t t t 1 f   23 "1043" 100 0 0 100  varcharlen - ));
 DESCR("character length");
 
-DATA(insert OID = 1326 (  interval_div		 PGUID 11 f t f t 2 f 1186 "1186 701" 100 0 0 100  interval_div - ));
+DATA(insert OID = 1326 (  interval_div		 PGUID 12 f t f t 2 f 1186 "1186 701" 100 0 0 100  interval_div - ));
 DESCR("divide");
 
 DATA(insert OID = 1339 (  dlog10			 PGUID 11 f t t t 1 f 701 "701" 100 0 0 100  dlog10 - ));
@@ -1644,25 +1644,25 @@ DATA(insert OID = 1349 (  oidvectortypes	 PGUID 12 f t f t 1 f   25 "30" 100 0 0
 DESCR("print type names of oidvector field");
 
 
-DATA(insert OID = 1350 (  timetz_in		   PGUID 11 f t f t 1 f 1266 "0" 100 0 0 100	timetz_in - ));
+DATA(insert OID = 1350 (  timetz_in		   PGUID 12 f t f t 1 f 1266 "0" 100 0 0 100	timetz_in - ));
 DESCR("(internal)");
-DATA(insert OID = 1351 (  timetz_out	   PGUID 11 f t f t 1 f 23 "0" 100 0 0 100  timetz_out - ));
+DATA(insert OID = 1351 (  timetz_out	   PGUID 12 f t f t 1 f 23 "0" 100 0 0 100  timetz_out - ));
 DESCR("(internal)");
-DATA(insert OID = 1352 (  timetz_eq		   PGUID 11 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_eq - ));
+DATA(insert OID = 1352 (  timetz_eq		   PGUID 12 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_eq - ));
 DESCR("equal");
-DATA(insert OID = 1353 (  timetz_ne		   PGUID 11 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_ne - ));
+DATA(insert OID = 1353 (  timetz_ne		   PGUID 12 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_ne - ));
 DESCR("not equal");
-DATA(insert OID = 1354 (  timetz_lt		   PGUID 11 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_lt - ));
+DATA(insert OID = 1354 (  timetz_lt		   PGUID 12 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_lt - ));
 DESCR("less-than");
-DATA(insert OID = 1355 (  timetz_le		   PGUID 11 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_le - ));
+DATA(insert OID = 1355 (  timetz_le		   PGUID 12 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_le - ));
 DESCR("less-than-or-equal");
-DATA(insert OID = 1356 (  timetz_ge		   PGUID 11 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_ge - ));
+DATA(insert OID = 1356 (  timetz_ge		   PGUID 12 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_ge - ));
 DESCR("greater-than-or-equal");
-DATA(insert OID = 1357 (  timetz_gt		   PGUID 11 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_gt - ));
+DATA(insert OID = 1357 (  timetz_gt		   PGUID 12 f t t t 2 f 16 "1266 1266" 100 0 0 100  timetz_gt - ));
 DESCR("greater-than");
-DATA(insert OID = 1358 (  timetz_cmp	   PGUID 11 f t t t 2 f 23 "1266 1266" 100 0 0 100  timetz_cmp - ));
+DATA(insert OID = 1358 (  timetz_cmp	   PGUID 12 f t t t 2 f 23 "1266 1266" 100 0 0 100  timetz_cmp - ));
 DESCR("less-equal-greater");
-DATA(insert OID = 1359 (  timestamp		   PGUID 11 f t f t 2 f 1184 "1082 1266" 100 0 0 100	datetimetz_timestamp - ));
+DATA(insert OID = 1359 (  timestamp		   PGUID 12 f t f t 2 f 1184 "1082 1266" 100 0 0 100	datetimetz_timestamp - ));
 DESCR("convert date and time with time zone to timestamp");
 
 DATA(insert OID = 1362 (  time				 PGUID 14 f t t t 1 f 1083 "1083" 100 0 0 100  "select $1" - ));
@@ -1677,7 +1677,7 @@ DATA(insert OID = 1368 (  timestamp			 PGUID 14 f t f t 1 f 1184 "1184" 100 0 0 
 DESCR("convert (noop)");
 DATA(insert OID = 1369 (  interval			 PGUID 14 f t t t 1 f 1186 "1186" 100 0 0 100  "select $1" - ));
 DESCR("convert (noop)");
-DATA(insert OID = 1370 (  interval			 PGUID 11 f t f t 1 f 1186 "1083" 100 0 0 100  time_interval - ));
+DATA(insert OID = 1370 (  interval			 PGUID 12 f t f t 1 f 1186 "1083" 100 0 0 100  time_interval - ));
 DESCR("convert time to interval");
 DATA(insert OID = 1371 (  date				 PGUID 14 f t t t 1 f 1082 "1082" 100 0 0 100  "select $1" - ));
 DESCR("convert (noop)");
@@ -1693,13 +1693,13 @@ DESCR("octet length");
 DATA(insert OID = 1376 (  octet_length			 PGUID 11 f t t t 1 f   23   "1043" 100 0 0 100  varcharoctetlen - ));
 DESCR("octet length");
 
-DATA(insert OID = 1377 (  time_larger	   PGUID 11 f t t t 2 f 1083 "1083 1083" 100 0 0 100	time_larger - ));
+DATA(insert OID = 1377 (  time_larger	   PGUID 12 f t t t 2 f 1083 "1083 1083" 100 0 0 100	time_larger - ));
 DESCR("larger of two");
-DATA(insert OID = 1378 (  time_smaller	   PGUID 11 f t t t 2 f 1083 "1083 1083" 100 0 0 100	time_smaller - ));
+DATA(insert OID = 1378 (  time_smaller	   PGUID 12 f t t t 2 f 1083 "1083 1083" 100 0 0 100	time_smaller - ));
 DESCR("smaller of two");
-DATA(insert OID = 1379 (  timetz_larger    PGUID 11 f t t t 2 f 1083 "1266 1266" 100 0 0 100	timetz_larger - ));
+DATA(insert OID = 1379 (  timetz_larger    PGUID 12 f t t t 2 f 1266 "1266 1266" 100 0 0 100	timetz_larger - ));
 DESCR("larger of two");
-DATA(insert OID = 1380 (  timetz_smaller   PGUID 11 f t t t 2 f 1083 "1266 1266" 100 0 0 100	timetz_smaller - ));
+DATA(insert OID = 1380 (  timetz_smaller   PGUID 12 f t t t 2 f 1266 "1266 1266" 100 0 0 100	timetz_smaller - ));
 DESCR("smaller of two");
 
 DATA(insert OID = 1381 (  char_length	   PGUID 11 f t t t 1 f 23 "25" 100 0 1 0  textlen - ));
@@ -1718,12 +1718,12 @@ DESCR("date difference from today preserving months and years");
 
 DATA(insert OID = 1387 (  timetz		   PGUID 14 f t f t 1 f 1266 "1266" 100 0 0 100  "select $1" - ));
 DESCR("noop conversion");
-DATA(insert OID = 1388 (  timetz		   PGUID 11 f t f t 1 f 1266 "1184" 100 0 0 100  timestamp_timetz - ));
-DESCR("convert timestamp to time");
+DATA(insert OID = 1388 (  timetz		   PGUID 12 f t f t 1 f 1266 "1184" 100 0 0 100  timestamp_timetz - ));
+DESCR("convert timestamp to timetz");
 
-DATA(insert OID = 1389 (  isfinite	   PGUID 11 f t f t 1 f	16 "1184" 100 0 0 100  timestamp_finite - ));
+DATA(insert OID = 1389 (  isfinite	   PGUID 12 f t f t 1 f	16 "1184" 100 0 0 100  timestamp_finite - ));
 DESCR("boolean test");
-DATA(insert OID = 1390 (  isfinite	   PGUID 11 f t f t 1 f	16 "1186" 100 0 0 100  interval_finite - ));
+DATA(insert OID = 1390 (  isfinite	   PGUID 12 f t f t 1 f	16 "1186" 100 0 0 100  interval_finite - ));
 DESCR("boolean test");
 
 
@@ -1915,7 +1915,7 @@ DATA(insert OID = 1479 (  circle			PGUID 11 f t t t 1 f 718 "603" 100 0 1 0	box_
 DESCR("convert box to circle");
 DATA(insert OID = 1480 (  box				PGUID 11 f t t t 1 f 603 "718" 100 0 1 0	circle_box - ));
 DESCR("convert circle to box");
-DATA(insert OID = 1481 (  tinterval			 PGUID 11 f t f t 2 f 704 "702 702" 100 0 0 100 mktinterval - ));
+DATA(insert OID = 1481 (  tinterval			 PGUID 12 f t f t 2 f 704 "702 702" 100 0 0 100 mktinterval - ));
 DESCR("convert to tinterval");
 
 DATA(insert OID = 1482 (  lseg_ne			PGUID 11 f t t t 2 f	16 "601 601" 100 0 0 100  lseg_ne - ));
@@ -2060,7 +2060,7 @@ DESCR("radians to degrees");
 DATA(insert OID = 1610 (  pi				PGUID 11 f t t t 0 f 701 "0" 100 0 0 100	dpi - ));
 DESCR("PI");
 
-DATA(insert OID = 1618 (  interval_mul		PGUID 11 f t t t 2 f 1186 "1186 701" 100 0 0 100	interval_mul - ));
+DATA(insert OID = 1618 (  interval_mul		PGUID 12 f t t t 2 f 1186 "1186 701" 100 0 0 100	interval_mul - ));
 DESCR("multiply interval");
 DATA(insert OID = 1619 (  varchar			PGUID 12 f t t t 1 f 1043 "23" 100 0 0 100  int4_text - ));
 DESCR("convert int4 to varchar");
@@ -2074,7 +2074,7 @@ DESCR("replicate string int4 times");
 
 DATA(insert OID = 1623 (  varchar			PGUID 11 f t t t 1 f 1043 "20" 100 0 0 100  int8_text - ));
 DESCR("convert int8 to varchar");
-DATA(insert OID = 1624 (  mul_d_interval	PGUID 11 f t t t 2 f 1186 "701 1186" 100 0 0 100	mul_d_interval - ));
+DATA(insert OID = 1624 (  mul_d_interval	PGUID 12 f t t t 2 f 1186 "701 1186" 100 0 0 100	mul_d_interval - ));
 
 /* OID's 1625 - 1639 LZTEXT data type */
 DATA(insert OID = 1626 ( lztextin			  PGUID 11 f t t t 1 f 1625 "0" 100 0 0 100  lztextin - ));
@@ -2164,7 +2164,7 @@ DATA(insert OID = 1641 (  pg_get_viewdef	   PGUID 11 f t f t 1 f 25 "19" 100 0 0
 DESCR("select statement of a view");
 DATA(insert OID = 1642 (  pg_get_userbyid	   PGUID 11 f t f t 1 f 19 "23" 100 0 0 100  pg_get_userbyid - ));
 DESCR("user name by UID (with fallback)");
-DATA(insert OID = 1643 (  pg_get_indexdef	   PGUID 11 f t f t 1 f 25 "26" 100 0 0 100  pg_get_indexdef - ));
+DATA(insert OID = 1643 (  pg_get_indexdef	   PGUID 12 f t f t 1 f 25 "26" 100 0 0 100  pg_get_indexdef - ));
 DESCR("index description");
 
 /* Generic referential integrity constraint triggers */
@@ -2425,7 +2425,7 @@ DATA(insert OID = 1783 ( int2					PGUID 12 f t t t 1 f 21 "1700" 100 0 0 100  nu
 DESCR("(internal)");
 
 /* formatting */
-DATA(insert OID = 1770 ( to_char			PGUID 11 f t f t 2 f	25 "1184 25" 100 0 0 100  timestamp_to_char - ));
+DATA(insert OID = 1770 ( to_char			PGUID 12 f t f t 2 f	25 "1184 25" 100 0 0 100  timestamp_to_char - ));
 DESCR("format timestamp to text");
 DATA(insert OID = 1772 ( to_char			PGUID 11 f t f t 2 f	25 "1700 25" 100 0 0 100  numeric_to_char - ));
 DESCR("format numeric to text");
@@ -2439,9 +2439,9 @@ DATA(insert OID = 1776 ( to_char			PGUID 11 f t f t 2 f	25 "701 25" 100 0 0 100 
 DESCR("format float8 to text");
 DATA(insert OID = 1777 ( to_number			PGUID 11 f t f t 2 f	1700 "25 25" 100 0 0 100  numeric_to_number - ));
 DESCR("convert text to numeric");
-DATA(insert OID = 1778 ( to_timestamp		PGUID 11 f t f t 2 f	1184 "25 25" 100 0 0 100  to_timestamp - ));
+DATA(insert OID = 1778 ( to_timestamp		PGUID 12 f t f t 2 f	1184 "25 25" 100 0 0 100  to_timestamp - ));
 DESCR("convert text to timestamp");
-DATA(insert OID = 1780 ( to_date			PGUID 11 f t f t 2 f	1082 "25 25" 100 0 0 100  to_date - ));
+DATA(insert OID = 1780 ( to_date			PGUID 12 f t f t 2 f	1082 "25 25" 100 0 0 100  to_date - ));
 DESCR("convert text to date");
 
 DATA(insert OID = 1798 (  oidin			   PGUID 12 f t t t 1 f 26 "0" 100 0 0 100  oidin - ));

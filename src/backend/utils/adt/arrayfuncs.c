@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.55 2000/06/02 15:57:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.56 2000/06/09 01:11:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -538,8 +538,11 @@ _ReadLOArray(char *str,
 
 	if (inputfile == NULL)
 		elog(ERROR, "array_in: missing file name");
-	lobjId = lo_creat(0);
-	*fd = lo_open(lobjId, INV_READ);
+	lobjId = DatumGetObjectId(DirectFunctionCall1(lo_creat,
+												  Int32GetDatum(0)));
+	*fd = DatumGetInt32(DirectFunctionCall2(lo_open,
+											ObjectIdGetDatum(lobjId),
+											Int32GetDatum(INV_READ)));
 	if (*fd < 0)
 		elog(ERROR, "Large object create failed");
 	retStr = inputfile;
@@ -877,17 +880,23 @@ array_ref(ArrayType *array,
 			v = _ReadChunkArray1El(indx, elmlen, fd, array, isNull);
 		else
 		{
-			if (lo_lseek(fd, offset, SEEK_SET) < 0)
+			if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum(fd),
+							  Int32GetDatum(offset),
+							  Int32GetDatum(SEEK_SET))) < 0)
 				RETURN_NULL;
 #ifdef LOARRAY
-			v = (struct varlena *) LOread(fd, elmlen);
+			v = (struct varlena *)
+				DatumGetPointer(DirectFunctionCall2(loread,
+													Int32GetDatum(fd),
+													Int32GetDatum(elmlen)));
 #endif
 		}
 		if (*isNull)
 			RETURN_NULL;
 		if (VARSIZE(v) - VARHDRSZ < elmlen)
 			RETURN_NULL;
-		lo_close(fd);
+		DirectFunctionCall1(lo_close, Int32GetDatum(fd));
 		retval = (char *) _ArrayCast((char *) VARDATA(v), reftype, elmlen);
 		if (reftype == 0)
 		{						/* not by value */
@@ -1029,7 +1038,9 @@ array_clip(ArrayType *array,
 			memmove(buff, &rsize, VARHDRSZ);
 #ifdef LOARRAY
 			if (!*isNull)
-				bytes = LOwrite(newfd, (struct varlena *) buff);
+				bytes = DatumGetInt32(DirectFunctionCall2(lowrite,
+									  Int32GetDatum(newfd),
+									  PointerGetDatum(buff)));
 #endif
 			pfree(buff);
 		}
@@ -1140,20 +1151,25 @@ array_set(ArrayType *array,
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_WRITE : O_WRONLY)) < 0)
 			return (char *) array;
 #endif
-		if (lo_lseek(fd, offset, SEEK_SET) < 0)
+		if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum(fd),
+							  Int32GetDatum(offset),
+							  Int32GetDatum(SEEK_SET))) < 0)
 			return (char *) array;
 		v = (struct varlena *) palloc(elmlen + VARHDRSZ);
 		VARSIZE(v) = elmlen + VARHDRSZ;
 		ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, VARDATA(v));
 #ifdef LOARRAY
-		n = LOwrite(fd, v);
+		n = DatumGetInt32(DirectFunctionCall2(lowrite,
+											  Int32GetDatum(fd),
+											  PointerGetDatum(v)));
 #endif
 
 		/*
 		 * if (n < VARSIZE(v) - VARHDRSZ) RETURN_NULL;
 		 */
 		pfree(v);
-		lo_close(fd);
+		DirectFunctionCall1(lo_close, Int32GetDatum(fd));
 		return (char *) array;
 	}
 	if (elmlen > 0)
@@ -1270,14 +1286,14 @@ array_assgn(ArrayType *array,
 				return (char *) array;
 #endif
 			_LOArrayRange(lowerIndx, upperIndx, len, fd, newfd, array, 1, isNull);
-			lo_close(newfd);
+			DirectFunctionCall1(lo_close, Int32GetDatum(newfd));
 		}
 		else
 		{
 			_LOArrayRange(lowerIndx, upperIndx, len, fd, (int) ARR_DATA_PTR(newArr),
 						  array, 0, isNull);
 		}
-		lo_close(fd);
+		DirectFunctionCall1(lo_close, Int32GetDatum(fd));
 		return (char *) array;
 	}
 	_ArrayRange(lowerIndx, upperIndx, len, ARR_DATA_PTR(newArr), array, 0);
@@ -1758,7 +1774,10 @@ _LOArrayRange(int *st,
 	mda_get_prod(n, dim, prod);
 	st_pos = tuple2linear(n, st, prod);
 	offset = st_pos * bsize;
-	if (lo_lseek(srcfd, offset, SEEK_SET) < 0)
+	if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum(srcfd),
+							  Int32GetDatum(offset),
+							  Int32GetDatum(SEEK_SET))) < 0)
 		return;
 	mda_get_range(n, span, st, endp);
 	mda_get_offset_values(n, dist, prod, span);
@@ -1770,7 +1789,10 @@ _LOArrayRange(int *st,
 	do
 	{
 		offset += (dist[j] * bsize);
-		if (lo_lseek(srcfd, offset, SEEK_SET) < 0)
+		if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum(srcfd),
+							  Int32GetDatum(offset),
+							  Int32GetDatum(SEEK_SET))) < 0)
 			return;
 		tmp = _LOtransfer((char **) &srcfd, inc, 1, (char **) &destfd, isSrcLO, 1);
 		if (tmp < inc)
@@ -1812,7 +1834,10 @@ _ReadArray(int *st,
 	mda_get_prod(n, dim, prod);
 	st_pos = tuple2linear(n, st, prod);
 	offset = st_pos * bsize;
-	if (lo_lseek(srcfd, offset, SEEK_SET) < 0)
+	if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum(srcfd),
+							  Int32GetDatum(offset),
+							  Int32GetDatum(SEEK_SET))) < 0)
 		return;
 	mda_get_range(n, span, st, endp);
 	mda_get_offset_values(n, dist, prod, span);
@@ -1824,7 +1849,10 @@ _ReadArray(int *st,
 	do
 	{
 		offset += (dist[j] * bsize);
-		if (lo_lseek(srcfd, offset, SEEK_SET) < 0)
+		if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum(srcfd),
+							  Int32GetDatum(offset),
+							  Int32GetDatum(SEEK_SET))) < 0)
 			return;
 		tmp = _LOtransfer((char **) &destfd, inc, 1, (char **) &srcfd, 1, isDestLO);
 		if (tmp < inc)
@@ -1857,13 +1885,18 @@ _LOtransfer(char **destfd,
 			 resid > 0 && (inc = min(resid, MAX_READ)) > 0; resid -= inc)
 		{
 #ifdef LOARRAY
-			v = (struct varlena *) LOread((int) *srcfd, inc);
+			v = (struct varlena *)
+				DatumGetPointer(DirectFunctionCall2(loread,
+								Int32GetDatum((int32) *srcfd),
+								Int32GetDatum(inc)));
 			if (VARSIZE(v) - VARHDRSZ < inc)
 			{
 				pfree(v);
 				return -1;
 			}
-			tmp += LOwrite((int) *destfd, v);
+			tmp += DatumGetInt32(DirectFunctionCall2(lowrite,
+								 Int32GetDatum((int32) *destfd),
+								 PointerGetDatum(v)));
 #endif
 			pfree(v);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.25 2000/01/26 05:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.26 2000/06/09 01:11:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,7 +385,9 @@ write_chunk(struct varlena * a_chunk, int ofile)
 	int			got_n = 0;
 
 #ifdef LOARRAY
-	got_n = LOwrite(ofile, a_chunk);
+	got_n = DatumGetInt32(DirectFunctionCall2(lowrite,
+											  Int32GetDatum(ofile),
+											  PointerGetDatum(a_chunk)));
 #endif
 	return got_n;
 }
@@ -400,13 +402,19 @@ write_chunk(struct varlena * a_chunk, int ofile)
 static int
 seek_and_read(int pos, int size, char *buff, int fp, int from)
 {
-	struct varlena *v = NULL;
+	struct varlena *v;
 
 	/* Assuming only one file */
-	if (lo_lseek(fp, pos, from) < 0)
+	if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+										  Int32GetDatum(fp),
+										  Int32GetDatum(pos),
+										  Int32GetDatum(from))) < 0)
 		elog(ERROR, "File seek error");
 #ifdef LOARRAY
-	v = (struct varlena *) LOread(fp, size);
+	v = (struct varlena *)
+		DatumGetPointer(DirectFunctionCall2(loread,
+											Int32GetDatum(fp),
+											Int32GetDatum(size)));
 #endif
 	if (VARSIZE(v) - VARHDRSZ < size)
 		elog(ERROR, "File read error");
@@ -505,7 +513,10 @@ _ReadChunkArray(int *st,
 	for (i = j = 0; i < n; i++)
 		j += chunk_st[i] * PC[i];
 	temp_seek = srcOff = j * csize * bsize;
-	if (lo_lseek(fp, srcOff, SEEK_SET) < 0)
+	if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+										  Int32GetDatum(fp),
+										  Int32GetDatum(srcOff),
+										  Int32GetDatum(SEEK_SET))) < 0)
 		RETURN_NULL;
 
 	jj = n - 1;
@@ -526,7 +537,10 @@ _ReadChunkArray(int *st,
 		bptr *= bsize;
 		if (isDestLO)
 		{
-			if (lo_lseek((int) destfp, bptr, SEEK_SET) < 0)
+			if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum((int32) destfp),
+							  Int32GetDatum(bptr),
+							  Int32GetDatum(SEEK_SET))) < 0)
 				RETURN_NULL;
 		}
 		else
@@ -538,7 +552,10 @@ _ReadChunkArray(int *st,
 		{
 			temp = (dist[jj] * csize + block_seek + temp_seek) * bsize;
 			srcOff += temp;
-			if (lo_lseek(fp, srcOff, SEEK_SET) < 0)
+			if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+							  Int32GetDatum(fp),
+							  Int32GetDatum(srcOff),
+							  Int32GetDatum(SEEK_SET))) < 0)
 				RETURN_NULL;
 		}
 		for (i = n - 1, to_read = bsize; i >= 0;
@@ -550,14 +567,20 @@ _ReadChunkArray(int *st,
 			if (cdist[j])
 			{
 				srcOff += (cdist[j] * bsize);
-				if (lo_lseek(fp, srcOff, SEEK_SET) < 0)
+				if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+								  Int32GetDatum(fp),
+								  Int32GetDatum(srcOff),
+								  Int32GetDatum(SEEK_SET))) < 0)
 					RETURN_NULL;
 			}
 			block_seek += cdist[j];
 			bptr += adist[j] * bsize;
 			if (isDestLO)
 			{
-				if (lo_lseek((int) destfp, bptr, SEEK_SET) < 0)
+				if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+								  Int32GetDatum((int32) destfp),
+								  Int32GetDatum(bptr),
+								  Int32GetDatum(SEEK_SET))) < 0)
 					RETURN_NULL;
 			}
 			else
@@ -675,10 +698,16 @@ _ReadChunkArray1El(int *st,
 		srcOff += (st[i] - chunk_st[i] * C[i]) * PCHUNK[i];
 
 	srcOff *= bsize;
-	if (lo_lseek(fp, srcOff, SEEK_SET) < 0)
+	if (DatumGetInt32(DirectFunctionCall3(lo_lseek,
+					  Int32GetDatum(fp),
+					  Int32GetDatum(srcOff),
+					  Int32GetDatum(SEEK_SET))) < 0)
 		RETURN_NULL;
 #ifdef LOARRAY
-	return (struct varlena *) LOread(fp, bsize);
+	return (struct varlena *)
+		DatumGetPointer(DirectFunctionCall2(loread,
+											Int32GetDatum(fp),
+											Int32GetDatum(bsize)));
 #endif
 	return (struct varlena *) 0;
 }

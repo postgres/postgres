@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.22 2000/01/26 05:57:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.23 2000/06/09 01:11:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,23 +34,28 @@ static int	my_varattno(Relation rd, char *a);
  *
  * ----------------------------------------------------------------
  */
-bool
-int4notin(int32 not_in_arg, char *relation_and_attr)
+Datum
+int4notin(PG_FUNCTION_ARGS)
 {
+	int32		not_in_arg = PG_GETARG_INT32(0);
+	text	   *relation_and_attr = PG_GETARG_TEXT_P(1);
 	Relation	relation_to_scan;
 	int32		integer_value;
 	HeapTuple	current_tuple;
 	HeapScanDesc scan_descriptor;
-	bool		dummy,
+	bool		isNull,
 				retval;
-	int			attrid;
+	int			attrid,
+				strlength;
 	char	   *relation,
 			   *attribute;
 	char		my_copy[NAMEDATALEN * 2 + 2];
 	Datum		value;
 
-	strncpy(my_copy, relation_and_attr, sizeof(my_copy));
-	my_copy[sizeof(my_copy) - 1] = '\0';
+	strlength = VARSIZE(relation_and_attr) - VARHDRSZ + 1;
+	if (strlength > sizeof(my_copy))
+		strlength = sizeof(my_copy);
+	StrNCpy(my_copy, VARDATA(relation_and_attr), strlength);
 
 	relation = (char *) strtok(my_copy, ".");
 	attribute = (char *) strtok(NULL, ".");
@@ -81,7 +86,9 @@ int4notin(int32 not_in_arg, char *relation_and_attr)
 		value = heap_getattr(current_tuple,
 							 (AttrNumber) attrid,
 							 RelationGetDescr(relation_to_scan),
-							 &dummy);
+							 &isNull);
+		if (isNull)
+			continue;
 		integer_value = DatumGetInt32(value);
 		if (not_in_arg == integer_value)
 		{
@@ -94,15 +101,21 @@ int4notin(int32 not_in_arg, char *relation_and_attr)
 	heap_endscan(scan_descriptor);
 	heap_close(relation_to_scan, AccessShareLock);
 
-	return retval;
+	PG_RETURN_BOOL(retval);
 }
 
-bool
-oidnotin(Oid the_oid, char *compare)
+Datum
+oidnotin(PG_FUNCTION_ARGS)
 {
+	Oid			the_oid = PG_GETARG_OID(0);
+#ifdef NOT_USED
+	text	   *relation_and_attr = PG_GETARG_TEXT_P(1);
+#endif
+
 	if (the_oid == InvalidOid)
-		return false;
-	return int4notin(the_oid, compare);
+		PG_RETURN_BOOL(false);
+	/* XXX assume oid maps to int4 */
+	return int4notin(fcinfo);
 }
 
 /*
@@ -117,7 +130,7 @@ my_varattno(Relation rd, char *a)
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
-		if (!namestrcmp(&rd->rd_att->attrs[i]->attname, a))
+		if (namestrcmp(&rd->rd_att->attrs[i]->attname, a) == 0)
 			return i + 1;
 	}
 	return -1;

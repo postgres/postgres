@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.45 2000/06/02 15:57:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.46 2000/06/09 01:11:06 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -49,6 +49,11 @@
 #define BUFSIZE			1024
 #define FNAME_BUFSIZE	8192
 
+/*
+ * LO "FD"s are indexes into this array.
+ * A non-null entry is a pointer to a LargeObjectDesc allocated in the
+ * LO private memory context.
+ */
 static LargeObjectDesc *cookies[MAX_LOBJ_FDS];
 
 static GlobalMemory fscxt = NULL;
@@ -61,15 +66,17 @@ static void deleteLOfd(int fd);
  *	File Interfaces for Large Objects
  *****************************************************************************/
 
-int
-lo_open(Oid lobjId, int mode)
+Datum
+lo_open(PG_FUNCTION_ARGS)
 {
+	Oid			lobjId = PG_GETARG_OID(0);
+	int32		mode = PG_GETARG_INT32(1);
 	LargeObjectDesc *lobjDesc;
 	int			fd;
 	MemoryContext currentContext;
 
 #if FSDB
-	elog(NOTICE, "LOopen(%u,%d)", lobjId, mode);
+	elog(NOTICE, "lo_open(%u,%d)", lobjId, mode);
 #endif
 
 	if (fscxt == NULL)
@@ -84,7 +91,7 @@ lo_open(Oid lobjId, int mode)
 #if FSDB
 		elog(NOTICE, "cannot open large object %u", lobjId);
 #endif
-		return -1;
+		PG_RETURN_INT32(-1);
 	}
 
 	fd = newLOfd(lobjDesc);
@@ -97,26 +104,27 @@ lo_open(Oid lobjId, int mode)
 		elog(NOTICE, "Out of space for large object FDs");
 #endif
 
-	return fd;
+	PG_RETURN_INT32(fd);
 }
 
-int
-lo_close(int fd)
+Datum
+lo_close(PG_FUNCTION_ARGS)
 {
+	int32		fd = PG_GETARG_INT32(0);
 	MemoryContext currentContext;
 
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
 		elog(ERROR, "lo_close: large obj descriptor (%d) out of range", fd);
-		return -2;
+		PG_RETURN_INT32(-2);
 	}
 	if (cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_close: invalid large obj descriptor (%d)", fd);
-		return -3;
+		PG_RETURN_INT32(-3);
 	}
 #if FSDB
-	elog(NOTICE, "LOclose(%d)", fd);
+	elog(NOTICE, "lo_close(%d)", fd);
 #endif
 
 	Assert(fscxt != NULL);
@@ -127,13 +135,19 @@ lo_close(int fd)
 	MemoryContextSwitchTo(currentContext);
 
 	deleteLOfd(fd);
-	return 0;
+
+	PG_RETURN_INT32(0);
 }
 
-/*
+
+/*****************************************************************************
+ *	Bare Read/Write operations --- these are not fmgr-callable!
+ *
  *	We assume the large object supports byte oriented reads and seeks so
  *	that our work is easier.
- */
+ *
+ *****************************************************************************/
+
 int
 lo_read(int fd, char *buf, int len)
 {
@@ -157,7 +171,8 @@ lo_read(int fd, char *buf, int len)
 	status = inv_read(cookies[fd], buf, len);
 
 	MemoryContextSwitchTo(currentContext);
-	return (status);
+
+	return status;
 }
 
 int
@@ -183,25 +198,29 @@ lo_write(int fd, char *buf, int len)
 	status = inv_write(cookies[fd], buf, len);
 
 	MemoryContextSwitchTo(currentContext);
-	return (status);
+
+	return status;
 }
 
 
-int
-lo_lseek(int fd, int offset, int whence)
+Datum
+lo_lseek(PG_FUNCTION_ARGS)
 {
+	int32		fd = PG_GETARG_INT32(0);
+	int32		offset = PG_GETARG_INT32(1);
+	int32		whence = PG_GETARG_INT32(2);
 	MemoryContext currentContext;
 	int			status;
 
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
 		elog(ERROR, "lo_lseek: large obj descriptor (%d) out of range", fd);
-		return -2;
+		PG_RETURN_INT32(-2);
 	}
 	if (cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_lseek: invalid large obj descriptor (%d)", fd);
-		return -3;
+		PG_RETURN_INT32(-3);
 	}
 
 	Assert(fscxt != NULL);
@@ -211,12 +230,13 @@ lo_lseek(int fd, int offset, int whence)
 
 	MemoryContextSwitchTo(currentContext);
 
-	return status;
+	PG_RETURN_INT32(status);
 }
 
-Oid
-lo_creat(int mode)
+Datum
+lo_creat(PG_FUNCTION_ARGS)
 {
+	int32		mode = PG_GETARG_INT32(0);
 	LargeObjectDesc *lobjDesc;
 	MemoryContext currentContext;
 	Oid			lobjId;
@@ -231,31 +251,32 @@ lo_creat(int mode)
 	if (lobjDesc == NULL)
 	{
 		MemoryContextSwitchTo(currentContext);
-		return InvalidOid;
+		PG_RETURN_OID(InvalidOid);
 	}
 
 	lobjId = RelationGetRelid(lobjDesc->heap_r);
 
 	inv_close(lobjDesc);
 
-	/* switch context back to original memory context */
 	MemoryContextSwitchTo(currentContext);
 
-	return lobjId;
+	PG_RETURN_OID(lobjId);
 }
 
-int
-lo_tell(int fd)
+Datum
+lo_tell(PG_FUNCTION_ARGS)
 {
+	int32		fd = PG_GETARG_INT32(0);
+
 	if (fd < 0 || fd >= MAX_LOBJ_FDS)
 	{
 		elog(ERROR, "lo_tell: large object descriptor (%d) out of range", fd);
-		return -2;
+		PG_RETURN_INT32(-2);
 	}
 	if (cookies[fd] == NULL)
 	{
 		elog(ERROR, "lo_tell: invalid large object descriptor (%d)", fd);
-		return -3;
+		PG_RETURN_INT32(-3);
 	}
 
 	/*
@@ -263,12 +284,13 @@ lo_tell(int fd)
 	 * true for now, but is probably more than this module ought to
 	 * assume...
 	 */
-	return inv_tell(cookies[fd]);
+	PG_RETURN_INT32(inv_tell(cookies[fd]));
 }
 
-int
-lo_unlink(Oid lobjId)
+Datum
+lo_unlink(PG_FUNCTION_ARGS)
 {
+	Oid			lobjId = PG_GETARG_OID(0);
 
 	/*
 	 * inv_drop does not need a context switch, indeed it doesn't touch
@@ -278,35 +300,42 @@ lo_unlink(Oid lobjId)
 	 * XXX there ought to be some code to clean up any open LOs that
 	 * reference the specified relation... as is, they remain "open".
 	 */
-	return inv_drop(lobjId);
+	PG_RETURN_INT32(inv_drop(lobjId));
 }
 
 /*****************************************************************************
- *	Read/Write using varlena
+ *	Read/Write using bytea
  *****************************************************************************/
 
-struct varlena *
-loread(int fd, int len)
+Datum
+loread(PG_FUNCTION_ARGS)
 {
+	int32		fd = PG_GETARG_INT32(0);
+	int32		len = PG_GETARG_INT32(1);
 	struct varlena *retval;
-	int			totalread = 0;
+	int			totalread;
+
+	if (len < 0)
+		len = 0;
 
 	retval = (struct varlena *) palloc(VARHDRSZ + len);
 	totalread = lo_read(fd, VARDATA(retval), len);
 	VARSIZE(retval) = totalread + VARHDRSZ;
 
-	return retval;
+	PG_RETURN_POINTER(retval);
 }
 
-int
-lowrite(int fd, struct varlena * wbuf)
+Datum
+lowrite(PG_FUNCTION_ARGS)
 {
-	int			totalwritten;
-	int			bytestowrite;
+	int32			fd = PG_GETARG_INT32(0);
+	struct varlena *wbuf = PG_GETARG_VARLENA_P(1);
+	int				bytestowrite;
+	int				totalwritten;
 
 	bytestowrite = VARSIZE(wbuf) - VARHDRSZ;
 	totalwritten = lo_write(fd, VARDATA(wbuf), bytestowrite);
-	return totalwritten;
+	PG_RETURN_INT32(totalwritten);
 }
 
 /*****************************************************************************
@@ -317,9 +346,10 @@ lowrite(int fd, struct varlena * wbuf)
  * lo_import -
  *	  imports a file as an (inversion) large object.
  */
-Oid
-lo_import(text *filename)
+Datum
+lo_import(PG_FUNCTION_ARGS)
 {
+	text	   *filename = PG_GETARG_TEXT_P(0);
 	File		fd;
 	int			nbytes,
 				tmp;
@@ -379,16 +409,18 @@ lo_import(text *filename)
 	FileClose(fd);
 	inv_close(lobj);
 
-	return lobjOid;
+	PG_RETURN_OID(lobjOid);
 }
 
 /*
  * lo_export -
  *	  exports an (inversion) large object.
  */
-int4
-lo_export(Oid lobjId, text *filename)
+Datum
+lo_export(PG_FUNCTION_ARGS)
 {
+	Oid			lobjId = PG_GETARG_OID(0);
+	text	   *filename = PG_GETARG_TEXT_P(1);
 	File		fd;
 	int			nbytes,
 				tmp;
@@ -445,7 +477,7 @@ lo_export(Oid lobjId, text *filename)
 	inv_close(lobj);
 	FileClose(fd);
 
-	return 1;
+	PG_RETURN_INT32(1);
 }
 
 /*

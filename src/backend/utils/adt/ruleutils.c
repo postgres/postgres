@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.50 2000/05/30 04:24:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.51 2000/06/09 01:11:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -319,9 +319,10 @@ pg_get_viewdef(NameData *rname)
  * get_indexdef			- Get the definition of an index
  * ----------
  */
-text *
-pg_get_indexdef(Oid indexrelid)
+Datum
+pg_get_indexdef(PG_FUNCTION_ARGS)
 {
+	Oid			indexrelid = PG_GETARG_OID(0);
 	text	   *indexdef;
 	HeapTuple	ht_idx;
 	HeapTuple	ht_idxrel;
@@ -541,7 +542,7 @@ pg_get_indexdef(Oid indexrelid)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "get_viewdef: SPI_finish() failed");
 
-	return indexdef;
+	PG_RETURN_TEXT_P(indexdef);
 }
 
 

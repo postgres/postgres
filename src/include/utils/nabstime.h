@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nabstime.h,v 1.25 2000/04/12 17:16:55 momjian Exp $
+ * $Id: nabstime.h,v 1.26 2000/06/09 01:11:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,13 +15,15 @@
 #define NABSTIME_H
 
 #include <time.h>
+
+#include "fmgr.h"
 #include "utils/timestamp.h"
 #include "utils/datetime.h"
 
 
 /* ----------------------------------------------------------------
- *				time types + support macros
  *
+ *				time types + support macros
  *
  * ----------------------------------------------------------------
  */
@@ -39,7 +41,27 @@ typedef struct
 	int32		status;
 	AbsoluteTime data[2];
 } TimeIntervalData;
+
 typedef TimeIntervalData *TimeInterval;
+
+/*
+ * Macros for fmgr-callable functions.
+ */
+#define DatumGetAbsoluteTime(X)  ((AbsoluteTime) DatumGetInt32(X))
+#define DatumGetRelativeTime(X)  ((RelativeTime) DatumGetInt32(X))
+#define DatumGetTimeInterval(X)  ((TimeInterval) DatumGetPointer(X))
+
+#define AbsoluteTimeGetDatum(X)  Int32GetDatum(X)
+#define RelativeTimeGetDatum(X)  Int32GetDatum(X)
+#define TimeIntervalGetDatum(X)  PointerGetDatum(X)
+
+#define PG_GETARG_ABSOLUTETIME(n)  DatumGetAbsoluteTime(PG_GETARG_DATUM(n))
+#define PG_GETARG_RELATIVETIME(n)  DatumGetRelativeTime(PG_GETARG_DATUM(n))
+#define PG_GETARG_TIMEINTERVAL(n)  DatumGetTimeInterval(PG_GETARG_DATUM(n))
+
+#define PG_RETURN_ABSOLUTETIME(x)  return AbsoluteTimeGetDatum(x)
+#define PG_RETURN_RELATIVETIME(x)  return RelativeTimeGetDatum(x)
+#define PG_RETURN_TIMEINTERVAL(x)  return TimeIntervalGetDatum(x)
 
 /*
  * Reserved values
@@ -78,20 +100,8 @@ typedef TimeIntervalData *TimeInterval;
 	((bool) (((AbsoluteTime) time) < NOEND_ABSTIME && \
 			 ((AbsoluteTime) time) > NOSTART_ABSTIME))
 
-/* have to include this because EPOCH_ABSTIME used to be invalid - yuk */
-#define AbsoluteTimeIsBackwardCompatiblyValid(time) \
-	((bool) (((AbsoluteTime) time) != INVALID_ABSTIME && \
-			 ((AbsoluteTime) time) > EPOCH_ABSTIME))
-
-#define AbsoluteTimeIsBackwardCompatiblyReal(time) \
-	((bool) (((AbsoluteTime) time) < NOEND_ABSTIME && \
-			 ((AbsoluteTime) time) > NOSTART_ABSTIME && \
-			 ((AbsoluteTime) time) > EPOCH_ABSTIME))
-
 #define RelativeTimeIsValid(time) \
 	((bool) (((RelativeTime) time) != INVALID_RELTIME))
-
-extern AbsoluteTime GetCurrentAbsoluteTime(void);
 
 /*
  * getSystemTime
@@ -104,62 +114,62 @@ extern AbsoluteTime GetCurrentAbsoluteTime(void);
 /*
  * nabstime.c prototypes
  */
-extern AbsoluteTime nabstimein(char *timestr);
-extern char *nabstimeout(AbsoluteTime time);
+extern Datum nabstimein(PG_FUNCTION_ARGS);
+extern Datum nabstimeout(PG_FUNCTION_ARGS);
 
-extern bool abstimeeq(AbsoluteTime t1, AbsoluteTime t2);
-extern bool abstimene(AbsoluteTime t1, AbsoluteTime t2);
-extern bool abstimelt(AbsoluteTime t1, AbsoluteTime t2);
-extern bool abstimegt(AbsoluteTime t1, AbsoluteTime t2);
-extern bool abstimele(AbsoluteTime t1, AbsoluteTime t2);
-extern bool abstimege(AbsoluteTime t1, AbsoluteTime t2);
-extern bool abstime_finite(AbsoluteTime time);
+extern Datum abstimeeq(PG_FUNCTION_ARGS);
+extern Datum abstimene(PG_FUNCTION_ARGS);
+extern Datum abstimelt(PG_FUNCTION_ARGS);
+extern Datum abstimegt(PG_FUNCTION_ARGS);
+extern Datum abstimele(PG_FUNCTION_ARGS);
+extern Datum abstimege(PG_FUNCTION_ARGS);
+extern Datum abstime_finite(PG_FUNCTION_ARGS);
 
-extern AbsoluteTime timestamp_abstime(Timestamp *timestamp);
-extern Timestamp *abstime_timestamp(AbsoluteTime abstime);
+extern Datum timestamp_abstime(PG_FUNCTION_ARGS);
+extern Datum abstime_timestamp(PG_FUNCTION_ARGS);
 
+extern Datum reltimein(PG_FUNCTION_ARGS);
+extern Datum reltimeout(PG_FUNCTION_ARGS);
+extern Datum tintervalin(PG_FUNCTION_ARGS);
+extern Datum tintervalout(PG_FUNCTION_ARGS);
+extern Datum interval_reltime(PG_FUNCTION_ARGS);
+extern Datum reltime_interval(PG_FUNCTION_ARGS);
+extern Datum mktinterval(PG_FUNCTION_ARGS);
+extern Datum timepl(PG_FUNCTION_ARGS);
+extern Datum timemi(PG_FUNCTION_ARGS);
+
+extern Datum intinterval(PG_FUNCTION_ARGS);
+extern Datum tintervalrel(PG_FUNCTION_ARGS);
+extern Datum timenow(PG_FUNCTION_ARGS);
+extern Datum reltimeeq(PG_FUNCTION_ARGS);
+extern Datum reltimene(PG_FUNCTION_ARGS);
+extern Datum reltimelt(PG_FUNCTION_ARGS);
+extern Datum reltimegt(PG_FUNCTION_ARGS);
+extern Datum reltimele(PG_FUNCTION_ARGS);
+extern Datum reltimege(PG_FUNCTION_ARGS);
+extern Datum tintervalsame(PG_FUNCTION_ARGS);
+extern Datum tintervaleq(PG_FUNCTION_ARGS);
+extern Datum tintervalne(PG_FUNCTION_ARGS);
+extern Datum tintervallt(PG_FUNCTION_ARGS);
+extern Datum tintervalgt(PG_FUNCTION_ARGS);
+extern Datum tintervalle(PG_FUNCTION_ARGS);
+extern Datum tintervalge(PG_FUNCTION_ARGS);
+extern Datum tintervalleneq(PG_FUNCTION_ARGS);
+extern Datum tintervallenne(PG_FUNCTION_ARGS);
+extern Datum tintervallenlt(PG_FUNCTION_ARGS);
+extern Datum tintervallengt(PG_FUNCTION_ARGS);
+extern Datum tintervallenle(PG_FUNCTION_ARGS);
+extern Datum tintervallenge(PG_FUNCTION_ARGS);
+extern Datum tintervalct(PG_FUNCTION_ARGS);
+extern Datum tintervalov(PG_FUNCTION_ARGS);
+extern Datum tintervalstart(PG_FUNCTION_ARGS);
+extern Datum tintervalend(PG_FUNCTION_ARGS);
+extern Datum int4reltime(PG_FUNCTION_ARGS);
+extern Datum timeofday(PG_FUNCTION_ARGS);
+
+/* non-fmgr-callable support routines */
+extern AbsoluteTime GetCurrentAbsoluteTime(void);
 extern bool AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2);
-
 extern void abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn);
-
-extern RelativeTime reltimein(char *timestring);
-extern char *reltimeout(RelativeTime timevalue);
-extern TimeInterval tintervalin(char *intervalstr);
-extern char *tintervalout(TimeInterval interval);
-extern RelativeTime interval_reltime(Interval *interval);
-extern Interval *reltime_interval(RelativeTime reltime);
-extern TimeInterval mktinterval(AbsoluteTime t1, AbsoluteTime t2);
-extern AbsoluteTime timepl(AbsoluteTime t1, RelativeTime t2);
-extern AbsoluteTime timemi(AbsoluteTime t1, RelativeTime t2);
-
-/* extern RelativeTime abstimemi(AbsoluteTime t1, AbsoluteTime t2);  static*/
-extern int	intinterval(AbsoluteTime t, TimeInterval interval);
-extern RelativeTime tintervalrel(TimeInterval interval);
-extern AbsoluteTime timenow(void);
-extern bool reltimeeq(RelativeTime t1, RelativeTime t2);
-extern bool reltimene(RelativeTime t1, RelativeTime t2);
-extern bool reltimelt(RelativeTime t1, RelativeTime t2);
-extern bool reltimegt(RelativeTime t1, RelativeTime t2);
-extern bool reltimele(RelativeTime t1, RelativeTime t2);
-extern bool reltimege(RelativeTime t1, RelativeTime t2);
-extern bool tintervalsame(TimeInterval i1, TimeInterval i2);
-extern bool tintervaleq(TimeInterval i1, TimeInterval i2);
-extern bool tintervalne(TimeInterval i1, TimeInterval i2);
-extern bool tintervallt(TimeInterval i1, TimeInterval i2);
-extern bool tintervalgt(TimeInterval i1, TimeInterval i2);
-extern bool tintervalle(TimeInterval i1, TimeInterval i2);
-extern bool tintervalge(TimeInterval i1, TimeInterval i2);
-extern bool tintervalleneq(TimeInterval i, RelativeTime t);
-extern bool tintervallenne(TimeInterval i, RelativeTime t);
-extern bool tintervallenlt(TimeInterval i, RelativeTime t);
-extern bool tintervallengt(TimeInterval i, RelativeTime t);
-extern bool tintervallenle(TimeInterval i, RelativeTime t);
-extern bool tintervallenge(TimeInterval i, RelativeTime t);
-extern bool tintervalct(TimeInterval i1, TimeInterval i2);
-extern bool tintervalov(TimeInterval i1, TimeInterval i2);
-extern AbsoluteTime tintervalstart(TimeInterval i);
-extern AbsoluteTime tintervalend(TimeInterval i);
-extern int32 int4reltime(int32 timevalue);
-extern text *timeofday(void);
 
 #endif	 /* NABSTIME_H */

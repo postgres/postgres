@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.9 2000/06/05 07:28:51 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.10 2000/06/09 01:11:08 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -2372,9 +2372,11 @@ DCH_cache_search(char *str)
  * TIMESTAMP to_char()
  * -------------------
  */
-text *
-timestamp_to_char(Timestamp *dt, text *fmt)
+Datum
+timestamp_to_char(PG_FUNCTION_ARGS)
 {
+	Timestamp	dt = PG_GETARG_TIMESTAMP(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	text	   *result,
 			   *result_tmp;
 	FormatNode *format;
@@ -2386,13 +2388,10 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 				flag = 0,
 				x = 0;
 
-	if ((!PointerIsValid(dt)) || (!PointerIsValid(fmt)))
-		return NULL;
-
 	len = VARSIZE(fmt) - VARHDRSZ;
 
-	if ((!len) || (TIMESTAMP_NOT_FINITE(*dt)))
-		return textin("");
+	if ((!len) || (TIMESTAMP_NOT_FINITE(dt)))
+		return PointerGetDatum(textin(""));
 
 	tm->tm_sec = 0;
 	tm->tm_year = 0;
@@ -2404,18 +2403,18 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 	tm->tm_isdst = 0;
 	tm->tm_mon = 1;
 
-	if (TIMESTAMP_IS_EPOCH(*dt))
+	if (TIMESTAMP_IS_EPOCH(dt))
 	{
-		x = timestamp2tm(SetTimestamp(*dt), NULL, tm, &fsec, NULL);
+		x = timestamp2tm(SetTimestamp(dt), NULL, tm, &fsec, NULL);
 
 	}
-	else if (TIMESTAMP_IS_CURRENT(*dt))
+	else if (TIMESTAMP_IS_CURRENT(dt))
 	{
-		x = timestamp2tm(SetTimestamp(*dt), &tz, tm, &fsec, &tzn);
+		x = timestamp2tm(SetTimestamp(dt), &tz, tm, &fsec, &tzn);
 
 	}
 	else
-		x = timestamp2tm(*dt, &tz, tm, &fsec, &tzn);
+		x = timestamp2tm(dt, &tz, tm, &fsec, &tzn);
 
 	if (x != 0)
 		elog(ERROR, "to_char(): Unable to convert timestamp to tm");
@@ -2508,7 +2507,7 @@ timestamp_to_char(Timestamp *dt, text *fmt)
 	VARSIZE(result) = len + VARHDRSZ;
 	pfree(result_tmp);
 
-	return result;
+	PG_RETURN_TEXT_P(result);
 }
 
 
@@ -2519,19 +2518,18 @@ timestamp_to_char(Timestamp *dt, text *fmt)
  * ( to_timestamp is reverse to_char() )
  * ---------------------
  */
-Timestamp  *
-to_timestamp(text *date_str, text *fmt)
+Datum
+to_timestamp(PG_FUNCTION_ARGS)
 {
+	text	   *date_str = PG_GETARG_TEXT_P(0);
+	text	   *fmt = PG_GETARG_TEXT_P(1);
 	FormatNode *format;
 	int			flag = 0;
-	Timestamp  *result;
+	Timestamp	result;
 	char	   *str;
 	int			len = 0,
 				fsec = 0,
 				tz = 0;
-
-	if ((!PointerIsValid(date_str)) || (!PointerIsValid(fmt)))
-		return NULL;
 
 	tm->tm_sec = 0;
 	tm->tm_year = 0;
@@ -2542,8 +2540,6 @@ to_timestamp(text *date_str, text *fmt)
 	tm->tm_mday = 1;
 	tm->tm_isdst = 0;
 	tm->tm_mon = 1;
-
-	result = palloc(sizeof(Timestamp));
 
 	len = VARSIZE(fmt) - VARHDRSZ;
 
@@ -2668,10 +2664,10 @@ to_timestamp(text *date_str, text *fmt)
 #ifdef DEBUG_TO_FROM_CHAR
 	NOTICE_TM;
 #endif
-	if (tm2timestamp(tm, fsec, &tz, result) != 0)
-		elog(ERROR, "to_datatime(): can't convert 'tm' to timestamp.");
+	if (tm2timestamp(tm, fsec, &tz, &result) != 0)
+		elog(ERROR, "to_timestamp(): can't convert 'tm' to timestamp.");
 
-	return result;
+	PG_RETURN_TIMESTAMP(result);
 }
 
 /* ----------
@@ -2679,10 +2675,13 @@ to_timestamp(text *date_str, text *fmt)
  *	Make Date from date_str which is formated at argument 'fmt'
  * ----------
  */
-DateADT
-to_date(text *date_str, text *fmt)
+Datum
+to_date(PG_FUNCTION_ARGS)
 {
-	return timestamp_date(to_timestamp(date_str, fmt));
+	/* Quick hack: since our inputs are just like to_timestamp,
+	 * hand over the whole input info struct...
+	 */
+	return DirectFunctionCall1(timestamp_date, to_timestamp(fcinfo));
 }
 
 /**********************************************************************

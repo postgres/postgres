@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.28 2000/06/08 22:37:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.29 2000/06/09 01:11:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,11 +49,11 @@ static int	tm2interval(struct tm * tm, double fsec, Interval *span);
 /* timestamp_in()
  * Convert a string to internal form.
  */
-Timestamp  *
-timestamp_in(char *str)
+Datum
+timestamp_in(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
-
+	char	   *str = PG_GETARG_CSTRING(0);
+	Timestamp	result;
 	double		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -64,55 +64,52 @@ timestamp_in(char *str)
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
 
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) timestamp external representation");
-
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		elog(ERROR, "Bad timestamp external representation '%s'", str);
 
-	result = palloc(sizeof(Timestamp));
-
 	switch (dtype)
 	{
 		case DTK_DATE:
-			if (tm2timestamp(tm, fsec, &tz, result) != 0)
+			if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 				elog(ERROR, "Timestamp out of range '%s'", str);
 			break;
 
 		case DTK_EPOCH:
-			TIMESTAMP_EPOCH(*result);
+			TIMESTAMP_EPOCH(result);
 			break;
 
 		case DTK_CURRENT:
-			TIMESTAMP_CURRENT(*result);
+			TIMESTAMP_CURRENT(result);
 			break;
 
 		case DTK_LATE:
-			TIMESTAMP_NOEND(*result);
+			TIMESTAMP_NOEND(result);
 			break;
 
 		case DTK_EARLY:
-			TIMESTAMP_NOBEGIN(*result);
+			TIMESTAMP_NOBEGIN(result);
 			break;
 
 		case DTK_INVALID:
-			TIMESTAMP_INVALID(*result);
+			TIMESTAMP_INVALID(result);
 			break;
 
 		default:
 			elog(ERROR, "Internal coding error, can't input timestamp '%s'", str);
+			TIMESTAMP_INVALID(result); /* keep compiler quiet */
 	}
 
-	return result;
-}	/* timestamp_in() */
+	PG_RETURN_TIMESTAMP(result);
+}
 
 /* timestamp_out()
  * Convert a timestamp to external form.
  */
-char *
-timestamp_out(Timestamp *dt)
+Datum
+timestamp_out(PG_FUNCTION_ARGS)
 {
+	Timestamp	dt = PG_GETARG_TIMESTAMP(0);
 	char	   *result;
 	int			tz;
 	struct tm	tt,
@@ -121,22 +118,16 @@ timestamp_out(Timestamp *dt)
 	char	   *tzn;
 	char		buf[MAXDATELEN + 1];
 
-	if (!PointerIsValid(dt))
-		return NULL;
-
-	if (TIMESTAMP_IS_RESERVED(*dt))
-		EncodeSpecialTimestamp(*dt, buf);
-	else if (timestamp2tm(*dt, &tz, tm, &fsec, &tzn) == 0)
+	if (TIMESTAMP_IS_RESERVED(dt))
+		EncodeSpecialTimestamp(dt, buf);
+	else if (timestamp2tm(dt, &tz, tm, &fsec, &tzn) == 0)
 		EncodeDateTime(tm, fsec, &tz, &tzn, DateStyle, buf);
 	else
 		EncodeSpecialTimestamp(DT_INVALID, buf);
 
-	result = palloc(strlen(buf) + 1);
-
-	strcpy(result, buf);
-
-	return result;
-}	/* timestamp_out() */
+	result = pstrdup(buf);
+	PG_RETURN_CSTRING(result);
+}
 
 
 /* interval_in()
@@ -145,11 +136,11 @@ timestamp_out(Timestamp *dt)
  * External format(s):
  *	Uses the generic date/time parsing and decoding routines.
  */
-Interval   *
-interval_in(char *str)
+Datum
+interval_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	Interval   *span;
-
 	double		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -167,14 +158,11 @@ interval_in(char *str)
 	tm->tm_sec = 0;
 	fsec = 0;
 
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) interval external representation");
-
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
 		elog(ERROR, "Bad interval external representation '%s'", str);
 
-	span = palloc(sizeof(Interval));
+	span = (Interval *) palloc(sizeof(Interval));
 
 	switch (dtype)
 	{
@@ -192,36 +180,31 @@ interval_in(char *str)
 			elog(ERROR, "Internal coding error, can't input interval '%s'", str);
 	}
 
-	return span;
-}	/* interval_in() */
+	PG_RETURN_INTERVAL_P(span);
+}
 
 /* interval_out()
  * Convert a time span to external form.
  */
-char *
-interval_out(Interval *span)
+Datum
+interval_out(PG_FUNCTION_ARGS)
 {
+	Interval   *span = PG_GETARG_INTERVAL_P(0);
 	char	   *result;
-
 	struct tm	tt,
 			   *tm = &tt;
 	double		fsec;
 	char		buf[MAXDATELEN + 1];
 
-	if (!PointerIsValid(span))
-		return NULL;
-
 	if (interval2tm(*span, tm, &fsec) != 0)
-		return NULL;
+		PG_RETURN_NULL();
 
 	if (EncodeTimeSpan(tm, fsec, DateStyle, buf) != 0)
 		elog(ERROR, "Unable to format interval");
 
-	result = palloc(strlen(buf) + 1);
-
-	strcpy(result, buf);
-	return result;
-}	/* interval_out() */
+	result = pstrdup(buf);
+	PG_RETURN_CSTRING(result);
+}
 
 
 /* EncodeSpecialTimestamp()
@@ -250,19 +233,17 @@ EncodeSpecialTimestamp(Timestamp dt, char *str)
 	return FALSE;
 }	/* EncodeSpecialTimestamp() */
 
-Timestamp  *
-now(void)
+Datum
+now(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
+	Timestamp	result;
 	AbsoluteTime sec;
-
-	result = palloc(sizeof(Timestamp));
 
 	sec = GetCurrentTransactionStartTime();
 
-	*result = (sec - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400));
+	result = (sec - ((date2j(2000, 1, 1) - date2j(1970, 1, 1)) * 86400));
 
-	return result;
+	PG_RETURN_TIMESTAMP(result);
 }
 
 static void
@@ -498,23 +479,21 @@ dt2local(Timestamp dt, int tz)
  *****************************************************************************/
 
 
-bool
-timestamp_finite(Timestamp *timestamp)
+Datum
+timestamp_finite(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(timestamp))
-		return FALSE;
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 
-	return !TIMESTAMP_NOT_FINITE(*timestamp);
-}	/* timestamp_finite() */
+	PG_RETURN_BOOL(! TIMESTAMP_NOT_FINITE(timestamp));
+}
 
-bool
-interval_finite(Interval *interval)
+Datum
+interval_finite(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(interval))
-		return FALSE;
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 
-	return !INTERVAL_NOT_FINITE(*interval);
-}	/* interval_finite() */
+	PG_RETURN_BOOL(! INTERVAL_NOT_FINITE(*interval));
+}
 
 
 /*----------------------------------------------------------
@@ -563,171 +542,128 @@ SetTimestamp(Timestamp dt)
 	return dt;
 }	/* SetTimestamp() */
 
-/*		timestamp_relop - is timestamp1 relop timestamp2
+/*
+ *		timestamp_relop - is timestamp1 relop timestamp2
  */
-bool
-timestamp_eq(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_eq(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return FALSE;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
 	if (TIMESTAMP_IS_RELATIVE(dt2))
 		dt2 = SetTimestamp(dt2);
 
-	return dt1 == dt2;
-}	/* timestamp_eq() */
+	PG_RETURN_BOOL(dt1 == dt2);
+}
 
-bool
-timestamp_ne(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_ne(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return FALSE;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
 	if (TIMESTAMP_IS_RELATIVE(dt2))
 		dt2 = SetTimestamp(dt2);
 
-	return dt1 != dt2;
-}	/* timestamp_ne() */
+	PG_RETURN_BOOL(dt1 != dt2);
+}
 
-bool
-timestamp_lt(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_lt(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return FALSE;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
 	if (TIMESTAMP_IS_RELATIVE(dt2))
 		dt2 = SetTimestamp(dt2);
 
-	return dt1 < dt2;
-}	/* timestamp_lt() */
+	PG_RETURN_BOOL(dt1 < dt2);
+}
 
-bool
-timestamp_gt(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_gt(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return FALSE;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
 	if (TIMESTAMP_IS_RELATIVE(dt2))
 		dt2 = SetTimestamp(dt2);
 
-	return dt1 > dt2;
-}	/* timestamp_gt() */
+	PG_RETURN_BOOL(dt1 > dt2);
+}
 
-bool
-timestamp_le(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_le(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return FALSE;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
 	if (TIMESTAMP_IS_RELATIVE(dt2))
 		dt2 = SetTimestamp(dt2);
 
-	return dt1 <= dt2;
-}	/* timestamp_le() */
+	PG_RETURN_BOOL(dt1 <= dt2);
+}
 
-bool
-timestamp_ge(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_ge(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return FALSE;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1) || TIMESTAMP_IS_INVALID(dt2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
 	if (TIMESTAMP_IS_RELATIVE(dt2))
 		dt2 = SetTimestamp(dt2);
 
-	return dt1 >= dt2;
-}	/* timestamp_ge() */
+	PG_RETURN_BOOL(dt1 >= dt2);
+}
 
 
 /*		timestamp_cmp	- 3-state comparison for timestamp
  *		collate invalid timestamp at the end
  */
-int
-timestamp_cmp(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_cmp(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return 0;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 
 	if (TIMESTAMP_IS_INVALID(dt1))
 	{
-		return (TIMESTAMP_IS_INVALID(dt2) ? 0 : 1);
-
+		PG_RETURN_INT32(TIMESTAMP_IS_INVALID(dt2) ? 0 : 1);
 	}
 	else if (TIMESTAMP_IS_INVALID(dt2))
 	{
-		return -1;
-
+		PG_RETURN_INT32(-1);
 	}
 	else
 	{
@@ -737,49 +673,49 @@ timestamp_cmp(Timestamp *timestamp1, Timestamp *timestamp2)
 			dt2 = SetTimestamp(dt2);
 	}
 
-	return ((dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0));
-}	/* timestamp_cmp() */
+	PG_RETURN_INT32((dt1 < dt2) ? -1 : ((dt1 > dt2) ? 1 : 0));
+}
 
 
-/*		interval_relop	- is interval1 relop interval2
+/*
+ *		interval_relop	- is interval1 relop interval2
  */
-bool
-interval_eq(Interval *interval1, Interval *interval2)
+Datum
+interval_eq(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return FALSE;
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 
 	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
-	return ((interval1->time == interval2->time)
-			&& (interval1->month == interval2->month));
-}	/* interval_eq() */
+	PG_RETURN_BOOL((interval1->time == interval2->time) &&
+				   (interval1->month == interval2->month));
+}
 
-bool
-interval_ne(Interval *interval1, Interval *interval2)
+Datum
+interval_ne(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return FALSE;
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 
 	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
-	return ((interval1->time != interval2->time)
-			|| (interval1->month != interval2->month));
-}	/* interval_ne() */
+	PG_RETURN_BOOL((interval1->time != interval2->time) ||
+				   (interval1->month != interval2->month));
+}
 
-bool
-interval_lt(Interval *interval1, Interval *interval2)
+Datum
+interval_lt(PG_FUNCTION_ARGS)
 {
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	double		span1,
 				span2;
 
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return FALSE;
-
 	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	span1 = interval1->time;
 	if (interval1->month != 0)
@@ -788,20 +724,19 @@ interval_lt(Interval *interval1, Interval *interval2)
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
 
-	return span1 < span2;
-}	/* interval_lt() */
+	PG_RETURN_BOOL(span1 < span2);
+}
 
-bool
-interval_gt(Interval *interval1, Interval *interval2)
+Datum
+interval_gt(PG_FUNCTION_ARGS)
 {
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	double		span1,
 				span2;
 
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return FALSE;
-
 	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	span1 = interval1->time;
 	if (interval1->month != 0)
@@ -810,20 +745,19 @@ interval_gt(Interval *interval1, Interval *interval2)
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
 
-	return span1 > span2;
-}	/* interval_gt() */
+	PG_RETURN_BOOL(span1 > span2);
+}
 
-bool
-interval_le(Interval *interval1, Interval *interval2)
+Datum
+interval_le(PG_FUNCTION_ARGS)
 {
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	double		span1,
 				span2;
 
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return FALSE;
-
 	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	span1 = interval1->time;
 	if (interval1->month != 0)
@@ -832,20 +766,19 @@ interval_le(Interval *interval1, Interval *interval2)
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
 
-	return span1 <= span2;
-}	/* interval_le() */
+	PG_RETURN_BOOL(span1 <= span2);
+}
 
-bool
-interval_ge(Interval *interval1, Interval *interval2)
+Datum
+interval_ge(PG_FUNCTION_ARGS)
 {
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	double		span1,
 				span2;
 
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return FALSE;
-
 	if (INTERVAL_IS_INVALID(*interval1) || INTERVAL_IS_INVALID(*interval2))
-		return FALSE;
+		PG_RETURN_BOOL(false);
 
 	span1 = interval1->time;
 	if (interval1->month != 0)
@@ -854,28 +787,24 @@ interval_ge(Interval *interval1, Interval *interval2)
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
 
-	return span1 >= span2;
-}	/* interval_ge() */
+	PG_RETURN_BOOL(span1 >= span2);
+}
 
 
 /*		interval_cmp	- 3-state comparison for interval
  */
-int
-interval_cmp(Interval *interval1, Interval *interval2)
+Datum
+interval_cmp(PG_FUNCTION_ARGS)
 {
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	double		span1,
 				span2;
 
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return 0;
-
 	if (INTERVAL_IS_INVALID(*interval1))
-	{
-		return INTERVAL_IS_INVALID(*interval2) ? 0 : 1;
-
-	}
+		PG_RETURN_INT32(INTERVAL_IS_INVALID(*interval2) ? 0 : 1);
 	else if (INTERVAL_IS_INVALID(*interval2))
-		return -1;
+		PG_RETURN_INT32(-1);
 
 	span1 = interval1->time;
 	if (interval1->month != 0)
@@ -884,36 +813,57 @@ interval_cmp(Interval *interval1, Interval *interval2)
 	if (interval2->month != 0)
 		span2 += (interval2->month * (30.0 * 86400));
 
-	return (span1 < span2) ? -1 : (span1 > span2) ? 1 : 0;
-}	/* interval_cmp() */
+	PG_RETURN_INT32((span1 < span2) ? -1 : (span1 > span2) ? 1 : 0);
+}
 
 /* overlaps_timestamp()
  * Implements the SQL92 OVERLAPS operator.
  * Algorithm from Date and Darwen, 1997
  */
-bool
-overlaps_timestamp(Timestamp *ts1, Timestamp *te1, Timestamp *ts2, Timestamp *te2)
+Datum
+overlaps_timestamp(PG_FUNCTION_ARGS)
 {
+	/* The arguments are Timestamps, but we leave them as generic Datums
+	 * to avoid unnecessary conversions between value and reference forms...
+	 */
+	Datum		ts1 = PG_GETARG_DATUM(0);
+	Datum		te1 = PG_GETARG_DATUM(1);
+	Datum		ts2 = PG_GETARG_DATUM(2);
+	Datum		te2 = PG_GETARG_DATUM(3);
+
+#define TIMESTAMP_GT(t1,t2) \
+	DatumGetBool(DirectFunctionCall2(timestamp_gt,t1,t2))
+#define TIMESTAMP_LT(t1,t2) \
+	DatumGetBool(DirectFunctionCall2(timestamp_lt,t1,t2))
+#define TIMESTAMP_EQ(t1,t2) \
+	DatumGetBool(DirectFunctionCall2(timestamp_eq,t1,t2))
+
 	/* Make sure we have ordered pairs... */
-	if (timestamp_gt(ts1, te1))
+	if (TIMESTAMP_GT(ts1, te1))
 	{
-		Timestamp  *tt = ts1;
+		Datum		tt = ts1;
 
 		ts1 = te1;
 		te1 = tt;
 	}
-	if (timestamp_gt(ts2, te2))
+	if (TIMESTAMP_GT(ts2, te2))
 	{
-		Timestamp  *tt = ts2;
+		Datum		tt = ts2;
 
 		ts2 = te2;
 		te2 = tt;
 	}
 
-	return ((timestamp_gt(ts1, ts2) && (timestamp_lt(ts1, te2) || timestamp_lt(te1, te2)))
-			|| (timestamp_gt(ts2, ts1) && (timestamp_lt(ts2, te1) || timestamp_lt(te2, te1)))
-			|| timestamp_eq(ts1, ts2));
-}	/* overlaps_timestamp() */
+	PG_RETURN_BOOL((TIMESTAMP_GT(ts1, ts2) &&
+					(TIMESTAMP_LT(ts1, te2) || TIMESTAMP_LT(te1, te2))) ||
+				   (TIMESTAMP_GT(ts2, ts1) &&
+					(TIMESTAMP_LT(ts2, te1) || TIMESTAMP_LT(te2, te1))) ||
+				   TIMESTAMP_EQ(ts1, ts2));
+
+#undef TIMESTAMP_GT
+#undef TIMESTAMP_LT
+#undef TIMESTAMP_EQ
+}
 
 
 /*----------------------------------------------------------
@@ -924,21 +874,12 @@ overlaps_timestamp(Timestamp *ts1, Timestamp *te1, Timestamp *ts2, Timestamp *te
  *						actual value.
  *---------------------------------------------------------*/
 
-Timestamp  *
-timestamp_smaller(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_smaller(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
-
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return NULL;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
-
-	result = palloc(sizeof(Timestamp));
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	result;
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
@@ -946,30 +887,21 @@ timestamp_smaller(Timestamp *timestamp1, Timestamp *timestamp2)
 		dt2 = SetTimestamp(dt2);
 
 	if (TIMESTAMP_IS_INVALID(dt1))
-		*result = dt2;
+		result = dt2;
 	else if (TIMESTAMP_IS_INVALID(dt2))
-		*result = dt1;
+		result = dt1;
 	else
-		*result = ((dt2 < dt1) ? dt2 : dt1);
+		result = ((dt2 < dt1) ? dt2 : dt1);
 
-	return result;
-}	/* timestamp_smaller() */
+	PG_RETURN_TIMESTAMP(result);
+}
 
-Timestamp  *
-timestamp_larger(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_larger(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
-
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return NULL;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
-
-	result = palloc(sizeof(Timestamp));
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
+	Timestamp	result;
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
@@ -977,31 +909,24 @@ timestamp_larger(Timestamp *timestamp1, Timestamp *timestamp2)
 		dt2 = SetTimestamp(dt2);
 
 	if (TIMESTAMP_IS_INVALID(dt1))
-		*result = dt2;
+		result = dt2;
 	else if (TIMESTAMP_IS_INVALID(dt2))
-		*result = dt1;
+		result = dt1;
 	else
-		*result = ((dt2 > dt1) ? dt2 : dt1);
+		result = ((dt2 > dt1) ? dt2 : dt1);
 
-	return result;
-}	/* timestamp_larger() */
+	PG_RETURN_TIMESTAMP(result);
+}
 
 
-Interval   *
-timestamp_mi(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_mi(PG_FUNCTION_ARGS)
 {
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 	Interval   *result;
 
-	Timestamp	dt1,
-				dt2;
-
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return NULL;
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
-
-	result = palloc(sizeof(Interval));
+	result = (Interval *) palloc(sizeof(Interval));
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
@@ -1010,16 +935,13 @@ timestamp_mi(Timestamp *timestamp1, Timestamp *timestamp2)
 
 	if (TIMESTAMP_IS_INVALID(dt1)
 		|| TIMESTAMP_IS_INVALID(dt2))
-	{
 		TIMESTAMP_INVALID(result->time);
-
-	}
 	else
 		result->time = JROUND(dt1 - dt2);
 	result->month = 0;
 
-	return result;
-}	/* timestamp_mi() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
 
 /* timestamp_pl_span()
@@ -1031,32 +953,23 @@ timestamp_mi(Timestamp *timestamp1, Timestamp *timestamp2)
  *	to the last day of month.
  * Lastly, add in the "quantitative time".
  */
-Timestamp  *
-timestamp_pl_span(Timestamp *timestamp, Interval *span)
+Datum
+timestamp_pl_span(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
+	Timestamp	result;
 	Timestamp	dt;
 	int			tz;
 	char	   *tzn;
 
-	if ((!PointerIsValid(timestamp)) || (!PointerIsValid(span)))
-		return NULL;
-
-	result = palloc(sizeof(Timestamp));
-
-	if (TIMESTAMP_NOT_FINITE(*timestamp))
-	{
-		*result = *timestamp;
-
-	}
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		result = timestamp;
 	else if (INTERVAL_IS_INVALID(*span))
-	{
-		TIMESTAMP_INVALID(*result);
-
-	}
+		TIMESTAMP_INVALID(result);
 	else
 	{
-		dt = (TIMESTAMP_IS_RELATIVE(*timestamp) ? SetTimestamp(*timestamp) : *timestamp);
+		dt = (TIMESTAMP_IS_RELATIVE(timestamp) ? SetTimestamp(timestamp) : timestamp);
 
 		if (span->month != 0)
 		{
@@ -1096,71 +1009,63 @@ timestamp_pl_span(Timestamp *timestamp, Interval *span)
 		dt += span->time;
 #endif
 
-		*result = dt;
+		result = dt;
 	}
 
-	return result;
-}	/* timestamp_pl_span() */
+	PG_RETURN_TIMESTAMP(result);
+}
 
-Timestamp  *
-timestamp_mi_span(Timestamp *timestamp, Interval *span)
+Datum
+timestamp_mi_span(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	Interval   *span = PG_GETARG_INTERVAL_P(1);
 	Interval	tspan;
 
-	if (!PointerIsValid(timestamp) || !PointerIsValid(span))
-		return NULL;
+	tspan.month = - span->month;
+	tspan.time = - span->time;
 
-	tspan.month = -span->month;
-	tspan.time = -span->time;
-
-	result = timestamp_pl_span(timestamp, &tspan);
-
-	return result;
-}	/* timestamp_mi_span() */
+	return DirectFunctionCall2(timestamp_pl_span,
+							   TimestampGetDatum(timestamp),
+							   PointerGetDatum(&tspan));
+}
 
 
-Interval   *
-interval_um(Interval *interval)
+Datum
+interval_um(PG_FUNCTION_ARGS)
 {
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 	Interval   *result;
 
-	if (!PointerIsValid(interval))
-		return NULL;
-
-	result = palloc(sizeof(Interval));
+	result = (Interval *) palloc(sizeof(Interval));
 
 	result->time = -(interval->time);
 	result->month = -(interval->month);
 
-	return result;
-}	/* interval_um() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
 
-Interval   *
-interval_smaller(Interval *interval1, Interval *interval2)
+Datum
+interval_smaller(PG_FUNCTION_ARGS)
 {
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
-
 	double		span1,
 				span2;
 
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return NULL;
-
-	result = palloc(sizeof(Interval));
+	result = (Interval *) palloc(sizeof(Interval));
 
 	if (INTERVAL_IS_INVALID(*interval1))
 	{
 		result->time = interval2->time;
 		result->month = interval2->month;
-
 	}
 	else if (INTERVAL_IS_INVALID(*interval2))
 	{
 		result->time = interval1->time;
 		result->month = interval1->month;
-
 	}
 	else
 	{
@@ -1175,7 +1080,6 @@ interval_smaller(Interval *interval1, Interval *interval2)
 		{
 			result->time = interval2->time;
 			result->month = interval2->month;
-
 		}
 		else
 		{
@@ -1184,33 +1088,29 @@ interval_smaller(Interval *interval1, Interval *interval2)
 		}
 	}
 
-	return result;
-}	/* interval_smaller() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
-Interval   *
-interval_larger(Interval *interval1, Interval *interval2)
+Datum
+interval_larger(PG_FUNCTION_ARGS)
 {
+	Interval   *interval1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *interval2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
-
 	double		span1,
 				span2;
 
-	if (!PointerIsValid(interval1) || !PointerIsValid(interval2))
-		return NULL;
-
-	result = palloc(sizeof(Interval));
+	result = (Interval *) palloc(sizeof(Interval));
 
 	if (INTERVAL_IS_INVALID(*interval1))
 	{
 		result->time = interval2->time;
 		result->month = interval2->month;
-
 	}
 	else if (INTERVAL_IS_INVALID(*interval2))
 	{
 		result->time = interval1->time;
 		result->month = interval1->month;
-
 	}
 	else
 	{
@@ -1225,7 +1125,6 @@ interval_larger(Interval *interval1, Interval *interval2)
 		{
 			result->time = interval2->time;
 			result->month = interval2->month;
-
 		}
 		else
 		{
@@ -1234,92 +1133,90 @@ interval_larger(Interval *interval1, Interval *interval2)
 		}
 	}
 
-	return result;
-}	/* interval_larger() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
 
-Interval   *
-interval_pl(Interval *span1, Interval *span2)
+Datum
+interval_pl(PG_FUNCTION_ARGS)
 {
+	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *span2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 
-	if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
-		return NULL;
-
-	result = palloc(sizeof(Interval));
+	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = (span1->month + span2->month);
 	result->time = JROUND(span1->time + span2->time);
 
-	return result;
-}	/* interval_pl() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
-Interval   *
-interval_mi(Interval *span1, Interval *span2)
+Datum
+interval_mi(PG_FUNCTION_ARGS)
 {
+	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
+	Interval   *span2 = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
 
-	if ((!PointerIsValid(span1)) || (!PointerIsValid(span2)))
-		return NULL;
-
-	result = palloc(sizeof(Interval));
+	result = (Interval *) palloc(sizeof(Interval));
 
 	result->month = (span1->month - span2->month);
 	result->time = JROUND(span1->time - span2->time);
 
-	return result;
-}	/* interval_mi() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
-Interval   *
-interval_mul(Interval *span1, float8 *factor)
+Datum
+interval_mul(PG_FUNCTION_ARGS)
 {
+	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
+	float8		factor = PG_GETARG_FLOAT8(1);
 	Interval   *result;
 	double		months;
 
-	if ((!PointerIsValid(span1)) || (!PointerIsValid(factor)))
-		return NULL;
+	result = (Interval *) palloc(sizeof(Interval));
 
-	if (!PointerIsValid(result = palloc(sizeof(Interval))))
-		elog(ERROR, "Memory allocation failed, can't multiply interval");
-
-	months = (span1->month * *factor);
+	months = (span1->month * factor);
 	result->month = rint(months);
-	result->time = JROUND(span1->time * *factor);
+	result->time = JROUND(span1->time * factor);
 	/* evaluate fractional months as 30 days */
 	result->time += JROUND((months - result->month) * 30 * 86400);
 
-	return result;
-}	/* interval_mul() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
-Interval   *
-mul_d_interval(float8 *factor, Interval *span1)
+Datum
+mul_d_interval(PG_FUNCTION_ARGS)
 {
-	return interval_mul(span1, factor);
-}	/* mul_d_interval() */
+	/* Args are float8 and Interval *, but leave them as generic Datum */
+	Datum		factor = PG_GETARG_DATUM(0);
+	Datum		span1 = PG_GETARG_DATUM(1);
 
-Interval   *
-interval_div(Interval *span1, float8 *factor)
+	return DirectFunctionCall2(interval_mul, span1, factor);
+}
+
+Datum
+interval_div(PG_FUNCTION_ARGS)
 {
+	Interval   *span1 = PG_GETARG_INTERVAL_P(0);
+	float8		factor = PG_GETARG_FLOAT8(1);
 	Interval   *result;
 	double		months;
 
-	if ((!PointerIsValid(span1)) || (!PointerIsValid(factor)))
-		return NULL;
+	result = (Interval *) palloc(sizeof(Interval));
 
-	if (!PointerIsValid(result = palloc(sizeof(Interval))))
-		elog(ERROR, "Memory allocation failed, can't divide interval");
-
-	if (*factor == 0.0)
+	if (factor == 0.0)
 		elog(ERROR, "interval_div:  divide by 0.0 error");
 
-	months = (span1->month / *factor);
+	months = (span1->month / factor);
 	result->month = rint(months);
-	result->time = JROUND(span1->time / *factor);
+	result->time = JROUND(span1->time / factor);
 	/* evaluate fractional months as 30 days */
 	result->time += JROUND((months - result->month) * 30 * 86400);
 
-	return result;
-}	/* interval_div() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
 /* timestamp_age()
  * Calculate time difference while retaining year/month fields.
@@ -1327,13 +1224,12 @@ interval_div(Interval *span1, float8 *factor)
  *	since year and month are out of context once the arithmetic
  *	is done.
  */
-Interval   *
-timestamp_age(Timestamp *timestamp1, Timestamp *timestamp2)
+Datum
+timestamp_age(PG_FUNCTION_ARGS)
 {
+	Timestamp	dt1 = PG_GETARG_TIMESTAMP(0);
+	Timestamp	dt2 = PG_GETARG_TIMESTAMP(1);
 	Interval   *result;
-
-	Timestamp	dt1,
-				dt2;
 	double		fsec,
 				fsec1,
 				fsec2;
@@ -1344,13 +1240,7 @@ timestamp_age(Timestamp *timestamp1, Timestamp *timestamp2)
 	struct tm	tt2,
 			   *tm2 = &tt2;
 
-	if (!PointerIsValid(timestamp1) || !PointerIsValid(timestamp2))
-		return NULL;
-
-	result = palloc(sizeof(Interval));
-
-	dt1 = *timestamp1;
-	dt2 = *timestamp2;
+	result = (Interval *) palloc(sizeof(Interval));
 
 	if (TIMESTAMP_IS_RELATIVE(dt1))
 		dt1 = SetTimestamp(dt1);
@@ -1361,7 +1251,6 @@ timestamp_age(Timestamp *timestamp1, Timestamp *timestamp2)
 		|| TIMESTAMP_IS_INVALID(dt2))
 	{
 		TIMESTAMP_INVALID(result->time);
-
 	}
 	else if ((timestamp2tm(dt1, NULL, tm1, &fsec1, NULL) == 0)
 			 && (timestamp2tm(dt2, NULL, tm2, &fsec2, NULL) == 0))
@@ -1438,13 +1327,12 @@ timestamp_age(Timestamp *timestamp1, Timestamp *timestamp2)
 
 		if (tm2interval(tm, fsec, result) != 0)
 			elog(ERROR, "Unable to decode timestamp");
-
 	}
 	else
 		elog(ERROR, "Unable to decode timestamp");
 
-	return result;
-}	/* timestamp_age() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
 
 /*----------------------------------------------------------
@@ -1455,20 +1343,16 @@ timestamp_age(Timestamp *timestamp1, Timestamp *timestamp2)
 /* timestamp_text()
  * Convert timestamp to text data type.
  */
-text *
-timestamp_text(Timestamp *timestamp)
+Datum
+timestamp_text(PG_FUNCTION_ARGS)
 {
+	/* Input is a Timestamp, but may as well leave it in Datum form */
+	Datum		timestamp = PG_GETARG_DATUM(0);
 	text	   *result;
 	char	   *str;
 	int			len;
 
-	if (!PointerIsValid(timestamp))
-		return NULL;
-
-	str = timestamp_out(timestamp);
-
-	if (!PointerIsValid(str))
-		return NULL;
+	str = DatumGetCString(DirectFunctionCall1(timestamp_out, timestamp));
 
 	len = (strlen(str) + VARHDRSZ);
 
@@ -1479,8 +1363,8 @@ timestamp_text(Timestamp *timestamp)
 
 	pfree(str);
 
-	return result;
-}	/* timestamp_text() */
+	PG_RETURN_TEXT_P(result);
+}
 
 
 /* text_timestamp()
@@ -1488,17 +1372,17 @@ timestamp_text(Timestamp *timestamp)
  * Text type is not null terminated, so use temporary string
  *	then call the standard input routine.
  */
-Timestamp  *
-text_timestamp(text *str)
+Datum
+text_timestamp(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
+	text	   *str = PG_GETARG_TEXT_P(0);
 	int			i;
 	char	   *sp,
 			   *dp,
 				dstr[MAXDATELEN + 1];
 
-	if (!PointerIsValid(str))
-		return NULL;
+	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Bad timestamp external representation (too long)");
 
 	sp = VARDATA(str);
 	dp = dstr;
@@ -1506,29 +1390,24 @@ text_timestamp(text *str)
 		*dp++ = *sp++;
 	*dp = '\0';
 
-	result = timestamp_in(dstr);
-
-	return result;
-}	/* text_timestamp() */
+	return DirectFunctionCall1(timestamp_in,
+							   CStringGetDatum(dstr));
+}
 
 
 /* interval_text()
  * Convert interval to text data type.
  */
-text *
-interval_text(Interval *interval)
+Datum
+interval_text(PG_FUNCTION_ARGS)
 {
+	Interval   *interval = PG_GETARG_INTERVAL_P(0);
 	text	   *result;
 	char	   *str;
 	int			len;
 
-	if (!PointerIsValid(interval))
-		return NULL;
-
-	str = interval_out(interval);
-
-	if (!PointerIsValid(str))
-		return NULL;
+	str = DatumGetCString(DirectFunctionCall1(interval_out,
+											  IntervalPGetDatum(interval)));
 
 	len = (strlen(str) + VARHDRSZ);
 
@@ -1539,8 +1418,8 @@ interval_text(Interval *interval)
 
 	pfree(str);
 
-	return result;
-}	/* interval_text() */
+	PG_RETURN_TEXT_P(result);
+}
 
 
 /* text_interval()
@@ -1548,37 +1427,35 @@ interval_text(Interval *interval)
  * Text type may not be null terminated, so copy to temporary string
  *	then call the standard input routine.
  */
-Interval   *
-text_interval(text *str)
+Datum
+text_interval(PG_FUNCTION_ARGS)
 {
-	Interval   *result;
+	text	   *str = PG_GETARG_TEXT_P(0);
 	int			i;
 	char	   *sp,
 			   *dp,
 				dstr[MAXDATELEN + 1];
 
-	if (!PointerIsValid(str))
-		return NULL;
-
+	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Bad interval external representation (too long)");
 	sp = VARDATA(str);
 	dp = dstr;
 	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
 		*dp++ = *sp++;
 	*dp = '\0';
 
-	result = interval_in(dstr);
-
-	return result;
-}	/* text_interval() */
+	return DirectFunctionCall1(interval_in, CStringGetDatum(dstr));
+}
 
 /* timestamp_trunc()
  * Extract specified field from timestamp.
  */
-Timestamp  *
-timestamp_trunc(text *units, Timestamp *timestamp)
+Datum
+timestamp_trunc(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
-
+	text	   *units = PG_GETARG_TEXT_P(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
+	Timestamp	result;
 	Timestamp	dt;
 	int			tz;
 	int			type,
@@ -1592,11 +1469,8 @@ timestamp_trunc(text *units, Timestamp *timestamp)
 	struct tm	tt,
 			   *tm = &tt;
 
-	if ((!PointerIsValid(units)) || (!PointerIsValid(timestamp)))
-		return NULL;
-
-	result = palloc(sizeof(Timestamp));
-
+	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Interval units '%s' not recognized", textout(units));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1605,18 +1479,18 @@ timestamp_trunc(text *units, Timestamp *timestamp)
 
 	type = DecodeUnits(0, lowunits, &val);
 
-	if (TIMESTAMP_NOT_FINITE(*timestamp))
+	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
 #if NOT_USED
 /* should return null but Postgres doesn't like that currently. - tgl 97/06/12 */
-		elog(ERROR, "Timestamp is not finite", NULL);
+		elog(ERROR, "Timestamp is not finite");
 #endif
-		*result = 0;
+		result = 0;
 
 	}
 	else
 	{
-		dt = (TIMESTAMP_IS_RELATIVE(*timestamp) ? SetTimestamp(*timestamp) : *timestamp);
+		dt = (TIMESTAMP_IS_RELATIVE(timestamp) ? SetTimestamp(timestamp) : timestamp);
 
 		if ((type == UNITS) && (timestamp2tm(dt, &tz, tm, &fsec, &tzn) == 0))
 		{
@@ -1654,7 +1528,7 @@ timestamp_trunc(text *units, Timestamp *timestamp)
 
 				default:
 					elog(ERROR, "Timestamp units '%s' not supported", lowunits);
-					result = NULL;
+					result = 0;
 			}
 
 			if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
@@ -1692,36 +1566,35 @@ timestamp_trunc(text *units, Timestamp *timestamp)
 				tz = 0;
 			}
 
-			if (tm2timestamp(tm, fsec, &tz, result) != 0)
+			if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 				elog(ERROR, "Unable to truncate timestamp to '%s'", lowunits);
-
-#if NOT_USED
 		}
+#if NOT_USED
 		else if ((type == RESERV) && (val == DTK_EPOCH))
 		{
-			TIMESTAMP_EPOCH(*result);
-			*result = dt - SetTimestamp(*result);
-#endif
-
+			TIMESTAMP_EPOCH(result);
+			result = dt - SetTimestamp(result);
 		}
+#endif
 		else
 		{
 			elog(ERROR, "Timestamp units '%s' not recognized", lowunits);
-			result = NULL;
+			result = 0;
 		}
 	}
 
-	return result;
-}	/* timestamp_trunc() */
+	PG_RETURN_TIMESTAMP(result);
+}
 
 /* interval_trunc()
  * Extract specified field from interval.
  */
-Interval   *
-interval_trunc(text *units, Interval *interval)
+Datum
+interval_trunc(PG_FUNCTION_ARGS)
 {
+	text	   *units = PG_GETARG_TEXT_P(0);
+	Interval   *interval = PG_GETARG_INTERVAL_P(1);
 	Interval   *result;
-
 	int			type,
 				val;
 	int			i;
@@ -1732,11 +1605,10 @@ interval_trunc(text *units, Interval *interval)
 	struct tm	tt,
 			   *tm = &tt;
 
-	if ((!PointerIsValid(units)) || (!PointerIsValid(interval)))
-		return NULL;
+	result = (Interval *) palloc(sizeof(Interval));
 
-	result = palloc(sizeof(Interval));
-
+	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Interval units '%s' not recognized", textout(units));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1748,14 +1620,12 @@ interval_trunc(text *units, Interval *interval)
 	if (INTERVAL_IS_INVALID(*interval))
 	{
 #if NOT_USED
-		elog(ERROR, "Interval is not finite", NULL);
+		elog(ERROR, "Interval is not finite");
 #endif
-		result = NULL;
-
+		PG_RETURN_NULL();
 	}
 	else if (type == UNITS)
 	{
-
 		if (interval2tm(*interval, tm, &fsec) == 0)
 		{
 			switch (val)
@@ -1792,7 +1662,7 @@ interval_trunc(text *units, Interval *interval)
 
 				default:
 					elog(ERROR, "Interval units '%s' not supported", lowunits);
-					result = NULL;
+					PG_RETURN_NULL();
 			}
 
 			if (tm2interval(tm, fsec, result) != 0)
@@ -1802,11 +1672,11 @@ interval_trunc(text *units, Interval *interval)
 		else
 		{
 			elog(NOTICE, "Interval out of range");
-			result = NULL;
+			PG_RETURN_NULL();
 		}
 
-#if NOT_USED
 	}
+#if NOT_USED
 	else if ((type == RESERV) && (val == DTK_EPOCH))
 	{
 		*result = interval->time;
@@ -1815,27 +1685,27 @@ interval_trunc(text *units, Interval *interval)
 			*result += ((365.25 * 86400) * (interval->month / 12));
 			*result += ((30 * 86400) * (interval->month % 12));
 		}
-#endif
-
 	}
+#endif
 	else
 	{
 		elog(ERROR, "Interval units '%s' not recognized", textout(units));
-		result = NULL;
+		PG_RETURN_NULL();
 	}
 
-	return result;
-}	/* interval_trunc() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
 
 /* timestamp_part()
  * Extract specified field from timestamp.
  */
-float64
-timestamp_part(text *units, Timestamp *timestamp)
+Datum
+timestamp_part(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
+	text	   *units = PG_GETARG_TEXT_P(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
+	float8		result;
 	Timestamp	dt;
 	int			tz;
 	int			type,
@@ -1850,11 +1720,8 @@ timestamp_part(text *units, Timestamp *timestamp)
 	struct tm	tt,
 			   *tm = &tt;
 
-	if ((!PointerIsValid(units)) || (!PointerIsValid(timestamp)))
-		return NULL;
-
-	result = palloc(sizeof(float64data));
-
+	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Interval units '%s' not recognized", textout(units));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -1865,67 +1732,66 @@ timestamp_part(text *units, Timestamp *timestamp)
 	if (type == IGNORE)
 		type = DecodeSpecial(0, lowunits, &val);
 
-	if (TIMESTAMP_NOT_FINITE(*timestamp))
+	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
 #if NOT_USED
 /* should return null but Postgres doesn't like that currently. - tgl 97/06/12 */
 		elog(ERROR, "Timestamp is not finite", NULL);
 #endif
-		*result = 0;
-
+		PG_RETURN_NULL();
 	}
 	else
 	{
-		dt = (TIMESTAMP_IS_RELATIVE(*timestamp) ? SetTimestamp(*timestamp) : *timestamp);
+		dt = (TIMESTAMP_IS_RELATIVE(timestamp) ? SetTimestamp(timestamp) : timestamp);
 
 		if ((type == UNITS) && (timestamp2tm(dt, &tz, tm, &fsec, &tzn) == 0))
 		{
 			switch (val)
 			{
 				case DTK_TZ:
-					*result = tz;
+					result = tz;
 					break;
 
 				case DTK_TZ_MINUTE:
-					*result = tz / 60;
-					TMODULO(*result, dummy, 60e0);
+					result = tz / 60;
+					TMODULO(result, dummy, 60e0);
 					break;
 
 				case DTK_TZ_HOUR:
 					dummy = tz;
-					TMODULO(dummy, *result, 3600e0);
+					TMODULO(dummy, result, 3600e0);
 					break;
 
 				case DTK_MICROSEC:
-					*result = (fsec * 1000000);
+					result = (fsec * 1000000);
 					break;
 
 				case DTK_MILLISEC:
-					*result = (fsec * 1000);
+					result = (fsec * 1000);
 					break;
 
 				case DTK_SECOND:
-					*result = (tm->tm_sec + fsec);
+					result = (tm->tm_sec + fsec);
 					break;
 
 				case DTK_MINUTE:
-					*result = tm->tm_min;
+					result = tm->tm_min;
 					break;
 
 				case DTK_HOUR:
-					*result = tm->tm_hour;
+					result = tm->tm_hour;
 					break;
 
 				case DTK_DAY:
-					*result = tm->tm_mday;
+					result = tm->tm_mday;
 					break;
 
 				case DTK_MONTH:
-					*result = tm->tm_mon;
+					result = tm->tm_mon;
 					break;
 
 				case DTK_QUARTER:
-					*result = (tm->tm_mon / 4) + 1;
+					result = (tm->tm_mon / 4) + 1;
 					break;
 
 				case DTK_WEEK:
@@ -1945,40 +1811,40 @@ timestamp_part(text *units, Timestamp *timestamp)
 							/* day0 == offset to first day of week (Monday) */
 							day0 = (j2day(day4 - 1) % 7);
 						}
-						*result = (((dayn - (day4 - day0)) / 7) + 1);
+						result = (((dayn - (day4 - day0)) / 7) + 1);
 						/* Sometimes the last few days in a year will fall into
 						 * the first week of the next year, so check for this.
 						 */
-						if (*result >= 53)
+						if (result >= 53)
 						{
 							day4 = date2j((tm->tm_year + 1), 1, 4);
 							/* day0 == offset to first day of week (Monday) */
 							day0 = (j2day(day4 - 1) % 7);
 							if (dayn >= (day4 - day0))
-								*result = (((dayn - (day4 - day0)) / 7) + 1);
+								result = (((dayn - (day4 - day0)) / 7) + 1);
 						}
 					}
 					break;
 
 				case DTK_YEAR:
-					*result = tm->tm_year;
+					result = tm->tm_year;
 					break;
 
 				case DTK_DECADE:
-					*result = (tm->tm_year / 10);
+					result = (tm->tm_year / 10);
 					break;
 
 				case DTK_CENTURY:
-					*result = (tm->tm_year / 100);
+					result = (tm->tm_year / 100);
 					break;
 
 				case DTK_MILLENNIUM:
-					*result = (tm->tm_year / 1000);
+					result = (tm->tm_year / 1000);
 					break;
 
 				default:
 					elog(ERROR, "Timestamp units '%s' not supported", lowunits);
-					*result = 0;
+					result = 0;
 			}
 
 		}
@@ -1987,50 +1853,51 @@ timestamp_part(text *units, Timestamp *timestamp)
 			switch (val)
 			{
 				case DTK_EPOCH:
-					TIMESTAMP_EPOCH(*result);
-					*result = dt - SetTimestamp(*result);
+					TIMESTAMP_EPOCH(result);
+					result = dt - SetTimestamp(result);
 					break;
 
 				case DTK_DOW:
 					if (timestamp2tm(dt, &tz, tm, &fsec, &tzn) != 0)
 						elog(ERROR, "Unable to encode timestamp");
 
-					*result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
+					result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 					break;
 
 				case DTK_DOY:
 					if (timestamp2tm(dt, &tz, tm, &fsec, &tzn) != 0)
 						elog(ERROR, "Unable to encode timestamp");
 
-					*result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
+					result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)
 							   - date2j(tm->tm_year, 1, 1) + 1);
 					break;
 
 				default:
 					elog(ERROR, "Timestamp units '%s' not supported", lowunits);
-					*result = 0;
+					result = 0;
 			}
 
 		}
 		else
 		{
 			elog(ERROR, "Timestamp units '%s' not recognized", lowunits);
-			*result = 0;
+			result = 0;
 		}
 	}
 
-	return result;
-}	/* timestamp_part() */
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /* interval_part()
  * Extract specified field from interval.
  */
-float64
-interval_part(text *units, Interval *interval)
+Datum
+interval_part(PG_FUNCTION_ARGS)
 {
-	float64		result;
-
+	text	   *units = PG_GETARG_TEXT_P(0);
+	Interval   *interval = PG_GETARG_INTERVAL_P(1);
+	float8		result;
 	int			type,
 				val;
 	int			i;
@@ -2041,11 +1908,8 @@ interval_part(text *units, Interval *interval)
 	struct tm	tt,
 			   *tm = &tt;
 
-	if ((!PointerIsValid(units)) || (!PointerIsValid(interval)))
-		return NULL;
-
-	result = palloc(sizeof(float64data));
-
+	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Interval units '%s' not recognized", textout(units));
 	up = VARDATA(units);
 	lp = lowunits;
 	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
@@ -2061,105 +1925,103 @@ interval_part(text *units, Interval *interval)
 #if NOT_USED
 		elog(ERROR, "Interval is not finite");
 #endif
-		*result = 0;
-
+		result = 0;
 	}
 	else if (type == UNITS)
 	{
-
 		if (interval2tm(*interval, tm, &fsec) == 0)
 		{
 			switch (val)
 			{
 				case DTK_MICROSEC:
-					*result = (fsec * 1000000);
+					result = (fsec * 1000000);
 					break;
 
 				case DTK_MILLISEC:
-					*result = (fsec * 1000);
+					result = (fsec * 1000);
 					break;
 
 				case DTK_SECOND:
-					*result = (tm->tm_sec + fsec);
+					result = (tm->tm_sec + fsec);
 					break;
 
 				case DTK_MINUTE:
-					*result = tm->tm_min;
+					result = tm->tm_min;
 					break;
 
 				case DTK_HOUR:
-					*result = tm->tm_hour;
+					result = tm->tm_hour;
 					break;
 
 				case DTK_DAY:
-					*result = tm->tm_mday;
+					result = tm->tm_mday;
 					break;
 
 				case DTK_MONTH:
-					*result = tm->tm_mon;
+					result = tm->tm_mon;
 					break;
 
 				case DTK_QUARTER:
-					*result = (tm->tm_mon / 4) + 1;
+					result = (tm->tm_mon / 4) + 1;
 					break;
 
 				case DTK_YEAR:
-					*result = tm->tm_year;
+					result = tm->tm_year;
 					break;
 
 				case DTK_DECADE:
-					*result = (tm->tm_year / 10);
+					result = (tm->tm_year / 10);
 					break;
 
 				case DTK_CENTURY:
-					*result = (tm->tm_year / 100);
+					result = (tm->tm_year / 100);
 					break;
 
 				case DTK_MILLENNIUM:
-					*result = (tm->tm_year / 1000);
+					result = (tm->tm_year / 1000);
 					break;
 
 				default:
-					elog(ERROR, "Interval units '%s' not yet supported", textout(units));
-					result = NULL;
+					elog(ERROR, "Interval units '%s' not yet supported",
+						 textout(units));
+					result = 0;
 			}
 
 		}
 		else
 		{
 			elog(NOTICE, "Interval out of range");
-			*result = 0;
+			result = 0;
 		}
-
 	}
 	else if ((type == RESERV) && (val == DTK_EPOCH))
 	{
-		*result = interval->time;
+		result = interval->time;
 		if (interval->month != 0)
 		{
-			*result += ((365.25 * 86400) * (interval->month / 12));
-			*result += ((30 * 86400) * (interval->month % 12));
+			result += ((365.25 * 86400) * (interval->month / 12));
+			result += ((30 * 86400) * (interval->month % 12));
 		}
-
 	}
 	else
 	{
 		elog(ERROR, "Interval units '%s' not recognized", textout(units));
-		*result = 0;
+		result = 0;
 	}
 
-	return result;
-}	/* interval_part() */
+	PG_RETURN_FLOAT8(result);
+}
 
 
 /* timestamp_zone()
  * Encode timestamp type with specified time zone.
  */
-text *
-timestamp_zone(text *zone, Timestamp *timestamp)
+Datum
+timestamp_zone(PG_FUNCTION_ARGS)
 {
+	text	   *zone = PG_GETARG_TEXT_P(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	text	   *result;
-
 	Timestamp	dt;
 	int			tz;
 	int			type,
@@ -2176,9 +2038,8 @@ timestamp_zone(text *zone, Timestamp *timestamp)
 	char		buf[MAXDATELEN + 1];
 	int			len;
 
-	if ((!PointerIsValid(zone)) || (!PointerIsValid(timestamp)))
-		return NULL;
-
+	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
+		elog(ERROR, "Time zone '%s' not recognized", textout(zone));
 	up = VARDATA(zone);
 	lp = lowzone;
 	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
@@ -2187,23 +2048,24 @@ timestamp_zone(text *zone, Timestamp *timestamp)
 
 	type = DecodeSpecial(0, lowzone, &val);
 
-	if (TIMESTAMP_NOT_FINITE(*timestamp))
+	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
 
 		/*
 		 * could return null but Postgres doesn't like that currently. -
 		 * tgl 97/06/12
+		 *
+		 * Could do it now if you wanted ... the other tgl 2000/06/08
 		 */
 		elog(ERROR, "Timestamp is not finite");
 		result = NULL;
-
 	}
 	else if ((type == TZ) || (type == DTZ))
 	{
 		tm->tm_isdst = ((type == DTZ) ? 1 : 0);
 		tz = val * 60;
 
-		dt = (TIMESTAMP_IS_RELATIVE(*timestamp) ? SetTimestamp(*timestamp) : *timestamp);
+		dt = (TIMESTAMP_IS_RELATIVE(timestamp) ? SetTimestamp(timestamp) : timestamp);
 		dt = dt2local(dt, tz);
 
 		if (timestamp2tm(dt, NULL, tm, &fsec, NULL) != 0)
@@ -2224,7 +2086,6 @@ timestamp_zone(text *zone, Timestamp *timestamp)
 
 		VARSIZE(result) = len;
 		memmove(VARDATA(result), buf, (len - VARHDRSZ));
-
 	}
 	else
 	{
@@ -2232,5 +2093,5 @@ timestamp_zone(text *zone, Timestamp *timestamp)
 		result = NULL;
 	}
 
-	return result;
-}	/* timestamp_zone() */
+	PG_RETURN_TEXT_P(result);
+}

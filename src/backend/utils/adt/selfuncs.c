@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.69 2000/06/05 07:28:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.70 2000/06/09 01:11:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1038,14 +1038,16 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 	switch (typid)
 	{
 		case TIMESTAMPOID:
-			return *((Timestamp *) DatumGetPointer(value));
+			return DatumGetTimestamp(value);
 		case ABSTIMEOID:
-			return *abstime_timestamp(value);
+			return DatumGetTimestamp(DirectFunctionCall1(abstime_timestamp,
+														 value));
 		case DATEOID:
-			return *date_timestamp(value);
+			return DatumGetTimestamp(DirectFunctionCall1(date_timestamp,
+														 value));
 		case INTERVALOID:
 		{
-			Interval   *interval = (Interval *) DatumGetPointer(value);
+			Interval   *interval = DatumGetIntervalP(value);
 
 			/*
 			 * Convert the month part of Interval to days using
@@ -1056,17 +1058,17 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 				interval->month * (365.25 / 12.0 * 24.0 * 60.0 * 60.0);
 		}
 		case RELTIMEOID:
-			return (RelativeTime) DatumGetInt32(value);
+			return DatumGetRelativeTime(value);
 		case TINTERVALOID:
 		{
-			TimeInterval interval = (TimeInterval) DatumGetPointer(value);
+			TimeInterval interval = DatumGetTimeInterval(value);
 
 			if (interval->status != 0)
 				return interval->data[1] - interval->data[0];
 			return 0;			/* for lack of a better idea */
 		}
 		case TIMEOID:
-			return *((TimeADT *) DatumGetPointer(value));
+			return DatumGetTimeADT(value);
 	}
 	/* Can't get here unless someone tries to use scalarltsel/scalargtsel
 	 * on an operator with one timevalue and one non-timevalue operand.

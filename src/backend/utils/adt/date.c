@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.44 2000/04/12 17:15:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.45 2000/06/09 01:11:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,10 @@ static int
 /* date_in()
  * Given date text string, convert to internal date format.
  */
-DateADT
-date_in(char *str)
+Datum
+date_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	DateADT		date;
 	double		fsec;
 	struct tm	tt,
@@ -47,11 +48,8 @@ date_in(char *str)
 	int			ftype[MAXDATEFIELDS];
 	char		lowstr[MAXDATELEN + 1];
 
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) date external representation");
-
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
-	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
+		|| (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
 		elog(ERROR, "Bad date external representation '%s'", str);
 
 	switch (dtype)
@@ -75,15 +73,16 @@ date_in(char *str)
 
 	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
-	return date;
-}	/* date_in() */
+	PG_RETURN_DATEADT(date);
+}
 
 /* date_out()
  * Given internal format date, convert to text string.
  */
-char *
-date_out(DateADT date)
+Datum
+date_out(PG_FUNCTION_ARGS)
 {
+	DateADT		date = PG_GETARG_DATEADT(0);
 	char	   *result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -94,128 +93,160 @@ date_out(DateADT date)
 
 	EncodeDateOnly(tm, DateStyle, buf);
 
-	result = palloc(strlen(buf) + 1);
-
-	strcpy(result, buf);
-
-	return result;
-}	/* date_out() */
-
-bool
-date_eq(DateADT dateVal1, DateADT dateVal2)
-{
-	return dateVal1 == dateVal2;
+	result = pstrdup(buf);
+	PG_RETURN_CSTRING(result);
 }
 
-bool
-date_ne(DateADT dateVal1, DateADT dateVal2)
+Datum
+date_eq(PG_FUNCTION_ARGS)
 {
-	return dateVal1 != dateVal2;
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
+
+	PG_RETURN_BOOL(dateVal1 == dateVal2);
 }
 
-bool
-date_lt(DateADT dateVal1, DateADT dateVal2)
+Datum
+date_ne(PG_FUNCTION_ARGS)
 {
-	return dateVal1 < dateVal2;
-}	/* date_lt() */
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
 
-bool
-date_le(DateADT dateVal1, DateADT dateVal2)
-{
-	return dateVal1 <= dateVal2;
-}	/* date_le() */
+	PG_RETURN_BOOL(dateVal1 != dateVal2);
+}
 
-bool
-date_gt(DateADT dateVal1, DateADT dateVal2)
+Datum
+date_lt(PG_FUNCTION_ARGS)
 {
-	return dateVal1 > dateVal2;
-}	/* date_gt() */
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
 
-bool
-date_ge(DateADT dateVal1, DateADT dateVal2)
-{
-	return dateVal1 >= dateVal2;
-}	/* date_ge() */
+	PG_RETURN_BOOL(dateVal1 < dateVal2);
+}
 
-int
-date_cmp(DateADT dateVal1, DateADT dateVal2)
+Datum
+date_le(PG_FUNCTION_ARGS)
 {
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
+
+	PG_RETURN_BOOL(dateVal1 <= dateVal2);
+}
+
+Datum
+date_gt(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
+
+	PG_RETURN_BOOL(dateVal1 > dateVal2);
+}
+
+Datum
+date_ge(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
+
+	PG_RETURN_BOOL(dateVal1 >= dateVal2);
+}
+
+Datum
+date_cmp(PG_FUNCTION_ARGS)
+{
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
+
 	if (dateVal1 < dateVal2)
-		return -1;
+		PG_RETURN_INT32(-1);
 	else if (dateVal1 > dateVal2)
-		return 1;
-	return 0;
-}	/* date_cmp() */
+		PG_RETURN_INT32(1);
+	PG_RETURN_INT32(0);
+}
 
-DateADT
-date_larger(DateADT dateVal1, DateADT dateVal2)
+Datum
+date_larger(PG_FUNCTION_ARGS)
 {
-	return date_gt(dateVal1, dateVal2) ? dateVal1 : dateVal2;
-}	/* date_larger() */
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
 
-DateADT
-date_smaller(DateADT dateVal1, DateADT dateVal2)
+	PG_RETURN_DATEADT((dateVal1 > dateVal2) ? dateVal1 : dateVal2);
+}
+
+Datum
+date_smaller(PG_FUNCTION_ARGS)
 {
-	return date_lt(dateVal1, dateVal2) ? dateVal1 : dateVal2;
-}	/* date_smaller() */
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
+
+	PG_RETURN_DATEADT((dateVal1 < dateVal2) ? dateVal1 : dateVal2);
+}
 
 /* Compute difference between two dates in days.
  */
-int4
-date_mi(DateADT dateVal1, DateADT dateVal2)
+Datum
+date_mi(PG_FUNCTION_ARGS)
 {
-	return dateVal1 - dateVal2;
-}	/* date_mi() */
+	DateADT		dateVal1 = PG_GETARG_DATEADT(0);
+	DateADT		dateVal2 = PG_GETARG_DATEADT(1);
+
+	PG_RETURN_INT32((int32) (dateVal1 - dateVal2));
+}
 
 /* Add a number of days to a date, giving a new date.
  * Must handle both positive and negative numbers of days.
  */
-DateADT
-date_pli(DateADT dateVal, int4 days)
+Datum
+date_pli(PG_FUNCTION_ARGS)
 {
-	return dateVal + days;
-}	/* date_pli() */
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	int32		days = PG_GETARG_INT32(1);
+
+	PG_RETURN_DATEADT(dateVal + days);
+}
 
 /* Subtract a number of days from a date, giving a new date.
  */
-DateADT
-date_mii(DateADT dateVal, int4 days)
+Datum
+date_mii(PG_FUNCTION_ARGS)
 {
-	return date_pli(dateVal, -days);
-}	/* date_mii() */
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	int32		days = PG_GETARG_INT32(1);
 
+	PG_RETURN_DATEADT(dateVal - days);
+}
 
 /* date_timestamp()
  * Convert date to timestamp data type.
  */
-Timestamp  *
-date_timestamp(DateADT dateVal)
+Datum
+date_timestamp(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
+	DateADT		dateVal = PG_GETARG_DATEADT(0);
+	Timestamp	result;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
 	double		fsec = 0;
 	char	   *tzn;
 
-	result = palloc(sizeof(*result));
-
 	if (date2tm(dateVal, &tz, tm, &fsec, &tzn) != 0)
 		elog(ERROR, "Unable to convert date to timestamp");
 
-	if (tm2timestamp(tm, fsec, &tz, result) != 0)
+	if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 		elog(ERROR, "Timestamp out of range");
 
-	return result;
-}	/* date_timestamp() */
+	PG_RETURN_TIMESTAMP(result);
+}
 
 
 /* timestamp_date()
  * Convert timestamp to date data type.
  */
-DateADT
-timestamp_date(Timestamp *timestamp)
+Datum
+timestamp_date(PG_FUNCTION_ARGS)
 {
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -223,40 +254,36 @@ timestamp_date(Timestamp *timestamp)
 	double		fsec;
 	char	   *tzn;
 
-	if (!PointerIsValid(timestamp))
-		elog(ERROR, "Unable to convert null timestamp to date");
-
-	if (TIMESTAMP_NOT_FINITE(*timestamp))
+	if (TIMESTAMP_NOT_FINITE(timestamp))
 		elog(ERROR, "Unable to convert timestamp to date");
 
-	if (TIMESTAMP_IS_EPOCH(*timestamp))
+	if (TIMESTAMP_IS_EPOCH(timestamp))
 	{
-		timestamp2tm(SetTimestamp(*timestamp), NULL, tm, &fsec, NULL);
-
+		timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
 	}
-	else if (TIMESTAMP_IS_CURRENT(*timestamp))
+	else if (TIMESTAMP_IS_CURRENT(timestamp))
 	{
-		timestamp2tm(SetTimestamp(*timestamp), &tz, tm, &fsec, &tzn);
-
+		timestamp2tm(SetTimestamp(timestamp), &tz, tm, &fsec, &tzn);
 	}
 	else
 	{
-		if (timestamp2tm(*timestamp, &tz, tm, &fsec, &tzn) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
 			elog(ERROR, "Unable to convert timestamp to date");
 	}
 
-	result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
+	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 
-	return result;
-}	/* timestamp_date() */
+	PG_RETURN_DATEADT(result);
+}
 
 
 /* abstime_date()
  * Convert abstime to date data type.
  */
-DateADT
-abstime_date(AbsoluteTime abstime)
+Datum
+abstime_date(PG_FUNCTION_ARGS)
 {
+	AbsoluteTime abstime = PG_GETARG_ABSOLUTETIME(0);
 	DateADT		result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -289,8 +316,8 @@ abstime_date(AbsoluteTime abstime)
 			break;
 	}
 
-	return result;
-}	/* abstime_date() */
+	PG_RETURN_DATEADT(result);
+}
 
 
 /* date2tm()
@@ -372,243 +399,237 @@ date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn)
  *	 Time ADT
  *****************************************************************************/
 
-
-TimeADT    *
-time_in(char *str)
+Datum
+time_in(PG_FUNCTION_ARGS)
 {
-	TimeADT    *time;
-
+	char	   *str = PG_GETARG_CSTRING(0);
+	TimeADT		time;
 	double		fsec;
 	struct tm	tt,
 			   *tm = &tt;
-
 	int			nf;
 	char		lowstr[MAXDATELEN + 1];
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) time external representation");
-
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, NULL) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
 
-	time = palloc(sizeof(*time));
+	time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
-	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	PG_RETURN_TIMEADT(time);
+}
 
-	return time;
-}	/* time_in() */
-
-
-char *
-time_out(TimeADT *time)
+Datum
+time_out(PG_FUNCTION_ARGS)
 {
+	TimeADT		time = PG_GETARG_TIMEADT(0);
 	char	   *result;
 	struct tm	tt,
 			   *tm = &tt;
-
 	double		fsec;
 	char		buf[MAXDATELEN + 1];
 
-	if (!PointerIsValid(time))
-		return NULL;
-
-	tm->tm_hour = (*time / (60 * 60));
-	tm->tm_min = (((int) (*time / 60)) % 60);
-	tm->tm_sec = (((int) *time) % 60);
+	tm->tm_hour = (time / (60 * 60));
+	tm->tm_min = (((int) (time / 60)) % 60);
+	tm->tm_sec = (((int) time) % 60);
 
 	fsec = 0;
 
 	EncodeTimeOnly(tm, fsec, NULL, DateStyle, buf);
 
-	result = palloc(strlen(buf) + 1);
-
-	strcpy(result, buf);
-
-	return result;
-}	/* time_out() */
+	result = pstrdup(buf);
+	PG_RETURN_CSTRING(result);
+}
 
 
-bool
-time_eq(TimeADT *time1, TimeADT *time2)
+Datum
+time_eq(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
 
-	return *time1 == *time2;
-}	/* time_eq() */
+	PG_RETURN_BOOL(time1 == time2);
+}
 
-bool
-time_ne(TimeADT *time1, TimeADT *time2)
+Datum
+time_ne(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
 
-	return *time1 != *time2;
-}	/* time_eq() */
+	PG_RETURN_BOOL(time1 != time2);
+}
 
-bool
-time_lt(TimeADT *time1, TimeADT *time2)
+Datum
+time_lt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
 
-	return (*time1 < *time2);
-}	/* time_lt() */
+	PG_RETURN_BOOL(time1 < time2);
+}
 
-bool
-time_le(TimeADT *time1, TimeADT *time2)
+Datum
+time_le(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
 
-	return (*time1 <= *time2);
-}	/* time_le() */
+	PG_RETURN_BOOL(time1 <= time2);
+}
 
-bool
-time_gt(TimeADT *time1, TimeADT *time2)
+Datum
+time_gt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
 
-	return (*time1 > *time2);
-}	/* time_gt() */
+	PG_RETURN_BOOL(time1 > time2);
+}
 
-bool
-time_ge(TimeADT *time1, TimeADT *time2)
+Datum
+time_ge(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
 
-	return (*time1 >= *time2);
-}	/* time_ge() */
+	PG_RETURN_BOOL(time1 >= time2);
+}
 
-int
-time_cmp(TimeADT *time1, TimeADT *time2)
+Datum
+time_cmp(PG_FUNCTION_ARGS)
 {
-	return (*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0));
-}	/* time_cmp() */
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
 
-TimeADT    *
-time_larger(TimeADT *time1, TimeADT *time2)
-{
-	return time_gt(time1, time2) ? time1 : time2;
-}	/* time_larger() */
+	if (time1 < time2)
+		PG_RETURN_INT32(-1);
+	if (time1 > time2)
+		PG_RETURN_INT32(1);
+	PG_RETURN_INT32(0);
+}
 
-TimeADT    *
-time_smaller(TimeADT *time1, TimeADT *time2)
+Datum
+time_larger(PG_FUNCTION_ARGS)
 {
-	return time_lt(time1, time2) ? time1 : time2;
-}	/* time_smaller() */
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
+
+	PG_RETURN_TIMEADT((time1 > time2) ? time1 : time2);
+}
+
+Datum
+time_smaller(PG_FUNCTION_ARGS)
+{
+	TimeADT		time1 = PG_GETARG_TIMEADT(0);
+	TimeADT		time2 = PG_GETARG_TIMEADT(1);
+
+	PG_RETURN_TIMEADT((time1 < time2) ? time1 : time2);
+}
 
 /* overlaps_time()
  * Implements the SQL92 OVERLAPS operator.
  * Algorithm from Date and Darwen, 1997
  */
-bool
-overlaps_time(TimeADT *ts1, TimeADT *te1, TimeADT *ts2, TimeADT *te2)
+Datum
+overlaps_time(PG_FUNCTION_ARGS)
 {
+	TimeADT		ts1 = PG_GETARG_TIMEADT(0);
+	TimeADT		te1 = PG_GETARG_TIMEADT(1);
+	TimeADT		ts2 = PG_GETARG_TIMEADT(2);
+	TimeADT		te2 = PG_GETARG_TIMEADT(3);
+
 	/* Make sure we have ordered pairs... */
-	if (time_gt(ts1, te1))
+	if (ts1 > te1)
 	{
-		TimeADT    *tt = ts1;
+		TimeADT		tt = ts1;
 
 		ts1 = te1;
 		te1 = tt;
 	}
-	if (time_gt(ts2, te2))
+	if (ts2 > te2)
 	{
-		TimeADT    *tt = ts2;
+		TimeADT		tt = ts2;
 
 		ts2 = te2;
 		te2 = tt;
 	}
 
-	return ((time_gt(ts1, ts2) && (time_lt(ts1, te2) || time_lt(te1, te2)))
-	   || (time_gt(ts2, ts1) && (time_lt(ts2, te1) || time_lt(te2, te1)))
-			|| time_eq(ts1, ts2));
+	PG_RETURN_BOOL((ts1 > ts2 && (ts1 < te2 || te1 < te2)) ||
+				   (ts1 < ts2 && (ts2 < te1 || te2 < te1)) ||
+				   (ts1 == ts2));
 }
 
 /* timestamp_time()
  * Convert timestamp to time data type.
  */
-TimeADT    *
-timestamp_time(Timestamp *timestamp)
+Datum
+timestamp_time(PG_FUNCTION_ARGS)
 {
-	TimeADT    *result;
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	TimeADT		result;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
 	double		fsec;
 	char	   *tzn;
 
-	if (!PointerIsValid(timestamp))
-		elog(ERROR, "Unable to convert null timestamp to date");
-
-	if (TIMESTAMP_NOT_FINITE(*timestamp))
+	if (TIMESTAMP_NOT_FINITE(timestamp))
 		elog(ERROR, "Unable to convert timestamp to date");
 
-	if (TIMESTAMP_IS_EPOCH(*timestamp))
-		timestamp2tm(SetTimestamp(*timestamp), NULL, tm, &fsec, NULL);
-	else if (TIMESTAMP_IS_CURRENT(*timestamp))
-		timestamp2tm(SetTimestamp(*timestamp), &tz, tm, &fsec, &tzn);
+	if (TIMESTAMP_IS_EPOCH(timestamp))
+		timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
+	else if (TIMESTAMP_IS_CURRENT(timestamp))
+		timestamp2tm(SetTimestamp(timestamp), &tz, tm, &fsec, &tzn);
 	else
 	{
-		if (timestamp2tm(*timestamp, &tz, tm, &fsec, &tzn) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
 			elog(ERROR, "Unable to convert timestamp to date");
 	}
 
-	result = palloc(sizeof(*result));
+	result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
-	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
-
-	return result;
-}	/* timestamp_time() */
+	PG_RETURN_TIMEADT(result);
+}
 
 
 /* datetime_timestamp()
  * Convert date and time to timestamp data type.
  */
-Timestamp  *
-datetime_timestamp(DateADT date, TimeADT *time)
+Datum
+datetime_timestamp(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
+	DateADT		date = PG_GETARG_DATEADT(0);
+	TimeADT		time = PG_GETARG_TIMEADT(1);
+	Timestamp	result;
 
-	if (!PointerIsValid(time))
-	{
-		result = palloc(sizeof(*result));
-		TIMESTAMP_INVALID(*result);
-	}
-	else
-	{
-		result = date_timestamp(date);
-		*result += *time;
-	}
+	result = DatumGetTimestamp(DirectFunctionCall1(date_timestamp,
+												   DateADTGetDatum(date)));
+	result += time;
 
-	return result;
-}	/* datetime_timestamp() */
+	PG_RETURN_TIMESTAMP(result);
+}
 
 
 /* time_interval()
  * Convert time to interval data type.
  */
-Interval   *
-time_interval(TimeADT *time)
+Datum
+time_interval(PG_FUNCTION_ARGS)
 {
+	TimeADT		time = PG_GETARG_TIMEADT(0);
 	Interval   *result;
 
-	if (!PointerIsValid(time))
-		return NULL;
+	result = (Interval *) palloc(sizeof(Interval));
 
-	result = palloc(sizeof(*result));
-	result->time = *time;
+	result->time = time;
 	result->month = 0;
 
-	return result;
-}	/* time_interval() */
+	PG_RETURN_INTERVAL_P(result);
+}
 
 
 /*****************************************************************************
@@ -616,51 +637,43 @@ time_interval(TimeADT *time)
  *****************************************************************************/
 
 
-TimeTzADT  *
-timetz_in(char *str)
+Datum
+timetz_in(PG_FUNCTION_ARGS)
 {
+	char	   *str = PG_GETARG_CSTRING(0);
 	TimeTzADT  *time;
-
 	double		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
-
 	int			nf;
 	char		lowstr[MAXDATELEN + 1];
 	char	   *field[MAXDATEFIELDS];
 	int			dtype;
 	int			ftype[MAXDATEFIELDS];
 
-	if (!PointerIsValid(str))
-		elog(ERROR, "Bad (null) time external representation");
-
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
 
-	time = palloc(sizeof(*time));
+	time = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 	time->time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 	time->zone = tz;
 
-	return time;
-}	/* timetz_in() */
+	PG_RETURN_TIMETZADT_P(time);
+}
 
-
-char *
-timetz_out(TimeTzADT *time)
+Datum
+timetz_out(PG_FUNCTION_ARGS)
 {
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
 	char	   *result;
 	struct tm	tt,
 			   *tm = &tt;
-
 	double		fsec;
 	int			tz;
 	char		buf[MAXDATELEN + 1];
-
-	if (!PointerIsValid(time))
-		return NULL;
 
 	tm->tm_hour = (time->time / (60 * 60));
 	tm->tm_min = (((int) (time->time / 60)) % 60);
@@ -671,120 +684,164 @@ timetz_out(TimeTzADT *time)
 
 	EncodeTimeOnly(tm, fsec, &tz, DateStyle, buf);
 
-	result = palloc(strlen(buf) + 1);
-
-	strcpy(result, buf);
-
-	return result;
-}	/* timetz_out() */
+	result = pstrdup(buf);
+	PG_RETURN_CSTRING(result);
+}
 
 
-bool
-timetz_eq(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_eq(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	return ((time1->time + time1->zone) == (time2->time + time2->zone));
-}	/* timetz_eq() */
+	PG_RETURN_BOOL(((time1->time+time1->zone) == (time2->time+time2->zone)));
+}
 
-bool
-timetz_ne(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_ne(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	return ((time1->time + time1->zone) != (time2->time + time2->zone));
-}	/* timetz_ne() */
+	PG_RETURN_BOOL(((time1->time+time1->zone) != (time2->time+time2->zone)));
+}
 
-bool
-timetz_lt(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_lt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	return ((time1->time + time1->zone) < (time2->time + time2->zone));
-}	/* timetz_lt() */
+	PG_RETURN_BOOL(((time1->time+time1->zone) < (time2->time+time2->zone)));
+}
 
-bool
-timetz_le(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_le(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	return ((time1->time + time1->zone) <= (time2->time + time2->zone));
-}	/* timetz_le() */
+	PG_RETURN_BOOL(((time1->time+time1->zone) <= (time2->time+time2->zone)));
+}
 
-bool
-timetz_gt(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_gt(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	return ((time1->time + time1->zone) > (time2->time + time2->zone));
-}	/* timetz_gt() */
+	PG_RETURN_BOOL(((time1->time+time1->zone) > (time2->time+time2->zone)));
+}
 
-bool
-timetz_ge(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_ge(PG_FUNCTION_ARGS)
 {
-	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return FALSE;
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
 
-	return ((time1->time + time1->zone) >= (time2->time + time2->zone));
-}	/* timetz_ge() */
+	PG_RETURN_BOOL(((time1->time+time1->zone) >= (time2->time+time2->zone)));
+}
 
-int
-timetz_cmp(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_cmp(PG_FUNCTION_ARGS)
 {
-	return (timetz_lt(time1, time2) ? -1 : (timetz_gt(time1, time2) ? 1 : 0));
-}	/* timetz_cmp() */
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
 
-TimeTzADT  *
-timetz_larger(TimeTzADT *time1, TimeTzADT *time2)
-{
-	return timetz_gt(time1, time2) ? time1 : time2;
-}	/* timetz_larger() */
+	if (DatumGetBool(DirectFunctionCall2(timetz_lt,
+										 TimeTzADTPGetDatum(time1),
+										 TimeTzADTPGetDatum(time2))))
+		PG_RETURN_INT32(-1);
+	if (DatumGetBool(DirectFunctionCall2(timetz_gt,
+										 TimeTzADTPGetDatum(time1),
+										 TimeTzADTPGetDatum(time2))))
+		PG_RETURN_INT32(1);
+	PG_RETURN_INT32(0);
+}
 
-TimeTzADT  *
-timetz_smaller(TimeTzADT *time1, TimeTzADT *time2)
+Datum
+timetz_larger(PG_FUNCTION_ARGS)
 {
-	return timetz_lt(time1, time2) ? time1 : time2;
-}	/* timetz_smaller() */
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+
+	if (DatumGetBool(DirectFunctionCall2(timetz_gt,
+										 TimeTzADTPGetDatum(time1),
+										 TimeTzADTPGetDatum(time2))))
+		PG_RETURN_TIMETZADT_P(time1);
+	PG_RETURN_TIMETZADT_P(time2);
+}
+
+Datum
+timetz_smaller(PG_FUNCTION_ARGS)
+{
+	TimeTzADT   *time1 = PG_GETARG_TIMETZADT_P(0);
+	TimeTzADT   *time2 = PG_GETARG_TIMETZADT_P(1);
+
+	if (DatumGetBool(DirectFunctionCall2(timetz_lt,
+										 TimeTzADTPGetDatum(time1),
+										 TimeTzADTPGetDatum(time2))))
+		PG_RETURN_TIMETZADT_P(time1);
+	PG_RETURN_TIMETZADT_P(time2);
+}
 
 /* overlaps_timetz()
  * Implements the SQL92 OVERLAPS operator.
  * Algorithm from Date and Darwen, 1997
  */
-bool
-overlaps_timetz(TimeTzADT *ts1, TimeTzADT *te1, TimeTzADT *ts2, TimeTzADT *te2)
+Datum
+overlaps_timetz(PG_FUNCTION_ARGS)
 {
+	/* The arguments are TimeTzADT *, but we leave them as generic Datums
+	 * for convenience of notation.
+	 */
+	Datum		ts1 = PG_GETARG_DATUM(0);
+	Datum		te1 = PG_GETARG_DATUM(1);
+	Datum		ts2 = PG_GETARG_DATUM(2);
+	Datum		te2 = PG_GETARG_DATUM(3);
+
+#define TIMETZ_GT(t1,t2) \
+	DatumGetBool(DirectFunctionCall2(timetz_gt,t1,t2))
+#define TIMETZ_LT(t1,t2) \
+	DatumGetBool(DirectFunctionCall2(timetz_lt,t1,t2))
+#define TIMETZ_EQ(t1,t2) \
+	DatumGetBool(DirectFunctionCall2(timetz_eq,t1,t2))
+
 	/* Make sure we have ordered pairs... */
-	if (timetz_gt(ts1, te1))
+	if (TIMETZ_GT(ts1, te1))
 	{
-		TimeTzADT  *tt = ts1;
+		Datum		tt = ts1;
 
 		ts1 = te1;
 		te1 = tt;
 	}
-	if (timetz_gt(ts2, te2))
+	if (TIMETZ_GT(ts2, te2))
 	{
-		TimeTzADT  *tt = ts2;
+		Datum		tt = ts2;
 
 		ts2 = te2;
 		te2 = tt;
 	}
 
-	return ((timetz_gt(ts1, ts2) && (timetz_lt(ts1, te2) || timetz_lt(te1, te2)))
-			|| (timetz_gt(ts2, ts1) && (timetz_lt(ts2, te1) || timetz_lt(te2, te1)))
-			|| timetz_eq(ts1, ts2));
-}	/* overlaps_timetz() */
+	PG_RETURN_BOOL((TIMETZ_GT(ts1, ts2) &&
+					(TIMETZ_LT(ts1, te2) || TIMETZ_LT(te1, te2))) ||
+				   (TIMETZ_GT(ts2, ts1) &&
+					(TIMETZ_LT(ts2, te1) || TIMETZ_LT(te2, te1))) ||
+				   TIMETZ_EQ(ts1, ts2));
+
+#undef TIMETZ_GT
+#undef TIMETZ_LT
+#undef TIMETZ_EQ
+}
 
 /* timestamp_timetz()
  * Convert timestamp to timetz data type.
  */
-TimeTzADT  *
-timestamp_timetz(Timestamp *timestamp)
+Datum
+timestamp_timetz(PG_FUNCTION_ARGS)
 {
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeTzADT  *result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -792,32 +849,29 @@ timestamp_timetz(Timestamp *timestamp)
 	double		fsec;
 	char	   *tzn;
 
-	if (!PointerIsValid(timestamp))
-		elog(ERROR, "Unable to convert null timestamp to date");
-
-	if (TIMESTAMP_NOT_FINITE(*timestamp))
+	if (TIMESTAMP_NOT_FINITE(timestamp))
 		elog(ERROR, "Unable to convert timestamp to date");
 
-	if (TIMESTAMP_IS_EPOCH(*timestamp))
+	if (TIMESTAMP_IS_EPOCH(timestamp))
 	{
-		timestamp2tm(SetTimestamp(*timestamp), NULL, tm, &fsec, NULL);
+		timestamp2tm(SetTimestamp(timestamp), NULL, tm, &fsec, NULL);
 		tz = 0;
 	}
-	else if (TIMESTAMP_IS_CURRENT(*timestamp))
-		timestamp2tm(SetTimestamp(*timestamp), &tz, tm, &fsec, &tzn);
+	else if (TIMESTAMP_IS_CURRENT(timestamp))
+		timestamp2tm(SetTimestamp(timestamp), &tz, tm, &fsec, &tzn);
 	else
 	{
-		if (timestamp2tm(*timestamp, &tz, tm, &fsec, &tzn) != 0)
+		if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
 			elog(ERROR, "Unable to convert timestamp to date");
 	}
 
-	result = palloc(sizeof(*result));
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
 	result->time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 	result->zone = tz;
 
-	return result;
-}	/* timestamp_timetz() */
+	PG_RETURN_TIMETZADT_P(result);
+}
 
 
 /* datetimetz_timestamp()
@@ -826,30 +880,25 @@ timestamp_timetz(Timestamp *timestamp)
  * stored with the timetz to the result.
  * - thomas 2000-03-10
  */
-Timestamp  *
-datetimetz_timestamp(DateADT date, TimeTzADT *time)
+Datum
+datetimetz_timestamp(PG_FUNCTION_ARGS)
 {
-	Timestamp  *result;
+	DateADT		date = PG_GETARG_DATEADT(0);
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
+	Timestamp	result;
 	struct tm	tt,
 			   *tm = &tt;
 	int			tz;
 	double		fsec = 0;
 	char	   *tzn;
 
-	result = palloc(sizeof(*result));
+	if (date2tm(date, &tz, tm, &fsec, &tzn) != 0)
+		elog(ERROR, "Unable to convert date to timestamp");
 
-	if (!PointerIsValid(date) || !PointerIsValid(time))
-		TIMESTAMP_INVALID(*result);
-	else
-	{
-		if (date2tm(date, &tz, tm, &fsec, &tzn) != 0)
-			elog(ERROR, "Unable to convert date to timestamp");
+	if (tm2timestamp(tm, fsec, &time->zone, &result) != 0)
+		elog(ERROR, "Timestamp out of range");
 
-		if (tm2timestamp(tm, fsec, &time->zone, result) != 0)
-			elog(ERROR, "Timestamp out of range");
+	result += time->time;
 
-		*result += time->time;
-	}
-
-	return result;
-}	/* datetimetz_timestamp() */
+	PG_RETURN_TIMESTAMP(result);
+}

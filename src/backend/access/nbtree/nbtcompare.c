@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.35 2000/06/05 07:28:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.36 2000/06/09 01:11:01 tgl Exp $
  *
  * NOTES
  *
@@ -170,9 +170,12 @@ btoidvectorcmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-int32
-btabstimecmp(AbsoluteTime a, AbsoluteTime b)
+Datum
+btabstimecmp(PG_FUNCTION_ARGS)
 {
+	AbsoluteTime	a = PG_GETARG_ABSOLUTETIME(0);
+	AbsoluteTime	b = PG_GETARG_ABSOLUTETIME(1);
+
 	if (AbsoluteTimeIsBefore(a, b))
 		PG_RETURN_INT32(-1);
 	else if (AbsoluteTimeIsBefore(b, a))

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.114 2000/06/08 22:37:58 momjian Exp $
+ * $Id: builtins.h,v 1.115 2000/06/09 01:11:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,7 @@ extern Datum btfloat4cmp(PG_FUNCTION_ARGS);
 extern Datum btfloat8cmp(PG_FUNCTION_ARGS);
 extern Datum btoidcmp(PG_FUNCTION_ARGS);
 extern Datum btoidvectorcmp(PG_FUNCTION_ARGS);
-extern int32 btabstimecmp(AbsoluteTime a, AbsoluteTime b);
+extern Datum btabstimecmp(PG_FUNCTION_ARGS);
 extern Datum btcharcmp(PG_FUNCTION_ARGS);
 extern Datum btnamecmp(PG_FUNCTION_ARGS);
 extern Datum bttextcmp(PG_FUNCTION_ARGS);
@@ -309,8 +309,8 @@ extern Datum oidsrand(PG_FUNCTION_ARGS);
 extern Datum userfntest(PG_FUNCTION_ARGS);
 
 /* not_in.c */
-extern bool int4notin(int32 not_in_arg, char *relation_and_attr);
-extern bool oidnotin(Oid the_oid, char *compare);
+extern Datum int4notin(PG_FUNCTION_ARGS);
+extern Datum oidnotin(PG_FUNCTION_ARGS);
 
 /* oid.c */
 extern Datum oidvectorin(PG_FUNCTION_ARGS);
@@ -353,7 +353,7 @@ extern Datum regproctooid(PG_FUNCTION_ARGS);
 /* ruleutils.c */
 extern text *pg_get_ruledef(NameData *rname);
 extern text *pg_get_viewdef(NameData *rname);
-extern text *pg_get_indexdef(Oid indexrelid);
+extern Datum pg_get_indexdef(PG_FUNCTION_ARGS);
 extern NameData *pg_get_userbyid(int32 uid);
 extern char *deparse_expression(Node *expr, List *rangetables,
 				   bool forceprefix);
@@ -407,8 +407,8 @@ extern char *make_greater_string(const char *str, Oid datatype);
 extern ItemPointer tidin(const char *str);
 extern char *tidout(ItemPointer itemPtr);
 extern bool tideq(ItemPointer, ItemPointer);
-extern ItemPointer currtid_byreloid(Oid relOid, ItemPointer);
-extern ItemPointer currtid_byrelname(const text *relName, ItemPointer);
+extern Datum currtid_byreloid(PG_FUNCTION_ARGS);
+extern Datum currtid_byrelname(PG_FUNCTION_ARGS);
 
 /* varchar.c */
 

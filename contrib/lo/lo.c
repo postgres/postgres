@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Id: lo.c,v 1.3 2000/05/29 01:59:02 tgl Exp $
+ *	$Id: lo.c,v 1.4 2000/06/09 01:10:58 tgl Exp $
  *
  */
 
@@ -76,7 +76,8 @@ lo_in(char *str)
 		/*
 		 * There is no Oid passed, so create a new one
 		 */
-		oid = lo_creat(INV_READ | INV_WRITE);
+		oid = DatumGetObjectId(DirectFunctionCall1(lo_creat,
+							   Int32GetDatum(INV_READ | INV_WRITE)));
 		if (oid == InvalidOid)
 		{
 			elog(ERROR, "lo_in: InvalidOid returned from lo_creat");
@@ -186,7 +187,8 @@ lo_manage(PG_FUNCTION_ARGS)
 		char	   *newv = SPI_getvalue(newtuple, tupdesc, attnum);
 
 		if ((orig != newv && (orig == NULL || newv == NULL)) || (orig != NULL && newv != NULL && strcmp(orig, newv)))
-			lo_unlink(atoi(orig));
+			DirectFunctionCall1(lo_unlink,
+								ObjectIdGetDatum((Oid) atoi(orig)));
 
 		if (newv)
 			pfree(newv);
@@ -206,7 +208,8 @@ lo_manage(PG_FUNCTION_ARGS)
 
 		if (orig != NULL)
 		{
-			lo_unlink(atoi(orig));
+			DirectFunctionCall1(lo_unlink,
+								ObjectIdGetDatum((Oid) atoi(orig)));
 
 			pfree(orig);
 		}

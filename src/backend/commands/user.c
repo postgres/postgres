@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.57 2000/06/02 03:58:33 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.58 2000/06/09 01:11:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,8 +122,8 @@ write_password_file(Relation rel)
 				"%s\n",
 				nameout(DatumGetName(datum_n)),
 				null_p ? "" : textout((text *) datum_p),
-				null_v ? "\\N" : nabstimeout((AbsoluteTime) datum_v)	/* this is how the
-																		 * parser wants it */
+				null_v ? "\\N" :
+				DatumGetCString(DirectFunctionCall1(nabstimeout, datum_v))
 			);
 	}
 	heap_endscan(scan);
@@ -268,7 +268,8 @@ CreateUser(CreateUserStmt *stmt)
 	if (stmt->password)
 		new_record[Anum_pg_shadow_passwd - 1] = PointerGetDatum(textin(stmt->password));
 	if (stmt->validUntil)
-		new_record[Anum_pg_shadow_valuntil - 1] = PointerGetDatum(nabstimein(stmt->validUntil));
+		new_record[Anum_pg_shadow_valuntil - 1] =
+			DirectFunctionCall1(nabstimein, CStringGetDatum(stmt->validUntil));
 
 	new_record_nulls[Anum_pg_shadow_usename - 1] = ' ';
 	new_record_nulls[Anum_pg_shadow_usesysid - 1] = ' ';
@@ -445,7 +446,8 @@ AlterUser(AlterUserStmt *stmt)
 	/* valid until */
 	if (stmt->validUntil)
 	{
-		new_record[Anum_pg_shadow_valuntil - 1] = PointerGetDatum(nabstimein(stmt->validUntil));
+		new_record[Anum_pg_shadow_valuntil - 1] =
+			DirectFunctionCall1(nabstimein, CStringGetDatum(stmt->validUntil));
 		new_record_nulls[Anum_pg_shadow_valuntil - 1] = ' ';
 	}
 	else

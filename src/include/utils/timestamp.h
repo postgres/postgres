@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.5 2000/06/08 22:37:58 momjian Exp $
+ * $Id: timestamp.h,v 1.6 2000/06/09 01:11:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,9 @@
 #include <time.h>
 #include <math.h>
 #include <limits.h>
+
+#include "fmgr.h"
+
 
 /*
  * Timestamp represents absolute time.
@@ -36,6 +39,25 @@ typedef struct
 	int4		month;			/* months and years, after time for
 								 * alignment */
 } Interval;
+
+
+/*
+ * Macros for fmgr-callable functions.
+ *
+ * For Timestamp, we make use of the same support routines as for float8.
+ * Therefore Timestamp is pass-by-reference if and only if float8 is!
+ */
+#define DatumGetTimestamp(X)  ((Timestamp) DatumGetFloat8(X))
+#define DatumGetIntervalP(X)  ((Interval *) DatumGetPointer(X))
+
+#define TimestampGetDatum(X)  Float8GetDatum(X)
+#define IntervalPGetDatum(X)  PointerGetDatum(X)
+
+#define PG_GETARG_TIMESTAMP(n)  DatumGetTimestamp(PG_GETARG_DATUM(n))
+#define PG_GETARG_INTERVAL_P(n) DatumGetIntervalP(PG_GETARG_DATUM(n))
+
+#define PG_RETURN_TIMESTAMP(x)  return TimestampGetDatum(x)
+#define PG_RETURN_INTERVAL_P(x) return IntervalPGetDatum(x)
 
 
 #ifdef NAN
@@ -105,59 +127,63 @@ extern int	timestamp_is_epoch(double j);
  * timestamp.c prototypes
  */
 
-extern Timestamp *timestamp_in(char *str);
-extern char *timestamp_out(Timestamp *dt);
-extern bool timestamp_eq(Timestamp *dt1, Timestamp *dt2);
-extern bool timestamp_ne(Timestamp *dt1, Timestamp *dt2);
-extern bool timestamp_lt(Timestamp *dt1, Timestamp *dt2);
-extern bool timestamp_le(Timestamp *dt1, Timestamp *dt2);
-extern bool timestamp_ge(Timestamp *dt1, Timestamp *dt2);
-extern bool timestamp_gt(Timestamp *dt1, Timestamp *dt2);
-extern bool timestamp_finite(Timestamp *timestamp);
-extern int	timestamp_cmp(Timestamp *dt1, Timestamp *dt2);
-extern Timestamp *timestamp_smaller(Timestamp *dt1, Timestamp *dt2);
-extern Timestamp *timestamp_larger(Timestamp *dt1, Timestamp *dt2);
+extern Datum timestamp_in(PG_FUNCTION_ARGS);
+extern Datum timestamp_out(PG_FUNCTION_ARGS);
+extern Datum timestamp_eq(PG_FUNCTION_ARGS);
+extern Datum timestamp_ne(PG_FUNCTION_ARGS);
+extern Datum timestamp_lt(PG_FUNCTION_ARGS);
+extern Datum timestamp_le(PG_FUNCTION_ARGS);
+extern Datum timestamp_ge(PG_FUNCTION_ARGS);
+extern Datum timestamp_gt(PG_FUNCTION_ARGS);
+extern Datum timestamp_finite(PG_FUNCTION_ARGS);
+extern Datum timestamp_cmp(PG_FUNCTION_ARGS);
+extern Datum timestamp_smaller(PG_FUNCTION_ARGS);
+extern Datum timestamp_larger(PG_FUNCTION_ARGS);
 
-extern Interval *interval_in(char *str);
-extern char *interval_out(Interval *span);
-extern bool interval_eq(Interval *span1, Interval *span2);
-extern bool interval_ne(Interval *span1, Interval *span2);
-extern bool interval_lt(Interval *span1, Interval *span2);
-extern bool interval_le(Interval *span1, Interval *span2);
-extern bool interval_ge(Interval *span1, Interval *span2);
-extern bool interval_gt(Interval *span1, Interval *span2);
-extern bool interval_finite(Interval *span);
-extern int	interval_cmp(Interval *span1, Interval *span2);
-extern Interval *interval_smaller(Interval *span1, Interval *span2);
-extern Interval *interval_larger(Interval *span1, Interval *span2);
+extern Datum interval_in(PG_FUNCTION_ARGS);
+extern Datum interval_out(PG_FUNCTION_ARGS);
+extern Datum interval_eq(PG_FUNCTION_ARGS);
+extern Datum interval_ne(PG_FUNCTION_ARGS);
+extern Datum interval_lt(PG_FUNCTION_ARGS);
+extern Datum interval_le(PG_FUNCTION_ARGS);
+extern Datum interval_ge(PG_FUNCTION_ARGS);
+extern Datum interval_gt(PG_FUNCTION_ARGS);
+extern Datum interval_finite(PG_FUNCTION_ARGS);
+extern Datum interval_cmp(PG_FUNCTION_ARGS);
+extern Datum interval_smaller(PG_FUNCTION_ARGS);
+extern Datum interval_larger(PG_FUNCTION_ARGS);
 
-extern text *timestamp_text(Timestamp *timestamp);
-extern Timestamp *text_timestamp(text *str);
-extern text *interval_text(Interval *interval);
-extern Interval *text_interval(text *str);
-extern Timestamp *timestamp_trunc(text *units, Timestamp *timestamp);
-extern Interval *interval_trunc(text *units, Interval *interval);
-extern float64 timestamp_part(text *units, Timestamp *timestamp);
-extern float64 interval_part(text *units, Interval *interval);
-extern text *timestamp_zone(text *zone, Timestamp *timestamp);
+extern Datum timestamp_text(PG_FUNCTION_ARGS);
+extern Datum text_timestamp(PG_FUNCTION_ARGS);
+extern Datum interval_text(PG_FUNCTION_ARGS);
+extern Datum text_interval(PG_FUNCTION_ARGS);
+extern Datum timestamp_trunc(PG_FUNCTION_ARGS);
+extern Datum interval_trunc(PG_FUNCTION_ARGS);
+extern Datum timestamp_part(PG_FUNCTION_ARGS);
+extern Datum interval_part(PG_FUNCTION_ARGS);
+extern Datum timestamp_zone(PG_FUNCTION_ARGS);
 
-extern Interval *interval_um(Interval *span);
-extern Interval *interval_pl(Interval *span1, Interval *span2);
-extern Interval *interval_mi(Interval *span1, Interval *span2);
-extern Interval *interval_mul(Interval *span1, float8 *factor);
-extern Interval *mul_d_interval(float8 *factor, Interval *span1);
-extern Interval *interval_div(Interval *span1, float8 *factor);
+extern Datum interval_um(PG_FUNCTION_ARGS);
+extern Datum interval_pl(PG_FUNCTION_ARGS);
+extern Datum interval_mi(PG_FUNCTION_ARGS);
+extern Datum interval_mul(PG_FUNCTION_ARGS);
+extern Datum mul_d_interval(PG_FUNCTION_ARGS);
+extern Datum interval_div(PG_FUNCTION_ARGS);
 
-extern Interval *timestamp_mi(Timestamp *dt1, Timestamp *dt2);
-extern Timestamp *timestamp_pl_span(Timestamp *dt, Interval *span);
-extern Timestamp *timestamp_mi_span(Timestamp *dt, Interval *span);
-extern Interval *timestamp_age(Timestamp *dt1, Timestamp *dt2);
-extern bool overlaps_timestamp(Timestamp *dt1, Timestamp *dt2, Timestamp *dt3, Timestamp *dt4);
+extern Datum timestamp_mi(PG_FUNCTION_ARGS);
+extern Datum timestamp_pl_span(PG_FUNCTION_ARGS);
+extern Datum timestamp_mi_span(PG_FUNCTION_ARGS);
+extern Datum timestamp_age(PG_FUNCTION_ARGS);
+extern Datum overlaps_timestamp(PG_FUNCTION_ARGS);
+
+extern Datum now(PG_FUNCTION_ARGS);
+
+/* Internal routines (not fmgr-callable) */
 
 extern int	tm2timestamp(struct tm * tm, double fsec, int *tzp, Timestamp *dt);
-extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn);
+extern int	timestamp2tm(Timestamp dt, int *tzp, struct tm * tm,
+						 double *fsec, char **tzn);
 
 extern Timestamp SetTimestamp(Timestamp timestamp);
-extern Timestamp *now(void);
 
 #endif	 /* TIMESTAMP_H */

@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.24 2000/06/02 15:57:20 momjian Exp $
+ * $Id: crypt.c,v 1.25 2000/06/09 01:11:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,8 @@ crypt_verify(Port *port, const char *user, const char *pgpass)
 		if (!valuntil || strcmp(valuntil, "\\N") == 0)
 			vuntil = INVALID_ABSTIME;
 		else
-			vuntil = nabstimein(valuntil);
+			vuntil = DatumGetAbsoluteTime(DirectFunctionCall1(nabstimein,
+										  CStringGetDatum(valuntil)));
 		current = GetCurrentAbsoluteTime();
 		if (vuntil != INVALID_ABSTIME && vuntil < current)
 			retval = STATUS_ERROR;
