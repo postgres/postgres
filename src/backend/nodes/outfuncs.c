@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.53 1998/12/15 02:24:15 scrappy Exp $
+ *  $Id: outfuncs.c,v 1.54 1998/12/15 02:32:57 scrappy Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -132,9 +132,9 @@ _outTypeName(StringInfo str, TypeName *node)
 	appendStringInfo(str, 
 			" TYPENAME :name %s :timezone %s :setof %s typmod %d :arrayBounds ",
 			node->name, 
-			node->timezone ? "true" : "false,
+			node->timezone ? "true" : "false",
 			node->setof ? "true" : "false",
-			node->typemod);
+			node->typmod);
 
 	appendStringInfo(str, " :arrayBounds ");
 	_outNode(str, node->arrayBounds);
@@ -274,7 +274,7 @@ _outPlanInfo(StringInfo str, Plan *node)
 	appendStringInfo(str, " :initplan ");
 	_outNode(str, node->initPlan);
 
-	appendStringInfo(str, " :nprm %d ", node-nParamExec);
+	appendStringInfo(str, " :nprm %d ", node->nParamExec);
 }
 
 /*
@@ -353,7 +353,6 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 	appendStringInfo(str, " :mergeclauses ");
 	_outNode(str, node->mergeclauses);
 
-	snprintf(buf, 500, " :mergejoinop %u ", node->mergejoinop);
 	appendStringInfo(str, 
 			" :mergejoinop %u :mergerightorder %u :mergeleftorder %u ",
 			node->mergejoinop, 
@@ -494,7 +493,7 @@ _outGroup(StringInfo str, Group *node)
 	_outPlanInfo(str, (Plan *) node);
 
 	/* the actual Group fields */
-	appendStringInfo(str, " :numCols %d :tuplePerGroup %s,
+	appendStringInfo(str, " :numCols %d :tuplePerGroup %s ",
 			node->numCols,
 			node->tuplePerGroup ? "true" : "false");
 }
@@ -526,7 +525,6 @@ _outHash(StringInfo str, Hash *node)
 	appendStringInfo(str, " :hashkey ");
 	_outNode(str, node->hashkey);
 
-	sprintf(buf, " :hashtable 0x%x ", (int) (node->hashtable));
 	appendStringInfo(str, " :hashtable 0x%x :hashtablekey %d :hashtablesize %d ",
 			(int) node->hashtable,
 			node->hashtablekey,
