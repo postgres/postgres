@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.362 2004/01/07 00:44:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.363 2004/01/22 19:09:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1149,12 +1149,19 @@ dumpDatabase(Archive *AH)
 	}
 	else
 	{
+		/*
+		 * In 7.0, datpath is either the same as datname, or the user-given
+		 * location with "/" and the datname appended.  We must strip this
+		 * junk off to produce a correct LOCATION value.
+		 */
 		appendPQExpBuffer(dbQry, "SELECT "
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_database') AS tableoid, "
 						  "oid, "
 						  "(SELECT usename FROM pg_user WHERE usesysid = datdba) as dba, "
 						  "pg_encoding_to_char(encoding) as encoding, "
-						  "datpath "
+						  "CASE WHEN length(datpath) > length(datname) THEN "
+						  "substr(datpath,1,length(datpath)-length(datname)-1) "
+						  "ELSE '' END as datpath "
 						  "FROM pg_database "
 						  "WHERE datname = ");
 		appendStringLiteral(dbQry, datname, true);
