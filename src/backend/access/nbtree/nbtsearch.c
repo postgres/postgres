@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.85 2003/12/21 03:00:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.86 2003/12/21 17:52:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -496,6 +496,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	StrategyNumber strat;
 	bool		res;
 	bool		nextkey;
+	bool		goback;
 	bool		continuescan;
 	ScanKey		scankeys;
 	ScanKey	   *startKeys = NULL;
@@ -695,18 +696,41 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	pfree(startKeys);
 
 	/*
-	 * We want to locate either the first item >= boundary point, or
-	 * first item > boundary point, depending on the initial-positioning
-	 * strategy we just chose.
+	 * Examine the selected initial-positioning strategy to determine
+	 * exactly where we need to start the scan, and set flag variables
+	 * to control the code below.
+	 *
+	 * If nextkey = false, _bt_search and _bt_binsrch will locate the
+	 * first item >= scan key.  If nextkey = true, they will locate the
+	 * first item > scan key.
+	 *
+	 * If goback = true, we will then step back one item, while if
+	 * goback = false, we will start the scan on the located item.
+	 *
+	 * it's yet other place to add some code later for is(not)null ...
 	 */
 	switch (strat_total)
 	{
 		case BTLessStrategyNumber:
+			/*
+			 * Find first item >= scankey, then back up one to arrive at last
+			 * item < scankey.  (Note: this positioning strategy is only used
+			 * for a backward scan, so that is always the correct starting
+			 * position.)
+			 */
 			nextkey = false;
+			goback = true;
 			break;
 
 		case BTLessEqualStrategyNumber:
+			/*
+			 * Find first item > scankey, then back up one to arrive at last
+			 * item <= scankey.  (Note: this positioning strategy is only used
+			 * for a backward scan, so that is always the correct starting
+			 * position.)
+			 */
 			nextkey = true;
+			goback = true;
 			break;
 
 		case BTEqualStrategyNumber:
@@ -715,17 +739,41 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * equal item not first one.
 			 */
 			if (ScanDirectionIsBackward(dir))
+			{
+				/*
+				 * This is the same as the <= strategy.  We will check
+				 * at the end whether the found item is actually =.
+				 */
 				nextkey = true;
+				goback = true;
+			}
 			else
+			{
+				/*
+				 * This is the same as the >= strategy.  We will check
+				 * at the end whether the found item is actually =.
+				 */
 				nextkey = false;
+				goback = false;
+			}
 			break;
 
 		case BTGreaterEqualStrategyNumber:
+			/*
+			 * Find first item >= scankey.  (This is only used for
+			 * forward scans.)
+			 */
 			nextkey = false;
+			goback = false;
 			break;
 
 		case BTGreaterStrategyNumber:
+			/*
+			 * Find first item > scankey.  (This is only used for
+			 * forward scans.)
+			 */
 			nextkey = true;
+			goback = false;
 			break;
 
 		default:
@@ -756,21 +804,18 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 
 	/* remember which buffer we have pinned */
 	so->btso_curbuf = buf;
-	blkno = BufferGetBlockNumber(buf);
-	page = BufferGetPage(buf);
 
 	/* position to the precise item on the page */
 	offnum = _bt_binsrch(rel, buf, keysCount, scankeys, nextkey);
 
+	page = BufferGetPage(buf);
+	blkno = BufferGetBlockNumber(buf);
 	ItemPointerSet(current, blkno, offnum);
 
 	/* done with manufactured scankey, now */
 	pfree(scankeys);
 
 	/*
-	 * It's now time to examine the initial-positioning strategy to find the
-	 * exact place to start the scan.
-	 *
 	 * If nextkey = false, we are positioned at the first item >= scan key,
 	 * or possibly at the end of a page on which all the existing items are
 	 * less than the scan key and we know that everything on later pages
@@ -781,103 +826,29 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * less than or equal to the scan key and we know that everything on
 	 * later pages is greater than scan key.
 	 *
-	 * The actually desired starting point is either this item or an adjacent
-	 * one, or in the end-of-page case it's the last item on this page or
-	 * the first item on the next.  We apply _bt_step if needed to get to
+	 * The actually desired starting point is either this item or the prior
+	 * one, or in the end-of-page case it's the first item on the next page
+	 * or the last item on this page.  We apply _bt_step if needed to get to
 	 * the right place.
 	 *
-	 * Note: if _bt_step fails (meaning we fell off the end of the index in
+	 * If _bt_step fails (meaning we fell off the end of the index in
 	 * one direction or the other), then there are no matches so we just
 	 * return false.
-	 *
-	 * it's yet other place to add some code later for is(not)null ...
 	 */
-	switch (strat_total)
+	if (goback)
 	{
-		case BTLessStrategyNumber:
-
-			/*
-			 * We are on first item >= scankey.
-			 *
-			 * Back up one to arrive at last item < scankey.  (Note: this
-			 * positioning strategy is only used for a backward scan, so
-			 * that is always the correct starting position.)
-			 */
-			if (!_bt_step(scan, &buf, BackwardScanDirection))
+		/* _bt_step will do the right thing if we are at end-of-page */
+		if (!_bt_step(scan, &buf, BackwardScanDirection))
+			return false;
+	}
+	else
+	{
+		/* If we're at end-of-page, must step forward to next page */
+		if (offnum > PageGetMaxOffsetNumber(page))
+		{
+			if (!_bt_step(scan, &buf, ForwardScanDirection))
 				return false;
-			break;
-
-		case BTLessEqualStrategyNumber:
-
-			/*
-			 * We are on first item > scankey.
-			 *
-			 * Back up one to arrive at last item <= scankey.  (Note: this
-			 * positioning strategy is only used for a backward scan, so
-			 * that is always the correct starting position.)
-			 */
-			if (!_bt_step(scan, &buf, BackwardScanDirection))
-				return false;
-			break;
-
-		case BTEqualStrategyNumber:
-			/*
-			 * If a backward scan was specified, need to start with last
-			 * equal item not first one.
-			 */
-			if (ScanDirectionIsBackward(dir))
-			{
-				/*
-				 * We are on first item > scankey.
-				 *
-				 * Back up one to arrive at last item <= scankey.
-				 * We will check below to see if it is equal to scankey.
-				 */
-				if (!_bt_step(scan, &buf, BackwardScanDirection))
-					return false;
-			}
-			else
-			{
-				/*
-				 * We are on first item >= scankey.
-				 *
-				 * Make sure we are on a real item; might have to
-				 * step forward if currently at end of page.
-				 * We will check below to see if it is equal to scankey.
-				 */
-				if (offnum > PageGetMaxOffsetNumber(page))
-				{
-					if (!_bt_step(scan, &buf, ForwardScanDirection))
-						return false;
-				}
-			}
-			break;
-
-		case BTGreaterEqualStrategyNumber:
-
-			/*
-			 * We want the first item >= scankey, which is where we are...
-			 * unless we're not anywhere at all...
-			 */
-			if (offnum > PageGetMaxOffsetNumber(page))
-			{
-				if (!_bt_step(scan, &buf, ForwardScanDirection))
-					return false;
-			}
-			break;
-
-		case BTGreaterStrategyNumber:
-
-			/*
-			 * We want the first item > scankey, which is where we are...
-			 * unless we're not anywhere at all...
-			 */
-			if (offnum > PageGetMaxOffsetNumber(page))
-			{
-				if (!_bt_step(scan, &buf, ForwardScanDirection))
-					return false;
-			}
-			break;
+		}
 	}
 
 	/* okay, current item pointer for the scan is right */
