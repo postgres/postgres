@@ -1,0 +1,116 @@
+.\" This is -*-nroff-*-
+.\" XXX standard disclaimer belongs here....
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pg_passwd.1,v 1.1 1997/09/21 04:54:36 momjian Exp $
+.TH PG_PASSWD UNIX 11/05/95 PostgreSQL PostgreSQL
+.SH NAME
+pg_passwd \(em manipulate the flat password file
+.SH SYNOPSIS
+.BR "pg_passwd password_file"
+.SH DESCRIPTION
+.IR Pg_passwd
+is a tool to manipulate the
+flat password file functionality of PostgreSQL.
+Specify the password file in the same style of Ident authentication in
+.IR $PGDATA/pg_hba.conf :
+.nf
+
+	host  unv     133.65.96.250   255.255.255.255 password passwd
+
+.fi
+The above line allows access from 133.65.96.250 using the passwords listed
+in
+.IR $PGDATA/passwd .
+The format of the password file follows those of
+.IR /etc/passwd
+and
+.IR /etc/shadow .
+The first field is the user name, and  the second field
+is the encrypted password.
+The rest is completely ignored.
+Thus the following three sample lines specify the same user and password pair:
+.nf
+
+	pg_guest:/nB7.w5Auq.BY:10031::::::
+	pg_guest:/nB7.w5Auq.BY:93001:930::/home/guest:/bin/tcsh
+	pg_guest:/nB7.w5Auq.BY:93001
+
+.fi
+Supply the password file to the pg_passwd command.
+In the case described above, after 
+.IR cd "'ing"
+to $PGDATA, the following command execution specify
+the new password for pg_guest:
+.nf
+
+	% pg_passwd passwd
+	Username: pg_guest
+	Password:
+	Re-enter password:
+
+.fi
+where the
+.IR Password:
+and
+.IR "Re-enter password:"
+prompts require the same password input which are not displayed
+on the terminal.
+The original password file is renamed to
+.BR "passwd.bk" .
+.PP
+.BR "Psql authentication"
+uses the 
+.BR -u
+option.
+The following lines show the sample usage of the option:
+.nf
+
+	% psql -h hyalos -u unv
+	Username: pg_guest
+	Password:
+	Welcome to the POSTGRESQL interactive sql monitor:
+	  Please read the file COPYRIGHT for copyright terms of POSTGRESQL
+	   type \\? for help on slash commands
+	   type \\q to quit
+	   type \\g or terminate with semicolon to execute query
+	 You are currently connected to the database: unv
+	unv=>
+
+.fi
+.BI "Perl5 authentication"
+uses the new style of the Pg.pm like this:
+.nf
+
+	$conn = Pg::connectdb("host=hyalos authtype=password dbname=unv
+	                       user=pg_guest password=xxxxxxx");
+
+.fi
+For more details, refer to 
+.IR src/pgsql_perl5/Pg.pm .
+.PP
+.BR "Pg{tcl,tk}sh authentication"
+uses the
+.IR pg_connect
+command with the
+.IR -conninfo
+option thus:
+.nf
+
+	% set conn [pg_connect -conninfo \\
+	        "host=hyalos authtype=password dbname=unv \\
+	         user=pg_guest password=xxxxxxx "]
+
+.fi
+Use can list all of the keys for the option by executing the following
+command:
+.nf
+
+	% puts [ pg_conndefaults]
+
+.fi
+.SH FILES
+.TP 5n
+$PGDATA/pg_hba.conf
+The Host Based Authentication file
+.SH "SEE ALSO"
+psql(1).
+
