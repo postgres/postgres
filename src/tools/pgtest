@@ -25,6 +25,9 @@ cd src/test/regress &&
 gmake clean &&
 gmake installcheck
 
+# The following grep's have to be adjusted for your setup because 
+# certain warnings are acceptable.
+
 cat $TMP/0 | 
 	grep -v warning |
 	grep -v setproctitle | 
