@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.58 2000/07/06 21:33:14 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.59 2000/07/08 02:40:27 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -113,13 +113,7 @@ $(top_builddir)/src/include/utils/fmgroids.h: utils/fmgroids.h
 
 ##########################################################################
 
-install: all installdirs
-	$(INSTALL_PROGRAM) postgres$(X) $(bindir)/postgres$(X)
-	@rm -f $(bindir)/postmaster
-	ln -s postgres$(X) $(bindir)/postmaster
-ifeq ($(MAKE_EXPORTS), true)
-	$(INSTALL_DATA) $(POSTGRES_IMP) $(libdir)/$(POSTGRES_IMP)
-endif
+install: all installdirs install-bin
 ifeq ($(PORTNAME), win)
 ifeq ($(MAKE_DLL), true)
 	$(INSTALL_DATA) libpostgres.a $(libdir)/libpostgres.a
@@ -133,6 +127,15 @@ endif
 installdirs:
 	$(mkinstalldirs) $(bindir) $(libdir) $(datadir)
 
+install-bin:
+	$(INSTALL_PROGRAM) postgres$(X) $(bindir)/postgres$(X)
+	@rm -f $(bindir)/postmaster
+	ln -s postgres$(X) $(bindir)/postmaster
+ifeq ($(MAKE_EXPORTS), true)
+	$(INSTALL_DATA) $(POSTGRES_IMP) $(libdir)/$(POSTGRES_IMP)
+endif
+
+.PHONY: install installdirs install-bin
 
 ##########################################################################
 
