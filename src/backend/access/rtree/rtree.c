@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.80 2003/09/25 06:57:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.80.2.1 2005/01/24 02:48:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -594,6 +594,8 @@ rtdosplit(Relation r,
 	rtup = (IndexTuple) index_formtuple(tupDesc,
 										&(v.spl_rdatum), isnull);
 	pfree(isnull);
+	pfree(DatumGetPointer(v.spl_ldatum));
+	pfree(DatumGetPointer(v.spl_rdatum));
 
 	/* set pointers to new child pages in the internal index tuples */
 	ItemPointerSet(&(ltup->t_tid), lbknum, 1);
