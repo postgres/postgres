@@ -204,6 +204,30 @@ five|         f1|          x
     |-2147483647|-1073741823
 (5 rows)
 
+QUERY: SELECT -2+3 AS one;
+one
+---
+  1
+(1 row)
+
+QUERY: SELECT 4-2 AS two;
+two
+---
+  2
+(1 row)
+
+QUERY: SELECT 2- -1 AS three;
+three
+-----
+    3
+(1 row)
+
+QUERY: SELECT 2 - -2 AS four;
+four
+----
+   4
+(1 row)
+
 QUERY: SELECT '2'::int2 * '2'::int2 = '16'::int2 / '4'::int2 AS true;
 true
 ----
