@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.56 2002/10/19 02:08:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.56.2.1 2003/03/14 00:15:41 tgl Exp $
  *
  * ----------
  */
@@ -3872,6 +3872,9 @@ ln_var(NumericVar *arg, NumericVar *result)
 			break;
 
 		add_var(result, &elem, result);
+
+		if (elem.weight < (result->weight - 2 * global_rscale))
+			break;
 	}
 
 	/* Compensate for argument range reduction, round to caller's rscale */
