@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.53 2001/05/17 21:50:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.54 2001/05/27 09:59:28 petere Exp $
 Postgres documentation
 -->
 
@@ -1187,8 +1187,8 @@ Access permissions for database "test"
 	</para>
 
 	<para>
-	The commands <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> and
-	<xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title">
+	The commands <xref linkend="SQL-GRANT"> and
+	<xref linkend="SQL-REVOKE">
 	are used to set access permissions.
 	</para>
 

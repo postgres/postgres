@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.20 2001/03/24 23:32:25 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.21 2001/05/27 09:59:30 petere Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -428,6 +428,18 @@ message "creating database \"$dbname\""
 "$bindir/createdb" $encoding_opt $psql_options --template template0 "$dbname"
 if [ $? -ne 0 ]; then
     echo "$me: createdb failed"
+    (exit 2); exit
+fi
+
+
+# ----------
+# Remove regressuser* and regressgroup* user accounts.
+# ----------
+
+message "dropping regression test user accounts"
+"$bindir/psql" $psql_options -c 'drop group regressgroup1; drop group regressgroup2; drop user regressuser1, regressuser2, regressuser3, regressuser4;' $dbname 2>/dev/null
+if [ $? -eq 2 ]; then
+    echo "$me: could not drop user accounts"
     (exit 2); exit
 fi
 

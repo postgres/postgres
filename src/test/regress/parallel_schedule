@@ -61,6 +61,7 @@ test: select
 ignore: random
 test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index
 
+test: privileges
 test: misc
 
 # ----------

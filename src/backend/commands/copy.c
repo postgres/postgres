@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.136 2001/03/22 06:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.137 2001/05/27 09:59:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 	FILE	   *fp;
 	Relation	rel;
-	const AclMode required_access = from ? ACL_WR : ACL_RD;
+	const AclMode required_access = from ? ACL_INSERT : ACL_SELECT;
 	int			result;
 
 	/*

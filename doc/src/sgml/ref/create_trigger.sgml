@@ -1,13 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.12 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.13 2001/05/27 09:59:28 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-CREATETRIGGER">
  <refmeta>
-  <refentrytitle id="SQL-CREATETRIGGER-TITLE">
-   CREATE TRIGGER
-  </refentrytitle>
+  <refentrytitle id="SQL-CREATETRIGGER-TITLE">CREATE TRIGGER</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
  <refnamediv>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.55 2001/05/10 20:38:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.56 2001/05/27 09:59:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,7 +243,7 @@ nextval(PG_FUNCTION_ARGS)
 				rescnt = 0;
 	bool		logit = false;
 
-	if (pg_aclcheck(seqname, GetUserId(), ACL_WR) != ACLCHECK_OK)
+	if (pg_aclcheck(seqname, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		elog(ERROR, "%s.nextval: you don't have permissions to set sequence %s",
 			 seqname, seqname);
 
@@ -390,7 +390,7 @@ currval(PG_FUNCTION_ARGS)
 	SeqTable	elm;
 	int32		result;
 
-	if (pg_aclcheck(seqname, GetUserId(), ACL_RD) != ACLCHECK_OK)
+	if (pg_aclcheck(seqname, GetUserId(), ACL_SELECT) != ACLCHECK_OK)
 		elog(ERROR, "%s.currval: you don't have permissions to read sequence %s",
 			 seqname, seqname);
 
@@ -428,7 +428,7 @@ do_setval(char *seqname, int32 next, bool iscalled)
 	Buffer		buf;
 	Form_pg_sequence seq;
 
-	if (pg_aclcheck(seqname, GetUserId(), ACL_WR) != ACLCHECK_OK)
+	if (pg_aclcheck(seqname, GetUserId(), ACL_UPDATE) != ACLCHECK_OK)
 		elog(ERROR, "%s.setval: you don't have permissions to set sequence %s",
 			 seqname, seqname);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.90 2001/03/22 06:16:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.91 2001/05/27 09:59:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +69,10 @@ CreateTrigger(CreateTrigStmt *stmt)
 	if (!allowSystemTableMods && IsSystemRelationName(stmt->relname))
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
 
-	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
-		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+	if (pg_aclcheck(stmt->relname, GetUserId(),
+					stmt->isconstraint ? ACL_REFERENCES : ACL_TRIGGER)
+		!= ACLCHECK_OK)
+		elog(ERROR, "permission denied");
 
 	/*
 	 * If trigger is a constraint, user trigger name as constraint name

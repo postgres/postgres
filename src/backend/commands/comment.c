@@ -7,7 +7,7 @@
  * Copyright (c) 1999, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.27 2001/03/22 03:59:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.28 2001/05/27 09:59:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,7 +468,7 @@ CommentRewrite(char *rule, char *comment)
 
 #ifndef NO_SECURITY
 	relation = RewriteGetRuleEventRel(rule);
-	aclcheck = pg_aclcheck(relation, GetUserId(), ACL_RU);
+	aclcheck = pg_aclcheck(relation, GetUserId(), ACL_RULE);
 	if (aclcheck != ACLCHECK_OK)
 	{
 		elog(ERROR, "you are not permitted to comment on rule '%s'",

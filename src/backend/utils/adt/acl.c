@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.58 2001/03/22 03:59:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.59 2001/05/27 09:59:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,8 +113,8 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 
 	Assert(s && aip && modechg);
 
-#ifdef ACLDEBUG_TRACE
-	printf("aclparse: input = '%s'\n", s);
+#ifdef ACLDEBUG
+	elog(DEBUG, "aclparse: input = '%s'", s);
 #endif
 	aip->ai_idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
@@ -155,17 +155,26 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 	{
 		switch (*s)
 		{
-			case ACL_MODE_AP_CHR:
-				aip->ai_mode |= ACL_AP;
+			case ACL_MODE_INSERT_CHR:
+				aip->ai_mode |= ACL_INSERT;
 				break;
-			case ACL_MODE_RD_CHR:
-				aip->ai_mode |= ACL_RD;
+			case ACL_MODE_SELECT_CHR:
+				aip->ai_mode |= ACL_SELECT;
 				break;
-			case ACL_MODE_WR_CHR:
-				aip->ai_mode |= ACL_WR;
+			case ACL_MODE_UPDATE_CHR:
+				aip->ai_mode |= ACL_UPDATE;
 				break;
-			case ACL_MODE_RU_CHR:
-				aip->ai_mode |= ACL_RU;
+			case ACL_MODE_DELETE_CHR:
+				aip->ai_mode |= ACL_DELETE;
+				break;
+			case ACL_MODE_RULE_CHR:
+				aip->ai_mode |= ACL_RULE;
+				break;
+			case ACL_MODE_REFERENCES_CHR:
+				aip->ai_mode |= ACL_REFERENCES;
+				break;
+			case ACL_MODE_TRIGGER_CHR:
+				aip->ai_mode |= ACL_TRIGGER;
 				break;
 			default:
 				elog(ERROR, "aclparse: mode flags must use \"%s\"",
@@ -192,7 +201,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 			break;
 	}
 
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 	elog(DEBUG, "aclparse: correctly read [%x %d %x], modechg=%x",
 		 aip->ai_idtype, aip->ai_id, aip->ai_mode, *modechg);
 #endif
@@ -269,7 +278,7 @@ aclitemout(PG_FUNCTION_ARGS)
 	unsigned	i;
 	char	   *tmpname;
 
-	p = out = palloc(strlen("group =arwR ") + 1 + NAMEDATALEN);
+	p = out = palloc(strlen("group =" ACL_MODE_STR " ") + 1 + NAMEDATALEN);
 	*p = '\0';
 
 	switch (aip->ai_idtype)
@@ -368,14 +377,13 @@ acldefault(char *relname, AclId ownerid)
 	AclItem    *aip;
 
 #define ACL_WORLD_DEFAULT		(ACL_NO)
-/* #define		ACL_WORLD_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU) */
-#define ACL_OWNER_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU)
+#define ACL_OWNER_DEFAULT		(ACL_INSERT|ACL_SELECT|ACL_UPDATE|ACL_DELETE|ACL_RULE|ACL_REFERENCES|ACL_TRIGGER)
 
 	acl = makeacl(2);
 	aip = ACL_DAT(acl);
 	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
 	aip[0].ai_id = ACL_ID_WORLD;
-	aip[0].ai_mode = IsSystemRelationName(relname) ? ACL_RD : ACL_WORLD_DEFAULT;
+	aip[0].ai_mode = IsSystemRelationName(relname) ? ACL_SELECT : ACL_WORLD_DEFAULT;
 	aip[1].ai_idtype = ACL_IDTYPE_UID;
 	aip[1].ai_id = ownerid;
 	aip[1].ai_mode = ACL_OWNER_DEFAULT;
@@ -651,8 +659,8 @@ aclmakepriv(char *old_privlist, char new_priv)
 	int			i;
 	int			l;
 
-	Assert(strlen(old_privlist) < 5);
-	priv = palloc(5); /* at most "rwaR" */ ;
+	Assert(strlen(old_privlist) <= strlen(ACL_MODE_STR));
+	priv = palloc(strlen(ACL_MODE_STR)+1);
 
 	if (old_privlist == NULL || old_privlist[0] == '\0')
 	{
@@ -665,7 +673,7 @@ aclmakepriv(char *old_privlist, char new_priv)
 
 	l = strlen(old_privlist);
 
-	if (l == 4)
+	if (l == strlen(ACL_MODE_STR))
 	{							/* can't add any more privileges */
 		return priv;
 	}

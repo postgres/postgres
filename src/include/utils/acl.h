@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.31 2001/03/22 04:01:10 momjian Exp $
+ * $Id: acl.h,v 1.32 2001/05/27 09:59:30 petere Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -52,11 +52,14 @@ typedef uint8 AclIdType;
 typedef uint8 AclMode;
 
 #define ACL_NO			0		/* no permissions */
-#define ACL_AP			(1<<0)	/* append */
-#define ACL_RD			(1<<1)	/* read */
-#define ACL_WR			(1<<2)	/* write (append/delete/replace) */
-#define ACL_RU			(1<<3)	/* place rules */
-#define N_ACL_MODES		4
+#define ACL_INSERT		(1<<0)
+#define ACL_SELECT		(1<<1)
+#define ACL_UPDATE		(1<<2)
+#define ACL_DELETE		(1<<3)
+#define ACL_RULE		(1<<4)
+#define ACL_REFERENCES	(1<<5)
+#define ACL_TRIGGER		(1<<6)
+#define N_ACL_MODES		7		/* 1 plus the last 1<<x */
 
 /*
  * AclItem
@@ -146,11 +149,14 @@ typedef ArrayType IdList;
 #define ACL_MODECHG_ADD_CHR		'+'
 #define ACL_MODECHG_DEL_CHR		'-'
 #define ACL_MODECHG_EQL_CHR		'='
-#define ACL_MODE_STR			"arwR"	/* list of valid characters */
-#define ACL_MODE_AP_CHR			'a'
-#define ACL_MODE_RD_CHR			'r'
-#define ACL_MODE_WR_CHR			'w'
-#define ACL_MODE_RU_CHR			'R'
+#define ACL_MODE_STR			"arwdRxt"	/* list of valid characters */
+#define ACL_MODE_INSERT_CHR		'a'	/* formerly known as "append" */
+#define ACL_MODE_SELECT_CHR		'r'	/* formerly known as "read" */
+#define ACL_MODE_UPDATE_CHR		'w'	/* formerly known as "write" */
+#define ACL_MODE_DELETE_CHR		'd'
+#define ACL_MODE_RULE_CHR		'R'
+#define ACL_MODE_REFERENCES_CHR	'x'
+#define ACL_MODE_TRIGGER_CHR	't'
 
 /* result codes for pg_aclcheck */
 #define ACLCHECK_OK				  0
@@ -160,11 +166,6 @@ typedef ArrayType IdList;
 
 /* warning messages.  set these in aclchk.c. */
 extern char *aclcheck_error_strings[];
-
-/*
- * Enable ACL execution tracing and table dumps
- */
-/*#define ACLDEBUG_TRACE*/
 
 /*
  * routines used internally

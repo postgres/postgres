@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.140 2001/05/15 00:33:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.141 2001/05/27 09:59:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 
 	if (rte->checkForRead)
 	{
-		aclcheck_result = CHECK(ACL_RD);
+		aclcheck_result = CHECK(ACL_SELECT);
 		if (aclcheck_result != ACLCHECK_OK)
 			elog(ERROR, "%s: %s",
 				 relName, aclcheck_error_strings[aclcheck_result]);
@@ -437,15 +437,14 @@ ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 		switch (operation)
 		{
 			case CMD_INSERT:
-				/* Accept either APPEND or WRITE access for this */
-				aclcheck_result = CHECK(ACL_AP);
-				if (aclcheck_result != ACLCHECK_OK)
-					aclcheck_result = CHECK(ACL_WR);
+				aclcheck_result = CHECK(ACL_INSERT);
 				break;
 			case CMD_SELECT:
-			case CMD_DELETE:
 			case CMD_UPDATE:
-				aclcheck_result = CHECK(ACL_WR);
+				aclcheck_result = CHECK(ACL_UPDATE);
+				break;
+			case CMD_DELETE:
+				aclcheck_result = CHECK(ACL_DELETE);
 				break;
 			default:
 				elog(ERROR, "ExecCheckRTEPerms: bogus operation %d",

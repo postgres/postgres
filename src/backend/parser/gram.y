@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.226 2001/05/14 20:30:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.227 2001/05/27 09:59:29 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2234,19 +2234,19 @@ from_in:  IN
  *
  *****************************************************************************/
 
-GrantStmt:  GRANT privileges ON relation_name_list TO grantee opt_with_grant
+GrantStmt:  GRANT privileges ON opt_table relation_name_list TO grantee opt_with_grant
 				{
-					$$ = (Node*)makeAclStmt($2,$4,$6,'+');
+					$$ = (Node*)makeAclStmt($2,$5,$7,'+');
 				}
 		;
 
 privileges:  ALL PRIVILEGES
 				{
-				 $$ = aclmakepriv("rwaR",0);
+				 $$ = aclmakepriv(ACL_MODE_STR,0);
 				}
 		| ALL
 				{
-				 $$ = aclmakepriv("rwaR",0);
+				 $$ = aclmakepriv(ACL_MODE_STR,0);
 				}
 		| operation_commalist
 				{
@@ -2266,23 +2266,31 @@ operation_commalist:  operation
 
 operation:  SELECT
 				{
-						$$ = ACL_MODE_RD_CHR;
+						$$ = ACL_MODE_SELECT_CHR;
 				}
 		| INSERT
 				{
-						$$ = ACL_MODE_AP_CHR;
+						$$ = ACL_MODE_INSERT_CHR;
 				}
 		| UPDATE
 				{
-						$$ = ACL_MODE_WR_CHR;
+						$$ = ACL_MODE_UPDATE_CHR;
 				}
 		| DELETE
 				{
-						$$ = ACL_MODE_WR_CHR;
+						$$ = ACL_MODE_DELETE_CHR;
 				}
 		| RULE
 				{
-						$$ = ACL_MODE_RU_CHR;
+						$$ = ACL_MODE_RULE_CHR;
+				}
+		| REFERENCES
+				{
+						$$ = ACL_MODE_REFERENCES_CHR;
+				}
+		| TRIGGER
+				{
+						$$ = ACL_MODE_TRIGGER_CHR;
 				}
 		;
 
@@ -2315,9 +2323,9 @@ opt_with_grant:  WITH GRANT OPTION
  *
  *****************************************************************************/
 
-RevokeStmt:  REVOKE privileges ON relation_name_list FROM grantee
+RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee
 				{
-					$$ = (Node*)makeAclStmt($2,$4,$6,'-');
+					$$ = (Node*)makeAclStmt($2,$5,$7,'-');
 				}
 		;
 

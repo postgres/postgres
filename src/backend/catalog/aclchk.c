@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.47 2001/03/22 03:59:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.48 2001/05/27 09:59:28 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -46,7 +46,7 @@ char	   *aclcheck_error_strings[] = {
 };
 
 
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 static
 dumpacl(Acl *acl)
 {
@@ -62,7 +62,7 @@ dumpacl(Acl *acl)
 											 PointerGetDatum(aip + i))));
 }
 
-#endif
+#endif /* ACLDEBUG */
 
 /*
  * ChangeAcl
@@ -116,13 +116,13 @@ ChangeAcl(char *relname,
 		old_acl = DatumGetAclPCopy(aclDatum);
 	}
 
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 	dumpacl(old_acl);
 #endif
 
 	new_acl = aclinsert3(old_acl, mod_aip, modechg);
 
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 	dumpacl(new_acl);
 #endif
 
@@ -285,7 +285,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 			{
 				if (aip->ai_id == id)
 				{
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 					elog(DEBUG, "aclcheck: found user %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
@@ -301,7 +301,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 				{
 					if (in_group(id, aip->ai_id))
 					{
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 						elog(DEBUG, "aclcheck: found group %u/%d",
 							 aip->ai_id, aip->ai_mode);
 #endif
@@ -324,7 +324,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 			{
 				if (aip->ai_id == id)
 				{
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 					elog(DEBUG, "aclcheck: found group %u/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
@@ -341,7 +341,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 			break;
 	}
 
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 	elog(DEBUG, "aclcheck: using world=%d", aidat->ai_mode);
 #endif
 	return (aidat->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
@@ -371,7 +371,7 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 	 * pg_shadow.usecatupd is set.	(This is to let superusers protect
 	 * themselves from themselves.)
 	 */
-	if (((mode & ACL_WR) || (mode & ACL_AP)) &&
+	if (((mode & ACL_UPDATE) || (mode & ACL_INSERT) || (mode & ACL_DELETE)) &&
 		!allowSystemTableMods && IsSystemRelationName(relname) &&
 		strncmp(relname, "pg_temp.", strlen("pg_temp.")) != 0 &&
 		!((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd)
@@ -387,7 +387,7 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 	 */
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 		elog(DEBUG, "pg_aclcheck: \"%s\" is superuser",
 			 usename);
 #endif
@@ -454,7 +454,7 @@ pg_ownercheck(Oid userid,
 	 */
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
@@ -528,7 +528,7 @@ pg_func_ownercheck(Oid userid,
 	 */
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
@@ -576,7 +576,7 @@ pg_aggr_ownercheck(Oid userid,
 	 */
 	if (((Form_pg_shadow) GETSTRUCT(tuple))->usesuper)
 	{
-#ifdef ACLDEBUG_TRACE
+#ifdef ACLDEBUG
 		elog(DEBUG, "pg_aggr_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif

@@ -1,444 +1,253 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.9 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.10 2001/05/27 09:59:28 petere Exp $
 Postgres documentation
 -->
 
 <refentry id="SQL-GRANT">
  <refmeta>
-  <refentrytitle id="SQL-GRANT-TITLE">
-   GRANT
-  </refentrytitle>
+  <refentrytitle>GRANT</refentrytitle>
   <refmiscinfo>SQL - Language Statements</refmiscinfo>
  </refmeta>
+
  <refnamediv>
-  <refname>
-   GRANT
-  </refname>
-  <refpurpose>
-   Grants access privilege to a user, a group or all users
-  </refpurpose>
+  <refname>GRANT</refname>
+  <refpurpose>Grants access privileges to a user, a group, or all users</refpurpose>
  </refnamediv>
+
  <refsynopsisdiv>
-  <refsynopsisdivinfo>
-   <date>1999-07-20</date>
-  </refsynopsisdivinfo>
-  <synopsis>
-GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...] ON <replaceable class="PARAMETER">object</replaceable> [, ...]
-    TO { PUBLIC | GROUP <replaceable class="PARAMETER">group</replaceable> | <replaceable class="PARAMETER">username</replaceable> }
-  </synopsis>
-    
-  <refsect2 id="R2-SQL-GRANT-1">
-   <refsect2info>
-    <date>1998-09-23</date>
-   </refsect2info>
-   <title>
-    Inputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">privilege</replaceable></term>
-      <listitem>
-       <para>
-	The possible privileges are:
-
-	<variablelist>
-	 <varlistentry>
-	  <term>SELECT</term>
-	  <listitem>
-	   <para>
-	    Access all of the columns of a specific
-	    table/view.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>INSERT</term>
-	  <listitem>
-	   <para>
-	    Insert data into all columns of a
-	    specific table.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>UPDATE</term>
-	  <listitem>
-	   <para>
-	    Update all columns of a specific
-	    table.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>DELETE</term>
-	  <listitem>
-	   <para>
-	    Delete rows from a specific table.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>RULE</term>
-	  <listitem>
-	   <para>
-	    Define rules on the table/view
-	    (See CREATE RULE statement).
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>ALL</term>
-	  <listitem>
-	   <para>
-	    Grant all privileges.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">object</replaceable></term>
-      <listitem>
-       <para>
-	The name of an object to which to grant access.
-	The possible objects are:
-
-	<itemizedlist spacing="compact" mark="bullet">
-	 <listitem>
-	  <para>
-	   table 
-	  </para>
-	 </listitem>
-
-	 <listitem>
-	  <para>
-	   view 
-	  </para>
-	 </listitem>
-
-	 <listitem>
-	  <para>
-	   sequence
-	  </para>
-	 </listitem>
-
-	</itemizedlist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>PUBLIC</term>
-      <listitem>
-       <para>
-	A short form representing all users.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term>GROUP <replaceable class="PARAMETER">group</replaceable></term>
-      <listitem>
-       <para>
-	A <replaceable class="PARAMETER">group</replaceable> to whom to grant privileges.
-       </para>
-      </listitem>
-     </varlistentry>	
-
-     <varlistentry>
-      <term>
-       <replaceable class="PARAMETER">username</replaceable>
-      </term>
-      <listitem>
-       <para>
-	The name of a user to whom to grant privileges. PUBLIC is a short form
-	representing all users.
-       </para>
-      </listitem>
-     </varlistentry>	
-    </variablelist>
-   </para>
-  </refsect2>
-
-  <refsect2 id="R2-SQL-GRANT-2">
-   <refsect2info>
-    <date>1998-09-23</date>
-   </refsect2info>
-   <title>
-    Outputs
-   </title>
-   <para>
-
-    <variablelist>
-     <varlistentry>
-      <term><computeroutput>
-CHANGE
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if successful.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-ERROR:  ChangeAcl: class "<replaceable class="PARAMETER">object</replaceable>" not found
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned if the specified object is not available or 
-	if it is impossible
-	to give privileges to the specified group or users.
-       </para>
-      </listitem>
-     </varlistentry>	
-    </variablelist>
-   </para>
-  </refsect2>
+<synopsis>
+GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER } [,...] | ALL [ PRIVILEGES ] }
+    ON [ TABLE ] <replaceable class="PARAMETER">objectname</replaceable> [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC }
+</synopsis>
  </refsynopsisdiv>
 
- <refsect1 id="R1-SQL-GRANT-1">
-  <refsect1info>
-   <date>1998-09-23</date>
-  </refsect1info>
-  <title>
-   Description
-  </title>
+ <refsect1 id="sql-grant-description">
+  <title>Description</title>
 
   <para>
-   <command>GRANT</command> allows the creator of an object to give specific permissions to
-   all users (PUBLIC) or to a certain user or group. 
-   Users other than the creator don't have any access permission 
-   unless the creator GRANTs permissions, after the object
-   is created.
+   The <command>GRANT</command> command gives specific permissions on
+   an object (table, view, sequence) to a user or a group of users.
+   The special key word <literal>PUBLIC</literal> indicates that the
+   privileges are to be granted to all users, including those that may
+   be created later.
   </para>
 
   <para>
-   Once a user has a privilege on an object, he is enabled to exercise
-   that privilege.
-   There is no need to GRANT privileges to the creator of 
-   an object, the creator automatically holds ALL privileges, and can 
-   also drop the object. 
+   Users other than the creator do not have any access privileges
+   unless the creator grants permissions, after the object is created.
+   There is no need to grant privileges to the creator of an object,
+   as the creator automatically holds all privileges, and can also
+   drop the object.
   </para>
 
-  <refsect2 id="R2-SQL-GRANT-3">
-   <refsect2info>
-    <date>1998-09-23</date>
-   </refsect2info>
-   <title>
-    Notes
-   </title>
+  <para>
+   The possible privileges are:
+
+   <variablelist>
+    <varlistentry>
+     <term>SELECT</term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-select"> from any column of the
+       specified table, view, or sequence.  Also allows the use of
+       <xref linkend="sql-copy"> FROM.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>INSERT</term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-insert"> of a new row into the
+       specified table.  Also allows <xref linkend="sql-copy"> TO.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>UPDATE</term>
+     <listitem>
+      <para>
+       Allows <xref linkend="sql-update"> of any column of the
+       specified table.  <literal>SELECT ... FOR UPDATE</literal>
+       also requires this privilege (besides the
+       <literal>SELECT</literal> privilege).  For sequences, this
+       privilege allows the use of <function>currval</function> and
+       <function>nextval</function>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>DELETE</term>
+     <listitem>
+      <para>
+       Allows the <xref linkend="sql-delete"> of a row from the
+       specified table.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>RULE</term>
+     <listitem>
+      <para>
+       Allows the creation of a rule on the table/view.  (See <xref
+       linkend="sql-createrule"> statement).
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>REFERENCES</term>
+     <listitem>
+      <para>
+       To create of a table with a foreign key constraint, it is
+       necessary to have this privilege on the table with the primary
+       key.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>TRIGGER</term>
+     <listitem>
+      <para>
+       Allows the creation of a trigger on the specified table.  (See
+       <xref linkend="sql-createtrigger"> statement).
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>ALL PRIVILEGES</term>
+     <listitem>
+      <para>
+       Grant all of the above privileges at once.  The
+       <literal>PRIVILEGES</literal> key word is optional, but it is
+       required by strict SQL.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   The privileges required by other commands are listed on the
+   reference page of the respective command.
+  </para>
+ </refsect1>
+
+
+ <refsect1 id="SQL-GRANT-notes">
+  <title>Notes</title>
 
    <para>
     Currently, to grant privileges in <productname>Postgres</productname>
     to only a few columns, you must
-    create a view having desired columns and then grant privileges
+    create a view having the desired columns and then grant privileges
     to that view.
    </para>
 
    <para>
-    Use <command>psql \z</command>
-    for further information about permissions 
+    Use <xref linkend="app-psql">'s <command>\z</command> command
+    to obtain information about privileges
     on existing objects:
-    <programlisting>
-	  Database    = lusitania
+<programlisting>
+          Database    = lusitania
    +------------------+---------------------------------------------+
    |  Relation        |        Grant/Revoke Permissions             |
    +------------------+---------------------------------------------+
-   | mytable          | {"=rw","miriam=arwR","group todos=rw"}      |
+   | mytable          | {"=rw","miriam=arwdRxt","group todos=rw"}   |
    +------------------+---------------------------------------------+
    Legend:
          uname=arwR -- privileges granted to a user
-   group gname=arwR -- privileges granted to a GROUP
+   group gname=arwR -- privileges granted to a group
               =arwR -- privileges granted to PUBLIC
 
-                  r -- SELECT
-                  w -- UPDATE/DELETE
-                  a -- INSERT
+                  r -- SELECT ("read")
+                  w -- UPDATE ("write")
+                  a -- INSERT ("append")
+                  d -- DELETE
                   R -- RULE
-               arwR -- ALL
-    </programlisting>
-
+                  x -- REFERENCES
+                  t -- TRIGGER
+            arwdRxt -- ALL PRIVILEGES
+</programlisting>
    </para>
 
    <para>
-    Refer to REVOKE statements to revoke access privileges.
+    The <xref linkend="sql-revoke"> command is used to revoke access
+    privileges.
    </para>
-  </refsect2>
  </refsect1>
 
- <refsect1 id="R1-SQL-GRANT-2">
-  <title>
-   Usage
-  </title>
+ <refsect1 id="sql-grant-examples">
+  <title>Examples</title>
+
   <para>
    Grant insert privilege to all users on table films:
 
-   <programlisting>
+<programlisting>
 GRANT INSERT ON films TO PUBLIC;
-   </programlisting>
+</programlisting>
   </para>
 
   <para>
    Grant all privileges to user manuel on view kinds:
 
-   <programlisting>
-GRANT ALL ON kinds TO manuel;
-   </programlisting>
+<programlisting>
+GRANT ALL PRIVILEGES ON kinds TO manuel;
+</programlisting>
   </para>
  </refsect1>
 
- <refsect1 id="R1-SQL-GRANT-3">
-  <title>
-   Compatibility
-  </title>
+ <refsect1 id="sql-grant-compatibility">
+  <title>Compatibility</title>
     
-  <refsect2 id="R2-SQL-GRANT-4">
-   <refsect2info>
-    <date>1998-09-23</date>
-   </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    The <acronym>SQL92</acronym> syntax for GRANT allows setting privileges 
-    for individual columns
-    within a table, and allows setting a privilege to grant
-    the same privileges to others:
+  <refsect2>
+   <title>SQL92</title>
 
-    <synopsis>
+   <para>
+    The <literal>PRIVILEGES</literal> key word in <literal>ALL
+    PRIVILEGES</literal> is required.  <acronym>SQL</acronym> does not
+    support setting the privileges on more than one table per command.
+   </para>
+
+   <para>
+    The <acronym>SQL92</acronym> syntax for GRANT allows setting
+    privileges for individual columns within a table, and allows
+    setting a privilege to grant the same privileges to others:
+
+<synopsis>
 GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...]
     ON <replaceable class="PARAMETER">object</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ] [, ...]
     TO { PUBLIC | <replaceable class="PARAMETER">username</replaceable> [, ...] } [ WITH GRANT OPTION ]
-    </synopsis>
+</synopsis>
    </para>
 
    <para>
-    Fields are compatible with those in the <acronym>Postgres</acronym>
-    implementation, with the following additions:
+    <acronym>SQL</acronym> allows to grant the USAGE privilege on
+    other kinds of objects:  CHARACTER SET, COLLATION, TRANSLATION, DOMAIN.
+   </para>
 
-    <variablelist>
-     <varlistentry>
-      <term><replaceable class="PARAMETER">privilege</replaceable></term>
-      <listitem>
-       <para>
-	<acronym>SQL92</acronym> permits additional privileges to be specified:
-
-	<variablelist>
-	 <varlistentry>
-	  <term>SELECT</term>
-	  <listitem>
-	   <para>
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>REFERENCES</term>
-	  <listitem>
-	   <para>
-	    Allowed to reference some or all of the columns of a specific
-	    table/view in integrity constraints.
-	   </para>
-	  </listitem>
-	 </varlistentry>	
-
-	 <varlistentry>
-	  <term>USAGE</term>
-	  <listitem>
-	   <para>
-	    Allowed to use a domain, character set, collation
-	    or translation.
-	    If an object specifies anything other than a table/view,
-	    <replaceable class="PARAMETER">privilege</replaceable>
-	    must specify only USAGE.
-	   </para>
-	  </listitem>
-	 </varlistentry>	
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="PARAMETER">object</replaceable></term>
-      <listitem>
-       <para>
-
-	<variablelist>
-	 <varlistentry>
-	  <term>[ TABLE ] <replaceable class="PARAMETER">table</replaceable></term>
-	  <listitem>
-	   <para>
-	    <acronym>SQL92</acronym> allows the additional
-	    non-functional keyword <literal>TABLE</literal>.
-	   </para>
-	  </listitem>
-	 </varlistentry>
-
-	 <varlistentry>
-	  <term>CHARACTER SET</term>
-	  <listitem>
-	   <para>
-	    Allowed to use the specified character set.
-	   </para>
-	  </listitem>
-	 </varlistentry>	
-
-	 <varlistentry>
-	  <term>COLLATION</term>
-	  <listitem>
-	   <para>
-	    Allowed to use the specified collation sequence.
-	   </para>
-	  </listitem>
-	 </varlistentry>	
-
-	 <varlistentry>
-	  <term>TRANSLATION</term>
-	  <listitem>
-	   <para>
-	    Allowed to use the specified character set translation.
-	   </para>
-	  </listitem>
-	 </varlistentry>	
-
-	 <varlistentry>
-	  <term>DOMAIN</term>
-	  <listitem>
-	   <para>
-	    Allowed to use the specified domain.
-	   </para>
-	  </listitem>
-	 </varlistentry>	
-
-	 <varlistentry>
-	  <term>WITH GRANT OPTION</term>
-	  <listitem>
-	   <para>
-	    Allowed to grant the same privilege to others.
-	   </para>
-	  </listitem>
-	 </varlistentry>	
-	</variablelist>
-       </para>
-      </listitem>
-     </varlistentry>
-    </variablelist>
+   <para>
+    The TRIGGER privilege was introduced in SQL99.  The RULE privilege
+    is a PostgreSQL extension.
    </para>
   </refsect2>
+
  </refsect1>
+
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simpara>
+   <xref linkend="sql-revoke">
+  </simpara>
+ </refsect1>
+
 </refentry>
 
 <!-- Keep this comment at the end of the file

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.128 2001/05/21 14:22:11 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.129 2001/05/27 09:59:28 petere Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1939,9 +1939,10 @@ LockTableCommand(LockStmt *lockstmt)
 		elog(ERROR, "LOCK TABLE: %s is not a table", lockstmt->relname);
 
 	if (lockstmt->mode == AccessShareLock)
-		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_RD);
+		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_SELECT);
 	else
-		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(), ACL_WR);
+		aclresult = pg_aclcheck(lockstmt->relname, GetUserId(),
+								ACL_UPDATE | ACL_DELETE);
 
 	if (aclresult != ACLCHECK_OK)
 		elog(ERROR, "LOCK TABLE: permission denied");
