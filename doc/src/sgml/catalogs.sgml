@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.83 2004/02/12 23:41:00 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.84 2004/02/15 21:01:38 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -3068,12 +3068,21 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_statistic</structname> stores statistical data about
-   the contents of the database.  Entries are created by
+   The catalog <structname>pg_statistic</structname> stores statistical data
+   about the contents of the database.  Entries are created by
    <command>ANALYZE</command> and subsequently used by the query planner.
    There is one entry for each table column that has been analyzed.
    Note that all the statistical data is inherently approximate,
    even assuming that it is up-to-date.
+  </para>
+
+  <para>
+   <structname>pg_statistic</structname> also stores statistical data about
+   the values of index expressions.  These are described as if they were
+   actual data columns; in particular, <structfield>starelid</structfield>
+   references the index.  No entry is made for an ordinary non-expression
+   index column, however, since it would be redundant with the entry
+   for the underlying table column.
   </para>
 
   <para>
@@ -3082,8 +3091,8 @@
    to assume very much about what sort of statistics it stores.  Only
    extremely general statistics (such as nullness) are given dedicated
    columns in <structname>pg_statistic</structname>.  Everything else
-   is stored in <quote>slots</quote>, which are groups of associated columns whose
-   content is identified by a code number in one of the slot's columns.
+   is stored in <quote>slots</quote>, which are groups of associated columns
+   whose content is identified by a code number in one of the slot's columns.
    For more information see
    <filename>src/include/catalog/pg_statistic.h</filename>.
   </para>
@@ -3117,7 +3126,7 @@
       <entry><structfield>starelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The table that the described column belongs to</entry>
+      <entry>The table or index that the described column belongs to</entry>
      </row>
 
      <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.98 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.99 2004/02/15 21:01:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2258,13 +2258,19 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	HeapTuple	tuple;
 	Form_pg_attribute attrtuple;
 
-	rel = heap_open(myrelid, AccessExclusiveLock);
+	rel = relation_open(myrelid, AccessExclusiveLock);
 
+	/*
+	 * Allow index for statistics case only
+	 */
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is not a table",
-						RelationGetRelationName(rel))));
+	{
+		if (rel->rd_rel->relkind != RELKIND_INDEX || *flagType != 'S')
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a table",
+							RelationGetRelationName(rel))));
+	}
 
 	/* Permissions checks */
 	if (!pg_class_ownercheck(myrelid, GetUserId()))
@@ -2339,7 +2345,7 @@ AlterTableAlterColumnFlags(Oid myrelid, bool recurse,
 	/*
 	 * Propagate to children if desired
 	 */
-	if (recurse)
+	if (recurse && rel->rd_rel->relkind == RELKIND_RELATION)
 	{
 		List	   *child,
 				   *children;

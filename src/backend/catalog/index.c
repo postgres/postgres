@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.227 2004/02/10 01:55:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.228 2004/02/15 21:01:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -153,7 +153,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			 */
 			to->attnum = i + 1;
 
-			to->attstattarget = 0;
+			to->attstattarget = -1;
 			to->attcacheoff = -1;
 			to->attnotnull = false;
 			to->atthasdef = false;
@@ -197,6 +197,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			to->attbyval = typeTup->typbyval;
 			to->attstorage = typeTup->typstorage;
 			to->attalign = typeTup->typalign;
+			to->attstattarget = -1;
 			to->attcacheoff = -1;
 			to->atttypmod = -1;
 			to->attislocal = true;
@@ -753,6 +754,7 @@ index_drop(Oid indexId)
 	Relation	userIndexRelation;
 	Relation	indexRelation;
 	HeapTuple	tuple;
+	bool		hasexprs;
 	int			i;
 
 	Assert(OidIsValid(indexId));
@@ -786,7 +788,7 @@ index_drop(Oid indexId)
 	DeleteAttributeTuples(indexId);
 
 	/*
-	 * fix INDEX relation
+	 * fix INDEX relation, and check for expressional index
 	 */
 	indexRelation = heap_openr(IndexRelationName, RowExclusiveLock);
 
@@ -796,10 +798,19 @@ index_drop(Oid indexId)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for index %u", indexId);
 
+	hasexprs = !heap_attisnull(tuple, Anum_pg_index_indexprs);
+
 	simple_heap_delete(indexRelation, &tuple->t_self);
 
 	ReleaseSysCache(tuple);
 	heap_close(indexRelation, RowExclusiveLock);
+
+	/*
+	 * if it has any expression columns, we might have stored
+	 * statistics about them.
+	 */
+	if (hasexprs)
+		RemoveStatistics(userIndexRelation, 0);
 
 	/*
 	 * flush buffer cache and physically remove the file

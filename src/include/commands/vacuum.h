@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.50 2004/02/13 06:39:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.51 2004/02/15 21:01:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,8 +106,11 @@ typedef struct VacAttrStats
 	 * be looked at by type-specific functions.
 	 */
 	int			tupattnum;		/* attribute number within tuples */
-	HeapTuple  *rows;			/* access info for fetch function */
+	HeapTuple  *rows;			/* access info for std fetch function */
 	TupleDesc	tupDesc;
+	Datum	   *exprvals;		/* access info for index fetch function */
+	bool	   *exprnulls;
+	int			rowstride;
 } VacAttrStats;
 
 

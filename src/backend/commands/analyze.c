@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.69 2004/02/13 06:39:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.70 2004/02/15 21:01:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,14 @@
 #include "access/tuptoaster.h"
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
 #include "commands/vacuum.h"
+#include "executor/executor.h"
 #include "miscadmin.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "utils/acl.h"
@@ -36,6 +39,16 @@
 #include "utils/tuplesort.h"
 
 
+/* Per-index data for ANALYZE */
+typedef struct AnlIndexData
+{
+	IndexInfo  *indexInfo;		/* BuildIndexInfo result */
+	double		tupleFract;		/* fraction of rows for partial index */
+	VacAttrStats **vacattrstats;	/* index attrs to analyze */
+	int			attr_cnt;
+} AnlIndexData;
+
+
 /* Default statistics target (GUC parameter) */
 int			default_statistics_target = 10;
 
@@ -44,6 +57,10 @@ static int	elevel = -1;
 static MemoryContext anl_context = NULL;
 
 
+static void compute_index_stats(Relation onerel, double totalrows,
+								AnlIndexData *indexdata, int nindexes,
+								HeapTuple *rows, int numrows,
+								MemoryContext col_context);
 static VacAttrStats *examine_attribute(Relation onerel, int attnum);
 static int acquire_sample_rows(Relation onerel, HeapTuple *rows,
 					int targrows, double *totalrows);
@@ -53,6 +70,7 @@ static double select_next_random_record(double t, int n, double *stateptr);
 static int	compare_rows(const void *a, const void *b);
 static void update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats);
 static Datum std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
+static Datum ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull);
 
 static bool std_typanalyze(VacAttrStats *stats);
 
@@ -66,8 +84,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	Relation	onerel;
 	int			attr_cnt,
 				tcnt,
-				i;
+				i,
+				ind;
+	Relation   *Irel;
+	int			nindexes;
+	bool		hasindex;
+	bool		analyzableindex;
 	VacAttrStats **vacattrstats;
+	AnlIndexData *indexdata;
 	int			targrows,
 				numrows;
 	double		totalrows;
@@ -202,10 +226,77 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 
 	/*
+	 * Open all indexes of the relation, and see if there are any analyzable
+	 * columns in the indexes.  We do not analyze index columns if there was
+	 * an explicit column list in the ANALYZE command, however.
+	 */
+	vac_open_indexes(onerel, &nindexes, &Irel);
+	hasindex = (nindexes > 0);
+	indexdata = NULL;
+	analyzableindex = false;
+	if (hasindex)
+	{
+		indexdata = (AnlIndexData *) palloc0(nindexes * sizeof(AnlIndexData));
+		for (ind = 0; ind < nindexes; ind++)
+		{
+			AnlIndexData *thisdata = &indexdata[ind];
+			IndexInfo *indexInfo;
+
+			thisdata->indexInfo = indexInfo = BuildIndexInfo(Irel[ind]);
+			thisdata->tupleFract = 1.0;		/* fix later if partial */
+			if (indexInfo->ii_Expressions != NIL && vacstmt->va_cols == NIL)
+			{
+				List	   *indexprs = indexInfo->ii_Expressions;
+
+				thisdata->vacattrstats = (VacAttrStats **)
+					palloc(indexInfo->ii_NumIndexAttrs * sizeof(VacAttrStats *));
+				tcnt = 0;
+				for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+				{
+					int			keycol = indexInfo->ii_KeyAttrNumbers[i];
+
+					if (keycol == 0)
+					{
+						/* Found an index expression */
+						Node	   *indexkey;
+
+						if (indexprs == NIL)	/* shouldn't happen */
+							elog(ERROR, "too few entries in indexprs list");
+						indexkey = (Node *) lfirst(indexprs);
+						indexprs = lnext(indexprs);
+
+						/*
+						 * Can't analyze if the opclass uses a storage type
+						 * different from the expression result type.  We'd
+						 * get confused because the type shown in pg_attribute
+						 * for the index column doesn't match what we are
+						 * getting from the expression.  Perhaps this can be
+						 * fixed someday, but for now, punt.
+						 */
+						if (exprType(indexkey) !=
+							Irel[ind]->rd_att->attrs[i]->atttypid)
+							continue;
+
+						thisdata->vacattrstats[tcnt] =
+							examine_attribute(Irel[ind], i+1);
+						if (thisdata->vacattrstats[tcnt] != NULL)
+						{
+							tcnt++;
+							analyzableindex = true;
+						}
+					}
+				}
+				thisdata->attr_cnt = tcnt;
+			}
+		}
+	}
+
+	/*
 	 * Quit if no analyzable columns
 	 */
-	if (attr_cnt <= 0)
+	if (attr_cnt <= 0 && !analyzableindex)
 	{
+		vac_close_indexes(nindexes, Irel);
 		relation_close(onerel, AccessShareLock);
 		return;
 	}
@@ -221,25 +312,22 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		if (targrows < vacattrstats[i]->minrows)
 			targrows = vacattrstats[i]->minrows;
 	}
+	for (ind = 0; ind < nindexes; ind++)
+	{
+		AnlIndexData *thisdata = &indexdata[ind];
+
+		for (i = 0; i < thisdata->attr_cnt; i++)
+		{
+			if (targrows < thisdata->vacattrstats[i]->minrows)
+				targrows = thisdata->vacattrstats[i]->minrows;
+		}
+	}
 
 	/*
 	 * Acquire the sample rows
 	 */
 	rows = (HeapTuple *) palloc(targrows * sizeof(HeapTuple));
 	numrows = acquire_sample_rows(onerel, rows, targrows, &totalrows);
-
-	/*
-	 * If we are running a standalone ANALYZE, update pages/tuples stats
-	 * in pg_class.  We have the accurate page count from heap_beginscan,
-	 * but only an approximate number of tuples; therefore, if we are part
-	 * of VACUUM ANALYZE do *not* overwrite the accurate count already
-	 * inserted by VACUUM.
-	 */
-	if (!vacstmt->vacuum)
-		vac_update_relstats(RelationGetRelid(onerel),
-							onerel->rd_nblocks,
-							totalrows,
-							RelationGetForm(onerel)->relhasindex);
 
 	/*
 	 * Compute the statistics.	Temporary results during the calculations
@@ -258,6 +346,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 											ALLOCSET_DEFAULT_INITSIZE,
 											ALLOCSET_DEFAULT_MAXSIZE);
 		old_context = MemoryContextSwitchTo(col_context);
+
 		for (i = 0; i < attr_cnt; i++)
 		{
 			VacAttrStats *stats = vacattrstats[i];
@@ -270,6 +359,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 									 totalrows);
 			MemoryContextResetAndDeleteChildren(col_context);
 		}
+
+		if (hasindex)
+			compute_index_stats(onerel, totalrows,
+								indexdata, nindexes,
+								rows, numrows,
+								col_context);
+
 		MemoryContextSwitchTo(old_context);
 		MemoryContextDelete(col_context);
 
@@ -280,7 +376,44 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		 * them alone.)
 		 */
 		update_attstats(relid, attr_cnt, vacattrstats);
+
+		for (ind = 0; ind < nindexes; ind++)
+		{
+			AnlIndexData *thisdata = &indexdata[ind];
+
+			update_attstats(RelationGetRelid(Irel[ind]),
+							thisdata->attr_cnt, thisdata->vacattrstats);
+		}
 	}
+
+	/*
+	 * If we are running a standalone ANALYZE, update pages/tuples stats
+	 * in pg_class.  We have the accurate page count from heap_beginscan,
+	 * but only an approximate number of tuples; therefore, if we are part
+	 * of VACUUM ANALYZE do *not* overwrite the accurate count already
+	 * inserted by VACUUM.  The same consideration applies to indexes.
+	 */
+	if (!vacstmt->vacuum)
+	{
+		vac_update_relstats(RelationGetRelid(onerel),
+							onerel->rd_nblocks,
+							totalrows,
+							hasindex);
+		for (ind = 0; ind < nindexes; ind++)
+		{
+			AnlIndexData *thisdata = &indexdata[ind];
+			double		totalindexrows;
+
+			totalindexrows = ceil(thisdata->tupleFract * totalrows);
+			vac_update_relstats(RelationGetRelid(Irel[ind]),
+								RelationGetNumberOfBlocks(Irel[ind]),
+								totalindexrows,
+								false);
+		}
+	}
+
+	/* Done with indexes */
+	vac_close_indexes(nindexes, Irel);
 
 	/*
 	 * Close source relation now, but keep lock so that no one deletes it
@@ -288,6 +421,160 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * entries we made in pg_statistic.)
 	 */
 	relation_close(onerel, NoLock);
+}
+
+/*
+ * Compute statistics about indexes of a relation
+ */
+static void
+compute_index_stats(Relation onerel, double totalrows,
+					AnlIndexData *indexdata, int nindexes,
+					HeapTuple *rows, int numrows,
+					MemoryContext col_context)
+{
+	MemoryContext ind_context,
+		old_context;
+	TupleDesc	heapDescriptor;
+	Datum		attdata[INDEX_MAX_KEYS];
+	char		nulls[INDEX_MAX_KEYS];
+	int			ind,
+				i;
+
+	heapDescriptor = RelationGetDescr(onerel);
+
+	ind_context = AllocSetContextCreate(anl_context,
+										"Analyze Index",
+										ALLOCSET_DEFAULT_MINSIZE,
+										ALLOCSET_DEFAULT_INITSIZE,
+										ALLOCSET_DEFAULT_MAXSIZE);
+	old_context = MemoryContextSwitchTo(ind_context);
+
+	for (ind = 0; ind < nindexes; ind++)
+	{
+		AnlIndexData *thisdata = &indexdata[ind];
+		IndexInfo *indexInfo = thisdata->indexInfo;
+		int			attr_cnt = thisdata->attr_cnt;
+		TupleTable	tupleTable;
+		TupleTableSlot *slot;
+		EState	   *estate;
+		ExprContext *econtext;
+		List	   *predicate;
+		Datum	   *exprvals;
+		bool	   *exprnulls;
+		int			numindexrows,
+					tcnt,
+					rowno;
+		double		totalindexrows;
+
+		/* Ignore index if no columns to analyze and not partial */
+		if (attr_cnt == 0 && indexInfo->ii_Predicate == NIL)
+			continue;
+
+		/*
+		 * Need an EState for evaluation of index expressions and
+		 * partial-index predicates.  Create it in the per-index context
+		 * to be sure it gets cleaned up at the bottom of the loop.
+		 */
+		estate = CreateExecutorState();
+		econtext = GetPerTupleExprContext(estate);
+		/* Need a slot to hold the current heap tuple, too */
+		tupleTable = ExecCreateTupleTable(1);
+		slot = ExecAllocTableSlot(tupleTable);
+		ExecSetSlotDescriptor(slot, heapDescriptor, false);
+
+		/* Arrange for econtext's scan tuple to be the tuple under test */
+		econtext->ecxt_scantuple = slot;
+
+		/* Set up execution state for predicate. */
+		predicate = (List *)
+			ExecPrepareExpr((Expr *) indexInfo->ii_Predicate,
+							estate);
+
+		/* Compute and save index expression values */
+		exprvals = (Datum *) palloc((numrows * attr_cnt + 1) * sizeof(Datum));
+		exprnulls = (bool *) palloc((numrows * attr_cnt + 1) * sizeof(bool));
+		numindexrows = 0;
+		tcnt = 0;
+		for (rowno = 0; rowno < numrows; rowno++)
+		{
+			HeapTuple	heapTuple = rows[rowno];
+
+			/* Set up for predicate or expression evaluation */
+			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
+
+			/* If index is partial, check predicate */
+			if (predicate != NIL)
+			{
+				if (!ExecQual(predicate, econtext, false))
+					continue;
+			}
+			numindexrows++;
+
+			if (attr_cnt > 0)
+			{
+				/*
+				 * Evaluate the index row to compute expression values.
+				 * We could do this by hand, but FormIndexDatum is convenient.
+				 */
+				FormIndexDatum(indexInfo,
+							   heapTuple,
+							   heapDescriptor,
+							   estate,
+							   attdata,
+							   nulls);
+				/*
+				 * Save just the columns we care about.
+				 */
+				for (i = 0; i < attr_cnt; i++)
+				{
+					VacAttrStats *stats = thisdata->vacattrstats[i];
+					int	attnum = stats->attr->attnum;
+
+					exprvals[tcnt] = attdata[attnum-1];
+					exprnulls[tcnt] = (nulls[attnum-1] == 'n');
+					tcnt++;
+				}
+			}
+		}
+
+		/*
+		 * Having counted the number of rows that pass the predicate in
+		 * the sample, we can estimate the total number of rows in the index.
+		 */
+		thisdata->tupleFract = (double) numindexrows / (double) numrows;
+		totalindexrows = ceil(thisdata->tupleFract * totalrows);
+
+		/*
+		 * Now we can compute the statistics for the expression columns.
+		 */
+		if (numindexrows > 0)
+		{
+			MemoryContextSwitchTo(col_context);
+			for (i = 0; i < attr_cnt; i++)
+			{
+				VacAttrStats *stats = thisdata->vacattrstats[i];
+
+				stats->exprvals = exprvals + i;
+				stats->exprnulls = exprnulls + i;
+				stats->rowstride = attr_cnt;
+				(*stats->compute_stats) (stats,
+										 ind_fetch_func,
+										 numindexrows,
+										 totalindexrows);
+				MemoryContextResetAndDeleteChildren(col_context);
+			}
+		}
+
+		/* And clean up */
+		MemoryContextSwitchTo(ind_context);
+
+		ExecDropTupleTable(tupleTable, true);
+		FreeExecutorState(estate);
+		MemoryContextResetAndDeleteChildren(ind_context);
+	}
+
+	MemoryContextSwitchTo(old_context);
+	MemoryContextDelete(ind_context);
 }
 
 /*
@@ -746,6 +1033,9 @@ update_attstats(Oid relid, int natts, VacAttrStats **vacattrstats)
 	Relation	sd;
 	int			attno;
 
+	if (natts <= 0)
+		return;					/* nothing to do */
+
 	sd = heap_openr(StatisticRelationName, RowExclusiveLock);
 
 	for (attno = 0; attno < natts; attno++)
@@ -878,6 +1168,23 @@ std_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
 	TupleDesc	tupDesc = stats->tupDesc;
 
 	return heap_getattr(tuple, attnum, tupDesc, isNull);
+}
+
+/*
+ * Fetch function for analyzing index expressions.
+ *
+ * We have not bothered to construct index tuples, instead the data is
+ * just in Datum arrays.
+ */
+static Datum
+ind_fetch_func(VacAttrStatsP stats, int rownum, bool *isNull)
+{
+	int			i;
+
+	/* exprvals and exprnulls are already offset for proper column */
+	i = rownum * stats->rowstride;
+	*isNull = stats->exprnulls[i];
+	return stats->exprvals[i];
 }
 
 
