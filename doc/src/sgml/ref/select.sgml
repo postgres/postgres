@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.59 2002/08/30 03:18:23 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.60 2002/08/30 16:00:41 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -869,7 +869,7 @@ SELECT name FROM distributors ORDER BY code;
     FOR UPDATE cannot be used in contexts where returned rows can't be clearly
     identified with individual table rows; for example it can't be used with
     aggregation.  FOR UPDATE may also appear before LIMIT for portability with
-    pre-7.3 servers.
+    pre-7.3 applications.
    </para>
   </refsect2>
 
