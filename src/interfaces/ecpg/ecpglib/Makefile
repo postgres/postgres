@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.29 2004/11/20 21:13:05 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.29.4.1 2005/01/26 19:24:17 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,6 +29,11 @@ OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) \
 	$(filter -lintl -lssl -lcrypto -lkrb5 -lcrypt -lm, $(LIBS)) $(PTHREAD_LIBS)
+
+ifeq ($(PORTNAME), win32)
+# Link to shfolder.dll instead of shell32.dll
+SHLIB_LINK += -lshfolder
+endif
 
 all: all-lib
 
