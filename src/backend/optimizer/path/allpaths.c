@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.92 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.93 2002/11/30 05:21:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -724,33 +724,34 @@ static void
 print_path(Query *root, Path *path, int indent)
 {
 	const char *ptype;
-	bool		join;
+	bool		join = false;
+	Path	   *subpath = NULL;
 	int			i;
 
 	switch (nodeTag(path))
 	{
 		case T_Path:
 			ptype = "SeqScan";
-			join = false;
 			break;
 		case T_IndexPath:
 			ptype = "IdxScan";
-			join = false;
 			break;
 		case T_TidPath:
 			ptype = "TidScan";
-			join = false;
 			break;
 		case T_AppendPath:
 			ptype = "Append";
-			join = false;
 			break;
 		case T_ResultPath:
 			ptype = "Result";
-			join = false;
+			subpath = ((ResultPath *) path)->subpath;
+			break;
+		case T_MaterialPath:
+			ptype = "Material";
+			subpath = ((MaterialPath *) path)->subpath;
 			break;
 		case T_NestPath:
-			ptype = "Nestloop";
+			ptype = "NestLoop";
 			join = true;
 			break;
 		case T_MergePath:
@@ -763,7 +764,6 @@ print_path(Query *root, Path *path, int indent)
 			break;
 		default:
 			ptype = "???Path";
-			join = false;
 			break;
 	}
 
@@ -814,6 +814,9 @@ print_path(Query *root, Path *path, int indent)
 		print_path(root, jp->outerjoinpath, indent + 1);
 		print_path(root, jp->innerjoinpath, indent + 1);
 	}
+
+	if (subpath)
+		print_path(root, subpath, indent + 1);
 }
 
 void

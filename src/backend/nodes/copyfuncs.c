@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.224 2002/11/30 00:08:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.225 2002/11/30 05:21:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1138,6 +1138,27 @@ _copyResultPath(ResultPath *from)
 	 */
 	COPY_NODE_FIELD(subpath);
 	COPY_NODE_FIELD(constantqual);
+
+	return newnode;
+}
+
+/*
+ * _copyMaterialPath
+ */
+static MaterialPath *
+_copyMaterialPath(MaterialPath *from)
+{
+	MaterialPath    *newnode = makeNode(MaterialPath);
+
+	/*
+	 * copy node superclass fields
+	 */
+	CopyPathFields((Path *) from, (Path *) newnode);
+
+	/*
+	 * copy remainder of node
+	 */
+	COPY_NODE_FIELD(subpath);
 
 	return newnode;
 }
@@ -2739,6 +2760,9 @@ copyObject(void *from)
 		case T_RelOptInfo:
 			retval = _copyRelOptInfo(from);
 			break;
+		case T_IndexOptInfo:
+			retval = _copyIndexOptInfo(from);
+			break;
 		case T_Path:
 			retval = _copyPath(from);
 			break;
@@ -2753,6 +2777,9 @@ copyObject(void *from)
 			break;
 		case T_ResultPath:
 			retval = _copyResultPath(from);
+			break;
+		case T_MaterialPath:
+			retval = _copyMaterialPath(from);
 			break;
 		case T_NestPath:
 			retval = _copyNestPath(from);
@@ -2771,9 +2798,6 @@ copyObject(void *from)
 			break;
 		case T_JoinInfo:
 			retval = _copyJoinInfo(from);
-			break;
-		case T_IndexOptInfo:
-			retval = _copyIndexOptInfo(from);
 			break;
 		case T_InnerIndexscanInfo:
 			retval = _copyInnerIndexscanInfo(from);

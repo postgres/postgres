@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.184 2002/11/30 00:08:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.185 2002/11/30 05:21:02 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1011,6 +1011,16 @@ _outResultPath(StringInfo str, ResultPath *node)
 }
 
 static void
+_outMaterialPath(StringInfo str, MaterialPath *node)
+{
+	WRITE_NODE_TYPE("MATERIALPATH");
+
+	_outPathInfo(str, (Path *) node);
+
+	WRITE_NODE_FIELD(subpath);
+}
+
+static void
 _outNestPath(StringInfo str, NestPath *node)
 {
 	WRITE_NODE_TYPE("NESTPATH");
@@ -1556,6 +1566,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_ResultPath:
 				_outResultPath(str, obj);
+				break;
+			case T_MaterialPath:
+				_outMaterialPath(str, obj);
 				break;
 			case T_NestPath:
 				_outNestPath(str, obj);

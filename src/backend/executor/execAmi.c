@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.64 2002/06/20 20:29:27 momjian Exp $
+ *	$Id: execAmi.c,v 1.65 2002/11/30 05:21:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,14 +170,10 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
 	}
 }
 
-/* ----------------------------------------------------------------
- *		ExecMarkPos
+/*
+ * ExecMarkPos
  *
- *		Marks the current scan position.
- *
- *		XXX Needs to be extended to include all the node types,
- *		or at least all the ones that can be directly below a mergejoin.
- * ----------------------------------------------------------------
+ * Marks the current scan position.
  */
 void
 ExecMarkPos(Plan *node)
@@ -192,6 +188,10 @@ ExecMarkPos(Plan *node)
 			ExecIndexMarkPos((IndexScan *) node);
 			break;
 
+		case T_TidScan:
+			ExecTidMarkPos((TidScan *) node);
+			break;
+
 		case T_FunctionScan:
 			ExecFunctionMarkPos((FunctionScan *) node);
 			break;
@@ -204,10 +204,6 @@ ExecMarkPos(Plan *node)
 			ExecSortMarkPos((Sort *) node);
 			break;
 
-		case T_TidScan:
-			ExecTidMarkPos((TidScan *) node);
-			break;
-
 		default:
 			/* don't make hard error unless caller asks to restore... */
 			elog(LOG, "ExecMarkPos: node type %d not supported",
@@ -216,14 +212,10 @@ ExecMarkPos(Plan *node)
 	}
 }
 
-/* ----------------------------------------------------------------
- *		ExecRestrPos
+/*
+ * ExecRestrPos
  *
- *		restores the scan position previously saved with ExecMarkPos()
- *
- *		XXX Needs to be extended to include all the node types,
- *		or at least all the ones that can be directly below a mergejoin.
- * ----------------------------------------------------------------
+ * restores the scan position previously saved with ExecMarkPos()
  */
 void
 ExecRestrPos(Plan *node)
@@ -236,6 +228,10 @@ ExecRestrPos(Plan *node)
 
 		case T_IndexScan:
 			ExecIndexRestrPos((IndexScan *) node);
+			break;
+
+		case T_TidScan:
+			ExecTidRestrPos((TidScan *) node);
 			break;
 
 		case T_FunctionScan:
@@ -255,4 +251,30 @@ ExecRestrPos(Plan *node)
 				 nodeTag(node));
 			break;
 	}
+}
+
+/*
+ * ExecSupportsMarkRestore - does a plan type support mark/restore?
+ *
+ * XXX Ideally, all plan node types would support mark/restore, and this
+ * wouldn't be needed.  For now, this had better match the routines above.
+ */
+bool
+ExecSupportsMarkRestore(NodeTag plantype)
+{
+	switch (plantype)
+	{
+		case T_SeqScan:
+		case T_IndexScan:
+		case T_TidScan:
+		case T_FunctionScan:
+		case T_Material:
+		case T_Sort:
+			return true;
+
+		default:
+			break;
+	}
+
+	return false;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.78 2002/09/04 20:31:42 momjian Exp $
+ * $Id: executor.h,v 1.79 2002/11/30 05:21:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 extern void ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent);
 extern void ExecMarkPos(Plan *node);
 extern void ExecRestrPos(Plan *node);
+extern bool ExecSupportsMarkRestore(NodeTag plantype);
 
 /*
  * prototypes from functions in execJunk.c

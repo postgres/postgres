@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.81 2002/11/30 00:08:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.82 2002/11/30 05:21:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include <math.h>
 
+#include "executor/executor.h"
 #include "nodes/plannodes.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
@@ -450,6 +451,7 @@ create_result_path(RelOptInfo *rel, Path *subpath, List *constantqual)
 	pathnode->subpath = subpath;
 	pathnode->constantqual = constantqual;
 
+	/* Ideally should define cost_result(), but I'm too lazy */
 	if (subpath)
 	{
 		pathnode->path.startup_cost = subpath->startup_cost;
@@ -460,6 +462,31 @@ create_result_path(RelOptInfo *rel, Path *subpath, List *constantqual)
 		pathnode->path.startup_cost = 0;
 		pathnode->path.total_cost = cpu_tuple_cost;
 	}
+
+	return pathnode;
+}
+
+/*
+ * create_material_path
+ *	  Creates a path corresponding to a Material plan, returning the
+ *	  pathnode.
+ */
+MaterialPath *
+create_material_path(RelOptInfo *rel, Path *subpath)
+{
+	MaterialPath *pathnode = makeNode(MaterialPath);
+
+	pathnode->path.pathtype = T_Material;
+	pathnode->path.parent = rel;
+
+	pathnode->path.pathkeys = subpath->pathkeys;
+
+	pathnode->subpath = subpath;
+
+	cost_material(&pathnode->path,
+				  subpath->total_cost,
+				  rel->rows,
+				  rel->width);
 
 	return pathnode;
 }
@@ -583,6 +610,21 @@ create_mergejoin_path(Query *root,
 	if (innersortkeys &&
 		pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
 		innersortkeys = NIL;
+	/*
+	 * If we are not sorting the inner path, we may need a materialize
+	 * node to ensure it can be marked/restored.  (Sort does support
+	 * mark/restore, so no materialize is needed in that case.)
+	 *
+	 * Since the inner side must be ordered, and only Sorts and IndexScans
+	 * can create order to begin with, you might think there's no problem
+	 * --- but you'd be wrong.  Nestloop and merge joins can *preserve*
+	 * the order of their inputs, so they can be selected as the input of
+	 * a mergejoin, and they don't support mark/restore at present.
+	 */
+	if (innersortkeys == NIL &&
+		!ExecSupportsMarkRestore(inner_path->pathtype))
+		inner_path = (Path *)
+			create_material_path(inner_path->parent, inner_path);
 
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;

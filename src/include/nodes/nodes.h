@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.124 2002/11/24 21:52:14 tgl Exp $
+ * $Id: nodes.h,v 1.125 2002/11/30 05:21:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,7 @@ typedef enum NodeTag
 	 * TAGS FOR PLANNER NODES (relation.h)
 	 */
 	T_RelOptInfo = 200,
+	T_IndexOptInfo,
 	T_Path,
 	T_IndexPath,
 	T_NestPath,
@@ -83,10 +84,10 @@ typedef enum NodeTag
 	T_TidPath,
 	T_AppendPath,
 	T_ResultPath,
+	T_MaterialPath,
 	T_PathKeyItem,
 	T_RestrictInfo,
 	T_JoinInfo,
-	T_IndexOptInfo,
 	T_InnerIndexscanInfo,
 
 	/*
@@ -287,17 +288,6 @@ extern Node *newNodeMacroHolder;
 #define NodeSetTag(nodeptr,t)	(((Node*)(nodeptr))->type = (t))
 
 #define IsA(nodeptr,_type_)		(nodeTag(nodeptr) == T_##_type_)
-
-/* ----------------------------------------------------------------
- *					  IsA functions (no inheritance any more)
- * ----------------------------------------------------------------
- */
-#define IsA_JoinPath(jp) \
-	(IsA(jp, NestPath) || IsA(jp, MergePath) || IsA(jp, HashPath))
-
-#define IsA_Join(jp) \
-	(IsA(jp, Join) || IsA(jp, NestLoop) || \
-	 IsA(jp, MergeJoin) || IsA(jp, HashJoin))
 
 /* ----------------------------------------------------------------
  *					  extern declarations follow

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.37 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.38 2002/11/30 05:21:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,8 @@
  *		ExecInitSeqScan			creates and initializes a seqscan node.
  *		ExecEndSeqScan			releases any storage allocated.
  *		ExecSeqReScan			rescans the relation
- *		ExecMarkPos				marks scan position
- *		ExecRestrPos			restores scan position
- *
+ *		ExecSeqMarkPos			marks scan position
+ *		ExecSeqRestrPos			restores scan position
  */
 #include "postgres.h"
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.125 2002/11/30 00:08:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.126 2002/11/30 05:21:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@ static Scan *create_scan_plan(Query *root, Path *best_path);
 static Join *create_join_plan(Query *root, JoinPath *best_path);
 static Append *create_append_plan(Query *root, AppendPath *best_path);
 static Result *create_result_plan(Query *root, ResultPath *best_path);
+static Material *create_material_plan(Query *root, MaterialPath *best_path);
 static SeqScan *create_seqscan_plan(Path *best_path, List *tlist,
 					List *scan_clauses);
 static IndexScan *create_indexscan_plan(Query *root, IndexPath *best_path,
@@ -140,6 +141,10 @@ create_plan(Query *root, Path *best_path)
 		case T_Result:
 			plan = (Plan *) create_result_plan(root,
 											   (ResultPath *) best_path);
+			break;
+		case T_Material:
+			plan = (Plan *) create_material_plan(root,
+												 (MaterialPath *) best_path);
 			break;
 		default:
 			elog(ERROR, "create_plan: unknown pathtype %d",
@@ -379,6 +384,28 @@ create_result_plan(Query *root, ResultPath *best_path)
 	constclauses = order_qual_clauses(root, best_path->constantqual);
 
 	plan = make_result(tlist, (Node *) constclauses, subplan);
+
+	return plan;
+}
+
+/*
+ * create_material_plan
+ *	  Create a Material plan for 'best_path' and (recursively) plans
+ *	  for its subpaths.
+ *
+ *	  Returns a Plan node.
+ */
+static Material *
+create_material_plan(Query *root, MaterialPath *best_path)
+{
+	Material   *plan;
+	Plan	   *subplan;
+
+	subplan = create_plan(root, best_path->subpath);
+
+	plan = make_material(best_path->path.parent->targetlist, subplan);
+
+	copy_path_costsize(&plan->plan, (Path *) best_path);
 
 	return plan;
 }
@@ -739,18 +766,6 @@ create_nestloop_plan(Query *root,
 											 inner_tlist,
 											 innerscan->scan.scanrelid);
 	}
-	else if (IsA_Join(inner_plan))
-	{
-		/*
-		 * Materialize the inner join for speed reasons.
-		 *
-		 * XXX It is probably *not* always fastest to materialize an inner
-		 * join --- how can we estimate whether this is a good thing to
-		 * do?
-		 */
-		inner_plan = (Plan *) make_material(inner_tlist,
-											inner_plan);
-	}
 
 	/*
 	 * Set quals to contain INNER/OUTER var references.
@@ -841,44 +856,6 @@ create_mergejoin_plan(Query *root,
 									inner_tlist,
 									inner_plan,
 									best_path->innersortkeys);
-
-	/*
-	 * The executor requires the inner side of a mergejoin to support
-	 * "mark" and "restore" operations.  Not all plan types do, so we must
-	 * be careful not to generate an invalid plan.	If necessary, an
-	 * invalid inner plan can be handled by inserting a Materialize node.
-	 *
-	 * Since the inner side must be ordered, and only Sorts and IndexScans
-	 * can create order to begin with, you might think there's no problem
-	 * --- but you'd be wrong.  Nestloop and merge joins can *preserve*
-	 * the order of their inputs, so they can be selected as the input of
-	 * a mergejoin, and that won't work in the present executor.
-	 *
-	 * Doing this here is a bit of a kluge since the cost of the Materialize
-	 * wasn't taken into account in our earlier decisions.  But
-	 * Materialize is hard to estimate a cost for, and the above
-	 * consideration shows that this is a rare case anyway, so this seems
-	 * an acceptable way to proceed.
-	 *
-	 * This check must agree with ExecMarkPos/ExecRestrPos in
-	 * executor/execAmi.c!
-	 */
-	switch (nodeTag(inner_plan))
-	{
-		case T_SeqScan:
-		case T_IndexScan:
-		case T_FunctionScan:
-		case T_Material:
-		case T_Sort:
-			/* OK, these inner plans support mark/restore */
-			break;
-
-		default:
-			/* Ooops, need to materialize the inner plan */
-			inner_plan = (Plan *) make_material(inner_tlist,
-												inner_plan);
-			break;
-	}
 
 	/*
 	 * Now we can build the mergejoin node.
@@ -1668,15 +1645,7 @@ make_material(List *tlist, Plan *lefttree)
 	Material   *node = makeNode(Material);
 	Plan	   *plan = &node->plan;
 
-	copy_plan_costsize(plan, lefttree);
-
-	/*
-	 * For plausibility, make startup & total costs equal total cost of
-	 * input plan; this only affects EXPLAIN display not decisions.
-	 *
-	 * XXX shouldn't we charge some additional cost for materialization?
-	 */
-	plan->startup_cost = plan->total_cost;
+	/* cost should be inserted by caller */
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.71 2002/11/30 00:08:22 tgl Exp $
+ * $Id: relation.h,v 1.72 2002/11/30 05:21:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,6 +404,18 @@ typedef struct ResultPath
 	Path	   *subpath;
 	List	   *constantqual;
 } ResultPath;
+
+/*
+ * MaterialPath represents use of a Material plan node, i.e., caching of
+ * the output of its subpath.  This is used when the subpath is expensive
+ * and needs to be scanned repeatedly, or when we need mark/restore ability
+ * and the subpath doesn't have it.
+ */
+typedef struct MaterialPath
+{
+	Path		path;
+	Path	   *subpath;
+} MaterialPath;
 
 /*
  * All join-type paths share these fields.

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.169 2002/11/25 21:29:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.170 2002/11/30 05:21:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,6 +452,16 @@ _equalResultPath(ResultPath *a, ResultPath *b)
 		return false;
 	COMPARE_NODE_FIELD(subpath);
 	COMPARE_NODE_FIELD(constantqual);
+
+	return true;
+}
+
+static bool
+_equalMaterialPath(MaterialPath *a, MaterialPath *b)
+{
+	if (!_equalPath((Path *) a, (Path *) b))
+		return false;
+	COMPARE_NODE_FIELD(subpath);
 
 	return true;
 }
@@ -1704,11 +1714,26 @@ equal(void *a, void *b)
 		case T_RelOptInfo:
 			retval = _equalRelOptInfo(a, b);
 			break;
+		case T_IndexOptInfo:
+			retval = _equalIndexOptInfo(a, b);
+			break;
 		case T_Path:
 			retval = _equalPath(a, b);
 			break;
 		case T_IndexPath:
 			retval = _equalIndexPath(a, b);
+			break;
+		case T_TidPath:
+			retval = _equalTidPath(a, b);
+			break;
+		case T_AppendPath:
+			retval = _equalAppendPath(a, b);
+			break;
+		case T_ResultPath:
+			retval = _equalResultPath(a, b);
+			break;
+		case T_MaterialPath:
+			retval = _equalMaterialPath(a, b);
 			break;
 		case T_NestPath:
 			retval = _equalNestPath(a, b);
@@ -1730,18 +1755,6 @@ equal(void *a, void *b)
 			break;
 		case T_InnerIndexscanInfo:
 			retval = _equalInnerIndexscanInfo(a, b);
-			break;
-		case T_TidPath:
-			retval = _equalTidPath(a, b);
-			break;
-		case T_AppendPath:
-			retval = _equalAppendPath(a, b);
-			break;
-		case T_ResultPath:
-			retval = _equalResultPath(a, b);
-			break;
-		case T_IndexOptInfo:
-			retval = _equalIndexOptInfo(a, b);
 			break;
 
 		case T_List:

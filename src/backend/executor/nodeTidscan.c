@@ -8,19 +8,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.26 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.27 2002/11/30 05:21:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
  *
- *		ExecTidScan		scans a relation using tids
+ *		ExecTidScan			scans a relation using tids
  *		ExecInitTidScan		creates and initializes state info.
  *		ExecTidReScan		rescans the tid relation.
  *		ExecEndTidScan		releases all storage.
  *		ExecTidMarkPos		marks scan position.
- *
+ *		ExecTidRestrPos		restores scan position.
  */
 #include "postgres.h"
 
@@ -345,7 +345,6 @@ ExecTidMarkPos(TidScan *node)
 	tidstate->tss_MarkTidPtr = tidstate->tss_TidPtr;
 }
 
-#ifdef NOT_USED
 /* ----------------------------------------------------------------
  *		ExecTidRestrPos
  *
@@ -363,7 +362,6 @@ ExecTidRestrPos(TidScan *node)
 	tidstate = node->tidstate;
 	tidstate->tss_TidPtr = tidstate->tss_MarkTidPtr;
 }
-#endif
 
 /* ----------------------------------------------------------------
  *		ExecInitTidScan
