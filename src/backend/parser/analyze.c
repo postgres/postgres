@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.131 2000/01/20 02:24:50 tgl Exp $
+ *	$Id: analyze.c,v 1.132 2000/01/22 01:22:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,6 +174,18 @@ transformStmt(ParseState *pstate, Node *parseTree)
 				result = makeNode(Query);
 				result->commandType = CMD_UTILITY;
 				n->query = transformStmt(pstate, (Node *) n->query);
+				result->utilityStmt = (Node *) parseTree;
+			}
+			break;
+
+		case T_AlterTableStmt:
+			{
+				AlterTableStmt *n = (AlterTableStmt *) parseTree;
+
+				result = makeNode(Query);
+				result->commandType = CMD_UTILITY;
+				if (n->subtype == 'A') /* ADD COLUMN */
+					transformColumnType(pstate, (ColumnDef *) n->def);
 				result->utilityStmt = (Node *) parseTree;
 			}
 			break;
