@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/filelayout.sgml,v 1.1 2004/11/12 21:50:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/filelayout.sgml,v 1.2 2004/11/16 15:00:36 tgl Exp $
 -->
 
 <chapter id="file-layout">
@@ -144,7 +144,7 @@ its TOAST table, if any.
 </para>
 
 <para>
-Tablespaces make the scenario more complicated.  Each non-default tablespace
+Tablespaces make the scenario more complicated.  Each user-defined tablespace
 has a symbolic link inside the <varname>PGDATA</><filename>/pg_tblspc</>
 directory, which points to the physical tablespace directory (as specified in
 its <command>CREATE TABLESPACE</> command).  The symbolic link is named after
