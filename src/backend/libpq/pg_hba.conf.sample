@@ -125,8 +125,8 @@
 #		not store encrypted passwords if you use this option.
 #
 #   ident:	For TCP/IP connections, authentication is done by contacting
-#		the ident server on the client host. (CAUTION: this is
-#		only as secure as the client machine!) On machines that
+#		the ident server on the client host.  Remember, this is
+#		only as secure as the client machine.  On machines that
 #		support unix-domain socket credentials (currently Linux,
 #		FreeBSD, NetBSD, and BSD/OS), this method also works for
 #		"local" connections.
