@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Nov 10 14:42:18 EST 2000
+Last updated:		Mon Nov 27 16:15:36 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -144,7 +144,7 @@ COMMANDS
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
 * Allow INSERT/UPDATE of system-generated oid value for a row
 * -Allow ESCAPE '\' at the end of LIKE for ANSI compliance (Thomas)
-* Rewrite the LIKE handling by rewriting the user string with the 
+* -Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE [like]
 * Allow RULE recompilation
 * -Support UNION/INTERSECT/EXCEPT in sub-selects
@@ -207,22 +207,21 @@ MISC
 * Have UPDATE/DELETE clean out indexes
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow DELETE WHERE CURRENT OF cursor
-* Transaction log, so re-do log can be on a separate disk by
-  with after-row images(Vadim) [logging](Vadim)(in-progress)
+* -Transaction log, so re-do log can be on a separate disk by
+  with after-row images(Vadim) [logging](Vadim)
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
 * Put sort files in their own directory
-* Do autocommit so always in a transaction block(?)
+* Allow autocommit so always in a transaction block
 * Show location of syntax error in query [yacc]
 * -Redesign the function call interface to handle NULLs better[function](Tom)
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Overhaul bufmgr/lockmgr/transaction manager
-* Allow BLCKSZ <= 64k, not <= 32k
 * -redesign UNION structures to have separarate target lists
 * -Allow multi-level query trees for INSERT INTO ... SELECT
 * Use IPC_EXCL when creating shared memory and semaphores
 * have pg_upgrade use pg_ctl to stop/start postmaster
-* Encrpyt passwords in pg_shadow table using MD5
+* Encrpyt passwords in pg_shadow table using MD5(Vince)
 * Use flock() to prevent multiple postmasters on the same port [flock]
 
 PERFORMANCE
@@ -266,7 +265,6 @@ MISC
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation [memory]
 * -In WHERE tab1.x=3 AND tab1.x=tab2.y, add tab2.y=3
-* Allow persistent backends [persistent]
 * prevent labels from being output for stored rules (Tom)
 * allow configuration of maximum number of open files
 * Remove pg_listener index
@@ -280,6 +278,7 @@ MISC
   lock and truncate table [vacuum]
 * -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 * Add connection pooling [pool]
+* Allow persistent backends [persistent]
 * Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
   ANALYZE, and CLUSTER
 
