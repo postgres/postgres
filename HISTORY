@@ -1,4 +1,4 @@
-  ------------------------------------------------------------------------
+   ------------------------------------------------------------------------
                                 Release 7.2
   ------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ Migration to 7.2
    A dump/restore using pg_dump is required for those wishing to migrate
    data from any previous release.  The SELECT ... LIMIT 10,20 syntax will
    be removed in 7.3.  You should change your queries to use LIMIT 10
-   OFFSET 20.
+   OFFSET 20.  Also, pg_hba.conf only loads on SIGHUP now.
 
 
 
@@ -51,7 +51,8 @@ Prevent unadorned relations names in target list (Bruce)
 Change UPDATE, DELETE permissions to be distinct (Peter E)
 PLpgSQL fix for SELECT... FOR UPDATE (Tom)
 Fix for PL/pgSQL PERFORM returning multiple rows (Tom)
-Fix for inherited CHECK constraints (Stephan Szabo)
+Fix for ALTER TABLE ADD CONSTRAINT ... CHECK for inherited children (Stephan
+  Szabo)
 Fix bug in permission modifications in newly created table (Tom)
 Disallow access to pg_statistic for non-super user (Tom)
 Fix SERIAL in temporary tables (Bruce)
@@ -83,10 +84,10 @@ New REFERENCES, TRIGGER privileges (Peter E)
 Have psql \d display indexes in unique, primary groupings (Christopher Kings-Lynne)
 Improve PL/pgSQL error reporting (Tom)
 Add DROP CONSTRAINT for CHECK constraints (Christopher Kings-Lynne)
-PL/pgSQL Allow IS and FOR in cursors (Bruce)
+PL/PgSQL Allow IS and FOR keywords in cursors, for compatibility (Bruce)
 Native language error messages, psql, pg_dump, libpq, configure --enable-nls
   (Peter E, Serguei A. Mokhov, Weiping He, Forth)
-Allow NULL to appear at beginning/end based on ORDER BY (Tom)
+Make NULL appear at beginning/end based on ORDER BY (Tom)
 Add %TYPE capability to CREATE TYPE (Ian Lance Taylor)
 Truncate extra-long sequence names to a reasonable value (Tom)
 Add RESET ALL, SHOW ALL (Marko Kreen)
@@ -104,7 +105,7 @@ CREATE/ALTER USER/GROUP now allows options in any order (Vince)
 New encode() function installed by default (Marko Kreen)
 Enable partial indexes (Martijn van Oosterhout)
 Add unix domain socket user authentication in Linux, *BSD (Helge Bahmann, Oliver Elphick, Teodor Sigaev, Bruce)
-Pltcl add spi_lastoid capability (bob@redivi.com)
+Pltcl add spi_lastoid function (bob@redivi.com)
 Add LOCK A,B,C functionality(Neil Padgett)
 Make OID's optional using WITHOUT OIDS (Tom)
 Allow column renaming in views
@@ -116,13 +117,13 @@ Greater randomization of encryption keys using MD5 (Bruce)
 New ENCRYPTED/UNENCRYPTED option to CREATE/ALTER USER (Bruce)
 Sequences now use int8 internally (Tom)
 New SERIAL8 creates int8 columns with sequences, default still SERIAL4 (Tom)
-New option to output SET SESSION AUTHORIZATION commands (Peter E)
+New SET SESSION AUTHORIZATION command (Peter E)
 Add automatic return type data casting for SQL functions (Tom)
 Allow safe transaction id wraparound (Tom)
 Use UTF, Unicode in TCL where appropriate (Vsevolod Lobko, Reinhard Max)
 Improved to_*() conversion functions (Karel Zak)
 PAM authentication (Dominic J. Eidson)
-Fix TCL COPY TO/FROM (ljb)
+Add TCL COPY TO/FROM (ljb)
 Allow ALTER TABLE ADD UNIQUE (Christopher Kings-Lynne)
 Super-user id now defaults to 1 (Peter E)
 Reject invalid multibyte character sequences (Tatsuo)
@@ -142,6 +143,8 @@ Prevent output of default index op class in pg_dump (Tom)
 Allow trailing semicolons in psql backslash commands (Greg Sabino Mullane)
 Prompt for psql password from /dev/tty if possible
 Allow SPI column functions to work for system columns (Tom)
+Dynahash portability improvements (Tom)
+Remove OID's from some system tables (Tom)
 
 Types
 -----
@@ -155,6 +158,8 @@ Bytea comparison improvements, \### now requires three octal digits (Joe Conway)
 Make trim/ltrim/rtrim/btrim/lpad/rpad/translate() multibyte aware (Tatsuo)
 Add pg_database_encoding_max_length() (Tatsuo)
 Add pg_client_encoding() function (Tatsuo)
+Add LATIN5,6,7,8,9,10 support (Tatsuo)
+Change LATIN5 to mean ISO-8859-9, not ISO-8859-5 (Tatsuo)
 Make mic2ascii() non-ASCII aware (Tatsuo)
 Measure transaction times in milliseconds (Thomas)
 now() returns time in milliseconds (Thomas)
@@ -185,7 +190,6 @@ Load pg_hba.conf only on startup and SIGHUP (Bruce)
 Rtree performance improvements (Kenneth Been)
 Improve lock manager to reduce lock contention (Tom)
 Btree splits more efficient (Tom)
-Dynahash portability improvements (Tom)
 Keep relcache entries for index access support functions (Tom)
 Make ALTER TABLE RENAME COLUMN update column names of indexes (Brent Verner)
 
@@ -222,12 +226,11 @@ JDBC
 	Fix for SELECT 'id' AS xxx FROM table (Dave Cramer)
 	DatabaseMetaData patch to show precision properly (Mark Lillywhite)
 ODBC
-	Remove query limit (Hiroshi)
+	Remove query size limit (Hiroshi)
 	Remove text field size limit (Hiroshi)
-	Fix for SQLPrimaryKeys() (Hiroshi)
-	Procedure calls (Hiroshi)
-	FETCH first fix (Aidan Mountford)
-	Updatable cursors (Hiroshi)
+	Fix for SQLPrimaryKeys in multibyte mode (Hiroshi)
+	Allow ODBC procedure calls (Hiroshi)
+	Improve boolean handing (Aidan Mountford)
 	Most configure options on setable via DSN (Hiroshi)
 	Multibyte, performance fixes (Hiroshi)
 	Allow driver to be used with iODBC or unixODBC (Peter E)
@@ -262,7 +265,6 @@ Fix for Win32 socket communication failures (Magnus, Mikhail Terekhov)
 Hurd compile fix (Oliver Elphick)
 New /contrib/fuzzystrmatch with lievnshtein and metaphone, soundex merged (Joe Conway)
 Beos fixes (Cyril VELTER)
-Remove OID's from some system tables (Tom)
 New functions in /contrib/pgcrypto: crypt(), hmac(), encrypt(), gen_salt()
   (Marko Kreen)
 System table operator reorganization (Oleg Bartunov, Teodor Sigaev, Tom)
@@ -278,10 +280,9 @@ Remove compile-time limit on number of backends (Tom)
 Enable SIGTERM, SIGQUIT to kill backends (Jan)
 New pgjindent utility to indent java code (Bruce)
 Replace strcasecmp() with strcmp() where appropriate (Peter E)
-Remove configure --enable-pltcl-utf option
 Make PL/PgSQL use the backends type coersion code (Tom)
 pgindent fixes, new pgjindent for java (Bruce, Tom)
-
+Remove configure --enable-unicode-conversion, now enabled by multibyte (Tatsuo)
 
   ------------------------------------------------------------------------
                                 Release 7.1.3
