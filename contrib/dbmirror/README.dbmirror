@@ -61,8 +61,27 @@ Requirments:
 -PgPerl (http://gborg.postgresql.org/project/pgperl/projdisplay.php)
 
 
+Upgrading from versions prior to 8.0
+---------------------------------------
+Users upgrading from a version of dbmirror prior to the one shipped with 
+Postgresql 8.0 will need to perform the following steps
+
+1. Dump the database then drop it (dropdb no not use the -C option)
+2. Create database with createdb.
+3. Run psql databasename -f MirrorSetup.sql
+4. Restore the database(do not use the -C option of pg_dump/pg_restore)
+5. run the SQL commands: DROP "Pending";DROP "PendingData"; DROP "MirrorHost";
+   DROP "MirroredTransaction";
+
+The above steps are needed A) Because the names of the tables used by dbmirror
+to store data have changed and B) In order for sequences to be mirrored properly
+all serial types must be recreated.
+
+
+
 Installation Instructions
 ------------------------------------------------------------------------
+
 
 
 1) Compile pending.c

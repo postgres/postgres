@@ -16,7 +16,7 @@
 #    GNU General Public License for more details.
 #
 ##############################################################################
-# $PostgreSQL: pgsql/contrib/dbmirror/clean_pending.pl,v 1.4 2003/11/29 22:39:19 pgsql Exp $
+# $PostgreSQL: pgsql/contrib/dbmirror/clean_pending.pl,v 1.5 2004/09/10 04:31:06 neilc Exp $
 ##############################################################################
 
 
@@ -77,13 +77,13 @@ unless($result->resultStatus == PGRES_COMMAND_OK) {
 
 #delete all transactions that have been sent to all mirrorhosts
 #or delete everything if no mirror hosts are defined.
-# Postgres takes the "SELECT COUNT(*) FROM "MirrorHost"  and makes it into
+# Postgres takes the "SELECT COUNT(*) FROM dbmirror_MirrorHost  and makes it into
 # an InitPlan.  EXPLAIN show's this.  
-my $deletePendingQuery = 'DELETE FROM "Pending" WHERE (SELECT ';
-$deletePendingQuery .= ' COUNT(*) FROM "MirroredTransaction" WHERE ';
-$deletePendingQuery .= ' "XID"="Pending"."XID") = (SELECT COUNT(*) FROM ';
-$deletePendingQuery .= ' "MirrorHost") OR (SELECT COUNT(*) FROM ';
-$deletePendingQuery .= ' "MirrorHost") = 0';
+my $deletePendingQuery = 'DELETE FROM dbmirror_Pending WHERE (SELECT ';
+$deletePendingQuery .= ' COUNT(*) FROM dbmirror_MirroredTransaction WHERE ';
+$deletePendingQuery .= ' XID=dbmirror_Pending.XID) = (SELECT COUNT(*) FROM ';
+$deletePendingQuery .= ' dbmirror_MirrorHost) OR (SELECT COUNT(*) FROM ';
+$deletePendingQuery .= ' dbmirror_MirrorHost) = 0';
 
 my $result = $dbConn->exec($deletePendingQuery);
 unless ($result->resultStatus == PGRES_COMMAND_OK ) {
@@ -91,15 +91,15 @@ unless ($result->resultStatus == PGRES_COMMAND_OK ) {
     die;
 }
 $dbConn->exec("COMMIT");
-$result = $dbConn->exec('VACUUM "Pending"');
+$result = $dbConn->exec('VACUUM dbmirror_Pending');
 unless ($result->resultStatus == PGRES_COMMAND_OK) {
    printf($dbConn->errorMessage);
 }
-$result = $dbConn->exec('VACUUM "PendingData"');
+$result = $dbConn->exec('VACUUM dbmirror_PendingData');
 unless($result->resultStatus == PGRES_COMMAND_OK) {
    printf($dbConn->errorMessage);
 }
-$result = $dbConn->exec('VACUUM "MirroredTransaction"');
+$result = $dbConn->exec('VACUUM dbmirror_MirroredTransaction');
 unless($result->resultStatus == PGRES_COMMAND_OK) {
   printf($dbConn->errorMessage);
 }

@@ -1,7 +1,7 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.19 2004/08/29 05:06:35 momjian Exp $
- * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.19 2004/08/29 05:06:35 momjian Exp $
+ * $Id: pending.c,v 1.20 2004/09/10 04:31:06 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.20 2004/09/10 04:31:06 neilc Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -63,7 +63,7 @@ char *packageData(HeapTuple tTupleData, TupleDesc tTupleDecs, Oid tableOid,
 
 #define BUFFER_SIZE 256
 #define MAX_OID_LEN 10
-#define DEBUG_OUTPUT 1
+/*#define DEBUG_OUTPUT 1 */
 extern Datum recordchange(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(recordchange);
@@ -596,18 +596,28 @@ setval(PG_FUNCTION_ARGS)
 
 	text	   *sequenceName;
 
-	Oid			setvalArgTypes[2] = {TEXTOID, INT4OID};
+	Oid			setvalArgTypes[3] = {TEXTOID, INT4OID,BOOLOID};
 	int			nextValue;
 	void	   *setvalPlan = NULL;
-	Datum		setvalData[2];
-	const char *setvalQuery = "SELECT setval_pg($1,$2)";
+	Datum		setvalData[3];
+	const char *setvalQuery = "SELECT setval_pg($1,$2,$3)";
 	int			ret;
+        char                    is_called;
 
 	sequenceName = PG_GETARG_TEXT_P(0);
 	nextValue = PG_GETARG_INT32(1);
+	is_called = PG_GETARG_BOOL(2);
 
 	setvalData[0] = PointerGetDatum(sequenceName);
 	setvalData[1] = Int32GetDatum(nextValue);
+	if(PG_NARGS() > 2)
+	  {
+	    setvalData[2] = BoolGetDatum(is_called);
+	  }
+	else
+	  {
+	    setvalData[2]=1;
+	  }
 
 	if (SPI_connect() < 0)
 	{
@@ -616,7 +626,7 @@ setval(PG_FUNCTION_ARGS)
 		return -1;
 	}
 
-	setvalPlan = SPI_prepare(setvalQuery, 2, setvalArgTypes);
+	setvalPlan = SPI_prepare(setvalQuery, 3, setvalArgTypes);
 	if (setvalPlan == NULL)
 	{
 		ereport(ERROR, (errcode(ERRCODE_EXTERNAL_ROUTINE_EXCEPTION),

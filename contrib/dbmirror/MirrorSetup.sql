@@ -1,6 +1,5 @@
 BEGIN;
 
-SET autocommit TO 'on';
 
 CREATE FUNCTION "recordchange" () RETURNS trigger AS
 '$libdir/pending.so', 'recordchange' LANGUAGE 'C';
@@ -25,7 +24,7 @@ XID int4 NOT NULL,
 PRIMARY KEY (SeqId)
 );
 
-CREATE INDEX "dbmirror_Pending_XID_Index" ON dbmirror_Pending (XID);
+CREATE INDEX dbmirror_Pending_XID_Index ON dbmirror_Pending (XID);
 
 CREATE TABLE dbmirror_PendingData (
 SeqId int4 NOT NULL,
@@ -50,12 +49,14 @@ CASCADE ON DELETE CASCADE
 UPDATE pg_proc SET proname='nextval_pg' WHERE proname='nextval';
 
 CREATE FUNCTION pg_catalog.nextval(text) RETURNS int8  AS
-'/usr/local/postgresql-7.4/lib/pending.so', 'nextval' LANGUAGE 'C' STRICT;
+'$libdir/pending.so', 'nextval' LANGUAGE 'C' STRICT;
 
 
 UPDATE pg_proc set proname='setval_pg' WHERE proname='setval';
 
-CREATE FUNCTION pg_catalog.setval(text,int4) RETURNS int8  AS
-'/usr/local/postgresql-7.4/lib/pending.so', 'setval' LANGUAGE 'C' STRICT;
+CREATE FUNCTION pg_catalog.setval("unknown",integer,boolean) RETURNS int8  AS
+'$libdir/pending.so', 'setval' LANGUAGE 'C' STRICT;
+CREATE FUNCTION pg_catalog.setval("unknown",integer) RETURNS int8  AS
+'$libdir/pending.so', 'setval' LANGUAGE 'C' STRICT;
 
 COMMIT;
