@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.308 2004/11/11 04:11:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.309 2004/11/20 21:44:24 tgl Exp $
 -->
 
 <appendix id="release">
@@ -289,7 +289,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.308 2004/11/11 04:11:07 neilc E
       <para>
        The <function>extract()</> function (also called
        <function>date_part</>) now returns the proper year for BC dates.
-       It previously returned one less than the current year. The
+       It previously returned one less than the correct year. The
        function now also returns the proper values for millennium and
        century.
       </para>
