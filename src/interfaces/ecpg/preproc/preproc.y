@@ -193,7 +193,7 @@ make_name(void)
                 SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
                 TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
-                UNION, UNIQUE, UPDATE, USER, USING,
+                UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHEN, WHERE, WITH, WITHOUT, WORK, YEAR_P, ZONE
 
@@ -217,7 +217,7 @@ make_name(void)
 		BACKWARD, BEFORE, BINARY, BIT, CACHE, CHECKPOINT, CLUSTER,
 		COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE, DATABASE,
 		DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE, EXPLAIN,
-		EXTEND, FORCE, FORWARD, FUNCTION, HANDLER, INCREMENT,
+		FORCE, FORWARD, FUNCTION, HANDLER, INCREMENT,
 		INDEX, INHERITS, INSTEAD, ISNULL, LANCOMPILER, LIMIT,
 		LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE,
 		MINVALUE, MODE, MOVE, NEW, NOCREATEDB, NOCREATEUSER,
@@ -260,7 +260,7 @@ make_name(void)
 %left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
-%nonassoc	IS NULL_P TRUE_P FALSE_P 
+%nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
@@ -312,7 +312,7 @@ make_name(void)
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
-%type  <str>    RemoveAggrStmt ExtendStmt opt_procedural select_no_parens
+%type  <str>    RemoveAggrStmt opt_procedural select_no_parens
 %type  <str>    RemoveOperStmt RenameStmt all_Op
 %type  <str>    VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>    VariableResetStmt AlterTableStmt DropUserStmt from_list
@@ -414,7 +414,6 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 		| DropPLangStmt		{ output_statement($1, 0, NULL, connection); }
 		| DropTrigStmt		{ output_statement($1, 0, NULL, connection); }
 		| DropUserStmt		{ output_statement($1, 0, NULL, connection); }
-		| ExtendStmt 		{ output_statement($1, 0, NULL, connection); }
 		| ExplainStmt		{ output_statement($1, 0, NULL, connection); }
 		| FetchStmt		{ output_statement($1, 1, NULL, connection); }
 		| GrantStmt		{ output_statement($1, 0, NULL, connection); }
@@ -1801,18 +1800,16 @@ RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee_list
  *
  *		QUERY:
  *				create index <indexname> on <relname>
- *				  using <access> "(" (<col> with <op>)+ ")" [with
- *				  <target_list>]
+ *				  [ using <access> ] "(" (<col> with <op>)+ ")"
+ *				  [ with <parameters> ]
+ *				  [ where <predicate> ]
  *
- *	[where <qual>] is not supported anymore
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
-			access_method_clause '(' index_params ')' opt_with
+			access_method_clause '(' index_params ')' opt_with where_clause
 				{
-					/* should check that access_method is valid,
-					   etc ... but doesn't */
-					$$ = cat_str(11, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11);
+					$$ = cat_str(12, make_str("create"), $2, make_str("index"), $4, make_str("on"), $6, $7, make_str("("), $9, make_str(")"), $11, $12);
 				}
 		;
 
@@ -1864,19 +1861,6 @@ opt_class:  class			{
 					}
 		| USING class			{ $$ = cat2_str(make_str("using"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
-		;
-
-/*****************************************************************************
- *
- *		QUERY:
- *				extend index <indexname> [where <qual>]
- *
- *****************************************************************************/
-
-ExtendStmt:  EXTEND INDEX index_name where_clause
-				{
-					$$ = cat_str(3, make_str("extend index"), $3, $4);
-				}
 		;
 
 
@@ -3324,15 +3308,23 @@ a_expr:  c_expr
 		 *  but let's make them expressions to allow the optimizer
 		 *  a chance to eliminate them if a_expr is a constant string.
 		 * - thomas 1997-12-22
+		 *
+		 *  Created BooleanTest Node type, and changed handling
+		 *  for NULL inputs
+		 * - jec 2001-06-18
 		 */
 		| a_expr IS TRUE_P
 				{	$$ = cat2_str($1, make_str("is true")); }
-		| a_expr IS NOT FALSE_P
-				{	$$ = cat2_str($1, make_str("is not false")); }
-		| a_expr IS FALSE_P
-				{	$$ = cat2_str($1, make_str("is false")); }
 		| a_expr IS NOT TRUE_P
 				{	$$ = cat2_str($1, make_str("is not true")); }
+		| a_expr IS FALSE_P
+				{	$$ = cat2_str($1, make_str("is false")); }
+		| a_expr IS NOT FALSE_P
+				{	$$ = cat2_str($1, make_str("is not false")); }
+		| a_expr IS UNKNOWN
+				{	$$ = cat2_str($1, make_str("is unknown")); }
+		| a_expr IS NOT UNKNOWN
+				{	$$ = cat2_str($1, make_str("is not unknown")); }
 		| a_expr BETWEEN b_expr AND b_expr	%prec BETWEEN
 				{
 					$$ = cat_str(5, $1, make_str("between"), $3, make_str("and"), $5); 
@@ -5152,7 +5144,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| EXCEPT	{ $$ = make_str("except"); }
 		| EXISTS	{ $$ = make_str("exists"); }
 		| EXPLAIN	{ $$ = make_str("explain"); }
-		| EXTEND	{ $$ = make_str("extend"); }
 		| EXTRACT	{ $$ = make_str("extract"); }
 		| FALSE_P	{ $$ = make_str("false"); }
 		| FOR		{ $$ = make_str("for"); }
@@ -5217,6 +5208,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| TRIM		{ $$ = make_str("trim"); }
 		| TRUE_P	{ $$ = make_str("true"); }
 		| UNIQUE	{ $$ = make_str("unique"); }
+		| UNKNOWN	{ $$ = make_str("unknown"); }
 		| USER		{ $$ = make_str("user"); }
 		| USING		{ $$ = make_str("using"); }
 		| VACUUM	{ $$ = make_str("vacuum"); }

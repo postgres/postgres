@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.167 2001/07/11 19:03:07 tgl Exp $
+ * $Id: config.h.in,v 1.168 2001/07/16 05:07:00 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -310,7 +310,6 @@
 /* #define ACLDEBUG */
 /* #define RTDEBUG */
 /* #define GISTDEBUG */
-/* #define OMIT_PARTIAL_INDEX */
 
 /*
  * defining unsafe floats will make float4 and float8 ops faster

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.114 2001/06/18 16:13:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.115 2001/07/16 05:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -565,18 +565,6 @@ ProcessUtility(Node *parsetree,
 			set_ps_display(commandTag = "CREATE");
 
 			DefineSequence((CreateSeqStmt *) parsetree);
-			break;
-
-		case T_ExtendStmt:
-			{
-				ExtendStmt *stmt = (ExtendStmt *) parsetree;
-
-				set_ps_display(commandTag = "EXTEND");
-
-				ExtendIndex(stmt->idxname,		/* index name */
-							(Expr *) stmt->whereClause, /* where */
-							stmt->rangetable);
-			}
 			break;
 
 		case T_RemoveAggrStmt:

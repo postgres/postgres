@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.236 2001/07/12 18:02:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.237 2001/07/16 05:06:58 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -135,7 +135,7 @@ static void doNegateFloat(Value *v);
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt, CreateTrigStmt,
 		CreateUserStmt, CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
 		DropGroupStmt, DropPLangStmt, DropSchemaStmt, DropStmt, DropTrigStmt,
-		DropUserStmt, DropdbStmt, ExplainStmt, ExtendStmt, FetchStmt,
+		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt, LockStmt,
 		NotifyStmt, OptimizableStmt, ProcedureStmt, ReindexStmt,
 		RemoveAggrStmt, RemoveFuncStmt, RemoveOperStmt,
@@ -345,7 +345,7 @@ static void doNegateFloat(Value *v);
 		BACKWARD, BEFORE, BINARY, BIT,
 		CACHE, CHECKPOINT, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
 		DATABASE, DELIMITERS, DO,
-		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
+		EACH, ENCODING, EXCLUSIVE, EXPLAIN,
 		FORCE, FORWARD, FUNCTION, HANDLER,
 		ILIKE, INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
@@ -450,7 +450,6 @@ stmt :	AlterSchemaStmt
 		| DropPLangStmt
 		| DropTrigStmt
 		| DropUserStmt
-		| ExtendStmt
 		| ExplainStmt
 		| FetchStmt
 		| GrantStmt
@@ -2392,14 +2391,14 @@ RevokeStmt:  REVOKE privileges ON opt_table relation_name_list FROM grantee_list
  *
  *		QUERY:
  *				create index <indexname> on <relname>
- *				  using <access> "(" (<col> with <op>)+ ")" [with
- *				  <target_list>]
+ *				  [ using <access> ] "(" (<col> with <op>)+ ")"
+ *				  [ with <parameters> ]
+ *				  [ where <predicate> ]
  *
- *	[where <qual>] is not supported anymore
  *****************************************************************************/
 
 IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
-			access_method_clause '(' index_params ')' opt_with
+			access_method_clause '(' index_params ')' opt_with where_clause
 				{
 					IndexStmt *n = makeNode(IndexStmt);
 					n->unique = $2;
@@ -2408,7 +2407,7 @@ IndexStmt:	CREATE index_opt_unique INDEX index_name ON relation_name
 					n->accessMethod = $7;
 					n->indexParams = $9;
 					n->withClause = $11;
-					n->whereClause = NULL;
+					n->whereClause = $12;
 					$$ = (Node *)n;
 				}
 		;
@@ -2470,22 +2469,6 @@ opt_class:  class
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-
-/*****************************************************************************
- *
- *		QUERY:
- *				extend index <indexname> [where <qual>]
- *
- *****************************************************************************/
-
-ExtendStmt:  EXTEND INDEX index_name where_clause
-				{
-					ExtendStmt *n = makeNode(ExtendStmt);
-					n->idxname = $3;
-					n->whereClause = $4;
-					$$ = (Node *)n;
-				}
-		;
 
 /*****************************************************************************
  *
@@ -5775,7 +5758,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| EXCEPT						{ $$ = "except"; }
 		| EXISTS						{ $$ = "exists"; }
 		| EXPLAIN						{ $$ = "explain"; }
-		| EXTEND						{ $$ = "extend"; }
 		| EXTRACT						{ $$ = "extract"; }
 		| FALSE_P						{ $$ = "false"; }
 		| FLOAT							{ $$ = "float"; }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.76 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.77 2001/07/16 05:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -641,7 +641,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	for (i = 0; i < numIndices; i++)
 	{
 		IndexInfo  *indexInfo;
-		Node	   *predicate;
+		List	   *predicate;
 		InsertIndexResult result;
 
 		if (relationDescs[i] == NULL)
@@ -649,10 +649,10 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 
 		indexInfo = indexInfoArray[i];
 		predicate = indexInfo->ii_Predicate;
-		if (predicate != NULL)
+		if (predicate != NIL)
 		{
 			/* Skip this index-update if the predicate isn't satisfied */
-			if (!ExecQual((List *) predicate, econtext, false))
+			if (!ExecQual(predicate, econtext, false))
 				continue;
 		}
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.108 2001/06/25 21:11:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.109 2001/07/16 05:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,8 +195,13 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * 4. Generate an indexscan path if there are relevant restriction
 		 * clauses OR the index ordering is potentially useful for later
 		 * merging or final output ordering.
+		 *
+		 * If there is a predicate, consider it anyway since the index
+		 * predicate has already been found to match the query.
 		 */
-		if (restrictclauses != NIL || useful_pathkeys != NIL)
+		if (restrictclauses != NIL ||
+			useful_pathkeys != NIL ||
+			index->indpred != NIL)
 			add_path(rel, (Path *)
 					 create_index_path(root, rel, index,
 									   restrictclauses,
@@ -974,18 +979,18 @@ pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 	 * clauses (those in restrictinfo_list). --Nels, Dec '92
 	 */
 
-	if (predicate_list == NULL)
+	if (predicate_list == NIL)
 		return true;			/* no predicate: the index is usable */
-	if (restrictinfo_list == NULL)
+	if (restrictinfo_list == NIL)
 		return false;			/* no restriction clauses: the test must
 								 * fail */
 
 	foreach(pred, predicate_list)
 	{
-
 		/*
 		 * if any clause is not implied, the whole predicate is not
-		 * implied
+		 * implied.  Note that checking for sub-ANDs here is redundant
+		 * if the predicate has been cnfify()-ed.
 		 */
 		if (and_clause(lfirst(pred)))
 		{
@@ -1011,15 +1016,16 @@ pred_test(List *predicate_list, List *restrictinfo_list, List *joininfo_list)
 static bool
 one_pred_test(Expr *predicate, List *restrictinfo_list)
 {
-	RestrictInfo *restrictinfo;
 	List	   *item;
 
 	Assert(predicate != NULL);
 	foreach(item, restrictinfo_list)
 	{
-		restrictinfo = (RestrictInfo *) lfirst(item);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(item);
+
 		/* if any clause implies the predicate, return true */
-		if (one_pred_clause_expr_test(predicate, (Node *) restrictinfo->clause))
+		if (one_pred_clause_expr_test(predicate,
+									  (Node *) restrictinfo->clause))
 			return true;
 	}
 	return false;
@@ -1055,7 +1061,6 @@ one_pred_clause_expr_test(Expr *predicate, Node *clause)
 		items = ((Expr *) clause)->args;
 		foreach(item, items)
 		{
-
 			/*
 			 * if any AND item implies the predicate, the whole clause
 			 * does
@@ -1102,7 +1107,6 @@ one_pred_clause_test(Expr *predicate, Node *clause)
 		items = predicate->args;
 		foreach(item, items)
 		{
-
 			/*
 			 * if any item is not implied, the whole predicate is not
 			 * implied
@@ -1177,26 +1181,30 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 				test_strategy;
 	Oper	   *test_oper;
 	Expr	   *test_expr;
-	bool		test_result,
-				isNull;
+	Datum		test_result;
+	bool		isNull;
 	Relation	relation;
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	ScanKeyData entry[3];
 	Form_pg_amop aform;
+	ExprContext *econtext;
+
+	/* Check the basic form; for now, only allow the simplest case */
+	/* Note caller already verified is_opclause(predicate) */
+	if (!is_opclause(clause))
+		return false;
 
 	pred_var = (Var *) get_leftop(predicate);
 	pred_const = (Const *) get_rightop(predicate);
 	clause_var = (Var *) get_leftop((Expr *) clause);
 	clause_const = (Const *) get_rightop((Expr *) clause);
 
-	/* Check the basic form; for now, only allow the simplest case */
-	if (!is_opclause(clause) ||
-		!IsA(clause_var, Var) ||
+	if (!IsA(clause_var, Var) ||
 		clause_const == NULL ||
 		!IsA(clause_const, Const) ||
-		!IsA(predicate->oper, Oper) ||
 		!IsA(pred_var, Var) ||
+		pred_const == NULL ||
 		!IsA(pred_const, Const))
 		return false;
 
@@ -1211,10 +1219,15 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	pred_op = ((Oper *) ((Expr *) predicate)->oper)->opno;
 	clause_op = ((Oper *) ((Expr *) clause)->oper)->opno;
 
-
 	/*
 	 * 1. Find a "btree" strategy number for the pred_op
+	 *
+	 * XXX consider using syscache lookups for these searches.  Right
+	 * now we don't have caches that match all of the search conditions,
+	 * but reconsider it after upcoming restructuring of pg_opclass.
 	 */
+	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
+
 	ScanKeyEntryInitialize(&entry[0], 0,
 						   Anum_pg_amop_amopid,
 						   F_OIDEQ,
@@ -1224,8 +1237,6 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 						   Anum_pg_amop_amopopr,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(pred_op));
-
-	relation = heap_openr(AccessMethodOperatorRelationName, AccessShareLock);
 
 	/*
 	 * The following assumes that any given operator will only be in a
@@ -1254,7 +1265,6 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 
 	heap_endscan(scan);
 
-
 	/*
 	 * 2. From the same opclass, find a strategy num for the clause_op
 	 */
@@ -1281,13 +1291,12 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 
 	/* Get the restriction clause operator's strategy number (1 to 5) */
 	clause_strategy = (StrategyNumber) aform->amopstrategy;
-	heap_endscan(scan);
 
+	heap_endscan(scan);
 
 	/*
 	 * 3. Look up the "test" strategy number in the implication table
 	 */
-
 	test_strategy = BT_implic_table[clause_strategy - 1][pred_strategy - 1];
 	if (test_strategy == 0)
 	{
@@ -1298,7 +1307,6 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 	/*
 	 * 4. From the same opclass, find the operator for the test strategy
 	 */
-
 	ScanKeyEntryInitialize(&entry[2], 0,
 						   Anum_pg_amop_amopstrategy,
 						   F_INT2EQ,
@@ -1329,19 +1337,20 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 						 InvalidOid,	/* opid */
 						 BOOLOID);		/* opresulttype */
 	replace_opid(test_oper);
-
 	test_expr = make_opclause(test_oper,
-							  copyObject(clause_const),
-							  copyObject(pred_const));
+							  (Var *) clause_const,
+							  (Var *) pred_const);
 
-	test_result = ExecEvalExpr((Node *) test_expr, NULL, &isNull, NULL);
+	econtext = MakeExprContext(NULL, TransactionCommandContext);
+	test_result = ExecEvalExpr((Node *) test_expr, econtext, &isNull, NULL);
+	FreeExprContext(econtext);
 
 	if (isNull)
 	{
 		elog(DEBUG, "clause_pred_clause_test: null test result");
 		return false;
 	}
-	return test_result;
+	return DatumGetBool(test_result);
 }
 
 

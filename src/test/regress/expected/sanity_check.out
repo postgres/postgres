@@ -29,6 +29,7 @@ SELECT relname, relhasindex
  num_exp_sqrt        | t
  num_exp_sub         | t
  onek                | t
+ onek2               | t
  pg_aggregate        | t
  pg_am               | t
  pg_amop             | t
@@ -57,5 +58,5 @@ SELECT relname, relhasindex
  shighway            | t
  tenk1               | t
  tenk2               | t
-(47 rows)
+(48 rows)
 

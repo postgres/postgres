@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.36 2001/07/15 22:48:18 tgl Exp $
+ * $Id: index.h,v 1.37 2001/07/16 05:06:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,6 @@ typedef void (*IndexBuildCallback) (Relation index,
 
 extern Form_pg_am AccessMethodObjectIdGetForm(Oid accessMethodObjectId,
 							MemoryContext resultCxt);
-
-extern void UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate);
 
 extern void InitIndexStrategy(int numatts,
 				  Relation indexRelation,

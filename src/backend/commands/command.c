@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.135 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.136 2001/07/16 05:06:57 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1882,7 +1882,7 @@ AlterTableCreateToastTable(const char *relationName, bool silent)
 	indexInfo->ii_NumIndexAttrs = 1;
 	indexInfo->ii_NumKeyAttrs = 1;
 	indexInfo->ii_KeyAttrNumbers[0] = 1;
-	indexInfo->ii_Predicate = NULL;
+	indexInfo->ii_Predicate = NIL;
 	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = false;
 

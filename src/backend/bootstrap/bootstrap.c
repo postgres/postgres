@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.111 2001/07/15 22:48:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.112 2001/07/16 05:06:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1100,8 +1100,9 @@ index_register(char *heap,
 	newind->il_info = (IndexInfo *) palloc(sizeof(IndexInfo));
 
 	memcpy(newind->il_info, indexInfo, sizeof(IndexInfo));
-	/* predicate will likely be null anyway, but may as well copy it */
-	newind->il_info->ii_Predicate = copyObject(indexInfo->ii_Predicate);
+	/* predicate will likely be null, but may as well copy it */
+	newind->il_info->ii_Predicate = (List *)
+		copyObject(indexInfo->ii_Predicate);
 
 	newind->il_next = ILHead;
 	ILHead = newind;

@@ -55,26 +55,32 @@ SELECT onek.unique1, onek.string4
    ORDER BY unique1 using <, string4 using >;
 
 --
--- partial btree index
--- awk '{if($1<10){print $0;}else{next;}}' onek.data | sort +0n -1
+-- test partial btree indexes
 --
---SELECT onek2.* WHERE onek2.unique1 < 10;
+-- As of 7.2, planner probably won't pick an indexscan without stats,
+-- so ANALYZE first.
+--
+ANALYZE onek2;
 
 --
--- partial btree index
+-- awk '{if($1<10){print $0;}else{next;}}' onek.data | sort +0n -1
+--
+SELECT onek2.* WHERE onek2.unique1 < 10;
+
+--
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
 --
---SELECT onek2.unique1, onek2.stringu1
---    WHERE onek2.unique1 < 20 
---    ORDER BY unique1 using >;
+SELECT onek2.unique1, onek2.stringu1
+    WHERE onek2.unique1 < 20 
+    ORDER BY unique1 using >;
 
 --
 -- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
 --
---SELECT onek2.unique1, onek2.stringu1
---   WHERE onek2.unique1 > 980
---   ORDER BY stringu1 using <;
-	
+SELECT onek2.unique1, onek2.stringu1
+   WHERE onek2.unique1 > 980;
+
+
 SELECT two, stringu1, ten, string4
    INTO TABLE tmp
    FROM onek;

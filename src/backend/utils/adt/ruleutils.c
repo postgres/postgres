@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.79 2001/07/10 00:02:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.80 2001/07/16 05:06:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include "catalog/heap.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
@@ -551,6 +552,64 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 		elog(ERROR, "get_viewdef: SPI_finish() failed");
 
 	PG_RETURN_TEXT_P(indexdef);
+}
+
+
+/* ----------
+ * get_expr			- Decompile an expression tree
+ *
+ * Input: an expression tree in nodeToString form, and a relation OID
+ *
+ * Output: reverse-listed expression
+ *
+ * Currently, the expression can only refer to a single relation, namely
+ * the one specified by the second parameter.  This is sufficient for
+ * partial indexes, column default expressions, etc.
+ * ----------
+ */
+Datum
+pg_get_expr(PG_FUNCTION_ARGS)
+{
+	text	*expr = PG_GETARG_TEXT_P(0);
+	Oid		relid = PG_GETARG_OID(1);
+	text	*result;
+	Node	*node;
+	List	*context;
+	char	*exprstr;
+	char	*relname;
+	char	*str;
+
+	/* Get the name for the relation */
+	relname = get_rel_name(relid);
+	if (relname == NULL)
+		PG_RETURN_NULL();		/* should we raise an error? */
+
+	/* Convert input TEXT object to C string */
+	exprstr = DatumGetCString(DirectFunctionCall1(textout,
+												  PointerGetDatum(expr)));
+
+	/* Convert expression to node tree */
+	node = (Node *) stringToNode(exprstr);
+
+	/*
+	 * If top level is a List, assume it is an implicit-AND structure,
+	 * and convert to explicit AND.  This is needed for partial index
+	 * predicates.
+	 */
+	if (node && IsA(node, List))
+	{
+		node = (Node *) make_ands_explicit((List *) node);
+	}
+
+	/* Deparse */
+	context = deparse_context_for(relname, relid);
+	str = deparse_expression(node, context, false);
+	
+	/* Pass the result back as TEXT */
+	result = DatumGetTextP(DirectFunctionCall1(textin,
+											   CStringGetDatum(str)));
+
+	PG_RETURN_TEXT_P(result);
 }
 
 

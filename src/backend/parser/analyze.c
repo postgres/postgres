@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.192 2001/07/04 17:36:54 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.193 2001/07/16 05:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@ static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
 static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
 static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
-static Query *transformExtendStmt(ParseState *pstate, ExtendStmt *stmt);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
 static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
@@ -146,10 +145,6 @@ transformStmt(ParseState *pstate, Node *parseTree)
 
 		case T_IndexStmt:
 			result = transformIndexStmt(pstate, (IndexStmt *) parseTree);
-			break;
-
-		case T_ExtendStmt:
-			result = transformExtendStmt(pstate, (ExtendStmt *) parseTree);
 			break;
 
 		case T_RuleStmt:
@@ -1630,43 +1625,34 @@ static Query *
 transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 {
 	Query	   *qry;
+	RangeTblEntry *rte;
 
 	qry = makeNode(Query);
 	qry->commandType = CMD_UTILITY;
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	if (stmt->whereClause)
+	{
+		/*
+		 * Put the parent table into the rtable so that the WHERE clause can
+		 * refer to its fields without qualification.  Note that this only
+		 * works if the parent table already exists --- so we can't easily
+		 * support predicates on indexes created implicitly by CREATE TABLE.
+		 * Fortunately, that's not necessary.
+		 */
+		rte = addRangeTableEntry(pstate, stmt->relname, NULL, false, true);
+
+		/* no to join list, yes to namespace */
+		addRTEtoQuery(pstate, rte, false, true);
+
+		stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+	}
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
-
 	stmt->rangetable = pstate->p_rtable;
 
 	qry->utilityStmt = (Node *) stmt;
 
-	return qry;
-}
-
-/*
- * transformExtendStmt -
- *	  transform the qualifications of the Extend Index Statement
- *
- */
-static Query *
-transformExtendStmt(ParseState *pstate, ExtendStmt *stmt)
-{
-	Query	   *qry;
-
-	qry = makeNode(Query);
-	qry->commandType = CMD_UTILITY;
-
-	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
-
-	qry->hasSubLinks = pstate->p_hasSubLinks;
-
-	stmt->rangetable = pstate->p_rtable;
-
-	qry->utilityStmt = (Node *) stmt;
 	return qry;
 }
 

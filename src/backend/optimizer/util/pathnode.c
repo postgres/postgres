@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.74 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.75 2001/07/16 05:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,6 +361,13 @@ create_index_path(Query *root,
 	pathnode->joinrelids = NIL; /* no join clauses here */
 	pathnode->alljoinquals = false;
 	pathnode->rows = rel->rows;
+
+	/*
+	 * Not sure if this is necessary, but it should help if the
+	 * statistics are too far off
+	 */
+	if (index->indpred && index->tuples < pathnode->rows)
+		pathnode->rows = index->tuples;
 
 	cost_index(&pathnode->path, root, rel, index, indexquals, false);
 

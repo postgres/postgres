@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.93 2001/06/19 22:39:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.94 2001/07/16 05:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
 	{"explain", EXPLAIN},
-	{"extend", EXTEND},
 	{"extract", EXTRACT},
 	{"false", FALSE_P},
 	{"fetch", FETCH},

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.213 2001/07/03 20:21:49 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.214 2001/07/16 05:06:59 tgl Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1758,6 +1758,8 @@ clearIndInfo(IndInfo *ind, int numIndexes)
 			free(ind[i].indisunique);
 		if (ind[i].indisprimary)
 			free(ind[i].indisprimary);
+		if (ind[i].indpred)
+			free(ind[i].indpred);
 		for (a = 0; a < INDEX_MAX_KEYS; ++a)
 		{
 			if (ind[i].indkey[a])
@@ -2887,10 +2889,10 @@ getIndexes(int *numIndexes)
 	int			i_indoid;
 	int			i_oid;
 	int			i_indisprimary;
+	int			i_indpred;
 
 	/*
-	 * find all the user-defined indexes. We do not handle partial
-	 * indexes.
+	 * find all the user-defined indexes.
 	 *
 	 * Notice we skip indexes on system classes
 	 *
@@ -2902,7 +2904,7 @@ getIndexes(int *numIndexes)
 	appendPQExpBuffer(query,
 					  "SELECT i.oid, t1.oid as indoid, t1.relname as indexrelname, t2.relname as indrelname, "
 					  "i.indproc, i.indkey, i.indclass, "
-				  "a.amname as indamname, i.indisunique, i.indisprimary "
+				  "a.amname as indamname, i.indisunique, i.indisprimary, i.indpred "
 					"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 				   "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
 					  "and t1.relam = a.oid and i.indexrelid > '%u'::oid "
@@ -2938,6 +2940,7 @@ getIndexes(int *numIndexes)
 	i_indclass = PQfnumber(res, "indclass");
 	i_indisunique = PQfnumber(res, "indisunique");
 	i_indisprimary = PQfnumber(res, "indisprimary");
+	i_indpred = PQfnumber(res, "indpred");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -2955,6 +2958,7 @@ getIndexes(int *numIndexes)
 						  INDEX_MAX_KEYS);
 		indinfo[i].indisunique = strdup(PQgetvalue(res, i, i_indisunique));
 		indinfo[i].indisprimary = strdup(PQgetvalue(res, i, i_indisprimary));
+		indinfo[i].indpred = strdup(PQgetvalue(res, i, i_indpred));
 	}
 	PQclear(res);
 	return indinfo;
@@ -4435,13 +4439,46 @@ dumpIndexes(Archive *fout, IndInfo *indinfo, int numIndexes,
 			{
 				/* need 2 printf's here cuz fmtId has static return area */
 				appendPQExpBuffer(q, " %s", fmtId(funcname, false));
-				appendPQExpBuffer(q, " (%s) %s );\n", attlist->data,
+				appendPQExpBuffer(q, " (%s) %s )", attlist->data,
 								  fmtId(classname[0], force_quotes));
 				free(funcname);
 				free(classname[0]);
 			}
 			else
-				appendPQExpBuffer(q, " %s );\n", attlist->data);
+				appendPQExpBuffer(q, " %s )", attlist->data);
+				
+			if (*indinfo[i].indpred) /* If there is an index predicate */
+			{
+				int numRows;
+				PQExpBuffer pred = createPQExpBuffer();
+				
+				appendPQExpBuffer(pred, "SELECT pg_get_expr(indpred,indrelid) as pred FROM pg_index WHERE oid = %s",
+								  indinfo[i].oid);
+				res = PQexec(g_conn, pred->data);
+				if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
+				{
+					fprintf(stderr, "dumpIndices(): SELECT (indpred) failed.  "
+							"Explanation from backend: '%s'.\n",
+							PQerrorMessage(g_conn));
+					exit_nicely();
+				}
+	
+				/* Sanity: Check we got only one tuple */
+				numRows = PQntuples(res);
+				if (numRows != 1)
+				{
+					fprintf(stderr, "dumpIndices(): SELECT (indpred) for index %s returned %d tuples. Expected 1.\n",
+							indinfo[i].indrelname, numRows);
+					exit_nicely();
+				}
+	
+				appendPQExpBuffer(q, " WHERE %s",
+								  PQgetvalue(res, 0, PQfnumber(res, "pred")));
+
+				PQclear(res);
+				destroyPQExpBuffer( pred );
+			}
+			appendPQExpBuffer(q, ";\n");
 
 			/*
 			 * We make the index belong to the owner of its table, which

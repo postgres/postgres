@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.41 2001/06/01 06:23:19 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.42 2001/07/16 05:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
 	{"explain", EXPLAIN},
-	{"extend", EXTEND},
 	{"extract", EXTRACT},
 	{"false", FALSE_P},
 	{"fetch", FETCH},
@@ -265,6 +264,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"type", TYPE_P},
 	{"union", UNION},
 	{"unique", UNIQUE},
+	{"unknown", UNKNOWN},
 	{"unlisten", UNLISTEN},
 	{"until", UNTIL},
 	{"update", UPDATE},

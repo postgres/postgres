@@ -205,24 +205,88 @@ SELECT onek.unique1, onek.string4
 (20 rows)
 
 --
--- partial btree index
+-- test partial btree indexes
+--
+-- As of 7.2, planner probably won't pick an indexscan without stats,
+-- so ANALYZE first.
+--
+ANALYZE onek2;
+--
 -- awk '{if($1<10){print $0;}else{next;}}' onek.data | sort +0n -1
 --
---SELECT onek2.* WHERE onek2.unique1 < 10;
+SELECT onek2.* WHERE onek2.unique1 < 10;
+ unique1 | unique2 | two | four | ten | twenty | hundred | thousand | twothousand | fivethous | tenthous | odd | even | stringu1 | stringu2 | string4 
+---------+---------+-----+------+-----+--------+---------+----------+-------------+-----------+----------+-----+------+----------+----------+---------
+       0 |     998 |   0 |    0 |   0 |      0 |       0 |        0 |           0 |         0 |        0 |   0 |    1 | AAAAAA   | KMBAAA   | OOOOxx
+       1 |     214 |   1 |    1 |   1 |      1 |       1 |        1 |           1 |         1 |        1 |   2 |    3 | BAAAAA   | GIAAAA   | OOOOxx
+       2 |     326 |   0 |    2 |   2 |      2 |       2 |        2 |           2 |         2 |        2 |   4 |    5 | CAAAAA   | OMAAAA   | OOOOxx
+       3 |     431 |   1 |    3 |   3 |      3 |       3 |        3 |           3 |         3 |        3 |   6 |    7 | DAAAAA   | PQAAAA   | VVVVxx
+       4 |     833 |   0 |    0 |   4 |      4 |       4 |        4 |           4 |         4 |        4 |   8 |    9 | EAAAAA   | BGBAAA   | HHHHxx
+       5 |     541 |   1 |    1 |   5 |      5 |       5 |        5 |           5 |         5 |        5 |  10 |   11 | FAAAAA   | VUAAAA   | HHHHxx
+       6 |     978 |   0 |    2 |   6 |      6 |       6 |        6 |           6 |         6 |        6 |  12 |   13 | GAAAAA   | QLBAAA   | OOOOxx
+       7 |     647 |   1 |    3 |   7 |      7 |       7 |        7 |           7 |         7 |        7 |  14 |   15 | HAAAAA   | XYAAAA   | VVVVxx
+       8 |     653 |   0 |    0 |   8 |      8 |       8 |        8 |           8 |         8 |        8 |  16 |   17 | IAAAAA   | DZAAAA   | HHHHxx
+       9 |      49 |   1 |    1 |   9 |      9 |       9 |        9 |           9 |         9 |        9 |  18 |   19 | JAAAAA   | XBAAAA   | HHHHxx
+(10 rows)
+
 --
--- partial btree index
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
 --
---SELECT onek2.unique1, onek2.stringu1
---    WHERE onek2.unique1 < 20 
---    ORDER BY unique1 using >;
+SELECT onek2.unique1, onek2.stringu1
+    WHERE onek2.unique1 < 20 
+    ORDER BY unique1 using >;
+ unique1 | stringu1 
+---------+----------
+      19 | TAAAAA
+      18 | SAAAAA
+      17 | RAAAAA
+      16 | QAAAAA
+      15 | PAAAAA
+      14 | OAAAAA
+      13 | NAAAAA
+      12 | MAAAAA
+      11 | LAAAAA
+      10 | KAAAAA
+       9 | JAAAAA
+       8 | IAAAAA
+       7 | HAAAAA
+       6 | GAAAAA
+       5 | FAAAAA
+       4 | EAAAAA
+       3 | DAAAAA
+       2 | CAAAAA
+       1 | BAAAAA
+       0 | AAAAAA
+(20 rows)
+
 --
 -- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
 --
---SELECT onek2.unique1, onek2.stringu1
---   WHERE onek2.unique1 > 980
---   ORDER BY stringu1 using <;
-	
+SELECT onek2.unique1, onek2.stringu1
+   WHERE onek2.unique1 > 980;
+ unique1 | stringu1 
+---------+----------
+     981 | TLAAAA
+     982 | ULAAAA
+     983 | VLAAAA
+     984 | WLAAAA
+     985 | XLAAAA
+     986 | YLAAAA
+     987 | ZLAAAA
+     988 | AMAAAA
+     989 | BMAAAA
+     990 | CMAAAA
+     991 | DMAAAA
+     992 | EMAAAA
+     993 | FMAAAA
+     994 | GMAAAA
+     995 | HMAAAA
+     996 | IMAAAA
+     997 | JMAAAA
+     998 | KMAAAA
+     999 | LMAAAA
+(19 rows)
+
 SELECT two, stringu1, ten, string4
    INTO TABLE tmp
    FROM onek;

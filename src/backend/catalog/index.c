@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.156 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.157 2001/07/16 05:06:57 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -510,7 +510,7 @@ UpdateIndexRelation(Oid indexoid,
 	 * allocate a Form_pg_index big enough to hold the index-predicate (if
 	 * any) in string form
 	 */
-	if (indexInfo->ii_Predicate != NULL)
+	if (indexInfo->ii_Predicate != NIL)
 	{
 		predString = nodeToString(indexInfo->ii_Predicate);
 		predText = DatumGetTextP(DirectFunctionCall1(textin,
@@ -584,87 +584,6 @@ UpdateIndexRelation(Oid indexoid,
 	pfree(predText);
 	pfree(indexForm);
 	heap_freetuple(tuple);
-}
-
-/* ----------------------------------------------------------------
- *		UpdateIndexPredicate
- * ----------------------------------------------------------------
- */
-void
-UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate)
-{
-	Node	   *newPred;
-	char	   *predString;
-	text	   *predText;
-	Relation	pg_index;
-	HeapTuple	tuple;
-	HeapTuple	newtup;
-	int			i;
-	Datum		values[Natts_pg_index];
-	char		nulls[Natts_pg_index];
-	char		replace[Natts_pg_index];
-
-	/*
-	 * Construct newPred as a CNF expression equivalent to the OR of the
-	 * original partial-index predicate ("oldPred") and the extension
-	 * predicate ("predicate").
-	 *
-	 * This should really try to process the result to change things like
-	 * "a>2 OR a>1" to simply "a>1", but for now all it does is make sure
-	 * that if the extension predicate is NULL (i.e., it is being extended
-	 * to be a complete index), then newPred will be NULL - in effect,
-	 * changing "a>2 OR TRUE" to "TRUE". --Nels, Jan '93
-	 */
-	newPred = NULL;
-	if (predicate != NULL)
-	{
-		newPred = (Node *) make_orclause(lcons(make_andclause((List *) predicate),
-								  lcons(make_andclause((List *) oldPred),
-										NIL)));
-		newPred = (Node *) cnfify((Expr *) newPred, true);
-	}
-
-	/* translate the index-predicate to string form */
-	if (newPred != NULL)
-	{
-		predString = nodeToString(newPred);
-		predText = DatumGetTextP(DirectFunctionCall1(textin,
-										   CStringGetDatum(predString)));
-		pfree(predString);
-	}
-	else
-		predText = DatumGetTextP(DirectFunctionCall1(textin,
-												   CStringGetDatum("")));
-
-	/* open the index system catalog relation */
-	pg_index = heap_openr(IndexRelationName, RowExclusiveLock);
-
-	tuple = SearchSysCache(INDEXRELID,
-						   ObjectIdGetDatum(indexoid),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "UpdateIndexPredicate: cache lookup failed for index %u",
-			 indexoid);
-
-	for (i = 0; i < Natts_pg_index; i++)
-	{
-		nulls[i] = heap_attisnull(tuple, i + 1) ? 'n' : ' ';
-		replace[i] = ' ';
-		values[i] = (Datum) NULL;
-	}
-
-	replace[Anum_pg_index_indpred - 1] = 'r';
-	values[Anum_pg_index_indpred - 1] = PointerGetDatum(predText);
-
-	newtup = heap_modifytuple(tuple, pg_index, values, nulls, replace);
-
-	simple_heap_update(pg_index, &newtup->t_self, newtup);
-
-	heap_freetuple(newtup);
-	ReleaseSysCache(tuple);
-
-	heap_close(pg_index, RowExclusiveLock);
-	pfree(predText);
 }
 
 /* ----------------------------------------------------------------
@@ -1084,7 +1003,7 @@ BuildIndexInfo(HeapTuple indexTuple)
 		pfree(predString);
 	}
 	else
-		ii->ii_Predicate = NULL;
+		ii->ii_Predicate = NIL;
 
 	/* Other info */
 	ii->ii_Unique = indexStruct->indisunique;
@@ -1684,7 +1603,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	Datum		attdata[INDEX_MAX_KEYS];
 	char		nulls[INDEX_MAX_KEYS];
 	double		reltuples;
-	Node	   *predicate = indexInfo->ii_Predicate;
+	List	   *predicate = indexInfo->ii_Predicate;
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
@@ -1708,7 +1627,7 @@ IndexBuildHeapScan(Relation heapRelation,
 	 * We construct the ExprContext anyway since we need a per-tuple
 	 * temporary memory context for function evaluation -- tgl July 00
 	 */
-	if (predicate != NULL)
+	if (predicate != NIL)
 	{
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
@@ -1831,12 +1750,12 @@ IndexBuildHeapScan(Relation heapRelation,
 		 * VACUUM doesn't complain about tuple count mismatch for partial
 		 * indexes.
 		 */
-		if (predicate != NULL)
+		if (predicate != NIL)
 		{
 			if (! tupleIsAlive)
 				continue;
 			ExecStoreTuple(heapTuple, slot, InvalidBuffer, false);
-			if (!ExecQual((List *) predicate, econtext, false))
+			if (!ExecQual(predicate, econtext, false))
 				continue;
 		}
 
@@ -1865,7 +1784,7 @@ IndexBuildHeapScan(Relation heapRelation,
 
 	heap_endscan(scan);
 
-	if (predicate != NULL)
+	if (predicate != NIL)
 		ExecDropTupleTable(tupleTable, true);
 	FreeExprContext(econtext);
 

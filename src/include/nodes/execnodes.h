@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.61 2001/06/01 02:41:36 tgl Exp $
+ * $Id: execnodes.h,v 1.62 2001/07/16 05:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  *		NumKeyAttrs			number of key attributes for this index
  *							(ie, number of attrs from underlying relation)
  *		KeyAttrNumbers		underlying-rel attribute numbers used as keys
- *		Predicate			partial-index predicate, or NULL if none
+ *		Predicate			partial-index predicate, or NIL if none
  *		FuncOid				OID of function, or InvalidOid if not f. index
  *		FuncInfo			fmgr lookup data for function, if FuncOid valid
  *		Unique				is it a unique index?
@@ -46,7 +46,7 @@ typedef struct IndexInfo
 	int			ii_NumIndexAttrs;
 	int			ii_NumKeyAttrs;
 	AttrNumber	ii_KeyAttrNumbers[INDEX_MAX_KEYS];
-	Node	   *ii_Predicate;
+	List	   *ii_Predicate;
 	Oid			ii_FuncOid;
 	FmgrInfo	ii_FuncInfo;
 	bool		ii_Unique;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.51 2001/07/15 22:48:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.52 2001/07/16 05:06:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,8 +45,6 @@
 
 /* non-export function prototypes */
 static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
-static void CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid);
-static void CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
 static void FuncIndexArgs(IndexInfo *indexInfo, Oid *classOidP,
 			  IndexElem *funcIndex,
 			  Oid relId,
@@ -144,12 +142,8 @@ DefineIndex(char *heapRelationName,
 	}
 
 	/*
-	 * Convert the partial-index predicate from parsetree form to plan
-	 * form, so it can be readily evaluated during index creation. Note:
-	 * "predicate" comes in as a list containing (1) the predicate itself
-	 * (a where_clause), and (2) a corresponding range table.
-	 *
-	 * [(1) is 'predicate' and (2) is 'rangetable' now. - ay 10/94]
+	 * Convert the partial-index predicate from parsetree form to
+	 * an implicit-AND qual expression, for easier evaluation at runtime.
 	 */
 	if (predicate != NULL && rangetable != NIL)
 	{
@@ -166,7 +160,7 @@ DefineIndex(char *heapRelationName,
 	 * structure
 	 */
 	indexInfo = makeNode(IndexInfo);
-	indexInfo->ii_Predicate = (Node *) cnfPred;
+	indexInfo->ii_Predicate = cnfPred;
 	indexInfo->ii_FuncOid = InvalidOid;
 	indexInfo->ii_Unique = unique;
 
@@ -219,154 +213,29 @@ DefineIndex(char *heapRelationName,
 
 
 /*
- * ExtendIndex
- *		Extends a partial index.
- */
-void
-ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
-{
-	Relation	heapRelation;
-	Relation	indexRelation;
-	Oid			accessMethodId,
-				indexId,
-				relationId;
-	HeapTuple	tuple;
-	Form_pg_index index;
-	List	   *cnfPred = NIL;
-	IndexInfo  *indexInfo;
-	Node	   *oldPred;
-
-	/*
-	 * Get index's relation id and access method id from pg_class
-	 */
-	tuple = SearchSysCache(RELNAME,
-						   PointerGetDatum(indexRelationName),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ExtendIndex: index \"%s\" not found",
-			 indexRelationName);
-	indexId = tuple->t_data->t_oid;
-	accessMethodId = ((Form_pg_class) GETSTRUCT(tuple))->relam;
-	ReleaseSysCache(tuple);
-
-	/*
-	 * Extract info from the pg_index tuple for the index
-	 */
-	tuple = SearchSysCache(INDEXRELID,
-						   ObjectIdGetDatum(indexId),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ExtendIndex: relation \"%s\" is not an index",
-			 indexRelationName);
-	index = (Form_pg_index) GETSTRUCT(tuple);
-	Assert(index->indexrelid == indexId);
-	relationId = index->indrelid;
-	indexInfo = BuildIndexInfo(tuple);
-	oldPred = indexInfo->ii_Predicate;
-	ReleaseSysCache(tuple);
-
-	if (oldPred == NULL)
-		elog(ERROR, "ExtendIndex: \"%s\" is not a partial index",
-			 indexRelationName);
-
-	/*
-	 * Convert the extension predicate from parsetree form to plan form,
-	 * so it can be readily evaluated during index creation. Note:
-	 * "predicate" comes in two parts (1) the predicate expression itself,
-	 * and (2) a corresponding range table.
-	 *
-	 * XXX I think this code is broken --- index_build expects a single
-	 * expression not a list --- tgl Jul 00
-	 */
-	if (rangetable != NIL)
-	{
-		cnfPred = cnfify((Expr *) copyObject(predicate), true);
-		fix_opids((Node *) cnfPred);
-		CheckPredicate(cnfPred, rangetable, relationId);
-	}
-
-	/* pass new predicate to index_build */
-	indexInfo->ii_Predicate = (Node *) cnfPred;
-
-	/* Open heap and index rels, and get suitable locks */
-	heapRelation = heap_open(relationId, ShareLock);
-	indexRelation = index_open(indexId);
-
-	/* Obtain exclusive lock on it, just to be sure */
-	LockRelation(indexRelation, AccessExclusiveLock);
-
-	InitIndexStrategy(indexInfo->ii_NumIndexAttrs,
-					  indexRelation, accessMethodId);
-
-	/*
-	 * XXX currently BROKEN: if we want to support EXTEND INDEX, oldPred
-	 * needs to be passed through to IndexBuildHeapScan.  We could do this
-	 * without help from the index AMs if we added an oldPred field to the
-	 * IndexInfo struct.  Currently I'm expecting that EXTEND INDEX will
-	 * get removed, so I'm not going to do that --- tgl 7/14/01
-	 */
-
-	index_build(heapRelation, indexRelation, indexInfo);
-
-	/* heap and index rels are closed as a side-effect of index_build */
-}
-
-
-/*
  * CheckPredicate
  *		Checks that the given list of partial-index predicates refer
- *		(via the given range table) only to the given base relation oid,
- *		and that they're in a form the planner can handle, i.e.,
- *		boolean combinations of "ATTR OP CONST" (yes, for now, the ATTR
- *		has to be on the left).
+ *		(via the given range table) only to the given base relation oid.
+ *
+ * This used to also constrain the form of the predicate to forms that
+ * indxpath.c could do something with.  However, that seems overly
+ * restrictive.  One useful application of partial indexes is to apply
+ * a UNIQUE constraint across a subset of a table, and in that scenario
+ * any evaluatable predicate will work.  So accept any predicate here
+ * (except ones requiring a plan), and let indxpath.c fend for itself.
  */
 
 static void
 CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid)
 {
-	List	   *item;
-
-	foreach(item, predList)
-		CheckPredExpr(lfirst(item), rangeTable, baseRelOid);
-}
-
-static void
-CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid)
-{
-	List	   *clauses = NIL,
-			   *clause;
-
-	if (is_opclause(predicate))
-	{
-		CheckPredClause((Expr *) predicate, rangeTable, baseRelOid);
-		return;
-	}
-	else if (or_clause(predicate) || and_clause(predicate))
-		clauses = ((Expr *) predicate)->args;
-	else
-		elog(ERROR, "Unsupported partial-index predicate expression type");
-
-	foreach(clause, clauses)
-		CheckPredExpr(lfirst(clause), rangeTable, baseRelOid);
-}
-
-static void
-CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid)
-{
-	Var		   *pred_var;
-	Const	   *pred_const;
-
-	pred_var = (Var *) get_leftop(predicate);
-	pred_const = (Const *) get_rightop(predicate);
-
-	if (!IsA(predicate->oper, Oper) ||
-		!IsA(pred_var, Var) ||
-		!IsA(pred_const, Const))
-		elog(ERROR, "Unsupported partial-index predicate clause type");
-
-	if (getrelid(pred_var->varno, rangeTable) != baseRelOid)
+	if (length(rangeTable) != 1 || getrelid(1, rangeTable) != baseRelOid)
 		elog(ERROR,
-		 "Partial-index predicates may refer only to the base relation");
+			 "Partial-index predicates may refer only to the base relation");
+
+	if (contain_subplans((Node *) predList))
+		elog(ERROR, "Cannot use subselect in index predicate");
+	if (contain_agg_clause((Node *) predList))
+		elog(ERROR, "Cannot use aggregate in index predicate");
 }
 
 

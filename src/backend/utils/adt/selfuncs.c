@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.94 2001/06/25 21:11:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.95 2001/07/16 05:06:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/plancat.h"
+#include "optimizer/prep.h"
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
@@ -2950,24 +2951,63 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 {
 	double		numIndexTuples;
 	double		numIndexPages;
-
-	/* Estimate the fraction of main-table tuples that will be visited */
-	*indexSelectivity = clauselist_selectivity(root, indexQuals,
-											   lfirsti(rel->relids));
-
-	/* Estimate the number of index tuples that will be visited */
-	numIndexTuples = *indexSelectivity * index->tuples;
-
-	/* Estimate the number of index pages that will be retrieved */
-	numIndexPages = *indexSelectivity * index->pages;
+	List	   *selectivityQuals = indexQuals;
 
 	/*
-	 * Always estimate at least one tuple and page are touched, even when
+	 * If the index is partial, AND the index predicate with the explicitly
+	 * given indexquals to produce a more accurate idea of the index
+	 * restriction.  This may produce redundant clauses, which we hope that
+	 * cnfify and clauselist_selectivity will deal with intelligently.
+	 *
+	 * Note that index->indpred and indexQuals are both in implicit-AND
+	 * form to start with, which we have to make explicit to hand to
+	 * canonicalize_qual, and then we get back implicit-AND form again.
+	 */
+	if (index->indpred != NIL)
+	{
+		Expr   *andedQuals;
+
+		andedQuals = make_ands_explicit(nconc(listCopy(index->indpred),
+											  indexQuals));
+		selectivityQuals = canonicalize_qual(andedQuals, true);
+	}
+
+  	/* Estimate the fraction of main-table tuples that will be visited */
+ 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
+  											   lfirsti(rel->relids));
+
+	/*
+	 * Estimate the number of tuples that will be visited.  We do it in
+	 * this rather peculiar-looking way in order to get the right answer
+	 * for partial indexes.  We can bound the number of tuples by the
+	 * index size, in any case.
+	 */
+	numIndexTuples = *indexSelectivity * rel->tuples;
+
+	if (numIndexTuples > index->tuples)
+		numIndexTuples = index->tuples;
+
+  	/*
+	 * Always estimate at least one tuple is touched, even when
 	 * indexSelectivity estimate is tiny.
 	 */
 	if (numIndexTuples < 1.0)
 		numIndexTuples = 1.0;
-	if (numIndexPages < 1.0)
+
+  	/*
+	 * Estimate the number of index pages that will be retrieved.
+	 *
+	 * For all currently-supported index types, the first page of the index
+	 * is a metadata page, and we should figure on fetching that plus a
+	 * pro-rated fraction of the remaining pages.
+	 */
+	if (index->pages > 1 && index->tuples > 0)
+	{
+		numIndexPages = (numIndexTuples / index->tuples) * (index->pages - 1);
+		numIndexPages += 1;		/* count the metapage too */
+		numIndexPages = ceil(numIndexPages);
+	}
+	else
 		numIndexPages = 1.0;
 
 	/*
