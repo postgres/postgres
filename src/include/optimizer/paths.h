@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.70 2003/11/29 22:41:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.71 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,9 @@ extern void debug_print_rel(Query *root, RelOptInfo *rel);
 extern void create_index_paths(Query *root, RelOptInfo *rel);
 extern Path *best_inner_indexscan(Query *root, RelOptInfo *rel,
 					 Relids outer_relids, JoinType jointype);
-extern List *extract_or_indexqual_conditions(RelOptInfo *rel,
-								IndexOptInfo *index,
-								Expr *orsubclause);
+extern List *group_clauses_by_indexkey_for_or(RelOptInfo *rel,
+											  IndexOptInfo *index,
+											  Expr *orsubclause);
 extern List *expand_indexqual_conditions(IndexOptInfo *index,
 							List *clausegroups);
 

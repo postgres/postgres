@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.90 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.91 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,6 +146,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 				ChangeVarNodes((Node *) info->indexprs, 1, varno, 0);
 			if (info->indpred && varno != 1)
 				ChangeVarNodes((Node *) info->indpred, 1, varno, 0);
+			info->predOK = false; /* set later in indxpath.c */
 			info->unique = index->indisunique;
 
 			/* initialize cached join info to empty */

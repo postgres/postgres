@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.94 2003/12/30 23:53:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.95 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
+#include "optimizer/restrictinfo.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
@@ -373,31 +374,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
 						Relids outerjoin_nonnullable,
 						Relids qualscope)
 {
-	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
-	RelOptInfo *rel;
 	Relids		relids;
 	List	   *vars;
 	bool		can_be_equijoin;
-
-	restrictinfo->clause = (Expr *) clause;
-	restrictinfo->canjoin = false;		/* set below, if join clause */
-	restrictinfo->left_relids = NULL;
-	restrictinfo->right_relids = NULL;
-	restrictinfo->subclauseindices = NIL;
-	restrictinfo->eval_cost.startup = -1;		/* not computed until
-												 * needed */
-	restrictinfo->this_selec = -1;		/* not computed until needed */
-	restrictinfo->mergejoinoperator = InvalidOid;
-	restrictinfo->left_sortop = InvalidOid;
-	restrictinfo->right_sortop = InvalidOid;
-	restrictinfo->left_pathkey = NIL;	/* not computable yet */
-	restrictinfo->right_pathkey = NIL;
-	restrictinfo->left_mergescansel = -1;		/* not computed until
-												 * needed */
-	restrictinfo->right_mergescansel = -1;
-	restrictinfo->hashjoinoperator = InvalidOid;
-	restrictinfo->left_bucketsize = -1; /* not computed until needed */
-	restrictinfo->right_bucketsize = -1;
+	RestrictInfo *restrictinfo;
+	RelOptInfo *rel;
 
 	/*
 	 * Retrieve all relids and vars contained within the clause.
@@ -508,18 +489,17 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * same joinrel. A qual originating from WHERE is always considered
 	 * "pushed down".
 	 */
-	restrictinfo->ispusheddown = ispusheddown || !bms_equal(relids,
-															qualscope);
+	if (!ispusheddown)
+		ispusheddown = !bms_equal(relids, qualscope);
 
 	/*
-	 * If it's a binary opclause, set up left/right relids info.
+	 * Build the RestrictInfo node itself.
 	 */
-	if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
-	{
-		restrictinfo->left_relids = pull_varnos(get_leftop((Expr *) clause));
-		restrictinfo->right_relids = pull_varnos(get_rightop((Expr *) clause));
-	}
+	restrictinfo = make_restrictinfo((Expr *) clause, ispusheddown);
 
+	/*
+	 * Figure out where to attach it.
+	 */
 	switch (bms_membership(relids))
 	{
 		case BMS_SINGLETON:
@@ -553,7 +533,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 			 * into a join rel's restriction list.)
 			 */
 			if (!isdeduced ||
-			!qual_is_redundant(root, restrictinfo, rel->baserestrictinfo))
+				!qual_is_redundant(root, restrictinfo,
+								   rel->baserestrictinfo))
 			{
 				/* Add clause to rel's restriction list */
 				rel->baserestrictinfo = lappend(rel->baserestrictinfo,
@@ -564,23 +545,11 @@ distribute_qual_to_rels(Query *root, Node *clause,
 
 			/*
 			 * 'clause' is a join clause, since there is more than one rel
-			 * in the relid set.   Set additional RestrictInfo fields for
-			 * joining.  First, does it look like a normal join clause,
-			 * i.e., a binary operator relating expressions that come from
-			 * distinct relations?	If so we might be able to use it in a
-			 * join algorithm.
+			 * in the relid set.
 			 */
-			if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
-			{
-				if (!bms_is_empty(restrictinfo->left_relids) &&
-					!bms_is_empty(restrictinfo->right_relids) &&
-					!bms_overlap(restrictinfo->left_relids,
-								 restrictinfo->right_relids))
-					restrictinfo->canjoin = true;
-			}
 
 			/*
-			 * Now check for hash or mergejoinable operators.
+			 * Check for hash or mergejoinable operators.
 			 *
 			 * We don't bother setting the hashjoin info if we're not going
 			 * to need it.	We do want to know about mergejoinable ops in
@@ -624,7 +593,8 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	 * equivalence for future use.	(We can skip this for a deduced
 	 * clause, since the keys are already known equivalent in that case.)
 	 */
-	if (can_be_equijoin && restrictinfo->mergejoinoperator != InvalidOid &&
+	if (can_be_equijoin &&
+		restrictinfo->mergejoinoperator != InvalidOid &&
 		!isdeduced)
 		add_equijoined_keys(root, restrictinfo);
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.151 2003/12/30 23:53:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.152 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,14 +50,6 @@
 	(indexable_operator(clause,opclass,indexkey_on_left) != InvalidOid)
 
 
-static void match_index_orclauses(RelOptInfo *rel, IndexOptInfo *index,
-					  List *restrictinfo_list);
-static List *match_index_orclause(RelOptInfo *rel, IndexOptInfo *index,
-					 List *or_clauses,
-					 List *other_matching_indices);
-static bool match_or_subclause_to_indexkey(RelOptInfo *rel,
-							   IndexOptInfo *index,
-							   Expr *clause);
 static List *group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index);
 static List *group_clauses_by_indexkey_for_join(Query *root,
 								   RelOptInfo *rel, IndexOptInfo *index,
@@ -65,7 +57,7 @@ static List *group_clauses_by_indexkey_for_join(Query *root,
 								   JoinType jointype, bool isouterjoin);
 static bool match_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
 									 int indexcol, Oid opclass,
-									 Expr *clause, RestrictInfo *rinfo);
+									 RestrictInfo *rinfo);
 static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
 										  int indexcol, Oid opclass,
 										  RestrictInfo *rinfo);
@@ -145,33 +137,20 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 * predicate test.
 		 */
 		if (index->indpred != NIL)
+		{
 			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list))
 				continue;
+			index->predOK = true; /* set flag for orindxpaths.c */
+		}
 
 		/*
-		 * 1. Try matching the index against subclauses of restriction
-		 * 'or' clauses (ie, 'or' clauses that reference only this
-		 * relation). The restrictinfo nodes for the 'or' clauses are
-		 * marked with lists of the matching indices.  No paths are
-		 * actually created now; that will be done in orindxpath.c after
-		 * all indexes for the rel have been examined.	(We need to do it
-		 * that way because we can potentially use a different index for
-		 * each subclause of an 'or', so we can't build a path for an 'or'
-		 * clause until all indexes have been matched against it.)
-		 *
-		 * We don't even think about special handling of 'or' clauses that
-		 * involve more than one relation (ie, are join clauses). Can we
-		 * do anything useful with those?
-		 */
-		match_index_orclauses(rel, index, restrictinfo_list);
-
-		/*
-		 * 2. Match the index against non-'or' restriction clauses.
+		 * 1. Match the index against non-OR restriction clauses.
+		 * (OR clauses will be considered later by orindxpath.c.)
 		 */
 		restrictclauses = group_clauses_by_indexkey(rel, index);
 
 		/*
-		 * 3. Compute pathkeys describing index's ordering, if any, then
+		 * 2. Compute pathkeys describing index's ordering, if any, then
 		 * see how many of them are actually useful for this query.
 		 */
 		index_pathkeys = build_index_pathkeys(root, rel, index,
@@ -181,7 +160,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 													index_pathkeys);
 
 		/*
-		 * 4. Generate an indexscan path if there are relevant restriction
+		 * 3. Generate an indexscan path if there are relevant restriction
 		 * clauses OR the index ordering is potentially useful for later
 		 * merging or final output ordering.
 		 *
@@ -201,7 +180,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 									   NoMovementScanDirection));
 
 		/*
-		 * 5. If the index is ordered, a backwards scan might be
+		 * 4. If the index is ordered, a backwards scan might be
 		 * interesting. Currently this is only possible for a DESC query
 		 * result ordering.
 		 */
@@ -220,7 +199,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		}
 
 		/*
-		 * 6. Examine join clauses to see which ones are potentially
+		 * 5. Examine join clauses to see which ones are potentially
 		 * usable with this index, and generate the set of all other
 		 * relids that participate in such join clauses.  We'll use this
 		 * set later to recognize outer rels that are equivalent for
@@ -234,269 +213,6 @@ create_index_paths(Query *root, RelOptInfo *rel)
 	}
 
 	rel->index_outer_relids = all_join_outerrelids;
-}
-
-
-/****************************************************************************
- *		----  ROUTINES TO PROCESS 'OR' CLAUSES	----
- ****************************************************************************/
-
-
-/*
- * match_index_orclauses
- *	  Attempt to match an index against subclauses within 'or' clauses.
- *	  Each subclause that does match is marked with the index's node.
- *
- *	  Essentially, this adds 'index' to the list of subclause indices in
- *	  the RestrictInfo field of each of the 'or' clauses where it matches.
- *	  NOTE: we can use storage in the RestrictInfo for this purpose because
- *	  this processing is only done on single-relation restriction clauses.
- *	  Therefore, we will never have indexes for more than one relation
- *	  mentioned in the same RestrictInfo node's list.
- *
- * 'rel' is the node of the relation on which the index is defined.
- * 'index' is the index node.
- * 'restrictinfo_list' is the list of available restriction clauses.
- */
-static void
-match_index_orclauses(RelOptInfo *rel,
-					  IndexOptInfo *index,
-					  List *restrictinfo_list)
-{
-	List	   *i;
-
-	foreach(i, restrictinfo_list)
-	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
-
-		if (restriction_is_or_clause(restrictinfo))
-		{
-			/*
-			 * Add this index to the subclause index list for each
-			 * subclause that it matches.
-			 */
-			restrictinfo->subclauseindices =
-				match_index_orclause(rel, index,
-							   ((BoolExpr *) restrictinfo->clause)->args,
-									 restrictinfo->subclauseindices);
-		}
-	}
-}
-
-/*
- * match_index_orclause
- *	  Attempts to match an index against the subclauses of an 'or' clause.
- *
- *	  A match means that:
- *	  (1) the operator within the subclause can be used with the
- *		  index's specified operator class, and
- *	  (2) one operand of the subclause matches the index key.
- *
- *	  If a subclause is an 'and' clause, then it matches if any of its
- *	  subclauses is an opclause that matches.
- *
- * 'or_clauses' is the list of subclauses within the 'or' clause
- * 'other_matching_indices' is the list of information on other indices
- *		that have already been matched to subclauses within this
- *		particular 'or' clause (i.e., a list previously generated by
- *		this routine), or NIL if this routine has not previously been
- *		run for this 'or' clause.
- *
- * Returns a list of the form ((a b c) (d e f) nil (g h) ...) where
- * a,b,c are nodes of indices that match the first subclause in
- * 'or-clauses', d,e,f match the second subclause, no indices
- * match the third, g,h match the fourth, etc.
- */
-static List *
-match_index_orclause(RelOptInfo *rel,
-					 IndexOptInfo *index,
-					 List *or_clauses,
-					 List *other_matching_indices)
-{
-	List	   *matching_indices;
-	List	   *index_list;
-	List	   *clist;
-
-	/*
-	 * first time through, we create list of same length as OR clause,
-	 * containing an empty sublist for each subclause.
-	 */
-	if (!other_matching_indices)
-	{
-		matching_indices = NIL;
-		foreach(clist, or_clauses)
-			matching_indices = lcons(NIL, matching_indices);
-	}
-	else
-		matching_indices = other_matching_indices;
-
-	index_list = matching_indices;
-
-	foreach(clist, or_clauses)
-	{
-		Expr	   *clause = lfirst(clist);
-
-		if (match_or_subclause_to_indexkey(rel, index, clause))
-		{
-			/* OK to add this index to sublist for this subclause */
-			lfirst(matching_indices) = lcons(index,
-											 lfirst(matching_indices));
-		}
-
-		matching_indices = lnext(matching_indices);
-	}
-
-	return index_list;
-}
-
-/*
- * See if a subclause of an OR clause matches an index.
- *
- * We accept the subclause if it is an operator clause that matches the
- * index, or if it is an AND clause any of whose members is an opclause
- * that matches the index.
- *
- * For multi-key indexes, we only look for matches to the first key;
- * without such a match the index is useless.  If the clause is an AND
- * then we may be able to extract additional subclauses to use with the
- * later indexkeys, but we need not worry about that until
- * extract_or_indexqual_conditions() is called (if it ever is).
- */
-static bool
-match_or_subclause_to_indexkey(RelOptInfo *rel,
-							   IndexOptInfo *index,
-							   Expr *clause)
-{
-	Oid			opclass = index->classlist[0];
-
-	if (and_clause((Node *) clause))
-	{
-		List	   *item;
-
-		foreach(item, ((BoolExpr *) clause)->args)
-		{
-			if (match_clause_to_indexcol(rel, index, 0, opclass,
-										 lfirst(item), NULL))
-				return true;
-		}
-		return false;
-	}
-	else
-		return match_clause_to_indexcol(rel, index, 0, opclass,
-										clause, NULL);
-}
-
-/*----------
- * Given an OR subclause that has previously been determined to match
- * the specified index, extract a list of specific opclauses that can be
- * used as indexquals.
- *
- * In the simplest case this just means making a one-element list of the
- * given opclause.	However, if the OR subclause is an AND, we have to
- * scan it to find the opclause(s) that match the index.  (There should
- * be at least one, if match_or_subclause_to_indexkey succeeded, but there
- * could be more.)
- *
- * Also, we can look at other restriction clauses of the rel to discover
- * additional candidate indexquals: for example, consider
- *			... where (a = 11 or a = 12) and b = 42;
- * If we are dealing with an index on (a,b) then we can include the clause
- * b = 42 in the indexqual list generated for each of the OR subclauses.
- * Essentially, we are making an index-specific transformation from CNF to
- * DNF.  (NOTE: when we do this, we end up with a slightly inefficient plan
- * because create_indexscan_plan is not very bright about figuring out which
- * restriction clauses are implied by the generated indexqual condition.
- * Currently we'll end up rechecking both the OR clause and the transferred
- * restriction clause as qpquals.  FIXME someday.)
- *
- * Also, we apply expand_indexqual_condition() to convert any special
- * matching opclauses to indexable operators.
- *
- * The passed-in clause is not changed.
- *----------
- */
-List *
-extract_or_indexqual_conditions(RelOptInfo *rel,
-								IndexOptInfo *index,
-								Expr *orsubclause)
-{
-	FastList	quals;
-	int			indexcol = 0;
-	Oid		   *classes = index->classlist;
-
-	FastListInit(&quals);
-
-	/*
-	 * Extract relevant indexclauses in indexkey order.  This is
-	 * essentially just like group_clauses_by_indexkey() except that the
-	 * input and output are lists of bare clauses, not of RestrictInfo
-	 * nodes, and that we expand special operators immediately.
-	 */
-	do
-	{
-		Oid			curClass = classes[0];
-		FastList	clausegroup;
-		List	   *item;
-
-		FastListInit(&clausegroup);
-		if (and_clause((Node *) orsubclause))
-		{
-			foreach(item, ((BoolExpr *) orsubclause)->args)
-			{
-				Expr	   *subsubclause = (Expr *) lfirst(item);
-
-				if (match_clause_to_indexcol(rel, index,
-											 indexcol, curClass,
-											 subsubclause, NULL))
-					FastConc(&clausegroup,
-							 expand_indexqual_condition(subsubclause,
-														curClass));
-			}
-		}
-		else if (match_clause_to_indexcol(rel, index,
-										  indexcol, curClass,
-										  orsubclause, NULL))
-			FastConc(&clausegroup,
-					 expand_indexqual_condition(orsubclause,
-												curClass));
-
-		/*
-		 * If we found no clauses for this indexkey in the OR subclause
-		 * itself, try looking in the rel's top-level restriction list.
-		 */
-		if (FastListValue(&clausegroup) == NIL)
-		{
-			foreach(item, rel->baserestrictinfo)
-			{
-				RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
-
-				if (match_clause_to_indexcol(rel, index,
-											 indexcol, curClass,
-											 rinfo->clause, rinfo))
-					FastConc(&clausegroup,
-							 expand_indexqual_condition(rinfo->clause,
-														curClass));
-			}
-		}
-
-		/*
-		 * If still no clauses match this key, we're done; we don't want
-		 * to look at keys to its right.
-		 */
-		if (FastListValue(&clausegroup) == NIL)
-			break;
-
-		FastConcFast(&quals, &clausegroup);
-
-		indexcol++;
-		classes++;
-
-	} while (!DoneMatchingIndexKeys(classes));
-
-	if (FastListValue(&quals) == NIL)
-		elog(ERROR, "no matching OR clause");
-
-	return FastListValue(&quals);
 }
 
 
@@ -552,7 +268,6 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 										 index,
 										 indexcol,
 										 curClass,
-										 rinfo->clause,
 										 rinfo))
 				FastAppend(&clausegroup, rinfo);
 		}
@@ -628,7 +343,6 @@ group_clauses_by_indexkey_for_join(Query *root,
 										 index,
 										 indexcol,
 										 curClass,
-										 rinfo->clause,
 										 rinfo))
 				FastAppend(&clausegroup, rinfo);
 		}
@@ -708,6 +422,114 @@ group_clauses_by_indexkey_for_join(Query *root,
 
 
 /*
+ * group_clauses_by_indexkey_for_or
+ *	  Generate a list of sublists of clauses that can be used with an index
+ *	  to find rows matching an OR subclause.
+ *
+ * This is essentially just like group_clauses_by_indexkey() except that
+ * we can use the given clause (or any AND subclauses of it) as well as
+ * top-level restriction clauses of the relation.  Furthermore, we demand
+ * that at least one such use be made, otherwise we fail and return NIL.
+ * (Any path we made without such a use would be redundant with non-OR
+ * indexscans.  Compare also group_clauses_by_indexkey_for_join.)
+ *
+ * XXX When we generate an indexqual list that uses both the OR subclause
+ * and top-level restriction clauses, we end up with a slightly inefficient
+ * plan because create_indexscan_plan is not very bright about figuring out
+ * which restriction clauses are implied by the generated indexqual condition.
+ * Currently we'll end up rechecking both the OR clause and the top-level
+ * restriction clause as qpquals.  FIXME someday.
+ */
+List *
+group_clauses_by_indexkey_for_or(RelOptInfo *rel,
+								 IndexOptInfo *index,
+								 Expr *orsubclause)
+{
+	FastList	clausegroup_list;
+	bool		matched = false;
+	int			indexcol = 0;
+	Oid		   *classes = index->classlist;
+
+	FastListInit(&clausegroup_list);
+	do
+	{
+		Oid			curClass = classes[0];
+		FastList	clausegroup;
+		List	   *item;
+
+		FastListInit(&clausegroup);
+
+		/* Try to match the OR subclause to the index key */
+		if (IsA(orsubclause, RestrictInfo))
+		{
+			if (match_clause_to_indexcol(rel, index,
+										 indexcol, curClass,
+										 (RestrictInfo *) orsubclause))
+			{
+				FastAppend(&clausegroup, orsubclause);
+				matched = true;
+			}
+		}
+		else if (and_clause((Node *) orsubclause))
+		{
+			foreach(item, ((BoolExpr *) orsubclause)->args)
+			{
+				RestrictInfo *subsubclause = (RestrictInfo *) lfirst(item);
+
+				if (IsA(subsubclause, RestrictInfo) &&
+					match_clause_to_indexcol(rel, index,
+											 indexcol, curClass,
+											 subsubclause))
+				{
+					FastAppend(&clausegroup, subsubclause);
+					matched = true;
+				}
+			}
+		}
+
+		/*
+		 * If we found no clauses for this indexkey in the OR subclause
+		 * itself, try looking in the rel's top-level restriction list.
+		 *
+		 * XXX should we always search the top-level list?  Slower but
+		 * could sometimes yield a better plan.
+		 */
+		if (FastListValue(&clausegroup) == NIL)
+		{
+			foreach(item, rel->baserestrictinfo)
+			{
+				RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
+
+				if (match_clause_to_indexcol(rel, index,
+											 indexcol, curClass,
+											 rinfo))
+					FastAppend(&clausegroup, rinfo);
+			}
+		}
+
+		/*
+		 * If still no clauses match this key, we're done; we don't want
+		 * to look at keys to its right.
+		 */
+		if (FastListValue(&clausegroup) == NIL)
+			break;
+
+		FastAppend(&clausegroup_list, FastListValue(&clausegroup));
+
+		indexcol++;
+		classes++;
+
+	} while (!DoneMatchingIndexKeys(classes));
+
+	/* if OR clause was not used then forget it, per comments above */
+	if (!matched)
+		return NIL;
+
+	return FastListValue(&clausegroup_list);
+}
+
+
+/*
  * match_clause_to_indexcol()
  *	  Determines whether a restriction clause matches a column of an index.
  *
@@ -729,8 +551,7 @@ group_clauses_by_indexkey_for_join(Query *root,
  * 'index' is an index on 'rel'.
  * 'indexcol' is a column number of 'index' (counting from 0).
  * 'opclass' is the corresponding operator class.
- * 'clause' is the clause to be tested.
- * 'rinfo' is the clause's RestrictInfo, if available (NULL if not).
+ * 'rinfo' is the clause to be tested (as a RestrictInfo node).
  *
  * Returns true if the clause can be used with this index key.
  *
@@ -742,9 +563,9 @@ match_clause_to_indexcol(RelOptInfo *rel,
 						 IndexOptInfo *index,
 						 int indexcol,
 						 Oid opclass,
-						 Expr *clause,
 						 RestrictInfo *rinfo)
 {
+	Expr	   *clause = rinfo->clause;
 	Node	   *leftop,
 			   *rightop;
 
@@ -760,13 +581,9 @@ match_clause_to_indexcol(RelOptInfo *rel,
 	 * Check for clauses of the form: (indexkey operator constant) or
 	 * (constant operator indexkey). Anything that is a "pseudo constant"
 	 * expression will do.
-	 *
-	 * If we have the RestrictInfo available, we can make a more efficient
-	 * test for pseudo-constness.
 	 */
 	if (match_index_to_operand(leftop, indexcol, rel, index) &&
-		(rinfo ? is_pseudo_constant_clause_relids(rightop, rinfo->right_relids)
-		 : is_pseudo_constant_clause(rightop)))
+		is_pseudo_constant_clause_relids(rightop, rinfo->right_relids))
 	{
 		if (is_indexable_operator(clause, opclass, true))
 			return true;
@@ -781,8 +598,7 @@ match_clause_to_indexcol(RelOptInfo *rel,
 	}
 
 	if (match_index_to_operand(rightop, indexcol, rel, index) &&
-		(rinfo ? is_pseudo_constant_clause_relids(leftop, rinfo->left_relids)
-		 : is_pseudo_constant_clause(leftop)))
+		is_pseudo_constant_clause_relids(leftop, rinfo->left_relids))
 	{
 		if (is_indexable_operator(clause, opclass, false))
 			return true;

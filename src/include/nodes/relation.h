@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.88 2003/12/30 23:53:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.89 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,6 +271,8 @@ typedef struct IndexOptInfo
 	List	   *indexprs;		/* expressions for non-simple index
 								 * columns */
 	List	   *indpred;		/* predicate if a partial index, else NIL */
+
+	bool		predOK;			/* true if predicate matches query */
 	bool		unique;			/* true if a unique index */
 
 	/* cached info about inner indexscan paths for index */
@@ -410,6 +412,8 @@ typedef struct AppendPath
  * variable-free targetlist or to gate execution of a subplan with a
  * one-time (variable-free) qual condition.  Note that in the former case
  * path.parent will be NULL; in the latter case it is copied from the subpath.
+ *
+ * Note that constantqual is a list of bare clauses, not RestrictInfos.
  */
 typedef struct ResultPath
 {
@@ -478,9 +482,7 @@ typedef JoinPath NestPath;
  * A mergejoin path has these fields.
  *
  * path_mergeclauses lists the clauses (in the form of RestrictInfos)
- * that will be used in the merge.	(Before 7.0, this was a list of bare
- * clause expressions, but we can save on list memory and cost_qual_eval
- * work by leaving it in the form of a RestrictInfo list.)
+ * that will be used in the merge.
  *
  * Note that the mergeclauses are a subset of the parent relation's
  * restriction-clause list.  Any join clauses that are not mergejoinable
@@ -586,6 +588,12 @@ typedef struct HashPath
  * qual-expression-evaluation code.  (But we are still entitled to count
  * their selectivity when estimating the result tuple count, if we
  * can guess what it is...)
+ *
+ * When the referenced clause is an OR clause, we generate a modified copy
+ * in which additional RestrictInfo nodes are inserted below the top-level
+ * OR/AND structure.  This is a convenience for OR indexscan processing:
+ * indexquals taken from either the top level or an OR subclause will have
+ * associated RestrictInfo nodes.
  */
 
 typedef struct RestrictInfo
@@ -609,9 +617,8 @@ typedef struct RestrictInfo
 	Relids		left_relids;	/* relids in left side of clause */
 	Relids		right_relids;	/* relids in right side of clause */
 
-	/* only used if clause is an OR clause: */
-	List	   *subclauseindices;		/* indexes matching subclauses */
-	/* subclauseindices is a List of Lists of IndexOptInfos */
+	/* This field is NULL unless clause is an OR clause: */
+	Expr	   *orclause;		/* modified clause with RestrictInfos */
 
 	/* cache space for costs (currently only used for join clauses) */
 	QualCost	eval_cost;		/* eval cost of clause; -1 if not yet set */

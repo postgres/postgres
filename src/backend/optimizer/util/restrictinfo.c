@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.21 2003/12/30 23:53:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.22 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,133 @@
 #include "optimizer/var.h"
 
 
+static Expr *make_sub_restrictinfos(Expr *clause, bool ispusheddown);
 static bool join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
 						 JoinType jointype);
 
+
+/*
+ * make_restrictinfo
+ *
+ * Build a RestrictInfo node containing the given subexpression.
+ *
+ * The ispusheddown flag must be supplied by the caller.  We initialize
+ * fields that depend only on the given subexpression, leaving others that
+ * depend on context (or may never be needed at all) to be filled later.
+ */
+RestrictInfo *
+make_restrictinfo(Expr *clause, bool ispusheddown)
+{
+	RestrictInfo *restrictinfo = makeNode(RestrictInfo);
+
+	restrictinfo->clause = clause;
+	restrictinfo->ispusheddown = ispusheddown;
+	restrictinfo->canjoin = false;		/* may get set below */
+
+	/*
+	 * If it's a binary opclause, set up left/right relids info.
+	 */
+	if (is_opclause(clause) && length(((OpExpr *) clause)->args) == 2)
+	{
+		restrictinfo->left_relids = pull_varnos(get_leftop(clause));
+		restrictinfo->right_relids = pull_varnos(get_rightop(clause));
+
+		/*
+		 * Does it look like a normal join clause, i.e., a binary operator
+		 * relating expressions that come from distinct relations? If so
+		 * we might be able to use it in a join algorithm.  Note that this
+		 * is a purely syntactic test that is made regardless of context.
+		 */
+		if (!bms_is_empty(restrictinfo->left_relids) &&
+			!bms_is_empty(restrictinfo->right_relids) &&
+			!bms_overlap(restrictinfo->left_relids,
+						 restrictinfo->right_relids))
+			restrictinfo->canjoin = true;
+	}
+	else
+	{
+		/* Not a binary opclause, so mark both relid sets as empty */
+		restrictinfo->left_relids = NULL;
+		restrictinfo->right_relids = NULL;
+	}
+
+	/*
+	 * If it's an OR clause, set up a modified copy with RestrictInfos
+	 * inserted above each subclause of the top-level AND/OR structure.
+	 */
+	if (or_clause((Node *) clause))
+	{
+		restrictinfo->orclause = make_sub_restrictinfos(clause, ispusheddown);
+	}
+	else
+	{
+		/* Shouldn't be an AND clause, else flatten_andors messed up */
+		Assert(!and_clause((Node *) clause));
+
+		restrictinfo->orclause = NULL;
+	}
+
+	/*
+	 * Fill in all the cacheable fields with "not yet set" markers.
+	 * None of these will be computed until/unless needed.  Note in
+	 * particular that we don't mark a binary opclause as mergejoinable
+	 * or hashjoinable here; that happens only if it appears in the right
+	 * context (top level of a joinclause list).
+	 */
+	restrictinfo->eval_cost.startup = -1;
+	restrictinfo->this_selec = -1;
+
+	restrictinfo->mergejoinoperator = InvalidOid;
+	restrictinfo->left_sortop = InvalidOid;
+	restrictinfo->right_sortop = InvalidOid;
+
+	restrictinfo->left_pathkey = NIL;
+	restrictinfo->right_pathkey = NIL;
+
+	restrictinfo->left_mergescansel = -1;
+	restrictinfo->right_mergescansel = -1;
+
+	restrictinfo->hashjoinoperator = InvalidOid;
+
+	restrictinfo->left_bucketsize = -1;
+	restrictinfo->right_bucketsize = -1;
+
+	return restrictinfo;
+}
+
+/*
+ * Recursively insert sub-RestrictInfo nodes into a boolean expression.
+ */
+static Expr *
+make_sub_restrictinfos(Expr *clause, bool ispusheddown)
+{
+	if (or_clause((Node *) clause))
+	{
+		List	   *orlist = NIL;
+		List	   *temp;
+
+		foreach(temp, ((BoolExpr *) clause)->args)
+			orlist = lappend(orlist,
+							 make_sub_restrictinfos(lfirst(temp),
+													ispusheddown));
+		return make_orclause(orlist);
+	}
+	else if (and_clause((Node *) clause))
+	{
+		List	   *andlist = NIL;
+		List	   *temp;
+
+		foreach(temp, ((BoolExpr *) clause)->args)
+			andlist = lappend(andlist,
+							  make_sub_restrictinfos(lfirst(temp),
+													 ispusheddown));
+		return make_andclause(andlist);
+	}
+	else
+		return (Expr *) make_restrictinfo(clause, ispusheddown);
+}
 
 /*
  * restriction_is_or_clause
@@ -34,8 +156,7 @@ static bool join_clause_is_redundant(Query *root,
 bool
 restriction_is_or_clause(RestrictInfo *restrictinfo)
 {
-	if (restrictinfo != NULL &&
-		or_clause((Node *) restrictinfo->clause))
+	if (restrictinfo->orclause != NULL)
 		return true;
 	else
 		return false;

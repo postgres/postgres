@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.105 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.106 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -881,12 +881,9 @@ adjust_inherited_attrs_mutator(Node *node,
 		newinfo->clause = (Expr *)
 			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
 
-		/*
-		 * We do NOT want to copy the original subclauseindices list,
-		 * since the new rel will have different indices.  The list will
-		 * be rebuilt when needed during later planning.
-		 */
-		newinfo->subclauseindices = NIL;
+		/* and the modified version, if an OR clause */
+		newinfo->orclause = (Expr *)
+			adjust_inherited_attrs_mutator((Node *) oldinfo->orclause, context);
 
 		/*
 		 * Adjust left/right relid sets too.
@@ -898,9 +895,13 @@ adjust_inherited_attrs_mutator(Node *node,
 												 context->old_rt_index,
 												 context->new_rt_index);
 
-		newinfo->eval_cost.startup = -1;		/* reset these too */
+		/*
+		 * Reset cached derivative fields, since these might need to have
+		 * different values when considering the child relation.
+		 */
+		newinfo->eval_cost.startup = -1;
 		newinfo->this_selec = -1;
-		newinfo->left_pathkey = NIL;	/* and these */
+		newinfo->left_pathkey = NIL;
 		newinfo->right_pathkey = NIL;
 		newinfo->left_mergescansel = -1;
 		newinfo->right_mergescansel = -1;

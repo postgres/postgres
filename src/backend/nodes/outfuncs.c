@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.223 2003/12/30 23:53:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.224 2004/01/04 00:07:32 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1077,7 +1077,7 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_BOOL_FIELD(canjoin);
 	WRITE_BITMAPSET_FIELD(left_relids);
 	WRITE_BITMAPSET_FIELD(right_relids);
-	WRITE_NODE_FIELD(subclauseindices);
+	WRITE_NODE_FIELD(orclause);
 	WRITE_OID_FIELD(mergejoinoperator);
 	WRITE_OID_FIELD(left_sortop);
 	WRITE_OID_FIELD(right_sortop);

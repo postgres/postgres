@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/restrictinfo.h,v 1.20 2003/11/29 22:41:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/restrictinfo.h,v 1.21 2004/01/04 00:07:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "nodes/relation.h"
 
+extern RestrictInfo *make_restrictinfo(Expr *clause, bool ispusheddown);
 extern bool restriction_is_or_clause(RestrictInfo *restrictinfo);
 extern List *get_actual_clauses(List *restrictinfo_list);
 extern void get_actual_join_clauses(List *restrictinfo_list,
