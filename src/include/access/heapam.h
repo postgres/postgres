@@ -6,24 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.3 1996/10/31 09:46:37 scrappy Exp $
+ * $Id: heapam.h,v 1.4 1996/11/03 08:17:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	HEAPAM_H
 #define HEAPAM_H
 
-#include <sys/types.h>
-
-
-#include "access/attnum.h"
-#include "access/htup.h"
 #include "access/relscan.h"
-#include "access/skey.h"
-#include "utils/tqual.h"
-#include "access/tupdesc.h"
-#include "storage/smgr.h"
-#include "utils/rel.h"
+#include "storage/buf.h"
 
 /* ----------------------------------------------------------------
  *		heap access method statistics

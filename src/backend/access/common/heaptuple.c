@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.12 1996/11/01 09:41:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.13 1996/11/03 08:16:44 scrappy Exp $
  *
  * NOTES
  *    The old interface functions have been converted to macros
@@ -21,9 +21,7 @@
 
 #include "access/htup.h"
 #include "access/transam.h"
-#include "access/tupdesc.h"
 #include "access/tupmacs.h"
-#include "storage/buf.h"
 #include "storage/bufpage.h"
 #include "utils/memutils.h"
 #include "utils/palloc.h"

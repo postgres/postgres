@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.2 1996/10/19 04:08:58 scrappy Exp $
+ * $Id: itup.h,v 1.3 1996/11/03 08:17:21 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,7 @@
 #define ITUP_H
 
 #include "storage/itemptr.h"
-#include "access/tupdesc.h"
+#include "access/tupdesc.h" 
 
 #define MaxIndexAttributeNumber	7
 

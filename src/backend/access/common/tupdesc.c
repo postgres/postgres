@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.7 1996/11/01 09:41:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.8 1996/11/03 08:16:51 scrappy Exp $
  *
  * NOTES
  *    some of the executor utility code such as "ExecTypeFromTL" should be
@@ -16,15 +16,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <time.h>
-
 #include "postgres.h"
 
 #include "access/htup.h"
 #include "utils/rel.h"
-#include "access/tupdesc.h"
 
 #include "utils/fcache.h"
 #include "utils/geo-decls.h"

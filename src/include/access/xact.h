@@ -6,20 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.1 1996/08/27 21:50:29 scrappy Exp $
+ * $Id: xact.h,v 1.2 1996/11/03 08:17:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef XACT_H
 #define XACT_H
 
-#include <signal.h>
-
-#include "storage/ipc.h"
-#include "miscadmin.h"
-#include "utils/portal.h"
-#include "utils/elog.h"
-#include "utils/mcxt.h"
 #include "utils/nabstime.h"
 
 /* ----------------

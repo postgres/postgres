@@ -6,16 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: mcxt.h,v 1.2 1996/10/31 09:51:24 scrappy Exp $
+ * $Id: mcxt.h,v 1.3 1996/11/03 08:17:34 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	MCXT_H
 #define MCXT_H
 
-
 #include "nodes/memnodes.h"
-#include "nodes/nodes.h"
 
 extern MemoryContext	CurrentMemoryContext;
 extern MemoryContext	TopMemoryContext;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.9 1996/11/01 09:41:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.10 1996/11/03 08:16:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,14 +15,9 @@
 #include "postgres.h"
 
 #include "access/htup.h"
-#include "access/tupdesc.h"
-
-#include "executor/execdebug.h"
-
-#include "access/skey.h"
-
 #include "access/itup.h"
-
+#include "access/skey.h"
+#include "executor/execdebug.h"
 
 /* ----------------------------------------------------------------
  *		  index scan key qualification code

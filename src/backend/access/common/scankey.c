@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.6 1996/11/01 09:41:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/scankey.c,v 1.7 1996/11/03 08:16:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,6 @@
 
 #include "fmgr.h"
 #include "access/attnum.h"
-
 #include "access/skey.h"
 
 /*
