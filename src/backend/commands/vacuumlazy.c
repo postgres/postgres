@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.26 2003/02/24 00:57:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.27 2003/03/04 21:51:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,21 +51,11 @@
 /*
  * Space/time tradeoff parameters: do these need to be user-tunable?
  *
- * A page with less than PAGE_SPACE_THRESHOLD free space will be forgotten
- * immediately, and not even passed to the free space map.	Removing the
- * uselessly small entries early saves cycles, and in particular reduces
- * the amount of time we spend holding the FSM lock when we finally call
- * MultiRecordFreeSpace.  Since the FSM will ignore pages below its own
- * runtime threshold anyway, there's no point in making this really small.
- * XXX Is it worth trying to measure average tuple size, and using that to
- * set the threshold?  Problem is we don't know average tuple size very
- * accurately for the first few pages...
- *
  * To consider truncating the relation, we want there to be at least
- * relsize / REL_TRUNCATE_FRACTION potentially-freeable pages.
+ * REL_TRUNCATE_MINIMUM or (relsize / REL_TRUNCATE_FRACTION) (whichever
+ * is less) potentially-freeable pages.
  */
-#define PAGE_SPACE_THRESHOLD	((Size) (BLCKSZ / 32))
-
+#define REL_TRUNCATE_MINIMUM	1000
 #define REL_TRUNCATE_FRACTION	16
 
 /* MAX_TUPLES_PER_PAGE can be a conservative upper limit */
@@ -78,6 +68,7 @@ typedef struct LVRelStats
 	BlockNumber rel_pages;
 	double		rel_tuples;
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
+	Size		threshold;		/* minimum interesting free space */
 	/* List of TIDs of tuples we intend to delete */
 	/* NB: this list is ordered by TID address */
 	int			num_dead_tuples;	/* current # of entries */
@@ -149,6 +140,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
+	/* Set threshold for interesting free space = average request size */
+	/* XXX should we scale it up or down?  Adjust vacuum.c too, if so */
+	vacrelstats->threshold = GetAvgFSMRequestSize(&onerel->rd_node);
+
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, &nindexes, &Irel);
 	hasindex = (nindexes > 0);
@@ -166,7 +161,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	 * number of pages.  Otherwise, the time taken isn't worth it.
 	 */
 	possibly_freeable = vacrelstats->rel_pages - vacrelstats->nonempty_pages;
-	if (possibly_freeable > vacrelstats->rel_pages / REL_TRUNCATE_FRACTION)
+	if (possibly_freeable >= REL_TRUNCATE_MINIMUM ||
+		possibly_freeable >= vacrelstats->rel_pages / REL_TRUNCATE_FRACTION)
 		lazy_truncate_heap(onerel, vacrelstats);
 
 	/* Update shared free space map with final free space info */
@@ -943,8 +939,21 @@ lazy_record_free_space(LVRelStats *vacrelstats,
 	PageFreeSpaceInfo *pageSpaces;
 	int			n;
 
-	/* Ignore pages with little free space */
-	if (avail < PAGE_SPACE_THRESHOLD)
+	/*
+	 * A page with less than stats->threshold free space will be forgotten
+	 * immediately, and never passed to the free space map.  Removing the
+	 * uselessly small entries early saves cycles, and in particular reduces
+	 * the amount of time we spend holding the FSM lock when we finally call
+	 * RecordRelationFreeSpace.  Since the FSM will probably drop pages with
+	 * little free space anyway, there's no point in making this really small.
+	 *
+	 * XXX Is it worth trying to measure average tuple size, and using that to
+	 * adjust the threshold?  Would be worthwhile if FSM has no stats yet
+	 * for this relation.  But changing the threshold as we scan the rel
+	 * might lead to bizarre behavior, too.  Also, it's probably better if
+	 * vacuum.c has the same thresholding behavior as we do here.
+	 */
+	if (avail < vacrelstats->threshold)
 		return;
 
 	/* Copy pointers to local variables for notational simplicity */
@@ -1079,13 +1088,13 @@ lazy_update_fsm(Relation onerel, LVRelStats *vacrelstats)
 	int			nPages = vacrelstats->num_free_pages;
 
 	/*
-	 * Sort data into order, as required by MultiRecordFreeSpace.
+	 * Sort data into order, as required by RecordRelationFreeSpace.
 	 */
 	if (nPages > 1)
 		qsort(pageSpaces, nPages, sizeof(PageFreeSpaceInfo),
 			  vac_cmp_page_spaces);
 
-	MultiRecordFreeSpace(&onerel->rd_node, 0, nPages, pageSpaces);
+	RecordRelationFreeSpace(&onerel->rd_node, nPages, pageSpaces);
 }
 
 /*

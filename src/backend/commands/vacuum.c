@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.250 2003/02/24 00:57:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.251 2003/03/04 21:51:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,6 +335,13 @@ vacuum(VacuumStmt *vacstmt)
 		 * even when autocommit is off.
 		 */
 		StartTransactionCommand(true);
+
+		/*
+		 * If it was a database-wide VACUUM, print FSM usage statistics
+		 * (we don't make you be superuser to see these).
+		 */
+		if (vacstmt->relation == NULL)
+			PrintFreeSpaceMapStatistics(elevel);
 
 		/*
 		 * If we completed a database-wide VACUUM without skipping any
@@ -2781,31 +2788,48 @@ vac_update_fsm(Relation onerel, VacPageList fraged_pages,
 			   BlockNumber rel_pages)
 {
 	int			nPages = fraged_pages->num_pages;
-	int			i;
+	VacPage    *pagedesc = fraged_pages->pagedesc;
+	Size		threshold;
 	PageFreeSpaceInfo *pageSpaces;
+	int			outPages;
+	int			i;
+
+	/*
+	 * We only report pages with free space at least equal to the average
+	 * request size --- this avoids cluttering FSM with uselessly-small bits
+	 * of space.  Although FSM would discard pages with little free space
+	 * anyway, it's important to do this prefiltering because (a) it reduces
+	 * the time spent holding the FSM lock in RecordRelationFreeSpace, and
+	 * (b) FSM uses the number of pages reported as a statistic for guiding
+	 * space management.  If we didn't threshold our reports the same way
+	 * vacuumlazy.c does, we'd be skewing that statistic.
+	 */
+	threshold = GetAvgFSMRequestSize(&onerel->rd_node);
 
 	/* +1 to avoid palloc(0) */
 	pageSpaces = (PageFreeSpaceInfo *)
 		palloc((nPages + 1) * sizeof(PageFreeSpaceInfo));
+	outPages = 0;
 
 	for (i = 0; i < nPages; i++)
 	{
-		pageSpaces[i].blkno = fraged_pages->pagedesc[i]->blkno;
-		pageSpaces[i].avail = fraged_pages->pagedesc[i]->free;
-
 		/*
 		 * fraged_pages may contain entries for pages that we later
 		 * decided to truncate from the relation; don't enter them into
 		 * the free space map!
 		 */
-		if (pageSpaces[i].blkno >= rel_pages)
-		{
-			nPages = i;
+		if (pagedesc[i]->blkno >= rel_pages)
 			break;
+
+		if (pagedesc[i]->free >= threshold)
+		{
+			pageSpaces[outPages].blkno = pagedesc[i]->blkno;
+			pageSpaces[outPages].avail = pagedesc[i]->free;
+			outPages++;
 		}
 	}
 
-	MultiRecordFreeSpace(&onerel->rd_node, 0, nPages, pageSpaces);
+	RecordRelationFreeSpace(&onerel->rd_node, outPages, pageSpaces);
 
 	pfree(pageSpaces);
 }

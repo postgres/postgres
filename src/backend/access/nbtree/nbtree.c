@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.100 2003/02/24 00:57:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.101 2003/03/04 21:51:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -697,7 +697,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	IndexBulkDeleteResult *stats = (IndexBulkDeleteResult *) PG_GETARG_POINTER(2);
 	BlockNumber num_pages;
 	BlockNumber blkno;
-	PageFreeSpaceInfo *pageSpaces;
+	BlockNumber *freePages;
 	int			nFreePages,
 				maxFreePages;
 	BlockNumber pages_deleted = 0;
@@ -712,7 +712,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	maxFreePages = MaxFSMPages;
 	if ((BlockNumber) maxFreePages > num_pages)
 		maxFreePages = (int) num_pages + 1;	/* +1 to avoid palloc(0) */
-	pageSpaces = (PageFreeSpaceInfo *) palloc(maxFreePages * sizeof(PageFreeSpaceInfo));
+	freePages = (BlockNumber *) palloc(maxFreePages * sizeof(BlockNumber));
 	nFreePages = 0;
 
 	/* Create a temporary memory context to run _bt_pagedel in */
@@ -740,12 +740,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 		{
 			/* Okay to recycle this page */
 			if (nFreePages < maxFreePages)
-			{
-				pageSpaces[nFreePages].blkno = blkno;
-				/* claimed avail-space must be < BLCKSZ */
-				pageSpaces[nFreePages].avail = BLCKSZ-1;
-				nFreePages++;
-			}
+				freePages[nFreePages++] = blkno;
 			pages_deleted++;
 		}
 		else if (P_ISDELETED(opaque))
@@ -781,12 +776,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 			if (ndel && info->vacuum_full)
 			{
 				if (nFreePages < maxFreePages)
-				{
-					pageSpaces[nFreePages].blkno = blkno;
-					/* claimed avail-space must be < BLCKSZ */
-					pageSpaces[nFreePages].avail = BLCKSZ-1;
-					nFreePages++;
-				}
+					freePages[nFreePages++] = blkno;
 			}
 
 			MemoryContextSwitchTo(oldcontext);
@@ -805,8 +795,7 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 	{
 		BlockNumber	new_pages = num_pages;
 
-		while (nFreePages > 0 &&
-			   pageSpaces[nFreePages-1].blkno == new_pages-1)
+		while (nFreePages > 0 && freePages[nFreePages-1] == new_pages-1)
 		{
 			new_pages--;
 			pages_deleted--;
@@ -841,12 +830,12 @@ btvacuumcleanup(PG_FUNCTION_ARGS)
 
 	/*
 	 * Update the shared Free Space Map with the info we now have about
-	 * free space in the index, discarding any old info the map may have.
+	 * free pages in the index, discarding any old info the map may have.
 	 * We do not need to sort the page numbers; they're in order already.
 	 */
-	MultiRecordFreeSpace(&rel->rd_node, 0, nFreePages, pageSpaces);
+	RecordIndexFreeSpace(&rel->rd_node, nFreePages, freePages);
 
-	pfree(pageSpaces);
+	pfree(freePages);
 
 	MemoryContextDelete(mycontext);
 

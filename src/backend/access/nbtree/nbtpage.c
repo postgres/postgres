@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.63 2003/02/23 23:20:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.64 2003/03/04 21:51:20 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -401,15 +401,10 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 		 * that the page is still free.  (For example, an already-free page
 		 * could have been re-used between the time the last VACUUM scanned
 		 * it and the time the VACUUM made its FSM updates.)
-		 *
-		 * The request size should be more than half of what btvacuumcleanup
-		 * logs as the per-page free space.  We use BLCKSZ/2 and BLCKSZ-1
-		 * to try to get some use out of FSM's space management algorithm.
-		 * XXX this needs some more thought...
 		 */
 		for (;;)
 		{
-			blkno = GetPageWithFreeSpace(&rel->rd_node, BLCKSZ/2);
+			blkno = GetFreeIndexPage(&rel->rd_node);
 			if (blkno == InvalidBlockNumber)
 				break;
 			buf = ReadBuffer(rel, blkno);

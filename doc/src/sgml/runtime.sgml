@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.169 2003/02/19 04:06:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.170 2003/03/04 21:51:19 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1725,7 +1725,9 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         Sets the maximum number of disk pages for which free space will
-        be tracked in the shared free-space map. The default is 10000.
+        be tracked in the shared free-space map.  Six bytes of shared memory
+	are consumed for each page slot.  This setting must be more than
+	16 * <varname>max_fsm_relations</varname>.  The default is 20000.
         This option can only be set at server start.
        </para>
       </listitem>
@@ -1735,9 +1737,11 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <term><varname>MAX_FSM_RELATIONS</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Sets the maximum number of relations (tables) for which free
-        space will be tracked in the shared free-space map. The default
-        is 1000. This option can only be set at server start.
+        Sets the maximum number of relations (tables and indexes) for which
+	free space will be tracked in the shared free-space map.  Roughly
+	fifty bytes of shared memory are consumed for each slot.
+	The default is 1000.
+	This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>

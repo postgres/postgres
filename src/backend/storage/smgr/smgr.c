@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.61 2002/09/20 19:56:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.62 2003/03/04 21:51:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -410,7 +410,7 @@ smgrtruncate(int16 which, Relation reln, BlockNumber nblocks)
 		 * for the about-to-be-deleted blocks.	We want to be sure it
 		 * won't return bogus block numbers later on.
 		 */
-		MultiRecordFreeSpace(&reln->rd_node, nblocks, 0, NULL);
+		FreeSpaceMapTruncateRel(&reln->rd_node, nblocks);
 
 		newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks);
 		if (newblks == InvalidBlockNumber)

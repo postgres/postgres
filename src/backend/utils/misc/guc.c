@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.115 2003/02/23 23:27:21 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.116 2003/03/04 21:51:21 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -644,11 +644,11 @@ static struct config_int
 
 	{
 		{"max_fsm_relations", PGC_POSTMASTER}, &MaxFSMRelations,
-		1000, 10, INT_MAX, NULL, NULL
+		1000, 100, INT_MAX, NULL, NULL
 	},
 	{
 		{"max_fsm_pages", PGC_POSTMASTER}, &MaxFSMPages,
-		10000, 1000, INT_MAX, NULL, NULL
+		20000, 1000, INT_MAX, NULL, NULL
 	},
 
 	{
