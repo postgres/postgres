@@ -9,6 +9,7 @@ PATCHLEVEL=0
 override CPPFLAGS+=-I$(srcdir)/../include -DMAJOR_VERSION=$(MAJOR_VERSION) \
 	-DMINOR_VERSION=$(MINOR_VERSION) -DPATCHLEVEL=$(PATCHLEVEL) \
 	-DINCLUDE_PATH=\"$(includedir)\" 
+# -DYYDEBUG -g
 
 OBJS=preproc.o pgc.o type.o ecpg.o ecpg_keywords.o output.o\
     keywords.o c_keywords.o ../lib/typename.o descriptor.o variable.o

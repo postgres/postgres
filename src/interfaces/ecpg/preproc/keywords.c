@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.30 2000/09/26 11:41:44 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.31 2000/11/07 08:46:27 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,12 +191,12 @@ static ScanKeyword ScanKeywords[] = {
 	{"only", ONLY},
 	{"operator", OPERATOR},
 	{"option", OPTION},
-	{"overlaps", OVERLAPS},
-	{"owner", OWNER},
 	{"or", OR},
 	{"order", ORDER},
 	{"out", OUT},   
 	{"outer", OUTER_P},
+	{"overlaps", OVERLAPS},
+	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
 	{"path", PATH_P}, 

@@ -375,6 +375,8 @@ make_name(void)
 %type  <index>	opt_array_bounds opt_type_array_bounds
 
 %type  <ival>	Iresult
+
+%token YYERROR_VERBOSE
 %%
 prog: statements;
 
@@ -5272,6 +5274,7 @@ c_anything:  IDENT 	{ $$ = $1; }
 	| S_LSHIFT	{ $$ = make_str("<<"); } 
 	| S_MEMBER	{ $$ = make_str("->"); } 
 	| S_MEMPOINT	{ $$ = make_str("->*"); } 
+	| S_MOD		{ $$ = make_str("%="); }
 	| S_MUL		{ $$ = make_str("*="); } 
 	| S_NEQUAL	{ $$ = make_str("!="); } 
 	| S_OR		{ $$ = make_str("||"); } 
@@ -5311,7 +5314,9 @@ blockend : '}'
 
 %%
 
-void yyerror(char * error)
-{
-	mmerror(ET_ERROR, error);
+void yyerror( char * error)
+{	char buf[1024];
+        snprintf(buf,sizeof buf,"%s at or near \"%s\"",error,yytext);
+        buf[sizeof(buf)-1]=0;
+	mmerror(ET_ERROR, buf);
 }

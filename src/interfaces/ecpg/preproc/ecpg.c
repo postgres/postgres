@@ -22,7 +22,11 @@ static void
 usage(char *progname)
 {
 	fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-	fprintf(stderr, "Usage: %s: [-v] [-t] [-I include path] [ -o output file name] [-D define name] file1 [file2] ...\n", progname);
+	fprintf(stderr, "Usage: %s: "
+#ifdef YYDEBUG
+								"[-d]"
+#endif
+									" [-v] [-t] [-I include path] [ -o output file name] [-D define name] file1 [file2] ...\n", progname);
 }
 
 static void
@@ -61,7 +65,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vo:I:tD:")) != EOF)
+	while ((c = getopt(argc, argv, "vo:I:tD:d")) != EOF)
 	{
 		switch (c)
 		{
@@ -84,6 +88,11 @@ main(int argc, char *const argv[])
 			case 'D':
 				add_preprocessor_define(optarg);
 				break;
+#ifdef YYDEBUG				
+			case 'd':
+				yydebug=1;
+				break;
+#endif
 			default:
 				usage(argv[0]);
 				return ILLEGAL_OPTION;
