@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.29 1998/09/23 17:50:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.30 1998/09/25 03:36:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ regprocin(char *pro_name_and_oid)
 
 		/*
 		 * we need to use the oid because there can be multiple entries
-		 * with the same name.	We accept 1323_int4eq and 1323.
+		 * with the same name.	We accept int4eq_1323 and 1323.
 		 */
 		if (strrchr(pro_name_and_oid, '_') != NULL)
 		{
