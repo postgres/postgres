@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 10 13:30:30 EDT 2004
+Last updated:		Thu Aug 12 15:45:17 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -295,6 +295,14 @@ Commands
 * Allow PREPARE of cursors
 * Allow PREPARE to automatically determine parameter types based on the SQL 
   statement
+* Allow finer control over the caching of prepared query plans
+
+  Currently, queries prepared via the libpq API are planned on first
+  execute using the supplied parameters --- allow SQL PREPARE to do the
+  same.  Also, allow control over replanning prepared queries either
+  manually or automatically when statistics for execute parameters
+  differ dramatically from those used during planning.
+
 * Allow LISTEN/NOTIFY to store info in memory rather than tables?
 
   Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
