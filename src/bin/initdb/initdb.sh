@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.200 2003/08/26 15:38:25 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.201 2003/09/07 03:36:03 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -76,6 +76,7 @@ CMDNAME=`basename $0`
 
 # Placed here during build
 VERSION='@VERSION@'
+HAVE_IPV6='@HAVE_IPV6@'
 bindir='@bindir@'
 # Note that "datadir" is not the directory we're initializing, it's
 # merely how Autoconf names PREFIX/share.
@@ -584,8 +585,6 @@ echo "$nconns"
 
 $ECHO_N "creating configuration files... "$ECHO_C
 
-cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf              || exit_nicely
-cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
 sed -e "s/^#shared_buffers = 1000/shared_buffers = $nbuffers/" \
     -e "s/^#max_connections = 100/max_connections = $nconns/" \
     -e "s/^#lc_messages = 'C'/lc_messages = '`pg_getlocale MESSAGES`'/" \
@@ -593,6 +592,14 @@ sed -e "s/^#shared_buffers = 1000/shared_buffers = $nbuffers/" \
     -e "s/^#lc_numeric = 'C'/lc_numeric = '`pg_getlocale NUMERIC`'/" \
     -e "s/^#lc_time = 'C'/lc_time = '`pg_getlocale TIME`'/" \
     "$POSTGRESQL_CONF_SAMPLE"  > "$PGDATA"/postgresql.conf || exit_nicely
+if [ "x$HAVE_IPV6" = xyes ]
+then
+    cp "$PG_HBA_SAMPLE" "$PGDATA"/pg_hba.conf          || exit_nicely
+else
+    sed -e "/ ::1 / s/^host/#host/" \
+        "$PG_HBA_SAMPLE" > "$PGDATA"/pg_hba.conf       || exit_nicely
+fi
+cp "$PG_IDENT_SAMPLE" "$PGDATA"/pg_ident.conf          || exit_nicely
 
 chmod 0600 "$PGDATA"/pg_hba.conf "$PGDATA"/pg_ident.conf \
 	"$PGDATA"/postgresql.conf

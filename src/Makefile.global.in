@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.167 2003/09/01 23:01:49 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.168 2003/09/07 03:36:02 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -262,6 +262,9 @@ PORTNAME= @PORTNAME@
 host_tuple = @host@
 host_os = @host_os@
 host_cpu = @host_cpu@
+
+# Make HAVE_IPV6 available for initdb script creation
+HAVE_IPV6= @HAVE_IPV6@
 
 # The HP-UX port makefile, for one, needs access to this symbol
 HAVE_POSIX_SIGNALS= @HAVE_POSIX_SIGNALS@

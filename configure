@@ -11193,6 +11193,7 @@ fi
 
 
 
+HAVE_IPV6=no
 echo "$as_me:$LINENO: checking for struct sockaddr_in6" >&5
 echo $ECHO_N "checking for struct sockaddr_in6... $ECHO_C" >&6
 if test "${ac_cv_type_struct_sockaddr_in6+set}" = set; then
@@ -11314,9 +11315,11 @@ cat >>confdefs.h <<\_ACEOF
 #define HAVE_IPV6 1
 _ACEOF
 
+							  HAVE_IPV6=yes
 fi
 
 fi
+
 
 
 echo "$as_me:$LINENO: checking for PS_STRINGS" >&5
@@ -18286,6 +18289,7 @@ s,@python_configdir@,$python_configdir,;t t
 s,@python_includespec@,$python_includespec,;t t
 s,@python_libspec@,$python_libspec,;t t
 s,@LIBOBJS@,$LIBOBJS,;t t
+s,@HAVE_IPV6@,$HAVE_IPV6,;t t
 s,@THREAD_CFLAGS@,$THREAD_CFLAGS,;t t
 s,@THREAD_LIBS@,$THREAD_LIBS,;t t
 s,@HAVE_POSIX_SIGNALS@,$HAVE_POSIX_SIGNALS,;t t

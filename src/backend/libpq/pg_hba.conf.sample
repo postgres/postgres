@@ -51,7 +51,7 @@
 # TYPE  DATABASE    USER        IP-ADDRESS        IP-MASK           METHOD
 
 local   all         all                                             trust
+# IPv4-style local connections:
 host    all         all         127.0.0.1         255.255.255.255   trust
-
-# uncomment this to support IPv6 loopback connections
-# host  all         all         ::1               ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff        trust
+# IPv6-style local connections:
+host    all         all         ::1               ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff        trust
