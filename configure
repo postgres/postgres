@@ -9051,6 +9051,111 @@ _ACEOF
 
 fi
 
+echo "$as_me:$LINENO: checking for __func__" >&5
+echo $ECHO_N "checking for __func__... $ECHO_C" >&6
+if test "${pgac_cv_funcname_func_support+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <stdio.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+printf("%s\n", __func__);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_funcname_func_support=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+pgac_cv_funcname_func_support=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $pgac_cv_funcname_func_support" >&5
+echo "${ECHO_T}$pgac_cv_funcname_func_support" >&6
+if test x"$pgac_cv_funcname_func_support" = xyes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_FUNCNAME__FUNC 1
+_ACEOF
+
+else
+echo "$as_me:$LINENO: checking for __FUNCTION__" >&5
+echo $ECHO_N "checking for __FUNCTION__... $ECHO_C" >&6
+if test "${pgac_cv_funcname_function_support+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+#include <stdio.h>
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+printf("%s\n", __FUNCTION__);
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  pgac_cv_funcname_function_support=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+pgac_cv_funcname_function_support=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $pgac_cv_funcname_function_support" >&5
+echo "${ECHO_T}$pgac_cv_funcname_function_support" >&6
+if test x"$pgac_cv_funcname_function_support" = xyes ; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_FUNCNAME__FUNCTION 1
+_ACEOF
+
+fi
+fi
 echo "$as_me:$LINENO: checking whether struct tm is in sys/time.h or time.h" >&5
 echo $ECHO_N "checking whether struct tm is in sys/time.h or time.h... $ECHO_C" >&6
 if test "${ac_cv_struct_tm+set}" = set; then

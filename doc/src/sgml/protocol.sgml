@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.29 2003/04/22 00:08:06 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/protocol.sgml,v 1.30 2003/04/24 21:16:42 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -3860,6 +3860,14 @@ whitespace in the values, it wasn't a very safe technique.)
 All messages now have a length count immediately following the message type
 byte (except for startup packets, which have no type byte).  Also note that
 PasswordMessage now has a type byte.
+</para>
+
+<para>
+ErrorResponse and NoticeResponse ('<literal>E</>' and '<literal>N</>')
+messages now contain multiple fields, from which the client code may
+assemble an error message of the desired level of verbosity.  Note that
+individual fields will typically not end with a newline, whereas the single
+string sent in the older protocol always did.
 </para>
 
 <para>

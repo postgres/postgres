@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.49 2003/03/20 03:34:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.50 2003/04/24 21:16:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1280,7 +1280,7 @@ NameListToString(List *names)
 	{
 		if (l != names)
 			appendStringInfoChar(&string, '.');
-		appendStringInfo(&string, "%s", strVal(lfirst(l)));
+		appendStringInfoString(&string, strVal(lfirst(l)));
 	}
 
 	return string.data;
@@ -1305,7 +1305,7 @@ NameListToQuotedString(List *names)
 	{
 		if (l != names)
 			appendStringInfoChar(&string, '.');
-		appendStringInfo(&string, "%s", quote_identifier(strVal(lfirst(l))));
+		appendStringInfoString(&string, quote_identifier(strVal(lfirst(l))));
 	}
 
 	return string.data;

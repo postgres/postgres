@@ -1,14 +1,43 @@
 /*-------------------------------------------------------------------------
  *
  * elog.c
- *	  error logger
+ *	  error logging and reporting
+ *
+ * Some notes about recursion and errors during error processing:
+ *
+ * We need to be robust about recursive-error scenarios --- for example,
+ * if we run out of memory, it's important to be able to report that fact.
+ * There are a number of considerations that go into this.
+ *
+ * First, distinguish between re-entrant use and actual recursion.  It
+ * is possible for an error or warning message to be emitted while the
+ * parameters for an error message are being computed.  In this case
+ * errstart has been called for the outer message, and some field values
+ * may have already been saved, but we are not actually recursing.  We handle
+ * this by providing a (small) stack of ErrorData records.  The inner message
+ * can be computed and sent without disturbing the state of the outer message.
+ * (If the inner message is actually an error, this isn't very interesting
+ * because control won't come back to the outer message generator ... but
+ * if the inner message is only debug or log data, this is critical.)
+ *
+ * Second, actual recursion will occur if an error is reported by one of
+ * the elog.c routines or something they call.  By far the most probable
+ * scenario of this sort is "out of memory"; and it's also the nastiest
+ * to handle because we'd likely also run out of memory while trying to
+ * report this error!  Our escape hatch for this condition is to force any
+ * such messages up to ERROR level if they aren't already (so that we will
+ * not need to return to the outer elog.c call), and to reset the ErrorContext
+ * to empty before trying to process the inner message.  Since ErrorContext
+ * is guaranteed to have at least 8K of space in it (see mcxt.c), we should
+ * be able to process an "out of memory" message successfully.
+ *
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.108 2003/04/22 00:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.109 2003/04/24 21:16:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,17 +54,22 @@
 #include <syslog.h>
 #endif
 
-#include "commands/copy.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "storage/ipc.h"
-#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 #include "utils/guc.h"
 
-#include "mb/pg_wchar.h"
+
+/* Global variables */
+ErrorContextCallback *error_context_stack = NULL;
+
+/* GUC parameters */
+bool		Log_timestamp;		/* show timestamps in stderr output */
+bool		Log_pid;			/* show PIDs in stderr output */
 
 #ifdef HAVE_SYSLOG
 /*
@@ -45,108 +79,118 @@
  * ... in theory anyway
  */
 int			Use_syslog = 0;
-char	   *Syslog_facility;
+char	   *Syslog_facility;	/* openlog() parameters */
 char	   *Syslog_ident;
 
 static void write_syslog(int level, const char *line);
 
 #else
+
 #define Use_syslog 0
-#endif
 
-bool		Log_timestamp;
-bool		Log_pid;
+#endif /* HAVE_SYSLOG */
 
-#define TIMESTAMP_SIZE 20		/* format `YYYY-MM-DD HH:MM:SS ' */
-#define PID_SIZE 9				/* format `[123456] ' */
 
+/*
+ * ErrorData holds the data accumulated during any one ereport() cycle.
+ * Any non-NULL pointers must point to palloc'd data in ErrorContext.
+ * (The const pointers are an exception; we assume they point at non-freeable
+ * constant strings.)
+ */
+
+typedef struct ErrorData
+{
+	int			elevel;			/* error level */
+	bool		output_to_server; /* will report to server log? */
+	bool		output_to_client; /* will report to client? */
+	bool		show_funcname;	/* true to force funcname inclusion */
+	const char *filename;		/* __FILE__ of ereport() call */
+	int			lineno;			/* __LINE__ of ereport() call */
+	const char *funcname;		/* __func__ of ereport() call */
+	int			sqlerrcode;		/* encoded ERRSTATE */
+	char	   *message;		/* primary error message */
+	char	   *detail;			/* detail error message */
+	char	   *hint;			/* hint message */
+	char	   *context;		/* context message */
+	int			cursorpos;		/* cursor index into query string */
+	int			saved_errno;	/* errno at entry */
+} ErrorData;
+
+/* We provide a small stack of ErrorData records for re-entrant cases */
+#define ERRORDATA_STACK_SIZE  5
+
+static ErrorData errordata[ERRORDATA_STACK_SIZE];
+
+static int	errordata_stack_depth = -1; /* index of topmost active frame */
+
+static int	recursion_depth = 0;		/* to detect actual recursion */
+
+
+/* Macro for checking errordata_stack_depth is reasonable */
+#define CHECK_STACK_DEPTH() \
+	do { \
+		if (errordata_stack_depth < 0) \
+		{ \
+			errordata_stack_depth = -1; \
+			ereport(ERROR, (errmsg_internal("errstart was not called"))); \
+		} \
+	} while (0)
+
+
+static void send_message_to_server_log(ErrorData *edata);
+static void send_message_to_frontend(ErrorData *edata);
+static char *expand_fmt_string(const char *fmt, ErrorData *edata);
+static const char *useful_strerror(int errnum);
+static const char *error_severity(int elevel);
 static const char *print_timestamp(void);
 static const char *print_pid(void);
-static void send_message_to_frontend(int type, const char *msg);
-static const char *useful_strerror(int errnum);
-static const char *elog_message_prefix(int lev);
-
-static int	Debugfile = -1;
 
 
-/*--------------------
- * elog
- *		Primary error logging function.
+/*
+ * errstart --- begin an error-reporting cycle
  *
- * 'lev': error level; indicates recovery action to take, if any.
- * 'fmt': a printf-style string.
- * Additional arguments, if any, are formatted per %-escapes in 'fmt'.
+ * Create a stack entry and store the given parameters in it.  Subsequently,
+ * errmsg() and perhaps other routines will be called to further populate
+ * the stack entry.  Finally, errfinish() will be called to actually process
+ * the error report.
  *
- * In addition to the usual %-escapes recognized by printf, "%m" in
- * fmt is replaced by the error message for the current value of errno.
- *
- * Note: no newline is needed at the end of the fmt string, since
- * elog will provide one for the output methods that need it.
- *
- * If 'lev' is ERROR or worse, control does not return to the caller.
- * See elog.h for the error level definitions.
- *--------------------
+ * Returns TRUE in normal case.  Returns FALSE to short-circuit the error
+ * report (if it's a warning or lower and not to be reported anywhere).
  */
-void
-elog(int lev, const char *fmt,...)
+bool
+errstart(int elevel, const char *filename, int lineno,
+		 const char *funcname)
 {
-	va_list		ap;
-
-	/*
-	 * The expanded format and final output message are dynamically
-	 * allocated if necessary, but not if they fit in the "reasonable
-	 * size" buffers shown here.  In extremis, we'd rather depend on
-	 * having a few hundred bytes of stack space than on malloc() still
-	 * working (since memory-clobber errors often take out malloc first).
-	 * Don't make these buffers unreasonably large though, on pain of
-	 * having to chase a bug with no error message.
-	 *
-	 * Note that we use malloc() not palloc() because we want to retain
-	 * control if we run out of memory.  palloc() would recursively call
-	 * elog(ERROR), which would be all right except if we are working on a
-	 * FATAL or PANIC error.	We'd lose track of the fatal condition and
-	 * report a mere ERROR to outer loop, which would be a Bad Thing. So,
-	 * we substitute an appropriate message in-place, without downgrading
-	 * the level if it's above ERROR.
-	 */
-	char		fmt_fixedbuf[128];
-	char		msg_fixedbuf[256];
-	char	   *fmt_buf = fmt_fixedbuf;
-	char	   *msg_buf = msg_fixedbuf;
-	char		copylineno_buf[32];		/* for COPY line numbers */
-	const char *errorstr;
-	const char *prefix;
-	const char *cp;
-	char	   *bp;
-	size_t		space_needed;
-	size_t		timestamp_size; /* prefix len for timestamp+pid */
+	ErrorData  *edata;
 	bool		output_to_server = false;
 	bool		output_to_client = false;
 
-	/* Check for old elog calls.  Codes were renumbered in 7.3. 2002-02-24 */
-	if (lev < DEBUG5)
-		elog(FATAL, "Pre-7.3 object file made an elog() call.  Recompile.");
+	/*
+	 * First decide whether we need to process this report at all;
+	 * if it's warning or less and not enabled for logging, just
+	 * return FALSE without starting up any error logging machinery.
+	 */
 
 	/*
 	 * Convert initialization errors into fatal errors. This is probably
 	 * redundant, because Warn_restart_ready won't be set anyway.
 	 */
-	if (lev == ERROR && IsInitProcessingMode())
-		lev = FATAL;
+	if (elevel == ERROR && IsInitProcessingMode())
+		elevel = FATAL;
 
 	/*
 	 * If we are inside a critical section, all errors become PANIC
 	 * errors.	See miscadmin.h.
 	 */
-	if (lev >= ERROR)
+	if (elevel >= ERROR)
 	{
 		if (CritSectionCount > 0)
-			lev = PANIC;
+			elevel = PANIC;
 	}
 
 	/* Determine whether message is enabled for server log output */
 	/* Complicated because LOG is sorted out-of-order for this purpose */
-	if (lev == LOG || lev == COMMERROR)
+	if (elevel == LOG || elevel == COMMERROR)
 	{
 		if (log_min_messages == LOG)
 			output_to_server = true;
@@ -155,19 +199,19 @@ elog(int lev, const char *fmt,...)
 	}
 	else
 	{
-		/* lev != LOG */
+		/* elevel != LOG */
 		if (log_min_messages == LOG)
 		{
-			if (lev >= FATAL)
+			if (elevel >= FATAL)
 				output_to_server = true;
 		}
 		/* Neither is LOG */
-		else if (lev >= log_min_messages)
+		else if (elevel >= log_min_messages)
 			output_to_server = true;
 	}
 
 	/* Determine whether message is enabled for client output */
-	if (whereToSendOutput == Remote && lev != COMMERROR)
+	if (whereToSendOutput == Remote && elevel != COMMERROR)
 	{
 		/*
 		 * client_min_messages is honored only after we complete the
@@ -176,271 +220,173 @@ elog(int lev, const char *fmt,...)
 		 * during authentication.
 		 */
 		if (ClientAuthInProgress)
-			output_to_client = (lev >= ERROR);
+			output_to_client = (elevel >= ERROR);
 		else
-			output_to_client = (lev >= client_min_messages || lev == INFO);
+			output_to_client = (elevel >= client_min_messages ||
+								elevel == INFO);
 	}
 
-	/* Skip formatting effort if non-error message will not be output */
-	if (lev < ERROR && !output_to_server && !output_to_client)
-		return;
-
-	/* Save error str before calling any function that might change errno */
-	errorstr = useful_strerror(errno);
-
-	/* Internationalize the error format string */
-	fmt = gettext(fmt);
-
-	/* Begin formatting by determining prefix information */
-	prefix = elog_message_prefix(lev);
-
-	timestamp_size = 0;
-	if (Log_timestamp)
-		timestamp_size += TIMESTAMP_SIZE;
-	if (Log_pid)
-		timestamp_size += PID_SIZE;
+	/* Skip processing effort if non-error message will not be output */
+	if (elevel < ERROR && !output_to_server && !output_to_client)
+		return false;
 
 	/*
-	 * Set up the expanded format, consisting of the prefix string plus
-	 * input format, with any %m replaced by strerror() string (since
-	 * vsnprintf won't know what to do with %m).  To keep space
-	 * calculation simple, we only allow one %m.
+	 * Okay, crank up a stack entry to store the info in.
 	 */
-	space_needed = timestamp_size + strlen(prefix) +
-		strlen(fmt) + strlen(errorstr) + 1;
 
-	if (copy_lineno)
+	if (recursion_depth++ > 0)
 	{
 		/*
-		 * Prints the failure line of the COPY.  Wow, what a hack!	bjm
-		 * Translator:	Error message will be truncated at 31 characters.
+		 * Ooops, error during error processing.  Clear ErrorContext and force
+		 * level up to ERROR or greater, as discussed at top of file.  Adjust
+		 * output decisions too.
 		 */
-		snprintf(copylineno_buf, sizeof(copylineno_buf),
-				 gettext("copy: line %d, "), copy_lineno);
-		space_needed += strlen(copylineno_buf);
-	}
-
-	if (space_needed > sizeof(fmt_fixedbuf))
-	{
-		fmt_buf = malloc(space_needed);
-		if (fmt_buf == NULL)
-		{
-			/* We're up against it, convert to out-of-memory error */
-			fmt_buf = fmt_fixedbuf;
-			if (lev < ERROR)
-			{
-				lev = ERROR;
-				prefix = elog_message_prefix(lev);
-			}
-
-			/*
-			 * gettext doesn't allocate memory, except in the very first
-			 * call (which this isn't), so it's safe to translate here.
-			 * Worst case we get the untranslated string back.
-			 */
-			/* translator: This must fit in fmt_fixedbuf. */
-			fmt = gettext("elog: out of memory");
-		}
-	}
-
-	fmt_buf[0] = '\0';
-
-	if (Log_timestamp)
-		strcat(fmt_buf, print_timestamp());
-	if (Log_pid)
-		strcat(fmt_buf, print_pid());
-
-	strcat(fmt_buf, prefix);
-
-	/* If error was in CopyFrom() print the offending line number -- dz */
-	if (copy_lineno)
-	{
-		strcat(fmt_buf, copylineno_buf);
-		if (lev >= ERROR)
-			copy_lineno = 0;
-	}
-
-	bp = fmt_buf + strlen(fmt_buf);
-
-	for (cp = fmt; *cp; cp++)
-	{
-		if (cp[0] == '%' && cp[1] != '\0')
-		{
-			if (cp[1] == 'm')
-			{
-				/*
-				 * XXX If there are any %'s in errorstr then vsnprintf
-				 * will do the Wrong Thing; do we need to cope? Seems
-				 * unlikely that % would appear in system errors.
-				 */
-				strcpy(bp, errorstr);
-
-				/*
-				 * copy the rest of fmt literally, since we can't afford
-				 * to insert another %m.
-				 */
-				strcat(bp, cp + 2);
-				bp += strlen(bp);
-				break;
-			}
-			else
-			{
-				/* copy % and next char --- this avoids trouble with %%m */
-				*bp++ = *cp++;
-				*bp++ = *cp;
-			}
-		}
-		else
-			*bp++ = *cp;
-	}
-	*bp = '\0';
-
-	/*
-	 * Now generate the actual output text using vsnprintf(). Be sure to
-	 * leave space for \n added later as well as trailing null.
-	 */
-	space_needed = sizeof(msg_fixedbuf);
-	for (;;)
-	{
-		int			nprinted;
-
-		va_start(ap, fmt);
-		nprinted = vsnprintf(msg_buf, space_needed - 2, fmt_buf, ap);
-		va_end(ap);
-
+		MemoryContextReset(ErrorContext);
+		output_to_server = true;
+		if (whereToSendOutput == Remote && elevel != COMMERROR)
+			output_to_client = true;
+		elevel = Max(elevel, ERROR);
 		/*
-		 * Note: some versions of vsnprintf return the number of chars
-		 * actually stored, but at least one returns -1 on failure. Be
-		 * conservative about believing whether the print worked.
+		 * If we recurse more than once, the problem might be something
+		 * broken in a context traceback routine.  Abandon them too.
 		 */
-		if (nprinted >= 0 && nprinted < space_needed - 3)
-			break;
-		/* It didn't work, try to get a bigger buffer */
-		if (msg_buf != msg_fixedbuf)
-			free(msg_buf);
-		space_needed *= 2;
-		msg_buf = malloc(space_needed);
-		if (msg_buf == NULL)
-		{
-			/* We're up against it, convert to out-of-memory error */
-			msg_buf = msg_fixedbuf;
-			if (lev < ERROR)
-			{
-				lev = ERROR;
-				prefix = elog_message_prefix(lev);
-			}
-			msg_buf[0] = '\0';
-			if (Log_timestamp)
-				strcat(msg_buf, print_timestamp());
-			if (Log_pid)
-				strcat(msg_buf, print_pid());
-			strcat(msg_buf, prefix);
-			strcat(msg_buf, gettext("elog: out of memory"));
-			break;
-		}
+		if (recursion_depth > 2)
+			error_context_stack = NULL;
+	}
+	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
+	{
+		/* Wups, stack not big enough */
+		int		i;
+
+		elevel = Max(elevel, ERROR);
+		/*
+		 * Don't forget any FATAL/PANIC status on the stack (see comments
+		 * in errfinish)
+		 */
+		for (i = 0; i < errordata_stack_depth; i++)
+			elevel = Max(elevel, errordata[i].elevel);
+		/* Clear the stack and try again */
+		errordata_stack_depth = -1;
+		ereport(elevel, (errmsg_internal("ERRORDATA_STACK_SIZE exceeded")));
 	}
 
+	/* Initialize data for this error frame */
+	edata = &errordata[errordata_stack_depth];
+	MemSet(edata, 0, sizeof(ErrorData));
+	edata->elevel = elevel;
+	edata->output_to_server = output_to_server;
+	edata->output_to_client = output_to_client;
+	edata->filename = filename;
+	edata->lineno = lineno;
+	edata->funcname = funcname;
+	edata->sqlerrcode = ERRCODE_INTERNAL_ERROR; /* default errcode */
+	/* errno is saved here so that error parameter eval can't change it */
+	edata->saved_errno = errno;
+
+	recursion_depth--;
+	return true;
+}
+
+/*
+ * errfinish --- end an error-reporting cycle
+ *
+ * Produce the appropriate error report(s) and pop the error stack.
+ *
+ * If elevel is ERROR or worse, control does not return to the caller.
+ * See elog.h for the error level definitions.
+ */
+void
+errfinish(int dummy, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	int			elevel = edata->elevel;
+	MemoryContext oldcontext;
+	ErrorContextCallback *econtext;
+
+	CHECK_STACK_DEPTH();
 
 	/*
-	 * Message prepared; send it where it should go
+	 * Call any context callback functions.  We can treat ereports occuring
+	 * in callback functions as re-entrant rather than recursive case, so
+	 * don't increment recursion_depth yet.
 	 */
-
-#ifdef HAVE_SYSLOG
-	/* Write to syslog, if enabled */
-	if (output_to_server && Use_syslog >= 1)
+	for (econtext = error_context_stack;
+		 econtext != NULL;
+		 econtext = econtext->previous)
 	{
-		int			syslog_level;
-
-		switch (lev)
-		{
-			case DEBUG5:
-			case DEBUG4:
-			case DEBUG3:
-			case DEBUG2:
-			case DEBUG1:
-				syslog_level = LOG_DEBUG;
-				break;
-			case LOG:
-			case COMMERROR:
-			case INFO:
-				syslog_level = LOG_INFO;
-				break;
-			case NOTICE:
-			case WARNING:
-				syslog_level = LOG_NOTICE;
-				break;
-			case ERROR:
-				syslog_level = LOG_WARNING;
-				break;
-			case FATAL:
-				syslog_level = LOG_ERR;
-				break;
-			case PANIC:
-			default:
-				syslog_level = LOG_CRIT;
-				break;
-		}
-
-		write_syslog(syslog_level, msg_buf + timestamp_size);
+		(*econtext->callback) (econtext->arg);
 	}
-#endif   /* HAVE_SYSLOG */
 
-	/* syslog doesn't want a trailing newline, but other destinations do */
-	strcat(msg_buf, "\n");
+	/* Now we are ready to process the error. */
+	recursion_depth++;
 
-	/* Write to stderr, if enabled */
-	if (output_to_server && (Use_syslog <= 1 || whereToSendOutput == Debug))
-		write(2, msg_buf, strlen(msg_buf));
+	/*
+	 * Do processing in ErrorContext, which we hope has enough reserved space
+	 * to report an error.
+	 */
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	/* Send to server log, if enabled */
+	if (edata->output_to_server)
+		send_message_to_server_log(edata);
+
+	/*
+	 * Abort any old-style COPY OUT in progress when an error is detected.
+	 * This hack is necessary because of poor design of old-style copy
+	 * protocol.  Note we must do this even if client is fool enough to
+	 * have set client_min_messages above ERROR, so don't look at
+	 * output_to_client.
+	 */
+	if (elevel >= ERROR && whereToSendOutput == Remote)
+		pq_endcopyout(true);
 
 	/* Send to client, if enabled */
-	if (output_to_client)
+	if (edata->output_to_client)
+		send_message_to_frontend(edata);
+
+	/* Now free up subsidiary data attached to stack entry, and release it */
+	if (edata->message)
+		pfree(edata->message);
+	if (edata->detail)
+		pfree(edata->detail);
+	if (edata->hint)
+		pfree(edata->hint);
+	if (edata->context)
+		pfree(edata->context);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	errordata_stack_depth--;
+	recursion_depth--;
+
+	/*
+	 * If the error level is ERROR or more, we are not going to return to
+	 * caller; therefore, if there is any stacked error already in progress
+	 * it will be lost.  This is more or less okay, except we do not want
+	 * to have a FATAL or PANIC error downgraded because the reporting process
+	 * was interrupted by a lower-grade error.  So check the stack and make
+	 * sure we panic if panic is warranted.
+	 */
+	if (elevel >= ERROR)
 	{
-		/* Send IPC message to the front-end program */
-		MemoryContext oldcxt;
+		int		i;
+
+		for (i = 0; i <= errordata_stack_depth; i++)
+			elevel = Max(elevel, errordata[i].elevel);
 
 		/*
-		 * Since backend libpq may call palloc(), switch to a context
-		 * where there's fairly likely to be some free space.  After all
-		 * the pushups above, we don't want to drop the ball by running
-		 * out of space now...
+		 * Also, be sure to reset the stack to empty.  We do not clear
+		 * ErrorContext here, though; PostgresMain does that later on.
 		 */
-		oldcxt = MemoryContextSwitchTo(ErrorContext);
-
-		if (lev >= ERROR)
-		{
-			/*
-			 * Abort any COPY OUT in progress when an error is detected.
-			 * This hack is necessary because of poor design of old-style
-			 * copy protocol.
-			 */
-			pq_endcopyout(true);
-		}
-
-		/* Exclude the timestamp from msg sent to frontend */
-		send_message_to_frontend(lev, msg_buf + timestamp_size);
-
-		MemoryContextSwitchTo(oldcxt);
+		errordata_stack_depth = -1;
+		recursion_depth = 0;
+		error_context_stack = NULL;
 	}
 
-	/* done with the message, release space */
-	if (fmt_buf != fmt_fixedbuf)
-		free(fmt_buf);
-	if (msg_buf != msg_fixedbuf)
-		free(msg_buf);
-
 	/*
-	 * If the user wants this elog() generating query logged, do so. We
-	 * only want to log if the query has been written to
-	 * debug_query_string. Also, avoid infinite loops.
+	 * Perform error recovery action as specified by elevel.
 	 */
-
-	if (lev != LOG && lev >= log_min_error_statement && debug_query_string)
-		elog(LOG, "statement: %s", debug_query_string);
-
-	/*
-	 * Perform error recovery action as specified by lev.
-	 */
-	if (lev == ERROR || lev == FATAL)
+	if (elevel == ERROR || elevel == FATAL)
 	{
 		/* Prevent immediate interrupt while entering error recovery */
 		ImmediateInterruptOK = false;
@@ -467,7 +413,7 @@ elog(int lev, const char *fmt,...)
 		 * postmaster (for example, if we are being run from the initdb
 		 * script, we'd better return an error status).
 		 */
-		if (lev == FATAL || !Warn_restart_ready || proc_exit_inprogress)
+		if (elevel == FATAL || !Warn_restart_ready || proc_exit_inprogress)
 		{
 			/*
 			 * fflush here is just to improve the odds that we get to see
@@ -482,10 +428,10 @@ elog(int lev, const char *fmt,...)
 		}
 
 		/*
-		 * Guard against infinite loop from elog() during error recovery.
+		 * Guard against infinite loop from errors during error recovery.
 		 */
 		if (InError)
-			elog(PANIC, "elog: error during error recovery, giving up!");
+			ereport(PANIC, (errmsg("error during error recovery, giving up")));
 		InError = true;
 
 		/*
@@ -494,7 +440,7 @@ elog(int lev, const char *fmt,...)
 		siglongjmp(Warn_restart, 1);
 	}
 
-	if (lev == PANIC)
+	if (elevel >= PANIC)
 	{
 		/*
 		 * Serious crash time. Postmaster will observe nonzero process
@@ -509,17 +455,280 @@ elog(int lev, const char *fmt,...)
 		abort();
 	}
 
-	/* We reach here if lev <= WARNING. OK to return to caller. */
+	/* We reach here if elevel <= WARNING. OK to return to caller. */
 }
 
 
+/*
+ * errcode --- add SQLSTATE error code to the current error
+ *
+ * The code is expected to be represented as per MAKE_SQLSTATE().
+ */
 int
+errcode(int sqlerrcode)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	edata->sqlerrcode = sqlerrcode;
+
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * This macro handles expansion of a format string and associated parameters;
+ * it's common code for errmsg(), errdetail(), etc.  Must be called inside
+ * a routine that is declared like "const char *fmt, ..." and has an edata
+ * pointer set up.  The message is assigned to edata->targetfield, or
+ * appended to it if appendval is true.
+ *
+ * Note: we pstrdup the buffer rather than just transferring its storage
+ * to the edata field because the buffer might be considerably larger than
+ * really necessary.
+ */
+#define EVALUATE_MESSAGE(targetfield, appendval)  \
+	{ \
+		char		   *fmtbuf; \
+		StringInfoData	buf; \
+		/* Internationalize the error format string */ \
+		fmt = gettext(fmt); \
+		/* Expand %m in format string */ \
+		fmtbuf = expand_fmt_string(fmt, edata); \
+		initStringInfo(&buf); \
+		if ((appendval) && edata->targetfield) \
+			appendStringInfo(&buf, "%s\n", edata->targetfield); \
+		/* Generate actual output --- have to use appendStringInfoVA */ \
+		for (;;) \
+		{ \
+			va_list		args; \
+			bool		success; \
+			va_start(args, fmt); \
+			success = appendStringInfoVA(&buf, fmtbuf, args); \
+			va_end(args); \
+			if (success) \
+				break; \
+			enlargeStringInfo(&buf, buf.maxlen); \
+		} \
+		/* Done with expanded fmt */ \
+		pfree(fmtbuf); \
+		/* Save the completed message into the stack item */ \
+		if (edata->targetfield) \
+			pfree(edata->targetfield); \
+		edata->targetfield = pstrdup(buf.data); \
+		pfree(buf.data); \
+	}
+
+
+/*
+ * errmsg --- add a primary error message text to the current error
+ *
+ * In addition to the usual %-escapes recognized by printf, "%m" in
+ * fmt is replaced by the error message for the caller's value of errno.
+ *
+ * Note: no newline is needed at the end of the fmt string, since
+ * ereport will provide one for the output methods that need it.
+ */
+int
+errmsg(const char *fmt, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(message, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errmsg_internal --- add a primary error message text to the current error
+ *
+ * This is exactly like errmsg() except that strings passed to errmsg_internal
+ * are customarily left out of the internationalization message dictionary.
+ * This should be used for "can't happen" cases that are probably not worth
+ * spending translation effort on.
+ */
+int
+errmsg_internal(const char *fmt, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(message, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errdetail --- add a detail error message text to the current error
+ */
+int
+errdetail(const char *fmt, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(detail, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errhint --- add a hint error message text to the current error
+ */
+int
+errhint(const char *fmt, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(hint, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errcontext --- add a context error message text to the current error
+ *
+ * Unlike other cases, multiple calls are allowed to build up a stack of
+ * context information.  We assume earlier calls represent more-closely-nested
+ * states.
+ */
+int
+errcontext(const char *fmt, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	recursion_depth++;
+	CHECK_STACK_DEPTH();
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(context, true);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * errfunction --- add reporting function name to the current error
+ *
+ * This is used when backwards compatibility demands that the function
+ * name appear in messages sent to old-protocol clients.  Note that the
+ * passed string is expected to be a non-freeable constant string.
+ */
+int
+errfunction(const char *funcname)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	edata->funcname = funcname;
+	edata->show_funcname = true;
+
+	return 0;					/* return value does not matter */
+}
+
+/*
+ * errposition --- add cursor position to the current error
+ */
+int
+errposition(int cursorpos)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+
+	/* we don't bother incrementing recursion_depth */
+	CHECK_STACK_DEPTH();
+
+	edata->cursorpos = cursorpos;
+
+	return 0;					/* return value does not matter */
+}
+
+
+/*
+ * elog_finish --- finish up for old-style API
+ *
+ * The elog() macro already called errstart, but with ERROR rather than
+ * the true elevel.
+ */
+void
+elog_finish(int elevel, const char *fmt, ...)
+{
+	ErrorData  *edata = &errordata[errordata_stack_depth];
+	MemoryContext oldcontext;
+
+	CHECK_STACK_DEPTH();
+
+	/*
+	 * We need to redo errstart() because the elog macro had to call it
+	 * with bogus elevel.
+	 */
+	errordata_stack_depth--;
+	errno = edata->saved_errno;
+	if (!errstart(elevel, edata->filename, edata->lineno, edata->funcname))
+		return;					/* nothing to do */
+
+	/*
+	 * Format error message just like errmsg().
+	 */
+	recursion_depth++;
+	oldcontext = MemoryContextSwitchTo(ErrorContext);
+
+	EVALUATE_MESSAGE(message, false);
+
+	MemoryContextSwitchTo(oldcontext);
+	recursion_depth--;
+
+	/*
+	 * And let errfinish() finish up.
+	 */
+	errfinish(0);
+}
+
+
+/*
+ * Initialization of error output file
+ */
+void
 DebugFileOpen(void)
 {
 	int			fd,
 				istty;
-
-	Debugfile = -1;
 
 	if (OutputFileName[0])
 	{
@@ -530,8 +739,8 @@ DebugFileOpen(void)
 		 */
 		if ((fd = open(OutputFileName, O_CREAT | O_APPEND | O_WRONLY,
 					   0666)) < 0)
-			elog(FATAL, "DebugFileOpen: open of %s: %m",
-				 OutputFileName);
+			ereport(FATAL,
+					(errmsg("failed to open %s: %m", OutputFileName)));
 		istty = isatty(fd);
 		close(fd);
 
@@ -539,9 +748,9 @@ DebugFileOpen(void)
 		 * Redirect our stderr to the debug output file.
 		 */
 		if (!freopen(OutputFileName, "a", stderr))
-			elog(FATAL, "DebugFileOpen: %s reopen as stderr: %m",
-				 OutputFileName);
-		Debugfile = fileno(stderr);
+			ereport(FATAL,
+					(errmsg("failed to reopen %s as stderr: %m",
+							OutputFileName)));
 
 		/*
 		 * If the file is a tty and we're running under the postmaster,
@@ -551,66 +760,10 @@ DebugFileOpen(void)
 		 */
 		if (istty && IsUnderPostmaster)
 			if (!freopen(OutputFileName, "a", stdout))
-				elog(FATAL, "DebugFileOpen: %s reopen as stdout: %m",
-					 OutputFileName);
-		return Debugfile;
+				ereport(FATAL,
+						(errmsg("failed to reopen %s as stdout: %m",
+								OutputFileName)));
 	}
-
-	/*
-	 * If no filename was specified, send debugging output to stderr. If
-	 * stderr has been hosed, try to open a file.
-	 */
-	fd = fileno(stderr);
-	if (fcntl(fd, F_GETFD, 0) < 0)
-	{
-		snprintf(OutputFileName, MAXPGPATH, "%s/pg.errors.%d",
-				 DataDir, (int) MyProcPid);
-		fd = open(OutputFileName, O_CREAT | O_APPEND | O_WRONLY, 0666);
-	}
-	if (fd < 0)
-		elog(FATAL, "DebugFileOpen: could not open debugging file");
-
-	Debugfile = fd;
-	return Debugfile;
-}
-
-
-/*
- * Return a timestamp string like
- *
- *	 "2000-06-04 13:12:03 "
- */
-static const char *
-print_timestamp(void)
-{
-	time_t		curtime;
-	static char buf[TIMESTAMP_SIZE + 1];
-
-	curtime = time(NULL);
-
-	strftime(buf, sizeof(buf),
-			 "%Y-%m-%d %H:%M:%S ",
-			 localtime(&curtime));
-
-	return buf;
-}
-
-
-
-/*
- * Return a string like
- *
- *	   "[123456] "
- *
- * with the current pid.
- */
-static const char *
-print_pid(void)
-{
-	static char buf[PID_SIZE + 1];
-
-	snprintf(buf, PID_SIZE + 1, "[%d]      ", (int) MyProcPid);
-	return buf;
 }
 
 
@@ -679,7 +832,6 @@ write_syslog(int level, const char *line)
 		{
 			char		buf[PG_SYSLOG_LIMIT + 1];
 			int			buflen;
-			int			l;
 			int			i;
 
 			/* if we start at a newline, move ahead one char */
@@ -695,28 +847,24 @@ write_syslog(int level, const char *line)
 			if (strchr(buf, '\n') != NULL)
 				*strchr(buf, '\n') = '\0';
 
-			l = strlen(buf);
+			buflen = strlen(buf);
 
 			/* trim to multibyte letter boundary */
-			buflen = pg_mbcliplen(buf, l, l);
+			buflen = pg_mbcliplen(buf, buflen, buflen);
 			if (buflen <= 0)
 				return;
 			buf[buflen] = '\0';
-			l = strlen(buf);
 
 			/* already word boundary? */
-			if (isspace((unsigned char) line[l]) || line[l] == '\0')
-				buflen = l;
-			else
+			if (!isspace((unsigned char) line[buflen]) &&
+				line[buflen] != '\0')
 			{
 				/* try to divide at word boundary */
-				i = l - 1;
+				i = buflen - 1;
 				while (i > 0 && !isspace((unsigned char) buf[i]))
 					i--;
 
-				if (i <= 0)		/* couldn't divide word boundary */
-					buflen = l;
-				else
+				if (i > 0)		/* else couldn't divide word boundary */
 				{
 					buflen = i;
 					buf[i] = '\0';
@@ -736,19 +884,222 @@ write_syslog(int level, const char *line)
 		syslog(level, "[%lu] %s", seq, line);
 	}
 }
+
 #endif   /* HAVE_SYSLOG */
 
 
+/*
+ * Write error report to server's log
+ */
 static void
-send_message_to_frontend(int type, const char *msg)
+send_message_to_server_log(ErrorData *edata)
 {
-	StringInfoData buf;
+	StringInfoData	buf;
+
+	initStringInfo(&buf);
+
+	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+
+	if (edata->message)
+		appendStringInfo(&buf, "%s\n", edata->message);
+	else
+		appendStringInfoString(&buf, "missing error text\n");
+
+	/* XXX showing of additional info should perhaps be optional */
+	/* XXX ought to localize the label strings, probably */
+
+	if (edata->detail)
+		appendStringInfo(&buf, "DETAIL:  %s\n", edata->detail);
+	if (edata->hint)
+		appendStringInfo(&buf, "HINT:  %s\n", edata->hint);
+	if (edata->context)
+		appendStringInfo(&buf, "CONTEXT:  %s\n", edata->context);
+	if (edata->funcname && edata->filename)
+		appendStringInfo(&buf, "IN:  %s (%s:%d)\n",
+						 edata->funcname, edata->filename, edata->lineno);
+
+	/*
+	 * If the user wants the query that generated this error logged, do so.
+	 * We use debug_query_string to get at the query, which is kinda useless
+	 * for queries triggered by extended query protocol; how to improve?
+	 */
+	if (edata->elevel >= log_min_error_statement && debug_query_string != NULL)
+		appendStringInfo(&buf, "STATEMENT:  %s\n", debug_query_string);
+
+
+#ifdef HAVE_SYSLOG
+	/* Write to syslog, if enabled */
+	if (Use_syslog >= 1)
+	{
+		int			syslog_level;
+
+		switch (edata->elevel)
+		{
+			case DEBUG5:
+			case DEBUG4:
+			case DEBUG3:
+			case DEBUG2:
+			case DEBUG1:
+				syslog_level = LOG_DEBUG;
+				break;
+			case LOG:
+			case COMMERROR:
+			case INFO:
+				syslog_level = LOG_INFO;
+				break;
+			case NOTICE:
+			case WARNING:
+				syslog_level = LOG_NOTICE;
+				break;
+			case ERROR:
+				syslog_level = LOG_WARNING;
+				break;
+			case FATAL:
+				syslog_level = LOG_ERR;
+				break;
+			case PANIC:
+			default:
+				syslog_level = LOG_CRIT;
+				break;
+		}
+
+		write_syslog(syslog_level, buf.data);
+	}
+#endif   /* HAVE_SYSLOG */
+
+	/* Write to stderr, if enabled */
+	if (Use_syslog <= 1 || whereToSendOutput == Debug)
+	{
+		/*
+		 * Timestamp and PID are only used for stderr output --- we assume
+		 * the syslog daemon will supply them for us in the other case.
+		 */
+		if (Log_timestamp)
+			fprintf(stderr, "%s", print_timestamp());
+		if (Log_pid)
+			fprintf(stderr, "%s", print_pid());
+		fprintf(stderr, "%s", buf.data);
+	}
+
+	pfree(buf.data);
+}
+
+
+/*
+ * Write error report to client
+ */
+static void
+send_message_to_frontend(ErrorData *edata)
+{
+	StringInfoData msgbuf;
 
 	/* 'N' (Notice) is for nonfatal conditions, 'E' is for errors */
-	pq_beginmessage(&buf, (type < ERROR) ? 'N' : 'E');
-	/* XXX more to do here */
-	pq_sendstring(&buf, msg);
-	pq_endmessage(&buf);
+	pq_beginmessage(&msgbuf, (edata->elevel < ERROR) ? 'N' : 'E');
+
+	if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 3)
+	{
+		/* New style with separate fields */
+		char	tbuf[12];
+		int		ssval;
+		int		i;
+
+		pq_sendbyte(&msgbuf, 'S');
+		pq_sendstring(&msgbuf, error_severity(edata->elevel));
+
+		/* unpack MAKE_SQLSTATE code */
+		ssval = edata->sqlerrcode;
+		for (i = 0; i < 5; i++)
+		{
+			tbuf[i] = PGUNSIXBIT(ssval);
+			ssval >>= 6;
+		}
+		tbuf[i] = '\0';
+
+		pq_sendbyte(&msgbuf, 'C');
+		pq_sendstring(&msgbuf, tbuf);
+
+		/* M field is required per protocol, so always send something */
+		pq_sendbyte(&msgbuf, 'M');
+		if (edata->message)
+			pq_sendstring(&msgbuf, edata->message);
+		else
+			pq_sendstring(&msgbuf, gettext("missing error text"));
+
+		if (edata->detail)
+		{
+			pq_sendbyte(&msgbuf, 'D');
+			pq_sendstring(&msgbuf, edata->detail);
+		}
+
+		if (edata->hint)
+		{
+			pq_sendbyte(&msgbuf, 'H');
+			pq_sendstring(&msgbuf, edata->hint);
+		}
+
+		if (edata->context)
+		{
+			pq_sendbyte(&msgbuf, 'W');
+			pq_sendstring(&msgbuf, edata->context);
+		}
+
+		if (edata->cursorpos > 0)
+		{
+			snprintf(tbuf, sizeof(tbuf), "%d", edata->cursorpos);
+			pq_sendbyte(&msgbuf, 'P');
+			pq_sendstring(&msgbuf, tbuf);
+		}
+
+		if (edata->filename)
+		{
+			pq_sendbyte(&msgbuf, 'F');
+			pq_sendstring(&msgbuf, edata->filename);
+		}
+
+		if (edata->lineno > 0)
+		{
+			snprintf(tbuf, sizeof(tbuf), "%d", edata->lineno);
+			pq_sendbyte(&msgbuf, 'L');
+			pq_sendstring(&msgbuf, tbuf);
+		}
+
+		if (edata->funcname)
+		{
+			pq_sendbyte(&msgbuf, 'R');
+			pq_sendstring(&msgbuf, edata->funcname);
+		}
+
+		pq_sendbyte(&msgbuf, '\0');	/* terminator */
+	}
+	else
+	{
+		/* Old style --- gin up a backwards-compatible message */
+		StringInfoData buf;
+
+		initStringInfo(&buf);
+
+		appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
+
+		if (edata->show_funcname && edata->funcname)
+			appendStringInfo(&buf, "%s: ", edata->funcname);
+
+		if (edata->message)
+			appendStringInfo(&buf, "%s", edata->message);
+		else
+			appendStringInfoString(&buf, gettext("missing error text"));
+
+		if (edata->cursorpos > 0)
+			appendStringInfo(&buf, gettext(" at character %d"),
+							 edata->cursorpos);
+
+		appendStringInfoChar(&buf, '\n');
+
+		pq_sendstring(&msgbuf, buf.data);
+
+		pfree(buf.data);
+	}
+
+	pq_endmessage(&msgbuf);
 
 	/*
 	 * This flush is normally not necessary, since postgres.c will flush
@@ -762,12 +1113,73 @@ send_message_to_frontend(int type, const char *msg)
 }
 
 
+/*
+ * Support routines for formatting error messages.
+ */
+
+
+/*
+ * expand_fmt_string --- process special format codes in a format string
+ *
+ * We must replace %m with the appropriate strerror string, since vsnprintf
+ * won't know what to do with it.
+ *
+ * The result is a palloc'd string.
+ */
+static char *
+expand_fmt_string(const char *fmt, ErrorData *edata)
+{
+	StringInfoData	buf;
+	const char *cp;
+
+	initStringInfo(&buf);
+
+	for (cp = fmt; *cp; cp++)
+	{
+		if (cp[0] == '%' && cp[1] != '\0')
+		{
+			cp++;
+			if (*cp == 'm')
+			{
+				/*
+				 * Replace %m by system error string.  If there are any %'s
+				 * in the string, we'd better double them so that vsnprintf
+				 * won't misinterpret.
+				 */
+				const char *cp2;
+
+				cp2 = useful_strerror(edata->saved_errno);
+				for (; *cp2; cp2++)
+				{
+					if (*cp2 == '%')
+						appendStringInfoCharMacro(&buf, '%');
+					appendStringInfoCharMacro(&buf, *cp2);
+				}
+			}
+			else
+			{
+				/* copy % and next char --- this avoids trouble with %%m */
+				appendStringInfoCharMacro(&buf, '%');
+				appendStringInfoCharMacro(&buf, *cp);
+			}
+		}
+		else
+			appendStringInfoCharMacro(&buf, *cp);
+	}
+
+	return buf.data;
+}
+
+
+/*
+ * A slightly cleaned-up version of strerror()
+ */
 static const char *
 useful_strerror(int errnum)
 {
 	/* this buffer is only used if errno has a bogus value */
 	static char errorstr_buf[48];
-	char	   *str;
+	const char   *str;
 
 	if (errnum == ERANGE)
 		/* small trick to save creating many regression test result files */
@@ -794,45 +1206,87 @@ useful_strerror(int errnum)
 }
 
 
-
+/*
+ * error_severity --- get localized string representing elevel
+ */
 static const char *
-elog_message_prefix(int lev)
+error_severity(int elevel)
 {
-	const char *prefix = NULL;
+	const char *prefix;
 
-	switch (lev)
+	switch (elevel)
 	{
 		case DEBUG1:
 		case DEBUG2:
 		case DEBUG3:
 		case DEBUG4:
 		case DEBUG5:
-			prefix = gettext("DEBUG:  ");
+			prefix = gettext("DEBUG");
 			break;
 		case LOG:
 		case COMMERROR:
-			prefix = gettext("LOG:  ");
+			prefix = gettext("LOG");
 			break;
 		case INFO:
-			prefix = gettext("INFO:  ");
+			prefix = gettext("INFO");
 			break;
 		case NOTICE:
-			prefix = gettext("NOTICE:  ");
+			prefix = gettext("NOTICE");
 			break;
 		case WARNING:
-			prefix = gettext("WARNING:  ");
+			prefix = gettext("WARNING");
 			break;
 		case ERROR:
-			prefix = gettext("ERROR:  ");
+			prefix = gettext("ERROR");
 			break;
 		case FATAL:
-			prefix = gettext("FATAL:  ");
+			prefix = gettext("FATAL");
 			break;
 		case PANIC:
-			prefix = gettext("PANIC:  ");
+			prefix = gettext("PANIC");
+			break;
+		default:
+			prefix = "???";
 			break;
 	}
 
-	Assert(prefix != NULL);
 	return prefix;
+}
+
+
+/*
+ * Return a timestamp string like
+ *
+ *	 "2000-06-04 13:12:03 "
+ */
+static const char *
+print_timestamp(void)
+{
+	time_t		curtime;
+	static char buf[21];		/* format `YYYY-MM-DD HH:MM:SS ' */
+
+	curtime = time(NULL);
+
+	strftime(buf, sizeof(buf),
+			 "%Y-%m-%d %H:%M:%S ",
+			 localtime(&curtime));
+
+	return buf;
+}
+
+
+/*
+ * Return a string like
+ *
+ *	   "[123456] "
+ *
+ * with the current pid.
+ */
+static const char *
+print_pid(void)
+{
+	static char buf[10];		/* allow `[123456] ' */
+
+	snprintf(buf, sizeof(buf), "[%d] ", (int) MyProcPid);
+	return buf;
 }

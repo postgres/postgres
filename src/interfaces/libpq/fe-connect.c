@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.234 2003/04/22 00:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.235 2003/04/24 21:16:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1429,20 +1429,13 @@ keep_going:						/* We will come back to here until there
 				/* Handle errors. */
 				if (beresp == 'E')
 				{
-					if (pqGets(&conn->errorMessage, conn))
+					if (pqGetErrorNotice(conn, true))
 					{
 						/* We'll come back when there is more data */
 						return PGRES_POLLING_READING;
 					}
 					/* OK, we read the message; mark data consumed */
 					conn->inStart = conn->inCursor;
-
-					/*
-					 * The postmaster typically won't end its message with
-					 * a newline, so add one to conform to libpq
-					 * conventions.
-					 */
-					appendPQExpBufferChar(&conn->errorMessage, '\n');
 					goto error_return;
 				}
 

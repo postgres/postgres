@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.33 2003/03/25 03:16:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.34 2003/04/24 21:16:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -552,6 +552,11 @@ typedef struct
 	uint32		eval_processed;
 	Oid			eval_lastoid;
 	ExprContext *eval_econtext;
+
+	/* status information for error context reporting */
+	PLpgSQL_function   *err_func;		/* current func */
+	PLpgSQL_stmt	   *err_stmt;		/* current stmt */
+	const char		   *err_text;		/* additional state info */
 }	PLpgSQL_execstate;
 
 

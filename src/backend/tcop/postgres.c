@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.323 2003/04/22 00:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.324 2003/04/24 21:16:43 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -349,7 +349,7 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
 	StringInfoData stri;
 
 	initStringInfo(&stri);
-	appendStringInfo(&stri, "%s", query_string);
+	appendStringInfoString(&stri, query_string);
 
 	/*
 	 * (1) parse the request string into a list of raw parse trees.
@@ -1831,7 +1831,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.323 $ $Date: 2003/04/22 00:08:07 $\n");
+		puts("$Revision: 1.324 $ $Date: 2003/04/24 21:16:43 $\n");
 	}
 
 	/*

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.138 2003/04/08 23:20:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.139 2003/04/24 21:16:43 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -921,7 +921,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 						 constraintId);
 
 				/* Append the constraint source */
-				appendStringInfo(&buf, DatumGetCString(DirectFunctionCall1(textout, val))); 
+				appendStringInfoString(&buf, DatumGetCString(DirectFunctionCall1(textout, val))); 
 
 				break;
 			}
@@ -2846,7 +2846,7 @@ get_const_expr(Const *constval, deparse_context *context)
 				 */
 				if (strspn(extval, "0123456789+-eE.") == strlen(extval))
 				{
-					appendStringInfo(buf, extval);
+					appendStringInfoString(buf, extval);
 					if (strcspn(extval, "eE.") != strlen(extval))
 						isfloat = true;	/* it looks like a float */
 				}

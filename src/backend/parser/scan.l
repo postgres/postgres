@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.103 2002/11/11 03:33:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.104 2003/04/24 21:16:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 #define YY_READ_BUF_SIZE 16777216
 
 /* Avoid exit() on fatal scanner errors (a bit ugly -- see yy_fatal_error) */
-#define fprintf(file, fmt, msg)  elog(FATAL, "%s", (msg))
+#define fprintf(file, fmt, msg)  ereport(FATAL, (errmsg_internal("%s", msg)))
 
 extern YYSTYPE yylval;
 
@@ -575,12 +575,19 @@ void
 yyerror(const char *message)
 {
 	const char *loc = token_start ? token_start : yytext;
+	int			cursorpos;
+
+	/* in multibyte encodings, return index in characters not bytes */
+	cursorpos = pg_mbstrlen_with_len(scanbuf, loc - scanbuf) + 1;
 
 	if (*loc == YY_END_OF_BUFFER_CHAR)
-		elog(ERROR, "parser: %s at end of input", message);
+		ereport(ERROR,
+				(errmsg("parser: %s at end of input", message),
+				 errposition(cursorpos)));
 	else
-		elog(ERROR, "parser: %s at or near \"%s\" at character %d",
-			 message, loc, (int) (loc - scanbuf + 1));
+		ereport(ERROR,
+				(errmsg("parser: %s at or near \"%s\"", message, loc),
+				 errposition(cursorpos)));
 }
 
 
@@ -591,7 +598,7 @@ void
 scanner_init(StringInfo str)
 {
 	/*
-	 * Might be left over after elog()
+	 * Might be left over after ereport()
 	 */
 	if (YY_CURRENT_BUFFER)
 		yy_delete_buffer(YY_CURRENT_BUFFER);

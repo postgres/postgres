@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.85 2003/04/08 23:20:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.86 2003/04/24 21:16:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -55,14 +55,12 @@
 #include "utils/syscache.h"
 
 
-static PLpgSQL_function *error_info_func = NULL;
-static PLpgSQL_stmt *error_info_stmt = NULL;
-static char *error_info_text = NULL;
-
+static const char * const raise_skip_msg = "RAISE";
 
 /************************************************************
  * Local function forward declarations
  ************************************************************/
+static void plpgsql_exec_error_callback(void *arg);
 static PLpgSQL_var *copy_var(PLpgSQL_var * var);
 static PLpgSQL_rec *copy_rec(PLpgSQL_rec * rec);
 
@@ -173,52 +171,8 @@ Datum
 plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 {
 	PLpgSQL_execstate estate;
+	ErrorContextCallback plerrcontext;
 	int			i;
-	sigjmp_buf	save_restart;
-	PLpgSQL_function *save_efunc;
-	PLpgSQL_stmt *save_estmt;
-	char	   *save_etext;
-
-	/*
-	 * Setup debug error info and catch elog()
-	 */
-	save_efunc = error_info_func;
-	save_estmt = error_info_stmt;
-	save_etext = error_info_text;
-
-	error_info_func = func;
-	error_info_stmt = NULL;
-	error_info_text = "while initialization of execution state";
-
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-
-		/*
-		 * If we are the first of cascaded error catchings, print where
-		 * this happened
-		 */
-		if (error_info_func != NULL)
-		{
-			elog(WARNING, "Error occurred while executing PL/pgSQL function %s",
-				 error_info_func->fn_name);
-			if (error_info_stmt != NULL)
-				elog(WARNING, "line %d at %s", error_info_stmt->lineno,
-					 plpgsql_stmt_typename(error_info_stmt));
-			else if (error_info_text != NULL)
-				elog(WARNING, "%s", error_info_text);
-			else
-				elog(WARNING, "no more error information available");
-
-			error_info_func = NULL;
-			error_info_stmt = NULL;
-			error_info_text = NULL;
-		}
-
-		siglongjmp(Warn_restart, 1);
-	}
-
 
 	/*
 	 * Setup the execution state
@@ -226,8 +180,17 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	plpgsql_estate_setup(&estate, func, (ReturnSetInfo *) fcinfo->resultinfo);
 
 	/*
+	 * Setup error traceback support for ereport()
+	 */
+	plerrcontext.callback = plpgsql_exec_error_callback;
+	plerrcontext.arg = &estate;
+	plerrcontext.previous = error_context_stack;
+	error_context_stack = &plerrcontext;
+
+	/*
 	 * Make local execution copies of all the datums
 	 */
+	estate.err_text = "while initialization of execution state";
 	for (i = 0; i < func->ndatums; i++)
 	{
 		switch (func->datums[i]->dtype)
@@ -257,7 +220,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	/*
 	 * Put the actual call argument values into the variables
 	 */
-	error_info_text = "while putting call arguments to local variables";
+	estate.err_text = "while putting call arguments to local variables";
 	for (i = 0; i < func->fn_nargs; i++)
 	{
 		int			n = func->fn_argvarnos[i];
@@ -298,7 +261,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	 * Initialize the other variables to NULL values for now. The default
 	 * values are set when the blocks are entered.
 	 */
-	error_info_text = "while initializing local variables to NULL";
+	estate.err_text = "while initializing local variables to NULL";
 	for (i = estate.found_varno; i < estate.ndatums; i++)
 	{
 		switch (estate.datums[i]->dtype)
@@ -333,20 +296,20 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	/*
 	 * Now call the toplevel block of statements
 	 */
-	error_info_text = NULL;
-	error_info_stmt = (PLpgSQL_stmt *) (func->action);
+	estate.err_text = NULL;
+	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
 	if (exec_stmt_block(&estate, func->action) != PLPGSQL_RC_RETURN)
 	{
-		error_info_stmt = NULL;
-		error_info_text = "at END of toplevel PL block";
+		estate.err_stmt = NULL;
+		estate.err_text = "at END of toplevel PL block";
 		elog(ERROR, "control reaches end of function without RETURN");
 	}
 
 	/*
 	 * We got a return value - process it
 	 */
-	error_info_stmt = NULL;
-	error_info_text = "while casting return value to function's return type";
+	estate.err_stmt = NULL;
+	estate.err_text = "while casting return value to function's return type";
 
 	fcinfo->isnull = estate.retisnull;
 
@@ -417,12 +380,9 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 	exec_eval_cleanup(&estate);
 
 	/*
-	 * Restore the previous error info and elog() jump target
+	 * Pop the error context stack
 	 */
-	error_info_func = save_efunc;
-	error_info_stmt = save_estmt;
-	error_info_text = save_etext;
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	error_context_stack = plerrcontext.previous;
 
 	/*
 	 * Return the functions result
@@ -441,56 +401,12 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 					 TriggerData *trigdata)
 {
 	PLpgSQL_execstate estate;
+	ErrorContextCallback plerrcontext;
 	int			i;
-	sigjmp_buf	save_restart;
-	PLpgSQL_function *save_efunc;
-	PLpgSQL_stmt *save_estmt;
-	char	   *save_etext;
 	PLpgSQL_var *var;
 	PLpgSQL_rec *rec_new,
 				*rec_old;
 	HeapTuple	rettup;
-
-	/*
-	 * Setup debug error info and catch elog()
-	 */
-	save_efunc = error_info_func;
-	save_estmt = error_info_stmt;
-	save_etext = error_info_text;
-
-	error_info_func = func;
-	error_info_stmt = NULL;
-	error_info_text = "while initialization of execution state";
-
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-
-		/*
-		 * If we are the first of cascaded error catchings, print where
-		 * this happened
-		 */
-		if (error_info_func != NULL)
-		{
-			elog(WARNING, "Error occurred while executing PL/pgSQL function %s",
-				 error_info_func->fn_name);
-			if (error_info_stmt != NULL)
-				elog(WARNING, "line %d at %s", error_info_stmt->lineno,
-					 plpgsql_stmt_typename(error_info_stmt));
-			else if (error_info_text != NULL)
-				elog(WARNING, "%s", error_info_text);
-			else
-				elog(WARNING, "no more error information available");
-
-			error_info_func = NULL;
-			error_info_stmt = NULL;
-			error_info_text = NULL;
-		}
-
-		siglongjmp(Warn_restart, 1);
-	}
-
 
 	/*
 	 * Setup the execution state
@@ -498,8 +414,17 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	plpgsql_estate_setup(&estate, func, NULL);
 
 	/*
+	 * Setup error traceback support for ereport()
+	 */
+	plerrcontext.callback = plpgsql_exec_error_callback;
+	plerrcontext.arg = &estate;
+	plerrcontext.previous = error_context_stack;
+	error_context_stack = &plerrcontext;
+
+	/*
 	 * Make local execution copies of all the datums
 	 */
+	estate.err_text = "while initialization of execution state";
 	for (i = 0; i < func->ndatums; i++)
 	{
 		switch (func->datums[i]->dtype)
@@ -634,7 +559,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	 * Put the actual call argument values into the special execution
 	 * state variables
 	 */
-	error_info_text = "while putting call arguments to local variables";
+	estate.err_text = "while putting call arguments to local variables";
 	estate.trig_nargs = trigdata->tg_trigger->tgnargs;
 	if (estate.trig_nargs == 0)
 		estate.trig_argv = NULL;
@@ -650,7 +575,7 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	 * Initialize the other variables to NULL values for now. The default
 	 * values are set when the blocks are entered.
 	 */
-	error_info_text = "while initializing local variables to NULL";
+	estate.err_text = "while initializing local variables to NULL";
 	for (i = estate.found_varno; i < estate.ndatums; i++)
 	{
 		switch (estate.datums[i]->dtype)
@@ -686,12 +611,12 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	/*
 	 * Now call the toplevel block of statements
 	 */
-	error_info_text = NULL;
-	error_info_stmt = (PLpgSQL_stmt *) (func->action);
+	estate.err_text = NULL;
+	estate.err_stmt = (PLpgSQL_stmt *) (func->action);
 	if (exec_stmt_block(&estate, func->action) != PLPGSQL_RC_RETURN)
 	{
-		error_info_stmt = NULL;
-		error_info_text = "at END of toplevel PL block";
+		estate.err_stmt = NULL;
+		estate.err_text = "at END of toplevel PL block";
 		elog(ERROR, "control reaches end of trigger procedure without RETURN");
 	}
 
@@ -723,17 +648,45 @@ plpgsql_exec_trigger(PLpgSQL_function * func,
 	exec_eval_cleanup(&estate);
 
 	/*
-	 * Restore the previous error info and elog() jump target
+	 * Pop the error context stack
 	 */
-	error_info_func = save_efunc;
-	error_info_stmt = save_estmt;
-	error_info_text = save_etext;
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+	error_context_stack = plerrcontext.previous;
 
 	/*
 	 * Return the triggers result
 	 */
 	return rettup;
+}
+
+
+/*
+ * error context callback to let us supply a call-stack traceback
+ */
+static void
+plpgsql_exec_error_callback(void *arg)
+{
+	PLpgSQL_execstate *estate = (PLpgSQL_execstate *) arg;
+
+	/* safety check, shouldn't happen */
+	if (estate->err_func == NULL)
+		return;
+
+	/* if we are doing RAISE, don't report its location */
+	if (estate->err_text == raise_skip_msg)
+		return;
+
+	if (estate->err_stmt != NULL)
+		errcontext("PL/pgSQL function %s line %d at %s",
+				   estate->err_func->fn_name,
+				   estate->err_stmt->lineno,
+				   plpgsql_stmt_typename(estate->err_stmt));
+	else if (estate->err_text != NULL)
+		errcontext("PL/pgSQL function %s %s",
+				   estate->err_func->fn_name,
+				   estate->err_text);
+	else
+		errcontext("PL/pgSQL function %s",
+				   estate->err_func->fn_name);
 }
 
 
@@ -909,8 +862,8 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 	PLpgSQL_stmt *save_estmt;
 	int			rc = -1;
 
-	save_estmt = error_info_stmt;
-	error_info_stmt = stmt;
+	save_estmt = estate->err_stmt;
+	estate->err_stmt = stmt;
 
 	CHECK_FOR_INTERRUPTS();
 
@@ -997,12 +950,12 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
 			break;
 
 		default:
-			error_info_stmt = save_estmt;
+			estate->err_stmt = save_estmt;
 			elog(ERROR, "unknown cmdtype %d in exec_stmt",
 				 stmt->cmd_type);
 	}
 
-	error_info_stmt = save_estmt;
+	estate->err_stmt = save_estmt;
 
 	return rc;
 }
@@ -1854,15 +1807,15 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 	}
 
 	/*
-	 * Now suppress debug info and throw the elog()
+	 * Throw the error (may or may not come back)
 	 */
-	if (stmt->elog_level == ERROR)
-	{
-		error_info_func = NULL;
-		error_info_stmt = NULL;
-		error_info_text = NULL;
-	}
-	elog(stmt->elog_level, "%s", plpgsql_dstring_get(&ds));
+	estate->err_text = raise_skip_msg; /* suppress traceback of raise */
+
+	ereport(stmt->elog_level,
+			(errmsg_internal("%s", plpgsql_dstring_get(&ds))));
+
+	estate->err_text = NULL;	/* un-suppress... */
+
 	plpgsql_dstring_free(&ds);
 
 	return PLPGSQL_RC_OK;
@@ -1905,6 +1858,10 @@ plpgsql_estate_setup(PLpgSQL_execstate * estate,
 	estate->eval_processed = 0;
 	estate->eval_lastoid = InvalidOid;
 	estate->eval_econtext = NULL;
+
+	estate->err_func = func;
+	estate->err_stmt = NULL;
+	estate->err_text = NULL;
 }
 
 /* ----------

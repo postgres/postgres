@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.33 2003/04/19 00:02:29 tgl Exp $
+ *	  $Id: stringinfo.c,v 1.34 2003/04/24 21:16:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,61 +56,102 @@ initStringInfo(StringInfo str)
 /*
  * appendStringInfo
  *
- * Format text data under the control of fmt (an sprintf-like format string)
+ * Format text data under the control of fmt (an sprintf-style format string)
  * and append it to whatever is already in str.  More space is allocated
  * to str if necessary.  This is sort of like a combination of sprintf and
  * strcat.
  */
 void
-appendStringInfo(StringInfo str, const char *fmt,...)
+appendStringInfo(StringInfo str, const char *fmt, ...)
 {
-	va_list		args;
+	for (;;)
+	{
+		va_list		args;
+		bool		success;
+
+		/* Try to format the data. */
+		va_start(args, fmt);
+		success = appendStringInfoVA(str, fmt, args);
+		va_end(args);
+
+		if (success)
+			break;
+
+		/* Double the buffer size and try again. */
+		enlargeStringInfo(str, str->maxlen);
+	}
+}
+
+/*
+ * appendStringInfoVA
+ *
+ * Attempt to format text data under the control of fmt (an sprintf-style
+ * format string) and append it to whatever is already in str.  If successful
+ * return true; if not (because there's not enough space), return false
+ * without modifying str.  Typically the caller would enlarge str and retry
+ * on false return --- see appendStringInfo for standard usage pattern.
+ *
+ * XXX This API is ugly, but there seems no alternative given the C spec's
+ * restrictions on what can portably be done with va_list arguments: you have
+ * to redo va_start before you can rescan the argument list, and we can't do
+ * that from here.
+ */
+bool
+appendStringInfoVA(StringInfo str, const char *fmt, va_list args)
+{
 	int			avail,
 				nprinted;
 
 	Assert(str != NULL);
 
-	for (;;)
-	{
-		/*
-		 * Try to format the given string into the available space; but if
-		 * there's hardly any space, don't bother trying, just fall
-		 * through to enlarge the buffer first.
-		 */
-		avail = str->maxlen - str->len - 1;
-		if (avail > 16)
-		{
-			/*
-			 * Assert check here is to catch buggy vsnprintf that overruns
-			 * the specified buffer length.  Solaris 7 in 64-bit mode is
-			 * an example of a platform with such a bug.
-			 */
+	/*
+	 * If there's hardly any space, don't bother trying, just fail to make
+	 * the caller enlarge the buffer first.
+	 */
+	avail = str->maxlen - str->len - 1;
+	if (avail < 16)
+		return false;
+
+	/*
+	 * Assert check here is to catch buggy vsnprintf that overruns
+	 * the specified buffer length.  Solaris 7 in 64-bit mode is
+	 * an example of a platform with such a bug.
+	 */
 #ifdef USE_ASSERT_CHECKING
-			str->data[str->maxlen - 1] = '\0';
+	str->data[str->maxlen - 1] = '\0';
 #endif
 
-			va_start(args, fmt);
-			nprinted = vsnprintf(str->data + str->len, avail,
-								 fmt, args);
-			va_end(args);
+	nprinted = vsnprintf(str->data + str->len, avail, fmt, args);
 
-			Assert(str->data[str->maxlen - 1] == '\0');
+	Assert(str->data[str->maxlen - 1] == '\0');
 
-			/*
-			 * Note: some versions of vsnprintf return the number of chars
-			 * actually stored, but at least one returns -1 on failure. Be
-			 * conservative about believing whether the print worked.
-			 */
-			if (nprinted >= 0 && nprinted < avail - 1)
-			{
-				/* Success.  Note nprinted does not include trailing null. */
-				str->len += nprinted;
-				break;
-			}
-		}
-		/* Double the buffer size and try again. */
-		enlargeStringInfo(str, str->maxlen);
+	/*
+	 * Note: some versions of vsnprintf return the number of chars
+	 * actually stored, but at least one returns -1 on failure. Be
+	 * conservative about believing whether the print worked.
+	 */
+	if (nprinted >= 0 && nprinted < avail - 1)
+	{
+		/* Success.  Note nprinted does not include trailing null. */
+		str->len += nprinted;
+		return true;
 	}
+
+	/* Restore the trailing null so that str is unmodified. */
+	str->data[str->len] = '\0';
+	return false;
+}
+
+/*
+ * appendStringInfoString
+ *
+ * Append a null-terminated string to str.
+ * Like appendStringInfo(str, "%s", s) but faster.
+ */
+void
+appendStringInfoString(StringInfo str, const char *s)
+{
+	appendBinaryStringInfo(str, s, strlen(s));
 }
 
 /*
@@ -163,8 +204,8 @@ appendBinaryStringInfo(StringInfo str, const char *data, int datalen)
  * Make sure there is enough space for 'needed' more bytes
  * ('needed' does not include the terminating null).
  *
- * External callers need not concern themselves with this, since all
- * stringinfo.c routines do it automatically.  However, if a caller
+ * External callers usually need not concern themselves with this, since
+ * all stringinfo.c routines do it automatically.  However, if a caller
  * knows that a StringInfo will eventually become X bytes large, it
  * can save some palloc overhead by enlarging the buffer before starting
  * to store data in it.

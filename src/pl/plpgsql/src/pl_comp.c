@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.55 2003/03/25 00:34:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.56 2003/04/24 21:16:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -80,6 +80,7 @@ int			plpgsql_DumpExecTree = 0;
 PLpgSQL_function *plpgsql_curr_compile;
 
 
+static void plpgsql_compile_error_callback(void *arg);
 static PLpgSQL_row *build_rowtype(Oid classOid);
 
 
@@ -121,7 +122,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 	PLpgSQL_rec *rec;
 	int			i;
 	int			arg_varnos[FUNC_MAX_ARGS];
-	sigjmp_buf	save_restart;
+	ErrorContextCallback plerrcontext;
 
 	/*
 	 * Lookup the pg_proc tuple by Oid
@@ -133,37 +134,25 @@ plpgsql_compile(Oid fn_oid, int functype)
 		elog(ERROR, "plpgsql: cache lookup for proc %u failed", fn_oid);
 
 	/*
-	 * Setup the scanner input and error info
+	 * Setup the scanner input and error info.  We assume that this function
+	 * cannot be invoked recursively, so there's no need to save and restore
+	 * the static variables used here.
 	 */
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	proc_source = DatumGetCString(DirectFunctionCall1(textout,
 								  PointerGetDatum(&procStruct->prosrc)));
 	plpgsql_setinput(proc_source, functype);
+
 	plpgsql_error_funcname = pstrdup(NameStr(procStruct->proname));
 	plpgsql_error_lineno = 0;
 
 	/*
-	 * Catch elog() so we can provide notice about where the error is
+	 * Setup error traceback support for ereport()
 	 */
-	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
-	if (sigsetjmp(Warn_restart, 1) != 0)
-	{
-		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-
-		/*
-		 * If we are the first of cascaded error catchings, print where
-		 * this happened
-		 */
-		if (plpgsql_error_funcname != NULL)
-		{
-			elog(WARNING, "plpgsql: ERROR during compile of %s near line %d",
-				 plpgsql_error_funcname, plpgsql_error_lineno);
-
-			plpgsql_error_funcname = NULL;
-		}
-
-		siglongjmp(Warn_restart, 1);
-	}
+	plerrcontext.callback = plpgsql_compile_error_callback;
+	plerrcontext.arg = NULL;
+	plerrcontext.previous = error_context_stack;
+	error_context_stack = &plerrcontext;
 
 	/*
 	 * Initialize the compiler
@@ -530,11 +519,11 @@ plpgsql_compile(Oid fn_oid, int functype)
 	ReleaseSysCache(procTup);
 
 	/*
-	 * Restore the previous elog() jump target
+	 * Pop the error context stack
 	 */
+	error_context_stack = plerrcontext.previous;
 	plpgsql_error_funcname = NULL;
 	plpgsql_error_lineno = 0;
-	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
 	/*
 	 * Finally return the compiled function
@@ -542,6 +531,18 @@ plpgsql_compile(Oid fn_oid, int functype)
 	if (plpgsql_DumpExecTree)
 		plpgsql_dumptree(function);
 	return function;
+}
+
+
+/*
+ * error context callback to let us supply a call-stack traceback
+ */
+static void
+plpgsql_compile_error_callback(void *arg)
+{
+	if (plpgsql_error_funcname)
+		errcontext("compile of PL/pgSQL function %s near line %d",
+				   plpgsql_error_funcname, plpgsql_error_lineno);
 }
 
 

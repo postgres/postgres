@@ -273,7 +273,8 @@ SELECT '' AS two, * FROM COPY_TBL;
 (2 rows)
 
 COPY COPY_TBL FROM '@abs_srcdir@/data/constrf.data';
-ERROR:  copy: line 2, CopyFrom: rejected due to CHECK constraint "copy_con" on "copy_tbl"
+ERROR:  CopyFrom: rejected due to CHECK constraint "copy_con" on "copy_tbl"
+CONTEXT:  COPY FROM, line 2
 SELECT * FROM COPY_TBL;
  x |       y       | z 
 ---+---------------+---

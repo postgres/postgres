@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.195 2003/04/22 00:08:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.196 2003/04/24 21:16:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,13 +100,13 @@ static const char BinarySignature[12] = "PGBCOPY\n\377\r\n\0";
  * Static communication variables ... pretty grotty, but COPY has
  * never been reentrant...
  */
-int			copy_lineno = 0;	/* exported for use by elog() -- dz */
-
 static CopyDest copy_dest;
 static FILE *copy_file;			/* if copy_dest == COPY_FILE */
 static StringInfo copy_msgbuf;	/* if copy_dest == COPY_NEW_FE */
 static bool fe_eof;				/* true if detected end of copy data */
-static EolType eol_type;
+static EolType eol_type;		/* EOL type of input */
+static int	copy_lineno;		/* line number for error messages */
+
 
 /*
  * These static variables are used to avoid incurring overhead for each
@@ -1001,6 +1001,16 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 
 /*
+ * error context callback for COPY FROM
+ */
+static void
+copy_in_error_callback(void *arg)
+{
+	errcontext("COPY FROM, line %d", copy_lineno);
+}
+
+
+/*
  * Copy FROM file to relation.
  */
 static void
@@ -1032,6 +1042,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	ExprState **defexprs;		/* array of default att expressions */
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
+	ErrorContextCallback errcontext;
 
 	tupDesc = RelationGetDescr(rel);
 	attr = tupDesc->attrs;
@@ -1188,15 +1199,21 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
 	nulls = (char *) palloc(num_phys_attrs * sizeof(char));
 
-	/* Initialize static variables */
-	copy_lineno = 0;
-	eol_type = EOL_UNKNOWN;
-	fe_eof = false;
-
 	/* Make room for a PARAM_EXEC value for domain constraint checks */
 	if (hasConstraints)
 		econtext->ecxt_param_exec_vals = (ParamExecData *)
 			palloc0(sizeof(ParamExecData));
+
+	/* Initialize static variables */
+	fe_eof = false;
+	eol_type = EOL_UNKNOWN;
+	copy_lineno = 0;
+
+	/* Set up callback to identify error line number */
+	errcontext.callback = copy_in_error_callback;
+	errcontext.arg = NULL;
+	errcontext.previous = error_context_stack;
+	error_context_stack = &errcontext;
 
 	while (!done)
 	{
@@ -1502,7 +1519,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	/*
 	 * Done, clean up
 	 */
-	copy_lineno = 0;
+	error_context_stack = errcontext.previous;
 
 	MemoryContextSwitchTo(oldcontext);
 

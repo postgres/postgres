@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.89 2003/03/27 16:51:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.90 2003/04/24 21:16:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -995,7 +995,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	 * Parse the request string into a list of raw parse trees.
 	 */
 	initStringInfo(&stri);
-	appendStringInfo(&stri, "%s", src);
+	appendStringInfoString(&stri, src);
 
 	raw_parsetree_list = pg_parse_query(&stri, argtypes, nargs);
 

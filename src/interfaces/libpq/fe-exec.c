@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.130 2003/04/22 00:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.131 2003/04/24 21:16:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,6 @@ static void handleSyncLoss(PGconn *conn, char id, int msgLength);
 static int	getRowDescriptions(PGconn *conn);
 static int	getAnotherTuple(PGconn *conn, int binary);
 static int	getNotify(PGconn *conn);
-static int	getNotice(PGconn *conn);
 
 /* ---------------
  * Escaping arbitrary strings to get valid SQL strings/identifiers.
@@ -390,6 +389,16 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
 	result->cmdStatus[0] = '\0';
 	result->binary = 0;
 	result->errMsg = NULL;
+	result->errSeverity = NULL;
+	result->errCode = NULL;
+	result->errPrimary = NULL;
+	result->errDetail = NULL;
+	result->errHint = NULL;
+	result->errPosition = NULL;
+	result->errContext = NULL;
+	result->errFilename = NULL;
+	result->errLineno = NULL;
+	result->errFuncname = NULL;
 	result->null_field[0] = '\0';
 	result->curBlock = NULL;
 	result->curOffset = 0;
@@ -949,7 +958,7 @@ parseInput(PGconn *conn)
 		}
 		else if (id == 'N')
 		{
-			if (getNotice(conn))
+			if (pqGetErrorNotice(conn, false))
 				return;
 		}
 		else if (conn->asyncStatus != PGASYNC_BUSY)
@@ -968,7 +977,7 @@ parseInput(PGconn *conn)
 			 */
 			if (id == 'E')
 			{
-				if (getNotice(conn))
+				if (pqGetErrorNotice(conn, false /* treat as notice */))
 					return;
 			}
 			else
@@ -999,10 +1008,8 @@ parseInput(PGconn *conn)
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'E':		/* error return */
-					if (pqGets(&conn->errorMessage, conn))
+					if (pqGetErrorNotice(conn, true))
 						return;
-					/* build an error result holding the error message */
-					saveErrorResult(conn);
 					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'Z':		/* backend is ready for new query */
@@ -1540,31 +1547,132 @@ errout:
 
 
 /*
- * Attempt to read a Notice response message.
+ * Attempt to read an Error or Notice response message.
  * This is possible in several places, so we break it out as a subroutine.
- * Entry: 'N' message type and length have already been consumed.
- * Exit: returns 0 if successfully consumed Notice message.
+ * Entry: 'E' or 'N' message type and length have already been consumed.
+ * Exit: returns 0 if successfully consumed message.
  *		 returns EOF if not enough data.
  */
-static int
-getNotice(PGconn *conn)
+int
+pqGetErrorNotice(PGconn *conn, bool isError)
 {
-	/*
-	 * Since the Notice might be pretty long, we create a temporary
-	 * PQExpBuffer rather than using conn->workBuffer.	workBuffer is
-	 * intended for stuff that is expected to be short.
-	 */
-	PQExpBufferData noticeBuf;
+	PGresult   *res;
+	PQExpBufferData workBuf;
+	char		id;
 
-	initPQExpBuffer(&noticeBuf);
-	if (pqGets(&noticeBuf, conn))
+	/*
+	 * Make a PGresult to hold the accumulated fields.  We temporarily
+	 * lie about the result status, so that PQmakeEmptyPGresult doesn't
+	 * uselessly copy conn->errorMessage.
+	 */
+	res = PQmakeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
+	res->resultStatus = PGRES_FATAL_ERROR;
+	/*
+	 * Since the fields might be pretty long, we create a temporary
+	 * PQExpBuffer rather than using conn->workBuffer.	workBuffer is
+	 * intended for stuff that is expected to be short.  We shouldn't
+	 * use conn->errorMessage either, since this might be only a notice.
+	 */
+	initPQExpBuffer(&workBuf);
+
+	/*
+	 * Read the fields and save into res.
+	 */
+	for (;;)
 	{
-		termPQExpBuffer(&noticeBuf);
-		return EOF;
+		if (pqGetc(&id, conn))
+			goto fail;
+		if (id == '\0')
+			break;				/* terminator found */
+		if (pqGets(&workBuf, conn))
+			goto fail;
+		switch (id)
+		{
+			case 'S':
+				res->errSeverity = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'C':
+				res->errCode = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'M':
+				res->errPrimary = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'D':
+				res->errDetail = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'H':
+				res->errHint = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'P':
+				res->errPosition = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'W':
+				res->errContext = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'F':
+				res->errFilename = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'L':
+				res->errLineno = pqResultStrdup(res, workBuf.data);
+				break;
+			case 'R':
+				res->errFuncname = pqResultStrdup(res, workBuf.data);
+				break;
+			default:
+				/* silently ignore any other field type */
+				break;
+		}
 	}
-	DONOTICE(conn, noticeBuf.data);
-	termPQExpBuffer(&noticeBuf);
+
+	/*
+	 * Now build the "overall" error message for PQresultErrorMessage.
+	 *
+	 * XXX this should be configurable somehow.
+	 */
+	resetPQExpBuffer(&workBuf);
+	if (res->errSeverity)
+		appendPQExpBuffer(&workBuf, "%s:  ", res->errSeverity);
+	if (res->errPrimary)
+		appendPQExpBufferStr(&workBuf, res->errPrimary);
+	/* translator: %s represents a digit string */
+	if (res->errPosition)
+		appendPQExpBuffer(&workBuf, libpq_gettext(" at character %s"),
+						  res->errPosition);
+	appendPQExpBufferChar(&workBuf, '\n');
+	if (res->errDetail)
+		appendPQExpBuffer(&workBuf, libpq_gettext("DETAIL:  %s\n"),
+						  res->errDetail);
+	if (res->errHint)
+		appendPQExpBuffer(&workBuf, libpq_gettext("HINT:  %s\n"),
+						  res->errHint);
+	if (res->errContext)
+		appendPQExpBuffer(&workBuf, libpq_gettext("CONTEXT:  %s\n"),
+						  res->errContext);
+
+	/*
+	 * Either save error as current async result, or just emit the notice.
+	 */
+	if (isError)
+	{
+		res->errMsg = pqResultStrdup(res, workBuf.data);
+		pqClearAsyncResult(conn);
+		conn->result = res;
+		resetPQExpBuffer(&conn->errorMessage);
+		appendPQExpBufferStr(&conn->errorMessage, workBuf.data);
+	}
+	else
+	{
+		DONOTICE(conn, workBuf.data);
+		PQclear(res);
+	}
+
+	termPQExpBuffer(&workBuf);
 	return 0;
+
+fail:
+	PQclear(res);
+	termPQExpBuffer(&workBuf);
+	return EOF;
 }
 
 /*
@@ -2123,10 +2231,8 @@ PQfn(PGconn *conn,
 				}
 				break;
 			case 'E':			/* error return */
-				if (pqGets(&conn->errorMessage, conn))
+				if (pqGetErrorNotice(conn, true))
 					continue;
-				/* build an error result holding the error message */
-				saveErrorResult(conn);
 				status = PGRES_FATAL_ERROR;
 				break;
 			case 'A':			/* notify message */
@@ -2136,7 +2242,7 @@ PQfn(PGconn *conn,
 				break;
 			case 'N':			/* notice */
 				/* handle notice and go back to processing return values */
-				if (getNotice(conn))
+				if (pqGetErrorNotice(conn, false))
 					continue;
 				break;
 			case 'Z':			/* backend is ready for new query */

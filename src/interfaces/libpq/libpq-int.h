@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.63 2003/04/22 00:08:07 tgl Exp $
+ * $Id: libpq-int.h,v 1.64 2003/04/24 21:16:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef int ssize_t;			/* ssize_t doesn't exist in VC (atleast
  * pqcomm.h describe what the backend knows, not what libpq knows.
  */
 
-#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,102) /* XXX temporary value */
+#define PG_PROTOCOL_LIBPQ	PG_PROTOCOL(3,103) /* XXX temporary value */
 
 /*
  * POSTGRES backend dependent Constants.
@@ -101,7 +101,7 @@ typedef struct pgresAttDesc
 /* We use char* for Attribute values.
    The value pointer always points to a null-terminated area; we add a
    null (zero) byte after whatever the backend sends us.  This is only
-   particularly useful for ASCII tuples ... with a binary value, the
+   particularly useful for text tuples ... with a binary value, the
    value might have embedded nulls, so the application can't use C string
    operators on it.  But we add a null anyway for consistency.
    Note that the value itself does not contain a length word.
@@ -133,7 +133,7 @@ struct pg_result
 	char		cmdStatus[CMDSTATUS_LEN];		/* cmd status from the
 												 * last query */
 	int			binary;			/* binary tuple values if binary == 1,
-								 * otherwise ASCII */
+								 * otherwise text */
 
 	/*
 	 * The conn link in PGresult is no longer used by any libpq code. It
@@ -152,8 +152,24 @@ struct pg_result
 	void	   *noticeArg;
 	int			client_encoding;	/* encoding id */
 
-
+	/*
+	 * Error information (all NULL if not an error result).  errMsg is the
+	 * "overall" error message returned by PQresultErrorMessage.  If we
+	 * got a field-ized error from the server then the additional fields
+	 * may be set.
+	 */
 	char	   *errMsg;			/* error message, or NULL if no error */
+
+	char	   *errSeverity;	/* severity code */
+	char	   *errCode;		/* SQLSTATE code */
+	char	   *errPrimary;		/* primary message text */
+	char	   *errDetail;		/* detail text */
+	char	   *errHint;		/* hint text */
+	char	   *errPosition;	/* cursor position */
+	char	   *errContext;		/* location information */
+	char	   *errFilename;	/* source-code file name */
+	char	   *errLineno;		/* source-code line number */
+	char	   *errFuncname;	/* source-code function name */
 
 	/* All NULL attributes in the query result point to this null string */
 	char		null_field[1];
@@ -321,6 +337,7 @@ extern void pqSetResultError(PGresult *res, const char *msg);
 extern void *pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary);
 extern char *pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
+extern int	pqGetErrorNotice(PGconn *conn, bool isError);
 
 /* === in fe-misc.c === */
 
