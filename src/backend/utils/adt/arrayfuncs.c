@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.27 1998/02/26 04:36:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.28 1998/03/20 03:44:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,7 +624,7 @@ array_out(ArrayType *v, Oid element_type)
 	FmgrInfo	outputproc;
 	char		typalign;
 
-	char	   *p,
+	char	   *p, *tmp, 
 			   *retval,
 			  **values,
 				delim[2];
@@ -633,6 +633,7 @@ array_out(ArrayType *v, Oid element_type)
 				i,
 				j,
 				k,
+				l,
 				indx[MAXDIM];
 	bool		dummy_bool;
 	int			ndim,
@@ -713,7 +714,11 @@ array_out(ArrayType *v, Oid element_type)
 			 */
 			overall_length += 2;
 		}
-		overall_length += (strlen(values[i]) + 1);
+		for (tmp=values[i];*tmp;tmp++) {
+			overall_length += 1;
+			if (*tmp=='"') overall_length += 1;
+		}
+		overall_length += 1;
 	}
 
 	/*
@@ -740,7 +745,12 @@ array_out(ArrayType *v, Oid element_type)
 		if (!typbyval)
 		{
 			strcat(p, "\"");
-			strcat(p, values[k]);
+			l=strlen(p);
+			for (tmp=values[k];*tmp;tmp++) {
+				if (*tmp=='"') p[l++]='\\';
+				p[l++]=*tmp;
+				}
+			p[l]='\0';
 			strcat(p, "\"");
 		}
 		else
