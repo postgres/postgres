@@ -5,7 +5,7 @@ import java.sql.*;
 /*
  * Converts to and from the postgresql bytea datatype used by the backend.
  *
- * $Id: PGbytea.java,v 1.4 2002/01/05 22:26:23 barry Exp $
+ * $Id: PGbytea.java,v 1.5 2002/08/16 17:51:38 barry Exp $
  */
 
 public class PGbytea
@@ -62,7 +62,7 @@ public class PGbytea
 	{
 		if (p_buf == null)
 			return null;
-		StringBuffer l_strbuf = new StringBuffer();
+		StringBuffer l_strbuf = new StringBuffer(p_buf.length);
 		for (int i = 0; i < p_buf.length; i++)
 		{
 			int l_int = (int)p_buf[i];

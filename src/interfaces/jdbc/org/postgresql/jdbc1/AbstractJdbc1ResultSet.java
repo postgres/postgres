@@ -13,7 +13,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.3 2002/08/14 20:35:39 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.4 2002/08/16 17:51:38 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
  * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
@@ -851,9 +851,10 @@ public abstract class AbstractJdbc1ResultSet
 
 			// If first time, create the buffer, otherwise clear it.
 			if (rs.sbuf == null)
-				rs.sbuf = new StringBuffer();
-			else
+				rs.sbuf = new StringBuffer(32);
+			else {
 				rs.sbuf.setLength(0);
+			}
 
 			// Copy s into sbuf for parsing.
 			rs.sbuf.append(s);
