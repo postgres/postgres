@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.32 2002/01/13 04:55:44 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.33 2002/01/13 05:36:42 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -191,14 +191,14 @@ $0 aborted." 1>&2
 		    $9 >= 2147483646 &&
 		    $9 <= 2147483648)
 		{
-			for(i=1; i < NF; i++)
+			for(i=1; i <= NF; i++)
 			{
 				if (i != 9)
 					printf "%s ", $i;
 				else
 					printf "%s ", "9223372036854775807";
 			}
-			print;
+			print "";
 		}
 		else    print $0;
 	}' > "$INFODIR"/schema
@@ -261,6 +261,8 @@ $0 aborted." 1>&2
 $0 aborted." 1>&2
 		exit 1
 	fi
+	echo
+	echo
 	echo "Plase 1 completed.
 Continue with the steps outlined in the $0 manual page."
 	exit 0
