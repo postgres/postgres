@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.19 2002/01/03 06:09:02 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.20 2002/01/03 08:53:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -96,10 +96,14 @@ do
 		exit 1
 		;;
 	 *)
- 		langname="$1"
-                if [ "$2" ]; then
-                        shift
-			dbname="$1"
+ 		if [ "$list" != "t" ]
+		then	langname="$1"
+			if [ "$2" ]
+			then
+				shift
+				dbname="$1"
+			fi
+		else	dbname="$1"
 		fi
                 ;;
     esac
