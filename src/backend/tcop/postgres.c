@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.313 2002/12/06 05:00:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.314 2003/01/01 21:57:05 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1781,7 +1781,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.313 $ $Date: 2002/12/06 05:00:26 $\n");
+		puts("$Revision: 1.314 $ $Date: 2003/01/01 21:57:05 $\n");
 	}
 
 	/*
@@ -1964,9 +1964,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 				/* start an xact for this function invocation */
 				start_xact_command();
-
-				/* assume it may need a snapshot */
-				SetQuerySnapshot();
 
 				if (HandleFunctionRequest() == EOF)
 				{

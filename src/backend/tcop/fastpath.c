@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.54 2002/08/24 15:00:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.55 2003/01/01 21:57:05 tgl Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -65,8 +65,10 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "tcop/fastpath.h"
+#include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/tqual.h"
 
 
 /* ----------------
@@ -221,6 +223,7 @@ HandleFunctionRequest(void)
 	int			argsize;
 	int			nargs;
 	int			tmp;
+	AclResult	aclresult;
 	FunctionCallInfoData fcinfo;
 	Datum		retval;
 	int			i;
@@ -336,6 +339,18 @@ HandleFunctionRequest(void)
 	if (IsAbortedTransactionBlockState())
 		elog(ERROR, "current transaction is aborted, "
 			 "queries ignored until end of transaction block");
+
+	/* Check permission to call function */
+	aclresult = pg_proc_aclcheck(fid, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_func_name(fid));
+
+	/*
+	 * Set up a query snapshot in case function needs one.  (It is not safe
+	 * to do this if we are in transaction-abort state, so we have to postpone
+	 * it till now.  Ugh.)
+	 */
+	SetQuerySnapshot();
 
 #ifdef NO_FASTPATH
 	/* force a NULL return */
