@@ -6707,15 +6707,15 @@ echo "configure:6688: checking for tkConfig.sh" >&5
 set dummy wish; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
 echo "configure:6710: checking for $ac_word" >&5
-if eval "test \"`echo '$''{'ac_cv_path_wish'+set}'`\" = set"; then
+if eval "test \"`echo '$''{'ac_cv_path_WISH'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
-  case "$wish" in
+  case "$WISH" in
   /*)
-  ac_cv_path_wish="$wish" # Let the user override the test with a path.
+  ac_cv_path_WISH="$WISH" # Let the user override the test with a path.
   ;;
   ?:/*)			 
-  ac_cv_path_wish="$wish" # Let the user override the test with a dos path.
+  ac_cv_path_WISH="$WISH" # Let the user override the test with a dos path.
   ;;
   *)
   IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=":"
@@ -6723,7 +6723,7 @@ else
   for ac_dir in $ac_dummy; do 
     test -z "$ac_dir" && ac_dir=.
     if test -f $ac_dir/$ac_word; then
-      ac_cv_path_wish="$ac_dir/$ac_word"
+      ac_cv_path_WISH="$ac_dir/$ac_word"
       break
     fi
   done
@@ -6731,9 +6731,9 @@ else
   ;;
 esac
 fi
-wish="$ac_cv_path_wish"
-if test -n "$wish"; then
-  echo "$ac_t""$wish" 1>&6
+WISH="$ac_cv_path_WISH"
+if test -n "$WISH"; then
+  echo "$ac_t""$WISH" 1>&6
 else
   echo "$ac_t""no" 1>&6
 fi
@@ -7934,7 +7934,7 @@ s%@HAVE_POSIX_SIGNALS@%$HAVE_POSIX_SIGNALS%g
 s%@TCLSH@%$TCLSH%g
 s%@TCL_CONFIG_SH@%$TCL_CONFIG_SH%g
 s%@TK_CONFIG_SH@%$TK_CONFIG_SH%g
-s%@wish@%$wish%g
+s%@WISH@%$WISH%g
 s%@X_CFLAGS@%$X_CFLAGS%g
 s%@X_PRE_LIBS@%$X_PRE_LIBS%g
 s%@X_LIBS@%$X_LIBS%g
