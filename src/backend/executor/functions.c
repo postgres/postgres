@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.82 2004/06/11 01:08:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.83 2004/07/15 13:51:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +58,10 @@ typedef struct local_es
  */
 typedef struct
 {
+	Oid			rettype;		/* actual return type */
 	int			typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
-	bool		returnsTuple;	/* true if return type is a tuple */
+	bool		returnsTuple;	/* true if returning whole tuple result */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
 
 	ParamListInfo paramLI;		/* Param list representing current args */
@@ -166,6 +167,8 @@ init_sql_fcache(FmgrInfo *finfo)
 					 errmsg("could not determine actual result type for function declared to return type %s",
 						  format_type_be(procedureStruct->prorettype))));
 	}
+
+	fcache->rettype = rettype;
 
 	/* Now look up the actual result type */
 	typeTuple = SearchSysCache(TYPEOID,
@@ -389,20 +392,36 @@ postquel_execute(execution_state *es,
 			 * Probably OK to leave them, as long as they are at the end.
 			 */
 			HeapTupleHeader	dtup;
+			Oid		dtuptype;
+			int32	dtuptypmod;
 
 			dtup = (HeapTupleHeader) palloc(tup->t_len);
 			memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
 
 			/*
-			 * For RECORD results, make sure a typmod has been assigned.
+			 * Use the declared return type if it's not RECORD; else take
+			 * the type from the computed result, making sure a typmod has
+			 * been assigned.
 			 */
-			if (tupDesc->tdtypeid == RECORDOID &&
-				tupDesc->tdtypmod < 0)
-				assign_record_type_typmod(tupDesc);
+			if (fcache->rettype != RECORDOID)
+			{
+				/* function has a named composite return type */
+				dtuptype = fcache->rettype;
+				dtuptypmod = -1;
+			}
+			else
+			{
+				/* function is declared to return RECORD */
+				if (tupDesc->tdtypeid == RECORDOID &&
+					tupDesc->tdtypmod < 0)
+					assign_record_type_typmod(tupDesc);
+				dtuptype = tupDesc->tdtypeid;
+				dtuptypmod = tupDesc->tdtypmod;
+			}
 
 			HeapTupleHeaderSetDatumLength(dtup, tup->t_len);
-			HeapTupleHeaderSetTypeId(dtup, tupDesc->tdtypeid);
-			HeapTupleHeaderSetTypMod(dtup, tupDesc->tdtypmod);
+			HeapTupleHeaderSetTypeId(dtup, dtuptype);
+			HeapTupleHeaderSetTypMod(dtup, dtuptypmod);
 
 			value = PointerGetDatum(dtup);
 			fcinfo->isnull = false;
