@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.9 2001/10/01 16:48:37 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.10 2001/10/05 17:28:12 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -500,11 +500,9 @@ pgstat_vacuum_tabstat(void)
 	int						dbidalloc;
 	int						dbidused;
 	HASH_SEQ_STATUS			hstat;
-	long				   *hentry;
 	PgStat_StatDBEntry	   *dbentry;
 	PgStat_StatTabEntry	   *tabentry;
 	HeapTuple				reltup;
-	bool					found;
 	int						nobjects = 0;
 	PgStat_MsgTabpurge		msg;
 	int						len;
@@ -537,8 +535,8 @@ pgstat_vacuum_tabstat(void)
 	 */
 	dbentry = (PgStat_StatDBEntry *)hash_search(pgStatDBHash,
 												(void *) &MyDatabaseId,
-												HASH_FIND, &found);
-	if (!found || dbentry == NULL)
+												HASH_FIND, NULL);
+	if (dbentry == NULL)
 		return -1;
 
 	if (dbentry->tables == NULL)
@@ -553,17 +551,13 @@ pgstat_vacuum_tabstat(void)
 	 * Check for all tables if they still exist.
 	 */
     hash_seq_init(&hstat, dbentry->tables);
-	while((hentry = hash_seq_search(&hstat)) != (long *)TRUE)
+	while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&hstat)) != NULL)
 	{
-		if (hentry == NULL)
-			return -1;
-
 		/*
 		 * Check if this relation is still alive by
 		 * looking up it's pg_class tuple in the 
 		 * system catalog cache.
 		 */
-		tabentry = (PgStat_StatTabEntry *)hentry;
 		reltup = SearchSysCache(RELOID,
 						ObjectIdGetDatum(tabentry->tableid),
 						0, 0, 0);
@@ -631,15 +625,9 @@ pgstat_vacuum_tabstat(void)
 	 * tell the collector to drop them as well.
 	 */
 	hash_seq_init(&hstat, pgStatDBHash);
-	while((hentry = hash_seq_search(&hstat)) != (long *)TRUE)
+	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
 	{
-		Oid		dbid;
-
-		if (hentry == NULL)
-			break;
-		
-		dbentry = (PgStat_StatDBEntry *)hentry;
-		dbid = dbentry->databaseid;
+		Oid		dbid = dbentry->databaseid;
 
 		for (i = 0; i < dbidused; i++)
 		{
@@ -935,7 +923,6 @@ PgStat_StatDBEntry *
 pgstat_fetch_stat_dbentry(Oid dbid)
 {
 	PgStat_StatDBEntry	   *dbentry;
-	bool					found;
 
 	/*
 	 * If not done for this transaction, read the statistics collector
@@ -954,8 +941,8 @@ pgstat_fetch_stat_dbentry(Oid dbid)
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 												 (void *) &dbid,
-												 HASH_FIND, &found);
-	if (!found || dbentry == NULL)
+												 HASH_FIND, NULL);
+	if (dbentry == NULL)
 		return NULL;
 
 	return dbentry;
@@ -976,7 +963,6 @@ pgstat_fetch_stat_tabentry(Oid relid)
 {
 	PgStat_StatDBEntry	   *dbentry;
 	PgStat_StatTabEntry	   *tabentry;
-	bool					found;
 
 	/*
 	 * If not done for this transaction, read the statistics collector
@@ -995,8 +981,8 @@ pgstat_fetch_stat_tabentry(Oid relid)
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 												 (void *) &MyDatabaseId,
-												 HASH_FIND, &found);
-	if (!found || dbentry == NULL)
+												 HASH_FIND, NULL);
+	if (dbentry == NULL)
 		return NULL;
 
 	/*
@@ -1006,8 +992,8 @@ pgstat_fetch_stat_tabentry(Oid relid)
 		return NULL;
 	tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
 												   (void *) &relid,
-												   HASH_FIND, &found);
-	if (!found || tabentry == NULL)
+												   HASH_FIND, NULL);
+	if (tabentry == NULL)
 		return NULL;
 
 	return tabentry;
@@ -1229,8 +1215,8 @@ pgstat_main(int real_argc, char *real_argv[])
 	hash_ctl.keysize   = sizeof(int);
 	hash_ctl.entrysize = sizeof(PgStat_StatBeDead);
 	hash_ctl.hash      = tag_hash;
-	pgStatBeDead = hash_create(PGSTAT_BE_HASH_SIZE, &hash_ctl, 
-							HASH_ELEM | HASH_FUNCTION);
+	pgStatBeDead = hash_create("Dead Backends", PGSTAT_BE_HASH_SIZE,
+							   &hash_ctl, HASH_ELEM | HASH_FUNCTION);
 	if (pgStatBeDead == NULL)
 	{
 		fprintf(stderr, 
@@ -1751,13 +1737,8 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 	 */
 	deadbe = (PgStat_StatBeDead *) hash_search(pgStatBeDead,
 											   (void *) &(msg->m_procpid),
-											   HASH_FIND, &found);
-	if (deadbe == NULL)
-	{
-		fprintf(stderr, "PGSTAT: Dead backend table corrupted - abort\n");
-		exit(1);
-	}
-	if (found)
+											   HASH_FIND, NULL);
+	if (deadbe)
 		return 1;
 
 	/*
@@ -1782,7 +1763,7 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 												 HASH_ENTER, &found);
     if (dbentry == NULL)
 	{
-		fprintf(stderr, "PGSTAT: DB hash table corrupted - abort\n");
+		fprintf(stderr, "PGSTAT: DB hash table out of memory - abort\n");
 		exit(1);
 	}
 
@@ -1805,8 +1786,10 @@ pgstat_add_backend(PgStat_MsgHdr *msg)
 		hash_ctl.keysize   = sizeof(Oid);
 		hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 		hash_ctl.hash      = tag_hash;
-		dbentry->tables = hash_create(PGSTAT_TAB_HASH_SIZE, &hash_ctl,
-							HASH_ELEM | HASH_FUNCTION);
+		dbentry->tables = hash_create("Per-database table",
+									  PGSTAT_TAB_HASH_SIZE,
+									  &hash_ctl,
+									  HASH_ELEM | HASH_FUNCTION);
 		if (dbentry->tables == NULL)
 		{
 			fprintf(stderr, "PGSTAT: failed to initialize hash table for "
@@ -1862,7 +1845,7 @@ pgstat_sub_backend(int procpid)
 													   HASH_ENTER, &found);
 			if (deadbe == NULL)
 			{
-				fprintf(stderr, "PGSTAT: dead backend hash table corrupted "
+				fprintf(stderr, "PGSTAT: dead backend hash table out of memory "
 								"- abort\n");
 				exit(1);
 			}
@@ -1902,8 +1885,6 @@ pgstat_write_statsfile(void)
 	PgStat_StatTabEntry		   *tabentry;
 	PgStat_StatBeDead		   *deadbe;
 	FILE					   *fpout;
-	long					   *hentry;
-	bool						found;
 	int							i;
 
 	/*
@@ -1923,16 +1904,8 @@ pgstat_write_statsfile(void)
 	 * Walk through the database table.
 	 */
 	hash_seq_init(&hstat, pgStatDBHash);
-	while ((hentry = hash_seq_search(&hstat)) != (long *)TRUE)
+	while ((dbentry = (PgStat_StatDBEntry *) hash_seq_search(&hstat)) != NULL)
 	{
-		if (hentry == NULL)
-		{
-			fprintf(stderr, "PGSTAT: database hash table corrupted "
-							"- abort\n");
-			exit(1);
-		}
-		dbentry = (PgStat_StatDBEntry *)hentry;
-
 		/*
 		 * If this database is marked destroyed, count down and do
 		 * so if it reaches 0.
@@ -1944,10 +1917,9 @@ pgstat_write_statsfile(void)
 				if (dbentry->tables != NULL)
 					hash_destroy(dbentry->tables);
 
-				hentry = hash_search(pgStatDBHash, 
-									 (void *) &(dbentry->databaseid),
-									 HASH_REMOVE, &found);
-				if (hentry == NULL)
+				if (hash_search(pgStatDBHash, 
+								(void *) &(dbentry->databaseid),
+								HASH_REMOVE, NULL) == NULL)
 				{
 					fprintf(stderr, "PGSTAT: database hash table corrupted "
 									"during cleanup - abort\n");
@@ -1970,17 +1942,8 @@ pgstat_write_statsfile(void)
 		 * Walk through the databases access stats per table.
 		 */
 		hash_seq_init(&tstat, dbentry->tables);
-		while((hentry = hash_seq_search(&tstat)) != (long *)TRUE)
+		while ((tabentry = (PgStat_StatTabEntry *) hash_seq_search(&tstat)) != NULL)
 		{
-			if (hentry == NULL)
-			{
-				fprintf(stderr, "PGSTAT: tables hash table for database "
-								"%d corrupted - abort\n",
-								dbentry->databaseid);
-				exit(1);
-			}
-			tabentry = (PgStat_StatTabEntry *)hentry;
-
 			/*
 			 * If table entry marked for destruction, same as above
 			 * for the database entry.
@@ -1989,10 +1952,9 @@ pgstat_write_statsfile(void)
 			{
 				if (--(tabentry->destroy) == 0)
 				{
-					hentry = hash_search(dbentry->tables,
+					if (hash_search(dbentry->tables,
 									(void *) &(tabentry->tableid),
-									HASH_REMOVE, &found);
-					if (hentry == NULL)
+									HASH_REMOVE, NULL) == NULL)
 					{
 						fprintf(stderr, "PGSTAT: tables hash table for "
 										"database %d corrupted during "
@@ -2062,26 +2024,17 @@ pgstat_write_statsfile(void)
 	 * Clear out the dead backends table
 	 */
 	hash_seq_init(&hstat, pgStatBeDead);
-	while ((hentry = hash_seq_search(&hstat)) != (long *)TRUE)
+	while ((deadbe = (PgStat_StatBeDead *) hash_seq_search(&hstat)) != NULL)
 	{
-		if (hentry == NULL)
-		{
-			fprintf(stderr, "PGSTAT: dead backend hash table corrupted "
-							"during cleanup - abort\n");
-			exit(1);
-		}
-		deadbe = (PgStat_StatBeDead *)hentry;
-
 		/*
 		 * Count down the destroy delay and remove entries where
 		 * it reaches 0.
 		 */
 		if (--(deadbe->destroy) <= 0)
 		{
-			hentry = hash_search(pgStatBeDead,
-								 (void *) &(deadbe->procpid),
-							HASH_REMOVE, &found);
-			if (hentry == NULL)
+			if (hash_search(pgStatBeDead,
+							(void *) &(deadbe->procpid),
+							HASH_REMOVE, NULL) == NULL)
 			{
 				fprintf(stderr, "PGSTAT: dead backend hash table corrupted "
 								"during cleanup - abort\n");
@@ -2143,7 +2096,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 	hash_ctl.entrysize = sizeof(PgStat_StatDBEntry);
 	hash_ctl.hash      = tag_hash;
 	hash_ctl.hcxt      = use_mcxt;
-	*dbhash = hash_create(PGSTAT_DB_HASH_SIZE, &hash_ctl, 
+	*dbhash = hash_create("Databases hash", PGSTAT_DB_HASH_SIZE, &hash_ctl, 
 							HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 	if (pgStatDBHash == NULL)
 	{
@@ -2214,13 +2167,13 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				{
 					if (pgStatRunningInCollector)
 					{
-						fprintf(stderr, "PGSTAT: DB hash table corrupted\n");
+						fprintf(stderr, "PGSTAT: DB hash table out of memory\n");
 						exit(1);
 					}
 					else
 					{
 						fclose(fpin);
-						elog(ERROR, "PGSTAT: DB hash table corrupted");
+						elog(ERROR, "PGSTAT: DB hash table out of memory");
 					}
 				}
 				if (found)
@@ -2258,7 +2211,9 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 				hash_ctl.hash      = tag_hash;
 				hash_ctl.hcxt      = use_mcxt;
-				dbentry->tables = hash_create(PGSTAT_TAB_HASH_SIZE, &hash_ctl,
+				dbentry->tables = hash_create("Per-database table",
+											  PGSTAT_TAB_HASH_SIZE,
+											  &hash_ctl,
 									HASH_ELEM | HASH_FUNCTION | mcxt_flags);
 				if (dbentry->tables == NULL)
 				{
@@ -2325,13 +2280,13 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				{
 					if (pgStatRunningInCollector)
 					{
-						fprintf(stderr, "PGSTAT: Tab hash table corrupted\n");
+						fprintf(stderr, "PGSTAT: Tab hash table out of memory\n");
 						exit(1);
 					}
 					else
 					{
 						fclose(fpin);
-						elog(ERROR, "PGSTAT: Tab hash table corrupted");
+						elog(ERROR, "PGSTAT: Tab hash table out of memory");
 					}
 				}
 
@@ -2444,8 +2399,8 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb,
 				 */
 				dbentry = (PgStat_StatDBEntry *)hash_search(*dbhash,
 								(void *) &((*betab)[havebackends].databaseid),
-								HASH_FIND, &found);
-				if (found)
+								HASH_FIND, NULL);
+				if (dbentry)
 					dbentry->n_backends++;
 
 				havebackends++;
@@ -2559,13 +2514,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 							(void *) &(msg->m_hdr.m_databaseid),
-							HASH_FIND, &found);
-	if (dbentry == NULL)
-	{
-		fprintf(stderr, "PGSTAT: database hash table corrupted - abort\n");
-		exit(1);
-	}
-	if (!found)
+							HASH_FIND, NULL);
+	if (!dbentry)
 		return;
 
 	/*
@@ -2588,7 +2538,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 						HASH_ENTER, &found);
 		if (tabentry == NULL)
 		{
-			fprintf(stderr, "PGSTAT: tables hash table corrupted for "
+			fprintf(stderr, "PGSTAT: tables hash table out of memory for "
 							"database %d - abort\n", dbentry->databaseid);
 			exit(1);
 		}
@@ -2646,7 +2596,6 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	PgStat_StatDBEntry     *dbentry;
 	PgStat_StatTabEntry    *tabentry;
 	int						i;
-	bool					found;
 
 	/*
 	 * Make sure the backend is counted for.
@@ -2659,13 +2608,8 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 							(void *) &(msg->m_hdr.m_databaseid),
-							HASH_FIND, &found);
-	if (dbentry == NULL)
-	{
-		fprintf(stderr, "PGSTAT: database hash table corrupted - abort\n");
-		exit(1);
-	}
-	if (!found)
+							HASH_FIND, NULL);
+	if (!dbentry)
 		return;
 
 	/*
@@ -2682,15 +2626,8 @@ pgstat_recv_tabpurge(PgStat_MsgTabpurge *msg, int len)
 	{
 		tabentry = (PgStat_StatTabEntry *) hash_search(dbentry->tables,
 						(void *) &(msg->m_tableid[i]), 
-						HASH_FIND, &found);
-		if (tabentry == NULL)
-		{
-			fprintf(stderr, "PGSTAT: tables hash table corrupted for "
-							"database %d - abort\n", dbentry->databaseid);
-			exit(1);
-		}
-
-		if (found)
+						HASH_FIND, NULL);
+		if (tabentry)
 			tabentry->destroy = PGSTAT_DESTROY_COUNT;
 	}
 }
@@ -2706,7 +2643,6 @@ static void
 pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 {
 	PgStat_StatDBEntry     *dbentry;
-	bool					found;
 
 	/*
 	 * Make sure the backend is counted for.
@@ -2719,13 +2655,8 @@ pgstat_recv_dropdb(PgStat_MsgDropdb *msg, int len)
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 							(void *) &(msg->m_databaseid),
-							HASH_FIND, &found);
-	if (dbentry == NULL)
-	{
-		fprintf(stderr, "PGSTAT: database hash table corrupted - abort\n");
-		exit(1);
-	}
-	if (!found)
+							HASH_FIND, NULL);
+	if (!dbentry)
 		return;
 
 	/*
@@ -2746,7 +2677,6 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 {
 	HASHCTL					hash_ctl;
 	PgStat_StatDBEntry     *dbentry;
-	bool					found;
 
 	/*
 	 * Make sure the backend is counted for.
@@ -2759,13 +2689,8 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	 */
 	dbentry = (PgStat_StatDBEntry *) hash_search(pgStatDBHash,
 							(void *) &(msg->m_hdr.m_databaseid),
-							HASH_FIND, &found);
-	if (dbentry == NULL)
-	{
-		fprintf(stderr, "PGSTAT: database hash table corrupted - abort\n");
-		exit(1);
-	}
-	if (!found)
+							HASH_FIND, NULL);
+	if (!dbentry)
 		return;
 
 	/*
@@ -2787,8 +2712,10 @@ pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len)
 	hash_ctl.keysize  = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 	hash_ctl.hash     = tag_hash;
-	dbentry->tables = hash_create(PGSTAT_TAB_HASH_SIZE, &hash_ctl,
-						HASH_ELEM | HASH_FUNCTION);
+	dbentry->tables = hash_create("Per-database table",
+								  PGSTAT_TAB_HASH_SIZE,
+								  &hash_ctl,
+								  HASH_ELEM | HASH_FUNCTION);
 	if (dbentry->tables == NULL)
 	{
 		fprintf(stderr, "PGSTAT: failed to reinitialize hash table for "

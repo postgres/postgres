@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.42 2001/10/01 05:36:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.43 2001/10/05 17:28:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
 
 #include "postgres.h"
 
-#include "lib/hasht.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/portal.h"
 
@@ -42,7 +42,7 @@
  * ----------------
  */
 
-#define MAX_PORTALNAME_LEN		64		/* XXX LONGALIGNable value */
+#define MAX_PORTALNAME_LEN		64
 
 typedef struct portalhashent
 {
@@ -54,15 +54,13 @@ static HTAB *PortalHashTable = NULL;
 
 #define PortalHashTableLookup(NAME, PORTAL) \
 do { \
-	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
+	PortalHashEnt *hentry; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
 	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", NAME); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
-										 key, HASH_FIND, &found); \
-	if (hentry == NULL) \
-		elog(FATAL, "error in PortalHashTable"); \
-	if (found) \
+										 key, HASH_FIND, NULL); \
+	if (hentry) \
 		PORTAL = hentry->portal; \
 	else \
 		PORTAL = NULL; \
@@ -77,7 +75,7 @@ do { \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
 										 key, HASH_ENTER, &found); \
 	if (hentry == NULL) \
-		elog(FATAL, "error in PortalHashTable"); \
+		elog(ERROR, "out of memory in PortalHashTable"); \
 	if (found) \
 		elog(NOTICE, "trying to insert a portal name that exists."); \
 	hentry->portal = PORTAL; \
@@ -85,15 +83,13 @@ do { \
 
 #define PortalHashTableDelete(PORTAL) \
 do { \
-	PortalHashEnt *hentry; bool found; char key[MAX_PORTALNAME_LEN]; \
+	PortalHashEnt *hentry; char key[MAX_PORTALNAME_LEN]; \
 	\
 	MemSet(key, 0, MAX_PORTALNAME_LEN); \
 	snprintf(key, MAX_PORTALNAME_LEN - 1, "%s", PORTAL->name); \
 	hentry = (PortalHashEnt*)hash_search(PortalHashTable, \
-										 key, HASH_REMOVE, &found); \
+										 key, HASH_REMOVE, NULL); \
 	if (hentry == NULL) \
-		elog(FATAL, "error in PortalHashTable"); \
-	if (!found) \
 		elog(NOTICE, "trying to delete portal name that does not exist."); \
 } while(0)
 
@@ -129,7 +125,8 @@ EnablePortalManager(void)
 	 * use PORTALS_PER_USER, defined in utils/portal.h as a guess of how
 	 * many hash table entries to create, initially
 	 */
-	PortalHashTable = hash_create(PORTALS_PER_USER * 3, &ctl, HASH_ELEM);
+	PortalHashTable = hash_create("Portal hash", PORTALS_PER_USER,
+								  &ctl, HASH_ELEM);
 }
 
 /*
@@ -234,15 +231,10 @@ CreatePortal(char *name)
  * Exceptions:
  *		BadState if called when disabled.
  *		BadArg if portal is invalid.
- *
- * Note peculiar calling convention: pass a pointer to a portal pointer.
- * This is mainly so that this routine can be used as a hashtable walker.
  */
 void
-PortalDrop(Portal *portalP)
+PortalDrop(Portal portal)
 {
-	Portal		portal = *portalP;
-
 	AssertArg(PortalIsValid(portal));
 
 	/* remove portal from hash table */
@@ -262,9 +254,23 @@ PortalDrop(Portal *portalP)
 
 /*
  * Destroy all portals created in the current transaction (ie, all of them).
+ *
+ * XXX This assumes that portals can be deleted in a random order, ie,
+ * no portal has a reference to any other (at least not one that will be
+ * exercised during deletion).  I think this is okay at the moment, but
+ * we've had bugs of that ilk in the past.  Keep a close eye on cursor
+ * references...
  */
 void
 AtEOXact_portals(void)
 {
-	HashTableWalk(PortalHashTable, (HashtFunc) PortalDrop, 0);
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	hash_seq_init(&status, PortalHashTable);
+
+	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
+	{
+		PortalDrop(hentry->portal);
+	}
 }

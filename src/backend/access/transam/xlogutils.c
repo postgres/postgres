@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.19 2001/10/01 05:36:13 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlogutils.c,v 1.20 2001/10/05 17:28:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,9 @@
 #include "access/htup.h"
 #include "access/xlogutils.h"
 #include "catalog/pg_database.h"
-#include "lib/hasht.h"
 #include "storage/bufpage.h"
 #include "storage/smgr.h"
+#include "utils/hsearch.h"
 #include "utils/relcache.h"
 
 
@@ -233,27 +233,22 @@ _xl_init_rel_cache(void)
 	ctl.entrysize = sizeof(XLogRelCacheEntry);
 	ctl.hash = tag_hash;
 
-	_xlrelcache = hash_create(_XLOG_RELCACHESIZE, &ctl,
-							  HASH_ELEM | HASH_FUNCTION);
+	_xlrelcache = hash_create("XLOG relcache", _XLOG_RELCACHESIZE,
+							  &ctl, HASH_ELEM | HASH_FUNCTION);
 }
 
 static void
-_xl_remove_hash_entry(XLogRelDesc **edata, Datum dummy)
+_xl_remove_hash_entry(XLogRelDesc *rdesc)
 {
-	XLogRelCacheEntry *hentry;
-	bool		found;
-	XLogRelDesc *rdesc = *edata;
 	Form_pg_class tpgc = rdesc->reldata.rd_rel;
+	XLogRelCacheEntry *hentry;
 
 	rdesc->lessRecently->moreRecently = rdesc->moreRecently;
 	rdesc->moreRecently->lessRecently = rdesc->lessRecently;
 
 	hentry = (XLogRelCacheEntry *) hash_search(_xlrelcache,
-				(void *) &(rdesc->reldata.rd_node), HASH_REMOVE, &found);
-
+				(void *) &(rdesc->reldata.rd_node), HASH_REMOVE, NULL);
 	if (hentry == NULL)
-		elog(STOP, "_xl_remove_hash_entry: can't delete from cache");
-	if (!found)
 		elog(STOP, "_xl_remove_hash_entry: file was not found in cache");
 
 	if (rdesc->reldata.rd_fd >= 0)
@@ -281,7 +276,7 @@ _xl_new_reldesc(void)
 	/* reuse */
 	res = _xlrelarr[0].moreRecently;
 
-	_xl_remove_hash_entry(&res, 0);
+	_xl_remove_hash_entry(res);
 
 	_xlast--;
 	return (res);
@@ -298,13 +293,21 @@ XLogInitRelationCache(void)
 void
 XLogCloseRelationCache(void)
 {
+	HASH_SEQ_STATUS status;
+	XLogRelCacheEntry *hentry;
 
 	DestroyDummyCaches();
 
 	if (!_xlrelarr)
 		return;
 
-	HashTableWalk(_xlrelcache, (HashtFunc) _xl_remove_hash_entry, 0);
+	hash_seq_init(&status, _xlrelcache);
+
+	while ((hentry = (XLogRelCacheEntry *) hash_seq_search(&status)) != NULL)
+	{
+		_xl_remove_hash_entry(hentry->rdesc);
+	}
+
 	hash_destroy(_xlrelcache);
 
 	free(_xlrelarr);
@@ -321,12 +324,9 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 	bool		found;
 
 	hentry = (XLogRelCacheEntry *)
-		hash_search(_xlrelcache, (void *) &rnode, HASH_FIND, &found);
+		hash_search(_xlrelcache, (void *) &rnode, HASH_FIND, NULL);
 
-	if (hentry == NULL)
-		elog(STOP, "XLogOpenRelation: error in cache");
-
-	if (found)
+	if (hentry)
 	{
 		res = hentry->rdesc;
 
@@ -348,7 +348,7 @@ XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode)
 			hash_search(_xlrelcache, (void *) &rnode, HASH_ENTER, &found);
 
 		if (hentry == NULL)
-			elog(STOP, "XLogOpenRelation: can't insert into cache");
+			elog(STOP, "XLogOpenRelation: out of memory for cache");
 
 		if (found)
 			elog(STOP, "XLogOpenRelation: file found on insert into cache");

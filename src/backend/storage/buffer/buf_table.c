@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.23 2001/10/01 05:36:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.24 2001/10/05 17:28:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,21 +62,15 @@ BufferDesc *
 BufTableLookup(BufferTag *tagPtr)
 {
 	BufferLookupEnt  *result;
-	bool		found;
 
 	if (tagPtr->blockNum == P_NEW)
 		return NULL;
 
 	result = (BufferLookupEnt *)
-		hash_search(SharedBufHash, (void *) tagPtr, HASH_FIND, &found);
-
+		hash_search(SharedBufHash, (void *) tagPtr, HASH_FIND, NULL);
 	if (!result)
-	{
-		elog(ERROR, "BufTableLookup: BufferLookup table corrupted");
 		return NULL;
-	}
-	if (!found)
-		return NULL;
+
 	return &(BufferDescriptors[result->id]);
 }
 
@@ -87,7 +81,6 @@ bool
 BufTableDelete(BufferDesc *buf)
 {
 	BufferLookupEnt  *result;
-	bool		found;
 
 	/*
 	 * buffer not initialized or has been removed from table already.
@@ -99,10 +92,11 @@ BufTableDelete(BufferDesc *buf)
 	buf->flags |= BM_DELETED;
 
 	result = (BufferLookupEnt *)
-		hash_search(SharedBufHash, (void *) &(buf->tag), HASH_REMOVE, &found);
+		hash_search(SharedBufHash, (void *) &(buf->tag), HASH_REMOVE, NULL);
 
-	if (!(result && found))
+	if (!result)
 	{
+		/* shouldn't happen */
 		elog(ERROR, "BufTableDelete: BufferLookup table corrupted");
 		return FALSE;
 	}
@@ -134,14 +128,13 @@ BufTableInsert(BufferDesc *buf)
 
 	if (!result)
 	{
-		Assert(0);
-		elog(ERROR, "BufTableInsert: BufferLookup table corrupted");
+		elog(ERROR, "BufTableInsert: BufferLookup table out of memory");
 		return FALSE;
 	}
+
 	/* found something else in the table ! */
 	if (found)
 	{
-		Assert(0);
 		elog(ERROR, "BufTableInsert: BufferLookup table corrupted");
 		return FALSE;
 	}

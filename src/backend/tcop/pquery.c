@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.44 2001/03/22 06:16:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.45 2001/10/05 17:28:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,7 +147,7 @@ PreparePortal(char *portalName)
 		 */
 		elog(NOTICE, "Closing pre-existing portal \"%s\"",
 			 portalName);
-		PortalDrop(&portal);
+		PortalDrop(portal);
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.60 2001/10/01 05:36:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.61 2001/10/05 17:28:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,7 +210,7 @@ InitShmemIndex(void)
 	result = (ShmemIndexEnt *)
 		hash_search(ShmemIndex, (void *) &item, HASH_ENTER, &found);
 	if (!result)
-		elog(FATAL, "InitShmemIndex: corrupted shmem index");
+		elog(FATAL, "InitShmemIndex: Shmem Index out of memory");
 
 	Assert(ShmemBootstrap && !found);
 
@@ -234,7 +234,7 @@ InitShmemIndex(void)
  * table at once.
  */
 HTAB *
-ShmemInitHash(char *name,		/* table string name for shmem index */
+ShmemInitHash(const char *name,	/* table string name for shmem index */
 			  long init_size,	/* initial table size */
 			  long max_size,	/* max size of the table */
 			  HASHCTL *infoP,	/* info about key and bucket size */
@@ -277,7 +277,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	infoP->hctl = (HASHHDR *) location;
 	infoP->dir = (HASHSEGMENT *) (((char *) location) + sizeof(HASHHDR));
 
-	return hash_create(init_size, infoP, hash_flags);
+	return hash_create(name, init_size, infoP, hash_flags);
 }
 
 /*
@@ -295,7 +295,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
  *		initialized).
  */
 void *
-ShmemInitStruct(char *name, Size size, bool *foundPtr)
+ShmemInitStruct(const char *name, Size size, bool *foundPtr)
 {
 	ShmemIndexEnt *result,
 				item;
@@ -328,7 +328,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 	if (!result)
 	{
 		LWLockRelease(ShmemIndexLock);
-		elog(ERROR, "ShmemInitStruct: Shmem Index corrupted");
+		elog(ERROR, "ShmemInitStruct: Shmem Index out of memory");
 		return NULL;
 	}
 
@@ -357,12 +357,12 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 		{
 			/* out of memory */
 			Assert(ShmemIndex);
-			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, foundPtr);
+			hash_search(ShmemIndex, (void *) &item, HASH_REMOVE, NULL);
 			LWLockRelease(ShmemIndexLock);
-			*foundPtr = FALSE;
 
 			elog(NOTICE, "ShmemInitStruct: cannot allocate '%s'",
 				 name);
+			*foundPtr = FALSE;
 			return NULL;
 		}
 		result->size = size;

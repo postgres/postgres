@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.142 2001/09/07 21:57:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.143 2001/10/05 17:28:11 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -259,7 +259,7 @@ PerformPortalClose(char *name, CommandDest dest)
 	/*
 	 * Note: PortalCleanup is called as a side-effect
 	 */
-	PortalDrop(&portal);
+	PortalDrop(portal);
 }
 
 /* ----------------

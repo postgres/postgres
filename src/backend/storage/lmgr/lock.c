@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.99 2001/10/01 05:36:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.100 2001/10/05 17:28:12 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -491,7 +491,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	if (!lock)
 	{
 		LWLockRelease(masterLock);
-		elog(FATAL, "LockAcquire: lock table %d is corrupted", lockmethod);
+		elog(ERROR, "LockAcquire: lock table %d is out of memory",
+			 lockmethod);
 		return FALSE;
 	}
 
@@ -537,7 +538,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	if (!holder)
 	{
 		LWLockRelease(masterLock);
-		elog(FATAL, "LockAcquire: holder table corrupted");
+		elog(ERROR, "LockAcquire: holder table out of memory");
 		return FALSE;
 	}
 
@@ -658,8 +659,8 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 				SHMQueueDelete(&holder->procLink);
 				holder = (HOLDER *) hash_search(holderTable,
 												(void *) holder,
-												HASH_REMOVE, &found);
-				if (!holder || !found)
+												HASH_REMOVE, NULL);
+				if (!holder)
 					elog(NOTICE, "LockAcquire: remove holder, table corrupted");
 			}
 			else
@@ -991,7 +992,6 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 {
 	LOCK	   *lock;
 	LWLockId	masterLock;
-	bool		found;
 	LOCKMETHODTABLE *lockMethodTable;
 	HOLDER	   *holder;
 	HOLDERTAG	holdertag;
@@ -1023,20 +1023,13 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	Assert(lockMethodTable->lockHash->hash == tag_hash);
 	lock = (LOCK *) hash_search(lockMethodTable->lockHash,
 								(void *) locktag,
-								HASH_FIND, &found);
+								HASH_FIND, NULL);
 
 	/*
 	 * let the caller print its own error message, too. Do not
 	 * elog(ERROR).
 	 */
 	if (!lock)
-	{
-		LWLockRelease(masterLock);
-		elog(NOTICE, "LockRelease: locktable corrupted");
-		return FALSE;
-	}
-
-	if (!found)
 	{
 		LWLockRelease(masterLock);
 		elog(NOTICE, "LockRelease: no such lock");
@@ -1056,12 +1049,12 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	holderTable = lockMethodTable->holderHash;
 	holder = (HOLDER *) hash_search(holderTable,
 									(void *) &holdertag,
-									HASH_FIND_SAVE, &found);
-	if (!holder || !found)
+									HASH_FIND_SAVE, NULL);
+	if (!holder)
 	{
 		LWLockRelease(masterLock);
 #ifdef USER_LOCKS
-		if (!found && lockmethod == USER_LOCKMETHOD)
+		if (lockmethod == USER_LOCKMETHOD)
 			elog(NOTICE, "LockRelease: no lock with this tag");
 		else
 #endif
@@ -1130,8 +1123,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		lock = (LOCK *) hash_search(lockMethodTable->lockHash,
 									(void *) &(lock->tag),
 									HASH_REMOVE,
-									&found);
-		if (!lock || !found)
+									NULL);
+		if (!lock)
 		{
 			LWLockRelease(masterLock);
 			elog(NOTICE, "LockRelease: remove lock, table corrupted");
@@ -1159,8 +1152,8 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		SHMQueueDelete(&holder->procLink);
 		holder = (HOLDER *) hash_search(holderTable,
 										(void *) &holder,
-										HASH_REMOVE_SAVED, &found);
-		if (!holder || !found)
+										HASH_REMOVE_SAVED, NULL);
+		if (!holder)
 		{
 			LWLockRelease(masterLock);
 			elog(NOTICE, "LockRelease: remove holder, table corrupted");
@@ -1201,7 +1194,6 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 	int			i,
 				numLockModes;
 	LOCK	   *lock;
-	bool		found;
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)
@@ -1313,8 +1305,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 		holder = (HOLDER *) hash_search(lockMethodTable->holderHash,
 										(void *) holder,
 										HASH_REMOVE,
-										&found);
-		if (!holder || !found)
+										NULL);
+		if (!holder)
 		{
 			LWLockRelease(masterLock);
 			elog(NOTICE, "LockReleaseAll: holder table corrupted");
@@ -1323,7 +1315,6 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 
 		if (lock->nRequested == 0)
 		{
-
 			/*
 			 * We've just released the last lock, so garbage-collect the
 			 * lock object.
@@ -1332,8 +1323,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			Assert(lockMethodTable->lockHash->hash == tag_hash);
 			lock = (LOCK *) hash_search(lockMethodTable->lockHash,
 										(void *) &(lock->tag),
-										HASH_REMOVE, &found);
-			if (!lock || !found)
+										HASH_REMOVE, NULL);
+			if (!lock)
 			{
 				LWLockRelease(masterLock);
 				elog(NOTICE, "LockReleaseAll: cannot remove lock from HTAB");
@@ -1438,7 +1429,7 @@ void
 DumpAllLocks(void)
 {
 	PROC	   *proc;
-	HOLDER	   *holder = NULL;
+	HOLDER	   *holder;
 	LOCK	   *lock;
 	int			lockmethod = DEFAULT_LOCKMETHOD;
 	LOCKMETHODTABLE *lockMethodTable;
@@ -1460,8 +1451,7 @@ DumpAllLocks(void)
 		LOCK_PRINT("DumpAllLocks: waiting on", proc->waitLock, 0);
 
 	hash_seq_init(&status, holderTable);
-	while ((holder = (HOLDER *) hash_seq_search(&status)) &&
-		   (holder != (HOLDER *) TRUE))
+	while ((holder = (HOLDER *) hash_seq_search(&status)) != NULL)
 	{
 		HOLDER_PRINT("DumpAllLocks", holder);
 

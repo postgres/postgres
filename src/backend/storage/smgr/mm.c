@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.26 2001/10/01 05:36:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.27 2001/10/05 17:28:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ mmcreate(Relation reln)
 	if (entry == (MMRelHashEntry *) NULL)
 	{
 		LWLockRelease(MMCacheLock);
-		elog(FATAL, "main memory storage mgr rel cache hash table corrupt");
+		elog(FATAL, "main memory storage mgr hash table out of memory");
 	}
 
 	if (found)
@@ -214,7 +214,6 @@ mmunlink(RelFileNode rnode)
 	int			i;
 	MMHashEntry *entry;
 	MMRelHashEntry *rentry;
-	bool		found;
 	MMRelTag	rtag;
 
 	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
@@ -226,8 +225,8 @@ mmunlink(RelFileNode rnode)
 		{
 			entry = (MMHashEntry *) hash_search(MMCacheHT,
 												(void *) &MMBlockTags[i],
-												HASH_REMOVE, &found);
-			if (entry == (MMHashEntry *) NULL || !found)
+												HASH_REMOVE, NULL);
+			if (entry == (MMHashEntry *) NULL)
 			{
 				LWLockRelease(MMCacheLock);
 				elog(FATAL, "mmunlink: cache hash table corrupted");
@@ -242,9 +241,9 @@ mmunlink(RelFileNode rnode)
 
 	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
 											(void *) &rtag,
-											HASH_REMOVE, &found);
+											HASH_REMOVE, NULL);
 
-	if (rentry == (MMRelHashEntry *) NULL || !found)
+	if (rentry == (MMRelHashEntry *) NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmunlink: rel cache hash table corrupted");
@@ -306,8 +305,8 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 
 	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
 											(void *) &rtag,
-											HASH_FIND, &found);
-	if (rentry == (MMRelHashEntry *) NULL || !found)
+											HASH_FIND, NULL);
+	if (rentry == (MMRelHashEntry *) NULL)
 	{
 		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmextend: rel cache hash table corrupt");
@@ -372,7 +371,6 @@ int
 mmread(Relation reln, BlockNumber blocknum, char *buffer)
 {
 	MMHashEntry *entry;
-	bool		found;
 	int			offset;
 	MMCacheTag	tag;
 
@@ -387,15 +385,9 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 	entry = (MMHashEntry *) hash_search(MMCacheHT,
 										(void *) &tag,
-										HASH_FIND, &found);
+										HASH_FIND, NULL);
 
 	if (entry == (MMHashEntry *) NULL)
-	{
-		LWLockRelease(MMCacheLock);
-		elog(FATAL, "mmread: hash table corrupt");
-	}
-
-	if (!found)
 	{
 		/* reading nonexistent pages is defined to fill them with zeroes */
 		LWLockRelease(MMCacheLock);
@@ -420,7 +412,6 @@ int
 mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 {
 	MMHashEntry *entry;
-	bool		found;
 	int			offset;
 	MMCacheTag	tag;
 
@@ -435,15 +426,9 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 	entry = (MMHashEntry *) hash_search(MMCacheHT,
 										(void *) &tag,
-										HASH_FIND, &found);
+										HASH_FIND, NULL);
 
 	if (entry == (MMHashEntry *) NULL)
-	{
-		LWLockRelease(MMCacheLock);
-		elog(FATAL, "mmread: hash table corrupt");
-	}
-
-	if (!found)
 	{
 		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmwrite: hash table missing requested page");
@@ -496,7 +481,6 @@ mmnblocks(Relation reln)
 {
 	MMRelTag	rtag;
 	MMRelHashEntry *rentry;
-	bool		found;
 	BlockNumber	nblocks;
 
 	if (reln->rd_rel->relisshared)
@@ -510,15 +494,9 @@ mmnblocks(Relation reln)
 
 	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
 											(void *) &rtag,
-											HASH_FIND, &found);
+											HASH_FIND, NULL);
 
-	if (rentry == (MMRelHashEntry *) NULL)
-	{
-		LWLockRelease(MMCacheLock);
-		elog(FATAL, "mmnblocks: rel cache hash table corrupt");
-	}
-
-	if (found)
+	if (rentry)
 		nblocks = rentry->mmrhe_nblocks;
 	else
 		nblocks = InvalidBlockNumber;

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.26 2001/10/01 05:36:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.27 2001/10/05 17:28:12 tgl Exp $
  *
  * ----------
  */
@@ -2990,14 +2990,14 @@ ri_InitHashTables(void)
 	ctl.keysize = sizeof(RI_QueryKey);
 	ctl.entrysize = sizeof(RI_QueryHashEntry);
 	ctl.hash = tag_hash;
-	ri_query_cache = hash_create(RI_INIT_QUERYHASHSIZE, &ctl,
-								 HASH_ELEM | HASH_FUNCTION);
+	ri_query_cache = hash_create("RI query cache", RI_INIT_QUERYHASHSIZE,
+								 &ctl, HASH_ELEM | HASH_FUNCTION);
 
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(RI_OpreqHashEntry);
 	ctl.hash = tag_hash;
-	ri_opreq_cache = hash_create(RI_INIT_OPREQHASHSIZE, &ctl,
-								 HASH_ELEM | HASH_FUNCTION);
+	ri_opreq_cache = hash_create("RI OpReq cache", RI_INIT_OPREQHASHSIZE,
+								 &ctl, HASH_ELEM | HASH_FUNCTION);
 }
 
 
@@ -3012,7 +3012,6 @@ static void *
 ri_FetchPreparedPlan(RI_QueryKey *key)
 {
 	RI_QueryHashEntry *entry;
-	bool		found;
 
 	/*
 	 * On the first call initialize the hashtable
@@ -3025,10 +3024,8 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
 	 */
 	entry = (RI_QueryHashEntry *) hash_search(ri_query_cache,
 											  (void *) key,
-											  HASH_FIND, &found);
+											  HASH_FIND, NULL);
 	if (entry == NULL)
-		elog(FATAL, "error in RI plan cache");
-	if (!found)
 		return NULL;
 	return entry->plan;
 }
@@ -3059,7 +3056,7 @@ ri_HashPreparedPlan(RI_QueryKey *key, void *plan)
 											  (void *) key,
 											  HASH_ENTER, &found);
 	if (entry == NULL)
-		elog(FATAL, "can't insert into RI plan cache");
+		elog(ERROR, "out of memory for RI plan cache");
 	entry->plan = plan;
 }
 
@@ -3235,16 +3232,14 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 	 */
 	entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
 											  (void *) &typeid,
-											  HASH_FIND, &found);
-	if (entry == NULL)
-		elog(FATAL, "error in RI operator cache");
+											  HASH_FIND, NULL);
 
 	/*
 	 * If not found, lookup the OPERNAME system cache for it to get the
 	 * func OID, then do the function manager lookup, and remember that
 	 * info.
 	 */
-	if (!found)
+	if (!entry)
 	{
 		HeapTuple	opr_tup;
 		Oid			opr_proc;
@@ -3278,7 +3273,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 												  (void *) &typeid,
 												  HASH_ENTER, &found);
 		if (entry == NULL)
-			elog(FATAL, "can't insert into RI operator cache");
+			elog(ERROR, "out of memory for RI operator cache");
 
 		entry->typeid = typeid;
 		memcpy(&(entry->oprfmgrinfo), &finfo, sizeof(FmgrInfo));

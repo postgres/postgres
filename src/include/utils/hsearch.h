@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.21 2001/10/01 05:36:17 tgl Exp $
+ * $Id: hsearch.h,v 1.22 2001/10/05 17:28:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@
 /*
  * HASHELEMENT is the private part of a hashtable entry.  The caller's data
  * follows the HASHELEMENT structure (on a MAXALIGN'd boundary).  The hash key
- * is expected to be at the start of the caller's hash entry structure.
+ * is expected to be at the start of the caller's hash entry data structure.
  */
 typedef struct HASHELEMENT
 {
@@ -85,10 +85,12 @@ typedef struct HASHHDR
 typedef struct HTAB
 {
 	HASHHDR	   *hctl;			/* shared control information */
-	long		(*hash) (void *key, int keysize); /* Hash Function */
 	HASHSEGMENT *dir;			/* directory of segment starts */
+	long		(*hash) (void *key, int keysize); /* Hash Function */
 	void	   *(*alloc) (Size);/* memory allocator */
 	MemoryContext hcxt;			/* memory context if default allocator used */
+	char	   *tabname;		/* table name (for error messages) */
+	bool		isshared;		/* true if table is in shared memory */
 } HTAB;
 
 /* Parameter data structure for hash_create */
@@ -147,9 +149,10 @@ typedef struct
 /*
  * prototypes for functions in dynahash.c
  */
-extern HTAB *hash_create(long nelem, HASHCTL *info, int flags);
+extern HTAB *hash_create(const char *tabname, long nelem,
+						 HASHCTL *info, int flags);
 extern void hash_destroy(HTAB *hashp);
-extern void hash_stats(char *where, HTAB *hashp);
+extern void hash_stats(const char *where, HTAB *hashp);
 extern void *hash_search(HTAB *hashp, void *keyPtr, HASHACTION action,
 			bool *foundPtr);
 extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);

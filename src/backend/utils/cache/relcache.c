@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.144 2001/10/01 05:36:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.145 2001/10/05 17:28:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,12 +48,12 @@
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
 #include "commands/trigger.h"
-#include "lib/hasht.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/fmgroids.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
 #include "utils/temprel.h"
@@ -144,38 +144,33 @@ do { \
 											   HASH_ENTER, \
 											   &found); \
 	if (namehentry == NULL) \
-		elog(FATAL, "can't insert into relation descriptor cache"); \
-	if (found && !IsBootstrapProcessingMode()) \
-		/* used to give notice -- now just keep quiet */ ; \
+		elog(ERROR, "out of memory for relation descriptor cache"); \
+	/* used to give notice if found -- now just keep quiet */ ; \
 	namehentry->reldesc = RELATION; \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										   (void *) &(RELATION->rd_id), \
 										   HASH_ENTER, \
 										   &found); \
 	if (idhentry == NULL) \
-		elog(FATAL, "can't insert into relation descriptor cache"); \
-	if (found && !IsBootstrapProcessingMode()) \
-		/* used to give notice -- now just keep quiet */ ; \
+		elog(ERROR, "out of memory for relation descriptor cache"); \
+	/* used to give notice if found -- now just keep quiet */ ; \
 	idhentry->reldesc = RELATION; \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
 										   (void *) &(RELATION->rd_node), \
 										   HASH_ENTER, \
 										   &found); \
 	if (nodentry == NULL) \
-		elog(FATAL, "can't insert into relation descriptor cache"); \
-	if (found && !IsBootstrapProcessingMode()) \
-		/* used to give notice -- now just keep quiet */ ; \
+		elog(ERROR, "out of memory for relation descriptor cache"); \
+	/* used to give notice if found -- now just keep quiet */ ; \
 	nodentry->reldesc = RELATION; \
 } while(0)
 
 #define RelationNameCacheLookup(NAME, RELATION) \
 do { \
-	RelNameCacheEnt *hentry; bool found; \
+	RelNameCacheEnt *hentry; \
 	hentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
-										   (void *) (NAME),HASH_FIND,&found); \
-	if (hentry == NULL) \
-		elog(FATAL, "error in CACHE"); \
-	if (found) \
+										   (void *) (NAME), HASH_FIND,NULL); \
+	if (hentry) \
 		RELATION = hentry->reldesc; \
 	else \
 		RELATION = NULL; \
@@ -184,12 +179,9 @@ do { \
 #define RelationIdCacheLookup(ID, RELATION) \
 do { \
 	RelIdCacheEnt *hentry; \
-	bool found; \
 	hentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
-										 (void *)&(ID),HASH_FIND, &found); \
-	if (hentry == NULL) \
-		elog(FATAL, "error in CACHE"); \
-	if (found) \
+										 (void *)&(ID), HASH_FIND,NULL); \
+	if (hentry) \
 		RELATION = hentry->reldesc; \
 	else \
 		RELATION = NULL; \
@@ -198,12 +190,9 @@ do { \
 #define RelationNodeCacheLookup(NODE, RELATION) \
 do { \
 	RelNodeCacheEnt *hentry; \
-	bool found; \
 	hentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
-									 (void *)&(NODE),HASH_FIND, &found); \
-	if (hentry == NULL) \
-		elog(FATAL, "error in CACHE"); \
-	if (found) \
+										   (void *)&(NODE), HASH_FIND,NULL); \
+	if (hentry) \
 		RELATION = hentry->reldesc; \
 	else \
 		RELATION = NULL; \
@@ -212,29 +201,22 @@ do { \
 #define RelationCacheDelete(RELATION) \
 do { \
 	RelNameCacheEnt *namehentry; RelIdCacheEnt *idhentry; \
-	char *relname; RelNodeCacheEnt *nodentry; bool found; \
+	char *relname; RelNodeCacheEnt *nodentry; \
 	relname = RelationGetPhysicalRelationName(RELATION); \
 	namehentry = (RelNameCacheEnt*)hash_search(RelationNameCache, \
 											   relname, \
-											   HASH_REMOVE, \
-											   &found); \
+											   HASH_REMOVE, NULL); \
 	if (namehentry == NULL) \
-		elog(FATAL, "can't delete from relation descriptor cache"); \
-	if (!found) \
 		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
 	idhentry = (RelIdCacheEnt*)hash_search(RelationIdCache, \
 										   (void *)&(RELATION->rd_id), \
-										   HASH_REMOVE, &found); \
+										   HASH_REMOVE, NULL); \
 	if (idhentry == NULL) \
-		elog(FATAL, "can't delete from relation descriptor cache"); \
-	if (!found) \
 		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
 	nodentry = (RelNodeCacheEnt*)hash_search(RelationNodeCache, \
 										   (void *)&(RELATION->rd_node), \
-										   HASH_REMOVE, &found); \
+										   HASH_REMOVE, NULL); \
 	if (nodentry == NULL) \
-		elog(FATAL, "can't delete from relation descriptor cache"); \
-	if (!found) \
 		elog(NOTICE, "trying to delete a reldesc that does not exist."); \
 } while(0)
 
@@ -248,8 +230,6 @@ static void RelationReloadClassinfo(Relation relation);
 #endif	 /* ENABLE_REINDEX_NAILED_RELATIONS */
 static void RelationFlushRelation(Relation relation);
 static Relation RelationNameCacheGetRelation(const char *relationName);
-static void RelationCacheInvalidateWalker(Relation *relationPtr, Datum listp);
-static void RelationCacheAbortWalker(Relation *relationPtr, Datum dummy);
 static void init_irels(void);
 static void write_irels(void);
 
@@ -1842,56 +1822,54 @@ RelationFlushIndexes(Relation *r,
  *
  *	 We do this in two phases: the first pass deletes deletable items, and
  *	 the second one rebuilds the rebuildable items.  This is essential for
- *	 safety, because HashTableWalk only copes with concurrent deletion of
+ *	 safety, because hash_seq_search only copes with concurrent deletion of
  *	 the element it is currently visiting.	If a second SI overflow were to
  *	 occur while we are walking the table, resulting in recursive entry to
  *	 this routine, we could crash because the inner invocation blows away
  *	 the entry next to be visited by the outer scan.  But this way is OK,
  *	 because (a) during the first pass we won't process any more SI messages,
- *	 so HashTableWalk will complete safely; (b) during the second pass we
+ *	 so hash_seq_search will complete safely; (b) during the second pass we
  *	 only hold onto pointers to nondeletable entries.
  */
 void
 RelationCacheInvalidate(void)
 {
+	HASH_SEQ_STATUS status;
+	RelNameCacheEnt *namehentry;
+	Relation	relation;
 	List	   *rebuildList = NIL;
 	List	   *l;
 
 	/* Phase 1 */
-	HashTableWalk(RelationNameCache,
-				  (HashtFunc) RelationCacheInvalidateWalker,
-				  PointerGetDatum(&rebuildList));
+	hash_seq_init(&status, RelationNameCache);
+
+	while ((namehentry = (RelNameCacheEnt *) hash_seq_search(&status)) != NULL)
+	{
+		relation = namehentry->reldesc;
+
+		/* Ignore xact-local relations, since they are never SI targets */
+		if (relation->rd_myxactonly)
+			continue;
+
+		if (RelationHasReferenceCountZero(relation))
+		{
+			/* Delete this entry immediately */
+			RelationClearRelation(relation, false);
+		}
+		else
+		{
+			/* Add entry to list of stuff to rebuild in second pass */
+			rebuildList = lcons(relation, rebuildList);
+		}
+	}
 
 	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
 	foreach(l, rebuildList)
 	{
-		Relation	relation = (Relation) lfirst(l);
-
+		relation = (Relation) lfirst(l);
 		RelationClearRelation(relation, true);
 	}
 	freeList(rebuildList);
-}
-
-static void
-RelationCacheInvalidateWalker(Relation *relationPtr, Datum listp)
-{
-	Relation	relation = *relationPtr;
-	List	  **rebuildList = (List **) DatumGetPointer(listp);
-
-	/* We can ignore xact-local relations, since they are never SI targets */
-	if (relation->rd_myxactonly)
-		return;
-
-	if (RelationHasReferenceCountZero(relation))
-	{
-		/* Delete this entry immediately */
-		RelationClearRelation(relation, false);
-	}
-	else
-	{
-		/* Add entry to list of stuff to rebuild in second pass */
-		*rebuildList = lcons(relation, *rebuildList);
-	}
 }
 
 /*
@@ -1910,20 +1888,20 @@ RelationCacheInvalidateWalker(Relation *relationPtr, Datum listp)
 void
 RelationCacheAbort(void)
 {
-	HashTableWalk(RelationNameCache,
-				  (HashtFunc) RelationCacheAbortWalker,
-				  0);
-}
+	HASH_SEQ_STATUS status;
+	RelNameCacheEnt *namehentry;
 
-static void
-RelationCacheAbortWalker(Relation *relationPtr, Datum dummy)
-{
-	Relation	relation = *relationPtr;
+	hash_seq_init(&status, RelationNameCache);
 
-	if (relation->rd_isnailed)
-		RelationSetReferenceCount(relation, 1);
-	else
-		RelationSetReferenceCount(relation, 0);
+	while ((namehentry = (RelNameCacheEnt *) hash_seq_search(&status)) != NULL)
+	{
+		Relation	relation = namehentry->reldesc;
+
+		if (relation->rd_isnailed)
+			RelationSetReferenceCount(relation, 1);
+		else
+			RelationSetReferenceCount(relation, 0);
+	}
 }
 
 /*
@@ -2095,19 +2073,20 @@ RelationCacheInitialize(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
 	ctl.entrysize = sizeof(RelNameCacheEnt);
-	RelationNameCache = hash_create(INITRELCACHESIZE, &ctl, HASH_ELEM);
+	RelationNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
+									&ctl, HASH_ELEM);
 
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(RelIdCacheEnt);
 	ctl.hash = tag_hash;
-	RelationIdCache = hash_create(INITRELCACHESIZE, &ctl,
-								  HASH_ELEM | HASH_FUNCTION);
+	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
+								  &ctl, HASH_ELEM | HASH_FUNCTION);
 
 	ctl.keysize = sizeof(RelFileNode);
 	ctl.entrysize = sizeof(RelNodeCacheEnt);
 	ctl.hash = tag_hash;
-	RelationNodeCache = hash_create(INITRELCACHESIZE, &ctl,
-									HASH_ELEM | HASH_FUNCTION);
+	RelationNodeCache = hash_create("Relcache by rnode", INITRELCACHESIZE,
+									&ctl, HASH_ELEM | HASH_FUNCTION);
 
 	/*
 	 * initialize the cache with pre-made relation descriptors for some of
@@ -2187,19 +2166,21 @@ CreateDummyCaches(void)
 	MemSet(&ctl, 0, sizeof(ctl));
 	ctl.keysize = sizeof(NameData);
 	ctl.entrysize = sizeof(RelNameCacheEnt);
-	RelationNameCache = hash_create(INITRELCACHESIZE, &ctl, HASH_ELEM);
+	RelationNameCache = hash_create("Relcache by name", INITRELCACHESIZE,
+									&ctl, HASH_ELEM);
 
 	ctl.keysize = sizeof(Oid);
 	ctl.entrysize = sizeof(RelIdCacheEnt);
 	ctl.hash = tag_hash;
-	RelationIdCache = hash_create(INITRELCACHESIZE, &ctl,
-								  HASH_ELEM | HASH_FUNCTION);
+	RelationIdCache = hash_create("Relcache by OID", INITRELCACHESIZE,
+								  &ctl, HASH_ELEM | HASH_FUNCTION);
 
 	ctl.keysize = sizeof(RelFileNode);
 	ctl.entrysize = sizeof(RelNodeCacheEnt);
 	ctl.hash = tag_hash;
-	RelationNodeCache = hash_create(INITRELCACHESIZE, &ctl,
-									HASH_ELEM | HASH_FUNCTION);
+	RelationNodeCache = hash_create("Relcache by rnode", INITRELCACHESIZE,
+									&ctl, HASH_ELEM | HASH_FUNCTION);
+
 	MemoryContextSwitchTo(oldcxt);
 }
 

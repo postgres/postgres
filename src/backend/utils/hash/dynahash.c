@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.37 2001/10/01 05:36:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.38 2001/10/05 17:28:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ static bool	dir_realloc(HTAB *hashp);
 static bool	expand_table(HTAB *hashp);
 static bool	hdefault(HTAB *hashp);
 static bool	init_htab(HTAB *hashp, long nelem);
+static void hash_corrupted(HTAB *hashp);
 
 
 /*
@@ -100,7 +101,7 @@ static long hash_accesses,
 /************************** CREATE ROUTINES **********************/
 
 HTAB *
-hash_create(long nelem, HASHCTL *info, int flags)
+hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 {
 	HTAB	   *hashp;
 	HASHHDR	   *hctl;
@@ -125,6 +126,9 @@ hash_create(long nelem, HASHCTL *info, int flags)
 		return NULL;
 	MemSet(hashp, 0, sizeof(HTAB));
 
+	hashp->tabname = (char *) MEM_ALLOC(strlen(tabname) + 1);
+	strcpy(hashp->tabname, tabname);
+
 	if (flags & HASH_FUNCTION)
 		hashp->hash = info->hash;
 	else
@@ -140,6 +144,7 @@ hash_create(long nelem, HASHCTL *info, int flags)
 		hashp->dir = info->dir;
 		hashp->alloc = info->alloc;
 		hashp->hcxt = NULL;
+		hashp->isshared = true;
 
 		/* hash table already exists, we're just attaching to it */
 		if (flags & HASH_ATTACH)
@@ -152,6 +157,7 @@ hash_create(long nelem, HASHCTL *info, int flags)
 		hashp->dir = NULL;
 		hashp->alloc = MEM_ALLOC;
 		hashp->hcxt = DynaHashCxt;
+		hashp->isshared = false;
 	}
 
 	if (!hashp->hctl)
@@ -434,12 +440,13 @@ hash_destroy(HTAB *hashp)
 		 * by the caller of hash_create()).
 		 */
 		MEM_FREE(hashp->hctl);
+		MEM_FREE(hashp->tabname);
 		MEM_FREE(hashp);
 	}
 }
 
 void
-hash_stats(char *where, HTAB *hashp)
+hash_stats(const char *where, HTAB *hashp)
 {
 #if HASH_STATISTICS
 
@@ -476,24 +483,37 @@ call_hash(HTAB *hashp, void *k)
 	return (uint32) bucket;
 }
 
-/*
+/*----------
  * hash_search -- look up key in table and perform action
  *
- * action is one of HASH_FIND/HASH_ENTER/HASH_REMOVE
+ * action is one of:
+ *		HASH_FIND: look up key in table
+ *		HASH_ENTER: look up key in table, creating entry if not present
+ *		HASH_REMOVE: look up key in table, remove entry if present
+ *		HASH_FIND_SAVE: look up key in table, also save in static var
+ *		HASH_REMOVE_SAVED: remove entry saved by HASH_FIND_SAVE
  *
- * RETURNS: NULL if table is corrupted, a pointer to the element
- *		found/removed/entered if applicable, TRUE otherwise.
- *		foundPtr is TRUE if we found an element in the table
- *		(FALSE if we entered one).
+ * Return value is a pointer to the element found/entered/removed if any,
+ * or NULL if no match was found.  (NB: in the case of the REMOVE actions,
+ * the result is a dangling pointer that shouldn't be dereferenced!)
+ * A NULL result for HASH_ENTER implies we ran out of memory.
+ *
+ * If foundPtr isn't NULL, then *foundPtr is set TRUE if we found an
+ * existing entry in the table, FALSE otherwise.  This is needed in the
+ * HASH_ENTER case, but is redundant with the return value otherwise.
+ *
+ * The HASH_FIND_SAVE/HASH_REMOVE_SAVED interface is a hack to save one
+ * table lookup in a find/process/remove scenario.  Note that no other
+ * addition or removal in the table can safely happen in between.
+ *----------
  */
 void *
 hash_search(HTAB *hashp,
 			void *keyPtr,
-			HASHACTION action,	/* HASH_FIND / HASH_ENTER / HASH_REMOVE
-								 * HASH_FIND_SAVE / HASH_REMOVE_SAVED */
+			HASHACTION action,
 			bool *foundPtr)
 {
-	HASHHDR	   *hctl;
+	HASHHDR	   *hctl = hashp->hctl;
 	uint32		bucket;
 	long		segment_num;
 	long		segment_ndx;
@@ -507,21 +527,14 @@ hash_search(HTAB *hashp,
 		HASHBUCKET *prevBucketPtr;
 	}			saveState;
 
-	Assert(hashp);
-	Assert(keyPtr);
-	Assert((action == HASH_FIND) ||
-		   (action == HASH_REMOVE) ||
-		   (action == HASH_ENTER) ||
-		   (action == HASH_FIND_SAVE) ||
-		   (action == HASH_REMOVE_SAVED));
-
-	hctl = hashp->hctl;
-
 #if HASH_STATISTICS
 	hash_accesses++;
-	hashp->hctl->accesses++;
+	hctl->accesses++;
 #endif
 
+	/*
+	 * Do the initial lookup (or recall result of prior lookup)
+	 */
 	if (action == HASH_REMOVE_SAVED)
 	{
 		currBucket = saveState.currBucket;
@@ -540,7 +553,8 @@ hash_search(HTAB *hashp,
 
 		segp = hashp->dir[segment_num];
 
-		Assert(segp);
+		if (segp == NULL)
+			hash_corrupted(hashp);
 
 		prevBucketPtr = &segp[segment_ndx];
 		currBucket = *prevBucketPtr;
@@ -556,23 +570,32 @@ hash_search(HTAB *hashp,
 			currBucket = *prevBucketPtr;
 #if HASH_STATISTICS
 			hash_collisions++;
-			hashp->hctl->collisions++;
+			hctl->collisions++;
 #endif
 		}
 	}
 
-	/*
-	 * if we found an entry or if we weren't trying to insert, we're done
-	 * now.
-	 */
-	*foundPtr = (bool) (currBucket != NULL);
+	if (foundPtr)
+		*foundPtr = (bool) (currBucket != NULL);
 
+	/*
+	 * OK, now what?
+	 */
 	switch (action)
 	{
-		case HASH_ENTER:
+		case HASH_FIND:
 			if (currBucket != NULL)
 				return (void *) ELEMENTKEY(currBucket);
-			break;
+			return NULL;
+
+		case HASH_FIND_SAVE:
+			if (currBucket != NULL)
+			{
+				saveState.currBucket = currBucket;
+				saveState.prevBucketPtr = prevBucketPtr;
+				return (void *) ELEMENTKEY(currBucket);
+			}
+			return NULL;
 
 		case HASH_REMOVE:
 		case HASH_REMOVE_SAVED:
@@ -595,78 +618,57 @@ hash_search(HTAB *hashp,
 				 */
 				return (void *) ELEMENTKEY(currBucket);
 			}
-			return (void *) TRUE;
+			return NULL;
 
-		case HASH_FIND:
+		case HASH_ENTER:
+			/* Return existing element if found, else create one */
 			if (currBucket != NULL)
 				return (void *) ELEMENTKEY(currBucket);
-			return (void *) TRUE;
 
-		case HASH_FIND_SAVE:
-			if (currBucket != NULL)
+			/* get the next free element */
+			currBucket = hctl->freeList;
+			if (currBucket == NULL)
 			{
-				saveState.currBucket = currBucket;
-				saveState.prevBucketPtr = prevBucketPtr;
-				return (void *) ELEMENTKEY(currBucket);
+				/* no free elements.  allocate another chunk of buckets */
+				if (!element_alloc(hashp))
+					return NULL; /* out of memory */
+				currBucket = hctl->freeList;
+				Assert(currBucket != NULL);
 			}
-			return (void *) TRUE;
 
-		default:
-			/* can't get here */
-			return NULL;
+			hctl->freeList = currBucket->link;
+
+			/* link into hashbucket chain */
+			*prevBucketPtr = currBucket;
+			currBucket->link = NULL;
+
+			/* copy key into record */
+			memcpy(ELEMENTKEY(currBucket), keyPtr, hctl->keysize);
+
+			/* caller is expected to fill the data field on return */
+
+			/* Check if it is time to split the segment */
+			if (++hctl->nentries / (hctl->max_bucket + 1) > hctl->ffactor)
+			{
+				/*
+				 * NOTE: failure to expand table is not a fatal error, it just
+				 * means we have to run at higher fill factor than we wanted.
+				 */
+				expand_table(hashp);
+			}
+
+			return (void *) ELEMENTKEY(currBucket);
 	}
 
-	/*
-	 * If we got here, then we didn't find the element and we have to
-	 * insert it into the hash table
-	 */
-	Assert(currBucket == NULL);
+	elog(ERROR, "hash_search: bogus action %d", (int) action);
 
-	/* get the next free bucket */
-	currBucket = hctl->freeList;
-	if (currBucket == NULL)
-	{
-		/* no free elements.  allocate another chunk of buckets */
-		if (!element_alloc(hashp))
-			return NULL;
-		currBucket = hctl->freeList;
-	}
-	Assert(currBucket != NULL);
-
-	hctl->freeList = currBucket->link;
-
-	/* link into chain */
-	*prevBucketPtr = currBucket;
-	currBucket->link = NULL;
-
-	/* copy key into record */
-	memcpy(ELEMENTKEY(currBucket), keyPtr, hctl->keysize);
-
-	/*
-	 * let the caller initialize the data field after hash_search returns.
-	 */
-
-	/*
-	 * Check if it is time to split the segment
-	 */
-	if (++hctl->nentries / (hctl->max_bucket + 1) > hctl->ffactor)
-	{
-
-		/*
-		 * NOTE: failure to expand table is not a fatal error, it just
-		 * means we have to run at higher fill factor than we wanted.
-		 */
-		expand_table(hashp);
-	}
-
-	return (void *) ELEMENTKEY(currBucket);
+	return NULL;				/* keep compiler quiet */
 }
 
 /*
  * hash_seq_init/_search
  *			Sequentially search through hash table and return
- *			all the elements one by one, return NULL on error and
- *			return (void *) TRUE in the end.
+ *			all the elements one by one, return NULL when no more.
  *
  * NOTE: caller may delete the returned element before continuing the scan.
  * However, deleting any other element while the scan is in progress is
@@ -717,8 +719,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 		 */
 		segp = hashp->dir[segment_num];
 		if (segp == NULL)
-			/* this is probably an error */
-			return NULL;
+			hash_corrupted(hashp);
 
 		/*
 		 * now find the right index into the segment for the first item in
@@ -734,7 +735,7 @@ hash_seq_search(HASH_SEQ_STATUS *status)
 			++status->curBucket;
 	}
 
-	return (void *) TRUE;		/* out of buckets */
+	return NULL;				/* out of buckets */
 }
 
 
@@ -921,6 +922,20 @@ element_alloc(HTAB *hashp)
 	}
 
 	return true;
+}
+
+/* complain when we have detected a corrupted hashtable */
+static void
+hash_corrupted(HTAB *hashp)
+{
+	/*
+	 * If the corruption is in a shared hashtable, we'd better force a
+	 * systemwide restart.  Otherwise, just shut down this one backend.
+	 */
+	if (hashp->isshared)
+		elog(STOP, "Hash table '%s' corrupted", hashp->tabname);
+	else
+		elog(FATAL, "Hash table '%s' corrupted", hashp->tabname);
 }
 
 /* calculate ceil(log base 2) of num */
