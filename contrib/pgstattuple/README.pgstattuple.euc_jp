@@ -1,4 +1,4 @@
-$Id: README.pgstattuple.euc_jp,v 1.3 2002/08/23 08:19:49 ishii Exp $
+$Id: README.pgstattuple.euc_jp,v 1.4 2002/09/04 02:54:59 ishii Exp $
 
 pgstattuple README		2002/08/22 石井達夫
 
@@ -52,16 +52,15 @@ free_percent		-- 再利用可能な領域．table_lenに対するfree_spaceの比率．
 
    pgstattupleの呼び出し形式は以下です．
 
-   CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS SETOF pgstattuple_view
+   CREATE OR REPLACE FUNCTION pgstattuple(text) RETURNS pgstattuple_type
      AS 'MODULE_PATHNAME', 'pgstattuple'
      LANGUAGE 'c' WITH (isstrict);
 
    第一引数: テーブル名
 
-   関数の戻りはpgstattuple_view型です．また，pgstattupleは1行しか行を
-   返しません．
+   関数の戻りはpgstattuple_type型です．
 
-   なお，pgstattupleはテーブルにAccessShareLockしかかけないので，
+   pgstattupleはテーブルにAccessShareLockしかかけないので，
    pgstattuple を実行中に該当テーブルに更新や削除が発生すると，正しく
    ない結果を返す可能性があります．
 
@@ -75,6 +74,11 @@ free_percent		-- 再利用可能な領域．table_lenに対するfree_spaceの比率．
    も責任を負いません．
 
 5. 改訂履歴
+
+   2002/09/04
+
+	SRF変更に伴い，Tom Lane	が修正インターフェイスの修正を行った．
+	そのことをこのREADMEにも反映．
 
    2002/08/23
 
