@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.276 2004/03/02 06:45:05 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.277 2004/03/04 07:32:01 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -541,7 +541,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst
 %type  <str>	inf_val_list inf_col_list using_descriptor into_descriptor 
 %type  <str>	ecpg_into_using prepared_name struct_union_type_with_symbol
-%type  <str>	ECPGunreserved ECPGunreserved_interval
+%type  <str>	ECPGunreserved ECPGunreserved_interval cvariable
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -4220,7 +4220,7 @@ connection_target: database_name opt_server opt_port
 		}
 		;
 
-db_prefix: ident CVARIABLE
+db_prefix: ident cvariable
 		{
 			if (strcmp($2, "postgresql") != 0 && strcmp($2, "postgres") != 0)
 			{
@@ -4311,7 +4311,7 @@ user_name: UserId
 		}
 		;
 
-char_variable: CVARIABLE
+char_variable: cvariable
 		{
 			/* check if we have a char variable */
 			struct variable *p = find_variable($1);
@@ -5241,14 +5241,14 @@ ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR quoted_ident_stringvar
  * read from descriptor
  */
 
-ECPGGetDescHeaderItem: CVARIABLE '=' desc_header_item
+ECPGGetDescHeaderItem: cvariable '=' desc_header_item
 			{ push_assignment($1, $3); }
 		;
 
 desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
 		;
 
-ECPGGetDescItem: CVARIABLE '=' descriptor_item	{ push_assignment($1, $3); };
+ECPGGetDescItem: cvariable '=' descriptor_item	{ push_assignment($1, $3); };
 
 descriptor_item:	SQL_CARDINALITY		{ $$ = ECPGd_cardinality; }
 		| SQL_DATA						{ $$ = ECPGd_data; }
@@ -5280,7 +5280,7 @@ ECPGGetDescriptorHeader:	GET SQL_DESCRIPTOR quoted_ident_stringvar
 			{  $$ = $3; }
 		;
 
-ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE CVARIABLE ECPGGetDescItems
+ECPGGetDescriptor:	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE cvariable ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
 		|	GET SQL_DESCRIPTOR quoted_ident_stringvar SQL_VALUE Iconst ECPGGetDescItems
 			{  $$.str = $5; $$.name = $3; }
@@ -6047,14 +6047,14 @@ c_args: /*EMPTY*/		{ $$ = EMPTY; }
 		| c_list		{ $$ = $1; }
 		;
 
-coutputvariable: CVARIABLE indicator
+coutputvariable: cvariable indicator
 			{ add_variable_to_head(&argsresult, find_variable($1), find_variable($2)); }
-		| CVARIABLE
+		| cvariable
 			{ add_variable_to_head(&argsresult, find_variable($1), &no_indicator); }
 		;
 
 
-civarind: CVARIABLE indicator
+civarind: cvariable indicator
 		{
 			if (find_variable($2)->type->type == ECPGt_array)
 				mmerror(PARSE_ERROR, ET_ERROR, "arrays of indicators are not allowed on input");
@@ -6064,18 +6064,47 @@ civarind: CVARIABLE indicator
 		}
 		;
 
-civar: CVARIABLE
+civar: cvariable
 			{
 				add_variable_to_head(&argsinsert, find_variable($1), &no_indicator);
 				$$ = create_questionmarks($1, false);
 			}
 		;
 
-indicator: CVARIABLE				{ check_indicator((find_variable($1))->type); $$ = $1; }
-		| SQL_INDICATOR CVARIABLE	{ check_indicator((find_variable($2))->type); $$ = $2; }
+indicator: cvariable				{ check_indicator((find_variable($1))->type); $$ = $1; }
+		| SQL_INDICATOR cvariable	{ check_indicator((find_variable($2))->type); $$ = $2; }
 		| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 		;
 
+cvariable:	CVARIABLE 
+		{
+			/* As long as multidimensional arrays are not implemented we have to check for those here */
+			char *ptr = $1;
+			int brace_open=0, brace = false;
+			
+			for (; *ptr; ptr++)
+			{
+				switch (*ptr)
+				{
+					case '[':	if (brace)
+							{
+								mmerror(PARSE_ERROR, ET_FATAL, "No multidimensional array support for simple data types");
+							}
+							brace_open++;
+							break;
+					case ']': 	brace_open--;
+							if (brace_open == 0) brace = true;
+							break;
+					case '\t':
+					case ' ':	break;
+					default:	if (brace_open == 0) brace = false;
+							break;
+				}
+			}
+
+			$$ = $1;
+		}
+		;
 ident: IDENT					{ $$ = $1; }
 		| CSTRING			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		;
