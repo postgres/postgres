@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.34 2003/07/31 19:20:41 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.35 2003/08/07 14:36:31 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -428,7 +428,7 @@ fi
 # Set up SQL shell for the test.
 # ----------
 
-PSQL="$bindir/psql -q -X $psql_options"
+PSQL="$bindir/psql -a -q -X $psql_options"
 
 
 # ----------
@@ -552,22 +552,13 @@ do
         # Run a single test
         formatted=`echo $1 | awk '{printf "%-20.20s", $1;}'`
         $ECHO_N "test $formatted ... $ECHO_C"
-
-        (cat <<EOF
-\\set ECHO all
-EOF
-	 cat "$inputdir/sql/$1.sql") | \
-        $PSQL -d "$dbname" >"$outputdir/results/$1.out" 2>&1
+        $PSQL -d "$dbname" <"$inputdir/sql/$1.sql" >"$outputdir/results/$1.out" 2>&1
     else
         # Start a parallel group
         $ECHO_N "parallel group ($# tests): $ECHO_C"
         for name do
             ( 
-	      (cat <<EOF
-\\set ECHO all
-EOF
-	       cat "$inputdir/sql/$name.sql") | \
-	      $PSQL -d $dbname >"$outputdir/results/$name.out" 2>&1
+	      $PSQL -d "$dbname" <"$inputdir/sql/$name.sql" >"$outputdir/results/$name.out" 2>&1
               $ECHO_N " $name$ECHO_C"
             ) &
         done
