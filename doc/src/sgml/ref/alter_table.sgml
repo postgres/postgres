@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.15 2000/10/05 19:48:17 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.16 2000/12/20 03:19:24 momjian Exp $
 Postgres documentation
 -->
 
@@ -36,6 +36,8 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     ADD <replaceable class="PARAMETER">table constraint definition</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
+	OWNER TO <replaceable class="PARAMETER">new owner</replaceable> 
   </synopsis>
 
   <refsect2 id="R2-SQL-ALTERTABLE-1">
@@ -100,6 +102,16 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><replaceable class="PARAMETER">New user </replaceable></term>
+      <listitem>
+       <para>
+	The userid of the new owner of the table.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect2>
@@ -158,6 +170,8 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
    adds a new constraint to the table using the same syntax as <xref
    linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">. 
+   The OWNER clause chnages the owner of the table to the user <replaceable class="PARAMETER">
+   new user</replaceable>.
   </para>
 
   <para>
