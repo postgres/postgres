@@ -59,6 +59,8 @@ DROP FUNCTION gtsvector_penalty(internal,internal,internal);
 DROP FUNCTION gtsvector_picksplit(internal, internal);
 DROP FUNCTION gtsvector_union(internal, internal);
 DROP FUNCTION reset_tsearch();
+DROP FUNCTION stat(text);
+DROP FUNCTION stat(text,stat);
 DROP FUNCTION tsearch2() CASCADE;
 DROP FUNCTION _get_parser_from_curcfg();
 

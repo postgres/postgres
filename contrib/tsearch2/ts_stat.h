@@ -20,10 +20,11 @@ typedef struct
 {
 	int4		len;
 	int4		size;
+	int4		weight;
 	char		data[1];
 }	tsstat;
 
-#define STATHDRSIZE (sizeof(int4)*2)
+#define STATHDRSIZE (sizeof(int4)*4)
 #define CALCSTATSIZE(x, lenstr) ( x * sizeof(StatEntry) + STATHDRSIZE + lenstr )
 #define STATPTR(x)	( (StatEntry*) ( (char*)x + STATHDRSIZE ) )
 #define STATSTRPTR(x)	( (char*)x + STATHDRSIZE + ( sizeof(StatEntry) * ((tsvector*)x)->size ) )

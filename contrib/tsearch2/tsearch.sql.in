@@ -652,6 +652,12 @@ CREATE FUNCTION stat(text)
 	language 'C'
 	with (isstrict);
 
+CREATE FUNCTION stat(text,text)
+	returns setof statinfo
+	as 'MODULE_PATHNAME', 'ts_stat'
+	language 'C'
+	with (isstrict);
+
 --reset - just for debuging
 CREATE FUNCTION reset_tsearch()
         returns void

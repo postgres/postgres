@@ -782,6 +782,7 @@ select rank(' a:1 s:2 d g'::tsvector, 'a & s');
 (1 row)
 
 insert into test_tsvector (t) values ('foo bar foo the over foo qq bar');
+drop trigger tsvectorupdate on test_tsvector;
 select * from stat('select a from test_tsvector') order by ndoc desc, nentry desc, word;
    word    | ndoc | nentry 
 -----------+------+--------
@@ -1933,6 +1934,55 @@ select * from stat('select a from test_tsvector') order by ndoc desc, nentry des
  qwerti    |    1 |      1
 (1146 rows)
 
+insert into test_tsvector values ('1', 'a:1a,2,3b b:5a,6a,7c,8');
+insert into test_tsvector values ('1', 'a:1a,2,3c b:5a,6b,7c,8b');
+select * from stat('select a from test_tsvector','a') order by ndoc desc, nentry desc, word;
+ word | ndoc | nentry 
+------+------+--------
+ b    |    2 |      3
+ a    |    2 |      2
+(2 rows)
+
+select * from stat('select a from test_tsvector','b') order by ndoc desc, nentry desc, word;
+ word | ndoc | nentry 
+------+------+--------
+ b    |    1 |      2
+ a    |    1 |      1
+(2 rows)
+
+select * from stat('select a from test_tsvector','c') order by ndoc desc, nentry desc, word;
+ word | ndoc | nentry 
+------+------+--------
+ b    |    2 |      2
+ a    |    1 |      1
+(2 rows)
+
+select * from stat('select a from test_tsvector','d') order by ndoc desc, nentry desc, word;
+   word    | ndoc | nentry 
+-----------+------+--------
+ a         |    2 |      2
+ copyright |    2 |      2
+ foo       |    1 |      3
+ bar       |    1 |      2
+ 345       |    1 |      1
+ b         |    1 |      1
+ qq        |    1 |      1
+ qwerti    |    1 |      1
+(8 rows)
+
+select * from stat('select a from test_tsvector','ad') order by ndoc desc, nentry desc, word;
+   word    | ndoc | nentry 
+-----------+------+--------
+ a         |    2 |      4
+ b         |    2 |      4
+ copyright |    2 |      2
+ foo       |    1 |      3
+ bar       |    1 |      2
+ 345       |    1 |      1
+ qq        |    1 |      1
+ qwerti    |    1 |      1
+(8 rows)
+
 select reset_tsearch();
 NOTICE:  TSearch cache cleaned
  reset_tsearch 
@@ -2092,7 +2142,6 @@ select * from ts_debug('Tsearch module for PostgreSQL 7.3.3');
 (5 rows)
 
 --check ordering
-drop trigger tsvectorupdate on test_tsvector;
 insert into test_tsvector values (null, null);
 select a is null, a from test_tsvector order by a;
  ?column? |                                                                                                                                                                                                                                                                              a                                                                                                                                                                                                                                                                              
@@ -2108,6 +2157,8 @@ select a is null, a from test_tsvector order by a;
  f        | 
  f        | '345':1 'qwerti':2 'copyright':3
  f        | 'qq':7 'bar':2,8 'foo':1,3,6 'copyright':9
+ f        | 'a':1A,2,3C 'b':5A,6B,7C,8B
+ f        | 'a':1A,2,3B 'b':5A,6A,7C,8
  f        | '7w' 'ch' 'd7' 'eo' 'gw' 'i4' 'lq' 'o6' 'qt' 'y0'
  f        | 'ar' 'ei' 'kq' 'ma' 'qa' 'qh' 'qq' 'qz' 'rx' 'st'
  f        | 'gs' 'i6' 'i9' 'j2' 'l0' 'oq' 'qx' 'sc' 'xe' 'yu'
@@ -2609,5 +2660,5 @@ select a is null, a from test_tsvector order by a;
  f        | '1b' '42' 'a7' 'ab' 'ak' 'ap' 'at' 'av' 'ay' 'b0' 'b9' 'bb' 'bp' 'bu' 'bz' 'cq' 'da' 'de' 'dn' 'e0' 'eb' 'ef' 'eg' 'ek' 'eq' 'er' 'eu' 'ey' 'fn' 'ft' 'gg' 'h4' 'hk' 'hl' 'i7' 'ig' 'ik' 'ip' 'ir' 'iu' 'iw' 'jr' 'jw' 'jx' 'kg' 'lc' 'lg' 'm0' 'na' 'np' 'om' 'on' 'oz' 'pg' 'pn' 'ps' 'pt' 'pz' 'q3' 'q6' 'qa' 'qb' 'ql' 'qq' 'qt' 'qv' 'qw' 'qy' 'r8' 'rf' 'ri' 'rk' 'rl' 'rw' 'sg' 'si' 'sp' 'sw' 'ta' 'th' 'ua' 'uj' 'uu' 'uv' 'uz' 'vj' 'vk' 'vm' 'wc' 'wf' 'wh' 'wn' 'wo' 'ww' 'xb' 'xk' 'xt' 'xw' 'y7' 'ye' 'yl' 'yt' 'yw' 'z4' 'z7' 'zc' 'zw'
  f        | '1h' '3s' 'ab' 'ae' 'ax' 'b1' 'bz' 'cy' 'dk' 'dq' 'ds' 'du' 'e8' 'ef' 'ej' 'ek' 'ex' 'f1' 'fe' 'ff' 'fn' 'fo' 'ft' 'fx' 'ge' 'go' 'gz' 'h6' 'hz' 'i2' 'iv' 'iy' 'j5' 'j6' 'ke' 'kf' 'lh' 'lr' 'mc' 'mj' 'na' 'ng' 'oh' 'om' 'oy' 'p2' 'pi' 'pk' 'py' 'q3' 'qb' 'qc' 'qg' 'qn' 'qo' 'qq' 'qu' 'qw' 'qx' 'qy' 'qz' 'r1' 'rk' 'rl' 'rq' 'rs' 'rt' 'ry' 'rz' 'sk' 'sl' 'so' 't9' 'td' 'te' 'tn' 'tw' 'tz' 'ud' 'uk' 'uo' 'uq' 'uw' 'ux' 'uy' 'v1' 'vg' 'vq' 'w4' 'w9' 'wa' 'wg' 'wj' 'wm' 'wo' 'wr' 'ww' 'wy' 'xf' 'xg' 'y9' 'yh' 'yi' 'yk' 'ym' 'yq' 'yv' 'zm'
  t        | 
-(512 rows)
+(514 rows)
 
