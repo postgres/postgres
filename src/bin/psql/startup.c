@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.41 2000/11/27 02:20:36 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.42 2001/01/23 22:46:14 petere Exp $
  */
 #include "postgres.h"
 
@@ -368,14 +368,14 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 	memset(options, 0, sizeof *options);
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "aAc:d:eEf:F:h:Hlno:p:P:qR:sStT:uU:v:VWxX?", long_options, &optindex)) != -1)
 #else							/* not HAVE_GETOPT_LONG */
 
 	/*
 	 * Be sure to leave the '-' in here, so we can catch accidental long
 	 * options.
 	 */
-	while ((c = getopt(argc, argv, "aAc:d:eEf:F:lh:Hno:p:P:qRsStT:uU:v:VWxX?-")) != -1)
+	while ((c = getopt(argc, argv, "aAc:d:eEf:F:h:Hlno:p:P:qR:sStT:uU:v:VWxX?-")) != -1)
 #endif	 /* not HAVE_GETOPT_LONG */
 	{
 		switch (c)
