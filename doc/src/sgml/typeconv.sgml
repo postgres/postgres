@@ -458,6 +458,17 @@ this step.)
 </para></step>
 <step performance="required">
 <para>
+If no exact match appears in the catalog, see whether the function call appears
+to be a trivial type coercion request.  This happens if the function call
+has just one argument and the function name is the same as the (internal)
+name of some data type.  Furthermore, the function argument must be either
+an unknown-type literal or a type that is binary-compatible with the named
+data type.  When these conditions are met, the function argument is coerced
+to the named data type without any explicit function call.
+</para>
+</step>
+<step performance="required">
+<para>
 Look for the best match.
 </para>
 <substeps>
@@ -518,17 +529,6 @@ then fail.
 </para>
 </step>
 </substeps>
-</step>
-<step performance="required">
-<para>
-If no best match could be identified, see whether the function call appears
-to be a trivial type coercion request.  This happens if the function call
-has just one argument and the function name is the same as the (internal)
-name of some data type.  Furthermore, the function argument must be either
-an unknown-type literal or a type that is binary-compatible with the named
-data type.  When these conditions are met, the function argument is coerced
-to the named data type.
-</para>
 </step>
 </procedure>
 

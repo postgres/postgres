@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.31 2001/05/19 00:33:20 momjian Exp $
+ * $Id: parse_func.h,v 1.32 2001/10/04 22:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,15 @@ typedef struct _CandidateList
 	struct _CandidateList *next;
 }		   *CandidateList;
 
+/* Result codes for func_get_detail */
+typedef enum
+{
+	FUNCDETAIL_NOTFOUND,		/* no suitable interpretation */
+	FUNCDETAIL_NORMAL,			/* found a matching function */
+	FUNCDETAIL_COERCION			/* it's a type coercion request */
+} FuncDetailCode;
+
+
 extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
 						int precedence);
 extern Node *ParseFuncOrColumn(ParseState *pstate,
@@ -45,9 +54,10 @@ extern Node *ParseFuncOrColumn(ParseState *pstate,
 				  bool agg_star, bool agg_distinct,
 				  int precedence);
 
-extern bool func_get_detail(char *funcname, int nargs, Oid *argtypes,
-				Oid *funcid, Oid *rettype,
-				bool *retset, Oid **true_typeids);
+extern FuncDetailCode func_get_detail(char *funcname, List *fargs,
+									  int nargs, Oid *argtypes,
+									  Oid *funcid, Oid *rettype,
+									  bool *retset, Oid **true_typeids);
 
 extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 

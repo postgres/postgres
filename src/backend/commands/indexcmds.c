@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.57 2001/08/21 16:36:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.58 2001/10/04 22:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,6 +240,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	List	   *arglist;
 	int			nargs = 0;
 	int			i;
+	FuncDetailCode	fdresult;
 	Oid			funcid;
 	Oid			rettype;
 	bool		retset;
@@ -282,9 +283,18 @@ FuncIndexArgs(IndexInfo *indexInfo,
 	 * that.  So, check to make sure that the selected function has
 	 * exact-match or binary-compatible input types.
 	 */
-	if (!func_get_detail(funcIndex->name, nargs, argTypes,
-						 &funcid, &rettype, &retset, &true_typeids))
-		func_error("DefineIndex", funcIndex->name, nargs, argTypes, NULL);
+	fdresult = func_get_detail(funcIndex->name, funcIndex->args,
+							   nargs, argTypes,
+							   &funcid, &rettype, &retset,
+							   &true_typeids);
+	if (fdresult != FUNCDETAIL_NORMAL)
+	{
+		if (fdresult == FUNCDETAIL_COERCION)
+			elog(ERROR, "DefineIndex: functional index must use a real function, not a type coercion"
+				 "\n\tTry specifying the index opclass you want to use, instead");
+		else
+			func_error("DefineIndex", funcIndex->name, nargs, argTypes, NULL);
+	}
 
 	if (retset)
 		elog(ERROR, "DefineIndex: cannot index on a function returning a set");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.110 2001/08/09 18:28:18 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.111 2001/10/04 22:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,12 +427,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	/*
-	 * func_get_detail looks up the function in the catalogs, does
-	 * disambiguation for polymorphic functions, handles inheritance, and
-	 * returns the funcid and type and set or singleton status of the
-	 * function's return value.  it also returns the true argument types
-	 * to the function.  if func_get_detail returns true, the function
-	 * exists.	otherwise, there was an error.
+	 * Is it a set, or a function?
 	 */
 	if (attisset)
 	{							/* we know all of these fields already */
@@ -454,61 +449,29 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 	else
 	{
-		bool		exists;
+		FuncDetailCode	fdresult;
 
-		exists = func_get_detail(funcname, nargs, oid_array, &funcid,
-								 &rettype, &retset, &true_oid_array);
-		if (!exists)
+		/*
+		 * func_get_detail looks up the function in the catalogs, does
+		 * disambiguation for polymorphic functions, handles inheritance, and
+		 * returns the funcid and type and set or singleton status of the
+		 * function's return value.  it also returns the true argument types
+		 * to the function.
+		 */
+		fdresult = func_get_detail(funcname, fargs, nargs, oid_array,
+								   &funcid, &rettype, &retset,
+								   &true_oid_array);
+		if (fdresult == FUNCDETAIL_COERCION)
 		{
-
 			/*
-			 * If we can't find a function (or can't find a unique
-			 * function), see if this is really a type-coercion request:
-			 * single-argument function call where the function name is a
-			 * type name.  If so, and if we can do the coercion trivially,
-			 * just go ahead and do it without requiring there to be a
-			 * real function for it.
-			 *
-			 * "Trivial" coercions are ones that involve binary-compatible
-			 * types and ones that are coercing a previously-unknown-type
-			 * literal constant to a specific type.
-			 *
-			 * DO NOT try to generalize this code to nontrivial coercions,
-			 * because you'll just set up an infinite recursion between
-			 * this routine and coerce_type!  We have already failed to
-			 * find a suitable "real" coercion function, so we have to
-			 * fail unless this is a coercion that coerce_type can handle
-			 * by itself. Make sure this code stays in sync with what
-			 * coerce_type does!
+			 * We can do it as a trivial coercion.
+			 * coerce_type can handle these cases, so why duplicate code...
 			 */
-			if (nargs == 1)
-			{
-				Oid			targetType;
-
-				targetType = GetSysCacheOid(TYPENAME,
-											PointerGetDatum(funcname),
-											0, 0, 0);
-				if (OidIsValid(targetType))
-				{
-					Oid			sourceType = oid_array[0];
-					Node	   *arg1 = lfirst(fargs);
-
-					if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
-						sourceType == targetType ||
-						IS_BINARY_COMPATIBLE(sourceType, targetType))
-					{
-
-						/*
-						 * Ah-hah, we can do it as a trivial coercion.
-						 * coerce_type can handle these cases, so why
-						 * duplicate code...
-						 */
-						return coerce_type(pstate, arg1,
-										   sourceType, targetType, -1);
-					}
-				}
-			}
-
+			return coerce_type(pstate, lfirst(fargs),
+							   oid_array[0], rettype, -1);
+		}
+		if (fdresult != FUNCDETAIL_NORMAL)
+		{
 			/*
 			 * Oops.  Time to die.
 			 *
@@ -1130,6 +1093,7 @@ func_select_candidate(int nargs,
 
 
 /* func_get_detail()
+ *
  * Find the named function in the system catalogs.
  *
  * Attempt to find the named function in the system catalogs with
@@ -1137,19 +1101,21 @@ func_select_candidate(int nargs,
  *	(exact match) is as quick as possible.
  *
  * If an exact match isn't found:
- *	1) get a vector of all possible input arg type arrays constructed
+ *  1) check for possible interpretation as a trivial type coercion
+ *	2) get a vector of all possible input arg type arrays constructed
  *	   from the superclasses of the original input arg types
- *	2) get a list of all possible argument type arrays to the function
+ *	3) get a list of all possible argument type arrays to the function
  *	   with given name and number of arguments
- *	3) for each input arg type array from vector #1:
+ *	4) for each input arg type array from vector #1:
  *	 a) find how many of the function arg type arrays from list #2
  *		it can be coerced to
  *	 b) if the answer is one, we have our function
  *	 c) if the answer is more than one, attempt to resolve the conflict
  *	 d) if the answer is zero, try the next array from vector #1
  */
-bool
+FuncDetailCode
 func_get_detail(char *funcname,
+				List *fargs,
 				int nargs,
 				Oid *argtypes,
 				Oid *funcid,	/* return value */
@@ -1158,6 +1124,7 @@ func_get_detail(char *funcname,
 				Oid **true_typeids)		/* return value */
 {
 	HeapTuple	ftup;
+	CandidateList function_typeids;
 
 	/* attempt to find with arguments exactly as specified... */
 	ftup = SearchSysCache(PROCNAME,
@@ -1173,12 +1140,59 @@ func_get_detail(char *funcname,
 	}
 	else
 	{
+		/*
+		 * If we didn't find an exact match, next consider the possibility
+		 * that this is really a type-coercion request: a single-argument
+		 * function call where the function name is a type name.  If so,
+		 * and if we can do the coercion trivially (no run-time function
+		 * call needed), then go ahead and treat the "function call" as
+		 * a coercion.  This interpretation needs to be given higher
+		 * priority than interpretations involving a type coercion followed
+		 * by a function call, otherwise we can produce surprising results.
+		 * For example, we want "text(varchar)" to be interpreted as a
+		 * trivial coercion, not as "text(name(varchar))" which the code
+		 * below this point is entirely capable of selecting.
+		 *
+		 * "Trivial" coercions are ones that involve binary-compatible
+		 * types and ones that are coercing a previously-unknown-type
+		 * literal constant to a specific type.
+		 *
+		 * NB: it's important that this code stays in sync with what
+		 * coerce_type can do, because the caller will try to apply
+		 * coerce_type if we return FUNCDETAIL_COERCION.  If we return
+		 * that result for something coerce_type can't handle, we'll
+		 * cause infinite recursion between this module and coerce_type!
+		 */
+		if (nargs == 1)
+		{
+			Oid			targetType;
+
+			targetType = GetSysCacheOid(TYPENAME,
+										PointerGetDatum(funcname),
+										0, 0, 0);
+			if (OidIsValid(targetType))
+			{
+				Oid			sourceType = argtypes[0];
+				Node	   *arg1 = lfirst(fargs);
+
+				if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
+					sourceType == targetType ||
+					IS_BINARY_COMPATIBLE(sourceType, targetType))
+				{
+					/* Yup, it's a type coercion */
+					*funcid = InvalidOid;
+					*rettype = targetType;
+					*retset = false;
+					*true_typeids = argtypes;
+					return FUNCDETAIL_COERCION;
+				}
+			}
+		}
 
 		/*
 		 * didn't find an exact match, so now try to match up
 		 * candidates...
 		 */
-		CandidateList function_typeids;
 
 		function_typeids = func_get_candidates(funcname, nargs);
 
@@ -1268,9 +1282,10 @@ func_get_detail(char *funcname,
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
 		ReleaseSysCache(ftup);
-		return true;
+		return FUNCDETAIL_NORMAL;
 	}
-	return false;
+
+	return FUNCDETAIL_NOTFOUND;
 }	/* func_get_detail() */
 
 /*
