@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Nov  5 22:54:00 EST 2000
+Last updated:		Wed Nov  8 15:04:11 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -64,7 +64,8 @@ ADMIN
 * More access control over who can create tables and use locks(Karel)
 * -Test syslog functionality
 * Convert remaining fprintf(stderr,...) to elog()
-* Allow elog() to return error codes, not just messages
+* Allow elog() to return error codes, module name, file name, line
+  number, not just messages
 * Allow international error message support and add error codes
 * -Unify configuration into one configuration file (Peter E)
 * -use setproctitle() if it exists for 'ps' display of status
