@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.21 1998/06/15 19:28:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.22 1998/07/21 04:17:23 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -41,6 +41,8 @@
 #include <storage/large_object.h>
 #include <libpq/be-fsstubs.h>
 
+/* [PA] is Pascal André <andre@via.ecp.fr> */
+
 /*#define FSDB 1*/
 #define MAX_LOBJ_FDS 256
 
@@ -51,7 +53,6 @@ static GlobalMemory fscxt = NULL;
 
 static int	newLOfd(LargeObjectDesc *lobjCookie);
 static void deleteLOfd(int fd);
-
 
 /*****************************************************************************
  *	File Interfaces for Large Objects
@@ -365,6 +366,26 @@ lo_export(Oid lobjId, text *filename)
 	close(fd);
 
 	return 1;
+}
+
+/*
+ * lo_commit -
+ *       prepares large objects for transaction commit [PA, 7/17/98]
+ */
+void 
+_lo_commit(void)
+{
+        int i;
+	MemoryContext currentContext;
+
+	currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+
+        for (i = 0; i < MAX_LOBJ_FDS; i++) {
+                if (cookies[i] != NULL) inv_cleanindex(cookies[i]);
+        }
+
+	MemoryContextSwitchTo(currentContext);
+
 }
 
 

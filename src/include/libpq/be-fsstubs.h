@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: be-fsstubs.h,v 1.5 1997/09/08 21:52:33 momjian Exp $
+ * $Id: be-fsstubs.h,v 1.6 1998/07/21 04:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,5 +36,10 @@ extern int	lo_unlink(Oid lobjId);
 
 extern struct varlena *loread(int fd, int len);
 extern int	lowrite(int fd, struct varlena * wbuf);
+
+/*
+ * Added for buffer leak prevention [ Pascal André <andre@via.ecp.fr> ]
+ */
+extern void _lo_commit(void);
 
 #endif							/* BE_FSSTUBS_H */

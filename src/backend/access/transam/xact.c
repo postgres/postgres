@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.20 1998/06/15 19:28:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.21 1998/07/21 04:17:21 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -137,6 +137,11 @@
  *-------------------------------------------------------------------------
  */
 
+/*
+ * Large object clean up added in CommitTransaction() to prevent buffer leaks.
+ * [PA, 7/17/98]
+ * [PA] is Pascal André <andre@via.ecp.fr>
+ */
 #include <postgres.h>
 
 #include <access/xact.h>
@@ -150,6 +155,9 @@
 #include <miscadmin.h>
 #include <commands/async.h>
 #include <commands/sequence.h>
+
+/* included for _lo_commit [PA, 7/17/98] */
+#include <libpq/be-fsstubs.h>
 
 static void AbortTransaction(void);
 static void AtAbort_Cache(void);
@@ -889,6 +897,10 @@ CommitTransaction()
 	 *	do commit processing
 	 * ----------------
 	 */
+
+	/* handle commit for large objects [ PA, 7/17/98 ] */ 
+	_lo_commit();
+
 	CloseSequences();
 	DestroyTempRels();
 	AtEOXact_portals();

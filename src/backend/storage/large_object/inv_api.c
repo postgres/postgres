@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.30 1998/06/15 19:29:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.31 1998/07/21 04:17:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,19 @@
  *	fragmentation.	In no case can we write more than IMAXBLK, since
  *	the 8K postgres page size less overhead leaves only this much space
  *	for data.
+ */
+
+/*
+ *      In order to prevent buffer leak on transaction commit, large object
+ *      scan index handling has been modified. Indexes are persistant inside
+ *      a transaction but may be closed between two calls to this API (when 
+ *      transaction is committed while object is opened, or when no 
+ *      transaction is active). Scan indexes are thus now reinitialized using
+ *      the object current offset. [PA]
+ *
+ *      Some cleanup has been also done for non freed memory.
+ *
+ *      For subsequent notes, [PA] is Pascal André <andre@via.ecp.fr>
  */
 
 #define IFREESPC(p)		(PageGetFreeSpace(p) - sizeof(HeapTupleData) - sizeof(struct varlena) - sizeof(int32))
@@ -261,8 +274,11 @@ inv_close(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 
-	if (obj_desc->iscan != (IndexScanDesc) NULL)
+	if (obj_desc->iscan != (IndexScanDesc) NULL) {
 		index_endscan(obj_desc->iscan);
+		pfree(obj_desc->iscan);
+		obj_desc->iscan = NULL;
+	}
 
 	heap_close(obj_desc->heap_r);
 	index_close(obj_desc->index_r);
@@ -547,6 +563,28 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 }
 
 /*
+ * inv_cleanindex --
+ *       Clean opened indexes for large objects, and clears current result.
+ *       This is necessary on transaction commit in order to prevent buffer
+ *       leak. 
+ *       This function must be called for each opened large object.
+ *       [ PA, 7/17/98 ]
+ */
+void 
+inv_cleanindex(LargeObjectDesc *obj_desc)
+{
+        Assert(PointerIsValid(obj_desc));
+
+	if (obj_desc->iscan == (IndexScanDesc) NULL) return;
+
+	index_endscan(obj_desc->iscan);
+	pfree(obj_desc->iscan);
+	obj_desc->iscan = (IndexScanDesc) NULL;
+	
+	ItemPointerSetInvalid(&(obj_desc->htid));
+}
+
+/*
  *	inv_fetchtup -- Fetch an inversion file system block.
  *
  *		This routine finds the file system block containing the offset
@@ -591,8 +629,13 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 		{
 			ScanKeyData skey;
 
+			/* 
+			 * As scan index may be prematurely closed (on commit),
+			 * we must use object current offset (was 0) to 
+			 * reinitialize the entry [ PA ].
+			 */
 			ScanKeyEntryInitialize(&skey, 0x0, 1, F_INT4GE,
-								   Int32GetDatum(0));
+					       Int32GetDatum(obj_desc->offset));
 			obj_desc->iscan =
 				index_beginscan(obj_desc->index_r,
 								(bool) 0, (uint16) 1,
@@ -622,7 +665,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 
 		/* remember this tid -- we may need it for later reads/writes */
 		ItemPointerCopy(&(res->heap_iptr), &(obj_desc->htid));
-
+		pfree(res);
 	}
 	else
 	{
@@ -1179,6 +1222,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 		if (res == (RetrieveIndexResult) NULL)
 		{
 			index_endscan(iscan);
+			pfree(iscan);
 			return (0);
 		}
 
@@ -1192,11 +1236,13 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 			ReleaseBuffer(buf);
 
 		htup = heap_fetch(hreln, false, &(res->heap_iptr), &buf);
+		pfree(res);
 
 	} while (!HeapTupleIsValid(htup));
 
 	/* don't need the index scan anymore */
 	index_endscan(iscan);
+	pfree(iscan);
 
 	/* get olastbyte attribute */
 	d = heap_getattr(htup, 1, hdesc, &isNull);
