@@ -18,7 +18,7 @@
  * Portions Copyright (c) 2000-2001, PostgreSQL Global Development Group
  * Copyright 1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.30 2001/11/12 00:46:36 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.31 2001/11/12 06:09:09 momjian Exp $
  *
  * ----------
  */
@@ -232,10 +232,10 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 
 			/* ---------
 			 * The query string built is
-			 *	SELECT oid FROM ONLY <pktable>
+			 *	SELECT 1 FROM ONLY <pktable>
 			 * ----------
 			 */
-			sprintf(querystr, "SELECT oid FROM ONLY \"%s\" FOR UPDATE OF \"%s\"",
+			sprintf(querystr, "SELECT 1 FROM ONLY \"%s\" FOR UPDATE OF \"%s\"",
 					tgargs[RI_PK_RELNAME_ARGNO],
 					tgargs[RI_PK_RELNAME_ARGNO]);
 
@@ -376,14 +376,14 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 
 		/* ----------
 		 * The query string built is
-		 *	SELECT oid FROM ONLY <pktable> WHERE pkatt1 = $1 [AND ...]
+		 *	SELECT 1 FROM ONLY <pktable> WHERE pkatt1 = $1 [AND ...]
 		 * The type id's for the $ parameters are those of the
 		 * corresponding FK attributes. Thus, SPI_prepare could
 		 * eventually fail if the parser cannot identify some way
 		 * how to compare these two types by '='.
 		 * ----------
 		 */
-		sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
+		sprintf(querystr, "SELECT 1 FROM ONLY \"%s\"",
 				tgargs[RI_PK_RELNAME_ARGNO]);
 		querysep = "WHERE";
 		for (i = 0; i < qkey.nkeypairs; i++)
@@ -609,14 +609,14 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
+				sprintf(querystr, "SELECT 1 FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -823,14 +823,14 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
+				sprintf(querystr, "SELECT 1 FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -1450,14 +1450,14 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
+				sprintf(querystr, "SELECT 1 FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
@@ -1670,14 +1670,14 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 
 				/* ----------
 				 * The query string built is
-				 *	SELECT oid FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
+				 *	SELECT 1 FROM ONLY <fktable> WHERE fkatt1 = $1 [AND ...]
 				 * The type id's for the $ parameters are those of the
 				 * corresponding PK attributes. Thus, SPI_prepare could
 				 * eventually fail if the parser cannot identify some way
 				 * how to compare these two types by '='.
 				 * ----------
 				 */
-				sprintf(querystr, "SELECT oid FROM ONLY \"%s\"",
+				sprintf(querystr, "SELECT 1 FROM ONLY \"%s\"",
 						tgargs[RI_FK_RELNAME_ARGNO]);
 				querysep = "WHERE";
 				for (i = 0; i < qkey.nkeypairs; i++)
