@@ -2,7 +2,7 @@
 **	entab.c		- add tabs to a text file
 **	by Bruce Momjian (root@candle.pha.pa.us)
 **
-**  version 1.2
+**  version 1.3
 **
 **	tabsize = 4
 **
@@ -102,11 +102,11 @@ char **argv;
 			while (*src != NUL)
 			{
 				col_in_tab++;
-				if (*src == ' ' || *src == '\t')
+				if (quote_char == ' ' && (*src == ' ' || *src == '\t'))
 				{
 					if (*src == '\t')
 					{
-						prv_spaces = prv_spaces + tab_size - col_in_tab + 1;
+						prv_spaces += tab_size - col_in_tab + 1;
 						col_in_tab = tab_size;
 					}
 					else
@@ -116,8 +116,8 @@ char **argv;
 					{
 						/*
 							Is the next character going to be a tab?
-							Needed to do tab replacement in current spot if
-							next char is going to be a tab, ignoring
+							Needed to do tab replacement in current spot
+							if next char is going to be a tab, ignoring
 							min_spaces
 						 */
 						nxt_spaces = 0;
@@ -136,25 +136,17 @@ char **argv;
 								break;
 							}
 						}
-						if (quote_char == ' ')
+						if ((prv_spaces >= min_spaces ||
+							nxt_spaces == tab_size) &&
+							del_tabs == FALSE)
 						{
-							if ((prv_spaces >= min_spaces ||
-								nxt_spaces == tab_size) &&
-								del_tabs == FALSE)
-							{
-								*(dst++) = '\t';
-								prv_spaces = 0;
-							}
-							else
-							{
-								for (; prv_spaces > 0; prv_spaces--)
-									*(dst++) = ' ';
-							}
+							*(dst++) = '\t';
+							prv_spaces = 0;
 						}
 						else
 						{
-							*(dst++) = *src;
-							prv_spaces = 0;
+							for (; prv_spaces > 0; prv_spaces--)
+								*(dst++) = ' ';
 						}
 					}
 				}
@@ -162,6 +154,8 @@ char **argv;
 				{
 					for (; prv_spaces > 0; prv_spaces--)
 						*(dst++) = ' ';
+					if (*src == '\t') /* only when in quote */
+						col_in_tab = 0;
 					if (*src == '\b')
 						col_in_tab -= 2;
 					if (escaped == FALSE && protect_quotes == TRUE)
@@ -179,7 +173,9 @@ char **argv;
 							escaped = FALSE;
 							
 					if (( *src == '\r' || *src == '\n') &&
-						clip_lines == TRUE && escaped == FALSE)
+						quote_char == ' ' &&
+						clip_lines == TRUE &&
+						escaped == FALSE)
 					{
 						while (dst > out_line &&
 							  (*(dst-1) == ' ' || *(dst-1) == '\t'))
