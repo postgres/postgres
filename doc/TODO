@@ -117,7 +117,7 @@ TYPES
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
-* Add index on NUMERIC/DECIMAL type
+* -Add index on NUMERIC/DECIMAL type
 * Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 * Functions returning sets don't really work right[function]
 
