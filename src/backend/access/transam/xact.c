@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.68 2000/06/28 03:31:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.69 2000/07/02 02:28:38 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -749,6 +749,7 @@ AtCommit_Memory()
 	 *	Release all transaction-local memory.
 	 * ----------------
 	 */
+	Assert(TopTransactionContext != NULL);
 	MemoryContextDelete(TopTransactionContext);
 	TopTransactionContext = NULL;
 	TransactionCommandContext = NULL;
@@ -825,17 +826,26 @@ AtAbort_Memory()
 {
 	/* ----------------
 	 *	Make sure we are in a valid context (not a child of
-	 *	TransactionCommandContext...)
+	 *	TransactionCommandContext...).  Note that it is possible
+	 *	for this code to be called when we aren't in a transaction
+	 *	at all; go directly to TopMemoryContext in that case.
 	 * ----------------
 	 */
-	MemoryContextSwitchTo(TransactionCommandContext);
+	if (TransactionCommandContext != NULL)
+	{
+		MemoryContextSwitchTo(TransactionCommandContext);
 
-	/* ----------------
-	 *	We do not want to destroy transaction contexts yet,
-	 *	but it should be OK to delete any command-local memory.
-	 * ----------------
-	 */
-	MemoryContextResetAndDeleteChildren(TransactionCommandContext);
+		/* ----------------
+		 *	We do not want to destroy transaction contexts yet,
+		 *	but it should be OK to delete any command-local memory.
+		 * ----------------
+		 */
+		MemoryContextResetAndDeleteChildren(TransactionCommandContext);
+	}
+	else
+	{
+		MemoryContextSwitchTo(TopMemoryContext);
+	}
 }
 
 
@@ -863,7 +873,8 @@ AtCleanup_Memory()
 	 *	Release all transaction-local memory.
 	 * ----------------
 	 */
-	MemoryContextDelete(TopTransactionContext);
+	if (TopTransactionContext != NULL)
+		MemoryContextDelete(TopTransactionContext);
 	TopTransactionContext = NULL;
 	TransactionCommandContext = NULL;
 }
