@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.4 1999/12/22 04:12:55 ishii Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.5 1999/12/22 04:41:17 ishii Exp $
 #
 #-------------------------------------------------------------------------
 CMDNAME=`basename $0`
@@ -48,6 +48,8 @@ do
                 exit 1
         fi
 done
+
+po_path=$PGPATH/postmaster
 
 # set default shutdown signal
 sig="-TERM"
