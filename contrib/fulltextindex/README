@@ -1,0 +1,95 @@
+An attempt at some sort of Full Text Indexing for PostgreSQL.
+
+The included software is an attempt to add some sort of Full Text Indexing
+support to PostgreSQL. I mean by this that we can ask questions like:
+
+	Give me all rows that have 'still' and 'nash' in the 'artist' field.
+
+Ofcourse we can write this as:
+
+	select * from cds where artist ~* 'stills' and artist ~* 'nash';
+
+But this does not use any indices, and therefore, if your database
+gets very large, it will not have very high performance (the above query
+requires at least one sequential scan, it probably takes 2 due to the
+self-join).
+
+The approach used by this add-on is to define a trigger on the table and
+column you want to do this queries on. On every insert in the table, it
+takes the value in the specified column, breaks the text in this column
+up into pieces, and stores all sub-strings into another table, together
+with a reference to the row in the original table that contained this
+sub-string (it uses the oid of that row).
+
+By now creating an index over the 'fti-table', we can search for
+substrings that occur in the original table. By making a join between
+the fti-table and the orig-table, we can get the actual rows we want
+(this can also be done by using subselects, and maybe there're other
+ways too).
+
+As an example we take the previous query, where we assume we have all
+sub-strings in the table 'cds-fti':
+
+	select c.*
+	from cds c, cds-fti f1, cds-fti f2
+	where	f1.string ~ '^stills' and
+		f2.string ~ '^nash' and
+		f1.id = c.oid and
+		f2.id = c.oid ;
+
+We can use the ~ (case-sensitive regular expression) here, because of
+the way sub-strings are built: from right to left, ie. house -> 'se' +
+'use' + 'ouse' + 'house'. If a ~ search starts with a ^ (match start of
+string), btree indices can be used by PostgreSQL.
+
+Now, how do we create the trigger that maintains the fti-table? First: the
+fti-table should have the following schema:
+
+	create cds-fti ( string varchar(N), id oid );
+
+Don't change the *names* of the columns, the varchar() can in fact also
+be of text-type. If you do use varchar, make sure the largest possible
+sub-string will fit.
+
+The create the function that contains the trigger::
+
+	create function fti() returns opaque as '/path/to/fti.so' language 'C';
+
+And finally define the trigger on the 'cds' table:
+
+	create trigger cds-fti-trigger after update or insert or delete on cds
+	    for each row execute procedure fti(cds-fti, artist);
+
+Here, the trigger will be defined on table 'cds', it will create
+sub-strings from the field 'artist', and it will place those sub-strings
+in the table 'cds-fti'.
+
+Now populate the table 'cds'. This will also populate the table 'cds-fti'.
+It's fastest to populate the table *before* you create the indices.
+
+Before you start using the system, you should at least have the following
+indices:
+
+	create index cds-fti-idx on cds-fti (string, id);
+	create index cds-oid-idx on cds (oid);
+
+To get the most performance out of this, you should have 'cds-fti'
+clustered on disk, ie. all rows with the same sub-strings should be
+close to each other. There are 3 ways of doing this:
+
+1. After you have created the indices, execute 'cluster cds-fti-idx on cds-fti'.
+2. Do a 'select * into tmp-table from cds-fti order by string' *before*
+   you create the indices, then 'drop table cds-fti' and
+   'alter table tmp-table rename to cds-fti'
+3. *Before* creating indices, dump the contents of the cds-fti table using
+   'pg_dump -a -t cds-fti dbase-name', remove the \connect
+   from the beginning and the \. from the end, and sort it using the
+   UNIX 'sort' program, and reload the data.
+
+Method 1 is very slow, 2 a lot faster, and for very large tables, 3 is
+preferred.
+
+
+
+
+
