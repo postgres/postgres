@@ -7,10 +7,11 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.9 1996/10/23 07:39:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.10 1996/11/10 01:37:48 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <unistd.h>   /* For getopt() */
 #include <time.h>
 #include <stdio.h>
 #include <signal.h>
