@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.40 2003/08/18 19:16:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.41 2003/09/25 23:02:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -207,8 +207,15 @@ typedef struct
 	int			rowno;
 	char	   *refname;
 	int			lineno;
-	Oid			rowtypeclass;
+	TupleDesc	rowtupdesc;
 
+	/*
+	 * Note: TupleDesc is only set up for named rowtypes, else it is NULL.
+	 *
+	 * Note: if the underlying rowtype contains a dropped column, the
+	 * corresponding fieldnames[] entry will be NULL, and there is no
+	 * corresponding var (varnos[] will be -1).
+	 */
 	int			nfields;
 	char	  **fieldnames;
 	int		   *varnos;
@@ -449,6 +456,7 @@ typedef struct
 	int			lineno;
 	PLpgSQL_expr *expr;
 	int			retrecno;
+	int			retrowno;
 }	PLpgSQL_stmt_return;
 
 typedef struct

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.145 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.146 2003/09/25 23:02:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,23 +315,6 @@ ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext, bool *isNull)
  *
  *		Returns a Datum whose value is the value of a range
  *		variable with respect to given expression context.
- *
- *
- *		As an entry condition, we expect that the datatype the
- *		plan expects to get (as told by our "variable" argument) is in
- *		fact the datatype of the attribute the plan says to fetch (as
- *		seen in the current context, identified by our "econtext"
- *		argument).
- *
- *		If we fetch a Type A attribute and Caller treats it as if it
- *		were Type B, there will be undefined results (e.g. crash).
- *		One way these might mismatch now is that we're accessing a
- *		catalog class and the type information in the pg_attribute
- *		class does not match the hardcoded pg_attribute information
- *		(in pg_attribute.h) for the class in question.
- *
- *		We have an Assert to make sure this entry condition is met.
- *
  * ---------------------------------------------------------------- */
 static Datum
 ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
@@ -369,11 +352,40 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 
 	attnum = variable->varattno;
 
-	/* (See prolog for explanation of this Assert) */
-	Assert(attnum <= 0 ||
-		   (attnum - 1 <= tuple_type->natts - 1 &&
-			tuple_type->attrs[attnum - 1] != NULL &&
-		  variable->vartype == tuple_type->attrs[attnum - 1]->atttypid));
+	/*
+	 * Some checks that are only applied for user attribute numbers
+	 * (bogus system attnums will be caught inside heap_getattr).
+	 */
+	if (attnum > 0)
+	{
+		/*
+		 * This assert checks that the attnum is valid.
+		 */
+		Assert(attnum <= tuple_type->natts &&
+			   tuple_type->attrs[attnum - 1] != NULL);
+
+		/*
+		 * If the attribute's column has been dropped, we force a NULL result.
+		 * This case should not happen in normal use, but it could happen if
+		 * we are executing a plan cached before the column was dropped.
+		 */
+		if (tuple_type->attrs[attnum - 1]->attisdropped)
+		{
+			*isNull = true;
+			return (Datum) 0;
+		}
+
+		/*
+		 * This assert checks that the datatype the plan expects to get (as
+		 * told by our "variable" argument) is in fact the datatype of the
+		 * attribute being fetched (as seen in the current context, identified
+		 * by our "econtext" argument).  Otherwise crashes are likely.
+		 *
+		 * Note that we can't check dropped columns, since their atttypid
+		 * has been zeroed.
+		 */
+		Assert(variable->vartype == tuple_type->attrs[attnum - 1]->atttypid);
+	}
 
 	/*
 	 * If the attribute number is invalid, then we are supposed to return

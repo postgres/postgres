@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.67 2003/08/18 19:16:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.68 2003/09/25 23:02:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -899,7 +899,8 @@ plpgsql_parse_dblword(char *word)
 				row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
 				for (i = 0; i < row->nfields; i++)
 				{
-					if (strcmp(row->fieldnames[i], cp[1]) == 0)
+					if (row->fieldnames[i] &&
+						strcmp(row->fieldnames[i], cp[1]) == 0)
 					{
 						plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[row->varnos[i]]);
 						pfree(cp[0]);
@@ -1005,7 +1006,8 @@ plpgsql_parse_tripword(char *word)
 				row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
 				for (i = 0; i < row->nfields; i++)
 				{
-					if (strcmp(row->fieldnames[i], cp[2]) == 0)
+					if (row->fieldnames[i] &&
+						strcmp(row->fieldnames[i], cp[2]) == 0)
 					{
 						plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[row->varnos[i]]);
 						pfree(cp[0]);
@@ -1396,6 +1398,8 @@ plpgsql_parse_wordrowtype(char *word)
 	 */
 	plpgsql_yylval.row = plpgsql_build_rowtype(classOid);
 
+	plpgsql_adddatum((PLpgSQL_datum *) plpgsql_yylval.row);
+
 	pfree(cp[0]);
 	pfree(cp[1]);
 
@@ -1439,6 +1443,8 @@ plpgsql_parse_dblwordrowtype(char *word)
 	 */
 	plpgsql_yylval.row = plpgsql_build_rowtype(classOid);
 
+	plpgsql_adddatum((PLpgSQL_datum *) plpgsql_yylval.row);
+
 	pfree(cp);
 
 	return T_ROW;
@@ -1451,23 +1457,20 @@ PLpgSQL_row *
 plpgsql_build_rowtype(Oid classOid)
 {
 	PLpgSQL_row *row;
-	HeapTuple	classtup;
+	Relation	rel;
 	Form_pg_class classStruct;
 	const char *relname;
 	int			i;
+	MemoryContext oldcxt;
 
 	/*
-	 * Fetch the pg_class tuple.
+	 * Open the relation to get info.
 	 */
-	classtup = SearchSysCache(RELOID,
-							  ObjectIdGetDatum(classOid),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(classtup))
-		elog(ERROR, "cache lookup failed for relation %u", classOid);
-	classStruct = (Form_pg_class) GETSTRUCT(classtup);
-	relname = NameStr(classStruct->relname);
+	rel = heap_open(classOid, AccessShareLock);
+	classStruct = RelationGetForm(rel);
+	relname = RelationGetRelationName(rel);
 
-	/* accept relation, sequence, view, or type pg_class entries */
+	/* accept relation, sequence, view, or composite type entries */
 	if (classStruct->relkind != RELKIND_RELATION &&
 		classStruct->relkind != RELKIND_SEQUENCE &&
 		classStruct->relkind != RELKIND_VIEW &&
@@ -1484,78 +1487,88 @@ plpgsql_build_rowtype(Oid classOid)
 	memset(row, 0, sizeof(PLpgSQL_row));
 
 	row->dtype = PLPGSQL_DTYPE_ROW;
+
+	/*
+	 * This is a bit ugly --- need a permanent copy of the rel's tupdesc.
+	 * Someday all these mallocs should go away in favor of a per-function
+	 * memory context ...
+	 */
+	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+	row->rowtupdesc = CreateTupleDescCopy(RelationGetDescr(rel));
+	MemoryContextSwitchTo(oldcxt);
+
 	row->nfields = classStruct->relnatts;
-	row->rowtypeclass = classStruct->reltype;
 	row->fieldnames = malloc(sizeof(char *) * row->nfields);
 	row->varnos = malloc(sizeof(int) * row->nfields);
 
 	for (i = 0; i < row->nfields; i++)
 	{
-		HeapTuple	attrtup;
 		Form_pg_attribute attrStruct;
-		HeapTuple	typetup;
-		const char *attname;
-		PLpgSQL_var *var;
 
 		/*
-		 * Get the attribute and it's type
+		 * Get the attribute and check for dropped column
 		 */
-		attrtup = SearchSysCache(ATTNUM,
-								 ObjectIdGetDatum(classOid),
-								 Int16GetDatum(i + 1),
-								 0, 0);
-		if (!HeapTupleIsValid(attrtup))
-			elog(ERROR, "cache lookup failed for attribute %d of relation %u",
-				 i + 1, classOid);
-		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
+		attrStruct = RelationGetDescr(rel)->attrs[i];
 
-		attname = NameStr(attrStruct->attname);
+		if (!attrStruct->attisdropped)
+		{
+			const char *attname;
+			HeapTuple	typetup;
+			PLpgSQL_var *var;
 
-		typetup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(attrStruct->atttypid),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(typetup))
-			elog(ERROR, "cache lookup failed for type %u",
-				 attrStruct->atttypid);
+			attname = NameStr(attrStruct->attname);
 
-		/*
-		 * Create the internal variable
-		 *
-		 * We know if the table definitions contain a default value or if the
-		 * field is declared in the table as NOT NULL. But it's possible
-		 * to create a table field as NOT NULL without a default value and
-		 * that would lead to problems later when initializing the
-		 * variables due to entering a block at execution time. Thus we
-		 * ignore this information for now.
-		 */
-		var = malloc(sizeof(PLpgSQL_var));
-		memset(var, 0, sizeof(PLpgSQL_var));
-		var->dtype = PLPGSQL_DTYPE_VAR;
-		var->refname = malloc(strlen(relname) + strlen(attname) + 2);
-		strcpy(var->refname, relname);
-		strcat(var->refname, ".");
-		strcat(var->refname, attname);
-		var->datatype = build_datatype(typetup, attrStruct->atttypmod);
-		var->isconst = false;
-		var->notnull = false;
-		var->default_val = NULL;
-		var->value = (Datum) 0;
-		var->isnull = true;
-		var->freeval = false;
+			typetup = SearchSysCache(TYPEOID,
+									 ObjectIdGetDatum(attrStruct->atttypid),
+									 0, 0, 0);
+			if (!HeapTupleIsValid(typetup))
+				elog(ERROR, "cache lookup failed for type %u",
+					 attrStruct->atttypid);
 
-		plpgsql_adddatum((PLpgSQL_datum *) var);
+			/*
+			 * Create the internal variable for the field
+			 *
+			 * We know if the table definitions contain a default value or if
+			 * the field is declared in the table as NOT NULL. But it's
+			 * possible to create a table field as NOT NULL without a default
+			 * value and that would lead to problems later when initializing
+			 * the variables due to entering a block at execution time. Thus
+			 * we ignore this information for now.
+			 */
+			var = malloc(sizeof(PLpgSQL_var));
+			MemSet(var, 0, sizeof(PLpgSQL_var));
+			var->dtype = PLPGSQL_DTYPE_VAR;
+			var->refname = malloc(strlen(relname) + strlen(attname) + 2);
+			strcpy(var->refname, relname);
+			strcat(var->refname, ".");
+			strcat(var->refname, attname);
+			var->datatype = build_datatype(typetup, attrStruct->atttypmod);
+			var->isconst = false;
+			var->notnull = false;
+			var->default_val = NULL;
+			var->value = (Datum) 0;
+			var->isnull = true;
+			var->freeval = false;
 
-		/*
-		 * Add the variable to the row.
-		 */
-		row->fieldnames[i] = strdup(attname);
-		row->varnos[i] = var->varno;
+			plpgsql_adddatum((PLpgSQL_datum *) var);
 
-		ReleaseSysCache(typetup);
-		ReleaseSysCache(attrtup);
+			/*
+			 * Add the variable to the row.
+			 */
+			row->fieldnames[i] = strdup(attname);
+			row->varnos[i] = var->varno;
+
+			ReleaseSysCache(typetup);
+		}
+		else
+		{
+			/* Leave a hole in the row structure for the dropped col */
+			row->fieldnames[i] = NULL;
+			row->varnos[i] = -1;
+		}
 	}
 
-	ReleaseSysCache(classtup);
+	heap_close(rel, AccessShareLock);
 
 	return row;
 }

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.90 2003/08/04 00:43:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.91 2003/09/25 23:02:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -148,6 +148,9 @@ static void exec_move_row(PLpgSQL_execstate * estate,
 			  PLpgSQL_rec * rec,
 			  PLpgSQL_row * row,
 			  HeapTuple tup, TupleDesc tupdesc);
+static HeapTuple make_tuple_from_row(PLpgSQL_execstate * estate,
+									 PLpgSQL_row * row,
+									 TupleDesc tupdesc);
 static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
@@ -1574,6 +1577,22 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
 			return PLPGSQL_RC_RETURN;
 		}
 
+		if (stmt->retrowno >= 0)
+		{
+			PLpgSQL_row *row = (PLpgSQL_row *) (estate->datums[stmt->retrowno]);
+
+			if (row->rowtupdesc) /* should always be true here */
+			{
+				estate->retval = (Datum) make_tuple_from_row(estate, row,
+															 row->rowtupdesc);
+				if (estate->retval == (Datum) NULL)	/* should not happen */
+					elog(ERROR, "row not compatible with its own tupdesc");
+				estate->rettupdesc = row->rowtupdesc;
+				estate->retisnull = false;
+			}
+			return PLPGSQL_RC_RETURN;
+		}
+
 		if (stmt->expr != NULL)
 		{
 			exec_run_select(estate, stmt->expr, 1, NULL);
@@ -1650,37 +1669,11 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 	}
 	else if (stmt->row)
 	{
-		Datum	   *dvalues;
-		char	   *nulls;
-		int			i;
-
-		if (natts != stmt->row->nfields)
+		tuple = make_tuple_from_row(estate, stmt->row, tupdesc);
+		if (tuple == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
-				   errmsg("wrong record type supplied in RETURN NEXT")));
-
-		dvalues = (Datum *) palloc0(natts * sizeof(Datum));
-		nulls = (char *) palloc(natts * sizeof(char));
-		MemSet(nulls, 'n', natts);
-
-		for (i = 0; i < natts; i++)
-		{
-			PLpgSQL_var *var;
-
-			var = (PLpgSQL_var *) (estate->datums[stmt->row->varnos[i]]);
-			if (var->datatype->typoid != tupdesc->attrs[i]->atttypid)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATATYPE_MISMATCH),
-				   errmsg("wrong record type supplied in RETURN NEXT")));
-			dvalues[i] = var->value;
-			if (!var->isnull)
-				nulls[i] = ' ';
-		}
-
-		tuple = heap_formtuple(tupdesc, dvalues, nulls);
-
-		pfree(dvalues);
-		pfree(nulls);
+					 errmsg("wrong record type supplied in RETURN NEXT")));
 		free_tuple = true;
 	}
 	else if (stmt->expr)
@@ -3412,7 +3405,8 @@ exec_move_row(PLpgSQL_execstate * estate,
 	 * expected if it's from an inheritance-child table of the current
 	 * table, or it might have fewer if the table has had columns added by
 	 * ALTER TABLE. Ignore extra columns and assume NULL for missing
-	 * columns, the same as heap_getattr would do.
+	 * columns, the same as heap_getattr would do.  We also have to skip
+	 * over dropped columns in either the source or destination.
 	 *
 	 * If we have no tuple data at all, we'll assign NULL to all columns of
 	 * the row variable.
@@ -3420,25 +3414,35 @@ exec_move_row(PLpgSQL_execstate * estate,
 	if (row != NULL)
 	{
 		int			t_natts;
-		int			i;
+		int			fnum;
+		int			anum;
 
 		if (HeapTupleIsValid(tup))
 			t_natts = tup->t_data->t_natts;
 		else
 			t_natts = 0;
 
-		for (i = 0; i < row->nfields; i++)
+		anum = 0;
+		for (fnum = 0; fnum < row->nfields; fnum++)
 		{
 			PLpgSQL_var *var;
 			Datum		value;
 			bool		isnull;
 			Oid			valtype;
 
-			var = (PLpgSQL_var *) (estate->datums[row->varnos[i]]);
-			if (i < t_natts)
+			if (row->varnos[fnum] < 0)
+				continue;		/* skip dropped column in row struct */
+
+			var = (PLpgSQL_var *) (estate->datums[row->varnos[fnum]]);
+
+			while (anum < t_natts && tupdesc->attrs[anum]->attisdropped)
+				anum++;			/* skip dropped column in tuple */
+
+			if (anum < t_natts)
 			{
-				value = SPI_getbinval(tup, tupdesc, i + 1, &isnull);
-				valtype = SPI_gettypeid(tupdesc, i + 1);
+				value = SPI_getbinval(tup, tupdesc, anum + 1, &isnull);
+				valtype = SPI_gettypeid(tupdesc, anum + 1);
+				anum++;
 			}
 			else
 			{
@@ -3447,7 +3451,7 @@ exec_move_row(PLpgSQL_execstate * estate,
 				valtype = InvalidOid;
 			}
 
-			exec_assign_value(estate, estate->datums[row->varnos[i]],
+			exec_assign_value(estate, (PLpgSQL_datum *) var,
 							  value, valtype, &isnull);
 		}
 
@@ -3457,6 +3461,54 @@ exec_move_row(PLpgSQL_execstate * estate,
 	elog(ERROR, "unsupported target");
 }
 
+/* ----------
+ * make_tuple_from_row		Make a tuple from the values of a row object
+ *
+ * A NULL return indicates rowtype mismatch; caller must raise suitable error
+ * ----------
+ */
+static HeapTuple
+make_tuple_from_row(PLpgSQL_execstate * estate,
+					PLpgSQL_row * row,
+					TupleDesc tupdesc)
+{
+	int			natts = tupdesc->natts;
+	HeapTuple	tuple;
+	Datum	   *dvalues;
+	char	   *nulls;
+	int			i;
+
+	if (natts != row->nfields)
+		return NULL;
+
+	dvalues = (Datum *) palloc0(natts * sizeof(Datum));
+	nulls = (char *) palloc(natts * sizeof(char));
+	MemSet(nulls, 'n', natts);
+
+	for (i = 0; i < natts; i++)
+	{
+		PLpgSQL_var *var;
+
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;		/* leave the column as null */
+		if (row->varnos[i] < 0) /* should not happen */
+			elog(ERROR, "dropped rowtype entry for non-dropped column");
+
+		var = (PLpgSQL_var *) (estate->datums[row->varnos[i]]);
+		if (var->datatype->typoid != tupdesc->attrs[i]->atttypid)
+			return NULL;
+		dvalues[i] = var->value;
+		if (!var->isnull)
+			nulls[i] = ' ';
+	}
+
+	tuple = heap_formtuple(tupdesc, dvalues, nulls);
+
+	pfree(dvalues);
+	pfree(nulls);
+
+	return tuple;
+}
 
 /* ----------
  * exec_cast_value			Cast a value if required

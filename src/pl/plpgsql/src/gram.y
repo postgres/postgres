@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.46 2003/07/27 21:49:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.47 2003/09/25 23:02:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -47,7 +47,6 @@ static	PLpgSQL_expr	*read_sql_stmt(const char *sqlstart);
 static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_select_stmt(void);
 static	PLpgSQL_stmt	*make_fetch_stmt(void);
-static	PLpgSQL_expr	*make_tupret_expr(PLpgSQL_row *row);
 static	void check_assignable(PLpgSQL_datum *datum);
 
 %}
@@ -493,7 +492,7 @@ decl_cursor_arglist : decl_cursor_arg
 						new->dtype = PLPGSQL_DTYPE_ROW;
 						new->refname = strdup("*internal*");
 						new->lineno = plpgsql_scanner_lineno();
-						new->rowtypeclass = InvalidOid;
+						new->rowtupdesc = NULL;
 						/*
 						 * We make temporary fieldnames/varnos arrays that
 						 * are much bigger than necessary.  We will resize
@@ -1176,24 +1175,24 @@ stmt_return		: K_RETURN lno
 
 						new = malloc(sizeof(PLpgSQL_stmt_return));
 						memset(new, 0, sizeof(PLpgSQL_stmt_return));
+						new->expr = NULL;
+						new->retrecno	= -1;
+						new->retrowno	= -1;
 
 						if (plpgsql_curr_compile->fn_retistuple &&
 							!plpgsql_curr_compile->fn_retset)
 						{
-							new->retrecno	= -1;
 							switch (yylex())
 							{
 								case K_NULL:
-									new->expr = NULL;
 									break;
 
 								case T_ROW:
-									new->expr = make_tupret_expr(yylval.row);
+									new->retrowno = yylval.row->rowno;
 									break;
 
 								case T_RECORD:
 									new->retrecno = yylval.rec->recno;
-									new->expr = NULL;
 									break;
 
 								default:
@@ -1874,7 +1873,7 @@ make_select_stmt(void)
 					row->dtype = PLPGSQL_DTYPE_ROW;
 					row->refname = strdup("*internal*");
 					row->lineno = plpgsql_scanner_lineno();
-					row->rowtypeclass = InvalidOid;
+					row->rowtupdesc = NULL;
 					row->nfields = nfields;
 					row->fieldnames = malloc(sizeof(char *) * nfields);
 					row->varnos = malloc(sizeof(int) * nfields);
@@ -2007,7 +2006,7 @@ make_fetch_stmt(void)
 				row->dtype = PLPGSQL_DTYPE_ROW;
 				row->refname = strdup("*internal*");
 				row->lineno = plpgsql_scanner_lineno();
-				row->rowtypeclass = InvalidOid;
+				row->rowtupdesc = NULL;
 				row->nfields = nfields;
 				row->fieldnames = malloc(sizeof(char *) * nfields);
 				row->varnos = malloc(sizeof(int) * nfields);
@@ -2040,36 +2039,6 @@ make_fetch_stmt(void)
 	return (PLpgSQL_stmt *)fetch;
 }
 
-
-static PLpgSQL_expr *
-make_tupret_expr(PLpgSQL_row *row)
-{
-	PLpgSQL_dstring		ds;
-	PLpgSQL_expr		*expr;
-	int					i;
-	char				buf[16];
-
-	expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * (row->nfields - 1));
-	expr->dtype			= PLPGSQL_DTYPE_EXPR;
-
-	plpgsql_dstring_init(&ds);
-	plpgsql_dstring_append(&ds, "SELECT ");
-
-	for (i = 0; i < row->nfields; i++)
-	{
-		sprintf(buf, "%s$%d", (i > 0) ? "," : "", i + 1);
-		plpgsql_dstring_append(&ds, buf);
-		expr->params[i] = row->varnos[i];
-	}
-
-	expr->query			= strdup(plpgsql_dstring_get(&ds));
-	expr->plan			= NULL;
-	expr->plan_argtypes = NULL;
-	expr->nparams		= row->nfields;
-
-	plpgsql_dstring_free(&ds);
-	return expr;
-}
 
 static void
 check_assignable(PLpgSQL_datum *datum)

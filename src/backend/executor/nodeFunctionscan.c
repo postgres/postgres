@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.21 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.22 2003/09/25 23:02:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@
 
 
 static TupleTableSlot *FunctionNext(FunctionScanState *node);
-static bool tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2);
+static bool tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc);
 
 /* ----------------------------------------------------------------
  *						Scan Support
@@ -86,8 +86,7 @@ FunctionNext(FunctionScanState *node)
 		 * need to do this for functions returning RECORD, but might as
 		 * well do it always.
 		 */
-		if (funcTupdesc &&
-			tupledesc_mismatch(node->tupdesc, funcTupdesc))
+		if (funcTupdesc && !tupledesc_match(node->tupdesc, funcTupdesc))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
 					 errmsg("query-specified return row and actual function return row do not match")));
@@ -364,26 +363,36 @@ ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 		tuplestore_rescan(node->tuplestorestate);
 }
 
-
+/*
+ * Check that function result tuple type (src_tupdesc) matches or can be
+ * considered to match what the query expects (dst_tupdesc).
+ *
+ * We really only care about number of attributes and data type.
+ * Also, we can ignore type mismatch on columns that are dropped in the
+ * destination type, so long as the physical storage matches.  This is
+ * helpful in some cases involving out-of-date cached plans.
+ */
 static bool
-tupledesc_mismatch(TupleDesc tupdesc1, TupleDesc tupdesc2)
+tupledesc_match(TupleDesc dst_tupdesc, TupleDesc src_tupdesc)
 {
 	int			i;
 
-	if (tupdesc1->natts != tupdesc2->natts)
-		return true;
+	if (dst_tupdesc->natts != src_tupdesc->natts)
+		return false;
 
-	for (i = 0; i < tupdesc1->natts; i++)
+	for (i = 0; i < dst_tupdesc->natts; i++)
 	{
-		Form_pg_attribute attr1 = tupdesc1->attrs[i];
-		Form_pg_attribute attr2 = tupdesc2->attrs[i];
+		Form_pg_attribute dattr = dst_tupdesc->attrs[i];
+		Form_pg_attribute sattr = src_tupdesc->attrs[i];
 
-		/*
-		 * We really only care about number of attributes and data type
-		 */
-		if (attr1->atttypid != attr2->atttypid)
-			return true;
+		if (dattr->atttypid == sattr->atttypid)
+			continue;			/* no worries */
+		if (!dattr->attisdropped)
+			return false;
+		if (dattr->attlen != sattr->attlen ||
+			dattr->attalign != sattr->attalign)
+			return false;
 	}
 
-	return false;
+	return true;
 }
