@@ -347,11 +347,13 @@ extern void srandom(int seed);
 #define FUNC_UTIL_PATCH
 
 /*
- * Define this if you want to retrieve arrays attributes as Tcl lists instead
- * of postgres C-like arrays, for example {{"a1" "a2"} {"b1" "b2"}} instead 
- * of {{"a1","a2"},{"b1","b2"}}.
+ * Define this to make libpgtcl's "pg_result -assign" command process C-style
+ * backslash sequences in returned tuple data and convert Postgres array
+ * attributes into Tcl lists.  CAUTION: this conversion is *wrong* unless
+ * you install the routines in contrib/string/string_io to make the backend
+ * produce C-style backslash sequences in the first place.
  */
-#define TCL_ARRAYS
+/* #define TCL_ARRAYS */
 
 /*
  * The following flag allows limiting the number of rows returned by a query.
