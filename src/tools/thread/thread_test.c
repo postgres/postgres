@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.30 2004/05/28 18:37:10 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.31 2004/06/09 15:16:17 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -104,7 +104,8 @@ main(int argc, char *argv[])
 {
 	pthread_t	thread1,
 				thread2;
-
+	int			fd;
+	
 	if (argc > 1)
 	{
 		fprintf(stderr, "Usage: %s\n", argv[0]);
@@ -120,11 +121,13 @@ main(int argc, char *argv[])
 	/* Make temp filenames, might not have strdup() */
 	temp_filename_1 = malloc(strlen(TEMP_FILENAME_1) + 1);
 	strcpy(temp_filename_1, TEMP_FILENAME_1);
-	mktemp(temp_filename_1);
+	fd = mkstemp(temp_filename_1);
+	close(fd);
 
 	temp_filename_2 = malloc(strlen(TEMP_FILENAME_2) + 1);
 	strcpy(temp_filename_2, TEMP_FILENAME_2);
-	mktemp(temp_filename_2);
+	fd = mkstemp(temp_filename_2);
+	close(fd);
 	
 #if !defined(HAVE_GETADDRINFO) && !defined(HAVE_GETHOSTBYNAME_R)
 	if (gethostname(myhostname, MAXHOSTNAMELEN) != 0)
