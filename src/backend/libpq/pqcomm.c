@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.78 1999/07/17 04:25:33 momjian Exp $
+ *	$Id: pqcomm.c,v 1.79 1999/07/17 05:16:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@
 #endif
 
 #include "libpq/libpq.h"
-#include "utils/trace.h" /* needed on some OS's */
+#include "utils/trace.h" /* needed for HAVE_FCNTL_SETLK */
 #include "miscadmin.h"
 
 
