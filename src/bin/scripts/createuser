@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.30 2003/02/13 05:37:44 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.31 2003/02/19 03:52:57 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -179,7 +179,7 @@ fi
 # Don't want to leave the user blind if he breaks
 # during password entry.
 
-trap 'stty echo >/dev/null 2>&1' 1 2 3 15
+trap 'stty echo >/dev/null 2>&1; echo; exit 1' 1 2 3 15
 
 # Get missing user attributes
 
