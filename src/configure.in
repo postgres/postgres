@@ -1228,4 +1228,3 @@ AC_OUTPUT(
 	pl/plpgsql/src/mklang.sql
 	pl/tcl/mkMakefile.tcldefs.sh
 )
-
