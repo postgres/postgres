@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.30 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.31 2003/01/12 22:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,9 +384,9 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	ExecInitScanTupleSlot(estate, &tidstate->ss);
 
 	/*
-	 * initialize projection info.	result type comes from scan desc
-	 * below..
+	 * Initialize result tuple type and projection info.
 	 */
+	ExecAssignResultTypeFromTL(&tidstate->ss.ps);
 	ExecAssignProjectionInfo(&tidstate->ss.ps);
 
 	/*
@@ -431,7 +431,6 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	 * get the scan type from the relation descriptor.
 	 */
 	ExecAssignScanType(&tidstate->ss, RelationGetDescr(currentRelation), false);
-	ExecAssignResultTypeFromTL(&tidstate->ss.ps);
 
 	/*
 	 * if there are some PARAM_EXEC in skankeys then force tid rescan on

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.16 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.17 2003/01/12 22:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
-	 * initialize tuple type
+	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ss.ps);
 	ExecAssignProjectionInfo(&scanstate->ss.ps);

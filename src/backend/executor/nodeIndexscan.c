@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.76 2002/12/18 00:14:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.77 2003/01/12 22:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,9 +583,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	ExecInitScanTupleSlot(estate, &indexstate->ss);
 
 	/*
-	 * initialize projection info.	result type comes from scan desc
-	 * below..
+	 * Initialize result tuple type and projection info.
 	 */
+	ExecAssignResultTypeFromTL(&indexstate->ss.ps);
 	ExecAssignProjectionInfo(&indexstate->ss.ps);
 
 	/*
@@ -893,7 +893,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * get the scan type from the relation descriptor.
 	 */
 	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation), false);
-	ExecAssignResultTypeFromTL(&indexstate->ss.ps);
 
 	/*
 	 * open the index relations and initialize relation and scan

@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.54 2003/01/10 23:54:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.55 2003/01/12 22:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,8 +180,7 @@ ExecInitGroup(Group *node, EState *estate)
 	ExecAssignScanTypeFromOuterPlan(&grpstate->ss);
 
 	/*
-	 * Initialize tuple type for both result and scan. This node does no
-	 * projection
+	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&grpstate->ss.ps);
 	ExecAssignProjectionInfo(&grpstate->ss.ps);

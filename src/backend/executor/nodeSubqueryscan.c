@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.16 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.17 2003/01/12 22:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate)
 	subquerystate->ss.ps.ps_TupFromTlist = false;
 
 	/*
-	 * initialize tuple type
+	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&subquerystate->ss.ps);
 	ExecAssignProjectionInfo(&subquerystate->ss.ps);

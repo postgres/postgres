@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.41 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.42 2003/01/12 22:01:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,7 +229,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate)
 	scanstate->ps.ps_TupFromTlist = false;
 
 	/*
-	 * initialize tuple type
+	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&scanstate->ps);
 	ExecAssignProjectionInfo(&scanstate->ps);
