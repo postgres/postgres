@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.118 2001/07/11 19:03:07 tgl Exp $
+ *	$Id: pqcomm.c,v 1.119 2001/08/05 01:22:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,10 +401,9 @@ StreamConnection(int server_fd, Port *port)
 	}
 
 #ifdef SCO_ACCEPT_BUG
-
 	/*
 	 * UnixWare 7+ and OpenServer 5.0.4 are known to have this bug, but it
-	 * shouldn't hurt it catch if for all of them.
+	 * shouldn't hurt to catch it for all versions of those platforms.
 	 */
 	if (port->raddr.sa.sa_family == 0)
 		port->raddr.sa.sa_family = AF_UNIX;
@@ -437,9 +436,6 @@ StreamConnection(int server_fd, Port *port)
 			return STATUS_ERROR;
 		}
 	}
-
-	/* reset to non-blocking */
-	fcntl(port->sock, F_SETFL, 1);
 
 	return STATUS_OK;
 }
