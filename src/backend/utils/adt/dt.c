@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.76 1999/07/17 20:17:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.77 1999/12/09 05:02:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4327,7 +4327,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					{
 						strcpy((str + 27), " ");
-						strcpy((str + 28), *tzn);
+						strncpy((str + 28), *tzn, MAXTZLEN);
 					}
 				}
 				else
@@ -4336,7 +4336,7 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					{
 						strcpy((str + 24), " ");
-						strcpy((str + 25), *tzn);
+						strncpy((str + 25), *tzn, MAXTZLEN);
 					}
 				}
 

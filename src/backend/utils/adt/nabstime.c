@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.61 1999/07/17 20:17:57 momjian Exp $
+ *	  $Id: nabstime.c,v 1.62 1999/12/09 05:02:24 momjian Exp $
  *
  */
 #include <ctype.h>
@@ -174,7 +174,16 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 		*tzp = -tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
 	/* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
 	if (tzn != NULL)
-		strcpy(tzn, tm->tm_zone);
+	{
+		/* Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
+		   contains an error message, which doesn't fit in the buffer */
+		strncpy(tzn, tm->tm_zone, MAXTZLEN);
+		if (strlen(tm->tm_zone) > MAXTZLEN)
+		{
+			tzn[MAXTZLEN] = '\0';
+			elog(NOTICE, "Invalid timezone \'%s\'", tm->tm_zone);
+		}
+	}
 #elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
 #ifdef __CYGWIN__
@@ -183,7 +192,16 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
 #endif
 	if (tzn != NULL)
-		strcpy(tzn, tzname[tm->tm_isdst]);
+	{
+		/* Copy no more than MAXTZLEN bytes of timezone to tzn, in case it
+		   contains an error message, which doesn't fit in the buffer */
+		strncpy(tzn, tzname[tm->tm_isdst], MAXTZLEN);
+		if (strlen(tzname[tm->tm_isdst]) > MAXTZLEN)
+		{
+			tzn[MAXTZLEN] = '\0';
+			elog(NOTICE, "Invalid timezone \'%s\'", tzname[tm->tm_isdst]);
+		}
+	}
 #else
 #error POSIX time support is broken
 #endif
