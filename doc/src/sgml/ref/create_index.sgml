@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.44 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.45 2004/04/20 01:00:26 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -66,7 +66,7 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
     When the <literal>WHERE</literal> clause is present, a
     <firstterm>partial index</firstterm> is created.
     A partial index is an index that contains entries for only a portion of
-    a table, usually a portion that is somehow more interesting than the
+    a table, usually a portion that is more useful for indexing than the
     rest of the table. For example, if you have a table that contains both
     billed and unbilled orders where the unbilled orders take up a small
     fraction of the total table and yet that is an often used section, you
@@ -77,9 +77,17 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
   </para>
 
   <para>
+   <literal>NULL</> values are not indexed by default.  The best way
+   to index <literal>NULL</> values is to create a partial index using
+   an <literal>IS NULL</> comparison.  <literal>IS NULL</> is more
+   of a function call than a value comparison, and this is why a partial
+   index works.
+  </para>
+
+  <para>
     The expression used in the <literal>WHERE</literal> clause may refer
-    only to columns of the underlying table (but it can use all columns,
-    not only the one(s) being indexed).  Presently, subqueries and
+    only to columns of the underlying table, but it can use all columns,
+    not just the ones being indexed.  Presently, subqueries and
     aggregate expressions are also forbidden in <literal>WHERE</literal>.
     The same restrictions apply to index fields that are expressions.
   </para>
