@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 26 11:27:34 EDT 2001
+Last updated:		Tue Oct 30 10:57:33 PST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -221,11 +221,12 @@ CLIENTS
 * JDBC
 	o Comprehensive test suite. This may be available already.
 	o Updateable resultSet (must be done in backend code)
-	o Improved DatabaseMetaData [java]
+	o -Improved DatabaseMetaData [java]
 	o JDBC-standard BLOB support
 	o Error Codes (pending backend implementation)
-	o Support for binary data/bytea
+	o -Support for binary data/bytea
 	o Move to using 'make' rather than 'ant'(?)
+	o Use cursors implicitly to avoid large results (see setCursorName())
 
 REFERENTIAL INTEGRITY
 
