@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.34 2004/12/20 17:40:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.35 2004/12/24 16:55:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,8 +272,7 @@ find_my_exec(const char *argv0, char *retpath)
 /*
  * resolve_symlinks - resolve symlinks to the underlying file
  *
- * If path does not point to a symlink, leave it alone.  If it does,
- * replace it by the absolute path to the referenced file.
+ * Replace "path" by the absolute path to the referenced file.
  *
  * Returns 0 if OK, -1 if error.
  *
@@ -290,17 +289,17 @@ resolve_symlinks(char *path)
 				link_buf[MAXPGPATH];
 	char	   *fname;
 
-	/* Quick out if it's not a symlink */
-	if (lstat(path, &buf) < 0 ||
-		(buf.st_mode & S_IFMT) != S_IFLNK)
-		return 0;
-
 	/*
 	 * To resolve a symlink properly, we have to chdir into its directory
 	 * and then chdir to where the symlink points; otherwise we may fail to
 	 * resolve relative links correctly (consider cases involving mount
 	 * points, for example).  After following the final symlink, we use
 	 * getcwd() to figure out where the heck we're at.
+	 *
+	 * One might think we could skip all this if path doesn't point to a
+	 * symlink to start with, but that's wrong.  We also want to get rid
+	 * of any directory symlinks that are present in the given path.
+	 * We expect getcwd() to give us an accurate, symlink-free path.
 	 */
 	if (!getcwd(orig_wd, MAXPGPATH))
 	{
