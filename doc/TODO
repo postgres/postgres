@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Nov  3 22:57:53 EST 2004
+Last updated:		Thu Nov  4 11:19:28 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -250,20 +250,18 @@ Indexes
   order. Another method would be to sort heap ctids matching the index
   before accessing the heap rows.
 
-* Allow the creation of bitmap indexes which can be quickly combined
-  with other bitmap indexes
+* Allow non-bitmap indexes to be combined by creating bitmaps in memory
 
   Bitmap indexes index single columns that can be combined with other bitmap
   indexes to dynamically create a composite index to match a specific query.
   Each index is a bitmap, and the bitmaps are bitwise AND'ed or OR'ed to be
-  combined.  Such indexes could be more compact if there are few unique
-  value.  Also, perhaps they can be lossy requiring a scan of the heap page
-  to find matching rows.
+  combined.  They can index by tid or can be lossy requiring a scan of the
+  heap page to find matching rows.
 
-* Allow non-bitmap indexes to be combined
+* Allow the creation of on-disk bitmap indexes which can be quickly
+  combined with other bitmap indexes
 
-  Do lookups on non-bitmap indexes and create bitmaps in memory that can be
-  combined with other indexes.
+  Such indexes could be more compact if there are few unique value.
 
 * Allow use of indexes to search for NULLs
 
