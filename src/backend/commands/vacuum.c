@@ -8,22 +8,23 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.190 2001/05/07 00:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.191 2001/05/17 01:28:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <fcntl.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 #ifndef HAVE_GETRUSAGE
 #include "rusagestub.h"
 #else
-#include <sys/time.h>
 #include <sys/resource.h>
 #endif
 
@@ -113,6 +114,11 @@ typedef struct VRelStats
 	VTupleLink	vtlinks;
 } VRelStats;
 
+typedef struct VacRUsage
+{
+	struct timeval	tv;
+	struct rusage	ru;
+} VacRUsage;
 
 static MemoryContext vac_context = NULL;
 
@@ -144,13 +150,15 @@ static void get_indices(Relation relation, int *nindices, Relation **Irel);
 static void close_indices(int nindices, Relation *Irel);
 static IndexInfo **get_index_desc(Relation onerel, int nindices,
 			   Relation *Irel);
-static void *vac_find_eq(void *bot, int nelem, int size, void *elm,
-			int (*compar) (const void *, const void *));
+static void *vac_bsearch(const void *key, const void *base,
+						 size_t nelem, size_t size,
+						 int (*compar) (const void *, const void *));
 static int	vac_cmp_blk(const void *left, const void *right);
 static int	vac_cmp_offno(const void *left, const void *right);
 static int	vac_cmp_vtlinks(const void *left, const void *right);
 static bool enough_space(VacPage vacpage, Size len);
-static char *show_rusage(struct rusage * ru0);
+static void init_rusage(VacRUsage *ru0);
+static char *show_rusage(VacRUsage *ru0);
 
 
 /*
@@ -635,9 +643,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	VTupleLink	vtlinks = (VTupleLink) palloc(100 * sizeof(VTupleLinkData));
 	int			num_vtlinks = 0;
 	int			free_vtlinks = 100;
-	struct rusage ru0;
+	VacRUsage	ru0;
 
-	getrusage(RUSAGE_SELF, &ru0);
+	init_rusage(&ru0);
 
 	relname = RelationGetRelationName(onerel);
 	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
@@ -1062,9 +1070,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	bool		isempty,
 				dowrite,
 				chain_tuple_moved;
-	struct rusage ru0;
+	VacRUsage	ru0;
 
-	getrusage(RUSAGE_SELF, &ru0);
+	init_rusage(&ru0);
 
 	myXID = GetCurrentTransactionId();
 	myCID = GetCurrentCommandId();
@@ -1360,10 +1368,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 						vtld.new_tid = tp.t_self;
 						vtlp = (VTupleLink)
-							vac_find_eq((void *) (vacrelstats->vtlinks),
+							vac_bsearch((void *) &vtld,
+										(void *) (vacrelstats->vtlinks),
 										vacrelstats->num_vtlinks,
 										sizeof(VTupleLinkData),
-										(void *) &vtld,
 										vac_cmp_vtlinks);
 						if (vtlp == NULL)
 							elog(ERROR, "Parent tuple was not found");
@@ -2134,9 +2142,9 @@ scan_index(Relation indrel, long num_tuples)
 	IndexScanDesc iscan;
 	long		nitups;
 	int			nipages;
-	struct rusage ru0;
+	VacRUsage	ru0;
 
-	getrusage(RUSAGE_SELF, &ru0);
+	init_rusage(&ru0);
 
 	/* walk through the entire index */
 	iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
@@ -2189,9 +2197,9 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	long		num_index_tuples;
 	int			num_pages;
 	VacPage		vp;
-	struct rusage ru0;
+	VacRUsage	ru0;
 
-	getrusage(RUSAGE_SELF, &ru0);
+	init_rusage(&ru0);
 
 	/* walk through the entire index */
 	iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
@@ -2264,30 +2272,35 @@ tid_reaped(ItemPointer itemptr, VacPageList vacpagelist)
 	ioffno = ItemPointerGetOffsetNumber(itemptr);
 
 	vp = &vacpage;
-	vpp = (VacPage *) vac_find_eq((void *) (vacpagelist->pagedesc),
-				   vacpagelist->num_pages, sizeof(VacPage), (void *) &vp,
+	vpp = (VacPage *) vac_bsearch((void *) &vp,
+								  (void *) (vacpagelist->pagedesc),
+								  vacpagelist->num_pages,
+								  sizeof(VacPage),
 								  vac_cmp_blk);
 
 	if (vpp == (VacPage *) NULL)
 		return (VacPage) NULL;
+
+	/* ok - we are on a partially or fully reaped page */
 	vp = *vpp;
 
-	/* ok - we are on true page */
-
 	if (vp->offsets_free == 0)
-	{							/* this is EmptyPage !!! */
+	{
+		/* this is EmptyPage, so claim all tuples on it are reaped!!! */
 		return vp;
 	}
 
-	voff = (OffsetNumber *) vac_find_eq((void *) (vp->offsets),
-				vp->offsets_free, sizeof(OffsetNumber), (void *) &ioffno,
+	voff = (OffsetNumber *) vac_bsearch((void *) &ioffno,
+										(void *) (vp->offsets),
+										vp->offsets_free,
+										sizeof(OffsetNumber),
 										vac_cmp_offno);
 
 	if (voff == (OffsetNumber *) NULL)
 		return (VacPage) NULL;
 
+	/* tid is reaped */
 	return vp;
-
 }
 
 /*
@@ -2393,64 +2406,47 @@ vpage_insert(VacPageList vacpagelist, VacPage vpnew)
 	}
 	vacpagelist->pagedesc[vacpagelist->num_pages] = vpnew;
 	(vacpagelist->num_pages)++;
-
 }
 
+/*
+ * vac_bsearch: just like standard C library routine bsearch(),
+ * except that we first test to see whether the target key is outside
+ * the range of the table entries.  This case is handled relatively slowly
+ * by the normal binary search algorithm (ie, no faster than any other key)
+ * but it occurs often enough in VACUUM to be worth optimizing.
+ */
 static void *
-vac_find_eq(void *bot, int nelem, int size, void *elm,
+vac_bsearch(const void *key, const void *base,
+			size_t nelem, size_t size,
 			int (*compar) (const void *, const void *))
 {
 	int			res;
-	int			last = nelem - 1;
-	int			celm = nelem / 2;
-	bool		last_move,
-				first_move;
+	const void *last;
 
-	last_move = first_move = true;
-	for (;;)
+	if (nelem == 0)
+		return NULL;
+	res = compar(key, base);
+	if (res < 0)
+		return NULL;
+	if (res == 0)
+		return (void *) base;
+	if (nelem > 1)
 	{
-		if (first_move == true)
-		{
-			res = compar(bot, elm);
-			if (res > 0)
-				return NULL;
-			if (res == 0)
-				return bot;
-			first_move = false;
-		}
-		if (last_move == true)
-		{
-			res = compar(elm, (void *) ((char *) bot + last * size));
-			if (res > 0)
-				return NULL;
-			if (res == 0)
-				return (void *) ((char *) bot + last * size);
-			last_move = false;
-		}
-		res = compar(elm, (void *) ((char *) bot + celm * size));
-		if (res == 0)
-			return (void *) ((char *) bot + celm * size);
-		if (res < 0)
-		{
-			if (celm == 0)
-				return NULL;
-			last = celm - 1;
-			celm = celm / 2;
-			last_move = true;
-			continue;
-		}
-
-		if (celm == last)
+		last = (const void *) ((const char *) base + (nelem - 1) * size);
+		res = compar(key, last);
+		if (res > 0)
 			return NULL;
-
-		last = last - celm - 1;
-		bot = (void *) ((char *) bot + (celm + 1) * size);
-		celm = (last + 1) / 2;
-		first_move = true;
+		if (res == 0)
+			return (void *) last;
 	}
-
+	if (nelem <= 2)
+		return NULL;			/* already checked 'em all */
+	return bsearch(key, base, nelem, size, compar);
 }
 
+/*
+ * Comparator routines for use with qsort() and bsearch().
+ */
 static int
 vac_cmp_blk(const void *left, const void *right)
 {
@@ -2465,25 +2461,21 @@ vac_cmp_blk(const void *left, const void *right)
 	if (lblk == rblk)
 		return 0;
 	return 1;
-
 }
 
 static int
 vac_cmp_offno(const void *left, const void *right)
 {
-
 	if (*(OffsetNumber *) left < *(OffsetNumber *) right)
 		return -1;
 	if (*(OffsetNumber *) left == *(OffsetNumber *) right)
 		return 0;
 	return 1;
-
 }
 
 static int
 vac_cmp_vtlinks(const void *left, const void *right)
 {
-
 	if (((VTupleLink) left)->new_tid.ip_blkid.bi_hi <
 		((VTupleLink) right)->new_tid.ip_blkid.bi_hi)
 		return -1;
@@ -2505,7 +2497,6 @@ vac_cmp_vtlinks(const void *left, const void *right)
 		((VTupleLink) right)->new_tid.ip_posid)
 		return 1;
 	return 0;
-
 }
 
 
@@ -2603,36 +2594,55 @@ enough_space(VacPage vacpage, Size len)
 
 
 /*
+ * Initialize usage snapshot.
+ */
+static void
+init_rusage(VacRUsage *ru0)
+{
+	struct timezone tz;
+
+	getrusage(RUSAGE_SELF, &ru0->ru);
+	gettimeofday(&ru0->tv, &tz);
+}
+
+/*
  * Compute elapsed time since ru0 usage snapshot, and format into
  * a displayable string.  Result is in a static string, which is
  * tacky, but no one ever claimed that the Postgres backend is
  * threadable...
  */
 static char *
-show_rusage(struct rusage * ru0)
+show_rusage(VacRUsage *ru0)
 {
-	static char result[64];
-	struct rusage ru1;
+	static char result[100];
+	VacRUsage	ru1;
 
-	getrusage(RUSAGE_SELF, &ru1);
+	init_rusage(&ru1);
 
-	if (ru1.ru_stime.tv_usec < ru0->ru_stime.tv_usec)
+	if (ru1.tv.tv_usec < ru0->tv.tv_usec)
 	{
-		ru1.ru_stime.tv_sec--;
-		ru1.ru_stime.tv_usec += 1000000;
+		ru1.tv.tv_sec--;
+		ru1.tv.tv_usec += 1000000;
 	}
-	if (ru1.ru_utime.tv_usec < ru0->ru_utime.tv_usec)
+	if (ru1.ru.ru_stime.tv_usec < ru0->ru.ru_stime.tv_usec)
 	{
-		ru1.ru_utime.tv_sec--;
-		ru1.ru_utime.tv_usec += 1000000;
+		ru1.ru.ru_stime.tv_sec--;
+		ru1.ru.ru_stime.tv_usec += 1000000;
+	}
+	if (ru1.ru.ru_utime.tv_usec < ru0->ru.ru_utime.tv_usec)
+	{
+		ru1.ru.ru_utime.tv_sec--;
+		ru1.ru.ru_utime.tv_usec += 1000000;
 	}
 
 	snprintf(result, sizeof(result),
-			 "CPU %d.%02ds/%d.%02du sec.",
-			 (int) (ru1.ru_stime.tv_sec - ru0->ru_stime.tv_sec),
-			 (int) (ru1.ru_stime.tv_usec - ru0->ru_stime.tv_usec) / 10000,
-			 (int) (ru1.ru_utime.tv_sec - ru0->ru_utime.tv_sec),
-		   (int) (ru1.ru_utime.tv_usec - ru0->ru_utime.tv_usec) / 10000);
+			 "CPU %d.%02ds/%d.%02du sec elapsed %d.%02d sec.",
+			 (int) (ru1.ru.ru_stime.tv_sec - ru0->ru.ru_stime.tv_sec),
+			 (int) (ru1.ru.ru_stime.tv_usec - ru0->ru.ru_stime.tv_usec) / 10000,
+			 (int) (ru1.ru.ru_utime.tv_sec - ru0->ru.ru_utime.tv_sec),
+			 (int) (ru1.ru.ru_utime.tv_usec - ru0->ru.ru_utime.tv_usec) / 10000,
+			 (int) (ru1.tv.tv_sec - ru0->tv.tv_sec),
+			 (int) (ru1.tv.tv_usec - ru0->tv.tv_usec) / 10000);
 
 	return result;
 }
