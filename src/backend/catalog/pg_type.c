@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.45 2000/01/10 17:14:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.46 2000/01/10 20:23:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,7 +373,7 @@ TypeCreate(char *typeName,
 	values[i++] = (Datum) GetUserId();	/* 2 */
 	values[i++] = (Datum) internalSize; /* 3 */
 	values[i++] = (Datum) externalSize; /* 4 */
-	values[i++] = (Datum) passedByValue;		/* 5 */
+	values[i++] = (Datum) passedByValue;/* 5 */
 	values[i++] = (Datum) typeType;		/* 6 */
 	values[i++] = (Datum) (bool) 1;		/* 7 */
 	values[i++] = (Datum) typDelim;		/* 8 */

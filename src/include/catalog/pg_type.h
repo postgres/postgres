@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.73 2000/01/10 16:13:21 momjian Exp $
+ * $Id: pg_type.h,v 1.74 2000/01/10 20:23:31 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -47,7 +47,6 @@ CATALOG(pg_type) BOOTSTRAP
 	 * is -1.
 	 */
 	int2		typprtlen;
-	bool		typbyval;
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value
@@ -59,6 +58,7 @@ CATALOG(pg_type) BOOTSTRAP
 	 * even if the length would allow pass-by-value; this is currently
 	 * true for type float4, for example.
 	 */
+	bool		typbyval;
 	char		typtype;
 
 	/*
@@ -174,8 +174,8 @@ DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2
 DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
-DATA(insert OID = 22 (	int2vector PGUID 16  50 f b t \054 0  21 int2vectorin int2vectorout int2vectorin int2vectorout i _null_ ));
-DESCR("8 int2 integers, used internally");
+DATA(insert OID = 22 (	int2vector PGUID 32  113 f b t \054 0  21 int2vectorin int2vectorout int2vectorin int2vectorout i _null_ ));
+DESCR("16 int2 integers, used internally");
 /*
  * XXX -- the implementation of int2vector's in postgres is a hack, and will
  *		  go away someday.	until that happens, there is a case (in the
@@ -213,8 +213,8 @@ DATA(insert OID = 29 (	cid		   PGUID  4  10 t b t \054 0   0 cidin cidout cidin 
 DESCR("command identifier type, sequence in transaction id");
 #define CIDOID 29
 
-DATA(insert OID = 30 (	oidvector  PGUID 32  89 f b t \054 0  26 oidvectorin oidvectorout oidvectorin oidvectorout i _null_ ));
-DESCR("array of 8 oids, used in system tables");
+DATA(insert OID = 30 (	oidvector  PGUID 64  193 f b t \054 0  26 oidvectorin oidvectorout oidvectorin oidvectorout i _null_ ));
+DESCR("array of 16 oids, used in system tables");
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f b t \054 0   0 textin textout textin textout i _null_ ));
 DESCR("set of tuples");
 
