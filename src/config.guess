@@ -709,7 +709,7 @@ EOF
 	  (/bin/uname -X|egrep '^Machine.*Pentium' >/dev/null) \
 	    && UNAME_MACHINE=i586
 	fi
-	echo ${UNAME_MACHINE}-unixware-${UNAME_RELEASE}-${UNAME_VERSION}
+	echo ${UNAME_MACHINE}-pc-unixware${UNAME_VERSION}
 	exit 0 ;;
     pc:*:*:*)
         # uname -m prints for DJGPP always 'pc', but it prints nothing about

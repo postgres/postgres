@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.40 1999/02/13 23:19:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.41 1999/04/20 00:26:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,10 +74,6 @@
 #define SHRT_MIN (-32768)
 #endif
 
-#ifndef NAN
-#define NAN		(0.0/0.0)
-#endif
-
 #define FORMAT			'g'		/* use "g" output format as standard
 								 * format */
 /* not sure what the following should be, but better to make it over-sufficient */
@@ -112,9 +108,8 @@ extern double rint(double x);
 
 #endif
 
-extern int	isinf(double x);
-
 #endif
+
 /* ========== USER I/O ROUTINES ========== */
 
 

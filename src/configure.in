@@ -44,7 +44,7 @@ nextstep*) os=nextstep need_tas=no ;;
 		    *) os=unknown need_tas=no ;;
        esac ;;
    sysv4*) os=svr4 need_tas=no ;;
-   sysv5*) os=unixware need_tas=no ;;
+   unixware*) os=unixware need_tas=no ;;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
@@ -674,9 +674,22 @@ AC_CHECK_FUNC(vsnprintf,
 	      AC_DEFINE(HAVE_VSNPRINTF),
 	      SNPRINTF='snprintf.o')
 AC_SUBST(SNPRINTF)
-AC_CHECK_FUNC(isinf,
-	      AC_DEFINE(HAVE_ISINF),
-	      ISINF='isinf.o')
+dnl do this one the hard way in case isinf() is a macro
+AC_MSG_CHECKING(for isinf)
+AC_CACHE_VAL(ac_cv_func_or_macro_isinf,
+[AC_TRY_LINK(
+[#include <math.h>],
+[double x = 0.0; int res = isinf(x);],
+[ac_cv_func_or_macro_isinf=yes],
+[ac_cv_func_or_macro_isinf=no])])
+if [[ $ac_cv_func_or_macro_isinf = yes ]]; then
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(HAVE_ISINF)
+  ISINF=''
+else
+  AC_MSG_RESULT(no)
+  ISINF='isinf.o'
+fi
 AC_SUBST(ISINF)
 AC_CHECK_FUNC(getrusage,
 	      AC_DEFINE(HAVE_GETRUSAGE),
