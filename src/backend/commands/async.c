@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.72 2000/11/21 21:15:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.73 2000/11/28 23:27:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,8 +119,8 @@ static Dllist *pendingNotifies = NULL;
 static volatile int notifyInterruptEnabled = 0;
 static volatile int notifyInterruptOccurred = 0;
 
-/* True if we've registered an on_shmem_exit cleanup (or at least tried to). */
-static int	unlistenExitRegistered = 0;
+/* True if we've registered an on_shmem_exit cleanup */
+static bool unlistenExitRegistered = false;
 
 
 static void Async_UnlistenAll(void);
@@ -253,9 +253,8 @@ Async_Listen(char *relname, int pid)
 	 */
 	if (!unlistenExitRegistered)
 	{
-		if (on_shmem_exit(Async_UnlistenOnExit, 0) < 0)
-			elog(NOTICE, "Async_Listen: out of shmem_exit slots");
-		unlistenExitRegistered = 1;
+		on_shmem_exit(Async_UnlistenOnExit, 0);
+		unlistenExitRegistered = true;
 	}
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.4 2000/11/22 02:19:14 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.5 2000/11/28 23:27:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,12 +87,6 @@ extern void AbortBufferIO(void);
  *		Note that write error doesn't mean the buffer broken
 */
 #define BUFFER_IS_BROKEN(buf) ((buf->flags & BM_IO_ERROR) && !(buf->flags & BM_DIRTY))
-
-#ifndef HAS_TEST_AND_SET
-static void SignalIO(BufferDesc *buf);
-extern long *NWaitIOBackendP;	/* defined in buf_init.c */
-
-#endif	 /* HAS_TEST_AND_SET */
 
 static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
 						 bool bufferLockHeld);
@@ -853,27 +847,7 @@ BufferSync()
  *
  * Should be entered with buffer manager spinlock held; releases it before
  * waiting and re-acquires it afterwards.
- *
- * OLD NOTES:
- *		Because IO_IN_PROGRESS conflicts are
- *		expected to be rare, there is only one BufferIO
- *		lock in the entire system.	All processes block
- *		on this semaphore when they try to use a buffer
- *		that someone else is faulting in.  Whenever a
- *		process finishes an IO and someone is waiting for
- *		the buffer, BufferIO is signaled (SignalIO).  All
- *		waiting processes then wake up and check to see
- *		if their buffer is now ready.  This implementation
- *		is simple, but efficient enough if WaitIO is
- *		rarely called by multiple processes simultaneously.
- *
- * NEW NOTES:
- *		The above is true only on machines without test-and-set
- *		semaphores (which we hope are few, these days).  On better
- *		hardware, each buffer has a spinlock that we can wait on.
  */
-#ifdef HAS_TEST_AND_SET
-
 static void
 WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 {
@@ -890,43 +864,6 @@ WaitIO(BufferDesc *buf, SPINLOCK spinlock)
 	}
 }
 
-#else							/* !HAS_TEST_AND_SET */
-
-IpcSemaphoreId WaitIOSemId;
-IpcSemaphoreId WaitCLSemId;
-
-static void
-WaitIO(BufferDesc *buf, SPINLOCK spinlock)
-{
-	bool		inProgress;
-
-	for (;;)
-	{
-
-		/* wait until someone releases IO lock */
-		(*NWaitIOBackendP)++;
-		SpinRelease(spinlock);
-		IpcSemaphoreLock(WaitIOSemId, 0, 1);
-		SpinAcquire(spinlock);
-		inProgress = (buf->flags & BM_IO_IN_PROGRESS);
-		if (!inProgress)
-			break;
-	}
-}
-
-/*
- * SignalIO
- */
-static void
-SignalIO(BufferDesc *buf)
-{
-	/* somebody better be waiting. */
-	Assert(buf->refcount > 1);
-	IpcSemaphoreUnlock(WaitIOSemId, 0, *NWaitIOBackendP);
-	*NWaitIOBackendP = 0;
-}
-
-#endif	 /* HAS_TEST_AND_SET */
 
 long		NDirectFileRead;	/* some I/O's are direct file access.
 								 * bypass bufmgr */
@@ -1965,11 +1902,7 @@ UnlockBuffers()
 		Assert(BufferIsValid(i + 1));
 		buf = &(BufferDescriptors[i]);
 
-#ifdef HAS_TEST_AND_SET
 		S_LOCK(&(buf->cntx_lock));
-#else
-		IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
-#endif
 
 		if (BufferLocks[i] & BL_R_LOCK)
 		{
@@ -1992,11 +1925,9 @@ UnlockBuffers()
 			Assert(buf->w_lock);
 			buf->w_lock = false;
 		}
-#ifdef HAS_TEST_AND_SET
+
 		S_UNLOCK(&(buf->cntx_lock));
-#else
-		IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
-#endif
+
 		BufferLocks[i] = 0;
 	}
 }
@@ -2014,11 +1945,7 @@ LockBuffer(Buffer buffer, int mode)
 	buf = &(BufferDescriptors[buffer - 1]);
 	buflock = &(BufferLocks[buffer - 1]);
 
-#ifdef HAS_TEST_AND_SET
 	S_LOCK(&(buf->cntx_lock));
-#else
-	IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
-#endif
 
 	if (mode == BUFFER_LOCK_UNLOCK)
 	{
@@ -2048,15 +1975,9 @@ LockBuffer(Buffer buffer, int mode)
 		Assert(!(*buflock & (BL_R_LOCK | BL_W_LOCK | BL_RI_LOCK)));
 		while (buf->ri_lock || buf->w_lock)
 		{
-#ifdef HAS_TEST_AND_SET
 			S_UNLOCK(&(buf->cntx_lock));
 			s_lock_sleep(i++);
 			S_LOCK(&(buf->cntx_lock));
-#else
-			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
-			s_lock_sleep(i++);
-			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
-#endif
 		}
 		(buf->r_locks)++;
 		*buflock |= BL_R_LOCK;
@@ -2080,15 +2001,9 @@ LockBuffer(Buffer buffer, int mode)
 				*buflock |= BL_RI_LOCK;
 				buf->ri_lock = true;
 			}
-#ifdef HAS_TEST_AND_SET
 			S_UNLOCK(&(buf->cntx_lock));
 			s_lock_sleep(i++);
 			S_LOCK(&(buf->cntx_lock));
-#else
-			IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
-			s_lock_sleep(i++);
-			IpcSemaphoreLock(WaitCLSemId, 0, IpcExclusiveLock);
-#endif
 		}
 		buf->w_lock = true;
 		*buflock |= BL_W_LOCK;
@@ -2109,12 +2024,7 @@ LockBuffer(Buffer buffer, int mode)
 	else
 		elog(ERROR, "LockBuffer: unknown lock mode %d", mode);
 
-#ifdef HAS_TEST_AND_SET
 	S_UNLOCK(&(buf->cntx_lock));
-#else
-	IpcSemaphoreUnlock(WaitCLSemId, 0, IpcExclusiveLock);
-#endif
-
 }
 
 /*
@@ -2142,7 +2052,6 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 	Assert(!InProgressBuf);
 	Assert(!(buf->flags & BM_IO_IN_PROGRESS));
 	buf->flags |= BM_IO_IN_PROGRESS;
-#ifdef	HAS_TEST_AND_SET
 
 	/*
 	 * There used to be
@@ -2156,7 +2065,7 @@ StartBufferIO(BufferDesc *buf, bool forInput)
 	 * happen -- tgl
 	 */
 	S_LOCK(&(buf->io_in_progress_lock));
-#endif	 /* HAS_TEST_AND_SET */
+
 	InProgressBuf = buf;
 	IsForInput = forInput;
 }
@@ -2173,12 +2082,7 @@ static void
 TerminateBufferIO(BufferDesc *buf)
 {
 	Assert(buf == InProgressBuf);
-#ifdef	HAS_TEST_AND_SET
 	S_UNLOCK(&(buf->io_in_progress_lock));
-#else
-	if (buf->refcount > 1)
-		SignalIO(buf);
-#endif	 /* HAS_TEST_AND_SET */
 	InProgressBuf = (BufferDesc *) 0;
 }
 

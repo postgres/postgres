@@ -1,22 +1,22 @@
 /*-------------------------------------------------------------------------
  *
  * s_lock.c
- *	  buffer manager interface routines
+ *	  Spinlock support routines
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.25 2000/11/16 05:51:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.26 2000/11/28 23:27:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
 
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "postgres.h"
 #include "storage/s_lock.h"
 
 

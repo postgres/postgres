@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.12 2000/05/31 00:28:38 petere Exp $
+ * $Id: spin.h,v 1.13 2000/11/28 23:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,10 @@
 /*
  * two implementations of spin locks
  *
- * sequent, sparc, sun3: real spin locks. uses a TAS instruction; see
- * src/storage/ipc/s_lock.c for details.
+ * Where TAS instruction is available: real spin locks.
+ * See src/storage/ipc/s_lock.c for details.
  *
- * default: fake spin locks using semaphores.  see spin.c
- *
+ * Otherwise: fake spin locks using semaphores.  see spin.c
  */
 
 typedef int SPINLOCK;
@@ -32,8 +31,10 @@ typedef int SPINLOCK;
 extern bool Trace_spinlocks;
 #endif
 
-extern void CreateSpinlocks(IPCKey key);
-extern void InitSpinLocks(void);
+
+extern int	SLockShmemSize(void);
+extern void CreateSpinlocks(PGShmemHeader *seghdr);
+
 extern void SpinAcquire(SPINLOCK lockid);
 extern void SpinRelease(SPINLOCK lockid);
 

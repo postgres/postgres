@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.72 2000/11/16 22:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.73 2000/11/28 23:27:57 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -45,7 +45,6 @@
 static void ReverifyMyDatabase(const char *name);
 static void InitCommunication(void);
 
-static IPCKey PostgresIpcKey;
 
 /*** InitPostgres support ***/
 
@@ -141,7 +140,7 @@ ReverifyMyDatabase(const char *name)
  * --------------------------------
  */
 static void
-InitCommunication()
+InitCommunication(void)
 {
 	/* ----------------
 	 *	initialize shared memory and semaphores appropriately.
@@ -151,26 +150,11 @@ InitCommunication()
 	{
 		/* ----------------
 		 *	we're running a postgres backend by itself with
-		 *	no front end or postmaster.
+		 *	no front end or postmaster.  Create private "shmem"
+		 *	and semaphores.  Setting MaxBackends = 16 is arbitrary.
 		 * ----------------
 		 */
-		char	   *ipc_key;	/* value of environment variable */
-		IPCKey		key;
-
-		ipc_key = getenv("IPC_KEY");
-
-		if (!PointerIsValid(ipc_key))
-		{
-			/* Normal standalone backend */
-			key = PrivateIPCKey;
-		}
-		else
-		{
-			/* Allow standalone's IPC key to be set */
-			key = atoi(ipc_key);
-		}
-		PostgresIpcKey = key;
-		AttachSharedMemoryAndSemaphores(key);
+		CreateSharedMemoryAndSemaphores(true, 16);
 	}
 }
 
@@ -295,7 +279,7 @@ InitPostgres(const char *dbname, const char *username)
 	/*
 	 * Set up my per-backend PROC struct in shared memory.
 	 */
-	InitProcess(PostgresIpcKey);
+	InitProcess();
 
 	/*
 	 * Initialize my entry in the shared-invalidation manager's array of
@@ -307,7 +291,7 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 	MyBackendId = InvalidBackendId;
 
-	InitSharedInvalidationState();
+	InitBackendSharedInvalidationState();
 
 	if (MyBackendId > MAXBACKENDS || MyBackendId <= 0)
 		elog(FATAL, "cinit2: bad backend id %d", MyBackendId);
@@ -365,11 +349,11 @@ BaseInit(void)
 	 */
 	InitCommunication();
 	DebugFileOpen();
+
 	smgrinit();
 
 	EnablePortalManager();		/* memory for portal/transaction stuff */
 
 	/* initialize the local buffer manager */
 	InitLocalBuffer();
-
 }

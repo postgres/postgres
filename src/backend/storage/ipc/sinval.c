@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.23 2000/11/12 20:51:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.24 2000/11/28 23:27:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,52 +27,23 @@
 SPINLOCK	SInvalLock = (SPINLOCK) NULL;
 
 /****************************************************************************/
-/*	CreateSharedInvalidationState()		 Create a buffer segment			*/
+/*	CreateSharedInvalidationState()		 Initialize SI buffer				*/
 /*																			*/
 /*	should be called only by the POSTMASTER									*/
 /****************************************************************************/
 void
-CreateSharedInvalidationState(IPCKey key, int maxBackends)
+CreateSharedInvalidationState(int maxBackends)
 {
-	int			status;
-
-	/* SInvalLock gets set in spin.c, during spinlock init */
-	status = SISegmentInit(true, IPCKeyGetSIBufferMemoryBlock(key),
-						   maxBackends);
-
-	if (status == -1)
-		elog(FATAL, "CreateSharedInvalidationState: failed segment init");
-}
-
-/****************************************************************************/
-/*	AttachSharedInvalidationState(key)	 Attach to existing buffer segment	*/
-/*																			*/
-/*	should be called by each backend during startup							*/
-/****************************************************************************/
-void
-AttachSharedInvalidationState(IPCKey key)
-{
-	int			status;
-
-	if (key == PrivateIPCKey)
-	{
-		CreateSharedInvalidationState(key, 16);
-		return;
-	}
-	/* SInvalLock gets set in spin.c, during spinlock init */
-	status = SISegmentInit(false, IPCKeyGetSIBufferMemoryBlock(key), 0);
-
-	if (status == -1)
-		elog(FATAL, "AttachSharedInvalidationState: failed segment init");
+	/* SInvalLock must be initialized already, during spinlock init */
+	SIBufferInit(maxBackends);
 }
 
 /*
- * InitSharedInvalidationState
+ * InitBackendSharedInvalidationState
  *		Initialize new backend's state info in buffer segment.
- *		Must be called after AttachSharedInvalidationState().
  */
 void
-InitSharedInvalidationState(void)
+InitBackendSharedInvalidationState(void)
 {
 	SpinAcquire(SInvalLock);
 	if (!SIBackendInit(shmInvalBuffer))

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * proc.h
- *
+ *	  per-process shared memory data structures
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.31 2000/05/31 00:28:38 petere Exp $
+ * $Id: proc.h,v 1.32 2000/11/28 23:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,8 @@ extern int DeadlockTimeout;
 typedef struct
 {
 	int			sleeplock;
-	int			semNum;
 	IpcSemaphoreId semId;
-	IpcSemaphoreKey semKey;
+	int			semNum;
 } SEMA;
 
 /*
@@ -33,7 +32,6 @@ typedef struct
  */
 typedef struct proc
 {
-
 	/* proc->links MUST BE THE FIRST ELEMENT OF STRUCT (see ProcWakeup()) */
 
 	SHM_QUEUE	links;			/* proc can be waiting for one event(lock) */
@@ -63,34 +61,6 @@ typedef struct proc
 								 * transaction */
 } PROC;
 
-
-/*
- * PROC_NSEMS_PER_SET is the number of semaphores in each sys-V semaphore set
- * we allocate.  It must be *less than* 32 (or however many bits in an int
- * on your machine), or our free-semaphores bitmap won't work.  You also must
- * not set it higher than your kernel's SEMMSL (max semaphores per set)
- * parameter, which is often around 25.
- *
- * MAX_PROC_SEMS is the maximum number of per-process semaphores (those used
- * by the lock mgr) we can keep track of.  It must be a multiple of
- * PROC_NSEMS_PER_SET.
- */
-#define  PROC_NSEMS_PER_SET		16
-#define  MAX_PROC_SEMS			(((MAXBACKENDS-1)/PROC_NSEMS_PER_SET+1)*PROC_NSEMS_PER_SET)
-
-typedef struct procglobal
-{
-	SHMEM_OFFSET freeProcs;
-	IPCKey		currKey;
-	int32		freeSemMap[MAX_PROC_SEMS / PROC_NSEMS_PER_SET];
-
-	/*
-	 * In each freeSemMap entry, the PROC_NSEMS_PER_SET least-significant
-	 * bits flag whether individual semaphores are in use, and the next
-	 * higher bit is set to show that the entire set is allocated.
-	 */
-} PROC_HDR;
-
 extern PROC *MyProc;
 
 #define PROC_INCR_SLOCK(lock) \
@@ -115,15 +85,45 @@ do { \
 
 extern SPINLOCK ProcStructLock;
 
+
+/*
+ * There is one ProcGlobal struct for the whole installation.
+ *
+ * PROC_NSEMS_PER_SET is the number of semaphores in each sys-V semaphore set
+ * we allocate.  It must be no more than 32 (or however many bits in an int
+ * on your machine), or our free-semaphores bitmap won't work.  It also must
+ * be *less than* your kernel's SEMMSL (max semaphores per set) parameter,
+ * which is often around 25.  (Less than, because we allocate one extra sema
+ * in each set for identification purposes.)
+ *
+ * PROC_SEM_MAP_ENTRIES is the number of semaphore sets we need to allocate
+ * to keep track of up to MAXBACKENDS backends.
+ */
+#define  PROC_NSEMS_PER_SET		16
+#define  PROC_SEM_MAP_ENTRIES	((MAXBACKENDS-1)/PROC_NSEMS_PER_SET+1)
+
+typedef struct procglobal
+{
+	/* Head of list of free PROC structures */
+	SHMEM_OFFSET freeProcs;
+
+	/* Info about semaphore sets used for per-process semaphores */
+	IpcSemaphoreId procSemIds[PROC_SEM_MAP_ENTRIES];
+	int32		freeSemMap[PROC_SEM_MAP_ENTRIES];
+
+	/*
+	 * In each freeSemMap entry, bit i is set if the i'th semaphore of the
+	 * set is allocated to a process.  (i counts from 0 at the LSB)
+	 */
+} PROC_HDR;
+
 /*
  * Function Prototypes
  */
-extern void InitProcess(IPCKey key);
+extern void InitProcGlobal(int maxBackends);
+extern void InitProcess(void);
 extern void ProcReleaseLocks(void);
 extern bool ProcRemove(int pid);
-
-/* extern bool ProcKill(int exitStatus, int pid); */
-/* make static in storage/lmgr/proc.c -- jolly */
 
 extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int ProcSleep(PROC_QUEUE *queue, LOCKMETHODCTL *lockctl, int token,

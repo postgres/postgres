@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.23 2000/11/12 20:51:52 tgl Exp $
+ * $Id: sinvaladt.h,v 1.24 2000/11/28 23:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,15 +107,13 @@ typedef struct SISeg
 } SISeg;
 
 
-extern SISeg *shmInvalBuffer;	/* pointer to the shared buffer segment,
-								 * set by SISegmentAttach() */
+extern SISeg *shmInvalBuffer;	/* pointer to the shared inval buffer */
 
 
 /*
  * prototypes for functions in sinvaladt.c
  */
-extern int SISegmentInit(bool createNewSegment, IPCKey key,
-			  int maxBackends);
+extern void SIBufferInit(int maxBackends);
 extern int	SIBackendInit(SISeg *segP);
 
 extern bool SIInsertDataEntry(SISeg *segP, SharedInvalidData *data);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.72 2000/11/08 22:10:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.73 2000/11/28 23:27:56 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -56,6 +56,7 @@ static char *lock_types[] =
 	"AccessExclusiveLock"
 };
 
+static char *DeadLockMessage = "Deadlock detected.\n\tSee the lock(l) manual page for a possible cause.";
 
 
 #ifdef LOCK_DEBUG
@@ -943,8 +944,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode)
 				  lock) != NO_ERROR)
 	{
 		/* -------------------
-		 * This could have happend as a result of a deadlock,
-		 * see HandleDeadLock().
+		 * We failed as a result of a deadlock, see HandleDeadLock().
 		 * Decrement the lock nHolding and holders fields as
 		 * we are no longer waiting on this lock.
 		 * -------------------
@@ -957,8 +957,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode)
 		if (lock->activeHolders[lockmode] == lock->holders[lockmode])
 			lock->waitMask &= BITS_OFF[lockmode];
 		SpinRelease(lockMethodTable->ctl->masterLock);
-		elog(ERROR, "WaitOnLock: error on wakeup - Aborting this transaction");
-
+		elog(ERROR, DeadLockMessage);
 		/* not reached */
 	}
 

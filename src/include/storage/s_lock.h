@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.73 2000/10/22 22:15:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.74 2000/11/28 23:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  *		void S_LOCK_FREE(slock_t *lock)
  *			Tests if the lock is free. Returns non-zero if free, 0 if locked.
  *
- *		The S_LOCK() macro	implements a primitive but still useful random
+ *		The S_LOCK() macro implements a primitive but still useful random
  *		backoff to avoid hordes of busywaiting lockers chewing CPU.
  *
  *		Effectively:
@@ -64,7 +64,7 @@
  *		manual for POWER in any case.
  *
  */
-#if !defined(S_LOCK_H)
+#ifndef S_LOCK_H
 #define S_LOCK_H
 
 #include "storage/ipc.h"
@@ -403,8 +403,8 @@ extern void s_lock(volatile slock_t *lock, const char *file, const int line);
 
 #define S_LOCK(lock) \
 	do { \
-		if (TAS((volatile slock_t *) lock)) \
-			s_lock((volatile slock_t *) lock, __FILE__, __LINE__); \
+		if (TAS((volatile slock_t *) (lock))) \
+			s_lock((volatile slock_t *) (lock), __FILE__, __LINE__); \
 	} while (0)
 #endif	 /* S_LOCK */
 
@@ -421,12 +421,46 @@ extern void s_lock(volatile slock_t *lock, const char *file, const int line);
 #endif	 /* S_INIT_LOCK */
 
 #if !defined(TAS)
-int			tas(volatile slock_t *lock);		/* port/.../tas.s, or
+extern int	tas(volatile slock_t *lock);		/* port/.../tas.s, or
 												 * s_lock.c */
 
-#define TAS(lock)		tas((volatile slock_t *) lock)
+#define TAS(lock)		tas((volatile slock_t *) (lock))
 #endif	 /* TAS */
 
-#endif	 /* HAS_TEST_AND_SET */
-#endif	 /* S_LOCK_H */
 
+#else	 /* !HAS_TEST_AND_SET */
+
+/*
+ * Fake spinlock implementation using SysV semaphores --- slow and prone
+ * to fall foul of kernel limits on number of semaphores, so don't use this
+ * unless you must!
+ */
+
+typedef struct
+{
+	/* reference to semaphore used to implement this spinlock */
+	IpcSemaphoreId	semId;
+	int				sem;
+} slock_t;
+
+extern bool s_lock_free_sema(volatile slock_t *lock);
+extern void s_unlock_sema(volatile slock_t *lock);
+extern void s_init_lock_sema(volatile slock_t *lock);
+extern int tas_sema(volatile slock_t *lock);
+
+extern void s_lock(volatile slock_t *lock, const char *file, const int line);
+
+#define S_LOCK(lock) \
+	do { \
+		if (TAS((volatile slock_t *) (lock))) \
+			s_lock((volatile slock_t *) (lock), __FILE__, __LINE__); \
+	} while (0)
+
+#define S_LOCK_FREE(lock)   s_lock_free_sema(lock)
+#define S_UNLOCK(lock)   s_unlock_sema(lock)
+#define S_INIT_LOCK(lock)   s_init_lock_sema(lock)
+#define TAS(lock)   tas_sema(lock)
+
+#endif	 /* HAS_TEST_AND_SET */
+
+#endif	 /* S_LOCK_H */

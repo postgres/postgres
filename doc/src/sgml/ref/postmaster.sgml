@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.16 2000/11/22 01:41:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.17 2000/11/28 23:27:54 tgl Exp $
 Postgres documentation
 -->
 
@@ -397,32 +397,6 @@ $ ps -e | grep postmast
 	For example, many versions of Unix consider port numbers under 1024 to
 	be <firstterm>trusted</firstterm>
 	and only permit the Unix superuser to access them.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-IpcMemoryAttach: shmat() failed: Permission denied
-       </computeroutput></term>
-      <listitem>
-       <para>
-	A likely explanation is that another user attempted to start a
-	<application>postmaster</application>
-	process on the same port which acquired shared resources and then 
-	died.  Since Postgres shared memory keys are based on the port number 
-	assigned to the
-	<application>postmaster</application>,
-	such conflicts are likely if there is more than one installation on 
-	a single host.  If there are no other
-	<application>postmaster</application>
-	processes currently running (see above), run
-	<application>ipcclean</application>
-	and try again.  If other <application>postmaster</application>
-	images
-	are running, you will have to find the owners of those processes to
-	coordinate the assignment of port numbers and/or removal of unused
-	shared memory segments.
        </para>
       </listitem>
      </varlistentry>

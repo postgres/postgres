@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.25 2000/06/08 22:37:54 momjian Exp $
+ * $Id: lmgr.h,v 1.26 2000/11/28 23:27:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,5 @@ extern void UnlockPage(Relation relation, BlockNumber blkno, LOCKMODE lockmode);
 /* and this is for transactions */
 extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
-
-/* proc.c */
-extern void InitProcGlobal(IPCKey key, int maxBackends);
 
 #endif	 /* LMGR_H */

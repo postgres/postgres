@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.37 2000/10/23 04:10:06 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.38 2000/11/28 23:27:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,13 +55,6 @@ int			Num_Descriptors;
 
 BufferDesc *BufferDescriptors;
 BufferBlock BufferBlocks;
-
-#ifndef HAS_TEST_AND_SET
-long	   *NWaitIOBackendP;
-
-#endif
-
-extern IpcSemaphoreId WaitIOSemId;
 
 long	   *PrivateRefCount;	/* also used in freelist.c */
 bits8	   *BufferLocks;		/* flag bits showing locks I have set */
@@ -139,7 +132,7 @@ long int	LocalBufferFlushCount;
  * amount of available memory.
  */
 void
-InitBufferPool(IPCKey key)
+InitBufferPool(void)
 {
 	bool		foundBufs,
 				foundDescs;
@@ -169,18 +162,6 @@ InitBufferPool(IPCKey key)
 	BufferBlocks = (BufferBlock)
 		ShmemInitStruct("Buffer Blocks",
 						NBuffers * BLCKSZ, &foundBufs);
-
-#ifndef HAS_TEST_AND_SET
-	{
-		bool		foundNWaitIO;
-
-		NWaitIOBackendP = (long *) ShmemInitStruct("#Backends Waiting IO",
-												   sizeof(long),
-												   &foundNWaitIO);
-		if (!foundNWaitIO)
-			*NWaitIOBackendP = 0;
-	}
-#endif
 
 	if (foundDescs || foundBufs)
 	{
@@ -214,10 +195,8 @@ InitBufferPool(IPCKey key)
 			buf->flags = (BM_DELETED | BM_FREE | BM_VALID);
 			buf->refcount = 0;
 			buf->buf_id = i;
-#ifdef HAS_TEST_AND_SET
 			S_INIT_LOCK(&(buf->io_in_progress_lock));
 			S_INIT_LOCK(&(buf->cntx_lock));
-#endif
 		}
 
 		/* close the circular queue */
@@ -231,22 +210,6 @@ InitBufferPool(IPCKey key)
 
 	SpinRelease(BufMgrLock);
 
-#ifndef HAS_TEST_AND_SET
-	{
-		extern IpcSemaphoreId WaitIOSemId;
-		extern IpcSemaphoreId WaitCLSemId;
-
-		WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
-										 1, IPCProtection, 0, 1);
-		if (WaitIOSemId < 0)
-			elog(FATAL, "InitBufferPool: IpcSemaphoreCreate(WaitIOSemId) failed");
-		WaitCLSemId = IpcSemaphoreCreate(IPCKeyGetWaitCLSemaphoreKey(key),
-										 1, IPCProtection,
-									   IpcSemaphoreDefaultStartValue, 1);
-		if (WaitCLSemId < 0)
-			elog(FATAL, "InitBufferPool: IpcSemaphoreCreate(WaitCLSemId) failed");
-	}
-#endif
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
 	BufferTagLastDirtied = (BufferTag *) calloc(NBuffers, sizeof(BufferTag));
@@ -262,7 +225,7 @@ InitBufferPool(IPCKey key)
  * ----------------------------------------------------
  */
 int
-BufferShmemSize()
+BufferShmemSize(void)
 {
 	int			size = 0;
 

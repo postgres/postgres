@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.35 2000/11/12 20:51:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.36 2000/11/28 23:27:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,94 +25,37 @@
 
 SISeg	   *shmInvalBuffer;
 
-static void SISegmentAttach(IpcMemoryId shmid);
-static void SISegInit(SISeg *segP, int maxBackends);
 static void CleanupInvalidationState(int status, Datum arg);
 static void SISetProcStateInvalid(SISeg *segP);
 
+
 /*
- * SISegmentInit
- *		Create a new SI memory segment, or attach to an existing one
- *
- * This is called with createNewSegment = true by the postmaster (or by
- * a standalone backend), and subsequently with createNewSegment = false
- * by backends started by the postmaster.
- *
- * Note: maxBackends param is only valid when createNewSegment is true
+ * SInvalShmemSize --- return shared-memory space needed
  */
 int
-SISegmentInit(bool createNewSegment, IPCKey key, int maxBackends)
+SInvalShmemSize(int maxBackends)
+{
+	/*
+	 * Figure space needed. Note sizeof(SISeg) includes the first
+	 * ProcState entry.
+	 */
+	return sizeof(SISeg) + sizeof(ProcState) * (maxBackends - 1);
+}
+
+/*
+ * SIBufferInit
+ *		Create and initialize a new SI message buffer
+ */
+void
+SIBufferInit(int maxBackends)
 {
 	int			segSize;
-	IpcMemoryId shmId;
-
-	if (createNewSegment)
-	{
-		/* Kill existing segment, if any */
-		IpcMemoryKill(key);
-
-		/*
-		 * Figure space needed. Note sizeof(SISeg) includes the first
-		 * ProcState entry.
-		 */
-		segSize = sizeof(SISeg) + sizeof(ProcState) * (maxBackends - 1);
-
-		/* Get a shared segment */
-		shmId = IpcMemoryCreate(key, segSize, IPCProtection);
-		if (shmId < 0)
-		{
-			perror("SISegmentInit: segment create failed");
-			return -1;			/* an error */
-		}
-
-		/* Attach to the shared cache invalidation segment */
-		/* sets the global variable shmInvalBuffer */
-		SISegmentAttach(shmId);
-
-		/* Init shared memory contents */
-		SISegInit(shmInvalBuffer, maxBackends);
-	}
-	else
-	{
-		/* find existing segment */
-		shmId = IpcMemoryIdGet(key, 0);
-		if (shmId < 0)
-		{
-			perror("SISegmentInit: segment get failed");
-			return -1;			/* an error */
-		}
-
-		/* Attach to the shared cache invalidation segment */
-		/* sets the global variable shmInvalBuffer */
-		SISegmentAttach(shmId);
-	}
-	return 1;
-}
-
-/*
- * SISegmentAttach
- *		Attach to specified shared memory segment
- */
-static void
-SISegmentAttach(IpcMemoryId shmid)
-{
-	shmInvalBuffer = (SISeg *) IpcMemoryAttach(shmid);
-
-	if (shmInvalBuffer == IpcMemAttachFailed)
-	{
-		/* XXX use validity function */
-		elog(FATAL, "SISegmentAttach: Could not attach segment: %m");
-	}
-}
-
-/*
- * SISegInit
- *		Initialize contents of a new shared memory sinval segment
- */
-static void
-SISegInit(SISeg *segP, int maxBackends)
-{
+	SISeg	   *segP;
 	int			i;
+
+	/* Allocate space in shared memory */
+	segSize = SInvalShmemSize(maxBackends);
+	shmInvalBuffer = segP = (SISeg *) ShmemAlloc(segSize);
 
 	/* Clear message counters, save size of procState array */
 	segP->minMsgNum = 0;

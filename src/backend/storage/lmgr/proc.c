@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.83 2000/10/07 14:39:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.84 2000/11/28 23:27:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.83 2000/10/07 14:39:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.84 2000/11/28 23:27:56 tgl Exp $
  */
 #include "postgres.h"
 
@@ -91,10 +91,8 @@ static PROC_HDR *ProcGlobal = NULL;
 PROC	   *MyProc = NULL;
 
 static void ProcKill(int exitStatus, Datum pid);
-static void ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum);
-static void ProcFreeSem(IpcSemaphoreKey semKey, int semNum);
-
-static char *DeadLockMessage = "Deadlock detected -- See the lock(l) manual page for a possible cause.";
+static void ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum);
+static void ProcFreeSem(IpcSemaphoreId semId, int semNum);
 
 /*
  * InitProcGlobal -
@@ -116,7 +114,7 @@ static char *DeadLockMessage = "Deadlock detected -- See the lock(l) manual page
  *	  rather than later.
  */
 void
-InitProcGlobal(IPCKey key, int maxBackends)
+InitProcGlobal(int maxBackends)
 {
 	bool		found = false;
 
@@ -135,39 +133,35 @@ InitProcGlobal(IPCKey key, int maxBackends)
 		int			i;
 
 		ProcGlobal->freeProcs = INVALID_OFFSET;
-		ProcGlobal->currKey = IPCGetProcessSemaphoreInitKey(key);
-		for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
+		for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
+		{
+			ProcGlobal->procSemIds[i] = -1;
 			ProcGlobal->freeSemMap[i] = 0;
+		}
 
 		/*
 		 * Arrange to delete semas on exit --- set this up now so that we
-		 * will clean up if pre-allocation fails...
+		 * will clean up if pre-allocation fails.  We use our own freeproc,
+		 * rather than IpcSemaphoreCreate's removeOnExit option, because
+		 * we don't want to fill up the on_shmem_exit list with a separate
+		 * entry for each semaphore set.
 		 */
 		on_shmem_exit(ProcFreeAllSemaphores, 0);
 
 		/*
-		 * Pre-create the semaphores for the first maxBackends processes,
-		 * unless we are running as a standalone backend.
+		 * Pre-create the semaphores for the first maxBackends processes.
 		 */
-		if (key != PrivateIPCKey)
-		{
-			for (i = 0;
-				 i < (maxBackends + PROC_NSEMS_PER_SET - 1) / PROC_NSEMS_PER_SET;
-				 i++)
-			{
-				IPCKey		semKey = ProcGlobal->currKey + i;
-				int			semId;
+		Assert(maxBackends > 0 && maxBackends <= MAXBACKENDS);
 
-				semId = IpcSemaphoreCreate(semKey,
-										   PROC_NSEMS_PER_SET,
-										   IPCProtection,
-										   IpcSemaphoreDefaultStartValue,
-										   0);
-				if (semId < 0)
-					elog(FATAL, "InitProcGlobal: IpcSemaphoreCreate failed");
-				/* mark this sema set allocated */
-				ProcGlobal->freeSemMap[i] = (1 << PROC_NSEMS_PER_SET);
-			}
+		for (i = 0; i < ((maxBackends-1)/PROC_NSEMS_PER_SET+1); i++)
+		{
+			IpcSemaphoreId		semId;
+
+			semId = IpcSemaphoreCreate(PROC_NSEMS_PER_SET,
+									   IPCProtection,
+									   1,
+									   false);
+			ProcGlobal->procSemIds[i] = semId;
 		}
 	}
 }
@@ -178,7 +172,7 @@ InitProcGlobal(IPCKey key, int maxBackends)
  * ------------------------
  */
 void
-InitProcess(IPCKey key)
+InitProcess(void)
 {
 	bool		found = false;
 	unsigned long location,
@@ -186,7 +180,7 @@ InitProcess(IPCKey key)
 
 	SpinAcquire(ProcStructLock);
 
-	/* attach to the free list */
+	/* attach to the ProcGlobal structure */
 	ProcGlobal = (PROC_HDR *)
 		ShmemInitStruct("Proc Header", sizeof(PROC_HDR), &found);
 	if (!found)
@@ -199,10 +193,9 @@ InitProcess(IPCKey key)
 	{
 		SpinRelease(ProcStructLock);
 		elog(ERROR, "ProcInit: you already exist");
-		return;
 	}
 
-	/* try to get a proc from the free list first */
+	/* try to get a proc struct from the free list first */
 
 	myOffset = ProcGlobal->freeProcs;
 
@@ -243,36 +236,22 @@ InitProcess(IPCKey key)
 
 	if (IsUnderPostmaster)
 	{
-		IPCKey		semKey;
-		int			semNum;
-		int			semId;
-		union semun semun;
+		IpcSemaphoreId	semId;
+		int				semNum;
+		union semun		semun;
 
-		ProcGetNewSemKeyAndNum(&semKey, &semNum);
-
-		/*
-		 * Note: because of the pre-allocation done in InitProcGlobal,
-		 * this call should always attach to an existing semaphore. It
-		 * will (try to) create a new group of semaphores only if the
-		 * postmaster tries to start more backends than it said it would.
-		 */
-		semId = IpcSemaphoreCreate(semKey,
-								   PROC_NSEMS_PER_SET,
-								   IPCProtection,
-								   IpcSemaphoreDefaultStartValue,
-								   0);
+		ProcGetNewSemIdAndNum(&semId, &semNum);
 
 		/*
 		 * we might be reusing a semaphore that belongs to a dead backend.
 		 * So be careful and reinitialize its value here.
 		 */
-		semun.val = IpcSemaphoreDefaultStartValue;
+		semun.val = 1;
 		semctl(semId, semNum, SETVAL, semun);
 
-		IpcSemaphoreLock(semId, semNum, IpcExclusiveLock);
+		IpcSemaphoreLock(semId, semNum);
 		MyProc->sem.semId = semId;
 		MyProc->sem.semNum = semNum;
-		MyProc->sem.semKey = semKey;
 	}
 	else
 		MyProc->sem.semId = -1;
@@ -304,7 +283,7 @@ InitProcess(IPCKey key)
 	 */
 	location = MAKE_OFFSET(MyProc);
 	if ((!ShmemPIDLookup(MyProcPid, &location)) || (location != MAKE_OFFSET(MyProc)))
-		elog(STOP, "InitProc: ShmemPID table broken");
+		elog(STOP, "InitProcess: ShmemPID table broken");
 
 	MyProc->errType = NO_ERROR;
 	SHMQueueElemInit(&(MyProc->links));
@@ -363,10 +342,7 @@ ProcReleaseLocks()
 /*
  * ProcRemove -
  *	  used by the postmaster to clean up the global tables. This also frees
- *	  up the semaphore used for the lmgr of the process. (We have to do
- *	  this is the postmaster instead of doing a IpcSemaphoreKill on exiting
- *	  the process because the semaphore set is shared among backends and
- *	  we don't want to remove other's semaphores on exit.)
+ *	  up the semaphore used for the lmgr of the process.
  */
 bool
 ProcRemove(int pid)
@@ -383,7 +359,7 @@ ProcRemove(int pid)
 
 	SpinAcquire(ProcStructLock);
 
-	ProcFreeSem(proc->sem.semKey, proc->sem.semNum);
+	ProcFreeSem(proc->sem.semId, proc->sem.semNum);
 
 	proc->links.next = ProcGlobal->freeProcs;
 	ProcGlobal->freeProcs = MAKE_OFFSET(proc);
@@ -490,6 +466,7 @@ ProcQueueInit(PROC_QUEUE *queue)
  *
  */
 static bool lockWaiting = false;
+
 void
 SetWaitingForLock(bool waiting)
 {
@@ -514,12 +491,12 @@ SetWaitingForLock(bool waiting)
 		}
 	}
 }
+
 void
 LockWaitCancel(void)
 {
-/* BeOS doesn't have setitimer, but has set_alarm */
 #ifndef __BEOS__ 	
-struct itimerval timeval,
+	struct itimerval timeval,
 				dummy;
 
 	if (!lockWaiting)
@@ -529,6 +506,7 @@ struct itimerval timeval,
 	MemSet(&timeval, 0, sizeof(struct itimerval));
 	setitimer(ITIMER_REAL, &timeval, &dummy);
 #else
+	/* BeOS doesn't have setitimer, but has set_alarm */
 	if (!lockWaiting)
 		return;
 	lockWaiting = false;
@@ -546,6 +524,8 @@ struct itimerval timeval,
  * P() on the semaphore should put us to sleep.  The process
  * semaphore is cleared by default, so the first time we try
  * to acquire it, we sleep.
+ *
+ * Result is NO_ERROR if we acquired the lock, STATUS_ERROR if not (deadlock).
  *
  * ASSUME: that no one will fiddle with the queue until after
  *		we release the spin lock.
@@ -566,7 +546,6 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 	int			aheadHolders[MAX_LOCKMODES];
 	bool		selfConflict = (lockctl->conflictTab[token] & myMask),
 				prevSame = false;
-	bool		deadlock_checked = false;
 #ifndef __BEOS__
 	struct itimerval timeval,
 				dummy;
@@ -595,8 +574,8 @@ ProcSleep(PROC_QUEUE *waitQueue,/* lock->waitProcs */
 			/* is he waiting for me ? */
 			if (lockctl->conflictTab[proc->token] & MyProc->holdLock)
 			{
+				/* Yes, report deadlock failure */
 				MyProc->errType = STATUS_ERROR;
-				elog(NOTICE, DeadLockMessage);
 				goto rt;
 			}
 			/* being waiting for him - go past */
@@ -642,10 +621,16 @@ ins:;
 	lock->waitMask |= myMask;
 	SpinRelease(spinlock);
 
+	MyProc->errType = NO_ERROR;		/* initialize result for success */
+
 	/* --------------
-	 * We set this so we can wake up periodically and check for a deadlock.
-	 * If a deadlock is detected, the handler releases the processes
-	 * semaphore and aborts the current transaction.
+	 * Set timer so we can wake up after awhile and check for a deadlock.
+	 * If a deadlock is detected, the handler releases the process's
+	 * semaphore and sets MyProc->errType = STATUS_ERROR, allowing us to
+	 * know that we must report failure rather than success.
+	 *
+	 * By delaying the check until we've waited for a bit, we can avoid
+	 * running the rather expensive deadlock-check code in most cases.
 	 *
 	 * Need to zero out struct to set the interval and the micro seconds fields
 	 * to 0.
@@ -655,49 +640,42 @@ ins:;
 	MemSet(&timeval, 0, sizeof(struct itimerval));
 	timeval.it_value.tv_sec = DeadlockTimeout / 1000;
 	timeval.it_value.tv_usec = (DeadlockTimeout % 1000) * 1000;
+	if (setitimer(ITIMER_REAL, &timeval, &dummy))
+		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 #else
-    /* usecs */
-    time_interval = DeadlockTimeout * 1000000;
+    time_interval = DeadlockTimeout * 1000000; /* usecs */
+	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
+		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 #endif
 
 	SetWaitingForLock(true);
-	do
-	{
-		MyProc->errType = NO_ERROR;		/* reset flag after deadlock check */
 
-		if (!deadlock_checked)
-#ifndef __BEOS__
-			if (setitimer(ITIMER_REAL, &timeval, &dummy))
-#else
-            if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
-#endif
-				elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
-		deadlock_checked = true;
+	/* --------------
+	 * If someone wakes us between SpinRelease and IpcSemaphoreLock,
+	 * IpcSemaphoreLock will not block.  The wakeup is "saved" by
+	 * the semaphore implementation.  Note also that if HandleDeadLock
+	 * is invoked but does not detect a deadlock, IpcSemaphoreLock()
+	 * will continue to wait.  There used to be a loop here, but it
+	 * was useless code...
+	 * --------------
+	 */
+	IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum);
 
-		/* --------------
-		 * if someone wakes us between SpinRelease and IpcSemaphoreLock,
-		 * IpcSemaphoreLock will not block.  The wakeup is "saved" by
-		 * the semaphore implementation.
-		 * --------------
-		 */
-		IpcSemaphoreLock(MyProc->sem.semId, MyProc->sem.semNum,
-						 IpcExclusiveLock);
-	} while (MyProc->errType == STATUS_NOT_FOUND);		/* sleep after deadlock
-														 * check */
 	lockWaiting = false;
 
 	/* ---------------
-	 * We were awoken before a timeout - now disable the timer
+	 * Disable the timer, if it's still running
 	 * ---------------
 	 */
 #ifndef __BEOS__
 	timeval.it_value.tv_sec = 0;
 	timeval.it_value.tv_usec = 0;
 	if (setitimer(ITIMER_REAL, &timeval, &dummy))
+		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
 #else
     if (set_alarm(B_INFINITE_TIMEOUT, B_PERIODIC_ALARM) < 0)
+		elog(FATAL, "ProcSleep: Unable to disable timer for process wakeup");
 #endif
-		elog(FATAL, "ProcSleep: Unable to diable timer for process wakeup");
 
 	/* ----------------
 	 * We were assumed to be in a critical section when we went
@@ -742,7 +720,7 @@ ProcWakeup(PROC *proc, int errType)
 
 	proc->errType = errType;
 
-	IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum, IpcExclusiveLock);
+	IpcSemaphoreUnlock(proc->sem.semId, proc->sem.semNum);
 
 	return retProc;
 }
@@ -855,26 +833,10 @@ HandleDeadLock(SIGNAL_ARGS)
 	 * Before we are awoken the process releasing the lock grants it to
 	 * us so we know that we don't have to wait anymore.
 	 *
-	 * Damn these names are LONG! -mer
+	 * We check by looking to see if we've been unlinked from the wait queue.
+	 * This is quicker than checking our semaphore's state, since no kernel
+	 * call is needed, and it is safe because we hold the locktable lock.
 	 * ---------------------
-	 */
-	if (IpcSemaphoreGetCount(MyProc->sem.semId, MyProc->sem.semNum) ==
-		IpcSemaphoreDefaultStartValue)
-	{
-		UnlockLockTable();
-		return;
-	}
-
-	/*
-	 * you would think this would be unnecessary, but...
-	 *
-	 * this also means we've been removed already.  in some ports (e.g.,
-	 * sparc and aix) the semop(2) implementation is such that we can
-	 * actually end up in this handler after someone has removed us from
-	 * the queue and bopped the semaphore *but the test above fails to
-	 * detect the semaphore update* (presumably something weird having to
-	 * do with the order in which the semaphore wakeup signal and SIGALRM
-	 * get handled).
 	 */
 	if (MyProc->links.prev == INVALID_OFFSET ||
 		MyProc->links.next == INVALID_OFFSET)
@@ -888,19 +850,18 @@ HandleDeadLock(SIGNAL_ARGS)
         DumpAllLocks();
 #endif
 
-	MyProc->errType = STATUS_NOT_FOUND;
 	if (!DeadLockCheck(MyProc, MyProc->waitLock))
 	{
+		/* No deadlock, so keep waiting */
 		UnlockLockTable();
 		return;
 	}
-
-	mywaitlock = MyProc->waitLock;
 
 	/* ------------------------
 	 * Get this process off the lock's wait queue
 	 * ------------------------
 	 */
+	mywaitlock = MyProc->waitLock;
 	Assert(mywaitlock->waitProcs.size > 0);
 	lockWaiting = false;
 	--mywaitlock->waitProcs.size;
@@ -908,12 +869,10 @@ HandleDeadLock(SIGNAL_ARGS)
 	SHMQueueElemInit(&(MyProc->links));
 
 	/* ------------------
-	 * Unlock my semaphore so that the count is right for next time.
-	 * I was awoken by a signal, not by someone unlocking my semaphore.
+	 * Unlock my semaphore so that the interrupted ProcSleep() call can finish.
 	 * ------------------
 	 */
-	IpcSemaphoreUnlock(MyProc->sem.semId, MyProc->sem.semNum,
-					   IpcExclusiveLock);
+	IpcSemaphoreUnlock(MyProc->sem.semId, MyProc->sem.semNum);
 
 	/* -------------
 	 * Set MyProc->errType to STATUS_ERROR so that we abort after
@@ -928,9 +887,6 @@ HandleDeadLock(SIGNAL_ARGS)
 	 * conditions.	i don't claim to understand this...
 	 */
 	UnlockLockTable();
-
-	elog(NOTICE, DeadLockMessage);
-	return;
 }
 
 void
@@ -959,31 +915,32 @@ ProcReleaseSpins(PROC *proc)
  *****************************************************************************/
 
 /*
- * ProcGetNewSemKeyAndNum -
+ * ProcGetNewSemIdAndNum -
  *	  scan the free semaphore bitmap and allocate a single semaphore from
- *	  a semaphore set. (If the semaphore set doesn't exist yet,
- *	  IpcSemaphoreCreate will create it. Otherwise, we use the existing
- *	  semaphore set.)
+ *	  a semaphore set.
  */
 static void
-ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
+ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 {
 	int			i;
+	IpcSemaphoreId *procSemIds = ProcGlobal->procSemIds;
 	int32	   *freeSemMap = ProcGlobal->freeSemMap;
-	int32		fullmask = (1 << (PROC_NSEMS_PER_SET + 1)) - 1;
+	int32		fullmask = (1 << PROC_NSEMS_PER_SET) - 1;
 
 	/*
 	 * we hold ProcStructLock when entering this routine. We scan through
 	 * the bitmap to look for a free semaphore.
 	 */
 
-	for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
+	for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
 	{
 		int			mask = 1;
 		int			j;
 
 		if (freeSemMap[i] == fullmask)
 			continue;			/* this set is fully allocated */
+		if (procSemIds[i] < 0)
+			continue;			/* this set hasn't been initialized */
 
 		for (j = 0; j < PROC_NSEMS_PER_SET; j++)
 		{
@@ -991,12 +948,11 @@ ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
 			{
 
 				/*
-				 * a free semaphore found. Mark it as allocated. Also set
-				 * the bit indicating whole set is allocated.
+				 * a free semaphore found. Mark it as allocated.
 				 */
-				freeSemMap[i] |= mask + (1 << PROC_NSEMS_PER_SET);
+				freeSemMap[i] |= mask;
 
-				*key = ProcGlobal->currKey + i;
+				*semId = procSemIds[i];
 				*semNum = j;
 				return;
 			}
@@ -1005,7 +961,7 @@ ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
 	}
 
 	/* if we reach here, all the semaphores are in use. */
-	elog(ERROR, "InitProc: cannot allocate a free semaphore");
+	elog(ERROR, "ProcGetNewSemIdAndNum: cannot allocate a free semaphore");
 }
 
 /*
@@ -1013,23 +969,22 @@ ProcGetNewSemKeyAndNum(IPCKey *key, int *semNum)
  *	  free up our semaphore in the semaphore set.
  */
 static void
-ProcFreeSem(IpcSemaphoreKey semKey, int semNum)
+ProcFreeSem(IpcSemaphoreId semId, int semNum)
 {
-	int			mask;
+	int32		mask;
 	int			i;
-	int32	   *freeSemMap = ProcGlobal->freeSemMap;
 
-	i = semKey - ProcGlobal->currKey;
 	mask = ~(1 << semNum);
-	freeSemMap[i] &= mask;
 
-	/*
-	 * Formerly we'd release a semaphore set if it was now completely
-	 * unused, but now we keep the semaphores to ensure we won't run out
-	 * when starting new backends --- cf. InitProcGlobal.  Note that the
-	 * PROC_NSEMS_PER_SET+1'st bit of the freeSemMap entry remains set to
-	 * indicate it is still allocated; ProcFreeAllSemaphores() needs that.
-	 */
+	for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
+	{
+		if (ProcGlobal->procSemIds[i] == semId)
+		{
+			ProcGlobal->freeSemMap[i] &= mask;
+			return;
+		}
+	}
+	fprintf(stderr, "ProcFreeSem: no ProcGlobal entry for semId %d\n", semId);
 }
 
 /*
@@ -1039,14 +994,13 @@ ProcFreeSem(IpcSemaphoreKey semKey, int semNum)
  *	  Free up all the semaphores allocated to the lmgrs of the backends.
  */
 static void
-ProcFreeAllSemaphores()
+ProcFreeAllSemaphores(void)
 {
 	int			i;
-	int32	   *freeSemMap = ProcGlobal->freeSemMap;
 
-	for (i = 0; i < MAX_PROC_SEMS / PROC_NSEMS_PER_SET; i++)
+	for (i = 0; i < PROC_SEM_MAP_ENTRIES; i++)
 	{
-		if (freeSemMap[i] != 0)
-			IpcSemaphoreKill(ProcGlobal->currKey + i);
+		if (ProcGlobal->procSemIds[i] >= 0)
+			IpcSemaphoreKill(ProcGlobal->procSemIds[i]);
 	}
 }
