@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /*
- * $Id: Connection.java,v 1.39 2001/11/25 23:26:56 barry Exp $
+ * $Id: Connection.java,v 1.40 2001/12/11 04:44:23 barry Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -1103,7 +1103,7 @@ public abstract class Connection
 	 */
 	public int getSQLType(int oid) throws SQLException
 	{
-		Integer sqlType = (Integer)typeOidCache.get(new Integer(oid));
+		Integer sqlType = (Integer)sqlTypeCache.get(new Integer(oid));
 
 		// it's not in the cache, so perform a query, and add the result to the cache
 		if (sqlType == null)
