@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.85 1998/12/08 06:18:11 thomas Exp $
+ * $Id: pg_proc.h,v 1.86 1998/12/13 23:45:22 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -238,11 +238,11 @@ DATA(insert OID = 108 (  intgtjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21"
 DESCR("selectivity");
 
 DATA(insert OID = 112 (  int4_text		   PGUID 11 f t f 1 f  25 "23" 100 0 0 100	foo bar ));
-DESCR("convert");
+DESCR("convert int4 to text");
 DATA(insert OID = 113 (  int2_text		   PGUID 11 f t f 1 f  25 "21" 100 0 0 100	foo bar ));
-DESCR("convert");
+DESCR("convert int2 to text");
 DATA(insert OID = 114 (  oid_text		   PGUID 11 f t f 1 f  25 "26" 100 0 0 100	foo bar ));
-DESCR("convert");
+DESCR("convert oid to text");
 
 DATA(insert OID = 115 (  box_above		   PGUID 11 f t f 2 f  16 "603 603" 100 1 0 100  foo bar ));
 DESCR("is above");
@@ -492,13 +492,13 @@ DATA(insert OID = 234 (  dlog1			   PGUID 11 f t f 1 f 701 "701" 100 0 0 100  fo
 DESCR("natural logarithm (in psql, protect with ()");
 
 DATA(insert OID = 235 (  i2tod			   PGUID 11 f t f 1 f 701  "21" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert int2 to float8");
 DATA(insert OID = 236 (  i2tof			   PGUID 11 f t f 1 f 700  "21" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert int2 to float4");
 DATA(insert OID = 237 (  dtoi2			   PGUID 11 f t f 1 f  21 "701" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert float8 to int2");
 DATA(insert OID = 238 (  ftoi2			   PGUID 11 f t f 1 f  21 "700" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert float4 to int2");
 DATA(insert OID = 239 (  line_distance	   PGUID 11 f t f 2 f 701 "628 628" 100 0 0 100  foo bar ));
 DESCR("distance between");
 
@@ -655,23 +655,23 @@ DATA(insert OID = 310 (  float84ge		   PGUID 11 f t f 2 f 16 "701 700" 100 0 0 1
 DESCR("greater-than-or-equal");
 
 DATA(insert OID = 311 (  ftod			   PGUID 11 f t f 1 f 701 "700" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert float4 to float8");
 DATA(insert OID = 312 (  dtof			   PGUID 11 f t f 1 f 700 "701" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert float8 to float4");
 DATA(insert OID = 313 (  i2toi4			   PGUID 11 f t f 1 f  23  "21" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert int2 to int4");
 DATA(insert OID = 314 (  i4toi2			   PGUID 11 f t f 1 f  21  "23" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert int4 to int2");
 DATA(insert OID = 315 (  keyfirsteq		   PGUID 11 f t f 2 f  16	"0 21" 100 0 0 100	foo bar ));
 DESCR("");
 DATA(insert OID = 316 (  i4tod			   PGUID 11 f t f 1 f 701  "23" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert int4 to float8");
 DATA(insert OID = 317 (  dtoi4			   PGUID 11 f t f 1 f  23 "701" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert float8 to int4");
 DATA(insert OID = 318 (  i4tof			   PGUID 11 f t f 1 f 700  "23" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert int4 to float4");
 DATA(insert OID = 319 (  ftoi4			   PGUID 11 f t f 1 f  23 "700" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert float4 to int4");
 
 DATA(insert OID = 320 (  rtinsert		   PGUID 11 f t f 5 f 23 "0" 100 0 0 100  foo bar ));
 DESCR("r-tree(internal)");
@@ -786,13 +786,13 @@ DESCR("");
 /* OIDS 400 - 499 */
 
 DATA(insert OID =  406 (  name_text		   PGUID 11 f t f 1 f	25 "19" 100 0 0 100 foo bar ));
-DESCR("convert");
+DESCR("convert name to text");
 DATA(insert OID =  407 (  text_name		   PGUID 11 f t f 1 f	19 "25" 100 0 0 100 foo bar ));
-DESCR("convert");
+DESCR("convert text to name");
 DATA(insert OID =  408 (  name_bpchar	   PGUID 11 f t f 1 f 1042 "19" 100 0 0 100 foo bar ));
-DESCR("convert");
+DESCR("convert name to char()");
 DATA(insert OID =  409 (  bpchar_name	   PGUID 11 f t f 1 f	19 "1042" 100 0 0 100	foo bar ));
-DESCR("convert");
+DESCR("convert char() to name");
 
 DATA(insert OID =  438 (  hashsel		   PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 DESCR("selectivity");
@@ -913,7 +913,9 @@ DATA(insert OID = 659 (  namene			   PGUID 11 f t f 2 f 16 "19 19" 100 0 0 100  
 DESCR("not equal");
 
 DATA(insert OID = 668 (  bpchar			   PGUID 11 f t f 2 f 1042 "1042 23" 100 0 0 100  foo bar ));
+DESCR("truncate char()");
 DATA(insert OID = 669 (  varchar		   PGUID 11 f t f 2 f 1043 "1043 23" 100 0 0 100  foo bar ));
+DESCR("truncate varchar()");
 
 DATA(insert OID = 676 (  mktinterval	   PGUID 11 f t f 2 f 704 "702 702" 100 0 0 100 foo bar ));
 DESCR("convert to interval");
@@ -1065,20 +1067,20 @@ DESCR("greater-than-or-equal");
 /* OIDS 800 - 899 */
 
 DATA(insert OID = 817 (  text_oid		   PGUID 11 f t f 1 f 26 "25" 100 0 0 100  foo bar));
-DESCR("convert");
+DESCR("convert text to oid");
 DATA(insert OID = 818 (  text_int2		   PGUID 11 f t f 1 f 21 "25" 100 0 0 100  foo bar));
-DESCR("convert");
+DESCR("convert text to int2");
 DATA(insert OID = 819 (  text_int4		   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar));
-DESCR("convert");
+DESCR("convert text to int4");
 
 DATA(insert OID = 838 (  text_float8	   PGUID 11 f t f 1 f 701 "25" 100 0 0 100  foo bar));
-DESCR("convert");
+DESCR("convert text to float8");
 DATA(insert OID = 839 (  text_float4	   PGUID 11 f t f 1 f 700 "25" 100 0 0 100  foo bar));
-DESCR("convert");
+DESCR("convert text to float4");
 DATA(insert OID = 840 (  float8_text	   PGUID 11 f t f 1 f  25 "701" 100 0 0 100  foo bar));
-DESCR("convert");
+DESCR("convert float8 to text");
 DATA(insert OID = 841 (  float4_text	   PGUID 11 f t f 1 f  25 "700" 100 0 0 100  foo bar));
-DESCR("convert");
+DESCR("convert float4 to text");
 
 DATA(insert OID =  846 (  cash_mul_flt4    PGUID 11 f t f 2 f 790 "790 700" 100 0 0 100  foo bar ));
 DESCR("multiply");
@@ -1113,9 +1115,9 @@ DATA(insert OID =  859 (  namenlike		   PGUID 11 f t f 2 f 16 "19 25" 100 0 0 10
 DESCR("does not match LIKE expression");
 
 DATA(insert OID =  860 (  char_bpchar	   PGUID 11 f t f 1 f 1042 "18" 100 0 0 100  foo bar ));
-DESCR("convert to bpchar");
+DESCR("convert char to char()");
 DATA(insert OID =  861 (  bpchar_char	   PGUID 11 f t f 1 f	18 "1042" 100 0 0 100  foo bar ));
-DESCR("convert to char");
+DESCR("convert char() to char");
 
 DATA(insert OID =  862 (  int4_mul_cash		   PGUID 11 f t f 2 f 790 "23 790" 100 0 0 100	foo bar ));
 DESCR("multiply");
@@ -1175,6 +1177,19 @@ DATA(insert OID = 938 (  upgradepoly	   PGUID 11 f t f 1 f 604 "604" 100 0 0 100
 DESCR("");
 DATA(insert OID = 939 (  revertpoly		   PGUID 11 f t f 1 f 604 "604" 100 0 0 100  foo bar ));
 DESCR("");
+
+DATA(insert OID = 942 (  char_text		   PGUID 11 f t f 1 f 25 "18" 100 0 0 100  foo bar ));
+DESCR("convert char to text");
+DATA(insert OID = 943 (  text_char		   PGUID 11 f t f 1 f 18 "25" 100 0 0 100  foo bar ));
+DESCR("convert text to char");
+DATA(insert OID = 944 (  char			   PGUID 14 f t f 1 f 18 "25" 100 0 0 100  "select text_char($1)" - ));
+DESCR("convert text to char()");
+DATA(insert OID = 946 (  text			   PGUID 14 f t f 1 f 25 "18" 100 0 0 100  "select char_text($1)" - ));
+DESCR("convert char to text");
+DATA(insert OID = 947 (  char			   PGUID 14 f t f 1 f 18 "1042" 100 0 0 100  "select bpchar_char($1)" - ));
+DESCR("convert char() to char");
+DATA(insert OID = 948 (  varchar		   PGUID 14 f t f 1 f 25 "1043" 100 0 0 100  "select bpchar_char($1)" - ));
+DESCR("convert char to text");
 
 DATA(insert OID = 950 (  istrue			   PGUID 11 f t f 1 f 16 "16" 100 0 0 100  foo bar ));
 DESCR("");
@@ -1453,13 +1468,13 @@ DESCR("plus");
 DATA(insert OID = 1190 (  datetime_mi_span	PGUID 11 f t f 2 f 1184 "1184 1186" 100 0 0 100  foo bar ));
 DESCR("minus");
 DATA(insert OID = 1191 (  text_datetime		 PGUID 11 f t f 1 f 1184 "25" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert text to datetime");
 DATA(insert OID = 1192 (  datetime_text		 PGUID 11 f t f 1 f   25 "1184" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert datetime to text");
 DATA(insert OID = 1193 (  timespan_text		 PGUID 11 f t f 1 f   25 "1186" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert timespan to text");
 DATA(insert OID = 1194 (  timespan_reltime	 PGUID 11 f t f 1 f  703 "1186" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert timespan to reltime");
 DATA(insert OID = 1195 (  datetime_smaller	 PGUID 11 f t f 2 f 1184 "1184 1184" 100 0 0 100  foo bar ));
 DESCR("smaller of two");
 DATA(insert OID = 1196 (  datetime_larger	 PGUID 11 f t f 2 f 1184 "1184 1184" 100 0 0 100  foo bar ));
@@ -1474,7 +1489,7 @@ DESCR("date difference preserving months and years");
 /* OIDS 1200 - 1299 */
 
 DATA(insert OID = 1200 (  int4reltime	   PGUID 11 f t f 1 f  703 "23" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert int4 to reltime");
 
 DATA(insert OID = 1217 (  datetime_trunc   PGUID 11 f t f 2 f 1184 "25 1184" 100 0 0 100  foo bar ));
 DESCR("truncate datetime to specified units");
@@ -1482,9 +1497,9 @@ DATA(insert OID = 1218 (  timespan_trunc   PGUID 11 f t f 2 f 1186 "25 1186" 100
 DESCR("truncate timespan to specified units");
 
 DATA(insert OID = 1230 (  bpchar		   PGUID 14 f t f 1 f 1042 "18" 100 0 0 100  "select char_bpchar($1)" - ));
-DESCR("convert to bpchar");
-DATA(insert OID = 1231 (  char			   PGUID 14 f t f 1 f	23 "1042" 100 0 0 100  "select bpchar_char($1)" - ));
-DESCR("convert to char");
+DESCR("convert char to char()");
+DATA(insert OID = 1231 (  char			   PGUID 14 f t f 1 f	18 "1042" 100 0 0 100  "select bpchar_char($1)" - ));
+DESCR("convert char() to char");
 
 DATA(insert OID = 1236 (  int8larger	   PGUID 11 f t f 2 f 20 "20 20" 100 0 0 100  foo bar ));
 DESCR("larger of two");
@@ -1510,7 +1525,7 @@ DATA(insert OID = 1379 (  varcharoctetlen  PGUID 11 f t f 1 f 23 "1043" 100 0 0 
 DESCR("octet length");
 
 DATA(insert OID = 1263 (  text_timespan    PGUID 11 f t f 1 f 1186 "25" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert text to timespan");
 DATA(insert OID = 1271 (  timespan_finite  PGUID 11 f t f 1 f	16 "1186" 100 0 0 100  foo bar ));
 DESCR("boolean test");
 
@@ -1557,77 +1572,77 @@ DESCR("less-equal-greater");
 DATA(insert OID = 1315 (  timespan_cmp		 PGUID 11 f t f 2 f   23 "1186 1186" 100 0 0 100  foo bar ));
 DESCR("less-equal-greater");
 DATA(insert OID = 1316 (  datetime_time		 PGUID 11 f t f 1 f 1083 "1184" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert datetime to time");
 DATA(insert OID = 1318 (  datetime_timestamp PGUID 11 f t f 1 f 1296 "1184" 100 0 0 100  foo bar ));
-DESCR("convert");
+DESCR("convert datetime to timestamp");
 DATA(insert OID = 1326 (  timespan_div		 PGUID 11 f t f 2 f 1186 "1186 701" 100 0 0 100  foo bar ));
 DESCR("divide");
 
 DATA(insert OID = 1339 (  date_zone			 PGUID 14 f t f 2 f   25 "25 1184" 100 0 0 100	"select datetime_zone($1, $2)" - ));
 DESCR("");
 DATA(insert OID = 1340 (  text				 PGUID 14 f t f 1 f   25 "1184" 100 0 0 100  "select datetime_text($1)" - ));
-DESCR("convert");
+DESCR("convert datetime to text");
 DATA(insert OID = 1341 (  text				 PGUID 14 f t f 1 f   25 "1186" 100 0 0 100  "select timespan_text($1)" - ));
-DESCR("convert");
+DESCR("convert timespan to text");
 DATA(insert OID = 1342 (  text				 PGUID 14 f t f 1 f   25 "23" 100 0 0 100  "select int4_text($1)" - ));
-DESCR("convert");
+DESCR("convert int4 to text");
 DATA(insert OID = 1343 (  text				 PGUID 14 f t f 1 f   25 "21" 100 0 0 100  "select int2_text($1)" - ));
-DESCR("convert");
+DESCR("convert int2 to text");
 DATA(insert OID = 1344 (  text				 PGUID 14 f t f 1 f   25 "26" 100 0 0 100  "select oid_text($1)" - ));
-DESCR("convert");
+DESCR("convert oid to text");
 DATA(insert OID = 1345 (  oid				 PGUID 14 f t f 1 f   26 "25" 100 0 0 100  "select text_oid($1)" - ));
-DESCR("convert");
+DESCR("convert text to oid");
 DATA(insert OID = 1346 (  int2				 PGUID 14 f t f 1 f   21 "25" 100 0 0 100  "select text_int2($1)" - ));
-DESCR("convert");
+DESCR("convert text to int2");
 DATA(insert OID = 1347 (  int4				 PGUID 14 f t f 1 f   23 "25" 100 0 0 100  "select text_int4($1)" - ));
-DESCR("convert");
+DESCR("convert text to int4");
 DATA(insert OID = 1348 (  obj_description	 PGUID 14 f t f 1 f   25 "26" 100 0 0 100  "select description from pg_description where objoid = $1" - ));
 DESCR("get description for object id");
 DATA(insert OID = 1349 (  oid8types			 PGUID 11 f t f 1 f   25 "30" 100 0 0 100  foo bar ));
 DESCR("print type names of oid8 field");
 
 DATA(insert OID = 1350 (  datetime			 PGUID 14 f t f 1 f 1184 "1184" 100 0 0 100  "select $1" - ));
-DESCR("convert");
+DESCR("convert (noop)");
 DATA(insert OID = 1351 (  datetime			 PGUID 14 f t f 1 f 1184 "25" 100 0 0 100  "select text_datetime($1)" - ));
-DESCR("convert");
+DESCR("convert text to datetime");
 DATA(insert OID = 1352 (  datetime			 PGUID 14 f t f 1 f 1184 "702" 100 0 0 100	"select abstime_datetime($1)" - ));
-DESCR("convert");
+DESCR("convert abstime to datetime");
 DATA(insert OID = 1353 (  datetime			 PGUID 14 f t f 1 f 1184 "1082" 100 0 0 100  "select date_datetime($1)" - ));
-DESCR("convert");
+DESCR("convert date to datetime");
 DATA(insert OID = 1354 (  datetime			 PGUID 14 f t f 1 f 1184 "1296" 100 0 0 100  "select timestamp_datetime($1)" - ));
-DESCR("convert");
+DESCR("convert timestamp to datetime");
 DATA(insert OID = 1355 (  datetime			 PGUID 14 f t f 2 f 1184 "1082 1083" 100 0 0 100  "select datetime_datetime($1, $2)" - ));
-DESCR("convert");
+DESCR("convert date and time to datetime");
 DATA(insert OID = 1356 (  timespan			 PGUID 14 f t f 1 f 1186 "1186" 100 0 0 100  "select $1" - ));
-DESCR("convert");
+DESCR("convert (noop)");
 DATA(insert OID = 1357 (  timespan			 PGUID 14 f t f 1 f 1186 "703" 100 0 0 100	"select reltime_timespan($1)" - ));
-DESCR("convert");
+DESCR("convert reltime to timespan");
 DATA(insert OID = 1358 (  timespan			 PGUID 14 f t f 1 f 1186 "1083" 100 0 0 100  "select time_timespan($1)" - ));
-DESCR("convert");
+DESCR("convert time to timespan");
 DATA(insert OID = 1359 (  date				 PGUID 14 f t f 1 f 1082 "1082" 100 0 0 100  "select $1" - ));
-DESCR("convert");
+DESCR("convert (noop)");
 DATA(insert OID = 1360 (  date				 PGUID 14 f t f 1 f 1082 "1184" 100 0 0 100  "select datetime_date($1)" - ));
-DESCR("convert");
+DESCR("convert datetime to date");
 DATA(insert OID = 1361 (  date				 PGUID 14 f t f 1 f 1082 "702" 100 0 0 100	"select abstime_date($1)" - ));
-DESCR("convert");
+DESCR("convert abstime to date");
 DATA(insert OID = 1362 (  time				 PGUID 14 f t f 1 f 1083 "1083" 100 0 0 100  "select $1" - ));
-DESCR("convert");
+DESCR("convert (noop)");
 DATA(insert OID = 1363 (  time				 PGUID 14 f t f 1 f 1083 "1184" 100 0 0 100  "select datetime_time($1)" - ));
-DESCR("convert");
+DESCR("convert datetime to time");
 DATA(insert OID = 1364 (  time				 PGUID 14 f t f 1 f 1083 "702" 100 0 0 100	"select abstime_time($1)" - ));
-DESCR("convert");
+DESCR("convert abstime to time");
 DATA(insert OID = 1365 (  abstime			 PGUID 14 f t f 1 f  702 "702" 100 0 0 100	"select $1" - ));
-DESCR("convert");
+DESCR("convert (noop)");
 DATA(insert OID = 1366 (  abstime			 PGUID 14 f t f 1 f  702 "1184" 100 0 0 100  "select datetime_abstime($1)" - ));
-DESCR("convert");
+DESCR("convert datetime to abstime");
 DATA(insert OID = 1367 (  reltime			 PGUID 14 f t f 1 f  703 "703" 100 0 0 100	"select $1" - ));
-DESCR("convert");
+DESCR("convert (noop)");
 DATA(insert OID = 1368 (  reltime			 PGUID 14 f t f 1 f  703 "1186" 100 0 0 100  "select timespan_reltime($1)" - ));
-DESCR("convert");
+DESCR("convert timespan to reltime");
 DATA(insert OID = 1369 (  timestamp			 PGUID 14 f t f 1 f 1296 "1296" 100 0 0 100  "select $1" - ));
-DESCR("convert");
+DESCR("convert (noop)");
 DATA(insert OID = 1370 (  timestamp			 PGUID 14 f t f 1 f 1296 "1184" 100 0 0 100  "select datetime_stamp($1)" - ));
-DESCR("convert");
+DESCR("convert datetime to timestamp");
 DATA(insert OID = 1371 (  length			 PGUID 14 f t f 1 f   23   "25" 100 0 0 100  "select textlen($1)" - ));
 DESCR("character length");
 DATA(insert OID = 1372 (  length			 PGUID 14 f t f 1 f   23   "1042" 100 0 0 100  "select bpcharlen($1)" - ));
@@ -1671,20 +1686,20 @@ DATA(insert OID = 1392 (  isfinite	   PGUID 14 f t f 1 f	16 "702" 100 0 0 100  "
 DESCR("boolean test");
 
 DATA(insert OID = 1393 (  timespan	   PGUID 14 f t f 1 f 1186 "25" 100 0 0 100  "select text_timespan($1)" - ));
-DESCR("convert");
+DESCR("convert text to timespan");
 
 DATA(insert OID = 1394 (  name		   PGUID 14 f t f 1 f	19 "25" 100 0 0 100  "select text_name($1)" - ));
-DESCR("convert");
+DESCR("convert text to name");
 DATA(insert OID = 1395 (  text		   PGUID 14 f t f 1 f	25 "19" 100 0 0 100  "select name_text($1)" - ));
-DESCR("convert");
+DESCR("convert name to text");
 DATA(insert OID = 1396 (  name		   PGUID 14 f t f 1 f	19 "1042" 100 0 0 100  "select bpchar_name($1)" - ));
-DESCR("convert");
+DESCR("convert char() to name");
 DATA(insert OID = 1397 (  bpchar	   PGUID 14 f t f 1 f 1042 "19" 100 0 0 100  "select name_bpchar($1)" - ));
-DESCR("convert");
+DESCR("convert name to char()");
 DATA(insert OID = 1398 (  name		   PGUID 14 f t f 1 f	19 "1043" 100 0 0 100  "select text_name($1)" - ));
-DESCR("convert");
+DESCR("convert varchar to name");
 DATA(insert OID = 1399 (  varchar	   PGUID 14 f t f 1 f 1043 "19" 100 0 0 100  "select name_text($1)" - ));
-DESCR("convert");
+DESCR("convert convert name to varchar");
 
 /* OIDS 1400 - 1499 */
 
@@ -1697,11 +1712,11 @@ DESCR("convert float4 to float4 (no-op)");
 DATA(insert OID = 1403 (  float4	   PGUID 14 f t f 1 f  700	"701" 100 0 0 100  "select dtof($1)" - ));
 DESCR("convert float8 to float4");
 DATA(insert OID = 1404 (  int		   PGUID 14 f t f 1 f	23	 "23" 100 0 0 100  "select $1" - ));
-DESCR("convert int4 to int4 (no-op)");
+DESCR("convert (no-op)");
 DATA(insert OID = 1405 (  int2		   PGUID 14 f t f 1 f	21	 "21" 100 0 0 100  "select $1" - ));
-DESCR("convert int2 to int2 (no-op)");
+DESCR("convert (no-op)");
 DATA(insert OID = 1406 (  float8	   PGUID 14 f t f 1 f  701	"701" 100 0 0 100  "select $1" - ));
-DESCR("convert float8 to float8 (no-op)");
+DESCR("convert (no-op)");
 DATA(insert OID = 1407 (  float8	   PGUID 14 f t f 1 f  701	"700" 100 0 0 100  "select ftod($1)" - ));
 DESCR("convert float4 to float8");
 DATA(insert OID = 1408 (  float8	   PGUID 14 f t f 1 f  701	 "23" 100 0 0 100  "select i4tod($1)" - ));
@@ -1713,7 +1728,7 @@ DESCR("convert int4 to float4");
 DATA(insert OID = 1411 (  float4	   PGUID 14 f t f 1 f  700	 "21" 100 0 0 100  "select i2tof($1)" - ));
 DESCR("convert int2 to float4");
 DATA(insert OID = 1412 (  int4		   PGUID 14 f t f 1 f	23	 "23" 100 0 0 100  "select $1" - ));
-DESCR("convert int4 to int4 (no-op)");
+DESCR("convert (no-op)");
 DATA(insert OID = 1413 (  int4		   PGUID 14 f t f 1 f	23	"701" 100 0 0 100  "select dtoi4($1)" - ));
 DESCR("convert float8 to int4");
 DATA(insert OID = 1414 (  int4		   PGUID 14 f t f 1 f	23	 "21" 100 0 0 100  "select i2toi4($1)" - ));
@@ -1836,11 +1851,11 @@ DESCR("distance between");
 DATA(insert OID = 1472 (  circle_center		PGUID 11 f t f 1 f 600 "718" 100 0 1 0	foo bar ));
 DESCR("center of");
 DATA(insert OID = 1473 (  circle			PGUID 11 f t f 2 f 718 "600 701" 100 0 1 0	foo bar ));
-DESCR("convert");
+DESCR("convert point and radius to circle");
 DATA(insert OID = 1474 (  poly_circle		PGUID 11 f t f 1 f 718 "604" 100 0 1 0	foo bar ));
-DESCR("convert");
+DESCR("convert polygon to circle");
 DATA(insert OID = 1475 (  circle_poly		PGUID 11 f t f 2 f 604 "23 718" 100 0 1 0  foo bar ));
-DESCR("convert");
+DESCR("convert vertex count and circle to polygon");
 DATA(insert OID = 1476 (  dist_pc			PGUID 11 f t f 2 f 604 "600 718" 100 0 1 0	foo bar ));
 DESCR("distance between");
 DATA(insert OID = 1477 (  circle_contain_pt   PGUID 11 f t f 2 f  16 "718 600" 100 0 0 100	foo bar ));
@@ -1848,9 +1863,9 @@ DESCR("");
 DATA(insert OID = 1478 (  pt_contained_circle PGUID 11 f t f 2 f  16 "600 718" 100 0 0 100	foo bar ));
 DESCR("");
 DATA(insert OID = 1479 (  box_circle		PGUID 11 f t f 1 f 718 "603" 100 0 1 0	foo bar ));
-DESCR("convert");
+DESCR("convert box to circle");
 DATA(insert OID = 1480 (  circle_box		PGUID 11 f t f 1 f 603 "718" 100 0 1 0	foo bar ));
-DESCR("convert");
+DESCR("convert circle to box");
 
 DATA(insert OID = 1481 (  text_substr		PGUID 11 f t f 3 f 25 "25 23 23" 100 0 0 100  foo bar ));
 DESCR("return portion of string");
@@ -1896,9 +1911,9 @@ DESCR("lines horizontal?");
 /* OIDS 1500 - 1599 */
 
 DATA(insert OID = 1530 (  point				PGUID 14 f t f 2 f 600 "601 601" 100 0 0 100  "select lseg_interpt($1, $2)" - ));
-DESCR("convert");
+DESCR("convert two line segments to point (intersection)");
 DATA(insert OID = 1531 (  point				PGUID 14 f t f 1 f 600 "718" 100 0 0 100  "select circle_center($1)" - ));
-DESCR("convert");
+DESCR("convert circle to point (center)");
 DATA(insert OID = 1532 (  isvertical		PGUID 14 f t f 2 f	16 "600 600" 100 0 0 100  "select point_vert($1, $2)" - ));
 DESCR("");
 DATA(insert OID = 1533 (  ishorizontal		PGUID 14 f t f 2 f	16 "600 600" 100 0 0 100  "select point_horiz($1, $2)" - ));
@@ -1939,28 +1954,28 @@ DATA(insert OID = 1556 (  isclosed			PGUID 14 f t f 1 f	16 "602" 100 0 0 100  "s
 DESCR("");
 
 DATA(insert OID = 1560 (  box				PGUID 14 f t f 2 f 603 "603 603" 100 0 0 100  "select box_intersect($1, $2)" - ));
-DESCR("convert");
+DESCR("convert boxes to box (intersection)");
 DATA(insert OID = 1561 (  box				PGUID 14 f t f 1 f 603 "604" 100 0 0 100  "select poly_box($1)" - ));
-DESCR("convert");
+DESCR("convert polygon to box");
 DATA(insert OID = 1562 (  width				PGUID 14 f t f 1 f 701 "603" 100 0 0 100  "select box_width($1)" - ));
-DESCR("");
+DESCR("box width");
 DATA(insert OID = 1563 (  height			PGUID 14 f t f 1 f 701 "603" 100 0 0 100  "select box_height($1)" - ));
-DESCR("");
+DESCR("box height");
 DATA(insert OID = 1564 (  center			PGUID 14 f t f 1 f 600 "603" 100 0 0 100  "select box_center($1)" - ));
-DESCR("");
+DESCR("box center");
 DATA(insert OID = 1565 (  area				PGUID 14 f t f 1 f 701 "603" 100 0 0 100  "select box_area($1)" - ));
-DESCR("");
+DESCR("box area");
 DATA(insert OID = 1569 (  box				PGUID 14 f t f 1 f 603 "718" 100 0 0 100  "select circle_box($1)" - ));
-DESCR("convert");
+DESCR("convert circle to box");
 
 DATA(insert OID = 1570 (  polygon			PGUID 14 f t f 1 f 604 "602" 100 0 0 100  "select path_poly($1)" - ));
-DESCR("convert");
+DESCR("convert path to polygon");
 DATA(insert OID = 1571 (  polygon			PGUID 14 f t f 1 f 604 "603" 100 0 0 100  "select box_poly($1)" - ));
-DESCR("convert");
+DESCR("convert box to polygon");
 DATA(insert OID = 1572 (  polygon			PGUID 14 f t f 2 f 604 "23 718" 100 0 0 100  "select circle_poly($1, $2)" - ));
-DESCR("convert");
+DESCR("convert circle to polygon");
 DATA(insert OID = 1573 (  polygon			PGUID 14 f t f 1 f 604 "718" 100 0 0 100  "select circle_poly(12, $1)" - ));
-DESCR("convert");
+DESCR("convert circle to 12-vertex polygon");
 DATA(insert OID = 1574 (  points			PGUID 14 f t f 1 f	23 "604" 100 0 0 100  "select poly_npoints($1)" - ));
 DESCR("");
 DATA(insert OID = 1575 (  center			PGUID 14 f t f 1 f 600 "604" 100 0 0 100  "select poly_center($1)" - ));
@@ -1969,17 +1984,17 @@ DATA(insert OID = 1576 (  length			PGUID 14 f t f 1 f 701 "601" 100 0 1 0	"selec
 DESCR("distance between endpoints");
 
 DATA(insert OID = 1579 (  circle			PGUID 14 f t f 1 f 718 "603" 100 0 0 100  "select box_circle($1)" - ));
-DESCR("convert");
+DESCR("convert box to circle");
 DATA(insert OID = 1580 (  circle			PGUID 14 f t f 1 f 718 "604" 100 0 0 100  "select poly_circle($1)" - ));
-DESCR("convert");
+DESCR("convert polygon to circle");
 DATA(insert OID = 1581 (  center			PGUID 14 f t f 1 f 600 "718" 100 0 0 100  "select circle_center($1)" - ));
-DESCR("");
+DESCR("center of circle");
 DATA(insert OID = 1582 (  radius			PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_radius($1)" - ));
-DESCR("");
+DESCR("radius of circle");
 DATA(insert OID = 1583 (  diameter			PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_diameter($1)" - ));
-DESCR("");
+DESCR("diameter of circle");
 DATA(insert OID = 1584 (  area				PGUID 14 f t f 1 f 701 "718" 100 0 0 100  "select circle_area($1)" - ));
-DESCR("");
+DESCR("area of circle");
 
 DATA(insert OID = 1592 (  int8				PGUID 14 f t f 1 f	20 "20" 100 0 0 100  "select $1" - ));
 DESCR("convert int8 to int8 (no-op)");
@@ -2004,13 +2019,13 @@ DATA(insert OID = 1603 (  isparallel		PGUID 14 f t f 2 f	16 "628 628" 100 0 0 10
 DESCR("are lines parallel?");
 
 DATA(insert OID = 1604 (  float8	   PGUID 14 f t f 1 f 701 "25" 100 0 0 100  "select text_float8($1)" - ));
-DESCR("convert");
+DESCR("convert text to float8");
 DATA(insert OID = 1605 (  float4	   PGUID 14 f t f 1 f 700 "25" 100 0 0 100  "select text_float4($1)" - ));
-DESCR("convert");
+DESCR("convert text to float4");
 DATA(insert OID = 1606 (  text		   PGUID 14 f t f 1 f  25 "701" 100 0 0 100  "select float8_text($1)" - ));
-DESCR("convert");
+DESCR("convert float8 to text");
 DATA(insert OID = 1607 (  text		   PGUID 14 f t f 1 f  25 "700" 100 0 0 100  "select float4_text($1)" - ));
-DESCR("convert");
+DESCR("convert float4 to text");
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  868 (  strpos	   PGUID 14 f t f 2 f 23 "25 25" 100 0 0 100  "select textpos($1, $2)" - ));
@@ -2041,7 +2056,7 @@ DATA(insert OID =  881 (  ltrim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "sel
 DESCR("remove initial characters from string");
 DATA(insert OID =  882 (  rtrim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select rtrim($1, \' \')" - ));
 DESCR("remove trailing characters from string");
-DATA(insert OID =  883 (  substr	   PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select substr($1, $2, -1)" - ));
+DATA(insert OID =  883 (  substr	   PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select text_substr($1, $2, -1)" - ));
 DESCR("return portion of string");
 DATA(insert OID =  884 (  btrim		   PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
 DESCR("trim both ends of string");
