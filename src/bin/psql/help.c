@@ -180,7 +180,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\c[onnect] [dbname|- [user|?]] -- connect to new database (now '%s')\n", PQdb(pset->db));
 	fprintf(fout, " \\copy [binary] <table> [with oids] {from|to} <fname>[using delimiters '<char>']\n");
 	fprintf(fout, " \\copyright   -- show PostgreSQL copyright\n");
-	fprintf(fout, " \\d           -- list tables, views, and sequences\n");
+	fprintf(fout, " \\d <table>   -- describe table (or view, index, sequence)\n");
 	fprintf(fout, " \\d{i|s|t|v|S}-- list only indices/sequences/tables/views/system tables\n");
 	fprintf(fout, " \\da          -- list aggregates\n");
 	fprintf(fout, " \\dd [object] -- list comment for table, type, function, or operator\n");

@@ -1,11 +1,13 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
+#include <config.h>
+#include <c.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <libpq-fe.h>
-#include <c.h>
+#include <postgres_ext.h>
 
 #include "variables.h"
 #include "print.h"
@@ -41,6 +43,8 @@ typedef struct _psqlSettings
 
 	bool		has_client_encoding;	/* was PGCLIENTENCODING set on
 										 * startup? */
+    Oid         lastOid;        /* saves oid from insert command
+                                   because people want it so badly */
 } PsqlSettings;
 
 

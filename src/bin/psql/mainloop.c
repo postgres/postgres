@@ -16,19 +16,20 @@
 
 
 
-/* MainLoop()
+/*
  * Main processing loop for reading lines of input
  *	and sending them to the backend.
  *
  * This loop is re-entrant. May be called by \i command
  *	which reads input from a file.
+ *
+ * FIXME: rewrite this whole thing with flex
  */
 int
 MainLoop(PsqlSettings *pset, FILE *source)
 {
 	PQExpBuffer query_buf;		/* buffer for query being accumulated */
 	char	   *line;			/* current line of input */
-	char	   *xcomment;		/* start of extended comment */
 	int			len;			/* length of the line */
 	int			successResult = EXIT_SUCCESS;
 	backslashResult slashCmdStatus;
@@ -37,6 +38,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 	bool		success;
 	char		in_quote;		/* == 0 for no in_quote */
 	bool		was_bslash;		/* backslash */
+	bool        xcomment;		/* in extended comment */
 	int			paren_level;
 	unsigned int query_start;
 
@@ -49,7 +51,6 @@ MainLoop(PsqlSettings *pset, FILE *source)
 	bool		prev_cmd_interactive;
 
 	bool		die_on_error;
-	const char *interpol_char;
 
 
 	/* Save old settings */
@@ -68,7 +69,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		exit(EXIT_FAILURE);
 	}
 
-	xcomment = NULL;
+	xcomment = false;
 	in_quote = 0;
 	paren_level = 0;
 	slashCmdStatus = CMD_UNKNOWN;		/* set default */
@@ -87,7 +88,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			line = strdup(query_buf->data);
 			resetPQExpBuffer(query_buf);
 			/* reset parsing state since we are rescanning whole query */
-			xcomment = NULL;
+			xcomment = false;
 			in_quote = 0;
 			paren_level = 0;
 		}
@@ -106,7 +107,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 					prompt_status = PROMPT_SINGLEQUOTE;
 				else if (in_quote && in_quote == '"')
 					prompt_status = PROMPT_DOUBLEQUOTE;
-				else if (xcomment != NULL)
+				else if (xcomment)
 					prompt_status = PROMPT_COMMENT;
 				else if (query_buf->len > 0)
 					prompt_status = PROMPT_CONTINUE;
@@ -120,10 +121,11 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		}
 
 
-		/* Setting these will not have effect until next line */
+		/* Setting this will not have effect until next line. (Faster.
+           Also think about what happens if there is an error processing
+           _this_ command.)
+        */
 		die_on_error = GetVariableBool(pset->vars, "die_on_error");
-		interpol_char = GetVariable(pset->vars, "sql_interpol");;
-
 
 		/*
 		 * query_buf holds query already accumulated.  line is the
@@ -144,11 +146,6 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			continue;
 		}
 
-		/* not currently inside an extended comment? */
-		if (xcomment)
-			xcomment = line;
-
-
 		/* strip trailing backslashes, they don't have a clear meaning */
 		while (1)
 		{
@@ -160,58 +157,18 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				break;
 		}
 
-
-		/* echo back if input is from file and flag is set */
-		if (!pset->cur_cmd_interactive && GetVariableBool(pset->vars, "echo"))
-			fprintf(stderr, "%s\n", line);
-
-
-		/* interpolate variables into SQL */
-		len = strlen(line);
-		thislen = PQmblen(line);
-
-		for (i = 0; line[i]; i += (thislen = PQmblen(&line[i])))
-		{
-			if (interpol_char && interpol_char[0] != '\0' && interpol_char[0] == line[i])
-			{
-				size_t		in_length,
-							out_length;
-				const char *value;
-				char	   *new;
-				bool		closer;		/* did we have a closing delimiter
-										 * or just an end of line? */
-
-				in_length = strcspn(&line[i + thislen], interpol_char);
-				closer = line[i + thislen + in_length] == line[i];
-				line[i + thislen + in_length] = '\0';
-				value = interpolate_var(&line[i + thislen], pset);
-				out_length = strlen(value);
-
-				new = malloc(len + out_length - (in_length + (closer ? 2 : 1)) + 1);
-				if (!new)
-				{
-					perror("malloc");
-					exit(EXIT_FAILURE);
-				}
-
-				new[0] = '\0';
-				strncat(new, line, i);
-				strcat(new, value);
-				if (closer)
-					strcat(new, line + i + 2 + in_length);
-
-				free(line);
-				line = new;
-				i += out_length;
-			}
-		}
-
 		/* nothing left on line? then ignore */
 		if (line[0] == '\0')
 		{
 			free(line);
 			continue;
 		}
+
+
+		/* echo back if input is from file and flag is set */
+		if (!pset->cur_cmd_interactive && GetVariableBool(pset->vars, "echo"))
+			puts(line);
+
 
 		slashCmdStatus = CMD_UNKNOWN;
 
@@ -224,24 +181,15 @@ MainLoop(PsqlSettings *pset, FILE *source)
 		 * The current character is at line[i], the prior character at line[i
 		 * - prevlen], the next character at line[i + thislen].
 		 */
-		prevlen = 0;
-		thislen = (len > 0) ? PQmblen(line) : 0;
-
-#define ADVANCE_1  (prevlen = thislen, i += thislen, thislen = PQmblen(line+i))
+#define ADVANCE_1 (prevlen = thislen, i += thislen, thislen = PQmblen(line+i))
 
 		success = true;
-		for (i = 0; i < len; ADVANCE_1)
+		for (i = 0, prevlen = 0, thislen = (len > 0) ? PQmblen(line) : 0;
+             i < len;
+             ADVANCE_1)
 		{
-			if (!success && die_on_error)
-				break;
-
-
 			/* was the previous character a backslash? */
-			if (i > 0 && line[i - prevlen] == '\\')
-				was_bslash = true;
-			else
-				was_bslash = false;
-
+			was_bslash = (i > 0 && line[i - prevlen] == '\\');
 
 			/* in quote? */
 			if (in_quote)
@@ -256,11 +204,11 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				in_quote = line[i];
 
 			/* in extended comment? */
-			else if (xcomment != NULL)
+			else if (xcomment)
 			{
 				if (line[i] == '*' && line[i + thislen] == '/')
 				{
-					xcomment = NULL;
+					xcomment = false;
 					ADVANCE_1;
 				}
 			}
@@ -268,7 +216,7 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			/* start of extended comment? */
 			else if (line[i] == '/' && line[i + thislen] == '*')
 			{
-				xcomment = &line[i];
+				xcomment = true;
 				ADVANCE_1;
 			}
 
@@ -287,8 +235,45 @@ MainLoop(PsqlSettings *pset, FILE *source)
 			else if (line[i] == ')' && paren_level > 0)
 				paren_level--;
 
+            /* colon -> substitute variable */
+            /* we need to be on the watch for the '::' operator */
+            else if (line[i] == ':' && !was_bslash &&
+                     strspn(line+i+thislen, VALID_VARIABLE_CHARS)>0 &&
+                     (prevlen > 0 && line[i-prevlen]!=':')
+                )
+            {
+				size_t		in_length,
+							out_length;
+				const char *value;
+				char	   *new;
+                char       after;		/* the character after the variable name
+                                           will be temporarily overwritten */
+
+				in_length = strspn(&line[i + thislen], VALID_VARIABLE_CHARS);
+				after = line[i + thislen + in_length];
+				line[i + thislen + in_length] = '\0';
+				value = interpolate_var(&line[i + thislen], pset);
+				out_length = strlen(value);
+
+				new = malloc(len + out_length - (1 + in_length) + 1);
+				if (!new)
+				{
+					perror("malloc");
+					exit(EXIT_FAILURE);
+				}
+
+                sprintf(new, "%.*s%s%c", i, line, value, after);
+                if (after)
+                    strcat(new, line + i + 1 + in_length + 1);
+
+				free(line);
+				line = new;
+                continue; /* reparse the just substituted */
+            }                
+            
+
 			/* semicolon? then send query */
-			else if (line[i] == ';' && !was_bslash && paren_level == 0)
+			else if (line[i] == ';' && !was_bslash)
 			{
 				line[i] = '\0';
 				/* is there anything else on the line? */
@@ -311,6 +296,15 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				resetPQExpBuffer(query_buf);
 				query_start = i + thislen;
 			}
+
+            /* if you have a burning need to send a semicolon or colon to
+               the backend ... */
+            else if (was_bslash && (line[i] == ';' || line[i] == ':'))
+            {
+                /* remove the backslash */
+                memmove(line + i - prevlen, line + i, len - i + 1);
+                len--;
+            }
 
 			/* backslash command */
 			else if (was_bslash)
@@ -355,7 +349,13 @@ MainLoop(PsqlSettings *pset, FILE *source)
 				else
 					break;
 			}
-		}
+
+
+            /* stop the script after error */
+			if (!success && die_on_error)
+				break;
+
+		} /* for (line) */
 
 
 		if (!success && die_on_error && !pset->cur_cmd_interactive)

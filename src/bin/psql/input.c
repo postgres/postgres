@@ -4,7 +4,8 @@
 
 #include <pqexpbuffer.h>
 
-/* Note that this file does not depend on any other files in psql. */
+#include "settings.h"
+#include "tab-complete.h"
 
 /* Runtime options for turning off readline and history */
 /* (of course there is no runtime command for doing that :) */
@@ -96,13 +97,14 @@ gets_fromFile(FILE *source)
  * The only "flag" right now is 1 for use readline & history.
  */
 void
-initializeInput(int flags)
+initializeInput(int flags, PsqlSettings *pset)
 {
 #ifdef USE_READLINE
 	if (flags == 1)
 	{
 		useReadline = true;
 		rl_readline_name = "psql";
+        initialize_readline(&(pset->db));
 	}
 #endif
 

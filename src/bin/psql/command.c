@@ -33,7 +33,7 @@
 #endif
 
 
-/* functions for use in this file only */
+/* functions for use in this file */
 
 static backslashResult exec_command(const char *cmd,
 			 char *const * options,
@@ -41,15 +41,23 @@ static backslashResult exec_command(const char *cmd,
 			 PQExpBuffer query_buf,
 			 PsqlSettings *pset);
 
-static bool
-			do_edit(const char *filename_arg, PQExpBuffer query_buf);
+static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
 
-static char *
-			unescape(const char *source, PsqlSettings *pset);
+static char * unescape(const char *source, PsqlSettings *pset);
 
-static bool
-			do_shell(const char *command);
+static bool do_connect(const char *new_dbname,
+                       const char *new_user,
+                       PsqlSettings *pset);
 
+
+static bool do_shell(const char *command);
+
+/*
+ * Perhaps this should be changed to "infinity",
+ * but there is no convincing reason to bother
+ * at this point.
+ */
+#define NR_OPTIONS 16
 
 
 /*----------
@@ -78,7 +86,7 @@ HandleSlashCmds(PsqlSettings *pset,
 {
 	backslashResult status = CMD_SKIP_LINE;
 	char	   *my_line;
-	char	   *options[17] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	char	   *options[NR_OPTIONS+1];
 	char	   *token;
 	const char *options_string = NULL;
 	const char *cmd;
@@ -120,7 +128,7 @@ HandleSlashCmds(PsqlSettings *pset,
 		i = 0;
 		token = strtokx(options_string, " \t", "\"'`", '\\', &quote, &pos);
 
-		for (i = 0; token && i < 16; i++)
+		for (i = 0; token && i < NR_OPTIONS; i++)
 		{
 			switch (quote)
 			{
@@ -194,14 +202,15 @@ HandleSlashCmds(PsqlSettings *pset,
 						options[i] = xstrdup(interpolate_var(token + 1, pset));
 					else
 						options[i] = xstrdup(token);
-					break;
 			}
 
 			if (continue_parse)
 				break;
 
 			token = strtokx(NULL, " \t", "\"'`", '\\', &quote, &pos);
-		}
+		} /* for */
+
+        options[i] = NULL;
 	}
 
 	cmd = my_line;
@@ -216,11 +225,11 @@ HandleSlashCmds(PsqlSettings *pset,
 		 * arguments to start immediately after the command, but that is
 		 * no longer encouraged.
 		 */
-		const char *new_options[17];
+		const char *new_options[NR_OPTIONS+1];
 		char		new_cmd[2];
 		int			i;
 
-		for (i = 1; i < 17; i++)
+		for (i = 1; i < NR_OPTIONS+1; i++)
 			new_options[i] = options[i - 1];
 		new_options[0] = cmd + 1;
 
@@ -249,7 +258,7 @@ HandleSlashCmds(PsqlSettings *pset,
 	}
 
 	/* clean up */
-	for (i = 0; i < 16 && options[i]; i++)
+	for (i = 0; i < NR_OPTIONS && options[i]; i++)
 		free(options[i]);
 
 	free(my_line);
@@ -274,10 +283,7 @@ exec_command(const char *cmd,
 	backslashResult status = CMD_SKIP_LINE;
 
 
-	/*
-	 * \a -- toggle field alignment This is deprecated and makes no sense,
-	 * but we keep it around.
-	 */
+	/* \a -- toggle field alignment This makes little sense but we keep it around. */
 	if (strcmp(cmd, "a") == 0)
 	{
 		if (pset->popt.topt.format != PRINT_ALIGNED)
@@ -287,22 +293,19 @@ exec_command(const char *cmd,
 	}
 
 
-	/*
-	 * \C -- override table title (formerly change HTML caption) This is
-	 * deprecated.
-	 */
+	/* \C -- override table title (formerly change HTML caption) */
 	else if (strcmp(cmd, "C") == 0)
 		success = do_pset("title", options[0], &pset->popt, quiet);
 
 
-
-	/*
+	/*----------
 	 * \c or \connect -- connect to new database or as different user
 	 *
-	 * \c foo bar	  : connect to db "foo" as user "bar" \c foo [-]	 :
-	 * connect to db "foo" as current user \c - bar		  : connect to
-	 * current db as user "bar" \c			   : connect to default db as
-	 * default user
+	 * \c foo bar: connect to db "foo" as user "bar"
+     * \c foo [-]: connect to db "foo" as current user
+     * \c - bar:   connect to current db as user "bar"
+     * \c:          connect to default db as default user
+     *----------
 	 */
 	else if (strcmp(cmd, "c") == 0 || strcmp(cmd, "connect") == 0)
 	{
@@ -335,35 +338,39 @@ exec_command(const char *cmd,
 	/* \d* commands */
 	else if (cmd[0] == 'd')
 	{
+        bool show_verbose = strchr(cmd, '+') ? true : false;
+        bool show_desc = strchr(cmd, '?') ? true : false;
+
 		switch (cmd[1])
 		{
 			case '\0':
+            case '?':
 				if (options[0])
-					success = describeTableDetails(options[0], pset);
+					success = describeTableDetails(options[0], pset, show_desc);
 				else
-					success = listTables("tvs", NULL, pset);	/* standard listing of
-																 * interesting things */
+                    /* standard listing of interesting things */
+					success = listTables("tvs", NULL, pset, show_desc);
 				break;
 			case 'a':
-				success = describeAggregates(options[0], pset);
+				success = describeAggregates(options[0], pset, show_verbose, show_desc);
 				break;
 			case 'd':
 				success = objectDescription(options[0], pset);
 				break;
 			case 'f':
-				success = describeFunctions(options[0], pset);
+				success = describeFunctions(options[0], pset, show_verbose, show_desc);
 				break;
 			case 'l':
-				success = do_lo_list(pset);
+				success = do_lo_list(pset, show_desc);
 				break;
 			case 'o':
-				success = describeOperators(options[0], pset);
+				success = describeOperators(options[0], pset, show_verbose, show_desc);
 				break;
 			case 'p':
 				success = permissionsList(options[0], pset);
 				break;
 			case 'T':
-				success = describeTypes(options[0], pset);
+				success = describeTypes(options[0], pset, show_verbose, show_desc);
 				break;
 			case 't':
 			case 'v':
@@ -371,9 +378,9 @@ exec_command(const char *cmd,
 			case 's':
 			case 'S':
 				if (cmd[1] == 'S' && cmd[2] == '\0')
-					success = listTables("Stvs", NULL, pset);
+					success = listTables("Stvs", NULL, pset, show_desc);
 				else
-					success = listTables(&cmd[1], options[0], pset);
+					success = listTables(&cmd[1], options[0], pset, show_desc);
 				break;
 			default:
 				status = CMD_UNKNOWN;
@@ -399,13 +406,9 @@ exec_command(const char *cmd,
 		fputs("\n", stdout);
 	}
 
-	/*
-	 * \f -- change field separator (This is deprecated in favour of
-	 * \pset.)
-	 */
+	/* \f -- change field separator */
 	else if (strcmp(cmd, "f") == 0)
 		success = do_pset("fieldsep", options[0], &pset->popt, quiet);
-
 
 	/* \g means send query */
 	else if (strcmp(cmd, "g") == 0)
@@ -419,12 +422,27 @@ exec_command(const char *cmd,
 
 	/* help */
 	else if (strcmp(cmd, "h") == 0 || strcmp(cmd, "help") == 0)
-		helpSQL(options_string);
-
+    {
+        char buf[256] = "";
+        int i;
+        for (i=0; options && options[i] && strlen(buf)<255; i++)
+        {
+            strncat(buf, options[i], 255 - strlen(buf));
+            if (strlen(buf)<255 && options[i+1])
+                strcat(buf, " ");
+        }
+        buf[255] = '\0';
+		helpSQL(buf);
+    }
 
 	/* HTML mode */
 	else if (strcmp(cmd, "H") == 0 || strcmp(cmd, "html") == 0)
-		success = do_pset("format", "html", &pset->popt, quiet);
+    {
+		if (pset->popt.topt.format != PRINT_HTML)
+			success = do_pset("format", "html", &pset->popt, quiet);
+		else
+			success = do_pset("format", "aligned", &pset->popt, quiet);
+    }
 
 
 	/* \i is include file */
@@ -439,9 +457,12 @@ exec_command(const char *cmd,
 			success = process_file(options[0], pset);
 	}
 
+
 	/* \l is list databases */
 	else if (strcmp(cmd, "l") == 0 || strcmp(cmd, "list") == 0)
-		success = listAllDbs(pset);
+		success = listAllDbs(pset, false);
+	else if (strcmp(cmd, "l?") == 0 || strcmp(cmd, "list?") == 0)
+		success = listAllDbs(pset, true);
 
 
 	/* large object things */
@@ -470,7 +491,9 @@ exec_command(const char *cmd,
 		}
 
 		else if (strcmp(cmd + 3, "list") == 0)
-			success = do_lo_list(pset);
+			success = do_lo_list(pset, false);
+		else if (strcmp(cmd + 3, "list?") == 0)
+			success = do_lo_list(pset, true);
 
 		else if (strcmp(cmd + 3, "unlink") == 0)
 		{
@@ -828,7 +851,7 @@ unescape(const char *source, PsqlSettings *pset)
  * Returns true if all ok, false if the new connection couldn't be established
  * but the old one was set back. Otherwise it terminates the program.
  */
-bool
+static bool
 do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 {
 	PGconn	   *oldconn = pset->db;

@@ -3,11 +3,11 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#include <stdio.h>
-#include <string.h>
 #ifndef HAVE_STRDUP
 #include <strdup.h>
 #endif
@@ -15,9 +15,12 @@
 #include <assert.h>
 #ifndef WIN32
 #include <unistd.h>				/* for write() */
+#else
+#include <io.h>                 /* for _write() */
 #endif
 
 #include <libpq-fe.h>
+#include <postgres_ext.h>
 #include <pqsignal.h>
 #include <version.h>
 
@@ -30,6 +33,7 @@
 #ifdef WIN32
 #define popen(x,y) _popen(x,y)
 #define pclose(x) _pclose(x)
+#define write(a,b,c) _write(a,b,c)
 #endif
 
 
@@ -210,11 +214,13 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 /*
  * interpolate_var()
  *
- * If the variable is a regular psql variable, just return its value.
- * If it's a magic variable, return that value.
+ * The idea here is that certain variables have a "magic" meaning, such as
+ * LastOid. However, you can assign to those variables, but that will shadow
+ * the magic meaning, until you unset it. If nothing matches, the value of
+ * the environment variable is used.
  *
- * This function only returns NULL if you feed in NULL. Otherwise it's ready for
- * immediate consumption.
+ * This function only returns NULL if you feed in NULL's (don't do that).
+ * Otherwise, the return value is ready for immediate consumption.
  */
 const char *
 interpolate_var(const char *name, PsqlSettings *pset)
@@ -229,14 +235,9 @@ interpolate_var(const char *name, PsqlSettings *pset)
 		return NULL;
 #endif
 
-	if (strspn(name, VALID_VARIABLE_CHARS) == strlen(name))
-	{
-		var = GetVariable(pset->vars, name);
-		if (var)
-			return var;
-		else
-			return "";
-	}
+    var = GetVariable(pset->vars, name);
+    if (var)
+        return var;
 
 	/* otherwise return magic variable */
 
@@ -279,11 +280,16 @@ interpolate_var(const char *name, PsqlSettings *pset)
 			return "";
 	}
 
-	/*
-	 * env vars (if env vars are all caps there should be no prob,
-	 * otherwise you're on your own
-	 */
+    if (strcmp(name, "LastOid") == 0)
+    {
+        static char buf[24];
+        if (pset->lastOid == InvalidOid)
+            return "";
+        sprintf(buf, "%u", pset->lastOid);
+        return buf;
+    }
 
+	/* env vars */
 	if ((var = getenv(name)))
 		return var;
 
@@ -293,42 +299,31 @@ interpolate_var(const char *name, PsqlSettings *pset)
 
 
 /*
- * Code to support command cancellation.
+ * Code to support query cancellation
  *
- * If interactive, we enable a SIGINT signal catcher before we start a
- * query that sends a cancel request to the backend.
- * Note that sending the cancel directly from the signal handler is safe
- * only because PQrequestCancel is carefully written to make it so. We
- * have to be very careful what else we do in the signal handler.
- *
- * Writing on stderr is potentially dangerous, if the signal interrupted
- * some stdio operation on stderr. On Unix we can avoid trouble by using
- * write() instead; on Windows that's probably not workable, but we can
- * at least avoid trusting printf by using the more primitive fputs().
+ * Before we start a query, we enable a SIGINT signal catcher that sends a
+ * cancel request to the backend. Note that sending the cancel directly from
+ * the signal handler is safe because PQrequestCancel() is written to make it
+ * so. We have to be very careful what else we do in the signal handler. This
+ * includes using write() for output.
  */
 
-PGconn	   *cancelConn;
+static PGconn *cancelConn;
 
-#ifdef WIN32
-#define safe_write_stderr(String) fputs(s, stderr)
-#else
-#define safe_write_stderr(String) write(fileno(stderr), String, strlen(String))
-#endif
-
+#define write_stderr(String) write(fileno(stderr), String, strlen(String))
 
 static void
 handle_sigint(SIGNAL_ARGS)
 {
-	/* accept signal if no connection */
 	if (cancelConn == NULL)
-		exit(1);
+		return;
 	/* Try to send cancel request */
 	if (PQrequestCancel(cancelConn))
-		safe_write_stderr("\nCANCEL request sent\n");
+		write_stderr("\nCancel request sent\n");
 	else
 	{
-		safe_write_stderr("\nCould not send cancel request: ");
-		safe_write_stderr(PQerrorMessage(cancelConn));
+		write_stderr("\nCould not send cancel request: ");
+		write_stderr(PQerrorMessage(cancelConn));
 	}
 }
 
@@ -348,7 +343,7 @@ PSQLexec(PsqlSettings *pset, const char *query)
 
 	if (!pset->db)
 	{
-		fputs("You are not currently connected to a database.\n", stderr);
+		fputs("You are currently not connected to a database.\n", stderr);
 		return NULL;
 	}
 
@@ -367,7 +362,7 @@ PSQLexec(PsqlSettings *pset, const char *query)
 
 	res = PQexec(pset->db, query);
 
-	pqsignal(SIGINT, SIG_DFL);	/* no control-C is back to normal */
+	pqsignal(SIGINT, SIG_DFL);	/* now control-C is back to normal */
 
 	if (PQstatus(pset->db) == CONNECTION_BAD)
 	{
@@ -393,7 +388,7 @@ PSQLexec(PsqlSettings *pset, const char *query)
 		return res;
 	else
 	{
-		fprintf(stderr, "%s", PQerrorMessage(pset->db));
+		fputs(PQerrorMessage(pset->db), pset->queryFout);
 		PQclear(res);
 		return NULL;
 	}
@@ -422,7 +417,7 @@ SendQuery(PsqlSettings *pset, const char *query)
 
 	if (!pset->db)
 	{
-		fputs("You are not currently connected to a database.\n", stderr);
+		fputs("You are currently not connected to a database.\n", stderr);
 		return false;
 	}
 
@@ -430,10 +425,10 @@ SendQuery(PsqlSettings *pset, const char *query)
 	{
 		char		buf[3];
 
-		fprintf(stdout, "***(Single step mode: Verify query)*********************************************\n"
-				"QUERY: %s\n"
-				"***(press return to proceed or enter x and return to cancel)********************\n",
-				query);
+		printf("***(Single step mode: Verify query)*********************************************\n"
+               "%s\n"
+               "***(press return to proceed or enter x and return to cancel)********************\n",
+               query);
 		fflush(stdout);
 		fgets(buf, 3, stdin);
 		if (buf[0] == 'x')
@@ -492,11 +487,15 @@ SendQuery(PsqlSettings *pset, const char *query)
 				break;
 			case PGRES_COMMAND_OK:
 				success = true;
-				fprintf(pset->queryFout, "%s\n", PQcmdStatus(results));
+                pset->lastOid = PQoidValue(results);
+                if (!GetVariableBool(pset->vars, "quiet")) {
+                    fprintf(pset->queryFout, "%s\n", PQcmdStatus(results));
+                    fflush(pset->queryFout);
+                }
 				break;
 
 			case PGRES_COPY_OUT:
-				if (pset->cur_cmd_interactive && !GetVariable(pset->vars, "quiet"))
+				if (pset->cur_cmd_interactive && !GetVariableBool(pset->vars, "quiet"))
 					puts("Copy command returns:");
 
 				success = handleCopyOut(pset->db, pset->queryFout);
@@ -516,6 +515,7 @@ SendQuery(PsqlSettings *pset, const char *query)
 			case PGRES_BAD_RESPONSE:
 				success = false;
 				fputs(PQerrorMessage(pset->db), pset->queryFout);
+                fflush(pset->queryFout);
 				break;
 		}
 

@@ -88,7 +88,7 @@ main(int argc, char **argv)
 	char	   *password = NULL;
 	bool		need_pass;
 
-	MemSet(&settings, 0, sizeof settings);
+	memset(&settings, 0, sizeof settings);
 
 	settings.cur_cmd_source = stdin;
 	settings.cur_cmd_interactive = false;
@@ -161,7 +161,7 @@ main(int argc, char **argv)
 
 	if (options.action == ACT_LIST_DB)
 	{
-		int			success = listAllDbs(&settings);
+		int			success = listAllDbs(&settings, false);
 
 		PQfinish(settings.db);
 		exit(!success);
@@ -179,15 +179,15 @@ main(int argc, char **argv)
 	{
 		puts("Welcome to psql, the PostgreSQL interactive terminal.\n\n"
 		     "Type:  \\copyright for distribution terms\n"
-			 "       \\h for help with SQL commands\n"
-			 "       \\? for help on internal slash commands\n"
-			 "       \\g or terminate with semicolon to execute query\n"
-			 "       \\q to quit\n");
+		     "       \\h for help with SQL commands\n"
+		     "       \\? for help on internal slash commands\n"
+		     "       \\g or terminate with semicolon to execute query\n"
+		     "       \\q to quit\n");
 	}
 
 	process_psqlrc(&settings);
 
-	initializeInput(options.no_readline ? 0 : 1);
+	initializeInput(options.no_readline ? 0 : 1, &settings);
 
 	/* Now find something to do */
 
@@ -270,7 +270,7 @@ parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * op
 	extern int	optind;
 	int			c;
 
-	MemSet(options, 0, sizeof *options);
+	memset(options, 0, sizeof *options);
 
 #ifdef HAVE_GETOPT_LONG
 	while ((c = getopt_long(argc, argv, "Ac:d:eEf:F:lh:Hno:p:P:qsStT:uU:v:VWx?", long_options, &optindex)) != -1)
@@ -516,8 +516,8 @@ showVersion(PsqlSettings *pset)
 
 	/* get backend version */
 	if (pset->db && PQstatus(pset->db) == CONNECTION_OK) {
-	res = PSQLexec(pset, "SELECT version()");
-	if (PQresultStatus(res) == PGRES_TUPLES_OK)
+	    res = PSQLexec(pset, "SELECT version()");
+	    if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		versionstr = PQgetvalue(res, 0, 0);
 	}
 
@@ -566,5 +566,5 @@ showVersion(PsqlSettings *pset)
 			 "distribution.");
 
 	if (res)
-	PQclear(res);
+	    PQclear(res);
 }

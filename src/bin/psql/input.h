@@ -37,20 +37,15 @@
 #endif
 
 
-char *
-			gets_interactive(const char *prompt);
+char * gets_interactive(const char *prompt);
 
-char *
-			gets_fromFile(FILE *source);
+char * gets_fromFile(FILE *source);
 
 
-void
-			initializeInput(int flags);
+void initializeInput(int flags, PsqlSettings *pset);
 
-bool
-			saveHistory(const char *fname);
+bool saveHistory(const char *fname);
 
-void
-			finishInput(void);
+void finishInput(void);
 
 #endif

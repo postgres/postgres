@@ -85,7 +85,7 @@ get_prompt(PsqlSettings *pset, promptStatus_t status)
 		 p && *p && strlen(destination) < MAX_PROMPT_SIZE;
 		 p++)
 	{
-		MemSet(buf, 0, MAX_PROMPT_SIZE + 1);
+		memset(buf, 0, MAX_PROMPT_SIZE + 1);
 		if (esc)
 		{
 			switch (*p)

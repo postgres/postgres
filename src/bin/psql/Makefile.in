@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.17 1999/11/08 15:59:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.18 1999/11/26 04:24:16 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,9 +30,17 @@ endif
 
 OBJS=command.o common.o help.o input.o stringutils.o mainloop.o \
 copy.o startup.o prompt.o variables.o large_obj.o print.o describe.o \
-@STRDUP@ @STRERROR2@
+tab-complete.o @STRDUP@ @STRERROR2@ @SNPRINTF@
 
 all: submake psql
+
+# Move this to the utils directory
+ifneq (@SNPRINTF@,)
+OBJS+=../../backend/port/snprintf.o
+
+../../backend/port/snprintf.o:
+	$(MAKE) -C ../../backend/port snprintf.o
+endif
 
 psql: $(OBJS) $(LIBPQDIR)/libpq.a
 	$(CC) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LDFLAGS)
@@ -69,7 +77,7 @@ clean:
 # sql_help.h is gone, for it needs the docs in the right place to be
 # regenerated. -- (pe)
 
-distclean: clean
+maintainer-clean: clean
 	rm -f sql_help.h
 
 ifeq (depend,$(wildcard depend))

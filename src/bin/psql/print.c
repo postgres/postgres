@@ -30,8 +30,8 @@
 static void
 print_unaligned_text(const char *title, const char * const * headers,
 		     const char * const * cells, const char * const * footers,
-					 const char *opt_fieldsep, bool opt_barebones,
-					 FILE *fout)
+		     const char *opt_fieldsep, bool opt_barebones,
+		     FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -83,8 +83,8 @@ print_unaligned_text(const char *title, const char * const * headers,
 static void
 print_unaligned_vertical(const char *title, const char * const * headers,
 			 const char * const * cells, const char * const * footers,
-						 const char *opt_fieldsep, bool opt_barebones,
-						 FILE *fout)
+			 const char *opt_fieldsep, bool opt_barebones,
+			 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -172,7 +172,7 @@ static void
 print_aligned_text(const char *title, const char * const * headers,
 		   const char * const * cells, const char * const * footers,
 		   const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-				   FILE *fout)
+		   FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i,
@@ -313,8 +313,8 @@ print_aligned_text(const char *title, const char * const * headers,
 static void
 print_aligned_vertical(const char *title, const char * const * headers,
 		       const char * const * cells, const char * const * footers,
-					   bool opt_barebones, unsigned short int opt_border,
-					   FILE *fout)
+		       bool opt_barebones, unsigned short int opt_border,
+		       FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int record = 1;
@@ -371,11 +371,10 @@ print_aligned_vertical(const char *title, const char * const * headers,
 		{
 			if (!opt_barebones)
 			{
-				char	   *div_copy = strdup(divider);
 				char	   *record_str = malloc(32);
 				size_t		record_str_len;
 
-				if (!div_copy || !record_str)
+				if (!record_str)
 				{
 					perror("malloc");
 					exit(EXIT_FAILURE);
@@ -386,29 +385,32 @@ print_aligned_vertical(const char *title, const char * const * headers,
 				else
 					sprintf(record_str, "[ RECORD %d ]", record++);
 				record_str_len = strlen(record_str);
-				if (record_str_len + opt_border > strlen(div_copy))
-				{
-					void	   *new;
 
-					new = realloc(div_copy, record_str_len + opt_border);
-					if (!new)
-					{
-						perror("realloc");
-						exit(EXIT_FAILURE);
-					}
-					div_copy = new;
-				}
-				strncpy(div_copy + opt_border, record_str, record_str_len);
-				fprintf(fout, "%s\n", div_copy);
+				if (record_str_len + opt_border > strlen(divider))
+                    fprintf(fout, "%.*s%s\n", opt_border, divider, record_str);
+                else
+                {
+                    char	   *div_copy = strdup(divider);
+
+                    if (!div_copy) {
+                        perror("malloc");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    strncpy(div_copy + opt_border, record_str, record_str_len);
+                    fprintf(fout, "%s\n", div_copy);
+                    free(div_copy);
+                }
 				free(record_str);
-				free(div_copy);
 			}
-			else if (i != 0 && opt_border < 2)
+			else if (i != 0 || opt_border == 2)
 				fprintf(fout, "%s\n", divider);
 		}
+
 		if (opt_border == 2)
 			fputs("| ", fout);
 		fprintf(fout, "%-*s", hwidth, headers[i % col_count]);
+
 		if (opt_border > 0)
 			fputs(" | ", fout);
 		else
@@ -479,7 +481,7 @@ print_html_text(const char *title, const char * const * headers,
 		const char * const * cells, const char * const * footers,
 		const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 		const char *opt_table_attr,
-				FILE *fout)
+		FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -661,7 +663,7 @@ static void
 print_latex_text(const char *title, const char * const * headers,
 		 const char * const * cells, const char * const * footers,
 		 const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-				 FILE *fout)
+		 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -757,7 +759,7 @@ static void
 print_latex_vertical(const char *title, const char * const * headers,
 		     const char * const * cells, const char * const * footers,
 		     const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-					 FILE *fout)
+		     FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
@@ -836,7 +838,7 @@ print_latex_vertical(const char *title, const char * const * headers,
 
 
 /********************************/
-/* Public functions				*/
+/* Public functions		*/
 /********************************/
 
 
@@ -845,8 +847,8 @@ printTable(const char *title,
 	   const char * const * headers,
 	   const char * const * cells,
 	   const char * const * footers,
-		   const char *align,
-		   const printTableOpt * opt, FILE *fout)
+	   const char *align,
+	   const printTableOpt * opt, FILE *fout)
 {
 	const char *default_footer[] = {NULL};
 	unsigned short int border = opt->border;
@@ -968,8 +970,8 @@ printQuery(const PGresult *result, const printQueryOpt * opt, FILE *fout)
 	int			nfields;
 	const char **headers;
 	const char **cells;
-	char	  **footers;
-	char	   *align;
+	char **footers;
+	char 	   *align;
 	int			i;
 
 	/* extract headers */

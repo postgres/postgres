@@ -46,8 +46,8 @@ typedef struct _printTableOpt
 */
 void printTable(const char *title, const char * const * headers,
 		const char * const * cells, const char * const * footers,
-		   const char *align,
-		   const printTableOpt * opt, FILE *fout);
+		const char *align,
+		const printTableOpt * opt, FILE *fout);
 
 
 

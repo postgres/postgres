@@ -11,7 +11,8 @@
 #define VARIABLES_H
 #include <c.h>
 
-#define VALID_VARIABLE_CHARS "abcdefghijklmnopqrstuvwxyz0123456789_"
+#define VALID_VARIABLE_CHARS "abcdefghijklmnopqrstuvwxyz"\
+                             "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789_"
 
 struct _variable
 {

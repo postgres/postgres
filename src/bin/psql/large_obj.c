@@ -220,6 +220,7 @@ do_lo_import(PsqlSettings *pset, const char *filename_arg, const char *comment_a
 
 
 	fprintf(pset->queryFout, "lo_import %d\n", loid);
+    pset->lastOid = loid;
 
 	return true;
 }
@@ -311,21 +312,20 @@ do_lo_unlink(PsqlSettings *pset, const char *loid_arg)
  * Show all large objects in database, with comments if desired
  */
 bool
-do_lo_list(PsqlSettings *pset)
+do_lo_list(PsqlSettings *pset, bool desc)
 {
 	PGresult   *res;
-	char		descbuf[512];
+	char		buf[512];
 	printQueryOpt myopt = pset->popt;
 
-	descbuf[0] = '\0';
-	strcat(descbuf, "SELECT usename as \"Owner\", substring(relname from 5) as \"ID\"");
-	if (GetVariableBool(pset->vars, "description"))
-		strcat(descbuf, ",\n  obj_description(pg_class.oid) as \"Description\"");
-	strcat(descbuf, "\nFROM pg_class, pg_user\n"
+	strcpy(buf, "SELECT usename as \"Owner\", substring(relname from 5) as \"ID\"");
+	if (desc)
+		strcat(buf, ",\n  obj_description(pg_class.oid) as \"Description\"");
+	strcat(buf, "\nFROM pg_class, pg_user\n"
 		   "WHERE usesysid = relowner AND relkind = 'l'\n"
 		   "ORDER BY \"ID\"");
 
-	res = PSQLexec(pset, descbuf);
+	res = PSQLexec(pset, buf);
 	if (!res)
 		return false;
 

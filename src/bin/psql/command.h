@@ -29,10 +29,6 @@ backslashResult HandleSlashCmds(PsqlSettings *pset,
 				PQExpBuffer query_buf,
 				const char **end_of_cmd);
 
-bool do_connect(const char *new_dbname,
-		   const char *new_user,
-		   PsqlSettings *pset);
-
 bool process_file(const char *filename,
 			 PsqlSettings *pset);
 
