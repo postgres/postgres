@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.42 2004/03/09 04:43:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.43 2004/03/19 02:23:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,6 @@ typedef struct Port
 	SockAddr	raddr;			/* remote addr (client) */
 	char        *remote_host;   /* name (or ip addr) of remote host */
 	char        *remote_port;   /* text rep of remote port */
-	char        *commandTag;    /* command tag for display in log lines */
-	struct timeval  session_start;  /* for session duration logging */
 	CAC_state	canAcceptConnections;	/* postmaster connection status */
 
 	/*
@@ -72,6 +70,14 @@ typedef struct Port
 	char	   *auth_arg;
 	char		md5Salt[4];		/* Password salt */
 	char		cryptSalt[2];	/* Password salt */
+
+	/*
+	 * Information that really has no business at all being in struct Port,
+	 * but since it gets used by elog.c in the same way as database_name
+	 * and other members of this struct, we may as well keep it here.
+	 */
+	const char *commandTag;			/* current command tag */
+	struct timeval session_start;	/* for session duration logging */
 
 	/*
 	 * SSL structures

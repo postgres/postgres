@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.18 2004/03/09 04:43:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.19 2004/03/19 02:23:59 tgl Exp $
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -277,15 +277,14 @@ init_ps_display(const char *username, const char *dbname,
 void
 set_ps_display(const char *activity)
 {
+	/* save tag for possible use by elog.c */
+	if (MyProcPort)
+		MyProcPort->commandTag = activity;
+
+#ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
 	if (!IsUnderPostmaster)
 		return;
-
-	/* save it for logging context */
-	if (MyProcPort)
-		MyProcPort->commandTag = (char *) activity;
-
-#ifndef PS_USE_NONE
 
 #ifdef PS_USE_CLOBBER_ARGV
 	/* If ps_buffer is a pointer, it might still be null */
