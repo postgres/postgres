@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.34 2000/12/01 18:14:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.35 2000/12/05 23:40:36 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -719,7 +719,7 @@ AllocSetFree(MemoryContext context, void *pointer)
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < chunk->size)
 		if (((char *) pointer)[chunk->requested_size] != 0x7E)
-			elog(ERROR, "AllocSetFree: detected write past chunk end in %s %p",
+			elog(NOTICE, "AllocSetFree: detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif	
 
@@ -793,7 +793,7 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	/* Test for someone scribbling on unused space in chunk */
 	if (chunk->requested_size < oldsize)
 		if (((char *) pointer)[chunk->requested_size] != 0x7E)
-			elog(ERROR, "AllocSetRealloc: detected write past chunk end in %s %p",
+			elog(NOTICE, "AllocSetRealloc: detected write past chunk end in %s %p",
 				 set->header.name, chunk);
 #endif
 
@@ -923,6 +923,10 @@ AllocSetStats(MemoryContext context)
 /* 
  * AllocSetCheck
  *		Walk through chunks and check consistency of memory.
+ *
+ * NOTE: report errors as NOTICE, *not* ERROR or FATAL.  Otherwise you'll
+ * find yourself in an infinite loop when trouble occurs, because this
+ * routine will be entered again when elog cleanup tries to release memory!
  */
 static void 
 AllocSetCheck(MemoryContext context)
@@ -966,16 +970,16 @@ AllocSetCheck(MemoryContext context)
 			 * Check chunk size
 			 */
 			if (dsize > chsize)
-				elog(ERROR, "AllocSetCheck(): %s: req size > alloc size for chunk %p in block %p",
+				elog(NOTICE, "AllocSetCheck(): %s: req size > alloc size for chunk %p in block %p",
 					 name, chunk, block);			
 			if (chsize < (1 << ALLOC_MINBITS))
-				elog(ERROR, "AllocSetCheck(): %s: bad size %lu for chunk %p in block %p",
+				elog(NOTICE, "AllocSetCheck(): %s: bad size %lu for chunk %p in block %p",
 					 name, (unsigned long) chsize, chunk, block);
 						
 			/* single-chunk block? */
 			if (chsize > ALLOC_CHUNK_LIMIT &&
 			    chsize + ALLOC_CHUNKHDRSZ != blk_used)
-				elog(ERROR, "AllocSetCheck(): %s: bad single-chunk %p in block %p",
+				elog(NOTICE, "AllocSetCheck(): %s: bad single-chunk %p in block %p",
 					 name, chunk, block);
 
 			/*
@@ -984,14 +988,14 @@ AllocSetCheck(MemoryContext context)
 			 * can't check as easily...)
 			 */
 			if (dsize > 0 && chunk->aset != (void *) set)
-				elog(ERROR, "AllocSetCheck(): %s: bogus aset link in block %p, chunk %p",
+				elog(NOTICE, "AllocSetCheck(): %s: bogus aset link in block %p, chunk %p",
 					 name, block, chunk);
 
 			/*
 			 * Check for overwrite of "unallocated" space in chunk
 			 */		
 			if (dsize > 0 && dsize < chsize && *chdata_end != 0x7E)
-				elog(ERROR, "AllocSetCheck(): %s: detected write past chunk end in block %p, chunk %p",
+				elog(NOTICE, "AllocSetCheck(): %s: detected write past chunk end in block %p, chunk %p",
 					 name, block, chunk);
 			
 			blk_data += chsize;
@@ -1001,7 +1005,7 @@ AllocSetCheck(MemoryContext context)
 		}
 
 		if ((blk_data + (nchunks * ALLOC_CHUNKHDRSZ)) != blk_used)
-			elog(ERROR, "AllocSetCheck(): %s: found inconsistent memory block %p",
+			elog(NOTICE, "AllocSetCheck(): %s: found inconsistent memory block %p",
 				 name, block);
 	}
 }
