@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.16 2002/01/06 18:12:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/ecpg-ref.sgml,v 1.17 2002/01/18 20:32:54 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -57,7 +57,10 @@ PostgreSQL documentation
       <term>-t</term>
       <listitem>
        <para>
-	Turn on auto-commit of transactions.
+	Turn on auto-commit of transactions. In this mode, each query is
+	automatically committed unless it is inside an explicit
+	transaction block. In the default mode, queries are committed
+	only when <command>exec sql commit</command> is issued.
        </para>
       </listitem>
      </varlistentry>
@@ -403,32 +406,6 @@ EXEC SQL COMMIT;
    See the <filename>TODO</filename> file in the source for some more
    missing features.
   </para>
-
-<!--
-.SH FILES
-.PD 0
-.TP
-.B /usr/src/pgsql/postgresql-${ver}/src/interfaces...
- ./ecpg/include.......source for \fIecpg\fP header files.
- ./ecpg/lib...........source for \fIecpg\fP libraries.
- ./ecpg/preproc.......source for \fIecpg\fP header files.
- ./ecpg/test..........source for \fIecpg\fP libraries.
- (test contains examples of syntax for ecpg SQL-C.)
-.PD
-.TP
-.B /usr/local/pgsql/bin 
-\fIPostgreSQL\fP binaries including \fIecpg\fP.
-.PD
-.TP
-.B /usr/local/pgsql/include 
-\fIPostgreSQL\fP headers including \fIecpglib.h\fP \fIecpgtype.h\fP 
-and \fIsqlca.h\fP.
-.PD
-.TP
-.B /usr/local/pgsql/lib 
-\fIPostgreSQL\fP libraries including \fIlibecpg.a\fP and 
-\fIlibecpg.so\fP.
--->
 
  </refsect1>
 </refentry>

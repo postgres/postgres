@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.85 2002/01/07 02:29:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.86 2002/01/18 20:32:54 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2109,10 +2109,17 @@ for information on correct values for these environment variables.
 <para>
 <filename>libpq</filename> is thread-safe as of
 <productname>PostgreSQL</productname> 7.0, so long as no two threads
-attempt to manipulate the same <structname>PGconn</> object at the same time.  In particular,
-you cannot issue concurrent queries from different threads through the same
-connection object.  (If you need to run concurrent queries, start up multiple
-connections.)
+attempt to manipulate the same <structname>PGconn</> object at the same
+time. In particular, you cannot issue concurrent queries from different
+threads through the same connection object. (If you need to run
+concurrent queries, start up multiple connections.)
+</para>
+<para>
+However, <filename>libpq</filename> clients using the
+<literal>crypt</literal> encryption method rely on the
+<literal>crypt()</literal> operating system function, which often is not
+thread-safe. It is better to use <literal>MD5</literal> encryption,
+which is guarantted to be thread-safe on all platforms.
 </para>
 
 <para>

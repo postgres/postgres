@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.33 2002/01/07 02:29:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.34 2002/01/18 20:32:53 momjian Exp $
 -->
 
  <chapter id="ecpg">
@@ -1053,14 +1053,16 @@ ECPGdo(__LINE__, NULL, "select  res  from mytable where index = ?     ",
     </para>
 
     <para>
-     All <acronym>SQL</acronym> statements are performed in one
-     transaction unless you issue a commit transaction. To accomplish
-     this auto-transaction behavior, the first statement and the first
-     statement after a commit or rollback always begins a new transaction. To
-     disable this feature, use the <option>-t</option> command-line
-     option.
+     In the default mode, queries are committed only when <command>exec
+     sql commit</command> is issued. <application>Ecpg</application>
+     also supports auto-commit of transactions via the
+     <option>-t</option> command-line option or via the <literal>exec
+     sql set autocommit to on</literal> statement. In
+     <literal>autocommit<literal> mode, each query is automatically
+     committed unless it is inside an explicit transaction block. This
+     mode can be explicitly turned off using <literal>exec sql set
+     autocommit to off</literal>.
     </para>
-
    </sect2>
   </sect1>
  </chapter>
