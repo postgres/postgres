@@ -16,8 +16,3 @@ typedef struct
 #ifndef			BYTE_ORDER
 #define			BYTE_ORDER		BIG_ENDIAN
 #endif
-
-/* workaround for nonstandard large file support implementation */
-#if defined(_FILE_OFFSET_BITS) && _FILE_OFFSET_BITS == 64
-#define _LARGEFILE64_SOURCE 1
-#endif
