@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.4 2001/02/18 17:15:03 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.5 2001/02/20 22:27:26 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -22,6 +22,7 @@
 (define pgsql-docs-list "pgsql-docs@postgresql.org")
 
 (define %refentry-xref-manvolnum% #f)
+(define %section-autolabel% #t)
 
 (element lineannotation ($italic-seq$))
 (element structfield ($mono-seq$))
