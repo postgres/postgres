@@ -229,7 +229,8 @@ dnl Checks for programs.
 AC_PROG_CC
 AC_PROG_CPP
 
-AC_LINK_FILES(port/${PORTNAME}.h, include/os.h)
+AC_LINK_FILES(include/port/${PORTNAME}.h, include/os.h)
+AC_LINK_FILES(makefiles/Makefile.${PORTNAME}, Makefile.port)
 AC_SUBST(PORTNAME)
 AC_SUBST(TR)
 AC_SUBST(LDFLAGS)
