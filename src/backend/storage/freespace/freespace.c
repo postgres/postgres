@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.37 2004/12/31 22:00:54 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.38 2005/03/12 05:21:52 momjian Exp $
  *
  *
  * NOTES:
@@ -706,11 +706,25 @@ PrintFreeSpaceMapStatistics(int elevel)
 	needed = (sumRequests + numRels) * CHUNKPAGES;
 
 	ereport(elevel,
-			(errmsg("free space map: %d relations, %d pages stored; %.0f total pages needed",
+			(errmsg("free space map: %d relations, %d pages stored; %.0f total pages used",
 					numRels, storedPages, needed),
-			 errdetail("Allocated FSM size: %d relations + %d pages = %.0f kB shared memory.",
+			 errdetail("FSM size: %d relations + %d pages = %.0f kB shared memory.",
 					   MaxFSMRelations, MaxFSMPages,
 					   (double) FreeSpaceShmemSize() / 1024.0)));
+    
+	if (numRels == MaxFSMRelations)
+		ereport(NOTICE,
+			(errmsg("max_fsm_relations(%d) equals the number of relations checked",
+			 MaxFSMRelations),
+			 errhint("You have >= %d relations.\n"
+			 		 "Consider increasing the configuration parameter \"max_fsm_relations\".",
+					 numRels)));
+	else if (needed > MaxFSMPages)
+		ereport(NOTICE,
+			(errmsg("the number of page slots needed (%.0f) exceeds max_fsm_pages (%d)",
+			 needed,MaxFSMPages),
+			 errhint("Consider increasing the configuration parameter \"max_fsm_relations\"\n"
+					 "to a value over %.0f.", needed)));
 }
 
 /*
