@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.135 2003/01/09 18:00:24 tgl Exp $
+ * $Id: c.h,v 1.136 2003/04/04 20:42:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -691,6 +691,12 @@ typedef NameData *Name;
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)
 #include <unistd.h>
 #endif
+
+/* Portable path handling for Unix/Win32 */
+bool is_absolute_path(const char *filename);
+char *first_path_separator(const char *filename);
+char *last_path_separator(const char *filename);
+char *get_progname(char *argv0);
 
 #if defined(bsdi) || defined(netbsd)
 int fseeko(FILE *stream, off_t offset, int whence);

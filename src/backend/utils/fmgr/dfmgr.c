@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.57 2002/09/02 02:47:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.58 2003/04/04 20:42:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,7 @@ expand_dynamic_library_name(const char *name)
 
 	AssertArg(name);
 
-	have_slash = (strchr(name, '/') != NULL);
+	have_slash = (first_path_separator(name) != NULL);
 
 	if (!have_slash)
 	{
@@ -326,7 +326,13 @@ substitute_libpath_macro(const char *name)
 	if (name[0] != '$')
 		return pstrdup(name);
 
-	macroname_len = strcspn(name + 1, "/") + 1;
+	macroname_len = strcspn(name + 1,
+#ifndef WIN32
+		"/"
+#else
+		"/\\"
+#endif
+		) + 1;
 
 	if (strncmp(name, "$libdir", macroname_len) == 0)
 		replacement = PKGLIBDIR;
@@ -362,7 +368,7 @@ find_in_dynamic_libpath(const char *basename)
 	size_t		baselen;
 
 	AssertArg(basename != NULL);
-	AssertArg(strchr(basename, '/') == NULL);
+	AssertArg(first_path_separator(basename) == NULL);
 	AssertState(Dynamic_library_path != NULL);
 
 	p = Dynamic_library_path;
@@ -391,7 +397,7 @@ find_in_dynamic_libpath(const char *basename)
 		pfree(piece);
 
 		/* only absolute paths */
-		if (mangled[0] != '/')
+		if (!is_absolute_path(mangled))
 			elog(ERROR, "dynamic_library_path component is not absolute");
 
 		full = palloc(strlen(mangled) + 1 + baselen + 1);

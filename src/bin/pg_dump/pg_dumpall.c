@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.16 2003/03/14 22:45:49 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.17 2003/04/04 20:42:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,10 +100,7 @@ main(int argc, char *argv[])
 	textdomain("pg_dump");
 #endif
 
-	if (!strrchr(argv[0], '/'))
-		progname = argv[0];
-	else
-		progname = strrchr(argv[0], '/') + 1;
+	progname = get_progname(argv[0]);
 
 	if (argc > 1)
 	{
@@ -730,7 +727,7 @@ findPgDump(const char *argv0)
 		return result;
 
 	cmd = createPQExpBuffer();
-	last = strrchr(argv0, '/');
+	last = last_path_separator(argv0);
 
 	if (!last)
 		appendPQExpBuffer(cmd, "pg_dump");

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.31 2002/11/02 15:54:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.32 2003/04/04 20:42:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,14 +159,14 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 	 * (making sure that a relative path is made absolute before returning
 	 * it).
 	 */
-	if (argv0 && (p = strrchr(argv0, '/')) && *++p)
+	if (argv0 && (p = last_path_separator(argv0)) && *++p)
 	{
-		if (*argv0 == '/' || !getcwd(buf, MAXPGPATH))
+		if (is_absolute_path(argv0) || !getcwd(buf, MAXPGPATH))
 			buf[0] = '\0';
 		else
 			strcat(buf, "/");
 		strcat(buf, argv0);
-		p = strrchr(buf, '/');
+		p = last_path_separator(buf);
 		strcpy(++p, binary_name);
 		if (ValidateBinary(buf) == 0)
 		{
@@ -194,7 +194,7 @@ FindExec(char *full_path, const char *argv0, const char *binary_name)
 				continue;
 			if (endp)
 				*endp = '\0';
-			if (*startp == '/' || !getcwd(buf, MAXPGPATH))
+			if (is_absolute_path(startp) || !getcwd(buf, MAXPGPATH))
 				buf[0] = '\0';
 			else
 				strcat(buf, "/");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.230 2003/04/02 00:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.231 2003/04/04 20:42:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,7 +330,7 @@ PQconnectStart(const char *conninfo)
 	/*
 	 * Allow unix socket specification in the host name
 	 */
-	if (conn->pghost && conn->pghost[0] == '/')
+	if (conn->pghost && is_absolute_path(conn->pghost))
 	{
 		if (conn->pgunixsocket)
 			free(conn->pgunixsocket);
@@ -449,7 +449,7 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	 * We don't allow unix socket path as a function parameter. This
 	 * allows unix socket specification in the host name.
 	 */
-	if (conn->pghost && conn->pghost[0] == '/')
+	if (conn->pghost && is_absolute_path(conn->pghost))
 	{
 		if (conn->pgunixsocket)
 			free(conn->pgunixsocket);
@@ -604,7 +604,7 @@ update_db_info(PGconn *conn)
 				*tmp = '\0';
 			}
 
-			tmp = strrchr(conn->dbName + offset, '/');
+			tmp = last_path_separator(conn->dbName + offset);
 			if (tmp != NULL)	/* database name given */
 			{
 				if (conn->dbName)

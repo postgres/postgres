@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.325 2003/03/31 20:48:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.326 2003/04/04 20:42:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,10 +244,7 @@ main(int argc, char **argv)
 
 	dataOnly = schemaOnly = dumpData = attrNames = false;
 
-	if (!strrchr(argv[0], '/'))
-		progname = argv[0];
-	else
-		progname = strrchr(argv[0], '/') + 1;
+	progname = get_progname(argv[0]);
 
 	/* Set default options based on progname */
 	if (strcmp(progname, "pg_backup") == 0)

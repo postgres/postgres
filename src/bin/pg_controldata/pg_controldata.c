@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.8 2003/01/08 22:26:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.9 2003/04/04 20:42:12 momjian Exp $
  */
 #include "postgres.h"
 
@@ -82,10 +82,7 @@ main(int argc, char *argv[])
 	textdomain("pg_controldata");
 #endif
 
-	if (!strrchr(argv[0], '/'))
-		progname = argv[0];
-	else
-		progname = strrchr(argv[0], '/') + 1;
+	progname = get_progname(argv[0]);
 
 	if (argc > 1)
 	{

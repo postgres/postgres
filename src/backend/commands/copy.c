@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.190 2003/03/27 16:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.191 2003/04/04 20:42:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,7 +476,7 @@ DoCopy(const CopyStmt *stmt)
 			 * Prevent write to relative path ... too easy to shoot
 			 * oneself in the foot by overwriting a database file ...
 			 */
-			if (filename[0] != '/')
+			if (!is_absolute_path(filename))
 				elog(ERROR, "Relative path not allowed for server side"
 					 " COPY command");
 

@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.44 2003/01/06 18:53:25 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.45 2003/04/04 20:42:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,10 +137,7 @@ main(int argc, char **argv)
 
 	opts = NewRestoreOptions();
 
-	if (!strrchr(argv[0], '/'))
-		progname = argv[0];
-	else
-		progname = strrchr(argv[0], '/') + 1;
+	progname = get_progname(argv[0]);
 
 	if (argc > 1)
 	{

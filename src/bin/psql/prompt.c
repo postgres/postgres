@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.24 2003/03/20 15:39:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.25 2003/04/04 20:42:13 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -130,7 +130,7 @@ get_prompt(promptStatus_t status)
 						const char *host = PQhost(pset.db);
 
 						/* INET socket */
-						if (host && host[0] && host[0] != '/')
+						if (host && host[0] && !is_absolute_path(host))
 						{
 							strncpy(buf, host, MAX_PROMPT_SIZE);
 							if (*p == 'm')

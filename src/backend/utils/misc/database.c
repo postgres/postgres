@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.55 2003/03/10 22:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.56 2003/04/04 20:42:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,10 +50,10 @@ ExpandDatabasePath(const char *dbpath)
 		return NULL;			/* ain't gonna fit nohow */
 
 	/* leading path delimiter? then already absolute path */
-	if (*dbpath == '/')
+	if (is_absolute_path(dbpath))
 	{
 #ifdef ALLOW_ABSOLUTE_DBPATHS
-		cp = strrchr(dbpath, '/');
+		cp = last_path_separator(dbpath);
 		len = cp - dbpath;
 		strncpy(buf, dbpath, len);
 		snprintf(&buf[len], MAXPGPATH - len, "/base/%s", (cp + 1));
@@ -62,7 +62,7 @@ ExpandDatabasePath(const char *dbpath)
 #endif
 	}
 	/* path delimiter somewhere? then has leading environment variable */
-	else if ((cp = strchr(dbpath, '/')) != NULL)
+	else if ((cp = first_path_separator(dbpath)) != NULL)
 	{
 		const char *envvar;
 

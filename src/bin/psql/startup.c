@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.72 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.73 2003/04/04 20:42:13 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -110,10 +110,7 @@ main(int argc, char *argv[])
 	textdomain("psql");
 #endif
 
-	if (!strrchr(argv[0], '/'))
-		pset.progname = argv[0];
-	else
-		pset.progname = strrchr(argv[0], '/') + 1;
+	pset.progname = get_progname(argv[0]);
 
 	if (argc > 1)
 	{

@@ -16,7 +16,6 @@ int optreset;
 #endif
 
 const char *get_user_name(const char *progname);
-char *get_progname(char *argv0);
 
 #define _(x) gettext((x))
 void init_nls(void);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.96 2003/03/27 16:51:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.97 2003/04/04 20:42:12 momjian Exp $
  *
  * NOTES:
  *
@@ -607,7 +607,7 @@ filepath(const char *filename)
 	char	   *buf;
 
 	/* Not an absolute path name? Then fill in with database path... */
-	if (*filename != '/')
+	if (!is_absolute_path(filename))
 	{
 		buf = (char *) palloc(strlen(DatabasePath) + strlen(filename) + 2);
 		sprintf(buf, "%s/%s", DatabasePath, filename);

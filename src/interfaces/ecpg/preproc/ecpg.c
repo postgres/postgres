@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.64 2003/03/27 14:29:17 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.65 2003/04/04 20:42:13 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -105,10 +105,7 @@ main(int argc, char *const argv[])
 	struct _include_path *ip;
 	char	   *progname;
 
-	if (!strrchr(argv[0], '/'))
-		progname = argv[0];
-	else
-		progname = strrchr(argv[0], '/') + 1;
+	progname = get_progname(argv[0]);
 
 	if (argc > 1)
 	{
@@ -213,7 +210,7 @@ main(int argc, char *const argv[])
 			strcpy(input_filename, argv[fnr]);
 
 			/* take care of relative paths */
-			ptr2ext = strrchr(input_filename, '/');
+			ptr2ext = last_path_separator(input_filename);
 			ptr2ext = (ptr2ext ? strrchr(ptr2ext, '.') : strrchr(input_filename, '.'));
 
 			/* no extension? */

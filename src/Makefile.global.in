@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.160 2003/03/29 11:31:51 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.161 2003/04/04 20:42:11 momjian Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -338,7 +338,7 @@ endif
 #
 # substitute implementations of the C library
 
-LIBOBJS = @LIBOBJS@
+LIBOBJS = @LIBOBJS@ path.o
 
 ifneq (,$(LIBOBJS))
 LIBS += -lpgport

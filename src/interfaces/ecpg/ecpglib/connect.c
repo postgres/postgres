@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.1 2003/03/16 10:42:53 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.2 2003/04/04 20:42:13 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -326,7 +326,7 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 				*tmp = '\0';
 			}
 
-			tmp = strrchr(dbname + offset, '/');
+			tmp = last_path_separator(dbname + offset);
 			if (tmp != NULL)	/* database name given */
 			{
 				realname = strdup(tmp + 1);
