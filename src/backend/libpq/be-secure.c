@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.25 2003/02/03 22:29:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.26 2003/02/14 00:18:41 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -83,7 +83,6 @@
 #include <ctype.h>
 
 #include "libpq/libpq.h"
-#include "libpq/pqsignal.h"
 #include "miscadmin.h"
 
 #ifdef WIN32
@@ -315,10 +314,6 @@ secure_write(Port *port, void *ptr, size_t len)
 {
 	ssize_t		n;
 
-#ifndef WIN32
-	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
-#endif
-
 #ifdef USE_SSL
 	if (port->ssl)
 	{
@@ -362,10 +357,6 @@ secure_write(Port *port, void *ptr, size_t len)
 	else
 #endif
 		n = send(port->sock, ptr, len, 0);
-
-#ifndef WIN32
-	pqsignal(SIGPIPE, oldsighandler);
-#endif
 
 	return n;
 }
