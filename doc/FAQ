@@ -1,9 +1,7 @@
 
-   ]
-   
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Oct 5 10:25:21 EDT 2003
+   Last updated: Fri Oct 10 17:27:02 EDT 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -688,7 +686,7 @@
     4.5) What is the maximum size for a row, a table, and a database?
     
    These are the limits:
-    Maximum size for a database?             unlimited (4 TB databases exist)
+    Maximum size for a database?             unlimited (32 TB databases exist)
     Maximum size for a table?                32 TB
     Maximum size for a row?                  1.6TB
     Maximum size for a field?                1 GB
