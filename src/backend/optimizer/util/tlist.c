@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.29 1999/05/06 23:07:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.30 1999/05/12 15:01:44 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -518,6 +518,25 @@ get_expr(TargetEntry *tle)
 }
 
 
+Var *
+get_groupclause_expr(GroupClause *groupClause, List *targetList)
+{
+	List		*l;
+	TargetEntry	*tle;
+
+	foreach(l, targetList)
+	{
+		tle = (TargetEntry *)lfirst(l);
+		if (tle->resdom->resgroupref == groupClause->tleGroupref)
+			return get_expr(tle);
+	}
+
+	elog(ERROR, 
+		"get_groupclause_expr: GROUP BY expression not found in targetlist");
+	return NULL;
+}
+
+
 /*****************************************************************************
  *
  *****************************************************************************/
@@ -528,6 +547,11 @@ get_expr(TargetEntry *tle)
  *	  in there.
  */
 #ifdef NOT_USED
+/*
+ * WARNING!!! If this ever get's used again, the new reference
+ * mechanism from group clause to targetlist entry must be implemented
+ * here too. Jan
+ */
 void
 AddGroupAttrToTlist(List *tlist, List *grpCl)
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.15 1999/03/01 00:10:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.16 1999/05/12 15:01:33 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,8 +396,6 @@ _freeAgg(Agg *node)
 static void
 _freeGroupClause(GroupClause *node)
 {
-	freeObject(node->entry);
-
 	pfree(node);
 }
 

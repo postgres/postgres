@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.45 1999/05/06 23:07:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.46 1999/05/12 15:01:39 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -961,7 +961,8 @@ del_agg_clause(Node *clause)
  */
 
 void
-check_having_for_ungrouped_vars(Node *clause, List *groupClause)
+check_having_for_ungrouped_vars(Node *clause, List *groupClause,
+						List *targetList)
 {
 	List	   *t;
 
@@ -981,7 +982,7 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause)
 	else if (IsA(clause, Iter))
 	{
 		check_having_for_ungrouped_vars(((Iter *) clause)->iterexpr,
-										groupClause);
+										groupClause, targetList);
 	}
 	else if (is_subplan(clause))
 	{
@@ -997,7 +998,8 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause)
 			foreach(gl, groupClause)
 			{
 				if (var_equal(lfirst(t),
-							  get_expr(((GroupClause *) lfirst(gl))->entry)))
+							  get_groupclause_expr((GroupClause *) 
+							  					lfirst(gl), targetList)))
 				{
 					contained_in_group_clause = true;
 					break;
@@ -1016,7 +1018,8 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause)
 		 * subplan is a kind of Expr node.
 		 */
 		foreach(t, ((Expr *) clause)->args)
-			check_having_for_ungrouped_vars(lfirst(t), groupClause);
+			check_having_for_ungrouped_vars(lfirst(t), groupClause,
+														targetList);
 	}
 	else if (IsA(clause, List))
 	{
@@ -1024,12 +1027,13 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause)
 		 * Recursively scan AND subclauses (see NOTE above).
 		 */
 		foreach(t, ((List *) clause))
-			check_having_for_ungrouped_vars(lfirst(t), groupClause);
+			check_having_for_ungrouped_vars(lfirst(t), groupClause,
+														targetList);
 	}
 	else if (IsA(clause, Aggref))
 	{
 		check_having_for_ungrouped_vars(((Aggref *) clause)->target,
-										groupClause);
+										groupClause, targetList);
 	}
 	else if (IsA(clause, ArrayRef))
 	{
@@ -1040,22 +1044,28 @@ check_having_for_ungrouped_vars(Node *clause, List *groupClause)
 		 * expression and its index expression...
 		 */
 		foreach(t, aref->refupperindexpr)
-			check_having_for_ungrouped_vars(lfirst(t), groupClause);
+			check_having_for_ungrouped_vars(lfirst(t), groupClause,
+														targetList);
 		foreach(t, aref->reflowerindexpr)
-			check_having_for_ungrouped_vars(lfirst(t), groupClause);
-		check_having_for_ungrouped_vars(aref->refexpr, groupClause);
-		check_having_for_ungrouped_vars(aref->refassgnexpr, groupClause);
+			check_having_for_ungrouped_vars(lfirst(t), groupClause,
+														targetList);
+		check_having_for_ungrouped_vars(aref->refexpr, groupClause,
+														targetList);
+		check_having_for_ungrouped_vars(aref->refassgnexpr, groupClause,
+														targetList);
 	}
 	else if (case_clause(clause))
 	{
 		foreach(t, ((CaseExpr *) clause)->args)
 		{
 			CaseWhen   *when = (CaseWhen *) lfirst(t);
-			check_having_for_ungrouped_vars(when->expr, groupClause);
-			check_having_for_ungrouped_vars(when->result, groupClause);
+			check_having_for_ungrouped_vars(when->expr, groupClause,
+														targetList);
+			check_having_for_ungrouped_vars(when->result, groupClause,
+														targetList);
 		}
 		check_having_for_ungrouped_vars(((CaseExpr *) clause)->defresult,
-										groupClause);
+										groupClause, targetList);
 	}
 	else
 	{

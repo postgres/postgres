@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.18 1999/04/29 01:13:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.19 1999/05/12 15:01:48 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,9 @@
 #include "utils/lsyscache.h"
 
 static bool contain_agg_clause(Node *clause);
-static bool exprIsAggOrGroupCol(Node *expr, List *groupClause);
-static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause);
+static bool exprIsAggOrGroupCol(Node *expr, List *groupClause, List *tlist);
+static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause, 
+													List *tlist);
 
 /*
  * contain_agg_clause
@@ -100,7 +101,7 @@ contain_agg_clause(Node *clause)
  *	  returns true if the expression does not contain non-group columns.
  */
 static bool
-exprIsAggOrGroupCol(Node *expr, List *groupClause)
+exprIsAggOrGroupCol(Node *expr, List *groupClause, List *tlist)
 {
 	List	   *gl;
 
@@ -113,7 +114,7 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
 	{
 		GroupClause *grpcl = lfirst(gl);
 
-		if (equal(expr, grpcl->entry->expr))
+		if (equal(expr, get_groupclause_expr(grpcl, tlist)))
 			return TRUE;
 	}
 
@@ -122,7 +123,7 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
 		List	   *temp;
 
 		foreach(temp, ((Expr *) expr)->args)
-			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause))
+			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause, tlist))
 			return FALSE;
 		return TRUE;
 	}
@@ -135,7 +136,7 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
  *	  returns true if the TargetEntry is Agg or GroupCol.
  */
 static bool
-tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
+tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause, List *tlist)
 {
 	Node	   *expr = tle->expr;
 	List	   *gl;
@@ -147,7 +148,7 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
 	{
 		GroupClause *grpcl = lfirst(gl);
 
-		if (tle->resdom->resno == grpcl->entry->resdom->resno)
+		if (tle->resdom->resgroupref == grpcl->tleGroupref)
 		{
 			if (contain_agg_clause((Node *) expr))
 				elog(ERROR, "Aggregates not allowed in GROUP BY clause");
@@ -163,7 +164,7 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
 		List	   *temp;
 
 		foreach(temp, ((Expr *) expr)->args)
-			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause))
+			if (!exprIsAggOrGroupCol(lfirst(temp), groupClause, tlist))
 			return FALSE;
 		return TRUE;
 	}
@@ -200,7 +201,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	{
 		TargetEntry *tle = lfirst(tl);
 
-		if (!tleIsAggOrGroupCol(tle, qry->groupClause))
+		if (!tleIsAggOrGroupCol(tle, qry->groupClause, qry->targetList))
 			elog(ERROR,
 				 "Illegal use of aggregates or non-group column in target list");
 	}
@@ -210,7 +211,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * restriction as those in the target list.
 	 */
 
-	if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause))
+	if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause, qry->targetList))
 		elog(ERROR,
 			 "Illegal use of aggregates or non-group column in HAVING clause");
 	return;

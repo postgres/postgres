@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.11 1999/05/10 00:45:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.12 1999/05/12 15:01:58 wieck Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1263,9 +1263,23 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 		case T_GroupClause:
 			{
 				GroupClause *grp = (GroupClause *) node;
+				List		*l;
+				TargetEntry	*tle = NULL;
 
-				return get_rule_expr(qh, rt_index,
-									 (Node *) (grp->entry), varprefix);
+				foreach(l, qh->query->targetList)
+				{
+					if (((TargetEntry *)lfirst(l))->resdom->resgroupref ==
+									grp->tleGroupref)
+					{
+						tle = (TargetEntry *)lfirst(l);
+						break;
+					}
+				}
+
+				if (tle == NULL)
+					elog(ERROR, "GROUP BY expression not found in targetlist");
+
+				return get_rule_expr(qh, rt_index, (Node *)tle, varprefix);
 			}
 			break;
 
@@ -1738,12 +1752,7 @@ check_if_rte_used(int rt_index, Node *node, int sup)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause *grp = (GroupClause *) node;
-
-				return check_if_rte_used(rt_index,
-										 (Node *) (grp->entry), sup);
-			}
+			return FALSE;
 			break;
 
 		case T_Expr:

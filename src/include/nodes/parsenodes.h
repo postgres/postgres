@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.71 1999/02/23 07:55:24 thomas Exp $
+ * $Id: parsenodes.h,v 1.72 1999/05/12 15:02:04 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -960,8 +960,8 @@ typedef struct SortClause
 typedef struct GroupClause
 {
 	NodeTag		type;
-	TargetEntry *entry;			/* attributes to group on */
 	Oid			grpOpoid;		/* the sort operator to use */
+	Index		tleGroupref;	/* reference into targetlist */
 } GroupClause;
 
 #define	ROW_MARK_FOR_UPDATE		(1 << 0)

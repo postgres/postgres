@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.29 1999/02/22 19:55:44 momjian Exp $
+ * $Id: relation.h,v 1.30 1999/05/12 15:02:08 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,6 +103,7 @@ typedef struct RelOptInfo
 } RelOptInfo;
 
 extern Var *get_expr(TargetEntry *foo);
+extern Var *get_groupclause_expr(GroupClause *groupClause, List *targetList);
 
 typedef struct MergeOrder
 {

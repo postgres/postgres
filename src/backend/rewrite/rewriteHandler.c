@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.38 1999/05/09 23:31:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.39 1999/05/12 15:01:53 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,15 +170,7 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				return rangeTableEntry_used(
-						(Node *)(grp->entry),
-						rt_index,
-						sublevels_up);
-			}
-			break;
+			return FALSE;
 
 		case T_Expr:
 			{
@@ -348,12 +340,6 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 						sublevels_up))
 					return TRUE;
 
-				if (rangeTableEntry_used(
-						(Node *)(qry->groupClause),
-						rt_index,
-						sublevels_up))
-					return TRUE;
-
 				return FALSE;
 			}
 			break;
@@ -407,16 +393,7 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				return attribute_used(
-						(Node *)(grp->entry),
-						rt_index,
-						attno,
-						sublevels_up);
-			}
-			break;
+			return FALSE;
 
 		case T_Expr:
 			{
@@ -558,13 +535,6 @@ attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 						sublevels_up))
 					return TRUE;
 
-				if (attribute_used(
-						(Node *)(qry->groupClause),
-						rt_index,
-						attno,
-						sublevels_up))
-					return TRUE;
-
 				return FALSE;
 			}
 			break;
@@ -697,8 +667,6 @@ modifyAggrefUplevel(Node *node)
 				modifyAggrefUplevel(
 						(Node *)(qry->havingQual));
 
-				modifyAggrefUplevel(
-						(Node *)(qry->groupClause));
 			}
 			break;
 
@@ -752,15 +720,6 @@ modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				modifyAggrefChangeVarnodes(
-						(Node **)(&(grp->entry)),
-						rt_index,
-						new_index,
-						sublevels_up);
-			}
 			break;
 
 		case T_Expr:
@@ -891,12 +850,6 @@ modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int subl
 
 				modifyAggrefChangeVarnodes(
 						(Node **)(&(qry->havingQual)),
-						rt_index,
-						new_index,
-						sublevels_up);
-
-				modifyAggrefChangeVarnodes(
-						(Node **)(&(qry->groupClause)),
 						rt_index,
 						new_index,
 						sublevels_up);
@@ -1186,13 +1139,6 @@ modifyAggrefQual(Node **nodePtr, Query *parsetree)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				modifyAggrefQual(
-						(Node **)(&(grp->entry)),
-						parsetree);
-			}
 			break;
 
 		case T_Expr:
@@ -1386,13 +1332,6 @@ apply_RIR_adjust_sublevel(Node *node, int sublevels_up)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				apply_RIR_adjust_sublevel(
-						(Node *)(grp->entry),
-						sublevels_up);
-			}
 			break;
 
 		case T_Expr:
@@ -1539,17 +1478,6 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				apply_RIR_view(
-						(Node **)(&(grp->entry)),
-						rt_index,
-						rte,
-						tlist,
-						modified,
-						sublevels_up);
-			}
 			break;
 
 		case T_Expr:
@@ -1724,14 +1652,6 @@ apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, in
 						tlist,
 						modified,
 						sublevels_up);
-
-				apply_RIR_view(
-						(Node **)(&(qry->groupClause)),
-						rt_index,
-						rte,
-						tlist,
-						modified,
-						sublevels_up);
 			}
 			break;
 
@@ -1898,10 +1818,8 @@ ApplyRetrieveRule(Query *parsetree,
 	}
 	if (*modified && !badsql) {
 	  AddQual(parsetree, rule_action->qual);
-	  /* This will only work if the query made to the view defined by the following
-	   * groupClause groups by the same attributes or does not use group at all! */
-	  if (parsetree->groupClause == NULL)
-	    parsetree->groupClause=rule_action->groupClause;
+	  AddGroupClause(parsetree, rule_action->groupClause, 
+	  								rule_action->targetList);
 	  AddHavingQual(parsetree, rule_action->havingQual);
 	  parsetree->hasAggs = (rule_action->hasAggs || parsetree->hasAggs);
 	  parsetree->hasSubLinks = (rule_action->hasSubLinks ||  parsetree->hasSubLinks);
@@ -1935,12 +1853,6 @@ fireRIRonSubselect(Node *node)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				fireRIRonSubselect(
-						(Node *)(grp->entry));
-			}
 			break;
 
 		case T_Expr:
@@ -2048,9 +1960,6 @@ fireRIRonSubselect(Node *node)
 
 				fireRIRonSubselect(
 						(Node *)(qry->havingQual));
-
-				fireRIRonSubselect(
-						(Node *)(qry->groupClause));
 			}
 			break;
 

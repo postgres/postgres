@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.29 1999/02/23 07:46:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.30 1999/05/12 15:01:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,13 +550,19 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 
 		restarget = findTargetlistEntry(pstate, lfirst(grouplist), targetlist, GROUP_CLAUSE);
 
-		grpcl->entry = restarget;
 		resdom = restarget->resdom;
 		grpcl->grpOpoid = oprid(oper("<",
 									 resdom->restype,
 									 resdom->restype, false));
 		if (glist == NIL)
+		{
+			int		groupref = length(glist) + 1;
+
+			restarget->resdom->resgroupref = groupref;
+			grpcl->tleGroupref = groupref;
+
 			gl = glist = lcons(grpcl, NIL);
+		}
 		else
 		{
 			List	   *i;
@@ -565,11 +571,17 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 			{
 				GroupClause *gcl = (GroupClause *) lfirst(i);
 
-				if (gcl->entry == grpcl->entry)
+				if (equal(get_groupclause_expr(gcl, targetlist),
+							restarget->expr))
 					break;
 			}
 			if (i == NIL)		/* not in grouplist already */
 			{
+				int		groupref = length(glist) + 1;
+
+				restarget->resdom->resgroupref = groupref;
+				grpcl->tleGroupref = groupref;
+
 				lnext(gl) = lcons(grpcl, NIL);
 				gl = lnext(gl);
 			}

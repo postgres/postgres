@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: outfuncs.c,v 1.80 1999/05/10 00:45:10 momjian Exp $
+ *  $Id: outfuncs.c,v 1.81 1999/05/12 15:01:34 wieck Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -255,10 +255,9 @@ _outSortClause(StringInfo str, SortClause *node)
 static void
 _outGroupClause(StringInfo str, GroupClause *node)
 {
-	appendStringInfo(str, " GROUPCLAUSE :entry ");
-	_outNode(str, node->entry);
-
-	appendStringInfo(str, " :grpOpoid %u ", node->grpOpoid);
+	appendStringInfo(str, " GROUPCLAUSE :grpOpoid %u :tleGroupref %d", 
+			node->grpOpoid,
+			node->tleGroupref);
 }
 
 /*
@@ -556,15 +555,18 @@ _outHash(StringInfo str, Hash *node)
 static void
 _outResdom(StringInfo str, Resdom *node)
 {
-	appendStringInfo(str, " RESDOM :resno %d :restype %u :restypmod %d ",
+	appendStringInfo(str, " RESDOM :resno %d :restype %u :restypmod %d",
 			node->resno,
 			node->restype,
 			node->restypmod);
 
-	appendStringInfo(str, " :resname \"%s\" :reskey %d :reskeyop %u :resjunk %d",
+	appendStringInfo(str, " :resname \"%s\" :reskey %d :reskeyop %u",
 			stringStringInfo(node->resname),
 			node->reskey,
-			node->reskeyop,
+			node->reskeyop);
+
+	appendStringInfo(str, " :resgroupref %d :resjunk %d",
+			node->resgroupref,
 			node->resjunk);
 }
 

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.29 1999/02/13 23:17:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.30 1999/05/12 15:01:55 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,14 +65,6 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				OffsetVarNodes(
-						(Node *)(grp->entry),
-						offset,
-						sublevels_up);
-			}
 			break;
 
 		case T_Expr:
@@ -199,11 +191,6 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 						(Node *)(qry->havingQual),
 						offset,
 						sublevels_up);
-
-				OffsetVarNodes(
-						(Node *)(qry->groupClause),
-						offset,
-						sublevels_up);
 			}
 			break;
 
@@ -284,15 +271,6 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 			break;
 
 		case T_GroupClause:
-			{
-				GroupClause	*grp = (GroupClause *)node;
-
-				ChangeVarNodes(
-						(Node *)(grp->entry),
-						rt_index,
-						new_index,
-						sublevels_up);
-			}
 			break;
 
 		case T_Expr:
@@ -430,12 +408,6 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 						rt_index,
 						new_index,
 						sublevels_up);
-
-				ChangeVarNodes(
-						(Node *)(qry->groupClause),
-						rt_index,
-						new_index,
-						sublevels_up);
 			}
 			break;
 
@@ -560,6 +532,44 @@ AddNotQual(Query *parsetree, Node *qual)
 	copy = (Node *) make_notclause((Expr *)copyObject(qual));
 
 	AddQual(parsetree, copy);
+}
+
+
+void
+AddGroupClause(Query *parsetree, List *group_by, List *tlist)
+{
+	List			*l;
+	List			*tl;
+	GroupClause		*groupclause;
+	TargetEntry		*tle;
+	int				new_resno;
+
+	new_resno = length(parsetree->targetList);
+
+	foreach (l, group_by)
+	{
+		groupclause = (GroupClause *)copyObject(lfirst(l));
+		tle = NULL;
+		foreach(tl, tlist)
+		{
+			if (((TargetEntry *)lfirst(tl))->resdom->resgroupref ==
+						groupclause->tleGroupref)
+			{
+				tle = (TargetEntry *)copyObject(lfirst(tl));
+				break;
+			}
+		}
+		if (tle == NULL)
+			elog(ERROR, "AddGroupClause(): GROUP BY entry not found in rules targetlist");
+
+		tle->resdom->resno = ++new_resno;
+		tle->resdom->resjunk = true;
+		tle->resdom->resgroupref = length(parsetree->groupClause) + 1;
+		groupclause->tleGroupref = tle->resdom->resgroupref;
+
+		parsetree->targetList  = lappend(parsetree->targetList, tle);
+		parsetree->groupClause = lappend(parsetree->groupClause, groupclause);
+	}
 }
 
 static Node *
@@ -688,7 +698,10 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 							*nodePtr = make_null(((Var *) node)->vartype);
 					}
 					else
+					{
 						*nodePtr = copyObject(n);
+						((Var *) *nodePtr)->varlevelsup = this_varlevelsup;
+					}
 				}
 				break;
 			}
@@ -709,6 +722,8 @@ ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
 				ResolveNew(info, targetlist, (Node **) &(query->qual), sublevels_up + 1);
 			}
 			break;
+		case T_GroupClause:
+			break;
 		default:
 			/* ignore the others */
 			break;
@@ -720,7 +735,10 @@ FixNew(RewriteInfo *info, Query *parsetree)
 {
 	ResolveNew(info, parsetree->targetList,
 			   (Node **) &(info->rule_action->targetList), 0);
-	ResolveNew(info, parsetree->targetList, &info->rule_action->qual, 0);
+	ResolveNew(info, parsetree->targetList, 
+	           (Node **) &info->rule_action->qual, 0);
+	ResolveNew(info, parsetree->targetList, 
+	           (Node **) &(info->rule_action->groupClause), 0);
 }
 
 static void

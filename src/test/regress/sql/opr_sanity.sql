@@ -25,8 +25,9 @@
 
 SELECT p1.oid, p1.proname
 FROM pg_proc as p1
-WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
-    p1.pronargs < 0 OR p1.pronargs > 9;
+WHERE (p1.prolang = 0 OR p1.prorettype = 0 OR
+    p1.pronargs < 0 OR p1.pronargs > 9)
+	AND p1.proname !~ '^pl[^_]+_call_handler$';
 
 -- Look for conflicting proc definitions (same names and input datatypes).
 

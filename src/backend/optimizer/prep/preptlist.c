@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.18 1999/02/13 23:16:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.19 1999/05/12 15:01:41 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,6 +228,49 @@ replace_matching_resname(List *new_tlist, List *old_tlist)
 			newresno->resjunk = 1;
 			new_tl = makeTargetEntry(newresno, old_tle->expr);
 			t_list = lappend(t_list, new_tl);
+		}
+
+		/*
+		 * Also it is possible that the parser or rewriter added
+		 * some junk attributes to hold GROUP BY expressions which
+		 * are not part of the result attributes.
+		 * We can simply identify them by looking at the resgroupref
+		 * in the TLE's resdom, which is a unique number telling which
+		 * TLE belongs to which GroupClause.
+		 */
+		if (old_tle->resdom->resgroupref > 0)
+		{
+			bool			already_there = FALSE;
+			TargetEntry 	*new_tle;
+			Resdom	   		*newresno;
+
+			/*
+			 * Check if the tle is already in the new list
+			 */
+			foreach(i, t_list)
+			{
+				new_tle = (TargetEntry *)lfirst(i);
+
+				if (new_tle->resdom->resgroupref == 
+									old_tle->resdom->resgroupref)
+				{
+					already_there = TRUE;
+					break;
+				}
+
+			}
+
+			/*
+			 * If not, add it and make sure it is now a junk attribute
+			 */
+			if (!already_there)
+			{
+				newresno = (Resdom *) copyObject((Node *) old_tle->resdom);
+				newresno->resno = length(t_list) + 1;
+				newresno->resjunk = 1;
+				new_tl = makeTargetEntry(newresno, old_tle->expr);
+				t_list = lappend(t_list, new_tl);
+			}
 		}
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.78 1999/04/27 09:49:36 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.79 1999/05/12 15:01:31 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,8 +487,8 @@ _copyGroupClause(GroupClause *from)
 {
 	GroupClause *newnode = makeNode(GroupClause);
 
-	Node_Copy(from, newnode, entry);
 	newnode->grpOpoid = from->grpOpoid;
+	newnode->tleGroupref = from->tleGroupref;
 
 	return newnode;
 }
@@ -589,6 +589,7 @@ _copyResdom(Resdom *from)
 		newnode->resname = pstrdup(from->resname);
 	newnode->reskey = from->reskey;
 	newnode->reskeyop = from->reskeyop;
+	newnode->resgroupref = from->resgroupref;
 	newnode->resjunk = from->resjunk;
 
 	return newnode;

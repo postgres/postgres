@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.35 1999/02/18 00:49:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.36 1999/05/12 15:01:33 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@ _equalResdom(Resdom *a, Resdom *b)
 	if (strcmp(a->resname, b->resname) != 0)
 		return false;
 	if (a->reskey != b->reskey)
+		return false;
+	if (a->resgroupref != b->resgroupref)
 		return false;
 	if (a->reskeyop != b->reskeyop)
 		return false;

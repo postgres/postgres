@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.50 1999/05/10 00:45:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.51 1999/05/12 15:01:37 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,7 +260,8 @@ union_planner(Query *parse)
 			 * belong to?)
 			 */
 			check_having_for_ungrouped_vars(parse->havingQual,
-											parse->groupClause);
+											parse->groupClause,
+											parse->targetList);
 		}
 
 		/* Calculate the opfids from the opnos */
@@ -426,8 +427,7 @@ make_subplanTargetList(Query *parse,
 			GroupClause *grpcl = (GroupClause *) lfirst(gl);
 
 			keyno++;			/* sort key # for this GroupClause */
-			/* Is it safe to use just resno to match tlist and glist items?? */
-			if (grpcl->entry->resdom->resno == resdom->resno)
+			if (grpcl->tleGroupref == resdom->resgroupref)
 			{
 				/* Found a matching groupclause; record info for sorting */
 				foundGroupClause = true;

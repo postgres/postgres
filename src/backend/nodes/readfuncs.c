@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.60 1999/03/01 00:10:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.61 1999/05/12 15:01:35 wieck Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -221,12 +221,13 @@ _readGroupClause()
 
 	local_node = makeNode(GroupClause);
 
-	token = lsptok(NULL, &length);		/* skip the :entry */
-	local_node->entry = nodeRead(true);
-
 	token = lsptok(NULL, &length);		/* skip :grpOpoid */
 	token = lsptok(NULL, &length);		/* get grpOpoid */
 	local_node->grpOpoid = strtoul(token, NULL, 10);
+
+	token = lsptok(NULL, &length);		/* skip :tleGroupref */
+	token = lsptok(NULL, &length);		/* get tleGroupref */
+	local_node->tleGroupref = strtoul(token, NULL, 10);
 
 	return local_node;
 }
@@ -743,6 +744,10 @@ _readResdom()
 	token = lsptok(NULL, &length);		/* eat :reskeyop */
 	token = lsptok(NULL, &length);		/* get reskeyop */
 	local_node->reskeyop = (Oid) atol(token);
+
+	token = lsptok(NULL, &length);		/* eat :resgroupref */
+	token = lsptok(NULL, &length);		/* get resgroupref */
+	local_node->resgroupref = strtoul(token, NULL, 10);
 
 	token = lsptok(NULL, &length);		/* eat :resjunk */
 	token = lsptok(NULL, &length);		/* get resjunk */
