@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.65 2004/03/01 17:58:39 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.66 2004/03/09 16:57:47 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -123,6 +123,11 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
    </varlistentry>
 
    <varlistentry>
+    <indexterm>
+     <primary>TOAST</primary>
+     <secondary>per-column storage settings</secondary>
+    </indexterm>
+
     <term><literal>SET STORAGE</literal></term>
     <listitem>
      <para>
@@ -240,7 +245,7 @@ ALTER TABLE <replaceable class="PARAMETER">name</replaceable>
 	to be altered, but in the current version, this is the default
 	behavior.  (In releases before 7.1, <literal>ONLY</> was the
 	default behavior.  The default can be altered by changing the
-	configuration parameter <varname>sql_inheritance</varname>.)
+	configuration parameter <xref linkend="guc-sql-inheritance">.)
        </para>
       </listitem>
      </varlistentry>

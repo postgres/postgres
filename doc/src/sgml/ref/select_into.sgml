@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.27 2003/12/13 23:59:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select_into.sgml,v 1.28 2004/03/09 16:57:47 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -103,7 +103,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
    rapidly incremented. As of <productname>PostgreSQL</> 7.5, the
    inclusion of OIDs in the table created by <command>SELECT
    INTO</command> is controlled by the
-   <varname>default_with_oids</varname> configuration variable. This
+   <xref linkend="guc-default-with-oids"> configuration variable. This
    variable currently defaults to true, but will likely default to
    false in a future release of <productname>PostgreSQL</>.
   </para>

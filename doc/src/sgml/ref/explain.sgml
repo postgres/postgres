@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.32 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.33 2004/03/09 16:57:47 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -100,8 +100,8 @@ ROLLBACK;
       than just a summary.  Usually this option is only useful for
       debugging <productname>PostgreSQL</productname>.  The
       <literal>VERBOSE</literal> output is either pretty-printed or
-      not, depending on the setting of the
-      <varname>explain_pretty_print</varname> configuration parameter.
+      not, depending on the setting of the <xref
+      linkend="guc-explain-pretty-print"> configuration parameter.
      </para>
     </listitem>
    </varlistentry>

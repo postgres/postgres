@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.63 2004/01/26 05:35:15 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.64 2004/03/09 16:57:46 neilc Exp $
 -->
 
 <chapter id="client-authentication">
@@ -113,8 +113,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        This record matches connection attempts made using TCP/IP.
        Note that TCP/IP connections are disabled unless the server is
-       started with the <option>-i</option> option or the
-       <varname>tcpip_socket</> configuration parameter is
+       started with the <option>-i</option> option or the <xref
+       linkend="guc-tcpip-socket"> configuration parameter is
        enabled. <literal>host</literal> records match either
        <acronym>SSL</acronym> or non-<acronym>SSL</acronym> connection
        attempts.
@@ -134,8 +134,8 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
       <para>
        To make use of this option the server must be built with
        <acronym>SSL</acronym> support enabled. Furthermore,
-       <acronym>SSL</acronym> must be enabled by setting the
-       <varname>ssl</varname> configuration parameter (see <xref
+       <acronym>SSL</acronym> must be enabled by setting the <xref
+       linkend="guc-ssl"> configuration parameter (see <xref
        linkend="ssl-tcp"> for more information).
       </para>
      </listitem>
@@ -677,14 +677,14 @@ local   db1,db2,@demodbs  all                                       md5
    </para>
 
    <para>
-    Make sure that your server key file is readable (and preferably only
-    readable) by the <productname>PostgreSQL</productname> server
-    account.  (See also <xref linkend="postgres-user">). The location of the
-    key file is specified with the <varname>krb_server_keyfile</> run-time
-    configuration parameter. (See also <xref
-    linkend="runtime-config">.) The default is <filename>/etc/srvtab</>
-    if you are using Kerberos 4 and
-    <filename>FILE:/usr/local/pgsql/etc/krb5.keytab</> (or whichever
+    Make sure that your server key file is readable (and preferably
+    only readable) by the <productname>PostgreSQL</productname> server
+    account.  (See also <xref linkend="postgres-user">). The location
+    of the key file is specified by the <xref
+    linkend="guc-krb-server-keyfile"> run-time configuration
+    parameter. (See also <xref linkend="runtime-config">.) The default
+    is <filename>/etc/srvtab</> if you are using Kerberos 4 and
+    <filename>/usr/local/pgsql/etc/krb5.keytab</> (or whichever
     directory was specified as <varname>sysconfdir</> at build time)
     with Kerberos 5.
    </para>

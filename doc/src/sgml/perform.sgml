@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.41 2004/02/03 17:34:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.42 2004/03/09 16:57:46 neilc Exp $
 -->
 
  <chapter id="performance-tips">
@@ -508,7 +508,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
    <productname>PostgreSQL</productname> planner will switch from exhaustive
    search to a <firstterm>genetic</firstterm> probabilistic search
    through a limited number of possibilities.  (The switch-over threshold is
-   set by the <varname>geqo_threshold</varname> run-time
+   set by the <xref linkend="guc-geqo-threshold"> run-time
    parameter.)
    The genetic search takes less time, but it won't
    necessarily find the best possible plan.
@@ -549,7 +549,7 @@ SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
 
   <para>
    To force the planner to follow the <literal>JOIN</> order for inner joins,
-   set the <varname>join_collapse_limit</> run-time parameter to 1.
+   set the <xref linkend="guc-join-collapse-limit"> run-time parameter to 1.
    (Other possible values are discussed below.)
   </para>
 
@@ -599,8 +599,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    problem replacing two separate three-way join problems.  Because of the
    exponential growth of the number of possibilities, this makes a big
    difference.  The planner tries to avoid getting stuck in huge join search
-   problems by not collapsing a subquery if more than
-   <varname>from_collapse_limit</> <literal>FROM</> items would result in the parent
+   problems by not collapsing a subquery if more than <xref linkend="guc-from-collapse-limit">
+   <literal>FROM</> items would result in the parent
    query.  You can trade off planning time against quality of plan by
    adjusting this run-time parameter up or down.
   </para>
@@ -688,11 +688,11 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Increase <varname>maintenance_work_mem</varname></title>
 
    <para>
-    Temporarily increasing the <varname>maintenance_work_mem</varname>
+    Temporarily increasing the <xref linkend="guc-maintenance-work-mem">
     configuration variable when restoring large amounts of data can
     lead to improved performance. This is because when a B-tree index
     is created from scratch, the existing content of the table needs
-    to be sorted. Allowing the merge sort to use more memory
+    to be sorted. Allowing the external merge sort to use more memory
     means that fewer merge passes will be required.  A larger setting for
     <varname>maintenance_work_mem</varname> may also speed up validation
     of foreign-key constraints.

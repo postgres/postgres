@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.17 2003/12/14 00:05:29 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.18 2004/03/09 16:57:46 neilc Exp $
 -->
 
 <sect1 id="bug-reporting">
@@ -173,7 +173,7 @@ $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.17 2003/12/14 00:05:29 neilc E
        form of the message.  In <application>psql</>, say <literal>\set
        VERBOSITY verbose</> beforehand.  If you are extracting the message
        from the server log, set the run-time parameter
-       <varname>log_error_verbosity</> to <literal>verbose</> so that all
+       <xref linkend="guc-log-error-verbosity"> to <literal>verbose</> so that all
        details are logged.
       </para>
      </note>

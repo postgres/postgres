@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.142 2004/02/01 06:55:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.143 2004/03/09 16:57:46 neilc Exp $
 -->
 
  <chapter id="datatype">
@@ -1409,7 +1409,7 @@ SELECT b, char_length(b) FROM test2;
      traditional <productname>POSTGRES</productname>, and others.
      For some formats, ordering of month, day, and year in date input is
      ambiguous and there is support for specifying the expected
-     ordering of these fields.  Set the <varname>datestyle</> parameter
+     ordering of these fields.  Set the <xref linkend="guc-datestyle"> parameter
      to <literal>MDY</> to select month-day-year interpretation,
      <literal>DMY</> to select day-month-year interpretation, or
      <literal>YMD</> to select year-month-day interpretation.
@@ -1720,7 +1720,7 @@ January 8 04:05:06 1999 PST
       time zone specified is converted to UTC using the appropriate offset
       for that time zone.  If no time zone is stated in the input string,
       then it is assumed to be in the time zone indicated by the system's
-      <varname>timezone</> parameter, and is converted to UTC using the
+      <xref linkend="guc-timezone"> parameter, and is converted to UTC using the
       offset for the <varname>timezone</> zone.
      </para>
 
@@ -1993,8 +1993,8 @@ January 8 04:05:06 1999 PST
 
     <para>
      The date/time styles can be selected by the user using the
-     <command>SET datestyle</command> command, the
-     <varname>datestyle</varname> parameter in the
+     <command>SET datestyle</command> command, the <xref
+     linkend="guc-datestyle"> parameter in the
      <filename>postgresql.conf</filename> configuration file, or the
      <envar>PGDATESTYLE</envar> environment variable on the server or
      client.  The formatting function <function>to_char</function>
@@ -2092,8 +2092,8 @@ January 8 04:05:06 1999 PST
 
       <listitem>
        <para>
-        The <varname>timezone</varname> configuration parameter can be
-        set in the file <filename>postgresql.conf</>.
+        The <xref linkend="guc-timezone"> configuration parameter can
+        be set in the file <filename>postgresql.conf</>.
        </para>
       </listitem>
 
@@ -2929,7 +2929,7 @@ SELECT * FROM test;
     <productname>PostgreSQL</productname> as primary keys for various
     system tables.  An OID system column is also added to user-created
     tables, unless <literal>WITHOUT OIDS</literal> is specified when
-    the table is created, or the <varname>default_with_oids</varname>
+    the table is created, or the <xref linkend="guc-default-with-oids">
     configuration variable is set to false.  Type <type>oid</>
     represents an object identifier.  There are also several alias
     types for <type>oid</>: <type>regproc</>, <type>regprocedure</>,

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.75 2004/03/03 22:22:24 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.76 2004/03/09 16:57:47 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -190,8 +190,8 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
         tables are to be scanned, but in the current version, this is
         the default behavior.  (In releases before 7.1,
         <literal>ONLY</> was the default behavior.)  The default
-        behavior can be modified by changing the
-        <varname>sql_interitance</varname> configuration option.
+        behavior can be modified by changing the <xref
+        linkend="guc-sql-inheritance"> configuration option.
        </para>
       </listitem>
      </varlistentry>
@@ -1023,7 +1023,7 @@ SELECT distributors.* FROM distributors d, distributors distributors;
     <command>SELECT</command> statement that also contains an explicit
     <literal>FROM</literal> clause.  Also, it is possible to disable
     the implicit-<literal>FROM</literal> feature by setting the
-    <varname>add_missing_from</> parameter to false.
+    <xref linkend="guc-add-missing-from"> parameter to false.
    </para>
   </refsect2>
 

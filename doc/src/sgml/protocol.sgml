@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.49 2003/12/14 00:10:32 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.50 2004/03/09 16:57:46 neilc Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -390,12 +390,13 @@
       <ListItem>
        <Para>
         This message informs the frontend about the current (initial)
-	setting of backend parameters, such as <varname>client_encoding</>
-	or <varname>DateStyle</>.  The frontend may ignore this message,
-	or record the settings for its future use; see
-	<xref linkend="protocol-async"> for more detail.
-        The frontend should not respond to this message, but should
-        continue listening for a ReadyForQuery message.
+         setting of backend parameters, such as <xref
+          linkend="guc-client-encoding"> or <xref linkend="guc-datestyle">.
+         The frontend may ignore this message, or record the settings
+         for its future use; see <xref linkend="protocol-async"> for
+         more details.  The frontend should not respond to this
+         message, but should continue listening for a ReadyForQuery
+         message.
        </Para>
       </ListItem>
      </VarListEntry>

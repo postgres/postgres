@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.45 2004/02/03 17:34:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.46 2004/03/09 16:57:47 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -376,7 +376,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default value of the <varname>DateStyle</varname> run-time
+      Default value of the <xref linkend="guc-datestyle"> run-time
       parameter.  (The use of this environment variable is deprecated.)
      </para>
     </listitem>
@@ -429,10 +429,11 @@ PostgreSQL documentation
 
    <tip>
     <para>
-     You may be able to postpone reconfiguring your kernel by decreasing
-     <varname>shared_buffers</varname> to reduce the shared memory consumption
-     of <productname>PostgreSQL</>, and/or by reducing
-     <varname>max_connections</varname> to reduce the semaphore consumption.
+     You may be able to postpone reconfiguring your kernel by
+     decreasing <xref linkend="guc-shared-buffers"> to reduce the
+     shared memory consumption of <productname>PostgreSQL</>, and/or
+     by reducing <xref linkend="guc-max-connections"> to reduce the
+     semaphore consumption.
     </para>
    </tip>
 

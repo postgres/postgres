@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.79 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.80 2004/03/09 16:57:47 neilc Exp $
 -->
 
  <sect1 id="xfunc">
@@ -738,7 +738,7 @@ CREATE FUNCTION square_root(double precision) RETURNS double precision
       <para>
        If the name does not contain a directory part, the file is
        searched for in the path specified by the configuration variable
-       <varname>dynamic_library_path</varname>.<indexterm><primary>dynamic_library_path</></>
+       <xref linkend="guc-dynamic-library-path">.<indexterm><primary>dynamic_library_path</></>
       </para>
      </listitem>
 

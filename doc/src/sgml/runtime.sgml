@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.246 2004/03/09 04:43:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.247 2004/03/09 16:57:47 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -570,7 +570,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
      
-     <varlistentry>
+     <varlistentry id="guc-tcpip-socket" xreflabel="tcpip_socket">
       <term><varname>tcpip_socket</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -582,7 +582,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
   
-     <varlistentry>
+     <varlistentry id="guc-max-connections" xreflabel="max_connections">
       <term><varname>max_connections</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -603,18 +603,20 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-superuser-reserved-connections"
+     xreflabel="superuser_reserved_connections">
       <term><varname>superuser_reserved_connections</varname>
       (<type>integer</type>)</term>
       <listitem>
        <para>
         Determines the number of <quote>connection slots</quote> that
         are reserved for connections by <productname>PostgreSQL</>
-        superusers.  At most <varname>max_connections</> connections can
-        ever be active simultaneously.  Whenever the number of active
-        concurrent connections is at least <varname>max_connections</> minus
-        <varname>superuser_reserved_connections</varname>, new connections
-        will be accepted only for superusers.
+        superusers.  At most <xref linkend="guc-max-connections">
+        connections can ever be active simultaneously.  Whenever the
+        number of active concurrent connections is at least
+        <varname>max_connections</> minus
+        <varname>superuser_reserved_connections</varname>, new
+        connections will be accepted only for superusers.
        </para>
 
        <para>
@@ -625,7 +627,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-port" xreflabel="port">
       <term><varname>port</varname> (<type>integer</type>)</term>
       <indexterm><primary>port</></>
       <listitem>
@@ -637,7 +639,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
 
-     <varlistentry>
+     <varlistentry id="guc-unix-socket-directory" xreflabel="unix_socket_directory">
       <term><varname>unix_socket_directory</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -649,7 +651,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-unix-socket-group" xreflabel="unix_socket_group">
       <term><varname>unix_socket_group</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -665,7 +667,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-unix-socket-permissions" xreflabel="unix_socket_permissions">
       <term><varname>unix_socket_permissions</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -699,7 +701,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-virtual-host" xreflabel="virtual_host">
       <term><varname>virtual_host</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -713,7 +715,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-rendezvous-name" xreflabel="rendezvous_name">
       <term><varname>rendezvous_name</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -729,7 +731,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Security and Authentication</title>
      
      <variablelist>
-     <varlistentry>
+     <varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
       <term><varname>authentication_timeout</varname> (<type>integer</type>)</term>
       <indexterm><primary>timeout</><secondary>client authentication</></indexterm>
       <indexterm><primary>client authentication</><secondary>timeout during</></indexterm>
@@ -745,11 +747,10 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-ssl" xreflabel="ssl">
       <indexterm>
        <primary>SSL</primary>
       </indexterm>
-
       <term><varname>ssl</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -760,7 +761,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-password-encryption" xreflabel="password_encryption">
       <term><varname>password_encryption</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -772,7 +773,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-krb-server-keyfile" xreflabel="krb_server_keyfile">
       <term><varname>krb_server_keyfile</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -782,7 +783,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-db-user-namespace" xreflabel="db_user_namespace">
       <term><varname>db_user_namespace</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -827,7 +828,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Memory</title>
 
      <variablelist>
-     <varlistentry>
+     <varlistentry id="guc-shared-buffers" xreflabel="shared_buffers">
       <term><varname>shared_buffers</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -837,7 +838,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <application>initdb</>).  Each buffer is 8192 bytes, unless a
         different value of <symbol>BLCKSZ</symbol> was chosen when building
         the server.  This setting must be at least 16, as well as at
-        least twice the value of <varname>max_connections</varname>;
+        least twice the value of <xref linkend="guc-max-connections">;
         however, settings significantly higher than the minimum are
         usually needed for good performance.  Values of a few thousand
         are recommended for production installations.  This option can
@@ -854,7 +855,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-work-mem" xreflabel="work_mem">
       <term><varname>work_mem</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -876,7 +877,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-maintenance-work-mem" xreflabel="maintenance_work_mem">
       <term><varname>maintenance_work_mem</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -900,7 +901,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Free Space Map</title>
 
      <variablelist>
-     <varlistentry>
+     <varlistentry id="guc-max-fsm-pages" xreflabel="max_fsm_pages">
       <term><varname>max_fsm_pages</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -913,7 +914,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-max-fsm-relations" xreflabel="max_fsm_relations">
       <term><varname>max_fsm_relations</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -932,7 +933,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Kernel Resource Usage</title>
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-max-files-per-process" xreflabel="max_files_per_process">
       <term><varname>max_files_per_process</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -949,7 +950,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-preload-libraries" xreflabel="preload_libraries">
       <term><varname>preload_libraries</varname> (<type>string</type>)</term>
       <indexterm><primary>preload_libraries</></>
       <listitem>
@@ -1025,7 +1026,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </para>
 
      <variablelist>
-      <varlistentry>
+      <varlistentry id="guc-vacuum-cost-page-hit" xreflabel="vacuum_cost_page_hit">
        <term><varname>vacuum_cost_page_hit</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
@@ -1037,7 +1038,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="guc-vacuum-cost-page-miss" xreflabel="vacuum_cost_page_miss">
        <term><varname>vacuum_cost_page_miss</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
@@ -1049,7 +1050,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="guc-vacuum-cost-page-dirty" xreflabel="vacuum_cost_page_dirty">
        <term><varname>vacuum_cost_page_dirty</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
@@ -1061,7 +1062,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="guc-vacuum-cost-limit" xreflabel="vacuum_cost_limit">
        <term><varname>vacuum_cost_limit</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
@@ -1071,7 +1072,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry>
+      <varlistentry id="guc-vacuum-cost-naptime" xreflabel="vacuum_cost_naptime">
        <term><varname>vacuum_cost_naptime</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
@@ -1118,7 +1119,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Settings</title>
      <variablelist>
      
-     <varlistentry>
+     <varlistentry id="guc-fsync" xreflabel="fsync">
       <indexterm>
        <primary>fsync</primary>
       </indexterm>
@@ -1168,7 +1169,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-wal-sync-method" xreflabel="wal_sync_method">
       <term><varname>wal_sync_method</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -1185,7 +1186,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-wal-buffers" xreflabel="wal_buffers">
       <term><varname>wal_buffers</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1202,7 +1203,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Checkpoints</title>
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="guc-checkpoint-segments" xreflabel="checkpoint_segments">
       <term><varname>checkpoint_segments</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1214,7 +1215,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-checkpoint-timeout" xreflabel="checkpoint_timeout">
       <term><varname>checkpoint_timeout</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1226,7 +1227,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-checkpoint-warning" xreflabel="checkpoint_warning">
       <term><varname>checkpoint_warning</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1239,7 +1240,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
                 
                 
-     <varlistentry>
+     <varlistentry id="guc-commit-delay" xreflabel="commit_delay">
       <term><varname>commit_delay</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1258,7 +1259,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-commit-siblings" xreflabel="commit_siblings">
       <term><varname>commit_siblings</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1299,7 +1300,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </note>
 
      <variablelist>
-     <varlistentry>
+     <varlistentry id="guc-enable-hashagg" xreflabel="enable_hashagg">
       <term><varname>enable_hashagg</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1310,7 +1311,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-enable-hashjoin" xreflabel="enable_hashjoin">
       <term><varname>enable_hashjoin</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1321,7 +1322,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-enable-indexscan" xreflabel="enable_indexscan">
       <indexterm>
        <primary>index scan</primary>
       </indexterm>
@@ -1336,7 +1337,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-enable-mergejoin" xreflabel="enable_mergejoin">
       <term><varname>enable_mergejoin</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1347,7 +1348,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-enable-nestloop" xreflabel="enable_nestloop">
       <term><varname>enable_nestloop</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1360,7 +1361,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-enable-seqscan" xreflabel="enable_seqscan">
       <indexterm>
        <primary>sequential scan</primary>
       </indexterm>
@@ -1377,7 +1378,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-enable-sort" xreflabel="enable_sort">
       <term><varname>enable_sort</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1390,7 +1391,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-enable-tidscan" xreflabel="enable_tidscan">
       <term><varname>enable_tidscan</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1419,7 +1420,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
      
-     <varlistentry>
+     <varlistentry id="guc-effective-cache-size" xreflabel="effective_cache_size">
       <term><varname>effective_cache_size</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
@@ -1432,7 +1433,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-random-page-cost" xreflabel="random_page_cost">
       <term><varname>random_page_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
@@ -1446,7 +1447,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-cpu-tuple-cost" xreflabel="cpu_tuple_cost">
       <term><varname>cpu_tuple_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
@@ -1457,7 +1458,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-cpu-index-tuple-cost" xreflabel="cpu_index_tuple_cost">
       <term><varname>cpu_index_tuple_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
@@ -1469,7 +1470,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
     
-     <varlistentry>
+     <varlistentry id="guc-cpu-operator-cost" xreflabel="cpu_operator_cost">
       <term><varname>cpu_operator_cost</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
@@ -1488,7 +1489,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-geqo" xreflabel="geqo">
       <indexterm>
        <primary>genetic query optimization</primary>
       </indexterm>
@@ -1500,14 +1501,15 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Enables or disables genetic query optimization, which is an
-        algorithm that attempts to do query planning without exhaustive
-        searching. This is on by default. See also the various other
-        <varname>geqo_</varname> settings.
+        algorithm that attempts to do query planning without
+        exhaustive searching. This is on by default. The
+        <varname>geqo_threshold</varname> variable provides a more
+        granular way to disable GEQO for certain classes of queries.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-geqo-threshold" xreflabel="geqo_threshold">
       <term><varname>geqo_threshold</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1521,37 +1523,63 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
-      <term><varname>geqo_effort</varname> (<type>integer</type>)</term>
+     <varlistentry id="guc-geqo-effort" xreflabel="geqo_effort">
+      <term><varname>geqo_effort</varname>
+      (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Controls the tradeoff between planning time and query plan
+        efficiency in GEQO. Valid values for this variable range
+        from 1 to 10; the default is 5. Larger values increasee the
+        time spent doing query planning, but increase the likelyhood
+        that an efficient query plan will be chosen.
+       </para>
+
+       <para>
+        <varname>geqo_effort</varname> doesn't actually do anything
+        directly; it is only used to compute the default values for
+        the other variables that influence GEQO behavior (described
+        below). If you prefer, you can set the other parameters by
+        hand instead.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-geqo-pool-size" xreflabel="geqo_pool_size">
       <term><varname>geqo_pool_size</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Controls the pool size used by GEQO. The pool size is the
+        number of individuals in the genetic population.  It must be
+        at least two, and useful values are typically 100 to 1000.  If
+        it is set to zero (the default setting) then a suitable
+        default is chosen based on <varname>geqo_effort</varname> and
+        the number of tables in the query.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-geqo-generations" xreflabel="geqo_generations">
       <term><varname>geqo_generations</varname> (<type>integer</type>)</term>
+      <listitem>
+       <para>
+        Controls the number of generations used by GEQO.  Generations
+        specifies the number of iterations of the algorithm.  It must
+        be at least one, and useful values are in the same range as
+        the pool size.  If it is set to zero (the default setting)
+        then a suitable default is chosen based on
+        <varname>geqo_pool_size</varname>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-geqo-selection-bias" xreflabel="geqo_selection_bias">
       <term><varname>geqo_selection_bias</varname> (<type>floating point</type>)</term>
       <listitem>
        <para>
-        Various tuning parameters for the genetic query optimization
-        algorithm.  The recommended one to modify is
-        <varname>geqo_effort</varname>, which can range from 1 to 10 with
-        a default of 5.  Larger values increase the time spent in planning
-        but make it more likely that a good plan will be found.
-        <varname>geqo_effort</varname> doesn't actually do anything directly,
-        it is just used to compute the default values for the other
-        parameters.  If you prefer, you can set the other parameters by hand
-        instead.
-        The pool size is the number of individuals in the genetic population.
-        It must be at least two, and useful values are typically 100 to 1000.
-        If it is set to zero (the default setting) then a suitable default
-        is chosen based on <varname>geqo_effort</varname> and the number of
-        tables in the query.
-        Generations specifies the number of iterations of the algorithm.
-        It must be at least one, and useful values are in the same range
-        as the pool size.
-        If it is set to zero (the default setting) then a suitable default
-        is chosen based on the pool size.
-        The run time of the algorithm is roughly proportional to the sum of
-        pool size and generations.
-        The selection bias is the selective pressure within the
-        population. Values can be from 1.50 to 2.00; the latter is the
-        default.
+        Controls the selection bias used by GEQO. The selection bias
+        is the selective pressure within the population. Values can be
+        from 1.50 to 2.00; the latter is the default.
        </para>
       </listitem>
      </varlistentry>
@@ -1563,7 +1591,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-default-statistics-target" xreflabel="default_statistics_target">
       <term><varname>default_statistics_target</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1578,7 +1606,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-from-collapse-limit" xreflabel="from_collapse_limit">
       <term><varname>from_collapse_limit</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1586,12 +1614,12 @@ SET ENABLE_SEQSCAN TO OFF;
         resulting <literal>FROM</literal> list would have no more than
         this many items.  Smaller values reduce planning time but may
         yield inferior query plans.  The default is 8.  It is usually
-        wise to keep this less than <varname>geqo_threshold</varname>.
+        wise to keep this less than <xref linkend="guc-geqo-threshold">.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-join-collapse-limit" xreflabel="join_collapse_limit">
       <term><varname>join_collapse_limit</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1661,7 +1689,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-syslog" xreflabel="syslog">
       <term><varname>syslog</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -1677,7 +1705,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-syslog-facility" xreflabel="syslog_facility">
       <term><varname>syslog_facility</varname> (<type>string</type>)</term>
        <listitem>
         <para>
@@ -1694,7 +1722,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-syslog-ident" xreflabel="syslog_ident">
       <term><varname>syslog_ident</varname> (<type>string</type>)</term>
        <listitem>
         <para>
@@ -1714,7 +1742,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-client-min-messages" xreflabel="client_min_messages">
       <term><varname>client_min_messages</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -1731,7 +1759,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-min-messages" xreflabel="log_min_messages">
       <term><varname>log_min_messages</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -1750,7 +1778,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-error-verbosity" xreflabel="log_error_verbosity">
       <term><varname>log_error_verbosity</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -1762,7 +1790,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-min-error-statement" xreflabel="log_min_error_statement">
       <term><varname>log_min_error_statement</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -1786,7 +1814,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-log-min-duration-statement" xreflabel="log_min_duration_statement">
       <term><varname>log_min_duration_statement</varname> (<type>integer</type>)</term>
        <listitem>
         <para>
@@ -1805,17 +1833,18 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-silent-mode" xreflabel="silent_mode">
       <term><varname>silent_mode</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Runs the server silently. If this option is set, the server
-        will automatically run in background and any controlling terminals
-        are disassociated.  Thus, no messages are written to standard
-        output or standard error (same effect as <command>postmaster</>'s <option>-S</option>
-        option). Unless
-        <application>syslog</> logging is enabled, using this option is
-        discouraged since it makes it impossible to see error messages.
+        will automatically run in background and any controlling
+        terminals are disassociated.  Thus, no messages are written to
+        standard output or standard error (same effect as
+        <command>postmaster</>'s <option>-S</option> option). Unless
+        <application>syslog</> logging is enabled, using this option
+        is discouraged because it makes it impossible to see error
+        messages.
        </para>
       </listitem>
      </varlistentry>
@@ -1908,9 +1937,9 @@ SET ENABLE_SEQSCAN TO OFF;
     </sect3>
      <sect3 id="runtime-config-logging-what">
      <title>What To Log</title>
-     
+
      <variablelist>
-     
+
      <varlistentry>
       <term><varname>debug_print_parse</varname> (<type>boolean</type>)</term>
       <term><varname>debug_print_rewritten</varname> (<type>boolean</type>)</term>
@@ -1931,7 +1960,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-connections" xreflabel="log_connections">
       <term><varname>log_connections</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1943,8 +1972,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-
-     <varlistentry>
+     <varlistentry id="guc-log-disconnections" xreflabel="log_disconnections">
       <term><varname>log_disconnections</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -1958,21 +1986,21 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
 
-     <varlistentry>
+     <varlistentry id="guc-log-duration" xreflabel="log_duration">
       <term><varname>log_duration</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Causes the duration of every completed statement to be logged.
-        To use this option, enable <varname>log_statement</> and
-        <varname>log_pid</> so you can link the statement to the
-        duration using the process ID. The default is off.
-        Only superusers can turn off this option if it is enabled by
-        the administrator.
+        To use this option, it is recommended that you also enable
+        <varname>log_statement</> and <varname>log_pid</> so that you
+        can link the statement to the duration using the process
+        ID. The default is off.  Only superusers can turn off this
+        option if it is enabled by the administrator.
        </para>
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-log-line-prefix" xreflabel="log_line_prefix">
       <term><varname>log_line_prefix</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -2077,7 +2105,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-statement" xreflabel="log_statement">
       <term><varname>log_statement</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2091,7 +2119,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-timestamp" xreflabel="log_timestamp">
       <term><varname>log_timestamp</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2101,7 +2129,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-hostname" xreflabel="log_hostname">
       <term><varname>log_hostname</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2114,7 +2142,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-log-source-port" xreflabel="log_source_port">
       <term><varname>log_source_port</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2161,7 +2189,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Query and Index Statistics Collector</title>
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-stats-start-collector" xreflabel="stats_start_collector">
       <term><varname>stats_start_collector</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2174,7 +2202,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-stats-command-string" xreflabel="stats_command_string">
       <term><varname>stats_command_string</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2206,7 +2234,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-stats-reset-on-server-start" xreflabel="stats_reset_on_server_start">
       <term><varname>stats_reset_on_server_start</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2229,7 +2257,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Statement Behavior</title>
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-search-path" xreflabel="search_path">
       <term><varname>search_path</varname> (<type>string</type>)</term>
       <indexterm><primary>search_path</></>
       <indexterm><primary>path</><secondary>for schemas</></>
@@ -2296,7 +2324,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-check-function-bodies" xreflabel="check_function_bodies">
       <term><varname>check_function_bodies</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2308,7 +2336,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-default-transaction-isolation" xreflabel="default_transaction_isolation">
       <indexterm>
        <primary>transaction isolation level</primary>
       </indexterm>
@@ -2331,7 +2359,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-default-transaction-read-only" xreflabel="default_transaction_read_only">
       <indexterm>
        <primary>read-only transaction</primary>
       </indexterm>
@@ -2350,7 +2378,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
      
-     <varlistentry>
+     <varlistentry id="guc-statement-timeout" xreflabel="statement_timeout">
       <term><varname>statement_timeout</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -2368,7 +2396,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-datestyle" xreflabel="datestyle">
       <term><varname>datestyle</varname> (<type>string</type>)</term>
       <indexterm><primary>date style</></>
       <listitem>
@@ -2389,7 +2417,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-timezone" xreflabel="timezone">
       <term><varname>timezone</varname> (<type>string</type>)</term>
       <indexterm><primary>time zone</></>
       <listitem>
@@ -2402,7 +2430,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-australian-timezones" xreflabel="australian_timezones">
       <term><varname>australian_timezones</varname> (<type>boolean</type>)</term>
       <indexterm><primary>time zone</><secondary>Australian</></>
       <listitem>
@@ -2416,7 +2444,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-extra-float-digits" xreflabel="extra_float_digits">
       <indexterm>
        <primary>significant digits</primary>
       </indexterm>
@@ -2440,7 +2468,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-client-encoding" xreflabel="client_encoding">
       <term><varname>client_encoding</varname> (<type>string</type>)</term>
       <indexterm><primary>character set</></>
       <listitem>
@@ -2451,7 +2479,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-lc-messages" xreflabel="lc_messages">
       <term><varname>lc_messages</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -2472,7 +2500,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-lc-monetary" xreflabel="lc_monetary">
       <term><varname>lc_monetary</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -2487,7 +2515,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-lc-numeric" xreflabel="lc_numeric">
       <term><varname>lc_numeric</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -2502,7 +2530,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-lc-time" xreflabel="lc_time">
       <term><varname>lc_time</varname> (<type>string</type>)</term>
       <listitem>
        <para>
@@ -2525,7 +2553,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-explain-pretty-print" xreflabel="explain_pretty_print">
       <term><varname>explain_pretty_print</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2536,7 +2564,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-dynamic-library-path" xreflabel="dynamic_library_path">
       <term><varname>dynamic_library_path</varname> (<type>string</type>)</term>
       <indexterm><primary>dynamic_library_path</></>
       <indexterm><primary>dynamic loading</></>
@@ -2582,7 +2610,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-max-expr-depth" xreflabel="max_expr_depth">
       <term><varname>max_expr_depth</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -2603,7 +2631,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-deadlock-timeout" xreflabel="deadlock_timeout">
       <indexterm>
        <primary>deadlock</primary>
        <secondary>timeout during</secondary>
@@ -2634,7 +2662,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-max-locks-per-transaction" xreflabel="max_locks_per_transaction">
       <term><varname>max_locks_per_transaction</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -2659,7 +2687,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      <title>Previous PostgreSQL Versions</title>
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-add-missing-from" xreflabel="add_missing_from">
       <term><varname>add_missing_from</varname> (<type>boolean</type>)</term>
       <indexterm><primary>FROM</><secondary>missing</></>
       <listitem>
@@ -2676,7 +2704,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-regex-flavor" xreflabel="regex_flavor">
       <term><varname>regex_flavor</varname> (<type>string</type>)</term>
       <indexterm><primary>regular expressions</></>
       <listitem>
@@ -2690,7 +2718,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-sql-inheritance" xreflabel="sql_inheritance">
       <term><varname>sql_inheritance</varname> (<type>boolean</type>)</term>
       <indexterm><primary>inheritance</></>
       <listitem>
@@ -2706,7 +2734,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-default-with-oids" xreflabel="default_with_oids">
       <term><varname>default_with_oids</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2743,7 +2771,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      <title>Platform and Client Compatibility</title>
      <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-transform-null-equals" xreflabel="transform_null_equals">
       <term><varname>transform_null_equals</varname> (<type>boolean</type>)</term>
       <indexterm><primary>IS NULL</></>
       <listitem>
@@ -2795,40 +2823,44 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 
     <para>
      The following options are available read-only, and are determined
-     at source code compile time.  As such, they have been excluded from the
-     sample <filename>postgresql.conf</> file.  They determine various aspects
-     of <productname>PostgreSQL</productname> behavior that may be of interest
-     to certain applications, particularly administrative front-ends.
+     when <productname>PostgreSQL</productname> is compiled. As such,
+     they have been excluded from the sample
+     <filename>postgresql.conf</> file.  These options determine
+     various aspects of <productname>PostgreSQL</productname> behavior
+     that may be of interest to certain applications, particularly
+     administrative front-ends.
     </para>
 
     <variablelist>
 
-     <varlistentry>
+     <varlistentry id="guc-block-size" xreflabel="block_size">
       <term><varname>block_size</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
         Shows the size of a disk block.  It is determined by the value
         of <literal>BLCKSZ</> when building the server. The default
-        value is 8192 bytes.  The <varname>shared_buffers</varname> setting is
-        influenced by <varname>block_size</varname>.  See
-        <xref linkend="runtime-config-resource"> for information.
+        value is 8192 bytes.  The meaning of some configuration
+        variables (such as <xref linkend="guc-shared-buffers">) is
+        influenced by <varname>block_size</varname>. See <xref
+        linkend="runtime-config-resource"> for information.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-integer-datetimes" xreflabel="integer_datetimes">
       <term><varname>integer_datetimes</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Shows <literal>on</literal> if <productname>PostgreSQL</productname>
-        was built with support for 64-bit integer dates and times.  It is
-        set by configuring with <literal>--enable-integer-datetimes</literal>.
-        The default value is <literal>off</literal>.
+        Shows whether <productname>PostgreSQL</productname> was built
+        with support for 64-bit integer dates and times.  It is set by
+        configuring with <literal>--enable-integer-datetimes</literal>
+        when building <productname>PostgreSQL</productname>.  The
+        default value is <literal>off</literal>.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-max-function-args" xreflabel="max_function_args">
       <term><varname>max_function_args</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -2839,7 +2871,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-max-identifier-length" xreflabel="max_identifier_length">
       <term><varname>max_identifier_length</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -2852,7 +2884,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-max-index-keys" xreflabel="max_index_keys">
       <term><varname>max_index_keys</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -2880,7 +2912,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
     </para>
 
     <variablelist>
-     <varlistentry>
+     <varlistentry id="guc-debug-assertions" xreflabel="debug_assertions">
       <term><varname>debug_assertions</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2898,7 +2930,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-pre-auth-delay" xreflabel="pre_auth_delay">
       <term><varname>pre_auth_delay</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
@@ -2911,14 +2943,14 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-trace-notify" xreflabel="trace_notify">
       <term><varname>trace_notify</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
         Generates a great amount of debugging output for the
         <command>LISTEN</command> and <command>NOTIFY</command>
-        commands.  <varname>client_min_messages</varname> or
-        <varname>log_min_messages</varname> must be
+        commands.  <xref linkend="guc-client-min-messages"> or
+        <xref linkend="guc-log-min-messages"> must be
         <literal>DEBUG1</literal> or lower to send this output to the
         client or server log, respectively.
        </para>
@@ -2940,7 +2972,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-     <varlistentry>
+     <varlistentry id="guc-wal-debug" xreflabel="wal_debug">
       <term><varname>wal_debug</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -2952,7 +2984,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       </listitem>
      </varlistentry>
 
-    <varlistentry>
+    <varlistentry id="guc-zero-damaged-pages" xreflabel="zero-damaged-pages">
       <term><varname>zero_damaged_pages</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
@@ -3049,12 +3081,12 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
           </footnote>
          </entry>
          <entry>
-          <literal>enable_indexscan=off</>,
-          <literal>enable_hashjoin=off</>,
-          <literal>enable_mergejoin=off</>,
-          <literal>enable_nestloop=off</>,
-          <literal>enable_seqscan=off</>,
-          <literal>enable_tidscan=off</>
+          <literal>enable_indexscan = off</>,
+          <literal>enable_hashjoin = off</>,
+          <literal>enable_mergejoin = off</>,
+          <literal>enable_nestloop = off</>,
+          <literal>enable_seqscan = off</>,
+          <literal>enable_tidscan = off</>
          </entry>
        </row>
 
@@ -3071,9 +3103,9 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
 
        <row>
         <entry><option>-tpa</option>, <option>-tpl</option>, <option>-te</option><footnoteref linkend="fn.runtime-config-short"></entry>
-        <entry><literal>log_parser_stats=on</>,
-        <literal>log_planner_stats=on</>, 
-        <literal>log_executor_stats=on</></entry>
+        <entry><literal>log_parser_stats = on</>,
+        <literal>log_planner_stats = on</>, 
+        <literal>log_executor_stats = on</></entry>
        </row>
       </tbody>
      </tgroup>
@@ -3154,7 +3186,8 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>250 kB + 8.2 kB * <varname>shared_buffers</> + 14.2 kB * <varname>max_connections</> up to infinity</entry>
+       <entry>250 kB + 8.2 kB * <xref linkend="guc-shared-buffers"> +
+       14.2 kB * <xref linkend="guc-max-connections"> up to infinity</entry>
       </row>
 
       <row>
@@ -3641,9 +3674,9 @@ default:\
     On the other side of the coin, some systems allow individual
     processes to open large numbers of files; if more than a few
     processes do so then the system-wide limit can easily be exceeded.
-    If you find this happening, and you do not want to alter the system-wide
-    limit, you can set <productname>PostgreSQL</productname>'s
-    <varname>max_files_per_process</varname> configuration parameter to
+    If you find this happening, and you do not want to alter the
+    system-wide limit, you can set <productname>PostgreSQL</>'s <xref
+    linkend="guc-max-files-per-process"> configuration parameter to
     limit the consumption of open files.
    </para>
   </sect2>
@@ -3814,7 +3847,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    With <acronym>SSL</> support compiled in, the
    <productname>PostgreSQL</> server can be started with
    <acronym>SSL</> enabled by setting the parameter
-   <varname>ssl</varname> to on in <filename>postgresql.conf</>. When
+   <xref linkend="guc-ssl"> to on in <filename>postgresql.conf</>. When
    starting in <acronym>SSL</> mode, the server will look for the
    files <filename>server.key</> and <filename>server.crt</> in the
    data directory, which should contain the server private key

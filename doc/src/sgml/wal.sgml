@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.27 2004/01/06 17:26:23 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.28 2004/03/09 16:57:47 neilc Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -162,10 +162,10 @@
   </para>
 
   <para>
-   The server spawns a special process every so often
-   to create the next checkpoint.  A checkpoint is created every
-   <varname>checkpoint_segments</varname> log segments, or every
-   <varname>checkpoint_timeout</varname> seconds, whichever comes first.
+   The server spawns a special process every so often to create the
+   next checkpoint.  A checkpoint is created every <xref
+   linkend="guc-checkpoint-segments"> log segments, or every <xref
+   linkend="guc-checkpoint-timeout"> seconds, whichever comes first.
    The default settings are 3 segments and 300 seconds respectively.
    It is also possible to force a checkpoint by using the SQL command
    <command>CHECKPOINT</command>.
@@ -204,11 +204,11 @@
    space for the new record, <function>LogInsert</function> will have
    to write (move to kernel cache) a few filled <acronym>WAL</acronym>
    buffers. This is undesirable because <function>LogInsert</function>
-   is used on every database low level modification (for example,
-   row insertion) at a time when an exclusive lock is held on
-   affected data pages, so the operation needs to be as fast as
-   possible.  What is worse, writing <acronym>WAL</acronym> buffers may
-   also force the creation of a new log segment, which takes even more
+   is used on every database low level modification (for example, row
+   insertion) at a time when an exclusive lock is held on affected
+   data pages, so the operation needs to be as fast as possible.  What
+   is worse, writing <acronym>WAL</acronym> buffers may also force the
+   creation of a new log segment, which takes even more
    time. Normally, <acronym>WAL</acronym> buffers should be written
    and flushed by a <function>LogFlush</function> request, which is
    made, for the most part, at transaction commit time to ensure that
@@ -217,9 +217,9 @@
    not occur often enough to prevent <acronym>WAL</acronym> buffers
    being written by <function>LogInsert</function>. On such systems
    one should increase the number of <acronym>WAL</acronym> buffers by
-   modifying the configuration parameter <varname>wal_buffers</varname>.
-   The default number of <acronym>
-   WAL</acronym> buffers is 8.  Increasing this value will 
+   modifying the configuration parameter <xref
+   linkend="guc-wal-buffers">.  The default number of <acronym>
+   WAL</acronym> buffers is 8.  Increasing this value will
    correspondingly increase shared memory usage.
   </para>
 
@@ -228,20 +228,20 @@
    buffers to disk using the operating system <literal>sync()</> call.
    Busy servers may fill checkpoint segment files too quickly,
    causing excessive checkpointing. If such forced checkpoints happen
-   more frequently than <varname>checkpoint_warning</varname> seconds, 
+   more frequently than <xref linkend="guc-checkpoint-warning"> seconds, 
    a message, will be output to the server logs recommending increasing 
    <varname>checkpoint_segments</varname>.
   </para>
 
   <para>
-   The <varname>commit_delay</varname> parameter defines for how many
+   The <xref linkend="guc-commit-delay"> parameter defines for how many
    microseconds the server process will sleep after writing a commit
    record to the log with <function>LogInsert</function> but before
    performing a <function>LogFlush</function>. This delay allows other
    server processes to add their commit records to the log so as to have all
    of them flushed with a single log sync. No sleep will occur if
-   <varname>fsync</varname>
-   is not enabled, nor if fewer than <varname>commit_siblings</varname>
+   <xref linkend="guc-fsync">
+   is not enabled, nor if fewer than <xref linkend="guc-commit-siblings">
    other sessions are currently in active transactions; this avoids
    sleeping when it's unlikely that any other session will commit soon.
    Note that on most platforms, the resolution of a sleep request is
@@ -252,7 +252,7 @@
   </para>
 
   <para>
-   The <varname>wal_sync_method</varname> parameter determines how
+   The <xref linkend="guc-wal-sync-method"> parameter determines how
    <productname>PostgreSQL</productname> will ask the kernel to force
     <acronym>WAL</acronym> updates out to disk. 
    All the options should be the same as far as reliability goes,
@@ -262,11 +262,12 @@
   </para>
 
   <para>
-   Enabling the <varname>wal_debug</varname> configuration parameter
-   will result in each <function>LogInsert</function> and
-   <function>LogFlush</function> <acronym>WAL</acronym> call being
-   logged to the server log. This option may be replaced by a more
-   general mechanism in the future.
+   Enabling the <xref linkend="guc-wal-debug"> configuration parameter
+   (provided that <productname>PostgreSQL</productname> has been
+   compiled with support for it) will result in each
+   <function>LogInsert</function> and <function>LogFlush</function>
+   <acronym>WAL</acronym> call being logged to the server log. This
+   option may be replaced by a more general mechanism in the future.
   </para>
  </sect1>
 

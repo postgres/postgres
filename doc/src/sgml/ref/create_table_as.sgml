@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.20 2004/01/10 23:28:44 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.21 2004/03/09 16:57:47 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -106,7 +106,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
        This optional clause specifies whether the table created by
        <command>CREATE TABLE AS</command> should include OIDs. If
        neither form of this clause if specified, the value of the
-       <varname>default_with_oids</varname> configuration parameter is
+       <xref linkend="guc-default-with-oids"> configuration parameter is
        used.
       </para>
      </listitem>
@@ -152,7 +152,7 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
    the <command>CREATE TABLE AS</command> command allows the user to
    explicitely specify whether OIDs should be included. If the
    presence of OIDs is not explicitely specified,
-   the <varname>default_with_oids</varname> configuration variable is
+   the <xref linkend="guc-default-with-oids"> configuration variable is
    used. While this variable currently defaults to true, the default
    value may be changed in the future. Therefore, applications that
    require OIDs in the table created by <command>CREATE TABLE

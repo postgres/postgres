@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.192 2004/03/07 01:01:44 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.193 2004/03/09 16:57:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -311,7 +311,7 @@ PostgreSQL documentation
     returns true if <replaceable>expression</replaceable> evaluates to
     the null value.  It is highly recommended that these applications
     be modified to comply with the SQL standard. However, if that
-    cannot be done the <varname>transform_null_equals</varname>
+    cannot be done the <xref linkend="guc-transform-null-equals">
     configuration variable is available. If it is enabled,
     <productname>PostgreSQL</productname> will convert <literal>x =
     NULL</literal> clauses to <literal>x IS NULL</literal>.  This was
@@ -2715,12 +2715,12 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
 
    <note>
     <para>
-     The form of regular expressions accepted by <productname>PostgreSQL</>
-     can be chosen by setting the <varname>regex_flavor</> run-time parameter
-     (described in <xref linkend="runtime-config">).  The usual setting is
-     <literal>advanced</>, but one might choose <literal>extended</> for
-     maximum backwards compatibility with pre-7.4 releases of
-     <productname>PostgreSQL</>.
+     The form of regular expressions accepted by
+     <productname>PostgreSQL</> can be chosen by setting the <xref
+     linkend="guc-regex-flavor"> run-time parameter.  The usual
+     setting is <literal>advanced</>, but one might choose
+     <literal>extended</> for maximum backwards compatibility with
+     pre-7.4 releases of <productname>PostgreSQL</>.
     </para>
    </note>
 

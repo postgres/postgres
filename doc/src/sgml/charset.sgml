@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.42 2003/12/30 23:36:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.43 2004/03/09 16:57:46 neilc Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -795,23 +795,23 @@ RESET client_encoding;
 
       <listitem>
        <para>
-	Using <envar>PGCLIENTENCODING</envar>.
-
-	If environment variable <envar>PGCLIENTENCODING</envar> is defined
-	in the client's environment, that client encoding is automatically
-	selected when a connection to the server is made.  (This can subsequently
-	be overridden using any of the other methods mentioned above.)
+        Using <envar>PGCLIENTENCODING</envar>. If environment variable
+        <envar>PGCLIENTENCODING</envar> is defined in the client's
+        environment, that client encoding is automatically selected
+        when a connection to the server is made.  (This can
+        subsequently be overridden using any of the other methods
+        mentioned above.)
        </para>
       </listitem>
 
       <listitem>
       <para>
-       Using the configuration variable <varname>client_encoding</varname>.
-
-      If the <varname>client_encoding</> variable in <filename>postgresql.conf</> is set, that
-      client encoding is automatically selected when a connection to the
-      server is made.  (This can subsequently be overridden using any of the
-      other methods mentioned above.)
+       Using the configuration variable <xref
+       linkend="guc-client-encoding">. If the
+       <varname>client_encoding</> variable is set, that client
+       encoding is automatically selected when a connection to the
+       server is made.  (This can subsequently be overridden using any
+       of the other methods mentioned above.)
        </para>
       </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.78 2004/03/01 17:58:39 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.79 2004/03/09 16:57:47 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -249,7 +249,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       should have OIDs (object identifiers) assigned to them.  If
       neither <literal>WITH OIDS</literal> nor <literal>WITHOUT
       OIDS</literal> is specified, the default value depends upon the
-      <varname>default_with_oids</varname> configuration parameter. (If
+      <xref linkend="guc-default-with-oids"> configuration parameter. (If
       the new table inherits from any tables that have OIDs, then
       <literal>WITH OIDS</> is forced even if the command says
       <literal>WITHOUT OIDS</>.)
