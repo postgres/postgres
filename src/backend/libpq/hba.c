@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.7 1996/11/03 07:00:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.8 1996/11/03 09:24:04 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -492,7 +492,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
       if (rc < 0) {
         sprintf(PQerrormsg,
                 "Unable to send query to Ident server on the host which is "
-                "trying to connect to Postgres (Host %s, Port %s),"
+                "trying to connect to Postgres (Host %s, Port %d),"
                 "even though we successfully connected to it.  "
                 "errno = %s (%d)\n",
                 inet_ntoa(remote_ip_addr), IDENT_PORT, strerror(errno), errno);
@@ -506,7 +506,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
           sprintf(PQerrormsg,
                   "Unable to receive response from Ident server "
                   "on the host which is "
-                  "trying to connect to Postgres (Host %s, Port %s),"
+                  "trying to connect to Postgres (Host %s, Port %d),"
                   "even though we successfully sent our query to it.  "
                   "errno = %s (%d)\n",
                   inet_ntoa(remote_ip_addr), IDENT_PORT, 
