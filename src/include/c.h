@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.11 1997/04/15 17:55:37 scrappy Exp $
+ * $Id: c.h,v 1.12 1997/04/24 20:00:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -743,6 +743,7 @@ extern char *form(char *fmt, ...);
 
 #if defined(sunos4)
 #define	memmove(d, s, l)	bcopy(s, d, l)
+#include <unistd.h>
 #endif
 
 /* These are for things that are one way on Unix and another on NT */

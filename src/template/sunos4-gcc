@@ -1,4 +1,4 @@
-AROPT:crs
+AROPT:cr
 CFLAGS:
 SHARED_LIB:-fPIC
 ALL:
