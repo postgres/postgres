@@ -1,198 +1,65 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
 <HEAD>
-   <TITLE></TITLE>
-   <META NAME="GENERATOR" CONTENT="Mozilla/3.04Gold (X11; I; Linux 2.0.32 i586) [Netscape]">
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.32 i586) [Netscape]">
 </HEAD>
 <BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EF" VLINK="#51188E" ALINK="#FF0000">
 
-<H1>PgAccess - Scripts and Forms 
+<H1>
+PgAccess - Scripts and Forms&nbsp;
 <HR WIDTH="100%"></H1>
+Beginning with 0.70 version, I have introduced in PgAccess two new modules
+for operating with scripts and forms.
 
-<P>Beginning with 0.70 version, I have introduced in PgAccess two new modules
-for operating with scripts and forms.</P>
+<P>&nbsp;&nbsp; This would give to PgAccess the power of creating application
+directly into PgAccess, defining new modules, procedures, forms and possibly
+making it a rapid development tool for PostgreSQL. The "scripts" and "forms"
+modules are using two new tables called pga_forms and pga_scripts. PgAccess
+take care of creating them if user is opening a new database and grant
+ALL permissions on them to PUBLIC.
+<BR>&nbsp;
+<BR>&nbsp;&nbsp; Of course, when Designing a script, a simple text editor
+is opened and text is saved as is in pga_scripts table. When "designing"
+a form, a "form editor" that would be very similar with "Visual Tcl" is
+invoked.
 
-<P>&nbsp;&nbsp;&nbsp;This would give to PgAccess the power of creating
-application directly into PgAccess, defining new modules, procedures, forms
-and possibly making it a rapid development tool for PostgreSQL. The &quot;scripts&quot;
-and &quot;forms&quot; modules are using two new tables called pga_forms
-and pga_scripts. PgAccess take care of creating them if user is opening
-a new database and grant ALL permissions on them to PUBLIC. <BR>
-&nbsp;&nbsp;&nbsp;Both scripts and forms are containing in fact sources
-of code written in Tcl/Tk and when the user has choose to &quot;open&quot;
-one of them, either by double-clicking in the main window or pressing the
-&quot;Open&quot; button PgAccess is searching for them in pga_forms or
-pga_scripts table, get the code and simply &quot;<B>eval</B>&quot; it !<BR>
-&nbsp;&nbsp;&nbsp;Of course, when Designing a script, a simple text editor
-is opened and text is saved as is in pga_scripts table. When &quot;designing&quot;
-a form, a &quot;form editor&quot; that would be very similar with &quot;Visual
-Tcl&quot; would be invoked.</P>
-
-<P>&nbsp;&nbsp;&nbsp;This mechanism and the extremely versatile scripting
-mode of Tcl/Tk would give PgAccess a great power for creating end user
-application using PosgreSQL. The most important thing is that the user
-could call procedures and functions that I have used for building up PgAccess
-!</P>
-
-<H3>Forms</H3>
-
-<P>&nbsp;&nbsp;&nbsp;Forms are special Tcl/Tk source code that is used
-for creating windows and placing widgets inside it. When Tcl/Tk is &quot;eval&quot;
-them, a new window appears, with buttons as defined that could call &quot;user
-defined scripts&quot;, &quot;user defined procedures&quot; or &quot;internal
-PgAccess procedures&quot;.<BR>
-&nbsp;&nbsp;&nbsp;For the moment, 0.70 version of PgAccess does not have
-a module for designing forms. It is intended to make an interface to the
-most powerful program of designing applications under Tcl/Tk , Visual Tcl
-, so it could handle forms designed to be used inside PgAccess.<BR>
-&nbsp;&nbsp;&nbsp;Forms can hold all the widgets allowed in Tcl/Tk , buttons,
+<P>&nbsp;&nbsp; This mechanism and the extremely versatile scripting mode
+of Tcl/Tk would give PgAccess a great power for creating end user application
+using PosgreSQL. The most important thing is that the user could call procedures
+and functions that I have used for building up PgAccess !
+<H3>
+Forms</H3>
+&nbsp;&nbsp; Forms are used for creating windows and placing widgets inside
+it. When PgAccess interpreet them, a new window appear, with buttons as
+defined that could call "user defined scripts", "user defined procedures"
+or "internal PgAccess procedures".
+<BR>&nbsp;&nbsp; Forms can hold all the widgets allowed in Tcl/Tk , buttons,
 check-boxes, radio-buttons, list-boxes, frames, canvases, etc. With these
 forms, you can control your application so PgAccess would become just a
-&quot;shell&quot;, a startup point for you applications.</P>
-
-<H3>Scripts</H3>
-
-<P>&nbsp;&nbsp;&nbsp;Scripts are normal Tcl/Tk code that is interpreted
-by Tcl/Tk. You can define your own procedures inside a script called &quot;Library&quot;
-for example. You can call your procedures from within another script, from
-another procedure.<BR>
-&nbsp;&nbsp;&nbsp;The most important thing is that you have total access
+"shell", a startup point for you applications. See the&nbsp; <A HREF="forms.html">special
+section concerning forms.</A>
+<H3>
+Scripts</H3>
+&nbsp;&nbsp; Scripts are normal Tcl/Tk code that is interpreted by Tcl/Tk.
+You can define your own procedures inside a script called "Library" for
+example. You can call your procedures from within another script, from
+another procedure.
+<BR>&nbsp;&nbsp; The most important thing is that you have total access
 to the PgAccess's core of functions and procedures used by me in building
 PgAccess as an application. Just write <B><TT><FONT COLOR="#000080">open_table
-&quot;Your sample table&quot;</FONT></TT></B> and you'll see the result.<BR>
-&nbsp;&nbsp;&nbsp;If you are writing a script called &quot;Autoexec&quot;
-then it will be executed every time the database is opened. You can put
-inside different commands that you want to be executed such as : running
-scripts that would define your own procedures such as <B><TT><FONT COLOR="#000080">execute_script
-&quot;My own procedure library&quot;</FONT></TT></B> or open a form with
-<B><TT><FONT COLOR="#000080">open_form &quot;Main window with menu buttons&quot;</FONT></TT></B>
-, and so on.</P>
+"Your sample table"</FONT></TT></B> and you'll see the result.
+<BR>&nbsp;&nbsp; If you are writing a script called "Autoexec" then it
+will be executed every time the database is opened. You can put inside
+different commands that you want to be executed such as : running scripts
+that would define your own procedures such as <B><TT><FONT COLOR="#000080">execute_script
+"My own procedure library"</FONT></TT></B> or open a form with <B><TT><FONT COLOR="#000080">open_form
+"Main window with menu buttons"</FONT></TT></B> , and so on.
 
 <P>
-<HR WIDTH="100%"></P>
-
-<H2>Examples :</H2>
-
-<P>We would like to give you some examples for using forms and scripts.
-First of all, get your PgAccess 0.70 version NOW !</P>
-
-<P><IMG SRC="a_right.gif" HEIGHT=20 WIDTH=20>&nbsp;&nbsp;Define your first
-form. Remember, the form design module hasn't arrived yet :-( , so you
-will have to define your first form using an action query :<BR>
-1. Click on Query tab and press &quot;New&quot; button<BR>
-2. Enter &quot;<TT>Generate my first form</TT>&quot; in Query name field<BR>
-3. Copy and paste from your browser window into query definition area the
-next text :<BR>
-<BR>
-<TT>insert into pga_forms values('My first form',' set base .pga_win_1;
-if {[winfo exists $base]} { wm deiconify $base; return }; toplevel $base
--class Toplevel; wm focusmodel $base passive; wm geometry $base 395x389+325+188;
-wm maxsize $base 1009 738; wm minsize $base 1 1; wm overrideredirect $base
-0; wm resizable $base 1 1; wm deiconify $base; wm title $base &quot;User
-defined Form No.1&quot;; button $base.b1 -command {execute_script &quot;My
-first script&quot;} -text &quot;My first button&quot; ; button $base.bexit
--command {destroy [focus]} -padx 9 -pady 3 -text Exit ; place $base.bexit
--x 340 -y 355 -anchor nw -bordermode ignore ; place $base.b1 -x 10 -y 10
--anchor nw;'); </TT></P>
-
-<P>4. Press &quot;Save query definition button&quot; and then &quot;Close&quot;<BR>
-5. In the mai window, select by clicking the query &quot;Generate my first
-form&quot; and press &quot;Open&quot; button.</P>
-
-<P>Your query must have been executed without errors! If you will check
-now the &quot;Forms&quot; tab, you will find there your first form. Press
-&quot;Open&quot; button and enjoy it! For the moment, if you will press
-&quot;My first button&quot; you will get an error message. Of course :
-we haven't yet defined our first script ! </P>
-
-<P><IMG SRC="a_right.gif" HEIGHT=20 WIDTH=20>&nbsp;&nbsp;Defining our first
-script :<BR>
-1. Click on Scripts tab and pres &quot;New&quot; button<BR>
-2. Enter &quot;My first script&quot; in script's name field<BR>
-3. Enter the body as the script the following statements :<BR>
-<BR>
-<TT>MsgBox &quot;Warning&quot; &quot;PgAccess unleashed!&quot;<BR>
-open_table pga_scripts<BR>
-<BR>
-</TT>4. Press &quot;Save&quot; button then &quot;Cancel&quot;</P>
-
-<P>It's now the time to define our first library script. I am defining
-not because I need it. I could write directly in &quot;My first script&quot;
-the instructions for creating that warning window but I only wanted to
-show you how you can mix PgAccess script execution with Tcl/Tk code and
-so on.</P>
-
-<P><IMG SRC="a_right.gif" HEIGHT=20 WIDTH=20>&nbsp;&nbsp;Define our first
-library that will contain your &quot;user defined&quot; Tcl/Tk procedures
-and functions :<BR>
-1. Click on Scripts tab and pres &quot;New&quot; button<BR>
-2. Enter &quot;My first library&quot; in script's name field<BR>
-3. Enter the body of the script the following statements :<BR>
-<BR>
-<TT>proc MsgBox {title msg} {<BR>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tk_messageBox -title $title -message
-$msg<BR>
-}<BR>
-<BR>
-</TT>4. Press &quot;Save&quot; button then &quot;Cancel&quot;</P>
-
-<P><IMG SRC="file:/home/teo/a_right.gif" HEIGHT=20 WIDTH=20>&nbsp;&nbsp;Define
-our first autoexec script that will contain commands that will be executed
-when opening database :<BR>
-1. Click on Scripts tab and pres &quot;New&quot; button<BR>
-2. Enter &quot;Autoexec&quot; in script's name field<BR>
-3. Enter the body of the script the following statements :<BR>
-<BR>
-<TT>execute_script &quot;My first library&quot;<BR>
-open_form &quot;My first form&quot;<BR>
-<BR>
-</TT>4. Press &quot;Save&quot; button then &quot;Cancel&quot;</P>
-
-<P>Everything is OK now! You will have to exit PgAccess and enter it again
-opening the same database ! Voila , your first form will pop-up on the
-screen, a message box is displayed and after clicking Ok button the table
-pga_scripts will be opened in table viewer revealing what's inside ! With
-this occasion I have shown how you could open in table view mode a &quot;pga_...&quot;
-system table that is hidden by PgAccess in main view mode!</P>
-
-<P>I am stopping here, asking you to try this new features and sending
-me as more feed-backs as you can! What do you think about this new features
-? How would you like to be developed PgAccess in future&nbsp;? In this
-moment, I am working in recoding the main part of PgAccess in order to
-give to the user more &quot;system&quot; functions that would help him
-creating new applications very easy.<BR>
-<BR>
-Remember : I'm waiting your messages at <A HREF="mailto:teo@flex.ro">teo@flex.ro</A>
-</P>
+<HR WIDTH="100%">
+<BR>Remember : I'm waiting your messages at <A HREF="mailto:teo@flex.ro">teo@flex.ro</A>
 
 <P>
-<HR WIDTH="50%"></P>
-
-<P>You will also have the ability of hiding the main window of PgAccess
-at the beginning of &quot;Autoexec&quot; script execution and showing it
-before destroying &quot;My first form&quot;. For this example, delete the
-previously defined &quot;My first form&quot; and create it with another
-action query with this code :<BR>
-<BR>
-<TT>insert into pga_forms values('My first form',' set base .pga_win_1;
-if {[winfo exists $base]} { wm deiconify $base; return }; toplevel $base
--class Toplevel; wm focusmodel $base passive; wm geometry $base 395x389+325+188;
-wm maxsize $base 1009 738; wm minsize $base 1 1; wm overrideredirect $base
-0; wm resizable $base 1 1; wm deiconify $base; wm title $base &quot;User
-defined Form No.1&quot;; button $base.b1 -command {execute_script &quot;My
-first script&quot;} -text &quot;My first button&quot; ; button $base.bexit
--command {Window show .dw ; destroy [focus]} -padx 9 -pady 3 -text Exit
-; place $base.bexit -x 340 -y 355 -anchor nw -bordermode ignore ; place
-$base.b1 -x 10 -y 10 -anchor nw;'); <BR>
-<BR>
-</TT>This new one is just showing main window (.dw) before destroying the
-&quot;user defined window&quot; . <BR>
-Also make &quot;Autoexec&quot; script to show like this :<BR>
-<BR>
-<TT>execute_script &quot;My first library&quot;<BR>
-Window hide .dw<BR>
-open_form &quot;My first form&quot;</TT><BR>
-</P>
-
+<HR WIDTH="50%">
 </BODY>
 </HTML>

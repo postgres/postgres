@@ -1,104 +1,105 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
 <HTML>
 <HEAD>
-   <TITLE></TITLE>
-   <META NAME="GENERATOR" CONTENT="Mozilla/3.04Gold (X11; I; Linux 2.0.32 i586) [Netscape]">
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <META NAME="GENERATOR" CONTENT="Mozilla/4.04 [en] (X11; I; Linux 2.0.32 i586) [Netscape]">
 </HEAD>
 <BODY TEXT="#000000" BGCOLOR="#FFEBCD" LINK="#0000EF" VLINK="#51188E" ALINK="#FF0000">
 
-<H1>FORMS</H1>
+<H1>
+FORMS</H1>
 
-<P>
-<HR WIDTH="100%"></P>
+<HR WIDTH="100%">
 
-<P>This version (0.81) of PgAccess introduce the visual form builder.</P>
+<P>This version (0.82) of PgAccess introduce the visual form builder.
 
 <P>For the moment, it has only some basic widgets : labels, entries, buttons
-, listboxes , checkboxes and radiobuttons.</P>
+, listboxes , checkboxes and radiobuttons.
 
 <P>Also there is a query widget that allows you yo have access to a query
-results.</P>
+results.
 
 <P>In a manner very similar with Visual Tcl or Visual Basic, the user must
 select a widget from the toolbar and drags on the canvas the rectangle
 that would define the widget. It can also specify some attributes in a
 separate window. Renaming, resizing items are possible modifying parameters
 in attribute window. Do not forget to press Enter in the edit field after
-changing a value in order to be accepted.</P>
+changing a value in order to be accepted.
 
 <P>You can also move items by dragging them or delete them by pressing
-Del key.</P>
+Del key.
 
 <P>In attribute window, there are some fields named <B><TT><FONT SIZE=+1>Command
-</FONT></TT></B>and <B><TT><FONT SIZE=+1>Variable</FONT></TT></B>.</P>
+</FONT></TT></B>and <B><TT><FONT SIZE=+1>Variable</FONT></TT></B>.
 
 <P>The field <B><TT><FONT SIZE=+1>Command </FONT></TT></B>have meaning
 only for Button widgets and holds the command that will be invoked when
-the button is pressed.</P>
+the button is pressed.
 
 <P>The field <B><TT><FONT SIZE=+1>Variable </FONT></TT></B>have meaning
 only for EditField , Label widgets and checkboxes and it is the name of
 the global variable that will hold the value for that widget. For checkboxes
-the values are 1 or 0.</P>
+the values are 1 or 0.
 
 <P>In order to make a simple test, put an entry field and set it's variable
-to <B>v1</B> and a button who's command is &quot;set v1 whisky&quot;. Press
-the button &quot;Test form&quot; and click on the button. In that entry
-should appear whisky. <BR>
-Another test is defining in Script module a script called &quot;My first
-script&quot; having the following commands:<BR>
-<TT><FONT SIZE=+1>tk_messageBox -title Warning -message &quot;This is my
-first message!&quot;<BR>
-</FONT></TT>and then define a button who's command is <B><TT><FONT SIZE=+1>execute_script
-&quot;My first script&quot;</FONT></TT></B>.</P>
+to <B>v1</B> and a button who's command is "set v1 whisky". Press the button
+"Test form" and click on the button. In that entry should appear whisky.
+<BR>Another test is defining in Script module a script called "My first
+script" having the following commands:
+<BR><TT><FONT SIZE=+1>tk_messageBox -title Warning -message "This is my
+first message!"</FONT></TT>
+<BR>and then define a button who's command is <B><TT><FONT SIZE=+1>execute_script
+"My first script"</FONT></TT></B>.
+<H2>
+Database manipulation</H2>
+Let's presume that our form have the internal name <B><TT>mf </TT></B>(my
+form). He wil be referred inside the Tcl/Tk source as <B><TT>.mf</TT></B>
+<BR>If you want to close the form in run-time you have to issue the command
+<B><TT>destroy .mf</TT></B>
 
-<H2>Database manipulation</H2>
-
-<P>Let's presume that our form have the internal name <B><TT>mf </TT></B>(my
-form). He wil be referred inside the Tcl/Tk source as <B><TT>.mf<BR>
-</TT></B>If you want to close the form in run-time you have to issue the
-command <B><TT>destroy .mf</TT></B></P>
-
-<P>Also, any widget will have the name prefixed by <B><TT>.mf </TT></B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;We
-will have <B><TT>.mf.button1</TT></B> or <B><TT>.mf.listbox1</TT></B> .</P>
+<P>Also, any widget will have the name prefixed by <B><TT>.mf&nbsp;</TT></B>&nbsp;&nbsp;&nbsp;&nbsp;
+We will have <B><TT>.mf.button1</TT></B> or <B><TT>.mf.listbox1</TT></B>
+.
 
 <P>We can name the query widget <B><TT>qry</TT></B> for example. The complete
-name will be <B><TT>.mf.qry</TT></B> then.<BR>
-The <B><TT>Command </TT></B>property of the query widget must contain the
-SQL command that will be executed.<BR>
-When the form will be in run-time, automatically you will have acces to
-the following methods :</P>
+name will be <B><TT>.mf.qry</TT></B> then.
+<BR>The <B><TT>Command </TT></B>property of the query widget must contain
+the SQL command that will be executed.
+<BR>When the form will be in run-time, automatically you will have acces
+to the following methods :
 
 <P><TT>.mf.qry:execute</TT> - opens the connection and execute the query
-(returns nothing)<BR>
-<TT>.mf.qry:nrecords</TT> - returns the number of records in the selected
-query<BR>
-<TT>.mf.qry:fields</TT> - returns a list of the fields in the result set<BR>
-<TT>.mf.qry:movefirst</TT> - move the cursor to the first record in the
-recordset<BR>
-<TT>.mf.qry:movelast , .mf.qry:movenext , .mf.qry:moveprevious </TT>- moves
-the cursor <BR>
-<TT>.mf.qry:updatecontrols</TT> - update the variables inside the designed
-form that have a particular name (I'll explain later)<BR>
-<TT>.mf.qry:close</TT> - close the connection (<B><FONT COLOR="#FF0000">if
-you don't close the query result, you will loose memory</FONT></B>)</P>
+(returns nothing)
+<BR><TT>.mf.qry:nrecords</TT> - returns the number of records in the selected
+query
+<BR><TT>.mf.qry:fields</TT> - returns a list of the fields in the result
+set
+<BR><TT>.mf.qry:movefirst</TT> - move the cursor to the first record in
+the recordset
+<BR><TT>.mf.qry:movelast , .mf.qry:movenext , .mf.qry:moveprevious </TT>-
+moves the cursor
+<BR><TT>.mf.qry:updatecontrols</TT> - update the variables inside the designed
+form that have a particular name (I'll explain later)
+<BR><TT>.mf.qry:close</TT> - close the connection (<B><FONT COLOR="#FF0000">if
+you don't close the query result, you will loose memory</FONT></B>)
 
 <P>If you want to bound some controls to the fields of the recordset, you
-will have to name their associate variable like that :</P>
+will have to name their associate variable like that :
 
-<P><TT>.mf.qry.salary</TT> to get the &quot;salary&quot; field , or <TT>.mf.qry.name</TT>
-to get the &quot;name&quot; field.</P>
+<P><TT>.mf.qry.salary</TT> to get the "salary" field , or <TT>.mf.qry.name</TT>
+to get the "name" field.
 
 <P>It's simple, isn't it ? It's just like a new widget that have some properties
-and methods that can be accesed.<BR>
-Also, the name convention is just like in Tcl/Tk.</P>
+and methods that can be accesed.
+<BR>Also, the name convention is just like in Tcl/Tk.
+
+<P>In order to avoid naming user defined forms with&nbsp; a particular
+name of another PgAccess form, I would recommend naming them as udf0, udf1
+(user defined form 0 , 1 )
 
 <P>
-<HR WIDTH="25%"></P>
+<HR WIDTH="25%">
 
 <P>Please feel free to send me your oppinion at <B>teo@flex.ro</B> on forms
-designing and usage.<BR>
-</P>
-
+designing and usage.
 </BODY>
 </HTML>

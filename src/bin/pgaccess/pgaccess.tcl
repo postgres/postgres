@@ -671,6 +671,7 @@ foreach objinfo [lrange $info 4 end] {
     if {$mode=="design"} {fd_draw_object $i}
     incr j
 }
+if {$mode=="design"} {wm geometry .fd $fdvar(geometry)}
 }
 
 proc {fd_mouse_down} {x y} {
@@ -870,7 +871,12 @@ switch $fdobj($item,t) {
         entry $base.$name -bo 1 -ba white -selectborderwidth 0  -highlightthickness 0 
         if {$var!=""} {$base.$name configure -textvar $var}
     }
-    label {set wh {} ; label $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -anchor nw -padx 0 -pady 0 -text $fdobj($item,l)}
+    label {
+    	set wh {}
+    	label $base.$name -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-* -anchor nw -padx 0 -pady 0 -text $fdobj($item,l)
+	set var {} ; catch {set var $fdobj($item,v)}
+	if {$var!=""} {$base.$name configure -textvar $var}
+    }
     listbox {listbox $base.$name -borderwidth 1 -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*}
 }
 if $visual {eval [subst "place $base.$name  -x [expr [lindex $coord 0]-1] -y [expr [lindex $coord 1]-1] -anchor nw $wh -bordermode ignore"]}
@@ -2559,7 +2565,7 @@ proc vTclWindow.about {base} {
     label $base.l2  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {A Tcl/Tk interface to
 PostgreSQL
 by Constantin Teodorescu} 
-    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.81}
+    label $base.l3  -borderwidth 0  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief sunken -text {vers 0.82}
     label $base.l4  -font -Adobe-Helvetica-Medium-R-Normal-*-*-120-*-*-*-*-*  -relief groove  -text {You will always get the latest version at:
 http://www.flex.ro/pgaccess
 
@@ -2782,7 +2788,7 @@ proc vTclWindow.fw {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 306x288+298+290
+    wm geometry $base 306x288+233+130
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -2907,7 +2913,7 @@ proc vTclWindow.mw {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 550x400+189+228
+    wm geometry $base 550x400+5+5
     wm maxsize $base 1009 738
     wm minsize $base 550 400
     wm overrideredirect $base 0
@@ -2993,7 +2999,7 @@ proc vTclWindow.nt {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 630x312+148+315
+    wm geometry $base 630x312+100+40
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -3316,7 +3322,7 @@ proc vTclWindow.qb {base} {
     ###################
     toplevel $base -class Toplevel  -cursor top_left_arrow 
     wm focusmodel $base passive
-    wm geometry $base 442x344+282+299
+    wm geometry $base 442x344+150+150
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -3412,7 +3418,7 @@ proc vTclWindow.ql {base} {
     ###################
     toplevel $base -class Toplevel  -cursor top_left_arrow 
     wm focusmodel $base passive
-    wm geometry $base 759x530+233+177
+    wm geometry $base 759x530+10+13
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -3548,7 +3554,7 @@ proc vTclWindow.rb {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 652x426+96+160
+    wm geometry $base 652x426+96+120
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -3786,7 +3792,7 @@ proc vTclWindow.rpv {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 495x500+239+165
+    wm geometry $base 495x500+230+50
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -3910,7 +3916,7 @@ proc vTclWindow.sw {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 594x416+248+217
+    wm geometry $base 594x416+192+152
     wm maxsize $base 1009 738
     wm minsize $base 300 300
     wm overrideredirect $base 0
@@ -3955,7 +3961,7 @@ proc vTclWindow.tiw {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 390x460+243+120
+    wm geometry $base 390x460+243+20
     wm maxsize $base 1009 738
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -4023,7 +4029,7 @@ proc vTclWindow.fd {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 377x315+185+234
+    wm geometry $base 377x315+103+101
     wm maxsize $base 785 570
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -4064,7 +4070,7 @@ proc vTclWindow.fda {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 225x197+589+29
+    wm geometry $base 225x197+561+0
     wm maxsize $base 785 570
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -4214,7 +4220,7 @@ proc vTclWindow.fdcmd {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 282x274+616+367
+    wm geometry $base 282x274+504+229
     wm maxsize $base 785 570
     wm minsize $base 1 19
     wm overrideredirect $base 0
@@ -4269,7 +4275,7 @@ proc vTclWindow.fdmenu {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 288x70+193+129
+    wm geometry $base 288x70+103+0
     wm maxsize $base 785 570
     wm minsize $base 1 1
     wm overrideredirect $base 0
@@ -4361,7 +4367,7 @@ proc vTclWindow.fdtb {base} {
     ###################
     toplevel $base -class Toplevel
     wm focusmodel $base passive
-    wm geometry $base 90x152+65+180
+    wm geometry $base 90x152+0+0
     wm maxsize $base 785 570
     wm minsize $base 1 1
     wm overrideredirect $base 0
