@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.71 2001/07/19 02:12:34 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.72 2001/07/22 22:01:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@
 #include "access/xlogutils.h"
 #include "utils/builtins.h"
 #include "utils/relcache.h"
+#include "utils/selfuncs.h"
 #include "miscadmin.h"
 
 
