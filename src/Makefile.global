@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.4 1996/07/16 07:12:10 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.5 1996/07/19 05:32:22 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -59,6 +59,9 @@
 #  or the makefiles can get confused
 PORTNAME=	BSD44_derived
 
+# SRCDIR specifies where the source files are.
+SRCDIR=		<SET THIS VALUE>
+
 # FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
 LEX = flex
 LDADD+= -L/usr/local/lib -lfl
@@ -78,9 +81,6 @@ POSTGRESLOGIN=	postgres
 # and other target destinations are rooted.  Of course, each of these is 
 # changable separately.
 POSTGRESDIR=	/home/staff/scrappy/cvs/postgres95
-
-# SRCDIR specifies where the source files are.
-SRCDIR=		$(POSTGRESDIR)/src
 
 # DATADIR specifies where the postmaster expects to find its database.
 # This may be overridden by command line options or the PGDATA environment
