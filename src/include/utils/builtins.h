@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.41 1998/04/27 17:09:28 scrappy Exp $
+ * $Id: builtins.h,v 1.42 1998/05/09 22:45:14 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -392,6 +392,9 @@ time_t		datetime_timestamp(DateTime *datetime);
 /* varchar.c */
 extern char *bpcharin(char *s, int dummy, int16 atttypmod);
 extern char *bpcharout(char *s);
+extern char *bpchar(char *s, int32 slen);
+extern char *char_bpchar(int32 c);
+extern int32 bpchar_char(char *s);
 extern bool bpchareq(char *arg1, char *arg2);
 extern bool bpcharne(char *arg1, char *arg2);
 extern bool bpcharlt(char *arg1, char *arg2);
@@ -405,6 +408,7 @@ extern uint32 hashbpchar(struct varlena * key);
 
 extern char *varcharin(char *s, int dummy, int16 atttypmod);
 extern char *varcharout(char *s);
+extern char *varchar(char *s, int32 slen);
 extern bool varchareq(char *arg1, char *arg2);
 extern bool varcharne(char *arg1, char *arg2);
 extern bool varcharlt(char *arg1, char *arg2);

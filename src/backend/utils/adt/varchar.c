@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.30 1998/04/27 17:08:26 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.31 1998/05/09 22:42:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,12 +130,103 @@ bpcharout(char *s)
 	return (result);
 }
 
+/* bpchar()
+ * Converts a char() type to a specific internal length.
+ * len is the length specified in () plus VARHDRSZ bytes.
+ */
+char *
+bpchar(char *s, int32 len)
+{
+	char	   *result,
+			   *r;
+	int			rlen, slen;
+	int			i;
+
+	if (s == NULL)
+		return ((char *) NULL);
+
+	if ((len == -1) || (len == VARSIZE(s)))
+		return (s);
+
+	rlen = len - VARHDRSZ;
+
+	if (rlen > 4096)
+		elog(ERROR, "bpchar: length of char() must be less than 4096");
+
+#ifdef STRINGDEBUG
+printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
+ VARSIZE(s)-VARHDRSZ, VARSIZE(s), rlen, len);
+#endif
+
+	result = (char *) palloc(len);
+	VARSIZE(result) = len;
+	r = VARDATA(result);
+	slen = VARSIZE(s) - VARHDRSZ;
+	s = VARDATA(s);
+
+#ifdef STRINGDEBUG
+printf("bpchar- string is '");
+#endif
+
+	for (i = 0; (i < rlen) && (i < slen); i++)
+	{
+		if (*s == '\0')
+			break;
+
+#ifdef STRINGDEBUG
+printf("%c", *s);
+#endif
+
+		*r++ = *s++;
+	}
+
+#ifdef STRINGDEBUG
+printf("'\n");
+#endif
+
+	/* blank pad the string if necessary */
+	for (; i < rlen; i++)
+	{
+		*r++ = ' ';
+	}
+
+	return (result);
+} /* bpchar() */
+
+
+/* bpchar_char()
+ * Convert bpchar(1) to char.
+ */
+int32
+bpchar_char(char *s)
+{
+	return ((int32) *VARDATA(s));
+} /* char_bpchar() */
+
+
+/* char_bpchar()
+ * Convert char to bpchar(1).
+ */
+char *
+char_bpchar(int32 c)
+{
+	char *result;
+
+	result = palloc(VARHDRSZ+1);
+
+	VARSIZE(result) = VARHDRSZ+1;
+	*(VARDATA(result)) = (char) c;
+
+	return result;
+} /* char_bpchar() */
+
+
 /*****************************************************************************
  *	 varchar - varchar()													 *
  *****************************************************************************/
 
 /*
- * vcharin -
+ * varcharin -
  *	  converts a string of varchar() type to the internal representation.
  *	  len is the length specified in () plus VARHDRSZ bytes. (XXX dummy is here
  *	  because we pass typelem as the second argument for array_in.)
@@ -192,6 +283,38 @@ varcharout(char *s)
 
 	return (result);
 }
+
+/* varchar()
+ * Converts a varchar() type to the specified size.
+ * slen is the length specified in () plus VARHDRSZ bytes.
+ */
+char *
+varchar(char *s, int32 slen)
+{
+	char	   *result;
+	int			len;
+
+	if (s == NULL)
+		return ((char *) NULL);
+
+	len = VARSIZE(s);
+	if ((slen == -1) || (len <= slen))
+		return ((char *) s);
+
+	/* only reach here if we need to truncate string... */
+
+	len = slen - VARHDRSZ;
+
+	if (len > 4096)
+		elog(ERROR, "varchar: length of varchar() must be less than 4096");
+
+	result = (char *) palloc(slen);
+	VARSIZE(result) = slen;
+	strncpy(VARDATA(result), VARDATA(s), len);
+
+	return (result);
+} /* varchar() */
+
 
 /*****************************************************************************
  *	Comparison Functions used for bpchar

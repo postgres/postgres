@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.33 1998/04/27 17:08:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.34 1998/05/09 22:42:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -255,8 +255,6 @@ textoctetlen(text *t)
  * Updated by Thomas, Thomas.Lockhart@jpl.nasa.gov 1997-07-10.
  * Allocate space for output in all cases.
  * XXX - thomas 1997-07-10
- * As in previous code, allow concatenation when one string is NULL.
- * Is this OK?
  */
 text *
 textcat(text *t1, text *t2)
@@ -267,32 +265,33 @@ textcat(text *t1, text *t2)
 	char	   *ptr;
 	text	   *result;
 
-	if (!PointerIsValid(t1) && !PointerIsValid(t2))
+	if (!PointerIsValid(t1) || !PointerIsValid(t2))
 		return (NULL);
 
-	len1 = (PointerIsValid(t1) ? (VARSIZE(t1) - VARHDRSZ) : 0);
+	len1 = (VARSIZE(t1) - VARHDRSZ);
 	if (len1 < 0)
 		len1 = 0;
 	while (len1 > 0 && VARDATA(t1)[len1 - 1] == '\0')
 		len1--;
 
-	len2 = (PointerIsValid(t2) ? (VARSIZE(t2) - VARHDRSZ) : 0);
+	len2 = (VARSIZE(t2) - VARHDRSZ);
 	if (len2 < 0)
 		len2 = 0;
 	while (len2 > 0 && VARDATA(t2)[len2 - 1] == '\0')
 		len2--;
 
-	result = palloc(len = len1 + len2 + VARHDRSZ);
-
-	/* Fill data field of result string... */
-	ptr = VARDATA(result);
-	if (PointerIsValid(t1))
-		memcpy(ptr, VARDATA(t1), len1);
-	if (PointerIsValid(t2))
-		memcpy(ptr + len1, VARDATA(t2), len2);
+	len = len1 + len2 + VARHDRSZ;
+	result = palloc(len);
 
 	/* Set size of result string... */
 	VARSIZE(result) = len;
+
+	/* Fill data field of result string... */
+	ptr = VARDATA(result);
+	if (len1 > 0)
+		memcpy(ptr, VARDATA(t1), len1);
+	if (len2 > 0)
+		memcpy(ptr + len1, VARDATA(t2), len2);
 
 	return (result);
 }	/* textcat() */
