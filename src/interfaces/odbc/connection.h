@@ -94,7 +94,7 @@ typedef enum
 #define NO_AUTHENTICATION							7
 #define PATH_SIZE									64
 #define ARGV_SIZE									64
-#define NAMEDATALEN									16
+#define USRNAMEDATALEN		16
 
 typedef unsigned int ProtocolVersion;
 
@@ -120,7 +120,7 @@ typedef struct _StartupPacket6_2
 {
 	unsigned int authtype;
 	char		database[PATH_SIZE];
-	char		user[NAMEDATALEN];
+	char		user[USRNAMEDATALEN];
 	char		options[ARGV_SIZE];
 	char		execfile[ARGV_SIZE];
 	char		tty[PATH_SIZE];

@@ -645,10 +645,11 @@ CC_connect(ConnectionClass *self, char password_req, char *salt_para)
 			 ci->drivers.ksqo,
 			 ci->drivers.unique_index,
 			 ci->drivers.use_declarefetch);
-		qlog("                text_as_longvarchar=%d, unknowns_as_longvarchar=%d, bools_as_char=%d\n",
+		qlog("                text_as_longvarchar=%d, unknowns_as_longvarchar=%d, bools_as_char=%d NAMEDATALEN=%d\n",
 			 ci->drivers.text_as_longvarchar,
 			 ci->drivers.unknowns_as_longvarchar,
-			 ci->drivers.bools_as_char);
+			 ci->drivers.bools_as_char,
+			 MAX_TABLE_LEN);
 
 #ifdef MULTIBYTE
 		encoding = check_client_encoding(ci->conn_settings);
@@ -728,7 +729,7 @@ another_version_retry:
 			SOCK_put_int(sock, htonl(4 + sizeof(StartupPacket6_2)), 4);
 			sp62.authtype = htonl(NO_AUTHENTICATION);
 			strncpy(sp62.database, ci->database, PATH_SIZE);
-			strncpy(sp62.user, ci->username, NAMEDATALEN);
+			strncpy(sp62.user, ci->username, USRNAMEDATALEN);
 			SOCK_put_n_char(sock, (char *) &sp62, sizeof(StartupPacket6_2));
 			SOCK_flush_output(sock);
 		}
