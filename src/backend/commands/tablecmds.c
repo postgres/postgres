@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.106 2004/05/08 00:34:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.107 2004/05/08 22:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,7 @@ typedef struct AlteredTableInfo
 {
 	/* Information saved before any work commences: */
 	Oid			relid;			/* Relation to work on */
+	char		relkind;		/* Its relkind */
 	TupleDesc	oldDesc;		/* Pre-modification tuple descriptor */
 	/* Information saved by Phase 1 for Phase 2: */
 	List	   *subcmds[AT_NUM_PASSES];		/* Lists of AlterTableCmd */
@@ -2011,9 +2012,10 @@ ATRewriteCatalogs(List **wqueue)
 	{
 		AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 
-		if (tab->subcmds[AT_PASS_ADD_COL] ||
-			tab->subcmds[AT_PASS_ALTER_TYPE] ||
-			tab->subcmds[AT_PASS_COL_ATTRS])
+		if (tab->relkind == RELKIND_RELATION &&
+			(tab->subcmds[AT_PASS_ADD_COL] ||
+			 tab->subcmds[AT_PASS_ALTER_TYPE] ||
+			 tab->subcmds[AT_PASS_COL_ATTRS]))
 		{
 			AlterTableCreateToastTable(tab->relid, true);
 		}
@@ -2192,7 +2194,7 @@ ATRewriteTables(List **wqueue)
 			 */
 			reindex_relation(tab->relid, false);
 		}
-		else
+		else if (tab->constraints != NIL)
 		{
 			/*
 			 * Test the current data within the table against new constraints
@@ -2486,6 +2488,7 @@ ATGetQueueEntry(List **wqueue, Relation rel)
 	 */
 	tab = (AlteredTableInfo *) palloc0(sizeof(AlteredTableInfo));
 	tab->relid = relid;
+	tab->relkind = rel->rd_rel->relkind;
 	tab->oldDesc = CreateTupleDescCopy(RelationGetDescr(rel));
 
 	*wqueue = lappend(*wqueue, tab);
