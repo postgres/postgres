@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.52 1999/05/01 19:47:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.53 1999/05/06 01:30:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -629,15 +629,23 @@ create_hashjoin_node(HashPath *best_path,
  *
  *****************************************************************************/
 
+/*
+ * fix_indxqual_references
+ *	Adjust a qual clause to refer to an index instead of the original relation.
+ *
+ * Returns a modified copy of the given clause --- the original is not changed.
+ */
+
 static Node *
 fix_indxqual_references(Node *clause, Path *index_path)
 {
-	Node	   *newclause;
-
-	if (IsA(clause, Var))
+	if (clause == NULL)
+		return NULL;
+	else if (IsA(clause, Var))
 	{
 		if (lfirsti(index_path->parent->relids) == ((Var *) clause)->varno)
 		{
+			Node	   *newclause;
 			int			pos = 0;
 			int			varatt = ((Var *) clause)->varattno;
 			int		   *indexkeys = ((IndexPath *) index_path)->indexkeys;
@@ -655,20 +663,18 @@ fix_indxqual_references(Node *clause, Path *index_path)
 			((Var *) newclause)->varattno = pos + 1;
 			return newclause;
 		}
-		else
-			return clause;
+		/* The Var is not part of the indexed relation, leave it alone */
+		return copyObject(clause);
 	}
-	else if (IsA(clause, Const))
-		return clause;
-	else if (IsA(clause, Param))
-	{
-		/* Function parameter used as index scan arg.  DZ - 27-8-1996 */
-		return clause;
-	}
+	else if (single_node(clause))
+		return copyObject(clause);
 	else if (is_opclause(clause) &&
 			 is_funcclause((Node *) get_leftop((Expr *) clause)) &&
 	((Func *) ((Expr *) get_leftop((Expr *) clause))->oper)->funcisindex)
 	{
+		/* This looks pretty seriously wrong to me, but I'm not sure what it's
+		 * supposed to be doing ... tgl 5/99
+		 */
 		Var		   *newvar = makeVar((Index) lfirsti(index_path->parent->relids),
 				1,				/* func indices have one key */
 				((Func *) ((Expr *) clause)->oper)->functype,
@@ -686,61 +692,60 @@ fix_indxqual_references(Node *clause, Path *index_path)
 	{
 		Expr	   *expr = (Expr *) clause;
 		List	   *new_subclauses = NIL;
-		Node	   *subclause = NULL;
-		List	   *i = NIL;
+		List	   *i;
 
 		foreach(i, expr->args)
 		{
-			subclause = lfirst(i);
-			if (subclause)
-				new_subclauses = lappend(new_subclauses,
-							fix_indxqual_references(subclause,
-													index_path));
-
+			Node	   *subclause = lfirst(i);
+			new_subclauses = lappend(new_subclauses,
+									 fix_indxqual_references(subclause,
+															 index_path));
 		}
 
-		/*
-		 * XXX new_subclauses should be a list of the form: ( (var var)
-		 * (var const) ...) ?
-		 */
-		if (new_subclauses)
-		{
-			return (Node *)
-					make_clause(expr->opType, expr->oper, new_subclauses);
-		}
-		else
-			return clause;
+		return (Node *) make_clause(expr->opType, expr->oper, new_subclauses);
 	}
-	else if (IsA(clause, CaseExpr))
+	else if (IsA(clause, List))
 	{
-		elog(NOTICE,"optimizer: fix_indxqual_references sees CaseExpr");
-		return clause;
+		List	   *new_subclauses = NIL;
+		List	   *i;
+
+		foreach(i, (List *) clause)
+		{
+			Node	   *subclause = lfirst(i);
+			new_subclauses = lappend(new_subclauses,
+									 fix_indxqual_references(subclause,
+															 index_path));
+		}
+
+		return (Node *) new_subclauses;
+	}
+	else if (IsA(clause, ArrayRef))
+	{
+		ArrayRef   *oldnode = (ArrayRef *) clause;
+		ArrayRef   *newnode = makeNode(ArrayRef);
+
+		newnode->refattrlength = oldnode->refattrlength;
+		newnode->refelemlength = oldnode->refelemlength;
+		newnode->refelemtype = oldnode->refelemtype;
+		newnode->refelembyval = oldnode->refelembyval;
+		newnode->refupperindexpr = (List *)
+			fix_indxqual_references((Node *) oldnode->refupperindexpr,
+									index_path);
+		newnode->reflowerindexpr = (List *)
+			fix_indxqual_references((Node *) oldnode->reflowerindexpr,
+									index_path);
+		newnode->refexpr =
+			fix_indxqual_references(oldnode->refexpr, index_path);
+		newnode->refassgnexpr =
+			fix_indxqual_references(oldnode->refassgnexpr, index_path);
+
+		return (Node *) newnode;
 	}
 	else
 	{
-		List	   *oldclauses = (List *) clause;
-		List	   *new_subclauses = NIL;
-		Node	   *subclause = NULL;
-		List	   *i = NIL;
-
-		foreach(i, oldclauses)
-		{
-			subclause = lfirst(i);
-			if (subclause)
-				new_subclauses = lappend(new_subclauses,
-							fix_indxqual_references(subclause,
-													index_path));
-
-		}
-
-		/*
-		 * XXX new_subclauses should be a list of the form: ( (var var)
-		 * (var const) ...) ?
-		 */
-		if (new_subclauses)
-			return (Node *) new_subclauses;
-		else
-			return clause;
+		elog(ERROR, "fix_indxqual_references: Cannot handle node type %d",
+			 nodeTag(clause));
+		return NULL;
 	}
 }
 
