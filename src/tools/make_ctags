@@ -2,17 +2,22 @@
 trap "rm -f /tmp/$$" 0 1 2 3 15
 rm -f ./tags
 
-if ctags --version 2>&1 | grep Exuberant >/dev/null
-then	FLAGS="--c-types=+dfmstuv"
-else	FLAGS="-dt"
+cv=`ctags --version 2>&1 | grep Exuberant`
+
+if [ -z "$cv" ]
+then	FLAGS="-dt"
+else	FLAGS="--c-types=+dfmstuv"
 fi
 
 find `pwd`/ \( -name _deadcode -a -prune \) -o \
 	-type f -name '*.[chyl]' -print|xargs ctags "$FLAGS" -a -f tags
 
-LC_ALL=C
-export LC_ALL
-sort tags >/tmp/$$ && mv /tmp/$$ tags
+if [ -z "$cv" ]
+then
+	LC_ALL=C
+	export LC_ALL
+	sort tags >/tmp/$$ && mv /tmp/$$ tags
+fi
 
 find . -name  'CVS' -prune -o -type d -print  |while read DIR
 do
