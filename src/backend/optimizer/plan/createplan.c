@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.155 2003/08/17 19:58:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.156 2003/08/26 22:56:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -944,6 +944,10 @@ create_nestloop_plan(Query *root,
 		otherclauses = NIL;
 	}
 
+	/* Sort clauses into best execution order */
+	joinclauses = order_qual_clauses(root, joinclauses);
+	otherclauses = order_qual_clauses(root, otherclauses);
+
 	join_plan = make_nestloop(tlist,
 							  joinclauses,
 							  otherclauses,
@@ -994,6 +998,11 @@ create_mergejoin_plan(Query *root,
 	 */
 	mergeclauses = get_switched_clauses(best_path->path_mergeclauses,
 						 best_path->jpath.outerjoinpath->parent->relids);
+
+	/* Sort clauses into best execution order */
+	joinclauses = order_qual_clauses(root, joinclauses);
+	otherclauses = order_qual_clauses(root, otherclauses);
+	mergeclauses = order_qual_clauses(root, mergeclauses);
 
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
@@ -1077,6 +1086,11 @@ create_hashjoin_plan(Query *root,
 	 */
 	hashclauses = get_switched_clauses(best_path->path_hashclauses,
 						 best_path->jpath.outerjoinpath->parent->relids);
+
+	/* Sort clauses into best execution order */
+	joinclauses = order_qual_clauses(root, joinclauses);
+	otherclauses = order_qual_clauses(root, otherclauses);
+	hashclauses = order_qual_clauses(root, hashclauses);
 
 	/*
 	 * Extract the inner hash keys (right-hand operands of the
