@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.9 2000/08/26 21:53:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.10 2000/10/31 10:22:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1053,8 +1053,8 @@ bitshiftright(PG_FUNCTION_ARGS)
 	/* Negative shift is a shift to the left */
 	if (shft < 0)
 		PG_RETURN_DATUM(DirectFunctionCall2(bitshiftleft,
-											VarBitPGetDatum(arg),
-											Int32GetDatum(-shft)));
+						    VarBitPGetDatum(arg),
+						    Int32GetDatum(-shft)));
 
 	result = (VarBit *) palloc(VARSIZE(arg));
 	VARATT_SIZEP(result) = VARSIZE(arg);
@@ -1145,4 +1145,100 @@ bittoint4(PG_FUNCTION_ARGS)
 	result >>= VARBITPAD(arg);
 
 	PG_RETURN_INT32(result);
+}
+
+
+
+/* Determines the position of S2 in the bitstring S1 (1-based string).
+ * If S2 does not appear in S1 this function returns 0.
+ * If S2 is of length 0 this function returns 1.
+ */
+Datum
+bitposition(PG_FUNCTION_ARGS)
+{
+	VarBit		*substr = PG_GETARG_VARBIT_P(1);
+	VarBit		*arg = PG_GETARG_VARBIT_P(0);
+	int			substr_length, 
+				arg_length,
+				i,
+				is;
+	bits8		*s,				/* pointer into substring */
+				*p;				/* pointer into arg */
+	bits8		cmp,			/* shifted substring byte to compare */ 
+				mask1,          /* mask for substring byte shifted right */
+				mask2,          /* mask for substring byte shifted left */
+				end_mask,       /* pad mask for last substring byte */
+				arg_mask;		/* pad mask for last argument byte */
+	bool		is_match;
+
+	/* Get the substring length */
+	substr_length = VARBITLEN(substr);
+	arg_length = VARBITLEN(arg);
+
+	/* Argument has 0 length or substring longer than argument, return 0 */
+	if (arg_length == 0 || substr_length > arg_length)
+		PG_RETURN_INT32(0);	
+	
+	/* 0-length means return 1 */
+	if (substr_length == 0)
+		PG_RETURN_INT32(1);
+
+	/* Initialise the padding masks */
+	end_mask = BITMASK << VARBITPAD(substr);
+	arg_mask = BITMASK << VARBITPAD(arg);
+	for (i = 0; i < VARBITBYTES(arg) - VARBITBYTES(substr) + 1; i++) 
+	{
+		for (is = 0; is < BITS_PER_BYTE; is++) {
+			is_match = true;
+			p = VARBITS(arg) + i;
+			mask1 = BITMASK >> is;
+			mask2 = ~mask1;
+			for (s = VARBITS(substr); 
+				 is_match && s < VARBITEND(substr); s++) 
+			{
+				cmp = *s >> is;
+				if (s == VARBITEND(substr) - 1) 
+				{
+					mask1 &= end_mask >> is;
+					if (p == VARBITEND(arg) - 1) {
+						/* Check that there is enough of arg left */
+						if (mask1 & ~arg_mask) {
+							is_match = false;
+							break;
+						}
+						mask1 &= arg_mask;
+					}
+				}
+				is_match = ((cmp ^ *p) & mask1) == 0;
+				if (!is_match)
+					break;
+				// Move on to the next byte
+				p++;
+				if (p == VARBITEND(arg)) {
+					mask2 = end_mask << (BITS_PER_BYTE - is);
+					is_match = mask2 == 0;
+					elog(NOTICE,"S. %d %d em=%2x sm=%2x r=%d",
+						 i,is,end_mask,mask2,is_match);
+					break;
+				}
+				cmp = *s << (BITS_PER_BYTE - is);
+				if (s == VARBITEND(substr) - 1) 
+				{
+					mask2 &= end_mask << (BITS_PER_BYTE - is);
+					if (p == VARBITEND(arg) - 1) {
+						if (mask2 & ~arg_mask) {
+							is_match = false;
+							break;
+						}
+						mask2 &= arg_mask;
+					}
+				}
+				is_match = ((cmp ^ *p) & mask2) == 0;
+			}
+			/* Have we found a match */
+			if (is_match)
+				PG_RETURN_INT32(i*BITS_PER_BYTE + is + 1);
+		}
+	}
+	PG_RETURN_INT32(0);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.170 2000/10/24 20:15:45 petere Exp $
+ * $Id: pg_proc.h,v 1.171 2000/10/31 10:22:12 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2097,6 +2097,11 @@ DESCR("trim both ends of string");
 DATA(insert OID =  885 (  btrim		   PGUID 14 f t t t 1 f 25 "25" 100 0 0 100  "select btrim($1, \' \')" - ));
 DESCR("trim both ends of string");
 
+DATA(insert OID =  936 (  substring	   PGUID 12 f t t t 3 f 25 "25 23 23" 100 0 0 100  text_substr - ));
+DESCR("return portion of string");
+DATA(insert OID =  937 (  substring	   PGUID 14 f t t t 2 f 25 "25 23" 100 0 0 100  "select \042substring\042($1, $2, -1)" - ));
+DESCR("return portion of string");
+
 /* for multi-byte support */
 DATA(insert OID = 1039 (  getdatabaseencoding	   PGUID 12 f t f t 0 f 19 "0" 100 0 0 100  getdatabaseencoding - ));
 DESCR("encoding name of current database");
@@ -2172,8 +2177,8 @@ DATA(insert OID = 1678 (  bitshiftright		PGUID 12 f t t t 2 f 1560 "1560 23" 100
 DESCR("bitwise right shift");
 DATA(insert OID = 1679 (  bitcat			PGUID 12 f t t t 2 f 1560 "1560 1560" 100 0 0 100  bitcat - ));
 DESCR("bitwise concatenation");
-DATA(insert OID = 1680 (  bitsubstr			PGUID 12 f t t t 3 f 1560 "1560 23 23" 100 0 0 100  bitsubstr - ));
-DESCR("bitwise field");
+DATA(insert OID = 1680 (  substring			PGUID 12 f t t t 3 f 1560 "1560 23 23" 100 0 0 100  bitsubstr - ));
+DESCR("return portion of bitstring");
 DATA(insert OID = 1681 (  length			PGUID 12 f t t t 1 f 23 "1560" 100 0 0 100  bitlength - ));
 DESCR("bitstring length");
 DATA(insert OID = 1682 (  octet_length		PGUID 12 f t t t 1 f 23 "1560" 100 0 0 100  bitoctetlength - ));
@@ -2191,6 +2196,12 @@ DATA(insert OID = 1687 (  varbit		   PGUID 12 f t t t 2 f 1562 "1562 23" 100 0 0
 DESCR("adjust varbit() to typmod length");
 DATA(insert OID = 1688 (  _varbit		   PGUID 12 f t t t 2 f 1563 "1563 23" 100 0 0 100  _varbit - ));
 DESCR("adjust varbit()[] to typmod length");
+
+DATA(insert OID = 1698 (  position		   PGUID 12 f t t t 2 f 23 "1560 1560" 100 0 0 100 bitposition - ));
+DESCR("return position of sub-bitstring");
+DATA(insert OID = 1699 (  substring			PGUID 14 f t t t 2 f 1560 "1560 23" 100 0 0 100  "select \042substring\042($1, $2, -1)" - ));
+DESCR("return portion of bitstring");
+
 
 /* for mac type support */
 DATA(insert OID = 436 (  macaddr_in			PGUID 12 f t t t 1 f 829 "0" 100 0 0 100	macaddr_in - ));

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.201 2000/10/29 16:11:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.202 2000/10/31 10:22:10 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -353,7 +353,7 @@ static void doNegateFloat(Value *v);
 %token			UNIONJOIN
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>	IDENT, FCONST, SCONST, Op
+%token <str>	IDENT, FCONST, SCONST, BITCONST, Op
 %token <ival>	ICONST, PARAM
 
 /* these are not real. they are here so that they get generated as #define's*/
@@ -1795,6 +1795,10 @@ TriggerFuncArg:  ICONST
 					$$ = makeString($1);
 				}
 			| Sconst
+				{
+					$$ = makeString($1);
+				}
+			| BITCONST
 				{
 					$$ = makeString($1);
 				}
@@ -4786,8 +4790,9 @@ c_expr:  attr
 				}
 		| POSITION '(' position_list ')'
 				{
+					/* position(A in B) is converted to position(B, A) */
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "strpos";
+					n->funcname = "position";
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -4795,8 +4800,10 @@ c_expr:  attr
 				}
 		| SUBSTRING '(' substr_list ')'
 				{
+					/* substring(A from B for C) is converted to
+					 * substring(A, B, C) */
 					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "substr";
+					n->funcname = "substring";
 					n->args = $3;
 					n->agg_star = FALSE;
 					n->agg_distinct = FALSE;
@@ -5198,6 +5205,13 @@ AexprConst:  Iconst
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
+					n->val.val.str = $1;
+					$$ = (Node *)n;
+				}
+		| BITCONST
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_BitString;
 					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.21 2000/10/05 19:11:36 tgl Exp $
+ * $Id: pg_list.h,v 1.22 2000/10/31 10:22:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ extern bool intMember(int datum, List *list);
 extern Value *makeInteger(long i);
 extern Value *makeFloat(char *numericStr);
 extern Value *makeString(char *str);
+extern Value *makeBitString(char *str);
 extern List *lappend(List *list, void *datum);
 extern List *lappendi(List *list, int datum);
 extern List *lremove(void *elem, List *list);

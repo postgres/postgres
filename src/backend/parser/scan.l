@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.79 2000/10/30 17:54:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.80 2000/10/31 10:22:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,25 +93,25 @@ static void addlit(char *ytext, int yleng);
  * We use exclusive states for quoted strings, extended comments,
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
- *  <xb> binary numeric string - thomas 1997-11-16
+ *  <xbit> bit string literal
  *  <xc> extended C-style comments - thomas 1997-07-12
  *  <xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *  <xh> hexadecimal numeric string - thomas 1997-11-16
  *  <xq> quoted strings - thomas 1997-07-30
  */
 
-%x xb
+%x xbit
 %x xc
 %x xd
 %x xh
 %x xq
 
-/* Binary number
+/* Bit string
  */
-xbstart			[bB]{quote}
-xbstop			{quote}
-xbinside		[^']+
-xbcat			{quote}{whitespace_with_newline}{quote}
+xbitstart		[bB]{quote}
+xbitstop		{quote}
+xbitinside		[^']*
+xbitcat			{quote}{whitespace_with_newline}{quote}
 
 /* Hexadecimal number
  */
@@ -279,30 +279,27 @@ other			.
 
 <xc><<EOF>>		{ elog(ERROR, "Unterminated /* comment"); }
 
-{xbstart}		{
-					BEGIN(xb);
+{xbitstart}		{
+					BEGIN(xbit);
 					startlit();
 				}
-<xb>{xbstop}	{
-					char* endptr;
-
+<xbit>{xbitstop}	{
 					BEGIN(INITIAL);
-					errno = 0;
-					yylval.ival = strtol(literalbuf, &endptr, 2);
-					if (*endptr != '\0' || errno == ERANGE)
-						elog(ERROR, "Bad binary integer input '%s'",
+					if (literalbuf[strspn(literalbuf, "01")] != '\0')
+						elog(ERROR, "invalid bit string input: '%s'",
 							 literalbuf);
-					return ICONST;
+					yylval.str = literalbuf;
+					return BITCONST;
 				}
 <xh>{xhinside}	|
-<xb>{xbinside}	{
+<xbit>{xbitinside}	{
 					addlit(yytext, yyleng);
 				}
 <xh>{xhcat}		|
-<xb>{xbcat}		{
+<xbit>{xbitcat}		{
 					/* ignore */
 				}
-<xb><<EOF>>		{ elog(ERROR, "Unterminated binary integer"); }
+<xbit><<EOF>>		{ elog(ERROR, "unterminated bit string literal"); }
 
 {xhstart}		{
 					BEGIN(xh);

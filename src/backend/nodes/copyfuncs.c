@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.127 2000/10/26 21:35:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.128 2000/10/31 10:22:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2511,6 +2511,7 @@ _copyValue(Value *from)
 			break;
 		case T_Float:
 		case T_String:
+		case T_BitString:
 			newnode->val.str = pstrdup(from->val.str);
 			break;
 		default:
@@ -2703,6 +2704,7 @@ copyObject(void *from)
 		case T_Integer:
 		case T_Float:
 		case T_String:
+		case T_BitString:
 			retval = _copyValue(from);
 			break;
 		case T_List:

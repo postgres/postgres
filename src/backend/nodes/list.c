@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.35 2000/10/05 19:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.36 2000/10/31 10:22:10 petere Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -69,6 +69,23 @@ makeString(char *str)
 	v->val.str = str;
 	return v;
 }
+
+
+/*
+ *	makeBitString
+ *
+ * Caller is responsible for passing a palloc'd string.
+ */
+Value *
+makeBitString(char *str)
+{
+	Value	   *v = makeNode(Value);
+
+	v->type = T_BitString;
+	v->val.str = str;
+	return v;
+}
+
 
 /*
  *	lcons

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.129 2000/10/26 21:35:48 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.130 2000/10/31 10:22:10 petere Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -20,9 +20,9 @@
  *	  representation plus some other information (string length, etc.)
  *
  */
-#include <ctype.h>
-
 #include "postgres.h"
+
+#include <ctype.h>
 
 #include "access/heapam.h"
 #include "access/htup.h"
@@ -1351,6 +1351,9 @@ _outValue(StringInfo str, Value *value)
 			appendStringInfo(str, " \"");
 			_outToken(str, value->val.str);
 			appendStringInfo(str, "\" ");
+			break;
+		case T_BitString:
+			appendStringInfo(str, " B%s ", value->val.str);
 			break;
 		default:
 			elog(NOTICE, "_outValue: don't know how to print type %d ",
