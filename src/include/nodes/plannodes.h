@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.19 1998/11/22 10:45:09 vadim Exp $
+ * $Id: plannodes.h,v 1.20 1999/01/23 23:28:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,16 +327,6 @@ typedef struct Hash
 	IpcMemoryKey hashtablekey;
 	int			hashtablesize;
 } Hash;
-
-/* ---------------------
- *		choose node
- * ---------------------
- */
-typedef struct Choose
-{
-	Plan		plan;
-	List	   *chooseplanlist;
-} Choose;
 
 /* -------------------
  *		Tee node information

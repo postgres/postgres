@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.30 1999/01/18 00:09:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.31 1999/01/23 23:28:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,13 +82,6 @@ set_tlist_references(Plan *plan)
 		set_result_tlist_references((Result *) plan);
 	else if (IsA(plan, Hash))
 		set_tlist_references(plan->lefttree);
-	else if (IsA(plan, Choose))
-	{
-		List	   *x;
-
-		foreach(x, ((Choose *) plan)->chooseplanlist)
-			set_tlist_references((Plan *) lfirst(x));
-	}
 }
 
 /*
