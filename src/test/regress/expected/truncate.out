@@ -27,7 +27,7 @@ SELECT * FROM truncate_a;
 (1 row)
 
 TRUNCATE truncate_a;
-ERROR:  TRUNCATE cannot be used as other tables reference this one via foreign key constraint $1
+ERROR:  TRUNCATE cannot be used as table truncate_b references this one via foreign key constraint $1
 SELECT * FROM truncate_a;
  col1 
 ------

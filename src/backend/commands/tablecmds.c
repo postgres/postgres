@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.31 2002/08/22 04:51:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.32 2002/08/22 14:23:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,6 +332,7 @@ TruncateRelation(const RangeVar *relation)
 {
 	Relation	rel;
 	Oid			relid;
+	Oid			toastrelid;
  	ScanKeyData key;
  	Relation	fkeyRel;
  	SysScanDesc	fkeyScan;
@@ -341,17 +342,20 @@ TruncateRelation(const RangeVar *relation)
 	rel = heap_openrv(relation, AccessExclusiveLock);
 	relid = RelationGetRelid(rel);
 
-	if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
-		elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
+	/* Only allow truncate on regular tables */
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+	{
+		/* special errors for backwards compatibility */
+		if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+			elog(ERROR, "TRUNCATE cannot be used on sequences. '%s' is a sequence",
+				 RelationGetRelationName(rel));
+		if (rel->rd_rel->relkind == RELKIND_VIEW)
+			elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
+				 RelationGetRelationName(rel));
+		/* else a generic error message will do */
+		elog(ERROR, "TRUNCATE can only be used on tables. '%s' is not a table",
 			 RelationGetRelationName(rel));
-
-	if (rel->rd_rel->relkind == RELKIND_VIEW)
-		elog(ERROR, "TRUNCATE cannot be used on views. '%s' is a view",
-			 RelationGetRelationName(rel));
-
-	if (rel->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		elog(ERROR, "TRUNCATE cannot be used on type relations. '%s' is a type",
-			 RelationGetRelationName(rel));
+	}
 
 	if (!allowSystemTableMods && IsSystemRelation(rel))
 		elog(ERROR, "TRUNCATE cannot be used on system tables. '%s' is a system table",
@@ -375,25 +379,33 @@ TruncateRelation(const RangeVar *relation)
 								  SnapshotNow, 1, &key);
 
 	/*
-	 * First foriegn key found with us as the reference
+	 * First foreign key found with us as the reference
 	 * should throw an error.
 	 */
 	while (HeapTupleIsValid(tuple = systable_getnext(fkeyScan)))
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tuple);
 
-		if (con->contype == 'f')
-			elog(ERROR, "TRUNCATE cannot be used as other tables reference this one via foreign key constraint %s",
+		if (con->contype == 'f' && con->conrelid != relid)
+			elog(ERROR, "TRUNCATE cannot be used as table %s references this one via foreign key constraint %s",
+				 get_rel_name(con->conrelid),
 				 NameStr(con->conname));
 	}
 
 	systable_endscan(fkeyScan);
 	heap_close(fkeyRel, AccessShareLock);
 
+	toastrelid = rel->rd_rel->reltoastrelid;
+
 	/* Keep the lock until transaction commit */
 	heap_close(rel, NoLock);
 
+	/* Truncate the table proper */
 	heap_truncate(relid);
+
+	/* If it has a toast table, truncate that too */
+	if (OidIsValid(toastrelid))
+		heap_truncate(toastrelid);
 }
 
 /*----------
