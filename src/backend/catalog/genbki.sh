@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.17 2000/10/20 21:03:42 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.18 2000/10/28 22:14:14 petere Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -28,6 +28,7 @@ BKIOPTS=
 INCLUDE_DIRS=
 OUTPUT_PREFIX=
 INFILES=
+major_version=
 
 #
 # Process command line switches.
@@ -54,15 +55,20 @@ do
         -o*)
             OUTPUT_PREFIX=`echo $1 | sed -e 's/^-o//'`
             ;;
+        --set-version=*)
+            arg=`expr x"$1" : x"--set-version=\(.*\)"`
+            major_version=`expr x"$arg" : x'\([0-9][0-9]*\.[0-9][0-9]*\)'`
+            ;;
         --help)
             echo "$CMDNAME generates system catalog bootstrapping files."
             echo
             echo "Usage:"
-            echo "  $CMDNAME [ -D define [...] ] [ -I dir ] [ -o prefix ]"
+            echo "  $CMDNAME [ -D define [...] ] [ -I dir ] --set-version=VERSION -o prefix files..."
             echo
             echo "Options:"
             echo "  -I  path to postgres_ext.h and config.h files"
             echo "  -o  prefix of output files"
+            echo "  --set-version  PostgreSQL version number for initdb cross-check"
             echo
             echo "The environment variables CPP and AWK determine which C"
             echo "preprocessor and Awk program to use. The defaults are"
@@ -97,6 +103,10 @@ if [ x"$INCLUDE_DIRS" = x"" ] ; then
     exit 1
 fi
 
+if [ x"$major_version" = x"" ] ; then
+    echo "$CMDNAME: invalid or no version number specified" 1>&2
+    exit 1
+fi
 
 if [ x"$TMPDIR" = x"" ] ; then
     TMPDIR=/tmp
@@ -105,12 +115,7 @@ fi
 
 TMPFILE="$TMPDIR/genbkitmp.c"
 
-trap "rm -f $TMPFILE" 0 1 2 3 15
-
-
-# clear output files
-> ${OUTPUT_PREFIX}.bki
-> ${OUTPUT_PREFIX}.description
+trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$" 0 1 2 3 15
 
 
 # Get NAMEDATALEN from postgres_ext.h
@@ -135,6 +140,8 @@ done
 
 INDEXMAXKEYS2=`expr $INDEXMAXKEYS '*' 2` || exit
 INDEXMAXKEYS4=`expr $INDEXMAXKEYS '*' 4` || exit
+
+touch ${OUTPUT_PREFIX}.description.$$
 
 # ----------------
 # 	strip comments and trash from .h before we generate
@@ -360,11 +367,15 @@ END {
 		reln_open = 0;
 	}
 }
-' "descriptionfile=${OUTPUT_PREFIX}.description" > $TMPFILE || exit
+' "descriptionfile=${OUTPUT_PREFIX}.description.$$" > $TMPFILE || exit
+
+echo "# PostgreSQL $major_version" >${OUTPUT_PREFIX}.bki.$$
 
 $CPP $BKIOPTS $TMPFILE | \
 sed -e '/^[ 	]*$/d' \
-    -e 's/[ 	][ 	]*/ /g' > ${OUTPUT_PREFIX}.bki || exit
+    -e 's/[ 	][ 	]*/ /g' >>${OUTPUT_PREFIX}.bki.$$ || exit
 
+mv ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.bki || exit
+mv ${OUTPUT_PREFIX}.description.$$ ${OUTPUT_PREFIX}.description || exit
 
 exit 0

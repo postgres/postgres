@@ -1,17 +1,17 @@
 #! /bin/sh
 #-------------------------------------------------------------------------
 #
-# initdb creates (initializes) a Postgres database cluster (site,
+# initdb creates (initializes) a PostgreSQL database cluster (site,
 # instance, installation, whatever).  A database cluster is a
-# collection of Postgres databases all managed by the same postmaster.  
+# collection of PostgreSQL databases all managed by the same postmaster.
 #
 # To create the database cluster, we create the directory that contains
 # all its data, create the files that hold the global tables, create
 # a few other control files for it, and create one database:  the
 # template database.
 #
-# The template database is an ordinary Postgres database.  Its data
-# never changes, though.  It exists to make it easy for Postgres to 
+# The template database is an ordinary PostgreSQL database.  Its data
+# never changes, though.  It exists to make it easy for PostgreSQL to 
 # create other databases -- it just copies.
 #
 # Optionally, we can skip creating the complete database cluster and
@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.106 2000/10/22 17:55:45 pjw Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.107 2000/10/28 22:14:14 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -85,7 +85,7 @@ fi
 if echo "$0" | grep '/' > /dev/null 2>&1 
 then
         # explicit dir name given
-        PGPATH=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
+        self_path=`echo $0 | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
         # look for it in PATH ('which' command is not portable)
         for dir in `echo "$PATH" | sed 's/:/ /g'`
@@ -94,36 +94,52 @@ else
                 [ -z "$dir" ] && dir='.'
                 if [ -f "$dir/$CMDNAME" ]
 		then
-                        PGPATH="$dir"
+                        self_path="$dir"
                         break
                 fi
         done
 fi
 
-if [ x"$PGPATH" = x"" ] ; then
-    PGPATH=$bindir
+
+# Check for right version of backend.  First we check for an
+# executable in the same directory is this initdb script (presuming
+# the above code worked).  Then we fall back to the hard-wired bindir.
+# We do it in this order because during upgrades users might move
+# their trees to backup places, so $bindir might be inaccurate.
+
+if [ x"$self_path" != x"" ] \
+  && [ -x "$self_path/postgres" ] \
+  && [ x"`$self_path/postgres --version 2>/dev/null`" == x"postgres (PostgreSQL) $VERSION" ]
+then
+    PGPATH=$self_path
+elif [ -x "$bindir/postgres" ]; then
+    if [ x"`$bindir/postgres --version 2>/dev/null`" == x"postgres (PostgreSQL) $VERSION" ]
+    then
+        PGPATH=$bindir
+    else
+        echo "The program '$bindir/postgres' needed by $CMDNAME does not belong to"
+        echo "PostgreSQL version $VERSION.  Check your installation."
+        exit 1
+    fi
+else
+    echo "The program 'postgres' is needed by $CMDNAME but was not found in"
+    echo "the directory '$bindir'.  Check your installation."
+    exit 1
 fi
 
-# Check if needed programs actually exist in path
-for prog in postgres pg_id
-do
-        if [ ! -x "$PGPATH/$prog" ]
-	then
-                echo "The program \`$prog' needed by $CMDNAME could not be found. It was"
-                echo "expected at:"
-                echo "    $PGPATH/$prog"
-                echo "If this is not the correct directory, please start $CMDNAME"
-                echo "with a full search path. Otherwise make sure that the program"
-                echo "was installed successfully."
-                exit 1
-        fi
-done
+
+# Now we can assume that 'pg_id' belongs to the same version as the
+# verified 'postgres' in the same directory.
+if [ ! -x "$PGPATH/pg_id" ]; then
+    echo "The program 'pg_id' is needed by $CMDNAME but was not found in"
+    echo "the directory '$PGPATH'.  Check your installation."
+    exit 1
+fi
 
 
-# Gotta wait for pg_id existence check above
 EffectiveUser=`$PGPATH/pg_id -n -u`
 if [ -z "$EffectiveUser" ]; then
-    echo "Could not determine current user name. You are really hosed."
+    echo "$CMDNAME: could not determine current user name"
     exit 1
 fi
 
@@ -275,7 +291,7 @@ fi
 
 if [ "$MULTIBYTE" ]
 then
-	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE 2> /dev/null`
+	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
         if [ "$?" -ne 0 ]
 	then
                 echo "$CMDNAME: pg_encoding failed"
@@ -352,6 +368,15 @@ do
         echo "wrong directory with the -L invocation option."
         exit 1
     fi
+done
+
+for file in "$TEMPLATE1_BKI" "$GLOBAL_BKI"; do
+     if [ x"`sed 1q $file`" != x"# PostgreSQL $short_version" ]; then
+         echo "The input file '$file' needed by $CMDNAME does not"
+         echo "belong to PostgreSQL $VERSION.  Check your installation or specify the"
+         echo "correct path using the -L option."
+         exit 1
+     fi
 done
 
 
