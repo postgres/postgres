@@ -157,6 +157,13 @@ static char *func = "SQLExecDirect";
 	mylog("**** %s: hstmt=%u, statement='%s'\n", func, hstmt, stmt->statement);
 
 	stmt->prepare = FALSE;
+
+	// If an SQLPrepare was performed prior to this, but was left in 
+	// the premature state because an error occurred prior to SQLExecute
+	// then set the statement to finished so it can be recycled.
+	if ( stmt->status == STMT_PREMATURE )
+		stmt->status = STMT_FINISHED;
+
 	stmt->statement_type = statement_type(stmt->statement);
 
 	//	Check if connection is onlyread (only selects are allowed)
