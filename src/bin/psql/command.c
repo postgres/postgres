@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.35 2000/07/17 18:24:32 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.36 2000/09/17 20:33:45 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -1237,6 +1237,7 @@ do_connect(const char *new_dbname, const char *new_user)
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
 			strcmp(PQerrorMessage(pset.db), "fe_sendauth: no password supplied\n") == 0)
 		{
+			PQfinish(pset.db);
 			need_pass = true;
 			free(prompted_password);
 			prompted_password = NULL;
