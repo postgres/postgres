@@ -2,7 +2,7 @@
  * This file contains some public functions
  * usable for both the backend and the frontend.
  * Tatsuo Ishii
- * $Id: common.c,v 1.7 1999/07/19 06:25:38 momjian Exp $ */
+ * $Id: common.c,v 1.8 2000/01/18 05:14:24 ishii Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -13,6 +13,8 @@
 #include <unistd.h>
 #endif
 
+#include "postgres.h"
+#include "miscadmin.h"
 #include "mb/pg_wchar.h"
 
 /*
