@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jan 31 20:35:58 EST 2005</P>
+    <P>Last updated: Mon Jan 31 20:41:21 EST 2005</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)
@@ -74,8 +74,7 @@
      <A href="#4.2">4.2</A>) How do I find out what tables, indexes,
     databases, and users are defined?  How do I see the queries used
     by <I>psql</I> to display them?<BR>
-     <A href="#4.3">4.3</A>) How do you remove a column from a
-    table, or change its data type?<BR>
+     <A href="#4.3">4.3</A>) How do you change a column's data type?<BR>
      <A href="#4.4">4.4</A>) What is the maximum size for a row, a
     table, and a database?<BR>
      <A href="#4.5">4.5</A>) How much database disk space is required
@@ -645,28 +644,15 @@
     database.</P>
 
     <P>There are also system tables beginning with <I>pg_</I> that describe
-    these too. Use <I>psql -l</I> will list all databases.</P>
+    these too.</P>
+    
+    <P>Use <I>psql -l</I> will list all databases.</P>
 
     <P>Also try the file <I>pgsql/src/tutorial/syscat.source</I>. It
     illustrates many of the <SMALL>SELECT</SMALL>s needed to get
     information from the database system tables.</P>
 
-    <H4><A name="4.3">4.3</A>) How do you remove a column from a
-    table, or change its data type?</H4>
-
-    <P><SMALL>DROP COLUMN</SMALL> functionality was added in release 7.3
-    with <SMALL>ALTER TABLE DROP COLUMN</SMALL>.  In earlier versions,
-    you can do this:</P>
-<PRE>
-    BEGIN;
-    LOCK TABLE old_table;
-    SELECT ...  -- select all columns but the one you want to remove
-    INTO TABLE new_table
-    FROM old_table;
-    DROP TABLE old_table;
-    ALTER TABLE new_table RENAME TO old_table;
-    COMMIT;
-</PRE>
+    <H4><A name="4.3">4.3</A>) How do you change a column's data type?</H4>
 
     <P>Changing the data type of a column can be done easily in 8.0
     and later with <SMALL>ALTER TABLE ALTER COLUMN TYPE</SMALL>.

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jan 31 20:35:58 EST 2005
+   Last updated: Mon Jan 31 20:41:21 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -51,7 +51,7 @@
    4.1) How do I SELECT only the first few rows of a query? A random row?
    4.2) How do I find out what tables, indexes, databases, and users are
    defined? How do I see the queries used by psql to display them?
-   4.3) How do you remove a column from a table, or change its data type?
+   4.3) How do you change a column's data type?
    4.4) What is the maximum size for a row, a table, and a database?
    4.5) How much database disk space is required to store data from a
    typical text file?
@@ -491,25 +491,16 @@
    query to get information about the database.
    
    There are also system tables beginning with pg_ that describe these
-   too. Use psql -l will list all databases.
+   too.
+   
+   Use psql -l will list all databases.
    
    Also try the file pgsql/src/tutorial/syscat.source. It illustrates
    many of the SELECTs needed to get information from the database system
    tables.
    
-    4.3) How do you remove a column from a table, or change its data type?
+    4.3) How do you change a column's data type?
     
-   DROP COLUMN functionality was added in release 7.3 with ALTER TABLE
-   DROP COLUMN. In earlier versions, you can do this:
-    BEGIN;
-    LOCK TABLE old_table;
-    SELECT ...  -- select all columns but the one you want to remove
-    INTO TABLE new_table
-    FROM old_table;
-    DROP TABLE old_table;
-    ALTER TABLE new_table RENAME TO old_table;
-    COMMIT;
-
    Changing the data type of a column can be done easily in 8.0 and later
    with ALTER TABLE ALTER COLUMN TYPE.
    
