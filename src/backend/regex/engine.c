@@ -148,8 +148,8 @@ int eflags;
 	struct match mv;
 	register struct match *m = &mv;
 	register char *dp;
-	const register sopno gf = g->firststate+1;	/* +1 for OEND */
-	const register sopno gl = g->laststate;
+	register const sopno gf = g->firststate+1;	/* +1 for OEND */
+	register const sopno gl = g->laststate;
 	char *start;
 	char *stop;
 
