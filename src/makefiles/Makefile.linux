@@ -4,7 +4,12 @@ rpath = -Wl,-rpath,$(libdir)
 shlib_symbolic = -Wl,-Bsymbolic
 allow_nonpic_in_shlib = yes
 DLSUFFIX = .so
+
+ifeq "$(findstring sparc,$(host_cpu))" "sparc"
+CFLAGS_SL = -fPIC
+else
 CFLAGS_SL = -fpic
+endif
 
 %.so: %.o
 	$(CC) -shared -o $@ $<
