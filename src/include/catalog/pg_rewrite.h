@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_rewrite.h,v 1.8 1999/11/18 13:56:30 wieck Exp $
+ * $Id: pg_rewrite.h,v 1.9 1999/12/28 13:40:50 wieck Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -37,8 +37,8 @@ CATALOG(pg_rewrite)
 	Oid			ev_class;
 	int2		ev_attr;
 	bool		is_instead;
-	lztext		ev_qual;		/* Compressed text */
-	lztext		ev_action;		/* Compressed text */
+	text		ev_qual;
+	text		ev_action;
 } FormData_pg_rewrite;
 
 /* ----------------

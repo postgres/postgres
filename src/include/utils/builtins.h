@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.92 1999/12/16 01:25:14 momjian Exp $
+ * $Id: builtins.h,v 1.93 1999/12/28 13:40:52 wieck Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -30,7 +30,6 @@
 #include "utils/int8.h"
 #include "utils/nabstime.h"
 #include "utils/numeric.h"
-#include "utils/lztext.h"
 #include "access/heapam.h"		/* for HeapTuple */
 
 /*
@@ -632,20 +631,5 @@ HeapTuple	RI_FKey_setnull_del(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_setnull_upd(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_setdefault_del(FmgrInfo *proinfo);
 HeapTuple	RI_FKey_setdefault_upd(FmgrInfo *proinfo);
-
-/* lztext.c */
-lztext	   *lztextin(char *str);
-char	   *lztextout(lztext *lz);
-text	   *lztext_text(lztext *lz);
-lztext	   *text_lztext(text *txt);
-int32		lztextlen(lztext *lz);
-int32		lztextoctetlen(lztext *lz);
-int32		lztext_cmp(lztext *lz1, lztext *lz2);
-bool		lztext_eq(lztext *lz1, lztext *lz2);
-bool		lztext_ne(lztext *lz1, lztext *lz2);
-bool		lztext_gt(lztext *lz1, lztext *lz2);
-bool		lztext_ge(lztext *lz1, lztext *lz2);
-bool		lztext_lt(lztext *lz1, lztext *lz2);
-bool		lztext_le(lztext *lz1, lztext *lz2);
 
 #endif	 /* BUILTINS_H */

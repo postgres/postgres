@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.82 1999/12/16 22:19:54 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.83 1999/12/28 13:40:49 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,8 +674,8 @@ RelationBuildRuleLock(Relation relation)
 							 Anum_pg_rewrite_ev_qual, pg_rewrite_tupdesc,
 										  &isnull);
 
-		ruleaction = PointerGetDatum(lztextout((lztext *) DatumGetPointer(ruleaction)));
-		rule_evqual_string = PointerGetDatum(lztextout((lztext *) DatumGetPointer(rule_evqual_string)));
+		ruleaction = PointerGetDatum(textout((text *) DatumGetPointer(ruleaction)));
+		rule_evqual_string = PointerGetDatum(textout((text *) DatumGetPointer(rule_evqual_string)));
 
 		rule->actions = (List *) stringToNode(DatumGetPointer(ruleaction));
 		rule->qual = (Node *) stringToNode(DatumGetPointer(rule_evqual_string));
