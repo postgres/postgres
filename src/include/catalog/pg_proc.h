@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.107 1999/11/25 01:28:05 wieck Exp $
+ * $Id: pg_proc.h,v 1.108 1999/12/01 18:03:26 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -523,7 +523,7 @@ DESCR("abstime in tinterval");
 DATA(insert OID = 249 (  intervalrel	   PGUID 11 f t f 1 f 703 "704" 100 0 0 100  intervalrel - ));
 DESCR("");
 DATA(insert OID = 250 (  timenow		   PGUID 11 f t f 0 f 702 "0" 100 0 0 100  timenow - ));
-DESCR("(internal)");
+DESCR("Current date and time");
 DATA(insert OID = 251 (  abstimeeq		   PGUID 11 f t f 2 f 16 "702 702" 100 0 0 100	abstimeeq - ));
 DESCR("equal");
 DATA(insert OID = 252 (  abstimene		   PGUID 11 f t f 2 f 16 "702 702" 100 0 0 100	abstimene - ));
@@ -571,7 +571,7 @@ DESCR("start of interval");
 DATA(insert OID = 273 (  intervalend	   PGUID 11 f t f 1 f 702 "704" 100 0 0 100  intervalend - ));
 DESCR("");
 DATA(insert OID = 274 (  timeofday		   PGUID 11 f t f 0 f 25 "0" 100 0 0 100  timeofday - ));
-DESCR("(internal)");
+DESCR("Current date and time with microseconds");
 DATA(insert OID = 275 (  abstime_finite    PGUID 11 f t f 1 f 16 "702" 100 0 0 100	abstime_finite - ));
 DESCR("");
 
@@ -939,7 +939,7 @@ DESCR("greater-than");
 
 /* OIDS 700 - 799 */
 DATA(insert OID = 710 (  getpgusername	   PGUID 11 f t f 0 f 19 "0" 100 0 0 100  getpgusername - ));
-DESCR("(internal)");
+DESCR("Return username");
 DATA(insert OID = 711 (  userfntest		   PGUID 11 f t t 1 f 23 "23" 100 0 0 100  userfntest - ));
 DESCR("");
 DATA(insert OID = 713 (  oidrand		   PGUID 11 f t f 2 f 16 "26 23" 100 0 0 100  oidrand - ));
