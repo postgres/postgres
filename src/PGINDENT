@@ -1,5 +1,5 @@
 #!/bin/sh
-trap "rm -f /tmp/$$" 0 1 2 3 15
+trap "rm -f /tmp/$$ /tmp/$$a" 0 1 2 3 15
 entab </dev/null >/dev/null
 if [ "$?" -ne 0 ]
 then	echo "Go to the src/tools/entab directory and do a 'make' and 'make install'." >&2
@@ -16,9 +16,14 @@ for FILE
 do
 	cat $FILE |
 	sed 's;/\*  *---;/*---X_X;g' |
-	detab -t4 -qc |
+	detab -t4 -qc >/tmp/$$a
 	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -cli1 -di16 -nfc1 \
-		-lp -nip -nbc -psl -di1 -i4 -l75 -st |
+		-lp -nip -nbc -psl -di1 -i4 -l75 >/tmp/$$ 2>&1
+	if [ "$?" -ne 0 -o -s /tmp/$$ ]
+	then	echo "$FILE"
+		cat /tmp/$$
+	fi
+	cat /tmp/$$a |
 	detab -t8 -qc |
 	entab -t4 -qc |
 	sed 's;/\*---X_X;/* ---;g' >/tmp/$$ && cat /tmp/$$ >$FILE
