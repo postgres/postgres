@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.142 2000/03/08 23:41:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.143 2000/03/09 05:00:23 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2240,6 +2240,10 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple)
 		VacAttrStats *stats = &vacattrstats[i];
 		bool		value_hit = true;
 
+#ifdef	_DROP_COLUMN_HACK__
+		if (COLUMN_IS_DROPPED(stats->attr))
+			continue;
+#endif	/* _DROP_COLUMN_HACK__ */
 		value = heap_getattr(tuple,
 							 stats->attr->attnum, tupDesc, &isnull);
 

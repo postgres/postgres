@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.101 2000/02/13 18:59:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.102 2000/03/09 05:00:23 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,6 +394,9 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 
 	int32		attr_count,
 				i;
+#ifdef	_DROP_COLUMN_HACK__
+	bool		*valid;
+#endif /* _DROP_COLUMN_HACK__ */
 	Form_pg_attribute *attr;
 	FmgrInfo   *out_functions;
 	Oid			out_func_oid;
@@ -425,8 +428,20 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 		out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
 		typmod = (int32 *) palloc(attr_count * sizeof(int32));
+#ifdef	_DROP_COLUMN_HACK__
+		valid = (bool *) palloc(attr_count * sizeof(bool));
+#endif /* _DROP_COLUMN_HACK__ */
 		for (i = 0; i < attr_count; i++)
 		{
+#ifdef	_DROP_COLUMN_HACK__
+			if (COLUMN_IS_DROPPED(attr[i]))
+			{
+				valid[i] = false;
+				continue;
+			}
+			else
+				valid[i] = true;
+#endif /* _DROP_COLUMN_HACK__ */
 			out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
 			fmgr_info(out_func_oid, &out_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
@@ -466,6 +481,14 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_p
 			value = heap_getattr(tuple, i + 1, tupDesc, &isnull);
 			if (!binary)
 			{
+#ifdef	_DROP_COLUMN_HACK__
+				if (!valid[i])
+				{
+					if (i == attr_count - 1)
+						CopySendChar('\n', fp);
+					continue;
+				}
+#endif /* _DROP_COLUMN_HACK__ */
 				if (!isnull)
 				{
 					string = (char *) (*fmgr_faddr(&out_functions[i]))
@@ -692,6 +715,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 		typmod = (int32 *) palloc(attr_count * sizeof(int32));
 		for (i = 0; i < attr_count; i++)
 		{
+#ifdef	_DROP_COLUMN_HACK__
+			if (COLUMN_IS_DROPPED(attr[i]))
+				continue;
+#endif /* _DROP_COLUMN_HACK__ */
 			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
 			fmgr_info(in_func_oid, &in_functions[i]);
 			elements[i] = GetTypeElement(attr[i]->atttypid);
@@ -718,6 +745,13 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 	{
 		nulls[i] = ' ';
 		index_nulls[i] = ' ';
+#ifdef	_DROP_COLUMN_HACK__
+		if (COLUMN_IS_DROPPED(attr[i]))
+		{
+			byval[i] = 'n';
+			continue;
+		}
+#endif /* _DROP_COLUMN_HACK__ */
 		byval[i] = (bool) IsTypeByVal(attr[i]->atttypid);
 	}
 
@@ -750,6 +784,14 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 			}
 			for (i = 0; i < attr_count && !done; i++)
 			{
+#ifdef	_DROP_COLUMN_HACK__
+				if (COLUMN_IS_DROPPED(attr[i]))
+				{
+					values[i] = PointerGetDatum(NULL);
+					nulls[i] = 'n';
+					continue;
+				}
+#endif /* _DROP_COLUMN_HACK__ */
 				string = CopyReadAttribute(fp, &isnull, delim, &newline, null_print);
 				if (isnull)
 				{

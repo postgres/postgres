@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.35 2000/02/15 03:37:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.36 2000/03/09 05:00:24 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,6 +359,10 @@ expandTable(ParseState *pstate, char *refname, bool getaliases)
 	{
 		char	   *attrname;
 
+#ifdef	_DROP_COLUMN_HACK__
+		if (COLUMN_IS_DROPPED(rel->rd_att->attrs[varattno]))
+			continue;
+#endif	/* _DROP_COLUMN_HACK__ */
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
 		attr->attrs = lappend(attr->attrs, makeString(attrname));
 	}
@@ -404,6 +408,10 @@ expandAll(ParseState *pstate, char *relname, Attr *ref, int *this_resno)
 		Var			   *varnode;
 		TargetEntry	   *te = makeNode(TargetEntry);
 
+#ifdef	_DROP_COLUMN_HACK__
+		if (COLUMN_IS_DROPPED(rel->rd_att->attrs[varattno]))
+			continue;
+#endif	/* _DROP_COLUMN_HACK__ */
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
 
 		/* varattno is zero-based, so check that length() is always greater */

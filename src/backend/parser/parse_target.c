@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.55 2000/02/15 03:37:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.56 2000/03/09 05:00:24 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,6 +355,12 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		{
 			Ident	   *id = makeNode(Ident);
 
+#ifdef	_DROP_COLUMN_HACK__
+			if (COLUMN_IS_DROPPED(attr[i]))
+			{
+				continue;
+			}
+#endif	/* _DROP_COLUMN_HACK__ */
 			id->name = palloc(NAMEDATALEN);
 			StrNCpy(id->name, NameStr(attr[i]->attname), NAMEDATALEN);
 			id->indirection = NIL;

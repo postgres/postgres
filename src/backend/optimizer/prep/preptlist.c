@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.34 2000/01/26 05:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.35 2000/03/09 05:00:24 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,10 +189,20 @@ expand_targetlist(List *tlist, int command_type,
 			{
 				case CMD_INSERT:
 				{
+#ifdef	_DROP_COLUMN_HACK__
+					Datum		typedefault;
+#else
 					Datum		typedefault = get_typdefault(atttype);
+#endif /* _DROP_COLUMN_HACK__ */
 					int			typlen;
 					Const	   *temp_const;
 
+#ifdef	_DROP_COLUMN_HACK__
+					if (COLUMN_IS_DROPPED(att_tup))
+						typedefault = PointerGetDatum(NULL);
+					else
+						typedefault = get_typdefault(atttype);
+#endif /* _DROP_COLUMN_HACK__ */
 					if (typedefault == PointerGetDatum(NULL))
 						typlen = 0;
 					else
@@ -230,8 +240,25 @@ expand_targetlist(List *tlist, int command_type,
 				{
 					Var		   *temp_var;
 
+#ifdef	_DROP_COLUMN_HACK__
+					Node	*temp_node = (Node *) NULL;
+					if (COLUMN_IS_DROPPED(att_tup))
+					{
+						temp_node = (Node *)makeConst(atttype, 								0, 
+							PointerGetDatum(NULL),
+								true,
+								false,
+								false, /* not a set */
+								false);
+					}
+					else
+#endif /* _DROP_COLUMN_HACK__ */
 					temp_var = makeVar(result_relation, attrno, atttype,
 									   atttypmod, 0);
+#ifdef	_DROP_COLUMN_HACK__
+					if (!temp_node)
+						temp_node = (Node *) temp_var;
+#endif /* _DROP_COLUMN_HACK__ */
 
 					new_tle = makeTargetEntry(makeResdom(attrno,
 														 atttype,
@@ -239,8 +266,12 @@ expand_targetlist(List *tlist, int command_type,
 														 pstrdup(attrname),
 														 0,
 														 (Oid) 0,
-														 false),
-											  (Node *) temp_var);
+														 false),										
+#ifdef	_DROP_COLUMN_HACK__
+				temp_node);
+#else
+	(Node *) temp_var);
+#endif /* _DROP_COLUMN_HACK__ */
 					break;
 				}
 				default:
