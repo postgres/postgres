@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.49 2004/11/08 18:01:28 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.50 2004/11/14 06:10:12 neilc Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -358,7 +358,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    properly shut down; therefore, when you start the database server
    on the backed-up data, it will think the server had crashed
    and replay the WAL log.  This is not a problem, just be aware of
-   it (and be sure to include the WAL files in your dump).
+   it (and be sure to include the WAL files in your backup).
   </para>
 
   <para>
@@ -379,7 +379,7 @@ tar -cf backup.tar /usr/local/pgsql/data
  </sect1>
 
  <sect1 id="backup-online">
-  <title>On-line backup and point-in-time recovery</title>
+  <title>On-line backup and point-in-time recovery (PITR)</title>
 
   <indexterm zone="backup">
    <primary>on-line backup</primary>
@@ -389,18 +389,25 @@ tar -cf backup.tar /usr/local/pgsql/data
    <primary>point-in-time recovery</primary>
   </indexterm>
 
+  <indexterm zone="backup">
+   <primary>PITR</primary>
+  </indexterm>
+
   <para>
-   At all times, <productname>PostgreSQL</> maintains a <firstterm>write ahead
-   log</> (WAL) that shows details of every change made to the database's data
-   files.  This log exists primarily for crash-safety purposes: if the system
-   crashes, the database can be restored to consistency by <quote>replaying</>
-   the log entries made since the last checkpoint.  However, the existence
+   At all times, <productname>PostgreSQL</> maintains a
+   <firstterm>write ahead log</> (WAL) in the <filename>pg_xlog/</>
+   subdirectory of the cluster's data directory. The log describes
+   every change made to the database's data files.  This log exists
+   primarily for crash-safety purposes: if the system crashes, the
+   database can be restored to consistency by <quote>replaying</> the
+   log entries made since the last checkpoint.  However, the existence
    of the log makes it possible to use a third strategy for backing up
-   databases: we can combine a filesystem-level backup with backup of the WAL
-   files.  If recovery is needed, we restore the backup and then replay from
-   the backed-up WAL files to bring the backup up to current time.  This
-   approach is notably more complex to administer than either of the previous
-   approaches, but it has some significant benefits to offer:
+   databases: we can combine a filesystem-level backup with backup of
+   the WAL files.  If recovery is needed, we restore the backup and
+   then replay from the backed-up WAL files to bring the backup up to
+   current time.  This approach is more complex to administer than
+   either of the previous approaches, but it has some significant
+   benefits:
   <itemizedlist>
    <listitem>
     <para>
@@ -414,7 +421,7 @@ tar -cf backup.tar /usr/local/pgsql/data
    <listitem>
     <para>
      Since we can string together an indefinitely long sequence of WAL files
-     for replay, continuous backup can be had simply by continuing to archive
+     for replay, continuous backup can be achieved simply by continuing to archive
      the WAL files.  This is particularly valuable for large databases, where
      it may not be convenient to take a full backup frequently.
     </para>
@@ -431,10 +438,11 @@ tar -cf backup.tar /usr/local/pgsql/data
    </listitem>
    <listitem>
     <para>
-     If we continuously feed the series of WAL files to another machine
-     that's been loaded with the same base backup file, we have a <quote>hot
-     standby</> system: at any point we can bring up the second machine
-     and it will have a nearly-current copy of the database.
+     If we continuously feed the series of WAL files to another
+     machine that has been loaded with the same base backup file, we
+     have a <quote>hot standby</> system: at any point we can bring up
+     the second machine and it will have a nearly-current copy of the
+     database.
     </para>
    </listitem>
   </itemizedlist>
@@ -464,15 +472,16 @@ tar -cf backup.tar /usr/local/pgsql/data
    <para>
     In an abstract sense, a running <productname>PostgreSQL</> system
     produces an indefinitely long sequence of WAL records.  The system
-    physically divides this sequence into WAL <firstterm>segment files</>,
-    which are normally 16Mb apiece (although the size can be altered when
-    building the server).  The segment files are given numeric names that
-    reflect their position in the abstract WAL sequence.  When not using WAL
-    archiving, the system normally creates just a few segment files and then
-    <quote>recycles</> them by renaming no-longer-needed segment files to
-    higher segment numbers.  It's assumed that a segment file whose contents
-    precede the checkpoint-before-last is no longer of interest and can be
-    recycled.
+    physically divides this sequence into WAL <firstterm>segment
+    files</>, which are normally 16MB apiece (although the size can be
+    altered when building <productname>PostgreSQL</>).  The segment
+    files are given numeric names that reflect their position in the
+    abstract WAL sequence.  When not using WAL archiving, the system
+    normally creates just a few segment files and then
+    <quote>recycles</> them by renaming no-longer-needed segment files
+    to higher segment numbers.  It's assumed that a segment file whose
+    contents precede the checkpoint-before-last is no longer of
+    interest and can be recycled.
    </para>
 
    <para>
@@ -481,7 +490,8 @@ tar -cf backup.tar /usr/local/pgsql/data
     file is recycled for reuse.  Depending on the application and the
     available hardware, there could be many different ways of <quote>saving
     the data somewhere</>: we could copy the segment files to an NFS-mounted
-    directory on another machine, or write them onto a tape drive, or batch
+    directory on another machine, write them onto a tape drive (ensuring that
+    you have a way of restoring the file with its original file name), or batch
     them together and burn them onto CDs, or something else entirely.  To
     provide the database administrator with as much flexibility as possible,
     <productname>PostgreSQL</> tries not to make any assumptions about how 
@@ -561,7 +571,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
    </para>
 
    <para>
-    Speed of the archiving command is not important, so long as it can keep up
+    The speed of the archiving command is not important, so long as it can keep up
     with the average rate at which your server generates WAL data.  Normal
     operation continues even if the archiving process falls a little behind.
     If archiving falls significantly behind, this will increase the amount of
@@ -573,24 +583,24 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
    </para>
 
    <para>
-    If you are concerned about being able to recover right up to the current
-    instant, you may want to take additional steps to ensure that the current,
-    partially-filled WAL segment is also copied someplace.  This is
-    particularly important if your server generates only little WAL traffic
-    (or has slack periods where it does so), since it could take a long time
-    before a WAL segment file is completely filled and ready to archive.
-    One possible way to handle this is to set up a <application>cron</> job
-    that periodically (once a minute, perhaps) identifies the current WAL
-    segment file and saves it someplace safe.  Then the combination of the
-    archived WAL segments and the saved current segment will be enough to
-    ensure you can always restore to within a minute of current time.  This
-    behavior is not presently built into <productname>PostgreSQL</> because
-    we did not want to complicate the definition of the <xref
-    linkend="guc-archive-command"> by requiring it to keep track of
-    successively archived, but different, copies of the same WAL file.
-    The <xref linkend="guc-archive-command"> is only invoked on finished
-    WAL segments that will not change anymore; and except in the case of
-    retrying a failure, it will be called only once for any given file name.
+    If you are concerned about being able to recover right up to the
+    current instant, you may want to take additional steps to ensure that
+    the current, partially-filled WAL segment is also copied someplace.
+    This is particularly important if your server generates only little WAL
+    traffic (or has slack periods where it does so), since it could take a
+    long time before a WAL segment file is completely filled and ready to
+    archive.  One possible way to handle this is to set up a
+    <application>cron</> job that periodically (once a minute, perhaps)
+    identifies the current WAL segment file and saves it someplace safe.
+    Then the combination of the archived WAL segments and the saved current
+    segment will be enough to ensure you can always restore to within a
+    minute of current time.  This behavior is not presently built into
+    <productname>PostgreSQL</> because we did not want to complicate the
+    definition of the <xref linkend="guc-archive-command"> by requiring it
+    to keep track of successively archived, but different, copies of the
+    same WAL file.  The <xref linkend="guc-archive-command"> is only
+    invoked on completed WAL segments. Except in the case of retrying a
+    failure, it will be called only once for any given file name.
    </para>
 
    <para>
@@ -599,6 +609,14 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
     combination of ASCII letters, digits, and dots.  It is not necessary to
     remember the original full path (<literal>%p</>) but it is necessary to
     remember the file name (<literal>%f</>).
+   </para>
+
+   <para>
+    Note that although WAL archiving will allow you to restore any
+    modifications made to the data in your <productname>PostgreSQL</> database
+    it will not restore changes made to configuration files (that is,
+	 <filename>postgresql.conf</>, <filename>pg_hba.conf</> and
+    <filename>pg_ident.conf</>) after the initial base backup.
    </para>
   </sect2>
 
@@ -620,10 +638,16 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 SELECT pg_start_backup('label');
 </programlisting>
      where <literal>label</> is any string you want to use to uniquely
-     identify this backup operation.  (One good practice is to use the
-     full path where you intend to put the backup dump file.)  It does
-     not matter which database within the cluster you connect to to issue
-     this command.  You can ignore the result returned by the function;
+     identify this backup operation. <function>pg_start_backup</> creates
+     a <firstterm>backup label</> file, called <filename>backup_label</>,
+     in the cluster directory with information about your backup. 
+     One good practice is to use the full path where you intend to put the 
+     backup dump file as.
+    </para>
+
+    <para>
+     It does not matter which database within the cluster you connect to to 
+     issue this command.  You can ignore the result returned by the function;
      but if it reports an error, deal with that before proceeding.
     </para>
    </listitem>
@@ -653,7 +677,7 @@ SELECT pg_stop_backup();
     nor between the end of the backup and <function>pg_stop_backup</>; a
     few minutes' delay won't hurt anything.  You
     must however be quite sure that these operations are carried out in
-    sequence and don't overlap.
+    sequence and do not overlap.
    </para>
 
    <para>
@@ -698,17 +722,17 @@ SELECT pg_stop_backup();
 
    <para>
     Since you have to keep around all the archived WAL files back to your
-    last full dump, your interval between full dumps would usually be chosen
-    based on how much storage you want to expend on archived WAL files.
-    You should also consider how long you are prepared to spend recovering,
-    if recovery should be necessary --- the system will have to replay all
-    those segments, and that could take awhile if it's been a long time
-    since the full dump.
+    last base backup, the interval between base backups should usually be
+    chosen based on how much storage you want to expend on archived WAL
+    files.  You should also consider how long you are prepared to spend
+    recovering, if recovery should be necessary --- the system will have to
+    replay all those WAL segments, and that could take awhile if it has
+    been a long time since the last base backup.
    </para>
 
    <para>
     It's also worth noting that the <function>pg_start_backup</> function
-    makes a file named <literal>backup_label</> in the database cluster
+    makes a file named <filename>backup_label</> in the database cluster
     directory, which is then removed again by <function>pg_stop_backup</>.
     This file will of course be archived as a part of your backup dump file.
     The backup label file includes the label string you gave to
@@ -721,11 +745,11 @@ SELECT pg_stop_backup();
 
    <para>
     It is also possible to make a backup dump while the postmaster is
-    stopped.  In this case, obviously you can't use
+    stopped.  In this case, you obviously cannot use
     <function>pg_start_backup</> or <function>pg_stop_backup</>, and
     you will therefore be left to your own devices to keep track of which
     backup dump is which and how far back the associated WAL files go.
-    It's generally better to follow the on-line backup procedure above.
+    It is generally better to follow the on-line backup procedure above.
    </para>
   </sect2>
 
@@ -738,12 +762,19 @@ SELECT pg_stop_backup();
   <orderedlist>
    <listitem>
     <para>
-     Stop the postmaster, if it's running, and clean out all existing files
-     under the cluster data directory and under the root directories of any
-     tablespaces you are using.
-     (If there are recent, unarchived WAL segment files in
-     <filename>pg_xlog/</> that you want to use during restore, move these aside
-     instead of removing them.)
+     Stop the postmaster, if it's running. If you have the space to do so,
+     copy the cluster data directory and any tablespaces to a temporary 
+     location so that you can reference them later. Note that this will
+     require that you have enough free space on your system to hold two
+     copies of your existing database. If you do not have enough space, 
+     you need at the least to backup the <filename>pg_xlog</> directory in
+     the cluster data directory as it may contain logs which were not archived
+     before the system went down.
+    </para>
+
+    <para>
+     Next, clean out all existing files under the cluster data directory and 
+     under the root directories of any tablespaces you are using.
     </para>
    </listitem>
    <listitem>
@@ -766,18 +797,18 @@ SELECT pg_stop_backup();
    </listitem>
    <listitem>
     <para>
-     If you had unarchived WAL segment files that you saved aside in step 1,
-     copy them into <filename>pg_xlog/</>.  (It's best to copy them, not move
-     them back in, so that you still have the unmodified files if the worst
-     happens and you have to start over.)
+     If you had unarchived WAL segment files that you saved in step 1,
+     copy them into <filename>pg_xlog/</>.  (It is best to copy them,
+     not move them, so that you still have the unmodified files if a
+     problem occurs and you have to start over.)
     </para>
    </listitem>
    <listitem>
     <para>
      Create a recovery command file <filename>recovery.conf</> in the cluster
-     data directory, as discussed below.  You may also want to temporarily
-     modify <filename>pg_hba.conf</> to prevent ordinary users from connecting
-     until you are sure the recovery has worked.
+     data directory (see <xref linkend="recovery-config-settings">). You may 
+     also want to temporarily modify <filename>pg_hba.conf</> to prevent 
+     ordinary users from connecting until you are sure the recovery has worked.
     </para>
    </listitem>
    <listitem>
@@ -801,20 +832,20 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    The key part of all this is to set up a recovery command file
-    that describes how you want to recover and how far the recovery
-    should run.  You can use <filename>recovery.conf.sample</> (normally
+    The key part of all this is to set up a recovery command file that
+    describes how you want to recover and how far the recovery should
+    run.  You can use <filename>recovery.conf.sample</> (normally
     installed in the installation <filename>share/</> directory) as a
     prototype.  The one thing that you absolutely must specify in
-    <filename>recovery.conf</> is the <literal>restore_command</>,
-    which tells how to get back archived WAL file segments.  Like
-    the <literal>archive_command</>, this is a shell command string.
-    It may contain <literal>%f</>,
-    which is replaced by the name of the desired log file, and <literal>%p</>,
+    <filename>recovery.conf</> is the <varname>restore_command</>,
+    which tells <productname>PostgreSQL</> how to get back archived
+    WAL file segments.  Like the <varname>archive_command</>, this is
+    a shell command string.  It may contain <literal>%f</>, which is
+    replaced by the name of the desired log file, and <literal>%p</>,
     which is replaced by the absolute path to copy the log file to.
     Write <literal>%%</> if you need to embed an actual <literal>%</>
-    character in the command.  The simplest useful command is something
-    like
+    character in the command.  The simplest useful command is
+    something like
 <programlisting>
 restore_command = 'cp /mnt/server/archivedir/%f %p'
 </programlisting>
@@ -844,34 +875,36 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
 
    <para>
     Normally, recovery will proceed through all available WAL segments,
-    thereby restoring the database to current time (or as close as we can
-    get given the available WAL segments).  But if you want to recover to
-    some previous point in time (say, right before the junior DBA dropped your
-    main transaction table), just specify the required stopping point in
-    <filename>recovery.conf</>.  You can specify the stop point, known as the
-    <quote>recovery target</>, either by date/time or by completion of a
-    specific transaction ID.  As of this writing 
-    only the date/time option is very usable, since there are no tools 
-    to help you identify with any accuracy which transaction ID to use.  
-   </para>
-   <para>
-    Note that the stop point must be after the ending time of the backup
-    (ie, the time of <function>pg_stop_backup</>).  You cannot use a base
-    backup to recover to a time when that backup was still going on.  (To
-    recover to such a time, you must go back to your previous base backup
-    and roll forward from there.)
+    thereby restoring the database to the current point in time (or as
+    close as we can get given the available WAL segments).  But if you want
+    to recover to some previous point in time (say, right before the junior
+    DBA dropped your main transaction table), just specify the required
+    stopping point in <filename>recovery.conf</>.  You can specify the stop
+    point, known as the <quote>recovery target</>, either by date/time or
+    by completion of a specific transaction ID.  As of this writing only
+    the date/time option is very usable, since there are no tools to help
+    you identify with any accuracy which transaction ID to use.
    </para>
 
-    <sect3 id="recovery-config-settings">
+   <note>
+     <para>
+      The stop point must be after the ending time of the base backup (the
+      time of <function>pg_stop_backup</>).  You cannot use a base backup
+      to recover to a time when that backup was still going on.  (To
+      recover to such a time, you must go back to your previous base backup
+      and roll forward from there.)
+     </para>
+    </note>
+
+    <sect3 id="recovery-config-settings" xreflabel="Recovery Settings">
      <title>Recovery Settings</title>
 
-       <para>
-        These settings can only be made in the 
-        <filename>recovery.conf</filename> file, and apply only for the
-        duration of the recovery. They must be reset for any subsequent 
-        recovery you wish to perform. They cannot be changed once recovery 
-        has begun.
-       </para>
+     <para>
+      These settings can only be made in the <filename>recovery.conf</>
+      file, and apply only for the duration of the recovery. They must be
+      reset for any subsequent recovery you wish to perform. They cannot be
+      changed once recovery has begun.
+     </para>
 
      <variablelist>
 
@@ -889,11 +922,10 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
         in the command. 
        </para>
        <para>
-        It is important for the command to return a zero exit status only if
-        it succeeds.  The command <emphasis>will</> be asked for file names
-        that are not present in the archive; 
-        it must return nonzero when so asked.
-        Examples:
+        It is important for the command to return a zero exit status only
+        if it succeeds.  The command <emphasis>will</> be asked for file
+        names that are not present in the archive; it must return nonzero
+        when so asked.  Examples:
 <programlisting>
 restore_command = 'cp /mnt/server/archivedir/%f "%p"'
 restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
@@ -996,7 +1028,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     Tuesday evening, and are up and running.  In <emphasis>this</> history of
     the database universe, you never dropped the table at all.  But suppose
     you later realize this wasn't such a great idea after all, and would like
-    to return to some later point in the original history?  You won't be able
+    to return to some later point in the original history.  You won't be able
     to if, while your database was up-and-running, it overwrote some of the
     sequence of WAL segment files that led up to the time you now wish you
     could get back to.  So you really want to distinguish the series of
@@ -1060,9 +1092,8 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     <para>
      Operations on non-btree indexes (hash, R-tree, and GiST indexes) are
      not presently WAL-logged, so replay will not update these index types.
-     The recommended workaround, if you use any non-btree indexes, is to
-     manually <command>REINDEX</> each such index after completing a
-     recovery operation.
+     The recommended workaround is to manually <command>REINDEX</> each
+     such index after completing a recovery operation.
     </para>
    </listitem>
   </itemizedlist>
