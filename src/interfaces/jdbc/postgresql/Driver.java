@@ -8,7 +8,7 @@ import java.util.*;
 // working quite to plan, so the class exists in the source, but it's not
 // quite implemented yet. Peter May 17 1999.
 //
-//import postgresql.util.PSQLException;
+import postgresql.util.PSQLException;
 
 /**
  * The Java SQL framework allows for multiple database drivers.  Each
@@ -108,11 +108,11 @@ public class Driver implements java.sql.Driver
 	con.openConnection (host(), port(), props, database(), url, this);
 	return (java.sql.Connection)con;
     } catch(ClassNotFoundException ex) {
-	//throw new PSQLException("postgresql.jvm.version",ex);
-	throw new SQLException("The postgresql.jar file does not contain the correct JDBC classes for this JVM. Try rebuilding.\nException thrown was "+ex.toString());
+	throw new PSQLException("postgresql.jvm.version",ex);
+	//throw new SQLException("The postgresql.jar file does not contain the correct JDBC classes for this JVM. Try rebuilding.\nException thrown was "+ex.toString());
     } catch(Exception ex2) {
-	//throw new PSQLException("postgresql.unusual",ex2);
-	throw new SQLException("Something unusual has occured to cause the driver to fail. Please report this exception: "+ex2.toString());
+	throw new PSQLException("postgresql.unusual",ex2);
+	//throw new SQLException("Something unusual has occured to cause the driver to fail. Please report this exception: "+ex2.toString());
     }
     // The old call - remove before posting
     //return new Connection (host(), port(), props, database(), url, this);
@@ -355,8 +355,8 @@ public class Driver implements java.sql.Driver
      */
     public static SQLException notImplemented()
     {
-	//return new PSQLException("postgresql.unimplemented");
-	return new SQLException("This method is not yet implemented.");
+	return new PSQLException("postgresql.unimplemented");
+	//return new SQLException("This method is not yet implemented.");
     }
 }
 

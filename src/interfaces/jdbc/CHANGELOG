@@ -1,3 +1,7 @@
+Tue May 18 00:00:00 BST 1999
+	- Just after committing, I realised why internationalisation isn't
+	  working. This is now fixed (in the Makefile).
+
 Mon May 17 23:40:00 BST 1999
 	- PG_Stream.close() now attempts to send the close connection message
 	  to the backend before closing the streams

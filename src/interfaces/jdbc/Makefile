@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.12 1999/01/25 21:22:02 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/Makefile,v 1.13 1999/05/17 22:58:18 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -69,6 +69,8 @@ OBJ_COMMON=	postgresql/Connection.class \
 		postgresql/Field.class \
 		postgresql/PG_Stream.class \
 		postgresql/ResultSet.class \
+		postgresql/errors.properties \
+		postgresql/errors_fr.properties \
 		postgresql/fastpath/Fastpath.class \
 		postgresql/fastpath/FastpathArg.class \
 		postgresql/geometric/PGbox.class \
@@ -83,6 +85,7 @@ OBJ_COMMON=	postgresql/Connection.class \
 		postgresql/util/PGmoney.class \
 		postgresql/util/PGobject.class \
 		postgresql/util/PGtokenizer.class \
+		postgresql/util/PSQLException.class \
 		postgresql/util/Serialize.class \
 		postgresql/util/UnixCrypt.class
 
@@ -140,7 +143,8 @@ jdbc2:	$(OBJ_COMMON) $(OBJ_JDBC2) postgresql.jar
 #	directory. We use this later for compiling the dual-mode driver.
 #
 postgresql.jar: $(OBJ) $(OBJ_COMMON)
-	$(JAR) -c0f $@ $$($(FIND) postgresql -name "*.class" -print)
+	$(JAR) -c0f $@ $$($(FIND) postgresql -name "*.class" -print) \
+		$(wildcard postgresql/*.properties)
 
 # This rule removes any temporary and compiled files from the source tree.
 clean:

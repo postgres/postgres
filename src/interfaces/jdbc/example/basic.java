@@ -48,6 +48,7 @@ public class basic
     st.close();
     db.close();
     
+    //throw postgresql.Driver.notImplemented();
   }
   
   /**
