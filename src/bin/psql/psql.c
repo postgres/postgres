@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.19 1996/08/14 05:44:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.20 1996/08/21 00:22:41 julian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1213,7 +1213,7 @@ main(int argc, char **argv)
       settings.opt.tableOpt = optarg;
       break;
     case 'x':
-      settings.opt.expanded = 0;
+      settings.opt.expanded = 1;
       break;
     default:
       usage(argv[0]);
