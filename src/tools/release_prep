@@ -1,0 +1,58 @@
+#!/bin/sh
+#
+# release_prep: prepare the Postgres source tree for distribution
+#
+# This script should be run after checking out a fileset from the Postgres
+# CVS repository, and just before creating a tarfile from the checked-out
+# fileset.  It does cleanup tasks to ensure that we have a good tarball.
+#
+# Run the script from the toplevel Postgres directory, ie, do
+#	cd pgsql
+#	src/tools/release_prep
+# (Right now, the cleanup tasks are all in the src subdirectory, but we
+# might want to add housekeeping in doc too?)
+#
+# The script's tasks are:
+# 1. Run configure to prepare usable Makefiles on the local system.
+# 2. Generate distribution copies of some derived files such as gram.c.
+#    (We do this so that recipients of the distribution don't have to have
+#    tools that can create these files.)
+#    Note we force these files to be recreated, to ensure they will have
+#    newer timestamps than their master files.
+# 3. "make distclean" to get rid of the configure outputs, as well as any
+#    other cruft that might be laying about.
+
+# Select make to use --- default gmake, can be overridden by env var
+MAKE=${MAKE:-gmake}
+
+cd src
+
+# Configure ... should we run autoconf here???
+
+./configure
+
+# Generate parser's gram and lex files.
+
+cd backend/parser
+
+rm -f gram.c parse.h scan.c
+
+$MAKE gram.c parse.h scan.c
+
+cd ../..
+
+# Generate ecpg preprocessor's gram and lex files.
+
+cd interfaces/ecpg/preproc
+
+rm -f preproc.c preproc.h pgc.c
+
+$MAKE preproc.c preproc.h pgc.c
+
+cd ../../..
+
+# Clean up
+
+$MAKE distclean
+
+exit 0
