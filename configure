@@ -12018,7 +12018,7 @@ cat >>confdefs.h <<\_ACEOF
 #define USE_PGTZ 1
 _ACEOF
 
-PGTZ=yes
+USE_PGTZ=yes
  ;;
 esac
 
