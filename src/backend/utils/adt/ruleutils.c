@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.124 2002/09/19 23:40:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.124.2.1 2003/01/08 22:54:36 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -687,6 +687,11 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 						break;
 				}
 				appendStringInfo(&buf, " ON DELETE %s", string);
+
+				if (conForm->condeferrable)
+					appendStringInfo(&buf, " DEFERRABLE");
+				if (conForm->condeferred)
+					appendStringInfo(&buf, " INITIALLY DEFERRED");
 
 				break;
 			}
