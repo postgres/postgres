@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.36 2003/08/04 02:39:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gistget.c,v 1.36.4.1 2004/08/27 17:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,16 +234,16 @@ gistindex_keytest(IndexTuple tuple,
 							  key[0].sk_attno,
 							  giststate->tupdesc,
 							  &isNull);
+		/* is the index entry NULL? */
 		if (isNull)
 		{
 			/* XXX eventually should check if SK_ISNULL */
 			return false;
 		}
-
-/* this code from backend/access/common/indexvalid.c. But why and what???
+		/* is the compared-to datum NULL? */
 		if (key[0].sk_flags & SK_ISNULL)
 			return false;
-*/
+
 		gistdentryinit(giststate, key[0].sk_attno - 1, &de,
 					   datum, r, p, offset,
 					   IndexTupleSize(tuple) - sizeof(IndexTupleData),
