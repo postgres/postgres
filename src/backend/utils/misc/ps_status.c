@@ -2,10 +2,10 @@
  * ps_status.c
  *
  * Routines to support changing the ps display of PostgreSQL backends
- * to contain some useful information. Differs wildly across
+ * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.5 2001/10/05 15:47:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.6 2001/10/21 03:25:35 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -15,8 +15,6 @@
 #include "postgres.h"
 
 #include <unistd.h>
-
-
 #ifdef HAVE_SYS_PSTAT_H
 #include <sys/pstat.h>			/* for HP-UX */
 #endif
@@ -26,7 +24,6 @@
 #endif
 
 #include "miscadmin.h"
-
 #include "utils/ps_status.h"
 
 extern char **environ;
@@ -91,14 +88,29 @@ static size_t ps_buffer_size;	/* space determined at run time */
 
 static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
 
+/* save the original argv[] location here */
+static int	save_argc;
+static char **save_argv;
 
 
 /*
- * Call this once at backend start.
+ * Call this early in startup to save the original argc/argv values.
+ * argv[] will not be overwritten by this routine, but may be overwritten
+ * during init_ps_display.
  */
 void
-init_ps_display(int argc, char *argv[],
-				const char *username, const char *dbname,
+save_ps_display_args(int argc, char *argv[])
+{
+	save_argc = argc;
+	save_argv = argv;
+}
+
+/*
+ * Call this once during subprocess startup to set the identification
+ * values.  At this point, the original argv[] array may be overwritten.
+ */
+void
+init_ps_display(const char *username, const char *dbname,
 				const char *host_info)
 {
 #ifndef PS_USE_NONE
@@ -109,9 +121,13 @@ init_ps_display(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 		return;
 
+	/* no ps display if you didn't call save_ps_display_args() */
+	if (!save_argv)
+		return;
+
 #ifdef PS_USE_CHANGE_ARGV
-	argv[0] = ps_buffer;
-	argv[1] = NULL;
+	save_argv[0] = ps_buffer;
+	save_argv[1] = NULL;
 #endif	 /* PS_USE_CHANGE_ARGV */
 
 #ifdef PS_USE_CLOBBER_ARGV
@@ -127,9 +143,9 @@ init_ps_display(int argc, char *argv[],
 		/*
 		 * check for contiguous argv strings
 		 */
-		for (i = 0; i < argc; i++)
-			if (i == 0 || end_of_area + 1 == argv[i])
-				end_of_area = argv[i] + strlen(argv[i]);
+		for (i = 0; i < save_argc; i++)
+			if (i == 0 || end_of_area + 1 == save_argv[i])
+				end_of_area = save_argv[i] + strlen(save_argv[i]);
 
 		/*
 		 * check for contiguous environ strings following argv
@@ -142,13 +158,14 @@ init_ps_display(int argc, char *argv[],
 		{
 			ps_buffer = NULL;
 			ps_buffer_size = 0;
+			return;
 		}
 		else
 		{
-			ps_buffer = argv[0];
-			ps_buffer_size = end_of_area - argv[0] - 1;
+			ps_buffer = save_argv[0];
+			ps_buffer_size = end_of_area - save_argv[0] - 1;
 		}
-		argv[1] = NULL;
+		save_argv[1] = NULL;
 
 		/*
 		 * move the environment out of the way
@@ -192,7 +209,7 @@ init_ps_display(int argc, char *argv[],
  * indication of what you're currently doing passed in the argument.
  */
 void
-set_ps_display(const char *value)
+set_ps_display(const char *activity)
 {
 #ifndef PS_USE_NONE
 	/* no ps display for stand-alone backend */
@@ -205,8 +222,8 @@ set_ps_display(const char *value)
 		return;
 #endif
 
-	/* Update ps_buffer to contain both fixed part and value */
-	StrNCpy(ps_buffer + ps_buffer_fixed_size, value,
+	/* Update ps_buffer to contain both fixed part and activity */
+	StrNCpy(ps_buffer + ps_buffer_fixed_size, activity,
 			ps_buffer_size - ps_buffer_fixed_size);
 
 	/* Transmit new setting to kernel, if necessary */
@@ -247,7 +264,7 @@ set_ps_display(const char *value)
 
 /*
  * Returns what's currently in the ps display, in case someone needs
- * it.	Note that only the variable part is returned.
+ * it.	Note that only the activity part is returned.
  */
 const char *
 get_ps_display(void)

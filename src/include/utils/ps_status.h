@@ -4,20 +4,21 @@
  *
  * Declarations for backend/utils/misc/ps_status.c
  *
+ * $Id: ps_status.h,v 1.20 2001/10/21 03:25:36 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
 
 #ifndef PS_STATUS_H
 #define PS_STATUS_H
 
-void init_ps_display(int argc, char *argv[],
-				const char *username, const char *dbname,
-				const char *host_info);
+extern void save_ps_display_args(int argc, char *argv[]);
 
-void
-			set_ps_display(const char *value);
+extern void init_ps_display(const char *username, const char *dbname,
+							const char *host_info);
 
-const char *
-			get_ps_display(void);
+extern void set_ps_display(const char *activity);
+
+extern const char *get_ps_display(void);
 
 #endif	 /* PS_STATUS_H */

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.93 2001/09/29 04:02:26 tgl Exp $
+ * $Id: miscadmin.h,v 1.94 2001/10/21 03:25:35 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -121,6 +121,7 @@ extern struct Port *MyProcPort;
 extern long MyCancelKey;
 
 extern char OutputFileName[];
+extern char pg_pathname[];
 
 /*
  * done in storage/backendid.h for now.

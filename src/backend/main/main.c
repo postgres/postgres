@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.45 2001/06/03 14:53:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.46 2001/10/21 03:25:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,12 +39,15 @@
 #include "miscadmin.h"
 #include "bootstrap/bootstrap.h"
 #include "tcop/tcopprot.h"
+#include "utils/ps_status.h"
 
 
 
 int
 main(int argc, char *argv[])
 {
+	char	  **new_argv;
+	int			i;
 	int			len;
 	struct passwd *pw;
 	char	   *pw_name_persist;
@@ -91,6 +94,12 @@ main(int argc, char *argv[])
 	beos_startup(argc, argv);
 #endif
 
+	/*
+	 * Not-quite-so-platform-specific startup environment checks. Still
+	 * best to minimize these.
+	 */
+
+	/* Initialize NLS settings so we can give localized error messages */
 #ifdef ENABLE_NLS
 #ifdef LC_MESSAGES
 	setlocale(LC_MESSAGES, "");
@@ -98,11 +107,6 @@ main(int argc, char *argv[])
 	bindtextdomain("postgres", LOCALEDIR);
 	textdomain("postgres");
 #endif
-
-	/*
-	 * Not-quite-so-platform-specific startup environment checks. Still
-	 * best to minimize these.
-	 */
 
 	/*
 	 * Skip permission checks if we're just trying to do --help or --version;
@@ -165,25 +169,46 @@ main(int argc, char *argv[])
 #endif
 
 	/*
+	 * Remember the physical location of the initially given argv[] array,
+	 * since on some platforms that storage must be overwritten in order
+	 * to set the process title for ps.  Then make a copy of the argv[]
+	 * array for subsequent use, so that argument parsing doesn't get
+	 * affected if init_ps_display overwrites the original argv[].
+	 *
+	 * (NB: do NOT think to remove this copying, even though postmaster.c
+	 * finishes looking at argv[] long before we ever consider changing
+	 * the ps display.  On some platforms, getopt(3) keeps pointers into
+	 * the argv array, and will get horribly confused when it is re-called
+	 * to analyze a subprocess' argument string if the argv storage has
+	 * been clobbered meanwhile.)
+	 */
+	save_ps_display_args(argc, argv);
+
+	new_argv = (char **) malloc((argc + 1) * sizeof(char *));
+	for (i = 0; i < argc; i++)
+		new_argv[i] = strdup(argv[i]);
+	new_argv[argc] = NULL;
+
+	/*
 	 * Now dispatch to one of PostmasterMain, PostgresMain, or
 	 * BootstrapMain depending on the program name (and possibly first
 	 * argument) we were called with.  The lack of consistency here is
 	 * historical.
 	 */
-	len = strlen(argv[0]);
+	len = strlen(new_argv[0]);
 
-	if (len >= 10 && strcmp(argv[0] + len - 10, "postmaster") == 0)
+	if (len >= 10 && strcmp(new_argv[0] + len - 10, "postmaster") == 0)
 	{
 		/* Called as "postmaster" */
-		exit(PostmasterMain(argc, argv));
+		exit(PostmasterMain(argc, new_argv));
 	}
 
 	/*
 	 * If the first argument is "-boot", then invoke bootstrap mode. Note
 	 * we remove "-boot" from the arguments passed on to BootstrapMain.
 	 */
-	if (argc > 1 && strcmp(argv[1], "-boot") == 0)
-		exit(BootstrapMain(argc - 1, argv + 1));
+	if (argc > 1 && strcmp(new_argv[1], "-boot") == 0)
+		exit(BootstrapMain(argc - 1, new_argv + 1));
 
 	/*
 	 * Otherwise we're a standalone backend.  Invoke PostgresMain,
@@ -194,11 +219,11 @@ main(int argc, char *argv[])
 	if (pw == NULL)
 	{
 		fprintf(stderr, gettext("%s: invalid current euid %d\n"),
-				argv[0], (int) geteuid());
+				new_argv[0], (int) geteuid());
 		exit(1);
 	}
 	/* Allocate new memory because later getpwuid() calls can overwrite it */
 	pw_name_persist = strdup(pw->pw_name);
 
-	exit(PostgresMain(argc, argv, argc, argv, pw_name_persist));
+	exit(PostgresMain(argc, new_argv, pw_name_persist));
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.237 2001/10/19 18:19:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.238 2001/10/21 03:25:35 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -86,7 +86,6 @@ bool		Warn_restart_ready = false;
 bool		InError = false;
 
 static bool EchoQuery = false;	/* default don't echo */
-char		pg_pathname[MAXPGPATH];
 FILE	   *StatFp = NULL;
 
 /* ----------------
@@ -1097,17 +1096,14 @@ usage(char *progname)
  * PostgresMain
  *	   postgres main loop -- all backends, interactive or otherwise start here
  *
- * argc/argv are the command line arguments to be used.  When being forked
- * by the postmaster, these are not the original argv array of the process.
- * real_argc/real_argv point to the original argv array, which is needed by
- * `ps' display on some platforms. username is the (possibly authenticated)
- * PostgreSQL user name to be used for the session.
+ * argc/argv are the command line arguments to be used.  (When being forked
+ * by the postmaster, these are not the original argv array of the process.)
+ * username is the (possibly authenticated) PostgreSQL user name to be used
+ * for the session.
  * ----------------------------------------------------------------
  */
 int
-PostgresMain(int argc, char *argv[],
-			 int real_argc, char *real_argv[],
-			 const char *username)
+PostgresMain(int argc, char *argv[], const char *username)
 {
 	int			flag;
 
@@ -1582,6 +1578,14 @@ PostgresMain(int argc, char *argv[],
 		}
 
 		/*
+		 * On some systems our dynloader code needs the executable's
+		 * pathname.  (If under postmaster, this was done already.)
+		 */
+		if (FindExec(pg_pathname, argv[0], "postgres") < 0)
+			elog(FATAL, "%s: could not locate executable, bailing out...",
+				 argv[0]);
+
+		/*
 		 * Validate we have been given a reasonable-looking DataDir
 		 * (if under postmaster, assume postmaster did this already).
 		 */
@@ -1611,11 +1615,6 @@ PostgresMain(int argc, char *argv[],
 #ifdef CYR_RECODE
 	SetCharSet();
 #endif
-
-	/* On some systems our dynloader code needs the executable's pathname */
-	if (FindExec(pg_pathname, real_argv[0], "postgres") < 0)
-		elog(FATAL, "%s: could not locate executable, bailing out...",
-			 real_argv[0]);
 
 	/*
 	 * General initialization.
@@ -1649,7 +1648,7 @@ PostgresMain(int argc, char *argv[],
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.237 $ $Date: 2001/10/19 18:19:41 $\n");
+		puts("$Revision: 1.238 $ $Date: 2001/10/21 03:25:35 $\n");
 	}
 
 	/*

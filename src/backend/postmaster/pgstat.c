@@ -16,7 +16,7 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.11 2001/10/16 22:35:27 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.12 2001/10/21 03:25:35 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -95,8 +95,8 @@ static char					pgStat_fname[MAXPGPATH];
  * Local function forward declarations
  * ----------
  */
-static void		pgstat_main(int real_argc, char *real_argv[]);
-static void		pgstat_recvbuffer(int real_argc, char *real_argv[]);
+static void		pgstat_main(void);
+static void		pgstat_recvbuffer(void);
 static void		pgstat_die(SIGNAL_ARGS);
 
 static int		pgstat_add_backend(PgStat_MsgHdr *msg);
@@ -246,13 +246,10 @@ pgstat_init(void)
  *
  *	Called from postmaster at startup or after an existing collector
  *	died.  Fire up a fresh statistics collector.
- *
- *	The process' original argc and argv are passed, because they are
- *	needed by init_ps_display() on some platforms.
  * ----------
  */
 int
-pgstat_start(int real_argc, char *real_argv[])
+pgstat_start(void)
 {
 	/*
 	 * Do nothing if no collector needed
@@ -316,7 +313,7 @@ pgstat_start(int real_argc, char *real_argv[])
 	/* Close the postmaster's sockets, except for pgstat link */
 	ClosePostmasterPorts(false);
 
-	pgstat_main(real_argc, real_argv);
+	pgstat_main();
 
 	exit(0);
 }
@@ -1104,7 +1101,7 @@ pgstat_send(void *msg, int len)
  * ----------
  */
 static void
-pgstat_main(int real_argc, char *real_argv[])
+pgstat_main(void)
 {
 	PgStat_Msg	msg;
 	fd_set			rfds;
@@ -1176,7 +1173,7 @@ pgstat_main(int real_argc, char *real_argv[])
 		default:
 			/* parent becomes buffer process */
 			close(pgStatPipe[0]);
-			pgstat_recvbuffer(real_argc, real_argv);
+			pgstat_recvbuffer();
 			exit(0);
 	}
 
@@ -1192,7 +1189,7 @@ pgstat_main(int real_argc, char *real_argv[])
 	 * WARNING: On some platforms the environment will be moved around to
 	 * make room for the ps display string.
 	 */
-	init_ps_display(real_argc, real_argv, "stats collector process", "", "");
+	init_ps_display("stats collector process", "", "");
 	set_ps_display("");
 
 	/*
@@ -1451,7 +1448,7 @@ pgstat_main(int real_argc, char *real_argv[])
  * ----------
  */
 static void
-pgstat_recvbuffer(int real_argc, char *real_argv[])
+pgstat_recvbuffer(void)
 {
 	fd_set				rfds;
 	fd_set				wfds;
@@ -1477,7 +1474,7 @@ pgstat_recvbuffer(int real_argc, char *real_argv[])
 	 * WARNING: On some platforms the environment will be moved around to
 	 * make room for the ps display string.
 	 */
-	init_ps_display(real_argc, real_argv, "stats buffer process", "", "");
+	init_ps_display("stats buffer process", "", "");
 	set_ps_display("");
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.60 2001/09/21 03:32:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.61 2001/10/21 03:25:35 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -55,7 +55,9 @@ char	   *DataDir = NULL;
 
 Relation	reldesc;			/* current relation descriptor */
 
-char		OutputFileName[MAXPGPATH] = "";
+char		OutputFileName[MAXPGPATH];
+
+char		pg_pathname[MAXPGPATH];	/* full path to postgres executable */
 
 BackendId	MyBackendId;
 

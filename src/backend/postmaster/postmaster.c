@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.249 2001/10/19 20:47:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.250 2001/10/21 03:25:35 tgl Exp $
  *
  * NOTES
  *
@@ -153,8 +153,6 @@ int			MaxBackends = DEF_MAXBACKENDS;
 
 
 static char *progname = (char *) NULL;
-static char **real_argv;
-static int	real_argc;
 
 /* flag to indicate that SIGHUP arrived during server loop */
 static volatile bool got_SIGHUP = false;
@@ -227,9 +225,6 @@ extern int	optind,
 			opterr;
 #ifdef HAVE_INT_OPTRESET
 extern int	optreset;
-#endif
-#ifdef HAVE_INT___GETOPT_INITIALIZED
-extern int	__getopt_initialized;
 #endif
 
 /*
@@ -337,8 +332,6 @@ PostmasterMain(int argc, char *argv[])
 	*original_extraoptions = '\0';
 
 	progname = argv[0];
-	real_argv = argv;
-	real_argc = argc;
 
 	/*
 	 * Catch standard options before doing much else.  This even works on
@@ -444,10 +437,7 @@ PostmasterMain(int argc, char *argv[])
 	/* reset getopt(3) to rescan arguments */
 	optind = 1;
 #ifdef HAVE_INT_OPTRESET
-	optreset = 1;				/* some systems need this */
-#endif
-#ifdef HAVE_INT___GETOPT_INITIALIZED
-	__getopt_initialized = 0;	/* glibc needs this */
+	optreset = 1;				/* some systems need this too */
 #endif
 
 	while ((opt = getopt(argc, argv, "A:a:B:b:c:D:d:Fh:ik:lm:MN:no:p:Ss-:")) != EOF)
@@ -599,10 +589,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	optind = 1;
 #ifdef HAVE_INT_OPTRESET
-	optreset = 1;				/* some systems need this */
-#endif
-#ifdef HAVE_INT___GETOPT_INITIALIZED
-	__getopt_initialized = 0;	/* glibc needs this */
+	optreset = 1;				/* some systems need this too */
 #endif
 
 	/* For debugging: display postmaster environment */
@@ -618,6 +605,13 @@ PostmasterMain(int argc, char *argv[])
 			fprintf(stderr, "\t%s\n", *p);
 		fprintf(stderr, "-----------------------------------------\n");
 	}
+
+	/*
+	 * On some systems our dynloader code needs the executable's pathname.
+	 */
+	if (FindExec(pg_pathname, progname, "postgres") < 0)
+		elog(FATAL, "%s: could not locate executable, bailing out...",
+			 progname);
 
 	/*
 	 * Initialize SSL library, if specified.
@@ -742,7 +736,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (pgstat_init() < 0)
 		ExitPostmaster(1);
-	if (pgstat_start(real_argc, real_argv) < 0)
+	if (pgstat_start() < 0)
 		ExitPostmaster(1);
 
 	/*
@@ -1570,7 +1564,7 @@ reaper(SIGNAL_ARGS)
 			else if (WIFSIGNALED(exitstatus))
 				elog(DEBUG, "statistics collector was terminated by signal %d",
 					 WTERMSIG(exitstatus));
-			pgstat_start(real_argc, real_argv);
+			pgstat_start();
 			continue;
 		}
 
@@ -1849,6 +1843,17 @@ BackendStartup(Port *port)
 	MyCancelKey = PostmasterRandom();
 
 	/*
+	 * Make room for backend data structure.  Better before the fork()
+	 * so we can handle failure cleanly.
+	 */
+	bn = (Backend *) malloc(sizeof(Backend));
+	if (!bn)
+	{
+		elog(DEBUG, "out of memory; connection startup aborted");
+		return STATUS_ERROR;
+	}
+
+	/*
 	 * Flush stdio channels just before fork, to avoid double-output
 	 * problems. Ideally we'd use fflush(NULL) here, but there are still a
 	 * few non-ANSI stdio libraries out there (like SunOS 4.1.x) that
@@ -1863,17 +1868,6 @@ BackendStartup(Port *port)
 	/* Specific beos actions before backend startup */
 	beos_before_backend_startup();
 #endif
-
-	/*
-	 * Make room for backend data structure.  Better before the fork()
-	 * so we can handle failure cleanly.
-	 */
-	bn = (Backend *) malloc(sizeof(Backend));
-	if (!bn)
-	{
-		elog(DEBUG, "out of memory; connection startup aborted");
-		return STATUS_ERROR;
-	}
 
 	pid = fork();
 
@@ -1912,8 +1906,8 @@ BackendStartup(Port *port)
 
 	/* in parent, normal */
 	if (DebugLvl >= 1)
-		elog(DEBUG, "BackendStartup: pid=%d user=%s db=%s socket=%d\n",
-			 pid, port->user, port->database, port->sock);
+		elog(DEBUG, "BackendStartup: forked pid=%d socket=%d",
+			 pid, port->sock);
 
 	/*
 	 * Everything's been successful, it's safe to add this backend to our
@@ -2103,8 +2097,7 @@ DoBackend(Port *port)
 	 * optarg or getenv() from above will be invalid after this call.
 	 * Better use strdup or something similar.
 	 */
-	init_ps_display(real_argc, real_argv, port->user, port->database,
-					remote_host);
+	init_ps_display(port->user, port->database, remote_host);
 	set_ps_display("authentication");
 
 	/*
@@ -2223,7 +2216,7 @@ DoBackend(Port *port)
 		fprintf(stderr, ")\n");
 	}
 
-	return (PostgresMain(ac, av, real_argc, real_argv, port->user));
+	return (PostgresMain(ac, av, port->user));
 }
 
 /*
@@ -2469,7 +2462,7 @@ SSDataBase(int xlop)
 				statmsg = "??? subprocess";
 				break;
 		}
-		init_ps_display(real_argc, real_argv, statmsg, "", "");
+		init_ps_display(statmsg, "", "");
 		set_ps_display("");
 
 		/* Set up command-line arguments for subprocess */
@@ -2568,7 +2561,7 @@ CreateOptsFile(int argc, char *argv[])
 	FILE	   *fp;
 	unsigned	i;
 
-	if (FindExec(fullprogname, argv[0], "postmaster") == -1)
+	if (FindExec(fullprogname, argv[0], "postmaster") < 0)
 		return false;
 
 	filename = palloc(strlen(DataDir) + 20);
