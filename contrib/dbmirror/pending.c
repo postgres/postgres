@@ -1,6 +1,6 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.8 2002/11/22 16:04:41 momjian Exp $
+ * $Id: pending.c,v 1.9 2002/11/22 16:25:29 tgl Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -253,7 +253,7 @@ storeKeyInfo(char *cpTableName, HeapTuple tTupleData,
 		return -1;
 	}
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "%s", cpKeyData);
+	elog(NOTICE, "KeyData: %s", cpKeyData);
 #endif
 	saPlanData[0] = PointerGetDatum(cpKeyData);
 
@@ -268,7 +268,7 @@ storeKeyInfo(char *cpTableName, HeapTuple tTupleData,
 		return -1;
 	}
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "INSERT SUCCESFULL");
+	elog(NOTICE, "Insert successful");
 #endif
 
 	return 0;
@@ -351,7 +351,7 @@ storeData(char *cpTableName, HeapTuple tTupleData, TupleDesc tTupleDesc,
 		return -1;
 	}
 #if defined DEBUG_OUTPUT
-	elog(NOTICE, "INSERT SUCCESFULL");
+	elog(NOTICE, "Insert successful");
 #endif
 
 	return 0;
@@ -437,7 +437,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 		cpFieldName = DatumGetPointer(NameGetDatum(&tTupleDesc->attrs
 										 [iColumnCounter - 1]->attname));
 #if defined DEBUG_OUTPUT
-		elog(NOTICE, "%s", cpFieldName);
+		elog(NOTICE, "FieldName: %s", cpFieldName);
 #endif
 		while (iDataBlockSize - iUsedDataBlock < strlen(cpFieldName) + 6)
 		{
@@ -465,7 +465,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 
 		}
 #if defined DEBUG_OUTPUT
-		elog(NOTICE, "%s", cpFieldData);
+		elog(NOTICE, "FieldData: %s", cpFieldData);
 		elog(NOTICE, "Starting format loop");
 #endif
 		while (*cpUnFormatedPtr != 0)
@@ -499,7 +499,7 @@ packageData(HeapTuple tTupleData, TupleDesc tTupleDesc,
 		sprintf(cpFormatedPtr, "' ");
 		iUsedDataBlock = iUsedDataBlock + 2;
 #if defined DEBUG_OUTPUT
-		elog(NOTICE, "%s", cpDataBlock);
+		elog(NOTICE, "DataBlock: %s", cpDataBlock);
 #endif
 
 	}							/* for iColumnCounter  */

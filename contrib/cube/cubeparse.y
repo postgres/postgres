@@ -200,7 +200,7 @@ int cube_yyerror ( char *msg ) {
 	  );
 
   reset_parse_buffer();     
-  elog(ERROR, buf);
+  elog(ERROR, "%s", buf);
   return 0;
 }
 

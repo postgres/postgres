@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.66 2002/10/19 22:10:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.67 2002/11/22 16:25:32 tgl Exp $
  *
  **********************************************************************/
 
@@ -1303,7 +1303,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	 * and return to the caller (if not catched)
 	 ************************************************************/
 	UTF_BEGIN;
-	elog(level, UTF_U2E(argv[2]));
+	elog(level, "%s", UTF_U2E(argv[2]));
 	UTF_END;
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	return TCL_OK;
