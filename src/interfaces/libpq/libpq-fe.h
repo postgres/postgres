@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.114 2004/12/02 15:32:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.115 2004/12/02 23:20:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -279,6 +279,9 @@ extern SSL *PQgetssl(PGconn *conn);
 extern void *PQgetssl(PGconn *conn);
 #endif
 
+/* Tell libpq whether it needs to initialize OpenSSL */
+extern void PQinitSSL(int do_init);
+
 /* Set verbosity for PQerrorMessage and PQresultErrorMessage */
 extern PGVerbosity PQsetErrorVerbosity(PGconn *conn, PGVerbosity verbosity);
 
@@ -301,11 +304,9 @@ extern PQnoticeProcessor PQsetNoticeProcessor(PGconn *conn,
  *	   Only required for multithreaded apps that use kerberos
  *	   both within their app and for postgresql connections.
  */
-typedef void (pgthreadlock_t) (int acquire);
+typedef void (*pgthreadlock_t) (int acquire);
 
-extern pgthreadlock_t *PQregisterThreadLock(pgthreadlock_t *newhandler);
-
-extern void PQinitSSL(int do_init);
+extern pgthreadlock_t PQregisterThreadLock(pgthreadlock_t newhandler);
 
 /* === in fe-exec.c === */
 
@@ -494,8 +495,6 @@ extern int	PQdsplen(const unsigned char *s, int encoding);
 
 /* Get encoding id from environment variable PGCLIENTENCODING */
 extern int	PQenv2encoding(void);
-
-/* === in fe-secure.c === */
 
 #ifdef __cplusplus
 }

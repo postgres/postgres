@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.97 2004/12/02 15:32:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.98 2004/12/02 23:20:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,13 +379,13 @@ extern int pqPacketSend(PGconn *conn, char pack_type,
 			 const void *buf, size_t buf_len);
 
 #ifdef ENABLE_THREAD_SAFETY
-extern pgthreadlock_t *g_threadlock;
+extern pgthreadlock_t pg_g_threadlock;
 
-#define pglock_thread() g_threadlock(true);
-#define pgunlock_thread() g_threadlock(false);
+#define pglock_thread()		pg_g_threadlock(true)
+#define pgunlock_thread()	pg_g_threadlock(false)
 #else
-#define pglock_thread() ((void)0)
-#define pgunlock_thread() ((void)0)
+#define pglock_thread()		((void) 0)
+#define pgunlock_thread()	((void) 0)
 #endif
 
 
@@ -476,13 +476,10 @@ extern void pqsecure_close(PGconn *);
 extern ssize_t pqsecure_read(PGconn *, void *ptr, size_t len);
 extern ssize_t pqsecure_write(PGconn *, const void *ptr, size_t len);
 
-#ifdef USE_SSL
-extern bool pq_initssllib;
-#endif
-
 #ifdef ENABLE_THREAD_SAFETY
-int pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
-int pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending);
+extern int	pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending);
+extern void pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending,
+							 bool got_epipe);
 #endif
 
 /*

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.58 2004/12/02 15:32:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.59 2004/12/02 23:20:21 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -147,7 +147,7 @@ static void SSLerrfree(char *buf);
 #endif
 
 #ifdef USE_SSL
-bool		pq_initssllib = true;
+static bool pq_initssllib = true;
 
 static SSL_CTX *SSL_context = NULL;
 #endif
@@ -211,6 +211,19 @@ KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
 /* ------------------------------------------------------------ */
 /*			 Procedures common to all secure sessions			*/
 /* ------------------------------------------------------------ */
+
+
+/*
+ * Exported (but as yet undocumented) function to allow application to
+ * tell us it's already initialized OpenSSL.
+ */
+void
+PQinitSSL(int do_init)
+{
+#ifdef USE_SSL
+	pq_initssllib = do_init;
+#endif
+}
 
 /*
  *	Initialize global context
@@ -377,8 +390,10 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 #ifdef ENABLE_THREAD_SAFETY
 	sigset_t	osigmask;
 	bool		sigpipe_pending;
+	bool		got_epipe = false;
 	
-	pq_block_sigpipe(&osigmask, &sigpipe_pending);
+	if (pq_block_sigpipe(&osigmask, &sigpipe_pending) < 0)
+		return -1;
 #else
 #ifndef WIN32
 	pqsigfunc	oldsighandler = pqsignal(SIGPIPE, SIG_IGN);
@@ -413,9 +428,13 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 					char		sebuf[256];
 
 					if (n == -1)
+					{
+						if (SOCK_ERRNO == EPIPE)
+							got_epipe = true;
 						printfPQExpBuffer(&conn->errorMessage,
 								libpq_gettext("SSL SYSCALL error: %s\n"),
 						SOCK_STRERROR(SOCK_ERRNO, sebuf, sizeof(sebuf)));
+					}
 					else
 					{
 						printfPQExpBuffer(&conn->errorMessage,
@@ -448,15 +467,16 @@ pqsecure_write(PGconn *conn, const void *ptr, size_t len)
 	}
 	else
 #endif
+	{
 		n = send(conn->sock, ptr, len, 0);
-		/*
-		 *	Possible optimization:  if sigpending() turns out to be an
-		 *	expensive operation, we can set sigpipe_pending = 'true'
-		 *	here if errno != EPIPE, avoiding a sigpending call.
-		 */
+#ifdef ENABLE_THREAD_SAFETY
+		if (n < 0 && SOCK_ERRNO == EPIPE)
+			got_epipe = true;
+#endif
+	}
 
 #ifdef ENABLE_THREAD_SAFETY
-	pq_reset_sigpipe(&osigmask, sigpipe_pending);
+	pq_reset_sigpipe(&osigmask, sigpipe_pending, got_epipe);
 #else
 #ifndef WIN32
 	pqsignal(SIGPIPE, oldsighandler);
@@ -1228,13 +1248,14 @@ pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending)
 {
 	sigset_t sigpipe_sigset;
 	sigset_t sigset;
-	int		 ret;
 	
 	sigemptyset(&sigpipe_sigset);
 	sigaddset(&sigpipe_sigset, SIGPIPE);
 
 	/* Block SIGPIPE and save previous mask for later reset */
-	ret = pthread_sigmask(SIG_BLOCK, &sigpipe_sigset, osigset);
+	SOCK_ERRNO_SET(pthread_sigmask(SIG_BLOCK, &sigpipe_sigset, osigset));
+	if (SOCK_ERRNO)
+		return -1;
 
 	/* We can have a pending SIGPIPE only if it was blocked before */
 	if (sigismember(osigset, SIGPIPE))
@@ -1251,44 +1272,52 @@ pq_block_sigpipe(sigset_t *osigset, bool *sigpipe_pending)
 	else
 		*sigpipe_pending = false;
 	
-	return ret;
+	return 0;
 }
 	
 /*
  *	Discard any pending SIGPIPE and reset the signal mask.
- *	We might be discarding a blocked SIGPIPE that we didn't generate,
- *	but we document that you can't keep blocked SIGPIPE calls across
- *	libpq function calls.
+ *
+ * Note: we are effectively assuming here that the C library doesn't queue
+ * up multiple SIGPIPE events.  If it did, then we'd accidentally leave
+ * ours in the queue when an event was already pending and we got another.
+ * As long as it doesn't queue multiple events, we're OK because the caller
+ * can't tell the difference.
+ *
+ * The caller should say got_epipe = FALSE if it is certain that it
+ * didn't get an EPIPE error; in that case we'll skip the clear operation
+ * and things are definitely OK, queuing or no.  If it got one or might have
+ * gotten one, pass got_epipe = TRUE.
+ *
+ * We do not want this to change errno, since if it did that could lose
+ * the error code from a preceding send().  We essentially assume that if
+ * we were able to do pq_block_sigpipe(), this can't fail.
  */
-int
-pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending)
+void
+pq_reset_sigpipe(sigset_t *osigset, bool sigpipe_pending, bool got_epipe)
 {
+	int	save_errno = SOCK_ERRNO;
 	int	signo;
 	sigset_t sigset;
 
 	/* Clear SIGPIPE only if none was pending */
-	if (!sigpipe_pending)
+	if (got_epipe && !sigpipe_pending)
 	{
-		if (sigpending(&sigset) != 0)
-			return -1;
-	
-		/*
-		 *	Discard pending and blocked SIGPIPE
-		 */
-		if (sigismember(&sigset, SIGPIPE))
+		if (sigpending(&sigset) == 0 &&
+			sigismember(&sigset, SIGPIPE))
 		{
 			sigset_t sigpipe_sigset;
 			
 			sigemptyset(&sigpipe_sigset);
 			sigaddset(&sigpipe_sigset, SIGPIPE);
-	
+
 			sigwait(&sigpipe_sigset, &signo);
-			if (signo != SIGPIPE)
-				return -1;
 		}
 	}
 	
 	/* Restore saved block mask */
-	return pthread_sigmask(SIG_SETMASK, osigset, NULL);
+	pthread_sigmask(SIG_SETMASK, osigset, NULL);
+
+	SOCK_ERRNO_SET(save_errno);
 }
 #endif

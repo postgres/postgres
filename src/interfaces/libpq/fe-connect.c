@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.291 2004/12/02 15:32:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.292 2004/12/02 23:20:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,6 +202,11 @@ static int parseServiceInfo(PQconninfoOption *options,
 static char *pwdfMatchesString(char *buf, char *token);
 static char *PasswordFromFile(char *hostname, char *port, char *dbname,
 				 char *username);
+static void default_threadlock(int acquire);
+
+
+/* global variable because fe-auth.c needs to access it */
+pgthreadlock_t pg_g_threadlock = default_threadlock;
 
 
 /*
@@ -3276,16 +3281,6 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
  * if they are not required.
  */
 
-void
-PQinitSSL(int do_init)
-{
-#ifdef USE_SSL
-	pq_initssllib = do_init;
-#endif
-}
-
-static pgthreadlock_t default_threadlock;
-
 static void
 default_threadlock(int acquire)
 {
@@ -3313,17 +3308,15 @@ default_threadlock(int acquire)
 #endif
 }
 
-pgthreadlock_t *g_threadlock = default_threadlock;
-
-pgthreadlock_t *
-PQregisterThreadLock(pgthreadlock_t *newhandler)
+pgthreadlock_t
+PQregisterThreadLock(pgthreadlock_t newhandler)
 {
-	pgthreadlock_t *prev;
+	pgthreadlock_t prev = pg_g_threadlock;
 
-	prev = g_threadlock;
 	if (newhandler)
-		g_threadlock = newhandler;
+		pg_g_threadlock = newhandler;
 	else
-		g_threadlock = default_threadlock;
+		pg_g_threadlock = default_threadlock;
+
 	return prev;
 }

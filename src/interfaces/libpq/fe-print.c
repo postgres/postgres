@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.56 2004/12/02 15:32:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-print.c,v 1.57 2004/12/02 23:20:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,8 +193,8 @@ PQprint(FILE *fout,
 				{
 					usePipe = 1;
 #ifdef ENABLE_THREAD_SAFETY
-					pq_block_sigpipe(&osigset, &sigpipe_pending);
-					sigpipe_masked = true;
+					if (pq_block_sigpipe(&osigset, &sigpipe_pending) == 0)
+						sigpipe_masked = true;
 #else
 #ifndef WIN32
 					oldsigpipehandler = pqsignal(SIGPIPE, SIG_IGN);
@@ -316,8 +316,9 @@ PQprint(FILE *fout,
 			pclose(fout);
 #endif
 #ifdef ENABLE_THREAD_SAFETY
+			/* we can't easily verify if EPIPE occurred, so say it did */
 			if (sigpipe_masked)
-				pq_reset_sigpipe(&osigset, sigpipe_pending);
+				pq_reset_sigpipe(&osigset, sigpipe_pending, true);
 #else
 #ifndef WIN32
 			pqsignal(SIGPIPE, oldsigpipehandler);
