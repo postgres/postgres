@@ -7,13 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.36 1999/07/16 04:59:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.37 1999/08/09 05:34:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
-
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -21,7 +19,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 
-static Node *flatten_tlistentry(Node *tlistentry, List *flat_tlist);
+static Node *flatten_tlist_vars_mutator(Node *node, List *flat_tlist);
 
 /*****************************************************************************
  *	---------- RELATION node target list routines ----------
@@ -29,25 +27,19 @@ static Node *flatten_tlistentry(Node *tlistentry, List *flat_tlist);
 
 /*
  * tlistentry_member
- *
- * RETURNS:  the leftmost member of sequence "targetlist" that satisfies
- *			 the predicate "var_equal"
- * MODIFIES: nothing
- * REQUIRES: test = function which can operate on a lispval union
- *			 var = valid var_node
- *			 targetlist = valid sequence
+ *	  Finds the (first) member of the given tlist whose expression is
+ *	  var_equal() to the given var.  Result is NULL if no such member.
  */
 TargetEntry *
 tlistentry_member(Var *var, List *targetlist)
 {
-	if (var)
+	if (var && IsA(var, Var))
 	{
 		List	   *temp;
 
 		foreach(temp, targetlist)
 		{
-			if (var_equal(var,
-						  get_expr(lfirst(temp))))
+			if (var_equal(var, get_expr(lfirst(temp))))
 				return (TargetEntry *) lfirst(temp);
 		}
 	}
@@ -56,11 +48,8 @@ tlistentry_member(Var *var, List *targetlist)
 
 /*
  * matching_tlist_var
- *
- * RETURNS:  var node in a target list which is var_equal to 'var',
- *			 if one exists.
- * REQUIRES: "test" operates on lispval unions,
- *
+ *	  Same as tlistentry_member(), except returns the tlist expression
+ *	  rather than its parent TargetEntry node.
  */
 Expr *
 matching_tlist_var(Var *var, List *targetlist)
@@ -75,53 +64,44 @@ matching_tlist_var(Var *var, List *targetlist)
 }
 
 /*
+ * tlist_member
+ *	  Same as tlistentry_member(), except returns the Resdom node
+ *	  rather than its parent TargetEntry node.
+ */
+Resdom *
+tlist_member(Var *var, List *tlist)
+{
+	TargetEntry *tlentry;
+
+	tlentry = tlistentry_member(var, tlist);
+	if (tlentry)
+		return tlentry->resdom;
+
+	return (Resdom *) NULL;
+}
+
+/*
  * add_var_to_tlist
  *	  Creates a targetlist entry corresponding to the supplied var node
- *
- * 'var' and adds the new targetlist entry to the targetlist field of
- * 'rel'
- *
- * RETURNS: nothing
- * MODIFIES: vartype and varid fields of leftmost varnode that matches
- *			 argument "var" (sometimes).
- * CREATES:  new var_node iff no matching var_node exists in targetlist
+ *	  'var' and adds the new targetlist entry to the targetlist field of
+ *	  'rel'.  No entry is created if 'var' is already in the tlist.
  */
 void
 add_var_to_tlist(RelOptInfo *rel, Var *var)
 {
-	Expr	   *oldvar;
-
-	oldvar = matching_tlist_var(var, rel->targetlist);
-
-	/*
-	 * If 'var' is not already in 'rel's target list, add a new node.
-	 */
-	if (oldvar == NULL)
+	if (tlistentry_member(var, rel->targetlist) == NULL)
 	{
-		List	   *tlist = rel->targetlist;
-		Var		   *newvar = makeVar(var->varno,
-									 var->varattno,
-									 var->vartype,
-									 var->vartypmod,
-									 var->varlevelsup,
-									 var->varno,
-									 var->varoattno);
-
-		rel->targetlist = lappend(tlist,
-								  create_tl_element(newvar,
-													length(tlist) + 1));
-
+		/* XXX is copyObject necessary here? */
+		rel->targetlist = lappend(rel->targetlist,
+							create_tl_element((Var *) copyObject(var),
+											  length(rel->targetlist) + 1));
 	}
 }
 
 /*
  * create_tl_element
  *	  Creates a target list entry node and its associated (resdom var) pair
- *	  with its resdom number equal to 'resdomno' and the joinlist field set
- *	  to 'joinlist'.
- *
- * RETURNS:  newly created tlist_entry
- * CREATES:  new targetlist entry (always).
+ *	  with its resdom number equal to 'resdomno'.
  */
 TargetEntry *
 create_tl_element(Var *var, int resdomno)
@@ -177,35 +157,6 @@ get_actual_tlist(List *tlist)
  *****************************************************************************/
 
 /*
- * tlist_member
- *	  Determines whether a var node is already contained within a
- *	  target list.
- *
- * 'var' is the var node
- * 'tlist' is the target list
- *
- * Returns the resdom entry of the matching var node, or NULL if no match.
- *
- */
-Resdom *
-tlist_member(Var *var, List *tlist)
-{
-	if (var)
-	{
-		List	   *i;
-
-		foreach(i, tlist)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(i);
-
-			if (var_equal(var, get_expr(tle)))
-				return tle->resdom;
-		}
-	}
-	return (Resdom *) NULL;
-}
-
-/*
  *	 Routine to get the resdom out of a targetlist.
  */
 Resdom *
@@ -228,51 +179,36 @@ tlist_resdom(List *tlist, Resdom *resnode)
 
 /*
  * match_varid
- *	  Searches a target list for an entry with some desired varid.
+ *	  Searches a target list for an entry matching a given var.
  *
- * 'varid' is the desired id
- * 'tlist' is the target list that is searched
- *
- * Returns the target list entry (resdom var) of the matching var.
- *
- * Now checks to make sure array references (in addition to range
- * table indices) are identical - retrieve (a.b[1],a.b[2]) should
- * not be turned into retrieve (a.b[1],a.b[1]).
- *
- * [what used to be varid is now broken up into two fields varnoold and
- *	varoattno. Also, nested attnos are long gone. - ay 2/95]
+ * Returns the target list entry (resdom var) of the matching var,
+ * or NULL if no match.
  */
 TargetEntry *
 match_varid(Var *test_var, List *tlist)
 {
 	List	   *tl;
-	Oid			type_var;
 
-	type_var = (Oid) test_var->vartype;
+	Assert(test_var->varlevelsup == 0);	/* XXX why? */
 
-	Assert(test_var->varlevelsup == 0);
 	foreach(tl, tlist)
 	{
-		TargetEntry *entry;
-		Var		   *tlvar;
-
-		entry = lfirst(tl);
-		tlvar = get_expr(entry);
+		TargetEntry *entry = lfirst(tl);
+		Var		   *tlvar = get_expr(entry);
 
 		if (!IsA(tlvar, Var))
 			continue;
 
 		/*
-		 * we test the original varno (instead of varno which might be
-		 * changed to INNER/OUTER.
+		 * we test the original varno, instead of varno which might be
+		 * changed to INNER/OUTER.  XXX is test on vartype necessary?
 		 */
 		Assert(tlvar->varlevelsup == 0);
+
 		if (tlvar->varnoold == test_var->varnoold &&
-			tlvar->varoattno == test_var->varoattno)
-		{
-			if (tlvar->vartype == type_var)
-				return entry;
-		}
+			tlvar->varoattno == test_var->varoattno &&
+			tlvar->vartype == test_var->vartype)
+			return entry;
 	}
 
 	return NULL;
@@ -321,11 +257,12 @@ List *
 copy_vars(List *target, List *source)
 {
 	List	   *result = NIL;
-	List	   *src = NIL;
-	List	   *dest = NIL;
+	List	   *src;
+	List	   *dest;
 
-	for (src = source, dest = target; src != NIL &&
-		 dest != NIL; src = lnext(src), dest = lnext(dest))
+	for (src = source, dest = target;
+		 src != NIL && dest != NIL;
+		 src = lnext(src), dest = lnext(dest))
 	{
 		TargetEntry *temp = makeTargetEntry(((TargetEntry *) lfirst(dest))->resdom,
 										 (Node *) get_expr(lfirst(src)));
@@ -350,35 +287,34 @@ flatten_tlist(List *tlist)
 {
 	int			last_resdomno = 1;
 	List	   *new_tlist = NIL;
-	List	   *tlist_vars = NIL;
-	List	   *temp;
+	List	   *tl;
 
-	foreach(temp, tlist)
+	foreach(tl, tlist)
 	{
-		TargetEntry *temp_entry = (TargetEntry *) lfirst(temp);
+		TargetEntry *tl_entry = (TargetEntry *) lfirst(tl);
+		List	   *vlist = pull_var_clause((Node *) get_expr(tl_entry));
+		List	   *v;
 
-		tlist_vars = nconc(tlist_vars,
-						 pull_var_clause((Node *) get_expr(temp_entry)));
-	}
-
-	foreach(temp, tlist_vars)
-	{
-		Var		   *var = lfirst(temp);
-
-		if (!(tlist_member(var, new_tlist)))
+		foreach(v, vlist)
 		{
-			Resdom	   *r;
+			Var		   *var = lfirst(v);
 
-			r = makeResdom(last_resdomno,
-						   var->vartype,
-						   var->vartypmod,
-						   NULL,
-						   (Index) 0,
-						   (Oid) 0,
-						   false);
-			last_resdomno++;
-			new_tlist = lappend(new_tlist, makeTargetEntry(r, (Node *) var));
+			if (! tlistentry_member(var, new_tlist))
+			{
+				Resdom	   *r;
+
+				r = makeResdom(last_resdomno++,
+							   var->vartype,
+							   var->vartypmod,
+							   NULL,
+							   (Index) 0,
+							   (Oid) 0,
+							   false);
+				new_tlist = lappend(new_tlist,
+									makeTargetEntry(r, (Node *) var));
+			}
 		}
+		freeList(vlist);
 	}
 
 	return new_tlist;
@@ -386,14 +322,13 @@ flatten_tlist(List *tlist)
 
 /*
  * flatten_tlist_vars
- *	  Redoes the target list of a query with no nested attributes by
- *	  replacing vars within computational expressions with vars from
- *	  the 'flattened' target list of the query.
+ *	  Redoes the target list of a query by replacing vars within
+ *	  target expressions with vars from the 'flattened' target list.
  *
- * 'full_tlist' is the actual target list
+ * 'full_tlist' is the original target list
  * 'flat_tlist' is the flattened (var-only) target list
  *
- * Returns the modified actual target list.
+ * Returns the rebuilt target list.  The original is not modified.
  *
  */
 List *
@@ -406,105 +341,25 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 	{
 		TargetEntry *tle = lfirst(x);
 
-		result = lappend(result, makeTargetEntry(tle->resdom,
-							   flatten_tlistentry((Node *) get_expr(tle),
-												  flat_tlist)));
+		result = lappend(result,
+						 makeTargetEntry(tle->resdom,
+							flatten_tlist_vars_mutator((Node *) get_expr(tle),
+													   flat_tlist)));
 	}
 
 	return result;
 }
 
-/*
- * flatten_tlistentry
- *	  Replaces vars within a target list entry with vars from a flattened
- *	  target list.
- *
- * 'tlistentry' is the target list entry to be modified
- * 'flat_tlist' is the flattened target list
- *
- * Returns the (modified) target_list entry from the target list.
- *
- */
 static Node *
-flatten_tlistentry(Node *tlistentry, List *flat_tlist)
+flatten_tlist_vars_mutator(Node *node, List *flat_tlist)
 {
-	List	   *temp;
-
-	if (tlistentry == NULL)
+	if (node == NULL)
 		return NULL;
-	else if (IsA(tlistentry, Var))
-		return (Node *) get_expr(match_varid((Var *) tlistentry,
+	if (IsA(node, Var))
+		return (Node *) get_expr(match_varid((Var *) node,
 											 flat_tlist));
-	else if (single_node(tlistentry))
-		return tlistentry;
-	else if (IsA(tlistentry, Iter))
-	{
-		((Iter *) tlistentry)->iterexpr =
-			flatten_tlistentry((Node *) ((Iter *) tlistentry)->iterexpr,
-							   flat_tlist);
-		return tlistentry;
-	}
-	else if (is_subplan(tlistentry))
-	{
-		/* do we need to support this case? */
-		elog(ERROR, "flatten_tlistentry: subplan case not implemented");
-		return tlistentry;
-	}
-	else if (IsA(tlistentry, Expr))
-	{
-
-		/*
-		 * Recursively scan the arguments of an expression. NOTE: this
-		 * must come after is_subplan() case since subplan is a kind of
-		 * Expr node.
-		 */
-		foreach(temp, ((Expr *) tlistentry)->args)
-			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
-		return tlistentry;
-	}
-	else if (IsA(tlistentry, Aggref))
-	{
-
-		/*
-		 * XXX shouldn't this be recursing into the agg's target? Seems to
-		 * work though, so will leave it alone ... tgl 5/99
-		 */
-		return tlistentry;
-	}
-	else if (IsA(tlistentry, ArrayRef))
-	{
-		ArrayRef   *aref = (ArrayRef *) tlistentry;
-
-		foreach(temp, aref->refupperindexpr)
-			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
-		foreach(temp, aref->reflowerindexpr)
-			lfirst(temp) = flatten_tlistentry(lfirst(temp), flat_tlist);
-		aref->refexpr = flatten_tlistentry(aref->refexpr, flat_tlist);
-		aref->refassgnexpr = flatten_tlistentry(aref->refassgnexpr, flat_tlist);
-
-		return tlistentry;
-	}
-	else if (case_clause(tlistentry))
-	{
-		CaseExpr   *cexpr = (CaseExpr *) tlistentry;
-
-		foreach(temp, cexpr->args)
-		{
-			CaseWhen   *cwhen = (CaseWhen *) lfirst(temp);
-
-			cwhen->expr = flatten_tlistentry(cwhen->expr, flat_tlist);
-			cwhen->result = flatten_tlistentry(cwhen->result, flat_tlist);
-		}
-		cexpr->defresult = flatten_tlistentry(cexpr->defresult, flat_tlist);
-
-		return tlistentry;
-	}
-	else
-	{
-		elog(ERROR, "flatten_tlistentry: Cannot handle node type %d",
-			 nodeTag(tlistentry));
-		return tlistentry;
-	}
+	return expression_tree_mutator(node, flatten_tlist_vars_mutator,
+								   (void *) flat_tlist);
 }
 
 
@@ -522,11 +377,10 @@ Var *
 get_groupclause_expr(GroupClause *groupClause, List *targetList)
 {
 	List	   *l;
-	TargetEntry *tle;
 
 	foreach(l, targetList)
 	{
-		tle = (TargetEntry *) lfirst(l);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 		if (tle->resdom->resgroupref == groupClause->tleGroupref)
 			return get_expr(tle);
 	}
@@ -535,49 +389,3 @@ get_groupclause_expr(GroupClause *groupClause, List *targetList)
 	"get_groupclause_expr: GROUP BY expression not found in targetlist");
 	return NULL;
 }
-
-
-/*****************************************************************************
- *
- *****************************************************************************/
-
-/*
- * AddGroupAttrToTlist -
- *	  append the group attribute to the target list if it's not already
- *	  in there.
- */
-#ifdef NOT_USED
-/*
- * WARNING!!! If this ever get's used again, the new reference
- * mechanism from group clause to targetlist entry must be implemented
- * here too. Jan
- */
-void
-AddGroupAttrToTlist(List *tlist, List *grpCl)
-{
-	List	   *gl;
-	int			last_resdomno = length(tlist) + 1;
-
-	foreach(gl, grpCl)
-	{
-		GroupClause *gc = (GroupClause *) lfirst(gl);
-		Var		   *var = gc->grpAttr;
-
-		if (!(tlist_member(var, tlist)))
-		{
-			Resdom	   *r;
-
-			r = makeResdom(last_resdomno,
-						   var->vartype,
-						   var->vartypmod,
-						   NULL,
-						   (Index) 0,
-						   (Oid) 0,
-						   false);
-			last_resdomno++;
-			tlist = lappend(tlist, makeTargetEntry(r, (Node *) var));
-		}
-	}
-}
-
-#endif
