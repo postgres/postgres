@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.58 1999/10/01 04:08:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.59 1999/10/02 04:42:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,6 +530,13 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	subquery->targetList = lcons(tle, NIL);
 	subquery->qual = modifyAggrefDropQual((Node *) parsetree->qual,
 										  (Node *) origexp);
+	/*
+	 * If there are still aggs in the subselect's qual, give up.
+	 * Recursing would be a bad idea --- we'd likely produce an
+	 * infinite recursion.  This whole technique is a crock, really...
+	 */
+	if (checkQueryHasAggs(subquery->qual))
+		elog(ERROR, "Cannot handle aggregate function inserted at this place in WHERE clause");
 	subquery->groupClause = NIL;
 	subquery->havingQual = NULL;
 	subquery->hasAggs = TRUE;
@@ -576,9 +583,17 @@ modifyAggrefQual(Node *node, Query *parsetree)
 			SubLink    *sub = modifyAggrefMakeSublink(expr,
 													  parsetree);
 			parsetree->hasSubLinks = true;
+			/* check for aggs in resulting lefthand... */
+			sub->lefthand = (List *) modifyAggrefQual((Node *) sub->lefthand,
+													  parsetree);
 			return (Node *) sub;
 		}
 		/* otherwise, fall through and copy the expr normally */
+	}
+	if (IsA(node, Aggref))
+	{
+		/* Oops, found one that's not inside an Expr we can rearrange... */
+		elog(ERROR, "Cannot handle aggregate function inserted at this place in WHERE clause");
 	}
 	/* We do NOT recurse into subselects in this routine.  It's sufficient
 	 * to get rid of aggregates that are in the qual expression proper.
