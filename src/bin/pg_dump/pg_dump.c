@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.27 1997/04/12 09:24:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.28 1997/05/06 05:20:18 vadim Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -55,6 +55,7 @@
 #include "postgres.h"
 #include "access/htup.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_index.h"
 #include "libpq-fe.h"
 #ifndef HAVE_STRDUP
 #include "strdup.h"
@@ -1142,16 +1143,16 @@ getIndices(int *numIndices)
     int i_indamname;
     int i_indproc;
     int i_indkey;
-    int i_indclassname;
+    int i_indclass;
     int i_indisunique;
     
-    /* find all the user-defined indices.
+    /* 
+       find all the user-defined indices.
        We do not handle partial indices.
-       We also assume that only single key indices 
 
        skip 'Xinx*' - indices on inversion objects
 
-       this is a 5-way join !!
+       this is a 4-way join !!
     */
        
     res = PQexec(g_conn, "begin");
@@ -1164,13 +1165,12 @@ getIndices(int *numIndices)
 
     sprintf(query,
             "SELECT t1.relname as indexrelname, t2.relname as indrelname, "
-            "i.indproc, i.indkey[0], o.opcname as indclassname, "
-            "a.amname as indamname, i.indisunique from pg_index i, pg_class t1, "
-            "pg_class t2, pg_opclass o, pg_am a "
+            "i.indproc, i.indkey, i.indclass, "
+            "a.amname as indamname, i.indisunique "
+            "from pg_index i, pg_class t1, pg_class t2, pg_am a "
             "where t1.oid = i.indexrelid and t2.oid = i.indrelid "
-            "and o.oid = i.indclass[0] and t1.relam = a.oid and "
-            "i.indexrelid > '%d'::oid and t2.relname !~ '^pg_' "
-            "and t1.relname !~ '^Xinx' ;",
+            "and t1.relam = a.oid and i.indexrelid > '%d'::oid "
+            "and t2.relname !~ '^pg_' and t1.relname !~ '^Xinx' ;",
             g_last_builtin_oid);
 
     res = PQexec(g_conn, query);
@@ -1191,7 +1191,7 @@ getIndices(int *numIndices)
     i_indamname = PQfnumber(res,"indamname");
     i_indproc = PQfnumber(res,"indproc");
     i_indkey = PQfnumber(res,"indkey");
-    i_indclassname = PQfnumber(res,"indclassname");
+    i_indclass = PQfnumber(res,"indclass");
     i_indisunique = PQfnumber(res,"indisunique");
 
     for (i=0;i<ntups;i++) {
@@ -1199,8 +1199,10 @@ getIndices(int *numIndices)
         indinfo[i].indrelname = strdup(PQgetvalue(res,i,i_indrelname));
         indinfo[i].indamname = strdup(PQgetvalue(res,i,i_indamname));
         indinfo[i].indproc = strdup(PQgetvalue(res,i,i_indproc));
-        indinfo[i].indkey = strdup(PQgetvalue(res,i,i_indkey));
-        indinfo[i].indclassname = strdup(PQgetvalue(res,i,i_indclassname));
+        parseArgTypes ((char **)indinfo[i].indkey, 
+        	(const char*)PQgetvalue(res,i,i_indkey));
+        parseArgTypes ((char **)indinfo[i].indclass,
+        	(const char*)PQgetvalue(res,i,i_indclass));
         indinfo[i].indisunique = strdup(PQgetvalue(res,i,i_indisunique));
     }
     PQclear(res);
@@ -1634,11 +1636,13 @@ void
 dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
             TableInfo* tblinfo, int numTables, const char *tablename)
 {
-    int i;
+    int i, k;
     int tableInd;
-    const char *attname;  /* the name of the indexed attribute  */
+    char attlist[1000];
+    char *classname[INDEX_MAX_KEYS];
     char *funcname; /* the name of the function to comput the index key from*/
-    int indkey;
+    int indkey, indclass;
+    int nclass;
 
     char q[MAXQUERYLEN];
     PGresult *res;
@@ -1646,11 +1650,7 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
     for (i=0;i<numIndices;i++) {
         tableInd = findTableByName(tblinfo, numTables,
                                    indinfo[i].indrelname);
-        indkey = atoi(indinfo[i].indkey) - 1; 
-        if (indkey == ObjectIdAttributeNumber - 1)
-            attname = "oid";
-        else
-            attname = tblinfo[tableInd].attnames[indkey];
+
         if (strcmp(indinfo[i].indproc,"0") == 0) {
             funcname = NULL;
         } else {
@@ -1664,9 +1664,73 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
                     "where pg_proc.oid = '%s'::oid",
                     indinfo[i].indproc);
             res = PQexec(g_conn, q);
+    	    if ( !res || PQresultStatus(res) != PGRES_TUPLES_OK )
+    	    {
+        	fprintf(stderr,"dumpIndices(): SELECT (funcname) failed\n");
+        	exit_nicely(g_conn);
+    	    }
             funcname = strdup(PQgetvalue(res, 0,
                                          PQfnumber(res,"proname")));
             PQclear(res);
+        }
+
+	/* convert opclass oid(s) into names */
+        for (nclass = 0; nclass < INDEX_MAX_KEYS; nclass++)
+        {
+            indclass = atoi(indinfo[i].indclass[nclass]);
+            if ( indclass == 0 )
+            	break;
+            sprintf(q,
+                    "SELECT opcname from pg_opclass "
+                    "where pg_opclass.oid = '%u'::oid",
+                    indclass);
+            res = PQexec(g_conn, q);
+    	    if ( !res || PQresultStatus(res) != PGRES_TUPLES_OK )
+    	    {
+        	fprintf(stderr,"dumpIndices(): SELECT (classname) failed\n");
+        	exit_nicely(g_conn);
+    	    }
+            classname[nclass] = strdup(PQgetvalue(res, 0,
+                                         PQfnumber(res,"opcname")));
+            PQclear(res);
+        }
+        
+        if ( funcname && nclass != 1 )
+    	{
+            fprintf(stderr,"dumpIndices(): Must be exactly one OpClass "
+            	"for functional index %s\n", indinfo[i].indexrelname);
+            exit_nicely(g_conn);
+    	}
+
+	/* convert attribute numbers into attribute list */
+        for (k = 0, attlist[0] = 0; k < INDEX_MAX_KEYS; k++)
+        {
+            char * attname;
+            
+            indkey = atoi(indinfo[i].indkey[k]);
+            if ( indkey == 0 )
+            	break;
+            indkey--; 
+            if (indkey == ObjectIdAttributeNumber - 1)
+            	attname = "oid";
+            else
+            	attname = tblinfo[tableInd].attnames[indkey];
+            if ( funcname )
+            	sprintf (attlist + strlen(attlist), "%s%s",
+            		( k == 0 ) ? "" : ", ", attname);
+            else
+            {
+        	if ( k >= nclass )
+    		{
+            	    fprintf(stderr,"dumpIndices(): OpClass not found for "
+            		"attribute %s of index %s\n", 
+            		attname, indinfo[i].indexrelname);
+            	    exit_nicely(g_conn);
+    		}
+            	sprintf (attlist + strlen(attlist), "%s%s %s",
+            		( k == 0 ) ? "" : ", ", attname, classname[k]);
+            	free (classname[k]);
+            }
         }
         
         if (!tablename || (!strcmp(indinfo[i].indrelname,tablename))) {
@@ -1677,12 +1741,13 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
                     indinfo[i].indrelname,
                     indinfo[i].indamname);
             if (funcname) {
-                sprintf(q, "%s %s(%s) %s);\n",
-                        q,funcname, attname, indinfo[i].indclassname);
+                sprintf(q, "%s %s (%s) %s );\n",
+                        q, funcname, attlist, classname[0]);
                 free(funcname); 
+                free(classname[0]); 
             } else
-                sprintf(q, "%s %s %s);\n",
-                        q,attname,indinfo[i].indclassname);
+                sprintf(q, "%s %s );\n",
+                        q, attlist);
 
             fputs(q,fout);
         }    

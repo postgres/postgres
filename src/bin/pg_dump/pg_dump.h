@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.12 1997/04/12 09:24:14 scrappy Exp $
+ * $Id: pg_dump.h,v 1.13 1997/05/06 05:20:21 vadim Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -87,8 +87,8 @@ typedef struct _indInfo {
     char *indrelname;    /* name of the indexed heap class */
     char *indamname;     /* name of the access method (e.g. btree, rtree, etc.) */
     char *indproc;       /* oid of the function to compute the index, 0 if none*/
-    char *indkey;        /* attribute number of the key attribute */
-    char *indclassname;  /* name of the opclass of the key */
+    char *indkey[INDEX_MAX_KEYS];	/* attribute numbers of the key attributes */
+    char *indclass[INDEX_MAX_KEYS];	/* opclass of the keys */
     char *indisunique;   /* is this index unique? */
 } IndInfo;
 
