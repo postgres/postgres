@@ -1338,7 +1338,6 @@ PGTYPESnumeric_from_long(signed long int long_val, numeric *var)
 	signed long int extract;
 	signed long int reach_limit;
 
-	printf("l=%ld\n", long_val);
 	if (abs_long_val < 0)
 	{
 		abs_long_val *= -1;
