@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.51 2004/12/12 15:34:15 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.52 2005/01/12 16:19:51 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -417,7 +417,11 @@ then
 
     message "starting postmaster"
     [ "$debug" = yes ] && postmaster_options="$postmaster_options -d 5"
-    [ "$unix_sockets" = no ] && postmaster_options="$postmaster_options -i"
+    if [ "$unix_sockets" = no ]; then
+	postmaster_options="$postmaster_options -c listen_addresses=$hostname"
+    else
+	postmaster_options="$postmaster_options -c listen_addresses=''"
+    fi
     "$bindir/postmaster" -D "$PGDATA" -F $postmaster_options >"$LOGDIR/postmaster.log" 2>&1 &
     postmaster_pid=$!
 
