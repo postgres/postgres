@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.22 1998/08/19 02:03:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.23 1998/08/31 07:35:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,9 +48,10 @@ regprocin(char *pro_oid_name)
 	{
 		/*
 		 *  we need to use the oid because there can be multiple entries
-		 *	with the same name, i.e.  1323(int4eq)
+		 *	with the same name, i.e.  1323_int4eq
 		 */
 		proctup = SearchSysCacheTuple(PROOID,
+										/* atoi stops at the _ */
 										ObjectIdGetDatum(atoi(pro_oid_name)),
 										0, 0, 0);
 		if (HeapTupleIsValid(proctup))
@@ -130,7 +131,7 @@ regprocout(RegProcedure proid)
 				char	   *s;
 	
 				s = ((Form_pg_proc) GETSTRUCT(proctup))->proname.data;
-				snprintf(result, NAMEDATALEN, "%d(%s)", proid, s);
+				snprintf(result, NAMEDATALEN, "%d_%s", proid, s);
 		}
 		else
 		{
