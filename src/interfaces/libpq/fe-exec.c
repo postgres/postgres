@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.9 1996/07/31 02:06:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.10 1996/07/31 02:20:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,8 @@
 #include "libpq-fe.h"
 #include <signal.h>
 #include <sys/ioctl.h>
-#ifdef PORTNAME_sparc_solaris
+#if defined(PORTNAME_sparc_solaris) || \
+    defined(PORTNAME_i386_solaris)
 #include <sys/termios.h>
 #endif
 
