@@ -1,6 +1,63 @@
  <chapter id="release">
   <title>Release Notes</title>
 
+<sect1>
+<title>Release 6.5.1</title>
+<!--
+<docinfo>
+<authorgroup>
+<author>
+<firstname>Bruce</firstname>
+<surname>Momjian</surname>
+</author>
+</authorgroup>
+<date>1999-07-15</date>
+</docinfo>
+-->
+
+<para>
+This is basically a cleanup release for 6.5.  We have fixed a variety of
+problems reported by 6.5 users.
+</para>
+
+
+<sect2>
+<title>Migration to v6.5.1</title>
+
+<para>
+A dump/restore is <emphasis>not</emphasis> required for those running
+6.5.
+</para>
+</sect2>
+<sect2>
+<title>Detailed Change List</title>
+
+<para>
+<programlisting>
+Add NT README file.
+Portability fixes for linux_ppc, Irix, linux_alpha, OpenBSD, alpha
+Remove QUERY_LIMIT, use SELECT...LIMIT
+Fix for EXPLAIN on inheritance(Tom)
+Patch to allow vacuum on multi-segment tables(Hiroshi)
+R=Tree optimizer selectivity fix(Tom)
+ACL file descriptor leak fix(Atsushi Ogawa)
+New expresssion subtree code(Tom)
+Avoid disk writes for read-only transactions(Vadim)
+Fix for removal of temp tables if last transaction was aborted(Bruce)
+Fix to prevent too large tuple from being created(Bruce)
+plpgsql fixes
+Allow port numbers 32k - 64k(Bruce)
+Add ^ precidence(Bruce)
+Rename sort files called pg_temp to pg_sorttemp
+Fix for microseconds in time values(Tom)
+Tutorial source cleanup
+New linux_m68k port
+</programlisting>
+</para>
+</sect2>
+</sect1>
+
+
   <sect1>
    <title>Release 6.5</title>
 <!--
