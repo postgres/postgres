@@ -1,49 +1,32 @@
-Array iterator functions, by Massimo Dal Zotto <dz@cs.unitn.it>
-Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
+Array iterator functions have been removed as of PostgreSQL 7.4, because
+equivalent functionality is now available built in to the backend.
 
-This software is distributed under the GNU General Public License
-either version 2, or (at your option) any later version.
+For example, previously, using contrib/array, you might have used the
+following construct:
 
+    create table t(id int4[], txt text[]);
 
-This loadable module defines a new class of functions which take
-an array and a scalar value, iterate a scalar operator over the
-elements of the array and the value, and compute a result as
-the logical OR or AND of the iteration results.
-For example array_int4eq returns true if some of the elements
-of an array of int4 is equal to the given value:
+    -- select tuples with some id element equal to 123
+    select * from t where t.id *= 123;
 
-	array_int4eq({1,2,3}, 1)  -->  true
-	array_int4eq({1,2,3}, 4)  -->  false
+Now you would do this instead:
 
-If we have defined T array types and O scalar operators we can
-define T x O x 2 array functions, each of them has a name like
-"array_[all_]<basetype><operation>" and takes an array of type T
-iterating the operator O over all the elements. Note however
-that some of the possible combination are invalid, for example
-the array_int4_like because there is no like operator for int4.
+    -- select tuples with some id element equal to 123
+    select * from t where 123 = any (t.id);
 
-We can then define new operators based on these functions and use
-them to write queries with qualification clauses based on the
-values of some of the elements of an array.
-For example to select rows having some or all element of an array
-attribute equal to a given value or matching a regular expression:
+    -- or you could also do this
+    select * from t where 123 = some (t.id);
 
-	create table t(id int4[], txt text[]);
+Similarly, if using contrib/array, you did the following:
 
-	-- select tuples with some id element equal to 123
-	select * from t where t.id *= 123;
+    -- select tuples with all txt elements matching '^[A-Z]'
+    select * from t where t.txt[1:3] **~ '^[A-Z]';
 
-	-- select tuples with some txt element matching '[a-z]'
-	select * from t where t.txt *~ '[a-z]';
+Now do this instead:
 
-	-- select tuples with all txt elements matching '^[A-Z]'
-	select * from t where t.txt[1:3] **~ '^[A-Z]';
+    -- select tuples with all txt elements matching '^[A-Z]'
+    select * from t where '^[A-Z]' ~ all (t.txt[1:3]);
 
-The scheme is quite general, each operator which operates on a base type
-can be iterated over the elements of an array. It seem to work well but
-defining each new operator requires writing a different C function.
-This is tedious, and error-prone since one must take care that the correct
-datatypes are associated with the selected underlying function.
-Can anyone suggest a better and more portable way to do it ?
+See the related section in the online documentation for more detail:
+    Table of Contents => Functions and Operators => Row and Array Comparisons
 
-See also array_iterator.sql for an example on how to use this module.

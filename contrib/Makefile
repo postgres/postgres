@@ -1,11 +1,10 @@
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.45 2003/07/24 16:54:58 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.46 2003/09/11 17:15:27 momjian Exp $
 
 subdir = contrib
 top_builddir = ..
 include $(top_builddir)/src/Makefile.global
 
 WANTED_DIRS = \
-		array		\
 		btree_gist	\
 		chkpass		\
 		cube		\
@@ -44,6 +43,7 @@ WANTED_DIRS = \
 		vacuumlo
 
 # Missing:
+#		array		\ (removed all but the README)
 #		adddepend	\ (does not have a makefile)
 #		ipc_check	\ (does not have a makefile)
 #		mSQL-interface	\ (requires msql installed)
