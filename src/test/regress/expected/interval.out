@@ -6,13 +6,13 @@ SET DATESTYLE = DEFAULT;
 SELECT INTERVAL '01:00' AS "One hour";
  One hour 
 ----------
- +01:00
+ 01:00
 (1 row)
 
 SELECT INTERVAL '+02:00' AS "Two hours";
  Two hours 
 -----------
- +02:00
+ 02:00
 (1 row)
 
 SELECT INTERVAL '-08:00' AS "Eight hours";
@@ -40,9 +40,9 @@ SELECT INTERVAL '-1 days +02:03' AS "22 hours ago...";
 (1 row)
 
 SELECT INTERVAL '10 years -11 month -12 days +13:14' AS "9 years...";
-        9 years...        
---------------------------
- 9 years 1 mon -11 -10:46
+          9 years...           
+-------------------------------
+ 9 years 1 mon -11 days -10:46
 (1 row)
 
 CREATE TABLE INTERVAL_TBL (f1 interval);
@@ -63,41 +63,41 @@ INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 30 eons ago');
 ERROR:  Bad interval external representation '@ 30 eons ago'
 -- test interval operators
 SELECT '' AS ten, INTERVAL_TBL.*;
- ten |       f1        
------+-----------------
-     | +00:01
-     | +05:00
-     | 10 +00:00
-     | 34 years +00:00
-     | 3 mons +00:00
+ ten |       f1       
+-----+----------------
+     | 00:01
+     | 05:00
+     | 10 days
+     | 34 years
+     | 3 mons
      | -00:00:14
-     | 1 +02:03:04
-     | 6 years +00:00
-     | 5 mons +00:00
-     | 5 mons +12:00
+     | 1 day 02:03:04
+     | 6 years
+     | 5 mons
+     | 5 mons 12:00
 (10 rows)
 
 SELECT '' AS nine, INTERVAL_TBL.*
    WHERE INTERVAL_TBL.f1 <> interval '@ 10 days';
- nine |       f1        
-------+-----------------
-      | +00:01
-      | +05:00
-      | 34 years +00:00
-      | 3 mons +00:00
+ nine |       f1       
+------+----------------
+      | 00:01
+      | 05:00
+      | 34 years
+      | 3 mons
       | -00:00:14
-      | 1 +02:03:04
-      | 6 years +00:00
-      | 5 mons +00:00
-      | 5 mons +12:00
+      | 1 day 02:03:04
+      | 6 years
+      | 5 mons
+      | 5 mons 12:00
 (9 rows)
 
 SELECT '' AS three, INTERVAL_TBL.*
    WHERE INTERVAL_TBL.f1 <= interval '@ 5 hours';
  three |    f1     
 -------+-----------
-       | +00:01
-       | +05:00
+       | 00:01
+       | 05:00
        | -00:00:14
 (3 rows)
 
@@ -105,95 +105,95 @@ SELECT '' AS three, INTERVAL_TBL.*
    WHERE INTERVAL_TBL.f1 < interval '@ 1 day';
  three |    f1     
 -------+-----------
-       | +00:01
-       | +05:00
+       | 00:01
+       | 05:00
        | -00:00:14
 (3 rows)
 
 SELECT '' AS one, INTERVAL_TBL.*
    WHERE INTERVAL_TBL.f1 = interval '@ 34 years';
- one |       f1        
------+-----------------
-     | 34 years +00:00
+ one |    f1    
+-----+----------
+     | 34 years
 (1 row)
 
 SELECT '' AS five, INTERVAL_TBL.* 
    WHERE INTERVAL_TBL.f1 >= interval '@ 1 month';
- five |       f1        
-------+-----------------
-      | 34 years +00:00
-      | 3 mons +00:00
-      | 6 years +00:00
-      | 5 mons +00:00
-      | 5 mons +12:00
+ five |      f1      
+------+--------------
+      | 34 years
+      | 3 mons
+      | 6 years
+      | 5 mons
+      | 5 mons 12:00
 (5 rows)
 
 SELECT '' AS nine, INTERVAL_TBL.*
    WHERE INTERVAL_TBL.f1 > interval '@ 3 seconds ago';
- nine |       f1        
-------+-----------------
-      | +00:01
-      | +05:00
-      | 10 +00:00
-      | 34 years +00:00
-      | 3 mons +00:00
-      | 1 +02:03:04
-      | 6 years +00:00
-      | 5 mons +00:00
-      | 5 mons +12:00
+ nine |       f1       
+------+----------------
+      | 00:01
+      | 05:00
+      | 10 days
+      | 34 years
+      | 3 mons
+      | 1 day 02:03:04
+      | 6 years
+      | 5 mons
+      | 5 mons 12:00
 (9 rows)
 
 SELECT '' AS fortyfive, r1.*, r2.*
    FROM INTERVAL_TBL r1, INTERVAL_TBL r2
    WHERE r1.f1 > r2.f1
    ORDER BY r1.f1, r2.f1;
- fortyfive |       f1        |       f1       
------------+-----------------+----------------
-           | +00:01          | -00:00:14
-           | +05:00          | -00:00:14
-           | +05:00          | +00:01
-           | 1 +02:03:04     | -00:00:14
-           | 1 +02:03:04     | +00:01
-           | 1 +02:03:04     | +05:00
-           | 10 +00:00       | -00:00:14
-           | 10 +00:00       | +00:01
-           | 10 +00:00       | +05:00
-           | 10 +00:00       | 1 +02:03:04
-           | 3 mons +00:00   | -00:00:14
-           | 3 mons +00:00   | +00:01
-           | 3 mons +00:00   | +05:00
-           | 3 mons +00:00   | 1 +02:03:04
-           | 3 mons +00:00   | 10 +00:00
-           | 5 mons +00:00   | -00:00:14
-           | 5 mons +00:00   | +00:01
-           | 5 mons +00:00   | +05:00
-           | 5 mons +00:00   | 1 +02:03:04
-           | 5 mons +00:00   | 10 +00:00
-           | 5 mons +00:00   | 3 mons +00:00
-           | 5 mons +12:00   | -00:00:14
-           | 5 mons +12:00   | +00:01
-           | 5 mons +12:00   | +05:00
-           | 5 mons +12:00   | 1 +02:03:04
-           | 5 mons +12:00   | 10 +00:00
-           | 5 mons +12:00   | 3 mons +00:00
-           | 5 mons +12:00   | 5 mons +00:00
-           | 6 years +00:00  | -00:00:14
-           | 6 years +00:00  | +00:01
-           | 6 years +00:00  | +05:00
-           | 6 years +00:00  | 1 +02:03:04
-           | 6 years +00:00  | 10 +00:00
-           | 6 years +00:00  | 3 mons +00:00
-           | 6 years +00:00  | 5 mons +00:00
-           | 6 years +00:00  | 5 mons +12:00
-           | 34 years +00:00 | -00:00:14
-           | 34 years +00:00 | +00:01
-           | 34 years +00:00 | +05:00
-           | 34 years +00:00 | 1 +02:03:04
-           | 34 years +00:00 | 10 +00:00
-           | 34 years +00:00 | 3 mons +00:00
-           | 34 years +00:00 | 5 mons +00:00
-           | 34 years +00:00 | 5 mons +12:00
-           | 34 years +00:00 | 6 years +00:00
+ fortyfive |       f1       |       f1       
+-----------+----------------+----------------
+           | 00:01          | -00:00:14
+           | 05:00          | -00:00:14
+           | 05:00          | 00:01
+           | 1 day 02:03:04 | -00:00:14
+           | 1 day 02:03:04 | 00:01
+           | 1 day 02:03:04 | 05:00
+           | 10 days        | -00:00:14
+           | 10 days        | 00:01
+           | 10 days        | 05:00
+           | 10 days        | 1 day 02:03:04
+           | 3 mons         | -00:00:14
+           | 3 mons         | 00:01
+           | 3 mons         | 05:00
+           | 3 mons         | 1 day 02:03:04
+           | 3 mons         | 10 days
+           | 5 mons         | -00:00:14
+           | 5 mons         | 00:01
+           | 5 mons         | 05:00
+           | 5 mons         | 1 day 02:03:04
+           | 5 mons         | 10 days
+           | 5 mons         | 3 mons
+           | 5 mons 12:00   | -00:00:14
+           | 5 mons 12:00   | 00:01
+           | 5 mons 12:00   | 05:00
+           | 5 mons 12:00   | 1 day 02:03:04
+           | 5 mons 12:00   | 10 days
+           | 5 mons 12:00   | 3 mons
+           | 5 mons 12:00   | 5 mons
+           | 6 years        | -00:00:14
+           | 6 years        | 00:01
+           | 6 years        | 05:00
+           | 6 years        | 1 day 02:03:04
+           | 6 years        | 10 days
+           | 6 years        | 3 mons
+           | 6 years        | 5 mons
+           | 6 years        | 5 mons 12:00
+           | 34 years       | -00:00:14
+           | 34 years       | 00:01
+           | 34 years       | 05:00
+           | 34 years       | 1 day 02:03:04
+           | 34 years       | 10 days
+           | 34 years       | 3 mons
+           | 34 years       | 5 mons
+           | 34 years       | 5 mons 12:00
+           | 34 years       | 6 years
 (45 rows)
 
 SET DATESTYLE = 'postgres';

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.29 2001/01/17 16:46:56 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.30 2001/01/18 07:22:36 thomas Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -2931,13 +2931,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 # if defined(HAVE_TM_ZONE)
 		tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 # elif defined(HAVE_INT_TIMEZONE)
-
-#  ifdef __CYGWIN__
-		tz = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#  else
-		tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#  endif
-
+		tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 # endif
 
 #else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.42 2001/01/17 16:46:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.43 2001/01/18 07:22:36 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,9 +324,10 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 /* XXX HACK
  * Argh! My Linux box puts in a 1 second offset for dates less than 1970
  *	but only if the seconds field was non-zero. So, don't copy the seconds
- *	field and instead carry forward from the original - tgl 97/06/18
+ *	field and instead carry forward from the original - thomas 97/06/18
  * Note that GNU/Linux uses the standard freeware zic package as do
  *	many other platforms so this may not be GNU/Linux/ix86-specific.
+ * Still shows a problem on my up to date Linux box - thomas 2001-01-17
  */
 			tm->tm_sec = tx->tm_sec;
 #endif
@@ -340,11 +341,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 			if (tzn != NULL)
 				*tzn = (char *) tm->tm_zone;
 # elif defined(HAVE_INT_TIMEZONE)
-#  ifdef __CYGWIN__
-			*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#  else
-			*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#  endif
+			*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 			if (tzn != NULL)
 				*tzn = tzname[(tm->tm_isdst > 0)];
 # endif
@@ -1084,13 +1081,7 @@ timestamp_pl_span(PG_FUNCTION_ARGS)
 # if defined(HAVE_TM_ZONE)
 					tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 # elif defined(HAVE_INT_TIMEZONE)
-
-#  ifdef __CYGWIN__
-					tz = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#  else
-					tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#  endif
-
+					tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 # endif
 
 #else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
@@ -1733,13 +1724,7 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 # if defined(HAVE_TM_ZONE)
 				tz = -(tm->tm_gmtoff);	/* tm_gmtoff is Sun/DEC-ism */
 # elif defined(HAVE_INT_TIMEZONE)
-
-#  ifdef __CYGWIN__
-				tz = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#  else
-				tz = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#  endif
-
+				tz = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 # endif
 
 #else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.15 2000/06/08 22:37:58 momjian Exp $
+ * $Id: datetime.h,v 1.16 2001/01/18 07:22:42 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,6 +193,11 @@ do { \
 		t -= rint(q * u); \
 } while(0)
 
+#ifdef __CYGWIN__
+#define TIMEZONE_GLOBAL _timezone
+#else
+#define TIMEZONE_GLOBAL timezone
+#endif
 
 /*
  * Date/time validation

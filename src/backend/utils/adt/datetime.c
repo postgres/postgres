@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.58 2001/01/17 16:46:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.59 2001/01/18 07:22:35 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -880,11 +880,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				*tzp = -(tm->tm_gmtoff);		/* tm_gmtoff is
 												 * Sun/DEC-ism */
 # elif defined(HAVE_INT_TIMEZONE)
-#  ifdef __CYGWIN__
-				*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#  else
-				*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#  endif /* __CYGWIN__ */
+				*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 # endif /* HAVE_INT_TIMEZONE */
 
 #else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
@@ -1128,11 +1124,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 # if defined(HAVE_TM_ZONE)
 		*tzp = -(tmp->tm_gmtoff);		/* tm_gmtoff is Sun/DEC-ism */
 # elif defined(HAVE_INT_TIMEZONE)
-#  ifdef __CYGWIN__
-		*tzp = ((tmp->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#  else
-		*tzp = ((tmp->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#  endif
+		*tzp = ((tmp->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 # endif
 
 #else /* not (HAVE_TM_ZONE || HAVE_INT_TIMEZONE) */
@@ -2252,12 +2244,14 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 				is_before = (tm->tm_mday < 0);
 				is_nonzero = TRUE;
 			}
+			if ((!is_nonzero) || (tm->tm_hour != 0) || (tm->tm_min != 0)
+				|| (tm->tm_sec != 0) || (fsec != 0))
 			{
 				int minus = ((tm->tm_hour < 0) || (tm->tm_min < 0)
 							 || (tm->tm_sec < 0) || (fsec < 0));
 
 				sprintf(cp, "%s%s%02d:%02d", (is_nonzero ? " " : ""),
-						(minus ? "-" : (is_nonzero ? "+" : "")),
+						(minus ? "-" : (is_before ? "+" : "")),
 						abs(tm->tm_hour), abs(tm->tm_min));
 				cp += strlen(cp);
 				/* Mark as "non-zero" since the fields are now filled in */
@@ -2289,7 +2283,9 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 			if (tm->tm_year != 0)
 			{
-				int year = ((tm->tm_year < 0) ? -(tm->tm_year) : tm->tm_year);
+				int year = tm->tm_year;
+				if (tm->tm_year < 0)
+					year = -year;
 
 				sprintf(cp, "%d year%s", year,
 						((year != 1) ? "s" : ""));
@@ -2300,7 +2296,9 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 			if (tm->tm_mon != 0)
 			{
-				int mon = ((is_before && (tm->tm_mon > 0)) ? -(tm->tm_mon) : tm->tm_mon);
+				int mon = tm->tm_mon;
+				if (is_before || ((!is_nonzero) && (tm->tm_mon < 0)))
+					mon = -mon;
 
 				sprintf(cp, "%s%d mon%s", (is_nonzero ? " " : ""), mon,
 						((mon != 1) ? "s" : ""));
@@ -2312,7 +2310,9 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 			if (tm->tm_mday != 0)
 			{
-				int day = ((is_before && (tm->tm_mday > 0)) ? -(tm->tm_mday) : tm->tm_mday);
+				int day = tm->tm_mday;
+				if (is_before || ((!is_nonzero) && (tm->tm_mday < 0)))
+					day = -day;
 
 				sprintf(cp, "%s%d day%s", (is_nonzero ? " " : ""), day,
 						((day != 1) ? "s" : ""));
@@ -2323,7 +2323,9 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			}
 			if (tm->tm_hour != 0)
 			{
-				int hour = ((is_before && (tm->tm_hour > 0)) ? -(tm->tm_hour) : tm->tm_hour);
+				int hour = tm->tm_hour;
+				if (is_before || ((!is_nonzero) && (tm->tm_hour < 0)))
+					hour = -hour;
 
 				sprintf(cp, "%s%d hour%s", (is_nonzero ? " " : ""), hour,
 						((hour != 1) ? "s" : ""));
@@ -2335,7 +2337,9 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 
 			if (tm->tm_min != 0)
 			{
-				int min = ((is_before && (tm->tm_min > 0)) ? -(tm->tm_min) : tm->tm_min);
+				int min = tm->tm_min;
+				if (is_before || ((!is_nonzero) && (tm->tm_min < 0)))
+					min = -min;
 
 				sprintf(cp, "%s%d min%s", (is_nonzero ? " " : ""), min,
 						((min != 1) ? "s" : ""));
@@ -2348,9 +2352,13 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			/* fractional seconds? */
 			if (fsec != 0)
 			{
+				double sec;
 				fsec += tm->tm_sec;
-				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""),
-						((is_before && (fsec > 0)) ? -(fsec) : fsec));
+				sec = fsec;
+				if (is_before || ((!is_nonzero) && (fsec < 0)))
+					sec = -sec;
+
+				sprintf(cp, "%s%.2f secs", (is_nonzero ? " " : ""), sec);
 				cp += strlen(cp);
 				if (! is_nonzero)
 					is_before = (fsec < 0);
@@ -2360,7 +2368,9 @@ EncodeTimeSpan(struct tm * tm, double fsec, int style, char *str)
 			}
 			else if (tm->tm_sec != 0)
 			{
-				int sec = ((is_before && (tm->tm_sec > 0)) ? -(tm->tm_sec) : tm->tm_sec);
+				int sec = tm->tm_sec;
+				if (is_before || ((!is_nonzero) && (tm->tm_sec < 0)))
+					sec = -sec;
 
 				sprintf(cp, "%s%d sec%s", (is_nonzero ? " " : ""), sec,
 						((sec != 1) ? "s" : ""));

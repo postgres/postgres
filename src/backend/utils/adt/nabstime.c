@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.78 2001/01/17 16:46:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.79 2001/01/18 07:22:36 thomas Exp $
  *
  * NOTES
  *
@@ -160,12 +160,7 @@ GetCurrentAbsoluteTime(void)
 		tm = localtime(&now);
 
 		CDayLight = tm->tm_isdst;
-		CTimeZone =
-# ifdef __CYGWIN__
-			((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-# else
-			((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-# endif
+		CTimeZone = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
 		strcpy(CTZName, tzname[tm->tm_isdst]);
 #else /* neither HAVE_TM_ZONE nor HAVE_INT_TIMEZONE */
 		CTimeZone = tb.timezone * 60;
@@ -244,11 +239,8 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct tm * tm, char *tzn)
 	}
 # elif defined(HAVE_INT_TIMEZONE)
 	if (tzp != NULL)
-#  ifdef __CYGWIN__
-		*tzp = ((tm->tm_isdst > 0) ? (_timezone - 3600) : _timezone);
-#  else
-		*tzp = ((tm->tm_isdst > 0) ? (timezone - 3600) : timezone);
-#  endif
+		*tzp = ((tm->tm_isdst > 0) ? (TIMEZONE_GLOBAL - 3600) : TIMEZONE_GLOBAL);
+
 	if (tzn != NULL)
 	{
 
