@@ -13,6 +13,7 @@ float8/i.86-pc-cygwin*=float8-cygwin
 geometry/.*-bsdi=geometry-positive-zeros-bsd
 geometry/.*-freebsd=geometry-positive-zeros
 geometry/.*-freebsdelf4.0=geometry-positive-zeros-bsd
+geometry/.*-irix6=geometry-irix
 geometry/.*-netbsd=geometry-positive-zeros
 geometry/hppa=geometry-positive-zeros
 geometry/i.86-.*-gnulibc=geometry-i86-gnulibc
