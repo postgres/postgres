@@ -1,4 +1,4 @@
-/*	$Id: sha1.c,v 1.5 2001/03/22 03:59:10 momjian Exp $ */
+/*	$Id: sha1.c,v 1.6 2001/08/21 00:42:41 momjian Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -85,8 +85,7 @@ static uint32 _K[] = {0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6};
 static void sha1_step(struct sha1_ctxt *);
 
 static void
-sha1_step(ctxt)
-struct sha1_ctxt *ctxt;
+sha1_step(struct sha1_ctxt *ctxt)
 {
 	uint32		a,
 				b,
@@ -231,8 +230,7 @@ struct sha1_ctxt *ctxt;
 /*------------------------------------------------------------*/
 
 void
-sha1_init(ctxt)
-struct sha1_ctxt *ctxt;
+sha1_init(struct sha1_ctxt *ctxt)
 {
 	bzero(ctxt, sizeof(struct sha1_ctxt));
 	H(0) = 0x67452301;
@@ -243,8 +241,7 @@ struct sha1_ctxt *ctxt;
 }
 
 void
-sha1_pad(ctxt)
-struct sha1_ctxt *ctxt;
+sha1_pad(struct sha1_ctxt *ctxt)
 {
 	size_t		padlen;			/* pad length in bytes */
 	size_t		padstart;
@@ -287,10 +284,7 @@ struct sha1_ctxt *ctxt;
 }
 
 void
-sha1_loop(ctxt, input0, len)
-struct sha1_ctxt *ctxt;
-const caddr_t input0;
-size_t		len;
+sha1_loop(struct sha1_ctxt *ctxt, const uint8 *input0, size_t len)
 {
 	const uint8 *input;
 	size_t		gaplen;
@@ -318,9 +312,7 @@ size_t		len;
 }
 
 void
-sha1_result(ctxt, digest0)
-struct sha1_ctxt *ctxt;
-caddr_t		digest0;
+sha1_result(struct sha1_ctxt *ctxt, uint8 *digest0)
 {
 	uint8	   *digest;
 
@@ -351,5 +343,4 @@ caddr_t		digest0;
 	digest[19] = ctxt->h.b8[16];
 #endif
 }
-
 #endif	 /* unsupported */

@@ -1,4 +1,4 @@
-/*	$Id: sha1.h,v 1.4 2001/03/22 03:59:10 momjian Exp $ */
+/*	$Id: sha1.h,v 1.5 2001/08/21 00:42:41 momjian Exp $ */
 /*	   $KAME: sha1.h,v 1.4 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -60,8 +60,8 @@ struct sha1_ctxt
 
 extern void sha1_init(struct sha1_ctxt *);
 extern void sha1_pad(struct sha1_ctxt *);
-extern void sha1_loop(struct sha1_ctxt *, const caddr_t, size_t);
-extern void sha1_result(struct sha1_ctxt *, caddr_t);
+extern void sha1_loop(struct sha1_ctxt *, const uint8 *, size_t);
+extern void sha1_result(struct sha1_ctxt *, uint8 *);
 
 /* compatibilty with other SHA1 source codes */
 typedef struct sha1_ctxt SHA1_CTX;

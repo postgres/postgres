@@ -1,4 +1,4 @@
-/*	$Id: md5.c,v 1.5 2001/03/22 03:59:10 momjian Exp $	*/
+/*	$Id: md5.c,v 1.6 2001/08/21 00:42:41 momjian Exp $	*/
 /*	   $KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $	   */
 
 /*
@@ -128,8 +128,7 @@ static const uint8 md5_paddat[MD5_BUFLEN] = {
 static void md5_calc(uint8 *, md5_ctxt *);
 
 void
-md5_init(ctxt)
-md5_ctxt   *ctxt;
+md5_init(md5_ctxt *ctxt)
 {
 	ctxt->md5_n = 0;
 	ctxt->md5_i = 0;
@@ -141,10 +140,7 @@ md5_ctxt   *ctxt;
 }
 
 void
-md5_loop(ctxt, input, len)
-md5_ctxt   *ctxt;
-uint8	   *input;
-unsigned int len;				/* number of bytes */
+md5_loop(md5_ctxt *ctxt, const uint8 *input, unsigned len)
 {
 	unsigned int gap,
 				i;
@@ -173,8 +169,7 @@ unsigned int len;				/* number of bytes */
 }
 
 void
-md5_pad(ctxt)
-md5_ctxt   *ctxt;
+md5_pad(md5_ctxt *ctxt)
 {
 	unsigned int gap;
 
@@ -216,9 +211,7 @@ md5_ctxt   *ctxt;
 }
 
 void
-md5_result(digest, ctxt)
-uint8	   *digest;
-md5_ctxt   *ctxt;
+md5_result(uint8 *digest, md5_ctxt *ctxt)
 {
 	/* 4 byte words */
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -245,14 +238,11 @@ md5_ctxt   *ctxt;
 }
 
 #if BYTE_ORDER == BIG_ENDIAN
-uint32		X[16];
-
+static uint32		X[16];
 #endif
 
 static void
-md5_calc(b64, ctxt)
-uint8	   *b64;
-md5_ctxt   *ctxt;
+md5_calc(uint8 *b64, md5_ctxt *ctxt)
 {
 	uint32		A = ctxt->md5_sta;
 	uint32		B = ctxt->md5_stb;
@@ -261,7 +251,6 @@ md5_ctxt   *ctxt;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	uint32	   *X = (uint32 *) b64;
-
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
 	/* 4 byte words */

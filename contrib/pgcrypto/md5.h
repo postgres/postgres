@@ -1,4 +1,4 @@
-/*	$Id: md5.h,v 1.4 2001/03/22 03:59:10 momjian Exp $	*/
+/*	$Id: md5.h,v 1.5 2001/08/21 00:42:41 momjian Exp $	*/
 /*	   $KAME: md5.h,v 1.3 2000/02/22 14:01:18 itojun Exp $	   */
 
 /*
@@ -62,7 +62,7 @@ typedef struct
 }			md5_ctxt;
 
 extern void md5_init(md5_ctxt *);
-extern void md5_loop(md5_ctxt *, uint8 *, unsigned int);
+extern void md5_loop(md5_ctxt *, const uint8 *, unsigned int);
 extern void md5_pad(md5_ctxt *);
 extern void md5_result(uint8 *, md5_ctxt *);
 
@@ -75,5 +75,4 @@ do {				\
 	md5_pad((y));		\
 	md5_result((x), (y));	\
 } while (0)
-
 #endif	 /* ! _NETINET6_MD5_H_ */

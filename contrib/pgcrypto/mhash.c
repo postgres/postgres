@@ -1,8 +1,8 @@
 /*
  * mhash.c
- *		Wrapper for mhash library.
+ *		Wrapper for mhash and mcrypt libraries.
  *
- * Copyright (c) 2000 Marko Kreen
+ * Copyright (c) 2001 Marko Kreen
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,48 +26,177 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mhash.c,v 1.3 2001/03/22 03:59:10 momjian Exp $
+ * $Id: mhash.c,v 1.4 2001/08/21 00:42:41 momjian Exp $
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "pgcrypto.h"
+#include "px.h"
 
 #include <mhash.h>
+#include <mcrypt.h>
+
+#define MAX_KEY_LENGTH 512
+#define MAX_IV_LENGTH 128
+
+#define DEF_KEY_LEN 16
+
+
+/* DIGEST */
 
 static uint
-			pg_mhash_len(pg_digest * hash);
-static uint8 *pg_mhash_digest(pg_digest * hash, uint8 *src,
-				uint len, uint8 *buf);
-
-static uint
-pg_mhash_len(pg_digest * h)
+digest_result_size(PX_MD * h)
 {
-	return mhash_get_block_size(h->misc.code);
+	MHASH		mh = (MHASH) h->p.ptr;
+	hashid		id = mhash_get_mhash_algo(mh);
+
+	return mhash_get_block_size(id);
 }
 
-static uint8 *
-pg_mhash_digest(pg_digest * h, uint8 *src, uint len, uint8 *dst)
+static uint
+digest_block_size(PX_MD * h)
 {
-	uint8	   *res;
+	MHASH		mh = (MHASH) h->p.ptr;
+	hashid		id = mhash_get_mhash_algo(mh);
 
-	MHASH		mh = mhash_init(h->misc.code);
+	return mhash_get_hash_pblock(id);
+}
 
-	mhash(mh, src, len);
-	res = mhash_end(mh);
+static void
+digest_reset(PX_MD * h)
+{
+	MHASH		mh = (MHASH) h->p.ptr;
+	hashid		id = mhash_get_mhash_algo(mh);
+	uint8	   *res = mhash_end(mh);
 
-	memcpy(dst, res, mhash_get_block_size(h->misc.code));
 	mhash_free(res);
-
-	return dst;
+	mh = mhash_init(id);
+	h->p.ptr = mh;
 }
 
-pg_digest  *
-pg_find_digest(pg_digest * h, char *name)
+static void
+digest_update(PX_MD * h, const uint8 * data, uint dlen)
 {
+	MHASH		mh = (MHASH) h->p.ptr;
+
+	mhash(mh, data, dlen);
+}
+
+static void
+digest_finish(PX_MD * h, uint8 * dst)
+{
+	MHASH		mh = (MHASH) h->p.ptr;
+	uint		hlen = digest_result_size(h);
+	hashid		id = mhash_get_mhash_algo(mh);
+	uint8	   *buf = mhash_end(mh);
+
+	memcpy(dst, buf, hlen);
+	mhash_free(buf);
+
+	mh = mhash_init(id);
+	h->p.ptr = mh;
+}
+
+static void
+digest_free(PX_MD * h)
+{
+	MHASH		mh = (MHASH) h->p.ptr;
+	uint8	   *buf = mhash_end(mh);
+
+	mhash_free(buf);
+
+	px_free(h);
+}
+
+/* ENCRYPT / DECRYPT */
+
+static uint
+cipher_block_size(PX_Cipher *c)
+{
+	MCRYPT ctx = (MCRYPT)c->ptr;
+	return mcrypt_enc_get_block_size(ctx);
+}
+
+static uint
+cipher_key_size(PX_Cipher *c)
+{
+	MCRYPT ctx = (MCRYPT)c->ptr;
+	return mcrypt_enc_get_key_size(ctx);
+}
+
+static uint
+cipher_iv_size(PX_Cipher *c)
+{
+	MCRYPT ctx = (MCRYPT)c->ptr;
+	return mcrypt_enc_mode_has_iv(ctx)
+		? mcrypt_enc_get_iv_size(ctx) : 0;
+}
+
+static int
+cipher_init(PX_Cipher *c, const uint8 *key, uint klen, const uint8 *iv)
+{
+	int err;
+	MCRYPT ctx = (MCRYPT)c->ptr;
+
+	err = mcrypt_generic_init(ctx, (char *)key, klen, (char*)iv);
+	if (err < 0)
+		elog(ERROR, "mcrypt_generic_init error: %s", mcrypt_strerror(err));
+
+	c->pstat = 1;
+	return 0;
+}
+
+static int
+cipher_encrypt(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res)
+{
+	int err;
+	MCRYPT ctx = (MCRYPT)c->ptr;
+
+	memcpy(res, data, dlen);
+
+	err = mcrypt_generic(ctx, res, dlen);
+	if (err < 0)
+		elog(ERROR, "mcrypt_generic error: %s", mcrypt_strerror(err));
+	return 0;
+}
+
+static int
+cipher_decrypt(PX_Cipher *c, const uint8 *data, uint dlen, uint8 *res)
+{
+	int err;
+	MCRYPT ctx = (MCRYPT)c->ptr;
+
+	memcpy(res, data, dlen);
+
+	err = mdecrypt_generic(ctx, res, dlen);
+	if (err < 0)
+		elog(ERROR, "mdecrypt_generic error: %s", mcrypt_strerror(err));
+	return 0;
+}
+
+
+static void
+cipher_free(PX_Cipher *c)
+{
+	MCRYPT ctx = (MCRYPT)c->ptr;
+
+	if (c->pstat)
+		mcrypt_generic_end(ctx);
+	else
+		mcrypt_module_close(ctx);
+	
+	px_free(c);
+}
+
+/* Helper functions */
+
+static int
+find_hashid(const char *name)
+{
+	int			res = -1;
 	size_t		hnum,
-				i,
-				b;
+				b,
+				i;
 	char	   *mname;
 
 	hnum = mhash_count();
@@ -80,12 +209,134 @@ pg_find_digest(pg_digest * h, char *name)
 		free(mname);
 		if (!b)
 		{
-			h->name = mhash_get_hash_name(i);
-			h->length = pg_mhash_len;
-			h->digest = pg_mhash_digest;
-			h->misc.code = i;
-			return h;
+			res = i;
+			break;
 		}
 	}
-	return NULL;
+
+	return res;
 }
+
+static char *modes[] = {
+	"ecb", "cbc", "cfb", "ofb", "nofb", "stream",
+	"ofb64", "cfb64", NULL
+};
+
+static PX_Alias aliases[] = {
+	{"bf", "blowfish" },
+	{"3des", "tripledes" },
+	{"des3", "tripledes" },
+	{"aes", "rijndael-128" },
+	{"rijndael", "rijndael-128" },
+	{"aes-128", "rijndael-128" },
+	{"aes-192", "rijndael-192" },
+	{"aes-256", "rijndael-256" },
+	{ NULL, NULL }
+};
+
+static PX_Alias mode_aliases[] = {
+#if 0 /* N/A */
+	{ "cfb", "ncfb" },
+	{ "ofb", "nofb" },
+	{ "cfb64", "ncfb" },
+#endif
+	/* { "ofb64", "nofb" }, not sure it works */
+	{ "cfb8", "cfb" },
+	{ "ofb8", "ofb" },
+	{ NULL, NULL }
+};
+
+static int is_mode(char *s)
+{
+	char **p;
+	
+	if (*s >= '0' && *s <= '9')
+		return 0;
+
+	for (p = modes; *p; p++)
+		if (!strcmp(s, *p))
+			return 1;
+
+	return 0;
+}
+
+/* PUBLIC FUNCTIONS */
+
+int
+px_find_digest(const char *name, PX_MD **res)
+{
+	PX_MD	   *h;
+	MHASH		mh;
+	int			i;
+
+	i = find_hashid(name);
+	if (i < 0)
+		return -1;
+
+	mh = mhash_init(i);
+	h = px_alloc(sizeof(*h));
+	h->p.ptr = (void *) mh;
+
+	h->result_size = digest_result_size;
+	h->block_size = digest_block_size;
+	h->reset = digest_reset;
+	h->update = digest_update;
+	h->finish = digest_finish;
+	h->free = digest_free;
+
+	*res = h;
+	return 0;
+}
+
+
+int
+px_find_cipher(const char *name, PX_Cipher **res)
+{
+	char nbuf[PX_MAX_NAMELEN + 1];
+	const char *mode = NULL;
+	char *p;
+	MCRYPT ctx;
+
+	PX_Cipher *c;
+
+	strcpy(nbuf, name);
+	
+	if ((p = strrchr(nbuf, '-')) != NULL) {
+		if (is_mode(p + 1)) {
+			mode = p + 1;
+			*p = 0;
+		}
+	}
+
+	name = px_resolve_alias(aliases, nbuf);
+
+	if (!mode) {
+		mode = "cbc";
+		/*
+		if (mcrypt_module_is_block_algorithm(name, NULL))
+			mode = "cbc";
+		else
+			mode = "stream";
+		*/
+	}
+	mode = px_resolve_alias(mode_aliases, mode);
+	
+	ctx = mcrypt_module_open((char*)name, NULL, (char*)mode, NULL);
+	if (ctx == (void*)MCRYPT_FAILED)
+		return -1;
+
+	c = palloc(sizeof *c);
+	c->iv_size = cipher_iv_size;
+	c->key_size = cipher_key_size;
+	c->block_size = cipher_block_size;
+	c->init = cipher_init;
+	c->encrypt = cipher_encrypt;
+	c->decrypt = cipher_decrypt;
+	c->free = cipher_free;
+	c->ptr = ctx;
+	c->pstat = 0;
+
+	*res = c;
+	return 0;
+}
+

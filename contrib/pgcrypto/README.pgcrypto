@@ -1,56 +1,184 @@
 
-DESCRIPTION
+pgcrypto 0.4 - cryptographic functions for PostgreSQL.
+======================================================
+by Marko Kreen <marko@l-t.ee>
 
-  Here are various cryptographic and otherwise useful
-  functions for PostgreSQL.
 
-    encode(data, type)
-        encodes binary data into ASCII-only representation.
-	Types supported are 'hex' and 'base64'.
+INSTALLATION
+============
 
-    decode(data, type)
-    	decodes the data processed by encode()
+Edit makefile, if you want to use any external library.
 
-    digest(data::text, hash_name::text)
-	which returns cryptographic checksum over data by
-	specified algorithm. eg
+make
+make install
 
-	> select encode(digest('blah', 'sha1'), 'hex');
-	5bf1fd927dfb8679496a2e6cf00cbe50c1c87145
+SQL FUNCTIONS
+=============
 
-    digest_exists(hash_name::text)::bool
-	which reports if particular hash type exists.
+	If any of arguments are NULL they return NULL.
 
-  If any of arguments are NULL they return NULL.
+digest(data::bytea, type::text)::bytea
 
-HASHES
+	Type is here the algorithm to use. E.g. 'md5', 'sha1', ...
+	Returns binary hash.
 
-  For choosing library you must edit Makefile.
+digest_exists(type::text)::bool
 
-  standalone (default):
-	MD5, SHA1
+	Returns BOOL whether given hash exists.
 
-	(the code is from KAME project.  Actually I hate code
-	duplication, but I also want to quarantee that MD5 and
-	SHA1 exist)
+hmac(data::bytea, key::bytea, type::text)::bytea
 
-  mhash (0.8.1):
-	MD5, SHA1, CRC32, CRC32B, GOST, TIGER, RIPEMD160,
-	HAVAL(256,224,192,160,128)
+	Calculates Hashed MAC over data.  type is the same as
+	in digest().  Returns binary hash.  Similar to digest()
+	but noone can alter data and re-calculate hash without
+	knowing key.  If the key is larger than hash blocksize
+	it will first hashed and the hash will be used as key.
+	
+	[ HMAC is described in RFC2104. ]
 
-  openssl:
-	MD5, SHA1, RIPEMD160, MD2
+hmac_exists(type::text)::bool
+	Returns BOOL.  It is separate function because all hashes
+	cannot be used in HMAC.
 
-  kerberos5 (heimdal):
-	MD5, SHA1
+crypt(password::text, salt::text)::text
 
-ENCRYPTION
+	Calculates UN*X crypt(3) style hash.  Useful for storing
+	passwords.  For generating salt you should use the
+	gen_salt() function.  Usage:
 
-  There is experimental version out with encryption, HMAC
-  and UN*X crypt() support in
+	New password:
+	
+	  UPDATE .. SET pswhash = crypt(new_psw, gen_salt('md5'));
+	
+	Authentication:
 
-    http://www.l-t.ee/marko/pgsql/
+	  SELECT pswhash = crypt(given_psw, pswhash) WHERE .. ;
+	
+	returns BOOL whether the given_psw is correct.  DES crypt
+	has max key of 8 bytes, MD5 has max key at least 2^32-1
+	bytes but may be larger on some platforms...
 
-  Current latest release is pgcrypto-0.3.tar.gz.
+	Builtin crypt() supports DES, Extended DES, MD5 and Blowfish
+	(variant 2a) algorithms.
+
+gen_salt(type::text)::text
+
+	Generates a new random salt for usage in crypt().  Type
+	
+	'des'	- Old UNIX, not recommended
+	'md5'	- md5-based crypt()
+	'xdes'	- 'Extended DES'
+	'bf'	- Blowfish-based, variant 2a
+
+	When you use --enable-system-crypt then note that system
+	libcrypt may not support them all.
+
+encrypt(data::bytea, key::bytea, type::text)::bytea
+decrypt(data::bytea, key::bytea, type::text)::bytea
+encrypt_iv(data::bytea, key::bytea, iv::bytea, type::text)::bytea
+decrypt_iv(data::bytea, key::bytea, iv::bytea, type::text)::bytea
+
+	Encrypt/decrypt data with cipher, padding data if needed.
+
+	Pseudo-noteup:
+
+	algo ['-' mode] ['/pad:' padding]
+
+	Supported algorithms:
+	
+		bf		- Blowfish
+		aes, rijndael	- Rijndael-128
+
+	Others depend on library and are not tested enough, so
+	play on your own risk.
+
+	Modes: 'cbc' (default), 'ecb'.  Again, library may support
+	more.
+
+	Padding is 'pkcs' (default), 'none'.  'none' is mostly for
+	testing ciphers, you should not need it.
+
+	So, example:
+
+		encrypt(data, 'fooz', 'bf')
+	
+	is equal to
+
+		encrypt(data, 'fooz', 'bf-cbc/pad:pkcs')
+
+	IV is initial value for mode, defaults to all zeroes.
+	It is ignored for ECB.  It is clipped or padded with zeroes
+	if not exactly block size.
+
+
+ALGORITHMS
+==========
+
+The standard functionality at the moment consist of
+
+Hashes: md5, sha1
+Ciphers: bf, aes
+Modes: cbc, ecb
+
+TODO: write stardard names for optional ciphers too.
+
+LIBRARIES
+=========
+
+* crypt()
+
+    internal: des, xdes, md5, bf
+
+    -lcrypt: ??? (whatever you have)
+
+* other:
+
+[ This only list of stuff libraries claim to support.  So
+  pgcrypto may work with all of them.  But ATM tested aree only the
+  standard ciphers.  On others pgcrypto and library may mess something
+  up. You have been warned.  ]
+
+internal (default):
+    Hashes: MD5, SHA1
+    Ciphers: Blowfish, Rijndael-128
+
+
+OpenSSL (0.9.6):
+    Hashes:	MD5, SHA1, RIPEMD160, MD2   
+    Ciphers:	DES, DESX, DES3, RC5, RC4, RC2, IDEA,
+		Blowfish, CAST5
+    License:	BSD-like with strong advertisement
+    Url:	http://www.openssl.org/
+
+
+mhash (0.8.9) + mcrypt (2.4.11):
+    Hashes:	MD5, SHA1, CRC32, CRC32B, GOST, TIGER, RIPEMD160,
+		HAVAL(256,224,192,160,128)
+    Ciphers:	DES, DES3, CAST-128(CAST5), CAST-256, xTEA, 3-way,
+    		SKIPJACK, Blowfish, Twofish, LOKI97, RC2, RC4, RC6,
+		Rijndael-128/192/256, MARS, PANAMA, WAKE, Serpent, IDEA, GOST,
+		SAFER, SAFER+, Enigma
+    License:	LGPL
+    Url:	http://mcrypt.sourceforge.org/
+    Url:	http://mhash.sourceforge.org/
+
+CREDITS
+=======
+
+I have used code from following sources:
+
+DES crypt() by David Burren and others	FreeBSD libcrypt
+MD5 crypt() by Poul-Henning Kamp	FreeBSD libcrypt
+Blowfish crypt() by Solar Designer	www.openwall.com
+Blowfish cipher by Niels Provos		OpenBSD sys/crypto
+Rijndael cipher by Brian Gladman	OpenBSD sys/crypto
+MD5 and SHA1 by WIDE Project		KAME kame/sys/crypto
+
+LEGALESE
+========
+
+* I owe a beer to Poul-Henning.
+
+* This product includes software developed by Niels Provos.
 
 
