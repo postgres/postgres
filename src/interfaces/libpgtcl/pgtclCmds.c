@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.74 2003/10/31 00:18:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.75 2003/11/08 20:34:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1218,7 +1218,11 @@ Pg_lo_read(ClientData cData, Tcl_Interp *interp, int objc,
 
 	if (nbytes >= 0)
 	{
+#if TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION >= 1 || TCL_MAJOR_VERSION > 8
 		bufObj = Tcl_NewByteArrayObj(buf, nbytes);
+#else
+		bufObj = Tcl_NewStringObj(buf, nbytes);
+#endif
 
 		if (Tcl_ObjSetVar2(interp, bufVar, NULL, bufObj,
 						   TCL_LEAVE_ERR_MSG | TCL_PARSE_PART1) == NULL)
@@ -1313,7 +1317,11 @@ Pg_lo_write(ClientData cData, Tcl_Interp *interp, int objc,
 	if (Tcl_GetIntFromObj(interp, objv[2], &fd) != TCL_OK)
 		return TCL_ERROR;
 
+#if TCL_MAJOR_VERSION == 8 && TCL_MINOR_VERSION >= 1 || TCL_MAJOR_VERSION > 8
 	buf = Tcl_GetByteArrayFromObj(objv[3], &nbytes);
+#else
+	buf = Tcl_GetStringFromObj(objv[3], &nbytes);
+#endif
 
 	if (Tcl_GetIntFromObj(interp, objv[4], &len) != TCL_OK)
 		return TCL_ERROR;
