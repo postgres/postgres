@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.13 2000/09/12 04:28:30 momjian Exp $
+# $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.14 2000/09/25 12:43:24 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,9 +18,9 @@ ifeq ($(USE_TCL), true)
 DIRS += tcl
 endif
 
-ifeq ($(with_perl), yes)
-DIRS += plperl
-endif
+#ifeq ($(with_perl), yes)
+#DIRS += plperl
+#endif
 
 all install installdirs uninstall depend distprep:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
