@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.175 2004/11/14 02:04:14 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.176 2004/12/06 23:57:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2363,6 +2363,14 @@ AfterTriggerEndXact(void)
 
 	/* ... but not inside a query */
 	Assert(afterTriggers->query_depth == -1);
+
+	/*
+	 * If there are any triggers to fire, make sure we have set a snapshot
+	 * for them to use.  (Since PortalRunUtility doesn't set a snap for
+	 * COMMIT, we can't assume ActiveSnapshot is valid on entry.)
+	 */
+	if (afterTriggers->events.head != NULL)
+		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 	/*
 	 * Run all the remaining triggers.  Loop until they are all gone,
