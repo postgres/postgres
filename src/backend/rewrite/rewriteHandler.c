@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.145 2004/11/06 17:46:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.146 2004/11/20 17:59:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1267,6 +1267,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 					newstuff = RewriteQuery(pt, rewrite_events);
 					rewritten = list_concat(rewritten, newstuff);
 				}
+
+				rewrite_events = list_delete_first(rewrite_events);
 			}
 		}
 
