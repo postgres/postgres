@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.4 1997/08/26 17:29:52 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_table.l,v 1.5 1997/08/26 17:39:30 momjian Exp $
 .TH "CREATE TABLE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create table \(em create a new class
@@ -54,7 +54,7 @@ from the class are automatically a type and can be used in
 or other 
 .BR "create table"
 statements.  See 
-.IR pgintro (l)
+.IR pgintro (1)
 for a further discussion of this point.
 .PP
 The optional
