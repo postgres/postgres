@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.68 1999/10/18 13:44:24 momjian Exp $
+ * $Id: pg_type.h,v 1.69 1999/10/18 14:07:49 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -167,11 +167,11 @@ DESCR("31-character type for storing system identifiers");
 #define NAMEOID			19
 
 DATA(insert OID = 20 (	int8	   PGUID  8  20 f b t \054 0   0 int8in int8out int8in int8out d _null_ ));
-DESCR("~18 digit integer, 8-bytes");
+DESCR("~18 digit integer, 8-byte storage");
 #define INT8OID			20
 
 DATA(insert OID = 21 (	int2	   PGUID  2   5 t b t \054 0   0 int2in int2out int2in int2out s _null_ ));
-DESCR("-32 thousand to 32 thousand, 2-byte storage, ");
+DESCR("-32 thousand to 32 thousand, 2-byte storage");
 #define INT2OID			21
 
 DATA(insert OID = 22 (	int28	   PGUID 16  50 f b t \054 0  21 int28in int28out int28in int28out i _null_ ));
@@ -186,7 +186,7 @@ DESCR("8 int2 integers, used internally");
 #define INT28OID		22
 
 DATA(insert OID = 23 (	int4	   PGUID  4  10 t b t \054 0   0 int4in int4out int4in int4out i _null_ ));
-DESCR("-2 billion to 2 billion, 4-byte integer, ");
+DESCR("-2 billion to 2 billion integer, 4-byte storage");
 #define INT4OID			23
 
 DATA(insert OID = 24 (	regproc    PGUID  4  16 t b t \054 0   0 regprocin regprocout regprocin regprocout i _null_ ));
@@ -273,10 +273,10 @@ DESCR("");
 /* OIDS 700 - 799 */
 
 DATA(insert OID = 700 (  float4    PGUID  4  12 f b t \054 0   0 float4in float4out float4in float4out i _null_ ));
-DESCR("single-precision floating point number, 4-byte");
+DESCR("single-precision floating point number, 4-byte storage");
 #define FLOAT4OID 700
 DATA(insert OID = 701 (  float8    PGUID  8  24 f b t \054 0   0 float8in float8out float8in float8out d _null_ ));
-DESCR("double-precision floating point number, 8-byte");
+DESCR("double-precision floating point number, 8-byte storage");
 #define FLOAT8OID 701
 DATA(insert OID = 702 (  abstime   PGUID  4  20 t b t \054 0   0 nabstimein nabstimeout nabstimein nabstimeout i _null_ ));
 DESCR("absolute, limited-range date and time (Unix system time)");
