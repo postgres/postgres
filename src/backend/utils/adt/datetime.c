@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.44 2000/03/16 14:36:51 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.45 2000/03/29 03:57:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1367,8 +1367,11 @@ DecodeNumber(int flen, char *str, int fmask,
 	 * more, but we now test first for a three-digit doy so anything
 	 * bigger than two digits had better be an explicit year. - thomas
 	 * 1999-01-09
+	 * Back to requiring a 4 digit year.
+	 * We accept a two digit year farther down.
+	 * - thomas 2000-03-28
 	 */
-	else if (flen > 2)
+	else if (flen >= 4)
 	{
 		*tmask = DTK_M(YEAR);
 
@@ -1382,14 +1385,16 @@ DecodeNumber(int flen, char *str, int fmask,
 
 		tm->tm_year = val;
 	}
+
 	/* already have year? then could be month */
 	else if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(MONTH)))
 			 && ((val >= 1) && (val <= 12)))
 	{
 		*tmask = DTK_M(MONTH);
 		tm->tm_mon = val;
-		/* no year and EuroDates enabled? then could be day */
+
 	}
+	/* no year and EuroDates enabled? then could be day */
 	else if ((EuroDates || (fmask & DTK_M(MONTH)))
 			 && (!(fmask & DTK_M(YEAR)) && !(fmask & DTK_M(DAY)))
 			 && ((val >= 1) && (val <= 31)))
@@ -1409,7 +1414,11 @@ DecodeNumber(int flen, char *str, int fmask,
 		*tmask = DTK_M(DAY);
 		tm->tm_mday = val;
 	}
-	else if (!(fmask & DTK_M(YEAR)))
+	/* Check for 2 or 4 or more digits, but currently we reach here
+	 * only if two digits. - thomas 2000-03-28
+	 */
+	else if (!(fmask & DTK_M(YEAR))
+			 && ((flen >= 4) || (flen == 2)))
 	{
 		*tmask = DTK_M(YEAR);
 		tm->tm_year = val;
