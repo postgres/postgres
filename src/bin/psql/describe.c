@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.20 2000/04/16 15:46:40 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.21 2000/04/16 20:04:51 petere Exp $
  */
 #include "postgres.h"
 #include "describe.h"
@@ -972,6 +972,10 @@ listTables(const char *infotype, const char *name, bool desc)
 	char		buf[3072 + 8 * REGEXP_CUTOFF];
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
+
+	if (showSystem && !(showSeq || showIndices || showViews || showTables))
+		showTables = showViews = showSeq = true;
+
 
 	buf[0] = '\0';
 

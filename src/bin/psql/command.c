@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.30 2000/04/16 15:46:40 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.31 2000/04/16 20:04:50 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -306,9 +306,6 @@ exec_command(const char *cmd,
 			case 'i':
 			case 's':
 			case 'S':
-				if (cmd[1] == 'S' && cmd[2] == '\0')
-					success = listTables("Stvs", NULL, show_verbose);
-				else
 					success = listTables(&cmd[1], name, show_verbose);
 				break;
 			default:
