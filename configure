@@ -19172,6 +19172,8 @@ echo "$as_me: error: Can not build thread test proram." >&2;}
    { (exit 1); exit 1; }; })
 $srcdir/src/tools/thread/thread_test >&5 ||
 	( rm -f src/Makefile.global
+	  echo
+	  echo
 	  $srcdir/src/tools/thread/thread_test
 	  { { echo "$as_me:$LINENO: error: Thread test program failed.  Your platform is not thread-safe." >&5
 echo "$as_me: error: Thread test program failed.  Your platform is not thread-safe." >&2;}
