@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.1 1999/09/23 17:02:28 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/truncate.sgml,v 1.2 1999/10/01 15:24:09 thomas Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    TRUNCATE
   </refname>
   <refpurpose>
-   Close a cursor
+   Empty a table
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-TRUNCATE TABLE <replaceable class="PARAMETER">table</replaceable>
+TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable>
   </synopsis>
   
   <refsect2 id="R2-SQL-TRUNCATE-1">
@@ -37,10 +37,10 @@ TRUNCATE TABLE <replaceable class="PARAMETER">table</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><replaceable class="PARAMETER">table</replaceable></term>
+      <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The table name to truncate.
+	The name of the table to be truncated.
        </para>
       </listitem>
      </varlistentry>
@@ -81,19 +81,24 @@ TRUNCATE
    Description
   </title>
   <para>
-   <command>TRUNCATE</command> quickly removes all rows from a table.
+   <command>TRUNCATE</command> quickly removes all rows from a
+   table. It has the same effect as an unqualified
+   <command>DELETE</command> but since it does not actually scan the
+   table it is faster. This is most effective on large tables.
   </para>
-  
+ </refsect1>
+
  <refsect1 id="R1-SQL-TRUNCATE-2">
   <title>
    Usage
   </title>
   <para>
-   Truncate the table bigtable.
-  </para>
-  <programlisting>
+   Truncate the table <literal>bigtable</literal>:
+
+   <programlisting>
 TRUNCATE TABLE bigtable;
-  </programlisting>
+   </programlisting>
+  </para>
  </refsect1>
  
  <refsect1 id="R1-SQL-TRUNCATE-3">

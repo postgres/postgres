@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.18 1999/08/06 13:50:30 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.19 1999/10/01 15:24:09 thomas Exp $
 Postgres documentation
 -->
 
@@ -67,6 +67,7 @@ Postgres documentation
    &selectInto;
    &set;
    &show;
+   &truncate;
    &unlisten;
    &update;
    &vacuum;
