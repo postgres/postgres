@@ -5,7 +5,7 @@
 # It also dumps the pg_shadow and pg_group tables, which belong to the
 # whole installation rather than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall,v 1.25 2000/05/05 03:04:00 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall,v 1.26 2000/05/05 17:50:38 tgl Exp $
 #
 # to adapt to System V vs. BSD 'echo'
 if echo '\\' | grep '\\\\' >/dev/null 2>&1
@@ -56,6 +56,7 @@ echo "${BS}."
 # XXX this breaks badly if the layout of pg_group ever changes.
 # It'd be better to convert the data into CREATE GROUP commands.
 #
+echo "delete from pg_group;"
 echo "copy pg_group from stdin;"
 psql -q template1 <<END
 copy pg_group to stdout;
