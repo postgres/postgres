@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.110 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.111 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -960,7 +960,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (!OidIsValid(array_typelem))
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-						 errmsg("argument declared \"anyarray\" is not an array but %s",
+						 errmsg("argument declared \"anyarray\" is not an array but type %s",
 								format_type_be(array_typeid))));
 		}
 

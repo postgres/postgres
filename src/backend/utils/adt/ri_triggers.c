@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.59 2003/09/28 02:11:23 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.60 2003/09/29 00:05:25 petere Exp $
  *
  * ----------
  */
@@ -2731,7 +2731,7 @@ ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname, int tgkind)
 			 errmsg("no target table given for trigger \"%s\" on table \"%s\"",
 					trigdata->tg_trigger->tgname,
 					RelationGetRelationName(trigdata->tg_relation)),
-				 errhint("Remove this RI trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
+				 errhint("Remove this referential integrity trigger and its mates, then do ALTER TABLE ADD CONSTRAINT.")));
 }
 
 

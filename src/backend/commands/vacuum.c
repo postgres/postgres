@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.261 2003/09/25 06:57:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.262 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2726,7 +2726,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 		if (stats->num_index_tuples > num_tuples + keep_tuples ||
 			!vac_is_partial_index(indrel))
 			ereport(WARNING,
-					(errmsg("index \"%s\" contains %.0f row versions, but table contains %.0f tuples",
+					(errmsg("index \"%s\" contains %.0f row versions, but table contains %.0f row versions",
 							RelationGetRelationName(indrel),
 					  stats->num_index_tuples, num_tuples + keep_tuples),
 					 errhint("Rebuild the index with REINDEX.")));

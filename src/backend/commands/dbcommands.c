@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.123 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.124 2003/09/29 00:05:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ createdb(const CreatedbStmt *stmt)
 	if (dbpath != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-		   errmsg("cannot use an alternate location on this platform")));
+		   errmsg("cannot use an alternative location on this platform")));
 #endif
 
 	/*

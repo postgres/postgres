@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.66 2003/09/25 06:58:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.67 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -400,7 +400,7 @@ numeric_recv(PG_FUNCTION_ARGS)
 	if (len < 0 || len > NUMERIC_MAX_PRECISION + NUMERIC_MAX_RESULT_SCALE)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid length in external numeric")));
+				 errmsg("invalid length in external \"numeric\" value")));
 
 	alloc_var(&value, len);
 
@@ -411,7 +411,7 @@ numeric_recv(PG_FUNCTION_ARGS)
 		  value.sign == NUMERIC_NAN))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid sign in external numeric")));
+				 errmsg("invalid sign in external \"numeric\" value")));
 
 	value.dscale = (uint16) pq_getmsgint(buf, sizeof(uint16));
 	for (i = 0; i < len; i++)
@@ -421,7 +421,7 @@ numeric_recv(PG_FUNCTION_ARGS)
 		if (d < 0 || d >= NBASE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-					 errmsg("invalid digit in external numeric")));
+					 errmsg("invalid digit in external \"numeric\" value")));
 		value.digits[i] = d;
 	}
 

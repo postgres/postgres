@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.116 2003/09/25 06:58:04 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.117 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -942,7 +942,7 @@ tintervalrecv(PG_FUNCTION_ARGS)
 		  interval->status == T_INTERVAL_VALID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid status in external tinterval")));
+				 errmsg("invalid status in external \"tinterval\" value")));
 
 	interval->data[0] = pq_getmsgint(buf, sizeof(interval->data[0]));
 	interval->data[1] = pq_getmsgint(buf, sizeof(interval->data[1]));

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.16 2003/09/26 15:27:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.17 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,9 +96,9 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 				 (errno == EINVAL) ?
 				 errhint("This error usually means that PostgreSQL's request for a shared memory "
 						 "segment exceeded your kernel's SHMMAX parameter.  You can either "
-						 "reduce the request size or reconfigure the kernel with larger SHMMAX. "
-			   "To reduce the request size (currently %u bytes), reduce "
-		   "PostgreSQL's shared_buffers parameter (currently %d) and/or "
+						 "reduce the request size or reconfigure the kernel with larger SHMMAX.  "
+						 "To reduce the request size (currently %u bytes), reduce "
+						 "PostgreSQL's shared_buffers parameter (currently %d) and/or "
 						 "its max_connections parameter (currently %d).\n"
 						 "If the request size is already small, it's possible that it is less than "
 						 "your kernel's SHMMIN parameter, in which case raising the request size or "

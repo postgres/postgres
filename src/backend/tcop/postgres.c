@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.366 2003/09/27 09:29:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.367 2003/09/29 00:05:25 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1972,36 +1972,36 @@ ProcessInterrupts(void)
 static void
 usage(char *progname)
 {
-	printf("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n", progname);
+	printf(gettext("%s is the PostgreSQL stand-alone backend.  It is not\nintended to be used by normal users.\n\n"), progname);
 
-	printf("Usage:\n  %s [OPTION]... [DBNAME]\n\n", progname);
-	printf("Options:\n");
+	printf(gettext("Usage:\n  %s [OPTION]... [DBNAME]\n\n"), progname);
+	printf(gettext("Options:\n"));
 #ifdef USE_ASSERT_CHECKING
-	printf("  -A 1|0          enable/disable run-time assert checking\n");
+	printf(gettext("  -A 1|0          enable/disable run-time assert checking\n"));
 #endif
-	printf("  -B NBUFFERS     number of shared buffers\n");
-	printf("  -c NAME=VALUE   set run-time parameter\n");
-	printf("  -d 0-5          debugging level (0 is off)\n");
-	printf("  -D DATADIR      database directory\n");
-	printf("  -e              use European date input format (DMY)\n");
-	printf("  -E              echo query before execution\n");
-	printf("  -F              turn fsync off\n");
-	printf("  -N              do not use newline as interactive query delimiter\n");
-	printf("  -o FILENAME     send stdout and stderr to given file\n");
-	printf("  -P              disable system indexes\n");
-	printf("  -s              show statistics after each query\n");
-	printf("  -S SORT-MEM     set amount of memory for sorts (in kbytes)\n");
-	printf("  --help-config   show configuration parameters, then exit;\n"
-		   "                  details: --help-config -h\n");
-	printf("  --help          show this help, then exit\n");
-	printf("  --version       output version information, then exit\n");
-	printf("\nDeveloper options:\n");
-	printf("  -f s|i|n|m|h    forbid use of some plan types\n");
-	printf("  -i              do not execute queries\n");
-	printf("  -O              allow system table structure changes\n");
-	printf("  -t pa|pl|ex     show timings after each query\n");
-	printf("  -W NUM          wait NUM seconds to allow attach from a debugger\n");
-	printf("\nReport bugs to <pgsql-bugs@postgresql.org>.\n");
+	printf(gettext("  -B NBUFFERS     number of shared buffers\n"));
+	printf(gettext("  -c NAME=VALUE   set run-time parameter\n"));
+	printf(gettext("  -d 0-5          debugging level (0 is off)\n"));
+	printf(gettext("  -D DATADIR      database directory\n"));
+	printf(gettext("  -e              use European date input format (DMY)\n"));
+	printf(gettext("  -E              echo query before execution\n"));
+	printf(gettext("  -F              turn fsync off\n"));
+	printf(gettext("  -N              do not use newline as interactive query delimiter\n"));
+	printf(gettext("  -o FILENAME     send stdout and stderr to given file\n"));
+	printf(gettext("  -P              disable system indexes\n"));
+	printf(gettext("  -s              show statistics after each query\n"));
+	printf(gettext("  -S SORT-MEM     set amount of memory for sorts (in kbytes)\n"));
+	printf(gettext("  --help-config   show configuration parameters, then exit;\n"
+				   "                  details: --help-config -h\n"));
+	printf(gettext("  --help          show this help, then exit\n"));
+	printf(gettext("  --version       output version information, then exit\n"));
+	printf(gettext("\nDeveloper options:\n"));
+	printf(gettext("  -f s|i|n|m|h    forbid use of some plan types\n"));
+	printf(gettext("  -i              do not execute queries\n"));
+	printf(gettext("  -O              allow system table structure changes\n"));
+	printf(gettext("  -t pa|pl|ex     show timings after each query\n"));
+	printf(gettext("  -W NUM          wait NUM seconds to allow attach from a debugger\n"));
+	printf(gettext("\nReport bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
 
 
@@ -2475,7 +2475,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	{
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("query-level statistics are disabled because parser, planner, or executor statistics are on")));
+				 errmsg("statement-level statistics are disabled because parser, planner, or executor statistics are on")));
 		SetConfigOption("show_statement_stats", "false", ctx, gucsource);
 	}
 
@@ -2564,8 +2564,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 		{
 			ereport(FATAL,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("invalid backend command-line arguments"),
-					 errhint("Try -? for help.")));
+					 errmsg("invalid command-line arguments for server process"),
+					 errhint("Try \"%s --help\" for more information.", argv[0])));
 		}
 		BaseInit();
 #ifdef EXECBACKEND
@@ -2581,7 +2581,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("%s: invalid command-line arguments",
 							argv[0]),
-					 errhint("Try -? for help.")));
+					 errhint("Try \"%s --help\" for more information.", argv[0])));
 		}
 		else if (argc - optind == 1)
 			dbname = argv[optind];
@@ -2662,7 +2662,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.366 $ $Date: 2003/09/27 09:29:31 $\n");
+		puts("$Revision: 1.367 $ $Date: 2003/09/29 00:05:25 $\n");
 	}
 
 	/*

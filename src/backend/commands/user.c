@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.126 2003/09/25 06:57:59 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.127 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1227,7 +1227,7 @@ CheckPgUserAclNotNull(void)
 	if (heap_attisnull(htup, Anum_pg_class_relacl))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-		errmsg("before using passwords you must revoke permissions on %s",
+		errmsg("before using passwords you must revoke privileges on %s",
 			   ShadowRelationName),
 				 errdetail("This restriction is to prevent unprivileged users from reading the passwords."),
 				 errhint("Try REVOKE ALL ON \"%s\" FROM PUBLIC.",

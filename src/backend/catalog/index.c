@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.218 2003/09/25 06:57:57 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.219 2003/09/29 00:05:24 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1656,7 +1656,7 @@ reindex_index(Oid indexId)
 	if (inplace && IsUnderPostmaster)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("shared index \"%s\" can only be reindexed in standalone mode",
+				 errmsg("shared index \"%s\" can only be reindexed in stand-alone mode",
 						RelationGetRelationName(iRel))));
 
 	/* Fetch info needed for index_build */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.81 2003/09/25 06:58:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.82 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,7 +312,7 @@ path_encode(bool closed, int npts, Point *pt)
 		if (!pair_encode(pt->x, pt->y, cp))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("could not format path")));
+					 errmsg("could not format \"path\" value")));
 
 		cp += strlen(cp);
 		*cp++ = RDELIM;
@@ -1386,7 +1386,7 @@ path_recv(PG_FUNCTION_ARGS)
 	if (npts < 0 || npts >= (int32) (INT_MAX / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid number of points in external path")));
+				 errmsg("invalid number of points in external \"path\" value")));
 
 	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
@@ -3415,7 +3415,7 @@ poly_recv(PG_FUNCTION_ARGS)
 	if (npts < 0 || npts >= (int32) ((INT_MAX - offsetof(POLYGON, p[0])) / sizeof(Point)))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid number of points in external polygon")));
+				 errmsg("invalid number of points in external \"polygon\" value")));
 
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
@@ -4274,7 +4274,7 @@ circle_out(PG_FUNCTION_ARGS)
 	if (!pair_encode(circle->center.x, circle->center.y, cp))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not format circle")));
+				 errmsg("could not format \"circle\" value")));
 
 	cp += strlen(cp);
 	*cp++ = RDELIM;
@@ -4282,7 +4282,7 @@ circle_out(PG_FUNCTION_ARGS)
 	if (!single_encode(circle->radius, cp))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("could not format circle")));
+				 errmsg("could not format \"circle\" value")));
 
 	cp += strlen(cp);
 	*cp++ = RDELIM_C;
@@ -4309,7 +4309,7 @@ circle_recv(PG_FUNCTION_ARGS)
 	if (circle->radius < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-				 errmsg("invalid radius in external circle")));
+				 errmsg("invalid radius in external \"circle\" value")));
 
 	PG_RETURN_CIRCLE_P(circle);
 }
@@ -4803,7 +4803,7 @@ circle_poly(PG_FUNCTION_ARGS)
 	if (FPzero(circle->radius))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot convert zero-size circle to polygon")));
+				 errmsg("cannot convert circle with radius zero to polygon")));
 
 	if (npts < 2)
 		ereport(ERROR,

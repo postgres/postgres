@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.31 2003/09/25 06:58:04 petere Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.32 2003/09/29 00:05:25 petere Exp $
  */
 
 #include "postgres.h"
@@ -69,7 +69,7 @@ macaddr_in(PG_FUNCTION_ARGS)
 		(e < 0) || (e > 255) || (f < 0) || (f > 255))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("invalid octet value in macaddr: \"%s\"", str)));
+				 errmsg("invalid octet value in \"macaddr\" value: \"%s\"", str)));
 
 	result = (macaddr *) palloc(sizeof(macaddr));
 

@@ -247,7 +247,7 @@ create table domcontest (col1 con);
 insert into domcontest values (1);
 insert into domcontest values (2);
 alter domain con add constraint t check (VALUE < 1); -- fails
-ERROR:  relation "domcontest" column "col1" contains values that violate the new constraint
+ERROR:  column "col1" of table "domcontest" contains values that violate the new constraint
 alter domain con add constraint t check (VALUE < 34);
 alter domain con add check (VALUE > 0);
 insert into domcontest values (-5); -- fails

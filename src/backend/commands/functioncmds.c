@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.36 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.37 2003/09/29 00:05:24 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -441,13 +441,8 @@ CreateFunction(CreateFunctionStmt *stmt)
 				 errmsg("language \"%s\" does not exist", languageName),
 				   (strcmp(languageName, "plperl") == 0 ||
 					strcmp(languageName, "plperlu") == 0 ||
-					strcmp(languageName, "plphp") == 0 ||
 					strcmp(languageName, "plpgsql") == 0 ||
-					strcmp(languageName, "plpython") == 0 ||
 					strcmp(languageName, "plpythonu") == 0 ||
-					strcmp(languageName, "plr") == 0 ||
-					strcmp(languageName, "plruby") == 0 ||
-					strcmp(languageName, "plsh") == 0 ||
 					strcmp(languageName, "pltcl") == 0 ||
 					strcmp(languageName, "pltclu") == 0) ?
 				 errhint("You need to use \"createlang\" to load the language into the database.") : 0));
@@ -948,7 +943,7 @@ CreateCast(CreateCastStmt *stmt)
 			typ1align != typ2align)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("source and target datatypes are not physically compatible")));
+					 errmsg("source and target data types are not physically compatible")));
 	}
 
 	/* convert CoercionContext enum to char value for castcontext */

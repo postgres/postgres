@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.107 2003/09/26 15:27:26 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.108 2003/09/29 00:05:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -533,7 +533,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning ANYARRAY or ANYELEMENT must have at least one argument of either type.")));
+				 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
 	}
 	else
 		ereport(ERROR,

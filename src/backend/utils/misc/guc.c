@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.160 2003/09/26 15:27:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.161 2003/09/29 00:05:25 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -423,7 +423,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		/* Not for general use --- used by SET SESSION AUTHORIZATION */
 		{"is_superuser", PGC_INTERNAL, UNGROUPED,
-			gettext_noop("set to indicate current user's privilege status"),
+			gettext_noop("shows whether the current user is a superuser"),
 			NULL,
 			GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -473,7 +473,7 @@ static struct config_bool ConfigureNamesBool[] =
 	{
 		{"silent_mode", PGC_POSTMASTER, LOGGING_WHEN,
 			gettext_noop("run the server silently"),
-			gettext_noop("If this option is set, the server will automatically run in the "
+			gettext_noop("If this parameter is set, the server will automatically run in the "
 			"background and any controlling terminals are dissociated.")
 		},
 		&SilentMode,
@@ -560,7 +560,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"debug_print_plan", PGC_USERSET, LOGGING_WHAT,
-			gettext_noop("print execution plan to the server log"),
+			gettext_noop("print execution plan to server log"),
 			NULL
 		},
 		&Debug_print_plan,
@@ -760,7 +760,7 @@ static struct config_bool ConfigureNamesBool[] =
 			gettext_noop("encrypt passwords"),
 			gettext_noop("When a password is specified in CREATE USER or "
 			"ALTER USER without writing either ENCRYPTED or UNENCRYPTED, "
-						 "this option determines whether the password is to be encrypted.")
+						 "this parameter determines whether the password is to be encrypted.")
 		},
 		&Password_encryption,
 		true, NULL, NULL
@@ -890,7 +890,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"geqo_generations", PGC_USERSET, QUERY_TUNING_GEQO,
 			gettext_noop("GEQO: number of iterations in the algorithm"),
 			gettext_noop("The number must be a positive integer. If 0 is "
-						 "specified then effort * log2(poolsize) is used")
+						 "specified then effort * log2(poolsize) is used.")
 		},
 		&Geqo_generations,
 		0, 0, INT_MAX, NULL, NULL
@@ -909,7 +909,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"syslog", PGC_SIGHUP, LOGGING_SYSLOG,
 			gettext_noop("use syslog for logging"),
-			gettext_noop("If this option is 1, messages go both to syslog "
+			gettext_noop("If this parameter is 1, messages go both to syslog "
 						 "and the standard output. A value of 2 sends output only to syslog. "
 						 "(Some messages will still go to the standard output/error.) The "
 						 "default is 0, which means syslog is off.")
@@ -966,7 +966,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"unix_socket_permissions", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("access permissions of the Unix-domain socket"),
 			gettext_noop("Unix-domain sockets use the usual Unix file system "
-						 "permission set. The option value is expected to be an numeric mode "
+						 "permission set. The parameter value is expected to be an numeric mode "
 						 "specification in the form accepted by the chmod and umask system "
 						 "calls. (To use the customary octal format the number must start with "
 						 "a 0 (zero).)")
@@ -1094,7 +1094,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"checkpoint_segments", PGC_SIGHUP, WAL_CHECKPOINTS,
-			gettext_noop("maximum distance between automatic WAL checkpoints"),
+			gettext_noop("maximum distance in log segments between automatic WAL checkpoints"),
 			NULL
 		},
 		&CheckPointSegments,
@@ -1114,7 +1114,7 @@ static struct config_int ConfigureNamesInt[] =
 		{"checkpoint_warning", PGC_SIGHUP, WAL_CHECKPOINTS,
 			gettext_noop("log if filling of checkpoint segments happens more "
 						 "frequently than this (in seconds)"),
-			gettext_noop("Send a message to the server logs if checkpoints "
+			gettext_noop("Write a message to the server log if checkpoints "
 						 "caused by the filling of checkpoint segment files happens more "
 						 "frequently than this number of seconds. Zero turns off the warning.")
 		},
@@ -1348,7 +1348,7 @@ static struct config_string ConfigureNamesString[] =
 		{"dynamic_library_path", PGC_SUSET, CLIENT_CONN_OTHER,
 			gettext_noop("path for dynamically loadable modules"),
 			gettext_noop("If a dynamically loadable module needs to be opened and "
-						 "the specified name does not have a directory component (i.e. the "
+						 "the specified name does not have a directory component (i.e., the "
 						 "name does not contain a slash), the system will search this path for "
 						 "the specified file.")
 		},

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.68 2003/09/03 14:59:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.69 2003/09/29 00:05:25 petere Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -3163,7 +3163,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		if (!tm->tm_year)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				errmsg("cannot convert yday without year information")));
+				errmsg("cannot calculate day of year without year information")));
 
 		y = ysum[isleap(tm->tm_year)];
 

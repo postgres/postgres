@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.160 2003/09/25 06:58:01 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.161 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot pass result of subquery or join %s to a function",
+								 errmsg("cannot pass result of subquery or join \"%s\" to a function",
 										relname)));
 					toid = InvalidOid;	/* keep compiler quiet */
 					break;

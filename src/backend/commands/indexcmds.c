@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.111 2003/09/26 15:27:31 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.112 2003/09/29 00:05:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -648,7 +648,7 @@ ReindexTable(RangeVar *relation, bool force /* currently unused */ )
 	if (((Form_pg_class) GETSTRUCT(tuple))->relisshared && IsUnderPostmaster)
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("shared table \"%s\" can only be reindexed in standalone mode",
+				 errmsg("shared table \"%s\" can only be reindexed in stand-alone mode",
 						relation->relname)));
 
 	ReleaseSysCache(tuple);

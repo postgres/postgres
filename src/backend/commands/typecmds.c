@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.46 2003/09/25 06:57:58 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.47 2003/09/29 00:05:25 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1554,9 +1554,9 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 				if (!isNull && !DatumGetBool(conResult))
 					ereport(ERROR,
 							(errcode(ERRCODE_CHECK_VIOLATION),
-							 errmsg("relation \"%s\" column \"%s\" contains values that violate the new constraint",
-									RelationGetRelationName(testrel),
-						 NameStr(tupdesc->attrs[attnum - 1]->attname))));
+							 errmsg("column \"%s\" of table \"%s\" contains values that violate the new constraint",
+									NameStr(tupdesc->attrs[attnum - 1]->attname),
+									RelationGetRelationName(testrel))));
 			}
 
 			ResetExprContext(econtext);

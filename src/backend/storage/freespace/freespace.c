@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.22 2003/09/25 06:58:02 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.23 2003/09/29 00:05:25 petere Exp $
  *
  *
  * NOTES:
@@ -704,7 +704,7 @@ PrintFreeSpaceMapStatistics(int elevel)
 	ereport(elevel,
 			(errmsg("free space map: %d relations, %d pages stored; %.0f total pages needed",
 					numRels, storedPages, needed),
-			 errdetail("Allocated FSM size: %d relations + %d pages = %.0f kB shared mem.",
+			 errdetail("Allocated FSM size: %d relations + %d pages = %.0f kB shared memory.",
 					   MaxFSMRelations, MaxFSMPages,
 					   (double) FreeSpaceShmemSize() / 1024.0)));
 }

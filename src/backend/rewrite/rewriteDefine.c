@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.89 2003/09/26 15:27:36 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.90 2003/09/29 00:05:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		if (length(action) > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("multiple action rules on select are not implemented")));
+					 errmsg("multiple actions for rules on SELECT are not implemented")));
 
 		/*
 		 * ... the one action must be a SELECT, ...
