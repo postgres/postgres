@@ -5,6 +5,8 @@
 
 #include <math.h>
 
+#include "fmgr.h"
+#include "utils/builtins.h"
 #include "segdata.h"
 
 #undef yylex                  /* failure to redefine yylex will result in calling the */
@@ -129,22 +131,13 @@ deviation:
 %%
 
 
-float seg_atof ( char *value ) {
-  float result;
-  char *buf = (char *) palloc(256);
+float
+seg_atof(char *value)
+{
+	Datum datum;
 
-  errno = 0;
-  sscanf(value, "%f", &result);
-
-  if ( errno ) {
-    snprintf(buf, 256, "numeric value %s unrepresentable", value);
-    ereport(ERROR,
-		    (errcode(ERRCODE_SYNTAX_ERROR),
-		     errmsg("syntax error"),
-		     errdetail("%s", buf)));
-  }
-
-  return result;
+	datum = DirectFunctionCall1(float4in, CStringGetDatum(value));
+	return DatumGetFloat4(datum);
 }
 
 

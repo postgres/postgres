@@ -418,8 +418,7 @@ SELECT '1 e7'::seg AS seg;
 ERROR:  bad seg representation
 DETAIL:  syntax error at or near "e"
 SELECT '1e700'::seg AS seg;
-ERROR:  syntax error
-DETAIL:  numeric value 1e700 unrepresentable
+ERROR:  "1e700" is out of range for type real
 --
 -- testing the  operators
 --
