@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.100 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.101 2004/10/20 16:04:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -966,7 +966,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
 	Oid			funcrettype = exprType(funcexpr);
-	char		functyptype;
+	TypeFuncClass functypclass;
 	Alias	   *alias = rangefunc->alias;
 	List	   *coldeflist = rangefunc->coldeflist;
 	Alias	   *eref;
@@ -1008,18 +1008,15 @@ addRangeTableEntryForFunction(ParseState *pstate,
 					 errmsg("a column definition list is required for functions returning \"record\"")));
 	}
 
-	functyptype = get_typtype(funcrettype);
+	functypclass = get_type_func_class(funcrettype);
 
-	if (functyptype == 'c')
+	if (functypclass == TYPEFUNC_COMPOSITE)
 	{
-		/*
-		 * Named composite data type, i.e. a table's row type
-		 */
+		/* Composite data type, e.g. a table's row type */
 		Oid			funcrelid = typeidTypeRelid(funcrettype);
 		Relation	rel;
 
-		if (!OidIsValid(funcrelid))		/* shouldn't happen if typtype is
-										 * 'c' */
+		if (!OidIsValid(funcrelid))		/* shouldn't happen */
 			elog(ERROR, "invalid typrelid for complex type %u", funcrettype);
 
 		/*
@@ -1038,12 +1035,10 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		 */
 		relation_close(rel, NoLock);
 	}
-	else if (functyptype == 'b' || functyptype == 'd')
+	else if (functypclass == TYPEFUNC_SCALAR)
 	{
-		/*
-		 * Must be a base data type, i.e. scalar. Just add one alias
-		 * column named for the function.
-		 */
+		/* Base data type, i.e. scalar */
+		/* Just add one alias column named for the function. */
 		if (alias && alias->colnames != NIL)
 		{
 			if (list_length(alias->colnames) != 1)
@@ -1056,7 +1051,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 		else
 			eref->colnames = list_make1(makeString(eref->aliasname));
 	}
-	else if (functyptype == 'p' && funcrettype == RECORDOID)
+	else if (functypclass == TYPEFUNC_RECORD)
 	{
 		ListCell   *col;
 
@@ -1073,8 +1068,8 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	else
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-			errmsg("function \"%s\" in FROM has unsupported return type",
-				   funcname)));
+			errmsg("function \"%s\" in FROM has unsupported return type %s",
+				   funcname, format_type_be(funcrettype))));
 
 	/*----------
 	 * Flags:
@@ -1314,9 +1309,9 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 			{
 				/* Function RTE */
 				Oid			funcrettype = exprType(rte->funcexpr);
-				char		functyptype = get_typtype(funcrettype);
+				TypeFuncClass functypclass = get_type_func_class(funcrettype);
 
-				if (functyptype == 'c')
+				if (functypclass == TYPEFUNC_COMPOSITE)
 				{
 					/*
 					 * Composite data type, i.e. a table's row type
@@ -1332,11 +1327,9 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 					expandRelation(funcrelid, rte->eref, rtindex, sublevels_up,
 								   include_dropped, colnames, colvars);
 				}
-				else if (functyptype == 'b' || functyptype == 'd')
+				else if (functypclass == TYPEFUNC_SCALAR)
 				{
-					/*
-					 * Must be a base data type, i.e. scalar
-					 */
+					/* Base data type, i.e. scalar */
 					if (colnames)
 						*colnames = lappend(*colnames,
 										  linitial(rte->eref->colnames));
@@ -1352,7 +1345,7 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 						*colvars = lappend(*colvars, varnode);
 					}
 				}
-				else if (functyptype == 'p' && funcrettype == RECORDOID)
+				else if (functypclass == TYPEFUNC_RECORD)
 				{
 					List	   *coldeflist = rte->coldeflist;
 					ListCell   *col;
@@ -1389,9 +1382,10 @@ expandRTE(List *rtable, int rtindex, int sublevels_up,
 					}
 				}
 				else
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("function in FROM has unsupported return type")));
+				{
+					/* addRangeTableEntryForFunction should've caught this */
+					elog(ERROR, "function in FROM has unsupported return type");
+				}
 			}
 			break;
 		case RTE_JOIN:
@@ -1669,14 +1663,15 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 			{
 				/* Function RTE */
 				Oid			funcrettype = exprType(rte->funcexpr);
-				char		functyptype = get_typtype(funcrettype);
+				TypeFuncClass functypclass = get_type_func_class(funcrettype);
 				List	   *coldeflist = rte->coldeflist;
 
-				if (functyptype == 'c')
+				if (functypclass == TYPEFUNC_COMPOSITE)
 				{
 					/*
-					 * Composite data type, i.e. a table's row type Same
-					 * as ordinary relation RTE
+					 * Composite data type, i.e. a table's row type
+					 *
+					 * Same as ordinary relation RTE
 					 */
 					Oid			funcrelid = typeidTypeRelid(funcrettype);
 					HeapTuple	tp;
@@ -1709,15 +1704,13 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					*vartypmod = att_tup->atttypmod;
 					ReleaseSysCache(tp);
 				}
-				else if (functyptype == 'b' || functyptype == 'd')
+				else if (functypclass == TYPEFUNC_SCALAR)
 				{
-					/*
-					 * Must be a base data type, i.e. scalar
-					 */
+					/* Base data type, i.e. scalar */
 					*vartype = funcrettype;
 					*vartypmod = -1;
 				}
-				else if (functyptype == 'p' && funcrettype == RECORDOID)
+				else if (functypclass == TYPEFUNC_RECORD)
 				{
 					ColumnDef  *colDef = list_nth(coldeflist, attnum - 1);
 
@@ -1725,9 +1718,10 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 					*vartypmod = -1;
 				}
 				else
-					ereport(ERROR,
-							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("function in FROM has unsupported return type")));
+				{
+					/* addRangeTableEntryForFunction should've caught this */
+					elog(ERROR, "function in FROM has unsupported return type");
+				}
 			}
 			break;
 		case RTE_JOIN:

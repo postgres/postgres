@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.27 2004/09/22 17:41:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.28 2004/10/20 16:04:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 	FunctionScanState *scanstate;
 	RangeTblEntry *rte;
 	Oid			funcrettype;
-	char		functyptype;
+	TypeFuncClass functypclass;
 	TupleDesc	tupdesc = NULL;
 
 	/*
@@ -184,16 +184,16 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 	 * Now determine if the function returns a simple or composite type,
 	 * and build an appropriate tupdesc.
 	 */
-	functyptype = get_typtype(funcrettype);
+	functypclass = get_type_func_class(funcrettype);
 
-	if (functyptype == 'c')
+	if (functypclass == TYPEFUNC_COMPOSITE)
 	{
 		/* Composite data type, e.g. a table's row type */
 		tupdesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(funcrettype, -1));
 	}
-	else if (functyptype == 'b' || functyptype == 'd')
+	else if (functypclass == TYPEFUNC_SCALAR)
 	{
-		/* Must be a base data type, i.e. scalar */
+		/* Base data type, i.e. scalar */
 		char	   *attname = strVal(linitial(rte->eref->colnames));
 
 		tupdesc = CreateTemplateTupleDesc(1, false);
@@ -204,9 +204,8 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 						   -1,
 						   0);
 	}
-	else if (funcrettype == RECORDOID)
+	else if (functypclass == TYPEFUNC_RECORD)
 	{
-		/* Must be a pseudo type, i.e. record */
 		tupdesc = BuildDescForRelation(rte->coldeflist);
 	}
 	else

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.90 2004/08/29 05:06:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.91 2004/10/20 16:04:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,15 @@ typedef enum IOFuncSelector
 	IOFunc_receive,
 	IOFunc_send
 } IOFuncSelector;
+
+/* Type categories for get_type_func_class */
+typedef enum TypeFuncClass
+{
+	TYPEFUNC_SCALAR,
+	TYPEFUNC_COMPOSITE,
+	TYPEFUNC_RECORD,
+	TYPEFUNC_OTHER
+} TypeFuncClass;
 
 extern bool op_in_opclass(Oid opno, Oid opclass);
 extern void get_op_opclass_properties(Oid opno, Oid opclass,
@@ -85,6 +94,7 @@ extern char get_typstorage(Oid typid);
 extern int32 get_typtypmod(Oid typid);
 extern Node *get_typdefault(Oid typid);
 extern char get_typtype(Oid typid);
+extern TypeFuncClass get_type_func_class(Oid typid);
 extern Oid	get_typ_typrelid(Oid typid);
 extern Oid	get_element_type(Oid typid);
 extern Oid	get_array_type(Oid typid);

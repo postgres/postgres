@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.106 2004/08/29 05:06:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/tupdesc.c,v 1.107 2004/10/20 16:04:47 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -607,13 +607,13 @@ RelationNameGetTupleDesc(const char *relname)
 TupleDesc
 TypeGetTupleDesc(Oid typeoid, List *colaliases)
 {
-	char		functyptype = get_typtype(typeoid);
+	TypeFuncClass functypclass = get_type_func_class(typeoid);
 	TupleDesc	tupdesc = NULL;
 
 	/*
 	 * Build a suitable tupledesc representing the output rows
 	 */
-	if (functyptype == 'c')
+	if (functypclass == TYPEFUNC_COMPOSITE)
 	{
 		/* Composite data type, e.g. a table's row type */
 		tupdesc = CreateTupleDescCopy(lookup_rowtype_tupdesc(typeoid, -1));
@@ -643,9 +643,9 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 			tupdesc->tdtypmod = -1;
 		}
 	}
-	else if (functyptype == 'b' || functyptype == 'd')
+	else if (functypclass == TYPEFUNC_SCALAR)
 	{
-		/* Must be a base data type, i.e. scalar */
+		/* Base data type, i.e. scalar */
 		char	   *attname;
 
 		/* the alias list is required for base types */
@@ -671,7 +671,7 @@ TypeGetTupleDesc(Oid typeoid, List *colaliases)
 						   -1,
 						   0);
 	}
-	else if (typeoid == RECORDOID)
+	else if (functypclass == TYPEFUNC_RECORD)
 	{
 		/* XXX can't support this because typmod wasn't passed in ... */
 		ereport(ERROR,
