@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
 Sun Solaris Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:        $Date: 2000/10/18 21:18:24 $
+last updated:        $Date: 2000/10/19 03:18:56 $
 
 current maintainer:  Marc Liyanage (liyanage@access.ch)
 original author:     Marc Liyanage (liyanage@access.ch)
@@ -13,7 +13,6 @@ Contents:
 
 1.1) What tools do I need to build and install PostgreSQL on Solaris?
 1.2) What else do I have to do before building PostgreSQL? 
-1.3) Why am I having trouble using PL/pgsql and other procedural languages?
 
 
 Notes:
@@ -80,10 +79,3 @@ Do this:
 
 There is some good information about this here:
 http://www.visi.com/~barr/ldpath.html
-
-
-1.3) Why am I having trouble using PL/pgsql and other procedural languages?
-
-Try adding this to template/solaris_sparc_gcc and recompile:
-
-	LDFLAGS:-Wl,--export-dynamic
