@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.58 2002/05/03 04:11:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.59 2002/06/15 19:34:51 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -371,6 +371,9 @@ END;
 user_id INTEGER;
 quantity NUMERIC(5);
 url VARCHAR;
+myrow tablename%ROWTYPE;
+myfield tablename.fieldname%TYPE;
+arow RECORD;
 </programlisting>
     </para>
 
@@ -448,6 +451,15 @@ BEGIN
     -- Some computations here
 END;
 ' LANGUAGE 'plpgsql';
+
+
+CREATE FUNCTION use_many_fields(tablename) RETURNS TEXT AS '
+DECLARE
+    in_t ALIAS FOR $1;
+BEGIN
+    RETURN in_t.f1 || in_t.f3 || in_t.f5 || in_t.f7;
+END;
+' LANGUAGE 'plpgsql';
 </programlisting>
      </para>
     </sect2>
@@ -491,6 +503,17 @@ END;
     row could be from a view).  The fields of the row type inherit the
     table's field size or precision for data types such as
     <type>char(n)</type>.
+<programlisting>
+CREATE FUNCTION use_two_tables(tablename) RETURNS TEXT AS '
+DECLARE
+    in_t ALIAS FOR $1;
+    use_t table2name%ROWTYPE;
+BEGIN
+    SELECT * INTO use_t FROM table2name WHERE ... ;
+    RETURN in_t.f1 || use_t.f3 || in_t.f5 || use_t.f7;
+END;
+' LANGUAGE 'plpgsql';
+</programlisting>
    </para>
   </sect2>
 
