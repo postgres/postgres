@@ -1,0 +1,11 @@
+:
+if [ "$#" -eq 0 ]
+then	APATH="."
+else	APATH="$1"
+fi
+find $APATH -name '*.orig' -print | sort | while read FILE
+do
+	NEW="`dirname $FILE`/`basename $FILE .orig`"
+	echo "$NEW" 1>&2
+	diff -c $FILE $NEW
+done

@@ -1,0 +1,8 @@
+:
+for FILE
+do
+	if [ ! -f "$FILE.orig" ]
+	then	cp $FILE $FILE.orig
+	else	echo "$FILE.orig exists" 1>&2
+	fi
+done

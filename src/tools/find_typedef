@@ -1,0 +1,27 @@
+#!/bin/sh
+# This script attempts to find all typedef's in the postgres binaries
+# by using 'nm' to report all typedef debugging symbols.
+# 
+# For this program to work, you must have compiled all binaries with 
+# debugging symbols.
+#
+# This is run on BSD/OS 3.0, so you may need to make changes for your
+# version of nm.
+# 
+# Ignore the nm errors about a file not being a binary file.
+#
+# Remember, debugging symbols are your friends.
+#
+
+if [ "$#" -ne 1 -o ! -d "$1" ]
+then	echo "Usage:  $0 postgres_binary_directory" 1>&2
+	exit 1
+fi
+
+nm -a "$1"/* |
+grep LSYM |
+grep ':t' |
+sed 's/^.*LSYM \([^:]*\):.*$/\1/' |
+grep -v ' ' | # some typedefs have spaces, revove them
+sort | 
+uniq
