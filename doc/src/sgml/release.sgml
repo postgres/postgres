@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.105 2001/12/23 18:20:05 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.106 2001/12/27 00:04:44 momjian Exp $
 -->
 
 <appendix id="release">
@@ -152,6 +152,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.105 2001/12/23 18:20:05 pe
        available.  You will need to rewrite your applications.
       </para>
      </listitem>
+
+     <listitem>
+      <para>
+       The <literal>timestamp()</literal> function is no longer
+       available.  Use <literal>timestamp "string"</literal> instead, 
+       or <literal>CAST</literal>.
+      </para>
+     </listitem>
+
+
+
     </itemizedlist>
    </para>
 
@@ -337,6 +348,7 @@ Optimize length functions when using single-byte encodings (Tatsuo)
 Fix path_inter, path_distance, path_length, dist_ppath to handle closed paths (Curtis Barrett, Tom)
 octet_length(text) now returns non-compressed length (Tatsuo, Bruce)
 Handle "July" full name in date/time literals (Greg Sabino Mullane)
+datatype(const,...) function calls now evaluated earlier
 </literallayout>
    </sect3>
 

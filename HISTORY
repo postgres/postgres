@@ -69,8 +69,11 @@ Migration to version 7.2
      * The function "octet_length()" now returns the uncompressed data
        length.
 
-     * The date/time value current is no longer available. You will need to
+     * The date/time value "current" is no longer available. You will need to
        rewrite your applications.
+
+     * The timestamp() function is no longer available.  Use timestamp
+       "string" instead, or CAST.
 
    The SELECT ... LIMIT #,# syntax will be removed in the next release. You
    should change your queries to use separate LIMIT and OFFSET clauses, e.g.
@@ -241,6 +244,7 @@ Changes
    Fix path_inter, path_distance, path_length, dist_ppath to handle closed paths (Curtis Barrett, Tom)
    octet_length(text) now returns non-compressed length (Tatsuo, Bruce)
    Handle "July" full name in date/time literals (Greg Sabino Mullane)
+   datatype(const,...) function calls now evaluated earlier
 
      ----------------------------------------------------------------------
 
