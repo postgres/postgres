@@ -7,4 +7,4 @@ SRCH_LIB:
 USE_LOCALE:no
 DLSUFFIX:.so
 YFLAGS:-d
-YACC:
+YACC: bison -y
