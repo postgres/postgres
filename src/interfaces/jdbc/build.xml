@@ -3,7 +3,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver.
 
-  $Id: build.xml,v 1.6 2001/02/14 17:45:13 peter Exp $
+  $Id: build.xml,v 1.7 2001/03/05 09:40:01 peter Exp $
 
 -->
 
@@ -63,6 +63,7 @@
     <!-- comment out 1.3+ stuff -->
     <property name="jdk13only" value="//" />
     <available property="jdk13only" value="" classname="java.lang.StrictMath" />
+    <filter token="JDK1.3ONLY" value="${jdk13only}" />
 
     <!-- Some defaults -->
     <filter token="MAJORVERSION" value="${major}" />
@@ -98,9 +99,11 @@
   <target name="compile" depends="prepare,check_versions,driver">
     <javac srcdir="${src}" destdir="${dest}">
       <include name="${package}/**" />
+      <exclude name="${package}/core/ConnectionHook.java" unless="jdk1.3+" />
       <exclude name="${package}/jdbc1/**" if="jdk1.2+" />
       <exclude name="${package}/jdbc2/**" unless="jdk1.2+" />
       <exclude name="${package}/largeobject/PGblob.java" unless="jdk1.2+" />
+      <exclude name="${package}/largeobject/PGclob.java" unless="jdk1.2+" />
       <exclude name="${package}/PostgresqlDataSource.java" unless="jdk1.2e+" />
       <exclude name="${package}/xa/**" unless="jdk1.2e+" />
       <exclude name="${package}/test/**" unless="junit" />

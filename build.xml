@@ -12,7 +12,7 @@
      detect the presence of both the JDK and ANT, and if both are found
      to build the jdbc driver and utils with the rest of postgresql.
 
-  $Id: build.xml,v 1.1 2001/01/18 14:50:14 peter Exp $
+  $Id: build.xml,v 1.2 2001/03/05 09:38:54 peter Exp $
 
 -->
 
@@ -90,5 +90,6 @@ e.g.
     <ant dir="src/interfaces/jdbc" target="${target}" />
     <ant dir="contrib/retep" target="${target}" />
   </target>
+
 </project>
   

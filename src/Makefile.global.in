@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.121 2001/03/03 15:53:41 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.122 2001/03/05 09:39:51 peter Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -107,6 +107,7 @@ odbcinst_ini_dir = @odbcinst_ini_dir@
 # Records the choice of the various --enable-xxx and --with-xxx options.
 
 with_CXX	= @with_CXX@
+with_java	= @with_java@
 with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
@@ -174,6 +175,7 @@ X = @EXEEXT@
 
 # Miscellaneous
 
+ANT	= @ANT@
 AWK	= @AWK@
 LN_S	= @LN_S@
 PERL	= @PERL@

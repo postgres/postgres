@@ -1,3 +1,13 @@
+Fri Mar 02 10:00:00 GMT 2001 peter@retep.org.uk
+        - Fixed build.xml so that PGclob is not built in the JDBC1.2 driver
+
+
+Fri Feb 17 18:25:00 GMT 2001 peter@retep.org.uk
+        - Removed the last deprecation warnings from the Java2 driver. Now only
+          the old examples give deprecation warnings.
+        - Added a new class into core that (JDK1.3+) ensures all connections are
+          closed when the VM terminates.
+
 Fri Feb 17 15:11:00 GMT 2001 peter@retep.org.uk
         - Reduced the object overhead in PreparedStatement by reusing the same
           StringBuffer object throughout. Similarly SimpleDateStamp's are alse

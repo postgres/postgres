@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.43 2000/09/25 22:23:00 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/Makefile,v 1.44 2001/03/05 09:39:52 peter Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include $(top_builddir)/src/Makefile.global
 
 DIRS := libpq ecpg libpgeasy
 
-ALLDIRS := $(DIRS) odbc libpq++ libpgtcl perl5 python
+ALLDIRS := $(DIRS) odbc libpq++ libpgtcl perl5 python jdbc
 
 ifeq ($(enable_odbc), yes)
 DIRS += odbc
@@ -34,6 +34,10 @@ endif
 
 ifeq ($(with_python), yes)
 DIRS += python
+endif
+
+ifeq ($(with_java), yes)
+DIRS += jdbc
 endif
 
 
