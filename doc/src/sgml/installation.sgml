@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.43 2001/04/02 15:19:15 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.44 2001/04/06 05:52:10 thomas Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -1208,12 +1208,11 @@ gunzip -c user.ps.gz \
         <entry></entry>
        </row>
        <row>
-	<entry>Compaq Tru64 4.0[dfg]</entry>
+	<entry>Compaq Tru64</entry>
 	<entry>Alpha</entry>
 	<entry>7.1</entry>
-	<entry>2001-03-19, Brent Verner (<email>brent@rcfile.org</email>),
-	       2001-03-26, Adriaan Joubert (<email>a.joubert@albourne.com</email>)</entry>
-        <entry></entry>
+	<entry>2001-03-26, Adriaan Joubert (<email>a.joubert@albourne.com</email>)</entry>
+        <entry>4.0-5.0, cc and gcc</entry>
        </row>
        <row>
 	<entry>FreeBSD 4.3</entry>
@@ -1255,15 +1254,15 @@ gunzip -c user.ps.gz \
 	<entry>Linux 2.0.x</entry>
 	<entry>MIPS</entry>
 	<entry>7.1</entry>
-	<entry>2001-03-30, Dominic  J. Eidson (<email>sauron@the-infinite.org</email>)</entry>
+	<entry>2001-03-30, Dominic Eidson (<email>sauron@the-infinite.org</email>)</entry>
 	<entry>Cobalt Qube</entry>
        </row>
        <row>
 	<entry>Linux 2.2.18</entry>
-	<entry>PPC750</entry>
+	<entry>PPC74xx</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, Tom Lane (<email>tgl@sss.pgh.pa.us</email>)</entry>
-	<entry></entry>
+	<entry>Apple G3</entry>
        </row>
        <row>
 	<entry>Linux</entry>
@@ -1280,11 +1279,11 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>Linux 2.2.16</entry>
+	<entry>Linux</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, Thomas Lockhart (<email>thomas@fourpalms.org</email>)</entry>
-	<entry>Also tested on a patched 2.4.2</entry>
+	<entry>2.0.x, 2.2.x, 2.4.2</entry>
        </row>
        <row>
 	<entry>MacOS X</entry>
@@ -1293,13 +1292,6 @@ gunzip -c user.ps.gz \
 	<entry>2000-12-11, Peter Bierman (<email>bierman@apple.com</email>),
 	       2000-12-11, Daniel Luke (<email>dluke@geeklair.net</email>)</entry>
 	<entry>Darwin (only) Beta-2 or higher</entry>
-       </row>
-       <row>
-	<entry>mklinux</entry>
-	<entry>PPC750</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-13, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-	<entry></entry>
        </row>
        <row>
 	<entry>NetBSD 1.5</entry>
@@ -1324,16 +1316,23 @@ gunzip -c user.ps.gz \
        </row>
        <row>
 	<entry>NetBSD</entry>
+	<entry>PPC</entry>
+	<entry>7.1</entry>
+	<entry>2001-04-05, Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
+	<entry>Mac G4</entry>
+       </row>
+       <row>
+	<entry>NetBSD</entry>
 	<entry>Sparc</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-13, Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
-	<entry></entry>
+	<entry>7.1</entry>
+	<entry>2000-04-05, Matthew Green (<email>mrg@eterna.com.au</email>)</entry>
+	<entry>32- and 64-bit builds</entry>
        </row>
        <row>
         <entry>NetBSD 1.5</entry>
         <entry>VAX</entry>
         <entry>7.1</entry>
-        <entry>2001-03-30, Tom I Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
+        <entry>2001-03-30, Tom I. Helbekkmo (<email>tih@kpnQwest.no</email>)</entry>
         <entry></entry>
        </row>
        <row>
@@ -1356,13 +1355,6 @@ gunzip -c user.ps.gz \
 	<entry>7.1</entry>
 	<entry>2001-03-21, Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
         <entry></entry>
-       </row>
-       <row>
-	<entry>QNX 4.25</entry>
-	<entry>x86</entry>
-	<entry>7.0</entry>
-	<entry>2000-04-01, Dr. Andreas Kardos (<email>kardos@repas-aeg.de</email>)</entry>
-	<entry>See also <filename>doc/FAQ_QNX4</filename></entry>
        </row>
        <row>
 	<entry>SCO OpenServer 5</entry>
@@ -1399,13 +1391,6 @@ gunzip -c user.ps.gz \
 	<entry>7.1</entry>
 	<entry>2001-03-23, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
 	<entry></entry>
-       </row>
-       <row>
-	<entry>Windows/Win32</entry>
-	<entry>x86</entry>
-	<entry>7.1</entry>
-	<entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
-	<entry>Client-side libraries or ODBC/JDBC, no server-side</entry>
        </row>
        <row>
 	<entry>WinNT/Cygwin</entry>
@@ -1451,11 +1436,25 @@ gunzip -c user.ps.gz \
       <entry>6.4 probably OK.</entry>
      </row>
      <row>
+      <entry>MkLinux DR1</entry>
+      <entry>PPC750</entry>
+      <entry>7.0</entry>
+      <entry>2001-04-03, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
+      <entry>7.1 needs OS update?</entry>
+     </row>
+     <row>
       <entry>NextStep</entry>
       <entry>x86</entry>
       <entry>6.x</entry>
       <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
       <entry>Client-only support</entry>
+     </row>
+     <row>
+      <entry>QNX 4.25</entry>
+      <entry>x86</entry>
+      <entry>7.0</entry>
+      <entry>2000-04-01, Dr. Andreas Kardos (<email>kardos@repas-aeg.de</email>)</entry>
+      <entry>See also <filename>doc/FAQ_QNX4</filename></entry>
      </row>
      <row>
       <entry>System V R4</entry>
@@ -1484,6 +1483,13 @@ gunzip -c user.ps.gz \
       <entry>6.x</entry>
       <entry>1998-03-01</entry>
       <entry>No recent reports. Obsolete?</entry>
+     </row>
+     <row>
+      <entry>Windows/Win32</entry>
+      <entry>x86</entry>
+      <entry>7.1</entry>
+      <entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
+      <entry>Client-side libraries or ODBC/JDBC, no server-side</entry>
      </row>
     </tbody>
    </tgroup>
