@@ -17,7 +17,7 @@
 #
 
 # setting this to nm -B might be better
-NM = /usr/ucb/nm
+NM=/usr/ucb/nm
 
 CMDNAME=`basename $0`
 if [ -z "$1" ]; then

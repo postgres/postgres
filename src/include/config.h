@@ -15,6 +15,12 @@
 #endif
 #endif /* !defined(sparc_solaris) */
 
+#if defined(aix)
+#define TERMIOS_H_LOCATION <termios.h>
+#else
+#define TERMIOS_H_LOCATION <sys/termios.h>
+#endif
+
 #define HAVE_MEMMOVE
 
 #if defined(aix)
@@ -39,6 +45,7 @@
 #  define NEED_UNION_SEMUN 
 #  define SB_PAD 40
 #  define HAS_TEST_AND_SET
+   include <sys/mman.h>  /* for msemaphore */
    typedef msemaphore slock_t;
 #endif
 

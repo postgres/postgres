@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.20 1996/12/13 09:25:08 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.21 1996/12/15 09:05:53 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #include "libpq-fe.h"
 #include <signal.h>
 #include <sys/ioctl.h>
-#include <sys/termios.h>
+#include TERMIOS_H_LOCATION
 
 #ifdef TIOCGWINSZ
 struct winsize screen_size;

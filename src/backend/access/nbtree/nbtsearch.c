@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.11 1996/12/06 09:41:45 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.12 1996/12/15 09:05:10 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,11 +27,19 @@
 #endif
 
 
-static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey, Buffer *bufP, BTStack stack_in);
-static OffsetNumber _bt_firsteq(Relation rel, TupleDesc itupdesc, Page page, Size keysz, ScanKey scankey, OffsetNumber offnum);
-int _bt_compare(Relation rel, TupleDesc itupdesc, Page page, int keysz, ScanKey scankey, OffsetNumber offnum);
-static bool _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
-static RetrieveIndexResult _bt_endpoint(IndexScanDesc scan, ScanDirection dir);
+static BTStack 
+_bt_searchr(Relation rel, int keysz, ScanKey scankey, 
+            Buffer *bufP, BTStack stack_in);
+static OffsetNumber 
+_bt_firsteq(Relation rel, TupleDesc itupdesc, Page page, 
+            Size keysz, ScanKey scankey, OffsetNumber offnum);
+int 
+_bt_compare(Relation rel, TupleDesc itupdesc, Page page, 
+            int keysz, ScanKey scankey, OffsetNumber offnum);
+static bool 
+_bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir);
+static RetrieveIndexResult 
+_bt_endpoint(IndexScanDesc scan, ScanDirection dir);
 
 /*
  *  _bt_search() -- Search for a scan key in the index.
@@ -472,7 +480,7 @@ _bt_compare(Relation rel,
 	    elog(WARN, "_bt_compare: invalid comparison to high key");
 	}
 
-#ifdef 0
+#if 0
 	/*
 	 *  We just have to belive that right answer will not
 	 *  break anything. I've checked code and all seems to be ok.
@@ -1130,7 +1138,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	 * Scanning in BackwardScanDirection is not understandable at all.
 	 * Well - new stuff. - vadim 12/06/96
 	 */
-#ifdef 0
+#if 0
 	if (PageIsEmpty(page) || start > maxoff) {
 	    ItemPointerSet(current, blkno, maxoff);
 	    if (!_bt_step(scan, &buf, BackwardScanDirection))
@@ -1166,7 +1174,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	 * empty why do scanning in ForwardScanDirection ???
 	 * Well - new stuff. - vadim 12/06/96
 	 */
-#ifdef 0
+#if 0
 	if (PageIsEmpty(page)) {
 	    ItemPointerSet(current, blkno, FirstOffsetNumber);
 	    if (!_bt_step(scan, &buf, ForwardScanDirection))
