@@ -9,18 +9,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.78 2000/10/29 16:11:33 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.79 2000/10/30 17:54:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <ctype.h>
 #include <unistd.h>
 #ifndef __linux__
 #include <math.h>
 #endif
 #include <errno.h>
-
-#include "postgres.h"
 
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
@@ -347,6 +347,8 @@ other			.
 				}
 <xd>{xdstop}	{
 					BEGIN(INITIAL);
+					if (strlen(literalbuf) == 0)
+						elog(ERROR, "zero-length delimited identifier");
 					if (strlen(literalbuf) >= NAMEDATALEN)
 					{
 #ifdef MULTIBYTE
