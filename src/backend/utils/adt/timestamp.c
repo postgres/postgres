@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.80 2003/03/11 21:01:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.81 2003/03/20 06:02:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -964,6 +964,9 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
 	*result = ((date * INT64CONST(86400000000)) + time);
+	if ((*result < 0 && date >= 0) || (*result >= 0 && date < 0))
+		elog(ERROR, "TIMESTAMP out of range '%04d-%02d-%02d'",
+			tm->tm_year, tm->tm_mon, tm->tm_mday);
 #else
 	*result = ((date * 86400) + time);
 #endif
