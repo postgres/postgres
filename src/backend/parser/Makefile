@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.35 2001/11/16 16:32:33 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.36 2002/03/08 07:12:11 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ endif
 
 # Force these dependencies to be known even without dependency info built:
 
-analyze.o keywords.o parse_clause.o parse_expr.o parser.o scan.o: $(srcdir)/parse.h
+keywords.o parse_clause.o parse_expr.o parser.o scan.o: $(srcdir)/parse.h
 
 
 # gram.c, parse.h, and scan.c are in the distribution tarball, so they
