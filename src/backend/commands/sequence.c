@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.49 2001/01/24 19:42:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.50 2001/02/13 01:57:12 pjw Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,6 +374,19 @@ currval(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(result);
 }
 
+/* 
+ * Main internal procedure that handles 2 & 3 arg forms of SETVAL.
+ *
+ * Note that the 3 arg version (which sets the is_called flag) is
+ * only for use in pg_dump, and setting the is_called flag may not
+ * work if multiple users are attached to the database and referencing 
+ * the sequence (unlikely if pg_dump is restoring it).
+ *
+ * It is necessary to have the 3 arg version so that pg_dump can 
+ * restore the state of a sequence exactly during data-only restores -
+ * it is the only way to clear the is_called flag in an existing
+ * sequence.
+ */
 static void
 do_setval(char *seqname, int32 next, bool iscalled)
 {
@@ -440,6 +453,10 @@ do_setval(char *seqname, int32 next, bool iscalled)
 
 }
 
+/*
+ * Implement the 2 arg setval procedure.
+ * See do_setval for discussion.
+ */
 Datum
 setval(PG_FUNCTION_ARGS)
 {
@@ -452,6 +469,10 @@ setval(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(next);
 }
 
+/*
+ * Implement the 3 arg setval procedure.
+ * See do_setval for discussion.
+ */
 Datum
 setval_and_iscalled(PG_FUNCTION_ARGS)
 {
