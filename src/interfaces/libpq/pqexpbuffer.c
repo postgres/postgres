@@ -17,12 +17,14 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.15 2003/08/04 02:40:20 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/libpq/pqexpbuffer.c,v 1.15.4.1 2004/05/14 00:20:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres_fe.h"
+
+#include <limits.h>
 
 #include "pqexpbuffer.h"
 
@@ -132,7 +134,18 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	size_t		newlen;
 	char	   *newdata;
 
+	/*
+	 * Guard against ridiculous "needed" values, which can occur if we're
+	 * fed bogus data.  Without this, we can get an overflow or infinite
+	 * loop in the following.
+	 */
+	if (needed >= ((size_t) INT_MAX - str->len))
+		return 0;
+
 	needed += str->len + 1;		/* total space required now */
+
+	/* Because of the above test, we now have needed <= INT_MAX */
+
 	if (needed <= str->maxlen)
 		return 1;				/* got enough space already */
 
@@ -145,6 +158,14 @@ enlargePQExpBuffer(PQExpBuffer str, size_t needed)
 	newlen = (str->maxlen > 0) ? (2 * str->maxlen) : 64;
 	while (needed > newlen)
 		newlen = 2 * newlen;
+
+	/*
+	 * Clamp to INT_MAX in case we went past it.  Note we are assuming
+	 * here that INT_MAX <= UINT_MAX/2, else the above loop could
+	 * overflow.  We will still have newlen >= needed.
+	 */
+	if (newlen > (size_t) INT_MAX)
+		newlen = (size_t) INT_MAX;
 
 	newdata = (char *) realloc(str->data, newlen);
 	if (newdata != NULL)
