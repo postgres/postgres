@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.31 1998/02/26 04:29:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.32 1998/04/10 18:43:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,8 @@ _bt_moveright(Relation rel,
 						if (_bt_skeycmp(rel, keysz, scankey, page,
 										PageGetItemId(page, P_FIRSTKEY),
 										BTEqualStrategyNumber))
-							elog(FATAL, "btree: BTP_CHAIN flag was expected");
+							elog(FATAL, "btree: BTP_CHAIN flag was expected (access = %d)", 
+										access);
 						if (_bt_skeycmp(rel, keysz, scankey, page,
 										PageGetItemId(page, offmax),
 										BTEqualStrategyNumber))
