@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.353 2004/05/19 22:12:30 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.354 2004/05/19 22:36:36 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -580,20 +580,11 @@ if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
 then
 	AC_CHECK_LIB(bsd,      main)
 fi
-# Irix has nsl, socket, gen, and sun in its libc, but also
-# keeps separate libs around for backwords compatibility.
-# Using them creates warnings in config.log. This test quiets that.
-# See also: http://freeware.sgi.com/howto.html
-if test "$PORTNAME" != "irix"
-then
-AC_CHECK_LIB(nsl,      main)
-AC_CHECK_LIB(socket,   main)
-AC_CHECK_LIB(gen,      main)
-fi
-
 AC_CHECK_LIB(util,     setproctitle)
 AC_CHECK_LIB(m,        main)
 AC_CHECK_LIB(dl,       main)
+AC_CHECK_LIB(nsl,      main)
+AC_CHECK_LIB(socket,   main)
 AC_CHECK_LIB(ipc,      main)
 AC_CHECK_LIB(IPC,      main)
 AC_CHECK_LIB(lc,       main)
@@ -601,6 +592,7 @@ AC_CHECK_LIB(dld,      main)
 AC_CHECK_LIB(ld,       main)
 AC_CHECK_LIB(compat,   main)
 AC_CHECK_LIB(BSD,      main)
+AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
 AC_SEARCH_LIBS(getopt_long, [getopt gnugetopt])
@@ -900,11 +892,7 @@ case $host_os in mingw*)
 AC_LIBOBJ(copydir)
 AC_LIBOBJ(gettimeofday)
 AC_LIBOBJ(open)
-AC_LIBOBJ(rand)
-AC_DEFINE(USE_PGTZ, 1,
-	[Define to 1 to use our own timezone library])
-USE_PGTZ=yes
-AC_SUBST(USE_PGTZ) ;;
+AC_LIBOBJ(rand) ;;
 esac
 
 # Win32 can't to rename or unlink on an open file
