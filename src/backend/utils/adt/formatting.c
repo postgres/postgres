@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.8.2.1 2000/10/19 18:39:03 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.8.2.2 2000/10/22 19:19:42 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -4006,6 +4006,9 @@ numeric_to_char(Numeric value, text *fmt)
 			   *p;
 	Numeric		x = NULL;
 
+	if (!value)
+		return textin("");
+
 	NUM_TOCHAR_prepare;
 
 	/* ----------
@@ -4089,7 +4092,7 @@ int4_to_char(int32 value, text *fmt)
 				plen = 0,
 				sign = 0;
 	char	   *numstr,
-			   *orgnum;
+			*orgnum;
 
 	NUM_TOCHAR_prepare;
 
@@ -4169,6 +4172,9 @@ int8_to_char(int64 *value, text *fmt)
 				sign = 0;
 	char	   *numstr,
 			   *orgnum;
+
+	if (!value)
+		return textin("");
 
 	NUM_TOCHAR_prepare;
 
@@ -4252,6 +4258,9 @@ float4_to_char(float32 value, text *fmt)
 			   *orgnum,
 			   *p;
 
+	if (!value)
+		return textin("");
+
 	NUM_TOCHAR_prepare;
 
 	if (IS_ROMAN(&Num))
@@ -4329,6 +4338,9 @@ float8_to_char(float64 value, text *fmt)
 	char	   *numstr,
 			   *orgnum,
 			   *p;
+
+	if (!value)
+		return textin("");
 
 	NUM_TOCHAR_prepare;
 
