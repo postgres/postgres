@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.3 1996/07/27 02:19:06 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.3.2.1 1996/09/21 06:16:39 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -22,7 +22,7 @@
 #       PGDATA, PGHOST, and PGPORT
 #
 # ----------------
-[ -z "$PGPORT" ] && PGPORT=5432
+[ -z "$PGPORT" ] && PGPORT=_fUnKy_POSTPORT_sTuFf_
 [ -z "$PGHOST" ] && PGHOST=localhost
 BINDIR=_fUnKy_BINDIR_sTuFf_
 PATH=$BINDIR:$PATH

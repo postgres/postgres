@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.4 1996/07/23 03:03:19 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.4.2.1 1996/09/21 06:18:52 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@
 #
 # ----------------
 [ -z "$PGDATA" ] && { PGDATA=_fUnKy_DATADIR_sTuFf_; export PGDATA; }
-[ -z "$PGPORT" ] && { PGPORT=5432; export PGPORT; }
+[ -z "$PGPORT" ] && { PGPORT=_fUnKy_POSTPORT_sTuFf_; export PGPORT; }
 [ -z "$PGHOST" ] && { PGHOST=localhost; export PGHOST; }
 POSTGRESDIR=_fUnKy_POSTGRESDIR_sTuFf_
 BINDIR=_fUnKy_BINDIR_sTuFf_

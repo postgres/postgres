@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.5 1996/08/20 04:06:12 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.6 1996/09/21 06:16:09 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -104,6 +104,9 @@ POSTDOCDIR=	$(POSTGRESDIR)/doc
 
 # Where the header files necessary to build frontend programs get installed.
 HEADERDIR=	$(POSTGRESDIR)/include
+
+# The port to run the postmaster on
+POSTPORT= 6543
 
 # NAMEDATALEN is the max length for system identifiers (e.g. table names, 
 # attribute names, function names, etc.)  
