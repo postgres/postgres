@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.34 2001/03/22 04:00:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.35 2001/03/22 17:41:47 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -520,7 +520,12 @@ parse_int(const char *value, int *result)
 
 	errno = 0;
 	val = strtol(value, &endptr, 0);
-	if (endptr == value || *endptr != '\0' || errno == ERANGE)
+	if (endptr == value || *endptr != '\0' || errno == ERANGE
+#ifdef HAVE_LONG_INT_64
+		/* if long > 32 bits, check for overflow of int4 */
+		|| val != (long) ((int32) val)
+#endif
+	   )
 		return false;
 	if (result)
 		*result = (int) val;

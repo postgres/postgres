@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.29 2001/03/22 03:59:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.30 2001/03/22 17:41:47 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -203,7 +203,6 @@ nodeTokenType(char *token, int length)
 	NodeTag		retval;
 	char	   *numptr;
 	int			numlen;
-	char	   *endptr;
 
 	/*
 	 * Check if the token is a number
@@ -215,16 +214,23 @@ nodeTokenType(char *token, int length)
 	if ((numlen > 0 && isdigit((unsigned char) *numptr)) ||
 	(numlen > 1 && *numptr == '.' && isdigit((unsigned char) numptr[1])))
 	{
-
 		/*
 		 * Yes.  Figure out whether it is integral or float; this requires
 		 * both a syntax check and a range check. strtol() can do both for
 		 * us. We know the token will end at a character that strtol will
 		 * stop at, so we do not need to modify the string.
 		 */
+		long	val;
+		char   *endptr;
+
 		errno = 0;
-		(void) strtol(token, &endptr, 10);
-		if (endptr != token + length || errno == ERANGE)
+		val = strtol(token, &endptr, 10);
+		if (endptr != token + length || errno == ERANGE
+#ifdef HAVE_LONG_INT_64
+			/* if long > 32 bits, check for overflow of int4 */
+			|| val != (long) ((int32) val)
+#endif
+		   )
 			return T_Float;
 		return T_Integer;
 	}
