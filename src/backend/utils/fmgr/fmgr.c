@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.88 2004/12/31 22:01:31 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.89 2005/02/02 22:40:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -842,18 +842,28 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 /*-------------------------------------------------------------------------
  *		Support routines for callers of fmgr-compatible functions
- *
- * NOTE: the simplest way to reliably initialize a FunctionCallInfoData
- * is to MemSet it to zeroes and then fill in the fields that should be
- * nonzero.  However, in a few of the most heavily used paths, we instead
- * just zero the fields that must be zero.	This saves a fair number of
- * cycles so it's worth the extra maintenance effort.  Also see inlined
- * version of FunctionCall2 in utils/sort/tuplesort.c if you need to change
- * these routines!
  *-------------------------------------------------------------------------
  */
 
-/* These are for invocation of a specifically named function with a
+/*
+ * This macro initializes all the fields of a FunctionCallInfoData except
+ * for the arg[] and argnull[] arrays.  Performance testing has shown that
+ * the fastest way to set up argnull[] for small numbers of arguments is to
+ * explicitly set each required element to false, so we don't try to zero
+ * out the argnull[] array in the macro.
+ */
+#define InitFunctionCallInfoData(Fcinfo, Flinfo, Nargs) \
+	do { \
+		(Fcinfo).flinfo = (Flinfo); \
+		(Fcinfo).context = NULL; \
+		(Fcinfo).resultinfo = NULL; \
+		(Fcinfo).isnull = false; \
+		(Fcinfo).nargs = (Nargs); \
+	} while (0)
+
+
+/*
+ * These are for invocation of a specifically named function with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.	Also, the function cannot be one that needs to
  * look at FmgrInfo, since there won't be any.
@@ -864,13 +874,8 @@ DirectFunctionCall1(PGFunction func, Datum arg1)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
-	fcinfo.flinfo = NULL;
-	fcinfo.context = NULL;
-	fcinfo.resultinfo = NULL;
-	fcinfo.isnull = false;
+	InitFunctionCallInfoData(fcinfo, NULL, 1);
 
-	fcinfo.nargs = 1;
 	fcinfo.arg[0] = arg1;
 	fcinfo.argnull[0] = false;
 
@@ -889,13 +894,8 @@ DirectFunctionCall2(PGFunction func, Datum arg1, Datum arg2)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
-	fcinfo.flinfo = NULL;
-	fcinfo.context = NULL;
-	fcinfo.resultinfo = NULL;
-	fcinfo.isnull = false;
+	InitFunctionCallInfoData(fcinfo, NULL, 2);
 
-	fcinfo.nargs = 2;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.argnull[0] = false;
@@ -917,11 +917,14 @@ DirectFunctionCall3(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.nargs = 3;
+	InitFunctionCallInfoData(fcinfo, NULL, 3);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -939,12 +942,16 @@ DirectFunctionCall4(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.nargs = 4;
+	InitFunctionCallInfoData(fcinfo, NULL, 4);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -962,13 +969,18 @@ DirectFunctionCall5(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.nargs = 5;
+	InitFunctionCallInfoData(fcinfo, NULL, 5);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
 	fcinfo.arg[4] = arg5;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -987,14 +999,20 @@ DirectFunctionCall6(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.nargs = 6;
+	InitFunctionCallInfoData(fcinfo, NULL, 6);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
 	fcinfo.arg[4] = arg5;
 	fcinfo.arg[5] = arg6;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -1013,8 +1031,8 @@ DirectFunctionCall7(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.nargs = 7;
+	InitFunctionCallInfoData(fcinfo, NULL, 7);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1022,6 +1040,13 @@ DirectFunctionCall7(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[4] = arg5;
 	fcinfo.arg[5] = arg6;
 	fcinfo.arg[6] = arg7;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -1040,8 +1065,8 @@ DirectFunctionCall8(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.nargs = 8;
+	InitFunctionCallInfoData(fcinfo, NULL, 8);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1050,6 +1075,14 @@ DirectFunctionCall8(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[5] = arg6;
 	fcinfo.arg[6] = arg7;
 	fcinfo.arg[7] = arg8;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
+	fcinfo.argnull[7] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -1069,8 +1102,8 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.nargs = 9;
+	InitFunctionCallInfoData(fcinfo, NULL, 9);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1080,6 +1113,15 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 	fcinfo.arg[6] = arg7;
 	fcinfo.arg[7] = arg8;
 	fcinfo.arg[8] = arg9;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
+	fcinfo.argnull[7] = false;
+	fcinfo.argnull[8] = false;
 
 	result = (*func) (&fcinfo);
 
@@ -1091,7 +1133,8 @@ DirectFunctionCall9(PGFunction func, Datum arg1, Datum arg2,
 }
 
 
-/* These are for invocation of a previously-looked-up function with a
+/*
+ * These are for invocation of a previously-looked-up function with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.
  */
@@ -1101,13 +1144,8 @@ FunctionCall1(FmgrInfo *flinfo, Datum arg1)
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
-	fcinfo.context = NULL;
-	fcinfo.resultinfo = NULL;
-	fcinfo.isnull = false;
+	InitFunctionCallInfoData(fcinfo, flinfo, 1);
 
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 1;
 	fcinfo.arg[0] = arg1;
 	fcinfo.argnull[0] = false;
 
@@ -1123,16 +1161,15 @@ FunctionCall1(FmgrInfo *flinfo, Datum arg1)
 Datum
 FunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
 {
+	/*
+	 * XXX if you change this routine, see also the inlined version in
+	 * utils/sort/tuplesort.c!
+	 */
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	/* MemSet(&fcinfo, 0, sizeof(fcinfo)); */
-	fcinfo.context = NULL;
-	fcinfo.resultinfo = NULL;
-	fcinfo.isnull = false;
+	InitFunctionCallInfoData(fcinfo, flinfo, 2);
 
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 2;
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.argnull[0] = false;
@@ -1154,12 +1191,14 @@ FunctionCall3(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 3;
+	InitFunctionCallInfoData(fcinfo, flinfo, 3);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1177,13 +1216,16 @@ FunctionCall4(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 4;
+	InitFunctionCallInfoData(fcinfo, flinfo, 4);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1201,14 +1243,18 @@ FunctionCall5(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 5;
+	InitFunctionCallInfoData(fcinfo, flinfo, 5);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
 	fcinfo.arg[4] = arg5;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1227,15 +1273,20 @@ FunctionCall6(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 6;
+	InitFunctionCallInfoData(fcinfo, flinfo, 6);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
 	fcinfo.arg[4] = arg5;
 	fcinfo.arg[5] = arg6;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1254,9 +1305,8 @@ FunctionCall7(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 7;
+	InitFunctionCallInfoData(fcinfo, flinfo, 7);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1264,6 +1314,13 @@ FunctionCall7(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	fcinfo.arg[4] = arg5;
 	fcinfo.arg[5] = arg6;
 	fcinfo.arg[6] = arg7;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1282,9 +1339,8 @@ FunctionCall8(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 8;
+	InitFunctionCallInfoData(fcinfo, flinfo, 8);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1293,6 +1349,14 @@ FunctionCall8(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	fcinfo.arg[5] = arg6;
 	fcinfo.arg[6] = arg7;
 	fcinfo.arg[7] = arg8;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
+	fcinfo.argnull[7] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1312,9 +1376,8 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	FunctionCallInfoData fcinfo;
 	Datum		result;
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = flinfo;
-	fcinfo.nargs = 9;
+	InitFunctionCallInfoData(fcinfo, flinfo, 9);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1324,6 +1387,15 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 	fcinfo.arg[6] = arg7;
 	fcinfo.arg[7] = arg8;
 	fcinfo.arg[8] = arg9;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
+	fcinfo.argnull[7] = false;
+	fcinfo.argnull[8] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1335,7 +1407,8 @@ FunctionCall9(FmgrInfo *flinfo, Datum arg1, Datum arg2,
 }
 
 
-/* These are for invocation of a function identified by OID with a
+/*
+ * These are for invocation of a function identified by OID with a
  * directly-computed parameter list.  Note that neither arguments nor result
  * are allowed to be NULL.	These are essentially fmgr_info() followed
  * by FunctionCallN().	If the same function is to be invoked repeatedly,
@@ -1350,10 +1423,10 @@ OidFunctionCall1(Oid functionId, Datum arg1)
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 1;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 1);
+
 	fcinfo.arg[0] = arg1;
+	fcinfo.argnull[0] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1373,11 +1446,12 @@ OidFunctionCall2(Oid functionId, Datum arg1, Datum arg2)
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 2;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 2);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1398,12 +1472,14 @@ OidFunctionCall3(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 3;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 3);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1424,13 +1500,16 @@ OidFunctionCall4(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 4;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 4);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1451,14 +1530,18 @@ OidFunctionCall5(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 5;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 5);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
 	fcinfo.arg[4] = arg5;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1480,15 +1563,20 @@ OidFunctionCall6(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 6;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 6);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
 	fcinfo.arg[3] = arg4;
 	fcinfo.arg[4] = arg5;
 	fcinfo.arg[5] = arg6;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1510,9 +1598,8 @@ OidFunctionCall7(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 7;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 7);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1520,6 +1607,13 @@ OidFunctionCall7(Oid functionId, Datum arg1, Datum arg2,
 	fcinfo.arg[4] = arg5;
 	fcinfo.arg[5] = arg6;
 	fcinfo.arg[6] = arg7;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1541,9 +1635,8 @@ OidFunctionCall8(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 8;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 8);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1552,6 +1645,14 @@ OidFunctionCall8(Oid functionId, Datum arg1, Datum arg2,
 	fcinfo.arg[5] = arg6;
 	fcinfo.arg[6] = arg7;
 	fcinfo.arg[7] = arg8;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
+	fcinfo.argnull[7] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
@@ -1574,9 +1675,8 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 
 	fmgr_info(functionId, &flinfo);
 
-	MemSet(&fcinfo, 0, sizeof(fcinfo));
-	fcinfo.flinfo = &flinfo;
-	fcinfo.nargs = 9;
+	InitFunctionCallInfoData(fcinfo, &flinfo, 9);
+
 	fcinfo.arg[0] = arg1;
 	fcinfo.arg[1] = arg2;
 	fcinfo.arg[2] = arg3;
@@ -1586,6 +1686,15 @@ OidFunctionCall9(Oid functionId, Datum arg1, Datum arg2,
 	fcinfo.arg[6] = arg7;
 	fcinfo.arg[7] = arg8;
 	fcinfo.arg[8] = arg9;
+	fcinfo.argnull[0] = false;
+	fcinfo.argnull[1] = false;
+	fcinfo.argnull[2] = false;
+	fcinfo.argnull[3] = false;
+	fcinfo.argnull[4] = false;
+	fcinfo.argnull[5] = false;
+	fcinfo.argnull[6] = false;
+	fcinfo.argnull[7] = false;
+	fcinfo.argnull[8] = false;
 
 	result = FunctionCallInvoke(&fcinfo);
 
