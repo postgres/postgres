@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.10 1996/10/04 20:32:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.11 1996/10/07 07:18:34 scrappy Exp $
  *
  * NOTES
  *
@@ -541,7 +541,7 @@ ServerLoop(void)
 		}
 		FD_CLR(port->sock, &basemask);
 		StreamClose(port->sock);
-		next = DLGetPred(curr);
+		next = DLGetSucc(curr);
 		DLRemove(curr);
 		DLFreeElem(curr);
 		curr = next;
