@@ -1180,13 +1180,9 @@ If you are using a client interface like ODBC you may need to set
 
 <H4><A NAME="4.22">4.22</A>) How do I create a column that will default to the
 current time?<BR></H4><P>
-This way always works:
+Use <i>now()</i>:
 <CODE><PRE>
 	CREATE TABLE test (x int, modtime timestamp default now() );
-</PRE></CODE>
-In releases 7.0 and later, you may use:
-<CODE><PRE>
-	create table test (x int, modtime timestamp default 'now');
 </PRE></CODE>
 <P>
 <H4><A NAME="4.23">4.23</A>) Why are my subqueries using <CODE>IN</CODE> so 
