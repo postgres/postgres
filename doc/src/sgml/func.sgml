@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.135 2003/01/23 01:22:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.136 2003/01/23 23:38:51 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -5785,6 +5785,12 @@ SELECT has_table_privilege('myschema.mytable', 'select');
     <literal>CREATE</literal> or
     <literal>USAGE</literal>.
    </para>
+
+  <para>
+   To evaluate whether a user holds a grant option on the privilege,
+   append <literal> WITH GRANT OPTION</literal> to the privilege key
+   word; for example <literal>'UPDATE WITH GRANT OPTION'</literal>.
+  </para>
 
   <para>
    <xref linkend="functions-misc-schema-table"> shows functions that

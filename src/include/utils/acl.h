@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.50 2003/01/09 18:00:24 tgl Exp $
+ * $Id: acl.h,v 1.51 2003/01/23 23:39:07 petere Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -50,27 +50,37 @@ typedef uint32 AclMode;
  */
 typedef struct AclItem
 {
-	AclId		ai_id;			/* ID that this item applies to */
+	AclId		ai_grantee;		/* ID that this item applies to */
+	AclId		ai_grantor;
 	AclMode		ai_privs;		/* AclIdType plus privilege bits */
 } AclItem;
 
 /*
- * The AclIdType is stored in the top two bits of the ai_privs field of an
- * AclItem, leaving us with thirty usable privilege bits.
+ * The AclIdType is stored in the top two bits of the ai_privs field
+ * of an AclItem.  The middle 15 bits are the grant option markers,
+ * and the lower 15 bits are the actual privileges.
  */
-#define ACLITEM_GET_PRIVS(item)   ((item).ai_privs & 0x3FFFFFFF)
-#define ACLITEM_GET_IDTYPE(item)  ((item).ai_privs >> 30)
-#define ACLITEM_SET_PRIVS_IDTYPE(item,privs,idtype) \
-  ((item).ai_privs = ((privs) & 0x3FFFFFFF) | ((idtype) << 30))
+#define ACLITEM_GET_PRIVS(item)    ((item).ai_privs & 0x7FFF)
+#define ACLITEM_GET_GOPTIONS(item) (((item).ai_privs >> 15)  & 0x7FFF) 
+#define ACLITEM_GET_IDTYPE(item)   ((item).ai_privs >> 30)
+
+#define ACL_GRANT_OPTION_FOR(privs) (((privs) & 0x7FFF) << 15)
+
+#define ACLITEM_SET_PRIVS(item,privs) \
+  ((item).ai_privs = (ACLITEM_GET_IDTYPE(item)<<30) | (ACLITEM_GET_GOPTIONS(item)<<15) | ((privs) & 0x7FFF))
+#define ACLITEM_SET_GOPTIONS(item,goptions) \
+  ((item).ai_privs = (ACLITEM_GET_IDTYPE(item)<<30) | (((goptions) & 0x7FFF) << 15) | ACLITEM_GET_PRIVS(item))
+#define ACLITEM_SET_PRIVS_IDTYPE(item,privs,goption,idtype) \
+  ((item).ai_privs = ((privs) & 0x7FFF) |(((goption) & 0x7FFF) << 15) | ((idtype) << 30))
 
 
 /*
  * Definitions for convenient access to Acl (array of AclItem) and IdList
- * (array of AclId).  These are standard Postgres arrays, but are restricted
+ * (array of AclId).  These are standard PostgreSQL arrays, but are restricted
  * to have one dimension.  We also ignore the lower bound when reading,
  * and set it to zero when writing.
  *
- * CAUTION: as of Postgres 7.1, these arrays are toastable (just like all
+ * CAUTION: as of PostgreSQL 7.1, these arrays are toastable (just like all
  * other array types).	Therefore, be careful to detoast them with the
  * macros provided, unless you know for certain that a particular array
  * can't have been toasted.  Presently, we do not provide toast tables for
@@ -80,7 +90,7 @@ typedef struct AclItem
 
 
 /*
- * Acl			a one-dimensional POSTGRES array of AclItem
+ * Acl			a one-dimensional array of AclItem
  */
 typedef ArrayType Acl;
 
@@ -90,7 +100,7 @@ typedef ArrayType Acl;
 #define ACL_SIZE(ACL)			ARR_SIZE(ACL)
 
 /*
- * IdList		a one-dimensional POSTGRES array of AclId
+ * IdList		a one-dimensional array of AclId
  */
 typedef ArrayType IdList;
 
@@ -125,11 +135,6 @@ typedef ArrayType IdList;
 #define ACL_MODECHG_ADD			1
 #define ACL_MODECHG_DEL			2
 #define ACL_MODECHG_EQL			3
-
-/* external representation of mode indicators for I/O */
-#define ACL_MODECHG_ADD_CHR		'+'
-#define ACL_MODECHG_DEL_CHR		'-'
-#define ACL_MODECHG_EQL_CHR		'='
 
 /*
  * External representations of the privilege bits --- aclitemin/aclitemout
@@ -173,7 +178,7 @@ typedef enum
  */
 extern Acl *acldefault(GrantObjectType objtype, AclId ownerid);
 extern Acl *aclinsert3(const Acl *old_acl, const AclItem *mod_aip,
-		   unsigned modechg);
+					   unsigned modechg, DropBehavior behavior);
 
 /*
  * SQL functions (from acl.c)

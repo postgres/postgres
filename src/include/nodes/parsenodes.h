@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.226 2003/01/20 18:55:00 tgl Exp $
+ * $Id: parsenodes.h,v 1.227 2003/01/23 23:39:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -750,7 +750,7 @@ typedef enum GrantObjectType
 
 /*
  * Grantable rights are encoded so that we can OR them together in a bitmask.
- * The present representation of AclItem limits us to 30 distinct rights.
+ * The present representation of AclItem limits us to 15 distinct rights.
  * Caution: changing these codes breaks stored ACLs, hence forces initdb.
  */
 #define ACL_INSERT		(1<<0)	/* for relations */
@@ -778,6 +778,8 @@ typedef struct GrantStmt
 								 * strings) */
 	List	   *privileges;		/* integer list of privilege codes */
 	List	   *grantees;		/* list of PrivGrantee nodes */
+	bool		grant_option;	/* grant or revoke grant option */
+	DropBehavior behavior;		/* drop behavior (for REVOKE) */
 } GrantStmt;
 
 typedef struct PrivGrantee

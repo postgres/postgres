@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.84 2002/12/05 04:04:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.85 2003/01/23 23:39:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,9 +32,10 @@
 
 static const char *getid(const char *s, char *n);
 static Acl *makeacl(int n);
-static const char *aclparse(const char *s, AclItem *aip, unsigned *modechg);
+static const char *aclparse(const char *s, AclItem *aip);
 static bool aclitemeq(const AclItem *a1, const AclItem *a2);
-static bool aclitemgt(const AclItem *a1, const AclItem *a2);
+static Acl *recursive_revoke(Acl *acl, AclId grantee,
+							 AclMode revoke_privs, DropBehavior behavior);
 
 static Oid	convert_table_name(text *tablename);
 static AclMode convert_table_priv_string(text *priv_type_text);
@@ -102,7 +103,7 @@ getid(const char *s, char *n)
 /*
  * aclparse
  *		Consumes and parses an ACL specification of the form:
- *				[group|user] [A-Za-z0-9]*[+-=][rwaR]*
+ *				[group|user] [A-Za-z0-9]*=[rwaR]*
  *		from string 's', ignoring any leading white space or white space
  *		between the optional id type keyword (group|user) and the actual
  *		ACL specification.
@@ -115,25 +116,23 @@ getid(const char *s, char *n)
  *		specification.	Also:
  *		- loads the structure pointed to by 'aip' with the appropriate
  *		  UID/GID, id type identifier and mode type values.
- *		- loads 'modechg' with the mode change flag.
  */
 static const char *
-aclparse(const char *s, AclItem *aip, unsigned *modechg)
+aclparse(const char *s, AclItem *aip)
 {
-	AclMode		privs;
+	AclMode		privs, goption, read;
 	uint32		idtype;
 	char		name[NAMEDATALEN];
+	char		name2[NAMEDATALEN];
 
-	Assert(s && aip && modechg);
+	Assert(s && aip);
 
 #ifdef ACLDEBUG
 	elog(LOG, "aclparse: input = '%s'", s);
 #endif
 	idtype = ACL_IDTYPE_UID;
 	s = getid(s, name);
-	if (*s != ACL_MODECHG_ADD_CHR &&
-		*s != ACL_MODECHG_DEL_CHR &&
-		*s != ACL_MODECHG_EQL_CHR)
+	if (*s != '=')
 	{
 		/* we just read a keyword, not a name */
 		if (strncmp(name, ACL_IDTYPE_GID_KEYWORD, sizeof(name)) == 0)
@@ -147,87 +146,93 @@ aclparse(const char *s, AclItem *aip, unsigned *modechg)
 	if (name[0] == '\0')
 		idtype = ACL_IDTYPE_WORLD;
 
-	switch (*s)
-	{
-		case ACL_MODECHG_ADD_CHR:
-			*modechg = ACL_MODECHG_ADD;
-			break;
-		case ACL_MODECHG_DEL_CHR:
-			*modechg = ACL_MODECHG_DEL;
-			break;
-		case ACL_MODECHG_EQL_CHR:
-			*modechg = ACL_MODECHG_EQL;
-			break;
-		default:
-			elog(ERROR, "aclparse: mode change flag must use \"%c%c%c\"",
-				 ACL_MODECHG_ADD_CHR,
-				 ACL_MODECHG_DEL_CHR,
-				 ACL_MODECHG_EQL_CHR);
-	}
+	if (*s != '=')
+		elog(ERROR, "aclparse: expecting \"=\" sign");
 
-	privs = ACL_NO_RIGHTS;
+	privs = goption = ACL_NO_RIGHTS;
 
-	while (isalpha((unsigned char) *++s))
+	for (++s, read=0; isalpha((unsigned char) *s) || *s == '*'; s++)
 	{
 		switch (*s)
 		{
+			case '*':
+				goption |= read;
+				break;
 			case ACL_INSERT_CHR:
-				privs |= ACL_INSERT;
+				read = ACL_INSERT;
 				break;
 			case ACL_SELECT_CHR:
-				privs |= ACL_SELECT;
+				read = ACL_SELECT;
 				break;
 			case ACL_UPDATE_CHR:
-				privs |= ACL_UPDATE;
+				read = ACL_UPDATE;
 				break;
 			case ACL_DELETE_CHR:
-				privs |= ACL_DELETE;
+				read = ACL_DELETE;
 				break;
 			case ACL_RULE_CHR:
-				privs |= ACL_RULE;
+				read = ACL_RULE;
 				break;
 			case ACL_REFERENCES_CHR:
-				privs |= ACL_REFERENCES;
+				read = ACL_REFERENCES;
 				break;
 			case ACL_TRIGGER_CHR:
-				privs |= ACL_TRIGGER;
+				read = ACL_TRIGGER;
 				break;
 			case ACL_EXECUTE_CHR:
-				privs |= ACL_EXECUTE;
+				read = ACL_EXECUTE;
 				break;
 			case ACL_USAGE_CHR:
-				privs |= ACL_USAGE;
+				read = ACL_USAGE;
 				break;
 			case ACL_CREATE_CHR:
-				privs |= ACL_CREATE;
+				read = ACL_CREATE;
 				break;
 			case ACL_CREATE_TEMP_CHR:
-				privs |= ACL_CREATE_TEMP;
+				read = ACL_CREATE_TEMP;
 				break;
 			default:
 				elog(ERROR, "aclparse: mode flags must use \"%s\"",
 					 ACL_ALL_RIGHTS_STR);
 		}
+
+		privs |= read;
 	}
 
 	switch (idtype)
 	{
 		case ACL_IDTYPE_UID:
-			aip->ai_id = get_usesysid(name);
+			aip->ai_grantee = get_usesysid(name);
 			break;
 		case ACL_IDTYPE_GID:
-			aip->ai_id = get_grosysid(name);
+			aip->ai_grantee = get_grosysid(name);
 			break;
 		case ACL_IDTYPE_WORLD:
-			aip->ai_id = ACL_ID_WORLD;
+			aip->ai_grantee = ACL_ID_WORLD;
 			break;
 	}
 
-	ACLITEM_SET_PRIVS_IDTYPE(*aip, privs, idtype);
+	/* XXX Allow a degree of backward compatibility by defaulting the
+	 * grantor to the superuser. */
+	if (*s == '/')
+	{
+		s = getid(s + 1, name2);
+		if (name2[0] == '\0')
+			elog(ERROR, "aclparse: a name must follow the \"/\" sign");
+
+		aip->ai_grantor = get_usesysid(name2);
+	}
+	else
+	{
+		aip->ai_grantor = BOOTSTRAP_USESYSID;
+		elog(WARNING, "defaulting grantor to %u", BOOTSTRAP_USESYSID);
+	}
+
+	ACLITEM_SET_PRIVS_IDTYPE(*aip, privs, goption, idtype);
 
 #ifdef ACLDEBUG
-	elog(LOG, "aclparse: correctly read [%x %d %x], modechg=%x",
-		 idtype, aip->ai_id, privs, *modechg);
+	elog(LOG, "aclparse: correctly read [%x %d %x]",
+		 idtype, aip->ai_grantee, privs);
 #endif
 	return s;
 }
@@ -271,12 +276,9 @@ aclitemin(PG_FUNCTION_ARGS)
 {
 	const char *s = PG_GETARG_CSTRING(0);
 	AclItem    *aip;
-	unsigned	modechg;
 
 	aip = (AclItem *) palloc(sizeof(AclItem));
-	s = aclparse(s, aip, &modechg);
-	if (modechg != ACL_MODECHG_EQL)
-		elog(ERROR, "aclitemin: cannot accept anything but = ACLs");
+	s = aclparse(s, aip);
 	while (isspace((unsigned char) *s))
 		++s;
 	if (*s)
@@ -302,14 +304,14 @@ aclitemout(PG_FUNCTION_ARGS)
 	unsigned	i;
 	char	   *tmpname;
 
-	p = out = palloc(strlen("group = ") + N_ACL_RIGHTS + NAMEDATALEN + 1);
+	p = out = palloc(strlen("group = ") + 2 * N_ACL_RIGHTS + 2* NAMEDATALEN + 2);
 	*p = '\0';
 
 	switch (ACLITEM_GET_IDTYPE(*aip))
 	{
 		case ACL_IDTYPE_UID:
 			htup = SearchSysCache(SHADOWSYSID,
-								  ObjectIdGetDatum(aip->ai_id),
+								  ObjectIdGetDatum(aip->ai_grantee),
 								  0, 0, 0);
 			if (HeapTupleIsValid(htup))
 			{
@@ -324,14 +326,14 @@ aclitemout(PG_FUNCTION_ARGS)
 				char	   *tmp;
 
 				tmp = DatumGetCString(DirectFunctionCall1(int4out,
-									 Int32GetDatum((int32) aip->ai_id)));
+									 Int32GetDatum((int32) aip->ai_grantee)));
 				strcat(p, tmp);
 				pfree(tmp);
 			}
 			break;
 		case ACL_IDTYPE_GID:
 			strcat(p, "group ");
-			tmpname = get_groname(aip->ai_id);
+			tmpname = get_groname(aip->ai_grantee);
 			if (tmpname != NULL)
 				strncat(p, tmpname, NAMEDATALEN);
 			else
@@ -340,7 +342,7 @@ aclitemout(PG_FUNCTION_ARGS)
 				char	   *tmp;
 
 				tmp = DatumGetCString(DirectFunctionCall1(int4out,
-									 Int32GetDatum((int32) aip->ai_id)));
+									 Int32GetDatum((int32) aip->ai_grantee)));
 				strcat(p, tmp);
 				pfree(tmp);
 			}
@@ -354,10 +356,43 @@ aclitemout(PG_FUNCTION_ARGS)
 	}
 	while (*p)
 		++p;
+
 	*p++ = '=';
+
 	for (i = 0; i < N_ACL_RIGHTS; ++i)
-		if (aip->ai_privs & (1 << i))
+	{
+		if (ACLITEM_GET_PRIVS(*aip) & (1 << i))
 			*p++ = ACL_ALL_RIGHTS_STR[i];
+		if (ACLITEM_GET_GOPTIONS(*aip) & (1 << i))
+			*p++ = '*';
+	}
+
+	*p++ = '/';
+	*p = '\0';
+
+	htup = SearchSysCache(SHADOWSYSID,
+						  ObjectIdGetDatum(aip->ai_grantor),
+						  0, 0, 0);
+	if (HeapTupleIsValid(htup))
+	{
+		strncat(p,
+				NameStr(((Form_pg_shadow) GETSTRUCT(htup))->usename),
+				NAMEDATALEN);
+		ReleaseSysCache(htup);
+	}
+	else
+	{
+		/* Generate numeric UID if we don't find an entry */
+		char	   *tmp;
+
+		tmp = DatumGetCString(DirectFunctionCall1(int4out,
+												  Int32GetDatum((int32) aip->ai_grantor)));
+		strcat(p, tmp);
+		pfree(tmp);
+	}
+
+	while (*p)
+		++p;
 	*p = '\0';
 
 	PG_RETURN_CSTRING(out);
@@ -365,29 +400,15 @@ aclitemout(PG_FUNCTION_ARGS)
 
 /*
  * aclitemeq
- * aclitemgt
- *		AclItem equality and greater-than comparison routines.
  *		Two AclItems are considered equal iff they have the same
- *		identifier (and identifier type); the privileges are ignored.
- *		Note that these routines are really only useful for sorting
- *		AclItems into identifier order.
- *
- * RETURNS:
- *		a boolean value indicating = or >
+ *		grantee and grantor; the privileges are ignored.
  */
 static bool
 aclitemeq(const AclItem *a1, const AclItem *a2)
 {
 	return ACLITEM_GET_IDTYPE(*a1) == ACLITEM_GET_IDTYPE(*a2) &&
-		a1->ai_id == a2->ai_id;
-}
-
-static bool
-aclitemgt(const AclItem *a1, const AclItem *a2)
-{
-	return ((ACLITEM_GET_IDTYPE(*a1) > ACLITEM_GET_IDTYPE(*a2)) ||
-			(ACLITEM_GET_IDTYPE(*a1) == ACLITEM_GET_IDTYPE(*a2) &&
-			 a1->ai_id > a2->ai_id));
+		a1->ai_grantee == a2->ai_grantee &&
+		a1->ai_grantor == a2->ai_grantor;
 }
 
 
@@ -436,15 +457,25 @@ acldefault(GrantObjectType objtype, AclId ownerid)
 			break;
 	}
 
-	acl = makeacl(ownerid ? 2 : 1);
+	acl = makeacl((world_default != ACL_NO_RIGHTS ? 1 : 0)
+				  + (ownerid ? 1 : 0));
 	aip = ACL_DAT(acl);
 
-	aip[0].ai_id = ACL_ID_WORLD;
-	ACLITEM_SET_PRIVS_IDTYPE(aip[0], world_default, ACL_IDTYPE_WORLD);
+	if (world_default != ACL_NO_RIGHTS)
+	{
+		aip[0].ai_grantee = ACL_ID_WORLD;
+		aip[0].ai_grantor = ownerid;
+		ACLITEM_SET_PRIVS_IDTYPE(aip[0], world_default, ACL_NO_RIGHTS, ACL_IDTYPE_WORLD);
+	}
+
 	if (ownerid)
 	{
-		aip[1].ai_id = ownerid;
-		ACLITEM_SET_PRIVS_IDTYPE(aip[1], owner_default, ACL_IDTYPE_UID);
+		int index = (world_default != ACL_NO_RIGHTS ? 1: 0);
+
+		aip[index].ai_grantee = ownerid;
+		aip[index].ai_grantor = ownerid;
+		/* owner gets default privileges with grant option */
+		ACLITEM_SET_PRIVS_IDTYPE(aip[index], owner_default, owner_default, ACL_IDTYPE_UID);
 	}
 
 	return acl;
@@ -458,7 +489,7 @@ acldefault(GrantObjectType objtype, AclId ownerid)
  * NB: caller is responsible for having detoasted the input ACL, if needed.
  */
 Acl *
-aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg)
+aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg, DropBehavior behavior)
 {
 	Acl		   *new_acl;
 	AclItem    *old_aip,
@@ -480,49 +511,35 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg)
 	old_aip = ACL_DAT(old_acl);
 
 	/*
-	 * Search the ACL for an existing entry for 'id'.  If one exists, just
-	 * modify the entry in-place (well, in the same position, since we
-	 * actually return a copy); otherwise, insert the new entry in
-	 * sort-order.
+	 * Search the ACL for an existing entry for this grantee and
+	 * grantor.  If one exists, just modify the entry in-place (well,
+	 * in the same position, since we actually return a copy);
+	 * otherwise, insert the new entry at the end.
 	 */
-	/* find the first element not less than the element to be inserted */
-	for (dst = 0; dst < num && aclitemgt(mod_aip, old_aip + dst); ++dst)
-		;
 
-	if (dst < num && aclitemeq(mod_aip, old_aip + dst))
+	for (dst = 0; dst < num; ++dst)
 	{
-		/* found a match, so modify existing item */
-		new_acl = makeacl(num);
-		new_aip = ACL_DAT(new_acl);
-		memcpy((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
+		if (aclitemeq(mod_aip, old_aip + dst))
+		{
+			/* found a match, so modify existing item */
+			new_acl = makeacl(num);
+			new_aip = ACL_DAT(new_acl);
+			memcpy(new_acl, old_acl, ACL_SIZE(old_acl));
+			break;
+		}
 	}
-	else
+
+	if (dst == num)
 	{
-		/* need to insert a new item */
+		/* need to append a new item */
 		new_acl = makeacl(num + 1);
 		new_aip = ACL_DAT(new_acl);
-		if (dst == 0)
-		{						/* start */
-			elog(ERROR, "aclinsert3: insertion before world ACL??");
-		}
-		else if (dst >= num)
-		{						/* end */
-			memcpy((char *) new_aip,
-				   (char *) old_aip,
-				   num * sizeof(AclItem));
-		}
-		else
-		{						/* middle */
-			memcpy((char *) new_aip,
-				   (char *) old_aip,
-				   dst * sizeof(AclItem));
-			memcpy((char *) (new_aip + dst + 1),
-				   (char *) (old_aip + dst),
-				   (num - dst) * sizeof(AclItem));
-		}
+		memcpy(new_aip, old_aip, num * sizeof(AclItem));
+
 		/* initialize the new entry with no permissions */
-		new_aip[dst].ai_id = mod_aip->ai_id;
-		ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst], ACL_NO_RIGHTS,
+		new_aip[dst].ai_grantee = mod_aip->ai_grantee;
+		new_aip[dst].ai_grantor = mod_aip->ai_grantor;
+		ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst], ACL_NO_RIGHTS, ACL_NO_RIGHTS,
 								 ACLITEM_GET_IDTYPE(*mod_aip));
 		num++;					/* set num to the size of new_acl */
 	}
@@ -531,34 +548,88 @@ aclinsert3(const Acl *old_acl, const AclItem *mod_aip, unsigned modechg)
 	switch (modechg)
 	{
 		case ACL_MODECHG_ADD:
-			new_aip[dst].ai_privs |= ACLITEM_GET_PRIVS(*mod_aip);
+			ACLITEM_SET_PRIVS(new_aip[dst], ACLITEM_GET_PRIVS(new_aip[dst]) | ACLITEM_GET_PRIVS(*mod_aip));
+			ACLITEM_SET_GOPTIONS(new_aip[dst], ACLITEM_GET_GOPTIONS(new_aip[dst]) | ACLITEM_GET_GOPTIONS(*mod_aip));
 			break;
 		case ACL_MODECHG_DEL:
-			new_aip[dst].ai_privs &= ~ACLITEM_GET_PRIVS(*mod_aip);
+			ACLITEM_SET_PRIVS(new_aip[dst], ACLITEM_GET_PRIVS(new_aip[dst]) & ~ACLITEM_GET_PRIVS(*mod_aip));
+			ACLITEM_SET_GOPTIONS(new_aip[dst], ACLITEM_GET_GOPTIONS(new_aip[dst]) & ~ACLITEM_GET_GOPTIONS(*mod_aip));
 			break;
 		case ACL_MODECHG_EQL:
 			ACLITEM_SET_PRIVS_IDTYPE(new_aip[dst],
 									 ACLITEM_GET_PRIVS(*mod_aip),
+									 ACLITEM_GET_GOPTIONS(*mod_aip),
 									 ACLITEM_GET_IDTYPE(new_aip[dst]));
 			break;
 	}
 
 	/*
-	 * if the adjusted entry has no permissions, delete it from the list.
-	 * For example, this helps in removing entries for users who no longer
-	 * exist.  EXCEPTION: never remove the world entry.
+	 * If the adjusted entry has no permissions, delete it from the list.
 	 */
-	if (ACLITEM_GET_PRIVS(new_aip[dst]) == ACL_NO_RIGHTS && dst > 0)
+	if (ACLITEM_GET_PRIVS(new_aip[dst]) == ACL_NO_RIGHTS)
 	{
-		memmove((char *) (new_aip + dst),
-				(char *) (new_aip + dst + 1),
+		memmove(new_aip + dst,
+				new_aip + dst + 1,
 				(num - dst - 1) * sizeof(AclItem));
 		ARR_DIMS(new_acl)[0] = num - 1;
 		ARR_SIZE(new_acl) -= sizeof(AclItem);
 	}
 
+	/*
+	 * Remove abandoned privileges (cascading revoke)
+	 */
+	if (modechg != ACL_MODECHG_ADD
+		&& ACLITEM_GET_IDTYPE(*mod_aip) == ACL_IDTYPE_UID
+		&& ACLITEM_GET_GOPTIONS(*mod_aip))
+		new_acl = recursive_revoke(new_acl, mod_aip->ai_grantee, ACLITEM_GET_GOPTIONS(*mod_aip), behavior);
+
 	return new_acl;
 }
+
+
+/*
+ * Ensure that no privilege is "abandoned".  A privilege is abandoned
+ * if the user that granted the privilege loses the grant option.  (So
+ * the chain through which it was granted is broken.)  Either the
+ * abandoned privileges are revoked as well, or an error message is
+ * printed, depending on the drop behavior option.
+ */
+static Acl *
+recursive_revoke(Acl *acl,
+				 AclId grantee,
+				 AclMode revoke_privs,
+				 DropBehavior behavior)
+{
+	int i;
+
+restart:
+	for (i = 0; i < ACL_NUM(acl); i++)
+	{
+		AclItem *aip = ACL_DAT(acl);
+
+		if (aip[i].ai_grantor == grantee
+			&& (ACLITEM_GET_PRIVS(aip[i]) & revoke_privs) != 0)
+		{
+			AclItem mod_acl;
+
+			if (behavior == DROP_RESTRICT)
+				elog(ERROR, "dependent privileges exist (use CASCADE to revoke them too)");
+
+			mod_acl.ai_grantor = grantee;
+			mod_acl.ai_grantee = aip[i].ai_grantee;
+			ACLITEM_SET_PRIVS_IDTYPE(mod_acl,
+									 revoke_privs,
+									 revoke_privs,
+									 ACLITEM_GET_IDTYPE(aip[i]));
+
+			acl = aclinsert3(acl, &mod_acl, ACL_MODECHG_DEL, behavior);
+			goto restart;
+		}
+	}
+
+	return acl;
+}
+
 
 /*
  * aclinsert (exported function)
@@ -569,7 +640,7 @@ aclinsert(PG_FUNCTION_ARGS)
 	Acl		   *old_acl = PG_GETARG_ACL_P(0);
 	AclItem    *mod_aip = PG_GETARG_ACLITEM_P(1);
 
-	PG_RETURN_ACL_P(aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL));
+	PG_RETURN_ACL_P(aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL, DROP_CASCADE));
 }
 
 Datum
@@ -649,7 +720,7 @@ aclcontains(PG_FUNCTION_ARGS)
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)
 	{
-		if (aip->ai_id == aidat[i].ai_id &&
+		if (aip->ai_grantee == aidat[i].ai_grantee &&
 			aip->ai_privs == aidat[i].ai_privs)
 			PG_RETURN_BOOL(true);
 	}
@@ -842,24 +913,38 @@ convert_table_priv_string(text *priv_type_text)
 	 */
 	if (strcasecmp(priv_type, "SELECT") == 0)
 		return ACL_SELECT;
+	if (strcasecmp(priv_type, "SELECT WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_SELECT);
 
 	if (strcasecmp(priv_type, "INSERT") == 0)
 		return ACL_INSERT;
+	if (strcasecmp(priv_type, "INSERT WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_INSERT);
 
 	if (strcasecmp(priv_type, "UPDATE") == 0)
 		return ACL_UPDATE;
+	if (strcasecmp(priv_type, "UPDATE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_UPDATE);
 
 	if (strcasecmp(priv_type, "DELETE") == 0)
 		return ACL_DELETE;
+	if (strcasecmp(priv_type, "DELETE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_DELETE);
 
 	if (strcasecmp(priv_type, "RULE") == 0)
 		return ACL_RULE;
+	if (strcasecmp(priv_type, "RULE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_RULE);
 
 	if (strcasecmp(priv_type, "REFERENCES") == 0)
 		return ACL_REFERENCES;
+	if (strcasecmp(priv_type, "REFERENCES WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_REFERENCES);
 
 	if (strcasecmp(priv_type, "TRIGGER") == 0)
 		return ACL_TRIGGER;
+	if (strcasecmp(priv_type, "TRIGGER WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_TRIGGER);
 
 	elog(ERROR, "has_table_privilege: invalid privilege type %s",
 		 priv_type);
@@ -1057,12 +1142,18 @@ convert_database_priv_string(text *priv_type_text)
 	 */
 	if (strcasecmp(priv_type, "CREATE") == 0)
 		return ACL_CREATE;
+	if (strcasecmp(priv_type, "CREATE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_CREATE);
 
 	if (strcasecmp(priv_type, "TEMPORARY") == 0)
 		return ACL_CREATE_TEMP;
+	if (strcasecmp(priv_type, "TEMPORARY WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP);
 
 	if (strcasecmp(priv_type, "TEMP") == 0)
 		return ACL_CREATE_TEMP;
+	if (strcasecmp(priv_type, "TEMP WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP);
 
 	elog(ERROR, "has_database_privilege: invalid privilege type %s",
 		 priv_type);
@@ -1262,6 +1353,8 @@ convert_function_priv_string(text *priv_type_text)
 	 */
 	if (strcasecmp(priv_type, "EXECUTE") == 0)
 		return ACL_EXECUTE;
+	if (strcasecmp(priv_type, "EXECUTE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_EXECUTE);
 
 	elog(ERROR, "has_function_privilege: invalid privilege type %s",
 		 priv_type);
@@ -1461,6 +1554,8 @@ convert_language_priv_string(text *priv_type_text)
 	 */
 	if (strcasecmp(priv_type, "USAGE") == 0)
 		return ACL_USAGE;
+	if (strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
 
 	elog(ERROR, "has_language_privilege: invalid privilege type %s",
 		 priv_type);
@@ -1660,9 +1755,13 @@ convert_schema_priv_string(text *priv_type_text)
 	 */
 	if (strcasecmp(priv_type, "CREATE") == 0)
 		return ACL_CREATE;
+	if (strcasecmp(priv_type, "CREATE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_CREATE);
 
 	if (strcasecmp(priv_type, "USAGE") == 0)
 		return ACL_USAGE;
+	if (strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
+		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
 
 	elog(ERROR, "has_schema_privilege: invalid privilege type %s",
 		 priv_type);

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.237 2003/01/20 18:54:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.238 2003/01/23 23:38:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1563,6 +1563,8 @@ _copyGrantStmt(GrantStmt *from)
 	COPY_NODE_FIELD(objects);
 	COPY_INTLIST_FIELD(privileges);
 	COPY_NODE_FIELD(grantees);
+	COPY_SCALAR_FIELD(grant_option);
+	COPY_SCALAR_FIELD(behavior);
 
 	return newnode;
 }

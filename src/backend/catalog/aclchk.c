@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.79 2002/12/04 05:18:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.80 2003/01/23 23:38:55 petere Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -47,7 +47,7 @@ static void ExecuteGrantStmt_Namespace(GrantStmt *stmt);
 
 static const char *privilege_to_string(AclMode privilege);
 
-static AclResult aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode);
+static AclResult aclcheck(Acl *acl, AclId userid, AclMode mode);
 
 
 #ifdef ACLDEBUG
@@ -75,7 +75,8 @@ dumpacl(Acl *acl)
  */
 static Acl *
 merge_acl_with_grant(Acl *old_acl, bool is_grant,
-					 List *grantees, AclMode privileges)
+					 List *grantees, AclMode privileges,
+					 bool grant_option, DropBehavior behavior)
 {
 	unsigned	modechg;
 	List	   *j;
@@ -96,26 +97,38 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 
 		if (grantee->username)
 		{
-			aclitem.	ai_id = get_usesysid(grantee->username);
-
+			aclitem.ai_grantee = get_usesysid(grantee->username);
 			idtype = ACL_IDTYPE_UID;
 		}
 		else if (grantee->groupname)
 		{
-			aclitem.	ai_id = get_grosysid(grantee->groupname);
-
+			aclitem.ai_grantee = get_grosysid(grantee->groupname);
 			idtype = ACL_IDTYPE_GID;
 		}
 		else
 		{
-			aclitem.	ai_id = ACL_ID_WORLD;
-
+			aclitem.ai_grantee = ACL_ID_WORLD;
 			idtype = ACL_IDTYPE_WORLD;
 		}
 
-		ACLITEM_SET_PRIVS_IDTYPE(aclitem, privileges, idtype);
+		/*
+		 * Grant options can only be granted to individual users, not
+		 * groups or public.  The reason is that if a user would
+		 * re-grant a privilege that he held through a group having a
+		 * grant option, and later the user is removed from the group,
+		 * the situation is impossible to clean up.
+		 */
+		if (is_grant && idtype != ACL_IDTYPE_UID && grant_option)
+			elog(ERROR, "grant options can only be granted to individual users");
 
-		new_acl = aclinsert3(new_acl, &aclitem, modechg);
+		aclitem.ai_grantor = GetUserId();
+
+		ACLITEM_SET_PRIVS_IDTYPE(aclitem,
+								 (is_grant || !grant_option) ? privileges : ACL_NO_RIGHTS,
+								 (grant_option || !is_grant) ? privileges : ACL_NO_RIGHTS,
+								 idtype);
+
+		new_acl = aclinsert3(new_acl, &aclitem, modechg, behavior);
 
 #ifdef ACLDEBUG
 		dumpacl(new_acl);
@@ -202,8 +215,10 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 			elog(ERROR, "relation %u not found", relOid);
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
 
-		if (!pg_class_ownercheck(relOid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, relvar->relname);
+		if (stmt->is_grant
+			&& !pg_class_ownercheck(relOid, GetUserId())
+			&& pg_class_aclcheck(relOid, GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
+			aclcheck_error(ACLCHECK_NO_PRIV, relvar->relname);
 
 		if (pg_class_tuple->relkind == RELKIND_INDEX)
 			elog(ERROR, "\"%s\" is an index",
@@ -223,7 +238,8 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privileges);
+									   stmt->grantees, privileges,
+									   stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -298,8 +314,10 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 			elog(ERROR, "database \"%s\" not found", dbname);
 		pg_database_tuple = (Form_pg_database) GETSTRUCT(tuple);
 
-		if (!superuser() && pg_database_tuple->datdba != GetUserId())
-			elog(ERROR, "permission denied");
+		if (stmt->is_grant
+			&& pg_database_tuple->datdba != GetUserId()
+			&& pg_database_aclcheck(HeapTupleGetOid(tuple), GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
+			aclcheck_error(ACLCHECK_NO_PRIV, NameStr(pg_database_tuple->datname));
 
 		/*
 		 * If there's no ACL, create a default.
@@ -314,7 +332,8 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privileges);
+									   stmt->grantees, privileges,
+									   stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -389,8 +408,10 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 			elog(ERROR, "function %u not found", oid);
 		pg_proc_tuple = (Form_pg_proc) GETSTRUCT(tuple);
 
-		if (!pg_proc_ownercheck(oid, GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER,
+		if (stmt->is_grant
+			&& !pg_proc_ownercheck(oid, GetUserId())
+			&& pg_proc_aclcheck(oid, GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
+			aclcheck_error(ACLCHECK_NO_PRIV,
 						   NameStr(pg_proc_tuple->proname));
 
 		/*
@@ -407,7 +428,8 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privileges);
+									   stmt->grantees, privileges,
+									   stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -470,9 +492,6 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 		char		nulls[Natts_pg_language];
 		char		replaces[Natts_pg_language];
 
-		if (!superuser())
-			elog(ERROR, "permission denied");
-
 		relation = heap_openr(LanguageRelationName, RowExclusiveLock);
 		tuple = SearchSysCache(LANGNAME,
 							   PointerGetDatum(langname),
@@ -483,6 +502,11 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 
 		if (!pg_language_tuple->lanpltrusted && stmt->is_grant)
 			elog(ERROR, "language \"%s\" is not trusted", langname);
+
+		if (stmt->is_grant
+			&& !superuser()
+			&& pg_language_aclcheck(HeapTupleGetOid(tuple), GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
+			aclcheck_error(ACLCHECK_NO_PRIV, NameStr(pg_language_tuple->lanname));
 
 		/*
 		 * If there's no ACL, create a default.
@@ -497,7 +521,8 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privileges);
+									   stmt->grantees, privileges,
+									   stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -568,8 +593,10 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 			elog(ERROR, "namespace \"%s\" not found", nspname);
 		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
 
-		if (!pg_namespace_ownercheck(HeapTupleGetOid(tuple), GetUserId()))
-			aclcheck_error(ACLCHECK_NOT_OWNER, nspname);
+		if (stmt->is_grant
+			&& !pg_namespace_ownercheck(HeapTupleGetOid(tuple), GetUserId())
+			&& pg_namespace_aclcheck(HeapTupleGetOid(tuple), GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
+			aclcheck_error(ACLCHECK_NO_PRIV, nspname);
 
 		/*
 		 * If there's no ACL, create a default using the
@@ -586,7 +613,8 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 			old_acl = DatumGetAclPCopy(aclDatum);
 
 		new_acl = merge_acl_with_grant(old_acl, stmt->is_grant,
-									   stmt->grantees, privileges);
+									   stmt->grantees, privileges,
+									   stmt->grant_option, stmt->behavior);
 
 		/* finished building new ACL value, now insert it */
 		MemSet(values, 0, sizeof(values));
@@ -741,125 +769,53 @@ in_group(AclId uid, AclId gid)
 /*
  * aclcheck
  *
- * Returns ACLCHECK_OK if the 'id' of type 'idtype' has ACL entries in 'acl'
- * to satisfy any one of the requirements of 'mode'.  Returns an appropriate
- * ACLCHECK_* error code otherwise.
- *
- * The ACL list is expected to be sorted in standard order.
+ * Returns ACLCHECK_OK if the 'userid' has ACL entries in 'acl' to
+ * satisfy any one of the requirements of 'mode'.  Returns an
+ * appropriate ACLCHECK_* error code otherwise.
  */
 static AclResult
-aclcheck(Acl *acl, AclId id, uint32 idtype, AclMode mode)
+aclcheck(Acl *acl, AclId userid, AclMode mode)
 {
-	AclItem    *aip,
-			   *aidat;
+	AclItem	   *aidat;
 	int			i,
 				num;
 
 	/*
-	 * If ACL is null, default to "OK" --- this should not happen, since
-	 * caller should have inserted appropriate default
+	 * Null ACL should not happen, since caller should have inserted
+	 * appropriate default
 	 */
-	if (!acl)
+	if (acl == NULL)
 	{
-		elog(DEBUG1, "aclcheck: null ACL, returning OK");
-		return ACLCHECK_OK;
+		elog(ERROR, "aclcheck: internal error -- null ACL");
+		return ACLCHECK_NO_PRIV;
 	}
 
 	num = ACL_NUM(acl);
 	aidat = ACL_DAT(acl);
 
 	/*
-	 * We'll treat the empty ACL like that, too, although this is more
-	 * like an error (i.e., you manually blew away your ACL array) -- the
-	 * system never creates an empty ACL, since there must always be a
-	 * "world" entry in the first slot.
+	 * See if privilege is granted directly to user or to public
 	 */
-	if (num < 1)
-	{
-		elog(DEBUG1, "aclcheck: zero-length ACL, returning OK");
-		return ACLCHECK_OK;
-	}
-
+	for (i = 0; i < num; i++)
+		if (ACLITEM_GET_IDTYPE(aidat[i]) == ACL_IDTYPE_WORLD
+			|| (ACLITEM_GET_IDTYPE(aidat[i]) == ACL_IDTYPE_UID
+				&& aidat[i].ai_grantee == userid))
+		{
+			if (aidat[i].ai_privs & mode)
+				return ACLCHECK_OK;
+		}
+	
 	/*
-	 * "World" rights are applicable regardless of the passed-in ID, and
-	 * since they're much the cheapest to check, check 'em first.
+	 * See if he has the permission via any group (do this in a
+	 * separate pass to avoid expensive(?) lookups in pg_group)
 	 */
-	if (ACLITEM_GET_IDTYPE(*aidat) != ACL_IDTYPE_WORLD)
-		elog(ERROR, "aclcheck: first entry in ACL is not 'world' entry");
-	if (aidat->ai_privs & mode)
-	{
-#ifdef ACLDEBUG
-		elog(DEBUG1, "aclcheck: using world=%d", ACLITEM_GET_PRIVS(*aidat));
-#endif
-		return ACLCHECK_OK;
-	}
+	for (i = 0; i < num; i++)
+		if (ACLITEM_GET_IDTYPE(aidat[i]) == ACL_IDTYPE_GID
+			&& aidat[i].ai_privs & mode
+			&& in_group(userid, aidat[i].ai_grantee))
+			return ACLCHECK_OK;
 
-	switch (idtype)
-	{
-		case ACL_IDTYPE_UID:
-			/* See if permission is granted directly to user */
-			for (i = 1, aip = aidat + 1;		/* skip world entry */
-				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_UID;
-				 ++i, ++aip)
-			{
-				if (aip->ai_id == id)
-				{
-#ifdef ACLDEBUG
-					elog(DEBUG1, "aclcheck: found user %u/%d",
-						 aip->ai_id, ACLITEM_GET_PRIVS(*aip));
-#endif
-					if (aip->ai_privs & mode)
-						return ACLCHECK_OK;
-				}
-			}
-			/* See if he has the permission via any group */
-			for (;
-				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_GID;
-				 ++i, ++aip)
-			{
-				if (aip->ai_privs & mode)
-				{
-					if (in_group(id, aip->ai_id))
-					{
-#ifdef ACLDEBUG
-						elog(DEBUG1, "aclcheck: found group %u/%d",
-							 aip->ai_id, ACLITEM_GET_PRIVS(*aip));
-#endif
-						return ACLCHECK_OK;
-					}
-				}
-			}
-			break;
-		case ACL_IDTYPE_GID:
-			/* Look for this group ID */
-			for (i = 1, aip = aidat + 1;		/* skip world entry */
-				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_UID;
-				 ++i, ++aip)
-				 /* skip UID entry */ ;
-			for (;
-				 i < num && ACLITEM_GET_IDTYPE(*aip) == ACL_IDTYPE_GID;
-				 ++i, ++aip)
-			{
-				if (aip->ai_id == id)
-				{
-#ifdef ACLDEBUG
-					elog(DEBUG1, "aclcheck: found group %u/%d",
-						 aip->ai_id, ACLITEM_GET_PRIVS(*aip));
-#endif
-					if (aip->ai_privs & mode)
-						return ACLCHECK_OK;
-				}
-			}
-			break;
-		case ACL_IDTYPE_WORLD:
-			/* Only check the world entry */
-			break;
-		default:
-			elog(ERROR, "aclcheck: bogus ACL id type: %d", idtype);
-			break;
-	}
-
-	/* If get here, he doesn't have the privilege nohow */
+	/* If here, doesn't have the privilege. */
 	return ACLCHECK_NO_PRIV;
 }
 
@@ -976,7 +932,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
+	result = aclcheck(acl, userid, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1038,7 +994,7 @@ pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
+	result = aclcheck(acl, userid, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1092,7 +1048,7 @@ pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
+	result = aclcheck(acl, userid, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1142,7 +1098,7 @@ pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
+	result = aclcheck(acl, userid, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))
@@ -1202,7 +1158,7 @@ pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
 		acl = DatumGetAclP(aclDatum);
 	}
 
-	result = aclcheck(acl, userid, ACL_IDTYPE_UID, mode);
+	result = aclcheck(acl, userid, mode);
 
 	/* if we have a detoasted copy, free it */
 	if (acl && (Pointer) acl != DatumGetPointer(aclDatum))

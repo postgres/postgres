@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.138 2003/01/08 21:40:39 tgl Exp $
+ * $Id: pg_type.h,v 1.139 2003/01/23 23:39:06 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -412,7 +412,7 @@ DATA(insert OID = 1023 (  _abstime	 PGNSP PGUID -1 f b t \054 0 702 array_in arr
 DATA(insert OID = 1024 (  _reltime	 PGNSP PGUID -1 f b t \054 0 703 array_in array_out i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1025 (  _tinterval PGNSP PGUID -1 f b t \054 0 704 array_in array_out i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1027 (  _polygon	 PGNSP PGUID -1 f b t \054 0 604 array_in array_out d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1033 (  aclitem	 PGNSP PGUID  8 f b t \054 0 0 aclitemin aclitemout i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1033 (  aclitem	 PGNSP PGUID 12 f b t \054 0 0 aclitemin aclitemout i p f 0 -1 0 _null_ _null_ ));
 DESCR("access control list");
 #define ACLITEMOID		1033
 DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b t \054 0 1033 array_in array_out i x f 0 -1 0 _null_ _null_ ));

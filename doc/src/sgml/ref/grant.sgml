@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.31 2002/11/21 23:34:43 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.32 2003/01/23 23:38:53 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -19,23 +19,23 @@ PostgreSQL documentation
 GRANT { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTION <replaceable>funcname</replaceable> ([<replaceable>type</replaceable>, ...]) [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>langname</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
 GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schemaname</replaceable> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -63,13 +63,18 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
 
   <para>
    There is no need to grant privileges to the creator of an object,
-   as the creator has all privileges by default.
-   (The creator could, however, choose to revoke
-   some of his own privileges for safety.)  Note that the ability to
-   grant and revoke privileges is inherent in the creator and cannot
-   be lost.  The right to drop an object, or to alter it in any way
-   not described by a grantable right, is likewise inherent in the
-   creator, and cannot be granted or revoked.
+   as the creator has all privileges by default.  (The creator could,
+   however, choose to revoke some of his own privileges for safety.)
+   Note that the right to drop an object, or to alter it in any way is
+   not described by a grantable right; it is inherent in the creator,
+   and cannot be granted or revoked.
+  </para>
+
+  <para>
+   If <literal>WITH GRANT OPTION</literal> is specified, the recipient
+   of the privilege may in turn grant it to others.  By default this
+   is not possible.  Grant options can only be granted to individual
+   users, not groups or <literal>PUBLIC</literal>.
   </para>
 
   <para>
@@ -269,7 +274,7 @@ lusitania=> \dp mytable
         Access privileges for database "lusitania"
  Schema |  Table  |           Access privileges
 --------+---------+---------------------------------------
- public | mytable | {=r,miriam=arwdRxt,"group todos=arw"}
+ public | mytable | {=r/postgres,miriam=arwdRxt/postgres,"group todos=arw/postgres"}
 (1 row)
 </programlisting>
     The entries shown by <command>\dp</command> are interpreted thus:
@@ -290,6 +295,9 @@ lusitania=> \dp mytable
                   C -- CREATE
                   T -- TEMPORARY
             arwdRxt -- ALL PRIVILEGES (for tables)
+                  * -- grant option for preceding privilege
+
+              /yyyy -- user who granted this privilege
 </programlisting>
 
     The above example display would be seen by user <literal>miriam</> after
@@ -346,13 +354,12 @@ GRANT ALL PRIVILEGES ON kinds TO manuel;
    </para>
 
    <para>
-    The <acronym>SQL92</acronym> syntax for GRANT allows setting
-    privileges for individual columns within a table, and allows
-    setting a privilege to grant the same privileges to others:
+    The <acronym>SQL</acronym> syntax for <literal>GRANT</literal>
+    allows setting privileges for individual columns within a table:
 
 <synopsis>
 GRANT <replaceable class="PARAMETER">privilege</replaceable> [, ...]
-    ON <replaceable class="PARAMETER">object</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ] [, ...]
+    ON <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ] [, ...]
     TO { PUBLIC | <replaceable class="PARAMETER">username</replaceable> [, ...] } [ WITH GRANT OPTION ]
 </synopsis>
    </para>

@@ -293,6 +293,33 @@ select has_table_privilege(t1.oid,'trigger')
 from (select oid from pg_class where relname = 'atest1') as t1;
 
 
+-- Grant options
+
+SET SESSION AUTHORIZATION regressuser1;
+
+CREATE TABLE atest4 (a int);
+
+GRANT SELECT ON atest4 TO regressuser2 WITH GRANT OPTION;
+GRANT UPDATE ON atest4 TO regressuser2;
+GRANT SELECT ON atest4 TO GROUP regressgroup1 WITH GRANT OPTION; -- fail
+
+SET SESSION AUTHORIZATION regressuser2;
+
+GRANT SELECT ON atest4 TO regressuser3;
+GRANT UPDATE ON atest4 TO regressuser3; -- fail
+
+SET SESSION AUTHORIZATION regressuser1;
+
+REVOKE SELECT ON atest4 FROM regressuser3; -- does nothing
+SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- true
+REVOKE SELECT ON atest4 FROM regressuser2; -- fail
+REVOKE GRANT OPTION FOR SELECT ON atest4 FROM regressuser2 CASCADE; -- ok
+SELECT has_table_privilege('regressuser2', 'atest4', 'SELECT'); -- true
+SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- false
+
+SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION'); -- true
+
+
 -- clean up
 
 \c regression
@@ -311,6 +338,7 @@ DROP VIEW atestv4;
 DROP TABLE atest1;
 DROP TABLE atest2;
 DROP TABLE atest3;
+DROP TABLE atest4;
 
 DROP GROUP regressgroup1;
 DROP GROUP regressgroup2;

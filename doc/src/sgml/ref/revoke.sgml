@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.24 2003/01/10 11:02:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.25 2003/01/23 23:38:53 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -16,31 +16,36 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-REVOKE { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }
+REVOKE [ GRANT OPTION FOR ]
+    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }
     [,...] | ALL [ PRIVILEGES ] }
     ON [ TABLE ] <replaceable class="PARAMETER">tablename</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
-    [ RESTRICT ]
+    [ CASCADE | RESTRICT ]
 
-REVOKE { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
+REVOKE [ GRANT OPTION FOR ]
+    { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
-    [ RESTRICT ]
+    [ CASCADE | RESTRICT ]
 
-REVOKE { EXECUTE | ALL [ PRIVILEGES ] }
+REVOKE [ GRANT OPTION FOR ]
+    { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTION <replaceable>funcname</replaceable> ([<replaceable>type</replaceable>, ...]) [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
-    [ RESTRICT ]
+    [ CASCADE | RESTRICT ]
 
-REVOKE { USAGE | ALL [ PRIVILEGES ] }
+REVOKE [ GRANT OPTION FOR ]
+    { USAGE | ALL [ PRIVILEGES ] }
     ON LANGUAGE <replaceable>langname</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
-    [ RESTRICT ]
+    [ CASCADE | RESTRICT ]
 
-REVOKE { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
+REVOKE [ GRANT OPTION FOR ]
+    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schemaname</replaceable> [, ...]
     FROM { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...]
-    [ RESTRICT ]
+    [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -70,8 +75,22 @@ REVOKE { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
   </para>
 
   <para>
-   The <literal>RESTRICT</literal> key word is currently only noise.
-   See also the compatibility notes below.
+   If <literal>GRANT OPTION FOR</literal> is specified, only the grant
+   option for the privilege is revoked, not the privilege itself.
+  </para>
+
+  <para>
+   If a user holds a privilege with grant option and has granted it to
+   other users then the privileges held by those other users are
+   called dependent privileges. If the privilege or the grant option
+   held by the first user is being revoked and dependent privileges
+   exist, those dependent privileges are also revoked if
+   <literal>CASCADE</literal> is specified, else the revoke action
+   will fail.  This recursive revocation only affects privileges that
+   were granted through a chain of users that is traceable to the user
+   that is the subject of this <literal>REVOKE</literal> command.
+   Thus, the affected users may effectively keep the privilege if it
+   was also granted through other users.
   </para>
  </refsect1>
 
@@ -82,6 +101,16 @@ REVOKE { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
    Use <xref linkend="app-psql">'s <command>\z</command> command to
    display the privileges granted on existing objects.  See also <xref
    linkend="sql-grant" endterm="sql-grant-title"> for information about the format.
+  </para>
+
+  <para>
+   A user can only revoke privileges that were granted directly by
+   that user.  If, for example, user A has granted a privilege with
+   grant option to user B, and user B has in turned granted it to user
+   C, then user A cannot revoke the privilege directly from C.
+   Instead, user A could revoke the grant option from user B and use
+   the <literal>CASCADE</literal> option so that the privilege is
+   automatically revoked from user C.
   </para>
  </refsect1>
 
@@ -122,16 +151,8 @@ REVOKE [ GRANT OPTION FOR ] { SELECT | INSERT | UPDATE | DELETE | REFERENCES }
     FROM { PUBLIC | <replaceable class="parameter">username</replaceable> [, ...] }
     { RESTRICT | CASCADE }
 </synopsis>
-   </para>
-
-   <para> 
-    If user1 gives a privilege WITH GRANT OPTION to user2,
-    and user2 gives it to user3 then user1 can revoke
-    this privilege in cascade using the CASCADE keyword.
-    If user1 gives a privilege WITH GRANT OPTION to user2,
-    and user2 gives it to user3, then if user1 tries to revoke
-    this privilege it fails if he specifies the RESTRICT
-    keyword.
+    One of <literal>RESTRICT</literal> or <literal>CASCADE</literal>
+    is required.
    </para>
   </refsect2>
  </refsect1>

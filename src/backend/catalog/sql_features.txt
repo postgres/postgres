@@ -72,7 +72,7 @@ E081	Basic Privileges	04	UPDATE privilege at the table level	YES
 E081	Basic Privileges	05	UPDATE privilege at the column level	NO	
 E081	Basic Privileges	06	REFERENCES privilege at the table level	YES	
 E081	Basic Privileges	07	REFERENCES privilege at the column level	NO	
-E081	Basic Privileges	08	WITH GRANT OPTION	NO	
+E081	Basic Privileges	08	WITH GRANT OPTION	YES	
 E091	Set functions			YES	
 E091	Set functions	01	AVG	YES	
 E091	Set functions	02	COUNT	YES	
@@ -133,10 +133,10 @@ F031	Basic schema manipulation	16	DROP VIEW statement: RESTRICT clause	YES
 F031	Basic schema manipulation	19	REVOKE statement: RESTRICT clause	YES	
 F032	CASCADE drop behavior			YES	
 F033	ALTER TABLE statement: DROP COLUMN clause			YES	
-F034	Extended REVOKE statement			NO	
-F034	Extended REVOKE statement	01	REVOKE statement performed by other than the owner of a schema object	NO	
-F034	Extended REVOKE statement	02	REVOKE statement: GRANT OPTION FOR clause	NO	
-F034	Extended REVOKE statement	03	REVOKE statement to revoke a privilege that the grantee has WITH GRANT OPTION	NO	
+F034	Extended REVOKE statement			YES	
+F034	Extended REVOKE statement	01	REVOKE statement performed by other than the owner of a schema object	YES	
+F034	Extended REVOKE statement	02	REVOKE statement: GRANT OPTION FOR clause	YES	
+F034	Extended REVOKE statement	03	REVOKE statement to revoke a privilege that the grantee has WITH GRANT OPTION	YES	
 F041	Basic joined table			YES	
 F041	Basic joined table	01	Inner join (but not necessarily the INNER keyword)	YES	
 F041	Basic joined table	02	INNER keyword	YES	

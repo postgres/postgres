@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.314 2003/01/06 18:53:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.315 2003/01/23 23:39:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,7 +92,7 @@ static void dumpFuncACL(Archive *fout, FuncInfo *finfo);
 static void dumpAggACL(Archive *fout, AggInfo *finfo);
 static void dumpACL(Archive *fout, const char *type, const char *name,
 		const char *tag, const char *nspname,
-		const char *usename, const char *acl, const char *objoid);
+		const char *owner, const char *acl, const char *objoid);
 
 static void dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables);
 static void dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables);
@@ -114,8 +114,10 @@ static char *getFormattedTypeName(const char *oid, OidOptions opts);
 static char *myFormatType(const char *typname, int32 typmod);
 static const char *fmtQualifiedId(const char *schema, const char *id);
 
-static void AddAcl(char *aclbuf, const char *keyword);
-static char *GetPrivileges(Archive *AH, const char *s, const char *type);
+static void AddAcl(PQExpBuffer aclbuf, const char *keyword);
+static void
+parseAclItem(const char *item, const char *type, const char *name, int remoteVersion,
+			 PQExpBuffer grantee, PQExpBuffer grantor, PQExpBuffer privs, PQExpBuffer privswgo);
 
 static int	dumpBlobs(Archive *AH, char *, void *);
 static int	dumpDatabase(Archive *AH);
@@ -4777,42 +4779,80 @@ dumpOneAgg(Archive *fout, AggInfo *agginfo)
 
 
 /*
- * These are some support functions to fix the acl problem of pg_dump
- *
- * Matthew C. Aycock 12/02/97
- */
-
-/* Append a keyword to a keyword list, inserting comma if needed.
- * Caller must make aclbuf big enough for all possible keywords.
+ * Append a privilege keyword to a keyword list, inserting comma if needed.
  */
 static void
-AddAcl(char *aclbuf, const char *keyword)
+AddAcl(PQExpBuffer aclbuf, const char *keyword)
 {
-	if (*aclbuf)
-		strcat(aclbuf, ",");
-	strcat(aclbuf, keyword);
+	if (aclbuf->len > 0)
+		appendPQExpBufferChar(aclbuf, ',');
+	appendPQExpBuffer(aclbuf, "%s", keyword);
 }
 
+
 /*
- * This will take a string of privilege code letters and return a malloced,
- * comma delimited string of keywords for GRANT.
+ * This will take an aclitem string of privilege code letters and
+ * parse it into grantee, grantor, and privilege information.  The
+ * privilege information is split between privileges with grant option
+ * (privswgo) and without (privs).
  *
  * Note: for cross-version compatibility, it's important to use ALL when
  * appropriate.
  */
-static char *
-GetPrivileges(Archive *AH, const char *s, const char *type)
+static void
+parseAclItem(const char *item, const char *type, const char *name, int remoteVersion,
+			 PQExpBuffer grantee, PQExpBuffer grantor, PQExpBuffer privs, PQExpBuffer privswgo)
 {
-	char		aclbuf[100];
-	bool		all = true;
+	char	   *buf;
+	bool		all_with_go = true;
+	bool		all_without_go = true;
+	char	   *eqpos;
+	char	   *slpos;
+	char	   *pos;
 
-	aclbuf[0] = '\0';
+	buf = strdup(item);
 
-#define CONVERT_PRIV(code,keywd) \
-	if (strchr(s, code)) \
-		AddAcl(aclbuf, keywd); \
+	/* user name is string up to = */
+	eqpos = strchr(buf, '=');
+	if (!eqpos)
+	{
+		write_msg(NULL, "could not parse ACL list (%s) for object %s (%s)\n",
+				  item, name, type);
+		exit_nicely();
+	}
+	*eqpos = '\0';
+	printfPQExpBuffer(grantee, "%s", buf);
+
+	/* grantor may be listed after / */
+	slpos = strchr(eqpos + 1, '/');
+	if (slpos)
+	{
+		*slpos = '\0';
+		printfPQExpBuffer(grantor, "%s", slpos + 1);
+	}
+	else
+		resetPQExpBuffer(grantor);
+
+	/* privilege codes */
+#define CONVERT_PRIV(code, keywd) \
+	if ((pos = strchr(eqpos + 1, code))) \
+	{ \
+		if (*(pos + 1) == '*') \
+		{ \
+			AddAcl(privswgo, keywd); \
+			all_without_go = false; \
+		} \
+		else \
+		{ \
+			AddAcl(privs, keywd); \
+			all_with_go = false; \
+		} \
+	} \
 	else \
-		all = false
+		all_with_go = all_without_go = false
+
+	resetPQExpBuffer(privs);
+	resetPQExpBuffer(privswgo);
 
 	if (strcmp(type, "TABLE") == 0)
 	{
@@ -4820,7 +4860,7 @@ GetPrivileges(Archive *AH, const char *s, const char *type)
 		CONVERT_PRIV('r', "SELECT");
 		CONVERT_PRIV('R', "RULE");
 
-		if (AH->remoteVersion >= 70200)
+		if (remoteVersion >= 70200)
 		{
 			CONVERT_PRIV('w', "UPDATE");
 			CONVERT_PRIV('d', "DELETE");
@@ -4847,10 +4887,16 @@ GetPrivileges(Archive *AH, const char *s, const char *type)
 
 #undef CONVERT_PRIV
 
-	if (all)
-		return strdup("ALL");
-	else
-		return strdup(aclbuf);
+	if (all_with_go)
+	{
+		resetPQExpBuffer(privs);
+		printfPQExpBuffer(privswgo, "ALL");
+	}
+	else if (all_without_go)
+	{
+		resetPQExpBuffer(privswgo);
+		printfPQExpBuffer(privs, "ALL");
+	}
 }
 
 
@@ -4861,7 +4907,7 @@ GetPrivileges(Archive *AH, const char *s, const char *type)
  * 'name' is the formatted name of the object.  Must be quoted etc. already.
  * 'tag' is the tag for the archive entry (typ. unquoted name of object).
  * 'nspname' is the namespace the object is in (NULL if none).
- * 'usename' is the owner, NULL if there is no owner (for languages).
+ * 'owner' is the owner, NULL if there is no owner (for languages).
  * 'acls' is the string read out of the fooacl system catalog field;
  * it will be parsed here.
  * 'objoid' is the OID of the object for purposes of ordering.
@@ -4869,28 +4915,34 @@ GetPrivileges(Archive *AH, const char *s, const char *type)
  */
 static void
 dumpACL(Archive *fout, const char *type, const char *name,
-		const char *tag, const char *nspname, const char *usename,
+		const char *tag, const char *nspname, const char *owner,
 		const char *acls, const char *objoid)
 {
 	char	   *aclbuf,
-			   *tok,
-			   *eqpos,
-			   *priv;
-	PQExpBuffer sql;
+			   *tok;
+	PQExpBuffer sql, grantee, grantor, privs, privswgo;
 	bool		found_owner_privs = false;
 
 	if (strlen(acls) == 0)
 		return;					/* object has default permissions */
 
+#define MKENTRY(grantor, command) \
+	ArchiveEntry(fout, objoid, tag, nspname, grantor ? grantor : "", "ACL", NULL, command, "", NULL, NULL, NULL)
+
 	sql = createPQExpBuffer();
+	grantee = createPQExpBuffer();
+	grantor = createPQExpBuffer();
+	privs = createPQExpBuffer();
+	privswgo = createPQExpBuffer();
 
 	/*
 	 * Always start with REVOKE ALL FROM PUBLIC, so that we don't have to
 	 * wire-in knowledge about the default public privileges for different
 	 * kinds of objects.
 	 */
-	appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM PUBLIC;\n",
+	printfPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM PUBLIC;\n",
 					  type, name);
+	MKENTRY(owner, sql->data);
 
 	/* Make a working copy of acls so we can use strtok */
 	aclbuf = strdup(acls);
@@ -4898,6 +4950,10 @@ dumpACL(Archive *fout, const char *type, const char *name,
 	/* Scan comma-separated ACL items */
 	for (tok = strtok(aclbuf, ","); tok != NULL; tok = strtok(NULL, ","))
 	{
+		size_t toklen;
+
+		resetPQExpBuffer(sql);
+
 		/*
 		 * Token may start with '{' and/or '"'.  Actually only the start
 		 * of the string should have '{', but we don't verify that.
@@ -4906,39 +4962,33 @@ dumpACL(Archive *fout, const char *type, const char *name,
 			tok++;
 		if (*tok == '"')
 			tok++;
+		toklen = strlen(tok);
+		while (toklen >=0 && (tok[toklen-1] == '"' || tok[toklen-1] == '}'))
+			tok[toklen-- - 1] = '\0';
 
-		/* User name is string up to = in tok */
-		eqpos = strchr(tok, '=');
-		if (!eqpos)
+		parseAclItem(tok, type, name, fout->remoteVersion,
+					 grantee, grantor, privs, privswgo);
+		if (grantor->len == 0 && owner)
+			printfPQExpBuffer(grantor, "%s", owner);
+
+		if (privs->len > 0 || privswgo->len > 0)
 		{
-			write_msg(NULL, "could not parse ACL list (%s) for object %s (%s)\n",
-					  acls, name, type);
-			exit_nicely();
-		}
-		*eqpos = '\0';			/* it's ok to clobber aclbuf */
-
-		/*
-		 * Parse the privileges (right-hand side).
-		 */
-		priv = GetPrivileges(fout, eqpos + 1, type);
-
-		if (*priv)
-		{
-			if (usename && strcmp(tok, usename) == 0)
+			if (owner && strcmp(grantee->data, owner) == 0)
 			{
 				/*
-				 * For the owner, the default privilege level is ALL.
+				 * For the owner, the default privilege level is ALL WITH GRANT OPTION.
 				 */
 				found_owner_privs = true;
-				if (strcmp(priv, "ALL") != 0)
+				if (strcmp(privswgo->data, "ALL") != 0)
 				{
-					/* NB: only one fmtId per appendPQExpBuffer! */
-					appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM ",
-									  type, name);
-					appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
-					appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
-									  priv, type, name);
-					appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
+					appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
+									  type, name, fmtId(grantee->data));
+					if (privs->len > 0)
+						appendPQExpBuffer(sql, "GRANT %s ON %s %s TO %s;\n",
+										  privs->data, type, name, fmtId(grantee->data));
+					if (privswgo->len > 0)
+						appendPQExpBuffer(sql, "GRANT %s ON %s %s TO %s WITH GRANT OPTION;\n",
+										  privswgo->data, type, name, fmtId(grantee->data));
 				}
 			}
 			else
@@ -4946,57 +4996,69 @@ dumpACL(Archive *fout, const char *type, const char *name,
 				/*
 				 * Otherwise can assume we are starting from no privs.
 				 */
-				appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
-								  priv, type, name);
-				if (eqpos == tok)
+				if (privs->len > 0)
 				{
-					/* Empty left-hand side means "PUBLIC" */
-					appendPQExpBuffer(sql, "PUBLIC;\n");
+					appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
+									  privs->data, type, name);
+					if (grantee->len == 0)
+						appendPQExpBuffer(sql, "PUBLIC;\n");
+					else if (strncmp(grantee->data, "group ", strlen("group ")) == 0)
+						appendPQExpBuffer(sql, "GROUP %s;\n",
+										  fmtId(grantee->data + strlen("group ")));
+					else
+						appendPQExpBuffer(sql, "%s;\n", fmtId(grantee->data));
 				}
-				else if (strncmp(tok, "group ", strlen("group ")) == 0)
-					appendPQExpBuffer(sql, "GROUP %s;\n",
-									  fmtId(tok + strlen("group ")));
-				else
-					appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
+				if (privswgo->len > 0)
+				{
+					appendPQExpBuffer(sql, "GRANT %s ON %s %s TO ",
+									  privswgo->data, type, name);
+					if (grantee->len == 0)
+						appendPQExpBuffer(sql, "PUBLIC");
+					else if (strncmp(grantee->data, "group ", strlen("group ")) == 0)
+						appendPQExpBuffer(sql, "GROUP %s",
+										  fmtId(grantee->data + strlen("group ")));
+					else
+						appendPQExpBuffer(sql, "%s", fmtId(grantee->data));
+					appendPQExpBuffer(sql, " WITH GRANT OPTION;\n");
+				}
 			}
 		}
 		else
 		{
 			/* No privileges.  Issue explicit REVOKE for safety. */
-			if (eqpos == tok)
-			{
-				/* Empty left-hand side means "PUBLIC"; already did it */
-			}
-			else if (strncmp(tok, "group ", strlen("group ")) == 0)
-			{
+			if (grantee->len == 0)
+				; /* Empty left-hand side means "PUBLIC"; already did it */
+			else if (strncmp(grantee->data, "group ", strlen("group ")) == 0)
 				appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM GROUP %s;\n",
 								  type, name,
-								  fmtId(tok + strlen("group ")));
-			}
+								  fmtId(grantee->data + strlen("group ")));
 			else
-			{
 				appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
-								  type, name, fmtId(tok));
-			}
+								  type, name, fmtId(grantee->data));
 		}
-		free(priv);
+
+		if (sql->len > 0)
+			MKENTRY(grantor->data, sql->data);
 	}
 
 	/*
 	 * If we didn't find any owner privs, the owner must have revoked 'em
 	 * all
 	 */
-	if (!found_owner_privs && usename)
+	if (!found_owner_privs && owner)
 	{
 		appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
-						  type, name, fmtId(usename));
+						  type, name, fmtId(owner));
+		MKENTRY(owner, sql->data);
 	}
-
-	ArchiveEntry(fout, objoid, tag, nspname, usename ? usename : "",
-				 "ACL", NULL, sql->data, "", NULL, NULL, NULL);
 
 	free(aclbuf);
 	destroyPQExpBuffer(sql);
+	destroyPQExpBuffer(grantee);
+	destroyPQExpBuffer(grantor);
+	destroyPQExpBuffer(privs);
+	destroyPQExpBuffer(privswgo);
+#undef MKENTRY
 }
 
 

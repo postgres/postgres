@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.395 2003/01/10 22:03:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.396 2003/01/23 23:38:56 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -163,6 +163,7 @@ static void doNegateFloat(Value *v);
 
 %type <ival>	opt_lock lock_type cast_context
 %type <boolean>	opt_force opt_or_replace transaction_access_mode
+				opt_grant_grant_option opt_revoke_grant_option
 
 %type <list>	user_list
 
@@ -2737,6 +2738,7 @@ GrantStmt:	GRANT privileges ON privilege_target TO grantee_list
 					n->objtype = ($4)->objtype;
 					n->objects = ($4)->objs;
 					n->grantees = $6;
+					n->grant_option = $7;
 					$$ = (Node*)n;
 				}
 		;
@@ -2750,9 +2752,8 @@ RevokeStmt: REVOKE opt_revoke_grant_option privileges ON privilege_target
 					n->objtype = ($5)->objtype;
 					n->objects = ($5)->objs;
 					n->grantees = $7;
-
-					if ($8 == DROP_CASCADE)
-						elog(ERROR, "REVOKE ... CASCADE is not implemented");
+					n->grant_option = $2;
+					n->behavior = $8;
 
 					$$ = (Node *)n;
 				}
@@ -2867,19 +2868,13 @@ grantee:	ColId
 
 
 opt_grant_grant_option:
-			WITH GRANT OPTION
-				{
-					elog(ERROR, "grant options are not implemented");
-				}
-			| /*EMPTY*/
+			WITH GRANT OPTION { $$ = TRUE; }
+			| /*EMPTY*/ { $$ = FALSE; }
 		;
 
 opt_revoke_grant_option:
-			GRANT OPTION FOR
-				{
-					elog(ERROR, "grant options are not implemented");
-				}
-			| /*EMPTY*/
+			GRANT OPTION FOR { $$ = TRUE; }
+			| /*EMPTY*/ { $$ = FALSE; }
 		;
 
 

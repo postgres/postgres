@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.181 2003/01/21 10:11:52 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.182 2003/01/23 23:39:01 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1029,14 +1029,12 @@ echo "ok"
 $ECHO_N "setting privileges on built-in objects... "$ECHO_C
 (
   cat <<EOF
-    UPDATE pg_class SET relacl = '{"=r"}' \
+    UPDATE pg_class SET relacl = '{"=r/$POSTGRES_SUPERUSERNAME"}' \
         WHERE relkind IN ('r', 'v', 'S') AND relacl IS NULL;
-    UPDATE pg_proc SET proacl = '{"=X"}' \
+    UPDATE pg_proc SET proacl = '{"=X/$POSTGRES_SUPERUSERNAME"}' \
         WHERE proacl IS NULL;
-    UPDATE pg_language SET lanacl = '{"=U"}' \
+    UPDATE pg_language SET lanacl = '{"=U/$POSTGRES_SUPERUSERNAME"}' \
         WHERE lanpltrusted;
-    UPDATE pg_language SET lanacl = '{"="}' \
-        WHERE NOT lanpltrusted;
 EOF
 ) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely

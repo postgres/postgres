@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.179 2003/01/20 18:54:44 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.180 2003/01/23 23:38:51 petere Exp $
 -->
 
 <appendix id="release">
@@ -38,6 +38,7 @@ ON COMMIT options for temp tables
 extra_float_digits option allows pg_dump to dump float data accurately
 Long options for psql and pg_dump are now available on all platforms
 Read-only transactions
+Object owners can allow grantees to grant the privilege to others (grant option)
 ]]></literallayout>
 
  </sect1>

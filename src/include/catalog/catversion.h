@@ -1,10 +1,10 @@
 /*-------------------------------------------------------------------------
  *
  * catversion.h
- *	  "Catalog version number" for Postgres.
+ *	  "Catalog version number" for PostgreSQL.
  *
  * The catalog version number is used to flag incompatible changes in
- * the Postgres system catalogs.  Whenever anyone changes the format of
+ * the PostgreSQL system catalogs.  Whenever anyone changes the format of
  * a system catalog relation, or adds, deletes, or modifies standard
  * catalog entries in such a way that an updated backend wouldn't work
  * with an old database (or vice versa), the catalog version number
@@ -37,7 +37,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catversion.h,v 1.172 2003/01/10 21:08:15 tgl Exp $
+ * $Id: catversion.h,v 1.173 2003/01/23 23:39:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,6 @@
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	200301101
+#define CATALOG_VERSION_NO	200301241
 
 #endif

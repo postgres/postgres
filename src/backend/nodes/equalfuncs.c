@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.181 2003/01/20 18:54:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.182 2003/01/23 23:38:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -635,6 +635,8 @@ _equalGrantStmt(GrantStmt *a, GrantStmt *b)
 	COMPARE_NODE_FIELD(objects);
 	COMPARE_INTLIST_FIELD(privileges);
 	COMPARE_NODE_FIELD(grantees);
+	COMPARE_SCALAR_FIELD(grant_option);
+	COMPARE_SCALAR_FIELD(behavior);
 
 	return true;
 }
