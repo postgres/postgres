@@ -320,35 +320,35 @@ int main(int argc, char **argv)
 static void usage(const char *progname)
 {
 	printf("%s restores a PostgreSQL database from an archive created by pg_dump.\n\n"
-		   "Usage:\n  %s [options] [backup file]\n\n"
+		   "Usage:\n  %s [options] [file]\n\n"
 		   "Options:\n",
 		   progname, progname);
 #ifdef HAVE_GETOPT_LONG
 	puts(
-	    "  -a, --data-only          dump out only the data, no schema\n"
+	    "  -a, --data-only          restore only the data, no schema\n"
 	    "  -c, --clean              clean (drop) schema prior to create\n"
 		"  -C, --create             output commands to create the database\n"
 		"  -d, --dbname=NAME        specify database name\n"
 	    "  -f, --file=FILENAME      script output file name\n"
 	    "  -F, --format {c|f}       specify backup file format\n"
 		"  -h, --host HOSTNAME      server host name\n"
-	    "  -i, --index[=NAME]       dump indexes or named index\n"
+	    "  -i, --index[=NAME]       restore indices or named index\n"
 	    "  -l, --list               dump summarized TOC for this file\n"
 		"  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 		"                           output from this file\n"
-		"  -N, --orig-order         dump in original dump order\n"
-	    "  -o, --oid-order          dump in oid order\n"
-		"  -O, --no-owner           do not output reconnect to database to match\n"
+		"  -N, --orig-order         restore in original dump order\n"
+	    "  -o, --oid-order          restore in oid order\n"
+		"  -O, --no-owner           do not reconnect to database to match\n"
 		"                           object owner\n"
 		"  -p, --port PORT          server port number\n"
-		"  -P, --function[=NAME]    dump functions or named function\n"
+		"  -P, --function[=NAME]    restore functions or named function\n"
 	    "  -r, --rearrange          rearrange output to put indexes etc. at end\n"
 		"  -R, --no-reconnect       disallow ALL reconnections to the database\n"
-	    "  -s, --schema-only        dump out only the schema, no data\n"
+	    "  -s, --schema-only        restore only the schema, no data\n"
 		"  -S, --superuser=NAME     specify the superuser user name to use for\n"
 		"                           disabling triggers\n"
-	    "  -t [TABLE], --table[=TABLE]  dump for this table only\n"
-	    "  -T, --trigger[=NAME]     dump triggers or named trigger\n"
+	    "  -t, --table[=TABLE]      restore this table only\n"
+	    "  -T, --trigger[=NAME]     restore triggers or named trigger\n"
 		"  -u, --password           use password authentication\n"
 	    "  -v, --verbose            verbose\n"
 	    "  -x, --no-acl             skip dumping of ACLs (grant/revoke)\n");
@@ -356,35 +356,35 @@ static void usage(const char *progname)
 #else /* not HAVE_GETOPT_LONG */
 
 	puts(
-	    "  -a                       dump out only the data, no schema\n"
+	    "  -a                       restore only the data, no schema\n"
 	    "  -c                       clean (drop) schema prior to create\n"
 		"  -C                       output commands to create the database\n"
 		"  -d NAME                  specify database name\n"
 	    "  -f FILENAME              script output file name\n"
 	    "  -F {c|f}                 specify backup file format\n"
 		"  -h HOSTNAME              server host name\n"
-	    "  -i NAME                  dump indexes or named index\n"
+	    "  -i NAME                  restore indices or named index\n"
 	    "  -l                       dump summarized TOC for this file\n"
 		"  -L FILENAME              use specified table of contents for ordering\n"
 		"                           output from this file\n"
-		"  -N                       dump in original dump order\n"
-	    "  -o                       dump in oid order\n"
+		"  -N                       restore in original dump order\n"
+	    "  -o                       restore in oid order\n"
 		"  -O                       do not output reconnect to database to match\n"
 		"                           object owner\n"
 		"  -p PORT                  server port number\n"
-		"  -P NAME                  dump functions or named function\n"
+		"  -P NAME                  restore functions or named function\n"
 	    "  -r                       rearrange output to put indexes etc at end\n"
 		"  -R                       disallow ALL reconnections to the database\n"
-	    "  -s                       dump out only the schema, no data\n"
+	    "  -s                       restore only the schema, no data\n"
 		"  -S NAME                  specify the superuser user name to use for\n"
 		"                           disabling triggers\n"
-	    "  -t NAME                  dump for this table only\n"
-	    "  -T NAME                  dump triggers or named trigger\n"
+	    "  -t NAME                  restore this table only\n"
+	    "  -T NAME                  restore triggers or named trigger\n"
 		"  -u                       use password authentication\n"
 	    "  -v                       verbose\n"
 	    "  -x                       skip dumping of ACLs (grant/revoke)\n");
 #endif
-	puts("If [backup file] is not supplied, then standard input is used.\n");
+	puts("If [file] is not supplied, then standard input is used.\n");
 	puts("Report bugs to <pgsql-bugs@postgresql.org>.");
 }
 
