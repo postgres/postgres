@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.25 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.26 2003/12/14 00:15:03 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -83,14 +83,7 @@ SET <replaceable class="parameter">parameter</replaceable> TO DEFAULT
   <title>Examples</title>
 
   <para>
-   Set <varname>DATESTYLE</> to its default value:
-<screen>
-RESET datestyle;
-</screen>
-  </para>
-
-  <para>
-   Set <varname>GEQO</> to its default value:
+   Set the <varname>geqo</> configuration variable to its default value:
 <screen>
 RESET geqo;
 </screen>

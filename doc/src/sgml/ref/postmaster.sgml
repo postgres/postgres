@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.43 2003/12/13 23:59:07 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.44 2003/12/14 00:15:03 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -376,7 +376,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default value of the <varname>DATESTYLE</varname> run-time
+      Default value of the <varname>DateStyle</varname> run-time
       parameter.  (The use of this environment variable is deprecated.)
      </para>
     </listitem>
@@ -544,7 +544,7 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>postmaster -c sort_mem=1234</userinput>
 <prompt>$</prompt> <userinput>postmaster --sort-mem=1234</userinput>
 </screen>
-   Either form overrides whatever setting might exist for <varname>SORT_MEM</>
+   Either form overrides whatever setting might exist for <varname>sort_mem</>
    in <filename>postgresql.conf</>.  Notice that underscores in parameter
    names can be written as either underscore or dash on the command line.
   </para>

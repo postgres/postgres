@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.17 2003/11/29 19:51:38 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.18 2003/12/14 00:15:03 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -134,7 +134,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
 
   <para>
    The extent of analysis can be controlled by adjusting the
-   <varname>DEFAULT_STATISTICS_TARGET</varname> parameter variable, or
+   <varname>default_statistics_target</varname> parameter variable, or
    on a column-by-column basis by setting the per-column statistics
    target with <command>ALTER TABLE ... ALTER COLUMN ... SET
    STATISTICS</command> (see <xref linkend="sql-altertable"

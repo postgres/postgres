@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.73 2003/11/29 19:51:39 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.74 2003/12/14 00:15:03 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1022,7 +1022,7 @@ SELECT distributors.* FROM distributors d, distributors distributors;
     <command>SELECT</command> statement that also contains an explicit
     <literal>FROM</literal> clause.  Also, it is possible to disable
     the implicit-<literal>FROM</literal> feature by setting the
-    <varname>ADD_MISSING_FROM</> parameter to false.
+    <varname>add_missing_from</> parameter to false.
    </para>
   </refsect2>
 
