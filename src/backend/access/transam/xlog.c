@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.64 2001/04/05 09:34:32 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.65 2001/04/05 16:55:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2467,6 +2467,7 @@ StartupXLOG(void)
 			Insert->currpage->xlp_sui = ThisStartUpID;
 		else
 			Insert->currpage->xlp_sui = ThisStartUpID + 1;
+		/* rest of buffer was zeroed in XLOGShmemInit */
 	}
 	else
 	{
@@ -2475,10 +2476,8 @@ StartupXLOG(void)
 			((EndOfLog.xrecoff - 1) / BLCKSZ + 1) * BLCKSZ;
 		/*
 		 * Tricky point here: readBuf contains the *last* block that the
-		 * LastRec record spans, not the one it starts in, which is what we
-		 * want.
-		 *
-		 * XXX - why would we want block LastRec starts in?
+		 * LastRec record spans, not the one it starts in.  The last block
+		 * is indeed the one we want to use.
 		 */
 		Assert(readOff == (XLogCtl->xlblocks[0].xrecoff - BLCKSZ) % XLogSegSize);
 		memcpy((char *) Insert->currpage, readBuf, BLCKSZ);
