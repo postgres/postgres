@@ -5,37 +5,43 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: DateTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
+ * $Id: DateTest.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
  *
  */
-public class DateTest extends TestCase {
+public class DateTest extends TestCase
+{
 
 	private Connection con;
-	
-	public DateTest(String name) {
+
+	public DateTest(String name)
+	{
 		super(name);
 	}
 
-	protected void setUp() throws Exception {
+	protected void setUp() throws Exception
+	{
 		con = JDBC2Tests.openDB();
 		JDBC2Tests.createTable(con, "testdate", "dt date");
 	}
 
-	protected void tearDown() throws Exception {
+	protected void tearDown() throws Exception
+	{
 		JDBC2Tests.dropTable(con, "testdate");
 		JDBC2Tests.closeDB(con);
 	}
-	
+
 	/**
 	 * Tests the time methods in ResultSet
 	 */
-	public void testGetDate() {
-		try {
+	public void testGetDate()
+	{
+		try
+		{
 			Statement stmt = con.createStatement();
-			
+
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1950-02-07'")));
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1970-06-02'")));
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testdate", "'1999-08-11'")));
@@ -46,7 +52,9 @@ public class DateTest extends TestCase {
 
 			assertEquals(4, stmt.executeUpdate("DELETE FROM " + "testdate"));
 			stmt.close();
-		} catch(Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			fail(ex.getMessage());
 		}
 	}
@@ -54,8 +62,10 @@ public class DateTest extends TestCase {
 	/**
 	 * Tests the time methods in PreparedStatement
 	 */
-	public void testSetDate() {
-		try {
+	public void testSetDate()
+	{
+		try
+		{
 			Statement stmt = con.createStatement();
 			PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testdate", "?"));
 
@@ -78,7 +88,9 @@ public class DateTest extends TestCase {
 
 			assertEquals(4, stmt.executeUpdate("DELETE FROM testdate"));
 			stmt.close();
-		} catch(Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			fail(ex.getMessage());
 		}
 	}
@@ -86,7 +98,8 @@ public class DateTest extends TestCase {
 	/**
 	 * Helper for the date tests. It tests what should be in the db
 	 */
-	private void dateTest() throws SQLException {
+	private void dateTest() throws SQLException
+	{
 		Statement st = con.createStatement();
 		ResultSet rs;
 		java.sql.Date d;
@@ -97,7 +110,7 @@ public class DateTest extends TestCase {
 		assertTrue(rs.next());
 		d = rs.getDate(1);
 		assertNotNull(d);
- 		assertEquals(d, makeDate(1950, 2, 7));
+		assertEquals(d, makeDate(1950, 2, 7));
 
 		assertTrue(rs.next());
 		d = rs.getDate(1);
@@ -108,7 +121,7 @@ public class DateTest extends TestCase {
 		d = rs.getDate(1);
 		assertNotNull(d);
 		assertEquals(d, makeDate(1999, 8, 11));
-		
+
 		assertTrue(rs.next());
 		d = rs.getDate(1);
 		assertNotNull(d);
@@ -120,7 +133,8 @@ public class DateTest extends TestCase {
 		st.close();
 	}
 
-	private java.sql.Date makeDate(int y, int m, int d) {
+	private java.sql.Date makeDate(int y, int m, int d)
+	{
 		return java.sql.Date.valueOf(JDBC2Tests.fix(y, 4) + "-" +
 									 JDBC2Tests.fix(m, 2) + "-" +
 									 JDBC2Tests.fix(d, 2));

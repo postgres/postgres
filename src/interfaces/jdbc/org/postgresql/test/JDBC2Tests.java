@@ -9,38 +9,48 @@ import java.sql.*;
 /**
  * Executes all known tests for JDBC2 and includes some utility methods.
  */
-public class JDBC2Tests extends TestSuite {
+public class JDBC2Tests extends TestSuite
+{
 	/**
 	 * Returns the Test database JDBC URL
 	 */
-	public static String getURL() {
+	public static String getURL()
+	{
 		return System.getProperty("database");
 	}
 
 	/**
 	 * Returns the Postgresql username
 	 */
-	public static String getUser() {
+	public static String getUser()
+	{
 		return System.getProperty("username");
 	}
 
 	/**
 	 * Returns the user's password
 	 */
-	public static String getPassword() {
+	public static String getPassword()
+	{
 		return System.getProperty("password");
 	}
 
 	/**
 	 * Helper - opens a connection.
 	 */
-	public static java.sql.Connection openDB() {
-		try {
+	public static java.sql.Connection openDB()
+	{
+		try
+		{
 			Class.forName("org.postgresql.Driver");
-			return java.sql.DriverManager.getConnection(JDBC2Tests.getURL(),JDBC2Tests.getUser(),JDBC2Tests.getPassword());
-		} catch(ClassNotFoundException ex) {
+			return java.sql.DriverManager.getConnection(JDBC2Tests.getURL(), JDBC2Tests.getUser(), JDBC2Tests.getPassword());
+		}
+		catch (ClassNotFoundException ex)
+		{
 			TestCase.fail(ex.getMessage());
-		} catch(SQLException ex) {
+		}
+		catch (SQLException ex)
+		{
 			TestCase.fail(ex.getMessage());
 		}
 		return null;
@@ -50,11 +60,15 @@ public class JDBC2Tests extends TestSuite {
 	 * Helper - closes an open connection. This rewrites SQLException to a failed
 	 * assertion. It's static so other classes can use it.
 	 */
-	public static void closeDB(Connection con) {
-		try {
+	public static void closeDB(Connection con)
+	{
+		try
+		{
 			if (con != null)
 				con.close();
-		} catch (SQLException ex) {
+		}
+		catch (SQLException ex)
+		{
 			TestCase.fail(ex.getMessage());
 		}
 	}
@@ -64,19 +78,26 @@ public class JDBC2Tests extends TestSuite {
 	 */
 	public static void createTable(Connection con,
 								   String table,
-								   String columns) {
-		try {
+								   String columns)
+	{
+		try
+		{
 			Statement st = con.createStatement();
-			try {
+			try
+			{
 				// Drop the table
 				dropTable(con, table);
 
 				// Now create the table
 				st.executeUpdate("create table " + table + " (" + columns + ")");
-			} finally {
+			}
+			finally
+			{
 				st.close();
 			}
-		} catch(SQLException ex) {
+		}
+		catch (SQLException ex)
+		{
 			TestCase.fail(ex.getMessage());
 		}
 	}
@@ -84,15 +105,22 @@ public class JDBC2Tests extends TestSuite {
 	/**
 	 * Helper - drops a table
 	 */
-	public static void dropTable(Connection con, String table) {
-		try {
+	public static void dropTable(Connection con, String table)
+	{
+		try
+		{
 			Statement stmt = con.createStatement();
-			try {
+			try
+			{
 				stmt.executeUpdate("DROP TABLE " + table);
-			} catch (SQLException ex) {
+			}
+			catch (SQLException ex)
+			{
 				// ignore
 			}
-		} catch (SQLException ex) {
+		}
+		catch (SQLException ex)
+		{
 			TestCase.fail(ex.getMessage());
 		}
 	}
@@ -100,47 +128,53 @@ public class JDBC2Tests extends TestSuite {
 	/**
 	 * Helper - generates INSERT SQL - very simple
 	 */
-	public static String insertSQL(String table, String values) {
+	public static String insertSQL(String table, String values)
+	{
 		return insertSQL(table, null, values);
 	}
-	
-	public static String insertSQL(String table, String columns, String values) {
+
+	public static String insertSQL(String table, String columns, String values)
+	{
 		String s = "INSERT INTO " + table;
-		
+
 		if (columns != null)
 			s = s + " (" + columns + ")";
-		
+
 		return s + " VALUES (" + values + ")";
 	}
 
 	/**
 	 * Helper - generates SELECT SQL - very simple
 	 */
-	public static String selectSQL(String table, String columns) {
+	public static String selectSQL(String table, String columns)
+	{
 		return selectSQL(table, columns, null, null);
 	}
 
-	public static String selectSQL(String table, String columns, String where) {
+	public static String selectSQL(String table, String columns, String where)
+	{
 		return selectSQL(table, columns, where, null);
 	}
-	
-	public static String selectSQL(String table, String columns, String where, String other) {
+
+	public static String selectSQL(String table, String columns, String where, String other)
+	{
 		String s = "SELECT " + columns + " FROM " + table;
-		
+
 		if (where != null)
 			s = s + " WHERE " + where;
 		if (other != null)
 			s = s + " " + other;
-		
+
 		return s;
 	}
-	
+
 	/**
 	 * Helper to prefix a number with leading zeros - ugly but it works...
 	 * @param v value to prefix
 	 * @param l number of digits (0-10)
 	 */
-	public static String fix(int v, int l) {
+	public static String fix(int v, int l)
+	{
 		String s = "0000000000".substring(0, l) + Integer.toString(v);
 		return s.substring(s.length() - l);
 	}
@@ -148,8 +182,9 @@ public class JDBC2Tests extends TestSuite {
 	/**
 	 * The main entry point for JUnit
 	 */
-	public static TestSuite suite() {
-		TestSuite suite= new TestSuite();
+	public static TestSuite suite()
+	{
+		TestSuite suite = new TestSuite();
 
 		//
 		// Add one line per class in our test cases. These should be in order of

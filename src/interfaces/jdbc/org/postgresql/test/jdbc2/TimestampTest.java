@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: TimestampTest.java,v 1.4 2001/09/29 03:11:11 momjian Exp $
+ * $Id: TimestampTest.java,v 1.5 2001/10/25 05:59:59 momjian Exp $
  *
  * This has been the most controversial pair of methods since 6.5 was released!
  *
@@ -13,22 +13,26 @@ import java.sql.*;
  * MUST PASS this TestCase!!!
  *
  */
-public class TimestampTest extends TestCase {
+public class TimestampTest extends TestCase
+{
 
 	private Connection con;
 
-	public TimestampTest(String name) {
+	public TimestampTest(String name)
+	{
 		super(name);
 	}
 
-	protected void setUp() throws Exception {
+	protected void setUp() throws Exception
+	{
 		con = JDBC2Tests.openDB();
 		Statement stmt = con.createStatement();
-		
+
 		JDBC2Tests.createTable(con, "testtimestamp", "ts timestamp");
 	}
 
-	protected void tearDown() throws Exception {
+	protected void tearDown() throws Exception
+	{
 		JDBC2Tests.dropTable(con, "testtimestamp");
 		JDBC2Tests.closeDB(con);
 	}
@@ -36,19 +40,21 @@ public class TimestampTest extends TestCase {
 	/**
 	 * Tests the time methods in ResultSet
 	 */
-	public void testGetTimestamp() {
-		try {
+	public void testGetTimestamp()
+	{
+		try
+		{
 			Statement stmt = con.createStatement();
 
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtimestamp",
-																	"'1950-02-07 15:00:00'")));
+											   "'1950-02-07 15:00:00'")));
 
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtimestamp", "'" +
-																	getTimestamp(1970, 6, 2, 8, 13, 0, 0).toString() +
-																	"'")));
+											   getTimestamp(1970, 6, 2, 8, 13, 0, 0).toString() +
+											   "'")));
 
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtimestamp",
-																	"'1970-06-02 08:13:00'")));
+											   "'1970-06-02 08:13:00'")));
 
 			// Fall through helper
 			timestampTest();
@@ -56,7 +62,9 @@ public class TimestampTest extends TestCase {
 			assertEquals(3, stmt.executeUpdate("DELETE FROM testtimestamp"));
 
 			stmt.close();
-		} catch(Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			fail(ex.getMessage());
 		}
 	}
@@ -64,8 +72,10 @@ public class TimestampTest extends TestCase {
 	/**
 	 * Tests the time methods in PreparedStatement
 	 */
-	public void testSetTimestamp() {
-		try {
+	public void testSetTimestamp()
+	{
+		try
+		{
 			Statement stmt = con.createStatement();
 			PreparedStatement pstmt = con.prepareStatement(JDBC2Tests.insertSQL("testtimestamp", "?"));
 
@@ -85,7 +95,9 @@ public class TimestampTest extends TestCase {
 
 			pstmt.close();
 			stmt.close();
-		} catch(Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			fail(ex.getMessage());
 		}
 	}
@@ -93,7 +105,8 @@ public class TimestampTest extends TestCase {
 	/**
 	 * Helper for the TimeTests. It tests what should be in the db
 	 */
-	private void timestampTest() throws SQLException {
+	private void timestampTest() throws SQLException
+	{
 		Statement stmt = con.createStatement();
 		ResultSet rs;
 		java.sql.Timestamp t;
@@ -115,20 +128,21 @@ public class TimestampTest extends TestCase {
 		t = rs.getTimestamp(1);
 		assertNotNull(t);
 		assertTrue(t.equals(getTimestamp(1970, 6, 2, 8, 13, 0, 0)));
-		
+
 		assertTrue(! rs.next()); // end of table. Fail if more entries exist.
 
 		rs.close();
 		stmt.close();
 	}
 
-	private java.sql.Timestamp getTimestamp(int y, int m, int d, int h, int mn, int se, int f) {
-		return java.sql.Timestamp.valueOf(JDBC2Tests.fix(y,  4) + "-" +
-										  JDBC2Tests.fix(m,  2) + "-" +
-										  JDBC2Tests.fix(d,  2) + " " +
-										  JDBC2Tests.fix(h,  2) + ":" +
+	private java.sql.Timestamp getTimestamp(int y, int m, int d, int h, int mn, int se, int f)
+	{
+		return java.sql.Timestamp.valueOf(JDBC2Tests.fix(y, 4) + "-" +
+										  JDBC2Tests.fix(m, 2) + "-" +
+										  JDBC2Tests.fix(d, 2) + " " +
+										  JDBC2Tests.fix(h, 2) + ":" +
 										  JDBC2Tests.fix(mn, 2) + ":" +
 										  JDBC2Tests.fix(se, 2) + "." +
-										  JDBC2Tests.fix(f,  9));
+										  JDBC2Tests.fix(f, 9));
 	}
 }

@@ -23,13 +23,13 @@ import org.postgresql.util.*;
  * parameter.  For instance, if the IN parameter has SQL type Integer, then
  * setInt should be used.
  *
- * <p>If arbitrary parameter type conversions are required, then the setObject 
+ * <p>If arbitrary parameter type conversions are required, then the setObject
  * method should be used with a target SQL type.
  *
  * @see ResultSet
  * @see java.sql.PreparedStatement
  */
-public class PreparedStatement extends Statement implements java.sql.PreparedStatement 
+public class PreparedStatement extends Statement implements java.sql.PreparedStatement
 {
 	String sql;
 	String[] templateStrings;
@@ -82,7 +82,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * A Prepared SQL query is executed and its ResultSet is returned
 	 *
 	 * @return a ResultSet that contains the data produced by the
-	 *     	 *	query - never null
+	 *		 *	query - never null
 	 * @exception SQLException if a database access error occurs
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException
@@ -93,12 +93,12 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
-				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
+				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
 			s.append (templateStrings[i]);
 			s.append (inStrings[i]);
 		}
 		s.append(templateStrings[inStrings.length]);
-		return super.executeQuery(s.toString()); 	// in Statement class
+		return super.executeQuery(s.toString());	// in Statement class
 	}
 
 	/**
@@ -107,7 +107,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * be executed.
 	 *
 	 * @return either the row count for INSERT, UPDATE or DELETE; or
-	 *     	 * 	0 for SQL statements that return nothing.
+	 *		 *	0 for SQL statements that return nothing.
 	 * @exception SQLException if a database access error occurs
 	 */
 	public int executeUpdate() throws SQLException
@@ -118,13 +118,13 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
-				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
+				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
 			s.append (templateStrings[i]);
 			s.append (inStrings[i]);
 		}
 		s.append(templateStrings[inStrings.length]);
-		return super.executeUpdate(s.toString()); 	// in Statement class
-	}	
+		return super.executeUpdate(s.toString());	// in Statement class
+	}
 
 	/**
 	 * Set a parameter to SQL NULL
@@ -220,7 +220,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	}
 
 	/**
-	 * Set a parameter to a Java double value.  The driver converts this
+	 * Set a parameter to a Java double value.	The driver converts this
 	 * to a SQL DOUBLE value when it sends it to the database
 	 *
 	 * @param parameterIndex the first parameter is 1...
@@ -247,7 +247,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	}
 
 	/**
-	 * Set a parameter to a Java String value.  The driver converts this
+	 * Set a parameter to a Java String value.	The driver converts this
 	 * to a SQL VARCHAR or LONGVARCHAR value (depending on the arguments
 	 * size relative to the driver's limits on VARCHARs) when it sends it
 	 * to the database.
@@ -258,59 +258,66 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setString(int parameterIndex, String x) throws SQLException
 	{
-	  // if the passed string is null, then set this column to null
-	  if(x==null)
-	    setNull(parameterIndex,Types.OTHER);
-	  else {
-	    StringBuffer b = new StringBuffer();
-	    int i;
-	    
-	    b.append('\'');
-	    for (i = 0 ; i < x.length() ; ++i)
-	      {
-		char c = x.charAt(i);
-		if (c == '\\' || c == '\'')
-		  b.append((char)'\\');
-		b.append(c);
-	      }
-	    b.append('\'');
-	    set(parameterIndex, b.toString());
-	  }
+		// if the passed string is null, then set this column to null
+		if (x == null)
+			setNull(parameterIndex, Types.OTHER);
+		else
+		{
+			StringBuffer b = new StringBuffer();
+			int i;
+
+			b.append('\'');
+			for (i = 0 ; i < x.length() ; ++i)
+			{
+				char c = x.charAt(i);
+				if (c == '\\' || c == '\'')
+					b.append((char)'\\');
+				b.append(c);
+			}
+			b.append('\'');
+			set(parameterIndex, b.toString());
+		}
 	}
 
-  /**
-   * Set a parameter to a Java array of bytes.  The driver converts this
-   * to a SQL VARBINARY or LONGVARBINARY (depending on the argument's
-   * size relative to the driver's limits on VARBINARYs) when it sends
-   * it to the database.
-   *
-   * <p>Implementation note:
-   * <br>With org.postgresql, this creates a large object, and stores the
-   * objects oid in this column.
-   *
-   * @param parameterIndex the first parameter is 1...
-   * @param x the parameter value
-   * @exception SQLException if a database access error occurs
-   */
-  public void setBytes(int parameterIndex, byte x[]) throws SQLException
-  {
-    if (connection.haveMinimumCompatibleVersion("7.2")) {
-      //Version 7.2 supports the bytea datatype for byte arrays
-      if(null == x){
-        setNull(parameterIndex,Types.OTHER);
-      } else {
-        setString(parameterIndex, PGbytea.toPGString(x));
-      }
-    } else {
-      //Version 7.1 and earlier support done as LargeObjects
-    LargeObjectManager lom = connection.getLargeObjectAPI();
-    int oid = lom.create();
-    LargeObject lob = lom.open(oid);
-    lob.write(x);
-    lob.close();
-    setInt(parameterIndex,oid);
-  }
-  }
+	/**
+	 * Set a parameter to a Java array of bytes.  The driver converts this
+	 * to a SQL VARBINARY or LONGVARBINARY (depending on the argument's
+	 * size relative to the driver's limits on VARBINARYs) when it sends
+	 * it to the database.
+	 *
+	 * <p>Implementation note:
+	 * <br>With org.postgresql, this creates a large object, and stores the
+	 * objects oid in this column.
+	 *
+	 * @param parameterIndex the first parameter is 1...
+	 * @param x the parameter value
+	 * @exception SQLException if a database access error occurs
+	 */
+	public void setBytes(int parameterIndex, byte x[]) throws SQLException
+	{
+		if (connection.haveMinimumCompatibleVersion("7.2"))
+		{
+			//Version 7.2 supports the bytea datatype for byte arrays
+			if (null == x)
+			{
+				setNull(parameterIndex, Types.OTHER);
+			}
+			else
+			{
+				setString(parameterIndex, PGbytea.toPGString(x));
+			}
+		}
+		else
+		{
+			//Version 7.1 and earlier support done as LargeObjects
+			LargeObjectManager lom = connection.getLargeObjectAPI();
+			int oid = lom.create();
+			LargeObject lob = lom.open(oid);
+			lob.write(x);
+			lob.close();
+			setInt(parameterIndex, oid);
+		}
+	}
 
 	/**
 	 * Set a parameter to a java.sql.Date value.  The driver converts this
@@ -322,24 +329,27 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDate(int parameterIndex, java.sql.Date x) throws SQLException
 	{
-	  if (null == x){
-		setNull(parameterIndex,Types.OTHER);
-	  }else{
-            SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
-	    set(parameterIndex, df.format(x));
-	  }
-	  // The above is how the date should be handled.
-	  //
-	  // However, in JDK's prior to 1.1.6 (confirmed with the
-	  // Linux jdk1.1.3 and the Win95 JRE1.1.5), SimpleDateFormat seems
-	  // to format a date to the previous day. So the fix is to add a day
-	  // before formatting.
-	  //
-	  // PS: 86400000 is one day
-	  //
-	  //set(parameterIndex, df.format(new java.util.Date(x.getTime()+86400000)));
+		if (null == x)
+		{
+			setNull(parameterIndex, Types.OTHER);
+		}
+		else
+		{
+			SimpleDateFormat df = new SimpleDateFormat("''yyyy-MM-dd''");
+			set(parameterIndex, df.format(x));
+		}
+		// The above is how the date should be handled.
+		//
+		// However, in JDK's prior to 1.1.6 (confirmed with the
+		// Linux jdk1.1.3 and the Win95 JRE1.1.5), SimpleDateFormat seems
+		// to format a date to the previous day. So the fix is to add a day
+		// before formatting.
+		//
+		// PS: 86400000 is one day
+		//
+		//set(parameterIndex, df.format(new java.util.Date(x.getTime()+86400000)));
 	}
-  
+
 	/**
 	 * Set a parameter to a java.sql.Time value.  The driver converts
 	 * this to a SQL TIME value when it sends it to the database.
@@ -350,11 +360,14 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setTime(int parameterIndex, Time x) throws SQLException
 	{
-	  if (null == x){
-		setNull(parameterIndex,Types.OTHER);
-	  }else{
-		set(parameterIndex, "'" + x.toString() + "'");
-	  }
+		if (null == x)
+		{
+			setNull(parameterIndex, Types.OTHER);
+		}
+		else
+		{
+			set(parameterIndex, "'" + x.toString() + "'");
+		}
 	}
 
 	/**
@@ -366,16 +379,19 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @exception SQLException if a database access error occurs
 	 */
 	public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException
-        {
-	  if (null == x){
-		setNull(parameterIndex,Types.OTHER);
-	  }else{
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            df.setTimeZone(TimeZone.getTimeZone("GMT"));
-            StringBuffer strBuf = new StringBuffer("'");
-            strBuf.append(df.format(x)).append('.').append(x.getNanos()/10000000).append("+00'");
-	    set(parameterIndex, strBuf.toString());
-	  }
+	{
+		if (null == x)
+		{
+			setNull(parameterIndex, Types.OTHER);
+		}
+		else
+		{
+			SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			df.setTimeZone(TimeZone.getTimeZone("GMT"));
+			StringBuffer strBuf = new StringBuffer("'");
+			strBuf.append(df.format(x)).append('.').append(x.getNanos() / 10000000).append("+00'");
+			set(parameterIndex, strBuf.toString());
+		}
 	}
 
 	/**
@@ -396,29 +412,37 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
-          if (connection.haveMinimumCompatibleVersion("7.2")) {
-            //Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
-            //As the spec/javadoc for this method indicate this is to be used for
-            //large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
-            //long varchar datatype, but with toast all text datatypes are capable of
-            //handling very large values.  Thus the implementation ends up calling
-            //setString() since there is no current way to stream the value to the server
-            try {
-              InputStreamReader l_inStream = new InputStreamReader(x, "ASCII");
-              char[] l_chars = new char[length];
-              int l_charsRead = l_inStream.read(l_chars,0,length);
-              setString(parameterIndex, new String(l_chars,0,l_charsRead));
-            } catch (UnsupportedEncodingException l_uee) {
-              throw new PSQLException("postgresql.unusual",l_uee);
-            } catch (IOException l_ioe) {
-              throw new PSQLException("postgresql.unusual",l_ioe);
-            }
-          } else {
-            //Version 7.1 supported only LargeObjects by treating everything
-            //as binary data
-		setBinaryStream(parameterIndex, x, length);
+		if (connection.haveMinimumCompatibleVersion("7.2"))
+		{
+			//Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
+			//As the spec/javadoc for this method indicate this is to be used for
+			//large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
+			//long varchar datatype, but with toast all text datatypes are capable of
+			//handling very large values.  Thus the implementation ends up calling
+			//setString() since there is no current way to stream the value to the server
+			try
+			{
+				InputStreamReader l_inStream = new InputStreamReader(x, "ASCII");
+				char[] l_chars = new char[length];
+				int l_charsRead = l_inStream.read(l_chars, 0, length);
+				setString(parameterIndex, new String(l_chars, 0, l_charsRead));
+			}
+			catch (UnsupportedEncodingException l_uee)
+			{
+				throw new PSQLException("postgresql.unusual", l_uee);
+			}
+			catch (IOException l_ioe)
+			{
+				throw new PSQLException("postgresql.unusual", l_ioe);
+			}
+		}
+		else
+		{
+			//Version 7.1 supported only LargeObjects by treating everything
+			//as binary data
+			setBinaryStream(parameterIndex, x, length);
+		}
 	}
-        }
 
 	/**
 	 * When a very large Unicode value is input to a LONGVARCHAR parameter,
@@ -437,35 +461,43 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
-          if (connection.haveMinimumCompatibleVersion("7.2")) {
-            //Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
-            //As the spec/javadoc for this method indicate this is to be used for
-            //large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
-            //long varchar datatype, but with toast all text datatypes are capable of
-            //handling very large values.  Thus the implementation ends up calling
-            //setString() since there is no current way to stream the value to the server
-            try {
-              InputStreamReader l_inStream = new InputStreamReader(x, "UTF-8");
-              char[] l_chars = new char[length];
-              int l_charsRead = l_inStream.read(l_chars,0,length);
-              setString(parameterIndex, new String(l_chars,0,l_charsRead));
-            } catch (UnsupportedEncodingException l_uee) {
-              throw new PSQLException("postgresql.unusual",l_uee);
-            } catch (IOException l_ioe) {
-              throw new PSQLException("postgresql.unusual",l_ioe);
-            }
-          } else {
-            //Version 7.1 supported only LargeObjects by treating everything
-            //as binary data
-		setBinaryStream(parameterIndex, x, length);
+		if (connection.haveMinimumCompatibleVersion("7.2"))
+		{
+			//Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
+			//As the spec/javadoc for this method indicate this is to be used for
+			//large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
+			//long varchar datatype, but with toast all text datatypes are capable of
+			//handling very large values.  Thus the implementation ends up calling
+			//setString() since there is no current way to stream the value to the server
+			try
+			{
+				InputStreamReader l_inStream = new InputStreamReader(x, "UTF-8");
+				char[] l_chars = new char[length];
+				int l_charsRead = l_inStream.read(l_chars, 0, length);
+				setString(parameterIndex, new String(l_chars, 0, l_charsRead));
+			}
+			catch (UnsupportedEncodingException l_uee)
+			{
+				throw new PSQLException("postgresql.unusual", l_uee);
+			}
+			catch (IOException l_ioe)
+			{
+				throw new PSQLException("postgresql.unusual", l_ioe);
+			}
+		}
+		else
+		{
+			//Version 7.1 supported only LargeObjects by treating everything
+			//as binary data
+			setBinaryStream(parameterIndex, x, length);
+		}
 	}
-        }
 
 	/**
 	 * When a very large binary value is input to a LONGVARBINARY parameter,
 	 * it may be more practical to send it via a java.io.InputStream.
 	 * JDBC will read the data from the stream as needed, until it reaches
-	 * end-of-file.  
+	 * end-of-file.
 	 *
 	 * <P><B>Note:</B> This stream object can either be a standard Java
 	 * stream object or your own subclass that implements the standard
@@ -477,60 +509,73 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
-          if (connection.haveMinimumCompatibleVersion("7.2")) {
-            //Version 7.2 supports BinaryStream for for the PG bytea type
-            //As the spec/javadoc for this method indicate this is to be used for
-            //large binary values (i.e. LONGVARBINARY)  PG doesn't have a separate
-            //long binary datatype, but with toast the bytea datatype is capable of
-            //handling very large values.  Thus the implementation ends up calling
-            //setBytes() since there is no current way to stream the value to the server
-            byte[] l_bytes = new byte[length];
-            int l_bytesRead;
-            try {
-              l_bytesRead = x.read(l_bytes,0,length);
-            } catch (IOException l_ioe) {
-              throw new PSQLException("postgresql.unusual",l_ioe);
-            }
-            if (l_bytesRead == length) {
-              setBytes(parameterIndex, l_bytes);
-            } else {
-              //the stream contained less data than they said
-              byte[] l_bytes2 = new byte[l_bytesRead];
-              System.arraycopy(l_bytes,0,l_bytes2,0,l_bytesRead);
-              setBytes(parameterIndex, l_bytes2);
-            }
-          } else {
-            //Version 7.1 only supported streams for LargeObjects
-            //but the jdbc spec indicates that streams should be
-            //available for LONGVARBINARY instead
-            LargeObjectManager lom = connection.getLargeObjectAPI();
-            int oid = lom.create();
-            LargeObject lob = lom.open(oid);
-            OutputStream los = lob.getOutputStream();
-            try {
-              // could be buffered, but then the OutputStream returned by LargeObject
-              // is buffered internally anyhow, so there would be no performance
-              // boost gained, if anything it would be worse!
-              int c=x.read();
-              int p=0;
-              while(c>-1 && p<length) {
-                los.write(c);
-                c=x.read();
-                p++;
-              }
-              los.close();
-            } catch(IOException se) {
-              throw new PSQLException("postgresql.unusual",se);
-            }
-            // lob is closed by the stream so don't call lob.close()
-            setInt(parameterIndex,oid);
-          }
+		if (connection.haveMinimumCompatibleVersion("7.2"))
+		{
+			//Version 7.2 supports BinaryStream for for the PG bytea type
+			//As the spec/javadoc for this method indicate this is to be used for
+			//large binary values (i.e. LONGVARBINARY)	PG doesn't have a separate
+			//long binary datatype, but with toast the bytea datatype is capable of
+			//handling very large values.  Thus the implementation ends up calling
+			//setBytes() since there is no current way to stream the value to the server
+			byte[] l_bytes = new byte[length];
+			int l_bytesRead;
+			try
+			{
+				l_bytesRead = x.read(l_bytes, 0, length);
+			}
+			catch (IOException l_ioe)
+			{
+				throw new PSQLException("postgresql.unusual", l_ioe);
+			}
+			if (l_bytesRead == length)
+			{
+				setBytes(parameterIndex, l_bytes);
+			}
+			else
+			{
+				//the stream contained less data than they said
+				byte[] l_bytes2 = new byte[l_bytesRead];
+				System.arraycopy(l_bytes, 0, l_bytes2, 0, l_bytesRead);
+				setBytes(parameterIndex, l_bytes2);
+			}
+		}
+		else
+		{
+			//Version 7.1 only supported streams for LargeObjects
+			//but the jdbc spec indicates that streams should be
+			//available for LONGVARBINARY instead
+			LargeObjectManager lom = connection.getLargeObjectAPI();
+			int oid = lom.create();
+			LargeObject lob = lom.open(oid);
+			OutputStream los = lob.getOutputStream();
+			try
+			{
+				// could be buffered, but then the OutputStream returned by LargeObject
+				// is buffered internally anyhow, so there would be no performance
+				// boost gained, if anything it would be worse!
+				int c = x.read();
+				int p = 0;
+				while (c > -1 && p < length)
+				{
+					los.write(c);
+					c = x.read();
+					p++;
+				}
+				los.close();
+			}
+			catch (IOException se)
+			{
+				throw new PSQLException("postgresql.unusual", se);
+			}
+			// lob is closed by the stream so don't call lob.close()
+			setInt(parameterIndex, oid);
+		}
 	}
 
 	/**
 	 * In general, parameter values remain in force for repeated used of a
 	 * Statement.  Setting a parameter value automatically clears its
-	 * previous value.  However, in coms cases, it is useful to immediately
+	 * previous value.	However, in coms cases, it is useful to immediately
 	 * release the resources used by the current parameter values; this
 	 * can be done by calling clearParameters
 	 *
@@ -559,62 +604,66 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * @param x the object containing the input parameter value
 	 * @param targetSqlType The SQL type to be send to the database
 	 * @param scale For java.sql.Types.DECIMAL or java.sql.Types.NUMERIC
-	 *     	 *	types this is the number of digits after the decimal.  For
-	 *     	 *	all other types this value will be ignored.
+	 *		 *	types this is the number of digits after the decimal.  For
+	 *		 *	all other types this value will be ignored.
 	 * @exception SQLException if a database access error occurs
 	 */
 	public void setObject(int parameterIndex, Object x, int targetSqlType, int scale) throws SQLException
 	{
-		if (x == null){
-			setNull(parameterIndex,Types.OTHER);
-			return;
+		if (x == null)
+		{
+			setNull(parameterIndex, Types.OTHER);
+			return ;
 		}
 		switch (targetSqlType)
 		{
-			case Types.TINYINT:
-			case Types.SMALLINT:
-			case Types.INTEGER:
-			case Types.BIGINT:
-			case Types.REAL:
-			case Types.FLOAT:
-			case Types.DOUBLE:
-			case Types.DECIMAL:
-			case Types.NUMERIC:
-				if (x instanceof Boolean)
-					set(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0");
-				else
-					set(parameterIndex, x.toString());
-				break;
-			case Types.CHAR:
-			case Types.VARCHAR:
-			case Types.LONGVARCHAR:
-				setString(parameterIndex, x.toString());
-				break;
-			case Types.DATE:
-				setDate(parameterIndex, (java.sql.Date)x);
-				break;
-			case Types.TIME:
-				setTime(parameterIndex, (Time)x);
-				break;
-			case Types.TIMESTAMP:
-				setTimestamp(parameterIndex, (Timestamp)x);
-				break;
-			case Types.BIT:
-				if (x instanceof Boolean) {
-					set(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE");
-				} else {
-					throw new PSQLException("postgresql.prep.type");
-				}
-				break;
-			case Types.BINARY:
-			case Types.VARBINARY:
-				setObject(parameterIndex,x);
-				break;
-			case Types.OTHER:
-				setString(parameterIndex, ((PGobject)x).getValue());
-				break;
-			default:
+		case Types.TINYINT:
+		case Types.SMALLINT:
+		case Types.INTEGER:
+		case Types.BIGINT:
+		case Types.REAL:
+		case Types.FLOAT:
+		case Types.DOUBLE:
+		case Types.DECIMAL:
+		case Types.NUMERIC:
+			if (x instanceof Boolean)
+				set(parameterIndex, ((Boolean)x).booleanValue() ? "1" : "0");
+			else
+				set(parameterIndex, x.toString());
+			break;
+		case Types.CHAR:
+		case Types.VARCHAR:
+		case Types.LONGVARCHAR:
+			setString(parameterIndex, x.toString());
+			break;
+		case Types.DATE:
+			setDate(parameterIndex, (java.sql.Date)x);
+			break;
+		case Types.TIME:
+			setTime(parameterIndex, (Time)x);
+			break;
+		case Types.TIMESTAMP:
+			setTimestamp(parameterIndex, (Timestamp)x);
+			break;
+		case Types.BIT:
+			if (x instanceof Boolean)
+			{
+				set(parameterIndex, ((Boolean)x).booleanValue() ? "TRUE" : "FALSE");
+			}
+			else
+			{
 				throw new PSQLException("postgresql.prep.type");
+			}
+			break;
+		case Types.BINARY:
+		case Types.VARBINARY:
+			setObject(parameterIndex, x);
+			break;
+		case Types.OTHER:
+			setString(parameterIndex, ((PGobject)x).getValue());
+			break;
+		default:
+			throw new PSQLException("postgresql.prep.type");
 		}
 	}
 
@@ -622,18 +671,19 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	{
 		setObject(parameterIndex, x, targetSqlType, 0);
 	}
-	
-  /**
-   * This stores an Object into a parameter.
-   * <p>New for 6.4, if the object is not recognised, but it is
-   * Serializable, then the object is serialised using the
-   * org.postgresql.util.Serialize class.
-   */
+
+	/**
+	 * This stores an Object into a parameter.
+	 * <p>New for 6.4, if the object is not recognised, but it is
+	 * Serializable, then the object is serialised using the
+	 * org.postgresql.util.Serialize class.
+	 */
 	public void setObject(int parameterIndex, Object x) throws SQLException
 	{
-		if (x == null){
-			setNull(parameterIndex,Types.OTHER);
-			return;
+		if (x == null)
+		{
+			setNull(parameterIndex, Types.OTHER);
+			return ;
 		}
 		if (x instanceof String)
 			setString(parameterIndex, (String)x);
@@ -667,11 +717,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 
 	/**
 	 * Some prepared statements return multiple results; the execute method
-	 * handles these complex statements as well as the simpler form of 
+	 * handles these complex statements as well as the simpler form of
 	 * statements handled by executeQuery and executeUpdate
 	 *
 	 * @return true if the next result is a ResultSet; false if it is an
-	 *     	 *	update count or there are no more results
+	 *		 *	update count or there are no more results
 	 * @exception SQLException if a database access error occurs
 	 */
 	public boolean execute() throws SQLException
@@ -682,19 +732,20 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		for (i = 0 ; i < inStrings.length ; ++i)
 		{
 			if (inStrings[i] == null)
-				throw new PSQLException("postgresql.prep.param",new Integer(i + 1));
+				throw new PSQLException("postgresql.prep.param", new Integer(i + 1));
 			s.append (templateStrings[i]);
 			s.append (inStrings[i]);
 		}
 		s.append(templateStrings[inStrings.length]);
-		return super.execute(s.toString()); 	// in Statement class
+		return super.execute(s.toString());		// in Statement class
 	}
 
 	/**
 	 * Returns the SQL statement with the current template values
 	 * substituted.
 	 */
-	public String toString() {
+	public String toString()
+	{
 		StringBuffer s = new StringBuffer();
 		int i;
 
@@ -709,14 +760,14 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		s.append(templateStrings[inStrings.length]);
 		return s.toString();
 	}
-	
+
 	// **************************************************************
-	//	END OF PUBLIC INTERFACE	
+	//	END OF PUBLIC INTERFACE
 	// **************************************************************
-	
+
 	/**
 	 * There are a lot of setXXX classes which all basically do
-	 * the same thing.  We need a method which actually does the
+	 * the same thing.	We need a method which actually does the
 	 * set for us.
 	 *
 	 * @param paramIndex the index into the inString

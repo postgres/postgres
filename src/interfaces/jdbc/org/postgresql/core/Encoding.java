@@ -8,173 +8,213 @@ import org.postgresql.util.*;
 /**
  * Converts to and from the character encoding used by the backend.
  *
- * $Id: Encoding.java,v 1.2 2001/10/16 20:07:17 barry Exp $
+ * $Id: Encoding.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
  */
 
-public class Encoding {
+public class Encoding
+{
 
-    private static final Encoding DEFAULT_ENCODING = new Encoding(null);
+	private static final Encoding DEFAULT_ENCODING = new Encoding(null);
 
-    /**
-     * Preferred JVM encodings for backend encodings.
-     */
-    private static final Hashtable encodings = new Hashtable();
+	/**
+	 * Preferred JVM encodings for backend encodings.
+	 */
+	private static final Hashtable encodings = new Hashtable();
 
-    static {
-        //Note: this list should match the set of supported server
-        // encodings found in backend/util/mb/encnames.c
-        encodings.put("SQL_ASCII", new String[] { "ASCII", "us-ascii" });
-        encodings.put("UNICODE", new String[] { "UTF-8", "UTF8" });
-        encodings.put("LATIN1", new String[] { "ISO8859_1" });
-        encodings.put("LATIN2", new String[] { "ISO8859_2" });
-        encodings.put("LATIN3", new String[] { "ISO8859_3" });
-        encodings.put("LATIN4", new String[] { "ISO8859_4" });
-	encodings.put("ISO_8859_5", new String[] { "ISO8859_5" });
-	encodings.put("ISO_8859_6", new String[] { "ISO8859_6" });
-	encodings.put("ISO_8859_7", new String[] { "ISO8859_7" });
-	encodings.put("ISO_8859_8", new String[] { "ISO8859_8" });
-	encodings.put("LATIN5", new String[] { "ISO8859_9" });
-	encodings.put("LATIN7", new String[] { "ISO8859_13" });
-	encodings.put("LATIN9", new String[] { "ISO8859_15_FDIS" });
-	encodings.put("EUC_JP", new String[] { "EUC_JP" });
-	encodings.put("EUC_CN", new String[] { "EUC_CN" });
-	encodings.put("EUC_KR", new String[] { "EUC_KR" });
-	encodings.put("EUC_TW", new String[] { "EUC_TW" });
-	encodings.put("SJIS", new String[] { "SJIS" });
-	encodings.put("BIG5", new String[] { "Big5" });
-        encodings.put("WIN1250", new String[] { "Cp1250" });
-        encodings.put("WIN", new String[] { "Cp1251" });
-        encodings.put("ALT", new String[] { "Cp866" });
-	// We prefer KOI8-U, since it is a superset of KOI8-R.
-	encodings.put("KOI8", new String[] { "KOI8_U", "KOI8_R" });
-	// If the database isn't encoding-aware then we can't have
-	// any preferred encodings.
-        encodings.put("UNKNOWN", new String[0]);
-	// The following encodings do not have a java equivalent
-        encodings.put("MULE_INTERNAL", new String[0]);
-        encodings.put("LATIN6", new String[0]);
-        encodings.put("LATIN8", new String[0]);
-        encodings.put("LATIN10", new String[0]);
-    }
-
-    private final String encoding;
-
-    private Encoding(String encoding) {
-	this.encoding = encoding;
-    }
-
-    /**
-     * Get an Encoding for from the given database encoding and
-     * the encoding passed in by the user.
-     */
-    public static Encoding getEncoding(String databaseEncoding,
-				       String passedEncoding)
-    {
-	if (passedEncoding != null) {
-	    if (isAvailable(passedEncoding)) {
-		return new Encoding(passedEncoding);
-	    } else {
-		return defaultEncoding();
-	    }
-	} else {
-	    return encodingForDatabaseEncoding(databaseEncoding);
+	static {
+		//Note: this list should match the set of supported server
+		// encodings found in backend/util/mb/encnames.c
+		encodings.put("SQL_ASCII", new String[] { "ASCII", "us-ascii" });
+		encodings.put("UNICODE", new String[] { "UTF-8", "UTF8" });
+		encodings.put("LATIN1", new String[] { "ISO8859_1" });
+		encodings.put("LATIN2", new String[] { "ISO8859_2" });
+		encodings.put("LATIN3", new String[] { "ISO8859_3" });
+		encodings.put("LATIN4", new String[] { "ISO8859_4" });
+		encodings.put("ISO_8859_5", new String[] { "ISO8859_5" });
+		encodings.put("ISO_8859_6", new String[] { "ISO8859_6" });
+		encodings.put("ISO_8859_7", new String[] { "ISO8859_7" });
+		encodings.put("ISO_8859_8", new String[] { "ISO8859_8" });
+		encodings.put("LATIN5", new String[] { "ISO8859_9" });
+		encodings.put("LATIN7", new String[] { "ISO8859_13" });
+		encodings.put("LATIN9", new String[] { "ISO8859_15_FDIS" });
+		encodings.put("EUC_JP", new String[] { "EUC_JP" });
+		encodings.put("EUC_CN", new String[] { "EUC_CN" });
+		encodings.put("EUC_KR", new String[] { "EUC_KR" });
+		encodings.put("EUC_TW", new String[] { "EUC_TW" });
+		encodings.put("SJIS", new String[] { "SJIS" });
+		encodings.put("BIG5", new String[] { "Big5" });
+		encodings.put("WIN1250", new String[] { "Cp1250" });
+		encodings.put("WIN", new String[] { "Cp1251" });
+		encodings.put("ALT", new String[] { "Cp866" });
+		// We prefer KOI8-U, since it is a superset of KOI8-R.
+		encodings.put("KOI8", new String[] { "KOI8_U", "KOI8_R" });
+		// If the database isn't encoding-aware then we can't have
+		// any preferred encodings.
+		encodings.put("UNKNOWN", new String[0]);
+		// The following encodings do not have a java equivalent
+		encodings.put("MULE_INTERNAL", new String[0]);
+		encodings.put("LATIN6", new String[0]);
+		encodings.put("LATIN8", new String[0]);
+		encodings.put("LATIN10", new String[0]);
 	}
-    }
 
-    /**
-     * Get an Encoding matching the given database encoding.
-     */
-    private static Encoding encodingForDatabaseEncoding(String databaseEncoding) {
-	// If the backend encoding is known and there is a suitable
-	// encoding in the JVM we use that. Otherwise we fall back
-	// to the default encoding of the JVM.
+	private final String encoding;
 
-	if (encodings.containsKey(databaseEncoding)) {
-	    String[] candidates = (String[]) encodings.get(databaseEncoding);
-	    for (int i = 0; i < candidates.length; i++) {
-		if (isAvailable(candidates[i])) {
-		    return new Encoding(candidates[i]);
+	private Encoding(String encoding)
+	{
+		this.encoding = encoding;
+	}
+
+	/**
+	 * Get an Encoding for from the given database encoding and
+	 * the encoding passed in by the user.
+	 */
+	public static Encoding getEncoding(String databaseEncoding,
+									   String passedEncoding)
+	{
+		if (passedEncoding != null)
+		{
+			if (isAvailable(passedEncoding))
+			{
+				return new Encoding(passedEncoding);
+			}
+			else
+			{
+				return defaultEncoding();
+			}
 		}
-	    }
+		else
+		{
+			return encodingForDatabaseEncoding(databaseEncoding);
+		}
 	}
-	return defaultEncoding();
-    }
 
-    /**
-     * Name of the (JVM) encoding used.
-     */
-    public String name() {
-	return encoding;
-    }
+	/**
+	 * Get an Encoding matching the given database encoding.
+	 */
+	private static Encoding encodingForDatabaseEncoding(String databaseEncoding)
+	{
+		// If the backend encoding is known and there is a suitable
+		// encoding in the JVM we use that. Otherwise we fall back
+		// to the default encoding of the JVM.
 
-    /**
-     * Encode a string to an array of bytes.
-     */
-    public byte[] encode(String s) throws SQLException {
-	try {
-	    if (encoding == null) {
-		return s.getBytes();
-	    } else {
-		return s.getBytes(encoding);
-	    }
-	} catch (UnsupportedEncodingException e) {
-	    throw new PSQLException("postgresql.stream.encoding", e);
+		if (encodings.containsKey(databaseEncoding))
+		{
+			String[] candidates = (String[]) encodings.get(databaseEncoding);
+			for (int i = 0; i < candidates.length; i++)
+			{
+				if (isAvailable(candidates[i]))
+				{
+					return new Encoding(candidates[i]);
+				}
+			}
+		}
+		return defaultEncoding();
 	}
-    }
 
-    /**
-     * Decode an array of bytes into a string.
-     */
-    public String decode(byte[] encodedString, int offset, int length) throws SQLException {
-	try {
-	    if (encoding == null) {
-		return new String(encodedString, offset, length);
-	    } else {
-		return new String(encodedString, offset, length, encoding);
-	    }
-	} catch (UnsupportedEncodingException e) {
-	    throw new PSQLException("postgresql.stream.encoding", e);
+	/**
+	 * Name of the (JVM) encoding used.
+	 */
+	public String name()
+	{
+		return encoding;
 	}
-    }
 
-    /**
-     * Decode an array of bytes into a string.
-     */
-    public String decode(byte[] encodedString) throws SQLException {
-	return decode(encodedString, 0, encodedString.length);
-    }
-
-    /**
-     * Get a Reader that decodes the given InputStream.
-     */
-    public Reader getDecodingReader(InputStream in) throws SQLException {
-	try {
-	    if (encoding == null) {
-		return new InputStreamReader(in);
-	    } else {
-		return new InputStreamReader(in, encoding);
-	    }
-	} catch (UnsupportedEncodingException e) {
-	    throw new PSQLException("postgresql.res.encoding", e);
+	/**
+	 * Encode a string to an array of bytes.
+	 */
+	public byte[] encode(String s) throws SQLException
+	{
+		try
+		{
+			if (encoding == null)
+			{
+				return s.getBytes();
+			}
+			else
+			{
+				return s.getBytes(encoding);
+			}
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			throw new PSQLException("postgresql.stream.encoding", e);
+		}
 	}
-    }
 
-    /**
-     * Get an Encoding using the default encoding for the JVM.
-     */
-    public static Encoding defaultEncoding() {
-	return DEFAULT_ENCODING;
-    }
-
-    /**
-     * Test if an encoding is available in the JVM.
-     */
-    private static boolean isAvailable(String encodingName) {
-	try {
-	    "DUMMY".getBytes(encodingName);
-	    return true;
-	} catch (UnsupportedEncodingException e) {
-	    return false;
+	/**
+	 * Decode an array of bytes into a string.
+	 */
+	public String decode(byte[] encodedString, int offset, int length) throws SQLException
+	{
+		try
+		{
+			if (encoding == null)
+			{
+				return new String(encodedString, offset, length);
+			}
+			else
+			{
+				return new String(encodedString, offset, length, encoding);
+			}
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			throw new PSQLException("postgresql.stream.encoding", e);
+		}
 	}
-    }
+
+	/**
+	 * Decode an array of bytes into a string.
+	 */
+	public String decode(byte[] encodedString) throws SQLException
+	{
+		return decode(encodedString, 0, encodedString.length);
+	}
+
+	/**
+	 * Get a Reader that decodes the given InputStream.
+	 */
+	public Reader getDecodingReader(InputStream in) throws SQLException
+	{
+		try
+		{
+			if (encoding == null)
+			{
+				return new InputStreamReader(in);
+			}
+			else
+			{
+				return new InputStreamReader(in, encoding);
+			}
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			throw new PSQLException("postgresql.res.encoding", e);
+		}
+	}
+
+	/**
+	 * Get an Encoding using the default encoding for the JVM.
+	 */
+	public static Encoding defaultEncoding()
+	{
+		return DEFAULT_ENCODING;
+	}
+
+	/**
+	 * Test if an encoding is available in the JVM.
+	 */
+	private static boolean isAvailable(String encodingName)
+	{
+		try
+		{
+			"DUMMY".getBytes(encodingName);
+			return true;
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			return false;
+		}
+	}
 }

@@ -10,194 +10,219 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.5 2001/09/23 04:11:14 momjian Exp $
+ * $Id: ConnectionTest.java,v 1.6 2001/10/25 05:59:59 momjian Exp $
  */
 
-public class ConnectionTest extends TestCase {
+public class ConnectionTest extends TestCase
+{
 
-  /**
-   * Constructor
-   */
-  public ConnectionTest(String name) {
-    super(name);
-  }
+	/**
+	 * Constructor
+	 */
+	public ConnectionTest(String name)
+	{
+		super(name);
+	}
 
-  // Set up the fixture for this testcase: the tables for this test.
-  protected void setUp() throws Exception {
-  	Connection con = JDBC2Tests.openDB();
+	// Set up the fixture for this testcase: the tables for this test.
+	protected void setUp() throws Exception
+	{
+		Connection con = JDBC2Tests.openDB();
 
-	JDBC2Tests.createTable(con, "test_a", "imagename name,image oid,id int4");
-	JDBC2Tests.createTable(con, "test_c", "source text,cost money,imageid int4");
+		JDBC2Tests.createTable(con, "test_a", "imagename name,image oid,id int4");
+		JDBC2Tests.createTable(con, "test_c", "source text,cost money,imageid int4");
 
-	JDBC2Tests.closeDB(con);
-  }
+		JDBC2Tests.closeDB(con);
+	}
 
-  // Tear down the fixture for this test case.
-  protected void tearDown() throws Exception {
-  	Connection con = JDBC2Tests.openDB();
+	// Tear down the fixture for this test case.
+	protected void tearDown() throws Exception
+	{
+		Connection con = JDBC2Tests.openDB();
 
-	JDBC2Tests.dropTable(con, "test_a");
-	JDBC2Tests.dropTable(con, "test_c");
-	
-    JDBC2Tests.closeDB(con);
-  }
+		JDBC2Tests.dropTable(con, "test_a");
+		JDBC2Tests.dropTable(con, "test_c");
 
-  /**
-   * Tests the two forms of createStatement()
-   */
-  public void testCreateStatement() {
-    try {
-      java.sql.Connection conn = JDBC2Tests.openDB();
+		JDBC2Tests.closeDB(con);
+	}
 
-      // A standard Statement
-      java.sql.Statement stat = conn.createStatement();
-      assertNotNull(stat);
-      stat.close();
+	/**
+	 * Tests the two forms of createStatement()
+	 */
+	public void testCreateStatement()
+	{
+		try
+		{
+			java.sql.Connection conn = JDBC2Tests.openDB();
 
-      // Ask for Updateable ResultSets
-      stat = conn.createStatement(java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE,java.sql.ResultSet.CONCUR_UPDATABLE);
-      assertNotNull(stat);
-      stat.close();
+			// A standard Statement
+			java.sql.Statement stat = conn.createStatement();
+			assertNotNull(stat);
+			stat.close();
 
-    } catch(SQLException ex) {
-      assertTrue(ex.getMessage(),false);
-    }
-  }
+			// Ask for Updateable ResultSets
+			stat = conn.createStatement(java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE, java.sql.ResultSet.CONCUR_UPDATABLE);
+			assertNotNull(stat);
+			stat.close();
 
-  /**
-   * Tests the two forms of prepareStatement()
-   */
-  public void testPrepareStatement() {
-    try {
-      java.sql.Connection conn = JDBC2Tests.openDB();
+		}
+		catch (SQLException ex)
+		{
+			assertTrue(ex.getMessage(), false);
+		}
+	}
 
-      String sql = "select source,cost,imageid from test_c";
+	/**
+	 * Tests the two forms of prepareStatement()
+	 */
+	public void testPrepareStatement()
+	{
+		try
+		{
+			java.sql.Connection conn = JDBC2Tests.openDB();
 
-      // A standard Statement
-      java.sql.PreparedStatement stat = conn.prepareStatement(sql);
-      assertNotNull(stat);
-      stat.close();
+			String sql = "select source,cost,imageid from test_c";
 
-      // Ask for Updateable ResultSets
-      stat = conn.prepareStatement(sql,java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE,java.sql.ResultSet.CONCUR_UPDATABLE);
-      assertNotNull(stat);
-      stat.close();
+			// A standard Statement
+			java.sql.PreparedStatement stat = conn.prepareStatement(sql);
+			assertNotNull(stat);
+			stat.close();
 
-    } catch(SQLException ex) {
-      assertTrue(ex.getMessage(),false);
-    }
-  }
+			// Ask for Updateable ResultSets
+			stat = conn.prepareStatement(sql, java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE, java.sql.ResultSet.CONCUR_UPDATABLE);
+			assertNotNull(stat);
+			stat.close();
 
-  /**
-   * Put the test for createPrepareCall here
-   */
-  public void testPrepareCall() {
-  }
+		}
+		catch (SQLException ex)
+		{
+			assertTrue(ex.getMessage(), false);
+		}
+	}
 
-  /**
-   * Test nativeSQL
-   */
-  public void testNativeSQL() {
-    // For now do nothing as it returns itself
-  }
+	/**
+	 * Put the test for createPrepareCall here
+	 */
+	public void testPrepareCall()
+	{}
 
-  /**
-   * Test autoCommit (both get & set)
-   */
-  public void testTransactions() {
-    try {
-      java.sql.Connection con = JDBC2Tests.openDB();
-      java.sql.Statement st;
-      java.sql.ResultSet rs;
+	/**
+	 * Test nativeSQL
+	 */
+	public void testNativeSQL()
+	{
+		// For now do nothing as it returns itself
+	}
 
-      // Turn it off
-      con.setAutoCommit(false);
-      assertTrue(!con.getAutoCommit());
+	/**
+	 * Test autoCommit (both get & set)
+	 */
+	public void testTransactions()
+	{
+		try
+		{
+			java.sql.Connection con = JDBC2Tests.openDB();
+			java.sql.Statement st;
+			java.sql.ResultSet rs;
 
-      // Turn it back on
-      con.setAutoCommit(true);
-      assertTrue(con.getAutoCommit());
+			// Turn it off
+			con.setAutoCommit(false);
+			assertTrue(!con.getAutoCommit());
 
-      // Now test commit
-      st = con.createStatement();
-      st.executeUpdate("insert into test_a (imagename,image,id) values ('comttest',1234,5678)");
+			// Turn it back on
+			con.setAutoCommit(true);
+			assertTrue(con.getAutoCommit());
 
-      con.setAutoCommit(false);
+			// Now test commit
+			st = con.createStatement();
+			st.executeUpdate("insert into test_a (imagename,image,id) values ('comttest',1234,5678)");
 
-      // Now update image to 9876 and commit
-      st.executeUpdate("update test_a set image=9876 where id=5678");
-      con.commit();
-      rs = st.executeQuery("select image from test_a where id=5678");
-      assertTrue(rs.next());
-      assertEquals(9876, rs.getInt(1));
-      rs.close();
+			con.setAutoCommit(false);
 
-      // Now try to change it but rollback
-      st.executeUpdate("update test_a set image=1111 where id=5678");
-      con.rollback();
-      rs = st.executeQuery("select image from test_a where id=5678");
-      assertTrue(rs.next());
-      assertEquals(9876, rs.getInt(1)); // Should not change!
-      rs.close();
+			// Now update image to 9876 and commit
+			st.executeUpdate("update test_a set image=9876 where id=5678");
+			con.commit();
+			rs = st.executeQuery("select image from test_a where id=5678");
+			assertTrue(rs.next());
+			assertEquals(9876, rs.getInt(1));
+			rs.close();
 
-      JDBC2Tests.closeDB(con);
-    } catch(SQLException ex) {
-      assertTrue(ex.getMessage(),false);
-    }
-  }
+			// Now try to change it but rollback
+			st.executeUpdate("update test_a set image=1111 where id=5678");
+			con.rollback();
+			rs = st.executeQuery("select image from test_a where id=5678");
+			assertTrue(rs.next());
+			assertEquals(9876, rs.getInt(1)); // Should not change!
+			rs.close();
 
-  /**
-   * Simple test to see if isClosed works.
-   */
-  public void testIsClosed() {
-    try {
-      Connection con = JDBC2Tests.openDB();
+			JDBC2Tests.closeDB(con);
+		}
+		catch (SQLException ex)
+		{
+			assertTrue(ex.getMessage(), false);
+		}
+	}
 
-      // Should not say closed
-      assertTrue(!con.isClosed());
+	/**
+	 * Simple test to see if isClosed works.
+	 */
+	public void testIsClosed()
+	{
+		try
+		{
+			Connection con = JDBC2Tests.openDB();
 
-      JDBC2Tests.closeDB(con);
+			// Should not say closed
+			assertTrue(!con.isClosed());
 
-      // Should now say closed
-      assertTrue(con.isClosed());
+			JDBC2Tests.closeDB(con);
 
-    } catch(SQLException ex) {
-      assertTrue(ex.getMessage(),false);
-    }
-  }
+			// Should now say closed
+			assertTrue(con.isClosed());
 
-  /**
-   * Test the warnings system
-   */
-  public void testWarnings() {
-    try {
-      Connection con = JDBC2Tests.openDB();
+		}
+		catch (SQLException ex)
+		{
+			assertTrue(ex.getMessage(), false);
+		}
+	}
 
-      String testStr = "This Is OuR TeSt message";
+	/**
+	 * Test the warnings system
+	 */
+	public void testWarnings()
+	{
+		try
+		{
+			Connection con = JDBC2Tests.openDB();
 
-      // The connection must be ours!
-      assertTrue(con instanceof org.postgresql.Connection);
+			String testStr = "This Is OuR TeSt message";
 
-      // Clear any existing warnings
-      con.clearWarnings();
+			// The connection must be ours!
+			assertTrue(con instanceof org.postgresql.Connection);
 
-      // Set the test warning
-      ((org.postgresql.Connection)con).addWarning(testStr);
+			// Clear any existing warnings
+			con.clearWarnings();
 
-      // Retrieve it
-      SQLWarning warning = con.getWarnings();
-      assertNotNull(warning);
-      assertEquals(testStr, warning.getMessage());
+			// Set the test warning
+			((org.postgresql.Connection)con).addWarning(testStr);
 
-      // Finally test clearWarnings() this time there must be something to delete
-      con.clearWarnings();
-      assertTrue(con.getWarnings()==null);
+			// Retrieve it
+			SQLWarning warning = con.getWarnings();
+			assertNotNull(warning);
+			assertEquals(testStr, warning.getMessage());
 
-      JDBC2Tests.closeDB(con);
-    } catch(SQLException ex) {
-      assertTrue(ex.getMessage(),false);
-    }
-  }
+			// Finally test clearWarnings() this time there must be something to delete
+			con.clearWarnings();
+			assertTrue(con.getWarnings() == null);
+
+			JDBC2Tests.closeDB(con);
+		}
+		catch (SQLException ex)
+		{
+			assertTrue(ex.getMessage(), false);
+		}
+	}
 
 	/**
 	 * Transaction Isolation Levels
@@ -210,14 +235,14 @@ public class ConnectionTest extends TestCase {
 
 			// PostgreSQL defaults to READ COMMITTED
 			assertEquals(Connection.TRANSACTION_READ_COMMITTED,
-				     con.getTransactionIsolation());
+						 con.getTransactionIsolation());
 
 			// Begin a transaction
 			con.setAutoCommit(false);
 
 			// The isolation level should not have changed
 			assertEquals(Connection.TRANSACTION_READ_COMMITTED,
-				     con.getTransactionIsolation());
+						 con.getTransactionIsolation());
 
 			// Now change the default for future transactions
 			con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
@@ -227,14 +252,14 @@ public class ConnectionTest extends TestCase {
 			// transaction did not change. It affects only future transactions.
 			// This behaviour is recommended by the JDBC spec.
 			assertEquals(Connection.TRANSACTION_READ_COMMITTED,
-				     con.getTransactionIsolation());
+						 con.getTransactionIsolation());
 
 			// Begin a new transaction
 			con.commit();
 
 			// Now we should see the new isolation level
 			assertEquals(Connection.TRANSACTION_SERIALIZABLE,
-				     con.getTransactionIsolation());
+						 con.getTransactionIsolation());
 
 			// Repeat the steps above with the transition back to
 			// READ COMMITTED.
@@ -277,35 +302,39 @@ public class ConnectionTest extends TestCase {
 						 con.getTransactionIsolation());
 
 			JDBC2Tests.closeDB(con);
-		} 
-		catch ( SQLException ex ) 
+		}
+		catch ( SQLException ex )
 		{
 			fail( ex.getMessage() );
 		}
 	}
 
-  /**
-   * JDBC2 Type mappings
-   */
-  public void testTypeMaps() {
-    try {
-      Connection con = JDBC2Tests.openDB();
+	/**
+	 * JDBC2 Type mappings
+	 */
+	public void testTypeMaps()
+	{
+		try
+		{
+			Connection con = JDBC2Tests.openDB();
 
-      // preserve the current map
-      java.util.Map oldmap = con.getTypeMap();
+			// preserve the current map
+			java.util.Map oldmap = con.getTypeMap();
 
-      // now change it for an empty one
-      java.util.Map newmap = new java.util.HashMap();
-      con.setTypeMap(newmap);
-      assertEquals(newmap, con.getTypeMap());
+			// now change it for an empty one
+			java.util.Map newmap = new java.util.HashMap();
+			con.setTypeMap(newmap);
+			assertEquals(newmap, con.getTypeMap());
 
-      // restore the old one
-      con.setTypeMap(oldmap);
-      assertEquals(oldmap, con.getTypeMap());
+			// restore the old one
+			con.setTypeMap(oldmap);
+			assertEquals(oldmap, con.getTypeMap());
 
-      JDBC2Tests.closeDB(con);
-    } catch(SQLException ex) {
-      assertTrue(ex.getMessage(),false);
-    }
-  }
+			JDBC2Tests.closeDB(con);
+		}
+		catch (SQLException ex)
+		{
+			assertTrue(ex.getMessage(), false);
+		}
+	}
 }

@@ -6,43 +6,44 @@ package org.postgresql.core;
  * other for jdk1.2+
  */
 
-public interface ObjectPool {
-    /**
-     * Adds an object to the pool
-     * @param o Object to add
-     */
-    public void add(Object o);
+public interface ObjectPool
+{
+	/**
+	 * Adds an object to the pool
+	 * @param o Object to add
+	 */
+	public void add(Object o);
 
-    /**
-     * Removes an object from the pool
-     * @param o Object to remove
-     */
-    public void remove(Object o);
+	/**
+	 * Removes an object from the pool
+	 * @param o Object to remove
+	 */
+	public void remove(Object o);
 
-    /**
-     * Removes the top object from the pool
-     * @return Object from the top.
-     */
-    public Object remove();
+	/**
+	 * Removes the top object from the pool
+	 * @return Object from the top.
+	 */
+	public Object remove();
 
-    /**
-     * @return true if the pool is empty
-     */
-    public boolean isEmpty();
+	/**
+	 * @return true if the pool is empty
+	 */
+	public boolean isEmpty();
 
-    /**
-     * @return the number of objects in the pool
-     */
-    public int size();
+	/**
+	 * @return the number of objects in the pool
+	 */
+	public int size();
 
-    /**
-     * Adds all objects in one pool to this one
-     * @param pool The pool to take the objects from
-     */
-    public void addAll(ObjectPool pool);
+	/**
+	 * Adds all objects in one pool to this one
+	 * @param pool The pool to take the objects from
+	 */
+	public void addAll(ObjectPool pool);
 
-    /**
-     * Clears the pool of all objects
-     */
-    public void clear();
+	/**
+	 * Clears the pool of all objects
+	 */
+	public void clear();
 }

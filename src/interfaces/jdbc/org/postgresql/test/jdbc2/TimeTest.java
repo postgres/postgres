@@ -5,37 +5,43 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /**
- * $Id: TimeTest.java,v 1.2 2001/09/23 04:11:14 momjian Exp $
+ * $Id: TimeTest.java,v 1.3 2001/10/25 05:59:59 momjian Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
  *
  */
-public class TimeTest extends TestCase {
+public class TimeTest extends TestCase
+{
 
 	private Connection con;
-    
-    public TimeTest(String name) {
-		super(name);
-    }
 
-    protected void setUp() throws Exception {
+	public TimeTest(String name)
+	{
+		super(name);
+	}
+
+	protected void setUp() throws Exception
+	{
 		con = JDBC2Tests.openDB();
 		JDBC2Tests.createTable(con, "testtime", "tm time");
-    }
+	}
 
-    protected void tearDown() throws Exception {
+	protected void tearDown() throws Exception
+	{
 		JDBC2Tests.dropTable(con, "testtime");
 		JDBC2Tests.closeDB(con);
-    }
-    
-    /**
-     * Tests the time methods in ResultSet
-     */
-    public void testGetTime() {
-		try {
+	}
+
+	/**
+	 * Tests the time methods in ResultSet
+	 */
+	public void testGetTime()
+	{
+		try
+		{
 			Statement stmt = con.createStatement();
-			
+
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtime", "'01:02:03'")));
 			assertEquals(1, stmt.executeUpdate(JDBC2Tests.insertSQL("testtime", "'23:59:59'")));
 
@@ -44,16 +50,20 @@ public class TimeTest extends TestCase {
 
 			assertEquals(2, stmt.executeUpdate("DELETE FROM testtime"));
 			stmt.close();
-		} catch(Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			fail(ex.getMessage());
 		}
-    }
+	}
 
-    /**
-     * Tests the time methods in PreparedStatement
-     */
-    public void testSetTime() {
-		try {
+	/**
+	 * Tests the time methods in PreparedStatement
+	 */
+	public void testSetTime()
+	{
+		try
+		{
 			PreparedStatement ps = con.prepareStatement(JDBC2Tests.insertSQL("testtime", "?"));
 			Statement stmt = con.createStatement();
 
@@ -69,15 +79,18 @@ public class TimeTest extends TestCase {
 			assertEquals(2, stmt.executeUpdate("DELETE FROM testtime"));
 			stmt.close();
 			ps.close();
-		} catch(Exception ex) {
+		}
+		catch (Exception ex)
+		{
 			fail(ex.getMessage());
 		}
-    }
+	}
 
-    /**
-     * Helper for the TimeTests. It tests what should be in the db
-     */
-    private void timeTest() throws SQLException {
+	/**
+	 * Helper for the TimeTests. It tests what should be in the db
+	 */
+	private void timeTest() throws SQLException
+	{
 		Statement st = con.createStatement();
 		ResultSet rs;
 		java.sql.Time t;
@@ -98,11 +111,12 @@ public class TimeTest extends TestCase {
 		assertTrue(! rs.next());
 
 		rs.close();
-    }
+	}
 
-    private java.sql.Time makeTime(int h, int m, int s) {
+	private java.sql.Time makeTime(int h, int m, int s)
+	{
 		return java.sql.Time.valueOf(JDBC2Tests.fix(h, 2) + ":" +
 									 JDBC2Tests.fix(m, 2) + ":" +
 									 JDBC2Tests.fix(s, 2));
-    }
+	}
 }
