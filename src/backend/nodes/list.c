@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.46 2003/01/27 20:51:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.47 2003/02/08 20:20:54 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -249,21 +249,6 @@ llast(List *l)
 }
 
 /*
- *	llasti
- *
- *	As above, but for integer lists
- */
-int
-llasti(List *l)
-{
-	if (l == NIL)
-		elog(ERROR, "llasti: empty list");
-	while (lnext(l) != NIL)
-		l = lnext(l);
-	return lfirsti(l);
-}
-
-/*
  *	freeList
  *
  *	Free the List nodes of a list
@@ -301,35 +286,6 @@ equali(List *list1, List *list2)
 	}
 	if (list2 != NIL)
 		return false;
-	return true;
-}
-
-/*
- *		sameseti
- *
- *		Returns t if two integer lists contain the same elements
- *		(but unlike equali(), they need not be in the same order)
- *
- *		Caution: this routine could be fooled if list1 contains
- *		duplicate elements.  It is intended to be used on lists
- *		containing only nonduplicate elements, eg Relids lists.
- */
-bool
-sameseti(List *list1, List *list2)
-{
-	List	   *temp;
-
-	if (list1 == NIL)
-		return list2 == NIL;
-	if (list2 == NIL)
-		return false;
-	if (length(list1) != length(list2))
-		return false;
-	foreach(temp, list1)
-	{
-		if (!intMember(lfirsti(temp), list2))
-			return false;
-	}
 	return true;
 }
 
@@ -397,7 +353,6 @@ set_ptrUnion(List *l1, List *l2)
  * The result is a fresh List, but it points to the same member nodes
  * as were in the inputs.
  */
-#ifdef NOT_USED
 List *
 set_intersect(List *l1, List *l2)
 {
@@ -411,7 +366,6 @@ set_intersect(List *l1, List *l2)
 	}
 	return retval;
 }
-#endif
 
 List *
 set_intersecti(List *l1, List *l2)
@@ -664,6 +618,7 @@ set_ptrDifference(List *l1, List *l2)
 /*
  * Reverse a list, non-destructively
  */
+#ifdef NOT_USED
 List *
 lreverse(List *l)
 {
@@ -674,39 +629,4 @@ lreverse(List *l)
 		result = lcons(lfirst(i), result);
 	return result;
 }
-
-/*
- * Return t if two integer lists have any members in common.
- */
-bool
-overlap_setsi(List *list1, List *list2)
-{
-	List	   *x;
-
-	foreach(x, list1)
-	{
-		int			e = lfirsti(x);
-
-		if (intMember(e, list2))
-			return true;
-	}
-	return false;
-}
-
-/*
- * Return t if all members of integer list list1 appear in list2.
- */
-bool
-is_subseti(List *list1, List *list2)
-{
-	List	   *x;
-
-	foreach(x, list1)
-	{
-		int			e = lfirsti(x);
-
-		if (!intMember(e, list2))
-			return false;
-	}
-	return true;
-}
+#endif

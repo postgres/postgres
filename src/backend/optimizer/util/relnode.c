@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.46 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.47 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,7 @@ build_base_rel(Query *root, int relid)
 	foreach(rels, root->base_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
-
-		/* length(rel->relids) == 1 for all members of base_rel_list */
-		if (lfirsti(rel->relids) == relid)
+		if (relid == rel->relid)
 			elog(ERROR, "build_base_rel: rel already exists");
 	}
 
@@ -64,8 +62,7 @@ build_base_rel(Query *root, int relid)
 	foreach(rels, root->other_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
-
-		if (lfirsti(rel->relids) == relid)
+		if (relid == rel->relid)
 			elog(ERROR, "build_base_rel: rel already exists as 'other' rel");
 	}
 
@@ -92,9 +89,7 @@ build_other_rel(Query *root, int relid)
 	foreach(rels, root->other_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
-
-		/* length(rel->relids) == 1 for all members of other_rel_list */
-		if (lfirsti(rel->relids) == relid)
+		if (relid == rel->relid)
 			return rel;
 	}
 
@@ -102,8 +97,7 @@ build_other_rel(Query *root, int relid)
 	foreach(rels, root->base_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
-
-		if (lfirsti(rel->relids) == relid)
+		if (relid == rel->relid)
 			elog(ERROR, "build_other_rel: rel already exists as base rel");
 	}
 
@@ -133,7 +127,7 @@ make_base_rel(Query *root, int relid)
 	RangeTblEntry *rte = rt_fetch(relid, root->rtable);
 
 	rel->reloptkind = RELOPT_BASEREL;
-	rel->relids = makeListi1(relid);
+	rel->relids = bms_make_singleton(relid);
 	rel->rows = 0;
 	rel->width = 0;
 	rel->targetlist = NIL;
@@ -142,6 +136,7 @@ make_base_rel(Query *root, int relid)
 	rel->cheapest_total_path = NULL;
 	rel->cheapest_unique_path = NULL;
 	rel->pruneable = true;
+	rel->relid = relid;
 	rel->rtekind = rte->rtekind;
 	rel->varlist = NIL;
 	rel->indexlist = NIL;
@@ -151,9 +146,9 @@ make_base_rel(Query *root, int relid)
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost.startup = 0;
 	rel->baserestrictcost.per_tuple = 0;
-	rel->outerjoinset = NIL;
+	rel->outerjoinset = NULL;
 	rel->joininfo = NIL;
-	rel->index_outer_relids = NIL;
+	rel->index_outer_relids = NULL;
 	rel->index_inner_paths = NIL;
 
 	/* Check type of rtable entry */
@@ -190,17 +185,14 @@ find_base_rel(Query *root, int relid)
 	foreach(rels, root->base_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
-
-		/* length(rel->relids) == 1 for all members of base_rel_list */
-		if (lfirsti(rel->relids) == relid)
+		if (relid == rel->relid)
 			return rel;
 	}
 
 	foreach(rels, root->other_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
-
-		if (lfirsti(rel->relids) == relid)
+		if (relid == rel->relid)
 			return rel;
 	}
 
@@ -211,7 +203,7 @@ find_base_rel(Query *root, int relid)
 
 /*
  * find_join_rel
- *	  Returns relation entry corresponding to 'relids' (a list of RT indexes),
+ *	  Returns relation entry corresponding to 'relids' (a set of RT indexes),
  *	  or NULL if none exists.  This is for join relations.
  *
  * Note: there is probably no good reason for this to be called from
@@ -227,7 +219,7 @@ find_join_rel(Query *root, Relids relids)
 	{
 		RelOptInfo *rel = (RelOptInfo *) lfirst(joinrels);
 
-		if (sameseti(rel->relids, relids))
+		if (bms_equal(rel->relids, relids))
 			return rel;
 	}
 
@@ -239,7 +231,7 @@ find_join_rel(Query *root, Relids relids)
  *	  Returns relation entry corresponding to the union of two given rels,
  *	  creating a new relation entry if none already exists.
  *
- * 'joinrelids' is the Relids list that uniquely identifies the join
+ * 'joinrelids' is the Relids set that uniquely identifies the join
  * 'outer_rel' and 'inner_rel' are relation nodes for the relations to be
  *		joined
  * 'jointype': type of join (inner/outer)
@@ -252,7 +244,7 @@ find_join_rel(Query *root, Relids relids)
  */
 RelOptInfo *
 build_join_rel(Query *root,
-			   List *joinrelids,
+			   Relids joinrelids,
 			   RelOptInfo *outer_rel,
 			   RelOptInfo *inner_rel,
 			   JoinType jointype,
@@ -288,7 +280,7 @@ build_join_rel(Query *root,
 	 */
 	joinrel = makeNode(RelOptInfo);
 	joinrel->reloptkind = RELOPT_JOINREL;
-	joinrel->relids = listCopy(joinrelids);
+	joinrel->relids = bms_copy(joinrelids);
 	joinrel->rows = 0;
 	joinrel->width = 0;
 	joinrel->targetlist = NIL;
@@ -297,6 +289,7 @@ build_join_rel(Query *root,
 	joinrel->cheapest_total_path = NULL;
 	joinrel->cheapest_unique_path = NULL;
 	joinrel->pruneable = true;
+	joinrel->relid = 0;			/* indicates not a baserel */
 	joinrel->rtekind = RTE_JOIN;
 	joinrel->varlist = NIL;
 	joinrel->indexlist = NIL;
@@ -306,9 +299,9 @@ build_join_rel(Query *root,
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost.startup = 0;
 	joinrel->baserestrictcost.per_tuple = 0;
-	joinrel->outerjoinset = NIL;
+	joinrel->outerjoinset = NULL;
 	joinrel->joininfo = NIL;
-	joinrel->index_outer_relids = NIL;
+	joinrel->index_outer_relids = NULL;
 	joinrel->index_inner_paths = NIL;
 
 	/*
@@ -494,7 +487,7 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 
-		if (is_subseti(joininfo->unjoined_relids, joinrel->relids))
+		if (bms_is_subset(joininfo->unjoined_relids, joinrel->relids))
 		{
 			/*
 			 * Clauses in this JoinInfo list become restriction clauses
@@ -529,15 +522,16 @@ subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 		Relids		new_unjoined_relids;
 
-		new_unjoined_relids = set_differencei(joininfo->unjoined_relids,
-											  joinrel->relids);
-		if (new_unjoined_relids == NIL)
+		new_unjoined_relids = bms_difference(joininfo->unjoined_relids,
+											 joinrel->relids);
+		if (bms_is_empty(new_unjoined_relids))
 		{
 			/*
 			 * Clauses in this JoinInfo list become restriction clauses
 			 * for the joinrel, since they refer to no outside rels. So we
 			 * can ignore them in this routine.
 			 */
+			bms_free(new_unjoined_relids);
 		}
 		else
 		{

@@ -7,17 +7,17 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: var.h,v 1.25 2003/01/20 18:55:06 tgl Exp $
+ * $Id: var.h,v 1.26 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VAR_H
 #define VAR_H
 
-#include "nodes/parsenodes.h"
+#include "nodes/relation.h"
 
 
-extern List *pull_varnos(Node *node);
+extern Relids pull_varnos(Node *node);
 extern bool contain_var_reference(Node *node, int varno, int varattno,
 					  int levelsup);
 extern bool contain_whole_tuple_var(Node *node, int varno, int levelsup);

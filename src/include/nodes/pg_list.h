@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.33 2003/01/27 20:51:54 tgl Exp $
+ * $Id: pg_list.h,v 1.34 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,6 @@ typedef struct List
  */
 extern int	length(List *list);
 extern void *llast(List *list);
-extern int	llasti(List *list);
 extern List *nconc(List *list1, List *list2);
 extern List *lcons(void *datum, List *list);
 extern List *lconsi(int datum, List *list);
@@ -136,20 +135,16 @@ extern void *nth(int n, List *l);
 extern int	nthi(int n, List *l);
 extern void set_nth(List *l, int n, void *elem);
 
-extern List *set_difference(List *list1, List *list2);
-extern List *set_differencei(List *list1, List *list2);
-extern List *set_ptrDifference(List *list1, List *list2);
-extern List *lreverse(List *l);
 extern List *set_union(List *list1, List *list2);
 extern List *set_unioni(List *list1, List *list2);
 extern List *set_ptrUnion(List *list1, List *list2);
+extern List *set_intersect(List *l1, List *l2);
 extern List *set_intersecti(List *list1, List *list2);
+extern List *set_difference(List *list1, List *list2);
+extern List *set_differencei(List *list1, List *list2);
+extern List *set_ptrDifference(List *list1, List *list2);
 
 extern bool equali(List *list1, List *list2);
-extern bool sameseti(List *list1, List *list2);
-extern bool overlap_setsi(List *list1, List *list2);
-#define nonoverlap_setsi(list1, list2) (!overlap_setsi(list1, list2))
-extern bool is_subseti(List *list1, List *list2);
 
 extern void freeList(List *list);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.2 2003/01/25 23:10:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.3 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,7 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			parse->rowMarks = nconc(parse->rowMarks, subquery->rowMarks);
 
 			/*
-			 * We also have to fix the relid lists of any parent InClauseInfo
+			 * We also have to fix the relid sets of any parent InClauseInfo
 			 * nodes.  (This could perhaps be done by ResolveNew, but it
 			 * would clutter that routine's API unreasonably.)
 			 */
@@ -611,10 +611,10 @@ preprocess_jointree(Query *parse, Node *jtnode)
 }
 
 /*
- * fix_in_clause_relids: update RT-index lists of InClauseInfo nodes
+ * fix_in_clause_relids: update RT-index sets of InClauseInfo nodes
  *
  * When we pull up a subquery, any InClauseInfo references to the subquery's
- * RT index have to be replaced by the list of substituted relids.
+ * RT index have to be replaced by the set of substituted relids.
  *
  * We assume we may modify the InClauseInfo nodes in-place.
  */
@@ -627,26 +627,26 @@ fix_in_clause_relids(List *in_info_list, int varno, Relids subrelids)
 	{
 		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
-		if (intMember(varno, ininfo->lefthand))
+		if (bms_is_member(varno, ininfo->lefthand))
 		{
-			ininfo->lefthand = lremovei(varno, ininfo->lefthand);
-			ininfo->lefthand = nconc(ininfo->lefthand, listCopy(subrelids));
+			ininfo->lefthand = bms_del_member(ininfo->lefthand, varno);
+			ininfo->lefthand = bms_add_members(ininfo->lefthand, subrelids);
 		}
-		if (intMember(varno, ininfo->righthand))
+		if (bms_is_member(varno, ininfo->righthand))
 		{
-			ininfo->righthand = lremovei(varno, ininfo->righthand);
-			ininfo->righthand = nconc(ininfo->righthand, listCopy(subrelids));
+			ininfo->righthand = bms_del_member(ininfo->righthand, varno);
+			ininfo->righthand = bms_add_members(ininfo->righthand, subrelids);
 		}
 	}
 }
 
 /*
- * get_relids_in_jointree: get list of base RT indexes present in a jointree
+ * get_relids_in_jointree: get set of base RT indexes present in a jointree
  */
-List *
+Relids
 get_relids_in_jointree(Node *jtnode)
 {
-	Relids		result = NIL;
+	Relids		result = NULL;
 
 	if (jtnode == NULL)
 		return result;
@@ -654,21 +654,17 @@ get_relids_in_jointree(Node *jtnode)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
-		result = makeListi1(varno);
+		result = bms_make_singleton(varno);
 	}
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
 		List	   *l;
 
-		/*
-		 * Note: we assume it's impossible to see same RT index from more
-		 * than one subtree, so nconc() is OK rather than set_unioni().
-		 */
 		foreach(l, f->fromlist)
 		{
-			result = nconc(result,
-						   get_relids_in_jointree(lfirst(l)));
+			result = bms_join(result,
+							  get_relids_in_jointree(lfirst(l)));
 		}
 	}
 	else if (IsA(jtnode, JoinExpr))
@@ -677,7 +673,7 @@ get_relids_in_jointree(Node *jtnode)
 
 		/* join's own RT index is not wanted in result */
 		result = get_relids_in_jointree(j->larg);
-		result = nconc(result, get_relids_in_jointree(j->rarg));
+		result = bms_join(result, get_relids_in_jointree(j->rarg));
 	}
 	else
 		elog(ERROR, "get_relids_in_jointree: unexpected node type %d",
@@ -686,12 +682,12 @@ get_relids_in_jointree(Node *jtnode)
 }
 
 /*
- * get_relids_for_join: get list of base RT indexes making up a join
+ * get_relids_for_join: get set of base RT indexes making up a join
  *
  * NB: this will not work reliably after preprocess_jointree() is run,
  * since that may eliminate join nodes from the jointree.
  */
-List *
+Relids
 get_relids_for_join(Query *parse, int joinrelid)
 {
 	Node	   *jtnode;

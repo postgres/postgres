@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.95 2003/01/25 23:10:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.96 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ make_one_rel(Query *root)
 	/*
 	 * The result should join all the query's base rels.
 	 */
-	Assert(length(rel->relids) == length(root->base_rel_list));
+	Assert(bms_num_members(rel->relids) == length(root->base_rel_list));
 
 	return rel;
 }
@@ -98,12 +98,11 @@ set_base_rel_pathlists(Query *root)
 	foreach(rellist, root->base_rel_list)
 	{
 		RelOptInfo *rel = (RelOptInfo *) lfirst(rellist);
-		Index		rti;
+		Index		rti = rel->relid;
 		RangeTblEntry *rte;
 		List	   *inheritlist;
 
-		Assert(length(rel->relids) == 1);		/* better be base rel */
-		rti = lfirsti(rel->relids);
+		Assert(rti > 0);		/* better be base rel */
 		rte = rt_fetch(rti, root->rtable);
 
 		if (rel->rtekind == RTE_SUBQUERY)
@@ -696,14 +695,19 @@ recurse_push_qual(Node *setOp, Query *topquery,
 static void
 print_relids(Relids relids)
 {
-	List	   *l;
+	Relids		tmprelids;
+	int			x;
+	bool		first = true;
 
-	foreach(l, relids)
+	tmprelids = bms_copy(relids);
+	while ((x = bms_first_member(tmprelids)) >= 0)
 	{
-		printf("%d", lfirsti(l));
-		if (lnext(l))
+		if (!first)
 			printf(" ");
+		printf("%d", x);
+		first = false;
 	}
+	bms_free(tmprelids);
 }
 
 static void

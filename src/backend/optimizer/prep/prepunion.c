@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.88 2003/01/20 18:54:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.89 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ static List *generate_append_tlist(List *colTypes, bool flag,
 					  List *refnames_tlist);
 static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
-static List *adjust_rtindex_list(List *relids, Index oldrelid, Index newrelid);
+static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
 static List *adjust_inherited_tlist(List *tlist, Oid new_relid);
 
 
@@ -604,7 +604,7 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 
 /*
  * find_all_inheritors -
- *		Returns an integer list of relids including the given rel plus
+ *		Returns an integer list of relation OIDs including the given rel plus
  *		all relations that inherit from it, directly or indirectly.
  */
 List *
@@ -662,6 +662,8 @@ find_all_inheritors(Oid parentrel)
  * its inh flag cleared, whether or not there were any children.  This
  * ensures we won't expand the same RTE twice, which would otherwise occur
  * for the case of an inherited UPDATE/DELETE target relation.
+ *
+ * XXX probably should convert the result type to Relids?
  */
 List *
 expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
@@ -840,13 +842,13 @@ adjust_inherited_attrs_mutator(Node *node,
 		ininfo = (InClauseInfo *) expression_tree_mutator(node,
 										  adjust_inherited_attrs_mutator,
 														  (void *) context);
-		/* now fix InClauseInfo's rtindex lists */
-		ininfo->lefthand = adjust_rtindex_list(ininfo->lefthand,
-											   context->old_rt_index,
-											   context->new_rt_index);
-		ininfo->righthand = adjust_rtindex_list(ininfo->righthand,
-												context->old_rt_index,
-												context->new_rt_index);
+		/* now fix InClauseInfo's relid sets */
+		ininfo->lefthand = adjust_relid_set(ininfo->lefthand,
+											context->old_rt_index,
+											context->new_rt_index);
+		ininfo->righthand = adjust_relid_set(ininfo->righthand,
+											 context->old_rt_index,
+											 context->new_rt_index);
 		return (Node *) ininfo;
 	}
 
@@ -873,14 +875,14 @@ adjust_inherited_attrs_mutator(Node *node,
 		newinfo->subclauseindices = NIL;
 
 		/*
-		 * Adjust left/right relids lists too.
+		 * Adjust left/right relid sets too.
 		 */
-		newinfo->left_relids = adjust_rtindex_list(oldinfo->left_relids,
-												   context->old_rt_index,
-												   context->new_rt_index);
-		newinfo->right_relids = adjust_rtindex_list(oldinfo->right_relids,
-													context->old_rt_index,
-													context->new_rt_index);
+		newinfo->left_relids = adjust_relid_set(oldinfo->left_relids,
+												context->old_rt_index,
+												context->new_rt_index);
+		newinfo->right_relids = adjust_relid_set(oldinfo->right_relids,
+												 context->old_rt_index,
+												 context->new_rt_index);
 
 		newinfo->eval_cost.startup = -1; /* reset these too */
 		newinfo->this_selec = -1;
@@ -928,18 +930,18 @@ adjust_inherited_attrs_mutator(Node *node,
 }
 
 /*
- * Substitute newrelid for oldrelid in a list of RT indexes
+ * Substitute newrelid for oldrelid in a Relid set
  */
-static List *
-adjust_rtindex_list(List *relids, Index oldrelid, Index newrelid)
+static Relids
+adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
 {
-	if (intMember(oldrelid, relids))
+	if (bms_is_member(oldrelid, relids))
 	{
 		/* Ensure we have a modifiable copy */
-		relids = listCopy(relids);
+		relids = bms_copy(relids);
 		/* Remove old, add new */
-		relids = lremovei(oldrelid, relids);
-		relids = lconsi(newrelid, relids);
+		relids = bms_del_member(relids, oldrelid);
+		relids = bms_add_member(relids, newrelid);
 	}
 	return relids;
 }

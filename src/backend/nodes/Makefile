@@ -4,7 +4,7 @@
 #    Makefile for backend/nodes
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.13 2000/08/31 16:10:06 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/nodes/Makefile,v 1.14 2003/02/08 20:20:53 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/nodes
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = nodeFuncs.o nodes.o list.o \
+OBJS = nodeFuncs.o nodes.o list.o bitmapset.o \
        copyfuncs.o equalfuncs.o makefuncs.o \
        outfuncs.o readfuncs.o print.o read.o
 

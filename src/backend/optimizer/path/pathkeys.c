@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.45 2003/01/24 03:58:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.46 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,7 +198,7 @@ generate_implied_equalities(Query *root)
 		 * Collect info about relids mentioned in each item.  For this
 		 * routine we only really care whether there are any at all in
 		 * each item, but process_implied_equality() needs the exact
-		 * lists, so we may as well pull them here.
+		 * sets, so we may as well pull them here.
 		 */
 		relids = (Relids *) palloc(nitems * sizeof(Relids));
 		have_consts = false;
@@ -208,7 +208,7 @@ generate_implied_equalities(Query *root)
 			PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
 
 			relids[i1] = pull_varnos(item1->key);
-			if (relids[i1] == NIL)
+			if (bms_is_empty(relids[i1]))
 				have_consts = true;
 			i1++;
 		}
@@ -221,12 +221,14 @@ generate_implied_equalities(Query *root)
 		foreach(ptr1, curset)
 		{
 			PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
+			bool		i1_is_variable = !bms_is_empty(relids[i1]);
 			List	   *ptr2;
 			int			i2 = i1 + 1;
 
 			foreach(ptr2, lnext(ptr1))
 			{
 				PathKeyItem *item2 = (PathKeyItem *) lfirst(ptr2);
+				bool		i2_is_variable = !bms_is_empty(relids[i2]);
 
 				/*
 				 * If it's "const = const" then just ignore it altogether.
@@ -235,7 +237,7 @@ generate_implied_equalities(Query *root)
 				 * propagating the comparison to Vars will cause us to
 				 * produce zero rows out, as expected.)
 				 */
-				if (relids[i1] != NIL || relids[i2] != NIL)
+				if (i1_is_variable || i2_is_variable)
 				{
 					/*
 					 * Tell process_implied_equality to delete the clause,
@@ -243,8 +245,9 @@ generate_implied_equalities(Query *root)
 					 * present in the list.
 					 */
 					bool	delete_it = (have_consts &&
-										 relids[i1] != NIL &&
-										 relids[i2] != NIL);
+										 i1_is_variable &&
+										 i2_is_variable);
+
 					process_implied_equality(root,
 											 item1->key, item2->key,
 											 item1->sortop, item2->sortop,
@@ -689,7 +692,7 @@ static Var *
 find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 {
 	List	   *temp;
-	int			relid;
+	Index		relid;
 	Oid			reloid,
 				vartypeid;
 	int32		type_mod;
@@ -702,7 +705,8 @@ find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 			return tle_var;
 	}
 
-	relid = lfirsti(rel->relids);
+	relid = rel->relid;
+	Assert(relid > 0);
 	reloid = getrelid(relid, root->rtable);
 	vartypeid = get_atttype(reloid, varattno);
 	type_mod = get_atttypmod(reloid, varattno);
@@ -953,12 +957,12 @@ make_pathkeys_for_mergeclauses(Query *root,
 
 		cache_mergeclause_pathkeys(root, restrictinfo);
 
-		if (is_subseti(restrictinfo->left_relids, rel->relids))
+		if (bms_is_subset(restrictinfo->left_relids, rel->relids))
 		{
 			/* Rel is left side of mergeclause */
 			pathkey = restrictinfo->left_pathkey;
 		}
-		else if (is_subseti(restrictinfo->right_relids, rel->relids))
+		else if (bms_is_subset(restrictinfo->right_relids, rel->relids))
 		{
 			/* Rel is right side of mergeclause */
 			pathkey = restrictinfo->right_pathkey;

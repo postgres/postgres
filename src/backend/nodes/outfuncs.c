@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.195 2003/02/03 21:15:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.196 2003/02/08 20:20:54 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -96,6 +96,11 @@
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
 	 _outOidList(str, node->fldname))
 
+/* Write a bitmapset field */
+#define WRITE_BITMAPSET_FIELD(fldname) \
+	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
+	 _outBitmapset(str, node->fldname))
+
 
 #define booltostr(x)  ((x) ? "true" : "false")
 
@@ -169,6 +174,29 @@ _outOidList(StringInfo str, List *list)
 	appendStringInfoChar(str, '(');
 	foreach(l, list)
 		appendStringInfo(str, " %u", (Oid) lfirsti(l));
+	appendStringInfoChar(str, ')');
+}
+
+/*
+ * _outBitmapset -
+ *	   converts a bitmap set of integers
+ *
+ * Note: for historical reasons, the output is formatted exactly like
+ * an integer List would be.
+ */
+static void
+_outBitmapset(StringInfo str, Bitmapset *bms)
+{
+	Bitmapset  *tmpset;
+	int			x;
+
+	appendStringInfoChar(str, '(');
+	tmpset = bms_copy(bms);
+	while ((x = bms_first_member(tmpset)) >= 0)
+	{
+		appendStringInfo(str, " %d", x);
+	}
+	bms_free(tmpset);
 	appendStringInfoChar(str, ')');
 }
 
@@ -963,8 +991,8 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_NODE_FIELD(clause);
 	WRITE_BOOL_FIELD(ispusheddown);
 	WRITE_NODE_FIELD(subclauseindices);
-	WRITE_INTLIST_FIELD(left_relids);
-	WRITE_INTLIST_FIELD(right_relids);
+	WRITE_BITMAPSET_FIELD(left_relids);
+	WRITE_BITMAPSET_FIELD(right_relids);
 	WRITE_OID_FIELD(mergejoinoperator);
 	WRITE_OID_FIELD(left_sortop);
 	WRITE_OID_FIELD(right_sortop);
@@ -976,7 +1004,7 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
 {
 	WRITE_NODE_TYPE("JOININFO");
 
-	WRITE_INTLIST_FIELD(unjoined_relids);
+	WRITE_BITMAPSET_FIELD(unjoined_relids);
 	WRITE_NODE_FIELD(jinfo_restrictinfo);
 }
 
@@ -985,8 +1013,8 @@ _outInClauseInfo(StringInfo str, InClauseInfo *node)
 {
 	WRITE_NODE_TYPE("INCLAUSEINFO");
 
-	WRITE_INTLIST_FIELD(lefthand);
-	WRITE_INTLIST_FIELD(righthand);
+	WRITE_BITMAPSET_FIELD(lefthand);
+	WRITE_BITMAPSET_FIELD(righthand);
 	WRITE_NODE_FIELD(sub_targetlist);
 }
 

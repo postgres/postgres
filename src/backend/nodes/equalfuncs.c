@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.183 2003/02/03 21:15:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.184 2003/02/08 20:20:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,13 @@
 #define COMPARE_INTLIST_FIELD(fldname) \
 	do { \
 		if (!equali(a->fldname, b->fldname)) \
+			return false; \
+	} while (0)
+
+/* Compare a field that is a pointer to a Bitmapset */
+#define COMPARE_BITMAPSET_FIELD(fldname) \
+	do { \
+		if (!bms_equal(a->fldname, b->fldname)) \
 			return false; \
 	} while (0)
 
@@ -486,7 +493,7 @@ _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 static bool
 _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
-	COMPARE_INTLIST_FIELD(unjoined_relids);
+	COMPARE_BITMAPSET_FIELD(unjoined_relids);
 	COMPARE_NODE_FIELD(jinfo_restrictinfo);
 
 	return true;
@@ -495,8 +502,8 @@ _equalJoinInfo(JoinInfo *a, JoinInfo *b)
 static bool
 _equalInClauseInfo(InClauseInfo *a, InClauseInfo *b)
 {
-	COMPARE_INTLIST_FIELD(lefthand);
-	COMPARE_INTLIST_FIELD(righthand);
+	COMPARE_BITMAPSET_FIELD(lefthand);
+	COMPARE_BITMAPSET_FIELD(righthand);
 	COMPARE_NODE_FIELD(sub_targetlist);
 
 	return true;

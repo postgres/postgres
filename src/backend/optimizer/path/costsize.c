@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.104 2003/01/28 22:13:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.105 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ cost_seqscan(Path *path, Query *root,
 	Cost		cpu_per_tuple;
 
 	/* Should only be applied to base relations */
-	Assert(length(baserel->relids) == 1);
+	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
 	if (!enable_seqscan)
@@ -241,7 +241,7 @@ cost_index(Path *path, Query *root,
 	/* Should only be applied to base relations */
 	Assert(IsA(baserel, RelOptInfo) &&
 		   IsA(index, IndexOptInfo));
-	Assert(length(baserel->relids) == 1);
+	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
 	if (!enable_indexscan)
@@ -397,7 +397,7 @@ cost_tidscan(Path *path, Query *root,
 	int			ntuples = length(tideval);
 
 	/* Should only be applied to base relations */
-	Assert(length(baserel->relids) == 1);
+	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_RELATION);
 
 	if (!enable_tidscan)
@@ -427,7 +427,7 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
 	Cost		cpu_per_tuple;
 
 	/* Should only be applied to base relations that are functions */
-	Assert(length(baserel->relids) == 1);
+	Assert(baserel->relid > 0);
 	Assert(baserel->rtekind == RTE_FUNCTION);
 
 	/*
@@ -886,7 +886,7 @@ cost_mergejoin(MergePath *path, Query *root)
 						 &firstclause->left_mergescansel,
 						 &firstclause->right_mergescansel);
 
-	if (is_subseti(firstclause->left_relids, outer_path->parent->relids))
+	if (bms_is_subset(firstclause->left_relids, outer_path->parent->relids))
 	{
 		/* left side of clause is outer */
 		outerscansel = firstclause->left_mergescansel;
@@ -1116,8 +1116,8 @@ cost_hashjoin(HashPath *path, Query *root)
 			 * planning a large query, we cache the bucketsize estimate in the
 			 * RestrictInfo node to avoid repeated lookups of statistics.
 			 */
-			if (is_subseti(restrictinfo->right_relids,
-						   inner_path->parent->relids))
+			if (bms_is_subset(restrictinfo->right_relids,
+							  inner_path->parent->relids))
 			{
 				/* righthand side is inner */
 				thisbucketsize = restrictinfo->right_bucketsize;
@@ -1133,8 +1133,8 @@ cost_hashjoin(HashPath *path, Query *root)
 			}
 			else
 			{
-				Assert(is_subseti(restrictinfo->left_relids,
-								  inner_path->parent->relids));
+				Assert(bms_is_subset(restrictinfo->left_relids,
+									 inner_path->parent->relids));
 				/* lefthand side is inner */
 				thisbucketsize = restrictinfo->left_bucketsize;
 				if (thisbucketsize < 0)
@@ -1635,12 +1635,12 @@ set_baserel_size_estimates(Query *root, RelOptInfo *rel)
 	double		temp;
 
 	/* Should only be applied to base relations */
-	Assert(length(rel->relids) == 1);
+	Assert(rel->relid > 0);
 
 	temp = rel->tuples *
 		restrictlist_selectivity(root,
 								 rel->baserestrictinfo,
-								 lfirsti(rel->relids),
+								 rel->relid,
 								 JOIN_INNER);
 
 	/*
@@ -1803,7 +1803,7 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 	double		temp;
 
 	/* Should only be applied to base relations that are functions */
-	Assert(length(rel->relids) == 1);
+	Assert(rel->relid > 0);
 	Assert(rel->rtekind == RTE_FUNCTION);
 
 	/*
@@ -1818,7 +1818,7 @@ set_function_size_estimates(Query *root, RelOptInfo *rel)
 	temp = rel->tuples *
 		restrictlist_selectivity(root,
 								 rel->baserestrictinfo,
-								 lfirsti(rel->relids),
+								 rel->relid,
 								 JOIN_INNER);
 
 	/*

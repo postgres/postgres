@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.239 2003/02/03 21:15:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.240 2003/02/08 20:20:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,10 @@
 /* Copy a field that is a pointer to a list of integers */
 #define COPY_INTLIST_FIELD(fldname) \
 	(newnode->fldname = listCopy(from->fldname))
+
+/* Copy a field that is a pointer to a Bitmapset */
+#define COPY_BITMAPSET_FIELD(fldname) \
+	(newnode->fldname = bms_copy(from->fldname))
 
 /* Copy a field that is a pointer to a C string, or perhaps NULL */
 #define COPY_STRING_FIELD(fldname) \
@@ -1058,8 +1062,8 @@ _copyRestrictInfo(RestrictInfo *from)
 	COPY_NODE_FIELD(subclauseindices); /* XXX probably bad */
 	COPY_SCALAR_FIELD(eval_cost);
 	COPY_SCALAR_FIELD(this_selec);
-	COPY_INTLIST_FIELD(left_relids);
-	COPY_INTLIST_FIELD(right_relids);
+	COPY_BITMAPSET_FIELD(left_relids);
+	COPY_BITMAPSET_FIELD(right_relids);
 	COPY_SCALAR_FIELD(mergejoinoperator);
 	COPY_SCALAR_FIELD(left_sortop);
 	COPY_SCALAR_FIELD(right_sortop);
@@ -1088,7 +1092,7 @@ _copyJoinInfo(JoinInfo *from)
 {
 	JoinInfo   *newnode = makeNode(JoinInfo);
 
-	COPY_INTLIST_FIELD(unjoined_relids);
+	COPY_BITMAPSET_FIELD(unjoined_relids);
 	COPY_NODE_FIELD(jinfo_restrictinfo);
 
 	return newnode;
@@ -1102,8 +1106,8 @@ _copyInClauseInfo(InClauseInfo *from)
 {
 	InClauseInfo *newnode = makeNode(InClauseInfo);
 
-	COPY_INTLIST_FIELD(lefthand);
-	COPY_INTLIST_FIELD(righthand);
+	COPY_BITMAPSET_FIELD(lefthand);
+	COPY_BITMAPSET_FIELD(righthand);
 	COPY_NODE_FIELD(sub_targetlist);
 
 	return newnode;

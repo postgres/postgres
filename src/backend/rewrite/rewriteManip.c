@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.70 2003/01/20 18:54:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.71 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,8 @@
 
 static bool checkExprHasAggs_walker(Node *node, void *context);
 static bool checkExprHasSubLink_walker(Node *node, void *context);
+static Relids offset_relid_set(Relids relids, int offset);
+static Relids adjust_relid_set(Relids relids, int oldrelid, int newrelid);
 
 
 /*
@@ -143,16 +145,10 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 
 		if (context->sublevels_up == 0)
 		{
-			List	*rt;
-
-			foreach(rt, ininfo->lefthand)
-			{
-				lfirsti(rt) += context->offset;
-			}
-			foreach(rt, ininfo->righthand)
-			{
-				lfirsti(rt) += context->offset;
-			}
+			ininfo->lefthand = offset_relid_set(ininfo->lefthand,
+												context->offset);
+			ininfo->righthand = offset_relid_set(ininfo->righthand,
+												 context->offset);
 		}
 		/* fall through to examine children */
 	}
@@ -208,6 +204,22 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 	}
 	else
 		OffsetVarNodes_walker(node, &context);
+}
+
+static Relids
+offset_relid_set(Relids relids, int offset)
+{
+	Relids		result = NULL;
+	Relids		tmprelids;
+	int			rtindex;
+
+	tmprelids = bms_copy(relids);
+	while ((rtindex = bms_first_member(tmprelids)) >= 0)
+	{
+		result = bms_add_member(result, rtindex + offset);
+	}
+	bms_free(tmprelids);
+	return result;
 }
 
 /*
@@ -272,18 +284,12 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 
 		if (context->sublevels_up == 0)
 		{
-			List	*rt;
-
-			foreach(rt, ininfo->lefthand)
-			{
-				if (lfirsti(rt) == context->rt_index)
-					lfirsti(rt) = context->new_index;
-			}
-			foreach(rt, ininfo->righthand)
-			{
-				if (lfirsti(rt) == context->rt_index)
-					lfirsti(rt) = context->new_index;
-			}
+			ininfo->lefthand = adjust_relid_set(ininfo->lefthand,
+												context->rt_index,
+												context->new_index);
+			ininfo->righthand = adjust_relid_set(ininfo->righthand,
+												 context->rt_index,
+												 context->new_index);
 		}
 		/* fall through to examine children */
 	}
@@ -343,6 +349,23 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 	}
 	else
 		ChangeVarNodes_walker(node, &context);
+}
+
+/*
+ * Substitute newrelid for oldrelid in a Relid set
+ */
+static Relids
+adjust_relid_set(Relids relids, int oldrelid, int newrelid)
+{
+	if (bms_is_member(oldrelid, relids))
+	{
+		/* Ensure we have a modifiable copy */
+		relids = bms_copy(relids);
+		/* Remove old, add new */
+		relids = bms_del_member(relids, oldrelid);
+		relids = bms_add_member(relids, newrelid);
+	}
+	return relids;
 }
 
 /*
@@ -468,8 +491,8 @@ rangeTableEntry_used_walker(Node *node,
 		InClauseInfo   *ininfo = (InClauseInfo *) node;
 
 		if (context->sublevels_up == 0 &&
-			(intMember(context->rt_index, ininfo->lefthand) ||
-			 intMember(context->rt_index, ininfo->righthand)))
+			(bms_is_member(context->rt_index, ininfo->lefthand) ||
+			 bms_is_member(context->rt_index, ininfo->righthand)))
 			return true;
 		/* fall through to examine children */
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.86 2003/01/27 20:51:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.87 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,7 +560,7 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	{
 		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
-		if (sameseti(ininfo->righthand, rel->relids))
+		if (bms_equal(ininfo->righthand, rel->relids))
 		{
 			sub_targetlist = ininfo->sub_targetlist;
 			break;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.134 2003/01/28 22:13:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.135 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 {
 	List	   *restrictinfo_list = rel->baserestrictinfo;
 	List	   *joininfo_list = rel->joininfo;
-	Relids		all_join_outerrelids = NIL;
+	Relids		all_join_outerrelids = NULL;
 	List	   *ilist;
 
 	foreach(ilist, rel->indexlist)
@@ -151,7 +151,7 @@ create_index_paths(Query *root, RelOptInfo *rel)
 		 */
 		if (index->indpred != NIL)
 			if (!pred_test(index->indpred, restrictinfo_list, joininfo_list,
-						   lfirsti(rel->relids)))
+						   rel->relid))
 				continue;
 
 		/*
@@ -227,15 +227,15 @@ create_index_paths(Query *root, RelOptInfo *rel)
 
 		/*
 		 * 6. Examine join clauses to see which ones are potentially
-		 * usable with this index, and generate a list of all other relids
-		 * that participate in such join clauses.  We'll use this list later
+		 * usable with this index, and generate the set of all other relids
+		 * that participate in such join clauses.  We'll use this set later
 		 * to recognize outer rels that are equivalent for joining purposes.
-		 * We compute both per-index and overall-for-relation lists.
+		 * We compute both per-index and overall-for-relation sets.
 		 */
 		join_outerrelids = indexable_outerrelids(rel, index);
 		index->outer_relids = join_outerrelids;
-		all_join_outerrelids = set_unioni(all_join_outerrelids,
-										  join_outerrelids);
+		all_join_outerrelids = bms_add_members(all_join_outerrelids,
+											   join_outerrelids);
 	}
 
 	rel->index_outer_relids = all_join_outerrelids;
@@ -609,7 +609,7 @@ group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
 			JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 			List	   *j;
 
-			if (!is_subseti(joininfo->unjoined_relids, outer_relids))
+			if (!bms_is_subset(joininfo->unjoined_relids, outer_relids))
 				continue;
 
 			foreach(j, joininfo->jinfo_restrictinfo)
@@ -820,27 +820,27 @@ match_join_clause_to_indexkey(RelOptInfo *rel,
 	 */
 	if (match_index_to_operand(indexkey, leftop, rel, index))
 	{
-		List	   *othervarnos = pull_varnos(rightop);
+		Relids		othervarnos = pull_varnos(rightop);
 		bool		isIndexable;
 
 		isIndexable =
-			!intMember(lfirsti(rel->relids), othervarnos) &&
+			!bms_overlap(rel->relids, othervarnos) &&
 			!contain_volatile_functions(rightop) &&
 			is_indexable_operator(clause, opclass, true);
-		freeList(othervarnos);
+		bms_free(othervarnos);
 		return isIndexable;
 	}
 
 	if (match_index_to_operand(indexkey, rightop, rel, index))
 	{
-		List	   *othervarnos = pull_varnos(leftop);
+		Relids		othervarnos = pull_varnos(leftop);
 		bool		isIndexable;
 
 		isIndexable =
-			!intMember(lfirsti(rel->relids), othervarnos) &&
+			!bms_overlap(rel->relids, othervarnos) &&
 			!contain_volatile_functions(leftop) &&
 			is_indexable_operator(clause, opclass, false);
-		freeList(othervarnos);
+		bms_free(othervarnos);
 		return isIndexable;
 	}
 
@@ -1312,14 +1312,14 @@ pred_test_simple_clause(Expr *predicate, Node *clause)
 /*
  * indexable_outerrelids
  *	  Finds all other relids that participate in any indexable join clause
- *	  for the specified index.  Returns a list of relids.
+ *	  for the specified index.  Returns a set of relids.
  *
  * 'rel' is the relation for which 'index' is defined
  */
 static Relids
 indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
 {
-	Relids		outer_relids = NIL;
+	Relids		outer_relids = NULL;
 	List	   *i;
 
 	foreach(i, rel->joininfo)
@@ -1368,8 +1368,8 @@ indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
 
 		if (match_found)
 		{
-			outer_relids = set_unioni(outer_relids,
-									  joininfo->unjoined_relids);
+			outer_relids = bms_add_members(outer_relids,
+										   joininfo->unjoined_relids);
 		}
 	}
 
@@ -1419,7 +1419,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	/*
 	 * If there are no indexable joinclauses for this rel, exit quickly.
 	 */
-	if (!rel->index_outer_relids)
+	if (bms_is_empty(rel->index_outer_relids))
 		return NULL;
 	/*
 	 * Otherwise, we have to do path selection in the memory context of
@@ -1433,9 +1433,10 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	 * to find the set of outer relids actually relevant for this index.
 	 * If there are none, again we can fail immediately.
 	 */
-	outer_relids = set_intersecti(rel->index_outer_relids, outer_relids);
-	if (!outer_relids)
+	outer_relids = bms_intersect(rel->index_outer_relids, outer_relids);
+	if (bms_is_empty(outer_relids))
 	{
+		bms_free(outer_relids);
 		MemoryContextSwitchTo(oldcontext);
 		return NULL;
 	}
@@ -1448,10 +1449,10 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	foreach(jlist, rel->index_inner_paths)
 	{
 		info = (InnerIndexscanInfo *) lfirst(jlist);
-		if (sameseti(info->other_relids, outer_relids) &&
+		if (bms_equal(info->other_relids, outer_relids) &&
 			info->isouterjoin == isouterjoin)
 		{
-			freeList(outer_relids);
+			bms_free(outer_relids);
 			MemoryContextSwitchTo(oldcontext);
 			return info->best_innerpath;
 		}
@@ -1470,24 +1471,25 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 		Relids		index_outer_relids;
 		Path	   *path = NULL;
 
-		/* skip quickly if index has no useful join clauses */
-		if (!index->outer_relids)
-			continue;
 		/* identify set of relevant outer relids for this index */
-		index_outer_relids = set_intersecti(index->outer_relids, outer_relids);
-		if (!index_outer_relids)
+		index_outer_relids = bms_intersect(index->outer_relids, outer_relids);
+		/* skip if none */
+		if (bms_is_empty(index_outer_relids))
+		{
+			bms_free(index_outer_relids);
 			continue;
+		}
 		/*
 		 * Look to see if we already computed the result for this index.
 		 */
 		foreach(jlist, index->inner_paths)
 		{
 			info = (InnerIndexscanInfo *) lfirst(jlist);
-			if (sameseti(info->other_relids, index_outer_relids) &&
+			if (bms_equal(info->other_relids, index_outer_relids) &&
 				info->isouterjoin == isouterjoin)
 			{
 				path = info->best_innerpath;
-				freeList(index_outer_relids); /* not needed anymore */
+				bms_free(index_outer_relids); /* not needed anymore */
 				break;
 			}
 		}
@@ -1607,7 +1609,7 @@ make_innerjoin_index_path(Query *root,
 		restrictlist_selectivity(root,
 								 set_ptrUnion(rel->baserestrictinfo,
 											  clausegroup),
-								 lfirsti(rel->relids),
+								 rel->relid,
 								 JOIN_INNER);
 	/* Like costsize.c, force estimate to be at least one row */
 	if (pathnode->rows < 1.0)
@@ -1649,7 +1651,7 @@ match_index_to_operand(int indexkey,
 		 * Simple index.
 		 */
 		if (operand && IsA(operand, Var) &&
-			lfirsti(rel->relids) == ((Var *) operand)->varno &&
+			rel->relid == ((Var *) operand)->varno &&
 			indexkey == ((Var *) operand)->varattno)
 			return true;
 		else
@@ -1665,7 +1667,6 @@ match_index_to_operand(int indexkey,
 static bool
 function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
 {
-	int			relvarno = lfirsti(rel->relids);
 	FuncExpr   *function;
 	List	   *funcargs;
 	int		   *indexKeys = index->indexkeys;
@@ -1705,7 +1706,7 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
 			return false;
 		if (indexKeys[i] == 0)
 			return false;
-		if (var->varno != relvarno || var->varattno != indexKeys[i])
+		if (var->varno != rel->relid || var->varattno != indexKeys[i])
 			return false;
 
 		i++;

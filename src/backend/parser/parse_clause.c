@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.103 2002/12/16 18:39:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.104 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,8 +301,8 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 {
 	Node	   *result;
 	List	   *save_namespace;
-	List	   *clause_varnos,
-			   *l;
+	Relids		clause_varnos;
+	int			varno;
 
 	/*
 	 * This is a tad tricky, for two reasons.  First, the namespace that
@@ -333,17 +333,15 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	 * here.)
 	 */
 	clause_varnos = pull_varnos(result);
-	foreach(l, clause_varnos)
+	while ((varno = bms_first_member(clause_varnos)) >= 0)
 	{
-		int			varno = lfirsti(l);
-
 		if (!intMember(varno, containedRels))
 		{
 			elog(ERROR, "JOIN/ON clause refers to \"%s\", which is not part of JOIN",
 				 rt_fetch(varno, pstate->p_rtable)->eref->aliasname);
 		}
 	}
-	freeList(clause_varnos);
+	bms_free(clause_varnos);
 
 	return result;
 }
@@ -490,7 +488,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	 * no local Var references in the transformed expression.  (Outer
 	 * references are OK, and are ignored here.)
 	 */
-	if (pull_varnos(funcexpr) != NIL)
+	if (!bms_is_empty(pull_varnos(funcexpr)))
 		elog(ERROR, "FROM function expression may not refer to other relations of same query level");
 
 	/*

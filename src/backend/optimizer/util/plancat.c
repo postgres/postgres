@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.77 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.78 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ void
 get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 {
 	Relation	relation;
-	Index		varno = lfirsti(rel->relids);
+	Index		varno = rel->relid;
 	bool		hasindex;
 	List	   *varlist = NIL;
 	List	   *indexinfos = NIL;
@@ -175,7 +175,7 @@ get_relation_info(Oid relationObjectId, RelOptInfo *rel)
 			}
 
 			/* initialize cached join info to empty */
-			info->outer_relids = NIL;
+			info->outer_relids = NULL;
 			info->inner_paths = NIL;
 
 			index_close(indexRelation);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.134 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.135 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,13 +65,14 @@ static HashJoin *create_hashjoin_plan(Query *root,
 static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
 						List **fixed_indexquals,
 						List **recheck_indexquals);
-static void fix_indxqual_sublist(List *indexqual, int baserelid,
-					 IndexOptInfo *index,
-					 List **fixed_quals, List **recheck_quals);
+static void fix_indxqual_sublist(List *indexqual,
+								 Relids baserelids, int baserelid,
+								 IndexOptInfo *index,
+								 List **fixed_quals, List **recheck_quals);
 static Node *fix_indxqual_operand(Node *node, int baserelid,
 					 IndexOptInfo *index,
 					 Oid *opclass);
-static List *get_switched_clauses(List *clauses, List *outerrelids);
+static List *get_switched_clauses(List *clauses, Relids outerrelids);
 static List *order_qual_clauses(Query *root, List *clauses);
 static void copy_path_costsize(Plan *dest, Path *src);
 static void copy_plan_costsize(Plan *dest, Plan *src);
@@ -100,7 +101,7 @@ static MergeJoin *make_mergejoin(List *tlist,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
 static Sort *make_sort_from_pathkeys(Query *root, Plan *lefttree,
-									 List *relids, List *pathkeys);
+									 Relids relids, List *pathkeys);
 
 
 /*
@@ -502,7 +503,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 	{
 		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
-		if (sameseti(ininfo->righthand, best_path->path.parent->relids))
+		if (bms_equal(ininfo->righthand, best_path->path.parent->relids))
 		{
 			sub_targetlist = ininfo->sub_targetlist;
 			break;
@@ -601,13 +602,11 @@ static SeqScan *
 create_seqscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 {
 	SeqScan    *scan_plan;
-	Index		scan_relid;
+	Index		scan_relid = best_path->parent->relid;
 
-	/* there should be exactly one base rel involved... */
-	Assert(length(best_path->parent->relids) == 1);
+	/* it should be a base rel... */
+	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_RELATION);
-
-	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
 	scan_plan = make_seqscan(tlist,
 							 scan_clauses,
@@ -638,7 +637,7 @@ create_indexscan_plan(Query *root,
 					  List *scan_clauses)
 {
 	List	   *indxqual = best_path->indexqual;
-	Index		baserelid;
+	Index		baserelid = best_path->path.parent->relid;
 	List	   *qpqual;
 	Expr	   *indxqual_or_expr = NULL;
 	List	   *fixed_indxqual;
@@ -647,11 +646,9 @@ create_indexscan_plan(Query *root,
 	List	   *ixinfo;
 	IndexScan  *scan_plan;
 
-	/* there should be exactly one base rel involved... */
-	Assert(length(best_path->path.parent->relids) == 1);
+	/* it should be a base rel... */
+	Assert(baserelid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
-
-	baserelid = lfirsti(best_path->path.parent->relids);
 
 	/*
 	 * Build list of index OIDs.
@@ -763,13 +760,11 @@ static TidScan *
 create_tidscan_plan(TidPath *best_path, List *tlist, List *scan_clauses)
 {
 	TidScan    *scan_plan;
-	Index		scan_relid;
+	Index		scan_relid = best_path->path.parent->relid;
 
-	/* there should be exactly one base rel involved... */
-	Assert(length(best_path->path.parent->relids) == 1);
+	/* it should be a base rel... */
+	Assert(scan_relid > 0);
 	Assert(best_path->path.parent->rtekind == RTE_RELATION);
-
-	scan_relid = (Index) lfirsti(best_path->path.parent->relids);
 
 	scan_plan = make_tidscan(tlist,
 							 scan_clauses,
@@ -790,14 +785,11 @@ static SubqueryScan *
 create_subqueryscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 {
 	SubqueryScan *scan_plan;
-	Index		scan_relid;
+	Index		scan_relid = best_path->parent->relid;
 
-	/* there should be exactly one base rel involved... */
-	Assert(length(best_path->parent->relids) == 1);
-	/* and it must be a subquery */
+	/* it should be a subquery base rel... */
+	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_SUBQUERY);
-
-	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
@@ -816,14 +808,11 @@ static FunctionScan *
 create_functionscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 {
 	FunctionScan *scan_plan;
-	Index		scan_relid;
+	Index		scan_relid = best_path->parent->relid;
 
-	/* there should be exactly one base rel involved... */
-	Assert(length(best_path->parent->relids) == 1);
-	/* and it must be a function */
+	/* it should be a function base rel... */
+	Assert(scan_relid > 0);
 	Assert(best_path->parent->rtekind == RTE_FUNCTION);
-
-	scan_relid = (Index) lfirsti(best_path->parent->relids);
 
 	scan_plan = make_functionscan(tlist, scan_clauses, scan_relid);
 
@@ -1055,7 +1044,8 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 {
 	List	   *fixed_quals = NIL;
 	List	   *recheck_quals = NIL;
-	int			baserelid = lfirsti(index_path->path.parent->relids);
+	Relids		baserelids = index_path->path.parent->relids;
+	int			baserelid = index_path->path.parent->relid;
 	List	   *ixinfo = index_path->indexinfo;
 	List	   *i;
 
@@ -1066,7 +1056,7 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 		List	   *fixed_qual;
 		List	   *recheck_qual;
 
-		fix_indxqual_sublist(indexqual, baserelid, index,
+		fix_indxqual_sublist(indexqual, baserelids, baserelid, index,
 							 &fixed_qual, &recheck_qual);
 		fixed_quals = lappend(fixed_quals, fixed_qual);
 		if (recheck_qual != NIL)
@@ -1092,7 +1082,9 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
  * the index is lossy for this operator type.
  */
 static void
-fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
+fix_indxqual_sublist(List *indexqual,
+					 Relids baserelids, int baserelid,
+					 IndexOptInfo *index,
 					 List **fixed_quals, List **recheck_quals)
 {
 	List	   *fixed_qual = NIL;
@@ -1103,7 +1095,7 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 	{
 		OpExpr	   *clause = (OpExpr *) lfirst(i);
 		OpExpr	   *newclause;
-		List	   *leftvarnos;
+		Relids		leftvarnos;
 		Oid			opclass;
 
 		if (!IsA(clause, OpExpr) || length(clause->args) != 2)
@@ -1124,9 +1116,9 @@ fix_indxqual_sublist(List *indexqual, int baserelid, IndexOptInfo *index,
 		 * (only) the base relation.
 		 */
 		leftvarnos = pull_varnos((Node *) lfirst(newclause->args));
-		if (length(leftvarnos) != 1 || lfirsti(leftvarnos) != baserelid)
+		if (!bms_equal(leftvarnos, baserelids))
 			CommuteClause(newclause);
-		freeList(leftvarnos);
+		bms_free(leftvarnos);
 
 		/*
 		 * Now, determine which index attribute this is, change the
@@ -1222,7 +1214,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
  *	  a modified list is returned.
  */
 static List *
-get_switched_clauses(List *clauses, List *outerrelids)
+get_switched_clauses(List *clauses, Relids outerrelids)
 {
 	List	   *t_list = NIL;
 	List	   *i;
@@ -1233,7 +1225,7 @@ get_switched_clauses(List *clauses, List *outerrelids)
 		OpExpr	   *clause = (OpExpr *) restrictinfo->clause;
 
 		Assert(is_opclause(clause));
-		if (is_subseti(restrictinfo->right_relids, outerrelids))
+		if (bms_is_subset(restrictinfo->right_relids, outerrelids))
 		{
 			/*
 			 * Duplicate just enough of the structure to allow commuting
@@ -1628,7 +1620,7 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
  */
 static Sort *
 make_sort_from_pathkeys(Query *root, Plan *lefttree,
-						List *relids, List *pathkeys)
+						Relids relids, List *pathkeys)
 {
 	List	   *tlist = lefttree->targetlist;
 	List	   *sort_tlist;
@@ -1671,7 +1663,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree,
 			foreach(j, keysublist)
 			{
 				pathkey = lfirst(j);
-				if (is_subseti(pull_varnos(pathkey->key), relids))
+				if (bms_is_subset(pull_varnos(pathkey->key), relids))
 					break;
 			}
 			if (!j)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.77 2003/01/27 20:51:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.78 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -689,7 +689,7 @@ hash_inner_and_outer(Query *root,
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 
-		if (restrictinfo->left_relids == NIL ||
+		if (restrictinfo->left_relids == NULL ||
 			restrictinfo->hashjoinoperator == InvalidOid)
 			continue;			/* not hashjoinable */
 
@@ -703,13 +703,13 @@ hash_inner_and_outer(Query *root,
 		/*
 		 * Check if clause is usable with these input rels.
 		 */
-		if (is_subseti(restrictinfo->left_relids, outerrel->relids) &&
-			is_subseti(restrictinfo->right_relids, innerrel->relids))
+		if (bms_is_subset(restrictinfo->left_relids, outerrel->relids) &&
+			bms_is_subset(restrictinfo->right_relids, innerrel->relids))
 		{
 			/* righthand side is inner */
 		}
-		else if (is_subseti(restrictinfo->left_relids, innerrel->relids) &&
-				 is_subseti(restrictinfo->right_relids, outerrel->relids))
+		else if (bms_is_subset(restrictinfo->left_relids, innerrel->relids) &&
+				 bms_is_subset(restrictinfo->right_relids, outerrel->relids))
 		{
 			/* lefthand side is inner */
 		}
@@ -808,12 +808,12 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			switch (jointype)
 			{
 				case JOIN_RIGHT:
-					if (restrictinfo->left_relids == NIL ||
+					if (restrictinfo->left_relids == NULL ||
 						restrictinfo->mergejoinoperator == InvalidOid)
 						return NIL;		/* not mergejoinable */
 					break;
 				case JOIN_FULL:
-					if (restrictinfo->left_relids == NIL ||
+					if (restrictinfo->left_relids == NULL ||
 						restrictinfo->mergejoinoperator == InvalidOid)
 						elog(ERROR, "FULL JOIN is only supported with mergejoinable join conditions");
 					break;
@@ -823,7 +823,7 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 			}
 		}
 
-		if (restrictinfo->left_relids == NIL ||
+		if (restrictinfo->left_relids == NULL ||
 			restrictinfo->mergejoinoperator == InvalidOid)
 			continue;			/* not mergejoinable */
 
@@ -832,13 +832,13 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 		 * needed on each side of the clause must be available from one or
 		 * the other of the input rels.
 		 */
-		if (is_subseti(restrictinfo->left_relids, outerrel->relids) &&
-			is_subseti(restrictinfo->right_relids, innerrel->relids))
+		if (bms_is_subset(restrictinfo->left_relids, outerrel->relids) &&
+			bms_is_subset(restrictinfo->right_relids, innerrel->relids))
 		{
 			/* righthand side is inner */
 		}
-		else if (is_subseti(restrictinfo->left_relids, innerrel->relids) &&
-				 is_subseti(restrictinfo->right_relids, outerrel->relids))
+		else if (bms_is_subset(restrictinfo->left_relids, innerrel->relids) &&
+				 bms_is_subset(restrictinfo->right_relids, outerrel->relids))
 		{
 			/* lefthand side is inner */
 		}

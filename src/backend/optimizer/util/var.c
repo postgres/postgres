@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.48 2003/02/06 22:21:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.49 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 
 typedef struct
 {
-	List	   *varlist;
+	Relids		varnos;
 	int			sublevels_up;
 } pull_varnos_context;
 
@@ -58,13 +58,12 @@ static bool pull_var_clause_walker(Node *node,
 					   pull_var_clause_context *context);
 static Node *flatten_join_alias_vars_mutator(Node *node,
 								flatten_join_alias_vars_context *context);
-static List *alias_rtindex_list(Query *root, List *rtlist);
+static Relids alias_relid_set(Query *root, Relids relids);
 
 
 /*
- *		pull_varnos
- *
- *		Create a list of all the distinct varnos present in a parsetree.
+ * pull_varnos
+ *		Create a set of all the distinct varnos present in a parsetree.
  *		Only varnos that reference level-zero rtable entries are considered.
  *
  * NOTE: this is used on not-yet-planned expressions.  It may therefore find
@@ -72,12 +71,12 @@ static List *alias_rtindex_list(Query *root, List *rtlist);
  * references to the desired rtable level!	But when we find a completed
  * SubPlan, we only need to look at the parameters passed to the subplan.
  */
-List *
+Relids
 pull_varnos(Node *node)
 {
 	pull_varnos_context context;
 
-	context.varlist = NIL;
+	context.varnos = NULL;
 	context.sublevels_up = 0;
 
 	/*
@@ -89,7 +88,7 @@ pull_varnos(Node *node)
 									(void *) &context,
 									0);
 
-	return context.varlist;
+	return context.varnos;
 }
 
 static bool
@@ -101,9 +100,8 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 	{
 		Var		   *var = (Var *) node;
 
-		if (var->varlevelsup == context->sublevels_up &&
-			!intMember(var->varno, context->varlist))
-			context->varlist = lconsi(var->varno, context->varlist);
+		if (var->varlevelsup == context->sublevels_up)
+			context->varnos = bms_add_member(context->varnos, var->varno);
 		return false;
 	}
 	if (IsA(node, Query))
@@ -430,13 +428,13 @@ flatten_join_alias_vars_mutator(Node *node,
 		ininfo = (InClauseInfo *) expression_tree_mutator(node,
 														  flatten_join_alias_vars_mutator,
 														  (void *) context);
-		/* now fix InClauseInfo's rtindex lists */
+		/* now fix InClauseInfo's relid sets */
 		if (context->sublevels_up == 0)
 		{
-			ininfo->lefthand = alias_rtindex_list(context->root,
-												  ininfo->lefthand);
-			ininfo->righthand = alias_rtindex_list(context->root,
-												   ininfo->righthand);
+			ininfo->lefthand = alias_relid_set(context->root,
+											   ininfo->lefthand);
+			ininfo->righthand = alias_relid_set(context->root,
+												ininfo->righthand);
 		}
 		return (Node *) ininfo;
 	}
@@ -462,25 +460,26 @@ flatten_join_alias_vars_mutator(Node *node,
 }
 
 /*
- * alias_rtindex_list: in a list of RT indexes, replace joins by their
+ * alias_relid_set: in a set of RT indexes, replace joins by their
  * underlying base relids
  */
-static List *
-alias_rtindex_list(Query *root, List *rtlist)
+static Relids
+alias_relid_set(Query *root, Relids relids)
 {
-	List   *result = NIL;
-	List   *l;
+	Relids		result = NULL;
+	Relids		tmprelids;
+	int			rtindex;
 
-	foreach(l, rtlist)
+	tmprelids = bms_copy(relids);
+	while ((rtindex = bms_first_member(tmprelids)) >= 0)
 	{
-		int		rtindex = lfirsti(l);
-		RangeTblEntry *rte;
+		RangeTblEntry *rte = rt_fetch(rtindex, root->rtable);
 
-		rte = rt_fetch(rtindex, root->rtable);
 		if (rte->rtekind == RTE_JOIN)
-			result = nconc(result, get_relids_for_join(root, rtindex));
+			result = bms_join(result, get_relids_for_join(root, rtindex));
 		else
-			result = lappendi(result, rtindex);
+			result = bms_add_member(result, rtindex);
 	}
+	bms_free(tmprelids);
 	return result;
 }

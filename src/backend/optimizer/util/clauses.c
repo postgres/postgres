@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.127 2003/02/04 00:50:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.128 2003/02/08 20:20:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -885,7 +885,7 @@ has_distinct_on_clause(Query *query)
  * clause_get_relids_vars
  *	  Retrieves distinct relids and vars appearing within a clause.
  *
- * '*relids' is set to an integer list of all distinct "varno"s appearing
+ * '*relids' is set to the set of all distinct "varno"s appearing
  *		in Vars within the clause.
  * '*vars' is set to a list of all distinct Vars appearing within the clause.
  *		Var nodes are considered distinct if they have different varno
@@ -899,7 +899,7 @@ void
 clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 {
 	List	   *clvars = pull_var_clause(clause, false);
-	List	   *varno_list = NIL;
+	Relids		varnos = NULL;
 	List	   *var_list = NIL;
 	List	   *i;
 
@@ -908,8 +908,7 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 		Var		   *var = (Var *) lfirst(i);
 		List	   *vi;
 
-		if (!intMember(var->varno, varno_list))
-			varno_list = lconsi(var->varno, varno_list);
+		varnos = bms_add_member(varnos, var->varno);
 		foreach(vi, var_list)
 		{
 			Var		   *in_list = (Var *) lfirst(vi);
@@ -923,7 +922,7 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 	}
 	freeList(clvars);
 
-	*relids = varno_list;
+	*relids = varnos;
 	*vars = var_list;
 }
 
@@ -936,10 +935,10 @@ clause_get_relids_vars(Node *clause, Relids *relids, List **vars)
 int
 NumRelids(Node *clause)
 {
-	List	   *varno_list = pull_varnos(clause);
-	int			result = length(varno_list);
+	Relids		varnos = pull_varnos(clause);
+	int			result = bms_num_members(varnos);
 
-	freeList(varno_list);
+	bms_free(varnos);
 	return result;
 }
 

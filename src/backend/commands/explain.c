@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.100 2003/02/02 23:46:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.101 2003/02/08 20:20:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,12 +775,15 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 	 */
 	if (outer_plan)
 	{
-		if (intMember(OUTER, pull_varnos(node)))
+		Relids	varnos = pull_varnos(node);
+
+		if (bms_is_member(OUTER, varnos))
 			outercontext = deparse_context_for_subplan("outer",
 												  outer_plan->targetlist,
 													   es->rtable);
 		else
 			outercontext = NULL;
+		bms_free(varnos);
 	}
 	else
 		outercontext = NULL;
@@ -857,6 +860,7 @@ show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 	int			keyno;
 	List	   *tl;
 	char	   *exprstr;
+	Relids		varnos;
 	int			i;
 
 	if (nkeys <= 0)
@@ -874,7 +878,8 @@ show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 	 * there are Vars with zero varno, use the tlist itself to determine
 	 * their names.
 	 */
-	if (intMember(0, pull_varnos((Node *) tlist)))
+	varnos = pull_varnos((Node *) tlist);
+	if (bms_is_member(0, varnos))
 	{
 		Node	   *outercontext;
 
@@ -893,6 +898,7 @@ show_sort_keys(List *tlist, int nkeys, const char *qlabel,
 										   es->rtable);
 		useprefix = length(es->rtable) > 1;
 	}
+	bms_free(varnos);
 
 	for (keyno = 1; keyno <= nkeys; keyno++)
 	{

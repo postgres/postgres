@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.15 2003/01/28 22:13:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/indexcost.sgml,v 2.16 2003/02/08 20:20:53 tgl Exp $
 -->
 
  <chapter id="indexcost">
@@ -205,8 +205,7 @@ amcostestimate (Query *root,
 
      <programlisting>
 *indexSelectivity = clauselist_selectivity(root, indexQuals,
-                                           lfirsti(rel->relids),
-                                           JOIN_INNER);
+                                           rel->relid, JOIN_INNER);
      </programlisting>
     </para>
    </step>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.33 2003/01/24 03:58:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/joininfo.c,v 1.34 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ find_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 
-		if (sameseti(join_relids, joininfo->unjoined_relids))
+		if (bms_equal(join_relids, joininfo->unjoined_relids))
 			return joininfo;
 	}
 	return NULL;
@@ -86,23 +86,20 @@ add_join_clause_to_rels(Query *root,
 						RestrictInfo *restrictinfo,
 						Relids join_relids)
 {
-	List	   *join_relid;
+	Relids		tmprelids;
+	int			cur_relid;
 
 	/* For every relid, find the joininfo, and add the proper join entries */
-	foreach(join_relid, join_relids)
+	tmprelids = bms_copy(join_relids);
+	while ((cur_relid = bms_first_member(tmprelids)) >= 0)
 	{
-		int			cur_relid = lfirsti(join_relid);
-		Relids		unjoined_relids = NIL;
+		Relids		unjoined_relids;
 		JoinInfo   *joininfo;
-		List	   *otherrel;
 
 		/* Get the relids not equal to the current relid */
-		foreach(otherrel, join_relids)
-		{
-			if (lfirsti(otherrel) != cur_relid)
-				unjoined_relids = lappendi(unjoined_relids, lfirsti(otherrel));
-		}
-		Assert(unjoined_relids != NIL);
+		unjoined_relids = bms_copy(join_relids);
+		unjoined_relids = bms_del_member(unjoined_relids, cur_relid);
+		Assert(!bms_is_empty(unjoined_relids));
 
 		/*
 		 * Find or make the joininfo node for this combination of rels,
@@ -113,11 +110,12 @@ add_join_clause_to_rels(Query *root,
 		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
 											   restrictinfo);
 		/*
-		 * Can't freeList(unjoined_relids) because new joininfo node may
-		 * link to it.  We could avoid leaking memory by doing listCopy()
+		 * Can't bms_free(unjoined_relids) because new joininfo node may
+		 * link to it.  We could avoid leaking memory by doing bms_copy()
 		 * in make_joininfo_node, but for now speed seems better.
 		 */
 	}
+	bms_free(tmprelids);
 }
 
 /*
@@ -136,23 +134,20 @@ remove_join_clause_from_rels(Query *root,
 							 RestrictInfo *restrictinfo,
 							 Relids join_relids)
 {
-	List	   *join_relid;
+	Relids		tmprelids;
+	int			cur_relid;
 
 	/* For every relid, find the joininfo */
-	foreach(join_relid, join_relids)
+	tmprelids = bms_copy(join_relids);
+	while ((cur_relid = bms_first_member(tmprelids)) >= 0)
 	{
-		int			cur_relid = lfirsti(join_relid);
-		Relids		unjoined_relids = NIL;
+		Relids		unjoined_relids;
 		JoinInfo   *joininfo;
-		List	   *otherrel;
 
 		/* Get the relids not equal to the current relid */
-		foreach(otherrel, join_relids)
-		{
-			if (lfirsti(otherrel) != cur_relid)
-				unjoined_relids = lappendi(unjoined_relids, lfirsti(otherrel));
-		}
-		Assert(unjoined_relids != NIL);
+		unjoined_relids = bms_copy(join_relids);
+		unjoined_relids = bms_del_member(unjoined_relids, cur_relid);
+		Assert(!bms_is_empty(unjoined_relids));
 
 		/*
 		 * Find the joininfo node for this combination of rels; it should
@@ -168,6 +163,7 @@ remove_join_clause_from_rels(Query *root,
 		Assert(ptrMember(restrictinfo, joininfo->jinfo_restrictinfo));
 		joininfo->jinfo_restrictinfo = lremove(restrictinfo,
 											   joininfo->jinfo_restrictinfo);
-		freeList(unjoined_relids);
+		bms_free(unjoined_relids);
 	}
+	bms_free(tmprelids);
 }

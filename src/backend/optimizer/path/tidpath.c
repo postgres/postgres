@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.13 2002/12/12 15:49:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/tidpath.c,v 1.14 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/lsyscache.h"
 
-static List *TidqualFromRestrictinfo(List *relids, List *restrictinfo);
+static List *TidqualFromRestrictinfo(Relids relids, List *restrictinfo);
 static bool isEvaluable(int varno, Node *node);
 static Node *TidequalClause(int varno, OpExpr *node);
 static List *TidqualFromExpr(int varno, Expr *expr);
@@ -198,7 +198,7 @@ TidqualFromExpr(int varno, Expr *expr)
 }
 
 static List *
-TidqualFromRestrictinfo(List *relids, List *restrictinfo)
+TidqualFromRestrictinfo(Relids relids, List *restrictinfo)
 {
 	List	   *lst,
 			   *rlst = NIL;
@@ -206,9 +206,9 @@ TidqualFromRestrictinfo(List *relids, List *restrictinfo)
 	Node	   *node;
 	Expr	   *expr;
 
-	if (length(relids) != 1)
+	if (bms_membership(relids) != BMS_SINGLETON)
 		return NIL;
-	varno = lfirsti(relids);
+	varno = bms_singleton_member(relids);
 	foreach(lst, restrictinfo)
 	{
 		node = lfirst(lst);

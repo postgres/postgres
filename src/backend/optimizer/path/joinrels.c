@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.59 2003/01/20 18:54:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.60 2003/02/08 20:20:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,7 +151,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			{
 				RelOptInfo *new_rel = (RelOptInfo *) lfirst(r2);
 
-				if (nonoverlap_setsi(old_rel->relids, new_rel->relids))
+				if (!bms_overlap(old_rel->relids, new_rel->relids))
 				{
 					List	   *i;
 
@@ -164,8 +164,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 					{
 						JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 
-						if (is_subseti(joininfo->unjoined_relids,
-									   new_rel->relids))
+						if (bms_is_subset(joininfo->unjoined_relids,
+										  new_rel->relids))
 						{
 							RelOptInfo *jrel;
 
@@ -268,7 +268,7 @@ make_rels_by_clause_joins(Query *root,
 		{
 			RelOptInfo *other_rel = (RelOptInfo *) lfirst(j);
 
-			if (is_subseti(unjoined_relids, other_rel->relids))
+			if (bms_is_subset(unjoined_relids, other_rel->relids))
 			{
 				RelOptInfo *jrel;
 
@@ -312,7 +312,7 @@ make_rels_by_clauseless_joins(Query *root,
 	{
 		RelOptInfo *other_rel = (RelOptInfo *) lfirst(i);
 
-		if (nonoverlap_setsi(other_rel->relids, old_rel->relids))
+		if (!bms_overlap(other_rel->relids, old_rel->relids))
 		{
 			RelOptInfo *jrel;
 
@@ -406,15 +406,15 @@ RelOptInfo *
 make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			  JoinType jointype)
 {
-	List	   *joinrelids;
+	Relids		joinrelids;
 	RelOptInfo *joinrel;
 	List	   *restrictlist;
 
 	/* We should never try to join two overlapping sets of rels. */
-	Assert(nonoverlap_setsi(rel1->relids, rel2->relids));
+	Assert(!bms_overlap(rel1->relids, rel2->relids));
 
 	/* Construct Relids set that identifies the joinrel. */
-	joinrelids = nconc(listCopy(rel1->relids), listCopy(rel2->relids));
+	joinrelids = bms_union(rel1->relids, rel2->relids);
 
 	/*
 	 * If we are implementing IN clauses as joins, there are some joins
@@ -433,15 +433,12 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			/*
 			 * Cannot join if proposed join contains part, but only
 			 * part, of the RHS, *and* it contains rels not in the RHS.
-			 *
-			 * Singleton RHS cannot be a problem, so skip expensive tests.
 			 */
-			if (length(ininfo->righthand) > 1 &&
-				overlap_setsi(ininfo->righthand, joinrelids) &&
-				!is_subseti(ininfo->righthand, joinrelids) &&
-				!is_subseti(joinrelids, ininfo->righthand))
+			if (bms_overlap(ininfo->righthand, joinrelids) &&
+				!bms_is_subset(ininfo->righthand, joinrelids) &&
+				!bms_is_subset(joinrelids, ininfo->righthand))
 			{
-				freeList(joinrelids);
+				bms_free(joinrelids);
 				return NULL;
 			}
 
@@ -449,19 +446,19 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 * No issue unless we are looking at a join of the IN's RHS
 			 * to other stuff.
 			 */
-			if (! (length(ininfo->righthand) < length(joinrelids) &&
-				   is_subseti(ininfo->righthand, joinrelids)))
+			if (! (bms_is_subset(ininfo->righthand, joinrelids) &&
+				   !bms_equal(ininfo->righthand, joinrelids)))
 				continue;
 			/*
 			 * If we already joined IN's RHS to any part of its LHS in either
 			 * input path, then this join is not constrained (the necessary
 			 * work was done at a lower level).
 			 */
-			if (overlap_setsi(ininfo->lefthand, rel1->relids) &&
-				is_subseti(ininfo->righthand, rel1->relids))
+			if (bms_overlap(ininfo->lefthand, rel1->relids) &&
+				bms_is_subset(ininfo->righthand, rel1->relids))
 				continue;
-			if (overlap_setsi(ininfo->lefthand, rel2->relids) &&
-				is_subseti(ininfo->righthand, rel2->relids))
+			if (bms_overlap(ininfo->lefthand, rel2->relids) &&
+				bms_is_subset(ininfo->righthand, rel2->relids))
 				continue;
 			/*
 			 * JOIN_IN technique will work if outerrel includes LHS and
@@ -477,31 +474,31 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			 */
 			if (jointype != JOIN_INNER)
 			{
-				freeList(joinrelids);
+				bms_free(joinrelids);
 				return NULL;
 			}
-			if (is_subseti(ininfo->lefthand, rel1->relids) &&
-				sameseti(ininfo->righthand, rel2->relids))
+			if (bms_is_subset(ininfo->lefthand, rel1->relids) &&
+				bms_equal(ininfo->righthand, rel2->relids))
 			{
 				jointype = JOIN_IN;
 			}
-			else if (is_subseti(ininfo->lefthand, rel2->relids) &&
-					 sameseti(ininfo->righthand, rel1->relids))
+			else if (bms_is_subset(ininfo->lefthand, rel2->relids) &&
+					 bms_equal(ininfo->righthand, rel1->relids))
 			{
 				jointype = JOIN_REVERSE_IN;
 			}
-			else if (sameseti(ininfo->righthand, rel1->relids))
+			else if (bms_equal(ininfo->righthand, rel1->relids))
 			{
 				jointype = JOIN_UNIQUE_OUTER;
 			}
-			else if (sameseti(ininfo->righthand, rel2->relids))
+			else if (bms_equal(ininfo->righthand, rel2->relids))
 			{
 				jointype = JOIN_UNIQUE_INNER;
 			}
 			else
 			{
 				/* invalid join path */
-				freeList(joinrelids);
+				bms_free(joinrelids);
 				return NULL;
 			}
 		}
@@ -579,7 +576,7 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			break;
 	}
 
-	freeList(joinrelids);
+	bms_free(joinrelids);
 
 	return joinrel;
 }

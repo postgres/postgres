@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.131 2003/01/28 22:13:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.132 2003/02/08 20:20:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3822,7 +3822,7 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 
 	/* Estimate the fraction of main-table tuples that will be visited */
 	*indexSelectivity = clauselist_selectivity(root, selectivityQuals,
-											   lfirsti(rel->relids),
+											   rel->relid,
 											   JOIN_INNER);
 
 	/*
@@ -3909,7 +3909,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 		Oid			relid;
 		HeapTuple	tuple;
 
-		relid = getrelid(lfirsti(rel->relids), root->rtable);
+		relid = getrelid(rel->relid, root->rtable);
 		Assert(relid != InvalidOid);
 		tuple = SearchSysCache(STATRELATT,
 							   ObjectIdGetDatum(relid),
