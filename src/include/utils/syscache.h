@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.22 1999/11/24 16:52:50 momjian Exp $
+ * $Id: syscache.h,v 1.23 2000/01/23 03:43:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,10 +81,8 @@ extern HeapTuple SearchSysCacheTupleCopy(int cacheId,
 						Datum key1, Datum key2, Datum key3, Datum key4);
 extern HeapTuple SearchSysCacheTuple(int cacheId,
 					Datum key1, Datum key2, Datum key3, Datum key4);
-extern int32 SearchSysCacheStruct(int cacheId, char *returnStruct,
-					 Datum key1, Datum key2, Datum key3, Datum key4);
-extern void *SearchSysCacheGetAttribute(int cacheId,
-						   AttrNumber attributeNumber,
-						 Datum key1, Datum key2, Datum key3, Datum key4);
+extern Datum SysCacheGetAttr(int cacheId, HeapTuple tup,
+							 AttrNumber attributeNumber,
+							 bool *isnull);
 
 #endif	 /* SYSCACHE_H */

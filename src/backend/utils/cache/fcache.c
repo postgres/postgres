@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.27 1999/11/22 17:56:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.28 2000/01/23 03:43:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,13 +74,12 @@ init_fcache(Oid foid,
 	Form_pg_proc procedureStruct;
 	Form_pg_type typeStruct;
 	FunctionCachePtr retval;
-	text	   *tmp;
 	int			nargs;
+	text	   *tmp;
+	bool		isNull;
 
 	/* ----------------
-	 *	 get the procedure tuple corresponding to the given
-	 *	 functionOid.  If this fails, returnValue has been
-	 *	 pre-initialized to "null" so we just return it.
+	 *	 get the procedure tuple corresponding to the given functionOid
 	 * ----------------
 	 */
 	retval = (FunctionCachePtr) palloc(sizeof(FunctionCache));
@@ -94,20 +93,13 @@ init_fcache(Oid foid,
 										 0, 0, 0);
 
 	if (!HeapTupleIsValid(procedureTuple))
-		elog(ERROR,
-			 "init_fcache: %s %u",
-			 "Cache lookup failed for procedure", foid);
+		elog(ERROR, "init_fcache: Cache lookup failed for procedure %u",
+			 foid);
 
-	/* ----------------
-	 *	 get the return type from the procedure tuple
-	 * ----------------
-	 */
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
 
 	/* ----------------
-	 *	 get the type tuple corresponding to the return type
-	 *	 If this fails, returnValue has been pre-initialized
-	 *	 to "null" so we just return it.
+	 *	 get the return type from the procedure tuple
 	 * ----------------
 	 */
 	typeTuple = SearchSysCacheTuple(TYPEOID,
@@ -115,27 +107,24 @@ init_fcache(Oid foid,
 									0, 0, 0);
 
 	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR,
-			 "init_fcache: %s %u",
-			 "Cache lookup failed for type",
-			 (procedureStruct)->prorettype);
+		elog(ERROR, "init_fcache: Cache lookup failed for type %u",
+			 procedureStruct->prorettype);
+
+	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/* ----------------
 	 *	 get the type length and by-value from the type tuple and
 	 *	 save the information in our one element cache.
 	 * ----------------
 	 */
-	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-
-	retval->typlen = (typeStruct)->typlen;
-	if ((typeStruct)->typrelid == InvalidOid)
+	retval->typlen = typeStruct->typlen;
+	if (typeStruct->typrelid == InvalidOid)
 	{
 		/* The return type is not a relation, so just use byval */
-		retval->typbyval = (typeStruct)->typbyval ? true : false;
+		retval->typbyval = typeStruct->typbyval;
 	}
 	else
 	{
-
 		/*
 		 * This is a hack.	We assume here that any function returning a
 		 * relation returns it by reference.  This needs to be fixed.
@@ -147,7 +136,7 @@ init_fcache(Oid foid,
 	retval->func_state = (char *) NULL;
 	retval->setArg = NULL;
 	retval->hasSetArg = false;
-	retval->oneResult = !procedureStruct->proretset;
+	retval->oneResult = ! procedureStruct->proretset;
 	retval->istrusted = procedureStruct->proistrusted;
 
 	/*
@@ -157,8 +146,8 @@ init_fcache(Oid foid,
 	 * allocated by the executor (i.e. slots and tuples) is freed.
 	 */
 	if ((retval->language == SQLlanguageId) &&
-		(retval->oneResult) &&
-		!(retval->typbyval))
+		retval->oneResult &&
+		! retval->typbyval)
 	{
 		Form_pg_class relationStruct;
 		HeapTuple	relationTuple;
@@ -198,7 +187,7 @@ init_fcache(Oid foid,
 	{
 		Oid		   *argTypes;
 
-		retval->nullVect = (bool *) palloc((retval->nargs) * sizeof(bool));
+		retval->nullVect = (bool *) palloc(retval->nargs * sizeof(bool));
 
 		if (retval->language == SQLlanguageId)
 		{
@@ -230,42 +219,35 @@ init_fcache(Oid foid,
 		retval->nullVect = (BoolPtr) NULL;
 	}
 
-	/*
-	 * XXX this is the first varlena in the struct.  If the order changes
-	 * for some reason this will fail.
-	 */
 	if (procedureStruct->prolang == SQLlanguageId)
 	{
-		retval->src = textout(&(procedureStruct->prosrc));
+		tmp = (text *) SysCacheGetAttr(PROCOID,
+									   procedureTuple,
+									   Anum_pg_proc_prosrc,
+									   &isNull);
+		if (isNull)
+			elog(ERROR, "init_fcache: null prosrc for procedure %u",
+				 foid);
+		retval->src = textout(tmp);
 		retval->bin = (char *) NULL;
 	}
 	else
 	{
-
-		/*
-		 * I'm not sure that we even need to do this at all.
-		 */
-
-		/*
-		 * We do for untrusted functions.
-		 */
-
+		retval->src = (char *) NULL;
 		if (procedureStruct->proistrusted)
 			retval->bin = (char *) NULL;
 		else
 		{
-			tmp = (text *)
-				SearchSysCacheGetAttribute(PROCOID,
+			tmp = (text *) SysCacheGetAttr(PROCOID,
+										   procedureTuple,
 										   Anum_pg_proc_probin,
-										   ObjectIdGetDatum(foid),
-										   0, 0, 0);
+										   &isNull);
+			if (isNull)
+				elog(ERROR, "init_fcache: null probin for procedure %u",
+					 foid);
 			retval->bin = textout(tmp);
 		}
-		retval->src = (char *) NULL;
 	}
-
-
-
 
 	if (retval->language != SQLlanguageId)
 	{
@@ -274,7 +256,6 @@ init_fcache(Oid foid,
 	}
 	else
 		retval->func.fn_addr = (func_ptr) NULL;
-
 
 	return retval;
 }

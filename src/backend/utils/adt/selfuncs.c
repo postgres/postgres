@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.50 2000/01/23 02:06:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.51 2000/01/23 03:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,9 +587,6 @@ getattproperties(Oid relid, AttrNumber attnum,
  * commonval, loval, hival are returned as Datums holding the internal
  * representation of the values.  (Note that these should be pfree'd
  * after use if the data type is not by-value.)
- *
- * XXX currently, this does a linear search of pg_statistic because there
- * is no index nor syscache for pg_statistic.  FIX THIS!
  */
 static bool
 getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
@@ -600,29 +597,26 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 				 Datum *loval,
 				 Datum *hival)
 {
-	Relation	rel;
-	bool		isnull;
 	HeapTuple	tuple;
 	HeapTuple	typeTuple;
 	FmgrInfo	inputproc;
 	Oid			typelem;
-
-	rel = heap_openr(StatisticRelationName, AccessShareLock);
-
-	tuple = SearchSysCacheTuple(STATRELID,
-									ObjectIdGetDatum(relid),
-									Int16GetDatum((int16) attnum),
-									opid, 0);
-	if (!HeapTupleIsValid(tuple))
-	{
-		/* no such stats entry */
-		heap_close(rel, AccessShareLock);
-		return false;
-	}
+	bool		isnull;
 
 	/* We assume that there will only be one entry in pg_statistic
 	 * for the given rel/att.  Someday, VACUUM might store more than one...
 	 */
+	tuple = SearchSysCacheTuple(STATRELID,
+								ObjectIdGetDatum(relid),
+								Int16GetDatum((int16) attnum),
+								opid,
+								0);
+	if (!HeapTupleIsValid(tuple))
+	{
+		/* no such stats entry */
+		return false;
+	}
+
 	if (nullfrac)
 		*nullfrac = ((Form_pg_statistic) GETSTRUCT(tuple))->stanullfrac;
 	if (commonfrac)
@@ -639,14 +633,13 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 	typelem = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
 
 	/* Values are variable-length fields, so cannot access as struct fields.
-	 * Must do it the hard way with heap_getattr.
+	 * Must do it the hard way with SysCacheGetAttr.
 	 */
 	if (commonval)
 	{
-		text *val = (text *) heap_getattr(tuple,
-										  Anum_pg_statistic_stacommonval,
-										  RelationGetDescr(rel),
-										  &isnull);
+		text *val = (text *) SysCacheGetAttr(STATRELID, tuple,
+											 Anum_pg_statistic_stacommonval,
+											 &isnull);
 		if (isnull)
 		{
 			elog(DEBUG, "getattstatistics: stacommonval is null");
@@ -663,10 +656,9 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 
 	if (loval)
 	{
-		text *val = (text *) heap_getattr(tuple,
-										  Anum_pg_statistic_staloval,
-										  RelationGetDescr(rel),
-										  &isnull);
+		text *val = (text *) SysCacheGetAttr(STATRELID, tuple,
+											 Anum_pg_statistic_staloval,
+											 &isnull);
 		if (isnull)
 		{
 			elog(DEBUG, "getattstatistics: staloval is null");
@@ -683,10 +675,9 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 
 	if (hival)
 	{
-		text *val = (text *) heap_getattr(tuple,
-										  Anum_pg_statistic_stahival,
-										  RelationGetDescr(rel),
-										  &isnull);
+		text *val = (text *) SysCacheGetAttr(STATRELID, tuple,
+											 Anum_pg_statistic_stahival,
+											 &isnull);
 		if (isnull)
 		{
 			elog(DEBUG, "getattstatistics: stahival is null");
@@ -701,7 +692,6 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 		}
 	}
 
-	heap_close(rel, AccessShareLock);
 	return true;
 }
 

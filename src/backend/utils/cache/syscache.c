@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.44 1999/11/24 17:09:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.45 2000/01/23 03:43:24 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -535,140 +535,42 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 	return tp;
 }
 
-/*
- * SearchSysCacheStruct
- *	  Fills 's' with the information retrieved by calling SearchSysCache()
- *	  with arguments key1...key4.  Retrieves only the portion of the tuple
- *	  which is not variable-length.
- *
- * NOTE: we are assuming that non-variable-length fields in the system
- *		 catalogs will always be defined!
- *
- * Returns 1L if a tuple was found, 0L if not.
- */
-int32
-SearchSysCacheStruct(int cacheId,		/* cache selection code */
-					 char *returnStruct,		/* (preallocated!) */
-					 Datum key1,
-					 Datum key2,
-					 Datum key3,
-					 Datum key4)
-{
-	HeapTuple	tp;
-
-	if (!PointerIsValid(returnStruct))
-	{
-		elog(ERROR, "SearchSysCacheStruct: No receiving struct");
-		return 0;
-	}
-	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
-	if (!HeapTupleIsValid(tp))
-		return 0;
-	memcpy(returnStruct, (char *) GETSTRUCT(tp), cacheinfo[cacheId].size);
-	return 1;
-}
-
 
 /*
- * SearchSysCacheGetAttribute
- *	  Returns the attribute corresponding to 'attributeNumber' for
- *	  a given cached tuple.  This routine usually needs to be used for
- *	  attributes that might be NULL or might be at a variable offset
- *	  in the tuple.
+ * SysCacheGetAttr
  *
- * XXX This re-opens the relation, so this is slower than just pulling
- * fixed-location fields out of the struct returned by SearchSysCacheTuple.
+ *		Given a tuple previously fetched by SearchSysCacheTuple() or
+ *		SearchSysCacheTupleCopy(), extract a specific attribute.
  *
- * [callers all assume this returns a (struct varlena *). -ay 10/94]
+ * This is equivalent to using heap_getattr() on a tuple fetched
+ * from a non-cached relation.  Usually, this is only used for attributes
+ * that could be NULL or variable length; the fixed-size attributes in
+ * a system table are accessed just by mapping the tuple onto the C struct
+ * declarations from include/catalog/.
+ *
+ * As with heap_getattr(), if the attribute is of a pass-by-reference type
+ * then a pointer into the tuple data area is returned --- the caller must
+ * not modify or pfree the datum!
  */
-void *
-SearchSysCacheGetAttribute(int cacheId,
-						   AttrNumber attributeNumber,
-						   Datum key1,
-						   Datum key2,
-						   Datum key3,
-						   Datum key4)
+Datum
+SysCacheGetAttr(int cacheId, HeapTuple tup,
+				AttrNumber attributeNumber,
+				bool *isnull)
 {
-	HeapTuple	tp;
-	char	   *cacheName;
-	Relation	relation;
-	int32		attributeLength,
-				attributeByValue;
-	bool		isNull;
-	Datum		attributeValue;
-	void	   *returnValue;
-
 	/*
-	 * Open the relation first, to ensure we are in sync with SI inval
-	 * events --- we don't want the tuple found in the cache to be
-	 * invalidated out from under us.
+	 * We just need to get the TupleDesc out of the cache entry,
+	 * and then we can apply heap_getattr().  We expect that the cache
+	 * control data is currently valid --- if the caller just fetched
+	 * the tuple, then it should be.
 	 */
-	cacheName = cacheinfo[cacheId].name;
-	relation = heap_openr(cacheName, AccessShareLock);
+	if (cacheId < 0 || cacheId >= SysCacheSize)
+		elog(ERROR, "SysCacheGetAttr: Bad cache id %d", cacheId);
+	if (! PointerIsValid(SysCache[cacheId]) ||
+		SysCache[cacheId]->relationId == InvalidOid ||
+		! PointerIsValid(SysCache[cacheId]->cc_tupdesc))
+		elog(ERROR, "SysCacheGetAttr: missing cache data for id %d", cacheId);
 
-	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
-
-	if (!HeapTupleIsValid(tp))
-	{
-		heap_close(relation, AccessShareLock);
-#ifdef	CACHEDEBUG
-		elog(DEBUG,
-			 "SearchSysCacheGetAttribute: Lookup in %s(%d) failed",
-			 cacheName, cacheId);
-#endif	 /* defined(CACHEDEBUG) */
-		return NULL;
-	}
-
-	if (attributeNumber < 0 &&
-		attributeNumber > FirstLowInvalidHeapAttributeNumber)
-	{
-		attributeLength = heap_sysattrlen(attributeNumber);
-		attributeByValue = heap_sysattrbyval(attributeNumber);
-	}
-	else if (attributeNumber > 0 &&
-			 attributeNumber <= relation->rd_rel->relnatts)
-	{
-		attributeLength = relation->rd_att->attrs[attributeNumber - 1]->attlen;
-		attributeByValue = relation->rd_att->attrs[attributeNumber - 1]->attbyval;
-	}
-	else
-	{
-		heap_close(relation, AccessShareLock);
-		elog(ERROR,
-			 "SearchSysCacheGetAttribute: Bad attr # %d in %s(%d)",
-			 attributeNumber, cacheName, cacheId);
-		return NULL;
-	}
-
-	attributeValue = heap_getattr(tp,
-								  attributeNumber,
-								  RelationGetDescr(relation),
-								  &isNull);
-
-	if (isNull)
-	{
-		/*
-		 * Used to be an elog(DEBUG, ...) here and a claim that it should
-		 * be a FATAL error, I don't think either is warranted -mer 6/9/92
-		 */
-		heap_close(relation, AccessShareLock);
-		return NULL;
-	}
-
-	if (attributeByValue)
-		returnValue = (void *) attributeValue;
-	else
-	{
-		char	   *tmp;
-		int			size = (attributeLength < 0)
-		? VARSIZE((struct varlena *) attributeValue)	/* variable length */
-		: attributeLength;		/* fixed length */
-
-		tmp = (char *) palloc(size);
-		memcpy(tmp, (void *) attributeValue, size);
-		returnValue = (void *) tmp;
-	}
-
-	heap_close(relation, AccessShareLock);
-	return returnValue;
+	return heap_getattr(tup, attributeNumber,
+						SysCache[cacheId]->cc_tupdesc,
+						isnull);
 }

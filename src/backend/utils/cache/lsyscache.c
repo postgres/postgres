@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.37 1999/12/31 03:18:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.38 2000/01/23 03:43:24 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -617,35 +617,15 @@ get_typalign(Oid typid)
 Datum
 get_typdefault(Oid typid)
 {
-	struct varlena *typDefault;
-	int32		dataSize;
 	HeapTuple	typeTuple;
 	Form_pg_type type;
+	struct varlena *typDefault;
+	bool		isNull;
+	int32		dataSize;
 	int32		typLen;
 	bool		typByVal;
 	Datum		returnValue;
 
-	/*
-	 * First, see if there is a non-null typdefault field (usually there isn't)
-	 */
-	typDefault = (struct varlena *)
-		SearchSysCacheGetAttribute(TYPEOID,
-								   Anum_pg_type_typdefault,
-								   ObjectIdGetDatum(typid),
-								   0, 0, 0);
-
-	if (typDefault == NULL)
-		return PointerGetDatum(NULL);
-
-	dataSize = VARSIZE(typDefault) - VARHDRSZ;
-
-	/*
-	 * Need the type's length and byVal fields.
-	 *
-	 * XXX silly to repeat the syscache search that SearchSysCacheGetAttribute
-	 * just did --- but at present this path isn't taken often enough to
-	 * make it worth fixing.
-	 */
 	typeTuple = SearchSysCacheTuple(TYPEOID,
 									ObjectIdGetDatum(typid),
 									0, 0, 0);
@@ -654,6 +634,22 @@ get_typdefault(Oid typid)
 		elog(ERROR, "get_typdefault: failed to lookup type %u", typid);
 
 	type = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	/*
+	 * First, see if there is a non-null typdefault field (usually there isn't)
+	 */
+	typDefault = (struct varlena *) SysCacheGetAttr(TYPEOID,
+													typeTuple,
+													Anum_pg_type_typdefault,
+													&isNull);
+
+	if (isNull)
+		return PointerGetDatum(NULL);
+
+	/*
+	 * Otherwise, extract/copy the value.
+	 */
+	dataSize = VARSIZE(typDefault) - VARHDRSZ;
 	typLen = type->typlen;
 	typByVal = type->typbyval;
 
