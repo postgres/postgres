@@ -18,6 +18,7 @@ $log$
 <!entity notation SYSTEM "notation.sgml">
 <!entity y2k      SYSTEM "y2k.sgml">
 
+<!entity config   SYSTEM "config.sgml">
 <!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity install  SYSTEM "install.sgml">
 <!entity options  SYSTEM "pg_options.sgml">
@@ -84,7 +85,7 @@ Your name here...
 </Dedication>
 -->
 
-<Preface>
+<Preface id="preface">
 <Title>Summary</Title>
 
 <Para>
@@ -102,6 +103,7 @@ It provides SQL92/SQL3 language support,
 &intro-ag;
 
 &ports;
+&config;
 &install;
 &runtime;
 &options;
@@ -112,7 +114,11 @@ It provides SQL92/SQL3 language support,
 
 &biblio;
 
-<INDEX> </INDEX>
+<!-- Don't bother with an index until we get some index entries.
+  -- - thomas 1998-10-26
+<index id="index">
+</index>
+-->
 
 </Book>
 

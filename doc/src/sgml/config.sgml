@@ -1,6 +1,206 @@
 <chapter id="config">
 <title>Configuration Options</title>
 
+<sect1>
+<title>Parameters for Configuration (<application>configure</application>)</title>
+
+<para>
+The full set of parameters available in <application>configure</application>
+can be obtained by typing
+
+<programlisting>
+$ ./configure --help
+</programlisting>
+
+<para>
+The following parameters may be of interest to most installers:
+
+<programlisting>
+Directory and file names:
+  --prefix=PREFIX         install architecture-independent files in PREFIX
+                          [/usr/local/pgsql]
+  --bindir=DIR            user executables in DIR [EPREFIX/bin]
+  --datadir=DIR           read-only architecture-independent data in DIR
+                          [PREFIX/share]
+  --sysconfdir=DIR        read-only single-machine data in DIR [PREFIX/etc]
+  --sharedstatedir=DIR    modifiable architecture-independent data in DIR
+                          [PREFIX/com]
+  --libdir=DIR            object code libraries in DIR [EPREFIX/lib]
+  --includedir=DIR        C header files in DIR [PREFIX/include]
+  --mandir=DIR            man documentation in DIR [PREFIX/man]
+  --srcdir=DIR            find the sources in DIR [configure dir or ..]
+Features and packages:
+  --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+  --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
+  --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
+--enable and --with options recognized:
+  --with-template=<replaceable>template</replaceable>
+                          use operating system template file
+                              see template directory
+  --with-includes=<replaceable>incdir</replaceable>  site header files for tk/tcl, etc in DIR
+  --with-libs=<replaceable>incdir</replaceable>      also search for libraries in DIR
+  --with-libraries=<replaceable>libdir</replaceable> also search for libraries in DIR
+  --enable-locale         enable locale support
+  --enable-recode         enable cyrillic recode support
+  --with-mb=<replaceable>encoding</replaceable>    enable multi-byte support
+  --with-pgport=<replaceable>portnum</replaceable> change default startup port
+  --with-tcl              use tcl
+  --with-tclconfig=<replaceable>tcldir</replaceable> tclConfig.sh and tkConfig.sh are in DIR
+  --with-perl             use perl
+  --with-odbc             build ODBC driver package
+  --with-odbcinst=<replaceable>odbcdir</replaceable> change default directory for odbcinst.ini
+  --enable-cassert        enable assertion checks (debugging)
+  --with-CC=<replaceable>compiler</replaceable>      use specific C compiler
+  --with-CXX=<replaceable>compiler</replaceable>     use specific C++ compiler
+  --with-x                use the X Window System
+</programlisting>
+
+<sect1>
+<title>Parameters for Building (<application>make</application>)</title>
+
+<para>
+Many installation-related parameters can be set in the building
+stage of <productname>Postgres</productname> installation.
+
+<para>
+In most cases, these parameters should be place in a file,
+<filename>Makefile.custom</filename>, intended just for that purpose.
+The default distribution does not contain this optional file, so you
+will create it using a text editor of your choice. When upgrading installations,
+you can simply copy your old Makefile.custom to the new installation before
+doing the build.
+
+<synopsis>
+make [ <replaceable>variable</replaceable>=<replaceable class="parameter">value</replaceable> [,...] ]
+</synopsis>
+
+<para>
+A few of the many variables which can be specified are:
+
+<variablelist>
+<varlistentry>
+<term>
+<envar>POSTGRESDIR</envar>
+
+<listitem>
+<para>
+Top of the installation tree.
+
+<varlistentry>
+<term>
+<envar>BINDIR</envar>
+
+<listitem>
+<para>
+Location of applications and utilities.
+
+<varlistentry>
+<term>
+<envar>LIBDIR</envar>
+
+<listitem>
+<para>
+Location of object libraries, including shared libraries.
+
+<varlistentry>
+<term>
+<envar>HEADERDIR</envar>
+
+<listitem>
+<para>
+Location of include files.
+
+<varlistentry>
+<term>
+<envar>ODBCINST</envar>
+
+<listitem>
+<para>
+Location of installation-wide <application>psqlODBC</application>
+(<acronym>ODBC</acronym>) configuration file.
+
+</variablelist>
+
+<para>
+There are other optional parameters which are not as commonly used.
+Many of those listed below are appropriate when doing 
+<application>Postgres</application> server code development.
+
+<variablelist>
+<varlistentry>
+<term>
+<envar>CFLAGS</envar>
+
+<listitem>
+<para>
+Set flags for the C compiler. 
+Should be assigned with "+=" to retain relevant default parameters.
+
+<varlistentry>
+<term>
+YFLAGS
+
+<listitem>
+<para>
+Set flags for the yacc/bison parser. <option>-v</option> might be
+used to help diagnose problems building a new parser.
+Should be assigned with "+=" to retain relevant default parameters.
+
+<varlistentry>
+<term>
+<envar>USE_TCL</envar>
+
+<listitem>
+<para>
+Enable Tcl interface building.
+
+<varlistentry>
+<term>
+<envar>HSTYLE</envar>
+
+<listitem>
+<para>
+DocBook <acronym>HTML</acronym> style sheets for building the 
+documentation from scratch.
+Not used unless you are developing new documentation from the
+DocBook-compatible <acronym>SGML</acronym> source documents in
+<filename>doc/src/sgml/</filename>.
+
+<varlistentry>
+<term>
+<envar>PSTYLE</envar>
+
+<listitem>
+<para>
+DocBook style sheets for building printed documentation from scratch.
+Not used unless you are developing new documentation from the
+DocBook-compatible <acronym>SGML</acronym> source documents in
+<filename>doc/src/sgml/</filename>.
+
+</variablelist>
+
+<para>
+Here is an example <filename>Makefile.custom</filename> for a
+PentiumPro Linux system:
+
+<programlisting>
+# Makefile.custom
+# Thomas Lockhart 1998-03-01
+
+POSTGRESDIR= /opt/postgres/current
+CFLAGS+= -m486 # -g -O0
+USE_TCL= true
+TCL_LIB= -ltcl
+X_LIBS= -L/usr/X11/lib
+TK_LIB= -ltk
+
+# documentation
+
+HSTYLE= /home/tgl/SGML/db118.d/docbook/html
+PSTYLE= /home/tgl/SGML/db118.d/docbook/print
+</programlisting>
+
 <Sect1>
 <Title>Locale Support</Title>
 
@@ -23,10 +223,11 @@ when I work with perl
  the <ProductName>Postgres</ProductName> source tree I made very minor corections to
 src/backend/utils/adt/varlena.c and src/backend/main/main.c and got what I needed! 
 I did support only for
-LC_CTYPE and LC_COLLATE, but later LC_MONETARY was added by others. I got many
+<envar>LC_CTYPE</envar> and <envar>LC_COLLATE</envar>, 
+but later <envar>LC_MONETARY</envar> was added by others. I got many
 messages from people about this patch so I decided to send it to developers 
 and (to my surprise) it was
-incorporated into postgresql distribution.
+incorporated into the <productname>Postgres</productname> distribution.
 
 <Para>
  People often complain that locale doesn't work for them. 
@@ -38,7 +239,8 @@ There are several common mistakes:
      Didn't properly configure postgresql before compilation. 
      You must run configure with --enable-locale option to enable locale support. 
      Didn't setup environment correctly when starting postmaster. 
-     You must define environment variables $LC_CTYPE and $LC_COLLATE 
+     You must define environment variables 
+<envar>LC_CTYPE</envar> and <envar>LC_COLLATE</envar> 
 before running postmaster
      because backend gets information about locale from environment. 
 I use following shell script
@@ -114,6 +316,7 @@ the USE_LOCALE variable.
 <Para>
 There is one evident drawback of using locale - it's speed! 
 So, use locale only if you really need it. 
+
 
 <Sect1>
 <Title>Kerberos Authentication</Title>

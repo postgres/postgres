@@ -1,11 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.11 1998/10/25 00:24:31 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/postgres.sgml,v 1.12 1998/10/27 06:14:01 thomas Exp $
 
 Postgres integrated documentation.
 Other subset docs should be copied and shrunk from here.
 thomas 1998-02-23
 
 $Log: postgres.sgml,v $
+Revision 1.12  1998/10/27 06:14:01  thomas
+Include configuration chapter with new info on configure and make.
+
 Revision 1.11  1998/10/25 00:24:31  thomas
 Add Y2K statement for intros.
 Make sure notation section is included in most intros.
@@ -65,6 +68,7 @@ Include new chapters.
 %allfiles;
 
 <!-- administrator's guide -->
+<!entity config   SYSTEM "config.sgml">
 <!entity install  SYSTEM "install.sgml">
 <!entity intro-ag SYSTEM "intro-ag.sgml">
 <!entity options  SYSTEM "pg_options.sgml">
@@ -225,6 +229,7 @@ Installation and maintenance information.
 </PartIntro>
 &intro-ag;
 &ports;
+&config;
 &install;
 &runtime;
 &options;
@@ -303,7 +308,10 @@ Additional related information.
 &biblio;
 </Part>
 
+<!-- Omit index until we have some index entries.
+  -- - thomas 1998-10-26
 <index Id="part-index">
 </index>
+-->
 
 </Book>
