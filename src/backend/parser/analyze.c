@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.27 1997/04/29 04:32:26 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.28 1997/05/08 02:45:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1047,7 +1047,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	    char *resname;
 	    
 	    identname = ((Ident*)res->val)->name;
-	    handleTargetColname(pstate, &res->name, NULL, res->name);
+	    handleTargetColname(pstate, &res->name, NULL, identname );
 
 	    /* here we want to look for column names only, not relation */
 	    /* names (even though they can be stored in Ident nodes,    */
