@@ -58,11 +58,17 @@ nextstep*) os=nextstep need_tas=no ;;
    exit;;
 esac
 
-if test "X$elf" = "Xyes"
+# If this test fails then it is ELF for sure
+if echo __ELF__ | ${CC} -E - | grep -q __ELF__
 then
-	ELF_SYS=true
+	if test "X$elf" = "Xyes"
+	then
+		ELF_SYS=true
+	else
+		ELF_SYS=
+	fi
 else
-	ELF_SYS=
+	ELF_SYS=true
 fi
 
 if test "X$need_tas" = "Xyes"
