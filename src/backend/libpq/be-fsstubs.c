@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.2 1996/09/23 08:29:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.3 1996/10/31 10:37:49 scrappy Exp $
  *
  * NOTES
  *    This should be moved to a more appropriate place.  It is here
@@ -25,6 +25,9 @@
 #include "lib/dllist.h"
 #include "libpq/libpq.h"
 #include "libpq/libpq-fs.h"
+#include "nodes/nodes.h"
+#include "utils/memutils.h"
+#include "lib/fstack.h"
 #include "utils/mcxt.h"
 #include "utils/palloc.h"
 

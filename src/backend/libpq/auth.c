@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.4 1996/10/13 04:49:32 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.5 1996/10/31 10:37:48 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,10 +61,13 @@
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <libpq/auth.h>
-#include <libpq/libpq.h>
-#include <libpq/libpq-be.h>
-#include <libpq/hba.h>
+
+#include "postgres.h"
+
+#include "libpq/auth.h"
+#include "libpq/libpq.h"
+#include "libpq/libpq-be.h"
+#include "libpq/hba.h"
 
 /*----------------------------------------------------------------
  * common definitions for generic fe/be routines

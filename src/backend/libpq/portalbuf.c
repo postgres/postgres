@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.1.1.1 1996/07/09 06:21:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.2 1996/10/31 10:37:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *
  */
 #include <sys/types.h>
-#include "c.h"
+#include "postgres.h"
 
 #include "libpq/libpq.h"		/* where the declarations go */
 #include "utils/exc.h"
