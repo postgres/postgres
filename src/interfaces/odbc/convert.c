@@ -1065,6 +1065,33 @@ int lobj_fd, retval;
 			/*	because of no conversion operator for bool and int4, SQL_BIT */
 			/*	must be quoted (0 or 1 is ok to use inside the quotes) */
 
+		case SQL_REAL:
+			if (buf)
+            			my_strcpy(param_string, sizeof(param_string), buf, used);
+			sprintf(tmp, "'%s'::float4", param_string);
+			strcpy(&new_statement[npos], tmp);
+			npos += strlen(tmp);
+			break;
+		case SQL_FLOAT:
+		case SQL_DOUBLE:
+			if (buf)
+            			my_strcpy(param_string, sizeof(param_string), buf, used);
+			sprintf(tmp, "'%s'::float8", param_string);
+			strcpy(&new_statement[npos], tmp);
+			npos += strlen(tmp);
+			break;
+		case SQL_NUMERIC:
+			if (buf)
+			{
+				cbuf[0] = '\'';
+				my_strcpy(cbuf + 1, sizeof(cbuf) - 12, buf, used);	/* 12 = 1('\'') + strlen("'::numeric") + 1('\0') */
+				strcat(cbuf, "'::numeric");
+			}
+			else
+				sprintf(cbuf, "'%s'::numeric", param_string);
+			my_strcpy(&new_statement[npos], sizeof(stmt->stmt_with_params) - npos - 1, cbuf, strlen(cbuf));
+			npos += strlen(&new_statement[npos]);
+			break;
 		default:		/* a numeric type or SQL_BIT */
 			if (param_sqltype == SQL_BIT)
 				new_statement[npos++] = '\'';	/*    Open Quote */
