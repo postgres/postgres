@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.16 2004/10/04 13:43:56 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_ctl/Makefile,v 1.17 2004/10/04 18:05:54 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ subdir = src/bin/pg_ctl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -DDEF_PGPORT=$(DEF_PGPORT) -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -DFRONTEND -DDEF_PGPORT=$(DEF_PGPORT) -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS=	pg_ctl.o
 
