@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.75 2001/11/21 21:12:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.76 2001/11/24 19:57:06 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -385,7 +385,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.75 2001/11/21 21:12:34 tg
 	<entry><type>bigint</></entry>
 	<entry>8 bytes</entry>
 	<entry>Very large range fixed-precision</entry>
-	<entry>-9223372036854775807 to 9223372036854775807</entry>
+	<entry>-9223372036854775808 to 9223372036854775807</entry>
        </row>
 
        <row>

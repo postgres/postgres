@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.35 2001/10/25 14:10:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.36 2001/11/24 19:57:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,12 @@
 /* this should be set in pg_config.h, but just in case it wasn't: */
 #ifndef INT64_FORMAT
 #define INT64_FORMAT "%ld"
+#endif
+
+#ifdef HAVE_LL_CONSTANTS
+#define INT64CONST(x)  ((int64) x##LL)
+#else
+#define INT64CONST(x)  ((int64) x)
 #endif
 
 #define MAXINT8LEN		25
@@ -69,8 +75,23 @@ int8in(PG_FUNCTION_ARGS)
 	 */
 	while (*ptr && isspace((unsigned char) *ptr))		/* skip leading spaces */
 		ptr++;
-	if (*ptr == '-')			/* handle sign */
-		sign = -1, ptr++;
+	/* handle sign */
+	if (*ptr == '-')
+	{
+		ptr++;
+		sign = -1;
+		/*
+		 * Do an explicit check for INT64_MIN.  Ugly though this is, it's
+		 * cleaner than trying to get the loop below to handle it portably.
+		 */
+#ifndef INT64_IS_BUSTED
+		if (strcmp(ptr, "9223372036854775808") == 0)
+		{
+			result = - INT64CONST(0x7fffffffffffffff) - 1;
+			PG_RETURN_INT64(result);
+		}
+#endif
+	}
 	else if (*ptr == '+')
 		ptr++;
 	if (!isdigit((unsigned char) *ptr)) /* require at least one digit */
