@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.294 2004/11/27 21:56:04 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.295 2004/12/05 20:05:47 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -568,7 +568,7 @@ SET ENABLE_SEQSCAN TO OFF;
     <title>File Locations</title>
 
      <variablelist>
-     <varlistentry id="guc-data-directory" xreflabel="data-directory">
+     <varlistentry id="guc-data-directory" xreflabel="data_directory">
       <term><varname>data_directory</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>data_directory</> configuration parameter</primary>
@@ -581,7 +581,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-config-file" xreflabel="config-file">
+     <varlistentry id="guc-config-file" xreflabel="config_file">
       <term><varname>config_file</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>config_file</> configuration parameter</primary>
@@ -595,7 +595,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-hba-file" xreflabel="hba-file">
+     <varlistentry id="guc-hba-file" xreflabel="hba_file">
       <term><varname>hba_file</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>hba_file</> configuration parameter</primary>
@@ -608,7 +608,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-ident-file" xreflabel="ident-file">
+     <varlistentry id="guc-ident-file" xreflabel="ident_file">
       <term><varname>ident_file</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>ident_file</> configuration parameter</primary>
@@ -622,7 +622,7 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="external-pid-file" xreflabel="external-pid-file">
+     <varlistentry id="guc-external-pid-file" xreflabel="external_pid_file">
       <term><varname>external_pid_file</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>external_pid_file</> configuration parameter</primary>
@@ -2876,7 +2876,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-stats-block-level" xreflabel="guc_stats_block_level">
+     <varlistentry id="guc-stats-block-level" xreflabel="stats_block_level">
       <term><varname>stats_block_level</varname> (<type>boolean</type>)</term>
       <indexterm>
        <primary><varname>stats_block_level</> configuration parameter</primary>
@@ -2893,7 +2893,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-stats-row-level" xreflabel="guc_stats_row_level">
+     <varlistentry id="guc-stats-row-level" xreflabel="stats_row_level">
       <term><varname>stats_row_level</varname> (<type>boolean</type>)</term>
       <indexterm>
        <primary><varname>stats_row_level</> configuration parameter</primary>
@@ -3750,7 +3750,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
 
     <variablelist>
 
-     <varlistentry id="guc-custom-variable-classes" xreflabel="custom-variable-classes">
+     <varlistentry id="guc-custom-variable-classes" xreflabel="custom_variable_classes">
       <term><varname>custom_variable_classes</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>custom_variable_classes</> configuration parameter</primary>
@@ -3912,7 +3912,7 @@ plruby.bar = true        # generates error, unknown class name
       </listitem>
      </varlistentry>
 
-    <varlistentry id="guc-zero-damaged-pages" xreflabel="zero-damaged-pages">
+    <varlistentry id="guc-zero-damaged-pages" xreflabel="zero_damaged_pages">
       <term><varname>zero_damaged_pages</varname> (<type>boolean</type>)</term>
       <indexterm>
        <primary><varname>zero_damaged_pages</> configuration parameter</primary>
