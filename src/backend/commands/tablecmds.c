@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.61 2002/12/15 16:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.62 2002/12/16 18:39:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	char		relname[NAMEDATALEN];
 	Oid			namespaceId;
 	List	   *schema = stmt->tableElts;
-	int			numberOfAttributes;
 	Oid			relationId;
 	Relation	rel;
 	TupleDesc	descriptor;
@@ -173,10 +172,6 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	schema = MergeAttributes(schema, stmt->inhRelations,
 							 stmt->relation->istemp,
 						 &inheritOids, &old_constraints, &parentHasOids);
-
-	numberOfAttributes = length(schema);
-	if (numberOfAttributes <= 0)
-		elog(ERROR, "DefineRelation: please inherit from a relation or define an attribute");
 
 	/*
 	 * Create a relation descriptor from the relation schema and create
@@ -1799,6 +1794,9 @@ AlterTableAddColumn(Oid myrelid,
 
 	typeTuple = typenameType(colDef->typename);
 	tform = (Form_pg_type) GETSTRUCT(typeTuple);
+
+	/* make sure datatype is legal for a column */
+	CheckAttributeType(colDef->colname, HeapTupleGetOid(typeTuple));
 
 	attributeTuple = heap_addheader(Natts_pg_attribute,
 									false,

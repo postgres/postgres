@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.59 2002/11/11 22:19:23 tgl Exp $
+ * $Id: heap.h,v 1.60 2002/12/16 18:39:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,5 +73,9 @@ extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,
 
 extern Form_pg_attribute SystemAttributeByName(const char *attname,
 					  bool relhasoids);
+
+extern void CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind);
+
+extern void CheckAttributeType(const char *attname, Oid atttypid);
 
 #endif   /* HEAP_H */
