@@ -52,5 +52,9 @@ do
 	echo "${BS}connect template1 $POSTGRES_USER"
 	echo "create database $DATABASE;"
 	echo "${BS}connect $DATABASE $POSTGRES_USER"
-	pg_dump "$@" $DATABASE || echo "pg_dump failed on $DATABASE" 1>&2
+	pg_dump "$@" $DATABASE
+	if [ "$?" -ne 0 ]
+	then	echo "pg_dump failed on $DATABASE, exiting" 1>&2
+		exit 1
+	fi
 done
