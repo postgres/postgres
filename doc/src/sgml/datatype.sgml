@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.132 2003/11/29 19:51:36 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.133 2003/11/30 20:55:09 joe Exp $
 -->
 
  <chapter id="datatype">
@@ -1076,9 +1076,10 @@ SELECT b, char_length(b) FROM test2;
     strings are distinguished from characters strings by two
     characteristics: First, binary strings specifically allow storing
     octets of value zero and other <quote>non-printable</quote>
-    octets.  Second, operations on binary strings process the actual
-    bytes, whereas the encoding and processing of character strings
-    depends on locale settings.
+    octets (defined as octets outside the range 32 to 126).
+    Second, operations on binary strings process the actual bytes,
+    whereas the encoding and processing of character strings depends
+    on locale settings.
    </para>
 
    <para>
@@ -1131,14 +1132,25 @@ SELECT b, char_length(b) FROM test2;
        <entry><literal>\\</literal></entry>
       </row>
 
+      <row>
+       <entry>0 to 31 and 127 to 255</entry>
+       <entry><quote>non-printable</quote> octets</entry>
+       <entry><literal>'\\<replaceable>xxx'</></literal> (octal value)</entry>
+       <entry><literal>SELECT '\\001'::bytea;</literal></entry>
+       <entry><literal>\001</literal></entry>
+      </row>
+
      </tbody>
     </tgroup>
    </table>
 
    <para>
-    Note that the result in each of the examples in <xref linkend="datatype-binary-sqlesc"> was exactly one
-    octet in length, even though the output representation of the zero
-    octet and backslash are more than one character.
+    The requirement to escape <quote>non-printable</quote> octets actually
+    varies depending on locale settings. In some instances you can get away
+    with leaving them unescaped. Note that the result in each of the examples
+    in <xref linkend="datatype-binary-sqlesc"> was exactly one octet in
+    length, even though the output representation of the zero octet and
+    backslash are more than one character.
    </para>
 
    <para>
@@ -1206,7 +1218,7 @@ SELECT b, char_length(b) FROM test2;
       <row>
        <entry>32 to 126</entry>
        <entry><quote>printable</quote> octets</entry>
-       <entry>ASCII representation</entry>
+       <entry>client character set representation</entry>
        <entry><literal>SELECT '\\176'::bytea;</literal></entry>
        <entry><literal>~</literal></entry>
       </row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.107 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.108 2003/11/30 20:55:09 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,10 +186,10 @@ byteaout(PG_FUNCTION_ARGS)
 	{
 		if (*vp == '\\')
 			len += 2;
-		else if (isprint((unsigned char) *vp))
-			len++;
-		else
+		else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
 			len += 4;
+		else
+			len++;
 	}
 	rp = result = (char *) palloc(len);
 	vp = VARDATA(vlena);
@@ -200,9 +200,7 @@ byteaout(PG_FUNCTION_ARGS)
 			*rp++ = '\\';
 			*rp++ = '\\';
 		}
-		else if (isprint((unsigned char) *vp))
-			*rp++ = *vp;
-		else
+		else if ((unsigned char) *vp < 0x20 || (unsigned char) *vp > 0x7e)
 		{
 			val = *vp;
 			rp[0] = '\\';
@@ -213,6 +211,8 @@ byteaout(PG_FUNCTION_ARGS)
 			rp[1] = DIG(val & 03);
 			rp += 4;
 		}
+		else
+			*rp++ = *vp;
 	}
 	*rp = '\0';
 	PG_RETURN_CSTRING(result);
