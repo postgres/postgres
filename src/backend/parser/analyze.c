@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.188 2001/06/04 16:17:30 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.189 2001/06/04 23:27:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
 #include "parser/parse_type.h"
+#include "parser/parse_expr.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -51,7 +52,10 @@ static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
+static Node *transformTypeRefs(ParseState *pstate, Node *stmt);
 
+static void transformTypeRefsList(ParseState *pstate, List *l);
+static void transformTypeRef(ParseState *pstate, TypeName *tn);
 static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
 static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid);
@@ -232,6 +236,17 @@ transformStmt(ParseState *pstate, Node *parseTree)
 											   (SelectStmt *) parseTree);
 			break;
 
+			/*
+			 * Convert use of %TYPE in statements where it is permitted.
+			 */
+		case T_ProcedureStmt:
+		case T_CommentStmt:
+		case T_RemoveFuncStmt:
+		case T_DefineStmt:
+			result = makeNode(Query);
+			result->commandType = CMD_UTILITY;
+			result->utilityStmt = transformTypeRefs(pstate, parseTree);
+			break;
 
 		default:
 
@@ -2699,6 +2714,107 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 	}
 	qry->utilityStmt = (Node *) stmt;
 	return qry;
+}
+
+/* 
+ * Transform uses of %TYPE in a statement.
+ */
+static Node *
+transformTypeRefs(ParseState *pstate, Node *stmt)
+{
+	switch (nodeTag(stmt))
+	{
+		case T_ProcedureStmt:
+		{
+			ProcedureStmt  *ps = (ProcedureStmt *) stmt;
+
+			transformTypeRefsList(pstate, ps->argTypes);
+			transformTypeRef(pstate, (TypeName *) ps->returnType);
+			transformTypeRefsList(pstate, ps->withClause);
+		}
+		break;
+
+		case T_CommentStmt:
+		{
+			CommentStmt	   *cs = (CommentStmt *) stmt;
+
+			transformTypeRefsList(pstate, cs->objlist);
+		}
+		break;
+
+		case T_RemoveFuncStmt:
+		{
+			RemoveFuncStmt *rs = (RemoveFuncStmt *) stmt;
+
+			transformTypeRefsList(pstate, rs->args);
+		}
+		break;
+
+		case T_DefineStmt:
+		{
+			DefineStmt *ds = (DefineStmt *) stmt;
+			List	   *ele;
+
+			foreach(ele, ds->definition)
+			{
+				DefElem	   *de = (DefElem *) lfirst(ele);
+
+				if (de->arg != NULL
+					&& IsA(de->arg, TypeName))
+				{
+					transformTypeRef(pstate, (TypeName *) de->arg);
+				}
+			}
+		}
+		break;
+
+		default:
+			elog(ERROR, "Unsupported type %d in transformTypeRefs",
+				 nodeTag(stmt));
+			break;
+	}
+
+	return stmt;
+}
+
+/*
+ * Transform uses of %TYPE in a list.
+ */
+static void
+transformTypeRefsList(ParseState *pstate, List *l)
+{
+	List	   *ele;
+
+	foreach(ele, l)
+	{
+		if (IsA(lfirst(ele), TypeName))
+			transformTypeRef(pstate, (TypeName *) lfirst(ele));
+	}
+}
+
+/*
+ * Transform a TypeName to not use %TYPE.
+ */
+static void
+transformTypeRef(ParseState *pstate, TypeName *tn)
+{
+	Attr   *att;
+	Node   *n;
+	Var	   *v;
+	char   *tyn;
+
+	if (tn->attrname == NULL)
+		return;
+	att = makeAttr(tn->name, tn->attrname);
+	n = transformExpr(pstate, (Node *) att, EXPR_COLUMN_FIRST);
+	if (! IsA(n, Var))
+		elog(ERROR, "unsupported expression in %%TYPE");
+	v = (Var *) n;
+	tyn = typeidTypeName(v->vartype);
+	elog(NOTICE, "%s.%s%%TYPE converted to %s", tn->name, tn->attrname, tyn);
+	tn->name = tyn;
+	tn->typmod = v->vartypmod;
+	tn->attrname = NULL;
 }
 
 /* exported so planner can check again after rewriting, query pullup, etc */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.129 2001/05/21 18:42:08 momjian Exp $
+ * $Id: parsenodes.h,v 1.130 2001/06/04 23:27:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -951,6 +951,7 @@ typedef struct TypeName
 	bool		setof;			/* is a set? */
 	int32		typmod;			/* type modifier */
 	List	   *arrayBounds;	/* array bounds */
+	char	   *attrname;		/* field name when using %TYPE */
 } TypeName;
 
 /*

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.23 2001/05/19 09:01:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.24 2001/06/04 23:27:23 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -55,10 +55,16 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
      <listitem>
       <para>
        The data type(s) of the function's arguments, if any.  The
-       input types may be base or complex types, or
-       <literal>opaque</literal>.  <literal>Opaque</literal> indicates
+       input types may be base or complex types,
+       <literal>opaque</literal>, or the same as the type of an
+       existing column.  <literal>Opaque</literal> indicates
        that the function accepts arguments of a non-SQL type such as
        <type>char *</type>.
+	The type of a column is indicated using <replaceable
+	class="parameter">tablename</replaceable>.<replaceable
+	class="parameter">columnname</replaceable><literal>%TYPE</literal>;
+	using this can sometimes help make a function independent from
+	changes to the definition of a table.
       </para>
      </listitem>
     </varlistentry>
@@ -69,8 +75,10 @@ CREATE FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceab
      <listitem>
       <para>
        The return data type.  The output type may be specified as a
-       base type, complex type, <literal>setof</literal> type, or
-       <literal>opaque</literal>.  The <literal>setof</literal>
+       base type, complex type, <literal>setof</literal> type,
+       <literal>opaque</literal>, or the same as the type of an
+       existing column.
+       The <literal>setof</literal>
        modifier indicates that the function will return a set of
        items, rather than a single item.  Functions with a declared
        return type of <literal>opaque</literal> do not return a value.

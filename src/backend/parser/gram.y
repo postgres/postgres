@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.227 2001/05/27 09:59:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.228 2001/06/04 23:27:23 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -192,7 +192,7 @@ static void doNegateFloat(Value *v);
 		def_list, opt_indirection, group_clause, TriggerFuncArgs,
 		select_limit, opt_select_limit
 
-%type <typnam>	func_arg, func_return, aggr_argtype
+%type <typnam>	func_arg, func_return, func_type, aggr_argtype
 
 %type <boolean>	opt_arg, TriggerForOpt, TriggerForType, OptTemp
 
@@ -2490,7 +2490,7 @@ func_args_list:  func_arg
 				{	$$ = lappend($1, $3); }
 		;
 
-func_arg:  opt_arg Typename
+func_arg:  opt_arg func_type
 				{
 					/* We can catch over-specified arguments here if we want to,
 					 * but for now better to silently swallow typmod, etc.
@@ -2498,7 +2498,7 @@ func_arg:  opt_arg Typename
 					 */
 					$$ = $2;
 				}
-		| Typename
+		| func_type
 				{
 					$$ = $1;
 				}
@@ -2526,7 +2526,7 @@ func_as: Sconst
 				{ 	$$ = makeList2(makeString($1), makeString($3)); }
 		;
 
-func_return:  Typename
+func_return:  func_type
 				{
 					/* We can catch over-specified arguments here if we want to,
 					 * but for now better to silently swallow typmod, etc.
@@ -2536,6 +2536,18 @@ func_return:  Typename
 				}
 		;
 
+func_type:	Typename
+				{
+					$$ = $1;
+				}
+		| IDENT '.' ColId '%' TYPE_P
+				{
+					$$ = makeNode(TypeName);
+					$$->name = $1;
+					$$->typmod = -1;
+					$$->attrname = $3;
+				}
+		;
 
 /*****************************************************************************
  *

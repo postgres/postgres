@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.96 2001/05/21 18:42:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.97 2001/06/04 23:27:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -942,6 +942,7 @@ parser_typecast_expression(ParseState *pstate,
 char *
 TypeNameToInternalName(TypeName *typename)
 {
+	Assert(typename->attrname == NULL);
 	if (typename->arrayBounds != NIL)
 	{
 
