@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/tools/Attic/test_thread_funcs.c,v 1.1 2003/09/03 19:30:31 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/tools/Attic/test_thread_funcs.c,v 1.2 2003/09/03 19:36:31 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -61,6 +61,13 @@ int main(int argc, char *argv[])
 	pthread_create(&thread2, NULL, (void *) func_call_2, NULL);
 	pthread_join(thread1, NULL);
 	pthread_join(thread2, NULL);
+
+	if (hostent_p1 == hostent_p2)
+		printf("Your gethostbyname() is _not_ thread-safe\n");
+	if (passwd_p1 == passwd_p2)
+		printf("Your getpwuid() is _not_ thread-safe\n");
+	if (strerror_p1 == strerror_p2)
+		printf("Your strerror() is _not_ thread-safe\n");
 
 	if (hostent_p1 != hostent_p2 &&
 		passwd_p1 != passwd_p2 &&
