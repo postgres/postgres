@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.19 2003/03/10 03:53:48 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.20 2003/03/21 17:11:46 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -58,9 +58,7 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
        <para>
 	<acronym>SQL92</acronym> keyword indicating that data retrieved
 	from the cursor should be unaffected by updates from other processes or cursors.
-	Since cursor operations occur within transactions
-	in <productname>PostgreSQL</productname> this is always the case.
-	This keyword has no effect.
+	By default, all cursors are insensitive.  This keyword has no effect.
        </para>
       </listitem>
      </varlistentry>
