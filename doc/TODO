@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct  8 13:08:55 EDT 2001
+Last updated:		Thu Oct 11 12:35:23 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -206,6 +206,7 @@ CLIENTS
   ORDER BY direction (Tom)
 * Have pg_dump use LEFT OUTER JOIN in multi-table SELECTs
   or multiple SELECTS to avoid bad system catalog entries
+* Have pg_dump -C dump database location and encoding information
 * Allow psql \d to show foreign keys
 * Allow psql \d to show temporary table structure
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
