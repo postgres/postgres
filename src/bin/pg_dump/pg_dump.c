@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.273 2002/07/18 04:50:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.274 2002/07/18 23:11:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3398,7 +3398,6 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	char	   *prosrc;
 	char	   *probin;
 	char	   *provolatile;
-	char	   *proimplicit;
 	char	   *proisstrict;
 	char	   *prosecdef;
 	char	   *lanname;
@@ -3417,7 +3416,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
-						  "provolatile, proimplicit, proisstrict, prosecdef, "
+						  "provolatile, proisstrict, prosecdef, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%s'::pg_catalog.oid",
@@ -3428,7 +3427,6 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
 						  "case when proiscachable then 'i' else 'v' end as provolatile, "
-						  "'f'::boolean as proimplicit, "
 						  "proisstrict, "
 						  "'f'::boolean as prosecdef, "
 						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
@@ -3441,7 +3439,6 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
 						  "case when proiscachable then 'i' else 'v' end as provolatile, "
-						  "'f'::boolean as proimplicit, "
 						  "'f'::boolean as proisstrict, "
 						  "'f'::boolean as prosecdef, "
 						  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
@@ -3472,7 +3469,6 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	prosrc = PQgetvalue(res, 0, PQfnumber(res, "prosrc"));
 	probin = PQgetvalue(res, 0, PQfnumber(res, "probin"));
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
-	proimplicit = PQgetvalue(res, 0, PQfnumber(res, "proimplicit"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
 	lanname = PQgetvalue(res, 0, PQfnumber(res, "lanname"));
@@ -3533,9 +3529,6 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
-	if (proimplicit[0] == 't')
-		appendPQExpBuffer(q, " IMPLICIT CAST");
-
 	if (proisstrict[0] == 't')
 		appendPQExpBuffer(q, " STRICT");
 
@@ -3568,6 +3561,108 @@ done:
 	free(funcsig);
 	free(funcsig_tag);
 }
+
+
+/*
+ * Dump all casts
+ */
+void
+dumpCasts(Archive *fout,
+		  FuncInfo *finfo, int numFuncs,
+		  TypeInfo *tinfo, int numTypes)
+{
+	PGresult   *res;
+	PQExpBuffer query = createPQExpBuffer();
+	PQExpBuffer defqry = createPQExpBuffer();
+	PQExpBuffer delqry = createPQExpBuffer();
+	int			ntups;
+	int			i;
+
+	/* Make sure we are in proper schema */
+	selectSourceSchema("pg_catalog");
+
+	if (fout->remoteVersion >= 70300)
+		appendPQExpBuffer(query, "SELECT oid, castsource, casttarget, castfunc, castimplicit FROM pg_cast ORDER BY 1,2,3;");
+	else
+		appendPQExpBuffer(query, "SELECT p.oid, t1.oid, t2.oid, p.oid, true FROM pg_type t1, pg_type t2, pg_proc p WHERE p.pronargs = 1 AND p.proargtypes[0] = t1.oid AND p.prorettype = t2.oid AND p.proname = t2.typname ORDER BY 1,2,3;");
+
+	res = PQexec(g_conn, query->data);
+	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		write_msg(NULL, "query to obtain list of casts failed: %s",
+				  PQerrorMessage(g_conn));
+		exit_nicely();
+	}
+	ntups = PQntuples(res);
+
+	for (i = 0; i < ntups; i++)
+	{
+		char * castoid = PQgetvalue(res, i, 0);
+		char * castsource = PQgetvalue(res, i, 1);
+		char * casttarget = PQgetvalue(res, i, 2);
+		char * castfunc = PQgetvalue(res, i, 3);
+		char * castimplicit = PQgetvalue(res, i, 4);
+		int fidx = -1;
+		const char *((*deps)[]);
+
+		if (strcmp(castfunc, "0") != 0)
+			fidx = findFuncByOid(finfo, numFuncs, castfunc);
+
+		/*
+		 * We treat the cast as being in the namespace of the
+		 * underlying function.  This doesn't handle binary compatible
+		 * casts.  Where should those go?
+		 */
+		if (fidx < 0 || !finfo[fidx].pronamespace->dump)
+			continue;
+
+		/* Make a dependency to ensure function is dumped first */
+		if (fidx >= 0)
+		{
+			deps = malloc(sizeof(char *) * 2);
+
+			(*deps)[0] = strdup(castfunc);
+			(*deps)[1] = NULL;	/* End of List */
+		}
+		else
+			deps = NULL;
+
+		resetPQExpBuffer(defqry);
+		resetPQExpBuffer(delqry);
+
+		appendPQExpBuffer(delqry, "DROP CAST (%s AS %s);\n",
+						  getFormattedTypeName(castsource, zeroAsNone),
+						  getFormattedTypeName(casttarget, zeroAsNone));
+
+		appendPQExpBuffer(defqry, "CREATE CAST (%s AS %s) ",
+						  getFormattedTypeName(castsource, zeroAsNone),
+						  getFormattedTypeName(casttarget, zeroAsNone));
+
+		if (strcmp(castfunc, "0")==0)
+			appendPQExpBuffer(defqry, "WITHOUT FUNCTION");
+		else
+			appendPQExpBuffer(defqry, "WITH FUNCTION %s",
+							  format_function_signature(&finfo[fidx], true));
+
+		if (strcmp(castimplicit, "t")==0)
+			appendPQExpBuffer(defqry, " AS ASSIGNMENT");
+		appendPQExpBuffer(defqry, ";\n");
+
+		ArchiveEntry(fout, castoid,
+					 format_function_signature(&finfo[fidx], false),
+					 finfo[fidx].pronamespace->nspname, "",
+					 "CAST", deps,
+					 defqry->data, delqry->data,
+					 NULL, NULL, NULL);
+	}
+
+	PQclear(res);
+
+	destroyPQExpBuffer(query);
+	destroyPQExpBuffer(defqry);
+	destroyPQExpBuffer(delqry);
+}
+
 
 /*
  * dumpOprs

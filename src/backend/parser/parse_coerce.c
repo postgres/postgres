@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.77 2002/07/09 13:52:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.78 2002/07/18 23:11:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/pg_cast.h"
 #include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -31,8 +32,9 @@ Oid			PromoteTypeToNext(Oid inType);
 
 static Oid	PreferredType(CATEGORY category, Oid type);
 static Node *build_func_call(Oid funcid, Oid rettype, List *args);
-static Oid	find_coercion_function(Oid targetTypeId, Oid inputTypeId,
-								   Oid secondArgType, bool isExplicit);
+static Oid	find_coercion_function(Oid targetTypeId, Oid sourceTypeId,
+								   bool isExplicit);
+static Oid	find_typmod_coercion_function(Oid typeId);
 static Node	*TypeConstraints(Node *arg, Oid typeId);
 
 /* coerce_type()
@@ -142,7 +144,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 
 		funcId = find_coercion_function(baseTypeId,
 										getBaseType(inputTypeId),
-										InvalidOid,
 										isExplicit);
 		if (!OidIsValid(funcId))
 			elog(ERROR, "coerce_type: no conversion function from '%s' to '%s'",
@@ -258,7 +259,6 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 		 */
 		funcId = find_coercion_function(getBaseType(targetTypeId),
 										getBaseType(inputTypeId),
-										InvalidOid,
 										isExplicit);
 		if (!OidIsValid(funcId))
 			return false;
@@ -312,8 +312,7 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	if (atttypmod < 0 || atttypmod == exprTypmod(node))
 		return node;
 
-	/* Note this is always implicit coercion */
-	funcId = find_coercion_function(baseTypeId, baseTypeId, INT4OID, false);
+	funcId = find_typmod_coercion_function(baseTypeId);
 	if (OidIsValid(funcId))
 	{
 		Const	   *cons;
@@ -621,21 +620,25 @@ TypeCategory(Oid inType)
 static bool
 DirectlyBinaryCompatible(Oid type1, Oid type2)
 {
+	HeapTuple	tuple;
+	bool		result;
+
 	if (type1 == type2)
 		return true;
-	if (TypeIsTextGroup(type1) && TypeIsTextGroup(type2))
-		return true;
-	if (TypeIsInt4GroupA(type1) && TypeIsInt4GroupA(type2))
-		return true;
-	if (TypeIsInt4GroupB(type1) && TypeIsInt4GroupB(type2))
-		return true;
-	if (TypeIsInt4GroupC(type1) && TypeIsInt4GroupC(type2))
-		return true;
-	if (TypeIsInetGroup(type1) && TypeIsInetGroup(type2))
-		return true;
-	if (TypeIsBitGroup(type1) && TypeIsBitGroup(type2))
-		return true;
-	return false;
+
+	tuple = SearchSysCache(CASTSOURCETARGET, type1, type2, 0, 0);
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_cast caststruct;
+
+		caststruct = (Form_pg_cast) GETSTRUCT(tuple);
+		result = caststruct->castfunc == InvalidOid && caststruct->castimplicit;
+		ReleaseSysCache(tuple);
+	}
+	else
+		result = false;
+
+	return result;
 }
 
 
@@ -750,34 +753,51 @@ PreferredType(CATEGORY category, Oid type)
  * If a function is found, return its pg_proc OID; else return InvalidOid.
  */
 static Oid
-find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType,
-					   bool isExplicit)
+find_coercion_function(Oid targetTypeId, Oid sourceTypeId, bool isExplicit)
+{
+	Oid			funcid = InvalidOid;
+	HeapTuple	tuple;
+
+	tuple = SearchSysCache(CASTSOURCETARGET,
+						   ObjectIdGetDatum(sourceTypeId),
+						   ObjectIdGetDatum(targetTypeId),
+						   0, 0);
+
+	if (HeapTupleIsValid(tuple))
+	{
+		Form_pg_cast cform = (Form_pg_cast) GETSTRUCT(tuple);
+
+		if (isExplicit || cform->castimplicit)
+			funcid = cform->castfunc;
+
+		ReleaseSysCache(tuple);
+	}
+
+	return funcid;
+}
+
+
+static Oid
+find_typmod_coercion_function(Oid typeId)
 {
 	Oid			funcid = InvalidOid;
 	Type		targetType;
 	char	   *typname;
 	Oid			typnamespace;
 	Oid			oid_array[FUNC_MAX_ARGS];
-	int			nargs;
 	HeapTuple	ftup;
 
-	targetType = typeidType(targetTypeId);
+	targetType = typeidType(typeId);
 	typname = NameStr(((Form_pg_type) GETSTRUCT(targetType))->typname);
 	typnamespace = ((Form_pg_type) GETSTRUCT(targetType))->typnamespace;
 
 	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	oid_array[0] = inputTypeId;
-	if (OidIsValid(secondArgType))
-	{
-		oid_array[1] = secondArgType;
-		nargs = 2;
-	}
-	else
-		nargs = 1;
+	oid_array[0] = typeId;
+	oid_array[1] = INT4OID;
 
 	ftup = SearchSysCache(PROCNAMENSP,
 						  CStringGetDatum(typname),
-						  Int16GetDatum(nargs),
+						  Int16GetDatum(2),
 						  PointerGetDatum(oid_array),
 						  ObjectIdGetDatum(typnamespace));
 	if (HeapTupleIsValid(ftup))
@@ -785,15 +805,11 @@ find_coercion_function(Oid targetTypeId, Oid inputTypeId, Oid secondArgType,
 		Form_pg_proc pform = (Form_pg_proc) GETSTRUCT(ftup);
 
 		/* Make sure the function's result type is as expected */
-		if (pform->prorettype == targetTypeId && !pform->proretset &&
+		if (pform->prorettype == typeId && !pform->proretset &&
 			!pform->proisagg)
 		{
-			/* If needed, make sure it can be invoked implicitly */
-			if (isExplicit || pform->proimplicit)
-			{
-				/* Okay to use it */
-				funcid = ftup->t_data->t_oid;
-			}
+			/* Okay to use it */
+			funcid = ftup->t_data->t_oid;
 		}
 		ReleaseSysCache(ftup);
 	}

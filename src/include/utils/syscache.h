@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.49 2002/07/11 07:39:28 ishii Exp $
+ * $Id: syscache.h,v 1.50 2002/07/18 23:11:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,29 +36,30 @@
 #define AMPROCNUM		5
 #define ATTNAME			6
 #define ATTNUM			7
-#define CLAAMNAMENSP	8
-#define CLAOID			9
-#define CONNAMESP		10
-#define GRONAME			11
-#define GROSYSID		12
-#define INDEXRELID		13
-#define INHRELID		14
-#define LANGNAME		15
-#define LANGOID			16
-#define NAMESPACENAME	17
-#define NAMESPACEOID	18
-#define OPERNAMENSP		19
-#define OPEROID			20
-#define PROCNAMENSP		21
-#define PROCOID			22
-#define RELNAMENSP		23
-#define RELOID			24
-#define RULERELNAME		25
-#define SHADOWNAME		26
-#define SHADOWSYSID		27
-#define STATRELATT		28
-#define TYPENAMENSP		29
-#define TYPEOID			30
+#define CASTSOURCETARGET 8
+#define CLAAMNAMENSP	9
+#define CLAOID			10
+#define CONNAMESP		11
+#define GRONAME			12
+#define GROSYSID		13
+#define INDEXRELID		14
+#define INHRELID		15
+#define LANGNAME		16
+#define LANGOID			17
+#define NAMESPACENAME	18
+#define NAMESPACEOID	19
+#define OPERNAMENSP		20
+#define OPEROID			21
+#define PROCNAMENSP		22
+#define PROCOID			23
+#define RELNAMENSP		24
+#define RELOID			25
+#define RULERELNAME		26
+#define SHADOWNAME		27
+#define SHADOWSYSID		28
+#define STATRELATT		29
+#define TYPENAMENSP		30
+#define TYPEOID			31
 
 extern void InitCatalogCache(void);
 extern void InitCatalogCachePhase2(void);

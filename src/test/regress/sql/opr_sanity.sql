@@ -1,7 +1,7 @@
 --
 -- OPR_SANITY
 -- Sanity checks for common errors in making operator/procedure system tables:
--- pg_operator, pg_proc, pg_aggregate, pg_am, pg_amop, pg_amproc, pg_opclass.
+-- pg_operator, pg_proc, pg_cast, pg_aggregate, pg_am, pg_amop, pg_amproc, pg_opclass.
 --
 -- None of the SELECTs here should ever find any matching entries,
 -- so the expected output is easy to maintain ;-).
@@ -141,19 +141,43 @@ WHERE p1.oid != p2.oid AND
     NOT p1.proisagg AND NOT p2.proisagg AND
     (p1.proargtypes[7] < p2.proargtypes[7]);
 
--- If a proc is marked as an implicit cast, then it should be something that
--- the system might actually use as a cast function: name same as the name
--- of its output type, and either one arg that's a different type, or two
--- args where the first is the same as the output type and the second is int4.
+-- **************** pg_cast ****************
 
-SELECT p1.oid, p1.proname
-FROM pg_proc as p1
-WHERE p1.proimplicit AND
-    (NOT EXISTS (SELECT 1 FROM pg_type t WHERE t.oid = p1.prorettype AND
-                 t.typname = p1.proname) OR
-     NOT ((p1.pronargs = 1 AND p1.proargtypes[0] != prorettype) OR
-          (p1.pronargs = 2 AND p1.proargtypes[0] = prorettype AND
-           p1.proargtypes[1] = 'int4'::regtype)));
+-- Look for casts from and to the same type.  This is not harmful, but
+-- useless.
+
+SELECT *
+FROM pg_cast c
+WHERE c.castsource = c.casttarget;
+
+-- Look for cast functions with incorrect number or type of argument
+-- or return value.
+
+SELECT c.*
+FROM pg_cast c, pg_proc p
+WHERE c.castfunc = p.oid AND
+    (p.pronargs <> 1 OR
+     p.proargtypes[0] <> c.castsource OR
+     p.prorettype <> c.casttarget);
+
+-- Look for binary compatible casts that are not implicit.  This is
+-- legal, but probably not intended.
+
+SELECT *
+FROM pg_cast c
+WHERE c.castfunc = 0 AND NOT c.castimplicit;
+
+-- Look for binary compatible casts that do not have the reverse
+-- direction registered as well, or where the reverse direction is not
+-- also binary compatible.  This is legal, but probably not intended.
+
+SELECT *
+FROM pg_cast c
+WHERE c.castfunc = 0 AND
+    NOT EXISTS (SELECT * FROM pg_cast k
+                WHERE k.castfunc = 0 AND
+                    k.castsource = c.casttarget AND
+                    k.casttarget = c.castsource);
 
 -- **************** pg_operator ****************
 

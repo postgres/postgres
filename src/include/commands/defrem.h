@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.41 2002/07/12 18:43:19 tgl Exp $
+ * $Id: defrem.h,v 1.42 2002/07/18 23:11:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,9 @@ extern void ReindexDatabase(const char *databaseName, bool force, bool all);
 extern void CreateFunction(CreateFunctionStmt *stmt);
 extern void RemoveFunction(RemoveFuncStmt *stmt);
 extern void RemoveFunctionById(Oid funcOid);
+extern void CreateCast(CreateCastStmt *stmt);
+extern void DropCast(DropCastStmt *stmt);
+extern void DropCastById(Oid castOid);
 
 extern void DefineOperator(List *names, List *parameters);
 extern void RemoveOperator(RemoveOperStmt *stmt);

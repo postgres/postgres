@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.160 2002/07/18 16:47:25 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.161 2002/07/18 23:11:29 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -708,6 +708,7 @@ $ECHO_N "initializing pg_depend... "$ECHO_C
 -- First delete any already-made entries; PINs override all else, and must
 -- be the only entries for their objects.
 DELETE FROM pg_depend;
+INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_cast;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_class;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_proc;
 INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' FROM pg_type;

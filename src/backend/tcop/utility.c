@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.163 2002/07/18 16:47:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.164 2002/07/18 23:11:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -827,6 +827,14 @@ ProcessUtility(Node *parsetree,
 			{
 				CreateConversionCommand((CreateConversionStmt *) parsetree);
 			}
+			break;
+
+		case T_CreateCastStmt:
+			CreateCast((CreateCastStmt *) parsetree);
+			break;
+
+		case T_DropCastStmt:
+			DropCast((DropCastStmt *) parsetree);
 			break;
 
 		default:

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.90 2002/07/06 20:12:30 momjian Exp $
+ * $Id: pg_dump.h,v 1.91 2002/07/18 23:11:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,6 +177,7 @@ typedef enum _OidOptions
 extern int	findTableByOid(TableInfo *tbinfo, int numTables, const char *oid);
 extern char *findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid);
 extern int	findFuncByOid(FuncInfo *finfo, int numFuncs, const char *oid);
+extern int	findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid);
 
 extern void check_conn_and_db(void);
 extern void exit_nicely(void);
@@ -202,6 +203,8 @@ extern void dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
 extern void dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs);
 extern void dumpFuncs(Archive *fout, FuncInfo finfo[], int numFuncs);
+extern void dumpCasts(Archive *fout, FuncInfo *finfo, int numFuncs,
+					  TypeInfo *tinfo, int numTypes);
 extern void dumpAggs(Archive *fout, AggInfo agginfo[], int numAggregates);
 extern void dumpOprs(Archive *fout, OprInfo *oprinfo, int numOperators);
 extern void dumpTables(Archive *fout, TableInfo tblinfo[], int numTables,

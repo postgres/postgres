@@ -37,6 +37,7 @@ SELECT relname, relhasindex
  pg_amproc           | t
  pg_attrdef          | t
  pg_attribute        | t
+ pg_cast             | t
  pg_class            | t
  pg_constraint       | t
  pg_conversion       | t
@@ -62,5 +63,5 @@ SELECT relname, relhasindex
  shighway            | t
  tenk1               | t
  tenk2               | t
-(52 rows)
+(53 rows)
 

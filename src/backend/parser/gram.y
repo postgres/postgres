@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.346 2002/07/18 17:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.347 2002/07/18 23:11:27 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -135,13 +135,13 @@ static void doNegateFloat(Value *v);
 		AlterDatabaseSetStmt, AlterGroupStmt,
 		AlterTableStmt, AlterUserStmt, AlterUserSetStmt,
 		AnalyzeStmt, ClosePortalStmt, ClusterStmt, CommentStmt,
-		ConstraintsSetStmt, CopyStmt, CreateAsStmt,
+		ConstraintsSetStmt, CopyStmt, CreateAsStmt, CreateCastStmt,
 		CreateDomainStmt, CreateGroupStmt, CreatePLangStmt,
 		CreateSchemaStmt, CreateSeqStmt, CreateStmt,
 		CreateAssertStmt, CreateTrigStmt, CreateUserStmt,
 		CreatedbStmt, CursorStmt, DefineStmt, DeleteStmt,
 		DropGroupStmt, DropPLangStmt, DropStmt,
-		DropAssertStmt, DropTrigStmt, DropRuleStmt,
+		DropAssertStmt, DropTrigStmt, DropRuleStmt, DropCastStmt,
 		DropUserStmt, DropdbStmt, ExplainStmt, FetchStmt,
 		GrantStmt, IndexStmt, InsertStmt, ListenStmt, LoadStmt,
 		LockStmt, NotifyStmt, OptimizableStmt,
@@ -165,7 +165,7 @@ static void doNegateFloat(Value *v);
 %type <defelt>	createdb_opt_item, copy_opt_item
 
 %type <ival>	opt_lock, lock_type
-%type <boolean>	opt_force, opt_or_replace
+%type <boolean>	opt_force, opt_or_replace, opt_assignment
 
 %type <list>	user_list
 
@@ -346,7 +346,7 @@ static void doNegateFloat(Value *v);
 
 	HANDLER, HAVING, HOUR_P,
 
-	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN_P, INCREMENT,
+	ILIKE, IMMEDIATE, IMMUTABLE, IN_P, INCREMENT,
 	INDEX, INHERITS, INITIALLY, INNER_P, INOUT, INPUT,
 	INSENSITIVE, INSERT, INSTEAD, INT, INTEGER, INTERSECT,
 	INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
@@ -475,6 +475,7 @@ stmt :
 			| CopyStmt
 			| CreateStmt
 			| CreateAsStmt
+			| CreateCastStmt
 			| CreateDomainStmt
 			| CreateFunctionStmt
 			| CreateSchemaStmt
@@ -489,6 +490,7 @@ stmt :
 			| DropStmt
 			| TruncateStmt
 			| CommentStmt
+			| DropCastStmt
 			| DropGroupStmt
 			| DropPLangStmt
 			| DropAssertStmt
@@ -2886,15 +2888,6 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *						as <filename or code in language as appropriate>
  *						language <lang> [with parameters]
  *
- * CAST() form allowing all options from the CREATE FUNCTION form:
- *				create [or replace] cast (<type> as <type>)
- *						as <filename or code in language as appropriate>
- *						language <lang> [with parameters]
- *
- * SQL99 CAST() form (requires a function to be previously defined):
- *				create [or replace] cast (<type> as <type>)
- *						with function fname (<type>) [as assignment]
- *
  *****************************************************************************/
 
 CreateFunctionStmt:
@@ -2908,63 +2901,6 @@ CreateFunctionStmt:
 					n->returnType = $7;
 					n->options = $8;
 					n->withClause = $9;
-					$$ = (Node *)n;
-				}
-		/* CREATE CAST SQL99 standard form */
-		| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
-			WITH FUNCTION func_name func_args opt_assignment opt_definition
-				{
-					CreateFunctionStmt *n;
-					char buf[256];
-					n = makeNode(CreateFunctionStmt);
-					n->replace = $2;
-					n->funcname = $7->names;
-					n->argTypes = makeList1($5);
-					n->returnType = $7;
-					/* expand this into a string of SQL language */
-					strcpy(buf, "select ");
-					strcat(buf, ((Value *)lfirst($11))->val.str);
-					strcat(buf, "($1)");
-					n->options = lappend($14, makeDefElem("as", (Node *)makeList1(makeString(pstrdup(buf)))));
-					/* make sure that this will allow implicit casting */
-					n->options = lappend(n->options,
-										 makeDefElem("implicit", (Node *)makeInteger(TRUE)));
-					/* and mention that this is SQL language */
-					n->options = lappend(n->options,
-										 makeDefElem("language", (Node *)makeString(pstrdup("sql"))));
-					$$ = (Node *)n;
-				}
-		/* CREATE CAST SQL99 minimally variant form */
-		| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
-			WITH FUNCTION func_name func_args AS Sconst opt_definition
-				{
-					CreateFunctionStmt *n;
-					n = makeNode(CreateFunctionStmt);
-					n->replace = $2;
-					n->funcname = $7->names;
-					n->argTypes = makeList1($5);
-					n->returnType = $7;
-					n->options = lappend($15, makeDefElem("as", (Node *)lcons(makeList1(makeString($14)), $11)));
-					/* make sure that this will allow implicit casting */
-					n->options = lappend(n->options,
-										 makeDefElem("implicit", (Node *)makeInteger(TRUE)));
-					n->options = lappend(n->options,
-										 makeDefElem("language", (Node *)makeString(pstrdup("c"))));
-					$$ = (Node *)n;
-				}
-		/* CREATE CAST with mostly CREATE FUNCTION clauses */
-		| CREATE opt_or_replace CAST '(' func_type AS func_type ')'
-			createfunc_opt_list opt_definition
-				{
-					CreateFunctionStmt *n;
-					n = makeNode(CreateFunctionStmt);
-					n->replace = $2;
-					n->funcname = $7->names;
-					n->argTypes = makeList1($5);
-					n->returnType = $7;
-					/* make sure that this will allow implicit casting */
-					n->options = lappend($9, makeDefElem("implicit", (Node *)makeInteger(TRUE)));
-					n->withClause = $10;
 					$$ = (Node *)n;
 				}
 		;
@@ -3090,10 +3026,6 @@ createfunc_opt_item:
 				{
 					$$ = makeDefElem("security", (Node *)makeInteger(FALSE));
 				}
-			| IMPLICIT CAST
-				{
-					$$ = makeDefElem("implicit", (Node *)makeInteger(TRUE));
-				}
 		;
 
 func_as:	Sconst						{ $$ = makeList1(makeString($1)); }
@@ -3106,10 +3038,6 @@ func_as:	Sconst						{ $$ = makeList1(makeString($1)); }
 opt_definition:
 			WITH definition							{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
-		;
-
-opt_assignment:  AS ASSIGNMENT					{}
-		| /*EMPTY*/								{}
 		;
 
 
@@ -3130,14 +3058,6 @@ RemoveFuncStmt:
 					n->funcname = $3;
 					n->args = $4;
 					n->behavior = $5;
-					$$ = (Node *)n;
-				}
-		| DROP CAST '(' func_type AS func_type ')' opt_drop_behavior
-				{
-					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
-					n->funcname = $6->names;
-					n->args = makeList1($4);
-					n->behavior = $8;
 					$$ = (Node *)n;
 				}
 		;
@@ -3188,6 +3108,49 @@ any_operator:
 			| ColId '.' any_operator
 					{ $$ = lcons(makeString($1), $3); }
 		;
+
+
+/*****************************************************************************
+ *
+ *		CREATE CAST / DROP CAST
+ *
+ *****************************************************************************/
+
+CreateCastStmt: CREATE CAST '(' ConstTypename AS ConstTypename ')'
+					WITH FUNCTION function_with_argtypes opt_assignment
+				{
+					CreateCastStmt *n = makeNode(CreateCastStmt);
+					n->sourcetype = $4;
+					n->targettype = $6;
+					n->func = (FuncWithArgs *) $10;
+					n->implicit = $11;
+					$$ = (Node *)n;
+				}
+			| CREATE CAST '(' ConstTypename AS ConstTypename ')'
+					WITHOUT FUNCTION opt_assignment
+				{
+					CreateCastStmt *n = makeNode(CreateCastStmt);
+					n->sourcetype = $4;
+					n->targettype = $6;
+					n->func = NULL;
+					n->implicit = $10;
+					$$ = (Node *)n;
+				}
+
+opt_assignment:  AS ASSIGNMENT					{ $$ = TRUE; }
+		| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+
+DropCastStmt: DROP CAST '(' ConstTypename AS ConstTypename ')' opt_drop_behavior
+				{
+					DropCastStmt *n = makeNode(DropCastStmt);
+					n->sourcetype = $4;
+					n->targettype = $6;
+					n->behavior = $8;
+					$$ = (Node *)n;
+				}
+
 
 
 /*****************************************************************************
@@ -6701,7 +6664,6 @@ unreserved_keyword:
 			| HOUR_P
 			| IMMEDIATE
 			| IMMUTABLE
-			| IMPLICIT
 			| INCREMENT
 			| INDEX
 			| INHERITS

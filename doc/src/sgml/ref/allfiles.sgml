@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.40 2002/07/18 16:47:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.41 2002/07/18 23:11:27 petere Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -51,6 +51,7 @@ Complete list of usable sgml source files in this directory.
 <!entity commit             system "commit.sgml">
 <!entity copyTable          system "copy.sgml">
 <!entity createAggregate    system "create_aggregate.sgml">
+<!entity createCast         system "create_cast.sgml">
 <!entity createConstraint   system "create_constraint.sgml">
 <!entity createDatabase     system "create_database.sgml">
 <!entity createDomain       system "create_domain.sgml">
@@ -71,6 +72,7 @@ Complete list of usable sgml source files in this directory.
 <!entity declare            system "declare.sgml">
 <!entity delete             system "delete.sgml">
 <!entity dropAggregate      system "drop_aggregate.sgml">
+<!entity dropCast           system "drop_cast.sgml">
 <!entity dropDatabase       system "drop_database.sgml">
 <!entity dropDomain         system "drop_domain.sgml">
 <!entity dropFunction       system "drop_function.sgml">

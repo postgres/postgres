@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.243 2002/06/20 20:29:44 momjian Exp $
+ * $Id: pg_proc.h,v 1.244 2002/07/18 23:11:30 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -45,7 +45,7 @@ CATALOG(pg_proc) BOOTSTRAP
 	Oid			prolang;		/* OID of pg_language entry */
 	bool		proisagg;		/* is it an aggregate? */
 	bool		prosecdef;		/* security definer */
-	bool		proimplicit;	/* can be invoked as implicit coercion? */
+	bool		proimplicit;	/* unused */
 	bool		proisstrict;	/* strict with respect to NULLs? */
 	bool		proretset;		/* returns a set? */
 	char		provolatile;	/* see PROVOLATILE_ categories below */
@@ -3007,7 +3007,6 @@ extern Oid ProcedureCreate(const char *procedureName,
 				const char *probin,
 				bool isAgg,
 				bool security_definer,
-				bool isImplicit,
 				bool isStrict,
 				char volatility,
 				int32 byte_pct,

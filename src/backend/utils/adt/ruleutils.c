@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.111 2002/07/18 17:14:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.112 2002/07/18 23:11:28 petere Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -43,6 +43,7 @@
 #include "catalog/heap.h"
 #include "catalog/index.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
@@ -2048,9 +2049,9 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
  *		Strip any type coercions at the top of the given expression tree,
  *		as long as they are coercions to the given datatype.
  *
- * A RelabelType node is always a type coercion.  A function call is also
- * considered a type coercion if it has one argument and the function name
- * is the same as the (internal) name of its result type.
+ * A RelabelType node is always a type coercion.  A function call is
+ * also considered a type coercion if it has one argument and there is
+ * a cast declared that uses it.
  *
  * XXX It'd be better if the parsetree retained some explicit indication
  * of the coercion, so we didn't need these heuristics.
@@ -2069,9 +2070,9 @@ strip_type_coercion(Node *expr, Oid resultType)
 	{
 		Func	   *func;
 		HeapTuple	procTuple;
-		HeapTuple	typeTuple;
+		HeapTuple	castTuple;
 		Form_pg_proc procStruct;
-		Form_pg_type typeStruct;
+		Form_pg_cast castStruct;
 
 		func = (Func *) (((Expr *) expr)->oper);
 		Assert(IsA(func, Func));
@@ -2085,33 +2086,33 @@ strip_type_coercion(Node *expr, Oid resultType)
 			elog(ERROR, "cache lookup for proc %u failed", func->funcid);
 		procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
 		/* Double-check func has one arg and correct result type */
-		/* Also, it must be an implicit coercion function */
 		if (procStruct->pronargs != 1 ||
-			procStruct->prorettype != resultType ||
-			!procStruct->proimplicit)
+			procStruct->prorettype != resultType)
 		{
 			ReleaseSysCache(procTuple);
 			return expr;
 		}
-		/* See if function has same name/namespace as its result type */
-		typeTuple = SearchSysCache(TYPEOID,
-								ObjectIdGetDatum(procStruct->prorettype),
-								   0, 0, 0);
-		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "cache lookup for type %u failed",
-				 procStruct->prorettype);
-		typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-		if (strcmp(NameStr(procStruct->proname),
-				   NameStr(typeStruct->typname)) != 0 ||
-			procStruct->pronamespace != typeStruct->typnamespace)
+		/* See if function has is actually declared as a cast */
+		castTuple = SearchSysCache(CASTSOURCETARGET,
+								   ObjectIdGetDatum(procStruct->proargtypes[0]),
+								   ObjectIdGetDatum(procStruct->prorettype),
+								   0, 0);
+		if (!HeapTupleIsValid(castTuple))
 		{
 			ReleaseSysCache(procTuple);
-			ReleaseSysCache(typeTuple);
+			return expr;
+		}
+		/* It must also be an implicit cast. */
+		castStruct = (Form_pg_cast) GETSTRUCT(castTuple);
+		if (!castStruct->castimplicit)
+		{
+			ReleaseSysCache(procTuple);
+			ReleaseSysCache(castTuple);
 			return expr;
 		}
 		/* Okay, it is indeed a type-coercion function */
 		ReleaseSysCache(procTuple);
-		ReleaseSysCache(typeTuple);
+		ReleaseSysCache(castTuple);
 		return strip_type_coercion(lfirst(((Expr *) expr)->args), resultType);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.81 2002/07/11 07:39:27 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.82 2002/07/18 23:11:29 petere Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -28,6 +28,7 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_conversion.h"
 #include "catalog/pg_group.h"
 #include "catalog/pg_index.h"
@@ -171,6 +172,17 @@ static const struct cachedesc cacheinfo[] = {
 		{
 			Anum_pg_attribute_attrelid,
 			Anum_pg_attribute_attnum,
+			0,
+			0
+	}},
+	{
+		CastRelationName,			/* CASTSOURCETARGET */
+		CastSourceTargetIndex,
+		0,
+		2,
+		{
+			Anum_pg_cast_castsource,
+			Anum_pg_cast_casttarget,
 			0,
 			0
 	}},

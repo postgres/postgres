@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.97 2002/07/15 16:33:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.98 2002/07/18 23:11:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,8 @@ char	   *Name_pg_attr_indices[Num_pg_attr_indices] =
 {AttributeRelidNameIndex, AttributeRelidNumIndex};
 char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] =
 {AttrDefaultIndex, AttrDefaultOidIndex};
+char	   *Name_pg_cast_indices[Num_pg_cast_indices] =
+{CastSourceTargetIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] =
 {ClassNameNspIndex, ClassOidIndex};
 char	   *Name_pg_constraint_indices[Num_pg_constraint_indices] =

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.8 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.9 2002/07/18 23:11:27 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -34,7 +34,9 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/dependency.h"
+#include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_cast.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -44,6 +46,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
@@ -171,8 +174,7 @@ compute_attributes_sql_style(const List *options,
 							 char **language,
 							 char *volatility_p,
 							 bool *strict_p,
-							 bool *security_definer,
-							 bool *implicit_cast)
+							 bool *security_definer)
 {
 	const List *option;
 	DefElem *as_item = NULL;
@@ -180,7 +182,6 @@ compute_attributes_sql_style(const List *options,
 	DefElem *volatility_item = NULL;
 	DefElem *strict_item = NULL;
 	DefElem *security_item = NULL;
-	DefElem *implicit_item = NULL;
 
 	foreach(option, options)
 	{
@@ -216,12 +217,6 @@ compute_attributes_sql_style(const List *options,
 				elog(ERROR, "conflicting or redundant options");
 			security_item = defel;
 		}
-		else if (strcmp(defel->defname, "implicit")==0)
-		{
-			if (implicit_item)
-				elog(ERROR, "conflicting or redundant options");
-			implicit_item = defel;
-		}
 		else
 			elog(ERROR, "invalid CREATE FUNCTION option");
 	}
@@ -252,8 +247,6 @@ compute_attributes_sql_style(const List *options,
 		*strict_p = intVal(strict_item->arg);
 	if (security_item)
 		*security_definer = intVal(security_item->arg);
-	if (implicit_item)
-		*implicit_cast = intVal(implicit_item->arg);
 }
 
 
@@ -264,10 +257,7 @@ compute_attributes_sql_style(const List *options,
  *	These parameters supply optional information about a function.
  *	All have defaults if not specified.
  *
- *	Note: currently, only three of these parameters actually do anything:
- *
- *	 * isImplicit means the function may be used as an implicit type
- *	   coercion.
+ *	Note: currently, only two of these parameters actually do anything:
  *
  *	 * isStrict means the function should not be called when any NULL
  *	   inputs are present; instead a NULL result value should be assumed.
@@ -284,7 +274,7 @@ static void
 compute_attributes_with_style(List *parameters,
 							  int32 *byte_pct_p, int32 *perbyte_cpu_p,
 							  int32 *percall_cpu_p, int32 *outin_ratio_p,
-							  bool *isImplicit_p, bool *isStrict_p,
+							  bool *isStrict_p,
 							  char *volatility_p)
 {
 	List	   *pl;
@@ -293,9 +283,7 @@ compute_attributes_with_style(List *parameters,
 	{
 		DefElem    *param = (DefElem *) lfirst(pl);
 
-		if (strcasecmp(param->defname, "implicitcoercion") == 0)
-			*isImplicit_p = true;
-		else if (strcasecmp(param->defname, "isstrict") == 0)
+		if (strcasecmp(param->defname, "isstrict") == 0)
 			*isStrict_p = true;
 		else if (strcasecmp(param->defname, "isimmutable") == 0)
 			*volatility_p = PROVOLATILE_IMMUTABLE;
@@ -398,8 +386,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 				perbyte_cpu,
 				percall_cpu,
 				outin_ratio;
-	bool		isImplicit,
-				isStrict,
+	bool		isStrict,
 				security;
 	char		volatility;
 	HeapTuple	languageTuple;
@@ -420,14 +407,13 @@ CreateFunction(CreateFunctionStmt *stmt)
 	perbyte_cpu = PERBYTE_CPU;
 	percall_cpu = PERCALL_CPU;
 	outin_ratio = OUTIN_RATIO;
-	isImplicit = false;
 	isStrict = false;
 	security = false;
 	volatility = PROVOLATILE_VOLATILE;
 
 	/* override attributes from explicit list */
 	compute_attributes_sql_style(stmt->options,
-								 &as_clause, &language, &volatility, &isStrict, &security, &isImplicit);
+								 &as_clause, &language, &volatility, &isStrict, &security);
 
 	/* Convert language name to canonical case */
 	case_translate_language_name(language, languageName);
@@ -474,8 +460,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 
 	compute_attributes_with_style(stmt->withClause,
 								  &byte_pct, &perbyte_cpu, &percall_cpu,
-								  &outin_ratio, &isImplicit, &isStrict,
-								  &volatility);
+								  &outin_ratio, &isStrict, &volatility);
 
 	interpret_AS_clause(languageOid, languageName, as_clause,
 						&prosrc_str, &probin_str);
@@ -517,7 +502,6 @@ CreateFunction(CreateFunctionStmt *stmt)
 					probin_str, /* converted to text later */
 					false,		/* not an aggregate */
 					security,
-					isImplicit,
 					isStrict,
 					volatility,
 					byte_pct,
@@ -638,4 +622,218 @@ RemoveFunctionById(Oid funcOid)
 
 		heap_close(relation, RowExclusiveLock);
 	}
+}
+
+
+
+/*
+ * CREATE CAST
+ */
+void
+CreateCast(CreateCastStmt *stmt)
+{
+	Oid			sourcetypeid;
+	Oid			targettypeid;
+	Oid			funcid;
+	HeapTuple	tuple;
+	Relation	relation;
+	Form_pg_proc procstruct;
+
+	Datum		values[Natts_pg_proc];
+	char		nulls[Natts_pg_proc];
+	int			i;
+
+	ObjectAddress myself,
+		referenced;
+
+	sourcetypeid = LookupTypeName(stmt->sourcetype);
+	if (!OidIsValid(sourcetypeid))
+		elog(ERROR, "source data type %s does not exist",
+			 TypeNameToString(stmt->sourcetype));
+
+	targettypeid = LookupTypeName(stmt->targettype);
+	if (!OidIsValid(targettypeid))
+		elog(ERROR, "target data type %s does not exist",
+			 TypeNameToString(stmt->targettype));
+
+	if (sourcetypeid == targettypeid)
+		elog(ERROR, "source data type and target data type are the same");
+
+	relation = heap_openr(CastRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCache(CASTSOURCETARGET,
+						   ObjectIdGetDatum(sourcetypeid),
+						   ObjectIdGetDatum(targettypeid),
+						   0, 0);
+	if (HeapTupleIsValid(tuple))
+		elog(ERROR, "cast from data type %s to data type %s already exists",
+			 TypeNameToString(stmt->sourcetype),
+			 TypeNameToString(stmt->targettype));
+
+	if (stmt->func != NULL)
+	{
+		funcid = LookupFuncNameTypeNames(stmt->func->funcname, stmt->func->funcargs, false, "CreateCast");
+
+		if(!pg_proc_ownercheck(funcid, GetUserId()))
+			elog(ERROR, "permission denied");
+
+		tuple = SearchSysCache(PROCOID, ObjectIdGetDatum(funcid), 0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "cache lookup of function %u failed", funcid);
+
+		procstruct = (Form_pg_proc) GETSTRUCT(tuple);
+		if (procstruct->pronargs != 1)
+			elog(ERROR, "cast function must take 1 argument");
+		if (procstruct->proargtypes[0] != sourcetypeid)
+			elog(ERROR, "argument of cast function must match source data type");
+		if (procstruct->prorettype != targettypeid)
+			elog(ERROR, "return data type of cast function must match target data type");
+		if (procstruct->provolatile != PROVOLATILE_IMMUTABLE)
+			elog(ERROR, "cast function must be immutable");
+		if (procstruct->proisagg)
+			elog(ERROR, "cast function must not be an aggregate function");
+		if (procstruct->proretset)
+			elog(ERROR, "cast function must be not return a set");
+
+		ReleaseSysCache(tuple);
+	}
+	else
+	{
+		/* indicates binary compatibility */
+		if (!pg_type_ownercheck(sourcetypeid, GetUserId())
+			|| !pg_type_ownercheck(targettypeid, GetUserId()))
+			elog(ERROR, "permission denied");
+		funcid = 0;
+	}
+
+	/* ready to go */
+	values[Anum_pg_cast_castsource-1] = ObjectIdGetDatum(sourcetypeid);
+	values[Anum_pg_cast_casttarget-1] = ObjectIdGetDatum(targettypeid);
+	values[Anum_pg_cast_castfunc-1] = ObjectIdGetDatum(funcid);
+	values[Anum_pg_cast_castimplicit-1] = BoolGetDatum(stmt->implicit);
+
+	for (i = 0; i < Natts_pg_cast; ++i)
+		nulls[i] = ' ';
+
+	tuple = heap_formtuple(RelationGetDescr(relation), values, nulls);
+	simple_heap_insert(relation, tuple);
+
+	if (RelationGetForm(relation)->relhasindex)
+	{
+		Relation	idescs[Num_pg_cast_indices];
+
+		CatalogOpenIndices(Num_pg_cast_indices, Name_pg_cast_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_cast_indices, relation, tuple);
+		CatalogCloseIndices(Num_pg_cast_indices, idescs);
+	}
+
+	myself.classId = get_system_catalog_relid(CastRelationName);
+	myself.objectId = tuple->t_data->t_oid;
+	myself.objectSubId = 0;
+
+	/* dependency on source type */
+	referenced.classId = RelOid_pg_type;
+	referenced.objectId = sourcetypeid;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* dependency on target type */
+	referenced.classId = RelOid_pg_type;
+	referenced.objectId = targettypeid;
+	referenced.objectSubId = 0;
+	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+	/* dependency on function */
+	if (OidIsValid(funcid))
+	{
+		referenced.classId = RelOid_pg_proc;
+		referenced.objectId = funcid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+	}
+
+	heap_freetuple(tuple);
+	heap_close(relation, RowExclusiveLock);
+}
+
+
+
+/*
+ * DROP CAST
+ */
+void
+DropCast(DropCastStmt *stmt)
+{
+	Oid			sourcetypeid;
+	Oid			targettypeid;
+	HeapTuple	tuple;
+	Form_pg_cast caststruct;
+	ObjectAddress object;
+
+	sourcetypeid = LookupTypeName(stmt->sourcetype);
+	if (!OidIsValid(sourcetypeid))
+		elog(ERROR, "source data type %s does not exist",
+			 TypeNameToString(stmt->sourcetype));
+
+	targettypeid = LookupTypeName(stmt->targettype);
+	if (!OidIsValid(targettypeid))
+		elog(ERROR, "target data type %s does not exist",
+			 TypeNameToString(stmt->targettype));
+
+	tuple = SearchSysCache(CASTSOURCETARGET,
+						 ObjectIdGetDatum(sourcetypeid),
+						 ObjectIdGetDatum(targettypeid),
+						 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "cast from type %s to type %s does not exist",
+			 TypeNameToString(stmt->sourcetype),
+			 TypeNameToString(stmt->targettype));
+
+	/* Permission check */
+	caststruct = (Form_pg_cast) GETSTRUCT(tuple);
+	if (caststruct->castfunc != InvalidOid)
+	{
+		if(!pg_proc_ownercheck(caststruct->castfunc, GetUserId()))
+			elog(ERROR, "permission denied");
+	}
+	else
+	{
+		if (!pg_type_ownercheck(sourcetypeid, GetUserId())
+			|| !pg_type_ownercheck(targettypeid, GetUserId()))
+			elog(ERROR, "permission denied");
+	}
+
+	ReleaseSysCache(tuple);
+
+	/*
+	 * Do the deletion
+	 */
+	object.classId = get_system_catalog_relid(CastRelationName);
+	object.objectId = tuple->t_data->t_oid;
+	object.objectSubId = 0;
+
+	performDeletion(&object, stmt->behavior);
+}
+
+
+void
+DropCastById(Oid castOid)
+{
+	Relation	relation;
+	ScanKeyData scankey;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+
+	relation = heap_openr(CastRelationName, RowExclusiveLock);
+	ScanKeyEntryInitialize(&scankey, 0x0,
+						   ObjectIdAttributeNumber, F_OIDEQ,
+						   ObjectIdGetDatum(castOid));
+	scan = heap_beginscan(relation, SnapshotNow, 1, &scankey);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple))
+		simple_heap_delete(relation, &tuple->t_self);
+	else
+		elog(ERROR, "could not find tuple for cast %u", castOid);
+	heap_endscan(scan);
+	heap_close(relation, RowExclusiveLock);
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.4 2002/07/18 16:47:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.5 2002/07/18 23:11:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
 /* This enum covers all system catalogs whose OIDs can appear in classid. */
 typedef enum ObjectClasses
 {
+	OCLASS_CAST,				/* pg_cast */
 	OCLASS_CLASS,				/* pg_class */
 	OCLASS_PROC,				/* pg_proc */
 	OCLASS_TYPE,				/* pg_type */
@@ -604,6 +605,10 @@ doDeletion(const ObjectAddress *object)
 			RemoveSchemaById(object->objectId);
 			break;
 
+		case OCLASS_CAST:
+			DropCastById(object->objectId);
+			break;
+
 		default:
 			elog(ERROR, "doDeletion: Unsupported object class %u",
 				 object->classId);
@@ -979,6 +984,7 @@ term_object_addresses(ObjectAddresses *addrs)
 static void
 init_object_classes(void)
 {
+	object_classes[OCLASS_CAST] = get_system_catalog_relid(CastRelationName);
 	object_classes[OCLASS_CLASS] = RelOid_pg_class;
 	object_classes[OCLASS_PROC] = RelOid_pg_proc;
 	object_classes[OCLASS_TYPE] = RelOid_pg_type;
@@ -1023,6 +1029,11 @@ getObjectClass(const ObjectAddress *object)
 	if (!object_classes_initialized)
 		init_object_classes();
 
+	if (object->classId == object_classes[OCLASS_CAST])
+	{
+		Assert(object->objectSubId == 0);
+		return OCLASS_CAST;
+	}
 	if (object->classId == object_classes[OCLASS_CONSTRAINT])
 	{
 		Assert(object->objectSubId == 0);
@@ -1078,6 +1089,10 @@ getObjectDescription(const ObjectAddress *object)
 
 	switch (getObjectClass(object))
 	{
+		case OCLASS_CAST:
+			appendStringInfo(&buffer, "cast");
+			break;
+
 		case OCLASS_CLASS:
 			getRelationDescription(&buffer, object->objectId);
 			if (object->objectSubId != 0)

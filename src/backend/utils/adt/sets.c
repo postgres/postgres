@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.46 2002/06/20 20:29:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.47 2002/07/18 23:11:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,6 @@ SetDefine(char *querystr, Oid elemType)
 							 fileName,	/* probin */
 							 false,		/* not aggregate */
 							 false,		/* security invoker */
-							 false,		/* not implicit coercion */
 							 false,		/* isStrict (irrelevant, no args) */
 							 PROVOLATILE_VOLATILE,	/* assume unsafe */
 							 100,		/* byte_pct */

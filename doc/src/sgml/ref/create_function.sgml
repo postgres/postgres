@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.39 2002/05/18 13:47:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.40 2002/07/18 23:11:27 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -20,7 +20,6 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   { LANGUAGE <replaceable class="parameter">langname</replaceable>
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
-    | IMPLICIT CAST
     | [EXTERNAL] SECURITY INVOKER | [EXTERNAL] SECURITY DEFINER
     | AS '<replaceable class="parameter">definition</replaceable>'
     | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
@@ -188,18 +187,6 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
      </listitem>
     </varlistentry>
 
-    <varlistentry>
-     <term><literal>IMPLICIT CAST</literal</term>
-
-     <listitem>
-      <para>
-       Indicates that the function may be used for implicit type
-       conversions.  See <xref linkend="sql-createfunction-cast-functions"
-       endterm="sql-createfunction-cast-functions-title"> for more detail.
-      </para>
-     </listitem>
-    </varlistentry>
-
    <varlistentry>
     <term><optional>EXTERNAL</optional> SECURITY INVOKER</term>
     <term><optional>EXTERNAL</optional> SECURITY DEFINER</term>
@@ -285,14 +272,6 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
         </listitem>
        </varlistentry>
 
-       <varlistentry>
-        <term>implicitCoercion</term>
-        <listitem>
-         <para>
-          Same as <literal>IMPLICIT CAST</literal>
-         </para>
-        </listitem>
-       </varlistentry>
       </variablelist>
 
       Attribute names are not case-sensitive.
@@ -394,55 +373,6 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   </para>
  </refsect1>
 
- <refsect1 id="sql-createfunction-cast-functions">
-  <title id="sql-createfunction-cast-functions-title">
-   Type Cast Functions
-  </title>
-  <para>
-   A function that has one argument and is named the same as its return
-   data type (including the schema name) is considered to be a <firstterm>type
-   casting function</>: it can be invoked to convert a value of its input
-   data type into a value 
-   of its output datatype.  For example,
-<programlisting>
-SELECT CAST(42 AS text);
-</programlisting>
-   converts the integer constant 42 to text by invoking a function
-   <literal>text(int4)</>, if such a function exists and returns type
-   text.  (If no suitable conversion function can be found, the cast fails.)
-  </para>
-
-  <para>
-   If a potential cast function is marked <literal>IMPLICIT CAST</>,
-   then it can be invoked implicitly in any context where the
-   conversion it defines is required.  Cast functions not so marked
-   can be invoked only by explicit <literal>CAST</>,
-   <replaceable>x</><literal>::</><replaceable>typename</>, or
-   <replaceable>typename</>(<replaceable>x</>) constructs.  For
-   example, supposing that <literal>foo.f1</literal> is a column of
-   type <type>text</type>, then
-<programlisting>
-INSERT INTO foo(f1) VALUES(42);
-</programlisting>
-   will be allowed if <literal>text(int4)</> is marked
-   <literal>IMPLICIT CAST</>, otherwise not.
-  </para>
-
-  <para>
-   It is wise to be conservative about marking cast functions as
-   implicit casts.  An overabundance of implicit casting paths can
-   cause <productname>PostgreSQL</productname> to choose surprising
-   interpretations of commands, or to be unable to resolve commands at
-   all because there are multiple possible interpretations.  A good
-   rule of thumb is to make cast implicitly invokable only for
-   information-preserving transformations between types in the same
-   general type category.  For example, <type>int2</type> to
-   <type>int4</type> casts can reasonably be implicit, but be wary of
-   marking <type>int4</type> to <type>text</type> or
-   <type>float8</type> to <type>int4</type> as implicit casts.
-  </para>
- </refsect1>
-  
  <refsect1 id="sql-createfunction-examples">
   <title>Examples</title>
 

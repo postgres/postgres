@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.28 2002/07/12 18:43:19 tgl Exp $
+ * $Id: catname.h,v 1.29 2002/07/18 23:11:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #define  AccessMethodOperatorRelationName "pg_amop"
 #define  AccessMethodProcedureRelationName "pg_amproc"
 #define  AttributeRelationName "pg_attribute"
+#define  CastRelationName "pg_cast"
 #define  ConstraintRelationName "pg_constraint"
 #define  ConversionRelationName "pg_conversion"
 #define  DatabaseRelationName "pg_database"

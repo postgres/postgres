@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.29 2002/07/18 16:47:22 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.30 2002/07/18 23:11:27 petere Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -60,6 +60,7 @@ PostgreSQL Reference Manual
    &commit;
    &copyTable;
    &createAggregate;
+   &createCast;
    &createConstraint;
    &createDatabase;
    &createDomain;
@@ -80,6 +81,7 @@ PostgreSQL Reference Manual
    &declare;
    &delete;
    &dropAggregate;
+   &dropCast;
    &dropDatabase;
    &dropDomain;
    &dropFunction;
