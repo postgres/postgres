@@ -15,7 +15,7 @@
 #		for use only by the backend binaries
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.22 2005/03/20 02:39:33 momjian Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.23 2005/03/20 02:40:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,6 +65,9 @@ exec_srv.o: exec.c
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
 getaddrinfo_srv.o: getaddrinfo.c
+	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
+
+snprintf_srv.o: snprintf.c
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
 # No thread flags for server version
