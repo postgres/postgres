@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.41 2004/06/03 00:13:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.42 2004/06/19 04:22:17 momjian Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -864,8 +864,14 @@ static int
 init_ssl_system(PGconn *conn)
 {
 #ifdef ENABLE_THREAD_SAFETY
-static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
-
+#ifndef WIN32
+        static pthread_mutex_t init_mutex = PTHREAD_MUTEX_INITIALIZER;
+#else
+        static pthread_mutex_t init_mutex;
+        static long mutex_initialized = 0L;
+        if (!InterlockedExchange(&mutex_initialized, 1L))
+                pthread_mutex_init(&init_mutex, NULL);
+#endif
 	pthread_mutex_lock(&init_mutex);
 	
 	if (pq_initssllib && pq_lockarray == NULL) {
@@ -1171,6 +1177,7 @@ PQgetssl(PGconn *conn)
 
 
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 /*
  *	Check SIGPIPE handler and perhaps install our own.
  */
@@ -1210,6 +1217,7 @@ sigpipe_handler_ignore_send(int signo)
 	if (!PQinSend())
 		exit(128 + SIGPIPE);	/* typical return value for SIG_DFL */
 }
+#endif
 #endif
  
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.274 2004/06/10 22:26:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.275 2004/06/19 04:22:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,10 +882,12 @@ connectDBStart(PGconn *conn)
 	const char *node = NULL;
 	int			ret;
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 	static pthread_once_t check_sigpipe_once = PTHREAD_ONCE_INIT;
 
 	/* Check only on first connection request */
 	pthread_once(&check_sigpipe_once, check_sigpipe_handler);
+#endif
 #endif
 
 	if (!conn)
@@ -3183,11 +3185,19 @@ PQinitSSL(int do_init)
 }
 
 static pgthreadlock_t default_threadlock;
+
 static void
 default_threadlock(int acquire)
 {
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 	static pthread_mutex_t singlethread_lock = PTHREAD_MUTEX_INITIALIZER;
+#else
+	static pthread_mutex_t singlethread_lock;
+        static long mutex_initialized = 0;
+        if (!InterlockedExchange(&mutex_initialized, 1L))
+                pthread_mutex_init(&singlethread_lock, NULL);
+#endif
 	if (acquire)
 		pthread_mutex_lock(&singlethread_lock);
 	else

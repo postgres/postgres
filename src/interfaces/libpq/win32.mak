@@ -4,7 +4,7 @@
 #        and a Win32 dynamic library libpq(d).dll with import library libpq(d)dll.lib
 # USE_SSL=1 will compile with OpenSSL
 # DEBUG=1 compiles with debugging symbols
-
+# ENABLE_THREAD_SAFETY=1 compiles with threading enabled
 
 !MESSAGE Building the Win32 static library...
 !MESSAGE
@@ -74,13 +74,17 @@ CLEAN :
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
+	-@erase "$(INTDIR)\pthread-win32.obj"
 
 
 
-config: ..\..\include\pg_config.h pg_config_paths.h
+config: ..\..\include\pg_config.h pthread.h pg_config_paths.h
 
 ..\..\include\pg_config.h: ..\..\include\pg_config.h.win32
 	copy ..\..\include\pg_config.h.win32 ..\..\include\pg_config.h
+
+pthread.h: pthread.h.win32
+	copy pthread.h.win32 pthread.h
 
 pg_config_paths.h: win32.mak
 	echo #define SYSCONFDIR "" >pg_config_paths.h
@@ -88,7 +92,7 @@ pg_config_paths.h: win32.mak
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /W3 /GX $(OPT) /I "..\..\include" /D "FRONTEND" $(DEBUGDEF) /D\
+CPP_PROJ=/nologo /W3 /GX $(OPT) /I "..\..\include" /I. /D "FRONTEND" $(DEBUGDEF) /D\
  "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" /YX\
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  /D "HAVE_VSNPRINTF" /D "HAVE_STRDUP"
 
@@ -127,7 +131,8 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-secure.obj" \
 	"$(INTDIR)\pqexpbuffer.obj" \
 	"$(INTDIR)\wchar.obj" \
-	"$(INTDIR)\encnames.obj"
+	"$(INTDIR)\encnames.obj" \
+	"$(INTDIR)\pthread-win32.obj"
 
 
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
