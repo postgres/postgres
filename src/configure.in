@@ -241,7 +241,7 @@ AC_ARG_ENABLE(multibyte,
         MULTIBYTE=SQL_ASCII
         if test "$enableval" != "yes"; then
                 case "$enableval" in
-                        SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT|SJIS|BIG5|WIN1250)  
+                        SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT)
                         # ok
                         ;;
                 *)
@@ -250,7 +250,7 @@ AC_ARG_ENABLE(multibyte,
   SQL_ASCII, EUC_JP, EUC_CN, EUC_KR, EUC_TW,
   UNICODE, MULE_INTERNAL,
   LATIN1, LATIN2, LATIN3, LATIN4, LATIN5,
-  KOI8, WIN, ALT, SJIS, BIG5, WIN1250
+  KOI8, WIN, ALT
 Or do not specify an argument to the option to use the default.])
                 esac
                 MULTIBYTE=$enableval
