@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.71 2001/12/21 03:54:02 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.72 2001/12/23 20:45:11 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -992,6 +992,7 @@ All of PostgreSQL is successfully made. Ready to install.
      interface libraries, then you can use these commands:
 <screen>
 <userinput>gmake -C src/bin install</>
+<userinput>gmake -C src/include install</>
 <userinput>gmake -C src/interfaces install</>
 <userinput>gmake -C doc install</>
 </screen>
