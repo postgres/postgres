@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Aug 10 10:29:24 EDT 2001
+Last updated:		Tue Aug 21 07:07:42 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -52,6 +52,7 @@ ADMIN
 * -Better document pg_hba.conf host-based authentication (Bruce)
 * Encrpyt passwords in pg_shadow table using MD5 (Bruce, Vince)
 * Incremental backups
+* Make it easier to create a database owned by someone who can't createdb
 
 TYPES
 
