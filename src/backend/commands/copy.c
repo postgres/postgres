@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.92 1999/11/27 21:52:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.93 1999/12/14 00:08:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,8 +43,8 @@
 
 
 /* non-export function prototypes */
-static void CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim);
-static void CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim);
+static void CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print);
+static void CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print);
 static Oid	GetOutputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static Oid	GetInputFunction(Oid type);
@@ -54,7 +54,7 @@ static void GetIndexRelations(Oid main_relation_oid,
 				  Relation **index_rels);
 
 static void CopyReadNewline(FILE *fp, int *newline);
-static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline);
+static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print);
 
 static void CopyAttributeOut(FILE *fp, char *string, char *delim);
 static int	CountTuples(Relation relation);
@@ -219,7 +219,7 @@ CopyDonePeek(FILE *fp, int c, int pickup)
 
 void
 DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
-	   char *filename, char *delim, int fileumask)
+	   char *filename, char *delim, char *null_print, int fileumask)
 {
 /*----------------------------------------------------------------------------
   Either unload or reload contents of class <relname>, depending on <from>.
@@ -232,7 +232,8 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
   Iff <binary>, unload or reload in the binary format, as opposed to the
   more wasteful but more robust and portable text format.
 
-  If in the text format, delimit columns with delimiter <delim>.
+  If in the text format, delimit columns with delimiter <delim> and print
+  NULL values as <null_print>.
 
   <fileumask> is the umask(2) setting to use while creating an output file.
   This should usually be more liberal than the backend's normal 077 umask,
@@ -304,7 +305,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 						 "reading.  Errno = %s (%d).",
 						 geteuid(), filename, strerror(errno), errno);
 			}
-			CopyFrom(rel, binary, oids, fp, delim);
+			CopyFrom(rel, binary, oids, fp, delim, null_print);
 		}
 		else
 		{						/* copy from database to file */
@@ -336,7 +337,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 						 "writing.  Errno = %s (%d).",
 						 geteuid(), filename, strerror(errno), errno);
 			}
-			CopyTo(rel, binary, oids, fp, delim);
+			CopyTo(rel, binary, oids, fp, delim, null_print);
 		}
 		if (!pipe)
 		{
@@ -362,7 +363,7 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 
 
 static void
-CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
+CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	HeapScanDesc scandesc;
@@ -449,7 +450,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 					pfree(string);
 				}
 				else
-					CopySendString("\\N", fp);	/* null indicator */
+					CopySendString(null_print, fp);	/* null indicator */
 
 				if (i == attr_count - 1)
 					CopySendChar('\n', fp);
@@ -520,7 +521,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 }
 
 static void
-CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
+CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	AttrNumber	attr_count;
@@ -711,7 +712,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			lineno++;
 			if (oids)
 			{
-				string = CopyReadAttribute(fp, &isnull, delim, &newline);
+				string = CopyReadAttribute(fp, &isnull, delim, &newline, null_print);
 				if (string == NULL)
 					done = 1;
 				else
@@ -724,7 +725,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			}
 			for (i = 0; i < attr_count && !done; i++)
 			{
-				string = CopyReadAttribute(fp, &isnull, delim, &newline);
+				string = CopyReadAttribute(fp, &isnull, delim, &newline, null_print);
 				if (isnull)
 				{
 					values[i] = PointerGetDatum(NULL);
@@ -1122,10 +1123,11 @@ CopyReadNewline(FILE *fp, int *newline)
  *
  * delim is the string of acceptable delimiter characters(s).
  * *newline remembers whether we've seen a newline ending this tuple.
+ * null_print says how NULL values are represented
  */
 
 static char *
-CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline)
+CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline, char *null_print)
 {
 	StringInfoData	attribute_buf;
 	char		c;
@@ -1207,6 +1209,13 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline)
 						c = val & 0377;
 					}
 					break;
+                    /* This is a special hack to parse `\N' as <backslash-N>
+                       rather then just 'N' to provide compatibility with
+                       the default NULL output. -- pe */
+                case 'N':
+                    appendStringInfoChar(&attribute_buf, '\\');
+                    c = 'N';
+                    break;
 				case 'b':
 					c = '\b';
 					break;
@@ -1224,9 +1233,6 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline)
 					break;
 				case 'v':
 					c = '\v';
-					break;
-				case 'N':
-					*isnull = (bool) true;
 					break;
 				case '.':
 					c = CopyGetChar(fp);
@@ -1266,6 +1272,9 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline)
 		return cvt;
 	}
 #endif
+    if (strcmp(attribute_buf.data, null_print)==0)
+        *isnull = true;
+
 	return attribute_buf.data;
 
 endOfFile:

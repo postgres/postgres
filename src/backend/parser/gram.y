@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.121 1999/12/10 07:37:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.122 1999/12/14 00:08:15 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -147,7 +147,7 @@ static Node *doNegate(Node *n);
 
 %type <str>		TriggerEvents, TriggerFuncArg
 
-%type <str>		relation_name, copy_file_name, copy_delimiter, def_name,
+%type <str>		relation_name, copy_file_name, copy_delimiter, copy_null, def_name,
 		database_name, access_method_clause, access_method, attr_name,
 		class, index_name, name, func_name, file_name, aggr_argtype
 
@@ -802,7 +802,7 @@ opt_id:  ColId									{ $$ = $1; }
  *
  *****************************************************************************/
 
-CopyStmt:  COPY opt_binary relation_name opt_with_copy copy_dirn copy_file_name copy_delimiter
+CopyStmt:  COPY opt_binary relation_name opt_with_copy copy_dirn copy_file_name copy_delimiter copy_null
 				{
 					CopyStmt *n = makeNode(CopyStmt);
 					n->binary = $2;
@@ -811,6 +811,7 @@ CopyStmt:  COPY opt_binary relation_name opt_with_copy copy_dirn copy_file_name 
 					n->direction = $5;
 					n->filename = $6;
 					n->delimiter = $7;
+                                        n->null_print = $8;
 					$$ = (Node *)n;
 				}
 		;
@@ -850,6 +851,8 @@ opt_using:	USING								{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
+copy_null:      WITH NULL_P AS Sconst { $$ = $4; }
+                | /*EMPTY*/         { $$ = "\\N"; }
 
 /*****************************************************************************
  *

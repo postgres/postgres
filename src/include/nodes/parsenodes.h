@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.90 1999/12/10 07:37:32 tgl Exp $
+ * $Id: parsenodes.h,v 1.91 1999/12/14 00:08:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ typedef struct CopyStmt
 	int			direction;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
 	char	   *delimiter;		/* delimiter character, \t by default */
+    char       *null_print;     /* how to print NULLs, `\N' by default */
 } CopyStmt;
 
 /* ----------------------

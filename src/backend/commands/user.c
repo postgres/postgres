@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.41 1999/12/12 05:57:28 momjian Exp $
+ * $Id: user.c,v 1.42 1999/12/14 00:08:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,6 +77,7 @@ update_pg_pwd()
 		   false,				/* pipe */
 		   tempname,			/* filename */
 		   CRYPT_PWD_FILE_SEPSTR, /* delim */
+           "",                  /* nulls */
 		   0077);				/* fileumask */
 	/*
 	 * And rename the temp file to its final name, deleting the old pg_pwd.

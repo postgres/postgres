@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.73 1999/12/10 03:55:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.74 1999/12/14 00:08:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,6 +269,7 @@ ProcessUtility(Node *parsetree,
 				 */
 					   stmt->filename,
 					   stmt->delimiter,
+                       stmt->null_print,
 				/*
 				 * specify 022 umask while writing files with COPY.
 				 */
