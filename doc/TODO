@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Nov  1 17:52:40 EST 2002
+Last updated:		Fri Nov  1 19:15:14 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -294,6 +294,8 @@ Clients
 * -Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil)
 * Add schema, cast, and conversion backslash commands to psql
 * Allow pg_dump to dump a specific schema
+* Allow psql to do table completion for SELECT * FROM schema_part and
+  table completion for SELECT * FROM schema_name.
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
