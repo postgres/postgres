@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.63 2001/11/21 18:30:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.64 2002/01/03 20:30:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "commands/command.h"
 #include "executor/spi_priv.h"
 #include "tcop/tcopprot.h"
+#include "utils/lsyscache.h"
 
 
 uint32		SPI_processed = 0;
@@ -782,8 +783,11 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	/* If the plan has parameters, put them into the executor state */
 	if (spiplan->nargs > 0)
 	{
-		ParamListInfo paramLI = (ParamListInfo) palloc((spiplan->nargs + 1) *
-											  sizeof(ParamListInfoData));
+		ParamListInfo paramLI;
+
+		paramLI = (ParamListInfo) palloc((spiplan->nargs + 1) *
+										 sizeof(ParamListInfoData));
+		MemSet(paramLI, 0, (spiplan->nargs + 1) * sizeof(ParamListInfoData));
 
 		eState->es_param_list_info = paramLI;
 		for (k = 0; k < spiplan->nargs; paramLI++, k++)
@@ -791,7 +795,22 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 			paramLI->kind = PARAM_NUM;
 			paramLI->id = k + 1;
 			paramLI->isnull = (Nulls && Nulls[k] == 'n');
-			paramLI->value = Values[k];
+			if (paramLI->isnull)
+			{
+				/* nulls just copy */
+				paramLI->value = Values[k];
+			}
+			else
+			{
+				/* pass-by-ref values must be copied into portal context */
+				int16		paramTypLen;
+				bool		paramTypByVal;
+
+				get_typlenbyval(spiplan->argtypes[k],
+								&paramTypLen, &paramTypByVal);
+				paramLI->value = datumCopy(Values[k],
+										   paramTypByVal, paramTypLen);
+			}
 		}
 		paramLI->kind = PARAM_INVALID;
 	}
@@ -1077,8 +1096,11 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 			state = CreateExecutorState();
 			if (nargs > 0)
 			{
-				ParamListInfo paramLI = (ParamListInfo) palloc((nargs + 1) *
-											  sizeof(ParamListInfoData));
+				ParamListInfo paramLI;
+
+				paramLI = (ParamListInfo) palloc((nargs + 1) *
+												 sizeof(ParamListInfoData));
+				MemSet(paramLI, 0, (nargs + 1) * sizeof(ParamListInfoData));
 
 				state->es_param_list_info = paramLI;
 				for (k = 0; k < plan->nargs; paramLI++, k++)
