@@ -195,7 +195,7 @@ AC_ARG_WITH(libraries,
 	LIBRARY_DIRS="$withval"
     ])
 
-if test "$LIBRARY_DIRS"; then
+if test "$LIBRARY_DIRS" -o "$SRCH_LIB"; then
 	for dir in $LIBRARY_DIRS $SRCH_LIB; do
 		if test -d "$dir"; then
 			PGSQL_LDFLAGS="$PGSQL_LDFLAGS -L$dir"
