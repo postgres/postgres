@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.374 2003/10/18 22:59:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.375 2003/10/19 23:43:51 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2659,7 +2659,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.374 $ $Date: 2003/10/18 22:59:08 $\n");
+		puts("$Revision: 1.375 $ $Date: 2003/10/19 23:43:51 $\n");
 	}
 
 	/*
@@ -3090,8 +3090,8 @@ PostgresMain(int argc, char *argv[], const char *username)
 #include <sys/resource.h>
 #endif   /* HAVE_GETRUSAGE */
 
-struct rusage Save_r;
-struct timeval Save_t;
+static struct rusage Save_r;
+static struct timeval Save_t;
 
 void
 ResetUsage(void)
