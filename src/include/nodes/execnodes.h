@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.24 1999/02/13 23:21:37 momjian Exp $
+ * $Id: execnodes.h,v 1.25 1999/02/23 07:55:23 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -607,7 +607,7 @@ typedef struct GroupState
  *	 SortState information
  *
  *|		sort nodes are really just a kind of a scan since
- *|		we implement sorts by retrieveing the entire subplan
+ *|		we implement sorts by retrieving the entire subplan
  *|		into a temp relation, sorting the temp relation into
  *|		another sorted relation, and then preforming a simple
  *|		unqualified sequential scan on the sorted relation..

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.70 1999/02/13 23:21:39 momjian Exp $
+ * $Id: parsenodes.h,v 1.71 1999/02/23 07:55:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ typedef struct CreateStmt
 
 typedef enum ConstrType			/* type of constaints */
 {
-	CONSTR_NONE, CONSTR_NOTNULL, CONSTR_DEFAULT, CONSTR_CHECK, CONSTR_PRIMARY, CONSTR_UNIQUE
+	CONSTR_NULL, CONSTR_NOTNULL, CONSTR_DEFAULT, CONSTR_CHECK, CONSTR_PRIMARY, CONSTR_UNIQUE
 } ConstrType;
 
 typedef struct Constraint
@@ -671,7 +671,6 @@ typedef struct SelectStmt
 	List	   *forUpdate;		/* FOR UPDATE clause */
 } SelectStmt;
 
-
 /****************************************************************************
  *	Supporting data structures for Parse Trees
  ****************************************************************************/
@@ -855,17 +854,6 @@ typedef struct SortGroupBy
 } SortGroupBy;
 
 /*
- * JoinUsing - for JOIN USING clause
- */
-typedef struct JoinUsing
-{
-	NodeTag		type;
-	int			resno;			/* target number */
-	char	   *range;
-	char	   *name;			/* name of column to sort on */
-}			JoinUsing;
-
-/*
  * RangeVar - range variable, used in FROM clauses
  */
 typedef struct RangeVar
@@ -897,6 +885,18 @@ typedef struct DefElem
 	char	   *defname;
 	Node	   *arg;			/* a (Value *) or a (TypeName *) */
 } DefElem;
+
+/*
+ * JoinExpr - for JOIN expressions
+ */
+typedef struct JoinExpr
+{
+	NodeTag		type;
+	int			jointype;
+	RangeVar   *larg;
+	Node	   *rarg;
+	List	   *quals;
+} JoinExpr;
 
 
 /****************************************************************************

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.43 1999/02/13 23:21:38 momjian Exp $
+ * $Id: nodes.h,v 1.44 1999/02/23 07:55:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -215,7 +215,7 @@ typedef enum NodeTag
 	T_SortClause,
 	T_GroupClause,
 	T_SubSelect,
-	T_JoinUsing,
+	T_JoinExpr,
 	T_CaseExpr,
 	T_CaseWhen,
 	T_RowMark
