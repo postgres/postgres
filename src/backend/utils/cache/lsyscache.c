@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.86 2002/11/25 21:29:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.87 2002/12/01 21:05:14 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -416,6 +416,22 @@ op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 }
 
 /*
+ * op_strict
+ *
+ * Get the proisstrict flag for the operator's underlying function.
+ */
+bool
+op_strict(Oid opno)
+{
+	RegProcedure funcid = get_opcode(opno);
+
+	if (funcid == (RegProcedure) InvalidOid)
+		elog(ERROR, "Operator OID %u does not exist", opno);
+
+	return func_strict((Oid) funcid);
+}
+
+/*
  * op_volatile
  *
  * Get the provolatile flag for the operator's underlying function.
@@ -602,6 +618,27 @@ get_func_retset(Oid funcid)
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
 	result = ((Form_pg_proc) GETSTRUCT(tp))->proretset;
+	ReleaseSysCache(tp);
+	return result;
+}
+
+/*
+ * func_strict
+ *		Given procedure id, return the function's proisstrict flag.
+ */
+bool
+func_strict(Oid funcid)
+{
+	HeapTuple	tp;
+	bool		result;
+
+	tp = SearchSysCache(PROCOID,
+						ObjectIdGetDatum(funcid),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "Function OID %u does not exist", funcid);
+
+	result = ((Form_pg_proc) GETSTRUCT(tp))->proisstrict;
 	ReleaseSysCache(tp);
 	return result;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.114 2002/11/30 21:25:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.115 2002/12/01 21:05:14 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -19,18 +19,25 @@
 
 #include "postgres.h"
 
+#include "catalog/pg_language.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "parser/analyze.h"
 #include "parser/parsetree.h"
+#include "tcop/tcopprot.h"
+#include "utils/acl.h"
+#include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 #include "utils/syscache.h"
 
 
@@ -44,6 +51,13 @@ typedef struct
 	List	   *groupClauses;
 } check_subplans_for_ungrouped_vars_context;
 
+typedef struct
+{
+	int			nargs;
+	List	   *args;
+	int		   *usecounts;
+} substitute_actual_parameters_context;
+
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool contain_distinct_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
@@ -54,8 +68,17 @@ static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 					 check_subplans_for_ungrouped_vars_context *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
-static Node *eval_const_expressions_mutator(Node *node, void *context);
-static Expr *simplify_op_or_func(Expr *expr, List *args);
+static bool contain_nonstrict_functions_walker(Node *node, void *context);
+static Node *eval_const_expressions_mutator(Node *node, List *active_fns);
+static Expr *simplify_op_or_func(Expr *expr, List *args, bool allow_inline,
+								 List *active_fns);
+static Expr *evaluate_op_or_func(Expr *expr, List *args, HeapTuple func_tuple);
+static Expr *inline_op_or_func(Expr *expr, List *args, HeapTuple func_tuple,
+							   List *active_fns);
+static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
+										  int *usecounts);
+static Node *substitute_actual_parameters_mutator(Node *node,
+					 substitute_actual_parameters_context *context);
 
 
 Expr *
@@ -169,7 +192,6 @@ get_rightop(Expr *clause)
  * is_funcclause
  *
  * Returns t iff the clause is a function clause: (func { expr }).
- *
  */
 bool
 is_funcclause(Node *clause)
@@ -184,7 +206,6 @@ is_funcclause(Node *clause)
  *
  * Creates a function clause given the FUNC node and the functional
  * arguments.
- *
  */
 Expr *
 make_funcclause(Func *func, List *funcargs)
@@ -206,7 +227,6 @@ make_funcclause(Func *func, List *funcargs)
  * or_clause
  *
  * Returns t iff the clause is an 'or' clause: (OR { expr }).
- *
  */
 bool
 or_clause(Node *clause)
@@ -220,7 +240,6 @@ or_clause(Node *clause)
  * make_orclause
  *
  * Creates an 'or' clause given a list of its subclauses.
- *
  */
 Expr *
 make_orclause(List *orclauses)
@@ -242,7 +261,6 @@ make_orclause(List *orclauses)
  * not_clause
  *
  * Returns t iff this is a 'not' clause: (NOT expr).
- *
  */
 bool
 not_clause(Node *clause)
@@ -256,7 +274,6 @@ not_clause(Node *clause)
  * make_notclause
  *
  * Create a 'not' clause given the expression to be negated.
- *
  */
 Expr *
 make_notclause(Expr *notclause)
@@ -274,7 +291,6 @@ make_notclause(Expr *notclause)
  * get_notclausearg
  *
  * Retrieve the clause within a 'not' clause
- *
  */
 Expr *
 get_notclausearg(Expr *notclause)
@@ -291,7 +307,6 @@ get_notclausearg(Expr *notclause)
  * and_clause
  *
  * Returns t iff its argument is an 'and' clause: (AND { expr }).
- *
  */
 bool
 and_clause(Node *clause)
@@ -849,6 +864,69 @@ contain_volatile_functions_walker(Node *node, void *context)
 
 
 /*****************************************************************************
+ *		Check clauses for nonstrict functions
+ *****************************************************************************/
+
+/*
+ * contain_nonstrict_functions
+ *	  Recursively search for nonstrict functions within a clause.
+ *
+ * Returns true if any nonstrict construct is found --- ie, anything that
+ * could produce non-NULL output with a NULL input.
+ *
+ * XXX we do not examine sublinks/subplans to see if they contain uses of
+ * nonstrict functions.	It's not real clear if that is correct or not...
+ * for the current usage it does not matter, since inline_op_or_func()
+ * rejects cases with sublinks.
+ */
+bool
+contain_nonstrict_functions(Node *clause)
+{
+	return contain_nonstrict_functions_walker(clause, NULL);
+}
+
+static bool
+contain_nonstrict_functions_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Expr))
+	{
+		Expr	   *expr = (Expr *) node;
+
+		switch (expr->opType)
+		{
+			case OP_EXPR:
+				if (!op_strict(((Oper *) expr->oper)->opno))
+					return true;
+				break;
+			case DISTINCT_EXPR:
+				/* IS DISTINCT FROM is inherently non-strict */
+				return true;
+			case FUNC_EXPR:
+				if (!func_strict(((Func *) expr->oper)->funcid))
+					return true;
+				break;
+			case OR_EXPR:
+			case AND_EXPR:
+				/* OR, AND are inherently non-strict */
+				return true;
+			default:
+				break;
+		}
+	}
+	if (IsA(node, CaseExpr))
+		return true;
+	if (IsA(node, NullTest))
+		return true;
+	if (IsA(node, BooleanTest))
+		return true;
+	return expression_tree_walker(node, contain_nonstrict_functions_walker,
+								  context);
+}
+
+
+/*****************************************************************************
  *		Check for "pseudo-constant" clauses
  *****************************************************************************/
 
@@ -1063,11 +1141,10 @@ NumRelids(Node *clause)
 	return result;
 }
 
-/*--------------------
+/*
  * CommuteClause: commute a binary operator clause
  *
  * XXX the clause is destructively modified!
- *--------------------
  */
 void
 CommuteClause(Expr *clause)
@@ -1134,12 +1211,15 @@ CommuteClause(Expr *clause)
 Node *
 eval_const_expressions(Node *node)
 {
-	/* no context or special setup needed, so away we go... */
-	return eval_const_expressions_mutator(node, NULL);
+	/*
+	 * The context for the mutator is a list of SQL functions being
+	 * recursively simplified, so we start with an empty list.
+	 */
+	return eval_const_expressions_mutator(node, NIL);
 }
 
 static Node *
-eval_const_expressions_mutator(Node *node, void *context)
+eval_const_expressions_mutator(Node *node, List *active_fns)
 {
 	if (node == NULL)
 		return NULL;
@@ -1157,7 +1237,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 		 */
 		args = (List *) expression_tree_mutator((Node *) expr->args,
 										  eval_const_expressions_mutator,
-												(void *) context);
+												(void *) active_fns);
 
 		switch (expr->opType)
 		{
@@ -1168,7 +1248,8 @@ eval_const_expressions_mutator(Node *node, void *context)
 				 * Code for op/func case is pretty bulky, so split it out
 				 * as a separate function.
 				 */
-				newexpr = simplify_op_or_func(expr, args);
+				newexpr = simplify_op_or_func(expr, args,
+											  true, active_fns);
 				if (newexpr)	/* successfully simplified it */
 					return (Node *) newexpr;
 
@@ -1212,7 +1293,9 @@ eval_const_expressions_mutator(Node *node, void *context)
 							return MAKEBOOLCONST(true, false);
 
 						/* otherwise try to evaluate the '=' operator */
-						newexpr = simplify_op_or_func(expr, args);
+						/* (NOT okay to try to inline it, though!) */
+						newexpr = simplify_op_or_func(expr, args,
+													  false, active_fns);
 						if (newexpr)	/* successfully simplified it */
 							return (Node *) newexpr;
 					}
@@ -1383,7 +1466,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 		RelabelType *relabel = (RelabelType *) node;
 		Node	   *arg;
 
-		arg = eval_const_expressions_mutator(relabel->arg, context);
+		arg = eval_const_expressions_mutator(relabel->arg, active_fns);
 
 		/*
 		 * If we find stacked RelabelTypes (eg, from foo :: int :: oid) we
@@ -1443,7 +1526,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 			CaseWhen   *casewhen = (CaseWhen *)
 			expression_tree_mutator((Node *) lfirst(arg),
 									eval_const_expressions_mutator,
-									(void *) context);
+									(void *) active_fns);
 
 			Assert(IsA(casewhen, CaseWhen));
 			if (casewhen->expr == NULL ||
@@ -1473,7 +1556,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 
 		/* Simplify the default result */
 		defresult = eval_const_expressions_mutator(caseexpr->defresult,
-												   context);
+												   active_fns);
 
 		/*
 		 * If no non-FALSE alternatives, CASE reduces to the default
@@ -1498,43 +1581,94 @@ eval_const_expressions_mutator(Node *node, void *context)
 	 * simplify constant expressions in its subscripts.
 	 */
 	return expression_tree_mutator(node, eval_const_expressions_mutator,
-								   (void *) context);
+								   (void *) active_fns);
 }
 
 /*
- * Subroutine for eval_const_expressions: try to evaluate an op or func
+ * Subroutine for eval_const_expressions: try to simplify an op or func
  *
- * Inputs are the op or func Expr node, and the pre-simplified argument list.
+ * Inputs are the op or func Expr node, and the pre-simplified argument list;
+ * also a list of already-active inline function expansions.
+ *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the op/func.
- *
- * XXX Possible future improvement: if the func is SQL-language, and its
- * definition is simply "SELECT expression", we could parse and substitute
- * the expression here.  This would avoid much runtime overhead, and perhaps
- * expose opportunities for constant-folding within the expression even if
- * not all the func's input args are constants.  It'd be appropriate to do
- * that here, not in the parser, since we wouldn't want it to happen until
- * after rule substitution/rewriting.
  */
 static Expr *
-simplify_op_or_func(Expr *expr, List *args)
+simplify_op_or_func(Expr *expr, List *args, bool allow_inline,
+					List *active_fns)
 {
-	List	   *arg;
 	Oid			funcid;
-	Oid			result_typeid;
 	HeapTuple	func_tuple;
-	Form_pg_proc funcform;
-	char		provolatile;
-	bool		proisstrict;
-	bool		proretset;
+	Expr	   *newexpr;
+
+	/*
+	 * We have two strategies for simplification: either execute the function
+	 * to deliver a constant result, or expand in-line the body of the
+	 * function definition (which only works for simple SQL-language
+	 * functions, but that is a common case).  In either case we need access
+	 * to the function's pg_proc tuple, so fetch it just once to use in both
+	 * attempts.
+	 */
+	if (expr->opType == FUNC_EXPR)
+	{
+		Func	   *func = (Func *) expr->oper;
+
+		funcid = func->funcid;
+	}
+	else						/* OP_EXPR or DISTINCT_EXPR */
+	{
+		Oper	   *oper = (Oper *) expr->oper;
+
+		replace_opid(oper);		/* OK to scribble on input to this extent */
+		funcid = oper->opid;
+	}
+
+	func_tuple = SearchSysCache(PROCOID,
+								ObjectIdGetDatum(funcid),
+								0, 0, 0);
+	if (!HeapTupleIsValid(func_tuple))
+		elog(ERROR, "Function OID %u does not exist", funcid);
+
+	newexpr = evaluate_op_or_func(expr, args, func_tuple);
+
+	if (!newexpr && allow_inline)
+		newexpr = inline_op_or_func(expr, args, func_tuple, active_fns);
+
+	ReleaseSysCache(func_tuple);
+
+	return newexpr;
+}
+
+/*
+ * evaluate_op_or_func: try to pre-evaluate an op or func
+ *
+ * We can do this if the function is strict and has any constant-null inputs
+ * (just return a null constant), or if the function is immutable and has all
+ * constant inputs (call it and return the result as a Const node).
+ *
+ * Returns a simplified expression if successful, or NULL if cannot
+ * simplify the op/func.
+ */
+static Expr *
+evaluate_op_or_func(Expr *expr, List *args, HeapTuple func_tuple)
+{
+	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	Oid			result_typeid = funcform->prorettype;
 	int16		resultTypLen;
 	bool		resultTypByVal;
+	bool		has_nonconst_input = false;
+	bool		has_null_input = false;
 	Expr	   *newexpr;
 	ExprContext *econtext;
 	Datum		const_val;
-	bool		has_nonconst_input = false;
-	bool		has_null_input = false;
 	bool		const_is_null;
+	List	   *arg;
+
+	/*
+	 * Can't simplify if it returns a set.
+	 */
+	if (funcform->proretset)
+		return NULL;
 
 	/*
 	 * Check for constant inputs and especially constant-NULL inputs.
@@ -1550,79 +1684,19 @@ simplify_op_or_func(Expr *expr, List *args)
 	/*
 	 * If the function is strict and has a constant-NULL input, it will
 	 * never be called at all, so we can replace the call by a NULL
-	 * constant even if there are other inputs that aren't constant.
-	 * Otherwise, we can only simplify if all inputs are constants. We can
-	 * skip the function lookup if neither case applies.
+	 * constant, even if there are other inputs that aren't constant,
+	 * and even if the function is not otherwise immutable.
 	 */
-	if (has_nonconst_input && !has_null_input)
-		return NULL;
-
-	/*
-	 * Get the function procedure's OID and look to see whether it is
-	 * marked immutable.
-	 *
-	 * Note we take the result type from the Oper or Func node, not the
-	 * pg_proc tuple; probably necessary for binary-compatibility cases.
-	 */
-	if (expr->opType == FUNC_EXPR)
-	{
-		Func	   *func = (Func *) expr->oper;
-
-		funcid = func->funcid;
-		result_typeid = func->funcresulttype;
-	}
-	else						/* OP_EXPR or DISTINCT_EXPR */
-	{
-		Oper	   *oper = (Oper *) expr->oper;
-
-		replace_opid(oper);		/* OK to scribble on input to this extent */
-		funcid = oper->opid;
-		result_typeid = oper->opresulttype;
-	}
-
-	/*
-	 * we could use func_volatile() here, but we need several fields out
-	 * of the func tuple, so might as well just look it up once.
-	 */
-	func_tuple = SearchSysCache(PROCOID,
-								ObjectIdGetDatum(funcid),
-								0, 0, 0);
-	if (!HeapTupleIsValid(func_tuple))
-		elog(ERROR, "Function OID %u does not exist", funcid);
-	funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	provolatile = funcform->provolatile;
-	proisstrict = funcform->proisstrict;
-	proretset = funcform->proretset;
-	ReleaseSysCache(func_tuple);
-
-	if (provolatile != PROVOLATILE_IMMUTABLE)
-		return NULL;
-
-	/*
-	 * Also check to make sure it doesn't return a set.
-	 */
-	if (proretset)
-		return NULL;
-
-	/*
-	 * Now that we know if the function is strict, we can finish the
-	 * checks for simplifiable inputs that we started above.
-	 */
-	if (proisstrict && has_null_input)
-	{
-		/*
-		 * It's strict and has NULL input, so must produce NULL output.
-		 * Return a NULL constant of the right type.
-		 */
+	if (funcform->proisstrict && has_null_input)
 		return (Expr *) makeNullConst(result_typeid);
-	}
 
 	/*
-	 * Otherwise, can simplify only if all inputs are constants. (For a
-	 * non-strict function, constant NULL inputs are treated the same as
-	 * constant non-NULL inputs.)
+	 * Otherwise, can simplify only if the function is immutable and
+	 * all inputs are constants. (For a non-strict function, constant NULL
+	 * inputs are treated the same as constant non-NULL inputs.)
 	 */
-	if (has_nonconst_input)
+	if (funcform->provolatile != PROVOLATILE_IMMUTABLE ||
+		has_nonconst_input)
 		return NULL;
 
 	/*
@@ -1631,9 +1705,9 @@ simplify_op_or_func(Expr *expr, List *args)
 	 * We use the executor's routine ExecEvalExpr() to avoid duplication of
 	 * code and ensure we get the same result as the executor would get.
 	 *
-	 * Build a new Expr node containing the already-simplified arguments. The
-	 * only other setup needed here is the replace_opid() that we already
-	 * did for the OP_EXPR/DISTINCT_EXPR case.
+	 * Build a new Expr node containing the already-simplified arguments.
+	 * The only other setup needed here is the replace_opid() that
+	 * simplify_op_or_func already did for the OP_EXPR/DISTINCT_EXPR case.
 	 */
 	newexpr = makeNode(Expr);
 	newexpr->typeOid = expr->typeOid;
@@ -1668,6 +1742,265 @@ simplify_op_or_func(Expr *expr, List *args)
 	return (Expr *) makeConst(result_typeid, resultTypLen,
 							  const_val, const_is_null,
 							  resultTypByVal);
+}
+
+/*
+ * inline_op_or_func: try to expand inline an op or func
+ *
+ * If the function is a sufficiently simple SQL-language function
+ * (just "SELECT expression"), then we can inline it and avoid the rather
+ * high per-call overhead of SQL functions.  Furthermore, this can expose
+ * opportunities for constant-folding within the function expression.
+ *
+ * We have to beware of some special cases however.  A directly or
+ * indirectly recursive function would cause us to recurse forever,
+ * so we keep track of which functions we are already expanding and
+ * do not re-expand them.  Also, if a parameter is used more than once
+ * in the SQL-function body, we require it not to contain any volatile
+ * functions or sublinks --- volatiles might deliver inconsistent answers,
+ * and subplans might be unreasonably expensive to evaluate multiple times.
+ * We must also beware of changing the volatility or strictness status of
+ * functions by inlining them.
+ *
+ * Returns a simplified expression if successful, or NULL if cannot
+ * simplify the op/func.
+ */
+static Expr *
+inline_op_or_func(Expr *expr, List *args, HeapTuple func_tuple,
+				  List *active_fns)
+{
+	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+	Oid			funcid = HeapTupleGetOid(func_tuple);
+	Oid			result_typeid = funcform->prorettype;
+	char		result_typtype;
+	char	   *src;
+	Datum		tmp;
+	bool		isNull;
+	MemoryContext oldcxt;
+	MemoryContext mycxt;
+	StringInfoData stri;
+	List	   *raw_parsetree_list;
+	List	   *querytree_list;
+	Query	   *querytree;
+	Node	   *newexpr;
+	int		   *usecounts;
+	List	   *arg;
+	int			i;
+
+	/*
+	 * Forget it if the function is not SQL-language or has other
+	 * showstopper properties.  (The nargs check is just paranoia.)
+	 */
+	if (funcform->prolang != SQLlanguageId ||
+		funcform->prosecdef ||
+		funcform->proretset ||
+		funcform->pronargs != length(args))
+		return NULL;
+
+	/* Forget it if return type is tuple or void */
+	result_typtype = get_typtype(result_typeid);
+	if (result_typtype != 'b' &&
+		result_typtype != 'd')
+		return NULL;
+
+	/* Check for recursive function, and give up trying to expand if so */
+	if (intMember(funcid, active_fns))
+		return NULL;
+
+	/* Check permission to call function (fail later, if not) */
+	if (pg_proc_aclcheck(funcid, GetUserId(), ACL_EXECUTE) != ACLCHECK_OK)
+		return NULL;
+
+	/*
+	 * Make a temporary memory context, so that we don't leak all the
+	 * stuff that parsing might create.
+	 */
+	mycxt = AllocSetContextCreate(CurrentMemoryContext,
+								  "inline_op_or_func",
+								  ALLOCSET_DEFAULT_MINSIZE,
+								  ALLOCSET_DEFAULT_INITSIZE,
+								  ALLOCSET_DEFAULT_MAXSIZE);
+	oldcxt = MemoryContextSwitchTo(mycxt);
+
+	/* Fetch and parse the function body */
+	tmp = SysCacheGetAttr(PROCOID,
+						  func_tuple,
+						  Anum_pg_proc_prosrc,
+						  &isNull);
+	if (isNull)
+		elog(ERROR, "inline_op_or_func: null prosrc for procedure %u",
+			 funcid);
+	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
+	/*
+	 * We just do parsing and parse analysis, not rewriting, because
+	 * rewriting will not affect SELECT-only queries, which is all that
+	 * we care about.  Also, we can punt as soon as we detect more than
+	 * one command in the function body.
+	 */
+	initStringInfo(&stri);
+	appendStringInfo(&stri, "%s", src);
+
+	raw_parsetree_list = pg_parse_query(&stri,
+										funcform->proargtypes,
+										funcform->pronargs);
+	if (length(raw_parsetree_list) != 1)
+		goto fail;
+
+	querytree_list = parse_analyze(lfirst(raw_parsetree_list), NULL);
+
+	if (length(querytree_list) != 1)
+		goto fail;
+
+	querytree = (Query *) lfirst(querytree_list);
+
+	/*
+	 * The single command must be a simple "SELECT expression".
+	 */
+	if (!IsA(querytree, Query) ||
+		querytree->commandType != CMD_SELECT ||
+		querytree->resultRelation != 0 ||
+		querytree->into ||
+		querytree->isPortal ||
+		querytree->hasAggs ||
+		querytree->hasSubLinks ||
+		querytree->rtable ||
+		querytree->jointree->fromlist ||
+		querytree->jointree->quals ||
+		querytree->groupClause ||
+		querytree->havingQual ||
+		querytree->distinctClause ||
+		querytree->sortClause ||
+		querytree->limitOffset ||
+		querytree->limitCount ||
+		querytree->setOperations ||
+		length(querytree->targetList) != 1)
+		goto fail;
+
+	newexpr = ((TargetEntry *) lfirst(querytree->targetList))->expr;
+
+	/*
+	 * Additional validity checks on the expression.  It mustn't return a
+	 * set, and it mustn't be more volatile than the surrounding function
+	 * (this is to avoid breaking hacks that involve pretending a function
+	 * is immutable when it really ain't).  If the surrounding function is
+	 * declared strict, then the expression must contain only strict constructs
+	 * and must use all of the function parameters (this is overkill, but
+	 * an exact analysis is hard).
+	 */
+	if (expression_returns_set(newexpr))
+		goto fail;
+
+	if (funcform->provolatile == PROVOLATILE_IMMUTABLE &&
+		contain_mutable_functions(newexpr))
+		goto fail;
+	else if (funcform->provolatile == PROVOLATILE_STABLE &&
+		contain_volatile_functions(newexpr))
+		goto fail;
+
+	if (funcform->proisstrict &&
+		contain_nonstrict_functions(newexpr))
+		goto fail;
+
+	/*
+	 * We may be able to do it; there are still checks on parameter usage
+	 * to make, but those are most easily done in combination with the
+	 * actual substitution of the inputs.  So start building expression
+	 * with inputs substituted.
+	 */
+	usecounts = (int *) palloc0((funcform->pronargs + 1) * sizeof(int));
+	newexpr = substitute_actual_parameters(newexpr, funcform->pronargs,
+										   args, usecounts);
+
+	/* Now check for parameter usage */
+	i = 0;
+	foreach(arg, args)
+	{
+		Node   *param = lfirst(arg);
+
+		if (usecounts[i] == 0)
+		{
+			/* Param not used at all: uncool if func is strict */
+			if (funcform->proisstrict)
+				goto fail;
+		}
+		else if (usecounts[i] != 1)
+		{
+			/* Param used multiple times: uncool if volatile or expensive */
+			if (contain_volatile_functions(param) ||
+				contain_subplans(param))
+				goto fail;
+		}
+		i++;
+	}
+
+	/*
+	 * Whew --- we can make the substitution.  Copy the modified expression
+	 * out of the temporary memory context, and clean up.
+	 */
+	MemoryContextSwitchTo(oldcxt);
+
+	newexpr = copyObject(newexpr);
+
+	MemoryContextDelete(mycxt);
+
+	/*
+	 * Recursively try to simplify the modified expression.  Here we must
+	 * add the current function to the context list of active functions.
+	 */
+	newexpr = eval_const_expressions_mutator(newexpr,
+											 lconsi(funcid, active_fns));
+
+	return (Expr *) newexpr;
+
+	/* Here if func is not inlinable: release temp memory and return NULL */
+fail:
+	MemoryContextSwitchTo(oldcxt);
+	MemoryContextDelete(mycxt);
+
+	return NULL;
+}
+
+/*
+ * Replace Param nodes by appropriate actual parameters
+ */
+static Node *
+substitute_actual_parameters(Node *expr, int nargs, List *args,
+							 int *usecounts)
+{
+	substitute_actual_parameters_context context;
+
+ 	context.nargs = nargs;
+	context.args = args;
+	context.usecounts = usecounts;
+
+	return substitute_actual_parameters_mutator(expr, &context);
+}
+
+static Node *
+substitute_actual_parameters_mutator(Node *node,
+									 substitute_actual_parameters_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Param))
+	{
+		Param	   *param = (Param *) node;
+
+		if (param->paramkind != PARAM_NUM)
+			elog(ERROR, "substitute_actual_parameters_mutator: unexpected paramkind");
+		if (param->paramid <= 0 || param->paramid > context->nargs)
+			elog(ERROR, "substitute_actual_parameters_mutator: unexpected paramid");
+
+		/* Count usage of parameter */
+		context->usecounts[param->paramid - 1]++;
+
+		/* Select the appropriate actual arg and replace the Param with it */
+		/* We don't need to copy at this time (it'll get done later) */
+		return nth(param->paramid - 1, context->args);
+	}
+	return expression_tree_mutator(node, substitute_actual_parameters_mutator,
+								   (void *) context);
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.55 2002/11/06 22:31:24 tgl Exp $
+ * $Id: clauses.h,v 1.56 2002/12/01 21:05:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@ extern void check_subplans_for_ungrouped_vars(Query *query);
 
 extern bool contain_mutable_functions(Node *clause);
 extern bool contain_volatile_functions(Node *clause);
+extern bool contain_nonstrict_functions(Node *clause);
 
 extern bool is_pseudo_constant_clause(Node *clause);
 extern List *pull_constant_clauses(List *quals, List **constantQual);
