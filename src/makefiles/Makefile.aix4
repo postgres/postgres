@@ -1,0 +1,4 @@
+MK_NO_LORDER= true
+
+%$(DLSUFFIX): %.o
+	$(LD) -G -bexpall -bnoentry -o $@ $< $(LDFLAGS)
