@@ -1,0 +1,414 @@
+$Header: /cvsroot/pgsql/src/backend/access/hash/README,v 1.1 2003/09/01 20:24:49 tgl Exp $
+
+This directory contains an implementation of hash indexing for Postgres.
+
+A hash index consists of two or more "buckets", into which tuples are
+placed whenever their hash key maps to the bucket number.  The
+key-to-bucket-number mapping is chosen so that the index can be
+incrementally expanded.  When a new bucket is to be added to the index,
+exactly one existing bucket will need to be "split", with some of its
+tuples being transferred to the new bucket according to the updated
+key-to-bucket-number mapping.  This is essentially the same hash table
+management technique embodied in src/backend/utils/hash/dynahash.c for
+in-memory hash tables.
+
+Each bucket in the hash index comprises one or more index pages.  The
+bucket's first page is permanently assigned to it when the bucket is
+created.  Additional pages, called "overflow pages", are added if the
+bucket receives too many tuples to fit in the primary bucket page.
+The pages of a bucket are chained together in a doubly-linked list
+using fields in the index page special space.
+
+There is currently no provision to shrink a hash index, other than by
+rebuilding it with REINDEX.  Overflow pages can be recycled for reuse
+in other buckets, but we never give them back to the operating system.
+There is no provision for reducing the number of buckets, either.
+
+
+Page addressing
+---------------
+
+There are four kinds of pages in a hash index: the meta page (page zero),
+which contains statically allocated control information; primary bucket
+pages; overflow pages; and bitmap pages, which keep track of overflow
+pages that have been freed and are available for re-use.  For addressing
+purposes, bitmap pages are regarded as a subset of the overflow pages.
+
+Primary bucket pages and overflow pages are allocated independently (since
+any given index might need more or fewer overflow pages relative to its
+number of buckets).  The hash code uses an interesting set of addressing
+rules to support a variable number of overflow pages while not having to
+move primary bucket pages around after they are created.
+
+Primary bucket pages (henceforth just "bucket pages") are allocated in
+power-of-2 groups, called "split points" in the code.  Buckets 0 and 1
+are created when the index is initialized.  At the first split, buckets 2
+and 3 are allocated; when bucket 4 is needed, buckets 4-7 are allocated;
+when bucket 8 is needed, buckets 8-15 are allocated; etc.  All the bucket
+pages of a power-of-2 group appear consecutively in the index.  This
+addressing scheme allows the physical location of a bucket page to be
+computed from the bucket number relatively easily, using only a small
+amount of control information.  We take the log2() of the bucket number
+to determine which split point S the bucket belongs to, and then simply
+add "hashm_spares[S] + 1" (where hashm_spares[] is an array stored in the
+metapage) to compute the physical address.  hashm_spares[S] can be
+interpreted as the total number of overflow pages that have been allocated
+before the bucket pages of splitpoint S.  hashm_spares[0] is always 0,
+so that buckets 0 and 1 (which belong to splitpoint 0) always appear at
+block numbers 1 and 2, just after the meta page.  We always have
+hashm_spares[N] <= hashm_spares[N+1], since the latter count includes the
+former.  The difference between the two represents the number of overflow
+pages appearing between the bucket page groups of splitpoints N and N+1.
+
+When S splitpoints exist altogether, the array entries hashm_spares[0]
+through hashm_spares[S] are valid; hashm_spares[S] records the current
+total number of overflow pages.  New overflow pages are created as needed
+at the end of the index, and recorded by incrementing hashm_spares[S].
+When it is time to create a new splitpoint's worth of bucket pages, we
+copy hashm_spares[S] into hashm_spares[S+1] and increment S (which is
+stored in the hashm_ovflpoint field of the meta page).  This has the
+effect of reserving the correct number of bucket pages at the end of the
+index, and preparing to allocate additional overflow pages after those
+bucket pages.  hashm_spares[] entries before S cannot change anymore,
+since that would require moving already-created bucket pages.
+
+Since overflow pages may be recycled if enough tuples are deleted from
+their bucket, we need a way to keep track of currently-free overflow
+pages.  The state of each overflow page (0 = available, 1 = not available)
+is recorded in "bitmap" pages dedicated to this purpose.  The entries in
+the bitmap are indexed by "bit number", a zero-based count in which every
+overflow page has a unique entry.  We can convert between an overflow
+page's physical block number and its bit number using the information in
+hashm_spares[] (see hashovfl.c for details).  The bit number sequence
+includes the bitmap pages, which is the reason for saying that bitmap
+pages are a subset of the overflow pages.  It turns out in fact that each
+bitmap page's first bit represents itself --- this is not an essential
+property, but falls out of the fact that we only allocate another bitmap
+page when we really need one.  Bit number zero always corresponds to block
+number 3, which is the first bitmap page and is allocated during index
+creation.
+
+
+Lock definitions
+----------------
+
+We use both lmgr locks ("heavyweight" locks) and buffer context locks
+(LWLocks) to control access to a hash index.  lmgr locks are needed for
+long-term locking since there is a (small) risk of deadlock, which we must
+be able to detect.  Buffer context locks are used for short-term access
+control to individual pages of the index.
+
+We define the following lmgr locks for a hash index:
+
+LockPage(rel, 0) represents the right to modify the hash-code-to-bucket
+mapping.  A process attempting to enlarge the hash table by splitting a
+bucket must exclusive-lock this lock before modifying the metapage data
+representing the mapping.  Processes intending to access a particular
+bucket must share-lock this lock until they have acquired lock on the
+correct target bucket.
+
+LockPage(rel, page), where page is the page number of a hash bucket page,
+represents the right to split or compact an individual bucket.  A process
+splitting a bucket must exclusive-lock both old and new halves of the
+bucket until it is done.  A process doing VACUUM must exclusive-lock the
+bucket it is currently purging tuples from.  Processes doing scans or
+insertions must share-lock the bucket they are scanning or inserting into.
+(It is okay to allow concurrent scans and insertions.)
+
+The lmgr lock IDs corresponding to overflow pages are currently unused.
+These are available for possible future refinements.
+
+Note that these lock definitions are conceptually distinct from any sort
+of lock on the pages whose numbers they share.  A process must also obtain
+read or write buffer lock on the metapage or bucket page before accessing
+said page.
+
+Processes performing hash index scans must hold share lock on the bucket
+they are scanning throughout the scan.  This seems to be essential, since
+there is no reasonable way for a scan to cope with its bucket being split
+underneath it.  This creates a possibility of deadlock external to the
+hash index code, since a process holding one of these locks could block
+waiting for an unrelated lock held by another process.  If that process
+then does something that requires exclusive lock on the bucket, we have
+deadlock.  Therefore the bucket locks must be lmgr locks so that deadlock
+can be detected and recovered from.  This also forces the page-zero lock
+to be an lmgr lock, because as we'll see below it is held while attempting
+to acquire a bucket lock, and so it could also participate in a deadlock.
+
+Processes must obtain read (share) buffer context lock on any hash index
+page while reading it, and write (exclusive) lock while modifying it.
+To prevent deadlock we enforce these coding rules: no buffer lock may be
+held long term (across index AM calls), nor may any buffer lock be held
+while waiting for an lmgr lock, nor may more than one buffer lock
+be held at a time by any one process.  (The third restriction is probably
+stronger than necessary, but it makes the proof of no deadlock obvious.)
+
+
+Pseudocode algorithms
+---------------------
+
+The operations we need to support are: readers scanning the index for
+entries of a particular hash code (which by definition are all in the same
+bucket); insertion of a new tuple into the correct bucket; enlarging the
+hash table by splitting an existing bucket; and garbage collection
+(deletion of dead tuples and compaction of buckets).  Bucket splitting is
+done at conclusion of any insertion that leaves the hash table more full
+than the target load factor, but it is convenient to consider it as an
+independent operation.  Note that we do not have a bucket-merge operation
+--- the number of buckets never shrinks.  Insertion, splitting, and
+garbage collection may all need access to freelist management, which keeps
+track of available overflow pages.
+
+The reader algorithm is:
+
+	share-lock page 0 (to prevent active split)
+	read/sharelock meta page
+	compute bucket number for target hash key
+	release meta page
+	share-lock bucket page (to prevent split/compact of this bucket)
+	release page 0 share-lock
+-- then, per read request:
+	read/sharelock current page of bucket
+		step to next page if necessary (no chaining of locks)
+	get tuple
+	release current page
+-- at scan shutdown:
+	release bucket share-lock
+
+By holding the page-zero lock until lock on the target bucket is obtained,
+the reader ensures that the target bucket calculation is valid (otherwise
+the bucket might be split before the reader arrives at it, and the target
+entries might go into the new bucket).  Holding the bucket sharelock for
+the remainder of the scan prevents the reader's current-tuple pointer from
+being invalidated by other processes.  Notice though that the reader need
+not prevent other buckets from being split or compacted.
+
+The insertion algorithm is rather similar:
+
+	share-lock page 0 (to prevent active split)
+	read/sharelock meta page
+	compute bucket number for target hash key
+	release meta page
+	share-lock bucket page (to prevent split/compact this bucket)
+	release page 0 share-lock
+-- (so far same as reader)
+	read/exclusive-lock current page of bucket
+	if full, release, read/exclusive-lock next page; repeat as needed
+	>> see below if no space in any page of bucket
+	insert tuple
+	write/release current page
+	release bucket share-lock
+	read/exclusive-lock meta page
+	increment tuple count, decide if split needed
+	write/release meta page
+	done if no split needed, else enter Split algorithm below
+
+It is okay for an insertion to take place in a bucket that is being
+actively scanned, because it does not change the position of any existing
+item in the bucket, so scan states are not invalidated.  We only need the
+short-term buffer locks to ensure that readers do not see a
+partially-updated page.
+
+It is clearly impossible for readers and inserters to deadlock, and in
+fact this algorithm allows them a very high degree of concurrency.
+(The exclusive metapage lock taken to update the tuple count is stronger
+than necessary, since readers do not care about the tuple count, but the
+lock is held for such a short time that this is probably not an issue.)
+
+When an inserter cannot find space in any existing page of a bucket, it
+must obtain an overflow page and add that page to the bucket's chain.
+Details of that part of the algorithm appear later.
+
+The page split algorithm is entered whenever an inserter observes that the
+index is overfull (has a higher-than-wanted ratio of tuples to buckets).
+The algorithm attempts, but does not necessarily succeed, to split one
+existing bucket in two, thereby lowering the fill ratio:
+
+	exclusive-lock page 0 (assert the right to begin a split)
+	read/exclusive-lock meta page
+	check split still needed
+	if split not needed anymore, drop locks and exit
+	decide which bucket to split
+	Attempt to X-lock new bucket number (shouldn't fail, but...)
+	Attempt to X-lock old bucket number (definitely could fail)
+	if above fail, drop locks and exit
+	update meta page to reflect new number of buckets
+	write/release meta page
+	release X-lock on page 0
+	-- now, accesses to all other buckets can proceed.
+	Perform actual split of bucket, moving tuples as needed
+	>> see below about acquiring needed extra space
+	Release X-locks of old and new buckets
+
+Note the page zero and metapage locks are not held while the actual tuple
+rearrangement is performed, so accesses to other buckets can proceed in
+parallel; in fact, it's possible for multiple bucket splits to proceed
+in parallel.
+
+Split's attempt to X-lock the old bucket number could fail if another
+process holds S-lock on it.  We do not want to wait if that happens, first
+because we don't want to wait while holding the metapage exclusive-lock,
+and second because it could very easily result in deadlock.  (The other
+process might be out of the hash AM altogether, and could do something
+that blocks on another lock this process holds; so even if the hash
+algorithm itself is deadlock-free, a user-induced deadlock could occur.)
+So, this is a conditional LockAcquire operation, and if it fails we just
+abandon the attempt to split.  This is all right since the index is
+overfull but perfectly functional.  Every subsequent inserter will try to
+split, and eventually one will succeed.  If multiple inserters failed to
+split, the index might still be overfull, but eventually, the index will
+not be overfull and split attempts will stop.  (We could make a successful
+splitter loop to see if the index is still overfull, but it seems better to
+distribute the split overhead across successive insertions.)
+
+It may be wise to make the initial exclusive-lock-page-zero operation a
+conditional one as well, although the odds of a deadlock failure are quite
+low.  (AFAICS it could only deadlock against a VACUUM operation that is
+trying to X-lock a bucket that the current process has a stopped indexscan
+in.)
+
+A problem is that if a split fails partway through (eg due to insufficient
+disk space) the index is left corrupt.  The probability of that could be
+made quite low if we grab a free page or two before we update the meta
+page, but the only real solution is to treat a split as a WAL-loggable,
+must-complete action.  I'm not planning to teach hash about WAL in this
+go-round.
+
+The fourth operation is garbage collection (bulk deletion):
+
+	next bucket := 0
+	read/sharelock meta page
+	fetch current max bucket number
+	release meta page
+	while next bucket <= max bucket do
+		Acquire X lock on target bucket
+		Scan and remove tuples, compact free space as needed
+		Release X lock
+		next bucket ++
+	end loop
+	exclusive-lock meta page
+	check if number of buckets changed
+	if so, release lock and return to for-each-bucket loop
+	else update metapage tuple count
+	write/release meta page
+
+Note that this is designed to allow concurrent splits.  If a split occurs,
+tuples relocated into the new bucket will be visited twice by the scan,
+but that does no harm.  (We must however be careful about the statistics
+reported by the VACUUM operation.  What we can do is count the number of
+tuples scanned, and believe this in preference to the stored tuple count
+if the stored tuple count and number of buckets did *not* change at any
+time during the scan.  This provides a way of correcting the stored tuple
+count if it gets out of sync for some reason.  But if a split or insertion
+does occur concurrently, the scan count is untrustworthy; instead,
+subtract the number of tuples deleted from the stored tuple count and
+use that.)
+
+The exclusive lock request could deadlock in some strange scenarios, but
+we can just error out without any great harm being done.
+
+
+Free space management
+---------------------
+
+Free space management consists of two sub-algorithms, one for reserving
+an overflow page to add to a bucket chain, and one for returning an empty
+overflow page to the free pool.
+
+Obtaining an overflow page:
+
+	read/exclusive-lock meta page
+	determine next bitmap page number; if none, exit loop
+	release meta page lock
+	read/exclusive-lock bitmap page
+	search for a free page (zero bit in bitmap)
+	if found:
+		set bit in bitmap
+		write/release bitmap page
+		read/exclusive-lock meta page
+		if first-free-bit value did not change,
+			update it and write meta page
+		release meta page
+		return page number
+	else (not found):
+	release bitmap page
+	loop back to try next bitmap page, if any
+-- here when we have checked all bitmap pages; we hold meta excl. lock
+	extend index to add another bitmap page; update meta information
+	write/release meta page
+	return page number
+
+It is slightly annoying to release and reacquire the metapage lock
+multiple times, but it seems best to do it that way to minimize loss of
+concurrency against processes just entering the index.  We don't want
+to hold the metapage exclusive lock while reading in a bitmap page.
+(We can at least avoid repeated buffer pin/unpin here.)
+
+The portion of tuple insertion that calls the above subroutine looks
+like this:
+
+	-- having determined that no space is free in the target bucket:
+	remember last page of bucket, drop write lock on it
+	call free-page-acquire routine
+	re-write-lock last page of bucket
+	if it is not last anymore, step to the last page
+	update (former) last page to point to new page
+	write-lock and initialize new page, with back link to former last page
+	write and release former last page
+	insert tuple into new page
+	-- etc.
+
+Notice this handles the case where two concurrent inserters try to extend
+the same bucket.  They will end up with a valid, though perhaps
+space-inefficient, configuration: two overflow pages will be added to the
+bucket, each containing one tuple.
+
+The last part of this violates the rule about holding write lock on two
+pages concurrently, but it should be okay to write-lock the previously
+free page; there can be no other process holding lock on it.
+
+Bucket splitting uses a similar algorithm if it has to extend the new
+bucket, but it need not worry about concurrent extension since it has
+exclusive lock on the new bucket.
+
+Freeing an overflow page is done by garbage collection and by bucket
+splitting (the old bucket may contain no-longer-needed overflow pages).
+In both cases, the process holds exclusive lock on the containing bucket,
+so need not worry about other accessors of pages in the bucket.  The
+algorithm is:
+
+	delink overflow page from bucket chain
+	(this requires read/update/write/release of fore and aft siblings)
+	read/share-lock meta page
+	determine which bitmap page contains the free space bit for page
+	release meta page
+	read/exclusive-lock bitmap page
+	update bitmap bit
+	write/release bitmap page
+	if page number is less than what we saw as first-free-bit in meta:
+	read/exclusive-lock meta page
+	if page number is still less than first-free-bit,
+		update first-free-bit field and write meta page
+	release meta page
+
+We have to do it this way because we must clear the bitmap bit before
+changing the first-free-bit field.
+
+All the freespace operations should be called while holding no buffer
+locks.  Since they need no lmgr locks, deadlock is not possible.
+
+
+Other notes
+-----------
+
+All the shenanigans with locking prevent a split occurring while *another*
+process is stopped in a given bucket.  They do not ensure that one of
+our *own* backend's scans is not stopped in the bucket, because lmgr
+doesn't consider a process's own locks to conflict.  So the Split
+algorithm must check for that case separately before deciding it can go
+ahead with the split.  VACUUM does not have this problem since nothing
+else can be happening within the vacuuming backend.
+
+Should we instead try to fix the state of any conflicting local scan?
+Seems mighty ugly --- got to move the held bucket S-lock as well as lots
+of other messiness.  For now, just punt and don't split.
