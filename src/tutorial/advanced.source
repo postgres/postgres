@@ -1,19 +1,18 @@
 ---------------------------------------------------------------------------
 --
 -- advanced.sql-
---    more POSTGRES SQL features. (These are not part of the SQL-92
---    standard.)
+--    Tutorial on advanced more PostgreSQL features
 --
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: advanced.source,v 1.3 1999/07/08 15:28:51 momjian Exp $
+-- $Id: advanced.source,v 1.4 2001/09/02 23:27:50 petere Exp $
 --
 ---------------------------------------------------------------------------
 
 -----------------------------
 -- Inheritance:
---	a table can inherit from zero or more tables. A query can reference
+--	S table can inherit from zero or more tables.  A query can reference
 --	either all rows of a table or all rows of a table plus all of its
 --	descendants.
 -----------------------------
@@ -31,7 +30,7 @@ CREATE TABLE capitals (
 	state		char(2)
 ) INHERITS (cities);
 
--- now, let's populate the tables
+-- Now, let's populate the tables.
 INSERT INTO cities VALUES ('San Francisco', 7.24E+5, 63);
 INSERT INTO cities VALUES ('Las Vegas', 2.583E+5, 2174);
 INSERT INTO cities VALUES ('Mariposa', 1200, 1953);
@@ -56,72 +55,6 @@ FROM cities* c
 WHERE c.altitude > 500;
 
 
------------------------------
--- Time Travel:
---	this feature allows you to run historical queries. 
---	removed for v6.3, but possible using triggers.
---	see contrib/spi/README for more information.
------------------------------
-
--- first, let's make some changes to the cities table (suppose Mariposa's
--- population grows 10% this year)
-
--- UPDATE cities
--- SET population = population * 1.1
--- WHERE name = 'Mariposa';
-
--- the default time is the current time ('now'):
-
--- SELECT * FROM cities WHERE name = 'Mariposa';
-
--- we can also retrieve the population of Mariposa ever has. ('epoch' is the
--- earliest time representable by the system)
-
--- SELECT name, population
--- FROM cities['epoch', 'now']	-- can be abbreviated to cities[,]
--- WHERE name = 'Mariposa';
-
-
-----------------------
--- Arrays:
---      attributes can be arrays of base types or user-defined types
-----------------------
-
-CREATE TABLE sal_emp (
-	name	text,
-	pay_by_quarter	int4[],
-	schedule	text[][]
-);
-
--- insert instances with array attributes.  Note the use of braces
-
-INSERT INTO sal_emp VALUES (
-	'Bill',
-	'{10000,10000,10000,10000}',
-	'{{"meeting", "lunch"}, {}}');
-
-INSERT INTO sal_emp VALUES (
-	'Carol',
-	'{20000,25000,25000,25000}',
-	'{{"talk", "consult"}, {"meeting"}}');
-
-----------------------
--- queries on array attributes
-----------------------
-SELECT name FROM sal_emp WHERE
-	sal_emp.pay_by_quarter[1] <> sal_emp.pay_by_quarter[2];
-
--- retrieve third quarter pay of all employees
-
-SELECT sal_emp.pay_by_quarter[3] FROM sal_emp;
-
--- select subarrays
-
-SELECT sal_emp.schedule[1:2][1:1] FROM sal_emp WHERE	
-	sal_emp.name = 'Bill';
-
-
 -- clean up (you must remove the children first)
-DROP TABLE sal_emp;
 DROP TABLE capitals;
 DROP TABLE cities;

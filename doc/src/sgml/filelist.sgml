@@ -1,7 +1,8 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.14 2001/08/26 21:17:12 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.15 2001/09/02 23:27:49 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
+<!entity intro      SYSTEM "intro.sgml">
 <!entity legal      SYSTEM "legal.sgml">
 <!entity notation   SYSTEM "notation.sgml">
 <!entity problems   SYSTEM "problems.sgml">
@@ -12,11 +13,11 @@
 
 <!-- tutorial -->
 <!entity advanced   SYSTEM "advanced.sgml">
-<!entity arch       SYSTEM "arch.sgml">
-<!entity intro      SYSTEM "intro.sgml">
 <!entity query      SYSTEM "query.sgml">
-<!entity sql        SYSTEM "sql.sgml">
 <!entity start      SYSTEM "start.sgml">
+
+<!-- currently unused, but contains some interesting information -->
+<!entity sql        SYSTEM "sql.sgml">
 
 <!-- user's guide -->
 <!entity array      SYSTEM "array.sgml">

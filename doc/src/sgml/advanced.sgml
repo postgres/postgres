@@ -1,32 +1,203 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.21 2001/01/13 23:58:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/advanced.sgml,v 1.22 2001/09/02 23:27:49 petere Exp $
 -->
 
- <chapter id="advanced">
-  <title>Advanced <productname>Postgres</productname> <acronym>SQL</acronym> Features</title>
+ <chapter id="tutorial-advanced">
+  <title>Advanced Features</title>
 
-  <para>
-   Having covered the basics  of  using
-   <productname>Postgres</productname> <acronym>SQL</acronym>  to
-   access your data, we will now discuss those features of
-   <productname>Postgres</productname> that distinguish  it  from  conventional  data
-   managers.   These  features  include  inheritance, time
-   travel and non-atomic  data  values  (array-  and  
-   set-valued attributes).
-   Examples   in   this  section  can  also  be  found  in
-   <filename>advance.sql</filename> in the tutorial directory.
-   (Refer to <xref linkend="QUERY"> for how to use it.)
-  </para>
-
-  <sect1 id="inheritance">
-   <title>Inheritance</title>
+  <sect1 id="tutorial-advanced-intro">
+   <title>Introduction</title>
 
    <para>
-    Let's create two tables. The capitals  table  contains
-    state  capitals  that  are also cities. Naturally, the
-    capitals table should inherit from cities.
+    In the previous chapter we have covered the basics of using
+    <acronym>SQL</acronym> to store and access your data in a
+    <productname>PostgreSQL</productname>.  We will now discuss some
+    more advanced features of <acronym>SQL</acronym> that simplify the
+    management and prevent loss or corruption of your data.  Finally,
+    we will look at some <productname>PostgreSQL</productname>
+    extensions.
+   </para>
 
-    <programlisting>
+   <para>
+    This chapter will on occasion refer to examples found in <xref
+    linkend="tutorial-sql"> to change or improve them, so it will be
+    of advantage if you have read that chapter.  Some examples from
+    this chapter can also be found in
+    <filename>advanced.sql</filename> in the tutorial directory.  This
+    file also contains some example data to load, which is not
+    repeated here.  (Refer to <xref linkend="tutorial-sql-intro"> for
+    how to use the file.)
+   </para>
+  </sect1>
+
+
+  <sect1 id="tutorial-views">
+   <title>Views</title>
+
+   <indexterm zone="tutorial-views">
+    <primary>view</primary>
+   </indexterm>
+
+   <para>
+    Refer back to the queries in <xref linkend="tutorial-join">.
+    Suppose the combined listing of weather records and city location
+    is of particular interest to your application, but you don't want
+    to type the query each time you need it.  You can create a
+    <firstterm>view</firstterm> over the query, which gives a name to
+    the query that you can refer to like an ordinary table.
+
+<programlisting>
+CREATE VIEW myview AS
+    SELECT city, temp_lo, temp_hi, prcp, date, location
+        FROM weather, cities
+        WHERE city = name;
+
+SELECT * FROM myview;
+</programlisting>
+   </para>
+
+   <para>
+    Making liberal use of views is a key aspect of good SQL database
+    design.  Views allow you to encapsulate the details of the
+    structure of your tables, which may change as your application
+    evolves, behind consistent interfaces.
+   </para>
+
+   <para>
+    Views can be used in almost any place a real table can be used.
+    Building views upon other views is not uncommon.
+   </para>
+  </sect1>
+
+
+  <sect1 id="tutorial-fk">
+   <title>Foreign Keys</title>
+
+   <indexterm zone="tutorial-fk">
+    <primary>foreign key</primary>
+   </indexterm>
+
+   <indexterm zone="tutorial-fk">
+    <primary>referential integrity</primary>
+   </indexterm>
+
+   <para>
+    Recall the <classname>weather</classname> and the
+    <classname>cities</classname> tables from <xref
+    linkend="tutorial-sql">.  Consider the following problem:  You
+    want to make sure that no one can insert rows in the
+    <classname>weather</classname> table that do not have a matching
+    entry in the <classname>cities</classname> table.  This is called
+    maintaining the <firstterm>referential integrity</firstterm> of
+    your data.  In simplistic database systems this would be
+    implemented (if at all) by first looking at the
+    <classname>cities</classname> table to check if a matching record
+    exists, and then inserting or rejecting the new
+    <classname>weather</classname> records.  This approach has a
+    number of problems and is very inconvenient, so
+    <productname>PostgreSQL</productname> can do this for you.
+   </para>
+
+   <para>
+    The new declaration of the tables would look like this:
+
+<programlisting>
+CREATE TABLE cities (
+	name		varchar(80) primary key,
+	location	point
+);
+
+CREATE TABLE weather (
+	city		varchar(80) references weather,
+	temp_lo		int,
+	temp_hi		int,
+	prcp		real,
+	date		date
+);
+
+</programlisting>
+
+    Now try inserting an invalid record:
+
+<programlisting>
+INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');
+</programlisting>
+
+<screen>
+ERROR:  &lt;unnamed&gt; referential integrity violation - key referenced from weather not found in cities
+</screen>
+
+   </para>
+
+   <para>
+    The behavior of foreign keys can be finely tuned to your
+    application.  We will not go beyond this simple example in this
+    tutorial and refer you to the <citetitle>Reference
+    Manual</citetitle> for more information.  Making correct use of
+    foreign keys will definitely improve the quality of your database
+    applications, so you are strongly encouraged to learn about them.
+   </para>
+  </sect1>
+
+
+  <sect1 id="tutorial-transactions">
+   <title>Transactions</title>
+
+   <comment>This section needs to be written.</comment>
+
+   <para>
+
+   </para>
+  </sect1>
+
+
+  <sect1 id="tutorial-inheritance">
+   <title>Inheritance</title>
+
+   <indexterm zone="tutorial-inheritance">
+    <primary>inheritance</primary>
+   </indexterm>
+
+   <para>
+    Inheritance is a concept from object-oriented databases.  It opens
+    up interesting new possibilities of database design.
+   </para>
+
+   <para>
+    Let's create two tables:  A table <classname>cities</classname>
+    and a table <classname>capitals</classname>.  Naturally, capitals
+    are also cities, so you want some way to show the capitals
+    implicitly when you list all cities.  If you're really clever you
+    might invent some scheme like this:
+
+<programlisting>
+CREATE TABLE capitals (
+    name            text,
+    population      real,
+    altitude        int,    -- (in ft)
+    state           char(2)
+);
+
+CREATE TABLE non_capitals (
+    name            text,
+    population      real,
+    altitude        int     -- (in ft)
+);
+
+CREATE VIEW cities AS
+    SELECT name, population, altitude FROM capitals
+        UNION
+    SELECT name, population, altitude FROM non_capitals;
+</programlisting>
+
+    This works OK as far as querying goes, but it gets ugly when you
+    need to update several rows, to name one thing.
+   </para>
+
+   <para>
+    A better solution is this:
+
+<programlisting>
 CREATE TABLE cities (
     name            text,
     population      real,
@@ -36,245 +207,93 @@ CREATE TABLE cities (
 CREATE TABLE capitals (
     state           char(2)
 ) INHERITS (cities);
-    </programlisting>
+</programlisting>
 
-    In this case, a row  of  capitals  <firstterm>inherits</firstterm>  all
-    columns (name,  population,  and altitude) from its
-    parent, cities.  The type  of  the  column name  is
-    <type>text</type>,  a  native  <productname>Postgres</productname>
-    type  for variable length
-    ASCII strings.  The type of the column population is
-    <type>real</type>,  a  type for single precision
-    floating point numbers.  State capitals have  an  extra
-    column, state, that shows their state.
-    In <productname>Postgres</productname>,
-    a  table  can inherit from zero or more other tables,
-    and a query can reference either  all  rows  of  a
-    table  or  all  rows  of  a  tables plus all of its
-    descendants.
-
-    <note>
-     <para>
-      The inheritance hierarchy is a  directed  acyclic graph.
-     </para>
-    </note>
+    In this case, a row of <classname>capitals</classname>
+    <firstterm>inherits</firstterm> all columns (<structfield>name</>,
+    <structfield>population</>, and <structfield>altitude</>) from its
+    <firstterm>parent</firstterm>, <classname>cities</classname>.  The
+    type of the column <structfield>name</structfield> is
+    <type>text</type>, a native <productname>Postgres</productname>
+    type for variable length character strings.  State capitals have
+    an extra column, state, that shows their state.  In
+    <productname>PostgreSQL</productname>, a table can inherit from
+    zero or more other tables.
    </para>
 
    <para>
     For example, the  following  query finds the  names  of  all  cities,
     including  state capitals, that are located at an altitude 
-    over 500ft:
+    over 500 ft.:
 
-    <programlisting>
+<programlisting>
 SELECT name, altitude
     FROM cities
     WHERE altitude &gt; 500;
-    </programlisting>
+</programlisting>
 
     which returns:
 
-    <programlisting>
-+----------+----------+
-|name      | altitude |
-+----------+----------+
-|Las Vegas | 2174     |
-+----------+----------+
-|Mariposa  | 1953     |
-+----------+----------+
-|Madison   | 845      |
-+----------+----------+
-    </programlisting>
+<screen>
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+ Madison   |      845
+(3 rows)
+</screen>
    </para>
 
    <para>
     On the other hand, the  following  query  finds
     all  the cities that are not state capitals and
-    are situated at an altitude of 500ft or higher:
+    are situated at an altitude of 500 ft. or higher:
 
-    <programlisting>
+<programlisting>
 SELECT name, altitude
     FROM ONLY cities
     WHERE altitude &gt; 500;
+</programlisting>
 
-+----------+----------+
-|name      | altitude |
-+----------+----------+
-|Las Vegas | 2174     |
-+----------+----------+
-|Mariposa  | 1953     |
-+----------+----------+
-    </programlisting>         
+<screen>
+   name    | altitude
+-----------+----------
+ Las Vegas |     2174
+ Mariposa  |     1953
+(2 rows)
+</screen>         
    </para>
 
    <para>
-    Here the <quote>ONLY</quote> before cities indicates that the query should
-    be  run over only the cities table, and not tables below cities in the
-    inheritance hierarchy.  Many of the  commands  that  we
-    have  already discussed -- <command>SELECT</command>,
-    <command>UPDATE</command> and <command>DELETE</command> --
-    support this <quote>ONLY</quote> notation.
+    Here the <literal>ONLY</literal> before <literal>cities</literal>
+    indicates that the query should be run over only the
+    <classname>cities</classname> table, and not tables below
+    <classname>cities</classname> in the inheritance hierarchy.  Many
+    of the commands that we have already discussed --
+    <command>SELECT</command>, <command>UPDATE</command> and
+    <command>DELETE</command> -- support this <literal>ONLY</literal>
+    notation.
    </para>
-
-   <note>
-    <title>Deprecated</title> 
-    <para>
-     In previous versions of <productname>Postgres</productname>, the
-     default was not to get access to child tables. This was found to
-     be error prone and is also in violation of SQL99. Under the old
-     syntax, to get the sub-tables you append "*" to the table name.
-     For example
-<programlisting>
-SELECT * from cities*;
-</programlisting>
-     You can still explicitly specify scanning child tables by appending
-     "*", as well as explicitly specify not scanning child tables by
-     writing <quote>ONLY</quote>.  But beginning in version 7.1, the default
-     behavior for an undecorated table name is to scan its child tables
-     too, whereas before the default was not to do so.  To get the old
-     default behavior, set the configuration option
-     <literal>SQL_Inheritance</literal> to off, e.g.,
-<programlisting>
-SET SQL_Inheritance TO OFF;
-</programlisting>
-     or add a line in your <filename>postgresql.conf</filename> file.
-    </para>
-   </note>
   </sect1>
 
-  <sect1 id="non-atomic-values">
-   <title>Non-Atomic Values</title>
 
+  <sect1 id="tutorial-conclusion">
+   <title>Conclusion</title>
+ 
    <para>
-    One  of  the tenets of the relational model is that the
-    columns of a table are atomic.
-    <productname>Postgres</productname> does not
-    have  this  restriction; columns can themselves contain 
-    sub-values that can be  accessed  from  the  query
-    language.   For example, you can create columns that
-    are arrays of base types.
+    <productname>PostgreSQL</productname> has many features not
+    touched upon in this tutorial introduction, which has been
+    oriented toward newer users of <acronym>SQL</acronym>.  These
+    features are discussed in more detail in both the
+    <citetitle>User's Guide</citetitle> and the
+    <citetitle>Programmer's Guide</citetitle>.
    </para>
 
-   <sect2>
-    <title>Arrays</title>
-
-    <para>
-     <productname>Postgres</productname> allows columns of a
-     row to be defined
-     as  fixed-length  or  variable-length multi-dimensional
-     arrays. Arrays of any base type  or  user-defined  type
-     can  be created. To illustrate their use, we first create a 
-     table with arrays of base types.
-
-     <programlisting>
-CREATE TABLE SAL_EMP (
-    name            text,
-    pay_by_quarter  integer[],
-    schedule        text[][]
-);
-     </programlisting>
-    </para>
-
-    <para>
-     The above query will create a table named SAL_EMP  with
-     a  <firstterm>text</firstterm>  string (name), a one-dimensional
-     array of <firstterm>integer</firstterm>
-     (pay_by_quarter),  which  represents   the   employee's
-     salary by quarter and a two-dimensional array of
-     <firstterm>text</firstterm>
-     (schedule),  which  represents  the  employee's  weekly
-     schedule.   Now  we  do  some  <firstterm>INSERT</firstterm>s;
-     note that when
-     appending to an array, we  enclose  the  values  within
-     braces  and  separate  them  by commas.  If you know
-     <firstterm>C</firstterm>,
-     this is not unlike the syntax for  initializing  structures.
-
-     <programlisting>
-INSERT INTO SAL_EMP
-    VALUES ('Bill',
-    '{10000, 10000, 10000, 10000}',
-    '{{"meeting", "lunch"}, {}}');
-
-INSERT INTO SAL_EMP
-    VALUES ('Carol',
-    '{20000, 25000, 25000, 25000}',
-    '{{"talk", "consult"}, {"meeting"}}');
-     </programlisting>
-
-     By  default,  <productname>Postgres</productname>  uses  the
-     "one-based" numbering
-     convention for arrays -- that is, an array  of  n  elements
-     starts with array[1] and ends with array[n].
-     Now,  we  can  run  some queries on SAL_EMP.  First, we
-     show how to access a single element of an  array  at  a
-     time.   This query retrieves the names of the employees
-     whose pay changed in the second quarter:
-
-     <programlisting>
-SELECT name
-    FROM SAL_EMP
-    WHERE SAL_EMP.pay_by_quarter[1] &lt;&gt;
-    SAL_EMP.pay_by_quarter[2];
-
-+------+
-|name  |
-+------+
-|Carol |
-+------+
-     </programlisting>
-    </para>
-
-    <para>
-     This query retrieves  the  third  quarter  pay  of  all
-     employees:
-     
-     <programlisting>
-SELECT SAL_EMP.pay_by_quarter[3] FROM SAL_EMP;
-
-
-+---------------+
-|pay_by_quarter |
-+---------------+
-|10000          |
-+---------------+
-|25000          |
-+---------------+
-     </programlisting>
-    </para>
-
-    <para>
-     We  can  also  access  arbitrary slices of an array (subarrays)
-     by specifying both lower and upper bounds for
-     each subscript.  This query  retrieves  the  first  item  on
-     Bill's schedule for the first two days of the week.
-
-     <programlisting>
-SELECT SAL_EMP.schedule[1:2][1:1]
-    FROM SAL_EMP
-    WHERE SAL_EMP.name = 'Bill';
-
-+-------------------+
-|schedule           |
-+-------------------+
-|{{"meeting"},{""}} |
-+-------------------+
-     </programlisting>
-    </para>
-   </sect2>
-  </sect1>
-
-  <sect1 id="more-advanced">
-   <title>More Advanced Features</title>
-
    <para>
-    <productname>Postgres</productname> has many features not touched
-    upon in this
-    tutorial introduction, which has been oriented toward newer users of
-    <acronym>SQL</acronym>.
-    These are discussed in more detail in both the User's and
-    Programmer's Guides.
+    If you feel you need more introductory material, please visit the
+    <ulink url="http://www.postgresql.org">PostgreSQL web
+    site</ulink> for links to more resources.
    </para>
-
   </sect1>
 
  </chapter>

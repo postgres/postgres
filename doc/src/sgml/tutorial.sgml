@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.14 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.15 2001/09/02 23:27:49 petere Exp $
 -->
 
 <book id="tutorial">
@@ -10,16 +10,46 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.14 2001/02/03 19:03
   &legal;
  </bookinfo>
 
+ <preface id="tutorial-welcome">
+  <title>Welcome</title>
+
+  <para>
+   Welcome to <productname>PostgreSQL</productname> and the
+   <citetitle>PostgreSQL Tutorial</citetitle>.  The following few
+   chapters are intended to give a simple introduction to
+   <productname>PostgreSQL</productname>, relational database
+   concepts, and the SQL language to those who are new to any one of
+   these aspects.  We only assume some general knowledge about how to
+   use computers.  No particular Unix or programming experience is
+   required.
+  </para>
+
+  <para>
+   After you have worked through this tutorial you might want to move on
+   to reading the <![%single-book;[<citetitle>User's
+   Guide</citetitle>]]><![%set-of-books;[<xref linkend="user">]]> to
+   gain a more formal knowledge of the SQL language, or the
+   <![%single-book;[<citetitle>Programmer's
+   Guide</citetitle>]]><![%set-of-books;[<xref linkend="programmer">]]>
+   for information about developing applications for
+   <productname>PostgreSQL</productname>.
+  </para>
+
+  <para>
+   We hope you have a pleasant experience with
+   <productname>PostgreSQL</productname>.
+  </para>
+ </preface>
+
 <![%single-book;[
   &intro;
 ]]>
-  &sql;
-  &arch;
   &start;
   &query;
   &advanced;
 <![%single-book;[
   &biblio;
+  &bookindex;
 ]]>
 
 </book>

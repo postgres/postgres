@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.11 2001/02/03 19:03:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.12 2001/09/02 23:27:49 petere Exp $
 -->
 
 <sect1 id="resources">
@@ -13,7 +13,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.11 2001/02/03 19:03:26 petere
     <term>Tutorial</term>
     <listitem>
      <para>
-      An introduction for new users. Does not cover advanced features.
+      An informal introduction for new users
      </para>
     </listitem>
    </varlistentry>
