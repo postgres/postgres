@@ -1096,5 +1096,10 @@ Wed Sep 19 15:57:49 CEST 2001
 	- Synced pgc.l with scan.l.
         - Synced keyword.c.
 	- Include the remaining patches by Christof Petig <christof.petig@wtal.de>.
+
+Tue Sep 25 20:10:03 CEST 2001
+
+	- Synced preproc.y with gram.y.
+	- Changed locale handling.
 	- Set ecpg version to 2.9.0.
         - Set library version to 3.3.0.

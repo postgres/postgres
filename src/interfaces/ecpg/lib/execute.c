@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.23 2001/09/19 14:09:32 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.24 2001/09/25 18:37:17 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1007,11 +1007,11 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	struct statement *stmt;
 	struct connection *con = get_connection(connection_name);
 	bool		status = true;
-	char	   *locale = setlocale(LC_NUMERIC, NULL);
+	char	   	*locale;
 
 	/* Make sure we do NOT honor the locale for numeric input/output */
-	/* since the database wants teh standard decimal point */
-	setlocale(LC_NUMERIC, "C");
+	/* since the database wants the standard decimal point */
+	locale = setlocale(LC_NUMERIC, "C");
 
 	if (!ecpg_init(con, connection_name, lineno))
 	{

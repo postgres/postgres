@@ -2333,6 +2333,10 @@ ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
 				{
 					$$ = cat_str(3, make_str("explain"), $2, $3);
 				}
+		| EXPLAIN analyze_keyword opt_verbose OptimizableStmt
+				{
+					$$ = cat_str(4, make_str("explain"), $2, $3, $4);
+				}
 		;
 
 
@@ -2664,7 +2668,7 @@ OptUseOp:  USING all_Op				{ $$ = cat2_str(make_str("using"), $2); }
 		| /*EMPTY*/			{ $$ = EMPTY; }
 		;
 
-select_limit:      LIMIT select_limit_value ',' select_offset_value
+select_limit:      LIMIT select_offset_value ',' select_limit_value
                        { $$ = cat_str(4, make_str("limit"), $2, make_str(","), $4); }
                | LIMIT select_limit_value OFFSET select_offset_value
                        { $$ = cat_str(4, make_str("limit"), $2, make_str("offset"), $4); }
