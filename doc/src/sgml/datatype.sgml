@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.66 2001/10/09 18:45:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.67 2001/10/30 20:13:44 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -624,6 +624,10 @@ NUMERIC
     </indexterm>
 
     <indexterm zone="datatype-serial">
+     <primary>bigserial</primary>
+    </indexterm>
+
+    <indexterm zone="datatype-serial">
      <primary>serial4</primary>
     </indexterm>
 
@@ -679,14 +683,14 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     <para>
      The type names <type>serial</type> and <type>serial4</type> are
      equivalent: both create <type>integer</type> columns.  The type
-     names <type>bigserial</type> and <type>serial8</type> works just
-     the same way, except that it creates a <type>bigint</type>
-     column.  <type>serial8</type> should be used if you anticipate
+     names <type>bigserial</type> and <type>serial8</type> work just
+     the same way, except that they create a <type>bigint</type>
+     column.  <type>bigserial</type> should be used if you anticipate
      use of more than 2^31 identifiers over the lifetime of the table.
     </para>
 
     <para>
-     Implicit sequences supporting the <type>serial</type> are
+     Implicit sequences supporting the <type>serial</type> types are
      not automatically dropped when a table containing a serial type
      is dropped. So, the following commands executed in order will likely fail:
 
@@ -697,7 +701,8 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 </programlisting>
 
      The sequence will remain in the database until explicitly dropped using
-     <command>DROP SEQUENCE</command>.
+     <command>DROP SEQUENCE</command>.  (This annoyance will probably be
+     changed in some future release.)
     </para>
    </sect2>
   </sect1>
