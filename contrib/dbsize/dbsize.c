@@ -6,12 +6,17 @@
 
 #include "access/heapam.h"
 #include "catalog/catalog.h"
+#include "catalog/catname.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "fmgr.h"
 #include "storage/fd.h"
 #include "utils/builtins.h"
 
+
+static int64
+get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK);
 
 static char *
 psnprintf(size_t len, const char *fmt,...)
@@ -44,10 +49,12 @@ database_size(PG_FUNCTION_ARGS)
 	Name		dbname = PG_GETARG_NAME(0);
 
 	Oid			dbid;
-	char	   *dbpath;
-	DIR		   *dirdesc;
-	struct dirent *direntry;
 	int64		totalsize;
+#ifdef SYMLINK
+	Relation		dbrel;
+	HeapScanDesc 	scan;
+	HeapTuple		tuple;
+#endif
 
 	dbid = get_database_oid(NameStr(*dbname));
 	if (!OidIsValid(dbid))
@@ -55,14 +62,55 @@ database_size(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 			errmsg("database \"%s\" does not exist", NameStr(*dbname))));
 
-	dbpath = GetDatabasePath(dbid);
+#ifdef SYMLINK 
+
+	dbrel = heap_openr(TableSpaceRelationName, AccessShareLock);	
+	scan = heap_beginscan(dbrel, SnapshotNow, 0, (ScanKey) NULL);
+
+	totalsize = 0;
+
+	while((tuple = heap_getnext(scan, ForwardScanDirection)))
+	{
+		Oid spcid = HeapTupleGetOid(tuple);
+		if(spcid != GLOBALTABLESPACE_OID)
+			totalsize += get_tablespace_size(dbid, spcid, true);
+	}
+	heap_endscan(scan);
+	heap_close(dbrel, AccessShareLock);
+#else
+	/* Same as always */
+	totalsize = get_tablespace_size(dbid, DEFAULTTABLESPACE_OID, false);
+#endif
+
+	/*
+	 * We need to keep in mind that we may not be called from the database
+	 * whose size we're reporting so, we need to look in every tablespace
+	 * to see if our database has data in there
+	 */
+
+	PG_RETURN_INT64(totalsize);
+}
+
+static int64
+get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK)
+{
+	char		*dbpath;
+	DIR			*dirdesc;
+	struct dirent *direntry;
+	int64		totalsize;
+
+	dbpath = GetDatabasePath(dbid, spcid);
 
 	dirdesc = AllocateDir(dbpath);
 	if (!dirdesc)
-		ereport(ERROR,
+	{
+		if(baddirOK)
+			return 0;
+		else
+			ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m", dbpath)));
-
+	}
 	totalsize = 0;
 	for (;;)
 	{
@@ -87,17 +135,13 @@ database_size(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode_for_file_access(),
 					 errmsg("could not stat \"%s\": %m", fullname)));
-
 		totalsize += statbuf.st_size;
 		pfree(fullname);
 	}
 
 	FreeDir(dirdesc);
-
-	PG_RETURN_INT64(totalsize);
+	return (totalsize);
 }
-
-
 
 /*
  * SQL function: relation_size(text) returns bigint
