@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.72 2001/12/23 20:45:11 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.73 2002/01/09 00:52:37 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1453,7 +1453,7 @@ gunzip -c user.ps.gz \
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>PlayStation2</></entry>
+	<entry><systemitem>PlayStation 2</></entry>
 	<entry>7.2</entry>
 	<entry>2001-12-12,
 	 Permaine Cheung <email>pcheung@redhat.com</email>)</entry>
@@ -1497,7 +1497,7 @@ gunzip -c user.ps.gz \
 	<entry>7.2</entry>
 	<entry>2001-11-28,
 	 Gavin Sherry (<email>swm@linuxworld.com.au</email>)</entry>
-	<entry>Darwin 10.1.x</entry>
+	<entry>10.1.x</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">NetBSD</></entry>
@@ -1561,7 +1561,7 @@ gunzip -c user.ps.gz \
 	<entry>7.2</entry>
 	<entry>2001-11-27,
 	 Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
-        <entry>OBSD-3.0</entry>
+        <entry>3.0</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">OpenBSD</></entry>
@@ -1569,10 +1569,10 @@ gunzip -c user.ps.gz \
 	<entry>7.2</entry>
 	<entry>2001-11-26,
 	 Brandon Palmer (<email>bpalmer@crimelabs.net</email>)</entry>
-        <entry>OBSD-3.0</entry>
+        <entry>3.0</entry>
        </row>
        <row>
-	<entry><systemitem class="osname">OpenUNIX</></entry>
+	<entry><systemitem class="osname">Open UNIX</></entry>
 	<entry><systemitem>x86</></entry>
 	<entry>7.2</entry>
 	<entry>2001-11-28,
@@ -1581,22 +1581,13 @@ gunzip -c user.ps.gz \
 	<entry>see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
      <row>
-      <entry><systemitem class="osname">QNX 4.25</></entry>
+      <entry><systemitem class="osname">QNX 4 RTOS</></entry>
       <entry><systemitem>x86</></entry>
       <entry>7.2</entry>
       <entry>2001-12-10,
        Bernd Tegge (<email>tegge@repas-aeg.de</email>)
       </entry>
-      <entry>see also <filename>doc/FAQ_QNX4</filename></entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">QNX 6</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>7.2</entry>
-      <entry>2001-12-10,
-       Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>)
-      </entry>
-      <entry>Requires patches for Posix semaphores; see archives</entry>
+      <entry>4.25; see also <filename>doc/FAQ_QNX4</filename></entry>
      </row>
        <row>
 	<entry><systemitem class="osname">Solaris</></entry>
@@ -1615,7 +1606,7 @@ gunzip -c user.ps.gz \
 	<entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
       <row>
-       <entry><systemitem class="osname">SunOS</></entry>
+       <entry><systemitem class="osname">SunOS 4</></entry>
        <entry><systemitem>Sparc</></entry>
        <entry>7.2</entry>
        <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
@@ -1681,14 +1672,12 @@ gunzip -c user.ps.gz \
 
     <tbody>
      <row>
-      <entry><systemitem class="osname">DGUX 5.4R4.11</></entry>
+      <entry><systemitem class="osname">DG/UX 5.4R4.11</></entry>
       <entry><systemitem>m88k</></entry>
       <entry>6.3</entry>
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
       <entry>no recent reports</entry>
      </row>
-<!--
-Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
      <row>
       <entry><systemitem class="osname">MkLinux DR1</></entry>
       <entry><systemitem>PPC750</></entry>
@@ -1696,20 +1685,19 @@ Obsolete platform? This distro was merged into PPC afaik. - thomas 2001-12-07
       <entry>2001-04-03, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
       <entry>7.1 needs OS update?</entry>
      </row>
--->
      <row>
-      <entry><systemitem class="osname">NextStep</></entry>
+      <entry><systemitem class="osname">NeXTSTEP</></entry>
       <entry><systemitem>x86</></entry>
       <entry>6.x</entry>
       <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
       <entry>bit rot suspected</entry>
      </row>
      <row>
-      <entry><systemitem class="osname">QNX 6</></entry>
+      <entry><systemitem class="osname">QNX RTOS v6</></entry>
       <entry><systemitem>x86</></entry>
       <entry>7.2</entry>
       <entry>2001-11-20, Igor Kovalenko (<email>Igor.Kovalenko@motorola.com</email>)</entry>
-      <entry>patches available, but too late for 7.2</entry>
+      <entry>patches available in archives, but too late for 7.2</entry>
      </row>
      <row>
       <entry><systemitem class="osname">SCO OpenServer 5</></entry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.111 2002/01/03 05:37:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.112 2002/01/09 00:52:37 petere Exp $
 -->
 
 <appendix id="release">
@@ -584,7 +584,7 @@ VACUUM buffer fix (Tom)
 Regression test fixes (Tom)
 pg_dump fixes for GRANT/REVOKE/comments on views, user-defined types (Tom)
 Fix subselects with DISTINCT ON or LIMIT (Tom)
-BEOS fix
+BeOS fix
 Disable COPY TO/FROM a view (Tom)
 Cygwin build (Jason Tishler)
      </programlisting>
@@ -663,7 +663,7 @@ pg_dump fixes (Philip)
 pg_dump can dump 7.0 databases (Philip)
 readline 4.2 fixes (Peter E)
 JOIN fixes (Tom)
-AIX, MSWIN, VAX,N32K fixes (Tom)
+AIX, MSWIN, VAX, N32K fixes (Tom)
 Multibytes fixes (Tom)
 Unicode fixes (Tatsuo)
 Optimizer improvements (Tom)
@@ -955,8 +955,8 @@ AIX port fixes (Andreas)
 New BeOS port (David Reid, Cyril Velter)
 Add proofreader's changes to docs (Addison-Wesley, Bruce)
 New Alpha spinlock code (Adriaan Joubert, Compaq)
-Unixware port overhaul (Peter E)
-New Darwin/Mac OSX port (Peter Bierman, Bruce Hartzler)
+UnixWare port overhaul (Peter E)
+New Darwin/MacOS X port (Peter Bierman, Bruce Hartzler)
 New FreeBSD Alpha port (Alfred)
 Overhaul shared memory segments (Tom)
 Add IBM S/390 support (Neale Ferguson)
@@ -1606,7 +1606,7 @@ Included all yacc and lex files into the distribution (Peter E.)
 Remove lextest, no longer needed (Peter E)
 Fix for libpq and psql on Win32 (Magnus)
 Internally change datetime and timespan into timestamp and interval (Thomas)
-Fix for plpgsql on BSDI
+Fix for plpgsql on BSD/OS
 Add SQL_ASCII test case to the regression test (Tatsuo)
 configure --with-mb now deprecated (Tatsuo)
 NT fixes
@@ -1701,7 +1701,7 @@ This is to re-use space on index pages freed by vacuum(Vadim)
 document -x for pg_dump(Bruce)
 Fix for unary operators in rule deparser(Tom)
 Comment out FileUnlink of excess segments during mdtruncate()(Tom)
-Irix linking fix from Yu Cao &gt;yucao@falcon.kla-tencor.com&lt;
+IRIX linking fix from Yu Cao &gt;yucao@falcon.kla-tencor.com&lt;
 Repair logic error in LIKE: should not return LIKE_ABORT
    when reach end of pattern before end of text(Tom)
 Repair incorrect cleanup of heap memory allocation during transaction abort(Tom)
@@ -1739,7 +1739,7 @@ Updated version of pgaccess 0.98
     <para>
      <programlisting>
 Add NT README file
-Portability fixes for linux_ppc, Irix, linux_alpha, OpenBSD, alpha
+Portability fixes for linux_ppc, IRIX, linux_alpha, OpenBSD, alpha
 Remove QUERY_LIMIT, use SELECT...LIMIT
 Fix for EXPLAIN on inheritance(Tom)
 Patch to allow vacuum on multi-segment tables(Hiroshi)
@@ -2155,7 +2155,7 @@ Fix for tcl/tk configuration(Vince)
 Removed CURRENT keyword for rule queries(Jan)
 NT dynamic loading now works(Daniel Horak)
 Add ARM32 support(Andrew McMurry)
-Better support for HPUX 11 and Unixware
+Better support for HP-UX 11 and UnixWare
 Improve file handling to be more uniform, prevent file descriptor leak(Tom)
 New install commands for plpgsql(Jan)
      </programlisting>
@@ -2251,7 +2251,7 @@ Fix memory overruns(Tatsuo)
 Fix for lo_import() crash(Bruce)
 Better search for install program(Tom)
 Timezone fixes(Tom)
-HPUX fixes(Tom)
+HP-UX fixes(Tom)
 Use implicit type coercion for matching DEFAULT values(Thomas)
 Add routines to help with single-byte (internal) character type(Thomas)
 Compilation of libpq for Win32 fixes(Magnus)
@@ -2528,7 +2528,7 @@ Source Tree Changes
 /contrib cleanup(Jun)
 Inline some small functions called for every row(Bruce)
 Alpha/linux fixes
-Hp/UX cleanups(Tom)
+HP-UX cleanups(Tom)
 Multibyte regression tests(Soonmyung.)
 Remove --disabled options from configure
 Define PGDOC to use POSTGRESDIR by default
@@ -2542,7 +2542,7 @@ Change atttypmod from int16 to int32(Bruce, Tom)
 Getrusage() fix for platforms that do not have it(Tom)
 Add PQconnectdb, PGUSER, PGPASSWORD to libpq man page
 NS32K platform fixes(Phil Nelson, John Buller)
-Sco 7/UnixWare 2.x fixes(Billy,others)
+SCO 7/UnixWare 2.x fixes(Billy,others)
 Sparc/Solaris 2.5 fixes(Ryan)
 Pgbuiltin.3 is obsolete, move to doc files(Thomas)
 Even more documention(Thomas)
@@ -3014,7 +3014,7 @@ FAQ for FreeBSD(Marc)
 Bring in the PostODBC source tree as part of our standard distribution(Marc)
 A minor patch for HP/UX 10 vs 9(Stan)
 New pg_attribute.atttypmod for type-specific info like varchar length(Bruce)
-Unixware patches(Billy)
+UnixWare patches(Billy)
 New i386 'lock' for spin lock asm(Billy)
 Support for multiplexed backends is removed
 Start an OpenBSD port
@@ -3226,9 +3226,9 @@ MOVE implementation (Vadim)
 
 Source Tree Changes
 -------------------
-HPUX 10 patches (Vladimir Turin)
+HP-UX 10 patches (Vladimir Turin)
 Added SCO support, (Daniel Harris)
-mkLinux patches (Tatsuo Ishii)
+MkLinux patches (Tatsuo Ishii)
 Change geometric box terminology from "length" to "width"(Thomas)
 Deprecate temporary unstored slope fields in geometric code(Thomas)
 Remove restart instructions from INSTALL(Bruce)
@@ -3473,7 +3473,7 @@ now works with eBones, international Kerberos(Jun)
 more shared library support
 c++ include file cleanup(Bruce)
 warn about buggy flex(Bruce)
-DG-UX, Ultrix, Irix, AIX portability fixes
+DG/UX, Ultrix, IRIX, AIX portability fixes
 </programlisting>
 </para>
 </sect2>
@@ -3752,8 +3752,8 @@ Bug Fixes (almost too numerous to mention)
 
 New Ports
  * added SolarisX86 port
- * added BSDI 2.1 port
- * added DGUX port
+ * added BSD/OS 2.1 port
+ * added DG/UX port
 </programlisting>
 </para>
 <!--

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.101 2002/01/07 02:29:13 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.102 2002/01/09 00:52:38 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2212,7 +2212,7 @@ set semsys:seminfo_semmsl=32
 
      <varlistentry>
       <term><systemitem class="osname">UnixWare</></term>
-      <indexterm><primary>Unixware</></>
+      <indexterm><primary>UnixWare</></>
       <listitem>
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared

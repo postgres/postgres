@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.18 2002/01/07 02:29:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.19 2002/01/09 00:52:37 petere Exp $
 -->
 
 <sect2 id="dfunc">
@@ -233,8 +233,8 @@ ld -shared -expect_unresolved '*' -o foo.so foo.o
    </varlistentry>
 
    <varlistentry>
-    <term><productname>Unixware</productname></term>
-    <indexterm><primary>Unixware</></>
+    <term><productname>UnixWare</productname></term>
+    <indexterm><primary>UnixWare</></>
     <listitem>
      <para>
       The compiler flag to create <acronym>PIC</acronym> is <option>-K

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.22 2002/01/08 20:03:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/cvs.sgml,v 1.23 2002/01/09 00:52:37 petere Exp $
 CVS code repository
 Thomas Lockhart
 -->
@@ -497,7 +497,7 @@ pgsql
     <para>
      At the time of writing, binaries are available for
      Alpha/Tru64, ix86/xBSD,
-     HPPA/HPUX-10.20, MIPS/irix,
+     HPPA/HP-UX 10.20, MIPS/IRIX,
      ix86/linux-libc5, ix86/linux-glibc,
      Sparc/Solaris, and Sparc/SunOS.
     </para>
