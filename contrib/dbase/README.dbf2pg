@@ -1,0 +1,132 @@
+
+
+
+dbf2sql(1L)					      dbf2sql(1L)
+
+
+NAME
+       dbf2sql	-  Insert  xBase-style	.dbf-files  into  a Post-
+       greSQL-table
+
+SYNOPSIS
+       "dbf2pg [options] dbf-file"
+       Options:
+       [-v[v]] [-f] [-u | -l] [-c | -D] [-d database] [-t  table]
+       [-h   host]   [-s  oldname=newname[,oldname=newname]]  [-s
+       start] [-e end] [-W] [-U username]  [-B	transaction_size]
+       [-F charset_from [-T charset_to]]
+
+
+DESCRIPTION
+       This  manual  page documents the program dbf2pg.  It takes
+       an xBase-style .dbf-file, and inserts it into  the  speci-
+       fied database and table.
+
+   OPTIONS
+       -v     Display some status-messages.
+
+       -vv    Also display progress.
+
+       -f     Convert  all field-names from the .dbf-file to low-
+	      ercase.
+
+       -u     Convert the contents of all fields to uppercase.
+
+       -l     Convert the contents of all fields to lowercase.
+
+       -c     Create the table specified with -t.  If this  table
+	      already exists, first DROP it.
+
+       -D     Delete the contents of the table specified with -t.
+	      Note that this table has to  exists.  An	error  is
+	      returned if this is not the case.
+
+       -W     Ask for password.
+
+       -d database
+	      Specify  the  database to use. An error is returned
+	      if  this	database  does	not  exists.  Default  is
+	      "test".
+
+       -t table
+	      Specify  the  table  to  insert  in.  An	error  is
+	      returned if this table does not exists. Default  is
+	      "test".
+
+       -h host
+	      Specify  the  host  to which to connect. Default is
+	      "localhost".
+
+
+
+
+
+								1
+
+
+
+
+
+dbf2sql(1L)					      dbf2sql(1L)
+
+
+       -s oldname=newname[,oldname=newname]
+	      Change the name of a field from oldname to newname.
+	      This  is	mainly	used to avoid using reserved SQL-
+	      keywords. Example:
+	      -s SELECT=SEL,COMMIT=doit
+	      This is done  before  the  -f  operator  has  taken
+	      effect!
+
+       -s start
+	      Specify  the  first record-number in the xBase-file
+	      we will insert.
+
+       -e end Specify the last record-number in the xBase-file we
+	      will insert.
+
+       -B transaction_size
+	      Specify  the  number  of	records  per transaction,
+	      default is all records.
+
+       -U username
+	      Log as the specified user in the database.
+
+       -F charset_from
+	      If specified, it converts the data from the  speci-
+	      fied charset. Example:
+	      -F IBM437
+	      Consult  your  system documentation to see the con-
+	      vertions available.
+
+       -T charset_to
+	      Together with -F charset_from  ,	it  converts  the
+	      data   to   the	specified   charset.  Default  is
+	      "ISO-8859-1".
+
+ENVIRONMENT
+       This program is affected by the	environment-variables  as
+       used  by  "PostgresSQL."   See  the documentation of Post-
+       gresSQL for more info.
+
+BUGS
+       Fields larger than 8192 characters are not  supported  and
+       could break the program.
+       Some  charset  convertions  could  cause  the output to be
+       larger than the input and could break the program.
+
+
+
+
+
+
+
+
+
+
+
+
+
+								2
+
+

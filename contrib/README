@@ -34,6 +34,10 @@ cube -
 	Multidimensional-cube datatype (GiST indexing example)
 	by Gene Selkov, Jr. <selkovjr@mcs.anl.gov>
 
+dbase -
+	Converts from dbase/xbase to PostgreSQL
+	by Ivan Baldo, lubaldo@adinet.com.uy
+
 earthdistance -
 	Operator for computing earth distance for two points
 	by Hal Snyder <hal@vailsys.com>
