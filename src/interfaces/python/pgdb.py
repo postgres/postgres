@@ -260,32 +260,38 @@ class pgdbCursor:
 		pass
 
 
-def _quote(x):
-	if type(x) == types.StringType:
-		x = "'" + string.replace(
-				string.replace(str(x), '\\', '\\\\'), "'", "''") + "'"
+try:
+  _quote = _pg.quote_fast
+  _quoteparams = _pg.quoteparams_fast
+except NameError:
+  def _quote(x):
+	  if type(x) == types.StringType:
+		  x = "'" + string.replace(
+				  string.replace(str(x), '\\', '\\\\'), "'", "''") + "'"
 
-	elif type(x) in (types.IntType, types.LongType, types.FloatType):
-		pass
-	elif x is None:
-		x = 'NULL'
-	elif hasattr(x, '__pg_repr__'):
-		x = x.__pg_repr__()
-	else:
-		raise InterfaceError, 'do not know how to handle type %s' % type(x)
+	  elif type(x) in (types.IntType, types.LongType, types.FloatType):
+		  pass
+	  elif x is None:
+		  x = 'NULL'
+	  elif type(x) in (types.ListType, types.TupleType):
+		  return '(%s)' % ','.join(map(lambda x: str(_quote(x)), x))
+	  elif hasattr(x, '__pg_repr__'):
+		  x = x.__pg_repr__()
+	  else:
+		  raise InterfaceError, 'do not know how to handle type %s' % type(x)
 
-	return x
+	  return x
 
-def _quoteparams(s, params):
-	if hasattr(params, 'has_key'):
-		x = {}
-		for k, v in params.items():
-			x[k] = _quote(v)
-		params = x
-	else:
-		params = tuple(map(_quote, params))
+  def _quoteparams(s, params):
+	  if hasattr(params, 'has_key'):
+		  x = {}
+		  for k, v in params.items():
+			  x[k] = _quote(v)
+		  params = x
+	  else:
+		  params = tuple(map(_quote, params))
 
-	return s % params
+	  return s % params
 
 ### connection object
 

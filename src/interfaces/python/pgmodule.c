@@ -3121,10 +3121,150 @@ pgsetdefport(PyObject * self, PyObject * args)
 }
 #endif   /* DEFAULT_VARS */
 
+static PyObject *comma_string = NULL;
+
+static PyObject *
+pgpy_quote_fast(PyObject *self, PyObject *args)
+{
+  PyObject *x, *retval = NULL;
+
+  if(!PyArg_ParseTuple(args, "O:pgpy_quote_fast", &x))
+    return NULL;
+
+  if(x->ob_type == &PyInt_Type || x->ob_type == &PyLong_Type || x->ob_type == &PyFloat_Type)
+    {
+      Py_INCREF(retval = x);
+    }
+  else if(x == Py_None)
+    retval = PyString_FromString("NULL");
+  else if(x->ob_type == &PyString_Type)
+    {
+      char *in, *out, *ctmp;
+      int i, n, ct;
+      in = PyString_AS_STRING(x);
+      n = PyString_GET_SIZE(x);
+
+      for(i = ct = 0; i < n; i++)
+	if(in[i] == '\\' || in[i] == '\'')
+	  ct++;
+      ctmp = out = alloca(n + ct + 10);
+      *(ctmp++) = '\'';
+      for(i = 0; i < n; i++)
+	{
+	  if(in[i] == '\\')
+	    *(ctmp++) = '\\';
+	  if(in[i] == '\'')
+	    *(ctmp++) = '\'';
+	  *(ctmp++) = in[i];
+	}
+      *(ctmp++) = '\'';
+      *(ctmp++) = '\0';
+      retval = PyString_FromString(out);
+    }
+  else if(PySequence_Check(x))
+    {
+      int i, n = PySequence_Size(x);
+      PyObject *subout, *subargs, *subjoin = NULL;
+
+      subargs = PyTuple_New(1);
+      subout = PyTuple_New(n);
+
+      for(i = 0; i < n; i++)
+	{
+	  PyObject *sub = PySequence_GetItem(x, i), *subres;
+
+	  PyTuple_SetItem(subargs, 0, sub);
+	  subres = pgpy_quote_fast(NULL, subargs);
+	  if(!subres)
+	    goto out;
+
+	  if(!PyString_Check(subres))
+	    {
+	      PyObject *subres2 = PyObject_Str(subres);
+
+	      if(!subres2)
+		goto out;
+	      Py_DECREF(subres);
+	      subres = subres2;
+	    }
+
+	  PyTuple_SetItem(subout, subres);
+	}
+
+      subjoin = _PyString_Join(comma_string, subout);
+      if(!subjoin)
+	goto out;
+      retval = PyString_FromFormat("(%s)", PyString_AS_STRING(subjoin));
+      
+    out:
+      Py_INCREF(Py_None);
+      PyTuple_SetItem(subargs, 0, Py_None);
+      Py_DECREF(subargs);
+      Py_DECREF(subout);
+      Py_XDECREF(subjoin);
+    }
+  else
+    {
+      retval = PyEval_CallMethod(x, "__pg_repr__", "()");
+      if(!retval)
+	{
+	  PyErr_Format(PyExc_TypeError, "Don't know how to quote type %s", ((PyTypeObject *)x->ob_type)->tp_name);
+	  return NULL;
+	}
+    }
+
+  return retval;
+}
+
+static PyObject *
+pgpy_quoteparams_fast(PyObject *self, PyObject *args)
+{
+  PyObject *s, *params, *x = NULL, *retval;
+
+  if(!PyArg_ParseTuple("O!O:pgpy_quoteparams_fast", &PyString_Type, &s, &params))
+    return NULL;
+
+  if(PyDict_Check(params))
+    {
+      int i = 0;
+      PyObject *k, *v, *subargs;
+
+      x = PyDict_New();
+      subargs = PyTuple_New(1);
+      while(PyDict_Next(params, &i, &k, &v))
+	{
+	  PyObject *qres;
+
+	  PyTuple_SetItem(subargs, 0, v);
+	  qres = pgpy_quote_fast(NULL, subargs);
+	  if(!qres)
+	    {
+	      Py_DECREF(x);
+	      Py_INCREF(Py_None);
+	      PyTuple_SetItem(subargs, 0, Py_None);
+	      Py_DECREF(subargs);
+
+	      return NULL;
+	    }
+
+	  PyDict_SetItem(x, k, qres);
+	  Py_DECREF(qres);
+	}
+
+      params = x;
+    }
+
+  retval = PyString_Format(s, params);
+  Py_XDECREF(x);
+  return retval;
+}
+
 /* List of functions defined in the module */
 
 static struct PyMethodDef pg_methods[] = {
 	{"connect", (PyCFunction) pgconnect, 3, connect__doc__},
+	{"quote_fast", (PyCFunction) pgpy_quote_fast, METH_VARARGS},
+	{"quoteparams_fast", (PyCFunction) pgpy_quoteparams_fast, METH_VARARGS},
 
 #ifdef DEFAULT_VARS
 	{"get_defhost", pggetdefhost, 1, getdefhost__doc__},
@@ -3177,6 +3317,8 @@ init_pg(void)
 	PyDict_SetItemString(dict, "RESULT_DML", PyInt_FromLong(RESULT_DML));
 	PyDict_SetItemString(dict, "RESULT_DDL", PyInt_FromLong(RESULT_DDL));
 	PyDict_SetItemString(dict, "RESULT_DQL", PyInt_FromLong(RESULT_DQL));
+
+	comma_string = PyString_InternFromString(",");
 
 #ifdef LARGE_OBJECTS
 	/* create mode for large objects */
