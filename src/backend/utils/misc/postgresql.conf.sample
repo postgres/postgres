@@ -182,6 +182,7 @@
 #debug_print_plan = false
 #debug_pretty_print = false
 #log_connections = false
+#log_disconnections = false
 #log_duration = false
 #log_pid = false
 #log_statement = false

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.186 2004/02/06 19:36:18 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.187 2004/02/17 03:54:57 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@
 
 /* XXX these should appear in other modules' header files */
 extern bool Log_connections;
+extern bool Log_disconnections;
 extern bool check_function_bodies;
 extern int	PreAuthDelay;
 extern int	AuthenticationTimeout;
@@ -497,6 +498,14 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&Log_connections,
+		false, NULL, NULL
+	},
+	{
+		{"log_disconnections", PGC_BACKEND, LOGGING_WHAT,
+		 gettext_noop("Logs end of a session, including duration"),
+		 NULL
+		},
+		&Log_disconnections,
 		false, NULL, NULL
 	},
 	{

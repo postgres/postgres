@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.389 2004/02/06 19:36:18 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.390 2004/02/17 03:54:57 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -84,6 +84,9 @@ sigjmp_buf	Warn_restart;
 bool		Warn_restart_ready = false;
 bool		InError = false;
 
+/* flag for logging end of session */
+bool        Log_disconnections = false;
+
 /*
  * Flags for expensive function optimization -- JMH 3/9/92
  */
@@ -149,6 +152,7 @@ static void start_xact_command(void);
 static void finish_xact_command(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void FloatExceptionHandler(SIGNAL_ARGS);
+static void log_session_end(void);
 
 
 /* ----------------------------------------------------------------
@@ -2406,7 +2410,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 * other output options.
 	 */
 	if (debug_flag >= 1)
+	{
 		SetConfigOption("log_connections", "true", debug_context, gucsource);
+		SetConfigOption("log_disconnections", "true", debug_context, gucsource);
+	}
 	if (debug_flag >= 2)
 		SetConfigOption("log_statement", "true", debug_context, gucsource);
 	if (debug_flag >= 3)
@@ -2435,6 +2442,12 @@ PostgresMain(int argc, char *argv[], const char *username)
 			gucopts = lnext(gucopts);
 			SetConfigOption(name, value, PGC_BACKEND, PGC_S_CLIENT);
 		}
+
+		/*
+		 * set up handler to log session end.
+		 */
+		if (IsUnderPostmaster && Log_disconnections)
+			on_proc_exit(log_session_end,0);
 	}
 
 	/*
@@ -3177,4 +3190,62 @@ ShowUsage(const char *title)
 			 errdetail("%s", str.data)));
 
 	pfree(str.data);
+}
+
+/*
+ * on_proc_exit handler to log end of session
+ */
+static void 
+log_session_end(void)
+{
+	Port * port = MyProcPort;
+	struct timeval end;
+	int  hours, minutes, seconds;
+
+	char session_time[20];
+	char uname[6+NAMEDATALEN];
+	char dbname[10+NAMEDATALEN];
+	char remote_host[7 + NI_MAXHOST];
+	char remote_port[7 + NI_MAXSERV];
+      
+	snprintf(uname, sizeof(uname)," user=%s",port->user_name);
+	snprintf(dbname, sizeof(dbname)," database=%s",port->database_name);
+	snprintf(remote_host,sizeof(remote_host)," host=%s",
+			 port->remote_host);
+	/* prevent redundant or empty reporting of port */
+	if (!LogSourcePort && strlen(port->remote_port))
+		snprintf(remote_port,sizeof(remote_port)," port=%s",port->remote_port);
+	else
+		remote_port[0] = '\0';
+
+
+	gettimeofday(&end,NULL);
+
+	if (end.tv_usec < port->session_start.tv_usec)
+	{
+		end.tv_sec--;
+		end.tv_usec += 1000000;
+	}
+	end.tv_sec -= port->session_start.tv_sec;
+	end.tv_usec -= port->session_start.tv_usec;
+
+	hours = end.tv_sec / 3600;
+	end.tv_sec %= 3600;
+	minutes = end.tv_sec / 60;
+	seconds = end.tv_sec % 60;
+
+	/* if time has gone backwards for some reason say so, or print time */
+
+	if (end.tv_sec < 0)
+		snprintf(session_time,sizeof(session_time),"negative!");
+	else
+		/* for stricter accuracy here we could round - this is close enough */
+		snprintf(session_time, sizeof(session_time),"%d:%02d:%02d.%02ld",
+				 hours, minutes, seconds, end.tv_usec/10000);
+      
+	ereport(
+		LOG,
+		(errmsg("disconnection: session time: %s%s%s%s%s",
+				session_time,uname,dbname,remote_host,remote_port)));
+
 }

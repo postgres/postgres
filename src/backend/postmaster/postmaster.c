@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.366 2004/02/11 22:25:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.367 2004/02/17 03:54:56 momjian Exp $
  *
  * NOTES
  *
@@ -2428,6 +2428,13 @@ BackendInit(Port *port)
 	 * Signal handlers setting is moved to tcop/postgres...
 	 */
 
+	/* save start time for end of session reporting */
+	gettimeofday(&(port->session_start),NULL);
+
+	/* set these to empty in case they are needed before we set them up */
+	port->remote_host = "";
+	port->remote_port = "";
+
 	/* Save port etc. for ps status */
 	MyProcPort = port;
 
@@ -2482,6 +2489,12 @@ BackendInit(Port *port)
 		snprintf(tmphost, sizeof(tmphost), "%s:%s", remote_host, remote_port);
 		StrNCpy(remote_host, tmphost, sizeof(remote_host));
 	}
+
+	/*
+	 * save remote_host and remote_port in port stucture
+	 */
+	port->remote_host = strdup(remote_host);
+	port->remote_port = strdup(remote_port);
 
 	/*
 	 * Ready to begin client interaction.  We will give up and exit(0)
