@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $Header: /cvsroot/pgsql/configure.in,v 1.188 2002/07/15 21:34:04 momjian Exp $
+dnl $Header: /cvsroot/pgsql/configure.in,v 1.189 2002/07/15 22:41:45 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -696,6 +696,7 @@ AC_CHECK_LIB(BSD,      main)
 AC_CHECK_LIB(gen,      main)
 AC_CHECK_LIB(PW,       main)
 AC_CHECK_LIB(resolv,   main)
+AC_CHECK_LIB(getopt,   main)
 # QNX:
 AC_CHECK_LIB([[unix]], main)
 AC_SEARCH_LIBS(crypt,  crypt)
@@ -903,25 +904,25 @@ fi
 AC_SUBST(ISINF)
 
 
-AC_CHECK_FUNCS(getrusage, [], GETRUSAGE='getrusage.o')
+AC_CHECK_FUNCS(getrusage, [], GETRUSAGE='$(top_builddir)/src/backend/port/getrusage.o')
 AC_SUBST(GETRUSAGE)
-AC_CHECK_FUNCS(srandom, [], SRANDOM='srandom.o')
+AC_CHECK_FUNCS(srandom, [], SRANDOM='$(top_builddir)/src/backend/port/srandom.o')
 AC_SUBST(SRANDOM)
-AC_CHECK_FUNCS(gethostname, [], GETHOSTNAME='gethostname.o')
+AC_CHECK_FUNCS(gethostname, [], GETHOSTNAME='$(top_builddir)/src/backend/port/gethostname.o')
 AC_SUBST(GETHOSTNAME)
-AC_CHECK_FUNCS(random, [], MISSING_RANDOM='random.o')
+AC_CHECK_FUNCS(random, [], MISSING_RANDOM='$(top_builddir)/src/backend/port/random.o')
 AC_SUBST(MISSING_RANDOM)
-AC_CHECK_FUNCS(inet_aton, [], INET_ATON='inet_aton.o')
+AC_CHECK_FUNCS(inet_aton, [], INET_ATON='$(top_builddir)/src/backend/port/inet_aton.o')
 AC_SUBST(INET_ATON)
 AC_CHECK_FUNCS(strerror, [], STRERROR='$(top_builddir)/src/backend/port/strerror.o')
 AC_SUBST(STRERROR)
 AC_CHECK_FUNCS(strdup, [], STRDUP='$(top_builddir)/src/utils/strdup.o')
 AC_SUBST(STRDUP)
-AC_CHECK_FUNCS(strtol, [], STRTOL='strtol.o')
+AC_CHECK_FUNCS(strtol, [], STRTOL='$(top_builddir)/src/backend/port/strtol.o')
 AC_SUBST(STRTOL)
-AC_CHECK_FUNCS(strtoul, [], STRTOUL='strtoul.o')
+AC_CHECK_FUNCS(strtoul, [], STRTOUL='$(top_builddir)/src/backend/port/strtoul.o')
 AC_SUBST(STRTOUL)
-AC_CHECK_FUNCS(strcasecmp, [], STRCASECMP='strcasecmp.o')
+AC_CHECK_FUNCS(strcasecmp, [], STRCASECMP='$(top_builddir)/src/backend/port/strcasecmp.o')
 AC_SUBST(STRCASECMP)
 
 # On HPUX 9, rint() is not in regular libm.a but in /lib/pa1.1/libm.a;
