@@ -5,7 +5,7 @@
  *
  * IDENTIFICATION
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.2 1998/09/01 04:32:55 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/version.c,v 1.3 1998/10/09 16:42:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ version(void)
 	text	   *ret = (text *) palloc(n);
 
 	VARSIZE(ret) = n;
-	strcpy(VARDATA(ret), PG_VERSION_STR);
+	StrNCpy(VARDATA(ret), PG_VERSION_STR, strlen(PG_VERSION_STR));
 
 	return ret;
 }
