@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.cygwin,v 1.1 2003/03/21 17:18:34 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.cygwin,v 1.2 2003/05/22 17:20:44 petere Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 BE_DLLLIBS= -L$(top_builddir)/src/backend -lpostgres
@@ -23,7 +23,7 @@ override CPPFLAGS+= -DBUILDING_DLL
 endif
 endif
 
-ifneq (,$(findstring ecpg/lib,$(subdir)))
+ifneq (,$(findstring ecpg/ecpglib,$(subdir)))
 override CPPFLAGS+= -DBUILDING_DLL
 endif
 

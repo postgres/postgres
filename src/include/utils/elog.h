@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.42 2003/05/15 16:35:29 momjian Exp $
+ * $Id: elog.h,v 1.43 2003/05/22 17:20:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ typedef struct ErrorContextCallback
 	void *arg;
 } ErrorContextCallback;
 
-extern ErrorContextCallback *error_context_stack;
+extern DLLIMPORT ErrorContextCallback *error_context_stack;
 
 
 /* GUC-configurable parameters */

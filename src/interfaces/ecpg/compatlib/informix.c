@@ -55,7 +55,7 @@ deccopy(Numeric *src, Numeric *target)
 }
 
 static char *
-strndup(char *str, int len)
+strndup(const char *str, size_t len)
 {
 	int real_len = strlen(str);
 	int use_len = (real_len > len) ? len : real_len;

@@ -1,6 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/cygwin.h,v 1.2 2003/04/18 01:03:42 momjian Exp $ */
-
-#include <port/win32defs.h>
+/* $Header: /cvsroot/pgsql/src/include/port/cygwin.h,v 1.3 2003/05/22 17:20:28 petere Exp $ */
 
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
