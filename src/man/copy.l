@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.2 1996/12/11 00:27:09 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.3 1997/07/29 21:43:40 momjian Exp $
 .TH COPY SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 copy \(em copy data to or from a class from or to a Unix file.
@@ -41,10 +41,6 @@ than as ASCII text.  It is somewhat faster than the normal
 command, but is not generally portable, and the files generated are
 somewhat larger, although this factor is highly dependent on the data
 itself.
-When copying in, the
-.BR "with oids"
-keyword should only be used on an empty database because
-the loaded oids could conflict with existing oids.
 By default, a ASCII
 .BR copy
 uses a tab (\\t) character as a delimiter.  The delimiter may also be changed
@@ -169,9 +165,3 @@ yield unexpected results for the naive user.  In this case,
 .SM $PGDATA\c
 /foo.  In general, the full pathname should be used when specifying
 files to be copied.
-.PP
-.BR Copy
-has virtually no error checking, and a malformed input file will
-likely cause the backend to crash.  You should avoid using 
-.BR copy
-for input whenever possible.
