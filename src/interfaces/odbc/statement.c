@@ -468,10 +468,8 @@ SC_recycle_statement(StatementClass *self)
 			conn = SC_get_conn(self);
 			if (!CC_is_in_autocommit(conn) && CC_is_in_trans(conn))
 			{
-				QResultClass *res = CC_send_query(conn, "ABORT", NULL);
-
-				QR_Destructor(res);
-				CC_set_no_trans(conn);
+				if (SC_is_pre_executable(self) && !conn->connInfo.disallow_premature) 
+					CC_abort(conn);
 			}
 			break;
 

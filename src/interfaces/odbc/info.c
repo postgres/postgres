@@ -832,7 +832,8 @@ PGAPI_GetFunctions(
 				UWORD FAR *pfExists)
 {
 	static char *func = "PGAPI_GetFunctions";
-	ConnInfo *ci = &(((ConnectionClass *)hdbc)->connInfo);
+	ConnectionClass *conn = (ConnectionClass *)hdbc;
+	ConnInfo *ci = &(conn->connInfo);
 
 	mylog("%s: entering...%u\n", func, fFunction);
 
@@ -915,7 +916,10 @@ PGAPI_GetFunctions(
 			pfExists[SQL_API_SQLPARAMOPTIONS] = FALSE;
 			pfExists[SQL_API_SQLPRIMARYKEYS] = TRUE;
 			pfExists[SQL_API_SQLPROCEDURECOLUMNS] = FALSE;
-			pfExists[SQL_API_SQLPROCEDURES] = FALSE;
+			if (PG_VERSION_LT(conn, 6.5))
+				pfExists[SQL_API_SQLPROCEDURES] = FALSE;
+			else
+				pfExists[SQL_API_SQLPROCEDURES] = TRUE;
 			pfExists[SQL_API_SQLSETPOS] = TRUE;
 			pfExists[SQL_API_SQLSETSCROLLOPTIONS] = TRUE;		/* odbc 1.0 */
 			pfExists[SQL_API_SQLTABLEPRIVILEGES] = FALSE;
@@ -1090,7 +1094,10 @@ PGAPI_GetFunctions(
 					*pfExists = FALSE;
 					break;
 				case SQL_API_SQLPROCEDURES:
-					*pfExists = FALSE;
+					if (PG_VERSION_LT(conn, 6.5))
+						*pfExists = FALSE;
+					else
+						*pfExists = TRUE;
 					break;
 				case SQL_API_SQLSETPOS:
 					*pfExists = TRUE;
@@ -3615,30 +3622,53 @@ PGAPI_Procedures(
 {
 	static char *func = "PGAPI_Procedures";
 	StatementClass	*stmt = (StatementClass *) hstmt;
-	Int2		result_cols;
+	ConnectionClass	*conn = SC_get_conn(stmt);
+	char		proc_query[INFO_INQUIRY_LEN];
+	QResultClass	*res;
 
 	mylog("%s: entering...\n", func);
-
+	
+	if (PG_VERSION_LT(conn, 6.5))
+	{
+		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		stmt->errormsg = "Version is too old";
+		SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
+		return SQL_ERROR;
+	}
+	if (!SC_recycle_statement(stmt))
+		return SQL_ERROR;
 	/*
- 	* a statement is actually executed, so we'll have to do this
- 	* ourselves.
- 	*/
-	result_cols = 8;
-	extend_bindings(stmt, result_cols);
+	 *	The following seems the simplest implementation
+	 */
+	strcpy(proc_query, "select '' as ""PROCEDURE_CAT"", '' as ""PROCEDURE_SCHEM"","
+		" proname as ""PROCEDURE_NAME"", '' as ""NUM_INPUT_PARAMS"","
+		" '' as ""NUM_OUTPUT_PARAMS"", '' as ""NUM_RESULT_SETS"","
+		" '' as ""REMARKS"","
+		" case when prorettype =0 then 1::int2 else 2::int2 end as ""PROCEDURE_TYPE"" from pg_proc");
+	my_strcat(proc_query, " where proname like '%.*s'", szProcName, cbProcName);
 
-	/* set the field names */
-	QR_set_num_fields(stmt->result, result_cols);
-	QR_set_field_info(stmt->result, 0, "PROCEDURE_CAT", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 1, "PROCEDURE_SCHEM", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 2, "PROCEDURE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 3, "NUM_INPUT_PARAMS", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 4, "NUM_OUTPUT_PARAMS", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 5, "NUM_RESULT_SET", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 6, "REMARKS", PG_TYPE_TEXT, MAX_INFO_STRING);
-	QR_set_field_info(stmt->result, 7, "PROCEDURE_TYPE", PG_TYPE_INT2, 2);
-                                                             
-	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
-	return SQL_ERROR;
+	res = CC_send_query(conn, proc_query, NULL);
+	if (!res || QR_aborted(res))
+	{
+		if (res)
+			QR_Destructor(res);
+		stmt->errornumber = STMT_EXEC_ERROR;
+		stmt->errormsg = "PGAPI_Procedures query error";
+		return SQL_ERROR;
+	}
+	stmt->result = res;
+	/*
+	 * also, things need to think that this statement is finished so the
+	 * results can be retrieved.
+	 */
+	stmt->status = STMT_FINISHED;
+	extend_bindings(stmt, 8);
+	/* set up the current tuple pointer for SQLFetch */
+	stmt->currTuple = -1;
+	stmt->rowset_start = -1;
+	stmt->current_col = -1;
+
+	return SQL_SUCCESS;
 }
 
 

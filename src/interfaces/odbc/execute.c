@@ -349,10 +349,29 @@ PGAPI_Execute(
 		if (SC_is_pre_executable(stmt))
 		{
 			BOOL	in_trans = CC_is_in_trans(conn);
+			BOOL	issued_begin = FALSE, begin_included = FALSE;
 			QResultClass	*res;
+
+			if (strnicmp(stmt->stmt_with_params, "BEGIN;", 6) == 0)
+				begin_included = TRUE;
+			else if (!in_trans)
+			{
+				res = CC_send_query(conn, "BEGIN", NULL);
+				if (res && !QR_aborted(res))
+					issued_begin = TRUE;
+				if (res)
+					QR_Destructor(res);
+				if (!issued_begin)
+				{
+					stmt->errornumber = STMT_EXEC_ERROR;
+					stmt->errormsg = "Handle prepare error";
+					return SQL_ERROR;
+				}
+			}
+			/* we are now in a transaction */
 			CC_set_in_trans(conn);
 			stmt->result = res = CC_send_query(conn, stmt->stmt_with_params, NULL);
-			if (res && QR_aborted(res))
+			if (!res || QR_aborted(res))
 			{
 				CC_abort(conn);
 				stmt->errornumber = STMT_EXEC_ERROR;
@@ -361,8 +380,18 @@ PGAPI_Execute(
 			}
 			else
 			{
-				if (!in_trans)
-					CC_set_no_trans(conn);
+				if (CC_is_in_autocommit(conn))
+				{
+					if (issued_begin)
+					{
+						res = CC_send_query(conn, "COMMIT", NULL);
+						CC_set_no_trans(conn);
+						if (res)
+							QR_Destructor(res);
+					}
+					else if (!in_trans && begin_included)
+						CC_set_no_trans(conn);
+				}	
 				stmt->status =STMT_FINISHED;
 				return SQL_SUCCESS;
 			}
@@ -650,6 +679,7 @@ PGAPI_ParamData(
 				return SQL_ERROR;
 			}
 			ok = QR_command_successful(res);
+			CC_set_no_trans(stmt->hdbc);
 			QR_Destructor(res);
 			if (!ok)
 			{
@@ -658,8 +688,6 @@ PGAPI_ParamData(
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 			}
-
-			CC_set_no_trans(stmt->hdbc);
 		}
 		stmt->lobj_fd = -1;
 	}

@@ -994,7 +994,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 	unsigned int	declare_pos = 0;
 	ConnectionClass	*conn = SC_get_conn(stmt);
 	ConnInfo	*ci = &(conn->connInfo);
-	BOOL		prepare_dummy_cursor = FALSE;
+	BOOL		prepare_dummy_cursor = FALSE, begin_first = FALSE;
 	char	token_save[32];
 	int	token_len;
 	BOOL	prev_token_end;
@@ -1055,8 +1055,11 @@ copy_statement_with_parameters(StatementClass *stmt)
 		{
 			if (prepare_dummy_cursor)
 			{
-				if (!CC_is_in_trans(conn))
-					strcpy(new_statement, "begin;");
+				if (!CC_is_in_trans(conn) && PG_VERSION_GE(conn, 7.1))
+				{
+					strcpy(new_statement, "BEGIN;");
+					begin_first = TRUE;
+				}
 			}
 			else if (ci->drivers.use_declarefetch)
 				SC_set_fetchcursor(stmt);
@@ -1718,8 +1721,8 @@ copy_statement_with_parameters(StatementClass *stmt)
 		char fetchstr[128];	
 		sprintf(fetchstr, ";fetch backward in %s;close %s;",
 				stmt->cursor_name, stmt->cursor_name);
-		if (!CC_is_in_trans(conn))
-			strcat(fetchstr, "commit;");
+		if (begin_first && CC_is_in_autocommit(conn))
+			strcat(fetchstr, "COMMIT;");
 		CVT_APPEND_STR(fetchstr);
 		stmt->inaccurate_result = TRUE;
 	}
