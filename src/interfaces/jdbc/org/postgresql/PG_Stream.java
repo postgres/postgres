@@ -10,7 +10,7 @@ import org.postgresql.core.*;
 import org.postgresql.util.*;
 
 /*
- * $Id: PG_Stream.java,v 1.16 2001/11/19 23:16:45 momjian Exp $
+ * $Id: PG_Stream.java,v 1.17 2002/08/20 04:26:02 barry Exp $
  *
  * This class is used by Connection & PGlobj for communicating with the
  * backend.
@@ -24,9 +24,6 @@ public class PG_Stream
 	private InputStream pg_input;
 	private BufferedOutputStream pg_output;
 	private byte[] byte_buf = new byte[8*1024];
-
-	BytePoolDim1 bytePoolDim1 = new BytePoolDim1();
-	BytePoolDim2 bytePoolDim2 = new BytePoolDim2();
 
 	/*
 	 * Constructor:  Connect to the PostgreSQL back end and return
@@ -69,7 +66,7 @@ public class PG_Stream
 	 */
 	public void SendInteger(int val, int siz) throws IOException
 	{
-		byte[] buf = bytePoolDim1.allocByte(siz);
+		byte[] buf = new byte[siz];
 
 		while (siz-- > 0)
 		{
@@ -272,7 +269,7 @@ public class PG_Stream
 	{
 		int i, bim = (nf + 7) / 8;
 		byte[] bitmask = Receive(bim);
-		byte[][] answer = bytePoolDim2.allocByte(nf);
+		byte[][] answer = new byte[nf][0];
 
 		int whichbit = 0x80;
 		int whichbyte = 0;
@@ -310,7 +307,7 @@ public class PG_Stream
 	 */
 	private byte[] Receive(int siz) throws SQLException
 	{
-		byte[] answer = bytePoolDim1.allocByte(siz);
+		byte[] answer = new byte[siz];
 		Receive(answer, 0, siz);
 		return answer;
 	}
