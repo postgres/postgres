@@ -1,8 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.1 1998/08/15 06:52:03 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/keys.sgml,v 1.2 1998/08/17 16:18:13 thomas Exp $
 Indices and Keys
 
 $Log: keys.sgml,v $
+Revision 1.2  1998/08/17 16:18:13  thomas
+Small sentence cleanups. Add tags for acronyms and products.
+
 Revision 1.1  1998/08/15 06:52:03  thomas
 Nice exposition on indices and keys from Herouth Maoz which appeared
  on the mailing lists a while ago. Maybe slightly changed to fit docs.
@@ -48,9 +51,9 @@ Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
               PRIMARY KEY(fields,...) and
               UNIQUE (fields,...)
 
-       - Is this an alias ?
+       - Is this an alias?
        - If PRIMARY KEY is already unique, then why
-         there's another kind of key named UNIQUE ?
+         is there another kind of key named UNIQUE?
 </ProgramListing>
 
 <Para>
@@ -131,16 +134,18 @@ NULLs are acceptable.
 </itemizedlist>
 
 <Para>
-As for why no non-unique keys are specifiable by SQL syntax? Well - you
-must understand that indexes are implementation-dependent. SQL does not
+As for why no non-unique keys are defined explicitly in standard <acronym>SQL</acronym> syntax?
+Well, you
+must understand that indices are implementation-dependent. <acronym>SQL</acronym> does not
 define the implementation, merely the relations between data in the
-database.
+database. <productname>Postgres</productname> does allow non-unique indices, but indices
+used to enforce <acronym>SQL</acronym> keys are always unique.
 </Para>
 <Para>
 Thus, you may query a table by any combination of its columns, despite the
 fact that you don't have an index on these columns. The indexes are merely
-an implementational aid which each RDBMS offers you, in order to cause
-commonly used queries to be done more efficiently. Some RDBMS may give you
+an implementational aid which each <acronym>RDBMS</acronym> offers you, in order to cause
+commonly used queries to be done more efficiently. Some <acronym>RDBMS</acronym> may give you
 additional measures, such as keeping a key stored in main memory. They will
 have a special command, for example
 <programlisting>
@@ -150,7 +155,7 @@ CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
 </Para>
 <Para>
 In fact, when you create a primary key or a unique combination of fields,
-nowhere in the SQL specification does it say that an index is created, nor that
+nowhere in the <acronym>SQL</acronym> specification does it say that an index is created, nor that
 the retrieval of data by the key is going to be more efficient than a
 sequential scan!
 </Para>
@@ -158,9 +163,9 @@ sequential scan!
 So, if you want to use a combination of fields which is not unique as a
 secondary key, you really don't have to specify anything - just start
 retrieving by that combination! However, if you want to make the retrieval
-efficient, you'll have to resort to the means your RDBMS provider gives you
-- be it an index, my imaginary MEMSTORE command, or an intelligent RDBMS
-which crates indices without your knowledge based on the fact that you have
+efficient, you'll have to resort to the means your <acronym>RDBMS</acronym> provider gives you
+- be it an index, my imaginary MEMSTORE command, or an intelligent <acronym>RDBMS</acronym>
+which creates indices without your knowledge based on the fact that you have
 sent it many queries based on a specific combination of keys... (It learns
 from experience).
 </Para>
