@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.142 2000/02/18 09:29:27 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.143 2000/02/19 22:10:47 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -40,6 +40,7 @@
 
 #include "commands/async.h"
 #include "commands/trigger.h"
+#include "commands/variable.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
@@ -891,7 +892,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	char	   *remote_host = "";
 	unsigned short remote_port = 0;
 
-	char	   *DBDate = NULL;
 	extern int	optind;
 	extern char *optarg;
 	extern int  DebugLvl;
@@ -912,30 +912,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	SetProcessingMode(InitProcessing);
 
-	/*
-	 * Try to get initial values for date styles and formats. Does not do
-	 * a complete job, but should be good enough for backend. Cannot call
-	 * parse_date() since palloc/pfree memory is not set up yet.
-	 */
-	DBDate = getenv("PGDATESTYLE");
-	if (DBDate != NULL)
-	{
-		if (strcasecmp(DBDate, "ISO") == 0)
-			DateStyle = USE_ISO_DATES;
-		else if (strcasecmp(DBDate, "SQL") == 0)
-			DateStyle = USE_SQL_DATES;
-		else if (strcasecmp(DBDate, "POSTGRES") == 0)
-			DateStyle = USE_POSTGRES_DATES;
-		else if (strcasecmp(DBDate, "GERMAN") == 0)
-		{
-			DateStyle = USE_GERMAN_DATES;
-			EuroDates = TRUE;
-		}
-		else if (strcasecmp(DBDate, "NONEURO") == 0)
-			EuroDates = FALSE;
-		else if (strcasecmp(DBDate, "EURO") == 0)
-			EuroDates = TRUE;
-	}
+	/* Check for PGDATESTYLE environment variable */
+	set_default_datestyle();
 
 	/*
 	 * Read default pg_options from file $DATADIR/pg_options.
@@ -1525,7 +1503,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.142 $ $Date: 2000/02/18 09:29:27 $\n");
+		puts("$Revision: 1.143 $ $Date: 2000/02/19 22:10:47 $\n");
 	}
 
 	/*

@@ -2,32 +2,16 @@
  * Headers for handling of 'SET var TO', 'SHOW var' and 'RESET var'
  * statements
  *
- * $Id: variable.h,v 1.8 1998/10/08 18:30:27 momjian Exp $
+ * $Id: variable.h,v 1.9 2000/02/19 22:10:43 tgl Exp $
  *
  */
 #ifndef VARIABLE_H
 #define VARIABLE_H 1
 
-enum DateFormat
-{
-	Date_Postgres, Date_SQL, Date_ISO
-};
+extern bool SetPGVariable(const char *name, const char *value);
+extern bool GetPGVariable(const char *name);
+extern bool ResetPGVariable(const char *name);
 
-/*-----------------------------------------------------------------------*/
-struct PGVariables
-{
-	struct
-	{
-		bool		euro;
-		enum DateFormat format;
-	}			date;
-};
-
-extern struct PGVariables PGVariables;
-
-/*-----------------------------------------------------------------------*/
-bool		SetPGVariable(const char *, const char *);
-bool		GetPGVariable(const char *);
-bool		ResetPGVariable(const char *);
+extern void set_default_datestyle(void);
 
 #endif	 /* VARIABLE_H */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.29 2000/02/15 20:49:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.30 2000/02/19 22:10:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,157 +40,165 @@ extern bool _use_keyset_query_optimizer;
 
 static bool show_date(void);
 static bool reset_date(void);
-static bool parse_date(const char *);
+static bool parse_date(char *);
 static bool show_timezone(void);
 static bool reset_timezone(void);
-static bool parse_timezone(const char *);
+static bool parse_timezone(char *);
 static bool show_effective_cache_size(void);
 static bool reset_effective_cache_size(void);
-static bool parse_effective_cache_size(const char *);
+static bool parse_effective_cache_size(char *);
 static bool show_random_page_cost(void);
 static bool reset_random_page_cost(void);
-static bool parse_random_page_cost(const char *);
+static bool parse_random_page_cost(char *);
 static bool show_cpu_tuple_cost(void);
 static bool reset_cpu_tuple_cost(void);
-static bool parse_cpu_tuple_cost(const char *);
+static bool parse_cpu_tuple_cost(char *);
 static bool show_cpu_index_tuple_cost(void);
 static bool reset_cpu_index_tuple_cost(void);
-static bool parse_cpu_index_tuple_cost(const char *);
+static bool parse_cpu_index_tuple_cost(char *);
 static bool show_cpu_operator_cost(void);
 static bool reset_cpu_operator_cost(void);
-static bool parse_cpu_operator_cost(const char *);
+static bool parse_cpu_operator_cost(char *);
 static bool reset_enable_seqscan(void);
 static bool show_enable_seqscan(void);
-static bool parse_enable_seqscan(const char *);
+static bool parse_enable_seqscan(char *);
 static bool reset_enable_indexscan(void);
 static bool show_enable_indexscan(void);
-static bool parse_enable_indexscan(const char *);
+static bool parse_enable_indexscan(char *);
 static bool reset_enable_tidscan(void);
 static bool show_enable_tidscan(void);
-static bool parse_enable_tidscan(const char *);
+static bool parse_enable_tidscan(char *);
 static bool reset_enable_sort(void);
 static bool show_enable_sort(void);
-static bool parse_enable_sort(const char *);
+static bool parse_enable_sort(char *);
 static bool reset_enable_nestloop(void);
 static bool show_enable_nestloop(void);
-static bool parse_enable_nestloop(const char *);
+static bool parse_enable_nestloop(char *);
 static bool reset_enable_mergejoin(void);
 static bool show_enable_mergejoin(void);
-static bool parse_enable_mergejoin(const char *);
+static bool parse_enable_mergejoin(char *);
 static bool reset_enable_hashjoin(void);
 static bool show_enable_hashjoin(void);
-static bool parse_enable_hashjoin(const char *);
+static bool parse_enable_hashjoin(char *);
 static bool reset_geqo(void);
 static bool show_geqo(void);
-static bool parse_geqo(const char *);
+static bool parse_geqo(char *);
 static bool show_ksqo(void);
 static bool reset_ksqo(void);
-static bool parse_ksqo(const char *);
+static bool parse_ksqo(char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
-static bool parse_XactIsoLevel(const char *);
+static bool parse_XactIsoLevel(char *);
 
 /*
+ * get_token
+ *		Obtain the next item in a comma-separated list of items,
+ *		where each item can be either "word" or "word=word".
+ *		The "word=word" form is only accepted if 'val' is not NULL.
+ *		Words are any sequences not containing whitespace, ',', or '='.
+ *		Whitespace can appear between the words and punctuation.
  *
- * Get_Token
+ * 'tok': receives a pointer to first word of item, or NULL if none.
+ * 'val': if not NULL, receives a pointer to second word, or NULL if none.
+ * 'str': start of input string.
  *
+ * Returns NULL if input string contained no more words, else pointer
+ * to just past this item, which can be used as 'str' for next call.
+ * (If this is the last item, returned pointer will point at a null char,
+ * so caller can alternatively check for that instead of calling again.)
+ *
+ * NB: input string is destructively modified by placing null characters
+ * at ends of words!
+ *
+ * A former version of this code avoided modifying the input string by
+ * returning palloc'd copies of the words.  However, we want to use this
+ * code early in backend startup to parse the PGDATESTYLE environment var,
+ * and palloc/pfree aren't initialized at that point.  Cleanest answer
+ * seems to be to palloc in SetPGVariable() so that we can treat the string
+ * as modifiable here.
  */
-static const char *
-get_token(char **tok, char **val, const char *str)
+static char *
+get_token(char **tok, char **val, char *str)
 {
-	const char *start;
-	int			len = 0;
+	char		ch;
 
 	*tok = NULL;
 	if (val != NULL)
 		*val = NULL;
 
-	if (!(*str))
+	if (!str || *str == '\0')
 		return NULL;
 
-	/* skip white spaces */
+	/* skip leading white space */
 	while (isspace(*str))
 		str++;
-	if (*str == ',' || *str == '=')
-		elog(ERROR, "Syntax error near (%s): empty setting", str);
 
 	/* end of string? then return NULL */
-	if (!(*str))
+	if (*str == '\0')
 		return NULL;
 
-	/* OK, at beginning of non-NULL string... */
-	start = str;
+	if (*str == ',' || *str == '=')
+		elog(ERROR, "Syntax error near \"%s\": empty setting", str);
 
-	/*
-	 * count chars in token until we hit white space or comma or '=' or
-	 * end of string
-	 */
-	while (*str && (!isspace(*str))
-		   && *str != ',' && *str != '=')
-	{
+	/* OK, at beginning of non-empty item */
+	*tok = str;
+
+	/* Advance to end of word */
+	while (*str && !isspace(*str) && *str != ',' && *str != '=')
 		str++;
-		len++;
-	}
 
-	*tok = (char *) palloc(len + 1);
-	StrNCpy(*tok, start, len + 1);
+	/* Terminate word string for caller */
+	ch = *str;
+	*str = '\0';
 
-	/* skip white spaces */
-	while (isspace(*str))
-		str++;
+	/* Skip any whitespace */
+	while (isspace(ch))
+		ch = *(++str);
 
 	/* end of string? */
-	if (!(*str))
-	{
+	if (ch == '\0')
 		return str;
-
-		/* delimiter? */
-	}
-	else if (*str == ',')
-	{
+	/* delimiter? */
+	if (ch == ',')
 		return ++str;
 
-	}
-	else if ((val == NULL) || (*str != '='))
-	{
-		elog(ERROR, "Syntax error near (%s)", str);
-	};
+	/* Had better be '=', and caller must be expecting it */
+	if (val == NULL || ch != '=')
+		elog(ERROR, "Syntax error near \"%s\"", str);
 
-	str++;						/* '=': get value */
-	len = 0;
+	/* '=': get the value */
+	str++;
 
-	/* skip white spaces */
+	/* skip whitespace after '=' */
 	while (isspace(*str))
 		str++;
 
-	if (*str == ',' || !(*str))
-		elog(ERROR, "Syntax error near (=%s)", str);
+	if (*str == ',' || *str == '\0')
+		elog(ERROR, "Syntax error near \"=%s\"", str);
 
-	start = str;
+	/* OK, at beginning of non-empty value */
+	*val = str;
 
-	/*
-	 * count chars in token's value until we hit white space or comma or
-	 * end of string
-	 */
-	while (*str && (!isspace(*str)) && *str != ',')
-	{
-		str++;
-		len++;
-	}
-
-	*val = (char *) palloc(len + 1);
-	StrNCpy(*val, start, len + 1);
-
-	/* skip white spaces */
-	while (isspace(*str))
+	/* Advance to end of word */
+	while (*str && !isspace(*str) && *str != ',')
 		str++;
 
-	if (!(*str))
-		return NULL;
-	if (*str == ',')
+	/* Terminate word string for caller */
+	ch = *str;
+	*str = '\0';
+
+	/* Skip any whitespace */
+	while (isspace(ch))
+		ch = *(++str);
+
+	/* end of string? */
+	if (ch == '\0')
+		return str;
+	/* delimiter? */
+	if (ch == ',')
 		return ++str;
 
-	elog(ERROR, "Syntax error near (%s)", str);
+	elog(ERROR, "Syntax error near \"%s\"", str);
 
 	return str;
 }
@@ -199,7 +207,7 @@ get_token(char **tok, char **val, const char *str)
  * Generic parse routine for boolean ON/OFF variables
  */
 static bool
-parse_boolean_var(const char *value,
+parse_boolean_var(char *value,
 				  bool *variable, const char *varname, bool defaultval)
 {
 	if (value == NULL)
@@ -222,7 +230,7 @@ parse_boolean_var(const char *value,
  * ENABLE_SEQSCAN
  */
 static bool
-parse_enable_seqscan(const char *value)
+parse_enable_seqscan(char *value)
 {
 	return parse_boolean_var(value, &enable_seqscan,
 							 "ENABLE_SEQSCAN", true);
@@ -247,7 +255,7 @@ reset_enable_seqscan()
  * ENABLE_INDEXSCAN
  */
 static bool
-parse_enable_indexscan(const char *value)
+parse_enable_indexscan(char *value)
 {
 	return parse_boolean_var(value, &enable_indexscan,
 							 "ENABLE_INDEXSCAN", true);
@@ -272,7 +280,7 @@ reset_enable_indexscan()
  * ENABLE_TIDSCAN
  */
 static bool
-parse_enable_tidscan(const char *value)
+parse_enable_tidscan(char *value)
 {
 	return parse_boolean_var(value, &enable_tidscan,
 							 "ENABLE_TIDSCAN", true);
@@ -297,7 +305,7 @@ reset_enable_tidscan()
  * ENABLE_SORT
  */
 static bool
-parse_enable_sort(const char *value)
+parse_enable_sort(char *value)
 {
 	return parse_boolean_var(value, &enable_sort,
 							 "ENABLE_SORT", true);
@@ -322,7 +330,7 @@ reset_enable_sort()
  * ENABLE_NESTLOOP
  */
 static bool
-parse_enable_nestloop(const char *value)
+parse_enable_nestloop(char *value)
 {
 	return parse_boolean_var(value, &enable_nestloop,
 							 "ENABLE_NESTLOOP", true);
@@ -347,7 +355,7 @@ reset_enable_nestloop()
  * ENABLE_MERGEJOIN
  */
 static bool
-parse_enable_mergejoin(const char *value)
+parse_enable_mergejoin(char *value)
 {
 	return parse_boolean_var(value, &enable_mergejoin,
 							 "ENABLE_MERGEJOIN", true);
@@ -372,7 +380,7 @@ reset_enable_mergejoin()
  * ENABLE_HASHJOIN
  */
 static bool
-parse_enable_hashjoin(const char *value)
+parse_enable_hashjoin(char *value)
 {
 	return parse_boolean_var(value, &enable_hashjoin,
 							 "ENABLE_HASHJOIN", true);
@@ -399,11 +407,11 @@ reset_enable_hashjoin()
  *
  */
 static bool
-parse_geqo(const char *value)
+parse_geqo(char *value)
 {
-	const char *rest;
 	char	   *tok,
-			   *val;
+			   *val,
+			   *rest;
 
 	if (value == NULL)
 	{
@@ -412,11 +420,12 @@ parse_geqo(const char *value)
 	}
 
 	rest = get_token(&tok, &val, value);
+
+	/* expect one and only one item */
 	if (tok == NULL)
 		elog(ERROR, "Value undefined");
-
-	if ((rest) && (*rest != '\0'))
-		elog(ERROR, "Unable to parse '%s'", value);
+	if (rest && *rest != '\0')
+		elog(ERROR, "Unable to parse '%s'", rest);
 
 	if (strcasecmp(tok, "on") == 0)
 	{
@@ -427,21 +436,19 @@ parse_geqo(const char *value)
 			new_geqo_rels = pg_atoi(val, sizeof(int), '\0');
 			if (new_geqo_rels <= 1)
 				elog(ERROR, "Bad value for # of relations (%s)", val);
-			pfree(val);
 		}
 		enable_geqo = true;
 		geqo_rels = new_geqo_rels;
 	}
 	else if (strcasecmp(tok, "off") == 0)
 	{
-		if ((val != NULL) && (*val != '\0'))
+		if (val != NULL)
 			elog(ERROR, "%s does not allow a parameter", tok);
 		enable_geqo = false;
 	}
 	else
 		elog(ERROR, "Bad value for GEQO (%s)", value);
 
-	pfree(tok);
 	return TRUE;
 }
 
@@ -471,7 +478,7 @@ reset_geqo(void)
  * EFFECTIVE_CACHE_SIZE
  */
 static bool
-parse_effective_cache_size(const char *value)
+parse_effective_cache_size(char *value)
 {
 	float64		res;
 
@@ -506,7 +513,7 @@ reset_effective_cache_size()
  * RANDOM_PAGE_COST
  */
 static bool
-parse_random_page_cost(const char *value)
+parse_random_page_cost(char *value)
 {
 	float64		res;
 
@@ -540,7 +547,7 @@ reset_random_page_cost()
  * CPU_TUPLE_COST
  */
 static bool
-parse_cpu_tuple_cost(const char *value)
+parse_cpu_tuple_cost(char *value)
 {
 	float64		res;
 
@@ -574,7 +581,7 @@ reset_cpu_tuple_cost()
  * CPU_INDEX_TUPLE_COST
  */
 static bool
-parse_cpu_index_tuple_cost(const char *value)
+parse_cpu_index_tuple_cost(char *value)
 {
 	float64		res;
 
@@ -608,7 +615,7 @@ reset_cpu_index_tuple_cost()
  * CPU_OPERATOR_COST
  */
 static bool
-parse_cpu_operator_cost(const char *value)
+parse_cpu_operator_cost(char *value)
 {
 	float64		res;
 
@@ -639,12 +646,19 @@ reset_cpu_operator_cost()
 }
 
 /*
- *
  * DATE_STYLE
  *
+ * NOTE: set_default_datestyle() is called during backend startup to check
+ * if the PGDATESTYLE environment variable is set.  We want the env var
+ * to determine the value that "RESET DateStyle" will reset to!
  */
+
+/* These get initialized from the "master" values in init/globals.c */
+static int DefaultDateStyle;
+static bool DefaultEuroDates;
+
 static bool
-parse_date(const char *value)
+parse_date(char *value)
 {
 	char	   *tok;
 	int			dcnt = 0,
@@ -698,13 +712,12 @@ parse_date(const char *value)
 		}
 		else if (!strcasecmp(tok, "DEFAULT"))
 		{
-			DateStyle = USE_POSTGRES_DATES;
-			EuroDates = FALSE;
+			DateStyle = DefaultDateStyle;
+			EuroDates = DefaultEuroDates;
 			ecnt++;
 		}
 		else
 			elog(ERROR, "Bad value for date style (%s)", tok);
-		pfree(tok);
 	}
 
 	if (dcnt > 1 || ecnt > 1)
@@ -746,11 +759,44 @@ show_date()
 static bool
 reset_date()
 {
-	DateStyle = USE_POSTGRES_DATES;
-	EuroDates = FALSE;
+	DateStyle = DefaultDateStyle;
+	EuroDates = DefaultEuroDates;
 
 	return TRUE;
 }
+
+void
+set_default_datestyle(void)
+{
+	char	   *DBDate;
+
+	/* Initialize from compile-time defaults in init/globals.c.
+	 * NB: this is a necessary step; consider PGDATESTYLE="DEFAULT".
+	 */
+	DefaultDateStyle = DateStyle;
+	DefaultEuroDates = EuroDates;
+
+	/* If the environment var is set, override compiled-in values */
+	DBDate = getenv("PGDATESTYLE");
+	if (DBDate == NULL)
+		return;
+
+	/* Make a modifiable copy --- overwriting the env var doesn't seem
+	 * like a good idea, even though we currently won't look at it again.
+	 * Note that we cannot use palloc at this early stage of initialization.
+	 */
+	DBDate = strdup(DBDate);
+
+	/* Parse desired setting into DateStyle/EuroDates */
+	parse_date(DBDate);
+
+	free(DBDate);
+
+	/* And make it the default for future RESETs */
+	DefaultDateStyle = DateStyle;
+	DefaultEuroDates = EuroDates;
+}
+
 
 /* Timezone support
  * Working storage for strings is allocated with an arbitrary size of 64 bytes.
@@ -771,7 +817,7 @@ static char tzbuf[64];
  * - thomas 1997-11-10
  */
 static bool
-parse_timezone(const char *value)
+parse_timezone(char *value)
 {
 	char	   *tok;
 
@@ -801,7 +847,6 @@ parse_timezone(const char *value)
 			elog(ERROR, "Unable to set TZ environment variable to %s", tok);
 
 		tzset();
-		pfree(tok);
 	}
 
 	return TRUE;
@@ -869,7 +914,7 @@ See optimizer/prep/prepkeyset.c for more on this.
 	daveh@insightdist.com	 6/16/98
 -----------------------------------------------------------------------*/
 static bool
-parse_ksqo(const char *value)
+parse_ksqo(char *value)
 {
 	return parse_boolean_var(value, &_use_keyset_query_optimizer,
 							 "KSQO", false);
@@ -893,7 +938,7 @@ reset_ksqo()
 /* SET TRANSACTION */
 
 static bool
-parse_XactIsoLevel(const char *value)
+parse_XactIsoLevel(char *value)
 {
 
 	if (value == NULL)
@@ -949,7 +994,7 @@ reset_XactIsoLevel()
  * Pg_options
  */
 static bool
-parse_pg_options(const char *value)
+parse_pg_options(char *value)
 {
 	if (!superuser()) {
 		elog(ERROR, "Only users with superuser privilege can set pg_options");
@@ -978,10 +1023,10 @@ reset_pg_options(void)
 
 /*-----------------------------------------------------------------------*/
 
-struct VariableParsers
+static struct VariableParsers
 {
 	const char *name;
-	bool		(*parser) (const char *);
+	bool		(*parser) (char *);
 	bool		(*show) ();
 	bool		(*reset) ();
 }			VariableParsers[] =
@@ -1071,11 +1116,15 @@ bool
 SetPGVariable(const char *name, const char *value)
 {
 	struct VariableParsers *vp;
+	char	   *val;
+
+	/* Make a modifiable copy for convenience of get_token */
+	val = pstrdup(value);
 
 	for (vp = VariableParsers; vp->name; vp++)
 	{
 		if (!strcasecmp(vp->name, name))
-			return (vp->parser) (value);
+			return (vp->parser) (val);
 	}
 
 	elog(NOTICE, "Unrecognized variable %s", name);
