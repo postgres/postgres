@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/intarray/Makefile,v 1.5 2001/03/18 23:35:18 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/intarray/Makefile,v 1.6 2001/05/31 19:25:27 tgl Exp $
 
 subdir = contrib/intarray
 top_builddir = ../..
@@ -12,7 +12,7 @@ NAME= _int
 SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0
 
-override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -DPGSQL71
+override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
 OBJS= _int.o
 
