@@ -5,14 +5,12 @@
    oktober 1996: merged sources of dbf2msql.c and dbf2pg.c
    oktober 1997: removed msql support
 */
-#define HAVE_TERMIOS_H
-#define HAVE_ICONV_H
+#include "postgres_fe.h"
 
-#include <stdio.h>
+#define HAVE_ICONV_H			/* should be somewhere else */
+
 #include <fcntl.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <ctype.h>
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -21,13 +19,14 @@
 #include <iconv.h>
 #endif
 
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 #include "dbf.h"
 
 int	verbose = 0, upper = 0, lower = 0, create = 0, fieldlow = 0;
 int del = 0;
 unsigned int begin = 0, end = 0;
 unsigned int t_block = 0;
+
 #ifdef HAVE_ICONV_H
 char *charset_from=NULL;
 char *charset_to="ISO-8859-1";
@@ -158,12 +157,11 @@ int check_table(PGconn *conn, char *table) {
 }
 
 void usage(void){
-	printf("\
-dbf2pg
-usage: dbf2pg [-u | -l] [-h hostname] [-W] [-U username]
-              [-B transaction_size] [-F charset_from [-T charset_to]]
-              [-s oldname=newname[,oldname=newname[...]]] [-d dbase]
-              [-t table] [-c | -D] [-f] [-v[v]] dbf-file\n");
+	printf("dbf2pg\n"
+"usage: dbf2pg [-u | -l] [-h hostname] [-W] [-U username]\n"
+"              [-B transaction_size] [-F charset_from [-T charset_to]]\n"
+"              [-s oldname=newname[,oldname=newname[...]]] [-d dbase]\n"
+"              [-t table] [-c | -D] [-f] [-v[v]] dbf-file\n");
 }
 
 /* patch submitted by Jeffrey Y. Sue <jysue@aloha.net> */

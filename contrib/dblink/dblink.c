@@ -111,7 +111,7 @@ dblink(PG_FUNCTION_ARGS)
 				results->res = res;
 				res = NULL;
 
-				(dblink_results *) fcinfo->flinfo->fn_extra = results;
+				fcinfo->flinfo->fn_extra = (void *) results;
 
 				results = NULL;
 				results = fcinfo->flinfo->fn_extra;
