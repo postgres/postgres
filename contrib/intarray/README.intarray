@@ -60,6 +60,13 @@ test=# select subarray('{1,2,3,2,1}'::int[],2,3);
  {2,3,2}
 (1 row)
 
+  int[] intset(int4) - casting int4 to int[]
+
+test=# select intset(1);
+ intset 
+--------
+ {1}
+(1 row)
 
 OPERATIONS:
 
