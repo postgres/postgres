@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.81 2002/08/31 22:10:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.82 2002/09/01 02:27:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,24 +27,27 @@
 #include "utils/syscache.h"
 
 
-Oid			DemoteType(Oid inType);
-Oid			PromoteTypeToNext(Oid inType);
-
 static Oid	PreferredType(CATEGORY category, Oid type);
-static Node *build_func_call(Oid funcid, Oid rettype, List *args);
-static Oid	find_coercion_function(Oid targetTypeId, Oid sourceTypeId,
-								   bool isExplicit);
+static bool find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
+								  bool isExplicit,
+								  Oid *funcid);
 static Oid	find_typmod_coercion_function(Oid typeId);
+static Node *build_func_call(Oid funcid, Oid rettype, List *args);
 
 
-/* coerce_type()
- * Convert a function argument to a different type.
+/*
+ * coerce_type()
+ *		Convert a function argument to a different type.
+ *
+ * The caller should already have determined that the coercion is possible;
+ * see can_coerce_type.
  */
 Node *
 coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			Oid targetTypeId, int32 atttypmod, bool isExplicit)
 {
 	Node	   *result;
+	Oid			funcId;
 
 	if (targetTypeId == inputTypeId ||
 		node == NULL)
@@ -118,25 +121,71 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		/* assume can_coerce_type verified that implicit coercion is okay */
 		result = node;
 	}
-	else if (IsBinaryCompatible(inputTypeId, targetTypeId))
+	else if (find_coercion_pathway(targetTypeId, inputTypeId, isExplicit,
+								   &funcId))
 	{
-		/*
-		 * We don't really need to do a conversion, but we do need to
-		 * attach a RelabelType node so that the expression will be seen
-		 * to have the intended type when inspected by higher-level code.
-		 *
-		 * Also, domains may have value restrictions beyond the base type
-		 * that must be accounted for.
-		 */
-		result = coerce_type_constraints(pstate, node, targetTypeId, true);
-		/*
-		 * XXX could we label result with exprTypmod(node) instead of
-		 * default -1 typmod, to save a possible length-coercion later?
-		 * Would work if both types have same interpretation of typmod,
-		 * which is likely but not certain (wrong if target is a domain,
-		 * in any case).
-		 */
-		result = (Node *) makeRelabelType(result, targetTypeId, -1);
+		if (OidIsValid(funcId))
+		{
+			/*
+			 * Generate an expression tree representing run-time application
+			 * of the conversion function.  If we are dealing with a domain
+			 * target type, the conversion function will yield the base type.
+			 */
+			Oid		baseTypeId = getBaseType(targetTypeId);
+
+			result = build_func_call(funcId, baseTypeId, makeList1(node));
+
+			/*
+			 * If domain, test against domain constraints and relabel with
+			 * domain type ID
+			 */
+			if (targetTypeId != baseTypeId)
+			{
+				result = coerce_type_constraints(pstate, result,
+												 targetTypeId, true);
+				result = (Node *) makeRelabelType(result, targetTypeId, -1);
+			}
+
+			/*
+			 * If the input is a constant, apply the type conversion function
+			 * now instead of delaying to runtime.	(We could, of course, just
+			 * leave this to be done during planning/optimization; but it's a
+			 * very frequent special case, and we save cycles in the rewriter
+			 * if we fold the expression now.)
+			 *
+			 * Note that no folding will occur if the conversion function is
+			 * not marked 'immutable'.
+			 *
+			 * HACK: if constant is NULL, don't fold it here.  This is needed
+			 * by make_subplan(), which calls this routine on placeholder
+			 * Const nodes that mustn't be collapsed.  (It'd be a lot cleaner
+			 * to make a separate node type for that purpose...)
+			 */
+			if (IsA(node, Const) &&
+				!((Const *) node)->constisnull)
+				result = eval_const_expressions(result);
+		}
+		else
+		{
+			/*
+			 * We don't need to do a physical conversion, but we do need to
+			 * attach a RelabelType node so that the expression will be seen
+			 * to have the intended type when inspected by higher-level code.
+			 *
+			 * Also, domains may have value restrictions beyond the base type
+			 * that must be accounted for.
+			 */
+			result = coerce_type_constraints(pstate, node,
+											 targetTypeId, true);
+			/*
+			 * XXX could we label result with exprTypmod(node) instead of
+			 * default -1 typmod, to save a possible length-coercion later?
+			 * Would work if both types have same interpretation of typmod,
+			 * which is likely but not certain (wrong if target is a domain,
+			 * in any case).
+			 */
+			result = (Node *) makeRelabelType(result, targetTypeId, -1);
+		}
 	}
 	else if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
@@ -149,74 +198,23 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 	}
 	else
 	{
-		/*
-		 * Otherwise, find the appropriate type conversion function
-		 * (caller should have determined that there is one), and generate
-		 * an expression tree representing run-time application of the
-		 * conversion function.
-		 *
-		 * For domains, we use the coercion function for the base type.
-		 */
-		Oid			baseTypeId = getBaseType(targetTypeId);
-		Oid			funcId;
-
-		funcId = find_coercion_function(baseTypeId,
-										getBaseType(inputTypeId),
-										isExplicit);
-		if (!OidIsValid(funcId))
-			elog(ERROR, "coerce_type: no conversion function from '%s' to '%s'",
-				 format_type_be(inputTypeId), format_type_be(targetTypeId));
-
-		result = build_func_call(funcId, baseTypeId, makeList1(node));
-
-		/*
-		 * If domain, test against domain constraints and relabel with
-		 * domain type ID
-		 */
-		if (targetTypeId != baseTypeId)
-		{
-			result = coerce_type_constraints(pstate, result, targetTypeId,
-											 true);
-			result = (Node *) makeRelabelType(result, targetTypeId, -1);
-		}
-
-		/*
-		 * If the input is a constant, apply the type conversion function
-		 * now instead of delaying to runtime.	(We could, of course, just
-		 * leave this to be done during planning/optimization; but it's a
-		 * very frequent special case, and we save cycles in the rewriter
-		 * if we fold the expression now.)
-		 *
-		 * Note that no folding will occur if the conversion function is not
-		 * marked 'iscachable'.
-		 *
-		 * HACK: if constant is NULL, don't fold it here.  This is needed by
-		 * make_subplan(), which calls this routine on placeholder Const
-		 * nodes that mustn't be collapsed.  (It'd be a lot cleaner to
-		 * make a separate node type for that purpose...)
-		 */
-		if (IsA(node, Const) &&
-			!((Const *) node)->constisnull)
-			result = eval_const_expressions(result);
+		/* If we get here, caller blew it */
+		elog(ERROR, "coerce_type: no conversion function from %s to %s",
+			 format_type_be(inputTypeId), format_type_be(targetTypeId));
+		result = NULL;			/* keep compiler quiet */
 	}
 
 	return result;
 }
 
 
-/* can_coerce_type()
- * Can input_typeids be coerced to func_typeids?
- *
- * There are a few types which are known apriori to be convertible.
- * We will check for those cases first, and then look for possible
- * conversion functions.
+/*
+ * can_coerce_type()
+ *		Can input_typeids be coerced to func_typeids?
  *
  * We must be told whether this is an implicit or explicit coercion
  * (explicit being a CAST construct, explicit function call, etc).
  * We will accept a wider set of coercion cases for an explicit coercion.
- *
- * Notes:
- * This uses the same mechanism as the CAST() SQL construct in gram.y.
  */
 bool
 can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
@@ -278,34 +276,100 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
 		}
 
 		/*
-		 * one of the known-good transparent conversions? then drop
-		 * through...
+		 * If pg_cast shows that we can coerce, accept.  This test now
+		 * covers both binary-compatible and coercion-function cases.
 		 */
-		if (IsBinaryCompatible(inputTypeId, targetTypeId))
+		if (find_coercion_pathway(targetTypeId, inputTypeId, isExplicit,
+								  &funcId))
 			continue;
 
 		/*
-		 * If input is a class type that inherits from target, no problem
+		 * If input is a class type that inherits from target, accept
 		 */
 		if (typeInheritsFrom(inputTypeId, targetTypeId))
 			continue;
 
 		/*
-		 * Else, try for run-time conversion using functions: look for a
-		 * single-argument function named with the target type name and
-		 * accepting the source type.
-		 *
-		 * If either type is a domain, use its base type instead.
+		 * Else, cannot coerce at this argument position
 		 */
-		funcId = find_coercion_function(getBaseType(targetTypeId),
-										getBaseType(inputTypeId),
-										isExplicit);
-		if (!OidIsValid(funcId))
-			return false;
+		return false;
 	}
 
 	return true;
 }
+
+
+/*
+ * Create an expression tree to enforce the constraints (if any)
+ * that should be applied by the type.  Currently this is only
+ * interesting for domain types.
+ */
+Node *
+coerce_type_constraints(ParseState *pstate, Node *arg,
+						Oid typeId, bool applyTypmod)
+{
+	char   *notNull = NULL;
+	int32	typmod = -1;
+
+	for (;;)
+	{
+		HeapTuple	tup;
+		Form_pg_type typTup;
+
+		tup = SearchSysCache(TYPEOID,
+							 ObjectIdGetDatum(typeId),
+							 0, 0, 0);
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "coerce_type_constraints: failed to lookup type %u",
+				 typeId);
+		typTup = (Form_pg_type) GETSTRUCT(tup);
+
+		/* Test for NOT NULL Constraint */
+		if (typTup->typnotnull && notNull == NULL)
+			notNull = pstrdup(NameStr(typTup->typname));
+
+		/* TODO: Add CHECK Constraints to domains */
+
+		if (typTup->typtype != 'd')
+		{
+			/* Not a domain, so done */
+			ReleaseSysCache(tup);
+			break;
+		}
+
+		Assert(typmod < 0);
+
+		typeId = typTup->typbasetype;
+		typmod = typTup->typtypmod;
+		ReleaseSysCache(tup);
+	}
+
+	/*
+	 * If domain applies a typmod to its base type, do length coercion.
+	 */
+	if (applyTypmod && typmod >= 0)
+		arg = coerce_type_typmod(pstate, arg, typeId, typmod);
+
+	/*
+	 * Only need to add one NOT NULL check regardless of how many 
+	 * domains in the stack request it.  The topmost domain that
+	 * requested it is used as the constraint name.
+	 */
+	if (notNull)
+	{
+		ConstraintTest *r = makeNode(ConstraintTest);
+
+		r->arg = arg;
+		r->testtype = CONSTR_TEST_NOTNULL;
+		r->name	= notNull;
+		r->check_expr = NULL;
+
+		arg = (Node *) r;
+	}	
+
+	return arg;
+}
+
 
 /* coerce_type_typmod()
  * Force a value to a particular typmod, if meaningful and possible.
@@ -317,21 +381,9 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *func_typeids,
  * The caller must have already ensured that the value is of the correct
  * type, typically by applying coerce_type.
  *
- * If the target column type possesses a function named for the type
- * and having parameter signature (columntype, int4), we assume that
- * the type requires coercion to its own length and that the said
- * function should be invoked to do that.
- *
- * "bpchar" (ie, char(N)) and "numeric" are examples of such types.
- *
- * This mechanism may seem pretty grotty and in need of replacement by
- * something in pg_cast, but since typmod is only interesting for datatypes
- * that have special handling in the grammar, there's not really much
- * percentage in making it any easier to apply such coercions ...
- *
  * NOTE: this does not need to work on domain types, because any typmod
  * coercion for a domain is considered to be part of the type coercion
- * needed to produce the domain value in the first place.
+ * needed to produce the domain value in the first place.  So, no getBaseType.
  */
 Node *
 coerce_type_typmod(ParseState *pstate, Node *node,
@@ -600,100 +652,6 @@ TypeCategory(Oid inType)
 }	/* TypeCategory() */
 
 
-/* IsBinaryCompatible()
- *		Check if two types are binary-compatible.
- *
- * This notion allows us to cheat and directly exchange values without
- * going through the trouble of calling a conversion function.
- *
- * XXX This should be moved to system catalog lookups
- * to allow for better type extensibility.
- */
-
-#define TypeIsTextGroup(t) \
-		((t) == TEXTOID || \
-		 (t) == BPCHAROID || \
-		 (t) == VARCHAROID)
-
-/* Notice OidGroup is a subset of Int4GroupA */
-#define TypeIsOidGroup(t) \
-		((t) == OIDOID || \
-		 (t) == REGPROCOID || \
-		 (t) == REGPROCEDUREOID || \
-		 (t) == REGOPEROID || \
-		 (t) == REGOPERATOROID || \
-		 (t) == REGCLASSOID || \
-		 (t) == REGTYPEOID)
-
-/*
- * INT4 is binary-compatible with many types, but we don't want to allow
- * implicit coercion directly between, say, OID and AbsTime.  So we subdivide
- * the categories.
- */
-#define TypeIsInt4GroupA(t) \
-		((t) == INT4OID || \
-		 TypeIsOidGroup(t))
-
-#define TypeIsInt4GroupB(t) \
-		((t) == INT4OID || \
-		 (t) == ABSTIMEOID)
-
-#define TypeIsInt4GroupC(t) \
-		((t) == INT4OID || \
-		 (t) == RELTIMEOID)
-
-#define TypeIsInetGroup(t) \
-		((t) == INETOID || \
-		 (t) == CIDROID)
-
-#define TypeIsBitGroup(t) \
-		((t) == BITOID || \
-		 (t) == VARBITOID)
-
-
-static bool
-DirectlyBinaryCompatible(Oid type1, Oid type2)
-{
-	HeapTuple	tuple;
-	bool		result;
-
-	if (type1 == type2)
-		return true;
-
-	tuple = SearchSysCache(CASTSOURCETARGET, type1, type2, 0, 0);
-	if (HeapTupleIsValid(tuple))
-	{
-		Form_pg_cast caststruct;
-
-		caststruct = (Form_pg_cast) GETSTRUCT(tuple);
-		result = caststruct->castfunc == InvalidOid && caststruct->castimplicit;
-		ReleaseSysCache(tuple);
-	}
-	else
-		result = false;
-
-	return result;
-}
-
-
-bool
-IsBinaryCompatible(Oid type1, Oid type2)
-{
-	if (DirectlyBinaryCompatible(type1, type2))
-		return true;
-	/*
-	 * Perhaps the types are domains; if so, look at their base types
-	 */
-	if (OidIsValid(type1))
-		type1 = getBaseType(type1);
-	if (OidIsValid(type2))
-		type2 = getBaseType(type2);
-	if (DirectlyBinaryCompatible(type1, type2))
-		return true;
-	return false;
-}
-
-
 /* IsPreferredType()
  * Check if this type is a preferred type.
  * XXX This should be moved to system catalog lookups
@@ -733,7 +691,13 @@ PreferredType(CATEGORY category, Oid type)
 			break;
 
 		case (NUMERIC_TYPE):
-			if (TypeIsOidGroup(type))
+			if (type == OIDOID ||
+				type == REGPROCOID ||
+				type == REGPROCEDUREOID ||
+				type == REGOPEROID ||
+				type == REGOPERATOROID ||
+				type == REGCLASSOID ||
+				type == REGTYPEOID)
 				result = OIDOID;
 			else if (type == NUMERICOID)
 				result = NUMERICOID;
@@ -768,30 +732,85 @@ PreferredType(CATEGORY category, Oid type)
 	return result;
 }	/* PreferredType() */
 
-/*
- * find_coercion_function
- *		Look for a coercion function between two types.
+
+/* IsBinaryCompatible()
+ *		Check if two types are binary-compatible.
  *
- * A coercion function must be named after (the internal name of) its
- * result type, and must accept exactly the specified input type.  We
- * also require it to be defined in the same namespace as its result type.
- * Furthermore, unless we are doing explicit coercion the function must
- * be marked as usable for implicit coercion --- this allows coercion
- * functions to be provided that aren't implicitly invokable.
+ * This notion allows us to cheat and directly exchange values without
+ * going through the trouble of calling a conversion function.
  *
- * This routine is also used to look for length-coercion functions, which
- * are similar but accept a second argument.  secondArgType is the type
- * of the second argument (normally INT4OID), or InvalidOid if we are
- * looking for a regular coercion function.
- *
- * If a function is found, return its pg_proc OID; else return InvalidOid.
+ * As of 7.3, binary compatibility isn't hardwired into the code anymore.
+ * We consider two types binary-compatible if there is an implicit,
+ * no-function-needed pg_cast entry.  NOTE that we assume that such
+ * entries are symmetric, ie, it doesn't matter which type we consider
+ * source and which target.  (cf. checks in opr_sanity regression test)
  */
-static Oid
-find_coercion_function(Oid targetTypeId, Oid sourceTypeId, bool isExplicit)
+bool
+IsBinaryCompatible(Oid type1, Oid type2)
 {
-	Oid			funcid = InvalidOid;
+	HeapTuple	tuple;
+	Form_pg_cast castForm;
+	bool		result;
+
+	/* Fast path if same type */
+	if (type1 == type2)
+		return true;
+
+	/* Perhaps the types are domains; if so, look at their base types */
+	if (OidIsValid(type1))
+		type1 = getBaseType(type1);
+	if (OidIsValid(type2))
+		type2 = getBaseType(type2);
+
+	/* Somewhat-fast path if same base type */
+	if (type1 == type2)
+		return true;
+
+	/* Else look in pg_cast */
+	tuple = SearchSysCache(CASTSOURCETARGET,
+						   ObjectIdGetDatum(type1),
+						   ObjectIdGetDatum(type2),
+						   0, 0);
+	if (!HeapTupleIsValid(tuple))
+		return false;			/* no cast */
+	castForm = (Form_pg_cast) GETSTRUCT(tuple);
+
+	result = (castForm->castfunc == InvalidOid) && castForm->castimplicit;
+
+	ReleaseSysCache(tuple);
+
+	return result;
+}
+
+
+/*
+ * find_coercion_pathway
+ *		Look for a coercion pathway between two types.
+ *
+ * If we find a matching entry in pg_cast, return TRUE, and set *funcid
+ * to the castfunc value (which may be InvalidOid for a binary-compatible
+ * coercion).
+ */
+static bool
+find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId, bool isExplicit,
+					  Oid *funcid)
+{
+	bool		result = false;
 	HeapTuple	tuple;
 
+	*funcid = InvalidOid;
+
+	/* Perhaps the types are domains; if so, look at their base types */
+	if (OidIsValid(sourceTypeId))
+		sourceTypeId = getBaseType(sourceTypeId);
+	if (OidIsValid(targetTypeId))
+		targetTypeId = getBaseType(targetTypeId);
+
+	/* Domains are automatically binary-compatible with their base type */
+	if (sourceTypeId == targetTypeId)
+		return true;
+
+	/* Else look in pg_cast */
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(sourceTypeId),
 						   ObjectIdGetDatum(targetTypeId),
@@ -799,18 +818,36 @@ find_coercion_function(Oid targetTypeId, Oid sourceTypeId, bool isExplicit)
 
 	if (HeapTupleIsValid(tuple))
 	{
-		Form_pg_cast cform = (Form_pg_cast) GETSTRUCT(tuple);
+		Form_pg_cast castForm = (Form_pg_cast) GETSTRUCT(tuple);
 
-		if (isExplicit || cform->castimplicit)
-			funcid = cform->castfunc;
+		if (isExplicit || castForm->castimplicit)
+		{
+			*funcid = castForm->castfunc;
+			result = true;
+		}
 
 		ReleaseSysCache(tuple);
 	}
 
-	return funcid;
+	return result;
 }
 
 
+/*
+ * find_typmod_coercion_function -- does the given type need length coercion?
+ *
+ * If the target type possesses a function named for the type
+ * and having parameter signature (targettype, int4), we assume that
+ * the type requires coercion to its own length and that the said
+ * function should be invoked to do that.
+ *
+ * "bpchar" (ie, char(N)) and "numeric" are examples of such types.
+ *
+ * This mechanism may seem pretty grotty and in need of replacement by
+ * something in pg_cast, but since typmod is only interesting for datatypes
+ * that have special handling in the grammar, there's not really much
+ * percentage in making it any easier to apply such coercions ...
+ */
 static Oid
 find_typmod_coercion_function(Oid typeId)
 {
@@ -849,6 +886,7 @@ find_typmod_coercion_function(Oid typeId)
 	}
 
 	ReleaseSysCache(targetType);
+
 	return funcid;
 }
 
@@ -876,75 +914,4 @@ build_func_call(Oid funcid, Oid rettype, List *args)
 	expr->args = args;
 
 	return (Node *) expr;
-}
-
-/*
- * Create an expression tree to enforce the constraints (if any)
- * that should be applied by the type.  Currently this is only
- * interesting for domain types.
- */
-Node *
-coerce_type_constraints(ParseState *pstate, Node *arg,
-						Oid typeId, bool applyTypmod)
-{
-	char   *notNull = NULL;
-	int32	typmod = -1;
-
-	for (;;)
-	{
-		HeapTuple	tup;
-		Form_pg_type typTup;
-
-		tup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(typeId),
-							 0, 0, 0);
-		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "coerce_type_constraints: failed to lookup type %u",
-				 typeId);
-		typTup = (Form_pg_type) GETSTRUCT(tup);
-
-		/* Test for NOT NULL Constraint */
-		if (typTup->typnotnull && notNull == NULL)
-			notNull = pstrdup(NameStr(typTup->typname));
-
-		/* TODO: Add CHECK Constraints to domains */
-
-		if (typTup->typtype != 'd')
-		{
-			/* Not a domain, so done */
-			ReleaseSysCache(tup);
-			break;
-		}
-
-		Assert(typmod < 0);
-
-		typeId = typTup->typbasetype;
-		typmod = typTup->typtypmod;
-		ReleaseSysCache(tup);
-	}
-
-	/*
-	 * If domain applies a typmod to its base type, do length coercion.
-	 */
-	if (applyTypmod && typmod >= 0)
-		arg = coerce_type_typmod(pstate, arg, typeId, typmod);
-
-	/*
-	 * Only need to add one NOT NULL check regardless of how many 
-	 * domains in the stack request it.  The topmost domain that
-	 * requested it is used as the constraint name.
-	 */
-	if (notNull)
-	{
-		ConstraintTest *r = makeNode(ConstraintTest);
-
-		r->arg = arg;
-		r->testtype = CONSTR_TEST_NOTNULL;
-		r->name	= notNull;
-		r->check_expr = NULL;
-
-		arg = (Node *) r;
-	}	
-
-	return arg;
 }
