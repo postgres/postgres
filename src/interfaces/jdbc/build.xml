@@ -4,7 +4,7 @@
   build file to allow ant (http://jakarta.apache.org/ant/) to be used
   to build the PostgreSQL JDBC Driver
 
-  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.19 2002/02/22 02:07:30 davec Exp $
+  $Header: /cvsroot/pgsql/src/interfaces/jdbc/Attic/build.xml,v 1.20 2002/02/24 16:12:51 davec Exp $
 
 -->
 
@@ -37,14 +37,15 @@
       <or>
         <equals arg1="${ant.java.version}" arg2="1.2"/>
         <equals arg1="${ant.java.version}" arg2="1.3"/>
+        <equals arg1="${ant.java.version}" arg2="1.4"/>
       </or>
     </condition> 
-    <condition property="jdbc3">
-      <equals arg1="${ant.java.version}" arg2="1.4"/>
-    </condition>
     <condition property="datasource">
       <and>
-        <equals arg1="${jdbc2}" arg2="true" />        
+      <or>
+        <equals arg1="${ant.java.version}" arg2="1.2"/>
+        <equals arg1="${ant.java.version}" arg2="1.3"/>
+      </or>     
         <available classname="javax.sql.DataSource"/>
       </and>
     </condition>
@@ -90,7 +91,7 @@
 
       <exclude name="${package}/jdbc1/**" unless="jdbc1"/>
       <exclude name="${package}/jdbc2/**" unless="jdbc2"/>
-
+ 
       <exclude name="${package}/largeobject/PGblob.java" unless="jdbc2" />
       <exclude name="${package}/largeobject/PGclob.java" unless="jdbc2" />
 
