@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Nov  1 21:44:07 EST 2002
+Last updated:		Sat Nov  2 00:41:54 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -528,6 +528,7 @@ Source Code
 * Create native Win32 port [win32]
 * -Fix glibc's mktime() to handle pre-1970's dates
 * -Move /contrib/retep to gborg.postgresql.org
+* Acquire lock on a relation before building a relcache entry for it
 
 ---------------------------------------------------------------------------
 
