@@ -3,15 +3,17 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.14 2000/02/23 15:46:12 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.15 2000/05/05 03:08:20 tgl Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
 
-trap "rm -f /tmp/$$" 0 1 2 3 15
+TMPFILE="/tmp/pgupgrade.$$"
+
+trap "rm -f $TMPFILE" 0 1 2 3 15
 
 if [ "$#" -eq 0 ]
-then	echo "Usage:  $0 [-f inputfile] old_data_dir" 1>&2
+then	echo "Usage:  $0 -f inputfile old_data_dir" 1>&2
 	exit 1
 fi
 
@@ -22,11 +24,12 @@ then	INPUT="$2"
 	then	echo "$INPUT does not exist" 1>&2
 		exit 1
 	fi
-else	INPUT=""
+else	echo "Usage:  $0 -f inputfile old_data_dir" 1>&2
+	exit 1
 fi
 
 if [ "$#" -ne 1 ]
-then	echo "Usage:  $0 [-f inputfile] old_data_dir" 1>&2
+then	echo "Usage:  $0 -f inputfile old_data_dir" 1>&2
 	exit 1
 fi
 
@@ -101,28 +104,20 @@ esac
 
 # OK, ready to proceed.
 
-# Remove any COPY statements, except for the one that loads pg_shadow.
+# Execute the input script to create everything, except that we remove
+# any COPY statements, except for the ones that load pg_shadow/pg_group.
 # There shouldn't be any others in there anyway...
-# Also marks rows as committed because when pg_log is replaced with
-# the saved version, the transaction statuses may be wrong, so
-# vacuum sets the on-row status to the proper value.
 
 cat $INPUT | awk '	{
-				if (toupper($1) == "COPY" && $2 != "pg_shadow")
+				if (tolower($1) == "copy" &&
+				    $2 != "pg_shadow" &&
+				    $2 != "pg_group")
 					while (getline $0 > 0 && $0 != "\\.")
 						;
-				else if (tolower($1) == "\\connect" && 
-					 tolower($2) == "template1")
-					printf "VACUUM;\n%s\n", $0;
 				else	print $0;
-			}' >/tmp/$$
+			}' >$TMPFILE
 
-# We need to vacuum the last database too
-echo "VACUUM;" >>/tmp/$$
-
-# Create and vacuum empty tables/indexes
-
-psql "template1" <"/tmp/$$"
+psql "template1" <$TMPFILE
 
 if [ $? -ne 0 ]
 then	echo "There were errors in the input script $INPUT.
@@ -130,7 +125,36 @@ $0 aborted." 1>&2
 	exit 1
 fi
 
-echo "Input script $INPUT complete, moving data files..."
+echo "Input script $INPUT complete, fixing row commit statuses..."
+
+# Now vacuum each result database to mark all system-table rows as committed,
+# because when pg_log is replaced with the saved version, the transaction
+# statuses will no longer match the data.  VACUUM will force the on-row
+# status flags to the right value so that pg_log will not matter anymore.
+# Note: we used to try to do this as part of the previous step, but that
+# risks permissions problems if VACUUM is run as the wrong user.
+# Note: the initial VACUUM does template1, then we do everything else.
+
+cat $INPUT | awk 'BEGIN	{ print "VACUUM;" }
+			{
+				if (tolower($1) == "copy")
+					while (getline $0 > 0 && $0 != "\\.")
+						;
+				else if (tolower($1) == "\\connect" && 
+					 $2 != "-" &&
+					 $2 != "template1")
+					printf "\\connect %s\nVACUUM;\n", $2;
+			}' >$TMPFILE
+
+psql "template1" <$TMPFILE
+
+if [ $? -ne 0 ]
+then	echo "There were errors in the vacuuming step.
+$0 aborted." 1>&2
+	exit 1
+fi
+
+echo "Commit fixes complete, moving data files..."
 
 for DIR in data/base/*
 do
@@ -153,4 +177,5 @@ mv -f $OLDDIR/pg_variable data
 
 echo "You must stop/start the postmaster before doing anything else."
 echo "You may remove the $OLDDIR directory with 'rm -r $OLDDIR'."
+
 exit 0
