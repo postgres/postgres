@@ -1,11 +1,11 @@
 
-PyGreSQL - v2.0: PostgreSQL module for Python
+PyGreSQL - v2.2: PostgreSQL module for Python
 ==============================================
 
 0. Copyright notice
 ===================
 
-  PyGreSQL, version 2.0
+  PyGreSQL, version 2.2
   A Python interface for PostgreSQL database.
   Written by D'Arcy J.M. Cain, darcy@druid.net<BR>
   Based heavily on code written by Pascal Andre, andre@chimay.via.ecp.fr.
@@ -42,10 +42,10 @@ PostgreSQL is a database system derived from Postgres4.2. It conforms to
 for functions or type definition, etc.). This package is copyright by the
 Regents of the University of California, and is freely distributable.
 
-Python is a interpretated programming langage. It is object oriented, simple
-to use (light syntax, simple and straighforward statements), and has many
+Python is an interpreted programming language. It is object oriented, simple
+to use (light syntax, simple and straightforward statements), and has many
 extensions for building GUIs, interfacing with WWW, etc. An intelligent web
-browser (HotJava like) is currently under development (november 1995), and
+browser (HotJava like) is currently under development (November 1995), and
 this should open programmers many doors. Python is copyrighted by Stichting S
 Mathematisch Centrum, Amsterdam, The Netherlands, and is freely distributable.
 
@@ -71,43 +71,63 @@ style prototypes and changed the order of arguments to connect.
                  This file should go in your Python library directory.  It
                  contains some interesting functions for pg use.   All pg
                  function are imported in this file.
+  pg.py        - PyGreSQL DB class.
   tutorial/    - demos directory
                  Content: basics.py, syscat.py, advanced.py, func.py and
                  pgtools.py.  The samples here have been taken from the
                  PostgreSQL manual and were used for module testing.  They
                  demonstrate some PostgreSQL features.  Pgtools.py is an
-                 add-in used for demonstation.
+                 add-in used for demonstration.
 
 1.3. Installation
 -----------------
 
-You first have to get and build Python and PostgreSQL.  You have to copy the
-pgmodule.c file to the Python Modules directory and add the following line to
-the Setup file there.
-    pg  pgmodule.c -I[pg inc] -L[pg lib] -lpq
-or, for a dynamic module:
-    pg  [pg mod]pgmodule.c ../Objects/access.c -I[pg inc] -L[pg lib] -lpd
-where:
-    pg mod       - directory where you did put the module files
-    pg inc       - path of the PostgreSQL include 
-    pg lib       - path of the PostgreSQL libraries 
+* You first have to get and build Python and PostgreSQL.
 
-Some options may be added to this line:
-  -DNO_DEF_VAR - no default variables support
-  -DNO_DIRECT  - no direct access methods
-  -DNO_LARGE   - no large object support
+* PyGreSQL is implemented as two parts, a C module labeled _pg and a
+  Python wrapper called pg.py.  This changed between 2.1 and 2.2.  This
+  should not affect any existing programs but the installation is slightly
+  different.
 
-These options will be described in the next sections.
+* Find the directory where your 'Setup' file lives (usually ??/Modules) and
+  copy the 'pgmodule.c' file there.
+
+* Add the following line to your Setup file
+    _pg  pgmodule.c -I[pgInc] -L[pgLib] -lpq # -lcrypt # needed on some systems
+  where:
+    [pgInc] = path of the PostgreSQL include 
+    [pgLib] = path of the PostgreSQL libraries 
+  Some options may be added to this line:
+    -DNO_DEF_VAR - no default variables support
+    -DNO_DIRECT  - no direct access methods
+    -DNO_LARGE   - no large object support
+  These options will be described in the next sections.
+
+* If you want a shared module, make sure that the "*shared*" keyword is
+  uncommented and add the above line below it.  You then need to install
+  your shared modules with "make sharedinstall."
+
+* Copy pg.py to the lib directory where the rest of your modules are.  For
+  example, that's /usr/local/lib/Python on my system.
+
+* Do 'make -f Makefile.pre.in boot' and do 'make && make install'
+
+* For more details read the documentation at the top of Makefile.pre.in
+
+* For Linux installation look at README.linux
 
 
 1.4. Where to get ... ?
 -----------------------
 
-The home sites of the differents packages are:
+The home sites of the different packages are:
 
   - Python:     ftp://ftp.python.org:/pub/python
-  - PosgreSQL:  ftp://ftp.PostgreSQL.org/pub/postgresql-6.2.1.tar.gz
-  - PyGreSQL:   ftp://ftp.druid.net/pub/contrib/pygresql-2.0.tgz
+  - PosgreSQL:  ftp://ftp.PostgreSQL.org/pub/postgresql-6.4.tar.gz
+  - PyGreSQL:   ftp://ftp.druid.net/pub/distrib/pygresql-2.2.tgz
+
+A Linux RPM can be picked up from ftp://www.eevolute.com/pub/python/.
+
 
 1.5. Information and support
 ----------------------------
@@ -115,6 +135,7 @@ The home sites of the differents packages are:
 If you need information about these packages please check their web sites:
 
   - Python:     http://www.python.org/
+  - PostgreSQL: http://www.postgresql.org/
   - PyGres95:   http://www.via.ecp.fr/via/products/pygres.html
   - PyGreSQL:   http://www.druid.net/pygresql/
 
@@ -125,7 +146,7 @@ For support:
   - PyGres95:    contact me (andre@via.ecp.fr) for bug reports, ideas, remarks
                  I will try to answer as long as my free time allow me to do 
                  that.
-  - PyGreSQL:    contact me (darcy@druid.net) concerning the changes to 2.0.
+  - PyGreSQL:    contact me (darcy@druid.net) concerning the changes to 2.x.
 
 
 2. Programming information
@@ -150,26 +171,28 @@ having to modify environment. The support for default variables can be disabled
 by setting the -DNO_DEF_VAR option in the Python Setup file. Methods relative 
 to this are specified by te tag [DV].
 
-All variables are set to None at module initialisation, specifying that 
+All variables are set to None at module initialization, specifying that 
 standard environment variables should be used.
 
   2.1.1. connect - opens a pg connection
   ----------------------------------------
 
   Syntax:      
-    connect(dbname, host, port, opt, tty)
+    connect(dbname, host, port, opt, tty, user, passwd)
   Parameters: 
     dbname        - name of connected database (string/None)
     host          - name of the server host (string/None)
     port          - port used by the database server (integer/-1)
     opt           - connection options (string/None)
     tty           - debug terminal (string/None)
+	user          - PostgreSQL user (string/None)
+    passwd        - password for user (string/None)
   Return type:
     pgobject      - the object handling the connection
   Exceptions raised:
     TypeError     - bad argument type, or too many arguments
     SyntaxError   - duplicate argument definition 
-    pg.error      - some error occured during pg connection definition
+    pg.error      - some error occurred during pg connection definition
     (+ all exceptions relative to object allocation)
   Description:
     This method opens a connection to a specified database on a given
@@ -311,19 +334,20 @@ standard environment variables should be used.
   2.1.7. Module constants
   -----------------------
 
-  Some constants are defined in the module dictionnary. They are intended to be
+  Some constants are defined in the module dictionary. They are intended to be
 used as parameters for methods calls. You should refer to PostgreSQL user 
 manual for more information about them. These constants are:
 
   - large objects access modes, used by (pgobject.)locreate and 
     (pglarge.)open: (pg.)INV_READ, (pg.)INV_WRITE, (pg.)INV_ARCHIVE
-  - positionnal flags, used by (pglarge.)seek: (pg.)SEEK_SET, 
+  - positional flags, used by (pglarge.)seek: (pg.)SEEK_SET, 
     (pg.)SEEK_CUR, (pg.)SEEK_END.
+  - version and __version__ constants that give the current version.
 
 2.2. pgobject description
 ---------------------------
 
-  This object handle a connection to a PostgreSQL database. It embends and 
+  This object handle a connection to a PostgreSQL database. It embeds and 
 hides all the parameters that define this connection, thus just leaving really
 significant parameters in function calls.
   Some methods give direct access to the connection socket. They are specified
@@ -347,10 +371,12 @@ methods are specified by the tag [LO].
     ValueError    - empty SQL query
     pg.error      - error during query processing, or invalid connection
   Description:
-    This method simply sends a SQL query to the database. If the command does
-    not return a result (ie. is not a some kind of SELECT statement), it 
-    returns None.  Otherwise, it returns a pgqueryobject that can be
-    accessed via the getresult method or printed.
+    This method simply sends a SQL query to the database. If the query is
+    an insert statement, the return value is the OID of the newly
+    inserted row.  If it is otherwise a query that does not return a result
+    (ie. is not a some kind of SELECT statement), it returns None.
+    Otherwise, it returns a pgqueryobject that can be accessed via the
+    getresult method or printed.
 
   pgqueryobject methods
   ---------------------
@@ -366,9 +392,25 @@ methods are specified by the tag [LO].
       SyntaxError   - too many parameters
       pg.error      - invalid previous result
     Description:
-      This method returns the list of the values returned by the last query.
+      This method returns the list of the values returned by the query.
       More information about this result may be get using listfields,
-      fieldname and fiednum methods. All list elements are strings.
+      fieldname and fiednum methods.
+
+    2.2.1.2. dictresult - like getresult but returns list of dictionaries
+    ---------------------------------------------------------------------
+
+    Syntax: dictresult()
+    Parameters: none
+    Return type:
+      list          - result values as a dictionary
+    Exceptions raised:
+      SyntaxError   - too many parameters
+      pg.error      - invalid previous result
+    Description:
+      This method returns the list of the values returned by the query
+      with each tuple returned as a dictionary with the field names
+      used as the dictionary index.
+
 
     2.2.3. listfields - lists the fields names of the previous query result
     -----------------------------------------------------------------------
@@ -428,7 +470,7 @@ methods are specified by the tag [LO].
     pg.error       - invalid connection
   Description:
     This methods try to get a notify from the server (from the SQL statement 
-    NOTIFY). If the server returns no notify, the methods retuns None. 
+    NOTIFY). If the server returns no notify, the methods returns None. 
     Otherwise, it returns a tuple (couple) (relname, pid), where relname is the
     name of the notify and pid the process id of the connection that triggered 
     the notify.
@@ -561,7 +603,7 @@ connection and its status. These attributes are:
 --------------------------
 
   This object handles all the request concerning a postgres large object. It 
-embends and hides all the 'recurrent' variables (object oid and connection), 
+embeds and hides all the 'recurrent' variables (object oid and connection), 
 exactly in the same way pgobjects do, thus only keeping significant 
 parameters in function calls. It keeps a reference to the pgobject used for
 its creation, sending requests though with its parameters. Any modification but
@@ -636,7 +678,7 @@ error message.
   Syntax: seek(offset, whence)
   Parameters:
     offset          - position offset
-    whence          - positionnal parameter
+    whence          - positional parameter
   Return type:
     integer         - new position in object
   Exception raised:
@@ -664,7 +706,7 @@ error message.
   Return type:
     None
   Exception raised:
-    pg.error        - invalid connection or incaid object
+    pg.error        - invalid connection or invalid object
     SyntaxError     - too many parameters
     IOError         - object is not closed, or unlink error
   Description:
@@ -717,3 +759,169 @@ duplicated. You should provide some locking to be able if you want to check
 this.
   The oid attribute is very interesting because it allow you reuse the oid 
 later, creating the pglarge object with a pgobject getlo() method call.
+
+
+3. The pg wrapper
+================
+
+The previous functions are wrapped in a module called pg.  The module
+has a class called DB.  The above functions are also included in the
+name space so it isn't necessary to import both modules.  The preferred
+way to use this module is as follows.
+
+from pg import DB
+db = DB(...) # See description of the initialization method below.
+
+The following describes the methods and variables of this class.
+
+
+ 3.1. Initialization
+ -------------------
+ The DB class is initialized with the same arguments as the connect
+ method described in section 2.  It also initializes a few internal
+ variables.  The statement 'db = DB()' will open the local database
+ with the name of the user just like connect() does.
+
+ 3.2. pkey
+ ---------
+ Syntax:
+   pkey(table)
+ Parameters:
+   table - name of table
+ Returns:
+   Name of field which is the primary key of the table.
+ Description:
+   This method returns the primary key of a table.  Note that this raises
+   an exception if the table doesn't have a primary key.  Further, in the
+   current implementation of PostgreSQL the 'PRIMARY KEY' syntax doesn't
+   actually fill in the necessary tables to determine primary keys.  You
+   can do this yourself with the following query.  Replace $0 with the
+   table name and $1 with the attribute that is the primary key.
+
+     UPDATE pg_index SET indisprimary = 't'
+                            WHERE pg_index.oid in (SELECT pg_index.oid
+       FROM pg_class, pg_attribute, pg_index
+       WHERE pg_class.oid = pg_attribute.attrelid AND
+           pg_class.oid = pg_index.indrelid AND
+           pg_index.indkey[0] = pg_attribute.attnum AND
+           pg_class.relname = '$0' AND
+           pg_attribute.attname = '$1');
+
+ 3.3. get_attnames
+ -----------------
+ Syntax: 
+   get_attnames(table)       
+ Parameters: 
+   table - name of table
+ Returns:
+   List of attribute names
+ Description:
+   Given the name of a table, digs out the list of attribute names.
+
+ 3.4. get
+ --------
+ Syntax: 
+   get(table, arg, [keyname])
+ Parameters:
+   table - name of table
+   arg - either a dictionary or the value to be looked up
+   keyname - name of field to use as key (optional)
+ Returns:
+   A dictionary mapping attribute names to row values.
+ Description:
+   This method is the basic mechanism to get a single row.  It assumes
+   that the key specifies a unique row.  If keyname is not specified
+   then the primary key for the table is used.  If arg is a dictionary
+   then the value for the key is taken from it and it is modified to
+   include the new values, replacing existing values where necessary.
+   The oid is also put into the dictionary but in order to allow the
+   caller to work with multiple tables, the attribute name is munged
+   to make it unique.  It consists of the string "oid_" followed by
+   the name of the table.
+
+
+ 3.5. insert
+ -----------
+ Syntax:
+   insert(table, a)
+ Parameters:
+   table - name of table
+   a - a dictionary of values
+ Returns:
+   The OID of the newly inserted row.
+ Description:
+   This method inserts values into the table specified filling in the
+   values from the dictionary.
+
+
+ 3.6. update
+ -----------
+ Syntax:
+   update(table, a)             
+ Parameters:
+   table - name of table
+   a - a dictionary of values
+ Returns:
+   A dictionary with the new row
+ Description:
+   Similar to insert but updates an existing row.  The update is based
+   on the OID value as munged by get.  The array returned is the
+   one sent modified to reflect any changes caused by the update due
+   to triggers, rules, defaults, etc.
+
+ 3.7. clear
+ ----------
+ Syntax:
+   clear(table, [a])
+ Parameters:
+   table - name of table
+   a - a dictionary of values
+ Returns:
+   A dictionary with an empty row
+ Description:
+   This method clears all the attributes to values determined by the types.
+   Numeric types are set to 0, dates are set to 'TODAY' and everything
+   else is set to the empty string.  If the array argument is present,
+   it is used as the array and any entries matching attribute names
+   are cleared with everything else left unchanged.
+
+ 3.8. delete
+ -----------
+ Syntax:
+   delete(table, a)
+ Parameters:
+   table - name of table
+   a - a dictionary of values
+ Returns:
+   None
+ Description:
+   This method deletes the row from a table.  It deletes based on the OID
+   as munged as described above.
+
+ 3.9. Convenience methods
+ ------------------------
+ In order to allow all access to a connection to be done through the DB
+ class, the following methods wrap the basic functions.
+
+   query
+   reset
+   getnotify
+   inserttable
+
+ The following depend on being activated in the underlying C code
+
+   putline
+   getline
+   endcopy
+   locreate
+   getlo
+   loimport
+
+
+4. Future directions
+====================
+
+The large object and direct access functions need much more attention.
+
+I want to add a DB-SIG API wrapper around the underlying module.
+
