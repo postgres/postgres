@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.35 1998/02/23 19:26:32 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.36 1998/02/23 20:32:40 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -358,7 +358,11 @@ echo "COPY pg_user TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" |\
 echo "GRANT SELECT ON pg_class TO PUBLIC" |\
 	 postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 
-echo "create view db_user as select usename,usesysid from pg_user;" |\
+echo "CREATE RULE pg_user_hide_pw as on SELECT to pg_user.passwd DO INSTEAD SELECT '********' as passwd;" | \
+	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
+	grep -v "'DEBUG:"
+
+echo "create view db_user as select * from pg_user;" |\
 	postgres -F -Q -D$PGDATA template1 2>&1 > /dev/null |\
 	grep -v "'DEBUG:"
 echo "grant select on db_user to public" |\
