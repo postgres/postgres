@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.7 2001/01/25 03:31:16 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.8 2001/01/26 18:23:12 tgl Exp $
 
 There are two fundamental lock structures: the per-lockable-object LOCK
 struct, and the per-lock-holder HOLDER struct.  A LOCK object exists
@@ -178,11 +178,10 @@ request of any pending waiter, then the process will be inserted in the
 wait queue just ahead of the first such waiter.  (If we did not make this
 check, the deadlock detection code would adjust the queue order to resolve
 the conflict, but it's relatively cheap to make the check in ProcSleep and
-avoid a deadlock timeout delay in this case.)  Note special case: if the
-process holds locks that conflict with the first waiter, so that it would
-go at the front of the queue, and its request does not conflict with the
-already-granted locks, then the process will be granted the lock without
-going to sleep at all.
+avoid a deadlock timeout delay in this case.)  Note special case when
+inserting before the end of the queue: if the process's request does not
+conflict with any existing lock nor any waiting request before its insertion
+point, then go ahead and grant the lock without waiting.
 
 When a lock is released, the lock release routine (ProcLockWakeup) scans
 the lock object's wait queue.  Each waiter is awoken if (a) its request
@@ -192,7 +191,7 @@ ensures that conflicting requests are granted in order of arrival.
 There are cases where a later waiter must be allowed to go in front of
 conflicting earlier waiters to avoid deadlock, but it is not
 ProcLockWakeup's responsibility to recognize these cases; instead, the
-deadlock detection code re-orders the wait queue when necessary.
+deadlock detection code will re-order the wait queue when necessary.
 
 To perform deadlock checking, we use the standard method of viewing the
 various processes as nodes in a directed graph (the waits-for graph or
@@ -263,13 +262,13 @@ orders) as well as the current real order.
 
 The easiest way to handle this seems to be to have a lookaside table that
 shows the proposed new queue order for each wait queue that we are
-considering rearranging.  This table is passed to FindLockCycle, and it
-believes the given queue order rather than the "real" order for each lock
+considering rearranging.  This table is checked by FindLockCycle, and it
+believes the proposed queue order rather than the real order for each lock
 that has an entry in the lookaside table.
 
 We build a proposed new queue order by doing a "topological sort" of the
 existing entries.  Each soft edge that we are currently considering
-reversing is a property of the partial order that the topological sort
+reversing creates a property of the partial order that the topological sort
 has to enforce.  We must use a sort method that preserves the input
 ordering as much as possible, so as not to gratuituously break arrival
 order for processes not involved in a deadlock.  (This is not true of the

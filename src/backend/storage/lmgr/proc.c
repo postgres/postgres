@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.97 2001/01/25 03:31:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.98 2001/01/26 18:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,13 +537,18 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	 * me to before that waiter anyway; but it's relatively cheap to detect
 	 * such a conflict immediately, and avoid delaying till deadlock timeout.
 	 *
-	 * Special case: if I find I should go in front of the first waiter,
-	 * and I do not conflict with already-held locks, then just grant myself
-	 * the requested lock immediately.
+	 * Special case: if I find I should go in front of some waiter, check
+	 * to see if I conflict with already-held locks or the requests before
+	 * that waiter.  If not, then just grant myself the requested lock
+	 * immediately.  This is the same as the test for immediate grant in
+	 * LockAcquire, except we are only considering the part of the wait queue
+	 * before my insertion point.
 	 * ----------------------
 	 */
 	if (myHeldLocks != 0)
 	{
+		int			aheadRequests = 0;
+
 		proc = (PROC *) MAKE_PTR(waitQueue->links.next);
 		for (i = 0; i < waitQueue->size; i++)
 		{
@@ -557,26 +562,30 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 					MyProc->errType = STATUS_ERROR;
 					return STATUS_ERROR;
 				}
-				if (i == 0)
+				/* I must go before this waiter.  Check special case. */
+				if ((lockctl->conflictTab[lockmode] & aheadRequests) == 0 &&
+					LockCheckConflicts(lockMethodTable,
+									   lockmode,
+									   lock,
+									   holder,
+									   MyProc,
+									   NULL) == STATUS_OK)
 				{
-					/* I must go before first waiter.  Check special case. */
-					if (LockCheckConflicts(lockMethodTable,
-										   lockmode,
-										   lock,
-										   holder,
-										   MyProc,
-										   NULL) == STATUS_OK)
-					{
-						/* Skip the wait and just grant myself the lock. */
-						GrantLock(lock, holder, lockmode);
-						return STATUS_OK;
-					}
+					/* Skip the wait and just grant myself the lock. */
+					GrantLock(lock, holder, lockmode);
+					return STATUS_OK;
 				}
 				/* Break out of loop to put myself before him */
 				break;
 			}
+			/* Nope, so advance to next waiter */
+			aheadRequests |= (1 << proc->waitLockMode);
 			proc = (PROC *) MAKE_PTR(proc->links.next);
 		}
+		/*
+		 * If we fall out of loop normally, proc points to waitQueue head,
+		 * so we will insert at tail of queue as desired.
+		 */
 	}
 	else
 	{
@@ -739,7 +748,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
 	PROC	   *proc;
-	int			conflictMask = 0;
+	int			aheadRequests = 0;
 
 	Assert(queue_size >= 0);
 
@@ -756,7 +765,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 		 * Waken if (a) doesn't conflict with requests of earlier waiters,
 		 * and (b) doesn't conflict with already-held locks.
 		 */
-		if (((1 << lockmode) & conflictMask) == 0 &&
+		if ((lockctl->conflictTab[lockmode] & aheadRequests) == 0 &&
 			LockCheckConflicts(lockMethodTable,
 							   lockmode,
 							   lock,
@@ -775,8 +784,8 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 		}
 		else
 		{
-			/* Cannot wake this guy.  Add his request to conflict mask. */
-			conflictMask |= lockctl->conflictTab[lockmode];
+			/* Cannot wake this guy. Remember his request for later checks. */
+			aheadRequests |= (1 << lockmode);
 			proc = (PROC *) MAKE_PTR(proc->links.next);
 		}
 	}
