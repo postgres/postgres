@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.8 1997/11/13 03:22:54 momjian Exp $
+ * $Id: indexing.h,v 1.9 1997/11/14 05:57:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
 #define AttrDefaultIndex   "pg_attrdefind"
 #define RelCheckIndex	   "pg_relcheckind"
 #define TriggerRelidIndex  "pg_trigrelidind"
-#define DescriptionRowOidIndex "pg_descrrowoidind"
+#define DescriptionObjOidIndex "pg_descrobjoidind"
 
 extern char *Name_pg_attr_indices[];
 extern char *Name_pg_proc_indices[];
@@ -55,7 +55,7 @@ extern char *Name_pg_class_indices[];
 extern char *Name_pg_attrdef_indices[];
 extern char *Name_pg_relcheck_indices[];
 extern char *Name_pg_trigger_indices[];
-extern char *Name_pg_rowoid_indices[];
+extern char *Name_pg_objoid_indices[];
 
 extern char *IndexedCatalogNames[];
 
@@ -119,7 +119,7 @@ DECLARE_INDEX(pg_relcheckind on pg_relcheck using btree(rcrelid oid_ops));
 
 DECLARE_INDEX(pg_trigrelidind on pg_trigger using btree(tgrelid oid_ops));
 
-DECLARE_INDEX(pg_descrrowoidind on pg_description using btree(rowoid oid_ops));
+DECLARE_INDEX(pg_descrobjoidind on pg_description using btree(objoid oid_ops));
 
 /* now build indices in the initialization scripts */
 BUILD_INDICES

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_description.h,v 1.1 1997/11/13 03:22:59 momjian Exp $
+ * $Id: pg_description.h,v 1.2 1997/11/14 05:57:46 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -34,7 +34,7 @@
  */
 CATALOG(pg_description)
 {
-	Oid			rowoid;
+	Oid			objoid;
 	text		description;
 } FormData_pg_description;
 
@@ -50,7 +50,7 @@ typedef FormData_pg_description *Form_pg_description;
  * ----------------
  */
 #define Natts_pg_description			2
-#define Anum_pg_description_rowoid		1
+#define Anum_pg_description_objoid		1
 #define Anum_pg_description_description	2
 
 /* ----------------

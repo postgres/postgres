@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.103 1997/11/13 03:36:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.104 1997/11/14 05:57:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -729,7 +729,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 		strcat(descbuf, "pg_attribute.attname = '");
 		strcat(descbuf, column);
 		strcat(descbuf, "' and ");
-		strcat(descbuf, " pg_attribute.oid = pg_description.rowoid " );
+		strcat(descbuf, " pg_attribute.oid = pg_description.objoid " );
 		if (!(res = PSQLexec(pset, descbuf)))
 			return -1;
 	}
@@ -740,7 +740,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 		strcat(descbuf, "WHERE pg_class.relname = '");
 		strcat(descbuf, object);
 		strcat(descbuf, "'" );
-		strcat(descbuf, " and pg_class.oid = pg_description.rowoid " );
+		strcat(descbuf, " and pg_class.oid = pg_description.objoid " );
 		if (!(res = PSQLexec(pset, descbuf)))
 			return -1;
 		else if (PQntuples(res) <= 0)
@@ -752,7 +752,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 			strcat(descbuf, "WHERE pg_type.typname = '");
 			strcat(descbuf, object);
 			strcat(descbuf, "'" );
-			strcat(descbuf, " and pg_type.oid = pg_description.rowoid " );
+			strcat(descbuf, " and pg_type.oid = pg_description.objoid " );
 			if (!(res = PSQLexec(pset, descbuf)))
 				return -1;
 			else if (PQntuples(res) <= 0)
@@ -764,7 +764,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 				strcat(descbuf, "WHERE pg_type.typname = '");
 				strcat(descbuf, object);
 				strcat(descbuf, "'" );
-				strcat(descbuf, " and pg_type.oid = pg_description.rowoid " );
+				strcat(descbuf, " and pg_type.oid = pg_description.objoid " );
 				if (!(res = PSQLexec(pset, descbuf)))
 					return -1;
 				else if (PQntuples(res) <= 0)
@@ -776,7 +776,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 					strcat(descbuf, "WHERE pg_proc.proname = '");
 					strcat(descbuf, object);
 					strcat(descbuf, "'" );
-					strcat(descbuf, " and pg_proc.oid = pg_description.rowoid " );
+					strcat(descbuf, " and pg_proc.oid = pg_description.objoid " );
 					if (!(res = PSQLexec(pset, descbuf)))
 						return -1;
 					else if (PQntuples(res) <= 0)
@@ -788,7 +788,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 						strcat(descbuf, "WHERE pg_operator.oprname = '");
 						strcat(descbuf, object);
 						strcat(descbuf, "'" );
-						strcat(descbuf, " and pg_operator.oid = pg_description.rowoid " );
+						strcat(descbuf, " and pg_operator.oid = pg_description.objoid " );
 						if (!(res = PSQLexec(pset, descbuf)))
 							return -1;
 						else if (PQntuples(res) <= 0)
@@ -800,7 +800,7 @@ objectDescription(PsqlSettings *pset, char *object, FILE *fout)
 							strcat(descbuf, "WHERE pg_aggregate.aggname = '");
 							strcat(descbuf, object);
 							strcat(descbuf, "'" );
-							strcat(descbuf, " and pg_aggregate.oid = pg_description.rowoid " );
+							strcat(descbuf, " and pg_aggregate.oid = pg_description.objoid " );
 							if (!(res = PSQLexec(pset, descbuf)))
 								return -1;
 						}

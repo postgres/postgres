@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.64 1997/11/10 15:22:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.65 1997/11/14 05:57:23 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3552,7 +3552,8 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 	Node *result = NULL;
 
 	/* we do this so indexes can be used */
-	if (strcmp(opname,"~") == 0)
+	if (strcmp(opname,"~") == 0 ||
+		strcmp(opname,"~*") == 0)
 	{
 		if (nodeTag(rexpr) == T_A_Const &&
 		   ((A_Const *)rexpr)->val.type == T_String &&
@@ -3570,7 +3571,8 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 					n->val.val.str[pos] == '?' ||
 					n->val.val.str[pos] == '*' ||
 					n->val.val.str[pos] == '[' ||
-					n->val.val.str[pos] == '$')
+					n->val.val.str[pos] == '$' ||
+					(strcmp(opname,"~*") == 0 && isalpha(n->val.val.str[pos]))
 		     		break;
 		     	if (n->val.val.str[pos] == '\\')
 					pos++;
@@ -3596,71 +3598,6 @@ static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 						makeA_Expr(AND, NULL,
 							makeA_Expr(OP, ">=", lexpr, (Node *)least),
 							makeA_Expr(OP, "<=", lexpr, (Node *)most)));
-			}
-		}
-	}
-	else if (strcmp(opname,"~*") == 0)
-	{
-		if (nodeTag(rexpr) == T_A_Const &&
-		   ((A_Const *)rexpr)->val.type == T_String &&
-		   ((A_Const *)rexpr)->val.val.str[0] == '^')
-		{
-			A_Const *n = (A_Const *)rexpr;
-			char *match_lower_least = palloc(strlen(n->val.val.str)+2);
-			char *match_lower_most = palloc(strlen(n->val.val.str)+2);
-			char *match_upper_least = palloc(strlen(n->val.val.str)+2);
-			char *match_upper_most = palloc(strlen(n->val.val.str)+2);
-			int pos, match_pos=0;
-
-			/* skip leading ^ */
-			for (pos = 1; n->val.val.str[pos]; pos++)
-			{
-				if (n->val.val.str[pos] == '.' ||
-					n->val.val.str[pos] == '?' ||
-					n->val.val.str[pos] == '*' ||
-					n->val.val.str[pos] == '[' ||
-					n->val.val.str[pos] == '$')
-		     		break;
-		     	if (n->val.val.str[pos] == '\\')
-					pos++;
-				/* If we have punctuation, this works well */
-				match_lower_least[match_pos] = tolower(n->val.val.str[pos]);
- 								match_lower_most[match_pos] = tolower(n->val.val.str[pos]);
-				match_upper_least[match_pos] = toupper(n->val.val.str[pos]);
- 								match_upper_most[match_pos++] = toupper(n->val.val.str[pos]);
-			}
-
-			if (match_pos != 0)
-			{
-				A_Const *lower_least = makeNode(A_Const);
-				A_Const *lower_most = makeNode(A_Const);
-				A_Const *upper_least = makeNode(A_Const);
-				A_Const *upper_most = makeNode(A_Const);
-				
-				/* make strings to be used in index use */
-				match_lower_least[match_pos] = '\0';
-				match_lower_most[match_pos] = '\377';
-				match_lower_most[match_pos+1] = '\0';
-				match_upper_least[match_pos] = '\0';
-				match_upper_most[match_pos] = '\377';
-				match_upper_most[match_pos+1] = '\0';
-				lower_least->val.type = T_String;
-				lower_least->val.val.str = match_lower_least;
-				lower_most->val.type = T_String;
-				lower_most->val.val.str = match_lower_most;
-				upper_least->val.type = T_String;
-				upper_least->val.val.str = match_upper_least;
-				upper_most->val.type = T_String;
-				upper_most->val.val.str = match_upper_most;
-				result = makeA_Expr(AND, NULL,
-						makeA_Expr(OP, "~*", lexpr, rexpr),
-						makeA_Expr(OR, NULL,
-						makeA_Expr(AND, NULL,
-							makeA_Expr(OP, ">=", lexpr, (Node *)lower_least),
-							makeA_Expr(OP, "<=", lexpr, (Node *)lower_most)),
-						makeA_Expr(AND, NULL,
-							makeA_Expr(OP, ">=", lexpr, (Node *)upper_least),
-							makeA_Expr(OP, "<=", lexpr, (Node *)upper_most))));
 			}
 		}
 	}
