@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.104 2001/04/18 20:42:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.105 2001/04/30 19:24:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,8 +363,41 @@ pull_up_subqueries(Query *parse, Node *jtnode)
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		j->larg = pull_up_subqueries(parse, j->larg);
-		j->rarg = pull_up_subqueries(parse, j->rarg);
+		/*
+		 * At the moment, we can't pull up subqueries that are inside the
+		 * nullable side of an outer join, because substituting their target
+		 * list entries for upper Var references wouldn't do the right thing
+		 * (the entries wouldn't go to NULL when they're supposed to).
+		 * Suppressing the pullup is an ugly, performance-losing hack, but
+		 * I see no alternative for now.  Find a better way to handle this
+		 * when we redesign query trees --- tgl 4/30/01.
+		 */
+		switch (j->jointype)
+		{
+			case JOIN_INNER:
+				j->larg = pull_up_subqueries(parse, j->larg);
+				j->rarg = pull_up_subqueries(parse, j->rarg);
+				break;
+			case JOIN_LEFT:
+				j->larg = pull_up_subqueries(parse, j->larg);
+				break;
+			case JOIN_FULL:
+				break;
+			case JOIN_RIGHT:
+				j->rarg = pull_up_subqueries(parse, j->rarg);
+				break;
+			case JOIN_UNION:
+				/*
+				 * This is where we fail if upper levels of planner
+				 * haven't rewritten UNION JOIN as an Append ...
+				 */
+				elog(ERROR, "UNION JOIN is not implemented yet");
+				break;
+			default:
+				elog(ERROR, "pull_up_subqueries: unexpected join type %d",
+					 j->jointype);
+				break;
+		}
 	}
 	else
 		elog(ERROR, "pull_up_subqueries: unexpected node type %d",
