@@ -7,7 +7,7 @@ PostgreSQL lists.
 
 Read the manual page for more information.  To view it:
 
-	nroff -man pg_upgrade.1 | $PAGER
+	nroff -man pg_upgrade.1 | more
 
 Bruce Momjian
 

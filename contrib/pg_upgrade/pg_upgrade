@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.10 2002/01/18 04:38:46 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.11 2002/01/31 19:13:53 momjian Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -184,7 +184,7 @@ then
 		exit 1
 	fi
 
-	# Start server, if needed, so we can do some work.
+	# If server is down, start it so we can do some work.
 	if ! pg_ctl status | sed -n '1p' | grep "is running" > /dev/null 2>&1
 	then	pg_ctl -w start
 		if [ $? -ne 0 ]
@@ -245,7 +245,8 @@ then
 	make_dbobjoidmap > "$INFODIR"/dbobjoidmap || exit "$?"
 
 	# Generate setval() script for 7.1 because it has int4 sequences
-	# Sequence XIDs changed from 7.2beta4 to beta5;  we have to recreate them.
+	# Sequence XIDs changed from 7.2beta4 to beta5 so we have to recreate them too.
+	# Not required for 7.2beta5 and later, but it can't hurt.
 	if [ "$SRC_VERSION" = "7.1" -o \
 	     "$SRC_VERSION" = "7.2" ]
 	then
@@ -427,7 +428,7 @@ then	echo "There were errors during VACUUM.  Exiting." 1>&2
 	exit 1
 fi
 
-# Generate mappings for database
+# Generate mappings for new database
 make_dboidmap > /tmp/$$.dboidmap || exit "$?"
 make_dbobjoidmap > /tmp/$$.dbobjoidmap || exit "$?"
 
