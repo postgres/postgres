@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.43 2000/02/21 20:18:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.44 2000/02/26 21:13:18 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -49,6 +49,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/keywords.h"
+#include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -947,7 +948,8 @@ get_select_query_def(Query *query, deparse_context *context)
 		appendStringInfo(buf, sep);
 		sep = ", ";
 
-		get_tle_expr(tle, context);
+		/* Do NOT use get_tle_expr here; see its comments! */
+		get_rule_expr(tle->expr, context);
 
 		/* Check if we must say AS ... */
 		if (! IsA(tle->expr, Var))
@@ -1486,16 +1488,16 @@ static void
 get_func_expr(Expr *expr, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
+	Func	   *func = (Func *) (expr->oper);
 	HeapTuple	proctup;
 	Form_pg_proc procStruct;
+	char	   *proname;
+	int32		coercedTypmod;
 	List	   *l;
 	char	   *sep;
-	Func	   *func = (Func *) (expr->oper);
-	char	   *proname;
 
-	/* ----------
+	/*
 	 * Get the functions pg_proc tuple
-	 * ----------
 	 */
 	proctup = SearchSysCacheTuple(PROCOID,
 								  ObjectIdGetDatum(func->funcid),
@@ -1527,9 +1529,59 @@ get_func_expr(Expr *expr, deparse_context *context)
 		}
 	}
 
-	/* ----------
-	 * Build a string of proname(args)
-	 * ----------
+	/*
+	 * Check to see if function is a length-coercion function for some
+	 * datatype.  If so, display the operation as a type cast.
+	 */
+	if (exprIsLengthCoercion((Node *) expr, &coercedTypmod))
+	{
+		Node	   *arg = lfirst(expr->args);
+
+		/*
+		 * Strip off any RelabelType on the input, so we don't print
+		 * redundancies like x::bpchar::char(8).
+		 * XXX Are there any cases where this is a bad idea?
+		 */
+		if (IsA(arg, RelabelType))
+			arg = ((RelabelType *) arg)->arg;
+		appendStringInfoChar(buf, '(');
+		get_rule_expr(arg, context);
+		appendStringInfo(buf, ")::");
+		/*
+		 * Show typename with appropriate length decoration.
+		 * Note that since exprIsLengthCoercion succeeded, the function
+		 * name is the same as its output type name.
+		 */
+		if (strcmp(proname, "bpchar") == 0)
+		{
+			if (coercedTypmod > VARHDRSZ)
+				appendStringInfo(buf, "char(%d)", coercedTypmod - VARHDRSZ);
+			else
+				appendStringInfo(buf, "char");
+		}
+		else if (strcmp(proname, "varchar") == 0)
+		{
+			if (coercedTypmod > VARHDRSZ)
+				appendStringInfo(buf, "varchar(%d)", coercedTypmod - VARHDRSZ);
+			else
+				appendStringInfo(buf, "varchar");
+		}
+		else if (strcmp(proname, "numeric") == 0)
+		{
+			if (coercedTypmod >= VARHDRSZ)
+				appendStringInfo(buf, "numeric(%d,%d)",
+								 ((coercedTypmod - VARHDRSZ) >> 16) & 0xffff,
+								 (coercedTypmod - VARHDRSZ) & 0xffff);
+			else
+				appendStringInfo(buf, "numeric");
+		}
+		else
+			appendStringInfo(buf, "%s", quote_identifier(proname));
+		return;
+	}
+
+	/*
+	 * Normal function: display as proname(args)
 	 */
 	appendStringInfo(buf, "%s(", quote_identifier(proname));
 	sep = "";
@@ -1546,99 +1598,37 @@ get_func_expr(Expr *expr, deparse_context *context)
 /* ----------
  * get_tle_expr
  *
- *		A target list expression is a bit different from a normal expression.
- *		If the target column has an atttypmod, the parser usually puts a
- *		padding-/cut-function call around the expression itself.
- *		We must get rid of it, otherwise dump/reload/dump... would blow up
- *		the expressions.
+ *		In an INSERT or UPDATE targetlist item, the parser may have inserted
+ *		a length-coercion function call to coerce the value to the right
+ *		length for the target column.  We want to suppress the output of
+ *		that function call, otherwise dump/reload/dump... would blow up the
+ *		expression by adding more and more layers of length-coercion calls.
+ *
+ * As of 7.0, this hack is no longer absolutely essential, because the parser
+ * is now smart enough not to add a redundant length coercion function call.
+ * But we still suppress the function call just for neatness of displayed
+ * rules.
+ *
+ * Note that this hack must NOT be applied to SELECT targetlist items;
+ * any length coercion appearing there is something the user actually wrote.
  * ----------
  */
 static void
 get_tle_expr(TargetEntry *tle, deparse_context *context)
 {
 	Expr	   *expr = (Expr *) (tle->expr);
-	Func	   *func;
-	HeapTuple	tup;
-	Form_pg_proc procStruct;
-	Form_pg_type typeStruct;
-	Const	   *second_arg;
-
-	/* ----------
-	 * Check if the result has an atttypmod and if the
-	 * expression in the targetlist entry is a function call
-	 * ----------
-	 */
-	if (tle->resdom->restypmod < 0 ||
-		! IsA(expr, Expr) ||
-		expr->opType != FUNC_EXPR)
-	{
-		get_rule_expr(tle->expr, context);
-		return;
-	}
-
-	func = (Func *) (expr->oper);
-
-	/* ----------
-	 * Get the functions pg_proc tuple
-	 * ----------
-	 */
-	tup = SearchSysCacheTuple(PROCOID,
-							  ObjectIdGetDatum(func->funcid), 0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup for proc %u failed", func->funcid);
-	procStruct = (Form_pg_proc) GETSTRUCT(tup);
-
-	/* ----------
-	 * It must be a function with two arguments where the first
-	 * is of the same type as the return value and the second is
-	 * an int4.
-	 * ----------
-	 */
-	if (procStruct->pronargs != 2 ||
-		procStruct->prorettype != procStruct->proargtypes[0] ||
-		procStruct->proargtypes[1] != INT4OID)
-	{
-		get_rule_expr(tle->expr, context);
-		return;
-	}
+	int32		coercedTypmod;
 
 	/*
-	 * Furthermore, the name of the function must be the same
-	 * as the argument/result type name.
+	 * If top level is a length coercion to the correct length, suppress it;
+	 * else dump the expression normally.
 	 */
-	tup = SearchSysCacheTuple(TYPEOID,
-							  ObjectIdGetDatum(procStruct->prorettype),
-							  0, 0, 0);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup for type %u failed",
-			 procStruct->prorettype);
-	typeStruct = (Form_pg_type) GETSTRUCT(tup);
-	if (strncmp(NameStr(procStruct->proname),
-				NameStr(typeStruct->typname),
-				NAMEDATALEN) != 0)
-	{
+	if (tle->resdom->restypmod >= 0 &&
+		exprIsLengthCoercion((Node *) expr, &coercedTypmod) &&
+		coercedTypmod == tle->resdom->restypmod)
+		get_rule_expr((Node *) lfirst(expr->args), context);
+	else
 		get_rule_expr(tle->expr, context);
-		return;
-	}
-
-	/* ----------
-	 * Finally (to be totally safe) the second argument must be a
-	 * const and match the value in the results atttypmod.
-	 * ----------
-	 */
-	second_arg = (Const *) lsecond(expr->args);
-	if (! IsA(second_arg, Const) ||
-		DatumGetInt32(second_arg->constvalue) != tle->resdom->restypmod)
-	{
-		get_rule_expr(tle->expr, context);
-		return;
-	}
-
-	/* ----------
-	 * Whow - got it. Now get rid of the padding function
-	 * ----------
-	 */
-	get_rule_expr((Node *) lfirst(expr->args), context);
 }
 
 
