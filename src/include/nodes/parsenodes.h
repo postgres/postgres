@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.214 2002/11/15 02:50:12 momjian Exp $
+ * $Id: parsenodes.h,v 1.215 2002/11/15 03:09:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1533,7 +1533,7 @@ typedef struct DropdbStmt
 typedef struct ClusterStmt
 {
 	NodeTag		type;
-	RangeVar   *relation;		/* relation being indexed */
+	RangeVar   *relation;		/* relation being indexed, or NULL if all */
 	char	   *indexname;		/* original index defined */
 } ClusterStmt;
 

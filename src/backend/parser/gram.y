@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.378 2002/11/15 02:50:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.379 2002/11/15 03:09:35 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3761,6 +3761,8 @@ CreateConversionStmt:
  *
  *		QUERY:
  *				cluster <index_name> on <qualified_name>
+ *				cluster <qualified_name>
+ *				cluster ALL
  *
  *****************************************************************************/
 
@@ -3770,6 +3772,20 @@ ClusterStmt:
 				   ClusterStmt *n = makeNode(ClusterStmt);
 				   n->relation = $4;
 				   n->indexname = $2;
+				   $$ = (Node*)n;
+				}
+			| CLUSTER qualified_name
+				{
+			       ClusterStmt *n = makeNode(ClusterStmt);
+				   n->relation = $2;
+				   n->indexname = NULL;
+				   $$ = (Node*)n;
+				}
+			| CLUSTER ALL
+			    {
+				   ClusterStmt *n = makeNode(ClusterStmt);
+				   n->relation = NULL;
+				   n->indexname = NULL;
 				   $$ = (Node*)n;
 				}
 		;

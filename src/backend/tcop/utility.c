@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.181 2002/11/13 00:44:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.182 2002/11/15 03:09:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,6 @@ ProcessUtility(Node *parsetree,
 			   CommandDest dest,
 			   char *completionTag)
 {
-	char	   *relname;
 
 	if (completionTag)
 		completionTag[0] = '\0';
@@ -702,9 +701,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ClusterStmt *stmt = (ClusterStmt *) parsetree;
 
-				CheckOwnership(stmt->relation, true);
-
-				cluster(stmt->relation, stmt->indexname);
+				cluster(stmt);
 			}
 			break;
 
@@ -833,8 +830,8 @@ ProcessUtility(Node *parsetree,
 
 				switch (stmt->reindexType)
 				{
+					char	*relname;
 					case INDEX:
-						relname = (char *) stmt->relation->relname;
 						CheckOwnership(stmt->relation, false);
 						ReindexIndex(stmt->relation, stmt->force);
 						break;

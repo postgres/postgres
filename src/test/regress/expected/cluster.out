@@ -285,3 +285,67 @@ WHERE pg_class.oid=indexrelid
  clstr_tst_c
 (1 row)
 
+-- Verify that clustering all tables does in fact cluster the right ones
+CREATE USER clstr_user;
+CREATE TABLE clstr_1 (a INT PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'clstr_1_pkey' for table 'clstr_1'
+CREATE TABLE clstr_2 (a INT PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'clstr_2_pkey' for table 'clstr_2'
+CREATE TABLE clstr_3 (a INT PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'clstr_3_pkey' for table 'clstr_3'
+ALTER TABLE clstr_1 OWNER TO clstr_user;
+ALTER TABLE clstr_3 OWNER TO clstr_user;
+GRANT SELECT ON clstr_2 TO clstr_user;
+INSERT INTO clstr_1 VALUES (2);
+INSERT INTO clstr_1 VALUES (1);
+INSERT INTO clstr_2 VALUES (2);
+INSERT INTO clstr_2 VALUES (1);
+INSERT INTO clstr_3 VALUES (2);
+INSERT INTO clstr_3 VALUES (1);
+CLUSTER clstr_1_pkey ON clstr_1;
+CLUSTER clstr_2_pkey ON clstr_2;
+SELECT * FROM clstr_1 UNION ALL
+  SELECT * FROM clstr_2 UNION ALL
+  SELECT * FROM clstr_3;
+ a 
+---
+ 1
+ 2
+ 1
+ 2
+ 2
+ 1
+(6 rows)
+
+-- revert to the original state
+DELETE FROM clstr_1;
+DELETE FROM clstr_2;
+DELETE FROM clstr_3;
+INSERT INTO clstr_1 VALUES (2);
+INSERT INTO clstr_1 VALUES (1);
+INSERT INTO clstr_2 VALUES (2);
+INSERT INTO clstr_2 VALUES (1);
+INSERT INTO clstr_3 VALUES (2);
+INSERT INTO clstr_3 VALUES (1);
+-- this user can only cluster clstr_1 and clstr_3, but the latter
+-- has not been clustered
+SET SESSION AUTHORIZATION clstr_user;
+CLUSTER ALL;
+SELECT * FROM clstr_1 UNION ALL
+  SELECT * FROM clstr_2 UNION ALL
+  SELECT * FROM clstr_3;
+ a 
+---
+ 1
+ 2
+ 2
+ 1
+ 2
+ 1
+(6 rows)
+
+-- clean up
+\c -
+DROP TABLE clstr_1;
+DROP TABLE clstr_3;
+DROP USER clstr_user;

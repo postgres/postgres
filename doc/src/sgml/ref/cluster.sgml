@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.21 2002/11/15 03:09:35 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -22,6 +22,8 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
+CLUSTER <replaceable class="PARAMETER">tablename</replaceable>
+CLUSTER ALL
   </synopsis>
 
   <refsect2 id="R2-SQL-CLUSTER-1">
@@ -104,6 +106,20 @@ CLUSTER
    periodically re-cluster by issuing the command again.
   </para>
 
+  <para>
+   When a table is clustered, <productname>PostgreSQL</productname>
+   remembers on which index it was clustered.  In calls to
+   <command>CLUSTER <replaceable class="parameter">tablename</replaceable></command>,
+   the table is clustered on the same index that it was clustered before.
+  </para>
+
+  <para>
+   In calls to <command>CLUSTER ALL</command>, all the tables in the database
+   that the calling user owns are clustered using the saved information.  This
+   form of <command>CLUSTER</command> cannot be called from inside a
+   transaction or function.
+  </para>
+
   <refsect2 id="R2-SQL-CLUSTER-3">
    <refsect2info>
     <date>1998-09-08</date>
@@ -141,8 +157,15 @@ CLUSTER
    </para>
 
    <para>
-    CLUSTER preserves GRANT, inheritance, index, foreign key, and other
-    ancillary information about the table.
+	<command>CLUSTER</command> preserves GRANT, inheritance, index, foreign
+	key, and other ancillary information about the table.
+   </para>
+
+   <para>
+	Because <command>CLUSTER</command> remembers the clustering information,
+	one can cluster the tables one wants clustered manually the first time, and
+	setup a timed event similar to <command>VACUUM</command> so that the tables
+	are periodically and automatically clustered.
    </para>
 
    <para>
@@ -191,6 +214,18 @@ SELECT <replaceable class="parameter">columnlist</replaceable> INTO TABLE <repla
   </para>
   <programlisting>
 CLUSTER emp_ind ON emp;
+  </programlisting>
+  <para>
+   Cluster the employees relation using the same index that was used before:
+  </para>
+  <programlisting>
+CLUSTER emp;
+  </programlisting>
+  <para>
+   Cluster all the tables on the database that have previously been clustered:
+  </para>
+  <programlisting>
+CLUSTER ALL;
   </programlisting>
  </refsect1>
 
