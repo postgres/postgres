@@ -492,13 +492,21 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	{
 		setObject(parameterIndex, x, targetSqlType, 0);
 	}
-
+	
+  /**
+   * This stores an Object into a parameter.
+   * <p>New for 6.4, if the object is not recognised, but it is
+   * Serializable, then the object is serialised using the
+   * postgresql.util.Serialize class.
+   */
 	public void setObject(int parameterIndex, Object x) throws SQLException
 	{
 		if (x instanceof String)
 			setString(parameterIndex, (String)x);
 		else if (x instanceof BigDecimal)
 			setBigDecimal(parameterIndex, (BigDecimal)x);
+		else if (x instanceof Short)
+			setShort(parameterIndex, ((Short)x).shortValue());
 		else if (x instanceof Integer)
 			setInt(parameterIndex, ((Integer)x).intValue());
 		else if (x instanceof Long)
@@ -520,7 +528,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		else if (x instanceof PGobject)
 			setString(parameterIndex, ((PGobject)x).getValue());
 		else
-			throw new SQLException("Unknown object type");
+			setLong(parameterIndex, connection.putObject(x));
 	}
 
 	/**
@@ -548,6 +556,26 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		return super.execute(s.toString()); 	// in Statement class
 	}
 
+	/**
+	 * Returns the SQL statement with the current template values
+	 * substituted.
+	 */
+	public String toString() {
+		StringBuffer s = new StringBuffer();
+		int i;
+
+		for (i = 0 ; i < inStrings.length ; ++i)
+		{
+			if (inStrings[i] == null)
+				s.append( '?' );
+			else
+				s.append (templateStrings[i]);
+			s.append (inStrings[i]);
+		}
+		s.append(templateStrings[inStrings.length]);
+		return s.toString();
+	}
+	
 	// **************************************************************
 	//	END OF PUBLIC INTERFACE	
 	// **************************************************************

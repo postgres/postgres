@@ -2,6 +2,7 @@ package postgresql;
 
 import java.io.*;
 import java.lang.*;
+import java.lang.reflect.*;
 import java.net.*;
 import java.util.*;
 import java.sql.*;
@@ -80,6 +81,12 @@ public class Connection implements java.sql.Connection
   
   // New for 6.3, salt value for crypt authorisation
   private String salt;
+  
+  // This is used by Field to cache oid -> names.
+  // It's here, because it's shared across this connection only.
+  // Hence it cannot be static within the Field class, because it would then
+  // be across all connections, which could be to different backends.
+  protected Hashtable fieldCache = new Hashtable();
   
   // This is used by Field to cache oid -> names.
   // It's here, because it's shared across this connection only.
@@ -916,23 +923,90 @@ public class Connection implements java.sql.Connection
    * You can use the getValue() or setValue() methods to handle the returned
    * object. Custom objects can have their own methods.
    *
+   * In 6.4, this is extended to use the postgresql.util.Serialize class to
+   * allow the Serialization of Java Objects into the database without using
+   * Blobs. Refer to that class for details on how this new feature works.
+   *
    * @return PGobject for this type, and set to value
    * @exception SQLException if value is not correct for this type
+   * @see postgresql.util.Serialize
    */
-  protected PGobject getObject(String type,String value) throws SQLException
+  protected Object getObject(String type,String value) throws SQLException
   {
-    PGobject obj = null;
     try {
-      String name = (String)objectTypes.get(type);
-      obj = (PGobject)(Class.forName(name==null?"postgresql.util.PGobject":name).newInstance());
+      Object o = objectTypes.get(type);
+      
+      // If o is null, then the type is unknown, so check to see if type
+      // is an actual table name. If it does, see if a Class is known that
+      // can handle it
+      if(o == null) {
+	Serialize ser = new Serialize(this,type);
+	objectTypes.put(type,ser);
+	return ser.fetch(Integer.parseInt(value));
+      }
+      
+      // If o is not null, and it is a String, then its a class name that
+      // extends PGobject.
+      //
+      // This is used to implement the postgresql unique types (like lseg,
+      // point, etc).
+      if(o instanceof String) {
+	// 6.3 style extending PG_Object
+	PGobject obj = null;
+	obj = (PGobject)(Class.forName((String)o).newInstance());
+	obj.setType(type);
+	obj.setValue(value);
+	return (Object)obj;
+      } else {
+	// If it's an object, it should be an instance of our Serialize class
+	// If so, then call it's fetch method.
+	if(o instanceof Serialize)
+	  return ((Serialize)o).fetch(Integer.parseInt(value));
+      }
+    } catch(SQLException sx) {
+      throw sx;
     } catch(Exception ex) {
       throw new SQLException("Failed to create object for "+type+": "+ex);
     }
-    if(obj!=null) {
-      obj.setType(type);
-      obj.setValue(value);
+    
+    // should never be reached
+    return null;
+  }
+  
+  /**
+   * This stores an object into the database.
+   * @param o Object to store
+   * @return OID of the new rectord
+   * @exception SQLException if value is not correct for this type
+   * @see postgresql.util.Serialize
+   */
+  protected int putObject(Object o) throws SQLException
+  {
+    try {
+      String type = o.getClass().getName();
+      Object x = objectTypes.get(type);
+      
+      // If x is null, then the type is unknown, so check to see if type
+      // is an actual table name. If it does, see if a Class is known that
+      // can handle it
+      if(x == null) {
+	Serialize ser = new Serialize(this,type);
+	objectTypes.put(type,ser);
+	return ser.store(o);
+      }
+      
+      // If it's an object, it should be an instance of our Serialize class
+      // If so, then call it's fetch method.
+      if(x instanceof Serialize)
+	return ((Serialize)x).store(o);
+    } catch(SQLException sx) {
+      throw sx;
+    } catch(Exception ex) {
+      throw new SQLException("Failed to store object: "+ex);
     }
-    return obj;
+    
+    // should never be reached
+    return 0;
   }
   
   /**

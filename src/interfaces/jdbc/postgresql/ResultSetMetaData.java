@@ -296,6 +296,8 @@ public class ResultSetMetaData implements java.sql.ResultSetMetaData
 	return 16;
       case Types.DOUBLE:
 	return 16;
+      case Types.VARCHAR:
+	return 0;
       default:
 	return 0;
       }

@@ -2354,7 +2354,53 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
    */
   public java.sql.ResultSet getTypeInfo() throws SQLException
   {
-    // XXX-Not Implemented
+    ResultSet rs = connection.ExecSQL("select typname from pg_type");
+    if(rs!=null) {
+      Field f[] = new Field[18];
+      ResultSet r;	// ResultSet for the SQL query that we need to do
+      Vector v = new Vector();		// The new ResultSet tuple stuff
+      
+      f[0] = new Field(connection, new String("TYPE_NAME"), iVarcharOid, 32);
+      f[1] = new Field(connection, new String("DATA_TYPE"), iInt2Oid, 2);
+      f[2] = new Field(connection, new String("PRECISION"), iInt4Oid, 4);
+      f[3] = new Field(connection, new String("LITERAL_PREFIX"), iVarcharOid, 32);
+      f[4] = new Field(connection, new String("LITERAL_SUFFIX"), iVarcharOid, 32);
+      f[5] = new Field(connection, new String("CREATE_PARAMS"), iVarcharOid, 32);
+      f[6] = new Field(connection, new String("NULLABLE"), iInt2Oid, 2);
+      f[7] = new Field(connection, new String("CASE_SENSITIVE"), iBoolOid, 1);
+      f[8] = new Field(connection, new String("SEARCHABLE"), iInt2Oid, 2);
+      f[9] = new Field(connection, new String("UNSIGNED_ATTRIBUTE"), iBoolOid, 1);
+      f[10] = new Field(connection, new String("FIXED_PREC_SCALE"), iBoolOid, 1);
+      f[11] = new Field(connection, new String("AUTO_INCREMENT"), iBoolOid, 1);
+      f[12] = new Field(connection, new String("LOCAL_TYPE_NAME"), iVarcharOid, 32);
+      f[13] = new Field(connection, new String("MINIMUM_SCALE"), iInt2Oid, 2);
+      f[14] = new Field(connection, new String("MAXIMUM_SCALE"), iInt2Oid, 2);
+      f[15] = new Field(connection, new String("SQL_DATA_TYPE"), iInt4Oid, 4);
+      f[16] = new Field(connection, new String("SQL_DATETIME_SUB"), iInt4Oid, 4);
+      f[17] = new Field(connection, new String("NUM_PREC_RADIX"), iInt4Oid, 4);
+      
+      while(rs.next()) {
+	byte[][] tuple = new byte[18][];
+	String typname=rs.getString(1);
+	tuple[0] = typname.getBytes();
+	tuple[1] = Integer.toString(Field.getSQLType(typname)).getBytes();
+	tuple[2] = "9".getBytes();	// for now
+	tuple[6] = Integer.toString(typeNoNulls).getBytes(); // for now
+	tuple[7] = "f".getBytes(); // false for now - not case sensitive
+	tuple[8] = Integer.toString(typeSearchable).getBytes();
+	tuple[9] = "f".getBytes(); // false for now - it's signed
+	tuple[10] = "f".getBytes(); // false for now - must handle money
+	tuple[11] = "f".getBytes(); // false for now - handle autoincrement
+	// 12 - LOCAL_TYPE_NAME is null
+	// 13 & 14 ?
+	// 15 & 16 are unused so we return null
+	tuple[17] = "10".getBytes(); // everything is base 10
+	v.addElement(tuple);
+      }
+      rs.close();
+      return new ResultSet(connection, f, v, "OK", 1);
+    }
+    
     return null;
   }
   
