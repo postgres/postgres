@@ -1231,6 +1231,12 @@ Thu Mar 21 08:25:08 CET 2002
 	- Applied patch by Nicolas Bazin <nbazin@ingenico.com.au> for improved
 	  typedef handling.
 	- Added option '-c' to automatically create C typedef from SQL one.
+
+Sun Apr 14 10:53:14 CEST 2002
+
+	- Fixed one bug in structure handling resulting in using sizeof
+	  indicator instead of variable.
+	- Synced preproc.y with gram.y.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 

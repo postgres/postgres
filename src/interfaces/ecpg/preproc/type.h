@@ -90,6 +90,7 @@ struct this_type
 	char	   *type_str;
 	int			type_dimension;
 	int			type_index;
+	int			type_sizeof;
 };
 
 struct _include_path
