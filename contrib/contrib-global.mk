@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.4 2002/11/01 23:45:37 tgl Exp $
+# $Header: /cvsroot/pgsql/contrib/contrib-global.mk,v 1.5 2002/11/02 00:16:21 tgl Exp $
 
 # This file contains generic rules to build many kinds of simple
 # contrib modules.  You only need to set a few variables and include
@@ -185,6 +185,24 @@ distclean maintainer-clean: clean
 
 
 ifdef REGRESS
+
+# When doing a VPATH build, must copy over the test .sql and .out
+# files so that the driver script can find them.  We have to use an
+# absolute path for the targets, because otherwise make will try to
+# locate the missing files using VPATH, and will find them in
+# $(srcdir), but the point here is that we want to copy them from
+# $(srcdir) to the build directory.
+
+ifdef VPATH
+abs_builddir := $(shell pwd)
+test_files_src := $(wildcard $(srcdir)/sql/*.sql) $(wildcard $(srcdir)/expected/*.out) $(wildcard $(srcdir)/data/*.data)
+test_files_build := $(patsubst $(srcdir)/%, $(abs_builddir)/%, $(test_files_src))
+
+all: $(test_files_build)
+$(test_files_build): $(abs_builddir)/%: $(srcdir)/%
+	ln -s $< $@
+endif # VPATH
+
 .PHONY: submake
 submake:
 	$(MAKE) -C $(top_builddir)/src/test/regress pg_regress
