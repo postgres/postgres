@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Dec 12 15:27:50 EST 2000
+Last updated:		Tue Dec 12 23:01:04 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -18,6 +18,7 @@ RELIABILITY
 
 PARSER
 
+* test to show diffs for TODO changes
 * SELECT pg_class FROM pg_class generates strange error
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
 * -Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
