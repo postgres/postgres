@@ -463,7 +463,7 @@ used to retrieve data. The syntax is:
    [WHERE condition]
    [GROUP BY <name_of_attr_i> 
              [,... [, <name_of_attr_j>]] [HAVING condition]]
-   [{UNION | INTERSECT | EXCEPT} SELECT ...]
+   [{UNION [ALL] | INTERSECT | EXCEPT} SELECT ...]
    [ORDER BY <name_of_attr_i> [ASC|DESC] 
              [, ... [, <name_of_attr_j> [ASC|DESC]]]];
 \end{verbatim}

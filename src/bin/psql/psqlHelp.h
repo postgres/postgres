@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.59 1999/02/13 23:20:40 momjian Exp $
+ * $Id: psqlHelp.h,v 1.60 1999/03/19 02:41:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,7 @@ static struct _helpStruct QL_HELP[] = {
 		"define a new rule",
 	"\
 \tCREATE RULE rule_name AS ON\n\
-\t[SELECT|UPDATE|DELETE|INSERT]\n\
+\t{ SELECT | UPDATE | DELETE | INSERT }\n\
 \tTO object [WHERE qual]\n\
 \tDO [INSTEAD] [action|NOTHING|[actions]];"},
 	{"create sequence",
@@ -175,7 +175,7 @@ static struct _helpStruct QL_HELP[] = {
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
 \t[ORDER BY attr1 [USING op1], ...attrN]\n\
-\t[UNION [ALL] SELECT ...];"},
+\t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...];"},
 	{"delete",
 		"delete tuples",
 	"\
@@ -258,8 +258,8 @@ static struct _helpStruct QL_HELP[] = {
 		"grant access control to a user or group",
 	"\
 \tGRANT privilege1, ...privilegeN ON rel1, ...relN TO \n\
-[PUBLIC|GROUP group|username]\n\
-\t privilege is ALL|SELECT|INSERT|UPDATE|DELETE|RULE"},
+{ PUBLIC | GROUP group | username }\n\
+\t privilege is { ALL | SELECT | INSERT | UPDATE | DELETE | RULE }"},
 	{"insert",
 		"insert tuples",
 	"\
@@ -271,7 +271,7 @@ static struct _helpStruct QL_HELP[] = {
 \t[WHERE qual]\n\
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
-\t[UNION [ALL] SELECT ...];"},
+\t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...];"},
 	{"listen",
 		"listen for notification on a condition name",
 	"\
@@ -305,8 +305,8 @@ static struct _helpStruct QL_HELP[] = {
 		"revoke access control from a user or group",
 	"\
 \tREVOKE privilege1, ...privilegeN ON rel1, ...relN FROM \n\
-[PUBLIC|GROUP group|username]\n\
-\t privilege is ALL|SELECT|INSERT|UPDATE|DELETE|RULE"},
+{ PUBLIC | GROUP group | username }\n\
+\t privilege is { ALL | SELECT | INSERT | UPDATE | DELETE | RULE }"},
 	{"rollback work",
 		"abort a transaction",
 	"\
@@ -321,7 +321,7 @@ static struct _helpStruct QL_HELP[] = {
 \t[GROUP BY group_list]\n\
 \t[HAVING having_clause]\n\
 \t[ORDER BY attr1 [ASC|DESC] [USING op1], ...attrN ]\n\
-\t[UNION [ALL] SELECT ...];"},
+\t[ { UNION [ALL] | INTERSECT | EXCEPT } SELECT ...];"},
 	{"set",
 		"set run-time environment",
 #ifdef MULTIBYTE

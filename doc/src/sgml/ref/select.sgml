@@ -24,7 +24,7 @@ SELECT [ALL|DISTINCT [ON <replaceable class="PARAMETER">column</replaceable>] ]
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ UNION [ALL] <replaceable class="PARAMETER">select</replaceable> ]
+    [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
   </synopsis>
   
@@ -230,8 +230,16 @@ including duplicates.
    DESCending mode operator. (See ORDER BY clause)</para>
    
   <para>
-   The UNION clause specifies a table derived from a Cartesian
-   product union join. (See UNION clause).</para>
+   The UNION clause allows the result to be the collection of rows
+   returned by the queries involved. (See UNION clause).</para>
+   
+  <para>
+   The INTERSECT give you the rows that are common to both queries.
+   (See INTERSECT clause).</para>
+   
+  <para>
+   The EXCEPT give you the rows in the upper query not in the lower query.
+   (See EXCEPT clause).</para>
    
   <para>
    You must have SELECT privilege to a table to read its values
@@ -370,7 +378,8 @@ SELECT name FROM distributors ORDER BY code;
     specifies any select expression without an ORDER BY clause.</para>
     
    <para>
-    The UNION operator specifies a table derived from a Cartesian product.
+    The UNION clause allows the result to be the collection of rows
+    returned by the queries involved. (See UNION clause).
     The two tables that represent the direct operands of the UNION must
     have the same number of columns, and corresponding columns must be
     of compatible data types.</para>
@@ -381,11 +390,75 @@ SELECT name FROM distributors ORDER BY code;
     
    <para>
     Multiple UNION operators in the same SELECT statement are
-evaluated left to right.
+    evaluated left to right.
     Note that the ALL keyword is not global in nature, being 
-applied only for the current pair of table results.</para>
+    applied only for the current pair of table results.</para>
     
-  </refsect2></refsect1>
+  </refsect2>
+
+  <refsect2 id="R2-SQL-INTERSECT-2">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
+    INTERSECT Clause
+   </title>
+   <para>
+    <synopsis>
+<replaceable class="PARAMETER">table_query</replaceable> INTERSECT <replaceable class="PARAMETER">table_query</replaceable>
+     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+    </synopsis>
+    
+    where
+    <replaceable class="PARAMETER">table_query</replaceable>
+    specifies any select expression without an ORDER BY clause.</para>
+    
+   <para>
+    The INTERSECT clause allows the result to be all rows that are 
+    common to the involved queries.  (See INTERSECT clause).
+    The two tables that represent the direct operands of the INTERSECT must
+    have the same number of columns, and corresponding columns must be
+    of compatible data types.</para>
+    
+   <para>
+    Multiple INTERSECT operators in the same SELECT statement are
+    evaluated left to right.
+    </para>
+    
+  </refsect2>
+
+  <refsect2 id="R2-SQL-EXCEPT-2">
+   <refsect2info>
+    <date>1998-09-24</date>
+   </refsect2info>
+   <title>
+    EXCEPT Clause
+   </title>
+   <para>
+    <synopsis>
+<replaceable class="PARAMETER">table_query</replaceable> EXCEPT <replaceable class="PARAMETER">table_query</replaceable>
+     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
+    </synopsis>
+    
+    where
+    <replaceable class="PARAMETER">table_query</replaceable>
+    specifies any select expression without an ORDER BY clause.</para>
+    
+   <para>
+    The EXCEPT clause allows the result to be rows from the upper query
+    that are not in the lower query.  (See EXCEPT clause).
+    The two tables that represent the direct operands of the EXCEPT must
+    have the same number of columns, and corresponding columns must be
+    of compatible data types.</para>
+    
+   <para>
+    Multiple EXCEPT operators in the same SELECT statement are
+    evaluated left to right.
+    </para>
+    
+  </refsect2>
+
+</refsect1>
   
  <refsect1 id="R1-SQL-SELECT-2">
   <title>
@@ -633,7 +706,7 @@ SELECT [ ALL | DISTINCT ] <replaceable class="PARAMETER">expression</replaceable
     [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
     [ GROUP BY <replaceable class="PARAMETER">column</replaceable> [, ...] ]
     [ HAVING <replaceable class="PARAMETER">condition</replaceable> [, ...] ]
-    [ UNION [ ALL ] <replaceable class="PARAMETER">select</replaceable>]
+    [ { UNION [ALL] | INTERSECT | EXCEPT } <replaceable class="PARAMETER">select</replaceable>]
     [ ORDER BY <replaceable class="PARAMETER">column</replaceable> [ ASC | DESC ] [, ...] ]
   </synopsis>
   

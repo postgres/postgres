@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.11 1999/02/02 03:45:32 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.12 1999/03/19 02:41:41 momjian Exp $
 .TH SELECT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 select - retrieve instances from a class
@@ -15,7 +15,7 @@ select - retrieve instances from a class
     [\fBgroup by\fR attr_name1 {, attr_name-i....}]
     [\fBhaving\fR having-clause]
     [\fBorder by\fR attr_name1 [\fBasc\fR | \fBdesc\fR] [\fBusing op1\fR] {, attr_namei...}]
-[\fBunion {all} select\fR ...]
+[ { \fBunion {all}\fR | \fBintersect\fR | \fBexcept\fR } \fBselect\fR ...]
 
 .fi
 .SH DESCRIPTION
