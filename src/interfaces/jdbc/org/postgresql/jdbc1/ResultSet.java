@@ -374,10 +374,15 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
   {
     if (columnIndex < 1 || columnIndex > fields.length)
       throw new PSQLException("postgresql.res.colrange");
-    wasNullFlag = (this_row[columnIndex - 1] == null);
     
+    if (connection.haveMinimumCompatibleVersion("7.2")) {
+      //Version 7.2 supports the bytea datatype for byte arrays
+      return PGbytea.toBytes(getString(columnIndex));
+    } else {
+      //Version 7.1 and earlier supports LargeObjects for byte arrays
+      wasNullFlag = (this_row[columnIndex - 1] == null);
     // Handle OID's as BLOBS
-    if(!wasNullFlag)
+      if(!wasNullFlag) {
       if( fields[columnIndex - 1].getOID() == 26) {
 	LargeObjectManager lom = connection.getLargeObjectAPI();
 	LargeObject lob = lom.open(getInt(columnIndex));
@@ -385,8 +390,9 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 	lob.close();
 	return buf;
       }
-    
-    return this_row[columnIndex - 1];
+      }
+    }
+    return null;
   }
   
   /**
@@ -545,7 +551,26 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public InputStream getAsciiStream(int columnIndex) throws SQLException
   {
+    wasNullFlag = (this_row[columnIndex - 1] == null);
+    if (wasNullFlag)
+      return null;
+
+    if (connection.haveMinimumCompatibleVersion("7.2")) {
+      //Version 7.2 supports AsciiStream for all the PG text types
+      //As the spec/javadoc for this method indicate this is to be used for
+      //large text values (i.e. LONGVARCHAR)  PG doesn't have a separate
+      //long string datatype, but with toast the text datatype is capable of
+      //handling very large values.  Thus the implementation ends up calling
+      //getString() since there is no current way to stream the value from the server
+      try {
+        return new ByteArrayInputStream(getString(columnIndex).getBytes("ASCII"));
+      } catch (UnsupportedEncodingException l_uee) {
+        throw new PSQLException("postgresql.unusual", l_uee);
+      }
+    } else {
+      // In 7.1 Handle as BLOBS so return the LargeObject input stream
     return getBinaryStream(columnIndex);
+  }
   }
   
   /**
@@ -562,7 +587,26 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public InputStream getUnicodeStream(int columnIndex) throws SQLException
   {
+    wasNullFlag = (this_row[columnIndex - 1] == null);
+    if (wasNullFlag)
+      return null;
+
+    if (connection.haveMinimumCompatibleVersion("7.2")) {
+      //Version 7.2 supports AsciiStream for all the PG text types
+      //As the spec/javadoc for this method indicate this is to be used for
+      //large text values (i.e. LONGVARCHAR)  PG doesn't have a separate
+      //long string datatype, but with toast the text datatype is capable of
+      //handling very large values.  Thus the implementation ends up calling
+      //getString() since there is no current way to stream the value from the server
+      try {
+        return new ByteArrayInputStream(getString(columnIndex).getBytes("UTF-8"));
+      } catch (UnsupportedEncodingException l_uee) {
+        throw new PSQLException("postgresql.unusual", l_uee);
+      }
+    } else {
+      // In 7.1 Handle as BLOBS so return the LargeObject input stream
     return getBinaryStream(columnIndex);
+  }
   }
   
   /**
@@ -579,11 +623,29 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public InputStream getBinaryStream(int columnIndex) throws SQLException
   {
-    byte b[] = getBytes(columnIndex);
+    wasNullFlag = (this_row[columnIndex - 1] == null);
+    if (wasNullFlag)
+      return null;
     
+    if (connection.haveMinimumCompatibleVersion("7.2")) {
+      //Version 7.2 supports BinaryStream for all PG bytea type
+      //As the spec/javadoc for this method indicate this is to be used for
+      //large binary values (i.e. LONGVARBINARY)  PG doesn't have a separate
+      //long binary datatype, but with toast the bytea datatype is capable of
+      //handling very large values.  Thus the implementation ends up calling
+      //getBytes() since there is no current way to stream the value from the server
+      byte b[] = getBytes(columnIndex);
     if (b != null)
       return new ByteArrayInputStream(b);
-    return null;		// SQL NULL
+    } else {
+      // In 7.1 Handle as BLOBS so return the LargeObject input stream
+      if( fields[columnIndex - 1].getOID() == 26) {
+        LargeObjectManager lom = connection.getLargeObjectAPI();
+        LargeObject lob = lom.open(getInt(columnIndex));
+        return lob.getInputStream();
+      }
+    }
+    return null;
   }
   
   /**

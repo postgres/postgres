@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /**
- * $Id: Connection.java,v 1.28 2001/09/07 22:17:02 momjian Exp $
+ * $Id: Connection.java,v 1.29 2001/09/10 15:07:05 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -22,15 +22,13 @@ public abstract class Connection
   // This is the network stream associated with this connection
   public PG_Stream pg_stream;
 
-  // This is set by org.postgresql.Statement.setMaxRows()
-  //public int maxrows = 0;		// maximum no. of rows; 0 = unlimited
-
   private String PG_HOST;
   private int PG_PORT;
   private String PG_USER;
   private String PG_PASSWORD;
   private String PG_DATABASE;
   private boolean PG_STATUS;
+  private String compatible;
 
   /**
    *  The encoding to use for this connection.
@@ -123,6 +121,11 @@ public abstract class Connection
     PG_PORT = port;
     PG_HOST = host;
     PG_STATUS = CONNECTION_BAD;
+    if(info.getProperty("compatible")==null) {
+      compatible = d.getMajorVersion() + "." + d.getMinorVersion();
+    } else {
+      compatible = info.getProperty("compatible");
+    }
 
     // Now make the initial connection
     try
@@ -966,6 +969,23 @@ public abstract class Connection
   public boolean haveMinimumServerVersion(String ver) throws SQLException
   {
       return (getDBVersionNumber().compareTo(ver) >= 0);
+  }
+
+  /**
+   * This method returns true if the compatible level set in the connection
+   * (which can be passed into the connection or specified in the URL)
+   * is at least the value passed to this method.  This is used to toggle
+   * between different functionality as it changes across different releases
+   * of the jdbc driver code.  The values here are versions of the jdbc client
+   * and not server versions.  For example in 7.1 get/setBytes worked on
+   * LargeObject values, in 7.2 these methods were changed to work on bytea
+   * values.  This change in functionality could be disabled by setting the
+   * "compatible" level to be 7.1, in which case the driver will revert to
+   * the 7.1 functionality.
+   */
+  public boolean haveMinimumCompatibleVersion(String ver) throws SQLException
+  {
+      return (compatible.compareTo(ver) >= 0);
   }
 
 

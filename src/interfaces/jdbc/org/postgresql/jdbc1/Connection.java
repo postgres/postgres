@@ -17,7 +17,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.9 2001/09/06 03:13:34 momjian Exp $
+ * $Id: Connection.java,v 1.10 2001/09/10 15:07:05 momjian Exp $
  *
  * A Connection represents a session with a specific database.  Within the
  * context of a Connection, SQL statements are executed and results are
@@ -174,6 +174,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     "float8",
     "bpchar","char","char2","char4","char8","char16",
     "varchar","text","name","filename",
+    "bytea",
     "bool",
     "date",
     "time",
@@ -197,6 +198,7 @@ public class Connection extends org.postgresql.Connection implements java.sql.Co
     Types.DOUBLE,
     Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,Types.CHAR,
     Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,Types.VARCHAR,
+    Types.BINARY,
     Types.BIT,
     Types.DATE,
     Types.TIME,

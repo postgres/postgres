@@ -192,7 +192,8 @@ public abstract class ResultSet
       String s = getString(col);
 
       // Handle SQL Null
-      if(s==null)
+      wasNullFlag = (this_row[col - 1] == null);
+      if(wasNullFlag)
         return null;
 
       // Handle Money

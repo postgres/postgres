@@ -85,12 +85,26 @@ public class Driver implements java.sql.Driver
    * database.
    *
    * <p>The java.util.Properties argument can be used to pass arbitrary
-   * string tag/value pairs as connection arguments.  Normally, at least
+   * string tag/value pairs as connection arguments.  
+   *
+   * user - (optional) The user to connect as
+   * password - (optional) The password for the user
+   * charSet - (optional) The character set to be used for converting 
+   *   to/from the database to unicode.  If multibyte is enabled on the 
+   *   server then the character set of the database is used as the default,
+   *   otherwise the jvm character encoding is used as the default.
+   * compatible - This is used to toggle
+   *   between different functionality as it changes across different releases
+   *   of the jdbc driver code.  The values here are versions of the jdbc 
+   *   client and not server versions.  For example in 7.1 get/setBytes 
+   *   worked on LargeObject values, in 7.2 these methods were changed 
+   *   to work on bytea values.  This change in functionality could 
+   *   be disabled by setting the compatible level to be "7.1", in 
+   *   which case the driver will revert to the 7.1 functionality.
+   *
+   * <p>Normally, at least
    * "user" and "password" properties should be included in the
-   * properties.  In addition, the "charSet" property can be used to
-   * set a character set encoding (e.g. "utf-8") other than the platform
-   * default (typically Latin1).  This is necessary in particular if storing
-   * multibyte characters in the database.  For a list of supported
+   * properties.  For a list of supported
    * character encoding , see
    * http://java.sun.com/products/jdk/1.2/docs/guide/internat/encoding.doc.html
    * Note that you will probably want to have set up the Postgres database

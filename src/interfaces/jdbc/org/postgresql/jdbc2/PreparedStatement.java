@@ -91,7 +91,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * A Prepared SQL query is executed and its ResultSet is returned
 	 *
 	 * @return a ResultSet that contains the data produced by the
-	 *	query - never null
+         *             *     	query - never null
 	 * @exception SQLException if a database access error occurs
 	 */
 	public java.sql.ResultSet executeQuery() throws SQLException
@@ -105,7 +105,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 * be executed.
 	 *
 	 * @return either the row count for INSERT, UPDATE or DELETE; or
-	 * 	0 for SQL statements that return nothing.
+         *             *     	0 for SQL statements that return nothing.
 	 * @exception SQLException if a database access error occurs
 	 */
 	public int executeUpdate() throws SQLException
@@ -305,12 +305,22 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
    */
   public void setBytes(int parameterIndex, byte x[]) throws SQLException
   {
+    if (connection.haveMinimumCompatibleVersion("7.2")) {
+      //Version 7.2 supports the bytea datatype for byte arrays
+      if(null == x){
+        setNull(parameterIndex,Types.OTHER);
+      } else {
+        setString(parameterIndex, PGbytea.toPGString(x));
+      }
+    } else {
+      //Version 7.1 and earlier support done as LargeObjects
     LargeObjectManager lom = connection.getLargeObjectAPI();
     int oid = lom.create();
     LargeObject lob = lom.open(oid);
     lob.write(x);
     lob.close();
     setInt(parameterIndex,oid);
+  }
   }
 
 	/**
@@ -413,8 +423,29 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
+          if (connection.haveMinimumCompatibleVersion("7.2")) {
+            //Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
+            //As the spec/javadoc for this method indicate this is to be used for
+            //large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
+            //long varchar datatype, but with toast all text datatypes are capable of
+            //handling very large values.  Thus the implementation ends up calling
+            //setString() since there is no current way to stream the value to the server
+            try {
+              InputStreamReader l_inStream = new InputStreamReader(x, "ASCII");
+              char[] l_chars = new char[length];
+              int l_charsRead = l_inStream.read(l_chars,0,length);
+              setString(parameterIndex, new String(l_chars,0,l_charsRead));
+            } catch (UnsupportedEncodingException l_uee) {
+              throw new PSQLException("postgresql.unusual",l_uee);
+            } catch (IOException l_ioe) {
+              throw new PSQLException("postgresql.unusual",l_ioe);
+            }
+          } else {
+            //Version 7.1 supported only LargeObjects by treating everything
+            //as binary data
 		setBinaryStream(parameterIndex, x, length);
 	}
+        }
 
 	/**
 	 * When a very large Unicode value is input to a LONGVARCHAR parameter,
@@ -436,8 +467,29 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
+          if (connection.haveMinimumCompatibleVersion("7.2")) {
+            //Version 7.2 supports AsciiStream for all PG text types (char, varchar, text)
+            //As the spec/javadoc for this method indicate this is to be used for
+            //large String values (i.e. LONGVARCHAR)  PG doesn't have a separate
+            //long varchar datatype, but with toast all text datatypes are capable of
+            //handling very large values.  Thus the implementation ends up calling
+            //setString() since there is no current way to stream the value to the server
+            try {
+              InputStreamReader l_inStream = new InputStreamReader(x, "UTF-8");
+              char[] l_chars = new char[length];
+              int l_charsRead = l_inStream.read(l_chars,0,length);
+              setString(parameterIndex, new String(l_chars,0,l_charsRead));
+            } catch (UnsupportedEncodingException l_uee) {
+              throw new PSQLException("postgresql.unusual",l_uee);
+            } catch (IOException l_ioe) {
+              throw new PSQLException("postgresql.unusual",l_ioe);
+            }
+          } else {
+            //Version 7.1 supported only LargeObjects by treating everything
+            //as binary data
 		setBinaryStream(parameterIndex, x, length);
 	}
+        }
 
 	/**
 	 * When a very large binary value is input to a LONGVARBINARY parameter,
@@ -455,6 +507,32 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException
 	{
+          if (connection.haveMinimumCompatibleVersion("7.2")) {
+            //Version 7.2 supports BinaryStream for for the PG bytea type
+            //As the spec/javadoc for this method indicate this is to be used for
+            //large binary values (i.e. LONGVARBINARY)  PG doesn't have a separate
+            //long binary datatype, but with toast the bytea datatype is capable of
+            //handling very large values.  Thus the implementation ends up calling
+            //setBytes() since there is no current way to stream the value to the server
+            byte[] l_bytes = new byte[length];
+            int l_bytesRead;
+            try {
+              l_bytesRead = x.read(l_bytes,0,length);
+            } catch (IOException l_ioe) {
+              throw new PSQLException("postgresql.unusual",l_ioe);
+            }
+            if (l_bytesRead == length) {
+              setBytes(parameterIndex, l_bytes);
+            } else {
+              //the stream contained less data than they said
+              byte[] l_bytes2 = new byte[l_bytesRead];
+              System.arraycopy(l_bytes,0,l_bytes2,0,l_bytesRead);
+              setBytes(parameterIndex, l_bytes2);
+            }
+          } else {
+            //Version 7.1 only supported streams for LargeObjects
+            //but the jdbc spec indicates that streams should be
+            //available for LONGVARBINARY instead
           LargeObjectManager lom = connection.getLargeObjectAPI();
           int oid = lom.create();
           LargeObject lob = lom.open(oid);
@@ -472,11 +550,12 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
             }
             los.close();
           } catch(IOException se) {
-            throw new PSQLException("postgresql.prep.is",se);
+              throw new PSQLException("postgresql.unusual",se);
           }
           // lob is closed by the stream so don't call lob.close()
           setInt(parameterIndex,oid);
 	}
+        }
 
 	/**
 	 * In general, parameter values remain in force for repeated used of a
@@ -728,11 +807,33 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
     }
 
     /**
-     * Sets a Blob - basically its similar to setBinaryStream()
+     * Sets a Blob
      */
     public void setBlob(int i,Blob x) throws SQLException
     {
-      setBinaryStream(i,x.getBinaryStream(),(int)x.length());
+            InputStream l_inStream = x.getBinaryStream();
+            int l_length = (int) x.length();
+            LargeObjectManager lom = connection.getLargeObjectAPI();
+            int oid = lom.create();
+            LargeObject lob = lom.open(oid);
+            OutputStream los = lob.getOutputStream();
+            try {
+              // could be buffered, but then the OutputStream returned by LargeObject
+              // is buffered internally anyhow, so there would be no performance
+              // boost gained, if anything it would be worse!
+              int c=l_inStream.read();
+              int p=0;
+              while(c>-1 && p<l_length) {
+                los.write(c);
+                c=l_inStream.read();
+                p++;
+              }
+              los.close();
+            } catch(IOException se) {
+              throw new PSQLException("postgresql.unusual",se);
+            }
+            // lob is closed by the stream so don't call lob.close()
+            setInt(i,oid);
     }
 
     /**
@@ -741,6 +842,25 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
      */
     public void setCharacterStream(int i,java.io.Reader x,int length) throws SQLException
     {
+          if (connection.haveMinimumCompatibleVersion("7.2")) {
+            //Version 7.2 supports CharacterStream for for the PG text types
+            //As the spec/javadoc for this method indicate this is to be used for
+            //large text values (i.e. LONGVARCHAR)  PG doesn't have a separate
+            //long varchar datatype, but with toast all the text datatypes are capable of
+            //handling very large values.  Thus the implementation ends up calling
+            //setString() since there is no current way to stream the value to the server
+            char[] l_chars = new char[length];
+            int l_charsRead;
+            try {
+              l_charsRead = x.read(l_chars,0,length);
+            } catch (IOException l_ioe) {
+              throw new PSQLException("postgresql.unusual",l_ioe);
+            }
+            setString(i, new String(l_chars,0,l_charsRead));
+          } else {
+            //Version 7.1 only supported streams for LargeObjects
+            //but the jdbc spec indicates that streams should be
+            //available for LONGVARCHAR instead
           LargeObjectManager lom = connection.getLargeObjectAPI();
           int oid = lom.create();
           LargeObject lob = lom.open(oid);
@@ -758,10 +878,11 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
             }
             los.close();
           } catch(IOException se) {
-            throw new PSQLException("postgresql.prep.is",se);
+              throw new PSQLException("postgresql.unusual",se);
           }
           // lob is closed by the stream so don't call lob.close()
           setInt(i,oid);
+    }
     }
 
     /**
@@ -769,7 +890,29 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
      */
     public void setClob(int i,Clob x) throws SQLException
     {
-      setBinaryStream(i,x.getAsciiStream(),(int)x.length());
+            InputStream l_inStream = x.getAsciiStream();
+            int l_length = (int) x.length();
+            LargeObjectManager lom = connection.getLargeObjectAPI();
+            int oid = lom.create();
+            LargeObject lob = lom.open(oid);
+            OutputStream los = lob.getOutputStream();
+            try {
+              // could be buffered, but then the OutputStream returned by LargeObject
+              // is buffered internally anyhow, so there would be no performance
+              // boost gained, if anything it would be worse!
+              int c=l_inStream.read();
+              int p=0;
+              while(c>-1 && p<l_length) {
+                los.write(c);
+                c=l_inStream.read();
+                p++;
+              }
+              los.close();
+            } catch(IOException se) {
+              throw new PSQLException("postgresql.unusual",se);
+            }
+            // lob is closed by the stream so don't call lob.close()
+            setInt(i,oid);
     }
 
     /**
