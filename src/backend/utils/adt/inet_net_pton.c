@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.2 1998/10/04 15:35:09 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.3 1998/10/12 01:30:26 momjian Exp $";
 
 #endif
 
@@ -117,7 +117,7 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 			*dst |= n;
 			if (!dirty++)
 				*dst <<= 4;
-			else if (size-- > 0)
+			else if (--size > 0)
 				*++dst = 0, dirty = 0;
 			else
 				goto emsgsize;
