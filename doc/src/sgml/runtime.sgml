@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.58 2001/03/24 00:24:26 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.59 2001/05/01 03:00:28 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -758,17 +758,20 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>DEBUG_PRINT_PARSE (<type>boolean</type>)</term>
-      <term>DEBUG_PRINT_PLAN (<type>boolean</type>)</term>
-      <term>DEBUG_PRINT_REWRITTEN (<type>boolean</type>)</term>
       <term>DEBUG_PRINT_QUERY (<type>boolean</type>)</term>
+      <term>DEBUG_PRINT_PARSE (<type>boolean</type>)</term>
+      <term>DEBUG_PRINT_REWRITTEN (<type>boolean</type>)</term>
+      <term>DEBUG_PRINT_PLAN (<type>boolean</type>)</term>
       <term>DEBUG_PRETTY_PRINT (<type>boolean</type>)</term>
       <listitem>
        <para>
-        For any executed query, prints either the query, the parse
-        tree, the execution plan, or the query rewriter output to the
-        server log. <option>DEBUG_PRETTY_PRINT</option> selects are
-        nicer but longer output format.
+        These flags enable various debugging output to be sent to the
+	server log.  For each executed query, prints either the query text,
+	the resulting parse tree, the query rewriter output, or the execution
+	plan. <option>DEBUG_PRETTY_PRINT</option> indents these displays
+	to produce a more readable but much longer output format.
+	Setting <option>DEBUG_LEVEL</option> above zero implicitly turns
+	on some of these flags.
        </para>
       </listitem>
      </varlistentry>
