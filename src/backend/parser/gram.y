@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.276 2001/12/09 04:39:39 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.277 2002/02/18 06:49:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3669,11 +3669,9 @@ select_limit:	LIMIT select_limit_value OFFSET select_offset_value
 			{ $$ = makeList2(NULL, $2); }
 		| OFFSET select_offset_value
 			{ $$ = makeList2($2, NULL); }
-		| LIMIT select_limit_value ',' select_offset_value 
-			{ $$ = makeList2($4, $2); }
-			/* enable this in 7.3, bjm 2001-10-22
-			{ elog(ERROR, "LIMIT #,# syntax no longer supported.\n\tUse separate LIMIT and OFFSET clauses."); }
-			*/
+		| LIMIT select_limit_value ',' select_offset_value
+			/* Disabled because it was too confusing, bjm 2002-02-18 */
+			{ elog(ERROR, "LIMIT #,# syntax not supported.\n\tUse separate LIMIT and OFFSET clauses."); }
 		;
 
 
