@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.76 2003/08/08 21:42:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.77 2003/09/04 15:10:10 tgl Exp $
  *
  **********************************************************************/
 
@@ -694,6 +694,7 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	pfree(stroid);
 
 	/* A list of attribute names for argument TG_relatts */
+	/* note: we deliberately include dropped atts here */
 	Tcl_DStringAppendElement(&tcl_trigtup, "");
 	for (i = 0; i < tupdesc->natts; i++)
 		Tcl_DStringAppendElement(&tcl_trigtup,
@@ -863,9 +864,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		modvalues[i] = (Datum) NULL;
 	}
 
-	modnulls = palloc(tupdesc->natts + 1);
+	modnulls = palloc(tupdesc->natts);
 	memset(modnulls, 'n', tupdesc->natts);
-	modnulls[tupdesc->natts] = '\0';
 
 	/************************************************************
 	 * Care for possible elog(ERROR)'s below
@@ -2312,6 +2312,10 @@ pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
+		/* ignore dropped attributes */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
@@ -2382,6 +2386,10 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 
 	for (i = 0; i < tupdesc->natts; i++)
 	{
+		/* ignore dropped attributes */
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
 		/************************************************************
 		 * Get the attribute name
 		 ************************************************************/
