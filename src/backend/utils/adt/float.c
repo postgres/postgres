@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.38 1999/01/21 16:08:51 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.39 1999/01/24 00:12:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,8 +209,16 @@ float4in(char *num)
 
 	errno = 0;
 	val = strtod(num, &endptr);
-	if (*endptr != '\0' || errno == ERANGE)
+	if (*endptr != '\0')
+	{
+		/* Should we accept "NaN" or "Infinity" for float4? */
 		elog(ERROR, "Bad float4 input format '%s'", num);
+	}
+	else
+	{
+		if (errno == ERANGE)
+			elog(ERROR, "Input '%s' is out of range for float4", num);
+	}
 
 	/*
 	 * if we get here, we have a legal double, still need to check to see
@@ -262,13 +270,17 @@ float8in(char *num)
 			val = NAN;
 		else if (strcasecmp(num, "Infinity") == 0)
 			val = HUGE_VAL;
-		else if (errno == ERANGE)
-			elog(ERROR, "Input '%s' is out of range for float8", num);
 		else
 			elog(ERROR, "Bad float8 input format '%s'", num);
 	}
+	else
+	{
+		if (errno == ERANGE)
+			elog(ERROR, "Input '%s' is out of range for float8", num);
+	}
 
 	CheckFloat8Val(val);
+
 	*result = val;
 	return result;
 }

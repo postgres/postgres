@@ -209,13 +209,13 @@ five|f1
 (5 rows)
 
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
-ERROR:  Bad float8 input format '10e400'
+ERROR:  Input '10e400' is out of range for float8
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
-ERROR:  Bad float8 input format '-10e400'
+ERROR:  Input '-10e400' is out of range for float8
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
-ERROR:  Bad float8 input format '10e-400'
+ERROR:  Input '10e-400' is out of range for float8
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
-ERROR:  Bad float8 input format '-10e-400'
+ERROR:  Input '-10e-400' is out of range for float8
 QUERY: DELETE FROM FLOAT8_TBL;
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
