@@ -6,6 +6,9 @@
 #include "type.h"
 
 void yyerror(char *);
+extern FILE * yyout;
+extern char * yytext;
+extern int yyleng;
 
 /*
  * Handling of the variables.
@@ -117,16 +120,11 @@ dump_variables(struct arguments * list)
     dump_variables(list->next);
 
     /* Then the current element. */
-    ECPGdump_a_type(stdout, list->variable->name, list->variable->type);
+    ECPGdump_a_type(yyout, list->variable->name, list->variable->type);
 
     /* Then release the list element. */
     free(list);
 }
-
-
-extern FILE * yyout;
-extern char * yytext;
-extern int yyleng;
 %}
 
 %union {
@@ -149,7 +147,7 @@ extern int yyleng;
 %token <tagname> S_LONG S_SHORT S_INT S_CHAR S_FLOAT S_DOUBLE
 %token <tagname> '[' ']' ';' ','
 
-%type <type> type type_detailed varchar_type simple_type
+%type <type> type type_detailed varchar_type simple_type array_type
 %type <symbolname> symbol
 %type <tagname> maybe_storage_clause varchar_tag
 %type <type_enum> simple_tag
@@ -204,7 +202,8 @@ symbol : S_SYMBOL {
 
 type : maybe_storage_clause type_detailed { $<type>$ = $<type>2; };
 type_detailed : varchar_type { $<type>$ = $<type>1; }
-	      | simple_type { $<type>$ = $<type>1; };
+	      | simple_type { $<type>$ = $<type>1; }
+	      | array_type {$<type>$ = $<type>1; };
 
 varchar_type : varchar_tag symbol index {
     fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $<symbolname>2, $<indexsize>3, $<symbolname>2);
@@ -219,6 +218,12 @@ simple_type : simple_tag symbol {
     fprintf(yyout, "%s %s", ECPGtype_name($<type_enum>1), $<symbolname>2);
     $<type>$.name = $<symbolname>2;
     $<type>$.typ = ECPGmake_simple_type($<type_enum>1);
+}
+
+array_type : simple_tag symbol index {
+    fprintf(yyout, "%s %s [%d]", ECPGtype_name($<type_enum>1), $<symbolname>2, $<indexsize>3);
+    $<type>$.name = $<symbolname>2;
+    $<type>$.typ = ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), $<indexsize>3);
 }
 
 simple_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
