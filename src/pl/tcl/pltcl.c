@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.57 2002/07/18 04:16:07 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.58 2002/07/18 05:07:30 ishii Exp $
  *
  **********************************************************************/
 
@@ -68,13 +68,13 @@
 static unsigned char *
 utf_u2e(unsigned char *src)
 {
-	return pg_do_encoding_conversion(src, strlen(src), PG_UNICODE, GetDatabaseEncoding());
+	return pg_do_encoding_conversion(src, strlen(src), PG_UTF8, GetDatabaseEncoding());
 }
 
 static unsigned char *
 utf_e2u(unsigned char *src)
 {
-	return pg_do_encoding_conversion(src, strlen(src), GetDatabaseEncoding(), PG_UNICODE);
+	return pg_do_encoding_conversion(src, strlen(src), GetDatabaseEncoding(), PG_UTF8);
 }
 
 #define PLTCL_UTF
