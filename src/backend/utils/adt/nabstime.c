@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.27 1997/06/23 14:56:15 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.28 1997/07/08 22:06:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,6 +149,9 @@ printf( "datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s dst=%d\n",
     if (tzp != NULL) *tzp = (tm->tm_isdst? (timezone - 3600): timezone);
     if (tzn != NULL) strcpy( tzn, tzname[tm->tm_isdst]);
 #else /* !HAVE_INT_TIMEZONE */
+    tm->tm_gmtoff = tx->tm_gmtoff;
+    tm->tm_zone = tx->tm_zone;
+
     if (tzp != NULL) *tzp = - tm->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
     /* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
     if (tzn != NULL) strcpy( tzn, tm->tm_zone);
