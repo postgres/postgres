@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.117 2004/08/29 04:12:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.118 2004/09/09 06:56:48 dennis Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -618,7 +618,7 @@ yyerror(const char *message)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: %s is typically "syntax error" */
-				 errmsg("%s at end of input", message),
+				 errmsg("%s at end of input", gettext(message)),
 				 errposition(cursorpos)));
 	}
 	else
@@ -626,7 +626,7 @@ yyerror(const char *message)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 /* translator: first %s is typically "syntax error" */
-				 errmsg("%s at or near \"%s\"", message, loc),
+				 errmsg("%s at or near \"%s\"", gettext(message), loc),
 				 errposition(cursorpos)));
 	}
 }
