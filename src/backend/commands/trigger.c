@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.122 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.123 2002/07/20 19:55:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,14 @@ static void DeferredTriggerExecute(DeferredTriggerEvent event, int itemno,
 					   MemoryContext per_tuple_context);
 
 
+/*
+ * Create a trigger.  Returns the OID of the created trigger.
+ *
+ * forConstraint, if true, says that this trigger is being created to
+ * implement a constraint.  The caller will then be expected to make
+ * a pg_depend entry linking the trigger to that constraint (and thereby
+ * to the owning relation(s)).
+ */
 Oid
 CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 {
@@ -95,6 +103,12 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		aclcheck_error(aclresult, RelationGetRelationName(rel));
 
 	/*
+	 * Generate the trigger's OID now, so that we can use it in the name
+	 * if needed.
+	 */
+	trigoid = newoid();
+
+	/*
 	 * If trigger is an RI constraint, use specified trigger name as
 	 * constraint name and build a unique trigger name instead.
 	 * This is mainly for backwards compatibility with CREATE CONSTRAINT
@@ -103,7 +117,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	if (stmt->isconstraint)
 	{
 		snprintf(constrtrigname, sizeof(constrtrigname),
-				 "RI_ConstraintTrigger_%u", newoid());
+				 "RI_ConstraintTrigger_%u", trigoid);
 		trigname = constrtrigname;
 		constrname = stmt->trigname;
 	}
@@ -279,10 +293,14 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	tuple = heap_formtuple(tgrel->rd_att, values, nulls);
 
+	/* force tuple to have the desired OID */
+	AssertTupleDescHasOid(tgrel->rd_att);
+	HeapTupleSetOid(tuple, trigoid);
+
 	/*
 	 * Insert tuple into pg_trigger.
 	 */
-	trigoid = simple_heap_insert(tgrel, tuple);
+	simple_heap_insert(tgrel, tuple);
 
 	CatalogOpenIndices(Num_pg_trigger_indices, Name_pg_trigger_indices, idescs);
 	CatalogIndexInsert(idescs, Num_pg_trigger_indices, tgrel, tuple);
