@@ -1,10 +1,10 @@
-# 2004-10-18 Zhenbang Wei <forth@zbwei.net>
+# 2004-12-13 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-19 01:08+0100\n"
-"PO-Revision-Date: 2004-10-19 10:40+0800\n"
+"POT-Creation-Date: 2004-12-13 01:05+0000\n"
+"PO-Revision-Date: 2004-12-13 14:29+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -50,7 +50,8 @@ msgid ""
 msgstr "  --includedir          顯使用戶端介面C標頭檔位置\n"
 
 #: pg_config.c:43
-msgid "  --includedir-server   show location of C header files for the server\n"
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   顯示伺服器C標頭檔位置\n"
 
 #: pg_config.c:44
@@ -113,3 +114,32 @@ msgstr "%s：無效的參數：%s\n"
 msgid "%s: could not find own executable\n"
 msgstr "%s：找不到執行檔\n"
 
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "無法識別目前的目錄：%s"
+
+#: ../../port/exec.c:323 ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "無法切換目錄至\"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "無法讀取符號連結\"%s\""
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "子行程結束，結束代碼 %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "子行程被信號 %d 結束"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "子行程結束，不明狀態代碼 %d"

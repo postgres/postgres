@@ -1,10 +1,10 @@
-# 2004-11-11 Zhenbang Wei <forth@zbwei.net>
+# 2004-12-13 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-11-11 01:19+0000\n"
-"PO-Revision-Date: 2004-11-11 13:58+0800\n"
+"POT-Creation-Date: 2004-12-13 01:06+0000\n"
+"PO-Revision-Date: 2004-12-13 14:33+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
@@ -190,7 +190,7 @@ msgstr "  -o, --oids               備份OID\n"
 
 #: pg_dump.c:685
 msgid ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
+"  -O, --no-owner           skip restoration of object ownership\n"
 "                           in plain text format\n"
 msgstr "  -O, --no-owner           不備份物件的擁有關係至純文字格式\n"
 
@@ -244,7 +244,7 @@ msgid ""
 "Connection options:\n"
 msgstr ""
 "\n"
-"連線選項:\n"
+"連線選項：\n"
 
 #: pg_dump.c:701 pg_dumpall.c:365 pg_restore.c:395
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
@@ -682,7 +682,7 @@ msgstr "無法關閉備份檔\n"
 
 #: pg_backup_archiver.c:153
 msgid "-C and -c are incompatible options\n"
-msgstr "-C 和 -c 選項不可以同時使用\n"
+msgstr "-C 和 -c 選項不可以同時使?\n"
 
 #: pg_backup_archiver.c:160
 msgid "connecting to database for restore\n"
@@ -1373,78 +1373,78 @@ msgstr "還原large object OID %u\n"
 msgid "could not write null block at end of tar archive\n"
 msgstr "無法在tar備份檔寫入空區塊\n"
 
-#: pg_backup_tar.c:1023
+#: pg_backup_tar.c:1027
 msgid "archive member too large for tar format\n"
 msgstr "tar格式中的備份檔成員太大\n"
 
-#: pg_backup_tar.c:1033
+#: pg_backup_tar.c:1037
 #, c-format
 msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
 msgstr "寫入資料至tar備份檔時發生錯誤(已寫入 %lu，打算寫入 %lu)\n"
 
-#: pg_backup_tar.c:1039
+#: pg_backup_tar.c:1043
 #, c-format
 msgid "could not close tar member: %s\n"
 msgstr "無法關閉tar成員：%s\n"
 
-#: pg_backup_tar.c:1048
+#: pg_backup_tar.c:1052
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "實際檔案大小(%s)與預期大小(%s)不符\n"
 
-#: pg_backup_tar.c:1056
+#: pg_backup_tar.c:1060
 msgid "could not output padding at end of tar member\n"
 msgstr "無法輸出填充內容至tar成員之後\n"
 
-#: pg_backup_tar.c:1085
+#: pg_backup_tar.c:1089
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "從位置 %s 移至位於檔案位置 %s 的下一個成員\n"
 
-#: pg_backup_tar.c:1096
+#: pg_backup_tar.c:1100
 #, c-format
 msgid "now at file position %s\n"
 msgstr "目前在檔案位置 %s\n"
 
-#: pg_backup_tar.c:1105 pg_backup_tar.c:1132
+#: pg_backup_tar.c:1109 pg_backup_tar.c:1136
 #, c-format
 msgid "could not find header for file %s in tar archive\n"
 msgstr "tar備份檔中找不到檔案 %s 的header\n"
 
-#: pg_backup_tar.c:1116
+#: pg_backup_tar.c:1120
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "跳過tar成員 %s\n"
 
-#: pg_backup_tar.c:1120
+#: pg_backup_tar.c:1124
 #, c-format
 msgid ""
 "dumping data out of order is not supported in this archive format: %s is "
 "required, but comes before %s in the archive file.\n"
 msgstr "此種備份格式不支援不依順序備分：需要 %s，但是要在備份檔的 %s 之前。\n"
 
-#: pg_backup_tar.c:1168
+#: pg_backup_tar.c:1172
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "實際檔案位置(%s)與預期位置(%s)不符\n"
 
-#: pg_backup_tar.c:1183
+#: pg_backup_tar.c:1187
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
 msgstr "發現不完整的tar header(%lu bytes)\n"
 
-#: pg_backup_tar.c:1218
+#: pg_backup_tar.c:1222
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "TOC Entry %s 於 %s (長度 %lu，checksum %d)\n"
 
-#: pg_backup_tar.c:1228
+#: pg_backup_tar.c:1232
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
 msgstr "在 %s 發現損壞的tar header(預期是 %d，計算得到 %d) 檔案位置 %s\n"
 
-#: pg_backup_tar.c:1321
+#: pg_backup_tar.c:1325
 msgid "could not write tar header\n"
 msgstr "無法寫入tar header\n"
 
@@ -1473,7 +1473,7 @@ msgid "  %s [OPTION]... [FILE]\n"
 msgstr "  %s [選項]... [檔名]\n"
 
 #: pg_restore.c:363
-msgid "  -d, --dbname=NAME        target database name\n"
+msgid "  -d, --dbname=NAME        connect to database name\n"
 msgstr "  -d, --dbname=NAME        指定資料庫名稱\n"
 
 #: pg_restore.c:365
@@ -1502,7 +1502,7 @@ msgid "  -a, --data-only          restore only the data, no schema\n"
 msgstr "  -a, --data-only          只還原資料，不還原schema\n"
 
 #: pg_restore.c:375
-msgid "  -C, --create             issue commands to create the database\n"
+msgid "  -C, --create             create the target database\n"
 msgstr "  -C, --create             執行建立資料庫的命令\n"
 
 #: pg_restore.c:376
@@ -1515,9 +1515,8 @@ msgid ""
 "                           output from this file\n"
 msgstr "  -L, --use-list=FILENAME  從這個檔案取得還原的順序\n"
 
-#: pg_restore.c:379
-msgid ""
-"  -O, --no-owner           do not issue commands to set object ownership\n"
+#: pg_dumpall.c:352 pg_restore.c:379
+msgid "  -O, --no-owner           skip restoration of object ownership\n"
 msgstr "  -O, --no-owner           忽略設定物件擁有關係的命令\n"
 
 #: pg_restore.c:380
@@ -1614,11 +1613,6 @@ msgstr "  -c, --clean              建立資料庫前先清理(刪除)\n"
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr "  -g, --globals-only       只備分全域物件，不備份資料庫\n"
 
-#: pg_dumpall.c:352
-msgid ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
-msgstr "  -O, --no-owner           忽略設定物件擁有關係的命令\n"
-
 #: pg_dumpall.c:354
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use in the "
@@ -1694,3 +1688,38 @@ msgstr "%s：查詢失敗：%s"
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s：查詢是：%s\n"
+
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "無法識別目前的目錄：%s"
+
+#: ../../port/exec.c:323 ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "無法切換目錄至\"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "無法讀取符號連結\"%s\""
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "子行程結束，結束代碼 %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "子行程被信號 %d 結束"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "子行程結束，不明狀態代碼 %d"
+
+#~ msgid ""
+#~ "  -O, --no-owner           do not output commands to set object "
+#~ "ownership\n"
+#~ msgstr "  -O, --no-owner           忽略設定物件擁有關係的命令\n"
