@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.131 2003/06/11 22:13:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.132 2003/06/27 19:08:38 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -138,6 +138,7 @@ static char *log_min_error_statement_str;
 static char *log_min_messages_str;
 static char *client_min_messages_str;
 static bool phony_autocommit;
+static bool session_auth_is_superuser;
 static double phony_random_seed;
 static char *client_encoding_string;
 static char *datestyle_string;
@@ -359,6 +360,13 @@ static struct config_bool
 	{
 		{"geqo", PGC_USERSET}, &enable_geqo,
 		true, NULL, NULL
+	},
+
+	/* Not for general use --- used by SET SESSION AUTHORIZATION */
+	{
+		{"is_superuser", PGC_INTERNAL, GUC_REPORT | GUC_NO_SHOW_ALL | GUC_NO_RESET_ALL},
+		&session_auth_is_superuser,
+		false, NULL, NULL
 	},
 
 	{
@@ -894,6 +902,7 @@ static struct config_string
 		"SQL_ASCII", NULL, NULL
 	},
 
+	/* Can't be set in postgresql.conf */
 	{
 		{"server_version", PGC_INTERNAL, GUC_REPORT},
 		&server_version_string,

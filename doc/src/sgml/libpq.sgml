@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.126 2003/06/22 00:29:29 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.127 2003/06/27 19:08:37 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -812,7 +812,8 @@ is not known.
 Parameters reported as of the current release include
 <literal>server_version</> (cannot change after startup);
 <literal>server_encoding</> (also not presently changeable after start);
-<literal>client_encoding</>, and
+<literal>client_encoding</>,
+<literal>is_superuser</>, and
 <literal>DateStyle</>.
 </para>
 

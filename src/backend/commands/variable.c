@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.78 2003/06/06 16:25:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.79 2003/06/27 19:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,25 +721,29 @@ assign_client_encoding(const char *value, bool doit, bool interactive)
  * When resetting session auth after an error, we can't expect to do catalog
  * lookups.  Hence, the stored form of the value must provide a numeric userid
  * that can be re-used directly.  We store the string in the form of
- * NAMEDATALEN 'x's followed by the numeric userid --- this cannot conflict
- * with any valid user name, because of the NAMEDATALEN limit on names.
+ * NAMEDATALEN 'x's, followed by T or F to indicate superuserness, followed
+ * by the numeric userid --- this cannot conflict with any valid user name,
+ * because of the NAMEDATALEN limit on names.
  */
 const char *
 assign_session_authorization(const char *value, bool doit, bool interactive)
 {
 	AclId		usesysid = 0;
+	bool		is_superuser = false;
 	char	   *result;
 
-	if (strspn(value, "x") == NAMEDATALEN)
+	if (strspn(value, "x") == NAMEDATALEN &&
+		(value[NAMEDATALEN] == 'T' || value[NAMEDATALEN] == 'F'))
 	{
 		/* might be a saved numeric userid */
 		char	   *endptr;
 
-		usesysid = (AclId) strtoul(value + NAMEDATALEN, &endptr, 10);
+		usesysid = (AclId) strtoul(value + NAMEDATALEN + 1, &endptr, 10);
 
-		if (endptr != value + NAMEDATALEN && *endptr == '\0')
+		if (endptr != value + NAMEDATALEN + 1 && *endptr == '\0')
 		{
-			/* syntactically valid, so use the numeric user ID */
+			/* syntactically valid, so use the numeric user ID and flag */
+			is_superuser = (value[NAMEDATALEN] == 'T');
 		}
 		else
 			usesysid = 0;
@@ -771,12 +775,13 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 		}
 
 		usesysid = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
-
+		is_superuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
+		
 		ReleaseSysCache(userTup);
 	}
 
 	if (doit)
-		SetSessionAuthorization(usesysid);
+		SetSessionAuthorization(usesysid, is_superuser);
 
 	result = (char *) malloc(NAMEDATALEN + 32);
 	if (!result)
@@ -784,7 +789,9 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 
 	memset(result, 'x', NAMEDATALEN);
 
-	snprintf(result + NAMEDATALEN, 32, "%lu", (unsigned long) usesysid);
+	snprintf(result + NAMEDATALEN, 32, "%c%lu",
+			 is_superuser ? 'T' : 'F',
+			 (unsigned long) usesysid);
 
 	return result;
 }

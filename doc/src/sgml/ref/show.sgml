@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.27 2003/05/14 03:26:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.28 2003/06/27 19:08:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -94,6 +94,16 @@ SHOW ALL
           classification.  At present, this parameter can be shown but
           not set, because the setting is determined at
           <command>initdb</> time.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
+        <term><literal>IS_SUPERUSER</literal></term>
+        <listitem>
+         <para>
+          True if the current session authorization identifier has
+	  superuser privileges.
          </para>
         </listitem>
        </varlistentry>

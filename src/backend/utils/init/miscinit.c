@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.103 2003/06/27 14:45:30 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.104 2003/06/27 19:08:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -553,9 +553,12 @@ InitializeSessionUserId(const char *username)
 
 	SetSessionUserId(usesysid); /* sets CurrentUserId too */
 
-	/* Record username as a config option too */
+	/* Record username and superuser status as GUC settings too */
 	SetConfigOption("session_authorization", username,
 					PGC_BACKEND, PGC_S_OVERRIDE);
+	SetConfigOption("is_superuser",
+					AuthenticatedUserIsSuperuser ? "on" : "off",
+					PGC_INTERNAL, PGC_S_OVERRIDE);
 
 	/*
 	 * Set up user-specific configuration variables.  This is a good place
@@ -594,10 +597,13 @@ InitializeSessionUserIdStandalone(void)
 /*
  * Change session auth ID while running
  *
- * Only a superuser may set auth ID to something other than himself.
+ * Only a superuser may set auth ID to something other than himself.  Note
+ * that in case of multiple SETs in a single session, the original userid's
+ * superuserness is what matters.  But we set the GUC variable is_superuser
+ * to indicate whether the *current* session userid is a superuser.
  */
 void
-SetSessionAuthorization(AclId userid)
+SetSessionAuthorization(AclId userid, bool is_superuser)
 {
 	/* Must have authenticated already, else can't make permission check */
 	AssertState(AclIdIsValid(AuthenticatedUserId));
@@ -608,6 +614,10 @@ SetSessionAuthorization(AclId userid)
 
 	SetSessionUserId(userid);
 	SetUserId(userid);
+
+	SetConfigOption("is_superuser",
+					is_superuser ? "on" : "off",
+					PGC_INTERNAL, PGC_S_OVERRIDE);
 }
 
 

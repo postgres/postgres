@@ -16,9 +16,12 @@
 ## if an option is valid but shows up in only one file (guc.c but not
 ## postgresql.conf.sample), it should be listed here so that it 
 ## can be ignored
-INTENTIONALLY_NOT_INCLUDED="pre_auth_delay lc_messages lc_monetary \
-lc_numeric lc_time seed server_encoding session_authorization \
-transaction_isolation transaction_read_only zero_damaged_pages"
+INTENTIONALLY_NOT_INCLUDED="autocommit debug_deadlocks exit_on_error \
+is_superuser lc_collate lc_ctype lc_messages lc_monetary lc_numeric lc_time \
+pre_auth_delay seed server_encoding server_version session_authorization \
+trace_lock_oidmin trace_lock_table trace_locks trace_lwlocks trace_notify \
+trace_userlocks transaction_isolation transaction_read_only \
+zero_damaged_pages"
 
 ### What options are listed in postgresql.conf.sample, but don't appear 
 ### in guc.c?
