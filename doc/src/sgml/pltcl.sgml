@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.8 2001/03/25 10:16:12 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.9 2001/04/30 22:22:34 tgl Exp $
 -->
 
  <chapter id="pltcl">
@@ -96,8 +96,10 @@ CREATE FUNCTION <replaceable>funcname</replaceable> (<replaceable>argument-types
      </programlisting>
 
      When the function is called, the arguments are given as
-     variables $1 ... $n to the Tcl procedure body.  For example,
-     a function
+     variables <literal>$1</literal> ... <literal>$n</literal> to the
+     Tcl procedure body.  The result is returned
+     from the Tcl code in the usual way, with a <literal>return</literal>
+     statement.  For example, a function
      returning the higher of two int4 values could be defined as:
 
      <programlisting>
@@ -107,6 +109,11 @@ CREATE FUNCTION tcl_max (int4, int4) RETURNS int4 AS '
 ' LANGUAGE 'pltcl';
      </programlisting>
 
+     To return a NULL value from a PL/Tcl function, execute
+     <literal>return_null</literal>.
+    </para>
+
+    <para>
      Composite type arguments are given to the procedure as Tcl arrays.
      The element names
      in the array are the attribute names of the composite
