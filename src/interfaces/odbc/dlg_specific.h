@@ -96,6 +96,7 @@
 #define INI_TRANSLATIONDLL				"TranslationDLL"
 #define INI_TRANSLATIONOPTION			"TranslationOption"
 #define INI_DISALLOWPREMATURE			"DisallowPremature"
+#define INI_UPDATABLECURSORS			"UpdatableCursors"
 
 
 /*	Connection Defaults */

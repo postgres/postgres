@@ -166,19 +166,17 @@ PGAPI_GetInfo(
 		case SQL_CURSOR_COMMIT_BEHAVIOR:		/* ODBC 1.0 */
 			len = 2;
 			value = SQL_CB_CLOSE;
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-			if (!ci->drivers.use_declarefetch)
-				value = SQL_CB_PRESERVE;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+			if (ci->updatable_cursors)
+				if (!ci->drivers.use_declarefetch)
+					value = SQL_CB_PRESERVE;
 			break;
 
 		case SQL_CURSOR_ROLLBACK_BEHAVIOR:		/* ODBC 1.0 */
 			len = 2;
 			value = SQL_CB_CLOSE;
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-			if (!ci->drivers.use_declarefetch)
-				value = SQL_CB_PRESERVE;
-#endif /* DRIVER_CURSOR_IMPLEMENT */
+			if (ci->updatable_cursors)
+				if (!ci->drivers.use_declarefetch)
+					value = SQL_CB_PRESERVE;
 			break;
 
 		case SQL_DATA_SOURCE_NAME:		/* ODBC 1.0 */
@@ -235,7 +233,7 @@ PGAPI_GetInfo(
 				if (dver[0])
 				{
 					int	major, minor;
-					mylog("REIGISTRY_ODBC_VER = %s\n", dver)
+					mylog("REGISTRY_ODBC_VER = %s\n", dver)
 ;
 					if (sscanf(dver, "%x.%x", &major, &minor) >= 2)
 					{
@@ -524,6 +522,8 @@ PGAPI_GetInfo(
 		case SQL_POS_OPERATIONS:		/* ODBC 2.0 */
 			len = 4;
 			value = ci->drivers.lie ? (SQL_POS_POSITION | SQL_POS_REFRESH | SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD) : (SQL_POS_POSITION | SQL_POS_REFRESH);
+			if (ci->updatable_cursors)
+				value |= (SQL_POS_UPDATE | SQL_POS_DELETE | SQL_POS_ADD);
 			break;
 
 		case SQL_POSITIONED_STATEMENTS: /* ODBC 2.0 */
@@ -571,7 +571,7 @@ PGAPI_GetInfo(
 			 * Driver doesn't support keyset-driven or mixed cursors, so
 			 * not much point in saying row updates are supported
 			 */
-			p = ci->drivers.lie ? "Y" : "N";
+			p = (ci->drivers.lie || ci->updatable_cursors) ? "Y" : "N";
 			break;
 
 		case SQL_SCROLL_CONCURRENCY:	/* ODBC 1.0 */
@@ -579,7 +579,10 @@ PGAPI_GetInfo(
 			value = ci->drivers.lie ? (SQL_SCCO_READ_ONLY |
 								   SQL_SCCO_LOCK |
 								   SQL_SCCO_OPT_ROWVER |
-							 SQL_SCCO_OPT_VALUES) : (SQL_SCCO_READ_ONLY);
+							 SQL_SCCO_OPT_VALUES) :
+ (SQL_SCCO_READ_ONLY);
+			if (ci->updatable_cursors)
+				value |= SQL_SCCO_OPT_ROWVER;
 			break;
 
 		case SQL_SCROLL_OPTIONS:		/* ODBC 1.0 */
@@ -588,7 +591,10 @@ PGAPI_GetInfo(
 								   SQL_SO_STATIC |
 								   SQL_SO_KEYSET_DRIVEN |
 								   SQL_SO_DYNAMIC |
-								   SQL_SO_MIXED) : (ci->drivers.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
+								   SQL_SO_MIXED)
+ : (ci->drivers.use_declarefetch ? SQL_SO_FORWARD_ONLY : (SQL_SO_FORWARD_ONLY | SQL_SO_STATIC));
+			if (ci->updatable_cursors)
+ 				value |= 0; /* SQL_SO_KEYSET_DRIVEN in the furure */
 			break;
 
 		case SQL_SEARCH_PATTERN_ESCAPE: /* ODBC 1.0 */
@@ -606,6 +612,8 @@ PGAPI_GetInfo(
 		case SQL_STATIC_SENSITIVITY:	/* ODBC 2.0 */
 			len = 4;
 			value = ci->drivers.lie ? (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES) : 0;
+			if (ci->updatable_cursors)
+				value |= (SQL_SS_ADDITIONS | SQL_SS_DELETIONS | SQL_SS_UPDATES);
 			break;
 
 		case SQL_STRING_FUNCTIONS:		/* ODBC 1.0 */

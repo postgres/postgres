@@ -1,5 +1,5 @@
 /*-------
- * Module:			drvconn.c
+  Module:			drvconn.c
  *
  * Description:		This module contains only routines related to
  *					implementing SQLDriverConnect.
@@ -88,6 +88,7 @@ PGAPI_DriverConnect(
 	int			retval;
 	char		password_required = FALSE;
 	int			len = 0;
+	SWORD		lenStrout;
 
 
 	mylog("%s: entering...\n", func);
@@ -211,7 +212,10 @@ dialog:
 	 */
 	result = SQL_SUCCESS;
 
-	makeConnectString(connStrOut, ci, cbConnStrOutMax);
+	lenStrout = cbConnStrOutMax;
+	if (conn->ms_jet && lenStrout > 255)
+		lenStrout = 255; 
+	makeConnectString(connStrOut, ci, lenStrout);
 	len = strlen(connStrOut);
 
 	if (szConnStrOut)

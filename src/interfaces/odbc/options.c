@@ -412,6 +412,15 @@ PGAPI_SetConnectOption(
 				conn->errormsg = "Unknown connect option (Set)";
 				conn->errornumber = CONN_UNSUPPORTED_OPTION;
 				sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
+				if (fOption == 30002 && vParam)
+				{
+					if (strcmp((char *) vParam, "Microsoft Jet") == 0)
+					{
+						conn->errornumber = 0;
+						conn->ms_jet = 1;
+						return SQL_SUCCESS;
+					}
+				}
 				CC_log_error(func, option, conn);
 				return SQL_ERROR;
 			}

@@ -510,6 +510,7 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 	char		got_dsn = (ci->dsn[0] != '\0');
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
 	UWORD		hlen;
+	BOOL		abbrev = (len <= 400);
 
 	/* fundamental info */
 	sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;PWD=%s",
@@ -524,8 +525,9 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 	encode(ci->conn_settings, encoded_conn_settings);
 
 	/* extra info */
-	hlen = strlen(connect_string),
-	sprintf(&connect_string[hlen],
+	hlen = strlen(connect_string);
+	if (!abbrev)
+		sprintf(&connect_string[hlen],
 			";READONLY=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s;FETCH=%d;SOCKET=%d;UNKNOWNSIZES=%d;MAXVARCHARSIZE=%d;MAXLONGVARCHARSIZE=%d;DEBUG=%d;COMMLOG=%d;OPTIMIZER=%d;KSQO=%d;USEDECLAREFETCH=%d;TEXTASLONGVARCHAR=%d;UNKNOWNSASLONGVARCHAR=%d;BOOLSASCHAR=%d;PARSE=%d;CANCELASFREESTMT=%d;EXTRASYSTABLEPREFIXES=%s",
 			ci->onlyread,
 			ci->protocol,
@@ -551,7 +553,7 @@ makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 			ci->drivers.cancel_as_freestmt,
 			ci->drivers.extra_systable_prefixes);
 	/* Abbrebiation is needed ? */
-	if (strlen(connect_string) >= len)
+	if (abbrev || strlen(connect_string) >= len)
 		sprintf(&connect_string[hlen],
 			";A0=%s;A1=%s;A2=%s;A3=%s;A4=%s;A5=%s;A6=%s;A7=%d;A8=%d;A9=%d;B0=%d;B1=%d;B2=%d;B3=%d;B4=%d;B5=%d;B6=%d;B7=%d;B8=%d;B9=%d;C0=%d;C1=%d;C2=%s",
 			ci->onlyread,
@@ -630,7 +632,10 @@ copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
 	else if (stricmp(attribute, INI_DISALLOWPREMATURE) == 0 || stricmp(attribute, "C3") == 0)
 	{
 		ci->disallow_premature = atoi(value);
-		/* strcpy(ci->conn_settings, value); */
+	}
+	else if (stricmp(attribute, INI_UPDATABLECURSORS) == 0 || stricmp(attribute, "C4") == 0)
+	{
+		ci->updatable_cursors = atoi(value);
 	}
 
 	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s',conn_settings='%s',disallow_premature=%d)\n", ci->dsn, ci->server, ci->database, ci->username, ci->password, ci->port, ci->onlyread, ci->protocol, ci->conn_settings, ci->disallow_premature);
@@ -803,6 +808,12 @@ getDSNinfo(ConnInfo *ci, char overwrite)
 		ci->disallow_premature = atoi(temp);
 	}
 
+	if (ci->updatable_cursors == 0 || overwrite)
+	{
+		SQLGetPrivateProfileString(DSN, INI_UPDATABLECURSORS, "", temp, sizeof(temp), ODBC_INI);
+		ci->updatable_cursors = atoi(temp);
+	}
+
 	/* Allow override of odbcinst.ini parameters here */
 	getCommonDefaults(DSN, ODBC_INI, ci);
 
@@ -914,6 +925,11 @@ writeDSNinfo(const ConnInfo *ci)
 	sprintf(temp, "%d", ci->disallow_premature); 
 	SQLWritePrivateProfileString(DSN,
 								 INI_DISALLOWPREMATURE,
+								 temp,
+								 ODBC_INI);
+	sprintf(temp, "%d", ci->updatable_cursors); 
+	SQLWritePrivateProfileString(DSN,
+								 INI_UPDATABLECURSORS,
 								 temp,
 								 ODBC_INI);
 }

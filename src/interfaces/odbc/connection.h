@@ -160,6 +160,7 @@ typedef struct
 	char		translation_option[SMALL_REGISTRY_LEN];
 	char		focus_password;
 	char		disallow_premature;
+	char		updatable_cursors;
 	GLOBAL_VALUES	drivers; /* moved from driver's option */
 } ConnInfo;
 
@@ -274,6 +275,7 @@ struct ConnectionClass_
 	float		pg_version_number;
 	Int2		pg_version_major;
 	Int2		pg_version_minor;
+	char		ms_jet;
 #ifdef	MULTIBYTE
 	char		*client_encoding;
 	char		*server_encoding;

@@ -252,7 +252,10 @@ CC_Constructor()
 		rv->transact_status = CONN_IN_AUTOCOMMIT;		/* autocommit by default */
 
 		memset(&rv->connInfo, 0, sizeof(ConnInfo));
-memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
+#ifdef	DRIVER_CURSOR_IMPLEMENT
+		rv->connInfo.updatable_cursors = 1;
+#endif /* DRIVER_CURSOR_IMPLEMENT */
+		memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
 		rv->sock = SOCK_Constructor(rv);
 		if (!rv->sock)
 			return NULL;
@@ -278,6 +281,7 @@ memcpy(&(rv->connInfo.drivers), &globals, sizeof(globals));
 		rv->pg_version_number = .0;
 		rv->pg_version_major = 0;
 		rv->pg_version_minor = 0;
+		rv->ms_jet = 0;
 #ifdef	MULTIBYTE
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
@@ -586,6 +590,7 @@ CC_connect(ConnectionClass *self, char do_password)
 
 		mylog("CC_connect(): DSN = '%s', server = '%s', port = '%s', database = '%s', username = '%s', password='%s'\n", ci->dsn, ci->server, ci->port, ci->database, ci->username, ci->password);
 
+another_version_retry:
 		/*
 		 * If the socket was closed for some reason (like a SQLDisconnect,
 		 * but no SQLFreeConnect then create a socket now.
@@ -690,6 +695,18 @@ CC_connect(ConnectionClass *self, char do_password)
 					self->errornumber = CONN_INVALID_AUTHENTICATION;
 					self->errormsg = msgbuffer;
 					qlog("ERROR from backend during authentication: '%s'\n", self->errormsg);
+					if (strncmp(msgbuffer, "Unsupported frontend protocol", 29) == 0)
+					{	/* retry older version */
+						if (PROTOCOL_63(ci))
+							strcpy(ci->protocol, PG62);
+						else
+							strcpy(ci->protocol, PG63);
+						SOCK_Destructor(sock);
+						self->sock = (SocketClass *) 0;
+						CC_initialize_pg_version(self);
+						goto another_version_retry;
+					}
+			
 					return 0;
 				case 'R':
 

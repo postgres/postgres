@@ -164,12 +164,12 @@ PGAPI_NumResultCols(
 		}
 
 		*pccol = QR_NumResultCols(result);
-#ifdef	DRIVER_CURSOR_IMPLEMENT
-		if (stmt->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
+		/* updatable cursors */
+		if (ci->updatable_cursors &&
+		    stmt->options.scroll_concurrency != SQL_CONCUR_READ_ONLY)
 		{
 			*pccol -= 2;
 		}
-#endif /* DRIVER_CURSOR_IMPLEMENT */
 	}
 
 	return SQL_SUCCESS;
@@ -1224,13 +1224,46 @@ PGAPI_MoreResults(
 
 
 #ifdef	DRIVER_CURSOR_IMPLEMENT
+/*
+ *	Stuff for updatable cursors. 
+ */
+static QResultClass *
+positioned_load(StatementClass *stmt, BOOL latest, int res_cols, UInt4 oid, const char *tidval)
+{
+	int	i;
+	QResultClass	*qres;
+	char	selstr[4096];
+
+	sprintf(selstr, "select");
+	for (i = 0; i < res_cols; i++)
+		sprintf(selstr, "%s \"%s\",", selstr, stmt->fi[i]->name);
+	sprintf(selstr, "%s CTID, OID from \"%s\" where", selstr, stmt->ti[0]->name);
+	if (tidval)
+	{
+		if (latest)
+			sprintf(selstr, "%s ctid = currtid2('%s', '%s') and",
+				selstr, stmt->ti[0]->name, tidval);
+		else
+			sprintf(selstr, "%s ctid = '%s' and", selstr, tidval);
+	}
+	sprintf(selstr, "%s oid = %u", selstr, oid), 
+	mylog("selstr=%s\n", selstr);
+	qres = CC_send_query(SC_get_conn(stmt), selstr, NULL);
+	if (qres && QR_aborted(qres))
+	{
+		QR_Destructor(qres);
+		qres = (QResultClass *) 0;
+	}
+	return qres;
+}
+
 RETCODE SQL_API
 SC_pos_reload(StatementClass *stmt, UWORD irow, UWORD *count)
 {
 	int	i, res_cols;
 	UWORD	rcnt, global_ridx;
+	UInt4	oid;
 	QResultClass	*res, *qres;
-	char	selstr[4096];
 	RETCODE	ret = SQL_ERROR;
 	char	*tidval, *oidval;
 
@@ -1247,22 +1280,16 @@ SC_pos_reload(StatementClass *stmt, UWORD irow, UWORD *count)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		return SQL_ERROR;
 	}
-	strcpy(selstr, "select");
 	global_ridx = irow + stmt->rowset_start;
 	res_cols = QR_NumResultCols(res);
 	if (!(oidval = QR_get_value_backend_row(res, global_ridx, res_cols - 1)))
 	{
 		return SQL_SUCCESS_WITH_INFO;
-	} 
+	}
+	sscanf(oidval, "%u", &oid); 
 	tidval = QR_get_value_backend_row(res, global_ridx, res_cols - 2);
 	res_cols -= 2;
-	for (i = 0; i < res_cols; i++)
-		sprintf(selstr, "%s \"%s\",", selstr, stmt->fi[i]->name);
-	sprintf(selstr, "%s CTID, OID from \"%s\" where ctid = currtid2('%s', '%s') and oid = %s",
-		selstr, stmt->ti[0]->name, stmt->ti[0]->name, tidval, oidval), 
-	mylog("selstr=%s\n", selstr);
-	qres = CC_send_query(SC_get_conn(stmt), selstr, NULL);
-	if (qres && QR_command_successful(qres))
+	if (qres = positioned_load(stmt, TRUE, res_cols, oid, tidval), qres)
 	{
 		TupleField	*tupleo, *tuplen;
 
@@ -1296,22 +1323,20 @@ SC_pos_reload(StatementClass *stmt, UWORD irow, UWORD *count)
 				tupleo[res_cols + 1].len = 0;
 			}
 		}
+		QR_Destructor(qres);
 	}
 	else if (stmt->errornumber == 0)
 		stmt->errornumber = STMT_ERROR_TAKEN_FROM_BACKEND;
-	if (qres)
-		QR_Destructor(qres);
 	if (count)
 		*count = rcnt;
 	return ret;
 }
 
 RETCODE SQL_API
-SC_pos_newload(StatementClass *stmt, Int4 oid, const char *tidval)
+SC_pos_newload(StatementClass *stmt, UInt4 oid, const char *tidval)
 {
-	int	i, res_cols;
+	int	i;
 	QResultClass	*res, *qres;
-	char	selstr[4096];
 	RETCODE	ret = SQL_ERROR;
 
 	mylog("positioned new fi=%x ti=%x\n", stmt->fi, stmt->ti);
@@ -1324,20 +1349,8 @@ SC_pos_newload(StatementClass *stmt, Int4 oid, const char *tidval)
 		stmt->options.scroll_concurrency = SQL_CONCUR_READ_ONLY;
 		return SQL_ERROR;
 	}
-	sprintf(selstr, "select");
-	res_cols = QR_NumResultCols(res);
-	res_cols -= 2;
-	for (i = 0; i < res_cols; i++)
-		sprintf(selstr, "%s \"%s\",", selstr, stmt->fi[i]->name);
-	sprintf(selstr, "%s CTID, OID from \"%s\" where", selstr, stmt->ti[0]->name);
-	if (tidval)
-		sprintf(selstr, "%s ctid = currtid2('%s', '%s') and",
-			selstr, stmt->ti[0]->name, tidval);
-	sprintf(selstr, "%s oid = %u", selstr, oid), 
-	mylog("selstr=%s\n", selstr);
-	qres = CC_send_query(SC_get_conn(stmt), selstr, NULL);
-	if (qres && QR_command_successful(qres))
-	{
+	if (qres = positioned_load(stmt, TRUE, QR_NumResultCols(res) - 2, oid, tidval), qres)
+	{ 
 		TupleField	*tupleo, *tuplen;
 		int	count = QR_get_num_tuples(qres);
 		QR_set_position(qres, 0);
@@ -1380,10 +1393,9 @@ SC_pos_newload(StatementClass *stmt, Int4 oid, const char *tidval)
 			stmt->errormsg = "the content was changed before updation";
 			ret = SQL_SUCCESS_WITH_INFO;
 		}
+		QR_Destructor(qres);
 		/*stmt->currTuple = stmt->rowset_start + irow;*/
 	}
-	if (qres)
-		QR_Destructor(qres);
 	return ret;
 }
 
@@ -1666,7 +1678,7 @@ SC_pos_add(StatementClass *stmt,
 		else
 		{
 			int	addcnt;
-			Int4	oid;
+			UInt4	oid;
 			const char *cmdstr = QR_get_command(qstmt->result);
 			if (cmdstr &&
 			    sscanf(cmdstr, "INSERT %u %d", &oid, &addcnt) == 2 &&
@@ -1696,6 +1708,9 @@ SC_pos_add(StatementClass *stmt,
 	PGAPI_FreeStmt(hstmt, SQL_DROP);
 	return ret;
 }
+/*
+ *	Stuff for updatable cursors end. 
+ */
 #endif /* DRIVER_CURSOR_IMPLEMENT */
 
 /*
