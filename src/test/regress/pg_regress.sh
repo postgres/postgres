@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.22 2001/09/16 16:11:11 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.23 2002/01/03 21:52:05 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -353,6 +353,27 @@ then
     "$bindir/postmaster" -D "$PGDATA" -F $postmaster_options >"$LOGDIR/postmaster.log" 2>&1 &
     postmaster_pid=$!
 
+    # Wait till postmaster is able to accept connections (normally only
+    # a second or so, but Cygwin is reportedly *much* slower).  Don't
+    # wait forever, however.
+    i=0
+    max=60
+    until "$bindir/psql" $psql_options template1 </dev/null 2>/dev/null
+    do
+        i=`expr $i + 1`
+        if [ $i -ge $max ]
+        then
+            break
+        fi
+        if kill -0 $postmaster_pid >/dev/null 2>&1
+        then
+            : still starting up
+        else
+            break
+        fi
+        sleep 1
+    done
+
     if kill -0 $postmaster_pid >/dev/null 2>&1
     then
         echo "running on port $PGPORT with pid $postmaster_pid"
@@ -363,9 +384,6 @@ then
         echo
         (exit 2); exit
     fi
-
-    # give postmaster some time to pass WAL recovery
-    sleep 3
 
 else # not temp-install
 
