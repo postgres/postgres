@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.21 1998/01/26 01:41:04 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.22 1998/01/27 03:11:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ static int map_old_to_new(Port *port, UserAuth old, int status);
  * unauthenticated connections.)
  */
 static int
-pg_krb4_recvauth(Port *)
+pg_krb4_recvauth(Port *port)
 {
 	long		krbopts = 0;	/* one-way authentication */
 	KTEXT_ST	clttkt;
@@ -117,7 +117,7 @@ pg_krb4_recvauth(Port *)
 	{
 		sprintf(PQerrormsg,
 				"pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
-				port->username,
+				port->user,
 				auth_data.pname);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
@@ -296,7 +296,7 @@ pg_krb5_recvauth(Port *port)
 	{
 		sprintf(PQerrormsg,
 				"pg_krb5_recvauth: name \"%s\" != \"%s\"\n",
-				port->username, kusername);
+				port->user, kusername);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		pfree(kusername);
