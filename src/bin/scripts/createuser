@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.19 2001/08/26 03:46:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.20 2001/08/26 04:19:46 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -104,10 +104,10 @@ do
         --sysid=*)
                 SysID=`echo "$1" | sed 's/^--sysid=//'`
                 ;;
-        --encrypted)
+        --encrypted|-E)
 		Encrypted=t
 		;;
-        --unencrypted)
+        --unencrypted|-N)
 		Encrypted=f
 		;;
         -i*)
@@ -141,6 +141,8 @@ if [ "$usage" ]; then
 	echo "  -A, --no-adduser                User cannot add new users"
 	echo "  -i, --sysid=SYSID               Select sysid for new user"     
 	echo "  -P, --pwprompt                  Assign a password to new user"
+	echo "  -E, --encrypted                 Encrypt stored password"
+	echo "  -N, --unencrypted               Do no encrypt stored password"
 	echo "  -h, --host=HOSTNAME             Database server host"
 	echo "  -p, --port=PORT                 Database server port"
 	echo "  -U, --username=USERNAME         Username to connect as (not the one to create)"
