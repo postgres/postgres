@@ -316,15 +316,6 @@ SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- false
 
 SELECT has_table_privilege('regressuser1', 'atest4', 'SELECT WITH GRANT OPTION'); -- true
 
--- aclitem utils small test
-SELECT u1.usename AS u1, u2.usename AS u2, 
-  aclitem_idtype(c.relacl[0]) AS idtype, 
-  aclitem_privs(c.relacl[0]) AS privs,
-  aclitem_goptions(c.relacl[0]) AS goptions
-FROM pg_class AS c, pg_user AS u1, pg_user AS u2
-WHERE u1.usesysid = aclitem_grantor(c.relacl[0])
-  AND u2.usesysid = aclitem_grantee(c.relacl[0])
-  AND c.relname LIKE 'atest4';
 
 -- clean up
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.326 2004/04/26 15:06:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.327 2004/05/02 13:38:27 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3533,18 +3533,6 @@ DATA(insert OID = 1068 (  generate_series PGNSP PGUID 12 f f t t v 3 20 "20 20 2
 DESCR("non-persistent series generator");
 DATA(insert OID = 1069 (  generate_series PGNSP PGUID 12 f f t t v 2 20 "20 20" _null_ generate_series_int8 - _null_ ));
 DESCR("non-persistent series generator");
-
-/* aclitem utils */
-DATA(insert OID = 2510 (  aclitem_grantor 			   PGNSP PGUID 12 f f t f i 1 23 "1033" _null_ aclitem_grantor - _null_ ));
-DESCR("extract user id grantor from aclitem");
-DATA(insert OID = 2511 (  aclitem_grantee 			   PGNSP PGUID 12 f f t f i 1 23 "1033" _null_ aclitem_grantee - _null_ ));
-DESCR("extract grantee (user or group id) from aclitem");
-DATA(insert OID = 2512 (  aclitem_idtype 			   PGNSP PGUID 12 f f t f i 1 23 "1033" _null_ aclitem_idtype - _null_ ));
-DESCR("extract id type of grantee (0 public, 1 user, 2 group) from aclitem");
-DATA(insert OID = 2513 (  aclitem_privs 			   PGNSP PGUID 12 f f t f i 1 23 "1033" _null_ aclitem_privs - _null_ ));
-DESCR("extract privileges from aclitem");
-DATA(insert OID = 2514 (  aclitem_goptions 			   PGNSP PGUID 12 f f t f i 1 23 "1033" _null_ aclitem_goptions - _null_ ));
-DESCR("extract grant options from aclitem");
 
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.67 2004/04/26 15:06:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.68 2004/05/02 13:38:28 momjian Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -220,11 +220,6 @@ extern Datum aclcontains(PG_FUNCTION_ARGS);
 extern Datum makeaclitem(PG_FUNCTION_ARGS);
 extern Datum aclitem_eq(PG_FUNCTION_ARGS);
 extern Datum hash_aclitem(PG_FUNCTION_ARGS);
-extern Datum aclitem_grantee(PG_FUNCTION_ARGS);
-extern Datum aclitem_grantor(PG_FUNCTION_ARGS);
-extern Datum aclitem_idtype(PG_FUNCTION_ARGS);
-extern Datum aclitem_privs(PG_FUNCTION_ARGS);
-extern Datum aclitem_goptions(PG_FUNCTION_ARGS);
 
 /*
  * prototypes for functions in aclchk.c
