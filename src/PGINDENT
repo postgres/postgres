@@ -16,11 +16,11 @@ for FILE
 do
 	cat $FILE |
 	sed 's;/\*  *---;/*---X_X;g' |
-	detab -t4 |
+	detab -t4 -qc |
 	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -cli1 -di16 -nfc1 \
 		-lp -nip -nbc -psl -di1 -i4 -l75 -st |
-	detab -t8 |
-	entab -qc -t4 |
+	detab -t8 -qc |
+	entab -t4 -qc |
 	sed 's;/\*---X_X;/* ---;g' >/tmp/$$ && cat /tmp/$$ >$FILE
 done
 
