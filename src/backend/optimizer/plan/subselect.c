@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.36 2000/04/14 00:19:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.36.2.1 2000/09/23 21:00:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,12 +136,23 @@ make_subplan(SubLink *slink)
 
 	PlannerQueryLevel++;		/* we become child */
 
-	/* Check to see if this node was already processed; if so we have
-	 * trouble.  Someday should change tree representation so that we can
-	 * cope with multiple links to the same subquery, but for now...
+	/*
+	 * Check to see if this node was already processed; if so we have
+	 * trouble.  We check to see if the linked-to Query appears to have
+	 * been planned already, too.
 	 */
 	if (subquery == NULL)
+		elog(ERROR, "make_subplan: invalid expression structure (SubLink already processed?)");
+	if (subquery->base_rel_list != NIL)
 		elog(ERROR, "make_subplan: invalid expression structure (subquery already processed?)");
+
+	/*
+	 * Copy the source Query node.  This is a quick and dirty kluge to resolve
+	 * the fact that the parser can generate trees with multiple links to the
+	 * same sub-Query node, but the planner wants to scribble on the Query.
+	 * Try to clean this up when we do querytree redesign...
+	 */
+	subquery = (Query *) copyObject(subquery);
 
 	/*
 	 * For an EXISTS subplan, tell lower-level planner to expect that only
