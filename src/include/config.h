@@ -15,6 +15,7 @@
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
 #  define NOFILE	100
+#  define NEED_UNION_SEMUN
 #endif /* WIN32 */
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
@@ -23,6 +24,7 @@
 
 #if defined(bsdi)
 #  define USE_LIMITS_H
+#  define NEED_UNION_SEMUN
 #endif
 
 #if defined(bsdi_2_1)
@@ -31,10 +33,28 @@
 
 #if defined(aix)
 #  define NEED_SYS_SELECT_H
+#  define NEED_UNION_SEMUN
 #endif
 
 #if defined(irix5)
 #  define NO_VFORK
+#endif
+
+/*
+ * On architectures for which we have not implemented spinlocks (or
+ * cannot do so), we use System V semaphores.  We also use them for
+ * long locks.  For some reason union semun is never defined in the
+ * System V header files so we must do it ourselves.
+ */
+#if defined(sequent) || \
+    defined(PORTNAME_alpha) || \
+    defined(PORTNAME_hpux) || \
+    defined(PORTNAME_dgux) || \
+    defined(PORTNAME_i386_solaris) || \
+    defined(PORTNAME_sparc_solaris) || \
+    defined(PORTNAME_ultrix4) || \
+    defined(PORTNAME_svr4) || \
+#define NEED_UNION_SEMUN 
 #endif
 
 /*  Debug and various "defines" that should be documented */
