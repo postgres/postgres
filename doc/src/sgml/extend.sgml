@@ -1,252 +1,279 @@
-<Chapter Id="extend">
-<Title>Extending <Acronym>SQL</Acronym>: An Overview</Title>
+ <chapter id="extend">
+  <title>Extending <acronym>SQL</acronym>: An Overview</title>
 
-<Para>
-     In  the  sections  that follow, we will discuss how you
-     can extend the <ProductName>Postgres</ProductName> <Acronym>SQL</Acronym> query language by adding:
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
+  <para>
+   In  the  sections  that follow, we will discuss how you
+   can extend the <productname>Postgres</productname> 
+   <acronym>SQL</acronym> query language by adding:
+
+   <itemizedlist spacing="compact" mark="bullet">
+    <listitem>
+     <para>
       functions
-</Para>
-</ListItem>
-<ListItem>
-<Para>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       types
-</Para>
-</ListItem>
-<ListItem>
-<Para>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       operators
-</Para>
-</ListItem>
-<ListItem>
-<Para>
+     </para>
+    </listitem>
+    <listitem>
+     <para>
       aggregates
-</Para>
-</ListItem>
-</ItemizedList>
-</Para>
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
 
-<Sect1>
-<Title>How Extensibility Works</Title>
+  <sect1>
+   <title>How Extensibility Works</title>
 
-<Para>
-     <ProductName>Postgres</ProductName> is extensible because its operation  is  
-     catalog-driven.   If  you  are familiar with standard 
-     relational systems, you know that  they  store  information
-     about  databases,  tables,  columns,  etc., in what are
-     commonly known as system catalogs.  (Some systems  call
-     this  the data dictionary).  The catalogs appear to the
-     user as classes, like any other, but  the  <Acronym>DBMS</Acronym>  stores
-     its  internal  bookkeeping in them.  One key difference
-     between <ProductName>Postgres</ProductName> and  standard  relational  systems  is
-     that <ProductName>Postgres</ProductName> stores much more information in its 
-     catalogs -- not only information about tables and  columns,
-     but also information about its types, functions, access
-     methods, and so on.  These classes can be  modified  by
-     the  user, and since <ProductName>Postgres</ProductName> bases its internal operation 
-     on these classes, this means that <ProductName>Postgres</ProductName> can  be
-     extended   by   users.    By  comparison,  conventional
-     database systems can only be extended by changing hardcoded  
-     procedures within the <Acronym>DBMS</Acronym> or by loading modules
-     specially-written by the <Acronym>DBMS</Acronym> vendor.
-</Para>
-<Para>
-     <ProductName>Postgres</ProductName> is also unlike most  other  data  managers  in
-     that  the server can incorporate user-written code into
-     itself through dynamic loading.  That is, the user  can
-     specify  an  object code file (e.g., a compiled .o file
-     or shared library) that implements a new type or  function 
-     and <ProductName>Postgres</ProductName> will load it as required.  Code written 
-     in <Acronym>SQL</Acronym> are even more trivial to add to the  server.
-     This ability to modify its operation "on the fly" makes
-     <ProductName>Postgres</ProductName> uniquely suited for rapid prototyping  of  new
-     applications and storage structures.
-</Para>
-</Sect1>
+   <para>
+    <productname>Postgres</productname> is extensible because its operation  is  
+    catalog-driven.   If  you  are familiar with standard 
+    relational systems, you know that  they  store  information
+    about  databases,  tables,  columns,  etc., in what are
+    commonly known as system catalogs.  (Some systems  call
+    this  the data dictionary).  The catalogs appear to the
+    user as classes, like any other, but  the  <acronym>DBMS</acronym>  stores
+    its  internal  bookkeeping in them.  One key difference
+    between <productname>Postgres</productname> and  standard  relational  systems  is
+    that <productname>Postgres</productname> stores much more information in its 
+    catalogs -- not only information about tables and  columns,
+    but also information about its types, functions, access
+    methods, and so on.  These classes can be  modified  by
+    the  user, and since <productname>Postgres</productname> bases its internal operation 
+    on these classes, this means that <productname>Postgres</productname> can  be
+    extended   by   users.    By  comparison,  conventional
+    database systems can only be extended by changing hardcoded  
+    procedures within the <acronym>DBMS</acronym> or by loading modules
+    specially-written by the <acronym>DBMS</acronym> vendor.
+   </para>
 
-<Sect1>
-<Title>The <ProductName>Postgres</ProductName> Type System</Title>
+   <para>
+    <productname>Postgres</productname> is also unlike most  other  data  managers  in
+    that  the server can incorporate user-written code into
+    itself through dynamic loading.  That is, the user  can
+    specify  an  object code file (e.g., a compiled .o file
+    or shared library) that implements a new type or  function 
+    and <productname>Postgres</productname> will load it as required.  Code written 
+    in <acronym>SQL</acronym> are even more trivial to add to the  server.
+    This ability to modify its operation "on the fly" makes
+    <productname>Postgres</productname> uniquely suited for rapid prototyping  of  new
+    applications and storage structures.
+   </para>
+  </sect1>
 
-<Para>
-     The  <ProductName>Postgres</ProductName> type system can be broken down in several ways.
-     Types are divided into base types and composite  types.
-     Base  types  are those, like <FirstTerm>int4</FirstTerm>, that are implemented
-     in a language such as <ProductName>C</ProductName>.  They generally correspond  to
-     what are often known as "abstract data types"; <ProductName>Postgres</ProductName>
-     can only operate on such types through methods provided
-     by  the  user and only understands the behavior of such
-     types to the extent that the user describes them.  
-     Composite  types  are  created whenever the user creates a
-     class.  EMP is an example of a composite  type.   
-</Para>
-<Para>
-     <ProductName>Postgres</ProductName>  stores  these  types  in only one way (within the
-     file that stores all instances of the  class)  but  the
-     user can "look inside" at the attributes of these types
-     from the query language and optimize their retrieval by
-     (for example) defining indices on the attributes.
-     <ProductName>Postgres</ProductName>  base  types are further divided into built-in
-     types and user-defined  types.   Built-in  types  (like
-     <FirstTerm>int4</FirstTerm>)  are  those  that  are  compiled into the system.
-     User-defined types are those created by the user in the
-     manner to be described below.
-</Para>
-</Sect1>
+  <sect1>
+   <title>The <productname>Postgres</productname> Type System</title>
 
-<Sect1>
-<Title>About the <ProductName>Postgres</ProductName> System Catalogs</Title>
+   <para>
+    The <productname>Postgres</productname> type system
+    can be broken down in several ways.
+    Types are divided into base types and composite  types.
+    Base  types  are those, like <firstterm>int4</firstterm>, that are implemented
+    in a language such as <productname>C</productname>.  They generally correspond  to
+    what are often known as "abstract data types"; <productname>Postgres</productname>
+    can only operate on such types through methods provided
+    by  the  user and only understands the behavior of such
+    types to the extent that the user describes them.  
+    Composite  types  are  created whenever the user creates a
+    class.  EMP is an example of a composite  type.   
+   </para>
 
-<Para>
-     Having  introduced the basic extensibility concepts, we
-     can now take a look at how the  catalogs  are  actually
-     laid  out.  You can skip this section for now, but some
-     later sections will  be  incomprehensible  without  the
-     information  given  here,  so  mark this page for later
-     reference.
-     All system catalogs have names  that  begin  with  <FirstTerm>pg_</FirstTerm>.
-     The  following  classes contain information that may be
-     useful to the end user.  (There are many  other  system
-     catalogs,  but there should rarely be a reason to query
-     them directly.)
+   <para>
+    <productname>Postgres</productname>  stores  these  types
+    in only one way (within the
+    file that stores all instances of the  class)  but  the
+    user can "look inside" at the attributes of these types
+    from the query language and optimize their retrieval by
+    (for example) defining indices on the attributes.
+    <productname>Postgres</productname>  base  types are further
+    divided into built-in
+    types and user-defined  types.   Built-in  types  (like
+    <firstterm>int4</firstterm>)  are  those  that  are  compiled
+    into the system.
+    User-defined types are those created by the user in the
+    manner to be described below.
+   </para>
+  </sect1>
 
-<TABLE TOCENTRY="1">
-<TITLE>Postgres System Catalogs</TITLE>
-<TITLEABBREV>Catalogs</TITLEABBREV>
-<TGROUP COLS="2">
-<THEAD>
-<ROW>
-<ENTRY>Catalog Name</ENTRY>
-<ENTRY>Description</ENTRY>
-</ROW>
-</THEAD>
-<TBODY>
-<ROW>
-<ENTRY>pg_database</ENTRY>
-<ENTRY> databases</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_class</ENTRY>
-<ENTRY> classes</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_attribute</ENTRY>
-<ENTRY> class attributes</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_index</ENTRY>
-<ENTRY> secondary indices</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_proc</ENTRY>
-<ENTRY> procedures (both C and SQL)</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_type</ENTRY>
-<ENTRY> types (both base and complex)</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_operator</ENTRY>
-<ENTRY> operators</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_aggregate</ENTRY>
-<ENTRY> aggregates and aggregate functions</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_am</ENTRY>
-<ENTRY> access methods</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_amop</ENTRY>
-<ENTRY> access method operators</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_amproc</ENTRY>
-<ENTRY> access method support functions</ENTRY>
-</ROW>
-<ROW>
-<ENTRY>pg_opclass</ENTRY>
-<ENTRY> access method operator classes</ENTRY>
-</ROW>
-</TBODY>
-</TGROUP>
-</TABLE>
-</Para>
+  <sect1>
+   <title>About the <productname>Postgres</productname> System Catalogs</title>
 
-<Para>
-<Figure Id="EXTEND-CATALOGS" Float="1">
-<Title>The major <ProductName>Postgres</ProductName> system catalogs</Title>
-<Graphic Align="center" FileRef="catalogs.gif" Format="GIF"></Graphic>
-</Figure>
+   <para>
+    Having  introduced the basic extensibility concepts, we
+    can now take a look at how the  catalogs  are  actually
+    laid  out.  You can skip this section for now, but some
+    later sections will  be  incomprehensible  without  the
+    information  given  here,  so  mark this page for later
+    reference.
+    All system catalogs have names  that  begin  with
+    <firstterm>pg_</firstterm>.
+    The  following  classes contain information that may be
+    useful to the end user.  (There are many  other  system
+    catalogs,  but there should rarely be a reason to query
+    them directly.)
 
-     The Reference Manual gives a more detailed  explanation
-     of  these catalogs and their attributes.  However,
-<XRef LinkEnd="EXTEND-CATALOGS" EndTerm="EXTEND-CATALOGS">
-     shows the major entities and their  relationships
-     in  the system catalogs.  (Attributes that do not refer
-     to other entities are not shown unless they are part of
-     a primary key.)
-     This diagram is more or less incomprehensible until you
-     actually start looking at the contents of the  catalogs
-     and  see  how  they relate to each other.  For now, the
-     main things to take away from this diagram are as  follows:
+    <table tocentry="1">
+     <title>Postgres System Catalogs</title>
+     <titleabbrev>Catalogs</titleabbrev>
+     <tgroup cols="2">
+      <thead>
+       <row>
+	<entry>Catalog Name</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>pg_database</entry>
+	<entry> databases</entry>
+       </row>
+       <row>
+	<entry>pg_class</entry>
+	<entry> classes</entry>
+       </row>
+       <row>
+	<entry>pg_attribute</entry>
+	<entry> class attributes</entry>
+       </row>
+       <row>
+	<entry>pg_index</entry>
+	<entry> secondary indices</entry>
+       </row>
+       <row>
+	<entry>pg_proc</entry>
+	<entry> procedures (both C and SQL)</entry>
+       </row>
+       <row>
+	<entry>pg_type</entry>
+	<entry> types (both base and complex)</entry>
+       </row>
+       <row>
+	<entry>pg_operator</entry>
+	<entry> operators</entry>
+       </row>
+       <row>
+	<entry>pg_aggregate</entry>
+	<entry> aggregates and aggregate functions</entry>
+       </row>
+       <row>
+	<entry>pg_am</entry>
+	<entry> access methods</entry>
+       </row>
+       <row>
+	<entry>pg_amop</entry>
+	<entry> access method operators</entry>
+       </row>
+       <row>
+	<entry>pg_amproc</entry>
+	<entry> access method support functions</entry>
+       </row>
+       <row>
+	<entry>pg_opclass</entry>
+	<entry> access method operator classes</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+   </para>
+
+   <para>
+    <figure float="1" id="EXTEND-CATALOGS">
+     <title>The major <productname>Postgres</productname> system catalogs</title>
+     <graphic fileref="catalogs.gif" format="GIF" align="center"></graphic>
+    </figure>
+
+    The Reference Manual gives a more detailed  explanation
+    of  these catalogs and their attributes.  However,
+    <xref endterm="EXTEND-CATALOGS" linkend="EXTEND-CATALOGS">
+    shows the major entities and their  relationships
+    in  the system catalogs.  (Attributes that do not refer
+    to other entities are not shown unless they are part of
+    a primary key.)
+    This diagram is more or less incomprehensible until you
+    actually start looking at the contents of the  catalogs
+    and  see  how  they relate to each other.  For now, the
+    main things to take away from this diagram are as  follows:
      
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-      In  several of the sections that follow, we will
-            present various join queries on the system 
-            catalogs  that display information we need to extend
-            the system.  Looking at this diagram should make
-            some  of  these  join  queries  (which are often
-            three- or four-way joins)  more  understandable,
-            because  you  will  be  able  to  see  that  the
-            attributes used in the queries form foreign keys
-            in other classes.
-</Para>
-</ListItem>
-<ListItem>
-<Para>  Many  different  features  (classes, attributes,
-            functions,  types,  access  methods,  etc.)  are
-            tightly  integrated  in  this  schema.  A simple
-            create command may modify many  of  these  catalogs.
-</Para>
-</ListItem>
-<ListItem>
-<Para>  Types and procedures
-            are central to the schema.
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       In  several of the sections that follow, we will
+       present various join queries on the system 
+       catalogs  that display information we need to extend
+       the system.  Looking at this diagram should make
+       some  of  these  join  queries  (which are often
+       three- or four-way joins)  more  understandable,
+       because  you  will  be  able  to  see  that  the
+       attributes used in the queries form foreign keys
+       in other classes.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Many  different  features  (classes, attributes,
+       functions,  types,  access  methods,  etc.)  are
+       tightly  integrated  in  this  schema.  A simple
+       create command may modify many  of  these  catalogs.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Types and procedures
+       are central to the schema.
 
-<Note>
-<Para>
-We  use  the words <FirstTerm>procedure</FirstTerm> and <FirstTerm>function</FirstTerm> more or less
-interchangably.
-</Para>
-</Note>
+       <note>
+	<para>
+	 We  use  the words <firstterm>procedure</firstterm>
+	 and <firstterm>function</firstterm> more or less interchangably.
+	</para>
+       </note>
 
-            Nearly  every catalog contains some reference to
-            instances in one or both of these classes.   For
-            example,  <ProductName>Postgres</ProductName>  frequently  uses type 
-            signatures (e.g.,  of  functions  and  operators)  to
-            identify unique instances of other catalogs.
+       Nearly  every catalog contains some reference to
+       instances in one or both of these classes.   For
+       example,  <productname>Postgres</productname>  frequently  uses type 
+       signatures (e.g.,  of  functions  and  operators)  to
+       identify unique instances of other catalogs.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       There are many attributes and relationships that
+       have obvious meanings, but there are many  
+       (particularly  those  that  have  to  do with access
+       methods) that do not.  The relationships between
+       pg_am,   pg_amop,   pg_amproc,  pg_operator  and
+       pg_opclass are particularly hard  to  understand
+       and  will  be described in depth (in the section
+       on interfacing types and operators  to  indices)
+       after we have discussed basic extensions.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect1>
+ </chapter>
 
-</Para>
-</ListItem>
-<ListItem>
-<Para>  There are many attributes and relationships that
-            have obvious meanings, but there are many  
-            (particularly  those  that  have  to  do with access
-            methods) that do not.  The relationships between
-            pg_am,   pg_amop,   pg_amproc,  pg_operator  and
-            pg_opclass are particularly hard  to  understand
-            and  will  be described in depth (in the section
-            on interfacing types and operators  to  indices)
-            after we have discussed basic extensions.
-</para>
-</ListItem>
-</ItemizedList>
-
-</Para>
-</sect1>
-</Chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->

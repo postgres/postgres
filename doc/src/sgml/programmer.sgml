@@ -1,9 +1,15 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.18 1999/06/23 06:21:19 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.19 1999/07/22 15:11:04 thomas Exp $
 
 Postgres Programmer's Guide.
 
 $Log: programmer.sgml,v $
+Revision 1.19  1999/07/22 15:11:04  thomas
+Complete merge of all old man page information.
+lisp.sgml is a placeholder for Eric Marsden's upcoming contribution.
+catalogs.sgml is not yet marked up or integrated.
+ It should perhaps become an appendix.
+
 Revision 1.18  1999/06/23 06:21:19  thomas
 Remove User's Guide entities since they were not being used.
 
@@ -34,28 +40,29 @@ Make new file current.sgml to hold release info for the current release.
 <!entity notation SYSTEM "notation.sgml">
 <!entity y2k      SYSTEM "y2k.sgml">
 
-<!entity intro-pg SYSTEM "intro-pg.sgml">
 <!entity arch-pg  SYSTEM "arch-pg.sgml">
-<!entity extend   SYSTEM "extend.sgml">
-<!entity rules    SYSTEM "rules.sgml">
-<!entity xfunc    SYSTEM "xfunc.sgml">
-<!entity xtypes   SYSTEM "xtypes.sgml">
-<!entity xoper    SYSTEM "xoper.sgml">
-<!entity xaggr    SYSTEM "xaggr.sgml">
-<!entity xindex   SYSTEM "xindex.sgml">
-<!entity gist     SYSTEM "gist.sgml">
 <!entity dfunc    SYSTEM "dfunc.sgml">
-<!entity lobj     SYSTEM "lobj.sgml">
-<!entity trigger  SYSTEM "trigger.sgml">
-<!entity spi      SYSTEM "spi.sgml">
+<!entity ecpg     SYSTEM "ecpg.sgml">
+<!entity extend   SYSTEM "extend.sgml">
 <!entity func-ref SYSTEM "func-ref.sgml">
+<!entity gist     SYSTEM "gist.sgml">
+<!entity intro-pg SYSTEM "intro-pg.sgml">
+<!entity jdbc     SYSTEM "jdbc.sgml">
 <!entity libpq    SYSTEM "libpq.sgml">
 <!entity libpqpp  SYSTEM "libpq++.sgml">
 <!entity libpgtcl SYSTEM "libpgtcl.sgml">
-<!entity ecpg     SYSTEM "ecpg.sgml">
+<!entity lisp     SYSTEM "lisp.sgml">
+<!entity lobj     SYSTEM "lobj.sgml">
 <!entity odbc     SYSTEM "odbc.sgml">
-<!entity jdbc     SYSTEM "jdbc.sgml">
+<!entity rules    SYSTEM "rules.sgml">
+<!entity spi      SYSTEM "spi.sgml">
+<!entity trigger  SYSTEM "trigger.sgml">
+<!entity xaggr    SYSTEM "xaggr.sgml">
+<!entity xfunc    SYSTEM "xfunc.sgml">
+<!entity xindex   SYSTEM "xindex.sgml">
 <!entity xplang   SYSTEM "xplang.sgml">
+<!entity xoper    SYSTEM "xoper.sgml">
+<!entity xtypes   SYSTEM "xtypes.sgml">
 
 <!-- developer's guide -->
 <!entity arch-dev SYSTEM "arch-dev.sgml">
@@ -172,6 +179,7 @@ Disable it until we put in some info.
   &ecpg;
   &odbc;
   &jdbc;
+  &lisp;
  
 <!-- development -->
  

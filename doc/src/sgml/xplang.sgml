@@ -1,14 +1,14 @@
-<Chapter Id="xplang">
-<Title>Procedural Languages</Title>
+ <chapter id="xplang">
+  <title id="xplang-title">Procedural Languages</title>
 
 <!-- **********
      * General information about procedural language support
      **********
 -->
 
-<Para>
+<para>
     Beginning with the release of version 6.3,
-    <ProductName>Postgres</ProductName> supports
+    <productname>Postgres</productname> supports
     the definition of procedural languages.
     In the case of a function or trigger
     procedure defined in a procedural language, the database has
@@ -18,60 +18,60 @@
     handler itself is a special programming language function
     compiled into a shared object
     and loaded on demand.
-</Para>
+</para>
 
 <!-- **********
      * Installation of procedural languages
      **********
 -->
 
-<Sect1>
-<Title>Installing Procedural Languages</Title>
+<sect1>
+<title>Installing Procedural Languages</title>
 
-<Procedure>
-    <Title>
+<procedure>
+    <title>
     Procedural Language Installation
-    </Title>
+    </title>
 
     <para>
     A procedural language is installed in the database in three steps.
     </para>
-	<Step Performance="Required">
-	    <Para>
+	<step performance="Required">
+	    <para>
 	        The shared object for the language handler
 		must be compiled and installed. By default the
 		handler for PL/pgSQL is built and installed into the
 		database library directory. If Tcl/Tk support is
 		configured in, the handler for PL/Tcl is also built
 		and installed in the same location.
-	    </Para>
-	    <Para>
+	    </para>
+	    <para>
 	        Writing a handler for a new procedural language (PL)
 		is outside the scope of this manual. 
-	    </Para>
-	</Step>
-	<Step Performance="Required">
-	    <Para>
+	    </para>
+	</step>
+	<step performance="Required">
+	    <para>
 	        The handler must be declared with the command
-		<ProgramListing>
-    CREATE FUNCTION <Replaceable>handler_function_name</Replaceable> () RETURNS OPAQUE AS
-        '<Filename>path-to-shared-object</Filename>' LANGUAGE 'C';
-		</ProgramListing>
-		The special return type of <Acronym>OPAQUE</Acronym> tells
+		<programlisting>
+    CREATE FUNCTION <replaceable>handler_function_name</replaceable> () RETURNS OPAQUE AS
+        '<filename>path-to-shared-object</filename>' LANGUAGE 'C';
+		</programlisting>
+		The special return type of <acronym>OPAQUE</acronym> tells
 		the database, that this function does not return one of
 		the defined base- or composite types and is not directly usable
-		in <Acronym>SQL</Acronym> statements.
-	    </Para>
-	</Step>
-	<Step Performance="Required">
-	    <Para>
+		in <acronym>SQL</acronym> statements.
+	    </para>
+	</step>
+	<step performance="Required">
+	    <para>
 	    	The PL must be declared with the command
-		<ProgramListing>
-    CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<Replaceable>language-name</Replaceable>'
-        HANDLER <Replaceable>handler_function_name</Replaceable>
-	LANCOMPILER '<Replaceable>description</Replaceable>';
-		</ProgramListing>
-		The optional keyword <Acronym>TRUSTED</Acronym> tells
+		<programlisting>
+    CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable>language-name</replaceable>'
+        HANDLER <replaceable>handler_function_name</replaceable>
+	LANCOMPILER '<replaceable>description</replaceable>';
+		</programlisting>
+		The optional keyword <acronym>TRUSTED</acronym> tells
 		if ordinary database users that have no superuser
 		privileges can use this language to create functions
 		and trigger procedures. Since PL functions are
@@ -79,129 +79,129 @@
 		languages that don't gain access to database backends
 		internals or the filesystem. The languages PL/pgSQL and
 		PL/Tcl are known to be trusted.
-	    </Para>
-	</Step>
-</Procedure>
+	    </para>
+	</step>
+</procedure>
 
-<Procedure>
-    <Title>Example</Title>
-    <Step Performance="Required">
-    <Para>
+<procedure>
+    <title>Example</title>
+    <step performance="Required">
+    <para>
         The following command tells the database where to find the 
 	shared object for the PL/pgSQL languages call handler function.
-    </Para>
-    <ProgramListing>
+    </para>
+    <programlisting>
     CREATE FUNCTION plpgsql_call_handler () RETURNS OPAQUE AS
         '/usr/local/pgsql/lib/plpgsql.so' LANGUAGE 'C';
-    </ProgramListing>
-    </Step>
+    </programlisting>
+    </step>
 
-    <Step Performance="Required">
-    <Para>
+    <step performance="Required">
+    <para>
         The command
-    </Para>
-    <ProgramListing>
+    </para>
+    <programlisting>
     CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql'
         HANDLER plpgsql_call_handler
         LANCOMPILER 'PL/pgSQL';
-    </ProgramListing>
-    <Para>
+    </programlisting>
+    <para>
         then defines that the previously declared call handler
 	function should be invoked for functions and trigger procedures
 	where the language attribute is 'plpgsql'.
-    </Para>
-    <Para>
+    </para>
+    <para>
         PL handler functions have a special call interface that is
 	different from regular C language functions. One of the arguments
-	given to the handler is the object ID in the <FileName>pg_proc</FileName>
+	given to the handler is the object ID in the <filename>pg_proc</filename>
 	tables entry for the function that should be executed.
         The handler examines various system catalogs to analyze the
 	functions call arguments and it's return data type. The source
 	text of the functions body is found in the prosrc attribute of
-	<FileName>pg_proc</FileName>.
+	<filename>pg_proc</filename>.
 	Due to this, in contrast to C language functions, PL functions
 	can be overloaded like SQL language functions. There can be
 	multiple different PL functions having the same function name,
 	as long as the call arguments differ.
-    </Para>
-    <Para>
-        Procedural languages defined in the <FileName>template1</FileName>
+    </para>
+    <para>
+        Procedural languages defined in the <filename>template1</filename>
 	database are automatically defined in all subsequently created
 	databases. So the database administrator can decide which
 	languages are available by default.
-    </Para>
-    </Step>
-</Procedure>
-</Sect1> <!-- **** End of PL installation **** -->
+    </para>
+    </step>
+</procedure>
+</sect1> <!-- **** End of PL installation **** -->
 
 <!-- **********
      * The procedural language PL/pgSQL
      **********
 -->
 
-<Sect1>
-<Title>PL/pgSQL</Title>
+<sect1>
+<title>PL/pgSQL</title>
 
-<Para>
+<para>
     PL/pgSQL is a loadable procedural language for the
-    <ProductName>Postgres</ProductName> database system.
-</Para>
+    <productname>Postgres</productname> database system.
+</para>
 
-<Para>
+<para>
     This package was originally written by Jan Wieck.
-</Para>
+</para>
 
 <!-- **** PL/pgSQL overview **** -->
 
-<Sect2>
-<Title>Overview</Title>
+<sect2>
+<title>Overview</title>
 
-<Para>
+<para>
     The design goals of PL/pgSQL were to create a loadable procedural
     language that
-    <ItemizedList>
-    <ListItem>
-	<Para>
+    <itemizedlist>
+    <listitem>
+	<para>
         can be used to create functions and trigger procedures,
-	</Para>
-    </ListItem>
-    <ListItem>
-	<Para>
-        adds control structures to the <Acronym>SQL</Acronym> language,
-	</Para>
-    </ListItem>
-    <ListItem>
-	<Para>
+	</para>
+    </listitem>
+    <listitem>
+	<para>
+        adds control structures to the <acronym>SQL</acronym> language,
+	</para>
+    </listitem>
+    <listitem>
+	<para>
         can perform complex computations,
-	</Para>
-    </ListItem>
-    <ListItem>
-	<Para>
+	</para>
+    </listitem>
+    <listitem>
+	<para>
         inherits all user defined types, functions and operators,
-	</Para>
-    </ListItem>
-    <ListItem>
-	<Para>
+	</para>
+    </listitem>
+    <listitem>
+	<para>
         can be defined to be trusted by the server,
-	</Para>
-    </ListItem>
-    <ListItem>
-	<Para>
+	</para>
+    </listitem>
+    <listitem>
+	<para>
         is easy to use.
-	</Para>
-    </ListItem>
-    </ItemizedList>
-</Para>
-<Para>
+	</para>
+    </listitem>
+    </itemizedlist>
+</para>
+<para>
     The PL/pgSQL call handler parses the functions source text and
     produces an internal binary instruction tree on the first time, the
     function is called by a backend. The produced bytecode is identified
     in the call handler by the object ID of the function. This ensures,
     that changing a function by a DROP/CREATE sequence will take effect
     without establishing a new database connection. 
-</Para>
-<Para>
-    For all expressions and <Acronym>SQL</Acronym> statements used in
+</para>
+<para>
+    For all expressions and <acronym>SQL</acronym> statements used in
     the function, the PL/pgSQL bytecode interpreter creates a
     prepared execution plan using the SPI managers SPI_prepare() and
     SPI_saveplan() functions. This is done the first time, the individual
@@ -210,41 +210,41 @@
     plans would be required, will only prepare and save those plans
     that are really used during the entire lifetime of the database
     connection.
-</Para>
-<Para>
+</para>
+<para>
     Except for input-/output-conversion and calculation functions
     for user defined types, anything that can be defined in C language
     functions can also be done with PL/pgSQL. It is possible to
     create complex conditional computation functions and later use
     them to define operators or use them in functional indices.
-</Para>
-</Sect2>
+</para>
+</sect2>
 
 <!-- **** PL/pgSQL Description **** -->
 
-<Sect2>
-<Title>Description</Title>
+<sect2>
+<title>Description</title>
 
 <!-- **** PL/pgSQL structure **** -->
 
-<Sect3>
-<Title>Structure of PL/pgSQL</Title>
+<sect3>
+<title>Structure of PL/pgSQL</title>
 
-<Para>
+<para>
     The PL/pgSQL language is case insensitive. All keywords and
     identifiers can be used in mixed upper- and lowercase.
-</Para>
-<Para>
+</para>
+<para>
     PL/pgSQL is a block oriented language. A block is defined as
 
-<ProgramListing>
+<programlisting>
     [&lt;&lt;label&gt;&gt;]
     [DECLARE
         <replaceable>declarations</replaceable>]
     BEGIN
         <replaceable>statements</replaceable>
     END;
-</ProgramListing>
+</programlisting>
 
     There can be any number of subblocks in the statement section
     of a block. Subblocks can be used to hide variables from outside a
@@ -252,76 +252,78 @@
     declared in the declarations section preceding a block are
     initialized to their default values every time the block is entered,
     not only once per function call.
-</Para>
+</para>
   
-<Para>
+<para>
     It is important not to misunderstand the meaning of BEGIN/END for
     grouping statements in PL/pgSQL and the database commands for
     transaction control. Functions and trigger procedures cannot
-    start or commit transactions and <ProductName>Postgres</ProductName>
+    start or commit transactions and <productname>Postgres</productname>
     does not have nested transactions.
-</Para>
-</Sect3>
+</para>
+</sect3>
 
 <!-- **** PL/pgSQL comments **** -->
 
-<Sect3>
-<Title>Comments</Title>
+<sect3>
+<title>Comments</title>
 
-<Para>
+<para>
     There are two types of comments in PL/pgSQL. A double dash '--'
     starts a comment that extends to the end of the line. A '/*'
     starts a block comment that extends to the next occurence of '*/'.
     Block comments cannot be nested, but double dash comments can be
     enclosed into a block comment and a double dash can hide
     the block comment delimiters '/*' and '*/'.
-</Para>
-</Sect3>
+</para>
+</sect3>
 
 <!-- **** PL/pgSQL declarations **** -->
 
-<Sect3>
-<Title>Declarations</Title>
+<sect3>
+<title>Declarations</title>
 
-<Para>
+<para>
     All variables, rows and records used in a block or it's
     subblocks must be declared in the declarations section of a block
     except for the loop variable of a FOR loop iterating over a range
     of integer values. Parameters given to a PL/pgSQL function are
     automatically declared with the usual identifiers $n.
     The declarations have the following syntax:
-</Para>
-<VariableList>
+</para>
+<variablelist>
 
-<VarListEntry>
-<Term>
-<Replaceable>name</Replaceable> [ CONSTANT ] <Replaceable>type</Replaceable> [ NOT NULL ] [ DEFAULT | := <Replaceable>value</Replaceable> ];
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+<replaceable>name</replaceable> [ CONSTANT ]
+<replaceable>>typ</replaceable>> [ NOT NULL ] [ DEFAULT | :=
+	<replaceable>value</replaceable> ];
+</term>
+<listitem>
+<para>
     Declares a variable of the specified base type. If the variable
     is declared as CONSTANT, the value cannot be changed. If NOT NULL
     is specified, an assignment of a NULL value results in a runtime
     error. Since the default value of all variables is the
-    <Acronym>SQL</Acronym> NULL value, all variables declared as NOT NULL
+    <acronym>SQL</acronym> NULL value, all variables declared as NOT NULL
     must also have a default value specified.
-</Para>
-<Para>
+</para>
+<para>
     The default value is evaluated ever time the function is called. So
-    assigning '<Replaceable>now</Replaceable>' to a variable of type
-    <Replaceable>datetime</Replaceable> causes the variable to have the
+    assigning '<replaceable>now</replaceable>' to a variable of type
+    <replaceable>datetime</replaceable> causes the variable to have the
     time of the actual function call, not when the function was
     precompiled into it's bytecode.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-<Replaceable>name</Replaceable> <Replaceable>class</Replaceable>%ROWTYPE;
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+<replaceable>name</replaceable> <replaceable>class</replaceable>%ROWTYPE;
+</term>
+<listitem>
+<para>
     Declares a row with the structure of the given class. Class must be
     an existing table- or viewname of the database. The fields of the row
     are accessed in the dot notation. Parameters to a function can
@@ -331,110 +333,110 @@
     attributes of a table row are accessible in the row, no Oid or other
     system attributes (hence the row could be from a view and view rows
     don't have useful system attributes).
-</Para>
-<Para>
+</para>
+<para>
     The fields of the rowtype inherit the tables fieldsizes 
     or precision for char() etc. data types.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-<Replaceable>name</Replaceable> RECORD;
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+<replaceable>name</replaceable> RECORD;
+</term>
+<listitem>
+<para>
     Records are similar to rowtypes, but they have no predefined structure.
     They are used in selections and FOR loops to hold one actual
     database row from a SELECT operation. One and the same record can be
     used in different selections. Accessing a record or an attempt to assign
     a value to a record field when there is no actual row in it results
     in a runtime error.
-</Para>
-<Para>
+</para>
+<para>
     The NEW and OLD rows in a trigger are given to the procedure as
-    records. This is necessary because in <ProductName>Postgres</ProductName>
+    records. This is necessary because in <productname>Postgres</productname>
     one and the same trigger procedure can handle trigger events for
     different tables.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-<Replaceable>name</Replaceable> ALIAS FOR $n;
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+<replaceable>name</replaceable> ALIAS FOR $n;
+</term>
+<listitem>
+<para>
     For better readability of the code it is possible to define an alias
     for a positional parameter to a function.
-</Para>
-<Para>
+</para>
+<para>
     This aliasing is required for composite types given as arguments to
     a function. The dot notation $1.salary as in SQL functions is not
     allowed in PL/pgSQL.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-RENAME <Replaceable>oldname</Replaceable> TO <Replaceable>newname</Replaceable>;
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+RENAME <replaceable>oldname</replaceable> TO <replaceable>newname</replaceable>;
+</term>
+<listitem>
+<para>
     Change the name of a variable, record or row. This is useful
     if NEW or OLD should be referenced by another name inside a 
     trigger procedure.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-</VariableList>
-</Sect3>
+</variablelist>
+</sect3>
 
 <!-- **** PL/pgSQL data types **** -->
 
-<Sect3>
-<Title>Data Types</Title>
+<sect3>
+<title>Data Types</title>
 
-<Para>
+<para>
     The type of a varible can be any of the existing basetypes of
-    the database. <Replaceable>type</Replaceable> in the declarations
+    the database. <replaceable>type</replaceable> in the declarations
     section above is defined as:
-</Para>
-<Para>
-    <ItemizedList>
-    <ListItem>
-        <Para>
-	<ProductName>Postgres</ProductName>-basetype
-	</Para>
-    </ListItem>
-    <ListItem>
-        <Para>
-	<Replaceable>variable</Replaceable>%TYPE
-	</Para>
-    </ListItem>
-    <ListItem>
-        <Para>
-	<Replaceable>class.field</Replaceable>%TYPE
-	</Para>
-    </ListItem>
-    </ItemizedList>
-</Para>
-<Para>
-    <Replaceable>variable</Replaceable> is the name of a variable,
+</para>
+<para>
+    <itemizedlist>
+    <listitem>
+        <para>
+	<productname>Postgres</productname>-basetype
+	</para>
+    </listitem>
+    <listitem>
+        <para>
+	<replaceable>variable</replaceable>%TYPE
+	</para>
+    </listitem>
+    <listitem>
+        <para>
+	<replaceable>class.field</replaceable>%TYPE
+	</para>
+    </listitem>
+    </itemizedlist>
+</para>
+<para>
+    <replaceable>variable</replaceable> is the name of a variable,
 previously declared in the 
     same function, that is visible at this point.
-</Para>
-<Para>
-    <Replaceable>class</Replaceable> is the name of an existing table
-    or view where <Replaceable>field</Replaceable> is the name of
+</para>
+<para>
+    <replaceable>class</replaceable> is the name of an existing table
+    or view where <replaceable>field</replaceable> is the name of
     an attribute.
-</Para>
-<Para>
-    Using the <Replaceable>class.field</Replaceable>%TYPE
+</para>
+<para>
+    Using the <replaceable>class.field</replaceable>%TYPE
     causes PL/pgSQL to lookup the attributes definitions at the
     first call to the funciton during the lifetime of a backend.
     Have a table with a char(20) attribute and some PL/pgSQL functions
@@ -444,18 +446,18 @@ previously declared in the
     char(40) and restores the data. Ha - he forgot about the
     funcitons. The computations inside them will truncate the values
     to 20 characters. But if they are defined using the
-    <Replaceable>class.field</Replaceable>%TYPE
+    <replaceable>class.field</replaceable>%TYPE
     declarations, they will automagically handle the size change or
     if the new table schema defines the attribute as text type.
-</Para>
-</Sect3>
+</para>
+</sect3>
 
 <!-- **** PL/pgSQL expressions **** -->
 
-<Sect3>
-<Title>Expressions</Title>
+<sect3>
+<title>Expressions</title>
 
-<Para>
+<para>
     All expressions used in PL/pgSQL statements are processed using
     the backends executor. Expressions which appear to contain
 constants may in fact require run-time evaluation (e.g. 'now' for the
@@ -463,22 +465,22 @@ datetime type) so
 it is impossible for the PL/pgSQL parser
     to identify real constant values other than the NULL keyword. All
     expressions are evaluated internally by executing a query
-    <ProgramListing>
-    SELECT <Replaceable>expression</Replaceable>
-    </ProgramListing>
+    <programlisting>
+    SELECT <replaceable>expression</replaceable>
+    </programlisting>
     using the SPI manager. In the expression, occurences of variable
     identifiers are substituted by parameters and the actual values from
     the variables are passed to the executor in the parameter array. All
     expressions used in a PL/pgSQL function are only prepared and
     saved once.
-</Para>
-<Para>
+</para>
+<para>
     The type checking done by the <productname>Postgres</productname>
     main parser has some side
     effects to the interpretation of constant values. In detail there
     is a difference between what the two functions
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION logfunc1 (text) RETURNS datetime AS '
         DECLARE
             logtxt ALIAS FOR $1;
@@ -487,11 +489,11 @@ it is impossible for the PL/pgSQL parser
             RETURN ''now'';
         END;
     ' LANGUAGE 'plpgsql';
-    </ProgramListing>
+    </programlisting>
 
     and
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION logfunc2 (text) RETURNS datetime AS '
         DECLARE
             logtxt ALIAS FOR $1;
@@ -502,9 +504,9 @@ it is impossible for the PL/pgSQL parser
             RETURN curtime;
         END;
     ' LANGUAGE 'plpgsql';
-    </ProgramListing>
+    </programlisting>
 
-    do. In the case of logfunc1(), the <ProductName>Postgres</ProductName>
+    do. In the case of logfunc1(), the <productname>Postgres</productname>
     main parser
     knows when preparing the plan for the INSERT, that the string 'now'
     should be interpreted as datetime because the target field of logtable
@@ -512,389 +514,392 @@ it is impossible for the PL/pgSQL parser
     and this constant value is then used in all invocations of logfunc1()
     during the lifetime of the backend. Needless to say that this isn't what the
     programmer wanted.
-</Para>
-<Para>
-    In the case of logfunc2(), the <ProductName>Postgres</ProductName> 
+</para>
+<para>
+    In the case of logfunc2(), the <productname>Postgres</productname> 
     main parser does not know
     what type 'now' should become and therefor it returns a datatype of
     text containing the string 'now'. During the assignment
     to the local variable curtime, the PL/pgSQL interpreter casts this
     string to the datetime type by calling the text_out() and datetime_in()
     functions for the conversion.
-</Para>
-<Para>
-    This type checking done by the <ProductName>Postgres</ProductName> main
+</para>
+<para>
+    This type checking done by the <productname>Postgres</productname> main
     parser got implemented after PL/pgSQL was nearly done.
     It is a difference between 6.3 and 6.4 and affects all functions
     using the prepared plan feature of the SPI manager.
     Using a local
     variable in the above manner is currently the only way in PL/pgSQL to get
     those values interpreted correctly.
-</Para>
-<Para>
+</para>
+<para>
     If record fields are used in expressions or statements, the data types of
     fields should not change between calls of one and the same expression.
     Keep this in mind when writing trigger procedures that handle events
     for more than one table.
-</Para>
-</Sect3>
+</para>
+</sect3>
 
 <!-- **** PL/pgSQL statements **** -->
 
-<Sect3>
-<Title>Statements</Title>
+<sect3>
+<title>Statements</title>
 
-<Para>
+<para>
     Anything not understood by the PL/pgSQL parser as specified below
     will be put into a query and sent down to the database engine
     to execute. The resulting query should not return any data.
-</Para>
+</para>
 
-<VariableList>
+<variablelist>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Assignment
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     An assignment of a value to a variable or row/record field is
     written as
-    <ProgramListing>
-    <Replaceable>identifier</Replaceable> := <Replaceable>expression</Replaceable>;
-    </ProgramListing>
+    <programlisting>
+    <replaceable>identifier</replaceable> := <replaceable>expression</replaceable>;
+    </programlisting>
     If the expressions result data type doesn't match the variables
     data type, or the variable has a size/precision that is known
     (as for char(20)), the result value will be implicitly casted by
     the PL/pgSQL bytecode interpreter using the result types output- and
     the variables type input-functions. Note that this could potentially
     result in runtime errors generated by the types input functions.
-</Para>
-<Para>
+</para>
+<para>
     An assignment of a complete selection into a record or row can
     be done by
-    <ProgramListing>
-    SELECT <Replaceable>expressions</Replaceable> INTO <Replaceable>target</Replaceable> FROM ...;
-    </ProgramListing>
-    <Replaceable>target</Replaceable> can be a record, a row variable or a
+    <programlisting>
+    SELECT <replaceable>expressions</replaceable> INTO <replaceable>target</replaceable> FROM ...;
+    </programlisting>
+    <replaceable>target</replaceable> can be a record, a row variable or a
     comma separated list of variables and record-/row-fields.
-</Para>
-<Para>
+</para>
+<para>
     if a row or a variable list is used as target, the selected values
     must exactly match the structure of the target(s) or a runtime error
     occurs. The FROM keyword can be followed by any valid qualification,
     grouping, sorting etc. that can be given for a SELECT statement.
-</Para>
-<Para>
+</para>
+<para>
     There is a special variable named FOUND of type bool that can be used
     immediately after a SELECT INTO to check if an assignment had success.
 
-    <ProgramListing>
+    <programlisting>
     SELECT * INTO myrec FROM EMP WHERE empname = myname;
     IF NOT FOUND THEN
         RAISE EXCEPTION ''employee % not found'', myname;
     END IF;
-    </ProgramListing>
+    </programlisting>
 
     If the selection returns multiple rows, only the first is moved
     into the target fields. All others are silently discarded.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Calling another function
-</Term>
-<ListItem>
-<Para>
-    All functions defined in a <ProductName>Prostgres</ProductName>
+</term>
+<listitem>
+<para>
+    All functions defined in a <productname>Prostgres</productname>
     database return a value. Thus, the normal way to call a function
     is to execute a SELECT query or doing an assignment (resulting
     in a PL/pgSQL internal SELECT). But there are cases where someone
     isn't interested int the functions result.
-    <ProgramListing>
-    PERFORM <Replaceable>query</Replaceable>
-    </ProgramListing>
-    executes a 'SELECT <Replaceable>query</Replaceable>' over the
+    <programlisting>
+    PERFORM <replaceable>query</replaceable>
+    </programlisting>
+    executes a 'SELECT <replaceable>query</replaceable>' over the
     SPI manager and discards the result. Identifiers like local
     variables are still substituted into parameters.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Returning from the function
-</Term>
-<ListItem>
-<Para>
-    <ProgramListing>
-    RETURN <Replaceable>expression</Replaceable>
-    </ProgramListing>
-    The function terminates and the value of <Replaceable>expression</Replaceable>
+</term>
+<listitem>
+<para>
+    <programlisting>
+    RETURN <replaceable>expression</replaceable>
+    </programlisting>
+    The function terminates and the value of <replaceable>expression</replaceable>
     will be returned to the upper executor. The return value of a function
     cannot be undefined. If control reaches the end of the toplevel block
     of the function without hitting a RETURN statement, a runtime error
     will occur.
-</Para>
-<Para>
+</para>
+<para>
     The expressions result will be automatically casted into the
     functions return type as described for assignments.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Aborting and messages
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     As indicated in the above examples there is a RAISE statement that
-    can throw messages into the <ProductName>Postgres</ProductName>
+    can throw messages into the <productname>Postgres</productname>
     elog mechanism.
-    <ProgramListing>
-    RAISE <replaceable class="parameter">level</replaceable> ''<replaceable class="parameter">format</replaceable>'' [, <replaceable class="parameter">identifier</replaceable> [...]];
-    </ProgramListing>
+    <programlisting>
+    RAISE <replaceable class="parameter">level</replaceable>
+	 <replaceable class="parameter">r">for</replaceable>le>'' [,
+	  <replaceable class="parameter">identifier</replaceable> [...]];
+    </programlisting>
     Inside the format, <quote>%</quote> is used as a placeholder for the
     subsequent comma-separated identifiers. Possible levels are
     DEBUG (silently suppressed in production running databases), NOTICE 
     (written into the database log and forwarded to the client application)
     and EXCEPTION (written into the database log and aborting the transaction).
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Conditionals
-</Term>
-<ListItem>
-<Para>
-    <ProgramListing>
-    IF <Replaceable>expression</Replaceable> THEN
+</term>
+<listitem>
+<para>
+    <programlisting>
+    IF <replaceable>expression</replaceable> THEN
         <replaceable>statements</replaceable>
     [ELSE
         <replaceable>statements</replaceable>]
     END IF;
-    </ProgramListing>
-    The <Replaceable>expression</Replaceable> must return a value that
+    </programlisting>
+    The <replaceable>expression</replaceable> must return a value that
     at least can be casted into a boolean type.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Loops
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     There are multiple types of loops.
-    <ProgramListing>
+    <programlisting>
     [&lt;&lt;label&gt;&gt;]
     LOOP
         <replaceable>statements</replaceable>
     END LOOP;
-    </ProgramListing>
+    </programlisting>
     An unconditional loop that must be terminated explicitly
     by an EXIT statement. The optional label can be used by
     EXIT statements of nested loops to specify which level of
     nesting should be terminated.
-    <ProgramListing>
+    <programlisting>
     [&lt;&lt;label&gt;&gt;]
-    WHILE <Replaceable>expression</Replaceable> LOOP
+    WHILE <replaceable>expression</replaceable> LOOP
         <replaceable>statements</replaceable>
     END LOOP;
-    </ProgramListing>
+    </programlisting>
     A conditional loop that is executed as long as the evaluation
-    of <Replaceable>expression</Replaceable> is true.
-    <ProgramListing>
+    of <replaceable>expression</replaceable> is true.
+    <programlisting>
     [&lt;&lt;label&gt;&gt;]
-    FOR <Replaceable>name</Replaceable> IN [ REVERSE ] <Replaceable>expression</Replaceable> .. <Replaceable>expression</Replaceable> LOOP
+    FOR <replaceable>name</replaceable> IN [ REVERSE ]
+<replaceable>le>express</replaceable>le> .. <replaceable>expression</replaceable> LOOP
         <replaceable>statements</replaceable>
     END LOOP;
-    </ProgramListing>
+    </programlisting>
     A loop that iterates over a range of integer values. The variable
-    <Replaceable>name</Replaceable> is automatically created as type
+    <replaceable>name</replaceable> is automatically created as type
     integer and exists only inside the loop. The two expressions giving
     the lower and upper bound of the range are evaluated only when entering
     the loop. The iteration step is always 1.
-    <ProgramListing>
+    <programlisting>
     [&lt;&lt;label&gt;&gt;]
-    FOR <Replaceable>record | row</Replaceable> IN <Replaceable>select_clause</Replaceable> LOOP
+    FOR <replaceable>record | row</replaceable> IN <replaceable>select_clause</replaceable> LOOP
         <replaceable>statements</replaceable>
     END LOOP;
-    </ProgramListing>
+    </programlisting>
     The record or row is assigned all the rows resulting from the select
     clause and the statements executed for each. If the loop is terminated
     with an EXIT statement, the last assigned row is still accessible 
     after the loop.
-    <ProgramListing>
-    EXIT [ <Replaceable>label</Replaceable> ] [ WHEN <Replaceable>expression</Replaceable> ];
-    </ProgramListing>
-    If no <Replaceable>label</Replaceable> given,
+    <programlisting>
+    EXIT [ <replaceable>label</replaceable> ] [ WHEN <replaceable>expression</replaceable> ];
+    </programlisting>
+    If no <replaceable>label</replaceable> given,
  the innermost loop is terminated and the
     statement following END LOOP is executed next.
- If <Replaceable>label</Replaceable> is given, it
+ If <replaceable>label</replaceable> is given, it
     must be the label of the current or an upper level of nested loop
     blocks. Then the named loop or block is terminated and control
     continues with the statement after the loops/blocks corresponding
     END.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-</VariableList>
+</variablelist>
 
-</Sect3>
+</sect3>
 
 <!-- **** PL/pgSQL trigger procedures **** -->
 
-<Sect3>
-<Title>Trigger Procedures</Title>
+<sect3>
+<title>Trigger Procedures</title>
 
-<Para>
+<para>
     PL/pgSQL can be used to define trigger procedures. They are created
     with the usual CREATE FUNCTION command as a function with no
     arguments and a return type of OPAQUE.
-</Para>
-<Para>
-    There are some <ProductName>Postgres</ProductName> specific details
+</para>
+<para>
+    There are some <productname>Postgres</productname> specific details
     in functions used as trigger procedures.
-</Para>
-<Para>
+</para>
+<para>
     First they have some special variables created automatically in the 
     toplevel blocks declaration section. They are
-</Para>
+</para>
 
-<VariableList>
+<variablelist>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     NEW
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype RECORD; variable holding the new database row on INSERT/UPDATE
     operations on ROW level triggers.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     OLD
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype RECORD; variable holding the old database row on UPDATE/DELETE
     operations on ROW level triggers.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_NAME
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype name; variable that contains the name of the trigger actually
     fired.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_WHEN
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype text; a string of either 'BEFORE' or 'AFTER' depending on the
     triggers definition.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_LEVEL
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype text; a string of either 'ROW' or 'STATEMENT' depending on the
     triggers definition.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_OP
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype text; a string of 'INSERT', 'UPDATE' or 'DELETE' telling
     for which operation the trigger is actually fired.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_RELID
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype oid; the object ID of the table that caused the
     trigger invocation.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_RELNAME
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype name; the name of the table that caused the trigger
     invocation.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_NARGS
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype integer; the number of arguments given to the trigger
     procedure in the CREATE TRIGGER statement.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
     TG_ARGV[]
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     Datatype array of text; the arguments from the CREATE TRIGGER statement.
     The index counts from 0 and can be given as an expression. Invalid
     indices (&lt; 0 or &gt;= tg_nargs) result in a NULL value.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-</VariableList>
+</variablelist>
 
-<Para>
+<para>
     Second they must return either NULL or a record/row containing
     exactly the structure of the table the trigger was fired for.
     Triggers fired AFTER might always return a NULL value with no
@@ -904,22 +909,22 @@ Loops
     row in the operation. It is possible to replace single values directly
     in NEW and return that or to build a complete new record/row to
     return.
-</Para>
-</Sect3>
+</para>
+</sect3>
 
 <!-- **** PL/pgSQL exceptions **** -->
 
-<Sect3>
-<Title>Exceptions</Title>
+<sect3>
+<title>Exceptions</title>
 
-<Para>
-    <ProductName>Postgres</ProductName> does not have a very smart
+<para>
+    <productname>Postgres</productname> does not have a very smart
     exception handling model. Whenever the parser, planner/optimizer
     or executor decide that a statement cannot be processed any longer,
     the whole transaction gets aborted and the system jumps back
     into the mainloop to get the next query from the client application.
-</Para>
-<Para>
+</para>
+<para>
     It is possible to hook into the error mechanism to notice that this
     happens. But currently it's impossible to tell what really
     caused the abort (input/output conversion error, floating point
@@ -929,73 +934,73 @@ Loops
     And even if, at this point the information, that the transaction
     is aborted, is already sent to the client application, so resuming
     operation does not make any sense.
-</Para>
-<Para>
+</para>
+<para>
     Thus, the only thing PL/pgSQL currently does when it encounters
     an abort during execution of a function or trigger
     procedure is to write some additional DEBUG level log messages
     telling in which function and where (line number and type of
     statement) this happened.
-</Para>
-</Sect3>
-</Sect2>
+</para>
+</sect3>
+</sect2>
 
 <!-- **** PL/pgSQL Examples **** -->
 
-<Sect2>
-<Title>Examples</Title>
+<sect2>
+<title>Examples</title>
 
-<Para>
+<para>
 Here are only a few functions to demonstrate how easy PL/pgSQL
 functions can be written. For more complex examples the programmer
 might look at the regression test for PL/pgSQL.
-</Para>
+</para>
 
-<Para>
+<para>
 One painful detail of writing functions in PL/pgSQL is the handling
 of single quotes. The functions source text on CREATE FUNCTION must
 be a literal string. Single quotes inside of literal strings must be
 either doubled or quoted with a backslash. We are still looking for
 an elegant alternative. In the meantime, doubling the single qoutes
 as in the examples below should be used. Any solution for this
-in future versions of <ProductName>Postgres</ProductName> will be
+in future versions of <productname>Postgres</productname> will be
 upward compatible.
-</Para>
+</para>
 
-<Sect3>
-<Title>Some Simple PL/pgSQL Functions</Title>
+<sect3>
+<title>Some Simple PL/pgSQL Functions</title>
 
-<Para>
+<para>
     The following two PL/pgSQL functions are identical to their
     counterparts from the C language function discussion.
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION add_one (int4) RETURNS int4 AS '
         BEGIN
             RETURN $1 + 1;
         END;
     ' LANGUAGE 'plpgsql';
-    </ProgramListing>
+    </programlisting>
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION concat_text (text, text) RETURNS text AS '
         BEGIN
             RETURN $1 || $2;
         END;
     ' LANGUAGE 'plpgsql';
-    </ProgramListing>
-</Para>
+    </programlisting>
+</para>
 
-</Sect3>
+</sect3>
 
-<Sect3>
-<Title>PL/pgSQL Function on Composite Type</Title>
+<sect3>
+<title>PL/pgSQL Function on Composite Type</title>
 
-<Para>
+<para>
     Again it is the PL/pgSQL equivalent to the example from
     The C functions.
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION c_overpaid (EMP, int4) RETURNS bool AS '
         DECLARE
             emprec ALIAS FOR $1;
@@ -1007,21 +1012,21 @@ upward compatible.
             RETURN emprec.salary > sallim;
         END;
     ' LANGUAGE 'plpgsql';
-    </ProgramListing>
-</Para>
+    </programlisting>
+</para>
 
-</Sect3>
+</sect3>
 
-<Sect3>
-<Title>PL/pgSQL Trigger Procedure</Title>
+<sect3>
+<title>PL/pgSQL Trigger Procedure</title>
 
-<Para>
+<para>
     This trigger ensures, that any time a row is inserted or updated
     in the table, the current username and time are stamped into the
     row. And it ensures that an employees name is given and that the
     salary is a positive value.
 
-    <ProgramListing>
+    <programlisting>
     CREATE TABLE emp (
         empname text,
         salary int4,
@@ -1052,108 +1057,110 @@ upward compatible.
 
     CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
         FOR EACH ROW EXECUTE PROCEDURE emp_stamp();
-    </ProgramListing>
-</Para>
+    </programlisting>
+</para>
 
-</Sect3>
+</sect3>
 
-</Sect2>
+</sect2>
 
-</Sect1>
+</sect1>
 
 <!-- **********
      * The procedural language PL/Tcl
      **********
 -->
 
-<Sect1>
-<Title>PL/Tcl</Title>
+<sect1>
+<title>PL/Tcl</title>
 
-<Para>
+<para>
     PL/Tcl is a loadable procedural language for the
-    <ProductName>Postgres</ProductName> database system
+    <productname>Postgres</productname> database system
     that enables the Tcl language to be used to create functions and
     trigger-procedures.
-</Para>
+</para>
 
-<Para>
+<para>
     This package was originally written by Jan Wieck.
-</Para>
+</para>
 
 <!-- **** PL/Tcl overview **** -->
 
-<Sect2>
-<Title>Overview</Title>
+<sect2>
+<title>Overview</title>
 
-<Para>
+<para>
     PL/Tcl offers most of the capabilities a function
     writer has in the C language, except for some restrictions.
-</Para>
-<Para>
+</para>
+<para>
     The good restriction is, that everything is executed in a safe
     Tcl-interpreter. In addition to the limited command set of safe Tcl, only
     a few commands are available to access the database over SPI and to raise
     messages via elog(). There is no way to access internals of the
     database backend or gaining OS-level access under the permissions of the
-    <ProductName>Postgres</ProductName> user ID like in C.
+    <productname>Postgres</productname> user ID like in C.
     Thus, any unprivileged database user may be
     permitted to use this language.
-</Para>
-<Para>
+</para>
+<para>
     The other, internal given, restriction is, that Tcl procedures cannot
     be used to create input-/output-functions for new data types.
-</Para>
-<Para>
+</para>
+<para>
     The shared object for the PL/Tcl call handler is automatically built
-    and installed in the <ProductName>Postgres</ProductName>
+    and installed in the <productname>Postgres</productname>
     library directory if the Tcl/Tk support is specified
     in the configuration step of the installation procedure.
-</Para>
-</Sect2>
+</para>
+</sect2>
 
 <!-- **** PL/Tcl description **** -->
 
-<Sect2>
-<Title>Description</Title>
+<sect2>
+<title>Description</title>
 
-<Sect3>
-<Title><ProductName>Postgres</ProductName> Functions and Tcl Procedure Names</Title>
+<sect3>
+<title><productname>Postgres</productname> Functions and Tcl Procedure Names</title>
 
-<Para>
-    In <ProductName>Postgres</ProductName>, one and the 
+<para>
+    In <productname>Postgres</productname>, one and the 
     same function name can be used for
     different functions as long as the number of arguments or their types
     differ. This would collide with Tcl procedure names. To offer the same
     flexibility in PL/Tcl, the internal Tcl procedure names contain the object
     ID of the procedures pg_proc row as part of their name. Thus, different
-    argtype versions of the same <ProductName>Postgres</ProductName> 
+    argtype versions of the same <productname>Postgres</productname> 
     function are different for Tcl too.
-</Para>
+</para>
 
-</Sect3>
+</sect3>
 
-<Sect3>
-<Title>Defining Functions in PL/Tcl</Title>
+<sect3>
+<title>Defining Functions in PL/Tcl</title>
 
-<Para>
+<para>
     To create a function in the PL/Tcl language, use the known syntax
 
-    <ProgramListing>
-    CREATE FUNCTION <Replaceable>funcname</Replaceable> (<Replaceable>argument-types</Replaceable>) RETURNS <Replaceable>returntype</Replaceable> AS '
+    <programlisting>
+    CREATE FUNCTION <replaceable>funcname</replaceable>
+ <replaceable>ceable>argumen</replaceable>ceable>) RETURNS
+       <replaceable>returntype</replaceable> AS '
         # PL/Tcl function body
     ' LANGUAGE 'pltcl';
-    </ProgramListing>
+    </programlisting>
 
     When calling this function in a query, the arguments are given as
     variables $1 ... $n to the Tcl procedure body. So a little max function
     returning the higher of two int4 values would be created as:
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION tcl_max (int4, int4) RETURNS int4 AS '
         if {$1 > $2} {return $1}
 	return $2
     ' LANGUAGE 'pltcl';
-    </ProgramListing>
+    </programlisting>
 
     Composite type arguments are given to the procedure as Tcl arrays.
     The element names
@@ -1161,9 +1168,9 @@ upward compatible.
     type. If an attribute in the actual row
     has the NULL value, it will not appear in the array! Here is
     an example that defines the overpaid_2 function (as found in the
-    older <ProductName>Postgres</ProductName> documentation) in PL/Tcl
+    older <productname>Postgres</productname> documentation) in PL/Tcl
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION overpaid_2 (EMP) RETURNS bool AS '
         if {200000.0 < $1(salary)} {
             return "t"
@@ -1173,15 +1180,15 @@ upward compatible.
         }
         return "f"
     ' LANGUAGE 'pltcl';
-    </ProgramListing>
-</Para>
+    </programlisting>
+</para>
 
-</Sect3>
+</sect3>
 
-<Sect3>
-<Title>Global Data in PL/Tcl</Title>
+<sect3>
+<title>Global Data in PL/Tcl</title>
 
-<Para>
+<para>
     Sometimes (especially when using the SPI functions described later) it
     is useful to have some global status data that is held between two
     calls to a procedure. 
@@ -1191,146 +1198,146 @@ upward compatible.
     an array is made available to each procedure via the upvar
     command. The global name of this variable is the procedures internal
     name and the local name is GD.
-</Para>
-</Sect3>
+</para>
+</sect3>
 
-<Sect3>
-<Title>Trigger Procedures in PL/Tcl</Title>
+<sect3>
+<title>Trigger Procedures in PL/Tcl</title>
 
-<Para>
-    Trigger procedures are defined in <ProductName>Postgres</ProductName>
+<para>
+    Trigger procedures are defined in <productname>Postgres</productname>
     as functions without
     arguments and a return type of opaque. And so are they in the PL/Tcl
     language.
-</Para>
-<Para>
+</para>
+<para>
     The informations from the trigger manager are given to the procedure body
     in the following variables:
-</Para>
-<VariableList>
+</para>
+<variablelist>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $TG_name
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     The name of the trigger from the CREATE TRIGGER statement.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $TG_relid
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     The object ID of the table that caused the trigger procedure
     to be invoked.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $TG_relatts
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     A Tcl list of the tables field names prefixed with an empty list element.
     So looking up an element name in the list with the lsearch Tcl command
     returns the same positive number starting from 1 as the fields are numbered
     in the pg_attribute system catalog.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $TG_when
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     The string BEFORE or AFTER depending on the event of the trigger call.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $TG_level
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     The string ROW or STATEMENT depending on the event of the trigger call.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $TG_op
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     The string INSERT, UPDATE or DELETE depending on the event of the 
     trigger call.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $NEW
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     An array containing the values of the new table row on INSERT/UPDATE
     actions, or empty on DELETE.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $OLD
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     An array containing the values of the old table row on UPDATE/DELETE
     actions, or empty on INSERT.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $GD
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     The global status data array as described above.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term><Replaceable class="Parameter">
+<varlistentry>
+<term><replaceable class="Parameter">
 $args
-</Replaceable></Term>
-<ListItem>
-<Para>
+</replaceable></term>
+<listitem>
+<para>
     A Tcl list of the arguments to the procedure as given in the
     CREATE TRIGGER statement. The arguments are also accessible as $1 ... $n
     in the procedure body.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-</VariableList>
+</variablelist>
 
-<Para>
+<para>
     The return value from a trigger procedure is one of the strings OK or SKIP,
     or a list as returned by the 'array get' Tcl command. If the return value
     is OK, the normal operation (INSERT/UPDATE/DELETE) that fired this trigger
@@ -1339,14 +1346,14 @@ $args
     to return a modified row to the trigger manager that will be inserted instead
     of the one given in $NEW (INSERT/UPDATE only). Needless to say that all
     this is only meaningful when the trigger is BEFORE and FOR EACH ROW.
-</Para>
-<Para>
+</para>
+<para>
     Here's a little example trigger procedure that forces an integer value
     in a table to keep track of the # of updates that are performed on the
     row. For new row's inserted, the value is initialized to 0 and then
     incremented on every update operation:
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION trigfunc_modcount() RETURNS OPAQUE AS '
         switch $TG_op {
             INSERT {
@@ -1367,161 +1374,163 @@ $args
 
     CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
         FOR EACH ROW EXECUTE PROCEDURE trigfunc_modcount('modcnt');
-    </ProgramListing>
+    </programlisting>
 
-</Para>
-</Sect3>
+</para>
+</sect3>
 
-<Sect3>
-<Title>Database Access from PL/Tcl</Title>
+<sect3>
+<title>Database Access from PL/Tcl</title>
 
-<Para>
+<para>
     The following commands are available to access the database from
     the body of a PL/Tcl procedure:
-</Para>
+</para>
 
-<VariableList>
+<variablelist>
 
-<VarListEntry>
-<Term>
-elog <Replaceable>level</Replaceable> <Replaceable>msg</Replaceable>
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+elog <replaceable>level</replaceable> <replaceable>msg</replaceable>
+</term>
+<listitem>
+<para>
     Fire a log message. Possible levels are NOTICE, WARN, ERROR,
     FATAL, DEBUG and NOIND
     like for the elog() C function.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-quote <Replaceable>string</Replaceable>
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+quote <replaceable>string</replaceable>
+</term>
+<listitem>
+<para>
     Duplicates all occurences of single quote and backslash characters.
     It should be used when variables are used in the query string given
     to spi_exec or spi_prepare (not for the value list on spi_execp).
     Think about a query string like
 
-    <ProgramListing>
+    <programlisting>
     "SELECT '$val' AS ret"
-    </ProgramListing>
+    </programlisting>
 
     where the Tcl variable val actually contains "doesn't". This would result
     in the final query string
 
-    <ProgramListing>
+    <programlisting>
     "SELECT 'doesn't' AS ret"
-    </ProgramListing>
+    </programlisting>
 
     what would cause a parse error during spi_exec or spi_prepare.
     It should contain
 
-    <ProgramListing>
+    <programlisting>
     "SELECT 'doesn''t' AS ret"
-    </ProgramListing>
+    </programlisting>
 
     and has to be written as
 
-    <ProgramListing>
+    <programlisting>
     "SELECT '[ quote $val ]' AS ret"
-    </ProgramListing>
-</Para>
-</ListItem>
-</VarListEntry>
+    </programlisting>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-spi_exec ?-count <Replaceable>n</Replaceable>? ?-array <Replaceable>name</Replaceable>? <Replaceable>query</Replaceable> ?<Replaceable>loop-body</Replaceable>?
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+spi_exec ?-count <replaceable>n</replaceable>? ?-array
+<replaceable>>nam</replaceable>>?<replaceable>e>que</replaceable>e> ?<replaceable>loop-body</replaceable>?
+</term>
+<listitem>
+<para>
     Call parser/planner/optimizer/executor for query.
     The optional -count value tells spi_exec the maximum number of rows
     to be processed by the query.
-</Para>
-<Para>
+</para>
+<para>
     If the query is
     a SELECT statement and the optional loop-body (a body of Tcl commands
     like in a foreach statement) is given, it is evaluated for each
     row selected and behaves like expected on continue/break. The values
     of selected fields are put into variables named as the column names. So a
 
-    <ProgramListing>
+    <programlisting>
     spi_exec "SELECT count(*) AS cnt FROM pg_proc"
-    </ProgramListing>
+    </programlisting>
 
     will set the variable $cnt to the number of rows in the pg_proc system
     catalog. If the option -array is given, the column values are stored
     in the associative array named 'name' indexed by the column name
     instead of individual variables.
 
-    <ProgramListing>
+    <programlisting>
     spi_exec -array C "SELECT * FROM pg_class" {
         elog DEBUG "have table $C(relname)"
     }
-    </ProgramListing>
+    </programlisting>
 
     will print a DEBUG log message for every row of pg_class. The return value
     of spi_exec is the number of rows affected by query as found in
     the global variable SPI_processed.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-spi_prepare <Replaceable>query</Replaceable> <Replaceable>typelist</Replaceable>
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+spi_prepare <replaceable>query</replaceable> <replaceable>typelist</replaceable>
+</term>
+<listitem>
+<para>
     Prepares AND SAVES a query plan for later execution. It is a bit different
     from the C level SPI_prepare in that the plan is automatically copied to the
     toplevel memory context. Thus, there is currently no way of preparing a
     plan without saving it.
-</Para>
-<Para>
+</para>
+<para>
     If the query references arguments, the type names must be given as a Tcl
     list. The return value from spi_prepare is a query ID to be used in
     subsequent calls to spi_execp. See spi_execp for a sample.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
-spi_exec ?-count <Replaceable>n</Replaceable>? ?-array <Replaceable>name</Replaceable>? ?-nulls <Replaceable>str</Replaceable>? <Replaceable>query</Replaceable> ?<Replaceable>valuelist</Replaceable>? ?<Replaceable>loop-body</Replaceable>?
-</Term>
-<ListItem>
-<Para>
+<varlistentry>
+<term>
+spi_exec ?-count <replaceable>n</replaceable>? ?-array
+<replaceable>>nam</replaceable>>? ?-nulls<replaceable>e>s</replaceable>e><replaceable>le>qu</replaceable>le<replaceable>ble>value</replaceable>ble>? ?<replaceable>loop-body</replaceable>?
+</term>
+<listitem>
+<para>
     Execute a prepared plan from spi_prepare with variable substitution.
     The optional -count value tells spi_execp the maximum number of rows
     to be processed by the query.
-</Para>
-<Para>
+</para>
+<para>
     The optional value for -nulls is a string of spaces and 'n' characters
     telling spi_execp which of the values are NULL's. If given, it must
     have exactly the length of the number of values.
-</Para>
-<Para>
+</para>
+<para>
     The queryid is the ID returned by the spi_prepare call.
-</Para>
-<Para>
+</para>
+<para>
     If there was a typelist given to spi_prepare, a Tcl list of values of
     exactly the same length must be given to spi_execp after the query. If
     the type list on spi_prepare was empty, this argument must be omitted.
-</Para>
-<Para>
+</para>
+<para>
     If the query is a SELECT statement, the same as described for spi_exec
     happens for the loop-body and the variables for the fields selected.
-</Para>
-<Para>
+</para>
+<para>
     Here's an example for a PL/Tcl function using a prepared plan:
 
-    <ProgramListing>
+    <programlisting>
     CREATE FUNCTION t1_count(int4, int4) RETURNS int4 AS '
         if {![ info exists GD(plan) ]} {
             # prepare the saved plan on the first call
@@ -1532,7 +1541,7 @@ spi_exec ?-count <Replaceable>n</Replaceable>? ?-array <Replaceable>name</Replac
         spi_execp -count 1 $GD(plan) [ list $1 $2 ]
         return $cnt
     ' LANGUAGE 'pltcl';
-    </ProgramListing>
+    </programlisting>
 
     Note that each backslash that Tcl should see must be doubled in
     the query creating the function, since the main parser processes
@@ -1540,16 +1549,16 @@ spi_exec ?-count <Replaceable>n</Replaceable>? ?-array <Replaceable>name</Replac
     Inside the query string given to spi_prepare should
     really be dollar signs to mark the parameter positions and to not let
     $1 be substituted by the value given in the first function call.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-<VarListEntry>
-<Term>
+<varlistentry>
+<term>
 Modules and the unknown command
-</Term>
-<ListItem>
-<Para>
+</term>
+<listitem>
+<para>
     PL/Tcl has a special support for things often used. It recognizes two
     magic tables, pltcl_modules and pltcl_modfuncs.
     If these exist, the module 'unknown' is loaded into the interpreter
@@ -1558,21 +1567,36 @@ Modules and the unknown command
     of the modules. If this is true, the module is loaded on demand.
     To enable this behavior, the PL/Tcl call handler must be compiled
     with -DPLTCL_UNKNOWN_SUPPORT set.
-</Para>
-<Para>
+</para>
+<para>
     There are support scripts to maintain these tables in the modules
     subdirectory of the PL/Tcl source including the source for the
     unknown module that must get installed initially.
-</Para>
-</ListItem>
-</VarListEntry>
+</para>
+</listitem>
+</varlistentry>
 
-</VariableList>
+</variablelist>
 
-</Sect3>
+</sect3>
 
-</Sect2>
-</Sect1>
+</sect2>
+</sect1>
+</chapter>
 
-
-</Chapter>
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-ecat-files:nil
+End:
+-->

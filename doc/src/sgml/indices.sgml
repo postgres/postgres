@@ -1,57 +1,384 @@
-<chapter id="indices">
-<title>Indices</title>
+ <chapter id="indices">
+  <title id="indices-title">Indices and Keys</title>
 
-<para>
+  <para>
+   Indexes are primarily used to enhance database
+   performance. They should be defined on table columns (or class
+   attributes) which are used as qualifications in repetative queries.
+   Inappropriate use will result in slower performance, since update
+   and insertion times are increased in the presence of indices.
+  </para>
 
-<sect1>
-<title>Partial Indices</title>
+  <para>
+   Two forms of indices may be defined:
 
-<para>
-<note>
-<title>Author</title>
-<para>
-This is from a reply to a question on the e-mail list
-by <ulink url="aoki@CS.Berkeley.EDU">Paul M. Aoki</ulink>
-on 1998-08-11.
+   <itemizedlist>
+    <listitem>
+     <para>
+      For a <firstterm>value index</firstterm>,
+      the key fields for the
+      index are specified as column names; a column may also have
+      an associated operator class. An operator class is used
+      to specify the operators to be used for a particular
+      index. For example, a btree index on four-byte integers
+      would use the <literal>int4_ops</literal> class;
+      this operator class includes
+      comparison functions for four-byte integers. The default
+      operator class is the appropriate operator class for that
+      field type.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For a <firstterm>functional index</firstterm>, an index is defined
+      on the result of a user-defined function applied
+      to one or more attributes of a single class.
+      These functional indices
+      can be used to obtain fast access to data
+      based on operators that would normally require some
+      transformation to apply them to the base data.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+
+  <para>
+   Postgres provides btree, rtree and hash access methods for
+   secondary indices.  The btree access method is an implementation of
+   the Lehman-Yao high-concurrency btrees.  The rtree access method
+   implements standard rtrees using Guttman's quadratic split algorithm.
+   The hash access method is an implementation of Litwin's linear
+   hashing.  We mention the algorithms used solely to indicate that all
+   of these access methods are fully dynamic and do not have to be
+   optimized periodically (as is the case with, for example, static hash
+   access methods).
+  </para>
+
+  <para>
+   The Postgres query optimizer will consider using btree indices in a scan
+   whenever an indexed attribute is involved in a comparison using one of:
+
+   <simplelist type="inline">
+    <member>&lt;</member>
+    <member>&lt;=</member>
+    <member>=</member>
+    <member>&gt;=</member>
+    <member>&gt;</member>
+   </simplelist>
+  </para>
+
+  <para>
+   Both box classes support indices on the <literal>box</literal> data 
+   type in <productname>Postgres</productname>.
+   The difference between them is that <literal>bigbox_ops</literal>
+   scales box coordinates down, to avoid floating point exceptions from
+   doing multiplication, addition, and subtraction on very large
+   floating-point coordinates.  If the field on which your rectangles lie
+   is about 20,000 units square or larger, you should use
+   <literal>bigbox_ops</literal>.
+   The <literal>poly_ops</literal> operator class supports rtree
+   indices on <literal>polygon</literal> data.
+  </para>
+
+  <para>
+   The <productname>Postgres</productname>
+   query optimizer will consider using an rtree index whenever
+   an indexed attribute is involved in a comparison using one of:
+
+   <simplelist type="inline">
+    <member>&lt;&lt;</member>
+    <member>&amp;&lt;</member>
+    <member>&amp;&gt;</member>
+    <member>&gt;&gt;</member>
+    <member>@</member>
+    <member>~=</member>
+    <member>&amp;&amp;</member>
+   </simplelist>
+  </para>
+
+  <para>
+   The <productname>Postgres</productname>
+   query optimizer will consider using a hash index whenever
+   an indexed attribute is involved in a comparison using
+   the <literal>=</literal> operator.
+  </para>
+
+  <para>
+   Currently, only the BTREE access method supports multi-column
+   indexes. Up to 7 keys may be specified.
+  </para>
+
+  <para>
+   Use <xref endterm="sql-dropindex-title"
+    linkend="sql-dropindex-title">
+   to remove an index.
+  </para>
+
+  <para>
+   The <literal>int24_ops</literal>
+   operator class is useful for constructing indices on int2 data, and
+   doing comparisons against int4 data in query qualifications.
+   Similarly, <literal>int42_ops</literal>
+   support indices on int4 data that is to be compared against int2 data
+   in queries.
+  </para>
+
+  <para>
+   The following select list returns all ops_names:
+
+   <programlisting>
+SELECT am.amname AS acc_name,
+       opc.opcname AS ops_name,
+       opr.oprname AS ops_comp
+    FROM pg_am am, pg_amop amop,
+         pg_opclass opc, pg_operator opr
+    WHERE amop.amopid = am.oid AND
+          amop.amopclaid = opc.oid AND
+          amop.amopopr = opr.oid
+    ORDER BY acc_name, ops_name, ops_comp
+   </programlisting>
+  </para>
+
+  <sect1 id="keys">
+   <title id="keys-title">Keys</title>
+
+   <para>
+    <note>
+     <title>Author</title>
+     <para>
+      Written by 
+      <ulink url="herouth@oumail.openu.ac.il">Herouth Maoz</ulink>
+      This originally appeared on the User's Mailing List on 1998-03-02
+      in response to the question:
+      "What is the difference between PRIMARY KEY and UNIQUE constraints?".
+     </para>
+    </note>
+   </para>
+
+   <para>
+    <programlisting>
+Subject: Re: [QUESTIONS] PRIMARY KEY | UNIQUE
+
+        What's the difference between:
+
+              PRIMARY KEY(fields,...) and
+              UNIQUE (fields,...)
+
+       - Is this an alias?
+       - If PRIMARY KEY is already unique, then why
+         is there another kind of key named UNIQUE?
+    </programlisting>
+   </para>
+
+   <para>
+    A primary key is the field(s) used to identify a specific row. For example,
+    Social Security numbers identifying a person.
+   </para>
+
+   <para>
+    A simply UNIQUE combination of fields has nothing to do with identifying
+    the row. It's simply an integrity constraint. For example, I have
+    collections of links. Each collection is identified by a unique number,
+    which is the primary key. This key is used in relations.
+   </para>
+
+   <para>
+    However, my application requires that each collection will also have a
+    unique name. Why? So that a human being who wants to modify a collection
+    will be able to identify it. It's much harder to know, if you have two
+    collections named "Life Science", the the one tagged 24433 is the one you
+    need, and the one tagged 29882 is not.
+   </para>
+
+   <para>
+    So, the user selects the collection by its name. We therefore make sure,
+    withing the database, that names are unique. However, no other table in the
+    database relates to the collections table by the collection Name. That
+    would be very inefficient.
+   </para>
+
+   <para>
+    Moreover, despite being unique, the collection name does not actually
+    define the collection! For example, if somebody decided to change the name
+    of the collection from "Life Science" to "Biology", it will still be the
+    same collection, only with a different name. As long as the name is unique,
+    that's OK.
+   </para>
+
+   <para>
+    So:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       Primary key:
+       <itemizedlist spacing="compact" mark="bullet">
+	<listitem>
+	 <para>
+	  Is used for identifying the row and relating to it.
+	 </para>
+	</listitem>
+	<listitem>
+	 <para>
+	  Is impossible (or hard) to update.
+	 </para>
+	</listitem>
+	<listitem>
+	 <para>
+	  Should not allow NULLs.
+	 </para>
+	</listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Unique field(s):
+       <itemizedlist spacing="compact" mark="bullet">
+	<listitem>
+	 <para>
+	  Are used as an alternative access to the row.
+	 </para>
+	</listitem>
+	<listitem>
+	 <para>
+	  Are updateable, so long as they are kept unique.
+	 </para>
+	</listitem>
+	<listitem>
+	 <para>
+	  NULLs are acceptable.
+	 </para>
+	</listitem>
+       </itemizedlist>
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+
+   <para>
+    As for why no non-unique keys are defined explicitly in standard
+    <acronym>SQL</acronym> syntax? Well, you
+    must understand that indices are implementation-dependent.
+    <acronym>SQL</acronym> does not
+    define the implementation, merely the relations between data in the
+    database. <productname>Postgres</productname> does allow
+    non-unique indices, but indices
+    used to enforce <acronym>SQL</acronym> keys are always unique.
+   </para>
+
+   <para>
+    Thus, you may query a table by any combination of its columns, despite the
+    fact that you don't have an index on these columns. The indexes are merely
+    an implementational aid which each <acronym>RDBMS</acronym> offers
+    you, in order to cause
+    commonly used queries to be done more efficiently.
+    Some <acronym>RDBMS</acronym> may give you
+    additional measures, such as keeping a key stored in main memory. They will
+    have a special command, for example
+    <programlisting>
+CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
+    </programlisting>
+    (this is not an existing command, just an example).
+   </para>
+
+   <para>
+    In fact, when you create a primary key or a unique combination of fields,
+    nowhere in the <acronym>SQL</acronym> specification does it say
+    that an index is created, nor that
+    the retrieval of data by the key is going to be more efficient than a
+    sequential scan!
+   </para>
+
+   <para>
+    So, if you want to use a combination of fields which is not unique as a
+    secondary key, you really don't have to specify anything - just start
+    retrieving by that combination! However, if you want to make the retrieval
+    efficient, you'll have to resort to the means your
+    <acronym>RDBMS</acronym> provider gives you
+    - be it an index, my imaginary MEMSTORE command, or an intelligent
+    <acronym>RDBMS</acronym>
+    which creates indices without your knowledge based on the fact that you have
+    sent it many queries based on a specific combination of keys... (It learns
+    from experience).
+   </para>
+  </sect1>
+
+  <sect1 id="partial-index">
+   <title id="partial-index-title">Partial Indices</title>
+
+   <note>
+    <title>Author</title>
+    <para>
+     This is from a reply to a question on the e-mail list
+     by <ulink url="aoki@CS.Berkeley.EDU">Paul M. Aoki</ulink>
+     on 1998-08-11.
 <!--
   Paul M. Aoki         | University of California at Berkeley
   aoki@CS.Berkeley.EDU | Dept. of EECS, Computer Science Division #1776
                        | Berkeley, CA 94720-1776
 -->
-</note>
+    </para>
+   </note>
 
-A <firstterm>partial index</firstterm>
-is an index built over a subset of a table; the subset is defined by
-a predicate.  <productname>Postgres</productname>
- supported partial indices with arbitrary
-predicates.  I believe IBM's db2 for as/400 supports partial indices
-using single-clause predicates.
+   <para>
+    A <firstterm>partial index</firstterm>
+    is an index built over a subset of a table; the subset is defined by
+    a predicate.  <productname>Postgres</productname>
+    supported partial indices with arbitrary
+    predicates.  I believe IBM's db2 for as/400 supports partial indices
+    using single-clause predicates.
+   </para>
 
-<para>
-The main motivation for partial indices is this:
-if all of the queries you ask that can
-profitably use an index fall into a certain range, why build an index
-over the whole table and suffer the associated space/time costs?
+   <para>
+    The main motivation for partial indices is this:
+    if all of the queries you ask that can
+    profitably use an index fall into a certain range, why build an index
+    over the whole table and suffer the associated space/time costs?
 
-(There are other reasons too; see 
-<xref linkend="STON89b-full" endterm="STON89b"> for details.)
+    (There are other reasons too; see 
+    <xref endterm="STON89b" linkend="STON89b-full"> for details.)
+   </para>
 
-<para>
-The machinery to build, update and query partial indices isn't too
-bad.  The hairy parts are index selection (which indices do I build?)
-and query optimization (which indices do I use?); i.e., the parts
-that involve deciding what predicate(s) match the workload/query in
-some useful way.  For those who are into database theory, the problems
-are basically analogous to the corresponding materialized view
-problems, albeit with different cost parameters and formulae.  These
-are, in the general case, hard problems for the standard ordinal 
-<acronym>SQL</acronym>
-types; they're super-hard problems with black-box extension types,
-because the selectivity estimation technology is so crude.
+   <para>
+    The machinery to build, update and query partial indices isn't too
+    bad.  The hairy parts are index selection (which indices do I build?)
+    and query optimization (which indices do I use?); i.e., the parts
+    that involve deciding what predicate(s) match the workload/query in
+    some useful way.  For those who are into database theory, the problems
+    are basically analogous to the corresponding materialized view
+    problems, albeit with different cost parameters and formulae.  These
+    are, in the general case, hard problems for the standard ordinal 
+    <acronym>SQL</acronym>
+    types; they're super-hard problems with black-box extension types,
+    because the selectivity estimation technology is so crude.
+   </para>
 
-<para>
-Check <xref linkend="STON89b-full" endterm="STON89b">,
-<xref linkend="OLSON93-full" endterm="OLSON93">,
-and
-<xref linkend="SESHADRI95-full" endterm="SESHADRI95">
-for more information.
+   <para>
+    Check <xref endterm="STON89b" linkend="STON89b-full">,
+    <xref endterm="OLSON93" linkend="OLSON93-full">,
+    and
+    <xref endterm="SESHADRI95" linkend="SESHADRI95-full">
+    for more information.
+   </para>
+  </sect1>
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

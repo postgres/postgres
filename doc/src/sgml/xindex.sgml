@@ -1,3 +1,8 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.5 1999/07/22 15:11:05 thomas Exp $
+Postgres documentation
+-->
+
  <chapter id="xindex">
   <title>Interfacing Extensions To Indices</title>
 

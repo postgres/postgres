@@ -102,6 +102,221 @@
      </varlistentry>
     </variablelist>
    </para>
+
+   <Sect2>
+    <Title>Host-Based Access Control</Title>
+
+    <Para>
+.SH NAME
+$PGDATA/pg_hba.conf
+.SH DESCRIPTION
+
+     <firstterm>Host-based access control</firstterm>
+     is the name for the basic controls PostgreSQL
+     exercises on what clients are allowed to access a database and how
+     the users on those clients must authenticate themselves.
+    </para>
+
+    <para>
+     Each database system contains a file named
+     <filename>pg_hba.conf</filename>, in its <envar>PGDATA</envar>
+     directory, which controls who can connect to each database.
+    </para>
+
+    <para>
+     Every client accessing a database
+     <emphasis>must</emphasis>
+     be covered by one of
+     the entries in <filename>pg_hba.conf</filename>.
+     Otherwise all attempted connections from that
+     client will be rejected with a "User authentication failed" error
+     message.
+    </para>
+
+    <para>
+     The general format of the <filename>pg_hba.conf</filename>
+     file is of a set of records, one per
+     line.  Blank lines and lines beginning with a hash character
+     ("#") are ignored.  A record is
+     made up of a number of fields which are separated by spaces and/or tabs.
+    </para>
+
+    <para>
+     Connections from clients can be made using UNIX domain sockets or Internet
+     domain sockets (ie. TCP/IP).  Connections made using UNIX domain sockets
+     are controlled using records of the following format:
+
+     <synopsis>
+local <replaceable>database</replaceable> <replaceable>authentication method</replaceable>
+     </synopsis>
+
+     where
+
+     <simplelist>
+      <member>
+       <replaceable>database</replaceable>
+       specifies the database that this record applies to.  The value
+	<literal>all</literal>
+	specifies that it applies to all databases.
+      </member>
+      <member>
+       <replaceable>authentication method</replaceable>
+       specifies the method a user must use to authenticate themselves when
+       connecting to that database using UNIX domain sockets.  The different methods
+       are described below.
+      </member>
+     </simplelist>
+    </para>
+
+    <para>
+     Connections made using Internet domain sockets are controlled using records
+     of the following format.
+
+     <synopsis>
+host <replaceable>database</replaceable> <replaceable>TCP/IP address</replaceable> <replaceable>TCP/IP mask</replaceable> <replaceable>authentication method</replaceable>
+     </synopsis>
+    </para>
+
+    <para>
+     The <replaceable>TCP/IP address</replaceable>
+     is logically anded to both the specified
+     <replaceable>TCP/IP mask</replaceable>
+     and the TCP/IP address
+     of the connecting client.
+     If the two resulting values are equal then the
+     record is used for this connection.  If a connection matches more than one
+     record then the earliest one in the file is used.
+     Both the
+     <replaceable>TCP/IP address</replaceable>
+     and the
+     <replaceable>TCP/IP mask</replaceable>
+     are specified in dotted decimal notation.
+    </para>
+
+    <para>
+     If a connection fails to match any record then the
+     <firstterm>reject</firstterm>
+     authentication method is applied (see below).
+    </para>
+
+    <sect3>
+     <title>Authentication Methods</title>
+
+     <para>
+      The following authentication methods are supported for both UNIX and TCP/IP
+      domain sockets:
+
+      <variablelist>
+       <varlistentry>
+	<term>trust</term>
+	<listitem>
+	 <para>
+	  The connection is allowed unconditionally.
+	 </para>
+	</listitem>
+       </varlistentry>
+
+       <varlistentry>
+	<term>reject</term>
+	<listitem>
+	 <para>
+	  The connection is rejected unconditionally.
+	 </para>
+	</listitem>
+       </varlistentry>
+
+       <varlistentry>
+	<term>crypt</term>
+	<listitem>
+	 <para>
+	  The client is asked for a password for the user.  This is sent encrypted
+	  (using <citetitle>crypt(3)</citetitle>)
+	  and compared against the password held in the 
+	  <filename>pg_shadow</filename> table.
+	  If the passwords match, the connection is allowed.
+	 </para>
+	</listitem>
+       </varlistentry>
+
+       <varlistentry>
+	<term>password</term>
+	<listitem>
+	 <para>
+	  The client is asked for a password for the user.  This is sent in clear
+	  and compared against the password held in the
+	  <filename>pg_shadow</filename> table.
+	  If the passwords match, the connection is allowed.  An optional password file
+	  may be specified after the
+	  <literal>password</literal>
+	  keyword which is used to match the supplied password rather than the pg_shadow
+	  table.  See
+	  <citerefentry><refentrytitle>pg_passwd</refentrytitle></citerefentry>.
+	 </para>
+	</listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+
+     <para>
+      The following authentication methods are supported for TCP/IP
+      domain sockets only:
+
+      <variablelist>
+       <varlistentry>
+	<term>krb4</term>
+	<listitem>
+	 <para>
+	  Kerberos V4 is used to authenticate the user.
+	 </para>
+	</listitem>
+       </varlistentry>
+
+       <varlistentry>
+	<term>krb5</term>
+	<listitem>
+	 <para>
+	  Kerberos V5 is used to authenticate the user.
+	 </para>
+	</listitem>
+       </varlistentry>
+
+       <varlistentry>
+	<term>ident</term>
+	<listitem>
+	 <para>
+	  The ident server on the client is used to authenticate the user (RFC 1413).
+	  An optional map name may be specified after the
+	  <literal>ident</literal>
+	  keyword which allows ident user names to be mapped onto
+	  <productname>Postgres</productname> user names.
+	  Maps are held in the file
+	  <filename>$<envar>PGDATA</envar>/pg_ident.conf</filename>.
+	 </para>
+	</listitem>
+       </varlistentry>
+      </variablelist>
+     </para>
+    </sect3>
+
+    <sect3>
+     <title>Examples</title>
+
+     <para>
+      <programlisting>
+# Trust any connection via UNIX domain sockets.
+local	trust
+# Trust any connection via TCP/IP from this machine.
+host	all	127.0.0.1	255.255.255.255		trust
+# We don't like this machine.
+host	all	192.168.0.10	255.255.255.0		reject
+# This machine can't encrypt so we ask for passwords in clear.
+host	all	192.168.0.3	255.255.255.0		password
+# The rest of this group of machines should provide encrypted passwords.
+host	all	192.168.0.0	255.255.255.0		crypt
+      </programlisting>
+     </para>
+    </sect3>
+   </sect2>
   </sect1>
 
   <sect1>
@@ -138,20 +353,50 @@
      have to explicitly insert/update the <literal>pg_group table</literal>.
      For example:
 
-        jolly=> insert into pg_group (groname, grosysid, grolist)
-        jolly=>     values ('posthackers', '1234', '{5443, 8261}');
-        INSERT 548224
-        jolly=> grant insert on foo to group posthackers;
-        CHANGE
-        jolly=>
+     <programlisting>
+jolly=> insert into pg_group (groname, grosysid, grolist)
+jolly=>     values ('posthackers', '1234', '{5443, 8261}');
+INSERT 548224
+jolly=> grant insert on foo to group posthackers;
+CHANGE
+jolly=>
+     </programlisting>
+    </para>
 
-   The fields in pg_group are:
-     * groname: the group name. This a name and should be purely
-       alphanumeric. Do not include underscores or other punctuation.
-     * grosysid: the group id. This is an int4. This should be unique for
-       each group.
-     * grolist: the list of pg_user id's that belong in the group. This
-       is an int4[].
+    <para>
+     The fields in <filename>pg_group</filename> are:
+
+     <variablelist>
+      <varlistentry>
+       <term>groname</term>
+       <listitem>
+	<para>
+	 The group name. This a name and should be purely
+	 alphanumeric. Do not include underscores or other punctuation.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>grosysid</term>
+       <listitem>
+	<para>
+	 The group id. This is an int4. This should be unique for
+	 each group.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>grolist</term>
+       <listitem>
+	<para>
+	 The list of pg_user id's that belong in the group. This
+	 is an int4[].
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
     </para>
    </sect2>
 

@@ -3,13 +3,17 @@
 
   <abstract>
    <para>
-    <acronym>SQL</acronym> manipulates sets of data. The language is
-    composed of various <firstterm>key words</firstterm>. Arithmetic
-    and procedural expressions are allowed. We will cover these topics
-    in this chapter; subsequent chapters will include details on data
-    types, functions, and operators.
+    A description of the general syntax of SQL.
    </para>
   </abstract>
+
+  <para>
+   <acronym>SQL</acronym> manipulates sets of data. The language is
+   composed of various <firstterm>key words</firstterm>. Arithmetic
+   and procedural expressions are allowed. We will cover these topics
+   in this chapter; subsequent chapters will include details on data
+   types, functions, and operators.
+  </para>
 
   <sect1>
    <title>Key Words</title>
@@ -230,7 +234,7 @@ MAXVALUE MINVALUE MODE
 NOCREATEDB NOCREATEUSER NOTHING NOTNULL 
 OIDS OPERATOR 
 PASSWORD PROCEDURAL
-RECIPE RENAME  RETURNS ROW RULE
+RECIPE RENAME RETURNS ROW RULE
 SEQUENCE SERIAL SHARE START STATEMENT STDIN STDOUT 
 TRUSTED 
 VALID VERSION
@@ -303,17 +307,454 @@ UNCOMMITTED UNNAMED
   </sect1>
 
   <sect1>
+   <title>Comments</title>
+
+   <para>
+    A <firstterm>comment</firstterm>
+    is an arbitrary sequence of characters following double dashes up to the end
+    of the line.  We also support double-slashes as comments, e.g.:
+
+    <programlisting>
+-- This is a standard SQL comment
+// And this is another supported comment style, like C++
+    </programlisting>
+
+We also support C-style block comments, e.g.:
+
+    <programlisting>
+/* multi
+   line
+   comment */
+    </programlisting>
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Names</title>
+
+   <para>
+    Names in SQL are sequences of less than NAMEDATALEN alphanumeric characters,
+    starting with an alphabetic character.  By default, NAMEDATALEN is set
+    to 32, but at the time the system is built, NAMEDATALEN can be changed
+    by changing the #ifdef in src/backend/include/postgres.h.  Underscore
+    ("_") is considered an alphabetic character.
+   </para>
+  </sect1>
+
+  <sect1>
+   <title>Constants</title>
+
+   <para>
+    There are six types of
+    <firstterm>constants</firstterm>
+    for use in SQL.  They are described below.
+   </para>
+
+   <sect2>
+    <title>String Constants</title>
+
+    <para>
+     <firstterm>Strings</firstterm>
+     in SQL are arbitrary sequences of ASCII characters bounded by single
+     quotes ("'", e.g. 'This is a string').
+     Uppercase alphabetics within strings are accepted
+     literally.  Non-printing characters may be embedded within strings by
+     prepending them with a backslash
+     ("\"; e.g. "\<replaceable>tab</replaceable>".
+     SQL92 allows single quotes to be embedded in strings by typing two 
+     adjacent single quotes (e.g. 'Dianne''s horse'), and for
+     historical reasons <productname>Postgres</productname> also allows 
+     single quotes to be escaped with a backslash
+     (e.g. 'Dianne\'s horse').
+    </para>
+
+    <para>
+     Because of the limitations on
+     instance sizes, string constants are currently limited to a length of
+     a little less than 8192 bytes.  Larger strings may be handled using the
+     Postgres Large Object interface.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Integer Constants</title>
+
+    <para>
+     <firstterm>Integer constants</firstterm>
+     in SQL are collection of ASCII digits with no decimal point.  Legal
+     values range from -2147483648 to +2147483647.  This will vary
+     depending on the operating system and host machine.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Floating Point Constants</title>
+
+    <para>
+     <firstterm>Floating point constants</firstterm>
+     consist of an integer part, a decimal point, and a fraction part or
+     scientific notation of the following format:
+
+     <synopsis>
+{<replaceable>dig</replaceable>}.{<replaceable>dig</replaceable>} [e [+-] {<replaceable>dig</replaceable>}]
+     </synopsis>
+
+     where <replaceable>dig</replaceable> is one or more digits.
+     You must include at least one <replaceable>dig</replaceable> after the
+     period and after the [+-] if you use those options.  An exponent with
+     a missing mantissa has a mantissa of 1 inserted.  There may be no
+     extra characters embedded in the string.  
+     Floating point constaints are of type float8.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Constants of Postgres User-Defined Types</title>
+
+    <para>
+     A constant of an
+     <emphasis>arbitrary</emphasis>
+     type can be entered using the notations:
+
+     <synopsis>
+<replaceable>type</replaceable> '<replaceable>string</replaceable>'
+'<replaceable>string</replaceable>'::<replaceable>type</replaceable>
+CAST '<replaceable>string</replaceable>' AS <replaceable>type</replaceable>
+     </synopsis>
+
+     The value inside the string is passed to the input
+     conversion routine for the type called type-name. The result is a
+     constant of the indicated type.  The explicit typecast may be omitted
+     if there is no ambiguity as to the type the constant must be, in which
+     case it is automatically coerced.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Array constants</title>
+
+    <para>
+     <firstterm>Array constants</firstterm>
+     are arrays of any Postgres type, including other arrays, string
+     constants, etc.  The general format of an array constant is the
+     following:
+
+     <synopsis>
+{<replaceable>val1</replaceable><replaceable>delim</replaceable><replaceable>val2</replaceable><replaceable>delim</replaceable>}
+     </synopsis>
+
+     where <replaceable>delim</replaceable>
+     is the delimiter for the type stored in the <literal>pg_type</literal> class.
+     (For built-in types, this is the comma character (",").  An
+     example of an array constant is
+
+     <programlisting>
+{{1,2,3},{4,5,6},{7,8,9}}
+     </programlisting>
+
+     This constant is a two-dimensional, 3 by 3 array consisting of three
+     sub-arrays of integers.
+    </para>
+
+    <para>
+     Individual array elements can and should be placed between quotation
+     marks whenever possible to avoid ambiguity problems with respect to
+     leading white space.
+    </para>
+   </sect2>
+  </sect1>
+
+  <sect1>
+   <title>Fields and Columns</title>
+
+   <sect2>
+    <title>Fields</title>
+
+    <para>
+     A <firstterm>field</firstterm>
+     is either an attribute of a given class or one of the following:
+
+     <variablelist>
+      <varlistentry>
+       <term>oid</term>
+       <listitem>
+	<para>
+	 stands for the unique identifier of an instance which is added by
+	 Postgres to all instances automatically. Oids are not reused and are 32
+	 bit quantities.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>xmin</term>
+       <listitem>
+	<para>
+	 The identity of the inserting transaction.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>xmax</term>
+       <listitem>
+	<para>
+	 The identity of the deleting transaction.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>cmin</term>
+       <listitem>
+	<para>
+	 The command identifier within the transaction.
+	</para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+      <term>cmax</term>
+       <listitem>
+	<para>
+	 The identity of the deleting command.
+	</para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+
+    <para>
+     For further information on these fields consult
+     <xref linkend="STON87a" endterm="STON87a">.
+     Times are represented internally as instances of the
+     <literal>abstime</literal>
+     data type.  Transaction and command identifiers are 32 bit quantities.
+     Transactions are assigned sequentially starting at 512.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Columns</title>
+
+    <para>
+     A <firstterm>column</firstterm> is a construct of the form:
+
+     <synopsis>
+<replaceable>instance</replaceable>{.<replaceable>composite_field</replaceable>}.<replaceable>field</replaceable> `['<replaceable>number</replaceable>`]'
+     </synopsis>
+
+     <replaceable>instance</replaceable>
+     identifies a particular class and can be thought of as standing for
+     the instances of that class.  An instance variable is either a class
+     name, a surrogate for a class defined by means of a FROM clause,
+     or the keyword NEW or CURRENT.
+     NEW and CURRENT can only appear in the action portion of a rule, while
+     other instance variables can be used in any SQL statement.
+     <replaceable>composite_field</replaceable>
+     is a field of of one of the Postgres composite types,
+     while successive composite fields address attributes in the
+     class(s) to which the composite field evaluates.  Lastly,
+     <replaceable>field</replaceable>
+     is a normal (base type) field in the class(s) last addressed.  If
+     <replaceable>field</replaceable>
+     is of type <literal>array</literal>,
+     then the optional <replaceable>number</replaceable>
+     designator indicates a specific element in the array.  If no number is
+     indicated, then all array elements are returned.
+    </para>
+   </sect2>
+  </sect1>
+
+  <sect1>
+   <title>Operators</title>
+
+   <para>
+    Any built-in system, or user-defined operator may be used in SQL.
+    For the list of built-in and system operators consult
+    <xref linkend="operators" endterm="operators">.
+    For a list of user-defined operators consult your system administrator
+    or run a query on the <literal>pg_operator</literal> class.
+    Parentheses may be used for arbitrary grouping of operators in expressions.
+   </para>
+  </sect1>
+
+  <sect1>
    <title>Expressions</title>
 
    <para>
     <acronym>SQL92</acronym> allows <firstterm>expressions</firstterm>
-    to transform data in expressions. Expressions may contain operators
+    to transform data in tables. Expressions may contain operators
     (see <xref linkend="operators-title" endterm="operators-title">
     for more details) and functions
     (<xref linkend="functions-title" endterm="functions-title"> has
     more information).
-
    </para>
+
+   <para>
+    An expression is one of the following:
+
+    <simplelist>
+     <member>( a_expr )</member>
+     <member>constant</member>
+     <member>attribute</member>
+     <member><replaceable>a_expr</replaceable> <replaceable>binary_operator</replaceable> <replaceable>a_expr</replaceable></member>
+     <member><replaceable>a_expr</replaceable> <replaceable>right_unary_operator</replaceable></member>
+     <member><replaceable>left_unary_operator</replaceable> <replaceable>a_expr</replaceable></member>
+     <member>parameter</member>
+     <member>functional expressions</member>
+     <member>aggregate expressions</member>
+    </simplelist>
+   </para>
+
+   <para>
+    We have already discussed constants and attributes.  The two kinds of
+    operator expressions indicate respectively binary and left_unary
+    expressions.  The following sections discuss the remaining options.
+   </para>
+
+   <sect2>
+    <title>Parameters</title>
+
+    <para>
+     A <firstterm>parameter</firstterm>
+     is used to indicate a parameter in a SQL function.  Typically this
+     is used in SQL function definition statement.  The form of a
+     parameter is:
+
+     <synopsis>
+$<replaceable class="parameter">number</replaceable>
+     </synopsis>
+    </para>
+
+    <para>
+     For example, consider the definition of a function,
+     <function>dept</function>, as
+
+     <programlisting>
+CREATE FUNCTION dept (name)
+	RETURNS dept
+	AS 'select * from 
+	    dept where name=$1'
+	LANGUAGE 'sql';
+     </programlisting>
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Functional Expressions</title>
+
+    <para>
+     A <firstterm>functional expression</firstterm>
+     is the name of a legal SQL function, followed by its argument list
+     enclosed in parentheses:
+
+     <synopsis>
+<replaceable>function</replaceable> (<replaceable>a_expr</replaceable> [, <replaceable>a_expr</replaceable> )
+     </synopsis>
+    </para>
+
+    <para>
+     For example, the following computes the square root of an employee
+     salary:
+
+     <programlisting>
+sqrt(emp.salary)
+     </programlisting>
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Aggregate Expression</title>
+
+    <para>
+     An <firstterm>aggregate expression</firstterm>
+     represents a simple aggregate (i.e., one that computes a single value)
+     or an aggregate function (i.e., one that computes a set of values).
+     The syntax is the following:
+
+     <synopsis>
+<replaceable>aggregate_name</replaceable> (<replaceable>attribute</replaceable>)
+     </synopsis>
+
+     where <replaceable>aggregate_name</replaceable>
+     must be a previously defined aggregate.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Target List</title>
+
+    <para>
+     A <firstterm>target list</firstterm>
+     is a parenthesized, comma-separated list of one or more elements, each
+     of which must be of the form:
+
+     <synopsis>
+<replaceable>a_expr</replaceable> [ AS <replaceable>result_attname</replaceable> ]
+     </synopsis>
+
+     where <replaceable>result_attname</replaceable>
+     is the name of the attribute to be created (or an
+     already existing attribute name in the case of update statements.)  If
+     <replaceable>result_attname</replaceable>
+     is not present, then 
+     <replaceable>a_expr</replaceable>
+     must contain only one attribute name which is assumed to be the name
+     of the result field.  In <productname>Postgres</productname>
+     default naming is only used if
+     <replaceable>a_expr</replaceable>
+     is an attribute.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Qualification</title>
+
+    <para>
+     A <firstterm>qualification</firstterm>
+     consists of any number of clauses connected by the logical operators:
+
+     <simplelist>
+      <member>NOT</member>
+      <member>AND</member>
+      <member>OR</member>
+     </simplelist>
+
+     A clause is an <replaceable>a_expr</replaceable>
+     that evaluates to a <literal>boolean</literal> over a set of instances.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>From List</title>
+
+    <para>
+     The <firstterm>from list</firstterm>
+     is a comma-separated list of <firstterm>from expressions</firstterm>.
+     Each "from expression" is of the form:
+
+     <synopsis>
+[ <replaceable>class_reference</replaceable> ] <replaceable>instance_variable</replaceable>
+	{, [ <replaceable>class_ref</replaceable> ] <replaceable>instance_variable</replaceable>... }
+     </synopsis>
+
+     where <replaceable>class_reference</replaceable>
+     is of the form
+
+     <synopsis>
+<replaceable>class_name</replaceable> [ * ]
+     </synopsis>
+
+     The "from expression"
+     defines one or more instance variables to range over the class
+     indicated in <replaceable>class_reference</replaceable>.
+     One can also request 
+     the instance variable to range over all classes that are beneath the
+     indicated class in the inheritance hierarchy by postpending the
+     designator asterisk ("*").
+    </para>
+   </sect2>
   </sect1>
  </chapter>
 

@@ -12,7 +12,7 @@
    <ProductName>Postgres</ProductName> provides a large number of 
    built-in operators on system types.
    These operators are declared in the system catalog
-   pg_operator.  Every entry in pg_operator includes
+   <literal>pg_operator</literal>.  Every entry in <literal>pg_operator</literal> includes
    the name of the procedure that implements the operator and the
    class <Acronym>OIDs</Acronym> of the input and output types.
   </Para>
