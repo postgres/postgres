@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.12 1998/09/01 04:30:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.13 1998/09/21 15:41:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,20 +355,17 @@ create_index_path(Query *root,
 						  &npages,
 						  &selec);
 		/* each clause gets an equal selectivity */
-		clausesel =
-			pow(selec,
-				1.0 / (double) length(restriction_clauses));
+		clausesel =	pow(selec, 1.0 / (double) length(restriction_clauses));
 
 		pathnode->indexqual = restriction_clauses;
-		pathnode->path.path_cost =
-			cost_index(lfirsti(index->relids),
-					   (int) npages,
-					   selec,
-					   rel->pages,
-					   rel->tuples,
-					   index->pages,
-					   index->tuples,
-					   false);
+		pathnode->path.path_cost = cost_index(lfirsti(index->relids),
+											   (int) npages,
+											   selec,
+											   rel->pages,
+											   rel->tuples,
+											   index->pages,
+											   index->tuples,
+											   false);
 
 #if 0
 		/* add in expensive functions cost!  -- JMH, 7/7/92 */
