@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/test/examples/testlo.c,v 1.23 2004/09/22 05:12:45 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/test/examples/testlo.c,v 1.24 2004/10/01 17:34:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,10 +225,10 @@ main(int argc, char **argv)
 	conn = PQsetdb(NULL, NULL, NULL, NULL, database);
 
 	/* check to see that the backend connection was successfully made */
-	if (PQstatus(conn) == CONNECTION_BAD)
+	if (PQstatus(conn) != CONNECTION_OK)
 	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", database);
-		fprintf(stderr, "%s", PQerrorMessage(conn));
+		fprintf(stderr, "Connection to database failed: %s",
+				PQerrorMessage(conn));
 		exit_nicely(conn);
 	}
 

@@ -22,10 +22,10 @@ static void
 check_conn(PGconn *conn, const char *dbName)
 {
 	/* check to see that the backend connection was successfully made */
-	if (PQstatus(conn) == CONNECTION_BAD)
+	if (PQstatus(conn) != CONNECTION_OK)
 	{
-		fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
-		fprintf(stderr, "%s", PQerrorMessage(conn));
+		fprintf(stderr, "Connection to database \"%s\" failed: %s",
+				dbName, PQerrorMessage(conn));
 		exit(1);
 	}
 }

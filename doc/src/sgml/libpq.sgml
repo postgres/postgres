@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.164 2004/09/26 22:51:49 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.165 2004/10/01 17:34:17 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -3979,8 +3979,8 @@ main(int argc, char **argv)
         /* Check to see that the backend connection was successfully made */
         if (PQstatus(conn) != CONNECTION_OK)
         {
-                fprintf(stderr, "Connection to database '%s' failed.\n", PQdb(conn));
-                fprintf(stderr, "%s", PQerrorMessage(conn));
+                fprintf(stderr, "Connection to database failed: %s",
+                        PQerrorMessage(conn));
                 exit_nicely(conn);
         }
 
@@ -4125,8 +4125,8 @@ main(int argc, char **argv)
         /* Check to see that the backend connection was successfully made */
         if (PQstatus(conn) != CONNECTION_OK)
         {
-                fprintf(stderr, "Connection to database '%s' failed.\n", PQdb(conn));
-                fprintf(stderr, "%s", PQerrorMessage(conn));
+                fprintf(stderr, "Connection to database failed: %s",
+                        PQerrorMessage(conn));
                 exit_nicely(conn);
         }
 
@@ -4267,8 +4267,8 @@ main(int argc, char **argv)
         /* Check to see that the backend connection was successfully made */
         if (PQstatus(conn) != CONNECTION_OK)
         {
-                fprintf(stderr, "Connection to database '%s' failed.\n", PQdb(conn));
-                fprintf(stderr, "%s", PQerrorMessage(conn));
+                fprintf(stderr, "Connection to database failed: %s",
+                        PQerrorMessage(conn));
                 exit_nicely(conn);
         }
 
