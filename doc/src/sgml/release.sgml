@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.300 2004/10/04 22:49:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.301 2004/10/08 15:03:25 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1723,7 +1723,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.300 2004/10/04 22:49:47 tgl Exp
 
     <listitem>
      <para>
-      New start/stop of dump markers in pg_dump (Bruce)
+      pg_restore -l display now includes objects' schema names
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      New begin/end markers in pg_dump text output (Bruce)
      </para>
     </listitem>
 
