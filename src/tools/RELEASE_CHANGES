@@ -29,6 +29,7 @@
 	document all new features
 	update help output from inside the programs
 	doc/src/sgml/ref manual pages
+	convert any literal "<" and ">" characters
 
 * Ports
 	update config.guess and config.sub at the start of beta
