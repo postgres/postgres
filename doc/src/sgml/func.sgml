@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.182 2003/12/16 15:27:58 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.183 2003/12/18 03:59:07 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -3134,7 +3134,10 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
    <note>
     <para>
      Keep in mind that an escape's leading <literal>\</> will need to be
-     doubled when entering the pattern as an SQL string constant.
+     doubled when entering the pattern as an SQL string constant.  For example:
+<programlisting>
+'123' ~ '^\\d{3}' <lineannotation>true</lineannotation>
+</programlisting>
     </para>
    </note>
 
