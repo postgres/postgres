@@ -13,7 +13,7 @@
 
 all install clean dep depend distclean maintainer-clean:
 	@if ! [ -f GNUmakefile ] ; then \
-	   echo "You need to run the \`configure' program fist. See the file"; \
+	   echo "You need to run the \`configure' program first. See the file"; \
 	   echo "\`INSTALL' for installation instructions." ; \
 	   false ; \
 	 fi
@@ -29,7 +29,7 @@ all install clean dep depend distclean maintainer-clean:
 	\
 	 if [ x"$${GMAKE+set}" = xset ]; then \
 	   echo "Using GNU make found at $${GMAKE}"; \
-	   $${GMAKE} ; \
+	   $${GMAKE} $@ ; \
 	 else \
 	   echo "You must use GNU make to build PostgreSQL." ; \
 	   false; \
