@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+ * $Id: pg_dump.h,v 1.2 1996/07/12 05:39:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ extern char g_opaque_type[10]; /* name for the opaque type */
  *  common utility functions 
 */
 
-extern TableInfo* dumpSchema(FILE* fout, int *numTablesPtr);
+extern TableInfo* dumpSchema(FILE* fout, int *numTablesPtr, char *tablename);
 
 extern char* findTypeByOid(TypeInfo* tinfo, int numTypes, char* oid);
 extern char* findOprByOid(OprInfo *oprinfo, int numOprs, char *oid);
@@ -178,11 +178,11 @@ extern void dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
 			TypeInfo *tinfo, int numTypes);
 extern void dumpTables(FILE* fout, TableInfo* tbinfo, int numTables,
 		       InhInfo *inhinfo, int numInherits,
-		       TypeInfo *tinfo, int numTypes);
+		       TypeInfo *tinfo, int numTypes, char *tablename);
 extern void dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
-			TableInfo* tbinfo, int numTables);
+			TableInfo* tbinfo, int numTables, char *tablename);
 
-extern void dumpClasses(TableInfo *tbinfo, int numTables, FILE *fout);
+extern void dumpClasses(TableInfo *tbinfo, int numTables, FILE *fout, char *tablename);
 extern void dumpTuples(PGresult *res, FILE *fout, int *attrmap);
 extern char* checkForQuote(char* s);
 extern int findLastBuiltinOid();

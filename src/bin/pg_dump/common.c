@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.2 1996/07/12 05:39:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ strInArray(char* pattern, char** arr, int arr_size)
  */
 
 TableInfo *
-dumpSchema(FILE *fout, int *numTablesPtr)
+dumpSchema(FILE *fout, int *numTablesPtr, char *tablename)
 {
     int numTypes;
     int numFuncs;
@@ -252,31 +252,42 @@ if (g_verbose) fprintf(stderr,"%s reading indices information %s\n",
 		       g_comment_start, g_comment_end);
     indinfo = getIndices(&numIndices);
 
-if (g_verbose) fprintf(stderr,"%s dumping out user-defined types %s\n",
-		       g_comment_start, g_comment_end);
-    dumpTypes(fout, finfo, numFuncs, tinfo, numTypes);
+if (!tablename && fout) {
+  if (g_verbose) fprintf(stderr,"%s dumping out user-defined types %s\n",
+  		       g_comment_start, g_comment_end);
+      dumpTypes(fout, finfo, numFuncs, tinfo, numTypes);
+}    
 
-if (g_verbose) fprintf(stderr,"%s dumping out tables %s\n",
+if (fout) {
+  if (g_verbose) fprintf(stderr,"%s dumping out tables %s\n",
 		       g_comment_start, g_comment_end);
     dumpTables(fout, tblinfo, numTables, inhinfo, numInherits,
-	       tinfo, numTypes);
+	       tinfo, numTypes, tablename);
+}	       
 
-if (g_verbose) fprintf(stderr,"%s dumping out user-defined functions %s\n",
-		       g_comment_start, g_comment_end);
-    dumpFuncs(fout, finfo, numFuncs, tinfo, numTypes);
+if (!tablename && fout) {
+  if (g_verbose) fprintf(stderr,"%s dumping out user-defined functions %s\n",
+  		       g_comment_start, g_comment_end);
+      dumpFuncs(fout, finfo, numFuncs, tinfo, numTypes);
+}
 
-if (g_verbose) fprintf(stderr,"%s dumping out user-defined functions %s\n",
-		       g_comment_start, g_comment_end);
-    dumpAggs(fout, agginfo, numAggregates, tinfo, numTypes);
+if (!tablename && fout) {
+  if (g_verbose) fprintf(stderr,"%s dumping out user-defined functions %s\n",
+  		       g_comment_start, g_comment_end);
+      dumpAggs(fout, agginfo, numAggregates, tinfo, numTypes);
+}      
 
-if (g_verbose) fprintf(stderr,"%s dumping out user-defined operators %s\n",
-		       g_comment_start, g_comment_end);
-    dumpOprs(fout, oprinfo, numOperators, tinfo, numTypes);
+if (!tablename && fout) {
+  if (g_verbose) fprintf(stderr,"%s dumping out user-defined operators %s\n",
+  		       g_comment_start, g_comment_end);
+      dumpOprs(fout, oprinfo, numOperators, tinfo, numTypes);
+}
 
-if (g_verbose) fprintf(stderr,"%s dumping out indices %s\n",
-		       g_comment_start, g_comment_end);
-    dumpIndices(fout, indinfo, numIndices, tblinfo, numTables);
-
+if (fout) {
+  if (g_verbose) fprintf(stderr,"%s dumping out indices %s\n",
+  		       g_comment_start, g_comment_end);
+      dumpIndices(fout, indinfo, numIndices, tblinfo, numTables, tablename);
+}
     *numTablesPtr = numTables;
     return tblinfo;
 }

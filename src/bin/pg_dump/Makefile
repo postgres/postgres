@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.2 1996/07/12 05:39:30 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 

@@ -20,11 +20,17 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.1.1.1 1996/07/09 06:22:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.2 1996/07/12 05:39:35 scrappy Exp $
+ *
+ * Modifications - 6/10/96 - dave@bensoft.com
+ *
+ *   Applied 'insert string' patch from "Marc G. Fournier" <scrappy@ki.net>
+ *   Added '-t table' option
+ *   Added '-a' option
+ *   Added '-da' option
  *
  *-------------------------------------------------------------------------
  */
-
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,6 +53,8 @@ int g_verbose;  /* verbose flag */
 int g_last_builtin_oid; /* value of the last builtin oid */
 FILE *g_fout;     /* the script file */
 PGconn *g_conn;   /* the database connection */
+int dumpData; /* dump data using proper insert strings */
+int attrNames; /* put attr names into insert strings */
 
 char g_opaque_type[10]; /* name for the opaque type */
 
@@ -60,10 +68,14 @@ usage(char* progname)
 {
     fprintf(stderr, "usage:  %s [options] [dbname]\n",progname);
     fprintf(stderr, "\t -f filename \t\t script output filename\n");
+    fprintf(stderr, "\t -d[a]       \t\t dump data as proper insert strings\n");
+    fprintf(stderr, "\t             \t\t (if 'a' then attribute names also)\n");
     fprintf(stderr, "\t -H hostname \t\t server host name\n");
     fprintf(stderr, "\t -p port     \t\t server port number\n");
     fprintf(stderr, "\t -v          \t\t verbose\n");
     fprintf(stderr, "\t -S          \t\t dump out only the schema, no data\n");
+    fprintf(stderr, "\t -a          \t\t dump out only the data, no schema\n");
+    fprintf(stderr, "\t -t table    \t\t dump for this table only\n");
     fprintf(stderr, "\n if dbname is not supplied, then the DATABASE environment name is used\n");
     fprintf(stderr, "\n");
 
@@ -89,25 +101,28 @@ main(int argc, char** argv)
     char* filename;
     char* dbname;
     int schemaOnly;
+    int dataOnly;
     char *pghost = NULL;
     char *pgport = NULL;
+    char *tablename;
 
     TableInfo *tblinfo;
     int numTables;
 
     dbname = NULL;
     filename = NULL;
+    tablename = NULL;
     g_verbose = 0;
 
     strcpy(g_comment_start,"-- ");
     g_comment_end[0] = '\0';
     strcpy(g_opaque_type, "opaque");
 
-    schemaOnly = 0;
+    dataOnly = schemaOnly = dumpData = attrNames = 0;
 
     progname = *argv;
 
-    while ((c = getopt(argc, argv,"f:H:p:vSD")) != EOF) {
+    while ((c = getopt(argc, argv,"f:H:p:t:vSDd:a")) != EOF) {
 	switch(c) {
 	case 'f': /* output file name */
 	    filename = optarg;
@@ -123,6 +138,16 @@ main(int argc, char** argv)
 	    break;
 	case 'S': /* dump schema only */
 	    schemaOnly = 1;
+	    break;
+        case 'd': /* dump data as proper insert strings */
+            dumpData = 1;
+            attrNames = strstr(optarg,"a") ? 1 : 0;
+            break;
+	case 't': /* Dump data for this table only */
+	    tablename = optarg;
+	    break;
+	case 'a': /* Dump data only */
+	    dataOnly = 1;
 	    break;
 	default:
 	    usage(progname);
@@ -159,18 +184,25 @@ main(int argc, char** argv)
 
     g_last_builtin_oid = findLastBuiltinOid();
 
+    if (!dataOnly) {
+
 if (g_verbose) 
     fprintf(stderr, "%s last builtin oid is %d %s\n",
 	    g_comment_start,  g_last_builtin_oid, g_comment_end);
 
-    tblinfo = dumpSchema(g_fout, &numTables);
+    tblinfo = dumpSchema(g_fout, &numTables, tablename);
+    
+    }
+    else {
+      tblinfo = dumpSchema(NULL, &numTables, tablename);
+    }
     
     if (!schemaOnly) {
 
 if (g_verbose) fprintf(stderr,"%s dumping out the contents of each table %s\n",
 		       g_comment_start, g_comment_end);
 
-      dumpClasses(tblinfo, numTables, g_fout); 
+      dumpClasses(tblinfo, numTables, g_fout, tablename); 
     }     
 
     fflush(g_fout);
@@ -1135,10 +1167,10 @@ dumpAggs(FILE* fout, AggInfo* agginfo, int numAggs,
  * dumpTables:
  *    write out to fout all the user-define tables
  */
-void
-dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
+
+void dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
 	   InhInfo *inhinfo, int numInherits,
-	   TypeInfo *tinfo, int numTypes)
+	   TypeInfo *tinfo, int numTypes, char *tablename)
 {
     int i,j,k;
     char q[MAXQUERYLEN];
@@ -1149,59 +1181,62 @@ dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
 
     for (i=0;i<numTables;i++) {
 
-	/* skip archive names*/
-	if (isArchiveName(tblinfo[i].relname))
-	    continue;
+        if (!tablename || (!strcmp(tblinfo[i].relname,tablename))) {
 
-	parentRels = tblinfo[i].parentRels;
-	numParents = tblinfo[i].numParents;
+  	    /* skip archive names*/
+  	    if (isArchiveName(tblinfo[i].relname))
+  	        continue;
 
-	sprintf(q, "CREATE TABLE %s (", tblinfo[i].relname);
-	actual_atts = 0;
-	for (j=0;j<tblinfo[i].numatts;j++) {
-	    if (tblinfo[i].inhAttrs[j] == 0) {
-		sprintf(q, "%s%s%s %s",
-			q,
-			(actual_atts > 0) ? ", " : "",
-			tblinfo[i].attnames[j],
-			tblinfo[i].typnames[j]);
-		actual_atts++;
+	    parentRels = tblinfo[i].parentRels;
+	    numParents = tblinfo[i].numParents;
+
+	    sprintf(q, "CREATE TABLE %s (", tblinfo[i].relname);
+	    actual_atts = 0;
+	    for (j=0;j<tblinfo[i].numatts;j++) {
+	        if (tblinfo[i].inhAttrs[j] == 0) {
+		    sprintf(q, "%s%s%s %s",
+		   	    q,
+			    (actual_atts > 0) ? ", " : "",
+			    tblinfo[i].attnames[j],
+			    tblinfo[i].typnames[j]);
+		    actual_atts++;
+	        }
 	    }
-	}
 
-	strcat(q,")");
-
-	if (numParents > 0) {
-	    sprintf(q, "%s inherits ( ",q);
-	    for (k=0;k<numParents;k++){
-		sprintf(q, "%s%s%s",
-			q,
-			(k>0) ? ", " : "",
-			parentRels[k]);
-	    }
 	    strcat(q,")");
-	}
 
-	switch(tblinfo[i].relarch[0]) {
-	case 'n':
-	    archiveMode = "none";
-	    break;
-	case 'h':
-	    archiveMode = "heavy";
-	    break;
-	case 'l':
-	    archiveMode = "light";
-	    break;
-	default:
-	    fprintf(stderr, "unknown archive mode\n");
-	    archiveMode = "none";
-	    break;
-	}
+	    if (numParents > 0) {
+	        sprintf(q, "%s inherits ( ",q);
+	        for (k=0;k<numParents;k++){
+		sprintf(q, "%s%s%s",
+			    q,
+			    (k>0) ? ", " : "",
+			    parentRels[k]);
+	        }
+	        strcat(q,")");
+	    }
+
+	    switch(tblinfo[i].relarch[0]) {
+	    case 'n':
+	        archiveMode = "none";
+	        break;
+	    case 'h':
+	        archiveMode = "heavy";
+	        break;
+	    case 'l':
+	        archiveMode = "light";
+	        break;
+	    default:
+	        fprintf(stderr, "unknown archive mode\n");
+	        archiveMode = "none";
+	        break;
+	    }
 	    
-	sprintf(q, "%s archive = %s;\n",
-		q,
-		archiveMode);
-	fputs(q,fout);
+	    sprintf(q, "%s archive = %s;\n",
+	    	    q,
+		    archiveMode);
+	    fputs(q,fout);
+        }
     }
 }
 
@@ -1211,7 +1246,7 @@ dumpTables(FILE* fout, TableInfo *tblinfo, int numTables,
  */
 void 
 dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
-	    TableInfo* tblinfo, int numTables)
+	    TableInfo* tblinfo, int numTables, char *tablename)
 {
     int i;
     int tableInd;
@@ -1243,82 +1278,139 @@ dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
 					 PQfnumber(res,"proname")));
 	    PQclear(res);
 	}
-	sprintf(q,"CREATE INDEX %s on %s using %s (",
-		indinfo[i].indexrelname,
-		indinfo[i].indrelname,
-		indinfo[i].indamname);
-	if (funcname) {
-	    sprintf(q, "%s %s(%s) %s);\n",
-		    q,funcname, attname, indinfo[i].indclassname);
-	    free(funcname); 
-	} else
-	    sprintf(q, "%s %s %s);\n",
-		    q,attname,indinfo[i].indclassname);
+	
+        if (!tablename || (!strcmp(indinfo[i].indrelname,tablename))) {
+	
+	    sprintf(q,"CREATE INDEX %s on %s using %s (",
+		    indinfo[i].indexrelname,
+		    indinfo[i].indrelname,
+		    indinfo[i].indamname);
+	    if (funcname) {
+	        sprintf(q, "%s %s(%s) %s);\n",
+		        q,funcname, attname, indinfo[i].indclassname);
+	        free(funcname); 
+	    } else
+	        sprintf(q, "%s %s %s);\n",
+		        q,attname,indinfo[i].indclassname);
 
-	fputs(q,fout);
+	    fputs(q,fout);
+	}    
     }
 
 }
-
-
-
-
 
 /*
  * DumpClasses -
  *    dump the contents of all the classes.
  */
 void
-dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout)
+dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable)
 {
     char query[255];
 #define COPYBUFSIZ	8192
     char copybuf[COPYBUFSIZ];
+    char q[MAXQUERYLEN];
     PGresult *res;
-    int i;
+    int i,j;
+    int actual_atts; /* number of attrs in this a table */
     int ret;
+    int field;
+    int tuple;
     int copydone;
 
     for(i = 0; i < numTables; i++) {
 	char *classname = tblinfo[i].relname;
 
-	/* skip archive names*/
-	if (isArchiveName(classname))
-	    continue;
+        if (!onlytable || (!strcmp(classname,onlytable))) {       
 
-	fprintf(fout, "COPY %s from stdin;\n", classname);
-	sprintf(query, "COPY %s to stdout;\n", classname);
-	res = PQexec(g_conn, query);
-	if (!res || 
-	    PQresultStatus(res) != PGRES_COPY_OUT) {
-	    fprintf(stderr,"dumpClasses(): COPY to stdout failed");
-	    exit_nicely(g_conn);
-	}
-	copydone = 0;
-	while (!copydone) {
-	    ret = PQgetline(res->conn, copybuf, COPYBUFSIZ);
+  	    /* skip archive names*/
+	    if (isArchiveName(classname))
+	        continue;
+
+            if(!dumpData) {
+	        fprintf(fout, "COPY %s from stdin;\n", classname);
+	        sprintf(query, "COPY %s to stdout;\n", classname);
+	        res = PQexec(g_conn, query);
+	        if (!res || 
+	            PQresultStatus(res) != PGRES_COPY_OUT) {
+	            fprintf(stderr,"dumpClasses(): COPY to stdout failed");
+	            exit_nicely(g_conn);
+	        }
+	        copydone = 0;
+	        while (!copydone) {
+	            ret = PQgetline(res->conn, copybuf, COPYBUFSIZ);
 	
-	    if (copybuf[0] == '.' && copybuf[1] =='\0') {
-		copydone = true;	/* don't print this... */
-	    } else {
-		fputs(copybuf, stdout);
-		switch (ret) {
-		case EOF:
-		    copydone = true;
-		    /*FALLTHROUGH*/
-		case 0:
-		    fputc('\n', stdout);
-		    break;
-		case 1:
-		    break;
-		}
+	            if (copybuf[0] == '.' && copybuf[1] =='\0') {
+	  	        copydone = true;	/* don't print this... */
+	            } else {
+	    	        fputs(copybuf, stdout);
+		        switch (ret) {
+		        case EOF:
+		            copydone = true;
+		            /*FALLTHROUGH*/
+		        case 0:
+		            fputc('\n', stdout);
+		            break;
+		        case 1:
+		            break;
+	    	        }
+	            }
+	        }
+	        fprintf(fout, ".\n");
+	        PQclear(res);
+	        PQendcopy(res->conn);
+            } else {
+	        sprintf(query, "select * from %s;\n", classname);
+	        res = PQexec(g_conn, query);
+	        if (!res ||
+		    PQresultStatus(res) != PGRES_TUPLES_OK) {
+		    fprintf(stderr,"dumpClasses(): command failed");
+		    exit_nicely(g_conn);
+	        }
+	        tuple=0;
+	        while(tuple < PQntuples(res)) {
+		    fprintf(fout, "insert into %s ", classname);
+		    if (attrNames) {
+                        actual_atts = 0;
+                        sprintf(q, "(");
+	    		for (j=0;j<tblinfo[i].numatts;j++) {
+			    if (tblinfo[i].inhAttrs[j] == 0) {
+			    	sprintf(q, "%s%s%s",
+				    q,
+				    (actual_atts > 0) ? "," : "",
+				    tblinfo[i].attnames[j]);
+				actual_atts++;
+			    }
+			}
+		        sprintf(q,"%s%s",q, ") ");
+		        fprintf(fout, q);
+		    }
+		    fprintf(fout, "values (");
+		    field=0;
+		    do {
+		        switch(PQftype(res,field)) {
+			    case 21: case 22: case 23: /* int types */
+			    case 810: case 910: /* oldint types */
+			    case 1005: case 1006: case 1007: /* _int types */
+			    case 700: case 701: /* float types */
+			    case 1021: case 1022: /* _float types */
+			        fprintf(fout, "%s", PQgetvalue(res,tuple,field));
+			        break;
+		            default:  
+			        fprintf(fout, "'%s'", PQgetvalue(res,tuple,field));
+			        break;
+		        }
+		        field++;
+		        if(field != PQnfields(res))
+			    fprintf(fout, ",");
+		    } while(field < PQnfields(res));
+		    fprintf(fout, ");\n");
+		    tuple++;
+	        }
+	        PQclear(res);
 	    }
-	}
-	fprintf(fout, ".\n");
-	PQclear(res);
-	PQendcopy(res->conn);
-    }
-    
+        }
+    }        
 }
 
 /*

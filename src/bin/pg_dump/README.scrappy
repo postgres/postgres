@@ -1,0 +1,23 @@
+  Here is what Marc had to say about insert.patch included in this archive....
+
+  In preparation of finally moving all my 1.0 databases over to a 1.01
+  database server, I looked at pg_dump and found that, unless I missed
+  something, it didn't *easily* do what I wanted, which was to dump a database
+  to a file, and then reload it again on another server (short-term)...but,
+  also, there doesn't seem to be any mechanism for dumping the database to a
+  file that can be backed up and quickly reloaded again.
+
+  So, I spent the past several hours modifying pg_dump so that it has an extra
+  switch for dumping the data in valid 'insert' strings, so that you can
+  quickly and easily reload a database.
+
+  So, now the output looks like:
+
+    CREATE TABLE scrap (integer int4, real float4, text text) archive = none;
+    insert into scrap values (1, 1, 'text');
+
+  Now, the hard part was figuring out what types are available, so that the
+  insert string works properly for char vs numberic data fields. As such, the
+  switch statement I'm using in dumpClasses() for this may be missing values
+  for numeric fields (I'm using PQftype() to figure out numeric vs non-numeric
+  fields)

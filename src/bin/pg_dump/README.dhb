@@ -1,0 +1,48 @@
+ 
+This is a modified version of the pg_dump.c program that is distributed with
+pg95 1.01.  Modifications include:
+
+* Applied 'insert string' patch from "Marc G. Fournier" <scrappy@ki.net>
+
+    (see insert.patch & README.scrappy for info on this patch)
+
+* Added '-t table' option
+
+    By specifying '-t table' on the command line you can output only the
+    schema (table & index defs) and data for one table of a database.
+
+    Example:
+
+      pg_dump -t descriptions software
+
+* Added '-a' option
+
+    This is the opposite of the -S option.  By specifying -a you can output
+    only the database data and not the schema.
+
+    Example:
+
+      pg_dump -a zipcodes
+
+* Added '-da' option
+
+    Marc's '-d' option adds the ability to output insert strings,  By using
+    the 'a' sub-parameter you can also place the attribute names in the
+    insert strings.  Basically,  this is useful because ALTER TABLE is
+    broken in pg95 1.01.
+
+    NOTE: This will create some long hairy output files!  Be sure to pipe
+    through compress or gzip before outputing to disk.
+
+    Example:
+
+      pg_dump -da -t oldfile mydatabase | gzip > oldfile.data.gz
+
+Comments:
+
+  -----------------------------------------------------
+  David Bennett, Bennett Software Solutions
+  2608 NW Fawn Drive Blue Springs, MO  64015
+  Phone: 816-228-8788, Fax: 816-228-3204
+  dave@bensoft.com, http://bensoft.com
+  PGP key at ftp://bensoft.com/pub/pgp/daveskey.txt
