@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.75 1999/05/17 00:22:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.76 1999/05/17 00:31:49 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2597,7 +2597,7 @@ LockStmt:	LOCK_P opt_table relation_name IN opt_lock
 					LockStmt *n = makeNode(LockStmt);
 
 					n->relname = $3;
-					n->mode = $4;
+					n->mode = $5;
 					$$ = (Node *)n;
 				}
 		;
