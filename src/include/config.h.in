@@ -237,7 +237,7 @@ extern long random(void);
 /* Set to 1 if you have srandom() */
 #undef HAVE_SRANDOM
 #ifndef HAVE_SRANDOM
-extern void srandom(int seed);
+extern void srandom(unsigned int seed);
 #endif
 
 /* Set to 1 if you have libreadline.a */
