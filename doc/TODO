@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Oct 26 00:43:53 EDT 2003
+Last updated:		Tue Nov 11 23:10:40 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -206,6 +206,12 @@ Commands
   (Christopher) 
 * Add optional textual message to NOTIFY
 * Allow more ISOLATION LEVELS to be accepted, but issue a warning for them
+* Allow CREATE TABLE foo (f1 INT CHECK (f1 > 0) CHECK (f1 < 10)) to work
+  by searching for non-conflicting constraint names, and prefix with table name
+* Use more reliable method for CREATE DATABASE to get a consistent copy of db
+* Have psql \dn show only visible schemas using current_schemas()
+* Have psql '\i ~/<tab><tab>' actually load files it displays from home dir
+* Ignore temporary tables from other session when processing inheritance
 
 
 * ALTER
@@ -395,7 +401,7 @@ Fsync
 Cache
 =====
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
-* Add free-behind capability for large sequential scans (Bruce)
+* Add free-behind capability for large sequential scans (fadvise)
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching
 * Make blind writes go through the file descriptor cache
 * Cache last known per-tuple offsets to speed long tuple access
@@ -516,7 +522,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1161 2003/10/26 04:43:55 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1161 2003/10/26 04:43:55 momjian Exp $
+* Change CVS $Id: TODO,v 1.1161.2.1 2003/11/14 17:54:15 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1161.2.1 2003/11/14 17:54:15 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests

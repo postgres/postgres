@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Oct 29 15:19:43 EST 2003
+   Last updated: Mon Nov 10 17:47:25 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -244,9 +244,9 @@
    
      http://www.PostgreSQL.org
      
-   There is also an IRC channel on EFNet and OpenProjects, channel
-   #PostgreSQL. I use the Unix command irc -c '#PostgreSQL' "$USER"
-   irc.phoenix.net.
+   There is also an IRC channel on EFNet and Freenode, channel
+   #PostgreSQL. You can use the Unix command irc -c '#PostgreSQL' "$USER"
+   irc.phoenix.net. or irc -c '#PostgreSQL' "$USER" irc.freenode.net.
    
    A list of commercial support companies is available at
    http://techdocs.postgresql.org/companies.php.
@@ -349,7 +349,7 @@
           Web page comparing PostgreSQL to MySQL at
           http://openacs.org/philosophy/why-not-mysql.html Also, MySQL is
           is a company that distributes its products via open source, not
-          an open source development community ilke PostgreSQL.
+          an open source development community like PostgreSQL.
           
    Reliability
           We realize that a DBMS must be reliable, or it is worthless. We
