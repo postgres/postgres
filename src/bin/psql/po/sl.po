@@ -1,3 +1,4 @@
+# :encoding=UTF-8:
 # Slovenian message translation for psql.
 # 
 # Aleksander Kmetec <aleksander.kmetec@intera.si>, 2003.
@@ -12,7 +13,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-04 21:35+0200\n"
+"POT-Creation-Date: 2003-10-13 03:11+0200\n"
 "PO-Revision-Date: 2003-10-06 07:00+0200\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
@@ -73,7 +74,7 @@ msgstr "Medpomnilnik poizvedb je bil počiščen."
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Zgodovina je bila zapisana v datoteko \"%s\".\n"
 
-#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:81
+#: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
 #: copy.c:88 copy.c:116 mainloop.c:78 mainloop.c:341 describe.c:51
 msgid "out of memory\n"
 msgstr "zmanjkalo je pomnilnika\n"
@@ -93,7 +94,7 @@ msgstr "Merjenje časa je izključeno."
 
 #: command.c:793 command.c:813 command.c:1011 command.c:1024 command.c:1035
 #: command.c:1606 command.c:1619 command.c:1631 command.c:1644 command.c:1658
-#: command.c:1680 command.c:1710 common.c:130 copy.c:378
+#: command.c:1680 command.c:1710 common.c:135 copy.c:378
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
@@ -111,7 +112,7 @@ msgstr "napaka v razlaganju ukaza pri koncu vrstice\n"
 msgid "Password: "
 msgstr "Geslo: "
 
-#: command.c:1389 common.c:176 common.c:346 common.c:400 common.c:614
+#: command.c:1389 common.c:181 common.c:351 common.c:405 common.c:652
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -250,38 +251,38 @@ msgstr "\\pset: neznana izbira: %s\n"
 msgid "\\!: failed\n"
 msgstr "\\!: spodletelo\n"
 
-#: common.c:74
+#: common.c:79
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: xstrdup: cannot duplicate null pointer (interna napaka)\n"
 
-#: common.c:258
+#: common.c:263
 msgid "connection to server was lost\n"
 msgstr "povezava s strežnikom je bila izgubljena\n"
 
-#: common.c:262
+#: common.c:267
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Povezava s strežnikom je bila izgubljena. Poskušam obnoviti: "
 
-#: common.c:267
+#: common.c:272
 msgid "Failed.\n"
 msgstr "Neuspeh.\n"
 
-#: common.c:274
+#: common.c:279
 msgid "Succeeded.\n"
 msgstr "Uspelo.\n"
 
-#: common.c:376 common.c:582
+#: common.c:381 common.c:620
 msgid "You are currently not connected to a database.\n"
 msgstr "Trenutno niste povezani z nobeno bazo podatkov.\n"
 
-#: common.c:431
+#: common.c:436
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Asinhrono obvestilo \"%s\" prejeto od strežniškega procesa z PID %d.\n"
 
-#: common.c:534
+#: common.c:516
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -289,12 +290,7 @@ msgstr ""
 "Vnesite podatke za kopiranje, zaključene z <newline>.\n"
 "Končajte z backslashem in piko (\\.) v samostojni vrstici."
 
-#: common.c:553
-#, c-format
-msgid "Time: %.2f ms\n"
-msgstr "Čas: %.2f ms\n"
-
-#: common.c:590
+#: common.c:628
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -308,6 +304,11 @@ msgstr ""
 "%s\n"
 "***(pritisnite enter za nadaljevanje, ali vtipkajte x in enter za preklic)"
 "******\n"
+
+#: common.c:679
+#, c-format
+msgid "Time: %.3f ms\n"
+msgstr "Čas: %.3f ms\n"
 
 #: copy.c:110
 msgid "\\copy: arguments required\n"
@@ -2863,4 +2864,3 @@ msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ime_tabele ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ ime_tabele [ (stolpec "
 "[, ...] ) ] ]"
-
