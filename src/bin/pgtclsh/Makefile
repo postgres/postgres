@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.25 2000/03/08 01:58:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.25.2.1 2000/09/23 22:51:19 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -59,10 +59,10 @@ install_tk: pgtksh
 	$(INSTALL) $(INSTL_EXE_OPTS) pgtksh $(BINDIR)/pgtksh
 
 Makefile.tcldefs: mkMakefile.tcldefs.sh
-	/bin/sh mkMakefile.tcldefs.sh
+	/bin/sh ./mkMakefile.tcldefs.sh
 
 Makefile.tkdefs: mkMakefile.tkdefs.sh
-	/bin/sh mkMakefile.tkdefs.sh
+	/bin/sh ./mkMakefile.tkdefs.sh
 
 clean:
 	rm -f *.o Makefile.t*defs pgtclsh pgtksh

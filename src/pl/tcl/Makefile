@@ -4,7 +4,7 @@
 #    Makefile for the pltcl shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.14 2000/05/23 02:12:44 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/pl/tcl/Makefile,v 1.14.2.1 2000/09/23 22:51:18 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ endif
 #
 
 Makefile.tcldefs: mkMakefile.tcldefs.sh
-	/bin/sh mkMakefile.tcldefs.sh
+	/bin/sh ./mkMakefile.tcldefs.sh
 
 #
 # Clean 
