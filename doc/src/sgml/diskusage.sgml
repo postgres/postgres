@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.12 2004/12/01 19:00:27 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.13 2004/12/28 19:08:58 tgl Exp $
 -->
 
 <chapter id="diskusage">
@@ -24,7 +24,10 @@ $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.12 2004/12/01 19:00:27 tgl Ex
    which is used to store values too wide to fit comfortably in the main
    table.  There will be one index on the
    <acronym>TOAST</> table, if present. There may also be indexes associated
-   with the base table.
+   with the base table.  Each table and index is stored in a separate disk
+   file &mdash; possibly more than one file, if the file would exceed one
+   gigabyte.  Naming conventions for these files are described in <xref
+   linkend="file-layout">.
   </para>
 
   <para>
@@ -135,6 +138,13 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
     not wait until the disk is completely full to take action.
    </para>
   </tip>
+
+  <para>
+   If your system supports per-user disk quotas, then the database
+   will naturally be subject to whatever quota is placed on the user
+   the server runs as.  Exceeding the quota will have the same bad
+   effects as running out of space entirely.
+  </para>
  </sect1>
 </chapter>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.44 2004/12/03 17:46:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.45 2004/12/28 19:08:58 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -15,16 +15,14 @@
    The regression tests are a comprehensive set of tests for the SQL
    implementation in <productname>PostgreSQL</productname>.  They test
    standard SQL operations as well as the extended capabilities of
-   <productname>PostgreSQL</productname>.  From
-   <productname>PostgreSQL</productname> 6.1 onward, the regression
-   tests are current for every official release.
+   <productname>PostgreSQL</productname>.
   </para>
 
   <sect1 id="regress-run">
    <title>Running the Tests</title>
 
   <para>
-   The regression test can be run against an already installed and
+   The regression tests can be run against an already installed and
    running server, or using a temporary installation within the build
    tree.  Furthermore, there is a <quote>parallel</quote> and a
    <quote>sequential</quote> mode for running the tests.  The
@@ -51,12 +49,13 @@ gmake check
 <screen>
 <computeroutput>
 ======================
- All 93 tests passed.
+ All 96 tests passed.
 ======================
 </computeroutput>
 </screen>
    or otherwise a note about which tests failed.  See <xref
-   linkend="regress-evaluation"> below for more.
+   linkend="regress-evaluation"> below before assuming that a
+   <quote>failure</> represents a serious problem.
   </para>
 
    <para>
@@ -131,9 +130,13 @@ gmake SHELL=/bin/ksh check
 <screen>
 gmake installcheck
 </screen>
+or for a parallel test
+<screen>
+gmake installcheck-parallel
+</screen>
    The tests will expect to contact the server at the local host and the
-   default port number, unless directed otherwise by <envar>PGHOST</envar> and <envar>PGPORT</envar>
-   environment variables.
+   default port number, unless directed otherwise by <envar>PGHOST</envar> and
+   <envar>PGPORT</envar> environment variables.
   </para>
   </sect1>
 
@@ -323,7 +326,7 @@ exclusion of those that don't.
 diff results/random.out expected/random.out
 </programlisting>
      should produce only one or a few lines of differences.  You need
-     not worry unless the random test repeatedly fails.
+     not worry unless the random test fails repeatedly.
     </para>
    </sect2>
   </sect1>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.53 2004/12/13 18:05:07 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.54 2004/12/28 19:08:58 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -7,7 +7,7 @@ $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.53 2004/12/13 18:05:07 petere Ex
  <indexterm zone="backup"><primary>backup</></>
 
  <para>
-  As everything that contains valuable data, <productname>PostgreSQL</>
+  As with everything that contains valuable data, <productname>PostgreSQL</>
   databases should be backed up regularly. While the procedure is
   essentially simple, it is important to have a basic understanding of
   the underlying techniques and assumptions.
@@ -46,9 +46,9 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
    client application (albeit a particularly clever one). This means
    that you can do this backup procedure from any remote host that has
    access to the database. But remember that <application>pg_dump</>
-   does not operate with special permissions. In particular, you must
+   does not operate with special permissions. In particular, it must
    have read access to all tables that you want to back up, so in
-   practice you almost always have to be a database superuser.
+   practice you almost always have to run it as a database superuser.
   </para>
 
   <para>
@@ -111,26 +111,25 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     command, you must create it yourself from <literal>template0</> before executing
     <application>psql</> (e.g., with <literal>createdb -T template0
     <replaceable class="parameter">dbname</></literal>).
-    <application>psql</> supports similar options to <application>pg_dump</> 
+    <application>psql</> supports options similar to <application>pg_dump</> 
     for controlling the database server location and the user name. See
-    its reference page for more information.
+    <xref linkend="app-psql">'s reference page for more information.
    </para>
 
    <para>
-    If the objects in the original database were owned by different
-    users, then the dump will instruct <application>psql</> to connect
-    as each affected user in turn and then create the relevant
-    objects. This way the original ownership is preserved. This also
-    means, however, that all these users must already exist, and
-    furthermore that you must be allowed to connect as each of them.
-    It might therefore be necessary to temporarily relax the client
-    authentication settings.
+    Not only must the target database already exist before starting to
+    run the restore, but so must all the users who own objects in the
+    dumped database or were granted permissions on the objects.  If they
+    do not, then the restore will fail to recreate the objects with the
+    original ownership and/or permissions.  (Sometimes this is what you want,
+    but usually it is not.)
    </para>
 
    <para>
     Once restored, it is wise to run <xref linkend="sql-analyze"
     endterm="sql-analyze-title"> on each database so the optimizer has
-    useful statistics. You can also run <command>vacuumdb -a -z</> to
+    useful statistics. An easy way to do this is to run
+    <command>vacuumdb -a -z</> to
     <command>VACUUM ANALYZE</> all databases; this is equivalent to
     running <command>VACUUM ANALYZE</command> manually.
    </para>
@@ -189,7 +188,7 @@ psql template1 &lt; <replaceable class="parameter">infile</replaceable>
   </sect2>
 
   <sect2 id="backup-dump-large">
-   <title>Large Databases</title>
+   <title>Handling large databases</title>
 
    <para>
     Since <productname>PostgreSQL</productname> allows tables larger
@@ -249,17 +248,19 @@ cat <replaceable class="parameter">filename</replaceable>* | psql <replaceable c
    <formalpara>
     <title>Use the custom dump format.</title>
     <para>
-     If <productname>PostgreSQL</productname> was built on a system with the <application>zlib</> compression library
-     installed, the custom dump format will compress data as it writes it
-     to the output file. For large databases, this will produce similar dump
-     sizes to using <command>gzip</command>, but has the added advantage that the tables can be
-     restored selectively. The following command dumps a database using the
-     custom dump format:
+     If <productname>PostgreSQL</productname> was built on a system with the
+     <application>zlib</> compression library installed, the custom dump
+     format will compress data as it writes it to the output file. This will
+     produce dump file sizes similar to using <command>gzip</command>, but it
+     has the added advantage that tables can be restored selectively. The
+     following command dumps a database using the custom dump format:
 
 <programlisting>
 pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable class="parameter">filename</replaceable>
 </programlisting>
 
+     A custom-format dump is not a script for <application>psql</>, but
+     instead must be restored with <application>pg_restore</>.
      See the <xref linkend="app-pgdump"> and <xref
      linkend="app-pgrestore"> reference pages for details.
     </para>
@@ -276,7 +277,8 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> > <replaceable c
     object</primary><secondary>backup</secondary></indexterm> To dump
     large objects you must use either the custom or the tar output
     format, and use the <option>-b</> option in
-    <application>pg_dump</>. See the reference pages for details.  The
+    <application>pg_dump</>. See the <xref linkend="app-pgdump"> reference
+    page for details.  The
     directory <filename>contrib/pg_dumplo</> of the
     <productname>PostgreSQL</> source tree also contains a program
     that can dump large objects.
@@ -366,7 +368,9 @@ tar -cf backup.tar /usr/local/pgsql/data
    data files and WAL log on different disks) there may not be any way
    to obtain exactly-simultaneous frozen snapshots of all the volumes.
    Read your file system documentation very carefully before trusting
-   to the consistent-snapshot technique in such situations.
+   to the consistent-snapshot technique in such situations.  The safest
+   approach is to shut down the database server for long enough to
+   establish all the frozen snapshots.
   </para>
 
   <para>
@@ -616,9 +620,12 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
     modifications made to the data in your <productname>PostgreSQL</> database
     it will not restore changes made to configuration files (that is,
     <filename>postgresql.conf</>, <filename>pg_hba.conf</> and
-    <filename>pg_ident.conf</>) after the initial base backup.
+    <filename>pg_ident.conf</>), since those are edited manually rather
+    than through SQL operations.
     You may wish to keep the configuration files in a location that will
-    be backed up by your regular file system backup procedures.
+    be backed up by your regular file system backup procedures.  See
+    <xref linkend="runtime-config-file-locations"> for how to relocate the
+    configuration files.
    </para>
   </sect2>
 
@@ -930,8 +937,8 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
         in the command. 
        </para>
        <para>
-        It is important for the command to return a zero exit status only
-        if it succeeds.  The command <emphasis>will</> be asked for file
+        It is important for the command to return a zero exit status if and
+        only if it succeeds.  The command <emphasis>will</> be asked for file
         names that are not present in the archive; it must return nonzero
         when so asked.  Examples:
 <programlisting>
@@ -1083,7 +1090,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     that was current when the base backup was taken.  If you want to recover
     into some child timeline (that is, you want to return to some state that
     was itself generated after a recovery attempt), you need to specify the
-    target timeline in <filename>recovery.conf</>.  You cannot recover into
+    target timeline ID in <filename>recovery.conf</>.  You cannot recover into
     timelines that branched off earlier than the base backup.
    </para>
   </sect2>
@@ -1132,6 +1139,13 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   </indexterm>
 
   <para>
+   This section discusses how to migrate your database data from one
+   <productname>PostgreSQL</> release to a newer one.
+   The software installation procedure <foreignphrase>per se</> is not the
+   subject of this section; those details are in <xref linkend="installation">.
+  </para>
+
+  <para>
    As a general rule, the internal data storage format is subject to
    change between major releases of <productname>PostgreSQL</> (where
    the number after the first dot changes). This does not apply to
@@ -1140,17 +1154,21 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    storage formats. For example, releases 7.0.1, 7.1.2, and 7.2 are
    not compatible, whereas 7.1.1 and 7.1.2 are. When you update
    between compatible versions, you can simply replace the executables
-   and reuse the data area on disk. Otherwise you need to <quote>back
-   up</> your data and <quote>restore</> it on the new server, using
-   <application>pg_dump</>. There are checks in place that prevent you
-   from using a data area with an incompatible version of
-   <productname>PostgreSQL</productname>, so no harm can be done by
-   confusing these things. It is recommended that you use the
-   <application>pg_dump</> program from the newer version of
-   <productname>PostgreSQL</> to take advantage of any enhancements in
-   <application>pg_dump</> that may have been made. The precise
-   installation procedure is not the subject of this section; those
-   details are in <xref linkend="installation">.
+   and reuse the data directory on disk. Otherwise you need to back
+   up your data and restore it on the new server.  This has to be done
+   using <application>pg_dump</>; file system level backup methods
+   obviously won't work. There are checks in place that prevent you
+   from using a data directory with an incompatible version of
+   <productname>PostgreSQL</productname>, so no great harm can be done by
+   trying to start the wrong server version on a data directory.
+  </para>
+
+  <para>
+   It is recommended that you use the <application>pg_dump</> and
+   <application>pg_dumpall</> programs from the newer version of
+   <productname>PostgreSQL</>, to take advantage of any enhancements
+   that may have been made in these programs.  Current releases of the
+   dump programs can read data from any server version back to 7.0.
   </para>
 
   <para>
@@ -1165,11 +1183,17 @@ pg_dumpall -p 5432 | psql -d template1 -p 6543
    to transfer your data.  Or use an intermediate file if you want.
    Then you can shut down the old server and start the new server at
    the port the old one was running at. You should make sure that the
-   database is not updated after you run <application>pg_dumpall</>,
+   old database is not updated after you run <application>pg_dumpall</>,
    otherwise you will obviously lose that data. See <xref
    linkend="client-authentication"> for information on how to prohibit
-   access. In practice you probably want to test your client
-   applications on the new setup before switching over.
+   access.
+  </para>
+
+  <para>
+   In practice you probably want to test your client
+   applications on the new setup before switching over completely.
+   This is another reason for setting up concurrent installations
+   of old and new versions.
   </para>
 
   <para>
@@ -1194,22 +1218,16 @@ psql template1 < backup
    you of strategic places to perform these steps.
   </para>
 
-  <para>
-   You will always need a SQL dump (<application>pg_dump</> dump) for
-   migrating to a new release.  File-system-level backups (including
-   on-line backups) will not work, for the same reason that you can't
-   just do the update in-place: the file formats won't necessarily be
-   compatible across major releases.
-  </para>
-
   <note>
    <para>
     When you <quote>move the old installation out of the way</quote>
-    it is no longer perfectly usable. Some parts of the installation
-    contain information about where the other parts are located. This
-    is usually not a big problem but if you plan on using two
+    it may no longer be perfectly usable. Some of the executable programs
+    contain absolute paths to various installed programs and data files.
+    This is usually not a big problem but if you plan on using two
     installations in parallel for a while you should assign them
-    different installation directories at build time.
+    different installation directories at build time.  (This problem
+    is rectified in <productname>PostgreSQL</> 8.0 and later, but you
+    need to be wary of moving older installations.)
    </para>
   </note>
  </sect1>

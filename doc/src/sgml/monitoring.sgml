@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.26 2004/03/26 03:18:28 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.27 2004/12/28 19:08:58 tgl Exp $
 -->
 
 <chapter id="monitoring">
@@ -26,7 +26,8 @@ $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.26 2004/03/26 03:18:28 neilc
    analyzing performance.  Most of this chapter is devoted to describing
    <productname>PostgreSQL</productname>'s statistics collector,
    but one should not neglect regular Unix monitoring programs such as
-   <command>ps</> and <command>top</>.  Also, once one has identified a
+   <command>ps</>, <command>top</>, <command>iostat</>, and <command>vmstat</>.
+   Also, once one has identified a
    poorly-performing query, further investigation may be needed using
    <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"
    endterm="sql-explain-title"> command.
@@ -172,25 +173,28 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   <title>Viewing Collected Statistics</Title>
 
   <para>
-   Several predefined views are available to show the results of
-   statistics collection, listed in <xref
-   linkend="monitoring-stats-views-table">.  Alternatively, one can
+   Several predefined views, listed in <xref
+   linkend="monitoring-stats-views-table">, are available to show the results
+   of statistics collection.  Alternatively, one can
    build custom views using the underlying statistics functions.
   </para>
 
   <para>
    When using the statistics to monitor current activity, it is important
    to realize that the information does not update instantaneously.
-   Each individual server process transmits new access counts to the collector
-   just before waiting for another client command; so a query still in
+   Each individual server process transmits new block and row access counts to
+   the collector just before going idle; so a query or transaction still in
    progress does not affect the displayed totals.  Also, the collector itself
-   emits new totals at most once per <varname>pgstat_stat_interval</varname> milliseconds
-   (500 by default).  So the displayed totals lag behind actual activity.
+   emits a new report at most once per <varname>pgstat_stat_interval</varname>
+   milliseconds (500 by default).  So the displayed information lags behind
+   actual activity.  Current-query information is reported to the collector
+   immediately, but is still subject to the
+   <varname>pgstat_stat_interval</varname> delay before it becomes visible.
   </para>
 
   <para>
    Another important point is that when a server process is asked to display
-   any of these statistics, it first fetches the most recent totals emitted by
+   any of these statistics, it first fetches the most recent report emitted by
    the collector process and then continues to use this snapshot for all
    statistical views and functions until the end of its current transaction.
    So the statistics will appear not to change as long as you continue the
@@ -614,7 +618,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
    database administrator to view information about the outstanding
    locks in the lock manager. For example, this capability can be used
    to:
-	
+
    <itemizedlist>
     <listitem>
      <para>
