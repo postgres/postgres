@@ -1,4 +1,4 @@
-postgresql 6.5 multi-byte (MB) support README	       1999/3/23 作成
+postgresql 6.5.1 multi-byte (MB) support README	       1999/7/11 作成
 
 							石井達夫
 						t-ishii@sra.co.jp
@@ -144,7 +144,8 @@ initdb/createdb/create database におけるエンコーディングの指定について
 
   環境変数 PGCLIENTENCODING が設定されている場合はその値が優先され、バッ
   クエンド側と異なるエンコーディングが使用できます。設定可能なエンコー
-  ディングは、上記に加え、SJIS (シフトJIS)と BiG5 が指定できます。
+  ディングは、上記に加え、SJIS (シフトJIS)、BiG5 それに WIN1250
+  (Windows用のチェコ語)が指定できます。
 
 	ちなみに、SJIS は JISX0201 の 1バイトカナ、いわゆる「半角カタ
 	カナ」もサポートしています(決して「半角カタカナ」の使用をお勧
@@ -218,7 +219,74 @@ initdb/createdb/create database におけるエンコーディングの指定について
     また、SJIS 対応については、市川@お茶大さんのパッチを参考にさせてい
     ただきました。
 
+参考：
+
+  Pavel Behal氏により提供されたWIN1250サポートですが、Windows環境での
+  利用の仕方について参考になるドキュメントが付属しているので、ここに添
+  付しておきます。
+
+  -------------------------------------------------------------------
+Version: 0.91 for PgSQL 6.5
+Author: Pavel Behal
+Revised by: Tatsuo Ishii
+Email: behal@opf.slu.cz
+Licence: The Same as PostgreSQL
+
+Sorry for my Eglish and C code, I'm not native :-)
+
+!!!!!!!!!!!!!!!!!!!!!!!!! NO WARRANTY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Instalation:
+------------
+1) Change three affected files in source directories 
+    (I don't have time to create proper patch diffs, I don't know how)
+	[PostgreSQL 6.5.1ではこのステップは必要ありません。-- 石井]
+2) Compile with enabled locale and multibyte set to LATIN2
+3) Setup properly your instalation, do not forget to create locale
+   variables in your profile (environment). Ex. (may not be exactly true):
+	LC_ALL=cs_CZ.ISO8859-2
+	LC_COLLATE=cs_CZ.ISO8859-2
+	LC_CTYPE=cs_CZ.ISO8859-2
+	LC_MONETARY=cs_CZ.ISO8859-2
+	LC_NUMERIC=cs_CZ.ISO8859-2
+	LC_TIME=cs_CZ.ISO8859-2
+4) You have to start the postmaster with locales set!
+5) Try it with Czech language, it have to sort
+5) Install ODBC driver for PgSQL into your M$ Windows
+6) Setup properly your data source. Include this line in your ODBC
+   configuration dialog in field "Connect Settings:" :
+	SET CLIENT_ENCODING = 'WIN1250';
+7) Now try it again, but in Windows with ODBC.
+
+Description:
+------------
+- Depends on proper system locales, tested with RH6.0 and Slackware 3.6,
+  with cs_CZ.iso8859-2 loacle
+- Never try to set-up server multibyte database encoding to WIN1250,
+  always use LATIN2 instead. There is not WIN1250 locale in Unix
+- WIN1250 encoding is useable only for M$W ODBC clients. The characters are
+  on thy fly re-coded, to be displayed and stored back properly
+ 
+Important:
+----------
+- it reorders your sort order depending on your LC_... setting, so don't be
+  confused with regression tests, they don't use locale
+- "ch" is corectly sorted only in some newer locales (Ex. RH6.0)
+- you have to insert money as '162,50' (with comma in aphostrophes!)
+- not tested properly
+  -------------------------------------------------------------------
+
+
 改定履歴：
+
+  1999/7/11 WIN1250(Windows用のチェコ語)サポートを追加しました。
+	* WIN1250 がフロントエンド側のエンコーディングとして利用できるよ
+	  うになりました。この場合、バックエンド側のエンコーディングは
+	  LATIN2 または MULE_INTERNAL とします。
+	  (contributed by Pavel Behal)
+	* backend/utils/mb/conv.cにおける型の不整合を修正しました。
+	  (contributed by Tomoaki Nishiyama)
+	* これらは6.5.1に反映されます。
 
   1999/3/23 キリル文字サポート追加他(6.5 に反映済)
 	* エンコーディングとして KOI8(KOI8-R), WIN(CP1251), ALT(CP866) を
