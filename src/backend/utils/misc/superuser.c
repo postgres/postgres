@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.24 2002/08/09 16:45:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/superuser.c,v 1.25 2002/12/05 04:04:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ superuser(void)
 
 
 bool
-superuser_arg(Oid userid)
+superuser_arg(AclId userid)
 {
 	bool		result = false;
 	HeapTuple	utup;
@@ -49,7 +49,7 @@ superuser_arg(Oid userid)
 		return true;
 
 	utup = SearchSysCache(SHADOWSYSID,
-						  ObjectIdGetDatum(userid),
+						  Int32GetDatum(userid),
 						  0, 0, 0);
 	if (HeapTupleIsValid(utup))
 	{
@@ -67,7 +67,7 @@ superuser_arg(Oid userid)
 bool
 is_dbadmin(Oid dbid)
 {
-	Oid			dba;
+	AclId		dba;
 
 	dba = get_database_owner(dbid);
 

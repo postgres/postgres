@@ -5,11 +5,13 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.h,v 1.10 2001/11/05 17:46:31 momjian Exp $
+ *	$Id: pgstat.h,v 1.11 2002/12/05 04:04:51 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
 #define PGSTAT_H
+
+#include "miscadmin.h"
 
 /* ----------
  * Paths for the statistics files. The %s is replaced with the
@@ -170,7 +172,7 @@ typedef struct PgStat_MsgHdr
 	int			m_backendid;
 	int			m_procpid;
 	Oid			m_databaseid;
-	Oid			m_userid;
+	AclId		m_userid;
 } PgStat_MsgHdr;
 
 /* ----------

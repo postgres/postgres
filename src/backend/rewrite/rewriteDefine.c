@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.80 2002/09/11 14:48:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.81 2002/12/05 04:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
 #include "utils/syscache.h"
 
 
-static void setRuleCheckAsUser(Query *qry, Oid userid);
+static void setRuleCheckAsUser(Query *qry, AclId userid);
 static bool setRuleCheckAsUser_walker(Node *node, Oid *context);
 
 
@@ -445,7 +445,7 @@ DefineQueryRewrite(RuleStmt *stmt)
  * them always.
  */
 static void
-setRuleCheckAsUser(Query *qry, Oid userid)
+setRuleCheckAsUser(Query *qry, AclId userid)
 {
 	List	   *l;
 

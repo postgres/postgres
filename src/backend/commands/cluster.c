@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.98 2002/12/04 05:18:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.99 2002/12/05 04:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ static void recreate_indexattr(Oid OIDOldHeap, List *indexes);
 static void swap_relfilenodes(Oid r1, Oid r2);
 static void cluster_rel(relToCluster *rv);
 static bool check_cluster_ownership(Oid relOid);
-static List *get_tables_to_cluster(Oid owner);
+static List *get_tables_to_cluster(AclId owner);
 
 static MemoryContext cluster_context = NULL;
 

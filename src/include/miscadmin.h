@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.112 2002/12/04 05:18:34 momjian Exp $
+ * $Id: miscadmin.h,v 1.113 2002/12/05 04:04:50 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -200,21 +200,20 @@ extern char *ExpandDatabasePath(const char *path);
 extern void SetDatabaseName(const char *name);
 extern void SetDatabasePath(const char *path);
 
-extern char *GetUserNameFromId(Oid userid);
-
 /*
  * AclId		system identifier for the user, group, etc.
- *				XXX Perhaps replace this type by OID?
  */
-typedef uint32 AclId;
+typedef int32 AclId;
+
+extern char *GetUserNameFromId(AclId userid);
 
 extern AclId GetUserId(void);
-extern void SetUserId(Oid userid);
-extern Oid	GetSessionUserId(void);
-extern void SetSessionUserId(Oid userid);
+extern void SetUserId(AclId userid);
+extern AclId GetSessionUserId(void);
+extern void SetSessionUserId(AclId userid);
 extern void InitializeSessionUserId(const char *username);
 extern void InitializeSessionUserIdStandalone(void);
-extern void SetSessionAuthorization(Oid userid);
+extern void SetSessionAuthorization(AclId userid);
 
 extern void SetDataDir(const char *dir);
 
@@ -229,7 +228,7 @@ extern char *convertstr(unsigned char *buff, int len, int dest);
 
 /* in utils/misc/superuser.c */
 extern bool superuser(void);	/* current user is superuser */
-extern bool superuser_arg(Oid userid);	/* given user is superuser */
+extern bool superuser_arg(AclId userid);	/* given user is superuser */
 extern bool is_dbadmin(Oid dbid);		/* current user is owner of
 										 * database */
 

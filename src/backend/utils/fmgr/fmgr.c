@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.66 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.67 2002/12/05 04:04:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -633,7 +633,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 struct fmgr_security_definer_cache
 {
 	FmgrInfo	flinfo;
-	Oid			userid;
+	AclId		userid;
 };
 
 /*
@@ -650,7 +650,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	Datum		result;
 	FmgrInfo   *save_flinfo;
 	struct fmgr_security_definer_cache *fcache;
-	Oid			save_userid;
+	AclId		save_userid;
 	HeapTuple	tuple;
 
 	if (!fcinfo->flinfo->fn_extra)

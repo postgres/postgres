@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.188 2002/11/29 19:03:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.189 2002/12/05 04:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,7 +346,7 @@ static void
 ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation)
 {
 	Oid			relOid;
-	Oid			userid;
+	AclId		userid;
 	AclResult	aclcheck_result;
 
 	/*

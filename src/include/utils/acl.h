@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.48 2002/12/04 05:18:38 momjian Exp $
+ * $Id: acl.h,v 1.49 2002/12/05 04:04:51 momjian Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -190,11 +190,11 @@ extern void ExecuteGrantStmt(GrantStmt *stmt);
 extern AclId get_grosysid(char *groname);
 extern char *get_groname(AclId grosysid);
 
-extern AclResult pg_class_aclcheck(Oid table_oid, Oid userid, AclMode mode);
-extern AclResult pg_database_aclcheck(Oid db_oid, Oid userid, AclMode mode);
-extern AclResult pg_proc_aclcheck(Oid proc_oid, Oid userid, AclMode mode);
-extern AclResult pg_language_aclcheck(Oid lang_oid, Oid userid, AclMode mode);
-extern AclResult pg_namespace_aclcheck(Oid nsp_oid, Oid userid, AclMode mode);
+extern AclResult pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode);
+extern AclResult pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode);
+extern AclResult pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode);
+extern AclResult pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode);
+extern AclResult pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode);
 
 extern void aclcheck_error(AclResult errcode, const char *objectname);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.6 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/schemacmds.c,v 1.7 2002/12/05 04:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	List	   *parsetree_list;
 	List	   *parsetree_item;
 	const char *owner_name;
-	Oid			owner_userid;
-	Oid			saved_userid;
+	AclId		owner_userid;
+	AclId		saved_userid;
 	AclResult	aclresult;
 
 	saved_userid = GetUserId();

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.114 2002/12/02 05:20:47 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.115 2002/12/05 04:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -984,7 +984,7 @@ DropUser(DropUserStmt *stmt)
 		TupleDesc	pg_dsc;
 		ScanKeyData scankey;
 		HeapScanDesc scan;
-		int32		usesysid;
+		AclId		usesysid;
 
 		tuple = SearchSysCache(SHADOWNAME,
 							   PointerGetDatum(user),

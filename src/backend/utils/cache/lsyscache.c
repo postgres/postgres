@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.87 2002/12/01 21:05:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.88 2002/12/05 04:04:44 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+#include "miscadmin.h"
 
 #include "access/tupmacs.h"
 #include "catalog/pg_amop.h"
@@ -1529,7 +1530,7 @@ get_namespace_name(Oid nspid)
  * someday.  It'd be reasonable to return zero on failure if we were
  * using Oid ...
  */
-int32
+AclId
 get_usesysid(const char *username)
 {
 	int32		result;

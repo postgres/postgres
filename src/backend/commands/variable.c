@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.71 2002/09/04 20:31:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.72 2002/12/05 04:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -526,7 +526,7 @@ show_server_encoding(void)
 const char *
 assign_session_authorization(const char *value, bool doit, bool interactive)
 {
-	Oid			usesysid;
+	AclId		usesysid;
 	char	   *endptr;
 	char	   *result;
 

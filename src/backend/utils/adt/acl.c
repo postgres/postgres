@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.83 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.84 2002/12/05 04:04:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -703,7 +703,7 @@ has_table_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *tablename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	Oid			tableoid;
 	AclMode		mode;
 	AclResult	aclresult;
@@ -751,7 +751,7 @@ has_table_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			tableoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	AclMode		mode;
 	AclResult	aclresult;
 
@@ -913,7 +913,7 @@ has_database_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *databasename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	Oid			databaseoid;
 	AclMode		mode;
 	AclResult	aclresult;
@@ -961,7 +961,7 @@ has_database_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			databaseoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	AclMode		mode;
 	AclResult	aclresult;
 
@@ -1116,7 +1116,7 @@ has_function_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *functionname = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	Oid			functionoid;
 	AclMode		mode;
 	AclResult	aclresult;
@@ -1164,7 +1164,7 @@ has_function_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			functionoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	AclMode		mode;
 	AclResult	aclresult;
 
@@ -1315,7 +1315,7 @@ has_language_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *languagename = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	Oid			languageoid;
 	AclMode		mode;
 	AclResult	aclresult;
@@ -1363,7 +1363,7 @@ has_language_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			languageoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	AclMode		mode;
 	AclResult	aclresult;
 
@@ -1514,7 +1514,7 @@ has_schema_privilege_name(PG_FUNCTION_ARGS)
 {
 	text	   *schemaname = PG_GETARG_TEXT_P(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	Oid			schemaoid;
 	AclMode		mode;
 	AclResult	aclresult;
@@ -1562,7 +1562,7 @@ has_schema_privilege_id(PG_FUNCTION_ARGS)
 {
 	Oid			schemaoid = PG_GETARG_OID(0);
 	text	   *priv_type_text = PG_GETARG_TEXT_P(1);
-	int32		usesysid;
+	AclId		usesysid;
 	AclMode		mode;
 	AclResult	aclresult;
 

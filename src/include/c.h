@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.132 2002/11/13 00:37:06 momjian Exp $
+ * $Id: c.h,v 1.133 2002/12/05 04:04:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,6 +461,8 @@ typedef NameData *Name;
 		(((long)(pointer) % (sizeof (type))) == 0)
 
 #define OidIsValid(objectId)  ((bool) ((objectId) != InvalidOid))
+
+#define AclIdIsValid(aclId)  ((bool) ((aclId) != 0))
 
 #define RegProcedureIsValid(p)	OidIsValid(p)
 

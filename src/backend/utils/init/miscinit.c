@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.97 2002/11/08 20:23:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.98 2002/12/05 04:04:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,27 +484,27 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
  * restore the current user id if you need to change it.
  * ----------------------------------------------------------------
  */
-static Oid	AuthenticatedUserId = InvalidOid;
-static Oid	SessionUserId = InvalidOid;
-static Oid	CurrentUserId = InvalidOid;
+static AclId	AuthenticatedUserId = 0;
+static AclId	SessionUserId = 0;
+static AclId	CurrentUserId = 0;
 
 static bool AuthenticatedUserIsSuperuser = false;
 
 /*
  * This function is relevant for all privilege checks.
  */
-Oid
+AclId
 GetUserId(void)
 {
-	AssertState(OidIsValid(CurrentUserId));
+	AssertState(AclIdIsValid(CurrentUserId));
 	return CurrentUserId;
 }
 
 
 void
-SetUserId(Oid newid)
+SetUserId(AclId newid)
 {
-	AssertArg(OidIsValid(newid));
+	AssertArg(AclIdIsValid(newid));
 	CurrentUserId = newid;
 }
 
@@ -512,21 +512,21 @@ SetUserId(Oid newid)
 /*
  * This value is only relevant for informational purposes.
  */
-Oid
+AclId
 GetSessionUserId(void)
 {
-	AssertState(OidIsValid(SessionUserId));
+	AssertState(AclIdIsValid(SessionUserId));
 	return SessionUserId;
 }
 
 
 void
-SetSessionUserId(Oid newid)
+SetSessionUserId(AclId newid)
 {
-	AssertArg(OidIsValid(newid));
+	AssertArg(AclIdIsValid(newid));
 	SessionUserId = newid;
 	/* Current user defaults to session user. */
-	if (!OidIsValid(CurrentUserId))
+	if (!AclIdIsValid(CurrentUserId))
 		CurrentUserId = newid;
 }
 
@@ -537,7 +537,7 @@ InitializeSessionUserId(const char *username)
 	HeapTuple	userTup;
 	Datum		datum;
 	bool		isnull;
-	Oid			usesysid;
+	AclId		usesysid;
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -605,10 +605,10 @@ InitializeSessionUserIdStandalone(void)
  * Only a superuser may set auth ID to something other than himself.
  */
 void
-SetSessionAuthorization(Oid userid)
+SetSessionAuthorization(AclId userid)
 {
 	/* Must have authenticated already, else can't make permission check */
-	AssertState(OidIsValid(AuthenticatedUserId));
+	AssertState(AclIdIsValid(AuthenticatedUserId));
 
 	if (userid != AuthenticatedUserId &&
 		!AuthenticatedUserIsSuperuser)
@@ -623,7 +623,7 @@ SetSessionAuthorization(Oid userid)
  * Get user name from user id
  */
 char *
-GetUserNameFromId(Oid userid)
+GetUserNameFromId(AclId userid)
 {
 	HeapTuple	tuple;
 	char	   *result;
@@ -632,7 +632,7 @@ GetUserNameFromId(Oid userid)
 						   ObjectIdGetDatum(userid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "invalid user id %u", (unsigned) userid);
+		elog(ERROR, "invalid user id %d", userid);
 
 	result = pstrdup(NameStr(((Form_pg_shadow) GETSTRUCT(tuple))->usename));
 
