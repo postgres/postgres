@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.154 2000/07/04 14:25:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.155 2000/07/04 16:57:18 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3599,20 +3599,20 @@ setMaxOid(Archive *fout)
 	char		sql[1024];
 	int		pos;
 
-	res = PQexec(g_conn, "CREATE TABLE pgdump_oid (dummy int4)");
+	res = PQexec(g_conn, "CREATE TEMP TABLE pg_dump_oid (dummy int4)");
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Can not create pgdump_oid table.  "
+		fprintf(stderr, "Can not create pg_dump_oid table.  "
 					"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
-	res = PQexec(g_conn, "INSERT INTO pgdump_oid VALUES (0)");
+	res = PQexec(g_conn, "INSERT INTO pg_dump_oid VALUES (0)");
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Can not insert into pgdump_oid table.  "
+		fprintf(stderr, "Can not insert into pg_dump_oid table.  "
 					"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
@@ -3623,11 +3623,11 @@ setMaxOid(Archive *fout)
 		exit_nicely(g_conn);
 	}
 	PQclear(res);
-	res = PQexec(g_conn, "DROP TABLE pgdump_oid;");
+	res = PQexec(g_conn, "DROP TABLE pg_dump_oid;");
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, "Can not drop pgdump_oid table.  "
+		fprintf(stderr, "Can not drop pg_dump_oid table.  "
 							"Explanation from backend: '%s'.\n", PQerrorMessage(g_conn));
 		exit_nicely(g_conn);
 	}
@@ -3635,11 +3635,11 @@ setMaxOid(Archive *fout)
 	if (g_verbose)
 		fprintf(stderr, "%s maximum system oid is %u %s\n",
 				g_comment_start, max_oid, g_comment_end);
-	pos = snprintf(sql, 1024, "CREATE TABLE pgdump_oid (dummy int4);\n");
-	pos = pos + snprintf(sql+pos, 1024-pos, "COPY pgdump_oid WITH OIDS FROM stdin;\n");
+	pos = snprintf(sql, 1024, "CREATE TEMP TABLE pg_dump_oid (dummy int4);\n");
+	pos = pos + snprintf(sql+pos, 1024-pos, "COPY pg_dump_oid WITH OIDS FROM stdin;\n");
 	pos = pos + snprintf(sql+pos, 1024-pos, "%-d\t0\n", max_oid);
 	pos = pos + snprintf(sql+pos, 1024-pos, "\\.\n");
-	pos = pos + snprintf(sql+pos, 1024-pos, "DROP TABLE pgdump_oid;\n");
+	pos = pos + snprintf(sql+pos, 1024-pos, "DROP TABLE pg_dump_oid;\n");
 
 	ArchiveEntry(fout, "0", "Max OID", "<Init>", NULL, sql, "","", NULL, NULL);
 }
