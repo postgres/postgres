@@ -341,7 +341,7 @@ dectoasc(decimal * np, char *cp, int len, int right)
 	if (right >= 0)
 		str = PGTYPESnumeric_to_asc(nres, right);
 	else
-		str = PGTYPESnumeric_to_asc(nres, 0);
+		str = PGTYPESnumeric_to_asc(nres, -1);
 
 	PGTYPESnumeric_free(nres);
 	if (!str)

@@ -1669,6 +1669,12 @@ Fri Oct  3 12:04:57 CEST 2003
 Sun Oct  5 13:08:47 CEST 2003
 
 	- Fixed bug in day of week calculation.
+	
+Mon Oct  6 08:41:45 CEST 2003
+
+	- Fixed constant listing in execute using clause.
+	- Fixed typo in ecpg for Informix dec_t type.
+	- Fixed precision handling in Informix compat funxtions.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
