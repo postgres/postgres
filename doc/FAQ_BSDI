@@ -21,12 +21,13 @@ to your /etc/login.conf file.
 2a)  By default, only 4MB of shared memory is supported by BSDI. Keep in
 mind that shared memory is not pageable.  It is locked in RAM.
 
-To increase the number of buffers supported by the postmaseter, increase
-SHMMAXPGS by 1024 for every additional 4MB of shared memory:
+To increase the number of buffers supported by the postmaseter, add the
+following to your kernel config file.  A SHMMAXPGS value of 1024 
+represents 4MB of shared memory.  Increase it accordingly:
 
-/sys/sys/shm.h:69:#define       SHMMAXPGS       1024    /* max hardware pages...
+options "SHMMAXPGS=4096"
 
-The default setting of 1024 is for a maximum of 4MB of shared memory.
+The default is 1024 which allows a maximum of 4MB of shared memory.
 
 For those running 4.1 or later, just recompile the kernel and reboot. 
 For those running earlier releases, see step 2b.
@@ -42,7 +43,7 @@ the current kernel.  This is computed dynamically at bootup.
 Next, change SYSPTSIZE to a hard-coded value.  Use the bpatch value,
 plus add 1 for every additional 4MB of shared memory you desire.
 
-/sys/i386/i386/i386_param.c:28:#define  SYSPTSIZE 0        /* dynamically...
+options "SYSPTSIZE=13"
 
 sysptsize can not be changed by sysctl on the fly.
 
