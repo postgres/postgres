@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.28 2000/04/13 21:44:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.29 2000/04/14 15:08:56 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -1022,7 +1022,7 @@ January 8 04:05:06 1999 PST
        <literal>Unit</literal> is <literal>second</literal>,
        <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
        <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
-       <literal>decade</literal>, <literal>century</literal>, <literal>millenium</literal>,
+       <literal>decade</literal>, <literal>century</literal>, <literal>millennium</literal>,
        or abbreviations or plurals of these units;
        <literal>Direction</literal> can be <literal>ago</literal> or
        empty.

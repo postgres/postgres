@@ -551,13 +551,19 @@
     For the
     <function>date_part</function> and <function>date_trunc</function>
     functions, arguments can be
-    `year', `month', `day', `hour', `minute', and `second',
+    `<literal>year</literal>', `<literal>month</literal>',
+    `<literal>day</literal>', `<literal>hour</literal>',
+    `<literal>minute</literal>', and `<literal>second</literal>',
     as well as the more specialized quantities
-    `decade', `century', `millenium', `millisecond', and `microsecond'.
-    <function>date_part</function> allows `dow'
-    to return day of week and `epoch' to return seconds since 1970
-    (for <type>timestamp</type>)
-    or 'epoch' to return total elapsed seconds (for <type>interval</type>).
+    `<literal>decade</literal>', `<literal>century</literal>',
+    `<literal>millennium</literal>', `<literal>millisecond</literal>',
+    and `<literal>microsecond</literal>'. 
+    <function>date_part</function> allows `<literal>dow</literal>'
+    to return day of week, '<literal>week</literal>' to return the
+    ISO-defined week of year, and `<literal>epoch</literal>' to return
+    seconds since 1970 (for <type>timestamp</type>)
+    or '<literal>epoch</literal>' to return total elapsed seconds
+    (for <type>interval</type>).
    </para>
   </sect1>
 
@@ -814,7 +820,8 @@
 
    <para>
     All templates allow the use of prefix and suffix modifiers. Modifiers are
-    always valid for use in templates. The prefix 'FX' is a global modifier only.      
+    always valid for use in templates. The prefix
+    '<literal>FX</literal>' is a global modifier only.      
    </para>
 
    <para>
