@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar 17 12:40:38 EST 2004
+Last updated:		Wed Mar 17 17:30:08 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -124,7 +124,7 @@ Views / Rules
 Indexes
 =======
 
-* Order duplicate index entries on creation by tid for faster heap lookups
+* -Order duplicate index entries on creation by tid for faster heap lookups
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
   key, foreign key  [inheritance]
 * UNIQUE INDEX on base column not honored on inserts from inherited table
