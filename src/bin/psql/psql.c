@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.161 1998/09/21 02:25:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.162 1998/10/08 00:10:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2723,18 +2723,6 @@ main(int argc, char **argv)
 	int			c;
 
 	char	   *home = NULL;	/* Used to store $HOME */
-
-#ifdef WIN32
-	{
-		WSADATA		wsaData;
-
-		if (WSAStartup(MAKEWORD(1, 1), &wsaData))
-		{
-			fprintf(stderr, "Failed to start winsock: %i\n", WSAGetLastError());
-			exit(1);
-		}
-	}
-#endif
 
 	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
