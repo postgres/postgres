@@ -454,6 +454,7 @@ bt_f8_heap
 bt_i4_heap     
 bt_txt_heap    
 c_star         
+char_tbl       
 check2_tbl     
 check_seq      
 check_tbl      
@@ -503,9 +504,11 @@ stud_emp
 student        
 tenk1          
 tenk2          
+text_tbl       
 timespan_tbl   
 tinterval_tbl  
 toyemp         
+varchar_tbl    
 xacttest       
-(65 rows)
+(68 rows)
 

@@ -180,5 +180,41 @@ tf_12_ff_4|f1|f1
           |t |f 
 (16 rows)
 
+QUERY: SELECT '' AS "True", BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE f1 IS TRUE;
+True|f1
+----+--
+    |t 
+    |t 
+    |t 
+(3 rows)
+
+QUERY: SELECT '' AS "Not False", BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE f1 IS NOT FALSE;
+Not False|f1
+---------+--
+         |t 
+         |t 
+         |t 
+(3 rows)
+
+QUERY: SELECT '' AS "False", BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE f1 IS FALSE;
+False|f1
+-----+--
+     |f 
+(1 row)
+
+QUERY: SELECT '' AS "Not True", BOOLTBL1.*
+   FROM BOOLTBL1
+   WHERE f1 IS NOT TRUE;
+Not True|f1
+--------+--
+        |f 
+(1 row)
+
 QUERY: DROP TABLE  BOOLTBL1;
 QUERY: DROP TABLE  BOOLTBL2;

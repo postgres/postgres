@@ -1,3 +1,9 @@
+QUERY: SELECT 'c'::char = 'c'::char AS true;
+true
+----
+t   
+(1 row)
+
 QUERY: CREATE TABLE CHAR_TBL(f1 char);
 QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('a');
 QUERY: INSERT INTO CHAR_TBL (f1) VALUES ('A');

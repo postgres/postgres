@@ -1,15 +1,3 @@
-QUERY: SELECT 'char 16 string'::char16 = 'char 16 string '::char16 AS false;
-false
------
-f    
-(1 row)
-
-QUERY: SELECT 'c'::char = 'c'::char AS true;
-true
-----
-t   
-(1 row)
-
 QUERY: SELECT 'this is a text string'::text = 'this is a text string'::text AS true;
 true
 ----
@@ -21,4 +9,14 @@ false
 -----
 f    
 (1 row)
+
+QUERY: CREATE TABLE TEXT_TBL (f1 text);
+QUERY: INSERT INTO TEXT_TBL VALUES ('doh!');
+QUERY: INSERT INTO TEXT_TBL VALUES ('hi de ho neighbor');
+QUERY: SELECT '' AS two, * FROM TEXT_TBL;
+two|f1               
+---+-----------------
+   |doh!             
+   |hi de ho neighbor
+(2 rows)
 
