@@ -1,0 +1,101 @@
+-- erServer
+-- Master server setup for erServer demonstration implementation
+-- (c) 2000 Vadim Mikheev, PostgreSQL Inc.
+--
+
+--
+-- Slave servers
+--
+drop table _RSERV_SERVERS_;
+
+create table _RSERV_SERVERS_
+(
+	server	int4,	-- slave server id
+	host	text,	-- server' host
+	port	int4,	-- server' port
+	dbase	text	-- db name
+);
+
+
+--
+-- Tables to sync
+--
+drop table _RSERV_TABLES_;
+
+create table _RSERV_TABLES_
+(
+	tname  name,	-- table name
+	cname  name,	-- column name
+	reloid	oid,	-- table oid
+	key		int4	-- key attnum 
+);
+
+
+--
+-- Log for inserts/updates/deletes to sync-ed tables
+--
+drop table _RSERV_LOG_;
+
+create table _RSERV_LOG_
+(
+	reloid		oid,
+	logid		int4,		-- xid of last update xaction
+	logtime		timestamp,	-- last update xaction start time
+	deleted		int4,		-- deleted or inserted/updated
+	key			text		-- 
+);
+
+-- This is to speedup lookup deleted tuples
+create index _RSERV_LOG_INDX_DLT_ID_ on _RSERV_LOG_ (deleted, logid);
+
+-- This is to speedup cleanup
+create index _RSERV_LOG_INDX_TM_ID_ on _RSERV_LOG_ (logtime, logid);
+
+-- This is to speedup trigger and lookup updated tuples
+create index _RSERV_LOG_INDX_REL_KEY_ on _RSERV_LOG_ (reloid, key);
+
+
+--
+-- How much each slave servers are sync-ed
+--
+drop table _RSERV_SYNC_;
+
+create table _RSERV_SYNC_
+(
+	server		int4,
+	syncid		int4,		-- from _rserv_sync_seq_
+	synctime	timestamp,	-- 
+	status		int4,		-- prepared (0) | applied
+	minid		int4,		-- min xid from serializable snapshot
+	maxid		int4,		-- max xid from serializable snapshot
+	active		text		-- list of active xactions
+);
+
+create index _RSERV_SYNC_INDX_SRV_ID_ on _RSERV_SYNC_ (server, syncid);
+
+drop sequence _rserv_sync_seq_;
+create sequence _rserv_sync_seq_;
+
+drop function _rserv_log_();
+
+CREATE FUNCTION _rserv_log_()
+	RETURNS opaque
+	AS '_OBJWD_/rserv_DLSUFFIX_'
+	LANGUAGE 'c'
+;
+
+drop function _rserv_sync_(int4);
+
+CREATE FUNCTION _rserv_sync_(int4)
+	RETURNS int4
+	AS '_OBJWD_/rserv_DLSUFFIX_'
+	LANGUAGE 'c'
+;
+
+drop function _rserv_debug_(int4);
+
+CREATE FUNCTION _rserv_debug_(int4)
+	RETURNS int4
+	AS '_OBJWD_/rserv_DLSUFFIX_'
+	LANGUAGE 'c'
+;

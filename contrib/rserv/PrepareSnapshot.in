@@ -1,0 +1,56 @@
+# -*- perl -*-
+# PrepareSnapshot
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use lib "@LIBDIR@";
+
+use IO::File;
+use Getopt::Long;
+use RServ;
+
+$| = 1;
+
+$result = GetOptions("debug!", "verbose!", "help", "snapshot=s",
+		     "host=s", "user=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+my $snapshot = $opt_snapshot || "__Snapshot";
+
+if (defined($opt_help) || (scalar(@ARGV) < 1)) {
+    print "Usage: $0 --snapshot=file --host=name --user=name --password=string masterdb\n";
+    exit ((scalar(@ARGV) < 1)? 1:0);
+}
+
+my $master = $ARGV[0] || "master";
+my $server = 0;
+
+my $minfo = "dbname=$master";
+$minfo = "$minfo host=$opt_host" if (defined($opt_host));
+$minfo = "$minfo user=$opt_user" if (defined($opt_user));
+$minfo = "$minfo password=$opt_password" if (defined($opt_password));
+
+my $conn = Pg::connectdb($minfo);
+
+my $outf = new IO::File;
+$outf = STDOUT;
+
+$res = PrepareSnapshot ($conn, $outf, $server);
+
+if ($res == 0)
+{
+	printf STDERR "Sync-ed\n";
+	exit(0);
+}
+if ($res > 0)
+{
+	printf STDERR "Snapshot dumped to STDOUT\n";
+	exit(0);
+}
+
+printf STDERR "ERROR\n";
+exit(1);

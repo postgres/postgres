@@ -1,0 +1,47 @@
+# -*- perl -*-
+# CleanLog
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use lib "@LIBDIR@";
+
+use Getopt::Long;
+use RServ;
+
+$| = 1;
+
+$result = GetOptions("debug!", "verbose!", "help", "snapshot=s",
+		     "host=s", "user=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+my $snapshot = $opt_snapshot || "__Snapshot";
+
+if (defined($opt_help) || (scalar(@ARGV) < 2) || ($ARGV[1] !~ /^\d+$/)) {
+    print "Usage: $PROGRAM_NAME --host=name --user=name --password=string masterdb syncid\n";
+    exit ((scalar(@ARGV) < 2)? 1: 0);
+}
+
+my $dbname = $ARGV[0];
+my $howold = $ARGV[1];
+
+my $minfo = "dbname=$dbname";
+$minfo = "$minfo host=$opt_host" if (defined($opt_host));
+$minfo = "$minfo user=$opt_user" if (defined($opt_user));
+$minfo = "$minfo password=$opt_password" if (defined($opt_password));
+
+print "Master connection is $minfo\n" if ($debug);
+print "Slave connection is $sinfo\n" if ($debug);
+
+my $conn = Pg::connectdb($minfo);
+
+$res = CleanLog($conn, $howold);
+
+exit(1) if $res < 0;
+
+printf STDERR "Deleted %d log records\n", $res if $res > 0;
+
+exit(0);

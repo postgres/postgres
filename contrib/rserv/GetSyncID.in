@@ -1,0 +1,55 @@
+# -*- perl -*-
+# GetSyncID
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use lib "@LIBDIR@";
+
+use Pg;
+use Getopt::Long;
+use RServ;
+
+$| = 1;
+
+my $verbose = 1;
+
+$result = GetOptions("debug!", "verbose!", "help",
+		     "host=s", "user=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose if (defined($opt_verbose));
+
+if (defined($opt_help) || (scalar(@ARGV) < 1)) {
+    print "Usage: $0 --host=name --user=name --password=string slavedb\n";
+    exit ((scalar(@ARGV) < 1)? 1: 0);
+}
+
+my $dbname = $ARGV[0];
+
+my $sinfo = "dbname=$dbname";
+$sinfo = "$sinfo host=$opt_host" if (defined($opt_host));
+$sinfo = "$sinfo user=$opt_user" if (defined($opt_user));
+$sinfo = "$sinfo password=$opt_password" if (defined($opt_password));
+
+if ($verbose) { print "Connecting to '$sinfo'\n" };
+my $conn = Pg::connectdb($sinfo);
+
+$res = GetSyncID($conn);
+
+die "ERROR\n" if $res < 0;
+
+if (! defined $res)
+{
+    printf STDERR "No SyncID found\n";
+}
+else
+{
+    print("Last SyncID applied: ") if ($verbose);
+    printf "%d", $res;
+    print("\n") if ($verbose);
+}
+
+exit(0);

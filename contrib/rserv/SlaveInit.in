@@ -1,0 +1,65 @@
+# -*- perl -*-
+# SlaveInit
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use Pg;
+use Getopt::Long;
+
+$| = 1;
+
+$result = GetOptions("debug!", "verbose!", "quiet!", "help",
+		     "host=s", "user=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+my $quiet = $opt_quiet || 0;
+
+if (defined($opt_help) || (scalar(@ARGV) < 1)) {
+    print "Usage: $0 --host=name --user=name --password=string slavedb\n";
+    exit ((scalar(@ARGV) < 1)? 1:0);
+}
+
+my $slave = $ARGV[0] || "slave";
+
+my $sinfo = "dbname=$slave";
+$sinfo = "$sinfo host=$opt_host" if (defined($opt_host));
+$sinfo = "$sinfo user=$opt_user" if (defined($opt_user));
+$sinfo = "$sinfo password=$opt_password" if (defined($opt_password));
+
+sub RollbackAndQuit {
+    my $conn = shift @_;
+
+    print STDERR $conn->errorMessage;
+    $conn->exec("ROLLBACK");
+    exit (-1);
+}
+
+print "Connecting to $sinfo\n";
+my $conn = Pg::connectdb($sinfo);
+if ($conn->status != PGRES_CONNECTION_OK) {
+    print STDERR "Failed opening $sinfo\n";
+    exit 1;
+}
+
+my $result = $conn->exec("BEGIN");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("set transaction isolation level serializable");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("create table _RSERV_SLAVE_TABLES_" .
+		      " (tname name, cname name, reloid oid, key int4)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("create table _RSERV_SLAVE_SYNC_" .
+		      " (syncid int4, synctime timestamp)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("COMMIT");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+exit (0);

@@ -1,0 +1,259 @@
+#!/bin/sh
+# InitRservTest
+# erServer demonstration implementation
+# (c) 2000 Vadim Mikheev, PostgreSQL Inc.
+
+[ -n "$RSERV_PERL" ] || RSERV_PERL=@LIBDIR@
+[ -n "$RSERV_SQL" ] || RSERV_SQL=@SQLDIR@
+[ -n "$RSERV_BIN" ] || RSERV_BIN=@BINDIR@
+export RSERV_PERL
+export RSERV_SQL
+export RSERV_BIN
+
+pargs=
+
+while [[ $1 == -* ]]; do
+    case "$1" in
+	--user)
+	    shift
+	    pargs="$pargs -U $1"
+	    ;;
+	--host)
+	    shift
+	    pargs="$pargs -h $1"
+	    ;;
+	*)
+	    echo "Usage: $0 --user name --host name masterdb slavedb"
+	    exit 1
+	    ;;
+    esac
+    shift
+done
+
+masterdb=$1
+slavedb=$2
+
+[ "${masterdb}" != "" ] || masterdb=master
+[ "${slavedb}" != "" ] || slavedb=slave
+
+echo "Master -> $masterdb"
+echo "Slave  -> $slavedb"
+
+############################################################################
+
+fill()
+{
+	table="create table test (i text, k int, l int);
+copy test from stdin;
+Line: 1	1	1
+Line: 2	2	2
+Line: 3	3	3
+Line: 4	4	4
+Line: 5	5	5
+Line: 6	6	6
+Line: 7	7	7
+Line: 8	8	8
+Line: 9	9	9
+Line: 10	10	10
+Line: 11	11	11
+Line: 12	12	12
+Line: 13	13	13
+Line: 14	14	14
+Line: 15	15	15
+Line: 16	16	16
+Line: 17	17	17
+Line: 18	18	18
+Line: 19	19	19
+Line: 20	20	20
+Line: 21	21	21
+Line: 22	22	22
+Line: 23	23	23
+Line: 24	24	24
+Line: 25	25	25
+Line: 26	26	26
+Line: 27	27	27
+Line: 28	28	28
+Line: 29	29	29
+Line: 30	30	30
+Line: 31	31	31
+Line: 32	32	32
+Line: 33	33	33
+Line: 34	34	34
+Line: 35	35	35
+Line: 36	36	36
+Line: 37	37	37
+Line: 38	38	38
+Line: 39	39	39
+Line: 40	40	40
+Line: 41	41	41
+Line: 42	42	42
+Line: 43	43	43
+Line: 44	44	44
+Line: 45	45	45
+Line: 46	46	46
+Line: 47	47	47
+Line: 48	48	48
+Line: 49	49	49
+Line: 50	50	50
+Line: 51	51	51
+Line: 52	52	52
+Line: 53	53	53
+Line: 54	54	54
+Line: 55	55	55
+Line: 56	56	56
+Line: 57	57	57
+Line: 58	58	58
+Line: 59	59	59
+Line: 60	60	60
+Line: 61	61	61
+Line: 62	62	62
+Line: 63	63	63
+Line: 64	64	64
+Line: 65	65	65
+Line: 66	66	66
+Line: 67	67	67
+Line: 68	68	68
+Line: 69	69	69
+Line: 70	70	70
+Line: 71	71	71
+Line: 72	72	72
+Line: 73	73	73
+Line: 74	74	74
+Line: 75	75	75
+Line: 76	76	76
+Line: 77	77	77
+Line: 78	78	78
+Line: 79	79	79
+Line: 80	80	80
+Line: 81	81	81
+Line: 82	82	82
+Line: 83	83	83
+Line: 84	84	84
+Line: 85	85	85
+Line: 86	86	86
+Line: 87	87	87
+Line: 88	88	88
+Line: 89	89	89
+Line: 90	90	90
+Line: 91	91	91
+Line: 92	92	92
+Line: 93	93	93
+Line: 94	94	94
+Line: 95	95	95
+Line: 96	96	96
+Line: 97	97	97
+Line: 98	98	98
+Line: 99	99	99
+Line: 100	100	100
+\\.";
+	echo "$table" | psql $pargs $1 || exit
+	if [ "$1" = "$masterdb" ]
+	then
+		rm -rf __tmpf__
+		psql $pargs -c "select * into table testoid from test" $1 || exit
+		psql $pargs -c "copy testoid with oids to '`pwd`/__tmpf__'" $1 || exit
+		psql $pargs -c "select * into table teststr from test" $1 || exit
+	else
+		psql $pargs -c "select * into table testoid from test where k < 0" $1 || exit
+		psql $pargs -c "copy testoid with oids from '`pwd`/__tmpf__'" $1 || exit
+		psql $pargs -c "select * into table teststr from test" $1 || exit
+		rm -rf __tmpf__
+	fi
+	psql $pargs -c "create unique index i_test on test (k)" $1 || exit
+	psql $pargs -c "create unique index i_testoid on testoid (oid)" $1 || exit
+	psql $pargs -c "create unique index i_teststr on teststr (i)" $1 || exit
+	psql $pargs -c vacuum $1 || exit
+}
+
+############################################################################
+
+echo
+echo
+echo '                            ATTENTION'
+echo
+echo This script will destroy databases with names MASTER and SLAVE
+echo
+echo -n "Are you going to continue ? [Y/N] "
+
+read answ
+
+case $answ in
+    Y*|y*)
+        ;;
+    *)
+        exit
+        ;;
+esac
+
+echo
+echo
+
+sql="drop database $masterdb"
+echo $sql
+psql $pargs -c "$sql" template1
+sql="create database $masterdb"
+echo $sql
+psql $pargs -c "$sql" template1 || exit
+
+echo Setup master system
+psql $pargs $masterdb < $RSERV_SQL/master.sql || exit
+
+echo Wait for template1 to become available...
+sleep 1
+
+sql="drop database $slavedb"
+echo $sql
+psql $pargs -c "$sql" template1
+sql="create database $slavedb"
+echo $sql
+psql $pargs -c "$sql" template1 || exit
+
+echo Setup slave system
+psql $pargs $slavedb < $RSERV_SQL/slave.sql || exit
+
+echo Create and fill test, testoid and teststr tables in master db
+fill $masterdb
+echo
+echo Register test, testoid and teststr tables for replication on master
+echo
+$RSERV_BIN/MasterAddTable $masterdb test k
+$RSERV_BIN/MasterAddTable $masterdb testoid oid
+$RSERV_BIN/MasterAddTable $masterdb teststr i
+
+echo Create and fill test, testoid and teststr tables in slave db
+fill $slavedb
+echo
+echo Register test, testoid and teststr tables for replication on slave
+echo
+$RSERV_BIN/SlaveAddTable $slavedb test k
+$RSERV_BIN/SlaveAddTable $slavedb testoid oid
+$RSERV_BIN/SlaveAddTable $slavedb teststr i
+
+echo 
+echo 
+echo 
+echo 
+echo 
+echo 
+echo 
+echo 
+echo "            Now make changes in $masterdb db and run"
+echo 
+echo "                Replicate $masterdb $slavedb"
+echo 
+echo "            to replicate the master on the slave."
+echo 
+echo "            You may also use the RservTest tcl utility"
+echo "            to demonstrate this functionality."
+echo 
+echo 
+echo 
+echo 
+echo 
+echo 
+echo 
+echo 
+
+exit
+
+############################################################################

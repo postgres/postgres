@@ -1,0 +1,59 @@
+# -*- perl -*-
+# SlaveAddTable
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use Pg;
+use Getopt::Long;
+
+$| = 1;
+
+$result = GetOptions("debug!", "verbose!", "help",
+		     "host=s", "user=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+
+if (defined($opt_help) || (scalar(@ARGV) < 3)) {
+    print "Usage: $0 --host=name --user=name --password=string slavedb table column\n";
+    exit ((scalar(@ARGV) < 3)? 1: 0);
+}
+
+my $dbname = $ARGV[0];
+my $table = $ARGV[1];
+my $keyname = $ARGV[2];
+
+my $sinfo = "dbname=$dbname";
+$sinfo = "$sinfo host=$opt_host" if (defined($opt_host));
+$sinfo = "$sinfo user=$opt_user" if (defined($opt_user));
+$sinfo = "$sinfo password=$opt_password" if (defined($opt_password));
+
+my $dbname = $ARGV[0];
+my $table = $ARGV[1];
+my $keyname = $ARGV[2];
+
+my $conn = Pg::connectdb($sinfo);
+
+my $result = $conn->exec("BEGIN");
+die $conn->errorMessage if $result->resultStatus ne PGRES_COMMAND_OK;
+
+$result = $conn->exec("select pgc.oid, pga.attnum from pg_class pgc" . 
+					  ", pg_attribute pga" .
+					  " where pgc.relname = '$table' and pgc.oid = pga.attrelid" . 
+					  " and pga.attname = '$keyname'");
+die $conn->errorMessage if $result->resultStatus ne PGRES_TUPLES_OK;
+
+my @row = $result->fetchrow;
+die "Can't find table/key\n" if ! defined $row[0] || ! defined $row[1];
+
+$result = $conn->exec("insert into _RSERV_SLAVE_TABLES_ (tname, cname, reloid, key)" . 
+					  " values ('$table', '$keyname', $row[0], $row[1])");
+die $conn->errorMessage if $result->resultStatus ne PGRES_COMMAND_OK;
+
+$result = $conn->exec("COMMIT");
+die $conn->errorMessage if $result->resultStatus ne PGRES_COMMAND_OK;
+
+exit(0);

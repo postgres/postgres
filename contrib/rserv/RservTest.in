@@ -1,0 +1,313 @@
+#!/bin/sh
+# pgserv.tcl
+# (c) 2000 Thomas Lockhart, PostgreSQL Inc.
+# The next line will reinvoke as wish *DO NOT REMOVE OR ALTER* \
+exec wish "$0" "$@"
+
+puts "Starting Replication Server demo"
+
+set RSERV_BIN "@BINDIR@"
+
+# Bring in the interfaces we will be using...
+
+#package require Pgtcl
+load libpgtcl[info sharedlibextension]
+
+# elog
+# Information or error log and exit handler
+proc {elog} {level message} {
+    global show
+    switch -exact -- $level {
+        DEBUG {
+            if {$show(debug)} {
+                puts "DEBUG $message"
+            }
+        }
+        ERROR {
+            if {$show(error)} {
+                puts "ERROR $message"
+            }
+        FATAL {
+            if ($show(error)} {
+                puts "FATAL $message"
+            }
+            exit 1
+        }
+        default {
+            puts "INFO $message"
+        }
+    }
+}
+
+proc {ShowUsage} {} {
+    global argv0
+    puts "Usage: $argv0 --host name --user name --password string masterdb slavedb"
+    puts "\t--masterhost name --masteruser name --masterpassword string"
+    puts "\t--slavehost name --slaveuser name --slavepassword string"
+}
+
+# Initial values for database access
+# master, slave variables are tied to text input boxes,
+# and will be updated on user input
+proc {SetDbInfo} {db name {host ""} {user ""} {pass ""}} {
+    global dbinfo
+    set dbinfo($db,name) $name
+    set dbinfo($db,host) $host
+    set dbinfo($db,user) $user
+    set dbinfo($db,pass) $pass
+}
+
+# ConnInfo
+# Connection information for pgtcl library
+proc {ConnInfo} {{db master}} {
+    global dbinfo
+    set ci "dbname=$dbinfo($db,name)"
+    if {[string length $dbinfo($db,host)] > 0} {
+        set ci "$ci host=$dbinfo($db,host)"
+    }
+    if {[string length $dbinfo($db,user)] > 0} {
+        set ci "$ci user=$dbinfo($db,user)"
+    }
+    if {[string length $dbinfo($db,pass)] > 0} {
+        set ci "$ci password=$dbinfo($db,pass)"
+    }
+#    puts "Construct conninfo $ci"
+    return $ci
+}
+
+# ConnInfoParams
+# Connection information for (perl) callable programs
+proc {ConnInfoParams} {{db master}} {
+    global dbinfo
+    set ci ""
+    if {[string length $dbinfo($db,host)] > 0} {
+        set ci "$ci --host=$dbinfo($db,host)"
+    }
+    if {[string length $dbinfo($db,user)] > 0} {
+        set ci "$ci --user=$dbinfo($db,user)"
+    }
+    if {[string length $dbinfo($db,pass)] > 0} {
+        set ci "$ci --password=$dbinfo($db,pass)"
+    }
+#    puts "Construct conninfo $ci"
+    return $ci
+}
+
+# ConnInfoMaster
+# Connection information for (perl) callable programs
+proc {ConnInfoMaster} {{db master}} {
+    global dbinfo
+    set ci $dbinfo($db,name)
+    if {[string length $dbinfo($db,host)] > 0} {
+        set ci "$ci --masterhost=$dbinfo($db,host)"
+    }
+    if {[string length $dbinfo($db,user)] > 0} {
+        set ci "$ci --masteruser=$dbinfo($db,user)"
+    }
+    if {[string length $dbinfo($db,pass)] > 0} {
+        set ci "$ci --masterpassword=$dbinfo($db,pass)"
+    }
+#    puts "Construct conninfo $ci"
+    return $ci
+}
+
+# ConnInfoSlave
+# Connection information for (perl) callable programs
+proc {ConnInfoSlave} {{db slave}} {
+    global dbinfo
+    set ci $dbinfo($db,name)
+    if {[string length $dbinfo($db,host)] > 0} {
+        set ci "$ci --slavehost=$dbinfo($db,host)"
+    }
+    if {[string length $dbinfo($db,user)] > 0} {
+        set ci "$ci --slaveuser=$dbinfo($db,user)"
+    }
+    if {[string length $dbinfo($db,pass)] > 0} {
+        set ci "$ci --slavepassword=$dbinfo($db,pass)"
+    }
+#    puts "Construct conninfo $ci"
+    return $ci
+}
+
+
+SetDbInfo master master localhost
+SetDbInfo slave slave localhost
+set dbinfo(snapshot,name) "__Snapshot"
+
+set update ""
+
+set show(debug) 1
+set show(error) 1
+
+set argi 0
+while {$argi < $argc} {
+#    puts "argi is $argi; argc is $argc"
+    set arg [lindex $argv $argi]
+    switch -glob -- $arg {
+        -h -
+        --host {
+            incr argi
+            set dbinfo(master,host) [lindex $argv $argi]
+            set dbinfo(slave,host) [lindex $argv $argi]
+        }
+        --masterhost {
+            incr argi
+            set dbinfo(master,host) [lindex $argv $argi]
+        }
+        --slavehost {
+            incr argi
+            set dbinfo(slave,host) [lindex $argv $argi]
+        }
+        -u -
+        --user {
+            incr argi
+            set dbinfo(master,user) [lindex $argv $argi]
+            set dbinfo(slave,user) [lindex $argv $argi]
+        }
+        --masteruser {
+            incr argi
+            set dbinfo(master,user) [lindex $argv $argi]
+        }
+        --slaveuser {
+            incr argi
+            set dbinfo(slave,user) [lindex $argv $argi]
+        }
+        -s -
+        --snapshot {
+            incr argi
+            set dbinfo(snapshot,name) [lindex $argv $argi]
+        }
+        -* {
+            elog ERROR "$argv0: invalid parameter '$arg'"
+            ShowUsage
+            exit 1
+        }
+        default {
+            break
+        }
+    }
+    incr argi
+}
+
+if {$argi < $argc} {
+    set dbinfo(master,name) [lindex $argv $argi]
+    incr argi
+}
+if {$argi < $argc} {
+    set dbinfo(slave,name) [lindex $argv $argi]
+    incr argi
+}
+if {$argi < $argc} {
+    elog "$argv0: too many parameters"
+    ShowUsage
+    exit 1
+}
+
+elog DEBUG "User is $dbinfo(master,user) $dbinfo(slave,user)"
+elog DEBUG "Host is $dbinfo(master,host) $dbinfo(slave,host)"
+
+#
+# TK layout
+#
+
+wm title . "Async Replication"
+
+wm geom . 400x400
+
+proc {CreateResultFrame} {b l w} {
+    pack [frame $b -borderwidth 10] -fill x
+    pack [button $b.run -text $l -command $l -width $w] -side left
+#    pack [entry $b.e -textvariable NewRow] -side left
+}
+
+set t .top
+pack [frame $t -borderwidth 10] -fill x
+pack [frame $t.h -borderwidth 10] -fill x
+pack [label $t.h.h -text "PostgreSQL Async Replication Server"]
+
+set b .b
+pack [frame $b -borderwidth 10] -fill x
+pack [frame $b.l -borderwidth 10] -fill x
+pack [label $b.l.ml -text "Master"] -side left
+pack [label $b.l.sl -text "Slave"] -side right
+pack [entry $b.m -textvariable dbinfo(master,name) -width 25] -side left
+pack [entry $b.s -textvariable dbinfo(slave,name) -width 25] -side right
+
+set b .u
+pack [frame $b -borderwidth 10] -fill x
+pack [button $b.run -text update -command Update -width 10] -side left
+pack [entry $b.e -textvariable update -width 50] -side left
+
+set r [CreateResultFrame .r Replicate 10]
+
+set b .s
+pack [frame $b -borderwidth 10] -fill x
+pack [button $b.b -text Show -command Show -width 10] -side left
+pack [label $b.e -text ""] -side left
+
+set b .button
+pack [frame $b -borderwidth 10] -fill x
+
+pack [button $b.quit -text "Quit" -command Shutdown]
+
+#
+# Functions mapped to buttons
+#
+
+proc {Update} {} {
+    global dbinfo
+    global update
+
+    elog DEBUG "Opening database [ConnInfo master]..."
+    set res [catch {set db [pg_connect -conninfo "[ConnInfo master]"]} msg]
+    if {$res} {
+        elog ERROR "Database '$dbinfo(master,name)' is not available: $res ($msg)"
+    } else {
+        elog DEBUG "Insert $update into database $dbinfo(master,name)..."
+        set res [pg_exec $db "insert into test select '$update', max(k)+1, max(l)+1 from test"]
+        elog DEBUG [pg_result $res -status]
+        catch {pg_disconnect $db}
+    }
+}
+
+proc {Replicate} {} {
+    global dbinfo
+    global RSERV_BIN
+
+    elog DEBUG "Replicating [ConnInfoCmd master]..."
+    exec "$RSERV_BIN/Replicate" --snapshot=$dbinfo(snapshot,name) [ConnInfoParams] [ConnInfoMaster] [ConnInfoSlave]
+}
+
+proc {Show} {} {
+    global dbinfo
+    global update
+
+    elog DEBUG "Opening database [ConnInfo slave]..."
+    set res [catch {set db [pg_connect -conninfo "[ConnInfo slave]"]} msg]
+    if {$res} {
+        elog ERROR "DB $dbinfo(slave,name) not available: $res ($msg)"
+    } else {
+        elog DEBUG "Select $update from database $dbinfo(slave,name)..."
+       set res [pg_exec $db "select i from test where i='$update'"]
+        if {[pg_result $res -status] != "PGRES_TUPLES_OK"} {
+            .s.e config -text "n/a"
+        } else {
+            set ntups [pg_result $res -numTuples]
+            if {$ntups <= 0} {
+                .s.e config -text "n/a"
+            } else {
+                for {set i 0} {$i < $ntups} {incr i} {
+                    set val [pg_result $res -getTuple $i]
+                    .s.e config -text $val
+                }
+            }
+            pg_result $res -clear
+        }
+        catch {pg_disconnect $db}
+    }
+}
+
+proc {Shutdown} {} {
+    global dbinfo
+    exit
+}

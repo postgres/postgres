@@ -1,0 +1,48 @@
+# -*- perl -*-
+# SyncSyncID
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use lib "@LIBDIR@";
+
+use Getopt::Long;
+use RServ;
+
+$| = 1;
+
+$result = GetOptions("debug!", "verbose!", "quiet!", "help",
+		     "host=s", "user=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+my $quiet = $opt_quiet || 0;
+
+if (defined($opt_help) || (scalar(@ARGV) < 2) || ($ARGV[1] !~ /^\d+$/)) {
+    print "Usage: $0 --host=name --user=name --password=string masterdb syncid\n";
+    exit ((scalar(@ARGV) < 2)? 1:0);
+}
+
+my $master = $ARGV[0] || "master";
+my $server = 0;
+my $syncid = $ARGV[1] || die "SyncID not specified";
+
+my $minfo = "dbname=$master";
+$minfo = "$minfo host=$opt_host" if (defined($opt_host));
+$minfo = "$minfo user=$opt_user" if (defined($opt_user));
+$minfo = "$minfo password=$opt_password" if (defined($opt_password));
+
+my $conn = Pg::connectdb($minfo);
+
+$res = SyncSyncID($conn, $server, $syncid);
+
+if ($res == 0)
+{
+    printf STDERR "SyncID updated on $master\n" if ($verbose);
+    exit(0);
+}
+
+printf STDERR "ERROR\n" unless ($quiet);
+exit(1);

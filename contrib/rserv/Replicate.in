@@ -1,0 +1,100 @@
+# -*- perl -*-
+# Replicate
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use lib "@LIBDIR@";
+
+use IO::File;
+use Getopt::Long;
+use RServ;
+
+$| = 1;
+
+$result = GetOptions("debug!", "verbose!", "help", "snapshot=s",
+		     "masterhost=s", "slavehost=s", "host=s",
+		     "masteruser=s", "slaveuser=s", "user=s",
+		     "masterpassword=s", "slavepassword=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+my $snapshot = $opt_snapshot || "__Snapshot";
+
+if (defined($opt_help) || (scalar(@ARGV) < 2)) {
+    print "Usage: $0 --snapshot=file --host=name --user=name --password=string masterdb slavedb\n";
+    print "\t--masterhost=name --masteruser=name --masterpassword=string\n";
+    print "\t--slavehost=name --slaveuser=name --slavepassword=string\n";
+    exit ((scalar(@ARGV) < 2)? 1:0);
+}
+
+my $master = $ARGV[0] || "master";
+my $slave = $ARGV[1] || "slave";
+my $server = 0;
+
+my $minfo = "dbname=$master";
+$minfo = "$minfo host=$opt_masterhost" if (defined($opt_masterhost));
+$minfo = "$minfo user=$opt_masteruser" if (defined($opt_masteruser));
+$minfo = "$minfo password=$opt_masterpassword" if (defined($opt_masterpassword));
+my $sinfo = "dbname=$slave";
+$sinfo = "$sinfo host=$opt_slavehost" if (defined($opt_slavehost));
+$sinfo = "$sinfo user=$opt_slaveuser" if (defined($opt_slaveuser));
+$sinfo = "$sinfo password=$opt_slavepassword" if (defined($opt_slavepassword));
+
+print "Master connection is $minfo\n" if ($debug);
+print "Slave connection is $sinfo\n" if ($debug);
+
+my $mconn = Pg::connectdb($minfo);
+my $sconn = Pg::connectdb($sinfo);
+
+SyncSync($mconn, $sconn);
+
+my $outf = new IO::File;
+open $outf, ">$snapshot";
+print "\n>>>>>>>>>>>>> Prepare Snapshot\n\n" if ($verbose);
+$res = PrepareSnapshot($mconn, $outf, $server);
+close $outf;
+die "\n>>>>>>>>>>>>> ERROR\n" if $res < 0;
+if ($res == 0)
+{
+	print "\n>>>>>>>>>>>>> DBases are sync-ed\n" if ($verbose);
+	exit(0);
+}
+
+my $inpf = new IO::File;
+open $inpf, "<$snapshot";
+print "\n>>>>>>>>>>>>> Apply Snapshot\n\n" if ($verbose);
+$res = ApplySnapshot($sconn, $inpf);
+close $inpf;
+die "\n>>>>>>>>>>>>> ERROR\n" if $res < 0;
+
+if ($res > 0)
+{
+	print "Snapshot applied\n" if ($verbose);
+	unlink $snapshot unless ($debug);
+	SyncSync($mconn, $sconn);
+}
+
+exit(0);
+
+###########################################################################
+
+sub SyncSync
+{
+    ($mconn, $sconn) = @_;
+
+    print "\n>>>>>>>>>>>>> Sync SyncID\n\n" if ($verbose);
+    print "Get last SyncID from Slave DB\n" if ($verbose);
+    $syncid = GetSyncID($sconn);
+    if ($syncid > 0)
+    {
+	print "Last SyncID applied: $syncid\n" if ($verbose);
+	print "Sync SyncID\n" if ($verbose);
+
+	$res = SyncSyncID($mconn, $server, $syncid);
+
+	print "Succeeded\n" if (($res > 0) && ($verbose));
+    }
+}

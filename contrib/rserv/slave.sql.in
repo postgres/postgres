@@ -1,0 +1,22 @@
+-- erServer
+-- Slave server setup for erServer demonstration implementation
+-- (c) 2000 Vadim Mikheev, PostgreSQL Inc.
+--
+
+drop table _RSERV_SLAVE_TABLES_;
+
+create table _RSERV_SLAVE_TABLES_
+(
+	tname  name,	-- table name
+	cname  name,	-- column name
+	reloid	oid,	-- table oid
+	key		int4	-- key attnum 
+);
+
+drop table _RSERV_SLAVE_SYNC_;
+
+create table _RSERV_SLAVE_SYNC_
+(
+	syncid		int4,
+	synctime	timestamp
+);

@@ -1,0 +1,107 @@
+# -*- perl -*-
+# MasterInit
+# Vadim Mikheev, (c) 2000, PostgreSQL Inc.
+
+eval '(exit $?0)' && eval 'exec perl -S $0 ${1+"$@"}'
+    & eval 'exec perl -S $0 $argv:q'
+    if 0;
+
+use Pg;
+use Getopt::Long;
+
+$| = 1;
+
+$result = GetOptions("debug!", "verbose!", "help",
+		     "host=s", "user=s", "password=s");
+
+my $debug = $opt_debug || 0;
+my $verbose = $opt_verbose || 0;
+
+if (defined($opt_help) || (scalar(@ARGV) < 1)) {
+    print "Usage: $0 --host=name --user=name --password=string masterdb\n";
+    exit ((scalar(@ARGV) < 1)? 1:0);
+}
+
+my $master = $ARGV[0] || "master";
+
+my $minfo = "dbname=$master";
+$minfo = "$minfo host=$opt_host" if (defined($opt_host));
+$minfo = "$minfo user=$opt_user" if (defined($opt_user));
+$minfo = "$minfo password=$opt_password" if (defined($opt_password));
+
+sub RollbackAndQuit {
+    $conn = shift @_;
+
+    print STDERR "Error in query: ", $conn->errorMessage;
+    $conn->exec("ROLLBACK");
+    exit (-1);
+}
+
+my $conn = Pg::connectdb($minfo);
+if ($conn->status != PGRES_CONNECTION_OK) {
+    print STDERR "Failed opening $minfo\n";
+    exit 1;
+}
+
+my $result = $conn->exec("BEGIN");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("set transaction isolation level serializable");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# List of slave servers
+$result = $conn->exec("create table _RSERV_SERVERS_" .
+					  " (server serial, host text, post int4, dbase text)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# List of replicated tables
+$result = $conn->exec("create table _RSERV_TABLES_" .
+					  " (tname name, cname name, reloid oid, key int4)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# Bookkeeping log for row replication
+$result = $conn->exec("create table _RSERV_LOG_" .
+					  " (reloid oid, logid int4, logtime timestamp, deleted int4, key text)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# This is to speedup lookup of deleted tuples
+$result = $conn->exec("create index _RSERV_LOG_INDX_DLT_ID_ on _RSERV_LOG_ (deleted, logid)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# This is to speedup cleanup
+$result = $conn->exec("create index _RSERV_LOG_INDX_TM_ID_ on _RSERV_LOG_ (logtime, logid)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# This is to speedup trigger and lookup of updated tuples
+$result = $conn->exec("create index _RSERV_LOG_INDX_REL_KEY_ on _RSERV_LOG_ (reloid, key)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# Sync point for each slave server
+$result = $conn->exec("create table _RSERV_SYNC_" .
+					  " (server int4, syncid int4, synctime timestamp" .
+					  ", status int4, minid int4, maxid int4, active text)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("create index _RSERV_SYNC_INDX_SRV_ID_ on _RSERV_SYNC_ (server, syncid)");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+# Sync point reference numbers
+$result = $conn->exec("create sequence _rserv_sync_seq_");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("CREATE FUNCTION _rserv_log_() RETURNS opaque" .
+					  " AS '_OBJWD_/rserv_DLSUFFIX_' LANGUAGE 'c'");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("CREATE FUNCTION _rserv_sync_(int4) RETURNS int4" .
+					  " AS '_OBJWD_/rserv_DLSUFFIX_' LANGUAGE 'c'");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("CREATE FUNCTION _rserv_debug_(int4) RETURNS int4" .
+					  " AS '_OBJWD_/rserv_DLSUFFIX_' LANGUAGE 'c'");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+$result = $conn->exec("COMMIT");
+RollbackAndQuit($conn) if ($result->resultStatus ne PGRES_COMMAND_OK);
+
+exit (0);

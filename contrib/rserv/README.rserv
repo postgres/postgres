@@ -1,0 +1,128 @@
+erServer demonstration implementation
+(c) 2000, Vadim Mikheev and Thomas Lockhart, PostgreSQL Inc.
+
+Version 0.1:
+  Replicates a master database to a single slave database.
+  Tested under Linux (Mandrake 7.2).
+
+Requirements:
+
+- PostgreSQL >= 7.0.X
+  A separate Makefile is required for PostgreSQL 7.0.x and earlier
+- Perl5 and the PostgreSQL perl interface
+- TCL and the PostgreSQL tcl interface (for demo only)
+
+
+How to compile:
+
+- make all
+- make install
+
+Scripts and libraries are installed in places which are consistant
+with the way other contrib/ code is installed; underneath the core
+items in a contrib/ directory.
+
+
+The toolset:
+
+MasterInit dbname
+  sets up structures and user-defined functions for a master
+  database. 
+
+SlaveInit dbname
+  sets up structures for a slave database. Does not include triggers,
+  but only bookkeeping tables. 
+
+MasterAddTable dbname table column
+  sets up triggers for the specified table and column. Note that this
+  column must be updated for replication to occur. 
+
+SlaveAddTable dbname table column
+  sets up bookkeeping for the specified table and column.
+
+Replicate masterdb slavedb
+  actually replicate changes from a master to single slave. Note that
+  this must be repeated to replicate to multiple slaves, but the
+  bookkeeping for each slave is handled separately so each can be
+  updated at different times and with different sets of changes.
+
+GetSyncID [--noverbose] slavedb
+  returns the last syncid the specified slave has seen. May be used
+  in conjunction with CleanLog using the --noverbose option.
+
+CleanLog masterdb syncid
+  removes obsolete entries in the master database replication log
+  table up to the specified replication sequence number.
+
+Other utilities:
+
+PrepareSnapshot
+  build a file of replication information from the specified masterdb.
+
+ApplySnapshot
+  use a file of replication information to apply to the specified
+  slavedb. 
+
+
+How to run a demo:
+
+Run the InitRservTest script. It will create two local databases
+'master' & 'slave' with table 'test' in them. It accepts the following
+arguments:
+  --help
+    Print a usage message and quit.
+  --user name
+    Access the database with another username.
+  --host name
+    Access a remote database. Note that the shared library *must* be
+    visible in the same path as installed on the build machine.
+  masterdb
+  slavedb
+    Names of test databases. Defaults to 'master' and 'slave',
+	respectively.
+
+Once the test databases are set up, simply updating the master table
+is sufficient to log a replication event. You can update the table
+test then run "Replicate master slave", or you can use the demo
+program RservTest.
+
+Run the tcl/tk GUI demo program, RservTest. It has a single window,
+which has four buttons and three data entry boxes.
+
+  --------------------------------------------------
+ |   PostgreSQL Asynchronous Replication            |
+ |        Master          Slave                     |
+ |      < master    >   < slave      >              |
+ |                                                  |
+ |  [ Update    ]   <                         >     |
+ |  [ Replicate ]                                   |
+ |  [ Show      ]   ____________                    |
+ |                                                  |
+ |            [ Quit ]                              |
+ |                                                  |
+  --------------------------------------------------
+
+The demo has the following behaviors:
+
+If you enter a string into the data entry field to the right of
+[Update], then that string will be used to either update the master
+database or to query the slave database.
+
+If you click [Update], then the string in the data entry box will be
+entered into the master database.
+
+If you click [Replicate], then all changes since the last replication
+will be propagated to the slave database.
+
+If you click [Show], then the slave database will be queried to find
+the string in the data entry box to the right of the [Update]
+button. If the string does not (yet) exist in the slave database, then
+"n/a" will appear to the right of the [Show] button. If the string
+does exist in the slave database, then it will be printed to the right
+of the [Show] button.
+
+
+Todo:
+1. Support for multiple slave servers.
+2. Explicit support for master/slave failover.
+3. More docs.
