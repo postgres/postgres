@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.157 2000/07/06 18:39:39 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.158 2000/07/11 13:07:17 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -2684,8 +2684,8 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	PQExpBuffer fn = createPQExpBuffer();
 	PQExpBuffer delqry = createPQExpBuffer();
 	PQExpBuffer fnlist = createPQExpBuffer();
+	PQExpBuffer	asPart = createPQExpBuffer();
 	int			j;
-	char	   *func_def;
 	char		func_lang[NAMEDATALEN + 1];
 	PGresult   *res;
 	int			nlangs;
@@ -2717,8 +2717,24 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
   	}
   
 	i_lanname = PQfnumber(res, "lanname");
-  
-	func_def = finfo[i].prosrc;
+
+  	/*
+	 * See backend/commands/define.c for details of how the 'AS' clause
+	 * is used.
+	 */
+	if (strcmp(finfo[i].probin, "-") != 0)
+	{
+		if (strcmp(finfo[i].prosrc, "-") != 0)
+			appendPQExpBuffer(asPart, "AS '%s', '%s'", finfo[i].probin, finfo[i].prosrc);
+		else
+			appendPQExpBuffer(asPart, "AS '%s'", finfo[i].probin);
+	}
+	else
+	{
+		if (strcmp(finfo[i].prosrc, "-") != 0)
+			appendPQExpBuffer(asPart, "AS '%s'", finfo[i].prosrc);
+	}
+
 	strcpy(func_lang, PQgetvalue(res, 0, i_lanname));
   
 	PQclear(res);
@@ -2744,10 +2760,10 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 
 	resetPQExpBuffer(q);
 	appendPQExpBuffer(q, "CREATE FUNCTION %s ", fn->data );
-	appendPQExpBuffer(q, "RETURNS %s%s AS '%s' LANGUAGE '%s';\n",
+	appendPQExpBuffer(q, "RETURNS %s%s %s LANGUAGE '%s';\n",
 					  (finfo[i].retset) ? " SETOF " : "",
 					  fmtId(findTypeByOid(tinfo, numTypes, finfo[i].prorettype), false),
-					  func_def, func_lang);
+					  asPart->data, func_lang);
 
 	ArchiveEntry(fout, finfo[i].oid, fn->data, "FUNCTION", NULL, q->data, delqry->data,
 					finfo[i].usename, NULL, NULL);

@@ -54,7 +54,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 2 
-#define K_VERS_REV 1 
+#define K_VERS_REV 2
 
 /* Some important version numbers (checked in code) */
 #define K_VERS_1_0 (( (1 * 256 + 0) * 256 + 0) * 256 + 0)
