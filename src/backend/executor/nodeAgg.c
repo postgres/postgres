@@ -46,7 +46,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.90 2002/11/01 19:33:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.90.2.1 2005/01/27 23:43:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,7 @@
 #include "access/heapam.h"
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_proc.h"
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "miscadmin.h"
@@ -902,6 +903,33 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 
 		peraggstate->transfn_oid = transfn_oid = aggform->aggtransfn;
 		peraggstate->finalfn_oid = finalfn_oid = aggform->aggfinalfn;
+
+		/* Check that aggregate owner has permission to call component fns */
+		{
+			HeapTuple	procTuple;
+			AclId		aggOwner;
+
+			procTuple = SearchSysCache(PROCOID,
+									   ObjectIdGetDatum(aggref->aggfnoid),
+									   0, 0, 0);
+			if (!HeapTupleIsValid(procTuple))
+				elog(ERROR, "cache lookup failed for function %u",
+					 aggref->aggfnoid);
+			aggOwner = ((Form_pg_proc) GETSTRUCT(procTuple))->proowner;
+			ReleaseSysCache(procTuple);
+
+			aclresult = pg_proc_aclcheck(transfn_oid, aggOwner,
+										 ACL_EXECUTE);
+			if (aclresult != ACLCHECK_OK)
+				aclcheck_error(aclresult, get_func_name(transfn_oid));
+			if (OidIsValid(finalfn_oid))
+			{
+				aclresult = pg_proc_aclcheck(finalfn_oid, aggOwner,
+											 ACL_EXECUTE);
+				if (aclresult != ACLCHECK_OK)
+					aclcheck_error(aclresult, get_func_name(finalfn_oid));
+			}
+		}
 
 		fmgr_info(transfn_oid, &peraggstate->transfn);
 		if (OidIsValid(finalfn_oid))

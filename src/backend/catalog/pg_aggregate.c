@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.56 2002/09/18 21:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.56.2.1 2005/01/27 23:43:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,10 +22,13 @@
 #include "catalog/pg_aggregate.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
+#include "miscadmin.h"
 #include "optimizer/cost.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -46,6 +49,7 @@ AggregateCreate(const char *aggName,
 	char		nulls[Natts_pg_aggregate];
 	Datum		values[Natts_pg_aggregate];
 	Form_pg_proc proc;
+	AclResult	aclresult;
 	Oid			transfn;
 	Oid			finalfn = InvalidOid;	/* can be omitted */
 	Oid			finaltype;
@@ -100,6 +104,11 @@ AggregateCreate(const char *aggName,
 	}
 	ReleaseSysCache(tup);
 
+	/* Check aggregate creator has permission to call the function */
+	aclresult = pg_proc_aclcheck(transfn, GetUserId(), ACL_EXECUTE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, get_func_name(transfn));
+
 	/* handle finalfn, if supplied */
 	if (aggfinalfnName)
 	{
@@ -116,6 +125,11 @@ AggregateCreate(const char *aggName,
 		proc = (Form_pg_proc) GETSTRUCT(tup);
 		finaltype = proc->prorettype;
 		ReleaseSysCache(tup);
+
+		/* Check aggregate creator has permission to call the function */
+		aclresult = pg_proc_aclcheck(finalfn, GetUserId(), ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, get_func_name(finalfn));
 	}
 	else
 	{
