@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.53 2003/07/26 13:50:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.54 2003/08/16 23:33:49 momjian Exp $
 -->
 
 <chapter id="client-authentication">
@@ -610,16 +610,21 @@ local   db1,db2,@demodbs  all                                       md5
 
    <para>
     <productname>Kerberos</productname> is an industry-standard secure
-    authentication system suitable for distributed computing over a
-    public network. A description of the
-    <productname>Kerberos</productname> system is far beyond the scope
-    of this document; in all generality it can be quite complex (yet
-    powerful). The <ulink
+    authentication system suitable for distributed computing over a public
+    network. A description of the <productname>Kerberos</productname> system
+    is far beyond the scope of this document; in all generality it can be
+    quite complex (yet powerful). The <ulink
     url="http://www.nrl.navy.mil/CCS/people/kenh/kerberos-faq.html">Kerberos
-    <acronym>FAQ</></ulink> or <ulink
-    url="ftp://athena-dist.mit.edu">MIT Project Athena</ulink> can be
-    a good starting point for exploration. Several sources for
-    <productname>Kerberos</> distributions exist.
+    <acronym>FAQ</></ulink> or <ulink url="ftp://athena-dist.mit.edu">MIT
+    Project Athena</ulink> can be a good starting point for exploration.
+    Several sources for <productname>Kerberos</> distributions exist.
+   </para>
+
+   <para>
+    While <productname>PostgreSQL</> supports both Kerberos 4 and 
+    Kerberos 5, only Kerberos 5 is recommended.  Kerberos 4 is
+    considered insecure and no longer recommended for general
+    use.
    </para>
 
    <para>
