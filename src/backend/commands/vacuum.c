@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.262 2003/09/29 00:05:25 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.263 2003/10/02 23:19:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -520,6 +520,9 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 		elog(ERROR, "pg_class entry for relid %u vanished during vacuuming",
 			 relid);
 
+	/* ensure no one else does this at the same time */
+	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+
 	/* overwrite the existing statistics in the tuple */
 	pgcform = (Form_pg_class) GETSTRUCT(&rtup);
 	pgcform->relpages = (int32) num_pages;
@@ -532,6 +535,8 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	 */
 	if (!hasindex)
 		pgcform->relhaspkey = false;
+
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	/*
 	 * Invalidate the tuple in the catcaches; this also arranges to flush
@@ -588,11 +593,16 @@ vac_update_dbstats(Oid dbid,
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "could not find tuple for database %u", dbid);
 
+	/* ensure no one else does this at the same time */
+	LockBuffer(scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
+
 	dbform = (Form_pg_database) GETSTRUCT(tuple);
 
 	/* overwrite the existing statistics in the tuple */
 	dbform->datvacuumxid = vacuumXID;
 	dbform->datfrozenxid = frozenXID;
+
+	LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 	/* invalidate the tuple in the cache and write the buffer */
 	CacheInvalidateHeapTuple(relation, tuple);
