@@ -1,7 +1,7 @@
 
                   Perguntas Frequentes (FAQ) sobre PostgreSQL
                                        
-   Última atualização: Ter Ago 31 23:28:02 EDT 2004
+   Última atualização: Sat Nov 20 17:28:23 EDT 2004
    
    Mantenedor atual: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -111,8 +111,7 @@
    4.25) Como eu retorno múltiplos registros ou colunas de uma função?
    4.26) Por que eu não posso confiar na criação/remoção de tabelas
    temporárias em funções PL/PgSQL?
-   4.27) Que opções para replicação estão disponíveis?
-   4.28) Que opções para encriptação estão disponíveis?
+   4.27) Que opções para encriptação estão disponíveis?
    
                           Extendendo o PostgreSQL
                                       
@@ -1196,16 +1195,7 @@ CREATE TABLE teste (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
    a tabelas temporárias no PL/PgSQL. Isto irá fazer com que a consulta
    seja avaliada toda vez.
    
-    4.27) Que opções para replicação estão disponíveis?
-    
-   Há várias opções de replicação mestre/escravo disponíveis. Isto
-   permite somente que o mestre faça mudanças no banco de dados e o
-   escravo só pode ler o banco de dados. Abaixo em
-   http://gborg.PostgreSQL.org/genpage?replication_research lista-os. Uma
-   solução de replicação de múltiplos mestres está sendo desenvolvida em
-   http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
-   
-    4.28) Que opções para encriptação estão disponíveis?
+    4.27) Que opções para encriptação estão disponíveis?
     
      * No contrib/pgcrypto contém muitas funções de encriptação para
        serem utilizados em consultas SQL.

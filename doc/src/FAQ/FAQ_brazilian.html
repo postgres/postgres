@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Perguntas Frequentes (FAQ) sobre PostgreSQL</H1>
 
-    <P>&Uacute;ltima atualiza&ccedil;&atilde;o: Ter Ago 31 23:28:02 EDT 2004</P>
+    <P>&Uacute;ltima atualiza&ccedil;&atilde;o: Sat Nov 20 17:28:23 EDT 2004</P>
 
     <P>Mantenedor atual: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -102,8 +102,7 @@
      <A href="#4.24">4.24</A>) Como eu fa&ccedil;o consultas utilizando m&uacute;ltiplos bancos de dados?<BR>
     <A href="#4.25">4.25</A>) Como eu retorno m&uacute;ltiplos registros ou colunas de uma fun&ccedil;&atilde;o?<BR>
     <A href="#4.26">4.26</A>) Por que eu n&atilde;o posso confiar na cria&ccedil;&atilde;o/remo&ccedil;&atilde;o de tabelas tempor&aacute;rias em fun&ccedil;&otilde;es PL/PgSQL?<BR>
-    <A href="#4.27">4.27</A>) Que op&ccedil;&otilde;es para replica&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?<BR>
-    <A href="#4.28">4.28</A>) Que op&ccedil;&otilde;es para encripta&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?<BR>
+    <A href="#4.28">4.27</A>) Que op&ccedil;&otilde;es para encripta&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?<BR>
      
 
     <H2 align="center">Extendendo o PostgreSQL</H2>
@@ -961,10 +960,7 @@ Para isto ser r&aacute;pido, <CODE>subcol</CODE> deve ser uma coluna indexada. <
     <H4><A name="4.26">4.26</A>) Por que eu n&atilde;o posso confiar na cria&ccedil;&atilde;o/remo&ccedil;&atilde;o de tabelas tempor&aacute;rias em fun&ccedil;&otilde;es PL/PgSQL?</H4>
     <P>PL/PgSQL armazena o conte&uacute;do da fun&ccedil;&atilde;o, e o efeito indesejado &eacute; que se uma fun&ccedil;&atilde;o PL/PgSQL acessa uma tabela tempor&aacute;ria, e aquela tabela &eacute; removida e criada novamente, e a fun&ccedil;&atilde;o &eacute; chamada novamente, a fun&ccedil;&atilde;o ir&aacute; falhar porque o conte&uacute;do armazenado da fun&ccedil;&atilde;o ainda apontar&aacute; para a tabela tempor&aacute;ria antiga. A solu&ccedil;&atilde;o &eacute; utilizar o <SMALL>EXECUTE</SMALL> para acesso a tabelas tempor&aacute;rias no PL/PgSQL. Isto ir&aacute; fazer com que a consulta seja avaliada toda vez.</P>
 
-    <H4><A name="4.27">4.27</A>) Que op&ccedil;&otilde;es para replica&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?</H4>
-    <P>H&aacute; v&aacute;rias op&ccedil;&otilde;es de replica&ccedil;&atilde;o mestre/escravo dispon&iacute;veis. Isto permite somente que o mestre fa&ccedil;a mudan&ccedil;as no banco de dados e o escravo s&oacute; pode ler o banco de dados. Abaixo em <A href="http://gborg.PostgreSQL.org/genpage?replication_research">http://gborg.PostgreSQL.org/genpage?replication_research</A> lista-os. Uma solu&ccedil;&atilde;o de replica&ccedil;&atilde;o de m&uacute;ltiplos mestres est&aacute; sendo desenvolvida em <A href="http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php">http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php</A>.</P>
-
-    <H4><A name="4.28">4.28</A>) Que op&ccedil;&otilde;es para encripta&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?</H4>
+    <H4><A name="4.27">4.27</A>) Que op&ccedil;&otilde;es para encripta&ccedil;&atilde;o est&atilde;o dispon&iacute;veis?</H4>
     <UL>
 	    <LI>No <I>contrib/pgcrypto</I> cont&eacute;m muitas fun&ccedil;&otilde;es de encripta&ccedil;&atilde;o para serem utilizados em consultas <SMALL>SQL</SMALL>.</li>
 	    <LI>Para encriptar a transmiss&atilde;o do cliente ao servidor, o servidor deve ter a op&ccedil;&atilde;o <I>ssl</I> definida como <I>true</I> no <I>postgresql.conf</I>, e um registro <I>host</I> ou <I>hostssl</I> deve existir no <I>pg_hba.conf</I>, e o <I>sslmode</I> no cliente n&atilde;o deve estar <I>disable</I>. (Note que tamb&eacute;m &eacute; poss&iacute;vel utilizar outros esquemas de transporte encriptado, tais como stunnel ou ssh, ao inv&eacute;s da conex&atilde;o SSL nativa do PostgreSQL.)
