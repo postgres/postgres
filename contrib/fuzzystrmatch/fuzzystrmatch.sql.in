@@ -19,4 +19,4 @@ LANGUAGE 'C' WITH (iscachable, isstrict);
 
 CREATE FUNCTION text_soundex(text) RETURNS text
 AS 'MODULE_PATHNAME', 'soundex'
-LANGUAGE 'C';
+LANGUAGE 'C' WITH (iscachable, isstrict);
