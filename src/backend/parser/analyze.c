@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.44 1997/09/18 20:20:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.45 1997/10/12 07:09:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,6 +303,7 @@ static Query *
 transformInsertStmt(ParseState *pstate, AppendStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);	/* make a new query tree */
+	List	   *icolumns;
 
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
@@ -313,10 +314,74 @@ transformInsertStmt(ParseState *pstate, AppendStmt *stmt)
 	qry->uniqueFlag = NULL;
 
 	/* fix the target list */
-	pstate->p_insert_columns = makeTargetNames(pstate, stmt->cols);
-
+	icolumns = pstate->p_insert_columns = makeTargetNames(pstate, stmt->cols);
+	
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
-
+	
+	/* DEFAULT handling */
+	if (length(qry->targetList) < pstate->p_target_relation->rd_att->natts &&
+		pstate->p_target_relation->rd_att->constr &&
+		pstate->p_target_relation->rd_att->constr->num_defval > 0)
+	{
+		AttributeTupleForm	   *att = pstate->p_target_relation->rd_att->attrs;
+		AttrDefault			   *defval = pstate->p_target_relation->rd_att->constr->defval;
+		int						ndef = pstate->p_target_relation->rd_att->constr->num_defval;
+		
+		/* 
+		 * if stmt->cols == NIL then makeTargetNames returns list of all 
+		 * attrs: have to shorter icolumns list...
+		 */
+		if (stmt->cols == NIL)
+		{
+			List   *extrl;
+			int		i = length(qry->targetList);
+			
+			foreach (extrl, icolumns)
+			{
+				if (--i <= 0)
+					break;
+			}
+			freeList (lnext(extrl));
+			lnext(extrl) = NIL;
+		}
+		
+		while (ndef-- > 0)
+		{
+			List		   *tl;
+			Ident		   *id;
+			TargetEntry	   *te;
+			
+			foreach (tl, icolumns)
+			{
+				id = (Ident *) lfirst(tl);
+				if (!namestrcmp(&(att[defval[ndef].adnum - 1]->attname), id->name))
+					break;
+			}
+			if (tl != NIL)		/* something given for this attr */
+				continue;
+			/* 
+			 * Nothing given for this attr with DEFAULT expr, so
+			 * add new TargetEntry to qry->targetList. 
+			 * Note, that we set resno to defval[ndef].adnum:
+			 * it's what transformTargetList()->make_targetlist_expr()
+			 * does for INSERT ... SELECT. But for INSERT ... VALUES
+			 * pstate->p_last_resno is used. It doesn't matter for 
+			 * "normal" using (planner creates proper target list
+			 * in preptlist.c), but may break RULEs in some way.
+			 * It seems better to create proper target list here...
+			 */
+			te = makeNode(TargetEntry);
+			te->resdom = makeResdom(defval[ndef].adnum,
+									att[defval[ndef].adnum - 1]->atttypid,
+									att[defval[ndef].adnum - 1]->attlen,
+									pstrdup(nameout(&(att[defval[ndef].adnum - 1]->attname))),
+									0, 0, 0);
+			te->fjoin = NULL;
+			te->expr = (Node *) stringToNode(defval[ndef].adbin);
+			qry->targetList = lappend (qry->targetList, te);
+		}
+	}
+	
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
@@ -1098,10 +1163,20 @@ makeTargetNames(ParseState *pstate, List *cols)
 		}
 	}
 	else
+	{
 		foreach(tl, cols)
-		/* elog on failure */
-			varattno(pstate->p_target_relation, ((Ident *) lfirst(tl))->name);
-
+		{
+			List	   *nxt;
+			char	   *name = ((Ident *) lfirst(tl))->name;
+		
+			/* elog on failure */
+			varattno(pstate->p_target_relation, name);
+			foreach(nxt, lnext(tl))
+				if (!strcmp(name, ((Ident *) lfirst(nxt))->name))
+					elog (WARN, "Attribute %s should be specified only once", name);
+		}
+	}
+	
 	return cols;
 }
 

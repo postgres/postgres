@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.26 1997/09/18 20:20:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.27 1997/10/12 07:09:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1245,6 +1245,7 @@ ExecReplace(TupleTableSlot *slot,
 		ExecARUpdateTriggers(resultRelationDesc, tupleid, tuple);
 }
 
+#if 0
 static HeapTuple
 ExecAttrDefault(Relation rel, HeapTuple tuple)
 {
@@ -1309,6 +1310,7 @@ ExecAttrDefault(Relation rel, HeapTuple tuple)
 	return (newtuple);
 
 }
+#endif
 
 static char *
 ExecRelCheck(Relation rel, HeapTuple tuple)
@@ -1375,8 +1377,10 @@ ExecConstraints(char *caller, Relation rel, HeapTuple tuple)
 
 	Assert(rel->rd_att->constr);
 
+#if 0
 	if (rel->rd_att->constr->num_defval > 0)
 		newtuple = tuple = ExecAttrDefault(rel, tuple);
+#endif
 
 	if (rel->rd_att->constr->has_not_null)
 	{
