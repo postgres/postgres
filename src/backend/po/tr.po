@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-tr\n"
 "POT-Creation-Date: 2004-10-25 18:59+0100\n"
-"PO-Revision-Date: 2004-11-09 11:32+0200\n"
-"Last-Translator: Nicolai TUFAR <ntufar@tdmsoft.com>\n"
+"PO-Revision-Date: 2004-11-13 01:13+0200\n"
+"Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -96,7 +96,7 @@ msgstr "Lütfen onu REINDEX'leyin."
 #: access/heap/heapam.c:495
 #, c-format
 msgid "could not obtain lock on relation \"%s\""
-msgstr "\"%s\" tablosu için lock alınamamıştır"
+msgstr "\"%s\" tablosu için lock alınamadı"
 
 #: access/heap/heapam.c:618
 #: access/heap/heapam.c:653
@@ -619,7 +619,7 @@ msgstr "Veritabanı LC_COLLATE \"%s\", ile ilklendirilmiştir, ancak setlocale()
 #: access/transam/xlog.c:3299
 #: access/transam/xlog.c:3306
 msgid "It looks like you need to initdb or install locale support."
-msgstr "Yerel dil desteğini etkinleştirmek için initdb'nin çalıştırılması gerekmektedir."
+msgstr "Yerel dil desteğini etkinleştirmek için initdb çalıştırmanız gerekir."
 
 #: access/transam/xlog.c:3303
 #, c-format
@@ -697,7 +697,7 @@ msgstr "\"%s\" tanınmayan recovery parametresi"
 #: access/transam/xlog.c:3739
 #, c-format
 msgid "syntax error in recovery command file: %s"
-msgstr "%s recovery komut dosyasında sözdizim hatası"
+msgstr "%s recovery komut dosyasında söz dizim hatası"
 
 #: access/transam/xlog.c:3741
 msgid "Lines should have the format parameter = 'value'."
@@ -774,7 +774,7 @@ msgstr "talep edilmiş timeline %u veritabanı sistem timeline %u için geçerli
 #: access/transam/xlog.c:4105
 #, c-format
 msgid "checkpoint record is at %X/%X"
-msgstr "checkpoint kaydı %X/%X adresindedir"
+msgstr "checkpoint kaydı %X/%X noktasındadır"
 
 #: access/transam/xlog.c:4090
 msgid "could not locate required checkpoint record"
@@ -1038,7 +1038,7 @@ msgstr "\"%s\" dosyası, offset %u yazma hatası: %m"
 #: access/transam/slru.c:862
 #, c-format
 msgid "could not truncate directory \"%s\": apparent wraparound"
-msgstr "\"%s\" dizini küçültülemedi: başa sarma durumuna rastlanmıştır"
+msgstr "\"%s\" dizini küçültülemedi: başa sarma durumuna rastlandı"
 
 #: access/transam/slru.c:930
 #: commands/tablespace.c:525
@@ -1776,7 +1776,7 @@ msgstr "sistem katalog tabloları üzerinde kullanıcı tanımlı index oluştur
 
 #: catalog/index.c:522
 msgid "shared indexes cannot be created after initdb"
-msgstr "initdb işleminden sonra shared index oluşturulamaz"
+msgstr "initdb işleminden sonra shared indeks oluşturulamaz"
 
 #: catalog/index.c:1679
 #, c-format
@@ -3133,7 +3133,7 @@ msgstr "hazırlanmış (prepared) sorgu SELECT değildir"
 #: commands/prepare.c:307
 #, c-format
 msgid "prepared statement \"%s\" already exists"
-msgstr "\"%s\"hazırlanmış sorgusu zaten mevcut"
+msgstr "\"%s\" hazırlanmış sorgusu zaten mevcut"
 
 #: commands/prepare.c:387
 #, c-format
@@ -4501,7 +4501,7 @@ msgid "value for domain %s violates check constraint \"%s\""
 msgstr "%s domaine kaydedilecek değer \"%s\" check kısıtlamasını desteklememektedir"
 
 #: executor/execQual.c:2804
-#: optimizer/util/clauses.c:427
+#: optimizer/util/clauses.c:428
 #: parser/parse_agg.c:74
 msgid "aggregate function calls may not be nested"
 msgstr "aggregate fonksiyon çağırmaları içiçe olamaz"
@@ -5316,7 +5316,7 @@ msgstr "UNION/INTERSECT/EXCEPT içeren sorguda SELECT FOR UPDATE kullanılamaz"
 msgid "SELECT FOR UPDATE is not allowed in subqueries"
 msgstr "subquery sorgusunda SELECT FOR UPDATE kullanılamaz"
 
-#: optimizer/util/clauses.c:2331
+#: optimizer/util/clauses.c:2348
 #, c-format
 msgid "SQL function \"%s\" during inlining"
 msgstr "satır içine alınma işlemi sırasında \"%s\" SQL fonksiyonu"
@@ -5669,7 +5669,7 @@ msgstr "giriş sonuna %s"
 #: scan.l:629
 #, c-format
 msgid "%s at or near \"%s\""
-msgstr "\"%2$s\"  yakınında %1$s"
+msgstr "\"%2$s\"  yerinde %1$s"
 
 #: parser/parse_agg.c:120
 msgid "aggregates not allowed in WHERE clause"
@@ -6300,7 +6300,7 @@ msgstr "parse hatası; ayrıca vertual bellek de dolmuştur"
 #: gram.y:8242
 #: y.tab.c:19082
 msgid "syntax error"
-msgstr "sözdizim hatası"
+msgstr "söz dizim hatası"
 
 #: y.tab.c:19196
 msgid "parser stack overflow"
@@ -6363,6 +6363,96 @@ msgstr "tip adı \"%s\" geçersiz"
 msgid "identifier \"%s\" will be truncated to \"%.*s\""
 msgstr "\"%s\" adı  \"%.*s\" uzunluğuna budanacaktır"
 
+#: port/pg_shmem.c:101
+#: port/sysv_shmem.c:101
+#, c-format
+msgid "could not create shared memory segment: %m"
+msgstr "shared memory segment oluşturulamıyor: %m"
+
+#: port/pg_shmem.c:102
+#: port/sysv_shmem.c:102
+#, c-format
+msgid "Failed system call was shmget(key=%lu, size=%u, 0%o)."
+msgstr "Başarısız çağrı: shmget(key=%lu, size=%u, 0%o)."
+
+#: port/pg_shmem.c:106
+#: port/sysv_shmem.c:106
+#, c-format
+msgid ""
+"This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMMAX parameter.  You can either reduce the request size or reconfigure the kernel with larger SHMMAX.  To reduce the request size (currently %u bytes), reduce PostgreSQL's shared_buffers parameter (currently %d) and/or its max_connections parameter (currently %d).\n"
+"If the request size is already small, it's possible that it is less than your kernel's SHMMIN parameter, in which case raising the request size or reconfiguring SHMMIN is called for.\n"
+"The PostgreSQL documentation contains more information about shared memory configuration."
+msgstr ""
+"Bu hata, PostgreSQL'in shared memory isteğinin kernelin SHMMAX parametresinde verilen değerinin aıldığını gösteriyor. İstenilen bellek boyutunu dürebilir veya kerneli daha büyük bir SHMMAX parametresi ile yeniden konfigure edebilirsiniz. İstenilen bellek boyutunu (şu an %u bayt) düşürmek için PostgreSQL'in shared_buffers parametresini (şu an %d) ve/veya max_connections (şu an %d) parametrelerini düşürebilirsiniz.\n"
+" Eğer istenilen bellek boyutu zaten küçük ise, kernelin SHMMIN parametresinden düşük olabilir, bu durumda istenilen bellek boyutunu SHMMIN değerine kadar büyütmeniz lazım veya SHMMIN değerini düşürmeniz lazmı. PostgreSQL dokümanlarında shared memory konfigurasyonu hakkında daha fazla bilgi bulabilirsiniz."
+
+#: port/pg_shmem.c:119
+#: port/sysv_shmem.c:119
+#, c-format
+msgid ""
+"This error usually means that PostgreSQL's request for a shared memory segment exceeded available memory or swap space. To reduce the request size (currently %u bytes), reduce PostgreSQL's shared_buffers parameter (currently %d) and/or its max_connections parameter (currently %d).\n"
+"The PostgreSQL documentation contains more information about shared memory configuration."
+msgstr ""
+"Bu hata genellikle PostgreSQL'in shared kuullanımı boş takas alanının aştığı zaman ortay çıkıyor. İstenilen bellek bouytu (şu an %u bayt) düşürmek içi, PostgreSQL'in shared_buffers (şu an %d) ve/veya max_connection (şu an %d) parametrelerini düşürün.\n"
+"  PostgreSQL dokümanlarında shared memory konfigurasyonu hakkında daha fazla bilgi bulabilirsiniz."
+
+#: port/pg_shmem.c:128
+#: port/sysv_shmem.c:128
+#, c-format
+msgid ""
+"This error does *not* mean that you have run out of disk space. It occurs either if all available shared memory IDs have been taken, in which case you need to raise the SHMMNI parameter in your kernel, or because the system's overall limit for shared memory has been reached.  If you cannot increase the shared memory limit, reduce PostgreSQL's shared memory request (currently %u bytes), by reducing its shared_buffers parameter (currently %d) and/or its max_connections parameter (currently %d).\n"
+"The PostgreSQL documentation contains more information about shared memory configuration."
+msgstr ""
+"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gelmiyor .\n"
+"Bu durum, tüm shared memory ID alınmış olduğu, ki bu durumda SHMMNI parametresinin değerleri yükseltmelisiniz.  Shared memory sınırını yükseltemezseniz, PostgerSQL sisteminin shared memory tütekitimini (şu an %u) shared_buffers (şu an %d) ve/veya max_connections parametresini (şu an %d) düşürerek azaltabilirsiniz.\n"
+"PostgreSQL dokümanlarında bu konu ile ilgili daha ayrıntılı açıklama ve konfigurasyon hakkında bilgileri bulabilirsiniz."
+
+#: port/pg_shmem.c:408
+#: port/sysv_shmem.c:408
+#, c-format
+msgid "could not stat data directory \"%s\": %m"
+msgstr "\"%s\" veri dizin hakkında bilgi alınamadı: %m"
+
+#: port/win32/security.c:39
+#, c-format
+msgid "could not open process token: error code %d\n"
+msgstr "open process token açma başarısız: hata kodu %d\n"
+
+#: port/win32/security.c:46
+msgid "could not get token information: got zero size\n"
+msgstr "token bilgisi alınamadı: sıfır uzunluk alınmış\n"
+
+#: port/win32/security.c:52
+#: port/win32/security.c:69
+#, c-format
+msgid "could not get token information: error code %d\n"
+msgstr "token bilgisi alınamadı: hata kodu %d\n"
+
+#: port/win32/security.c:60
+#, c-format
+msgid "could not allocate %i bytes for token information\n"
+msgstr "token bilgisi için %i bayt rezerve edilememiş\n"
+
+#: port/win32/security.c:80
+#, c-format
+msgid "could not get SID for Administrators group: error code %d\n"
+msgstr "Administrators grubunun SID numarası alınamadı: hata kodu %d\n"
+
+#: port/win32/security.c:89
+#, c-format
+msgid "could not get SID for PowerUsers group: error code %d\n"
+msgstr "PowerUsers grubunun SID numarası alınamadı: %d\n"
+
+#: port/win32/signal.c:227
+#, c-format
+msgid "could not create signal listener pipe: error code %d; retrying\n"
+msgstr "signal listener pipe oluşturulamadı: %d; yeniden deneniyor\n"
+
+#: port/win32/signal.c:239
+#, c-format
+msgid "could not create signal dispatch thread: error code %d\n"
+msgstr "signal dispatch thread oluşturulamıyor: hata kodu %d\n"
+
 #: port/pg_sema.c:117
 #: port/sysv_sema.c:117
 #, c-format
@@ -6392,90 +6482,6 @@ msgstr ""
 #, c-format
 msgid "You possibly need to raise your kernel's SEMVMX value to be at least %d.  Look into the PostgreSQL documentation for details."
 msgstr "Kernel SEMVMX değerini en az %d değerine kadar çıkartmalısınız.  Daha fazla bilgi için PostgreSQL dokümanlarına bakın."
-
-#: port/win32/security.c:39
-#, c-format
-msgid "could not open process token: %d\n"
-msgstr "open process token açma hatası: %d\n"
-
-#: port/win32/security.c:46
-msgid "could not get token information: got zero size\n"
-msgstr "token bilgisi alınamadı: sıfır uzunluk alınmış\n"
-
-#: port/win32/security.c:52
-#: port/win32/security.c:69
-#, c-format
-msgid "could not get token information: %d\n"
-msgstr "gösterge bilgisi alınamadı: %d\n"
-
-#: port/win32/security.c:60
-#, c-format
-msgid "could not allocate %i bytes for token information\n"
-msgstr "token bilgisi için %i bayt rezerve edilememiş\n"
-
-#: port/win32/security.c:80
-#, c-format
-msgid "could not get SID for Administrators group: %d\n"
-msgstr "Administrators grubunun SID numarası alınamamış: %d\n"
-
-#: port/win32/security.c:89
-#, c-format
-msgid "could not get SID for PowerUsers group: %d\n"
-msgstr "PowerUsers grubunun SID numarası alınamamış: %d\n"
-
-#: port/win32/signal.c:227
-#, c-format
-msgid "could not create signal listener pipe: %d; retrying\n"
-msgstr "signal listener pipe oluşturulamamılş: %d; yeniden deneniyor\n"
-
-#: port/win32/signal.c:239
-#, c-format
-msgid "could not create signal dispatch thread: %d\n"
-msgstr "signal dispatch thread oluşturulamıyor: %d\n"
-
-#: port/pg_shmem.c:94
-#: port/sysv_shmem.c:94
-#, c-format
-msgid "could not create shared memory segment: %m"
-msgstr "shared memory segment oluşturulamıyor: %m"
-
-#: port/pg_shmem.c:95
-#: port/sysv_shmem.c:95
-#, c-format
-msgid "Failed system call was shmget(key=%lu, size=%u, 0%o)."
-msgstr "Başarısız çağrı: shmget(key=%lu, size=%u, 0%o)."
-
-#: port/pg_shmem.c:99
-#: port/sysv_shmem.c:99
-#, c-format
-msgid ""
-"This error usually means that PostgreSQL's request for a shared memory segment exceeded your kernel's SHMMAX parameter.  You can either reduce the request size or reconfigure the kernel with larger SHMMAX.  To reduce the request size (currently %u bytes), reduce PostgreSQL's shared_buffers parameter (currently %d) and/or its max_connections parameter (currently %d).\n"
-"If the request size is already small, it's possible that it is less than your kernel's SHMMIN parameter, in which case raising the request size or reconfiguring SHMMIN is called for.\n"
-"The PostgreSQL documentation contains more information about shared memory configuration."
-msgstr ""
-"Bu hata, PostgreSQL'in shared memory isteğinin kernelin SHMMAX parametresinde verilen değerinin aıldığını gösteriyor. İstenilen bellek boyutunu dürebilir veya kerneli daha büyük bir SHMMAX parametresi ile yeniden konfigure edebilirsiniz. İstenilen bellek boyutunu (şu an %u bayt) düşürmek için PostgreSQL'in shared_buffers parametresini (şu an %d) ve/veya max_connections (şu an %d) parametrelerini düşürebilirsiniz.\n"
-" Eğer istenilen bellek boyutu zaten küçük ise, kernelin SHMMIN parametresinden düşük olabilir, bu durumda istenilen bellek boyutunu SHMMIN değerine kadar büyütmeniz lazım veya SHMMIN değerini düşürmeniz lazmı. PostgreSQL dokümanlarında shared memory konfigurasyonu hakkında daha fazla bilgi bulabilirsiniz."
-
-#: port/pg_shmem.c:112
-#: port/sysv_shmem.c:112
-#, c-format
-msgid ""
-"This error usually means that PostgreSQL's request for a shared memory segment exceeded available memory or swap space. To reduce the request size (currently %u bytes), reduce PostgreSQL's shared_buffers parameter (currently %d) and/or its max_connections parameter (currently %d).\n"
-"The PostgreSQL documentation contains more information about shared memory configuration."
-msgstr ""
-"Bu hata genellikle PostgreSQL'in shared kuullanımı boş takas alanının aştığı zaman ortay çıkıyor. İstenilen bellek bouytu (şu an %u bayt) düşürmek içi, PostgreSQL'in shared_buffers (şu an %d) ve/veya max_connection (şu an %d) parametrelerini düşürün.\n"
-"  PostgreSQL dokümanlarında shared memory konfigurasyonu hakkında daha fazla bilgi bulabilirsiniz."
-
-#: port/pg_shmem.c:121
-#: port/sysv_shmem.c:121
-#, c-format
-msgid ""
-"This error does *not* mean that you have run out of disk space. It occurs either if all available shared memory IDs have been taken, in which case you need to raise the SHMMNI parameter in your kernel, or because the system's overall limit for shared memory has been reached.  If you cannot increase the shared memory limit, reduce PostgreSQL's shared memory request (currently %u bytes), by reducing its shared_buffers parameter (currently %d) and/or its max_connections parameter (currently %d).\n"
-"The PostgreSQL documentation contains more information about shared memory configuration."
-msgstr ""
-"Bu hata mesajı yeterli boş disk alanı kalmadığı anlamına gelmiyor .\n"
-"Bu durum, tüm shared memory ID alınmış olduğu, ki bu durumda SHMMNI parametresinin değerleri yükseltmelisiniz.  Shared memory sınırını yükseltemezseniz, PostgerSQL sisteminin shared memory tütekitimini (şu an %u) shared_buffers (şu an %d) ve/veya max_connections parametresini (şu an %d) düşürerek azaltabilirsiniz.\n"
-"PostgreSQL dokümanlarında bu konu ile ilgili daha ayrıntılı açıklama ve konfigurasyon hakkında bilgileri bulabilirsiniz."
 
 #: postmaster/postmaster.c:388
 #, c-format
@@ -6759,11 +6765,11 @@ msgstr "SIGHUP sinyali alınmıştır, konfigurasyon dosyaları yeniden okunuyor
 
 #: postmaster/postmaster.c:1790
 msgid "received smart shutdown request"
-msgstr "smart shutdown isteği alınmış"
+msgstr "smart shutdown isteği alındı"
 
 #: postmaster/postmaster.c:1826
 msgid "received fast shutdown request"
-msgstr "fast shutdown isteği alınmış"
+msgstr "fast shutdown isteği alındı"
 
 #: postmaster/postmaster.c:1833
 msgid "aborting any active transactions"
@@ -6771,7 +6777,7 @@ msgstr "actif transactionlar iptal ediliyor"
 
 #: postmaster/postmaster.c:1871
 msgid "received immediate shutdown request"
-msgstr "immediate shutdown isteği alınmış"
+msgstr "immediate shutdown isteği alındı"
 
 #: postmaster/postmaster.c:1944
 msgid "startup process"
@@ -6851,8 +6857,8 @@ msgstr "bağlantı tanımı: kullanıcı=%s veritabanı=%s"
 
 #: postmaster/postmaster.c:2850
 #, c-format
-msgid "could not exec backend process \"%s\": %m"
-msgstr "\"%s\" backend süreci başlatma hatası: %m"
+msgid "could not execute server process \"%s\": %m"
+msgstr "\"%s\" sunucu süreci başlatma hatası: %m"
 
 #: postmaster/postmaster.c:3257
 #, c-format
@@ -6876,8 +6882,8 @@ msgstr "backend parametreler dosyasından \"%s\" okunamıyor: %m"
 
 #: postmaster/postmaster.c:3763
 #, c-format
-msgid "could not wait on child process handle: %d\n"
-msgstr "could not wait on child process handle: %d\n"
+msgid "could not wait on child process handle: error code %d\n"
+msgstr "çocuk süreç handle bekleme hatası: error kodu: %d\n"
 
 #: postmaster/bgwriter.c:336
 #, c-format
@@ -6907,8 +6913,8 @@ msgstr "archiver başlatılamadı: %m"
 
 #: postmaster/pgarch.c:392
 #, c-format
-msgid "transaction log file \"%s\" could not be archived"
-msgstr "transaction log dosyası \"%s\" archive edilemedi"
+msgid "transaction log file \"%s\" could not be archived: too many failures"
+msgstr "transaction log dosyası \"%s\" arşivlenemedi: çok fazla başarısız işlem"
 
 #: postmaster/pgarch.c:475
 #, c-format
@@ -7109,14 +7115,10 @@ msgid "logger shutting down"
 msgstr "loglama süreci kapatılıyor"
 
 #: postmaster/syslogger.c:405
+#: postmaster/syslogger.c:419
 #, c-format
 msgid "could not create pipe for syslog: %m"
 msgstr "syslog için pipe oluşturulamadı: %m"
-
-#: postmaster/syslogger.c:419
-#, c-format
-msgid "could not create pipe for syslogging: %m"
-msgstr "syslogging için pipe oluşturulamadı: %m"
 
 #: postmaster/syslogger.c:447
 #, c-format
@@ -9231,13 +9233,13 @@ msgstr "yıl bilgisi olmadan haftanın günü hesaplanamaz"
 msgid "interval time zone \"%s\" must not specify month"
 msgstr "\"%s\" interval time zone ayı belirtmemelidir"
 
-#: utils/adt/selfuncs.c:3409
-#: utils/adt/selfuncs.c:3796
+#: utils/adt/selfuncs.c:3370
+#: utils/adt/selfuncs.c:3757
 msgid "case insensitive matching not supported on type bytea"
 msgstr "bytea veri tipi için büyük ve küçük harf duyarsız karşılaştırma desteklenmemektedir"
 
-#: utils/adt/selfuncs.c:3514
-#: utils/adt/selfuncs.c:3957
+#: utils/adt/selfuncs.c:3475
+#: utils/adt/selfuncs.c:3918
 msgid "regular-expression matching not supported on type bytea"
 msgstr "bytea tipi için regular-expression karşılaştırma desteklenmemektedir"
 
@@ -9394,7 +9396,7 @@ msgstr "hata metni eksik"
 #: utils/error/elog.c:1763
 #, c-format
 msgid " at character %d"
-msgstr "%d karakterinde"
+msgstr " %d. karakterinde"
 
 #: utils/error/elog.c:1504
 msgid "DETAIL:  "
@@ -10784,7 +10786,7 @@ msgstr "SET AUTOCOMMIT TO OFF artık desteklenmiyor"
 #: utils/misc/guc.c:5726
 #, c-format
 msgid "invalid syntax for \"custom_variable_classes\": \"%s\""
-msgstr "\"custom_variable_classes\" için sözdizim hatası: \"%s\""
+msgstr "\"custom_variable_classes\" için söz dizim hatası: \"%s\""
 
 #: utils/misc/guc.c:5755
 msgid "cannot enable parameter when \"log_statement_stats\" is true"

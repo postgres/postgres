@@ -1,17 +1,20 @@
 # Slovenian message translation for libpq.
-# 
-# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2003.
-# 
+# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2003 - 2004.
+#
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2003-10-04 00:00+0200\n"
-"PO-Revision-Date: 2003-10-06 07:00+0200\n"
+"PO-Revision-Date: 2004-11-06 21:26+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Slovenian\n"
+"X-Poedit-Country: SLOVENIA\n"
+"X-Generator: KBabel 1.3.1\n"
 
 #: fe-auth.c:232
 #, c-format
@@ -21,9 +24,10 @@ msgstr "Kerberos 4 napaka: %s\n"
 #: fe-auth.c:394
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
-msgstr "vtiƒçnice ni bilo mogoƒçe nastaviti na blokiranje: %s\n"
+msgstr "vtiËnice ni bilo mogoËe preklopiti v blokirajoËi naËin: %s\n"
 
-#: fe-auth.c:411 fe-auth.c:415
+#: fe-auth.c:411
+#: fe-auth.c:415
 #, c-format
 msgid "Kerberos 5 authentication rejected: %*s\n"
 msgstr "Kerberos 5 avtentikacija je bila zavrnjena: %*s\n"
@@ -31,312 +35,333 @@ msgstr "Kerberos 5 avtentikacija je bila zavrnjena: %*s\n"
 #: fe-auth.c:441
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
-msgstr "vtiƒçnice ni bilo mogoƒçe povrniti v neblokirni naƒçin: %s\n"
+msgstr "vtiËnice ni bilo mogoËe povrniti v neblokirajoËi naËin: %s\n"
 
-#: fe-auth.c:509
+#: fe-auth.c:508
 msgid "SCM_CRED authentication method not supported\n"
-msgstr "SCM_CRED naƒçin avtentikacije ni podprt\n"
+msgstr "SCM_CRED naËin avtentikacije ni podprt\n"
 
 #: fe-auth.c:600
 msgid "Kerberos 4 authentication failed\n"
-msgstr "Kerberos 4 avtentikacija ni bila uspe≈°na\n"
+msgstr "Kerberos 4 avtentikacija ni bila uspeπna\n"
 
-#: fe-auth.c:606
+#: fe-auth.c:608
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Kerberos 4 avtentikacija ni podprta\n"
 
-#: fe-auth.c:616
+#: fe-auth.c:619
 msgid "Kerberos 5 authentication failed\n"
-msgstr "Kerberos 5 avtentikacija ni bila uspe≈°na\n"
+msgstr "Kerberos 5 avtentikacija ni bila uspeπna\n"
 
-#: fe-auth.c:622
+#: fe-auth.c:627
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Kerberos 5 avtentikacija ni podprta\n"
 
-#: fe-auth.c:650
+#: fe-auth.c:655
 #, c-format
 msgid "authentication method %u not supported\n"
-msgstr "%u ni podprt naƒçin avtentikacije\n"
+msgstr "%u ni podprt naËin avtentikacije\n"
 
-#: fe-auth.c:687
+#: fe-auth.c:692
 #, c-format
 msgid "invalid authentication service name \"%s\", ignored\n"
 msgstr "neveljavno ime storitve za avtentikacijo \"%s\" je bilo ignorirano\n"
 
-#: fe-auth.c:758
+#: fe-auth.c:764
 #, c-format
 msgid "fe_getauthname: invalid authentication system: %d\n"
 msgstr "fe_getauthname: neveljaven avtentikacijski sistem: %d\n"
 
-#: fe-connect.c:452
+#: fe-connect.c:457
 #, c-format
 msgid "invalid sslmode value: \"%s\"\n"
-msgstr "neznan SSL naƒçin: \"%s\"\n"
+msgstr "neznan SSL naËin: \"%s\"\n"
 
-#: fe-connect.c:472
+#: fe-connect.c:477
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
-msgstr "ssl naƒçin \"%s\" ni veljaven, kadar program ni bil preveden s SSL podporo\n"
+msgstr "SSL naËin \"%s\" ni veljaven, kadar program ni bil preveden s SSL podporo\n"
 
-#: fe-connect.c:783
-#, c-format
-msgid "could not set socket to non-blocking mode: %s\n"
-msgstr "vtiƒçnice ni bilo mogoƒçe nastaviti na neblokirni naƒçin: %s\n"
-
-#: fe-connect.c:810
+#: fe-connect.c:793
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
-msgstr "vtiƒçnice ni bilo mogoƒçe nastaviti na TCP no delay naƒçin: %s\n"
+msgstr "vtiËnice ni bilo mogoËe preklopiti v TCP no delay naËin: %s\n"
 
-#: fe-connect.c:841
+#: fe-connect.c:824
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
 "\tIs the server running locally and accepting\n"
 "\tconnections on Unix domain socket \"%s\"?\n"
 msgstr ""
-"s stre≈ænikom se ni bilo mogoƒçe povezati: %s\n"
-"\tAli je stre≈ænik zagnan na lokalnem raƒçunalniku in sprejema\n"
-"\tpovezave na Unix domenski vtiƒçnici \"%s\"?\n"
+"s streænikom se ni bilo mogoËe povezati: %s\n"
+"\tAli je streænik zagnan na lokalnem raËunalniku in sprejema\n"
+"\tpovezave na Unix domenski vtiËnici \"%s\"?\n"
 
-#: fe-connect.c:853
+#: fe-connect.c:836
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
 "\tIs the server running on host \"%s\" and accepting\n"
 "\tTCP/IP connections on port %s?\n"
 msgstr ""
-"s stre≈ænikom se ni bilo mogoƒçe povezati: %s\n"
-"\tAli je stre≈ænik zagnan na gostitelju \"%s\" in sprejema\n"
+"s streænikom se ni bilo mogoËe povezati: %s\n"
+"\tAli je streænik zagnan na gostitelju \"%s\" in sprejema\n"
 "\tTCP/IP povezave na vratih %s?\n"
 
-#: fe-connect.c:937
+#: fe-connect.c:929
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
-msgstr "imena gostitelja \"%s\" ni bilo mogoƒçe prevesti v naslov: %s\n"
+msgstr "imena gostitelja \"%s\" ni bilo mogoËe prevesti v naslov: %s\n"
 
-#: fe-connect.c:941
+#: fe-connect.c:933
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "poti Unix domenske vtiƒçnice \"%s\" ni bilo mogoƒçe prevesti v naslov: %s\n"
+msgstr "poti Unix domenske vtiËnice \"%s\" ni bilo mogoËe prevesti v naslov: %s\n"
 
-#: fe-connect.c:1144
+#: fe-connect.c:1137
 msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "neveljavno stanje povezave, kar najverjetneje nakazuje pokvarjen spomin\n"
+msgstr "neveljavno stanje povezave, kar najverjetneje nakazuje okvaro podatkov v pomnilniku\n"
 
-#: fe-connect.c:1187
+#: fe-connect.c:1180
 #, c-format
 msgid "could not create socket: %s\n"
-msgstr "vtiƒçnice ni bilo mogoƒçe ustvariti: %s\n"
+msgstr "vtiËnice ni bilo mogoËe ustvariti: %s\n"
 
-#: fe-connect.c:1298
+#: fe-connect.c:1203
+#, c-format
+msgid "could not set socket to non-blocking mode: %s\n"
+msgstr "vtiËnice ni bilo mogoËe preklopiti v neblokirajoËi naËin: %s\n"
+
+#: fe-connect.c:1215
+#, c-format
+msgid "could not set socket to close-on-exec mode: %s\n"
+msgstr "vtiËnice ni bilo mogoËe preklopiti v close-on-exec naËin: %s\n"
+
+#: fe-connect.c:1307
 #, c-format
 msgid "could not get socket error status: %s\n"
-msgstr "stanja napake vtiƒçnice ni bilo mogoƒçe izvedeti: %s\n"
+msgstr "stanja napake vtiËnice ni bilo mogoËe izvedeti: %s\n"
 
-#: fe-connect.c:1337
+#: fe-connect.c:1346
 #, c-format
 msgid "could not get client address from socket: %s\n"
-msgstr "od vtiƒçnice ni bilo mogoƒçe izvedeti naslova odjemalca: %s\n"
+msgstr "od vtiËnice ni bilo mogoËe izvedeti naslova odjemalca: %s\n"
 
-#: fe-connect.c:1382
+#: fe-connect.c:1391
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
-msgstr "SSL pogajalskega paketa ni bilo mogoƒçe poslati: %s\n"
+msgstr "SSL pogajalskega paketa ni bilo mogoËe poslati: %s\n"
 
-#: fe-connect.c:1404 fe-connect.c:2527 fe-connect.c:2536 fe-connect.c:3103
-#: fe-lobj.c:540
+#: fe-connect.c:1413
+#: fe-connect.c:2628
+#: fe-connect.c:2637
+#: fe-connect.c:3216
+#: fe-lobj.c:556
+#: fe-protocol2.c:1007
+#: fe-protocol3.c:958
 msgid "out of memory\n"
 msgstr "zmanjkalo je pomnilnika\n"
 
-#: fe-connect.c:1417
+#: fe-connect.c:1426
 #, c-format
 msgid "could not send startup packet: %s\n"
-msgstr "zagonskega paketa ni bilo mogoƒçe poslati: %s\n"
+msgstr "zagonskega paketa ni bilo mogoËe poslati: %s\n"
 
-#: fe-connect.c:1457
+#: fe-connect.c:1466
 #, c-format
 msgid "could not receive server response to SSL negotiation packet: %s\n"
-msgstr "stre≈ænikovega odziva na SSL pogajalski paket ni bilo mogoƒçe prejeti: %s\n"
+msgstr "streænikovega odgovora na SSL pogajalski paket ni bilo mogoËe prejeti: %s\n"
 
-#: fe-connect.c:1476 fe-connect.c:1493
+#: fe-connect.c:1485
+#: fe-connect.c:1502
 msgid "server does not support SSL, but SSL was required\n"
-msgstr "stre≈ænik ne vsebuje podpore za SSL, le-ta pa je bila zahtevana\n"
+msgstr "streænik ne vsebuje podpore za SSL, le-ta pa je bila zahtevana\n"
 
-#: fe-connect.c:1509
+#: fe-connect.c:1518
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "na SSL pogajanje je bil prejet neveljaven odgovor: %c\n"
 
-#: fe-connect.c:1566 fe-connect.c:1598
+#: fe-connect.c:1575
+#: fe-connect.c:1607
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
-msgstr "namesto priƒçakovane pro≈°nje za avtentikacijo, je od stre≈ænika bil prejet %c\n"
+msgstr "namesto priËakovane proπnje za avtentikacijo, je od streænika bil prejet %c\n"
 
-#: fe-connect.c:1834
+#: fe-connect.c:1843
 msgid "unexpected message from server during startup\n"
-msgstr "med zagonom je od stre≈ænika bilo prejeto nepriƒçakovano sporoƒçilo\n"
+msgstr "med zagonom je od streænika bilo prejeto nepriËakovano sporoËilo\n"
 
-#: fe-connect.c:1904
+#: fe-connect.c:1913
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
-msgstr "neveljavno stanje povezave %c, kar najverjetneje nakazuje pokvarjen spomin\n"
+msgstr "neveljavno stanje povezave %c, kar najverjetneje nakazuje okvaro podatkov v pomnilniku\n"
 
-#: fe-connect.c:2575
+#: fe-connect.c:2676
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
-msgstr "manjkajoƒç \"=\" za \"%s\" v nizu s povezavnimi podatki\n"
+msgstr "v nizu s povezavnimi podatki manjka \"=\" za \"%s\"\n"
 
-#: fe-connect.c:2624
+#: fe-connect.c:2725
 msgid "unterminated quoted string in connection info string\n"
-msgstr "povezavni niz vsebuje nezakljuƒçen niz v narekovajih\n"
+msgstr "povezavni niz vsebuje nezakljuËen niz v narekovajih\n"
 
-#: fe-connect.c:2658
+#: fe-connect.c:2759
 #, c-format
 msgid "invalid connection option \"%s\"\n"
-msgstr "neveljavna povezavna mo≈ænost \"%s\"\n"
+msgstr "neveljavna povezavna moænost \"%s\"\n"
 
-#: fe-connect.c:2870
+#: fe-connect.c:2981
 msgid "connection pointer is NULL\n"
 msgstr "kazalec na povezavo je NULL\n"
 
-#: fe-connect.c:3121
+#: fe-connect.c:3238
 #, c-format
-msgid ""
-"WARNING: Password file %s has world or group read access; permission should "
-"be u=rw (0600)\n"
-msgstr ""
-"OPOZORILO: Datoteka z gesli %s ima nastavljena dovoljenja, ki omogoƒçajo branje "
-"njene vsebine drugim uporabnikom; nastavljena bi morala biti na u=rw (0600)\n"
+msgid "WARNING: Password file %s has world or group read access; permission should be u=rw (0600)\n"
+msgstr "OPOZORILO: Datoteka z gesli %s ima nastavljena dovoljenja, ki omogoËajo branje njene vsebine drugim uporabnikom; nastavljena bi morala biti na u=rw (0600)\n"
 
-#: fe-exec.c:484
+#: fe-exec.c:479
 msgid "NOTICE"
 msgstr "OPOMBA"
 
-#: fe-exec.c:637 fe-exec.c:689
+#: fe-exec.c:648
+#: fe-exec.c:700
+#: fe-exec.c:740
 msgid "command string is a null pointer\n"
 msgstr "ukazni niz je null pointer\n"
 
-#: fe-exec.c:724
+#: fe-exec.c:733
+#: fe-exec.c:823
 msgid "statement name is a null pointer\n"
 msgstr "ime izjave je null pointer\n"
 
-#: fe-exec.c:755
-msgid "no connection to the server\n"
-msgstr "ni povezave s stre≈ænikom\n"
-
-#: fe-exec.c:762
-msgid "another command is already in progress\n"
-msgstr "trenutno ≈æe poteka izvajanje drugega ukaza\n"
-
-#: fe-exec.c:798 fe-exec.c:1432
+#: fe-exec.c:748
+#: fe-exec.c:897
+#: fe-exec.c:1572
 msgid "function requires at least protocol version 3.0\n"
 msgstr "funkcija zahteva vsaj protokol verzije 3.0\n"
 
-#: fe-exec.c:1100
+#: fe-exec.c:854
+msgid "no connection to the server\n"
+msgstr "ni povezave s streænikom\n"
+
+#: fe-exec.c:861
+msgid "another command is already in progress\n"
+msgstr "trenutno æe poteka izvajanje drugega ukaza\n"
+
+#: fe-exec.c:1199
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
-msgstr "nepriƒçakovan asyncStatus: %d\n"
+msgstr "nepriËakovan asyncStatus: %d\n"
 
-#: fe-exec.c:1205
+#: fe-exec.c:1326
 msgid "COPY terminated by new PQexec"
 msgstr "COPY je bil prekinjen s strani novega PQexec klica"
 
-#: fe-exec.c:1213
+#: fe-exec.c:1334
 msgid "COPY IN state must be terminated first\n"
-msgstr "COPY IN stanje mora najprej biti zakljuƒçeno\n"
+msgstr "COPY IN stanje mora najprej biti zakljuËeno\n"
 
-#: fe-exec.c:1233
+#: fe-exec.c:1354
 msgid "COPY OUT state must be terminated first\n"
-msgstr "COPY OUT stanje mora najprej biti zakljuƒçeno\n"
+msgstr "COPY OUT stanje mora najprej biti zakljuËeno\n"
 
-#: fe-exec.c:1336 fe-exec.c:1390 fe-exec.c:1474
+#: fe-exec.c:1464
+#: fe-exec.c:1529
+#: fe-exec.c:1614
+#: fe-protocol2.c:1153
+#: fe-protocol3.c:1115
 msgid "no COPY in progress\n"
 msgstr "trenutno se ne izvaja noben COPY ukaz\n"
 
-#: fe-exec.c:1666
+#: fe-exec.c:1806
 msgid "connection in wrong state\n"
-msgstr "povezava je v napaƒçnem stanju\n"
+msgstr "povezava je v napaËnem stanju\n"
 
-#: fe-exec.c:1697
+#: fe-exec.c:1837
 msgid "invalid ExecStatusType code"
 msgstr "neveljavna ExecStatusType koda"
 
-#: fe-exec.c:1761 fe-exec.c:1784
+#: fe-exec.c:1901
+#: fe-exec.c:1924
 #, c-format
 msgid "column number %d is out of range 0..%d"
-msgstr "≈°tevilo stolpca %d je izven obsega 0..%d"
+msgstr "πtevilo stolpca %d je izven obsega 0..%d"
 
-#: fe-exec.c:1777
+#: fe-exec.c:1917
 #, c-format
 msgid "row number %d is out of range 0..%d"
-msgstr "≈°tevilo vrstice %d je izven obsega 0..%d"
+msgstr "πtevilo vrstice %d je izven obsega 0..%d"
 
-#: fe-exec.c:2014
+#: fe-exec.c:2199
 #, c-format
 msgid "could not interpret result from server: %s"
-msgstr "rezultata s stre≈ænika ni bilo mogoƒçe razumeti: %s"
+msgstr "rezultata s streænika ni bilo mogoËe razumeti: %s"
 
-#: fe-lobj.c:402 fe-lobj.c:487
+#: fe-lobj.c:410
+#: fe-lobj.c:495
 #, c-format
 msgid "could not open file \"%s\": %s\n"
-msgstr "datoteke \"%s\" ni bilo mogoƒçe odpreti: %s\n"
+msgstr "datoteke \"%s\" ni bilo mogoËe odpreti: %s\n"
 
-#: fe-lobj.c:414
+#: fe-lobj.c:422
 #, c-format
 msgid "could not create large object for file \"%s\"\n"
-msgstr "velikega objekta za datoteko \"%s\" ni bilo mogoƒçe ustvariti\n"
+msgstr "velikega objekta za datoteko \"%s\" ni bilo mogoËe ustvariti\n"
 
-#: fe-lobj.c:424 fe-lobj.c:474
+#: fe-lobj.c:432
+#: fe-lobj.c:482
 #, c-format
 msgid "could not open large object %u\n"
-msgstr "velikega objekta %u ni bilo mogoƒçe odpreti\n"
+msgstr "velikega objekta %u ni bilo mogoËe odpreti\n"
 
-#: fe-lobj.c:439
+#: fe-lobj.c:447
 #, c-format
 msgid "error while reading file \"%s\"\n"
 msgstr "napaka pri branju datoteke \"%s\"\n"
 
-#: fe-lobj.c:502
+#: fe-lobj.c:510
+#: fe-lobj.c:523
 #, c-format
 msgid "error while writing to file \"%s\"\n"
 msgstr "napaka pri zapisovanju datoteke \"%s\"\n"
 
-#: fe-lobj.c:568
+#: fe-lobj.c:601
 msgid "query to initialize large object functions did not return data\n"
 msgstr "poizvedba za inicializacijo funkcij za delo z velikimi objekti ni vrnila podatkov\n"
 
-#: fe-lobj.c:606
+#: fe-lobj.c:639
 msgid "cannot determine OID of function lo_open\n"
-msgstr "OID za funkcijo lo_open ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo lo_open ni mogoËe ugotoviti\n"
 
-#: fe-lobj.c:613
+#: fe-lobj.c:646
 msgid "cannot determine OID of function lo_close\n"
-msgstr "OID za funkcijo lo_close ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo lo_close ni mogoËe ugotoviti\n"
 
-#: fe-lobj.c:620
+#: fe-lobj.c:653
 msgid "cannot determine OID of function lo_creat\n"
-msgstr "OID za funkcijo lo_creat ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo lo_creat ni mogoËe ugotoviti\n"
 
-#: fe-lobj.c:627
+#: fe-lobj.c:660
 msgid "cannot determine OID of function lo_unlink\n"
-msgstr "OID za funkcijo lo_unlink ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo lo_unlink ni mogoËe ugotoviti\n"
 
-#: fe-lobj.c:634
+#: fe-lobj.c:667
 msgid "cannot determine OID of function lo_lseek\n"
-msgstr "OID za funkcijo lo_lseek ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo lo_lseek ni mogoËe ugotoviti\n"
 
-#: fe-lobj.c:641
+#: fe-lobj.c:674
 msgid "cannot determine OID of function lo_tell\n"
-msgstr "OID za funkcijo lo_tell ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo lo_tell ni mogoËe ugotoviti\n"
 
-#: fe-lobj.c:648
+#: fe-lobj.c:681
 msgid "cannot determine OID of function loread\n"
-msgstr "OID za funkcijo loread ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo loread ni mogoËe ugotoviti\n"
 
-#: fe-lobj.c:655
+#: fe-lobj.c:688
 msgid "cannot determine OID of function lowrite\n"
-msgstr "OID za funkcijo lowrite ni mogoƒçe ugotoviti\n"
+msgstr "OID vrednosti za funkcijo lowrite ni mogoËe ugotoviti\n"
 
 #: fe-misc.c:228
 #, c-format
@@ -348,150 +373,283 @@ msgstr "integer velikosti %lu ni podprt s strani pqGetInt"
 msgid "integer of size %lu not supported by pqPutInt"
 msgstr "integer velikosti %lu ni podprt s strani pqPutInt"
 
-#: fe-misc.c:544 fe-misc.c:748
+#: fe-misc.c:544
+#: fe-misc.c:748
 msgid "connection not open\n"
 msgstr "povezava ni odprta\n"
 
-#: fe-misc.c:610 fe-misc.c:701
+#: fe-misc.c:610
+#: fe-misc.c:701
 #, c-format
 msgid "could not receive data from server: %s\n"
-msgstr "podatkov iz stre≈ænika ni bilo mogoƒçe prejeti: %s\n"
+msgstr "podatkov iz streænika ni bilo mogoËe prejeti: %s\n"
 
-#: fe-misc.c:718 fe-misc.c:786
+#: fe-misc.c:718
+#: fe-misc.c:786
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
 "\tbefore or while processing the request.\n"
 msgstr ""
-"stre≈ænik je nepriƒçakovano prekinil povezavo\n"
-"\tTo najverjetneje pomeni, da je pri≈°lo do nenadne prekinitve\n"
-"\tizvajanja stre≈ænika, pred ali med obdelavo zahteve.\n"
+"streænik je nepriËakovano prekinil povezavo\n"
+"\tTo najverjetneje pomeni, da je priπlo do nenadne prekinitve\n"
+"\tizvajanja streænika, pred ali med obdelavo zahteve.\n"
 
 #: fe-misc.c:803
 #, c-format
 msgid "could not send data to server: %s\n"
-msgstr "podatkov ni bilo mogoƒçe poslati na stre≈ænik: %s\n"
+msgstr "podatkov ni bilo mogoËe poslati na streænik: %s\n"
 
-#: fe-misc.c:905
+#: fe-misc.c:923
 msgid "timeout expired\n"
-msgstr "ƒçasovna omejitev se je iztekla\n"
+msgstr "Ëasovna omejitev se je iztekla\n"
 
-#: fe-misc.c:950
+#: fe-misc.c:968
 msgid "socket not open\n"
-msgstr "vtiƒçnica ni odprta\n"
+msgstr "vtiËnica ni odprta\n"
 
-#: fe-misc.c:973
+#: fe-misc.c:991
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() ni uspel: %s\n"
 
-#: fe-secure.c:246
+#: fe-protocol2.c:91
+#, c-format
+msgid "invalid setenv state %c, probably indicative of memory corruption\n"
+msgstr "neveljavno setenv stanje %c, kar najverjetneje nakazuje okvaro podatkov v pomnilniku\n"
+
+#: fe-protocol2.c:333
+#, c-format
+msgid "invalid state %c, probably indicative of memory corruption\n"
+msgstr "neveljavno stanje %c, kar najverjetneje nakazuje okvaro podatkov v pomnilniku\n"
+
+#: fe-protocol2.c:423
+#: fe-protocol3.c:183
+#, c-format
+msgid "message type 0x%02x arrived from server while idle"
+msgstr "v Ëasu neaktivnosti je od streænika prispelo sporoËilo tipa 0x%02x"
+
+#: fe-protocol2.c:462
+#, c-format
+msgid "unexpected character %c following empty query response (\"I\" message)"
+msgstr "praznemu odgovoru na poizvedbo je sledil nepriËakovani znak %c (\"I\" sporoËilo)"
+
+#: fe-protocol2.c:517
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
+msgstr "streænik je poslal podatke (\"D\" sporoËilo) brez predhodnega opisa vrstic (\"T\" sporoËilo)"
+
+#: fe-protocol2.c:533
+msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
+msgstr "streænik je poslal binarne podatke (\"B\" sporoËilo) brez predhodnega opisa vrstic (\"T\" sporoËilo)"
+
+#: fe-protocol2.c:548
+#: fe-protocol3.c:344
+#, c-format
+msgid "unexpected response from server; first received character was \"%c\"\n"
+msgstr "streænik je vrnil nepriËakovan odgovor; prvi prejeti znak je bil \"%c\"\n"
+
+#: fe-protocol2.c:760
+#: fe-protocol3.c:577
+msgid "out of memory for query result\n"
+msgstr "zmanjkalo je pomnilnika za rezultat poizvedbe\n"
+
+#: fe-protocol2.c:1196
+#: fe-protocol3.c:1184
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: fe-protocol2.c:1208
+msgid "lost synchronization with server, resetting connection"
+msgstr "priπlo je do izgube sinhronizacije s streænikom; obnavljam povezavo"
+
+#: fe-protocol2.c:1343
+#: fe-protocol2.c:1375
+#: fe-protocol3.c:1387
+#, c-format
+msgid "protocol error: id=0x%x\n"
+msgstr "napaka protokola: id=0x%x\n"
+
+#: fe-protocol3.c:306
+msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
+msgstr "streænik je poslal podatke (\"D\" sporoËilo) brez predhodnega opisa vrstic (\"T\" sporoËilo)\n"
+
+#: fe-protocol3.c:365
+#, c-format
+msgid "message contents do not agree with length in message type \"%c\"\n"
+msgstr "vsebina sporoËila se razlikuje od dolæine v sporoËilu tipa \"%c\"\n"
+
+#: fe-protocol3.c:386
+#, c-format
+msgid "lost synchronization with server: got message type \"%c\", length %d\n"
+msgstr "priπlo je do izgube sinhronizacije s streænikom: prejeto sporoËilo tipa \"%c\", dolæine %d\n"
+
+#: fe-protocol3.c:522
+msgid "unexpected field count in \"D\" message\n"
+msgstr "nepriËakovano πtevilo polj v sporoËilu tipa \"D\"\n"
+
+#. translator: %s represents a digit string
+#: fe-protocol3.c:651
+#: fe-protocol3.c:659
+#, c-format
+msgid " at character %s"
+msgstr " pri znaku %s"
+
+#: fe-protocol3.c:668
+#, c-format
+msgid "DETAIL:  %s\n"
+msgstr "PODROBNOSTI:  %s\n"
+
+#: fe-protocol3.c:671
+#, c-format
+msgid "HINT:  %s\n"
+msgstr "NAMIG:  %s\n"
+
+#: fe-protocol3.c:674
+#, c-format
+msgid "QUERY:  %s\n"
+msgstr "POIZVEDBA:  %s\n"
+
+#: fe-protocol3.c:677
+#, c-format
+msgid "CONTEXT:  %s\n"
+msgstr "KONTEKST:  %s\n"
+
+#: fe-protocol3.c:689
+msgid "LOCATION:  "
+msgstr "LOKACIJA:  "
+
+#: fe-protocol3.c:691
+#, c-format
+msgid "%s, "
+msgstr "%s, "
+
+#: fe-protocol3.c:693
+#, c-format
+msgid "%s:%s"
+msgstr "%s:%s"
+
+#: fe-protocol3.c:1000
+msgid "PQgetline: not doing text COPY OUT\n"
+msgstr "PQgetline: ne izvaja se tekstovni COPY OUT\n"
+
+#: fe-secure.c:264
 #, c-format
 msgid "could not establish SSL connection: %s\n"
-msgstr "SSL povezave ni bilo mogoƒçe vzpostaviti: %s\n"
+msgstr "SSL povezave ni bilo mogoËe vzpostaviti: %s\n"
 
-#: fe-secure.c:308 fe-secure.c:380 fe-secure.c:913
+#: fe-secure.c:330
+#: fe-secure.c:415
+#: fe-secure.c:1038
 #, c-format
 msgid "SSL SYSCALL error: %s\n"
 msgstr "SSL SYSCALL napaka: %s\n"
 
-#: fe-secure.c:313 fe-secure.c:385 fe-secure.c:917
+#: fe-secure.c:335
+#: fe-secure.c:420
+#: fe-secure.c:1042
 msgid "SSL SYSCALL error: EOF detected\n"
 msgstr "SSL SYSCALL napaka: zaznan je bil EOF\n"
 
-#: fe-secure.c:322 fe-secure.c:393 fe-secure.c:923
+#: fe-secure.c:347
+#: fe-secure.c:431
+#: fe-secure.c:1051
 #, c-format
 msgid "SSL error: %s\n"
 msgstr "SSL napaka: %s\n"
 
-#: fe-secure.c:330 fe-secure.c:401 fe-secure.c:929
-msgid "unrecognized SSL error code\n"
-msgstr "neznana koda SSL napake\n"
+#: fe-secure.c:357
+#: fe-secure.c:441
+#: fe-secure.c:1059
+#, c-format
+msgid "unrecognized SSL error code: %d\n"
+msgstr "neznana koda SSL napake: %d\n"
 
-#: fe-secure.c:459
+#: fe-secure.c:504
 #, c-format
 msgid "error querying socket: %s\n"
-msgstr "napaka pri spra≈°evanju vrat: %s\n"
+msgstr "napaka pri spraπevanju vrat: %s\n"
 
-#: fe-secure.c:487
+#: fe-secure.c:532
 #, c-format
-msgid "could not get information about host (%s): %s\n"
-msgstr "podatkov o gostitelju (%s) ni bilo mogoƒçe dobiti: %s\n"
+msgid "could not get information about host \"%s\": %s\n"
+msgstr "podatkov o gostitelju \"%s\" ni bilo mogoËe dobiti: %s\n"
 
-#: fe-secure.c:506
+#: fe-secure.c:551
 msgid "unsupported protocol\n"
 msgstr "protokol ni podprt\n"
 
-#: fe-secure.c:528
+#: fe-secure.c:573
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
-msgstr "obiƒçajno ime stre≈ænika \"%s\" se ne razre≈°i kot naslov %ld.%ld.%ld.%ld\n"
+msgstr "obiËajno ime streænika \"%s\" se ne razreπi kot naslov %ld.%ld.%ld.%ld\n"
 
-#: fe-secure.c:535
+#: fe-secure.c:580
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
-msgstr "obiƒçajnega imena stre≈ænika \"%s\" ni mogoƒçe pretvoriti v enakovreden naslov\n"
+msgstr "obiËajnega imena streænika \"%s\" ni mogoËe pretvoriti v naslov\n"
 
-#: fe-secure.c:718
+#: fe-secure.c:763
 msgid "could not get user information\n"
-msgstr "podatkov o trenutnem uporabniku ni bilo mogoƒçe pridobiti\n"
-
-#: fe-secure.c:730
-#, c-format
-msgid "could not open certificate (%s): %s\n"
-msgstr "certifikata (%s) ni bilo mogoƒçe odpreti: %s\n"
-
-#: fe-secure.c:737
-#, c-format
-msgid "could not read certificate (%s): %s\n"
-msgstr "certifikata (%s) ni bilo mogoƒçe prebrati: %s\n"
-
-#: fe-secure.c:750
-#, c-format
-msgid "certificate present, but not private key (%s)\n"
-msgstr "certifikat obstaja, zasebni kljuƒç pa ne (%s)\n"
-
-#: fe-secure.c:759
-#, c-format
-msgid "private key (%s) has wrong permissions\n"
-msgstr "zasebni kljuƒç (%s) ima nastavljena napaƒçna dovoljenja\n"
-
-#: fe-secure.c:766
-#, c-format
-msgid "could not open private key file (%s): %s\n"
-msgstr "datoteke z zasebnim kljuƒçem (%s) ni bilo mogoƒçe odpreti: %s\n"
+msgstr "podatkov o uporabniku ni bilo mogoËe pridobiti\n"
 
 #: fe-secure.c:775
 #, c-format
-msgid "private key (%s) changed during execution\n"
-msgstr "zasebni kljuƒç (%s) se je spremenil med izvajanjem\n"
+msgid "could not open certificate file \"%s\": %s\n"
+msgstr "certifikata \"%s\" ni bilo mogoËe odpreti: %s\n"
 
-#: fe-secure.c:782
+#: fe-secure.c:784
 #, c-format
-msgid "could not read private key (%s): %s\n"
-msgstr "zasebnega kljuƒça (%s) ni bilo mogoƒçe prebrati: %s\n"
+msgid "could not read certificate file \"%s\": %s\n"
+msgstr "certifikata \"%s\" ni bilo mogoËe prebrati: %s\n"
 
-#: fe-secure.c:794
+#: fe-secure.c:798
 #, c-format
-msgid "certificate/private key mismatch (%s): %s\n"
-msgstr "certifikat in zasebni kljuƒç se ne ujemata (%s): %s\n"
+msgid "certificate present, but not private key file \"%s\"\n"
+msgstr "certifikat obstaja, zasebni kljuË \"%s\" pa ne\n"
 
-#: fe-secure.c:827
+#: fe-secure.c:807
+#, c-format
+msgid "private key file \"%s\" has wrong permissions\n"
+msgstr "zasebni kljuË \"%s\" ima nastavljena napaËna dovoljenja\n"
+
+#: fe-secure.c:815
+#, c-format
+msgid "could not open private key file \"%s\": %s\n"
+msgstr "zasebnega kljuËa \"%s\" ni bilo mogoËe odpreti: %s\n"
+
+#: fe-secure.c:824
+#, c-format
+msgid "private key file \"%s\" changed during execution\n"
+msgstr "zasebni kljuË \"%s\" se je med izvajanjem spremenil\n"
+
+#: fe-secure.c:833
+#, c-format
+msgid "could not read private key file \"%s\": %s\n"
+msgstr "zasebnega kljuËa \"%s\" ni bilo mogoËe prebrati: %s\n"
+
+#: fe-secure.c:848
+#, c-format
+msgid "certificate does not match private key file \"%s\": %s\n"
+msgstr "certifikat se ne ujema z zasebnim kljuËem \"%s\": %s\n"
+
+#: fe-secure.c:932
 #, c-format
 msgid "could not create SSL context: %s\n"
-msgstr "SSL konteksta ni bilo mogoƒçe ustvariti: %s\n"
+msgstr "SSL konteksta ni bilo mogoËe ustvariti: %s\n"
 
-#: fe-secure.c:846 fe-secure.c:854
+#: fe-secure.c:977
 #, c-format
-msgid "could not read root certificate list (%s): %s\n"
-msgstr "seznama korenskih certifikatov (%s) ni bilo mogoƒçe prebrati: %s\n"
+msgid "could not read root certificate file \"%s\": %s\n"
+msgstr "datoteke s korenskimi certifikati \"%s\" ni bilo mogoËe prebrati: %s\n"
 
-#: fe-secure.c:948
+#: fe-secure.c:1079
 #, c-format
 msgid "certificate could not be validated: %s\n"
-msgstr "certifikata ni bilo mogoƒçe potrditi: %s\n"
+msgstr "certifikata ni bilo mogoËe potrditi: %s\n"
 
-#: fe-secure.c:960
+#: fe-secure.c:1093
 #, c-format
 msgid "certificate could not be obtained: %s\n"
-msgstr "certifikata ni bilo mogoƒçe dobiti: %s\n"
+msgstr "certifikata ni bilo mogoËe dobiti: %s\n"
+

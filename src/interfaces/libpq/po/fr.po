@@ -1,7 +1,7 @@
 # translation of libpq-fr.po to FR_fr
 # French message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.10 2004/11/02 09:28:41 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.11 2004/11/16 22:58:44 petere Exp $
 #
 # Use these quotes: «%s»
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -11,7 +11,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: libpq-fr\n"
-"POT-Creation-Date: 2004-10-25 19:07+0100\n"
+"POT-Creation-Date: 2004-11-16 07:09+0000\n"
 "PO-Revision-Date: 2004-10-25 23:00+0200\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team: FR_fr <pgsql-fr-generale@postgresql.org>\n"
@@ -43,6 +43,11 @@ msgstr "impossible de rétablir le mode non-bloquant pour le socket : %s\n"
 #: fe-auth.c:508
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "méthode d'authentification SCM_CRED non supportée\n"
+
+#: fe-auth.c:530 fe-connect.c:1413 fe-connect.c:2628 fe-connect.c:2637
+#: fe-connect.c:3216 fe-lobj.c:556 fe-protocol2.c:1007 fe-protocol3.c:958
+msgid "out of memory\n"
+msgstr "mémoire épuisée\n"
 
 #: fe-auth.c:600
 msgid "Kerberos 4 authentication failed\n"
@@ -156,11 +161,6 @@ msgstr "impossible d'obtenir l'adresse du client du socket : %s\n"
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "impossible de transmettre le paquet de négociation SSL : %s\n"
 
-#: fe-connect.c:1413 fe-connect.c:2543 fe-connect.c:2552 fe-connect.c:3131
-#: fe-lobj.c:556 fe-protocol2.c:1007 fe-protocol3.c:958
-msgid "out of memory\n"
-msgstr "mémoire épuisée\n"
-
 #: fe-connect.c:1426
 #, c-format
 msgid "could not send startup packet: %s\n"
@@ -194,25 +194,25 @@ msgstr "message inattendu du serveur lors de démarrage\n"
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr "état non-valable de connexion (%c), probablement une indication de mémoire corrompue\n"
 
-#: fe-connect.c:2591
+#: fe-connect.c:2676
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "«=» manquant après «%s» dans la chaîne de paramètres de connexion\n"
 
-#: fe-connect.c:2640
+#: fe-connect.c:2725
 msgid "unterminated quoted string in connection info string\n"
 msgstr "guillemets non refermés dans la chaîne de paramètres de connexion\n"
 
-#: fe-connect.c:2674
+#: fe-connect.c:2759
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "option de connexion non-valable «%s»\n"
 
-#: fe-connect.c:2896
+#: fe-connect.c:2981
 msgid "connection pointer is NULL\n"
 msgstr "le pointeur de connexion a la valeur NULL\n"
 
-#: fe-connect.c:3153
+#: fe-connect.c:3238
 #, c-format
 msgid ""
 "WARNING: Password file %s has world or group read access; permission should "
@@ -626,4 +626,3 @@ msgstr "le certificat n'a pas pu être validé : %s\n"
 #, c-format
 msgid "certificate could not be obtained: %s\n"
 msgstr "le certificat n'a pas pu être obtenu : %s\n"
-

@@ -1,29 +1,34 @@
 # ru.po
 # PGSCRIPTS Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.8 2004/08/13 16:34:31 petere Exp $
+# Copyright (c) 2003-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Distributed under the same licensing terms as PostgreSQL itself.
+#
+# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.9 2004/11/16 22:47:40 petere Exp $
 #
 # To the new translator:
 #   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
 #   PG Glossary: <http://www.sai.msu.su/~megera/oddmuse/index.cgi?Pgsql_Glossary>
 #
 # ChangeLog:
-#   - May 28 - August 11, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
+#   - May 28 - November 14, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
 #   - July 24 - August 25, 2003: Complete Initial Translation for 7.4.*; Serguei A. Mokhov, <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-08-11 19:17-0300\n"
-"PO-Revision-Date: 2004-08-11 23:41-0500\n"
+"POT-Creation-Date: 2004-11-14 07:10+0000\n"
+"PO-Revision-Date: 2004-11-14 18:37-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Russian\n"
+"X-Poedit-Country: RUSSIAN FEDERATION\n"
 
-#: clusterdb.c:97
-#: clusterdb.c:112
+#: clusterdb.c:95
+#: clusterdb.c:110
 #: createdb.c:102
 #: createdb.c:121
 #: createlang.c:97
@@ -39,20 +44,20 @@ msgstr ""
 #: droplang.c:157
 #: dropuser.c:84
 #: dropuser.c:99
-#: vacuumdb.c:114
-#: vacuumdb.c:129
+#: vacuumdb.c:112
+#: vacuumdb.c:127
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Наберите \"%s --help\" для более подробной информации.\n"
 
-#: clusterdb.c:110
+#: clusterdb.c:108
 #: createdb.c:119
 #: createlang.c:116
 #: createuser.c:130
 #: dropdb.c:99
 #: droplang.c:113
 #: dropuser.c:97
-#: vacuumdb.c:127
+#: vacuumdb.c:125
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
@@ -81,14 +86,14 @@ msgstr ""
 "%s создаёт базу PostgreSQL.\n"
 "\n"
 
-#: clusterdb.c:236
+#: clusterdb.c:234
 #: createdb.c:218
 #: createlang.c:299
 #: createuser.c:240
 #: dropdb.c:147
 #: droplang.c:280
 #: dropuser.c:147
-#: vacuumdb.c:262
+#: vacuumdb.c:260
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
@@ -97,14 +102,14 @@ msgstr "Использование:\n"
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [ОПЦИЯ]... [ИМЯБД] [ОПИСАНИЕ]\n"
 
-#: clusterdb.c:238
+#: clusterdb.c:236
 #: createdb.c:220
 #: createlang.c:301
 #: createuser.c:242
 #: dropdb.c:149
 #: droplang.c:282
 #: dropuser.c:149
-#: vacuumdb.c:264
+#: vacuumdb.c:262
 msgid ""
 "\n"
 "Options:\n"
@@ -144,10 +149,10 @@ msgstr "  --help                       показать эту справку и выйти\n"
 msgid "  --version                    output version information, then exit\n"
 msgstr "  --version                    показать версию и выйти\n"
 
-#: clusterdb.c:246
+#: clusterdb.c:244
 #: createdb.c:229
 #: createuser.c:255
-#: vacuumdb.c:275
+#: vacuumdb.c:273
 msgid ""
 "\n"
 "Connection options:\n"
@@ -179,14 +184,14 @@ msgstr ""
 "\n"
 "По умолчанию имя создаваемой базы такоеже как текущее имя пользователя.\n"
 
-#: clusterdb.c:252
+#: clusterdb.c:250
 #: createdb.c:235
 #: createlang.c:312
 #: createuser.c:262
 #: dropdb.c:159
 #: droplang.c:292
 #: dropuser.c:159
-#: vacuumdb.c:281
+#: vacuumdb.c:279
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
@@ -263,7 +268,7 @@ msgstr "  %s [ОПЦИЯ]... ЯЗЫК [ИМЯБД]\n"
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=ИМЯБД        база в которой установить язык\n"
 
-#: clusterdb.c:242
+#: clusterdb.c:240
 #: createlang.c:303
 #: createuser.c:251
 #: dropdb.c:150
@@ -281,45 +286,45 @@ msgstr "  -l, --list                показать список установленных языков\n"
 msgid "  -L, --pglib=DIRECTORY     find language interpreter file in DIRECTORY\n"
 msgstr "  -L, --pglib=ДИРЕКТОРИЯ    найти файл интерпретатора в ДИРЕКТОРИИ\n"
 
-#: clusterdb.c:247
+#: clusterdb.c:245
 #: createlang.c:306
 #: createuser.c:256
 #: dropdb.c:153
 #: droplang.c:286
 #: dropuser.c:153
-#: vacuumdb.c:276
+#: vacuumdb.c:274
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=ХОСТ           сервер баз данных или директория сокетов\n"
 
-#: clusterdb.c:248
+#: clusterdb.c:246
 #: createlang.c:307
 #: createuser.c:257
 #: dropdb.c:154
 #: droplang.c:287
 #: dropuser.c:154
-#: vacuumdb.c:277
+#: vacuumdb.c:275
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=ПОРТ           порт сервера баз данных\n"
 
-#: clusterdb.c:249
+#: clusterdb.c:247
 #: createlang.c:308
 #: dropdb.c:155
 #: droplang.c:288
-#: vacuumdb.c:278
+#: vacuumdb.c:276
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr ""
 "  -U, --username=ПОЛЬЗОВАТЕЛЬ\n"
 "                            имя пользователя для подсоединения\n"
 
-#: clusterdb.c:250
+#: clusterdb.c:248
 #: createlang.c:309
 #: dropdb.c:156
 #: droplang.c:289
-#: vacuumdb.c:279
+#: vacuumdb.c:277
 msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            запросить пароль\n"
 
-#: clusterdb.c:244
+#: clusterdb.c:242
 #: createlang.c:310
 #: createuser.c:253
 #: dropdb.c:157
@@ -328,7 +333,7 @@ msgstr "  -W, --password            запросить пароль\n"
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    показать эту спраку и выйти\n"
 
-#: clusterdb.c:245
+#: clusterdb.c:243
 #: createlang.c:311
 #: createuser.c:254
 #: dropdb.c:158
@@ -418,7 +423,7 @@ msgstr "  -N, --unencrypted         не щифровать сохранённый пароль\n"
 msgid "  -i, --sysid=SYSID         select sysid for new user\n"
 msgstr "  -i, --sysid=SYSID         выбрать sysid для нового пользователья\n"
 
-#: clusterdb.c:243
+#: clusterdb.c:241
 #: createuser.c:252
 #: dropdb.c:152
 #: dropuser.c:152
@@ -542,32 +547,32 @@ msgstr ""
 "  -U, --username=ПОЛЬЗОВАТЕЛЬ\n"
 "                            имя пользователя для подсоединения (не для удаления)\n"
 
-#: clusterdb.c:120
+#: clusterdb.c:118
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
 msgstr "%s: нельзя переупорядочить все базы и одну конкретную одновременно\n"
 
-#: clusterdb.c:126
+#: clusterdb.c:124
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
 msgstr "%s: нельзя переупорядочить одну и ту же таблицу во всех базах\n"
 
-#: clusterdb.c:182
+#: clusterdb.c:180
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: ощибка при переупорядочивании таблицы \"%s\" в базе \"%s\": %s"
 
-#: clusterdb.c:185
+#: clusterdb.c:183
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
 msgstr "%s: ощибка при переупорядочивании базы \"%s\": %s"
 
-#: clusterdb.c:221
+#: clusterdb.c:219
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: переупорядочивание базы \"%s\"\n"
 
-#: clusterdb.c:235
+#: clusterdb.c:233
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -576,25 +581,25 @@ msgstr ""
 "%s переупорядочивает ранее перегруппированные таблицы в базе данных согласно индексу.\n"
 "\n"
 
-#: clusterdb.c:237
-#: vacuumdb.c:263
+#: clusterdb.c:235
+#: vacuumdb.c:261
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [ОПЦИЯ]... [ИМЯБД]\n"
 
-#: clusterdb.c:239
+#: clusterdb.c:237
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 переупорядочить все базы\n"
 
-#: clusterdb.c:240
+#: clusterdb.c:238
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=ИМЯБД        имя базы для переупорядочивания\n"
 
-#: clusterdb.c:241
+#: clusterdb.c:239
 msgid "  -t, --table=TABLE         cluster specific table only\n"
 msgstr "  -t, --table=ТАБЛИЦА        переупорядочить конкретную таблицу\n"
 
-#: clusterdb.c:251
+#: clusterdb.c:249
 msgid ""
 "\n"
 "Read the description of the SQL command CLUSTER for details.\n"
@@ -602,32 +607,32 @@ msgstr ""
 "\n"
 "Читайте описание SQL-команды CLUSTER для более подробной информации.\n"
 
-#: vacuumdb.c:137
+#: vacuumdb.c:135
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s: нельзя произвести сборку мусора для всех баз и одной конкретной одновременно\n"
 
-#: vacuumdb.c:143
+#: vacuumdb.c:141
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
 msgstr "%s: нельзя произвести сборку мусора в одной и той же таблице во всех базах\n"
 
-#: vacuumdb.c:207
+#: vacuumdb.c:205
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: ошибка при сборке мусора в таблице \"%s\" в базе \"%s\": %s"
 
-#: vacuumdb.c:210
+#: vacuumdb.c:208
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: ошибка при сборке базы \"%s\": %s"
 
-#: vacuumdb.c:247
+#: vacuumdb.c:245
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: ошибка при сборке мусора в базе \"%s\"\n"
 
-#: vacuumdb.c:261
+#: vacuumdb.c:259
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -636,47 +641,47 @@ msgstr ""
 "%s очищает и анализирует базу PostgreSQL.\n"
 "\n"
 
-#: vacuumdb.c:265
+#: vacuumdb.c:263
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       произвести сборку мусора во всех базах\n"
 
-#: vacuumdb.c:266
+#: vacuumdb.c:264
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=ИМЯБД              произвести сборку мусора в указанной базе\n"
 
-#: vacuumdb.c:267
+#: vacuumdb.c:265
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
 msgstr "  -t, --table='ТАБЛИЦА[(КОЛОНКИ)]' произвести сборку мусора в указанной таблице\n"
 
-#: vacuumdb.c:268
+#: vacuumdb.c:266
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      произвесим глобальную сборку мусора\n"
 
-#: vacuumdb.c:269
+#: vacuumdb.c:267
 msgid "  -z, --analyze                   update optimizer hints\n"
 msgstr "  -z, --analyze                   обновить статистику для оптимизатора\n"
 
-#: vacuumdb.c:270
+#: vacuumdb.c:268
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      показывать команды отправляемые серверу\n"
 
-#: vacuumdb.c:271
+#: vacuumdb.c:269
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     не выводить сообщения\n"
 
-#: vacuumdb.c:272
+#: vacuumdb.c:270
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   многсловный вывод\n"
 
-#: vacuumdb.c:273
+#: vacuumdb.c:271
 msgid "  --help                          show this help, then exit\n"
 msgstr "  --help                          показать эту справку и выйти\n"
 
-#: vacuumdb.c:274
+#: vacuumdb.c:272
 msgid "  --version                       output version information, then exit\n"
 msgstr "  --version                       показать версию и выйти\n"
 
-#: vacuumdb.c:280
+#: vacuumdb.c:278
 msgid ""
 "\n"
 "Read the description of the SQL command VACUUM for details.\n"
@@ -684,38 +689,48 @@ msgstr ""
 "\n"
 "Читайте описание SQL-команды VACUUM для более подробной информации.\n"
 
-#: common.c:86
-#: common.c:112
+#: common.c:33
+#, c-format
+msgid "%s: could not obtain information about current user: %s"
+msgstr "%s: не удалось получить информацию о текущем пользователе: %s"
+
+#: common.c:44
+#, c-format
+msgid "%s: could not get current user name: %s"
+msgstr "%s: не удалось получить имя текущего пользователя: %s"
+
+#: common.c:89
+#: common.c:115
 msgid "Password: "
 msgstr "Пароль: "
 
-#: common.c:99
+#: common.c:102
 #, c-format
 msgid "%s: could not connect to database %s\n"
-msgstr "%s: не уалось подсоединиться к базе %s\n"
+msgstr "%s: не удалось подсоединиться к базе %s\n"
 
-#: common.c:122
+#: common.c:125
 #, c-format
 msgid "%s: could not connect to database %s: %s"
-msgstr "%s: не уалось подсоединиться к базе %s: %s"
+msgstr "%s: не удалось подсоединиться к базе %s: %s"
 
-#: common.c:146
+#: common.c:149
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: запрос не удался: %s"
 
-#: common.c:147
+#: common.c:150
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: запрос был: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:161
+#: common.c:164
 msgid "y"
 msgstr "y"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:163
+#: common.c:166
 msgid "n"
 msgstr "n"
 

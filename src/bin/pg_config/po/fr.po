@@ -1,7 +1,7 @@
 # translation of pg_config.po to FR_fr
 # French message translation file for pg_config
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.1 2004/11/02 09:28:30 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.2 2004/11/16 22:58:30 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
@@ -9,7 +9,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_config\n"
-"POT-Creation-Date: 2004-10-25 19:05+0100\n"
+"POT-Creation-Date: 2004-11-16 07:06+0000\n"
 "PO-Revision-Date: 2004-10-26 22:27+0200\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team: FR_fr <pgsql-fr-generale@postgresql.org>\n"
@@ -56,10 +56,11 @@ msgid ""
 "                        interfaces\n"
 msgstr ""
 "  --includedir          affiche l'emplacement des fichiers d'en-tête C\n"
-"                         des interfaces clientss\n"
+"                        des interfaces clients\n"
 
 #: pg_config.c:43
-msgid "  --includedir-server   show location of C header files for the server\n"
+msgid ""
+"  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   affiche l'emplacement des fichiers d'en-tête C du serveur\n"
 
 #: pg_config.c:44
@@ -68,11 +69,14 @@ msgstr "  --libdir              affiche l'emplacement des bibliothèques\n"
 
 #: pg_config.c:45
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
-msgstr "  --pkglibdir           affiche l'emplacement des modules chargeables dynamiquement\n"
+msgstr ""
+"  --pkglibdir           affiche l'emplacement des modules chargeables "
+"dynamiquement\n"
 
 #: pg_config.c:46
 msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                affiche l'emplacement du makefile d'extension\n"
+msgstr ""
+"  --pgxs                affiche l'emplacement du makefile d'extension\n"
 
 #: pg_config.c:47
 msgid ""
@@ -105,7 +109,7 @@ msgid ""
 "Try \"%s --help\" for more information\n"
 msgstr ""
 "\n"
-"Essayez \"%s --help\" pour plus informations\n"
+"Essayez «%s --help» pour plus informations\n"
 
 #: pg_config.c:75
 #, c-format
@@ -121,4 +125,3 @@ msgstr "%s : argument invalide : %s\n"
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s : impossible de trouver mon propre exécutable\n"
-

@@ -1,59 +1,58 @@
-# translation of initdb-tr.po to Turkish
-# translation of initdb.po to Turkish
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004.
+# Slovenian message translation for initdb.
+# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2004.
+#
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: initdb-tr\n"
-"POT-Creation-Date: 2004-10-18 07:07+0100\n"
-"PO-Revision-Date: 2004-11-11 12:43+0200\n"
-"Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
-"Language-Team: Turkish <http://developer.postgresql.org/~petere/nlsstatus/po-current/libpq-tr.po>\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
+"POT-Creation-Date: 2004-06-04 13:07-0300\n"
+"PO-Revision-Date: 2004-11-09 22:43+0100\n"
+"Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
+"Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.3.1\n"
-"X-Poedit-Language: Turkish\n"
-"X-Poedit-Country: TURKEY\n"
+"X-Poedit-Language: Slovenian\n"
+"X-Poedit-Country: SLOVENIA\n"
 
 #: initdb.c:237
 #: initdb.c:251
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: yetersiz bellek\n"
+msgstr "%s: zmanjkalo je pomnilnika\n"
 
 #: initdb.c:361
 #: initdb.c:1342
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: \"%s\"  dosyası, okunmak için açılamadı: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogo�e odpreti za branje: %s\n"
 
 #: initdb.c:422
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
-msgstr "%s: \"%s\" dosyası, yazılmak için açılamadı: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogo�e odpreti za pisanje: %s\n"
 
 #: initdb.c:550
 #: initdb.c:559
 #: initdb.c:567
 #, c-format
 msgid "%s: failed\n"
-msgstr "%s: başarısız oldu\n"
+msgstr "%s: spodletelo\n"
 
 #: initdb.c:556
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
-msgstr "%s: veri dizini siliniyor \"%s\"\n"
+msgstr "%s: odstranjevanje podatkovnega imenika \"%s\"\n"
 
 #: initdb.c:564
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
-msgstr "%s: veri dizininin içindekiler siliniyor \"%s\"\n"
+msgstr "%s: odstranjevanje vsebine podatkovnega imenika \"%s\"\n"
 
 #: initdb.c:575
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
-msgstr "%s: \"%s\" veri dizini kullanıcının isteği üzerine silinmedi\n"
+msgstr "%s: podatkovni imenik \"%s\" na uporabnikovo zahtevo ni bil odstranjen\n"
 
 #: initdb.c:601
 #, c-format
@@ -62,18 +61,19 @@ msgid ""
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s: root olarak çalıştırılamaz.\n"
-"(Örneğin \"su\" kullanarak ) sunucu sürecinin sahibi olacak şekilde sisteme yetkisiz bir kullanıcı olarak giriş yapın.\n"
+"%s: poganjanje programa pod uporabnikom root ni mogo�e\n"
+"Lastnik stre�ni�kega procesa je lahko le obi�ajni uporabnik.\n"
+"(Kot drug uporabnik se lahko prijavite z uporabo ukaza \"su\".)\n"
 
 #: initdb.c:650
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr "%s: \"%s\" geçerli bir dil kodlaması adı değil\n"
+msgstr "%s: \"%s\" ni veljavno ime kodne tabele za stre�nik\n"
 
 #: initdb.c:805
 #, c-format
 msgid "%s: warning: encoding mismatch\n"
-msgstr "%s: uyarı: dil kodlaması uyuşmazlığı\n"
+msgstr "%s: opozorilo: neskladje kodnih tabel\n"
 
 #: initdb.c:807
 #, c-format
@@ -84,11 +84,11 @@ msgid ""
 "this situation, rerun %s and either do not specify an encoding\n"
 "explicitly, or choose a matching combination.\n"
 msgstr ""
-"Seçtiğiniz (%s) dil kodlaması ve seçilen yerelin kullandığı dil kodlaması\n"
-"(%s) uyuşmuyor.  Bu, çeşitli metin işleme fonksiyonlarının\n"
-"yanlış çalışmasına neden olabilir. Bu durumu düzeltebilmek için\n"
-"%s komutunu yeniden çalıştırın ve de ya kodlama belirtmeyin\n"
-"ya da eşleştirilebilir bir kodlama seçin.\n"
+"Izbrana kodna tabela (%s) in kodna tabela izbranih podro�nih\n"
+"nastavitev (%s) nista kompatibilni.  To lahko pripelje do nepravilnega\n"
+"delovanja nekaterih funkcij za delo z nizi.  Da bi popravili to situacijo,\n"
+"ponovno po�enite %s in pri tem ne navedite kodne tabele, ali pa izberite\n"
+"ujemajo�o se kombinacijo.\n"
 
 #: initdb.c:959
 #, c-format
@@ -97,26 +97,26 @@ msgid ""
 "This means you have a corrupted installation or identified\n"
 "the wrong directory with the invocation option -L.\n"
 msgstr ""
-"%s: \"%s\" dosyası bulunamadı\n"
-"Bu ileti, bozulmus bir kurulumunuz olduğu ya da\n"
-"initdb betiğine verdiğiniz -L parametresi ile yanlış dizin belirttiğiniz anlamına gelir..\n"
+"%s: datoteka \"%s\" ne obstaja\n"
+"To pomeni, da program ni pravilno name��en, ali pa ste\n"
+"z uporabo mo�nosti -E navedli napa�no lokacijo vhodnih datotek.\n"
 
 #: initdb.c:1024
 msgid "selecting default max_connections ... "
-msgstr "ön tanımlı max_connections seçiliyor ... "
+msgstr "izbiranje privzete vrednosti max_connections ... "
 
 #: initdb.c:1060
 msgid "selecting default shared_buffers ... "
-msgstr "ön tanımlı shared_buffers seçiliyor ... "
+msgstr "izbiranje privzete vrednosti shared_buffers ... "
 
 #: initdb.c:1093
 msgid "creating configuration files ... "
-msgstr "yapılandırma dosyaları yaratılıyor ... "
+msgstr "ustvarjanje konfiguracijskih datotek ..."
 
 #: initdb.c:1189
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
-msgstr "%s/base/1 içinde template1 veritabanı yaratılıyor."
+msgstr "ustvarjanje podatkovne baze template1 v imeniku %s/base/1 ... "
 
 #: initdb.c:1205
 #, c-format
@@ -124,91 +124,92 @@ msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
 "Check your installation or specify the correct path using the option -L.\n"
 msgstr ""
-"%s: \"%s\" girdi dosyası PostgreSQL'e ait değil %s\n"
-"Kurulumunuzu kontrol edin ya da -L seçeneği ile doğru dizini belirtin.\n"
+"%s: vhodna datoteka \"%s\" ne pripada PostgreSQL-u %s\n"
+"Preverite, ali je program pravilno name��en, ali pa z uporabo mo�nosti -L\n"
+"navedite pravilno pot do vhodnih datotek.\n"
 
 #: initdb.c:1281
 msgid "initializing pg_shadow ... "
-msgstr "pg_shadow hazırlanıyor ... "
+msgstr "inicializacija pg_shadow ..."
 
 #: initdb.c:1317
 msgid "Enter new superuser password: "
-msgstr "Yeni superuser şifresini giriniz: "
+msgstr "Vpi�ite novo geslo za superuser uporabnika: "
 
 #: initdb.c:1318
 msgid "Enter it again: "
-msgstr "Yeniden giriniz: "
+msgstr "Ponovite vnos gesla: "
 
 #: initdb.c:1321
 msgid "Passwords didn't match.\n"
-msgstr "Şifreler uyuşmadı.\n"
+msgstr "Gesli se ne ujemata.\n"
 
 #: initdb.c:1348
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
-msgstr "%s: \"%s\" dosyasından şifre okunamadı: %s\n"
+msgstr "%s: iz datoteke \"%s\" ni bilo mogo�e prebrati gesla: %s\n"
 
 #: initdb.c:1361
 msgid "setting password ... "
-msgstr "şifre ayarlanıyor ... "
+msgstr "nastavljanje gesla ..."
 
 #: initdb.c:1385
 #, c-format
 msgid "%s: The password file was not generated. Please report this problem.\n"
-msgstr "%s: Şifre dosyası üretilemedi. Lütfen bu hatayı bildiriniz.\n"
+msgstr "%s: Datoteka z gesli ni bila ustvarjena. Prosimo, prijavite ta problem.\n"
 
 #: initdb.c:1415
 msgid "enabling unlimited row size for system tables ... "
-msgstr "Sistem tabloları için sınırsız satır sayısı etkinleştiriliyor ... "
+msgstr "omogo�anje neomejene velikosti vrstic za sistemske tabele ..."
 
 #: initdb.c:1488
 msgid "initializing pg_depend ... "
-msgstr "pg_depend hazırlanıyor ... "
+msgstr "inicializacija pg_depend ..."
 
 #: initdb.c:1516
 msgid "creating system views ... "
-msgstr "sistem viewları yaratılıyor ... "
+msgstr "ustvarjanje sistemskih pogledov ..."
 
 #: initdb.c:1553
 msgid "loading pg_description ... "
-msgstr "pg_description yükleniyor ... "
+msgstr "nalaganje pg_description ..."
 
 #: initdb.c:1601
 msgid "creating conversions ... "
-msgstr "dönüşümler yükleniyor ... "
+msgstr "ustvarjanje pretvorb med kodnimi tabelami ..."
 
 #: initdb.c:1657
 msgid "setting privileges on built-in objects ... "
-msgstr "gömülü nesnelerdeki izinler ayarlanıyor ... "
+msgstr "nastavljanje pravic na vgrajenih objektih ..."
 
 #: initdb.c:1715
 msgid "creating information schema ... "
-msgstr "information schema yaratılıyor ... "
+msgstr "ustvarjanje sheme information_schema ..."
 
 #: initdb.c:1778
 msgid "vacuuming database template1 ... "
-msgstr "template1 veritabanı vakumlanıyor ... "
+msgstr "sesanje baze template1 ..."
 
 #: initdb.c:1834
 msgid "copying template1 to template0 ... "
-msgstr "template1 template0'a kopyalanıyor ... "
+msgstr "kopiranje template1 v template0 ..."
 
 #: initdb.c:1891
 msgid "caught signal\n"
-msgstr "sinyal yakalandı\n"
+msgstr "ujet je bil signal\n"
 
 #: initdb.c:1896
 msgid "could not write to child process\n"
-msgstr "çocuk sürece yazılamadı\n"
+msgstr "v podproces ni bilo mogo�e pisati\n"
 
 #: initdb.c:1902
 msgid "ok\n"
-msgstr "tamam\n"
+msgstr "ok\n"
 
 #: initdb.c:1949
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s: geçersiz yerel adı \"%s\"\n"
+msgstr "%s: \"%s\" ni veljavno ime podro�nih nastavitev \n"
 
 #: initdb.c:2016
 #, c-format
@@ -216,17 +217,17 @@ msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%sbir PostgreSQL Veritabanı kümesini ilklendirir.\n"
+"%s incializira gru�o podatkovnih baz za PostgreSQL.\n"
 "\n"
 
 #: initdb.c:2017
 msgid "Usage:\n"
-msgstr "Kullanımı:\n"
+msgstr "Uporaba:\n"
 
 #: initdb.c:2018
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
-msgstr "  %s [SEÇENEK]... [DATADIR]\n"
+msgstr "  %s [MO�NOST]... [PODATKOVNI_IMENIK]\n"
 
 #: initdb.c:2019
 msgid ""
@@ -234,19 +235,19 @@ msgid ""
 "Options:\n"
 msgstr ""
 "\n"
-"Seçenekler:\n"
+"Mo�nosti:\n"
 
 #: initdb.c:2020
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
-msgstr "[-D, --pgdata=]DATADIR     bu veritabanı kümesi için yer\n"
+msgstr " [-D, --pgdata=]DATADIR     lokacija nove gru�e podatkovnih baz\n"
 
 #: initdb.c:2021
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
-msgstr "  -E, --encoding=ENCODING   yeni veritabanları için öntanımlı dil kodlamasını ayarlar\n"
+msgstr "  -E, --encoding=ENCODING   nastavi privzeto kodno tabelo novih podatkovnih baz\n"
 
 #: initdb.c:2022
 msgid "  --locale=LOCALE           initialize database cluster with given locale\n"
-msgstr "  --locale=LOCALE           veritabanı kümesini verilen yerel ile ilklendirir\n"
+msgstr "  --locale=LOCALE           gru�o podatkovnih baz inicializiraj s podanimi podro�nimi nastavitvami\n"
 
 #: initdb.c:2023
 msgid ""
@@ -258,37 +259,37 @@ msgid ""
 msgstr ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
-"                            veritabanı kümesini, ilgili kategorideki \n"
-"                            verilen yerelde ilklendirir.\n"
-"                            ön tanımlı bilgi çevresel bigilerden alınmıştır)\n"
+"                            gru�o podatkovnih baz inicializiraj s podanimi podro�nimi\n"
+"                            nastavitvami za posamezno kategorijo (privzeta vrednost\n"
+"                            je dobljena iz okolja)\n"
 
 #: initdb.c:2028
 msgid "  --no-locale               equivalent to --locale=C\n"
-msgstr "  --no-locale               --locale=C'ye eşdeğer\n"
+msgstr "  --no-locale               enako kot --locale=C\n"
 
 #: initdb.c:2029
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
-msgstr "  -A, --auth=METHOD         yerel bağlantılar için ön tanımlı yetkilendirme yöntemi\n"
+msgstr "  -A, --auth=NA�IN          privzeti na�in avtentikacije za lokalne povezave\n"
 
 #: initdb.c:2030
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=NAME       veritabanı superuser kullanıcısı adı\n"
+msgstr "  -U, --username=NAME       nastavi ime superuser uporabnika\n"
 
 #: initdb.c:2031
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
-msgstr "  -W, --pwprompt            yeni superuser için şifre sorar\n"
+msgstr "  -W, --pwprompt            vpra�aj za geslo za novega superuser uporabnika\n"
 
 #: initdb.c:2032
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
-msgstr "  --pwfile=DOSYA_ADI         yeni superuser için şifreyi belirtilen dosyadan okur\n"
+msgstr "  --pwfile=DATOTEKA         geslo za superuser uporabnika preberi iz podane datoteke\n"
 
 #: initdb.c:2033
 msgid "  -?, --help                show this help, then exit\n"
-msgstr "  -?, --help                bu yardımı gösterir ve sonra çıkar\n"
+msgstr "  -?, --help                izpi�i to pomo�, nato kon�aj program\n"
 
 #: initdb.c:2034
 msgid "  -V, --version             output version information, then exit\n"
-msgstr "  -V, --version             sürüm bilgisini gösterir ve sonra çıkar\n"
+msgstr "  -V, --version             izpi�i podatke o razli�ici, nato kon�aj program\n"
 
 #: initdb.c:2035
 msgid ""
@@ -296,23 +297,23 @@ msgid ""
 "Less commonly used options:\n"
 msgstr ""
 "\n"
-"Daha az kullanılan seçenekler:\n"
+"Redkeje uporabljane mo�nosti:\n"
 
 #: initdb.c:2036
 msgid "  -d, --debug               generate lots of debugging output\n"
-msgstr "  -d, --debug               bol miktarda debug çıktısı üretir\n"
+msgstr "  -d, --debug               prika�i podatke za razhro��evanje\n"
 
 #: initdb.c:2037
 msgid "  -s, --show                show internal settings\n"
-msgstr "  -s, --show                dahili ayarları gösterir\n"
+msgstr "  -s, --show                prika�i interne nastavitve\n"
 
 #: initdb.c:2038
 msgid "  -L DIRECTORY              where to find the input files\n"
-msgstr "  -L DIRECTORY              girdi dosyalarının nerede bulunacağını belirtir\n"
+msgstr "  -L IMENIK                 lokacija vhodnih datotek\n"
 
 #: initdb.c:2039
 msgid "  -n, --noclean             do not clean up after errors\n"
-msgstr "  -n, --noclean             hatalardan sonra temizlik yapma\n"
+msgstr "  -n, --noclean             ne po�isti za napakami\n"
 
 #: initdb.c:2040
 msgid ""
@@ -321,7 +322,9 @@ msgid ""
 "is used.\n"
 msgstr ""
 "\n"
-"Eğer veri dizini belirtilmezse, PGDATA çevresel değişkeni kullanılacaktır\n"
+"�e podatkovni imenik ni podan, bo uporabljena vrednost okoljske\n"
+"spremenljivke PGDATA.\n"
+"\n"
 
 #: initdb.c:2042
 msgid ""
@@ -329,32 +332,32 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Hataları <pgsql-bugs@postgresql.org> adresine bildirebilirsiniz.\n"
+"Napake sporo�ajte na naslov <pgsql-bugs@postgresql.org>.\n"
 
 #: initdb.c:2133
 msgid "Running in debug mode.\n"
-msgstr "Debug modunda çalışıyor.\n"
+msgstr "Izvajanje v \"debug\" na�inu.\n"
 
 #: initdb.c:2137
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
-msgstr "noclean modunda çalışıyor.  Hatalar silinmeyecek.\n"
+msgstr "Izvajanje v \"noclean\" na�inu.  Posledice morebitnih napak ne bodo po�i��ene.\n"
 
 #: initdb.c:2173
 #: initdb.c:2190
 #: initdb.c:2408
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Ayrıntılı bilgi için  \"%s --help\" komutunu deneyebilirsiniz.\n"
+msgstr "Za ve� informacij poskusite \"%s --help\".\n"
 
 #: initdb.c:2188
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: Çok fazla komut satırı girdisi var (ilki \"%s\")\n"
+msgstr "%s: preve� argumentov na ukazni vrstici (prvi je \"%s\")\n"
 
 #: initdb.c:2196
 #, c-format
 msgid "%s: password prompt and password file may not be specified together\n"
-msgstr "%s: Şifre promptu ve şifre dosyası birlikte belirtilemez\n"
+msgstr "%s: ro�no vpisovanje gesla in navajanje datoteke z geslom nista zdru�ljiva\n"
 
 #: initdb.c:2202
 msgid ""
@@ -364,19 +367,20 @@ msgid ""
 "next time you run initdb.\n"
 msgstr ""
 "\n"
-"UYARI: Yerel bağlantıları için \"trust\" yetkilendirmesi etkinleştiriliyor.\n"
-"Bunu, pg_hba.conf dosyasını düzenleyerek ya da  initdb'yi yeniden \n"
-" çalıştırdığınızda -A parametresi ile değiştirebilirsiniz..\n"
+"OPOZORILO: za lokalne povezave bo uporabljen \"trust\" na�in\n"
+"avtentikacije, ki od uporabnikov ne zahteva gesla.\n"
+"To nastavitev lahko spremenite v datoteki pg_hba.conf, ali z\n"
+"uporabo stikala -A ob naslednjem zagonu programa initdb.\n"
 
 #: initdb.c:2226
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
-msgstr "%s: bilinmeyen yetkilendirme yöntemi\"%s\".\n"
+msgstr "%s: \"%s\" ni podprt na�in avtentikacije\n"
 
 #: initdb.c:2235
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s: %s yetkilendirmesini etkinleştirmek için superuser'a şifre atamanız gerekmektedir.\n"
+msgstr "%s: da bi omogo�ili \"%s\" na�in avtentikacije, morate navesti geslo za superuser uporabnika.\n"
 
 #: initdb.c:2250
 #, c-format
@@ -386,9 +390,9 @@ msgid ""
 "will reside.  Do this with either the invocation option -D or the\n"
 "environment variable PGDATA.\n"
 msgstr ""
-"%s: Hiçbir veri dizini belirtilmedi\n"
-"Bu veritabanı sistemi için verinin hangi dizinde duracağını belirtmeniz gerekmektedir.\n"
-"Bunu ya -D seçeneği ile ya da PGDATA çevresel değişkeni ile yapabilirsiniz.\n"
+"%s: podatkovni imenik ni naveden\n"
+"Navesti morate imenik, kjer bodo shranjeni podatki za ta sistem podatkovnih baz.\n"
+"To lahko storite z uporabo mo�nosti -D, ali z nastavitvijo okoljske spremenljivke PGDATA.\n"
 
 #: initdb.c:2281
 #, c-format
@@ -397,9 +401,9 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-" \"postgres\"  programına %s gereksinim duymaktadır, ancak bu program  \"%s\"\n"
-"ile aynı dizinde bulunamadı.\n"
-"Kurulumunuzu kontrol ediniz.\n"
+"%s potrebuje program \"postgres\", vendar pa ta ni bil najden\n"
+"v istem imeniku kot \"%s\".\n"
+"Preverite, ali je program name��en pravilno.\n"
 
 #: initdb.c:2288
 #, c-format
@@ -408,19 +412,19 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-" \"postgres\"  programı \"%s\" tarafından bulundu; ancak bu program  %s\n"
-"ile aynı sürüm numarasına sahip değil.\n"
-"Kurulumunuzu kontrol ediniz.\n"
+"%s: program \"postgres\" je bil najden, vendar se njegova\n"
+"razli�ica razlikuje od razli�ice programa \"%s\".\n"
+"Preverite, ali je program pravilno name��en.\n"
 
 #: initdb.c:2307
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
-msgstr "%s: girdi dosyasının yeri mutlak bir yol olmalıdır\n"
+msgstr "%s: lokacija vhodnih datotek mora biti absolutna pot\n"
 
 #: initdb.c:2315
 #, c-format
 msgid "%s: could not determine valid short version string\n"
-msgstr "%s: geçerli bir kısa sürüm katarı belirlenemedi\n"
+msgstr "%s: veljavnega niza s kratko razli�ico ni bilo mogo�e dobiti\n"
 
 #: initdb.c:2368
 #, c-format
@@ -429,14 +433,14 @@ msgid ""
 "This user must also own the server process.\n"
 "\n"
 msgstr ""
-"Bu veritabanı sistemine ait olan dosyaların sahibi \"%s\" kullanıcısı olacaktır.\n"
-"Bu kullanıcı aynı zamanda sunucu sürecinin de sahibi olmalıdır.\n"
+"Lastnik datotek, ki pripadajo temu sistemu podatkovnih baz, bo uporabnik \"%s\".\n"
+"Ta uporabnik mora biti tudi lastnik stre�ni�kega procesa.\n"
 "\n"
 
 #: initdb.c:2378
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
-msgstr "Veritabanı kümesi %s yereli ile ilklendirilecek.\n"
+msgstr "Gru�a podatkovnih baz bo inicializirana s podro�nimi nastavitvami %s.\n"
 
 #: initdb.c:2381
 #, c-format
@@ -449,7 +453,7 @@ msgid ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 msgstr ""
-"Veritabanı kümesi aşağıdaki yerellerle ilklendirilecek:\n"
+"Gru�a podatkovnih baz bo inicializirana s podro�nimi nastavitvami\n"
 "  COLLATE:  %s\n"
 "  CTYPE:    %s\n"
 "  MESSAGES: %s\n"
@@ -460,32 +464,32 @@ msgstr ""
 #: initdb.c:2406
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
-msgstr "%s: \"%s\" yereli için uygun dil kodlaması bulunamadı.\n"
+msgstr "%s: ne najdem primerne kodne tabele za podro�ne nastavitve \"%s\"\n"
 
 #: initdb.c:2407
 #, c-format
 msgid "Rerun %s with the -E option.\n"
-msgstr "%s komutunu -E seçeneği ile yeniden çalıştırın.\n"
+msgstr "Ponovno po�enite %s z mo�nostjo -E.\n"
 
 #: initdb.c:2414
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
-msgstr "Öntanımlı veritabanı dil kodlaması %s olarak ayarlandı.\n"
+msgstr "Privzeta stre�ni�ka kodna tabela je bila nastavljena na %s.\n"
 
 #: initdb.c:2455
 #, c-format
 msgid "creating directory %s ... "
-msgstr "%s dizini yaratılıyor... "
+msgstr "ustvarjanje imenika %s ..."
 
 #: initdb.c:2469
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
-msgstr "mevcut %s dizininin izinleri düzeltiliyor..."
+msgstr "popravljanje dovoljenj na obstoje�em imeniku %s ... "
 
 #: initdb.c:2475
 #, c-format
-msgid "%s: could not change permissions of directory %s: %s\n"
-msgstr "%s: %s dizininin erişim haklarını değiştirilemiyor: %s\n"
+msgid "%s: could not change permissions of directory �%s�: %s\n"
+msgstr "%s: dovoljenj za imenik \"%s\" ni bilo mogo�e spremeniti: %s\n"
 
 #: initdb.c:2488
 #, c-format
@@ -495,20 +499,20 @@ msgid ""
 "the directory \"%s\" or run %s\n"
 "with an argument other than \"%s\".\n"
 msgstr ""
-"%s: \"%s\" dizini mevcut ancak boş değil \n"
-"Eğer yeni bir veritabanı sistemi yaratmak istiyorsanız, \"%s\" dizini\n"
-"ya silin ya da taşıyın; ya da %s komutunu \n"
-"\"%s\" argümanınından farklı bir argümanla çalıştırın.\n"
+"%s: imenik \"%s\" obstaja, vendar ni prazen\n"
+"�e �elite ustvariti nov sistem podatkovnih baz, morate\n"
+"imenik \"%s\" odstraniti ali izprazniti, ali pa programu %s\n"
+"podajte vrednost, ki ni enaka \"%s\".\n"
 
 #: initdb.c:2497
 #, c-format
-msgid "%s: could not access directory %s: %s\n"
-msgstr "%s: %s dizinine erişim hatası: %s\n"
+msgid "%s: could not access directory �%s�: %s\n"
+msgstr "%s: do imenika \"%s\" ni bilo mogo�e dostopati: %s\n"
 
 #: initdb.c:2506
 #, c-format
 msgid "creating directory %s/%s ... "
-msgstr "%s/%s dizini yaratılıyor... "
+msgstr "ustvarjanje imenika %s/%s ... "
 
 #: initdb.c:2570
 #, c-format
@@ -522,11 +526,10 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"İşlem başarılı. Veritabanı sunucusunu:\n"
+"Uspeh. Podatkovni stre�nik lahko sedaj za�enete z ukazom:\n"
 "\n"
 "    %s%s%s/postmaster -D %s%s%s\n"
-"ile ya da \n"
+"ali\n"
 "    %s%s%s/pg_ctl -D %s%s%s -l logfile start\n"
-"ile başlatabilirsiniz.\n"
 "\n"
 

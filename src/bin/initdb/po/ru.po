@@ -1,16 +1,19 @@
 # ru.po
 # INITDB Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.10 2004/10/27 11:22:06 petere Exp $
+# Copyright (c) 2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Distributed under the same licensing terms as PostgreSQL itself.
+#
+# $PostgreSQL: pgsql/src/bin/initdb/po/ru.po,v 1.11 2004/11/16 22:50:57 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - October 21, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
+#   - March 27 - November 14, 2004: Initial Translation, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-20 19:06+0100\n"
-"PO-Revision-Date: 2004-10-21 02:55-0500\n"
+"POT-Creation-Date: 2004-11-14 07:07+0000\n"
+"PO-Revision-Date: 2004-11-14 20:17-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -26,39 +29,39 @@ msgid "%s: out of memory\n"
 msgstr "%s: нехватка памяти\n"
 
 #: initdb.c:361
-#: initdb.c:1339
+#: initdb.c:1342
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: не удалось открыть файл \"%s\" для чтения: %s\n"
 
-#: initdb.c:419
+#: initdb.c:422
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
 msgstr "%s: не удалось открыть файл \"%s\" для записи: %s\n"
 
-#: initdb.c:547
-#: initdb.c:556
-#: initdb.c:564
+#: initdb.c:550
+#: initdb.c:559
+#: initdb.c:567
 #, c-format
 msgid "%s: failed\n"
 msgstr "%s: ошибка\n"
 
-#: initdb.c:553
+#: initdb.c:556
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
 msgstr "%s: удаление директории данных \"%s\"\n"
 
-#: initdb.c:561
+#: initdb.c:564
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
 msgstr "%s: удаление содержимого директории данных \"%s\"\n"
 
-#: initdb.c:572
+#: initdb.c:575
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
 msgstr "%s: директория данных \"%s\" не удалена по запросу пользователя\n"
 
-#: initdb.c:598
+#: initdb.c:601
 #, c-format
 msgid ""
 "%s: cannot be run as root\n"
@@ -69,17 +72,17 @@ msgstr ""
 "Пожалуйста, зайдите как (непривилегированный) пользователь (например,\n"
 "используя \"su\"), под которым будет выполняться процесс сервера.\n"
 
-#: initdb.c:647
+#: initdb.c:650
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
 msgstr "%s: \"%s\" не является верной кодировкой сервера\n"
 
-#: initdb.c:802
+#: initdb.c:805
 #, c-format
 msgid "%s: warning: encoding mismatch\n"
 msgstr "%s: внимание: не соответствие кодировки\n"
 
-#: initdb.c:804
+#: initdb.c:807
 #, c-format
 msgid ""
 "The encoding you selected (%s) and the encoding that the selected\n"
@@ -94,7 +97,7 @@ msgstr ""
 "Чтобы исправить ситуауию перезапустите %s и либо не указывайте\n"
 "кодировку или выбирете соответствующую комбинацию.\n"
 
-#: initdb.c:956
+#: initdb.c:959
 #, c-format
 msgid ""
 "%s: file \"%s\" does not exist\n"
@@ -105,24 +108,24 @@ msgstr ""
 "Это либо означает что у вас повреждённая инсталляция или указана\n"
 "неправильная директория в опции запуска -L.\n"
 
-#: initdb.c:1021
+#: initdb.c:1024
 msgid "selecting default max_connections ... "
 msgstr "производится выборка значения по умолчанию max_connections ... "
 
-#: initdb.c:1057
+#: initdb.c:1060
 msgid "selecting default shared_buffers ... "
 msgstr "производится выборка значения по умолчанию shared_buffers ... "
 
-#: initdb.c:1090
+#: initdb.c:1093
 msgid "creating configuration files ... "
 msgstr "создание файлов конфигурации ... "
 
-#: initdb.c:1186
+#: initdb.c:1189
 #, c-format
 msgid "creating template1 database in %s/base/1 ... "
 msgstr "создание базы template1 в %s/base/1 ... "
 
-#: initdb.c:1202
+#: initdb.c:1205
 #, c-format
 msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
@@ -131,90 +134,90 @@ msgstr ""
 "%s: входной файл \"%s\" не принадлежит PostgreSQL %s\n"
 "Проверьте вашу инсталляцию или укажите правильный путь с помощью опции -L.\n"
 
-#: initdb.c:1278
+#: initdb.c:1281
 msgid "initializing pg_shadow ... "
 msgstr "инициализация pg_shadow ... "
 
-#: initdb.c:1314
+#: initdb.c:1317
 msgid "Enter new superuser password: "
 msgstr "Введите новый пароль администратора: "
 
-#: initdb.c:1315
+#: initdb.c:1318
 msgid "Enter it again: "
 msgstr "Введите его снова: "
 
-#: initdb.c:1318
+#: initdb.c:1321
 msgid "Passwords didn't match.\n"
 msgstr "Пароли не совпадают.\n"
 
-#: initdb.c:1345
+#: initdb.c:1348
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
 msgstr "%s: не удалось считать пароль из файла \"%s\": %s\n"
 
-#: initdb.c:1358
+#: initdb.c:1361
 msgid "setting password ... "
 msgstr "установка пароля ... "
 
-#: initdb.c:1382
+#: initdb.c:1385
 #, c-format
 msgid "%s: The password file was not generated. Please report this problem.\n"
 msgstr "%s: Не удалось сгенерировать пароль. Пожалуйста сообщите об этой проблеме.\n"
 
-#: initdb.c:1412
+#: initdb.c:1415
 msgid "enabling unlimited row size for system tables ... "
 msgstr "разграничение размера строки для системных таблиц ... "
 
-#: initdb.c:1485
+#: initdb.c:1488
 msgid "initializing pg_depend ... "
 msgstr "инициализация pg_depend ... "
 
-#: initdb.c:1513
+#: initdb.c:1516
 msgid "creating system views ... "
 msgstr "создание системных представлений ... "
 
-#: initdb.c:1550
+#: initdb.c:1553
 msgid "loading pg_description ... "
 msgstr "загрузка pg_description ... "
 
-#: initdb.c:1598
+#: initdb.c:1601
 msgid "creating conversions ... "
 msgstr "создание конверсий ... "
 
-#: initdb.c:1654
+#: initdb.c:1657
 msgid "setting privileges on built-in objects ... "
 msgstr "установка привилегий для встроенных объектов ... "
 
-#: initdb.c:1712
+#: initdb.c:1715
 msgid "creating information schema ... "
 msgstr "создание информационной схемы ... "
 
-#: initdb.c:1775
+#: initdb.c:1778
 msgid "vacuuming database template1 ... "
 msgstr "сборка мусора в базе template1 ... "
 
-#: initdb.c:1831
+#: initdb.c:1834
 msgid "copying template1 to template0 ... "
 msgstr "копирование template1 в template0 ... "
 
-#: initdb.c:1888
+#: initdb.c:1891
 msgid "caught signal\n"
 msgstr "пойман сигнал\n"
 
-#: initdb.c:1893
+#: initdb.c:1896
 msgid "could not write to child process\n"
 msgstr "не удалось записать в процесс-наследник\n"
 
-#: initdb.c:1899
+#: initdb.c:1902
 msgid "ok\n"
 msgstr "ок\n"
 
-#: initdb.c:1946
+#: initdb.c:1949
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
 msgstr "%s: неверное имя локали \"%s\"\n"
 
-#: initdb.c:2013
+#: initdb.c:2016
 #, c-format
 msgid ""
 "%s initializes a PostgreSQL database cluster.\n"
@@ -223,16 +226,16 @@ msgstr ""
 "%s инициализирует кластер PostgreSQL.\n"
 "\n"
 
-#: initdb.c:2014
+#: initdb.c:2017
 msgid "Usage:\n"
 msgstr "Использование:\n"
 
-#: initdb.c:2015
+#: initdb.c:2018
 #, c-format
 msgid "  %s [OPTION]... [DATADIR]\n"
 msgstr "  %s [ОПЦИЯ]... [ДИРДАННЫХ]\n"
 
-#: initdb.c:2016
+#: initdb.c:2019
 msgid ""
 "\n"
 "Options:\n"
@@ -240,19 +243,19 @@ msgstr ""
 "\n"
 "Опции:\n"
 
-#: initdb.c:2017
+#: initdb.c:2020
 msgid " [-D, --pgdata=]DATADIR     location for this database cluster\n"
 msgstr " [-D, --pgdata=]ДИРДАННЫХ   местонахождение для этого кластера баз данных\n"
 
-#: initdb.c:2018
+#: initdb.c:2021
 msgid "  -E, --encoding=ENCODING   set default encoding for new databases\n"
 msgstr "  -E, --encoding=КОДИРОВКА  установить кодировку по умолчанию для новых баз\n"
 
-#: initdb.c:2019
+#: initdb.c:2022
 msgid "  --locale=LOCALE           initialize database cluster with given locale\n"
 msgstr "  --locale=ЛОКАЛЬ           инициализировать кластер баз данных с указанной локалью\n"
 
-#: initdb.c:2020
+#: initdb.c:2023
 msgid ""
 "  --lc-collate, --lc-ctype, --lc-messages=LOCALE\n"
 "  --lc-monetary, --lc-numeric, --lc-time=LOCALE\n"
@@ -266,35 +269,35 @@ msgstr ""
 "                            указанной локалью в соответствующей категории\n"
 "                            (значения по умолчанию берутся из окружения)\n"
 
-#: initdb.c:2025
+#: initdb.c:2028
 msgid "  --no-locale               equivalent to --locale=C\n"
 msgstr "  --no-locale               эквивалентно --locale=C\n"
 
-#: initdb.c:2026
+#: initdb.c:2029
 msgid "  -A, --auth=METHOD         default authentication method for local connections\n"
 msgstr "  -A, --auth=МЕТОД          метод аутентификации по умолчанию для локальных подсоединений\n"
 
-#: initdb.c:2027
+#: initdb.c:2030
 msgid "  -U, --username=NAME       database superuser name\n"
 msgstr "  -U, --username=NAME       имя администратора базы данных\n"
 
-#: initdb.c:2028
+#: initdb.c:2031
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr "  -W, --pwprompt            запросить пароль для нового администратора\n"
 
-#: initdb.c:2029
+#: initdb.c:2032
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr "  --pwfile=ФАЙЛ             считать пароль для нового администратора из файла\n"
 
-#: initdb.c:2030
+#: initdb.c:2033
 msgid "  -?, --help                show this help, then exit\n"
 msgstr "  -?, --help                показать эту помощь и выйти\n"
 
-#: initdb.c:2031
+#: initdb.c:2034
 msgid "  -V, --version             output version information, then exit\n"
 msgstr "  -V, --version             показать версию и выйти\n"
 
-#: initdb.c:2032
+#: initdb.c:2035
 msgid ""
 "\n"
 "Less commonly used options:\n"
@@ -302,23 +305,23 @@ msgstr ""
 "\n"
 "Реже используемые опции:\n"
 
-#: initdb.c:2033
+#: initdb.c:2036
 msgid "  -d, --debug               generate lots of debugging output\n"
 msgstr "  -d, --debug               генерировать много отладочных сообщений\n"
 
-#: initdb.c:2034
+#: initdb.c:2037
 msgid "  -s, --show                show internal settings\n"
 msgstr "  -s, --show                показать внутренние установки\n"
 
-#: initdb.c:2035
+#: initdb.c:2038
 msgid "  -L DIRECTORY              where to find the input files\n"
 msgstr "  -L DIRECTORY              где найти входные файлы\n"
 
-#: initdb.c:2036
+#: initdb.c:2039
 msgid "  -n, --noclean             do not clean up after errors\n"
 msgstr "  -n, --noclean             не подчищать после ошибок\n"
 
-#: initdb.c:2037
+#: initdb.c:2040
 msgid ""
 "\n"
 "If the data directory is not specified, the environment variable PGDATA\n"
@@ -327,7 +330,7 @@ msgstr ""
 "\n"
 "Если директория данных не указана, используется значение переменной окружения PGDATA.\n"
 
-#: initdb.c:2039
+#: initdb.c:2042
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
@@ -335,32 +338,32 @@ msgstr ""
 "\n"
 "Сообщения об ошибках: <pgsql-bugs@postgresql.org>.\n"
 
-#: initdb.c:2130
+#: initdb.c:2133
 msgid "Running in debug mode.\n"
 msgstr "Выполнение в режиме отладки.\n"
 
-#: initdb.c:2134
+#: initdb.c:2137
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
 msgstr "Выполнение в режиме 'noclean'.  Сборка мусора и чистка после ошибок производиться не будет.\n"
 
-#: initdb.c:2170
-#: initdb.c:2187
-#: initdb.c:2405
+#: initdb.c:2173
+#: initdb.c:2190
+#: initdb.c:2408
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Наберите \"%s --help\" для более подробной информации.\n"
 
-#: initdb.c:2185
+#: initdb.c:2188
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: слишком много аргументов командной строки (первый: \"%s\")\n"
 
-#: initdb.c:2193
+#: initdb.c:2196
 #, c-format
 msgid "%s: password prompt and password file may not be specified together\n"
 msgstr "%s: запрос пароля и файл паролей не могут указываться вместе\n"
 
-#: initdb.c:2199
+#: initdb.c:2202
 msgid ""
 "\n"
 "WARNING: enabling \"trust\" authentication for local connections\n"
@@ -372,17 +375,17 @@ msgstr ""
 "Вы можете её поменять отредактировав pg_hba.conf или используя опцию -A\n"
 "при следующем выполнении initdb.\n"
 
-#: initdb.c:2223
+#: initdb.c:2226
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
 msgstr "%s: нераспознанный метод аутентификации \"%s\"\n"
 
-#: initdb.c:2232
+#: initdb.c:2235
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
 msgstr "%s: необходимо указать пароль администратора чтобы включить аутентификацию %s\n"
 
-#: initdb.c:2247
+#: initdb.c:2250
 #, c-format
 msgid ""
 "%s: no data directory specified\n"
@@ -395,7 +398,7 @@ msgstr ""
 "для этой системы.  Это можно сделать с помощью указания опции -D\n"
 "или установки переменной окружения PGDATA.\n"
 
-#: initdb.c:2278
+#: initdb.c:2281
 #, c-format
 msgid ""
 "The program \"postgres\" is needed by %s but was not found in the\n"
@@ -406,7 +409,7 @@ msgstr ""
 "той же директории что и \"%s\".\n"
 "Проверьте вашу инсталляцию.\n"
 
-#: initdb.c:2285
+#: initdb.c:2288
 #, c-format
 msgid ""
 "The program \"postgres\" was found by \"%s\"\n"
@@ -417,17 +420,17 @@ msgstr ""
 "с той же версией как %s.\n"
 "Проверьте вашу инсталляцию.\n"
 
-#: initdb.c:2304
+#: initdb.c:2307
 #, c-format
 msgid "%s: input file location must be an absolute path\n"
 msgstr "%s: местонахождение входного файла должно быть абсолютным путём\n"
 
-#: initdb.c:2312
+#: initdb.c:2315
 #, c-format
 msgid "%s: could not determine valid short version string\n"
 msgstr "%s: не в состоянии определить правильную короткую строку версии\n"
 
-#: initdb.c:2365
+#: initdb.c:2368
 #, c-format
 msgid ""
 "The files belonging to this database system will be owned by user \"%s\".\n"
@@ -438,12 +441,12 @@ msgstr ""
 "принадлежать пользователю \"%s\". Этот пользователь\n"
 "также должен быть владельцем процесса сервера.\n"
 
-#: initdb.c:2375
+#: initdb.c:2378
 #, c-format
 msgid "The database cluster will be initialized with locale %s.\n"
 msgstr "Кластер баз данных будет инициализирован с локалью %s.\n"
 
-#: initdb.c:2378
+#: initdb.c:2381
 #, c-format
 msgid ""
 "The database cluster will be initialized with locales\n"
@@ -462,32 +465,37 @@ msgstr ""
 "  NUMERIC:  %s\n"
 "  TIME:     %s\n"
 
-#: initdb.c:2403
+#: initdb.c:2406
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
 msgstr "%s: не удалось найти подходящую кодировку для локали \"%s\"\n"
 
-#: initdb.c:2404
+#: initdb.c:2407
 #, c-format
 msgid "Rerun %s with the -E option.\n"
 msgstr "Перезапустите %s с опцией -E.\n"
 
-#: initdb.c:2411
+#: initdb.c:2414
 #, c-format
 msgid "The default database encoding has accordingly been set to %s.\n"
 msgstr "Кодировка базы по умолчанию установлена в %s.\n"
 
-#: initdb.c:2452
+#: initdb.c:2455
 #, c-format
 msgid "creating directory %s ... "
 msgstr "создание директории %s ... "
 
-#: initdb.c:2466
+#: initdb.c:2469
 #, c-format
 msgid "fixing permissions on existing directory %s ... "
 msgstr "исправление прав на существующую директорию %s ... "
 
-#: initdb.c:2484
+#: initdb.c:2475
+#, c-format
+msgid "%s: could not change permissions of directory \"%s\": %s\n"
+msgstr "%s: не удалось поменять права на директорию \"%s\": %s\n"
+
+#: initdb.c:2488
 #, c-format
 msgid ""
 "%s: directory \"%s\" exists but is not empty\n"
@@ -500,12 +508,17 @@ msgstr ""
 "директорию \"%s\" или её содержимое или выполните %s\n"
 "с аргументом отличным от \"%s\".\n"
 
-#: initdb.c:2501
+#: initdb.c:2497
+#, c-format
+msgid "%s: could not access directory \"%s\": %s\n"
+msgstr "%s: нет доступа к директории \"%s\": %s\n"
+
+#: initdb.c:2506
 #, c-format
 msgid "creating directory %s/%s ... "
 msgstr "создание директории %s/%s ... "
 
-#: initdb.c:2565
+#: initdb.c:2570
 #, c-format
 msgid ""
 "\n"

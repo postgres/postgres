@@ -1,10 +1,13 @@
 # ru.po
 # POSTGRES Translated Messages into the Russian Language (KOI8-R)
 #
-# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.27 2004/10/27 11:52:28 petere Exp $
+# Copyright (c) 2001-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
+# Distributed under the same licensing terms as PostgreSQL itself.
+#
+# $Header: /cvsroot/pgsql/src/backend/po/Attic/ru.po,v 1.28 2004/11/16 22:49:44 petere Exp $
 #
 # ChangeLog:
-#   - March 27 - October 24, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
+#   - March 27 - November 14, 2004: Updates for 7.4.x/8.0 branches; <mokhov@cs.concordia.ca>
 #   - July - August 23, 2003: Updates for 7.4.x; <mokhov@cs.concordia.ca>
 #   - January 2, 2003: Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
 #   - October 12, 2002: Post-7.3 beta 2, Fuzzy fixes, Serguei A. Mokhov <mokhov@cs.concordia.ca>
@@ -15,8 +18,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4.x\n"
-"POT-Creation-Date: 2004-10-22 07:08+0100\n"
-"PO-Revision-Date: 2004-10-24 18:40-0500\n"
+"POT-Creation-Date: 2004-11-01 19:32+0000\n"
+"PO-Revision-Date: 2004-11-14 18:51-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -24,11 +27,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Russian\n"
 "X-Poedit-Country: RUSSIAN FEDERATION\n"
-
-#: access/common/heaptuple.c:584
-#, c-format
-msgid "number of columns (%d) exceeds limit (%d)"
-msgstr "число колонок (%d) превышает лимит (%d)"
 
 #: access/common/indextuple.c:57
 #, c-format
@@ -39,6 +37,11 @@ msgstr "число идексированных атрибутов (%d) превышает лимит (%d)"
 #, c-format
 msgid "index row requires %lu bytes, maximum size is %lu"
 msgstr "строка индекса требует байт: %lu, при максимуме: %lu"
+
+#: access/common/heaptuple.c:584
+#, c-format
+msgid "number of columns (%d) exceeds limit (%d)"
+msgstr "число колонок (%d) превышает лимит (%d)"
 
 #: access/common/printtup.c:279
 #: tcop/fastpath.c:187
@@ -64,20 +67,20 @@ msgstr "не в состоянии определить описание строки для функции возвращающей запис
 #: access/hash/hashinsert.c:90
 #, c-format
 msgid "index row size %lu exceeds hash maximum %lu"
-msgstr ""
+msgstr "размер строки индекса %lu превышает hash-максимум %lu"
+
+#: access/hash/hashsearch.c:145
+msgid "hash indexes do not support whole-index scans"
+msgstr "hash-индексы не поддерживают сканирование целиковых индексов"
 
 #: access/hash/hashovfl.c:521
 #, c-format
 msgid "out of overflow pages in hash index \"%s\""
-msgstr ""
-
-#: access/hash/hashsearch.c:145
-msgid "hash indexes do not support whole-index scans"
-msgstr ""
+msgstr "нехватает страниц переполнения в hash-индексе \"%s\""
 
 #: access/hash/hashutil.c:46
 msgid "hash indexes cannot contain null keys"
-msgstr ""
+msgstr "hash-индексы не могут содержать нулевые (NULL) ключи"
 
 #: access/hash/hashutil.c:126
 #, c-format
@@ -87,7 +90,7 @@ msgstr "индекс \"%s\" не является hash-индексом"
 #: access/hash/hashutil.c:132
 #, c-format
 msgid "index \"%s\" has wrong hash version"
-msgstr ""
+msgstr "индекс \"%s\" имеент неправильную hash-версию"
 
 #: access/hash/hashutil.c:133
 msgid "Please REINDEX it."
@@ -156,12 +159,44 @@ msgstr "не совпадение версии в индексе \"%s\": версия файла: %d, версия кода: %d
 
 #: access/rtree/rtree.c:645
 msgid "variable-length rtree keys are not supported"
-msgstr ""
+msgstr "rtree-ключи разной длины не поддерживаются"
 
 #: access/rtree/rtree.c:785
 #, c-format
 msgid "index row size %lu exceeds rtree maximum, %lu"
 msgstr "размер строки индекса (%lu) превышает максимальный для rtree: %lu"
+
+#: access/transam/xact.c:418
+msgid "cannot have more than 2^32-1 commands in a transaction"
+msgstr "нельзя иметь более 2^32-1 команд в одной транзакции"
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1411
+#, c-format
+msgid "%s cannot run inside a transaction block"
+msgstr "%s не может выполняться внутри транзакционного блока"
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1423
+#, c-format
+msgid "%s cannot be executed from a function"
+msgstr "%s не может выполняться внутри функции"
+
+#. translator: %s represents an SQL statement name
+#: access/transam/xact.c:1466
+#, c-format
+msgid "%s may only be used in transaction blocks"
+msgstr "%s может выполняться только внутри блоков транзакций"
+
+#: access/transam/xact.c:1545
+msgid "there is already a transaction in progress"
+msgstr "транзакция уже в процессе выполнения"
+
+#: access/transam/xact.c:1607
+#: access/transam/xact.c:1645
+#: access/transam/xact.c:1693
+msgid "there is no transaction in progress"
+msgstr "нет транзакции в процессе выполнения"
 
 #: access/transam/slru.c:490
 #, c-format
@@ -229,38 +264,6 @@ msgstr "удаление файла \"%s/%s\""
 #, c-format
 msgid "could not read directory \"%s\": %m"
 msgstr "не получилось считать директорию \"%s\": %m"
-
-#: access/transam/xact.c:418
-msgid "cannot have more than 2^32-1 commands in a transaction"
-msgstr "нельзя иметь более 2^32-1 команд в одной транзакции"
-
-#. translator: %s represents an SQL statement name
-#: access/transam/xact.c:1410
-#, c-format
-msgid "%s cannot run inside a transaction block"
-msgstr "%s не может выполняться внутри транзакционного блока"
-
-#. translator: %s represents an SQL statement name
-#: access/transam/xact.c:1422
-#, c-format
-msgid "%s cannot be executed from a function"
-msgstr "%s не может выполняться внутри функции"
-
-#. translator: %s represents an SQL statement name
-#: access/transam/xact.c:1465
-#, c-format
-msgid "%s may only be used in transaction blocks"
-msgstr "%s может выполняться только внутри блоков транзакций"
-
-#: access/transam/xact.c:1544
-msgid "there is already a transaction in progress"
-msgstr "транзакция уже в процессе выполнения"
-
-#: access/transam/xact.c:1606
-#: access/transam/xact.c:1644
-#: access/transam/xact.c:1692
-msgid "there is no transaction in progress"
-msgstr "нет транзакции в процессе выполнения"
 
 #: access/transam/xlog.c:1047
 #: access/transam/xlog.c:1163
@@ -338,12 +341,12 @@ msgstr "не получилось считать файл директорию лога транзакций \"%s\": %m"
 #: access/transam/xlog.c:1747
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
-msgstr ""
+msgstr "некорректная контрольная сумма данных менеджера ресурсов в записи на %X/%X"
 
 #: access/transam/xlog.c:1770
 #, c-format
 msgid "incorrect checksum of backup block %d in record at %X/%X"
-msgstr ""
+msgstr "некорректная контрольная сумма резервного блока %d в записи на %X/%X"
 
 #: access/transam/xlog.c:1840
 #, c-format
@@ -358,7 +361,7 @@ msgstr "не удалось считать из лог-файла: %u, сегмент: %u, смещение %u: %m"
 #: access/transam/xlog.c:1884
 #, c-format
 msgid "contrecord is requested by %X/%X"
-msgstr ""
+msgstr "contrecord запрошена следующим: %X/%X"
 
 #: access/transam/xlog.c:1899
 #, c-format
@@ -383,33 +386,33 @@ msgstr "не удалось считать из лог-файла: %u, сегмент: %u, смещение %u: %m"
 #: access/transam/xlog.c:1972
 #, c-format
 msgid "there is no contrecord flag in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "отсутствует флаг contrecord в фале журнала %u, сегмент %u, смещение %u"
 
 #: access/transam/xlog.c:1981
 #, c-format
 msgid "invalid contrecord length %u in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "неверная длина contrecord %u в фале журнала %u, сегмент %u, смещение %u"
 
 #: access/transam/xlog.c:2047
 #, c-format
 msgid "invalid magic number %04X in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "неверное магическое число %04X в фале журнала %u, сегмент %u, смещение %u"
 
 #: access/transam/xlog.c:2054
 #, c-format
 msgid "invalid info bits %04X in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "неверные информационные биты %04X в фале журнала %u, сегмент %u, смещение %u"
 
 #: access/transam/xlog.c:2063
 #, c-format
 msgid "unexpected pageaddr %X/%X in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "неожиданный pageaddr %X/%X в фале журнала %u, сегмент %u, смещение %u"
 
 #. translator: SUI = startup id
 #: access/transam/xlog.c:2086
 #, c-format
 msgid "out-of-sequence SUI %u (after %u) in log file %u, segment %u, offset %u"
-msgstr ""
+msgstr "вне последовательности SUI %u (после %u) в фале журнала %u, сегмент %u, смещение %u"
 
 #: access/transam/xlog.c:2147
 msgid "invalid LC_COLLATE setting"
@@ -772,13 +775,62 @@ msgstr ""
 "путём указания опции -D при запуске или установив переменную\n"
 "окружения PGDATA.\n"
 
+#: catalog/dependency.c:173
+#, c-format
+msgid "cannot drop %s because other objects depend on it"
+msgstr "нельзя удалить %s по причине наличия зависимых объектов"
+
+#: catalog/dependency.c:175
+msgid "Use DROP ... CASCADE to drop the dependent objects too."
+msgstr "Используйте DROP ... CASCADE чтобы также удалить зависимые объекты."
+
+#: catalog/dependency.c:233
+#, c-format
+msgid "failed to drop all objects depending on %s"
+msgstr "ошибка при удалении всех объектов завимых от %s"
+
+#: catalog/dependency.c:330
+#: catalog/dependency.c:729
+#, c-format
+msgid "cannot drop %s because it is required by the database system"
+msgstr "нельзя удалить %s: этот объект нужен системе баз данных"
+
+#: catalog/dependency.c:466
+#, c-format
+msgid "cannot drop %s because %s requires it"
+msgstr "нельзя удалить %s: этот объект нужен %s"
+
+#: catalog/dependency.c:468
+#, c-format
+msgid "You may drop %s instead."
+msgstr "Вместо этого вы можете удалить %s."
+
+#: catalog/dependency.c:536
+#: catalog/dependency.c:686
+#: catalog/dependency.c:714
+#, c-format
+msgid "drop auto-cascades to %s"
+msgstr "удаление автоматически снисходит до %s"
+
+#: catalog/dependency.c:541
+#: catalog/dependency.c:691
+#, c-format
+msgid "%s depends on %s"
+msgstr "%s зависит от %s"
+
+#: catalog/dependency.c:548
+#: catalog/dependency.c:698
+#, c-format
+msgid "drop cascades to %s"
+msgstr "удаление снисходит до %s"
+
 #: catalog/aclchk.c:160
 msgid "grant options can only be granted to individual users"
-msgstr ""
+msgstr "опции GRANT могут быть только вручены индивидуальны пользователям"
 
 #: catalog/aclchk.c:165
 msgid "cannot revoke grant options from owner"
-msgstr ""
+msgstr "нелзя отобрать GRANT-опции от владельца"
 
 #: catalog/aclchk.c:236
 #, c-format
@@ -999,54 +1051,54 @@ msgstr "оператро с OID %u не существует"
 msgid "operator class with OID %u does not exist"
 msgstr "класс операторов с OID %u не существует"
 
-#: catalog/dependency.c:173
-#, c-format
-msgid "cannot drop %s because other objects depend on it"
-msgstr "нельзя удалить %s по причине наличия зависимых объектов"
+#: catalog/pg_aggregate.c:80
+msgid "cannot determine transition data type"
+msgstr "не в состоянии определить переходный тип"
 
-#: catalog/dependency.c:175
-msgid "Use DROP ... CASCADE to drop the dependent objects too."
-msgstr "Используйте DROP ... CASCADE чтобы также удалить зависимые объекты."
+#: catalog/pg_aggregate.c:81
+msgid "An aggregate using \"anyarray\" or \"anyelement\" as transition type must have one of them as its base type."
+msgstr "Агрегат, использующий \"anyarray\" или \"anyelement\" как переходные типы должен иметь один из них как свой базовый тип."
 
-#: catalog/dependency.c:233
+#: catalog/pg_aggregate.c:110
 #, c-format
-msgid "failed to drop all objects depending on %s"
-msgstr "ошибка при удалении всех объектов завимых от %s"
+msgid "return type of transition function %s is not %s"
+msgstr "тип возрата переходной функции %s не является %s"
 
-#: catalog/dependency.c:330
-#: catalog/dependency.c:729
-#, c-format
-msgid "cannot drop %s because it is required by the database system"
-msgstr "нельзя удалить %s: этот объект нужен системе баз данных"
+#: catalog/pg_aggregate.c:132
+msgid "must not omit initial value when transition function is strict and transition type is not compatible with input type"
+msgstr "нельзя опускать начальное значение когда переходная функция strict и переходный тип не совместим с входным типом"
 
-#: catalog/dependency.c:466
-#, c-format
-msgid "cannot drop %s because %s requires it"
-msgstr "нельзя удалить %s: этот объект нужен %s"
+#: catalog/pg_aggregate.c:165
+#: catalog/pg_proc.c:116
+#: catalog/pg_proc.c:539
+msgid "cannot determine result data type"
+msgstr "не в состоянии определить тип результата"
 
-#: catalog/dependency.c:468
-#, c-format
-msgid "You may drop %s instead."
-msgstr "Вместо этого вы можете удалить %s."
+#: catalog/pg_aggregate.c:166
+msgid "An aggregate returning \"anyarray\" or \"anyelement\" must have one of them as its base type."
+msgstr "Агрегат, возвращающий \"anyarray\" или \"anyelement\" должен иметь один из них как свой базовый тип."
 
-#: catalog/dependency.c:536
-#: catalog/dependency.c:686
-#: catalog/dependency.c:714
+#: catalog/pg_aggregate.c:280
+#: commands/typecmds.c:896
+#: commands/typecmds.c:966
+#: commands/typecmds.c:998
+#: commands/typecmds.c:1030
+#: parser/parse_func.c:319
+#: parser/parse_func.c:1491
 #, c-format
-msgid "drop auto-cascades to %s"
-msgstr "удаление автоматически снисходит до %s"
+msgid "function %s does not exist"
+msgstr "функция %s не существует"
 
-#: catalog/dependency.c:541
-#: catalog/dependency.c:691
+#: catalog/pg_aggregate.c:285
 #, c-format
-msgid "%s depends on %s"
-msgstr "%s зависит от %s"
+msgid "function %s returns a set"
+msgstr "функция %s возвращает множество"
 
-#: catalog/dependency.c:548
-#: catalog/dependency.c:698
+#: catalog/pg_aggregate.c:316
+#: catalog/pg_aggregate.c:325
 #, c-format
-msgid "drop cascades to %s"
-msgstr "удаление снисходит до %s"
+msgid "function %s requires run-time type coercion"
+msgstr ""
 
 #: catalog/heap.c:227
 #, c-format
@@ -1114,18 +1166,18 @@ msgstr "CHECK-ограничение \"%s\" уже существует"
 #: catalog/heap.c:1634
 #, c-format
 msgid "only table \"%s\" can be referenced in check constraint"
-msgstr ""
+msgstr "только на таблицу \"%s\" можно ссылаться в CHECK-ограничении"
 
 #: catalog/heap.c:1643
 #: commands/tablecmds.c:2941
 #: commands/typecmds.c:1811
 msgid "cannot use subquery in check constraint"
-msgstr ""
+msgstr "нельзя использовать подзапрос в CHECK-ограничении"
 
 #: catalog/heap.c:1647
 #: commands/tablecmds.c:2945
 msgid "cannot use aggregate function in check constraint"
-msgstr ""
+msgstr "нельзя использовать агрегатную функцию в CHECK-ограничении"
 
 #: catalog/heap.c:1754
 msgid "cannot use column references in default expression"
@@ -1164,7 +1216,7 @@ msgstr ""
 #: catalog/heap.c:2060
 #, c-format
 msgid "Table \"%s\" references \"%s\" via foreign key constraint \"%s\"."
-msgstr ""
+msgstr "Таблица \"%s\" ссылается на \"%s\" через вторичный ключ \"%s\"."
 
 #: catalog/index.c:505
 msgid "user-defined indexes on system catalog tables are not supported"
@@ -1172,12 +1224,12 @@ msgstr "пользовательские индексы на таблицы системного каталога не поддерживаютс
 
 #: catalog/index.c:517
 msgid "shared indexes cannot be created after initdb"
-msgstr ""
+msgstr "нельзя создать общие индексы после initdb"
 
 #: catalog/index.c:1659
 #, c-format
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
-msgstr ""
+msgstr "общий индекс \"%s\" можно только переиндексировать в одиночном режиме"
 
 #: catalog/namespace.c:167
 #: catalog/namespace.c:220
@@ -1226,54 +1278,12 @@ msgstr ""
 msgid "permission denied to create temporary tables in database \"%s\""
 msgstr "доступ запрещён по созданию временных таблиц в базе \"%s\""
 
-#: catalog/pg_aggregate.c:80
-msgid "cannot determine transition data type"
-msgstr ""
-
-#: catalog/pg_aggregate.c:81
-msgid "An aggregate using \"anyarray\" or \"anyelement\" as transition type must have one of them as its base type."
-msgstr ""
-
-#: catalog/pg_aggregate.c:110
+#: catalog/pg_largeobject.c:107
+#: storage/large_object/inv_api.c:128
+#: storage/large_object/inv_api.c:248
 #, c-format
-msgid "return type of transition function %s is not %s"
-msgstr ""
-
-#: catalog/pg_aggregate.c:132
-msgid "must not omit initial value when transition function is strict and transition type is not compatible with input type"
-msgstr ""
-
-#: catalog/pg_aggregate.c:165
-#: catalog/pg_proc.c:116
-#: catalog/pg_proc.c:539
-msgid "cannot determine result data type"
-msgstr "не в состоянии определить тип результата"
-
-#: catalog/pg_aggregate.c:166
-msgid "An aggregate returning \"anyarray\" or \"anyelement\" must have one of them as its base type."
-msgstr ""
-
-#: catalog/pg_aggregate.c:280
-#: commands/typecmds.c:896
-#: commands/typecmds.c:966
-#: commands/typecmds.c:998
-#: commands/typecmds.c:1030
-#: parser/parse_func.c:319
-#: parser/parse_func.c:1491
-#, c-format
-msgid "function %s does not exist"
-msgstr "функция %s не существует"
-
-#: catalog/pg_aggregate.c:285
-#, c-format
-msgid "function %s returns a set"
-msgstr "функция %s возвращает множество"
-
-#: catalog/pg_aggregate.c:316
-#: catalog/pg_aggregate.c:325
-#, c-format
-msgid "function %s requires run-time type coercion"
-msgstr ""
+msgid "large object %u does not exist"
+msgstr "большой объект %u не существует"
 
 #: catalog/pg_conversion.c:66
 #, c-format
@@ -1291,13 +1301,6 @@ msgstr "конверсия по умолчанию для %s в %s уже существует"
 #, c-format
 msgid "conversion \"%s\" does not exist"
 msgstr "конверсия \"%s\" не существует"
-
-#: catalog/pg_largeobject.c:107
-#: storage/large_object/inv_api.c:128
-#: storage/large_object/inv_api.c:248
-#, c-format
-msgid "large object %u does not exist"
-msgstr "большой объект %u не существует"
 
 #: catalog/pg_namespace.c:51
 #: commands/schemacmds.c:256
@@ -1317,19 +1320,19 @@ msgstr "либо аргумент слева либо справа должен быть указан как минимум"
 
 #: catalog/pg_operator.c:420
 msgid "only binary operators can have commutators"
-msgstr ""
+msgstr "только бинарные операторы могут иметь коммутаторы"
 
 #: catalog/pg_operator.c:424
 msgid "only binary operators can have join selectivity"
-msgstr ""
+msgstr "только бинарные операторы могут иметь выборку по объединению (JOIN SELECT)"
 
 #: catalog/pg_operator.c:428
 msgid "only binary operators can hash"
-msgstr ""
+msgstr "только бинарные операторы могут хэшироваться"
 
 #: catalog/pg_operator.c:432
 msgid "only binary operators can merge join"
-msgstr ""
+msgstr "только бинарные операторы могут использовать слияние в объединении (MERGE JOIN)"
 
 #: catalog/pg_operator.c:444
 #, c-format
@@ -1451,7 +1454,7 @@ msgstr "неверный внутренний размер типа: %d"
 
 #: catalog/pg_type.c:208
 msgid "fixed-size types must have storage PLAIN"
-msgstr ""
+msgstr "типы фиксированного размера обязаны иметь хранение PLAIN"
 
 #: catalog/pg_type.c:289
 #: catalog/pg_type.c:511
@@ -1484,20 +1487,20 @@ msgstr "агрегатный атрибут \"%s\" не распознан"
 
 #: commands/aggregatecmds.c:107
 msgid "aggregate basetype must be specified"
-msgstr ""
+msgstr "basetype агрегата должен быть указан"
 
 #: commands/aggregatecmds.c:111
 msgid "aggregate stype must be specified"
-msgstr ""
+msgstr "stype агрегата должен быть указан"
 
 #: commands/aggregatecmds.c:115
 msgid "aggregate sfunc must be specified"
-msgstr ""
+msgstr "sfunc агрегата должен быть указана"
 
 #: commands/aggregatecmds.c:138
 #, c-format
 msgid "aggregate transition data type cannot be %s"
-msgstr ""
+msgstr "переходный тип агрегата не может быть %s"
 
 #: commands/aggregatecmds.c:259
 #, c-format
@@ -1529,12 +1532,12 @@ msgstr "анализируется \"%s.%s\""
 #: commands/analyze.c:700
 #, c-format
 msgid "\"%s\": %u pages, %d rows sampled, %.0f estimated total rows"
-msgstr ""
+msgstr "\"%s\": страниц: %u, рядов замерено: %d, всего рядов оценено: %.0f"
 
 #: commands/cluster.c:150
 #, c-format
 msgid "there is no previously clustered index for table \"%s\""
-msgstr ""
+msgstr "не имеется предыдущего перегруппированного индекса для таблицы \"%s\""
 
 #: commands/cluster.c:164
 #: commands/tablecmds.c:3932
@@ -1549,7 +1552,7 @@ msgstr "\"%s\" не является индексом для таблицы \"%s\""
 
 #: commands/cluster.c:334
 msgid "cannot cluster on partial index"
-msgstr ""
+msgstr "нельзя группировать по частичному индексу"
 
 #: commands/cluster.c:352
 msgid "cannot cluster when index access method does not handle null values"
@@ -1572,6 +1575,21 @@ msgstr "\"%s\" является системным каталогом"
 #: commands/cluster.c:389
 msgid "cannot cluster temporary tables of other sessions"
 msgstr ""
+
+#: commands/conversioncmds.c:66
+#, c-format
+msgid "source encoding \"%s\" does not exist"
+msgstr "исходная кодировка \"%s\" не существует"
+
+#: commands/conversioncmds.c:73
+#, c-format
+msgid "destination encoding \"%s\" does not exist"
+msgstr "кодировка назначения \"%s\" не существует"
+
+#: commands/conversioncmds.c:151
+#, c-format
+msgid "conversion \"%s\" already exists in schema \"%s\""
+msgstr "преобразование \"%s\" уже существует в схеме \"%s\""
 
 #: commands/comment.c:316
 #: commands/sequence.c:779
@@ -1667,20 +1685,186 @@ msgstr "таблица \"%s\" содержит более одного констрейнта с именем \"%s\""
 msgid "constraint \"%s\" for table \"%s\" does not exist"
 msgstr "констрейнт \"%s\" для таблицы \"%s\" не существует"
 
-#: commands/conversioncmds.c:66
-#, c-format
-msgid "source encoding \"%s\" does not exist"
-msgstr "исходная кодировка \"%s\" не существует"
+#: commands/copy.c:700
+#: commands/copy.c:708
+#: commands/copy.c:716
+#: commands/copy.c:724
+#: commands/dbcommands.c:103
+#: commands/dbcommands.c:111
+#: commands/dbcommands.c:119
+#: commands/dbcommands.c:127
+#: commands/functioncmds.c:220
+#: commands/functioncmds.c:228
+#: commands/functioncmds.c:236
+#: commands/functioncmds.c:244
+#: commands/functioncmds.c:252
+#: commands/sequence.c:880
+#: commands/sequence.c:893
+#: commands/sequence.c:901
+#: commands/sequence.c:909
+#: commands/sequence.c:917
+#: commands/sequence.c:925
+#: commands/user.c:525
+#: commands/user.c:537
+#: commands/user.c:545
+#: commands/user.c:553
+#: commands/user.c:561
+#: commands/user.c:569
+#: commands/user.c:775
+#: commands/user.c:787
+#: commands/user.c:795
+#: commands/user.c:803
+#: commands/user.c:1275
+#: commands/user.c:1283
+msgid "conflicting or redundant options"
+msgstr "конфликтующие или излишние опции"
 
-#: commands/conversioncmds.c:73
+#: commands/dbcommands.c:153
 #, c-format
-msgid "destination encoding \"%s\" does not exist"
-msgstr "кодировка назначения \"%s\" не существует"
+msgid "%d is not a valid encoding code"
+msgstr "%d не является верным кодом кодировки"
 
-#: commands/conversioncmds.c:151
+#: commands/dbcommands.c:162
 #, c-format
-msgid "conversion \"%s\" already exists in schema \"%s\""
-msgstr "преобразование \"%s\" уже существует в схеме \"%s\""
+msgid "%s is not a valid encoding name"
+msgstr "%s не является верным именем кодировки"
+
+#: commands/dbcommands.c:183
+msgid "permission denied to create database"
+msgstr "доступ запрещён по созданию базы"
+
+#: commands/dbcommands.c:192
+msgid "must be superuser to create database for another user"
+msgstr "нужно быть администратором чтобы создавать базы для других пользователей"
+
+#: commands/dbcommands.c:203
+msgid "cannot use an alternative location on this platform"
+msgstr "нельзя использовать алтернативное распололжение базы на данной платформе"
+
+#: commands/dbcommands.c:217
+#: commands/dbcommands.c:405
+#: commands/dbcommands.c:653
+#, c-format
+msgid "database \"%s\" already exists"
+msgstr "база \"%s\" уже существует"
+
+#: commands/dbcommands.c:231
+#, c-format
+msgid "template database \"%s\" does not exist"
+msgstr "база данных-шаблон \"%s\" не существует"
+
+#: commands/dbcommands.c:242
+#, c-format
+msgid "permission denied to copy database \"%s\""
+msgstr "доступ запрещён по копированию базы \"%s\""
+
+#: commands/dbcommands.c:263
+#, c-format
+msgid "source database \"%s\" is being accessed by other users"
+msgstr "исходная база \"%s\" находится в пользовании другими пользователями"
+
+#: commands/dbcommands.c:274
+#, c-format
+msgid "invalid server encoding %d"
+msgstr "неверная кодировка сервера: %d"
+
+#: commands/dbcommands.c:304
+#: commands/dbcommands.c:308
+#: commands/dbcommands.c:312
+msgid "database path may not contain single quotes"
+msgstr "путь к базе не должен содержать одиночных кавычек"
+
+#: commands/dbcommands.c:337
+#, c-format
+msgid "could not create database directory \"%s\": %m"
+msgstr "не получилось создать директорию баз данных \"%s\": %m"
+
+#: commands/dbcommands.c:342
+#, c-format
+msgid "could not remove temporary directory \"%s\": %m"
+msgstr "не получилось удалить временную директорию \"%s\": %m"
+
+#: commands/dbcommands.c:353
+#, c-format
+msgid "could not link file \"%s\" to \"%s\": %m"
+msgstr "не получилось слинковать файл \"%s\" в \"%s\": %m"
+
+#: commands/dbcommands.c:370
+#: commands/dbcommands.c:385
+msgid "could not initialize database directory"
+msgstr "не получилось инициализировать  директорию баз данных"
+
+#: commands/dbcommands.c:371
+#: commands/dbcommands.c:376
+#: commands/dbcommands.c:961
+#, c-format
+msgid "Failing system command was: %s"
+msgstr "Системная команда с ошибкой: %s"
+
+#: commands/dbcommands.c:372
+#: commands/dbcommands.c:377
+#: commands/dbcommands.c:962
+msgid "Look in the postmaster's stderr log for more information."
+msgstr "Просмотрите stderr-журнал postmaster'а для подробностей."
+
+#: commands/dbcommands.c:375
+#: commands/dbcommands.c:388
+msgid "could not initialize database directory; delete failed as well"
+msgstr "не получилось инициализировать  директорию баз данных; также не удалось её удалить"
+
+#: commands/dbcommands.c:483
+msgid "cannot drop the currently open database"
+msgstr "нельзя удалить открытую в данный момент базу"
+
+#: commands/dbcommands.c:516
+msgid "cannot drop a template database"
+msgstr "нельзя удалить базу-шаблон"
+
+#: commands/dbcommands.c:527
+#: commands/dbcommands.c:643
+#, c-format
+msgid "database \"%s\" is being accessed by other users"
+msgstr "база \"%s\" находится в пользовании другими пользователями"
+
+#: commands/dbcommands.c:634
+msgid "current database may not be renamed"
+msgstr "нельзя переименовать текущую базу данных"
+
+#: commands/dbcommands.c:665
+msgid "permission denied to rename database"
+msgstr "доступ запрещён по переименованию базы"
+
+#: commands/dbcommands.c:884
+msgid "relative paths are not allowed as database locations"
+msgstr "относительные пути не дозволены для расположения баз"
+
+#: commands/dbcommands.c:888
+msgid "absolute paths are not allowed as database locations"
+msgstr "абслютные пути не дозволены для расположения баз"
+
+#: commands/dbcommands.c:900
+#, c-format
+msgid "postmaster environment variable \"%s\" not found"
+msgstr "переменная окружения postmaster'а \"%s\" не найдена"
+
+#: commands/dbcommands.c:905
+#, c-format
+msgid "postmaster environment variable \"%s\" must be absolute path"
+msgstr "переменная окружения postmaster'а \"%s\" должна содержать абсолютный путь"
+
+#: commands/dbcommands.c:914
+msgid "alternative path is too long"
+msgstr "альтернативный путь слишком длинный"
+
+#: commands/dbcommands.c:945
+#, c-format
+msgid "could not remove file \"%s\": %m"
+msgstr "не получилось удалить файл \"%s\": %m"
+
+#: commands/dbcommands.c:959
+#, c-format
+msgid "could not remove database directory \"%s\""
+msgstr "не получилось удалить директорию баз данных \"%s\""
 
 #: commands/copy.c:193
 #: commands/copy.c:205
@@ -1718,40 +1902,6 @@ msgstr "ошибка при COPY из стандартного ввода (stdin): %s"
 #, c-format
 msgid "unexpected message type 0x%02X during COPY from stdin"
 msgstr "неожиданный тип сообщения 0x%02X при COPY из стандартного ввода (stdin)"
-
-#: commands/copy.c:700
-#: commands/copy.c:708
-#: commands/copy.c:716
-#: commands/copy.c:724
-#: commands/dbcommands.c:103
-#: commands/dbcommands.c:111
-#: commands/dbcommands.c:119
-#: commands/dbcommands.c:127
-#: commands/functioncmds.c:220
-#: commands/functioncmds.c:228
-#: commands/functioncmds.c:236
-#: commands/functioncmds.c:244
-#: commands/functioncmds.c:252
-#: commands/sequence.c:880
-#: commands/sequence.c:893
-#: commands/sequence.c:901
-#: commands/sequence.c:909
-#: commands/sequence.c:917
-#: commands/sequence.c:925
-#: commands/user.c:525
-#: commands/user.c:537
-#: commands/user.c:545
-#: commands/user.c:553
-#: commands/user.c:561
-#: commands/user.c:569
-#: commands/user.c:775
-#: commands/user.c:787
-#: commands/user.c:795
-#: commands/user.c:803
-#: commands/user.c:1275
-#: commands/user.c:1283
-msgid "conflicting or redundant options"
-msgstr "конфликтующие или излишние опции"
 
 #: commands/copy.c:735
 msgid "cannot specify DELIMITER in BINARY mode"
@@ -1948,189 +2098,6 @@ msgstr "неверный двоичный формат данных"
 msgid "column \"%s\" specified more than once"
 msgstr "колонка \"%s\" указана больше одного раза"
 
-#: commands/dbcommands.c:153
-#, c-format
-msgid "%d is not a valid encoding code"
-msgstr "%d не является верным кодом кодировки"
-
-#: commands/dbcommands.c:162
-#, c-format
-msgid "%s is not a valid encoding name"
-msgstr "%s не является верным именем кодировки"
-
-#: commands/dbcommands.c:183
-msgid "permission denied to create database"
-msgstr "доступ запрещён по созданию базы"
-
-#: commands/dbcommands.c:192
-msgid "must be superuser to create database for another user"
-msgstr "нужно быть администратором чтобы создавать базы для других пользователей"
-
-#: commands/dbcommands.c:203
-msgid "cannot use an alternative location on this platform"
-msgstr "нельзя использовать алтернативное распололжение базы на данной платформе"
-
-#: commands/dbcommands.c:217
-#: commands/dbcommands.c:405
-#: commands/dbcommands.c:653
-#, c-format
-msgid "database \"%s\" already exists"
-msgstr "база \"%s\" уже существует"
-
-#: commands/dbcommands.c:231
-#, c-format
-msgid "template database \"%s\" does not exist"
-msgstr "база данных-шаблон \"%s\" не существует"
-
-#: commands/dbcommands.c:242
-#, c-format
-msgid "permission denied to copy database \"%s\""
-msgstr "доступ запрещён по копированию базы \"%s\""
-
-#: commands/dbcommands.c:263
-#, c-format
-msgid "source database \"%s\" is being accessed by other users"
-msgstr "исходная база \"%s\" находится в пользовании другими пользователями"
-
-#: commands/dbcommands.c:274
-#, c-format
-msgid "invalid server encoding %d"
-msgstr "неверная кодировка сервера: %d"
-
-#: commands/dbcommands.c:304
-#: commands/dbcommands.c:308
-#: commands/dbcommands.c:312
-msgid "database path may not contain single quotes"
-msgstr "путь к базе не должен содержать одиночных кавычек"
-
-#: commands/dbcommands.c:337
-#, c-format
-msgid "could not create database directory \"%s\": %m"
-msgstr "не получилось создать директорию баз данных \"%s\": %m"
-
-#: commands/dbcommands.c:342
-#, c-format
-msgid "could not remove temporary directory \"%s\": %m"
-msgstr "не получилось удалить временную директорию \"%s\": %m"
-
-#: commands/dbcommands.c:353
-#, c-format
-msgid "could not link file \"%s\" to \"%s\": %m"
-msgstr "не получилось слинковать файл \"%s\" в \"%s\": %m"
-
-#: commands/dbcommands.c:370
-#: commands/dbcommands.c:385
-msgid "could not initialize database directory"
-msgstr "не получилось инициализировать  директорию баз данных"
-
-#: commands/dbcommands.c:371
-#: commands/dbcommands.c:376
-#: commands/dbcommands.c:961
-#, c-format
-msgid "Failing system command was: %s"
-msgstr "Системная команда с ошибкой: %s"
-
-#: commands/dbcommands.c:372
-#: commands/dbcommands.c:377
-#: commands/dbcommands.c:962
-msgid "Look in the postmaster's stderr log for more information."
-msgstr "Просмотрите stderr-журнал postmaster'а для подробностей."
-
-#: commands/dbcommands.c:375
-#: commands/dbcommands.c:388
-msgid "could not initialize database directory; delete failed as well"
-msgstr "не получилось инициализировать  директорию баз данных; также не удалось её удалить"
-
-#: commands/dbcommands.c:483
-msgid "cannot drop the currently open database"
-msgstr "нельзя удалить открытую в данный момент базу"
-
-#: commands/dbcommands.c:516
-msgid "cannot drop a template database"
-msgstr "нельзя удалить базу-шаблон"
-
-#: commands/dbcommands.c:527
-#: commands/dbcommands.c:643
-#, c-format
-msgid "database \"%s\" is being accessed by other users"
-msgstr "база \"%s\" находится в пользовании другими пользователями"
-
-#: commands/dbcommands.c:634
-msgid "current database may not be renamed"
-msgstr "нельзя переименовать текущую базу данных"
-
-#: commands/dbcommands.c:665
-msgid "permission denied to rename database"
-msgstr "доступ запрещён по переименованию базы"
-
-#: commands/dbcommands.c:884
-msgid "relative paths are not allowed as database locations"
-msgstr "относительные пути не дозволены для расположения баз"
-
-#: commands/dbcommands.c:888
-msgid "absolute paths are not allowed as database locations"
-msgstr "абслютные пути не дозволены для расположения баз"
-
-#: commands/dbcommands.c:900
-#, c-format
-msgid "postmaster environment variable \"%s\" not found"
-msgstr "переменная окружения postmaster'а \"%s\" не найдена"
-
-#: commands/dbcommands.c:905
-#, c-format
-msgid "postmaster environment variable \"%s\" must be absolute path"
-msgstr "переменная окружения postmaster'а \"%s\" должна содержать абсолютный путь"
-
-#: commands/dbcommands.c:914
-msgid "alternative path is too long"
-msgstr "альтернативный путь слишком длинный"
-
-#: commands/dbcommands.c:945
-#, c-format
-msgid "could not remove file \"%s\": %m"
-msgstr "не получилось удалить файл \"%s\": %m"
-
-#: commands/dbcommands.c:959
-#, c-format
-msgid "could not remove database directory \"%s\""
-msgstr "не получилось удалить директорию баз данных \"%s\""
-
-#: commands/define.c:66
-#: commands/define.c:164
-#: commands/define.c:196
-#: commands/define.c:230
-#, c-format
-msgid "%s requires a parameter"
-msgstr "%s требует параметр"
-
-#: commands/define.c:105
-#: commands/define.c:116
-#: commands/define.c:131
-#: commands/define.c:149
-#, c-format
-msgid "%s requires a numeric value"
-msgstr "%s требует цифровое значение"
-
-#: commands/define.c:178
-#, c-format
-msgid "argument of %s must be a name"
-msgstr "имя должно быть аргументом для %s"
-
-#: commands/define.c:214
-#, c-format
-msgid "argument of %s must be a type name"
-msgstr "имя типа должно быть аргументом для %s"
-
-#: commands/define.c:239
-#, c-format
-msgid "%s requires an integer value"
-msgstr "%s требует целое значение"
-
-#: commands/define.c:260
-#, c-format
-msgid "invalid argument for %s: \"%s\""
-msgstr "неверный аргумент для %s: \"%s\""
-
 #: commands/functioncmds.c:83
 #, c-format
 msgid "SQL function cannot return shell type %s"
@@ -2296,14 +2263,41 @@ msgstr "конверсия типа %s в тип %s уже существует"
 msgid "cast from type %s to type %s does not exist"
 msgstr "конверсия типа %s в тип %s не существует"
 
-#: commands/indexcmds.c:92
-msgid "must specify at least one column"
-msgstr "как минимум одна колонка должна быть указана"
-
-#: commands/indexcmds.c:96
+#: commands/define.c:66
+#: commands/define.c:164
+#: commands/define.c:196
+#: commands/define.c:230
 #, c-format
-msgid "cannot use more than %d columns in an index"
-msgstr "число колонок в индексе не может превышать %d"
+msgid "%s requires a parameter"
+msgstr "%s требует параметр"
+
+#: commands/define.c:105
+#: commands/define.c:116
+#: commands/define.c:131
+#: commands/define.c:149
+#, c-format
+msgid "%s requires a numeric value"
+msgstr "%s требует цифровое значение"
+
+#: commands/define.c:178
+#, c-format
+msgid "argument of %s must be a name"
+msgstr "имя должно быть аргументом для %s"
+
+#: commands/define.c:214
+#, c-format
+msgid "argument of %s must be a type name"
+msgstr "имя типа должно быть аргументом для %s"
+
+#: commands/define.c:239
+#, c-format
+msgid "%s requires an integer value"
+msgstr "%s требует целое значение"
+
+#: commands/define.c:260
+#, c-format
+msgid "invalid argument for %s: \"%s\""
+msgstr "неверный аргумент для %s: \"%s\""
 
 #: commands/indexcmds.c:144
 #: commands/opclasscmds.c:91
@@ -2312,6 +2306,78 @@ msgstr "число колонок в индексе не может превышать %d"
 #, c-format
 msgid "access method \"%s\" does not exist"
 msgstr "метод доступа \"%s\" не существует"
+
+#: commands/opclasscmds.c:112
+msgid "must be superuser to create an operator class"
+msgstr "нужно быть администратором для создания класса операторов"
+
+#: commands/opclasscmds.c:154
+#, c-format
+msgid "invalid operator number %d, must be between 1 and %d"
+msgstr "неверный номер оператора: %d, должен быть между 1 и %d"
+
+#: commands/opclasscmds.c:160
+#, c-format
+msgid "operator number %d appears more than once"
+msgstr "номер оператора %d указан больше одного раза"
+
+#: commands/opclasscmds.c:192
+#, c-format
+msgid "invalid procedure number %d, must be between 1 and %d"
+msgstr "неверный номер процедуры: %d, должен быть между 1 и %d"
+
+#: commands/opclasscmds.c:198
+#, c-format
+msgid "procedure number %d appears more than once"
+msgstr "номер процедуры %d указан больше одного раза"
+
+#: commands/opclasscmds.c:214
+msgid "storage type specified more than once"
+msgstr ""
+
+#: commands/opclasscmds.c:241
+#, c-format
+msgid "storage type may not be different from data type for access method \"%s\""
+msgstr ""
+
+#: commands/opclasscmds.c:259
+#, c-format
+msgid "operator class \"%s\" for access method \"%s\" already exists"
+msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует"
+
+#: commands/opclasscmds.c:287
+#, c-format
+msgid "could not make operator class \"%s\" be default for type %s"
+msgstr "не получилось установить класс операторов \"%s\" по умолчанию для типа %s"
+
+#: commands/opclasscmds.c:290
+#, c-format
+msgid "Operator class \"%s\" already is the default."
+msgstr "Класс операторов \"%s\" уже существует является классом по умолчанию."
+
+#: commands/indexcmds.c:471
+#: commands/indexcmds.c:481
+#: commands/opclasscmds.c:526
+#: commands/opclasscmds.c:536
+#: commands/opclasscmds.c:669
+#: commands/opclasscmds.c:680
+#, c-format
+msgid "operator class \"%s\" does not exist for access method \"%s\""
+msgstr "класс операторов \"%s\" для медота доступа \"%s\" не существует"
+
+#: commands/opclasscmds.c:701
+#, c-format
+msgid "operator class \"%s\" for access method \"%s\" already exists in schema \"%s\""
+msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует в схеме \"%s\""
+
+#: commands/indexcmds.c:92
+msgid "must specify at least one column"
+msgstr "как минимум одна колонка должна быть указана"
+
+#: commands/indexcmds.c:96
+#, c-format
+msgid "cannot use more than %d columns in an index"
+msgstr "число колонок в индексе не может превышать %d"
 
 #: commands/indexcmds.c:152
 #, c-format
@@ -2377,16 +2443,6 @@ msgstr "тип данных %s не имеет класса операторов по умолчанию для метода доступа
 msgid "You must specify an operator class for the index or define a default operator class for the data type."
 msgstr "Вы должны указать класс операторов для индекса или определить класс операторов по умолчанию для этого типа данных."
 
-#: commands/indexcmds.c:471
-#: commands/indexcmds.c:481
-#: commands/opclasscmds.c:526
-#: commands/opclasscmds.c:536
-#: commands/opclasscmds.c:669
-#: commands/opclasscmds.c:680
-#, c-format
-msgid "operator class \"%s\" does not exist for access method \"%s\""
-msgstr "класс операторов \"%s\" для медота доступа \"%s\" не существует"
-
 #: commands/indexcmds.c:494
 #, c-format
 msgid "operator class \"%s\" does not accept data type %s"
@@ -2416,59 +2472,6 @@ msgstr "можно переиндексовать только открытую базу"
 #, c-format
 msgid "table \"%s\" was reindexed"
 msgstr "таблица \"%s\" переиндексована"
-
-#: commands/opclasscmds.c:112
-msgid "must be superuser to create an operator class"
-msgstr "нужно быть администратором для создания класса операторов"
-
-#: commands/opclasscmds.c:154
-#, c-format
-msgid "invalid operator number %d, must be between 1 and %d"
-msgstr "неверный номер оператора: %d, должен быть между 1 и %d"
-
-#: commands/opclasscmds.c:160
-#, c-format
-msgid "operator number %d appears more than once"
-msgstr "номер оператора %d указан больше одного раза"
-
-#: commands/opclasscmds.c:192
-#, c-format
-msgid "invalid procedure number %d, must be between 1 and %d"
-msgstr "неверный номер процедуры: %d, должен быть между 1 и %d"
-
-#: commands/opclasscmds.c:198
-#, c-format
-msgid "procedure number %d appears more than once"
-msgstr "номер процедуры %d указан больше одного раза"
-
-#: commands/opclasscmds.c:214
-msgid "storage type specified more than once"
-msgstr ""
-
-#: commands/opclasscmds.c:241
-#, c-format
-msgid "storage type may not be different from data type for access method \"%s\""
-msgstr ""
-
-#: commands/opclasscmds.c:259
-#, c-format
-msgid "operator class \"%s\" for access method \"%s\" already exists"
-msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует"
-
-#: commands/opclasscmds.c:287
-#, c-format
-msgid "could not make operator class \"%s\" be default for type %s"
-msgstr "не получилось установить класс операторов \"%s\" по умолчанию для типа %s"
-
-#: commands/opclasscmds.c:290
-#, c-format
-msgid "Operator class \"%s\" already is the default."
-msgstr "Класс операторов \"%s\" уже существует является классом по умолчанию."
-
-#: commands/opclasscmds.c:701
-#, c-format
-msgid "operator class \"%s\" for access method \"%s\" already exists in schema \"%s\""
-msgstr "класс операторов \"%s\" для метода доступа \"%s\" уже существует в схеме \"%s\""
 
 #: commands/operatorcmds.c:106
 #: commands/operatorcmds.c:114
@@ -3771,6 +3774,51 @@ msgstr ""
 msgid "cannot open SELECT INTO query as cursor"
 msgstr ""
 
+#: libpq/be-fsstubs.c:124
+#: libpq/be-fsstubs.c:162
+#: libpq/be-fsstubs.c:186
+#: libpq/be-fsstubs.c:214
+#: libpq/be-fsstubs.c:271
+#, c-format
+msgid "invalid large-object descriptor: %d"
+msgstr ""
+
+#: libpq/be-fsstubs.c:375
+msgid "must be superuser to use server-side lo_import()"
+msgstr "нужно быть администратором для использования server-side lo_import()"
+
+#: libpq/be-fsstubs.c:376
+msgid "Anyone can use the client-side lo_import() provided by libpq."
+msgstr ""
+
+#: libpq/be-fsstubs.c:391
+#, c-format
+msgid "could not open server file \"%s\": %m"
+msgstr "не получилось отктрыть файл сервера \"%s\": %m"
+
+#: libpq/be-fsstubs.c:412
+#, c-format
+msgid "could not read server file \"%s\": %m"
+msgstr "не получилось считать файл сервера \"%s\": %m"
+
+#: libpq/be-fsstubs.c:442
+msgid "must be superuser to use server-side lo_export()"
+msgstr "нужно быть администратором для использования server-side lo_export()"
+
+#: libpq/be-fsstubs.c:443
+msgid "Anyone can use the client-side lo_export() provided by libpq."
+msgstr ""
+
+#: libpq/be-fsstubs.c:469
+#, c-format
+msgid "could not create server file \"%s\": %m"
+msgstr "не получилось создать файл сервера \"%s\": %m"
+
+#: libpq/be-fsstubs.c:481
+#, c-format
+msgid "could not write server file \"%s\": %m"
+msgstr "не получилось записать файл сервера \"%s\": %m"
+
 #: libpq/auth.c:113
 #, c-format
 msgid "Kerberos error: %s"
@@ -3916,51 +3964,6 @@ msgstr "неверный размер пакета с паролем"
 #: libpq/auth.c:803
 msgid "received password packet"
 msgstr "получент пакет с паролем"
-
-#: libpq/be-fsstubs.c:124
-#: libpq/be-fsstubs.c:162
-#: libpq/be-fsstubs.c:186
-#: libpq/be-fsstubs.c:214
-#: libpq/be-fsstubs.c:271
-#, c-format
-msgid "invalid large-object descriptor: %d"
-msgstr ""
-
-#: libpq/be-fsstubs.c:375
-msgid "must be superuser to use server-side lo_import()"
-msgstr "нужно быть администратором для использования server-side lo_import()"
-
-#: libpq/be-fsstubs.c:376
-msgid "Anyone can use the client-side lo_import() provided by libpq."
-msgstr ""
-
-#: libpq/be-fsstubs.c:391
-#, c-format
-msgid "could not open server file \"%s\": %m"
-msgstr "не получилось отктрыть файл сервера \"%s\": %m"
-
-#: libpq/be-fsstubs.c:412
-#, c-format
-msgid "could not read server file \"%s\": %m"
-msgstr "не получилось считать файл сервера \"%s\": %m"
-
-#: libpq/be-fsstubs.c:442
-msgid "must be superuser to use server-side lo_export()"
-msgstr "нужно быть администратором для использования server-side lo_export()"
-
-#: libpq/be-fsstubs.c:443
-msgid "Anyone can use the client-side lo_export() provided by libpq."
-msgstr ""
-
-#: libpq/be-fsstubs.c:469
-#, c-format
-msgid "could not create server file \"%s\": %m"
-msgstr "не получилось создать файл сервера \"%s\": %m"
-
-#: libpq/be-fsstubs.c:481
-#, c-format
-msgid "could not write server file \"%s\": %m"
-msgstr "не получилось записать файл сервера \"%s\": %m"
 
 #: libpq/be-secure.c:274
 #: libpq/be-secure.c:359
@@ -4340,6 +4343,106 @@ msgstr ""
 msgid "relation reference \"%s\" cannot be used in an expression"
 msgstr ""
 
+#: parser/parse_clause.c:336
+#, c-format
+msgid "JOIN/ON clause refers to \"%s\", which is not part of JOIN"
+msgstr "выражение JOIN/ON ссылается на \"%s\", что не является частью JOIN"
+
+#: gram.y:4765
+#: parser/parse_clause.c:396
+msgid "subquery in FROM must have an alias"
+msgstr "подзапрос в FROM должен иметь алиас"
+
+#: parser/parse_clause.c:419
+msgid "subquery in FROM may not have SELECT INTO"
+msgstr "подзапрос в FROM не может содержать SELECT INTO"
+
+#: parser/parse_clause.c:441
+msgid "subquery in FROM may not refer to other relations of same query level"
+msgstr "позапрос во FROM не может ссылаться на другие отношения на том же уровне запроса"
+
+#: parser/parse_clause.c:496
+msgid "function expression in FROM may not refer to other relations of same query level"
+msgstr "функциональное выражение во FROM не может ссылаться на другие отношения на том же уровне запроса"
+
+#: parser/parse_clause.c:508
+msgid "cannot use aggregate function in function expression in FROM"
+msgstr "нельзя использовать агрегатную фунцию в фунциональном выражении в FROM"
+
+#: parser/parse_clause.c:728
+#, c-format
+msgid "column name \"%s\" appears more than once in USING clause"
+msgstr "имя колонки \"%s\" фигурирует больше одного раза в USING-выражении"
+
+#: parser/parse_clause.c:743
+#, c-format
+msgid "common column name \"%s\" appears more than once in left table"
+msgstr "общее имя колонки \"%s\" фигурирует более одного раза в таблице слева"
+
+#: parser/parse_clause.c:752
+#, c-format
+msgid "column \"%s\" specified in USING clause does not exist in left table"
+msgstr "колонка \"%s\" в USING-выражении не существует в таблице слева"
+
+#: parser/parse_clause.c:766
+#, c-format
+msgid "common column name \"%s\" appears more than once in right table"
+msgstr "общее имя колонки \"%s\" фигурирует более одного раза в таблице справа"
+
+#: parser/parse_clause.c:775
+#, c-format
+msgid "column \"%s\" specified in USING clause does not exist in right table"
+msgstr "колонка \"%s\" в USING-выражении не существует в таблице справа"
+
+#: parser/parse_clause.c:827
+#, c-format
+msgid "column alias list for \"%s\" has too many entries"
+msgstr "слишком много записей в списке алиасов колонки \"%s\""
+
+#. translator: %s is name of a SQL construct, eg LIMIT
+#: parser/parse_clause.c:1020
+#, c-format
+msgid "argument of %s must not contain variables"
+msgstr "аргумент к %s не должен содержать переменные"
+
+#. translator: %s is name of a SQL construct, eg LIMIT
+#: parser/parse_clause.c:1028
+#, c-format
+msgid "argument of %s must not contain aggregates"
+msgstr "аргумент к %s не должен содержать агрегаты"
+
+#. translator: %s is name of a SQL construct, eg LIMIT
+#: parser/parse_clause.c:1036
+#, c-format
+msgid "argument of %s must not contain subqueries"
+msgstr "аргумент к %s не должен содержать подзапросы"
+
+#. translator: first %s is name of a SQL construct, eg ORDER BY
+#: parser/parse_clause.c:1146
+#, c-format
+msgid "%s \"%s\" is ambiguous"
+msgstr "выражение %s \"%s\" двусмысленно"
+
+#. translator: %s is name of a SQL construct, eg ORDER BY
+#: parser/parse_clause.c:1168
+#, c-format
+msgid "non-integer constant in %s"
+msgstr "нецелочисленная константа в %s"
+
+#. translator: %s is name of a SQL construct, eg ORDER BY
+#: parser/parse_clause.c:1185
+#, c-format
+msgid "%s position %d is not in select list"
+msgstr "позиция %s %d не в списке выборки"
+
+#: parser/parse_clause.c:1370
+msgid "for SELECT DISTINCT, ORDER BY expressions must appear in select list"
+msgstr "для SELECT DISTINCT, выражения ORDER BY обязаны быть в списке выборки (SELECT)"
+
+#: parser/parse_clause.c:1410
+msgid "SELECT DISTINCT ON expressions must match initial ORDER BY expressions"
+msgstr "Выражения SELECT DISTINCT ON должны совпадать с изначальными выражениями ORDER BY"
+
 #: parser/analyze.c:364
 msgid "CREATE VIEW specifies more column names than columns"
 msgstr "CREATE VIEW указывает больше имён колонок чем реально имеется"
@@ -4584,105 +4687,80 @@ msgstr "колонка \"%s.%s\" должна фигурировать в выражении GROUP BY или использов
 msgid "subquery uses ungrouped column \"%s.%s\" from outer query"
 msgstr "подзапрос использует несгруппированную колонку \"%s.%s\" из внешнего запроса"
 
-#: parser/parse_clause.c:336
+#: parser/parse_relation.c:174
+#: parser/parse_relation.c:189
 #, c-format
-msgid "JOIN/ON clause refers to \"%s\", which is not part of JOIN"
-msgstr "выражение JOIN/ON ссылается на \"%s\", что не является частью JOIN"
+msgid "table reference \"%s\" is ambiguous"
+msgstr "ссылка на таблицу \"%s\" неоднозначна"
 
-#: gram.y:4765
-#: parser/parse_clause.c:396
-msgid "subquery in FROM must have an alias"
-msgstr "подзапрос в FROM должен иметь алиас"
-
-#: parser/parse_clause.c:419
-msgid "subquery in FROM may not have SELECT INTO"
-msgstr "подзапрос в FROM не может содержать SELECT INTO"
-
-#: parser/parse_clause.c:441
-msgid "subquery in FROM may not refer to other relations of same query level"
-msgstr "позапрос во FROM не может ссылаться на другие отношения на том же уровне запроса"
-
-#: parser/parse_clause.c:496
-msgid "function expression in FROM may not refer to other relations of same query level"
-msgstr "функциональное выражение во FROM не может ссылаться на другие отношения на том же уровне запроса"
-
-#: parser/parse_clause.c:508
-msgid "cannot use aggregate function in function expression in FROM"
-msgstr "нельзя использовать агрегатную фунцию в фунциональном выражении в FROM"
-
-#: parser/parse_clause.c:728
+#: parser/parse_relation.c:249
+#: parser/parse_relation.c:264
 #, c-format
-msgid "column name \"%s\" appears more than once in USING clause"
-msgstr "имя колонки \"%s\" фигурирует больше одного раза в USING-выражении"
+msgid "table reference %u is ambiguous"
+msgstr "ссылка на таблицу %u неоднозначна"
 
-#: parser/parse_clause.c:743
+#: parser/parse_relation.c:356
+#: parser/parse_relation.c:368
 #, c-format
-msgid "common column name \"%s\" appears more than once in left table"
-msgstr "общее имя колонки \"%s\" фигурирует более одного раза в таблице слева"
+msgid "table name \"%s\" specified more than once"
+msgstr "имя таблицы \"%s\" указано больше одного раза"
 
-#: parser/parse_clause.c:752
+#: parser/parse_relation.c:477
+#: parser/parse_relation.c:574
 #, c-format
-msgid "column \"%s\" specified in USING clause does not exist in left table"
-msgstr "колонка \"%s\" в USING-выражении не существует в таблице слева"
+msgid "column reference \"%s\" is ambiguous"
+msgstr "ссылка на колонку \"%s\" неоднозначна"
 
-#: parser/parse_clause.c:766
+#: parser/parse_relation.c:669
+#: parser/parse_relation.c:764
+#: parser/parse_relation.c:859
+#: parser/parse_relation.c:979
 #, c-format
-msgid "common column name \"%s\" appears more than once in right table"
-msgstr "общее имя колонки \"%s\" фигурирует более одного раза в таблице справа"
+msgid "table \"%s\" has %d columns available but %d columns specified"
+msgstr "у таблицы \"%s\" колонок доступно: %d, но указано: %d"
 
-#: parser/parse_clause.c:775
+#: parser/parse_relation.c:936
+msgid "a column definition list is only allowed for functions returning \"record\""
+msgstr ""
+
+#: parser/parse_relation.c:947
+msgid "a column definition list is required for functions returning \"record\""
+msgstr ""
+
+#: parser/parse_relation.c:1008
 #, c-format
-msgid "column \"%s\" specified in USING clause does not exist in right table"
-msgstr "колонка \"%s\" в USING-выражении не существует в таблице справа"
+msgid "too many column aliases specified for function %s"
+msgstr "указано слишком много алиасов колонки для функции %s"
 
-#: parser/parse_clause.c:827
+#: parser/parse_relation.c:1031
 #, c-format
-msgid "column alias list for \"%s\" has too many entries"
-msgstr "слишком много записей в списке алиасов колонки \"%s\""
+msgid "function \"%s\" in FROM has unsupported return type"
+msgstr "функция \"%s\" в FROM имеет неподдерживаемый тип возрата"
 
-#. translator: %s is name of a SQL construct, eg LIMIT
-#: parser/parse_clause.c:1020
+#: parser/parse_relation.c:1423
+#: parser/parse_relation.c:1667
+msgid "function in FROM has unsupported return type"
+msgstr "функция в FROM имеет неподдерживаемый тип возрата"
+
+#: parser/parse_relation.c:1911
 #, c-format
-msgid "argument of %s must not contain variables"
-msgstr "аргумент к %s не должен содержать переменные"
+msgid "missing FROM-clause entry in subquery for table \"%s\""
+msgstr "отсутствует запись о FROM-выражении в подзапросе для таблицы \"%s\""
 
-#. translator: %s is name of a SQL construct, eg LIMIT
-#: parser/parse_clause.c:1028
+#: parser/parse_relation.c:1916
 #, c-format
-msgid "argument of %s must not contain aggregates"
-msgstr "аргумент к %s не должен содержать агрегаты"
+msgid "missing FROM-clause entry for table \"%s\""
+msgstr "отсутствует запись о FROM-выражении для таблицы \"%s\""
 
-#. translator: %s is name of a SQL construct, eg LIMIT
-#: parser/parse_clause.c:1036
+#: parser/parse_relation.c:1935
 #, c-format
-msgid "argument of %s must not contain subqueries"
-msgstr "аргумент к %s не должен содержать подзапросы"
+msgid "adding missing FROM-clause entry in subquery for table \"%s\""
+msgstr "добавление отсутствующей записи о FROM-выражении в подзапросе для таблицы \"%s\""
 
-#. translator: first %s is name of a SQL construct, eg ORDER BY
-#: parser/parse_clause.c:1146
+#: parser/parse_relation.c:1940
 #, c-format
-msgid "%s \"%s\" is ambiguous"
-msgstr "выражение %s \"%s\" двусмысленно"
-
-#. translator: %s is name of a SQL construct, eg ORDER BY
-#: parser/parse_clause.c:1168
-#, c-format
-msgid "non-integer constant in %s"
-msgstr "нецелочисленная константа в %s"
-
-#. translator: %s is name of a SQL construct, eg ORDER BY
-#: parser/parse_clause.c:1185
-#, c-format
-msgid "%s position %d is not in select list"
-msgstr "позиция %s %d не в списке выборки"
-
-#: parser/parse_clause.c:1370
-msgid "for SELECT DISTINCT, ORDER BY expressions must appear in select list"
-msgstr "для SELECT DISTINCT, выражения ORDER BY обязаны быть в списке выборки (SELECT)"
-
-#: parser/parse_clause.c:1410
-msgid "SELECT DISTINCT ON expressions must match initial ORDER BY expressions"
-msgstr "Выражения SELECT DISTINCT ON должны совпадать с изначальными выражениями ORDER BY"
+msgid "adding missing FROM-clause entry for table \"%s\""
+msgstr "добавление отсутствующей записи о FROM-выражении для таблицы \"%s\""
 
 #: parser/parse_coerce.c:261
 #, c-format
@@ -4959,80 +5037,41 @@ msgstr "операторы ANY/ALL (массив) требуют оператор производить булевское значен
 msgid "op ANY/ALL (array) requires operator not to return a set"
 msgstr "операторы ANY/ALL (массив) требуют оператор не возвращать множество"
 
-#: parser/parse_relation.c:174
-#: parser/parse_relation.c:189
-#, c-format
-msgid "table reference \"%s\" is ambiguous"
-msgstr "ссылка на таблицу \"%s\" неоднозначна"
+#: scan.l:296
+msgid "unterminated /* comment"
+msgstr "незакрытый комментарий /*"
 
-#: parser/parse_relation.c:249
-#: parser/parse_relation.c:264
-#, c-format
-msgid "table reference %u is ambiguous"
-msgstr "ссылка на таблицу %u неоднозначна"
-
-#: parser/parse_relation.c:356
-#: parser/parse_relation.c:368
-#, c-format
-msgid "table name \"%s\" specified more than once"
-msgstr "имя таблицы \"%s\" указано больше одного раза"
-
-#: parser/parse_relation.c:477
-#: parser/parse_relation.c:574
-#, c-format
-msgid "column reference \"%s\" is ambiguous"
-msgstr "ссылка на колонку \"%s\" неоднозначна"
-
-#: parser/parse_relation.c:669
-#: parser/parse_relation.c:764
-#: parser/parse_relation.c:859
-#: parser/parse_relation.c:979
-#, c-format
-msgid "table \"%s\" has %d columns available but %d columns specified"
-msgstr "у таблицы \"%s\" колонок доступно: %d, но указано: %d"
-
-#: parser/parse_relation.c:936
-msgid "a column definition list is only allowed for functions returning \"record\""
+#: scan.l:324
+msgid "unterminated bit string literal"
 msgstr ""
 
-#: parser/parse_relation.c:947
-msgid "a column definition list is required for functions returning \"record\""
+#: scan.l:343
+msgid "unterminated hexadecimal string literal"
 msgstr ""
 
-#: parser/parse_relation.c:1008
-#, c-format
-msgid "too many column aliases specified for function %s"
-msgstr "указано слишком много алиасов колонки для функции %s"
+#: scan.l:389
+msgid "unterminated quoted string"
+msgstr ""
 
-#: parser/parse_relation.c:1031
-#, c-format
-msgid "function \"%s\" in FROM has unsupported return type"
-msgstr "функция \"%s\" в FROM имеет неподдерживаемый тип возрата"
+#: scan.l:402
+msgid "zero-length delimited identifier"
+msgstr ""
 
-#: parser/parse_relation.c:1423
-#: parser/parse_relation.c:1667
-msgid "function in FROM has unsupported return type"
-msgstr "функция в FROM имеет неподдерживаемый тип возрата"
+#: scan.l:415
+msgid "unterminated quoted identifier"
+msgstr ""
 
-#: parser/parse_relation.c:1911
+#. translator: %s is typically "syntax error"
+#: scan.l:564
 #, c-format
-msgid "missing FROM-clause entry in subquery for table \"%s\""
-msgstr "отсутствует запись о FROM-выражении в подзапросе для таблицы \"%s\""
+msgid "%s at end of input"
+msgstr "%s в конце ввода"
 
-#: parser/parse_relation.c:1916
+#. translator: first %s is typically "syntax error"
+#: scan.l:572
 #, c-format
-msgid "missing FROM-clause entry for table \"%s\""
-msgstr "отсутствует запись о FROM-выражении для таблицы \"%s\""
-
-#: parser/parse_relation.c:1935
-#, c-format
-msgid "adding missing FROM-clause entry in subquery for table \"%s\""
-msgstr "добавление отсутствующей записи о FROM-выражении в подзапросе для таблицы \"%s\""
-
-#: parser/parse_relation.c:1940
-#, c-format
-msgid "adding missing FROM-clause entry for table \"%s\""
-msgstr "добавление отсутствующей записи о FROM-выражении для таблицы \"%s\""
+msgid "%s at or near \"%s\""
+msgstr "%s в или рядом \"%s\""
 
 #: parser/parse_target.c:66
 #, c-format
@@ -5093,42 +5132,6 @@ msgstr "неверное имя типа \"%s\""
 #, c-format
 msgid "identifier \"%s\" will be truncated to \"%.*s\""
 msgstr ""
-
-#: scan.l:296
-msgid "unterminated /* comment"
-msgstr "незакрытый комментарий /*"
-
-#: scan.l:324
-msgid "unterminated bit string literal"
-msgstr ""
-
-#: scan.l:343
-msgid "unterminated hexadecimal string literal"
-msgstr ""
-
-#: scan.l:389
-msgid "unterminated quoted string"
-msgstr ""
-
-#: scan.l:402
-msgid "zero-length delimited identifier"
-msgstr ""
-
-#: scan.l:415
-msgid "unterminated quoted identifier"
-msgstr ""
-
-#. translator: %s is typically "syntax error"
-#: scan.l:564
-#, c-format
-msgid "%s at end of input"
-msgstr "%s в конце ввода"
-
-#. translator: first %s is typically "syntax error"
-#: scan.l:572
-#, c-format
-msgid "%s at or near \"%s\""
-msgstr "%s в или рядом \"%s\""
 
 #: y.tab.c:9086
 msgid "syntax error: cannot back up"
@@ -5379,33 +5382,6 @@ msgstr "многочисленные выражения OFFSET не дозволены"
 msgid "multiple LIMIT clauses not allowed"
 msgstr "многочисленные выражения LIMIT не дозволены"
 
-#: port/pg_sema.c:117
-#: port/sysv_sema.c:117
-#, c-format
-msgid "could not create semaphores: %m"
-msgstr "не получилось создать семафоры: %m"
-
-#: port/pg_sema.c:118
-#: port/sysv_sema.c:118
-#, c-format
-msgid "Failed system call was semget(%d, %d, 0%o)."
-msgstr ""
-
-#: port/pg_sema.c:122
-#: port/sysv_sema.c:122
-#, c-format
-msgid ""
-"This error does *not* mean that you have run out of disk space.\n"
-"It occurs when either the system limit for the maximum number of semaphore sets (SEMMNI), or the system wide maximum number of semaphores (SEMMNS), would be exceeded.  You need to raise the respective kernel parameter.  Alternatively, reduce PostgreSQL's consumption of semaphores by reducing its max_connections parameter (currently %d).\n"
-"The PostgreSQL documentation contains more information about configuring your system for PostgreSQL."
-msgstr ""
-
-#: port/pg_sema.c:151
-#: port/sysv_sema.c:151
-#, c-format
-msgid "You possibly need to raise your kernel's SEMVMX value to be at least %d.  Look into the PostgreSQL documentation for details."
-msgstr ""
-
 #: port/pg_shmem.c:92
 #: port/sysv_shmem.c:92
 #, c-format
@@ -5443,162 +5419,31 @@ msgid ""
 "The PostgreSQL documentation contains more information about shared memory configuration."
 msgstr ""
 
-#: postmaster/pgstat.c:201
+#: port/pg_sema.c:117
+#: port/sysv_sema.c:117
 #, c-format
-msgid "could not resolve \"localhost\": %s"
+msgid "could not create semaphores: %m"
+msgstr "не получилось создать семафоры: %m"
+
+#: port/pg_sema.c:118
+#: port/sysv_sema.c:118
+#, c-format
+msgid "Failed system call was semget(%d, %d, 0%o)."
 msgstr ""
 
-#: postmaster/pgstat.c:228
+#: port/pg_sema.c:122
+#: port/sysv_sema.c:122
 #, c-format
-msgid "could not create socket for statistics collector: %m"
-msgstr "не получилось создать сокет для сборщика статистики: %m"
-
-#: postmaster/pgstat.c:240
-#, c-format
-msgid "could not bind socket for statistics collector: %m"
+msgid ""
+"This error does *not* mean that you have run out of disk space.\n"
+"It occurs when either the system limit for the maximum number of semaphore sets (SEMMNI), or the system wide maximum number of semaphores (SEMMNS), would be exceeded.  You need to raise the respective kernel parameter.  Alternatively, reduce PostgreSQL's consumption of semaphores by reducing its max_connections parameter (currently %d).\n"
+"The PostgreSQL documentation contains more information about configuring your system for PostgreSQL."
 msgstr ""
 
-#: postmaster/pgstat.c:251
+#: port/pg_sema.c:151
+#: port/sysv_sema.c:151
 #, c-format
-msgid "could not get address of socket for statistics collector: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:267
-#, c-format
-msgid "could not connect socket for statistics collector: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:282
-msgid "disabling statistics collector for lack of working socket"
-msgstr ""
-
-#: postmaster/pgstat.c:296
-#, c-format
-msgid "could not set statistics collector socket to nonblocking mode: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:307
-#, c-format
-msgid "could not create pipe for statistics collector: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:370
-msgid "statistics collector startup skipped"
-msgstr ""
-
-#: postmaster/pgstat.c:401
-#, c-format
-msgid "could not fork statistics buffer: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:814
-msgid "must be superuser to reset statistics counters"
-msgstr "нужно быть администратором для сброса счётчиков статистики"
-
-#: postmaster/pgstat.c:1295
-#, c-format
-msgid "could not create pipe for statistics buffer: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:1303
-#, c-format
-msgid "could not fork statistics collector: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:1360
-#: postmaster/pgstat.c:1373
-#: postmaster/pgstat.c:1662
-#: postmaster/pgstat.c:1918
-#: postmaster/pgstat.c:1950
-#: postmaster/pgstat.c:2004
-#: postmaster/pgstat.c:2265
-#: postmaster/pgstat.c:2326
-#: postmaster/pgstat.c:2372
-#: postmaster/pgstat.c:2423
-#: postmaster/pgstat.c:2652
-#: postmaster/pgstat.c:2834
-msgid "out of memory in statistics collector --- abort"
-msgstr "нехватка памяти в сборщике статистики --- отбой"
-
-#: postmaster/pgstat.c:1439
-#, c-format
-msgid "select() failed in statistics collector: %m"
-msgstr "select() не удался в сборщике статистики: %m"
-
-#: postmaster/pgstat.c:1481
-#, c-format
-msgid "could not read from statistics collector pipe: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:1500
-msgid "invalid statistics message length"
-msgstr "неверная длина сообщения статистики"
-
-#: postmaster/pgstat.c:1650
-#, c-format
-msgid "could not set statistics collector pipe to nonblocking mode: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:1690
-msgid "statistics buffer is full"
-msgstr "буфер статистики полон"
-
-#: postmaster/pgstat.c:1723
-#, c-format
-msgid "select() failed in statistics buffer: %m"
-msgstr "select() не удался в буфере статистики: %m"
-
-#: postmaster/pgstat.c:1739
-#, c-format
-msgid "could not read statistics message: %m"
-msgstr "не получилось прочитать сообщение статистики: %m"
-
-#: postmaster/pgstat.c:1804
-#, c-format
-msgid "could not write to statistics collector pipe: %m"
-msgstr ""
-
-#: postmaster/pgstat.c:1858
-#, c-format
-msgid "invalid server process ID %d"
-msgstr "неверный ID процесса-сервера: %d"
-
-#: postmaster/pgstat.c:2053
-#, c-format
-msgid "could not open temporary statistics file \"%s\": %m"
-msgstr "не получилось открыть временный файл статистики \"%s\": %m"
-
-#: postmaster/pgstat.c:2080
-msgid "database hash table corrupted during cleanup --- abort"
-msgstr ""
-
-#: postmaster/pgstat.c:2117
-#, c-format
-msgid "tables hash table for database %u corrupted during cleanup --- abort"
-msgstr ""
-
-#: postmaster/pgstat.c:2166
-#, c-format
-msgid "could not close temporary statistics file \"%s\": %m"
-msgstr "не получилось закрыть временный файл статистики \"%s\": %m"
-
-#: postmaster/pgstat.c:2175
-#, c-format
-msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
-msgstr "не получилось переименовать временный файл статистики из \"%s\" в \"%s\": %m"
-
-#: postmaster/pgstat.c:2197
-msgid "dead-server-process hash table corrupted during cleanup --- abort"
-msgstr ""
-
-#: postmaster/pgstat.c:2308
-#: postmaster/pgstat.c:2340
-#: postmaster/pgstat.c:2403
-#: postmaster/pgstat.c:2436
-#: postmaster/pgstat.c:2457
-#: postmaster/pgstat.c:2503
-#: postmaster/pgstat.c:2536
-msgid "corrupted pgstat.stat file"
+msgid "You possibly need to raise your kernel's SEMVMX value to be at least %d.  Look into the PostgreSQL documentation for details."
 msgstr ""
 
 #: postmaster/postmaster.c:327
@@ -5987,6 +5832,164 @@ msgstr "не получилось стартовать процесс остановки: %m"
 #, c-format
 msgid "could not fork process: %m"
 msgstr "не получилось стартовать процесс: %m"
+
+#: postmaster/pgstat.c:201
+#, c-format
+msgid "could not resolve \"localhost\": %s"
+msgstr ""
+
+#: postmaster/pgstat.c:228
+#, c-format
+msgid "could not create socket for statistics collector: %m"
+msgstr "не получилось создать сокет для сборщика статистики: %m"
+
+#: postmaster/pgstat.c:240
+#, c-format
+msgid "could not bind socket for statistics collector: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:251
+#, c-format
+msgid "could not get address of socket for statistics collector: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:267
+#, c-format
+msgid "could not connect socket for statistics collector: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:282
+msgid "disabling statistics collector for lack of working socket"
+msgstr ""
+
+#: postmaster/pgstat.c:296
+#, c-format
+msgid "could not set statistics collector socket to nonblocking mode: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:307
+#, c-format
+msgid "could not create pipe for statistics collector: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:370
+msgid "statistics collector startup skipped"
+msgstr ""
+
+#: postmaster/pgstat.c:401
+#, c-format
+msgid "could not fork statistics buffer: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:814
+msgid "must be superuser to reset statistics counters"
+msgstr "нужно быть администратором для сброса счётчиков статистики"
+
+#: postmaster/pgstat.c:1295
+#, c-format
+msgid "could not create pipe for statistics buffer: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:1303
+#, c-format
+msgid "could not fork statistics collector: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:1360
+#: postmaster/pgstat.c:1373
+#: postmaster/pgstat.c:1662
+#: postmaster/pgstat.c:1918
+#: postmaster/pgstat.c:1950
+#: postmaster/pgstat.c:2004
+#: postmaster/pgstat.c:2265
+#: postmaster/pgstat.c:2326
+#: postmaster/pgstat.c:2372
+#: postmaster/pgstat.c:2423
+#: postmaster/pgstat.c:2652
+#: postmaster/pgstat.c:2834
+msgid "out of memory in statistics collector --- abort"
+msgstr "нехватка памяти в сборщике статистики --- отбой"
+
+#: postmaster/pgstat.c:1439
+#, c-format
+msgid "select() failed in statistics collector: %m"
+msgstr "select() не удался в сборщике статистики: %m"
+
+#: postmaster/pgstat.c:1481
+#, c-format
+msgid "could not read from statistics collector pipe: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:1500
+msgid "invalid statistics message length"
+msgstr "неверная длина сообщения статистики"
+
+#: postmaster/pgstat.c:1650
+#, c-format
+msgid "could not set statistics collector pipe to nonblocking mode: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:1690
+msgid "statistics buffer is full"
+msgstr "буфер статистики полон"
+
+#: postmaster/pgstat.c:1723
+#, c-format
+msgid "select() failed in statistics buffer: %m"
+msgstr "select() не удался в буфере статистики: %m"
+
+#: postmaster/pgstat.c:1739
+#, c-format
+msgid "could not read statistics message: %m"
+msgstr "не получилось прочитать сообщение статистики: %m"
+
+#: postmaster/pgstat.c:1804
+#, c-format
+msgid "could not write to statistics collector pipe: %m"
+msgstr ""
+
+#: postmaster/pgstat.c:1858
+#, c-format
+msgid "invalid server process ID %d"
+msgstr "неверный ID процесса-сервера: %d"
+
+#: postmaster/pgstat.c:2053
+#, c-format
+msgid "could not open temporary statistics file \"%s\": %m"
+msgstr "не получилось открыть временный файл статистики \"%s\": %m"
+
+#: postmaster/pgstat.c:2080
+msgid "database hash table corrupted during cleanup --- abort"
+msgstr ""
+
+#: postmaster/pgstat.c:2117
+#, c-format
+msgid "tables hash table for database %u corrupted during cleanup --- abort"
+msgstr ""
+
+#: postmaster/pgstat.c:2166
+#, c-format
+msgid "could not close temporary statistics file \"%s\": %m"
+msgstr "не получилось закрыть временный файл статистики \"%s\": %m"
+
+#: postmaster/pgstat.c:2175
+#, c-format
+msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
+msgstr "не получилось переименовать временный файл статистики из \"%s\" в \"%s\": %m"
+
+#: postmaster/pgstat.c:2197
+msgid "dead-server-process hash table corrupted during cleanup --- abort"
+msgstr ""
+
+#: postmaster/pgstat.c:2308
+#: postmaster/pgstat.c:2340
+#: postmaster/pgstat.c:2403
+#: postmaster/pgstat.c:2436
+#: postmaster/pgstat.c:2457
+#: postmaster/pgstat.c:2503
+#: postmaster/pgstat.c:2536
+msgid "corrupted pgstat.stat file"
+msgstr ""
 
 #: rewrite/rewriteDefine.c:103
 #: rewrite/rewriteDefine.c:575
@@ -6632,6 +6635,57 @@ msgstr "нужно быть администратором для изменения владельцев"
 msgid "must be superuser to do CHECKPOINT"
 msgstr "нужно быть администратором для выполнения CHECKPOINT"
 
+#: utils/adt/array_userfuncs.c:50
+msgid "could not determine input data types"
+msgstr "не в состоянии определить входные типы данных"
+
+#: utils/adt/array_userfuncs.c:72
+msgid "neither input type is an array"
+msgstr "входной тип также не является массивом"
+
+#: utils/adt/array_userfuncs.c:99
+msgid "argument must be empty or one-dimensional array"
+msgstr "аргумент должен быть пустой или одномерный массив"
+
+#: utils/adt/array_userfuncs.c:198
+#: utils/adt/array_userfuncs.c:210
+#: utils/adt/array_userfuncs.c:247
+#: utils/adt/array_userfuncs.c:280
+#: utils/adt/array_userfuncs.c:308
+msgid "cannot concatenate incompatible arrays"
+msgstr "нельзя объеденить несовместимые массивы"
+
+#: utils/adt/array_userfuncs.c:199
+#, c-format
+msgid "Arrays of %d and %d dimensions are not compatible for concatenation."
+msgstr "Массивы размерностями %d и %d не совместимы для совмещения."
+
+#: utils/adt/array_userfuncs.c:211
+#, c-format
+msgid "Arrays with element types %s and %s are not compatible for concatenation."
+msgstr "Массивы типами элементов %s и %s не совместимы для совмещения."
+
+#: utils/adt/array_userfuncs.c:248
+msgid "Arrays with differing element dimensions are not compatible for concatenation."
+msgstr "Массивы с отличными размерностями элементов не совместимы для совмещения."
+
+#: utils/adt/array_userfuncs.c:281
+#: utils/adt/array_userfuncs.c:309
+msgid "Arrays with differing dimensions are not compatible for concatenation."
+msgstr "Массивы с отличными размерностями не совместимы для совмещения."
+
+#: utils/adt/array_userfuncs.c:354
+#, c-format
+msgid "invalid array element type OID: %u"
+msgstr "неверный OID типа элементов массива: %u"
+
+#: utils/adt/array_userfuncs.c:358
+#: utils/adt/arrayfuncs.c:893
+#: utils/adt/arrayfuncs.c:2239
+#, c-format
+msgid "invalid number of dimensions: %d"
+msgstr "неверное число размерностей: %d"
+
 #: utils/adt/acl.c:102
 #: utils/adt/name.c:90
 msgid "identifier too long"
@@ -6712,56 +6766,17 @@ msgstr "нераспознанный тип привилегий: \"%s\""
 msgid "function \"%s\" does not exist"
 msgstr "функция \"%s\" не существует"
 
-#: utils/adt/array_userfuncs.c:50
-msgid "could not determine input data types"
-msgstr "не в состоянии определить входные типы данных"
+#: utils/adt/like.c:453
+#: utils/adt/like_match.c:291
+#: utils/adt/regexp.c:460
+msgid "invalid escape string"
+msgstr ""
 
-#: utils/adt/array_userfuncs.c:72
-msgid "neither input type is an array"
-msgstr "входной тип также не является массивом"
-
-#: utils/adt/array_userfuncs.c:99
-msgid "argument must be empty or one-dimensional array"
-msgstr "аргумент должен быть пустой или одномерный массив"
-
-#: utils/adt/array_userfuncs.c:198
-#: utils/adt/array_userfuncs.c:210
-#: utils/adt/array_userfuncs.c:247
-#: utils/adt/array_userfuncs.c:280
-#: utils/adt/array_userfuncs.c:308
-msgid "cannot concatenate incompatible arrays"
-msgstr "нельзя объеденить несовместимые массивы"
-
-#: utils/adt/array_userfuncs.c:199
-#, c-format
-msgid "Arrays of %d and %d dimensions are not compatible for concatenation."
-msgstr "Массивы размерностями %d и %d не совместимы для совмещения."
-
-#: utils/adt/array_userfuncs.c:211
-#, c-format
-msgid "Arrays with element types %s and %s are not compatible for concatenation."
-msgstr "Массивы типами элементов %s и %s не совместимы для совмещения."
-
-#: utils/adt/array_userfuncs.c:248
-msgid "Arrays with differing element dimensions are not compatible for concatenation."
-msgstr "Массивы с отличными размерностями элементов не совместимы для совмещения."
-
-#: utils/adt/array_userfuncs.c:281
-#: utils/adt/array_userfuncs.c:309
-msgid "Arrays with differing dimensions are not compatible for concatenation."
-msgstr "Массивы с отличными размерностями не совместимы для совмещения."
-
-#: utils/adt/array_userfuncs.c:354
-#, c-format
-msgid "invalid array element type OID: %u"
-msgstr "неверный OID типа элементов массива: %u"
-
-#: utils/adt/array_userfuncs.c:358
-#: utils/adt/arrayfuncs.c:893
-#: utils/adt/arrayfuncs.c:2239
-#, c-format
-msgid "invalid number of dimensions: %d"
-msgstr "неверное число размерностей: %d"
+#: utils/adt/like.c:454
+#: utils/adt/like_match.c:292
+#: utils/adt/regexp.c:461
+msgid "Escape string must be empty or one character."
+msgstr ""
 
 #: utils/adt/arrayfuncs.c:219
 #: utils/adt/arrayfuncs.c:231
@@ -7376,17 +7391,11 @@ msgstr "неверный входной синтаксис для типа bigint: \"%s\""
 msgid "OID out of range"
 msgstr "OID вне диапазона"
 
-#: utils/adt/like.c:453
-#: utils/adt/like_match.c:291
-#: utils/adt/regexp.c:460
-msgid "invalid escape string"
-msgstr ""
-
-#: utils/adt/like.c:454
-#: utils/adt/like_match.c:292
-#: utils/adt/regexp.c:461
-msgid "Escape string must be empty or one character."
-msgstr ""
+#: utils/adt/oracle_compat.c:206
+#: utils/adt/oracle_compat.c:303
+#: utils/adt/oracle_compat.c:927
+msgid "requested length too large"
+msgstr "запрошенная длина слишком велика"
 
 #: utils/adt/mac.c:65
 #, c-format
@@ -7567,12 +7576,6 @@ msgstr "значение \"%s\" вне диапазона для типа \"oid\""
 #: utils/adt/oid.c:176
 msgid "oidvector has too many elements"
 msgstr "oidvector содержит слишком много элементов"
-
-#: utils/adt/oracle_compat.c:206
-#: utils/adt/oracle_compat.c:303
-#: utils/adt/oracle_compat.c:927
-msgid "requested length too large"
-msgstr "запрошенная длина слишком велика"
 
 #: utils/adt/pseudotypes.c:38
 #: utils/adt/pseudotypes.c:64

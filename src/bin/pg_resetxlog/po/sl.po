@@ -1,133 +1,136 @@
-# :encoding=UTF-8:
 # Slovenian message translation for pg_resetxlog.
-# 
-# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2003.
+# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2003 - 2004.
+#
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2003-10-13 03:00+0200\n"
-"PO-Revision-Date: 2003-10-13 03:00+0200\n"
+"PO-Revision-Date: 2004-11-06 22:03+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Slovenian\n"
+"X-Poedit-Country: SLOVENIA\n"
+"X-Generator: KBabel 1.3.1\n"
 
-#: pg_resetxlog.c:142
+#: pg_resetxlog.c:120
 #, c-format
 msgid "%s: invalid argument for option -x\n"
-msgstr "%s: neveljaven argument k mo≈ænosti -x\n"
+msgstr "%s: neveljaven argument k moænosti -x\n"
 
-#: pg_resetxlog.c:143 pg_resetxlog.c:158 pg_resetxlog.c:173 pg_resetxlog.c:180
-#: pg_resetxlog.c:186 pg_resetxlog.c:194
+#: pg_resetxlog.c:121
+#: pg_resetxlog.c:136
+#: pg_resetxlog.c:151
+#: pg_resetxlog.c:158
+#: pg_resetxlog.c:164
+#: pg_resetxlog.c:172
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Za veƒç informacij poskusite \"%s --help\"\n"
+msgstr "Za veË informacij poskusite \"%s --help\"\n"
 
-#: pg_resetxlog.c:148
+#: pg_resetxlog.c:126
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
 msgstr "%s: ID transakcije (-x) ne sme biti 0\n"
 
-#: pg_resetxlog.c:157
+#: pg_resetxlog.c:135
 #, c-format
 msgid "%s: invalid argument for option -o\n"
-msgstr "%s: neveljaven argument k mo≈ænosti -o\n"
+msgstr "%s: neveljaven argument k moænosti -o\n"
 
-#: pg_resetxlog.c:163
+#: pg_resetxlog.c:141
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
 msgstr "%s: OID (-o) ne sme biti 0\n"
 
-#: pg_resetxlog.c:172 pg_resetxlog.c:179
+#: pg_resetxlog.c:150
+#: pg_resetxlog.c:157
 #, c-format
 msgid "%s: invalid argument for option -l\n"
-msgstr "%s: neveljaven argument k mo≈ænosti -l\n"
+msgstr "%s: neveljaven argument k moænosti -l\n"
 
-#: pg_resetxlog.c:193
+#: pg_resetxlog.c:171
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: podatkovni imenik ni bil naveden\n"
 
-#: pg_resetxlog.c:213 pg_resetxlog.c:309
+#: pg_resetxlog.c:191
+#: pg_resetxlog.c:287
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoƒçe odpreti za branje: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogoËe odpreti za branje: %s\n"
 
-#: pg_resetxlog.c:219
+#: pg_resetxlog.c:197
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s: najdena je bila zaklepna datoteka \"%s\"\n"
-"Ali je stre≈ænik zagnan? ƒåe ni, potem pobri≈°ite zaklepno datoteko in "
-"poskusite znova.\n"
+"Ali je streænik æe zagnan? »e ni, potem pobriπite zaklepno datoteko in poskusite znova.\n"
 
-#: pg_resetxlog.c:258
+#: pg_resetxlog.c:236
 msgid ""
 "\n"
 "If these values seem acceptable, use -f to force reset.\n"
 msgstr ""
 "\n"
-"ƒåe se vam te vrednosti zdijo sprejemljive, uporabite -f za njihovo prisilno "
-"nastavitev.\n"
+"»e se vam te vrednosti zdijo sprejemljive, uporabite -f za njihovo prisilno ponastavitev.\n"
 
-#: pg_resetxlog.c:270
+#: pg_resetxlog.c:248
 msgid ""
 "The database server was not shut down cleanly.\n"
 "Resetting the transaction log may cause data to be lost.\n"
 "If you want to proceed anyway, use -f to force reset.\n"
 msgstr ""
-"Podatkovni stre≈ænik ni bil pravilno zaustavljen.\n"
-"Ponastavitev dnevnika transakcij lahko povzroƒçi izgubo podatkov.\n"
-"ƒåe kljub temu ≈æelite nadaljevati, uporabite -f za prisilno ponastavitev.\n"
+"Podatkovni streænik ni bil pravilno zaustavljen.\n"
+"Ponastavitev dnevnika transakcij lahko povzroËi izgubo podatkov.\n"
+"»e kljub temu æelite nadaljevati, uporabite -f za prisilno ponastavitev.\n"
 
-#: pg_resetxlog.c:283
+#: pg_resetxlog.c:261
 msgid "Transaction log reset\n"
 msgstr "Dnevnik transakcij je bil ponastavljen\n"
 
-#: pg_resetxlog.c:312
+#: pg_resetxlog.c:290
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
 "  touch %s\n"
 "and try again.\n"
 msgstr ""
-"ƒåe ste prepriƒçani, da je pot do imenika pravilna, po≈æenite ukaz\n"
+"»e ste prepriËani, da je pot do podatkovnega imenika pravilna, poæenite ukaz\n"
 "  touch %s\n"
 "in poskusite znova.\n"
 
-#: pg_resetxlog.c:325
+#: pg_resetxlog.c:303
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoƒçe prebrati: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogoËe prebrati: %s\n"
 
-#: pg_resetxlog.c:348
+#: pg_resetxlog.c:326
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr ""
-"%s: pg_control obstaja, vendar ima neveljaven CRC; nadaljujte s "
-"previdnostjo\n"
+msgstr "%s: pg_control obstaja, vendar ima neveljaven CRC; nadaljujte s previdnostjo\n"
 
-#: pg_resetxlog.c:357
+#: pg_resetxlog.c:335
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr ""
-"%s: pg_control obstaja, vendar je pokvarjen ali neznane verzije; ignoriram\n"
+msgstr "%s: pg_control obstaja, vendar je pokvarjen ali neznane verzije; ignoriram\n"
 
-#: pg_resetxlog.c:408
+#: pg_resetxlog.c:399
 #, c-format
 msgid "%s: invalid LC_COLLATE setting\n"
 msgstr "%s: neveljavna nastavitev LC_COLLATE\n"
 
-#: pg_resetxlog.c:415
+#: pg_resetxlog.c:406
 #, c-format
 msgid "%s: invalid LC_CTYPE setting\n"
 msgstr "%s: neveljavna nastavitev LC_CTYPE\n"
 
-#: pg_resetxlog.c:437
+#: pg_resetxlog.c:430
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
@@ -135,7 +138,7 @@ msgstr ""
 "Uganjene pg_control vrednosti:\n"
 "\n"
 
-#: pg_resetxlog.c:439
+#: pg_resetxlog.c:432
 msgid ""
 "pg_control values:\n"
 "\n"
@@ -146,139 +149,143 @@ msgstr ""
 #: pg_resetxlog.c:441
 #, c-format
 msgid "pg_control version number:            %u\n"
-msgstr "Verzija pg_control .................... %u\n"
+msgstr "RazliËica pg_control .................. %u\n"
 
 #: pg_resetxlog.c:442
 #, c-format
 msgid "Catalog version number:               %u\n"
-msgstr "Verzija kataloga ...................... %u\n"
+msgstr "RazliËica kataloga .................... %u\n"
 
 #: pg_resetxlog.c:443
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "Identifikator sistema podatkovnih baz:  %s\n"
+
+#: pg_resetxlog.c:444
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "Trenutni ID dnevnika .................. %u\n"
 
-#: pg_resetxlog.c:444
+#: pg_resetxlog.c:445
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Naslednji segment dnevnika ............ %u\n"
 
-#: pg_resetxlog.c:445
-#, c-format
-msgid "Latest checkpoint's StartUpID:        %u\n"
-msgstr "StartUpID zadnje kontrolne toƒçke ...... %u\n"
-
 #: pg_resetxlog.c:446
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u\n"
-msgstr "NextXID zadnje kontrolne toƒçke ........ %u\n"
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "TimeLineID zadnje kontrolne toËke ..... %u\n"
 
 #: pg_resetxlog.c:447
 #, c-format
-msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "NextOID zadnje kontolne toƒçke ......... %u\n"
+msgid "Latest checkpoint's NextXID:          %u\n"
+msgstr "NextXID zadnje kontrolne toËke ........ %u\n"
 
 #: pg_resetxlog.c:448
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "NextOID zadnje kontrolne toËke ......... %u\n"
+
+#: pg_resetxlog.c:449
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Velikost bloka ........................ %u\n"
 
-#: pg_resetxlog.c:449
+#: pg_resetxlog.c:450
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr ""
-"≈†tevilo blokov na posamezni segment\n"
+"©tevilo blokov na posamezni segment\n"
 "velike relacije ....................... %u\n"
-
-#: pg_resetxlog.c:450
-#, c-format
-msgid "Maximum length of identifiers:        %u\n"
-msgstr "Najveƒçja dol≈æina identifikatorjev ..... %u\n"
 
 #: pg_resetxlog.c:451
 #, c-format
-msgid "Maximum number of function arguments: %u\n"
-msgstr "Najveƒçje ≈°tevilo argumentov funkcije .. %u\n"
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "NajveËja dolæina identifikatorjev ..... %u\n"
 
 #: pg_resetxlog.c:452
 #, c-format
-msgid "Date/time type storage:               %s\n"
-msgstr "Naƒçin shranjevanja datuma/ƒçasa ........ %s\n"
+msgid "Maximum number of function arguments: %u\n"
+msgstr "NajveËje πtevilo argumentov funkcije .. %u\n"
 
 #: pg_resetxlog.c:453
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "NaËin shranjevanja datuma/Ëasa ........ %s\n"
+
+#: pg_resetxlog.c:454
 msgid "64-bit integers"
 msgstr "64-bitni integerji"
 
-#: pg_resetxlog.c:453
-msgid "floating-point numbers"
-msgstr "≈°tevila s plavajoƒço vejico"
-
 #: pg_resetxlog.c:454
+msgid "floating-point numbers"
+msgstr "©tevila s plavajoËo vejico"
+
+#: pg_resetxlog.c:455
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr ""
-"Najveƒçja dol≈æina imena podroƒçnih\n"
+"NajveËja dolæina imena podroËnih\n"
 "nastavitev (locale settings) .......... %u\n"
 
-#: pg_resetxlog.c:455
+#: pg_resetxlog.c:456
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE ............................ %s\n"
 
-#: pg_resetxlog.c:456
+#: pg_resetxlog.c:457
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE .............................. %s\n"
 
-#: pg_resetxlog.c:509
+#: pg_resetxlog.c:518
 #, c-format
-msgid ""
-"%s: internal error -- sizeof(ControlFileData) is too large ... fix xlog.c\n"
-msgstr ""
-"%s: interna napaka -- vrednost sizeof(ControlFileData) je prevelika ... "
-"popravite xlog.c\n"
+msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix xlog.c\n"
+msgstr "%s: interna napaka -- vrednost sizeof(ControlFileData) je prevelika ... popravite xlog.c\n"
 
-#: pg_resetxlog.c:522
+#: pg_resetxlog.c:531
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
-msgstr "%s: datoteke pg_control ni bilo mogoƒçe ustvariti: %s\n"
+msgstr "%s: datoteke pg_control ni bilo mogoËe ustvariti: %s\n"
 
-#: pg_resetxlog.c:533
+#: pg_resetxlog.c:542
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
-msgstr "%s: datoteke pg_control ni bilo mogoƒçe zapisati: %s\n"
+msgstr "%s: datoteke pg_control ni bilo mogoËe zapisati: %s\n"
 
-#: pg_resetxlog.c:540 pg_resetxlog.c:681
+#: pg_resetxlog.c:549
+#: pg_resetxlog.c:705
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: fsync napaka: %s\n"
 
-#: pg_resetxlog.c:561
+#: pg_resetxlog.c:570
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s: imenika \"%s\" ni bilo mogoƒçe odpreti: %s\n"
+msgstr "%s: imenika \"%s\" ni bilo mogoËe odpreti: %s\n"
 
-#: pg_resetxlog.c:575
+#: pg_resetxlog.c:584
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoƒçe pobrisati: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogoËe pobrisati: %s\n"
 
-#: pg_resetxlog.c:585
+#: pg_resetxlog.c:603
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
-msgstr "%s: iz imenika \"%s\" ni bilo mogoƒçe brati: %s\n"
+msgstr "%s: iz imenika \"%s\" ni bilo mogoËe brati: %s\n"
 
-#: pg_resetxlog.c:648
+#: pg_resetxlog.c:672
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoƒçe odpreti: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogoËe odpreti: %s\n"
 
-#: pg_resetxlog.c:659 pg_resetxlog.c:673
+#: pg_resetxlog.c:683
+#: pg_resetxlog.c:697
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoƒçe zapisati: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogoËe zapisati: %s\n"
 
-#: pg_resetxlog.c:692
+#: pg_resetxlog.c:716
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -287,7 +294,7 @@ msgstr ""
 "%s ponastavi PostgreSQL-ov dnevnik transakcij.\n"
 "\n"
 
-#: pg_resetxlog.c:693
+#: pg_resetxlog.c:717
 #, c-format
 msgid ""
 "Usage:\n"
@@ -295,53 +302,46 @@ msgid ""
 "\n"
 msgstr ""
 "Uporaba:\n"
-"  %s [MO≈ΩNOST]... PODATKOVNI_IMENIK\n"
+"  %s [MOÆNOST]... PODATKOVNI_IMENIK\n"
 "\n"
 
-#: pg_resetxlog.c:694
+#: pg_resetxlog.c:718
 msgid "Options:\n"
-msgstr "Mo≈ænosti:\n"
+msgstr "Moænosti:\n"
 
-#: pg_resetxlog.c:695
+#: pg_resetxlog.c:719
 msgid "  -f              force update to be done\n"
 msgstr "  -f              prisili izvedbo posodobitve\n"
 
-#: pg_resetxlog.c:696
-msgid ""
-"  -l FILEID,SEG   force minimum WAL starting location for new transaction "
-"log\n"
-msgstr ""
-"  -l FILEID,SEG   doloƒçi najmanj≈°o zaƒçetno WAL lokacijo za novi dnevnik "
-"transakcij\n"
+#: pg_resetxlog.c:720
+msgid "  -l FILEID,SEG   force minimum WAL starting location for new transaction log\n"
+msgstr "  -l FILEID,SEG   doloËi najmanjπo zaËetno WAL lokacijo za novi dnevnik transakcij\n"
 
-#: pg_resetxlog.c:697
-msgid ""
-"  -n              no update, just show extracted control values (for "
-"testing)\n"
-msgstr ""
-"  -n              ne posodabljaj, ampak samo prika≈æi vrednosti (za "
-"testiranje)\n"
+#: pg_resetxlog.c:721
+msgid "  -n              no update, just show extracted control values (for testing)\n"
+msgstr "  -n              ne posodabljaj, ampak samo prikaæi vrednosti (za testiranje)\n"
 
-#: pg_resetxlog.c:698
+#: pg_resetxlog.c:722
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID          nastavi naslednji OID\n"
 
-#: pg_resetxlog.c:699
+#: pg_resetxlog.c:723
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID          nastavi naslednji ID transakcije\n"
 
-#: pg_resetxlog.c:700
+#: pg_resetxlog.c:724
 msgid "  --help          show this help, then exit\n"
-msgstr "  --help          izpi≈°i to pomoƒç, nato konƒçaj program\n"
+msgstr "  --help          izpiπi to pomoË, nato konËaj program\n"
 
-#: pg_resetxlog.c:701
+#: pg_resetxlog.c:725
 msgid "  --version       output version information, then exit\n"
-msgstr "  --version       izpi≈°i podatke o verziji, nato konƒçaj program\n"
+msgstr "  --version       izpiπi podatke o razliËici, nato konËaj program\n"
 
-#: pg_resetxlog.c:702
+#: pg_resetxlog.c:726
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Hro≈°ƒçe sporoƒçajte na naslov <pgsql-bugs@postgresql.org>.\n"
+"Napake sporoËajte na naslov <pgsql-bugs@postgresql.org>.\n"
+

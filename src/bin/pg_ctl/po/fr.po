@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-fr\n"
-"POT-Creation-Date: 2004-10-25 19:06+0100\n"
+"POT-Creation-Date: 2004-11-16 07:07+0000\n"
 "PO-Revision-Date: 2004-10-26 00:42+0200\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team: FR_fr <pgsql-fr-generale@postgresql.org>\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.9\n"
 
-#: pg_ctl.c:200 pg_ctl.c:215 pg_ctl.c:1327
+#: pg_ctl.c:200 pg_ctl.c:215 pg_ctl.c:1331
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s : mémoire épuisée\n"
@@ -28,8 +28,9 @@ msgstr "%s : impossible d'ouvrir le fichier PID «%s» : %s"
 
 #: pg_ctl.c:468
 #, c-format
-msgid "%s: another postmaster may be running; trying to start postmaster anyway\n"
-msgstr "%s : un autre postmaster pourrait être en cours d'exécution ; Néanmoins, je vais essayer de lancer postmaster.\n"
+msgid ""
+"%s: another postmaster may be running; trying to start postmaster anyway\n"
+msgstr "%s : un autre postmaster pourrait être en cours d'exécution ; néanmoins, je vais essayer de lancer postmaster.\n"
 
 #: pg_ctl.c:486
 #, c-format
@@ -109,7 +110,7 @@ msgstr "postmaster est-il en cours d'exécution ?\n"
 #: pg_ctl.c:613
 #, c-format
 msgid "%s: cannot stop postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s : impossible d'arrêter postmaster; postgres est en cours d'exécution (PID : %ld)\n"
+msgstr "%s : impossible d'arrêter postmaster ; postgres est en cours d'exécution (PID : %ld)\n"
 
 #: pg_ctl.c:621 pg_ctl.c:692
 #, c-format
@@ -153,7 +154,7 @@ msgstr "Merci d'arrêter postgres et de re-essayer.\n"
 #: pg_ctl.c:741
 #, c-format
 msgid "%s: cannot reload postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s : impossible de recharger postmaster; postgres est en cours d'exécution (PID : %ld)\n"
+msgstr "%s : impossible de recharger postmaster ; postgres est en cours d'exécution (PID : %ld)\n"
 
 #: pg_ctl.c:750
 #, c-format
@@ -249,30 +250,29 @@ msgstr "Usage :\n"
 #, c-format
 msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s start   [-w] [-D REPERTOIRE_BASE] [-s] [-l NOM_FICHIER] [-o \"OPTIONS"
-"\"]\n"
+"  %s start   [-w] [-D RÉP_DONNÉES] [-s] [-l NOM_FICHIER] [-o \"OPTIONS\"]\n"
 
 #: pg_ctl.c:1087
 #, c-format
 msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-D REPERTOIRE_BASE] [-s] [-m MODE-ARRET]\n"
+msgstr "  %s stop    [-W] [-D RÉP_DONNÉES] [-s] [-m MODE_ARRET]\n"
 
 #: pg_ctl.c:1088
 #, c-format
-msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
+msgid ""
+"  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s restart [-w] [-D REPERTOIRE_BASE] [-s] [-m MODE-ARRET] [-o \"OPTIONS"
-"\"]\n"
+"  %s restart [-w] [-D RÉP_DONNÉES] [-s] [-m MODE_ARRET] [-o \"OPTIONS\"]\n"
 
 #: pg_ctl.c:1089
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
-msgstr "  %s reload  [-D REPERTOIRE_BASE] [-s]\n"
+msgstr "  %s reload  [-D RÉP_DONNÉES] [-s]\n"
 
 #: pg_ctl.c:1090
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
-msgstr "  %s status  [-D REPERTOIRE_BASE]\n"
+msgstr "  %s status  [-D RÉP_DONNÉES]\n"
 
 #: pg_ctl.c:1091
 #, c-format
@@ -285,13 +285,14 @@ msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-w] [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s register   [-N service] [-U utilisateur] [-P motdepasse] [-D "
-"REPERTOIRE_BASE] [- w] [-o \"OPTIONS\"]\n"
+"  %s register   [-N NOM_SERVICE] [-U NOM_UTILISATEUR] [-P MOTDEPASSE] "
+"[-D RÉP_DONNÉES]\n"
+"                    [-w] [-o \"OPTIONS\"]\n"
 
 #: pg_ctl.c:1095
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
-msgstr "  %s unregister [-N service]\n"
+msgstr "  %s unregister [-N NOM_SERVICE]\n"
 
 #: pg_ctl.c:1098
 msgid ""
@@ -303,19 +304,21 @@ msgstr ""
 
 #: pg_ctl.c:1099
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata REPERTOIRE_BASE   emplacement du stockage de la base de données\n"
+msgstr "  -D, --pgdata RÉP_DONNÉES emplacement du stockage de la base de données\n"
 
 #: pg_ctl.c:1100
 msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent           affiche seulement les erreurs, aucun message d'information\n"
+msgstr ""
+"  -s, --silent           affiche seulement les erreurs, aucun message "
+"d'informations\n"
 
 #: pg_ctl.c:1101
 msgid "  -w                     wait until operation completes\n"
-msgstr "  -w                     attendre la fin de l'opération\n"
+msgstr "  -w                     attend la fin de l'opération\n"
 
 #: pg_ctl.c:1102
 msgid "  -W                     do not wait until operation completes\n"
-msgstr "  -W                     ne pas attendre la fin de l'opération\n"
+msgstr "  -W                     n'attend pas la fin de l'opération\n"
 
 #: pg_ctl.c:1103
 msgid "  --help                 show this help, then exit\n"
@@ -348,8 +351,7 @@ msgstr ""
 #: pg_ctl.c:1109
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
 msgstr ""
-"  -l, --log NOMFICHIER   écrit (ou ajoute) les traces du serveur dans NOMFICHIER.\n"
-"                         L'utilisation de cette option est recommendée.\n"
+"  -l, --log NOMFICHIER   écrit (ou ajoute) le journal de traces du serveur dans NOMFICHIER.\n"
 
 #: pg_ctl.c:1110
 msgid ""
@@ -373,7 +375,7 @@ msgstr ""
 
 #: pg_ctl.c:1115
 msgid "  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m MODE-ARRET          soit \"smart\", soit \"fast\", soit \"immediate\"\n"
+msgstr "  -m MODE_ARRET      soit «smart», soit «fast», soit «immediate»\n"
 
 #: pg_ctl.c:1117
 msgid ""
@@ -395,7 +397,7 @@ msgstr "  fast        quitte directement, mais proprement\n"
 msgid ""
 "  immediate   quit without complete shutdown; will lead to recovery on "
 "restart\n"
-msgstr "  immediate   quitte sans un arrêt complet; amènera une restauration au prochain lancement\n"
+msgstr "  immediate   quitte sans un arrêt complet ; amènera une restauration au prochain lancement\n"
 
 #: pg_ctl.c:1122
 msgid ""
@@ -414,12 +416,17 @@ msgstr ""
 "Options pour enregistrer ou dés-enregistrer :\n"
 
 #: pg_ctl.c:1127
-msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N NOM_SERVICE  nom du service avec lequel enregistrer le serveur PostgreSQL\n"
+msgid ""
+"  -N SERVICENAME  service name with which to register PostgreSQL server\n"
+msgstr ""
+"  -N NOM_SERVICE  nom du service avec lequel enregistrer le serveur "
+"PostgreSQL\n"
 
 #: pg_ctl.c:1128
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
-msgstr "  -P MOT_DE_PASSE mot de passe du compte pour enregistrer le serveur PostgreSQL\n"
+msgstr ""
+"  -P MOT_DE_PASSE mot de passe du compte pour enregistrer le serveur "
+"PostgreSQL\n"
 
 #: pg_ctl.c:1129
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
@@ -454,33 +461,33 @@ msgstr ""
 "Merci de vous connecter (avec l'aide de «su») comme utilisateur (non privilégié)\n"
 "qui sera le propriétaire du processus serveur.\n"
 
-#: pg_ctl.c:1343
+#: pg_ctl.c:1347
 #, c-format
 msgid "%s: invalid option %s\n"
 msgstr "%s : option invalide %s\n"
 
-#: pg_ctl.c:1354
+#: pg_ctl.c:1358
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s : trop d'arguments en ligne de commande (le premier est «%s»)\n"
 
-#: pg_ctl.c:1373
+#: pg_ctl.c:1377
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
 msgstr "%s : arguments manquants pour le mode kill\n"
 
-#: pg_ctl.c:1391
+#: pg_ctl.c:1395
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
 msgstr "%s : mode d'opération non reconnu «%s»\n"
 
-#: pg_ctl.c:1401
+#: pg_ctl.c:1405
 #, c-format
 msgid "%s: no operation specified\n"
 msgstr "%s : aucune opération spécifiée\n"
 
-#: pg_ctl.c:1417
+#: pg_ctl.c:1421
 #, c-format
-msgid "%s: no database directory specified and environment variable PGDATA unset\n"
+msgid ""
+"%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s : aucun répertoire de bases de données spécifié et variable d'environnement PGDATA non initialisée\n"
-

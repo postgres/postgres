@@ -1,238 +1,249 @@
-# :encoding=UTF-8:
 # Slovenian message translation for pg_controldata.
-# 
-# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2003.
-# 
+# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2003 - 2004.
+#
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2003-10-13 03:00+0200\n"
-"PO-Revision-Date: 2003-10-13 03:00+0200\n"
+"PO-Revision-Date: 2004-11-06 21:28+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-Language: Slovenian\n"
+"X-Poedit-Country: SLOVENIA\n"
+"X-Generator: KBabel 1.3.1\n"
 
-#: pg_controldata.c:28
+#: pg_controldata.c:26
 #, c-format
 msgid ""
 "%s displays control information of a PostgreSQL database cluster.\n"
 "\n"
 msgstr ""
-"%s prika≈æe kontrolne informacije o gruƒçi PostgreSQL podatkovnih baz.\n"
+"%s prikaæe kontrolne informacije o gruËi PostgreSQL podatkovnih baz.\n"
 "\n"
 
-#: pg_controldata.c:32
+#: pg_controldata.c:30
 #, c-format
 msgid ""
 "Usage:\n"
-"  %s [OPTION]\n"
+"  %s [OPTION] [DATADIR]\n"
 "\n"
 "Options:\n"
-"  DATADIR        show cluster control information for DATADIR\n"
 "  --help         show this help, then exit\n"
 "  --version      output version information, then exit\n"
 msgstr ""
 "Uporaba:\n"
-"  %s [MO≈ΩNOST]\n"
+"  %s [MOÆNOST] [PODATKOVNI_IMENIK]\n"
 "\n"
-"Mo≈ænosti:\n"
-"  DATADIR        prika≈æi kontrolne informacije za gruƒço v imeniku DATADIR\n"
-"  --help         prika≈æi to pomoƒç, nato konƒçaj program\n"
-"  --version      izpi≈°i podatke o verziji, nato konƒçaj program\n"
+"Moænosti:\n"
+"  --help         prikaæi to pomoË, nato konËaj program\n"
+"  --version      izpiπi podatke o razliËici, nato konËaj program\n"
 
-#: pg_controldata.c:41
+#: pg_controldata.c:38
 msgid ""
 "\n"
-"If no data directory is specified, the environment variable PGDATA\n"
+"If no data directory (DATADIR) is specified, the environment variable PGDATA\n"
 "is used.\n"
 "\n"
 msgstr ""
 "\n"
-"ƒåe podatkovni imenik ni podan, bo uporabljena vrednost okoljske\n"
+"»e podatkovni imenik ni podan, bo uporabljena vrednost okoljske\n"
 "spremenljivke PGDATA.\n"
 "\n"
 
-#: pg_controldata.c:42
+#: pg_controldata.c:40
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Hro≈°ƒçe sporoƒçajte na naslov <pgsql-bugs@postgresql.org>.\n"
+msgstr "Napake sporoËajte na naslov <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_controldata.c:52
+#: pg_controldata.c:50
 msgid "starting up"
 msgstr "v zaganjanju"
 
-#: pg_controldata.c:54
+#: pg_controldata.c:52
 msgid "shut down"
 msgstr "zaustavljena"
 
-#: pg_controldata.c:56
+#: pg_controldata.c:54
 msgid "shutting down"
 msgstr "v zaustavljanju"
 
-#: pg_controldata.c:58
+#: pg_controldata.c:56
 msgid "in recovery"
 msgstr "v okrevanju"
 
-#: pg_controldata.c:60
+#: pg_controldata.c:58
 msgid "in production"
-msgstr "zagnana in delujoƒça"
+msgstr "zagnana in delujoËa"
 
-#: pg_controldata.c:62
+#: pg_controldata.c:60
 msgid "unrecognized status code"
 msgstr "v neznanem stanju"
 
-#: pg_controldata.c:107
+#: pg_controldata.c:102
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: podatkovni imenik ni bil naveden\n"
 
-#: pg_controldata.c:108
+#: pg_controldata.c:103
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Za veƒç informacij poskusite \"%s --help\".\n"
+msgstr "Za veË informacij poskusite \"%s --help\".\n"
 
-#: pg_controldata.c:116
+#: pg_controldata.c:111
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoƒçe odpreti za branje: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogoËe odpreti za branje: %s\n"
 
-#: pg_controldata.c:123
+#: pg_controldata.c:118
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoƒçe prebrati: %s\n"
+msgstr "%s: datoteke \"%s\" ni bilo mogoËe prebrati: %s\n"
 
-#: pg_controldata.c:137
+#: pg_controldata.c:132
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
 "is expecting.  The results below are untrustworthy.\n"
 "\n"
 msgstr ""
-"OPOZORILO: Izraƒçunana CRC kontrolna vsota se ne ujema z vrednostjo, ki je\n"
-"shranjena v datoteki. Lahko da je datoteka po≈°kodovana, ali pa uporablja\n"
-"drugaƒçno razporeditev podatkov, kot jo priƒçakuje ta program.\n"
+"OPOZORILO: IzraËunana CRC kontrolna vsota se ne ujema z vrednostjo, ki je\n"
+"shranjena v datoteki. Obstaja moænost, da je datoteka poπkodovana, ali pa \n"
+" uporablja drugaËno razporeditev podatkov, kot jo priËakuje ta program.\n"
 "Spodaj navedeni rezultati niso zanesljivi.\n"
 "\n"
 
-#: pg_controldata.c:150
-#, c-format
-msgid "pg_control version number:            %u\n"
-msgstr "Verzija pg_control .................... %u\n"
-
-#: pg_controldata.c:151
-#, c-format
-msgid "Catalog version number:               %u\n"
-msgstr "Verzija kataloga ...................... %u\n"
-
 #: pg_controldata.c:152
 #, c-format
-msgid "Database cluster state:               %s\n"
-msgstr "Stanje gruƒçe podatkovnih baz .......... %s\n"
+msgid "pg_control version number:            %u\n"
+msgstr "RazliËica pg_control .................. %u\n"
 
 #: pg_controldata.c:153
+#, c-format
+msgid "Catalog version number:               %u\n"
+msgstr "RazliËica kataloga .................... %u\n"
+
+#: pg_controldata.c:154
+#, c-format
+msgid "Database system identifier:           %s\n"
+msgstr "Identifikator sistema podatkovnih baz . %s\n"
+
+#: pg_controldata.c:155
+#, c-format
+msgid "Database cluster state:               %s\n"
+msgstr "Stanje gruËe podatkovnih baz .......... %s\n"
+
+#: pg_controldata.c:156
 #, c-format
 msgid "pg_control last modified:             %s\n"
 msgstr "Zadnja sprememba pg_control ........... %s\n"
 
-#: pg_controldata.c:154
+#: pg_controldata.c:157
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "Trenutni ID dnevnika .................. %u\n"
 
-#: pg_controldata.c:155
+#: pg_controldata.c:158
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Naslednji segment dnevnika ............ %u\n"
 
-#: pg_controldata.c:156
+#: pg_controldata.c:159
 #, c-format
 msgid "Latest checkpoint location:           %X/%X\n"
-msgstr "Lokacija zadnje kontolne toƒçke ........ %X/%X\n"
+msgstr "Lokacija zadnje kontrolne toËke ........ %X/%X\n"
 
-#: pg_controldata.c:158
+#: pg_controldata.c:161
 #, c-format
 msgid "Prior checkpoint location:            %X/%X\n"
-msgstr "Lokacija predhodne kontrolne toƒçke .... %X/%X\n"
+msgstr "Lokacija predhodne kontrolne toËke .... %X/%X\n"
 
-#: pg_controldata.c:160
+#: pg_controldata.c:163
 #, c-format
 msgid "Latest checkpoint's REDO location:    %X/%X\n"
-msgstr "REDO lokacija zadnje kontrolne toƒçke .. %X/%X\n"
-
-#: pg_controldata.c:162
-#, c-format
-msgid "Latest checkpoint's UNDO location:    %X/%X\n"
-msgstr "UNDO lokacija zadnje kontrolne toƒçke .. %X/%X\n"
-
-#: pg_controldata.c:164
-#, c-format
-msgid "Latest checkpoint's StartUpID:        %u\n"
-msgstr "StartUpID zadnje kontrolne toƒçke ...... %u\n"
+msgstr "REDO lokacija zadnje kontrolne toËke .. %X/%X\n"
 
 #: pg_controldata.c:165
 #, c-format
-msgid "Latest checkpoint's NextXID:          %u\n"
-msgstr "NextXID zadnje kontrolne toƒçke ........ %u\n"
-
-#: pg_controldata.c:166
-#, c-format
-msgid "Latest checkpoint's NextOID:          %u\n"
-msgstr "NextOID zadnje kontolne toƒçke ......... %u\n"
+msgid "Latest checkpoint's UNDO location:    %X/%X\n"
+msgstr "UNDO lokacija zadnje kontrolne toËke .. %X/%X\n"
 
 #: pg_controldata.c:167
 #, c-format
-msgid "Time of latest checkpoint:            %s\n"
-msgstr "ƒåas zadnje kontolne toƒçke ............. %s\n"
+msgid "Latest checkpoint's TimeLineID:       %u\n"
+msgstr "TimeLineID zadnje kontrolne toËke ..... %u\n"
 
 #: pg_controldata.c:168
+#, c-format
+msgid "Latest checkpoint's NextXID:          %u\n"
+msgstr "NextXID zadnje kontrolne toËke ........ %u\n"
+
+#: pg_controldata.c:169
+#, c-format
+msgid "Latest checkpoint's NextOID:          %u\n"
+msgstr "NextOID zadnje kontrolne toËke ......... %u\n"
+
+#: pg_controldata.c:170
+#, c-format
+msgid "Time of latest checkpoint:            %s\n"
+msgstr "»as zadnje kontrolne toËke ............ %s\n"
+
+#: pg_controldata.c:171
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Velikost bloka ........................ %u\n"
 
-#: pg_controldata.c:169
+#: pg_controldata.c:172
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr ""
-"≈†tevilo blokov na posamezni segment\n"
+"©tevilo blokov na posamezni segment\n"
 "velike relacije ....................... %u\n"
 
-#: pg_controldata.c:170
-#, c-format
-msgid "Maximum length of identifiers:        %u\n"
-msgstr "Najveƒçja dol≈æina identifikatorjev ..... %u\n"
-
-#: pg_controldata.c:171
-#, c-format
-msgid "Maximum number of function arguments: %u\n"
-msgstr "Najveƒçje ≈°tevilo argumentov funkcije .. %u\n"
-
-#: pg_controldata.c:172
-#, c-format
-msgid "Date/time type storage:               %s\n"
-msgstr "Naƒçin shranjevanja datuma/ƒçasa ........ %s\n"
-
 #: pg_controldata.c:173
-msgid "64-bit integers"
-msgstr "64-bitni integerji"
-
-#: pg_controldata.c:173
-msgid "floating-point numbers"
-msgstr "≈°tevila s plavajoƒço vejico"
+#, c-format
+msgid "Bytes per WAL segment:                %u\n"
+msgstr "©tevilo bytov na segment WAL .......... %u\n"
 
 #: pg_controldata.c:174
 #, c-format
-msgid "Maximum length of locale name:        %u\n"
-msgstr ""
-"Najveƒçja dol≈æina imena podroƒçnih\n"
-"nastavitev (locale settings) .......... %u\n"
+msgid "Maximum length of identifiers:        %u\n"
+msgstr "NajveËja dolæina identifikatorjev ..... %u\n"
 
 #: pg_controldata.c:175
+#, c-format
+msgid "Maximum number of function arguments: %u\n"
+msgstr "NajveËje πtevilo argumentov funkcije .. %u\n"
+
+#: pg_controldata.c:176
+#, c-format
+msgid "Date/time type storage:               %s\n"
+msgstr "NaËin shranjevanja datuma/Ëasa ........ %s\n"
+
+#: pg_controldata.c:177
+msgid "64-bit integers"
+msgstr "64-bitni integerji"
+
+#: pg_controldata.c:177
+msgid "floating-point numbers"
+msgstr "πtevila s plavajoËo vejico"
+
+#: pg_controldata.c:178
+#, c-format
+msgid "Maximum length of locale name:        %u\n"
+msgstr ""
+"NajveËja dolæina imena podroËnih\n"
+"nastavitev (locale settings) .......... %u\n"
+
+#: pg_controldata.c:179
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE ............................ %s\n"
 
-#: pg_controldata.c:176
+#: pg_controldata.c:180
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE .............................. %s\n"
+

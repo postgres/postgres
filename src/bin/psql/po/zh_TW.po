@@ -1,111 +1,163 @@
-# Traditional Chinese translation for psql.
-# Zhenbang Wei <forth@zbwei.net>, 2001.
+# 2004-11-11 Zhenbang Wei <forth@zbwei.net>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-19 01:09+0100\n"
-"PO-Revision-Date: 2004-10-19 10:37+0800\n"
+"POT-Creation-Date: 2004-11-11 01:23+0000\n"
+"PO-Revision-Date: 2004-11-11 13:14+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: command.c:112
+# command.c:112
+#: command.c:116
 msgid "Warning: This syntax is deprecated.\n"
 msgstr "警告：這種語法已經廢棄。\n"
 
-#: command.c:120
+# command.c:120
+#: command.c:124
 #, c-format
 msgid "Invalid command \\%s. Try \\? for help.\n"
 msgstr "無效的命令 \\%s，用 \\? 顯示說明。\n"
 
-#: command.c:122
+# command.c:122
+#: command.c:126
 #, c-format
 msgid "invalid command \\%s\n"
 msgstr "無效的命令 \\%s\n"
 
-#: command.c:131
+# command.c:131
+#: command.c:135
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
-msgstr "\\%s: 忽略多餘的參數\"%s\"\n"
+msgstr "\\%s：忽略多餘的參數\"%s\"\n"
 
-#: command.c:240
+# command.c:240
+#: command.c:244
 #, c-format
 msgid "could not get home directory: %s\n"
-msgstr "無法取得home目錄: %s\n"
+msgstr "無法取得home目錄：%s\n"
 
-#: command.c:256
+# command.c:256
+#: command.c:260
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: 無法切換到目錄\"%s\": %s\n"
 
-#: command.c:370
-#: command.c:760
+# command.c:370
+# command.c:760
+#: command.c:374
+#: command.c:764
 msgid "no query buffer\n"
 msgstr "沒有查詢暫存區\n"
 
-#: command.c:433
+# command.c:433
+#: command.c:437
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
-msgstr "%s: 無效的編碼名稱或找不到conversion程序\n"
+msgstr "%s：無效的編碼名稱或找不到conversion程序\n"
 
-#: command.c:501
-#: command.c:535
-#: command.c:549
-#: command.c:566
-#: command.c:612
-#: command.c:740
-#: command.c:771
+# command.c:501
+# command.c:535
+# command.c:549
+# command.c:566
+# command.c:612
+# command.c:740
+# command.c:771
+#: command.c:505
+#: command.c:539
+#: command.c:553
+#: command.c:570
+#: command.c:616
+#: command.c:744
+#: command.c:775
 #, c-format
 msgid "\\%s: missing required argument\n"
-msgstr "\\%s: 缺少所需參數\n"
+msgstr "\\%s：缺少所需參數\n"
 
-#: command.c:598
+# command.c:598
+#: command.c:602
 msgid "Query buffer is empty."
 msgstr "查詢暫存區是空的。"
 
-#: command.c:632
+# command.c:632
+#: command.c:636
 msgid "Query buffer reset (cleared)."
 msgstr "重置(清空)查詢暫存區。"
 
-#: command.c:646
+# command.c:646
+#: command.c:650
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "將歷史記錄寫入\"%s \"。\n"
 
-#: command.c:681
+# command.c:681
+# common.c:85
+# common.c:99
+# mainloop.c:71
+#: command.c:685
 #: common.c:85
 #: common.c:99
 #: mainloop.c:71
+#: print.c:230
+#: print.c:237
+#: print.c:256
+#: print.c:440
+#: print.c:464
+#: print.c:488
+#: print.c:517
+#: print.c:535
+#: print.c:1156
+#: print.c:1168
+#: print.c:1189
+#: print.c:1196
+#: print.c:1211
 msgid "out of memory\n"
 msgstr "記憶體用盡\n"
 
-#: command.c:696
-#: command.c:745
+# command.c:696
+# command.c:745
+#: command.c:700
+#: command.c:749
 #, c-format
 msgid "\\%s: error\n"
-msgstr "\\%s: 錯誤\n"
+msgstr "\\%s：錯誤\n"
 
-#: command.c:726
+# command.c:726
+#: command.c:730
 msgid "Timing is on."
 msgstr "啟用計時功能"
 
-#: command.c:728
+# command.c:728
+#: command.c:732
 msgid "Timing is off."
 msgstr "停止計時功能"
 
-#: command.c:788
-#: command.c:808
-#: command.c:1163
-#: command.c:1170
-#: command.c:1180
-#: command.c:1192
-#: command.c:1205
-#: command.c:1219
-#: command.c:1241
-#: command.c:1272
+# command.c:788
+# command.c:808
+# command.c:1163
+# command.c:1170
+# command.c:1180
+# command.c:1192
+# command.c:1205
+# command.c:1219
+# command.c:1241
+# command.c:1272
+# common.c:170
+# copy.c:530
+# copy.c:575
+#: command.c:792
+#: command.c:812
+#: command.c:1189
+#: command.c:1196
+#: command.c:1206
+#: command.c:1218
+#: command.c:1231
+#: command.c:1245
+#: command.c:1267
+#: command.c:1298
 #: common.c:170
 #: copy.c:530
 #: copy.c:575
@@ -113,208 +165,267 @@ msgstr "停止計時功能"
 msgid "%s: %s\n"
 msgstr ""
 
-#: command.c:915
-#: command.c:939
-#: startup.c:187
-#: startup.c:205
+# command.c:915
+# command.c:939
+# startup.c:187
+# startup.c:205
+#: command.c:919
+#: command.c:943
+#: startup.c:188
+#: startup.c:206
 msgid "Password: "
-msgstr "密碼: "
+msgstr "密碼："
 
-#: command.c:953
+# command.c:953
+# common.c:216
+# common.c:605
+# common.c:660
+# common.c:903
+#: command.c:957
 #: common.c:216
-#: common.c:605
-#: common.c:660
-#: common.c:903
+#: common.c:685
+#: common.c:740
+#: common.c:983
 #, c-format
 msgid "%s"
 msgstr ""
 
-#: command.c:957
+# command.c:957
+#: command.c:961
 msgid "Previous connection kept\n"
 msgstr "保留上一次連線\n"
 
-#: command.c:969
+# command.c:969
+#: command.c:973
 #, c-format
 msgid "\\connect: %s"
 msgstr ""
 
-#: command.c:981
+# command.c:981
+#: command.c:985
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "你現在已經連線到資料庫\"%s\"。\n"
 
-#: command.c:983
+# command.c:983
+#: command.c:987
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "你現在是以新使用者\"%s\"進行連線。\n"
 
-#: command.c:986
+# command.c:986
+#: command.c:990
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "您現在是以使用者 %s 連線到資料庫\"%s\"。\n"
 
-#: command.c:1103
+# command.c:1103
+#: command.c:1107
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "無法執行編輯器\"%s\"\n"
 
-#: command.c:1105
+# command.c:1105
+#: command.c:1109
 msgid "could not start /bin/sh\n"
 msgstr "無法執行 /bin/sh\n"
 
+# command.c:1148
 #: command.c:1148
+#, c-format
+msgid "cannot locate temporary directory: %s"
+msgstr "找不到暫存目錄：%s"
+
+# command.c:1148
+#: command.c:1174
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "無法開啟暫存檔\"%s\": %s\n"
 
-#: command.c:1340
+# command.c:1340
+#: command.c:1366
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
-msgstr "\\pset: 可以使用的格式有unaligned、aligned、html、latex\n"
+msgstr "\\pset：可以使用的格式有unaligned、aligned、html、latex\n"
 
-#: command.c:1345
+# command.c:1345
+#: command.c:1371
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "輸出格式是 %s。\n"
 
-#: command.c:1355
+# command.c:1355
+#: command.c:1381
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "邊界風格是 %d。\n"
 
-#: command.c:1364
+# command.c:1364
+#: command.c:1390
 msgid "Expanded display is on.\n"
 msgstr "擴展顯示已打開。\n"
 
-#: command.c:1365
+# command.c:1365
+#: command.c:1391
 msgid "Expanded display is off.\n"
 msgstr "擴展顯示已關閉。\n"
 
-#: command.c:1377
+# command.c:1377
+#: command.c:1403
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr ""
 
-#: command.c:1389
+# command.c:1389
+#: command.c:1415
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "欄位分隔符號是\"%s\"。\n"
 
-#: command.c:1403
+# command.c:1403
+#: command.c:1429
 msgid "Record separator is <newline>."
 msgstr "記錄分隔符號是<newline>。"
 
-#: command.c:1405
+# command.c:1405
+#: command.c:1431
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "記茄分隔符號是\"%s\"。\n"
 
-#: command.c:1416
+# command.c:1416
+#: command.c:1442
 msgid "Showing only tuples."
 msgstr "只顯示tuples。"
 
-#: command.c:1418
+# command.c:1418
+#: command.c:1444
 msgid "Tuples only is off."
 msgstr "關閉只顯示tuples。"
 
-#: command.c:1434
+# command.c:1434
+#: command.c:1460
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "標題是 \"%s\"。\n"
 
-#: command.c:1436
+# command.c:1436
+#: command.c:1462
 msgid "Title is unset.\n"
 msgstr "無標題。\n"
 
-#: command.c:1452
+# command.c:1452
+#: command.c:1478
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "資料表屬性是 \"%s\"。\n"
 
-#: command.c:1454
+# command.c:1454
+#: command.c:1480
 msgid "Table attributes unset.\n"
 msgstr "未設置資料表屬性。\n"
 
-#: command.c:1470
+# command.c:1470
+#: command.c:1496
 msgid "Pager is used for long output."
 msgstr "顯示大量資料時使用分頁器。"
 
-#: command.c:1472
+# command.c:1472
+#: command.c:1498
 msgid "Pager is always used."
 msgstr "永遠使用分頁器。"
 
-#: command.c:1474
+# command.c:1474
+#: command.c:1500
 msgid "Pager usage is off."
 msgstr "不使用分頁器。"
 
-#: command.c:1485
+# command.c:1485
+#: command.c:1511
 msgid "Default footer is on."
 msgstr "打開預設footer。"
 
-#: command.c:1487
+# command.c:1487
+#: command.c:1513
 msgid "Default footer is off."
 msgstr "關閉預設footer。"
 
-#: command.c:1493
+# command.c:1493
+#: command.c:1519
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: 不明選項: %s\n"
 
-#: command.c:1532
+# command.c:1532
+#: command.c:1570
 msgid "\\!: failed\n"
-msgstr "\\!: 失敗\n"
+msgstr "\\!：失敗\n"
 
+# common.c:78
 #: common.c:78
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
-msgstr "%s: xstrdup: 無法複製空指標(內部錯誤)\n"
+msgstr "%s：xstrdup: 無法複製空指標(內部錯誤)\n"
 
+# common.c:123
 #: common.c:123
 msgid "out of memory"
 msgstr "記憶體用盡"
 
-#: common.c:298
+# common.c:298
+#: common.c:356
 msgid "connection to server was lost\n"
 msgstr "與資料庫的連線中斷\n"
 
-#: common.c:302
+# common.c:302
+#: common.c:360
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "與伺服器的連線已中斷，嘗試重置: "
 
-#: common.c:307
+# common.c:307
+#: common.c:365
 msgid "Failed.\n"
 msgstr "失敗。\n"
 
-#: common.c:314
+# common.c:314
+#: common.c:372
 msgid "Succeeded.\n"
 msgstr "完成。\n"
 
-#: common.c:391
+# common.c:391
+#: common.c:471
 #, c-format
 msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 msgstr "內部錯誤：非預期的敘述位置\"%s\"\n"
 
-#: common.c:527
+# common.c:527
+#: common.c:607
 #, c-format
 msgid "LINE %d: "
 msgstr ""
 
-#: common.c:544
-#: common.c:553
+# common.c:544
+# common.c:553
+#: common.c:624
+#: common.c:633
 #, c-format
 msgid "%s\n"
 msgstr ""
 
-#: common.c:636
-#: common.c:871
+# common.c:636
+# common.c:871
+#: common.c:716
+#: common.c:951
 msgid "You are currently not connected to a database.\n"
 msgstr "你目前沒有與資料庫連線。\n"
 
-#: common.c:691
+# common.c:691
+#: common.c:771
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "從PID為%2$d的伺服器收到非同步通知\"%1$s\"。\n"
 
-#: common.c:879
+# common.c:879
+#: common.c:959
 #, c-format
 msgid ""
 "***(Single step mode: verify command)*******************************************\n"
@@ -325,39 +436,47 @@ msgstr ""
 "%s\n"
 "***(按Enter鍵繼續或輸入x取消)********************\n"
 
-#: common.c:930
+# common.c:930
+#: common.c:1010
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "時間: %.3f ms\n"
 
+# copy.c:122
 #: copy.c:122
 msgid "\\copy: arguments required\n"
-msgstr "\\copy: 需要參數\n"
+msgstr "\\copy：需要參數\n"
 
+# copy.c:408
 #: copy.c:408
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
-msgstr "\\copy: 在\"%s\"發生解讀錯誤\n"
+msgstr "\\copy：在\"%s\"發生解讀錯誤\n"
 
+# copy.c:410
 #: copy.c:410
 msgid "\\copy: parse error at end of line\n"
-msgstr "\\copy: 在行尾分析錯誤\n"
+msgstr "\\copy：在行尾發生解讀錯誤\n"
 
+# copy.c:541
 #: copy.c:541
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
-msgstr "%s: 無法從目錄複製或複製到目錄\n"
+msgstr "%s：無法從目錄複製或複製到目錄\n"
 
+# copy.c:562
 #: copy.c:562
 #, c-format
 msgid "\\copy: %s"
-msgstr "\\copy: %s"
+msgstr "\\copy：%s"
 
+# copy.c:566
 #: copy.c:566
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
-msgstr "\\copy: 意外回應(%d)\n"
+msgstr "\\copy：意外回應(%d)\n"
 
+# copy.c:668
 #: copy.c:668
 msgid ""
 "Enter data to be copied followed by a newline.\n"
@@ -366,19 +485,23 @@ msgstr ""
 "輸入要複製的資料並且換行。\n"
 "在獨立的一行上輸入一個反斜線和一個句點結束。"
 
+# help.c:48
 #: help.c:48
 msgid "on"
 msgstr "開啟"
 
+# help.c:48
 #: help.c:48
 msgid "off"
 msgstr "關閉"
 
+# help.c:70
 #: help.c:70
 #, c-format
 msgid "could not get current user name: %s\n"
-msgstr "無法取得目前的使用者名稱: %s\n"
+msgstr "無法取得目前的使用者名稱：%s\n"
 
+# help.c:83
 #: help.c:83
 #, c-format
 msgid ""
@@ -386,51 +509,63 @@ msgid ""
 "\n"
 msgstr "這是psql %s，PostgreSQL的文字模式介面。\n"
 
+# help.c:85
 #: help.c:85
 msgid "Usage:"
 msgstr "使用方法:"
 
+# help.c:86
 #: help.c:86
 msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
 msgstr "  psql [選項]... [資料庫名稱 [使用者名稱]]\n"
 
+# help.c:88
 #: help.c:88
 msgid "General options:"
 msgstr "一般選項:"
 
+# help.c:93
 #: help.c:93
 #, c-format
 msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
 msgstr "  -d 資料庫名稱   指定要連線的資料庫(預設：\"%s\")\n"
 
+# help.c:94
 #: help.c:94
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
 msgstr "  -c 命令         執行一條命令(SQL或內部指令)然後結束"
 
+# help.c:95
 #: help.c:95
 msgid "  -f FILENAME     execute commands from file, then exit"
 msgstr "  -f 檔案名稱     執行檔案中的命令然後結束"
 
+# help.c:96
 #: help.c:96
 msgid "  -l              list available databases, then exit"
-msgstr "  -l              列出所有可用?料庫然?結束"
+msgstr "  -l              列出所有可用資料庫然後結束"
 
+# help.c:97
 #: help.c:97
 msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
 msgstr "  -v NAME=VALUE   將psql變數NAME設為VALUE"
 
+# help.c:98
 #: help.c:98
 msgid "  -X              do not read startup file (~/.psqlrc)"
 msgstr "  -X              不要讀取啟動檔(~/.psqlrc)"
 
+# help.c:99
 #: help.c:99
 msgid "  --help          show this help, then exit"
 msgstr "  --help          顯示這份說明然後結束"
 
+# help.c:100
 #: help.c:100
 msgid "  --version       output version information, then exit"
 msgstr "  --version       顯示版本資訊然後結束"
 
+# help.c:102
 #: help.c:102
 msgid ""
 "\n"
@@ -439,38 +574,47 @@ msgstr ""
 "\n"
 "輸入和輸出選項:"
 
+# help.c:103
 #: help.c:103
 msgid "  -a              echo all input from script"
 msgstr "  -a              顯示所有來自命令稿的輸入"
 
+# help.c:104
 #: help.c:104
 msgid "  -e              echo commands sent to server"
 msgstr "  -e              顯示傳送給伺服器的命令"
 
+# help.c:105
 #: help.c:105
 msgid "  -E              display queries that internal commands generate"
 msgstr "  -E              顯示內部指令產生的查詢"
 
+# help.c:106
 #: help.c:106
 msgid "  -q              run quietly (no messages, only query output)"
 msgstr "  -q              安靜模式(沒有訊息，只有查詢結果)"
 
+# help.c:107
 #: help.c:107
 msgid "  -o FILENAME     send query results to file (or |pipe)"
 msgstr "  -o 檔案名稱     將查詢結果寫入檔案(或 | 管道)"
 
+# help.c:108
 #: help.c:108
 msgid "  -n              disable enhanced command line editing (readline)"
 msgstr "  -n              關閉命令列加強編輯模式(readline)"
 
+# help.c:109
 #: help.c:109
 msgid "  -s              single-step mode (confirm each query)"
 msgstr "  -s              單步模式(確認每個查詢)"
 
+# help.c:110
 #: help.c:110
 msgid "  -S              single-line mode (end of line terminates SQL command)"
 msgstr "  -S              單行模式(一行就是一條SQL命令)"
 
+# help.c:112
 #: help.c:112
 msgid ""
 "\n"
@@ -479,39 +623,48 @@ msgstr ""
 "\n"
 "輸出格式選項:"
 
+# help.c:113
 #: help.c:113
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
 msgstr "  -A              使用非對齊表格輸出模式(-P format=unaligned)"
 
+# help.c:114
 #: help.c:114
 msgid "  -H              HTML table output mode (-P format=html)"
 msgstr "  -H              HTML表格輸出模式 (-P format=html)"
 
+# help.c:115
 #: help.c:115
 msgid "  -t              print rows only (-P tuples_only)"
 msgstr "  -t              只顯示行(-P tuples_onle)"
 
+# help.c:116
 #: help.c:116
 msgid "  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"
 msgstr "  -T TEXT         設定HTML表格標記屬性(width, border) (-P tableattr=)"
 
+# help.c:117
 #: help.c:117
 msgid "  -x              turn on expanded table output (-P expanded)"
 msgstr "  -x              打開擴展表格輸出(-P expended)"
 
+# help.c:118
 #: help.c:118
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
 msgstr "  -P VAR[=ARG]    將顯示選項VAR設為ARG(參見\\pset命令)"
 
+# help.c:119
 #: help.c:119
 #, c-format
 msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
 msgstr "  -F STRING       設定欄位分隔符號(預設：\"%s\") (-P fieldsep=)\n"
 
+# help.c:121
 #: help.c:121
 msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
 msgstr "  -R STRING       設定記錄分隔符號(預設：換行符號) (-P recordsep=)"
 
+# help.c:123
 #: help.c:123
 msgid ""
 "\n"
@@ -520,29 +673,35 @@ msgstr ""
 "\n"
 "連線選項:"
 
+# help.c:126
 #: help.c:126
 #, c-format
 msgid "  -h HOSTNAME     database server host or socket directory (default: \"%s\")\n"
 msgstr "  -h 主機名稱     資料庫伺服器主機或socket目錄(預設：\"%s\")\n"
 
+# help.c:127
 #: help.c:127
 msgid "local socket"
 msgstr ""
 
+# help.c:130
 #: help.c:130
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
 msgstr "  -p 埠號         資料庫伺服器埠號(預設：\"%s\")\n"
 
+# help.c:136
 #: help.c:136
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
 msgstr "  -U NAME        指定資料庫使用者(預設：\"%s\")\n"
 
+# help.c:137
 #: help.c:137
 msgid "  -W              prompt for password (should happen automatically)"
 msgstr "  -W              詢問密碼(應該會自動詢問)"
 
+# help.c:140
 #: help.c:140
 msgid ""
 "\n"
@@ -558,10 +717,12 @@ msgstr ""
 "\n"
 "向<pgsql-bugs@postgresql.org>回報錯誤。"
 
+# help.c:174
 #: help.c:174
 msgid "General\n"
 msgstr ""
 
+# help.c:175
 #: help.c:175
 #, c-format
 msgid ""
@@ -571,14 +732,17 @@ msgstr ""
 " \\c[onnect] [資料庫名稱|- [使用者名稱]]\n"
 "                連線到另一個資料庫(目前是\"%s\")\n"
 
+# help.c:178
 #: help.c:178
 msgid "  \\cd [DIR]      change the current working directory\n"
 msgstr "  \\cd [DIR]      改變目前的工作目錄\n"
 
+# help.c:179
 #: help.c:179
 msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
 msgstr "  \\copyright     顯示PostgreSQL的使用和發行條款\n"
 
+# help.c:180
 #: help.c:180
 msgid ""
 "  \\encoding [ENCODING]\n"
@@ -587,14 +751,17 @@ msgstr ""
 "  \\encoding [編碥名稱]\n"
 "                 顯示或設定用戶端編碼\n"
 
+# help.c:182
 #: help.c:182
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
 msgstr "  \\h [NAME]      顯示SQL令令的語法，用 * 顯示所有SQL命令\n"
 
+# help.c:183
 #: help.c:183
 msgid "  \\q             quit psql\n"
 msgstr "  \\q             結束psql\n"
 
+# help.c:184
 #: help.c:184
 msgid ""
 "  \\set [NAME [VALUE]]\n"
@@ -603,63 +770,78 @@ msgstr ""
 "  \\set [NAME [VALUE]]\n"
 "                 設定內部變數，若無參數則列出所有變數\n"
 
+# help.c:186
 #: help.c:186
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
 msgstr "  \\timing        切換命令計時開關(目前是 %s)\n"
 
+# help.c:188
 #: help.c:188
 msgid "  \\unset NAME    unset (delete) internal variable\n"
 msgstr "  \\unset NAME    刪除內部變數\n"
 
+# help.c:189
 #: help.c:189
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
 msgstr "  \\! [命令]   在shell裡執行命令或開啟一個shell\n"
 
+# help.c:192
 #: help.c:192
 msgid "Query Buffer\n"
 msgstr "查詢暫存區\n"
 
+# help.c:193
 #: help.c:193
 msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
 msgstr "  \\e [檔案]      使用外部編輯器編輯查詢暫存區或檔案\n"
 
+# help.c:194
 #: help.c:194
 msgid "  \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"
 msgstr "  \\g [檔案]      將SQL命令送給伺服器(並把結果寫入檔案或 |管道)\n"
 
+# help.c:195
 #: help.c:195
 msgid "  \\p             show the contents of the query buffer\n"
 msgstr "  \\p             顯示查詢暫存區的內容\n"
 
+# help.c:196
 #: help.c:196
 msgid "  \\r             reset (clear) the query buffer\n"
 msgstr "  \\r             重置(清理)查詢暫存區\n"
 
+# help.c:198
 #: help.c:198
 msgid "  \\s [FILE]      display history or save it to file\n"
-msgstr "  \\s [檔案]      顯示歷史記錄?儲存?檔案\n"
+msgstr "  \\s [檔案]      顯示歷史記錄或儲存至檔案\n"
 
+# help.c:200
 #: help.c:200
 msgid "  \\w FILE        write query buffer to file\n"
 msgstr "  \\w 檔案        將查詢暫存區寫入檔案\n"
 
+# help.c:203
 #: help.c:203
 msgid "Input/Output\n"
 msgstr "輸入/輸出\n"
 
+# help.c:204
 #: help.c:204
 msgid "  \\echo [STRING] write string to standard output\n"
 msgstr "  \\echo [STRING] 將字串寫至標準輸出\n"
 
+# help.c:205
 #: help.c:205
 msgid "  \\i FILE        execute commands from file\n"
 msgstr " \\i 檔案名稱    執行檔案中的命令\n"
 
+# help.c:206
 #: help.c:206
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
 msgstr "  \\o [檔案]      將查詢結果寫入檔案或 |管道\n"
 
+# help.c:207
 #: help.c:207
 msgid ""
 "  \\qecho [STRING]\n"
@@ -668,14 +850,17 @@ msgstr ""
 "  \\qecho [STRING]\n"
 "                 將文字寫入查詢輸出串流(參見\\o)\n"
 
+# help.c:211
 #: help.c:211
 msgid "Informational\n"
 msgstr ""
 
+# help.c:212
 #: help.c:212
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
 msgstr "  \\d [NAME]      為資料表、索引、sequence或view加上註解\n"
 
+# help.c:213
 #: help.c:213
 msgid ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
@@ -684,91 +869,113 @@ msgstr ""
 "  \\d{t|i|s|v|S} [PATTERN] (加上\"+\"取得更多資訊)\n"
 "                 列出資料表/索引/sequences/views/系統資料表\n"
 
+# help.c:215
 #: help.c:215
 msgid "  \\da [PATTERN]  list aggregate functions\n"
 msgstr "  \\da [PATTERN]  列出aggregate functions\n"
 
+# help.c:216
 #: help.c:216
 msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 msgstr "  \\db [PATTERN]  列出tablespaces(加上\"+\"取得更多資訊)\n"
 
+# help.c:217
 #: help.c:217
 msgid "  \\dc [PATTERN]  list conversions\n"
 msgstr "  \\dc [PATTERN]  列出conversions\n"
 
+# help.c:218
 #: help.c:218
 msgid "  \\dC            list casts\n"
 msgstr "  \\dC            列出casts\n"
 
+# help.c:219
 #: help.c:219
 msgid "  \\dd [PATTERN]  show comment for object\n"
 msgstr "  \\dd [PATTERN]  顯示物件註解t\n"
 
+# help.c:220
 #: help.c:220
 msgid "  \\dD [PATTERN]  list domains\n"
 msgstr "  \\dD [PATTERN]  列出domains\n"
 
+# help.c:221
 #: help.c:221
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 msgstr "  \\df [PATTERN]  列出函式(加上\"+\"取得更多資訊)\n"
 
+# help.c:222
 #: help.c:222
 msgid "  \\dg [PATTERN]  list groups\n"
 msgstr "  \\dg [PATTERN]  列出群組\n"
 
+# help.c:223
 #: help.c:223
 msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
 msgstr "  \\dn [PATTERN]  列出schemas(加上\"+\"取得更多資訊)\n"
 
+# help.c:224
 #: help.c:224
 msgid "  \\do [NAME]     list operators\n"
 msgstr "  \\do [NAME]     列出operators\n"
 
+# help.c:225
 #: help.c:225
 msgid "  \\dl            list large objects, same as \\lo_list\n"
 msgstr "  \\dl            列出large objects，同\\lo_list\n"
 
+# help.c:226
 #: help.c:226
 msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
 msgstr "  \\dp [PATTERN]  列出資料表、view和sequence的存取權限\n"
 
+# help.c:227
 #: help.c:227
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr "  \\dT [PATTERN]  列出資料型別(加上\"+\"取得更多資訊)\n"
 
+# help.c:228
 #: help.c:228
 msgid "  \\du [PATTERN]  list users\n"
 msgstr "  \\du [PATTERN]  列出使用者\n"
 
+# help.c:229
 #: help.c:229
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 msgstr "  \\l             列出所有資料庫(加上\"+\"取得更多資訊)\n"
 
+# help.c:230
 #: help.c:230
 msgid "  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"
 msgstr "  \\z [PATTERN]   列出資料表、view和sequence存取權限(同\\dp)\n"
 
+# help.c:233
 #: help.c:233
 msgid "Formatting\n"
 msgstr ""
 
+# help.c:234
 #: help.c:234
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
 msgstr " \\a             切換非對齊模式和對齊模式\n"
 
+# help.c:235
 #: help.c:235
 msgid "  \\C [STRING]    set table title, or unset if none\n"
 msgstr "  \\C [STRING]    設定表格標題\n"
 
+# help.c:236
 #: help.c:236
 msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
 msgstr "  \\f [STRING]    顯示或設定非對齊模式的欄位分隔符號\n"
 
+# help.c:237
 #: help.c:237
 #, c-format
 msgid "  \\H             toggle HTML output mode (currently %s)\n"
 msgstr " \\H             切換HTML輸出模式(目前是 %s)\n"
 
+# help.c:239
 #: help.c:239
 msgid ""
 "  \\pset NAME [VALUE]\n"
@@ -781,44 +988,52 @@ msgstr ""
 "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 "                 recordsep|tuples_only|title|tableattr|pager})\n"
 
+# help.c:243
 #: help.c:243
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
 msgstr " \\t             只顯示列(目前是 %s)\n"
 
+# help.c:245
 #: help.c:245
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
 msgstr "  \\T [STRING]    設定HTML表格標籤屬性\n"
 
+# help.c:246
 #: help.c:246
 #, c-format
 msgid "  \\x             toggle expanded output (currently %s)\n"
 msgstr " \\x             切換擴展輸出模式(目前是 %s)\n"
 
+# help.c:250
 #: help.c:250
 msgid "Copy, Large Object\n"
 msgstr ""
 
+# help.c:251
 #: help.c:251
 msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
 msgstr " \\copy ...      執行SQL COPY，資料流指向用戶端主機\n"
 
+# help.c:252
 #: help.c:252
 msgid ""
 "  \\lo_export LOBOID FILE\n"
-"  \\lo_import FILE [COMMENT] \n"
+"  \\lo_import FILE [COMMENT]\n"
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID    large object operations\n"
 msgstr ""
 "  \\lo_export LOBOID FILE\n"
-"  \\lo_import FILE [COMMENT] \n"
+"  \\lo_import FILE [COMMENT]\n"
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID    large object操作\n"
 
+# help.c:285
 #: help.c:285
 msgid "Available help:\n"
 msgstr "可用說明:\n"
 
+# help.c:344
 #: help.c:344
 #, c-format
 msgid ""
@@ -834,6 +1049,7 @@ msgstr ""
 "%s\n"
 "\n"
 
+# help.c:357
 #: help.c:357
 #, c-format
 msgid ""
@@ -843,30 +1059,45 @@ msgstr ""
 "沒有\"%-.*s\"的說明。\n"
 "用不帶參數的 \\h 顯示目前擁有的說明。\n"
 
+# input.c:210
 #: input.c:210
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
-msgstr "無法將歷史記錄儲存到\"%s\": %s\n"
+msgstr "無法將歷史記錄儲存到\"%s\"：%s\n"
 
+# input.c:213
 #: input.c:213
 msgid "history is not supported by this installation\n"
 msgstr "這個安裝不支援命令記錄\n"
 
+# large_obj.c:36
 #: large_obj.c:36
 #, c-format
 msgid "%s: not connected to a database\n"
 msgstr "%s: 尚未與資料庫連線\n"
 
+# large_obj.c:55
 #: large_obj.c:55
 #, c-format
 msgid "%s: current transaction is aborted\n"
 msgstr "%s: 目前的交易被中止\n"
 
+# large_obj.c:58
 #: large_obj.c:58
 #, c-format
 msgid "%s: unknown transaction status\n"
 msgstr "%s: 不明交易狀態\n"
 
+# describe.c:83
+# describe.c:187
+# describe.c:260
+# describe.c:322
+# describe.c:369
+# describe.c:469
+# describe.c:758
+# describe.c:1488
+# describe.c:1733
+# large_obj.c:256
 #: describe.c:83
 #: describe.c:187
 #: describe.c:260
@@ -880,38 +1111,46 @@ msgstr "%s: 不明交易狀態\n"
 msgid "Description"
 msgstr "描述"
 
+# large_obj.c:264
 #: large_obj.c:264
 msgid "Large objects"
 msgstr ""
 
-#: mainloop.c:172
+# mainloop.c:172
+#: mainloop.c:175
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "使用\"\\q\"離開 %s。\n"
 
+# print.c:428
 #: print.c:428
 msgid "(No rows)\n"
 msgstr "(沒有資料)\n"
 
+# print.c:1200
 #: print.c:1200
 msgid "(1 row)"
 msgstr "(1 行)"
 
+# print.c:1202
 #: print.c:1202
 #, c-format
 msgid "(%d rows)"
 msgstr "(%d 行)"
 
-#: startup.c:132
+# startup.c:132
+#: startup.c:133
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: 記憶體用盡\n"
 
-#: startup.c:181
+# startup.c:181
+#: startup.c:182
 msgid "User name: "
 msgstr "使用者名稱:"
 
-#: startup.c:292
+# startup.c:292
+#: startup.c:293
 #, c-format
 msgid ""
 "Welcome to %s %s, the PostgreSQL interactive terminal.\n"
@@ -925,49 +1164,58 @@ msgid ""
 msgstr ""
 "歡迎使用 %s %s，PostgreSQL的文字操作介面。\n"
 "\n"
-"輸入:  \\copyright 顯示發行條款\n"
+"輸入： \\copyright 顯示發行條款\n"
 "       \\h 顯示SQL命令的說明\n"
 "       \\? 顯示pgsql命令的說明\n"
 "       \\g 或者以分號結尾以執行查詢\n"
 "       \\q 退出\n"
 "\n"
 
-#: startup.c:446
+# startup.c:446
+#: startup.c:447
 #, c-format
 msgid "%s: couldn't set printing parameter \"%s\"\n"
 msgstr "%s: 無法設定列印參數\"%s\"\n"
 
-#: startup.c:492
+# startup.c:492
+#: startup.c:493
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s: 無法刪除變數\"%s\"\n"
 
-#: startup.c:502
+# startup.c:502
+#: startup.c:503
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s: 無法設定變數\"%s\"\n"
 
-#: startup.c:533
-#: startup.c:539
+# startup.c:533
+# startup.c:539
+#: startup.c:534
+#: startup.c:540
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "執行\"%s --help\"以顯示更多資訊。\n"
 
-#: startup.c:557
+# startup.c:557
+#: startup.c:558
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: 警告：忽略多餘的命令列參數\"%s\"\n"
 
-#: startup.c:564
+# startup.c:564
+#: startup.c:565
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: 警告：-u 選項已經廢棄，請改用 -U。\n"
 
-#: startup.c:629
+# startup.c:629
+#: startup.c:630
 msgid "contains support for command-line editing"
 msgstr "包含命令列編輯支援"
 
-#: startup.c:652
+# startup.c:652
+#: startup.c:653
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
@@ -976,6 +1224,15 @@ msgstr ""
 "SSL連接(加密: %s，位元: %i)\n"
 "\n"
 
+# describe.c:82
+# describe.c:177
+# describe.c:247
+# describe.c:320
+# describe.c:415
+# describe.c:469
+# describe.c:1476
+# describe.c:1585
+# describe.c:1633
 #: describe.c:82
 #: describe.c:177
 #: describe.c:247
@@ -988,6 +1245,18 @@ msgstr ""
 msgid "Schema"
 msgstr ""
 
+# describe.c:82
+# describe.c:128
+# describe.c:177
+# describe.c:247
+# describe.c:320
+# describe.c:362
+# describe.c:415
+# describe.c:469
+# describe.c:1476
+# describe.c:1586
+# describe.c:1634
+# describe.c:1727
 #: describe.c:82
 #: describe.c:128
 #: describe.c:177
@@ -1003,23 +1272,32 @@ msgstr ""
 msgid "Name"
 msgstr "名稱"
 
+# describe.c:82
 #: describe.c:82
 msgid "(all types)"
 msgstr "(所有型別)"
 
+# describe.c:83
 #: describe.c:83
 msgid "Data type"
 msgstr "資料型別"
 
+# describe.c:97
 #: describe.c:97
 msgid "List of aggregate functions"
 msgstr "aggregate functions列表"
 
+# describe.c:117
 #: describe.c:117
 #, c-format
 msgid "The server version (%d) does not support tablespaces.\n"
 msgstr "伺服器版本(%d)不支援tablespace。\n"
 
+# describe.c:128
+# describe.c:186
+# describe.c:362
+# describe.c:1478
+# describe.c:1727
 #: describe.c:128
 #: describe.c:186
 #: describe.c:362
@@ -1028,94 +1306,126 @@ msgstr "伺服器版本(%d)不支援tablespace。\n"
 msgid "Owner"
 msgstr "擁有者"
 
+# describe.c:128
 #: describe.c:128
 msgid "Location"
 msgstr ""
 
+# describe.c:133
+# describe.c:415
+# describe.c:1733
 #: describe.c:133
 #: describe.c:415
 #: describe.c:1733
 msgid "Access privileges"
 msgstr "存取權限"
 
+# describe.c:150
 #: describe.c:150
 msgid "List of tablespaces"
 msgstr "tablespace列表"
 
+# describe.c:177
 #: describe.c:177
 msgid "Result data type"
 msgstr "結果資料型別"
 
+# describe.c:178
 #: describe.c:178
 msgid "Argument data types"
 msgstr "參數資料型別"
 
+# describe.c:186
 #: describe.c:186
 msgid "Language"
 msgstr "語言"
 
+# describe.c:187
 #: describe.c:187
 msgid "Source code"
 msgstr "原始程式"
 
+# describe.c:221
 #: describe.c:221
 msgid "List of functions"
 msgstr "函式列表"
 
+# describe.c:257
 #: describe.c:257
 msgid "Internal name"
 msgstr "內部名稱"
 
+# describe.c:257
 #: describe.c:257
 msgid "Size"
 msgstr "大小"
 
+# describe.c:289
 #: describe.c:289
 msgid "List of data types"
 msgstr "資料型別列表"
 
+# describe.c:321
 #: describe.c:321
 msgid "Left arg type"
 msgstr "左參數型別"
 
+# describe.c:321
 #: describe.c:321
 msgid "Right arg type"
 msgstr "右參數型別"
 
+# describe.c:322
 #: describe.c:322
 msgid "Result type"
 msgstr "結果型別"
 
+# describe.c:336
 #: describe.c:336
 msgid "List of operators"
 msgstr "operators列表"
 
+# describe.c:365
 #: describe.c:365
 msgid "Encoding"
 msgstr "編碼"
 
+# describe.c:381
 #: describe.c:381
 msgid "List of databases"
 msgstr "資料庫列表"
 
+# describe.c:415
+# describe.c:543
+# describe.c:1477
 #: describe.c:415
 #: describe.c:543
 #: describe.c:1477
 msgid "table"
 msgstr "資料表"
 
+# describe.c:415
+# describe.c:543
+# describe.c:1477
 #: describe.c:415
 #: describe.c:543
 #: describe.c:1477
 msgid "view"
 msgstr ""
 
+# describe.c:415
+# describe.c:543
+# describe.c:1477
 #: describe.c:415
 #: describe.c:543
 #: describe.c:1477
 msgid "sequence"
 msgstr ""
 
+# describe.c:415
+# describe.c:745
+# describe.c:1478
+# describe.c:1587
 #: describe.c:415
 #: describe.c:745
 #: describe.c:1478
@@ -1123,128 +1433,157 @@ msgstr ""
 msgid "Type"
 msgstr "型別"
 
+# describe.c:437
 #: describe.c:437
 #, c-format
 msgid "Access privileges for database \"%s\""
 msgstr "資料庫 \"%s\" 的存取權限"
 
+# describe.c:469
 #: describe.c:469
 msgid "Object"
 msgstr "物件"
 
+# describe.c:480
 #: describe.c:480
 msgid "aggregate"
 msgstr ""
 
+# describe.c:498
 #: describe.c:498
 msgid "function"
 msgstr "函式"
 
+# describe.c:512
 #: describe.c:512
 msgid "operator"
 msgstr ""
 
+# describe.c:526
 #: describe.c:526
 msgid "data type"
 msgstr "資料型別"
 
+# describe.c:543
+# describe.c:1477
 #: describe.c:543
 #: describe.c:1477
 msgid "index"
 msgstr ""
 
+# describe.c:559
 #: describe.c:559
 msgid "rule"
 msgstr ""
 
+# describe.c:575
 #: describe.c:575
 msgid "trigger"
 msgstr ""
 
+# describe.c:593
 #: describe.c:593
 msgid "Object descriptions"
 msgstr "物件描述"
 
+# describe.c:641
 #: describe.c:641
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "沒有找到任何名稱為 \"%s\" 的relation。\n"
 
+# describe.c:728
 #: describe.c:728
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "沒有找到任何OID為 %s 的relation。\n"
 
+# describe.c:744
 #: describe.c:744
 msgid "Column"
 msgstr "列"
 
+# describe.c:752
 #: describe.c:752
 msgid "Modifiers"
 msgstr "修飾詞"
 
+# describe.c:859
 #: describe.c:859
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "資料表\"%s.%s\""
 
+# describe.c:863
 #: describe.c:863
 #, c-format
 msgid "View \"%s.%s\""
 msgstr ""
 
+# describe.c:867
 #: describe.c:867
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr ""
 
+# describe.c:871
 #: describe.c:871
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "索引\"%s.%s\""
 
+# describe.c:875
 #: describe.c:875
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "特殊relation \"%s.%s\""
 
+# describe.c:879
 #: describe.c:879
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST資料表 \"%s.%s\""
 
+# describe.c:883
 #: describe.c:883
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr ""
 
+# describe.c:887
 #: describe.c:887
 #, c-format
 msgid "?%c? \"%s.%s\""
 msgstr ""
 
+# describe.c:925
 #: describe.c:925
 msgid "primary key, "
 msgstr ""
 
+# describe.c:927
 #: describe.c:927
 msgid "unique, "
 msgstr ""
 
+# describe.c:933
 #: describe.c:933
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr ""
 
+# describe.c:937
 #: describe.c:937
 #, c-format
 msgid ", predicate (%s)"
 msgstr ""
 
+# describe.c:940
 #: describe.c:940
 msgid ", clustered"
 msgstr ""
 
+# describe.c:977
 #: describe.c:977
 #, c-format
 msgid ""
@@ -1254,208 +1593,249 @@ msgstr ""
 "view定義:\n"
 "%s"
 
+# describe.c:983
+# describe.c:1204
 #: describe.c:983
 #: describe.c:1204
 msgid "Rules:"
 msgstr ""
 
+# describe.c:1138
 #: describe.c:1138
 msgid "Indexes:"
 msgstr "索引:"
 
+# describe.c:1146
 #: describe.c:1146
 #, c-format
 msgid "    \"%s\""
 msgstr ""
 
-#: describe.c:1152
-msgid " PRIMARY KEY,"
-msgstr ""
-
-#: describe.c:1154
-msgid " UNIQUE,"
-msgstr ""
-
-#: describe.c:1165
-msgid " CLUSTER"
-msgstr ""
-
+# describe.c:1174
 #: describe.c:1174
 msgid "Check constraints:"
 msgstr ""
 
+# describe.c:1178
+# describe.c:1193
 #: describe.c:1178
 #: describe.c:1193
 #, c-format
 msgid "    \"%s\" %s"
 msgstr ""
 
+# describe.c:1189
 #: describe.c:1189
 msgid "Foreign-key constraints:"
 msgstr "外鍵constraints:"
 
+# describe.c:1223
 #: describe.c:1223
 msgid "Triggers:"
 msgstr ""
 
+# describe.c:1245
 #: describe.c:1245
 msgid "Inherits"
 msgstr ""
 
+# describe.c:1259
 #: describe.c:1259
 msgid "Has OIDs"
 msgstr ""
 
+# describe.c:1262
+# describe.c:1637
+# describe.c:1694
 #: describe.c:1262
 #: describe.c:1637
 #: describe.c:1694
 msgid "yes"
 msgstr "是"
 
+# describe.c:1262
+# describe.c:1638
+# describe.c:1692
 #: describe.c:1262
 #: describe.c:1638
 #: describe.c:1692
 msgid "no"
 msgstr "否"
 
+# describe.c:1342
 #: describe.c:1342
 #, c-format
 msgid "Tablespace: \"%s\""
 msgstr "Tablespace: \"%s\""
 
+# describe.c:1375
 #: describe.c:1375
 msgid "User name"
 msgstr "使用者名稱"
 
+# describe.c:1375
 #: describe.c:1375
 msgid "User ID"
 msgstr "使用者 ID"
 
+# describe.c:1376
 #: describe.c:1376
 msgid "superuser, create database"
 msgstr "管理者，建立資料庫"
 
+# describe.c:1377
 #: describe.c:1377
 msgid "superuser"
 msgstr "管理者"
 
+# describe.c:1377
 #: describe.c:1377
 msgid "create database"
 msgstr "建立資料庫"
 
+# describe.c:1378
 #: describe.c:1378
 msgid "Attributes"
 msgstr "屬性"
 
+# describe.c:1378
 #: describe.c:1378
 msgid "Groups"
 msgstr ""
 
+# describe.c:1753
 #: describe.c:1391
-msgid "List of database users"
-msgstr "資料庫使用者列表"
+msgid "List of users"
+msgstr "使用者列表"
 
+# describe.c:1418
 #: describe.c:1418
 msgid "Group name"
 msgstr "群組名稱"
 
+# describe.c:1418
 #: describe.c:1418
 msgid "Group ID"
 msgstr ""
 
+# describe.c:1431
 #: describe.c:1431
-msgid "List of database groups"
+msgid "List of groups"
 msgstr "群組列表"
 
+# describe.c:1478
 #: describe.c:1478
 msgid "special"
 msgstr "特殊"
 
+# describe.c:1483
 #: describe.c:1483
 msgid "Table"
 msgstr "資料表"
 
+# describe.c:1542
 #: describe.c:1542
 msgid "No matching relations found.\n"
 msgstr "沒有找到符合的relations。\n"
 
+# describe.c:1544
 #: describe.c:1544
 msgid "No relations found.\n"
 msgstr "找不到relations。\n"
 
+# describe.c:1549
 #: describe.c:1549
 msgid "List of relations"
 msgstr "relations列表"
 
+# describe.c:1588
 #: describe.c:1588
 msgid "Modifier"
 msgstr "修飾詞"
 
+# describe.c:1602
 #: describe.c:1602
 msgid "List of domains"
 msgstr "domains列表"
 
+# describe.c:1635
 #: describe.c:1635
 msgid "Source"
 msgstr ""
 
+# describe.c:1636
 #: describe.c:1636
 msgid "Destination"
 msgstr ""
 
+# describe.c:1639
 #: describe.c:1639
 msgid "Default?"
 msgstr ""
 
+# describe.c:1653
 #: describe.c:1653
 msgid "List of conversions"
 msgstr "conversions列表"
 
+# describe.c:1688
 #: describe.c:1688
 msgid "Source type"
 msgstr ""
 
+# describe.c:1689
 #: describe.c:1689
 msgid "Target type"
 msgstr ""
 
+# describe.c:1690
 #: describe.c:1690
 msgid "(binary compatible)"
 msgstr ""
 
+# describe.c:1691
 #: describe.c:1691
 msgid "Function"
 msgstr "函式"
 
+# describe.c:1693
 #: describe.c:1693
 msgid "in assignment"
 msgstr ""
 
+# describe.c:1695
 #: describe.c:1695
 msgid "Implicit?"
 msgstr ""
 
+# describe.c:1703
 #: describe.c:1703
 msgid "List of casts"
 msgstr "casts列表"
 
+# describe.c:1753
 #: describe.c:1753
 msgid "List of schemas"
 msgstr "schemas列表"
 
+# sql_help.h:25
+# sql_help.h:373
 #: sql_help.h:25
 #: sql_help.h:373
 msgid "abort the current transaction"
 msgstr "中止目前的交易"
 
+# sql_help.h:26
 #: sql_help.h:26
 msgid "ABORT [ WORK | TRANSACTION ]"
 msgstr ""
 
+# sql_help.h:29
 #: sql_help.h:29
 msgid "change the definition of an aggregate function"
 msgstr "修改aggregate function"
 
+# sql_help.h:30
 #: sql_help.h:30
 msgid ""
 "ALTER AGGREGATE name ( type ) RENAME TO newname\n"
@@ -1464,10 +1844,12 @@ msgstr ""
 "ALTER AGGREGATE 名稱 ( 資料型別 ) RENAME TO 新名稱\n"
 "ALTER AGGREGATE 名稱 ( 資料型別 ) OWNER TO 新擁有者"
 
+# sql_help.h:33
 #: sql_help.h:33
 msgid "change the definition of a conversion"
 msgstr "修改conversion的定義"
 
+# sql_help.h:34
 #: sql_help.h:34
 msgid ""
 "ALTER CONVERSION name RENAME TO newname\n"
@@ -1476,10 +1858,12 @@ msgstr ""
 "ALTER CONVERSION 名稱 RENAME TO 新名稱\n"
 "ALTER CONVERSION 名稱 OWNER TO 新擁有者"
 
+# sql_help.h:37
 #: sql_help.h:37
 msgid "change a database"
 msgstr "修改資料庫"
 
+# sql_help.h:38
 #: sql_help.h:38
 msgid ""
 "ALTER DATABASE name SET parameter { TO | = } { value | DEFAULT }\n"
@@ -1496,10 +1880,12 @@ msgstr ""
 "\n"
 "ALTER DATABASE 名稱 OWNER TO 新擁有者"
 
+# sql_help.h:41
 #: sql_help.h:41
 msgid "change the definition of a domain"
 msgstr "修改domain的定義"
 
+# sql_help.h:42
 #: sql_help.h:42
 msgid ""
 "ALTER DOMAIN name\n"
@@ -1514,20 +1900,24 @@ msgid ""
 "    OWNER TO new_owner"
 msgstr ""
 
+# sql_help.h:45
 #: sql_help.h:45
 msgid "change the definition of a function"
 msgstr "修改函式的定義"
 
+# sql_help.h:46
 #: sql_help.h:46
 msgid ""
 "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname\n"
 "ALTER FUNCTION name ( [ type [, ...] ] ) OWNER TO newowner"
 msgstr ""
 
+# sql_help.h:49
 #: sql_help.h:49
 msgid "change a user group"
 msgstr "修改群組"
 
+# sql_help.h:50
 #: sql_help.h:50
 msgid ""
 "ALTER GROUP groupname ADD USER username [, ... ]\n"
@@ -1536,10 +1926,12 @@ msgid ""
 "ALTER GROUP groupname RENAME TO newname"
 msgstr ""
 
+# sql_help.h:53
 #: sql_help.h:53
 msgid "change the definition of an index"
 msgstr "修改index的定義"
 
+# sql_help.h:54
 #: sql_help.h:54
 msgid ""
 "ALTER INDEX name \n"
@@ -1553,36 +1945,44 @@ msgid ""
 "    SET TABLESPACE indexspace_name"
 msgstr ""
 
+# sql_help.h:57
 #: sql_help.h:57
 msgid "change the definition of a procedural language"
 msgstr "修改程序語言的定義"
 
+# sql_help.h:58
 #: sql_help.h:58
 msgid "ALTER LANGUAGE name RENAME TO newname"
 msgstr "ALTER LANGUAGE 名稱 RENAME TO 新名稱"
 
+# sql_help.h:61
 #: sql_help.h:61
 msgid "change the definition of an operator class"
 msgstr "修改operator class的定義"
 
+# sql_help.h:62
 #: sql_help.h:62
 msgid ""
 "ALTER OPERATOR CLASS name USING index_method RENAME TO newname\n"
 "ALTER OPERATOR CLASS name USING index_method OWNER TO newowner"
 msgstr ""
 
+# sql_help.h:65
 #: sql_help.h:65
 msgid "change the definition of an operator"
 msgstr "修改operator的定義"
 
+# sql_help.h:66
 #: sql_help.h:66
 msgid "ALTER OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) OWNER TO newowner"
 msgstr ""
 
+# sql_help.h:69
 #: sql_help.h:69
 msgid "change the definition of a schema"
 msgstr "修改schema的定義"
 
+# sql_help.h:70
 #: sql_help.h:70
 msgid ""
 "ALTER SCHEMA name RENAME TO newname\n"
@@ -1591,10 +1991,12 @@ msgstr ""
 "ALTER SCHEMA 名稱 RENAME TO 新名稱\n"
 "ALTER SCHEMA 名稱 OWNER TO 新擁有者"
 
+# sql_help.h:73
 #: sql_help.h:73
 msgid "change the definition of a sequence generator"
 msgstr "修改sequence產生器的定義"
 
+# sql_help.h:74
 #: sql_help.h:74
 msgid ""
 "ALTER SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
@@ -1602,10 +2004,12 @@ msgid ""
 "    [ RESTART [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 msgstr ""
 
+# sql_help.h:77
 #: sql_help.h:77
 msgid "change the definition of a table"
 msgstr "修改資料表的定義"
 
+# sql_help.h:78
 #: sql_help.h:78
 msgid ""
 "ALTER TABLE [ ONLY ] name [ * ]\n"
@@ -1634,36 +2038,44 @@ msgid ""
 "    SET TABLESPACE tablespace_name"
 msgstr ""
 
+# sql_help.h:81
 #: sql_help.h:81
 msgid "change the definition of a tablespace"
 msgstr "修改tablespace的定義"
 
+# sql_help.h:82
 #: sql_help.h:82
 msgid ""
 "ALTER TABLESPACE name RENAME TO newname\n"
 "ALTER TABLESPACE name OWNER TO newowner"
 msgstr ""
 
+# sql_help.h:85
 #: sql_help.h:85
 msgid "change the definition of a trigger"
 msgstr "修改trigger的定義"
 
+# sql_help.h:86
 #: sql_help.h:86
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
 msgstr "ALTER TRIGGER 名稱 ON 資料表 RENAME TO 新名稱"
 
+# sql_help.h:89
 #: sql_help.h:89
 msgid "change the definition of a type"
 msgstr "修改資料型別的定義"
 
+# sql_help.h:90
 #: sql_help.h:90
 msgid "ALTER TYPE name OWNER TO new_owner"
 msgstr ""
 
+# sql_help.h:93
 #: sql_help.h:93
 msgid "change a database user account"
 msgstr "修改資料庫使用者"
 
+# sql_help.h:94
 #: sql_help.h:94
 msgid ""
 "ALTER USER name [ [ WITH ] option [ ... ] ]\n"
@@ -1681,19 +2093,24 @@ msgid ""
 "ALTER USER name RESET parameter"
 msgstr ""
 
+# sql_help.h:97
 #: sql_help.h:97
 msgid "collect statistics about a database"
 msgstr "計算資料庫執行參數"
 
+# sql_help.h:98
 #: sql_help.h:98
 msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ 資料表 [ (欄位 [, ...] ) ] ]"
 
+# sql_help.h:101
+# sql_help.h:413
 #: sql_help.h:101
 #: sql_help.h:413
 msgid "start a transaction block"
 msgstr "開始交易"
 
+# sql_help.h:102
 #: sql_help.h:102
 msgid ""
 "BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
@@ -1704,26 +2121,32 @@ msgid ""
 "    READ WRITE | READ ONLY"
 msgstr ""
 
+# sql_help.h:105
 #: sql_help.h:105
 msgid "force a transaction log checkpoint"
 msgstr "強制交易日誌檢查點"
 
+# sql_help.h:106
 #: sql_help.h:106
 msgid "CHECKPOINT"
 msgstr ""
 
+# sql_help.h:109
 #: sql_help.h:109
 msgid "close a cursor"
 msgstr "關閉cursor"
 
+# sql_help.h:110
 #: sql_help.h:110
 msgid "CLOSE name"
 msgstr "CLOSE 名稱"
 
+# sql_help.h:113
 #: sql_help.h:113
 msgid "cluster a table according to an index"
 msgstr "依照索引重新排列資料表"
 
+# sql_help.h:114
 #: sql_help.h:114
 msgid ""
 "CLUSTER indexname ON tablename\n"
@@ -1734,10 +2157,12 @@ msgstr ""
 "CLUSTER 資料表\n"
 "CLUSTER"
 
+# sql_help.h:117
 #: sql_help.h:117
 msgid "define or change the comment of an object"
 msgstr "建立或修改物件的註解"
 
+# sql_help.h:118
 #: sql_help.h:118
 msgid ""
 "COMMENT ON\n"
@@ -1765,19 +2190,24 @@ msgid ""
 "} IS 'text'"
 msgstr ""
 
+# sql_help.h:121
+# sql_help.h:309
 #: sql_help.h:121
 #: sql_help.h:309
 msgid "commit the current transaction"
 msgstr "確認目前的交易"
 
+# sql_help.h:122
 #: sql_help.h:122
 msgid "COMMIT [ WORK | TRANSACTION ]"
 msgstr ""
 
+# sql_help.h:125
 #: sql_help.h:125
 msgid "copy data between a file and a table"
 msgstr "在檔案和資料表間複製資料"
 
+# sql_help.h:126
 #: sql_help.h:126
 msgid ""
 "COPY tablename [ ( column [, ...] ) ]\n"
@@ -1803,10 +2233,12 @@ msgid ""
 "                [ FORCE QUOTE column [, ...] ]"
 msgstr ""
 
+# sql_help.h:129
 #: sql_help.h:129
 msgid "define a new aggregate function"
 msgstr "建立aggregate function"
 
+# sql_help.h:130
 #: sql_help.h:130
 msgid ""
 "CREATE AGGREGATE name (\n"
@@ -1818,10 +2250,12 @@ msgid ""
 ")"
 msgstr ""
 
+# sql_help.h:133
 #: sql_help.h:133
 msgid "define a new cast"
 msgstr "建立新的cast"
 
+# sql_help.h:134
 #: sql_help.h:134
 msgid ""
 "CREATE CAST (sourcetype AS targettype)\n"
@@ -1833,10 +2267,12 @@ msgid ""
 "    [ AS ASSIGNMENT | AS IMPLICIT ]"
 msgstr ""
 
+# sql_help.h:137
 #: sql_help.h:137
 msgid "define a new constraint trigger"
 msgstr "建立新的constraint trigger"
 
+# sql_help.h:138
 #: sql_help.h:138
 msgid ""
 "CREATE CONSTRAINT TRIGGER name\n"
@@ -1845,20 +2281,24 @@ msgid ""
 "    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
 msgstr ""
 
+# sql_help.h:141
 #: sql_help.h:141
 msgid "define a new conversion"
 msgstr "建立新的conversion"
 
+# sql_help.h:142
 #: sql_help.h:142
 msgid ""
 "CREATE [DEFAULT] CONVERSION name\n"
 "    FOR source_encoding TO dest_encoding FROM funcname"
 msgstr ""
 
+# sql_help.h:145
 #: sql_help.h:145
 msgid "create a new database"
 msgstr "建立資料庫"
 
+# sql_help.h:146
 #: sql_help.h:146
 msgid ""
 "CREATE DATABASE name\n"
@@ -1868,10 +2308,12 @@ msgid ""
 "           [ TABLESPACE [=] tablespace ] ]"
 msgstr ""
 
+# sql_help.h:149
 #: sql_help.h:149
 msgid "define a new domain"
 msgstr "建立新的domain"
 
+# sql_help.h:150
 #: sql_help.h:150
 msgid ""
 "CREATE DOMAIN name [AS] data_type\n"
@@ -1884,10 +2326,12 @@ msgid ""
 "{ NOT NULL | NULL | CHECK (expression) }"
 msgstr ""
 
+# sql_help.h:153
 #: sql_help.h:153
 msgid "define a new function"
 msgstr "建立新的函式"
 
+# sql_help.h:154
 #: sql_help.h:154
 msgid ""
 "CREATE [ OR REPLACE ] FUNCTION name ( [ [ argname ] argtype [, ...] ] )\n"
@@ -1902,10 +2346,12 @@ msgid ""
 "    [ WITH ( attribute [, ...] ) ]"
 msgstr ""
 
+# sql_help.h:157
 #: sql_help.h:157
 msgid "define a new user group"
 msgstr "建立新的群組"
 
+# sql_help.h:158
 #: sql_help.h:158
 msgid ""
 "CREATE GROUP name [ [ WITH ] option [ ... ] ]\n"
@@ -1916,10 +2362,12 @@ msgid ""
 "   | USER  username [, ...]"
 msgstr ""
 
+# sql_help.h:161
 #: sql_help.h:161
 msgid "define a new index"
 msgstr "建立新的索引"
 
+# sql_help.h:162
 #: sql_help.h:162
 msgid ""
 "CREATE [ UNIQUE ] INDEX name ON table [ USING method ]\n"
@@ -1928,20 +2376,24 @@ msgid ""
 "    [ WHERE predicate ]"
 msgstr ""
 
+# sql_help.h:165
 #: sql_help.h:165
 msgid "define a new procedural language"
 msgstr "建立新的程序語言"
 
+# sql_help.h:166
 #: sql_help.h:166
 msgid ""
 "CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE name\n"
 "    HANDLER call_handler [ VALIDATOR valfunction ]"
 msgstr ""
 
+# sql_help.h:169
 #: sql_help.h:169
 msgid "define a new operator class"
 msgstr "建立新的operator class"
 
+# sql_help.h:170
 #: sql_help.h:170
 msgid ""
 "CREATE OPERATOR CLASS name [ DEFAULT ] FOR TYPE data_type USING index_method AS\n"
@@ -1951,10 +2403,12 @@ msgid ""
 "  } [, ... ]"
 msgstr ""
 
+# sql_help.h:173
 #: sql_help.h:173
 msgid "define a new operator"
 msgstr "建立新的operator"
 
+# sql_help.h:174
 #: sql_help.h:174
 msgid ""
 "CREATE OPERATOR name (\n"
@@ -1968,10 +2422,12 @@ msgid ""
 ")"
 msgstr ""
 
+# sql_help.h:177
 #: sql_help.h:177
 msgid "define a new rewrite rule"
 msgstr "建立新的rewrite rule"
 
+# sql_help.h:178
 #: sql_help.h:178
 msgid ""
 "CREATE [ OR REPLACE ] RULE name AS ON event\n"
@@ -1979,20 +2435,23 @@ msgid ""
 "    DO [ ALSO | INSTEAD ] { NOTHING | command | ( command ; command ... ) }"
 msgstr ""
 
+# sql_help.h:181
 #: sql_help.h:181
 msgid "define a new schema"
 msgstr "建立新的schema"
 
 #: sql_help.h:182
 msgid ""
-"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ TABLESPACE tablespace ] [ schema_element [ ... ] ]\n"
-"CREATE SCHEMA AUTHORIZATION username [ TABLESPACE tablespace ] [ schema_element [ ... ] ]"
+"CREATE SCHEMA schemaname [ AUTHORIZATION username ] [ schema_element [ ... ] ]\n"
+"CREATE SCHEMA AUTHORIZATION username [ schema_element [ ... ] ]"
 msgstr ""
 
+# sql_help.h:185
 #: sql_help.h:185
 msgid "define a new sequence generator"
 msgstr "建立新的sequence產生器"
 
+# sql_help.h:186
 #: sql_help.h:186
 msgid ""
 "CREATE [ TEMPORARY | TEMP ] SEQUENCE name [ INCREMENT [ BY ] increment ]\n"
@@ -2000,10 +2459,12 @@ msgid ""
 "    [ START [ WITH ] start ] [ CACHE cache ] [ [ NO ] CYCLE ]"
 msgstr ""
 
+# sql_help.h:189
 #: sql_help.h:189
 msgid "define a new table"
 msgstr "建立新的資料表"
 
+# sql_help.h:190
 #: sql_help.h:190
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name (\n"
@@ -2039,29 +2500,36 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 
+# sql_help.h:193
+# sql_help.h:389
 #: sql_help.h:193
 #: sql_help.h:389
 msgid "define a new table from the results of a query"
 msgstr "以查詢結果建立新的資料表"
 
+# sql_help.h:194
 #: sql_help.h:194
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name [ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS query"
 msgstr ""
 
+# sql_help.h:197
 #: sql_help.h:197
 msgid "define a new tablespace"
 msgstr "建立新的tablespace"
 
+# sql_help.h:198
 #: sql_help.h:198
 msgid "CREATE TABLESPACE tablespacename [ OWNER username ] LOCATION 'directory'"
 msgstr ""
 
+# sql_help.h:201
 #: sql_help.h:201
 msgid "define a new trigger"
 msgstr "建立新的trigger"
 
+# sql_help.h:202
 #: sql_help.h:202
 msgid ""
 "CREATE TRIGGER name { BEFORE | AFTER } { event [ OR ... ] }\n"
@@ -2069,10 +2537,12 @@ msgid ""
 "    EXECUTE PROCEDURE funcname ( arguments )"
 msgstr ""
 
+# sql_help.h:205
 #: sql_help.h:205
 msgid "define a new data type"
 msgstr "建立新的資料型別"
 
+# sql_help.h:206
 #: sql_help.h:206
 msgid ""
 "CREATE TYPE name AS\n"
@@ -2094,10 +2564,12 @@ msgid ""
 ")"
 msgstr ""
 
+# sql_help.h:209
 #: sql_help.h:209
 msgid "define a new database user account"
 msgstr "建立新的資料庫使用者"
 
+# sql_help.h:210
 #: sql_help.h:210
 msgid ""
 "CREATE USER name [ [ WITH ] option [ ... ] ]\n"
@@ -2112,26 +2584,32 @@ msgid ""
 "    | VALID UNTIL 'abstime'"
 msgstr ""
 
+# sql_help.h:213
 #: sql_help.h:213
 msgid "define a new view"
 msgstr "建立新的view"
 
+# sql_help.h:214
 #: sql_help.h:214
 msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
 msgstr ""
 
+# sql_help.h:217
 #: sql_help.h:217
 msgid "deallocate a prepared statement"
 msgstr "釋放prepared statement"
 
+# sql_help.h:218
 #: sql_help.h:218
 msgid "DEALLOCATE [ PREPARE ] plan_name"
 msgstr ""
 
+# sql_help.h:221
 #: sql_help.h:221
 msgid "define a cursor"
 msgstr "建立一個cursor"
 
+# sql_help.h:222
 #: sql_help.h:222
 msgid ""
 "DECLARE name [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]\n"
@@ -2139,198 +2617,247 @@ msgid ""
 "    [ FOR { READ ONLY | UPDATE [ OF column [, ...] ] } ]"
 msgstr ""
 
+# sql_help.h:225
 #: sql_help.h:225
 msgid "delete rows of a table"
 msgstr "刪除資料表中的資料"
 
+# sql_help.h:226
 #: sql_help.h:226
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
 msgstr "DELETE FROM [ ONLY ] 資料表 [ WHERE 條件 ]"
 
+# sql_help.h:229
 #: sql_help.h:229
 msgid "remove an aggregate function"
 msgstr "刪除aggregate function"
 
+# sql_help.h:230
 #: sql_help.h:230
 msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
 msgstr "DROP AGGREGATE 名稱 ( 資料型別 ) [ CASCADE | RESTRICT ]"
 
+# sql_help.h:233
 #: sql_help.h:233
 msgid "remove a cast"
 msgstr "刪除一個cast"
 
+# sql_help.h:234
 #: sql_help.h:234
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 msgstr "DROP CAST (來源資料型別 AS 目的資料型別) [ CASCADE | RESTRICT ]"
 
+# sql_help.h:237
 #: sql_help.h:237
 msgid "remove a conversion"
 msgstr "刪除一個conversion"
 
+# sql_help.h:238
 #: sql_help.h:238
 msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
 msgstr "DROP CONVERSION 名稱 [ CASCADE | RESTRICT ]"
 
+# sql_help.h:241
 #: sql_help.h:241
 msgid "remove a database"
-msgstr "刪除資料庫"
+msgstr "刪除資疙庫"
 
+# sql_help.h:242
 #: sql_help.h:242
 msgid "DROP DATABASE name"
 msgstr "DROP DATABASE 名稱"
 
+# sql_help.h:245
 #: sql_help.h:245
 msgid "remove a domain"
 msgstr "刪除一個domain"
 
+# sql_help.h:246
 #: sql_help.h:246
 msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
 msgstr "DROP DOMAIN 名稱 [, ...]  [ CASCADE | RESTRICT ]"
 
+# sql_help.h:249
 #: sql_help.h:249
 msgid "remove a function"
 msgstr "刪除函式"
 
+# sql_help.h:250
 #: sql_help.h:250
 msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
 msgstr "DROP FUNCTION 名稱 ( [ 資料型別 [, ...] ] ) [ CASCADE | RESTRICT ]"
 
+# sql_help.h:253
 #: sql_help.h:253
 msgid "remove a user group"
 msgstr "刪除一個群組"
 
+# sql_help.h:254
 #: sql_help.h:254
 msgid "DROP GROUP name"
 msgstr "DROP GROUP 名稱"
 
+# sql_help.h:257
 #: sql_help.h:257
 msgid "remove an index"
 msgstr "刪除一個索引"
 
+# sql_help.h:258
 #: sql_help.h:258
 msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP INDEX 名稱 [, ...] [ CASCADE | RESTRICT ]"
 
+# sql_help.h:261
 #: sql_help.h:261
 msgid "remove a procedural language"
 msgstr "刪除一個程序語言"
 
+# sql_help.h:262
 #: sql_help.h:262
 msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
 msgstr "DROP [ PROCEDURAL ] LANGUAGE 名稱 [ CASCADE | RESTRICT ]"
 
+# sql_help.h:265
 #: sql_help.h:265
 msgid "remove an operator class"
 msgstr "刪除一個operator class"
 
+# sql_help.h:266
 #: sql_help.h:266
 msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR CLASS 名稱 USING 索引方式 [ CASCADE | RESTRICT ]"
 
+# sql_help.h:269
 #: sql_help.h:269
 msgid "remove an operator"
 msgstr "刪除operator"
 
+# sql_help.h:270
 #: sql_help.h:270
 msgid "DROP OPERATOR name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR 名稱 ( { 左側資料型別 | NONE } , { 右側資料型別 | NONE } ) [ CASCADE | RESTRICT ]"
 
+# sql_help.h:273
 #: sql_help.h:273
 msgid "remove a rewrite rule"
 msgstr "刪除一個rewrite rule"
 
+# sql_help.h:274
 #: sql_help.h:274
 msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
 msgstr ""
 
+# sql_help.h:277
 #: sql_help.h:277
 msgid "remove a schema"
 msgstr "刪除一個schema"
 
+# sql_help.h:278
 #: sql_help.h:278
 msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SCHEMA 名稱 [, ...] [ CASCADE | RESTRICT ]"
 
+# sql_help.h:281
 #: sql_help.h:281
 msgid "remove a sequence"
 msgstr "刪除sequence"
 
+# sql_help.h:282
 #: sql_help.h:282
 msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SEQUENCE 名稱 [, ...] [ CASCADE | RESTRICT ]"
 
+# sql_help.h:285
 #: sql_help.h:285
 msgid "remove a table"
 msgstr "刪除資料表"
 
+# sql_help.h:286
 #: sql_help.h:286
 msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TABLE 名稱 [, ...] [ CASCADE | RESTRICT ]"
 
+# sql_help.h:289
 #: sql_help.h:289
 msgid "remove a tablespace"
 msgstr "刪除一個tablespace"
 
+# sql_help.h:290
 #: sql_help.h:290
 msgid "DROP TABLESPACE tablespacename"
 msgstr "DROP TABLESPACE tablespace名稱"
 
+# sql_help.h:293
 #: sql_help.h:293
 msgid "remove a trigger"
 msgstr "刪除trigger"
 
+# sql_help.h:294
 #: sql_help.h:294
 msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
 msgstr "DROP TRIGGER 名稱 ON 資料表 [ CASCADE | RESTRICT ]"
 
+# sql_help.h:297
 #: sql_help.h:297
 msgid "remove a data type"
 msgstr "刪除資料型別"
 
+# sql_help.h:298
 #: sql_help.h:298
 msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TYPE 名稱 [, ...] [ CASCADE | RESTRICT ]"
 
+# sql_help.h:301
 #: sql_help.h:301
 msgid "remove a database user account"
 msgstr "刪除一個資料庫使用者"
 
+# sql_help.h:302
 #: sql_help.h:302
 msgid "DROP USER name"
 msgstr "DROP USER 名稱"
 
+# sql_help.h:305
 #: sql_help.h:305
 msgid "remove a view"
 msgstr "刪除一個view"
 
+# sql_help.h:306
 #: sql_help.h:306
 msgid "DROP VIEW name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP VIEW 名稱 [, ...] [ CASCADE | RESTRICT ]"
 
+# sql_help.h:310
 #: sql_help.h:310
 msgid "END [ WORK | TRANSACTION ]"
 msgstr ""
 
+# sql_help.h:313
 #: sql_help.h:313
 msgid "execute a prepared statement"
 msgstr "執行prepared statement"
 
+# sql_help.h:314
 #: sql_help.h:314
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
 msgstr ""
 
+# sql_help.h:317
 #: sql_help.h:317
 msgid "show the execution plan of a statement"
-msgstr "顯示statement的執行計畫"
+msgstr "顯示statement的執行計蕫"
 
+# sql_help.h:318
 #: sql_help.h:318
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
 msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] 敘述"
 
+# sql_help.h:321
 #: sql_help.h:321
 msgid "retrieve rows from a query using a cursor"
 msgstr "從使用cursor的查詢讀取資料"
 
+# sql_help.h:322
 #: sql_help.h:322
 msgid ""
 "FETCH [ direction { FROM | IN } ] cursorname\n"
@@ -2353,6 +2880,7 @@ msgid ""
 "    BACKWARD ALL"
 msgstr ""
 
+# sql_help.h:325
 #: sql_help.h:325
 msgid "define access privileges"
 msgstr "建立存取權限"
@@ -2368,10 +2896,6 @@ msgid ""
 "    ON DATABASE dbname [, ...]\n"
 "    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
 "\n"
-"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tablespacename [, ...]\n"
-"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
-"\n"
 "GRANT { EXECUTE | ALL [ PRIVILEGES ] }\n"
 "    ON FUNCTION funcname ([type, ...]) [, ...]\n"
 "    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
@@ -2382,39 +2906,51 @@ msgid ""
 "\n"
 "GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON SCHEMA schemaname [, ...]\n"
+"    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]\n"
+"\n"
+"GRANT { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
 "    TO { username | GROUP groupname | PUBLIC } [, ...] [ WITH GRANT OPTION ]"
 msgstr ""
 
+# sql_help.h:329
 #: sql_help.h:329
 msgid "create new rows in a table"
 msgstr "在資料表中建立資料"
 
+# sql_help.h:330
 #: sql_help.h:330
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) | query }"
 msgstr ""
 
+# sql_help.h:333
 #: sql_help.h:333
 msgid "listen for a notification"
 msgstr "等待通知"
 
+# sql_help.h:334
 #: sql_help.h:334
 msgid "LISTEN name"
 msgstr "LISTEN 名稱"
 
+# sql_help.h:337
 #: sql_help.h:337
 msgid "load or reload a shared library file"
 msgstr "載入或重新載入共享程式庫"
 
+# sql_help.h:338
 #: sql_help.h:338
 msgid "LOAD 'filename'"
 msgstr "LOAD '檔名'"
 
+# sql_help.h:341
 #: sql_help.h:341
 msgid "lock a table"
 msgstr "鎖定資料表"
 
+# sql_help.h:342
 #: sql_help.h:342
 msgid ""
 "LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
@@ -2431,50 +2967,62 @@ msgstr ""
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 
+# sql_help.h:345
 #: sql_help.h:345
 msgid "position a cursor"
 msgstr "移動cursor位置"
 
+# sql_help.h:346
 #: sql_help.h:346
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
 msgstr ""
 
+# sql_help.h:349
 #: sql_help.h:349
 msgid "generate a notification"
 msgstr "產生通知"
 
+# sql_help.h:350
 #: sql_help.h:350
 msgid "NOTIFY name"
 msgstr "NOTIFY 名稱"
 
+# sql_help.h:353
 #: sql_help.h:353
 msgid "prepare a statement for execution"
 msgstr "預先編譯敘述以執行"
 
+# sql_help.h:354
 #: sql_help.h:354
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
 msgstr ""
 
+# sql_help.h:357
 #: sql_help.h:357
 msgid "rebuild indexes"
 msgstr "重新建立索引"
 
+# sql_help.h:358
 #: sql_help.h:358
 msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
 msgstr "REINDEX { DATABASE | TABLE | INDEX } 名稱 [ FORCE ]"
 
+# sql_help.h:361
 #: sql_help.h:361
 msgid "destroy a previously defined savepoint"
 msgstr "刪除先前建立的savepoint"
 
+# sql_help.h:362
 #: sql_help.h:362
 msgid "RELEASE [ SAVEPOINT ] savepoint_name"
 msgstr "RELEASE [ SAVEPOINT ] 儲存點名稱"
 
+# sql_help.h:365
 #: sql_help.h:365
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "將執行時期參數還原成預設值"
 
+# sql_help.h:366
 #: sql_help.h:366
 msgid ""
 "RESET name\n"
@@ -2483,6 +3031,7 @@ msgstr ""
 "RESET 名稱\n"
 "RESET ALL"
 
+# sql_help.h:369
 #: sql_help.h:369
 msgid "remove access privileges"
 msgstr "刪除存取權限"
@@ -2503,12 +3052,6 @@ msgid ""
 "    [ CASCADE | RESTRICT ]\n"
 "\n"
 "REVOKE [ GRANT OPTION FOR ]\n"
-"    { CREATE | ALL [ PRIVILEGES ] }\n"
-"    ON TABLESPACE tablespacename [, ...]\n"
-"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
-"    [ CASCADE | RESTRICT ]\n"
-"\n"
-"REVOKE [ GRANT OPTION FOR ]\n"
 "    { EXECUTE | ALL [ PRIVILEGES ] }\n"
 "    ON FUNCTION funcname ([type, ...]) [, ...]\n"
 "    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
@@ -2524,33 +3067,46 @@ msgid ""
 "    { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }\n"
 "    ON SCHEMA schemaname [, ...]\n"
 "    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
+"    [ CASCADE | RESTRICT ]\n"
+"\n"
+"REVOKE [ GRANT OPTION FOR ]\n"
+"    { CREATE | ALL [ PRIVILEGES ] }\n"
+"    ON TABLESPACE tablespacename [, ...]\n"
+"    FROM { username | GROUP groupname | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 msgstr ""
 
+# sql_help.h:374
 #: sql_help.h:374
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
 msgstr ""
 
+# sql_help.h:377
 #: sql_help.h:377
 msgid "roll back to a savepoint"
 msgstr "還原至一個savepoint"
 
+# sql_help.h:378
 #: sql_help.h:378
 msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
 msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] 儲存點名稱"
 
+# sql_help.h:381
 #: sql_help.h:381
 msgid "define a new savepoint within the current transaction"
 msgstr "在目前的交易中建立新的savepoint"
 
+# sql_help.h:382
 #: sql_help.h:382
 msgid "SAVEPOINT savepoint_name"
 msgstr "SAVEPOINT 儲存點名稱"
 
+# sql_help.h:385
 #: sql_help.h:385
 msgid "retrieve rows from a table or view"
 msgstr "從資料表或view讀取資料"
 
+# sql_help.h:386
 #: sql_help.h:386
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
@@ -2574,6 +3130,7 @@ msgid ""
 "    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
 msgstr ""
 
+# sql_help.h:390
 #: sql_help.h:390
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
@@ -2590,28 +3147,34 @@ msgid ""
 "    [ FOR UPDATE [ OF tablename [, ...] ] ]"
 msgstr ""
 
+# sql_help.h:393
 #: sql_help.h:393
 msgid "change a run-time parameter"
 msgstr "修改執行時期參數"
 
+# sql_help.h:394
 #: sql_help.h:394
 msgid ""
 "SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
 msgstr ""
 
+# sql_help.h:397
 #: sql_help.h:397
 msgid "set constraint checking modes for the current transaction"
 msgstr "設定目前交易的constraint檢查模式"
 
+# sql_help.h:398
 #: sql_help.h:398
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr "SET CONSTRAINTS { ALL | 名稱 [, ...] } { DEFERRED | IMMEDIATE }"
 
+# sql_help.h:401
 #: sql_help.h:401
 msgid "set the session user identifier and the current user identifier of the current session"
 msgstr ""
 
+# sql_help.h:402
 #: sql_help.h:402
 msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
@@ -2619,10 +3182,12 @@ msgid ""
 "RESET SESSION AUTHORIZATION"
 msgstr ""
 
+# sql_help.h:405
 #: sql_help.h:405
 msgid "set the characteristics of the current transaction"
 msgstr "設定交易屬性"
 
+# sql_help.h:406
 #: sql_help.h:406
 msgid ""
 "SET TRANSACTION transaction_mode [, ...]\n"
@@ -2634,10 +3199,12 @@ msgid ""
 "    READ WRITE | READ ONLY"
 msgstr ""
 
+# sql_help.h:409
 #: sql_help.h:409
 msgid "show the value of a run-time parameter"
 msgstr "顯示執行時期的參數"
 
+# sql_help.h:410
 #: sql_help.h:410
 msgid ""
 "SHOW name\n"
@@ -2646,6 +3213,7 @@ msgstr ""
 "SHOW 名稱\n"
 "SHOW ALL"
 
+# sql_help.h:414
 #: sql_help.h:414
 msgid ""
 "START TRANSACTION [ transaction_mode [, ...] ]\n"
@@ -2656,26 +3224,32 @@ msgid ""
 "    READ WRITE | READ ONLY"
 msgstr ""
 
+# sql_help.h:417
 #: sql_help.h:417
 msgid "empty a table"
 msgstr "清空資料表"
 
+# sql_help.h:418
 #: sql_help.h:418
 msgid "TRUNCATE [ TABLE ] name"
 msgstr "TRUNCATE [ TABLE ] 名稱"
 
+# sql_help.h:421
 #: sql_help.h:421
 msgid "stop listening for a notification"
 msgstr "停止等待通知"
 
+# sql_help.h:422
 #: sql_help.h:422
 msgid "UNLISTEN { name | * }"
 msgstr "UNLISTEN { 名稱 | * }"
 
+# sql_help.h:425
 #: sql_help.h:425
 msgid "update rows of a table"
 msgstr "更新資料表中的資料"
 
+# sql_help.h:426
 #: sql_help.h:426
 msgid ""
 "UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
@@ -2683,10 +3257,12 @@ msgid ""
 "    [ WHERE condition ]"
 msgstr ""
 
+# sql_help.h:429
 #: sql_help.h:429
 msgid "garbage-collect and optionally analyze a database"
 msgstr "重整並選擇性的分析資料庫"
 
+# sql_help.h:430
 #: sql_help.h:430
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
