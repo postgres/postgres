@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.296 2002/09/27 03:34:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.297 2002/09/27 03:59:00 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1136,6 +1136,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	const char *DBName = NULL;
 	bool		secure;
 	int			errs = 0;
+	int			debug_flag = 0;
 	GucContext	ctx;
 	GucSource	gucsource;
 	char	   *tmp;
@@ -1250,6 +1251,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 			case 'd':			/* debug level */
 				{
+					debug_flag = atoi(optarg);
 					/* Set server debugging level. */
 					if (atoi(optarg) != 0)
 					{
@@ -1259,25 +1261,10 @@ PostgresMain(int argc, char *argv[], const char *username)
 						SetConfigOption("server_min_messages", debugstr, ctx, gucsource);
 						pfree(debugstr);
 
-						/*
-						 * -d is not the same as setting
-						 * client_min_messages because it enables other
-						 * output options.
-						 */
-						if (atoi(optarg) >= 1)
-							SetConfigOption("log_connections", "true", ctx, gucsource);
-						if (atoi(optarg) >= 2)
-							SetConfigOption("log_statement", "true", ctx, gucsource);
-						if (atoi(optarg) >= 3)
-							SetConfigOption("debug_print_parse", "true", ctx, gucsource);
-						if (atoi(optarg) >= 4)
-							SetConfigOption("debug_print_plan", "true", ctx, gucsource);
-						if (atoi(optarg) >= 5)
-							SetConfigOption("debug_print_rewritten", "true", ctx, gucsource);
 					}
 					else
 						/*
-						 * -d 0 allows user to prevent postmaster debug
+						 * -d0 allows user to prevent postmaster debug
 						 * from propagating to backend.  It would be nice
 						 * to set it to the postgresql.conf value here.
 						 */
@@ -1521,6 +1508,22 @@ PostgresMain(int argc, char *argv[], const char *username)
 		}
 
 	/*
+	 * -d is not the same as setting
+	 * server_min_messages because it enables other
+	 * output options.
+	 */
+	if (debug_flag >= 1)
+		SetConfigOption("log_connections", "true", ctx, gucsource);
+	if (debug_flag >= 2)
+		SetConfigOption("log_statement", "true", ctx, gucsource);
+	if (debug_flag >= 3)
+		SetConfigOption("debug_print_parse", "true", ctx, gucsource);
+	if (debug_flag >= 4)
+		SetConfigOption("debug_print_plan", "true", ctx, gucsource);
+	if (debug_flag >= 5)
+		SetConfigOption("debug_print_rewritten", "true", ctx, gucsource);
+
+	/*
 	 * Post-processing for command line options.
 	 */
 	if (Show_statement_stats &&
@@ -1698,7 +1701,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.296 $ $Date: 2002/09/27 03:34:15 $\n");
+		puts("$Revision: 1.297 $ $Date: 2002/09/27 03:59:00 $\n");
 	}
 
 	/*
