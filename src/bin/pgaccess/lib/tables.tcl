@@ -815,7 +815,7 @@ if {$PgAcVar(mw,$wn,updatable)} then {
 	$wn.c bind q <Key> "Tables::editText $wn %A %K"
 	if {[info commands kanjiInput] == "kanjiInput"} then {
 		$wn.c bind q <Control-backslash> "pgaccess_kinput_start %W";
-		$wn.c bind q <Control-Kanji> "pg_access_kinput_start %W";
+		$wn.c bind q <Control-Kanji> "pgaccess_kinput_start %W";
 	}
 } else {
 	$wn.c bind q <Key> {}
@@ -2175,7 +2175,7 @@ proc vTclWindow.pgaw:Permissions {base} {
 #
 # This file contains Tcl procedures used to input Japanese text.
 #
-# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.10 2001/08/10 23:29:46 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/pgaccess/lib/Attic/tables.tcl,v 1.11 2002/02/18 04:01:27 ishii Exp $
 #
 # Copyright (c) 1993  Software Research Associates, Inc.
 #
