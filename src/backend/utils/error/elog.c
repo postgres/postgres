@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.4 1996/07/22 21:58:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.5 1996/08/14 05:03:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ extern jmp_buf  Warn_restart;
  *	Old error logging function.
  */
 void
-elog(int lev, char *fmt, ... )
+elog(int lev, const char *fmt, ... )
 {
     va_list ap;
     char		buf[ELOG_MAXLEN], line[ELOG_MAXLEN];
