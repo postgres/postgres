@@ -1,7 +1,7 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.5 2004/11/16 22:58:42 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.6 2004/12/12 18:26:29 petere Exp $
 #
 # Use these quotes: «%s»
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
@@ -615,13 +615,13 @@ msgstr ""
 
 #: common.c:33
 #, c-format
-msgid "%s: could not obtain information about current user: %s"
-msgstr "%s : n'a pas pu obtenir les informations sur l'utilisateur actuel : %s"
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s : n'a pas pu obtenir les informations sur l'utilisateur actuel : %s\n"
 
 #: common.c:44
 #, c-format
-msgid "%s: could not get current user name: %s"
-msgstr "%s: n'a pas pu récupérer le nom de l'utilisateur : %s"
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: n'a pas pu récupérer le nom de l'utilisateur : %s\n"
 
 #: common.c:89 common.c:115
 msgid "Password: "

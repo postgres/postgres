@@ -4,7 +4,7 @@
 # Copyright (c) 2003-2004 Serguei A. Mokhov, mokhov@cs.concordia.ca
 # Distributed under the same licensing terms as PostgreSQL itself.
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.9 2004/11/16 22:47:40 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/ru.po,v 1.10 2004/12/12 18:26:29 petere Exp $
 #
 # To the new translator:
 #   PG Russian Translation Discussion Group: <http://groups.yahoo.com/group/pgsql-rus/>
@@ -691,13 +691,13 @@ msgstr ""
 
 #: common.c:33
 #, c-format
-msgid "%s: could not obtain information about current user: %s"
-msgstr "%s: не удалось получить информацию о текущем пользователе: %s"
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: не удалось получить информацию о текущем пользователе: %s\n"
 
 #: common.c:44
 #, c-format
-msgid "%s: could not get current user name: %s"
-msgstr "%s: не удалось получить имя текущего пользователя: %s"
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: не удалось получить имя текущего пользователя: %s\n"
 
 #: common.c:89
 #: common.c:115

@@ -708,13 +708,13 @@ msgstr ""
 
 #: common.c:33
 #, c-format
-msgid "%s: could not obtain information about current user: %s"
-msgstr "%s: no se pudo obtener información sobre el usuario actual: %s"
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: no se pudo obtener información sobre el usuario actual: %s\n"
 
 #: common.c:44
 #, c-format
-msgid "%s: could not get current user name: %s"
-msgstr "%s: no se pudo obtener el nombre de usuario actual: %s"
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: no se pudo obtener el nombre de usuario actual: %s\n"
 
 #: common.c:89 common.c:115
 msgid "Password: "

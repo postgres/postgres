@@ -673,13 +673,13 @@ msgstr ""
 
 #: common.c:33
 #, c-format
-msgid "%s: could not obtain information about current user: %s"
-msgstr "%s: geçerli kullanıcı hakkında ilgi alınamadı: %s"
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: geçerli kullanıcı hakkında ilgi alınamadı: %s\n"
 
 #: common.c:44
 #, c-format
-msgid "%s: could not get current user name: %s"
-msgstr "%s: geçerli kullanıcı adı alınamadı: %s"
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: geçerli kullanıcı adı alınamadı: %s\n"
 
 #: common.c:89
 #: common.c:115

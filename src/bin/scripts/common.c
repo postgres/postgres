@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.13 2004/11/09 15:57:54 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.14 2004/12/12 18:26:28 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@ get_user_name(const char *progname)
 	pw = getpwuid(getuid());
 	if (!pw)
 	{
-		fprintf(stderr, _("%s: could not obtain information about current user: %s"),
+		fprintf(stderr, _("%s: could not obtain information about current user: %s\n"),
 				progname, strerror(errno));
 		exit(1);
 	}
@@ -41,7 +41,7 @@ get_user_name(const char *progname)
 
 	if (!GetUserName(username, &len))
 	{
-		fprintf(stderr, _("%s: could not get current user name: %s"),
+		fprintf(stderr, _("%s: could not get current user name: %s\n"),
 				progname, strerror(errno));
 		exit(1);
 	}

@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.4 2004/12/12 18:09:18 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/de.po,v 1.5 2004/12/12 18:26:29 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -701,13 +701,13 @@ msgstr ""
 
 #: common.c:33
 #, c-format
-msgid "%s: could not obtain information about current user: %s"
-msgstr "%s: konnte Informationen über aktuellen Benutzer nicht ermitteln: %s"
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: konnte Informationen über aktuellen Benutzer nicht ermitteln: %s\n"
 
 #: common.c:44
 #, c-format
-msgid "%s: could not get current user name: %s"
-msgstr "%s: konnte aktuellen Benutzernamen nicht ermitteln: %s"
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: konnte aktuellen Benutzernamen nicht ermitteln: %s\n"
 
 #: common.c:89 common.c:115
 msgid "Password: "

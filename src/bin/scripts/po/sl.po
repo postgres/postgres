@@ -674,13 +674,13 @@ msgstr ""
 
 #: common.c:33
 #, c-format
-msgid "%s: could not obtain information about current user: %s"
-msgstr "%s: podatkov o trenutnem uporabniku ni bilo mogoèe izvedeti: %s"
+msgid "%s: could not obtain information about current user: %s\n"
+msgstr "%s: podatkov o trenutnem uporabniku ni bilo mogoèe izvedeti: %s\n"
 
 #: common.c:44
 #, c-format
-msgid "%s: could not get current user name: %s"
-msgstr "%s: imena trenutnega uporabnika ni bilo mogoèe izvedeti: %s"
+msgid "%s: could not get current user name: %s\n"
+msgstr "%s: imena trenutnega uporabnika ni bilo mogoèe izvedeti: %s\n"
 
 #: common.c:89
 #: common.c:115
