@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.60 2004/08/29 05:06:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.61 2004/12/15 19:16:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,11 +224,11 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			numberOfKeys = scan->numberOfKeys;
 	int			new_numberOfKeys;
+	int			numberOfEqualCols;
 	ScanKey		inkeys;
 	ScanKey		outkeys;
 	ScanKey		cur;
 	ScanKey		xform[BTMaxStrategyNumber];
-	bool		allEqualSoFar;
 	bool		hasOtherTypeEqual;
 	Datum		test;
 	int			i,
@@ -278,7 +278,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	 * Otherwise, do the full set of pushups.
 	 */
 	new_numberOfKeys = 0;
-	allEqualSoFar = true;
+	numberOfEqualCols = 0;
 
 	/*
 	 * Initialize for processing of keys for attr 1.
@@ -321,7 +321,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		 */
 		if (i == numberOfKeys || cur->sk_attno != attno)
 		{
-			bool		priorAllEqualSoFar = allEqualSoFar;
+			int			priorNumberOfEqualCols = numberOfEqualCols;
 
 			/* check input keys are correctly ordered */
 			if (i < numberOfKeys && cur->sk_attno != attno + 1)
@@ -355,14 +355,14 @@ _bt_preprocess_keys(IndexScanDesc scan)
 				xform[BTLessEqualStrategyNumber - 1] = NULL;
 				xform[BTGreaterEqualStrategyNumber - 1] = NULL;
 				xform[BTGreaterStrategyNumber - 1] = NULL;
+				/* track number of attrs for which we have "=" keys */
+				numberOfEqualCols++;
 			}
 			else
 			{
-				/*
-				 * If no "=" for this key, we're done with required keys
-				 */
-				if (!hasOtherTypeEqual)
-					allEqualSoFar = false;
+				/* track number of attrs for which we have "=" keys */
+				if (hasOtherTypeEqual)
+					numberOfEqualCols++;
 			}
 
 			/* keep only one of <, <= */
@@ -411,7 +411,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			 * If all attrs before this one had "=", include these keys
 			 * into the required-keys count.
 			 */
-			if (priorAllEqualSoFar)
+			if (priorNumberOfEqualCols == attno - 1)
 				so->numberOfRequiredKeys = new_numberOfKeys;
 
 			/*
@@ -468,8 +468,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	 * If unique index and we have equality keys for all columns, set
 	 * keys_are_unique flag for higher levels.
 	 */
-	if (allEqualSoFar && relation->rd_index->indisunique &&
-		relation->rd_rel->relnatts == new_numberOfKeys)
+	if (relation->rd_index->indisunique &&
+		relation->rd_rel->relnatts == numberOfEqualCols)
 		scan->keys_are_unique = true;
 }
 
