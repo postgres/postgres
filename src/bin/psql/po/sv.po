@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.19 2004/03/11 15:46:59 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.20 2004/03/12 12:38:36 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-03-11 16:42+0100\n"
-"PO-Revision-Date: 2004-03-11 16:43+0100\n"
+"POT-Creation-Date: 2004-03-12 13:37+0100\n"
+"PO-Revision-Date: 2004-03-12 13:38+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1998,7 +1998,8 @@ msgid ""
 msgstr ""
 "CREATE [ OR REPLACE ] RULE namn AS ON händelse\n"
 "    TO tabell [ WHERE villkor ]\n"
-"    DO [ ALSO | INSTEAD ] { NOTHING | kommando | ( kommando ; kommando ... ) }"
+"    DO [ ALSO | INSTEAD ] { NOTHING | kommando | ( kommando ; "
+"kommando ... ) }"
 
 #: sql_help.h:165
 msgid "define a new schema"
@@ -2548,14 +2549,14 @@ msgstr "lås en tabell"
 
 #: sql_help.h:318
 msgid ""
-"LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ]\n"
+"LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
 "\n"
 "where lockmode is one of:\n"
 "\n"
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 msgstr ""
-"LOCK [ TABLE ] namn [, ...] [ IN låsläge MODE ]\n"
+"LOCK [ TABLE ] namn [, ...] [ IN låsläge MODE ] [ NOWAIT ]\n"
 "\n"
 "där låsläge är en av:\n"
 "\n"
