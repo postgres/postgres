@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.129 2001/05/27 09:59:28 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.130 2001/05/30 12:57:36 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -51,9 +51,7 @@
 #include "catalog/pg_shadow.h"
 #include "utils/relcache.h"
 
-#ifdef	_DROP_COLUMN_HACK__
 #include "parser/parse.h"
-#endif	 /* _DROP_COLUMN_HACK__ */
 #include "access/genam.h"
 
 
@@ -1324,6 +1322,11 @@ AlterTableAddConstraint(char *relationName,
 
 							break;
 						}
+					case CONSTR_PRIMARY:
+						{
+
+							break;
+						}
 					default:
 						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT is not implemented for that constraint type.");
 				}
@@ -1585,13 +1588,71 @@ AlterTableAddConstraint(char *relationName,
 
 /*
  * ALTER TABLE DROP CONSTRAINT
+ * Note: It is legal to remove a constraint with name "" as it is possible
+ * to add a constraint with name "".
+ * Christopher Kings-Lynne
  */
 void
 AlterTableDropConstraint(const char *relationName,
 						 bool inh, const char *constrName,
 						 int behavior)
 {
-	elog(ERROR, "ALTER TABLE / DROP CONSTRAINT is not implemented");
+	Relation		rel;
+	int			deleted;
+
+#ifndef NO_SECURITY
+	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
+		elog(ERROR, "ALTER TABLE: permission denied");
+#endif
+
+	/* We don't support CASCADE yet  - in fact, RESTRICT
+	 * doesn't work to the spec either! */
+	if (behavior == CASCADE)
+		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT does not support the CASCADE keyword");
+
+	/*
+	 * Acquire an exclusive lock on the target relation for
+	 * the duration of the operation.
+	 */
+
+	rel = heap_openr(relationName, AccessExclusiveLock);
+
+	/* Disallow DROP CONSTRAINT on views, indexes, sequences, etc */
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT: %s is not a table",
+			 relationName);
+
+	/*
+	 * Since all we have is the name of the constraint, we have to look through
+	 * all catalogs that could possibly contain a constraint for this relation.
+	 * We also keep a count of the number of constraints removed.
+	 */
+
+	deleted = 0;
+
+	/*
+	 * First, we remove all CHECK constraints with the given name
+	 */
+
+	deleted += RemoveCheckConstraint(rel, constrName, inh);
+
+	/*
+	 * Now we remove NULL, UNIQUE, PRIMARY KEY and FOREIGN KEY constraints.
+	 *
+	 * Unimplemented.
+	 */
+
+	/* Close the target relation */
+	heap_close(rel, NoLock);
+
+	/* If zero constraints deleted, complain */
+	if (deleted == 0)
+		elog(ERROR, "ALTER TABLE / DROP CONSTRAINT: %s does not exist",
+			 constrName);
+	/* Otherwise if more than one constraint deleted, notify */
+	else if (deleted > 1)
+		elog(NOTICE, "Multiple constraints dropped");
+
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.165 2001/05/14 20:30:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.166 2001/05/30 12:57:36 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -48,6 +48,7 @@
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
+#include "optimizer/prep.h"
 #include "optimizer/var.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_clause.h"
@@ -1975,6 +1976,150 @@ RemoveRelCheck(Relation rel)
 
 	heap_endscan(rcscan);
 	heap_close(rcrel, RowExclusiveLock);
+
+}
+
+/*
+ * Removes all CHECK constraints on a relation that match the given name.
+ * It is the responsibility of the calling function to acquire a lock on
+ * the relation.
+ * Returns: The number of CHECK constraints removed.
+ */
+int
+RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
+{
+   Oid            relid;
+	Relation			rcrel;
+	Relation			relrel;
+	Relation			inhrel;
+	Relation			relidescs[Num_pg_class_indices];
+	TupleDesc		tupleDesc;
+	TupleConstr		*oldconstr;
+	int				numoldchecks;
+	int				numchecks;
+	HeapScanDesc	rcscan;
+	ScanKeyData		key[2];
+	HeapTuple		rctup;
+	HeapTuple		reltup;
+	Form_pg_class	relStruct;
+	int				rel_deleted = 0;
+   int            all_deleted = 0;
+
+   /* Find id of the relation */
+   relid = RelationGetRelid(rel);
+
+   /* Process child tables and remove constraints of the
+      same name. */
+   if (inh)
+   {
+      List  *child,
+            *children;
+
+      /* This routine is actually in the planner */
+      children = find_all_inheritors(relid);
+
+      /*
+       * find_all_inheritors does the recursive search of the
+       * inheritance hierarchy, so all we have to do is process all
+       * of the relids in the list that it returns.
+       */
+      foreach(child, children)
+      {
+         Oid	childrelid = lfirsti(child);
+
+         if (childrelid == relid)
+            continue;
+         inhrel = heap_open(childrelid, AccessExclusiveLock);
+         all_deleted += RemoveCheckConstraint(inhrel, constrName, false);
+         heap_close(inhrel, NoLock);
+      }
+   }
+
+	/* Grab an exclusive lock on the pg_relcheck relation */
+	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
+
+	/*
+	 * Create two scan keys.  We need to match on the oid of the table
+	 * the CHECK is in and also we need to match the name of the CHECK
+	 * constraint.
+	 */
+	ScanKeyEntryInitialize(&key[0], 0, Anum_pg_relcheck_rcrelid,
+						   F_OIDEQ, RelationGetRelid(rel));
+
+	ScanKeyEntryInitialize(&key[1], 0, Anum_pg_relcheck_rcname,
+						   F_NAMEEQ, PointerGetDatum(constrName));
+
+	/* Begin scanning the heap */
+	rcscan = heap_beginscan(rcrel, 0, SnapshotNow, 2, key);
+
+	/*
+	 * Scan over the result set, removing any matching entries.  Note
+	 * that this has the side-effect of removing ALL CHECK constraints
+	 * that share the specified constraint name.
+	 */
+	while (HeapTupleIsValid(rctup = heap_getnext(rcscan, 0))) {
+		simple_heap_delete(rcrel, &rctup->t_self);
+		++rel_deleted;
+      ++all_deleted;
+	}
+
+	/* Clean up after the scan */
+	heap_endscan(rcscan);
+
+	/*
+	 * Update the count of constraints in the relation's pg_class tuple.
+	 * We do this even if there was no change, in order to ensure that an
+	 * SI update message is sent out for the pg_class tuple, which will
+	 * force other backends to rebuild their relcache entries for the rel.
+	 * (Of course, for a newly created rel there is no need for an SI
+	 * message, but for ALTER TABLE ADD ATTRIBUTE this'd be important.)
+	 */
+
+ 	/*
+	 * Get number of existing constraints.
+	 */
+
+	tupleDesc = RelationGetDescr(rel);
+	oldconstr = tupleDesc->constr;
+	if (oldconstr)
+		numoldchecks = oldconstr->num_check;
+	else
+		numoldchecks = 0;
+
+	/* Calculate the new number of checks in the table, fail if negative */
+	numchecks = numoldchecks - rel_deleted;
+
+	if (numchecks < 0)
+		elog(ERROR, "check count became negative");
+
+	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
+	reltup = SearchSysCacheCopy(RELOID,
+		ObjectIdGetDatum(RelationGetRelid(rel)), 0, 0, 0);
+
+	if (!HeapTupleIsValid(reltup))
+		elog(ERROR, "cache lookup of relation %u failed",
+			 RelationGetRelid(rel));
+	relStruct = (Form_pg_class) GETSTRUCT(reltup);
+
+	relStruct->relchecks = numchecks;
+
+	simple_heap_update(relrel, &reltup->t_self, reltup);
+
+	/* Keep catalog indices current */
+	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
+					   relidescs);
+	CatalogIndexInsert(relidescs, Num_pg_class_indices, relrel, reltup);
+	CatalogCloseIndices(Num_pg_class_indices, relidescs);
+
+	/* Clean up after the scan */
+	heap_freetuple(reltup);
+	heap_close(relrel, RowExclusiveLock);
+
+	/* Close the heap relation */
+	heap_close(rcrel, RowExclusiveLock);
+
+	/* Return the number of tuples deleted */
+	return all_deleted;
 }
 
 static void
