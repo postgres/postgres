@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.38 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.39 2004/10/12 21:54:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ pg_tablespace_databases(PG_FUNCTION_ARGS)
 							 errmsg("could not open directory \"%s\": %m",
 									fctx->location)));
 				ereport(WARNING,
-				  (errmsg("%u is not a tablespace oid", tablespaceOid)));
+				  (errmsg("%u is not a tablespace OID", tablespaceOid)));
 			}
 		}
 		funcctx->user_fctx = fctx;

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.8 2004/08/29 05:06:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.9 2004/10/12 21:54:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -487,7 +487,7 @@ BgWriterShmemInit(void)
 	if (BgWriterShmem == NULL)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("insufficient shared memory for bgwriter")));
+				 errmsg("not enough shared memory for background writer")));
 	if (found)
 		return;					/* already initialized */
 

@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.61 2004/08/29 05:06:53 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.62 2004/10/12 21:54:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 
 	/* done, print a summary of ignored errors */
 	if (AH->n_errors)
-		fprintf(stderr, _("WARNING, errors ignored on restore: %d\n"),
+		fprintf(stderr, _("WARNING: errors ignored on restore: %d\n"),
 				AH->n_errors);
 
 	/* AH may be freed in CloseArchive? */

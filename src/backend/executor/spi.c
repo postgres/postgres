@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.129 2004/09/16 20:17:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.130 2004/10/12 21:54:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,7 +188,7 @@ AtEOXact_SPI(bool isCommit)
 		ereport(WARNING,
 				(errcode(ERRCODE_WARNING),
 				 errmsg("transaction left non-empty SPI stack"),
-				 errhint("Check for missing \"SPI_finish\" calls")));
+				 errhint("Check for missing \"SPI_finish\" calls.")));
 
 	_SPI_current = _SPI_stack = NULL;
 	_SPI_stack_depth = 0;
@@ -1571,7 +1571,7 @@ _SPI_error_callback(void *arg)
 		internalerrquery(query);
 	}
 	else
-		errcontext("SQL query \"%s\"", query);
+		errcontext("SQL statement \"%s\"", query);
 }
 
 /*

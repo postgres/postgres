@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.242 2004/10/10 23:37:28 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.243 2004/10/12 21:54:42 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -489,7 +489,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"log_disconnections", PGC_BACKEND, LOGGING_WHAT,
-			gettext_noop("Logs end of a session, including duration"),
+			gettext_noop("Logs end of a session, including duration."),
 			NULL
 		},
 		&Log_disconnections,
@@ -805,7 +805,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"default_with_oids", PGC_USERSET, COMPAT_OPTIONS_PREVIOUS,
-			gettext_noop("By default, newly-created tables should have OIDs"),
+			gettext_noop("By default, newly-created tables should have OIDs."),
 			NULL
 		},
 		&default_with_oids,
@@ -813,7 +813,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"redirect_stderr", PGC_POSTMASTER, LOGGING_WHERE,
-			gettext_noop("Start a subprocess to capture stderr output into log files"),
+			gettext_noop("Start a subprocess to capture stderr output into log files."),
 			NULL
 		},
 		&Redirect_stderr,
@@ -821,7 +821,7 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 	{
 		{"log_truncate_on_rotation", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Truncate existing log files of same name during log rotation"),
+			gettext_noop("Truncate existing log files of same name during log rotation."),
 			NULL
 		},
 		&Log_truncate_on_rotation,
@@ -1273,7 +1273,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_rotation_age", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Automatic logfile rotation will occur after N minutes"),
+			gettext_noop("Automatic log file rotation will occur after N minutes"),
 			NULL
 		},
 		&Log_RotationAge,
@@ -1282,7 +1282,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_rotation_size", PGC_SIGHUP, LOGGING_WHERE,
-			gettext_noop("Automatic logfile rotation will occur after N kilobytes"),
+			gettext_noop("Automatic log file rotation will occur after N kilobytes"),
 			NULL
 		},
 		&Log_RotationSize,
@@ -1291,7 +1291,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"max_function_args", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Shows the maximum number of function arguments"),
+			gettext_noop("Shows the maximum number of function arguments."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -1301,7 +1301,7 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"max_index_keys", PGC_INTERNAL, PRESET_OPTIONS,
-			gettext_noop("Shows the maximum number of index keys"),
+			gettext_noop("Shows the maximum number of index keys."),
 			NULL,
 			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
@@ -1671,8 +1671,8 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_destination", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the destination for server log output."),
-			gettext_noop("Valid values are combinations of stderr, syslog "
-						 "and eventlog, depending on platform."),
+			gettext_noop("Valid values are combinations of \"stderr\", \"syslog\", "
+						 "and \"eventlog\", depending on the platform."),
 			GUC_LIST_INPUT
 		},
 		&log_destination_string,
@@ -1786,7 +1786,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
-		 gettext_noop("Sets the server's data directory"),
+		 gettext_noop("Sets the server's data directory."),
 		 NULL
 		},
 		&data_directory,
@@ -1795,7 +1795,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"config_file", PGC_POSTMASTER, FILE_LOCATIONS,
-		 gettext_noop("Sets the server's main configuration file"),
+		 gettext_noop("Sets the server's main configuration file."),
 		 NULL,
 		 GUC_DISALLOW_IN_FILE
 		},
@@ -1823,7 +1823,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"external_pid_file", PGC_POSTMASTER, FILE_LOCATIONS,
-		 gettext_noop("Writes the postmaster PID to the specified file"),
+		 gettext_noop("Writes the postmaster PID to the specified file."),
 		 NULL
 		},
 		&external_pid_file,
@@ -2480,7 +2480,7 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	else if (!configdir)
 	{
 		write_stderr("%s does not know where to find the server configuration file.\n"
-					 "You must specify the --config_file or -D invocation "
+					 "You must specify the --config-file or -D invocation "
 					 "option or set the PGDATA environment variable.\n",
 					 progname);
 		return false;
@@ -5403,7 +5403,7 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 			if (source >= PGC_S_INTERACTIVE)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("unrecognised \"log_destination\" key word: \"%s\"",
+						 errmsg("unrecognized \"log_destination\" key word: \"%s\"",
 								tok)));
 			pfree(rawstring);
 			list_free(elemlist);
@@ -5685,7 +5685,7 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 			 */
 			ereport(LOG,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("invalid syntax for custom_variable_classes: \"%s\"", newval)));
+					 errmsg("invalid syntax for \"custom_variable_classes\": \"%s\"", newval)));
 			pfree(buf.data);
 			return NULL;
 		}

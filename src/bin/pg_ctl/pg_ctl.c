@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.33 2004/10/10 23:37:37 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.34 2004/10/12 21:54:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,8 @@ get_pgpid(void)
 			return 0;
 		else
 		{
-			perror("openning pid file");
+			write_stderr(_("%s: could not open PID file \"%s\": %s"),
+						 progname, pid_file, strerror(errno));
 			exit(1);
 		}
 	}
@@ -444,13 +445,14 @@ do_start(void)
 	pgpid_t		pid;
 	pgpid_t		old_pid = 0;
 	char	   *optline = NULL;
+	int			exitcode;
 
 	if (ctl_command != RESTART_COMMAND)
 	{
 		old_pid = get_pgpid();
 		if (old_pid != 0)
-			write_stderr(_("%s: Another postmaster may be running. "
-						   "Trying to start postmaster anyway.\n"),
+			write_stderr(_("%s: another postmaster may be running; "
+						   "trying to start postmaster anyway\n"),
 						 progname);
 	}
 
@@ -467,13 +469,13 @@ do_start(void)
 				post_opts = "";
 			else
 			{
-				write_stderr(_("%s: cannot read %s\n"), progname, postopts_file);
+				write_stderr(_("%s: could not read file \"%s\"\n"), progname, postopts_file);
 				exit(1);
 			}
 		}
 		else if (optlines[0] == NULL || optlines[1] != NULL)
 		{
-			write_stderr(_("%s: option file %s must have exactly 1 line\n"),
+			write_stderr(_("%s: option file \"%s\" must have exactly 1 line\n"),
 						 progname, ctl_command == RESTART_COMMAND ?
 						 postopts_file : def_postopts_file);
 			exit(1);
@@ -534,9 +536,11 @@ do_start(void)
 		postgres_path = postmaster_path;
 	}
 
-	if (start_postmaster() != 0)
+	exitcode = start_postmaster();
+	if (exitcode != 0)
 	{
-		write_stderr(_("Unable to run the postmaster binary\n"));
+		write_stderr(_("%s: could not start postmaster: exit code was %d\n"),
+					 progname, exitcode);
 		exit(1);
 	}
 
@@ -546,8 +550,8 @@ do_start(void)
 		pid = get_pgpid();
 		if (pid == old_pid)
 		{
-			write_stderr(_("%s: cannot start postmaster\n"
-						   "Examine the log output\n"),
+			write_stderr(_("%s: could not start postmaster\n"
+						   "Examine the log output.\n"),
 						 progname);
 			exit(1);
 		}
@@ -582,7 +586,7 @@ do_stop(void)
 
 	if (pid == 0)				/* no pid file */
 	{
-		write_stderr(_("%s: could not find %s\n"), progname, pid_file);
+		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
 		write_stderr(_("Is postmaster running?\n"));
 		exit(1);
 	}
@@ -597,7 +601,7 @@ do_stop(void)
 
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		write_stderr(_("stop signal failed (PID: %ld): %s\n"), pid,
+		write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 					 strerror(errno));
 		exit(1);
 	}
@@ -612,7 +616,7 @@ do_stop(void)
 	{
 		if (!silence_echo)
 		{
-			printf(_("waiting for postmaster to shut down..."));
+			printf(_("waiting for postmaster to shut down... "));
 			fflush(stdout);
 		}
 
@@ -634,7 +638,7 @@ do_stop(void)
 		if (pid != 0)			/* pid file still exists */
 		{
 			if (!silence_echo)
-				printf(_(" failed\n"));
+				printf(_("failed\n"));
 
 			write_stderr(_("%s: postmaster does not shut down\n"), progname);
 			exit(1);
@@ -661,7 +665,7 @@ do_restart(void)
 
 	if (pid == 0)				/* no pid file */
 	{
-		write_stderr(_("%s: could not find %s\n"), progname, pid_file);
+		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
 		write_stderr(_("Is postmaster running?\nstarting postmaster anyway\n"));
 		do_start();
 		return;
@@ -678,7 +682,7 @@ do_restart(void)
 
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		write_stderr(_("stop signal failed (PID: %ld): %s\n"), pid,
+		write_stderr(_("%s: could not send stop signal (PID: %ld): %s\n"), progname, pid,
 					 strerror(errno));
 		exit(1);
 	}
@@ -731,7 +735,7 @@ do_reload(void)
 	pid = get_pgpid();
 	if (pid == 0)				/* no pid file */
 	{
-		write_stderr(_("%s: could not find %s\n"), progname, pid_file);
+		write_stderr(_("%s: PID file \"%s\" does not exist\n"), progname, pid_file);
 		write_stderr(_("Is postmaster running?\n"));
 		exit(1);
 	}
@@ -747,7 +751,7 @@ do_reload(void)
 
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		write_stderr(_("reload signal failed (PID: %ld): %s\n"), pid,
+		write_stderr(_("could not send reload signal (PID: %ld): %s\n"), pid,
 					 strerror(errno));
 		exit(1);
 	}
@@ -797,7 +801,7 @@ do_kill(pgpid_t pid)
 {
 	if (kill((pid_t) pid, sig) != 0)
 	{
-		write_stderr(_("signal %d failed (PID: %ld): %s\n"), sig, pid,
+		write_stderr(_("%s: could not send signal %d (PID: %ld): %s\n"), progname, sig, pid,
 					 strerror(errno));
 		exit(1);
 	}
@@ -828,7 +832,7 @@ pgwin32_CommandLine(bool registration)
 		ret = find_other_exec(argv0, "postmaster", PM_VERSIONSTR, cmdLine);
 	if (ret != 0)
 	{
-		write_stderr(_("Unable to find exe"));
+		write_stderr(_("%s: could not find exe"), progname);
 		exit(1);
 	}
 
@@ -875,13 +879,13 @@ pgwin32_doRegister()
 
 	if (hSCM == NULL)
 	{
-		write_stderr(_("Unable to open service manager\n"));
+		write_stderr(_("%s: could not open service manager\n"), progname);
 		exit(1);
 	}
 	if (pgwin32_IsInstalled(hSCM))
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("Service \"%s\" already registered\n"), register_servicename);
+		write_stderr(_("%s: service \"%s\" already registered\n"), progname, register_servicename);
 		exit(1);
 	}
 
@@ -892,7 +896,7 @@ pgwin32_doRegister()
 	NULL, NULL, "RPCSS\0", register_username, register_password)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("Unable to register service \"%s\" [%d]\n"), register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not register service \"%s\" [%d]\n"), progname, register_servicename, (int) GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -907,27 +911,27 @@ pgwin32_doUnregister()
 
 	if (hSCM == NULL)
 	{
-		write_stderr(_("Unable to open service manager\n"));
+		write_stderr(_("%s: could not open service manager\n"), progname);
 		exit(1);
 	}
 	if (!pgwin32_IsInstalled(hSCM))
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("Service \"%s\" not registered\n"), register_servicename);
+		write_stderr(_("%s: service \"%s\" not registered\n"), progname, register_servicename);
 		exit(1);
 	}
 
 	if ((hService = OpenService(hSCM, register_servicename, DELETE)) == NULL)
 	{
 		CloseServiceHandle(hSCM);
-		write_stderr(_("Unable to open service \"%s\" [%d]\n"), register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not open service \"%s\" [%d]\n"), progname, register_servicename, (int) GetLastError());
 		exit(1);
 	}
 	if (!DeleteService(hService))
 	{
 		CloseServiceHandle(hService);
 		CloseServiceHandle(hSCM);
-		write_stderr(_("Unable to unregister service \"%s\" [%d]\n"), register_servicename, (int) GetLastError());
+		write_stderr(_("%s: could not unregister service \"%s\" [%d]\n"), progname, register_servicename, (int) GetLastError());
 		exit(1);
 	}
 	CloseServiceHandle(hService);
@@ -1082,8 +1086,8 @@ do_help(void)
 	printf(_("  %s status  [-D DATADIR]\n"), progname);
 	printf(_("  %s kill    SIGNALNAME PROCESSID\n"), progname);
 #ifdef WIN32
-	printf(_("  %s register   [-N servicename] [-U username] [-P password] [-D DATADIR] [-w] [-o \"OPTIONS\"]\n"), progname);
-	printf(_("  %s unregister [-N servicename]\n"), progname);
+	printf(_("  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR] [-w] [-o \"OPTIONS\"]\n"), progname);
+	printf(_("  %s unregister [-N SERVICENAME]\n"), progname);
 #endif
 	printf(_("Common options:\n"));
 	printf(_("  -D, --pgdata DATADIR   location of the database storage area\n"));
@@ -1106,7 +1110,7 @@ do_help(void)
 		  "                          (PostgreSQL server executable)\n"));
 	printf(_("  -p PATH-TO-POSTMASTER   normally not necessary\n\n"));
 	printf(_("Options for stop or restart:\n"));
-	printf(_("  -m SHUTDOWN-MODE   may be 'smart', 'fast', or 'immediate'\n\n"));
+	printf(_("  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n\n"));
 	printf(_("Allowed signal names for kill:\n"));
 	printf(_("  HUP INT QUIT ABRT TERM USR1 USR2\n\n"));
 	printf(_("Shutdown modes are:\n"));
@@ -1138,7 +1142,7 @@ set_mode(char *modeopt)
 	}
 	else
 	{
-		write_stderr(_("%s: invalid shutdown mode %s\n"), progname, modeopt);
+		write_stderr(_("%s: unrecognized shutdown mode \"%s\"\n"), progname, modeopt);
 		do_advice();
 		exit(1);
 	}
@@ -1171,7 +1175,7 @@ set_sig(char *signame)
 		sig = SIGUSR2;
 	else
 	{
-		write_stderr(_("%s: invalid signal \"%s\"\n"), progname, signame);
+		write_stderr(_("%s: unrecognized signal name \"%s\"\n"), progname, signame);
 		do_advice();
 		exit(1);
 	}
@@ -1317,7 +1321,7 @@ main(int argc, char **argv)
 		{
 			if (ctl_command != NO_COMMAND)
 			{
-				write_stderr(_("%s: extra operation mode %s\n"), progname, argv[optind]);
+				write_stderr(_("%s: extra operation mode \"%s\"\n"), progname, argv[optind]);
 				do_advice();
 				exit(1);
 			}
@@ -1354,7 +1358,7 @@ main(int argc, char **argv)
 #endif
 			else
 			{
-				write_stderr(_("%s: invalid operation mode %s\n"), progname, argv[optind]);
+				write_stderr(_("%s: unrecognized operation mode \"%s\"\n"), progname, argv[optind]);
 				do_advice();
 				exit(1);
 			}

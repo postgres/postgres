@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.172 2004/10/09 02:46:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.173 2004/10/12 21:54:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1933,7 +1933,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 		if (errno != ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m",
+					 errmsg("could not stat file \"%s\": %m",
 							xlogpath)));
 	}
 	else
@@ -2035,7 +2035,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 			if (errno != ENOENT)
 				ereport(FATAL,
 						(errcode_for_file_access(),
-						 errmsg("could not stat \"%s\": %m",
+						 errmsg("could not stat file \"%s\": %m",
 								xlogpath)));
 		}
 	}
@@ -2739,7 +2739,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 		if (errno != ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not open \"%s\": %m", path)));
+					 errmsg("could not open file \"%s\": %m", path)));
 		/* Not there, so assume no parents */
 		return list_make1_int((int) targetTLI);
 	}
@@ -2829,7 +2829,7 @@ existsTimeLineHistory(TimeLineID probeTLI)
 		if (errno != ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not open \"%s\": %m", path)));
+					 errmsg("could not open file \"%s\": %m", path)));
 		return false;
 	}
 }
@@ -2927,7 +2927,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 		if (errno != ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not open \"%s\": %m", path)));
+					 errmsg("could not open file \"%s\": %m", path)));
 		/* Not there, so assume parent has no parents */
 	}
 	else
@@ -4077,7 +4077,7 @@ StartupXLOG(void)
 		{
 			ereport(PANIC,
 				  (errmsg("could not locate required checkpoint record"),
-				   errhint("If you are not restoring from a backup, try removing $PGDATA/backup_label.")));
+				   errhint("If you are not restoring from a backup, try removing the file \"%s/backup_label\".", DataDir)));
 		}
 	}
 	else
@@ -5288,7 +5288,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		if (errno != ENOENT)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m",
+					 errmsg("could not stat file \"%s\": %m",
 							labelfilepath)));
 	}
 	else

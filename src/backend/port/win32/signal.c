@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.7 2004/08/29 05:06:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/signal.c,v 1.8 2004/10/12 21:54:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,7 +224,7 @@ pg_signal_thread(LPVOID param)
 						   PIPE_UNLIMITED_INSTANCES, 16, 16, 1000, NULL);
 		if (pipe == INVALID_HANDLE_VALUE)
 		{
-			write_stderr("failed to create signal listener pipe: %d. Retrying.\n", (int) GetLastError());
+			write_stderr("could not create signal listener pipe: %d; retrying\n", (int) GetLastError());
 			SleepEx(500, FALSE);
 			continue;
 		}
@@ -236,7 +236,7 @@ pg_signal_thread(LPVOID param)
 					  (LPTHREAD_START_ROUTINE) pg_signal_dispatch_thread,
 								   (LPVOID) pipe, 0, NULL);
 			if (hThread == INVALID_HANDLE_VALUE)
-				write_stderr("failed to create signal dispatch thread: %d\n",
+				write_stderr("could not create signal dispatch thread: %d\n",
 							 (int) GetLastError());
 			else
 				CloseHandle(hThread);

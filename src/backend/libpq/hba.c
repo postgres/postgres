@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.132 2004/10/09 23:12:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.133 2004/10/12 21:54:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,7 +737,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("invalid IP address \"%s\" in \"%s\" line %d: %s",
+					 errmsg("invalid IP address \"%s\" in file \"%s\" line %d: %s",
 							token, HbaFileName, line_num,
 							gai_strerror(ret))));
 			if (cidr_slash)
@@ -772,7 +772,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("invalid IP mask \"%s\" in \"%s\" line %d: %s",
+						 errmsg("invalid IP mask \"%s\" in file \"%s\" line %d: %s",
 								token, HbaFileName, line_num,
 								gai_strerror(ret))));
 				if (gai_result)
@@ -787,7 +787,7 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("IP address and mask do not match in \"%s\" line %d",
+						 errmsg("IP address and mask do not match in file \"%s\" line %d",
 								HbaFileName, line_num)));
 				goto hba_other_error;
 			}
@@ -845,13 +845,13 @@ hba_syntax:
 	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid entry in \"%s\" at line %d, token \"%s\"",
+				 errmsg("invalid entry in file \"%s\" at line %d, token \"%s\"",
 						HbaFileName, line_num,
 						(char *) lfirst(line_item))));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			errmsg("missing field in \"%s\" at end of line %d",
+			errmsg("missing field in file \"%s\" at end of line %d",
 				   HbaFileName, line_num)));
 
 	/* Come here if suitable message already logged */
@@ -1101,13 +1101,13 @@ ident_syntax:
 	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid entry in \"%s\" at line %d, token \"%s\"",
+				 errmsg("invalid entry in file \"%s\" at line %d, token \"%s\"",
 						IdentFileName, line_number,
 						(const char *) lfirst(line_item))));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-		  errmsg("missing entry in \"%s\" at end of line %d",
+		  errmsg("missing entry in file \"%s\" at end of line %d",
 				 IdentFileName, line_number)));
 
 	*error_p = true;
@@ -1634,7 +1634,7 @@ authident(hbaPort *port)
 	}
 
 	ereport(DEBUG1,
-			(errmsg("IDENT code identifies remote user as \"%s\"",
+			(errmsg("Ident protocol identifies remote user as \"%s\"",
 					ident_user)));
 
 	if (check_ident_usermap(port->auth_arg, port->user_name, ident_user))

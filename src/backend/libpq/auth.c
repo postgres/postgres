@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.118 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.119 2004/10/12 21:54:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,24 +363,24 @@ auth_failed(Port *port, int status)
 	switch (port->auth_method)
 	{
 		case uaReject:
-			errstr = gettext_noop("Rejected host: authentication failed for user \"%s\"");
+			errstr = gettext_noop("authentication failed for user \"%s\": host rejected");
 			break;
 		case uaKrb4:
-			errstr = gettext_noop("Kerberos4 authentication failed for user \"%s\"");
+			errstr = gettext_noop("Kerberos 4 authentication failed for user \"%s\"");
 			break;
 		case uaKrb5:
-			errstr = gettext_noop("Kerberos5 authentication failed for user \"%s\"");
+			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
 			break;
 		case uaTrust:
-			errstr = gettext_noop("Trusted authentication failed for user \"%s\"");
+			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
 			break;
 		case uaIdent:
-			errstr = gettext_noop("IDENT authentication failed for user \"%s\"");
+			errstr = gettext_noop("Ident authentication failed for user \"%s\"");
 			break;
 		case uaMD5:
 		case uaCrypt:
 		case uaPassword:
-			errstr = gettext_noop("Password authentication failed for user \"%s\"");
+			errstr = gettext_noop("password authentication failed for user \"%s\"");
 			break;
 #ifdef USE_PAM
 		case uaPAM:
@@ -388,7 +388,7 @@ auth_failed(Port *port, int status)
 			break;
 #endif   /* USE_PAM */
 		default:
-			errstr = gettext_noop("Unknown auth method: authentication failed for user \"%s\"");
+			errstr = gettext_noop("authentication failed for user \"%s\": invalid authentication method");
 			break;
 	}
 

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.4 2004/08/29 05:06:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/security.c,v 1.5 2004/10/12 21:54:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,20 +36,20 @@ pgwin32_is_admin(void)
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &AccessToken))
 	{
-		write_stderr("failed to open process token: %d\n",
+		write_stderr("could not open process token: %d\n",
 					 (int) GetLastError());
 		exit(1);
 	}
 
 	if (GetTokenInformation(AccessToken, TokenGroups, NULL, 0, &InfoBufferSize))
 	{
-		write_stderr("failed to get token information - got zero size!\n");
+		write_stderr("could not get token information: got zero size\n");
 		exit(1);
 	}
 
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
 	{
-		write_stderr("failed to get token information: %d\n",
+		write_stderr("could not get token information: %d\n",
 					 (int) GetLastError());
 		exit(1);
 	}
@@ -57,7 +57,7 @@ pgwin32_is_admin(void)
 	InfoBuffer = malloc(InfoBufferSize);
 	if (!InfoBuffer)
 	{
-		write_stderr("failed to allocate %i bytes for token information!\n",
+		write_stderr("could not allocate %i bytes for token information\n",
 					 (int) InfoBufferSize);
 		exit(1);
 	}
@@ -66,7 +66,7 @@ pgwin32_is_admin(void)
 	if (!GetTokenInformation(AccessToken, TokenGroups, InfoBuffer,
 							 InfoBufferSize, &InfoBufferSize))
 	{
-		write_stderr("failed to get token information: %d\n",
+		write_stderr("could not get token information: %d\n",
 					 (int) GetLastError());
 		exit(1);
 	}
@@ -77,7 +77,7 @@ pgwin32_is_admin(void)
 	 SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0,
 								  0, &AdministratorsSid))
 	{
-		write_stderr("failed to get SID for Administrators group: %d\n",
+		write_stderr("could not get SID for Administrators group: %d\n",
 					 (int) GetLastError());
 		exit(1);
 	}
@@ -86,7 +86,7 @@ pgwin32_is_admin(void)
 								  SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0,
 								  0, &PowerUsersSid))
 	{
-		write_stderr("failed to get SID for PowerUsers group: %d\n",
+		write_stderr("could not get SID for PowerUsers group: %d\n",
 					 (int) GetLastError());
 		exit(1);
 	}
@@ -146,7 +146,7 @@ pgwin32_is_service(void)
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_READ, &AccessToken))
 	{
-		fprintf(stderr, "failed to open process token: %d\n",
+		fprintf(stderr, "could not open process token: %d\n",
 				(int) GetLastError());
 		return -1;
 	}
@@ -154,7 +154,7 @@ pgwin32_is_service(void)
 	/* First check for local system */
 	if (!GetTokenInformation(AccessToken, TokenUser, InfoBuffer, 1024, &InfoBufferSize))
 	{
-		fprintf(stderr, "failed to get token information: %d\n",
+		fprintf(stderr, "could not get token information: %d\n",
 				(int) GetLastError());
 		return -1;
 	}
@@ -163,7 +163,7 @@ pgwin32_is_service(void)
 						  SECURITY_LOCAL_SYSTEM_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &LocalSystemSid))
 	{
-		fprintf(stderr, "failed to get SID for local system account\n");
+		fprintf(stderr, "could not get SID for local system account\n");
 		CloseHandle(AccessToken);
 		return -1;
 	}
@@ -181,7 +181,7 @@ pgwin32_is_service(void)
 	/* Now check for group SID */
 	if (!GetTokenInformation(AccessToken, TokenGroups, InfoBuffer, 1024, &InfoBufferSize))
 	{
-		fprintf(stderr, "failed to get token information: %d\n",
+		fprintf(stderr, "could not get token information: %d\n",
 				(int) GetLastError());
 		return -1;
 	}
@@ -190,7 +190,7 @@ pgwin32_is_service(void)
 							   SECURITY_SERVICE_RID, 0, 0, 0, 0, 0, 0, 0,
 								  &ServiceSid))
 	{
-		fprintf(stderr, "failed to get SID for service group\n");
+		fprintf(stderr, "could not get SID for service group\n");
 		CloseHandle(AccessToken);
 		return -1;
 	}

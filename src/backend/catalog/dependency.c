@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.39 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.40 2004/10/12 21:54:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1623,7 +1623,7 @@ getObjectDescription(const ObjectAddress *object)
 				else
 					nspname = get_namespace_name(opcForm->opcnamespace);
 
-				appendStringInfo(&buffer, gettext("operator class %s for %s"),
+				appendStringInfo(&buffer, gettext("operator class %s for access method %s"),
 								 quote_qualified_identifier(nspname,
 											  NameStr(opcForm->opcname)),
 								 NameStr(amForm->amname));

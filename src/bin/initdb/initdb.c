@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.60 2004/10/10 23:37:31 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.61 2004/10/12 21:54:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2023,10 +2023,10 @@ usage(const char *progname)
 			 "                            in the respective category (default taken from\n"
 			 "                            environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
-	printf(_("  -A, --auth=method         default authentication method for local connections\n"));
+	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
-	printf(_("  --pwfile=filename         read password for the new superuser from file\n"));
+	printf(_("  --pwfile=FILE             read password for the new superuser from file\n"));
 	printf(_("  -?, --help                show this help, then exit\n"));
 	printf(_("  -V, --version             output version information, then exit\n"));
 	printf(_("\nLess commonly used options:\n"));
@@ -2190,13 +2190,13 @@ main(int argc, char *argv[])
 
 	if (pwprompt && pwfilename)
 	{
-		fprintf(stderr, _("%s: you cannot specify both password prompt and password file\n"), progname);
+		fprintf(stderr, _("%s: password prompt and password file may not be specified together\n"), progname);
 		exit(1);
 	}
 
 	if (authmethod == NULL || !strlen(authmethod))
 	{
-		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections.\n"
+		authwarning = _("\nWARNING: enabling \"trust\" authentication for local connections\n"
 						"You can change this by editing pg_hba.conf or using the -A flag the\n"
 						"next time you run initdb.\n");
 		authmethod = "trust";
@@ -2220,7 +2220,7 @@ main(int argc, char *argv[])
 		 * local connections and are rejected in hba.c
 		 */
 	{
-		fprintf(stderr, _("%s: unknown authentication method \"%s\".\n"), progname, authmethod);
+		fprintf(stderr, _("%s: unrecognized authentication method \"%s\"\n"), progname, authmethod);
 		exit(1);
 	}
 
@@ -2229,7 +2229,7 @@ main(int argc, char *argv[])
 		 !strcmp(authmethod, "password")) &&
 		!(pwprompt || pwfilename))
 	{
-		fprintf(stderr, _("%s: you need to specify a password for the superuser to enable %s authentication.\n"), progname, authmethod);
+		fprintf(stderr, _("%s: must specify a password for the superuser to enable %s authentication\n"), progname, authmethod);
 		exit(1);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.16 2004/08/30 02:54:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.17 2004/10/12 21:54:45 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,7 +353,7 @@ pqParseInput3(PGconn *conn)
 		{
 			/* Trouble --- report it */
 			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("Message contents do not agree with length in message type \"%c\"\n"),
+							  libpq_gettext("message contents do not agree with length in message type \"%c\"\n"),
 							  id);
 			/* build an error result holding the error message */
 			pqSaveErrorResult(conn);
@@ -510,7 +510,7 @@ getAnotherTuple(PGconn *conn, int msgLength)
 	{
 		/* Replace partially constructed result with an error result */
 		printfPQExpBuffer(&conn->errorMessage,
-				 libpq_gettext("unexpected field count in D message\n"));
+				 libpq_gettext("unexpected field count in \"D\" message\n"));
 		pqSaveErrorResult(conn);
 		/* Discard the failed message by pretending we read it */
 		conn->inCursor = conn->inStart + 5 + msgLength;
