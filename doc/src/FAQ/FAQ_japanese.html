@@ -7,8 +7,7 @@
 <H1>
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問(FAQ)</H1>
 <P>
-原文最終更新日:		Tue Oct 17 00:21:20 EDT 2000
-			(ファイル日付は 03/02/2001)
+原文最終更新日:		Tue Mar 13 09:41:02 EST 2001
 <P>
 現在の維持管理者:	Bruce Momjian (<A
 HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
@@ -34,39 +33,39 @@ HREF="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR><P>
 	にアクセスしてみてください。
 
 
-日本語版については以下の通りです。
+  日本語版の製作については以下の通りです。
 
-最終更新日:	2001年03月03日
-訳者:		桑村 潤 (<A HREF="mailto:juk@jp.postgresql.org">Jun Kuwamura &lt;juk@jp.postgresql.org&gt;</A>)
+  最終更新日:	2001年03月20日
+  翻訳者:	桑村 潤 (<A HREF="mailto:juk@jp.postgresql.org">Jun Kuwamura &lt;juk@jp.postgresql.org&gt;</A>)
 
- このFAQの和訳の作成に協力をしてくださった以下の方々をはじめ、
+  このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
-		田仲 稔さん(<A HREF="mailto:Tanaka.Minoru@keiken.co.jp">Minoru Tanaka &lt;Tanaka.Minoru@keiken.co.jp&gt;</A>)
-		石井 達夫さん(<A HREF="mailto:t-ishii@sra.co.jp">Tatsuo Ishii &lt;t-ishii@sra.co.jp&gt;</A>)
-		齊藤 知人さん(<A HREF="mailto:tomos@elelab.nsc.co.jp">Tomohito Saitoh &lt;tomos@elelab.nsc.co.jp&gt;</A>)
-		馬場  肇さん(<A HREF="mailto:baba@kusastro.kyoto-u.ac.jp">Hajime Baba &lt;baba@kusastro.kyoto-u.ac.jp&gt;</A>)
-		岡本 一幸さん(<A HREF="mailto:kokamoto@itg.hitachi.co.jp">Kazuyuki Okamoto &lt;kokamoto@itg.hitachi.co.jp&gt;</A>)
-		小菅 昭一さん(<A HREF="mailto:s-kosuge@str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge@str.hitachi.co.jp&gt;</A>)
-		山下 義之さん(<A HREF="mailto:dica@eurus.dti.ne.jp">Yoshiyuki Yamashita &lt;dica@eurus.dti.ne.jp&gt;</A>)
-		境 真太郎さん(<A HREF="mailto:s_sakai@mxn.mesh.ne.jp">Sintaro Sakai &lt;s_sakai@mxn.mesh.ne.jp&gt;</A>)
-		生越 昌己さん(<A HREF="mailto:ogochan@zetabits.com">Masami Ogoshi &lt;ogochan@zetabits.com&gt;</A>)
-		石川 俊行さん(<A HREF="mailto:tosiyuki@gol.com">Toshiyuki Ishikawa &lt;tosiyuki@gol.com&gt;</A>)
-		本田 茂広さん(<A HREF="mailto:fwif0083@mb.infoweb.ne.jp">Shigehiro Honda &lt;fwif0083@mb.infoweb.ne.jp&gt;</A>)
+		田仲 稔(<A HREF="mailto:Tanaka.Minoru@keiken.co.jp">Minoru Tanaka &lt;Tanaka.Minoru@keiken.co.jp&gt;</A>)
+		石井 達夫(<A HREF="mailto:t-ishii@sra.co.jp">Tatsuo Ishii &lt;t-ishii@sra.co.jp&gt;</A>)
+		齊藤 知人(<A HREF="mailto:tomos@elelab.nsc.co.jp">Tomohito Saitoh &lt;tomos@elelab.nsc.co.jp&gt;</A>)
+		馬場  肇(<A HREF="mailto:baba@kusastro.kyoto-u.ac.jp">Hajime Baba &lt;baba@kusastro.kyoto-u.ac.jp&gt;</A>)
+		岡本 一幸(<A HREF="mailto:kokamoto@itg.hitachi.co.jp">Kazuyuki Okamoto &lt;kokamoto@itg.hitachi.co.jp&gt;</A>)
+		小菅 昭一(<A HREF="mailto:s-kosuge@str.hitachi.co.jp">Shoichi Kosuge &lt;s-kosuge@str.hitachi.co.jp&gt;</A>)
+		山下 義之(<A HREF="mailto:dica@eurus.dti.ne.jp">Yoshiyuki Yamashita &lt;dica@eurus.dti.ne.jp&gt;</A>)
+		境 真太郎(<A HREF="mailto:s_sakai@mxn.mesh.ne.jp">Sintaro Sakai &lt;s_sakai@mxn.mesh.ne.jp&gt;</A>)
+		生越 昌己(<A HREF="mailto:ogochan@zetabits.com">Masami Ogoshi &lt;ogochan@zetabits.com&gt;</A>)
+		石川 俊行(<A HREF="mailto:tosiyuki@gol.com">Toshiyuki Ishikawa &lt;tosiyuki@gol.com&gt;</A>)
+		本田 茂広(<A HREF="mailto:fwif0083@mb.infoweb.ne.jp">Shigehiro Honda &lt;fwif0083@mb.infoweb.ne.jp&gt;</A>)
+		せせ じゅん(<A HREF="mailto:sesejun@linet.gr.jp">Jun Sese &lt;sesejun@linet.gr.jp&gt;</A>)
 
+  をはじめ、ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
+  和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF(Linux Japanese FAQ Mailing List)プロジェクト</A>、その他、
+  直接あるいは間接的にかかわっているすべてのオープンソースコミュニティーの
+  皆さんに感謝します。
 
-ポストグレスに関する話題豊富な<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/ML/info.html">日本語ポストグレス・メーリングリスト</A>、
-和訳のきっかけを作ってくれた <A HREF="http://jf.linux.or.jp/">JF</A>(Linux Japanese FAQ Mailing List)プロジェクト、
-その他、直接あるいは間接的にかかわっているすべてのオープンソース
-コミュニティーの皆さんに感謝します。
-
-  日本語版のこの文書は
+  日本語版のこの文書は<A HREF="http://www.PostgreSQL.org/users-lounge/docs/faq-japanese.html">http://www.PostgreSQL.org/users-lounge/docs/faq-japanese.html</A>にあるほか,
+  以下のサイトからもたどれます。
 	<A HREF="http://www.jp.postgresql.org/">http://www.jp.postgresql.org/</A>
 	<A HREF="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</A>
-	<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/">http://www.sra.co.jp/people/t-ishii/PostgreSQL/</A>
+	<A HREF="http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/">http://www.sra.co.jp/people/t-ishii/PostgreSQL/doc-jp/</A>
 	<A HREF="http://www.linux.or.jp/JF/">http://www.linux.or.jp/JF/</A>
-からもたどれます。
 
-なお、この和訳に関するご意見は(<A HREF="mailto:juk@jp.postgresql.org">juk@jp.postgresql.org</A>)までお寄せ下さい。
+  なお、この和訳に関するご意見は(<A HREF="mailto:juk@jp.postgresql.org">juk@jp.postgresql.org</A>)までお寄せ下さい。
 ]
 </PRE></small>
 
@@ -570,7 +569,7 @@ PostgreSQLの使用は、商用でも非商用でも、すべて無料です。上記に示してあ
 
 <P> たぶん彼らは、商用品質のサポートの必要な人々に売っていると思いますが、フリーウェア版はいつでも入手可能のようです。質問は、<A HREF="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>にお願いします。
 
-<A HREF="http://www.PostgreSQL.org/docs/programmer/odbc.htm">
+<A HREF="http://www.PostgreSQL.org/docs/programmer/odbc.html">
 Programmer's Guide</A>
 の <font size=-1>ODBC</font> の章もご覧ください。
 
@@ -816,6 +815,9 @@ PostgreSQLに許されるバックエンドのプロセス数が制限されているのは、
 	ALTER TABLE new_table RENAME TO old_table;
 </PRE>
 
+[訳注：列の追加は ALTER TABLE ADD COLUMN で行えます。]
+
+
 <P>
 <H4><A NAME="4.6">4.6</A>)	行、テーブル、データベースの最大サイズは？
 </H4>
@@ -887,6 +889,10 @@ PostgreSQL のデータベースに保存するには、普通のファイルの約6.5倍のディスク容量を
 
 <P> <font size=-1>LIKE</font> あるいは <I>~</I> のようなワイルドカード演算子(wild-card  operators)を使うとき、検索の開始が文字列の始めの部分に固定されているときにのみ、インデックスが使われます。
 そういうわけで、インデックスを使うためには、<font size=-1>LIKE</font> 検索では<I>%</I>で始めないようにして、また、<I>~</I>(正規表現検索)は<I>^</I> で始めるようにするべきです。
+
+[訳注：強制的にインデックスを使うには
+        SET enable_seqscan = off を実行します]
+
 
 <P>
 <H4><A NAME="4.10">4.10</A>)	問い合わせオブティマイザがどのように問い合わせを評価するのかを見るにはどうしますか？
@@ -1213,6 +1219,14 @@ PostgreSQL 7.1 以降では<font size=-1>SQL</font>標準構文を使う外部結合(アウタージ
 </H4>
 
 <P> いくつかの <I>Makefile</I> がインクルード・ファイルに対して適切な依存関係を持っていません。<I>make clean</I> をしてからもう一度 <I>make</I> を行なわなくてはなりません。もし、<font size=-1>GCC</font> をお使いであれば <i>configure</i> の <i>--enable-depend</i> オプションを使って、コンパイラに依存関係を自動的に調べさせることもできます。
+
+
+<HR>
+
+<small><PRE>
+[訳注：
+]
+</PRE></small>
 
 </BODY>
 </HTML>
