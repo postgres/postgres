@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.15 1997/09/08 02:40:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.16 1997/09/25 15:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1339,9 +1339,11 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 
 		if ((r = Tcl_Eval(interp, argv[4])) != TCL_OK && r != TCL_CONTINUE)
 		{
-			if (r == TCL_BREAK)
+			if (r == TCL_BREAK) {
+				/* I suppose that memory used by info and result must be released */
+				free(info); PQclear(result);Tcl_UnsetVar(interp, argv[3], 0);
 				return TCL_OK;
-
+			}
 			if (r == TCL_ERROR)
 			{
 				char		msg[60];
@@ -1350,12 +1352,15 @@ Pg_select(ClientData cData, Tcl_Interp * interp, int argc, char **argv)
 						interp->errorLine);
 				Tcl_AddErrorInfo(interp, msg);
 			}
-
+			/* also, releasing memory used by info and result */
+			free(info); PQclear(result);Tcl_UnsetVar(interp, argv[3], 0);
 			return r;
 		}
 	}
 
 	free(info);
+	/* Release memory used by result */
+	PQclear(result);
 	Tcl_UnsetVar(interp, argv[3], 0);
 	Tcl_AppendResult(interp, "", 0);
 	return TCL_OK;
