@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.66 2000/10/25 07:00:33 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.67 2000/11/03 10:47:54 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,6 @@
 #include <sys/types.h>
 #include <limits.h>
 #include <errno.h>
-
-#include "postgres.h"
 
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
@@ -89,14 +87,14 @@ static struct _if_value {
  * We use exclusive states for quoted strings, extended comments,
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
- *  <xb> binary numeric string - thomas 1997-11-16
+ *  <xbit> bit string literal
  *  <xc> extended C-style comments - thomas 1997-07-12
  *  <xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *  <xh> hexadecimal numeric string - thomas 1997-11-16
  *  <xq> quoted strings - thomas 1997-07-30
  */
 
-%x xb
+%x xbit
 %x xc
 %x xd
 %x xdc
@@ -106,12 +104,12 @@ static struct _if_value {
 %x xcond
 %x xskip
 
-/* Binary number
+/* Bit string
  */
-xbstart			[bB]{quote}
-xbstop			{quote}
-xbinside		[^']+
-xbcat			{quote}{whitespace_with_newline}{quote}
+xbitstart		[bB]{quote}
+xbitstop		{quote}
+xbitinside		[^']*
+xbitcat			{quote}{whitespace_with_newline}{quote}
 
 /* Hexadecimal number
  */
@@ -192,7 +190,7 @@ typecast		"::"
  * If you change either set, adjust the character lists appearing in the
  * rule for "operator"!
  */
-self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
+self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=]
 op_chars		[\~\!\@\#\^\&\|\`\?\$\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
@@ -313,30 +311,29 @@ cppline			{space}*#(.*\\{line_end})*.*
 
 <xc><<EOF>>            { mmerror(ET_ERROR, "Unterminated /* comment"); }
 
-<SQL>{xbstart}		{
-					BEGIN(xb);
+<SQL>{xbitstart}		{
+					BEGIN(xbit);
 					startlit();
 				}
-<xb>{xbstop}	{
+<xbit>{xbitstop}		{
 					char* endptr;
 
 					BEGIN(SQL);
-					errno = 0;
-					yylval.ival = strtol(literalbuf, &endptr, 2);
-					if (*endptr != '\0' || errno == ERANGE)
-						mmerror(ET_ERROR, "Bad binary integer input!");
-					return ICONST;
+					if (literalbuf[strspn(literalbuf, "01") + 1] != '\0')
+						mmerror(ET_ERROR, "invalid bit string input.");
+					yylval.str = literalbuf;
+			                return BITCONST;
 				}
  
 <xh>{xhinside}	|
-<xb>{xbinside}	{
+<xbit>{xbitinside}	{
 					addlit(yytext, yyleng);
 				}
 <xh>{xhcat}		|
-<xb>{xbcat}		{
+<xbit>{xbitcat}		{
 					/* ignore */
 				}
-<xb><<EOF>>		{ mmerror(ET_ERROR, "Unterminated binary integer"); }
+<xbit><<EOF>>		{ mmerror(ET_ERROR, "Unterminated bit string"); }
 
 <SQL>{xhstart}		{
 					BEGIN(xh);
@@ -490,7 +487,7 @@ cppline			{space}*#(.*\\{line_end})*.*
 						 * that the "self" rule would have.
 						 */
 						if (nchars == 1 &&
-							strchr(",()[].;$:+-*/%^<>=|", yytext[0]))
+							strchr(",()[].;$:+-*/%^<>=", yytext[0]))
 							return yytext[0];
 					}
 

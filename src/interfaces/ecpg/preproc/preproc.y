@@ -242,7 +242,7 @@ make_name(void)
 %token                 UNIONJOIN
                 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP
+%token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BITCONST
 %token <ival>   ICONST PARAM
 %token <dval>   FCONST
 
@@ -281,7 +281,7 @@ make_name(void)
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
 %type  <str>	OptUnder key_reference comment_text ConstraintDeferrabilitySpec
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
-%type  <str>    ColConstraint ColConstraintElem drop_type
+%type  <str>    ColConstraint ColConstraintElem drop_type Bitconst
 %type  <str>    OptTableElementList OptTableElement TableConstraint
 %type  <str>    ConstraintElem key_actions ColQualList TokenId DropSchemaStmt
 %type  <str>    target_list target_el update_target_list alias_clause
@@ -3790,6 +3790,7 @@ ParamNo:  PARAM opt_indirection
 
 Iconst:  ICONST                                 { $$ = make_name();};
 Fconst:  FCONST                                 { $$ = make_name();};
+Bitconst:  BITCONST                             { $$ = make_name();};
 Sconst:  SCONST                                 {
 							$$ = (char *)mm_alloc(strlen($1) + 3);
 							$$[0]='\'';
@@ -3825,6 +3826,7 @@ AllConst:	Sconst		{ $$ = $1; }
 PosAllConst:	Sconst  	{ $$ = $1; }
 		| Fconst	{ $$ = $1; }
 		| Iconst        { $$ = $1; }
+		| Bitconst	{ $$ = $1; }
 		| civar 	{ $$ = make_str("?"); }
 		;
 

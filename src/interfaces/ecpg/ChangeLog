@@ -1004,5 +1004,10 @@ Tue Oct 31 16:09:55 CET 2000
 
 	- Added patch by Christof Petig <christof.petig@wtal.de> fixing some
 	  parser bugs.
+
+Fri Nov  3 11:34:43 CET 2000
+
+	- Synced pgc.l with scan.l.
+	- Synced gram.y and preproc.y.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.
