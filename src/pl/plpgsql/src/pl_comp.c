@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.29 2001/04/06 02:06:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.30 2001/04/18 20:42:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -552,7 +552,7 @@ plpgsql_parse_word(char *word)
 	 */
 	if (plpgsql_curr_compile->fn_functype == T_TRIGGER)
 	{
-		if (!strcmp(cp, "tg_argv"))
+		if (strcmp(cp, "tg_argv") == 0)
 		{
 			int			save_spacescanned = plpgsql_SpaceScanned;
 			PLpgSQL_trigarg *trigarg;
@@ -751,7 +751,7 @@ plpgsql_parse_dblword(char *string)
 				row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
 				for (i = 0; i < row->nfields; i++)
 				{
-					if (!strcmp(row->fieldnames[i], word2))
+					if (strcmp(row->fieldnames[i], word2) == 0)
 					{
 						plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[row->varnos[i]]);
 						pfree(word1);
@@ -855,7 +855,7 @@ plpgsql_parse_tripword(char *string)
 				row = (PLpgSQL_row *) (plpgsql_Datums[ns->itemno]);
 				for (i = 0; i < row->nfields; i++)
 				{
-					if (!strcmp(row->fieldnames[i], word3))
+					if (strcmp(row->fieldnames[i], word3) == 0)
 					{
 						plpgsql_yylval.var = (PLpgSQL_var *) (plpgsql_Datums[row->varnos[i]]);
 						pfree(word1);
@@ -1139,14 +1139,17 @@ plpgsql_parse_wordrowtype(char *string)
 		elog(ERROR, "%s: no such class", word1);
 	}
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
-	if (classStruct->relkind != 'r' && classStruct->relkind != 's')
+	/* accept relation, sequence, or view pg_class entries */
+	if (classStruct->relkind != 'r' &&
+		classStruct->relkind != 's' &&
+		classStruct->relkind != 'v')
 	{
 		plpgsql_comperrinfo();
 		elog(ERROR, "%s isn't a table", word1);
 	}
 
 	/*
-	 * Fetch the tables pg_type tuple too
+	 * Fetch the table's pg_type tuple too
 	 */
 	typetup = SearchSysCache(TYPENAME,
 							 PointerGetDatum(word1),
@@ -1205,15 +1208,17 @@ plpgsql_parse_wordrowtype(char *string)
 		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 		/*
-		 * Create the internal variable We know if the table definitions
-		 * contain a default value or if the field is declared in the
-		 * table as NOT NULL. But it's possible to create a table field as
-		 * NOT NULL without a default value and that would lead to
-		 * problems later when initializing the variables due to entering
-		 * a block at execution time. Thus we ignore this information for
-		 * now.
+		 * Create the internal variable
+		 *
+		 * We know if the table definitions contain a default value or if the
+		 * field is declared in the table as NOT NULL. But it's possible to
+		 * create a table field as NOT NULL without a default value and that
+		 * would lead to problems later when initializing the variables due to
+		 * entering a block at execution time. Thus we ignore this information
+		 * for now.
 		 */
 		var = malloc(sizeof(PLpgSQL_var));
+		memset(var, 0, sizeof(PLpgSQL_var));
 		var->dtype = PLPGSQL_DTYPE_VAR;
 		var->refname = malloc(strlen(word1) + strlen(cp) + 2);
 		strcpy(var->refname, word1);
@@ -1241,7 +1246,7 @@ plpgsql_parse_wordrowtype(char *string)
 		/*
 		 * Add the variable to the row.
 		 */
-		row->fieldnames[i] = cp;
+		row->fieldnames[i] = strdup(cp);
 		row->varnos[i] = var->varno;
 	}
 

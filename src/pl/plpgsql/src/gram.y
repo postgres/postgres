@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.16 2001/02/19 19:49:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.17 2001/04/18 20:42:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -885,7 +885,7 @@ fori_lower		:
 							}
 						}
 
-						expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - 1);
+						expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 						expr->dtype				= PLPGSQL_DTYPE_EXPR;
 						expr->query				= strdup(plpgsql_dstring_get(&ds));
 						expr->plan				= NULL;
@@ -1272,7 +1272,7 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 		}
 	}
 
-	expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - 1);
+	expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
 	expr->query			= strdup(plpgsql_dstring_get(&ds));
 	expr->plan			= NULL;
@@ -1310,7 +1310,7 @@ make_select_stmt()
 		{
 			PLpgSQL_stmt_execsql		*execsql;
 
-			expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - 1);
+			expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 			expr->dtype			= PLPGSQL_DTYPE_EXPR;
 			expr->query			= strdup(plpgsql_dstring_get(&ds));
 			expr->plan			= NULL;
@@ -1449,14 +1449,13 @@ make_select_stmt()
 					{
 						PLpgSQL_stmt_execsql	*execsql;
 
-						expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - 1);
+						expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 						expr->dtype				= PLPGSQL_DTYPE_EXPR;
 						expr->query				= strdup(plpgsql_dstring_get(&ds));
 						expr->plan				= NULL;
 						expr->nparams	= nparams;
-						while(nparams-- > 0) {
+						while (nparams-- > 0)
 							expr->params[nparams] = params[nparams];
-						}
 						plpgsql_dstring_free(&ds);
 
 						execsql = malloc(sizeof(PLpgSQL_stmt_execsql));
@@ -1549,7 +1548,7 @@ make_select_stmt()
 		}
 	}
 
-	expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * (nparams - 1));
+	expr = malloc(sizeof(PLpgSQL_expr) + sizeof(int) * nparams - sizeof(int));
 	expr->dtype			= PLPGSQL_DTYPE_EXPR;
 	expr->query			= strdup(plpgsql_dstring_get(&ds));
 	expr->plan			= NULL;

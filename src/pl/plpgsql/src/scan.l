@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.9 2001/02/19 19:49:53 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/scan.l,v 1.10 2001/04/18 20:42:56 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -145,6 +145,12 @@ dump			{ return O_DUMP;			}
 {WS}{WC}*%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
 
 \$[0-9]+		{ return plpgsql_parse_word(yytext);	}
+\$[0-9]+\.{WS}{WC}*	{ return plpgsql_parse_dblword(yytext);	}
+\$[0-9]+\.{WS}{WC}*\.{WS}{WC}*	{ return plpgsql_parse_tripword(yytext); }
+\$[0-9]+%TYPE		{ return plpgsql_parse_wordtype(yytext);	}
+\$[0-9]+\.{WS}{WC}*%TYPE	{ return plpgsql_parse_dblwordtype(yytext); }
+\$[0-9]+%ROWTYPE	{ return plpgsql_parse_wordrowtype(yytext);	}
+
 [0-9]+			{ return T_NUMBER;			}
 
     /* ----------
