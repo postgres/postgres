@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.93 1999/07/17 20:16:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.94 1999/09/04 22:00:29 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -237,8 +237,7 @@ heap_create(char *relname,
 	if (istemp)
 	{
 		/* replace relname of caller */
-		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u",
-				 MyProcPid, uniqueId++);
+		snprintf(relname, NAMEDATALEN, "pg_temp.%d.%u", MyProcPid, uniqueId++);
 	}
 
 	/* ----------------
@@ -788,15 +787,6 @@ heap_create_with_catalog(char *relname,
 	if ((!istemp && RelnameFindRelid(relname)) ||
 		(istemp && get_temp_rel_by_name(relname) != NULL))
 		elog(ERROR, "Relation '%s' already exists", relname);
-
-	/* invalidate cache so non-temp table is masked by temp */
-	if (istemp)
-	{
-		Oid			relid = RelnameFindRelid(relname);
-
-		if (relid != InvalidOid)
-			RelationForgetRelation(relid);
-	}
 
 	/* save user relation name because heap_create changes it */
 	if (istemp)

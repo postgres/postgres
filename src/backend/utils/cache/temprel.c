@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.12 1999/09/04 21:45:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.13 1999/09/04 22:00:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,8 @@ remove_temp_relation(Oid relid)
 	MemoryContext oldcxt;
 	List	   *l,
 			   *prev;
+			   
+elog(NOTICE,"oid = %d", relid);
 
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
@@ -126,8 +128,11 @@ remove_temp_relation(Oid relid)
 	{
 		TempTable  *temp_rel = lfirst(l);
 
+elog(NOTICE,"check oid = %d", temp_rel->relid);
+
 		if (temp_rel->relid == relid)
 		{
+elog(NOTICE,"removed");
 			pfree(temp_rel->user_relname);
 			pfree(temp_rel->relname);
 			pfree(temp_rel);
@@ -212,7 +217,10 @@ get_temp_rel_by_name(char *user_relname)
 		TempTable  *temp_rel = lfirst(l);
 
 		if (strcmp(temp_rel->user_relname, user_relname) == 0)
+		{
+			elog(NOTICE,"found");
 			return temp_rel->relname;
+		}
 	}
 	return NULL;
 }

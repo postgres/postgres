@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.87 1999/07/20 17:14:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.88 1999/09/04 22:00:29 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -974,15 +974,6 @@ index_create(char *heapRelationName,
 												attributeList,
 												numatts,
 												attNums);
-
-	/* invalidate cache so possible non-temp index is masked by temp */
-	if (istemp)
-	{
-		Oid			relid = RelnameFindRelid(indexRelationName);
-
-		if (relid != InvalidOid)
-			RelationForgetRelation(relid);
-	}
 
 	/* save user relation name because heap_create changes it */
 	if (istemp)

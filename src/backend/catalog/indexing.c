@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.43 1999/09/04 19:55:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.44 1999/09/04 22:00:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include "catalog/pg_index.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
-#include "utils/temprel.h"
 
 /*
  * Names of indices on the following system catalogs:
@@ -449,15 +448,7 @@ ClassNameIndexScan(Relation heapRelation, char *relName)
 	Relation	idesc;
 	ScanKeyData skey[1];
 	HeapTuple	tuple;
-	char		*hold_rel;
 	
-	/*
-	 * we have to do this before looking in system tables because temp
-	 * table namespace takes precedence
-	 */
-	if ((hold_rel = get_temp_rel_by_name(relName)) != NULL)
-		relName = hold_rel;
-
 	ScanKeyEntryInitialize(&skey[0],
 						   (bits16) 0x0,
 						   (AttrNumber) 1,
