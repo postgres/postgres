@@ -7,11 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.5 1999/12/16 20:10:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_encoding/Attic/pg_encoding.c,v 1.6 2000/01/15 18:30:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
+#include "c.h"
 #include "mb/pg_wchar.h"
 
 static void usage(void);

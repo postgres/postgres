@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.6 1999/12/17 01:05:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.7 2000/01/15 18:30:27 petere Exp $
 Postgres documentation
 -->
 
@@ -25,8 +25,8 @@ Postgres documentation
   <synopsis>
 initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
        [ --sysid|-i <replaceable class="parameter">sysid</replaceable> ]
-       [ --password|-W <replaceable class="parameter">password</replaceable> ]
-       [ --pgencoding|-e <replaceable class="parameter">encoding</replaceable> ]
+       [ --pwprompt|-W ]
+       [ --encoding|-e <replaceable class="parameter">encoding</replaceable> ]
        [ --pglib|-L <replaceable class="parameter">libdir</replaceable> ]
        [ --username|-u <replaceable class="parameter">name</replaceable> ]
        [ --noclean | -n ] [ --debug | -d ] [ --template | -t ]
@@ -71,20 +71,20 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
      </varlistentry>
  
      <varlistentry>
-      <term>--password=<replaceable class="parameter">password</replaceable></term>
-      <term>-W <replaceable class="parameter">password</replaceable></term>
+      <term>--pwprompt</term>
+      <term>-W</term>
       <listitem>
        <para>
-        Sets the password of the database superuser. If you don't plan
-        on using password authentication, this is not important. If you
-        do, you can save yourself a trip by specifying it here, but you
-        can always change it later. The default password is empty.
+        Makes initdb prompt for a password of the database superuser. If you
+        don't plan on using password authentication, this is not important.
+        Otherwise you won't be able to use password authentication until
+        you have a password set up.
        </para>
       </listitem>
      </varlistentry>
  
      <varlistentry>
-      <term>--pgencoding=<replaceable class="parameter">encoding</replaceable></term>
+      <term>--encoding=<replaceable class="parameter">encoding</replaceable></term>
       <term>-e <replaceable class="parameter">encoding</replaceable></term>
       <listitem>
        <para>
@@ -246,15 +246,6 @@ initdb [ --pgdata|-D <replaceable class="parameter">dbdir</replaceable> ]
    it is a good idea to create the data directory before running <application>initdb</application>
    <emphasis>and</emphasis> to hand over the ownership of it to the database superuser.
   </para>
-
-  <para>
-   Note that if you use the <option>--username</option> you must give correct
-   information about the name of the <emphasis>current</emphasis> user. If you don't
-   this will usually manifest itself in an error message about <literal>chmod</literal>
-   failing on a file <filename>pg_pwd</filename>, because the backend silently
-   refuses to create it.
-  </para>
-
  </refsect1>
 </refentry>
 

@@ -61,6 +61,9 @@
 /* Set to 1 if you want CYR_RECODE (cyrillic recode) */
 #undef CYR_RECODE
 
+/* Set to 1 if you want to use multibyte characters */
+#undef MULTIBYTE
+
 /* Set to 1 if you want to Enable ASSERT CHECKING */
 #undef USE_ASSERT_CHECKING
 

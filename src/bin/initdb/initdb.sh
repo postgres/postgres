@@ -26,11 +26,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.78 2000/01/13 18:22:10 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.79 2000/01/15 18:30:31 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 exit_nicely(){
+    stty echo >& /dev/null
     echo
     echo "$CMDNAME failed."
     if [ "$noclean" -eq 0 ]; then
@@ -59,6 +60,18 @@ if [ "$TMPDIR" ]; then
 else
     TEMPFILE="/tmp/initdb.$$"
 fi
+
+
+# Check for echo -n vs echo \c
+if echo '\c' | grep -s c >/dev/null 2>&1
+then
+    ECHO_N="echo -n"
+    ECHO_C=""
+else
+    ECHO_N="echo"
+    ECHO_C='\c'
+fi
+
 
 #
 # Find out where we're located
@@ -98,7 +111,7 @@ done
 
 # 0 is the default (non-)encoding
 MULTIBYTEID=0
-# This is placed here by configure --with-mb=XXX.
+# This is placed here by configure --enable-multibyte[=XXX].
 MULTIBYTE=__MULTIBYTE__
 
 # Set defaults:
@@ -117,8 +130,6 @@ template_only=0
 #       user.
 POSTGRES_SUPERUSERNAME="$EffectiveUser"
 POSTGRES_SUPERUSERID="`id -u 2>/dev/null || echo 0`"
-
-Password='_null_'
 
 while [ "$#" -gt 0 ]
 do
@@ -160,14 +171,9 @@ do
                 POSTGRES_SUPERUSERID=`echo $1 | sed 's/^-i//'`
                 ;;
 # The default password of the database superuser.
-        --password|-W)
-                Password="$2"
-                shift;;
-        --password=*)
-                Password=`echo $1 | sed 's/^--password=//'`
-                ;;
-        -W*)
-                Password=`echo $1 | sed 's/^-W//'`
+# Make initdb prompt for the default password of the database superuser.
+        --pwprompt|-W)
+                PwPrompt=1
                 ;;
 # Directory where to install the data. No default, unless the environment
 # variable PGDATA is set.
@@ -193,43 +199,43 @@ do
                 ;;
 # The encoding of the template1 database. Defaults to what you chose
 # at configure time. (see above)
-        --pgencoding|-e)
+        --encoding|-e)
                 MULTIBYTE="$2"
                 shift;;
-        --pgencoding=*)
-                MULTIBYTE=`echo $1 | sed 's/^--pgencoding=//'`
+        --encoding=*)
+                MULTIBYTE=`echo $1 | sed 's/^--encoding=//'`
                 ;;
         -e*)
                 MULTIBYTE=`echo $1 | sed 's/^-e//'`
                 ;;
         *)
-                echo "Unrecognized option '$1'. Try -? for help."
-                exit 1
+                PGDATA=$1
                 ;;
     esac
     shift
 done
 
-if [ "$usage" ]
-then
- 	echo ""
- 	echo "Usage: $CMDNAME [options]"
- 	echo ""
-        echo "    -t,           --template           "
-        echo "    -d,           --debug              "
-        echo "    -n,           --noclean            "
-        echo "    -i SYSID,     --sysid=SYSID        "
-        echo "    -W PASSWORD,  --password=PASSWORD  "
-        echo "    -u SUPERUSER, --username=SUPERUSER " 
-        echo "    -D DATADIR,   --pgdata=DATADIR     "
-        echo "    -L LIBDIR,    --pglib=LIBDIR       "
- 	
+if [ "$usage" ]; then
+        echo "initdb initialized a PostgreSQL database."
+ 	echo
+ 	echo "Usage:"
+        echo "  $CMDNAME [options] datadir"
+ 	echo
+        echo "Options:"
+        echo "  [-D, --pgdata] <datadir>    Location for this database"
+        echo "  -W, --pwprompt              Prompt for a password for the new superuser's"
  	if [ -n "$MULTIBYTE" ]
 	then 
- 		echo "    -e ENCODING,  --pgencoding=ENCODING"
+ 		echo "  -e, --encoding <encoding>         Set the default multibyte encoding for new databases"
 	fi
- 	echo "    -?,           --help               "           	
- 	echo ""	 
+        echo "  -i, --sysid <sysid>         Database sysid for the superuser"
+        echo "Less commonly used options: "
+        echo "  -L, --pglib <libdir>        Where to find the input files (should happend automatically"
+        echo "  -t, --template              Re-initialize template database only"
+        echo "  -d, --debug                 Generate lots of debugging output"
+        echo "  -n, --noclean               Do not clean up after errors"
+ 	echo	 
+        echo "Report bugs to <bugs@postgresql.org>."
  	exit 0
 fi
 
@@ -239,17 +245,18 @@ fi
 
 if [ "$MULTIBYTE" ]
 then
-	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE`
+	MULTIBYTEID=`$PGPATH/pg_encoding $MULTIBYTE 2> /dev/null`
         if [ "$?" -ne 0 ]
 	then
-                echo "The program pg_encoding failed. Perhaps you did not configure"
-                echo "PostgreSQL for multibyte support or the program was not success-"
-                echo "fully installed."
+                echo "$CMDNAME: pg_encoding failed"
+                echo
+                echo "Perhaps you did not configure PostgreSQL for multibyte support or"
+                echo "the program was not successfully installed."
                 exit 1
         fi
 	if [ -z "$MULTIBYTEID" ]
 	then
-		echo "$CMDNAME: $MULTIBYTE is not a valid encoding name."
+		echo "$CMDNAME: $MULTIBYTE is not a valid encoding name"
 		exit 1
 	fi
 fi
@@ -273,7 +280,7 @@ fi
 
 if ! echo "$PGDATA" | grep '^/' > /dev/null 2>&1
 then
-    echo "$CMDNAME: The data path must be specified as an absolute path."
+    echo "$CMDNAME: data path must be specified as an absolute path"
     exit 1
 fi
 
@@ -284,8 +291,7 @@ fi
 # This means they have neither 'id' nor 'whoami'!
 if [ -z "$POSTGRES_SUPERUSERNAME" ]
 then 
-    echo "$CMDNAME: Could not determine what the name of the database"
-    echo "superuser should be. Please use the --username option."
+    echo "$CMDNAME: Could not the determine current username. Please use the -u option."
     exit 1
 fi
 
@@ -431,7 +437,6 @@ then
     cat "$GLOBAL" \
     | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
           -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
-          -e "s/PASSWORD/$Password/g" \
     | "$PGPATH"/postgres $BACKENDARGS template1 \
     || exit_nicely
 
@@ -470,17 +475,35 @@ echo "CREATE TRIGGER pg_sync_pg_pwd AFTER INSERT OR UPDATE OR DELETE ON pg_shado
      "FOR EACH ROW EXECUTE PROCEDURE update_pg_pwd()" \
      | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-# Create the initial pg_pwd (flat-file copy of pg_shadow)
-echo "Writing password file."
-echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" \
+# needs to be done before alter user
+echo "REVOKE ALL on pg_shadow FROM public" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
-# An ordinary COPY will leave the file too loosely protected.
-# Note: If you lied above and specified a --username different from the one
-# you really are, this will manifest itself in this command failing because
-# of a missing file, since the COPY command above failed. It would perhaps
-# be better if postgres returned an error code.
-chmod go-rw "$PGDATA"/pg_pwd || exit_nicely
+# set up password
+if [ "$PwPrompt" ]; then
+    $ECHO_N "Enter new superuser password: "$ECHO_C
+    stty -echo >& /dev/null
+    read FirstPw
+    stty echo >& /dev/null
+    echo
+    $ECHO_N "Enter it again: "$ECHO_C
+    stty -echo >& /dev/null
+    read SecondPw
+    stty echo >& /dev/null
+    echo
+    if [ "$FirstPw" != "$SecondPw" ]; then
+        echo "Passwords didn't match."
+        exit_nicely
+    fi
+    echo "ALTER USER \"$POSTGRES_SUPERUSERNAME\" WITH PASSWORD '$FirstPw'" \
+	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+    if [ ! -f $PGDATA/pg_pwd ]; then
+        echo "The password file wasn't generated. Please report this problem."
+        exit_nicely
+    fi
+    echo "Setting password"
+fi
+
 
 echo "Creating view pg_user."
 echo "CREATE VIEW pg_user AS \
@@ -495,9 +518,6 @@ echo "CREATE VIEW pg_user AS \
             valuntil \
         FROM pg_shadow" \
         | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
-
-echo "REVOKE ALL on pg_shadow FROM public" \
-	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Creating view pg_rules."
 echo "CREATE VIEW pg_rules AS \
@@ -569,9 +589,9 @@ echo "VACUUM ANALYZE" \
 
 echo
 echo "$CMDNAME completed successfully. You can now start the database server."
-echo "($PGPATH/postmaster -D $PGDATA)"
+echo "  $PGPATH/postmaster -D $PGDATA"
 echo "or"
-echo "($PGPATH/pg_ctl -D $PGDATA start)"
+echo "  $PGPATH/pg_ctl -D $PGDATA start"
 echo
 
 exit 0

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.78 2000/01/14 22:11:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.79 2000/01/15 18:30:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,21 +359,24 @@ ProcessUtility(Node *parsetree,
 				aip = stmt->aclitem;
 
 				modechg = stmt->modechg;
-#ifndef NO_SECURITY
 				foreach(i, stmt->relNames)
-				{
+                {
+					Relation	rel;
+
 					relname = strVal(lfirst(i));
+					rel = heap_openr(relname, AccessExclusiveLock);
+					if (rel && rel->rd_rel->relkind == RELKIND_INDEX)
+						elog(ERROR, "\"%s\" is an index relation",
+							 relname);
+					/* close rel, but keep lock until end of xact */
+					heap_close(rel, NoLock);
+#ifndef NO_SECURITY
 					if (!pg_ownercheck(userName, relname, RELNAME))
 						elog(ERROR, "you do not own class \"%s\"",
 							 relname);
-				}
 #endif
-				foreach(i, stmt->relNames)
-				{
-					relname = strVal(lfirst(i));
 					ChangeAcl(relname, aip, modechg);
 				}
-
 			}
 			break;
 

@@ -214,7 +214,7 @@ dnl We have read the default value of USE_LOCALE from the template
 dnl file.  We have a further option of using
 dnl	--enable-locale to explicitly enable it
 dnl It defaults to disabled
-AC_MSG_CHECKING(setting USE_LOCALE)
+AC_MSG_CHECKING(whether to support locale)
 AC_ARG_ENABLE(
    locale,
    [  --enable-locale         enable locale support ],
@@ -225,7 +225,7 @@ AC_ARG_ENABLE(
 dnl We exclude cyrillic recode support unless we override it with
 dnl	--enable-recode to explicitly enable it
 dnl It defaults to disabled
-AC_MSG_CHECKING(setting CYR_RECODE)
+AC_MSG_CHECKING(whether to support cyrillic recode)
 AC_ARG_ENABLE(
    recode,
    [  --enable-recode         enable cyrillic recode support ],
@@ -233,22 +233,35 @@ AC_ARG_ENABLE(
    AC_MSG_RESULT(disabled)
 )
 
-AC_MSG_CHECKING(setting MULTIBYTE)
-AC_ARG_WITH(mb,
-    [  --with-mb=<encoding>    enable multi-byte support ], 
+dnl Multibyte support
+
+AC_MSG_CHECKING(whether to support multibyte)
+AC_ARG_ENABLE(multibyte,
+    [  --enable-multibyte      enable multibyte character support ], 
     [
-	case "$withval" in
-	SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT)
-	    AC_MSG_RESULT("enabled with $withval")
-            ;;
-	*)
-	    AC_MSG_ERROR([*** You must supply an argument to the --with-mb option one of SQL_ASCII,EUC_JP,EUC_CN,EUC_KR,EUC_TW,UNICODE,MULE_INTERNAL,LATIN1-5,KOI8,WIN,ALT])
-	  ;;
-	esac
-	MULTIBYTE="$withval"
+        MULTIBYTE=SQL_ASCII
+        if test "$enableval" != "yes"; then
+                case "$enableval" in
+                        SQL_ASCII|EUC_JP|EUC_CN|EUC_KR|EUC_TW|UNICODE|MULE_INTERNAL|LATIN1|LATIN2|LATIN3|LATIN4|LATIN5|KOI8|WIN|ALT|SJIS|BIG5|WIN1250)  
+                        # ok
+                        ;;
+                *)
+                        AC_MSG_ERROR(
+[Argument to --enable-multibyte must be one of:
+  SQL_ASCII, EUC_JP, EUC_CN, EUC_KR, EUC_TW,
+  UNICODE, MULE_INTERNAL,
+  LATIN1, LATIN2, LATIN3, LATIN4, LATIN5,
+  KOI8, WIN, ALT, SJIS, BIG5, WIN1250
+Or do not specify an argument to the option to use the default.])
+                esac
+                MULTIBYTE=$enableval
+        fi
+        AC_DEFINE(MULTIBYTE)
+        AC_MSG_RESULT(enabled)
     ],
     AC_MSG_RESULT("disabled")
 )
+
 
 dnl We use the default value of 5432 for the DEF_PGPORT value.	If
 dnl we over-ride it with --with-pgport=port then we bypass this piece

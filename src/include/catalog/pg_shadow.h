@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.5 1999/12/17 01:05:31 momjian Exp $
+ * $Id: pg_shadow.h,v 1.6 2000/01/15 18:30:34 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -72,6 +72,6 @@ typedef FormData_pg_shadow *Form_pg_shadow;
  * user choices.
  * ----------------
  */
-DATA(insert OID = 0 ( POSTGRES PGUID t t t t PASSWORD _null_ ));
+DATA(insert OID = 0 ( POSTGRES PGUID t t t t _null_ _null_ ));
 
 #endif	 /* PG_SHADOW_H */
