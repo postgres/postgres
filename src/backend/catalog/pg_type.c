@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.87 2003/05/08 22:19:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.88 2003/07/21 01:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,16 +190,22 @@ TypeCreate(const char *typeName,
 	if (!(internalSize > 0 ||
 		  internalSize == -1 ||
 		  internalSize == -2))
-		elog(ERROR, "TypeCreate: invalid type internal size %d",
-			 internalSize);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("invalid type internal size %d",
+						internalSize)));
 	if (passedByValue &&
 		(internalSize <= 0 || internalSize > (int16) sizeof(Datum)))
-		elog(ERROR, "TypeCreate: invalid type internal size %d",
-			 internalSize);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("invalid type internal size %d",
+						internalSize)));
 
 	/* Only varlena types can be toasted */
 	if (storage != 'p' && internalSize != -1)
-		elog(ERROR, "TypeCreate: fixed size types must have storage PLAIN");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
+				 errmsg("fixed-size types must have storage PLAIN")));
 
 	/*
 	 * initialize arrays needed for heap_formtuple or heap_modifytuple
@@ -278,7 +284,9 @@ TypeCreate(const char *typeName,
 		 */
 		if (((Form_pg_type) GETSTRUCT(tup))->typisdefined ||
 			assignedTypeOid != InvalidOid)
-			elog(ERROR, "type %s already exists", typeName);
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("type \"%s\" already exists", typeName)));
 
 		/*
 		 * Okay to update existing "shell" type tuple
@@ -489,13 +497,17 @@ TypeRename(const char *oldTypeName, Oid typeNamespace,
 							   ObjectIdGetDatum(typeNamespace),
 							   0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "type %s does not exist", oldTypeName);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type \"%s\" does not exist", oldTypeName)));
 
 	if (SearchSysCacheExists(TYPENAMENSP,
 							 CStringGetDatum(newTypeName),
 							 ObjectIdGetDatum(typeNamespace),
 							 0, 0))
-		elog(ERROR, "type named %s already exists", newTypeName);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("type \"%s\" already exists", newTypeName)));
 
 	namestrcpy(&(((Form_pg_type) GETSTRUCT(tuple))->typname), newTypeName);
 

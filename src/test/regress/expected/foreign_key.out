@@ -138,7 +138,7 @@ SELECT * FROM FKTABLE;
 (5 rows)
 
 DROP TABLE PKTABLE CASCADE;
-NOTICE:  Drop cascades to constraint constrname on table fktable
+NOTICE:  drop cascades to constraint constrname on table fktable
 DROP TABLE FKTABLE;
 --
 -- check set default and table constraint on multiple columns
@@ -225,10 +225,10 @@ SELECT * FROM FKTABLE;
 -- this should fail for lack of CASCADE
 DROP TABLE PKTABLE;
 NOTICE:  constraint constrname2 on table fktable depends on table pktable
-ERROR:  Cannot drop table pktable because other objects depend on it
-	Use DROP ... CASCADE to drop the dependent objects too
+ERROR:  cannot drop table pktable because other objects depend on it
+HINT:  Use DROP ... CASCADE to drop the dependent objects too.
 DROP TABLE PKTABLE CASCADE;
-NOTICE:  Drop cascades to constraint constrname2 on table fktable
+NOTICE:  drop cascades to constraint constrname2 on table fktable
 DROP TABLE FKTABLE;
 --
 -- First test, check with no on delete or on update

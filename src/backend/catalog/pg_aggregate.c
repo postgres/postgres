@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.60 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.61 2003/07/21 01:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ AggregateCreate(const char *aggName,
 	ObjectAddress myself,
 				referenced;
 
-	/* sanity checks */
+	/* sanity checks (caller should have caught these) */
 	if (!aggName)
 		elog(ERROR, "no aggregate name supplied");
 
@@ -75,8 +75,11 @@ AggregateCreate(const char *aggName,
 	 */
 	if ((aggTransType == ANYARRAYOID || aggTransType == ANYELEMENTOID) &&
 		!(aggBaseType == ANYARRAYOID || aggBaseType == ANYELEMENTOID))
-		elog(ERROR, "an aggregate using ANYARRAY or ANYELEMENT as trans type "
-			 "must also have one of them as its base type");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("cannot determine transition datatype"),
+				 errdetail("An aggregate using ANYARRAY or ANYELEMENT as "
+						   "trans type must have one of them as its base type.")));
 
 	/* handle transfn */
 	MemSet(fnArgs, 0, FUNC_MAX_ARGS * sizeof(Oid));
@@ -102,14 +105,17 @@ AggregateCreate(const char *aggName,
 	 * polymorphic we *must* demand exact equality.
 	 */
 	if (rettype != aggTransType)
-		elog(ERROR, "return type of transition function %s is not %s",
-		 NameListToString(aggtransfnName), format_type_be(aggTransType));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("return type of transition function %s is not %s",
+						NameListToString(aggtransfnName),
+						format_type_be(aggTransType))));
 
 	tup = SearchSysCache(PROCOID,
 						 ObjectIdGetDatum(transfn),
 						 0, 0, 0);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "cache lookup of function %u failed", transfn);
+		elog(ERROR, "cache lookup failed for function %u", transfn);
 	proc = (Form_pg_proc) GETSTRUCT(tup);
 
 	/*
@@ -121,7 +127,9 @@ AggregateCreate(const char *aggName,
 	if (proc->proisstrict && agginitval == NULL)
 	{
 		if (!IsBinaryCoercible(aggBaseType, aggTransType))
-			elog(ERROR, "must not omit initval when transfn is strict and transtype is not compatible with input type");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("must not omit initval when transfn is strict and transtype is not compatible with input type")));
 	}
 	ReleaseSysCache(tup);
 
@@ -152,8 +160,11 @@ AggregateCreate(const char *aggName,
 	 */
 	if ((finaltype == ANYARRAYOID || finaltype == ANYELEMENTOID) &&
 		!(aggBaseType == ANYARRAYOID || aggBaseType == ANYELEMENTOID))
-		elog(ERROR, "an aggregate returning ANYARRAY or ANYELEMENT "
-			 "must also have one of them as its base type");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("cannot determine result datatype"),
+				 errdetail("An aggregate returning ANYARRAY or ANYELEMENT "
+						   "must have one of them as its base type.")));
 
 	/*
 	 * Everything looks okay.  Try to create the pg_proc entry for the
@@ -264,11 +275,15 @@ lookup_agg_function(List *fnName,
 
 	/* only valid case is a normal function not returning a set */
 	if (fdresult != FUNCDETAIL_NORMAL || !OidIsValid(fnOid))
-		elog(ERROR, "function %s does not exist",
-			 func_signature_string(fnName, nargs, input_types));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function %s does not exist",
+						func_signature_string(fnName, nargs, input_types))));
 	if (retset)
-		elog(ERROR, "function %s returns a set",
-			 func_signature_string(fnName, nargs, input_types));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("function %s returns a set",
+						func_signature_string(fnName, nargs, input_types))));
 
 	/*
 	 * If the given type(s) are all polymorphic, there's nothing we
@@ -296,15 +311,19 @@ lookup_agg_function(List *fnName,
 	if (true_oid_array[0] != ANYARRAYOID &&
 		true_oid_array[0] != ANYELEMENTOID &&
 		!IsBinaryCoercible(input_types[0], true_oid_array[0]))
-		elog(ERROR, "function %s requires run-time type coercion",
-			 func_signature_string(fnName, nargs, true_oid_array));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("function %s requires run-time type coercion",
+						func_signature_string(fnName, nargs, true_oid_array))));
 
 	if (nargs == 2 &&
 		true_oid_array[1] != ANYARRAYOID &&
 		true_oid_array[1] != ANYELEMENTOID &&
 		!IsBinaryCoercible(input_types[1], true_oid_array[1]))
-		elog(ERROR, "function %s requires run-time type coercion",
-			 func_signature_string(fnName, nargs, true_oid_array));
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("function %s requires run-time type coercion",
+						func_signature_string(fnName, nargs, true_oid_array))));
 
 	return fnOid;
 }

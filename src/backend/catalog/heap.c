@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.247 2003/07/20 21:56:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.248 2003/07/21 01:59:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -147,17 +147,16 @@ static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
 
 /*
  * This function returns a Form_pg_attribute pointer for a system attribute.
- * Note that we elog if the presented attno is invalid.
+ * Note that we elog if the presented attno is invalid, which would only
+ * happen if there's a problem upstream.
  */
 Form_pg_attribute
 SystemAttributeDefinition(AttrNumber attno, bool relhasoids)
 {
 	if (attno >= 0 || attno < -(int) lengthof(SysAtt))
-		elog(ERROR, "SystemAttributeDefinition: invalid attribute number %d",
-			 attno);
+		elog(ERROR, "invalid system attribute number %d", attno);
 	if (attno == ObjectIdAttributeNumber && !relhasoids)
-		elog(ERROR, "SystemAttributeDefinition: invalid attribute number %d",
-			 attno);
+		elog(ERROR, "invalid system attribute number %d", attno);
 	return SysAtt[-attno - 1];
 }
 
@@ -223,9 +222,11 @@ heap_create(const char *relname,
 	if (!allow_system_table_mods &&
 	(IsSystemNamespace(relnamespace) || IsToastNamespace(relnamespace)) &&
 		IsNormalProcessingMode())
-		elog(ERROR, "cannot create %s.%s: "
-			 "system catalog modifications are currently disallowed",
-			 get_namespace_name(relnamespace), relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to create \"%s.%s\"",
+						get_namespace_name(relnamespace), relname),
+				 errdetail("System catalog modifications are currently disallowed.")));
 
 	/*
 	 * Real ugly stuff to assign the proper relid in the relation
@@ -338,7 +339,7 @@ heap_storage_create(Relation rel)
  *
  *		this is used to make certain the tuple descriptor contains a
  *		valid set of attribute names and datatypes.  a problem simply
- *		generates elog(ERROR) which aborts the current transaction.
+ *		generates ereport(ERROR) which aborts the current transaction.
  * --------------------------------
  */
 void
@@ -367,8 +368,10 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 		{
 			if (SystemAttributeByName(NameStr(tupdesc->attrs[i]->attname),
 									  tupdesc->tdhasoid) != NULL)
-				elog(ERROR, "name of column \"%s\" conflicts with an existing system column",
-					 NameStr(tupdesc->attrs[i]->attname));
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("column name \"%s\" conflicts with a system column name",
+								NameStr(tupdesc->attrs[i]->attname))));
 		}
 	}
 
@@ -381,8 +384,10 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 		{
 			if (strcmp(NameStr(tupdesc->attrs[j]->attname),
 					   NameStr(tupdesc->attrs[i]->attname)) == 0)
-				elog(ERROR, "column name \"%s\" is duplicated",
-					 NameStr(tupdesc->attrs[j]->attname));
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_COLUMN),
+						 errmsg("column name \"%s\" is duplicated",
+								NameStr(tupdesc->attrs[j]->attname))));
 		}
 	}
 
@@ -419,23 +424,28 @@ CheckAttributeType(const char *attname, Oid atttypid)
 	 * Berkeley-derived code that thinks it can do this...)
 	 */
 	if (atttypid == UNKNOWNOID)
-		elog(WARNING, "Attribute \"%s\" has an unknown type"
-			 "\n\tProceeding with relation creation anyway",
-			 attname);
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+				 errmsg("attribute \"%s\" has type UNKNOWN", attname),
+				 errdetail("Proceeding with relation creation anyway.")));
 	else if (att_typtype == 'p')
 	{
 		/* Special hack for pg_statistic: allow ANYARRAY during initdb */
 		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
-			elog(ERROR, "Attribute \"%s\" has pseudo-type %s",
-				 attname, format_type_be(atttypid));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("attribute \"%s\" has pseudo-type %s",
+							attname, format_type_be(atttypid))));
 	}
 	else if (att_typtype == 'c')
 	{
 		Oid		typrelid = get_typ_typrelid(atttypid);
 
 		if (get_rel_relkind(typrelid) == RELKIND_COMPOSITE_TYPE)
-			elog(ERROR, "Attribute \"%s\" has composite type %s",
-				 attname, format_type_be(atttypid));
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("attribute \"%s\" has composite type %s",
+							attname, format_type_be(atttypid))));
 	}
 }
 
@@ -719,7 +729,9 @@ heap_create_with_catalog(const char *relname,
 	CheckAttributeNamesTypes(tupdesc, relkind);
 
 	if (get_relname_relid(relname, relnamespace))
-		elog(ERROR, "Relation '%s' already exists", relname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("relation \"%s\" already exists", relname)));
 
 	/*
 	 * Create the relcache entry (mostly dummy at this point) and the
@@ -955,7 +967,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 							   Int16GetDatum(attnum),
 							   0, 0);
 	if (!HeapTupleIsValid(tuple))		/* shouldn't happen */
-		elog(ERROR, "RemoveAttributeById: Failed to find attribute %d in relation %u",
+		elog(ERROR, "cache lookup failed for attribute %d of relation %u",
 			 attnum, relid);
 	attStruct = (Form_pg_attribute) GETSTRUCT(tuple);
 
@@ -1047,7 +1059,7 @@ RemoveAttrDefault(Oid relid, AttrNumber attnum,
 	heap_close(attrdef_rel, RowExclusiveLock);
 
 	if (complain && !found)
-		elog(ERROR, "RemoveAttrDefault: no default found for rel %u attnum %d",
+		elog(ERROR, "could not find attrdef tuple for relation %u attnum %d",
 			 relid, attnum);
 }
 
@@ -1160,8 +1172,7 @@ heap_drop_with_catalog(Oid rid)
 	 */
 	i = FlushRelationBuffers(rel, (BlockNumber) 0);
 	if (i < 0)
-		elog(ERROR, "heap_drop_with_catalog: FlushRelationBuffers returned %d",
-			 i);
+		elog(ERROR, "FlushRelationBuffers returned %d", i);
 
 	/*
 	 * remove inheritance information
@@ -1539,8 +1550,10 @@ AddRelationRawConstraints(Relation rel,
 									 RelationGetRelid(rel),
 									 RelationGetNamespace(rel),
 									 ccname))
-				elog(ERROR, "constraint \"%s\" for relation \"%s\" already exists",
-					 ccname, RelationGetRelationName(rel));
+				ereport(ERROR,
+						(errcode(ERRCODE_DUPLICATE_OBJECT),
+						 errmsg("constraint \"%s\" for relation \"%s\" already exists",
+								ccname, RelationGetRelationName(rel))));
 			/* Check against other new constraints */
 			/* Needed because we don't do CommandCounterIncrement in loop */
 			foreach(listptr2, rawConstraints)
@@ -1553,8 +1566,10 @@ AddRelationRawConstraints(Relation rel,
 					cdef2->name == NULL)
 					continue;
 				if (strcmp(cdef2->name, ccname) == 0)
-					elog(ERROR, "Duplicate CHECK constraint name: '%s'",
-						 ccname);
+					ereport(ERROR,
+							(errcode(ERRCODE_DUPLICATE_OBJECT),
+							 errmsg("CHECK constraint \"%s\" already exists",
+									ccname)));
 			}
 		}
 		else
@@ -1613,16 +1628,22 @@ AddRelationRawConstraints(Relation rel,
 		 * Make sure no outside relations are referred to.
 		 */
 		if (length(pstate->p_rtable) != 1)
-			elog(ERROR, "Only relation \"%s\" can be referenced in CHECK constraint expression",
-				 relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+					 errmsg("only relation \"%s\" can be referenced in CHECK constraint",
+							relname)));
 
 		/*
 		 * No subplans or aggregates, either...
 		 */
 		if (pstate->p_hasSubLinks)
-			elog(ERROR, "cannot use subselect in CHECK constraint expression");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use sub-select in CHECK constraint")));
 		if (pstate->p_hasAggs)
-			elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("cannot use aggregate in CHECK constraint")));
 
 		/*
 		 * Constraints are evaluated with execQual, which expects an
@@ -1727,21 +1748,29 @@ cookDefault(ParseState *pstate,
 	 * Make sure default expr does not refer to any vars.
 	 */
 	if (contain_var_clause(expr))
-		elog(ERROR, "cannot use column references in DEFAULT clause");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
+				 errmsg("cannot use column references in DEFAULT clause")));
 
 	/*
 	 * It can't return a set either.
 	 */
 	if (expression_returns_set(expr))
-		elog(ERROR, "DEFAULT clause must not return a set");
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("DEFAULT clause must not return a set")));
 
 	/*
 	 * No subplans or aggregates, either...
 	 */
 	if (pstate->p_hasSubLinks)
-		elog(ERROR, "cannot use subselects in DEFAULT clause");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot use sub-select in DEFAULT clause")));
 	if (pstate->p_hasAggs)
-		elog(ERROR, "cannot use aggregate functions in DEFAULT clause");
+		ereport(ERROR,
+				(errcode(ERRCODE_GROUPING_ERROR),
+				 errmsg("cannot use aggregate in DEFAULT clause")));
 
 	/*
 	 * Check that it will be possible to coerce the expression to the
@@ -1762,12 +1791,14 @@ cookDefault(ParseState *pstate,
 								  atttypid, atttypmod,
 								  COERCION_ASSIGNMENT,
 								  COERCE_IMPLICIT_CAST) == NULL)
-			elog(ERROR, "Column \"%s\" is of type %s"
-				 " but default expression is of type %s"
-				 "\n\tYou will need to rewrite or cast the expression",
-				 attname,
-				 format_type_be(atttypid),
-				 format_type_be(type_id));
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("column \"%s\" is of type %s"
+							" but default expression is of type %s",
+							attname,
+							format_type_be(atttypid),
+							format_type_be(type_id)),
+					 errhint("You will need to rewrite or cast the expression.")));
 	}
 
 	return (expr);

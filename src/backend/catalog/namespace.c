@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.53 2003/06/27 17:03:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.54 2003/07/21 01:59:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,9 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 	if (relation->catalogname)
 	{
 		if (strcmp(relation->catalogname, get_database_name(MyDatabaseId)) != 0)
-			elog(ERROR, "Cross-database references are not implemented");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cross-database references are not implemented")));
 	}
 
 	if (relation->schemaname)
@@ -180,11 +182,15 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 	if (!OidIsValid(relId) && !failOK)
 	{
 		if (relation->schemaname)
-			elog(ERROR, "Relation \"%s\".\"%s\" does not exist",
-				 relation->schemaname, relation->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("relation \"%s.%s\" does not exist",
+							relation->schemaname, relation->relname)));
 		else
-			elog(ERROR, "Relation \"%s\" does not exist",
-				 relation->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_TABLE),
+					 errmsg("relation \"%s\" does not exist",
+							relation->relname)));
 	}
 	return relId;
 }
@@ -209,14 +215,18 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	if (newRelation->catalogname)
 	{
 		if (strcmp(newRelation->catalogname, get_database_name(MyDatabaseId)) != 0)
-			elog(ERROR, "Cross-database references are not implemented");
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cross-database references are not implemented")));
 	}
 
 	if (newRelation->istemp)
 	{
 		/* TEMP tables are created in our backend-local temp namespace */
 		if (newRelation->schemaname)
-			elog(ERROR, "TEMP tables may not specify a namespace");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("TEMP tables may not specify a schema name")));
 		/* Initialize temp namespace if first time through */
 		if (!OidIsValid(myTempNamespace))
 			InitTempTableNamespace();
@@ -230,8 +240,10 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 								CStringGetDatum(newRelation->schemaname),
 									 0, 0, 0);
 		if (!OidIsValid(namespaceId))
-			elog(ERROR, "Namespace \"%s\" does not exist",
-				 newRelation->schemaname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist",
+							newRelation->schemaname)));
 		/* we do not check for USAGE rights here! */
 	}
 	else
@@ -240,7 +252,9 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		recomputeNamespacePath();
 		namespaceId = defaultCreationNamespace;
 		if (!OidIsValid(namespaceId))
-			elog(ERROR, "No namespace has been selected to create in");
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("no schema has been selected to create in")));
 	}
 
 	/* Note: callers will check for CREATE rights when appropriate */
@@ -293,7 +307,7 @@ RelationIsVisible(Oid relid)
 							ObjectIdGetDatum(relid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "Cache lookup failed for relation %u", relid);
+		elog(ERROR, "cache lookup failed for relation %u", relid);
 	relform = (Form_pg_class) GETSTRUCT(reltup);
 
 	recomputeNamespacePath();
@@ -375,7 +389,7 @@ TypeIsVisible(Oid typid)
 							ObjectIdGetDatum(typid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(typtup))
-		elog(ERROR, "Cache lookup failed for type %u", typid);
+		elog(ERROR, "cache lookup failed for type %u", typid);
 	typform = (Form_pg_type) GETSTRUCT(typtup);
 
 	recomputeNamespacePath();
@@ -576,7 +590,7 @@ FunctionIsVisible(Oid funcid)
 							 ObjectIdGetDatum(funcid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(proctup))
-		elog(ERROR, "Cache lookup failed for procedure %u", funcid);
+		elog(ERROR, "cache lookup failed for function %u", funcid);
 	procform = (Form_pg_proc) GETSTRUCT(proctup);
 
 	recomputeNamespacePath();
@@ -788,7 +802,7 @@ OperatorIsVisible(Oid oprid)
 							ObjectIdGetDatum(oprid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(oprtup))
-		elog(ERROR, "Cache lookup failed for operator %u", oprid);
+		elog(ERROR, "cache lookup failed for operator %u", oprid);
 	oprform = (Form_pg_operator) GETSTRUCT(oprtup);
 
 	recomputeNamespacePath();
@@ -1001,7 +1015,7 @@ OpclassIsVisible(Oid opcid)
 							ObjectIdGetDatum(opcid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(opctup))
-		elog(ERROR, "Cache lookup failed for opclass %u", opcid);
+		elog(ERROR, "cache lookup failed for opclass %u", opcid);
 	opcform = (Form_pg_opclass) GETSTRUCT(opctup);
 
 	recomputeNamespacePath();
@@ -1082,7 +1096,7 @@ ConversionIsVisible(Oid conid)
 							ObjectIdGetDatum(conid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(contup))
-		elog(ERROR, "Cache lookup failed for conversion %u", conid);
+		elog(ERROR, "cache lookup failed for conversion %u", conid);
 	conform = (Form_pg_conversion) GETSTRUCT(contup);
 
 	recomputeNamespacePath();
@@ -1148,11 +1162,15 @@ DeconstructQualifiedName(List *names,
 			 * We check the catalog name and then ignore it.
 			 */
 			if (strcmp(catalogname, get_database_name(MyDatabaseId)) != 0)
-				elog(ERROR, "Cross-database references are not implemented");
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cross-database references are not implemented")));
 			break;
 		default:
-			elog(ERROR, "Improper qualified name (too many dotted names): %s",
-				 NameListToString(names));
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("improper qualified name (too many dotted names): %s",
+							NameListToString(names))));
 			break;
 	}
 
@@ -1165,7 +1183,7 @@ DeconstructQualifiedName(List *names,
  *		Process an explicitly-specified schema name: look up the schema
  *		and verify we have USAGE (lookup) rights in it.
  *
- * Returns the namespace OID.  Raises elog if any problem.
+ * Returns the namespace OID.  Raises ereport if any problem.
  */
 Oid
 LookupExplicitNamespace(const char *nspname)
@@ -1177,7 +1195,9 @@ LookupExplicitNamespace(const char *nspname)
 								 CStringGetDatum(nspname),
 								 0, 0, 0);
 	if (!OidIsValid(namespaceId))
-		elog(ERROR, "Namespace \"%s\" does not exist", nspname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema \"%s\" does not exist", nspname)));
 
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(), ACL_USAGE);
 	if (aclresult != ACLCHECK_OK)
@@ -1212,8 +1232,9 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 									 CStringGetDatum(schemaname),
 									 0, 0, 0);
 		if (!OidIsValid(namespaceId))
-			elog(ERROR, "Namespace \"%s\" does not exist",
-				 schemaname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist", schemaname)));
 		/* we do not check for USAGE rights here! */
 	}
 	else
@@ -1222,7 +1243,9 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 		recomputeNamespacePath();
 		namespaceId = defaultCreationNamespace;
 		if (!OidIsValid(namespaceId))
-			elog(ERROR, "No namespace has been selected to create in");
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("no schema has been selected to create in")));
 	}
 
 	/* Note: callers will check for CREATE rights when appropriate */
@@ -1255,7 +1278,10 @@ makeRangeVarFromNameList(List *names)
 			rel->relname = strVal(lthird(names));
 			break;
 		default:
-			elog(ERROR, "Improper relation name (too many dotted names)");
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("improper relation name (too many dotted names): %s",
+							NameListToString(names))));
 			break;
 	}
 
@@ -1467,7 +1493,7 @@ recomputeNamespacePath(void)
 	{
 		/* syntax error in name list */
 		/* this should not happen if GUC checked check_search_path */
-		elog(ERROR, "recomputeNamespacePath: invalid list syntax");
+		elog(ERROR, "invalid list syntax");
 	}
 
 	/*
@@ -1596,8 +1622,10 @@ InitTempTableNamespace(void)
 	 */
 	if (pg_database_aclcheck(MyDatabaseId, GetSessionUserId(),
 							 ACL_CREATE_TEMP) != ACLCHECK_OK)
-		elog(ERROR, "%s: not authorized to create temp tables",
-			 get_database_name(MyDatabaseId));
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("not authorized to create temp tables in database \"%s\"",
+						get_database_name(MyDatabaseId))));
 
 	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);
 
@@ -1766,7 +1794,9 @@ assign_search_path(const char *newval, bool doit, bool interactive)
 			if (!SearchSysCacheExists(NAMESPACENAME,
 									  CStringGetDatum(curname),
 									  0, 0, 0))
-				elog(ERROR, "Namespace \"%s\" does not exist", curname);
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_SCHEMA),
+						 errmsg("schema \"%s\" does not exist", curname)));
 		}
 	}
 

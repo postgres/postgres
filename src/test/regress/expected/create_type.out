@@ -72,5 +72,5 @@ SELECT * FROM get_default_test();
 (1 row)
 
 DROP TYPE default_test_row CASCADE;
-NOTICE:  Drop cascades to function get_default_test()
+NOTICE:  drop cascades to function get_default_test()
 DROP TABLE default_test;

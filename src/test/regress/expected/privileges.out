@@ -69,11 +69,11 @@ SELECT * FROM atest2; -- ok
 
 INSERT INTO atest1 VALUES (2, 'two'); -- ok
 INSERT INTO atest2 VALUES ('foo', true); -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 INSERT INTO atest1 SELECT 1, b FROM atest1; -- ok
 UPDATE atest1 SET a = 1 WHERE a = 2; -- ok
 UPDATE atest2 SET col2 = NOT col2; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 SELECT * FROM atest1 FOR UPDATE; -- ok
  a |  b  
 ---+-----
@@ -82,15 +82,15 @@ SELECT * FROM atest1 FOR UPDATE; -- ok
 (2 rows)
 
 SELECT * FROM atest2 FOR UPDATE; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 DELETE FROM atest2; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 COPY atest2 FROM stdin; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 GRANT ALL ON atest1 TO PUBLIC; -- fail
-ERROR:  atest1: permission denied
+ERROR:  permission denied for "atest1"
 -- checks in subquery, both ok
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
  a | b 
@@ -117,33 +117,33 @@ SELECT * FROM atest1; -- ok
 (2 rows)
 
 SELECT * FROM atest2; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 INSERT INTO atest1 VALUES (2, 'two'); -- fail
-ERROR:  atest1: permission denied
+ERROR:  permission denied for "atest1"
 INSERT INTO atest2 VALUES ('foo', true); -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 INSERT INTO atest1 SELECT 1, b FROM atest1; -- fail
-ERROR:  atest1: permission denied
+ERROR:  permission denied for "atest1"
 UPDATE atest1 SET a = 1 WHERE a = 2; -- fail
-ERROR:  atest1: permission denied
+ERROR:  permission denied for "atest1"
 UPDATE atest2 SET col2 = NULL; -- ok
 UPDATE atest2 SET col2 = NOT col2; -- fails; requires SELECT on atest2
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 UPDATE atest2 SET col2 = true WHERE atest1.a = 5; -- ok
 SELECT * FROM atest1 FOR UPDATE; -- fail
-ERROR:  atest1: permission denied
+ERROR:  permission denied for "atest1"
 SELECT * FROM atest2 FOR UPDATE; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 DELETE FROM atest2; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 LOCK atest2 IN ACCESS EXCLUSIVE MODE; -- ok
 COPY atest2 FROM stdin; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 -- checks in subquery, both fail
 SELECT * FROM atest1 WHERE ( b IN ( SELECT col1 FROM atest2 ) );
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 SELECT * FROM atest2 WHERE ( col1 IN ( SELECT b FROM atest1 ) );
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 SET SESSION AUTHORIZATION regressuser4;
 COPY atest2 FROM stdin; -- ok
 SELECT * FROM atest1; -- ok
@@ -159,7 +159,7 @@ CREATE TABLE atest3 (one int, two int, three int);
 GRANT DELETE ON atest3 TO GROUP regressgroup2;
 SET SESSION AUTHORIZATION regressuser1;
 SELECT * FROM atest3; -- fail
-ERROR:  atest3: permission denied
+ERROR:  permission denied for "atest3"
 DELETE FROM atest3; -- ok
 -- views
 SET SESSION AUTHORIZATION regressuser3;
@@ -175,7 +175,7 @@ SELECT * FROM atestv1; -- ok
 (2 rows)
 
 SELECT * FROM atestv2; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 GRANT SELECT ON atestv1, atestv3 TO regressuser4;
 GRANT SELECT ON atestv2 TO regressuser2;
 SET SESSION AUTHORIZATION regressuser4;
@@ -187,7 +187,7 @@ SELECT * FROM atestv1; -- ok
 (2 rows)
 
 SELECT * FROM atestv2; -- fail
-ERROR:  atestv2: permission denied
+ERROR:  permission denied for "atestv2"
 SELECT * FROM atestv3; -- ok
  one | two | three 
 -----+-----+-------
@@ -203,7 +203,7 @@ GRANT SELECT ON atestv4 TO regressuser2;
 SET SESSION AUTHORIZATION regressuser2;
 -- Two complex cases:
 SELECT * FROM atestv3; -- fail
-ERROR:  atestv3: permission denied
+ERROR:  permission denied for "atestv3"
 SELECT * FROM atestv4; -- ok (even though regressuser2 cannot access underlying atestv3)
  one | two | three 
 -----+-----+-------
@@ -216,7 +216,7 @@ SELECT * FROM atest2; -- ok
 (1 row)
 
 SELECT * FROM atestv2; -- fail (even though regressuser2 can access underlying atest2)
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 -- privileges on functions, languages
 -- switch to superuser
 \c -
@@ -226,13 +226,13 @@ GRANT USAGE ON LANGUAGE c TO PUBLIC; -- fail
 ERROR:  language "c" is not trusted
 SET SESSION AUTHORIZATION regressuser1;
 GRANT USAGE ON LANGUAGE sql TO regressuser2; -- fail
-ERROR:  sql: permission denied
+ERROR:  permission denied for "sql"
 CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
 CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
 REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regressuser2;
 GRANT USAGE ON FUNCTION testfunc1(int) TO regressuser3; -- semantic error
-ERROR:  invalid privilege type USAGE for function object
+ERROR:  invalid privilege type USAGE for function
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;
 GRANT ALL PRIVILEGES ON FUNCTION testfunc_nosuch(int) TO regressuser4;
 ERROR:  function testfunc_nosuch(integer) does not exist
@@ -248,12 +248,12 @@ SELECT testfunc1(5), testfunc2(5); -- ok
 (1 row)
 
 CREATE FUNCTION testfunc3(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql; -- fail
-ERROR:  sql: permission denied
+ERROR:  permission denied for "sql"
 SET SESSION AUTHORIZATION regressuser3;
 SELECT testfunc1(5); -- fail
-ERROR:  testfunc1: permission denied
+ERROR:  permission denied for "testfunc1"
 SELECT col1 FROM atest2 WHERE col2 = true; -- fail
-ERROR:  atest2: permission denied
+ERROR:  permission denied for "atest2"
 SELECT testfunc4(true); -- ok
  testfunc4 
 -----------
@@ -268,7 +268,7 @@ SELECT testfunc1(5); -- ok
 (1 row)
 
 DROP FUNCTION testfunc1(int); -- fail
-ERROR:  testfunc1: must be owner
+ERROR:  must be owner of "testfunc1"
 \c -
 DROP FUNCTION testfunc1(int); -- ok
 -- restore to sanity
@@ -282,15 +282,15 @@ select has_table_privilege(NULL,'pg_shadow','select');
 (1 row)
 
 select has_table_privilege('pg_shad','select');
-ERROR:  Relation "pg_shad" does not exist
+ERROR:  relation "pg_shad" does not exist
 select has_table_privilege('nosuchuser','pg_shadow','select');
 ERROR:  user "nosuchuser" does not exist
 select has_table_privilege('pg_shadow','sel');
 ERROR:  has_table_privilege: invalid privilege type sel
 select has_table_privilege(-999999,'pg_shadow','update');
-ERROR:  pg_class_aclcheck: invalid user id 4293967297
+ERROR:  user with ID 4293967297 does not exist
 select has_table_privilege(1,'rule');
-ERROR:  pg_class_aclcheck: relation 1 not found
+ERROR:  relation with OID 1 does not exist
 -- superuser
 \c -
 select has_table_privilege(current_user,'pg_shadow','select');
@@ -551,7 +551,7 @@ ERROR:  grant options can only be granted to individual users
 SET SESSION AUTHORIZATION regressuser2;
 GRANT SELECT ON atest4 TO regressuser3;
 GRANT UPDATE ON atest4 TO regressuser3; -- fail
-ERROR:  atest4: permission denied
+ERROR:  permission denied for "atest4"
 SET SESSION AUTHORIZATION regressuser1;
 REVOKE SELECT ON atest4 FROM regressuser3; -- does nothing
 SELECT has_table_privilege('regressuser3', 'atest4', 'SELECT'); -- true
@@ -589,8 +589,8 @@ DROP VIEW atestv1;
 DROP VIEW atestv2;
 -- this should cascade to drop atestv4
 DROP VIEW atestv3 CASCADE;
-NOTICE:  Drop cascades to rule _RETURN on view atestv4
-NOTICE:  Drop cascades to view atestv4
+NOTICE:  drop cascades to rule _RETURN on view atestv4
+NOTICE:  drop cascades to view atestv4
 -- this should complain "does not exist"
 DROP VIEW atestv4;
 ERROR:  view "atestv4" does not exist

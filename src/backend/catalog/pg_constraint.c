@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.13 2003/05/28 16:03:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.14 2003/07/21 01:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -427,8 +427,7 @@ RemoveConstraintById(Oid conId)
 
 	tup = systable_getnext(conscan);
 	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "RemoveConstraintById: constraint %u not found",
-			 conId);
+		elog(ERROR, "could not find tuple for constraint %u", conId);
 	con = (Form_pg_constraint) GETSTRUCT(tup);
 
 	/*
@@ -460,12 +459,12 @@ RemoveConstraintById(Oid conId)
 										ObjectIdGetDatum(con->conrelid),
 										0, 0, 0);
 			if (!HeapTupleIsValid(relTup))
-				elog(ERROR, "cache lookup of relation %u failed",
+				elog(ERROR, "cache lookup failed for relation %u",
 					 con->conrelid);
 			classForm = (Form_pg_class) GETSTRUCT(relTup);
 
-			if (classForm->relchecks == 0)
-				elog(ERROR, "RemoveConstraintById: relation %s has relchecks = 0",
+			if (classForm->relchecks == 0)	/* should not happen */
+				elog(ERROR, "relation \"%s\" has relchecks = 0",
 					 RelationGetRelationName(rel));
 			classForm->relchecks--;
 
@@ -492,8 +491,7 @@ RemoveConstraintById(Oid conId)
 	}
 	else
 	{
-		elog(ERROR, "RemoveConstraintById: Constraint %u is not a known type",
-			 conId);
+		elog(ERROR, "constraint %u is not of a known type", conId);
 	}
 
 	/* Fry the constraint itself */

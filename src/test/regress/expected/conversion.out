@@ -8,7 +8,7 @@ CREATE CONVERSION myconv FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
 -- cannot make same name conversion in same schema
 --
 CREATE CONVERSION myconv FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
-ERROR:  conversion name "myconv" already exists
+ERROR:  conversion "myconv" already exists
 --
 -- create default conversion with qualified name
 --
@@ -17,7 +17,7 @@ CREATE DEFAULT CONVERSION public.mydef FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_
 -- cannot make default conversion with same shcema/for_encoding/to_encoding
 --
 CREATE DEFAULT CONVERSION public.mydef2 FOR 'LATIN1' TO 'UNICODE' FROM iso8859_1_to_utf8;
-ERROR:  default conversion for LATIN1 to UNICODE already exists
+ERROR:  default conversion for "LATIN1" to "UNICODE" already exists
 --
 -- drop user defined conversion
 --

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.79 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.80 2003/07/21 01:59:11 tgl Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -80,7 +80,7 @@ validOperatorName(const char *name)
 
 	/* Can't contain any invalid characters */
 	/* Test string here should match op_chars in scan.l */
-	if (strspn(name, "~!@#^&|`?$+-*/%<>=") != len)
+	if (strspn(name, "~!@#^&|`?+-*/%<>=") != len)
 		return false;
 
 	/* Can't contain slash-star or dash-dash (comment starts) */
@@ -102,7 +102,7 @@ validOperatorName(const char *name)
 
 		for (ic = len - 2; ic >= 0; ic--)
 		{
-			if (strchr("~!@#^&|`?$%", name[ic]))
+			if (strchr("~!@#^&|`?%", name[ic]))
 				break;
 		}
 		if (ic < 0)
@@ -212,7 +212,10 @@ OperatorShellMake(const char *operatorName,
 	 * validate operator name
 	 */
 	if (!validOperatorName(operatorName))
-		elog(ERROR, "\"%s\" is not a valid operator name", operatorName);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("\"%s\" is not a valid operator name",
+						operatorName)));
 
 	/*
 	 * initialize our *nulls and *values arrays
@@ -398,22 +401,35 @@ OperatorCreate(const char *operatorName,
 	 * Sanity checks
 	 */
 	if (!validOperatorName(operatorName))
-		elog(ERROR, "\"%s\" is not a valid operator name", operatorName);
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("\"%s\" is not a valid operator name",
+						operatorName)));
 
 	if (!OidIsValid(leftTypeId) && !OidIsValid(rightTypeId))
-		elog(ERROR, "at least one of leftarg or rightarg must be specified");
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("at least one of leftarg or rightarg must be specified")));
 
 	if (!(OidIsValid(leftTypeId) && OidIsValid(rightTypeId)))
 	{
 		/* If it's not a binary op, these things mustn't be set: */
 		if (commutatorName)
-			elog(ERROR, "only binary operators can have commutators");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can have commutators")));
 		if (joinName)
-			elog(ERROR, "only binary operators can have join selectivity");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can have join selectivity")));
 		if (canHash)
-			elog(ERROR, "only binary operators can hash");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can hash")));
 		if (leftSortName || rightSortName || ltCompareName || gtCompareName)
-			elog(ERROR, "only binary operators can mergejoin");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("only binary operators can mergejoin")));
 	}
 
 	operatorObjectId = OperatorGet(operatorName,
@@ -423,8 +439,10 @@ OperatorCreate(const char *operatorName,
 								   &operatorAlreadyDefined);
 
 	if (operatorAlreadyDefined)
-		elog(ERROR, "OperatorDef: operator \"%s\" already defined",
-			 operatorName);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_FUNCTION),
+				 errmsg("operator %s already exists",
+						operatorName)));
 
 	/*
 	 * At this point, if operatorObjectId is not InvalidOid then we are
@@ -615,7 +633,7 @@ OperatorCreate(const char *operatorName,
 								 ObjectIdGetDatum(operatorObjectId),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
-			elog(ERROR, "OperatorDef: operator %u not found",
+			elog(ERROR, "cache lookup failed for operator %u",
 				 operatorObjectId);
 
 		tup = heap_modifytuple(tup,
@@ -703,7 +721,9 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 		 * only self-linkage for commutation makes sense.
 		 */
 		if (!isCommutator)
-			elog(ERROR, "operator cannot be its own negator or sort operator");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+					 errmsg("operator cannot be its own negator or sort operator")));
 		return InvalidOid;
 	}
 
@@ -718,10 +738,6 @@ get_other_operator(List *otherOp, Oid otherLeftTypeId, Oid otherRightTypeId,
 								  otherNamespace,
 								  otherLeftTypeId,
 								  otherRightTypeId);
-	if (!OidIsValid(other_oid))
-		elog(ERROR,
-			 "OperatorDef: can't create operator shell \"%s\"",
-			 NameListToString(otherOp));
 	return other_oid;
 }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.83 2003/07/04 02:51:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.84 2003/07/21 01:59:07 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -119,7 +119,9 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 		 * the situation is impossible to clean up.
 		 */
 		if (is_grant && idtype != ACL_IDTYPE_UID && grant_option)
-			elog(ERROR, "grant options can only be granted to individual users");
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+					 errmsg("grant options can only be granted to individual users")));
 
 		aclitem.ai_grantor = GetUserId();
 
@@ -163,7 +165,8 @@ ExecuteGrantStmt(GrantStmt *stmt)
 			ExecuteGrantStmt_Namespace(stmt);
 			break;
 		default:
-			elog(ERROR, "bogus GrantStmt.objtype %d", (int) stmt->objtype);
+			elog(ERROR, "unrecognized GrantStmt.objtype: %d",
+				 (int) stmt->objtype);
 	}
 }
 
@@ -183,8 +186,10 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 			AclMode		priv = lfirsti(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_RELATION))
-				elog(ERROR, "invalid privilege type %s for table object",
-					 privilege_to_string(priv));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("invalid privilege type %s for table",
+								privilege_to_string(priv))));
 			privileges |= priv;
 		}
 	}
@@ -212,7 +217,7 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 							   ObjectIdGetDatum(relOid),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "relation %u not found", relOid);
+			elog(ERROR, "cache lookup failed for relation %u", relOid);
 		pg_class_tuple = (Form_pg_class) GETSTRUCT(tuple);
 
 		if (stmt->is_grant
@@ -220,9 +225,12 @@ ExecuteGrantStmt_Relation(GrantStmt *stmt)
 			&& pg_class_aclcheck(relOid, GetUserId(), ACL_GRANT_OPTION_FOR(privileges)) != ACLCHECK_OK)
 			aclcheck_error(ACLCHECK_NO_PRIV, relvar->relname);
 
+		/* Not sensible to grant on an index */
 		if (pg_class_tuple->relkind == RELKIND_INDEX)
-			elog(ERROR, "\"%s\" is an index",
-				 relvar->relname);
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is an index",
+							relvar->relname)));
 
 		/*
 		 * If there's no ACL, create a default using the pg_class.relowner
@@ -281,8 +289,10 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 			AclMode		priv = lfirsti(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_DATABASE))
-				elog(ERROR, "invalid privilege type %s for database object",
-					 privilege_to_string(priv));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("invalid privilege type %s for database",
+								privilege_to_string(priv))));
 			privileges |= priv;
 		}
 	}
@@ -311,7 +321,9 @@ ExecuteGrantStmt_Database(GrantStmt *stmt)
 		scan = heap_beginscan(relation, SnapshotNow, 1, entry);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "database \"%s\" not found", dbname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("database \"%s\" does not exist", dbname)));
 		pg_database_tuple = (Form_pg_database) GETSTRUCT(tuple);
 
 		if (stmt->is_grant
@@ -375,8 +387,10 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 			AclMode		priv = lfirsti(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_FUNCTION))
-				elog(ERROR, "invalid privilege type %s for function object",
-					 privilege_to_string(priv));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("invalid privilege type %s for function",
+								privilege_to_string(priv))));
 			privileges |= priv;
 		}
 	}
@@ -404,7 +418,7 @@ ExecuteGrantStmt_Function(GrantStmt *stmt)
 							   ObjectIdGetDatum(oid),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "function %u not found", oid);
+			elog(ERROR, "cache lookup failed for function %u", oid);
 		pg_proc_tuple = (Form_pg_proc) GETSTRUCT(tuple);
 
 		if (stmt->is_grant
@@ -470,8 +484,10 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 			AclMode		priv = lfirsti(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_LANGUAGE))
-				elog(ERROR, "invalid privilege type %s for language object",
-					 privilege_to_string(priv));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("invalid privilege type %s for language",
+								privilege_to_string(priv))));
 			privileges |= priv;
 		}
 	}
@@ -496,11 +512,15 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 							   PointerGetDatum(langname),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "language \"%s\" not found", langname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("language \"%s\" does not exist", langname)));
 		pg_language_tuple = (Form_pg_language) GETSTRUCT(tuple);
 
 		if (!pg_language_tuple->lanpltrusted && stmt->is_grant)
-			elog(ERROR, "language \"%s\" is not trusted", langname);
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("language \"%s\" is not trusted", langname)));
 
 		if (stmt->is_grant
 			&& !superuser()
@@ -563,8 +583,10 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 			AclMode		priv = lfirsti(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_NAMESPACE))
-				elog(ERROR, "invalid privilege type %s for namespace object",
-					 privilege_to_string(priv));
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_GRANT_OPERATION),
+						 errmsg("invalid privilege type %s for schema",
+								privilege_to_string(priv))));
 			privileges |= priv;
 		}
 	}
@@ -589,7 +611,9 @@ ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 							   CStringGetDatum(nspname),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "namespace \"%s\" not found", nspname);
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+					 errmsg("schema \"%s\" does not exist", nspname)));
 		pg_namespace_tuple = (Form_pg_namespace) GETSTRUCT(tuple);
 
 		if (stmt->is_grant
@@ -668,8 +692,7 @@ privilege_to_string(AclMode privilege)
 		case ACL_CREATE_TEMP:
 			return "TEMP";
 		default:
-			elog(ERROR, "privilege_to_string: unrecognized privilege %d",
-				 privilege);
+			elog(ERROR, "unrecognized privilege: %d", (int) privilege);
 	}
 	return NULL;				/* appease compiler */
 }
@@ -690,7 +713,9 @@ get_grosysid(char *groname)
 		ReleaseSysCache(tuple);
 	}
 	else
-		elog(ERROR, "non-existent group \"%s\"", groname);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("group \"%s\" does not exist", groname)));
 	return id;
 }
 
@@ -760,7 +785,9 @@ in_group(AclId uid, AclId gid)
 		ReleaseSysCache(tuple);
 	}
 	else
-		elog(WARNING, "in_group: group %u not found", gid);
+		ereport(WARNING,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("group with ID %u does not exist", gid)));
 	return result;
 }
 
@@ -785,7 +812,7 @@ aclcheck(Acl *acl, AclId userid, AclMode mode)
 	 */
 	if (acl == NULL)
 	{
-		elog(ERROR, "aclcheck: internal error -- null ACL");
+		elog(ERROR, "null ACL");
 		return ACLCHECK_NO_PRIV;
 	}
 
@@ -823,22 +850,25 @@ aclcheck(Acl *acl, AclId userid, AclMode mode)
  * Standardized reporting of aclcheck permissions failures.
  */
 void
-aclcheck_error(AclResult errcode, const char *objectname)
+aclcheck_error(AclResult aclerr, const char *objectname)
 {
-	switch (errcode)
+	switch (aclerr)
 	{
 		case ACLCHECK_OK:
 			/* no error, so return to caller */
 			break;
 		case ACLCHECK_NO_PRIV:
-			elog(ERROR, "%s: permission denied", objectname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("permission denied for \"%s\"", objectname)));
 			break;
 		case ACLCHECK_NOT_OWNER:
-			elog(ERROR, "%s: must be owner", objectname);
+			ereport(ERROR,
+					(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+					 errmsg("must be owner of \"%s\"", objectname)));
 			break;
 		default:
-			elog(ERROR, "%s: unexpected AclResult %d",
-				 objectname, (int) errcode);
+			elog(ERROR, "unrecognized AclResult: %d", (int) aclerr);
 			break;
 	}
 }
@@ -846,6 +876,11 @@ aclcheck_error(AclResult errcode, const char *objectname)
 
 /*
  * Exported routine for checking a user's access privileges to a table
+ *
+ * Note: we give lookup failure the full ereport treatment because the
+ * has_table_privilege() family of functions allow users to pass
+ * any random OID to this function.  Likewise for the sibling functions
+ * below.
  */
 AclResult
 pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
@@ -865,7 +900,9 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 						   ObjectIdGetDatum(userid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_class_aclcheck: invalid user id %u", userid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("user with ID %u does not exist", userid)));
 
 	usecatupd = ((Form_pg_shadow) GETSTRUCT(tuple))->usecatupd;
 
@@ -880,7 +917,9 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 						   ObjectIdGetDatum(table_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_class_aclcheck: relation %u not found", table_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation with OID %u does not exist", table_oid)));
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
@@ -893,7 +932,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 		!usecatupd)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG2, "pg_class_aclcheck: catalog update: permission denied");
+		elog(DEBUG2, "permission denied for system catalog update");
 #endif
 		ReleaseSysCache(tuple);
 		return ACLCHECK_NO_PRIV;
@@ -905,7 +944,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 	if (usesuper)
 	{
 #ifdef ACLDEBUG
-		elog(DEBUG2, "pg_class_aclcheck: %u is superuser", userid);
+		elog(DEBUG2, "%u is superuser, home free", userid);
 #endif
 		ReleaseSysCache(tuple);
 		return ACLCHECK_OK;
@@ -973,7 +1012,9 @@ pg_database_aclcheck(Oid db_oid, AclId userid, AclMode mode)
 	scan = heap_beginscan(pg_database, SnapshotNow, 1, entry);
 	tuple = heap_getnext(scan, ForwardScanDirection);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_database_aclcheck: database %u not found", db_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database with OID %u does not exist", db_oid)));
 
 	aclDatum = heap_getattr(tuple, Anum_pg_database_datacl,
 							RelationGetDescr(pg_database), &isNull);
@@ -1028,7 +1069,9 @@ pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode)
 						   ObjectIdGetDatum(proc_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_proc_aclcheck: function %u not found", proc_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function with OID %u does not exist", proc_oid)));
 
 	aclDatum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proacl,
 							   &isNull);
@@ -1075,13 +1118,15 @@ pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode)
 		return ACLCHECK_OK;
 
 	/*
-	 * Get the function's ACL from pg_language
+	 * Get the language's ACL from pg_language
 	 */
 	tuple = SearchSysCache(LANGOID,
 						   ObjectIdGetDatum(lang_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_language_aclcheck: language %u not found", lang_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("language with OID %u does not exist", lang_oid)));
 
 	aclDatum = SysCacheGetAttr(LANGOID, tuple, Anum_pg_language_lanacl,
 							   &isNull);
@@ -1132,13 +1177,15 @@ pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode)
 		return ACLCHECK_OK;
 
 	/*
-	 * Get the function's ACL from pg_namespace
+	 * Get the schema's ACL from pg_namespace
 	 */
 	tuple = SearchSysCache(NAMESPACEOID,
 						   ObjectIdGetDatum(nsp_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_namespace_aclcheck: namespace %u not found", nsp_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema with OID %u does not exist", nsp_oid)));
 
 	aclDatum = SysCacheGetAttr(NAMESPACEOID, tuple, Anum_pg_namespace_nspacl,
 							   &isNull);
@@ -1186,7 +1233,9 @@ pg_class_ownercheck(Oid class_oid, AclId userid)
 						   ObjectIdGetDatum(class_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_class_ownercheck: relation %u not found", class_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+				 errmsg("relation with OID %u does not exist", class_oid)));
 
 	owner_id = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
 
@@ -1212,7 +1261,9 @@ pg_type_ownercheck(Oid type_oid, AclId userid)
 						   ObjectIdGetDatum(type_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_type_ownercheck: type %u not found", type_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("type with OID %u does not exist", type_oid)));
 
 	owner_id = ((Form_pg_type) GETSTRUCT(tuple))->typowner;
 
@@ -1238,7 +1289,9 @@ pg_oper_ownercheck(Oid oper_oid, AclId userid)
 						   ObjectIdGetDatum(oper_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_oper_ownercheck: operator %u not found", oper_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("operator with OID %u does not exist", oper_oid)));
 
 	owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
 
@@ -1264,7 +1317,9 @@ pg_proc_ownercheck(Oid proc_oid, AclId userid)
 						   ObjectIdGetDatum(proc_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_proc_ownercheck: function %u not found", proc_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("function with OID %u does not exist", proc_oid)));
 
 	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
 
@@ -1290,8 +1345,9 @@ pg_namespace_ownercheck(Oid nsp_oid, AclId userid)
 						   ObjectIdGetDatum(nsp_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_namespace_ownercheck: namespace %u not found",
-			 nsp_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_SCHEMA),
+				 errmsg("schema with OID %u does not exist", nsp_oid)));
 
 	owner_id = ((Form_pg_namespace) GETSTRUCT(tuple))->nspowner;
 
@@ -1317,8 +1373,10 @@ pg_opclass_ownercheck(Oid opc_oid, AclId userid)
 						   ObjectIdGetDatum(opc_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "pg_opclass_ownercheck: operator class %u not found",
-			 opc_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator class with OID %u does not exist",
+						opc_oid)));
 
 	owner_id = ((Form_pg_opclass) GETSTRUCT(tuple))->opcowner;
 
@@ -1354,7 +1412,9 @@ pg_database_ownercheck(Oid db_oid, AclId userid)
 	dbtuple = heap_getnext(scan, ForwardScanDirection);
 
 	if (!HeapTupleIsValid(dbtuple))
-		elog(ERROR, "database %u does not exist", db_oid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database with OID %u does not exist", db_oid)));
 
 	dba = ((Form_pg_database) GETSTRUCT(dbtuple))->datdba;
 

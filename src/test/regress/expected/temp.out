@@ -44,7 +44,7 @@ DROP TABLE temptest;
 CREATE TEMP TABLE temptest(col int);
 \c regression
 SELECT * FROM temptest;
-ERROR:  Relation "temptest" does not exist
+ERROR:  relation "temptest" does not exist
 -- Test ON COMMIT DELETE ROWS
 CREATE TEMP TABLE temptest(col int) ON COMMIT DELETE ROWS;
 BEGIN;
@@ -78,7 +78,7 @@ SELECT * FROM temptest;
 
 COMMIT;
 SELECT * FROM temptest;
-ERROR:  Relation "temptest" does not exist
+ERROR:  relation "temptest" does not exist
 -- ON COMMIT is only allowed for TEMP
 CREATE TABLE temptest(col int) ON COMMIT DELETE ROWS;
 ERROR:  ON COMMIT can only be used on TEMP tables

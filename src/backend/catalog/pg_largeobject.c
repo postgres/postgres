@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.14 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_largeobject.c,v 1.15 2003/07/21 01:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,9 @@ LargeObjectDrop(Oid loid)
 	heap_close(pg_largeobject, RowShareLock);
 
 	if (!found)
-		elog(ERROR, "LargeObjectDrop: large object %u not found", loid);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("large object %u does not exist", loid)));
 }
 
 bool

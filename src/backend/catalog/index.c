@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.211 2003/05/29 00:54:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.212 2003/07/21 01:59:08 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -156,9 +156,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 				/*
 				 * here we are indexing on a normal attribute (1...n)
 				 */
-				if (atnum > natts)
-					elog(ERROR, "cannot create index: column %d does not exist",
-						 atnum);
+				if (atnum > natts)		/* safety check */
+					elog(ERROR, "invalid column number %d", atnum);
 				from = heapTupDesc->attrs[AttrNumberGetAttrOffset(atnum)];
 			}
 
@@ -186,7 +185,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 			/* Expressional index */
 			Node	   *indexkey;
 
-			if (indexprs == NIL)
+			if (indexprs == NIL)		/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");
 			indexkey = (Node *) lfirst(indexprs);
 			indexprs = lnext(indexprs);
@@ -205,7 +204,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 								   ObjectIdGetDatum(keyType),
 								   0, 0, 0);
 			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "Type %u does not exist", keyType);
+				elog(ERROR, "cache lookup failed for type %u", keyType);
 			typeTup = (Form_pg_type) GETSTRUCT(tuple);
 
 			/*
@@ -239,7 +238,8 @@ ConstructTupleDescriptor(Relation heapRelation,
 							   ObjectIdGetDatum(classObjectId[i]),
 							   0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "Opclass %u does not exist", classObjectId[i]);
+			elog(ERROR, "cache lookup failed for opclass %u",
+				 classObjectId[i]);
 		keyType = ((Form_pg_opclass) GETSTRUCT(tuple))->opckeytype;
 		ReleaseSysCache(tuple);
 
@@ -250,7 +250,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 								   ObjectIdGetDatum(keyType),
 								   0, 0, 0);
 			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "Type %u does not exist", keyType);
+				elog(ERROR, "cache lookup failed for type %u", keyType);
 			typeTup = (Form_pg_type) GETSTRUCT(tuple);
 
 			to->atttypid = keyType;
@@ -520,7 +520,9 @@ index_create(Oid heapRelationId,
 	if (!allow_system_table_mods &&
 		IsSystemRelation(heapRelation) &&
 		IsNormalProcessingMode())
-		elog(ERROR, "User-defined indexes on system catalogs are not supported");
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("user-defined indexes on system catalogs are not supported")));
 
 	/*
 	 * We cannot allow indexing a shared relation after initdb (because
@@ -530,11 +532,15 @@ index_create(Oid heapRelationId,
 	 * under normal multi-user operation.
 	 */
 	if (shared_relation && IsUnderPostmaster)
-		elog(ERROR, "Shared indexes cannot be created after initdb");
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("shared indexes cannot be created after initdb")));
 
 	if (get_relname_relid(indexRelationName, namespaceId))
-		elog(ERROR, "relation named \"%s\" already exists",
-			 indexRelationName);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_TABLE),
+				 errmsg("relation \"%s\" already exists",
+						indexRelationName)));
 
 	/*
 	 * construct tuple descriptor for index tuples
@@ -639,7 +645,7 @@ index_create(Oid heapRelationId,
 				constraintType = CONSTRAINT_UNIQUE;
 			else
 			{
-				elog(ERROR, "index_create: constraint must be PRIMARY or UNIQUE");
+				elog(ERROR, "constraint must be PRIMARY or UNIQUE");
 				constraintType = 0;		/* keep compiler quiet */
 			}
 
@@ -807,8 +813,7 @@ index_drop(Oid indexId)
 						   ObjectIdGetDatum(indexId),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "index_drop: cache lookup failed for index %u",
-			 indexId);
+		elog(ERROR, "cache lookup failed for index %u", indexId);
 
 	simple_heap_delete(indexRelation, &tuple->t_self);
 
@@ -820,7 +825,7 @@ index_drop(Oid indexId)
 	 */
 	i = FlushRelationBuffers(userIndexRelation, (BlockNumber) 0);
 	if (i < 0)
-		elog(ERROR, "index_drop: FlushRelationBuffers returned %d", i);
+		elog(ERROR, "FlushRelationBuffers returned %d", i);
 
 	smgrunlink(DEFAULT_SMGR, userIndexRelation);
 
@@ -984,8 +989,10 @@ IndexesAreActive(Relation heaprel)
 
 	if (heaprel->rd_rel->relkind != RELKIND_RELATION &&
 		heaprel->rd_rel->relkind != RELKIND_TOASTVALUE)
-		elog(ERROR, "relation %s isn't an indexable relation",
-			 RelationGetRelationName(heaprel));
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("relation \"%s\" isn't an indexable relation",
+						RelationGetRelationName(heaprel))));
 
 	/* If pg_class.relhasindex is set, indexes are active */
 	isactive = heaprel->rd_rel->relhasindex;
@@ -1055,8 +1062,7 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	}
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "setRelhasindex: cannot find relation %u in pg_class",
-			 relid);
+		elog(ERROR, "could not find tuple for relation %u", relid);
 
 	/*
 	 * Update fields in the pg_class tuple.
@@ -1171,7 +1177,7 @@ setNewRelfilenode(Relation relation)
 	}
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "setNewRelfilenode: cannot find relation %u in pg_class",
+		elog(ERROR, "could not find tuple for relation %u",
 			 RelationGetRelid(relation));
 	rd_rel = (Form_pg_class) GETSTRUCT(tuple);
 
@@ -1283,8 +1289,7 @@ UpdateStats(Oid relid, double reltuples)
 	}
 
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "UpdateStats: cannot find relation %u in pg_class",
-			 relid);
+		elog(ERROR, "could not find tuple for relation %u", relid);
 
 	/*
 	 * Figure values to insert.
@@ -1558,7 +1563,7 @@ IndexBuildHeapScan(Relation heapRelation,
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
 							  HeapTupleHeaderGetXmin(heapTuple->t_data)))
-						elog(ERROR, "IndexBuildHeapScan: concurrent insert in progress");
+						elog(ERROR, "concurrent insert in progress");
 					indexIt = true;
 					tupleIsAlive = true;
 					break;
@@ -1573,12 +1578,12 @@ IndexBuildHeapScan(Relation heapRelation,
 					 */
 					if (!TransactionIdIsCurrentTransactionId(
 							  HeapTupleHeaderGetXmax(heapTuple->t_data)))
-						elog(ERROR, "IndexBuildHeapScan: concurrent delete in progress");
+						elog(ERROR, "concurrent delete in progress");
 					indexIt = true;
 					tupleIsAlive = false;
 					break;
 				default:
-					elog(ERROR, "Unexpected HeapTupleSatisfiesVacuum result");
+					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
 					indexIt = tupleIsAlive = false;		/* keep compiler quiet */
 					break;
 			}
@@ -1673,8 +1678,7 @@ IndexGetRelation(Oid indexId)
 						   ObjectIdGetDatum(indexId),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "IndexGetRelation: can't find index id %u",
-			 indexId);
+		elog(ERROR, "cache lookup failed for index %u", indexId);
 	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);
 
@@ -1721,8 +1725,6 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	 * index is locked down.
 	 */
 	iRel = index_open(indexId);
-	if (iRel == NULL)
-		elog(ERROR, "reindex_index: can't open index relation");
 	LockRelation(iRel, AccessExclusiveLock);
 
 	old = SetReindexProcessing(true);
@@ -1732,8 +1734,6 @@ reindex_index(Oid indexId, bool force, bool inplace)
 
 	/* Open the parent heap relation */
 	heapRelation = heap_open(heapId, AccessExclusiveLock);
-	if (heapRelation == NULL)
-		elog(ERROR, "reindex_index: can't open heap relation");
 
 	/*
 	 * If it's a shared index, we must do inplace processing (because we
@@ -1747,13 +1747,17 @@ reindex_index(Oid indexId, bool force, bool inplace)
 	if (iRel->rd_rel->relisshared)
 	{
 		if (!IsIgnoringSystemIndexes())
-			elog(ERROR, "the target relation %u is shared", indexId);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("the target relation %u is shared", indexId)));
 		inplace = true;
 	}
 	if (iRel->rd_isnailed)
 	{
 		if (!IsIgnoringSystemIndexes())
-			elog(ERROR, "the target relation %u is nailed", indexId);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("the target relation %u is nailed", indexId)));
 		inplace = true;
 	}
 
@@ -1870,7 +1874,9 @@ reindex_relation(Oid relid, bool force)
 			deactivate_needed = true;
 		}
 		else
-			elog(ERROR, "the target relation %u is shared", relid);
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+					 errmsg("the target relation %u is shared", relid)));
 	}
 
 	old = SetReindexProcessing(true);

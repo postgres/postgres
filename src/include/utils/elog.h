@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: elog.h,v 1.50 2003/07/20 21:56:35 tgl Exp $
+ * $Id: elog.h,v 1.51 2003/07/21 01:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,8 @@
 #define ERRCODE_WARNING_NULL_VALUE_ELIMINATED_IN_SET_FUNCTION	MAKE_SQLSTATE('0','1', '0','0','3')
 #define ERRCODE_WARNING_STRING_DATA_RIGHT_TRUNCATION	MAKE_SQLSTATE('0','1', '0','0','4')
 
-/* Class 02 - No Data */
+/* Class 02 - No Data --- this is also a warning class per SQL99 */
+/* (do not use this class for failure conditions!) */
 #define ERRCODE_NO_DATA						MAKE_SQLSTATE('0','2', '0','0','0')
 #define ERRCODE_NO_ADDITIONAL_DYNAMIC_RESULT_SETS_RETURNED	MAKE_SQLSTATE('0','2', '0','0','1')
 
@@ -111,6 +112,7 @@
 
 /* Class 0L - Invalid Grantor */
 #define ERRCODE_INVALID_GRANTOR				MAKE_SQLSTATE('0','L', '0','0','0')
+#define ERRCODE_INVALID_GRANT_OPERATION		MAKE_SQLSTATE('0','L', 'P','0','1')
 
 /* Class 0P - Invalid Role Specification */
 #define ERRCODE_INVALID_ROLE_SPECIFICATION	MAKE_SQLSTATE('0','P', '0','0','0')
@@ -186,6 +188,7 @@
 
 /* Class 2B - Dependent Privilege Descriptors Still Exist */
 #define ERRCODE_DEPENDENT_PRIVILEGE_DESCRIPTORS_STILL_EXIST		MAKE_SQLSTATE('2','B', '0','0','0')
+#define ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST		MAKE_SQLSTATE('2','B', 'P','0','1')
 
 /* Class 2D - Invalid Transaction Termination */
 #define ERRCODE_INVALID_TRANSACTION_TERMINATION		MAKE_SQLSTATE('2','D', '0','0','0')

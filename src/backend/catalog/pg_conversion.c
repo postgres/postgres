@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.10 2003/01/27 00:45:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_conversion.c,v 1.11 2003/07/21 01:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,9 @@ ConversionCreate(const char *conname, Oid connamespace,
 							 PointerGetDatum(conname),
 							 ObjectIdGetDatum(connamespace),
 							 0, 0))
-		elog(ERROR, "conversion name \"%s\" already exists", conname);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("conversion \"%s\" already exists", conname)));
 
 	if (def)
 	{
@@ -72,9 +74,11 @@ ConversionCreate(const char *conname, Oid connamespace,
 		if (FindDefaultConversion(connamespace,
 								  conforencoding,
 								  contoencoding))
-			elog(ERROR, "default conversion for %s to %s already exists",
-				 pg_encoding_to_char(conforencoding),
-				 pg_encoding_to_char(contoencoding));
+			ereport(ERROR,
+					(errcode(ERRCODE_DUPLICATE_OBJECT),
+					 errmsg("default conversion for \"%s\" to \"%s\" already exists",
+							pg_encoding_to_char(conforencoding),
+							pg_encoding_to_char(contoencoding))));
 	}
 
 	/* open pg_conversion */
@@ -138,12 +142,13 @@ ConversionDrop(Oid conversionOid, DropBehavior behavior)
 						   ObjectIdGetDatum(conversionOid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Conversion %u search from syscache failed",
-			 conversionOid);
+		elog(ERROR, "cache lookup failed for conversion %u", conversionOid);
 
 	if (!superuser() &&
 		((Form_pg_conversion) GETSTRUCT(tuple))->conowner != GetUserId())
-		elog(ERROR, "DROP CONVERSION: permission denied");
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied")));
 
 	ReleaseSysCache(tuple);
 
@@ -189,7 +194,7 @@ RemoveConversionById(Oid conversionOid)
 	if (HeapTupleIsValid(tuple = heap_getnext(scan, ForwardScanDirection)))
 		simple_heap_delete(rel, &tuple->t_self);
 	else
-		elog(ERROR, "conversion %u does not exist", conversionOid);
+		elog(ERROR, "could not find tuple for conversion %u", conversionOid);
 	heap_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
 }
@@ -299,13 +304,16 @@ pg_convert_using(PG_FUNCTION_ARGS)
 	parsed_name = textToQualifiedNameList(conv_name, "convert_using");
 	convoid = FindConversionByName(parsed_name);
 	if (!OidIsValid(convoid))
-		elog(ERROR, "conversion %s not found", NameListToString(parsed_name));
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("conversion \"%s\" does not exist",
+						NameListToString(parsed_name))));
 
 	tuple = SearchSysCache(CONOID,
 						   ObjectIdGetDatum(convoid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "Conversion %u search from syscache failed", convoid);
+		elog(ERROR, "cache lookup failed for conversion %u", convoid);
 	body = (Form_pg_conversion) GETSTRUCT(tuple);
 
 	/* Temporary result area should be more than big enough */

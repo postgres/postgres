@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.26 2003/06/29 00:33:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.27 2003/07/21 01:59:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,9 +168,11 @@ performDeletion(const ObjectAddress *object,
 
 	if (!recursiveDeletion(object, behavior, NOTICE,
 						   NULL, &oktodelete, depRel))
-		elog(ERROR, "Cannot drop %s because other objects depend on it"
-			 "\n\tUse DROP ... CASCADE to drop the dependent objects too",
-			 objDescription);
+		ereport(ERROR,
+				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+				 errmsg("cannot drop %s because other objects depend on it",
+						objDescription),
+				 errhint("Use DROP ... CASCADE to drop the dependent objects too.")));
 
 	term_object_addresses(&oktodelete);
 
@@ -226,8 +228,10 @@ deleteWhatDependsOn(const ObjectAddress *object,
 								DROP_CASCADE,
 								showNotices ? NOTICE : DEBUG2,
 								&oktodelete, depRel))
-		elog(ERROR, "Failed to drop all objects depending on %s",
-			 objDescription);
+		ereport(ERROR,
+				(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+				 errmsg("failed to drop all objects depending on %s",
+						objDescription)));
 
 	/*
 	 * We do not need CommandCounterIncrement here, since if step 2 did
@@ -316,15 +320,17 @@ findAutoDeletableObjects(const ObjectAddress *object,
 				break;
 			case DEPENDENCY_PIN:
 				/*
-				 * For a PIN dependency we just elog immediately; there
+				 * For a PIN dependency we just ereport immediately; there
 				 * won't be any others to examine, and we aren't ever
 				 * going to let the user delete it.
 				 */
-				elog(ERROR, "Cannot drop %s because it is required by the database system",
-					 getObjectDescription(object));
+				ereport(ERROR,
+						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						 errmsg("cannot drop %s because it is required by the database system",
+								getObjectDescription(object))));
 				break;
 			default:
-				elog(ERROR, "findAutoDeletableObjects: unknown dependency type '%c' for %s",
+				elog(ERROR, "unrecognized dependency type '%c' for %s",
 					 foundDep->deptype, getObjectDescription(object));
 				break;
 		}
@@ -349,7 +355,7 @@ findAutoDeletableObjects(const ObjectAddress *object,
  * depRel is the already-open pg_depend relation.
  *
  *
- * In RESTRICT mode, we perform all the deletions anyway, but elog a message
+ * In RESTRICT mode, we perform all the deletions anyway, but ereport a message
  * and return FALSE if we find a restriction violation.  performDeletion
  * will then abort the transaction to nullify the deletions.  We have to
  * do it this way to (a) report all the direct and indirect dependencies
@@ -447,16 +453,19 @@ recursiveDeletion(const ObjectAddress *object,
 				 * another object.	We have three cases:
 				 *
 				 * 1. At the outermost recursion level, disallow the DROP.
-				 * (We just elog here, rather than proceeding, since no
+				 * (We just ereport here, rather than proceeding, since no
 				 * other dependencies are likely to be interesting.)
 				 */
 				if (callingObject == NULL)
 				{
 					char	   *otherObjDesc = getObjectDescription(&otherObject);
 
-					elog(ERROR, "Cannot drop %s because %s requires it"
-						 "\n\tYou may drop %s instead",
-						 objDescription, otherObjDesc, otherObjDesc);
+					ereport(ERROR,
+							(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+							 errmsg("cannot drop %s because %s requires it",
+									objDescription, otherObjDesc),
+							 errhint("You may drop %s instead.",
+									 otherObjDesc)));
 				}
 
 				/*
@@ -480,7 +489,7 @@ recursiveDeletion(const ObjectAddress *object,
 				 * owning object to recurse back to me.
 				 */
 				if (amOwned)	/* shouldn't happen */
-					elog(ERROR, "recursiveDeletion: multiple INTERNAL dependencies for %s",
+					elog(ERROR, "multiple INTERNAL dependencies for %s",
 						 objDescription);
 				owningObject = otherObject;
 				amOwned = true;
@@ -492,11 +501,11 @@ recursiveDeletion(const ObjectAddress *object,
 				 * Should not happen; PIN dependencies should have zeroes
 				 * in the depender fields...
 				 */
-				elog(ERROR, "recursiveDeletion: incorrect use of PIN dependency with %s",
+				elog(ERROR, "incorrect use of PIN dependency with %s",
 					 objDescription);
 				break;
 			default:
-				elog(ERROR, "recursiveDeletion: unknown dependency type '%c' for %s",
+				elog(ERROR, "unrecognized dependency type '%c' for %s",
 					 foundDep->deptype, objDescription);
 				break;
 		}
@@ -522,18 +531,21 @@ recursiveDeletion(const ObjectAddress *object,
 	if (amOwned)
 	{
 		if (object_address_present(&owningObject, oktodelete))
-			elog(DEBUG2, "Drop auto-cascades to %s",
-				 getObjectDescription(&owningObject));
+			ereport(DEBUG2,
+					(errmsg("drop auto-cascades to %s",
+							getObjectDescription(&owningObject))));
 		else if (behavior == DROP_RESTRICT)
 		{
-			elog(msglevel, "%s depends on %s",
-				 getObjectDescription(&owningObject),
-				 objDescription);
+			ereport(msglevel,
+					(errmsg("%s depends on %s",
+							getObjectDescription(&owningObject),
+							objDescription)));
 			ok = false;
 		}
 		else
-			elog(msglevel, "Drop cascades to %s",
-				 getObjectDescription(&owningObject));
+			ereport(msglevel,
+					(errmsg("drop cascades to %s",
+							getObjectDescription(&owningObject))));
 
 		if (!recursiveDeletion(&owningObject, behavior, msglevel,
 							   object, oktodelete, depRel))
@@ -669,18 +681,21 @@ deleteDependentObjects(const ObjectAddress *object,
 				 * In that case, act like this link is AUTO, too.
 				 */
 				if (object_address_present(&otherObject, oktodelete))
-					elog(DEBUG2, "Drop auto-cascades to %s",
-						 getObjectDescription(&otherObject));
+					ereport(DEBUG2,
+							(errmsg("drop auto-cascades to %s",
+									getObjectDescription(&otherObject))));
 				else if (behavior == DROP_RESTRICT)
 				{
-					elog(msglevel, "%s depends on %s",
-						 getObjectDescription(&otherObject),
-						 objDescription);
+					ereport(msglevel,
+							(errmsg("%s depends on %s",
+									getObjectDescription(&otherObject),
+									objDescription)));
 					ok = false;
 				}
 				else
-					elog(msglevel, "Drop cascades to %s",
-						 getObjectDescription(&otherObject));
+					ereport(msglevel,
+							(errmsg("drop cascades to %s",
+									getObjectDescription(&otherObject))));
 
 				if (!recursiveDeletion(&otherObject, behavior, msglevel,
 									   object, oktodelete, depRel))
@@ -694,8 +709,9 @@ deleteDependentObjects(const ObjectAddress *object,
 				 * RESTRICT case.  (However, normal dependencies on the
 				 * component object could still cause failure.)
 				 */
-				elog(DEBUG2, "Drop auto-cascades to %s",
-					 getObjectDescription(&otherObject));
+				ereport(DEBUG2,
+						(errmsg("drop auto-cascades to %s",
+								getObjectDescription(&otherObject))));
 
 				if (!recursiveDeletion(&otherObject, behavior, msglevel,
 									   object, oktodelete, depRel))
@@ -704,14 +720,16 @@ deleteDependentObjects(const ObjectAddress *object,
 			case DEPENDENCY_PIN:
 
 				/*
-				 * For a PIN dependency we just elog immediately; there
+				 * For a PIN dependency we just ereport immediately; there
 				 * won't be any others to report.
 				 */
-				elog(ERROR, "Cannot drop %s because it is required by the database system",
-					 objDescription);
+				ereport(ERROR,
+						(errcode(ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST),
+						 errmsg("cannot drop %s because it is required by the database system",
+								objDescription)));
 				break;
 			default:
-				elog(ERROR, "recursiveDeletion: unknown dependency type '%c' for %s",
+				elog(ERROR, "unrecognized dependency type '%c' for %s",
 					 foundDep->deptype, objDescription);
 				break;
 		}
@@ -800,7 +818,7 @@ doDeletion(const ObjectAddress *object)
 			break;
 
 		default:
-			elog(ERROR, "doDeletion: Unsupported object class %u",
+			elog(ERROR, "unrecognized object class: %u",
 				 object->classId);
 	}
 }
@@ -968,12 +986,10 @@ find_expr_references_walker(Node *node,
 			rtables = lnext(rtables);
 		}
 		if (rtables == NIL)
-			elog(ERROR, "find_expr_references_walker: bogus varlevelsup %d",
-				 var->varlevelsup);
+			elog(ERROR, "invalid varlevelsup %d", var->varlevelsup);
 		rtable = lfirst(rtables);
 		if (var->varno <= 0 || var->varno > length(rtable))
-			elog(ERROR, "find_expr_references_walker: bogus varno %d",
-				 var->varno);
+			elog(ERROR, "invalid varno %d", var->varno);
 		rte = rt_fetch(var->varno, rtable);
 		if (rte->rtekind == RTE_RELATION)
 		{
@@ -992,8 +1008,7 @@ find_expr_references_walker(Node *node,
 			context->rtables = rtables;
 			if (var->varattno <= 0 ||
 				var->varattno > length(rte->joinaliasvars))
-				elog(ERROR, "find_expr_references_walker: bogus varattno %d",
-					 var->varattno);
+				elog(ERROR, "invalid varattno %d", var->varattno);
 			find_expr_references_walker((Node *) nth(var->varattno - 1,
 													 rte->joinaliasvars),
 										context);
@@ -1064,7 +1079,7 @@ find_expr_references_walker(Node *node,
 	if (is_subplan(node))
 	{
 		/* Extra work needed here if we ever need this case */
-		elog(ERROR, "find_expr_references_walker: already-planned subqueries not supported");
+		elog(ERROR, "already-planned subqueries not supported");
 	}
 	if (IsA(node, Query))
 	{
@@ -1400,8 +1415,7 @@ getObjectClass(const ObjectAddress *object)
 		return OCLASS_SCHEMA;
 	}
 
-	elog(ERROR, "getObjectClass: Unknown object class %u",
-		 object->classId);
+	elog(ERROR, "unrecognized object class: %u", object->classId);
 	return OCLASS_CLASS;		/* keep compiler quiet */
 }
 
@@ -1457,7 +1471,7 @@ getObjectDescription(const ObjectAddress *object)
 				tup = systable_getnext(rcscan);
 
 				if (!HeapTupleIsValid(tup))
-					elog(ERROR, "getObjectDescription: Cast %u does not exist",
+					elog(ERROR, "could not find tuple for cast %u",
 						 object->objectId);
 
 				castForm = (Form_pg_cast) GETSTRUCT(tup);
@@ -1491,7 +1505,7 @@ getObjectDescription(const ObjectAddress *object)
 				tup = systable_getnext(rcscan);
 
 				if (!HeapTupleIsValid(tup))
-					elog(ERROR, "getObjectDescription: Constraint %u does not exist",
+					elog(ERROR, "could not find tuple for constraint %u",
 						 object->objectId);
 
 				con = (Form_pg_constraint) GETSTRUCT(tup);
@@ -1521,7 +1535,7 @@ getObjectDescription(const ObjectAddress *object)
 									  ObjectIdGetDatum(object->objectId),
 										0, 0, 0);
 				if (!HeapTupleIsValid(conTup))
-					elog(ERROR, "getObjectDescription: Conversion %u does not exist",
+					elog(ERROR, "cache lookup failed for conversion %u",
 						 object->objectId);
 				appendStringInfo(&buffer, "conversion %s",
 								 NameStr(((Form_pg_conversion) GETSTRUCT(conTup))->conname));
@@ -1550,7 +1564,7 @@ getObjectDescription(const ObjectAddress *object)
 				tup = systable_getnext(adscan);
 
 				if (!HeapTupleIsValid(tup))
-					elog(ERROR, "getObjectDescription: Default %u does not exist",
+					elog(ERROR, "could not find tuple for attrdef %u",
 						 object->objectId);
 
 				attrdef = (Form_pg_attrdef) GETSTRUCT(tup);
@@ -1575,7 +1589,7 @@ getObjectDescription(const ObjectAddress *object)
 									  ObjectIdGetDatum(object->objectId),
 										 0, 0, 0);
 				if (!HeapTupleIsValid(langTup))
-					elog(ERROR, "getObjectDescription: Language %u does not exist",
+					elog(ERROR, "cache lookup failed for language %u",
 						 object->objectId);
 				appendStringInfo(&buffer, "language %s",
 								 NameStr(((Form_pg_language) GETSTRUCT(langTup))->lanname));
@@ -1600,7 +1614,7 @@ getObjectDescription(const ObjectAddress *object)
 									  ObjectIdGetDatum(object->objectId),
 										0, 0, 0);
 				if (!HeapTupleIsValid(opcTup))
-					elog(ERROR, "cache lookup of opclass %u failed",
+					elog(ERROR, "cache lookup failed for opclass %u",
 						 object->objectId);
 				opcForm = (Form_pg_opclass) GETSTRUCT(opcTup);
 
@@ -1618,7 +1632,7 @@ getObjectDescription(const ObjectAddress *object)
 									   ObjectIdGetDatum(opcForm->opcamid),
 									   0, 0, 0);
 				if (!HeapTupleIsValid(amTup))
-					elog(ERROR, "syscache lookup for AM %u failed",
+					elog(ERROR, "cache lookup failed for access method %u",
 						 opcForm->opcamid);
 				amForm = (Form_pg_am) GETSTRUCT(amTup);
 
@@ -1650,7 +1664,7 @@ getObjectDescription(const ObjectAddress *object)
 				tup = systable_getnext(rcscan);
 
 				if (!HeapTupleIsValid(tup))
-					elog(ERROR, "getObjectDescription: Rule %u does not exist",
+					elog(ERROR, "could not find tuple for rule %u",
 						 object->objectId);
 
 				rule = (Form_pg_rewrite) GETSTRUCT(tup);
@@ -1684,7 +1698,7 @@ getObjectDescription(const ObjectAddress *object)
 				tup = systable_getnext(tgscan);
 
 				if (!HeapTupleIsValid(tup))
-					elog(ERROR, "getObjectDescription: Trigger %u does not exist",
+					elog(ERROR, "could not find tuple for trigger %u",
 						 object->objectId);
 
 				trig = (Form_pg_trigger) GETSTRUCT(tup);
@@ -1704,7 +1718,7 @@ getObjectDescription(const ObjectAddress *object)
 
 				nspname = get_namespace_name(object->objectId);
 				if (!nspname)
-					elog(ERROR, "getObjectDescription: Schema %u does not exist",
+					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
 				appendStringInfo(&buffer, "schema %s", nspname);
 				break;
@@ -1736,7 +1750,7 @@ getRelationDescription(StringInfo buffer, Oid relid)
 							ObjectIdGetDatum(relid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(relTup))
-		elog(ERROR, "cache lookup of relation %u failed", relid);
+		elog(ERROR, "cache lookup failed for relation %u", relid);
 	relForm = (Form_pg_class) GETSTRUCT(relTup);
 
 	/* Qualify the name if not visible in search path */

@@ -358,8 +358,8 @@ NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
 NOTICE:  ALTER TABLE will create implicit trigger(s) for FOREIGN KEY check(s)
 DROP TABLE pktable cascade;
-NOTICE:  Drop cascades to constraint $2 on table fktable
-NOTICE:  Drop cascades to constraint $1 on table fktable
+NOTICE:  drop cascades to constraint $2 on table fktable
+NOTICE:  drop cascades to constraint $1 on table fktable
 DROP TABLE fktable;
 CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
                            PRIMARY KEY(ptest1, ptest2));
@@ -619,9 +619,9 @@ alter table pg_class alter relname set not null;
 ERROR:  "pg_class" is a system catalog
 -- try altering non-existent table, should fail
 alter table non_existent alter column bar set not null;
-ERROR:  Relation "non_existent" does not exist
+ERROR:  relation "non_existent" does not exist
 alter table non_existent alter column bar drop not null;
-ERROR:  Relation "non_existent" does not exist
+ERROR:  relation "non_existent" does not exist
 -- test setting columns to null and not null and vice versa
 -- test checking for null values and primary key
 create table atacc1 (test int not null);
@@ -744,7 +744,7 @@ alter table pg_class drop column relname;
 ERROR:  "pg_class" is a system catalog
 -- try altering non-existent table, should fail
 alter table foo drop column bar;
-ERROR:  Relation "foo" does not exist
+ERROR:  relation "foo" does not exist
 -- test dropping columns
 create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
 insert into atacc1 values (1, 2, 3, 4);
@@ -1074,7 +1074,7 @@ alter table c1 drop column f1;
 select f1 from c1;
 ERROR:  attribute "f1" not found
 drop table p1 cascade;
-NOTICE:  Drop cascades to table c1
+NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
 create table c1 () inherits(p1);
 -- should be rejected since c1.f1 is inherited
@@ -1085,7 +1085,7 @@ alter table p1 drop column f1;
 select f1 from c1;
 ERROR:  attribute "f1" not found
 drop table p1 cascade;
-NOTICE:  Drop cascades to table c1
+NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
 create table c1 () inherits(p1);
 -- should be rejected since c1.f1 is inherited
@@ -1095,7 +1095,7 @@ alter table only p1 drop column f1;
 -- c1.f1 is NOT dropped, but must now be considered non-inherited
 alter table c1 drop column f1;
 drop table p1 cascade;
-NOTICE:  Drop cascades to table c1
+NOTICE:  drop cascades to table c1
 create table p1 (f1 int, f2 int);
 create table c1 (f1 int not null) inherits(p1);
 NOTICE:  merging attribute "f1" with inherited definition
@@ -1106,7 +1106,7 @@ alter table only p1 drop column f1;
 -- c1.f1 is still there, but no longer inherited
 alter table c1 drop column f1;
 drop table p1 cascade;
-NOTICE:  Drop cascades to table c1
+NOTICE:  drop cascades to table c1
 create table p1(id int, name text);
 create table p2(id2 int, name text, height int);
 create table c1(age int) inherits(p1,p2);
@@ -1166,8 +1166,8 @@ order by relname, attnum;
 (8 rows)
 
 drop table p1, p2 cascade;
-NOTICE:  Drop cascades to table c1
-NOTICE:  Drop cascades to table gc1
+NOTICE:  drop cascades to table c1
+NOTICE:  drop cascades to table gc1
 --
 -- Test the ALTER TABLE WITHOUT OIDS command
 --
@@ -1250,8 +1250,8 @@ select * from p1;
 (2 rows)
 
 drop table p1 cascade;
-NOTICE:  Drop cascades to table c1
-NOTICE:  Drop cascades to constraint p1_a1 on table c1
+NOTICE:  drop cascades to table c1
+NOTICE:  drop cascades to constraint p1_a1 on table c1
 -- test that operations with a dropped column do not try to reference
 -- its datatype
 create domain mytype as text;
@@ -1264,7 +1264,7 @@ select * from foo;
 (1 row)
 
 drop domain mytype cascade;
-NOTICE:  Drop cascades to table foo column f2
+NOTICE:  drop cascades to table foo column f2
 select * from foo;
  f1 | f3 
 ----+----

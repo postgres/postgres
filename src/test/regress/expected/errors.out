@@ -25,7 +25,7 @@ select;
 ERROR:  syntax error at or near ";" at character 7
 -- no such relation 
 select * from nonesuch;
-ERROR:  Relation "nonesuch" does not exist
+ERROR:  relation "nonesuch" does not exist
 -- missing target list
 select from pg_database;
 ERROR:  syntax error at or near "from" at character 8
@@ -52,7 +52,7 @@ delete from;
 ERROR:  syntax error at or near ";" at character 12
 -- no such relation 
 delete from nonesuch;
-ERROR:  Relation "nonesuch" does not exist
+ERROR:  relation "nonesuch" does not exist
 --
 -- DROP
  
@@ -71,10 +71,10 @@ alter table rename;
 ERROR:  syntax error at or near ";" at character 19
 -- no such relation 
 alter table nonesuch rename to newnonesuch;
-ERROR:  Relation "nonesuch" does not exist
+ERROR:  relation "nonesuch" does not exist
 -- no such relation 
 alter table nonesuch rename to stud_emp;
-ERROR:  Relation "nonesuch" does not exist
+ERROR:  relation "nonesuch" does not exist
 -- conflict 
 alter table stud_emp rename to aggtest;
 ERROR:  relation "aggtest" already exists
@@ -84,7 +84,7 @@ ERROR:  relation "stud_emp" already exists
 -- attribute renaming 
 -- no such relation 
 alter table nonesuchrel rename column nonesuchatt to newnonesuchatt;
-ERROR:  Relation "nonesuchrel" does not exist
+ERROR:  relation "nonesuchrel" does not exist
 -- no such attribute 
 alter table emp rename column nonesuchatt to newnonesuchatt;
 ERROR:  attribute "nonesuchatt" does not exist
@@ -227,7 +227,7 @@ drop rule 314159;
 ERROR:  syntax error at or near "314159" at character 11
 -- no such rule 
 drop rule nonesuch on noplace;
-ERROR:  Relation "noplace" does not exist
+ERROR:  relation "noplace" does not exist
 -- bad keyword 
 drop tuple rule nonesuch;
 ERROR:  syntax error at or near "tuple" at character 6

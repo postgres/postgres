@@ -214,8 +214,8 @@ alter domain dnotnulltest drop not null; -- fails
 NOTICE:  "dnotnulltest" is already set to NULL
 update domnotnull set col1 = null;
 drop domain dnotnulltest cascade;
-NOTICE:  Drop cascades to table domnotnull column col2
-NOTICE:  Drop cascades to table domnotnull column col1
+NOTICE:  drop cascades to table domnotnull column col2
+NOTICE:  drop cascades to table domnotnull column col1
 -- Test ALTER DOMAIN .. DEFAULT ..
 create table domdeftest (col1 ddef1);
 insert into domdeftest default values;

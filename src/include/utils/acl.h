@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.56 2003/06/27 14:45:32 petere Exp $
+ * $Id: acl.h,v 1.57 2003/07/21 01:59:11 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
@@ -207,7 +207,7 @@ extern AclResult pg_proc_aclcheck(Oid proc_oid, AclId userid, AclMode mode);
 extern AclResult pg_language_aclcheck(Oid lang_oid, AclId userid, AclMode mode);
 extern AclResult pg_namespace_aclcheck(Oid nsp_oid, AclId userid, AclMode mode);
 
-extern void aclcheck_error(AclResult errcode, const char *objectname);
+extern void aclcheck_error(AclResult aclerr, const char *objectname);
 
 /* ownercheck routines just return true (owner) or false (not) */
 extern bool pg_class_ownercheck(Oid class_oid, AclId userid);

@@ -76,7 +76,8 @@ CREATE AGGREGATE myaggp01a(BASETYPE = "ANY", SFUNC = stfnp, STYPE = int4[],
 -- should ERROR: stfnp(anyarray) not matched by stfnp(int[])
 CREATE AGGREGATE myaggp02a(BASETYPE = "ANY", SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --     N    P
 -- should CREATE
 CREATE AGGREGATE myaggp03a(BASETYPE = "ANY", SFUNC = stfp, STYPE = int4[],
@@ -87,10 +88,12 @@ CREATE AGGREGATE myaggp03b(BASETYPE = "ANY", SFUNC = stfp, STYPE = int4[],
 -- should ERROR: we have no way to resolve S
 CREATE AGGREGATE myaggp04a(BASETYPE = "ANY", SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 CREATE AGGREGATE myaggp04b(BASETYPE = "ANY", SFUNC = stfp, STYPE = anyarray,
   INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    Case2 (R = P) && ((B = P) || (B = N))
 --    -------------------------------------
 --    S    tf1      B    tf2
@@ -144,12 +147,14 @@ ERROR:  function tfp(integer[], anyelement) does not exist
 -- should ERROR: tfnp(anyarray, int) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggp13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    N        N    P
 -- should ERROR: tf2p(anyarray, int) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggp14a(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    N        P    N
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggp15a(BASETYPE = anyelement, SFUNC = tfnp,
@@ -164,18 +169,22 @@ ERROR:  function tf2p(anyarray, anyelement) does not exist
 -- should ERROR: we have no way to resolve S
 CREATE AGGREGATE myaggp17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 CREATE AGGREGATE myaggp17b(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    P        N    P
 -- should ERROR: tfp(anyarray, int) not matched by tfp(anyarray, anyelement)
 CREATE AGGREGATE myaggp18a(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   FINALFUNC = ffp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 CREATE AGGREGATE myaggp18b(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    P        P    N
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggp19a(BASETYPE = anyelement, SFUNC = tf1p,
@@ -204,10 +213,12 @@ CREATE AGGREGATE myaggn01b(BASETYPE = "ANY", SFUNC = stfnp, STYPE = int4[],
 -- should ERROR: stfnp(anyarray) not matched by stfnp(int[])
 CREATE AGGREGATE myaggn02a(BASETYPE = "ANY", SFUNC = stfnp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 CREATE AGGREGATE myaggn02b(BASETYPE = "ANY", SFUNC = stfnp, STYPE = anyarray,
   INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --     N    P
 -- should CREATE
 CREATE AGGREGATE myaggn03a(BASETYPE = "ANY", SFUNC = stfp, STYPE = int4[],
@@ -216,7 +227,8 @@ CREATE AGGREGATE myaggn03a(BASETYPE = "ANY", SFUNC = stfp, STYPE = int4[],
 -- should ERROR: ffnp(anyarray) not matched by ffnp(int[])
 CREATE AGGREGATE myaggn04a(BASETYPE = "ANY", SFUNC = stfp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    Case4 (R = N) && ((B = P) || (B = N))
 --    -------------------------------------
 --    S    tf1      B    tf2
@@ -269,18 +281,22 @@ ERROR:  function tfp(integer[], anyelement) does not exist
 -- should ERROR: tfnp(anyarray, int) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggn13a(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 CREATE AGGREGATE myaggn13b(BASETYPE = int, SFUNC = tfnp, STYPE = anyarray,
   INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    N        N    P
 -- should ERROR: tf2p(anyarray, int) not matched by tf2p(int[],anyelement)
 CREATE AGGREGATE myaggn14a(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 CREATE AGGREGATE myaggn14b(BASETYPE = int, SFUNC = tf2p, STYPE = anyarray,
   INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    N        P    N
 -- should ERROR: tfnp(anyarray, anyelement) not matched by tfnp(int[],int)
 CREATE AGGREGATE myaggn15a(BASETYPE = anyelement, SFUNC = tfnp,
@@ -301,12 +317,14 @@ ERROR:  function tf2p(anyarray, anyelement) does not exist
 -- should ERROR: ffnp(anyarray) not matched by ffnp(int[])
 CREATE AGGREGATE myaggn17a(BASETYPE = int, SFUNC = tf1p, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    P        N    P
 -- should ERROR: tfp(anyarray, int) not matched by tfp(anyarray, anyelement)
 CREATE AGGREGATE myaggn18a(BASETYPE = int, SFUNC = tfp, STYPE = anyarray,
   FINALFUNC = ffnp, INITCOND = '{}');
-ERROR:  an aggregate using ANYARRAY or ANYELEMENT as trans type must also have one of them as its base type
+ERROR:  cannot determine transition datatype
+DETAIL:  An aggregate using ANYARRAY or ANYELEMENT as trans type must have one of them as its base type.
 --    P    P        P    N
 -- should ERROR: tf1p(anyarray, anyelement) not matched by tf1p(anyarray, int)
 CREATE AGGREGATE myaggn19a(BASETYPE = anyelement, SFUNC = tf1p,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_namespace.c,v 1.5 2002/08/05 03:29:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_namespace.c,v 1.6 2003/07/21 01:59:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,9 @@ NamespaceCreate(const char *nspName, int32 ownerSysId)
 	if (SearchSysCacheExists(NAMESPACENAME,
 							 PointerGetDatum(nspName),
 							 0, 0, 0))
-		elog(ERROR, "namespace \"%s\" already exists", nspName);
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_SCHEMA),
+				 errmsg("schema \"%s\" already exists", nspName)));
 
 	/* initialize nulls and values */
 	for (i = 0; i < Natts_pg_namespace; i++)
