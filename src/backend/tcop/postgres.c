@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.106 1999/03/22 16:45:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.107 1999/04/20 02:19:53 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -21,7 +21,6 @@
 #include <string.h>
 #include <signal.h>
 #include <time.h>
-#include <setjmp.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <fcntl.h>
@@ -136,15 +135,8 @@ static bool IsEmptyQuery = false;
 
 char		relname[80];		/* current relation name */
 
-#if defined(nextstep)
-jmp_buf		Warn_restart;
-
-#define sigsetjmp(x,y)	setjmp(x)
-#define siglongjmp longjmp
-#else
+/* note: these declarations had better match tcopprot.h */
 DLLIMPORT sigjmp_buf	Warn_restart;
-
-#endif	 /* defined(nextstep) */
 bool		InError;
 
 extern int	NBuffers;
@@ -829,8 +821,15 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 /* --------------------------------
  *		signal handler routines used in PostgresMain()
  *
- *		handle_warn() is used to catch kill(getpid(),SIGQUIT) which
- *		occurs when elog(ERROR) is called.
+ *		handle_warn() catches SIGQUIT.  It forces control back to the main
+ *		loop, just as if an internal error (elog(ERROR,...)) had occurred.
+ *		elog() used to actually use kill(2) to induce a SIGQUIT to get here!
+ *		But that's not 100% reliable on some systems, so now it does its own
+ *		siglongjmp() instead. 
+ *		We still provide the signal catcher so that an error quit can be
+ *		forced externally.  This should be done only with great caution,
+ *		however, since an asynchronous signal could leave the system in
+ *		who-knows-what inconsistent state.
  *
  *		quickdie() occurs when signalled by the postmaster.
  *		Some backend has bought the farm,
@@ -1531,7 +1530,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.106 $ $Date: 1999/03/22 16:45:27 $\n");
+		puts("$Revision: 1.107 $ $Date: 1999/04/20 02:19:53 $\n");
 	}
 
 	/* ----------------
@@ -1543,8 +1542,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 *	so that the slaves signal the master to abort the transaction
 	 *	rather than calling AbortCurrentTransaction() themselves.
 	 *
-	 *	Note:  elog(ERROR) causes a kill(getpid(),SIGQUIT) to occur
-	 *		   sending us back here.
+	 *	Note:  elog(ERROR) does a siglongjmp() to transfer control here.
 	 * ----------------
 	 */
 

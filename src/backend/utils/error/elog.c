@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.40 1999/04/16 06:38:17 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.41 1999/04/20 02:19:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "miscadmin.h"
 #include "libpq/libpq.h"
 #include "storage/proc.h"
+#include "tcop/tcopprot.h"
 #include "utils/trace.h"
 
 #ifdef USE_SYSLOG
@@ -216,24 +217,12 @@ elog(int lev, const char *fmt,...)
 
 	if (lev == ERROR)
 	{
-		extern bool InError;
-
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		if (!InError)
 		{
-			if (MyProcPid == 0) {
-				kill(getpid(), SIGQUIT);
-			} else {
-				kill(MyProcPid, SIGQUIT);	/* abort to traffic cop */
-			}
-			pause();
+			/* exit to main loop */
+			siglongjmp(Warn_restart, 1);
 		}
-
-		/*
-		 * The pause(3) is just to avoid race conditions where the thread
-		 * of control on an MP system gets past here (i.e., the signal is
-		 * not received instantaneously).
-		 */
 	}
 
 	if (lev == FATAL)

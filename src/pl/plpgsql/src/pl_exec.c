@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.8 1999/03/22 16:45:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.9 1999/04/20 02:19:57 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -55,27 +55,11 @@
 #include "fmgr.h"
 #include "access/heapam.h"
 
+#include "tcop/tcopprot.h"
 #include "utils/syscache.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 
-
-/************************************************************
- * Make Warn_restart from tcop/postgres.c visible for us.
- * The longjmp() mechanism of the elog(ERROR,...) makes it
- * impossible for us to call exceptions. But at least I
- * would like some suggestions about where in the PL function
- * the error occured.
- *
- * It's ugly - Jan
- ************************************************************/
-#if defined(nextstep)
-#define sigjmp_buf		jmp_buf
-#define sigsetjmp(x,y)	setjmp(x)
-#define siglongjmp		longjmp
-#endif
-
-extern DLLIMPORT sigjmp_buf Warn_restart; /* in tcop/postgres.c */
 
 static PLpgSQL_function *error_info_func = NULL;
 static PLpgSQL_stmt *error_info_stmt = NULL;

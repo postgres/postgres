@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.8 1998/11/27 20:05:27 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.9 1999/04/20 02:19:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -52,6 +52,7 @@
 #include "fmgr.h"
 #include "access/heapam.h"
 
+#include "tcop/tcopprot.h"
 #include "utils/syscache.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -89,23 +90,6 @@ typedef struct pltcl_query_desc
 	int		   *arglen;
 }			pltcl_query_desc;
 
-
-/************************************************************
- * Make Warn_restart from tcop/postgres.c visible for us.
- * The longjmp() mechanism of the elog(ERROR,...) restart let's
- * interpreter levels lay around. So we must tidy up in that
- * case and thus, we have to catch the longjmp's sometimes to
- * return though all the interpreter levels back.
- *
- * It's ugly - Jan
- ************************************************************/
-#if defined(nextstep)
-#define sigjmp_buf	jmp_buf
-#define sigsetjmp(x,y)	setjmp(x)
-#define siglongjmp	longjmp
-#endif
-
-extern sigjmp_buf Warn_restart; /* in tcop/postgres.c */
 
 /**********************************************************************
  * Global data
