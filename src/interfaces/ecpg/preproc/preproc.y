@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.259 2003/09/23 12:56:35 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.260 2003/09/24 19:05:32 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -1499,7 +1499,7 @@ CreateAsElement:  ColId { $$ = $1; }
  *****************************************************************************/
 
 CreateSeqStmt:	CREATE OptTemp SEQUENCE qualified_name OptSeqList
-			{ $$ = cat_str(4, make_str("create sequence"), $2, $4, $5); }
+			{ $$ = cat_str(4, make_str("create"), $2, make_str("sequence"), $4, $5); }
 		;
 
 AlterSeqStmt: ALTER SEQUENCE qualified_name OptSeqList
