@@ -12,7 +12,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.2 1996/09/16 06:11:44 scrappy Exp $
+ * $Id: miscadmin.h,v 1.3 1996/09/19 20:02:53 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -54,7 +54,7 @@ extern int Quiet;
 extern char *DataDir;   
 
 extern char	  OutputFileName[];
-extern void 	  InitGlobals();
+extern void 	  InitGlobals(void);
 
 /*
  * done in storage/backendid.h for now.
