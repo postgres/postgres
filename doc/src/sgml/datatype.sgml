@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.109 2002/11/21 23:31:20 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.110 2002/12/06 05:17:42 momjian Exp $
 -->
 
  <chapter id="datatype">
@@ -654,10 +654,11 @@ NUMERIC
     </indexterm>
 
     <para>
-     The <type>serial</type> data types are not truly types, but are a
-     notational convenience for setting up unique identifier columns
-     in tables.
-     In the current implementation, specifying
+     The <type>serial</type> data type is not a true type, but merely
+     a notational convenience for setting up identifier columns
+     (similar to the <literal>AUTO_INCREMENT</literal> property
+     supported by some other databases). In the current
+     implementation, specifying
 
 <programlisting>
 CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
@@ -684,32 +685,49 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (
     </para>
 
     <para>
+     To use a <type>serial</type> column to insert the next value of
+     the sequence into the table, specify that the <type>serial</type>
+     column should be assigned the default value. This can be done
+     either be excluding from the column from the list of columns in
+     the <command>INSERT</command> statement, or through the use of
+     the <literal>DEFAULT</literal> keyword.
+    </para>
+
+    <para>
      The type names <type>serial</type> and <type>serial4</type> are
      equivalent: both create <type>integer</type> columns.  The type
      names <type>bigserial</type> and <type>serial8</type> work just
      the same way, except that they create a <type>bigint</type>
      column.  <type>bigserial</type> should be used if you anticipate
-     the use of more than 2<superscript>31</> identifiers over the lifetime of the table.
+     the use of more than 2<superscript>31</> identifiers over the
+     lifetime of the table.
     </para>
 
     <para>
-     The sequence created by a <type>serial</type> type is automatically
-     dropped when
-     the owning column is dropped, and cannot be dropped otherwise.
-     (This was not true in <productname>PostgreSQL</productname> releases
-     before 7.3.  Note that this automatic drop linkage will not occur for a
-     sequence created by reloading a dump from a pre-7.3 database; the dump
-     file does not contain the information needed to establish the dependency
-     link.)
+     The sequence created by a <type>serial</type> type is
+     automatically dropped when the owning column is dropped, and
+     cannot be dropped otherwise.  (This was not true in
+     <productname>PostgreSQL</productname> releases before 7.3.  Note
+     that this automatic drop linkage will not occur for a sequence
+     created by reloading a dump from a pre-7.3 database; the dump
+     file does not contain the information needed to establish the
+     dependency link.) Furthermore, this dependency between sequence
+     and column is made only for the <type>serial</> column itself; if
+     any other columns reference the sequence (perhaps by manually
+     calling the <function>nextval()</>) function), they may be broken
+     if the sequence is removed. Using <type>serial</> columns in
+     fashion is considered bad form.
     </para>
 
-    <note><para>
-     Prior to <productname>PostgreSQL</productname> 7.3, <type>serial</type>
-     implied <literal>UNIQUE</literal>.  This is no longer automatic.  If
-     you wish a serial column to be <literal>UNIQUE</literal> or a 
-     <literal>PRIMARY KEY</literal> it must now be specified, same as with
-     any other data type.
-    </para></note>
+    <note>
+     <para>
+      Prior to <productname>PostgreSQL</> 7.3, <type>serial</type>
+      implied <literal>UNIQUE</literal>.  This is no longer automatic.
+      If you wish a serial column to be <literal>UNIQUE</literal> or a
+      <literal>PRIMARY KEY</literal> it must now be specified, just as
+      with any other data type.
+     </para>
+    </note>
    </sect2>
   </sect1>
 
