@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: MiscTest.java,v 1.5 2002/05/30 16:26:55 davec Exp $
+ * $Id: MiscTest.java,v 1.6 2002/06/14 10:56:13 davec Exp $
  *
  * Some simple tests based on problems reported by users. Hopefully these will
  * help prevent previous problems from re-occuring ;-)
@@ -51,6 +51,29 @@ public class MiscTest extends TestCase
 			fail(ex.getMessage());
 		}
 	}
+
+  public void testError()
+  {
+    Connection con = JDBC2Tests.openDB();
+		try
+		{
+
+      // transaction mode
+      con.setAutoCommit(false);
+      Statement stmt = con.createStatement();
+      stmt.execute("select 1/0");
+			fail( "Should not execute this, as a SQLException s/b thrown" );
+      con.commit();
+		}
+		catch ( Exception ex )
+		{
+		}
+    try
+    {
+      con.commit();
+      con.close();
+    }catch ( Exception ex) {}
+  }
 
 	public void xtestLocking()
 	{
