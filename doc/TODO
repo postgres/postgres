@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Sep 23 17:00:00 EDT 2003
+Last updated:		Mon Sep 29 12:52:11 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -65,7 +65,7 @@ Administration
 * Allow pooled connections to query prepared queries
 * Allow pooled connections to close all open WITH HOLD cursors
 * Allow major upgrades without dump/reload, perhaps using pg_upgrade
-
+* Have SHOW ALL and pg_settings show descriptions for server-side variables(Joe)
 
 
 Data Types
@@ -501,7 +501,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1138 2003/09/23 21:00:18 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1138 2003/09/23 21:00:18 momjian Exp $
+* Change CVS $Id: TODO,v 1.1139 2003/09/29 16:52:14 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1139 2003/09/29 16:52:14 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
