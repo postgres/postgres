@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.2 2004/05/31 17:57:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.3 2004/06/01 01:28:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,8 @@
 int			optreset;
 #endif
 
+/* PID can be negative for standalone backend */
+typedef long pgpid_t;
 
 #define _(x) gettext((x))
 
@@ -79,8 +81,8 @@ static void do_stop(void);
 static void do_restart(void);
 static void do_reload(void);
 static void do_status(void);
-static void do_kill(pid_t pid);
-static pid_t get_pgpid(void);
+static void do_kill(pgpid_t pid);
+static pgpid_t get_pgpid(void);
 static char **readfile(char *path);
 static int start_postmaster(void);
 static bool test_postmaster_connection(void);
@@ -126,11 +128,11 @@ xstrdup(const char *s)
 
 
 
-static pid_t
+static pgpid_t
 get_pgpid(void)
 {
 	FILE	   *pidf;
-	pid_t		pid;
+	pgpid_t		pid;
 
 	pidf = fopen(pid_file, "r");
 	if (pidf == NULL)
@@ -144,7 +146,7 @@ get_pgpid(void)
 			exit(1);
 		}
 	}
-	fscanf(pidf, "%u", &pid);
+	fscanf(pidf, "%ld", &pid);
 	fclose(pidf);
 	return pid;
 }
@@ -323,8 +325,8 @@ test_postmaster_connection(void)
 static void
 do_start(void)
 {
-	pid_t		pid;
-	pid_t		old_pid = 0;
+	pgpid_t		pid;
+	pgpid_t		old_pid = 0;
 	char	   *optline = NULL;
 
 	if (ctl_command != RESTART_COMMAND)
@@ -457,7 +459,7 @@ static void
 do_stop(void)
 {
 	int			cnt;
-	pid_t		pid;
+	pgpid_t		pid;
 
 	pid = get_pgpid();
 
@@ -472,14 +474,14 @@ do_stop(void)
 		pid = -pid;
 		fprintf(stderr,
 				_("%s: cannot stop postmaster; "
-				"postgres is running (PID: %u)\n"),
+				"postgres is running (PID: %ld)\n"),
 				progname, pid);
 		exit(1);
 	}
 
-	if (kill(pid, sig) != 0)
+	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("stop signal failed (PID: %u): %s\n"), pid,
+		fprintf(stderr, _("stop signal failed (PID: %ld): %s\n"), pid,
 				strerror(errno));
 		exit(1);
 	}
@@ -537,7 +539,7 @@ static void
 do_restart(void)
 {
 	int			cnt;
-	pid_t		pid;
+	pgpid_t		pid;
 
 	pid = get_pgpid();
 
@@ -553,15 +555,15 @@ do_restart(void)
 		pid = -pid;
 		fprintf(stderr,
 				_("%s: cannot restart postmaster; "
-				"postgres is running (PID: %u)\n"),
+				"postgres is running (PID: %ld)\n"),
 				progname, pid);
 		fprintf(stderr, _("Please terminate postgres and try again.\n"));
 		exit(1);
 	}
 
-	if (kill(pid, sig) != 0)
+	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("stop signal failed (PID: %u): %s\n"), pid,
+		fprintf(stderr, _("stop signal failed (PID: %ld): %s\n"), pid,
 				strerror(errno));
 		exit(1);
 	}
@@ -609,7 +611,7 @@ do_restart(void)
 static void
 do_reload(void)
 {
-	pid_t		pid;
+	pgpid_t		pid;
 
 	pid = get_pgpid();
 	if (pid == 0)				/* no pid file */
@@ -623,15 +625,15 @@ do_reload(void)
 		pid = -pid;
 		fprintf(stderr,
 				_("%s: cannot reload postmaster; "
-				"postgres is running (PID: %u)\n"),
+				"postgres is running (PID: %ld)\n"),
 				progname, pid);
 		fprintf(stderr, _("Please terminate postgres and try again.\n"));
 		exit(1);
 	}
 
-	if (kill(pid, sig) != 0)
+	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("reload signal failed (PID: %u): %s\n"), pid,
+		fprintf(stderr, _("reload signal failed (PID: %ld): %s\n"), pid,
 				strerror(errno));
 		exit(1);
 	}
@@ -647,7 +649,7 @@ do_reload(void)
 static void
 do_status(void)
 {
-	pid_t		pid;
+	pgpid_t		pid;
 
 	pid = get_pgpid();
 	if (pid == 0)				/* no pid file */
@@ -658,13 +660,13 @@ do_status(void)
 	else if (pid < 0)			/* standalone backend */
 	{
 		pid = -pid;
-		fprintf(stdout, _("%s: a standalone backend \"postgres\" is running (PID: %u)\n"), progname, pid);
+		fprintf(stdout, _("%s: a standalone backend \"postgres\" is running (PID: %ld)\n"), progname, pid);
 	}
 	else						/* postmaster */
 	{
 		char	  **optlines;
 
-		fprintf(stdout, _("%s: postmaster is running (PID: %u)\n"), progname, pid);
+		fprintf(stdout, _("%s: postmaster is running (PID: %ld)\n"), progname, pid);
 
 		optlines = readfile(postopts_file);
 		if (optlines != NULL)
@@ -676,11 +678,11 @@ do_status(void)
 
 
 static void
-do_kill(pid_t pid)
+do_kill(pgpid_t pid)
 {
-	if (kill(pid, sig) != 0)
+	if (kill((pid_t) pid, sig) != 0)
 	{
-		fprintf(stderr, _("signal %d failed (PID: %u): %s\n"), sig, pid,
+		fprintf(stderr, _("signal %d failed (PID: %ld): %s\n"), sig, pid,
 				strerror(errno));
 		exit(1);
 	}
@@ -813,7 +815,7 @@ main(int argc, char **argv)
 
 	int			option_index;
 	int			c;
-	int			killproc = 0;
+	pgpid_t		killproc = 0;
 	
 #ifdef WIN32
 	setvbuf(stderr, NULL, _IONBF, 0);
