@@ -522,7 +522,7 @@ AC_TRY_RUN([#include <stdlib.h>
 #endif
 main() { double d = DBL_MIN; if (d != DBL_MIN) exit(-1); else exit(0); }],
 	AC_MSG_RESULT(yes),
-	[AC_MSG_RESULT(no) AC_DEFINE(HAVE_DBL_MIN_PROBLEM)],
+	[AC_DEFINE(HAVE_DBL_MIN_PROBLEM) AC_MSG_RESULT(no)],
 	AC_MSG_RESULT(assuming ok on target machine))
 
 dnl Check to see if we have a working 64-bit integer type.
@@ -559,7 +559,7 @@ int does_int64_work()
 main() {
   exit(! does_int64_work());
 }],
-	[AC_MSG_RESULT(yes) AC_DEFINE(HAVE_LONG_INT_64)],
+	[AC_DEFINE(HAVE_LONG_INT_64) AC_MSG_RESULT(yes)],
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
@@ -596,7 +596,7 @@ int does_int64_work()
 main() {
   exit(! does_int64_work());
 }],
-	[AC_MSG_RESULT(yes) AC_DEFINE(HAVE_LONG_LONG_INT_64)],
+	[AC_DEFINE(HAVE_LONG_LONG_INT_64) AC_MSG_RESULT(yes)],
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
