@@ -210,7 +210,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.2 1998/02/21 06:31:46 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/Attic/gram.c,v 2.3 1998/02/27 02:40:36 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -287,7 +287,7 @@ typedef union
 	char				chr;
 	char				*str;
 	bool				boolean;
-	bool*				pboolean;	/* for pg_user privileges */
+	bool*				pboolean;	/* for pg_shadow privileges */
 	List				*list;
 	Node				*node;
 	Value				*value;

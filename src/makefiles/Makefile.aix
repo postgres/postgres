@@ -2,6 +2,9 @@
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
 
+RANLIB= touch
+MK_NO_LORDER= true
+
 EXPSUFF= .exp
 IMPSUFF= .imp
 

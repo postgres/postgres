@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.7 1998/02/24 03:09:47 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.8 1998/02/27 02:40:59 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,12 +17,9 @@ SO_MINOR_VERSION=1
 SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
-# We need the backend directory here for its fmgr.h
-INCLUDE_OPT= -I$(SRCDIR)/include -I$(SRCDIR)/backend
-
 PORTNAME=@PORTNAME@
 
-CFLAGS+= $(INCLUDE_OPT) -DFRONTEND
+CFLAGS+=-DFRONTEND
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
@@ -175,7 +172,7 @@ install-shlib: $(shlib)
 	ln -s $(shlib) $(DESTDIR)$(LIBDIR)/libpq.so
 
 depend dep:
-	$(CC) -MM $(INCLUDE_OPT) *.c >depend
+	$(CC) -MM *.c >depend
 
 .PHONY: clean
 clean:

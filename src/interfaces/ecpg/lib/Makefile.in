@@ -1,7 +1,7 @@
 SRCDIR= ../../..
 include $(SRCDIR)/Makefile.global
 
-PQ_INCLUDE=-I$(SRCDIR)/include -I$(SRCDIR)/interfaces/libpq
+PQ_INCLUDE=-I$(SRCDIR)/interfaces/libpq
 
 SO_MAJOR_VERSION=1
 SO_MINOR_VERSION=0
@@ -61,6 +61,6 @@ uninstall::
 libecpg.a : libecpg.a(ecpglib.o) libecpg.a(typename.o)
 
 ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
-	$(CC) -Wall -I../include $(PQ_INCLUDE) -c ecpglib.c
+	$(CC) -I../include $(PQ_INCLUDE) -c ecpglib.c
 typename.o : typename.c ../include/ecpgtype.h
-	$(CC) -Wall -I../include $(PQ_INCLUDE) -c typename.c
+	$(CC) -I../include $(PQ_INCLUDE) -c typename.c
