@@ -1,0 +1,27 @@
+#!/bin/sh
+
+DBNAME=pltcl_test
+export DBNAME
+
+echo "**** Destroy old database $DBNAME ****"
+destroydb $DBNAME
+
+echo "**** Create test database $DBNAME ****"
+createdb $DBNAME
+
+echo "**** Create procedural language pltcl ****"
+psql -q -n $DBNAME <test_mklang.sql
+
+echo "**** Create tables, functions and triggers ****"
+psql -q -n $DBNAME <test_setup.sql
+
+echo "**** Running test queries ****"
+psql -q -n -e $DBNAME <test_queries.sql > test.out 2>&1
+
+if diff test.expected test.out >/dev/null 2>&1 ; then
+    echo "    Tests passed O.K."
+else
+    echo "    Tests faild - look at diffs between"
+    echo "    test.expected and test.out"
+fi
+
