@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.8 1997/09/01 08:13:22 vadim Exp $
+ * $Id: rel.h,v 1.9 1997/09/04 13:26:45 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,14 +22,12 @@
 
 typedef struct Trigger {
     char		*tgname;
-    char		*tgfunc;
-    Oid			tglang;
+    Oid			tgfoid;
+    func_ptr		tgfunc;
     int16		tgtype;
     int16		tgnargs;
     int16		tgattr[8];
-    char		*tgtext;
     char		**tgargs;
-    char		*tgwhen;
 } Trigger;
 
 typedef struct TriggerDesc {
