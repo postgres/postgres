@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Dec 10 17:27:40 EST 2002
+Last updated:		Wed Dec 11 19:19:09 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -420,6 +420,7 @@ Miscellaneous
 	o Special passing of binary values in platform-neutral format (bytea?)
 	o ecpg improvements?
 	o Add decoded type, length, precision
+	o Compression?
 
 
 Source Code
