@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.6 2000/01/19 20:08:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/droplang,v 1.7 2000/02/09 20:23:26 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -159,9 +159,13 @@ case "$langname" in
 		lancomp="PL/Tcl"
 		handler="pltcl_call_handler"
                 ;;
+	plperl)
+		lancomp="PL/Perl"
+		handler="plperl_call_handler"
+                ;;
 	*)
 		echo "$CMDNAME: unsupported language '$langname'"
-		echo "Supported languages are 'plpgsql' and 'pltcl'."
+		echo "Supported languages are 'plpgsql', 'pltcl', and 'plperl'."
 		exit 1
                 ;;
 esac
