@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.154 2003/09/03 22:05:08 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.155 2003/09/04 05:11:20 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2556,7 +2556,7 @@ set_config_option(const char *name, const char *value,
 					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_UNPRIVILEGED &&
-						newval < conf->session_val &&
+						newval < conf->reset_val &&
 						!superuser())
 					{
 						ereport(elevel,
@@ -2569,8 +2569,8 @@ set_config_option(const char *name, const char *value,
 					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
-						record->session_source > PGC_S_UNPRIVILEGED &&
-						newval > conf->session_val &&
+						record->reset_source > PGC_S_UNPRIVILEGED &&
+						newval > conf->reset_val &&
 						!superuser())
 						changeVal = changeVal_orig;
 				}
@@ -2652,8 +2652,8 @@ set_config_option(const char *name, const char *value,
 					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_UNPRIVILEGED &&
-						conf->session_val != 0 &&
-						(newval > conf->session_val || newval == 0) &&
+						conf->reset_val != 0 &&
+						(newval > conf->reset_val || newval == 0) &&
 						!superuser())
 					{
 						ereport(elevel,
@@ -2666,8 +2666,8 @@ set_config_option(const char *name, const char *value,
 					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
-						record->session_source > PGC_S_UNPRIVILEGED &&
-						newval < conf->session_val &&
+						record->reset_source > PGC_S_UNPRIVILEGED &&
+						newval < conf->reset_val &&
 						!superuser())
 						changeVal = changeVal_orig;
 				}
@@ -2749,7 +2749,7 @@ set_config_option(const char *name, const char *value,
 					/* Limit non-superuser changes */
 					if (record->context == PGC_USERLIMIT &&
 						source > PGC_S_UNPRIVILEGED &&
-						newval > conf->session_val &&
+						newval > conf->reset_val &&
 						!superuser())
 					{
 						ereport(elevel,
@@ -2762,8 +2762,8 @@ set_config_option(const char *name, const char *value,
 					/* Allow admin to override non-superuser setting */
 					if (record->context == PGC_USERLIMIT &&
 						source < PGC_S_UNPRIVILEGED &&
-						record->session_source > PGC_S_UNPRIVILEGED &&
-						newval < conf->session_val &&
+						record->reset_source > PGC_S_UNPRIVILEGED &&
+						newval < conf->reset_val &&
 						!superuser())
 						changeVal = changeVal_orig;
 				}
@@ -2860,8 +2860,8 @@ set_config_option(const char *name, const char *value,
 						}
 						/* Allow admin to override non-superuser setting */
 						if (source < PGC_S_UNPRIVILEGED &&
-							record->session_source > PGC_S_UNPRIVILEGED &&
-							newval < conf->session_val &&
+							record->reset_source > PGC_S_UNPRIVILEGED &&
+							newval < conf->reset_val &&
 							!superuser())
 							changeVal = changeVal_orig;
 					}
