@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.120 2000/02/19 05:04:54 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.121 2000/02/21 12:26:19 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -853,7 +853,7 @@ connectDBStart(PGconn *conn)
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
 #ifndef WIN32
-		if (errno == EINPROGRESS)
+		if (errno == EINPROGRESS || errno == 0)
 #else
 		if (WSAGetLastError() == WSAEINPROGRESS)
 #endif
