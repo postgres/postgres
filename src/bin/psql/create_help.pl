@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2000-2003, PostgreSQL Global Development Group
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/create_help.pl,v 1.8 2003/08/04 23:59:40 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/create_help.pl,v 1.9 2003/09/14 22:37:12 petere Exp $
 #################################################################
 
 #
@@ -50,6 +50,8 @@ print OUT
 
 #ifndef $define
 #define $define
+
+#define N_(x) (x) /* gettext noop */
 
 struct _helpStruct
 {
@@ -110,7 +112,7 @@ foreach $file (sort readdir DIR) {
 	$cmdsynopsis =~ s/\n/\\n/g;
         $cmdsynopsis =~ s/\"/\\"/g;
 
-	print OUT "    { \"$cmdname\",\n      \"$cmddesc\",\n      \"$cmdsynopsis\" },\n\n";
+	print OUT "    { \"$cmdname\",\n      N_(\"$cmddesc\"),\n      N_(\"$cmdsynopsis\") },\n\n";
         $count++;
     }
     else {
