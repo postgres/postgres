@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.257 2004/04/05 03:02:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.258 2004/04/07 05:05:49 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2121,12 +2121,21 @@ SET ENABLE_SEQSCAN TO OFF;
      </varlistentry>
 
      <varlistentry id="guc-log-statement" xreflabel="log_statement">
-      <term><varname>log_statement</varname> (<type>boolean</type>)</term>
+      <term><varname>log_statement</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        Causes each SQL statement to be logged. The default is
-        off. Only superusers can disable this option if it has been
-        enabled by an administrator.
+        Controls which SQL statement are logged. Valid values are
+        <literal>all</>, <literal>ddl</>, <literal>mod</>, and
+        <literal>none</>. <literal>ddl</> logs all data definition
+        commands like <literal>CREATE</>, <literal>ALTER</>, and
+        <literal>DROP</> commands. <literal>mod</> logs all
+        <literal>ddl</> statements, plus <literal>INSERT</>,
+        <literal>UPDATE</>, <literal>DELETE</>, <literal>TRUNCATE</>,
+        and <literal>COPY FROM</>. <literal>PREPARE</> and
+        <literal>EXPLAIN ANALYZE</> statements are also considered for
+        appropriate commands. The default is <literal>none</>. Only
+        superusers can reduce the detail of this option if it has been
+        set by an administrator.
        </para>
 
        <note>

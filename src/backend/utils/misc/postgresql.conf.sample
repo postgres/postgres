@@ -191,7 +191,7 @@
 				# %s=session start timestamp
 				# %x=stop here in non-session processes
 				# %%='%'
-#log_statement = false
+#log_statement = 'none'		# none, mod, ddl, all
 #log_hostname = false
 
 

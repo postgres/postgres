@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.197 2004/04/05 03:02:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.198 2004/04/07 05:05:50 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -86,18 +86,22 @@ static const char *assign_facility(const char *facility,
 				bool doit, GucSource source);
 #endif
 
-static const char *assign_defaultxactisolevel(const char *newval,
-						   bool doit, GucSource source);
-static const char *assign_log_min_messages(const char *newval,
-						bool doit, GucSource source);
+static const char *assign_defaultxactisolevel(const char *newval, bool doit,
+						   GucSource source);
+static const char *assign_log_min_messages(const char *newval, bool doit,
+						   GucSource source);
 static const char *assign_client_min_messages(const char *newval,
 						   bool doit, GucSource source);
 static const char *assign_min_error_statement(const char *newval, bool doit,
 						   GucSource source);
-static const char *assign_msglvl(int *var, const char *newval,
-			  bool doit, GucSource source);
+static const char *assign_msglvl(int *var, const char *newval, bool doit,
+						   GucSource source);
 static const char *assign_log_error_verbosity(const char *newval, bool doit,
 						   GucSource source);
+static const char *assign_log_statement(const char *newval, bool doit,
+						   GucSource source);
+static const char *assign_log_stmtlvl(int *var, const char *newval,
+						   bool doit, GucSource source);
 static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 
 
@@ -107,7 +111,6 @@ static bool assign_phony_autocommit(bool newval, bool doit, GucSource source);
 #ifdef USE_ASSERT_CHECKING
 bool		assert_enabled = true;
 #endif
-bool		log_statement = false;
 bool		log_duration = false;
 bool		Debug_print_plan = false;
 bool		Debug_print_parse = false;
@@ -145,6 +148,7 @@ int			log_min_duration_statement = -1;
 static char *client_min_messages_str;
 static char *log_min_messages_str;
 static char *log_error_verbosity_str;
+static char *log_statement_str;
 static char *log_min_error_statement_str;
 static char *log_destination_string;
 static bool phony_autocommit;
@@ -525,14 +529,6 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE
 		},
 		&ExitOnAnyError,
-		false, NULL, NULL
-	},
-	{
-		{"log_statement", PGC_USERLIMIT, LOGGING_WHAT,
-			gettext_noop("Logs each SQL statement."),
-			NULL
-		},
-		&log_statement,
 		false, NULL, NULL
 	},
 	{
@@ -1442,6 +1438,14 @@ static struct config_string ConfigureNamesString[] =
 		&log_error_verbosity_str,
 		"default", assign_log_error_verbosity, NULL
 	},
+	{
+		{"log_statement", PGC_USERLIMIT, LOGGING_WHAT,
+			gettext_noop("Sets the type of statements logged."),
+			gettext_noop("Valid values are \"none\", \"mod\", \"ddl\", and \"all\".")
+		},
+		&log_statement_str,
+		"none", assign_log_statement, NULL
+	},
 
 	{
 		{"log_min_error_statement", PGC_USERLIMIT, LOGGING_WHEN,
@@ -2007,14 +2011,11 @@ InitializeGUCOptions(void)
 					struct config_string *conf = (struct config_string *) gconf;
 					char	   *str;
 
-					/*
-					 * Check to make sure we only have valid
-					 * PGC_USERLIMITs
-					 */
+					/* Check to make sure we only have valid PGC_USERLIMITs */
 					Assert(conf->gen.context != PGC_USERLIMIT ||
 						   conf->assign_hook == assign_log_min_messages ||
-					   conf->assign_hook == assign_client_min_messages ||
-						conf->assign_hook == assign_min_error_statement);
+						   conf->assign_hook == assign_min_error_statement ||
+						   conf->assign_hook == assign_log_statement);
 					*conf->variable = NULL;
 					conf->reset_val = NULL;
 					conf->session_val = NULL;
@@ -3025,15 +3026,23 @@ set_config_option(const char *name, const char *value,
 					if (record->context == PGC_USERLIMIT &&
 						IsUnderPostmaster && !superuser())
 					{
-						int			old_int_value,
-									new_int_value;
+						int		var_value, reset_value, new_value;
+						const char * (*var_hook) (int *var, const char *newval,
+									bool doit, GucSource source);
+    
+						if (conf->assign_hook == assign_log_statement)
+							var_hook = assign_log_stmtlvl;
+						else
+							var_hook = assign_msglvl;
 
-						/* all USERLIMIT strings are message levels */
-						assign_msglvl(&new_int_value, newval,
-									  true, source);
-						assign_msglvl(&old_int_value, conf->reset_val,
-									  true, source);
-						if (new_int_value > old_int_value)
+						(*var_hook) (&new_value, newval, true, source);
+						(*var_hook) (&reset_value, conf->reset_val,	true,
+									 source);
+						(*var_hook) (&var_value, *conf->variable, true,
+									 source);
+
+						/* Limit non-superuser changes */
+						if (new_value > reset_value)
 						{
 							/* Limit non-superuser changes */
 							if (source > PGC_S_UNPRIVILEGED)
@@ -3046,10 +3055,9 @@ set_config_option(const char *name, const char *value,
 								return false;
 							}
 						}
-							/* Allow change if admin should override */
-						assign_msglvl(&old_int_value, *conf->variable,
-									  true, source);
-						if (new_int_value < old_int_value)
+
+						/* Allow change if admin should override */
+						if (new_value < var_value)
 						{
 							if (source < PGC_S_UNPRIVILEGED &&
 								record->source > PGC_S_UNPRIVILEGED)
@@ -4646,6 +4654,40 @@ assign_log_error_verbosity(const char *newval, bool doit, GucSource source)
 	{
 		if (doit)
 			Log_error_verbosity = PGERROR_VERBOSE;
+	}
+	else
+		return NULL;			/* fail */
+	return newval;				/* OK */
+}
+
+static const char *
+assign_log_statement(const char *newval, bool doit, GucSource source)
+{
+	return (assign_log_stmtlvl((int *)&log_statement, newval, doit, source));
+}
+
+static const char *
+assign_log_stmtlvl(int *var, const char *newval, bool doit, GucSource source)
+{
+	if (strcasecmp(newval, "none") == 0)
+	{
+		if (doit)
+			(*var) = LOGSTMT_NONE;
+	}
+	else if (strcasecmp(newval, "mod") == 0)
+	{
+		if (doit)
+			(*var) = LOGSTMT_MOD;
+	}
+	else if (strcasecmp(newval, "ddl") == 0)
+	{
+		if (doit)
+			(*var) = LOGSTMT_DDL;
+	}
+	else if (strcasecmp(newval, "all") == 0)
+	{
+		if (doit)
+			(*var) = LOGSTMT_ALL;
 	}
 	else
 		return NULL;			/* fail */

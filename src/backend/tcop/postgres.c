@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.397 2004/03/24 22:40:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.398 2004/04/07 05:05:49 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -86,6 +86,8 @@ bool		InError = false;
 
 /* flag for logging end of session */
 bool        Log_disconnections = false;
+
+LogStmtLevel log_statement = LOGSTMT_NONE;
 
 /*
  * Flags for expensive function optimization -- JMH 3/9/92
@@ -471,9 +473,10 @@ pg_parse_and_rewrite(const char *query_string,	/* string to execute */
 List *
 pg_parse_query(const char *query_string)
 {
-	List	   *raw_parsetree_list;
+	List	   *raw_parsetree_list,
+			   *parsetree_item;
 
-	if (log_statement)
+	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
 				(errmsg("statement: %s", query_string)));
 
@@ -481,6 +484,51 @@ pg_parse_query(const char *query_string)
 		ResetUsage();
 
 	raw_parsetree_list = raw_parser(query_string);
+
+	/* do log_statement tests for mod and ddl */
+	if (log_statement == LOGSTMT_MOD ||
+		log_statement == LOGSTMT_DDL)
+	{
+		foreach(parsetree_item, raw_parsetree_list)
+		{
+			Node	   *parsetree = (Node *) lfirst(parsetree_item);
+			const char *commandTag;
+	
+			if (IsA(parsetree, ExplainStmt) &&
+				((ExplainStmt *)parsetree)->analyze)
+				parsetree = (Node *)(((ExplainStmt *)parsetree)->query);
+			
+			if (IsA(parsetree, PrepareStmt))
+				parsetree = (Node *)(((PrepareStmt *)parsetree)->query);
+			
+			if (IsA(parsetree, SelectStmt))
+				continue;	/* optimization for frequent command */
+				
+			if (log_statement == LOGSTMT_MOD &&
+				(IsA(parsetree, InsertStmt) ||
+				 IsA(parsetree, UpdateStmt) ||
+				 IsA(parsetree, DeleteStmt) ||
+				 IsA(parsetree, TruncateStmt) ||
+				 (IsA(parsetree, CopyStmt) &&
+				  ((CopyStmt *)parsetree)->is_from)))	/* COPY FROM */
+			{
+				ereport(LOG,
+						(errmsg("statement: %s", query_string)));
+				break;
+			}
+			commandTag = CreateCommandTag(parsetree);
+			if (strncmp(commandTag, "CREATE ", strlen("CREATE ")) == 0 ||
+				strncmp(commandTag, "ALTER ", strlen("ALTER ")) == 0 ||
+				strncmp(commandTag, "DROP ", strlen("DROP ")) == 0 ||
+				IsA(parsetree, GrantStmt) ||	/* GRANT or REVOKE */
+				IsA(parsetree, CommentStmt))
+			{
+				ereport(LOG,
+						(errmsg("statement: %s", query_string)));
+				break;
+			}
+		}
+	}
 
 	if (log_parser_stats)
 		ShowUsage("PARSER STATISTICS");
@@ -2488,7 +2536,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		SetConfigOption("log_disconnections", "true", debug_context, gucsource);
 	}
 	if (debug_flag >= 2)
-		SetConfigOption("log_statement", "true", debug_context, gucsource);
+		SetConfigOption("log_statement", "all", debug_context, gucsource);
 	if (debug_flag >= 3)
 		SetConfigOption("debug_print_parse", "true", debug_context, gucsource);
 	if (debug_flag >= 4)
