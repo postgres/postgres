@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.16 1999/07/17 20:18:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.17 1999/09/27 10:41:02 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ static ScanKeyword ScanKeywords[] = {
 	/* name, value */
 	{"abort", ABORT_TRANS},
 	{"absolute", ABSOLUTE},
+	{"access", ACCESS},
 	{"action", ACTION},
 	{"add", ADD},
 	{"after", AFTER},
@@ -61,6 +62,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"collate", COLLATE},
 	{"column", COLUMN},
 	{"commit", COMMIT},
+	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},
 	{"copy", COPY},
 	{"create", CREATE},
@@ -90,7 +92,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"encoding", ENCODING},
 	{"end", END_TRANS},
 	{"except", EXCEPT},
-
+	{"exclusive", EXCLUSIVE},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
 	{"explain", EXPLAIN},
@@ -105,6 +107,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"from", FROM},
 	{"full", FULL},
 	{"function", FUNCTION},
+	{"global", GLOBAL},
 	{"grant", GRANT},
 	{"group", GROUP},
 	{"handler", HANDLER},
@@ -119,7 +122,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"insert", INSERT},
 	{"instead", INSTEAD},
 	{"intersect", INTERSECT},
-
 	{"interval", INTERVAL},
 	{"into", INTO},
 	{"is", IS},
@@ -143,6 +145,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"maxvalue", MAXVALUE},
 	{"minute", MINUTE_P},
 	{"minvalue", MINVALUE},
+	{"mode", MODE},
 	{"month", MONTH_P},
 	{"move", MOVE},
 	{"names", NAMES},
@@ -199,8 +202,10 @@ static ScanKeyword ScanKeywords[] = {
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
 	{"serial", SERIAL},
+	{"serializable", SERIALIZABLE},
 	{"set", SET},
 	{"setof", SETOF},
+	{"share", SHARE},
 	{"show", SHOW},
 	{"start", START},
 	{"statement", STATEMENT},
@@ -221,6 +226,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"trigger", TRIGGER},
 	{"trim", TRIM},
 	{"true", TRUE_P},
+	{"truncate", TRUNCATE},
 	{"trusted", TRUSTED},
 	{"type", TYPE_P},
 	{"union", UNION},

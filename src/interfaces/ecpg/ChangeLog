@@ -643,3 +643,8 @@ Fri Sep 17 18:16:34 CEST 1999
 	- Made sure sqlca is initialized everytime.
 	- Set library version to 3.0.3
 
+Mon Sep 27 07:40:20 CEST 1999
+
+	- Synced preproc.y with gram.y.
+	- Synced keyword.c.
+	- Set ecpg version to 2.6.5

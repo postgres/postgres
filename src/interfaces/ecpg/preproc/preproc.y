@@ -727,7 +727,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
                 RENAME, RESET, RETURNS, ROW, RULE,
                 SERIAL, SEQUENCE, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT,
-		TRUSTED,
+		TRUNCATE, TRUSTED,
                 UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -777,7 +777,7 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
 %type  <str>    file_name AexprConst ParamNo TypeId
-%type  <str>	in_expr_nodes a_expr b_expr
+%type  <str>	in_expr_nodes a_expr b_expr TruncateStmt
 %type  <str> 	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from
 %type  <str>	trim_list in_expr substr_for attr attrs
@@ -881,6 +881,7 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
   		| ClusterStmt		{ output_statement($1, 0); }
 		| DefineStmt 		{ output_statement($1, 0); }
 		| DestroyStmt		{ output_statement($1, 0); }
+		| TruncateStmt		{ output_statement($1, 0); }
 		| DropPLangStmt		{ output_statement($1, 0); }
 		| DropTrigStmt		{ output_statement($1, 0); }
 		| DropUserStmt		{ output_statement($1, 0); }
@@ -1948,7 +1949,17 @@ DestroyStmt:  DROP TABLE relation_name_list
 				}
 		;
 
-
+/*****************************************************************************
+ *
+ *             QUERY:
+ *                             truncate table relname
+ *
+ *****************************************************************************/
+TruncateStmt:  TRUNCATE TABLE relation_name
+                               {
+					$$ = cat2_str(make1_str("drop table"), $3);
+                               }
+                       ;
 
 /*****************************************************************************
  *
@@ -4283,9 +4294,11 @@ ColId:  ident					{ $$ = $1; }
 		| INSENSITIVE			{ $$ = make1_str("insensitive"); }
 		| INSTEAD			{ $$ = make1_str("instead"); }
 		| ISNULL			{ $$ = make1_str("isnull"); }
+		| ISOLATION			{ $$ = make1_str("isolation"); }
 		| KEY				{ $$ = make1_str("key"); }
 		| LANGUAGE			{ $$ = make1_str("language"); }
 		| LANCOMPILER			{ $$ = make1_str("lancompiler"); }
+		| LEVEL				{ $$ = make1_str("level"); }
 		| LOCATION			{ $$ = make1_str("location"); }
 		| MATCH				{ $$ = make1_str("match"); }
 		| MAXVALUE			{ $$ = make1_str("maxvalue"); }
