@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.15 1997/05/14 04:35:10 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.16 1997/06/03 13:58:06 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -974,9 +974,15 @@ float64 dpow(float64 arg1, float64 arg2)
     
     tmp1 = *arg1;
     tmp2 = *arg2;
+#ifndef finite
     errno = 0;
+#endif
     *result = (float64data) pow(tmp1, tmp2);
+#ifndef finite
     if (errno == ERANGE)
+#else
+    if (!finite(*result))
+#endif
       elog(WARN, "pow() returned a floating point out of the range\n");
 
     CheckFloat8Val(*result);
@@ -998,9 +1004,15 @@ float64 dexp(float64 arg1)
     result = (float64) palloc(sizeof(float64data));
     
     tmp = *arg1;
+#ifndef finite
     errno = 0;
+#endif
     *result = (float64data) exp(tmp);
+#ifndef finite
     if (errno == ERANGE)
+#else
+    if (!finite(*result))
+#endif
       elog(WARN, "exp() returned a floating point out of range\n");
 
     CheckFloat8Val(*result);
