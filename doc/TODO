@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 12 21:30:57 EST 2004
+Last updated:		Thu Feb 12 23:36:00 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -163,6 +163,7 @@ Commands
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Add schema option to createlang
 * Allow savepoints / nested transactions [transactions] (Bruce)
+* Use nested transactions to prevent syntax errors from aborting a transaction
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
 * Allow SET CONSTRAINTS to be qualified by schema/table
 * Prevent COMMENT ON DATABASE from using a database name
@@ -459,7 +460,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1214 2004/02/13 02:30:53 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1214 2004/02/13 02:30:53 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1215 2004/02/13 04:36:02 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1215 2004/02/13 04:36:02 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
