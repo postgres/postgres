@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.12 2001/02/18 18:34:01 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.13 2001/05/23 22:00:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,9 +18,7 @@ SCRIPTS := createdb dropdb createuser dropuser createlang droplang vacuumdb
 all: $(SCRIPTS)
 
 createlang: createlang.sh
-	sed -e 's/@DLSUFFIX@/$(DLSUFFIX)/g' \
-	    -e 's,@libdir@,$(libdir),g' \
-	  $< >$@
+	cp $< $@
 	chmod a+x $@
 
 install: all installdirs

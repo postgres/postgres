@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.25 2001/05/12 01:30:30 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.26 2001/05/23 22:00:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -170,7 +170,7 @@ fi
 # Check that we have PGLIB
 # ----------
 if [ -z "$PGLIB" ]; then
-	PGLIB='@libdir@'
+	PGLIB='$libdir'
 fi
 
 # ----------
@@ -222,27 +222,6 @@ case "$langname" in
         ;;
 esac
 
-DLSUFFIX='@DLSUFFIX@'
-
-# ----------
-# Check that the shared object for the call handler is installed
-# in PGLIB
-# ----------
-if [ ! -f "$PGLIB/$object$DLSUFFIX" ]; then
-      (
-	echo "$CMDNAME: cannot find the file '$PGLIB/$langname$DLSUFFIX'"
-        echo ""
-	echo "This file contains the call handler for $lancomp.  By default,"
-        echo "only PL/pgSQL is built and installed; other languages must be"
-        echo "explicitly enabled at configure time."
-	echo ""
-	echo "To install PL/Tcl, make sure the option --with-tcl is given to"
-        echo "configure, then recompile and install.  To install PL/Perl use"
-        echo "--with-perl."
-      ) 1>&2
-	exit 1
-fi
-
 
 PSQL="${PATHNAME}psql -A -t -q $PSQLOPT -d $dbname -c"
 
@@ -280,7 +259,7 @@ fi
 # ----------
 # Create the call handler and the language
 # ----------
-sqlcmd="CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}$DLSUFFIX' LANGUAGE 'C';"
+sqlcmd="CREATE FUNCTION $handler () RETURNS OPAQUE AS '$PGLIB/${object}' LANGUAGE 'C';"
 if [ "$showsql" = yes ]; then
 	echo "$sqlcmd"
 fi
