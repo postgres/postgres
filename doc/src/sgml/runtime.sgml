@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.89 2001/10/09 18:46:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.90 2001/10/11 21:16:26 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -719,7 +719,9 @@ env PGOPTIONS='-c geqo=off' psql
         this many FROM items involved.  (Note that a JOIN construct
 	counts as only one FROM item.) The default is 11. For simpler
 	queries it is usually best to use the
-        deterministic, exhaustive planner.
+        deterministic, exhaustive planner.  This parameter also controls
+        how hard the optimizer will try to merge subquery
+        <literal>FROM</literal> clauses into the upper query.
        </para>
       </listitem>
      </varlistentry>
