@@ -48,6 +48,7 @@ select
 select_into
 select_distinct
 select_distinct_on
+subselect
 aggregates
 transactions
 random
