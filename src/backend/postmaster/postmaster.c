@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.192 2000/11/25 20:33:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.193 2000/11/27 04:03:20 inoue Exp $
  *
  * NOTES
  *
@@ -823,7 +823,7 @@ ServerLoop(void)
 		struct timeval *timeout = NULL;
 		struct timeval	timeout_tv;
 
-		if (CheckPointPID == 0 && checkpointed)
+		if (CheckPointPID == 0 && checkpointed && !FatalError)
 		{
 			time_t	now = time(NULL);
 
