@@ -1,41 +1,67 @@
-How do I installing PostgreSQL on Windows NT or Windows 2000?
-=============================================================
-$Date: 2001/01/19 23:43:35 $
+*  You can get the most recent version of this from
+*  http://people.freebsd.org/~kevlo/postgres/portNT.html.
 
-1.  Install the Cygwin package.
+*  Problem reports can be sent to <pgsql-ports@postgresql.org>.
 
-    The Cygwin package provides a UNIX-like API on top of the Win32
-    API.  It is available at <http://sources.redhat.com/cygwin/>.
-    The 1.1.x series is recommended (1.1.7 was the latest at the time
-    of this writing); using 1.0 or B20 might require extra efforts.
-    For B20 you also need to download the separate crypt library at the
-    same location.
+How do I install the PostgreSQL server on Windows NT or Windows 2000?
+=====================================================================
 
-2.  Install the cygipc package, available at
-    <http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/>.
-    Do not use versions prior to 1.04, they will not work.
-
-3.  Optional:  The "Andy Piper Tools" at <http://www.xemacs.freeserve.co.uk/>
-    are a collection of pre-compiled libraries and utilities that you
-    might find useful -- especially on Cygwin B20.
-
-4.  The Cygwin bin directory has to be placed in the path before the
-    Windows program directories, because the sort.exe has to be taken
-    from Cygwin, not Windows.
-
-5.  Start `ipc-daemon &' (background process) from the cygipc package.
-    This program needs to be running anytime you start the PostgreSQL
-    server (postmaster).
-
-6.  Proceed according to the INSTALL file.  (./configure; make; etc.)
-
-NOTE:  There are two issues with Cygwin's current UNIX domain socket
-support:
-
-1.  psql (and other clients) will hang if postmaster is not running and
-    the socket file (e.g., /tmp/.s.PGSQL.5432) exists.
-
-2.  Cygwin's AF_UNIX sockets are really implemented as AF_INET sockets
-    so they are inherently insecure.
-
-Problem reports can be sent to <pgsql-ports@postgresql.org>.
+         Porting PostgreSQL to Windows 2000 installation procedures
+                                      
+   Thanks to Daniel Horak, JasonTishler ,Joost Kraaijeveld and Pete
+   Formanfor their helps.
+   Without them, I cannot port Postgres to Windows 2000 successfully.
+   ______________________________________________________________________
+   
+     * Install the lastest verion(1.1.5) of Cygwin
+       
+               1. Click on the "Install Cygwin now" link on the
+   http://sources.redhat.com/cygwinwebpage.
+                    This downloads setup.exe to your system.
+               2. Run setup and answer all of the questions. Please
+   choose a mirror sitefor your download.
+     * Install Charles Wilson's Cygwin32 IPC package
+       
+               1. Download the precompiled binary
+   http://www.neuro.gatech.edu/users/cwilson/cygutils/V1.1/cygipc/cygipc-
+   1.07-1.tar.gzin"/" directory.
+               2. tar zxvf cygipc-1.07-1.tar.gz
+     * Install PostgreSQL 7.0.3
+       
+               1. Download PostgreSQL 7.0.3 sourcecode in /usr/src.
+               2. tar zxvf postgresql-7.0.3.tar.gz
+               3. mkdir -p /usr/local/pgsql/{bin,include,lib,data}
+               4. cd /usr/src/postgresql-7.0.3/src/win32
+               5. cp endian.h /usr/include
+                    cp tcp.h /usr/include/netinet
+                6. Apply Jason Tishler's patches  in
+   /usr/src/postgresql-7.0.3, then run 'patch -p1 <patch.diff'.
+                    Note that some browsers convert the patch to a text
+   mode file (i.e., CRNL line endings)
+                during the save operation which causes patch    to reject
+   all hunks.
+                7. cd /usr/src/postgresql-7.0.3/src, then run
+   './configure'
+               8. make; make install
+               9. cp/usr/local/pgsql/lib/pq.dll /usr/local/pgsql/bin
+             10. Usingany editor to create .bashrc in / directory as
+   belows:
+                     PATH=$PATH:/usr/local/pgsql/bin:/usr/local/bin
+                     PGDATA=/usr/local/pgsql/data
+                     PGLIB=/usr/local/pgsql/lib
+                     LD_LIBRARY_PATH=/usr/local/pgsql/lib:/usr/local/lib
+                     export LD_LIBRARY_PATH PATH PGDATA PGLIB
+             11. source/.bashrc, then run 'initdb'
+                    Note that the owner of the DB system have to be
+   different from root/administrator
+             12. Editthe file /usr/local/pgsql/data/pg_hba.conf, such as:
+   
+                    host        all     163.17.11.109   255.255.255.0
+   trust
+   
+             13. ipc-daemon&
+             14. postmaster-i&
+             15. Run' psql -h host_name template1'. It's easy, huh :-)
+   
+   
+                Last updated: 01/05/2001    Author: KevinLo
