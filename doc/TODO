@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jan 27 18:16:46 EST 2003
+Last updated:		Mon Jan 27 18:19:09 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -55,6 +55,7 @@ Administration
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
 * Add the concept of dataspaces/tablespaces [tablespaces]
+
 
 Data Types
 ==========
