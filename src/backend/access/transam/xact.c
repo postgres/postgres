@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.142 2003/03/10 22:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.143 2003/03/14 22:40:31 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -197,7 +197,8 @@ static TransactionStateData CurrentTransactionStateData = {
 	0,							/* scan command id */
 	0x0,						/* start time */
 	TRANS_DEFAULT,				/* transaction state */
-	TBLOCK_DEFAULT				/* transaction block state of client queries */
+	TBLOCK_DEFAULT				/* transaction block state from
+								   the client perspective */
 };
 
 TransactionState CurrentTransactionState = &CurrentTransactionStateData;
@@ -259,12 +260,11 @@ SetTransactionFlushEnabled(bool state)
 #endif
 
 
-/* --------------------------------
+/*
  *	IsTransactionState
  *
  *	This returns true if we are currently running a query
  *	within an executing transaction.
- * --------------------------------
  */
 bool
 IsTransactionState(void)
@@ -291,12 +291,11 @@ IsTransactionState(void)
 	return false;
 }
 
-/* --------------------------------
+/*
  *	IsAbortedTransactionBlockState
  *
  *	This returns true if we are currently running a query
  *	within an aborted transaction block.
- * --------------------------------
  */
 bool
 IsAbortedTransactionBlockState(void)
@@ -310,9 +309,8 @@ IsAbortedTransactionBlockState(void)
 }
 
 
-/* --------------------------------
+/*
  *	GetCurrentTransactionId
- * --------------------------------
  */
 TransactionId
 GetCurrentTransactionId(void)
@@ -323,9 +321,8 @@ GetCurrentTransactionId(void)
 }
 
 
-/* --------------------------------
+/*
  *	GetCurrentCommandId
- * --------------------------------
  */
 CommandId
 GetCurrentCommandId(void)
@@ -336,9 +333,8 @@ GetCurrentCommandId(void)
 }
 
 
-/* --------------------------------
+/*
  *	GetCurrentTransactionStartTime
- * --------------------------------
  */
 AbsoluteTime
 GetCurrentTransactionStartTime(void)
@@ -349,9 +345,8 @@ GetCurrentTransactionStartTime(void)
 }
 
 
-/* --------------------------------
+/*
  *	GetCurrentTransactionStartTimeUsec
- * --------------------------------
  */
 AbsoluteTime
 GetCurrentTransactionStartTimeUsec(int *msec)
@@ -364,14 +359,13 @@ GetCurrentTransactionStartTimeUsec(int *msec)
 }
 
 
-/* --------------------------------
+/*
  *	TransactionIdIsCurrentTransactionId
  *
  *	During bootstrap, we cheat and say "it's not my transaction ID" even though
  *	it is.  Along with transam.c's cheat to say that the bootstrap XID is
  *	already committed, this causes the tqual.c routines to see previously
  *	inserted tuples as committed, which is what we need during bootstrap.
- * --------------------------------
  */
 bool
 TransactionIdIsCurrentTransactionId(TransactionId xid)
@@ -388,9 +382,8 @@ TransactionIdIsCurrentTransactionId(TransactionId xid)
 }
 
 
-/* --------------------------------
+/*
  *	CommandIdIsCurrentCommandId
- * --------------------------------
  */
 bool
 CommandIdIsCurrentCommandId(CommandId cid)
@@ -401,9 +394,8 @@ CommandIdIsCurrentCommandId(CommandId cid)
 }
 
 
-/* --------------------------------
+/*
  *	CommandCounterIncrement
- * --------------------------------
  */
 void
 CommandCounterIncrement(void)
@@ -434,9 +426,8 @@ CommandCounterIncrement(void)
  * ----------------------------------------------------------------
  */
 
-/* --------------------------------
+/*
  *	AtStart_Cache
- * --------------------------------
  */
 static void
 AtStart_Cache(void)
@@ -444,9 +435,8 @@ AtStart_Cache(void)
 	AcceptInvalidationMessages();
 }
 
-/* --------------------------------
+/*
  *		AtStart_Locks
- * --------------------------------
  */
 static void
 AtStart_Locks(void)
@@ -459,9 +449,8 @@ AtStart_Locks(void)
 	 */
 }
 
-/* --------------------------------
+/*
  *	AtStart_Memory
- * --------------------------------
  */
 static void
 AtStart_Memory(void)
@@ -608,9 +597,8 @@ RecordTransactionCommit(void)
 }
 
 
-/* --------------------------------
+/*
  *	AtCommit_Cache
- * --------------------------------
  */
 static void
 AtCommit_Cache(void)
@@ -626,9 +614,8 @@ AtCommit_Cache(void)
 	AtEOXactInvalidationMessages(true);
 }
 
-/* --------------------------------
+/*
  *	AtCommit_LocalCache
- * --------------------------------
  */
 static void
 AtCommit_LocalCache(void)
@@ -639,9 +626,8 @@ AtCommit_LocalCache(void)
 	CommandEndInvalidationMessages(true);
 }
 
-/* --------------------------------
+/*
  *	AtCommit_Locks
- * --------------------------------
  */
 static void
 AtCommit_Locks(void)
@@ -654,9 +640,8 @@ AtCommit_Locks(void)
 	ProcReleaseLocks(true);
 }
 
-/* --------------------------------
+/*
  *	AtCommit_Memory
- * --------------------------------
  */
 static void
 AtCommit_Memory(void)
@@ -751,9 +736,8 @@ RecordTransactionAbort(void)
 	MyProc->logRec.xrecoff = 0;
 }
 
-/* --------------------------------
+/*
  *	AtAbort_Cache
- * --------------------------------
  */
 static void
 AtAbort_Cache(void)
@@ -762,9 +746,8 @@ AtAbort_Cache(void)
 	AtEOXactInvalidationMessages(false);
 }
 
-/* --------------------------------
+/*
  *	AtAbort_Locks
- * --------------------------------
  */
 static void
 AtAbort_Locks(void)
@@ -778,9 +761,8 @@ AtAbort_Locks(void)
 }
 
 
-/* --------------------------------
+/*
  *	AtAbort_Memory
- * --------------------------------
  */
 static void
 AtAbort_Memory(void)
@@ -811,9 +793,8 @@ AtAbort_Memory(void)
  * ----------------------------------------------------------------
  */
 
-/* --------------------------------
+/*
  *	AtCleanup_Memory
- * --------------------------------
  */
 static void
 AtCleanup_Memory(void)
@@ -840,9 +821,8 @@ AtCleanup_Memory(void)
  * ----------------------------------------------------------------
  */
 
-/* --------------------------------
+/*
  *	StartTransaction
- * --------------------------------
  */
 static void
 StartTransaction(void)
@@ -905,9 +885,8 @@ StartTransaction(void)
 
 }
 
-/* --------------------------------
+/*
  *	CommitTransaction
- * --------------------------------
  */
 static void
 CommitTransaction(void)
@@ -1025,9 +1004,8 @@ CommitTransaction(void)
 	RESUME_INTERRUPTS();
 }
 
-/* --------------------------------
+/*
  *	AbortTransaction
- * --------------------------------
  */
 static void
 AbortTransaction(void)
@@ -1131,9 +1109,8 @@ AbortTransaction(void)
 	RESUME_INTERRUPTS();
 }
 
-/* --------------------------------
+/*
  *	CleanupTransaction
- * --------------------------------
  */
 static void
 CleanupTransaction(void)
@@ -1158,12 +1135,11 @@ CleanupTransaction(void)
 	s->state = TRANS_DEFAULT;
 }
 
-/* --------------------------------
+/*
  *	StartTransactionCommand
  *
  *	preventChain, if true, forces autocommit behavior at the next
  *	CommitTransactionCommand call.
- * --------------------------------
  */
 void
 StartTransactionCommand(bool preventChain)
@@ -1251,11 +1227,10 @@ StartTransactionCommand(bool preventChain)
 	MemoryContextSwitchTo(TransactionCommandContext);
 }
 
-/* --------------------------------
+/*
  *	CommitTransactionCommand
  *
  *	forceCommit = true forces autocommit behavior even when autocommit is off.
- * --------------------------------
  */
 void
 CommitTransactionCommand(bool forceCommit)
@@ -1350,9 +1325,8 @@ CommitTransactionCommand(bool forceCommit)
 	}
 }
 
-/* --------------------------------
+/*
  *	AbortCurrentTransaction
- * --------------------------------
  */
 void
 AbortCurrentTransaction(void)
@@ -1427,7 +1401,7 @@ AbortCurrentTransaction(void)
 	}
 }
 
-/* --------------------------------
+/*
  *	PreventTransactionChain
  *
  *	This routine is to be called by statements that must not run inside
@@ -1444,7 +1418,6 @@ AbortCurrentTransaction(void)
  *	stmtNode: pointer to parameter block for statement; this is used in
  *	a very klugy way to determine whether we are inside a function.
  *	stmtType: statement type name for error messages.
- * --------------------------------
  */
 void
 PreventTransactionChain(void *stmtNode, const char *stmtType)
@@ -1480,7 +1453,7 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 	}
 }
 
-/* --------------------------------
+/*
  *	RequireTransactionChain
  *
  *	This routine is to be called by statements that must run inside
@@ -1496,7 +1469,6 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
  *	stmtNode: pointer to parameter block for statement; this is used in
  *	a very klugy way to determine whether we are inside a function.
  *	stmtType: statement type name for error messages.
- * --------------------------------
  */
 void
 RequireTransactionChain(void *stmtNode, const char *stmtType)
@@ -1529,9 +1501,8 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
  *					   transaction block support
  * ----------------------------------------------------------------
  */
-/* --------------------------------
+/*
  *	BeginTransactionBlock
- * --------------------------------
  */
 void
 BeginTransactionBlock(void)
@@ -1563,9 +1534,8 @@ BeginTransactionBlock(void)
 	s->blockState = TBLOCK_INPROGRESS;
 }
 
-/* --------------------------------
+/*
  *	EndTransactionBlock
- * --------------------------------
  */
 void
 EndTransactionBlock(void)
@@ -1611,9 +1581,8 @@ EndTransactionBlock(void)
 	s->blockState = TBLOCK_ENDABORT;
 }
 
-/* --------------------------------
+/*
  *	AbortTransactionBlock
- * --------------------------------
  */
 #ifdef NOT_USED
 static void
@@ -1649,9 +1618,8 @@ AbortTransactionBlock(void)
 }
 #endif
 
-/* --------------------------------
+/*
  *	UserAbortTransactionBlock
- * --------------------------------
  */
 void
 UserAbortTransactionBlock(void)
@@ -1695,13 +1663,12 @@ UserAbortTransactionBlock(void)
 	s->blockState = TBLOCK_ENDABORT;
 }
 
-/* --------------------------------
+/*
  *	AbortOutOfAnyTransaction
  *
  *	This routine is provided for error recovery purposes.  It aborts any
  *	active transaction or transaction block, leaving the system in a known
  *	idle state.
- * --------------------------------
  */
 void
 AbortOutOfAnyTransaction(void)
