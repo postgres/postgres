@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.35 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.36 2001/05/27 20:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ ExecInitMaterial(Material *node, EState *estate, Plan *parent)
 	 * ExecQual or ExecProject.
 	 */
 
-#define MATERIAL_NSLOTS 1
+#define MATERIAL_NSLOTS 2
 
 	/*
 	 * tuple table initialization

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.56 2001/03/22 06:16:12 momjian Exp $
+ *	$Id: nodeHash.c,v 1.57 2001/05/27 20:42:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,8 @@ ExecInitHash(Hash *node, EState *estate, Plan *parent)
 	 */
 	ExecAssignExprContext(estate, &hashstate->cstate);
 
+#define HASH_NSLOTS 1
+
 	/*
 	 * initialize our result slot
 	 */
@@ -164,7 +166,6 @@ ExecInitHash(Hash *node, EState *estate, Plan *parent)
 int
 ExecCountSlotsHash(Hash *node)
 {
-#define HASH_NSLOTS 1
 	return ExecCountSlotsNode(outerPlan(node)) +
 	ExecCountSlotsNode(innerPlan(node)) +
 	HASH_NSLOTS;

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.8 2001/05/15 16:11:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.9 2001/05/27 20:42:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,7 +134,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 	 */
 	ExecAssignExprContext(estate, &subquerystate->csstate.cstate);
 
-#define SUBQUERYSCAN_NSLOTS 2
+#define SUBQUERYSCAN_NSLOTS 1
 
 	/*
 	 * tuple table initialization
@@ -177,7 +177,6 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, Plan *parent)
 int
 ExecCountSlotsSubqueryScan(SubqueryScan *node)
 {
-
 	/*
 	 * The subplan has its own tuple table and must not be counted here!
 	 */

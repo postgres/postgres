@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.16 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.17 2001/05/27 20:42:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,7 +411,7 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	 */
 	ExecAssignExprContext(estate, &scanstate->cstate);
 
-#define TIDSCAN_NSLOTS 3
+#define TIDSCAN_NSLOTS 2
 
 	/*
 	 * tuple table initialization

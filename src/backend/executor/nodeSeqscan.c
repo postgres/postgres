@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.29 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.30 2001/05/27 20:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ ExecInitSeqScan(SeqScan *node, EState *estate, Plan *parent)
 	 */
 	ExecAssignExprContext(estate, &scanstate->cstate);
 
-#define SEQSCAN_NSLOTS 3
+#define SEQSCAN_NSLOTS 2
 
 	/*
 	 * tuple table initialization

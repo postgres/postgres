@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.33 2001/05/07 00:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.34 2001/05/27 20:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 	 * ExecQual or ExecProject.
 	 */
 
-#define SORT_NSLOTS 1
+#define SORT_NSLOTS 2
 
 	/*
 	 * tuple table initialization
