@@ -116,7 +116,7 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 		 atol(PQgetvalue(res, row, PQfnumber(res, "n_tup_upd"))));
 	new_tbl->curr_vacuum_count = new_tbl->CountAtLastVacuum;
 
-	new_tbl->relfilenode = atoi(PQgetvalue(res, row, PQfnumber(res, "relfilenode")));
+	new_tbl->relid = atoi(PQgetvalue(res, row, PQfnumber(res, "oid")));
 	new_tbl->reltuples = atoi(PQgetvalue(res, row, PQfnumber(res, "reltuples")));
 	new_tbl->relpages = atoi(PQgetvalue(res, row, PQfnumber(res, "relpages")));
 
@@ -154,7 +154,7 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 
 	if (dbi->conn != NULL)
 	{
-		snprintf(query, sizeof(query), PAGES_QUERY, tbl->relfilenode);
+		snprintf(query, sizeof(query), PAGES_QUERY, tbl->relid);
 		res = send_query(query, dbi);
 		if (res != NULL)
 		{
@@ -237,7 +237,7 @@ update_table_list(db_info * dbi)
 			for (i = 0; i < t; i++)
 			{					/* loop through result set looking for a
 								 * match */
-				if (tbl->relfilenode == atoi(PQgetvalue(res, i, PQfnumber(res, "relfilenode"))))
+				if (tbl->relid == atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))))
 				{
 					found_match = 1;
 					break;
@@ -267,7 +267,7 @@ update_table_list(db_info * dbi)
 			while (tbl_elem != NULL)
 			{
 				tbl = ((tbl_info *) DLE_VAL(tbl_elem));
-				if (tbl->relfilenode == atoi(PQgetvalue(res, i, PQfnumber(res, "relfilenode"))))
+				if (tbl->relid == atoi(PQgetvalue(res, i, PQfnumber(res, "oid"))))
 				{
 					found_match = 1;
 					break;
@@ -361,7 +361,7 @@ print_table_info(tbl_info * tbl)
 {
 	sprintf(logbuffer, "  table name:     %s.%s", tbl->dbi->dbname, tbl->table_name);
 	log_entry(logbuffer);
-	sprintf(logbuffer, "     relfilenode: %i;   relisshared: %i", tbl->relfilenode, tbl->relisshared);
+	sprintf(logbuffer, "     relid: %i;   relisshared: %i", tbl->relid, tbl->relisshared);
 	log_entry(logbuffer);
 	sprintf(logbuffer, "     reltuples: %i;  relpages: %i", tbl->reltuples, tbl->relpages);
 	log_entry(logbuffer);
@@ -1072,7 +1072,7 @@ main(int argc, char *argv[])
 						{		/* Loop through tables in list */
 							tbl = ((tbl_info *) DLE_VAL(tbl_elem));		/* set tbl_info =
 																		 * current_table */
-							if (tbl->relfilenode == atoi(PQgetvalue(res, j, PQfnumber(res, "relfilenode"))))
+							if (tbl->relid == atoi(PQgetvalue(res, j, PQfnumber(res, "oid"))))
 							{
 								tbl->curr_analyze_count =
 									(atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_ins"))) +
