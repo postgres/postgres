@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.88 2001/06/22 19:16:23 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.89 2001/08/10 20:52:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@ inv_create(int flags)
 	 * Create the LO by writing an empty first page for it in
 	 * pg_largeobject
 	 */
-	(void) LargeObjectCreate(file_oid);
+	LargeObjectCreate(file_oid);
 
 	/*
 	 * Advance command counter so that new tuple will be seen by later

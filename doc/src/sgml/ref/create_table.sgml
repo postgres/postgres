@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.43 2001/08/10 18:57:32 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.44 2001/08/10 20:52:24 tgl Exp $
 Postgres documentation
 -->
 
@@ -2155,7 +2155,7 @@ ALTER DOMAIN cities
     </para>
    </refsect3>
 
-   <refsect3 id="R3-SQL-INHERITANCE-1">
+   <refsect3 id="R3-SQL-OBJECTIDS-1">
     <title>
      Object IDs
     </title>
