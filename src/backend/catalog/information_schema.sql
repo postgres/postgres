@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.17 2003/11/29 22:39:40 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.18 2003/12/07 10:21:58 petere Exp $
  */
 
 /*
@@ -260,12 +260,16 @@ CREATE VIEW columns AS
 
            CAST(
              CASE WHEN t.typtype = 'd' THEN
-               CASE WHEN t.typbasetype IN (25, 1042, 1043, 1560, 1562) AND t.typtypmod <> -1
-                    THEN t.typtypmod - 4
+               CASE WHEN t.typbasetype IN (1042, 1043) AND t.typtypmod <> -1
+                    THEN t.typtypmod - 4 /* char, varchar */
+                    WHEN t.typbasetype IN (1560, 1562) AND t.typtypmod <> -1
+                    THEN t.typtypmod /* bit, varbit */
                     ELSE null END
              ELSE
-               CASE WHEN a.atttypid IN (25, 1042, 1043, 1560, 1562) AND a.atttypmod <> -1
+               CASE WHEN a.atttypid IN (1042, 1043) AND a.atttypmod <> -1
                     THEN a.atttypmod - 4
+                    WHEN a.atttypid IN (1560, 1562) AND a.atttypmod <> -1
+                    THEN a.atttypmod
                     ELSE null END
              END
              AS cardinal_number)
@@ -559,8 +563,10 @@ CREATE VIEW domains AS
              AS data_type,
 
            CAST(
-             CASE WHEN t.typbasetype IN (25, 1042, 1043, 1560, 1562) AND t.typtypmod <> -1
-                  THEN t.typtypmod - 4
+             CASE WHEN t.typbasetype IN (1042, 1043) AND t.typtypmod <> -1
+                  THEN t.typtypmod - 4 /* char, varchar */
+                  WHEN t.typbasetype IN (1560, 1562) AND t.typtypmod <> -1
+                  THEN t.typtypmod /* bit, varbit */
                   ELSE null END
              AS cardinal_number)
              AS character_maximum_length,
