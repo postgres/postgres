@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.46 2001/03/22 03:59:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.47 2001/03/29 19:03:57 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -719,7 +719,7 @@ SetPGVariable(const char *name, const char *value)
 		parse_client_encoding(mvalue);
 	else if (strcasecmp(name, "server_encoding") == 0)
 		parse_server_encoding(mvalue);
-	else if (strcasecmp(name, "random_seed") == 0)
+	else if (strcasecmp(name, "seed") == 0)
 		parse_random_seed(mvalue);
 	else
 		SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET);
@@ -744,7 +744,7 @@ GetPGVariable(const char *name)
 		show_client_encoding();
 	else if (strcasecmp(name, "server_encoding") == 0)
 		show_server_encoding();
-	else if (strcasecmp(name, "random_seed") == 0)
+	else if (strcasecmp(name, "seed") == 0)
 		show_random_seed();
 	else
 	{
@@ -769,7 +769,7 @@ ResetPGVariable(const char *name)
 		reset_client_encoding();
 	else if (strcasecmp(name, "server_encoding") == 0)
 		reset_server_encoding();
-	else if (strcasecmp(name, "random_seed") == 0)
+	else if (strcasecmp(name, "seed") == 0)
 		reset_random_seed();
 	else
 		SetConfigOption(name, NULL, superuser() ? PGC_SUSET : PGC_USERSET);
