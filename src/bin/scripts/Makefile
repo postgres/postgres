@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.19 2003/03/18 22:19:46 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.20 2003/04/16 05:23:55 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 SCRIPTS := vacuumdb clusterdb
 PROGRAMS = createdb createlang createuser dropdb droplang dropuser
 
-override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -I$(top_srcdir)/src/bin/pg_dump -I$(top_srcdir)/src/bin/psql -I$(libpq_srcdir) $(CPPFLAGS)
 
 
 all: submake-libpq submake-backend $(PROGRAMS)
@@ -31,15 +31,10 @@ dropdb: dropdb.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/pars
 droplang: droplang.o common.o sprompt.o print.o mbprint.o
 dropuser: dropuser.o common.o dumputils.o sprompt.o $(top_builddir)/src/backend/parser/keywords.o
 
-createdb.o createuser.o dropdb.o dropuser.o dumputils.o: dumputils.h
-
-createlang.o droplang.o: print.h
-print.o: print.h mbprint.h
-
-dumputils.c dumputils.h sprompt.c : % : $(top_srcdir)/src/bin/pg_dump/%
+dumputils.c sprompt.c : % : $(top_srcdir)/src/bin/pg_dump/%
 	rm -f $@ && $(LN_S) $< .
 
-print.c print.h mbprint.c mbprint.h : % : $(top_srcdir)/src/bin/psql/%
+print.c mbprint.c : % : $(top_srcdir)/src/bin/psql/%
 	rm -f $@ && $(LN_S) $< .
 
 .PHONY: submake-backend
@@ -65,4 +60,4 @@ uninstall:
 
 
 clean distclean maintainer-clean:
-	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS)) common.o dumputils.o sprompt.o print.o mbprint.o dumputils.c dumputils.h sprompt.c print.c print.h mbprint.c mbprint.h
+	rm -f $(addsuffix $(X), $(PROGRAMS)) $(addsuffix .o, $(PROGRAMS)) common.o dumputils.o sprompt.o print.o mbprint.o dumputils.c sprompt.c print.c mbprint.c

@@ -4,11 +4,11 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.2 2003/04/08 17:08:15 tgl Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.3 2003/04/16 05:23:55 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
-subdir = src/interfaces/ecpg/pgtypeslib
+subdir = src/interfaces/ecpg/compatlib
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
