@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.53 1999/09/05 23:24:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.54 1999/09/24 00:24:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -576,12 +576,10 @@ mdblindwrt(char *dbstr,
 /* this is work arround only !!! */
 	{
 		char		dbpath[MAXPGPATH + 1];
-		int4		owner;
 		Oid			id;
 		char	   *tmpPath;
-		int			tmpEncoding;
 
-		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath, &tmpEncoding);
+		GetRawDatabaseInfo(dbstr, &id, dbpath);
 
 		if (id != dbid)
 			elog(FATAL, "mdblindwrt: oid of db %s is not %u", dbstr, dbid);
@@ -615,12 +613,10 @@ mdblindwrt(char *dbstr,
 /* this is work arround only !!! */
 	{
 		char		dbpath[MAXPGPATH + 1];
-		int4		owner;
 		Oid			id;
 		char	   *tmpPath;
-		int			tmpEncoding;
 
-		GetRawDatabaseInfo(dbstr, &owner, &id, dbpath, &tmpEncoding);
+		GetRawDatabaseInfo(dbstr, &id, dbpath);
 
 		if (id != dbid)
 			elog(FATAL, "mdblindwrt: oid of db %s is not %u", dbstr, dbid);

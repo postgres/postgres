@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.29 1999/07/17 20:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.30 1999/09/24 00:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,6 @@
  *		ExecSetSlotDescriptor	- set a slot's tuple descriptor
  *		ExecSetSlotDescriptorIsNew - diddle the slot-desc-is-new flag
  *		ExecSetNewSlotDescriptor - set a desc and the is-new-flag all at once
- *		ExecSlotBuffer			- return buffer of tuple in slot
- *		ExecSetSlotBuffer		- set the buffer for tuple in slot
- *		ExecIncrSlotBufferRefcnt - bump the refcnt of the slot buffer(Macro)
  *
  *	 SLOT STATUS PREDICATES
  *		TupIsNull				- true when slot contains no tuple(Macro)
@@ -193,7 +190,7 @@ ExecDestroyTupleTable(TupleTable table, /* tuple table */
 					  bool shouldFree)	/* true if we should free slot
 										 * contents */
 {
-	int			next;			/* next avaliable slot */
+	int			next;			/* next available slot */
 	TupleTableSlot *array;		/* start of table array */
 	int			i;				/* counter */
 
@@ -212,38 +209,27 @@ ExecDestroyTupleTable(TupleTable table, /* tuple table */
 
 	/* ----------------
 	 *	first free all the valid pointers in the tuple array
-	 *	if that's what the caller wants..
+	 *	and drop refcounts of any referenced buffers,
+	 *	if that's what the caller wants.  (There is probably
+	 *	no good reason for the caller ever not to want it!)
 	 *
-	 *	Note: we do nothing about the Buffer and Tuple Descriptor's
+	 *	Note: we do nothing about the Tuple Descriptor's
 	 *	we store in the slots.	This may have to change (ex: we should
 	 *	probably worry about pfreeing tuple descs too) -cim 3/14/91
+	 *
+	 *	Right now, the handling of tuple pointers and buffer refcounts
+	 *	is clean, but the handling of tuple descriptors is NOT; they
+	 *	are copied around with wild abandon.  It would take some work
+	 *	to make tuple descs pfree'able.  Fortunately, since they're
+	 *	normally only made once per scan, it's probably not worth
+	 *	worrying about...  tgl 9/21/99
 	 * ----------------
 	 */
 	if (shouldFree)
+	{
 		for (i = 0; i < next; i++)
-		{
-			TupleTableSlot slot;
-			HeapTuple	tuple;
-
-			slot = array[i];
-			tuple = slot.val;
-
-			if (tuple != NULL)
-			{
-				slot.val = (HeapTuple) NULL;
-				if (slot.ttc_shouldFree)
-				{
-					/* ----------------
-					 *	since a tuple may contain a pointer to
-					 *	lock information allocated along with the
-					 *	tuple, we have to be careful to free any
-					 *	rule locks also -cim 1/17/90
-					 * ----------------
-					 */
-					pfree(tuple);
-				}
-			}
-		}
+			ExecClearTuple(&array[i]);
+	}
 
 	/* ----------------
 	 *	finally free the tuple array and the table itself.
@@ -274,6 +260,7 @@ TupleTableSlot *				/* return: the slot allocated in the tuple
 ExecAllocTableSlot(TupleTable table)
 {
 	int			slotnum;		/* new slot number */
+	TupleTableSlot*   slot;
 
 	/* ----------------
 	 *	sanity checks
@@ -319,9 +306,18 @@ ExecAllocTableSlot(TupleTable table)
 	slotnum = table->next;
 	table->next++;
 
-	table->array[slotnum].type = T_TupleTableSlot;
+	slot = &(table->array[slotnum]);
 
-	return &(table->array[slotnum]);
+	/* Make sure the allocated slot is valid (and empty) */
+	slot->type = T_TupleTableSlot;
+	slot->val = (HeapTuple) NULL;
+	slot->ttc_shouldFree = true;
+	slot->ttc_descIsNew = true;
+	slot->ttc_tupleDescriptor = (TupleDesc) NULL;
+	slot->ttc_buffer = InvalidBuffer;
+	slot->ttc_whichplan = -1;
+
+	return slot;
 }
 
 /* ----------------------------------------------------------------
@@ -333,26 +329,49 @@ ExecAllocTableSlot(TupleTable table)
  *		ExecStoreTuple
  *
  *		This function is used to store a tuple into a specified
- *		slot in the tuple table.  Note: the only slots which should
- *		be called with shouldFree == false are those slots used to
- *		store tuples not allocated with pfree().  Currently the
- *		seqscan and indexscan nodes use this for the tuples returned
- *		by amgetattr, which are actually pointers onto disk pages.
+ *		slot in the tuple table.
+ *
+ *		tuple:	tuple to store
+ *		slot:	slot to store it in
+ *		buffer:	disk buffer if tuple is in a disk page, else InvalidBuffer
+ *		shouldFree:	true if ExecClearTuple should pfree() the tuple
+ *					when done with it
+ *
+ * If 'buffer' is not InvalidBuffer, the tuple table code acquires a pin
+ * on the buffer which is held until the slot is cleared, so that the tuple
+ * won't go away on us.
+ *
+ * shouldFree is normally set 'true' for tuples constructed on-the-fly.
+ * It must always be 'false' for tuples that are stored in disk pages,
+ * since we don't want to try to pfree those.
+ *
+ * Another case where it is 'false' is when the referenced tuple is held
+ * in a tuple table slot belonging to a lower-level executor Proc node.
+ * In this case the lower-level slot retains ownership and responsibility
+ * for eventually releasing the tuple.  When this method is used, we must
+ * be certain that the upper-level Proc node will lose interest in the tuple
+ * sooner than the lower-level one does!  If you're not certain, copy the
+ * lower-level tuple with heap_copytuple and let the upper-level table
+ * slot assume ownership of the copy!
+ *
+ * Return value is just the passed-in slot pointer.
  * --------------------------------
  */
-TupleTableSlot *				/* return: slot passed */
-ExecStoreTuple(HeapTuple tuple, /* tuple to store */
-			   TupleTableSlot *slot,	/* slot in which to store tuple */
-			   Buffer buffer,	/* buffer associated with tuple */
-			   bool shouldFree) /* true if we call pfree() when we gc. */
+TupleTableSlot *
+ExecStoreTuple(HeapTuple tuple,
+			   TupleTableSlot *slot,
+			   Buffer buffer,
+			   bool shouldFree)
 {
 	/* ----------------
 	 *	sanity checks
 	 * ----------------
 	 */
 	Assert(slot != NULL);
+	/* passing shouldFree=true for a tuple on a disk page is not sane */
+	Assert(BufferIsValid(buffer) ? (!shouldFree) : true);
 
-	/* clear out the slot first */
+	/* clear out any old contents of the slot */
 	ExecClearTuple(slot);
 
 	/* ----------------
@@ -363,6 +382,12 @@ ExecStoreTuple(HeapTuple tuple, /* tuple to store */
 	slot->val = tuple;
 	slot->ttc_buffer = buffer;
 	slot->ttc_shouldFree = shouldFree;
+
+	/* If tuple is on a disk page, keep the page pinned as long as we hold
+	 * a pointer into it.
+	 */
+	if (BufferIsValid(buffer))
+		IncrBufferRefCount(buffer);
 
 	return slot;
 }
@@ -395,29 +420,20 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 	 * ----------------
 	 */
 	if (slot->ttc_shouldFree && oldtuple != NULL)
-	{
-		/* ----------------
-		 *	since a tuple may contain a pointer to
-		 *	lock information allocated along with the
-		 *	tuple, we have to be careful to free any
-		 *	rule locks also -cim 1/17/90
-		 * ----------------
-		 */
 		pfree(oldtuple);
-	}
 
-	/* ----------------
-	 *	store NULL into the specified slot and return the slot.
-	 *	- also set buffer to InvalidBuffer -cim 3/14/91
-	 * ----------------
-	 */
 	slot->val = (HeapTuple) NULL;
 
+	slot->ttc_shouldFree = true; /* probably useless code... */
+
+	/* ----------------
+	 *	Drop the pin on the referenced buffer, if there is one.
+	 * ----------------
+	 */
 	if (BufferIsValid(slot->ttc_buffer))
 		ReleaseBuffer(slot->ttc_buffer);
 
 	slot->ttc_buffer = InvalidBuffer;
-	slot->ttc_shouldFree = true;
 
 	return slot;
 }
@@ -525,41 +541,6 @@ ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
 
 #endif
 
-/* --------------------------------
- *		ExecSlotBuffer
- *
- *		This function is used to get the tuple descriptor associated
- *		with the slot's tuple.  Be very careful with this as it does not
- *		balance the reference counts.  If the buffer returned is stored
- *		someplace else, then also use ExecIncrSlotBufferRefcnt().
- *
- * Now a macro in tuptable.h
- * --------------------------------
- */
-
-/* --------------------------------
- *		ExecSetSlotBuffer
- *
- *		This function is used to set the tuple descriptor associated
- *		with the slot's tuple.   Be very careful with this as it does not
- *		balance the reference counts.  If we're using this then we should
- *		also use ExecIncrSlotBufferRefcnt().
- * --------------------------------
- */
-#ifdef NOT_USED
-Buffer							/* return: old slot buffer */
-ExecSetSlotBuffer(TupleTableSlot *slot, /* slot to change */
-				  Buffer b)		/* tuple descriptor */
-{
-	Buffer		oldb = slot->ttc_buffer;
-
-	slot->ttc_buffer = b;
-
-	return oldb;
-}
-
-#endif
-
 /* ----------------------------------------------------------------
  *				  tuple table slot status predicates
  * ----------------------------------------------------------------
@@ -601,12 +582,7 @@ ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
 
 #define INIT_SLOT_ALLOC \
 	tupleTable = (TupleTable) estate->es_tupleTable; \
-	slot =		 ExecAllocTableSlot(tupleTable); \
-	slot->val = (HeapTuple)NULL; \
-	slot->ttc_shouldFree = true; \
-	slot->ttc_tupleDescriptor = (TupleDesc)NULL; \
-	slot->ttc_whichplan = -1;\
-	slot->ttc_descIsNew = true;
+	slot =		 ExecAllocTableSlot(tupleTable);
 
 /* ----------------
  *		ExecInitResultTupleSlot

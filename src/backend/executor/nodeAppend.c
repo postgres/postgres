@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.25 1999/09/18 19:06:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.26 1999/09/24 00:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,12 +399,13 @@ ExecProcAppend(Append *node)
 	{
 		/* ----------------
 		 *	if the subplan gave us something then place a copy of
-		 *	whatever we get into our result slot and return it, else..
+		 *	whatever we get into our result slot and return it.
+		 *
+		 *	Note we rely on the subplan to retain ownership of the
+		 *	tuple for as long as we need it --- we don't copy it.
 		 * ----------------
 		 */
-		return ExecStoreTuple(result->val,
-							  result_slot, result->ttc_buffer, false);
-
+		return ExecStoreTuple(result->val, result_slot, InvalidBuffer, false);
 	}
 	else
 	{

@@ -404,52 +404,61 @@ QUERY: SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person p;
 name |name       |name         
 -----+-----------+-------------
 mike |posthacking|advil        
-joe  |basketball |peet's coffee
+mike |posthacking|peet's coffee
+joe  |basketball |hightops     
 sally|basketball |hightops     
-(3 rows)
+(4 rows)
 
 QUERY: SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person* p;
 name |name       |name         
 -----+-----------+-------------
 mike |posthacking|advil        
-joe  |basketball |peet's coffee
+mike |posthacking|peet's coffee
+joe  |basketball |hightops     
 sally|basketball |hightops     
 jeff |posthacking|advil        
-(4 rows)
+jeff |posthacking|peet's coffee
+(6 rows)
 
 QUERY: SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person p;
-name    |name |name       
---------+-----+-----------
-advil   |mike |posthacking
-hightops|joe  |basketball 
-hightops|sally|basketball 
-(3 rows)
+name         |name |name       
+-------------+-----+-----------
+advil        |mike |posthacking
+peet's coffee|mike |posthacking
+hightops     |joe  |basketball 
+hightops     |sally|basketball 
+(4 rows)
 
 QUERY: SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person* p;
-name    |name |name       
---------+-----+-----------
-advil   |mike |posthacking
-hightops|joe  |basketball 
-hightops|sally|basketball 
-advil   |jeff |posthacking
-(4 rows)
+name         |name |name       
+-------------+-----+-----------
+advil        |mike |posthacking
+peet's coffee|mike |posthacking
+hightops     |joe  |basketball 
+hightops     |sally|basketball 
+advil        |jeff |posthacking
+peet's coffee|jeff |posthacking
+(6 rows)
 
 QUERY: SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person p;
 name         |name       |name 
 -------------+-----------+-----
 advil        |posthacking|mike 
-peet's coffee|basketball |joe  
+peet's coffee|posthacking|mike 
+hightops     |basketball |joe  
 hightops     |basketball |sally
-(3 rows)
+(4 rows)
 
 QUERY: SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person* p;
 name         |name       |name 
 -------------+-----------+-----
 advil        |posthacking|mike 
-peet's coffee|basketball |joe  
+peet's coffee|posthacking|mike 
+hightops     |basketball |joe  
 hightops     |basketball |sally
 advil        |posthacking|jeff 
-(4 rows)
+peet's coffee|posthacking|jeff 
+(6 rows)
 
 QUERY: SELECT user_relns() AS user_relns
    ORDER BY user_relns;

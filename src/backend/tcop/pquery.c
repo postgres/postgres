@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.27 1999/07/17 20:17:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.28 1999/09/24 00:24:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,6 @@ CreateExecutorState(void)
 {
 	EState	   *state;
 	extern int	NBuffers;
-	long	   *refcount;
 
 	/* ----------------
 	 *	create a new executor state
@@ -80,10 +79,6 @@ CreateExecutorState(void)
 	state->es_tupleTable = NULL;
 
 	state->es_junkFilter = NULL;
-
-	refcount = (long *) palloc(NBuffers * sizeof(long));
-	MemSet((char *) refcount, 0, NBuffers * sizeof(long));
-	state->es_refcount = (int *) refcount;
 
 	/* ----------------
 	 *	return the executor state structure

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.32 1999/09/18 19:08:18 tgl Exp $
+ * $Id: buf_internals.h,v 1.33 1999/09/24 00:25:27 tgl Exp $
  *
  * NOTE
  *		If BUFFERPAGE0 is defined, then 0 will be used as a
@@ -68,7 +68,7 @@ struct buftag
 	(a)->relId = (xx_reln)->rd_lockInfo.lockRelId \
 )
 
-#define BAD_BUFFER_ID(bid) ((bid<1) || (bid>(NBuffers)))
+#define BAD_BUFFER_ID(bid) ((bid) < 1 || (bid) > NBuffers)
 #define INVALID_DESCRIPTOR (-3)
 
 /*
@@ -168,7 +168,6 @@ extern bool BufTableInsert(BufferDesc *buf);
 extern BufferDesc *BufferDescriptors;
 extern BufferBlock BufferBlocks;
 extern long *PrivateRefCount;
-extern long *LastRefCount;
 extern bits8 *BufferLocks;
 extern long *CommitInfoNeedsSave;
 extern SPINLOCK BufMgrLock;

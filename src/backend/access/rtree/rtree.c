@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.37 1999/09/18 19:06:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.38 1999/09/24 00:23:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ rtbuild(Relation heap,
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
 		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, hd, buffer);
+		FillDummyExprContext(econtext, slot, hd, InvalidBuffer);
 	}
 	else
 	{

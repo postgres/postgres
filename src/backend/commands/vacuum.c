@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.120 1999/09/18 19:06:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.121 1999/09/24 00:24:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "parser/parse_oper.h"
+#include "storage/sinval.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
@@ -45,8 +46,6 @@
 #endif
 
  /* #include <port-protos.h> *//* Why? */
-
-extern int	BlowawayRelationBuffers(Relation rel, BlockNumber block);
 
 bool		VacuumRunning = false;
 
@@ -1838,9 +1837,9 @@ Elapsed %u/%u sec.",
 	/* truncate relation */
 	if (blkno < nblocks)
 	{
-		i = BlowawayRelationBuffers(onerel, blkno);
+		i = FlushRelationBuffers(onerel, blkno, false);
 		if (i < 0)
-			elog(FATAL, "VACUUM (vc_rpfheap): BlowawayRelationBuffers returned %d", i);
+			elog(FATAL, "VACUUM (vc_rpfheap): FlushRelationBuffers returned %d", i);
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
 		Assert(blkno >= 0);
 		vacrelstats->num_pages = blkno; /* set new number of blocks */
@@ -1902,12 +1901,14 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages)
 		/*
 		 * we have to flush "empty" end-pages (if changed, but who knows
 		 * it) before truncation
+		 *
+		 * XXX wouldn't passing 'true' to FlushRelationBuffers do the job?
 		 */
 		FlushBufferPool(!TransactionFlushEnabled());
 
-		i = BlowawayRelationBuffers(onerel, nblocks);
+		i = FlushRelationBuffers(onerel, nblocks, false);
 		if (i < 0)
-			elog(FATAL, "VACUUM (vc_vacheap): BlowawayRelationBuffers returned %d", i);
+			elog(FATAL, "VACUUM (vc_vacheap): FlushRelationBuffers returned %d", i);
 
 		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
 		Assert(nblocks >= 0);

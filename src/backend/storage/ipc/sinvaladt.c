@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.26 1999/09/09 14:56:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.27 1999/09/24 00:24:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,8 @@
 #include "miscadmin.h"
 #include "storage/backendid.h"
 #include "storage/lmgr.h"
+#include "storage/proc.h"
+#include "storage/sinval.h"
 #include "storage/sinvaladt.h"
 #include "utils/trace.h"
 
@@ -125,6 +127,7 @@ SISegInit(SISeg *segP, int maxBackends)
 		segP->procState[i].nextMsgNum = -1;	/* inactive */
 		segP->procState[i].resetState = false;
 		segP->procState[i].tag = InvalidBackendTag;
+		segP->procState[i].procStruct = INVALID_OFFSET;
 	}
 }
 
@@ -161,8 +164,8 @@ SIBackendInit(SISeg *segP)
 		}
 	}
 
-	/* elog() with spinlock held is probably not too cool, but these
-	 * conditions should never happen anyway.
+	/* elog() with spinlock held is probably not too cool, but this
+	 * condition should never happen anyway.
 	 */
 	if (stateP == NULL)
 	{
@@ -179,9 +182,10 @@ SIBackendInit(SISeg *segP)
 #endif	 /* INVALIDDEBUG */
 
 	/* mark myself active, with all extant messages already read */
-	stateP->tag = MyBackendTag;
-	stateP->resetState = false;
 	stateP->nextMsgNum = segP->maxMsgNum;
+	stateP->resetState = false;
+	stateP->tag = MyBackendTag;
+	stateP->procStruct = MAKE_OFFSET(MyProc);
 
 	/* register exit routine to mark my entry inactive at exit */
 	on_shmem_exit(CleanupInvalidationState, (caddr_t) segP);
@@ -193,7 +197,8 @@ SIBackendInit(SISeg *segP)
  * CleanupInvalidationState
  *		Mark the current backend as no longer active.
  *
- * This function is called via on_shmem_exit() during backend shutdown.
+ * This function is called via on_shmem_exit() during backend shutdown,
+ * so the caller has NOT acquired the lock for us.
  */
 static void
 CleanupInvalidationState(int status,
@@ -201,13 +206,14 @@ CleanupInvalidationState(int status,
 {
 	Assert(PointerIsValid(segP));
 
-	/* XXX we probably oughta grab the SInval spinlock for this...
-	 * but I think it is safe not to.
-	 */
+	SpinAcquire(SInvalLock);
 
 	segP->procState[MyBackendId - 1].nextMsgNum = -1;
 	segP->procState[MyBackendId - 1].resetState = false;
 	segP->procState[MyBackendId - 1].tag = InvalidBackendTag;
+	segP->procState[MyBackendId - 1].procStruct = INVALID_OFFSET;
+
+	SpinRelease(SInvalLock);
 }
 
 /*

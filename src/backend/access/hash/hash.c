@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.31 1999/09/18 19:05:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.32 1999/09/24 00:23:48 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -58,7 +58,6 @@ hashbuild(Relation heap,
 				nitups;
 	int			i;
 	HashItem	hitem;
-	Buffer		buffer = InvalidBuffer;
 
 #ifndef OMIT_PARTIAL_INDEX
 	ExprContext *econtext;
@@ -101,7 +100,7 @@ hashbuild(Relation heap,
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
 		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, htupdesc, buffer);
+		FillDummyExprContext(econtext, slot, htupdesc, InvalidBuffer);
 	}
 	else
 /* quiet the compiler */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.62 1999/09/18 19:07:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.63 1999/09/24 00:24:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,9 +89,6 @@ static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
 void		PrintBufferDescs(void);
 
-/* not static but used by vacuum only ... */
-int			BlowawayRelationBuffers(Relation rel, BlockNumber block);
-
 /* ---------------------------------------------------
  * RelationGetBufferWithBuffer
  *		see if the given buffer is what we want
@@ -145,9 +142,6 @@ RelationGetBufferWithBuffer(Relation relation,
  * Assume when this function is called, that reln has been
  *		opened already.
  */
-
-extern int	ShowPinTrace;
-
 
 #undef ReadBuffer				/* conflicts with macro when BUFMGR_DEBUG
 								 * defined */
@@ -499,6 +493,7 @@ BufferAlloc(Relation reln,
 					SignalIO(buf);
 #endif	 /* !HAS_TEST_AND_SET */
 				PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
+				Assert(buf->refcount > 0);
 				buf->refcount--;
 				if (buf->refcount == 0)
 				{
@@ -575,10 +570,14 @@ BufferAlloc(Relation reln,
 						SignalIO(buf);
 #endif	 /* !HAS_TEST_AND_SET */
 					/* give up the buffer since we don't need it any more */
-					buf->refcount--;
 					PrivateRefCount[BufferDescriptorGetBuffer(buf) - 1] = 0;
-					AddBufferToFreelist(buf);
-					buf->flags |= BM_FREE;
+					Assert(buf->refcount > 0);
+					buf->refcount--;
+					if (buf->refcount == 0)
+					{
+						AddBufferToFreelist(buf);
+						buf->flags |= BM_FREE;
+					}
 					buf->flags &= ~BM_IO_IN_PROGRESS;
 				}
 
@@ -791,7 +790,7 @@ FlushBuffer(Buffer buffer, bool release)
 	int			status;
 
 	if (BufferIsLocal(buffer))
-		return FlushLocalBuffer(buffer, release);
+		return FlushLocalBuffer(buffer, release) ? STATUS_OK : STATUS_ERROR;
 
 	if (BAD_BUFFER_ID(buffer))
 		return STATUS_ERROR;
@@ -813,7 +812,7 @@ FlushBuffer(Buffer buffer, bool release)
 	status = smgrflush(DEFAULT_SMGR, bufrel, bufHdr->tag.blockNum,
 					   (char *) MAKE_PTR(bufHdr->data));
 
-	/* drop relcache refcount incremented by RelationIdCacheGetRelation */
+	/* drop relcache refcnt incremented by RelationIdCacheGetRelation */
 	RelationDecrementReferenceCount(bufrel);
 
 	if (status == SM_FAIL)
@@ -908,15 +907,10 @@ ReleaseAndReadBuffer(Buffer buffer,
 			bufHdr = &BufferDescriptors[buffer - 1];
 			Assert(PrivateRefCount[buffer - 1] > 0);
 			PrivateRefCount[buffer - 1]--;
-			if (PrivateRefCount[buffer - 1] == 0 &&
-				LastRefCount[buffer - 1] == 0)
+			if (PrivateRefCount[buffer - 1] == 0)
 			{
-
-				/*
-				 * only release buffer if it is not pinned in previous
-				 * ExecMain level
-				 */
 				SpinAcquire(BufMgrLock);
+				Assert(bufHdr->refcount > 0);
 				bufHdr->refcount--;
 				if (bufHdr->refcount == 0)
 				{
@@ -994,7 +988,7 @@ BufferSync()
 						elog(ERROR, "BufferSync: write error %u for %s",
 							 bufHdr->tag.blockNum, bufHdr->sb_relname);
 					}
-					/* drop refcount from RelationIdCacheGetRelation */
+					/* drop refcnt from RelationIdCacheGetRelation */
 					if (reln != (Relation) NULL)
 						RelationDecrementReferenceCount(reln);
 					continue;
@@ -1049,7 +1043,7 @@ BufferSync()
 				 */
 				if (!(bufHdr->flags & BM_JUST_DIRTIED))
 					bufHdr->flags &= ~BM_DIRTY;
-				/* drop refcount from RelationIdCacheGetRelation */
+				/* drop refcnt from RelationIdCacheGetRelation */
 				if (reln != (Relation) NULL)
 					RelationDecrementReferenceCount(reln);
 			}
@@ -1175,7 +1169,7 @@ ResetBufferUsage()
  *		ResetBufferPool
  *
  *		this routine is supposed to be called when a transaction aborts.
- *		it will release all the buffer pins held by the transaciton.
+ *		it will release all the buffer pins held by the transaction.
  *
  * ----------------------------------------------
  */
@@ -1184,15 +1178,24 @@ ResetBufferPool()
 {
 	int			i;
 
-	for (i = 1; i <= NBuffers; i++)
+	for (i = 0; i < NBuffers; i++)
 	{
-		CommitInfoNeedsSave[i - 1] = 0;
-		if (BufferIsValid(i))
+		if (PrivateRefCount[i] != 0)
 		{
-			while (PrivateRefCount[i - 1] > 0)
-				ReleaseBuffer(i);
+			BufferDesc *buf = &BufferDescriptors[i];
+
+			SpinAcquire(BufMgrLock);
+			Assert(buf->refcount > 0);
+			buf->refcount--;
+			if (buf->refcount == 0)
+			{
+				AddBufferToFreelist(buf);
+				buf->flags |= BM_FREE;
+			}
+			SpinRelease(BufMgrLock);
 		}
-		LastRefCount[i - 1] = 0;
+		PrivateRefCount[i] = 0;
+		CommitInfoNeedsSave[i] = 0;
 	}
 
 	ResetLocalBufferPool();
@@ -1213,7 +1216,7 @@ BufferPoolCheckLeak()
 
 	for (i = 1; i <= NBuffers; i++)
 	{
-		if (BufferIsValid(i))
+		if (PrivateRefCount[i - 1] != 0)
 		{
 			BufferDesc *buf = &(BufferDescriptors[i - 1]);
 
@@ -1226,7 +1229,7 @@ relname=%s, blockNum=%d, flags=0x%x, refcount=%d %d)",
 			result = 1;
 		}
 	}
-	return (result);
+	return result;
 }
 
 /* ------------------------------------------------
@@ -1287,7 +1290,7 @@ BufferGetRelation(Buffer buffer)
 	relation = RelationIdGetRelation(relid);
 	Assert(relation);
 
-	/* drop relcache refcount incremented by RelationIdGetRelation */
+	/* drop relcache refcnt incremented by RelationIdGetRelation */
 	RelationDecrementReferenceCount(relation);
 
 	if (RelationHasReferenceCountZero(relation))
@@ -1354,7 +1357,7 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 							  (char *) MAKE_PTR(bufHdr->data));
 	}
 
-	/* drop relcache refcount incremented by RelationIdCacheGetRelation */
+	/* drop relcache refcnt incremented by RelationIdCacheGetRelation */
 	if (reln != (Relation) NULL)
 		RelationDecrementReferenceCount(reln);
 
@@ -1549,10 +1552,27 @@ BufferPoolBlowaway()
 #endif
 
 /* ---------------------------------------------------------------------
- *		BlowawayRelationBuffers
+ *		FlushRelationBuffers
  *
- *		This function blowaway all the pages with blocknumber >= passed
- *		of a relation in the buffer pool. Used by vacuum before truncation...
+ *		This function removes from the buffer pool all pages of a relation
+ *		that have blocknumber >= specified block.  If doFlush is true,
+ *		dirty buffers are written out --- otherwise it's an error for any
+ *		of the buffers to be dirty.
+ *
+ *		This is used by VACUUM before truncating the relation to the given
+ *		number of blocks.  For VACUUM, we pass doFlush = false since it would
+ *		mean a bug in VACUUM if any of the unwanted pages were still dirty.
+ *		(TRUNCATE TABLE also uses it in the same way.)
+ *
+ *		This is also used by RENAME TABLE (with block = 0 and doFlush = true)
+ *		to clear out the buffer cache before renaming the physical files of
+ *		a relation.  Without that, some other backend might try to do a
+ *		blind write of a buffer page (relying on the sb_relname of the buffer)
+ *		and fail because it's not got the right filename anymore.
+ *
+ *		In both cases, the caller should be holding AccessExclusiveLock on
+ *		the target relation to ensure that no other backend is busy reading
+ *		more blocks of the relation...
  *
  *		Returns: 0 - Ok, -1 - DIRTY, -2 - PINNED
  *
@@ -1561,7 +1581,7 @@ BufferPoolBlowaway()
  * --------------------------------------------------------------------
  */
 int
-BlowawayRelationBuffers(Relation rel, BlockNumber block)
+FlushRelationBuffers(Relation rel, BlockNumber block, bool doFlush)
 {
 	int			i;
 	BufferDesc *buf;
@@ -1576,13 +1596,25 @@ BlowawayRelationBuffers(Relation rel, BlockNumber block)
 			{
 				if (buf->flags & BM_DIRTY)
 				{
-					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is dirty",
-					rel->rd_rel->relname.data, block, buf->tag.blockNum);
-					return -1;
+					if (doFlush)
+					{
+						if (FlushBuffer(-i-1, false) != STATUS_OK)
+						{
+							elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty, could not flush it",
+								 rel->rd_rel->relname.data, block, buf->tag.blockNum);
+							return -1;
+						}
+					}
+					else
+					{
+						elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is dirty",
+							 rel->rd_rel->relname.data, block, buf->tag.blockNum);
+						return -1;
+					}
 				}
 				if (LocalRefCount[i] > 0)
 				{
-					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is referenced (%d)",
+					elog(NOTICE, "FlushRelationBuffers(%s (local), %u): block %u is referenced (%d)",
 						 rel->rd_rel->relname.data, block,
 						 buf->tag.blockNum, LocalRefCount[i]);
 					return -2;
@@ -1603,18 +1635,33 @@ BlowawayRelationBuffers(Relation rel, BlockNumber block)
 		{
 			if (buf->flags & BM_DIRTY)
 			{
-				elog(NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is dirty (private %d, last %d, global %d)",
-					 buf->sb_relname, block, buf->tag.blockNum,
-					 PrivateRefCount[i], LastRefCount[i], buf->refcount);
-				SpinRelease(BufMgrLock);
-				return -1;
+				if (doFlush)
+				{
+					SpinRelease(BufMgrLock);
+					if (FlushBuffer(i+1, false) != STATUS_OK)
+					{
+						elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %d, global %d), could not flush it",
+							 buf->sb_relname, block, buf->tag.blockNum,
+							 PrivateRefCount[i], buf->refcount);
+						return -1;
+					}
+					SpinAcquire(BufMgrLock);
+				}
+				else
+				{
+					SpinRelease(BufMgrLock);
+					elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is dirty (private %d, global %d)",
+						 buf->sb_relname, block, buf->tag.blockNum,
+						 PrivateRefCount[i], buf->refcount);
+					return -1;
+				}
 			}
 			if (!(buf->flags & BM_FREE))
 			{
-				elog(NOTICE, "BlowawayRelationBuffers(%s, %u): block %u is referenced (private %d, last %d, global %d)",
-					 buf->sb_relname, block, buf->tag.blockNum,
-					 PrivateRefCount[i], LastRefCount[i], buf->refcount);
 				SpinRelease(BufMgrLock);
+				elog(NOTICE, "FlushRelationBuffers(%s, %u): block %u is referenced (private %d, global %d)",
+					 buf->sb_relname, block, buf->tag.blockNum,
+					 PrivateRefCount[i], buf->refcount);
 				return -2;
 			}
 			BufTableDelete(buf);
@@ -1650,14 +1697,10 @@ ReleaseBuffer(Buffer buffer)
 
 	Assert(PrivateRefCount[buffer - 1] > 0);
 	PrivateRefCount[buffer - 1]--;
-	if (PrivateRefCount[buffer - 1] == 0 && LastRefCount[buffer - 1] == 0)
+	if (PrivateRefCount[buffer - 1] == 0)
 	{
-
-		/*
-		 * only release buffer if it is not pinned in previous ExecMain
-		 * levels
-		 */
 		SpinAcquire(BufMgrLock);
+		Assert(bufHdr->refcount > 0);
 		bufHdr->refcount--;
 		if (bufHdr->refcount == 0)
 		{
@@ -1891,32 +1934,6 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
 }
 
 #endif	 /* BMTRACE */
-
-void
-BufferRefCountReset(int *refcountsave)
-{
-	int			i;
-
-	for (i = 0; i < NBuffers; i++)
-	{
-		refcountsave[i] = PrivateRefCount[i];
-		LastRefCount[i] += PrivateRefCount[i];
-		PrivateRefCount[i] = 0;
-	}
-}
-
-void
-BufferRefCountRestore(int *refcountsave)
-{
-	int			i;
-
-	for (i = 0; i < NBuffers; i++)
-	{
-		PrivateRefCount[i] = refcountsave[i];
-		LastRefCount[i] -= refcountsave[i];
-		refcountsave[i] = 0;
-	}
-}
 
 int
 SetBufferWriteMode(int mode)

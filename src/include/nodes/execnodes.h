@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.34 1999/08/21 03:49:08 tgl Exp $
+ * $Id: execnodes.h,v 1.35 1999/09/24 00:25:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,6 @@ typedef struct EState
 	int			es_BaseId;
 	TupleTable	es_tupleTable;
 	JunkFilter *es_junkFilter;
-	int		   *es_refcount;
 	uint32		es_processed;	/* # of tuples processed */
 	Oid			es_lastoid;		/* last oid processed (by INSERT) */
 	List	   *es_rowMark;		/* not good place, but there is no other */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.128 1999/08/31 04:26:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.129 1999/09/24 00:24:52 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -113,7 +113,22 @@ char		relname[80];		/* current relation name */
 
 /* note: these declarations had better match tcopprot.h */
 DLLIMPORT sigjmp_buf Warn_restart;
-bool		InError;
+
+bool		InError = true;
+
+/*
+ * Note: InError is a flag to elog() telling whether it is safe to longjmp
+ * back to PostgresMain.  It is "false", allowing an error longjmp, during
+ * normal processing.  It is "true" during startup, when we have not yet
+ * set the Warn_restart jmp_buf, and also "true" in the interval when we
+ * have executed a longjmp back to PostgresMain and not yet finished cleaning
+ * up after the error.  In either case, elog(ERROR) should be treated as a
+ * fatal exit condition rather than attempting to recover --- since there is
+ * noplace to recover to in the first case, and we don't want to risk an
+ * infinite loop of "error recoveries" in the second case.
+ *
+ * Therefore, InError starts out "true" at program load time, as shown above.
+ */
 
 extern int	NBuffers;
 
@@ -1469,7 +1484,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.128 $ $Date: 1999/08/31 04:26:40 $\n");
+		puts("$Revision: 1.129 $ $Date: 1999/09/24 00:24:52 $\n");
 	}
 
 	/* ----------------
@@ -1479,6 +1494,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	 *	so we abort the current transaction and start a new one.
 	 *
 	 *	Note:  elog(ERROR) does a siglongjmp() to transfer control here.
+	 *	See comments with the declaration of InError, above.
 	 * ----------------
 	 */
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.20 1999/07/16 04:58:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.21 1999/09/24 00:24:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,20 +74,20 @@ SeqNext(SeqScan *node)
 	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[node->scanrelid - 1] != NULL)
 	{
-		slot->ttc_buffer = InvalidBuffer;
-		slot->ttc_shouldFree = false;
+		ExecClearTuple(slot);
 		if (estate->es_evTupleNull[node->scanrelid - 1])
-		{
-			slot->val = NULL;	/* must not free tuple! */
-			return (slot);
-		}
+			return slot;		/* return empty slot */
+
+		/* probably ought to use ExecStoreTuple here... */
 		slot->val = estate->es_evTuple[node->scanrelid - 1];
+		slot->ttc_shouldFree = false;
 
 		/*
 		 * Note that unlike IndexScan, SeqScan never use keys in
-		 * heap_beginscan (and this is very bad) - so, here we have not
+		 * heap_beginscan (and this is very bad) - so, here we do not
 		 * check are keys ok or not.
 		 */
+
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[node->scanrelid - 1] = true;
 		return (slot);
@@ -104,7 +104,9 @@ SeqNext(SeqScan *node)
 	 *	in our scan tuple slot and return the slot.  Note: we pass 'false'
 	 *	because tuples returned by heap_getnext() are pointers onto
 	 *	disk pages and were not created with palloc() and so should not
-	 *	be pfree()'d.
+	 *	be pfree()'d.  Note also that ExecStoreTuple will increment the
+	 *	refcount of the buffer; the refcount will not be dropped until
+	 *	the tuple table slot is cleared.
 	 * ----------------
 	 */
 
@@ -113,17 +115,6 @@ SeqNext(SeqScan *node)
 						  scandesc->rs_cbuf,	/* buffer associated with
 												 * this tuple */
 						  false);		/* don't pfree this pointer */
-
-	/* ----------------
-	 *	XXX -- mao says:  The sequential scan for heap relations will
-	 *	automatically unpin the buffer this tuple is on when we cross
-	 *	a page boundary.  The clearslot code also does this.  We bump
-	 *	the pin count on the page here, since we actually have two
-	 *	pointers to it -- one in the scan desc and one in the tuple
-	 *	table slot.  --mar 20 91
-	 * ----------------
-	 */
-	ExecIncrSlotBufferRefcnt(slot);
 
 	return slot;
 }

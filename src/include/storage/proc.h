@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.25 1999/07/15 23:04:13 momjian Exp $
+ * $Id: proc.h,v 1.26 1999/09/24 00:25:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,8 @@ typedef struct proc
 	LOCK	   *waitLock;		/* Lock we're sleeping on ... */
 	int			token;			/* type of lock we sleeping for */
 	int			holdLock;		/* while holding these locks */
-	int			pid;			/* This procs process id */
+	int			pid;			/* This backend's process id */
+	Oid			databaseId;		/* OID of database this backend is using */
 	short		sLocks[MAX_SPINS];		/* Spin lock stats */
 	SHM_QUEUE	lockQueue;		/* locks associated with current
 								 * transaction */
@@ -64,6 +65,7 @@ typedef struct proc
  * on your machine), or our free-semaphores bitmap won't work.  You also must
  * not set it higher than your kernel's SEMMSL (max semaphores per set)
  * parameter, which is often around 25.
+ *
  * MAX_PROC_SEMS is the maximum number of per-process semaphores (those used
  * by the lock mgr) we can keep track of.  It must be a multiple of
  * PROC_NSEMS_PER_SET.
@@ -78,9 +80,9 @@ typedef struct procglobal
 	int32		freeSemMap[MAX_PROC_SEMS / PROC_NSEMS_PER_SET];
 
 	/*
-	 * In each freeSemMap entry, the PROC_NSEMS_PER_SET lsbs flag whether
-	 * individual semaphores are in use, and the next higher bit is set to
-	 * show that the entire set is allocated.
+	 * In each freeSemMap entry, the PROC_NSEMS_PER_SET least-significant bits
+	 * flag whether individual semaphores are in use, and the next higher bit
+	 * is set to show that the entire set is allocated.
 	 */
 } PROC_HDR;
 

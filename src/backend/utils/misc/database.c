@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * database.c
- *	  miscellanious initialization support stuff
+ *	  miscellaneous initialization support stuff
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.29 1999/09/18 19:08:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.30 1999/09/24 00:25:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,6 @@
 #include "catalog/pg_database.h"
 #include "miscadmin.h"
 #include "utils/syscache.h"
-
-#ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
-#endif
 
 #ifdef NOT_USED
 /* GetDatabaseInfo()
@@ -153,24 +149,13 @@ ExpandDatabasePath(char *dbpath)
  *		cache.	To get around this problem, this code opens and scans the
  *		pg_database relation by hand.
  *
- *		This algorithm relies on the fact that first attribute in the
- *		pg_database relation schema is the database name.  It also knows
- *		about the internal format of tuples on disk and the length of
- *		the datname attribute.	It knows the location of the pg_database
- *		file.
- *		Actually, the code looks as though it is using the pg_database
- *		tuple definition to locate the database name, so the above statement
- *		seems to be no longer correct. - thomas 1997-11-01
- *
- *		This code is called from InitPostgres(), before we chdir() to the
- *		local database directory and before we open any relations.
- *		Used to be called after the chdir(), but we now want to confirm
- *		the location of the target database using pg_database info.
- *		- thomas 1997-11-01
+ *		This code knows way more than it should about the layout of
+ *		tuples on disk, but there seems to be no help for that.
+ *		We're pulling ourselves up by the bootstraps here...
  * --------------------------------
  */
 void
-GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encoding)
+GetRawDatabaseInfo(char *name, Oid *db_id, char *path)
 {
 	int			dbfd;
 	int			fileflags;
@@ -238,48 +223,38 @@ GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encodin
 			 * skip this tuple.  XXX warning, will robinson:  violation of
 			 * transaction semantics happens right here.  we should check
 			 * to be sure that the xact that deleted this tuple actually
-			 * committed.  only way to do this at init time is to paw over
-			 * the log relation by hand, too.  let's be optimistic.
+			 * committed.  Only way to do that at init time is to paw over
+			 * the log relation by hand, too.  Instead we take the
+			 * conservative assumption that if someone tried to delete it,
+			 * it's gone.  The other side of the coin is that we might
+			 * accept a tuple that was stored and never committed.  All in
+			 * all, this code is pretty shaky.  We will cross-check our
+			 * result in ReverifyMyDatabase() in postinit.c.
 			 *
-			 * XXX This is an evil type cast.  tup->t_xmax is char[5] while
-			 * TransactionId is struct * { char data[5] }.	It works but
-			 * if data is ever moved and no longer the first field this
-			 * will be broken!! -mer 11 Nov 1991.
+			 * NOTE: if a bogus tuple in pg_database prevents connection
+			 * to a valid database, a fix is to connect to another database
+			 * and do "select * from pg_database".  That should cause
+			 * committed and dead tuples to be marked with correct states.
+			 *
+			 * XXX wouldn't it be better to let new backends read the
+			 * database OID from a flat file, handled the same way
+			 * we handle the password relation?
 			 */
 			if (TransactionIdIsValid((TransactionId) tup.t_data->t_xmax))
 				continue;
 
 			/*
-			 * Okay, see if this is the one we want. XXX 1 july 91:  mao
-			 * and mer discover that tuples now squash t_bits.	Why is
-			 * this?
-			 *
-			 * 24 july 92:	mer realizes that the t_bits field is only used
-			 * in the event of null values.  If no fields are null we
-			 * reduce the header size by doing the squash.	t_hoff tells
-			 * you exactly how big the header actually is. use the PC
-			 * means of getting at sys cat attrs.
+			 * Okay, see if this is the one we want.
 			 */
 			tup_db = (Form_pg_database) GETSTRUCT(&tup);
-#ifdef MULTIBYTE
 
-			/*
-			 * get encoding from template database. This is the "default
-			 * for default" for create database command.
-			 */
-			if (strcmp("template1", tup_db->datname.data) == 0)
-				SetTemplateEncoding(tup_db->encoding);
-#endif
 			if (strcmp(name, tup_db->datname.data) == 0)
 			{
+				/* Found it; extract the OID and the database path. */
 				*db_id = tup.t_data->t_oid;
 				strncpy(path, VARDATA(&(tup_db->datpath)),
 						(VARSIZE(&(tup_db->datpath)) - VARHDRSZ));
 				*(path + VARSIZE(&(tup_db->datpath)) - VARHDRSZ) = '\0';
-#ifdef MULTIBYTE
-				*encoding = tup_db->encoding;
-#endif
-
 				goto done;
 			}
 		}

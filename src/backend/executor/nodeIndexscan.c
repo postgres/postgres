@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.42 1999/08/12 00:42:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.43 1999/09/24 00:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,14 +125,14 @@ IndexNext(IndexScan *node)
 	{
 		int			iptr;
 
-		slot->ttc_buffer = InvalidBuffer;
-		slot->ttc_shouldFree = false;
+		ExecClearTuple(slot);
 		if (estate->es_evTupleNull[node->scan.scanrelid - 1])
-		{
-			slot->val = NULL;	/* must not free tuple! */
-			return (slot);
-		}
+			return slot;		/* return empty slot */
+
+		/* probably ought to use ExecStoreTuple here... */
 		slot->val = estate->es_evTuple[node->scan.scanrelid - 1];
+		slot->ttc_shouldFree = false;
+
 		for (iptr = 0; iptr < numIndices; iptr++)
 		{
 			scanstate->cstate.cs_ExprContext->ecxt_scantuple = slot;
@@ -142,6 +142,7 @@ IndexNext(IndexScan *node)
 		}
 		if (iptr == numIndices) /* would not be returned by indices */
 			slot->val = NULL;
+
 		/* Flag for the next call that no more tuples */
 		estate->es_evTupleNull[node->scan.scanrelid - 1] = true;
 		return (slot);
@@ -192,13 +193,20 @@ IndexNext(IndexScan *node)
 				 *	the scan state.  Eventually we will only do this and not
 				 *	return a tuple.  Note: we pass 'false' because tuples
 				 *	returned by amgetnext are pointers onto disk pages and
-				 *	were not created with palloc() and so should not be pfree()'d.
+				 *	must not be pfree()'d.
 				 * ----------------
 				 */
 				ExecStoreTuple(tuple,	/* tuple to store */
 							   slot,	/* slot to store in */
 							   buffer,	/* buffer associated with tuple  */
 							   false);	/* don't pfree */
+
+				/*
+				 * At this point we have an extra pin on the buffer,
+				 * because ExecStoreTuple incremented the pin count.
+				 * Drop our local pin.
+				 */
+				ReleaseBuffer(buffer);
 
 				/*
 				 * We must check to see if the current tuple would have
@@ -223,8 +231,6 @@ IndexNext(IndexScan *node)
 				else
 					ExecClearTuple(slot);
 			}
-			if (BufferIsValid(buffer))
-				ReleaseBuffer(buffer);
 		}
 		if (indexNumber < numIndices)
 		{

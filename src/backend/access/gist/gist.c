@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.45 1999/09/18 19:05:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/gist.c,v 1.46 1999/09/24 00:23:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ gistbuild(Relation heap,
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
 		econtext = makeNode(ExprContext);
-		FillDummyExprContext(econtext, slot, hd, buffer);
+		FillDummyExprContext(econtext, slot, hd, InvalidBuffer);
 	}
 	else
 /* shut the compiler up */

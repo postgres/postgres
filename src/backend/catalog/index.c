@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.90 1999/09/18 19:06:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.91 1999/09/24 00:24:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1113,15 +1113,19 @@ index_destroy(Oid indexId)
 	LockRelation(userindexRelation, AccessExclusiveLock);
 
 	/* ----------------
-	 *	We do not allow DROP INDEX within a transaction block, because
-	 *	if the transaction is later rolled back there would be no way to
-	 *	undo the unlink of the relation's physical file.  The sole exception
-	 *	is for relations created in the current transaction, since the post-
-	 *	abort state would be that they don't exist anyway.
+	 *	DROP INDEX within a transaction block is dangerous, because
+	 *	if the transaction is later rolled back there will be no way to
+	 *	undo the unlink of the relation's physical file.  For now, allow it
+	 *	but emit a warning message.
+	 *	Someday we might want to consider postponing the physical unlink
+	 *	until transaction commit, but that's a lot of work...
+	 *	The only case that actually works right is for relations created
+	 *	in the current transaction, since the post-abort state would be that
+	 *	they don't exist anyway.  So, no warning in that case.
 	 * ----------------
 	 */
 	if (IsTransactionBlock() && ! userindexRelation->rd_myxactonly)
-		elog(ERROR, "Cannot destroy index within a transaction block");
+		elog(NOTICE, "Caution: DROP INDEX cannot be rolled back, so don't abort now");
 
 	/* ----------------
 	 * fix RELATION relation
@@ -1370,7 +1374,7 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 		rd_rel->relpages = relpages;
 		rd_rel->reltuples = reltuples;
 		rd_rel->relhasindex = hasindex;
-		WriteBuffer(pg_class_scan->rs_cbuf);
+		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
 	}
 	else
 	{
@@ -1413,6 +1417,9 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
  *		FillDummyExprContext
  *			Sets up dummy ExprContext and TupleTableSlot objects for use
  *			with ExecQual.
+ *
+ *			NOTE: buffer is passed for historical reasons; it should
+ *			almost certainly always be InvalidBuffer.
  * -------------------------
  */
 void
@@ -1508,7 +1515,6 @@ DefaultBuild(Relation heapRelation,
 		tupleTable = ExecCreateTupleTable(1);
 		slot = ExecAllocTableSlot(tupleTable);
 		econtext = makeNode(ExprContext);
-		/* last parameter was junk being sent bjm 1998/08/17 */
 		FillDummyExprContext(econtext, slot, heapDescriptor, InvalidBuffer);
 	}
 	else
@@ -1605,7 +1611,8 @@ DefaultBuild(Relation heapRelation,
 #ifndef OMIT_PARTIAL_INDEX
 	if (predicate != NULL || oldPred != NULL)
 	{
-		ExecDestroyTupleTable(tupleTable, false);
+		/* parameter was 'false', almost certainly wrong --- tgl 9/21/99 */
+		ExecDestroyTupleTable(tupleTable, true);
 	}
 #endif	 /* OMIT_PARTIAL_INDEX */
 

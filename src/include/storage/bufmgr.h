@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.30 1999/09/23 17:03:27 momjian Exp $
+ * $Id: bufmgr.h,v 1.31 1999/09/24 00:25:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,12 +71,35 @@ extern int	ShowPinTrace;
 
 /*
  * BufferIsValid
- *		True iff the refcnt of the local buffer is > 0
+ *		True iff the given buffer number is valid (either as a shared
+ *		or local buffer).
+ *
  * Note:
  *		BufferIsValid(InvalidBuffer) is False.
  *		BufferIsValid(UnknownBuffer) is False.
+ *
+ * Note: For a long time this was defined the same as BufferIsPinned,
+ * that is it would say False if you didn't hold a pin on the buffer.
+ * I believe this was bogus and served only to mask logic errors.
+ * Code should always know whether it has a buffer reference,
+ * independently of the pin state.
  */
 #define BufferIsValid(bufnum) \
+( \
+	BufferIsLocal(bufnum) ? \
+		((bufnum) >= -NLocBuffer) \
+	: \
+		(! BAD_BUFFER_ID(bufnum)) \
+)
+
+/*
+ * BufferIsPinned
+ *		True iff the buffer is pinned (also checks for valid buffer number).
+ *
+ *		NOTE: what we check here is that *this* backend holds a pin on
+ *		the buffer.  We do not care whether some other backend does.
+ */
+#define BufferIsPinned(bufnum) \
 ( \
 	BufferIsLocal(bufnum) ? \
 		((bufnum) >= -NLocBuffer && LocalRefCount[-(bufnum) - 1] > 0) \
@@ -90,28 +113,27 @@ extern int	ShowPinTrace;
 )
 
 /*
- * BufferIsPinned
- *		True iff the buffer is pinned (and therefore valid)
+ * IncrBufferRefCount
+ *		Increment the pin count on a buffer that we have *already* pinned
+ *		at least once.
  *
- * Note:
- *		Smenatics are identical to BufferIsValid
- *		XXX - need to remove either one eventually.
+ *		This macro cannot be used on a buffer we do not have pinned,
+ *		because it doesn't change the shared buffer state.  Therefore the
+ *		Assert checks are for refcount > 0.  Someone got this wrong once...
  */
-#define BufferIsPinned BufferIsValid
-
-
 #define IncrBufferRefCount(buffer) \
 ( \
 	BufferIsLocal(buffer) ? \
 	( \
-		(void)AssertMacro(LocalRefCount[-(buffer) - 1] >= 0), \
-		(void)LocalRefCount[-(buffer) - 1]++ \
+		(void) AssertMacro((buffer) >= -NLocBuffer), \
+		(void) AssertMacro(LocalRefCount[-(buffer) - 1] > 0), \
+		(void) LocalRefCount[-(buffer) - 1]++ \
 	) \
 	: \
 	( \
-		(void)AssertMacro(!BAD_BUFFER_ID(buffer)), \
-		(void)AssertMacro(PrivateRefCount[(buffer) - 1] >= 0), \
-		(void)PrivateRefCount[(buffer) - 1]++ \
+		(void) AssertMacro(!BAD_BUFFER_ID(buffer)), \
+		(void) AssertMacro(PrivateRefCount[(buffer) - 1] > 0), \
+		(void) PrivateRefCount[(buffer) - 1]++ \
 	) \
 )
 
@@ -151,19 +173,18 @@ extern int	BufferPoolCheckLeak(void);
 extern void FlushBufferPool(int StableMainMemoryFlag);
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
+extern int	FlushRelationBuffers(Relation rel, BlockNumber block,
+								 bool doFlush);
 extern void ReleaseRelationBuffers(Relation rel);
 extern void DropBuffers(Oid dbid);
 extern void PrintPinnedBufs(void);
 extern int	BufferShmemSize(void);
 extern int	ReleaseBuffer(Buffer buffer);
 
-extern void BufferRefCountReset(int *refcountsave);
-extern void BufferRefCountRestore(int *refcountsave);
 extern int	SetBufferWriteMode(int mode);
 extern void SetBufferCommitInfoNeedsSave(Buffer buffer);
-extern int BlowawayRelationBuffers(Relation rel, BlockNumber block);
 
 extern void UnlockBuffers(void);
 extern void LockBuffer(Buffer buffer, int mode);
 
-#endif	 /* !defined(BufMgrIncluded) */
+#endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.25 1999/07/16 04:58:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.26 1999/09/24 00:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  *		ExecMaterial
  *
  *		The first time this is called, ExecMaterial retrieves tuples
- *		this node's outer subplan and inserts them into a temporary
+ *		from this node's outer subplan and inserts them into a temporary
  *		relation.  After this is done, a flag is set indicating that
  *		the subplan has been materialized.	Once the relation is
  *		materialized, the first tuple is then returned.  Successive
@@ -41,7 +41,7 @@
  *		Initial State:
  *
  *		ExecMaterial assumes the temporary relation has been
- *		created and openend by ExecInitMaterial during the prior
+ *		created and opened by ExecInitMaterial during the prior
  *		InitPlan() phase.
  *
  * ----------------------------------------------------------------
@@ -116,18 +116,7 @@ ExecMaterial(Material *node)
 			if (TupIsNull(slot))
 				break;
 
-			/*
-			 * heap_insert changes something...
-			 */
-			if (slot->ttc_buffer != InvalidBuffer)
-				heapTuple = heap_copytuple(slot->val);
-			else
-				heapTuple = slot->val;
-
-			heap_insert(tempRelation, heapTuple);
-
-			if (slot->ttc_buffer != InvalidBuffer)
-				pfree(heapTuple);
+			heap_insert(tempRelation, slot->val);
 
 			ExecClearTuple(slot);
 		}
@@ -164,7 +153,7 @@ ExecMaterial(Material *node)
 
 	/* ----------------
 	 *	at this point we know we have a sorted relation so
-	 *	we preform a simple scan on it with amgetnext()..
+	 *	we perform a simple scan on it with amgetnext()..
 	 * ----------------
 	 */
 	currentScanDesc = matstate->csstate.css_currentScanDesc;

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.12 1999/07/15 23:04:14 momjian Exp $
+ * $Id: sinval.h,v 1.13 1999/09/24 00:25:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,10 @@ extern void RegisterSharedInvalid(int cacheId, Index hashIndex,
 					  ItemPointer pointer);
 extern void InvalidateSharedInvalid(void (*invalFunction) (),
 												void (*resetFunction) ());
+
+extern bool DatabaseHasActiveBackends(Oid databaseId);
+extern bool TransactionIdIsInProgress(TransactionId xid);
+extern void GetXmaxRecent(TransactionId *XmaxRecent);
 
 
 #endif	 /* SINVAL_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.60 1999/07/17 20:17:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.61 1999/09/24 00:24:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.60 1999/07/17 20:17:47 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.61 1999/09/24 00:24:41 tgl Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -296,6 +296,7 @@ InitProcess(IPCKey key)
 	SpinRelease(ProcStructLock);
 
 	MyProc->pid = MyProcPid;
+	MyProc->databaseId = MyDatabaseId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 

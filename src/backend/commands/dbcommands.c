@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.40 1999/09/18 19:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.41 1999/09/24 00:24:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_shadow.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
+#include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 #include "utils/syscache.h"
 
@@ -89,7 +90,11 @@ destroydb(char *dbname, CommandDest dest)
 	Oid			db_id;
 	char	   *path,
 				dbpath[MAXPGPATH + 1],
-				buf[512];
+				buf[MAXPGPATH + 50];
+	Relation	pgdbrel;
+	HeapScanDesc pgdbscan;
+	ScanKeyData	key;
+	HeapTuple	tup;
 
 	/*
 	 * If this call returns, the database exists and we're allowed to
@@ -97,13 +102,9 @@ destroydb(char *dbname, CommandDest dest)
 	 */
 	check_permissions("destroydb", dbpath, dbname, &db_id, &user_id);
 
+	/* do as much checking as we can... */
 	if (!OidIsValid(db_id))
 		elog(FATAL, "pg_database instance has an invalid OID");
-
-	/* stop the vacuum daemon */
-	stop_vacuum(dbpath, dbname);
-
-	/* XXX what about stopping backends connected to the target database? */
 
 	path = ExpandDatabasePath(dbpath);
 	if (path == NULL)
@@ -111,22 +112,69 @@ destroydb(char *dbname, CommandDest dest)
 			 "\n\tThis may be due to a missing environment variable"
 			 " in the server", dbpath);
 
-	/*
-	 * remove the pg_database tuple FIRST, this may fail due to
-	 * permissions problems
-	 */
-	snprintf(buf, 512,
-	"delete from pg_database where pg_database.oid = \'%u\'::oid", db_id);
-	pg_exec_query_dest(buf, dest, false);
+	/* stop the vacuum daemon (dead code...) */
+	stop_vacuum(dbpath, dbname);
 
-	/* drop pages for this database that are in the shared buffer cache */
+	/*
+	 * Obtain exclusive lock on pg_database.  We need this to ensure
+	 * that no new backend starts up in the target database while we
+	 * are deleting it.  (Actually, a new backend might still manage to
+	 * start up, because it will read pg_database without any locking
+	 * to discover the database's OID.  But it will detect its error
+	 * in ReverifyMyDatabase and shut down before any serious damage
+	 * is done.  See postinit.c.)
+	 */
+	pgdbrel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
+
+	/*
+	 * Check for active backends in the target database.
+	 */
+	if (DatabaseHasActiveBackends(db_id))
+		elog(ERROR, "Database '%s' has running backends, can't destroy it",
+			 dbname);
+
+	/*
+	 * Find the database's tuple by OID (should be unique, we trust).
+	 */
+	ScanKeyEntryInitialize(&key, 0, ObjectIdAttributeNumber,
+						   F_OIDEQ, ObjectIdGetDatum(db_id));
+
+	pgdbscan = heap_beginscan(pgdbrel, 0, SnapshotNow, 1, &key);
+
+	tup = heap_getnext(pgdbscan, 0);
+	if (!HeapTupleIsValid(tup))
+	{
+		heap_close(pgdbrel, AccessExclusiveLock);
+		elog(ERROR, "Database '%s', OID %u, not found in pg_database",
+			 dbname, db_id);
+	}
+
+	/*
+	 * Houston, we have launch commit...
+	 *
+	 * Remove the database's tuple from pg_database.
+	 */
+	heap_delete(pgdbrel, &tup->t_self, NULL);
+
+	heap_endscan(pgdbscan);
+
+	/*
+	 * Close pg_database, but keep exclusive lock till commit to ensure
+	 * that any new backend scanning pg_database will see the tuple dead.
+	 */
+	heap_close(pgdbrel, NoLock);
+
+	/*
+	 * Drop pages for this database that are in the shared buffer cache.
+	 * This is important to ensure that no remaining backend tries to
+	 * write out a dirty buffer to the dead database later...
+	 */
 	DropBuffers(db_id);
 
 	/*
-	 * remove the data directory. If the DELETE above failed, this will
-	 * not be reached
+	 * Remove the database's subdirectory and everything in it.
 	 */
-	snprintf(buf, 512, "rm -r %s", path);
+	snprintf(buf, sizeof(buf), "rm -r '%s'", path);
 	system(buf);
 }
 
@@ -274,22 +322,28 @@ check_permissions(char *command,
 }	/* check_permissions() */
 
 /*
- *	stop_vacuum() -- stop the vacuum daemon on the database, if one is running.
+ *	stop_vacuum -- stop the vacuum daemon on the database, if one is running.
+ *
+ *	This is currently dead code, since we don't *have* vacuum daemons.
+ *	If you want to re-enable it, think about the interlock against deleting
+ *	a database out from under running backends, in destroydb() above.
  */
 static void
 stop_vacuum(char *dbpath, char *dbname)
 {
-	char		filename[256];
+#ifdef NOT_USED
+	char		filename[MAXPGPATH + 1];
 	FILE	   *fp;
 	int			pid;
 
 	if (strchr(dbpath, SEP_CHAR) != 0)
 	{
-		snprintf(filename, 256, "%s%cbase%c%s%c%s.vacuum",
+		snprintf(filename, sizeof(filename), "%s%cbase%c%s%c%s.vacuum",
 				 DataDir, SEP_CHAR, SEP_CHAR, dbname, SEP_CHAR, dbname);
 	}
 	else
-		snprintf(filename, 256, "%s%c%s.vacuum", dbpath, SEP_CHAR, dbname);
+		snprintf(filename, sizeof(filename), "%s%c%s.vacuum",
+				 dbpath, SEP_CHAR, dbname);
 
 #ifndef __CYGWIN32__
 	if ((fp = AllocateFile(filename, "r")) != NULL)
@@ -305,4 +359,5 @@ stop_vacuum(char *dbpath, char *dbname)
 				 pid, dbname);
 		}
 	}
+#endif
 }

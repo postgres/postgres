@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.94 1999/09/18 19:06:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.95 1999/09/24 00:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,16 +129,6 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 					  queryDesc->parsetree,
 					  queryDesc->plantree,
 					  estate);
-
-	/*
-	 * reset buffer refcount.  the current refcounts are saved and will be
-	 * restored when ExecutorEnd is called
-	 *
-	 * this makes sure that when ExecutorRun's are called recursively as for
-	 * postquel functions, the buffers pinned by one ExecutorRun will not
-	 * be unpinned by another ExecutorRun.
-	 */
-	BufferRefCountReset(estate->es_refcount);
 
 	return result;
 }
@@ -385,10 +375,6 @@ ExecutorEnd(QueryDesc *queryDesc, EState *estate)
 		pfree(estate->es_param_exec_vals);
 		estate->es_param_exec_vals = NULL;
 	}
-
-	/* restore saved refcounts. */
-	BufferRefCountRestore(estate->es_refcount);
-
 }
 
 void
@@ -802,7 +788,7 @@ EndPlan(Plan *plan, EState *estate)
 	{
 		TupleTable	tupleTable = (TupleTable) estate->es_tupleTable;
 
-		ExecDestroyTupleTable(tupleTable, true);		/* was missing last arg */
+		ExecDestroyTupleTable(tupleTable, true);
 		estate->es_tupleTable = NULL;
 	}
 
@@ -1678,7 +1664,6 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 						   sizeof(ParamExecData));
 			epqstate->es_tupleTable =
 				ExecCreateTupleTable(estate->es_tupleTable->size);
-			epqstate->es_refcount = estate->es_refcount;
 			/* ... rest */
 			newepq->plan = copyObject(estate->es_origPlan);
 			newepq->free = NULL;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.28 1999/07/16 04:58:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.29 1999/09/24 00:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1153,15 +1153,18 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, Plan *parent)
 #define MERGEJOIN_NSLOTS 2
 	/* ----------------
 	 *	tuple table initialization
+	 *
+	 *	XXX why aren't we getting a tuple table slot in the normal way?
 	 * ----------------
 	 */
 	ExecInitResultTupleSlot(estate, &mergestate->jstate);
-	mjSlot = (TupleTableSlot *) palloc(sizeof(TupleTableSlot));
+	mjSlot = makeNode(TupleTableSlot);
 	mjSlot->val = NULL;
 	mjSlot->ttc_shouldFree = true;
-	mjSlot->ttc_tupleDescriptor = NULL;
-	mjSlot->ttc_whichplan = -1;
 	mjSlot->ttc_descIsNew = true;
+	mjSlot->ttc_tupleDescriptor = NULL;
+	mjSlot->ttc_buffer = InvalidBuffer;
+	mjSlot->ttc_whichplan = -1;
 	mergestate->mj_MarkedTupleSlot = mjSlot;
 
 	/* ----------------
@@ -1278,11 +1281,9 @@ ExecReScanMergeJoin(MergeJoin *node, ExprContext *exprCtxt, Plan *parent)
 	TupleTableSlot *mjSlot = mergestate->mj_MarkedTupleSlot;
 
 	ExecClearTuple(mjSlot);
-	mjSlot->val = NULL;
-	mjSlot->ttc_shouldFree = true;
 	mjSlot->ttc_tupleDescriptor = NULL;
-	mjSlot->ttc_whichplan = -1;
 	mjSlot->ttc_descIsNew = true;
+	mjSlot->ttc_whichplan = -1;
 
 	mergestate->mj_JoinState = EXEC_MJ_INITIALIZE;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.54 1999/09/18 19:05:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.55 1999/09/24 00:23:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -160,7 +160,7 @@ unpinscan(HeapScanDesc scan)
 		ReleaseBuffer(scan->rs_pbuf);
 
 	/* ------------------------------------
-	 *	Scan will pin buffer one for each non-NULL tuple pointer
+	 *	Scan will pin buffer once for each non-NULL tuple pointer
 	 *	(ptup, ctup, ntup), so they have to be unpinned multiple
 	 *	times.
 	 * ------------------------------------
@@ -170,6 +170,10 @@ unpinscan(HeapScanDesc scan)
 
 	if (BufferIsValid(scan->rs_nbuf))
 		ReleaseBuffer(scan->rs_nbuf);
+
+	/* we don't bother to clear rs_pbuf etc --- caller must
+	 * reinitialize them if scan descriptor is not being deleted.
+	 */
 }
 
 /* ------------------------------------------
@@ -826,6 +830,8 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		{
 			if (BufferIsValid(scan->rs_nbuf))
 				ReleaseBuffer(scan->rs_nbuf);
+			scan->rs_ntup.t_data = NULL;
+			scan->rs_nbuf = UnknownBuffer;
 			return NULL;
 		}
 
@@ -906,6 +912,8 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		{
 			if (BufferIsValid(scan->rs_pbuf))
 				ReleaseBuffer(scan->rs_pbuf);
+			scan->rs_ptup.t_data = NULL;
+			scan->rs_pbuf = UnknownBuffer;
 			HEAPDEBUG_3;		/* heap_getnext returns NULL at end */
 			return NULL;
 		}
@@ -1014,8 +1022,6 @@ heap_fetch(Relation relation,
 	ItemPointer tid = &(tuple->t_self);
 	OffsetNumber offnum;
 
-	AssertMacro(PointerIsValid(userbuf));		/* see comments above */
-
 	/* ----------------
 	 *	increment access statistics
 	 * ----------------
@@ -1067,21 +1073,17 @@ heap_fetch(Relation relation,
 
 	if (tuple->t_data == NULL)
 	{
+		/* Tuple failed time check, so we can release now. */
 		ReleaseBuffer(buffer);
-		return;
+		*userbuf = InvalidBuffer;
 	}
-
-	/* ----------------
-	 *	all checks passed, now either return a copy of the tuple
-	 *	or pin the buffer page and return a pointer, depending on
-	 *	whether caller gave us a valid buf.
-	 * ----------------
-	 */
-
-	*userbuf = buffer;			/* user is required to ReleaseBuffer()
-								 * this */
-
-	return;
+	else
+	{
+		/* All checks passed, so return the tuple as valid.
+		 * Caller is now responsible for releasing the buffer.
+		 */
+		*userbuf = buffer;
+	}
 }
 
 /* ----------------

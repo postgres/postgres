@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.37 1999/07/17 20:18:26 momjian Exp $
+ * $Id: executor.h,v 1.38 1999/09/24 00:25:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,22 +35,6 @@
 			false \
 	) \
 )
-
-/* --------------------------------
- *		ExecIncrSlotBufferRefcnt
- *
- *		When we pass around buffers in the tuple table, we have to
- *		be careful to increment reference counts appropriately.
- *		This is used mainly in the mergejoin code.
- * --------------------------------
- */
-#define ExecIncrSlotBufferRefcnt(slot) \
-( \
-	BufferIsValid((slot)->ttc_buffer) ? \
-		IncrBufferRefCount((slot)->ttc_buffer) \
-	: (void)NULL \
-)
-
 
 /*
  * prototypes from functions in execAmi.c

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.18 1999/09/06 19:37:37 tgl Exp $
+ * $Id: sinvaladt.h,v 1.19 1999/09/24 00:25:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 
 #include "storage/ipc.h"
 #include "storage/itemptr.h"
+#include "storage/shmem.h"
 
 /*
  * The shared cache invalidation manager is responsible for transmitting
@@ -77,6 +78,7 @@ typedef struct ProcState
 	int			nextMsgNum;		/* next message number to read, or -1 */
 	bool		resetState;		/* true, if backend has to reset its state */
 	int			tag;			/* backend tag received from postmaster */
+	SHMEM_OFFSET procStruct;	/* location of backend's PROC struct */
 } ProcState;
 
 /* Shared cache invalidation memory segment */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.48 1999/07/17 20:18:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.49 1999/09/24 00:24:58 tgl Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -36,6 +36,7 @@
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
+#include "catalog/pg_database.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "storage/backendid.h"
@@ -54,13 +55,12 @@
 
 static void VerifySystemDatabase(void);
 static void VerifyMyDatabase(void);
+static void ReverifyMyDatabase(char *name);
 static void InitCommunication(void);
 static void InitMyDatabaseInfo(char *name);
 static void InitStdio(void);
 static void InitUserid(void);
 
-extern char *ExpandDatabasePath(char *name);
-extern void GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encoding);
 
 static IPCKey PostgresIpcKey;
 
@@ -98,13 +98,11 @@ static IPCKey PostgresIpcKey;
 static void
 InitMyDatabaseInfo(char *name)
 {
-	int4		owner;
 	char	   *path,
 				myPath[MAXPGPATH + 1];
-	int			encoding;
 
 	SetDatabaseName(name);
-	GetRawDatabaseInfo(name, &owner, &MyDatabaseId, myPath, &encoding);
+	GetRawDatabaseInfo(name, &MyDatabaseId, myPath);
 
 	if (!OidIsValid(MyDatabaseId))
 		elog(FATAL,
@@ -114,11 +112,6 @@ InitMyDatabaseInfo(char *name)
 
 	path = ExpandDatabasePath(myPath);
 	SetDatabasePath(path);
-#ifdef MULTIBYTE
-	SetDatabaseEncoding(encoding);
-#endif
-
-	return;
 }	/* InitMyDatabaseInfo() */
 
 
@@ -249,6 +242,86 @@ VerifyMyDatabase()
 	/* Above does not return */
 }	/* VerifyMyDatabase() */
 
+/* --------------------------------
+ *		ReverifyMyDatabase
+ *
+ * Since we are forced to fetch the database OID out of pg_database without
+ * benefit of locking or transaction ID checking (see utils/misc/database.c),
+ * we might have gotten a wrong answer.  Or, we might have attached to a
+ * database that's in process of being destroyed by destroydb().  This
+ * routine is called after we have all the locking and other infrastructure
+ * running --- now we can check that we are really attached to a valid
+ * database.
+ *
+ * In reality, if destroydb() is running in parallel with our startup,
+ * it's pretty likely that we will have failed before now, due to being
+ * unable to read some of the system tables within the doomed database.
+ * This routine just exists to make *sure* we have not started up in an
+ * invalid database.  If we quit now, we should have managed to avoid
+ * creating any serious problems.
+ *
+ * This is also a handy place to fetch the database encoding info out
+ * of pg_database, if we are in MULTIBYTE mode.
+ * --------------------------------
+ */
+static void
+ReverifyMyDatabase(char *name)
+{
+	Relation	pgdbrel;
+	HeapScanDesc pgdbscan;
+	ScanKeyData	key;
+	HeapTuple	tup;
+
+	/*
+	 * Because we grab AccessShareLock here, we can be sure that
+	 * destroydb is not running in parallel with us (any more).
+	 */
+	pgdbrel = heap_openr(DatabaseRelationName, AccessShareLock);
+
+	ScanKeyEntryInitialize(&key, 0, Anum_pg_database_datname,
+						   F_NAMEEQ, NameGetDatum(name));
+
+	pgdbscan = heap_beginscan(pgdbrel, 0, SnapshotNow, 1, &key);
+
+	tup = heap_getnext(pgdbscan, 0);
+	if (!HeapTupleIsValid(tup) ||
+		tup->t_data->t_oid != MyDatabaseId)
+	{
+		/* OOPS */
+		heap_close(pgdbrel, AccessShareLock);
+		/*
+		 * The only real problem I could have created is to load dirty
+		 * buffers for the dead database into shared buffer cache;
+		 * if I did, some other backend will eventually try to write
+		 * them and die in mdblindwrt.  Flush any such pages to forestall
+		 * trouble.
+		 */
+		DropBuffers(MyDatabaseId);
+		/* Now I can commit hara-kiri with a clear conscience... */
+		elog(FATAL, "Database '%s', OID %u, has disappeared from pg_database",
+			 name, MyDatabaseId);
+	}
+
+	/*
+	 * OK, we're golden.  Only other to-do item is to save the MULTIBYTE
+	 * encoding info out of the pg_database tuple.  Note we also set the
+	 * "template encoding", which is the default encoding for any
+	 * CREATE DATABASE commands executed in this backend; essentially,
+	 * you get the same encoding of the database you connected to as
+	 * the default.  (This replaces code that unreliably grabbed
+	 * template1's encoding out of pg_database.  We could do an extra
+	 * scan to find template1's tuple, but for 99.99% of all backend
+	 * startups it'd be wasted cycles --- and the 'createdb' script
+	 * connects to template1 anyway, so there's no difference.)
+	 */
+#ifdef MULTIBYTE
+	SetDatabaseEncoding(((Form_pg_database) GETSTRUCT(tup))->encoding);
+	SetTemplateEncoding(((Form_pg_database) GETSTRUCT(tup))->encoding);
+#endif
+
+	heap_endscan(pgdbscan);
+	heap_close(pgdbrel, AccessShareLock);
+}
 
 /* --------------------------------
  *		InitUserid
@@ -402,17 +475,11 @@ InitStdio()
  *		Be very careful with the order of calls in the InitPostgres function.
  * --------------------------------
  */
-bool		PostgresIsInitialized = false;
 extern int	NBuffers;
 
-/*
- *	this global is used by wei for testing his code, but must be declared
- *	here rather than in postgres.c so that it's defined for cinterface.a
- *	applications.
- */
+bool		PostgresIsInitialized = false;
 
-/*int	testFlag = 0;*/
-int			lockingOff = 0;
+int			lockingOff = 0;		/* backend -L switch */
 
 /*
  */
@@ -530,21 +597,21 @@ InitPostgres(char *name)		/* database name */
 	LockDisable(false);
 
 	/* ----------------
-	 *	anyone knows what this does?  something having to do with
-	 *	system catalog cache invalidation in the case of multiple
-	 *	backends, I think -cim 10/3/90
-	 *	Sets up MyBackendId a unique backend identifier.
-	 * ----------------
-	 */
-	InitSharedInvalidationState();
-
-	/* ----------------
-	 * Set up a per backend process in shared memory.  Must be done after
-	 * InitSharedInvalidationState() as it relies on MyBackendId being
-	 * initialized already.  XXX -mer 11 Aug 1991
+	 * Set up my per-backend PROC struct in shared memory.
 	 * ----------------
 	 */
 	InitProcess(PostgresIpcKey);
+
+	/* ----------------
+	 *	Initialize my entry in the shared-invalidation manager's
+	 *	array of per-backend data.  (Formerly this came before
+	 *	InitProcess, but now it must happen after, because it uses
+	 *	MyProc.)  Once I have done this, I am visible to other backends!
+	 *
+	 *	Sets up MyBackendId, a unique backend identifier.
+	 * ----------------
+	 */
+	InitSharedInvalidationState();
 
 	if (MyBackendId > MAXBACKENDS || MyBackendId <= 0)
 	{
@@ -592,7 +659,6 @@ InitPostgres(char *name)		/* database name */
 	 * ----------------
 	 */
 	PostgresIsInitialized = true;
-/*	  on_shmem_exit(DestroyLocalRelList, (caddr_t) NULL); */
 
 	/* ----------------
 	 *	Done with "InitPostgres", now change to NormalProcessing unless
@@ -601,7 +667,14 @@ InitPostgres(char *name)		/* database name */
 	 */
 	if (!bootstrap)
 		SetProcessingMode(NormalProcessing);
-/*	  if (testFlag || lockingOff) */
 	if (lockingOff)
 		LockDisable(true);
+
+	/*
+	 * Unless we are bootstrapping, double-check that InitMyDatabaseInfo()
+	 * got a correct result.  We can't do this until essentially all the
+	 * infrastructure is up, so just do it at the end.
+	 */
+	if (!bootstrap)
+		ReverifyMyDatabase(name);
 }

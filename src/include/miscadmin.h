@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.40 1999/06/12 22:17:23 tgl Exp $
+ * $Id: miscadmin.h,v 1.41 1999/09/24 00:25:16 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -111,7 +111,7 @@ extern char *DatabaseName;
 extern char *DatabasePath;
 
 /* in utils/misc/database.c */
-extern void GetRawDatabaseInfo(char *name, int4 *owner, Oid *db_id, char *path, int *encoding);
+extern void GetRawDatabaseInfo(char *name, Oid *db_id, char *path);
 extern int	GetDatabaseInfo(char *name, int4 *owner, char *path);
 extern char *ExpandDatabasePath(char *path);
 

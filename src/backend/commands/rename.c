@@ -7,11 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.33 1999/09/18 19:06:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.34 1999/09/24 00:24:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <errno.h>
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -21,6 +23,7 @@
 #include "catalog/catalog.h"
 #include "commands/rename.h"
 #include "miscadmin.h"
+#include "storage/smgr.h"
 #include "optimizer/prep.h"
 #include "utils/acl.h"
 
@@ -166,19 +169,6 @@ renameatt(char *relname,
 
 /*
  *		renamerel		- change the name of a relation
- *
- *		Relname attribute is changed in relation catalog.
- *		No record of the previous relname is kept (correct?).
- *
- *		scan relation catalog
- *				for name conflict
- *				for original relation (if not arg)
- *		modify relname in relation tuple
- *		insert modified relation in relation catalog
- *		delete original relation from relation catalog
- *
- *		XXX Will currently lose track of a relation if it is unable to
- *				properly replace the new relation tuple.
  */
 void
 renamerel(char *oldrelname, char *newrelname)
@@ -206,8 +196,55 @@ renamerel(char *oldrelname, char *newrelname)
 	 * until end of transaction.
 	 */
 	targetrelation = heap_openr(oldrelname, AccessExclusiveLock);
-	heap_close(targetrelation, NoLock);	/* close rel but keep lock! */
 
+	/* ----------------
+	 *	RENAME TABLE within a transaction block is dangerous, because
+	 *	if the transaction is later rolled back we have no way to
+	 *	undo the rename of the relation's physical file.  For now, allow it
+	 *	but emit a warning message.
+	 *	Someday we might want to consider postponing the physical rename
+	 *	until transaction commit, but that's a lot of work...
+	 *	The only case that actually works right is for relations created
+	 *	in the current transaction, since the post-abort state would be that
+	 *	they don't exist anyway.  So, no warning in that case.
+	 * ----------------
+	 */
+	if (IsTransactionBlock() && ! targetrelation->rd_myxactonly)
+		elog(NOTICE, "Caution: RENAME TABLE cannot be rolled back, so don't abort now");
+
+	/*
+	 * Flush all blocks of the relation out of the buffer pool.  We need this
+	 * because the blocks are marked with the relation's name as well as OID.
+	 * If some backend tries to write a dirty buffer with mdblindwrt after
+	 * we've renamed the physical file, we'll be in big trouble.
+	 *
+	 * Since we hold the exclusive lock on the relation, we don't have to
+	 * worry about more blocks being read in while we finish the rename.
+	 */
+	if (FlushRelationBuffers(targetrelation, (BlockNumber) 0, true) < 0)
+		elog(ERROR, "renamerel: unable to flush relation from buffer pool");
+
+	/*
+	 * Make sure smgr and lower levels close the relation's files.
+	 * (Next access to rel will reopen them.)
+	 *
+	 * Note: we rely on shared cache invalidation message to make other
+	 * backends close and re-open the files.
+	 */
+	smgrclose(DEFAULT_SMGR, targetrelation);
+
+	/*
+	 * Close rel, but keep exclusive lock!
+	 *
+	 * Note: we don't do anything about updating the relcache entry;
+	 * we assume it will be flushed by shared cache invalidate.
+	 * XXX is this good enough?  What if relation is myxactonly?
+	 */
+	heap_close(targetrelation, NoLock);
+
+	/*
+	 * Find relation's pg_class tuple, and make sure newrelname isn't in use.
+	 */
 	relrelation = heap_openr(RelationRelationName, RowExclusiveLock);
 
 	oldreltup = SearchSysCacheTupleCopy(RELNAME,
@@ -220,14 +257,17 @@ renamerel(char *oldrelname, char *newrelname)
 		elog(ERROR, "renamerel: relation \"%s\" exists", newrelname);
 
 	/*
-	 * XXX need to close relation and flush dirty buffers here!
+	 * Perform physical rename of files.  If this fails, we haven't yet
+	 * done anything irreversible.
+	 *
+	 * XXX smgr.c ought to provide an interface for this; doing it
+	 * directly is bletcherous.
 	 */
-
-	/* rename the path first, so if this fails the rename's not done */
 	strcpy(oldpath, relpath(oldrelname));
 	strcpy(newpath, relpath(newrelname));
 	if (rename(oldpath, newpath) < 0)
-		elog(ERROR, "renamerel: unable to rename file: %s", oldpath);
+		elog(ERROR, "renamerel: unable to rename %s to %s: %m",
+			 oldpath, newpath);
 
 	/* rename additional segments of relation, too */
 	for (i = 1;; i++)
@@ -235,13 +275,22 @@ renamerel(char *oldrelname, char *newrelname)
 		sprintf(toldpath, "%s.%d", oldpath, i);
 		sprintf(tnewpath, "%s.%d", newpath, i);
 		if (rename(toldpath, tnewpath) < 0)
-			break;
+		{
+			/* expected case is that there's not another segment file */
+			if (errno == ENOENT)
+				break;
+			/* otherwise we're up the creek... */
+			elog(ERROR, "renamerel: unable to rename %s to %s: %m",
+				 toldpath, tnewpath);
+		}
 	}
 
+	/*
+	 * Update pg_class tuple with new relname.
+	 */
 	StrNCpy((((Form_pg_class) GETSTRUCT(oldreltup))->relname.data),
 			newrelname, NAMEDATALEN);
 
-	/* insert fixed rel tuple */
 	heap_replace(relrelation, &oldreltup->t_self, oldreltup, NULL);
 
 	/* keep the system catalog indices current */

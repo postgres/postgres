@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.27 1999/09/18 19:07:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.28 1999/09/24 00:24:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,9 +193,11 @@ FlushLocalBuffer(Buffer buffer, bool release)
 	/* drop relcache refcount incremented by RelationIdCacheGetRelation */
 	RelationDecrementReferenceCount(bufrel);
 
-	Assert(LocalRefCount[bufid] > 0);
 	if (release)
+	{
+		Assert(LocalRefCount[bufid] > 0);
 		LocalRefCount[bufid]--;
+	}
 
 	return true;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.18 1999/07/17 20:17:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.19 1999/09/24 00:24:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ PinBuffer(BufferDesc *buf)
 
 	b = BufferDescriptorGetBuffer(buf) - 1;
 	Assert(PrivateRefCount[b] >= 0);
-	if (PrivateRefCount[b] == 0 && LastRefCount[b] == 0)
+	if (PrivateRefCount[b] == 0)
 		buf->refcount++;
 	PrivateRefCount[b]++;
 }
@@ -138,10 +138,10 @@ UnpinBuffer(BufferDesc *buf)
 {
 	long		b = BufferDescriptorGetBuffer(buf) - 1;
 
-	Assert(buf->refcount);
+	Assert(buf->refcount > 0);
 	Assert(PrivateRefCount[b] > 0);
 	PrivateRefCount[b]--;
-	if (PrivateRefCount[b] == 0 && LastRefCount[b] == 0)
+	if (PrivateRefCount[b] == 0)
 		buf->refcount--;
 	NotInQueue(buf);
 

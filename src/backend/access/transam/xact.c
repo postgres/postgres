@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.52 1999/09/16 09:08:56 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.53 1999/09/24 00:24:05 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -151,6 +151,7 @@
 #include "commands/vacuum.h"
 #include "libpq/be-fsstubs.h"
 #include "storage/proc.h"
+#include "storage/sinval.h"
 #include "utils/temprel.h"
 #include "utils/inval.h"
 #include "utils/portal.h"
@@ -749,8 +750,8 @@ RecordTransactionAbort()
 static void
 AtAbort_Cache()
 {
-	RegisterInvalid(false);
 	RelationCacheAbort();
+	RegisterInvalid(false);
 }
 
 /* --------------------------------
@@ -929,7 +930,7 @@ CommitTransaction()
 	/*
 	 * Let others know about no transaction in progress by me.
 	 * Note that this must be done _before_ releasing locks we hold 
-	 * and SpinAcquire(ShmemIndexLock) is required: UPDATE with xid 0 is 
+	 * and SpinAcquire(SInvalLock) is required: UPDATE with xid 0 is 
 	 * blocked by xid 1' UPDATE, xid 1 is doing commit while xid 2 
 	 * gets snapshot - if xid 2' GetSnapshotData sees xid 1 as running
 	 * then it must see xid 0 as running as well or it will see two
@@ -937,10 +938,11 @@ CommitTransaction()
 	 */
 	if (MyProc != (PROC *) NULL)
 	{
-		SpinAcquire(ShmemIndexLock);
+		/* Lock SInvalLock because that's what GetSnapshotData uses. */
+		SpinAcquire(SInvalLock);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
-		SpinRelease(ShmemIndexLock);
+		SpinRelease(SInvalLock);
 	}
 
 	RelationPurgeLocalRelation(true);

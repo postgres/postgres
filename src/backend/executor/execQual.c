@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.59 1999/09/18 23:26:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.60 1999/09/24 00:24:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,7 +637,8 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
 
 		if (!(*argIsDone))
 		{
-			Assert(i == 0);
+			if (i != 0)
+				elog(ERROR, "functions can only take sets in their first argument");
 			fcache->setArg = (char *) argV[0];
 			fcache->hasSetArg = true;
 		}
@@ -758,35 +759,48 @@ ExecMakeFunctionResult(Node *node,
 	if (fcache->language == SQLlanguageId)
 	{
 		Datum		result;
+		bool		argDone;
 
 		Assert(funcNode);
-		result = postquel_function(funcNode, (char **) argV, isNull, isDone);
 
-		/*
-		 * finagle the situation where we are iterating through all
-		 * results in a nested dot function (whose argument function
+		/*--------------------
+		 * This loop handles the situation where we are iterating through
+		 * all results in a nested dot function (whose argument function
 		 * returns a set of tuples) and the current function finally
-		 * finishes.  We need to get the next argument in the set and run
-		 * the function all over again.  This is getting unclean.
+		 * finishes.  We need to get the next argument in the set and start
+		 * the function all over again.  We might have to do it more than
+		 * once, if the function produces no results for a particular argument.
+		 * This is getting unclean.
+		 *--------------------
 		 */
-		if ((*isDone) && (fcache->hasSetArg))
+		for (;;)
 		{
-			bool		argDone;
+			result = postquel_function(funcNode, (char **) argV,
+									   isNull, isDone);
 
+			if (! *isDone)
+				break;			/* got a result from current argument */
+			if (! fcache->hasSetArg)
+				break;			/* input not a set, so done */
+
+			/* OK, get the next argument... */
 			ExecEvalFuncArgs(fcache, econtext, arguments, argV, &argDone);
 
 			if (argDone)
 			{
+				/* End of arguments, so reset the setArg flag and say "Done" */
 				fcache->setArg = (char *) NULL;
+				fcache->hasSetArg = false;
 				*isDone = true;
 				result = (Datum) NULL;
+				break;
 			}
-			else
-				result = postquel_function(funcNode,
-										   (char **) argV,
-										   isNull,
-										   isDone);
+
+			/* If we reach here, loop around to run the function on the
+			 * new argument.
+			 */
 		}
+
 		if (funcisset)
 		{
 
@@ -805,6 +819,7 @@ ExecMakeFunctionResult(Node *node,
 			if (*isDone)
 				((Func *) node)->func_fcache = NULL;
 		}
+
 		return result;
 	}
 	else
@@ -1424,8 +1439,10 @@ ExecTargetList(List *targetlist,
 {
 	char		nulls_array[64];
 	bool		fjNullArray[64];
-	bool	   *fjIsNull;
+	bool		itemIsDoneArray[64];
 	char	   *null_head;
+	bool	   *fjIsNull;
+	bool	   *itemIsDone;
 	List	   *tl;
 	TargetEntry *tle;
 	Node	   *expr;
@@ -1434,6 +1451,7 @@ ExecTargetList(List *targetlist,
 	Datum		constvalue;
 	HeapTuple	newTuple;
 	bool		isNull;
+	bool		haveDoneIters;
 	static struct tupleDesc NullTupleDesc; /* we assume this inits to zeroes */
 
 	/*
@@ -1457,24 +1475,30 @@ ExecTargetList(List *targetlist,
 	/*
 	 * allocate an array of char's to hold the "null" information only if
 	 * we have a really large targetlist.  otherwise we use the stack.
+	 *
+	 * We also allocate a bool array that is used to hold fjoin result state,
+	 * and another that holds the isDone status for each targetlist item.
 	 */
 	if (nodomains > 64)
 	{
 		null_head = (char *) palloc(nodomains + 1);
 		fjIsNull = (bool *) palloc(nodomains + 1);
+		itemIsDone = (bool *) palloc(nodomains + 1);
 	}
 	else
 	{
 		null_head = &nulls_array[0];
 		fjIsNull = &fjNullArray[0];
+		itemIsDone = &itemIsDoneArray[0];
 	}
 
 	/*
 	 * evaluate all the expressions in the target list
 	 */
-	EV_printf("ExecTargetList: setting target list values\n");
 
-	*isDone = true;
+	*isDone = true;				/* until proven otherwise */
+	haveDoneIters = false;		/* any isDone Iter exprs in tlist? */
+
 	foreach(tl, targetlist)
 	{
 
@@ -1493,13 +1517,11 @@ ExecTargetList(List *targetlist,
 			expr = tle->expr;
 			resdom = tle->resdom;
 			resind = resdom->resno - 1;
+
 			constvalue = (Datum) ExecEvalExpr(expr,
 											  econtext,
 											  &isNull,
-											  isDone);
-
-			if ((IsA(expr, Iter)) && (*isDone))
-				return (HeapTuple) NULL;
+											  &itemIsDone[resind]);
 
 			values[resind] = constvalue;
 
@@ -1507,6 +1529,14 @@ ExecTargetList(List *targetlist,
 				null_head[resind] = ' ';
 			else
 				null_head[resind] = 'n';
+
+			if (IsA(expr, Iter))
+			{
+				if (itemIsDone[resind])
+					haveDoneIters = true;
+				else
+					*isDone = false; /* we have undone Iters in the list */
+			}
 		}
 		else
 		{
@@ -1518,6 +1548,8 @@ ExecTargetList(List *targetlist,
 			DatumPtr	results = fjNode->fj_results;
 
 			ExecEvalFjoin(tle, econtext, fjIsNull, isDone);
+
+			/* this is probably wrong: */
 			if (*isDone)
 				return (HeapTuple) NULL;
 
@@ -1558,18 +1590,86 @@ ExecTargetList(List *targetlist,
 		}
 	}
 
+	if (haveDoneIters)
+	{
+		if (*isDone)
+		{
+			/* all Iters are done, so return a null indicating tlist set
+			 * expansion is complete.
+			 */
+			newTuple = NULL;
+			goto exit;
+		}
+		else
+		{
+			/* We have some done and some undone Iters.  Restart the done ones
+			 * so that we can deliver a tuple (if possible).
+			 *
+			 * XXX this code is a crock, because it only works for Iters at
+			 * the top level of tlist expressions, and doesn't even work right
+			 * for them: you should get all possible combinations of Iter
+			 * results, but you won't unless the numbers of values returned by
+			 * each are relatively prime.  Should have a mechanism more like
+			 * aggregate functions, where we make a list of all Iters
+			 * contained in the tlist and cycle through their values in a
+			 * methodical fashion.  To do someday; can't get excited about
+			 * fixing a Berkeley feature that's not in SQL92.  (The only
+			 * reason we're doing this much is that we have to be sure all
+			 * the Iters are run to completion, or their subplan executors
+			 * will have unreleased resources, e.g. pinned buffers...)
+			 */
+			foreach(tl, targetlist)
+			{
+				tle = lfirst(tl);
+
+				if (tle->resdom != NULL)
+				{
+					expr = tle->expr;
+					resdom = tle->resdom;
+					resind = resdom->resno - 1;
+
+					if (IsA(expr, Iter) && itemIsDone[resind])
+					{
+						constvalue = (Datum) ExecEvalExpr(expr,
+														  econtext,
+														  &isNull,
+														  &itemIsDone[resind]);
+						if (itemIsDone[resind])
+						{
+							/* Oh dear, this Iter is returning an empty set.
+							 * Guess we can't make a tuple after all.
+							 */
+							*isDone = true;
+							newTuple = NULL;
+							goto exit;
+						}
+
+						values[resind] = constvalue;
+
+						if (!isNull)
+							null_head[resind] = ' ';
+						else
+							null_head[resind] = 'n';
+					}
+				}
+			}
+		}
+	}
+
 	/*
 	 * form the new result tuple (in the "normal" context)
 	 */
 	newTuple = (HeapTuple) heap_formtuple(targettype, values, null_head);
 
+exit:
 	/*
-	 * free the nulls array if we allocated one..
+	 * free the status arrays if we palloc'd them
 	 */
 	if (nodomains > 64)
 	{
 		pfree(null_head);
 		pfree(fjIsNull);
+		pfree(itemIsDone);
 	}
 
 	return newTuple;
