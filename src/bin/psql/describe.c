@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2005, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.113 2005/03/16 23:52:18 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.114 2005/04/01 05:30:38 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -201,7 +201,8 @@ describeFunctions(const char *pattern, bool verbose)
 	 */
 	appendPQExpBuffer(&buf,
 	   "WHERE p.prorettype <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
-					  "      AND p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
+					  "      AND (p.proargtypes[0] IS NULL\n"
+					  "      OR   p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype)\n"
 					  "      AND NOT p.proisagg\n");
 
 	processNamePattern(&buf, pattern, true, false,
@@ -491,7 +492,8 @@ objectDescription(const char *pattern)
 					  "       LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
 
 	 "  WHERE p.prorettype <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
-					  "      AND p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype\n"
+					  "      AND (p.proargtypes[0] IS NULL\n"
+					  "      OR   p.proargtypes[0] <> 'pg_catalog.cstring'::pg_catalog.regtype)\n"
 					  "      AND NOT p.proisagg\n",
 					  _("function"));
 	processNamePattern(&buf, pattern, true, false,
