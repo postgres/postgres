@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: gramparse.h,v 1.9 1999/02/13 23:21:55 momjian Exp $
+ * $Id: gramparse.h,v 1.10 2000/01/20 05:26:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,8 @@
 
 /* from scan.l */
 extern void init_io(void);
+extern int	yylex(void);
+extern void yyerror(const char * message);
 
 /* from gram.y */
 extern Oid	param_type(int t);

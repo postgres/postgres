@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.60 1999/10/18 02:42:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.61 2000/01/20 05:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,7 +356,7 @@ other			.
 
 %%
 
-void yyerror(char message[])
+void yyerror(const char * message)
 {
 	elog(ERROR, "parser: %s at or near \"%s\"", message, yytext);
 }
