@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.15 2004/05/25 18:08:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.16 2004/05/25 19:46:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,17 @@ try_timezone(const char *tzname, struct tztry *tt)
 			return false;		/* probably shouldn't happen */
 		systm = localtime(&(tt->test_times[i]));
 		if (!compare_tm(systm, pgtm))
+		{
+			elog(DEBUG4, "Reject TZ \"%s\": at %lu %04d-%02d-%02d %02d:%02d:%02d %s versus %04d-%02d-%02d %02d:%02d:%02d %s",
+				 tzname, (unsigned long) tt->test_times[i],
+				 pgtm->tm_year + 1900, pgtm->tm_mon + 1, pgtm->tm_mday,
+				 pgtm->tm_hour, pgtm->tm_min, pgtm->tm_sec,
+				 pgtm->tm_isdst ? "dst" : "std",
+				 systm->tm_year + 1900, systm->tm_mon + 1, systm->tm_mday,
+				 systm->tm_hour, systm->tm_min, systm->tm_sec,
+				 systm->tm_isdst ? "dst" : "std");
 			return false;
+		}
 		if (systm->tm_isdst >= 0)
 		{
 			/* Check match of zone names, too */
@@ -172,14 +182,23 @@ try_timezone(const char *tzname, struct tztry *tt)
 			memset(cbuf, 0, sizeof(cbuf));
 			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm); /* zone abbr */
 			if (strcmp(TZABBREV(cbuf), pgtm->tm_zone) != 0)
+			{
+				elog(DEBUG4, "Reject TZ \"%s\": at %lu \"%s\" versus \"%s\"",
+					 tzname, (unsigned long) tt->test_times[i],
+					 pgtm->tm_zone, cbuf);
 				return false;
+			}
 		}
 	}
 
 	/* Reject if leap seconds involved */
 	if (!tz_acceptable())
+	{
+		elog(DEBUG4, "Reject TZ \"%s\": uses leap seconds", tzname);
 		return false;
+	}
 
+	elog(DEBUG4, "Accept TZ \"%s\"", tzname);
 	return true;
 }
 
@@ -384,6 +403,13 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt)
 		direntry = readdir(dirdesc);
 		if (!direntry)
 		{
+#ifdef WIN32
+			/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4),
+			 * but not in released version
+			 */
+			if (GetLastError() == ERROR_NO_MORE_FILES)
+				errno = 0;
+#endif
 			if (errno)
 				ereport(LOG,
 						(errcode_for_file_access(),
