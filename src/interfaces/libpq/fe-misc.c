@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.65 2001/12/03 00:28:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.66 2002/03/05 05:20:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,54 +110,82 @@ pqPutc(char c, PGconn *conn)
 static int
 pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 {
-	size_t		avail = Max(conn->outBufSize - conn->outCount, 0);
-
 	/*
-	 * if we are non-blocking and the send queue is too full to buffer
-	 * this request then try to flush some and return an error
-	 */
-	if (pqIsnonblocking(conn) && nbytes > avail && pqFlush(conn))
-	{
-		/*
-		 * even if the flush failed we may still have written some data,
-		 * recalculate the size of the send-queue relative to the amount
-		 * we have to send, we may be able to queue it afterall even
-		 * though it's not sent to the database it's ok, any routines that
-		 * check the data coming from the database better call pqFlush()
-		 * anyway.
-		 */
-		if (nbytes > Max(conn->outBufSize - conn->outCount, 0))
-		{
-			printfPQExpBuffer(&conn->errorMessage,
-							  libpq_gettext("could not flush enough data (space available: %d, space needed %d)\n"),
-						 (int) Max(conn->outBufSize - conn->outCount, 0),
-							  (int) nbytes);
-			return EOF;
-		}
-		/* fixup avail for while loop */
-		avail = Max(conn->outBufSize - conn->outCount, 0);
-	}
-
-	/*
-	 * is the amount of data to be sent is larger than the size of the
-	 * output buffer then we must flush it to make more room.
+	 * Strategy to handle blocking and non-blocking connections: Fill the
+	 * output buffer and flush it repeatedly until either all data has
+	 * been sent or is at least queued in the buffer.
 	 *
-	 * the code above will make sure the loop conditional is never true for
-	 * non-blocking connections
+	 * For non-blocking connections, grow the buffer if not all data fits
+	 * into it and the buffer can't be sent because the socket would
+	 * block.
 	 */
-	while (nbytes > avail)
-	{
-		memcpy(conn->outBuffer + conn->outCount, s, avail);
-		conn->outCount += avail;
-		s += avail;
-		nbytes -= avail;
-		if (pqFlush(conn))
-			return EOF;
-		avail = conn->outBufSize;
-	}
 
-	memcpy(conn->outBuffer + conn->outCount, s, nbytes);
-	conn->outCount += nbytes;
+	while (nbytes)
+	{
+		size_t		avail,
+					remaining;
+
+		/* fill the output buffer */
+		avail = Max(conn->outBufSize - conn->outCount, 0);
+		remaining = Min(avail, nbytes);
+		memcpy(conn->outBuffer + conn->outCount, s, remaining);
+		conn->outCount += remaining;
+		s += remaining;
+		nbytes -= remaining;
+
+		/*
+		 * if the data didn't fit completely into the buffer, try to flush
+		 * the buffer
+		 */
+		if (nbytes)
+		{
+			int			send_result = pqSendSome(conn);
+
+			/* if there were errors, report them */
+			if (send_result < 0)
+				return EOF;
+
+			/*
+			 * if not all data could be sent, increase the output buffer,
+			 * put the rest of s into it and return successfully. This
+			 * case will only happen in a non-blocking connection
+			 */
+			if (send_result > 0)
+			{
+				/*
+				 * try to grow the buffer. FIXME: The new size could be
+				 * chosen more intelligently.
+				 */
+				size_t		buflen = conn->outCount + nbytes;
+
+				if (buflen > conn->outBufSize)
+				{
+					char	   *newbuf = realloc(conn->outBuffer, buflen);
+
+					if (!newbuf)
+					{
+						/* realloc failed. Probably out of memory */
+						printfPQExpBuffer(&conn->errorMessage,
+						   "cannot allocate memory for output buffer\n");
+						return EOF;
+					}
+					conn->outBuffer = newbuf;
+					conn->outBufSize = buflen;
+				}
+				/* put the data into it */
+				memcpy(conn->outBuffer + conn->outCount, s, nbytes);
+				conn->outCount += nbytes;
+
+				/* report success. */
+				return 0;
+			}
+		}
+
+		/*
+		 * pqSendSome was able to send all data. Continue with the next
+		 * chunk of s.
+		 */
+	}							/* while */
 
 	return 0;
 }
@@ -603,11 +631,22 @@ definitelyFailed:
 	return -1;
 }
 
-/*
- * pqFlush: send any data waiting in the output buffer
+/* pqSendSome: send any data waiting in the output buffer and return 0
+ * if all data was sent, -1 if an error occurred or 1 if not all data
+ * could be written because the socket would have blocked.
+ *
+ * For a blocking connection all data will be sent unless an error
+ * occurrs. -1 will only be returned if the connection is non-blocking.
+ *
+ * Internally, the case of data remaining in the buffer after pqSendSome
+ * could be determined by looking at outCount, but this function also
+ * serves as the implementation of the new API function PQsendsome.
+ *
+ * FIXME: perhaps it would be more useful to return the number of bytes
+ * remaining?
  */
 int
-pqFlush(PGconn *conn)
+pqSendSome(PGconn *conn)
 {
 	char	   *ptr = conn->outBuffer;
 	int			len = conn->outCount;
@@ -685,14 +724,14 @@ pqFlush(PGconn *conn)
 					 * the socket open until pqReadData finds no more data
 					 * can be read.
 					 */
-					return EOF;
+					return -1;
 
 				default:
 					printfPQExpBuffer(&conn->errorMessage,
 					libpq_gettext("could not send data to server: %s\n"),
 									  SOCK_STRERROR(SOCK_ERRNO));
 					/* We don't assume it's a fatal error... */
-					return EOF;
+					return -1;
 			}
 		}
 		else
@@ -707,7 +746,7 @@ pqFlush(PGconn *conn)
 
 			/*
 			 * if the socket is in non-blocking mode we may need to abort
-			 * here
+			 * here and return 1 to indicate that data is still pending.
 			 */
 #ifdef USE_SSL
 			/* can't do anything for our SSL users yet */
@@ -719,14 +758,14 @@ pqFlush(PGconn *conn)
 					/* shift the contents of the buffer */
 					memmove(conn->outBuffer, ptr, len);
 					conn->outCount = len;
-					return EOF;
+					return 1;
 				}
 #ifdef USE_SSL
 			}
 #endif
 
 			if (pqWait(FALSE, TRUE, conn))
-				return EOF;
+				return -1;
 		}
 	}
 
@@ -735,6 +774,23 @@ pqFlush(PGconn *conn)
 	if (conn->Pfdebug)
 		fflush(conn->Pfdebug);
 
+	return 0;
+}
+
+
+/*
+ * pqFlush: send any data waiting in the output buffer
+ *
+ * Implemented in terms of pqSendSome to recreate the old behavior which
+ * returned 0 if all data was sent or EOF. EOF was sent regardless of
+ * whether an error occurred or not all data was sent on a non-blocking
+ * socket.
+ */
+int
+pqFlush(PGconn *conn)
+{
+	if (pqSendSome(conn))
+		return EOF;
 	return 0;
 }
 
@@ -756,7 +812,7 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("connection not open\n"));
-		return EOF;
+		return -1;
 	}
 
 	if (forRead || forWrite)
@@ -857,19 +913,20 @@ libpq_gettext(const char *msgid)
  * strerror replacement for windows:
  *
  * This works on WIN2000 and newer, but we don't know where to find WinSock
- * error strings on older Windows flavors.  If you know, clue us in.
+ * error strings on older Windows flavors.	If you know, clue us in.
  */
 const char *
 winsock_strerror(int eno)
 {
-	static char	err_buf[512];
-#define WSSE_MAXLEN (sizeof(err_buf)-1-13)	/* 13 for " (0x00000000)" */
+	static char err_buf[512];
+
+#define WSSE_MAXLEN (sizeof(err_buf)-1-13)		/* 13 for " (0x00000000)" */
 	int			length;
 
 	/* First try the "system table", this works on Win2k and up */
 
 	if (FormatMessage(
-				FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+			  FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
 					  0,
 					  eno,
 					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),

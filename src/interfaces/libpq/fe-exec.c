@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.114 2002/03/04 23:59:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.115 2002/03/05 05:20:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2428,4 +2428,12 @@ PQflush(PGconn *conn)
 {
 
 	return (pqFlush(conn));
+}
+
+/* try to force data out, really only useful for non-blocking users.
+ * This implementation actually works for non-blocking connections */
+int
+PQsendSome(PGconn *conn)
+{
+	return pqSendSome(conn);
 }
