@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.50 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.51 2003/09/10 20:13:45 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -364,7 +364,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
   <title>Examples</title>
 
   <para>
-   Here is a trivial example to help you get startet.  For more
+   Here is a trivial example to help you get started.  For more
    information and examples, see <xref linkend="xfunc">.
 <programlisting>
 CREATE FUNCTION add(integer, integer) RETURNS integer
