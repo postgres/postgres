@@ -6,13 +6,13 @@ all clean::
 	@echo Nothing to be done.
 
 install::
-	$(INSTALL) $(INSTLOPTS) ecpglib.h $(HEADERDIR)	
-	$(INSTALL) $(INSTLOPTS) ecpgtype.h $(HEADERDIR)	
-	$(INSTALL) $(INSTLOPTS) sqlca.h $(HEADERDIR)	
+	$(INSTALL) $(INSTLOPTS) ecpglib.h $(DESTDIR)$(HEADERDIR)	
+	$(INSTALL) $(INSTLOPTS) ecpgtype.h $(DESTDIR)$(HEADERDIR)	
+	$(INSTALL) $(INSTLOPTS) sqlca.h $(DESTDIR)$(HEADERDIR)	
 
 uninstall::
-	rm -f $(HEADERDIR)/ecpglib.h
-	rm -f $(HEADERDIR)/ecpgtype.h
-	rm -f $(HEADERDIR)/sqlca.h
+	rm -f $(DESTDIR)$(HEADERDIR)/ecpglib.h
+	rm -f $(DESTDIR)$(HEADERDIR)/ecpgtype.h
+	rm -f $(DESTDIR)$(HEADERDIR)/sqlca.h
 
 dep depend:

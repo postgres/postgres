@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.9 1998/04/06 00:29:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.10 1998/04/06 01:15:24 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ $(LIBPQDIR)/libpq.a:
 	$(MAKE) -C $(LIBPQDIR) libpq.a
 
 install: pg_id
-	$(INSTALL) $(INSTL_EXE_OPTS) pg_id $(BINDIR)/pg_id
+	$(INSTALL) $(INSTL_EXE_OPTS) pg_id $(DESTDIR)$(BINDIR)/pg_id
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.6 1998/04/06 00:28:16 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/Makefile,v 1.7 1998/04/06 01:14:18 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ createuser: createuser.sh
 	sed $(SEDSCRIPT) <createuser.sh >createuser
 
 install: createuser
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $< $(DESTDIR)$(BINDIR)/$<
 
 clean:
 	rm -f createuser
