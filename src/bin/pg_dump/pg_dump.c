@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.257 2002/04/29 17:30:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.258 2002/05/06 18:33:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ static void dumpComment(Archive *fout, const char *target, const char *oid,
 			const char *((*deps)[]));
 static void dumpOneDomain(Archive *fout, TypeInfo *tinfo);
 static void dumpSequence(Archive *fout, TableInfo tbinfo, const bool schemaOnly, const bool dataOnly);
-static void dumpACL(Archive *fout, TableInfo tbinfo);
+static void dumpACL(Archive *fout, TableInfo *tbinfo);
 static void dumpTriggers(Archive *fout, const char *tablename,
 			 TableInfo *tblinfo, int numTables);
 static void dumpRules(Archive *fout, const char *tablename,
@@ -4129,58 +4129,27 @@ GetPrivileges(Archive *AH, const char *s)
 		return strdup(aclbuf);
 }
 
-/*
- * The name says it all; a function to append a string if the dest
- * is big enough. If not, it does a realloc.
- */
-static void
-strcatalloc(char **dest, int *dSize, char *src)
-{
-	int			dLen = strlen(*dest);
-	int			sLen = strlen(src);
-
-	if ((dLen + sLen) >= *dSize)
-	{
-		*dSize = (dLen + sLen) * 2;
-		*dest = realloc(*dest, *dSize);
-	}
-	strcpy(*dest + dLen, src);
-}
-
 
 /*
  * dumpACL:
- *	  Write out grant/revoke information
- *	  Called for sequences and tables
+ *	  Write out grant/revoke information for a table, view or sequence
  */
-
 static void
-dumpACL(Archive *fout, TableInfo tbinfo)
+dumpACL(Archive *fout, TableInfo *tbinfo)
 {
-	const char *acls = tbinfo.relacl;
+	const char *acls = tbinfo->relacl;
 	char	   *aclbuf,
 			   *tok,
 			   *eqpos,
 			   *priv;
 	char	   *objoid;
-	char	   *sql;
-	char		tmp[1024];
-	int			sSize = 4096;
+	PQExpBuffer sql;
+	bool		found_owner_privs = false;
 
 	if (strlen(acls) == 0)
 		return;					/* table has default permissions */
 
-	/*
-	 * Allocate a larginsh buffer for the output SQL.
-	 */
-	sql = (char *) malloc(sSize);
-
-	/*
-	 * Revoke Default permissions for PUBLIC. Is this actually necessary,
-	 * or is it just a waste of time?
-	 */
-	sprintf(sql, "REVOKE ALL on %s from PUBLIC;\n",
-			fmtId(tbinfo.relname, force_quotes));
+	sql = createPQExpBuffer();
 
 	/* Make a working copy of acls so we can use strtok */
 	aclbuf = strdup(acls);
@@ -4202,9 +4171,10 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 		if (!eqpos)
 		{
 			write_msg(NULL, "could not parse ACL list ('%s') for relation %s\n",
-					  acls, tbinfo.relname);
+					  acls, tbinfo->relname);
 			exit_nicely();
 		}
+		*eqpos = '\0';			/* it's ok to clobber aclbuf */
 
 		/*
 		 * Parse the privileges (right-hand side).	Skip if there are
@@ -4213,41 +4183,69 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 		priv = GetPrivileges(fout, eqpos + 1);
 		if (*priv)
 		{
-			sprintf(tmp, "GRANT %s on %s to ",
-					priv, fmtId(tbinfo.relname, force_quotes));
-			strcatalloc(&sql, &sSize, tmp);
-
-			/*
-			 * Note: fmtId() can only be called once per printf, so don't
-			 * try to merge printing of username into the above printf.
-			 */
-			if (eqpos == tok)
+			if (strcmp(tok, tbinfo->usename) == 0)
 			{
-				/* Empty left-hand side means "PUBLIC" */
-				strcatalloc(&sql, &sSize, "PUBLIC;\n");
+				/*
+				 * For the owner, the default privilege level is ALL.
+				 */
+				found_owner_privs = true;
+				if (strcmp(priv, "ALL") != 0)
+				{
+					/* NB: only one fmtId per appendPQExpBuffer! */
+					appendPQExpBuffer(sql, "REVOKE ALL ON %s FROM ",
+									  fmtId(tbinfo->relname, force_quotes));
+					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
+					appendPQExpBuffer(sql, "GRANT %s ON %s TO ",
+									  priv,
+									  fmtId(tbinfo->relname, force_quotes));
+					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
+				}
 			}
 			else
 			{
-				*eqpos = '\0';	/* it's ok to clobber aclbuf */
-				if (strncmp(tok, "group ", strlen("group ")) == 0)
-					sprintf(tmp, "GROUP %s;\n",
-							fmtId(tok + strlen("group "), force_quotes));
+				/*
+				 * Otherwise can assume we are starting from no privs.
+				 */
+				appendPQExpBuffer(sql, "GRANT %s ON %s TO ",
+								  priv,
+								  fmtId(tbinfo->relname, force_quotes));
+				if (eqpos == tok)
+				{
+					/* Empty left-hand side means "PUBLIC" */
+					appendPQExpBuffer(sql, "PUBLIC;\n");
+				}
+				else if (strncmp(tok, "group ", strlen("group ")) == 0)
+					appendPQExpBuffer(sql, "GROUP %s;\n",
+									  fmtId(tok + strlen("group "),
+											force_quotes));
 				else
-					sprintf(tmp, "%s;\n", fmtId(tok, force_quotes));
-				strcatalloc(&sql, &sSize, tmp);
+					appendPQExpBuffer(sql, "%s;\n", fmtId(tok, force_quotes));
 			}
 		}
 		free(priv);
 	}
 
+	/*
+	 * If we didn't find any owner privs, the owner must have revoked 'em all
+	 */
+	if (!found_owner_privs && *tbinfo->usename)
+	{
+		appendPQExpBuffer(sql, "REVOKE ALL ON %s FROM ",
+						  fmtId(tbinfo->relname, force_quotes));
+		appendPQExpBuffer(sql, "%s;\n", fmtId(tbinfo->usename, force_quotes));
+	}
+
 	free(aclbuf);
 
-	if (tbinfo.viewdef != NULL)
-		objoid = tbinfo.viewoid;
+	if (tbinfo->viewdef != NULL)
+		objoid = tbinfo->viewoid;
 	else
-		objoid = tbinfo.oid;
+		objoid = tbinfo->oid;
 
-	ArchiveEntry(fout, objoid, tbinfo.relname, "ACL", NULL, sql, "", "", "", NULL, NULL);
+	ArchiveEntry(fout, objoid, tbinfo->relname, "ACL",
+				 NULL, sql->data, "", "", "", NULL, NULL);
+
+	destroyPQExpBuffer(sql);
 }
 
 static void
@@ -4350,7 +4348,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			/* becomeUser(fout, tblinfo[i].usename); */
 			dumpSequence(fout, tblinfo[i], schemaOnly, dataOnly);
 			if (!aclsSkip)
-				dumpACL(fout, tblinfo[i]);
+				dumpACL(fout, &tblinfo[i]);
 		}
 	}
 	if (serialSeq)
@@ -4486,7 +4484,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 							 NULL, NULL);
 
 				if (!aclsSkip)
-					dumpACL(fout, tblinfo[i]);
+					dumpACL(fout, &tblinfo[i]);
 
 			}
 
