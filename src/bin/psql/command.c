@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.26 2000/03/27 21:11:37 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.27 2000/04/11 17:35:50 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -1456,14 +1456,15 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 			fclose(stream);
 		}
 
-		/* remove temp file */
-		if (!filename_arg)
+    }
+
+  		/* remove temp file */
+	if (!filename_arg)
+    {
+		if (remove(fname)==-1)
         {
-			if (remove(fname)==-1)
-            {
-                psql_error("%s: %s\n", fname, strerror(errno));
-                error=true;
-            }
+            psql_error("%s: %s\n", fname, strerror(errno));
+            error=true;
         }
     }
 
