@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.73 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.74 2002/07/24 19:11:08 petere Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -232,9 +232,7 @@ OperatorShellMake(const char *operatorName,
 	values[i++] = NameGetDatum(&oname);				/* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
 	values[i++] = Int32GetDatum(GetUserId());		/* oprowner */
-	values[i++] = UInt16GetDatum(0);				/* oprprec */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
-	values[i++] = BoolGetDatum(false);				/* oprisleft */
 	values[i++] = BoolGetDatum(false);				/* oprcanhash */
 	values[i++] = ObjectIdGetDatum(leftTypeId);		/* oprleft */
 	values[i++] = ObjectIdGetDatum(rightTypeId);	/* oprright */
@@ -296,8 +294,6 @@ OperatorShellMake(const char *operatorName,
  *		leftTypeId				X left type ID
  *		rightTypeId				X right type ID
  *		procedureName			procedure for operator
- *		precedence				operator precedence
- *		isLeftAssociative		operator is left associative
  *		commutatorName			X commutator operator
  *		negatorName				X negator operator
  *		restrictionName			X restriction sel. procedure
@@ -331,9 +327,7 @@ OperatorShellMake(const char *operatorName,
  * assign values to the fields of the operator:
  *	 operatorName
  *	 owner id (simply the user id of the caller)
- *	 precedence
  *	 operator "kind" either "b" for binary or "l" for left unary
- *	 isLeftAssociative boolean
  *	 canHash boolean
  *	 leftTypeObjectId -- type must already be defined
  *	 rightTypeObjectId -- this is optional, enter ObjectId=0 if none specified
@@ -373,8 +367,6 @@ OperatorCreate(const char *operatorName,
 			   Oid leftTypeId,
 			   Oid rightTypeId,
 			   List *procedureName,
-			   uint16 precedence,
-			   bool isLeftAssociative,
 			   List *commutatorName,
 			   List *negatorName,
 			   List *restrictionName,
@@ -524,9 +516,7 @@ OperatorCreate(const char *operatorName,
 	values[i++] = NameGetDatum(&oname);			/* oprname */
 	values[i++] = ObjectIdGetDatum(operatorNamespace);	/* oprnamespace */
 	values[i++] = Int32GetDatum(GetUserId());		/* oprowner */
-	values[i++] = UInt16GetDatum(precedence);		/* oprprec */
 	values[i++] = CharGetDatum(leftTypeId ? (rightTypeId ? 'b' : 'r') : 'l');	/* oprkind */
-	values[i++] = BoolGetDatum(isLeftAssociative);	/* oprisleft */
 	values[i++] = BoolGetDatum(canHash);			/* oprcanhash */
 	values[i++] = ObjectIdGetDatum(leftTypeId);		/* oprleft */
 	values[i++] = ObjectIdGetDatum(rightTypeId);	/* oprright */

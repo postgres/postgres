@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.105 2002/06/20 20:29:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.106 2002/07/24 19:11:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,7 +560,6 @@ CreateUser(CreateUserStmt *stmt)
 	new_record[Anum_pg_shadow_usesysid - 1] = Int32GetDatum(sysid);
 	AssertState(BoolIsValid(createdb));
 	new_record[Anum_pg_shadow_usecreatedb - 1] = BoolGetDatum(createdb);
-	new_record[Anum_pg_shadow_usetrace - 1] = BoolGetDatum(false);
 	AssertState(BoolIsValid(createuser));
 	new_record[Anum_pg_shadow_usesuper - 1] = BoolGetDatum(createuser);
 	/* superuser gets catupd right by default */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.5 2002/07/12 18:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/operatorcmds.c,v 1.6 2002/07/24 19:11:09 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -62,11 +62,8 @@ DefineOperator(List *names, List *parameters)
 	char	   *oprName;
 	Oid			oprNamespace;
 	AclResult	aclresult;
-	uint16		precedence = 0;			/* operator precedence */
 	bool		canHash = false;		/* operator hashes */
 	bool		canMerge = false;		/* operator merges */
-	bool		isLeftAssociative = true;		/* operator is left
-												 * associative */
 	List	   *functionName = NIL;		/* function for operator */
 	TypeName   *typeName1 = NULL;		/* first type name */
 	TypeName   *typeName2 = NULL;		/* second type name */
@@ -113,16 +110,6 @@ DefineOperator(List *names, List *parameters)
 		}
 		else if (strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "precedence") == 0)
-		{
-			/* NOT IMPLEMENTED (never worked in v4.2) */
-			elog(NOTICE, "CREATE OPERATOR: precedence not implemented");
-		}
-		else if (strcasecmp(defel->defname, "associativity") == 0)
-		{
-			/* NOT IMPLEMENTED (never worked in v4.2) */
-			elog(NOTICE, "CREATE OPERATOR: associativity not implemented");
-		}
 		else if (strcasecmp(defel->defname, "commutator") == 0)
 			commutatorName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "negator") == 0)
@@ -190,8 +177,6 @@ DefineOperator(List *names, List *parameters)
 				   typeId1,		/* left type id */
 				   typeId2,		/* right type id */
 				   functionName,	/* function for operator */
-				   precedence,	/* operator precedence */
-				   isLeftAssociative,	/* operator is left associative */
 				   commutatorName,		/* optional commutator operator
 										 * name */
 				   negatorName, /* optional negator operator name */

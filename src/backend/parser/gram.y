@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.348 2002/07/20 05:58:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.349 2002/07/24 19:11:10 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1931,7 +1931,6 @@ CreatePLangStmt:
 				n->plname = $5;
 				n->plhandler = $7;
 				n->plvalidator = $8;
-				n->plcompiler = $9;
 				n->pltrusted = $2;
 				$$ = (Node *)n;
 			}

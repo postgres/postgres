@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.75 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.76 2002/07/24 19:11:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,6 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = ObjectIdGetDatum(typeNamespace); /* typnamespace */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typowner */
 	values[i++] = Int16GetDatum(0);		/* typlen */
-	values[i++] = Int16GetDatum(0);		/* typprtlen */
 	values[i++] = BoolGetDatum(false);	/* typbyval */
 	values[i++] = CharGetDatum(0);		/* typtype */
 	values[i++] = BoolGetDatum(false);	/* typisdefined */
@@ -85,8 +84,6 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typelem */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typinput */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typoutput */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typreceive */
-	values[i++] = ObjectIdGetDatum(InvalidOid); /* typsend */
 	values[i++] = CharGetDatum('i');			/* typalign */
 	values[i++] = CharGetDatum('p');			/* typstorage */
 	values[i++] = BoolGetDatum(false);			/* typnotnull */
@@ -141,13 +138,10 @@ TypeCreate(const char *typeName,
 		   Oid assignedTypeOid,
 		   Oid relationOid,			/* only for 'c'atalog typeTypes */
 		   int16 internalSize,
-		   int16 externalSize,
 		   char typeType,
 		   char typDelim,
 		   Oid inputProcedure,
 		   Oid outputProcedure,
-		   Oid receiveProcedure,
-		   Oid sendProcedure,
 		   Oid elementType,
 		   Oid baseType,
 		   const char *defaultTypeValue,	/* human readable rep */
@@ -176,9 +170,6 @@ TypeCreate(const char *typeName,
 	if (!(internalSize > 0 || internalSize == -1))
 		elog(ERROR, "TypeCreate: invalid type internal size %d",
 			 internalSize);
-	if (!(externalSize > 0 || externalSize == -1))
-		elog(ERROR, "TypeCreate: invalid type external size %d",
-			 externalSize);
 
 	if (internalSize != -1 && storage != 'p')
 		elog(ERROR, "TypeCreate: fixed size types must have storage PLAIN");
@@ -202,7 +193,6 @@ TypeCreate(const char *typeName,
 	values[i++] = ObjectIdGetDatum(typeNamespace);	/* typnamespace */
 	values[i++] = Int32GetDatum(GetUserId());	/* typowner */
 	values[i++] = Int16GetDatum(internalSize);	/* typlen */
-	values[i++] = Int16GetDatum(externalSize);	/* typprtlen */
 	values[i++] = BoolGetDatum(passedByValue);	/* typbyval */
 	values[i++] = CharGetDatum(typeType);		/* typtype */
 	values[i++] = BoolGetDatum(true);			/* typisdefined */
@@ -211,8 +201,6 @@ TypeCreate(const char *typeName,
 	values[i++] = ObjectIdGetDatum(elementType);	/* typelem */
 	values[i++] = ObjectIdGetDatum(inputProcedure);	/* typinput */
 	values[i++] = ObjectIdGetDatum(outputProcedure); /* typoutput */
-	values[i++] = ObjectIdGetDatum(receiveProcedure); /* typreceive */
-	values[i++] = ObjectIdGetDatum(sendProcedure);	/* typsend */
 	values[i++] = CharGetDatum(alignment);		/* typalign */
 	values[i++] = CharGetDatum(storage);		/* typstorage */
 	values[i++] = BoolGetDatum(typeNotNull);		/* typnotnull */
@@ -334,22 +322,6 @@ TypeCreate(const char *typeName,
 		referenced.objectId = outputProcedure;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-
-		if (receiveProcedure != inputProcedure)
-		{
-			referenced.classId = RelOid_pg_proc;
-			referenced.objectId = receiveProcedure;
-			referenced.objectSubId = 0;
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-		}
-
-		if (sendProcedure != outputProcedure)
-		{
-			referenced.classId = RelOid_pg_proc;
-			referenced.objectId = sendProcedure;
-			referenced.objectSubId = 0;
-			recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
-		}
 
 		/*
 		 * If the type is a rowtype for a relation, mark it as internally

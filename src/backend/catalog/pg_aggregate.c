@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.51 2002/07/18 23:11:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.52 2002/07/24 19:11:07 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,10 +146,6 @@ AggregateCreate(const char *aggName,
 							  false,		/* security invoker (currently not definable for agg) */
 							  false,		/* isStrict (not needed for agg) */
 							  PROVOLATILE_IMMUTABLE,	/* volatility (not needed for agg) */
-							  BYTE_PCT,		/* default cost values */
-							  PERBYTE_CPU,
-							  PERCALL_CPU,
-							  OUTIN_RATIO,
 							  1,			/* parameterCount */
 							  fnArgs);		/* parameterTypes */
 

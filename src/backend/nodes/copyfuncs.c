@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.196 2002/07/18 17:14:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.197 2002/07/24 19:11:10 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2415,8 +2415,6 @@ _copyCreatePLangStmt(CreatePLangStmt *from)
 		newnode->plname = pstrdup(from->plname);
 	Node_Copy(from, newnode, plhandler);
 	Node_Copy(from, newnode, plvalidator);
-	if (from->plcompiler)
-		newnode->plcompiler = pstrdup(from->plcompiler);
 	newnode->pltrusted = from->pltrusted;
 
 	return newnode;

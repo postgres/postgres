@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.29 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.30 2002/07/24 19:11:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -24,10 +24,8 @@ PostgreSQL documentation
 CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <replaceable class="parameter">input_function</replaceable>, OUTPUT = <replaceable class="parameter">output_function</replaceable>
       , INTERNALLENGTH = { <replaceable
       class="parameter">internallength</replaceable> | VARIABLE }
-    [ , EXTERNALLENGTH = { <replaceable class="parameter">externallength</replaceable> | VARIABLE } ]
     [ , DEFAULT = <replaceable class="parameter">default</replaceable> ]
     [ , ELEMENT = <replaceable class="parameter">element</replaceable> ] [ , DELIMITER = <replaceable class="parameter">delimiter</replaceable> ]
-    [ , SEND = <replaceable class="parameter">send_function</replaceable> ] [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
     [ , PASSEDBYVALUE ]
     [ , ALIGNMENT = <replaceable class="parameter">alignment</replaceable> ]
     [ , STORAGE = <replaceable class="parameter">storage</replaceable> ]
@@ -58,16 +56,6 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
       <listitem>
        <para>
 	A literal value, which specifies the internal length of
-	the new type.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">externallength</replaceable></term>
-      <listitem>
-       <para>
-	A literal value, which specifies the external (displayed) length of
 	the new type.
        </para>
       </listitem>
@@ -123,26 +111,6 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> ( INPUT = <rep
        <para>
 	The default value for the data type.  Usually this is omitted,
 	so that the default is NULL.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">send_function</replaceable></term>
-      <listitem>
-       <para>
-	The name of a function, created by <command>CREATE FUNCTION</command>, which
-	converts data of this type into a form suitable for
-	transmission to another machine.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
-      <term><replaceable class="parameter">receive_function</replaceable></term>
-      <listitem>
-       <para>
-	The name of a function, created by <command>CREATE FUNCTION</command>, which
-	converts data of this type from a form suitable for
-	transmission from another machine to internal form.
        </para>
       </listitem>
      </varlistentry>
@@ -260,13 +228,6 @@ CREATE TYPE
   </para>
 
   <para>
-   The external representation length is  similarly specified using the
-   <replaceable class="parameter">externallength</replaceable>
-   keyword.  (This value is not presently used, and is typically omitted,
-   letting it default to <option>VARIABLE</option>.)
-  </para>
-
-  <para>
    To indicate that a type is an array,
    specify the type  of  the  array
    elements using the <option>ELEMENT</> keyword.  For example, to define
@@ -290,18 +251,6 @@ CREATE TYPE
    Specify the default with the <option>DEFAULT</option> keyword.
    (Such a default may be overridden by an explicit <option>DEFAULT</option>
    clause attached to a particular column.)
-  </para>
-
-  <para>
-   The optional arguments
-   <replaceable class="parameter">send_function</replaceable> and
-   <replaceable class="parameter">receive_function</replaceable>
-   are not currently used, and are usually omitted (allowing them
-   to default to the 
-   <replaceable class="parameter">output_function</replaceable> and
-   <replaceable class="parameter">input_function</replaceable>
-   respectively).  These functions may someday be resurrected for use
-   in specifying machine-independent binary representations.
   </para>
 
   <para>

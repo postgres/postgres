@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.212 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.213 2002/07/24 19:11:07 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -641,13 +641,10 @@ AddNewRelationType(const char *typeName,
 			   new_type_oid,	/* preassigned oid for type */
 			   new_rel_oid,		/* relation oid */
 			   sizeof(Oid),		/* internal size */
-			   -1,				/* external size */
 			   'c',				/* type-type (complex) */
 			   ',',				/* default array delimiter */
 			   F_OIDIN,			/* input procedure */
 			   F_OIDOUT,		/* output procedure */
-			   F_OIDIN,			/* receive procedure */
-			   F_OIDOUT,		/* send procedure */
 			   InvalidOid,		/* array element type - irrelevant */
 			   InvalidOid,		/* domain base type - irrelevant */
 			   NULL,			/* default type value - none */

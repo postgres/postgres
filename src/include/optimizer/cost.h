@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.45 2002/06/20 20:29:51 momjian Exp $
+ * $Id: cost.h,v 1.46 2002/07/24 19:11:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,12 +24,6 @@
 #define DEFAULT_CPU_TUPLE_COST	0.01
 #define DEFAULT_CPU_INDEX_TUPLE_COST 0.001
 #define DEFAULT_CPU_OPERATOR_COST  0.0025
-
-/* defaults for function attributes used for expensive function calculations */
-#define BYTE_PCT 100
-#define PERBYTE_CPU 0
-#define PERCALL_CPU 0
-#define OUTIN_RATIO 100
 
 
 /*

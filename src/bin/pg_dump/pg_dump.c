@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.274 2002/07/18 23:11:29 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.275 2002/07/24 19:11:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2781,15 +2781,10 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	int			ntups;
 	int			funcInd;
 	char	   *typlen;
-	char	   *typprtlen;
 	char	   *typinput;
 	char	   *typoutput;
-	char	   *typreceive;
-	char	   *typsend;
 	char	   *typinputoid;
 	char	   *typoutputoid;
-	char	   *typreceiveoid;
-	char	   *typsendoid;
 	char	   *typdelim;
 	char	   *typdefault;
 	char	   *typbyval;
@@ -2806,12 +2801,10 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	/* Fetch type-specific details */
 	if (fout->remoteVersion >= 70300)
 	{
-		appendPQExpBuffer(query, "SELECT typlen, typprtlen, "
-						  "typinput, typoutput, typreceive, typsend, "
+		appendPQExpBuffer(query, "SELECT typlen, "
+						  "typinput, typoutput, "
 						  "typinput::pg_catalog.oid as typinputoid, "
 						  "typoutput::pg_catalog.oid as typoutputoid, "
-						  "typreceive::pg_catalog.oid as typreceiveoid, "
-						  "typsend::pg_catalog.oid as typsendoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "typstorage "
 						  "FROM pg_catalog.pg_type "
@@ -2820,12 +2813,10 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	}
 	else if (fout->remoteVersion >= 70100)
 	{
-		appendPQExpBuffer(query, "SELECT typlen, typprtlen, "
-						  "typinput, typoutput, typreceive, typsend, "
+		appendPQExpBuffer(query, "SELECT typlen, "
+						  "typinput, typoutput, "
 						  "typinput::oid as typinputoid, "
 						  "typoutput::oid as typoutputoid, "
-						  "typreceive::oid as typreceiveoid, "
-						  "typsend::oid as typsendoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "typstorage "
 						  "FROM pg_type "
@@ -2834,12 +2825,10 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	}
 	else
 	{
-		appendPQExpBuffer(query, "SELECT typlen, typprtlen, "
-						  "typinput, typoutput, typreceive, typsend, "
+		appendPQExpBuffer(query, "SELECT typlen, "
+						  "typinput, typoutput, "
 						  "typinput::oid as typinputoid, "
 						  "typoutput::oid as typoutputoid, "
-						  "typreceive::oid as typreceiveoid, "
-						  "typsend::oid as typsendoid, "
 						  "typdelim, typdefault, typbyval, typalign, "
 						  "'p'::char as typstorage "
 						  "FROM pg_type "
@@ -2866,15 +2855,10 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	}
 
 	typlen = PQgetvalue(res, 0, PQfnumber(res, "typlen"));
-	typprtlen = PQgetvalue(res, 0, PQfnumber(res, "typprtlen"));
 	typinput = PQgetvalue(res, 0, PQfnumber(res, "typinput"));
 	typoutput = PQgetvalue(res, 0, PQfnumber(res, "typoutput"));
-	typreceive = PQgetvalue(res, 0, PQfnumber(res, "typreceive"));
-	typsend = PQgetvalue(res, 0, PQfnumber(res, "typsend"));
 	typinputoid = PQgetvalue(res, 0, PQfnumber(res, "typinputoid"));
 	typoutputoid = PQgetvalue(res, 0, PQfnumber(res, "typoutputoid"));
-	typreceiveoid = PQgetvalue(res, 0, PQfnumber(res, "typreceiveoid"));
-	typsendoid = PQgetvalue(res, 0, PQfnumber(res, "typsendoid"));
 	typdelim = PQgetvalue(res, 0, PQfnumber(res, "typdelim"));
 	if (PQgetisnull(res, 0, PQfnumber(res, "typdefault")))
 		typdefault = NULL;
@@ -2898,20 +2882,6 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	if (funcInd >= 0 && g_finfo[funcInd].pronamespace->dump)
 		(*deps)[depIdx++] = strdup(typoutputoid);
 
-	if (strcmp(typreceiveoid, typinputoid) != 0)
-	{
-		funcInd = findFuncByOid(g_finfo, numFuncs, typreceiveoid);
-		if (funcInd >= 0 && g_finfo[funcInd].pronamespace->dump)
-			(*deps)[depIdx++] = strdup(typreceiveoid);
-	}
-
-	if (strcmp(typsendoid, typoutputoid) != 0)
-	{
-		funcInd = findFuncByOid(g_finfo, numFuncs, typsendoid);
-		if (funcInd >= 0 && g_finfo[funcInd].pronamespace->dump)
-			(*deps)[depIdx++] = strdup(typsendoid);
-	}
-
 	/* DROP must be fully qualified in case same name appears in pg_catalog */
 	appendPQExpBuffer(delq, "DROP TYPE %s.",
 					  fmtId(tinfo->typnamespace->nspname, force_quotes));
@@ -2920,17 +2890,15 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 
 	appendPQExpBuffer(q,
 					  "CREATE TYPE %s "
-					  "( internallength = %s, externallength = %s,",
+					  "( internallength = %s,",
 					  fmtId(tinfo->typname, force_quotes),
-					  (strcmp(typlen, "-1") == 0) ? "variable" : typlen,
-					  (strcmp(typprtlen, "-1") == 0) ? "variable" : typprtlen);
+					  (strcmp(typlen, "-1") == 0) ? "variable" : typlen);
 
 	if (fout->remoteVersion >= 70300)
 	{
 		/* regproc result is correctly quoted in 7.3 */
-		appendPQExpBuffer(q, " input = %s, output = %s, "
-						  "send = %s, receive = %s",
-						  typinput, typoutput, typsend, typreceive);
+		appendPQExpBuffer(q, " input = %s, output = %s, ",
+						  typinput, typoutput);
 	}
 	else
 	{
@@ -2940,10 +2908,6 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 						  fmtId(typinput, force_quotes));
 		appendPQExpBuffer(q, " output = %s,",
 						  fmtId(typoutput, force_quotes));
-		appendPQExpBuffer(q, " send = %s,",
-						  fmtId(typsend, force_quotes));
-		appendPQExpBuffer(q, " receive = %s",
-						  fmtId(typreceive, force_quotes));
 	}
 
 	if (typdefault != NULL)
@@ -3167,11 +3131,9 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 	int			i_lanpltrusted;
 	int			i_lanplcallfoid;
 	int			i_lanvalidator = -1;
-	int			i_lancompiler;
 	int			i_lanacl = -1;
 	char	   *lanoid;
 	char	   *lanname;
-	char	   *lancompiler;
 	char	   *lanacl;
 	const char *lanplcallfoid;
 	const char *lanvalidator;
@@ -3200,7 +3162,6 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 	i_lanname = PQfnumber(res, "lanname");
 	i_lanpltrusted = PQfnumber(res, "lanpltrusted");
 	i_lanplcallfoid = PQfnumber(res, "lanplcallfoid");
-	i_lancompiler = PQfnumber(res, "lancompiler");
 	i_oid = PQfnumber(res, "oid");
 	if (fout->remoteVersion >= 70300)
 	{
@@ -3213,7 +3174,6 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		lanoid = PQgetvalue(res, i, i_oid);
 		lanplcallfoid = PQgetvalue(res, i, i_lanplcallfoid);
 		lanname = PQgetvalue(res, i, i_lanname);
-		lancompiler = PQgetvalue(res, i, i_lancompiler);
 		if (fout->remoteVersion >= 70300)
 		{
 			lanvalidator = PQgetvalue(res, i, i_lanvalidator);

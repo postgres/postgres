@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.161 2002/07/18 23:11:29 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.162 2002/07/24 19:11:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -737,7 +737,6 @@ CREATE VIEW pg_user AS \
         usename, \
         usesysid, \
         usecreatedb, \
-        usetrace, \
         usesuper, \
         usecatupd, \
         '********'::text as passwd, \

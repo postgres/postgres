@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.47 2002/07/24 05:51:55 ishii Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.48 2002/07/24 19:11:06 petere Exp $
  -->
 
 <chapter id="catalogs">
@@ -1735,13 +1735,6 @@
      </row>
 
      <row>
-      <entry>lancompiler</entry>
-      <entry><type>text</type></entry>
-      <entry></entry>
-      <entry>not currently used</entry>
-     </row>
-
-     <row>
       <entry>lanacl</entry>
       <entry><type>aclitem[]</type></entry>
       <entry></entry>
@@ -1977,14 +1970,6 @@
      </row>
 
      <row>
-      <entry>oprprec</entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>precedence (currently unused, as precedences are hard-wired
-      in the grammar)</entry>
-     </row>
-
-     <row>
       <entry>oprkind</entry>
       <entry><type>char</type></entry>
       <entry></entry>
@@ -1992,14 +1977,6 @@
        'b' = infix (<quote>both</quote>), 'l' = prefix
        (<quote>left</quote>), 'r' = postfix (<quote>right</quote>)
       </entry>
-     </row>
-
-     <row>
-      <entry>oprisleft</entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>left-associativity (currently unused, as this is hard-wired
-      in the grammar)</entry>
      </row>
 
      <row>
@@ -2186,13 +2163,6 @@
      </row>
 
      <row>
-      <entry>proimplicit</entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>Function may be invoked as an implicit type coercion</entry>
-     </row>
-
-     <row>
       <entry>proisstrict</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -2250,34 +2220,6 @@
       <entry><type>oidvector</type></entry>
       <entry>pg_type.oid</entry>
       <entry>A vector with the data types of the function arguments</entry>
-     </row>
-
-     <row>
-      <entry>probyte_pct</entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>dead code</entry>
-     </row>
-
-     <row>
-      <entry>properbyte_cpu</entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>dead code</entry>
-     </row>
-
-     <row>
-      <entry>propercall_cpu</entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>dead code</entry>
-     </row>
-
-     <row>
-      <entry>prooutin_ratio</entry>
-      <entry><type>int4</type></entry>
-      <entry></entry>
-      <entry>dead code</entry>
      </row>
 
      <row>
@@ -2469,13 +2411,6 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>User may create databases</entry>
-     </row>
-
-     <row>
-      <entry>usetrace</entry>
-      <entry><type>bool</type></entry>
-      <entry></entry>
-      <entry>not used</entry>
      </row>
 
      <row>
@@ -2844,13 +2779,6 @@
      </row>
 
      <row>
-      <entry>typprtlen</entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>unused</entry>
-     </row>
-
-     <row>
       <entry>typbyval</entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -2950,20 +2878,6 @@
       <entry><type>regproc</type></entry>
       <entry>pg_proc.oid</entry>
       <entry>Output function</entry>
-     </row>
-
-     <row>
-      <entry>typreceive</entry>
-      <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry>unused</entry>
-     </row>
-
-     <row>
-      <entry>typsend</entry>
-      <entry><type>regproc</type></entry>
-      <entry>pg_proc.oid</entry>
-      <entry>unused</entry>
      </row>
 
      <row>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.93 2002/06/20 20:29:44 momjian Exp $
+ * $Id: pg_attribute.h,v 1.94 2002/07/24 19:11:12 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -214,50 +214,44 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typnamespace"},  26, 0,	4,	2, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1247, {"typowner"},	   23, 0,	4,	3, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1247, {"typlen"},		   21, 0,	2,	4, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1247, {"typprtlen"},	   21, 0,	2,	5, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1247, {"typbyval"},	   16, 0,	1,	6, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typtype"},	   18, 0,	1,	7, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typisdefined"},  16, 0,	1,	8, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typdelim"},	   18, 0,	1,	9, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typrelid"},	   26, 0,	4, 10, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typelem"},	   26, 0,	4, 11, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typinput"},	   24, 0,	4, 12, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typoutput"},	   24, 0,	4, 13, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typreceive"},    24, 0,	4, 14, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typsend"},	   24, 0,	4, 15, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typalign"},	   18, 0,	1, 16, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typstorage"},    18, 0,	1, 17, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typnotnull"},    16, 0,   1, 18, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1247, {"typbasetype"},   26, 0,	4, 19, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typtypmod"},     23, 0,	4, 20, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typndims"},      23, 0,	4, 21, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1247, {"typdefaultbin"}, 25, 0,  -1, 22, 0, -1, -1, false, 'x', false, 'i', false, false }, \
-{ 1247, {"typdefault"},    25, 0,  -1, 23, 0, -1, -1, false, 'x', false, 'i', false, false }
+{ 1247, {"typbyval"},	   16, 0,	1,	5, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1247, {"typtype"},	   18, 0,	1,	6, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1247, {"typisdefined"},  16, 0,	1,	7, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1247, {"typdelim"},	   18, 0,	1,	8, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1247, {"typrelid"},	   26, 0,	4,	9, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1247, {"typelem"},	   26, 0,	4, 10, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1247, {"typinput"},	   24, 0,	4, 11, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1247, {"typoutput"},	   24, 0,	4, 12, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1247, {"typalign"},	   18, 0,	1, 13, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1247, {"typstorage"},    18, 0,	1, 14, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1247, {"typnotnull"},    16, 0,   1, 15, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1247, {"typbasetype"},   26, 0,	4, 16, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1247, {"typtypmod"},     23, 0,	4, 17, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1247, {"typndims"},      23, 0,	4, 18, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1247, {"typdefaultbin"}, 25, 0,  -1, 19, 0, -1, -1, false, 'x', false, 'i', false, false }, \
+{ 1247, {"typdefault"},    25, 0,  -1, 20, 0, -1, -1, false, 'x', false, 'i', false, false }
 
 
 DATA(insert ( 1247 typname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert ( 1247 typnamespace		26 0  4   2 0 -1 -1 t p f i f f));
 DATA(insert ( 1247 typowner			23 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert ( 1247 typlen			21 0  2   4 0 -1 -1 t p f s f f));
-DATA(insert ( 1247 typprtlen		21 0  2   5 0 -1 -1 t p f s f f));
-DATA(insert ( 1247 typbyval			16 0  1   6 0 -1 -1 t p f c f f));
-DATA(insert ( 1247 typtype			18 0  1   7 0 -1 -1 t p f c f f));
-DATA(insert ( 1247 typisdefined		16 0  1   8 0 -1 -1 t p f c f f));
-DATA(insert ( 1247 typdelim			18 0  1   9 0 -1 -1 t p f c f f));
-DATA(insert ( 1247 typrelid			26 0  4  10 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typelem			26 0  4  11 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typinput			24 0  4  12 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typoutput		24 0  4  13 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typreceive		24 0  4  14 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typsend			24 0  4  15 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typalign			18 0  1  16 0 -1 -1 t p f c f f));
-DATA(insert ( 1247 typstorage		18 0  1  17 0 -1 -1 t p f c f f));
-DATA(insert ( 1247 typnotnull		16 0  1  18 0 -1 -1 t p f c f f));
-DATA(insert ( 1247 typbasetype		26 0  4  19 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typtypmod		23 0  4  20 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typndims			23 0  4  21 0 -1 -1 t p f i f f));
-DATA(insert ( 1247 typdefaultbin	25 0 -1  22 0 -1 -1 f x f i f f));
-DATA(insert ( 1247 typdefault		25 0 -1  23 0 -1 -1 f x f i f f));
+DATA(insert ( 1247 typbyval			16 0  1   5 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typtype			18 0  1   6 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typisdefined		16 0  1   7 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typdelim			18 0  1   8 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typrelid			26 0  4   9 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typelem			26 0  4  10 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typinput			24 0  4  11 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typoutput		24 0  4  12 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typalign			18 0  1  13 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typstorage		18 0  1  14 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typnotnull		16 0  1  15 0 -1 -1 t p f c f f));
+DATA(insert ( 1247 typbasetype		26 0  4  16 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typtypmod		23 0  4  17 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typndims			23 0  4  18 0 -1 -1 t p f i f f));
+DATA(insert ( 1247 typdefaultbin	25 0 -1  19 0 -1 -1 f x f i f f));
+DATA(insert ( 1247 typdefault		25 0 -1  20 0 -1 -1 f x f i f f));
 DATA(insert ( 1247 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert ( 1247 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert ( 1247 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -301,20 +295,15 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 { 1255, {"prolang"},			26, 0,	4,	4, 0, -1, -1, true, 'p', false, 'i', false, false }, \
 { 1255, {"proisagg"},			16, 0,	1,	5, 0, -1, -1, true, 'p', false, 'c', false, false }, \
 { 1255, {"prosecdef"},			16, 0,	1,	6, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1255, {"proimplicit"},		16, 0,	1,	7, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1255, {"proisstrict"},		16, 0,	1,	8, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1255, {"proretset"},			16, 0,	1,  9, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1255, {"provolatile"},		18, 0,	1, 10, 0, -1, -1, true, 'p', false, 'c', false, false }, \
-{ 1255, {"pronargs"},			21, 0,	2, 11, 0, -1, -1, true, 'p', false, 's', false, false }, \
-{ 1255, {"prorettype"},			26, 0,	4, 12, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1255, {"proargtypes"},		30, 0, INDEX_MAX_KEYS*4, 13, 0, -1, -1, false, 'p', false, 'i', false, false }, \
-{ 1255, {"probyte_pct"},		23, 0,	4, 14, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1255, {"properbyte_cpu"},		23, 0,	4, 15, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1255, {"propercall_cpu"},		23, 0,	4, 16, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1255, {"prooutin_ratio"},		23, 0,	4, 17, 0, -1, -1, true, 'p', false, 'i', false, false }, \
-{ 1255, {"prosrc"},				25, 0, -1, 18, 0, -1, -1, false, 'x', false, 'i', false, false }, \
-{ 1255, {"probin"},				17, 0, -1, 19, 0, -1, -1, false, 'x', false, 'i', false, false }, \
-{ 1255, {"proacl"},			  1034, 0, -1, 20, 0, -1, -1, false, 'x', false, 'i', false, false }
+{ 1255, {"proisstrict"},		16, 0,	1,	7, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1255, {"proretset"},			16, 0,	1,  8, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1255, {"provolatile"},		18, 0,	1,  9, 0, -1, -1, true, 'p', false, 'c', false, false }, \
+{ 1255, {"pronargs"},			21, 0,	2, 10, 0, -1, -1, true, 'p', false, 's', false, false }, \
+{ 1255, {"prorettype"},			26, 0,	4, 11, 0, -1, -1, true, 'p', false, 'i', false, false }, \
+{ 1255, {"proargtypes"},		30, 0, INDEX_MAX_KEYS*4, 12, 0, -1, -1, false, 'p', false, 'i', false, false }, \
+{ 1255, {"prosrc"},				25, 0, -1, 13, 0, -1, -1, false, 'x', false, 'i', false, false }, \
+{ 1255, {"probin"},				17, 0, -1, 14, 0, -1, -1, false, 'x', false, 'i', false, false }, \
+{ 1255, {"proacl"},			  1034, 0, -1, 15, 0, -1, -1, false, 'x', false, 'i', false, false }
 
 DATA(insert ( 1255 proname			19 DEFAULT_ATTSTATTARGET NAMEDATALEN   1 0 -1 -1 f p f i f f));
 DATA(insert ( 1255 pronamespace		26 0  4   2 0 -1 -1 t p f i f f));
@@ -322,20 +311,15 @@ DATA(insert ( 1255 proowner			23 0  4   3 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 prolang			26 0  4   4 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 proisagg			16 0  1   5 0 -1 -1 t p f c f f));
 DATA(insert ( 1255 prosecdef		16 0  1   6 0 -1 -1 t p f c f f));
-DATA(insert ( 1255 proimplicit		16 0  1   7 0 -1 -1 t p f c f f));
-DATA(insert ( 1255 proisstrict		16 0  1   8 0 -1 -1 t p f c f f));
-DATA(insert ( 1255 proretset		16 0  1   9 0 -1 -1 t p f c f f));
-DATA(insert ( 1255 provolatile		18 0  1  10 0 -1 -1 t p f c f f));
-DATA(insert ( 1255 pronargs			21 0  2  11 0 -1 -1 t p f s f f));
-DATA(insert ( 1255 prorettype		26 0  4  12 0 -1 -1 t p f i f f));
-DATA(insert ( 1255 proargtypes		30 0 INDEX_MAX_KEYS*4 13 0 -1 -1 f p f i f f));
-DATA(insert ( 1255 probyte_pct		23 0  4  14 0 -1 -1 t p f i f f));
-DATA(insert ( 1255 properbyte_cpu	23 0  4  15 0 -1 -1 t p f i f f));
-DATA(insert ( 1255 propercall_cpu	23 0  4  16 0 -1 -1 t p f i f f));
-DATA(insert ( 1255 prooutin_ratio	23 0  4  17 0 -1 -1 t p f i f f));
-DATA(insert ( 1255 prosrc			25 0 -1  18 0 -1 -1 f x f i f f));
-DATA(insert ( 1255 probin			17 0 -1  19 0 -1 -1 f x f i f f));
-DATA(insert ( 1255 proacl		  1034 0 -1  20 0 -1 -1 f x f i f f));
+DATA(insert ( 1255 proisstrict		16 0  1   7 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 proretset		16 0  1   8 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 provolatile		18 0  1   9 0 -1 -1 t p f c f f));
+DATA(insert ( 1255 pronargs			21 0  2  10 0 -1 -1 t p f s f f));
+DATA(insert ( 1255 prorettype		26 0  4  11 0 -1 -1 t p f i f f));
+DATA(insert ( 1255 proargtypes		30 0 INDEX_MAX_KEYS*4 12 0 -1 -1 f p f i f f));
+DATA(insert ( 1255 prosrc			25 0 -1  13 0 -1 -1 f x f i f f));
+DATA(insert ( 1255 probin			17 0 -1  14 0 -1 -1 f x f i f f));
+DATA(insert ( 1255 proacl		  1034 0 -1  15 0 -1 -1 f x f i f f));
 DATA(insert ( 1255 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 DATA(insert ( 1255 oid				26 0  4  -2 0 -1 -1 t p f i f f));
 DATA(insert ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i f f));
@@ -351,12 +335,11 @@ DATA(insert ( 1255 tableoid			26 0  4  -7 0 -1 -1 t p f i f f));
 DATA(insert ( 1260 usename			19	DEFAULT_ATTSTATTARGET NAMEDATALEN	1 0 -1 -1 f p f i f f));
 DATA(insert ( 1260 usesysid			23	DEFAULT_ATTSTATTARGET	4	2 0 -1 -1 t p f i f f));
 DATA(insert ( 1260 usecreatedb		16	0	1	3 0 -1 -1 t p f c f f));
-DATA(insert ( 1260 usetrace			16	0	1	4 0 -1 -1 t p f c f f));
-DATA(insert ( 1260 usesuper			16	0	1	5 0 -1 -1 t p f c f f));
-DATA(insert ( 1260 usecatupd		16	0	1	6 0 -1 -1 t p f c f f));
-DATA(insert ( 1260 passwd			25	0  -1	7 0 -1 -1 f x f i f f));
-DATA(insert ( 1260 valuntil			702 0	4	8 0 -1 -1 t p f i f f));
-DATA(insert ( 1260 useconfig	  1009  0  -1   9 0 -1 -1 f x f i f f));
+DATA(insert ( 1260 usesuper			16	0	1	4 0 -1 -1 t p f c f f));
+DATA(insert ( 1260 usecatupd		16	0	1	5 0 -1 -1 t p f c f f));
+DATA(insert ( 1260 passwd			25	0  -1	6 0 -1 -1 f x f i f f));
+DATA(insert ( 1260 valuntil			702 0	4	7 0 -1 -1 t p f i f f));
+DATA(insert ( 1260 useconfig	  1009  0  -1   8 0 -1 -1 f x f i f f));
 DATA(insert ( 1260 ctid				27 0  6  -1 0 -1 -1 f p f i f f));
 /* no OIDs in pg_shadow */
 DATA(insert ( 1260 xmin				28 0  4  -3 0 -1 -1 t p f i f f));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.37 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/proclang.c,v 1.38 2002/07/24 19:11:09 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,6 @@ CreateProceduralLanguage(CreatePLangStmt *stmt)
 	values[i++] = BoolGetDatum(stmt->pltrusted);
 	values[i++] = ObjectIdGetDatum(procOid);
 	values[i++] = ObjectIdGetDatum(valProcOid);
-	values[i++] = DirectFunctionCall1(textin,
-									  CStringGetDatum(stmt->plcompiler));
 	nulls[i] = 'n';				/* lanacl */
 
 	rel = heap_openr(LanguageRelationName, RowExclusiveLock);

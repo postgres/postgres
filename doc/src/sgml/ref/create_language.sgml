@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.25 2002/06/20 15:44:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.26 2002/07/24 19:11:07 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -221,14 +221,13 @@ ERROR:  PL handler function <replaceable class="parameter">funcname</replaceable
  lanpltrusted  | boolean   |
  lanplcallfoid | oid       |
  lanvalidator  | oid       |
- lancompiler   | text      |
  lanacl        | aclitem[] |
 
-   lanname   | lanispl | lanpltrusted | lanplcallfoid | lanvalidator | lancompiler | lanacl
--------------+---------+--------------+---------------+--------------+-------------+--------
- internal    | f       | f            |             0 |         2246 | n/a         |
- c           | f       | f            |             0 |         2247 | /bin/cc     |
- sql         | f       | t            |             0 |         2248 | postgres    | {=U}
+   lanname   | lanispl | lanpltrusted | lanplcallfoid | lanvalidator | lanacl
+-------------+---------+--------------+---------------+--------------+--------
+ internal    | f       | f            |             0 |         2246 |
+ c           | f       | f            |             0 |         2247 |
+ sql         | f       | t            |             0 |         2248 | {=U}
 </screen>
   </para>
 

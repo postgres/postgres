@@ -209,11 +209,3 @@ SELECT	ctid, pg_type.typoutput
 FROM	pg_type 
 WHERE	pg_type.typoutput != 0 AND 
 	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_type.typoutput);
-SELECT	ctid, pg_type.typreceive 
-FROM	pg_type 
-WHERE	pg_type.typreceive != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_type.typreceive);
-SELECT	ctid, pg_type.typsend 
-FROM	pg_type 
-WHERE	pg_type.typsend != 0 AND 
-	NOT EXISTS(SELECT * FROM pg_proc AS t1 WHERE t1.oid = pg_type.typsend);

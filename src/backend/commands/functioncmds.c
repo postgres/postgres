@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.12 2002/07/22 20:23:19 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/functioncmds.c,v 1.13 2002/07/24 19:11:09 petere Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -272,11 +272,7 @@ compute_attributes_sql_style(const List *options,
  *------------
  */
 static void
-compute_attributes_with_style(List *parameters,
-							  int32 *byte_pct_p, int32 *perbyte_cpu_p,
-							  int32 *percall_cpu_p, int32 *outin_ratio_p,
-							  bool *isStrict_p,
-							  char *volatility_p)
+compute_attributes_with_style(List *parameters, bool *isStrict_p, char *volatility_p)
 {
 	List	   *pl;
 
@@ -286,33 +282,11 @@ compute_attributes_with_style(List *parameters,
 
 		if (strcasecmp(param->defname, "isstrict") == 0)
 			*isStrict_p = true;
-		else if (strcasecmp(param->defname, "isimmutable") == 0)
-			*volatility_p = PROVOLATILE_IMMUTABLE;
-		else if (strcasecmp(param->defname, "isstable") == 0)
-			*volatility_p = PROVOLATILE_STABLE;
-		else if (strcasecmp(param->defname, "isvolatile") == 0)
-			*volatility_p = PROVOLATILE_VOLATILE;
 		else if (strcasecmp(param->defname, "iscachable") == 0)
 		{
 			/* obsolete spelling of isImmutable */
 			*volatility_p = PROVOLATILE_IMMUTABLE;
 		}
-		else if (strcasecmp(param->defname, "trusted") == 0)
-		{
-			/*
-			 * we don't have untrusted functions any more. The 4.2
-			 * implementation is lousy anyway so I took it out. -ay 10/94
-			 */
-			elog(ERROR, "untrusted function has been decommissioned.");
-		}
-		else if (strcasecmp(param->defname, "byte_pct") == 0)
-			*byte_pct_p = (int) defGetNumeric(param);
-		else if (strcasecmp(param->defname, "perbyte_cpu") == 0)
-			*perbyte_cpu_p = (int) defGetNumeric(param);
-		else if (strcasecmp(param->defname, "percall_cpu") == 0)
-			*percall_cpu_p = (int) defGetNumeric(param);
-		else if (strcasecmp(param->defname, "outin_ratio") == 0)
-			*outin_ratio_p = (int) defGetNumeric(param);
 		else
 			elog(WARNING, "Unrecognized function attribute '%s' ignored",
 				 param->defname);
@@ -383,10 +357,6 @@ CreateFunction(CreateFunctionStmt *stmt)
 	AclResult	aclresult;
 	int			parameterCount;
 	Oid			parameterTypes[FUNC_MAX_ARGS];
-	int32		byte_pct,
-				perbyte_cpu,
-				percall_cpu,
-				outin_ratio;
 	bool		isStrict,
 				security;
 	char		volatility;
@@ -404,10 +374,6 @@ CreateFunction(CreateFunctionStmt *stmt)
 		aclcheck_error(aclresult, get_namespace_name(namespaceId));
 
 	/* defaults attributes */
-	byte_pct = BYTE_PCT;
-	perbyte_cpu = PERBYTE_CPU;
-	percall_cpu = PERCALL_CPU;
-	outin_ratio = OUTIN_RATIO;
 	isStrict = false;
 	security = false;
 	volatility = PROVOLATILE_VOLATILE;
@@ -459,9 +425,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	parameterCount = compute_parameter_types(stmt->argTypes, languageOid,
 											 parameterTypes);
 
-	compute_attributes_with_style(stmt->withClause,
-								  &byte_pct, &perbyte_cpu, &percall_cpu,
-								  &outin_ratio, &isStrict, &volatility);
+	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility);
 
 	interpret_AS_clause(languageOid, languageName, as_clause,
 						&prosrc_str, &probin_str);
@@ -505,10 +469,6 @@ CreateFunction(CreateFunctionStmt *stmt)
 					security,
 					isStrict,
 					volatility,
-					byte_pct,
-					perbyte_cpu,
-					percall_cpu,
-					outin_ratio,
 					parameterCount,
 					parameterTypes);
 }

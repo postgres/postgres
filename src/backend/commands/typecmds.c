@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.7 2002/07/20 05:16:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.8 2002/07/24 19:11:09 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -20,7 +20,7 @@
  * NOTES
  *	  These things must be defined and committed in the following order:
  *		"create function":
- *				input/output, recv/send procedures
+ *				input/output functions
  *		"create type":
  *				type
  *		"create operator":
@@ -62,12 +62,9 @@ DefineType(List *names, List *parameters)
 	Oid			typeNamespace;
 	AclResult	aclresult;
 	int16		internalLength = -1;	/* int2 */
-	int16		externalLength = -1;	/* int2 */
 	Oid			elemType = InvalidOid;
 	List	   *inputName = NIL;
 	List	   *outputName = NIL;
-	List	   *sendName = NIL;
-	List	   *receiveName = NIL;
 	char	   *defaultValue = NULL;
 	bool		byValue = false;
 	char		delimiter = DEFAULT_TYPDELIM;
@@ -75,8 +72,6 @@ DefineType(List *names, List *parameters)
 	char		storage = 'p';	/* default TOAST storage method */
 	Oid			inputOid;
 	Oid			outputOid;
-	Oid			sendOid;
-	Oid			receiveOid;
 	char	   *shadow_type;
 	List	   *pl;
 	Oid			typoid;
@@ -105,15 +100,15 @@ DefineType(List *names, List *parameters)
 		if (strcasecmp(defel->defname, "internallength") == 0)
 			internalLength = defGetTypeLength(defel);
 		else if (strcasecmp(defel->defname, "externallength") == 0)
-			externalLength = defGetTypeLength(defel);
+			; /* ignored -- remove after 7.3 */
 		else if (strcasecmp(defel->defname, "input") == 0)
 			inputName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "output") == 0)
 			outputName = defGetQualifiedName(defel);
 		else if (strcasecmp(defel->defname, "send") == 0)
-			sendName = defGetQualifiedName(defel);
+			; /* ignored -- remove after 7.3 */
 		else if (strcasecmp(defel->defname, "receive") == 0)
-			receiveName = defGetQualifiedName(defel);
+			; /* ignored -- remove after 7.3 */
 		else if (strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
@@ -187,14 +182,6 @@ DefineType(List *names, List *parameters)
 	/* Convert I/O proc names to OIDs */
 	inputOid = findTypeIOFunction(inputName, false);
 	outputOid = findTypeIOFunction(outputName, true);
-	if (sendName)
-		sendOid = findTypeIOFunction(sendName, true);
-	else
-		sendOid = outputOid;
-	if (receiveName)
-		receiveOid = findTypeIOFunction(receiveName, false);
-	else
-		receiveOid = inputOid;
 
 	/*
 	 * now have TypeCreate do all the real work.
@@ -205,13 +192,10 @@ DefineType(List *names, List *parameters)
 				   InvalidOid,		/* preassigned type oid (not done here) */
 				   InvalidOid,		/* relation oid (n/a here) */
 				   internalLength,	/* internal size */
-				   externalLength,	/* external size */
 				   'b',				/* type-type (base type) */
 				   delimiter,		/* array element delimiter */
 				   inputOid,		/* input procedure */
 				   outputOid,		/* output procedure */
-				   receiveOid,		/* receive procedure */
-				   sendOid,			/* send procedure */
 				   elemType,		/* element type ID */
 				   InvalidOid,		/* base type ID (only for domains) */
 				   defaultValue,	/* default type value */
@@ -237,13 +221,10 @@ DefineType(List *names, List *parameters)
 			   InvalidOid,		/* preassigned type oid (not done here) */
 			   InvalidOid,		/* relation oid (n/a here) */
 			   -1,				/* internal size */
-			   -1,				/* external size */
 			   'b',				/* type-type (base type) */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */
-			   F_ARRAY_IN,		/* receive procedure */
-			   F_ARRAY_OUT,		/* send procedure */
 			   typoid,			/* element type ID */
 			   InvalidOid,		/* base type ID */
 			   NULL,			/* never a default type value */
@@ -346,11 +327,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	Oid			domainNamespace;
 	AclResult	aclresult;
 	int16		internalLength;
-	int16		externalLength;
 	Oid			inputProcedure;
 	Oid			outputProcedure;
-	Oid			receiveProcedure;
-	Oid			sendProcedure;
 	bool		byValue;
 	char		delimiter;
 	char		alignment;
@@ -421,17 +399,12 @@ DefineDomain(CreateDomainStmt *stmt)
 	/* Storage Length */
 	internalLength = baseType->typlen;
 
-	/* External Length (unused) */
-	externalLength = baseType->typprtlen;
-
 	/* Array element Delimiter */
 	delimiter = baseType->typdelim;
 
 	/* I/O Functions */
 	inputProcedure = baseType->typinput;
 	outputProcedure = baseType->typoutput;
-	receiveProcedure = baseType->typreceive;
-	sendProcedure = baseType->typsend;
 
 	/* Inherited default value */
 	datum =	SysCacheGetAttr(TYPEOID, typeTup,
@@ -549,13 +522,10 @@ DefineDomain(CreateDomainStmt *stmt)
 				   InvalidOid,			/* preassigned type oid (none here) */
 				   InvalidOid,			/* relation oid (n/a here) */
 				   internalLength,		/* internal size */
-				   externalLength,		/* external size */
 				   'd',					/* type-type (domain type) */
 				   delimiter,			/* array element delimiter */
 				   inputProcedure,		/* input procedure */
 				   outputProcedure,		/* output procedure */
-				   receiveProcedure,	/* receive procedure */
-				   sendProcedure,		/* send procedure */
 				   basetypelem,			/* element type ID */
 				   basetypeoid,			/* base type ID */
 				   defaultValue,		/* default type value (text) */
