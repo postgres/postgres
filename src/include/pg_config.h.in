@@ -8,7 +8,7 @@
  * or in pg_config.h afterwards.  Of course, if you edit pg_config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: pg_config.h.in,v 1.38 2003/01/25 05:19:47 tgl Exp $
+ * $Id: pg_config.h.in,v 1.39 2003/02/14 14:05:00 momjian Exp $
  */
 
 #ifndef PG_CONFIG_H
@@ -344,6 +344,9 @@
 /* Set to 1 if you have <netinet/tcp.h> */
 #undef HAVE_NETINET_TCP_H
 
+/* Set to 1 if you have <pam/pam_appl.h> */
+#undef HAVE_PAM_PAM_APPL_H
+
 /* Set to 1 if you have <readline.h> */
 #undef HAVE_READLINE_H
 
@@ -352,6 +355,9 @@
 
 /* Set to 1 if you have <readline/readline.h> */
 #undef HAVE_READLINE_READLINE_H
+
+/* Set to 1 if you have <security/pam_appl.h> */
+#undef HAVE_SECURITY_PAM_APPL_H
 
 /* Set to 1 if you have <sys/ipc.h> */
 #undef HAVE_SYS_IPC_H
