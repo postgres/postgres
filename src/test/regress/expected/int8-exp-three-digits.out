@@ -87,16 +87,6 @@ SELECT '' AS five, q2, float8(q2) FROM INT8_TBL;
       | -4567890123456789 | -4.56789012345679e+015
 (5 rows)
 
-SELECT '' AS five, q1, int8(float8(q1)) AS "two coercions" FROM INT8_TBL;
- five |        q1        |  two coercions   
-------+------------------+------------------
-      |              123 |              123
-      |              123 |              123
-      | 4567890123456789 | 4567890123456789
-      | 4567890123456789 | 4567890123456789
-      | 4567890123456789 | 4567890123456789
-(5 rows)
-
 SELECT '' AS five, 2 * q1 AS "twice int4" FROM INT8_TBL;
  five |    twice int4    
 ------+------------------

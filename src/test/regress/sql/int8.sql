@@ -22,7 +22,6 @@ SELECT '' AS five, q1, q2, q1 / q2 AS divide FROM INT8_TBL;
 
 SELECT '' AS five, q1, float8(q1) FROM INT8_TBL;
 SELECT '' AS five, q2, float8(q2) FROM INT8_TBL;
-SELECT '' AS five, q1, int8(float8(q1)) AS "two coercions" FROM INT8_TBL;
 
 SELECT '' AS five, 2 * q1 AS "twice int4" FROM INT8_TBL;
 SELECT '' AS five, q1 * 2 AS "twice int4" FROM INT8_TBL;

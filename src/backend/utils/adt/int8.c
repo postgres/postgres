@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.27 2001/01/24 19:43:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.28 2001/01/26 22:50:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -693,13 +693,6 @@ i8tod(PG_FUNCTION_ARGS)
 
 /* dtoi8()
  * Convert double float to 8-byte integer.
- * Do a range check before the conversion.
- * Note that the comparison probably isn't quite right
- *	since we only have ~52 bits of precision in a double float
- *	and so subtracting one from a large number gives the large
- *	number exactly. However, for some reason the comparison below
- *	does the right thing on my i686/linux-rh4.2 box.
- * - thomas 1998-06-16
  */
 Datum
 dtoi8(PG_FUNCTION_ARGS)
@@ -707,10 +700,17 @@ dtoi8(PG_FUNCTION_ARGS)
 	float8		val = PG_GETARG_FLOAT8(0);
 	int64		result;
 
-	if ((val < (-pow(2.0, 63.0) + 1)) || (val > (pow(2.0, 63.0) - 1)))
-		elog(ERROR, "Floating point conversion to int64 is out of range");
-
+	/* Round val to nearest integer (but it's still in float form) */
+	val = rint(val);
+	/*
+	 * Does it fit in an int64?  Avoid assuming that we have handy constants
+	 * defined for the range boundaries, instead test for overflow by
+	 * reverse-conversion.
+	 */
 	result = (int64) val;
+
+	if ((float8) result != val)
+		elog(ERROR, "Floating point conversion to int8 is out of range");
 
 	PG_RETURN_INT64(result);
 }
