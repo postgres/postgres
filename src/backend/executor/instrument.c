@@ -7,7 +7,7 @@
  * Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.6 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/instrument.c,v 1.7 2004/01/30 22:44:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ InstrStartNode(Instrumentation *instr)
 		return;
 
 	if (instr->starttime.tv_sec != 0 || instr->starttime.tv_usec != 0)
-		elog(DEBUG2, "InstrStartTimer called twice in a row");
+		elog(DEBUG2, "InstrStartNode called twice in a row");
 	else
 		gettimeofday(&instr->starttime, NULL);
 }
