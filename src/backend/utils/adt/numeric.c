@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.41 2001/05/03 19:00:36 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.42 2001/06/07 00:09:29 momjian Exp $
  *
  * ----------
  */
@@ -400,6 +400,19 @@ numeric_uminus(PG_FUNCTION_ARGS)
 		else
 			res->n_sign_dscale = NUMERIC_POS | NUMERIC_DSCALE(num);
 	}
+
+	PG_RETURN_NUMERIC(res);
+}
+
+
+Datum
+numeric_uplus(PG_FUNCTION_ARGS)
+{
+	Numeric		num = PG_GETARG_NUMERIC(0);
+	Numeric		res;
+
+	res = (Numeric) palloc(num->varlen);
+	memcpy(res, num, num->varlen);
 
 	PG_RETURN_NUMERIC(res);
 }

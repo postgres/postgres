@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.16 2001/06/01 20:57:58 momjian Exp $
+ * $Id: Connection.java,v 1.17 2001/06/07 00:09:32 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -505,7 +505,7 @@ public abstract class Connection
 			    recv_status = pg_stream.ReceiveString(receive_sbuf,8192,getEncoding());
 
 				// Now handle the update count correctly.
-				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE")) {
+				if(recv_status.startsWith("INSERT") || recv_status.startsWith("UPDATE") || recv_status.startsWith("DELETE") || recv_status.startsWith("MOVE")) {
 					try {
 						update_count = Integer.parseInt(recv_status.substring(1+recv_status.lastIndexOf(' ')));
 					} catch(NumberFormatException nfe) {

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.131 2001/05/30 13:00:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.132 2001/06/07 00:09:28 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -176,6 +176,12 @@ PerformPortalFetch(char *name,
 		if (!portal->atEnd)
 		{
 			ExecutorRun(queryDesc, estate, EXEC_FOR, (long) count);
+			/*
+			 *	I use CMD_UPDATE, because no CMD_MOVE or the like
+			 *	exists, and I would like to provide the same
+			 *	kind of info as CMD_UPDATE
+			 */
+			UpdateCommandInfo(CMD_UPDATE, 0, estate->es_processed);
 			if (estate->es_processed > 0)
 				portal->atStart = false;		/* OK to back up now */
 			if (count <= 0 || (int) estate->es_processed < count)
@@ -187,6 +193,12 @@ PerformPortalFetch(char *name,
 		if (!portal->atStart)
 		{
 			ExecutorRun(queryDesc, estate, EXEC_BACK, (long) count);
+			/*
+			 *	I use CMD_UPDATE, because no CMD_MOVE or the like
+			 *	exists, and I would like to provide the same
+			 *	kind of info as CMD_UPDATE
+			 */
+			UpdateCommandInfo(CMD_UPDATE, 0, estate->es_processed);
 			if (estate->es_processed > 0)
 				portal->atEnd = false;	/* OK to go forward now */
 			if (count <= 0 || (int) estate->es_processed < count)

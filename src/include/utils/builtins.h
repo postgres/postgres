@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.148 2001/03/22 04:01:11 momjian Exp $
+ * $Id: builtins.h,v 1.149 2001/06/07 00:09:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,6 +96,7 @@ extern Datum int42le(PG_FUNCTION_ARGS);
 extern Datum int42gt(PG_FUNCTION_ARGS);
 extern Datum int42ge(PG_FUNCTION_ARGS);
 extern Datum int4um(PG_FUNCTION_ARGS);
+extern Datum int4up(PG_FUNCTION_ARGS);
 extern Datum int4pl(PG_FUNCTION_ARGS);
 extern Datum int4mi(PG_FUNCTION_ARGS);
 extern Datum int4mul(PG_FUNCTION_ARGS);
@@ -103,6 +104,7 @@ extern Datum int4div(PG_FUNCTION_ARGS);
 extern Datum int4abs(PG_FUNCTION_ARGS);
 extern Datum int4inc(PG_FUNCTION_ARGS);
 extern Datum int2um(PG_FUNCTION_ARGS);
+extern Datum int2up(PG_FUNCTION_ARGS);
 extern Datum int2pl(PG_FUNCTION_ARGS);
 extern Datum int2mi(PG_FUNCTION_ARGS);
 extern Datum int2mul(PG_FUNCTION_ARGS);
@@ -184,10 +186,12 @@ extern Datum float8in(PG_FUNCTION_ARGS);
 extern Datum float8out(PG_FUNCTION_ARGS);
 extern Datum float4abs(PG_FUNCTION_ARGS);
 extern Datum float4um(PG_FUNCTION_ARGS);
+extern Datum float4up(PG_FUNCTION_ARGS);
 extern Datum float4larger(PG_FUNCTION_ARGS);
 extern Datum float4smaller(PG_FUNCTION_ARGS);
 extern Datum float8abs(PG_FUNCTION_ARGS);
 extern Datum float8um(PG_FUNCTION_ARGS);
+extern Datum float8up(PG_FUNCTION_ARGS);
 extern Datum float8larger(PG_FUNCTION_ARGS);
 extern Datum float8smaller(PG_FUNCTION_ARGS);
 extern Datum float4pl(PG_FUNCTION_ARGS);
@@ -532,6 +536,7 @@ extern Datum numeric_out(PG_FUNCTION_ARGS);
 extern Datum numeric(PG_FUNCTION_ARGS);
 extern Datum numeric_abs(PG_FUNCTION_ARGS);
 extern Datum numeric_uminus(PG_FUNCTION_ARGS);
+extern Datum numeric_uplus(PG_FUNCTION_ARGS);
 extern Datum numeric_sign(PG_FUNCTION_ARGS);
 extern Datum numeric_round(PG_FUNCTION_ARGS);
 extern Datum numeric_trunc(PG_FUNCTION_ARGS);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.188 2001/05/24 09:29:29 petere Exp $
+ * $Id: pg_proc.h,v 1.189 2001/06/07 00:09:30 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2613,6 +2613,19 @@ DATA(insert OID = 1908 (  int8shl		   PGUID 12 f t t t 2 f 20 "20 23" 100 0 0 10
 DESCR("binary shift left");
 DATA(insert OID = 1909 (  int8shr		   PGUID 12 f t t t 2 f 20 "20 23" 100 0 0 100	int8shr - ));
 DESCR("binary shift right");
+
+DATA(insert OID = 1910 (  int8up		   PGUID 12 f t t t 1 f 20  "20"   100 0 0 100  int8up - ));
+DESCR("unary plus");
+DATA(insert OID = 1911 (  int2up		   PGUID 12 f t t t 1 f 21  "21"   100 0 0 100  int2up - ));
+DESCR("unary plus");
+DATA(insert OID = 1912 (  int4up		   PGUID 12 f t t t 1 f 23  "23"   100 0 0 100  int4up - ));
+DESCR("unary plus");
+DATA(insert OID = 1913 (  float4up		   PGUID 12 f t t t 1 f 700 "700"  100 0 0 100  float4up - ));
+DESCR("unary plus");
+DATA(insert OID = 1914 (  float8up		   PGUID 12 f t t t 1 f 701 "701"  100 0 0 100  float8up - ));
+DESCR("unary plus");
+DATA(insert OID = 1915 (  numeric_uplus	   PGUID 12 f t t t 1 f 1700 "1700" 100 0 0 100  numeric_uplus - ));
+DESCR("unary plus");
 
 /*
  * prototypes for functions pg_proc.c

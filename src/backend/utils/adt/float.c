@@ -8,16 +8,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.73 2001/06/02 20:18:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.74 2001/06/07 00:09:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*----------
  * OLD COMMENTS
  *		Basic float4 ops:
- *		 float4in, float4out, float4abs, float4um
+ *		 float4in, float4out, float4abs, float4um, float4up
  *		Basic float8 ops:
- *		 float8in, float8out, float8abs, float8um
+ *		 float8in, float8out, float8abs, float8um, float8up
  *		Arithmetic operators:
  *		 float4pl, float4mi, float4mul, float4div
  *		 float8pl, float8mi, float8mul, float8div
@@ -341,6 +341,13 @@ float4um(PG_FUNCTION_ARGS)
 }
 
 Datum
+float4up(PG_FUNCTION_ARGS)
+{
+	float4		arg = PG_GETARG_FLOAT4(0);
+	PG_RETURN_FLOAT4(arg);
+}
+
+Datum
 float4larger(PG_FUNCTION_ARGS)
 {
 	float4		arg1 = PG_GETARG_FLOAT4(0);
@@ -397,6 +404,13 @@ float8um(PG_FUNCTION_ARGS)
 
 	CheckFloat8Val(result);
 	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+float8up(PG_FUNCTION_ARGS)
+{
+	float8		arg = PG_GETARG_FLOAT8(0);
+	PG_RETURN_FLOAT8(arg);
 }
 
 Datum
