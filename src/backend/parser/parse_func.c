@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.139 2002/10/24 22:09:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.139.2.1 2003/04/23 18:20:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1286,7 +1286,7 @@ func_error(const char *caller, List *funcname,
 	{
 		if (i)
 			appendStringInfo(&argbuf, ", ");
-		appendStringInfo(&argbuf, format_type_be(argtypes[i]));
+		appendStringInfo(&argbuf, "%s", format_type_be(argtypes[i]));
 	}
 
 	if (caller == NULL)
