@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.77 2000/09/12 21:07:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.78 2000/10/29 16:11:33 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ typecast		"::"
  * If you change either set, adjust the character lists appearing in the
  * rule for "operator"!
  */
-self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
+self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=]
 op_chars		[\~\!\@\#\^\&\|\`\?\$\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
