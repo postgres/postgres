@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.*;
 
 /**
- * $Id: Connection.java,v 1.32 2001/10/25 05:59:59 momjian Exp $
+ * $Id: Connection.java,v 1.33 2001/10/31 20:26:01 davec Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -109,13 +109,16 @@ public abstract class Connection
 		// of getConnection(), and is a common question on the email lists
 		if (info.getProperty("user") == null)
 			throw new PSQLException("postgresql.con.user");
-		if (info.getProperty("password") == null)
-			throw new PSQLException("postgresql.con.pass");
+
+
+                PG_PASSWORD = info.getProperty("password");
+                // allow a null password D.C.
+                if ( PG_PASSWORD== null)
+                  PG_PASSWORD = "";
 
 		this_driver = d;
 		this_url = url;
 		PG_DATABASE = database;
-		PG_PASSWORD = info.getProperty("password");
 		PG_USER = info.getProperty("user");
 		PG_PORT = port;
 		PG_HOST = host;
