@@ -244,7 +244,7 @@ Changes
    Fix path_inter, path_distance, path_length, dist_ppath to handle closed paths (Curtis Barrett, Tom)
    octet_length(text) now returns non-compressed length (Tatsuo, Bruce)
    Handle "July" full name in date/time literals (Greg Sabino Mullane)
-   datatype(const,...) function calls now evaluated earlier
+   Some datatype() function calls now evaluated differently
 
      ----------------------------------------------------------------------
 
