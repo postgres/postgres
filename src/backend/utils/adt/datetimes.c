@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.1.1.1 1996/07/09 06:22:03 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/datetimes.c,v 1.2 1996/07/19 07:19:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,11 +57,15 @@ date_in(char *datestr)
     int4 result;
     DateADT *date = (DateADT*)&result;
 
+#if 0
 #ifdef USE_SHORT_YEAR
 #define CHECK_DATE_LEN(datestr) (strlen(datestr) >= 8)
 #else
 #define CHECK_DATE_LEN(datestr) (strlen(datestr) == 10)
 #endif /* USE_SHORT_YEAR */
+#else
+#define CHECK_DATE_LEN(datestr) 1
+#endif
 
 #ifdef AMERICAN_STYLE
     if (!CHECK_DATE_LEN(datestr) ||
@@ -76,6 +80,8 @@ date_in(char *datestr)
 	     datestr);
     }
 #endif
+    if (y < 0 || y > 32767)
+	elog(WARN, "date_in: year must be limited to values 0 through 32767 in \"%s\"", datestr);
     if (m < 1 || m > 12)
 	elog(WARN, "date_in: month must be limited to values 1 through 12 in \"%s\"", datestr);
     if (d < 1 || d > day_tab[isleap(y)][m-1])
@@ -247,16 +253,19 @@ time_in(char *timestr)
     TimeADT *time;
 
     if (sscanf(timestr, "%d%*c%d%*c%f", &h, &m, &sec) != 3) {
-	elog(WARN, "time_in: time \"%s\" not of the form hh:mm:ss",
-	     timestr);
+	sec = 0.0;
+	if (sscanf(timestr, "%d%*c%d", &h, &m) != 2) {
+	    elog(WARN, "time_in: time \"%s\" not of the form hh:mm:ss",
+		 timestr);
+	}
     }
 
     if (h < 0 || h > 23)
 	elog(WARN, "time_in: hour must be limited to values 0 through 23 in \"%s\"", timestr);
     if (m < 0 || m > 59)
 	elog(WARN, "time_in: minute must be limited to values 0 through 59 in \"%s\"", timestr);
-    if (sec < 0 || sec >= 62.0)
-	elog(WARN, "time_in: second must be limited to values 0 through 61.99 in \"%s\"", timestr);
+    if (sec < 0 || sec >= 60.0)
+	elog(WARN, "time_in: second must be limited to values 0 through 59.999 in \"%s\"", timestr);
 
     time = (TimeADT*)palloc(sizeof(TimeADT));
     time->hr = h;
@@ -268,10 +277,24 @@ time_in(char *timestr)
 char *
 time_out(TimeADT *time)
 {
-    char *timestr = palloc(16);
-    
-    sprintf(timestr, "%02d:%02d:%09.6f",
-	    (int)time->hr, (int)time->min, time->sec);
+    char *timestr = palloc(32);
+    int n;
+    float f;
+
+    if (time->sec == 0.0) {
+	sprintf(timestr, "%02d:%02d",
+		(int)time->hr, (int)time->min);
+    } else {
+	n = (int)time->sec;
+	f = (float)n;
+	if (f == time->sec) {
+	    sprintf(timestr, "%02d:%02d:%02d",
+		    (int)time->hr, (int)time->min, n);
+	} else {
+	    sprintf(timestr, "%02d:%02d:%09.6f",
+		    (int)time->hr, (int)time->min, time->sec);
+	}
+    }
 
     return timestr;
 }
