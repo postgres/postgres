@@ -2,6 +2,40 @@
 -- ARRAYS
 --
 
+CREATE TABLE arrtest (
+	a 			int2[],
+	b 			int4[][][],
+	c 			name[],
+	d			text[][], 
+	e 			float8[],
+	f			char(5)[],
+	g			varchar(5)[]
+);
+
+--
+-- only this array as a 0-based 'e', the others are 1-based.
+-- 'e' is also a large object.
+--
+
+INSERT INTO arrtest (a[5], b[2][1][2], c, d, f, g)
+   VALUES ('{1,2,3,4,5}', '{{{},{1,2}}}', '{}', '{}', '{}', '{}');
+
+UPDATE arrtest SET e[0] = '1.1';
+
+UPDATE arrtest SET e[1] = '2.2';
+
+INSERT INTO arrtest (f)
+   VALUES ('{"too long"}');
+
+INSERT INTO arrtest (a, b[2][2][1], c, d, e, f, g)
+   VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}', 
+           '{{"elt1", "elt2"}}', '{"3.4", "6.7"}',
+           '{"abc","abcde"}', '{"abc","abcde"}');
+
+INSERT INTO arrtest (a, b[1][2][2], c, d[2][1])
+   VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
+
+
 SELECT * FROM arrtest;
 
 SELECT arrtest.a[1],

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.77 2001/05/03 19:00:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.78 2001/05/21 16:54:46 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +55,11 @@
  *****************************************************************************/
 
 /*
- * bpcharin -
- *	  converts a string of char() type to the internal representation.
- *	  len is the length specified in () plus VARHDRSZ bytes.
+ * Convert a C string to CHARACTER internal representation.  atttypmod
+ * is the declared length of the type plus VARHDRSZ.
+ *
+ * If the C string is too long, raise an error, unless the extra
+ * characters are spaces, in which case they're truncated.  (per SQL)
  */
 Datum
 bpcharin(PG_FUNCTION_ARGS)
@@ -71,30 +73,33 @@ bpcharin(PG_FUNCTION_ARGS)
 	int32		atttypmod = PG_GETARG_INT32(2);
 	BpChar	   *result;
 	char	   *r;
-	int			len;
+	size_t		len, maxlen;
 	int			i;
 
-	if (atttypmod < (int32) VARHDRSZ)
+	len = strlen(s);
+	maxlen = atttypmod - VARHDRSZ;
+
+	if (atttypmod >= (int32) VARHDRSZ && len > maxlen)
 	{
-		/* If typmod is -1 (or invalid), use the actual string length */
-		len = strlen(s);
-		atttypmod = len + VARHDRSZ;
+#ifdef MULTIBYTE
+		size_t mbmaxlen = pg_mbcliplen(s, len, maxlen);
+
+		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
+			len = mbmaxlen;
+#else
+		if (strspn(s + maxlen, " ") == len - maxlen)
+			/* clip extra spaces */
+			len = maxlen;
+#endif
+		else
+			elog(ERROR, "value too long for type character(%d)", maxlen);
 	}
 	else
-#ifdef MULTIBYTE
-	{
+		/* If typmod is -1 (or invalid), use the actual string length */
+		maxlen = len;
 
-		/*
-		 * truncate multi-byte string preserving multi-byte boundary
-		 */
-		len = pg_mbcliplen(s, atttypmod - VARHDRSZ, atttypmod - VARHDRSZ);
-	}
-#else
-		len = atttypmod - VARHDRSZ;
-#endif
-
-	result = (BpChar *) palloc(atttypmod);
-	VARATT_SIZEP(result) = atttypmod;
+	result = palloc(maxlen + VARHDRSZ);
+	VARATT_SIZEP(result) = maxlen + VARHDRSZ;
 	r = VARDATA(result);
 	for (i = 0; i < len; i++, r++, s++)
 	{
@@ -108,16 +113,16 @@ bpcharin(PG_FUNCTION_ARGS)
 #endif
 
 	/* blank pad the string if necessary */
-#ifdef MULTIBYTE
-	for (; i < atttypmod - VARHDRSZ; i++)
-#else
-	for (; i < len; i++)
-#endif
+	for (; i < maxlen; i++)
 		*r++ = ' ';
 
 	PG_RETURN_BPCHAR_P(result);
 }
 
+
+/*
+ * Convert a CHARACTER value to a C string.
+ */
 Datum
 bpcharout(PG_FUNCTION_ARGS)
 {
@@ -138,74 +143,69 @@ bpcharout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
-/* bpchar()
- * Converts a char() type to a specific internal length.
- * len is the length specified in () plus VARHDRSZ bytes.
+
+/*
+ * Converts a CHARACTER type to the specified size.  maxlen is the new
+ * declared length plus VARHDRSZ bytes.  Truncation
+ * rules see bpcharin() above.
  */
 Datum
 bpchar(PG_FUNCTION_ARGS)
 {
-	BpChar	   *str = PG_GETARG_BPCHAR_P(0);
-	int32		len = PG_GETARG_INT32(1);
+	BpChar	   *source = PG_GETARG_BPCHAR_P(0);
+	int32		maxlen = PG_GETARG_INT32(1);
 	BpChar	   *result;
-	char	   *r,
-			   *s;
-	int			rlen,
-				slen;
+	int32		len;
+	char	   *r;
+	char	   *s;
 	int			i;
 
+	len = VARSIZE(source);
 	/* No work if typmod is invalid or supplied data matches it already */
-	if (len < (int32) VARHDRSZ || len == VARSIZE(str))
-		PG_RETURN_BPCHAR_P(str);
+	if (len < (int32) VARHDRSZ || len == maxlen)
+		PG_RETURN_BPCHAR_P(source);
 
-	rlen = len - VARHDRSZ;
-
-#ifdef STRINGDEBUG
-	printf("bpchar- convert string length %d (%d) ->%d (%d)\n",
-		   VARSIZE(str) - VARHDRSZ, VARSIZE(str), rlen, len);
-#endif
-
-	result = (BpChar *) palloc(len);
-	VARATT_SIZEP(result) = len;
-	r = VARDATA(result);
-
-#ifdef MULTIBYTE
-
-	/*
-	 * truncate multi-byte string in a way not to break multi-byte
-	 * boundary
-	 */
-	if (VARSIZE(str) > len)
-		slen = pg_mbcliplen(VARDATA(str), VARSIZE(str) - VARHDRSZ, rlen);
-	else
-		slen = VARSIZE(str) - VARHDRSZ;
-#else
-	slen = VARSIZE(str) - VARHDRSZ;
-#endif
-	s = VARDATA(str);
-
-#ifdef STRINGDEBUG
-	printf("bpchar- string is '");
-#endif
-
-	for (i = 0; (i < rlen) && (i < slen); i++)
+	if (len > maxlen)
 	{
-#ifdef STRINGDEBUG
-		printf("%c", *s);
+#ifdef MULTIBYTE
+		size_t		maxmblen;
+
+		maxmblen = pg_mbcliplen(VARDATA(source), len - VARHDRSZ,
+								maxlen - VARHDRSZ) + VARHDRSZ;
+
+		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
+			if (*(VARDATA(source) + i) != ' ')
+				elog(ERROR, "value too long for type character(%d)",
+					 maxlen - VARHDRSZ);
+
+		len = maxmblen;
+#else
+		for (i = maxlen - VARHDRSZ; i < len - VARHDRSZ; i++)
+			if (*(VARDATA(source) + i) != ' ')
+				elog(ERROR, "value too long for type character(%d)",
+					 maxlen - VARHDRSZ);
+
+		/* clip extra spaces */
+		len = maxlen;
 #endif
-		*r++ = *s++;
 	}
 
-#ifdef STRINGDEBUG
-	printf("'\n");
-#endif
+	s = VARDATA(source);
+
+	result = palloc(maxlen);
+	VARATT_SIZEP(result) = maxlen;
+	r = VARDATA(result);
+
+	for (i = 0; (i < maxlen - VARHDRSZ) && (i < len - VARHDRSZ); i++)
+		*r++ = *s++;
 
 	/* blank pad the string if necessary */
-	for (; i < rlen; i++)
+	for (; i < maxlen - VARHDRSZ; i++)
 		*r++ = ' ';
 
 	PG_RETURN_BPCHAR_P(result);
 }
+
 
 /* _bpchar()
  * Converts an array of char() elements to a specific internal length.
@@ -330,9 +330,11 @@ name_bpchar(PG_FUNCTION_ARGS)
  *****************************************************************************/
 
 /*
- * varcharin -
- *	  converts a string of varchar() type to the internal representation.
- *	  len is the length specified in () plus VARHDRSZ bytes.
+ * Convert a C string to VARCHAR internal representation.  atttypmod
+ * is the declared length of the type plus VARHDRSZ.
+ *
+ * If the C string is too long, raise an error, unless the extra
+ * characters are spaces, in which case they're truncated.  (per SQL)
  */
 Datum
 varcharin(PG_FUNCTION_ARGS)
@@ -345,37 +347,52 @@ varcharin(PG_FUNCTION_ARGS)
 #endif
 	int32		atttypmod = PG_GETARG_INT32(2);
 	VarChar    *result;
-	int			len;
+	size_t		len, maxlen;
 
-	len = strlen(s) + VARHDRSZ;
-	if (atttypmod >= (int32) VARHDRSZ && len > atttypmod)
+	len = strlen(s);
+	maxlen = atttypmod - VARHDRSZ;
+
+	if (atttypmod >= (int32) VARHDRSZ && len > maxlen)
+	{
 #ifdef MULTIBYTE
-		len = pg_mbcliplen(s, len - VARHDRSZ, atttypmod - VARHDRSZ) + VARHDRSZ;
-#else
-		len = atttypmod;		/* clip the string at max length */
-#endif
+		size_t mbmaxlen = pg_mbcliplen(s, len, maxlen);
 
-	result = (VarChar *) palloc(len);
-	VARATT_SIZEP(result) = len;
-	memcpy(VARDATA(result), s, len - VARHDRSZ);
+		if (strspn(s + mbmaxlen, " ") == len - mbmaxlen)
+			len = mbmaxlen;
+#else
+		if (strspn(s + maxlen, " ") == len - maxlen)
+			/* clip extra spaces */
+			len = maxlen;
+#endif
+		else
+			elog(ERROR, "value too long for type character varying(%d)", maxlen);
+	}
+
+	result = palloc(len + VARHDRSZ);
+	VARATT_SIZEP(result) = len + VARHDRSZ;
+	memcpy(VARDATA(result), s, len);
 
 #ifdef CYR_RECODE
-	convertstr(VARDATA(result), len - VARHDRSZ, 0);
+	convertstr(VARDATA(result), len, 0);
 #endif
 
 	PG_RETURN_VARCHAR_P(result);
 }
 
+
+/*
+ * Convert a VARCHAR value to a C string.
+ */
 Datum
 varcharout(PG_FUNCTION_ARGS)
 {
 	VarChar    *s = PG_GETARG_VARCHAR_P(0);
 	char	   *result;
-	int			len;
+	int32		len;
 
 	/* copy and add null term */
 	len = VARSIZE(s) - VARHDRSZ;
-	result = (char *) palloc(len + 1);
+	result = palloc(len + 1);
 	memcpy(result, VARDATA(s), len);
 	result[len] = '\0';
 
@@ -386,41 +403,59 @@ varcharout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(result);
 }
 
-/* varchar()
- * Converts a varchar() type to the specified size.
- * slen is the length specified in () plus VARHDRSZ bytes.
+
+/*
+ * Converts a VARCHAR type to the specified size.  maxlen is the new
+ * declared length plus VARHDRSZ bytes.  Truncation
+ * rules see varcharin() above.
  */
 Datum
 varchar(PG_FUNCTION_ARGS)
 {
-	VarChar    *s = PG_GETARG_VARCHAR_P(0);
-	int32		slen = PG_GETARG_INT32(1);
+	VarChar    *source = PG_GETARG_VARCHAR_P(0);
+	int32		maxlen = PG_GETARG_INT32(1);
 	VarChar    *result;
-	int			len;
+	int32		len;
+	int			i;
 
-	len = VARSIZE(s);
-	if (slen < (int32) VARHDRSZ || len <= slen)
-		PG_RETURN_VARCHAR_P(s);
+	len = VARSIZE(source);
+	if (maxlen < (int32) VARHDRSZ || len <= maxlen)
+		PG_RETURN_VARCHAR_P(source);
 
-	/* only reach here if we need to truncate string... */
+	/* only reach here if string is too long... */
 
 #ifdef MULTIBYTE
+	{
+		size_t		maxmblen;
 
-	/*
-	 * truncate multi-byte string preserving multi-byte boundary
-	 */
-	len = pg_mbcliplen(VARDATA(s), slen - VARHDRSZ, slen - VARHDRSZ);
-	slen = len + VARHDRSZ;
+		/* truncate multi-byte string preserving multi-byte boundary */
+		maxmblen = pg_mbcliplen(VARDATA(source), len - VARHDRSZ,
+								maxlen - VARHDRSZ) + VARHDRSZ;
+
+		for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
+			if (*(VARDATA(source) + i) != ' ')
+				elog(ERROR, "value too long for type character varying(%d)",
+					 maxlen - VARHDRSZ);
+
+		len = maxmblen;
+	}
 #else
-	len = slen - VARHDRSZ;
+	for (i = maxlen - VARHDRSZ; i < len - VARHDRSZ; i++)
+		if (*(VARDATA(source) + i) != ' ')
+			elog(ERROR, "value too long for type character varying(%d)",
+				 maxlen - VARHDRSZ);
+
+	/* clip extra spaces */
+	len = maxlen;
 #endif
 
-	result = (VarChar *) palloc(slen);
-	VARATT_SIZEP(result) = slen;
-	memcpy(VARDATA(result), VARDATA(s), len);
+	result = palloc(len);
+	VARATT_SIZEP(result) = len;
+	memcpy(VARDATA(result), VARDATA(source), len - VARHDRSZ);
 
 	PG_RETURN_VARCHAR_P(result);
 }
+
 
 /* _varchar()
  * Converts an array of varchar() elements to the specified size.
@@ -451,6 +486,12 @@ _varchar(PG_FUNCTION_ARGS)
 
 	return array_map(&locfcinfo, VARCHAROID, VARCHAROID);
 }
+
+
+
+/*****************************************************************************
+ * Exported functions
+ *****************************************************************************/
 
 /* "True" length (not counting trailing blanks) of a BpChar */
 static int

@@ -1,6 +1,5 @@
 --
 -- CHAR
--- all inputs are SILENTLY truncated at 1 character
 --
 -- fixed-length by value
 -- internally passed by value if <= 4 bytes in storage
@@ -24,6 +23,8 @@ INSERT INTO CHAR_TBL (f1) VALUES ('3');
 INSERT INTO CHAR_TBL (f1) VALUES ('');
 -- try char's of greater than 1 length 
 INSERT INTO CHAR_TBL (f1) VALUES ('cd');
+ERROR:  value too long for type character(1)
+INSERT INTO CHAR_TBL (f1) VALUES ('c     ');
 SELECT '' AS seven, CHAR_TBL.*;
  seven | f1 
 -------+----
@@ -108,6 +109,8 @@ INSERT INTO CHAR_TBL (f1) VALUES ('a');
 INSERT INTO CHAR_TBL (f1) VALUES ('ab');
 INSERT INTO CHAR_TBL (f1) VALUES ('abcd');
 INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
+ERROR:  value too long for type character(4)
+INSERT INTO CHAR_TBL (f1) VALUES ('abcd    ');
 SELECT '' AS four, CHAR_TBL.*;
  four |  f1  
 ------+------

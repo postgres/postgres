@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.53 2001/05/12 22:51:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.54 2001/05/21 16:54:45 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -550,14 +550,77 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     <see>character strings</see>
    </indexterm>
 
+    <table tocentry="1">
+     <title>Character Types</title>
+     <tgroup cols="3">
+      <thead>
+       <row>
+	<entry>Type Name</entry>
+	<entry>Storage</entry>
+	<entry>Description</entry>
+       </row>
+      </thead>
+      <tbody>
+       <row>
+	<entry>character(n), char(n)</entry>
+	<entry>(4+n) bytes</entry>
+	<entry>Fixed-length blank padded</entry>
+       </row>
+       <row>
+	<entry>character varying(n), varchar(n)</entry>
+	<entry>(4+n) bytes</entry>
+	<entry>Variable-length with limit</entry>
+       </row>
+       <row>
+	<entry>text</entry>
+	<entry>(4+n) bytes</entry>
+	<entry>Variable unlimited length</entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
    <para>
     <acronym>SQL</acronym> defines two primary character types:
-    <type>character</type> and <type>character varying</type>. 
-    <productname>Postgres</productname> supports these types, in
-    addition to the more general <type>text</type> type, 
-    which unlike <type>character varying</type>
-    does not require an explicit declared upper
-    limit on the size of the field.
+    <type>character(<replaceable>n</>)</type> and <type>character
+    varying(<replaceable>n</>)</type>, where <replaceable>n</> is a
+    positive integer.  Both of these types can store strings up to
+    <replaceable>n</> characters in length.  An attempt to store a
+    longer string into a column of these types will result in an
+    error, unless the excess characters are all spaces, in which case
+    the string will be truncated to the maximum length.  (This
+    somewhat bizarre exception is required by the SQL standard.)  If
+    the string to be stored is shorter than the declared length,
+    values of type <type>character</type> will be space-padded; values
+    of type <type>character varying</type> will simply store the
+    shorter string.
+   </para>
+
+   <note>
+    <para>
+     Prior to PostgreSQL 7.2, strings that were too long were silently
+     truncated, no error was raised.
+    </para>
+   </note>
+
+   <para>
+    The notations <type>char(<replaceable>n</>)</type> and
+    <type>varchar(<replaceable>n</>)</type> are aliases for
+    <type>character(<replaceable>n</>)</type> and <type>character
+    varying(<replaceable>n</>)</type>,
+    respectively. <type>character</type> without length specifier is
+    equivalent to <type>character(1)</type>; if <type>character
+    varying</type> is used without length specifier, the type accepts
+    strings of any size.  The latter is a PostgreSQL extension.
+   </para>
+
+   <para>
+    In addition, <productname>PostgreSQL</productname> supports the
+    more general <type>text</type> type, which stores strings of any
+    length.  Unlike <type>character varying</type>, <type>text</type>
+    does not require an explicit declared upper limit on the size of
+    the string.  Although the type <type>text</type> is not in the SQL
+    standard, many other RDBMS packages have it as well.
    </para>
 
    <para>
@@ -566,48 +629,49 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     for information about available operators and functions.
    </para>
 
-   <para>
-    <table tocentry="1">
-     <title>Character Types</title>
-     <tgroup cols="4">
-      <thead>
-       <row>
-	<entry>Type Name</entry>
-	<entry>Storage</entry>
-	<entry>Recommendation</entry>
-	<entry>Description</entry>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>character(n), char(n)</entry>
-	<entry>(4+n) bytes</entry>
-	<entry><acronym>SQL</acronym>-compatible</entry>
-	<entry>Fixed-length blank padded</entry>
-       </row>
-       <row>
-	<entry>character varying(n), varchar(n)</entry>
-	<entry>(4+n) bytes</entry>
-	<entry><acronym>SQL</acronym>-compatible</entry>
-	<entry>Variable-length with limit</entry>
-       </row>
-       <row>
-	<entry>text</entry>
-	<entry>(4+n) bytes</entry>
-	<entry>Most flexible</entry>
-	<entry>Variable unlimited length</entry>
-       </row>
-      </tbody>
-     </tgroup>
-    </table>
+   <tip>
+    <para>
+     There are no performance differences between these three types,
+     apart from the increased storage size when using the blank-padded
+     type.
+    </para>
+   </tip>
 
-    <note>
-     <para>
-      Although the type <type>text</type> is not SQL-compliant, many
-      other RDBMS packages have it as well.
-     </para>
-    </note>
-   </para>
+   <example>
+    <title>Using the character types</title>
+
+<programlisting>
+CREATE TABLE test1 (a character(4));
+INSERT INTO test1 VALUES ('ok');
+SELECT a, char_length(a) FROM test1; -- <co id="co.datatype-char">
+<computeroutput>
+  a   | char_length
+------+-------------
+ ok   |           4
+</computeroutput>
+
+CREATE TABLE test2 (b varchar(5));
+INSERT INTO test2 VALUES ('ok');
+INSERT INTO test2 VALUES ('good      ');
+INSERT INTO test2 VALUES ('too long');
+<computeroutput>ERROR:  value too long for type character varying(5)</computeroutput>
+SELECT b, char_length(b) FROM test2;
+<computeroutput>
+   b   | char_length
+-------+-------------
+ ok    |           2
+ good  |           5
+</computeroutput>
+</programlisting>
+    <calloutlist>
+     <callout arearefs="co.datatype-char">
+      <para>
+       The <function>char_length</function> function is discussed in
+       <xref linkend="functions-string">.
+      </para>
+     </callout>
+    </calloutlist>
+   </example>
 
    <para>
     There are two other fixed-length character types in
@@ -625,7 +689,6 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     enumeration type.
    </para>
 
-   <para>
     <table tocentry="1">
      <title>Specialty Character Type</title>
      <tgroup cols="3">
@@ -650,7 +713,6 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
       </tbody>
      </tgroup>
     </table>
-   </para>
 
   </sect1>
 

@@ -188,30 +188,6 @@ INSERT INTO f_star (class, f)
 
 INSERT INTO f_star (class) VALUES ('f');
 
---
--- ARRAYS
---
-
---
--- only this array as a 0-based 'e', the others are 1-based.
--- 'e' is also a large object.
---
-
-INSERT INTO arrtest (a[5], b[2][1][2], c, d, f, g)
-   VALUES ('{1,2,3,4,5}', '{{{},{1,2}}}', '{}', '{}', '{}', '{}');
-
-UPDATE arrtest SET e[0] = '1.1';
-
-UPDATE arrtest SET e[1] = '2.2';
-
-INSERT INTO arrtest (a, b[2][2][1], c, d, e, f, g)
-   VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}', 
-           '{{"elt1", "elt2"}}', '{"3.4", "6.7"}',
-           '{"abc","abcdefgh"}', '{"abc","abcdefgh"}');
-
-INSERT INTO arrtest (a, b[1][2][2], c, d[2][1])
-   VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
-
 
 --
 -- for internal portal (cursor) tests

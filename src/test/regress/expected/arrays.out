@@ -1,6 +1,32 @@
 --
 -- ARRAYS
 --
+CREATE TABLE arrtest (
+	a 			int2[],
+	b 			int4[][][],
+	c 			name[],
+	d			text[][], 
+	e 			float8[],
+	f			char(5)[],
+	g			varchar(5)[]
+);
+--
+-- only this array as a 0-based 'e', the others are 1-based.
+-- 'e' is also a large object.
+--
+INSERT INTO arrtest (a[5], b[2][1][2], c, d, f, g)
+   VALUES ('{1,2,3,4,5}', '{{{},{1,2}}}', '{}', '{}', '{}', '{}');
+UPDATE arrtest SET e[0] = '1.1';
+UPDATE arrtest SET e[1] = '2.2';
+INSERT INTO arrtest (f)
+   VALUES ('{"too long"}');
+ERROR:  value too long for type character(5)
+INSERT INTO arrtest (a, b[2][2][1], c, d, e, f, g)
+   VALUES ('{11,12,23}', '{{3,4},{4,5}}', '{"foobar"}', 
+           '{{"elt1", "elt2"}}', '{"3.4", "6.7"}',
+           '{"abc","abcde"}', '{"abc","abcde"}');
+INSERT INTO arrtest (a, b[1][2][2], c, d[2][1])
+   VALUES ('{}', '{3,4}', '{foo,bar}', '{bar,foo}');
 SELECT * FROM arrtest;
       a      |        b        |       c       |         d         |       e       |         f         |        g        
 -------------+-----------------+---------------+-------------------+---------------+-------------------+-----------------
@@ -75,8 +101,8 @@ SELECT a,b,c FROM arrtest;
        a       |           b           |           c           
 ---------------+-----------------------+-----------------------
  {16,25,3,4,5} | {{{113,142},{1,147}}} | {}
- {16,25,23}    | {{3,4},{4,5}}         | {"foobar","new_word"}
  {}            | {3,4}                 | {"foo","new_word"}
+ {16,25,23}    | {{3,4},{4,5}}         | {"foobar","new_word"}
 (3 rows)
 
 SELECT a[1:3],
@@ -87,7 +113,7 @@ SELECT a[1:3],
      a      |           b           |           c           |     d      
 ------------+-----------------------+-----------------------+------------
  {16,25,3}  | {{{113,142},{1,147}}} |                       | 
- {16,25,23} |                       | {"foobar","new_word"} | {{"elt2"}}
             |                       | {"foo","new_word"}    | 
+ {16,25,23} |                       | {"foobar","new_word"} | {{"elt2"}}
 (3 rows)
 

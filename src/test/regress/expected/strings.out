@@ -45,11 +45,13 @@ SELECT CAST(name 'namefield' AS text) AS "text(name)";
  namefield
 (1 row)
 
-SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL;
- char(text) 
-------------
- doh!      
- hi de ho n
+SELECT CAST(f1 AS char(10)) AS "char(text)" FROM TEXT_TBL; -- fail
+ERROR:  value too long for type character(10)
+SELECT CAST(f1 AS char(20)) AS "char(text)" FROM TEXT_TBL;
+      char(text)      
+----------------------
+ doh!                
+ hi de ho neighbor   
 (2 rows)
 
 SELECT CAST(f1 AS char(10)) AS "char(varchar)" FROM VARCHAR_TBL;
@@ -479,10 +481,10 @@ SELECT text 'text' || ' and unknown' AS "Concat text to unknown type";
  text and unknown
 (1 row)
 
-SELECT text 'text' || char(10) ' and characters' AS "Concat text to char";
+SELECT text 'text' || char(20) ' and characters' AS "Concat text to char";
  Concat text to char 
 ---------------------
- text and chara
+ text and characters
 (1 row)
 
 SELECT text 'text' || varchar ' and varchar' AS "Concat text to varchar";

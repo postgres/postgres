@@ -1,6 +1,5 @@
 --
 -- CHAR
--- all inputs are SILENTLY truncated at 1 character
 --
 
 -- fixed-length by value
@@ -30,6 +29,7 @@ INSERT INTO CHAR_TBL (f1) VALUES ('');
 
 -- try char's of greater than 1 length 
 INSERT INTO CHAR_TBL (f1) VALUES ('cd');
+INSERT INTO CHAR_TBL (f1) VALUES ('c     ');
 
 
 SELECT '' AS seven, CHAR_TBL.*;
@@ -70,6 +70,6 @@ INSERT INTO CHAR_TBL (f1) VALUES ('a');
 INSERT INTO CHAR_TBL (f1) VALUES ('ab');
 INSERT INTO CHAR_TBL (f1) VALUES ('abcd');
 INSERT INTO CHAR_TBL (f1) VALUES ('abcde');
+INSERT INTO CHAR_TBL (f1) VALUES ('abcd    ');
 
 SELECT '' AS four, CHAR_TBL.*;
-

@@ -20,6 +20,7 @@ INSERT INTO VARCHAR_TBL (f1) VALUES ('');
 
 -- try varchar's of greater than 1 length 
 INSERT INTO VARCHAR_TBL (f1) VALUES ('cd');
+INSERT INTO VARCHAR_TBL (f1) VALUES ('c     ');
 
 
 SELECT '' AS seven, VARCHAR_TBL.*;
@@ -60,6 +61,6 @@ INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('ab');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('abcde');
+INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd    ');
 
 SELECT '' AS four, VARCHAR_TBL.*;
-

@@ -12,6 +12,8 @@ INSERT INTO VARCHAR_TBL (f1) VALUES ('3');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('');
 -- try varchar's of greater than 1 length 
 INSERT INTO VARCHAR_TBL (f1) VALUES ('cd');
+ERROR:  value too long for type character varying(1)
+INSERT INTO VARCHAR_TBL (f1) VALUES ('c     ');
 SELECT '' AS seven, VARCHAR_TBL.*;
  seven | f1 
 -------+----
@@ -96,6 +98,8 @@ INSERT INTO VARCHAR_TBL (f1) VALUES ('a');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('ab');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd');
 INSERT INTO VARCHAR_TBL (f1) VALUES ('abcde');
+ERROR:  value too long for type character varying(4)
+INSERT INTO VARCHAR_TBL (f1) VALUES ('abcd    ');
 SELECT '' AS four, VARCHAR_TBL.*;
  four |  f1  
 ------+------
