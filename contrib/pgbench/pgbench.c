@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.9 2001/08/01 01:08:17 ishii Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.10 2001/09/09 03:15:56 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -67,6 +67,16 @@ int			tps = 1;
 
 int			remains;			/* number of remained clients */
 
+int			is_connect;			/* establish connection  for each transactoin */
+
+char	   *pghost = "";
+char	   *pgport = NULL;
+char	   *pgoptions = NULL;
+char	   *pgtty = NULL;
+char	   *login = NULL;
+char	   *pwd = NULL;
+char	   *dbName;
+
 typedef struct
 {
 	PGconn	   *con;			/* connection handle to DB */
@@ -85,8 +95,8 @@ typedef struct
 static void
 usage()
 {
-	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-n][-v][-S][-d][dbname]\n");
-	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor][-d][dbname]\n");
+	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-n][-C][-v][-S][-U login][-P password][-d][dbname]\n");
+	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor][-U login][-P password][-d][dbname]\n");
 }
 
 /* random number generator */
@@ -94,6 +104,34 @@ static int
 getrand(int min, int max)
 {
 	return (min + (int) (max * 1.0 * rand() / (RAND_MAX + 1.0)));
+}
+
+/* set up a connection to the backend */
+static PGconn *doConnect()
+{
+    PGconn *con;
+
+    con = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName,
+				login, pwd);
+    if (con == NULL)
+    {
+	fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+	fprintf(stderr, "Memory allocatin problem?\n");
+	return(NULL);
+    }
+    
+    if (PQstatus(con) == CONNECTION_BAD)
+    {
+	fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
+
+	if (PQerrorMessage(con))
+	    fprintf(stderr, "%s", PQerrorMessage(con));
+	else
+	    fprintf(stderr, "No explanation from the backend\n");
+
+	return(NULL);
+    }
+    return (con);
 }
 
 /* throw away response from backend */
@@ -110,6 +148,7 @@ discard_response(CState * state)
 	} while (res);
 }
 
+/* check to see if the SQL result was good */
 static int
 check(CState * state, PGresult *res, int n, int good)
 {
@@ -123,7 +162,7 @@ check(CState * state, PGresult *res, int n, int good)
 		st->con = NULL;
 		return (-1);
 	}
-	return (0);
+	return (0);	/* OK */
 }
 
 /* process a transaction */
@@ -201,11 +240,20 @@ doOne(CState * state, int n, int debug)
 				PQclear(res);
 				discard_response(st);
 
+				if (is_connect)
+				{
+				    PQfinish(st->con);
+				    st->con = NULL;
+				}
+
 				if (++st->cnt >= nxacts)
 				{
 					remains--;	/* I've done */
-					PQfinish(st->con);
-					st->con = NULL;
+					if (st->con != NULL)
+					{
+					    PQfinish(st->con);
+					    st->con = NULL;
+					}
 					return;
 				}
 				break;
@@ -215,6 +263,19 @@ doOne(CState * state, int n, int debug)
 		st->state++;
 		if (st->state > 6)
 			st->state = 0;
+	}
+
+	if (st->con == NULL)
+	{
+	    if ((st->con = doConnect()) == NULL)
+	    {
+		fprintf(stderr, "Client %d aborted in establishing connection.\n",
+			n);
+		remains--;		/* I've aborted */
+		PQfinish(st->con);
+		st->con = NULL;
+		return;
+	    }
 	}
 
 	switch (st->state)
@@ -295,11 +356,20 @@ doSelectOnly(CState * state, int n, int debug)
 				PQclear(res);
 				discard_response(st);
 
+				if (is_connect)
+				{
+				    PQfinish(st->con);
+				    st->con = NULL;
+				}
+
 				if (++st->cnt >= nxacts)
 				{
 					remains--;	/* I've done */
-					PQfinish(st->con);
-					st->con = NULL;
+					if (st->con != NULL)
+					{
+					    PQfinish(st->con);
+					    st->con = NULL;
+					}
 					return;
 				}
 				break;
@@ -309,6 +379,19 @@ doSelectOnly(CState * state, int n, int debug)
 		st->state++;
 		if (st->state > 0)
 			st->state = 0;
+	}
+
+	if (st->con == NULL)
+	{
+	    if ((st->con = doConnect()) == NULL)
+	    {
+		fprintf(stderr, "Client %d aborted in establishing connection.\n",
+			n);
+		remains--;		/* I've aborted */
+		PQfinish(st->con);
+		st->con = NULL;
+		return;
+	    }
 	}
 
 	switch (st->state)
@@ -349,7 +432,7 @@ disconnect_all(CState * state)
 
 /* create tables and setup data */
 static void
-init(char *pghost, char *pgport, char *dbName)
+init()
 {
 	PGconn	   *con;
 	PGresult   *res;
@@ -366,13 +449,8 @@ init(char *pghost, char *pgport, char *dbName)
 
 	int			i;
 
-	con = PQsetdb(pghost, pgport, NULL, NULL, dbName);
-	if (PQstatus(con) == CONNECTION_BAD)
-	{
-		fprintf(stderr, "Connection to database '%s' on %s failed.\n", dbName, pghost);
-		fprintf(stderr, "%s", PQerrorMessage(con));
-		exit(1);
-	}
+	if ((con = doConnect()) == NULL)
+	    exit(1);
 
 	for (i = 0; i < (sizeof(DDLs) / sizeof(char *)); i++)
 	{
@@ -524,6 +602,7 @@ printResults(
 	printf("tps = %f(excluding connections establishing)\n", t2);
 }
 
+
 int
 main(int argc, char **argv)
 {
@@ -532,9 +611,6 @@ main(int argc, char **argv)
 				opterr,
 				optopt;
 	int			c;
-	char	   *pghost = NULL;
-	char	   *pgport = NULL;
-	char	   *dbName;
 	int			is_init_mode = 0;		/* initialize mode? */
 	int			is_no_vacuum = 0;		/* no vacuum at all before
 										 * testing? */
@@ -564,7 +640,7 @@ main(int argc, char **argv)
 	PGconn	   *con;
 	PGresult   *res;
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:S")) != EOF)
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CS")) != EOF)
 	{
 		switch (c)
 		{
@@ -615,6 +691,9 @@ main(int argc, char **argv)
 				}
 #endif	 /* #ifndef __CYGWIN__ */
 				break;
+		        case 'C':
+			      is_connect = 1;
+			      break;
 			case 's':
 				tps = atoi(optarg);
 				if (tps <= 0)
@@ -630,6 +709,12 @@ main(int argc, char **argv)
 					fprintf(stderr, "wrong number of transactions: %d\n", nxacts);
 					exit(1);
 				}
+				break;
+			case 'U':
+				login = optarg;
+				break;
+			case 'P':
+				pwd = optarg;
 				break;
 			default:
 				usage();
@@ -649,7 +734,7 @@ main(int argc, char **argv)
 
 	if (is_init_mode)
 	{
-		init(pghost, pgport, dbName);
+	        init();
 		exit(0);
 	}
 
@@ -662,7 +747,10 @@ main(int argc, char **argv)
 	}
 
 	/* opening connection... */
-	con = PQsetdb(pghost, pgport, NULL, NULL, dbName);
+	con = doConnect();
+	if (con == NULL)
+	    exit(1);
+
 	if (PQstatus(con) == CONNECTION_BAD)
 	{
 		fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
@@ -746,16 +834,14 @@ main(int argc, char **argv)
 	/* get start up time */
 	gettimeofday(&tv1, 0);
 
-	/* make connections to the database */
-	for (i = 0; i < nclients; i++)
+	if (is_connect == 0)
 	{
-		state[i].con = PQsetdb(pghost, pgport, NULL, NULL, dbName);
-		if (PQstatus(state[i].con) == CONNECTION_BAD)
-		{
-			fprintf(stderr, "Connection to database '%s' failed.\n", dbName);
-			fprintf(stderr, "%s", PQerrorMessage(state[i].con));
-			exit(1);
-		}
+	    /* make connections to the database */
+	    for (i = 0; i < nclients; i++)
+	    {
+		if ((state[i].con = doConnect()) == NULL)
+		    exit(1);
+	    }
 	}
 
 	/* time after connections set up */
