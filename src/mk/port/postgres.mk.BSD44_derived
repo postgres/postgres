@@ -6,7 +6,7 @@
 #
 # Copyright (c) 1994-5, Regents of the University of California
 #
-#    $Id: postgres.mk.BSD44_derived,v 1.1.1.1 1996/07/09 06:22:19 scrappy Exp $
+#    $Id: postgres.mk.BSD44_derived,v 1.2 1996/07/25 07:28:12 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 ifndef MK_PORT
@@ -19,6 +19,10 @@ INSTALL=	/usr/bin/install
 RANLIB=		/usr/bin/ranlib
 
 AROPT = cq
+
+# FreeBSD 2.1R with new Flex v2.5.2 in /usr/local
+LEX = flex
+LDADD+= -L/usr/local/lib -lfl
 
 #
 # for postgres.user.mk
