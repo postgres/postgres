@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.21 1997/09/08 21:54:55 momjian Exp $
+ * $Id: dt.h,v 1.22 1997/11/17 16:39:58 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
  *	relative to an absolute time.
  *
  * Note that Postgres uses "time interval" to mean a bounded interval,
- *	consisting of a beginning and ending time, not a time span - tgl 97/03/20
+ *	consisting of a beginning and ending time, not a time span - thomas 97/03/20
  */
 
 typedef double DateTime;
@@ -126,7 +126,9 @@ typedef struct
  * At the moment, that means keep them within [-127,127].
  * These are also used for bit masks in DecodeDateDelta()
  *	so actually restrict them to within [0,31] for now.
- * - tgl 97/06/19
+ * - thomas 97/06/19
+ * Not all of these fields are used for masks in DecodeDateDelta
+ *  so allow some larger than 31. - thomas 1997-11-17
  */
 
 #define DTK_NUMBER		0
@@ -164,6 +166,7 @@ typedef struct
 #define DTK_MILLISEC	29
 #define DTK_MICROSEC	30
 #define DTK_DOW			31
+#define DTK_DOY			32
 
 /*
  * Bit mask definitions for time parsing.
