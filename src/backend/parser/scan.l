@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.88 2001/03/22 17:41:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.89 2001/09/04 00:19:39 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,7 +375,7 @@ other			.
 					return IDENT;
 				}
 <xd>{xddouble} {
-					addlit(yytext, yyleng-1);
+					addlit(yytext+1, yyleng-1);
 				}
 <xd>{xdinside}	{
 					addlit(yytext, yyleng);
