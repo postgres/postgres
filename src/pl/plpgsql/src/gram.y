@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.26 2001/10/09 04:15:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.27 2001/10/09 15:59:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -507,10 +507,16 @@ decl_aliasitem	: T_WORD
 						plpgsql_ns_setlocal(false);
 						name = plpgsql_tolower(yytext);
 						if (name[0] != '$')
+						{
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "can only alias positional parameters");
+						}
 						nsi = plpgsql_ns_lookup(name, NULL);
 						if (nsi == NULL)
+						{
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "function has no parameter %s", name);
+						}
 
 						plpgsql_ns_setlocal(true);
 
@@ -585,14 +591,12 @@ decl_defval		: ';'
 						{
 							case 0:
 								plpgsql_error_lineno = lno;
-								plpgsql_comperrinfo();
 								elog(ERROR, "unexpected end of file");
 							case K_NULL:
 								if (yylex() != ';')
 								{
 									plpgsql_error_lineno = lno;
-									plpgsql_comperrinfo();
-									elog(ERROR, "expectec ; after NULL");
+									elog(ERROR, "expected ; after NULL");
 								}
 								free(expr);
 								plpgsql_dstring_free(&ds);
@@ -607,7 +611,6 @@ decl_defval		: ';'
 									if (tok == 0)
 									{
 										plpgsql_error_lineno = lno;
-										plpgsql_comperrinfo();
 										elog(ERROR, "unterminated default value");
 									}
 									if (plpgsql_SpaceScanned)
@@ -793,7 +796,7 @@ getdiag_target	: T_VARIABLE
 					{
 						if (yylval.var->isconst)
 						{
-							plpgsql_comperrinfo();
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "%s is declared CONSTANT; can not receive diagnostics", yylval.var->refname);
 						}
 						$$ = yylval.var->varno;
@@ -809,7 +812,7 @@ assign_var		: T_VARIABLE
 					{
 						if (yylval.var->isconst)
 						{
-							plpgsql_comperrinfo();
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "%s is declared CONSTANT", yylval.var->refname);
 						}
 						$$ = yylval.var->varno;
@@ -1045,7 +1048,6 @@ fori_lower		:
 									if (tok == 0)
 									{
 										plpgsql_error_lineno = lno;
-										plpgsql_comperrinfo();
 										elog(ERROR, "missing .. to terminate lower bound of for loop");
 									}
 									plpgsql_dstring_append(&ds, yytext);
@@ -1083,7 +1085,6 @@ stmt_fors		: opt_label K_FOR lno fors_target K_IN K_SELECT expr_until_loop loop_
 								new->row = (PLpgSQL_row *)$4;
 								break;
 							default:
-								plpgsql_comperrinfo();
 								elog(ERROR, "unknown dtype %d in stmt_fors", $4->dtype);
 						}
 						new->query = $7;
@@ -1113,7 +1114,6 @@ stmt_dynfors : opt_label K_FOR lno fors_target K_IN K_EXECUTE expr_until_loop lo
 								new->row = (PLpgSQL_row *)$4;
 								break;
 							default:
-								plpgsql_comperrinfo();
 								elog(ERROR, "unknown dtype %d in stmt_dynfors", $4->dtype);
 						}
 						new->query = $7;
@@ -1339,7 +1339,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 
 							if (tok != K_FOR)
 							{
-								plpgsql_comperrinfo();
+								plpgsql_error_lineno = $2;
 								elog(ERROR, "syntax error at \"%s\" - expected FOR to open a reference cursor", yytext);
 							}
 
@@ -1355,7 +1355,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 									break;
 
 								default:
-									plpgsql_comperrinfo();
+									plpgsql_error_lineno = $2;
 									elog(ERROR, "syntax error at \"%s\"", yytext);
 							}
 
@@ -1370,7 +1370,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 
 								if (tok != '(')
 								{
-									plpgsql_comperrinfo();
+									plpgsql_error_lineno = yylineno;
 									elog(ERROR, "cursor %s has arguments", $3->refname);
 								}
 
@@ -1384,7 +1384,7 @@ stmt_open		: K_OPEN lno cursor_varptr
 								--cp;
 								if (*cp != ')')
 								{
-									plpgsql_comperrinfo();
+									plpgsql_error_lineno = yylineno;
 									elog(ERROR, "missing )");
 								}
 								*cp = '\0';
@@ -1395,13 +1395,13 @@ stmt_open		: K_OPEN lno cursor_varptr
 
 								if (tok == '(')
 								{
-									plpgsql_comperrinfo();
+									plpgsql_error_lineno = yylineno;
 									elog(ERROR, "cursor %s has no arguments", $3->refname);
 								}
 								
 								if (tok != ';')
 								{
-									plpgsql_comperrinfo();
+									plpgsql_error_lineno = yylineno;
 									elog(ERROR, "syntax error at \"%s\"", yytext);
 								}
 							}
@@ -1440,7 +1440,7 @@ cursor_varptr	: T_VARIABLE
 					{
 						if (yylval.var->datatype->typoid != REFCURSOROID)
 						{
-							plpgsql_comperrinfo();
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "%s must be of type cursor or refcursor", yylval.var->refname);
 						}
 						$$ = yylval.var;
@@ -1451,7 +1451,7 @@ cursor_variable	: T_VARIABLE
 					{
 						if (yylval.var->datatype->typoid != REFCURSOROID)
 						{
-							plpgsql_comperrinfo();
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "%s must be of type refcursor", yylval.var->refname);
 						}
 						$$ = yylval.var->varno;
@@ -1545,7 +1545,6 @@ read_sqlstmt (int until, char *s, char *sqlstart)
 		{
 			case 0:
 				plpgsql_error_lineno = lno;
-				plpgsql_comperrinfo();
 				elog(ERROR, "missing %s at end of SQL statement", s);
 				break;
 
@@ -1613,7 +1612,6 @@ read_datatype(int tok)
 		if (tok == 0)
 		{
 			plpgsql_error_lineno = lno;
-			plpgsql_comperrinfo();
 			elog(ERROR, "incomplete datatype declaration");
 		}
 		/* Possible followers for datatype in a declaration */
@@ -1635,6 +1633,8 @@ read_datatype(int tok)
 	}
 
 	plpgsql_push_back_token(tok);
+
+	plpgsql_error_lineno = lno;	/* in case of error in parse_datatype */
 
 	result = plpgsql_parse_datatype(plpgsql_dstring_get(&ds));
 
@@ -1711,7 +1711,6 @@ make_select_stmt()
 				if (tok == 0)
 				{
 					plpgsql_error_lineno = yylineno;
-					plpgsql_comperrinfo();
 					elog(ERROR, "unexpected end of file");
 				}
 				plpgsql_dstring_append(&ds, yytext);
@@ -1772,6 +1771,7 @@ make_select_stmt()
 							break;
 
 						default:
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "plpgsql: %s is not a variable or record field", yytext);
 					}
 				}
@@ -1850,7 +1850,6 @@ make_select_stmt()
 							if (tok == 0)
 							{
 								plpgsql_error_lineno = yylineno;
-								plpgsql_comperrinfo();
 								elog(ERROR, "unexpected end of file");
 							}
 							plpgsql_dstring_append(&ds, yytext);
@@ -1899,7 +1898,6 @@ make_select_stmt()
 				if (tok == 0)
 				{
 					plpgsql_error_lineno = yylineno;
-					plpgsql_comperrinfo();
 					elog(ERROR, "unexpected end of file");
 				}
 				plpgsql_dstring_append(&ds, yytext);
@@ -1989,6 +1987,7 @@ make_fetch_stmt()
 							break;
 
 						default:
+							plpgsql_error_lineno = yylineno;
 							elog(ERROR, "plpgsql: %s is not a variable or record field", yytext);
 					}
 				}
@@ -2013,16 +2012,18 @@ make_fetch_stmt()
 			break;
 
 		default:
-			{
-				elog(ERROR, "syntax error at '%s'", yytext);
-			}
+			plpgsql_error_lineno = yylineno;
+			elog(ERROR, "syntax error at '%s'", yytext);
 	}
 
 	if (!have_nexttok)
 		tok = yylex();
 
 	if (tok != ';')
+	{
+		plpgsql_error_lineno = yylineno;
 		elog(ERROR, "syntax error at '%s'", yytext);
+	}
 
 	fetch = malloc(sizeof(PLpgSQL_stmt_select));
 	memset(fetch, 0, sizeof(PLpgSQL_stmt_fetch));

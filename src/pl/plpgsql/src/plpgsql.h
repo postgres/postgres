@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.18 2001/10/09 04:15:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.19 2001/10/09 15:59:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -455,9 +455,12 @@ typedef struct
 
 typedef struct PLpgSQL_function
 {								/* Complete compiled function	  */
-	Oid			fn_oid;
 	char	   *fn_name;
+	Oid			fn_oid;
+	TransactionId fn_xmin;
+	CommandId	fn_cmin;
 	int			fn_functype;
+
 	Oid			fn_rettype;
 	int			fn_rettyplen;
 	bool		fn_retbyval;
@@ -482,7 +485,8 @@ typedef struct PLpgSQL_function
 	int			ndatums;
 	PLpgSQL_datum **datums;
 	PLpgSQL_stmt_block *action;
-	struct PLpgSQL_function *next;
+
+	struct PLpgSQL_function *next; /* for chaining list of functions */
 }			PLpgSQL_function;
 
 
@@ -549,7 +553,6 @@ extern int	plpgsql_parse_wordrowtype(char *string);
 extern PLpgSQL_type *plpgsql_parse_datatype(char *string);
 extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);
-extern void plpgsql_comperrinfo(void);
 extern void plpgsql_yyerror(const char *s);
 
 /* ----------

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.15 2001/07/12 17:42:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.16 2001/10/09 15:59:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -324,6 +324,7 @@ plpgsql_ns_rename(char *oldname, char *newname)
 char *
 plpgsql_tolower(char *s)
 {
+	char	   *sstart = s;
 	char	   *ret;
 	char	   *cp;
 
@@ -342,10 +343,7 @@ plpgsql_tolower(char *s)
 				*cp++ = *s++;
 			}
 			if (*s != '"')
-			{
-				plpgsql_comperrinfo();
-				elog(ERROR, "unterminated \"");
-			}
+				elog(ERROR, "unterminated \" in name %s", sstart);
 			s++;
 		}
 		else

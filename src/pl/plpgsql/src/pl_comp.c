@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.35 2001/10/09 04:15:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.36 2001/10/09 15:59:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <setjmp.h>
 
 #include "pl.tab.h"
 
@@ -55,6 +56,7 @@
 #include "fmgr.h"
 #include "parser/gramparse.h"
 #include "parser/parse_type.h"
+#include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -119,18 +121,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 	PLpgSQL_rec *rec;
 	int			i;
 	int			arg_varnos[FUNC_MAX_ARGS];
-
-	/*
-	 * Initialize the compiler
-	 */
-	plpgsql_ns_init();
-	plpgsql_ns_push(NULL);
-	plpgsql_DumpExecTree = 0;
-
-	datums_alloc = 128;
-	plpgsql_nDatums = 0;
-	plpgsql_Datums = palloc(sizeof(PLpgSQL_datum *) * datums_alloc);
-	datums_last = 0;
+	sigjmp_buf	save_restart;
 
 	/*
 	 * Lookup the pg_proc tuple by Oid
@@ -152,15 +143,52 @@ plpgsql_compile(Oid fn_oid, int functype)
 	plpgsql_error_lineno = 0;
 
 	/*
+	 * Catch elog() so we can provide notice about where the error is
+	 */
+	memcpy(&save_restart, &Warn_restart, sizeof(save_restart));
+	if (sigsetjmp(Warn_restart, 1) != 0)
+	{
+		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
+
+		/*
+		 * If we are the first of cascaded error catchings, print where
+		 * this happened
+		 */
+		if (plpgsql_error_funcname != NULL)
+		{
+			elog(NOTICE, "plpgsql: ERROR during compile of %s near line %d",
+				 plpgsql_error_funcname, plpgsql_error_lineno);
+
+			plpgsql_error_funcname = NULL;
+		}
+
+		siglongjmp(Warn_restart, 1);
+	}
+
+	/*
+	 * Initialize the compiler
+	 */
+	plpgsql_ns_init();
+	plpgsql_ns_push(NULL);
+	plpgsql_DumpExecTree = 0;
+
+	datums_alloc = 128;
+	plpgsql_nDatums = 0;
+	plpgsql_Datums = palloc(sizeof(PLpgSQL_datum *) * datums_alloc);
+	datums_last = 0;
+
+	/*
 	 * Create the new function node
 	 */
 	function = malloc(sizeof(PLpgSQL_function));
 	memset(function, 0, sizeof(PLpgSQL_function));
 	plpgsql_curr_compile = function;
 
-	function->fn_functype = functype;
-	function->fn_oid = fn_oid;
 	function->fn_name = strdup(NameStr(procStruct->proname));
+	function->fn_oid = fn_oid;
+	function->fn_xmin = procTup->t_data->t_xmin;
+	function->fn_cmin = procTup->t_data->t_cmin;
+	function->fn_functype = functype;
 
 	switch (functype)
 	{
@@ -180,7 +208,6 @@ plpgsql_compile(Oid fn_oid, int functype)
 									 0, 0, 0);
 			if (!HeapTupleIsValid(typeTup))
 			{
-				plpgsql_comperrinfo();
 				if (!OidIsValid(procStruct->prorettype))
 					elog(ERROR, "plpgsql functions cannot return type \"opaque\""
 						 "\n\texcept when used as triggers");
@@ -215,7 +242,6 @@ plpgsql_compile(Oid fn_oid, int functype)
 										 0, 0, 0);
 				if (!HeapTupleIsValid(typeTup))
 				{
-					plpgsql_comperrinfo();
 					if (!OidIsValid(procStruct->proargtypes[i]))
 						elog(ERROR, "plpgsql functions cannot take type \"opaque\"");
 					else
@@ -233,11 +259,8 @@ plpgsql_compile(Oid fn_oid, int functype)
 					 */
 					sprintf(buf, "%s%%rowtype", NameStr(typeStruct->typname));
 					if (plpgsql_parse_wordrowtype(buf) != T_ROW)
-					{
-						plpgsql_comperrinfo();
 						elog(ERROR, "cannot get tuple struct of argument %d",
 							 i + 1);
-					}
 
 					row = plpgsql_yylval.row;
 					sprintf(buf, "$%d", i + 1);
@@ -485,10 +508,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 	 */
 	parse_rc = plpgsql_yyparse();
 	if (parse_rc != 0)
-	{
-		plpgsql_comperrinfo();
 		elog(ERROR, "plpgsql: parser returned %d ???", parse_rc);
-	}
 
 	/*
 	 * If that was successful, complete the functions info.
@@ -503,6 +523,13 @@ plpgsql_compile(Oid fn_oid, int functype)
 	function->action = plpgsql_yylval.program;
 
 	ReleaseSysCache(procTup);
+
+	/*
+	 * Restore the previous elog() jump target
+	 */
+	plpgsql_error_funcname = NULL;
+	plpgsql_error_lineno = 0;
+	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
 	/*
 	 * Finally return the compiled function
@@ -703,7 +730,6 @@ plpgsql_parse_dblword(char *string)
 						return T_VARIABLE;
 					}
 				}
-				plpgsql_comperrinfo();
 				elog(ERROR, "row %s doesn't have a field %s",
 					 word1, word2);
 			}
@@ -807,7 +833,6 @@ plpgsql_parse_tripword(char *string)
 						return T_VARIABLE;
 					}
 				}
-				plpgsql_comperrinfo();
 				elog(ERROR, "row %s.%s doesn't have a field %s",
 					 word1, word2, word3);
 			}
@@ -989,10 +1014,12 @@ plpgsql_parse_dblwordtype(char *string)
 	}
 
 	/*
-	 * It must be a (shared) relation class
+	 * It must be a relation, sequence or view
 	 */
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
-	if (classStruct->relkind != 'r' && classStruct->relkind != 's')
+	if (classStruct->relkind != RELKIND_RELATION &&
+		classStruct->relkind != RELKIND_SEQUENCE &&
+		classStruct->relkind != RELKIND_VIEW)
 	{
 		ReleaseSysCache(classtup);
 		pfree(word1);
@@ -1018,11 +1045,8 @@ plpgsql_parse_dblwordtype(char *string)
 							 ObjectIdGetDatum(attrStruct->atttypid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-	{
-		plpgsql_comperrinfo();
 		elog(ERROR, "cache lookup for type %u of %s.%s failed",
 			 attrStruct->atttypid, word1, word2);
-	}
 	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	/*
@@ -1079,19 +1103,13 @@ plpgsql_parse_wordrowtype(char *string)
 							  PointerGetDatum(word1),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(classtup))
-	{
-		plpgsql_comperrinfo();
 		elog(ERROR, "%s: no such class", word1);
-	}
 	classStruct = (Form_pg_class) GETSTRUCT(classtup);
 	/* accept relation, sequence, or view pg_class entries */
-	if (classStruct->relkind != 'r' &&
-		classStruct->relkind != 's' &&
-		classStruct->relkind != 'v')
-	{
-		plpgsql_comperrinfo();
+	if (classStruct->relkind != RELKIND_RELATION &&
+		classStruct->relkind != RELKIND_SEQUENCE &&
+		classStruct->relkind != RELKIND_VIEW)
 		elog(ERROR, "%s isn't a table", word1);
-	}
 
 	/*
 	 * Fetch the table's pg_type tuple too
@@ -1100,10 +1118,7 @@ plpgsql_parse_wordrowtype(char *string)
 							 PointerGetDatum(word1),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(typetup))
-	{
-		plpgsql_comperrinfo();
 		elog(ERROR, "cache lookup for %s in pg_type failed", word1);
-	}
 
 	/*
 	 * Create a row datum entry and all the required variables that it
@@ -1131,11 +1146,8 @@ plpgsql_parse_wordrowtype(char *string)
 								 Int16GetDatum(i + 1),
 								 0, 0);
 		if (!HeapTupleIsValid(attrtup))
-		{
-			plpgsql_comperrinfo();
 			elog(ERROR, "cache lookup for attribute %d of class %s failed",
 				 i + 1, word1);
-		}
 		attrStruct = (Form_pg_attribute) GETSTRUCT(attrtup);
 
 		cp = pstrdup(NameStr(attrStruct->attname));
@@ -1144,11 +1156,8 @@ plpgsql_parse_wordrowtype(char *string)
 								 ObjectIdGetDatum(attrStruct->atttypid),
 								 0, 0, 0);
 		if (!HeapTupleIsValid(typetup))
-		{
-			plpgsql_comperrinfo();
 			elog(ERROR, "cache lookup for type %u of %s.%s failed",
 				 attrStruct->atttypid, word1, cp);
-		}
 		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 		/*
@@ -1316,19 +1325,6 @@ plpgsql_add_initdatums(int **varnos)
 }
 
 
-/* ----------
- * plpgsql_comperrinfo			Called before elog(ERROR, ...)
- *					during compile.
- * ----------
- */
-void
-plpgsql_comperrinfo()
-{
-	elog(NOTICE, "plpgsql: ERROR during compile of %s near line %d",
-		 plpgsql_error_funcname, plpgsql_error_lineno);
-}
-
-
 /* ---------
  * plpgsql_yyerror			Handle parser error
  * ---------
@@ -1338,6 +1334,5 @@ void
 plpgsql_yyerror(const char *s)
 {
 	plpgsql_error_lineno = plpgsql_yylineno;
-	plpgsql_comperrinfo();
 	elog(ERROR, "%s at or near \"%s\"", s, plpgsql_yytext);
 }

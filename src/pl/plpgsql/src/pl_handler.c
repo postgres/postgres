@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.8 2001/03/22 06:16:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.9 2001/10/09 15:59:56 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -58,6 +58,9 @@
 static PLpgSQL_function *compiled_functions = NULL;
 
 
+static bool func_up_to_date(PLpgSQL_function *func);
+
+
 /* ----------
  * plpgsql_call_handler
  *
@@ -72,6 +75,7 @@ Datum
 plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
 	bool		isTrigger = CALLED_AS_TRIGGER(fcinfo);
+	Oid			funcOid = fcinfo->flinfo->fn_oid;
 	PLpgSQL_function *func;
 	Datum		retval;
 
@@ -86,17 +90,24 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	 * (ie, current FmgrInfo has been used before)
 	 */
 	func = (PLpgSQL_function *) fcinfo->flinfo->fn_extra;
+	if (func != NULL)
+	{
+		Assert(func->fn_oid == funcOid);
+		/*
+		 * But is the function still up to date?
+		 */
+		if (! func_up_to_date(func))
+			func = NULL;
+	}
+
 	if (func == NULL)
 	{
-
 		/*
-		 * Check if we already compiled this function
+		 * Check if we already compiled this function for another caller
 		 */
-		Oid			funcOid = fcinfo->flinfo->fn_oid;
-
 		for (func = compiled_functions; func != NULL; func = func->next)
 		{
-			if (funcOid == func->fn_oid)
+			if (funcOid == func->fn_oid && func_up_to_date(func))
 				break;
 		}
 
@@ -134,4 +145,31 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "plpgsql: SPI_finish() failed");
 
 	return retval;
+}
+
+
+/*
+ * Check to see if a compiled function is still up-to-date.  This
+ * is needed because CREATE OR REPLACE FUNCTION can modify the
+ * function's pg_proc entry without changing its OID.
+ */
+static bool
+func_up_to_date(PLpgSQL_function *func)
+{
+	HeapTuple	procTup;
+	bool		result;
+
+	procTup = SearchSysCache(PROCOID,
+							 ObjectIdGetDatum(func->fn_oid),
+							 0, 0, 0);
+	if (!HeapTupleIsValid(procTup))
+		elog(ERROR, "plpgsql: cache lookup for proc %u failed",
+			 func->fn_oid);
+
+	result = (func->fn_xmin == procTup->t_data->t_xmin &&
+			  func->fn_cmin == procTup->t_data->t_cmin);
+
+	ReleaseSysCache(procTup);
+
+	return result;
 }
