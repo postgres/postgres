@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125.2.2 2002/09/30 19:55:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125.2.3 2005/01/24 17:46:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,6 +640,8 @@ ProcessUtility(Node *parsetree,
 			{
 				LoadStmt   *stmt = (LoadStmt *) parsetree;
 
+				if (!superuser())
+					elog(ERROR, "permission denied");
 				closeAllVfds(); /* probably not necessary... */
 				load_file(stmt->filename);
 			}
