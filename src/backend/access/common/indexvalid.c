@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.17 1998/01/15 19:41:44 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.18 1998/01/31 05:54:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <postgres.h>
+#include <fmgr.h>
 
 #include <access/htup.h>
 #include <access/iqual.h>

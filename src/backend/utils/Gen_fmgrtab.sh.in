@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.8 1998/01/31 05:30:59 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.9 1998/01/31 05:54:57 momjian Exp $
 #
 # NOTES
 #    Passes any -D options on to cpp prior to generating the list
@@ -81,7 +81,7 @@ cat > $HFILE <<FuNkYfMgRsTuFf
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: Gen_fmgrtab.sh.in,v 1.8 1998/01/31 05:30:59 momjian Exp $
+ * $Id: Gen_fmgrtab.sh.in,v 1.9 1998/01/31 05:54:57 momjian Exp $
  *
  * NOTES
  *	******************************
@@ -143,7 +143,7 @@ extern void load_file(char *filename);
  */
 
 /* We don't make this static so fmgr_faddr() macros can access it */
-extern FmgrInfo        *fmgr_pl_finfo;
+FmgrInfo        *fmgr_pl_finfo;
 
 #define fmgr_faddr(finfo) \
 ( \
@@ -195,7 +195,7 @@ cat > $TABCFILE <<FuNkYfMgRtAbStUfF
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.8 1998/01/31 05:30:59 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh.in,v 1.9 1998/01/31 05:54:57 momjian Exp $
  *
  * NOTES
  *
