@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.39 1997/08/22 03:17:55 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.40 1997/08/28 05:02:01 vadim Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -715,6 +715,13 @@ def_elem:  def_name '=' def_arg
 		    $$ = makeNode(DefElem);
 		    $$->defname = $1;
 		    $$->arg = (Node *)NULL;
+		}
+	|  DEFAULT '=' def_arg
+		{
+		    $$ = makeNode(DefElem);
+		    $$->defname = (char*) palloc (8);
+		    strcpy ($$->defname, "default");
+		    $$->arg = (Node *)$3;
 		}
 	;
 
