@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.3 2000/07/03 23:09:58 wieck Exp $
+ * $Id: tuptoaster.h,v 1.4 2000/07/04 00:04:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 
 #ifdef TUPLE_TOASTER_ACTIVE
 
-#include "postgres.h"
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tupmacs.h"
