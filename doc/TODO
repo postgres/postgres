@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Aug 17 09:14:04 EDT 2002
+Last updated:		Sat Aug 17 11:09:40 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -349,6 +349,7 @@ Dependency Checking
 * Make other constraints clearer in dump file
 * -Make foreign keys easier to identify
 * Flush cached query plans when their underlying catalog data changes
+* Use dependency information to dump data in proper order
 
 
 Transactions
