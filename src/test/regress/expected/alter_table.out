@@ -94,183 +94,36 @@ SELECT * FROM tmp;
 
 DROP TABLE tmp;
 --
--- rename -
---   should preserve indices, which we can check by seeing if a SELECT
---   chooses an indexscan; however, in the absence of vacuum statistics
---   it might not.  Therefore, vacuum first.
+-- rename - check on both non-temp and temp tables
 --
-VACUUM ANALYZE tenk1;
-ALTER TABLE tenk1 RENAME TO ten_k;
--- 20 values, sorted 
-SELECT unique1 FROM ten_k WHERE unique1 < 20;
- unique1 
----------
-       0
-       1
-       2
-       3
-       4
-       5
-       6
-       7
-       8
-       9
-      10
-      11
-      12
-      13
-      14
-      15
-      16
-      17
-      18
-      19
-(20 rows)
+CREATE TABLE tmp (regtable int);
+CREATE TEMP TABLE tmp (tmptable int);
+ALTER TABLE tmp RENAME TO tmp_new;
+SELECT * FROM tmp;
+ regtable 
+----------
+(0 rows)
 
--- 20 values, sorted 
-SELECT unique2 FROM ten_k WHERE unique2 < 20;
- unique2 
----------
-       0
-       1
-       2
-       3
-       4
-       5
-       6
-       7
-       8
-       9
-      10
-      11
-      12
-      13
-      14
-      15
-      16
-      17
-      18
-      19
-(20 rows)
+SELECT * FROM tmp_new;
+ tmptable 
+----------
+(0 rows)
 
--- 100 values, sorted 
-SELECT hundred FROM ten_k WHERE hundred = 50;
- hundred 
----------
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-      50
-(100 rows)
+ALTER TABLE tmp RENAME TO tmp_new2;
+SELECT * FROM tmp;		-- should fail
+ERROR:  relation "tmp" does not exist
+SELECT * FROM tmp_new;
+ tmptable 
+----------
+(0 rows)
 
-ALTER TABLE ten_k RENAME TO tenk1;
--- 5 values, sorted 
-SELECT unique1 FROM tenk1 WHERE unique1 < 5;
- unique1 
----------
-       0
-       1
-       2
-       3
-       4
-(5 rows)
+SELECT * FROM tmp_new2;
+ regtable 
+----------
+(0 rows)
 
+DROP TABLE tmp_new;
+DROP TABLE tmp_new2;
 -- ALTER TABLE ... RENAME on non-table relations
 -- renaming indexes (FIXME: this should probably test the index's functionality)
 ALTER TABLE onek_unique1 RENAME TO tmp_onek_unique1;
@@ -278,6 +131,8 @@ ALTER TABLE tmp_onek_unique1 RENAME TO onek_unique1;
 -- renaming views
 CREATE VIEW tmp_view (unique1) AS SELECT unique1 FROM tenk1;
 ALTER TABLE tmp_view RENAME TO tmp_view_new;
+-- analyze to ensure we get an indexscan here
+ANALYZE tenk1;
 -- 5 values, sorted 
 SELECT unique1 FROM tenk1 WHERE unique1 < 5;
  unique1 
