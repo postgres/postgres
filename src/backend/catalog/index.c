@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.54 1998/08/26 05:22:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.55 1998/08/26 17:12:09 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -119,9 +119,9 @@ DefaultBuild(Relation heapRelation, Relation indexRelation,
 static FormData_pg_attribute sysatts[] = {
 	{0, {"ctid"}, TIDOID, 0, 6, -1, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
 	{0, {"oid"}, OIDOID, 0, 4, -2, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
-	{0, {"xmin"}, XIDOID, 0, 4, -3, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
+	{0, {"xmin"}, XIDOID, 0, 4, -3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
 	{0, {"cmin"}, CIDOID, 0, 4, -4, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
-	{0, {"xmax"}, XIDOID, 0, 4, -5, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'},
+	{0, {"xmax"}, XIDOID, 0, 4, -5, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
 	{0, {"cmax"}, CIDOID, 0, 4, -6, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'},
 };
 

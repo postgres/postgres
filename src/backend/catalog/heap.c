@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.60 1998/08/24 01:37:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.61 1998/08/26 17:12:08 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -111,7 +111,7 @@ static FormData_pg_attribute a2 = {
 
 static FormData_pg_attribute a3 = {
 	0xffffffff, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
-	MinTransactionIdAttributeNumber, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'
+	MinTransactionIdAttributeNumber, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
 static FormData_pg_attribute a4 = {
@@ -121,7 +121,7 @@ static FormData_pg_attribute a4 = {
 
 static FormData_pg_attribute a5 = {
 	0xffffffff, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
-	MaxTransactionIdAttributeNumber, 0, -1, -1, '\0', '\0', 'i', '\0', '\0'
+	MaxTransactionIdAttributeNumber, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
 static FormData_pg_attribute a6 = {
