@@ -12,7 +12,7 @@
   alink="#0000FF">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Jul 10 21:01:47 EDT 2001</P>
+    <P>Last updated: Mon Aug 20 16:37:10 EDT 2001</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -338,8 +338,7 @@
     See our <A href="http://www.PostgreSQL.org/docs/todo.html">TODO</A>
     list for known bugs, missing features, and future plans.</P>
 
-    <H4><A name="1.10">1.10</A>) How can I learn
-    <SMALL>SQL</SMALL>?</H4>
+    <H4><A name="1.10">1.10</A>) How can I learn <SMALL>SQL</SMALL>?</H4>
 
     <P>The PostgreSQL book at <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
@@ -626,9 +625,9 @@
     <H4><A name="3.7">3.7</A>) How do I tune the database engine for
     better performance?</H4>
 
-    <P>Certainly, indices can speed up queries. The
-    <SMALL>EXPLAIN</SMALL> command allows you to see how PostgreSQL is
-    interpreting your query, and which indices are being used.</P>
+    <P>Certainly, indices can speed up queries. The <SMALL>EXPLAIN</SMALL>
+    command allows you to see how PostgreSQL is interpreting your query,
+    and which indices are being used.</P>
 
     <P>If you are doing a lot of <SMALL>INSERTs</SMALL>, consider doing
     them in a large batch using the <SMALL>COPY</SMALL> command. This
@@ -900,7 +899,7 @@ Maximum number of indexes on a table?    unlimited
     because a sequential scan would be faster.</P>
 
     <P>For column-specific optimization statistics, use <SMALL>VACUUM
-    ANALYZE.</SMALL> <SMALL>VACUUM ANALYZE</SMALL> is important for
+    ANALYZE.</SMALL> V<SMALL>ACUUM ANALYZE</SMALL> is important for
     complex multijoin queries, so the optimizer can estimate the number
     of rows returned from each table, and choose the proper join order.
     The backend does not keep track of column statistics on its own, so
