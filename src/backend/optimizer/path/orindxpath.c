@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.64 2004/12/31 22:00:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.65 2005/03/01 01:40:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -387,10 +387,14 @@ best_or_subclause_index(Query *root,
 
 		/*
 		 * Ignore index if it doesn't match the subclause at all; except
-		 * that if it's a partial index, consider it anyway, since the
-		 * selectivity of the predicate alone might make the index useful.
+		 * that if it's a partial index matching the current OR subclause,
+		 * consider it anyway, since effectively we are using the index
+		 * predicate to match the subclause.  (Note: we exclude partial
+		 * indexes that are predOK; else such a partial index would be
+		 * considered to match *every* OR subclause, generating bogus OR
+		 * plans that are redundant with the basic scan on that index.)
 		 */
-		if (indexclauses == NIL && index->indpred == NIL)
+		if (indexclauses == NIL && (index->indpred == NIL || index->predOK))
 			continue;
 
 		/* Convert clauses to indexquals the executor can handle */
