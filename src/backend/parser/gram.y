@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.258 2001/10/03 20:54:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.259 2001/10/05 06:37:42 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4251,8 +4251,8 @@ ConstDatetime:  datetime
 					 */
 					$$->timezone = $5;
 					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"TIMESTAMP %s precision %d must be beween 0 and %d",
-							 ($5? " WITH TIME ZONE": ""), 0, 13);
+						elog(ERROR,"TIMESTAMP(%d) %s precision must be beween %d and %d",
+							 $3, ($5? " WITH TIME ZONE": ""), 0, 13);
 					$$->typmod = $3;
 				}
 		| TIMESTAMP opt_timezone_x
@@ -4276,8 +4276,8 @@ ConstDatetime:  datetime
 					else
 						$$->name = xlateSqlType("time");
 					if (($3 < 0) || ($3 > 13))
-						elog(ERROR,"TIME %s precision %d must be beween 0 and %d",
-							 ($5? " WITH TIME ZONE": ""), 0, 13);
+						elog(ERROR,"TIME(%d) %s precision must be beween %d and %d",
+							 $3, ($5? " WITH TIME ZONE": ""), 0, 13);
 					$$->typmod = $3;
 				}
 		| TIME opt_timezone
@@ -4911,7 +4911,7 @@ c_expr:  attr
 					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
-					FuncCall *n = makeNode(FuncCall);
+					TypeName *d = makeNode(TypeName);
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
@@ -4921,12 +4921,12 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					n->funcname = xlateSqlType("date");
-					n->args = makeList1(s);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
+					d = makeNode(TypeName);
+					d->name = xlateSqlType("date");
+					d->setof = FALSE;
+					d->typmod = -1;
 
-					$$ = (Node *)n;
+					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
 		| CURRENT_TIME
 				{
@@ -4936,7 +4936,7 @@ c_expr:  attr
 					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
-					FuncCall *n = makeNode(FuncCall);
+					TypeName *d = makeNode(TypeName);
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
@@ -4946,12 +4946,12 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					n->funcname = xlateSqlType("time");
-					n->args = makeList1(s);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
+					d = makeNode(TypeName);
+					d->name = xlateSqlType("time");
+					d->setof = FALSE;
+					d->typmod = 0;
 
-					$$ = (Node *)n;
+					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
 		| CURRENT_TIME '(' Iconst ')'
 				{
@@ -4961,7 +4961,7 @@ c_expr:  attr
 					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
-					FuncCall *n = makeNode(FuncCall);
+					TypeName *d = makeNode(TypeName);
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
@@ -4971,26 +4971,25 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					n->funcname = xlateSqlType("time");
-					n->args = makeList1(s);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
+					d = makeNode(TypeName);
+					d->name = xlateSqlType("timetz");
+					d->setof = FALSE;
+					if (($3 < 0) || ($3 > 13))
+						elog(ERROR,"CURRENT_TIME(%d) precision must be between %d and %d",
+							 $3, 0, 13);
+					d->typmod = $3;
 
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented"
-							 "; zero used instead",$3);
-
-					$$ = (Node *)n;
+					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
 		| CURRENT_TIMESTAMP
 				{
 					/*
-					 * Translate as "timestamp('now'::text)".
+					 * Translate as "timestamptz('now'::text)".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
-					FuncCall *n = makeNode(FuncCall);
+					TypeName *d = makeNode(TypeName);
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
@@ -5000,12 +4999,15 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					n->funcname = xlateSqlType("timestamp");
-					n->args = makeList1(s);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
+					/* SQL99 mandates a default precision of 6
+					 * for timestamp. - thomas 2001-10-04
+					 */
+					d = makeNode(TypeName);
+					d->name = xlateSqlType("timestamptz");
+					d->setof = FALSE;
+					d->typmod = 6;
 
-					$$ = (Node *)n;
+					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
 		| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
@@ -5015,7 +5017,7 @@ c_expr:  attr
 					 */
 					A_Const *s = makeNode(A_Const);
 					TypeName *t = makeNode(TypeName);
-					FuncCall *n = makeNode(FuncCall);
+					TypeName *d = makeNode(TypeName);
 
 					s->val.type = T_String;
 					s->val.val.str = "now";
@@ -5025,16 +5027,15 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					n->funcname = xlateSqlType("timestamp");
-					n->args = makeList1(s);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
+					d = makeNode(TypeName);
+					d->name = xlateSqlType("timestamptz");
+					d->setof = FALSE;
+					if (($3 < 0) || ($3 > 13))
+						elog(ERROR,"CURRENT_TIMESTAMP(%d) precision must be beween %d and %d",
+							 $3, 0, 13);
+					d->typmod = $3;
 
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented"
-							 "; zero used instead",$3);
-
-					$$ = (Node *)n;
+					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
 		| CURRENT_USER
 				{
