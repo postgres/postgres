@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.10 1996/11/18 06:07:29 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.11 1996/12/02 06:31:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -60,17 +60,21 @@ runtest: $(INFILES) expected.out
 # turns those names back into real values for the instant installation to
 # create a standard (expected.out) against which to compare regress.out 
 # from the experimental run.
-
+#
+#
 expected.out: expected.input
 	if [ -z "$$USER" ]; then USER=$$LOGNAME; fi; \
 	if [ -z "$$USER" ]; then USER=`whoami`; fi; \
 	if [ -z "$$USER" ]; then echo 'Cannot deduce $USER.'; exit 1; fi; \
 	rm -f expected.out; \
+	MYTZ=`date | cut -c21`; \
 	C="`pwd`"; \
 	sed -e "s:_CWD_:$$C:g" \
 	    -e "s:_OBJWD_:$$C:g" \
             -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
-	    -e "s/_USER_/$$USER/g" < expected.input > expected.out
+	    -e "s;\([A-Z][a-z][a-z][^ ]* [A-Z][a-z][a-z] [0-9 ][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] [0-9][0-9][0-9][0-9] \)[A-Z]\([A-Z][A-Z]\);\1$$MYTZ\2;g" \
+	    -e "s;\([A-Z][a-z][a-z][^ ]* [A-Z][a-z][a-z] [0-9 ][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9] \)[A-Z]\([A-Z][A-Z] [0-9][0-9][0-9][0-9]\);\1$$MYTZ\2;g" \
+	    -e "s:_USER_:$$USER:g" < expected.input > expected.out
 	@echo "YOUR EXPECTED RESULTS ARE NOW IN FILE expected.out."
 
 %.sql: %.source

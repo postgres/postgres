@@ -4,12 +4,12 @@ destroydb: database destroy failed on regression.
 =============== creating new regression database... =================
 QUERY: CREATE FUNCTION circle_in(opaque)
    RETURNS circle
-   AS '_CWD_/obj/regress_DLSUFFIX_'
+   AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 NOTICE:ProcedureCreate: type 'circle' is not yet defined
 QUERY: CREATE FUNCTION circle_out(opaque)
    RETURNS opaque
-   AS '_CWD_/obj/regress_DLSUFFIX_'
+   AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE TYPE circle (
    internallength = 24,
@@ -211,25 +211,25 @@ QUERY: CREATE FUNCTION user_relns()
    LANGUAGE 'sql';
 QUERY: CREATE FUNCTION pt_in_circle(point, circle)
    RETURNS int4
-   AS '_CWD_/obj/regress_DLSUFFIX_'
+   AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION overpaid(emp)
    RETURNS bool
-   AS '_CWD_/obj/regress_DLSUFFIX_'
+   AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION boxarea(box)
    RETURNS int4
-   AS '_CWD_/obj/regress_DLSUFFIX_'
+   AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
-   AS '_CWD_/obj/regress_DLSUFFIX_'
+   AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION reverse_c16(char16)
    RETURNS char16
-   AS '_CWD_/obj/regress_DLSUFFIX_'
+   AS '_CWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: LOAD '_CWD_/obj/regress_DLSUFFIX_'
+QUERY: LOAD '_CWD_/regress_DLSUFFIX_'
 COPY onek FROM '_CWD_/data/onek.data';
 QUERY: COPY tenk1 FROM '_CWD_/data/tenk.data';
 QUERY: INSERT INTO tenk2 VALUES (tenk1.*);
@@ -416,15 +416,15 @@ QUERY: CREATE OPERATOR <% (
    commutator = >=%
 );
 QUERY: CREATE OPERATOR @#@ (
-   rightarg = int4,
+   rightarg = int4,		
    procedure = int4fac
 );
 QUERY: CREATE OPERATOR #@# (
-   leftarg = int4,
+   leftarg = int4,		
    procedure = int4fac
 );
 QUERY: CREATE OPERATOR #%# (
-   leftarg = int4,
+   leftarg = int4,		
    procedure = int4fac
 );
 QUERY: CREATE VIEW street AS
@@ -663,7 +663,7 @@ tf_12_ff_4|f1|f1
 
 QUERY: CREATE TABLE ABSTIME_TBL (f1 abstime);
 QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Jan 14, 1973 03:14:21');
-QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Mon May  1 00:30:30 PDT 1995'::abstime);
+QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('Mon May  1 00:30:30 1995'::abstime);
 QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('epoch'::abstime);
 QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('current'::abstime);
 QUERY: INSERT INTO ABSTIME_TBL (f1) VALUES ('infinity'::abstime);
@@ -690,7 +690,7 @@ QUERY: INSERT INTO TINTERVAL_TBL (f1)
 QUERY: INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["Sep 4, 1983 23:59:12" "Oct 4, 1983 23:59:12"]');
 QUERY: INSERT INTO TINTERVAL_TBL (f1)
-   VALUES ('["epoch" "Mon May  1 00:30:30 PDT 1995"]');
+   VALUES ('["epoch" "Mon May  1 00:30:30 1995"]');
 QUERY: INSERT INTO TINTERVAL_TBL (f1)
    VALUES ('["Feb 15 1990 12:15:03" "current"]');
 QUERY: INSERT INTO TINTERVAL_TBL (f1)
@@ -799,7 +799,7 @@ six|f1
 (6 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-  WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime)
+  WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime)	
 	< 'Jan 14 14:00:00 1977'::abstime;
 five|f1                          
 ----+----------------------------
@@ -811,7 +811,7 @@ five|f1
 (5 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime)
+   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime)	
 	< 'Jan 14 14:00:00 1971'::abstime;
 five|f1                          
 ----+----------------------------
@@ -823,7 +823,7 @@ five|f1
 (5 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)
+   WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)	
 	< 'Jan 14 14:00:00 1971'::abstime;
 five|f1                          
 ----+----------------------------
@@ -835,7 +835,7 @@ five|f1
 (5 rows)
 
 QUERY: SELECT '' AS five, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime)
+   WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime)	
 	< 'Jan 14 14:00:00 1977'::abstime;
 five|f1                          
 ----+----------------------------
@@ -1194,7 +1194,7 @@ two|f1
 (2 rows)
 
 QUERY: SELECT '' AS two, b.f1
-   FROM BOX_TBL b				-- zero area
+   FROM BOX_TBL b				
    WHERE b.f1 > '(3.5,3.0,4.5,3.0)'::box;
 two|f1       
 ---+---------
@@ -1203,7 +1203,7 @@ two|f1
 (2 rows)
 
 QUERY: SELECT '' AS four, b.f1
-   FROM BOX_TBL b				-- zero area
+   FROM BOX_TBL b				
    WHERE b.f1 >= '(3.5,3.0,4.5,3.0)'::box;
 four|f1               
 ----+-----------------
@@ -1842,17 +1842,14 @@ three|f1         |x
 (3 rows)
 
 QUERY: SELECT '' AS three, f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
-   WHERE f.f1 > '0.0'
-SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 three|f1         |x          
 -----+-----------+-----------
      |1004.3     |994.3      
      |1.23457e+20|1.23457e+20
      |1.23457e-20|-10        
-(3 rows)
 
-QUERY: SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
+QUERY: SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
    WHERE f.f1 > '0.0';
 three|f1         |x           
 -----+-----------+------------
@@ -1861,7 +1858,8 @@ three|f1         |x
      |1.23457e-20|-1.23457e-21
 (3 rows)
 
-QUERY: SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
+QUERY: SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
+   WHERE f.f1 > '0.0';
 three|f1         |x          
 -----+-----------+-----------
      |1004.3     |1014.3     
@@ -1869,9 +1867,9 @@ three|f1         |x
      |1.23457e-20|10         
 (3 rows)
 
-QUERY: SELECT '' AS five, FLOAT4_TBL.*;
+QUERY: SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
 WARN:float4div:  divide by 0.0 error
-QUERY: SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
+QUERY: SELECT '' AS five, FLOAT4_TBL.*;
 five|f1         
 ----+-----------
     |0          
@@ -1881,9 +1879,7 @@ five|f1
     |1.23457e-20
 (5 rows)
 
-QUERY: UPDATE FLOAT4_TBL
-   SET f1 = FLOAT4_TBL.f1 * '-1'
-   WHERE FLOAT4_TBL.f1 > '0.0';
+QUERY: SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 five|f1         |abs_f1     
 ----+-----------+-----------
     |0          |0          
@@ -1893,7 +1889,19 @@ five|f1         |abs_f1
     |1.23457e-20|1.23457e-20
 (5 rows)
 
+QUERY: UPDATE FLOAT4_TBL
+   SET f1 = FLOAT4_TBL.f1 * '-1'
+   WHERE FLOAT4_TBL.f1 > '0.0';
 QUERY: SELECT '' AS five, FLOAT4_TBL.*;
+five|f1          
+----+------------
+    |0           
+    |-34.84      
+    |-1004.3     
+    |-1.23457e+20
+    |-1.23457e-20
+(5 rows)
+
 QUERY: CREATE TABLE FLOAT8_TBL(f1 float8);
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
 QUERY: INSERT INTO FLOAT8_TBL(f1) VALUES ('1004.30');
@@ -3886,9 +3894,9 @@ f20000
  20000
 (1 row)
 
-QUERY: COPY onek TO '_CWD_/obj/onek.data';
+QUERY: COPY onek TO '_CWD_/onek.data';
 QUERY: DELETE FROM onek;
-QUERY: COPY onek FROM '_CWD_/obj/onek.data';
+QUERY: COPY onek FROM '_CWD_/onek.data';
 QUERY: SELECT unique1 FROM onek WHERE unique1 < 2;
 unique1
 -------
@@ -3897,7 +3905,7 @@ unique1
 (2 rows)
 
 QUERY: DELETE FROM onek2;
-QUERY: COPY onek2 FROM '_CWD_/obj/onek.data';
+QUERY: COPY onek2 FROM '_CWD_/onek.data';
 QUERY: SELECT unique1 FROM onek2 WHERE unique1 < 2;
 unique1
 -------
@@ -3905,9 +3913,9 @@ unique1
       0
 (2 rows)
 
-QUERY: COPY BINARY stud_emp TO '_CWD_/obj/stud_emp.data';
+QUERY: COPY BINARY stud_emp TO '_CWD_/stud_emp.data';
 QUERY: DELETE FROM stud_emp;
-QUERY: COPY BINARY stud_emp FROM '_CWD_/obj/stud_emp.data';
+QUERY: COPY BINARY stud_emp FROM '_CWD_/stud_emp.data';
 QUERY: SELECT * FROM stud_emp;
 name |age|location  |salary|manager|gpa|percent
 -----+---+----------+------+-------+---+-------
@@ -4762,7 +4770,7 @@ QUERY: CLOSE foo24;
 QUERY: CLOSE foo25;
 QUERY: END;
 QUERY: PURGE hash_f8_heap BEFORE 'now';
-SELECT count(*) AS has_10002 FROM hash_f8_heap[,] h;
+QUERY: SELECT count(*) AS has_10002 FROM hash_f8_heap[,] h;
 QUERY: VACUUM hash_f8_heap;
 QUERY: SELECT count(*) AS has_10000 FROM hash_f8_heap[,] h;
 has_10000
@@ -4771,12 +4779,17 @@ has_10000
 (1 row)
 
 QUERY: PURGE hash_i4_heap AFTER '@ 1 second ago';
-SELECT count(*) AS has_10002 FROM hash_i4_heap[,] h;
+QUERY: SELECT count(*) AS has_10002 FROM hash_i4_heap[,] h;
+has_10002
+---------
+    10002
+(1 row)
+
 QUERY: VACUUM hash_i4_heap;
 QUERY: SELECT count(*) AS has_10000 FROM hash_i4_heap[,] h;
 has_10000
 ---------
-    10002
+    10000
 (1 row)
 
 QUERY: CREATE TABLE temp (initial int4);
@@ -4809,7 +4822,7 @@ QUERY: ALTER TABLE temp ADD COLUMN z int2[];
 QUERY: INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
    VALUES (4, 'char16', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
-        'Mon May  1 00:30:30 PDT 1995', 'c', '{Mon May  1 00:30:30 PDT 1995, Monday Aug 24 14:43:07 1992 PDT, epoch}',
+        'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
 	314159, '(1,1)', 512,
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
@@ -4854,7 +4867,7 @@ QUERY: ALTER TABLE temp ADD COLUMN z int2[];
 QUERY: INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
 	v, w, x, y, z)
    VALUES (4, 'char16', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
-	'Mon May  1 00:30:30 PDT 1995', 'c', '{Mon May  1 00:30:30 PDT 1995, Monday Aug 24 14:43:07 1992 PDT, epoch}',
+	'Mon May  1 00:30:30 1995', 'c', '{Mon May  1 00:30:30 1995, Monday Aug 24 14:43:07 1992, epoch}',
 	 314159, '(1,1)', 512,
 	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
 	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',

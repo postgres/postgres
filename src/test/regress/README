@@ -10,9 +10,9 @@ Preparation
 
   The regression test is invoked thru by the 'make' command which compiles
   a 'c' program with Postgres95 extension functions into a shared library
-  in the 'obj' directory.  Localised shell scripts are also created in
-  the 'obj' directory. The 'expected.input' file is massaged into the
-  'obj/expected.out' file.  The localization replaces macros in the source
+  in the current directory.  Localized shell scripts are also created in
+  the current directory. The 'expected.input' file is massaged into the
+  'expected.out' file.  The localization replaces macros in the source
   files with absolute pathnames and user names.
 
 The 'expected.input' file and the 'sample.regress.out' file
@@ -46,12 +46,12 @@ Running the regression test
   Normally, the regression test should be run as the 'postgres' user as the
   'src/test/regress' directory and sub-directories are owned by the
   'postgres' user. If you run the regression test as another user the
-  'src/test/regress/obj' directory should be writeable to that user.
+  'src/test/regress' directory should be writeable to that user.
 
 Comparing expected/actual output
 
-  The results are in the file 'obj/regress.out' which can be compared
-  with the 'obj/expected.out' file using 'diff'. The files will NOT
+  The results are in the file 'regress.out' which can be compared
+  with the 'expected.out' file using 'diff'. The files will NOT
   compare exactly. The following paragraphs attempt to explain the
   differences.
 
@@ -109,4 +109,13 @@ POLYGON differences
 
     QUERY: SELECT * from street;
     QUERY: SELECT * from iexit;
+
+DATE/TIME differences
+
+  The Makefile attempts to adjust for timezone differences, but it is
+  totally possible to eliminate them.  People outside North America
+  will probabablly find the Makefile's adjustments are incorrect.  Also
+  entries that use the time -infinity display with year 1970 plus/minus the
+  number of hours you are different from GMT.
+
 
