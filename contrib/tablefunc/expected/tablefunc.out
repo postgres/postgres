@@ -7,7 +7,7 @@
 -- normal_rand()
 -- no easy way to do this for regression testing
 --
-SELECT avg(normal_rand)::int FROM normal_rand(100, 250, 0.2, EXTRACT(SECONDS FROM CURRENT_TIME(0))::int);
+SELECT avg(normal_rand)::int FROM normal_rand(100, 250, 0.2);
  avg 
 -----
  250

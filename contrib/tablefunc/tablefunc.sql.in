@@ -1,7 +1,7 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-CREATE OR REPLACE FUNCTION normal_rand(int4, float8, float8, int4)
+CREATE OR REPLACE FUNCTION normal_rand(int4, float8, float8)
 RETURNS setof float8
 AS 'MODULE_PATHNAME','normal_rand'
 LANGUAGE 'C' VOLATILE STRICT;

@@ -165,8 +165,8 @@ typedef struct crosstab_hashent
  * normal_rand - return requested number of random values
  * with a Gaussian (Normal) distribution.
  *
- * inputs are int numvals, float8 lower_bound, and float8 upper_bound
- * returns float8
+ * inputs are int numvals, float8 mean, and float8 stddev
+ * returns setof float8
  */
 PG_FUNCTION_INFO_V1(normal_rand);
 Datum
@@ -212,12 +212,6 @@ normal_rand(PG_FUNCTION_ARGS)
 		fctx->use_carry = false;
 
 		funcctx->user_fctx = fctx;
-
-		/*
-		 * we might actually get passed a negative number, but for this
-		 * purpose it doesn't matter, just cast it as an unsigned value
-		 */
-		srandom(PG_GETARG_UINT32(3));
 
 		MemoryContextSwitchTo(oldcontext);
 	}

@@ -48,7 +48,7 @@ Installation:
 
   installs following functions into database template1:
 
-    normal_rand(int numvals, float8 mean, float8 stddev, int seed)
+    normal_rand(int numvals, float8 mean, float8 stddev)
       - returns a set of normally distributed float8 values
 
     crosstabN(text sql)
@@ -74,12 +74,12 @@ Documentation
 ==================================================================
 Name
 
-normal_rand(int, float8, float8, int) - returns a set of normally
+normal_rand(int, float8, float8) - returns a set of normally
        distributed float8 values
 
 Synopsis
 
-normal_rand(int numvals, float8 mean, float8 stddev, int seed)
+normal_rand(int numvals, float8 mean, float8 stddev)
 
 Inputs
 
@@ -92,9 +92,6 @@ Inputs
   stddev
     the standard deviation of the normal distribution of values
 
-  seed
-    a seed value for the pseudo-random number generator
-
 Outputs
 
   Returns setof float8, where the returned set of random values are normally
@@ -103,7 +100,7 @@ Outputs
 Example usage
 
   test=# SELECT * FROM
-  test=# normal_rand(1000, 5, 3, EXTRACT(SECONDS FROM CURRENT_TIME(0))::int);
+  test=# normal_rand(1000, 5, 3);
      normal_rand
 ----------------------
      1.56556322244898
