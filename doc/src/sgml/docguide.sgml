@@ -1,9 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.7 1998/08/15 06:53:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/docguide.sgml,v 1.8 1998/08/17 16:17:07 thomas Exp $
 Documentation Guide
 Thomas Lockhart
 
 $Log: docguide.sgml,v $
+Revision 1.8  1998/08/17 16:17:07  thomas
+Bring document list closer to up to day.
+Add a note on sgml-tools that they are now working with jade and so
+ may become the toolset of choice in the future.
+
 Revision 1.7  1998/08/15 06:53:52  thomas
 Include working list of all documentation sources, with current status
  and plans for some of them.
@@ -131,18 +136,18 @@ Description
 </thead>
 
 <tbody>
-<row><entry>	./COPYRIGHT	</entry><entry>	Copyright notice	</entry></row>
-<row><entry>	./register.txt	</entry><entry>	Registration message during make	</entry></row>
-<row><entry>	./doc/bug.template	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/postgres.tar.gz	</entry><entry>	Integrated docs (<acronym>HTML</acronym>)	</entry></row>
-<row><entry>	./doc/programmer.ps.gz	</entry><entry>	Programmer's Guide (Postscript)	</entry></row>
-<row><entry>	./doc/programmer.tar.gz	</entry><entry>	Programmer's Guide (<acronym>HTML</acronym>)	</entry></row>
-<row><entry>	./doc/reference.ps.gz	</entry><entry>	Reference Manual (Postscript)	</entry></row>
-<row><entry>	./doc/reference.tar.gz	</entry><entry>	Reference Manual (<acronym>HTML</acronym>)	</entry></row>
-<row><entry>	./doc/tutorial.ps.gz	</entry><entry>	Introduction (Postscript)	</entry></row>
-<row><entry>	./doc/tutorial.tar.gz	</entry><entry>	Introduction (<acronym>HTML</acronym>)	</entry></row>
-<row><entry>	./doc/user.ps.gz	</entry><entry>	User's Guide (Postscript)	</entry></row>
-<row><entry>	./doc/user.tar.gz	</entry><entry>	User's Guide (<acronym>HTML</acronym>)	</entry></row>
+<row><entry> ./COPYRIGHT	</entry><entry>	Copyright notice	</entry></row>
+<row><entry> ./register.txt	</entry><entry>	Registration message during make	</entry></row>
+<row><entry> ./doc/bug.template	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/postgres.tar.gz	</entry><entry>	Integrated docs (<acronym>HTML</acronym>)	</entry></row>
+<row><entry> ./doc/programmer.ps.gz	</entry><entry>	Programmer's Guide (Postscript)	</entry></row>
+<row><entry> ./doc/programmer.tar.gz	</entry><entry>	Programmer's Guide (<acronym>HTML</acronym>)	</entry></row>
+<row><entry> ./doc/reference.ps.gz	</entry><entry>	Reference Manual (Postscript)	</entry></row>
+<row><entry> ./doc/reference.tar.gz	</entry><entry>	Reference Manual (<acronym>HTML</acronym>)	</entry></row>
+<row><entry> ./doc/tutorial.ps.gz	</entry><entry>	Introduction (Postscript)	</entry></row>
+<row><entry> ./doc/tutorial.tar.gz	</entry><entry>	Introduction (<acronym>HTML</acronym>)	</entry></row>
+<row><entry> ./doc/user.ps.gz	</entry><entry>	User's Guide (Postscript)	</entry></row>
+<row><entry> ./doc/user.tar.gz	</entry><entry>	User's Guide (<acronym>HTML</acronym>)	</entry></row>
 </tbody>
 </tgroup>
 </table>
@@ -166,89 +171,91 @@ Status
 </thead>
 
 <tbody>
-<row><entry>	./doc/src/graphics/catalogs.gif	</entry><entry>	Output file	</entry></row>
-<row><entry>	./doc/src/graphics/clientserver.ag	</entry><entry>	Source file. Convert to CGM	</entry></row>
-<row><entry>	./doc/src/graphics/clientserver.gif	</entry><entry>	Output file	</entry></row>
-<row><entry>	./doc/src/graphics/connections.ag	</entry><entry>	Source file. Convert to CGM	</entry></row>
-<row><entry>	./doc/src/graphics/connections.gif	</entry><entry>	Output file	</entry></row>
-<row><entry>	./doc/src/graphics/layout.ag	</entry><entry>	Source file. Convert to CGM	</entry></row>
-<row><entry>	./doc/src/graphics/layout.gif	</entry><entry>	Output file	</entry></row>
-<row><entry>	./doc/src/sgml/spi.sgml	</entry><entry>	Converted. Original removed.	</entry></row>
-<row><entry>	./doc/src/sgml/admin.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/advanced.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/arch-dev.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/arch-pg.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/arch.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/array.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/biblio.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/compiler.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/contacts.sgml	</entry><entry>	Sample. Either complete or discard	</entry></row>
-<row><entry>	./doc/src/sgml/datatype.sgml	</entry><entry>	New document. Replaces man/pgbuiltin.3	</entry></row>
-<row><entry>	./doc/src/sgml/dfunc.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/docguide.sgml	</entry><entry>	New document.	</entry></row>
-<row><entry>	./doc/src/sgml/ecpg.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/environ.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/extend.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/func-ref.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/func.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/geqo.sgml	</entry><entry>	Converted. Original removed.	</entry></row>
-<row><entry>	./doc/src/sgml/gist.sgml	</entry><entry>	New from mailing list	</entry></row>
-<row><entry>	./doc/src/sgml/inherit.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/install.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/intro-pg.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/intro.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/jdbc.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/libpgtcl.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/libpq.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/lobj.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/manage.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/odbc.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/oper.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/pgaccess.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/ports.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/postgres.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/programmer.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/protocol.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/psql.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/query-ug.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/query.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/recovery.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/reference.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/regress.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/release.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/rules.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/start-ag.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/start.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/storage.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/trigger.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/tutorial.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/typeconv.sgml	</entry><entry>	New document	</entry></row>
-<row><entry>	./doc/src/sgml/user.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/xaggr.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/xfunc.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/xindex.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/xoper.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/xtypes.sgml	</entry><entry>	Converted	</entry></row>
-<row><entry>	./doc/src/sgml/ref/allfiles.sgml	</entry><entry>	List of files in ref/ (internal)	</entry></row>
-<row><entry>	./doc/src/sgml/ref/alter_table.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/alter_user.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/begin.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/close.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/cluster.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/commands.sgml	</entry><entry>	List of commands (internal)	</entry></row>
-<row><entry>	./doc/src/sgml/ref/commit.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/copy.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_aggregate.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_database.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_function.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_index.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_language.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/drop_function.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/select.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_operator.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_rule.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_sequence.sgml	</entry><entry>	New	</entry></row>
-<row><entry>	./doc/src/sgml/ref/create_table.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/graphics/catalogs.gif	</entry><entry>	Output file	</entry></row>
+<row><entry> ./doc/src/graphics/clientserver.ag	</entry><entry>	Source file. Convert to CGM	</entry></row>
+<row><entry> ./doc/src/graphics/clientserver.gif	</entry><entry>	Output file	</entry></row>
+<row><entry> ./doc/src/graphics/connections.ag	</entry><entry>	Source file. Convert to CGM	</entry></row>
+<row><entry> ./doc/src/graphics/connections.gif	</entry><entry>	Output file	</entry></row>
+<row><entry> ./doc/src/graphics/layout.ag	</entry><entry>	Source file. Convert to CGM	</entry></row>
+<row><entry> ./doc/src/graphics/layout.gif	</entry><entry>	Output file	</entry></row>
+<row><entry> ./doc/src/sgml/spi.sgml	</entry><entry>	Converted. Original removed	</entry></row>
+<row><entry> ./doc/src/sgml/admin.sgml	</entry><entry>	Administrator's Guide	</entry></row>
+<row><entry> ./doc/src/sgml/advanced.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/arch-dev.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/arch-pg.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/arch.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/array.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/biblio.sgml	</entry><entry>	New document	</entry></row>
+<row><entry> ./doc/src/sgml/bki.sgml	</entry><entry>	Converted from bki.5	</entry></row>
+<row><entry> ./doc/src/sgml/compiler.sgml	</entry><entry>	New document	</entry></row>
+<row><entry> ./doc/src/sgml/contacts.sgml	</entry><entry>	Sample. Either complete or discard	</entry></row>
+<row><entry> ./doc/src/sgml/datatype.sgml	</entry><entry>	New document. Replaces man/pgbuiltin.3	</entry></row>
+<row><entry> ./doc/src/sgml/dfunc.sgml	</entry><entry>	Converted from PG95 docs	</entry></row>
+<row><entry> ./doc/src/sgml/docguide.sgml	</entry><entry>	Documentation info. New document	</entry></row>
+<row><entry> ./doc/src/sgml/ecpg.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/environ.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/extend.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/func-ref.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/func.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/geqo.sgml	</entry><entry>	Converted. Original removed.	</entry></row>
+<row><entry> ./doc/src/sgml/gist.sgml	</entry><entry>	New from mailing list	</entry></row>
+<row><entry> ./doc/src/sgml/inherit.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/install.sgml	</entry><entry>	Installation instructions	</entry></row>
+<row><entry> ./doc/src/sgml/intro-pg.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/intro.sgml	</entry><entry>	Converted from PG95 docs	</entry></row>
+<row><entry> ./doc/src/sgml/jdbc.sgml	</entry><entry>	Document stub. Where are the full JDBC docs?	</entry></row>
+<row><entry> ./doc/src/sgml/keys.sgml	</entry><entry>	New document	</entry></row>
+<row><entry> ./doc/src/sgml/libpgtcl.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/libpq.sgml	</entry><entry>	<filename>libpq</filename> interface library	</entry></row>
+<row><entry> ./doc/src/sgml/lobj.sgml	</entry><entry>	Large objects	</entry></row>
+<row><entry> ./doc/src/sgml/manage.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/odbc.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/oper.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/pgaccess.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/ports.sgml	</entry><entry>	Supported/unsupported platforms	</entry></row>
+<row><entry> ./doc/src/sgml/postgres.sgml	</entry><entry>	Container for all docs. Best for html output	</entry></row>
+<row><entry> ./doc/src/sgml/programmer.sgml	</entry><entry>	Programmer's Guide	</entry></row>
+<row><entry> ./doc/src/sgml/protocol.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/psql.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/query-ug.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/query.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/recovery.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/reference.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/regress.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/release.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/rules.sgml	</entry><entry>	Rule system	</entry></row>
+<row><entry> ./doc/src/sgml/start-ag.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/start.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/storage.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/trigger.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/tutorial.sgml	</entry><entry>	Converted from PG95 docs	</entry></row>
+<row><entry> ./doc/src/sgml/typeconv.sgml	</entry><entry>	Datatype conversion. New document. In UG </entry></row>
+<row><entry> ./doc/src/sgml/user.sgml	</entry><entry>	User's Guide	</entry></row>
+<row><entry> ./doc/src/sgml/xaggr.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/xfunc.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/xindex.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/xoper.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/xtypes.sgml	</entry><entry>	Converted	</entry></row>
+<row><entry> ./doc/src/sgml/ref/allfiles.sgml	</entry><entry>	List of files in ref/ (internal)	</entry></row>
+<row><entry> ./doc/src/sgml/ref/alter_table.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/alter_user.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/begin.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/close.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/cluster.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/commands.sgml	</entry><entry>	List of commands (internal)	</entry></row>
+<row><entry> ./doc/src/sgml/ref/commit.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/copy.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_aggregate.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_database.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_function.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_index.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_language.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/drop_function.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/select.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_operator.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_rule.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_sequence.sgml	</entry><entry>	New	</entry></row>
+<row><entry> ./doc/src/sgml/ref/create_table.sgml	</entry><entry>	New	</entry></row>
 </tbody>
 </tgroup>
 </table>
@@ -272,235 +279,235 @@ Status
 </thead>
 
 <tbody>
-<row><entry>	./HISTORY	</entry><entry>	Obsolete. Converted to release.sgml		</entry></row>
-<row><entry>	./README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./INSTALL	</entry><entry>	Obsolete. Converted to install.sgml	</entry></row>
-<row><entry>	./contrib/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/apache_logging/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/array/array_iterator.doc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/datetime/datetime_functions.doc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/earthdistance/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/int8/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/ip_and_mac/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/lo/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/mSQL-interface/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/noupdate/noup.example	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/pginterface/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/sequence/set_sequence.sql.in	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/soundex/soundex.sql.in	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/spi/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/spi/autoinc.example	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/spi/insert_username.example	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/spi/refint.example	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/spi/timetravel.example	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/string/string_io.sql.in	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/unixdate/unixdate.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./contrib/userlock/user_locks.doc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/FAQ	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/FAQ_DEV	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/FAQ_FreeBSD	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/FAQ_Irix	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/FAQ_Linux	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/TODO	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/README.GEQO	</entry><entry>	Removed. Superceded by geqo.sgml	</entry></row>
-<row><entry>	./doc/README.fsync	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry>	./doc/README.locale	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry>	./doc/README.mb	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry>	./doc/README.mb.jp	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/README.support	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./doc/TODO.GEQO	</entry><entry>	Removed. Superceded by geqo.sgml	</entry></row>
-<row><entry>	./doc/userguide.ps	</entry><entry>	Removed (converted to SGML)	</entry></row>
-<row><entry>	./migration/1.02_to_1.02.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/1.09_to_6.0	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/1.0_to_1.01	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/6.0_to_6.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/6.1_to_6.1.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/6.1_to_6.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/6.2.1_to_6.3	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/6.2_to_6.2.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./migration/6.3.1_to_6.3.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
-<row><entry>	./src/DEVELOPERS	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/access/nbtree/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/catalog/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/libpq/pg_hba.conf.sample	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/libpq/pg_ident.conf.sample	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/nodes/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/optimizer/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/optimizer/geqo/pg_geqo.sample	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/optimizer/plan/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/parser/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/port/dynloader/README.dlfcn.aix	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/regex/COPYRIGHT	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/regex/WHATSNEW	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/regex/re_format.7	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/regex/regex.3	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/storage/ipc/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/storage/lmgr/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/backend/storage/smgr/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/bin/pg_dump/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/bin/pgaccess/README.pga	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/bin/pgaccess/formdemo.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/bin/pgtclsh/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/data/charset.conf	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/data/koi-alt.tab	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/data/koi-iso.tab	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/data/koi-koi.tab	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/data/koi-mac.tab	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/data/koi-win.tab	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/ecpg/ChangeLog	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/ecpg/TODO	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/jdbc/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/jdbc/README_6.3	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/jdbc/example/ImageViewer.java	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/jdbc/example/basic.java	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/jdbc/example/blobtest.java	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/jdbc/example/datestyle.java	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/jdbc/example/psql.java	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpgtcl/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq0.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq1.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq2.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq2.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq3.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq3.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq4.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq4.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq5.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq5.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlibpq6.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/examples/testlo.cc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/libpq++/man/libpq++.3	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/odbc/license.txt	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/odbc/notice.txt	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/odbc/readme.txt	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/perl5/MANIFEST	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/perl5/Changes	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/perl5/eg/example.newstyle	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/perl5/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/Announce	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/ChangeLog	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/advanced.py	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/advanced.pyc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/basics.py	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/func.py	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/func.pyc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/pgtools.py	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/pgtools.pyc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/syscat.py	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/interfaces/python/tutorial/syscat.pyc	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/ecpg.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/abort.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/alter_table.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/alter_user.l	</entry><entry>	Split into Reference and Admin Guide	</entry></row>
-<row><entry>	./src/man/begin.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/bki.5	</entry><entry>	Removed. Superceded by bki.sgml	</entry></row>
-<row><entry>	./src/man/catalogs.3	</entry><entry>	Catalog synopsis. Move to Programmer's Guide?	</entry></row>
-<row><entry>	./src/man/cleardbdir.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/close.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/cluster.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/commit.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/copy.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_aggregate.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_database.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_function.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_index.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_language.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_operator.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_rule.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_sequence.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_table.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_trigger.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_type.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_user.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_version.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/create_view.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/createdb.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/createuser.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/declare.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/delete.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/destroydb.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/destroyuser.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_aggregate.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_database.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_function.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_index.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_language.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_operator.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_rule.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_sequence.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_table.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_trigger.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_type.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_user.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/drop_view.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/end.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/explain.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/fetch.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/grant.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/initdb.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/initlocation.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/insert.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/ipcclean.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/large_objects.3	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/libpq.3	</entry><entry>	Obsolete. Superceded by libpq.sgml	</entry></row>
-<row><entry>	./src/man/listen.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/load.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/lock.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/move.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/notify.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/oracle_compat.3	</entry><entry>	Removed. Superceded by func.sgml	</entry></row>
-<row><entry>	./src/man/page.5	</entry><entry>	Table storage. Assimilate into Dev Guide	</entry></row>
-<row><entry>	./src/man/pg_dump.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry>	./src/man/pg_dumpall.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry>	./src/man/pg_hba.conf.5	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry>	./src/man/pg_passwd.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
-<row><entry>	./src/man/pgbuiltin.3	</entry><entry>	Obsolete. Superceded by datatype.sgml	</entry></row>
-<row><entry>	./src/man/pgintro.1	</entry><entry>	Assimilate into User's Guide?	</entry></row>
-<row><entry>	./src/man/postgres.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
-<row><entry>	./src/man/postmaster.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
-<row><entry>	./src/man/psql.1	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/reset.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/revoke.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/rollback.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/select.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/set.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/show.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/sql.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/update.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/man/vacuum.l	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/INSTALL	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/modules/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/license.terms	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/test/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/test/runtest	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/test/test.expected	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/test/test_mklang.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/test/test_queries.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/pl/tcl/test/test_setup.sql	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/test/bench/WISC-README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/test/locale/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/test/performance/results/PgSQL.970926	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/test/regress/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/test/suite/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/RELEASE_CHANGES	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/SQL_keywords	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/backend/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/backend/flow.fig	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/backend/flow.jpg	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/make_keywords.README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/entab/entab.man	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/make_diff/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/mkldexport/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tools/pgindent/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/tutorial/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./src/utils/README	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./lib/pg_hba.conf.sample	</entry><entry>	Not converted	</entry></row>
-<row><entry>	./lib/pg_geqo.sample	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./HISTORY	</entry><entry>	Obsolete. Converted to release.sgml		</entry></row>
+<row><entry> ./README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./INSTALL	</entry><entry>	Obsolete. Converted to install.sgml	</entry></row>
+<row><entry> ./contrib/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/apache_logging/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/array/array_iterator.doc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/datetime/datetime_functions.doc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/earthdistance/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/int8/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/ip_and_mac/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/lo/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/mSQL-interface/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/noupdate/noup.example	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/pginterface/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/sequence/set_sequence.sql.in	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/soundex/soundex.sql.in	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/spi/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/spi/autoinc.example	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/spi/insert_username.example	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/spi/refint.example	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/spi/timetravel.example	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/string/string_io.sql.in	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/unixdate/unixdate.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./contrib/userlock/user_locks.doc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/FAQ	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/FAQ_DEV	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/FAQ_FreeBSD	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/FAQ_Irix	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/FAQ_Linux	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/TODO	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/README.GEQO	</entry><entry>	Removed. Superceded by geqo.sgml	</entry></row>
+<row><entry> ./doc/README.fsync	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry> ./doc/README.locale	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry> ./doc/README.mb	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry> ./doc/README.mb.jp	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/README.support	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./doc/TODO.GEQO	</entry><entry>	Removed. Superceded by geqo.sgml	</entry></row>
+<row><entry> ./doc/userguide.ps	</entry><entry>	Removed (converted to SGML)	</entry></row>
+<row><entry> ./migration/1.02_to_1.02.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/1.09_to_6.0	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/1.0_to_1.01	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/6.0_to_6.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/6.1_to_6.1.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/6.1_to_6.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/6.2.1_to_6.3	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/6.2_to_6.2.1	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./migration/6.3.1_to_6.3.2	</entry><entry>	Removed. Superceded by release.sgml	</entry></row>
+<row><entry> ./src/DEVELOPERS	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/access/nbtree/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/catalog/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/libpq/pg_hba.conf.sample	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/libpq/pg_ident.conf.sample	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/nodes/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/optimizer/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/optimizer/geqo/pg_geqo.sample	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/optimizer/plan/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/parser/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/port/dynloader/README.dlfcn.aix	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/regex/COPYRIGHT	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/regex/WHATSNEW	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/regex/re_format.7	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/regex/regex.3	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/storage/ipc/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/storage/lmgr/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/backend/storage/smgr/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/bin/pg_dump/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/bin/pgaccess/README.pga	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/bin/pgaccess/formdemo.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/bin/pgtclsh/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/data/charset.conf	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/data/koi-alt.tab	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/data/koi-iso.tab	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/data/koi-koi.tab	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/data/koi-mac.tab	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/data/koi-win.tab	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/ecpg/ChangeLog	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/ecpg/TODO	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/jdbc/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/jdbc/README_6.3	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/jdbc/example/ImageViewer.java	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/jdbc/example/basic.java	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/jdbc/example/blobtest.java	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/jdbc/example/datestyle.java	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/jdbc/example/psql.java	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpgtcl/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq0.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq1.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq2.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq2.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq3.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq3.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq4.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq4.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq5.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq5.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlibpq6.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/examples/testlo.cc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/libpq++/man/libpq++.3	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/odbc/license.txt	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/odbc/notice.txt	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/odbc/readme.txt	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/perl5/MANIFEST	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/perl5/Changes	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/perl5/eg/example.newstyle	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/perl5/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/Announce	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/ChangeLog	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/advanced.py	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/advanced.pyc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/basics.py	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/func.py	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/func.pyc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/pgtools.py	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/pgtools.pyc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/syscat.py	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/interfaces/python/tutorial/syscat.pyc	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/ecpg.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/abort.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/alter_table.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/alter_user.l	</entry><entry>	Split into Reference and Admin Guide	</entry></row>
+<row><entry> ./src/man/begin.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/bki.5	</entry><entry>	Removed. Superceded by bki.sgml	</entry></row>
+<row><entry> ./src/man/catalogs.3	</entry><entry>	Catalog synopsis. Move to Programmer's Guide?	</entry></row>
+<row><entry> ./src/man/cleardbdir.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/close.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/cluster.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/commit.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/copy.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_aggregate.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_database.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_function.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_index.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_language.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_operator.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_rule.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_sequence.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_table.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_trigger.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_type.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_user.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_version.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/create_view.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/createdb.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/createuser.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/declare.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/delete.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/destroydb.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/destroyuser.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_aggregate.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_database.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_function.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_index.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_language.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_operator.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_rule.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_sequence.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_table.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_trigger.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_type.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_user.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/drop_view.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/end.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/explain.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/fetch.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/grant.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/initdb.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/initlocation.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/insert.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/ipcclean.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/large_objects.3	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/libpq.3	</entry><entry>	Obsolete. Superceded by libpq.sgml	</entry></row>
+<row><entry> ./src/man/listen.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/load.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/lock.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/move.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/notify.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/oracle_compat.3	</entry><entry>	Removed. Superceded by func.sgml	</entry></row>
+<row><entry> ./src/man/page.5	</entry><entry>	Removed. Converted to page.sgml for Dev Guide	</entry></row>
+<row><entry> ./src/man/pg_dump.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry> ./src/man/pg_dumpall.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry> ./src/man/pg_hba.conf.5	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry> ./src/man/pg_passwd.1	</entry><entry>	Assimilate into Admin Guide	</entry></row>
+<row><entry> ./src/man/pgbuiltin.3	</entry><entry>	Obsolete. Superceded by datatype.sgml	</entry></row>
+<row><entry> ./src/man/pgintro.1	</entry><entry>	Assimilate into User's Guide?	</entry></row>
+<row><entry> ./src/man/postgres.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
+<row><entry> ./src/man/postmaster.1	</entry><entry>	Assimilate into User's, Admin Guides	</entry></row>
+<row><entry> ./src/man/psql.1	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/reset.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/revoke.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/rollback.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/select.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/set.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/show.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/sql.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/update.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/man/vacuum.l	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/INSTALL	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/modules/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/license.terms	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/test/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/test/runtest	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/test/test.expected	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/test/test_mklang.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/test/test_queries.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/pl/tcl/test/test_setup.sql	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/test/bench/WISC-README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/test/locale/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/test/performance/results/PgSQL.970926	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/test/regress/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/test/suite/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/RELEASE_CHANGES	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/SQL_keywords	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/backend/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/backend/flow.fig	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/backend/flow.jpg	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/make_keywords.README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/entab/entab.man	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/make_diff/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/mkldexport/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tools/pgindent/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/tutorial/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./src/utils/README	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./lib/pg_hba.conf.sample	</entry><entry>	Not converted	</entry></row>
+<row><entry> ./lib/pg_geqo.sample	</entry><entry>	Not converted	</entry></row>
 </tbody>
 </tgroup>
 </table>
@@ -1361,6 +1368,9 @@ version of <productname>sgml-tools</productname> evaluated for
 Install
 <productname>sgml-tools-0.99.0</productname>
 </para>
+
+<sect2>
+<title><productname>sgml-tools</productname></title>
 
 <para>
 Apply  <ulink
