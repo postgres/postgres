@@ -52,12 +52,12 @@ SELECT '' AS ten, i, c,
   FROM INET_TBL;
 
 -- check the conversion to/from text and set_netmask
-select '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;
+SELECT '' AS ten, set_masklen(inet(text(i)), 24) FROM INET_TBL;
 -- check that index works correctly
-create index inet_idx1 on inet_tbl(i);
-set enable_seqscan to off;
-select * from inet_tbl where i<<'192.168.1.0/24'::cidr;
-select * from inet_tbl where i<<='192.168.1.0/24'::cidr;
-set enable_seqscan to on;
-drop index inet_idx1;
+CREATE INDEX inet_idx1 ON inet_tbl(i);
+SET enable_seqscan TO off;
+SELECT * FROM inet_tbl WHERE i<<'192.168.1.0/24'::cidr ORDER BY c,i;
+SELECT * FROM inet_tbl WHERE i<<='192.168.1.0/24'::cidr ORDER BY c,i;
+SET enable_seqscan TO on;
+DROP INDEX inet_idx1;
 
