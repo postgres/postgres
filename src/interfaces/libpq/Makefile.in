@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.40 1998/10/19 00:00:43 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.41 1998/11/12 05:27:01 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,6 +33,10 @@ OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
 ifdef MULTIBYTE
 OBJS+= common.o wchar.o conv.o
 endif
+
+# If crypt is a separate library, rather than part of libc,
+# make sure it gets included in shared libpq.
+SHLIB_LINK= $(findstring -lcrypt,$(LIBS))
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
