@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.40 2000/09/06 14:15:15 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.41 2000/10/02 04:49:28 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -36,34 +36,15 @@
 static int32 aclcheck(char *relname, Acl *acl, AclId id,
 					  AclIdType idtype, AclMode mode);
 
-/*
- * Enable use of user relations in place of real system catalogs.
- */
-/*#define ACLDEBUG*/
-
-#ifdef ACLDEBUG
-/*
- * Fool the code below into thinking that "pgacls" is pg_class.
- * relname and relowner are in the same place, happily.
- */
-#undef	Anum_pg_class_relacl
-#define Anum_pg_class_relacl			3
-#undef	Natts_pg_class
-#define Natts_pg_class					3
-#undef	Name_pg_class
-#define Name_pg_class					"pgacls"
-#undef	Name_pg_group
-#define Name_pg_group					"pggroup"
-#endif
-
 /* warning messages, now more explicit. */
-/* should correspond to the order of the ACLCHK_* result codes above. */
+/* MUST correspond to the order of the ACLCHK_* result codes in acl.h. */
 char	   *aclcheck_error_strings[] = {
 	"No error.",
 	"Permission denied.",
 	"Table does not exist.",
 	"Must be table owner."
 };
+
 
 #ifdef ACLDEBUG_TRACE
 static
@@ -84,7 +65,7 @@ dumpacl(Acl *acl)
 #endif
 
 /*
- *
+ * ChangeAcl
  */
 void
 ChangeAcl(char *relname,
@@ -96,12 +77,12 @@ ChangeAcl(char *relname,
 			   *new_acl;
 	Relation	relation;
 	HeapTuple	tuple;
+	Datum		aclDatum;
 	Datum		values[Natts_pg_class];
 	char		nulls[Natts_pg_class];
 	char		replaces[Natts_pg_class];
 	Relation	idescs[Num_pg_class_indices];
 	bool		isNull;
-	bool		free_old_acl = false;
 
 	/*
 	 * Find the pg_class tuple matching 'relname' and extract the ACL. If
@@ -118,29 +99,20 @@ ChangeAcl(char *relname,
 			 relname);
 	}
 
-	old_acl = (Acl *) heap_getattr(tuple,
-								   Anum_pg_class_relacl,
-								   RelationGetDescr(relation),
-								   &isNull);
+	aclDatum = SysCacheGetAttr(RELNAME, tuple, Anum_pg_class_relacl,
+							   &isNull);
 	if (isNull)
 	{
-#ifdef ACLDEBUG_TRACE
-		elog(DEBUG, "ChangeAcl: using default ACL");
-#endif
-		old_acl = acldefault(relname);
-		free_old_acl = true;
+		/* No ACL, so build default ACL for rel */
+		AclId		ownerId;
+
+		ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
+		old_acl = acldefault(relname, ownerId);
 	}
-
-	/* Need to detoast the old ACL for modification */
-	old_acl = DatumGetAclP(PointerGetDatum(old_acl));
-
-	if (ACL_NUM(old_acl) < 1)
+	else
 	{
-#ifdef ACLDEBUG_TRACE
-		elog(DEBUG, "ChangeAcl: old ACL has zero length");
-#endif
-		old_acl = acldefault(relname);
-		free_old_acl = true;
+		/* get a detoasted copy of the rel's ACL */
+		old_acl = DatumGetAclPCopy(aclDatum);
 	}
 
 #ifdef ACLDEBUG_TRACE
@@ -173,8 +145,8 @@ ChangeAcl(char *relname,
 	CatalogCloseIndices(Num_pg_class_indices, idescs);
 
 	heap_close(relation, RowExclusiveLock);
-	if (free_old_acl)
-		pfree(old_acl);
+
+	pfree(old_acl);
 	pfree(new_acl);
 }
 
@@ -264,9 +236,15 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	unsigned	num,
 				found_group;
 
-	/* if no acl is found, use world default */
+	/*
+	 * If ACL is null, default to "OK" --- this should not happen,
+	 * since caller should have inserted appropriate default
+	 */
 	if (!acl)
-		acl = acldefault(relname);
+	{
+		elog(DEBUG, "aclcheck: null ACL, returning 1");
+		return ACLCHECK_OK;
+	}
 
 	num = ACL_NUM(acl);
 	aidat = ACL_DAT(acl);
@@ -278,9 +256,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 	 */
 	if (num < 1)
 	{
-#if defined(ACLDEBUG_TRACE) || 1
 		elog(DEBUG, "aclcheck: zero-length ACL, returning 1");
-#endif
 		return ACLCHECK_OK;
 	}
 
@@ -357,11 +333,12 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 int32
 pg_aclcheck(char *relname, Oid userid, AclMode mode)
 {
-	HeapTuple	tuple;
-	Acl		   *acl = (Acl *) NULL;
 	int32		result;
+	HeapTuple	tuple;
 	char       *usename;
-	Relation	relation;
+	Datum		aclDatum;
+	bool		isNull;
+	Acl		   *acl;
 
 	tuple = SearchSysCacheTuple(SHADOWSYSID,
 								ObjectIdGetDatum(userid),
@@ -399,53 +376,31 @@ pg_aclcheck(char *relname, Oid userid, AclMode mode)
 		return ACLCHECK_OK;
 	}
 
-#ifndef ACLDEBUG
-	relation = heap_openr(RelationRelationName, RowExclusiveLock);
+	/*
+	 * Normal case: get the relation's ACL from pg_class
+	 */
 	tuple = SearchSysCacheTuple(RELNAME,
 								PointerGetDatum(relname),
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
-	{
-		elog(ERROR, "pg_aclcheck: class \"%s\" not found",
-			 relname);
-	}
-	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
-	{
-		/* get a detoasted copy of the ACL */
-		acl = DatumGetAclPCopy(heap_getattr(tuple,
-											Anum_pg_class_relacl,
-											RelationGetDescr(relation),
-											(bool *) NULL));
-	}
-	else
-	{
+		elog(ERROR, "pg_aclcheck: class \"%s\" not found", relname);
 
-		/*
-		 * if the acl is null, by default the owner can do whatever he
-		 * wants to with it
-		 */
+	aclDatum = SysCacheGetAttr(RELNAME, tuple, Anum_pg_class_relacl,
+							   &isNull);
+	if (isNull)
+	{
+		/* No ACL, so build default ACL for rel */
 		AclId		ownerId;
 
 		ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
-		acl = aclownerdefault(relname, ownerId);
+		acl = acldefault(relname, ownerId);
 	}
-	heap_close(relation, RowExclusiveLock);
-#else
-	relation = heap_openr(RelationRelationName, RowExclusiveLock);
-	tuple = SearchSysCacheTuple(RELNAME,
-								PointerGetDatum(relname),
-								0, 0, 0);
-	if (HeapTupleIsValid(tuple) &&
-		!heap_attisnull(tuple, Anum_pg_class_relacl))
+	else
 	{
-		/* get a detoasted copy of the ACL */
-		acl = DatumGetAclPCopy(heap_getattr(tuple,
-											Anum_pg_class_relacl,
-											RelationGetDescr(relation),
-											(bool *) NULL));
+		/* get a detoasted copy of the rel's ACL */
+		acl = DatumGetAclPCopy(aclDatum);
 	}
-	heap_close(relation, RowExclusiveLock);
-#endif
+
 	result = aclcheck(relname, acl, userid, (AclIdType) ACL_IDTYPE_UID, mode);
 	if (acl)
 		pfree(acl);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.48 2000/07/31 22:39:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.49 2000/10/02 04:49:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -334,11 +334,22 @@ aclitemgt(AclItem *a1, AclItem *a2)
 			(a1->ai_idtype == a2->ai_idtype && a1->ai_id > a2->ai_id));
 }
 
+
+/*
+ * acldefault()  --- create an ACL describing default access permissions
+ *
+ * Change this routine if you want to alter the default access policy for
+ * newly-created tables (or any table with a NULL acl entry in pg_class)
+ */
 Acl *
-aclownerdefault(char *relname, AclId ownerid)
+acldefault(char *relname, AclId ownerid)
 {
 	Acl		   *acl;
 	AclItem    *aip;
+
+#define ACL_WORLD_DEFAULT		(ACL_NO)
+/* #define		ACL_WORLD_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU) */
+#define ACL_OWNER_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU)
 
 	acl = makeacl(2);
 	aip = ACL_DAT(acl);
@@ -351,19 +362,6 @@ aclownerdefault(char *relname, AclId ownerid)
 	return acl;
 }
 
-Acl *
-acldefault(char *relname)
-{
-	Acl		   *acl;
-	AclItem    *aip;
-
-	acl = makeacl(1);
-	aip = ACL_DAT(acl);
-	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
-	aip[0].ai_id = ACL_ID_WORLD;
-	aip[0].ai_mode = IsSystemRelationName(relname) ? ACL_RD : ACL_WORLD_DEFAULT;
-	return acl;
-}
 
 /*
  * Add or replace an item in an ACL array.

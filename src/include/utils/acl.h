@@ -7,12 +7,12 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.27 2000/09/06 14:15:31 petere Exp $
+ * $Id: acl.h,v 1.28 2000/10/02 04:49:27 tgl Exp $
  *
  * NOTES
  *	  For backward-compatibility purposes we have to allow there
  *	  to be a null ACL in a pg_class tuple.  This will be defined as
- *	  meaning "no protection" (i.e., old catalogs get old semantics).
+ *	  meaning "default protection" (i.e., whatever acldefault() returns).
  *
  *	  The AclItems in an ACL array are currently kept in sorted order.
  *	  Things will break hard if you change that without changing the
@@ -32,7 +32,7 @@
  */
 typedef uint32 AclId;
 
-#define ACL_ID_WORLD	0		/* XXX only idtype should be checked */
+#define ACL_ID_WORLD	0		/* placeholder for id in a WORLD acl item */
 
 /*
  * AclIdType	tag that describes if the AclId is a user, group, etc.
@@ -57,15 +57,6 @@ typedef uint8 AclMode;
 #define ACL_WR			(1<<2)	/* write (append/delete/replace) */
 #define ACL_RU			(1<<3)	/* place rules */
 #define N_ACL_MODES		4
-
-#define ACL_MODECHG_ADD			1
-#define ACL_MODECHG_DEL			2
-#define ACL_MODECHG_EQL			3
-
-/* change this line if you want to set the default acl permission  */
-#define ACL_WORLD_DEFAULT		(ACL_NO)
-/* #define		ACL_WORLD_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU) */
-#define ACL_OWNER_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU)
 
 /*
  * AclItem
@@ -143,6 +134,13 @@ typedef ArrayType IdList;
 #define PG_RETURN_IDLIST_P(x)      PG_RETURN_POINTER(x)
 
 
+/*
+ * ACL modification opcodes
+ */
+#define ACL_MODECHG_ADD			1
+#define ACL_MODECHG_DEL			2
+#define ACL_MODECHG_EQL			3
+
 /* mode indicators for I/O */
 #define ACL_MODECHG_STR			"+-="	/* list of valid characters */
 #define ACL_MODECHG_ADD_CHR		'+'
@@ -171,8 +169,8 @@ extern char *aclcheck_error_strings[];
 /*
  * routines used internally (parser, etc.)
  */
-extern Acl *aclownerdefault(char *relname, AclId ownerid);
-extern Acl *acldefault(char *relname);
+extern Acl *acldefault(char *relname, AclId ownerid);
+
 extern Acl *aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg);
 
 extern char *aclmakepriv(char *old_privlist, char new_priv);
