@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.128 2004/07/11 23:49:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.129 2004/07/12 00:09:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -926,6 +926,7 @@ process_preload_libraries(char *preload_libraries_string)
 			funcname = NULL;
 		}
 
+		canonicalize_path(filename);
 		initfunc = (func_ptr) load_external_function(filename, funcname,
 													 true, NULL);
 		if (initfunc)
