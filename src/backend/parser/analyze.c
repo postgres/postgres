@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.273 2003/06/06 15:04:02 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.274 2003/06/15 16:42:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1787,13 +1787,18 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	 */
 	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
-	qry->groupClause = transformGroupClause(pstate,
-											stmt->groupClause,
-											qry->targetList);
-
+	/*
+	 * Transform sorting/grouping stuff.  Do ORDER BY first because both
+	 * transformGroupClause and transformDistinctClause need the results.
+	 */
 	qry->sortClause = transformSortClause(pstate,
 										  stmt->sortClause,
 										  qry->targetList);
+
+	qry->groupClause = transformGroupClause(pstate,
+											stmt->groupClause,
+											qry->targetList,
+											qry->sortClause);
 
 	qry->distinctClause = transformDistinctClause(pstate,
 												  stmt->distinctClause,

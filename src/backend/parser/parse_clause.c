@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.114 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.115 2003/06/15 16:42:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1124,7 +1124,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
  *	  transform a GROUP BY clause
  */
 List *
-transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
+transformGroupClause(ParseState *pstate, List *grouplist,
+					 List *targetlist, List *sortClause)
 {
 	List	   *glist = NIL,
 			   *gl;
@@ -1132,21 +1133,41 @@ transformGroupClause(ParseState *pstate, List *grouplist, List *targetlist)
 	foreach(gl, grouplist)
 	{
 		TargetEntry *tle;
+		Oid			ordering_op;
+		GroupClause *grpcl;
 
 		tle = findTargetlistEntry(pstate, lfirst(gl),
 								  targetlist, GROUP_CLAUSE);
 
 		/* avoid making duplicate grouplist entries */
-		if (!targetIsInSortList(tle, glist))
+		if (targetIsInSortList(tle, glist))
+			continue;
+
+		/*
+		 * If the GROUP BY clause matches the ORDER BY clause, we want to
+		 * adopt the ordering operators from the latter rather than using
+		 * the default ops.  This allows "GROUP BY foo ORDER BY foo DESC" to
+		 * be done with only one sort step.  Note we are assuming that any
+		 * user-supplied ordering operator will bring equal values together,
+		 * which is all that GROUP BY needs.
+		 */
+		if (sortClause &&
+			((SortClause *) lfirst(sortClause))->tleSortGroupRef ==
+			tle->resdom->ressortgroupref)
 		{
-			GroupClause *grpcl = makeNode(GroupClause);
-
-			grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
-
-			grpcl->sortop = ordering_oper_opid(tle->resdom->restype);
-
-			glist = lappend(glist, grpcl);
+			ordering_op = ((SortClause *) lfirst(sortClause))->sortop;
+			sortClause = lnext(sortClause);
 		}
+		else
+		{
+			ordering_op = ordering_oper_opid(tle->resdom->restype);
+			sortClause = NIL;	/* disregard ORDER BY once match fails */
+		}
+
+		grpcl = makeNode(GroupClause);
+		grpcl->tleSortGroupRef = assignSortGroupRef(tle, targetlist);
+		grpcl->sortop = ordering_op;
+		glist = lappend(glist, grpcl);
 	}
 
 	return glist;
