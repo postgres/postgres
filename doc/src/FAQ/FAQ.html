@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Feb 26 23:52:13 EST 2002</P>
+    <P>Last updated: Sun Mar  3 11:02:16 EST 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -72,7 +72,8 @@
     get <I>IpcMemoryCreate</I> errors. Why?<BR>
      <A href="#3.4">3.4</A>) When I try to start <I>postmaster</I>, I
     get <I>IpcSemaphoreCreate</I> errors. Why?<BR>
-     <A href="#3.5">3.5</A>) How do I control connections from other hosts?<BR>
+     <A href="#3.5">3.5</A>) How do I control connections from other
+    hosts?<BR>
      <A href="#3.6">3.6</A>) How do I tune the database engine for
     better performance?<BR>
      <A href="#3.7">3.7</A>) What debugging features are available?<BR>
@@ -116,9 +117,9 @@
     <SMALL>SERIAL</SMALL> insert?<BR>
      <A href="#4.15.3">4.15.3</A>) Don't <I>currval()</I> and
     <I>nextval()</I> lead to a race condition with other users?<BR>
-     <A href="#4.15.4">4.15.4</A>) Why aren't my sequence numbers reused
-     on transaction abort? Why are there gaps in the numbering of my
-     sequence/SERIAL column?<BR>
+     <A href="#4.15.4">4.15.4</A>) Why aren't my sequence numbers
+    reused on transaction abort? Why are there gaps in the numbering of
+    my sequence/SERIAL column?<BR>
      <A href="#4.16">4.16</A>) What is an <SMALL>OID</SMALL>? What is a
     <SMALL>TID</SMALL>?<BR>
      <A href="#4.17">4.17</A>) What is the meaning of some of the terms
@@ -213,9 +214,9 @@
     UNIVERSITY OF CALIFORNIA HAS NO OBLIGATIONS TO PROVIDE MAINTENANCE,
     SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.</P>
 
-    <P>The above is the BSD license, the classic open-source license. It
-    has no restrictions on how the source code may be used.  We like it
-    and have no intention of changing it.</P>
+    <P>The above is the BSD license, the classic open-source license.
+    It has no restrictions on how the source code may be used. We like
+    it and have no intention of changing it.</P>
 
     <H4><A name="1.3">1.3</A>) What Unix platforms does PostgreSQL run
     on?</H4>
@@ -326,9 +327,11 @@
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
     and <A href=
     "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</A>.
-    There is a list of PostgreSQL books available for purchase at <A href=
+    There is a list of PostgreSQL books available for purchase at <A
+    href=
     "http://www.postgresql.org/books/">http://www.postgresql.org/books/</A>.
-    There is also a collection of PostgreSQL technical articles at <A href=
+    There is also a collection of PostgreSQL technical articles at <A
+    href=
     "http://techdocs.postgresql.org/">http://techdocs.postgresql.org/</A>.</P>
 
     <P><I>psql</I> has some nice \d commands to show information about
@@ -348,9 +351,9 @@
 
     <P>The PostgreSQL book at <A href=
     "http://www.PostgreSQL.org/docs/awbook.html">http://www.PostgreSQL.org/docs/awbook.html</A>
-    teaches <SMALL>SQL</SMALL>. There is another PostgreSQL book at
-    <A href="http://www.commandprompt.com/ppbook/">
-    http://www.commandprompt.com/ppbook.</A>
+    teaches <SMALL>SQL</SMALL>. There is another PostgreSQL book at <A
+    href=
+    "http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook.</A>
     There is a nice tutorial at <A href=
     "http://www.intermedia.net/support/sql/sqltut.shtm">http://www.intermedia.net/support/sql/sqltut.shtm,</A>
     at <A href=
@@ -856,14 +859,14 @@
     <H4><A name="4.6">4.6</A>) How much database disk space is required
     to store data from a typical text file?</H4>
 
-    <P>A PostgreSQL database may require up to five times the disk space
-    to store data from a text file.</P>
+    <P>A PostgreSQL database may require up to five times the disk
+    space to store data from a text file.</P>
 
     <P>As an example, consider a file of 100,000 lines with an integer
-    and text description on each line. Suppose the text string avergages
-    twenty bytes in length. The flat file would be 2.8 MB. The size
-    of the PostgreSQL database file containing this data can be
-    estimated as 6.4 MB:</P>
+    and text description on each line. Suppose the text string
+    avergages twenty bytes in length. The flat file would be 2.8 MB.
+    The size of the PostgreSQL database file containing this data can
+    be estimated as 6.4 MB:</P>
 <PRE>
     36 bytes: each row header (approximate)
     24 bytes: one int field and one text filed
@@ -899,33 +902,33 @@
 
     <H4><A name="4.8">4.8</A>) My queries are slow or don't make use of
     the indexes. Why?</H4>
+    Indexes are not automatically used by every query. Indexes are only
+    used if the table is larger than a minimum size, and the index
+    selects only a small percentage of the rows in the table. This is
+    because the random disk access caused by an index scan is sometimes
+    slower than a straight read through the table, or sequential scan. 
 
-    <P>PostgreSQL does not automatically maintain statistics.
-    V<SMALL>ACUUM</SMALL> must be run to update the statistics. After
-    statistics are updated, the optimizer knows how many rows in the
-    table, and can better decide if it should use indexes. Note that
-    the optimizer does not use indexes in cases when the table is small
-    because a sequential scan would be faster.</P>
+    <P>To determine if an index should be used, PostgreSQL must have
+    statistics about the table. These statistics are collected using
+    <SMALL>VACUUM ANALYZE</SMALL>, or simply <SMALL>ANALYZE</SMALL>.
+    Using statistics, the optimizer knows how many rows are in the
+    table, and can better determine if indexes should be used.
+    Statistics are also valuable in determining optimal join order and
+    join methods. Statistics collection should be performed
+    periodically as the contents of the table change.</P>
 
-    <P>For column-specific optimization statistics, use <SMALL>VACUUM
-    ANALYZE.</SMALL> V<SMALL>ACUUM ANALYZE</SMALL> is important for
-    complex multijoin queries, so the optimizer can estimate the number
-    of rows returned from each table, and choose the proper join order.
-    The backend does not keep track of column statistics on its own, so
-    <SMALL>VACUUM ANALYZE</SMALL> must be run to collect them
-    periodically.</P>
-
-    <P>Indexes are usually not used for <SMALL>ORDER BY</SMALL> or
-    joins. A sequential scan followed by an explicit sort is faster
-    than an indexscan of all tuples of a large table. This is because
-    random disk access is very slow.</P>
+    <P>Indexes are normally not used for <SMALL>ORDER BY</SMALL> or to
+    perform joins. A sequential scan followed by an explicit sort is
+    usually faster than an index scan of a large table.</P>
+    However, <SMALL>LIMIT</SMALL> combined with <SMALL>ORDER BY</SMALL>
+    often will use an index because only a small portion of the table
+    is returned. 
 
     <P>When using wild-card operators such as <SMALL>LIKE</SMALL> or
     <I>~</I>, indexes can only be used if the beginning of the search
-    is anchored to the start of the string. So, to use indexes,
-    <SMALL>LIKE</SMALL> searches should not begin with <I>%</I>, and
-    <I>~</I>(regular expression searches) should start with
-    <I>^</I>.</P>
+    is anchored to the start of the string. Therefore, to use indexes,
+    <SMALL>LIKE</SMALL> patterns must not start with <I>%</I>, and
+    <I>~</I>(regular expression) patterns must start with <I>^</I>.</P>
 
     <H4><A name="4.9">4.9</A>) How do I see how the query optimizer is
     evaluating my query?</H4>
@@ -1091,13 +1094,14 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     <P>No. Currval() returns the current value assigned by your
     backend, not by all users.</P>
 
-    <H4><A name="4.15.4">4.15.4</A>) Why aren't my sequence numbers reused
-    on transaction abort? Why are there gaps in the numbering of my
-    sequence/SERIAL column?</H4>
+    <H4><A name="4.15.4">4.15.4</A>) Why aren't my sequence numbers
+    reused on transaction abort? Why are there gaps in the numbering of
+    my sequence/SERIAL column?</H4>
 
     <P>To improve concurrency, sequence values are given out to running
     transactions as needed and are not locked until the transaction
-    completes. This causes gaps in numbering from aborted transactions.
+    completes. This causes gaps in numbering from aborted
+    transactions.</P>
 
     <H4><A name="4.16">4.16</A>) What is an <SMALL>OID</SMALL>? What is
     a <SMALL>TID</SMALL>?</H4>

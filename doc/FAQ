@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 26 23:52:13 EST 2002
+   Last updated: Sun Mar 3 11:02:16 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -706,28 +706,30 @@
    
     4.8) My queries are slow or don't make use of the indexes. Why?
     
-   PostgreSQL does not automatically maintain statistics. VACUUM must be
-   run to update the statistics. After statistics are updated, the
-   optimizer knows how many rows in the table, and can better decide if
-   it should use indexes. Note that the optimizer does not use indexes in
-   cases when the table is small because a sequential scan would be
-   faster.
+   Indexes are not automatically used by every query. Indexes are only
+   used if the table is larger than a minimum size, and the index selects
+   only a small percentage of the rows in the table. This is because the
+   random disk access caused by an index scan is sometimes slower than a
+   straight read through the table, or sequential scan.
    
-   For column-specific optimization statistics, use VACUUM ANALYZE.
-   VACUUM ANALYZE is important for complex multijoin queries, so the
-   optimizer can estimate the number of rows returned from each table,
-   and choose the proper join order. The backend does not keep track of
-   column statistics on its own, so VACUUM ANALYZE must be run to collect
-   them periodically.
+   To determine if an index should be used, PostgreSQL must have
+   statistics about the table. These statistics are collected using
+   VACUUM ANALYZE, or simply ANALYZE. Using statistics, the optimizer
+   knows how many rows are in the table, and can better determine if
+   indexes should be used. Statistics are also valuable in determining
+   optimal join order and join methods. Statistics collection should be
+   performed periodically as the contents of the table change.
    
-   Indexes are usually not used for ORDER BY or joins. A sequential scan
-   followed by an explicit sort is faster than an indexscan of all tuples
-   of a large table. This is because random disk access is very slow.
+   Indexes are normally not used for ORDER BY or to perform joins. A
+   sequential scan followed by an explicit sort is usually faster than an
+   index scan of a large table.
+   However, LIMIT combined with ORDER BY often will use an index because
+   only a small portion of the table is returned.
    
    When using wild-card operators such as LIKE or ~, indexes can only be
    used if the beginning of the search is anchored to the start of the
-   string. So, to use indexes, LIKE searches should not begin with %, and
-   ~(regular expression searches) should start with ^.
+   string. Therefore, to use indexes, LIKE patterns must not start with
+   %, and ~(regular expression) patterns must start with ^.
    
     4.9) How do I see how the query optimizer is evaluating my query?
     
