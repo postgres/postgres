@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.164 2003/10/26 01:06:35 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.165 2003/10/26 01:17:31 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1585,7 +1585,7 @@ gunzip -c postgres.ps.gz \
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>Arm</></entry>
+	<entry><systemitem>arm41</></entry>
 	<entry>7.4</entry>
 	<entry>2003-10-25,
 	 No?l K?the (<email>noel@debian.org</email>)</entry>
@@ -1638,14 +1638,6 @@ gunzip -c postgres.ps.gz \
 	<entry>2003-10-24, 
 	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
 	<entry>2.4, 32-bit</entry>
-       </row>
-       <row>
-	<entry><systemitem class="osname">Linux</></entry>
-	<entry><systemitem>x86</></entry>
-	<entry>7.4</entry>
-	<entry>2003-10-24,
-	 Peter Eisentraut (<email>peter_e@gmx.net</email>)</entry>
-	<entry>2.4</entry>
        </row>
        <row>
 	<entry><systemitem class="osname">Linux</></entry>
@@ -1795,50 +1787,12 @@ gunzip -c postgres.ps.gz \
       <entry>needs updates to semaphore code</entry>
      </row>
      <row>
-      <entry><systemitem class="osname">DG/UX 5.4R4.11</></entry>
-      <entry><systemitem>m88k</></entry>
-      <entry>6.3</entry>
-      <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
-      <entry>no recent reports</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">Linux</></entry>
-      <entry><systemitem>armv4l</></entry>
-      <entry>7.2</entry>
-      <entry>2001-12-10,
-       Mark Knox (<email>segfault@hardline.org</email>)</entry>
-      <entry>2.2.x</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">Linux</></entry>
-      <entry><systemitem>MIPS</></entry>
-      <entry>7.2</entry>
-      <entry>2001-11-15,
-       Hisao Shibuya (<email>shibuya@alpha.or.jp</>)</entry>
-      <entry>2.0.x; <productname>Cobalt Qube2</></entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">MkLinux DR1</></entry>
-      <entry><systemitem>PPC750</></entry>
-      <entry>7.0</entry>
-      <entry>2001-04-03, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-      <entry>7.1 needs OS update?</entry>
-     </row>
-     <row>
       <entry><systemitem class="osname">NetBSD</></entry>
       <entry><systemitem>Alpha</></entry>
       <entry>7.2</entry>
       <entry>2001-11-20,
        Thomas Thai (<email>tom@minnesota.com</email>)</entry>
       <entry>1.5W</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">NetBSD</></entry>
-      <entry><systemitem>m68k</></entry>
-      <entry>7.0</entry>
-      <entry>2000-04-10,
-       Henry B. Hotz (<email>hotz@jpl.nasa.gov</email>)</entry>
-      <entry>Mac 8xx</entry>
      </row>
      <row>
       <entry><systemitem class="osname">NetBSD</></entry>
@@ -1873,13 +1827,6 @@ gunzip -c postgres.ps.gz \
       <entry>1.5</entry>
      </row>
      <row>
-      <entry><systemitem class="osname">NeXTSTEP</></entry>
-      <entry><systemitem>x86</></entry>
-      <entry>6.x</entry>
-      <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
-      <entry>bit rot suspected</entry>
-     </row>
-     <row>
       <entry><systemitem class="osname">QNX 4 RTOS</></entry>
       <entry><systemitem>x86</></entry>
       <entry>7.2</entry>
@@ -1901,34 +1848,6 @@ gunzip -c postgres.ps.gz \
       <entry><systemitem>Sparc</></entry>
       <entry>7.2</entry>
       <entry>2001-12-04, Tatsuo Ishii (<email>t-ishii@sra.co.jp</email>)</entry>
-      <entry></entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">System V R4</></entry>
-      <entry><systemitem>m88k</></entry>
-      <entry>6.2.1</entry>
-      <entry>1998-03-01, Doug Winterburn (<email>dlw@seavme.xroads.com</email>)</entry>
-      <entry>needs new <acronym>TAS</acronym> spinlock code</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">System V R4</></entry>
-      <entry><systemitem>MIPS</></entry>
-      <entry>6.4</entry>
-      <entry>1998-10-28, Frank Ridderbusch (<email>ridderbusch.pad@sni.de</email>)</entry>
-      <entry>no recent reports</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">Ultrix</></entry>
-      <entry><systemitem>MIPS</></entry>
-      <entry>7.1</entry>
-      <entry>2001-03-26</entry>
-      <entry><acronym>TAS</acronym> spinlock code not detected</entry>
-     </row>
-     <row>
-      <entry><systemitem class="osname">Ultrix</></entry>
-      <entry><systemitem>VAX</></entry>
-      <entry>6.x</entry>
-      <entry>1998-03-01</entry>
       <entry></entry>
      </row>
     </tbody>
