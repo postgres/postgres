@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Dec  9 13:09:27 EST 2002
+Last updated:		Tue Dec 10 17:27:40 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -406,6 +406,20 @@ Miscellaneous
   when it is available
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 * Improve caching of attribute offsets when NULLs exist in the row
+
+* Wire Protocol Changes
+	o Show transaction status in psql
+	o Allow binding of query parameters, support for prepared queries
+	o Add optional textual message to NOTIFY
+	o Remove hard-coded limits on user/db/password names
+	o Remove unused elements of startup packet (unused, tty, passlength)
+	o Fix COPY/fastpath protocol?
+	o Replication support?
+	o Error codes
+	o Dynamic character set handling
+	o Special passing of binary values in platform-neutral format (bytea?)
+	o ecpg improvements?
+	o Add decoded type, length, precision
 
 
 Source Code
