@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.256 2003/09/19 14:06:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.257 2003/09/19 14:13:16 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4522,7 +4522,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = make_str("Numeric");
+				$$.type_str = make_str("numeric");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;

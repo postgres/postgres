@@ -1635,6 +1635,10 @@ Tue Sep 16 07:56:14 CEST 2003
 Thu Sep 18 14:54:47 CEST 2003
 
 	- Added Informix handling of datatype converion errors.
+	
+Fri Sep 19 08:33:39 CEST 2003
+
+	- Some code cleanup
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0
