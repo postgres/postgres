@@ -10,8 +10,8 @@
 #define ABSTIMEOID	702			/* it should be in pg_type.h */
 
 AbsoluteTime currabstime(void);
-HeapTuple	timetravel(void);
-int32		set_timetravel(Name relname, int32 on);
+Datum		timetravel(PG_FUNCTION_ARGS);
+Datum		set_timetravel(PG_FUNCTION_ARGS);
 
 typedef struct
 {
@@ -47,9 +47,10 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
  * timetravel ('date_on', 'date_off').
  */
 
-HeapTuple						/* have to return HeapTuple to Executor */
-timetravel()
+Datum
+timetravel(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	char	  **args;			/* arguments */
 	int			attnum[2];		/* fnumbers of start/stop columns */
@@ -78,27 +79,27 @@ timetravel()
 	 */
 
 	/* Called by trigger manager ? */
-	if (!CurrentTriggerData)
-		elog(ERROR, "timetravel: triggers are not initialized");
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "timetravel: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "timetravel: can't process STATEMENT events");
 
 	/* Should be called BEFORE */
-	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		elog(ERROR, "timetravel: must be fired before event");
 
 	/* INSERT ? */
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		isinsert = true;
 
-	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-		newtuple = CurrentTriggerData->tg_newtuple;
+	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		newtuple = trigdata->tg_newtuple;
 
-	trigtuple = CurrentTriggerData->tg_trigtuple;
+	trigtuple = trigdata->tg_trigtuple;
 
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
 
 	/* check if TT is OFF for this relation */
@@ -108,10 +109,10 @@ timetravel()
 	if (i < nTTOff)				/* OFF - nothing to do */
 	{
 		pfree(relname);
-		return ((newtuple != NULL) ? newtuple : trigtuple);
+		return PointerGetDatum((newtuple != NULL) ? newtuple : trigtuple);
 	}
 
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 
 	if (trigger->tgnargs != 2)
 		elog(ERROR, "timetravel (%s): invalid (!= 2) number of arguments %d",
@@ -120,13 +121,6 @@ timetravel()
 	args = trigger->tgargs;
 	tupdesc = rel->rd_att;
 	natts = tupdesc->natts;
-
-	/*
-	 * Setting CurrentTriggerData to NULL prevents direct calls to trigger
-	 * functions in queries. Normally, trigger functions have to be called
-	 * by trigger manager code only.
-	 */
-	CurrentTriggerData = NULL;
 
 	for (i = 0; i < 2; i++)
 	{
@@ -175,11 +169,11 @@ timetravel()
 
 		pfree(relname);
 		if (chnattrs <= 0)
-			return (trigtuple);
+			return PointerGetDatum(trigtuple);
 
 		rettuple = SPI_modifytuple(rel, trigtuple, chnattrs,
 								   chattrs, newvals, NULL);
-		return (rettuple);
+		return PointerGetDatum(rettuple);
 	}
 
 	oldon = SPI_getbinval(trigtuple, tupdesc, attnum[0], &isnull);
@@ -210,13 +204,13 @@ timetravel()
 		if (newoff != NOEND_ABSTIME)
 		{
 			pfree(relname);		/* allocated in upper executor context */
-			return (NULL);
+			return PointerGetDatum(NULL);
 		}
 	}
 	else if (oldoff != NOEND_ABSTIME)	/* DELETE */
 	{
 		pfree(relname);
-		return (NULL);
+		return PointerGetDatum(NULL);
 	}
 
 	newoff = GetCurrentAbsoluteTime();
@@ -325,16 +319,18 @@ timetravel()
 
 	pfree(relname);
 
-	return (rettuple);
+	return PointerGetDatum(rettuple);
 }
 
 /*
- * set_timetravel () --
+ * set_timetravel (relname, on) --
  *					turn timetravel for specified relation ON/OFF
  */
-int32
-set_timetravel(Name relname, int32 on)
+Datum
+set_timetravel(PG_FUNCTION_ARGS)
 {
+	Name		relname = PG_GETARG_NAME(0);
+	int32		on = PG_GETARG_INT32(1);
 	char	   *rname;
 	char	   *d;
 	char	   *s;
@@ -347,7 +343,7 @@ set_timetravel(Name relname, int32 on)
 	if (i < nTTOff)				/* OFF currently */
 	{
 		if (on == 0)
-			return (0);
+			PG_RETURN_INT32(0);
 
 		/* turn ON */
 		free(TTOff[i]);
@@ -360,12 +356,12 @@ set_timetravel(Name relname, int32 on)
 			TTOff = realloc(TTOff, (nTTOff - 1) * sizeof(char *));
 		}
 		nTTOff--;
-		return (0);
+		PG_RETURN_INT32(0);
 	}
 
 	/* ON currently */
 	if (on != 0)
-		return (1);
+		PG_RETURN_INT32(1);
 
 	/* turn OFF */
 	if (nTTOff == 0)
@@ -380,8 +376,7 @@ set_timetravel(Name relname, int32 on)
 	pfree(rname);
 	nTTOff++;
 
-	return (1);
-
+	PG_RETURN_INT32(1);
 }
 
 AbsoluteTime

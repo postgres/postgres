@@ -8,10 +8,8 @@
 #include <ctype.h>				/* tolower () */
 
 
-
-
-HeapTuple	check_primary_key(void);
-HeapTuple	check_foreign_key(void);
+extern Datum check_primary_key(PG_FUNCTION_ARGS);
+extern Datum check_foreign_key(PG_FUNCTION_ARGS);
 
 
 typedef struct
@@ -38,9 +36,10 @@ static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
  * check_primary_key ('Fkey1', 'Fkey2', 'Ptable', 'Pkey1', 'Pkey2').
  */
 
-HeapTuple						/* have to return HeapTuple to Executor */
-check_primary_key()
+Datum
+check_primary_key(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: column names and table name */
@@ -57,33 +56,35 @@ check_primary_key()
 	int			ret;
 	int			i;
 
-	/*
-	 * Some checks first...
-	 */
 #ifdef	DEBUG_QUERY
 	elog(NOTICE, "Check_primary_key Enter Function");
 #endif
+
+	/*
+	 * Some checks first...
+	 */
+
 	/* Called by trigger manager ? */
-	if (!CurrentTriggerData)
-		elog(ERROR, "check_primary_key: triggers are not initialized");
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "check_primary_key: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "check_primary_key: can't process STATEMENT events");
 
 	/* If INSERTion then must check Tuple to being inserted */
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-		tuple = CurrentTriggerData->tg_trigtuple;
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+		tuple = trigdata->tg_trigtuple;
 
 	/* Not should be called for DELETE */
-	else if (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event))
+	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 		elog(ERROR, "check_primary_key: can't process DELETE events");
 
 	/* If UPDATion the must check new Tuple, not old one */
 	else
-		tuple = CurrentTriggerData->tg_newtuple;
+		tuple = trigdata->tg_newtuple;
 
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
 
@@ -92,15 +93,8 @@ check_primary_key()
 
 	nkeys = nargs / 2;
 	relname = args[nkeys];
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	tupdesc = rel->rd_att;
-
-	/*
-	 * Setting CurrentTriggerData to NULL prevents direct calls to trigger
-	 * functions in queries. Normally, trigger functions have to be called
-	 * by trigger manager code only.
-	 */
-	CurrentTriggerData = NULL;
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -145,7 +139,7 @@ check_primary_key()
 		if (isnull)
 		{
 			SPI_finish();
-			return (tuple);
+			return PointerGetDatum(tuple);
 		}
 
 		if (plan->nplans <= 0)	/* Get typeId of column */
@@ -207,7 +201,7 @@ check_primary_key()
 
 	SPI_finish();
 
-	return (tuple);
+	return PointerGetDatum(tuple);
 }
 
 /*
@@ -222,9 +216,10 @@ check_primary_key()
  * 'Ftable1', 'Fkey11', 'Fkey12', 'Ftable2', 'Fkey21', 'Fkey22').
  */
 
-HeapTuple						/* have to return HeapTuple to Executor */
-check_foreign_key()
+Datum
+check_foreign_key(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: as described above */
@@ -258,19 +253,19 @@ check_foreign_key()
 	 */
 
 	/* Called by trigger manager ? */
-	if (!CurrentTriggerData)
-		elog(ERROR, "check_foreign_key: triggers are not initialized");
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "check_foreign_key: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "check_foreign_key: can't process STATEMENT events");
 
 	/* Not should be called for INSERT */
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		elog(ERROR, "check_foreign_key: can't process INSERT events");
 
 	/* Have to check tg_trigtuple - tuple being deleted */
-	trigtuple = CurrentTriggerData->tg_trigtuple;
+	trigtuple = trigdata->tg_trigtuple;
 
 	/*
 	 * But if this is UPDATE then we have to return tg_newtuple. Also, if
@@ -278,12 +273,12 @@ check_foreign_key()
 	 * do.
 	 */
 	is_update = 0;
-	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
-		newtuple = CurrentTriggerData->tg_newtuple;
+		newtuple = trigdata->tg_newtuple;
 		is_update = 1;
 	}
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
 
@@ -304,15 +299,8 @@ check_foreign_key()
 		elog(ERROR, "check_foreign_key: invalid number of arguments %d for %d references",
 			 nargs + 2, nrefs);
 
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	tupdesc = rel->rd_att;
-
-	/*
-	 * Setting CurrentTriggerData to NULL prevents direct calls to trigger
-	 * functions in queries. Normally, trigger functions have to be called
-	 * by trigger manager code only.
-	 */
-	CurrentTriggerData = NULL;
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -364,7 +352,7 @@ check_foreign_key()
 		if (isnull)
 		{
 			SPI_finish();
-			return ((newtuple == NULL) ? trigtuple : newtuple);
+			return PointerGetDatum((newtuple == NULL) ? trigtuple : newtuple);
 		}
 
 		/*
@@ -527,7 +515,7 @@ check_foreign_key()
 	if (newtuple != NULL && isequal)
 	{
 		SPI_finish();
-		return (newtuple);
+		return PointerGetDatum(newtuple);
 	}
 
 	/*
@@ -571,7 +559,7 @@ check_foreign_key()
 
 	SPI_finish();
 
-	return ((newtuple == NULL) ? trigtuple : newtuple);
+	return PointerGetDatum((newtuple == NULL) ? trigtuple : newtuple);
 }
 
 static EPlan *

@@ -17,7 +17,7 @@
 	Example:
 
 create function fti() returns opaque as
-'/home/boekhold/src/postgresql-6.2/contrib/fti/fti.so' language 'c';
+'/home/boekhold/src/postgresql-6.2/contrib/fti/fti.so' language 'newC';
 
 create table title_fti (string varchar(25), id oid);
 create index title_fti_idx on title_fti (string);
@@ -61,11 +61,11 @@ select p.* from product p, title_fti f1, title_fti f2 where
    that can build the final query automatigally?
    */
 
-HeapTuple	fti(void);
-char	   *breakup(char *, char *);
-bool		is_stopword(char *);
+extern Datum	fti(PG_FUNCTION_ARGS);
+static char	   *breakup(char *, char *);
+static bool		is_stopword(char *);
 
-bool		new_tuple = false;
+static bool		new_tuple = false;
 
 
 /* THIS LIST MUST BE IN SORTED ORDER, A BINARY SEARCH IS USED!!!! */
@@ -93,9 +93,10 @@ static int	nDeletePlans = 0;
 static EPlan *find_plan(char *ident, EPlan ** eplan, int *nplans);
 
 /***********************************************************************/
-HeapTuple
-fti()
+Datum
+fti(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of arguments */
 	char	  **args;			/* arguments */
@@ -119,32 +120,29 @@ fti()
 	 * function\n"); fflush(debug);
 	 */
 
-	if (!CurrentTriggerData)
-		elog(ERROR, "Full Text Indexing: triggers are not initialized");
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "Full Text Indexing: not fired by trigger manager");
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "Full Text Indexing: can't process STATEMENT events");
-	if (TRIGGER_FIRED_BEFORE(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 		elog(ERROR, "Full Text Indexing: must be fired AFTER event");
 
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		isinsert = true;
-	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
 		isdelete = true;
 		isinsert = true;
 	}
-	if (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 		isdelete = true;
 
-	trigger = CurrentTriggerData->tg_trigger;
-	rel = CurrentTriggerData->tg_relation;
+	trigger = trigdata->tg_trigger;
+	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
-	rettuple = CurrentTriggerData->tg_trigtuple;
+	rettuple = trigdata->tg_trigtuple;
 	if (isdelete && isinsert)	/* is an UPDATE */
-		rettuple = CurrentTriggerData->tg_newtuple;
-
-	CurrentTriggerData = NULL;	/* invalidate 'normal' calls to this
-								 * function */
+		rettuple = trigdata->tg_newtuple;
 
 	if ((ret = SPI_connect()) < 0)
 		elog(ERROR, "Full Text Indexing: SPI_connect failed, returned %d\n", ret);
@@ -289,10 +287,10 @@ fti()
 	}
 
 	SPI_finish();
-	return (rettuple);
+	return PointerGetDatum(rettuple);
 }
 
-char *
+static char *
 breakup(char *string, char *substring)
 {
 	static char *last_start;
@@ -342,7 +340,7 @@ breakup(char *string, char *substring)
 }
 
 /* copied from src/backend/parser/keywords.c and adjusted for our situation*/
-bool
+static bool
 is_stopword(char *text)
 {
 	char	  **StopLow;		/* for list of stop-words */

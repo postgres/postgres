@@ -3,4 +3,4 @@ DROP FUNCTION autoinc();
 CREATE FUNCTION autoinc() 
 	RETURNS opaque 
 	AS '_OBJWD_/autoinc_DLSUFFIX_'
-	LANGUAGE 'c';
+	LANGUAGE 'newC';

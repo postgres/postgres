@@ -2,13 +2,13 @@
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
 
-HeapTuple	autoinc(void);
-
+extern Datum autoinc(PG_FUNCTION_ARGS);
 extern int4 nextval(struct varlena * seqin);
 
-HeapTuple
-autoinc()
+Datum
+autoinc(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of arguments */
 	int		   *chattrs;		/* attnums of attributes to change */
@@ -22,24 +22,24 @@ autoinc()
 	bool		isnull;
 	int			i;
 
-	if (!CurrentTriggerData)
-		elog(ERROR, "autoinc: triggers are not initialized");
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "autoinc: not fired by trigger manager");
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "autoinc: can't process STATEMENT events");
-	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		elog(ERROR, "autoinc: must be fired before event");
 
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-		rettuple = CurrentTriggerData->tg_trigtuple;
-	else if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-		rettuple = CurrentTriggerData->tg_newtuple;
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+		rettuple = trigdata->tg_trigtuple;
+	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		rettuple = trigdata->tg_newtuple;
 	else
 		elog(ERROR, "autoinc: can't process DELETE events");
 
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
 
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 
 	nargs = trigger->tgnargs;
 	if (nargs <= 0 || nargs % 2 != 0)
@@ -47,8 +47,6 @@ autoinc()
 
 	args = trigger->tgargs;
 	tupdesc = rel->rd_att;
-
-	CurrentTriggerData = NULL;
 
 	chattrs = (int *) palloc(nargs / 2 * sizeof(int));
 	newvals = (Datum *) palloc(nargs / 2 * sizeof(Datum));
@@ -96,5 +94,5 @@ autoinc()
 	pfree(chattrs);
 	pfree(newvals);
 
-	return (rettuple);
+	return PointerGetDatum(rettuple);
 }

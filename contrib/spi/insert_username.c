@@ -10,11 +10,12 @@
 #include "commands/trigger.h"	/* -"- and triggers */
 #include "miscadmin.h"			/* for GetPgUserName() */
 
-HeapTuple	insert_username(void);
+extern Datum	insert_username(PG_FUNCTION_ARGS);
 
-HeapTuple
-insert_username()
+Datum
+insert_username(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of arguments */
 	Datum		newval;			/* new value of column */
@@ -26,24 +27,24 @@ insert_username()
 	int			attnum;
 
 	/* sanity checks from autoinc.c */
-	if (!CurrentTriggerData)
-		elog(ERROR, "insert_username: triggers are not initialized");
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "insert_username: not fired by trigger manager");
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "insert_username: can't process STATEMENT events");
-	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		elog(ERROR, "insert_username: must be fired before event");
 
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-		rettuple = CurrentTriggerData->tg_trigtuple;
-	else if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-		rettuple = CurrentTriggerData->tg_newtuple;
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+		rettuple = trigdata->tg_trigtuple;
+	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		rettuple = trigdata->tg_newtuple;
 	else
 		elog(ERROR, "insert_username: can't process DELETE events");
 
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
 
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 
 	nargs = trigger->tgnargs;
 	if (nargs != 1)
@@ -51,8 +52,6 @@ insert_username()
 
 	args = trigger->tgargs;
 	tupdesc = rel->rd_att;
-
-	CurrentTriggerData = NULL;
 
 	attnum = SPI_fnumber(tupdesc, args[0]);
 
@@ -73,5 +72,5 @@ insert_username()
 
 	pfree(relname);
 
-	return (rettuple);
+	return PointerGetDatum(rettuple);
 }

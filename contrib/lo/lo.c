@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Id: lo.c,v 1.2 1999/05/25 16:05:45 momjian Exp $
+ *	$Id: lo.c,v 1.3 2000/05/29 01:59:02 tgl Exp $
  *
  */
 
@@ -37,7 +37,7 @@ Blob	   *lo_in(char *str);	/* Create from String		*/
 char	   *lo_out(Blob * addr);/* Output oid as String		*/
 Oid			lo_oid(Blob * addr);/* Return oid as an oid		*/
 Blob	   *lo(Oid oid);		/* Return Blob based on oid */
-HeapTuple	lo_manage(void);	/* Trigger handler			*/
+Datum		lo_manage(PG_FUNCTION_ARGS); /* Trigger handler			*/
 
 /*
  * This creates a large object, and set's its OID to the value in the
@@ -139,9 +139,10 @@ lo(Oid oid)
 /*
  * This handles the trigger that protects us from orphaned large objects
  */
-HeapTuple
-lo_manage(void)
+Datum
+lo_manage(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			attnum;			/* attribute number to monitor	*/
 	char	  **args;			/* Args containing attr name	*/
 	TupleDesc	tupdesc;		/* Tuple Descriptor				*/
@@ -150,28 +151,25 @@ lo_manage(void)
 	HeapTuple	newtuple = NULL;/* The new value for tuple		*/
 	HeapTuple	trigtuple;		/* The original value of tuple	*/
 
-	if (!CurrentTriggerData)
-		elog(ERROR, "lo: triggers are not initialized");
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "lo: not fired by trigger manager");
 
 	/*
-	 * Fetch some values from CurrentTriggerData
+	 * Fetch some values from trigdata
 	 */
-	newtuple = CurrentTriggerData->tg_newtuple;
-	trigtuple = CurrentTriggerData->tg_trigtuple;
-	tupdesc = CurrentTriggerData->tg_relation->rd_att;
-	args = CurrentTriggerData->tg_trigger->tgargs;
+	newtuple = trigdata->tg_newtuple;
+	trigtuple = trigdata->tg_trigtuple;
+	tupdesc = trigdata->tg_relation->rd_att;
+	args = trigdata->tg_trigger->tgargs;
 
 	/* tuple to return to Executor */
-	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		rettuple = newtuple;
 	else
 		rettuple = trigtuple;
 
 	/* Are we deleting the row? */
-	isdelete = TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event);
-
-	/* Were done with it */
-	CurrentTriggerData = NULL;
+	isdelete = TRIGGER_FIRED_BY_DELETE(trigdata->tg_event);
 
 	/* Get the column were interested in */
 	attnum = SPI_fnumber(tupdesc, args[0]);
@@ -214,5 +212,5 @@ lo_manage(void)
 		}
 	}
 
-	return (rettuple);
+	return PointerGetDatum(rettuple);
 }

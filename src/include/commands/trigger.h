@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * trigger.h
- *	  prototypes for trigger.c.
+ *	  Declarations for trigger handling.
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.19 2000/04/12 17:16:32 momjian Exp $
+ * $Id: trigger.h,v 1.20 2000/05/29 01:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,19 @@
 #include "nodes/execnodes.h"
 #include "nodes/parsenodes.h"
 
+/*
+ * TriggerData is the node type that is passed as fmgr "context" info
+ * when a function is called by the trigger manager.
+ */
+
+#define CALLED_AS_TRIGGER(fcinfo) \
+	((fcinfo)->context != NULL && IsA((fcinfo)->context, TriggerData))
+
 typedef uint32 TriggerEvent;
 
 typedef struct TriggerData
 {
+	NodeTag		type;
 	TriggerEvent tg_event;
 	Relation	tg_relation;
 	HeapTuple	tg_trigtuple;
@@ -27,7 +36,7 @@ typedef struct TriggerData
 	Trigger    *tg_trigger;
 } TriggerData;
 
-extern DLLIMPORT TriggerData *CurrentTriggerData;
+/* TriggerEvent bit flags */
 
 #define TRIGGER_EVENT_INSERT			0x00000000
 #define TRIGGER_EVENT_DELETE			0x00000001
@@ -136,6 +145,6 @@ extern void DeferredTriggerSaveEvent(Relation rel, int event,
  * in utils/adt/ri_triggers.c
  *
  */
-extern bool RI_FKey_keyequal_upd(void);
+extern bool RI_FKey_keyequal_upd(TriggerData *trigdata);
 
 #endif	 /* TRIGGER_H */

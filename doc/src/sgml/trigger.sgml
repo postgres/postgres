@@ -15,13 +15,14 @@
 
    <para>
     If a trigger event occurs, the trigger manager (called by the Executor)
-    initializes the global structure TriggerData *CurrentTriggerData (described
-    below) and calls the trigger function to handle the event.
+    sets up a TriggerData information structure (described below) and calls
+    the trigger function to handle the event.
    </para>
 
    <para>
     The trigger function must be created before the trigger is created as a
-    function taking no arguments and returns opaque.
+    function taking no arguments and returning opaque.  If the function is
+    written in C, it must follow the "new style" function manager interface.
    </para>
 
    <para>
@@ -106,7 +107,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
       <term><replaceable>args</replaceable></term>
       <listitem>
        <para>
-	The arguments passed to the function in the CurrentTriggerData structure.
+	The arguments passed to the function in the TriggerData structure.
 	The purpose of passing arguments to the function is to allow different
 	triggers with similar requirements to call the same function.
        </para>
@@ -179,11 +180,35 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
    <title>Interaction with the Trigger Manager</title>
 
    <para>
-    As mentioned above, when function is called by the trigger manager,
-    structure TriggerData *CurrentTriggerData is NOT NULL and initialized.  So
-    it is better to check CurrentTriggerData against being NULL at the start
-    and set it to NULL just after fetching the information to prevent calls to
-    a trigger function not from the trigger manager.
+    This section describes the low-level details of the interface to a
+    trigger function.  This information is only needed when writing a
+    trigger function in C.  If you are using a higher-level function
+    language then these details are handled for you.
+   </para>
+
+    <note>
+     <para>
+      The interface described here applies for
+      <productname>Postgres</productname> 7.1 and later.
+      Earlier versions passed the TriggerData pointer in a global
+      variable CurrentTriggerData.
+     </para>
+    </note>
+
+   <para>
+    When a function is called by the trigger manager, it is not passed any
+    normal parameters, but it is passed a "context" pointer pointing to a
+    TriggerData structure.  C functions can check whether they were called
+    from the trigger manager or not by executing the macro
+    <literal>CALLED_AS_TRIGGER(fcinfo)</literal>, which expands to
+    <programlisting>
+        ((fcinfo)->context != NULL && IsA((fcinfo)->context, TriggerData))
+    </programlisting>
+    If this returns TRUE, then it is safe to cast fcinfo->context to type
+    <literal>TriggerData *</literal> and make use of the pointed-to
+    TriggerData structure.
+    The function must <emphasis>not</emphasis> alter the TriggerData
+    structure or any of the data it points to.
    </para>
 
    <para>
@@ -192,6 +217,7 @@ CREATE TRIGGER <replaceable>trigger</replaceable> [ BEFORE | AFTER ] [ INSERT | 
     <programlisting>
 typedef struct TriggerData
 {
+    NodeTag       type;
     TriggerEvent  tg_event;
     Relation      tg_relation;
     HeapTuple     tg_trigtuple;
@@ -203,6 +229,15 @@ typedef struct TriggerData
     where the members are defined as follows:
 
     <variablelist>
+     <varlistentry>
+      <term>type</term>
+      <listitem>
+       <para>
+        Always <literal>T_TriggerData</literal> if this is a trigger event.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry>
       <term>tg_event</term>
       <listitem>
@@ -410,11 +445,12 @@ execution of Q) or after Q is done.
 #include "executor/spi.h"	/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
 
-HeapTuple		trigf(void);
+extern Datum trigf(PG_FUNCTION_ARGS);
 
-HeapTuple
-trigf()
+Datum
+trigf(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	TupleDesc	tupdesc;
 	HeapTuple	rettuple;
 	char		*when;
@@ -422,27 +458,27 @@ trigf()
 	bool		isnull;
 	int		ret, i;
 
-	if (!CurrentTriggerData)
-		elog(NOTICE, "trigf: triggers are not initialized");
+	/* Make sure trigdata is pointing at what I expect */
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "trigf: not fired by trigger manager");
 	
 	/* tuple to return to Executor */
-	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-		rettuple = CurrentTriggerData->tg_newtuple;
+	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		rettuple = trigdata->tg_newtuple;
 	else
-		rettuple = CurrentTriggerData->tg_trigtuple;
+		rettuple = trigdata->tg_trigtuple;
 	
 	/* check for NULLs ? */
-	if (!TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event) &&
-		TRIGGER_FIRED_BEFORE(CurrentTriggerData->tg_event))
+	if (!TRIGGER_FIRED_BY_DELETE(trigdata->tg_event) &&
+		TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 		checknull = true;
 	
-	if (TRIGGER_FIRED_BEFORE(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 		when = "before";
 	else
 		when = "after ";
 	
-	tupdesc = CurrentTriggerData->tg_relation->rd_att;
-	CurrentTriggerData = NULL;
+	tupdesc = trigdata->tg_relation->rd_att;
 	
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
@@ -467,7 +503,7 @@ trigf()
 			rettuple = NULL;
 	}
 
-	return (rettuple);
+	return PointerGetDatum(rettuple);
 }
     </programlisting>
    </para>

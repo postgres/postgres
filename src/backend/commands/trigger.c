@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.66 2000/05/28 20:34:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.67 2000/05/29 01:59:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,14 +32,12 @@
 #include "utils/syscache.h"
 #include "utils/tqual.h"
 
-DLLIMPORT TriggerData *CurrentTriggerData = NULL;
-
-/* XXX no points for style */
-extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
 
 static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
 static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
 				   TupleTableSlot **newSlot);
+static HeapTuple ExecCallTriggerFunc(Trigger *trigger,
+									 TriggerData *trigdata);
 
 
 void
@@ -507,7 +505,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgoid = htup->t_data->t_oid;
 		build->tgname = nameout(&pg_trigger->tgname);
 		build->tgfoid = pg_trigger->tgfoid;
-		build->tgfunc.fn_addr = NULL;
+		build->tgfunc.fn_oid = InvalidOid; /* mark FmgrInfo as uninitialized */
 		build->tgtype = pg_trigger->tgtype;
 		build->tgenabled = pg_trigger->tgenabled;
 		build->tgisconstraint = pg_trigger->tgisconstraint;
@@ -757,45 +755,66 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 	return true;
 }
 
-
 static HeapTuple
-ExecCallTriggerFunc(Trigger *trigger)
+ExecCallTriggerFunc(Trigger *trigger, TriggerData *trigdata)
 {
-	if (trigger->tgfunc.fn_addr == NULL)
+	FunctionCallInfoData	fcinfo;
+	Datum					result;
+
+	/*
+	 * Fmgr lookup info is cached in the Trigger structure,
+	 * so that we need not repeat the lookup on every call.
+	 */
+	if (trigger->tgfunc.fn_oid == InvalidOid)
 		fmgr_info(trigger->tgfoid, &trigger->tgfunc);
 
-	return (HeapTuple) ((*fmgr_faddr(&trigger->tgfunc)) ());
+	/*
+	 * Call the function, passing no arguments but setting a context.
+	 */
+	MemSet(&fcinfo, 0, sizeof(fcinfo));
+
+	fcinfo.flinfo = &trigger->tgfunc;
+	fcinfo.context = (Node *) trigdata;
+
+	result = FunctionCallInvoke(&fcinfo);
+
+	/*
+	 * Trigger protocol allows function to return a null pointer,
+	 * but NOT to set the isnull result flag.
+	 */
+	if (fcinfo.isnull)
+		elog(ERROR, "ExecCallTriggerFunc: function %u returned NULL",
+			 fcinfo.flinfo->fn_oid);
+
+	return (HeapTuple) DatumGetPointer(result);
 }
 
 HeapTuple
 ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 {
-	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT];
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_INSERT];
 	HeapTuple	newtuple = trigtuple;
 	HeapTuple	oldtuple;
+	TriggerData	LocTriggerData;
 	int			i;
 
-	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
-	SaveTriggerData->tg_relation = rel;
-	SaveTriggerData->tg_newtuple = NULL;
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation = rel;
+	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
 		if (!trigger[i]->tgenabled)
 			continue;
-		CurrentTriggerData = SaveTriggerData;
-		CurrentTriggerData->tg_trigtuple = oldtuple = newtuple;
-		CurrentTriggerData->tg_trigger = trigger[i];
-		newtuple = ExecCallTriggerFunc(trigger[i]);
+		LocTriggerData.tg_trigtuple = oldtuple = newtuple;
+		LocTriggerData.tg_trigger = trigger[i];
+		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData);
 		if (newtuple == NULL)
 			break;
 		else if (oldtuple != newtuple && oldtuple != trigtuple)
 			heap_freetuple(oldtuple);
 	}
-	CurrentTriggerData = NULL;
-	pfree(SaveTriggerData);
 	return newtuple;
 }
 
@@ -810,9 +829,9 @@ bool
 ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 {
 	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
-	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_DELETE];
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_DELETE];
+	TriggerData LocTriggerData;
 	HeapTuple	trigtuple;
 	HeapTuple	newtuple = NULL;
 	TupleTableSlot *newSlot;
@@ -822,25 +841,22 @@ ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 	if (trigtuple == NULL)
 		return false;
 
-	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event = TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
-	SaveTriggerData->tg_relation = rel;
-	SaveTriggerData->tg_newtuple = NULL;
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation = rel;
+	LocTriggerData.tg_newtuple = NULL;
 	for (i = 0; i < ntrigs; i++)
 	{
 		if (!trigger[i]->tgenabled)
 			continue;
-		CurrentTriggerData = SaveTriggerData;
-		CurrentTriggerData->tg_trigtuple = trigtuple;
-		CurrentTriggerData->tg_trigger = trigger[i];
-		newtuple = ExecCallTriggerFunc(trigger[i]);
+		LocTriggerData.tg_trigtuple = trigtuple;
+		LocTriggerData.tg_trigger = trigger[i];
+		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData);
 		if (newtuple == NULL)
 			break;
 		if (newtuple != trigtuple)
 			heap_freetuple(newtuple);
 	}
-	CurrentTriggerData = NULL;
-	pfree(SaveTriggerData);
 	heap_freetuple(trigtuple);
 
 	return (newtuple == NULL) ? false : true;
@@ -860,9 +876,9 @@ HeapTuple
 ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 {
 	Relation	rel = estate->es_result_relation_info->ri_RelationDesc;
-	TriggerData *SaveTriggerData;
 	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE];
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_UPDATE];
+	TriggerData LocTriggerData;
 	HeapTuple	trigtuple;
 	HeapTuple	oldtuple;
 	HeapTuple	intuple = newtuple;
@@ -880,25 +896,22 @@ ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	if (newSlot != NULL)
 		intuple = newtuple = ExecRemoveJunk(estate->es_junkFilter, newSlot);
 
-	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
-	SaveTriggerData->tg_event = TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
-	SaveTriggerData->tg_relation = rel;
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
+	LocTriggerData.tg_relation = rel;
 	for (i = 0; i < ntrigs; i++)
 	{
 		if (!trigger[i]->tgenabled)
 			continue;
-		CurrentTriggerData = SaveTriggerData;
-		CurrentTriggerData->tg_trigtuple = trigtuple;
-		CurrentTriggerData->tg_newtuple = oldtuple = newtuple;
-		CurrentTriggerData->tg_trigger = trigger[i];
-		newtuple = ExecCallTriggerFunc(trigger[i]);
+		LocTriggerData.tg_trigtuple = trigtuple;
+		LocTriggerData.tg_newtuple = oldtuple = newtuple;
+		LocTriggerData.tg_trigger = trigger[i];
+		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData);
 		if (newtuple == NULL)
 			break;
 		else if (oldtuple != newtuple && oldtuple != intuple)
 			heap_freetuple(oldtuple);
 	}
-	CurrentTriggerData = NULL;
-	pfree(SaveTriggerData);
 	heap_freetuple(trigtuple);
 	return newtuple;
 }
@@ -1167,7 +1180,7 @@ static void
 deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 {
 	Relation	rel;
-	TriggerData SaveTriggerData;
+	TriggerData LocTriggerData;
 	HeapTupleData oldtuple;
 	HeapTupleData newtuple;
 	HeapTuple	rettuple;
@@ -1200,30 +1213,31 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 	 * Setup the trigger information
 	 * ----------
 	 */
-	SaveTriggerData.tg_event = (event->dte_event & TRIGGER_EVENT_OPMASK) |
+	LocTriggerData.type = T_TriggerData;
+	LocTriggerData.tg_event = (event->dte_event & TRIGGER_EVENT_OPMASK) |
 		TRIGGER_EVENT_ROW;
-	SaveTriggerData.tg_relation = rel;
+	LocTriggerData.tg_relation = rel;
 
 	switch (event->dte_event & TRIGGER_EVENT_OPMASK)
 	{
 		case TRIGGER_EVENT_INSERT:
-			SaveTriggerData.tg_trigtuple = &newtuple;
-			SaveTriggerData.tg_newtuple = NULL;
-			SaveTriggerData.tg_trigger =
+			LocTriggerData.tg_trigtuple = &newtuple;
+			LocTriggerData.tg_newtuple = NULL;
+			LocTriggerData.tg_trigger =
 				rel->trigdesc->tg_after_row[TRIGGER_EVENT_INSERT][itemno];
 			break;
 
 		case TRIGGER_EVENT_UPDATE:
-			SaveTriggerData.tg_trigtuple = &oldtuple;
-			SaveTriggerData.tg_newtuple = &newtuple;
-			SaveTriggerData.tg_trigger =
+			LocTriggerData.tg_trigtuple = &oldtuple;
+			LocTriggerData.tg_newtuple = &newtuple;
+			LocTriggerData.tg_trigger =
 				rel->trigdesc->tg_after_row[TRIGGER_EVENT_UPDATE][itemno];
 			break;
 
 		case TRIGGER_EVENT_DELETE:
-			SaveTriggerData.tg_trigtuple = &oldtuple;
-			SaveTriggerData.tg_newtuple = NULL;
-			SaveTriggerData.tg_trigger =
+			LocTriggerData.tg_trigtuple = &oldtuple;
+			LocTriggerData.tg_newtuple = NULL;
+			LocTriggerData.tg_trigger =
 				rel->trigdesc->tg_after_row[TRIGGER_EVENT_DELETE][itemno];
 			break;
 	}
@@ -1233,9 +1247,7 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 	 * updated tuple.
 	 * ----------
 	 */
-	CurrentTriggerData = &SaveTriggerData;
-	rettuple = ExecCallTriggerFunc(SaveTriggerData.tg_trigger);
-	CurrentTriggerData = NULL;
+	rettuple = ExecCallTriggerFunc(LocTriggerData.tg_trigger, &LocTriggerData);
 	if (rettuple != NULL && rettuple != &oldtuple && rettuple != &newtuple)
 		heap_freetuple(rettuple);
 
@@ -1778,7 +1790,7 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	Trigger   **triggers;
 	ItemPointerData oldctid;
 	ItemPointerData newctid;
-	TriggerData SaveTriggerData;
+	TriggerData LocTriggerData;
 
 	if (deftrig_cxt == NULL)
 		elog(ERROR,
@@ -1891,15 +1903,14 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 				if (!is_ri_trigger)
 					continue;
 
-				SaveTriggerData.tg_event = TRIGGER_EVENT_UPDATE;
-				SaveTriggerData.tg_relation = rel;
-				SaveTriggerData.tg_trigtuple = oldtup;
-				SaveTriggerData.tg_newtuple = newtup;
-				SaveTriggerData.tg_trigger = triggers[i];
+				LocTriggerData.type = T_TriggerData;
+				LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE;
+				LocTriggerData.tg_relation = rel;
+				LocTriggerData.tg_trigtuple = oldtup;
+				LocTriggerData.tg_newtuple = newtup;
+				LocTriggerData.tg_trigger = triggers[i];
 
-				CurrentTriggerData = &SaveTriggerData;
-				key_unchanged = RI_FKey_keyequal_upd();
-				CurrentTriggerData = NULL;
+				key_unchanged = RI_FKey_keyequal_upd(&LocTriggerData);
 
 				if (key_unchanged)
 				{

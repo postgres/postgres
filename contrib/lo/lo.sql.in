@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for LargeObjects
 --
---	$Id: lo.sql.in,v 1.1 1998/06/16 07:07:11 momjian Exp $
+--	$Id: lo.sql.in,v 1.2 2000/05/29 01:59:02 tgl Exp $
 --
 
 load '_OBJWD_/lo_DLSUFFIX_';
@@ -47,7 +47,7 @@ create function lo(oid)
 create function lo_manage()
 	returns opaque
 	as '_OBJWD_/lo_DLSUFFIX_'
-	language 'c';
+	language 'newC';
 
 -- This allows us to map lo to oid
 --

@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.113 2000/04/12 17:15:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.114 2000/05/29 01:59:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,6 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-/* XXX no points for style */
-extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
-			 ItemPointer tid);
 
 /* decls for local routines only used within this module */
 static TupleDesc InitPlan(CmdType operation,
@@ -1974,7 +1971,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 	 */
 	*tid = tuple.t_self;
 
-	return (EvalPlanQualNext(estate));
+	return EvalPlanQualNext(estate);
 }
 
 static TupleTableSlot *

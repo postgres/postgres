@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.72 2000/05/28 17:55:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.73 2000/05/29 01:59:06 tgl Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -1159,19 +1159,24 @@ AlterTableAddConstraint(const char *relationName,
 
 				while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 				{
-					TriggerData newtrigdata;
-
-					newtrigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
-					newtrigdata.tg_relation = rel;
-					newtrigdata.tg_trigtuple = tuple;
-					newtrigdata.tg_newtuple = NULL;
-					newtrigdata.tg_trigger = &trig;
-
-					CurrentTriggerData = &newtrigdata;
-
-					RI_FKey_check_ins(NULL);
-
 					/* Make a call to the check function */
+					/* No parameters are passed, but we do set a context */
+					FunctionCallInfoData	fcinfo;
+					TriggerData				trigdata;
+
+					MemSet(&fcinfo, 0, sizeof(fcinfo));
+					/* We assume RI_FKey_check_ins won't look at flinfo... */
+
+					trigdata.type = T_TriggerData;
+					trigdata.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW;
+					trigdata.tg_relation = rel;
+					trigdata.tg_trigtuple = tuple;
+					trigdata.tg_newtuple = NULL;
+					trigdata.tg_trigger = &trig;
+
+					fcinfo.context = (Node *) &trigdata;
+
+					RI_FKey_check_ins(&fcinfo);
 				}
 				heap_endscan(scan);
 				heap_close(rel, NoLock);		/* close rel but keep

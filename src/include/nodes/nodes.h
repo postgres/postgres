@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.67 2000/04/12 17:16:40 momjian Exp $
+ * $Id: nodes.h,v 1.68 2000/05/29 01:59:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,13 @@ typedef enum NodeTag
 	T_CaseExpr,
 	T_CaseWhen,
 	T_RowMark,
-	T_FkConstraint
+	T_FkConstraint,
+
+	/*---------------------
+	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (cf. fmgr.h)
+	 *---------------------
+	 */
+	T_TriggerData = 800			/* in commands/trigger.h */
 } NodeTag;
 
 /*

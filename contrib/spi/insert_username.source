@@ -3,4 +3,4 @@ DROP FUNCTION insert_username();
 CREATE FUNCTION insert_username() 
 	RETURNS opaque 
 	AS '_OBJWD_/insert_username_DLSUFFIX_'
-	LANGUAGE 'c';
+	LANGUAGE 'newC';

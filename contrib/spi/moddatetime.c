@@ -8,18 +8,19 @@ a modification datetime stamp in a record when that record is UPDATEd.
 Credits
 This is 95%+ based on autoinc.c, which I used as a starting point as I do
 not really know what I am doing.  I also had help from
-Jan Wieck <jwieck@debis.com> who told me about the datetime_in("now") function.
+Jan Wieck <jwieck@debis.com> who told me about the timestamp_in("now") function.
 OH, me, I'm Terry Mackintosh <terry@terrym.com>
 */
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
 
-HeapTuple	moddatetime(void);
+extern Datum	moddatetime(PG_FUNCTION_ARGS);
 
-HeapTuple
-moddatetime()
+Datum
+moddatetime(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of arguments */
 	int			attnum;			/* positional number of field to change */
@@ -30,26 +31,26 @@ moddatetime()
 	HeapTuple	rettuple = NULL;
 	TupleDesc	tupdesc;		/* tuple description */
 
-	if (!CurrentTriggerData)
-		elog(ERROR, "moddatetime: triggers are not initialized.");
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "moddatetime: not fired by trigger manager.");
 
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "moddatetime: can't process STATEMENT events.");
 
-	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		elog(ERROR, "moddatetime: must be fired before event.");
 
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		elog(ERROR, "moddatetime: must be fired before event.");
-	else if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-		rettuple = CurrentTriggerData->tg_newtuple;
+	else if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		rettuple = trigdata->tg_newtuple;
 	else
 		elog(ERROR, "moddatetime: can't process DELETE events.");
 
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
 
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 
 	nargs = trigger->tgnargs;
 
@@ -60,11 +61,8 @@ moddatetime()
 	/* must be the field layout? */
 	tupdesc = rel->rd_att;
 
-	/* Why do this? */
-	CurrentTriggerData = NULL;
-
 	/* Get the current datetime. */
-	newdt = datetime_in("now");
+	newdt = (Datum) timestamp_in("now");
 
 	/*
 	 * This gets the position in the turple of the field we want. args[0]
@@ -82,12 +80,12 @@ moddatetime()
 			 args[0]);
 
 	/*
-	 * OK, this is where we make sure the datetime field that we are
-	 * modifying is really a datetime field. Hay, error checking, what a
+	 * OK, this is where we make sure the timestamp field that we are
+	 * modifying is really a timestamp field. Hay, error checking, what a
 	 * novel idea !-)
 	 */
-	if (SPI_gettypeid(tupdesc, attnum) != DATETIMEOID)
-		elog(ERROR, "moddatetime (%s): attribute %s must be of DATETIME type",
+	if (SPI_gettypeid(tupdesc, attnum) != TIMESTAMPOID)
+		elog(ERROR, "moddatetime (%s): attribute %s must be of TIMESTAMP type",
 			 relname, args[0]);
 
 /* 1 is the number of items in the arrays attnum and newdt.
@@ -106,5 +104,5 @@ moddatetime()
 /* Clean up */
 	pfree(relname);
 
-	return (rettuple);
+	return PointerGetDatum(rettuple);
 }

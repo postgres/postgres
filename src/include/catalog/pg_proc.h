@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.134 2000/05/28 17:56:16 tgl Exp $
+ * $Id: pg_proc.h,v 1.135 2000/05/29 01:59:10 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2103,7 +2103,7 @@ DESCR("less-than");
 DATA(insert OID = 1656 ( lztext_le			  PGUID 11 f t t t 2 f 16 "1625 1625" 100 0 1 0  lztext_le - ));
 DESCR("less-than-or-equal");
 
-DATA(insert OID = 1689 (  update_pg_pwd       PGUID 11 f t f t 0 f 0  ""  100 0 0 100  update_pg_pwd - ));
+DATA(insert OID = 1689 (  update_pg_pwd       PGUID 12 f t f t 0 f 0  ""  100 0 0 100  update_pg_pwd - ));
 DESCR("update pg_pwd file");
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
@@ -2163,29 +2163,29 @@ DATA(insert OID = 1643 (  pg_get_indexdef	   PGUID 11 f t f t 1 f 25 "26" 100 0 
 DESCR("index description");
 
 /* Generic referential integrity constraint triggers */
-DATA(insert OID = 1644 (  RI_FKey_check_ins		PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_check_ins - ));
+DATA(insert OID = 1644 (  RI_FKey_check_ins		PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_check_ins - ));
 DESCR("referential integrity FOREIGN KEY ... REFERENCES");
-DATA(insert OID = 1645 (  RI_FKey_check_upd		PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_check_upd - ));
+DATA(insert OID = 1645 (  RI_FKey_check_upd		PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_check_upd - ));
 DESCR("referential integrity FOREIGN KEY ... REFERENCES");
-DATA(insert OID = 1646 (  RI_FKey_cascade_del	PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_cascade_del - ));
+DATA(insert OID = 1646 (  RI_FKey_cascade_del	PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_cascade_del - ));
 DESCR("referential integrity ON DELETE CASCADE");
-DATA(insert OID = 1647 (  RI_FKey_cascade_upd	PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_cascade_upd - ));
+DATA(insert OID = 1647 (  RI_FKey_cascade_upd	PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_cascade_upd - ));
 DESCR("referential integrity ON UPDATE CASCADE");
-DATA(insert OID = 1648 (  RI_FKey_restrict_del	PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_restrict_del - ));
+DATA(insert OID = 1648 (  RI_FKey_restrict_del	PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_restrict_del - ));
 DESCR("referential integrity ON DELETE RESTRICT");
-DATA(insert OID = 1649 (  RI_FKey_restrict_upd	PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_restrict_upd - ));
+DATA(insert OID = 1649 (  RI_FKey_restrict_upd	PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_restrict_upd - ));
 DESCR("referential integrity ON UPDATE RESTRICT");
-DATA(insert OID = 1650 (  RI_FKey_setnull_del	PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setnull_del - ));
+DATA(insert OID = 1650 (  RI_FKey_setnull_del	PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setnull_del - ));
 DESCR("referential integrity ON DELETE SET NULL");
-DATA(insert OID = 1651 (  RI_FKey_setnull_upd	PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setnull_upd - ));
+DATA(insert OID = 1651 (  RI_FKey_setnull_upd	PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setnull_upd - ));
 DESCR("referential integrity ON UPDATE SET NULL");
-DATA(insert OID = 1652 (  RI_FKey_setdefault_del PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_del - ));
+DATA(insert OID = 1652 (  RI_FKey_setdefault_del PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_del - ));
 DESCR("referential integrity ON DELETE SET DEFAULT");
-DATA(insert OID = 1653 (  RI_FKey_setdefault_upd PGUID 11 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_upd - ));
+DATA(insert OID = 1653 (  RI_FKey_setdefault_upd PGUID 12 f t f t 0 f 0 "" 100 0 0 100  RI_FKey_setdefault_upd - ));
 DESCR("referential integrity ON UPDATE SET DEFAULT");
-DATA(insert OID = 1654 (  RI_FKey_noaction_del PGUID 11 f t f t 0 f 0 "" 100 0 0 100	RI_FKey_noaction_del - ));
+DATA(insert OID = 1654 (  RI_FKey_noaction_del PGUID 12 f t f t 0 f 0 "" 100 0 0 100	RI_FKey_noaction_del - ));
 DESCR("referential integrity ON DELETE NO ACTION");
-DATA(insert OID = 1655 (  RI_FKey_noaction_upd PGUID 11 f t f t 0 f 0 "" 100 0 0 100	RI_FKey_noaction_upd - ));
+DATA(insert OID = 1655 (  RI_FKey_noaction_upd PGUID 12 f t f t 0 f 0 "" 100 0 0 100	RI_FKey_noaction_upd - ));
 DESCR("referential integrity ON UPDATE NO ACTION");
 
 DATA(insert OID = 1666 (  varbiteq			PGUID 11 f t t t 2 f 16 "1562 1562" 100 0 1 0  varbiteq - ));

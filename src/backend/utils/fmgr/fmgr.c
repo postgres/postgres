@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.40 2000/05/28 17:56:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.41 2000/05/29 01:59:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
-#include "commands/trigger.h"	/* TEMPORARY: for CurrentTriggerData */
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
 #include "utils/syscache.h"

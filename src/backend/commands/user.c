@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.54 2000/05/28 17:55:55 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.55 2000/05/29 01:59:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,20 +168,14 @@ write_password_file(Relation rel)
 
 
 /* This is the wrapper for triggers. */
-HeapTuple
-update_pg_pwd(void)
+Datum
+update_pg_pwd(PG_FUNCTION_ARGS)
 {
 	Relation	rel = heap_openr(ShadowRelationName, AccessExclusiveLock);
 
 	write_password_file(rel);
 	heap_close(rel, AccessExclusiveLock);
-
-	/*
-	 * This is a trigger, so clean out the information provided by the
-	 * trigger manager.
-	 */
-	CurrentTriggerData = NULL;
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 

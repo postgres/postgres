@@ -3,7 +3,7 @@
  * user.h
  *
  *
- *
+ * $Id: user.h,v 1.12 2000/05/29 01:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,6 @@ extern void CreateGroup(CreateGroupStmt *stmt);
 extern void AlterGroup(AlterGroupStmt *stmt, const char *tag);
 extern void DropGroup(DropGroupStmt *stmt);
 
-extern HeapTuple update_pg_pwd(void);
+extern Datum update_pg_pwd(PG_FUNCTION_ARGS);
 
 #endif	 /* USER_H */

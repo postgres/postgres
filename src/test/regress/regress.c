@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.36 2000/04/12 17:17:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.37 2000/05/29 01:59:15 tgl Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -306,11 +306,12 @@ static int	fd17b_level = 0;
 static int	fd17a_level = 0;
 static bool fd17b_recursion = true;
 static bool fd17a_recursion = true;
-HeapTuple	funny_dup17(void);
+extern Datum funny_dup17(PG_FUNCTION_ARGS);
 
-HeapTuple						/* have to return HeapTuple to Executor */
-funny_dup17()
+Datum
+funny_dup17(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	TransactionId *xid;
 	int		   *level;
 	bool	   *recursion;
@@ -325,10 +326,13 @@ funny_dup17()
 	int			selected = 0;
 	int			ret;
 
-	tuple = CurrentTriggerData->tg_trigtuple;
-	rel = CurrentTriggerData->tg_relation;
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "funny_dup17: not fired by trigger manager");
+
+	tuple = trigdata->tg_trigtuple;
+	rel = trigdata->tg_relation;
 	tupdesc = rel->rd_att;
-	if (TRIGGER_FIRED_BEFORE(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BEFORE(trigdata->tg_event))
 	{
 		xid = &fd17b_xid;
 		level = &fd17b_level;
@@ -343,8 +347,6 @@ funny_dup17()
 		when = "AFTER ";
 	}
 
-	CurrentTriggerData = NULL;
-
 	if (!TransactionIdIsCurrentTransactionId(*xid))
 	{
 		*xid = GetCurrentTransactionId();
@@ -355,11 +357,11 @@ funny_dup17()
 	if (*level == 17)
 	{
 		*recursion = false;
-		return tuple;
+		return PointerGetDatum(tuple);
 	}
 
 	if (!(*recursion))
-		return tuple;
+		return PointerGetDatum(tuple);
 
 	(*level)++;
 
@@ -412,10 +414,10 @@ funny_dup17()
 	if (*level == 0)
 		*xid = InvalidTransactionId;
 
-	return tuple;
+	return PointerGetDatum(tuple);
 }
 
-HeapTuple	ttdummy(void);
+extern Datum ttdummy(PG_FUNCTION_ARGS);
 int32		set_ttdummy(int32 on);
 
 extern int4 nextval(struct varlena * seqin);
@@ -425,9 +427,10 @@ extern int4 nextval(struct varlena * seqin);
 static void *splan = NULL;
 static bool ttoff = false;
 
-HeapTuple
-ttdummy()
+Datum
+ttdummy(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	char	  **args;			/* arguments */
 	int			attnum[2];		/* fnumbers of start/stop columns */
@@ -448,30 +451,30 @@ ttdummy()
 	int			ret;
 	int			i;
 
-	if (!CurrentTriggerData)
-		elog(ERROR, "ttdummy: triggers are not initialized");
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "ttdummy: not fired by trigger manager");
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		elog(ERROR, "ttdummy: can't process STATEMENT events");
-	if (TRIGGER_FIRED_AFTER(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		elog(ERROR, "ttdummy: must be fired before event");
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		elog(ERROR, "ttdummy: can't process INSERT event");
-	if (TRIGGER_FIRED_BY_UPDATE(CurrentTriggerData->tg_event))
-		newtuple = CurrentTriggerData->tg_newtuple;
+	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
+		newtuple = trigdata->tg_newtuple;
 
-	trigtuple = CurrentTriggerData->tg_trigtuple;
+	trigtuple = trigdata->tg_trigtuple;
 
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
 
 	/* check if TT is OFF for this relation */
 	if (ttoff)					/* OFF - nothing to do */
 	{
 		pfree(relname);
-		return (newtuple != NULL) ? newtuple : trigtuple;
+		return PointerGetDatum((newtuple != NULL) ? newtuple : trigtuple);
 	}
 
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 
 	if (trigger->tgnargs != 2)
 		elog(ERROR, "ttdummy (%s): invalid (!= 2) number of arguments %d",
@@ -480,8 +483,6 @@ ttdummy()
 	args = trigger->tgargs;
 	tupdesc = rel->rd_att;
 	natts = tupdesc->natts;
-
-	CurrentTriggerData = NULL;
 
 	for (i = 0; i < 2; i++)
 	{
@@ -517,13 +518,13 @@ ttdummy()
 		if (newoff != TTDUMMY_INFINITY)
 		{
 			pfree(relname);		/* allocated in upper executor context */
-			return NULL;
+			return PointerGetDatum(NULL);
 		}
 	}
 	else if (oldoff != TTDUMMY_INFINITY)		/* DELETE */
 	{
 		pfree(relname);
-		return NULL;
+		return PointerGetDatum(NULL);
 	}
 
 	{
@@ -618,7 +619,7 @@ ttdummy()
 
 	pfree(relname);
 
-	return rettuple;
+	return PointerGetDatum(rettuple);
 }
 
 int32

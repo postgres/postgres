@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.7 2000/05/28 17:56:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.8 2000/05/29 01:59:13 tgl Exp $
  *
  **********************************************************************/
 
@@ -283,18 +283,18 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	 * Determine if called as function or trigger and
 	 * call appropriate subhandler
 	 ************************************************************/
-	if (CurrentTriggerData == NULL)
-		retval = plperl_func_handler(fcinfo);
-	else
+	if (CALLED_AS_TRIGGER(fcinfo))
 	{
 		elog(ERROR, "plperl: can't use perl in triggers yet.");
 
 		/*
-		 * retval = (Datum) plperl_trigger_handler(fcinfo);
+		 * retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
 		 */
 		/* make the compiler happy */
 		retval = (Datum) 0;
 	}
+	else
+		retval = plperl_func_handler(fcinfo);
 
 	plperl_call_level--;
 
@@ -687,7 +687,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 static HeapTuple
 plperl_trigger_handler(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	char		internal_proname[512];
 	char	   *stroid;
 	Tcl_HashEntry *hashent;
@@ -709,12 +709,6 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	char	  **ret_values;
 
 	sigjmp_buf	save_restart;
-
-	/************************************************************
-	 * Save the current trigger data local
-	 ************************************************************/
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 
 	/************************************************************
 	 * Build our internal proc name from the functions Oid

@@ -6,7 +6,7 @@
 #include "commands/trigger.h"	/* -"- and triggers */
 #include <ctype.h>				/* tolower () */
 
-HeapTuple	noup(void);
+extern Datum noup(PG_FUNCTION_ARGS);
 
 /*
  * noup () -- revoke permission on column
@@ -16,9 +16,10 @@ HeapTuple	noup(void);
  * EXECUTE PROCEDURE noup ('col').
  */
 
-HeapTuple						/* have to return HeapTuple to Executor */
-noup()
+Datum
+noup(PG_FUNCTION_ARGS)
 {
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	Trigger    *trigger;		/* to get trigger name */
 	int			nargs;			/* # of args specified in CREATE TRIGGER */
 	char	  **args;			/* arguments: column names and table name */
@@ -36,42 +37,35 @@ noup()
 	 */
 
 	/* Called by trigger manager ? */
-	if (!CurrentTriggerData)
-		elog(WARN, "noup: triggers are not initialized");
+	if (!CALLED_AS_TRIGGER(fcinfo))
+		elog(ERROR, "noup: not fired by trigger manager");
 
 	/* Should be called for ROW trigger */
-	if (TRIGGER_FIRED_FOR_STATEMENT(CurrentTriggerData->tg_event))
-		elog(WARN, "noup: can't process STATEMENT events");
+	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
+		elog(ERROR, "noup: can't process STATEMENT events");
 
 	/* Not should be called for INSERT */
-	if (TRIGGER_FIRED_BY_INSERT(CurrentTriggerData->tg_event))
-		elog(WARN, "noup: can't process INSERT events");
+	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
+		elog(ERROR, "noup: can't process INSERT events");
 
 	/* Not should be called for DELETE */
-	else if (TRIGGER_FIRED_BY_DELETE(CurrentTriggerData->tg_event))
-		elog(WARN, "noup: can't process DELETE events");
+	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
+		elog(ERROR, "noup: can't process DELETE events");
 
 	/* check new Tuple */
-	tuple = CurrentTriggerData->tg_newtuple;
+	tuple = trigdata->tg_newtuple;
 
-	trigger = CurrentTriggerData->tg_trigger;
+	trigger = trigdata->tg_trigger;
 	nargs = trigger->tgnargs;
 	args = trigger->tgargs;
 
 	nkeys = nargs;
-	rel = CurrentTriggerData->tg_relation;
+	rel = trigdata->tg_relation;
 	tupdesc = rel->rd_att;
-
-	/*
-	 * Setting CurrentTriggerData to NULL prevents direct calls to trigger
-	 * functions in queries. Normally, trigger functions have to be called
-	 * by trigger manager code only.
-	 */
-	CurrentTriggerData = NULL;
 
 	/* Connect to SPI manager */
 	if ((ret = SPI_connect()) < 0)
-		elog(WARN, "noup: SPI_connect returned %d", ret);
+		elog(ERROR, "noup: SPI_connect returned %d", ret);
 
 	/*
 	 * We use SPI plan preparation feature, so allocate space to place key
@@ -87,7 +81,7 @@ noup()
 
 		/* Bad guys may give us un-existing column in CREATE TRIGGER */
 		if (fnumber < 0)
-			elog(WARN, "noup: there is no attribute %s in relation %s",
+			elog(ERROR, "noup: there is no attribute %s in relation %s",
 				 args[i], SPI_getrelname(rel));
 
 		/* Well, get binary (in internal format) value of column */
@@ -99,13 +93,13 @@ noup()
 		if (!isnull)
 		{
 
-			elog(WARN, "%s: update not allowed", args[i]);
+			elog(NOTICE, "%s: update not allowed", args[i]);
 			SPI_finish();
-			return NULL;
+			return PointerGetDatum(NULL);
 		}
 
 	}
 
 	SPI_finish();
-	return (tuple);
+	return PointerGetDatum(tuple);
 }

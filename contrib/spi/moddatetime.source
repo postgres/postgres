@@ -3,4 +3,4 @@ DROP FUNCTION moddatetime();
 CREATE FUNCTION moddatetime() 
 	RETURNS opaque 
 	AS '_OBJWD_/moddatetime_DLSUFFIX_'
-	LANGUAGE 'c';
+	LANGUAGE 'newC';

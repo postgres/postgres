@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.4 2000/05/28 17:56:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.5 2000/05/29 01:59:14 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -69,20 +69,9 @@ static PLpgSQL_function *compiled_functions = NULL;
 Datum
 plpgsql_call_handler(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
-	bool		isTrigger;
+	bool		isTrigger = CALLED_AS_TRIGGER(fcinfo);
 	PLpgSQL_function *func;
 	Datum		retval;
-
-	/* ----------
-	 * Save the current trigger data local
-	 *
-	 * XXX this should go away in favor of using fcinfo->context
-	 * ----------
-	 */
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
-	isTrigger = (trigdata != NULL);
 
 	/* ----------
 	 * Connect to SPI manager
@@ -136,7 +125,8 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	 * ----------
 	 */
 	if (isTrigger)
-		retval = PointerGetDatum(plpgsql_exec_trigger(func, trigdata));
+		retval = PointerGetDatum(plpgsql_exec_trigger(func,
+										(TriggerData *) fcinfo->context));
 	else
 		retval = plpgsql_exec_function(func, fcinfo);
 

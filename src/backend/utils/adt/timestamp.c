@@ -8,16 +8,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.26 2000/04/14 15:22:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.27 2000/05/29 01:59:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <ctype.h>
-#include <math.h>
-#include <sys/types.h>
-#include <errno.h>
 
 #include "postgres.h"
+
+#include <ctype.h>
+#include <math.h>
+#include <errno.h>
+#include <sys/types.h>
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
@@ -28,6 +29,7 @@
 #include <sys/timeb.h>
 #endif
 
+#include "access/xact.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 

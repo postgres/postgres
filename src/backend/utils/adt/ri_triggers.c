@@ -6,7 +6,7 @@
  *
  *	1999 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.14 2000/04/12 17:15:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.15 2000/05/29 01:59:08 tgl Exp $
  *
  * ----------
  */
@@ -20,7 +20,6 @@
  */
 
 #include "postgres.h"
-#include "fmgr.h"
 
 #include "access/heapam.h"
 #include "catalog/pg_operator.h"
@@ -28,10 +27,11 @@
 #include "commands/trigger.h"
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
+#include "fmgr.h"
+#include "lib/hasht.h"
 #include "utils/builtins.h"
 #include "utils/mcxt.h"
 #include "utils/syscache.h"
-#include "lib/hasht.h"
 
 
 /* ----------
@@ -105,7 +105,6 @@ typedef struct RI_QueryHashEntry
 typedef struct RI_OpreqHashEntry
 {
 	Oid			typeid;
-	Oid			oprfnid;
 	FmgrInfo	oprfmgrinfo;
 } RI_OpreqHashEntry;
 
@@ -147,13 +146,13 @@ static void ri_HashPreparedPlan(RI_QueryKey *key, void *plan);
 /* ----------
  * RI_FKey_check -
  *
- *	Check foreign key existance (combined for INSERT and UPDATE).
+ *	Check foreign key existence (combined for INSERT and UPDATE).
  * ----------
  */
-static HeapTuple
-RI_FKey_check(FmgrInfo *proinfo)
+static Datum
+RI_FKey_check(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -168,15 +167,13 @@ RI_FKey_check(FmgrInfo *proinfo)
 	int			i;
 	int			match_type;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_check() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -275,7 +272,7 @@ RI_FKey_check(FmgrInfo *proinfo)
 		if (SPI_finish() != SPI_OK_FINISH)
 			elog(NOTICE, "SPI_finish() failed in RI_FKey_check()");
 
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	}
 
@@ -284,7 +281,7 @@ RI_FKey_check(FmgrInfo *proinfo)
 	if (match_type == RI_MATCH_TYPE_PARTIAL)
 	{
 		elog(ERROR, "MATCH PARTIAL not yet supported");
-		return NULL;
+		return PointerGetDatum(NULL);
 	}
 
 	ri_BuildQueryKeyFull(&qkey, trigdata->tg_trigger->tgoid,
@@ -303,7 +300,7 @@ RI_FKey_check(FmgrInfo *proinfo)
 			 * ----------
 			 */
 			heap_close(pk_rel, NoLock);
-			return NULL;
+			return PointerGetDatum(NULL);
 
 		case RI_KEYS_SOME_NULL:
 			/* ----------
@@ -324,7 +321,7 @@ RI_FKey_check(FmgrInfo *proinfo)
 						 "and NON-NULL key values",
 						 tgargs[RI_CONSTRAINT_NAME_ARGNO]);
 					heap_close(pk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_MATCH_TYPE_UNSPECIFIED:
 					/* ----------
@@ -333,7 +330,7 @@ RI_FKey_check(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(pk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_MATCH_TYPE_PARTIAL:
 					/* ----------
@@ -345,7 +342,7 @@ RI_FKey_check(FmgrInfo *proinfo)
 					 */
 					elog(ERROR, "MATCH PARTIAL not yet implemented");
 					heap_close(pk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 			}
 
 		case RI_KEYS_NONE_NULL:
@@ -459,40 +456,40 @@ RI_FKey_check(FmgrInfo *proinfo)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(NOTICE, "SPI_finish() failed in RI_FKey_check()");
 
-	return NULL;
+	return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Never reached
 	 * ----------
 	 */
 	elog(ERROR, "internal error #1 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
 /* ----------
  * RI_FKey_check_ins -
  *
- *	Check foreign key existance at insert event on FK table.
+ *	Check foreign key existence at insert event on FK table.
  * ----------
  */
-HeapTuple
-RI_FKey_check_ins(FmgrInfo *proinfo)
+Datum
+RI_FKey_check_ins(PG_FUNCTION_ARGS)
 {
-	return RI_FKey_check(proinfo);
+	return RI_FKey_check(fcinfo);
 }
 
 
 /* ----------
  * RI_FKey_check_upd -
  *
- *	Check foreign key existance at update event on FK table.
+ *	Check foreign key existence at update event on FK table.
  * ----------
  */
-HeapTuple
-RI_FKey_check_upd(FmgrInfo *proinfo)
+Datum
+RI_FKey_check_upd(PG_FUNCTION_ARGS)
 {
-	return RI_FKey_check(proinfo);
+	return RI_FKey_check(fcinfo);
 }
 
 
@@ -504,10 +501,10 @@ RI_FKey_check_upd(FmgrInfo *proinfo)
  *	integrity constraint.
  * ----------
  */
-HeapTuple
-RI_FKey_noaction_del(FmgrInfo *proinfo)
+Datum
+RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -520,15 +517,13 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
 	bool		isnull;
 	int			i;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_noaction_del() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -553,7 +548,7 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -590,7 +585,7 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -685,7 +680,7 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_noaction_del()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL restrict delete.
@@ -693,7 +688,7 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -701,7 +696,7 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #2 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -713,10 +708,10 @@ RI_FKey_noaction_del(FmgrInfo *proinfo)
  *	integrity constraint.
  * ----------
  */
-HeapTuple
-RI_FKey_noaction_upd(FmgrInfo *proinfo)
+Datum
+RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -730,15 +725,13 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 	bool		isnull;
 	int			i;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_noaction_upd() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -763,7 +756,7 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -801,7 +794,7 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -818,7 +811,7 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
 							 RI_KEYPAIR_PK_IDX))
-				return NULL;
+				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(NOTICE, "SPI_connect() failed in RI_FKey_noaction_upd()");
@@ -904,7 +897,7 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_noaction_upd()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL noaction update.
@@ -912,7 +905,7 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -920,7 +913,7 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #3 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -930,10 +923,10 @@ RI_FKey_noaction_upd(FmgrInfo *proinfo)
  *	Cascaded delete foreign key references at delete event on PK table.
  * ----------
  */
-HeapTuple
-RI_FKey_cascade_del(FmgrInfo *proinfo)
+Datum
+RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -946,15 +939,13 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
 	bool		isnull;
 	int			i;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_cascade_del() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -979,7 +970,7 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -1016,7 +1007,7 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -1100,7 +1091,7 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_cascade_del()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL cascaded delete.
@@ -1108,7 +1099,7 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -1116,7 +1107,7 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #4 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -1126,10 +1117,10 @@ RI_FKey_cascade_del(FmgrInfo *proinfo)
  *	Cascaded update/delete foreign key references at update event on PK table.
  * ----------
  */
-HeapTuple
-RI_FKey_cascade_upd(FmgrInfo *proinfo)
+Datum
+RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -1144,15 +1135,13 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 	int			i;
 	int			j;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_cascade_upd() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -1177,7 +1166,7 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -1215,7 +1204,7 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -1232,7 +1221,7 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
 							 RI_KEYPAIR_PK_IDX))
-				return NULL;
+				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(NOTICE, "SPI_connect() failed in RI_FKey_cascade_upd()");
@@ -1328,7 +1317,7 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_cascade_upd()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL cascade update.
@@ -1336,7 +1325,7 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -1344,7 +1333,7 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #5 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -1361,10 +1350,10 @@ RI_FKey_cascade_upd(FmgrInfo *proinfo)
  *	equivalent.
  * ----------
  */
-HeapTuple
-RI_FKey_restrict_del(FmgrInfo *proinfo)
+Datum
+RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -1377,15 +1366,13 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
 	bool		isnull;
 	int			i;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_restrict_del() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -1410,7 +1397,7 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -1447,7 +1434,7 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -1542,7 +1529,7 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_restrict_del()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL restrict delete.
@@ -1550,7 +1537,7 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -1558,7 +1545,7 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #6 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -1575,10 +1562,10 @@ RI_FKey_restrict_del(FmgrInfo *proinfo)
  *	equivalent.
  * ----------
  */
-HeapTuple
-RI_FKey_restrict_upd(FmgrInfo *proinfo)
+Datum
+RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -1592,15 +1579,13 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 	bool		isnull;
 	int			i;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_restrict_upd() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -1625,7 +1610,7 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -1663,7 +1648,7 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -1680,7 +1665,7 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
 							 RI_KEYPAIR_PK_IDX))
-				return NULL;
+				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(NOTICE, "SPI_connect() failed in RI_FKey_restrict_upd()");
@@ -1766,7 +1751,7 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_restrict_upd()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL restrict update.
@@ -1774,7 +1759,7 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -1782,7 +1767,7 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #7 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -1792,10 +1777,10 @@ RI_FKey_restrict_upd(FmgrInfo *proinfo)
  *	Set foreign key references to NULL values at delete event on PK table.
  * ----------
  */
-HeapTuple
-RI_FKey_setnull_del(FmgrInfo *proinfo)
+Datum
+RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -1808,15 +1793,13 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
 	bool		isnull;
 	int			i;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_setnull_del() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -1841,7 +1824,7 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -1878,7 +1861,7 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -1973,7 +1956,7 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setnull_del()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL set null delete.
@@ -1981,7 +1964,7 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -1989,7 +1972,7 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #8 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -1999,10 +1982,10 @@ RI_FKey_setnull_del(FmgrInfo *proinfo)
  *	Set foreign key references to NULL at update event on PK table.
  * ----------
  */
-HeapTuple
-RI_FKey_setnull_upd(FmgrInfo *proinfo)
+Datum
+RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -2018,15 +2001,13 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 	int			match_type;
 	bool		use_cached_query;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_setnull_upd() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -2051,7 +2032,7 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -2090,7 +2071,7 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -2108,7 +2089,7 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
 							 RI_KEYPAIR_PK_IDX))
-				return NULL;
+				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(NOTICE, "SPI_connect() failed in RI_FKey_setnull_upd()");
@@ -2231,7 +2212,7 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setnull_upd()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL set null update.
@@ -2239,7 +2220,7 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -2247,7 +2228,7 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #9 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -2257,10 +2238,10 @@ RI_FKey_setnull_upd(FmgrInfo *proinfo)
  *	Set foreign key references to defaults at delete event on PK table.
  * ----------
  */
-HeapTuple
-RI_FKey_setdefault_del(FmgrInfo *proinfo)
+Datum
+RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -2273,15 +2254,13 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
 	bool		isnull;
 	int			i;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_setdefault_del() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -2306,7 +2285,7 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -2343,7 +2322,7 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -2485,7 +2464,7 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_del()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL set null delete.
@@ -2493,7 +2472,7 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -2501,7 +2480,7 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #10 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -2511,10 +2490,10 @@ RI_FKey_setdefault_del(FmgrInfo *proinfo)
  *	Set foreign key references to defaults at update event on PK table.
  * ----------
  */
-HeapTuple
-RI_FKey_setdefault_upd(FmgrInfo *proinfo)
+Datum
+RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 {
-	TriggerData *trigdata;
+	TriggerData *trigdata = (TriggerData *) fcinfo->context;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -2529,15 +2508,13 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 	int			i;
 	int			match_type;
 
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 	ReferentialIntegritySnapshotOverride = true;
 
 	/* ----------
 	 * Check that this is a valid trigger call on the right time and event.
 	 * ----------
 	 */
-	if (trigdata == NULL)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "RI_FKey_setdefault_upd() not fired by trigger manager");
 	if (!TRIGGER_FIRED_AFTER(trigdata->tg_event) ||
 		!TRIGGER_FIRED_FOR_ROW(trigdata->tg_event))
@@ -2562,7 +2539,7 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	if (tgnargs == 4)
-		return NULL;
+		return PointerGetDatum(NULL);
 
 	/* ----------
 	 * Get the relation descriptors of the FK and PK tables and
@@ -2602,7 +2579,7 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 					 * ----------
 					 */
 					heap_close(fk_rel, NoLock);
-					return NULL;
+					return PointerGetDatum(NULL);
 
 				case RI_KEYS_NONE_NULL:
 					/* ----------
@@ -2619,7 +2596,7 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 			 */
 			if (ri_KeysEqual(pk_rel, old_row, new_row, &qkey,
 							 RI_KEYPAIR_PK_IDX))
-				return NULL;
+				return PointerGetDatum(NULL);
 
 			if (SPI_connect() != SPI_OK_CONNECT)
 				elog(NOTICE, "SPI_connect() failed in RI_FKey_setdefault_upd()");
@@ -2769,7 +2746,7 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 			if (SPI_finish() != SPI_OK_FINISH)
 				elog(NOTICE, "SPI_finish() failed in RI_FKey_setdefault_upd()");
 
-			return NULL;
+			return PointerGetDatum(NULL);
 
 			/* ----------
 			 * Handle MATCH PARTIAL set null delete.
@@ -2777,7 +2754,7 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 			 */
 		case RI_MATCH_TYPE_PARTIAL:
 			elog(ERROR, "MATCH PARTIAL not yet supported");
-			return NULL;
+			return PointerGetDatum(NULL);
 	}
 
 	/* ----------
@@ -2785,7 +2762,7 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
 	 * ----------
 	 */
 	elog(ERROR, "internal error #11 in ri_triggers.c");
-	return NULL;
+	return PointerGetDatum(NULL);
 }
 
 
@@ -2794,14 +2771,13 @@ RI_FKey_setdefault_upd(FmgrInfo *proinfo)
  *
  *	Check if we have a key change on update.
  *
- *	This is no real trigger procedure. It is used by the deferred
+ *	This is not a real trigger procedure. It is used by the deferred
  *	trigger queue manager to detect "triggered data change violation".
  * ----------
  */
 bool
-RI_FKey_keyequal_upd(void)
+RI_FKey_keyequal_upd(TriggerData *trigdata)
 {
-	TriggerData *trigdata;
 	int			tgnargs;
 	char	  **tgargs;
 	Relation	fk_rel;
@@ -2809,9 +2785,6 @@ RI_FKey_keyequal_upd(void)
 	HeapTuple	new_row;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-
-	trigdata = CurrentTriggerData;
-	CurrentTriggerData = NULL;
 
 	/* ----------
 	 * Check for the correct # of call arguments
@@ -3262,8 +3235,10 @@ ri_OneKeyEqual(Relation rel, int column, HeapTuple oldtup, HeapTuple newtup,
 /* ----------
  * ri_AttributesEqual -
  *
- *	Call the type specific '=' operator comparision function
+ *	Call the type specific '=' operator comparison function
  *	for two values.
+ *
+ *	NB: we have already checked that neither value is null.
  * ----------
  */
 static bool
@@ -3271,7 +3246,6 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 {
 	RI_OpreqHashEntry *entry;
 	bool		found;
-	Datum		result;
 
 	/* ----------
 	 * On the first call initialize the hashtable
@@ -3291,6 +3265,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 
 	/* ----------
 	 * If not found, lookup the OPERNAME system cache for it
+	 * to get the func OID, then do the function manager lookup,
 	 * and remember that info.
 	 * ----------
 	 */
@@ -3307,7 +3282,7 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 
 		if (!HeapTupleIsValid(opr_tup))
 			elog(ERROR, "ri_AttributesEqual(): cannot find '=' operator "
-				 "for type %d", typeid);
+				 "for type %u", typeid);
 		opr_struct = (Form_pg_operator) GETSTRUCT(opr_tup);
 
 		entry = (RI_OpreqHashEntry *) hash_search(ri_opreq_cache,
@@ -3315,15 +3290,14 @@ ri_AttributesEqual(Oid typeid, Datum oldvalue, Datum newvalue)
 		if (entry == NULL)
 			elog(FATAL, "can't insert into RI operator cache");
 
-		entry->oprfnid = opr_struct->oprcode;
-		memset(&(entry->oprfmgrinfo), 0, sizeof(FmgrInfo));
+		entry->typeid = typeid;
+		fmgr_info(opr_struct->oprcode, &(entry->oprfmgrinfo));
 	}
 
 	/* ----------
 	 * Call the type specific '=' function
 	 * ----------
 	 */
-	fmgr_info(entry->oprfnid, &(entry->oprfmgrinfo));
-	result = (Datum) (*fmgr_faddr(&(entry->oprfmgrinfo))) (oldvalue, newvalue);
-	return (bool) result;
+	return DatumGetBool(FunctionCall2(&(entry->oprfmgrinfo),
+									  oldvalue, newvalue));
 }

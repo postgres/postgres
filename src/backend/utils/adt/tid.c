@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.16 2000/04/12 17:15:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.17 2000/05/29 01:59:08 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -17,6 +17,8 @@
  */
 
 #include "postgres.h"
+
+#include "access/heapam.h"
 #include "utils/builtins.h"
 
 #define LDELIM			'('
