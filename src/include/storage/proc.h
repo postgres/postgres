@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.69 2004/07/17 03:31:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.70 2004/07/21 20:23:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,8 @@ typedef struct PROC_HDR
 
 #define	DUMMY_PROC_DEFAULT	0
 #define	DUMMY_PROC_BGWRITER	1
-#define	NUM_DUMMY_PROCS		2
+#define	DUMMY_PROC_AUTOVAC	2
+#define	NUM_DUMMY_PROCS		3
 
 
 /* configurable options */

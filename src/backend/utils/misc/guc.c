@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.221 2004/07/19 21:39:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.222 2004/07/21 20:23:01 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -43,7 +43,9 @@
 #include "optimizer/prep.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "pgstat.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/pg_autovacuum.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
@@ -55,7 +57,6 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
-#include "pgstat.h"
 
 char *guc_pgdata;
 char *guc_hbafile;
@@ -641,6 +642,14 @@ static struct config_bool ConfigureNamesBool[] =
 		},
 		&pgstat_collect_blocklevel,
 		false, NULL, NULL
+	},
+	{
+		{"autovacuum", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Starts the auto vacuum subprocess."),
+			NULL
+		},
+		&autovacuum_start_daemon,
+		false, NULL, NULL	 
 	},
 
 	{
@@ -1284,6 +1293,30 @@ static struct config_int ConfigureNamesInt[] =
 		&block_size,
 		BLCKSZ, BLCKSZ, BLCKSZ, NULL, NULL
 	},
+	{
+		{"autovacuum_vacuum_threshold_base", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Minimum number of tuple updates or deletes prior to vacuum."),
+			NULL
+		},
+		&autovacuum_vacuum_base,
+		1000, 0, INT_MAX, NULL, NULL
+	},
+	{
+		{"autovacuum_analyze_threshold_base", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Minimum number of tuple updates or deletes prior to analyze."),
+			NULL
+		},
+		&autovacuum_analyze_base,
+		500, 0, INT_MAX, NULL, NULL
+	},
+	{
+		{"autovacuum_naptime", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Minimum number of tuple updates or deletes prior to analyze."),
+			NULL
+		},
+		&autovacuum_analyze_base,
+		500, 0, INT_MAX, NULL, NULL
+	},
 
 	/* End-of-list marker */
 	{
@@ -1363,6 +1396,22 @@ static struct config_real ConfigureNamesReal[] =
 		},
 		&phony_random_seed,
 		0.5, 0.0, 1.0, assign_random_seed, show_random_seed
+	},
+	{
+		{"autovacuum_vacuum_threshold_sf", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Numer of tuple updates or deletes prior to vacuum as a factor of reltuples."),
+			NULL
+		},
+		&autovacuum_vacuum_scaling_factor,
+		2, 0, 100, NULL, NULL
+	},
+	{
+		{"autovacuum_analyze_threshold_sf", PGC_SIGHUP, AUTOVACUUM,
+			gettext_noop("Numer of tuple updates or deletes prior to analyze as a factor of reltuples."),
+			NULL
+		},
+		&autovacuum_analyze_scaling_factor,
+		1, 0, 100, NULL, NULL
 	},
 
 	/* End-of-list marker */

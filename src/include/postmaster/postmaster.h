@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.2 2004/05/30 03:50:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/postmaster.h,v 1.3 2004/07/21 20:23:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@ extern char *preload_libraries_string;
 extern bool Log_connections;
 extern bool log_hostname;
 extern char *rendezvous_name;
+extern bool autovacuum_start_daemon; 
 
 #ifdef WIN32
 extern HANDLE PostmasterHandle;

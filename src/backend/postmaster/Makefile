@@ -4,7 +4,7 @@
 #    Makefile for src/backend/postmaster
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/postmaster/Makefile,v 1.16 2004/07/19 02:47:08 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/postmaster/Makefile,v 1.17 2004/07/21 20:22:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/postmaster
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = postmaster.o bgwriter.o pgstat.o pgarch.o
+OBJS = postmaster.o bgwriter.o pgstat.o pgarch.o pg_autovacuum.o
 
 all: SUBSYS.o
 
