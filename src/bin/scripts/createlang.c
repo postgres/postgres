@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/createlang.c,v 1.3 2003/06/11 05:13:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/createlang.c,v 1.4 2003/06/30 18:31:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,16 +195,16 @@ main(int argc, char *argv[])
 		handler = "plperl_call_handler";
 		object = "plperl";
 	}
-	else if (strcmp(langname, "plpython")==0)
+	else if (strcmp(langname, "plpythonu")==0)
 	{
-		trusted = true;
+		trusted = false;
 		handler = "plpython_call_handler";
 		object = "plpython";
 	}
 	else
 	{
 		fprintf(stderr, _("%s: unsupported language \"%s\"\n"), progname, langname);
-		fprintf(stderr, _("Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpython.\n"));
+		fprintf(stderr, _("Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpythonu.\n"));
 		exit(1);
 	}
 

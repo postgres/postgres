@@ -1,5 +1,8 @@
 In no particular order...
 
+* Develop a trusted variant of PL/Python.  Now that RExec has been shown
+  to be full of holes, this may take a while :-(
+
 * Allow arrays as function arguments and return values.  (almost done)
 
 * Create a new restricted execution class that will allow me to pass
@@ -10,7 +13,7 @@ In no particular order...
   so the following will make PostgreSQL unhappy:
 
     create table users (first_name text, last_name text);
-    create function user_name(user) returns text as 'mycode' language 'plpython';
+    create function user_name(user) returns text as 'mycode' language plpython;
     select user_name(user) from users;
     alter table add column user_id integer;
     select user_name(user) from users;

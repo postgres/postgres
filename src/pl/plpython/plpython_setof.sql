@@ -8,4 +8,4 @@ CREATE FUNCTION test_setof() returns setof text
 else:
 	GD["calls"] = 1
 return str(GD["calls"])'
-	LANGUAGE 'plpython';
+	LANGUAGE plpythonu;

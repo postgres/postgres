@@ -16,24 +16,15 @@ SELECT valid_type('rick');
  
 (1 row)
 
-SELECT read_file('/etc/passwd');
-ERROR:  plpython: Call of function `read_file' failed.
-exceptions.IOError: can't open files in restricted mode
-SELECT write_file('/tmp/plpython','This is very bad');
-ERROR:  plpython: Call of function `write_file' failed.
-exceptions.IOError: can't open files in restricted mode
-SELECT getpid();
-ERROR:  plpython: Call of function `getpid' failed.
-exceptions.AttributeError: 'module' object has no attribute 'getpid'
-SELECT uname();
-ERROR:  plpython: Call of function `uname' failed.
-exceptions.AttributeError: 'module' object has no attribute 'uname'
-SELECT sys_exit();
-ERROR:  plpython: Call of function `sys_exit' failed.
-exceptions.AttributeError: 'module' object has no attribute 'exit'
-SELECT sys_argv();
-    sys_argv    
-----------------
- ['RESTRICTED']
+SELECT write_file('/tmp/plpython','Only trusted users should be able to do this!');
+          write_file          
+------------------------------
+ Wrote to file: /tmp/plpython
+(1 row)
+
+SELECT read_file('/tmp/plpython');
+                   read_file                   
+-----------------------------------------------
+ Only trusted users should be able to do this!
 (1 row)
 

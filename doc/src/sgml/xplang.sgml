@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.21 2003/04/07 01:29:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.22 2003/06/30 18:31:42 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -109,13 +109,14 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
       for languages that do not allow access to database server
       internals or the file system. The languages
       <application>PL/pgSQL</application>,
-      <application>PL/Tcl</application>,
-      <application>PL/Perl</application>, and
-      <application>PL/Python</application> are known to be trusted;
-      the languages <application>PL/TclU</application> and
-      <application>PL/PerlU</application> are designed to provide
-      unlimited functionality and should <emphasis>not</emphasis> be
-      marked trusted.
+      <application>PL/Tcl</application>, and
+      <application>PL/Perl</application>
+      are considered trusted; the languages
+      <application>PL/TclU</application>,
+      <application>PL/PerlU</application>, and
+      <application>PL/PythonU</application>
+      are designed to provide unlimited functionality and should
+      <emphasis>not</emphasis> be marked trusted.
      </para>
     </step>
    </procedure>
@@ -158,7 +159,7 @@ CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
     directory. If <application>Tcl/Tk</> support is configured in, the handlers for
     <application>PL/Tcl</> and <application>PL/TclU</> are also built and installed in the same
     location.  Likewise, the <application>PL/Perl</> and <application>PL/PerlU</> handlers are built
-    and installed if Perl support is configured, and <application>PL/Python</> is
+    and installed if Perl support is configured, and <application>PL/PythonU</> is
     installed if Python support is configured.
    </para>
 

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.16 2003/04/07 01:29:25 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/plpython.sgml,v 1.17 2003/06/30 18:31:41 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -14,8 +14,20 @@
 
  <para>
   To install PL/Python in a particular database, use
-  <literal>createlang plpython <replaceable>dbname</></literal>.
+  <literal>createlang plpythonu <replaceable>dbname</></literal>.
  </para>
+
+ <note>
+  <para>
+   As of <productname>PostgreSQL</productname> 7.4,
+   PL/Python is only available as an <quote>untrusted</> language
+   (meaning it does not offer any way of restricting what users
+   can do in it).  It has therefore been renamed to <literal>plpythonu</>.
+   The trusted variant <literal>plpython</> may become available again in
+   future, if a new secure execution mechanism is developed by the Python
+   community.
+  </para>
+ </note>
 
   <tip>
    <para>
@@ -41,7 +53,7 @@
 <programlisting>
 CREATE FUNCTION myfunc(text) RETURNS text
     AS 'return args[0]'
-    LANGUAGE plpython;
+    LANGUAGE plpythonu;
 </programlisting>
 
    gets transformed into
@@ -78,6 +90,8 @@ def __plpython_procedure_myfunc_23456():
    available to all Python functions within a session.  Use with care.
   </para>
 
+<!-- NOT CORRECT ANYMORE, IS IT?
+
   <para>
    Each function gets its own restricted execution object in the
    Python interpreter, so that global data and function arguments from
@@ -85,6 +99,9 @@ def __plpython_procedure_myfunc_23456():
    <function>myfunc2</function>.  The exception is the data in the
    <varname>GD</varname> dictionary, as mentioned above.
   </para>
+
+-->
+
  </sect1>
 
  <sect1 id="plpython-trigger">
@@ -218,10 +235,12 @@ CREATE FUNCTION usesavedplan() RETURNS trigger AS '
         plan = plpy.prepare("SELECT 1")
         SD["plan"] = plan
     # rest of function
-' LANGUAGE plpython;
+' LANGUAGE plpythonu;
 </programlisting>
   </para>
  </sect1>
+
+<!-- NOT CURRENTLY SUPPORTED 
 
  <sect1 id="plpython-trusted">
   <title>Restricted Environment</title>
@@ -244,5 +263,7 @@ CREATE FUNCTION usesavedplan() RETURNS trigger AS '
    <literal>zlib</>.
   </para>
  </sect1>
+
+-->
 
 </chapter>

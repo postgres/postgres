@@ -11,7 +11,7 @@ createdb $DBNAME >> test.log 2>&1
 echo " Done. ***"
 
 echo -n "*** Create plpython."
-createlang plpython $DBNAME >> test.log 2>&1
+createlang plpythonu $DBNAME >> test.log 2>&1
 echo " Done. ***"
 
 echo -n "*** Create tables"

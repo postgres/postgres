@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.195 2003/06/28 00:12:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.196 2003/06/30 18:31:41 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+PL/Python is now an untrusted language, and is renamed to 'plpythonu'
 Dollar sign ($) is no longer allowed in operator names
 Dollar sign ($) can be a non-first character in identifiers
 Precision in FLOAT(p) is now interpreted as bits, not decimal digits
