@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.2 1996/08/15 07:42:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.3 1996/08/19 01:53:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,7 +504,7 @@ GetDefaultOpClass(Oid atttypid)
  *
  * Exceptions:
  *	BadArg if name is invalid.
- *	"WARN" if index nonexistant.
+ *	"WARN" if index nonexistent.
  *	...
  */
 void
@@ -517,7 +517,7 @@ RemoveIndex(char *name)
 				0,0,0);
     
     if (!HeapTupleIsValid(tuple)) {
-	elog(WARN, "index \"%s\" nonexistant", name);
+	elog(WARN, "index \"%s\" nonexistent", name);
     }
     
     if (((Form_pg_class)GETSTRUCT(tuple))->relkind != RELKIND_INDEX) {

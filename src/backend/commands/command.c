@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.1.1.1 1996/07/09 06:21:19 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.2 1996/08/19 01:53:37 scrappy Exp $
  *
  * NOTES
  *    The PortalExecutorHeapMemory crap needs to be eliminated
@@ -473,7 +473,7 @@ PerformAddAttribute(char *relationName,
 	form = (TypeTupleForm)GETSTRUCT(typeTuple);
 	
 	if (!HeapTupleIsValid(typeTuple)) {
-	    elog(WARN, "Add: type \"%s\" nonexistant", p);
+	    elog(WARN, "Add: type \"%s\" nonexistent", p);
 	}
 	namestrcpy(&(attribute->attname), (char*) key[1].sk_argument);
 	attribute->atttypid = typeTuple->t_oid;
