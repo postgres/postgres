@@ -12,15 +12,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.2 1996/10/30 06:18:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.3 1996/11/11 12:14:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdlib.h>
 #include <string.h>
-#include "tcl.h"
+#include <tcl.h>
 
+#include "postgres.h"
 #include "pgtclCmds.h"
 #include "pgtclId.h"
 

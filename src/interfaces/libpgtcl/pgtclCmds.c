@@ -7,16 +7,17 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.6 1996/11/09 10:39:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclCmds.c,v 1.7 1996/11/11 12:14:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <tcl.h>
 #include <string.h>
+#include <tcl.h>
+
+#include "postgres.h"
 #include "libpq/pqcomm.h"
 #include "libpq-fe.h"
 #include "libpq/libpq-fs.h"
@@ -224,7 +225,7 @@ tcl_value (char *value)
  **********************************/
 
 int
-Pg_conndefaults(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
+Pg_conndefaults(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
 {
     PQconninfoOption *option;
     char	buf[8192];
@@ -581,7 +582,7 @@ Pg_result(ClientData cData, Tcl_Interp *interp, int argc, char* argv[])
       Tcl_ResetResult(interp);
       for (i = 0; i < PQnfields(result); i++) {
           sprintf(buf, "{%s} %ld %d", PQfname(result, i),
-	  			      PQftype(result, i),
+	  			      (long) PQftype(result, i),
 				      PQfsize(result, i));
           Tcl_AppendElement(interp, buf);
       }
@@ -1125,7 +1126,7 @@ Pg_select(ClientData cData, Tcl_Interp *interp, int argc, char **argv)
     Pg_clientData *cd = (Pg_clientData *)cData;
 	PGconn *conn;
    	PGresult *result;
-    int ch_flag, r;
+    int r;
     size_t tupno, column, ncols;
 	Tcl_DString headers;
 	struct {

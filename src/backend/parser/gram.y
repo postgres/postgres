@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.14 1996/11/08 20:45:33 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.15 1996/11/11 12:14:09 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -55,8 +55,6 @@ extern List *parsetree;
  * problem, yet.)
  */
 /*#define __YYSCLASS*/
-
-extern void yyerror(char message[]);
 
 static char *xlateSqlType(char *);
 static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
