@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.34 1999/07/17 20:18:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.35 1999/10/06 21:58:10 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,20 +133,7 @@ StatusPostmasterExit(int status)
  *		processing mode support stuff (used to be in pmod.c)
  * ----------------------------------------------------------------
  */
-static ProcessingMode Mode = NoProcessing;
-
-#ifdef NOT_USED
-/*
- * IsNoProcessingMode
- *		True iff processing mode is NoProcessing.
- */
-bool
-IsNoProcessingMode()
-{
-	return (bool) (Mode == NoProcessing);
-}
-
-#endif
+static ProcessingMode Mode = InitProcessing;
 
 /*
  * IsBootstrapProcessingMode
@@ -186,13 +173,13 @@ IsNormalProcessingMode()
  *		BadArg if called with invalid mode.
  *
  * Note:
- *		Mode is NoProcessing before the first time this is called.
+ *		Mode is InitProcessing before the first time this is called.
  */
 void
 SetProcessingMode(ProcessingMode mode)
 {
-	AssertArg(mode == NoProcessing || mode == BootstrapProcessing ||
-			  mode == InitProcessing || mode == NormalProcessing);
+	AssertArg(mode == BootstrapProcessing || mode == InitProcessing || 
+				mode == NormalProcessing);
 
 	Mode = mode;
 }

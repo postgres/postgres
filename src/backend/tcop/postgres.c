@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.130 1999/09/29 16:06:10 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.131 1999/10/06 21:58:08 vadim Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -58,6 +58,7 @@
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
+#include "storage/proc.h"
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
 #include "utils/trace.h"
@@ -98,10 +99,19 @@
  */
 
 /*static bool	EnableRewrite = true; , never changes why have it*/
-CommandDest whereToSendOutput;
+CommandDest whereToSendOutput = Debug;
 
 /* Define status buffer needed by PS_SET_STATUS */
 PS_DEFINE_BUFFER;
+
+extern void		BaseInit(void);
+extern void		StartupXLOG(void);
+extern void		ShutdownXLOG(void);
+
+extern void		HandleDeadLock(SIGNAL_ARGS);
+
+extern char		XLogDir[];
+extern char		ControlFilePath[];
 
 extern int	lockingOff;
 extern int	NBuffers;
@@ -115,21 +125,8 @@ char		relname[80];		/* current relation name */
 /* note: these declarations had better match tcopprot.h */
 DLLIMPORT sigjmp_buf Warn_restart;
 
-bool		InError = true;
-
-/*
- * Note: InError is a flag to elog() telling whether it is safe to longjmp
- * back to PostgresMain.  It is "false", allowing an error longjmp, during
- * normal processing.  It is "true" during startup, when we have not yet
- * set the Warn_restart jmp_buf, and also "true" in the interval when we
- * have executed a longjmp back to PostgresMain and not yet finished cleaning
- * up after the error.  In either case, elog(ERROR) should be treated as a
- * fatal exit condition rather than attempting to recover --- since there is
- * noplace to recover to in the first case, and we don't want to risk an
- * infinite loop of "error recoveries" in the second case.
- *
- * Therefore, InError starts out "true" at program load time, as shown above.
- */
+bool		InError = false;
+bool		ExitAfterAbort = false;
 
 extern int	NBuffers;
 
@@ -773,6 +770,7 @@ handle_warn(SIGNAL_ARGS)
 void
 quickdie(SIGNAL_ARGS)
 {
+	PG_SETMASK(&BlockSig);
 	elog(NOTICE, "Message from PostgreSQL backend:"
 		 "\n\tThe Postmaster has informed me that some other backend"
 		 " died abnormally and possibly corrupted shared memory."
@@ -787,13 +785,25 @@ quickdie(SIGNAL_ARGS)
 	 * storage.  Just nail the windows shut and get out of town.
 	 */
 
-	exit(0);
+	exit(1);
 }
 
+/*
+ * Abort transaction and exit
+ */
 void
 die(SIGNAL_ARGS)
 {
-	ExitPostgres(0);
+	PG_SETMASK(&BlockSig);
+	/*
+	 * If ERROR/FATAL is in progress...
+	 */
+	if (InError)
+	{
+		ExitAfterAbort = true;
+		return;
+	}
+	elog(FATAL, "The system is shutting down");
 }
 
 /* signal handler for floating point exception */
@@ -906,6 +916,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	LockDebug = 0;
 #endif
 	DataDir = getenv("PGDATA");
+
+	SetProcessingMode(InitProcessing);
 
 	/*
 	 * Try to get initial values for date styles and formats. Does not do
@@ -1265,41 +1277,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 		}
 
-	/* ----------------
-	 *	get user name (needed now in case it is the default database name)
-	 *	and check command line validity
-	 * ----------------
-	 */
-	SetPgUserName();
-	userName = GetPgUserName();
-
-	if (IsUnderPostmaster)
-	{
-		/* noninteractive case: nothing should be left after switches */
-		if (errs || argc != optind || DBName == NULL)
-		{
-			usage(argv[0]);
-			proc_exit(1);
-		}
-	}
-	else
-	{
-		/* interactive case: database name can be last arg on command line */
-		if (errs || argc - optind > 1)
-		{
-			usage(argv[0]);
-			proc_exit(1);
-		}
-		else if (argc - optind == 1)
-			DBName = argv[optind];
-		else if ((DBName = userName) == NULL)
-		{
-			fprintf(stderr, "%s: USER undefined and no database specified\n",
-					argv[0]);
-			proc_exit(1);
-		}
-	}
-
 	if (ShowStats &&
 		(ShowParserStats || ShowPlannerStats || ShowExecutorStats))
 	{
@@ -1315,6 +1292,90 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			 "option or by setting the PGDATA environment variable.\n\n",
 				argv[0]);
 		proc_exit(1);
+	}
+
+	/*
+	 * 1. Set BlockSig and UnBlockSig masks. 
+	 * 2. Set up signal handlers.
+	 * 3. Allow only SIGUSR1 signal (we never block it) 
+	 *    during initialization.
+	 *
+	 * Note that postmaster already blocked ALL signals to make us happy.
+	 */
+	if (!IsUnderPostmaster)
+	{
+		PG_INITMASK();
+		PG_SETMASK(&BlockSig);
+	}
+
+#ifdef HAVE_SIGPROCMASK
+	sigdelset(&BlockSig, SIGUSR1);
+#else
+	BlockSig &= ~(sigmask(SIGUSR1));
+#endif
+
+	pqsignal(SIGHUP, read_pg_options);		/* update pg_options from file */
+	pqsignal(SIGINT, QueryCancelHandler);	/* cancel current query */
+	pqsignal(SIGQUIT, handle_warn);			/* handle error */
+	pqsignal(SIGTERM, die);
+	pqsignal(SIGALRM, HandleDeadLock);
+	/* 
+	 * Ignore failure to write to frontend. Note: if frontend closes 
+	 * connection, we will notice it and exit cleanly when control next 
+	 * returns to outer loop.  This seems safer than forcing exit in the 
+	 * midst of output during who-knows-what operation...
+	 */
+	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGUSR1, quickdie);
+	pqsignal(SIGUSR2, Async_NotifyHandler);	/* flush also sinval cache */
+	pqsignal(SIGFPE, FloatExceptionHandler);
+	pqsignal(SIGCHLD, SIG_IGN);				/* ignored, sent by LockOwners */
+	pqsignal(SIGTTIN, SIG_DFL);
+	pqsignal(SIGTTOU, SIG_DFL);
+	pqsignal(SIGCONT, SIG_DFL);
+
+	PG_SETMASK(&BlockSig);		/* block everything except SIGUSR1 */
+
+	/*
+	 * Get user name (needed now in case it is the default database name)
+	 * and check command line validity
+	 */
+	SetPgUserName();
+	userName = GetPgUserName();
+
+	if (IsUnderPostmaster)
+	{
+		/* noninteractive case: nothing should be left after switches */
+		if (errs || argc != optind || DBName == NULL)
+		{
+			usage(argv[0]);
+			proc_exit(1);
+		}
+		pq_init();				/* initialize libpq at backend startup */
+		whereToSendOutput = Remote;
+		BaseInit();
+	}
+	else
+	{
+		/* interactive case: database name can be last arg on command line */
+		whereToSendOutput = Debug;
+		if (errs || argc - optind > 1)
+		{
+			usage(argv[0]);
+			proc_exit(1);
+		}
+		else if (argc - optind == 1)
+			DBName = argv[optind];
+		else if ((DBName = userName) == NULL)
+		{
+			fprintf(stderr, "%s: USER undefined and no database specified\n",
+					argv[0]);
+			proc_exit(1);
+		}
+		BaseInit();
+		sprintf(XLogDir, "%s%cpg_xlog", DataDir, SEP_CHAR);
+		sprintf(ControlFilePath, "%s%cpg_control", DataDir, SEP_CHAR);
+		StartupXLOG();
 	}
 
 	/*
@@ -1367,18 +1428,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				remote_info = remote_host = "unknown";
 				break;
 		}
-	}
-
-	/* ----------------
-	 *	set process params for ps
-	 * ----------------
-	 */
-	if (IsUnderPostmaster)
-	{
+		/*
+		 * Set process params for ps
+		 */
 		PS_INIT_STATUS(real_argc, real_argv, argv[0],
 					   remote_info, userName, DBName);
 		PS_SET_STATUS("startup");
 	}
+
 
 	/* ----------------
 	 *	print flags
@@ -1409,23 +1466,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		}
 	}
 
-	/* ----------------
-	 *	initialize I/O
-	 * ----------------
-	 */
-	if (IsUnderPostmaster)
-	{
-		pq_init();				/* initialize libpq at backend startup */
-		whereToSendOutput = Remote;
-	}
-	else
-		whereToSendOutput = Debug;
 
-	/* ----------------
-	 *	general initialization
-	 * ----------------
+	/*
+	 * general initialization
 	 */
-	SetProcessingMode(InitProcessing);
 
 	if (Verbose)
 		TPRINTF(TRACE_VERBOSE, "InitPostgres");
@@ -1445,30 +1489,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 	parser_input = makeStringInfo(); /* initialize input buffer */
 
-	/* ----------------
-	 *	Set up handler for cancel-request signal, and
-	 *	send this backend's cancellation info to the frontend.
-	 *	This should not be done until we are sure startup is successful.
-	 * ----------------
+	/* 
+	 * Send this backend's cancellation info to the frontend. 
 	 */
-
-	pqsignal(SIGHUP, read_pg_options);	/* update pg_options from file */
-	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
-	pqsignal(SIGQUIT, handle_warn);		/* handle error */
-	pqsignal(SIGTERM, die);
-	pqsignal(SIGPIPE, SIG_IGN); /* ignore failure to write to frontend */
-
-	/*
-	 * Note: if frontend closes connection, we will notice it and exit
-	 * cleanly when control next returns to outer loop.  This seems safer
-	 * than forcing exit in the midst of output during who-knows-what
-	 * operation...
-	 */
-	pqsignal(SIGUSR1, quickdie);
-	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
-	pqsignal(SIGCHLD, SIG_IGN); /* ignored, sent by LockOwners */
-	pqsignal(SIGFPE, FloatExceptionHandler);
-
 	if (whereToSendOutput == Remote &&
 		PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
 	{
@@ -1485,40 +1508,41 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.130 $ $Date: 1999/09/29 16:06:10 $\n");
+		puts("$Revision: 1.131 $ $Date: 1999/10/06 21:58:08 $\n");
 	}
 
-	/* ----------------
+	/*
 	 * Initialize the deferred trigger manager
-	 * ----------------
 	 */
 	if (DeferredTriggerInit() != 0)
 		ExitPostgres(1);
 
-	/* ----------------
-	 *	POSTGRES main processing loop begins here
+	/*
+	 * POSTGRES main processing loop begins here
 	 *
-	 *	if an exception is encountered, processing resumes here
-	 *	so we abort the current transaction and start a new one.
-	 *
-	 *	Note:  elog(ERROR) does a siglongjmp() to transfer control here.
-	 *	See comments with the declaration of InError, above.
-	 * ----------------
+	 * If an exception is encountered, processing resumes here
+	 * so we abort the current transaction and start a new one.
 	 */
+
+	SetProcessingMode(NormalProcessing);
 
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
-		InError = true;
-
 		time(&tim);
 
 		if (Verbose)
 			TPRINTF(TRACE_VERBOSE, "AbortCurrentTransaction");
 
 		AbortCurrentTransaction();
+		InError = false;
+		if (ExitAfterAbort)
+		{
+			ProcReleaseLocks();		/* Just to be sure... */
+			ExitPostgres(0);
+		}
 	}
 
-	InError = false;
+	PG_SETMASK(&UnBlockSig);
 
 	/*
 	 * Non-error queries loop here.
@@ -1636,6 +1660,8 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 */
 			case 'X':
 			case EOF:
+				if (!IsUnderPostmaster)
+					ShutdownXLOG();
 				pq_close();
 				proc_exit(0);
 				break;

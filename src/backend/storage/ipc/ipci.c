@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.30 1999/07/17 20:17:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.31 1999/10/06 21:58:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,17 +54,17 @@ void
 CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 {
 	int			size;
+	extern int	XLOGShmemSize(void);
+	extern void	XLOGShmemInit(void);
 
 #ifdef HAS_TEST_AND_SET
-	/* ---------------
-	 *	create shared memory for slocks
-	 * --------------
+	/*
+	 * Create shared memory for slocks
 	 */
 	CreateAndInitSLockMemory(IPCKeyGetSLockSharedMemoryKey(key));
 #endif
-	/* ----------------
-	 *	kill and create the buffer manager buffer pool (and semaphore)
-	 * ----------------
+	/*
+	 * Kill and create the buffer manager buffer pool (and semaphore)
 	 */
 	CreateSpinlocks(IPCKeyGetSpinLockSemaphoreKey(key));
 
@@ -73,7 +73,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 	 * moderately-accurate estimates for the big hogs, plus 100K for the
 	 * stuff that's too small to bother with estimating.
 	 */
-	size = BufferShmemSize() + LockShmemSize(maxBackends);
+	size = BufferShmemSize() + LockShmemSize(maxBackends) + XLOGShmemSize();
 #ifdef STABLE_MEMORY_STORAGE
 	size += MMShmemSize();
 #endif
@@ -89,6 +89,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key, int maxBackends)
 	ShmemCreate(IPCKeyGetBufferMemoryKey(key), size);
 	ShmemIndexReset();
 	InitShmem(key, size);
+	XLOGShmemInit();
 	InitBufferPool(key);
 
 	/* ----------------

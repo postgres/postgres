@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.48 1999/09/11 19:06:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.49 1999/10/06 21:58:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 extern int	errno;
 extern int	sys_nerr;
 
+extern CommandDest	whereToSendOutput;
 
 #ifdef USE_SYSLOG
 /*
@@ -106,6 +107,19 @@ elog(int lev, const char *fmt, ...)
 
 	if (lev <= DEBUG && Debugfile < 0)
 		return;					/* ignore debug msgs if noplace to send */
+
+	if (lev == ERROR || lev == FATAL)
+	{
+		if (IsInitProcessingMode())
+		{
+			extern TransactionState	CurrentTransactionState;
+
+			if (CurrentTransactionState->state != TRANS_DEFAULT && 
+				CurrentTransactionState->state != TRANS_DISABLED)
+				abort();
+			lev = FATAL;
+		}
+	}
 
 	/* choose message prefix and indent level */
 	switch (lev)
@@ -304,7 +318,7 @@ elog(int lev, const char *fmt, ...)
 
 #ifndef PG_STANDALONE
 
-	if (lev > DEBUG && IsUnderPostmaster)
+	if (lev > DEBUG && whereToSendOutput == Remote)
 	{
 		/* Send IPC message to the front-end program */
 		char		msgtype;
@@ -336,7 +350,7 @@ elog(int lev, const char *fmt, ...)
 		pq_flush();
 	}
 
-	if (lev > DEBUG && ! IsUnderPostmaster)
+	if (lev > DEBUG && whereToSendOutput != Remote)
 	{
 		/* We are running as an interactive backend, so just send
 		 * the message to stderr.
@@ -355,36 +369,29 @@ elog(int lev, const char *fmt, ...)
 	/*
 	 * Perform error recovery action as specified by lev.
 	 */
-	if (lev == ERROR)
+	if (lev == ERROR || lev == FATAL)
 	{
 		if (InError)
 		{
 			/* error reported during error recovery; don't loop forever */
 			elog(REALLYFATAL, "elog: error during error recovery, giving up!");
 		}
+		InError = true;
+		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
+		if (lev == FATAL)
+		{
+			if (IsInitProcessingMode())
+				ExitPostgres(0);
+			ExitAfterAbort = true;
+		}
 		/* exit to main loop */
-		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
 		siglongjmp(Warn_restart, 1);
-	}
-
-	if (lev == FATAL)
-	{
-		/*
-		 * Assume that if we have detected the failure we can exit with a
-		 * normal exit status.	This will prevent the postmaster from
-		 * cleaning up when it's not needed.
-		 */
-		fflush(stdout);
-		fflush(stderr);
-		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
-		ProcReleaseLocks();		/* get rid of real locks we hold */
-		proc_exit(0);
 	}
 
 	if (lev > FATAL)
 	{
 		/*
-		 * Serious crash time.  Postmaster will observe nonzero
+		 * Serious crash time. Postmaster will observe nonzero
 		 * process exit status and kill the other backends too.
 		 */
 		fflush(stdout);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.30 1999/09/24 00:24:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.31 1999/10/06 21:58:04 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,16 +230,18 @@ InitBufferPool(IPCKey key)
 
 #ifndef HAS_TEST_AND_SET
 	{
-		int			status;
 		extern IpcSemaphoreId WaitIOSemId;
 		extern IpcSemaphoreId WaitCLSemId;
 
 		WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
-										 1, IPCProtection, 0, 1, &status);
+										 1, IPCProtection, 0, 1);
+		if (WaitIOSemId < 0)
+			elog(FATAL, "InitBufferPool: IpcSemaphoreCreate(WaitIOSemId) failed");
 		WaitCLSemId = IpcSemaphoreCreate(IPCKeyGetWaitCLSemaphoreKey(key),
 										 1, IPCProtection,
-										 IpcSemaphoreDefaultStartValue,
-										 1, &status);
+										 IpcSemaphoreDefaultStartValue, 1);
+		if (WaitCLSemId < 0)
+			elog(FATAL, "InitBufferPool: IpcSemaphoreCreate(WaitCLSemId) failed");
 	}
 #endif
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));

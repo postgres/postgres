@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqsignal.h,v 1.9 1999/02/13 23:21:36 momjian Exp $
+ * $Id: pqsignal.h,v 1.10 1999/10/06 21:58:16 vadim Exp $
  *
  * NOTES
  *	  This shouldn't be in libpq, but the monitor and some other
@@ -16,6 +16,28 @@
  */
 #ifndef PQSIGNAL_H
 #define PQSIGNAL_H
+
+#ifdef HAVE_SIGPROCMASK
+extern sigset_t		UnBlockSig,
+					BlockSig;
+#define	PG_INITMASK()	( \
+							sigemptyset(&UnBlockSig), \
+							sigfillset(&BlockSig) \
+						)
+#define	PG_SETMASK(mask)	sigprocmask(SIG_SETMASK, mask, NULL)
+#else
+extern int			UnBlockSig,
+					BlockSig;
+#define PG_INITMASK()	( \
+							UnBlockSig = 0, \
+							BlockSig = sigmask(SIGHUP) | sigmask(SIGQUIT) | \
+										sigmask(SIGTERM) | sigmask(SIGALRM) | \
+										sigmask(SIGINT) | sigmask(SIGUSR1) | \
+										sigmask(SIGUSR2) | sigmask(SIGCHLD) | \
+										sigmask(SIGWINCH) | sigmask(SIGFPE) \
+						)
+#define	PG_SETMASK(mask)	sigsetmask(*((int*)(mask)))
+#endif
 
 typedef void (*pqsigfunc) (int);
 

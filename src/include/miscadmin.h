@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.42 1999/09/27 20:27:26 momjian Exp $
+ * $Id: miscadmin.h,v 1.43 1999/10/06 21:58:13 vadim Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -143,28 +143,25 @@ extern int	CheckPathAccess(char *path, char *name, int open_mode);
  *****************************************************************************/
 /*
  * Description:
- *		There are four processing modes in POSTGRES.  They are NoProcessing
- * or "none," BootstrapProcessing or "bootstrap," InitProcessing or
+ *		There are three processing modes in POSTGRES.  They are 
+ * "BootstrapProcessing or "bootstrap," InitProcessing or
  * "initialization," and NormalProcessing or "normal."
  *
- *		If a POSTGRES binary is in normal mode, then all code may be executed
- * normally.  In the none mode, only bookkeeping code may be called.  In
- * particular, access method calls may not occur in this mode since the
- * execution state is outside a transaction.
- *
- *		The final two processing modes are used during special times.  When the
+ * The first two processing modes are used during special times. When the
  * system state indicates bootstrap processing, transactions are all given
- * transaction id "one" and are consequently guarenteed to commit.	This mode
+ * transaction id "one" and are consequently guarenteed to commit. This mode
  * is used during the initial generation of template databases.
  *
- * Finally, the execution state is in initialization mode until all normal
- * initialization is complete.	Some code behaves differently when executed in
- * this mode to enable system bootstrapping.
+ * Initialization mode until all normal initialization is complete.	
+ * Some code behaves differently when executed in this mode to enable 
+ * system bootstrapping.
+ *
+ * If a POSTGRES binary is in normal mode, then all code may be executed
+ * normally. 
  */
 
 typedef enum ProcessingMode
 {
-	NoProcessing,				/* "nothing" can be done */
 	BootstrapProcessing,		/* bootstrap creation of template database */
 	InitProcessing,				/* initializing system */
 	NormalProcessing			/* normal processing */

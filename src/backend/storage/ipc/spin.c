@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.20 1999/07/16 04:59:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.21 1999/10/06 21:58:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,15 +40,15 @@ IpcSemaphoreId SpinLockId;
 #ifdef HAS_TEST_AND_SET
 /* real spin lock implementations */
 
-bool
+void
 CreateSpinlocks(IPCKey key)
 {
 	/* the spin lock shared memory must have been created by now */
-	return TRUE;
+	return;
 }
 
-bool
-InitSpinLocks(int init, IPCKey key)
+void
+InitSpinLocks(void)
 {
 	extern SPINLOCK ShmemLock;
 	extern SPINLOCK ShmemIndexLock;
@@ -57,7 +57,8 @@ InitSpinLocks(int init, IPCKey key)
 	extern SPINLOCK ProcStructLock;
 	extern SPINLOCK SInvalLock;
 	extern SPINLOCK OidGenLockId;
-
+	extern SPINLOCK XidGenLockId;
+	extern SPINLOCK	ControlFileLockId;
 #ifdef STABLE_MEMORY_STORAGE
 	extern SPINLOCK MMCacheLock;
 
@@ -71,12 +72,14 @@ InitSpinLocks(int init, IPCKey key)
 	ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
 	SInvalLock = (SPINLOCK) SINVALLOCKID;
 	OidGenLockId = (SPINLOCK) OIDGENLOCKID;
+	XidGenLockId = (SPINLOCK) XIDGENLOCKID;
+	ControlFileLockId = (SPINLOCK) CNTLFILELOCKID;
 
 #ifdef STABLE_MEMORY_STORAGE
 	MMCacheLock = (SPINLOCK) MMCACHELOCKID;
 #endif
 
-	return TRUE;
+	return;
 }
 
 #ifdef LOCKDEBUG
@@ -224,55 +227,17 @@ SpinIsLocked(SPINLOCK lock)
  *		the spinlocks
  *
  */
-bool
+void
 CreateSpinlocks(IPCKey key)
 {
 
-	int			status;
-	IpcSemaphoreId semid;
+	SpinLockId = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection,
+							   IpcSemaphoreDefaultStartValue, 1);
 
-	semid = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection,
-							   IpcSemaphoreDefaultStartValue, 1, &status);
-	if (status == IpcSemIdExist)
-	{
-		IpcSemaphoreKill(key);
-		elog(NOTICE, "Destroying old spinlock semaphore");
-		semid = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection,
-							  IpcSemaphoreDefaultStartValue, 1, &status);
-	}
+	if (SpinLockId <= 0)
+		elog(STOP, "CreateSpinlocks: cannot create spin locks");
 
-	if (semid >= 0)
-	{
-		SpinLockId = semid;
-		return TRUE;
-	}
-	/* cannot create spinlocks */
-	elog(FATAL, "CreateSpinlocks: cannot create spin locks");
-	return FALSE;
-}
-
-/*
- * Attach to existing spinlock set
- */
-static bool
-AttachSpinLocks(IPCKey key)
-{
-	IpcSemaphoreId id;
-
-	id = semget(key, MAX_SPINS, 0);
-	if (id < 0)
-	{
-		if (errno == EEXIST)
-		{
-			/* key is the name of someone else's semaphore */
-			elog(FATAL, "AttachSpinlocks: SPIN_KEY belongs to someone else");
-		}
-		/* cannot create spinlocks */
-		elog(FATAL, "AttachSpinlocks: cannot create spin locks");
-		return FALSE;
-	}
-	SpinLockId = id;
-	return TRUE;
+	return;
 }
 
 /*
@@ -287,8 +252,8 @@ AttachSpinLocks(IPCKey key)
  * (SJCacheLock) for it.  Same story for the main memory storage mgr.
  *
  */
-bool
-InitSpinLocks(int init, IPCKey key)
+void
+InitSpinLocks(void)
 {
 	extern SPINLOCK ShmemLock;
 	extern SPINLOCK ShmemIndexLock;
@@ -297,25 +262,13 @@ InitSpinLocks(int init, IPCKey key)
 	extern SPINLOCK ProcStructLock;
 	extern SPINLOCK SInvalLock;
 	extern SPINLOCK OidGenLockId;
+	extern SPINLOCK XidGenLockId;
+	extern SPINLOCK	ControlFileLockId;
 
 #ifdef STABLE_MEMORY_STORAGE
 	extern SPINLOCK MMCacheLock;
 
 #endif
-
-	if (!init || key != IPC_PRIVATE)
-	{
-
-		/*
-		 * if bootstrap and key is IPC_PRIVATE, it means that we are
-		 * running backend by itself.  no need to attach spinlocks
-		 */
-		if (!AttachSpinLocks(key))
-		{
-			elog(FATAL, "InitSpinLocks: couldnt attach spin locks");
-			return FALSE;
-		}
-	}
 
 	/* These five (or six) spinlocks have fixed location is shmem */
 	ShmemLock = (SPINLOCK) SHMEMLOCKID;
@@ -325,12 +278,14 @@ InitSpinLocks(int init, IPCKey key)
 	ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
 	SInvalLock = (SPINLOCK) SINVALLOCKID;
 	OidGenLockId = (SPINLOCK) OIDGENLOCKID;
+	XidGenLockId = (SPINLOCK) XIDGENLOCKID;
+	ControlFileLockId = (SPINLOCK) CNTLFILELOCKID;
 
 #ifdef STABLE_MEMORY_STORAGE
 	MMCacheLock = (SPINLOCK) MMCACHELOCKID;
 #endif
 
-	return TRUE;
+	return;
 }
 
 #endif	 /* HAS_TEST_AND_SET */

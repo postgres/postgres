@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.35 1999/07/15 23:04:10 momjian Exp $
+ * $Id: ipc.h,v 1.36 1999/10/06 21:58:17 vadim Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -79,7 +79,7 @@ extern void on_exit_reset(void);
 
 extern IpcSemaphoreId IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 				   int semNum, int permission, int semStartValue,
-				   int removeOnExit, int *status);
+				   int removeOnExit);
 extern void IpcSemaphoreKill(IpcSemaphoreKey key);
 extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock);
 extern void IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock);
@@ -105,6 +105,8 @@ typedef enum _LockId_
 	BUFMGRLOCKID,
 	LOCKLOCKID,
 	OIDGENLOCKID,
+	XIDGENLOCKID,
+	CNTLFILELOCKID,
 	SHMEMLOCKID,
 	SHMEMINDEXLOCKID,
 	LOCKMGRLOCKID,
@@ -147,6 +149,8 @@ typedef enum _LockId_
 
 	PROCSTRUCTLOCKID,
 	OIDGENLOCKID,
+	XIDGENLOCKID,
+	CNTLFILELOCKID,
 	FIRSTFREELOCKID
 } _LockId_;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.120 1999/09/30 02:45:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.121 1999/10/06 21:58:03 vadim Exp $
  *
  * NOTES
  *
@@ -87,6 +87,7 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
+#include "access/xlog.h"
 #include "tcop/tcopprot.h"
 #include "utils/trace.h"
 #include "version.h"
@@ -98,10 +99,13 @@
 #define INVALID_SOCK	(-1)
 #define ARGV_SIZE	64
 
- /*
-  * Max time in seconds for socket to linger (close() to block) waiting
-  * for frontend to retrieve its message from us.
-  */
+#ifdef HAVE_SIGPROCMASK
+sigset_t	UnBlockSig,
+			BlockSig;
+#else
+int			UnBlockSig,
+			BlockSig;
+#endif
 
 /*
  * Info for garbage collection.  Whenever a process dies, the Postmaster
@@ -124,7 +128,6 @@ static Dllist *BackendList;
 static Dllist *PortList;
 
 static unsigned short PostPortName = 0;
-static short ActiveBackends = FALSE;
 
  /*
   * This is a boolean indicating that there is at least one backend that
@@ -209,18 +212,16 @@ static bool SecureNetServer = false; /* if not zero, postmaster listens for only
                                       * non-local connections */
 #endif
 
-/*
- * GH: For !HAVE_SIGPROCMASK (NEXTSTEP), TRH implemented an
- * alternative interface.
- */
-#ifdef HAVE_SIGPROCMASK
-static sigset_t oldsigmask,
-			newsigmask;
+static pid_t	StartupPID = 0,
+				ShutdownPID = 0;
 
-#else
-static int	orgsigmask = sigblock(0);
+#define			NoShutdown		0
+#define			SmartShutdown	1
+#define			FastShutdown	2
 
-#endif
+static int		Shutdown = NoShutdown;
+
+static bool		FatalError = false;
 
 /*
  * State for assigning random salts and cancel keys.
@@ -234,30 +235,35 @@ extern char *optarg;
 extern int	optind,
 			opterr;
 
-
 /*
  * postmaster.c - function prototypes
  */
-static void pmdaemonize(void);
-static Port *ConnCreate(int serverFd);
-static void ConnFree(Port *port);
-static void reset_shared(unsigned short port);
-static void pmdie(SIGNAL_ARGS);
-static void reaper(SIGNAL_ARGS);
-static void dumpstatus(SIGNAL_ARGS);
-static void CleanupProc(int pid, int exitstatus);
-static int	DoBackend(Port *port);
-static void ExitPostmaster(int status);
-static void usage(const char *);
-static int	ServerLoop(void);
-static int	BackendStartup(Port *port);
-static int	readStartupPacket(void *arg, PacketLen len, void *pkt);
-static int	processCancelRequest(Port *port, PacketLen len, void *pkt);
-static int	initMasks(fd_set *rmask, fd_set *wmask);
-static long PostmasterRandom(void);
-static void RandomSalt(char *salt);
-static void SignalChildren(SIGNAL_ARGS);
-static int	CountChildren(void);
+static void		pmdaemonize(void);
+static Port	   *ConnCreate(int serverFd);
+static void		ConnFree(Port *port);
+static void 	reset_shared(unsigned short port);
+static void 	pmdie(SIGNAL_ARGS);
+static void 	reaper(SIGNAL_ARGS);
+static void 	dumpstatus(SIGNAL_ARGS);
+static void 	CleanupProc(int pid, int exitstatus);
+static int		DoBackend(Port *port);
+static void 	ExitPostmaster(int status);
+static void 	usage(const char *);
+static int		ServerLoop(void);
+static int		BackendStartup(Port *port);
+static int		readStartupPacket(void *arg, PacketLen len, void *pkt);
+static int		processCancelRequest(Port *port, PacketLen len, void *pkt);
+static int		initMasks(fd_set *rmask, fd_set *wmask);
+static long 	PostmasterRandom(void);
+static void 	RandomSalt(char *salt);
+static void 	SignalChildren(SIGNAL_ARGS);
+static int		CountChildren(void);
+
+extern int		BootstrapMain(int argc, char *argv[]);
+static pid_t	SSDataBase(bool startup);
+#define	StartupDataBase()	SSDataBase(true)
+#define	ShutdownDataBase()	SSDataBase(false)
+
 #ifdef USE_SSL
 static void InitSSL(void);
 #endif
@@ -613,18 +619,23 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * Set up signal handlers for the postmaster process.
 	 */
+	PG_INITMASK();
+	PG_SETMASK(&BlockSig);
 
-	pqsignal(SIGHUP, pmdie);	/* send SIGHUP, don't die */
-	pqsignal(SIGINT, pmdie);	/* die */
-	pqsignal(SIGQUIT, pmdie);	/* send SIGTERM and die */
-	pqsignal(SIGTERM, pmdie);	/* send SIGTERM,SIGKILL and die */
-	pqsignal(SIGPIPE, SIG_IGN); /* ignored */
-	pqsignal(SIGUSR1, pmdie);	/* send SIGUSR1 and die */
-	pqsignal(SIGUSR2, pmdie);	/* send SIGUSR2, don't die */
-	pqsignal(SIGCHLD, reaper);	/* handle child termination */
-	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
-	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
-	pqsignal(SIGWINCH, dumpstatus);		/* dump port status */
+	pqsignal(SIGHUP, pmdie);		/* send SIGHUP, don't die */
+	pqsignal(SIGINT, pmdie);		/* send SIGTERM and ShutdownDataBase */
+	pqsignal(SIGQUIT, pmdie);		/* send SIGUSR1 and die */
+	pqsignal(SIGTERM, pmdie);		/* wait for children and ShutdownDataBase */
+	pqsignal(SIGALRM, SIG_IGN);		/* ignored */
+	pqsignal(SIGPIPE, SIG_IGN); 	/* ignored */
+	pqsignal(SIGUSR1, SIG_IGN);		/* ignored */
+	pqsignal(SIGUSR2, pmdie);		/* send SIGUSR2, don't die */
+	pqsignal(SIGCHLD, reaper);		/* handle child termination */
+	pqsignal(SIGTTIN, SIG_IGN); 	/* ignored */
+	pqsignal(SIGTTOU, SIG_IGN); 	/* ignored */
+	pqsignal(SIGWINCH, dumpstatus);	/* dump port status */
+
+	StartupPID = StartupDataBase();
 
 	status = ServerLoop();
 
@@ -702,12 +713,6 @@ ServerLoop(void)
 
 	nSockets = initMasks(&readmask, &writemask);
 
-#ifdef HAVE_SIGPROCMASK
-	sigprocmask(0, NULL, &oldsigmask);
-	sigemptyset(&newsigmask);
-	sigaddset(&newsigmask, SIGCHLD);
-#endif
-
 	for (;;)
 	{
 		Port	   *port;
@@ -717,25 +722,25 @@ ServerLoop(void)
 		int no_select = 0;
 #endif
 
-#ifdef HAVE_SIGPROCMASK
-		sigprocmask(SIG_SETMASK, &oldsigmask, 0);
-#else
-		sigsetmask(orgsigmask);
-#endif
-
 		memmove((char *) &rmask, (char *) &readmask, sizeof(fd_set));
 		memmove((char *) &wmask, (char *) &writemask, sizeof(fd_set));
 
 #ifdef USE_SSL
 		for (curr = DLGetHead(PortList); curr; curr = DLGetSucc(curr))
-		  if (((Port *)DLE_VAL(curr))->ssl &&
-		      SSL_pending(((Port *)DLE_VAL(curr))->ssl) > 0) {
-		    no_select = 1;
-		    break;
-		  }
+		{
+			if (((Port *)DLE_VAL(curr))->ssl &&
+				SSL_pending(((Port *)DLE_VAL(curr))->ssl) > 0)
+			{
+			    no_select = 1;
+			    break;
+			}
+		}
+		PG_SETMASK(&UnBlockSig);
 		if (no_select) 
 		  FD_ZERO(&rmask); /* So we don't accept() anything below */
 		else
+#else
+		PG_SETMASK(&UnBlockSig);
 #endif
 		if (select(nSockets, &rmask, &wmask, (fd_set *) NULL,
 				   (struct timeval *) NULL) < 0)
@@ -765,16 +770,9 @@ ServerLoop(void)
 		}
 
 		/*
-		 * [TRH] To avoid race conditions, block SIGCHLD signals while we
-		 * are handling the request. (both reaper() and ConnCreate()
-		 * manipulate the BackEnd list, and reaper() calls free() which is
-		 * usually non-reentrant.)
+		 * Block all signals
 		 */
-#ifdef HAVE_SIGPROCMASK
-		sigprocmask(SIG_BLOCK, &newsigmask, &oldsigmask);
-#else
-		sigblock(sigmask(SIGCHLD));		/* XXX[TRH] portability */
-#endif
+		PG_SETMASK(&BlockSig);
 
 		/* new connection pending on our well-known port's socket */
 
@@ -817,8 +815,8 @@ ServerLoop(void)
 			}
 			else
 #endif
-			  if (FD_ISSET(port->sock, &rmask))
-			readyread = 1;
+			if (FD_ISSET(port->sock, &rmask))
+				readyread = 1;
 
 			if (readyread)
 			{
@@ -852,13 +850,25 @@ ServerLoop(void)
 
 			if (status == STATUS_OK && port->pktInfo.state == Idle)
 			{
-				/* Can't start backend if max backend count is exceeded. */
-				if (CountChildren() >= MaxBackends)
+				/* 
+				 * Can't start backend if max backend count is exceeded.
+				 * 
+				 * The same when shutdowning data base.
+				 */
+				if (Shutdown > NoShutdown)
+					PacketSendError(&port->pktInfo,
+									"The Data Base System is shutting down");
+				else if (StartupPID)
+					PacketSendError(&port->pktInfo,
+									"The Data Base System is starting up");
+				else if (FatalError)
+					PacketSendError(&port->pktInfo,
+									"The Data Base System is in recovery mode");
+				else if (CountChildren() >= MaxBackends)
 					PacketSendError(&port->pktInfo,
 									"Sorry, too many clients already");
 				else
 				{
-
 					/*
 					 * If the backend start fails then keep the connection
 					 * open to report it.  Otherwise, pretend there is an
@@ -1113,6 +1123,7 @@ ConnCreate(int serverFd)
 	{
 		fprintf(stderr, "%s: ConnCreate: malloc failed\n",
 				progname);
+		SignalChildren(SIGUSR1);
 		ExitPostmaster(1);
 	}
 
@@ -1154,7 +1165,6 @@ reset_shared(unsigned short port)
 {
 	ipc_key = port * 1000 + shmem_seq * 100;
 	CreateSharedMemoryAndSemaphores(ipc_key, MaxBackends);
-	ActiveBackends = FALSE;
 	shmem_seq += 1;
 	if (shmem_seq >= 10)
 		shmem_seq -= 10;
@@ -1166,49 +1176,94 @@ reset_shared(unsigned short port)
 static void
 pmdie(SIGNAL_ARGS)
 {
-	int			i;
-
+	PG_SETMASK(&BlockSig);
+	
 	TPRINTF(TRACE_VERBOSE, "pmdie %d", postgres_signal_arg);
 
-	/*
-	 * Kill self and/or children processes depending on signal number.
-	 */
 	switch (postgres_signal_arg)
 	{
 		case SIGHUP:
-			/* Send SIGHUP to all children (update options flags) */
+			/* 
+			 * Send SIGHUP to all children (update options flags)
+			 */
+			if (Shutdown > SmartShutdown)
+				return;
 			SignalChildren(SIGHUP);
-			/* Don't die */
 			return;
-		case SIGINT:
-			/* Die without killing children */
-			break;
-		case SIGQUIT:
-			/* Shutdown all children with SIGTERM */
-			SignalChildren(SIGTERM);
-			/* Don't die */
-			return;
-		case SIGTERM:
-			/* Shutdown all children with SIGTERM and SIGKILL, then die */
-			SignalChildren(SIGTERM);
-			for (i = 0; i < 10; i++)
-			{
-				if (!DLGetHead(BackendList))
-					break;
-				sleep(1);
-			}
-			if (DLGetHead(BackendList))
-				SignalChildren(SIGKILL);
-			break;
-		case SIGUSR1:
-			/* Quick die all children with SIGUSR1 and die */
-			SignalChildren(SIGUSR1);
-			break;
 		case SIGUSR2:
-			/* Send SIGUSR2 to all children (AsyncNotifyHandler) */
+			/* 
+			 * Send SIGUSR2 to all children (AsyncNotifyHandler) 
+			 */
+			if (Shutdown > SmartShutdown)
+				return;
 			SignalChildren(SIGUSR2);
-			/* Don't die */
 			return;
+
+		case SIGTERM:
+			/*
+			 * Smart Shutdown:
+			 *
+			 * let children to end their work and ShutdownDataBase.
+			 */
+			if (Shutdown >= SmartShutdown)
+				return;
+			Shutdown = SmartShutdown;
+			if (DLGetHead(BackendList))			/* let reaper() handle this */
+				return;
+			/*
+			 * No children left. Shutdown data base system.
+			 */
+			if (StartupPID > 0 || FatalError)	/* let reaper() handle this */
+				return;
+			if (ShutdownPID > 0)
+				abort();
+
+			ShutdownPID = ShutdownDataBase();
+			return;
+
+		case SIGINT:
+			/*
+			 * Fast Shutdown:
+			 * 
+			 * abort all children with SIGTERM (rollback active
+			 * transactions and exit) and ShutdownDataBase.
+			 */
+			if (Shutdown >= FastShutdown)
+				return;
+			if (DLGetHead(BackendList))			/* let reaper() handle this */
+			{
+				if (!FatalError)
+					SignalChildren(SIGTERM);
+				return;
+			}
+			if (Shutdown > NoShutdown)
+				return;
+			Shutdown = FastShutdown;
+			/*
+			 * No children left. Shutdown data base system.
+			 */
+			if (StartupPID > 0 || FatalError)	/* let reaper() handle this */
+				return;
+			if (ShutdownPID > 0)
+				abort();
+
+			ShutdownPID = ShutdownDataBase();	/* flag for reaper() */
+			return;
+
+		case SIGQUIT:
+			/* 
+			 * Immediate Shutdown:
+			 * 
+			 * abort all children with SIGUSR1 and exit without
+			 * attempt to properly shutdown data base system.
+			 */
+			if (ShutdownPID > 0)
+				kill(ShutdownPID, SIGQUIT);
+			else if (StartupPID > 0)
+				kill(StartupPID, SIGQUIT);
+			else if (DLGetHead(BackendList))
+				SignalChildren(SIGUSR1);
+			break;
 	}
 
 	/* exit postmaster */
@@ -1224,12 +1279,13 @@ reaper(SIGNAL_ARGS)
 /* GH: replace waitpid for !HAVE_WAITPID. Does this work ? */
 #ifdef HAVE_WAITPID
 	int			status;			/* backend exit status */
-
 #else
-	union wait	statusp;		/* backend exit status */
-
+	union wait	status;			/* backend exit status */
 #endif
+	int			exitstatus;
 	int			pid;			/* process id of dead backend */
+
+	PG_SETMASK(&BlockSig);
 
 	if (DebugLvl)
 		fprintf(stderr, "%s: reaping dead processes...\n",
@@ -1237,16 +1293,68 @@ reaper(SIGNAL_ARGS)
 #ifdef HAVE_WAITPID
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 	{
-		CleanupProc(pid, status);
-		pqsignal(SIGCHLD, reaper);
-	}
+		exitstatus = status;
 #else
-	while ((pid = wait3(&statusp, WNOHANG, NULL)) > 0)
+	while ((pid = wait3(&status, WNOHANG, NULL)) > 0)
 	{
-		CleanupProc(pid, statusp.w_status);
-		pqsignal(SIGCHLD, reaper);
-	}
+		exitstatus = status.w_status;
 #endif
+		if (ShutdownPID > 0)
+		{
+			if (pid != ShutdownPID)
+				abort();
+			if (exitstatus != 0)
+				abort();
+			proc_exit(0);
+		}
+		if (StartupPID > 0)
+		{
+			if (pid != StartupPID)
+				abort();
+			if (exitstatus != 0)
+				abort();
+			StartupPID = 0;
+			FatalError = false;
+			if (Shutdown > NoShutdown)
+			{
+				if (ShutdownPID > 0)
+					abort();
+				ShutdownPID = ShutdownDataBase();
+			}
+			pqsignal(SIGCHLD, reaper);
+			return;
+		}
+		CleanupProc(pid, exitstatus);
+	}
+	pqsignal(SIGCHLD, reaper);
+
+	if (FatalError)
+	{
+		/*
+		 * Wait for all children exit then StartupDataBase.
+		 */
+		if (DLGetHead(BackendList))
+			return;
+		if (StartupPID > 0 || ShutdownPID > 0)
+			return;
+		if (DebugLvl)
+			fprintf(stderr, "%s: CleanupProc: reinitializing shared memory and semaphores\n",
+					progname);
+		shmem_exit(0);
+		reset_shared(PostPortName);
+		StartupPID = StartupDataBase();
+		return;
+	}
+
+	if (Shutdown > NoShutdown)
+	{
+		if (DLGetHead(BackendList))
+			return;
+		if (StartupPID > 0 || ShutdownPID > 0)
+			return;
+		ShutdownPID = ShutdownDataBase();
+	}
+
 }
 
 /*
@@ -1260,8 +1368,8 @@ static void
 CleanupProc(int pid,
 			int exitstatus)		/* child's exit status. */
 {
-	Dlelem	   *prev,
-			   *curr;
+	Dlelem	   *curr,
+			   *next;
 	Backend    *bp;
 	int			sig;
 
@@ -1298,18 +1406,19 @@ CleanupProc(int pid,
 		return;
 	}
 
+	FatalError = true;
 	curr = DLGetHead(BackendList);
 	while (curr)
 	{
+		next = DLGetSucc(curr);
 		bp = (Backend *) DLE_VAL(curr);
 
-		/* -----------------
+		/*
 		 * SIGUSR1 is the special signal that says exit
 		 * without proc_exit and let the user know what's going on.
 		 * ProcSemaphoreKill() cleans up the backends semaphore.  If
 		 * SendStop is set (-s on command line), then we send a SIGSTOP so
 		 * that we can core dumps from all backends by hand.
-		 * -----------------
 		 */
 		sig = (SendStop) ? SIGSTOP : SIGUSR1;
 		if (bp->pid != pid)
@@ -1322,36 +1431,25 @@ CleanupProc(int pid,
 						bp->pid);
 			kill(bp->pid, sig);
 		}
-		ProcRemove(bp->pid);
+		else
+		{
+			/*
+			 * I don't like that we call ProcRemove() here, assuming that 
+			 * shmem may be corrupted! But is there another way to free 
+			 * backend semaphores? Actually, I believe that we need not
+			 * in per backend semaphore at all (we use them to wait on lock
+			 * only, couldn't we just sigpause?), so probably we'll
+			 * remove this call from here someday.	-- vadim 04-10-1999
+			 */
+			ProcRemove(pid);
 
-		prev = DLGetPred(curr);
-		DLRemove(curr);
-		free(bp);
-		DLFreeElem(curr);
-		if (!prev)
-		{						/* removed head */
-			curr = DLGetHead(BackendList);
-			continue;
+			DLRemove(curr);
+			free(bp);
+			DLFreeElem(curr);
 		}
-		curr = DLGetSucc(prev);
+		curr = next;
 	}
 
-	/*
-	 * Nothing up my sleeve here, ActiveBackends means that since the last
-	 * time we recreated shared memory and sems another frontend has
-	 * requested and received a connection and I have forked off another
-	 * backend.  This prevents me from reinitializing shared stuff more
-	 * than once for the set of backends that caused the failure and were
-	 * killed off.
-	 */
-	if (ActiveBackends == TRUE && Reinit)
-	{
-		if (DebugLvl)
-			fprintf(stderr, "%s: CleanupProc: reinitializing shared memory and semaphores\n",
-					progname);
-		shmem_exit(0);
-		reset_shared(PostPortName);
-	}
 }
 
 /*
@@ -1516,8 +1614,6 @@ BackendStartup(Port *port)
 	bn->cancel_key = MyCancelKey;
 	DLAddHead(BackendList, DLNewElem(bn));
 
-	ActiveBackends = TRUE;
-
 	return STATUS_OK;
 }
 
@@ -1586,27 +1682,9 @@ DoBackend(Port *port)
 	/* We don't want the postmaster's proc_exit() handlers */
 	on_exit_reset();	
 
-	/* ----------------
-	 *	register signal handlers.
-	 *	Thanks to the postmaster, these are currently blocked.
-	 * ----------------
+	/* 
+	 * Signal handlers setting is moved to tcop/postgres...
 	 */
-	pqsignal(SIGINT, die);
-
-	pqsignal(SIGHUP, die);
-	pqsignal(SIGTERM, die);
-	pqsignal(SIGPIPE, die);
-	pqsignal(SIGUSR1, quickdie);
-	pqsignal(SIGUSR2, Async_NotifyHandler);
-	pqsignal(SIGFPE, FloatExceptionHandler);
-
-	pqsignal(SIGCHLD, SIG_DFL);
-	pqsignal(SIGTTIN, SIG_DFL);
-	pqsignal(SIGTTOU, SIG_DFL);
-	pqsignal(SIGCONT, SIG_DFL);
-
-	/* OK, let's unblock our signals, all together now... */
-	sigprocmask(SIG_SETMASK, &oldsigmask, 0);
 
 	/* Close the postmaster sockets */
 	if (NetServer) 
@@ -1739,6 +1817,8 @@ ExitPostmaster(int status)
 	/*
 	 * Not sure of the semantics here.	When the Postmaster dies, should
 	 * the backends all be killed? probably not.
+	 *
+	 * MUST		-- vadim 05-10-1999
 	 */
 	if (ServerSock_INET != INVALID_SOCK)
 		StreamClose(ServerSock_INET);
@@ -1752,8 +1832,11 @@ ExitPostmaster(int status)
 static void
 dumpstatus(SIGNAL_ARGS)
 {
-	Dlelem	   *curr = DLGetHead(PortList);
+	Dlelem	   *curr;
 
+	PG_SETMASK(&BlockSig);
+
+	curr = DLGetHead(PortList);
 	while (curr)
 	{
 		Port	   *port = DLE_VAL(curr);
@@ -1837,7 +1920,6 @@ CountChildren(void)
 	return cnt;
 }
 
-
 #ifdef USE_SSL
 /*
  * Initialize SSL library and structures
@@ -1868,3 +1950,88 @@ static void InitSSL(void) {
   }
 }
 #endif
+
+static pid_t
+SSDataBase(bool startup)
+{
+	pid_t		pid;
+	int			i;
+	static char	ssEntry[4][2 * ARGV_SIZE];
+
+	for (i = 0; i < 4; ++i)
+		MemSet(ssEntry[i], 0, 2 * ARGV_SIZE);
+
+	sprintf(ssEntry[0], "POSTPORT=%d", PostPortName);
+	putenv(ssEntry[0]);
+	sprintf(ssEntry[1], "POSTID=%d", NextBackendTag);
+	putenv(ssEntry[1]);
+	if (!getenv("PGDATA"))
+	{
+		sprintf(ssEntry[2], "PGDATA=%s", DataDir);
+		putenv(ssEntry[2]);
+	}
+	sprintf(ssEntry[3], "IPC_KEY=%d", ipc_key);
+	putenv(ssEntry[3]);
+
+	fflush(stdout);
+	fflush(stderr);
+
+	if ((pid = fork()) == 0)	/* child */
+	{
+		char	   *av[ARGV_SIZE * 2];
+		int			ac = 0;
+		char		execbuf[MAXPATHLEN];
+		char		nbbuf[ARGV_SIZE];
+		char		dbbuf[ARGV_SIZE];
+
+		on_exit_reset();	
+		if (NetServer) 
+			StreamClose(ServerSock_INET);
+#ifndef __CYGWIN32__
+		StreamClose(ServerSock_UNIX);
+#endif
+
+		StrNCpy(execbuf, Execfile, MAXPATHLEN);
+		av[ac++] = execbuf;
+
+		av[ac++] = "-d";
+
+		sprintf(nbbuf, "-B%u", NBuffers);
+		av[ac++] = nbbuf;
+
+		if (startup)
+			av[ac++] = "-x";
+
+		av[ac++] = "-p";
+
+		StrNCpy(dbbuf, "template1", ARGV_SIZE);
+		av[ac++] = dbbuf;
+
+		av[ac] = (char *) NULL;
+
+		optind = 1;
+
+		pqsignal(SIGQUIT, SIG_DFL);
+#ifdef HAVE_SIGPROCMASK
+		sigdelset(&BlockSig, SIGQUIT);
+#else
+		BlockSig &= ~(sigmask(SIGQUIT));
+#endif
+		PG_SETMASK(&BlockSig);
+	
+		BootstrapMain(ac, av);
+		exit(0);
+	}
+
+	/* in parent */
+	if (pid < 0)
+	{
+		fprintf(stderr, "%s Data Base: fork failed: %s\n",
+			((startup) ? "Startup" : "Shutdown"), strerror(errno));
+		ExitPostmaster(1);
+	}
+
+	NextBackendTag -= 1;
+
+	return(pid);
+}

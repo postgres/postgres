@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.68 1999/09/27 20:26:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.69 1999/10/06 21:58:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,14 @@
 
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))
 #define FIRST_TYPE_OID 16		/* OID of the first type */
+
+extern void		BaseInit(void);
+extern void		StartupXLOG(void);
+extern void		ShutdownXLOG(void);
+extern void		BootStrapXLOG(void);
+
+extern char		XLogDir[];
+extern char		ControlFilePath[];
 
 extern int	Int_yyparse(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
@@ -218,22 +226,13 @@ BootstrapMain(int argc, char *argv[])
  */
 {
 	int			i;
-	int			portFd = -1;
 	char	   *dbName;
 	int			flag;
-	int			override = 1;	/* use BootstrapProcessing or
-								 * InitProcessing mode */
+	bool		xloginit = false;
 
 	extern int	optind;
 	extern char *optarg;
 
-	/* ----------------
-	 *	initialize signal handlers
-	 * ----------------
-	 */
-	pqsignal(SIGINT, (sig_func) die);
-	pqsignal(SIGHUP, (sig_func) die);
-	pqsignal(SIGTERM, (sig_func) die);
 
 	/* --------------------
 	 *	initialize globals
@@ -252,8 +251,9 @@ BootstrapMain(int argc, char *argv[])
 	Noversion = false;
 	dbName = NULL;
 	DataDir = getenv("PGDATA"); /* Null if no PGDATA variable */
+	IsUnderPostmaster = false;
 
-	while ((flag = getopt(argc, argv, "D:dCOQP:F")) != EOF)
+	while ((flag = getopt(argc, argv, "D:dCQxpB:F")) != EOF)
 	{
 		switch (flag)
 		{
@@ -270,14 +270,17 @@ BootstrapMain(int argc, char *argv[])
 			case 'F':
 				disableFsync = true;
 				break;
-			case 'O':
-				override = true;
-				break;
 			case 'Q':
 				Quiet = true;
 				break;
-			case 'P':			/* specify port */
-				portFd = atoi(optarg);
+			case 'x':
+				xloginit = true;
+				break;
+			case 'p':
+				IsUnderPostmaster = true;
+				break;
+			case 'B':
+				NBuffers = atoi(optarg);
 				break;
 			default:
 				usage();
@@ -289,6 +292,8 @@ BootstrapMain(int argc, char *argv[])
 		usage();
 	else if (argc - optind == 1)
 		dbName = argv[optind];
+
+	SetProcessingMode(BootstrapProcessing);
 
 	if (!DataDir)
 	{
@@ -311,23 +316,49 @@ BootstrapMain(int argc, char *argv[])
 		}
 	}
 
-	/* ----------------
-	 *	initialize input fd
-	 * ----------------
-	 */
-	if (IsUnderPostmaster && portFd < 0)
+	BaseInit();
+
+	if (!IsUnderPostmaster)
 	{
-		fputs("backend: failed, no -P option with -postmaster opt.\n", stderr);
-		proc_exit(1);
+		pqsignal(SIGINT, (sig_func) die);
+		pqsignal(SIGHUP, (sig_func) die);
+		pqsignal(SIGTERM, (sig_func) die);
 	}
 
-	/* ----------------
-	 *	backend initialization
-	 * ----------------
+	/*
+	 * Bootstrap under Postmaster means two things:
+	 * (xloginit) ? StartupXLOG : ShutdownXLOG
+	 *
+	 * If !under Postmaster and xloginit then BootStrapXLOG.
 	 */
-	SetProcessingMode((override) ? BootstrapProcessing : InitProcessing);
+	if (IsUnderPostmaster || xloginit)
+	{
+		sprintf(XLogDir, "%s%cpg_xlog", DataDir, SEP_CHAR);
+		sprintf(ControlFilePath, "%s%cpg_control", DataDir, SEP_CHAR);
+	}
+
+	if (IsUnderPostmaster && xloginit)
+	{
+		StartupXLOG();
+		proc_exit(0);
+	}
+
+	if (!IsUnderPostmaster && xloginit)
+	{
+		BootStrapXLOG();
+	}
+
+	/*
+	 * backend initialization
+	 */
 	InitPostgres(dbName);
 	LockDisable(true);
+
+	if (IsUnderPostmaster && !xloginit)
+	{
+		ShutdownXLOG();
+		proc_exit(0);
+	}
 
 	for (i = 0; i < MAXATTR; i++)
 	{

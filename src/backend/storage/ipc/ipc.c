@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.38 1999/07/17 20:17:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.39 1999/10/06 21:58:06 vadim Exp $
  *
  * NOTES
  *
@@ -284,18 +284,6 @@ IPCPrivateMemoryKill(int status,
 	}
 }
 
-
-/****************************************************************************/
-/*	 IpcSemaphoreCreate(semKey, semNum, permission, semStartValue)			*/
-/*																			*/
-/*	  - returns a semaphore identifier:										*/
-/*																			*/
-/* if key doesn't exist: return a new id,      status:= IpcSemIdNotExist    */
-/* if key exists:		 return the old id,    status:= IpcSemIdExist		*/
-/* if semNum > MAX :	 return # of argument, status:=IpcInvalidArgument	*/
-/*																			*/
-/****************************************************************************/
-
 /*
  * Note:
  * XXX	This should be split into two different calls.	One should
@@ -312,8 +300,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 				   int semNum,
 				   int permission,
 				   int semStartValue,
-				   int removeOnExit,
-				   int *status)
+				   int removeOnExit)
 {
 	int			i;
 	int			errStatus;
@@ -321,20 +308,14 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 	u_short		array[IPC_NMAXSEM];
 	union semun semun;
 
-	/* get a semaphore if non-existent */
 	/* check arguments	*/
 	if (semNum > IPC_NMAXSEM || semNum <= 0)
-	{
-		*status = IpcInvalidArgument;
-		return 2;				/* returns the number of the invalid
-								 * argument   */
-	}
+		return(-1);
 
 	semId = semget(semKey, 0, 0);
 
 	if (semId == -1)
 	{
-		*status = IpcSemIdNotExist;		/* there doesn't exist a semaphore */
 #ifdef DEBUG_IPC
 		EPRINTF("calling semget with %d, %d , %d\n",
 				semKey,
@@ -348,7 +329,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 			EPRINTF("IpcSemaphoreCreate: semget failed (%s) "
 					"key=%d, num=%d, permission=%o",
 					strerror(errno), semKey, semNum, permission);
-			proc_exit(3);
+			return(-1);
 		}
 		for (i = 0; i < semNum; i++)
 			array[i] = semStartValue;
@@ -358,22 +339,16 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		{
 			EPRINTF("IpcSemaphoreCreate: semctl failed (%s) id=%d",
 					strerror(errno), semId);
+			semctl(semId, 0, IPC_RMID, semun);
+			return(-1);
 		}
 
 		if (removeOnExit)
 			on_shmem_exit(IPCPrivateSemaphoreKill, (caddr_t) semId);
-
-	}
-	else
-	{
-		/* there is a semaphore id for this key */
-		*status = IpcSemIdExist;
 	}
 
 #ifdef DEBUG_IPC
-	EPRINTF("\nIpcSemaphoreCreate, status %d, returns %d\n",
-			*status,
-			semId);
+	EPRINTF("\nIpcSemaphoreCreate, returns %d\n", semId);
 	fflush(stdout);
 	fflush(stderr);
 #endif

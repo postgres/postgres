@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.46 1999/09/24 00:24:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.47 1999/10/06 21:58:06 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,8 +187,7 @@ InitShmem(unsigned int key, unsigned int size)
 	 * bootstrap initialize spin locks so we can start to use the
 	 * allocator and shmem index.
 	 */
-	if (!InitSpinLocks(ShmemBootstrap, IPCKeyGetSpinLockSemaphoreKey(key)))
-		return FALSE;
+	InitSpinLocks();
 
 	/*
 	 * We have just allocated additional space for two spinlocks. Now

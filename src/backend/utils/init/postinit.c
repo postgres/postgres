@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.50 1999/09/28 11:41:09 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.51 1999/10/06 21:58:10 vadim Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -53,12 +53,13 @@
 #include "mb/pg_wchar.h"
 #endif
 
+void		BaseInit(void);
+
 static void VerifySystemDatabase(void);
 static void VerifyMyDatabase(void);
 static void ReverifyMyDatabase(char *name);
 static void InitCommunication(void);
 static void InitMyDatabaseInfo(char *name);
-static void InitStdio(void);
 static void InitUserid(void);
 
 
@@ -385,37 +386,6 @@ InitCommunication()
 	{
 		if (MyBackendTag == -1)
 			elog(FATAL, "InitCommunication: missing POSTID");
-
-		/*
-		 * Enable this if you are trying to force the backend to run as if
-		 * it is running under the postmaster.
-		 *
-		 * This goto forces Postgres to attach to shared memory instead of
-		 * using malloc'ed memory (which is the normal behavior if run
-		 * directly).
-		 *
-		 * To enable emulation, run the following shell commands (in addition
-		 * to enabling this goto)
-		 *
-		 * % setenv POSTID 1 % setenv POSTPORT 4321 % setenv IPC_KEY 4321000
-		 * % postmaster & % kill -9 %1
-		 *
-		 * Upon doing this, Postmaster will have allocated the shared memory
-		 * resources that Postgres will attach to if you enable
-		 * EMULATE_UNDER_POSTMASTER.
-		 *
-		 * This comment may well age with time - it is current as of 8
-		 * January 1990
-		 *
-		 * Greg
-		 */
-
-#ifdef EMULATE_UNDER_POSTMASTER
-
-		goto forcesharedmemory;
-
-#endif
-
 	}
 	else if (IsUnderPostmaster)
 	{
@@ -439,32 +409,11 @@ InitCommunication()
 	 *	initialize shared memory and semaphores appropriately.
 	 * ----------------
 	 */
-#ifdef EMULATE_UNDER_POSTMASTER
-
-forcesharedmemory:
-
-#endif
-
 	if (!IsUnderPostmaster)		/* postmaster already did this */
 	{
 		PostgresIpcKey = key;
 		AttachSharedMemoryAndSemaphores(key);
 	}
-}
-
-
-/* --------------------------------
- *		InitStdio
- *
- *		this routine consists of a bunch of code fragments
- *		that used to be randomly scattered through cinit().
- *		they all seem to do stuff associated with io.
- * --------------------------------
- */
-static void
-InitStdio()
-{
-	DebugFileOpen();
 }
 
 /* --------------------------------
@@ -477,8 +426,6 @@ InitStdio()
  */
 extern int	NBuffers;
 
-bool		PostgresIsInitialized = false;
-
 int			lockingOff = 0;		/* backend -L switch */
 
 /*
@@ -488,36 +435,10 @@ InitPostgres(char *name)		/* database name */
 {
 	bool		bootstrap;		/* true if BootstrapProcessing */
 
-	/* ----------------
-	 *	see if we're running in BootstrapProcessing mode
-	 * ----------------
+	/*
+	 * See if we're running in BootstrapProcessing mode
 	 */
 	bootstrap = IsBootstrapProcessingMode();
-
-	/* ----------------
-	 *	turn on the exception handler.	Note: we cannot use elog, Assert,
-	 *	AssertState, etc. until after exception handling is on.
-	 * ----------------
-	 */
-	EnableExceptionHandling(true);
-
-	/* ----------------
-	 *	A stupid check to make sure we don't call this more than once.
-	 *	But things like ReinitPostgres() get around this by just diddling
-	 *	the PostgresIsInitialized flag.
-	 * ----------------
-	 */
-	AssertState(!PostgresIsInitialized);
-
-	/* ----------------
-	 *	Memory system initialization.
-	 *	(we may call palloc after EnableMemoryContext())
-	 *
-	 *	Note EnableMemoryContext() must happen before EnablePortalManager().
-	 * ----------------
-	 */
-	EnableMemoryContext(true);	/* initializes the "top context" */
-	EnablePortalManager(true);	/* memory for portal/transaction stuff */
 
 	/* ----------------
 	 *	initialize the backend local portal stack used by
@@ -527,14 +448,6 @@ InitPostgres(char *name)		/* database name */
 	 * ----------------
 	 */
 	be_portalinit();
-
-	/* ----------------
-	 *	 attach to shared memory and semaphores, and initialize our
-	 *	 input/output/debugging file descriptors.
-	 * ----------------
-	 */
-	InitCommunication();
-	InitStdio();
 
 	/*
 	 * initialize the local buffer manager
@@ -574,13 +487,9 @@ InitPostgres(char *name)		/* database name */
 	 * Will try that, but may not work... - thomas 1997-11-01
 	 */
 
-	/* Does not touch files (?) - thomas 1997-11-01 */
-	smgrinit();
-
-	/* ----------------
-	 *	initialize the transaction system and the relation descriptor cache.
-	 *	Note we have to make certain the lock manager is off while we do this.
-	 * ----------------
+	/*
+	 * Initialize the transaction system and the relation descriptor cache.
+	 * Note we have to make certain the lock manager is off while we do this.
 	 */
 	AmiTransactionOverride(IsBootstrapProcessingMode());
 	LockDisable(true);
@@ -598,20 +507,18 @@ InitPostgres(char *name)		/* database name */
 
 	LockDisable(false);
 
-	/* ----------------
+	/*
 	 * Set up my per-backend PROC struct in shared memory.
-	 * ----------------
 	 */
 	InitProcess(PostgresIpcKey);
 
-	/* ----------------
-	 *	Initialize my entry in the shared-invalidation manager's
-	 *	array of per-backend data.  (Formerly this came before
-	 *	InitProcess, but now it must happen after, because it uses
-	 *	MyProc.)  Once I have done this, I am visible to other backends!
+	/*
+	 * Initialize my entry in the shared-invalidation manager's
+	 * array of per-backend data.  (Formerly this came before
+	 * InitProcess, but now it must happen after, because it uses
+	 * MyProc.)  Once I have done this, I am visible to other backends!
 	 *
-	 *	Sets up MyBackendId, a unique backend identifier.
-	 * ----------------
+	 * Sets up MyBackendId, a unique backend identifier.
 	 */
 	InitSharedInvalidationState();
 
@@ -622,16 +529,14 @@ InitPostgres(char *name)		/* database name */
 			 MyBackendId);
 	}
 
-	/* ----------------
-	 *	initialize the access methods.
-	 *	Does not touch files (?) - thomas 1997-11-01
-	 * ----------------
+	/*
+	 * Initialize the access methods.
+	 * Does not touch files (?) - thomas 1997-11-01
 	 */
 	initam();
 
-	/* ----------------
-	 *	initialize all the system catalog caches.
-	 * ----------------
+	/*
+	 * Initialize all the system catalog caches.
 	 */
 	zerocaches();
 
@@ -641,34 +546,19 @@ InitPostgres(char *name)		/* database name */
 	 */
 	InitCatalogCache();
 
-	/* ----------------
-	 *	 set ourselves to the proper user id and figure out our postgres
-	 *	 user id.  If we ever add security so that we check for valid
-	 *	 postgres users, we might do it here.
-	 * ----------------
+	/*
+	 * Set ourselves to the proper user id and figure out our postgres
+	 * user id.  If we ever add security so that we check for valid
+	 * postgres users, we might do it here.
 	 */
 	InitUserid();
 
-	/* ----------------
-	 *	 initialize local data in cache invalidation stuff
-	 * ----------------
+	/*
+	 * Initialize local data in cache invalidation stuff
 	 */
 	if (!bootstrap)
 		InitLocalInvalidateData();
 
-	/* ----------------
-	 *	ok, all done, now let's make sure we don't do it again.
-	 * ----------------
-	 */
-	PostgresIsInitialized = true;
-
-	/* ----------------
-	 *	Done with "InitPostgres", now change to NormalProcessing unless
-	 *	we're in BootstrapProcessing mode.
-	 * ----------------
-	 */
-	if (!bootstrap)
-		SetProcessingMode(NormalProcessing);
 	if (lockingOff)
 		LockDisable(true);
 
@@ -679,4 +569,31 @@ InitPostgres(char *name)		/* database name */
 	 */
 	if (!bootstrap)
 		ReverifyMyDatabase(name);
+}
+
+void
+BaseInit(void)
+{
+
+	/*
+	 * Turn on the exception handler. Note: we cannot use elog, Assert,
+	 * AssertState, etc. until after exception handling is on.
+	 */
+	EnableExceptionHandling(true);
+
+	/*
+	 * Memory system initialization - we may call palloc after 
+	 * EnableMemoryContext()).	Note that EnableMemoryContext() 
+	 * must happen before EnablePortalManager().
+	 */
+	EnableMemoryContext(true);	/* initializes the "top context" */
+	EnablePortalManager(true);	/* memory for portal/transaction stuff */
+
+	/*
+	 * Attach to shared memory and semaphores, and initialize our
+	 * input/output/debugging file descriptors.
+	 */
+	InitCommunication();
+	DebugFileOpen();
+	smgrinit();
 }

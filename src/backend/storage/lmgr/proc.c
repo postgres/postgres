@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.61 1999/09/24 00:24:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.62 1999/10/06 21:58:07 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.61 1999/09/24 00:24:41 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.62 1999/10/06 21:58:07 vadim Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -70,7 +70,7 @@
 #include "storage/proc.h"
 #include "utils/trace.h"
 
-static void HandleDeadLock(int sig);
+void HandleDeadLock(SIGNAL_ARGS);
 static void ProcFreeAllSemaphores(void);
 
 #define DeadlockCheckTimer pg_options[OPT_DEADLOCKTIMEOUT]
@@ -83,12 +83,6 @@ static void ProcFreeAllSemaphores(void);
  * --------------------
  */
 SPINLOCK	ProcStructLock;
-
-/*
- * For cleanup routines.  Don't cleanup if the initialization
- * has not happened.
- */
-static bool ProcInitialized = FALSE;
 
 static PROC_HDR *ProcGlobal = NULL;
 
@@ -167,8 +161,9 @@ InitProcGlobal(IPCKey key, int maxBackends)
 										   PROC_NSEMS_PER_SET,
 										   IPCProtection,
 										   IpcSemaphoreDefaultStartValue,
-										   0,
-										   &semstat);
+										   0);
+				if (semId < 0)
+					elog(FATAL, "InitProcGlobal: IpcSemaphoreCreate failed");
 				/* mark this sema set allocated */
 				ProcGlobal->freeSemMap[i] = (1 << PROC_NSEMS_PER_SET);
 			}
@@ -189,12 +184,6 @@ InitProcess(IPCKey key)
 	unsigned long location,
 				myOffset;
 
-	/* ------------------
-	 * Routine called if deadlock timer goes off. See ProcSleep()
-	 * ------------------
-	 */
-	pqsignal(SIGALRM, HandleDeadLock);
-
 	SpinAcquire(ProcStructLock);
 
 	/* attach to the free list */
@@ -203,7 +192,7 @@ InitProcess(IPCKey key)
 	if (!found)
 	{
 		/* this should not happen. InitProcGlobal() is called before this. */
-		elog(ERROR, "InitProcess: Proc Header uninitialized");
+		elog(STOP, "InitProcess: Proc Header uninitialized");
 	}
 
 	if (MyProc != NULL)
@@ -271,8 +260,7 @@ InitProcess(IPCKey key)
 								   PROC_NSEMS_PER_SET,
 								   IPCProtection,
 								   IpcSemaphoreDefaultStartValue,
-								   0,
-								   &semstat);
+								   0);
 
 		/*
 		 * we might be reusing a semaphore that belongs to a dead backend.
@@ -316,14 +304,12 @@ InitProcess(IPCKey key)
 	 */
 	location = MAKE_OFFSET(MyProc);
 	if ((!ShmemPIDLookup(MyProcPid, &location)) || (location != MAKE_OFFSET(MyProc)))
-		elog(FATAL, "InitProc: ShmemPID table broken");
+		elog(STOP, "InitProc: ShmemPID table broken");
 
 	MyProc->errType = NO_ERROR;
 	SHMQueueElemInit(&(MyProc->links));
 
 	on_shmem_exit(ProcKill, (caddr_t) MyProcPid);
-
-	ProcInitialized = TRUE;
 }
 
 /*
@@ -755,8 +741,8 @@ ProcAddLock(SHM_QUEUE *elem)
  * up my semaphore.
  * --------------------
  */
-static void
-HandleDeadLock(int sig)
+void
+HandleDeadLock(SIGNAL_ARGS)
 {
 	LOCK	   *mywaitlock;
 
