@@ -337,7 +337,7 @@ class pgdbCnx:
 ### module interface
 
 # connects to a database
-def connect(dsn = None, user = None, password = None, xhost = None, database = None):
+def connect(dsn = None, user = None, password = None, host = None, database = None):
 	# first get params from DSN
 	dbport = -1
 	dbhost = ""
@@ -364,9 +364,9 @@ def connect(dsn = None, user = None, password = None, xhost = None, database = N
 		dbpasswd = password
 	if database != None:
 		dbbase = database
-	if xhost != None:
+	if host != None:
 		try:
-			params = string.split(xhost, ":")
+			params = string.split(host, ":")
 			dbhost = params[0]
 			dbport = int(params[1])
 		except:
