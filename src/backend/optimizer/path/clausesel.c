@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.63 2004/01/04 03:51:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.64 2004/01/05 16:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,17 +417,38 @@ clause_selectivity(Query *root,
 		 * If possible, cache the result of the selectivity calculation for
 		 * the clause.  We can cache if varRelid is zero or the clause
 		 * contains only vars of that relid --- otherwise varRelid will affect
-		 * the result, so mustn't cache.  We ignore the possibility that
-		 * jointype will affect the result, which should be okay because outer
-		 * join clauses will always be examined with the same jointype value.
+		 * the result, so mustn't cache.  We also have to be careful about
+		 * the jointype.  It's OK to cache when jointype is JOIN_INNER or
+		 * one of the outer join types (any given outer-join clause should
+		 * always be examined with the same jointype, so result won't change).
+		 * It's not OK to cache when jointype is one of the special types
+		 * associated with IN processing, because the same clause may be
+		 * examined with different jointypes and the result should vary.
 		 */
 		if (varRelid == 0 ||
 			bms_is_subset_singleton(rinfo->clause_relids, varRelid))
 		{
-			/* Cacheable --- do we already have the result? */
-			if (rinfo->this_selec >= 0)
-				return rinfo->this_selec;
-			cacheable = true;
+			switch (jointype)
+			{
+				case JOIN_INNER:
+				case JOIN_LEFT:
+				case JOIN_FULL:
+				case JOIN_RIGHT:
+					/* Cacheable --- do we already have the result? */
+					if (rinfo->this_selec >= 0)
+						return rinfo->this_selec;
+					cacheable = true;
+					break;
+
+				case JOIN_UNION:
+					/* unimplemented anyway... */
+				case JOIN_IN:
+				case JOIN_REVERSE_IN:
+				case JOIN_UNIQUE_OUTER:
+				case JOIN_UNIQUE_INNER:
+					/* unsafe to cache */
+					break;
+			}
 		}
 
 		/* Proceed with examination of contained clause */
