@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Apr 8 23:22:06 EDT 2002
+   Last updated: Tue Apr 9 10:21:18 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -1022,7 +1022,7 @@ SELECT *
     
    You can return result sets from PL/pgSQL functions using refcursors.
    See
-   http://candle.pha.pa.us/main/writings/pgsql/sgml/plpgsql-cursors.html,
+   http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,
    section 23.7.3.3.
    
                             Extending PostgreSQL
