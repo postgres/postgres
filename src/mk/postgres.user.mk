@@ -19,15 +19,14 @@
 #    values. This is a feeble attempt to provide "portable" scripts.
 #	_CWD_	    - current working directory
 #	_OBJWD_     - where the generated files (eg. object files) are
-#	_SLSUFF_    - suffix of the shared library or object for
-#	              dynamic loading
+#	_DLSUFFIX_    - suffix of the dynamic loading
 #	_USER_	    - the login of the user
 #
 # Copyright (c) 1994-5, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.user.mk,v 1.1.1.1 1996/07/09 06:22:19 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/mk/Attic/postgres.user.mk,v 1.2 1996/11/18 06:07:23 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -42,7 +41,7 @@ CFLAGS+=  -I$(includedir) $(CFLAGS_SL)
 	C=`pwd`; \
 	sed -e "s:_CWD_:$$C:g" \
 	    -e "s:_OBJWD_:$$C/$(objdir):g" \
-	    -e "s:_SLSUFF_:$(SLSUFF):g" \
+	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s/_USER_/$$USER/g" < $*.source > $(objdir)/$*.sql
 
 #How to create a dynamic lib
@@ -58,7 +57,7 @@ CFLAGS+=  -I$(includedir) $(CFLAGS_SL)
 	C="`pwd`/"; \
 	sed -e "s:_CWD_:$$C:g" \
 	    -e "s:_OBJWD_:$$C/$(objdir):g" \
-	    -e "s:_SLSUFF_:$(SLSUFF):g" \
+	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s/_USER_/$$USER/g" < $*.source > $(objdir)/$*.sh
 
 #
@@ -71,9 +70,9 @@ endif
 #
 # plus shared libraries
 #
-ifdef SLSUFF
-ifneq ($(SLSUFF), '.o')
-CREATEFILES+= $(DLOBJS:.so=$(SLSUFF))
+ifdef DLSUFFIX
+ifneq ($(DLSUFFIX), '.o')
+CREATEFILES+= $(DLOBJS:.so=$(DLSUFFIX))
 endif
 endif
 

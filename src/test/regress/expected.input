@@ -4,12 +4,12 @@ destroydb: database destroy failed on regression.
 =============== creating new regression database... =================
 QUERY: CREATE FUNCTION circle_in(opaque)
    RETURNS circle
-   AS '_CWD_/obj/regress_SLSUFF_'
+   AS '_CWD_/obj/regress_DLSUFFIX_'
    LANGUAGE 'c';
 NOTICE:ProcedureCreate: type 'circle' is not yet defined
 QUERY: CREATE FUNCTION circle_out(opaque)
    RETURNS opaque
-   AS '_CWD_/obj/regress_SLSUFF_'
+   AS '_CWD_/obj/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE TYPE circle (
    internallength = 24,
@@ -211,25 +211,25 @@ QUERY: CREATE FUNCTION user_relns()
    LANGUAGE 'sql';
 QUERY: CREATE FUNCTION pt_in_circle(point, circle)
    RETURNS int4
-   AS '_CWD_/obj/regress_SLSUFF_'
+   AS '_CWD_/obj/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION overpaid(emp)
    RETURNS bool
-   AS '_CWD_/obj/regress_SLSUFF_'
+   AS '_CWD_/obj/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION boxarea(box)
    RETURNS int4
-   AS '_CWD_/obj/regress_SLSUFF_'
+   AS '_CWD_/obj/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
-   AS '_CWD_/obj/regress_SLSUFF_'
+   AS '_CWD_/obj/regress_DLSUFFIX_'
    LANGUAGE 'c';
 QUERY: CREATE FUNCTION reverse_c16(char16)
    RETURNS char16
-   AS '_CWD_/obj/regress_SLSUFF_'
+   AS '_CWD_/obj/regress_DLSUFFIX_'
    LANGUAGE 'c';
-QUERY: LOAD '_CWD_/obj/regress_SLSUFF_'
+QUERY: LOAD '_CWD_/obj/regress_DLSUFFIX_'
 COPY onek FROM '_CWD_/data/onek.data';
 QUERY: COPY tenk1 FROM '_CWD_/data/tenk.data';
 QUERY: INSERT INTO tenk2 VALUES (tenk1.*);

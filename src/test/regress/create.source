@@ -9,12 +9,12 @@
 
 CREATE FUNCTION circle_in(opaque)
    RETURNS circle
-   AS '_OBJWD_/regress_SLSUFF_'
+   AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 
 CREATE FUNCTION circle_out(opaque)
    RETURNS opaque
-   AS '_OBJWD_/regress_SLSUFF_'
+   AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 
 CREATE TYPE circle (
@@ -288,33 +288,33 @@ CREATE FUNCTION user_relns()
 
 CREATE FUNCTION pt_in_circle(point, circle)
    RETURNS int4
-   AS '_OBJWD_/regress_SLSUFF_'
+   AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 
 CREATE FUNCTION overpaid(emp)
    RETURNS bool
-   AS '_OBJWD_/regress_SLSUFF_'
+   AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 
 CREATE FUNCTION boxarea(box)
    RETURNS int4
-   AS '_OBJWD_/regress_SLSUFF_'
+   AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 
 CREATE FUNCTION interpt_pp(path, path)
    RETURNS point
-   AS '_OBJWD_/regress_SLSUFF_'
+   AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 
 CREATE FUNCTION reverse_c16(char16)
    RETURNS char16
-   AS '_OBJWD_/regress_SLSUFF_'
+   AS '_OBJWD_/regress_DLSUFFIX_'
    LANGUAGE 'c';
 
 --
 -- FUNCTION DYNAMIC LOADING
 --
-LOAD '_OBJWD_/regress_SLSUFF_'
+LOAD '_OBJWD_/regress_DLSUFFIX_'
 
 --
 -- CLASS POPULATION

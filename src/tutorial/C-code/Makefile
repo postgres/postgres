@@ -3,7 +3,8 @@ include ../../Makefile.global
 
 CFLAGS+= -I../../include -I$(LIBPQDIR)
 
-all: complex$(SLSUFF) funcs$(SLSUFF)
+all: complex$(DLSUFFIX) funcs$(DLSUFFIX)
 
 clean: 
-	rm -f complex$(SLSUFF) funcs$(SLSUFF)
+	rm -f complex$(DLSUFFIX) funcs$(DLSUFFIX)
+

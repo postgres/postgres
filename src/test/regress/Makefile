@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.9 1996/11/13 10:36:17 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/Makefile,v 1.10 1996/11/18 06:07:29 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,7 +22,7 @@ LDADD+= -L$(LIBPQDIR) -lpq
 # DLOBJS is the dynamically-loaded object file.  The regression test uses 
 # this when it does a CREATE FUNCTION ... LANGUAGE 'C').
 #
-DLOBJS= regress$(SLSUFF)
+DLOBJS= regress$(DLSUFFIX)
 
 #
 # ... plus test query inputs
@@ -69,7 +69,7 @@ expected.out: expected.input
 	C="`pwd`"; \
 	sed -e "s:_CWD_:$$C:g" \
 	    -e "s:_OBJWD_:$$C:g" \
-            -e "s:_SLSUFF_:$(SLSUFF):g" \
+            -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s/_USER_/$$USER/g" < expected.input > expected.out
 	@echo "YOUR EXPECTED RESULTS ARE NOW IN FILE expected.out."
 
@@ -81,7 +81,7 @@ expected.out: expected.input
 	C=`pwd`; \
 	sed -e "s:_CWD_:$$C:g" \
 	    -e "s:_OBJWD_:$$C:g" \
-	    -e "s:_SLSUFF_:$(SLSUFF):g" \
+	    -e "s:_DLSUFFIX_:$(DLSUFFIX):g" \
 	    -e "s/_USER_/$$USER/g" < $< > $@
 
 clean:
