@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.120 2003/11/29 19:51:58 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.121 2003/12/17 21:45:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3005,7 +3005,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 					if (*cp != '\0')
 						return DTERR_BAD_FORMAT;
 
-					if (val < 0)
+					if (*field[i] == '-')
 						fval = -(fval);
 				}
 				else if (*cp == '\0')
