@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.101 1999/07/19 06:25:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.102 1999/08/31 01:37:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static ConnStatusType connectDB(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
-static int	conninfo_parse(const char *conninfo, char *errorMessage);
+static int	conninfo_parse(const char *conninfo, PQExpBuffer errorMessage);
 static char *conninfo_getval(char *keyword);
 static void conninfo_free(void);
 static void defaultNoticeProcessor(void *arg, const char *message);
@@ -178,7 +178,7 @@ PQconnectdb(const char *conninfo)
 	 * Parse the conninfo string and save settings in conn structure
 	 * ----------
 	 */
-	if (conninfo_parse(conninfo, conn->errorMessage) < 0)
+	if (conninfo_parse(conninfo, &conn->errorMessage) < 0)
 	{
 		conn->status = CONNECTION_BAD;
 		conninfo_free();
@@ -226,9 +226,11 @@ PQconnectdb(const char *conninfo)
 PQconninfoOption *
 PQconndefaults(void)
 {
-	char		errorMessage[ERROR_MSG_LENGTH];
+	PQExpBufferData  errorBuf;
 
-	conninfo_parse("", errorMessage);
+	initPQExpBuffer(&errorBuf);
+	conninfo_parse("", &errorBuf);
+	termPQExpBuffer(&errorBuf);
 	return PQconninfoOptions;
 }
 
@@ -328,13 +330,17 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, cons
 	else if ((tmp = getenv("PGUSER")) != NULL)
 		conn->pguser = strdup(tmp);
 	else
-		conn->pguser = fe_getauthname(conn->errorMessage);
+	{
+		/* fe-auth.c has not been fixed to support PQExpBuffers, so: */
+		conn->pguser = fe_getauthname(conn->errorMessage.data);
+		conn->errorMessage.len = strlen(conn->errorMessage.data);
+	}
 
 	if (conn->pguser == NULL)
 	{
 		error = TRUE;
-		sprintf(conn->errorMessage,
-				"FATAL: PQsetdbLogin(): Unable to determine a Postgres username!\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "FATAL: PQsetdbLogin(): Unable to determine a Postgres username!\n");
 	}
 
 	if (pwd)
@@ -469,8 +475,8 @@ update_db_info(PGconn *conn)
 				conn->pghost = NULL;
 				if (strcmp(old + offset, "localhost") != 0)
 				{
-					(void) sprintf(conn->errorMessage,
-								   "connectDB() -- non-tcp access only possible on localhost\n");
+					printfPQExpBuffer(&conn->errorMessage,
+									  "connectDB() -- non-tcp access only possible on localhost\n");
 					return 1;
 				}
 			}
@@ -533,9 +539,9 @@ connectDB(PGconn *conn)
 		hp = gethostbyname(conn->pghost);
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
-			(void) sprintf(conn->errorMessage,
-						   "connectDB() --  unknown hostname: %s\n",
-						   conn->pghost);
+			printfPQExpBuffer(&conn->errorMessage,
+							  "connectDB() --  unknown hostname: %s\n",
+							  conn->pghost);
 			goto connect_errReturn;
 		}
 		family = AF_INET;
@@ -567,21 +573,21 @@ connectDB(PGconn *conn)
 	/* Connect to the server  */
 	if ((conn->sock = socket(family, SOCK_STREAM, 0)) < 0)
 	{
-		(void) sprintf(conn->errorMessage,
-					   "connectDB() -- socket() failed: errno=%d\n%s\n",
-					   errno, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+						  "connectDB() -- socket() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
 		goto connect_errReturn;
 	}
 	if (connect(conn->sock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
-		(void) sprintf(conn->errorMessage,
-					   "connectDB() -- connect() failed: %s\n"
-					   "Is the postmaster running%s at '%s' and accepting connections on %s '%s'?\n",
-					   strerror(errno),
-					   (family == AF_INET) ? " (with -i)" : "",
-					   conn->pghost ? conn->pghost : "localhost",
-					 (family == AF_INET) ? "TCP/IP port" : "Unix socket",
-					   conn->pgport);
+		printfPQExpBuffer(&conn->errorMessage,
+						  "connectDB() -- connect() failed: %s\n"
+						  "Is the postmaster running%s at '%s' and accepting connections on %s '%s'?\n",
+						  strerror(errno),
+						  (family == AF_INET) ? " (with -i)" : "",
+						  conn->pghost ? conn->pghost : "localhost",
+						  (family == AF_INET) ? "TCP/IP port" : "Unix socket",
+						  conn->pgport);
 		goto connect_errReturn;
 	}
 
@@ -596,9 +602,9 @@ connectDB(PGconn *conn)
 	if (ioctlsocket(conn->sock, FIONBIO, &on) != 0)
 #endif
 	{
-		(void) sprintf(conn->errorMessage,
-					   "connectDB() -- fcntl() failed: errno=%d\n%s\n",
-					   errno, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+						  "connectDB() -- fcntl() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
 		goto connect_errReturn;
 	}
 
@@ -609,8 +615,8 @@ connectDB(PGconn *conn)
 		pe = getprotobyname("TCP");
 		if (pe == NULL)
 		{
-			(void) sprintf(conn->errorMessage,
-						   "connectDB(): getprotobyname failed\n");
+			printfPQExpBuffer(&conn->errorMessage,
+							  "connectDB(): getprotobyname failed\n");
 			goto connect_errReturn;
 		}
 		if (setsockopt(conn->sock, pe->p_proto, TCP_NODELAY,
@@ -620,9 +626,9 @@ connectDB(PGconn *conn)
 					   &on,
 					   sizeof(on)) < 0)
 		{
-			(void) sprintf(conn->errorMessage,
-					  "connectDB() -- setsockopt failed: errno=%d\n%s\n",
-						   errno, strerror(errno));
+			printfPQExpBuffer(&conn->errorMessage,
+							  "connectDB() -- setsockopt failed: errno=%d\n%s\n",
+							  errno, strerror(errno));
 #ifdef WIN32
 			printf("Winsock error: %i\n", WSAGetLastError());
 #endif
@@ -634,9 +640,9 @@ connectDB(PGconn *conn)
 	laddrlen = sizeof(conn->laddr);
 	if (getsockname(conn->sock, &conn->laddr.sa, &laddrlen) < 0)
 	{
-		(void) sprintf(conn->errorMessage,
-				   "connectDB() -- getsockname() failed: errno=%d\n%s\n",
-					   errno, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+						  "connectDB() -- getsockname() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
 		goto connect_errReturn;
 	}
 
@@ -648,9 +654,9 @@ connectDB(PGconn *conn)
 
 	if (pqPacketSend(conn, (char *) &sp, sizeof(StartupPacket)) != STATUS_OK)
 	{
-		sprintf(conn->errorMessage,
-		  "connectDB() --  couldn't send startup packet: errno=%d\n%s\n",
-				errno, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+						  "connectDB() --  couldn't send startup packet: errno=%d\n%s\n",
+						  errno, strerror(errno));
 		goto connect_errReturn;
 	}
 
@@ -681,7 +687,7 @@ connectDB(PGconn *conn)
 		/* Handle errors. */
 		if (beresp == 'E')
 		{
-			if (pqGets(conn->errorMessage, sizeof(conn->errorMessage), conn))
+			if (pqGets(&conn->errorMessage, conn))
 				continue;
 			goto connect_errReturn;
 		}
@@ -689,8 +695,8 @@ connectDB(PGconn *conn)
 		/* Otherwise it should be an authentication request. */
 		if (beresp != 'R')
 		{
-			(void) sprintf(conn->errorMessage,
-					 "connectDB() -- expected authentication request\n");
+			printfPQExpBuffer(&conn->errorMessage,
+							  "connectDB() -- expected authentication request\n");
 			goto connect_errReturn;
 		}
 
@@ -709,9 +715,14 @@ connectDB(PGconn *conn)
 		conn->inStart = conn->inCursor;
 
 		/* Respond to the request if necessary. */
+		/* fe-auth.c has not been fixed to support PQExpBuffers, so: */
 		if (fe_sendauth(areq, conn, conn->pghost, conn->pgpass,
-						conn->errorMessage) != STATUS_OK)
+						conn->errorMessage.data) != STATUS_OK)
+		{
+			conn->errorMessage.len = strlen(conn->errorMessage.data);
 			goto connect_errReturn;
+		}
+
 		if (pqFlush(conn))
 			goto connect_errReturn;
 
@@ -737,35 +748,11 @@ connectDB(PGconn *conn)
 	if (res)
 	{
 		if (res->resultStatus != PGRES_FATAL_ERROR)
-			sprintf(conn->errorMessage,
-					"connectDB() -- unexpected message during startup\n");
+			printfPQExpBuffer(&conn->errorMessage,
+							  "connectDB() -- unexpected message during startup\n");
 		PQclear(res);
 		goto connect_errReturn;
 	}
-
-	/*
-	 * Given the new protocol that sends a ReadyForQuery message after
-	 * successful backend startup, it should no longer be necessary to
-	 * send an empty query to test for startup.
-	 */
-
-#ifdef NOT_USED
-
-	/*
-	 * Send a blank query to make sure everything works; in particular,
-	 * that the database exists.
-	 */
-	res = PQexec(conn, " ");
-	if (res == NULL || res->resultStatus != PGRES_EMPTY_QUERY)
-	{
-		/* PQexec has put error message in conn->errorMessage */
-		closePGconn(conn);
-		PQclear(res);
-		goto connect_errReturn;
-	}
-	PQclear(res);
-
-#endif
 
 	/*
 	 * Post-connection housekeeping. Send environment variables to server
@@ -870,11 +857,27 @@ makeEmptyPGconn(void)
 	conn->asyncStatus = PGASYNC_IDLE;
 	conn->notifyList = DLNewList();
 	conn->sock = -1;
-	conn->inBufSize = PQ_BUFFER_SIZE;
+	/*
+	 * The output buffer size is set to 8K, which is the usual size of pipe
+	 * buffers on Unix systems.  That way, when we are sending a large
+	 * amount of data, we avoid incurring extra kernel context swaps for
+	 * partial bufferloads.  Note that we currently don't ever enlarge
+	 * the output buffer.
+	 *
+	 * With the same goal of minimizing context swaps, the input buffer will
+	 * be enlarged anytime it has less than 8K free, so we initially allocate
+	 * twice that.
+	 */
+	conn->inBufSize = 16 * 1024;
 	conn->inBuffer = (char *) malloc(conn->inBufSize);
-	conn->outBufSize = PQ_BUFFER_SIZE;
+	conn->outBufSize = 8 * 1024;
 	conn->outBuffer = (char *) malloc(conn->outBufSize);
-	if (conn->inBuffer == NULL || conn->outBuffer == NULL)
+	initPQExpBuffer(&conn->errorMessage);
+	initPQExpBuffer(&conn->workBuffer);
+	if (conn->inBuffer == NULL ||
+		conn->outBuffer == NULL ||
+		conn->errorMessage.data == NULL ||
+		conn->workBuffer.data == NULL)
 	{
 		freePGconn(conn);
 		conn = NULL;
@@ -922,6 +925,8 @@ freePGconn(PGconn *conn)
 		free(conn->inBuffer);
 	if (conn->outBuffer)
 		free(conn->outBuffer);
+	termPQExpBuffer(&conn->errorMessage);
+	termPQExpBuffer(&conn->workBuffer);
 	free(conn);
 }
 
@@ -1002,9 +1007,13 @@ PQreset(PGconn *conn)
  * PQrequestCancel: attempt to request cancellation of the current operation.
  *
  * The return value is TRUE if the cancel request was successfully
- * dispatched, FALSE if not (in which case errorMessage is set).
+ * dispatched, FALSE if not (in which case conn->errorMessage is set).
  * Note: successful dispatch is no guarantee that there will be any effect at
  * the backend.  The application must read the operation result as usual.
+ *
+ * XXX it was a bad idea to have the error message returned in
+ * conn->errorMessage, since it could overwrite a message already there.
+ * Would be better to return it in a char array passed by the caller.
  *
  * CAUTION: we want this routine to be safely callable from a signal handler
  * (for example, an application might want to call it in a SIGINT handler).
@@ -1012,6 +1021,10 @@ PQreset(PGconn *conn)
  * malloc/free are often non-reentrant, and anything that might call them is
  * just as dangerous.  We avoid sprintf here for that reason.  Building up
  * error messages with strcpy/strcat is tedious but should be quite safe.
+ *
+ * NOTE: this routine must not generate any error message longer than
+ * INITIAL_EXPBUFFER_SIZE (currently 256), since we dare not try to
+ * expand conn->errorMessage!
  */
 
 int
@@ -1030,8 +1043,9 @@ PQrequestCancel(PGconn *conn)
 
 	if (conn->sock < 0)
 	{
-		strcpy(conn->errorMessage,
+		strcpy(conn->errorMessage.data,
 			   "PQrequestCancel() -- connection is not open\n");
+		conn->errorMessage.len = strlen(conn->errorMessage.data);
 		return FALSE;
 	}
 
@@ -1041,12 +1055,14 @@ PQrequestCancel(PGconn *conn)
 	 */
 	if ((tmpsock = socket(conn->raddr.sa.sa_family, SOCK_STREAM, 0)) < 0)
 	{
-		strcpy(conn->errorMessage, "PQrequestCancel() -- socket() failed: ");
+		strcpy(conn->errorMessage.data,
+			   "PQrequestCancel() -- socket() failed: ");
 		goto cancel_errReturn;
 	}
 	if (connect(tmpsock, &conn->raddr.sa, conn->raddr_len) < 0)
 	{
-		strcpy(conn->errorMessage, "PQrequestCancel() -- connect() failed: ");
+		strcpy(conn->errorMessage.data,
+			   "PQrequestCancel() -- connect() failed: ");
 		goto cancel_errReturn;
 	}
 
@@ -1063,7 +1079,8 @@ PQrequestCancel(PGconn *conn)
 
 	if (send(tmpsock, (char *) &crp, sizeof(crp), 0) != (int) sizeof(crp))
 	{
-		strcpy(conn->errorMessage, "PQrequestCancel() -- send() failed: ");
+		strcpy(conn->errorMessage.data,
+			   "PQrequestCancel() -- send() failed: ");
 		goto cancel_errReturn;
 	}
 
@@ -1077,8 +1094,9 @@ PQrequestCancel(PGconn *conn)
 	return TRUE;
 
 cancel_errReturn:
-	strcat(conn->errorMessage, strerror(errno));
-	strcat(conn->errorMessage, "\n");
+	strcat(conn->errorMessage.data, strerror(errno));
+	strcat(conn->errorMessage.data, "\n");
+	conn->errorMessage.len = strlen(conn->errorMessage.data);
 	if (tmpsock >= 0)
 	{
 #ifdef WIN32
@@ -1123,7 +1141,7 @@ pqPacketSend(PGconn *conn, const char *buf, size_t len)
  * ----------------
  */
 static int
-conninfo_parse(const char *conninfo, char *errorMessage)
+conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 {
 	char	   *pname;
 	char	   *pval;
@@ -1132,13 +1150,13 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 	char	   *cp;
 	char	   *cp2;
 	PQconninfoOption *option;
-	char		errortmp[ERROR_MSG_LENGTH];
+	char		errortmp[INITIAL_EXPBUFFER_SIZE];
 
 	conninfo_free();
 
 	if ((buf = strdup(conninfo)) == NULL)
 	{
-		strcpy(errorMessage,
+		printfPQExpBuffer(errorMessage,
 		  "FATAL: cannot allocate memory for copy of conninfo string\n");
 		return -1;
 	}
@@ -1176,9 +1194,9 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		/* Check that there is a following '=' */
 		if (*cp != '=')
 		{
-			sprintf(errorMessage,
-			"ERROR: PQconnectdb() - Missing '=' after '%s' in conninfo\n",
-					pname);
+			printfPQExpBuffer(errorMessage,
+				"ERROR: PQconnectdb() - Missing '=' after '%s' in conninfo\n",
+							  pname);
 			free(buf);
 			return -1;
 		}
@@ -1223,7 +1241,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 			{
 				if (*cp == '\0')
 				{
-					sprintf(errorMessage,
+					printfPQExpBuffer(errorMessage,
 							"ERROR: PQconnectdb() - unterminated quoted string in conninfo\n");
 					free(buf);
 					return -1;
@@ -1257,9 +1275,9 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		}
 		if (option->keyword == NULL)
 		{
-			sprintf(errorMessage,
-					"ERROR: PQconnectdb() - unknown option '%s'\n",
-					pname);
+			printfPQExpBuffer(errorMessage,
+							  "ERROR: PQconnectdb() - unknown option '%s'\n",
+							  pname);
 			free(buf);
 			return -1;
 		}
@@ -1314,6 +1332,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 		if (!strcmp(option->keyword, "user"))
 		{
 			option->val = fe_getauthname(errortmp);
+			/* note any error message is thrown away */
 			continue;
 		}
 
@@ -1436,7 +1455,7 @@ PQerrorMessage(PGconn *conn)
 
 	if (!conn)
 		return noConn;
-	return conn->errorMessage;
+	return conn->errorMessage.data;
 }
 
 int

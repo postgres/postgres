@@ -5,9 +5,11 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
+ * NOTE: the error message strings returned by this module must not
+ * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.32 1999/07/19 06:25:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.33 1999/08/31 01:37:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

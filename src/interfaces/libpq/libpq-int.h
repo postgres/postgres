@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.10 1999/07/13 20:00:37 momjian Exp $
+ * $Id: libpq-int.h,v 1.11 1999/08/31 01:37:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,12 +21,12 @@
 
 /* We assume libpq-fe.h has already been included. */
 
-/* ----------------
- *		include stuff common to fe and be
- * ----------------
- */
+/* include stuff common to fe and be */
 #include "libpq/pqcomm.h"
 #include "lib/dllist.h"
+/* include stuff found in fe only */
+#include "pqexpbuffer.h"
+
 
 /* libpq supports this version of the frontend/backend protocol.
  *
@@ -45,8 +45,6 @@
  * POSTGRES backend dependent Constants.
  */
 
-/* ERROR_MSG_LENGTH should really be the same as ELOG_MAXLEN in utils/elog.h*/
-#define ERROR_MSG_LENGTH 4096
 #define CMDSTATUS_LEN 40
 
 /*
@@ -115,7 +113,7 @@ struct pg_result
 	int			tupArrSize;		/* size of tuples array allocated */
 	ExecStatusType resultStatus;
 	char		cmdStatus[CMDSTATUS_LEN];		/* cmd status from the
-												 * last insert query */
+												 * last query */
 	int			binary;			/* binary tuple values if binary == 1,
 								 * otherwise ASCII */
 	PGconn	   *conn;			/* connection we did the query on, if any */
@@ -217,8 +215,11 @@ struct pg_conn
 	PGresult   *result;			/* result being constructed */
 	PGresAttValue *curTuple;	/* tuple currently being read */
 
-	/* Message space.  Placed last for code-size reasons. */
-	char		errorMessage[ERROR_MSG_LENGTH];
+	/* Buffer for current error message */
+	PQExpBufferData	errorMessage;	/* expansible string */
+
+	/* Buffer for receiving various parts of messages */
+	PQExpBufferData	workBuffer;	/* expansible string */
 };
 
 /* ----------------
@@ -249,7 +250,7 @@ extern void pqClearAsyncResult(PGconn *conn);
   * necessarily any error.
   */
 extern int	pqGetc(char *result, PGconn *conn);
-extern int	pqGets(char *s, int maxlen, PGconn *conn);
+extern int	pqGets(PQExpBuffer buf, PGconn *conn);
 extern int	pqPuts(const char *s, PGconn *conn);
 extern int	pqGetnchar(char *s, int len, PGconn *conn);
 extern int	pqPutnchar(const char *s, int len, PGconn *conn);
@@ -258,12 +259,6 @@ extern int	pqPutInt(int value, int bytes, PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);
-
-/* max length of message to send  */
-#define MAX_MESSAGE_LEN MAX_QUERY_SIZE
-
-/* maximum number of fields in a tuple */
-#define MAX_FIELDS 512
 
 /* bits in a byte */
 #define BYTELEN 8

@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.28 1999/07/19 06:25:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.29 1999/08/31 01:37:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,12 +106,12 @@ pqPutBytes(const char *s, int nbytes, PGconn *conn)
 /* --------------------------------------------------------------------- */
 /* pqGets:
    get a null-terminated string from the connection,
-   and store it in a buffer of size maxlen bytes.
-   If the incoming string is >= maxlen bytes, all of it is read,
+   and store it in an expansible PQExpBuffer.
+   If we run out of memory, all of the string is still read,
    but the excess characters are silently discarded.
 */
 int
-pqGets(char *s, int maxlen, PGconn *conn)
+pqGets(PQExpBuffer buf, PGconn *conn)
 {
 	/* Copy conn data to locals for faster search loop */
 	char	   *inBuffer = conn->inBuffer;
@@ -126,18 +126,15 @@ pqGets(char *s, int maxlen, PGconn *conn)
 		return EOF;
 
 	slen = inCursor - conn->inCursor;
-	if (slen < maxlen)
-		strcpy(s, inBuffer + conn->inCursor);
-	else
-	{
-		strncpy(s, inBuffer + conn->inCursor, maxlen - 1);
-		s[maxlen - 1] = '\0';
-	}
+
+	resetPQExpBuffer(buf);
+	appendBinaryPQExpBuffer(buf, inBuffer + conn->inCursor, slen);
 
 	conn->inCursor = ++inCursor;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "From backend> \"%s\"\n", s);
+		fprintf(conn->Pfdebug, "From backend> \"%s\"\n",
+				buf->data);
 
 	return 0;
 }
@@ -202,6 +199,7 @@ pqGetInt(int *result, int bytes, PGconn *conn)
 {
 	uint16		tmp2;
 	uint32		tmp4;
+	char		noticeBuf[64];
 
 	switch (bytes)
 	{
@@ -220,9 +218,9 @@ pqGetInt(int *result, int bytes, PGconn *conn)
 			*result = (int) ntohl(tmp4);
 			break;
 		default:
-			sprintf(conn->errorMessage,
+			sprintf(noticeBuf,
 					"pqGetInt: int size %d not supported\n", bytes);
-			DONOTICE(conn, conn->errorMessage);
+			DONOTICE(conn, noticeBuf);
 			return EOF;
 	}
 
@@ -242,6 +240,7 @@ pqPutInt(int value, int bytes, PGconn *conn)
 {
 	uint16		tmp2;
 	uint32		tmp4;
+	char		noticeBuf[64];
 
 	switch (bytes)
 	{
@@ -256,9 +255,9 @@ pqPutInt(int value, int bytes, PGconn *conn)
 				return EOF;
 			break;
 		default:
-			sprintf(conn->errorMessage,
+			sprintf(noticeBuf,
 					"pqPutInt: int size %d not supported\n", bytes);
-			DONOTICE(conn, conn->errorMessage);
+			DONOTICE(conn, noticeBuf);
 			return EOF;
 	}
 
@@ -287,9 +286,9 @@ pqReadReady(PGconn *conn)
 	if (select(conn->sock + 1, &input_mask, (fd_set *) NULL, (fd_set *) NULL,
 			   &timeout) < 0)
 	{
-		sprintf(conn->errorMessage,
-				"pqReadReady() -- select() failed: errno=%d\n%s\n",
-				errno, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+						  "pqReadReady() -- select() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
 		return 0;
 	}
 	return FD_ISSET(conn->sock, &input_mask);
@@ -312,7 +311,8 @@ pqReadData(PGconn *conn)
 
 	if (conn->sock < 0)
 	{
-		strcpy(conn->errorMessage, "pqReadData() -- connection not open\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "pqReadData() -- connection not open\n");
 		return -1;
 	}
 
@@ -333,9 +333,10 @@ pqReadData(PGconn *conn)
 	 * enlarge the buffer in case a single message exceeds the initial
 	 * buffer size.  We enlarge before filling the buffer entirely so as
 	 * to avoid asking the kernel for a partial packet. The magic constant
-	 * here should be at least one TCP packet.
+	 * here should be large enough for a TCP packet or Unix pipe
+	 * bufferload.  8K is the usual pipe buffer size, so...
 	 */
-	if (conn->inBufSize - conn->inEnd < 2000)
+	if (conn->inBufSize - conn->inEnd < 8192)
 	{
 		int			newSize = conn->inBufSize * 2;
 		char	   *newBuf = (char *) realloc(conn->inBuffer, newSize);
@@ -369,9 +370,9 @@ tryAgain:
 		if (errno == ECONNRESET)
 			goto definitelyFailed;
 #endif
-		sprintf(conn->errorMessage,
-				"pqReadData() --  read() failed: errno=%d\n%s\n",
-				errno, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+						  "pqReadData() --  read() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
 		return -1;
 	}
 	if (nread > 0)
@@ -417,9 +418,9 @@ tryAgain2:
 		if (errno == ECONNRESET)
 			goto definitelyFailed;
 #endif
-		sprintf(conn->errorMessage,
-				"pqReadData() --  read() failed: errno=%d\n%s\n",
-				errno, strerror(errno));
+		printfPQExpBuffer(&conn->errorMessage,
+						  "pqReadData() --  read() failed: errno=%d\n%s\n",
+						  errno, strerror(errno));
 		return -1;
 	}
 	if (nread > 0)
@@ -433,7 +434,7 @@ tryAgain2:
 	 * This means the connection has been closed.  Cope.
 	 */
 definitelyFailed:
-	sprintf(conn->errorMessage,
+	printfPQExpBuffer(&conn->errorMessage,
 			"pqReadData() -- backend closed the channel unexpectedly.\n"
 			"\tThis probably means the backend terminated abnormally\n"
 			"\tbefore or while processing the request.\n");
@@ -459,7 +460,8 @@ pqFlush(PGconn *conn)
 
 	if (conn->sock < 0)
 	{
-		strcpy(conn->errorMessage, "pqFlush() -- connection not open\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "pqFlush() -- connection not open\n");
 		return EOF;
 	}
 
@@ -499,7 +501,7 @@ pqFlush(PGconn *conn)
 #ifdef ECONNRESET
 				case ECONNRESET:
 #endif
-					sprintf(conn->errorMessage,
+					printfPQExpBuffer(&conn->errorMessage,
 							"pqFlush() -- backend closed the channel unexpectedly.\n"
 							"\tThis probably means the backend terminated abnormally"
 							" before or while processing the request.\n");
@@ -513,8 +515,8 @@ pqFlush(PGconn *conn)
 					return EOF;
 
 				default:
-					sprintf(conn->errorMessage,
-					  "pqFlush() --  couldn't send data: errno=%d\n%s\n",
+					printfPQExpBuffer(&conn->errorMessage,
+							"pqFlush() --  couldn't send data: errno=%d\n%s\n",
 							errno, strerror(errno));
 					/* We don't assume it's a fatal error... */
 					return EOF;
@@ -552,7 +554,8 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 
 	if (conn->sock < 0)
 	{
-		strcpy(conn->errorMessage, "pqWait() -- connection not open\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "pqWait() -- connection not open\n");
 		return EOF;
 	}
 
@@ -570,9 +573,9 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 		{
 			if (errno == EINTR)
 				continue;
-			sprintf(conn->errorMessage,
-					"pqWait() -- select() failed: errno=%d\n%s\n",
-					errno, strerror(errno));
+			printfPQExpBuffer(&conn->errorMessage,
+							  "pqWait() -- select() failed: errno=%d\n%s\n",
+							  errno, strerror(errno));
 			return EOF;
 		}
 		/* On nonerror return, assume we're done */

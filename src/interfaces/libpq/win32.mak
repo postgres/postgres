@@ -29,6 +29,7 @@ CLEAN :
 	-@erase "$(INTDIR)\fe-lobj.obj"
 	-@erase "$(INTDIR)\fe-misc.obj"
 	-@erase "$(INTDIR)\fe-print.obj"
+	-@erase "$(INTDIR)\pqexpbuffer.obj"
 	-@erase "$(OUTDIR)\libpqdll.obj"
 	-@erase "$(OUTDIR)\libpq.lib"
 	-@erase "$(OUTDIR)\libpq.dll"
@@ -70,7 +71,8 @@ LIB32_OBJS= \
 	"$(INTDIR)\fe-exec.obj" \
 	"$(INTDIR)\fe-lobj.obj" \
 	"$(INTDIR)\fe-misc.obj" \
-	"$(INTDIR)\fe-print.obj"
+	"$(INTDIR)\fe-print.obj" \
+	"$(INTDIR)\pqexpbuffer.obj"
 
 !IFDEF MULTIBYTE
 LIB32_OBJS = $(LIB32_OBJS) "$(INTDIR)\common.obj" "$(INTDIR)\wchar.obj" "$(INTDIR)\conv.obj" "$(INTDIR)\big5.obj"

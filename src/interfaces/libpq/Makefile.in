@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.46 1999/06/30 23:57:25 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.47 1999/08/31 01:37:36 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ CFLAGS+= $(MBFLAGS)
 endif
 
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
-      dllist.o pqsignal.o
+      pqexpbuffer.o dllist.o pqsignal.o
 
 ifdef MULTIBYTE
 OBJS+= common.o wchar.o conv.o big5.o
@@ -80,6 +80,7 @@ install-headers: libpq-fe.h libpq-int.h
 	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 	$(INSTALL) $(INSTLOPTS) libpq-fe.h $(HEADERDIR)/libpq-fe.h
 	$(INSTALL) $(INSTLOPTS) libpq-int.h $(HEADERDIR)/libpq-int.h
+	$(INSTALL) $(INSTLOPTS) pqexpbuffer.h $(HEADERDIR)/pqexpbuffer.h
 
 
 .PHONY: clean

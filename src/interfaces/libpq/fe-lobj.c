@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.24 1999/07/19 06:25:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.25 1999/08/31 01:37:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,8 +397,9 @@ lo_import(PGconn *conn, char *filename)
 #endif
 	if (fd < 0)
 	{							/* error */
-		sprintf(conn->errorMessage,
-				"lo_import: can't open unix file\"%s\"\n", filename);
+		printfPQExpBuffer(&conn->errorMessage,
+						  "lo_import: can't open unix file\"%s\"\n",
+						  filename);
 		return InvalidOid;
 	}
 
@@ -408,16 +409,18 @@ lo_import(PGconn *conn, char *filename)
 	lobjOid = lo_creat(conn, INV_READ | INV_WRITE);
 	if (lobjOid == InvalidOid)
 	{
-		sprintf(conn->errorMessage,
-			  "lo_import: can't create inv object for \"%s\"", filename);
+		printfPQExpBuffer(&conn->errorMessage,
+						  "lo_import: can't create inv object for \"%s\"",
+						  filename);
 		return InvalidOid;
 	}
 
 	lobj = lo_open(conn, lobjOid, INV_WRITE);
 	if (lobj == -1)
 	{
-		sprintf(conn->errorMessage,
-				"lo_import: could not open inv object oid %u", lobjOid);
+		printfPQExpBuffer(&conn->errorMessage,
+						  "lo_import: could not open inv object oid %u",
+						  lobjOid);
 		return InvalidOid;
 	}
 
@@ -429,8 +432,9 @@ lo_import(PGconn *conn, char *filename)
 		tmp = lo_write(conn, lobj, buf, nbytes);
 		if (tmp < nbytes)
 		{
-			sprintf(conn->errorMessage,
-					"lo_import: error while reading \"%s\"", filename);
+			printfPQExpBuffer(&conn->errorMessage,
+							  "lo_import: error while reading \"%s\"",
+							  filename);
 			return InvalidOid;
 		}
 	}
@@ -461,8 +465,8 @@ lo_export(PGconn *conn, Oid lobjId, char *filename)
 	lobj = lo_open(conn, lobjId, INV_READ);
 	if (lobj == -1)
 	{
-		sprintf(conn->errorMessage,
-				"lo_export: can't open inv object %u", lobjId);
+		printfPQExpBuffer(&conn->errorMessage,
+						  "lo_export: can't open inv object %u", lobjId);
 		return -1;
 	}
 
@@ -476,8 +480,9 @@ lo_export(PGconn *conn, Oid lobjId, char *filename)
 #endif
 	if (fd < 0)
 	{							/* error */
-		sprintf(conn->errorMessage,
-				"lo_export: can't open unix file\"%s\"", filename);
+		printfPQExpBuffer(&conn->errorMessage,
+						  "lo_export: can't open unix file\"%s\"",
+						  filename);
 		return 0;
 	}
 
@@ -489,9 +494,9 @@ lo_export(PGconn *conn, Oid lobjId, char *filename)
 		tmp = write(fd, buf, nbytes);
 		if (tmp < nbytes)
 		{
-			sprintf(conn->errorMessage,
-					"lo_export: error while writing \"%s\"",
-					filename);
+			printfPQExpBuffer(&conn->errorMessage,
+							  "lo_export: error while writing \"%s\"",
+							  filename);
 			return -1;
 		}
 	}
@@ -527,8 +532,8 @@ lo_initialize(PGconn *conn)
 	lobjfuncs = (PGlobjfuncs *) malloc(sizeof(PGlobjfuncs));
 	if (lobjfuncs == (PGlobjfuncs *) NULL)
 	{
-		strcpy(conn->errorMessage,
-			   "FATAL: malloc() failed in lo_initialize()\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "FATAL: malloc() failed in lo_initialize()\n");
 		return -1;
 	}
 	MemSet((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
@@ -556,8 +561,8 @@ lo_initialize(PGconn *conn)
 	{
 		free(lobjfuncs);
 		PQclear(res);
-		strcpy(conn->errorMessage,
-			   "ERROR: SELECT didn't return data in lo_initialize()\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: SELECT didn't return data in lo_initialize()\n");
 		return -1;
 	}
 
@@ -596,57 +601,57 @@ lo_initialize(PGconn *conn)
 	 */
 	if (lobjfuncs->fn_lo_open == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function lo_open\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function lo_open\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_close == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function lo_close\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function lo_close\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_creat == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function lo_creat\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function lo_creat\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_unlink == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function lo_unlink\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function lo_unlink\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_lseek == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function lo_lseek\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function lo_lseek\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_tell == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function lo_tell\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function lo_tell\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_read == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function loread\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function loread\n");
 		free(lobjfuncs);
 		return -1;
 	}
 	if (lobjfuncs->fn_lo_write == 0)
 	{
-		strcpy(conn->errorMessage,
-			   "ERROR: Cannot determine OID for function lowrite\n");
+		printfPQExpBuffer(&conn->errorMessage,
+						  "ERROR: Cannot determine OID for function lowrite\n");
 		free(lobjfuncs);
 		return -1;
 	}

@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.26 1999/07/19 06:25:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.27 1999/08/31 01:37:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static struct winsize
 
 
 static void do_field(PQprintOpt *po, PGresult *res,
-		 const int i, const int j, char *buf, const int fs_len,
+		 const int i, const int j, const int fs_len,
 		 char **fields,
 		 const int nFields, char **fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
@@ -103,7 +103,6 @@ PQprint(FILE *fout,
 		int			usePipe = 0;
 		pqsigfunc	oldsigpipehandler = NULL;
 		char	   *pagerenv;
-		char		buf[MAX_QUERY_SIZE + 1];
 
 		nTups = PQntuples(res);
 		if (!(fieldNames = (char **) calloc(nFields, sizeof(char *))))
@@ -254,7 +253,7 @@ PQprint(FILE *fout,
 					fprintf(fout, "-- RECORD %d --\n", i);
 			}
 			for (j = 0; j < nFields; j++)
-				do_field(po, res, i, j, buf, fs_len, fields, nFields,
+				do_field(po, res, i, j, fs_len, fields, nFields,
 						 fieldNames, fieldNotNum,
 						 fieldMax, fieldMaxLen, fout);
 			if (po->html3 && po->expanded)
@@ -332,7 +331,7 @@ PQdisplayTuples(PGresult *res,
 				j;
 	int			nFields;
 	int			nTuples;
-	int			fLength[MAX_FIELDS];
+	int		   *fLength = NULL;
 
 	if (fieldSep == NULL)
 		fieldSep = DEFAULT_FIELD_SEP;
@@ -344,19 +343,19 @@ PQdisplayTuples(PGresult *res,
 	if (fp == NULL)
 		fp = stdout;
 
-	/* Zero the initial field lengths */
-	for (j = 0; j < nFields; j++)
-		fLength[j] = strlen(PQfname(res, j));
-	/* Find the max length of each field in the result */
+	/* Figure the field lengths to align to */
 	/* will be somewhat time consuming for very large results */
 	if (fillAlign)
 	{
-		for (i = 0; i < nTuples; i++)
+		fLength = (int *) malloc(nFields * sizeof(int));
+		for (j = 0; j < nFields; j++)
 		{
-			for (j = 0; j < nFields; j++)
+			fLength[j] = strlen(PQfname(res, j));
+			for (i = 0; i < nTuples; i++)
 			{
-				if (PQgetlength(res, i, j) > fLength[j])
-					fLength[j] = PQgetlength(res, i, j);
+				int flen = PQgetlength(res, i, j);
+				if (flen > fLength[j])
+					fLength[j] = flen;
 			}
 		}
 	}
@@ -401,6 +400,9 @@ PQdisplayTuples(PGresult *res,
 				(PQntuples(res) == 1) ? "" : "s");
 
 	fflush(fp);
+
+	if (fLength)
+		free(fLength);
 }
 
 
@@ -522,7 +524,7 @@ PQmblen(unsigned char *s)
 
 static void
 do_field(PQprintOpt *po, PGresult *res,
-		 const int i, const int j, char *buf, const int fs_len,
+		 const int i, const int j, const int fs_len,
 		 char **fields,
 		 const int nFields, char **fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
@@ -530,8 +532,7 @@ do_field(PQprintOpt *po, PGresult *res,
 {
 
 	char	   *pval,
-			   *p,
-			   *o;
+			   *p;
 	int			plen;
 	bool		skipit;
 
@@ -553,62 +554,49 @@ do_field(PQprintOpt *po, PGresult *res,
 
 	if (!skipit)
 	{
-		char		ch = 0;
+		if (po->align && ! fieldNotNum[j])
+		{
+			/* Detect whether field contains non-numeric data */
+			char		ch = '0';
 
 #ifdef MULTIBYTE
-		int			len;
-
-		for (p = pval, o = buf; *p;
-			 len = PQmblen(p), memcpy(o, p, len),
-			 o += len, p += len)
+			for (p = pval; *p; p += PQmblen(p))
 #else
-		for (p = pval, o = buf; *p; *(o++) = *(p++))
+			for (p = pval; *p; p++)
 #endif
-		{
-			ch = *p;
-
+			{
+				ch = *p;
+				if (! ((ch >= '0' && ch <= '9') ||
+					   ch == '.' ||
+					   ch == 'E' ||
+					   ch == 'e' ||
+					   ch == ' ' ||
+					   ch == '-'))
+				{
+					fieldNotNum[j] = 1;
+					break;
+				}
+			}
 			/*
-			 * Consensus on pgsql-interfaces (as of Aug 1998) seems to be
-			 * that the print functions ought not insert backslashes.  If
-			 * you like them, you can re-enable this next bit.
+			 * Above loop will believe E in first column is numeric; also, we
+			 * insist on a digit in the last column for a numeric.	This test
+			 * is still not bulletproof but it handles most cases.
 			 */
-#ifdef GRATUITOUS_BACKSLASHES
-			if ((fs_len == 1 && (ch == *(po->fieldSep))) ||
-				ch == '\\' || ch == '\n')
-				*(o++) = '\\';
-#endif
-			if (po->align &&
-				!((ch >= '0' && ch <= '9') ||
-				  ch == '.' ||
-				  ch == 'E' ||
-				  ch == 'e' ||
-				  ch == ' ' ||
-				  ch == '-'))
+			if (*pval == 'E' || *pval == 'e' ||
+				!(ch >= '0' && ch <= '9'))
 				fieldNotNum[j] = 1;
 		}
-		*o = '\0';
 
-		/*
-		 * Above loop will believe E in first column is numeric; also, we
-		 * insist on a digit in the last column for a numeric.	This test
-		 * is still not bulletproof but it handles most cases.
-		 */
-		if (po->align &&
-			(*pval == 'E' || *pval == 'e' ||
-			 !(ch >= '0' && ch <= '9')))
-			fieldNotNum[j] = 1;
 		if (!po->expanded && (po->align || po->html3))
 		{
-			int			n = strlen(buf);
-
-			if (n > fieldMax[j])
-				fieldMax[j] = n;
-			if (!(fields[i * nFields + j] = (char *) malloc(n + 1)))
+			if (plen > fieldMax[j])
+				fieldMax[j] = plen;
+			if (!(fields[i * nFields + j] = (char *) malloc(plen + 1)))
 			{
 				perror("malloc");
 				exit(1);
 			}
-			strcpy(fields[i * nFields + j], buf);
+			strcpy(fields[i * nFields + j], pval);
 		}
 		else
 		{
@@ -620,23 +608,26 @@ do_field(PQprintOpt *po, PGresult *res,
 							"<td align=%s>%s</td></tr>\n",
 							fieldNames[j],
 							fieldNotNum[j] ? "left" : "right",
-							buf);
+							pval);
 				else
 				{
 					if (po->align)
 						fprintf(fout,
 								"%-*s%s %s\n",
-						fieldMaxLen - fs_len, fieldNames[j], po->fieldSep,
-								buf);
+								fieldMaxLen - fs_len, fieldNames[j],
+								po->fieldSep,
+								pval);
 					else
-						fprintf(fout, "%s%s%s\n", fieldNames[j], po->fieldSep, buf);
+						fprintf(fout,
+								"%s%s%s\n",
+								fieldNames[j], po->fieldSep, pval);
 				}
 			}
 			else
 			{
 				if (!po->html3)
 				{
-					fputs(buf, fout);
+					fputs(pval, fout);
 			efield:
 					if ((j + 1) < nFields)
 						fputs(po->fieldSep, fout);
