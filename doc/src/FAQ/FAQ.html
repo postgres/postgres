@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Apr 26 23:03:46 EDT 2002</P>
+    <P>Last updated: Mon Jun 10 15:47:38 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -138,7 +138,9 @@
      <A href="#4.24">4.24</A>) How do I perform queries using multiple
     databases?<BR>
      <A href="#4.25">4.25</A>) How do I return multiple rows or columns
-     from a function?<BR>
+    from a function?<BR>
+     <A href="#4.26">4.26</A>) Why can't I reliably create/drop
+    temporary tables in PL/PgSQL functions?<BR>
      
 
     <H2 align="center">Extending PostgreSQL</H2>
@@ -742,7 +744,7 @@
     <P>You can also compile with profiling to see what functions are
     taking execution time. The backend profile files will be deposited
     in the <I>pgsql/data/base/dbname</I> directory. The client profile
-    file will be put in the client's current directory.  Linux requires
+    file will be put in the client's current directory. Linux requires
     a compile with <I>-DLINUX_PROFILE</I> for proper profiling.</P>
 
     <H4><A name="3.8">3.8</A>) Why do I get <I>"Sorry, too many
@@ -900,9 +902,9 @@
     databases, and users are defined?</H4>
 
     <P><I>psql</I> has a variety of backslash commands to show such
-    information. Use \? to see them.  There are also system tables
-    beginning with <i>pg_</i> that describe these too.  Also, <i>psql
-    -l</i> will list all databases.</P>
+    information. Use \? to see them. There are also system tables
+    beginning with <I>pg_</I> that describe these too. Also, <I>psql
+    -l</I> will list all databases.</P>
 
     <P>Also try the file <I>pgsql/src/tutorial/syscat.source</I>. It
     illustrates many of the <SMALL>SELECT</SMALL>s needed to get
@@ -1307,16 +1309,25 @@ BYTEA           bytea           variable-length byte array (null-byte safe)
     different databases and merge the information that way.</P>
     <HR>
 
-    <H4><A name="4.25">4.25</A>) How do I return multiple rows or columns
-     from a function?</H4>
+    <H4><A name="4.25">4.25</A>) How do I return multiple rows or
+    columns from a function?</H4>
 
-     <P>You can return result sets from PL/pgSQL functions using
-     <i>refcursors</i>. See <a
-     href="http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html">
-     http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,</a>
-     section 23.7.3.3.</P>
+    <P>You can return result sets from PL/pgSQL functions using
+    <I>refcursors</I>. See <A href=
+    "http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html">
+    http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,</A>
+    section 23.7.3.3.</P>
 
-     
+    <H4><A href="#4.26">4.26</A>) Why can't I reliably create/drop
+    temporary tables in PL/PgSQL functions?</H4>
+    PL/PgSQL caches function contents, and an unfortunate side effect
+    is that if a PL/PgSQL function accesses a temporary table, and that
+    table is later dropped and recreated, and the function called
+    again, the function will fail because the cached function contents
+    still point to the old temporary table. The solution is to use
+    <SMALL>EXECUTE</SMALL> for temporary table access in PL/PgSQL. This
+    will cause the query to be reparsed every time. 
+
     <H2 align="center">Extending PostgreSQL</H2>
 
     <H4><A name="5.1">5.1</A>) I wrote a user-defined function. When I

@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Apr 26 23:03:46 EDT 2002
+   Last updated: Mon Jun 10 15:47:38 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -92,6 +92,8 @@
    4.23) How do I perform an outer join?
    4.24) How do I perform queries using multiple databases?
    4.25) How do I return multiple rows or columns from a function?
+   4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
+   functions?
    
                             Extending PostgreSQL
                                       
@@ -1030,6 +1032,17 @@ SELECT *
    See
    http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,
    section 23.7.3.3.
+   
+    4.26) Why can't I reliably create/drop temporary tables in PL/PgSQL
+    functions?
+    
+   PL/PgSQL caches function contents, and an unfortunate side effect is
+   that if a PL/PgSQL function accesses a temporary table, and that table
+   is later dropped and recreated, and the function called again, the
+   function will fail because the cached function contents still point to
+   the old temporary table. The solution is to use EXECUTE for temporary
+   table access in PL/PgSQL. This will cause the query to be reparsed
+   every time.
    
                             Extending PostgreSQL
                                       
