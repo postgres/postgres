@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.16 1998/02/26 04:37:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.17 1998/05/09 23:45:29 thomas Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -438,7 +438,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 #ifdef CACHEDEBUG
 		elog(DEBUG,
 			 "SearchSysCacheTuple: Search %s(%d) %d %d %d %d failed",
-			 (*cacheinfo[cacheId].name)->data,
+			 cacheinfo[cacheId].name,
 			 cacheId, key1, key2, key3, key4);
 #endif
 		return ((HeapTuple) NULL);
@@ -610,7 +610,7 @@ TypeDefaultRetrieve(Oid typId)
 	{
 #ifdef	CACHEDEBUG
 		elog(DEBUG, "TypeDefaultRetrieve: Lookup in %s(%d) failed",
-			 (*cacheinfo[TYPOID].name)->data, TYPOID);
+			 cacheinfo[TYPOID].name, TYPOID);
 #endif							/* defined(CACHEDEBUG) */
 		return (NULL);
 	}
@@ -628,8 +628,8 @@ TypeDefaultRetrieve(Oid typId)
 	if (typDefault == (struct varlena *) NULL)
 	{
 #ifdef	CACHEDEBUG
-		elog(DEBUG, "TypeDefaultRetrieve: No extractable typdefault",
-			 (*cacheinfo[TYPOID].name)->data, TYPOID);
+		elog(DEBUG, "TypeDefaultRetrieve: No extractable typdefault in %s(%d)",
+			 cacheinfo[TYPOID].name, TYPOID);
 #endif							/* defined(CACHEDEBUG) */
 		return (NULL);
 
