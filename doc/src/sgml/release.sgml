@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.88 2001/05/03 17:17:41 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.89 2001/05/03 20:39:52 momjian Exp $
 -->
 
  <appendix id="release">
@@ -45,6 +45,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.88 2001/05/03 17:17:41 mom
      <programlisting>
 Fix for numeric MODULO operator (Tom)
 pg_dump fixes (Philip)
+pg_dump can dump 7.0 databases (Philip)
 readline 4.2 fixes (Peter E)
 JOIN fixes (Tom)
 AIX, MSWIN, VAX,N32K fixes (Tom)

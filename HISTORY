@@ -15,6 +15,7 @@ Changes
 -------
 Fix for numeric MODULO operator (Tom)
 pg_dump fixes (Philip)
+pg_dump can dump 7.0 databases (Philip)
 readline 4.2 fixes (Peter E)
 JOIN fixes (Tom)
 AIX, MSWIN, VAX,N32K fixes (Tom)
