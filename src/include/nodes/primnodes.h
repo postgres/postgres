@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.42 2000/05/25 22:42:19 tgl Exp $
+ * $Id: primnodes.h,v 1.43 2000/06/12 19:40:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,8 +142,8 @@ typedef struct Expr
 #define    INNER		65000
 #define    OUTER		65001
 
-#define    PRS2_CURRENT_VARNO			1
-#define    PRS2_NEW_VARNO				2
+#define    PRS2_OLD_VARNO			1
+#define    PRS2_NEW_VARNO			2
 
 typedef struct Var
 {

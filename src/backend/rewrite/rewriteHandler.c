@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.74 2000/05/30 00:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.75 2000/06/12 19:40:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,11 +107,11 @@ gatherRewriteMeta(Query *parsetree,
 		OffsetVarNodes((Node *) info->rule_action->targetList, rt_length, 0);
 		OffsetVarNodes(info->rule_qual, rt_length, 0);
 		ChangeVarNodes((Node *) info->rule_action->qual,
-					   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 		ChangeVarNodes((Node *) info->rule_action->targetList,
-					   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 		ChangeVarNodes(info->rule_qual,
-					   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+					   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 
 		/*
 		 * bug here about replace CURRENT  -- sort of replace current is
@@ -125,7 +125,7 @@ gatherRewriteMeta(Query *parsetree,
 			result_reln = info->rule_action->resultRelation;
 			switch (result_reln)
 			{
-				case PRS2_CURRENT_VARNO:
+				case PRS2_OLD_VARNO:
 					new_result_reln = rt_index;
 					break;
 				case PRS2_NEW_VARNO:	/* XXX */
@@ -796,9 +796,9 @@ ApplyRetrieveRule(Query *parsetree,
 	OffsetVarNodes((Node *) rule_action, rt_length, 0);
 
 	ChangeVarNodes((Node *) rule_qual,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 	ChangeVarNodes((Node *) rule_action,
-				   PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+				   PRS2_OLD_VARNO + rt_length, rt_index, 0);
 
 	if (relation_level)
 	{
@@ -1061,7 +1061,7 @@ CopyAndAddQual(Query *parsetree,
 		rtable = nconc(rtable, copyObject(rule_action->rtable));
 		new_tree->rtable = rtable;
 		OffsetVarNodes(new_qual, rt_length, 0);
-		ChangeVarNodes(new_qual, PRS2_CURRENT_VARNO + rt_length, rt_index, 0);
+		ChangeVarNodes(new_qual, PRS2_OLD_VARNO + rt_length, rt_index, 0);
 	}
 	/* XXX -- where current doesn't work for instead nothing.... yet */
 	AddNotQual(new_tree, new_qual);

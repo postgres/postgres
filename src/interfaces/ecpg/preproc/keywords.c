@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.27 2000/06/09 01:44:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.28 2000/06/12 19:40:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"createdb", CREATEDB},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
+	/* for portability with old rules bjm 2000-06-12 */
+	{"current", OLD},
 	{"current_date", CURRENT_DATE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
@@ -178,7 +180,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"of", OF},
 	{"offset", OFFSET},
 	{"oids", OIDS},
-	{"old", CURRENT},
+	{"old", OLD},
 	{"on", ON},
 	{"only", ONLY},
 	{"operator", OPERATOR},

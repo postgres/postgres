@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.146 2000/06/09 01:44:18 momjian Exp $
+ *	$Id: analyze.c,v 1.147 2000/06/12 19:40:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1351,7 +1351,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		nothing_qry->commandType = CMD_NOTHING;
 
 		addRangeTableEntry(pstate, stmt->object->relname,
-						   makeAttr("*CURRENT*", NULL),
+						   makeAttr("*OLD*", NULL),
 						   FALSE, FALSE, FALSE);
 		addRangeTableEntry(pstate, stmt->object->relname,
 						   makeAttr("*NEW*", NULL),
@@ -1371,11 +1371,11 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	{
 
 		/*
-		 * NOTE: 'CURRENT' must always have a varno equal to 1 and 'NEW'
+		 * NOTE: 'OLD' must always have a varno equal to 1 and 'NEW'
 		 * equal to 2.
 		 */
 		addRangeTableEntry(pstate, stmt->object->relname,
-						   makeAttr("*CURRENT*", NULL),
+						   makeAttr("*OLD*", NULL),
 						   FALSE, FALSE, FALSE);
 		addRangeTableEntry(pstate, stmt->object->relname,
 						   makeAttr("*NEW*", NULL),

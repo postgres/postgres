@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.42 2000/06/08 22:37:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.43 2000/06/12 19:40:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,7 +250,7 @@ addRangeTableEntry(ParseState *pstate,
 
 		if (rt_index != 0 && (!inFromCl || sublevels_up == 0))
 		{
-			if (!strcmp(ref->relname, "*CURRENT*") || !strcmp(ref->relname, "*NEW*"))
+			if (!strcmp(ref->relname, "*OLD*") || !strcmp(ref->relname, "*NEW*"))
 				return (RangeTblEntry *) nth(rt_index - 1, pstate->p_rtable);
 			elog(ERROR, "Table name '%s' specified more than once", ref->relname);
 		}

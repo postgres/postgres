@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.172 2000/06/12 03:40:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.173 2000/06/12 19:40:40 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -298,7 +298,7 @@ static void doNegateFloat(Value *v);
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
 		COALESCE, COLLATE, COLUMN, COMMIT,
-		CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT, CURRENT_DATE,
+		CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT_DATE,
 		CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DELETE, DESC,
 		DISTINCT, DOUBLE, DROP,
@@ -309,7 +309,7 @@ static void doNegateFloat(Value *v);
 		ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
 		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
-		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
+		OF, OLD, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
 		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
 		SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SOME, SUBSTRING,
@@ -5509,7 +5509,6 @@ ColLabel:  ColId						{ $$ = $1; }
 		| CONSTRAINT					{ $$ = "constraint"; }
 		| COPY							{ $$ = "copy"; }
 		| CROSS							{ $$ = "cross"; }
-		| CURRENT						{ $$ = "current"; }
 		| CURRENT_DATE					{ $$ = "current_date"; }
 		| CURRENT_TIME					{ $$ = "current_time"; }
 		| CURRENT_TIMESTAMP				{ $$ = "current_timestamp"; }
@@ -5564,6 +5563,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| NUMERIC						{ $$ = "numeric"; }
 		| OFF							{ $$ = "off"; }
 		| OFFSET						{ $$ = "offset"; }
+		| OLD							{ $$ = "old"; }
 		| ON							{ $$ = "on"; }
 		| ONLY							{ $$ = "only"; }
 		| OR							{ $$ = "or"; }
@@ -5601,12 +5601,12 @@ ColLabel:  ColId						{ $$ = $1; }
 		| WHERE							{ $$ = "where"; }
 		;
 
-SpecialRuleRelation:  CURRENT
+SpecialRuleRelation:  OLD
 				{
 					if (QueryIsRule)
-						$$ = "*CURRENT*";
+						$$ = "*OLD*";
 					else
-						elog(ERROR,"CURRENT used in non-rule query");
+						elog(ERROR,"OLD used in non-rule query");
 				}
 		| NEW
 				{

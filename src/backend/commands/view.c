@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.42 2000/02/15 03:36:39 thomas Exp $
+ *	$Id: view.c,v 1.43 2000/06/12 19:40:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ DefineViewRules(char *viewName, Query *viewParse)
  * This update consists of adding two new entries IN THE BEGINNING
  * of the range table (otherwise the rule system will die a slow,
  * horrible and painful death, and we do not want that now, do we?)
- * one for the CURRENT relation and one for the NEW one (both of
+ * one for the OLD relation and one for the NEW one (both of
  * them refer in fact to the "view" relation).
  *
  * Of course we must also increase the 'varnos' of all the Var nodes
@@ -224,10 +224,10 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 
 	/*
 	 * create the 2 new range table entries and form the new range
-	 * table... CURRENT first, then NEW....
+	 * table... OLD first, then NEW....
 	 */
 	rt_entry1 = addRangeTableEntry(NULL, (char *) viewName,
-								   makeAttr("*CURRENT*", NULL),
+								   makeAttr("*OLD*", NULL),
 								   FALSE, FALSE, FALSE);
 	rt_entry2 = addRangeTableEntry(NULL, (char *) viewName,
 								   makeAttr("*NEW*", NULL),
@@ -276,7 +276,7 @@ DefineView(char *viewName, Query *viewParse)
 
 	/*
 	 * The range table of 'viewParse' does not contain entries for the
-	 * "CURRENT" and "NEW" relations. So... add them! NOTE: we make the
+	 * "OLD" and "NEW" relations. So... add them! NOTE: we make the
 	 * update in place! After this call 'viewParse' will never be what it
 	 * used to be...
 	 */

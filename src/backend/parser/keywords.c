@@ -9,9 +9,9 @@
  *
  * IDENTIFICATION
 <<<<<<< keywords.c
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.76 2000/06/12 03:40:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.77 2000/06/12 19:40:41 momjian Exp $
 =======
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.76 2000/06/12 03:40:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.77 2000/06/12 19:40:41 momjian Exp $
 >>>>>>> 1.73
  *
  *-------------------------------------------------------------------------
@@ -77,6 +77,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"createdb", CREATEDB},
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
+	/* for portability with old rules bjm 2000-06-12 */
+	{"current", OLD},
 	{"current_date", CURRENT_DATE},
 	{"current_time", CURRENT_TIME},
 	{"current_timestamp", CURRENT_TIMESTAMP},
@@ -183,7 +185,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"off", OFF},
 	{"offset", OFFSET},
 	{"oids", OIDS},
-	{"old", CURRENT},
+	{"old", OLD},
 	{"on", ON},
 	{"only", ONLY},
 	{"operator", OPERATOR},

@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.52 2000/06/10 05:17:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.53 2000/06/12 19:40:43 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -912,7 +912,7 @@ get_select_query_def(Query *query, deparse_context *context)
 
 	/* ----------
 	 * Now check if any of the used rangetable entries is different
-	 * from *NEW* and *CURRENT*. If so we must provide the FROM clause
+	 * from *NEW* and *OLD*. If so we must provide the FROM clause
 	 * later.
 	 * ----------
 	 */
@@ -927,7 +927,7 @@ get_select_query_def(Query *query, deparse_context *context)
 			continue;
 		if (!strcmp(rte->ref->relname, "*NEW*"))
 			continue;
-		if (!strcmp(rte->ref->relname, "*CURRENT*"))
+		if (!strcmp(rte->ref->relname, "*OLD*"))
 			continue;
 
 		rt_constonly = FALSE;
@@ -973,7 +973,7 @@ get_select_query_def(Query *query, deparse_context *context)
 							 quote_identifier(tle->resdom->resname));
 	}
 
-	/* If we need other tables than *NEW* or *CURRENT* add the FROM clause */
+	/* If we need other tables than *NEW* or *OLD* add the FROM clause */
 	if (!rt_constonly && rt_numused > 0)
 	{
 		sep = " FROM ";
@@ -988,7 +988,7 @@ get_select_query_def(Query *query, deparse_context *context)
 					continue;
 				if (!strcmp(rte->ref->relname, "*NEW*"))
 					continue;
-				if (!strcmp(rte->ref->relname, "*CURRENT*"))
+				if (!strcmp(rte->ref->relname, "*OLD*"))
 					continue;
 
 				appendStringInfo(buf, sep);
@@ -1074,7 +1074,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	List	   *l;
 
 	/* ----------
-	 * We need to know if other tables than *NEW* or *CURRENT*
+	 * We need to know if other tables than *NEW* or *OLD*
 	 * are used in the query. If not, it's an INSERT ... VALUES,
 	 * otherwise an INSERT ... SELECT.
 	 * ----------
@@ -1105,7 +1105,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 			continue;
 		if (!strcmp(rte->ref->relname, "*NEW*"))
 			continue;
-		if (!strcmp(rte->ref->relname, "*CURRENT*"))
+		if (!strcmp(rte->ref->relname, "*OLD*"))
 			continue;
 
 		rt_constonly = FALSE;
@@ -1278,7 +1278,7 @@ get_rule_expr(Node *node, deparse_context *context)
 										 quote_identifier(rte->relname));
 					else if (!strcmp(rte->ref->relname, "*NEW*"))
 						appendStringInfo(buf, "new.");
-					else if (!strcmp(rte->ref->relname, "*CURRENT*"))
+					else if (!strcmp(rte->ref->relname, "*OLD*"))
 						appendStringInfo(buf, "old.");
 					else
 						appendStringInfo(buf, "%s.",

@@ -196,12 +196,12 @@ make_name(void)
                 ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LOCAL,
                 MATCH, MINUTE_P, MONTH_P, NAMES,
                 NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF, NULL_P, NUMERIC,
-                OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
+                OF, OLD, ON, ONLY, OPTION, OR, ORDER, OUTER_P, OVERLAPS,
                 PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
                 READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
                 SCROLL, SECOND_P, SELECT, SESSION_USER, SET, SOME, SUBSTRING,
                 TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
-		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
+				TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
                 UNION, UNIQUE, UPDATE, USER, USING,
                 VALUES, VARCHAR, VARYING, VIEW,
                 WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
@@ -223,20 +223,19 @@ make_name(void)
  * - Todd A. Brandys 1998-01-01?
  */
 %token  ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYZE,
-		BACKWARD, BEFORE, BINARY, BIT
-		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
-                DATABASE, DELIMITERS, DO,
-		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
-                FORCE, FORWARD, FUNCTION, HANDLER,
-                INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-                LANCOMPILER, LIMIT, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P,
-		MAXVALUE, MINVALUE, MODE, MOVE,
-                NEW,  NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
-		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
-                REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
-                SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID
-		TEMP, TRUNCATE, TRUSTED,
-                UNDER, UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
+		BACKWARD, BEFORE, BINARY, BIT, CACHE, CLUSTER, COMMENT,
+		COPY, CREATEDB, CREATEUSER, CYCLE, DATABASE,
+		DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE, EXPLAIN,
+		EXTEND, FORCE, FORWARD, FUNCTION, HANDLER, INCREMENT,
+		INDEX, INHERITS, INSTEAD, ISNULL, LANCOMPILER, LIMIT,
+		LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P, MAXVALUE,
+		MINVALUE, MODE, MOVE, NEW, NOCREATEDB, NOCREATEUSER,
+		NONE, NOTHING, NOTIFY, NOTNULL, OFFSET, OLD, OIDS,
+		OPERATOR, PASSWORD, PROCEDURAL, REINDEX, RENAME, RESET,
+		RETURNS, ROW, RULE, SEQUENCE, SERIAL, SETOF, SHARE,
+		SHOW, START, STATEMENT, STDIN, STDOUT, SYSID TEMP,
+		TRUNCATE, TRUSTED, UNDER, UNLISTEN, UNTIL, VACUUM,
+		VALID, VERBOSE, VERSION
 
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>    IDENT SCONST Op CSTRING CVARIABLE CPP_LINE
@@ -3911,12 +3910,12 @@ ColLabel:  ECPGLabelTypeName			{ $$ = $1; }
 	| ECPGColLabel                  { $$ = $1; }
 	;
 
-SpecialRuleRelation:  CURRENT
+SpecialRuleRelation:  OLD
 				{
 					if (QueryIsRule)
-						$$ = make_str("current");
+						$$ = make_str("old");
 					else
-						mmerror(ET_ERROR, "CURRENT used in non-rule query");
+						mmerror(ET_ERROR, "OLD used in non-rule query");
 				}
 		| NEW
 				{
@@ -5102,40 +5101,39 @@ TokenId:  ABSOLUTE			{ $$ = make_str("absolute"); }
 	;
 
 ECPGColLabel:  ECPGColId		{ $$ = $1; }
-		| ABORT_TRANS           { $$ = make_str("abort"); }
+		| ABORT_TRANS   { $$ = make_str("abort"); }
 		| ALL			{ $$ = make_str("all"); }
-		| ANALYZE               { $$ = make_str("analyze"); }
+		| ANALYZE       { $$ = make_str("analyze"); }
 		| ANY			{ $$ = make_str("any"); }
 		| ASC			{ $$ = make_str("asc"); }
-	        | BETWEEN               { $$ = make_str("between"); }
-		| BINARY                { $$ = make_str("binary"); }
-		| BIT	                { $$ = make_str("bit"); }
+	    | BETWEEN       { $$ = make_str("between"); }
+		| BINARY        { $$ = make_str("binary"); }
+		| BIT	        { $$ = make_str("bit"); }
 		| BOTH			{ $$ = make_str("both"); }
-		| CASE                  { $$ = make_str("case"); }
+		| CASE          { $$ = make_str("case"); }
 		| CAST			{ $$ = make_str("cast"); }
-		| CHARACTER             { $$ = make_str("character"); }
+		| CHARACTER     { $$ = make_str("character"); }
 		| CHECK			{ $$ = make_str("check"); }
 		| CLUSTER		{ $$ = make_str("cluster"); }
-		| COALESCE              { $$ = make_str("coalesce"); }
+		| COALESCE      { $$ = make_str("coalesce"); }
 		| COLLATE		{ $$ = make_str("collate"); }
 		| COLUMN		{ $$ = make_str("column"); }
-		| CONSTRAINT		{ $$ = make_str("constraint"); }
+		| CONSTRAINT	{ $$ = make_str("constraint"); }
 		| COPY			{ $$ = make_str("copy"); }
 		| CROSS			{ $$ = make_str("cross"); }
-		| CURRENT		{ $$ = make_str("current"); }
-		| CURRENT_DATE		{ $$ = make_str("current_date"); }
-		| CURRENT_TIME		{ $$ = make_str("current_time"); }
+		| CURRENT_DATE	{ $$ = make_str("current_date"); }
+		| CURRENT_TIME	{ $$ = make_str("current_time"); }
 		| CURRENT_TIMESTAMP	{ $$ = make_str("current_timestamp"); }
 		| CURRENT_USER		{ $$ = make_str("current_user"); }
 		| DEC			{ $$ = make_str("dec"); }
 		| DECIMAL		{ $$ = make_str("decimal"); }
 		| DEFAULT		{ $$ = make_str("default"); }
-		| DEFERRABLE		{ $$ = make_str("deferrable"); }
+		| DEFERRABLE	{ $$ = make_str("deferrable"); }
 		| DESC			{ $$ = make_str("desc"); }
 		| DISTINCT		{ $$ = make_str("distinct"); }
 		| DO			{ $$ = make_str("do"); }
-		| ELSE                  { $$ = make_str("else"); }
-		| END_TRANS             { $$ = make_str("end"); }
+		| ELSE          { $$ = make_str("else"); }
+		| END_TRANS     { $$ = make_str("end"); }
 		| EXCEPT		{ $$ = make_str("except"); }
 		| EXISTS		{ $$ = make_str("exists"); }
 		| EXPLAIN		{ $$ = make_str("explain"); }
@@ -5146,9 +5144,9 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| FOREIGN		{ $$ = make_str("foreign"); }
 		| FROM			{ $$ = make_str("from"); }
 		| FULL			{ $$ = make_str("full"); }
-	        | IN                    { $$ = make_str("in"); }
-        	| IS                    { $$ = make_str("is"); }
-	        | ISNULL                { $$ = make_str("isnull"); }
+        | IN            { $$ = make_str("in"); }
+       	| IS            { $$ = make_str("is"); }
+        | ISNULL        { $$ = make_str("isnull"); }
 		| GLOBAL		{ $$ = make_str("global"); }
 		| GROUP			{ $$ = make_str("group"); }
 		| HAVING		{ $$ = make_str("having"); }
@@ -5169,33 +5167,34 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| NEW			{ $$ = make_str("new"); }
 		| NONE			{ $$ = make_str("none"); }
 		| NOT			{ $$ = make_str("not"); }
-	        | NOTNULL               { $$ = make_str("notnull"); }
-		| NULLIF                { $$ = make_str("nullif"); }
+	    | NOTNULL   	{ $$ = make_str("notnull"); }
+		| NULLIF		{ $$ = make_str("nullif"); }
 		| NULL_P		{ $$ = make_str("null"); }
-		| NUMERIC               { $$ = make_str("numeric"); }
+		| NUMERIC		{ $$ = make_str("numeric"); }
 		| OFFSET		{ $$ = make_str("offset"); }
+		| OLD			{ $$ = make_str("old"); }
 		| ON			{ $$ = make_str("on"); }
 		| OR			{ $$ = make_str("or"); }
 		| ORDER			{ $$ = make_str("order"); }
 		| OUTER_P		{ $$ = make_str("outer"); }
-	        | OVERLAPS              { $$ = make_str("overlaps"); }
+        | OVERLAPS      { $$ = make_str("overlaps"); }
 		| POSITION		{ $$ = make_str("position"); }
 		| PRECISION		{ $$ = make_str("precision"); }
 		| PRIMARY		{ $$ = make_str("primary"); }
 		| PROCEDURE		{ $$ = make_str("procedure"); }
 		| PUBLIC		{ $$ = make_str("public"); }
-		| REFERENCES		{ $$ = make_str("references"); }
+		| REFERENCES	{ $$ = make_str("references"); }
 		| RESET			{ $$ = make_str("reset"); }
 		| RIGHT			{ $$ = make_str("right"); }
 		| SELECT		{ $$ = make_str("select"); }
-		| SESSION_USER		{ $$ = make_str("session_user"); }
+		| SESSION_USER	{ $$ = make_str("session_user"); }
 		| SETOF			{ $$ = make_str("setof"); }
 		| SHOW			{ $$ = make_str("show"); }
 		| SUBSTRING		{ $$ = make_str("substring"); }
 		| TABLE			{ $$ = make_str("table"); }
-		| THEN                  { $$ = make_str("then"); }
+		| THEN          { $$ = make_str("then"); }
 		| TO			{ $$ = make_str("to"); }
-		| TRANSACTION		{ $$ = make_str("transaction"); }
+		| TRANSACTION	{ $$ = make_str("transaction"); }
 		| TRIM			{ $$ = make_str("trim"); }
 		| TRUE_P		{ $$ = make_str("true"); }
 		| UNIQUE		{ $$ = make_str("unique"); }
@@ -5203,7 +5202,7 @@ ECPGColLabel:  ECPGColId		{ $$ = $1; }
 		| USING			{ $$ = make_str("using"); }
 		| VACUUM		{ $$ = make_str("vacuum"); }
 		| VERBOSE		{ $$ = make_str("verbose"); }
-		| WHEN                  { $$ = make_str("when"); }
+		| WHEN          { $$ = make_str("when"); }
 		| WHERE			{ $$ = make_str("where"); }
 		;
 
