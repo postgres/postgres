@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.132 2003/01/10 21:08:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.133 2003/02/03 15:17:24 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -642,7 +642,7 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				switch (conForm->confupdtype)
 				{
 					case FKCONSTR_ACTION_NOACTION:
-						string = "NO ACTION";
+						string = "";
 						break;
 					case FKCONSTR_ACTION_RESTRICT:
 						string = "RESTRICT";
@@ -662,12 +662,13 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 						string = "";	/* keep compiler quiet */
 						break;
 				}
-				appendStringInfo(&buf, " ON UPDATE %s", string);
+				if (strlen(string) != 0)
+					appendStringInfo(&buf, " ON UPDATE %s", string);
 
 				switch (conForm->confdeltype)
 				{
 					case FKCONSTR_ACTION_NOACTION:
-						string = "NO ACTION";
+						string = "";
 						break;
 					case FKCONSTR_ACTION_RESTRICT:
 						string = "RESTRICT";
@@ -687,7 +688,8 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 						string = "";	/* keep compiler quiet */
 						break;
 				}
-				appendStringInfo(&buf, " ON DELETE %s", string);
+				if (strlen(string) != 0)
+					appendStringInfo(&buf, " ON DELETE %s", string);
 
 				if (conForm->condeferrable)
 					appendStringInfo(&buf, " DEFERRABLE");
