@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.83 2000/09/25 04:11:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.84 2000/09/29 01:23:47 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2529,11 +2529,10 @@ AbortBufferIO(void)
 		else
 		{
 			Assert((buf->flags & BM_DIRTY) != 0);
-			if (buf->flags & BM_IO_ERROR)
+			if (buf->flags & BM_IO_ERROR != 0)
 			{
-				elog(NOTICE, "!!! write error seems permanent !!!");
-				elog(NOTICE, "!!! now kill all backends and reset postmaster !!!");
-				proc_exit(255);
+				elog(NOTICE, "write error may be permanent: cannot write block %u for %s/%s",
+				buf->tag.blockNum, buf->blind.dbname, buf->blind.relname);
 			}
 			buf->flags |= BM_DIRTY;
 		}
