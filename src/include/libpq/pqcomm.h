@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.67 2002/08/27 15:15:23 momjian Exp $
+ * $Id: pqcomm.h,v 1.68 2002/08/27 16:21:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,16 +111,13 @@ typedef uint32 PacketLen;
  */
 
 /*
- * FIXME: remove the fixed size limitations on database & user name, use
- * variable length fields instead. The actual values will still be
- * limited by NAMEDATALEN, but this will at least allow changing
- * NAMEDATALEN to increase database & user name limits without changing
- * the protocol. -neilc, 2002/08/27
+ * FIXME: remove the fixed size limitations on the database name, user
+ * name, and options fields and use a variable length field instead. The
+ * actual limits on database & user name will then be NAMEDATALEN, which
+ * can be changed without changing the FE/BE protocol. -neilc,2002/08/27
  */
  
-/* These should all be of near-unlimited length, perhap 10k */
 #define SM_DATABASE		64
-/* SM_USER should be the same size as the others.  bjm 2002-06-02 */
 #define SM_USER			32
 /* We append database name if db_user_namespace true. */
 #define SM_DATABASE_USER (SM_DATABASE+SM_USER+1) /* +1 for @ */

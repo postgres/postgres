@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.84 2002/08/27 15:15:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.85 2002/08/27 16:21:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -808,6 +808,17 @@ recv_and_check_password_packet(Port *port)
 		pfree(buf.data);
 		return STATUS_EOF;
 	}
+	/*
+	 * We don't actually use the password packet length the frontend
+	 * sent us; however, it's a reasonable sanity check to ensure that
+	 * we actually read as much data as we expected to.
+	 *
+	 * The password packet size is the length of the buffer, plus the
+	 * size field itself (4 bytes), plus a 1-byte terminator.
+	 */
+	if (len != (buf.len + 4 + 1))
+		elog(LOG, "unexpected password packet size: read %d, expected %d",
+			 buf.len + 4 + 1, len);
 
 	/* Do not echo password to logs, for security. */
 	elog(DEBUG5, "received password packet");

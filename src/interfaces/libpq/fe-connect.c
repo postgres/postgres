@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.196 2002/08/27 15:02:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.197 2002/08/27 16:21:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1132,7 +1132,7 @@ connectDBComplete(PGconn *conn)
 		/*
 		 * If connecting timeout is set, calculate remain time.
 		 */
-		if (NULL != rp)
+		if (rp != NULL)
 		{
 			if (gettimeofday(&finish_time, NULL) == -1)
 			{
@@ -1152,8 +1152,8 @@ connectDBComplete(PGconn *conn)
 			remains.tv_sec -= finish_time.tv_sec - start_time.tv_sec;
 		}
 	}
-      conn->status = CONNECTION_BAD;
-      return 0;
+	conn->status = CONNECTION_BAD;
+	return 0;
 }
 
 /* ----------------
@@ -1162,7 +1162,8 @@ connectDBComplete(PGconn *conn)
  * Poll an asynchronous connection.
  *
  * Returns a PostgresPollingStatusType.
- * Before calling this function, use select(2) to determine when data arrive.
+ * Before calling this function, use select(2) to determine when data
+ * has arrived..
  *
  * You must call PQfinish whether or not this fails.
  *
@@ -1356,7 +1357,7 @@ keep_going:						/* We will come back to here until there
 				{
 					if (pqGets(&conn->errorMessage, conn))
 					{
-						/* We'll come back when there are more data */
+						/* We'll come back when there is more data */
 						return PGRES_POLLING_READING;
 					}
 					/* OK, we read the message; mark data consumed */
