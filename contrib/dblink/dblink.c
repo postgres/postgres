@@ -1883,6 +1883,7 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 		SPITupleTable *tuptable = SPI_tuptable;
 
 		tuple = SPI_copytuple(tuptable->vals[0]);
+		SPI_finish();
 
 		return tuple;
 	}
@@ -1891,6 +1892,8 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 		/*
 		 * no qualifying tuples
 		 */
+		SPI_finish();
+
 		return NULL;
 	}
 
