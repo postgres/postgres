@@ -180,7 +180,7 @@ CLIENTS
 	scripts (Peter E)
 * -Allow psql to print nulls as distinct from "" [null]
 * fix array handling for ECPG
-* allow pg_dump to dump type names as standard ANSI types
+* add pg_dump option to dump type names as standard ANSI types
 
 EXOTIC FEATURES
 
