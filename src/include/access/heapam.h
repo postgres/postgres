@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.8 1997/08/26 23:31:53 momjian Exp $
+ * $Id: heapam.h,v 1.9 1997/08/27 09:03:47 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw, Buffer *b);
 extern HeapTuple heap_fetch(Relation relation, TimeQual timeQual,
 			    ItemPointer tid, Buffer *b);
 extern Oid heap_insert(Relation relation, HeapTuple tup);
-extern void heap_delete(Relation relation, ItemPointer tid);
+extern int heap_delete(Relation relation, ItemPointer tid);
 extern int heap_replace(Relation relation, ItemPointer otid,
 			HeapTuple tup);
 extern void heap_markpos(HeapScanDesc sdesc);
