@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jul 10 17:36:02 EDT 2001
+Last updated:		Wed Jul 11 16:39:57 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -74,6 +74,7 @@ TYPES
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * -Add SQL standard function bit_length() (Peter E)
 * -Make oid use unsigned int more reliably (Tom)
+* Add security checking for large objects
 * ARRAYS
 	* Allow nulls in arrays
 	* Allow arrays to be ORDER'ed
