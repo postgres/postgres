@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.159 2003/07/23 23:30:40 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.160 2003/07/24 00:02:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,7 +322,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 			ereport(LOG,
 					(errcode_for_socket_access(),
 					 errmsg("failed to bind server socket: %m"),
-					 (addr->ai_family == AF_UNIX) ?
+					 (IS_AF_UNIX(addr->ai_family)) ?
 					 errhint("Is another postmaster already running on port %d?"
 							 " If not, remove socket node \"%s\" and retry.",
 							 (int) portNumber, sock_path) :
