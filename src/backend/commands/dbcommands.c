@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.124 2003/09/29 00:05:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.124.2.1 2004/11/18 01:19:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -757,6 +757,14 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 	systable_endscan(scan);
 	heap_close(rel, RowExclusiveLock);
+
+	/*
+	 * Force dirty buffers out to disk, so that newly-connecting backends
+	 * will see the updated database in pg_database right away.  (They'll
+	 * see an uncommitted tuple, but they don't care; see
+	 * GetRawDatabaseInfo.)
+	 */
+	BufferSync();
 }
 
 
