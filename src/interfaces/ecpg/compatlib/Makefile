@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.4 2003/05/22 17:20:44 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.5 2003/06/24 14:45:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ SO_MAJOR_VERSION= 1
 SO_MINOR_VERSION= 0.0
 
 override CPPFLAGS := -I$(top_srcdir)/src/interfaces/ecpg/include -I$(top_srcdir)/src/include/utils $(CPPFLAGS)
-SHLIB_LINK = -L../pgtypeslib -lpgtypes
+SHLIB_LINK = -L../pgtypeslib -lpgtypes -L../ecpglib -lecpg
 
 OBJS= informix.o
 
