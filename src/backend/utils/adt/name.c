@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.24 1999/11/07 23:08:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.25 1999/11/25 19:15:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ nameeq(NameData *arg1, NameData *arg2)
 	if (!arg1 || !arg2)
 		return 0;
 	else
-		return (bool) strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) == 0;
+		return (bool) (strncmp(NameStr(*arg1), NameStr(*arg2), NAMEDATALEN) == 0);
 }
 
 bool
