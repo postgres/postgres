@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.9 1997/02/12 05:04:20 scrappy Exp $
+ *    $Id: nbtsort.c,v 1.10 1997/02/14 22:47:19 momjian Exp $
  *
  * NOTES
  *
@@ -596,7 +596,6 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
     BTSpool *btspool = (BTSpool *) spool;
     BTTapeBlock *itape;
     Size itemsz;
-    int i;
 
     itape = btspool->bts_itape[btspool->bts_tape];
     itemsz = BTITEMSZ(btitem);
@@ -636,7 +635,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 	     */
 	    _bt_isortcmpinit(index);
 	    qsort((void *) parray, itape->bttb_ntup, sizeof(BTSortKey),
-		  _bt_isortcmp);
+		  (int (*)(const void *,const void *))_bt_isortcmp);
 	}
 
 	/*
@@ -743,17 +742,6 @@ _bt_slideleft(Relation index, Buffer buf, Page page)
     }
 }
 
-typedef struct BTPageState {
-    Buffer		btps_buf;
-    Page		btps_page;
-    BTItem		btps_lastbti;
-    OffsetNumber	btps_lastoff;
-    OffsetNumber	btps_firstoff;
-    int			btps_level;
-    bool		btps_doupper;
-    struct BTPageState	*btps_next;
-} BTPageState;
-
 /*
  * allocate and initialize a new BTPageState.  the returned structure
  * is suitable for immediate use by _bt_buildadd.
@@ -841,7 +829,6 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
     BTPageState *state = (BTPageState *) pstate;
     Buffer nbuf;
     Page npage;
-    char *pos;
     BTItem last_bti;
     OffsetNumber first_off;
     OffsetNumber last_off;
@@ -1060,8 +1047,6 @@ _bt_merge(Relation index, BTSpool *btspool)
     int nruns;
     Size btisz;
     bool doleaf = false;
-    BTPageState *s;
-    BTPageOpaque *opaque;
 
     /*
      * initialize state needed for the merge into the btree leaf pages.

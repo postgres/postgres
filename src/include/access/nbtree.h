@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.6 1997/02/12 05:04:28 scrappy Exp $
+ * $Id: nbtree.h,v 1.7 1997/02/14 22:47:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,6 +113,17 @@ typedef struct BTStackData {
 } BTStackData;
 
 typedef BTStackData	*BTStack;
+
+typedef struct BTPageState {
+    Buffer		btps_buf;
+    Page		btps_page;
+    BTItem		btps_lastbti;
+    OffsetNumber	btps_lastoff;
+    OffsetNumber	btps_firstoff;
+    int			btps_level;
+    bool		btps_doupper;
+    struct BTPageState	*btps_next;
+} BTPageState;
 
 /*
  *  We need to be able to tell the difference between read and write
@@ -227,7 +238,9 @@ extern void btdelete(Relation rel, ItemPointer tid);
  */
 extern void _bt_regscan(IndexScanDesc scan);
 extern void _bt_dropscan(IndexScanDesc scan);
-extern void _bt_adjscans(Relation rel, ItemPointer tid, int op);
+extern void _bt_adjscans(Relation rel, ItemPointer tid);
+extern void _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
+extern bool _bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
 
 /*
  * prototypes for functions in nbtsearch.c
@@ -268,6 +281,10 @@ extern BTItem _bt_formitem(IndexTuple itup);
  * prototypes for functions in nbtsort.c
  */
 extern void *_bt_spoolinit(Relation index, int ntapes);
+extern void *_bt_pagestate(Relation index, int flags, int level, bool doupper);
+extern BTItem _bt_minitem(Page opage, BlockNumber oblkno, int atend);
+extern BTItem _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags);
+extern void _bt_uppershutdown(Relation index, BTPageState *state);
 extern void _bt_spooldestroy(void *spool);
 extern void _bt_spool(Relation index, BTItem btitem, void *spool);
 extern void _bt_upperbuild(Relation index);
