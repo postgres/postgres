@@ -13,12 +13,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.54 2002/09/04 20:31:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.55 2002/10/31 22:37:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <errno.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <locale.h>
