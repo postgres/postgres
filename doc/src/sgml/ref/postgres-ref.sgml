@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.17 2001/03/17 16:27:31 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.18 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>postgres</refname>
-  <refpurpose>Run a <productname>PostgreSQL</productname> single-user backend</refpurpose>
+  <refpurpose>run a <productname>PostgreSQL</productname> server in single-user mode</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

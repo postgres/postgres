@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.19 2001/08/29 19:11:00 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createdb.sgml,v 1.20 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>createdb</refname>
-  <refpurpose>Create a new <productname>Postgres</productname> database</refpurpose>
+  <refpurpose>create a new <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

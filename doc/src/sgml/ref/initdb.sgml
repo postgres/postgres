@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.15 2001/01/20 22:09:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/initdb.sgml,v 1.16 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>initdb</refname>
-  <refpurpose>Create a new <productname>Postgres</productname> database cluster</refpurpose>
+  <refpurpose>create a new <productname>PostgreSQL</productname> database cluster</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.20 2001/08/03 20:47:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.21 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE TYPE
   </refname>
   <refpurpose>
-   Defines a new base data type
+   define a new data type
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

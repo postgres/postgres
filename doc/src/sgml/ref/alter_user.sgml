@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.15 2001/08/15 18:42:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.16 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    ALTER USER
   </refname>
   <refpurpose>
-   Modifies user account information
+   change a database user account
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

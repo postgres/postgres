@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.11 2001/06/07 04:50:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reset.sgml,v 1.12 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -10,7 +10,7 @@ Postgres documentation
  </refmeta>
  <refnamediv>
   <refname>RESET</refname>
-  <refpurpose>Restores run-time parameters to default values</refpurpose>
+  <refpurpose>restore the value of a run-time parameter to a default value</refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <synopsis>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.1 2001/05/07 00:43:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.2 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    ANALYZE
   </refname>
   <refpurpose>
-   Collect statistics about a <productname>Postgres</productname> database
+   collect statistics about a database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

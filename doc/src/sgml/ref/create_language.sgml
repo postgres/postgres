@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.15 2001/08/13 21:34:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_language.sgml,v 1.16 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE LANGUAGE
   </refname>
   <refpurpose>
-   Defines a new language for functions
+   define a new procedural language
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

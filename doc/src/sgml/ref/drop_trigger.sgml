@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.6 1999/07/22 15:09:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.7 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DROP TRIGGER
   </refname>
   <refpurpose>
-   Removes the definition of a trigger
+   remove a trigger
   </refpurpose> 
  </refnamediv>            
  <refsynopsisdiv>

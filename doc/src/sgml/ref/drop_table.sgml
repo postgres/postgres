@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.10 2001/08/13 15:24:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.11 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DROP TABLE
   </refname>
   <refpurpose>
-   Removes tables from a database
+   remove a table
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

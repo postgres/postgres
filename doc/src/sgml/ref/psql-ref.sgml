@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.57 2001/07/15 13:45:03 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.58 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -17,7 +17,7 @@ Postgres documentation
   <refnamediv>
     <refname><application>psql</application></refname>
     <refpurpose>
-      <productname>Postgres</productname> interactive terminal
+      <productname>PostgreSQL</productname> interactive terminal
     </refpurpose>
   </refnamediv>
 

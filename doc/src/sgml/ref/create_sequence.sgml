@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.18 2001/08/16 20:38:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.19 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE SEQUENCE
   </refname>
   <refpurpose>
-   Creates a new sequence number generator
+   define a new sequence
   </refpurpose>
  </refnamediv> 
  <refsynopsisdiv>

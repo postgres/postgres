@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.8 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.9 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    ROLLBACK
   </refname>
   <refpurpose>
-   Aborts the current transaction
+   abort the current transaction
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

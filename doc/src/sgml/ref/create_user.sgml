@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.18 2001/08/15 18:42:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.19 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE USER
   </refname>
   <refpurpose>
-   Creates a new database user
+   define a new database user account
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.12 2001/02/15 21:11:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.13 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DECLARE
   </refname>
   <refpurpose>
-   Defines a cursor for table access
+   define a cursor
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

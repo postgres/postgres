@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.10 2001/08/13 15:24:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.11 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>dropdb</refname>
-  <refpurpose>Removes a <productname>Postgres</productname> database</refpurpose>
+  <refpurpose>remove a <productname>PostgreSQL</productname> database</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

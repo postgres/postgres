@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.17 2001/05/08 21:06:42 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.18 2001/09/03 12:57:49 petere Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -12,13 +12,36 @@ PostgreSQL Reference Manual
   &legal;
  </bookinfo>
 
+ <preface id="reference-preface">
+  <title>Preface</title>
+
+  <para>
+   The entries in this <citetitle>Reference Manual</citetitle> are
+   meant to provide in reasonable length an authorative, complete, and
+   formal summary about the respective subjects.  More information
+   about the use of <productname>PostgreSQL</productname>, in
+   narrative, tutorial, or example form, may be found in other parts
+   of the <productname>PostgreSQL</productname> documentation set.
+   See the cross-references listed on each reference page.
+  </para>
+
+  <para>
+   The <citetitle>Reference Manual</citetitle> entries are also
+   available as traditional <quote>man</quote> pages.
+  </para>
+ </preface>
+
  <reference id="sql-commands">
   <title>SQL Commands</title>
 
   <partintro>
    <para>
-    This is reference information for the <acronym>SQL</acronym>
-    commands supported by <productname>Postgres</productname>.
+    This part contains reference information for the
+    <acronym>SQL</acronym> commands supported by
+    <productname>PostgreSQL</productname>.  By <quote>SQL</quote> the
+    language in general is meant; information about the standards
+    conformance and compatibility of each command can be found on the
+    respective reference page.
    </para>
   </partintro>
 
@@ -120,15 +143,20 @@ Disable this chapter until we have more functions documented.
 
   <partintro>
    <para>
-    This is reference information for
-    <productname>Postgres</productname> client applications and
-    utilities.
+    This part contains reference information for
+    <productname>PostgreSQL</productname> client applications and
+    utilities.  Not all of these commands are of general utility, some
+    may require special privileges.  The common feature of these
+    applications is that they can be run on any host, independent of
+    where the database server resides.
    </para>
   </partintro>
 
    &createdb;
+   &createlang;
    &createuser;
    &dropdb;
+   &droplang;
    &dropuser;
    &ecpgRef;
    &pgAccess;
@@ -148,14 +176,14 @@ Disable this chapter until we have more functions documented.
 
   <partintro>
    <para>
-    This is reference information for
-    <productname>Postgres</productname>
-    server applications and support utilities.
+    This part contains reference information for
+    <productname>PostgreSQL</productname> server applications and
+    support utilities.  These commands can only be run usefully on the
+    host where the database server resides.  Other utility programs
+    are listed in <xref linkend="reference-client">.
    </para>
   </partintro>
 
-   &createlang;
-   &droplang;
    &initdb;
    &initlocation;
    &ipcclean;

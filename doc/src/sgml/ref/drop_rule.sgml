@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.9 2001/08/13 15:24:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_rule.sgml,v 1.10 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DROP RULE
   </refname>
   <refpurpose>
-   Removes rules from the database
+   remove a rewrite rule
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

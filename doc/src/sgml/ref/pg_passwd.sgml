@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.7 2001/06/18 16:11:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_passwd.sgml,v 1.8 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>pg_passwd</refname>
-  <refpurpose>Manipulate a secondary password file</refpurpose>
+  <refpurpose>change a secondary password file</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

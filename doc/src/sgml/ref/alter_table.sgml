@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.25 2001/05/30 13:01:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.26 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    ALTER TABLE
   </refname>
   <refpurpose>
-   Modifies table properties
+   change the definition of a table
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.14 2001/06/10 03:46:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.15 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -13,7 +13,7 @@ Postgres documentation
    CREATE TRIGGER
   </refname>
   <refpurpose>
-   Creates a new trigger
+   define a new trigger
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

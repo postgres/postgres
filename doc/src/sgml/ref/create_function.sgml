@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.25 2001/08/13 21:34:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.26 2001/09/03 12:57:49 petere Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ref/create_function.sgml,v 1.25 2001/08/13 
 
  <refnamediv>
   <refname>CREATE FUNCTION</refname>
-  <refpurpose>Defines a new function</refpurpose>
+  <refpurpose>define a new function</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.6 2001/03/20 20:54:41 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.7 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE TABLE AS
   </refname>
   <refpurpose>
-   Creates a new table from the results of a SELECT
+   create a new table from the results of a query
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

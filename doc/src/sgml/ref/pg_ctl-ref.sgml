@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.7 2001/04/27 01:31:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.8 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>pg_ctl</refname>
-  <refpurpose>Starts, stops, or restarts postmaster</refpurpose>
+  <refpurpose>start, stop, or restart a <productname>PostgreSQL</productname> server</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

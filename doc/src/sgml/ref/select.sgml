@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.43 2001/06/10 03:46:31 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.44 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -13,7 +13,7 @@ Postgres documentation
    SELECT
   </refname>
   <refpurpose>
-   Retrieves rows from a table or view
+   retrieve rows from a table or view
   </refpurpose></refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>

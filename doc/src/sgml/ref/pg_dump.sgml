@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.35 2001/08/22 20:23:23 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.36 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -20,7 +20,7 @@ Postgres documentation
   <refname>pg_dump</refname>
 
   <refpurpose>
-   Extract a <productname>Postgres</productname> database into a script file or other archive file 
+   extract a <productname>PostgreSQL</productname> database into a script file or other archive file 
   </refpurpose>
  </refnamediv>
 

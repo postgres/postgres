@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.4 2001/08/13 15:24:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_group.sgml,v 1.5 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    ALTER GROUP
   </refname>
   <refpurpose>
-   Add users to a group;  remove users from a group
+   add users to a group or remove users from a group
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

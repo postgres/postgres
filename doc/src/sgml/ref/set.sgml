@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.52 2001/03/05 19:00:01 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.53 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -10,7 +10,7 @@ Postgres documentation
  </refmeta>
  <refnamediv>
   <refname>SET</refname>
-  <refpurpose>Set run-time parameters</refpurpose>
+  <refpurpose>change a run-time parameter</refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <synopsis>

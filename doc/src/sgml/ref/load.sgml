@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.8 2001/05/19 09:01:10 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.9 2001/09/03 12:57:50 petere Exp $
 -->
 
 <refentry id="SQL-LOAD">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.8 2001/05/19 09:01:10 pet
 
  <refnamediv>
   <refname>LOAD</refname>
-  <refpurpose>Loads a shared object file</refpurpose>
+  <refpurpose>load or reload a shared object file</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.14 2001/05/27 09:59:28 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.15 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -13,7 +13,7 @@ Postgres documentation
    INSERT
   </refname>
   <refpurpose>
-   Inserts new rows into a table
+   create new rows in a table
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

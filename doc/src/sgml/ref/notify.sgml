@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.13 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/notify.sgml,v 1.14 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    NOTIFY
   </refname>
   <refpurpose>
-   Signals all frontends and backends listening on a notify condition
+   generate a notification
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

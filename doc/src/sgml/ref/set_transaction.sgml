@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.4 2001/06/30 22:03:25 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.5 2001/09/03 12:57:50 petere Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <docinfo>
   <date>2000-11-24</date>
@@ -11,7 +11,7 @@
 
  <refnamediv>
   <refname>SET TRANSACTION</refname>
-  <refpurpose>Set the characteristics of the current SQL-transaction</refpurpose>
+  <refpurpose>set the characteristics of the current transaction</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.9 2001/08/13 15:24:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.10 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    DROP VIEW
   </refname>
   <refpurpose>
-   Removes views from the database
+   remove a view
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

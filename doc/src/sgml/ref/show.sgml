@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.12 2001/06/07 04:50:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/show.sgml,v 1.13 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -10,7 +10,7 @@ Postgres documentation
  </refmeta>
  <refnamediv>
   <refname>SHOW</refname>
-  <refpurpose>Shows run-time parameters</refpurpose>
+  <refpurpose>show the value of a run-time parameter</refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <synopsis>

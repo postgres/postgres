@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.18 2001/08/26 16:55:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.19 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    VACUUM
   </refname>
   <refpurpose>
-   Clean and optionally analyze a <productname>Postgres</productname> database
+   garbage-collect and optionally analyze a database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

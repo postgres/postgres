@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.18 2001/08/26 16:55:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.19 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE DATABASE
   </refname>
   <refpurpose>
-   Creates a new database
+   create a new database
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

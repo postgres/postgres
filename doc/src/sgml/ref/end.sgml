@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.4 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.5 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    END
   </refname>
   <refpurpose>
-   Commits the current transaction
+   commit the current transaction
   </refpurpose>
  </refnamediv>  
   

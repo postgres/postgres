@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.10 2001/05/17 21:50:18 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pgaccess-ref.sgml,v 1.11 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>pgaccess</refname>
-  <refpurpose><productname>PostgreSQL</productname> graphical client</refpurpose>
+  <refpurpose>a graphical <productname>PostgreSQL</productname> client application</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>

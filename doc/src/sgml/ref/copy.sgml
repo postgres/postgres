@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.22 2001/08/10 23:09:30 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.23 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -13,7 +13,7 @@ Postgres documentation
    COPY
   </refname>
   <refpurpose>
-   Copies data between files and tables
+   copy data between files and tables
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

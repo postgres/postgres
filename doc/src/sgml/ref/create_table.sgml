@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.44 2001/08/10 20:52:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.45 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE TABLE
   </refname>
   <refpurpose>
-   Creates a new table
+   define a new table
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

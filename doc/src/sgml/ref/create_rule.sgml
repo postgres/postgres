@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.24 2001/07/09 23:50:31 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.25 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -13,7 +13,7 @@ Postgres documentation
    CREATE RULE
   </refname>
   <refpurpose>
-   Defines a new rule
+   define a new rewrite rule
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

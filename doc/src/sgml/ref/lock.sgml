@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.27 2001/08/10 14:30:14 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/lock.sgml,v 1.28 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    LOCK
   </refname>
   <refpurpose>
-   Explicitly lock a table / tables inside a transaction
+   explicitly lock a table
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

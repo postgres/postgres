@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.14 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.15 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    FETCH
   </refname>
   <refpurpose>
-   Gets rows using a cursor
+   retrieve rows from a table using a cursor
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

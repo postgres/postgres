@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.22 2001/08/21 16:35:59 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_index.sgml,v 1.23 2001/09/03 12:57:49 petere Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    CREATE INDEX
   </refname>
   <refpurpose>
-   Constructs a secondary index
+   define a new index
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>

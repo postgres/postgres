@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.19 2000/12/25 23:15:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.20 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -16,7 +16,7 @@ Postgres documentation
 
  <refnamediv>
   <refname id="postmaster-ref">postmaster</refname>
-  <refpurpose><productname>PostgreSQL</productname> multi-user database server</refpurpose>
+  <refpurpose><productname>PostgreSQL</productname> multiuser database server</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
@@ -45,7 +45,7 @@ Postgres documentation
 
   <para>
    <application>postmaster</application> is the
-   <productname>PostgreSQL</productname> multi-user database server.
+   <productname>PostgreSQL</productname> multiuser database server.
    In order for a client application to access a database it connects
    (over a network or locally) to a running
    <application>postmaster</application>.  The

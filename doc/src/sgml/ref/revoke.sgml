@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.15 2001/06/09 23:21:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.16 2001/09/03 12:57:50 petere Exp $
 Postgres documentation
 -->
 
@@ -11,7 +11,7 @@ Postgres documentation
 
  <refnamediv>
   <refname>REVOKE</refname>
-  <refpurpose>Revokes access privilege from a user, a group, or all users.</refpurpose>
+  <refpurpose>remove access privileges</refpurpose>
  </refnamediv>
 
  <refsynopsisdiv>
