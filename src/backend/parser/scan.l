@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.4 1996/11/11 04:54:45 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.5 1996/11/30 03:38:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,10 @@ other		.
 {self}		{ return (yytext[0]);	}
 
 {operator}	{
-			yylval.str = pstrdup((char*)yytext);
+			if (strcmp((char*)yytext,"!=") == 0)
+			    yylval.str = pstrdup("<>"); /* compatability */
+			else
+			    yylval.str = pstrdup((char*)yytext);
 			return (Op);
 		}
 {param}	        {       yylval.ival = atoi((char*)&yytext[1]);		

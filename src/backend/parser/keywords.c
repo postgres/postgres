@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.4 1996/11/13 20:49:04 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.5 1996/11/30 03:38:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "backward",		BACKWARD	},
 	{ "before",		BEFORE		},
 	{ "begin",		BEGIN_TRANS	},
+	{ "between",		BETWEEN		},
 	{ "binary",		BINARY		},
 	{ "by",			BY		},
 	{ "cast",		CAST		},

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.19 1996/11/29 15:56:18 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.20 1996/11/30 03:38:05 momjian Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -46,7 +46,7 @@
 
 static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
-
+static Node *saved_In_Expr;
 extern List *parsetree;
 
 /*
@@ -57,7 +57,7 @@ extern List *parsetree;
 /*#define __YYSCLASS*/
 
 static char *xlateSqlType(char *);
-static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
+static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 
 /* old versions of flex define this as a macro */
 #if defined(yywrap)
@@ -127,8 +127,8 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 	oper_argtypes, OptStmtList, OptStmtBlock, opt_column_list, columnList,
 	sort_clause, sortby_list, index_params, 
 	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
-	expr_list, attrs, res_target_list, res_target_list2, def_list,
-	opt_indirection, group_clause, groupby_list, explain_options
+	expr_list, attrs, res_target_list, res_target_list2,
+	def_list, opt_indirection, group_clause, groupby_list, explain_options
 
 %type <boolean>	opt_inh_star, opt_binary, opt_instead, opt_with_copy, index_opt_unique
 
@@ -145,7 +145,8 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 %type <coldef>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, 
-		a_expr, AexprConst, having_clause, groupby
+		a_expr, AexprConst, in_expr_nodes, not_in_expr_nodes,
+		having_clause, groupby
 %type <value>	NumConst
 %type <attr>	event_object, attr
 %type <sortby>	sortby
@@ -169,10 +170,10 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 
 /* Keywords */
 %token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, AND, APPEND,
-	ARCHIVE, ARCH_STORE, AS, ASC, BACKWARD, BEFORE, BEGIN_TRANS, BINARY,
-	BY, CAST, CHANGE, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE, CURRENT,
-	CURSOR, DATABASE, DECLARE, DELETE, DELIMITERS, DESC, DISTINCT, DO,
-	DROP, END_TRANS,
+	ARCHIVE, ARCH_STORE, AS, ASC, BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN,
+	BINARY, BY, CAST, CHANGE, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE,
+	CURRENT, CURSOR, DATABASE, DECLARE, DELETE, DELIMITERS, DESC, DISTINCT,
+	DO, DROP, END_TRANS,
 	EXTEND, FETCH, FOR, FORWARD, FROM, FUNCTION, GRANT, GROUP, 
 	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, IS,
 	ISNULL, LANGUAGE, LIGHT, LISTEN, LOAD, MERGE, MOVE, NEW, 
@@ -199,6 +200,8 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 %right	NOT
 %right 	'='
 %nonassoc LIKE
+%nonassoc BETWEEN
+%nonassoc IN
 %nonassoc Op
 %nonassoc NOTNULL
 %nonassoc ISNULL
@@ -1813,6 +1816,20 @@ a_expr:  attr opt_indirection
 		{   $$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
 	| a_expr IS NOT PNULL
 		{   $$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
+	| a_expr BETWEEN AexprConst AND AexprConst
+		{   $$ = makeA_Expr(AND, NULL,
+			makeA_Expr(OP, ">=", $1, $3),
+			makeA_Expr(OP, "<=", $1,$5));
+		}
+	| a_expr NOT BETWEEN AexprConst AND AexprConst
+		{   $$ = makeA_Expr(OR, NULL,
+			makeA_Expr(OP, "<", $1, $4),
+			makeA_Expr(OP, ">", $1, $6));
+		}
+	| a_expr IN { saved_In_Expr = $1; } '(' in_expr_nodes ')'
+		{   $$ = $5; }
+	| a_expr NOT IN { saved_In_Expr = $1; } '(' not_in_expr_nodes ')'
+		{   $$ = $6; }
 	| a_expr AND a_expr
 		{   $$ = makeA_Expr(AND, NULL, $1, $3); }
 	| a_expr OR a_expr
@@ -1838,11 +1855,27 @@ opt_indirection:  '[' a_expr ']' opt_indirection
 	| /* EMPTY */			
 		{   $$ = NIL; }
 	;
-
+   
 expr_list: a_expr
 		{ $$ = lcons($1, NIL); }
 	|  expr_list ',' a_expr
 		{ $$ = lappend($1, $3); }
+	;
+
+in_expr_nodes: AexprConst
+		{   $$ = makeA_Expr(OP, "=", saved_In_Expr, $1); }
+	|  in_expr_nodes ',' AexprConst
+		{   $$ = makeA_Expr(OR, NULL, $1,
+			makeA_Expr(OP, "=", saved_In_Expr, $3));
+		}
+	;
+
+not_in_expr_nodes: AexprConst
+		{   $$ = makeA_Expr(OP, "<>", saved_In_Expr, $1); }
+	|  not_in_expr_nodes ',' AexprConst
+		{   $$ = makeA_Expr(AND, NULL, $1,
+			makeA_Expr(OP, "<>", saved_In_Expr, $3));
+		}
 	;
 
 attr:  relation_name '.' attrs
@@ -2085,10 +2118,10 @@ Pnull:	PNULL;
 
 %%
 
-static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr)
+static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 {
     A_Expr *a = makeNode(A_Expr);
-    a->oper = op;
+    a->oper = oper;
     a->opname = opname;
     a->lexpr = lexpr;
     a->rexpr = rexpr;
@@ -2114,7 +2147,8 @@ void parser_init(Oid *typev, int nargs)
 {
     QueryIsRule = false;
     saved_relname[0]= '\0';
-
+    saved_In_Expr = NULL;
+    
     param_type_init(typev, nargs);
 }
 
