@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Feb 14 22:54:13 EST 2005
+Last updated:		Sun Feb 20 23:58:46 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -674,7 +674,8 @@ Cache
   backends that also have the file open, and the feature is not supported
   on all operating systems.
 
-* Consider use of open/fcntl(O_DIRECT) to minimize OS caching
+* Consider use of open/fcntl(O_DIRECT) to minimize OS caching,
+  especially for WAL writes
 * Cache last known per-tuple offsets to speed long tuple access
 
   While column offsets are already cached, the cache can not be used if
