@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.34 2004/09/30 02:40:23 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.35 2004/10/29 02:11:18 neilc Exp $
 -->
 
 <chapter id="managing-databases">
@@ -347,21 +347,22 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    </para>
 
    <para>
-    By using tablespaces, a database administrator can control the disk
-    layout of a <productname>PostgreSQL</> installation. This is useful in
-    at least two ways. Firstly, if the partition or volume on which the cluster
-    was initialized runs out of space and cannot be extended logically
-    or otherwise, a tablespace can be created on a different partition
-    and used until the system can be reconfigured.
+    By using tablespaces, an administrator can control the disk layout
+    of a <productname>PostgreSQL</> installation. This is useful in at
+    least two ways. First, if the partition or volume on which the
+    cluster was initialized runs out of space and cannot be extended,
+    a tablespace can be created on a different partition and used
+    until the system can be reconfigured.
    </para>
 
    <para>
-    Secondly, tablespaces allow a database administrator to arrange data
-    locations based on the usage patterns of database objects. For
-    example, an index which is very heavily used can be placed on very fast,
-    highly available disk, such as an expensive solid state device. At the same
-    time a table storing archived data which is rarely used or not performance
-    critical could be stored on a less expensive, slower disk system.
+    Second, tablespaces allow an administrator to use knowledge of the
+    usage pattern of database objects to optimize performance. For
+    example, an index which is very heavily used can be placed on a
+    very fast, highly available disk, such as an expensive solid state
+    device. At the same time a table storing archived data which is
+    rarely used or not performance critical could be stored on a less
+    expensive, slower disk system.
    </para>
 
    <para>
@@ -377,14 +378,14 @@ CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
    </para>
 
    <note>
-   <para>
-    There is usually not much point in making more than one
-    tablespace per logical filesystem, since you can't control the location
-    of individual files within a logical filesystem.  However,
-    <productname>PostgreSQL</> does not enforce any such limitation, and
-    indeed it's not directly aware of the filesystem boundaries on your
-    system.  It just stores files in the directories you tell it to use.
-   </para>
+    <para>
+     There is usually not much point in making more than one
+     tablespace per logical filesystem, since you cannot control the location
+     of individual files within a logical filesystem.  However,
+     <productname>PostgreSQL</> does not enforce any such limitation, and
+     indeed it is not directly aware of the filesystem boundaries on your
+     system.  It just stores files in the directories you tell it to use.
+    </para>
    </note>
 
    <para>
@@ -416,17 +417,17 @@ CREATE TABLE foo(i int) TABLESPACE space1;
    </para>
 
    <para>
-    A schema does not in itself occupy any storage (other than a system
-    catalog entry), so assigning a tablespace to a schema does not in itself
-    do anything.  What this actually does is to set a default tablespace
-    for tables later created within the schema.  If
+    A schema does not in itself occupy any storage (other than a
+    system catalog entry), so assigning a schema to a tablespace does
+    not in itself do anything.  What this actually does is to set a
+    default tablespace for tables later created within the schema.  If
     no tablespace is mentioned when creating a schema, it inherits its
     default tablespace from the current database.
    </para>
 
    <para>
-    The default choice of tablespace for an index is the same tablespace
-    already assigned to the table the index is for.
+    The default tablespace for an index is the tablespace associated
+    with the table the index is on.
    </para>
 
    <para>
