@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.30 2001/10/22 18:14:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.31 2001/11/10 20:13:37 tgl Exp $
 Postgres documentation
 -->
 
@@ -178,7 +178,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    adds a new constraint to the table using the same syntax as <xref
    linkend="SQL-CREATETABLE">. 
    The DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> clause 
-   drops all CHECK constraints on the table (and its children) that match <replaceable class="PARAMETER">constraint</replaceable>.
+   drops all constraints on the table (and its children) that match <replaceable class="PARAMETER">constraint</replaceable>.
    The OWNER clause changes the owner of the table to the user <replaceable class="PARAMETER">
    new user</replaceable>.
   </para>
@@ -207,15 +207,15 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     new default value, using <xref linkend="sql-update">.)
    </para>
 
-	<para>
-    Currently only CHECK constraints can be dropped from a table.  The RESTRICT
-	 keyword is required, although dependencies are not checked.  The CASCADE
-	 option is unsupported.  To remove a PRIMARY or UNIQUE constraint, drop the 
-	 relevant index using the <xref linkend="SQL-DROPINDEX"> command.
+   <para>
+    In DROP CONSTRAINT, the RESTRICT keyword is required, although
+    dependencies are not yet checked.  The CASCADE option is unsupported.  
+    Currently DROP CONSTRAINT drops only CHECK constraints.
+    To remove a PRIMARY or UNIQUE constraint, drop the 
+    relevant index using the <xref linkend="SQL-DROPINDEX"> command.
     To remove FOREIGN KEY constraints you need to recreate
     and reload the table, using other parameters to the
-    <xref linkend="SQL-CREATETABLE">
-    command.
+    <xref linkend="SQL-CREATETABLE"> command.
    </para>
    <para>
     For example, to drop all constraints on a table <literal>distributors</literal>:
@@ -277,7 +277,7 @@ ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5);
   <para> 
    To remove a check constraint from a table and all its children:
    <programlisting>
-ALTER TABLE distributors DROP CONSTRAINT zipchk;
+ALTER TABLE distributors DROP CONSTRAINT zipchk RESTRICT;
    </programlisting>
   </para>
 
