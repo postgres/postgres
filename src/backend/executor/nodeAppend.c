@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.31 2000/06/09 01:44:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.32 2000/06/10 05:16:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,6 +189,9 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	Plan	   *initNode;
 	List	   *junkList;
 	RelationInfo *es_rri = estate->es_result_relation_info;
+	bool		inherited_result_rel = false;
+
+	CXT1_printf("ExecInitAppend: context is %d\n", CurrentMemoryContext);
 
 	/* ----------------
 	 *	assign execution state to node and get information
@@ -201,8 +204,8 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	nplans = length(appendplans);
 	rtable = node->inheritrtable;
 
-	CXT1_printf("ExecInitAppend: context is %d\n", CurrentMemoryContext);
 	initialized = (bool *) palloc(nplans * sizeof(bool));
+	MemSet(initialized, 0, nplans * sizeof(bool));
 
 	/* ----------------
 	 *	create new AppendState for our append node
@@ -231,7 +234,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 #define APPEND_NSLOTS 1
 	/* ----------------
 	 *	append nodes still have Result slots, which hold pointers
-	 *	to tuples, so we have to initialize them..
+	 *	to tuples, so we have to initialize them.
 	 * ----------------
 	 */
 	ExecInitResultTupleSlot(estate, &appendstate->cstate);
@@ -247,34 +250,60 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 		(node->inheritrelid == es_rri->ri_RangeTableIndex))
 	{
 		List	   *resultList = NIL;
+		Oid			initial_reloid = RelationGetRelid(es_rri->ri_RelationDesc);
 		List	   *rtentryP;
+
+		inherited_result_rel = true;
 
 		foreach(rtentryP, rtable)
 		{
 			RangeTblEntry *rtentry = lfirst(rtentryP);
-			Oid			reloid;
+			Oid			reloid = rtentry->relid;
 			RelationInfo *rri;
 
-			reloid = rtentry->relid;
-			rri = makeNode(RelationInfo);
-			rri->ri_RangeTableIndex = es_rri->ri_RangeTableIndex;
-			rri->ri_RelationDesc = heap_open(reloid, RowExclusiveLock);
-			rri->ri_NumIndices = 0;
-			rri->ri_IndexRelationDescs = NULL;	/* index descs */
-			rri->ri_IndexRelationInfo = NULL;	/* index key info */
+			/*
+			 * We must recycle the RelationInfo already opened by InitPlan()
+			 * for the parent rel, else we will leak the associated relcache
+			 * refcount. 
+			 */
+			if (reloid == initial_reloid)
+			{
+				Assert(es_rri != NULL);	/* check we didn't use it already */
+				rri = es_rri;
+				es_rri = NULL;
+			}
+			else
+			{
+				rri = makeNode(RelationInfo);
+				rri->ri_RangeTableIndex = node->inheritrelid;
+				rri->ri_RelationDesc = heap_open(reloid, RowExclusiveLock);
+				rri->ri_NumIndices = 0;
+				rri->ri_IndexRelationDescs = NULL;	/* index descs */
+				rri->ri_IndexRelationInfo = NULL;	/* index key info */
 
-			if (rri->ri_RelationDesc->rd_rel->relhasindex)
-				ExecOpenIndices(reloid, rri);
+				/*
+				 * XXX if the operation is a DELETE then we need not open
+				 * indices, but how to tell that here?
+				 */
+				if (rri->ri_RelationDesc->rd_rel->relhasindex)
+					ExecOpenIndices(reloid, rri);
+			}
 
-			resultList = lcons(rri, resultList);
+			/*
+			 * NB: the as_result_relation_info_list must be in the same
+			 * order as the rtentry list otherwise update or delete on
+			 * inheritance hierarchies won't work.
+			 */
+			resultList = lappend(resultList, rri);
 		}
-        /*
-          The as_result_relation_info_list must be in the same
-          order as the rtentry list otherwise update or delete on
-          inheritance hierarchies won't work.
-        */
-		appendstate->as_result_relation_info_list = lreverse(resultList);
+
+		appendstate->as_result_relation_info_list = resultList;
+		/* Check that we recycled InitPlan()'s RelationInfo */
+		Assert(es_rri == NULL);
+		/* Just for paranoia's sake, clear link until we set it properly */
+		estate->es_result_relation_info = NULL;
 	}
+
 	/* ----------------
 	 *	call ExecInitNode on each of the plans in our list
 	 *	and save the results into the array "initialized"
@@ -304,8 +333,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 		 *	the one that we're looking at the subclasses of
 		 * ---------------
 		 */
-		if ((es_rri != (RelationInfo *) NULL) &&
-			(node->inheritrelid == es_rri->ri_RangeTableIndex))
+		if (inherited_result_rel)
 		{
 			JunkFilter *j = ExecInitJunkFilter(initNode->targetlist,
 											   ExecGetTupType(initNode));
@@ -361,7 +389,6 @@ ExecProcAppend(Append *node)
 {
 	EState	   *estate;
 	AppendState *appendstate;
-
 	int			whichplan;
 	List	   *appendplans;
 	Plan	   *subnode;
@@ -376,7 +403,6 @@ ExecProcAppend(Append *node)
 	appendstate = node->appendstate;
 	estate = node->plan.state;
 	direction = estate->es_direction;
-
 	appendplans = node->appendplans;
 	whichplan = appendstate->as_whichplan;
 	result_slot = appendstate->cstate.cs_ResultTupleSlot;
@@ -448,19 +474,20 @@ ExecProcAppend(Append *node)
 void
 ExecEndAppend(Append *node)
 {
+	EState	   *estate;
 	AppendState *appendstate;
 	int			nplans;
 	List	   *appendplans;
 	bool	   *initialized;
 	int			i;
 	List	   *resultRelationInfoList;
-	RelationInfo *resultRelationInfo;
 
 	/* ----------------
 	 *	get information from the node
 	 * ----------------
 	 */
 	appendstate = node->appendstate;
+	estate = node->plan.state;
 	appendplans = node->appendplans;
 	nplans = appendstate->as_nplans;
 	initialized = appendstate->as_initialized;
@@ -471,7 +498,7 @@ ExecEndAppend(Append *node)
 	 */
 	for (i = 0; i < nplans; i++)
 	{
-		if (initialized[i] == TRUE)
+		if (initialized[i])
 			ExecEndNode((Plan *) nth(i, appendplans), (Plan *) node);
 	}
 
@@ -482,6 +509,7 @@ ExecEndAppend(Append *node)
 	resultRelationInfoList = appendstate->as_result_relation_info_list;
 	while (resultRelationInfoList != NIL)
 	{
+		RelationInfo *resultRelationInfo;
 		Relation	resultRelationDesc;
 
 		resultRelationInfo = (RelationInfo *) lfirst(resultRelationInfoList);
@@ -490,8 +518,13 @@ ExecEndAppend(Append *node)
 		pfree(resultRelationInfo);
 		resultRelationInfoList = lnext(resultRelationInfoList);
 	}
-	if (appendstate->as_result_relation_info_list)
-		pfree(appendstate->as_result_relation_info_list);
+	appendstate->as_result_relation_info_list = NIL;
+	/*
+	 * This next step is critical to prevent EndPlan() from trying to close
+	 * an already-closed-and-deleted RelationInfo --- es_result_relation_info
+	 * is pointing at one of the nodes we just zapped above.
+	 */
+	estate->es_result_relation_info = NULL;
 
 	/*
 	 * XXX should free appendstate->as_rtentries  and

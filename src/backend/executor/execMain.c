@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.115 2000/05/30 00:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.116 2000/06/10 05:16:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,7 @@ static TupleDesc InitPlan(CmdType operation,
 		 Query *parseTree,
 		 Plan *plan,
 		 EState *estate);
-static void EndPlan(Plan *plan,
-		EState *estate);
+static void EndPlan(Plan *plan, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, Plan *plan,
 			CmdType operation,
 			int offsetTuples,
@@ -916,14 +915,7 @@ static void
 EndPlan(Plan *plan, EState *estate)
 {
 	RelationInfo *resultRelationInfo;
-	Relation	intoRelationDesc;
 	List	   *l;
-
-	/*
-	 * get information from state
-	 */
-	resultRelationInfo = estate->es_result_relation_info;
-	intoRelationDesc = estate->es_into_relation_descriptor;
 
 	/*
 	 * shut down any PlanQual processing we were doing
@@ -932,42 +924,34 @@ EndPlan(Plan *plan, EState *estate)
 		EndEvalPlanQual(estate);
 
 	/*
-	 * shut down the query
+	 * shut down the node-type-specific query processing
 	 */
 	ExecEndNode(plan, plan);
 
 	/*
 	 * destroy the executor "tuple" table.
 	 */
-	{
-		TupleTable	tupleTable = (TupleTable) estate->es_tupleTable;
-
-		ExecDropTupleTable(tupleTable, true);
-		estate->es_tupleTable = NULL;
-	}
+	ExecDropTupleTable(estate->es_tupleTable, true);
+	estate->es_tupleTable = NULL;
 
 	/*
-	 * close the result relations if necessary, but hold locks on them
-	 * until xact commit
+	 * close the result relation if necessary, but hold lock on it
+	 * until xact commit.  NB: must not do this till after ExecEndNode(),
+	 * see nodeAppend.c ...
 	 */
+	resultRelationInfo = estate->es_result_relation_info;
 	if (resultRelationInfo != NULL)
 	{
-		Relation	resultRelationDesc;
-
-		resultRelationDesc = resultRelationInfo->ri_RelationDesc;
-		heap_close(resultRelationDesc, NoLock);
-
-		/*
-		 * close indices on the result relation
-		 */
+		heap_close(resultRelationInfo->ri_RelationDesc, NoLock);
+		/* close indices on the result relation, too */
 		ExecCloseIndices(resultRelationInfo);
 	}
 
 	/*
 	 * close the "into" relation if necessary, again keeping lock
 	 */
-	if (intoRelationDesc != NULL)
-		heap_close(intoRelationDesc, NoLock);
+	if (estate->es_into_relation_descriptor != NULL)
+		heap_close(estate->es_into_relation_descriptor, NoLock);
 
 	/*
 	 * close any relations selected FOR UPDATE, again keeping locks
