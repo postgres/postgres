@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.3 1996/08/19 13:51:55 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.4 1996/08/27 06:10:50 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -83,9 +83,11 @@ endif
 #
 CFLAGS+=  -DPOSTGRESDIR='"$(POSTGRESDIR)"' \
 	-DPGDATADIR='"$(DATADIR)"' \
-	-I$(CURDIR)/. -I$(CURDIR)/$(objdir) \
+	-I$(CURDIR)/. \
+	-I$(CURDIR)/$(objdir) \
 	-I$(CURDIR)/include \
-	-I$(CURDIR)/port/$(PORTNAME)
+	-I$(CURDIR)/port/$(PORTNAME) \
+	-I$(CURDIR)/../include
 
 # turn this on if you prefer European style dates instead of American
 # style dates
