@@ -48,7 +48,11 @@ dbase -
 
 dblink -
 	Allows remote query execution
-	by  Joe Conway <joe.conway@mail.com>
+	by Joe Conway <joe.conway@mail.com>
+
+dbmirror -
+	Replication server
+	by Steven Singer <ssinger@navtechinc.com>
 
 dbsize -
 	Reports database and table disk space
@@ -73,8 +77,7 @@ fuzzystrmatch -
 
 intagg -
 	Integer aggregator
-	by  mlw <markw@mohawksoft.com>
-
+	by mlw <markw@mohawksoft.com>
 
 intarray -
 	Index support for arrays of int4, using GiST
@@ -105,20 +108,20 @@ miscutil -
 	by Massimo Dal Zotto <dz@cs.unitn.it>
 
 mysql -
-	utility to convert MySQL schema dumps to SQL92 and PostgreSQL
+	Utility to convert MySQL schema dumps to SQL92 and PostgreSQL
 	by Thomas Lockhart <lockhart@alumni.caltech.edu>
 	   Max Rudensky <fonin@ziet.zhitomir.ua>
 	   Valentine Danilchuk <valdan@ziet.zhitomir.ua>
 
 noupdate -
-	trigger to prevent updates on single columns
+	Trigger to prevent updates on single columns
 
 oid2name - 
-	maps numeric files to table names
+	Maps numeric files to table names
 	by B Palmer <bpalmer@crimelabs.net>
 
 oracle -
-	converts Oracle database schema to PostgreSQL
+	Converts Oracle database schema to PostgreSQL
 	by Gilles Darold <gilles@darold.net>
 
 pg_controldata -
@@ -158,11 +161,11 @@ pgstattuple -
 	by Tatsuo Ishii <t-ishii@sra.co.jp>
 
 retep -
-	tools to build retep tools packages
+	Tools to build retep tools packages
 	by Peter T Mount <peter@retep.org.uk>
 
 rserv -
-	replication server
+	Replication server
 	by Vadim B. Mikheev <vadim4o@email.com>
 
 rtree_gist -
