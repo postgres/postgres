@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.61 2003/03/27 16:35:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.62 2003/03/27 17:10:55 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
@@ -3647,6 +3647,8 @@ NUM_numpart_from_char(NUMProc *Np, int id, int plen)
 static void
 NUM_numpart_to_char(NUMProc *Np, int id)
 {
+	int end;
+	
 	if (IS_ROMAN(Np->Num))
 		return;
 
@@ -3804,7 +3806,7 @@ NUM_numpart_to_char(NUMProc *Np, int id)
 			++Np->number_p;
 		}
 
-		int end = Np->num_count + (Np->num_pre ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
+		end = Np->num_count + (Np->num_pre ? 1 : 0) + (IS_DECIMAL(Np->Num) ? 1 : 0);
 		
 		if (Np->last_relevant && Np->last_relevant == Np->number_p)
 			end = Np->num_curr;
