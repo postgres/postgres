@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.21 2000/04/16 04:19:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.22 2000/05/23 01:59:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1064,7 +1064,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 
 	if (ret_numvals % 2 != 0)
 	{
-		ckfree(ret_values);
+		ckfree((char *) ret_values);
 		elog(ERROR, "pltcl: invalid return list from trigger - must have even # of elements");
 	}
 
@@ -1086,7 +1086,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	if (sigsetjmp(Warn_restart, 1) != 0)
 	{
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		ckfree(ret_values);
+		ckfree((char *) ret_values);
 		pltcl_restart_in_progress = 1;
 		if (--pltcl_call_level == 0)
 			pltcl_restart_in_progress = 0;
@@ -1156,7 +1156,7 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 	if (rettup == NULL)
 		elog(ERROR, "pltcl: SPI_modifytuple() failed - RC = %d\n", SPI_result);
 
-	ckfree(ret_values);
+	ckfree((char *) ret_values);
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
 	return rettup;
@@ -1581,7 +1581,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		free(qdesc->argvalues);
 		free(qdesc->arglen);
 		free(qdesc);
-		ckfree(args);
+		ckfree((char *) args);
 		return TCL_ERROR;
 	}
 
@@ -1730,7 +1730,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	if (callargs != NULL)
 	{
-		ckfree(callargs);
+		ckfree((char *) callargs);
 		callargs = NULL;
 	}
 
@@ -1843,7 +1843,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 						  TCL_VOLATILE);
 			if (callargs != NULL)
 			{
-				ckfree(callargs);
+				ckfree((char *) callargs);
 				callargs = NULL;
 			}
 			return TCL_ERROR;
@@ -1867,7 +1867,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 					qdesc->argvalues[j] = (Datum) NULL;
 				}
 			}
-			ckfree(callargs);
+			ckfree((char *) callargs);
 			callargs = NULL;
 			pltcl_restart_in_progress = 1;
 			Tcl_SetResult(interp, "Transaction abort", TCL_VOLATILE);
@@ -1890,7 +1890,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		 * Free the splitted argument value list
 		 ************************************************************/
 		memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
-		ckfree(callargs);
+		ckfree((char *) callargs);
 		callargs = NULL;
 	}
 	else
