@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.173 2004/09/23 13:16:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.174 2004/09/26 15:13:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,7 @@ typedef unsigned long int uint64;
 /* Decide if we need to decorate 64-bit constants */
 #ifdef HAVE_LL_CONSTANTS
 #define INT64CONST(x)  ((int64) x##LL)
-#define UINT64CONST(x) ((uint64) x##LL)
+#define UINT64CONST(x) ((uint64) x##ULL)
 #else
 #define INT64CONST(x)  ((int64) x)
 #define UINT64CONST(x) ((uint64) x)
