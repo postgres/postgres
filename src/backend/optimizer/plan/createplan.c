@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.94 2000/07/12 02:37:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.95 2000/08/13 02:50:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -865,6 +865,12 @@ static Node *
 fix_indxqual_operand(Node *node, int baserelid, Form_pg_index index,
 					 Oid *opclass)
 {
+	/*
+	 * Remove any binary-compatible relabeling of the indexkey
+	 */
+	if (IsA(node, RelabelType))
+		node = ((RelabelType *) node)->arg;
+
 	/*
 	 * We represent index keys by Var nodes having the varno of the base
 	 * table but varattno equal to the index's attribute number (index

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.57 2000/07/27 04:51:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.58 2000/08/13 02:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,8 @@ query_planner(Query *root,
 			  List *qual,
 			  double tuple_fraction)
 {
-	List	   *constant_qual = NIL;
+	List	   *noncachable_qual;
+	List	   *constant_qual;
 	List	   *var_only_tlist;
 	Plan	   *subplan;
 
@@ -106,9 +107,14 @@ query_planner(Query *root,
 	 * have been optimized away by eval_const_expressions().  What we're
 	 * mostly interested in here is quals that depend only on outer-level
 	 * vars, although if the qual reduces to "WHERE FALSE" this path will
-	 * also be taken.
+	 * also be taken.  We also need a special case for quals that contain
+	 * noncachable functions but no vars, such as "WHERE random() < 0.5".
+	 * These cannot be treated as normal restriction or join quals, but
+	 * they're not constants either.  Instead, attach them to the qpqual
+	 * of the top-level plan, so that they get evaluated once per potential
+	 * output tuple.
 	 */
-	qual = pull_constant_clauses(qual, &constant_qual);
+	qual = pull_constant_clauses(qual, &noncachable_qual, &constant_qual);
 
 	/*
 	 * Create a target list that consists solely of (resdom var) target
@@ -127,6 +133,12 @@ query_planner(Query *root,
 	 * Choose the best access path and build a plan for it.
 	 */
 	subplan = subplanner(root, var_only_tlist, qual, tuple_fraction);
+
+	/*
+	 * Handle the noncachable quals.
+	 */
+	if (noncachable_qual)
+		subplan->qual = nconc(subplan->qual, noncachable_qual);
 
 	/*
 	 * Build a result node to control the plan if we have constant quals.
@@ -163,7 +175,7 @@ query_planner(Query *root,
  *	 for processing a single level of attributes.
  *
  * flat_tlist is the flattened target list
- * qual is the qualification to be satisfied
+ * qual is the qualification to be satisfied (restrict and join quals only)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
  *
  * See query_planner() comments about the interpretation of tuple_fraction.

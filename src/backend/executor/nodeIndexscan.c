@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.52 2000/07/12 02:37:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.53 2000/08/13 02:50:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -281,6 +281,16 @@ IndexNext(IndexScan *node)
 TupleTableSlot *
 ExecIndexScan(IndexScan *node)
 {
+	IndexScanState *indexstate = node->indxstate;
+
+	/* ----------------
+	 *	If we have runtime keys and they've not already been set up,
+	 *	do it now.
+	 * ----------------
+	 */
+	if (indexstate->iss_RuntimeKeyInfo && !indexstate->iss_RuntimeKeysReady)
+		ExecReScan((Plan *) node, NULL, NULL);
+
 	/* ----------------
 	 *	use IndexNext as access method
 	 * ----------------
@@ -335,9 +345,10 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 	scanKeys = indexstate->iss_ScanKeys;
 	runtimeKeyInfo = indexstate->iss_RuntimeKeyInfo;
 	numScanKeys = indexstate->iss_NumScanKeys;
-	indexstate->iss_IndexPtr = -1;
 	if (ScanDirectionIsBackward(node->indxorderdir))
 		indexstate->iss_IndexPtr = numIndices;
+	else
+		indexstate->iss_IndexPtr = -1;
 
 	if (econtext)
 	{
@@ -420,6 +431,9 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 		skey = scanKeys[i];
 		index_rescan(scan, direction, skey);
 	}
+
+	if (runtimeKeyInfo)
+		indexstate->iss_RuntimeKeysReady = true;
 }
 
 /* ----------------------------------------------------------------
@@ -603,7 +617,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	Relation	currentRelation;
 	HeapScanDesc currentScanDesc;
 	ScanDirection direction;
-	List	   *execParam = NIL;
 
 	/* ----------------
 	 *	assign execution state to node
@@ -656,6 +669,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	indexstate->iss_NumScanKeys = NULL;
 	indexstate->iss_RuntimeKeyInfo = NULL;
 	indexstate->iss_RuntimeContext = NULL;
+	indexstate->iss_RuntimeKeysReady = false;
 	indexstate->iss_RelationDescs = NULL;
 	indexstate->iss_ScanDescs = NULL;
 
@@ -787,6 +801,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			 */
 			leftop = (Node *) get_leftop(clause);
 
+			if (leftop && IsA(leftop, RelabelType))
+				leftop = ((RelabelType *) leftop)->arg;
+
 			Assert(leftop != NULL);
 
 			if (IsA(leftop, Var) && var_is_rel((Var *) leftop))
@@ -827,7 +844,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 					/* treat Param as runtime key */
 					have_runtime_keys = true;
 					run_keys[j] = LEFT_OP;
-					execParam = lappendi(execParam, ((Param *) leftop)->paramid);
 				}
 				else
 				{
@@ -856,6 +872,9 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			 * ----------------
 			 */
 			rightop = (Node *) get_rightop(clause);
+
+			if (rightop && IsA(rightop, RelabelType))
+				rightop = ((RelabelType *) rightop)->arg;
 
 			Assert(rightop != NULL);
 
@@ -906,7 +925,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 					/* treat Param as runtime key */
 					have_runtime_keys = true;
 					run_keys[j] = RIGHT_OP;
-					execParam = lappendi(execParam, ((Param *) rightop)->paramid);
 				}
 				else
 				{
@@ -1067,12 +1085,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 
 	indexstate->iss_RelationDescs = relationDescs;
 	indexstate->iss_ScanDescs = scanDescs;
-
-	/*
-	 * if there are some PARAM_EXEC in scankeys then force index rescan on
-	 * first scan.
-	 */
-	((Plan *) node)->chgParam = execParam;
 
 	/* ----------------
 	 *	all done.

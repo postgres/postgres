@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.18 2000/01/26 05:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.19 2000/08/13 02:50:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ ExecProcNode(Plan *node, Plan *parent)
 			 * ----------------
 			 */
 		case T_NestLoop:
-			result = ExecNestLoop((NestLoop *) node, parent);
+			result = ExecNestLoop((NestLoop *) node);
 			break;
 
 		case T_MergeJoin:

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.44 2000/07/23 03:50:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.45 2000/08/13 02:50:16 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -26,15 +26,15 @@
 /*
  * op_class
  *
- *		Return t iff operator 'opid' is in operator class 'opclass' for
+ *		Return t iff operator 'opno' is in operator class 'opclass' for
  *		access method 'amopid'.
  */
 bool
-op_class(Oid opid, Oid opclass, Oid amopid)
+op_class(Oid opno, Oid opclass, Oid amopid)
 {
 	if (HeapTupleIsValid(SearchSysCacheTuple(AMOPOPID,
 											 ObjectIdGetDatum(opclass),
-											 ObjectIdGetDatum(opid),
+											 ObjectIdGetDatum(opno),
 											 ObjectIdGetDatum(amopid),
 											 0)))
 		return true;
@@ -287,7 +287,7 @@ get_opcode(Oid opno)
 		return optup->oprcode;
 	}
 	else
-		return (RegProcedure) NULL;
+		return (RegProcedure) InvalidOid;
 }
 
 /*
@@ -371,17 +371,28 @@ op_hashjoinable(Oid opno, Oid ltype, Oid rtype)
 	return InvalidOid;
 }
 
+/*
+ * op_iscachable
+ *
+ * Get the proiscachable flag for the operator's underlying function.
+ */
+bool
+op_iscachable(Oid opno)
+{
+	RegProcedure	funcid = get_opcode(opno);
+
+	if (funcid == (RegProcedure) InvalidOid)
+		elog(ERROR, "Operator OID %u does not exist", opno);
+
+	return func_iscachable((Oid) funcid);
+}
+
 HeapTuple
 get_operator_tuple(Oid opno)
 {
-	HeapTuple	optup;
-
-	if ((optup = SearchSysCacheTuple(OPEROID,
-									 ObjectIdGetDatum(opno),
-									 0, 0, 0)))
-		return optup;
-	else
-		return (HeapTuple) NULL;
+	return SearchSysCacheTuple(OPEROID,
+							   ObjectIdGetDatum(opno),
+							   0, 0, 0);
 }
 
 /*
@@ -450,7 +461,7 @@ get_oprrest(Oid opno)
 		return optup->oprrest;
 	}
 	else
-		return (RegProcedure) NULL;
+		return (RegProcedure) InvalidOid;
 }
 
 /*
@@ -473,7 +484,7 @@ get_oprjoin(Oid opno)
 		return optup->oprjoin;
 	}
 	else
-		return (RegProcedure) NULL;
+		return (RegProcedure) InvalidOid;
 }
 
 /*				---------- FUNCTION CACHE ----------					 */
@@ -494,6 +505,24 @@ get_func_rettype(Oid funcid)
 		elog(ERROR, "Function OID %u does not exist", funcid);
 
 	return ((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
+}
+
+/*
+ * func_iscachable
+ *		Given procedure id, return the function's proiscachable flag.
+ */
+bool
+func_iscachable(Oid funcid)
+{
+	HeapTuple	func_tuple;
+
+	func_tuple = SearchSysCacheTuple(PROCOID,
+									 ObjectIdGetDatum(funcid),
+									 0, 0, 0);
+	if (!HeapTupleIsValid(func_tuple))
+		elog(ERROR, "Function OID %u does not exist", funcid);
+
+	return ((Form_pg_proc) GETSTRUCT(func_tuple))->proiscachable;
 }
 
 /*				---------- RELATION CACHE ----------					 */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.92 2000/08/08 15:41:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.93 2000/08/13 02:50:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -649,7 +649,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  *	  a key of an index.
  *
  *	  To match, the clause:
-
+ *
  *	  (1a) for a restriction clause: must be in the form (indexkey op const)
  *		   or (const op indexkey), or
  *	  (1b) for a join clause: must be in the form (indexkey op others)
@@ -708,11 +708,11 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		/*
 		 * Not considering joins, so check for clauses of the form:
 		 * (indexkey operator constant) or (constant operator indexkey).
-		 * We will accept a Param as being constant.
+		 * Anything that is a "pseudo constant" expression will do.
 		 */
 
-		if ((IsA(rightop, Const) ||IsA(rightop, Param)) &&
-			match_index_to_operand(indexkey, leftop, rel, index))
+		if (match_index_to_operand(indexkey, leftop, rel, index) &&
+			is_pseudo_constant_clause((Node *) rightop))
 		{
 			if (is_indexable_operator(clause, opclass, index->relam, true))
 				return true;
@@ -726,8 +726,8 @@ match_clause_to_indexkey(RelOptInfo *rel,
 				return true;
 			return false;
 		}
-		if ((IsA(leftop, Const) ||IsA(leftop, Param)) &&
-			match_index_to_operand(indexkey, rightop, rel, index))
+		if (match_index_to_operand(indexkey, rightop, rel, index) &&
+			is_pseudo_constant_clause((Node *) leftop))
 		{
 			if (is_indexable_operator(clause, opclass, index->relam, false))
 				return true;
@@ -748,29 +748,32 @@ match_clause_to_indexkey(RelOptInfo *rel,
 		/*
 		 * Check for an indexqual that could be handled by a nestloop
 		 * join. We need the index key to be compared against an
-		 * expression that uses none of the indexed relation's vars.
+		 * expression that uses none of the indexed relation's vars
+		 * and contains no non-cachable functions.
 		 */
 		if (match_index_to_operand(indexkey, leftop, rel, index))
 		{
 			List	   *othervarnos = pull_varnos((Node *) rightop);
 			bool		isIndexable;
 
-			isIndexable = !intMember(lfirsti(rel->relids), othervarnos);
+			isIndexable =
+				!intMember(lfirsti(rel->relids), othervarnos) &&
+				!contain_noncachable_functions((Node *) rightop) &&
+				is_indexable_operator(clause, opclass, index->relam, true);
 			freeList(othervarnos);
-			if (isIndexable &&
-			  is_indexable_operator(clause, opclass, index->relam, true))
-				return true;
+			return isIndexable;
 		}
 		else if (match_index_to_operand(indexkey, rightop, rel, index))
 		{
 			List	   *othervarnos = pull_varnos((Node *) leftop);
 			bool		isIndexable;
 
-			isIndexable = !intMember(lfirsti(rel->relids), othervarnos);
+			isIndexable =
+				!intMember(lfirsti(rel->relids), othervarnos) &&
+				!contain_noncachable_functions((Node *) leftop) &&
+				is_indexable_operator(clause, opclass, index->relam, false);
 			freeList(othervarnos);
-			if (isIndexable &&
-			 is_indexable_operator(clause, opclass, index->relam, false))
-				return true;
+			return isIndexable;
 		}
 	}
 
@@ -790,7 +793,9 @@ match_clause_to_indexkey(RelOptInfo *rel,
  * recognizing binary-compatible datatypes.  For example, if we have
  * an expression like "oid = 123", the operator will be oideqint4,
  * which we need to replace with oideq in order to recognize it as
- * matching an oid_ops index on the oid field.
+ * matching an oid_ops index on the oid field.  A variant case is where
+ * the expression is like "oid::int4 = 123", where the given operator
+ * will be int4eq and again we need to intuit that we want to use oideq.
  *
  * Returns the OID of the matching operator, or InvalidOid if no match.
  * Note that the returned OID will be different from the one in the given
@@ -804,8 +809,13 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 {
 	Oid			expr_op = ((Oper *) clause->oper)->opno;
 	Oid			commuted_op;
+	Operator	oldop,
+				newop;
+	Form_pg_operator oldopform;
+	char	   *opname;
 	Oid			ltype,
-				rtype;
+				rtype,
+				indexkeytype;
 
 	/* Get the commuted operator if necessary */
 	if (indexkey_on_left)
@@ -821,48 +831,72 @@ indexable_operator(Expr *clause, Oid opclass, Oid relam,
 
 	/*
 	 * Maybe the index uses a binary-compatible operator set.
+	 *
+	 * Get the nominal input types of the given operator and the actual
+	 * type (before binary-compatible relabeling) of the index key.
 	 */
-	ltype = exprType((Node *) get_leftop(clause));
-	rtype = exprType((Node *) get_rightop(clause));
+	oldop = get_operator_tuple(expr_op);
+	if (! HeapTupleIsValid(oldop))
+		return InvalidOid;		/* probably can't happen */
+	oldopform = (Form_pg_operator) GETSTRUCT(oldop);
+	opname = NameStr(oldopform->oprname);
+	ltype = oldopform->oprleft;
+	rtype = oldopform->oprright;
+
+	if (indexkey_on_left)
+	{
+		Node   *leftop = (Node *) get_leftop(clause);
+
+		if (leftop && IsA(leftop, RelabelType))
+			leftop = ((RelabelType *) leftop)->arg;
+		indexkeytype = exprType(leftop);
+	}
+	else
+	{
+		Node   *rightop = (Node *) get_rightop(clause);
+
+		if (rightop && IsA(rightop, RelabelType))
+			rightop = ((RelabelType *) rightop)->arg;
+		indexkeytype = exprType(rightop);
+	}
 
 	/*
-	 * make sure we have two different binary-compatible types...
+	 * Make sure we have different but binary-compatible types.
 	 */
-	if (ltype != rtype && IS_BINARY_COMPATIBLE(ltype, rtype))
+	if (ltype == indexkeytype && rtype == indexkeytype)
+		return InvalidOid;		/* no chance for a different operator */
+	if (ltype != indexkeytype && !IS_BINARY_COMPATIBLE(ltype, indexkeytype))
+		return InvalidOid;
+	if (rtype != indexkeytype && !IS_BINARY_COMPATIBLE(rtype, indexkeytype))
+		return InvalidOid;
+
+	/*
+	 * OK, look for operator of the same name with the indexkey's data type.
+	 * (In theory this might find a non-semantically-comparable operator,
+	 * but in practice that seems pretty unlikely for binary-compatible types.)
+	 */
+	newop = oper(opname, indexkeytype, indexkeytype, TRUE);
+
+	if (HeapTupleIsValid(newop))
 	{
-		char	   *opname = get_opname(expr_op);
-		Operator	newop;
+		Oid			new_expr_op = oprid(newop);
 
-		if (opname == NULL)
-			return InvalidOid;	/* probably shouldn't happen */
-
-		/* Use the datatype of the index key */
-		if (indexkey_on_left)
-			newop = oper(opname, ltype, ltype, TRUE);
-		else
-			newop = oper(opname, rtype, rtype, TRUE);
-
-		if (HeapTupleIsValid(newop))
+		if (new_expr_op != expr_op)
 		{
-			Oid			new_expr_op = oprid(newop);
 
-			if (new_expr_op != expr_op)
-			{
+			/*
+			 * OK, we found a binary-compatible operator of the same
+			 * name; now does it match the index?
+			 */
+			if (indexkey_on_left)
+				commuted_op = new_expr_op;
+			else
+				commuted_op = get_commutator(new_expr_op);
+			if (commuted_op == InvalidOid)
+				return InvalidOid;
 
-				/*
-				 * OK, we found a binary-compatible operator of the same
-				 * name; now does it match the index?
-				 */
-				if (indexkey_on_left)
-					commuted_op = new_expr_op;
-				else
-					commuted_op = get_commutator(new_expr_op);
-				if (commuted_op == InvalidOid)
-					return InvalidOid;
-
-				if (op_class(commuted_op, opclass, relam))
-					return new_expr_op;
-			}
+			if (op_class(commuted_op, opclass, relam))
+				return new_expr_op;
 		}
 	}
 
@@ -1526,13 +1560,22 @@ match_index_to_operand(int indexkey,
 					   RelOptInfo *rel,
 					   IndexOptInfo *index)
 {
+	/*
+	 * Ignore any RelabelType node above the indexkey.  This is needed to
+	 * be able to apply indexscanning in binary-compatible-operator cases.
+	 * Note: we can assume there is at most one RelabelType node;
+	 * eval_const_expressions() will have simplified if more than one.
+	 */
+	if (operand && IsA(operand, RelabelType))
+		operand = (Var *) ((RelabelType *) operand)->arg;
+
 	if (index->indproc == InvalidOid)
 	{
 
 		/*
-		 * Normal index.
+		 * Simple index.
 		 */
-		if (IsA(operand, Var) &&
+		if (operand && IsA(operand, Var) &&
 			lfirsti(rel->relids) == operand->varno &&
 			indexkey == operand->varattno)
 			return true;
@@ -1541,7 +1584,7 @@ match_index_to_operand(int indexkey,
 	}
 
 	/*
-	 * functional index check
+	 * Functional index.
 	 */
 	return function_index_operand((Expr *) operand, rel, index);
 }
@@ -1570,18 +1613,23 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
 	if (function->funcid != index->indproc)
 		return false;
 
-	/*
+	/*----------
 	 * Check that the arguments correspond to the same arguments used to
-	 * create the functional index.  To do this we must check that 1.
-	 * refer to the right relation. 2. the args have the right attr.
-	 * numbers in the right order.
+	 * create the functional index.  To do this we must check that
+	 *	1. they refer to the right relation.
+	 *	2. the args have the right attr. numbers in the right order.
+	 * We must ignore RelabelType nodes above the argument Vars in order
+	 * to recognize binary-compatible-function cases correctly.
+	 *----------
 	 */
 	i = 0;
 	foreach(arg, funcargs)
 	{
 		Var		   *var = (Var *) lfirst(arg);
 
-		if (!IsA(var, Var))
+		if (var && IsA(var, RelabelType))
+			var = (Var *) ((RelabelType *) var)->arg;
+		if (var == NULL || !IsA(var, Var))
 			return false;
 		if (indexKeys[i] == 0)
 			return false;
@@ -1643,7 +1691,7 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, IndexOptInfo *index)
  *	  additional indexscanable qualifications.
  *
  * The given clause is already known to be a binary opclause having
- * the form (indexkey OP const/param) or (const/param OP indexkey),
+ * the form (indexkey OP pseudoconst) or (pseudoconst OP indexkey),
  * but the OP proved not to be one of the index's opclass operators.
  * Return 'true' if we can do something with it anyway.
  */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.45 2000/08/06 04:26:29 tgl Exp $
+ * $Id: execnodes.h,v 1.46 2000/08/13 02:50:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,6 +380,7 @@ typedef struct CommonScanState
  *		NumScanKeys		   array of no of keys in each Skey struct
  *		RuntimeKeyInfo	   array of array of flags for Skeys evaled at runtime
  *		RuntimeContext	   expr context for evaling runtime Skeys
+ *		RuntimeKeysReady   true if runtime Skeys have been computed
  *		RelationDescs	   ptr to array of relation descriptors
  *		ScanDescs		   ptr to array of scan descriptors
  * ----------------
@@ -394,6 +395,7 @@ typedef struct IndexScanState
 	int		   *iss_NumScanKeys;
 	int		  **iss_RuntimeKeyInfo;
 	ExprContext *iss_RuntimeContext;
+	bool		iss_RuntimeKeysReady;
 	RelationPtr iss_RelationDescs;
 	IndexScanDescPtr iss_ScanDescs;
 	HeapTupleData iss_htup;

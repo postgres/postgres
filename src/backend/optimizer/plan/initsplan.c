@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.48 2000/08/08 15:41:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.49 2000/08/13 02:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -184,7 +184,7 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 
 		/*
 		 * There is only one relation participating in 'clause', so
-		 * 'clause' must be a restriction clause for that relation.
+		 * 'clause' is a restriction clause for that relation.
 		 */
 		RelOptInfo *rel = get_base_rel(root, lfirsti(relids));
 
@@ -201,11 +201,11 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 		 */
 		check_mergejoinable(restrictinfo);
 	}
-	else
+	else if (relids != NIL)
 	{
 
 		/*
-		 * 'clause' is a join clause, since there is more than one atom in
+		 * 'clause' is a join clause, since there is more than one rel in
 		 * the relid list.	Set additional RestrictInfo fields for
 		 * joining.
 		 *
@@ -219,8 +219,6 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 
 		/*
 		 * Add clause to the join lists of all the relevant relations.
-		 * (If, perchance, 'clause' contains NO vars, then nothing will
-		 * happen...)
 		 */
 		add_join_info_to_rels(root, restrictinfo, relids);
 
@@ -231,6 +229,15 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 		 * node!).
 		 */
 		add_vars_to_targetlist(root, vars);
+	}
+	else
+	{
+		/*
+		 * 'clause' references no rels, and therefore we have no place to
+		 * attach it.  This means query_planner() screwed up --- it should
+		 * treat variable-less clauses separately.
+		 */
+		elog(ERROR, "add_restrict_and_join_to_rel: can't cope with variable-free clause");
 	}
 
 	/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.38 2000/06/08 22:37:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.39 2000/08/13 02:50:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ clauselist_selectivity(Query *root,
 		Selectivity s2;
 
 		/*
-		 * See if it looks like a restriction clause with a Const or Param
+		 * See if it looks like a restriction clause with a pseudoconstant
 		 * on one side.  (Anything more complicated than that might not
 		 * behave in the simple way we are expecting.)
 		 *
@@ -146,7 +146,7 @@ clauselist_selectivity(Query *root,
 
 				other = (flag & SEL_RIGHT) ? get_rightop((Expr *) clause) :
 					get_leftop((Expr *) clause);
-				if (IsA(other, Const) || IsA(other, Param))
+				if (is_pseudo_constant_clause((Node *) other))
 				{
 					Oid		opno = ((Oper *) ((Expr *) clause)->oper)->opno;
 					RegProcedure oprrest = get_oprrest(opno);
@@ -532,6 +532,13 @@ clause_selectivity(Query *root,
 		 * Just for the moment! FIX ME! - vadim 02/04/98
 		 */
 		s1 = 1.0;
+	}
+	else if (IsA(clause, RelabelType))
+	{
+		/* Not sure this case is needed, but it can't hurt */
+		s1 = clause_selectivity(root,
+								((RelabelType *) clause)->arg,
+								varRelid);
 	}
 
 	return s1;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.37 2000/05/30 04:24:57 tgl Exp $
+ * $Id: clauses.h,v 1.38 2000/08/13 02:50:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,13 @@ extern bool contain_subplans(Node *clause);
 extern List *pull_subplans(Node *clause);
 extern void check_subplans_for_ungrouped_vars(Node *clause, Query *query);
 
-extern List *pull_constant_clauses(List *quals, List **constantQual);
+extern bool contain_noncachable_functions(Node *clause);
+
+extern bool is_pseudo_constant_clause(Node *clause);
+
+extern List *pull_constant_clauses(List *quals,
+								   List **noncachableQual,
+								   List **constantQual);
 
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);

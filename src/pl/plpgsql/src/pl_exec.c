@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.26 2000/08/03 16:34:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.27 2000/08/13 02:50:35 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -54,6 +54,7 @@
 #include "executor/spi.h"
 #include "executor/spi_priv.h"
 #include "fmgr.h"
+#include "parser/parse_expr.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -2487,6 +2488,9 @@ exec_simple_check_node(Node *node)
 		case T_Const:
 			return TRUE;
 
+		case T_RelabelType:
+			return exec_simple_check_node(((RelabelType *) node)->arg);
+
 		default:
 			return FALSE;
 	}
@@ -2563,26 +2567,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	 * ----------
 	 */
 	expr->plan_simple_expr = tle->expr;
-
-	switch (nodeTag(tle->expr))
-	{
-		case T_Expr:
-			expr->plan_simple_type =
-				((Expr *) (tle->expr))->typeOid;
-			break;
-
-		case T_Param:
-			expr->plan_simple_type =
-				((Param *) (tle->expr))->paramtype;
-			break;
-
-		case T_Const:
-			expr->plan_simple_type = ((Const *) (tle->expr))->consttype;
-			break;
-
-		default:
-			expr->plan_simple_type = InvalidOid;
-	}
+	expr->plan_simple_type = exprType(tle->expr);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.18 2000/07/17 03:04:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.19 2000/08/13 02:50:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecNestLoop(NestLoop *node, Plan *parent)
+ExecNestLoop(NestLoop *node)
 {
 	NestLoopState *nlstate;
 	Plan	   *innerPlan;
@@ -187,7 +187,7 @@ ExecNestLoop(NestLoop *node, Plan *parent)
 			 * outer tuple (e.g. in index scans), that's why we pass our
 			 * expr context.
 			 */
-			ExecReScan(innerPlan, econtext, parent);
+			ExecReScan(innerPlan, econtext, (Plan *) node);
 
 			ENL1_printf("getting new inner tuple");
 

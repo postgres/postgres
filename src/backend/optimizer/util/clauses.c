@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.70 2000/08/08 15:41:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.71 2000/08/13 02:50:10 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -46,6 +46,7 @@ static bool contain_subplans_walker(Node *node, void *context);
 static bool pull_subplans_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 										 Query *context);
+static bool contain_noncachable_functions_walker(Node *node, void *context);
 static int	is_single_func(Node *node);
 static Node *eval_const_expressions_mutator(Node *node, void *context);
 static Expr *simplify_op_or_func(Expr *expr, List *args);
@@ -601,39 +602,134 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 
 
 /*****************************************************************************
+ *		Check clauses for noncachable functions
+ *****************************************************************************/
+
+/*
+ * contain_noncachable_functions
+ *	  Recursively search for noncachable functions within a clause.
+ *
+ * Returns true if any noncachable function (or operator implemented by a
+ * noncachable function) is found.  This test is needed so that we don't
+ * mistakenly think that something like "WHERE random() < 0.5" can be treated
+ * as a constant qualification.
+ *
+ * XXX we do not examine sublinks/subplans to see if they contain uses of
+ * noncachable functions.  It's not real clear if that is correct or not...
+ */
+bool
+contain_noncachable_functions(Node *clause)
+{
+	return contain_noncachable_functions_walker(clause, NULL);
+}
+
+static bool
+contain_noncachable_functions_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Expr))
+	{
+		Expr	   *expr = (Expr *) node;
+
+		switch (expr->opType)
+		{
+			case OP_EXPR:
+				if (! op_iscachable(((Oper *) expr->oper)->opno))
+					return true;
+				break;
+			case FUNC_EXPR:
+				if (! func_iscachable(((Func *) expr->oper)->funcid))
+					return true;
+				break;
+			default:
+				break;
+		}
+	}
+	return expression_tree_walker(node, contain_noncachable_functions_walker,
+								  context);
+}
+
+
+/*****************************************************************************
+ *		Check for "pseudo-constant" clauses
+ *****************************************************************************/
+
+/*
+ * is_pseudo_constant_clause
+ *	  Detect whether a clause is "constant", ie, it contains no variables
+ *	  of the current query level and no uses of noncachable functions.
+ *	  Such a clause is not necessarily a true constant: it can still contain
+ *	  Params and outer-level Vars.  However, its value will be constant over
+ *	  any one scan of the current query, so it can be used as an indexscan
+ *	  key or (if a top-level qual) can be pushed up to become a gating qual.
+ */
+bool
+is_pseudo_constant_clause(Node *clause)
+{
+	/*
+	 * We could implement this check in one recursive scan.  But since the
+	 * check for noncachable functions is both moderately expensive and
+	 * unlikely to fail, it seems better to look for Vars first and only
+	 * check for noncachable functions if we find no Vars.
+	 */
+	if (!contain_var_clause(clause) &&
+		!contain_noncachable_functions(clause))
+		return true;
+	return false;
+}
+
+/*----------
+ * pull_constant_clauses
+ *		Scan through a list of qualifications and separate "constant" quals
+ *		from those that are not.
+ *
+ * The input qual list is divided into three parts:
+ *	* The function's return value is a list of all those quals that contain
+ *	  variable(s) of the current query level.  (These quals will become
+ *	  restrict and join quals.)
+ *	* *noncachableQual receives a list of quals that have no Vars, yet
+ *	  cannot be treated as constants because they contain noncachable
+ *	  function calls.  (Example: WHERE random() < 0.5)
+ *	* *constantQual receives a list of the remaining quals, which can be
+ *	  treated as constants for any one scan of the current query level.
+ *	  (They are really only pseudo-constant, since they may contain
+ *	  Params or outer-level Vars.)
+ *----------
+ */
+List *
+pull_constant_clauses(List *quals,
+					  List **noncachableQual,
+					  List **constantQual)
+{
+	List	   *q;
+	List	   *normqual = NIL;
+	List	   *noncachequal = NIL;
+	List	   *constqual = NIL;
+
+	foreach(q, quals)
+	{
+		Node	   *qual = (Node *) lfirst(q);
+
+		if (contain_var_clause(qual))
+			normqual = lappend(normqual, qual);
+		else if (contain_noncachable_functions(qual))
+			noncachequal = lappend(noncachequal, qual);
+		else
+			constqual = lappend(constqual, qual);
+	}
+
+	*noncachableQual = noncachequal;
+	*constantQual = constqual;
+	return normqual;
+}
+
+
+/*****************************************************************************
  *																			 *
  *		General clause-manipulating routines								 *
  *																			 *
  *****************************************************************************/
-
-
-/*
- * pull_constant_clauses
- *	  Scans through a list of qualifications and find those that
- *	  contain no variables (of the current query level).
- *
- * Returns a list of the constant clauses in constantQual and the remaining
- * quals as the return value.
- *
- */
-List *
-pull_constant_clauses(List *quals, List **constantQual)
-{
-	List	   *q;
-	List	   *constqual = NIL;
-	List	   *restqual = NIL;
-
-	foreach(q, quals)
-	{
-		if (!contain_var_clause(lfirst(q)))
-			constqual = lcons(lfirst(q), constqual);
-		else
-			restqual = lcons(lfirst(q), restqual);
-	}
-	*constantQual = constqual;
-	return restqual;
-}
-
 
 /*
  * clause_relids_vars
@@ -743,6 +839,13 @@ get_relattval(Node *clause,
 
 	if (!right)
 		goto default_results;
+
+	/* Ignore any binary-compatible relabeling */
+
+	if (IsA(left, RelabelType))
+		left = (Var *) ((RelabelType *) left)->arg;
+	if (IsA(right, RelabelType))
+		right = (Var *) ((RelabelType *) right)->arg;
 
 	/* First look for the var or func */
 
@@ -855,6 +958,12 @@ get_rels_atts(Node *clause,
 		if (left && right)
 		{
 			int			funcvarno;
+
+			/* Ignore any binary-compatible relabeling */
+			if (IsA(left, RelabelType))
+				left = (Var *) ((RelabelType *) left)->arg;
+			if (IsA(right, RelabelType))
+				right = (Var *) ((RelabelType *) right)->arg;
 
 			if (IsA(left, Var))
 			{
@@ -1147,12 +1256,20 @@ eval_const_expressions_mutator(Node *node, void *context)
 		/*
 		 * If we can simplify the input to a constant, then we don't need
 		 * the RelabelType node anymore: just change the type field of the
-		 * Const node.	Otherwise, copy the RelabelType node.
+		 * Const node.	Otherwise, must copy the RelabelType node.
 		 */
 		RelabelType *relabel = (RelabelType *) node;
 		Node	   *arg;
 
 		arg = eval_const_expressions_mutator(relabel->arg, context);
+
+		/*
+		 * If we find stacked RelabelTypes (eg, from foo :: int :: oid)
+		 * we can discard all but the top one.
+		 */
+		while (arg && IsA(arg, RelabelType))
+			arg = ((RelabelType *) arg)->arg;
+
 		if (arg && IsA(arg, Const))
 		{
 			Const	   *con = (Const *) arg;
@@ -1369,7 +1486,10 @@ simplify_op_or_func(Expr *expr, List *args)
 		funcid = func->funcid;
 		result_typeid = func->functype;
 	}
-	/* Someday lsyscache.c might provide a function for this */
+	/*
+	 * we could use func_iscachable() here, but we need several fields
+	 * out of the func tuple, so might as well just look it up once.
+	 */
 	func_tuple = SearchSysCacheTuple(PROCOID,
 									 ObjectIdGetDatum(funcid),
 									 0, 0, 0);
