@@ -5,14 +5,23 @@
 
 #set -x
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.28 2002/01/11 06:48:41 momjian Exp $
+# Set this to "Y" to enable this program
+ENABLE="N"
+
+# UPGRADE_VERSION is the expected old database version
+UPGRADE_VERSION="7.1"
+
+# Hard-wired from pg_class in 7.1.  I wish there was another way.
+# Are these fixed values for that release? XXX
+SRC_LARGEOBJECT_OID=16948
+SRC_LARGEOBJECT_IDX_OID=17148
+
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.29 2002/01/11 20:34:14 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
 
-TMPFILE="/tmp/pgupgrade.$$"
-
-trap "rm -f $TMPFILE" 0 1 2 3 15
+trap "rm -f /tmp/$$.*" 0 1 2 3 15
 
 SCHEMA=""
 while [ "$#" -gt 1 ]
@@ -71,14 +80,12 @@ then	echo "Cannot read ./$OLDDIR/PG_VERSION --- something is wrong." 1>&2
 fi
 
 # Get the actual versions seen in the data dirs.
+
 DEST_VERSION=`cat ./data/PG_VERSION`
 SRC_VERSION=`cat ./$OLDDIR/PG_VERSION`
 
 # Check for version compatibility.
 # This code will need to be updated/reviewed for each new PostgreSQL release.
-
-# UPGRADE_VERSION is the expected output database version
-UPGRADE_VERSION="7.1"
 
 if [ "$DEST_VERSION" != "$UPGRADE_VERSION" -a "$DEST_VERSION" != "$SRC_VERSION" ]
 then	echo "`basename $0` is for PostgreSQL version $UPGRADE_VERSION, but ./data/PG_VERSION contains $DEST_VERSION." 1>&2
@@ -92,13 +99,18 @@ fi
 # enough to compare dotted version strings properly.  Using a case statement
 # looks uglier but is more flexible.
 
-case "$SRC_VERSION" in
-#    7.2) ;;
-    *)	echo "Sorry, `basename $0` cannot upgrade database version $SRC_VERSION to $DEST_VERSION." 1>&2
-	echo "The on-disk structure of tables has changed." 1>&2
-	echo "You will need to dump and restore using pg_dumpall." 1>&2
-	exit 1;;
-esac
+if [ "$ENABLE" != "Y" ]
+then
+	case "$SRC_VERSION" in
+#	    7.2) ;;
+	    *)	echo "Sorry, `basename $0` cannot upgrade database version $SRC_VERSION to $DEST_VERSION." 1>&2
+		echo "The on-disk structure of tables has changed." 1>&2
+		echo "You will need to dump and restore using pg_dumpall." 1>&2
+		exit 1;;
+	esac
+fi
+
+# check for proper pg_resetxlog version
 
 pg_resetxlog 2>/dev/null
 # file not found status is normally 127, not 1
@@ -117,13 +129,27 @@ fi
 # If the XID is > 2 billion, 7.1 database will have non-frozen XID's in 
 # low numbers, and 7.2 will think they are in the future --- bad.
 
-XID=`pg_resetxlog -n "$OLDDIR" | grep "NextXID" | awk -F'  *' '{print $4}'`
+SRC_XID=`pg_resetxlog -n "$OLDDIR" | grep "NextXID" | awk -F'  *' '{print $4}'`
 if [ "$SRC_VERSION" = "7.1" -a "$XID" -gt 2000000000 ]
 then	echo "XID too high for $0.;  exiting" 1>&2
 	exit 1
 fi
+DST_XID=`pg_resetxlog -n data | grep "NextXID" | awk -F'  *' '{print $4}'`
 
+# compare locales to make sure they match
+
+pg_resetxlog -n "$OLDDIR" | grep "^LC_" > /tmp/$$.0
+pg_resetxlog -n data | grep "^LC_" > /tmp/$$.1
+if ! diff /tmp/$$.0 /tmp/$$.1 >/dev/null
+then	echo "Locales do not match between the two versions.;  exiting" 1>&2
+	exit 1
+fi
+
+
+###################################
 # Checking done.  Ready to proceed.
+###################################
+
 
 # Execute the schema script to create everything
 
@@ -149,10 +175,25 @@ fi
 
 # Used for scans looking for a database/table name match
 # New oid is looked up
-pg_dumpall -s > $TMPFILE 2>/dev/null
+pg_dumpall -s > /tmp/$$.3 2>/dev/null
 if [ "$?" -ne 0 ]
 then	echo "Unable to dump schema of new database.;  exiting" 1>&2
 	exit 1
+fi
+
+# Get pg_largeobject oids for movement
+
+DST_LARGEOBJECT_OID=`psql -d template1 -At -c "SELECT oid from pg_class where relname = 'pg_largeobject';"`
+DST_LARGEOBJECT_IDX_OID=`psql -d template1 -At -c "SELECT oid from pg_class where relname = 'pg_largeobject_loid_pn_index';"`
+if [ "$LARGEOBJECT_OID" -eq 0 -o "$LARGEOBJECT_IDX_OID" -eq 0 ]
+then	echo "Unable to find large object oid.;  exiting" 1>&2
+	exit 1
+fi
+
+if [ "$SRC_VERSION" = "$DST_VERSION" ]
+then	# Versions are the same so we can get pg_largeobject oid this way
+	SRC_LARGEOBJECT_IDX_OID="$DST_LARGEOBJECT_OID"
+	SRC_LARGEOBJECT_IDX_OID="$DST_LARGEOBJECT_IDX_OID"
 fi
 
 # we are done with SQL database access
@@ -165,6 +206,8 @@ then	echo "Unable to stop database server.;  exiting" 1>&2
 fi
 
 echo "Commit fixes complete, moving data files..."
+
+# Move table/index/sequence files
 
 cat "$SCHEMA" | while read LINE
 do
@@ -205,13 +248,17 @@ do
 				newdb == "'"$DB"'" && \
 				$3 == "'"$TABLE"'" \
 					{ ret=newoid; exit}
-				END { print ret;}' $TMPFILE`
+				END { print ret;}' /tmp/$$.3`
 		if [ "$NEWOID" -eq 0 ]
 		then	echo "Move of database $DB, OID $OID, table $TABLE failed.
 New oid not found;  exiting" 1>&2
 			exit 1
 		fi
+
 		# We use stars so we don't have to worry about database oids
+
+		# Test to make sure there is exactly one matching file on each place
+
  		if [ `ls "$OLDDIR"/base/*/"$OID" | wc -l` -eq 0 ]
 		then	echo "Move of database $DB, OID $OID, table $TABLE failed.
 File not found;  exiting" 1>&2
@@ -232,25 +279,100 @@ File not found;  exiting" 1>&2
 Too many found;  exiting" 1>&2
 			exit 1
 		fi
-		mv -f "$OLDDIR"/base/*/"$OID" data/base/*/"$NEWOID"
+
+		# Move files
+
+		SRCDB=`basename \`dirname $OLDDIR"/base/*/"$OID"\``
+		DSTDB=`basename \'dirname data/base/*/"$NEWOID"\``
+		mv -f "$OLDIR"/base/"$SRCDB"/"$OID" data/base/"$DSTDB"/"$NEWOID"
 		if [ "$?" -ne 0 ]
 		then	echo "Move of database $DB, OID $OID, table $TABLE 
 to $NEWOID failed.;  exiting" 1>&2
 			exit 1
+		fi
+		# handle table extents
+		ls "$OLDDIR"/base/"$SRCDB"/"$OID".* | while read FILE
+		do
+			EXT=`basename "$FILE" | sed 's/[^[^\.]*\.\(.*\)$/\1/'`
+			mv -f "$FILE" data/base/"$DSTDB"/"$NEWOID"."$EXT"
+			if [ "$?" -ne 0 ]
+			then	echo "Move of database $DB, OID $OID, table $TABLE 
+to $NEWOID failed.;  exiting" 1>&2
+				exit 1
+			fi
+		done
+
+		# handle pg_largeobject
+		# We use the unique oid's to tell use where to move the
+		# pg_largeobject files.
+
+		if [ -f "$OLDIR"/base/"$SRCDB"/"$SRC_LARGEOBJECT_OID" ]
+		then	mv "$OLDIR"/base/"$SRCDB"/"$SRC_LARGEOBJECT_OID" \
+				data/base/"$DSTDB"/"$DST_LARGEOBJECT_OID"
+			if [ "$?" -ne 0 ]
+			then	echo "Move of large object for database $DB
+to $NEWOID failed.;  exiting" 1>&2
+				exit 1
+			fi
+	 		# handle table extents
+			ls "$OLDDIR"/base/"$SRCDB"/"$SRC_LARGEOBJECT_OID".* | while read FILE
+			do
+				EXT=`basename "$FILE" | sed 's/[^[^\.]*\.\(.*\)$/\1/'`
+				mv -f "$FILE" data/base/"$DSTDB"/"$DST_LARGEOBJECT_OID"."$EXT"
+				if [ "$?" -ne 0 ]
+				then	echo "Move of large object for database $DB
+to $NEWOID failed.;  exiting" 1>&2
+					exit 1
+				fi
+			done
+		fi
+
+		# Handle pg_largeobject_loid_pn_index
+		if [ -f "$OLDIR"/base/"$SRCDB"/"$SRC_LARGEOBJECT_IDX_OID" ]
+		then	mv "$OLDIR"/base/"$SRCDB"/"$SRC_LARGEOBJECT_IDX_OID" \
+				data/base/"$DSTDB"/"$DST_LARGEOBJECT_IDX_OID"
+			if [ "$?" -ne 0 ]
+			then	echo "Move of large object for database $DB
+to $NEWOID failed.;  exiting" 1>&2
+				exit 1
+			fi
+	 		# handle table extents
+			ls "$OLDDIR"/base/"$SRCDB"/"$SRC_LARGEOBJECT_IDX_OID".* | while read FILE
+			do
+				EXT=`basename "$FILE" | sed 's/[^[^\.]*\.\(.*\)$/\1/'`
+				mv -f "$FILE" data/base/"$DSTDB"/"$DST_LARGEOBJECT_IDX_OID"."$EXT"
+				if [ "$?" -ne 0 ]
+				then	echo "Move of large object for database $DB
+to $NEWOID failed.;  exiting" 1>&2
+					exit 1
+				fi
+			done
 		fi
 		TABLE=""
 	fi
 done
 
 
-# Set this so the next VACUUM sets the old row XID's as "frozen"
+# Set this so future backends don't think these tuples are their own
+# because it matches their own XID.
 # Commit status already updated by vacuum above
+# Set to maximum XID just in case SRC wrapped around recently and
+# is lower than DST's database
+if [ "$SRC_XID" -gt "$DST_XID" ]
+then	MAX_XID="$SRC_XID"
+else	MAX_XID="$DST_XID"
+fi
 
-pg_resetxlog -x "$XID" data
+pg_resetxlog -x "$MAX_XID" data
 if [ "$?" -ne 0 ]
 then	echo "Unable to set new XID.;  exiting" 1>&2
 	exit 1
 fi
+
+# Move over old WAL
+
+rm -r data/pg_xlog
+mv -f "$OLDDIR"/pg_xlog data
 
 # Set last checkpoint location from old database
 
@@ -283,8 +405,7 @@ if [ "$SRC_VERSION" = "7.1" ]
 then	echo "Set int8 sequence values from 7.1..."
 
 	psql -d template1 -At -c "SELECT datname FROM pg_database" | 
-	grep -v '^template0$' | # no system databases
-	grep -v '^template1$' | # no system databases
+	grep -v '^template0$' | # template1 OK
 	while read DB
 	do	
 		echo "$DB"

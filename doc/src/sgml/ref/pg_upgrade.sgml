@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.17 2002/01/11 06:08:02 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.18 2002/01/11 20:34:14 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -154,7 +154,8 @@ $ pg_upgrade -s schema.out data.old
 
    <note>
     <para>
-     pg_upgrade does not migrate large objects.
+     pg_upgrade does not handle custom tables/indexes/sequences in template1.
+     It does handle other template1 object customizations.
     </para>
    </note>
   </procedure>
