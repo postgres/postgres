@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.8 1998/10/08 18:29:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.9 1998/10/22 13:50:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -328,6 +328,11 @@ TypeCategory(Oid inType)
 			result = GEOMETRIC_TYPE;
 			break;
 
+		case (INETOID):
+		case (CIDROID):
+			result = NETWORK_TYPE;
+			break;
+
 		default:
 			result = USER_TYPE;
 			break;
@@ -379,6 +384,10 @@ PreferredType(CATEGORY category, Oid type)
 			result = TIMESPANOID;
 			break;
 
+		case (NETWORK_TYPE):
+			result = INETOID;
+			break;
+		
 		case (GEOMETRIC_TYPE):
 		case (USER_TYPE):
 			result = type;

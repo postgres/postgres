@@ -3,7 +3,7 @@
  *	is for IP V4 CIDR notation, but prepared for V6: just
  *	add the necessary bits where the comments indicate.
  *
- *	$Id: inet.c,v 1.12 1998/10/22 13:16:23 momjian Exp $
+ *	$Id: inet.c,v 1.13 1998/10/22 13:50:56 momjian Exp $
  *	Jon Postel RIP 16 Oct 1998
  */
 
@@ -297,7 +297,7 @@ inet_cmp(inet *a1, inet *a2)
 }
 
 text *
-inet_host(inet *ip)
+host(inet *ip)
 {
 	text	   *ret;
 	int			len;
@@ -331,7 +331,7 @@ inet_host(inet *ip)
 	ret = palloc(len);
 	if (ret == NULL)
 	{
-		elog(ERROR, "unable to allocate memory in inet_host()");
+		elog(ERROR, "unable to allocate memory in host()");
 		return (NULL);
 	}
 	VARSIZE(ret) = len;
@@ -339,26 +339,14 @@ inet_host(inet *ip)
 	return (ret);
 }
 
-text *
-cidr_host(inet *ip)
-{
-	return inet_host(ip);
-}
-
 int4
-inet_netmasklen(inet *ip)
+masklen(inet *ip)
 {
 	return ip_bits(ip);
 }
 
-int4
-cidr_netmasklen(inet *ip)
-{
-	return inet_netmasklen(ip);
-}
-
 text *
-inet_broadcast(inet *ip)
+broadcast(inet *ip)
 {
 	text	   *ret;
 	int			len;
@@ -390,7 +378,7 @@ inet_broadcast(inet *ip)
 	ret = palloc(len);
 	if (ret == NULL)
 	{
-		elog(ERROR, "unable to allocate memory in inet_broadcast()");
+		elog(ERROR, "unable to allocate memory in broadcast()");
 		return (NULL);
 	}
 	VARSIZE(ret) = len;
@@ -399,13 +387,7 @@ inet_broadcast(inet *ip)
 }
 
 text *
-cidr_broadcast(inet *ip)
-{
-	return inet_broadcast(ip);
-}
-	
-text *
-inet_netmask(inet *ip)
+netmask(inet *ip)
 {
 	text	   *ret;
 	int			len;
@@ -435,18 +417,12 @@ inet_netmask(inet *ip)
 	ret = palloc(len);
 	if (ret == NULL)
 	{
-		elog(ERROR, "unable to allocate memory in inet_netmask()");
+		elog(ERROR, "unable to allocate memory in netmask()");
 		return (NULL);
 	}
 	VARSIZE(ret) = len;
 	strcpy(VARDATA(ret), tmp);
 	return (ret);
-}
-
-text *
-cidr_netmask(inet *ip)
-{
-	return inet_netmask(ip);
 }
 
 /*

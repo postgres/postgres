@@ -1,4 +1,4 @@
-1/*-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------
  *
  * pg_proc.h--
  *	  definition of the system "procedure" relation (pg_proc)
@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.79 1998/10/22 05:29:24 momjian Exp $
+ * $Id: pg_proc.h,v 1.80 1998/10/22 13:51:02 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2104,44 +2104,14 @@ DESCR("is-supernet");
 DATA(insert OID = 930 (  inet_supeq  	   PGUID 11 f t f 2 f 16 "869 869" 100 0 0 100  foo bar ));
 DESCR("is-supernet-or-equal");
 
-/* inet base versions */
-DATA(insert OID = 940 (  inet_netmask		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
+/* inet/cidr versions */
+DATA(insert OID = 940 (  netmask			PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
 DESCR("netmask of address");
-DATA(insert OID = 941 (  inet_netmasklen	PGUID 11 f t f 1 f 23 "869" 100 0 0 100  foo bar ));
+DATA(insert OID = 941 (  masklen			PGUID 11 f t f 1 f 23 "869" 100 0 0 100  foo bar ));
 DESCR("netmask length");
-DATA(insert OID = 945 (  inet_broadcast		PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
+DATA(insert OID = 945 (  broadcast			PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
 DESCR("broadcast address");
-DATA(insert OID = 682 (  inet_host			PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
-DESCR("host address");
-
-/* cidr base versions */
-DATA(insert OID = 1619 (  cidr_netmask		PGUID 11 f t f 1 f 25 "650" 100 0 0 100  foo bar ));
-DESCR("netmask of address");
-DATA(insert OID = 1620 (  cidr_netmasklen	PGUID 11 f t f 1 f 23 "650" 100 0 0 100  foo bar ));
-DESCR("netmask length");
-DATA(insert OID = 1621 (  cidr_broadcast	PGUID 11 f t f 1 f 25 "650" 100 0 0 100  foo bar ));
-DESCR("broadcast address");
-DATA(insert OID = 1622 (  cidr_host			PGUID 11 f t f 1 f 25 "650" 100 0 0 100  foo bar ));
-DESCR("host address");
-
-/* inet versions */
-DATA(insert OID = 946 (  netmask		PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select inet_netmask($1)" - ));
-DESCR("netmask of address");
-DATA(insert OID = 947 (  netmasklen		PGUID 14 f t f 1 f 23 "869" 100 0 0 100  "select inet_netmasklen($1)" - ));
-DESCR("netmask length");
-DATA(insert OID = 948 (  broadcast		PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select inet_broadcast($1)" - ));
-DESCR("broadcast address");
-DATA(insert OID = 949 (  host			PGUID 14 f t f 1 f 25 "869" 100 0 0 100  "select inet_host($1)" - ));
-DESCR("host address");
-
-/* cidr versions */
-DATA(insert OID = 696 (  netmask		PGUID 14 f t f 1 f 25 "650" 100 0 0 100  "select cidr_netmask($1)" - ));
-DESCR("netmask of address");
-DATA(insert OID = 697 (  netmasklen		PGUID 14 f t f 1 f 23 "650" 100 0 0 100  "select cidr_netmasklen($1)" - ));
-DESCR("netmask length");
-DATA(insert OID = 698 (  broadcast		PGUID 14 f t f 1 f 25 "650" 100 0 0 100  "select cidr_broadcast($1)" - ));
-DESCR("broadcast address");
-DATA(insert OID = 699 (  host			PGUID 14 f t f 1 f 25 "650" 100 0 0 100  "select cidr_host($1)" - ));
+DATA(insert OID = 682 (  host				PGUID 11 f t f 1 f 25 "869" 100 0 0 100  foo bar ));
 DESCR("host address");
 
 
