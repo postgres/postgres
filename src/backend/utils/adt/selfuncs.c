@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.28 1999/05/25 16:12:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.29 1999/05/31 19:32:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,21 @@ btreesel(Oid operatorObjectId,
 	}
 	else
 	{
-		result = (float64) fmgr(get_oprrest(operatorObjectId),
+		RegProcedure oprrest = get_oprrest(operatorObjectId);
+
+		/*
+		 * Operators used for indexes should have selectivity estimators.
+		 * (An alternative is to default to 0.5, as the optimizer does in
+		 * dealing with operators occurring in WHERE clauses, but if you
+		 * are going to the trouble of making index support you probably
+		 * don't want to miss the benefits of a good selectivity estimate.)
+		 */
+		if (!oprrest)
+			elog(ERROR,
+				 "Operator %u must have a restriction selectivity estimator to be used in a btree index",
+				 operatorObjectId);
+
+		result = (float64) fmgr(oprrest,
 								(char *) operatorObjectId,
 								(char *) indrelid,
 								(char *) (int) attributeNumber,
@@ -449,7 +463,21 @@ btreenpage(Oid operatorObjectId,
 	}
 	else
 	{
-		temp = (float64) fmgr(get_oprrest(operatorObjectId),
+		RegProcedure oprrest = get_oprrest(operatorObjectId);
+
+		/*
+		 * Operators used for indexes should have selectivity estimators.
+		 * (An alternative is to default to 0.5, as the optimizer does in
+		 * dealing with operators occurring in WHERE clauses, but if you
+		 * are going to the trouble of making index support you probably
+		 * don't want to miss the benefits of a good selectivity estimate.)
+		 */
+		if (!oprrest)
+			elog(ERROR,
+				 "Operator %u must have a restriction selectivity estimator to be used in a btree index",
+				 operatorObjectId);
+
+		temp = (float64) fmgr(oprrest,
 							  (char *) operatorObjectId,
 							  (char *) indrelid,
 							  (char *) (int) attributeNumber,
@@ -514,7 +542,21 @@ hashsel(Oid operatorObjectId,
 	}
 	else
 	{
-		result = (float64) fmgr(get_oprrest(operatorObjectId),
+		RegProcedure oprrest = get_oprrest(operatorObjectId);
+
+		/*
+		 * Operators used for indexes should have selectivity estimators.
+		 * (An alternative is to default to 0.5, as the optimizer does in
+		 * dealing with operators occurring in WHERE clauses, but if you
+		 * are going to the trouble of making index support you probably
+		 * don't want to miss the benefits of a good selectivity estimate.)
+		 */
+		if (!oprrest)
+			elog(ERROR,
+				 "Operator %u must have a restriction selectivity estimator to be used in a hash index",
+				 operatorObjectId);
+
+		result = (float64) fmgr(oprrest,
 								(char *) operatorObjectId,
 								(char *) indrelid,
 								(char *) (int) attributeNumber,
@@ -578,7 +620,21 @@ hashnpage(Oid operatorObjectId,
 	}
 	else
 	{
-		temp = (float64) fmgr(get_oprrest(operatorObjectId),
+		RegProcedure oprrest = get_oprrest(operatorObjectId);
+
+		/*
+		 * Operators used for indexes should have selectivity estimators.
+		 * (An alternative is to default to 0.5, as the optimizer does in
+		 * dealing with operators occurring in WHERE clauses, but if you
+		 * are going to the trouble of making index support you probably
+		 * don't want to miss the benefits of a good selectivity estimate.)
+		 */
+		if (!oprrest)
+			elog(ERROR,
+				 "Operator %u must have a restriction selectivity estimator to be used in a hash index",
+				 operatorObjectId);
+
+		temp = (float64) fmgr(oprrest,
 							  (char *) operatorObjectId,
 							  (char *) indrelid,
 							  (char *) (int) attributeNumber,
