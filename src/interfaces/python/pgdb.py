@@ -263,16 +263,16 @@ def _quote(x):
 		x = "'" + string.replace(
 				string.replace(str(x), '\\', '\\\\'), "'", "''") + "'"
 
-   elif type(x) in (types.IntType, types.LongType, types.FloatType):
+	elif type(x) in (types.IntType, types.LongType, types.FloatType):
 		pass
-   elif x is None:
+	elif x is None:
 		x = 'NULL'
-   elif hasattr(x, '__pg_repr__'):
+	elif hasattr(x, '__pg_repr__'):
 		x = x.__pg_repr__()
-   else:
+	else:
 		raise InterfaceError, 'do not know how to handle type %s' % type(x)
 
-   return x
+	return x
 
 def _quoteparams(s, params):
 	if hasattr(params, 'has_key'):
@@ -401,7 +401,7 @@ BINARY = pgdbType()
 INTEGER = pgdbType('int2', 'int4', 'serial')
 LONG = pgdbType('int8')
 FLOAT = pgdbType('float4', 'float8', 'numeric')
-BOOL = pgdbType('bool') 
+BOOL = pgdbType('bool')
 MONEY = pgdbType('money')
 
 # this may be problematic as type are quite different ... I hope it won't hurt
