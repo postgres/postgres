@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.14 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.15 2001/10/04 22:27:58 petere Exp $
 -->
 
  <preface id="preface">
@@ -49,22 +49,36 @@ $Header: /cvsroot/pgsql/doc/src/sgml/intro.sgml,v 1.14 2001/02/03 19:03:27 peter
     concepts in such a way that  users  can  easily
     extend the system:
 
-    <simplelist>
-     <member>inheritance</member>
-     <member>data types</member>
-     <member>functions</member>
-    </simplelist>
+    <itemizedlist>
+     <listitem>
+      <simpara>inheritance</>
+     </listitem>
+     <listitem>
+      <simpara>data types</>
+     </listitem>
+     <listitem>
+      <simpara>functions</simpara>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
     Other features provide additional power and flexibility:
 
-    <simplelist>
-     <member>constraints</member>
-     <member>triggers</member>
-     <member>rules</member>
-     <member>transaction integrity</member>
-    </simplelist>
+    <itemizedlist>
+     <listitem>
+      <simpara>constraints</simpara>
+     </listitem>
+     <listitem>
+      <simpara>triggers</simpara>
+     </listitem>
+     <listitem>
+      <simpara>rules</simpara>
+     </listitem>
+     <listitem>
+      <simpara>transaction integrity</simpara>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
