@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Dec  2 00:42:30 EST 2002
+Last updated:		Tue Dec  3 12:38:29 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -295,7 +295,8 @@ Transactions
 Exotic Features
 ===============
 
-* Add sql3 recursive unions
+* Add SQL99 WITH clause to SELECT
+* Add SQL99 WITH RECURSIVE to SELECT
 * Add the concept of dataspaces/tablespaces [tablespaces]
 * Allow queries across multiple databases [crossdb]
 * Add pre-parsing phase that converts non-ANSI features to supported features
