@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/doc/Makefile,v 1.22 2002/02/06 20:29:35 petere Exp $
+# $Header: /cvsroot/pgsql/doc/Makefile,v 1.23 2002/07/28 15:19:59 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -97,7 +97,6 @@ ifdef found_man
 endif
 
 
-clean:
+clean distclean maintainer-clean:
 	rm -rf man1/ man$(sqlmansectnum)/ man$(sqlmansect_dummy)/
-
-distclean maintainer-clean: clean
+	$(MAKE) -C src $@

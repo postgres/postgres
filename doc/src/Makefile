@@ -1,5 +1,5 @@
 # Postgres documentation makefile
-# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.28 2001/11/25 22:17:27 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/Makefile,v 1.29 2002/07/28 15:19:59 petere Exp $
 
 subdir = doc/src
 top_builddir = ../..
@@ -18,11 +18,8 @@ install:
 	$(MAKE) all
 	(mv -f *.$(ZIPSUFFIX) ..)
 
-clean:
-	$(MAKE) -C sgml clean
-
-distclean:
-	$(MAKE) -C sgml distclean
+clean distclean maintainer-clean:
+	$(MAKE) -C sgml $@
 
 all: $(TARGETS)
 
