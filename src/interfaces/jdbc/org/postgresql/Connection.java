@@ -11,7 +11,7 @@ import org.postgresql.util.*;
 import org.postgresql.core.Encoding;
 
 /**
- * $Id: Connection.java,v 1.19 2001/07/21 18:52:10 momjian Exp $
+ * $Id: Connection.java,v 1.20 2001/07/21 18:56:17 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -789,6 +789,36 @@ public abstract class Connection
     protected abstract java.sql.ResultSet getResultSet(org.postgresql.Connection conn,java.sql.Statement stat, Field[] fields, Vector tuples, String status, int updateCount,int insertOID) throws SQLException;
 
     public abstract void close() throws SQLException;
+
+    /**
+     * A sub-space of this Connection's database may be selected by
+     * setting a catalog name.  If the driver does not support catalogs,
+     * it will silently ignore this request
+     *
+     * @exception SQLException if a database access error occurs
+     */
+    public void setCatalog(String catalog) throws SQLException
+    {
+	if(catalog!=null && !catalog.equals(PG_DATABASE)) {
+	    close();
+	    Properties info=new Properties();
+	    info.setProperty("user", PG_USER);
+	    info.setProperty("password", PG_PASSWORD);
+	    openConnection(PG_HOST, PG_PORT, info, catalog, this_url, this_driver);
+	}
+    }
+
+    /**
+     * Return the connections current catalog name, or null if no
+     * catalog name is set, or we dont support catalogs.
+     *
+     * @return the current catalog name or null
+     * @exception SQLException if a database access error occurs
+     */
+    public String getCatalog() throws SQLException
+    {
+	return PG_DATABASE;
+    }
 
     /**
      * Overides finalize(). If called, it closes the connection.
