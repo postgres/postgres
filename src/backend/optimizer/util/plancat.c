@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.5 1997/04/09 01:52:04 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.6 1997/04/24 16:07:14 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -499,6 +499,8 @@ IndexSelectivity(Oid indexrelid,
     float64data	npages, select;
     float64	amopnpages, amopselect;
     Oid relam;
+    bool nphack = false;
+    float64data	fattr_select = 1.0;
 
     indRel = SearchSysCacheTuple(RELOID,
 				 ObjectIdGetDatum(indexrelid),
@@ -515,6 +517,15 @@ IndexSelectivity(Oid indexrelid,
 	elog(WARN, "IndexSelectivity: index %d not found",
 	     indexrelid);
     index = (IndexTupleForm)GETSTRUCT(indexTuple);
+    
+    /*
+     * Hack for non-functional btree npages estimation:
+     * npages = index_pages * selectivity_of_1st_attr_clause(s)
+     *		- vadim 04/24/97
+     */
+    if ( relam == BTREE_AM_OID && 
+    		varAttributeNumbers[0] != InvalidAttrNumber )
+    	nphack = true;
 
     npages = 0.0;
     select = 1.0;
@@ -556,7 +567,10 @@ IndexSelectivity(Oid indexrelid,
 	    elog(WARN, "IndexSelectivity: no amop %d %d",
 		 indclass, operatorObjectIds[n]);
 	amop = (Form_pg_amop)GETSTRUCT(amopTuple);
-	amopnpages = (float64) fmgr(amop->amopnpages,
+	
+	if ( !nphack )
+	{
+	    amopnpages = (float64) fmgr(amop->amopnpages,
 				    (char *) operatorObjectIds[n],
 				    (char *) indrelid,
 				    (char *) varAttributeNumbers[n],
@@ -573,8 +587,9 @@ IndexSelectivity(Oid indexrelid,
 	if ((i = npages) < npages) /* ceil(npages)? */
 	    npages += 1.0;
 #endif
-	npages += PointerIsValid(amopnpages) ? *amopnpages : 0.0;
-
+	    npages += PointerIsValid(amopnpages) ? *amopnpages : 0.0;
+	}
+	
 	amopselect = (float64) fmgr(amop->amopselect,
 				    (char *) operatorObjectIds[n],
 				    (char *) indrelid,
@@ -583,15 +598,27 @@ IndexSelectivity(Oid indexrelid,
 				    (char *) constFlags[n],
 				    (char *) nIndexKeys,
 				    (char *) indexrelid);
+
+	if ( nphack && varAttributeNumbers[n] == index->indkey[0] )
+	    fattr_select *= PointerIsValid(amopselect) ? *amopselect : 1.0;
+
 	select *= PointerIsValid(amopselect) ? *amopselect : 1.0;
     }
     /*
      * Estimation of npages below is hack of course, but it's
      * better than it was before.	- vadim 04/09/97
      */
-    if ( nIndexKeys > 1 )
-    	npages = npages / (1.0 + nIndexKeys);
-    *idxPages = ceil ((double)(npages/nIndexKeys));
+    if ( nphack )
+    {
+	npages = fattr_select * ((Form_pg_class)GETSTRUCT(indRel))->relpages;
+    	*idxPages = ceil ((double)npages);
+    }
+    else
+    {
+    	if ( nIndexKeys > 1 )
+    	    npages = npages / (1.0 + nIndexKeys);
+    	*idxPages = ceil ((double)(npages/nIndexKeys));
+    }
     *idxSelec = select;
 }
 
