@@ -3,7 +3,7 @@
 #include "extern.h"
 
 void
-output_line_number()
+output_line_number(void)
 {
 	if (input_filename)
 		fprintf(yyout, "\n#line %d \"%s\"\n", yylineno, input_filename);

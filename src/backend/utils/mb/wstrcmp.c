@@ -39,9 +39,7 @@
 #include "mb/pg_wchar.h"
 
 int
-pg_char_and_wchar_strcmp(s1, s2)
-register const char *s1;
-register const pg_wchar *s2;
+pg_char_and_wchar_strcmp(const char *s1, const pg_wchar *s2)
 {
 	while ((pg_wchar) *s1 == *s2++)
 		if (*s1++ == 0)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.130 2004/10/12 21:54:37 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.131 2004/10/13 01:25:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,7 +348,7 @@ SPI_execp(void *plan, Datum *Values, const char *Nulls, int tcount)
  * Passing snapshot == InvalidSnapshot will select the normal behavior of
  * fetching a new snapshot for each query.
  */
-extern int
+int
 SPI_execute_snapshot(void *plan,
 					 Datum *Values, const char *Nulls,
 					 Snapshot snapshot, Snapshot crosscheck_snapshot,
@@ -1629,13 +1629,13 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 
 
 static MemoryContext
-_SPI_execmem()
+_SPI_execmem(void)
 {
 	return MemoryContextSwitchTo(_SPI_current->execCxt);
 }
 
 static MemoryContext
-_SPI_procmem()
+_SPI_procmem(void)
 {
 	return MemoryContextSwitchTo(_SPI_current->procCxt);
 }

@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.47 2004/08/29 05:06:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.48 2004/10/13 01:25:12 neilc Exp $
  */
 #include "postgres.h"
 
@@ -574,7 +574,7 @@ SetDatabaseEncoding(int encoding)
 }
 
 void
-SetDefaultClientEncoding()
+SetDefaultClientEncoding(void)
 {
 	ClientEncoding = &pg_enc2name_tbl[GetDatabaseEncoding()];
 }

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.38 2004/09/24 05:27:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.39 2004/10/13 01:25:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,7 @@ InternalIpcMemoryCreate(IpcMemoryKey memKey, uint32 size)
 #ifdef EXEC_BACKEND
 	memAddress = shmat(shmid, UsedShmemSegAddr, 0);
 #else
-	memAddress = shmat(shmid, 0, 0);
+	memAddress = shmat(shmid, NULL, 0);
 #endif
 #endif
 

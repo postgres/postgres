@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.78 2004/08/30 02:54:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.79 2004/10/13 01:25:11 neilc Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2004, PostgreSQL Global Development Group
@@ -129,23 +129,25 @@ typedef struct
 				type;			/* prefix / postfix			*/
 } KeySuffix;
 
+typedef struct FormatNode FormatNode;
+
 typedef struct
 {
 	char	   *name;			/* keyword			*/
 	/* action for keyword		*/
 	int			len,			/* keyword length		*/
-				(*action) (),
+				(*action) (int arg, char *inout, int suf, int flag, FormatNode *node, void *data),
 				id;				/* keyword id			*/
 	bool		isitdigit;		/* is expected output/input digit */
 } KeyWord;
 
-typedef struct
+struct FormatNode
 {
 	int			type;			/* node type			*/
 	KeyWord    *key;			/* if node type is KEYWORD	*/
 	int			character,		/* if node type is CHAR		*/
 				suffix;			/* keyword suffix		*/
-} FormatNode;
+};
 
 #define NODE_TYPE_END		1
 #define NODE_TYPE_ACTION	2
