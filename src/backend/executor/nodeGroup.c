@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.12 1998/01/26 00:21:02 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.13 1998/01/27 15:41:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,11 +415,8 @@ sameGroup(TupleTableSlot *oldslot,
 
 		if (isNull1 == isNull2)
 		{
-			/* both are null, they are _not_ equal since
-			 * NULL is not equal to NULL (or anything).
-			 *   --  25 Jan 1998  --  darrenk */
-			if (isNull1)
-				return FALSE;
+			if (isNull1)		/* both are null, they are equal */
+				continue;
 
 			val1 = fmgr(typoutput, attr1,
 						gettypelem(tupdesc->attrs[att - 1]->atttypid));
