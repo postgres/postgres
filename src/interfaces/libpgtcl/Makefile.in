@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.14 1998/05/12 21:44:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.15 1998/05/24 03:48:58 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ endif
 
 ifeq ($(PORTNAME), hpux)
   install-shlib-dep := install-shlib
-  shlib := libpq.sl
+  shlib := libpgtcl.sl
   LDFLAGS_SL = -b
   CFLAGS += $(CFLAGS_SL)
 endif
