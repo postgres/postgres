@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.60 2002/04/25 20:14:43 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.61 2002/06/01 20:56:55 petere Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -44,7 +44,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.60 2002/04/25 20:14:43 tgl 
    whitespace.
   </para>
 
-  <informalexample id="sql-syntax-ex-commands">
    <para>
     For example, the following is (syntactically) valid SQL input:
 <programlisting>
@@ -56,7 +55,6 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     is not required; more than one command can be on a line, and
     commands can usefully be split across lines).
    </para>
-  </informalexample>
 
   <para>
    The SQL syntax is not very consistent regarding what tokens
@@ -328,18 +326,16 @@ SELECT 'foo'      'bar';
      characters embedded in the constant.
     </para>
 
-     <informalexample>
-      <para>
-       These are some examples of valid floating-point constants:
-       <literallayout>
+    <para>
+     These are some examples of valid floating-point constants:
+<literallayout>
 3.5
 4.
 .001
 5e2
 1.925e-3
-       </literallayout>
-      </para>
-     </informalexample>
+</literallayout>
+    </para>
 
     <para>
      Floating-point constants are of type <type>DOUBLE
@@ -347,10 +343,10 @@ SELECT 'foo'      'bar';
      by using <acronym>SQL</acronym> string notation or
      <productname>PostgreSQL</productname> type notation:
 
-      <programlisting>
+<programlisting>
 REAL '1.23'  -- string style
 '1.23'::REAL -- PostgreSQL (historical) style
-      </programlisting>
+</programlisting>
      </para>
     </sect3>
 
@@ -621,6 +617,184 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     analysis and is effectively replaced by whitespace.
    </para>
   </sect2>
+
+  <sect2 id="sql-precedence">
+   <title>Lexical Precedence</title>
+
+   <indexterm zone="sql-precedence">
+    <primary>operators</primary>
+    <secondary>precedence</secondary>
+   </indexterm>
+
+   <para>
+    The precedence and associativity of the operators is hard-wired
+    into the parser.  Most operators have the same precedence and are
+    left-associative.  This may lead to non-intuitive behavior; for
+    example the Boolean operators <literal>&lt;</> and <literal>&gt;</> have a different
+    precedence than the Boolean operators <literal>&lt;=</> and <literal>&gt;=</>.  Also,
+    you will sometimes need to add parentheses when using combinations
+    of binary and unary operators.  For instance
+<programlisting>
+SELECT 5 ! - 6;
+</programlisting>
+   will be parsed as
+<programlisting>
+SELECT 5 ! (- 6);
+</programlisting>
+    because the parser has no idea -- until it is too late -- that
+    <token>!</token> is defined as a postfix operator, not an infix one.
+    To get the desired behavior in this case, you must write
+<programlisting>
+SELECT (5 !) - 6;
+</programlisting>
+    This is the price one pays for extensibility.
+   </para>
+
+   <table tocentry="1">
+    <title>Operator Precedence (decreasing)</title>
+
+    <tgroup cols="3">
+     <thead>
+      <row>
+       <entry>Operator/Element</entry>
+       <entry>Associativity</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry><token>.</token></entry>
+       <entry>left</entry>
+       <entry>table/column name separator</entry>
+      </row>
+
+      <row>
+       <entry><token>::</token></entry>
+       <entry>left</entry>
+       <entry><productname>PostgreSQL</productname>-style typecast</entry>
+      </row>
+
+      <row>
+       <entry><token>[</token> <token>]</token></entry>
+       <entry>left</entry>
+       <entry>array element selection</entry>
+      </row>
+
+      <row>
+       <entry><token>-</token></entry>
+       <entry>right</entry>
+       <entry>unary minus</entry>
+      </row>
+
+      <row>
+       <entry><token>^</token></entry>
+       <entry>left</entry>
+       <entry>exponentiation</entry>
+      </row>
+
+      <row>
+       <entry><token>*</token> <token>/</token> <token>%</token></entry>
+       <entry>left</entry>
+       <entry>multiplication, division, modulo</entry>
+      </row>
+
+      <row>
+       <entry><token>+</token> <token>-</token></entry>
+       <entry>left</entry>
+       <entry>addition, subtraction</entry>
+      </row>
+
+      <row>
+       <entry><token>IS</token></entry>
+       <entry></entry>
+       <entry>test for TRUE, FALSE, UNKNOWN, NULL</entry>
+      </row>
+
+      <row>
+       <entry><token>ISNULL</token></entry>
+       <entry></entry>
+       <entry>test for NULL</entry>
+      </row>
+
+      <row>
+       <entry><token>NOTNULL</token></entry>
+       <entry></entry>
+       <entry>test for NOT NULL</entry>
+      </row>
+
+      <row>
+       <entry>(any other)</entry>
+       <entry>left</entry>
+       <entry>all other native and user-defined operators</entry>
+      </row>
+
+      <row>
+       <entry><token>IN</token></entry>
+       <entry></entry>
+       <entry>set membership</entry>
+      </row>
+
+      <row>
+       <entry><token>BETWEEN</token></entry>
+       <entry></entry>
+       <entry>containment</entry>
+      </row>
+
+      <row>
+       <entry><token>OVERLAPS</token></entry>
+       <entry></entry>
+       <entry>time interval overlap</entry>
+      </row>
+
+      <row>
+       <entry><token>LIKE</token> <token>ILIKE</token></entry>
+       <entry></entry>
+       <entry>string pattern matching</entry>
+      </row>
+
+      <row>
+       <entry><token>&lt;</token> <token>&gt;</token></entry>
+       <entry></entry>
+       <entry>less than, greater than</entry>
+      </row>
+
+      <row>
+       <entry><token>=</token></entry>
+       <entry>right</entry>
+       <entry>equality, assignment</entry>
+      </row>
+
+      <row>
+       <entry><token>NOT</token></entry>
+       <entry>right</entry>
+       <entry>logical negation</entry>
+      </row>
+
+      <row>
+       <entry><token>AND</token></entry>
+       <entry>left</entry>
+       <entry>logical conjunction</entry>
+      </row>
+
+      <row>
+       <entry><token>OR</token></entry>
+       <entry>left</entry>
+       <entry>logical disjunction</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <para>
+    Note that the operator precedence rules also apply to user-defined
+    operators that have the same names as the built-in operators
+    mentioned above.  For example, if you define a
+    <quote>+</quote> operator for some custom data type it will have
+    the same precedence as the built-in <quote>+</quote> operator, no
+    matter what yours does.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="sql-naming">
@@ -728,11 +902,11 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     need to write a qualified operator name in an expression, there is a
     special provision: you must write
 <synopsis>
-    <literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operator</><literal>)</>
+<literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operator</><literal>)</>
 </synopsis>
     This is needed to avoid syntactic ambiguity.  An example is
 <programlisting>
-    SELECT 3 OPERATOR(pg_catalog.+) 4;
+SELECT 3 OPERATOR(pg_catalog.+) 4;
 </programlisting>
     In practice one usually relies on the search path for operators,
     so as not to have to write anything so ugly as that.
@@ -1256,186 +1430,39 @@ FROM states;
    </para>
   </sect2>
 
+  <sect2>
+   <title>Expression Evaluation</title>
+
+   <para>
+    The order of evaluation of subexpressions is not defined.  In
+    particular, subexpressions are not necessarily evaluated
+    left-to-right, right-to-left, or according to the lexical
+    precedence rules.
+   </para>
+
+   <para>
+    Furthermore, if the result of an expression can be determined by
+    evaluating only some parts of it, then some subexpressions
+    might not be evaluated at all.  For instance, if one wrote
+<programlisting>
+SELECT true OR somefunc();
+</programlisting>
+    then <literal>somefunc()</literal> would (probably) not be called
+    at all. The same would be the case if one wrote
+<programlisting>
+SELECT somefunc() OR true;
+</programlisting>
+    Note that this is not the same as the left-to-right
+    <quote>short-circuiting</quote> of Boolean operators that is found
+    in some programming languages.
+   </para>
+
+   <para>
+    As a consequence, it is unwise to use functions with side effects
+    as part of complex expressions.
+   </para>
+  </sect2>
  </sect1>
-
-
-  <sect1 id="sql-precedence">
-   <title>Lexical Precedence</title>
-
-   <indexterm zone="sql-precedence">
-    <primary>operators</primary>
-    <secondary>precedence</secondary>
-   </indexterm>
-
-   <para>
-    The precedence and associativity of the operators is hard-wired
-    into the parser.  Most operators have the same precedence and are
-    left-associative.  This may lead to non-intuitive behavior; for
-    example the Boolean operators <literal>&lt;</> and <literal>&gt;</> have a different
-    precedence than the Boolean operators <literal>&lt;=</> and <literal>&gt;=</>.  Also,
-    you will sometimes need to add parentheses when using combinations
-    of binary and unary operators.  For instance
-<programlisting>
-SELECT 5 ! - 6;
-</programlisting>
-   will be parsed as
-<programlisting>
-SELECT 5 ! (- 6);
-</programlisting>
-    because the parser has no idea -- until it is too late -- that
-    <token>!</token> is defined as a postfix operator, not an infix one.
-    To get the desired behavior in this case, you must write
-<programlisting>
-SELECT (5 !) - 6;
-</programlisting>
-    This is the price one pays for extensibility.
-   </para>
-
-   <table tocentry="1">
-    <title>Operator Precedence (decreasing)</title>
-
-    <tgroup cols="3">
-     <thead>
-      <row>
-       <entry>Operator/Element</entry>
-       <entry>Associativity</entry>
-       <entry>Description</entry>
-      </row>
-     </thead>
-
-     <tbody>
-      <row>
-       <entry><token>.</token></entry>
-       <entry>left</entry>
-       <entry>table/column name separator</entry>
-      </row>
-
-      <row>
-       <entry><token>::</token></entry>
-       <entry>left</entry>
-       <entry><productname>PostgreSQL</productname>-style typecast</entry>
-      </row>
-
-      <row>
-       <entry><token>[</token> <token>]</token></entry>
-       <entry>left</entry>
-       <entry>array element selection</entry>
-      </row>
-
-      <row>
-       <entry><token>-</token></entry>
-       <entry>right</entry>
-       <entry>unary minus</entry>
-      </row>
-
-      <row>
-       <entry><token>^</token></entry>
-       <entry>left</entry>
-       <entry>exponentiation</entry>
-      </row>
-
-      <row>
-       <entry><token>*</token> <token>/</token> <token>%</token></entry>
-       <entry>left</entry>
-       <entry>multiplication, division, modulo</entry>
-      </row>
-
-      <row>
-       <entry><token>+</token> <token>-</token></entry>
-       <entry>left</entry>
-       <entry>addition, subtraction</entry>
-      </row>
-
-      <row>
-       <entry><token>IS</token></entry>
-       <entry></entry>
-       <entry>test for TRUE, FALSE, UNKNOWN, NULL</entry>
-      </row>
-
-      <row>
-       <entry><token>ISNULL</token></entry>
-       <entry></entry>
-       <entry>test for NULL</entry>
-      </row>
-
-      <row>
-       <entry><token>NOTNULL</token></entry>
-       <entry></entry>
-       <entry>test for NOT NULL</entry>
-      </row>
-
-      <row>
-       <entry>(any other)</entry>
-       <entry>left</entry>
-       <entry>all other native and user-defined operators</entry>
-      </row>
-
-      <row>
-       <entry><token>IN</token></entry>
-       <entry></entry>
-       <entry>set membership</entry>
-      </row>
-
-      <row>
-       <entry><token>BETWEEN</token></entry>
-       <entry></entry>
-       <entry>containment</entry>
-      </row>
-
-      <row>
-       <entry><token>OVERLAPS</token></entry>
-       <entry></entry>
-       <entry>time interval overlap</entry>
-      </row>
-
-      <row>
-       <entry><token>LIKE</token> <token>ILIKE</token></entry>
-       <entry></entry>
-       <entry>string pattern matching</entry>
-      </row>
-
-      <row>
-       <entry><token>&lt;</token> <token>&gt;</token></entry>
-       <entry></entry>
-       <entry>less than, greater than</entry>
-      </row>
-
-      <row>
-       <entry><token>=</token></entry>
-       <entry>right</entry>
-       <entry>equality, assignment</entry>
-      </row>
-
-      <row>
-       <entry><token>NOT</token></entry>
-       <entry>right</entry>
-       <entry>logical negation</entry>
-      </row>
-
-      <row>
-       <entry><token>AND</token></entry>
-       <entry>left</entry>
-       <entry>logical conjunction</entry>
-      </row>
-
-      <row>
-       <entry><token>OR</token></entry>
-       <entry>left</entry>
-       <entry>logical disjunction</entry>
-      </row>
-     </tbody>
-    </tgroup>
-   </table>
-
-   <para>
-    Note that the operator precedence rules also apply to user-defined
-    operators that have the same names as the built-in operators
-    mentioned above.  For example, if you define a
-    <quote>+</quote> operator for some custom data type it will have
-    the same precedence as the built-in <quote>+</quote> operator, no
-    matter what yours does.
-   </para>
-  </sect1>
 
 </chapter>
 
