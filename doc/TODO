@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun 20 12:54:59 EDT 2002
+Last updated:		Fri Jun 21 16:12:54 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -165,7 +165,7 @@ Indexes
 * Add FILLFACTOR to btree index creation
 * Improve concurrency in GIST
 * Improve concurrency of hash indexes (Neil Conway)
-* Test hash index performance and recommend or discourage usage
+* -Test hash index performance and discourage usage
 
 Commands
 ========
