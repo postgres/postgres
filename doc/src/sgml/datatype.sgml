@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.56 2001/06/18 19:05:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.57 2001/08/07 22:41:49 petere Exp $
 -->
 
  <chapter id="datatype">
@@ -552,28 +552,24 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
 
     <table tocentry="1">
      <title>Character Types</title>
-     <tgroup cols="3">
+     <tgroup cols="2">
       <thead>
        <row>
-	<entry>Type Name</entry>
-	<entry>Storage</entry>
+	<entry>Type name</entry>
 	<entry>Description</entry>
        </row>
       </thead>
       <tbody>
        <row>
-	<entry>character(n), char(n)</entry>
-	<entry>(4+n) bytes</entry>
+	<entry>character(<replaceable>n</>), char(<replaceable>n</>)</entry>
 	<entry>Fixed-length blank padded</entry>
        </row>
        <row>
-	<entry>character varying(n), varchar(n)</entry>
-	<entry>(4+n) bytes</entry>
+	<entry>character varying(<replaceable>n</>), varchar(<replaceable>n</>)</entry>
 	<entry>Variable-length with limit</entry>
        </row>
        <row>
 	<entry>text</entry>
-	<entry>(4+n) bytes</entry>
 	<entry>Variable unlimited length</entry>
        </row>
       </tbody>
@@ -624,9 +620,15 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
    </para>
 
    <para>
-    Refer to <xref linkend="sql-syntax-strings"> for information about
-    the syntax of string literals, and to <xref linkend="functions">
-    for information about available operators and functions.
+    The storage requirement for data of these types is 4 bytes plus
+    the actual string, and in case of <type>character</type> plus the
+    padding.  Long strings will actually be compressed by the system
+    automatically.  In any case, the longest possible character string
+    that can be stored is about 1 GB.  (The maximum value that will be
+    allowed for <replaceable>n</> in the data type declaration is
+    actually larger than that.  It wouldn't be very useful to change
+    this because with multi-byte character encodings the number of
+    characters and bytes can be quite different anyway.)
    </para>
 
    <tip>
@@ -636,6 +638,12 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
      type.
     </para>
    </tip>
+
+   <para>
+    Refer to <xref linkend="sql-syntax-strings"> for information about
+    the syntax of string literals, and to <xref linkend="functions">
+    for information about available operators and functions.
+   </para>
 
    <example>
     <title>Using the character types</title>
