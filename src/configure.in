@@ -17,6 +17,7 @@ case "$host_os" in
 	   i386) os=solaris_i386 need_tas=yes tas_file=solaris_i386.s ;;
 	esac ;;
    sunos*) os=sunos4 need_tas=no ;;
+     beos) os=beos need_tas=no ;;
      aux*) os=aux need_tas=no ;;
    linux*) os=linux need_tas=no ;;
     bsdi*) os=bsdi need_tas=no ;;
