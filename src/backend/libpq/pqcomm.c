@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.153 2003/05/15 16:35:28 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.154 2003/05/29 19:15:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,9 +149,17 @@ pq_close(void)
 {
 	if (MyProcPort != NULL)
 	{
+		/* Cleanly shut down SSL layer */
 		secure_close(MyProcPort);
-		closesocket(MyProcPort->sock);
-		/* make sure any subsequent attempts to do I/O fail cleanly */
+		/*
+		 * Formerly we did an explicit close() here, but it seems better
+		 * to leave the socket open until the process dies.  This allows
+		 * clients to perform a "synchronous close" if they care --- wait
+		 * till the transport layer reports connection closure, and you
+		 * can be sure the backend has exited.
+		 *
+		 * We do set sock to -1 to prevent any further I/O, though.
+		 */
 		MyProcPort->sock = -1;
 	}
 }
@@ -470,6 +478,13 @@ StreamConnection(int server_fd, Port *port)
 
 /*
  * StreamClose -- close a client/backend connection
+ *
+ * NOTE: this is NOT used to terminate a session; it is just used to release
+ * the file descriptor in a process that should no longer have the socket
+ * open.  (For example, the postmaster calls this after passing ownership
+ * of the connection to a child process.)  It is expected that someone else
+ * still has the socket open.  So, we only want to close the descriptor,
+ * we do NOT want to send anything to the far end.
  */
 void
 StreamClose(int sock)
