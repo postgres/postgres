@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.30 2001/01/24 19:42:57 momjian Exp $
+ * $Id: geqo_misc.c,v 1.31 2001/05/08 17:25:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,9 +242,9 @@ geqo_print_rel(Query *root, RelOptInfo *rel)
 	foreach(l, rel->pathlist)
 		geqo_print_path(root, lfirst(l), 1);
 
-	printf("\tcheapest startup path:\n");
+	printf("\n\tcheapest startup path:\n");
 	geqo_print_path(root, rel->cheapest_startup_path, 1);
 
-	printf("\tcheapest total path:\n");
+	printf("\n\tcheapest total path:\n");
 	geqo_print_path(root, rel->cheapest_total_path, 1);
 }

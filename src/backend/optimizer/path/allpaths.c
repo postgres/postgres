@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.72 2001/03/22 03:59:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.73 2001/05/08 17:25:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,9 +617,9 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 	printf("\tpath list:\n");
 	foreach(l, rel->pathlist)
 		print_path(root, lfirst(l), 1);
-	printf("\tcheapest startup path:\n");
+	printf("\n\tcheapest startup path:\n");
 	print_path(root, rel->cheapest_startup_path, 1);
-	printf("\tcheapest total path:\n");
+	printf("\n\tcheapest total path:\n");
 	print_path(root, rel->cheapest_total_path, 1);
 }
 
