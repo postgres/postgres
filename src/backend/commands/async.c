@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.8 1996/12/07 04:36:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.9 1996/12/19 04:54:56 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,13 +117,17 @@ Async_NotifyHandler(SIGNAL_ARGS)
     if ((CurrentTransactionState->state == TRANS_DEFAULT) &&
 	(CurrentTransactionState->blockState == TRANS_DEFAULT)) {
 
+#ifdef ASYNC_DEBUG
 	elog(DEBUG, "Waking up sleeping backend process");
+#endif
 	Async_NotifyFrontEnd();
 
     }else {
+#ifdef ASYNC_DEBUG
 	elog(DEBUG, "Process is in the middle of another transaction, state = %d, block state = %d",
 	     CurrentTransactionState->state,
 	     CurrentTransactionState->blockState);
+#endif
 	notifyFrontEndPending = 1;
     }
 }
@@ -167,7 +171,9 @@ Async_Notify(char *relname)
     
     char *notifyName;
     
+#ifdef ASYNC_DEBUG
     elog(DEBUG,"Async_Notify: %s",relname);
+#endif
     
     if (!pendingNotifies) 
       pendingNotifies = DLNewList();
@@ -249,7 +255,9 @@ Async_NotifyAtCommit()
 	if (notifyIssued) {		/* 'notify <relname>' issued by us */
 	    notifyIssued = 0;
 	    StartTransactionCommand();
+#ifdef ASYNC_DEBUG
 	    elog(DEBUG, "Async_NotifyAtCommit.");
+#endif
 	    ScanKeyEntryInitialize(&key, 0,
 				   Anum_pg_listener_notify,
 				   Integer32EqualRegProcedure,
@@ -268,10 +276,14 @@ Async_NotifyAtCommit()
 					     tdesc, &isnull);
 		    
 		    if (ourpid == DatumGetInt32(d)) {
+#ifdef ASYNC_DEBUG
 			elog(DEBUG, "Notifying self, setting notifyFronEndPending to 1");
+#endif
 			notifyFrontEndPending = 1;
 		    } else {
+#ifdef ASYNC_DEBUG
 			elog(DEBUG, "Notifying others");
+#endif
 #ifndef win32
 			if (kill(DatumGetInt32(d), SIGUSR2) < 0) {
 			    if (errno == ESRCH) {
@@ -373,7 +385,9 @@ Async_Listen(char *relname, int pid)
     char *relnamei;
     TupleDesc tupDesc;
     
+#ifdef ASYNC_DEBUG
     elog(DEBUG,"Async_Listen: %s",relname);
+#endif
     for (i = 0 ; i < Natts_pg_listener; i++) {
         nulls[i] = ' ';
         values[i] = PointerGetDatum(NULL);
@@ -514,7 +528,9 @@ Async_NotifyFrontEnd()
     
     notifyFrontEndPending = 0;
     
+#ifdef ASYNC_DEBUG
     elog(DEBUG, "Async_NotifyFrontEnd: notifying front end.");
+#endif
     
     StartTransactionCommand();
     ourpid = getpid();
