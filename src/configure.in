@@ -229,6 +229,7 @@ else
 	USE_TCL=
 fi
 export USE_TCL
+USE_X=$USE_TCL
 
 dnl We exclude perl support unless we override it with --with-perl
 if test "X$with_perl" = "Xyes"
@@ -514,5 +515,131 @@ fi
 AC_MSG_CHECKING(setting DEF_PGPORT)
 AC_DEFINE_UNQUOTED(DEF_PGPORT, "${DEF_PGPORT}")
 AC_MSG_RESULT($DEF_PGPORT)
+
+dnl Check for X libraries
+
+if test "$USE_X" = true; then
+
+ice_save_LIBS="$LIBS"
+ice_save_CFLAGS="$CFLAGS"
+ice_save_CPPFLAGS="$CPPFLAGS"
+ice_save_LDFLAGS="$LDFLAGS"
+
+AC_PATH_XTRA
+
+LIBS="$LIBS $X_EXTRA_LIBS"
+CFLAGS="$CFLAGS $X_CFLAGS"
+CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+LDFLAGS="$LDFLAGS $X_LIBS"
+
+dnl Check for X library
+
+X11_LIBS=""
+AC_CHECK_LIB(X11, XOpenDisplay, X11_LIBS="-lX11",,${X_PRE_LIBS})
+if test "$X11_LIBS" = ""; then
+dnl Not having X may be fatal.  Let the user fix this.
+AC_MSG_WARN([The X11 library '-lX11' could not be found.
+                    Please use the configure options '--x-includes=DIR'
+                    and '--x-libraries=DIR' to specify the X location.
+                    See the file 'config.log' for further diagnostics.])
+fi
+AC_SUBST(X_LIBS)
+AC_SUBST(X11_LIBS)
+AC_SUBST(X_PRE_LIBS)
+
+LIBS="$ice_save_LIBS"
+CFLAGS="$ice_save_CFLAGS"
+CPPFLAGS="$ice_save_CPPFLAGS"
+LDFLAGS="$ice_save_LDFLAGS"
+fi
+
+dnl Check for location of Tcl support
+dnl Disable Tcl support if not found
+
+dnl Check for tcl.h
+if test "$USE_TCL" = "true"
+then
+TCL_INCDIR=no
+AC_CHECK_HEADER(tcl.h, TCL_INCDIR=)
+for f in /usr/include /usr/include/tcl8.0 /usr/local/include /usr/local/include/tcl8.0; do
+if test "$TCL_INCDIR" = "no"; then
+AC_CHECK_HEADER($f/tcl.h, TCL_INCDIR=$f)
+fi
+done
+if test "$TCL_INCDIR" = "no"; then
+AC_MSG_WARN(tcl support disabled; tcl.h missing)
+USE_TCL=
+fi
+AC_SUBST(TCL_INCDIR)
+fi
+
+dnl Check for Tcl archive
+if test "$USE_TCL" = "true"
+then
+TCL_LIB=
+for f in tcl8.0 tcl80; do
+if test -z "$TCL_LIB"; then
+AC_CHECK_LIB($f, main, TCL_LIB=$f)
+fi
+done
+if test -z "$TCL_LIB"; then
+AC_MSG_WARN(tcl support disabled; Tcl library missing)
+USE_TCL=
+else
+TCL_LIB=-l$TCL_LIB
+fi
+AC_SUBST(TCL_LIB)
+fi
+
+dnl Check for location of Tk support (only if Tcl used)
+dnl Disable Tcl support if Tk not found
+
+dnl Check for tk.h
+if test "$USE_TCL" = "true"
+then
+
+ice_save_LIBS="$LIBS"
+ice_save_CFLAGS="$CFLAGS"
+ice_save_CPPFLAGS="$CPPFLAGS"
+ice_save_LDFLAGS="$LDFLAGS"
+
+CPPFLAGS="$CPPFLAGS $X_CFLAGS -I$TCL_INCDIR"
+
+TK_INCDIR=no
+AC_CHECK_HEADER(tk.h, TK_INCDIR=)
+for f in /usr/include /usr/include/tk8.0 /usr/local/include /usr/local/include/tk8.0; do
+if test "$TK_INCDIR" = "no"; then
+AC_CHECK_HEADER($f/tk.h, TK_INCDIR=$f)
+fi
+done
+if test "$TK_INCDIR" = "no"; then
+AC_MSG_WARN(tcl support disabled; tk.h missing)
+USE_TCL=
+fi
+AC_SUBST(TK_INCDIR)
+
+LIBS="$ice_save_LIBS"
+CFLAGS="$ice_save_CFLAGS"
+CPPFLAGS="$ice_save_CPPFLAGS"
+LDFLAGS="$ice_save_LDFLAGS"
+fi
+
+dnl Check for Tk archive
+if test "$USE_TCL" = "true"
+then
+TK_LIB=
+for f in tk8.0 tk80; do
+if test -z "$TK_LIB"; then
+AC_CHECK_LIB($f, main, TK_LIB=$f)
+fi
+done
+if test -z "$TK_LIB"; then
+AC_MSG_WARN(tcl support disabled; Tk library missing)
+USE_TCL=
+else
+TK_LIB=-l$TK_LIB
+fi
+AC_SUBST(TK_LIB)
+fi
 
 AC_OUTPUT(GNUmakefile Makefile.global backend/port/Makefile bin/pg_version/Makefile bin/psql/Makefile bin/pg_dump/Makefile backend/utils/Gen_fmgrtab.sh interfaces/libpq/Makefile interfaces/libpgtcl/Makefile interfaces/ecpg/lib/Makefile ) 

@@ -7,7 +7,7 @@
 for file in `cat "$@" | grep 'failed$' | cut -d " " -f 1`
 do
 	echo "======   $file   ======"
-	diff -w expected/$file.out results
+	diff -uw expected/$file.out results
 done
 
 

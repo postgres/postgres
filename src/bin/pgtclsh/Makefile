@@ -7,14 +7,14 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.10 1998/01/25 04:14:23 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.11 1998/02/22 20:02:28 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
 
-CFLAGS+=  -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(X11_INCDIR) -I$(SRCDIR)/interfaces/libpgtcl
+CFLAGS+=  $(X_CFLAGS) -I$(TCL_INCDIR) -I$(TK_INCDIR) -I$(SRCDIR)/interfaces/libpgtcl
 
 ifdef KRBVERS
 LDFLAGS+= $(KRBLIBS)
@@ -33,8 +33,8 @@ pgtclsh: pgtclAppInit.o
 
 pgtksh: pgtkAppInit.o
 	$(CC) $(CFLAGS) -o $@ pgtkAppInit.o \
-	  $(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) -L$(TK_LIBDIR) -L$(X11_LIBDIR) \
-	  $(TK_LIB) $(TCL_LIB) -lX11 -lm $(LDFLAGS)
+	  $(LIBPGTCL) $(LIBPQ) -L$(TCL_LIBDIR) -L$(TK_LIBDIR) $(X_LIBS) \
+	  $(TK_LIB) $(TCL_LIB) $(X11_LIBS) -lm $(LDFLAGS)
 
 install: pgtclsh pgtksh
 	$(INSTALL) $(INSTL_EXE_OPTS) pgtclsh $(DESTDIR)$(BINDIR)/pgtclsh
