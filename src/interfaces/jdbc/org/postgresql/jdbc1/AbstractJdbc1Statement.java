@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41 2003/10/29 02:39:09 davec Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.41.2.1 2003/12/12 00:27:41 davec Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1478,6 +1478,11 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 			if (l_bytesRead == length)
 			{
 				setBytes(parameterIndex, l_bytes);
+			}
+			// x.read will return -1 not 0 on an empty InputStream
+			else if (l_bytesRead == -1)
+			{
+				setBytes(parameterIndex, new byte[0]);
 			}
 			else
 			{
