@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.8 1997/08/06 05:38:38 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.9 1997/08/06 07:02:48 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -123,7 +123,7 @@ psort_begin(Sort *node, int nkeys, ScanKey key)
     PS(node)->BytesRead = 0;
     PS(node)->BytesWritten = 0;
     PS(node)->treeContext.tupDesc =
-    ExecGetTupType(outerPlan((Plan *)node));
+	ExecGetTupType(outerPlan((Plan *)node));
     PS(node)->treeContext.nKeys = nkeys;
     PS(node)->treeContext.scanKeys = key;
     PS(node)->treeContext.sortMem = SortMem * 1024;
@@ -276,7 +276,7 @@ initialrun(Sort *node, bool *empty)
 
     tp = PS(node)->Tape;
     
-    if ((bool)createrun(node, tp->tp_file, empty) != false) {
+    if ((bool)createrun(node, NULL, empty) != false) {
 	if (! PS(node)->using_tape_files)
 	    inittapes(node);
 	extrapasses = 0;
@@ -307,7 +307,7 @@ initialrun(Sort *node, bool *empty)
 	}					/* D3 */
 	if (extrapasses)
 	    if (--extrapasses) {
-		dumptuples(node);
+		dumptuples(tp->tp_file, node);
 		ENDRUN(tp->tp_file);
 		continue;
 	    } else
@@ -360,9 +360,11 @@ createrun(Sort *node, FILE *file, bool *empty)
 	    }
 	    lasttuple = tup = gettuple(&PS(node)->Tuples, &junk,
 				       &PS(node)->treeContext);
-	    if (! PS(node)->using_tape_files)
+	    if (! PS(node)->using_tape_files) {
 		inittapes(node);
-	    PUTTUP(node, tup, PS(node)->Tape->tp_file);
+		file = PS(node)->Tape->tp_file; /* was NULL */
+	    }
+	    PUTTUP(node, tup, file);
 	    TRACEOUT(createrun, tup);
 	}
 	if (LACKMEM(node))
@@ -400,7 +402,7 @@ createrun(Sort *node, FILE *file, bool *empty)
 	FREE(lasttuple);
 	TRACEMEM(createrun);
     }
-    dumptuples(node);
+    dumptuples(file, node);
     if (PS(node)->using_tape_files)
 	ENDRUN(file);
     /* delimit the end of the run */
@@ -561,7 +563,7 @@ merge(Sort *node, struct tape *dest)
  * dumptuples	- stores all the tuples in tree into file
  */
 void
-dumptuples(Sort *node)
+dumptuples(FILE *file, Sort *node)
 {
     register struct	leftist	*tp;
     register struct	leftist	*newp;

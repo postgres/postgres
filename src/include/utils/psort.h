@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.5 1997/08/06 05:38:46 momjian Exp $
+ * $Id: psort.h,v 1.6 1997/08/06 07:02:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ extern HeapTuple tuplecopy(HeapTuple tup);
 extern FILE *mergeruns(Sort *node);
 extern void merge(Sort *node, struct tape *dest);
 
-extern void dumptuples(Sort *node);
+extern void dumptuples(FILE *file, Sort *node);
 extern HeapTuple psort_grabtuple(Sort *node);
 extern void psort_markpos(Sort *node);
 extern void psort_restorepos(Sort *node);
