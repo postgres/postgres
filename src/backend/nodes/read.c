@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.18 1999/07/17 20:17:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.19 2000/01/14 00:53:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -19,6 +19,7 @@
 #include <ctype.h>
 
 #include "postgres.h"
+
 #include "nodes/pg_list.h"
 #include "nodes/readfuncs.h"
 
@@ -43,6 +44,134 @@ stringToNode(char *str)
  *
  *****************************************************************************/
 
+/*
+ * lsptok --- retrieve next "token" from a string.
+ *
+ * Works kinda like strtok, except it never modifies the source string.
+ * (Instead of storing nulls into the string, the length of the token
+ * is returned to the caller.)
+ * Also, the rules about what is a token are hard-wired rather than being
+ * configured by passing a set of terminating characters.
+ *
+ * The string is initially set by passing a non-NULL "string" value,
+ * and subsequent calls with string==NULL read the previously given value.
+ * (Pass length==NULL to set the string without reading its first token.)
+ *
+ * The rules for tokens are:
+ *  * Whitespace (space, tab, newline) always separates tokens.
+ *  * The characters '(', ')', '{', '}' form individual tokens even
+ *    without any whitespace around them.
+ *  * Otherwise, a token is all the characters up to the next whitespace
+ *    or occurrence of one of the four special characters.
+ *  * A backslash '\' can be used to quote whitespace or one of the four
+ *    special characters, so that it is treated as a plain token character.
+ *    Backslashes themselves must also be backslashed for consistency.
+ *    Any other character can be, but need not be, backslashed as well.
+ *  * If the resulting token is '<>' (with no backslash), it is returned
+ *    as a non-NULL pointer to the token but with length == 0.  Note that
+ *    there is no other way to get a zero-length token.
+ *
+ * Returns a pointer to the start of the next token, and the length of the
+ * token (including any embedded backslashes!) in *length.  If there are
+ * no more tokens, NULL and 0 are returned.
+ *
+ * NOTE: this routine doesn't remove backslashes; the caller must do so
+ * if necessary (see "debackslash").
+ *
+ * NOTE: prior to release 7.0, this routine also had a special case to treat
+ * a token starting with '"' as extending to the next '"'.  This code was
+ * broken, however, since it would fail to cope with a string containing an
+ * embedded '"'.  I have therefore removed this special case, and instead
+ * introduced rules for using backslashes to quote characters.  Higher-level
+ * code should add backslashes to a string constant to ensure it is treated
+ * as a single token.
+ */
+char *
+lsptok(char *string, int *length)
+{
+	static char *saved_str = NULL;
+	char	   *local_str;		/* working pointer to string */
+	char	   *ret_str;		/* start of token to return */
+
+	if (string != NULL)
+	{
+		saved_str = string;
+		if (length == NULL)
+			return NULL;
+	}
+
+	local_str = saved_str;
+
+	while (*local_str == ' ' || *local_str == '\n' || *local_str == '\t')
+		local_str++;
+
+	if (*local_str == '\0')
+	{
+		*length = 0;
+		saved_str = local_str;
+		return NULL;			/* no more tokens */
+	}
+
+	/*
+	 * Now pointing at start of next token.
+	 */
+	ret_str = local_str;
+
+	if (*local_str == '(' || *local_str == ')' ||
+		*local_str == '{' || *local_str == '}')
+	{
+		/* special 1-character token */
+		local_str++;
+	}
+	else
+	{
+		/* Normal token, possibly containing backslashes */
+		while (*local_str != '\0' &&
+			   *local_str != ' ' && *local_str != '\n' &&
+			   *local_str != '\t' &&
+			   *local_str != '(' && *local_str != ')' &&
+			   *local_str != '{' && *local_str != '}')
+		{
+			if (*local_str == '\\' && local_str[1] != '\0')
+				local_str += 2;
+			else
+				local_str++;
+		}
+	}
+
+	*length = local_str - ret_str;
+
+	/* Recognize special case for "empty" token */
+	if (*length == 2 && ret_str[0] == '<' && ret_str[1] == '>')
+		*length = 0;
+
+	saved_str = local_str;
+
+	return ret_str;
+}
+
+/*
+ * debackslash -
+ *	  create a palloc'd string holding the given token.
+ *	  any protective backslashes in the token are removed.
+ */
+char *
+debackslash(char *token, int length)
+{
+	char   *result = palloc(length+1);
+	char   *ptr = result;
+
+	while (length > 0)
+	{
+		if (*token == '\\' && length > 1)
+			token++, length--;
+		*ptr++ = *token++;
+		length--;
+	}
+	*ptr = '\0';
+	return result;
+}
+
 #define RIGHT_PAREN (1000000 + 1)
 #define LEFT_PAREN	(1000000 + 2)
 #define PLAN_SYM	(1000000 + 3)
@@ -62,127 +191,72 @@ stringToNode(char *str)
 static NodeTag
 nodeTokenType(char *token, int length)
 {
-	NodeTag		retval = 0;
+	NodeTag		retval;
 
 	/*
 	 * Check if the token is a number (decimal or integer, positive or
-	 * negative
+	 * negative)
 	 */
 	if (isdigit(*token) ||
-		(length >= 2 && *token == '-' && isdigit(*(token + 1))))
+		(length >= 2 && *token == '-' && isdigit(token[1])))
 	{
-
 		/*
 		 * skip the optional '-' (i.e. negative number)
 		 */
 		if (*token == '-')
-			token++;
+			token++, length--;
 
 		/*
 		 * See if there is a decimal point
 		 */
-
-		for (; length && *token != '.'; token++, length--);
+		while (length > 0 && *token != '.')
+			token++, length--;
 
 		/*
 		 * if there isn't, token's an int, otherwise it's a float.
 		 */
-
 		retval = (*token != '.') ? T_Integer : T_Float;
 	}
-	else if (isalpha(*token) || *token == '_' ||
-			 (token[0] == '<' && token[1] == '>'))
-		retval = ATOM_TOKEN;
+	/*
+	 * these three cases do not need length checks, since lsptok()
+	 * will always treat them as single-byte tokens
+	 */
 	else if (*token == '(')
 		retval = LEFT_PAREN;
 	else if (*token == ')')
 		retval = RIGHT_PAREN;
-	else if (*token == '@')
-		retval = AT_SYMBOL;
-	else if (*token == '\"')
-		retval = T_String;
 	else if (*token == '{')
 		retval = PLAN_SYM;
+	else if (*token == '@' && length == 1)
+		retval = AT_SYMBOL;
+	else if (*token == '\"' && length > 1 && token[length-1] == '\"')
+		retval = T_String;
+	else
+		retval = ATOM_TOKEN;
 	return retval;
 }
 
 /*
- * Works kinda like strtok, except it doesn't put nulls into string.
+ * nodeRead -
+ *	  Slightly higher-level reader.
  *
- * Returns the length in length instead.  The string can be set without
- * returning a token by calling lsptok with length == NULL.
+ * This routine applies some semantic knowledge on top of the purely
+ * lexical tokenizer lsptok().  It can read
+ *	* Value token nodes (integers, floats, or strings);
+ *  * Plan nodes (via parsePlanString() from readfuncs.c);
+ *  * Lists of the above.
  *
- */
-char *
-lsptok(char *string, int *length)
-{
-	static char *local_str;
-	char	   *ret_string;
-
-	if (string != NULL)
-	{
-		local_str = string;
-		if (length == NULL)
-			return NULL;
-	}
-
-	for (; *local_str == ' '
-		 || *local_str == '\n'
-		 || *local_str == '\t'; local_str++);
-
-	/*
-	 * Now pointing at next token.
-	 */
-	ret_string = local_str;
-	if (*local_str == '\0')
-		return NULL;
-	*length = 1;
-
-	if (*local_str == '"')
-	{
-		for (local_str++; *local_str != '"'; (*length)++, local_str++)
-			;
-		(*length)++;
-		local_str++;
-	}
-	/* NULL */
-	else if (local_str[0] == '<' && local_str[1] == '>')
-	{
-		*length = 0;
-		local_str += 2;
-	}
-	else if (*local_str == ')' || *local_str == '(' ||
-			 *local_str == '}' || *local_str == '{')
-		local_str++;
-	else
-	{
-		for (; *local_str != ' '
-			 && *local_str != '\n'
-			 && *local_str != '\t'
-			 && *local_str != '{'
-			 && *local_str != '}'
-			 && *local_str != '('
-			 && *local_str != ')'; local_str++, (*length)++);
-		(*length)--;
-	}
-	return ret_string;
-}
-
-/*
- * This guy does all the reading.
- *
- * Secrets:  He assumes that lsptok already has the string (see below).
+ * Secrets:  He assumes that lsptok already has the string (see above).
  * Any callers should set read_car_only to true.
  */
 void *
 nodeRead(bool read_car_only)
 {
 	char	   *token;
-	NodeTag		type;
-	Node	   *this_value = NULL,
-			   *return_value = NULL;
 	int			tok_len;
-	char		tmp;
+	NodeTag		type;
+	Node	   *this_value,
+			   *return_value;
 	bool		make_dotted_pair_cell = false;
 
 	token = lsptok(NULL, &tok_len);
@@ -198,8 +272,7 @@ nodeRead(bool read_car_only)
 			this_value = parsePlanString();
 			token = lsptok(NULL, &tok_len);
 			if (token[0] != '}')
-				return NULL;
-
+				elog(ERROR, "nodeRead: did not find '}' at end of plan node");
 			if (!read_car_only)
 				make_dotted_pair_cell = true;
 			else
@@ -221,12 +294,13 @@ nodeRead(bool read_car_only)
 			this_value = NULL;
 			break;
 		case AT_SYMBOL:
+			this_value = NULL;
 			break;
 		case ATOM_TOKEN:
-			if (!strncmp(token, "<>", 2))
+			if (tok_len == 0)
 			{
+				/* must be "<>" */
 				this_value = NULL;
-
 				/*
 				 * It might be NULL but it is an atom!
 				 */
@@ -237,39 +311,28 @@ nodeRead(bool read_car_only)
 			}
 			else
 			{
-				tmp = token[tok_len];
-				token[tok_len] = '\0';
-				this_value = (Node *) pstrdup(token);	/* !attention! not a
-														 * Node. use with
-														 * caution */
-				token[tok_len] = tmp;
+				/* !attention! result is not a Node.  Use with caution. */
+				this_value = (Node *) debackslash(token, tok_len);
 				make_dotted_pair_cell = true;
 			}
 			break;
 		case T_Float:
-			tmp = token[tok_len];
-			token[tok_len] = '\0';
+			/* we know that the token terminates on a char atof will stop at */
 			this_value = (Node *) makeFloat(atof(token));
-			token[tok_len] = tmp;
 			make_dotted_pair_cell = true;
 			break;
 		case T_Integer:
-			tmp = token[tok_len];
-			token[tok_len] = '\0';
+			/* we know that the token terminates on a char atoi will stop at */
 			this_value = (Node *) makeInteger(atoi(token));
-			token[tok_len] = tmp;
 			make_dotted_pair_cell = true;
 			break;
 		case T_String:
-			tmp = token[tok_len - 1];
-			token[tok_len - 1] = '\0';
-			token++;
-			this_value = (Node *) makeString(token);	/* !! not strdup'd */
-			token[tok_len - 2] = tmp;
+			this_value = (Node *) makeString(debackslash(token+1, tok_len-2));
 			make_dotted_pair_cell = true;
 			break;
 		default:
 			elog(ERROR, "nodeRead: Bad type %d", type);
+			this_value = NULL;	/* keep compiler happy */
 			break;
 	}
 	if (make_dotted_pair_cell)

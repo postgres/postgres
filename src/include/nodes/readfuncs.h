@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: readfuncs.h,v 1.7 1999/02/13 23:21:41 momjian Exp $
+ * $Id: readfuncs.h,v 1.8 2000/01/14 00:53:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
  * prototypes for functions in read.c (the lisp token parser)
  */
 extern char *lsptok(char *string, int *length);
+extern char *debackslash(char *token, int length);
 extern void *nodeRead(bool read_car_only);
 
 /*

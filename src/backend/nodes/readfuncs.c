@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.77 2000/01/09 00:26:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.78 2000/01/14 00:53:21 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -25,8 +25,6 @@
 #include <math.h>
 
 #include "postgres.h"
-
-
 
 #include "catalog/pg_index.h"
 #include "nodes/plannodes.h"
@@ -81,8 +79,7 @@ _readQuery()
 	{
 		NotifyStmt *n = makeNode(NotifyStmt);
 
-		n->relname = palloc(length + 1);
-		StrNCpy(n->relname, token, length + 1);
+		n->relname = debackslash(token, length);
 		local_node->utilityStmt = (Node *) n;
 	}
 
@@ -95,10 +92,7 @@ _readQuery()
 	if (length == 0)
 		local_node->into = NULL;
 	else
-	{
-		local_node->into = palloc(length + 1);
-		StrNCpy(local_node->into, token, length + 1);
-	}
+		local_node->into = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* skip :isPortal */
 	token = lsptok(NULL, &length);		/* get isPortal */
@@ -121,10 +115,7 @@ _readQuery()
 	if (length == 0)
 		local_node->uniqueFlag = NULL;
 	else
-	{
-		local_node->uniqueFlag = palloc(length + 1);
-		StrNCpy(local_node->uniqueFlag, token, length + 1);
-	}
+		local_node->uniqueFlag = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* skip :sortClause */
 	local_node->sortClause = nodeRead(true);
@@ -289,9 +280,6 @@ _readPlan()
 
 /* ----------------
  *		_readResult
- *
- *		Does some obscene, possibly unportable, magic with
- *		sizes of things.
  * ----------------
  */
 static Result *
@@ -718,14 +706,10 @@ _readResdom()
 
 	token = lsptok(NULL, &length);		/* eat :resname */
 	token = lsptok(NULL, &length);		/* get the name */
-
 	if (length == 0)
 		local_node->resname = NULL;
 	else
-	{
-		local_node->resname = (char *) palloc(length + 1);
-		StrNCpy(local_node->resname, token + 1, length + 1 - 2);		/* strip quotes */
-	}
+		local_node->resname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* eat :reskey */
 	token = lsptok(NULL, &length);		/* get reskey */
@@ -779,6 +763,8 @@ _readExpr()
 		local_node->opType = NOT_EXPR;
 	else if (!strncmp(token, "subp", 4))
 		local_node->opType = SUBPLAN_EXPR;
+	else
+		elog(ERROR, "_readExpr: unknown opType \"%.10s\"", token);
 
 	token = lsptok(NULL, &length);		/* eat :oper */
 	local_node->oper = nodeRead(true);
@@ -1140,10 +1126,7 @@ _readParam()
 	if (length == 0)
 		local_node->paramname = NULL;
 	else
-	{
-		local_node->paramname = (char *) palloc(length + 1);
-		StrNCpy(local_node->paramname, token, length + 1);
-	}
+		local_node->paramname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* get :paramtype */
 	token = lsptok(NULL, &length);		/* now read it */
@@ -1172,8 +1155,7 @@ _readAggref()
 
 	token = lsptok(NULL, &length);		/* eat :aggname */
 	token = lsptok(NULL, &length);		/* get aggname */
-	local_node->aggname = (char *) palloc(length + 1);
-	StrNCpy(local_node->aggname, token, length + 1);
+	local_node->aggname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* eat :basetype */
 	token = lsptok(NULL, &length);		/* get basetype */
@@ -1416,20 +1398,14 @@ _readRangeTblEntry()
 	if (length == 0)
 		local_node->relname = NULL;
 	else
-	{
-		local_node->relname = (char *) palloc(length + 1);
-		StrNCpy(local_node->relname, token, length + 1);
-	}
+		local_node->relname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* eat :refname */
 	token = lsptok(NULL, &length);		/* get :refname */
 	if (length == 0)
 		local_node->refname = NULL;
 	else
-	{
-		local_node->refname = (char *) palloc(length + 1);
-		StrNCpy(local_node->refname, token, length + 1);
-	}
+		local_node->refname = debackslash(token, length);
 
 	token = lsptok(NULL, &length);		/* eat :relid */
 	token = lsptok(NULL, &length);		/* get :relid */
@@ -1854,7 +1830,7 @@ _readIter()
  * Given a character string containing a plan, parsePlanString sets up the
  * plan structure representing that plan.
  *
- * The string passed to parsePlanString must be null-terminated.
+ * The string to be read must already have been loaded into lsptok().
  * ----------------
  */
 Node *
@@ -1866,101 +1842,101 @@ parsePlanString(void)
 
 	token = lsptok(NULL, &length);
 
-	if (!strncmp(token, "PLAN", length))
+	if (length == 4 && strncmp(token, "PLAN", length) == 0)
 		return_value = _readPlan();
-	else if (!strncmp(token, "RESULT", length))
+	else if (length == 6 && strncmp(token, "RESULT", length) == 0)
 		return_value = _readResult();
-	else if (!strncmp(token, "APPEND", length))
+	else if (length == 6 && strncmp(token, "APPEND", length) == 0)
 		return_value = _readAppend();
-	else if (!strncmp(token, "JOIN", length))
+	else if (length == 4 && strncmp(token, "JOIN", length) == 0)
 		return_value = _readJoin();
-	else if (!strncmp(token, "NESTLOOP", length))
+	else if (length == 8 && strncmp(token, "NESTLOOP", length) == 0)
 		return_value = _readNestLoop();
-	else if (!strncmp(token, "MERGEJOIN", length))
+	else if (length == 9 && strncmp(token, "MERGEJOIN", length) == 0)
 		return_value = _readMergeJoin();
-	else if (!strncmp(token, "HASHJOIN", length))
+	else if (length == 8 && strncmp(token, "HASHJOIN", length) == 0)
 		return_value = _readHashJoin();
-	else if (!strncmp(token, "SCAN", length))
+	else if (length == 4 && strncmp(token, "SCAN", length) == 0)
 		return_value = _readScan();
-	else if (!strncmp(token, "SEQSCAN", length))
+	else if (length == 7 && strncmp(token, "SEQSCAN", length) == 0)
 		return_value = _readSeqScan();
-	else if (!strncmp(token, "INDEXSCAN", length))
+	else if (length == 9 && strncmp(token, "INDEXSCAN", length) == 0)
 		return_value = _readIndexScan();
-	else if (!strncmp(token, "TIDSCAN", length))
+	else if (length == 7 && strncmp(token, "TIDSCAN", length) == 0)
 		return_value = _readTidScan();
-	else if (!strncmp(token, "NONAME", length))
+	else if (length == 6 && strncmp(token, "NONAME", length) == 0)
 		return_value = _readNoname();
-	else if (!strncmp(token, "SORT", length))
+	else if (length == 4 && strncmp(token, "SORT", length) == 0)
 		return_value = _readSort();
-	else if (!strncmp(token, "AGGREG", length))
+	else if (length == 6 && strncmp(token, "AGGREG", length) == 0)
 		return_value = _readAggref();
-	else if (!strncmp(token, "SUBLINK", length))
+	else if (length == 7 && strncmp(token, "SUBLINK", length) == 0)
 		return_value = _readSubLink();
-	else if (!strncmp(token, "AGG", length))
+	else if (length == 3 && strncmp(token, "AGG", length) == 0)
 		return_value = _readAgg();
-	else if (!strncmp(token, "UNIQUE", length))
+	else if (length == 6 && strncmp(token, "UNIQUE", length) == 0)
 		return_value = _readUnique();
-	else if (!strncmp(token, "HASH", length))
+	else if (length == 4 && strncmp(token, "HASH", length) == 0)
 		return_value = _readHash();
-	else if (!strncmp(token, "RESDOM", length))
+	else if (length == 6 && strncmp(token, "RESDOM", length) == 0)
 		return_value = _readResdom();
-	else if (!strncmp(token, "EXPR", length))
+	else if (length == 4 && strncmp(token, "EXPR", length) == 0)
 		return_value = _readExpr();
-	else if (!strncmp(token, "ARRAYREF", length))
+	else if (length == 8 && strncmp(token, "ARRAYREF", length) == 0)
 		return_value = _readArrayRef();
-	else if (!strncmp(token, "ARRAY", length))
+	else if (length == 5 && strncmp(token, "ARRAY", length) == 0)
 		return_value = _readArray();
-	else if (!strncmp(token, "VAR", length))
+	else if (length == 3 && strncmp(token, "VAR", length) == 0)
 		return_value = _readVar();
-	else if (!strncmp(token, "CONST", length))
+	else if (length == 5 && strncmp(token, "CONST", length) == 0)
 		return_value = _readConst();
-	else if (!strncmp(token, "FUNC", length))
+	else if (length == 4 && strncmp(token, "FUNC", length) == 0)
 		return_value = _readFunc();
-	else if (!strncmp(token, "OPER", length))
+	else if (length == 4 && strncmp(token, "OPER", length) == 0)
 		return_value = _readOper();
-	else if (!strncmp(token, "PARAM", length))
+	else if (length == 5 && strncmp(token, "PARAM", length) == 0)
 		return_value = _readParam();
-	else if (!strncmp(token, "ESTATE", length))
+	else if (length == 6 && strncmp(token, "ESTATE", length) == 0)
 		return_value = _readEState();
-	else if (!strncmp(token, "RELOPTINFO", length))
+	else if (length == 10 && strncmp(token, "RELOPTINFO", length) == 0)
 		return_value = _readRelOptInfo();
-	else if (!strncmp(token, "INDEXOPTINFO", length))
+	else if (length == 12 && strncmp(token, "INDEXOPTINFO", length) == 0)
 		return_value = _readIndexOptInfo();
-	else if (!strncmp(token, "TARGETENTRY", length))
+	else if (length == 11 && strncmp(token, "TARGETENTRY", length) == 0)
 		return_value = _readTargetEntry();
-	else if (!strncmp(token, "RTE", length))
+	else if (length == 3 && strncmp(token, "RTE", length) == 0)
 		return_value = _readRangeTblEntry();
-	else if (!strncmp(token, "PATH", length))
+	else if (length == 4 && strncmp(token, "PATH", length) == 0)
 		return_value = _readPath();
-	else if (!strncmp(token, "INDEXPATH", length))
+	else if (length == 9 && strncmp(token, "INDEXPATH", length) == 0)
 		return_value = _readIndexPath();
-	else if (!strncmp(token, "TIDPATH", length))
+	else if (length == 7 && strncmp(token, "TIDPATH", length) == 0)
 		return_value = _readTidPath();
-	else if (!strncmp(token, "NESTPATH", length))
+	else if (length == 8 && strncmp(token, "NESTPATH", length) == 0)
 		return_value = _readNestPath();
-	else if (!strncmp(token, "MERGEPATH", length))
+	else if (length == 9 && strncmp(token, "MERGEPATH", length) == 0)
 		return_value = _readMergePath();
-	else if (!strncmp(token, "HASHPATH", length))
+	else if (length == 8 && strncmp(token, "HASHPATH", length) == 0)
 		return_value = _readHashPath();
-	else if (!strncmp(token, "PATHKEYITEM", length))
+	else if (length == 11 && strncmp(token, "PATHKEYITEM", length) == 0)
 		return_value = _readPathKeyItem();
-	else if (!strncmp(token, "RESTRICTINFO", length))
+	else if (length == 12 && strncmp(token, "RESTRICTINFO", length) == 0)
 		return_value = _readRestrictInfo();
-	else if (!strncmp(token, "JOININFO", length))
+	else if (length == 8 && strncmp(token, "JOININFO", length) == 0)
 		return_value = _readJoinInfo();
-	else if (!strncmp(token, "ITER", length))
+	else if (length == 4 && strncmp(token, "ITER", length) == 0)
 		return_value = _readIter();
-	else if (!strncmp(token, "QUERY", length))
+	else if (length == 5 && strncmp(token, "QUERY", length) == 0)
 		return_value = _readQuery();
-	else if (!strncmp(token, "SORTCLAUSE", length))
+	else if (length == 10 && strncmp(token, "SORTCLAUSE", length) == 0)
 		return_value = _readSortClause();
-	else if (!strncmp(token, "GROUPCLAUSE", length))
+	else if (length == 11 && strncmp(token, "GROUPCLAUSE", length) == 0)
 		return_value = _readGroupClause();
-	else if (!strncmp(token, "CASE", length))
+	else if (length == 4 && strncmp(token, "CASE", length) == 0)
 		return_value = _readCaseExpr();
-	else if (!strncmp(token, "WHEN", length))
+	else if (length == 4 && strncmp(token, "WHEN", length) == 0)
 		return_value = _readCaseWhen();
-	else if (!strncmp(token, "ROWMARK", length))
+	else if (length == 7 && strncmp(token, "ROWMARK", length) == 0)
 		return_value = _readRowMark();
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
@@ -2001,6 +1977,7 @@ readDatum(Oid type)
 	{
 		if (length > sizeof(Datum))
 			elog(ERROR, "readValue: byval & length = %d", length);
+		res = (Datum) 0;
 		s = (char *) (&res);
 		for (i = 0; i < sizeof(Datum); i++)
 		{
@@ -2009,11 +1986,10 @@ readDatum(Oid type)
 		}
 	}
 	else if (length <= 0)
-		s = NULL;
-	else if (length >= 1)
+		res = (Datum) NULL;
+	else
 	{
 		s = (char *) palloc(length);
-		Assert(s != NULL);
 		for (i = 0; i < length; i++)
 		{
 			token = lsptok(NULL, &tokenLength);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.101 2000/01/09 00:26:23 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.102 2000/01/14 00:53:21 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -19,8 +19,10 @@
  *	  representation plus some other information (string length, etc.)
  *
  */
+#include <ctype.h>
 
 #include "postgres.h"
+
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "catalog/pg_type.h"
@@ -42,9 +44,43 @@
 static void _outDatum(StringInfo str, Datum value, Oid type);
 static void _outNode(StringInfo str, void *obj);
 
-/* Convert a null string pointer into "<>" */
-#define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
-
+/*
+ * _outToken
+ *	  Convert an ordinary string (eg, an identifier) into a form that
+ *	  will be decoded back to a plain token by read.c's functions.
+ *
+ *	  If a null or empty string is given, it is encoded as "<>".
+ */
+static void
+_outToken(StringInfo str, char *s)
+{
+	if (s == NULL || *s == '\0')
+	{
+		appendStringInfo(str, "<>");
+		return;
+	}
+	/*
+	 * Look for characters or patterns that are treated specially by
+	 * read.c (either in lsptok() or in nodeRead()), and therefore need
+	 * a protective backslash.
+	 */
+	/* These characters only need to be quoted at the start of the string */
+	if (*s == '<' ||
+		*s == '\"' ||
+		*s == '@' ||
+		isdigit(*s) ||
+		(*s == '-' && isdigit(s[1])))
+		appendStringInfoChar(str, '\\');
+	while (*s)
+	{
+		/* These chars must be backslashed anywhere in the string */
+		if (*s == ' ' || *s == '\n' || *s == '\t' ||
+			*s == '(' || *s == ')' || *s == '{' || *s == '}' ||
+			*s == '\\')
+			appendStringInfoChar(str, '\\');
+		appendStringInfoChar(str, *s++);
+	}
+}
 
 /*
  * _outIntList -
@@ -55,17 +91,17 @@ _outIntList(StringInfo str, List *list)
 {
 	List	   *l;
 
-	appendStringInfo(str, "(");
+	appendStringInfoChar(str, '(');
 	foreach(l, list)
-		appendStringInfo(str, " %d ", lfirsti(l));
-	appendStringInfo(str, ")");
+		appendStringInfo(str, " %d", lfirsti(l));
+	appendStringInfoChar(str, ')');
 }
 
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
-	appendStringInfo(str, " CREATE :relname %s ",
-					 stringStringInfo(node->relname));
+	appendStringInfo(str, " CREATE :relname ");
+	_outToken(str, node->relname);
 
 	appendStringInfo(str, " :istemp %s ",
 					 node->istemp ? "true" : "false");
@@ -83,11 +119,13 @@ _outCreateStmt(StringInfo str, CreateStmt *node)
 static void
 _outIndexStmt(StringInfo str, IndexStmt *node)
 {
-	appendStringInfo(str,
-		 " INDEX :idxname %s :relname %s :accessMethod %s :indexParams ",
-					 stringStringInfo(node->idxname),
-					 stringStringInfo(node->relname),
-					 stringStringInfo(node->accessMethod));
+	appendStringInfo(str, " INDEX :idxname ");
+	_outToken(str, node->idxname);
+	appendStringInfo(str, " :relname ");
+	_outToken(str, node->relname);
+	appendStringInfo(str, " :accessMethod ");
+	_outToken(str, node->accessMethod);
+	appendStringInfo(str, " :indexParams ");
 	_outNode(str, node->indexParams);
 
 	appendStringInfo(str, " :withClause ");
@@ -114,8 +152,9 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 static void
 _outFuncCall(StringInfo str, FuncCall *node)
 {
-	appendStringInfo(str, "FUNCTION %s :args ",
-					 stringStringInfo(node->funcname));
+	appendStringInfo(str, "FUNCTION ");
+	_outToken(str, node->funcname);
+	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
 	appendStringInfo(str, " :agg_star %s :agg_distinct %s ",
 					 node->agg_star ? "true" : "false",
@@ -125,40 +164,42 @@ _outFuncCall(StringInfo str, FuncCall *node)
 static void
 _outColumnDef(StringInfo str, ColumnDef *node)
 {
-	appendStringInfo(str, " COLUMNDEF :colname %s :typename ",
-					 stringStringInfo(node->colname));
+	appendStringInfo(str, " COLUMNDEF :colname ");
+	_outToken(str, node->colname);
+	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
 	appendStringInfo(str, " :is_not_null %s :is_sequence %s :raw_default ",
 					 node->is_not_null ? "true" : "false",
 					 node->is_sequence ? "true" : "false");
 	_outNode(str, node->raw_default);
-	appendStringInfo(str, " :cooked_default %s :constraints ",
-					 stringStringInfo(node->cooked_default));
+	appendStringInfo(str, " :cooked_default ");
+	_outToken(str, node->cooked_default);
+	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
 }
 
 static void
 _outTypeName(StringInfo str, TypeName *node)
 {
-	appendStringInfo(str,
-	 " TYPENAME :name %s :timezone %s :setof %s typmod %d :arrayBounds ",
-					 stringStringInfo(node->name),
+	appendStringInfo(str, " TYPENAME :name ");
+	_outToken(str, node->name);
+	appendStringInfo(str, " :timezone %s :setof %s typmod %d :arrayBounds ",
 					 node->timezone ? "true" : "false",
 					 node->setof ? "true" : "false",
 					 node->typmod);
-
-	appendStringInfo(str, " :arrayBounds ");
 	_outNode(str, node->arrayBounds);
 }
 
 static void
 _outIndexElem(StringInfo str, IndexElem *node)
 {
-	appendStringInfo(str, " INDEXELEM :name %s :args ",
-					 stringStringInfo(node->name));
+	appendStringInfo(str, " INDEXELEM :name ");
+	_outToken(str, node->name);
+	appendStringInfo(str, " :args ");
 	_outNode(str, node->args);
-
-	appendStringInfo(str, " :class %s :typename ", stringStringInfo(node->class));
+	appendStringInfo(str, " :class ");
+	_outToken(str, node->class);
+	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
 }
 
@@ -173,21 +214,24 @@ _outQuery(StringInfo str, Query *node)
 		switch (nodeTag(node->utilityStmt))
 		{
 			case T_CreateStmt:
-				appendStringInfo(str, " :create %s ",
-								 stringStringInfo(((CreateStmt *) (node->utilityStmt))->relname));
+				appendStringInfo(str, " :create ");
+				_outToken(str, ((CreateStmt *) (node->utilityStmt))->relname);
+				appendStringInfo(str, " ");
 				_outNode(str, node->utilityStmt);
 				break;
 
 			case T_IndexStmt:
-				appendStringInfo(str, " :index %s on %s ",
-								 stringStringInfo(((IndexStmt *) (node->utilityStmt))->idxname),
-								 stringStringInfo(((IndexStmt *) (node->utilityStmt))->relname));
+				appendStringInfo(str, " :index ");
+				_outToken(str, ((IndexStmt *) (node->utilityStmt))->idxname);
+				appendStringInfo(str, " on ");
+				_outToken(str, ((IndexStmt *) (node->utilityStmt))->relname);
+				appendStringInfo(str, " ");
 				_outNode(str, node->utilityStmt);
 				break;
 
 			case T_NotifyStmt:
-				appendStringInfo(str, " :utility %s ",
-								 stringStringInfo(((NotifyStmt *) (node->utilityStmt))->relname));
+				appendStringInfo(str, " :utility ");
+				_outToken(str, ((NotifyStmt *) (node->utilityStmt))->relname);
 				break;
 
 			default:
@@ -197,17 +241,18 @@ _outQuery(StringInfo str, Query *node)
 	else
 		appendStringInfo(str, " :utility <>");
 
+	appendStringInfo(str, " :resultRelation %u :into ",
+					 node->resultRelation);
+	_outToken(str, node->into);
+
 	appendStringInfo(str,
-					 " :resultRelation %u :into %s :isPortal %s :isBinary %s :isTemp %s :unionall %s ",
-					 node->resultRelation,
-					 stringStringInfo(node->into),
+					 " :isPortal %s :isBinary %s :isTemp %s :unionall %s :unique ",
 					 node->isPortal ? "true" : "false",
 					 node->isBinary ? "true" : "false",
 					 node->isTemp ? "true" : "false",
 					 node->unionall ? "true" : "false");
-
-	appendStringInfo(str, " :unique %s :sortClause ",
-					 stringStringInfo(node->uniqueFlag));
+	_outToken(str, node->uniqueFlag);
+	appendStringInfo(str, " :sortClause ");
 	_outNode(str, node->sortClause);
 
 	appendStringInfo(str, " :rtable ");
@@ -560,17 +605,15 @@ _outHash(StringInfo str, Hash *node)
 static void
 _outResdom(StringInfo str, Resdom *node)
 {
-	appendStringInfo(str, " RESDOM :resno %d :restype %u :restypmod %d",
+	appendStringInfo(str,
+					 " RESDOM :resno %d :restype %u :restypmod %d :resname ",
 					 node->resno,
 					 node->restype,
 					 node->restypmod);
-
-	appendStringInfo(str, " :resname \"%s\" :reskey %d :reskeyop %u",
-					 stringStringInfo(node->resname),
+	_outToken(str, node->resname);
+	appendStringInfo(str, " :reskey %d :reskeyop %u :ressortgroupref %d :resjunk %s ",
 					 node->reskey,
-					 node->reskeyop);
-
-	appendStringInfo(str, " :ressortgroupref %d :resjunk %s ",
+					 node->reskeyop,
 					 node->ressortgroupref,
 					 node->resjunk ? "true" : "false");
 }
@@ -626,7 +669,9 @@ _outExpr(StringInfo str, Expr *node)
 			opstr = "subp";
 			break;
 	}
-	appendStringInfo(str, " :opType %s :oper ", stringStringInfo(opstr));
+	appendStringInfo(str, " :opType ");
+	_outToken(str, opstr);
+	appendStringInfo(str, " :oper ");
 	_outNode(str, node->oper);
 
 	appendStringInfo(str, " :args ");
@@ -679,9 +724,9 @@ _outConst(StringInfo str, Const *node)
 static void
 _outAggref(StringInfo str, Aggref *node)
 {
-	appendStringInfo(str,
-					 " AGGREG :aggname %s :basetype %u :aggtype %u :target ",
-					 stringStringInfo(node->aggname),
+	appendStringInfo(str, " AGGREG :aggname ");
+	_outToken(str, node->aggname);
+	appendStringInfo(str, " :basetype %u :aggtype %u :target ",
 					 node->basetype,
 					 node->aggtype);
 	_outNode(str, node->target);
@@ -801,14 +846,12 @@ _outOper(StringInfo str, Oper *node)
 static void
 _outParam(StringInfo str, Param *node)
 {
-	appendStringInfo(str,
-		 " PARAM :paramkind %d :paramid %d :paramname %s :paramtype %u ",
+	appendStringInfo(str, " PARAM :paramkind %d :paramid %d :paramname ",
 					 node->paramkind,
-					 node->paramid,
-					 stringStringInfo(node->paramname),
+					 node->paramid);
+	_outToken(str, node->paramname);
+	appendStringInfo(str, " :paramtype %u :param_tlist ",
 					 node->paramtype);
-
-	appendStringInfo(str, " :param_tlist ");
 	_outNode(str, node->param_tlist);
 }
 
@@ -897,10 +940,12 @@ _outTargetEntry(StringInfo str, TargetEntry *node)
 static void
 _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
+	appendStringInfo(str, " RTE :relname ");
+	_outToken(str, node->relname);
+	appendStringInfo(str, " :refname ");
+	_outToken(str, node->refname);
 	appendStringInfo(str,
-					 " RTE :relname %s :refname %s :relid %u :inh %s :inFromCl %s :inJoinSet %s :skipAcl %s",
-					 stringStringInfo(node->relname),
-					 stringStringInfo(node->refname),
+					 " :relid %u :inh %s :inFromCl %s :inJoinSet %s :skipAcl %s",
 					 node->relid,
 					 node->inh ? "true" : "false",
 					 node->inFromCl ? "true" : "false",
@@ -1115,7 +1160,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 		s = (char *) (&value);
 		appendStringInfo(str, " %d [ ", length);
 		for (i = 0; i < sizeof(Datum); i++)
-			appendStringInfo(str, " %d ", (int) (s[i]));
+			appendStringInfo(str, "%d ", (int) (s[i]));
 		appendStringInfo(str, "] ");
 	}
 	else
@@ -1134,7 +1179,7 @@ _outDatum(StringInfo str, Datum value, Oid type)
 				length = VARSIZE(s);
 			appendStringInfo(str, " %d [ ", length);
 			for (i = 0; i < length; i++)
-				appendStringInfo(str, " %d ", (int) (s[i]));
+				appendStringInfo(str, "%d ", (int) (s[i]));
 			appendStringInfo(str, "] ");
 		}
 	}
@@ -1172,27 +1217,27 @@ _outAExpr(StringInfo str, A_Expr *node)
 	switch (node->oper)
 	{
 		case AND:
-			appendStringInfo(str, "AND");
+			appendStringInfo(str, "AND ");
 			break;
 		case OR:
-			appendStringInfo(str, "OR");
+			appendStringInfo(str, "OR ");
 			break;
 		case NOT:
-			appendStringInfo(str, "NOT");
+			appendStringInfo(str, "NOT ");
 			break;
 		case ISNULL:
-			appendStringInfo(str, "ISNULL");
+			appendStringInfo(str, "ISNULL ");
 			break;
 		case NOTNULL:
-			appendStringInfo(str, "NOTNULL");
+			appendStringInfo(str, "NOTNULL ");
 			break;
 		default:
-			appendStringInfo(str, stringStringInfo(node->opname));
+			_outToken(str, node->opname);
+			appendStringInfo(str, " ");
 			break;
 	}
 	_outNode(str, node->lexpr);
 	_outNode(str, node->rexpr);
-	return;
 }
 
 static void
@@ -1200,26 +1245,29 @@ _outValue(StringInfo str, Value *value)
 {
 	switch (value->type)
 	{
-			case T_String:
-			appendStringInfo(str, " \"%s\" ", stringStringInfo(value->val.str));
+		case T_String:
+			appendStringInfo(str, " \"");
+			_outToken(str, value->val.str);
+			appendStringInfo(str, "\" ");
 			break;
 		case T_Integer:
 			appendStringInfo(str, " %ld ", value->val.ival);
 			break;
 		case T_Float:
-			appendStringInfo(str, " %f ", value->val.dval);
+			appendStringInfo(str, " %.17g ", value->val.dval);
 			break;
 		default:
+			elog(NOTICE, "_outValue: don't know how to print type %d ",
+				 value->type);
 			break;
 	}
-	return;
 }
 
 static void
 _outIdent(StringInfo str, Ident *node)
 {
-	appendStringInfo(str, " IDENT \"%s\" ", stringStringInfo(node->name));
-	return;
+	appendStringInfo(str, " IDENT ");
+	_outToken(str, node->name);
 }
 
 static void
@@ -1227,17 +1275,16 @@ _outAttr(StringInfo str, Attr *node)
 {
 	List	   *l;
 
-	appendStringInfo(str, " ATTR \"%s\" ", stringStringInfo(node->relname));
-
-	appendStringInfo(str, "(");
+	appendStringInfo(str, " ATTR ");
+	_outToken(str, node->relname);
+	appendStringInfo(str, " (");
 	foreach(l, node->attrs)
 	{
 		_outNode(str, lfirst(l));
 		if (lnext(l))
-			appendStringInfo(str, ",");
+			appendStringInfo(str, " ");
 	}
 	appendStringInfo(str, ")");
-	return;
 }
 
 static void
@@ -1245,46 +1292,47 @@ _outAConst(StringInfo str, A_Const *node)
 {
 	appendStringInfo(str, "CONST ");
 	_outValue(str, &(node->val));
-	return;
 }
 
 static void
 _outConstraint(StringInfo str, Constraint *node)
 {
-	appendStringInfo(str, " %s :type", stringStringInfo(node->name));
+	appendStringInfo(str, " ");
+	_outToken(str, node->name);
+	appendStringInfo(str, " :type ");
 
 	switch (node->contype)
 	{
 		case CONSTR_PRIMARY:
-			appendStringInfo(str, " PRIMARY KEY ");
+			appendStringInfo(str, "PRIMARY KEY ");
 			_outNode(str, node->keys);
 			break;
 
 		case CONSTR_CHECK:
-			appendStringInfo(str, " CHECK :raw ");
+			appendStringInfo(str, "CHECK :raw ");
 			_outNode(str, node->raw_expr);
-			appendStringInfo(str, " :cooked %s ",
-							 stringStringInfo(node->cooked_expr));
+			appendStringInfo(str, " :cooked ");
+			_outToken(str, node->cooked_expr);
 			break;
 
 		case CONSTR_DEFAULT:
-			appendStringInfo(str, " DEFAULT :raw ");
+			appendStringInfo(str, "DEFAULT :raw ");
 			_outNode(str, node->raw_expr);
-			appendStringInfo(str, " :cooked %s ",
-							 stringStringInfo(node->cooked_expr));
+			appendStringInfo(str, " :cooked ");
+			_outToken(str, node->cooked_expr);
 			break;
 
 		case CONSTR_NOTNULL:
-			appendStringInfo(str, " NOT NULL ");
+			appendStringInfo(str, "NOT NULL");
 			break;
 
 		case CONSTR_UNIQUE:
-			appendStringInfo(str, " UNIQUE ");
+			appendStringInfo(str, "UNIQUE ");
 			_outNode(str, node->keys);
 			break;
 
 		default:
-			appendStringInfo(str, "<unrecognized constraint>");
+			appendStringInfo(str, "<unrecognized_constraint>");
 			break;
 	}
 }
@@ -1297,8 +1345,6 @@ _outCaseExpr(StringInfo str, CaseExpr *node)
 
 	appendStringInfo(str, " :default ");
 	_outNode(str, node->defresult);
-
-	return;
 }
 
 static void
@@ -1309,8 +1355,6 @@ _outCaseWhen(StringInfo str, CaseWhen *node)
 
 	appendStringInfo(str, " :then ");
 	_outNode(str, node->result);
-
-	return;
 }
 
 /*
@@ -1330,18 +1374,18 @@ _outNode(StringInfo str, void *obj)
 	{
 		List	   *l;
 
-		appendStringInfo(str, "(");
+		appendStringInfoChar(str, '(');
 		foreach(l, (List *) obj)
 		{
 			_outNode(str, lfirst(l));
 			if (lnext(l))
-				appendStringInfo(str, " ");
+				appendStringInfoChar(str, ' ');
 		}
-		appendStringInfo(str, ")");
+		appendStringInfoChar(str, ')');
 	}
 	else
 	{
-		appendStringInfo(str, "{");
+		appendStringInfoChar(str, '{');
 		switch (nodeTag(obj))
 		{
 			case T_CreateStmt:
@@ -1350,7 +1394,6 @@ _outNode(StringInfo str, void *obj)
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);
 				break;
-
 			case T_ColumnDef:
 				_outColumnDef(str, obj);
 				break;
@@ -1551,9 +1594,8 @@ _outNode(StringInfo str, void *obj)
 					 nodeTag(obj));
 				break;
 		}
-		appendStringInfo(str, "}");
+		appendStringInfoChar(str, '}');
 	}
-	return;
 }
 
 /*
