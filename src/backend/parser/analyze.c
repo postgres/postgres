@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.101 1999/02/23 07:44:44 thomas Exp $
+ *  $Id: analyze.c,v 1.102 1999/05/12 07:17:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,7 +513,6 @@ static Query *
 transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 {
 	Query	   *q;
-	int			have_pkey = FALSE;
 	List	   *elements;
 	Node	   *element;
 	List	   *columns;
@@ -524,9 +523,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	Constraint *constraint;
 	List	   *keys;
 	Ident	   *key;
-	List	   *blist = NIL;
-	List	   *ilist = NIL;
-	IndexStmt  *index;
+	List	   *blist = NIL;	/* "before list" of things to do before creating the table */
+	List	   *ilist = NIL;	/* "index list" of things to do after creating the table */
+	IndexStmt  *index, *pkey = NULL;
 	IndexElem  *iparam;
 
 	q = makeNode(Query);
@@ -568,6 +567,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					constraint->def = cstring;
 					constraint->keys = NULL;
 
+#if 0
 					/* The parser only allows PRIMARY KEY as a constraint for the SERIAL type.
 					 * So, if there is a constraint of any kind, assume it is that.
 					 * If PRIMARY KEY is specified, then don't need to gin up a UNIQUE constraint
@@ -580,7 +580,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					}
 					else
 					{
-						column->constraints = lcons(constraint, NIL);
+#endif
+						column->constraints = lappend(column->constraints, constraint);
 
 						constraint = makeNode(Constraint);
 						constraint->contype = CONSTR_UNIQUE;
@@ -590,13 +591,15 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 								 "\n\tSum of lengths of '%s' and '%s' must be less than %d",
 								 NAMEDATALEN, stmt->relname, column->colname, (NAMEDATALEN-5));
 						column->constraints = lappend(column->constraints, constraint);
+#if 0
 					}
+#endif
 
 					sequence = makeNode(CreateSeqStmt);
 					sequence->seqname = pstrdup(sname);
 					sequence->options = NIL;
 
-					elog(NOTICE, "CREATE TABLE will create implicit sequence %s for SERIAL column %s.%s",
+					elog(NOTICE, "CREATE TABLE will create implicit sequence '%s' for SERIAL column '%s.%s'",
 					  sequence->seqname, stmt->relname, column->colname);
 
 					blist = lcons(sequence, NIL);
@@ -735,32 +738,28 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	while (dlist != NIL)
 	{
 		constraint = lfirst(dlist);
-		if (nodeTag(constraint) != T_Constraint)
-			elog(ERROR, "parser: unrecognized deferred node (internal error)", NULL);
-
-		if (constraint->contype == CONSTR_PRIMARY)
-		{
-			if (have_pkey)
-				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple primary keys"
-					 " for table %s are not legal", stmt->relname);
-			else
-				have_pkey = TRUE;
-		}
-		else if (constraint->contype != CONSTR_UNIQUE)
-			elog(ERROR, "parser: unrecognized deferred constraint (internal error)", NULL);
+		Assert(nodeTag(constraint) == T_Constraint);
+		Assert((constraint->contype == CONSTR_PRIMARY)
+		 || (constraint->contype == CONSTR_UNIQUE));
 
 		index = makeNode(IndexStmt);
 
 		index->unique = TRUE;
 		index->primary = (constraint->contype == CONSTR_PRIMARY ? TRUE:FALSE);
+		if (index->primary)
+		{
+			if (pkey != NULL)
+				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple primary keys"
+					 " for table %s are not legal", stmt->relname);
+			pkey = (IndexStmt *) index;
+		}
+
 		if (constraint->name != NULL)
+		{
 			index->idxname = constraint->name;
+		}
 		else if (constraint->contype == CONSTR_PRIMARY)
 		{
-			if (have_pkey)
-				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple keys for table %s are not legal", stmt->relname);
-
-			have_pkey = TRUE;
 			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
 			if (index->idxname == NULL)
 				elog(ERROR, "CREATE TABLE/PRIMARY KEY implicit index name must be less than %d characters"
@@ -768,7 +767,9 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					 NAMEDATALEN, stmt->relname, (NAMEDATALEN-5));
 		}
 		else
+		{
 			index->idxname = NULL;
+		}
 
 		index->relname = stmt->relname;
 		index->accessMethod = "btree";
@@ -812,12 +813,55 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		if (index->idxname == NULL)
 			elog(ERROR, "CREATE TABLE unable to construct implicit index for table %s"
 				 "; name too long", stmt->relname);
+#if 0
 		else
-			elog(NOTICE, "CREATE TABLE/%s will create implicit index %s for table %s",
+			elog(NOTICE, "CREATE TABLE/%s will create implicit index '%s' for table '%s'",
 				 ((constraint->contype == CONSTR_PRIMARY) ? "PRIMARY KEY" : "UNIQUE"),
 				 index->idxname, stmt->relname);
+#endif
 
 		ilist = lappend(ilist, index);
+		dlist = lnext(dlist);
+	}
+
+/* OK, now finally, if there is a primary key, then make sure that there aren't any redundant
+ * unique indices defined on columns. This can arise if someone specifies UNIQUE explicitly
+ * or if a SERIAL column was defined along with a table PRIMARY KEY constraint.
+ * - thomas 1999-05-11
+ */
+	if ((pkey != NULL) && (length(lfirst(pkey->indexParams)) == 1))
+	{
+		dlist = ilist;
+		ilist = NIL;
+		while (dlist != NIL)
+		{
+			int keep = TRUE;
+
+			index = lfirst(dlist);
+
+			/* has a single column argument, so might be a conflicting index... */
+			if ((index != pkey)
+			 && (length(index->indexParams) == 1))
+			{
+				char *pname = ((IndexElem *) lfirst(index->indexParams))->name;
+				char *iname = ((IndexElem *) lfirst(index->indexParams))->name;
+				/* same names? then don't keep... */
+				keep = (strcmp(iname, pname) != 0);
+			}
+
+			if (keep)
+				ilist = lappend(ilist, index);
+			dlist = lnext(dlist);
+		}
+	}
+
+	dlist = ilist;
+	while (dlist != NIL)
+	{
+		index = lfirst(dlist);
+		elog(NOTICE, "CREATE TABLE/%s will create implicit index '%s' for table '%s'",
+			 (index->primary? "PRIMARY KEY": "UNIQUE"),
+			 index->idxname, stmt->relname);
 		dlist = lnext(dlist);
 	}
 
