@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Feb 28 10:04:28 EST 1998
+   Last updated: Wed Apr 15 12:47:01 EDT 1998
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
    
@@ -34,7 +34,7 @@ Questions answered:
    1.12) What tools are available for hooking PostgreSQL to Web pages?
    1.13) Does PostgreSQL have a graphical user interface? A report
    generator? A embedded query language interface?
-   1.14) What is a good book to learn SQL?
+   1.14) How can I learn SQL?
    1.15) What languages are available to communicate with PostgreSQL?
    
   2) Installation/Configuration questions
@@ -57,7 +57,8 @@ Questions answered:
    2.10) All my servers crash under concurrent table access. Why?
    2.11) How do I tune the database engine for better performance?
    2.12) What debugging features are available in PostgreSQL?
-   2.13) How do I enable more than 32 concurrent backends?
+   2.13) How do I enable more than 32 concurrent backends? 2.14) What
+   non-unix ports are available?
    
   3) Operational questions
   
@@ -243,8 +244,7 @@ Section 1: General Questions
      
   1.6) Latest release of PostgreSQL
   
-   The latest release of PostgreSQL is version 6.3, which was released on
-   March 1st, 1998.
+   The latest release of PostgreSQL is version 6.3.2.
    
    We plan to have major releases every three months.
    
@@ -260,21 +260,19 @@ Section 1: General Questions
   1.8) What documentation is available for PostgreSQL?
   
    A user manual, manual pages, and some small test examples are included
-   in the distribution. The sql and built-in manual pages are
-   particularly important.
+   in the distribution. The pgintro, sql, and pgbuiltin manual pages are
+   particularly important. pgintro contains a list of all available
+   manual pages.
+   
+   psql has some nice \d commands to show information about types,
+   operators, functions, aggregates, etc.
    
    The www page contains pointers to an implementation guide and five
    papers written about Postgres design concepts and features.
    
   1.9) What version of SQL does PostgreSQL use?
   
-   PostgreSQL supports a subset of SQL-92. It has most of the important
-   constructs but lacks some of the functionality. The most visible
-   differences are:
-     * no HAVING clause under a GROUP BY
-       
-   On the other hand, you get to create user-defined types, functions,
-   inheritance etc.
+   PostgreSQL supports a subset of SQL-92.
    
   1.10) Does PostgreSQL work with databases from earlier versions of
   PostgreSQL?
@@ -290,7 +288,7 @@ Section 1: General Questions
    
    Those ugrading from versions earlier than 1.09 must upgrade to 1.09
    first without a dump/reload, then dump the data from 1.09, and then
-   load it into 6.2.1 or 6.3 beta.
+   load it into 6.2.1 or 6.3.
    
   1.11) Are there ODBC drivers for PostgreSQL?
   
@@ -307,9 +305,9 @@ Section 1: General Questions
      * majordomo@listserv.direct.net
        
    OpenLink ODBC is very popular. You can get it from
-   http://www.openlinksw.com/postgres.html. It works with our standard
-   ODBC client software so you'll have PostgreSQL ODBC available on every
-   client platform we support (Win, Mac, Unix, VMS).
+   http://www.openlinksw.com. It works with our standard ODBC client
+   software so you'll have PostgreSQL ODBC available on every client
+   platform we support (Win, Mac, Unix, VMS).
    
    We will probably be selling this product to people who need
    commercial-quality support, but a freeware version will always be
@@ -339,8 +337,9 @@ Section 1: General Questions
    We also have ecpg, which is an embedded SQL query language interface
    for C. This is also included.
    
-  1.14) What is a good book to learn SQL?
+  1.14) How can I learn SQL?
   
+   There is a nice tutorial at http://w3.one.net/~jhoffman/sqltut.htm
    Many of our users like The Practical SQL Handbook, Bowman et al,
    Addison Wesley.
    
@@ -426,7 +425,7 @@ Section 2: Installation Questions
    
   2.11) How do I tune the database engine for better performance?
   
-   There are two things that can be done. You can disable fsync() by
+   There are several things that can be done. You can disable fsync() by
    starting the postmaster with a '-o -F' option. This will prevent
    fsync()'s from flushing to disk after every transaction.
    
@@ -438,6 +437,9 @@ Section 2: Installation Questions
    You can also use the postgres -S option to increase the maximum amount
    of memory used by each backend process for temporary sorts. Each
    buffer is 1K and the defualt is 512 buffers.
+   
+   You can also use the CLUSTER command to group data in base tables to
+   match an index. See the cluster(l) manual page for more details.
    
   2.12) What debugging features are available in PostgreSQL?
   
@@ -489,6 +491,17 @@ Section 2: Installation Questions
    Edit include/storage/sinvaladt.h, and change the value of
    MaxBackendId. In the future, we plan to make this a configurable
    prameter.
+   
+  2.13) What non-unix ports are available?
+  
+   It is possible to compile the libpq C library, psql, and other
+   interfaces and binaries to run on MS Windows platforms. In this case,
+   the client is running on MS Windows, and communicates via TCP/IP to a
+   server running on one of our supported Unix platforms.
+   
+   People have attempted to port our PostgreSQL database server to
+   Windows NT using the Cygnus Unix/NT porting library, but no one has
+   succeeded yet.
      _________________________________________________________________
    
 Section 3: PostgreSQL Features
@@ -598,7 +611,7 @@ Section 3: PostgreSQL Features
   3.10) How do I do regular expression searches? case-insensitive regexp
   searching?
   
-   See the pgbuiltin manual page. Search for regular expression.
+   See psql's \do command.
    
   3.11) I experienced a server crash during a vacuum. How do I remove the lock
   file?
@@ -682,7 +695,7 @@ BYTEA           bytea           variable-length array of bytes
    The default configuration allows only unix domain socket connections
    from the local machine. To enable TCP/IP connections, use the
    postmaster -i option You need to add a host entry to the file
-   pgsql/data/pg_hba. See the hba_conf manual page.
+   pgsql/data/pg_hba. See the pg_hba.conf manual page.
    
   3.18) How do I find out what indexes or operations are defined in the
   database?
