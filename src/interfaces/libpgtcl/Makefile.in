@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.33 1998/10/19 00:00:41 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.34 1999/02/07 22:10:45 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,12 @@ endif
 
 OBJS= pgtcl.o pgtclCmds.o pgtclId.o
 
-SHLIB_LINK= -L../libpq -lpq
+SHLIB_LINK+= -L../libpq -lpq
+
+# If crypt is a separate library, rather than part of libc, it may need
+# to be referenced separately to keep (broken) linkers happy.  (This is
+# braindead; users of libpq should not need to know what it depends on.)
+SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib

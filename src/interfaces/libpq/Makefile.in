@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.43 1999/02/02 18:51:29 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Attic/Makefile.in,v 1.44 1999/02/07 22:10:46 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,11 +36,7 @@ endif
 
 # If crypt is a separate library, rather than part of libc,
 # make sure it gets included in shared libpq.
-ifeq ($(PORTNAME), win)
 SHLIB_LINK+= $(findstring -lcrypt,$(LIBS))
-else
-SHLIB_LINK= $(findstring -lcrypt,$(LIBS))
-endif
 
 # Shared library stuff, also default 'all' target
 include $(SRCDIR)/Makefile.shlib
