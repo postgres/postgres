@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.18 2002/02/21 22:39:35 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.19 2002/02/21 22:42:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
   <synopsis>
 FETCH [ <replaceable class="PARAMETER">direction</replaceable> ] [ <replaceable class="PARAMETER">count</replaceable> ] { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
 FETCH [ FORWARD | BACKWARD | RELATIVE ] [ <replaceable class="PARAMETER">#</replaceable> | ALL | NEXT | PRIOR ]
-  { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
+    { IN | FROM } <replaceable class="PARAMETER">cursor</replaceable>
   </synopsis>
 
   <refsect2 id="R2-SQL-FETCH-1">
