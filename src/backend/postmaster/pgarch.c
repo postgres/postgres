@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.2 2004/07/21 22:31:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.3 2004/08/01 17:45:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -587,6 +587,6 @@ pgarch_archiveDone(char *xlog)
  	if (rename(rlogready, rlogdone) < 0)
  		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\" to \"%s\": %m",
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						rlogready, rlogdone)));
 }

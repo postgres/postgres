@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.152 2004/07/22 21:09:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.153 2004/08/01 17:45:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1936,7 +1936,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 		if (unlink(xlogpath) != 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not remove \"%s\": %m",
+					 errmsg("could not remove file \"%s\": %m",
 							xlogpath)));
 	}
 
@@ -3772,7 +3772,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 		if (rename(recoveryPath, xlogpath) != 0)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("could not rename \"%s\" to \"%s\": %m",
+					 errmsg("could not rename file \"%s\" to \"%s\": %m",
 							recoveryPath, xlogpath)));
 		/* XXX might we need to fix permissions on the file? */
 	}
@@ -3814,7 +3814,7 @@ exitArchiveRecovery(TimeLineID endTLI, uint32 endLogId, uint32 endLogSeg)
 	if (rename(recoveryCommandFile, recoveryCommandDone) != 0)
 		ereport(FATAL,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\" to \"%s\": %m",
+				 errmsg("could not rename file \"%s\" to \"%s\": %m",
 						recoveryCommandFile, recoveryCommandDone)));
 
 	ereport(LOG,
