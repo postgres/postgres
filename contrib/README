@@ -24,6 +24,10 @@ procedure.
 Index:
 ------
 
+adddepend -
+	Add object dependency information to pre-7.3 objects.
+	by Rod Taylor <rbt@rbt.ca>
+
 array -
 	Array iterator functions
 	by Massimo Dal Zotto <dz@cs.unitn.it>
