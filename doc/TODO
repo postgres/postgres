@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon May 28 00:28:27 EDT 2001
+Last updated:		Wed May 30 10:37:14 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -137,12 +137,14 @@ COMMANDS
 * Change LIMIT val,val to offset,limit to match MySQL
 * Allow PL/PgSQL's RAISE function to take expressions
 * ALTER
-	* ALTER TABLE ADD COLUMN does not honor DEFAULT or add CONSTRAINT
+	* ALTER TABLE ADD COLUMN does not honor DEFAULT and non-CHECK 
+	  CONSTRAINT
 	* ALTER TABLE ADD COLUMN to inherited table put column in wrong place
 	  [inheritance]
 	* Add ALTER TABLE DROP COLUMN feature [drop]
 	* Add ALTER FUNCTION
-	* Add ALTER TABLE DROP CONSTRAINT
+	* Add ALTER TABLE DROP non-CHECK CONSTRAINT
+	* -Add ALTER TABLE DROP CHECK CONSTRAINT (Christopher Kings)
 * CLUSTER
 	* cluster all tables at once
 	* prevent lose of indexes, permissions, inheritance
