@@ -1,0 +1,3961 @@
+From pgsql-hackers-owner+M5631@postgresql.org Thu Mar  8 21:04:12 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA09681
+	for <pgman@candle.pha.pa.us>; Thu, 8 Mar 2001 21:04:12 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2924Hx38075;
+	Thu, 8 Mar 2001 21:04:17 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5631@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f2920Ex24188
+	for <pgsql-hackers@postgresql.org>; Thu, 8 Mar 2001 21:00:14 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f29209904744
+	for <pgsql-hackers@postgresql.org>; Thu, 8 Mar 2001 21:00:09 -0500 (EST)
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages 
+In-reply-to: <20010308164222.Y624@store.zembu.com> 
+References: <Pine.LNX.4.30.0103082319150.1061-100000@peter.localdomain> <20010308164222.Y624@store.zembu.com>
+Comments: In-reply-to ncm@zembu.com (Nathan Myers)
+	message dated "Thu, 08 Mar 2001 16:42:22 -0800"
+Date: Thu, 08 Mar 2001 21:00:09 -0500
+Message-ID: <4741.984103209@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> On Thu, Mar 08, 2001 at 11:49:50PM +0100, Peter Eisentraut wrote:
+>> I really feel that translated error messages need to happen soon.
+
+Agreed.
+
+ncm@zembu.com (Nathan Myers) writes:
+> Similar approaches have been tried frequently, and even enshrined 
+> in standards (e.g. POSIX catgets), but have almost always proven too
+> cumbersome.  The problem is that keeping programs that interpret the 
+> numeric code in sync with the program they monitor is hard, and trying 
+> to avoid breaking all those secondary programs hinders development on 
+> the primary program.  Furthermore, assigning code numbers is a nuisance,
+> and they add uninformative clutter.  
+
+There's a difficult tradeoff to make here, but I think we do want to
+distinguish between the "official error code" --- the thing that has
+translations into various languages --- and what the backend is actually
+allowed to print out.  It seems to me that a fairly large fraction of
+the unique messages found in the backend can all be lumped under the
+category of "internal error", and that we need to have only one official
+error code and one user-level translated message for the lot of them.
+But we do want to be able to print out different detail messages for
+each of those internal errors.  There are other categories that might be
+lumped together, but that one alone is sufficiently large to force us
+to recognize it.  This suggests a distinction between a "primary" or
+"user-level" error message, which we catalog and provide translations
+for, and a "secondary", "detail", or "wizard-level" error message that
+exists only in the backend source code, and only in English, and so
+can be made up on the spur of the moment.
+
+Another thing that's bothered me for a long time is our inconsistent
+approach to determining where in the code a message comes from.  A lot
+of the messages currently embed the name of the generating routine right
+into the error text.  Again, we ought to separate the functionality:
+the source-code location is valuable but ought not form part of the
+primary error message.  I would like to see elog() become a macro that
+invokes __FILE__ and __LINE__ to automatically make the *exact* source
+code location become part of the secondary error information, and then
+drop the convention of using the routine name in the message text.
+
+Something else we have talked about off-and-on is providing locator
+information for errors that can be associated with a particular point in
+the query string (lexical and syntactic errors).  This would probably be
+best returned as a character index.
+
+Another thing that I missed in Peter's proposal is how we are going to
+cope with messages that include parameters.  Surely we do not expect
+gettext to start with 'Attribute "foo" not found' and distinguish fixed
+from variable parts of that string?
+
+So it's clear that we need to devise a way of breaking an "error
+message" into multiple portions, including:
+
+	Primary error message (localizable)
+	Parameters to insert into error message (user identifiers, etc)
+	Secondary (wizard) error message (optional)
+	Source code location
+	Query text location (optional)
+
+and perhaps others that I have forgotten about.  One of the key things
+to think about is whether we can, or should try to, transmit all this
+stuff in a backwards-compatible protocol.  That would mean we'd have
+to dump all the info into a single string, which is doable but would
+perhaps look pretty ugly:
+
+	ERROR: Attribute "foo" not found  -- basic message for dumb frontends
+	ERRORCODE: UNREC_IDENT		-- key for finding localized message
+	PARAM1: foo	-- something to embed in the localized message
+	MESSAGE: Attribute or table name not known within context of query
+	CODELOC: src/backend/parser/parse_clause.c line 345
+	QUERYLOC: 22
+
+Alternatively we could suppress most of this stuff unless the frontend
+specifically asks for it (and presumably is willing to digest it for
+the user).
+
+Bottom line for me is that if we are going to go to the trouble of
+examining and changing every single elog() in the system, we should
+try to get all of these issues cleaned up at once.  Let's not have to
+go back and do it again later.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M5633@postgresql.org Thu Mar  8 22:35:37 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA14437
+	for <pgman@candle.pha.pa.us>; Thu, 8 Mar 2001 22:35:36 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f293Zhx83174;
+	Thu, 8 Mar 2001 22:35:43 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5633@postgresql.org)
+Received: from store.d.zembu.com (nat.zembu.com [209.128.96.253])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f293Ulx76439
+	for <pgsql-hackers@postgresql.org>; Thu, 8 Mar 2001 22:30:47 -0500 (EST)
+	(envelope-from ncm@zembu.com)
+Received: by store.d.zembu.com (Postfix, from userid 509)
+	id C6F2BA75B; Thu,  8 Mar 2001 19:30:41 -0800 (PST)
+Date: Thu, 8 Mar 2001 19:30:41 -0800
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Message-ID: <20010308193041.Z624@store.zembu.com>
+Reply-To: pgsql-hackers@postgresql.org
+References: <Pine.LNX.4.30.0103082319150.1061-100000@peter.localdomain> <20010308164222.Y624@store.zembu.com> <4741.984103209@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <4741.984103209@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Thu, Mar 08, 2001 at 09:00:09PM -0500
+From: ncm@zembu.com (Nathan Myers)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Thu, Mar 08, 2001 at 09:00:09PM -0500, Tom Lane wrote:
+> ncm@zembu.com (Nathan Myers) writes:
+> > Similar approaches have been tried frequently, and even enshrined 
+> > in standards (e.g. POSIX catgets), but have almost always proven too
+> > cumbersome.  The problem is that keeping programs that interpret the 
+> > numeric code in sync with the program they monitor is hard, and trying 
+> > to avoid breaking all those secondary programs hinders development on 
+> > the primary program.  Furthermore, assigning code numbers is a nuisance,
+> > and they add uninformative clutter.  
+> 
+> There's a difficult tradeoff to make here, but I think we do want to
+> distinguish between the "official error code" --- the thing that has
+> translations into various languages --- and what the backend is actually
+> allowed to print out.  It seems to me that a fairly large fraction of
+> the unique messages found in the backend can all be lumped under the
+> category of "internal error", and that we need to have only one official
+> error code and one user-level translated message for the lot of them.
+> But we do want to be able to print out different detail messages for
+> each of those internal errors.  There are other categories that might be
+> lumped together, but that one alone is sufficiently large to force us
+> to recognize it.  This suggests a distinction between a "primary" or
+> "user-level" error message, which we catalog and provide translations
+> for, and a "secondary", "detail", or "wizard-level" error message that
+> exists only in the backend source code, and only in English, and so
+> can be made up on the spur of the moment.
+
+I suggest using different named functions/macros for different 
+categories of message, rather than arguments to a common function.  
+(I.e. "elog(ERROR, ...)" Considered Harmful.)  
+
+You might even have more than one call at a site, one for the official
+message and another for unofficial or unstable informative details.
+
+> Another thing that I missed in Peter's proposal is how we are going to
+> cope with messages that include parameters.  Surely we do not expect
+> gettext to start with 'Attribute "foo" not found' and distinguish fixed
+> from variable parts of that string?
+
+The common way to deal with this is to catalog the format string itself,
+with its embedded % directives.  The tricky bit, and what the printf 
+family has had to be extended to handle, is that the order of the formal 
+arguments varies with the target language.  The original string is an 
+ordinary printf string, but the translations may have to refer to the 
+substitution arguments by numeric position (as well as type).
+
+There is probably Free code to implement that.
+
+As much as possible, any compile-time annotations should be extracted 
+into the catalog and filtered out of the source, to be reunited only
+when you retrieve the catalog entry.  
+
+
+> So it's clear that we need to devise a way of breaking an "error
+> message" into multiple portions, including:
+> 
+> 	Primary error message (localizable)
+> 	Parameters to insert into error message (user identifiers, etc)
+> 	Secondary (wizard) error message (optional)
+> 	Source code location
+> 	Query text location (optional)
+> 
+> and perhaps others that I have forgotten about.  One of the key things
+> to think about is whether we can, or should try to, transmit all this
+> stuff in a backwards-compatible protocol.  That would mean we'd have
+> to dump all the info into a single string, which is doable but would
+> perhaps look pretty ugly:
+> 
+> 	ERROR: Attribute "foo" not found  -- basic message for dumb frontends
+> 	ERRORCODE: UNREC_IDENT		-- key for finding localized message
+> 	PARAM1: foo	-- something to embed in the localized message
+> 	MESSAGE: Attribute or table name not known within context of query
+> 	CODELOC: src/backend/parser/parse_clause.c line 345
+> 	QUERYLOC: 22
+
+Whitespace can be used effectively.  E.g. only primary messages appear
+in column 0.  PG might emit this, which is easily filtered:
+
+   Attribute "foo" not found
+    severity: cannot proceed
+    explain: An attribute or table was name not known within
+    explain: the context of the query.
+    index: 237 Attribute \"%s\" not found
+    location: src/backend/parser/parse_clause.c line 345
+    query_position: 22
+
+Here the first line is the localized replacement of what appears in the 
+code, with arguments substituted in.   The other stuff comes from the
+catalog
+
+The call looks like
+
+  elog_query("Attribute \"%s\" not found", foo);
+  elog_explain("An attribute or table was name not known within"
+               "the context of the query.");
+  elog_severity(ERROR);
+
+which might gets expanded (squeezed) by the preprocessor to
+
+  _elog(current_query_position, "Attribute \"%s\" not found", foo);
+
+while a separate tool scans the sources and builds the catalog,
+annotating it with severity, line number, etc.  Human translators
+may edit copies of the resulting catalog.  The call to _elog looks up
+the string in the catalog, substitutes arguments into the translation,
+and emits it along with the catalog index number and whatever else
+has been requested in the config file.  Alternatively, any other program 
+can use the number to pull the annotations out of the catalog given
+just the index.
+
+> Alternatively we could suppress most of this stuff unless the frontend
+> specifically asks for it (and presumably is willing to digest it for
+> the user).
+> 
+> Bottom line for me is that if we are going to go to the trouble of
+> examining and changing every single elog() in the system, we should
+> try to get all of these issues cleaned up at once.  Let's not have to
+> go back and do it again later.
+
+The more complex it is, the more likely that will need to be redone.
+The simpler the calls look, the more likely that you can automate
+(or implement invisibly) any later improvements.  
+
+Nathan Myers
+ncm@zembu.com
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M5638@postgresql.org Fri Mar  9 00:41:08 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA25061
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 00:41:08 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f295f9x37185;
+	Fri, 9 Mar 2001 00:41:09 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5638@postgresql.org)
+Received: from technoart.net ([212.17.18.2])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f295a9x17382
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 00:36:09 -0500 (EST)
+	(envelope-from dyp@perchine.com)
+Received: from dyp.perchine.com ([212.17.18.66])
+	by technoart.net (8.8.8/8.8.8) with SMTP id LAA22076
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 11:36:07 +0600
+Content-Type: text/plain;
+  charset="koi8-r"
+From: Denis Perchine <dyp@perchine.com>
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Date: Fri, 9 Mar 2001 11:34:42 +0600
+X-Mailer: KMail [version 1.2.1]
+References: <Pine.LNX.4.30.0103082319150.1061-100000@peter.localdomain> <siwv9zeqzy.fsf@daffy.airs.com>
+In-Reply-To: <siwv9zeqzy.fsf@daffy.airs.com>
+MIME-Version: 1.0
+Message-Id: <01030911344204.00457@dyp.perchine.com>
+Content-Transfer-Encoding: 8bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> I like this approach.  One of the nice things about Oracle is that
+> they have an error manual.  All Oracle errors have an associated
+> number.  You can look up that number in the error manual to find a
+> paragraph giving details and workarounds.  Admittedly, sometimes the
+> further details are not helpful, but sometimes they are.  The basic
+> idea of being able to look up an error lets programmers balance the
+> need for a terse error message with the need for a fuller explanation.
+
+One of the examples when you need exact error message code is when you want 
+to separate unique index violations from other errors. This often needed when 
+you want just do insert, and leave all constraint checking to database...
+
+-- 
+Sincerely Yours,
+Denis Perchine
+
+----------------------------------
+E-Mail: dyp@perchine.com
+HomePage: http://www.perchine.com/dyp/
+FidoNet: 2:5000/120.5
+----------------------------------
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M5640@postgresql.org Fri Mar  9 06:30:04 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA06293
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 06:30:04 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29BTvx46311;
+	Fri, 9 Mar 2001 06:29:57 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5640@postgresql.org)
+Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29Agpx33552
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 05:43:10 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: (from zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) id IAA09255;
+	Fri, 9 Mar 2001 08:53:20 +0100
+Date: Fri, 9 Mar 2001 08:53:20 +0100
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Message-ID: <20010309085320.A7401@ara.zf.jcu.cz>
+References: <Pine.LNX.4.30.0103082319150.1061-100000@peter.localdomain> <20010308164222.Y624@store.zembu.com> <4741.984103209@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0.1i
+In-Reply-To: <4741.984103209@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Thu, Mar 08, 2001 at 09:00:09PM -0500
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Thu, Mar 08, 2001 at 09:00:09PM -0500, Tom Lane wrote:
+> > On Thu, Mar 08, 2001 at 11:49:50PM +0100, Peter Eisentraut wrote:
+> >> I really feel that translated error messages need to happen soon.
+> 
+> Agreed.
+
+ Yes, error codes is *very* wanted feature.
+
+> 
+> 	ERROR: Attribute "foo" not found  -- basic message for dumb frontends
+> 	ERRORCODE: UNREC_IDENT		-- key for finding localized message
+> 	PARAM1: foo	-- something to embed in the localized message
+> 	MESSAGE: Attribute or table name not known within context of query
+> 	CODELOC: src/backend/parser/parse_clause.c line 345
+> 	QUERYLOC: 22
+
+ Great idea! I agree that we need some powerful Error protocol instead 
+currect string based messages.
+ 
+ For transaltion to other languages I not sure with gettext() stuff on
+backend -- IMHO better (faster) solution will postgres system catalog
+with it.
+
+ May be add new command too: SET MESSAGE_LANGUAGE TO <xxx>, because
+wanted language not must be always same as locale setting.
+
+ Something like elog(ERROR, gettext(...)); is usable, but not sounds good 
+for me.
+
+			Karel
+
+-- 
+ Karel Zak  <zakkr@zf.jcu.cz>
+ http://home.zf.jcu.cz/~zakkr/
+ 
+ C, PostgreSQL, PHP, WWW, http://docs.linux.cz, http://mape.jcu.cz
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M5641@postgresql.org Fri Mar  9 06:43:48 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id GAA10006
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 06:43:47 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29Bhnx49065;
+	Fri, 9 Mar 2001 06:43:49 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5641@postgresql.org)
+Received: from sraigw.sra.co.jp (sraigw.sra.co.jp [202.32.10.2])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29Bgpx48712
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 06:42:53 -0500 (EST)
+	(envelope-from t-ishii@sra.co.jp)
+Received: from sranhk.sra.co.jp (sranhk [133.137.36.134])
+	by sraigw.sra.co.jp (8.8.7/3.7W-sraigw) with ESMTP id UAA07670
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 20:42:46 +0900 (JST)
+Received: from localhost (IDENT:t-ishii@portsv3-8 [133.137.84.8])
+	by sranhk.sra.co.jp (8.9.3/3.7W-srambox) with ESMTP id UAA22314;
+	Fri, 9 Mar 2001 20:42:43 +0900
+To: zakkr@zf.jcu.cz
+Cc: tgl@sss.pgh.pa.us, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+In-Reply-To: <20010309085320.A7401@ara.zf.jcu.cz>
+References: <20010308164222.Y624@store.zembu.com>
+	<4741.984103209@sss.pgh.pa.us>
+	<20010309085320.A7401@ara.zf.jcu.cz>
+X-Mailer: Mew version 1.94.2 on Emacs 20.7 / Mule 4.1
+	=?iso-2022-jp?B?KBskQjAqGyhCKQ==?=
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Message-Id: <20010309204226O.t-ishii@sra.co.jp>
+Date: Fri, 09 Mar 2001 20:42:26 +0900
+From: Tatsuo Ishii <t-ishii@sra.co.jp>
+X-Dispatcher: imput version 20000228(IM140)
+Lines: 17
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+>  For transaltion to other languages I not sure with gettext() stuff on
+> backend -- IMHO better (faster) solution will postgres system catalog
+> with it.
+> 
+>  May be add new command too: SET MESSAGE_LANGUAGE TO <xxx>, because
+> wanted language not must be always same as locale setting.
+
+In the multibyte enabled environment, that kind of command would not
+be necessary except UNICODE and MULE_INTERNAL, since they are
+multi-lingual encoding. For them, we might need something like:
+
+SET LANGUAGE_PREFERENCE TO 'Japanese';
+
+For the long term solutuon, this kind of problem should be solved in
+the implemetaion of SQL-92/99 i18n features.
+--
+Tatsuo Ishii
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M5645@postgresql.org Fri Mar  9 10:37:12 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA22198
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 10:37:11 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29FbDx71892;
+	Fri, 9 Mar 2001 10:37:13 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5645@postgresql.org)
+Received: from mailout03.sul.t-online.com (mailout03.sul.t-online.com [194.25.134.81])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29FaXx71776
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 10:36:33 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd01.sul.t-online.com 
+	by mailout03.sul.t-online.com with smtp 
+	id 14bOwN-0001Ce-03; Fri, 09 Mar 2001 16:36:27 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.76]) by fmrl01.sul.t-online.com
+	with esmtp id 14bOw7-0yVrI8C; Fri, 9 Mar 2001 16:36:11 +0100
+Date: Fri, 9 Mar 2001 16:45:54 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Internationalized error messages
+In-Reply-To: <20010308164222.Y624@store.zembu.com>
+Message-ID: <Pine.LNX.4.30.0103091643350.929-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Nathan Myers writes:
+
+> >     elog(ERROR, "XYZ01", gettext("stuff happened"));
+>
+> Similar approaches have been tried frequently, and even enshrined
+> in standards (e.g. POSIX catgets), but have almost always proven too
+> cumbersome.  The problem is that keeping programs that interpret the
+> numeric code in sync with the program they monitor is hard, and trying
+> to avoid breaking all those secondary programs hinders development on
+> the primary program.
+
+That's why no one uses catgets and everyone uses gettext.
+
+> Furthermore, assigning code numbers is a nuisance, and they add
+> uninformative clutter.
+
+The error codes are exactly what we want, to allow client programs (as
+opposed to humans) to identify the errors.  The code in my example has
+nothing to do with the message id in the catgets interface.
+
+> It's better to scan the program for elog() arguments, and generate
+> a catalog by using the string itself as the index code.  Those
+> maintaining the secondary programs can compare catalogs to see what
+> has been broken by changes and what new messages to expect.  elog()
+> itself can (optionally) invent tokens (e.g. catalog indices) to help
+> out those programs.
+
+That's what gettext does for you.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M5646@postgresql.org Fri Mar  9 10:49:11 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA23130
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 10:49:11 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29FnFx73540;
+	Fri, 9 Mar 2001 10:49:15 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5646@postgresql.org)
+Received: from mailout01.sul.t-online.com (mailout01.sul.t-online.com [194.25.134.80])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29FmVx73372
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 10:48:31 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd06.sul.t-online.com 
+	by mailout01.sul.t-online.com with smtp 
+	id 14bP7X-0001eg-00; Fri, 09 Mar 2001 16:47:59 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.76]) by fmrl06.sul.t-online.com
+	with esmtp id 14bP79-1w2fj6C; Fri, 9 Mar 2001 16:47:35 +0100
+Date: Fri, 9 Mar 2001 16:57:18 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Internationalized error messages 
+In-Reply-To: <4741.984103209@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.30.0103091646150.929-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane writes:
+
+> There's a difficult tradeoff to make here, but I think we do want to
+> distinguish between the "official error code" --- the thing that has
+> translations into various languages --- and what the backend is actually
+> allowed to print out.  It seems to me that a fairly large fraction of
+> the unique messages found in the backend can all be lumped under the
+> category of "internal error", and that we need to have only one official
+> error code and one user-level translated message for the lot of them.
+
+That's exactly what I was trying to avoid.  You'd still be allowed to
+choose the error message text freely, but client programs will be able to
+make sense of them by looking at the code only, as opposed to parsing the
+message text.  I'm trying to avoid making the message text to be computed
+from the error code, because that obscures the source code.
+
+> Another thing that's bothered me for a long time is our inconsistent
+> approach to determining where in the code a message comes from.  A lot
+> of the messages currently embed the name of the generating routine right
+> into the error text.  Again, we ought to separate the functionality:
+> the source-code location is valuable but ought not form part of the
+> primary error message.  I would like to see elog() become a macro that
+> invokes __FILE__ and __LINE__ to automatically make the *exact* source
+> code location become part of the secondary error information, and then
+> drop the convention of using the routine name in the message text.
+
+These sort of things have been on my mind as well, but they're really
+independent of my issue.  We can easily have runtime options to append or
+not additional things to the error string.  I don't see this as part of my
+proposal.
+
+> Another thing that I missed in Peter's proposal is how we are going to
+> cope with messages that include parameters.  Surely we do not expect
+> gettext to start with 'Attribute "foo" not found' and distinguish fixed
+> >from variable parts of that string?
+
+Sure we do.
+
+> That would mean we'd have to dump all the info into a single string,
+> which is doable but would perhaps look pretty ugly:
+>
+> 	ERROR: Attribute "foo" not found  -- basic message for dumb frontends
+> 	ERRORCODE: UNREC_IDENT		-- key for finding localized message
+
+There should not be a "key" to look up localized messages.  Remember that
+the localization will also have to be done in all the front-end programs.
+Surely we do not wish to make a list of messages that pg_dump or psql
+print out.  Gettext takes care of this stuff.  The only reason why we need
+error codes is for the sake of ease of interpreting by programs.
+
+> 	PARAM1: foo	-- something to embed in the localized message
+
+Not necessary.
+
+> 	MESSAGE: Attribute or table name not known within context of query
+
+How's that different from ERROR:?
+
+> 	CODELOC: src/backend/parser/parse_clause.c line 345
+
+Can be appended to ERROR (or MESSAGE) depending on configuration setting.
+
+> 	QUERYLOC: 22
+
+Not all errors are related to a query.
+
+The general problem here is also that this would introduce a client
+incompatibility.  Older clients that do not expect this amount of detail
+will print all this garbage to the screen?
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M5647@postgresql.org Fri Mar  9 11:01:42 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA24084
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 11:01:42 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29G1kx75165;
+	Fri, 9 Mar 2001 11:01:46 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5647@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29G11x75037
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 11:01:01 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f29G0r906898;
+	Fri, 9 Mar 2001 11:00:54 -0500 (EST)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages 
+In-reply-to: <Pine.LNX.4.30.0103091646150.929-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0103091646150.929-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Fri, 09 Mar 2001 16:57:18 +0100"
+Date: Fri, 09 Mar 2001 11:00:53 -0500
+Message-ID: <6895.984153653@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> That's exactly what I was trying to avoid.  You'd still be allowed to
+> choose the error message text freely, but client programs will be able to
+> make sense of them by looking at the code only, as opposed to parsing the
+> message text.  I'm trying to avoid making the message text to be computed
+> from the error code, because that obscures the source code.
+
+I guess I don't understand what you have in mind, because this seems
+self-contradictory.  If "client programs can look at the code only",
+then how can the error message text be chosen independently of the code?
+
+>> Surely we do not expect gettext to start with 'Attribute "foo" not
+>> found' and distinguish fixed from variable parts of that string?
+
+> Sure we do.
+
+How does that work exactly?  You're assuming an extremely intelligent
+localization mechanism, I guess, which I was not.  I think it makes more
+sense to work a little harder in the backend to avoid requiring AI
+software in every frontend.
+
+>> MESSAGE: Attribute or table name not known within context of query
+
+> How's that different from ERROR:?
+
+Sorry, I meant that as an example of the "secondary message string", but
+it's a pretty lame example...
+
+> The general problem here is also that this would introduce a client
+> incompatibility.  Older clients that do not expect this amount of detail
+> will print all this garbage to the screen?
+
+Yes, if we send it to them.  It would make sense to control the amount
+of detail presented via some option (a GUC variable, probably).  For
+backwards compatibility reasons we'd want the default to correspond to
+roughly the existing amount of detail.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M5649@postgresql.org Fri Mar  9 11:48:03 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA29403
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 11:48:02 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29Gm7x82613;
+	Fri, 9 Mar 2001 11:48:07 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5649@postgresql.org)
+Received: from mailout03.sul.t-online.com (mailout03.sul.t-online.com [194.25.134.81])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29Gftx80866
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 11:41:55 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd06.sul.t-online.com 
+	by mailout03.sul.t-online.com with smtp 
+	id 14bPxV-0006Eh-06; Fri, 09 Mar 2001 17:41:41 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.76]) by fmrl06.sul.t-online.com
+	with esmtp id 14bPwb-239C4mC; Fri, 9 Mar 2001 17:40:45 +0100
+Date: Fri, 9 Mar 2001 17:50:28 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Internationalized error messages 
+In-Reply-To: <6895.984153653@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.30.0103091733430.929-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane writes:
+
+> I guess I don't understand what you have in mind, because this seems
+> self-contradictory.  If "client programs can look at the code only",
+> then how can the error message text be chosen independently of the code?
+
+Let's say "type mismatch error", code 2200G acc. to SQL.  At one place in
+the source you write
+
+elog(ERROR, "2200G", "type mismatch in CASE expression (%s vs %s)", ...);
+
+Elsewhere you'd write
+
+elog(ERROR, "2200G", "type mismatch in argument %d of function %s,
+     expected %s, got %s", ...);
+
+Humans can look at this and have a fairly good idea what they'd need to
+fix.  However, a client program currently only has the option of failing
+or not failing.  In this example case it would probably better for it to
+fail, but someone else already put forth the example of constraint
+violation.  In this case the program might want to do something else.
+
+> >> Surely we do not expect gettext to start with 'Attribute "foo" not
+> >> found' and distinguish fixed from variable parts of that string?
+>
+> > Sure we do.
+>
+> How does that work exactly?  You're assuming an extremely intelligent
+> localization mechanism, I guess, which I was not.  I think it makes more
+> sense to work a little harder in the backend to avoid requiring AI
+> software in every frontend.
+
+Gettext takes care of this.  In the source you'd write
+
+elog(ERROR, "2200G", gettext("type mismatch in CASE expression (%s vs %s)"),
+            string, string);
+
+When you run the xgettext utility program it scans the source for cases of
+gettext(...) and creates message catalogs for the translators.  When it
+finds printf arguments it automatically includes marks in the message,
+such as
+
+"type mismatch in CASE expression (%1$s vs %2$s)"
+
+which the translator better keep in his version.  This also handles the
+case where the arguments might have to appear in a different order in a
+different language.
+
+> Sorry, I meant that as an example of the "secondary message string", but
+> it's a pretty lame example...
+
+I guess I'm not sold on the concept of primary and secondary message
+strings.  If the primary message isn't good enough you better fix that.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M5650@postgresql.org Fri Mar  9 11:58:51 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA01102
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 11:58:51 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29Gwux84498;
+	Fri, 9 Mar 2001 11:58:56 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5650@postgresql.org)
+Received: from mailout03.sul.t-online.com (mailout03.sul.t-online.com [194.25.134.81])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29Gm0x82577
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 11:48:00 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd06.sul.t-online.com 
+	by mailout03.sul.t-online.com with smtp 
+	id 14bQ3Q-0006Eh-05; Fri, 09 Mar 2001 17:47:48 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.76]) by fmrl06.sul.t-online.com
+	with esmtp id 14bQ39-0bSV4SC; Fri, 9 Mar 2001 17:47:31 +0100
+Date: Fri, 9 Mar 2001 17:57:13 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Karel Zak <zakkr@zf.jcu.cz>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Internationalized error messages
+In-Reply-To: <20010309085320.A7401@ara.zf.jcu.cz>
+Message-ID: <Pine.LNX.4.30.0103091756220.929-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Karel Zak writes:
+
+>  For transaltion to other languages I not sure with gettext() stuff on
+> backend -- IMHO better (faster) solution will postgres system catalog
+> with it.
+
+elog(ERROR, "cannot open message catalog table");
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M5651@postgresql.org Fri Mar  9 12:08:40 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA03663
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 12:08:40 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29H8fx86748;
+	Fri, 9 Mar 2001 12:08:41 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5651@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29H5Px86225
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 12:05:25 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f29H5M907103;
+	Fri, 9 Mar 2001 12:05:22 -0500 (EST)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages 
+In-reply-to: <Pine.LNX.4.30.0103091733430.929-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0103091733430.929-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Fri, 09 Mar 2001 17:50:28 +0100"
+Date: Fri, 09 Mar 2001 12:05:22 -0500
+Message-ID: <7100.984157522@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> Let's say "type mismatch error", code 2200G acc. to SQL.  At one place in
+> the source you write
+> elog(ERROR, "2200G", "type mismatch in CASE expression (%s vs %s)", ...);
+> Elsewhere you'd write
+> elog(ERROR, "2200G", "type mismatch in argument %d of function %s,
+>      expected %s, got %s", ...);
+
+Okay, so your notion of an error code is not a localizable entity at
+all, it's something for client programs to look at.  Now I get it.
+
+I object to writing "2200G" however, because that has no mnemonic value
+whatever, and is much too easy to get wrong.  How about
+
+elog(ERROR, ERR_TYPE_MISMATCH, "type mismatch in argument %d of function %s,
+     expected %s, got %s", ...);
+
+where ERR_TYPE_MISMATCH is #defined as "2200G" someplace?  Or for that
+matter #defined as "TYPE_MISMATCH"?  Content-free numeric codes are no
+fun to use on the client side either...
+
+> Gettext takes care of this.  In the source you'd write
+
+> elog(ERROR, "2200G", gettext("type mismatch in CASE expression (%s vs %s)"),
+>             string, string);
+
+Duh.  For some reason I was envisioning the localization substitution as
+occurring on the client side, but of course we'd want to do it on the
+server side, and before parameters are substituted into the message.
+Sorry for the noise.
+
+I am not sure we can/should use gettext (possible license problems?),
+but certainly something like this could be cooked up.
+
+>> Sorry, I meant that as an example of the "secondary message string", but
+>> it's a pretty lame example...
+
+> I guess I'm not sold on the concept of primary and secondary message
+> strings.  If the primary message isn't good enough you better fix that.
+
+The motivation isn't so much to improve on the primary message as to
+reduce the number of distinct strings that really need to be translated.
+Remember all those internal "can't happen" errors.  If we have only one
+message component then the translator is faced with a huge pile of
+internal messages and not a lot of gain from translating them.  If
+there's a primary and secondary component then all the internal messages
+can share the same primary component ("Internal error, please file a bug
+report").  Now the translator translates that one message, and can
+ignore the many secondary-component messages with a clear conscience.
+(Of course, he can translate those too if he really wants to, but the
+point is that he doesn't *have* to do it to attain reasonably friendly
+behavior.)
+
+Perhaps another way to look at it is that we have a bunch of errors that
+are user-oriented (ie, relate pretty directly to something the user did
+wrong) and another bunch that are system-oriented (relate to internal
+problems, such as consistency check failures or violations of internal
+APIs).  We want to provide localized translations of the first set, for
+sure.  I don't think we need localized translations of the second set,
+so long as we have some sort of "covering message" that can be localized
+for them.  Maybe instead of "primary" and "secondary" strings for a
+single error, we ought to distinguish these two categories of error and
+plan different localization strategies for them.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M5665@postgresql.org Fri Mar  9 14:43:45 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA13877
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 14:43:44 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29Jhlx10520;
+	Fri, 9 Mar 2001 14:43:47 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5665@postgresql.org)
+Received: from exup.z.zembu.com (nat.zembu.com [209.128.96.253])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29JhLx10390
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 14:43:22 -0500 (EST)
+	(envelope-from andrew@zembu.com)
+Received: from andrew by exup.z.zembu.com with local (Exim 3.12 #1 (Debian))
+	id 14bSnI-0003Qy-00
+	for <pgsql-hackers@postgresql.org>; Fri, 09 Mar 2001 11:43:20 -0800
+Date: Fri, 9 Mar 2001 11:43:20 -0800
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Message-ID: <20010309114320.C12977@zembu.com>
+Mail-Followup-To: pgsql-hackers@postgresql.org
+References: <Pine.LNX.4.30.0103091733430.929-100000@peter.localdomain> <7100.984157522@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <7100.984157522@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Fri, Mar 09, 2001 at 12:05:22PM -0500
+From: Andrew Evans <andrew@zembu.com>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Peter Eisentraut <peter_e@gmx.net> writes:
+> > Let's say "type mismatch error", code 2200G acc. to SQL.  At one place in
+> > the source you write
+> > elog(ERROR, "2200G", "type mismatch in CASE expression (%s vs %s)", ...);
+
+Tom Lane <tgl@sss.pgh.pa.us> spake:
+> I object to writing "2200G" however, because that has no mnemonic value
+> whatever, and is much too easy to get wrong.  How about
+> 
+> elog(ERROR, ERR_TYPE_MISMATCH, "type mismatch in argument %d of function %s,
+>      expected %s, got %s", ...);
+> 
+> where ERR_TYPE_MISMATCH is #defined as "2200G" someplace?  Or for that
+> matter #defined as "TYPE_MISMATCH"?  Content-free numeric codes are no
+> fun to use on the client side either...
+
+This is one thing I think VMS does well.  All error messages are a
+composite of the subsystem where they originated, the severity of the
+error, and the actual error itself.  Internally this is stored in a
+32-bit word.  It's been a long time, so I don't recall how many bits
+they allocated for each component.  The human-readable representation
+looks like "<subsystem>-<severity>-<error>".
+
+--
+Andrew Evans
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M5666@postgresql.org Fri Mar  9 14:58:32 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA15747
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 14:58:31 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29JwYx12257;
+	Fri, 9 Mar 2001 14:58:34 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5666@postgresql.org)
+Received: from store.d.zembu.com (nat.zembu.com [209.128.96.253])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29JnJx11198
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 14:49:19 -0500 (EST)
+	(envelope-from ncm@zembu.com)
+Received: by store.d.zembu.com (Postfix, from userid 509)
+	id 0552DA75B; Fri,  9 Mar 2001 11:49:21 -0800 (PST)
+Date: Fri, 9 Mar 2001 11:49:20 -0800
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Message-ID: <20010309114920.D624@store.zembu.com>
+Reply-To: pgsql-hackers@postgresql.org
+References: <Pine.LNX.4.30.0103091733430.929-100000@peter.localdomain> <7100.984157522@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <7100.984157522@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Fri, Mar 09, 2001 at 12:05:22PM -0500
+From: ncm@zembu.com (Nathan Myers)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Fri, Mar 09, 2001 at 12:05:22PM -0500, Tom Lane wrote:
+> > Gettext takes care of this.  In the source you'd write
+> 
+> > elog(ERROR, "2200G", gettext("type mismatch in CASE expression (%s vs %s)"),
+> >             string, string);
+> 
+> Duh.  For some reason I was envisioning the localization substitution as
+> occurring on the client side, but of course we'd want to do it on the
+> server side, and before parameters are substituted into the message.
+> Sorry for the noise.
+> 
+> I am not sure we can/should use gettext (possible license problems?),
+> but certainly something like this could be cooked up.
+
+I've been assuming that PG's needs are specialized enough that the
+project wouldn't use gettext directly, but instead something inspired 
+by it.  
+
+If you look at my last posting on the subject, by the way, you will see 
+that it could work without a catalog underneath; integrating a catalog 
+would just require changes in a header file (and the programs to generate 
+the catalog, of course).  That quality seems to me essential to allow the 
+changeover to be phased in gradually, and to allow different underlying 
+catalog implementations to be tried out.
+
+Nathan
+ncm
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M5674@postgresql.org Fri Mar  9 15:36:01 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA19742
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 15:36:00 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29Ka3x19411;
+	Fri, 9 Mar 2001 15:36:03 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5674@postgresql.org)
+Received: from mailout05.sul.t-online.com (mailout05.sul.t-online.com [194.25.134.82])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29KZfx19290
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 15:35:41 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd03.sul.t-online.com 
+	by mailout05.sul.t-online.com with smtp 
+	id 14bTbq-0007l3-0G; Fri, 09 Mar 2001 21:35:34 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.76]) by fmrl03.sul.t-online.com
+	with esmtp id 14bTbm-0MoEWuC; Fri, 9 Mar 2001 21:35:30 +0100
+Date: Fri, 9 Mar 2001 21:45:14 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Internationalized error messages 
+In-Reply-To: <7100.984157522@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.30.0103092133380.929-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane writes:
+
+> I object to writing "2200G" however, because that has no mnemonic value
+> whatever, and is much too easy to get wrong.  How about
+>
+> elog(ERROR, ERR_TYPE_MISMATCH, "type mismatch in argument %d of function %s,
+>      expected %s, got %s", ...);
+>
+> where ERR_TYPE_MISMATCH is #defined as "2200G" someplace?  Or for that
+> matter #defined as "TYPE_MISMATCH"?  Content-free numeric codes are no
+> fun to use on the client side either...
+
+Well, SQL defines these.  Do we want to make our own list?  However,
+numeric codes also have the advantage that some hierarchy is possible.
+E.g., the "22" in "2200G" is actually the category code "data exception".
+Personally, I would stick to the SQL codes but make some readable macro
+name for backend internal use.
+
+> I am not sure we can/should use gettext (possible license problems?),
+
+Gettext is an open standard, invented at Sun IIRC.  There is also an
+independent implementation for BSDs in the works.  On GNU/Linux system
+it's in the C library.  I don't see any license problems that way.  Is has
+been used widely for free software and so far I haven't seen any real
+alternative.
+
+> but certainly something like this could be cooked up.
+
+Well, I'm trying to avoid having to do the cooking. ;-)
+
+> Perhaps another way to look at it is that we have a bunch of errors that
+> are user-oriented (ie, relate pretty directly to something the user did
+> wrong) and another bunch that are system-oriented (relate to internal
+> problems, such as consistency check failures or violations of internal
+> APIs).  We want to provide localized translations of the first set, for
+> sure.  I don't think we need localized translations of the second set,
+> so long as we have some sort of "covering message" that can be localized
+> for them.
+
+I'm sure this can be covered in some macro way.  A random idea:
+
+elog(ERROR, INTERNAL_ERROR("text"), ...)
+
+expands to
+
+elog(ERROR, gettext("Internal error: %s"), ...)
+
+OTOH, we should not yet make presumptions about what dedicated translators
+can be capable of.  :-)
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M5675@postgresql.org Fri Mar  9 15:49:07 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA20321
+	for <pgman@candle.pha.pa.us>; Fri, 9 Mar 2001 15:49:07 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f29Kn8x21185;
+	Fri, 9 Mar 2001 15:49:09 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5675@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f29Kmbx20959
+	for <pgsql-hackers@postgresql.org>; Fri, 9 Mar 2001 15:48:37 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f29KmX908663;
+	Fri, 9 Mar 2001 15:48:33 -0500 (EST)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages 
+In-reply-to: <Pine.LNX.4.30.0103092133380.929-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0103092133380.929-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Fri, 09 Mar 2001 21:45:14 +0100"
+Date: Fri, 09 Mar 2001 15:48:33 -0500
+Message-ID: <8660.984170913@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> Well, SQL defines these.  Do we want to make our own list?  However,
+> numeric codes also have the advantage that some hierarchy is possible.
+> E.g., the "22" in "2200G" is actually the category code "data exception".
+> Personally, I would stick to the SQL codes but make some readable macro
+> name for backend internal use.
+
+We will probably find cases where we need codes not defined by SQL
+(since we have non-SQL features).  If there is room to invent our
+own codes then I have no objection to this.
+
+>> I am not sure we can/should use gettext (possible license problems?),
+
+> Gettext is an open standard, invented at Sun IIRC.  There is also an
+> independent implementation for BSDs in the works.  On GNU/Linux system
+> it's in the C library.  I don't see any license problems that way.
+
+Unless that BSD implementation is ready to go, I think we'd be talking
+about relying on GPL'd (not LGPL'd) code for an essential component of
+the system functionality.  Given RMS' recent antics I am much less
+comfortable with that than I might once have been.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M5801@postgresql.org Tue Mar 13 08:13:36 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id IAA03404
+	for <pgman@candle.pha.pa.us>; Tue, 13 Mar 2001 08:13:35 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2DDCix16410;
+	Tue, 13 Mar 2001 08:12:44 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5801@postgresql.org)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2DDC4x16226
+	for <pgsql-hackers@postgresql.org>; Tue, 13 Mar 2001 08:12:04 -0500 (EST)
+	(envelope-from pgsql-hackers-owner@postgresql.org)
+Received: from nemeton.com.au (202-76-170-108.dialin.swift.net.au [202.76.170.108])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2AM2xx82737
+	for <pgsql-hackers@postgresql.org>; Sat, 10 Mar 2001 17:03:00 -0500 (EST)
+	(envelope-from giles@nemeton.com.au)
+Received: (qmail 5430 invoked from network); 10 Mar 2001 22:02:16 -0000
+Received: from nemeton.com.au (203.8.3.33)
+  by nemeton.com.au with SMTP; 10 Mar 2001 22:02:16 -0000
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages 
+In-Reply-To: Message from Tom Lane <tgl@sss.pgh.pa.us> 
+   of "Fri, 09 Mar 2001 12:05:22 CDT." <7100.984157522@sss.pgh.pa.us> 
+Date: Sun, 11 Mar 2001 09:02:16 +1100
+Message-ID: <5428.984261736@nemeton.com.au>
+From: Giles Lean <giles@nemeton.com.au>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+
+Tom Lane wrote:
+
+> I am not sure we can/should use gettext (possible license problems?),
+> but certainly something like this could be cooked up.
+
+http://citrus.bsdclub.org/index-en.html
+
+I'm not sure of the current status of the code.
+
+Regards,
+
+Giles
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M5809@postgresql.org Tue Mar 13 10:01:04 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id KAA10081
+	for <pgman@candle.pha.pa.us>; Tue, 13 Mar 2001 10:01:03 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2DF01x32641;
+	Tue, 13 Mar 2001 10:00:01 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5809@postgresql.org)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2DESJx26149
+	for <pgsql-hackers@postgresql.org>; Tue, 13 Mar 2001 09:28:19 -0500 (EST)
+	(envelope-from pgsql-hackers-owner@postgresql.org)
+Received: from henry.newn.cam.ac.uk (henry.newn.cam.ac.uk [131.111.204.130])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f2BIBGx97386
+	for <pgsql-hackers@postgresql.org>; Sun, 11 Mar 2001 13:11:16 -0500 (EST)
+	(envelope-from prlw1@newn.cam.ac.uk)
+Received: from [131.111.204.180] (helo=quartz.newn.cam.ac.uk)
+	by henry.newn.cam.ac.uk with esmtp (Exim 3.13 #1)
+	id 14cAJ4-0002pP-00; Sun, 11 Mar 2001 18:11:02 +0000
+Received: from prlw1 by quartz.newn.cam.ac.uk with local (Exim 3.13 #1)
+	id 14cAJ4-0002Em-00; Sun, 11 Mar 2001 18:11:02 +0000
+Date: Sun, 11 Mar 2001 18:11:02 +0000
+From: Patrick Welche <prlw1@newn.cam.ac.uk>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: Peter Eisentraut <peter_e@gmx.net>, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Message-ID: <20010311181102.B8454@quartz.newn.cam.ac.uk>
+Reply-To: prlw1@cam.ac.uk
+References: <Pine.LNX.4.30.0103092133380.929-100000@peter.localdomain> <8660.984170913@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2i
+In-Reply-To: <8660.984170913@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Fri, Mar 09, 2001 at 03:48:33PM -0500
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Fri, Mar 09, 2001 at 03:48:33PM -0500, Tom Lane wrote:
+> Peter Eisentraut <peter_e@gmx.net> writes:
+> > Well, SQL defines these.  Do we want to make our own list?  However,
+> > numeric codes also have the advantage that some hierarchy is possible.
+> > E.g., the "22" in "2200G" is actually the category code "data exception".
+> > Personally, I would stick to the SQL codes but make some readable macro
+> > name for backend internal use.
+> 
+> We will probably find cases where we need codes not defined by SQL
+> (since we have non-SQL features).  If there is room to invent our
+> own codes then I have no objection to this.
+> 
+> >> I am not sure we can/should use gettext (possible license problems?),
+> 
+> > Gettext is an open standard, invented at Sun IIRC.  There is also an
+> > independent implementation for BSDs in the works.  On GNU/Linux system
+> > it's in the C library.  I don't see any license problems that way.
+> 
+> Unless that BSD implementation is ready to go, I think we'd be talking
+> about relying on GPL'd (not LGPL'd) code for an essential component of
+> the system functionality.  Given RMS' recent antics I am much less
+> comfortable with that than I might once have been.
+
+cf. http://citrus.bsdclub.org/
+
+and the libintl in NetBSD, at least NetBSD-current, works. The hard part
+was eg convincing gmake's configure to use it as there are bits like
+
+#if __USE_GNU_GETTEXT
+
+rather than just checking for the existence of the functions (as well as
+the internal symbol _nl_msg_cat_cntr).
+
+So yes it's ready to go, but please don't use the same m4 in configure.in as
+for GNU gettext.
+
+Cheers,
+
+Patrick
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M5729@postgresql.org Mon Mar 12 08:38:58 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id IAA29321
+	for <pgman@candle.pha.pa.us>; Mon, 12 Mar 2001 08:38:57 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2CDbhx08914;
+	Mon, 12 Mar 2001 08:37:43 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5729@postgresql.org)
+Received: from ara.zf.jcu.cz ([160.217.161.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f2CCDQx02184
+	for <pgsql-hackers@postgresql.org>; Mon, 12 Mar 2001 07:13:26 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: (from zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) id KAA03098;
+	Mon, 12 Mar 2001 10:32:34 +0100
+Date: Mon, 12 Mar 2001 10:32:33 +0100
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Peter Eisentraut <peter_e@gmx.net>
+Cc: Karel Zak <zakkr@zf.jcu.cz>, Tom Lane <tgl@sss.pgh.pa.us>,
+        pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Message-ID: <20010312103232.A2268@ara.zf.jcu.cz>
+References: <20010309085320.A7401@ara.zf.jcu.cz> <Pine.LNX.4.30.0103091756220.929-100000@peter.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0.1i
+In-Reply-To: <Pine.LNX.4.30.0103091756220.929-100000@peter.localdomain>; from peter_e@gmx.net on Fri, Mar 09, 2001 at 05:57:13PM +0100
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Fri, Mar 09, 2001 at 05:57:13PM +0100, Peter Eisentraut wrote:
+> Karel Zak writes:
+> 
+> >  For transaltion to other languages I not sure with gettext() stuff on
+> > backend -- IMHO better (faster) solution will postgres system catalog
+> > with it.
+> 
+> elog(ERROR, "cannot open message catalog table");
+
+ Sure, and what:
+
+elog(ERROR, gettext("can't set LC_MESSAGES"));
+
+ We can generate our system catalog for this by simular way as gettext, it's 
+means all messages can be in sources in English too.
+
+ But this is reflexion, performance test show more.
+
+			Karel
+
+-- 
+ Karel Zak  <zakkr@zf.jcu.cz>
+ http://home.zf.jcu.cz/~zakkr/
+ 
+ C, PostgreSQL, PHP, WWW, http://docs.linux.cz, http://mape.jcu.cz
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M5734@postgresql.org Mon Mar 12 11:30:24 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA06736
+	for <pgman@candle.pha.pa.us>; Mon, 12 Mar 2001 11:30:23 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2CGUSx29891;
+	Mon, 12 Mar 2001 11:30:28 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5734@postgresql.org)
+Received: from mail.retep.org.uk ([216.126.85.184])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f2CGCYx27481
+	for <pgsql-hackers@postgresql.org>; Mon, 12 Mar 2001 11:12:34 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Received: from heather.retep.org.uk ([193.113.113.179])
+	(authenticated)
+	by mail.retep.org.uk (8.11.1/8.11.1) with ESMTP id f2CGCQR27465;
+	Mon, 12 Mar 2001 11:12:26 -0500 (EST)
+	(envelope-from peter@retep.org.uk)
+Message-Id: <5.0.2.1.0.20010312143839.0214cc90@mail.retep.org.uk>
+X-Sender: peter@mail.retep.org.uk
+X-Mailer: QUALCOMM Windows Eudora Version 5.0.2
+Date: Mon, 12 Mar 2001 15:09:53 +0000
+To: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+From: Peter Mount <peter@retep.org.uk>
+Subject: Re: [HACKERS] Internationalized error messages
+In-Reply-To: <Pine.LNX.4.30.0103082319150.1061-100000@peter.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"; format=flowed
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 23:49 08/03/01 +0100, Peter Eisentraut wrote:
+>I really feel that translated error messages need to happen soon.
+>Managing translated message catalogs can be done easily with available
+>APIs.  However, translatable messages really require an error code
+>mechanism (otherwise it's completely impossible for programs to interpret
+>error messages reliably).  I've been thinking about this for much too long
+>now and today I finally settled to the simplest possible solution.
+>
+>Let the actual method of allocating error codes be irrelevant for now,
+>although the ones in the SQL standard are certainly to be considered for a
+>start.  Essentially, instead of writing
+
+snip
+
+>On the protocol front, this could be pretty easy to do.  Instead of
+>"message text" we'd send a string "XYZ01: message text".  Worst case, we
+>pass this unfiltered to the client and provide an extra function that
+>returns only the first five characters.  Alternatively we could strip off
+>the prefix when returning the message text only.
+
+Most other DB's (I'm thinking of Oracle here) pass the code unfiltered to 
+the client anyhow. Saying that, it's not impossible to get psql and other 
+interactive clients to strip the error code anyhow.
+
+
+>At the end, the i18n part would actually be pretty easy, e.g.,
+>
+>     elog(ERROR, "XYZ01", gettext("stuff happened"));
+>
+>
+>Comments?  Better ideas?
+
+A couple of ideas. One, if we have a master list of error codes, we need to 
+have this in an independent format (ie not a .h file). However the other 
+idea is to expand on the JDBC's errors.properties files. Being 
+ascii/unicode, the format will work with just some extra code to implement 
+them in C.
+
+Brief description:
+------------------------
+
+The ResourceBundle's handle one language per file. From a base filename, 
+each different language has a file based on:
+
+         filename_la_ct.properties
+
+where la is the ISO 2 character language, and ct is the ISO 2 character 
+country code.
+
+For example:
+
+messages_en_GB.properties
+messages_en_US.properties
+messages_en.properties
+messages_fr.properties
+messages.properties
+
+Now, here for the english locale for England it checks in this order: 
+messages_en_GB.properties messages_en.properties messages.properties.
+
+In each file, a message is of the format:
+
+key=message, and each parameter passed into the message written like {1} 
+{2} etc, so for example:
+
+fathom=Unable to fathom update count {0}
+
+Now apart from the base file (messages.properties in this case), the other 
+files are optional, and an entry only needs to be in there if they are 
+present in that language.
+
+So, in french, fathom may be translated, but then again it may not (in JDBC 
+it isn't). Then it's not included in the file. Any new messages can be 
+added to the base language, but only included as and when they are translated.
+
+Peter
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M5736@postgresql.org Mon Mar 12 14:12:38 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id OAA13271
+	for <pgman@candle.pha.pa.us>; Mon, 12 Mar 2001 14:12:36 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2CJAMx49815;
+	Mon, 12 Mar 2001 14:10:22 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5736@postgresql.org)
+Received: from mailout03.sul.t-online.com (mailout03.sul.t-online.com [194.25.134.81])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f2CJ5kx49312
+	for <pgsql-hackers@postgresql.org>; Mon, 12 Mar 2001 14:05:46 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd05.sul.t-online.com 
+	by mailout03.sul.t-online.com with smtp 
+	id 14cXdC-0005sr-00; Mon, 12 Mar 2001 20:05:22 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.45]) by fmrl05.sul.t-online.com
+	with esmtp id 14cXd2-1UHYcCC; Mon, 12 Mar 2001 20:05:12 +0100
+Date: Mon, 12 Mar 2001 20:15:02 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Karel Zak <zakkr@zf.jcu.cz>
+cc: Tom Lane <tgl@sss.pgh.pa.us>, <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] Internationalized error messages
+In-Reply-To: <20010312103232.A2268@ara.zf.jcu.cz>
+Message-ID: <Pine.LNX.4.30.0103122013270.1047-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Karel Zak writes:
+
+> > >  For transaltion to other languages I not sure with gettext() stuff on
+> > > backend -- IMHO better (faster) solution will postgres system catalog
+> > > with it.
+> >
+> > elog(ERROR, "cannot open message catalog table");
+>
+>  Sure, and what:
+>
+> elog(ERROR, gettext("can't set LC_MESSAGES"));
+>
+>  We can generate our system catalog for this by simular way as gettext, it's
+> means all messages can be in sources in English too.
+
+When there is an error condition in the backend, the last thing you want
+to do (and are allowed to do) is accessing tables.  Also keep in mind that
+we want to internationalize other parts of the system as well, such as
+pg_dump and psql.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M5791@postgresql.org Tue Mar 13 02:41:02 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id CAA18106
+	for <pgman@candle.pha.pa.us>; Tue, 13 Mar 2001 02:41:01 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f2D7dWx73584;
+	Tue, 13 Mar 2001 02:39:32 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M5791@postgresql.org)
+Received: from ara.zf.jcu.cz (ara.zf.jcu.cz [160.217.161.4])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f2D7V5x72953
+	for <pgsql-hackers@postgresql.org>; Tue, 13 Mar 2001 02:31:05 -0500 (EST)
+	(envelope-from zakkr@zf.jcu.cz)
+Received: (from zakkr@localhost)
+	by ara.zf.jcu.cz (8.9.3/8.9.3/Debian 8.9.3-21) id IAA26971;
+	Tue, 13 Mar 2001 08:30:59 +0100
+Date: Tue, 13 Mar 2001 08:30:59 +0100
+From: Karel Zak <zakkr@zf.jcu.cz>
+To: Peter Eisentraut <peter_e@gmx.net>
+Cc: Karel Zak <zakkr@zf.jcu.cz>, Tom Lane <tgl@sss.pgh.pa.us>,
+        pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Internationalized error messages
+Message-ID: <20010313083058.C24468@ara.zf.jcu.cz>
+References: <20010312103232.A2268@ara.zf.jcu.cz> <Pine.LNX.4.30.0103122013270.1047-100000@peter.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0.1i
+In-Reply-To: <Pine.LNX.4.30.0103122013270.1047-100000@peter.localdomain>; from peter_e@gmx.net on Mon, Mar 12, 2001 at 08:15:02PM +0100
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Mon, Mar 12, 2001 at 08:15:02PM +0100, Peter Eisentraut wrote:
+> Karel Zak writes:
+> 
+> > > >  For transaltion to other languages I not sure with gettext() stuff on
+> > > > backend -- IMHO better (faster) solution will postgres system catalog
+> > > > with it.
+> > >
+> > > elog(ERROR, "cannot open message catalog table");
+> >
+> >  Sure, and what:
+> >
+> > elog(ERROR, gettext("can't set LC_MESSAGES"));
+> >
+> >  We can generate our system catalog for this by simular way as gettext, it's
+> > means all messages can be in sources in English too.
+> 
+> When there is an error condition in the backend, the last thing you want
+> to do (and are allowed to do) is accessing tables.  Also keep in mind that
+> we want to internationalize other parts of the system as well, such as
+> pg_dump and psql.
+
+ Agree, the pg_xxxx application are good adepts for POSIX locales, all my
+previous notes are about backend error/notice messages, but forget it --
+after implementation we will more judicious.
+
+-- 
+ Karel Zak  <zakkr@zf.jcu.cz>
+ http://home.zf.jcu.cz/~zakkr/
+ 
+ C, PostgreSQL, PHP, WWW, http://docs.linux.cz, http://mape.jcu.cz
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M6177@postgresql.org Mon Mar 19 17:58:41 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA09211
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 17:58:40 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2JMw5N07189;
+	Mon, 19 Mar 2001 17:58:05 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6177@postgresql.org)
+Received: from mailout03.sul.t-online.com (mailout03.sul.t-online.com [194.25.134.81])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2JMkaN84648
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 17:46:36 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd03.sul.t-online.com 
+	by mailout03.sul.t-online.com with smtp 
+	id 14f8Q5-0007Mt-01; Mon, 19 Mar 2001 23:46:33 +0100
+Received: from peter.localdomain (520083510237-0001@[217.80.146.106]) by fmrl03.sul.t-online.com
+	with esmtp id 14f8Px-15zChUC; Mon, 19 Mar 2001 23:46:25 +0100
+Date: Mon, 19 Mar 2001 23:56:32 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] More on elog and error codes
+Message-ID: <Pine.LNX.4.30.0103192110470.1131-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I've looked at the elog calls in the source, about 1700 in total (only
+elog(ERROR)).  If we mapped these to the SQL error codes then we'd have
+about two dozen calls with an assigned code and the rest being "other".
+The way I estimate it (I didn't really look at *each* call, of course) is
+that about 2/3 of the calls are internal panic calls ("cache lookup of %s
+failed"), 1/6 are SQL-level problems, and the rest are operating system,
+storage problems, "not implemented", misconfigurations, etc.
+
+A problem that makes this quite hard to manage is that many errors can be
+reported from several places, e.g., the parser, the executor, the access
+method.  Some of these messages are probably not readily reproduceable
+because they are caught elsewhere.
+
+Consequentially, the most pragmatic approach to assigning error codes
+might be to just pick some numbers and give them out gradually.  A
+hierarchical subsystem+code might be useful, beyond that it really depends
+on what we expect from error codes in the first place.  Does anyone have
+good experiences from other products?
+
+Essentially, I envision making up a new function, say "elogc", which has
+
+    elogc(<level>, [<subsys>,?] <code>, message...)
+
+where the code is some macro, the expansion of which is to be determined.
+A call to "elogc" would also require a formalized message wording, adding
+the error code to the documentation, which also requires having a fairly
+good idea how the error can happen and how to handle it.  This could
+perhaps even be automated to some extent.
+
+All the calls that are not converted yet will be assigned a to the generic
+"internal error" class; most of them will stay this way.
+
+
+As for translations, I don't think we have to worry about this right now.
+Assuming that we would use gettext or something similar, we can tell it
+that all calls to elog (or "elogc" or whatever) contain translatable
+strings, so we don't have to uglify it with gettext(...) or _(...)  calls
+or what else.
+
+
+So we need some good error numbering scheme.  Any ideas?
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M6182@postgresql.org Mon Mar 19 19:19:38 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA13745
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 19:19:37 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K0J2N56455;
+	Mon, 19 Mar 2001 19:19:02 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6182@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2JNnEN15608
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 18:49:14 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id KAA19461;
+	Tue, 20 Mar 2001 10:48:55 +1100
+Message-Id: <3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Tue, 20 Mar 2001 10:48:55 +1100
+To: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes
+In-Reply-To: <Pine.LNX.4.30.0103192110470.1131-100000@peter.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 23:56 19/03/01 +0100, Peter Eisentraut wrote:
+>
+>Essentially, I envision making up a new function, say "elogc", which has
+>
+>    elogc(<level>, [<subsys>,?] <code>, message...)
+>
+>where the code is some macro, the expansion of which is to be determined.
+>A call to "elogc" would also require a formalized message wording, adding
+>the error code to the documentation, which also requires having a fairly
+>good idea how the error can happen and how to handle it.  This could
+>perhaps even be automated to some extent.
+>
+>All the calls that are not converted yet will be assigned a to the generic
+>"internal error" class; most of them will stay this way.
+>
+...
+>
+>So we need some good error numbering scheme.  Any ideas?
+>
+
+FWIW, the VMS scheme has error numbers broken down to include system,
+subsystem, error number & severity. These are maintained in an error
+message source file. eg. the file system's 'file not found' error message
+is something like:
+
+FACILITY RMS (the file system)
+...
+SEVERITY WARNING
+...
+FILNFND "File %AS not found"
+...
+
+It's a while since I used VMS messages files regularly, this is at least
+representative. It  has the drawback that severity is often tied to the
+message, not the circumstance, but this is a problem only rarely.
+
+In code, the messages are used as external symbols (probably in our case
+representing pointers to C format strings). In making extensive use of such
+a mnemonics, I never really needed to have full text messages. Once a set
+of standards is in place for message abbreviations, the most people can
+read the message codes. This would mean that:
+
+    elogc(<level>, [<subsys>,?] <code>, message...)
+
+becomes:
+
+    elogc(<code> [, parameter...])
+
+eg.
+
+    "cache lookup of %s failed"
+
+might be replaced by:
+
+    elog(CACHELOOKUPFAIL, cacheItemThatFailed);
+
+and 
+    "internal error: %s"
+
+becomes
+
+    elog(INTERNAL, "could not find the VeryImportantThing");
+
+Unlike VMS, it's probably a good idea to separate the severity from the
+error code, since a  CACHELOOKUPFAIL in one place may be less significant
+than another (eg. severity=debug).
+
+I also think it's important that we get the source file and line number
+somewhere in the message, and if we have these, we may not need the subsystem.
+
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M6184@postgresql.org Mon Mar 19 19:36:40 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA15177
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 19:36:40 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K0ZvN60485;
+	Mon, 19 Mar 2001 19:35:57 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6184@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2K0ZbN60358
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 19:35:37 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f2K0ZMt08329;
+	Mon, 19 Mar 2001 19:35:22 -0500 (EST)
+To: Philip Warner <pjw@rhyme.com.au>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] More on elog and error codes 
+In-reply-to: <3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au> 
+References: <3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au>
+Comments: In-reply-to Philip Warner <pjw@rhyme.com.au>
+	message dated "Tue, 20 Mar 2001 10:48:55 +1100"
+Date: Mon, 19 Mar 2001 19:35:22 -0500
+Message-ID: <8326.985048522@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Philip Warner <pjw@rhyme.com.au> writes:
+> I also think it's important that we get the source file and line number
+> somewhere in the message, and if we have these, we may not need the
+> subsystem.
+
+I agree that the subsystem concept is not necessary, except possibly as
+a means of avoiding collisions in the error-symbol namespace, and for
+that it would only be a naming convention (PGERR_subsys_IDENTIFIER).
+We probably do not need it considering that we have much less than 1000
+distinct error identifiers to assign, judging from Peter's survey.
+
+We do need severity to be distinct from the error code ("internal
+errors" are surely not all the same severity, even if we don't bother
+to assign formal error codes to each one).
+
+BTW, the symbols used in the source code do need to have a common prefix
+(PGERR_CACHELOOKUPFAIL not CACHELOOKUPFAIL) to avoid namespace pollution
+problems.  We blew this before with "DEBUG" and friends, let's learn
+from that mistake.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M6205@postgresql.org Tue Mar 20 11:30:33 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA29491
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 11:30:32 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KGRqN30235;
+	Tue, 20 Mar 2001 11:27:53 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6205@postgresql.org)
+Received: from mailout05.sul.t-online.com (mailout05.sul.t-online.com [194.25.134.82])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KGQ2N29944
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 11:26:02 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd06.sul.t-online.com 
+	by mailout05.sul.t-online.com with smtp 
+	id 14fOx7-0001ta-02; Tue, 20 Mar 2001 17:25:45 +0100
+Received: from peter.localdomain (520083510237-0001@[217.80.146.107]) by fmrl06.sul.t-online.com
+	with esmtp id 14fOww-0JqouOC; Tue, 20 Mar 2001 17:25:34 +0100
+Date: Tue, 20 Mar 2001 17:35:42 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Philip Warner <pjw@rhyme.com.au>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] More on elog and error codes
+In-Reply-To: <3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au>
+Message-ID: <Pine.LNX.4.30.0103201726200.1639-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Philip Warner writes:
+
+>     elog(CACHELOOKUPFAIL, cacheItemThatFailed);
+
+The disadvantage of this approach, which I tried to explain in a previous
+message, is that we might want to have different wordings for different
+occurences of the same class of error.
+
+Additionally, the whole idea behind having error *codes* is that the
+client program can easily distinguish errors that it can handle specially.
+Thus the codes should be numeric or some other short, fixed scheme.  In
+the backend they could be replaced by macros.
+
+Example:
+
+#define PGERR_TYPE 1854
+
+/* somewhere... */
+
+elogc(ERROR, PGERR_TYPE, "type %s cannot be created because it already exists", ...)
+
+/* elsewhere... */
+
+elogc(ERROR, PGERR_TYPE, "type %s used as argument %d of function %s doesn't exist", ...)
+
+
+In fact, this is my proposal.  The "1854" can be argued, but I like the
+rest.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M6236@postgresql.org Tue Mar 20 16:59:30 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id QAA23182
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 16:59:29 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KLwdH05279;
+	Tue, 20 Mar 2001 16:58:39 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6236@postgresql.org)
+Received: from mta1-rme.xtra.co.nz (mta1-rme.xtra.co.nz [203.96.92.1])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KLfiH02063
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 16:41:45 -0500 (EST)
+	(envelope-from csawtell@xtra.co.nz)
+Received: from berty ([210.54.106.166]) by mta1-rme.xtra.co.nz with SMTP
+          id <20010320214348.MNVZ4360745.mta1-rme.xtra.co.nz@berty>;
+          Wed, 21 Mar 2001 09:43:48 +1200
+Content-Type: text/plain;
+  charset="iso-8859-1"
+From: Christopher Sawtell <csawtell@xtra.co.nz>
+Organization: At Home
+To: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] More on elog and error codes
+Date: Wed, 21 Mar 2001 09:41:44 +1200
+X-Mailer: KMail [version 1.2]
+References: <Pine.LNX.4.30.0103192110470.1131-100000@peter.localdomain>
+In-Reply-To: <Pine.LNX.4.30.0103192110470.1131-100000@peter.localdomain>
+MIME-Version: 1.0
+Message-Id: <01032109414401.09393@berty>
+Content-Transfer-Encoding: 8bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Tue, 20 Mar 2001 10:56, you wrote:
+> I've looked at the elog calls in the source, about 1700 in total (only
+
+[ ... ]
+
+> So we need some good error numbering scheme.  Any ideas?
+
+Just that it might be a good idea to incorporate the  version / release 
+details in some way so that when somebody on the list is squeaking about 
+an error message it is obvious to the helper that the advice needed is to 
+upgrade from the Cretatious Period version to a modern release, and have 
+another go.
+
+-- 
+Sincerely etc.,
+
+ NAME       Christopher Sawtell
+ CELL PHONE 021 257 4451
+ ICQ UIN    45863470
+ EMAIL      csawtell @ xtra . co . nz
+ CNOTES     ftp://ftp.funet.fi/pub/languages/C/tutorials/sawtell_C.tar.gz
+
+ -->> Please refrain from using HTML or WORD attachments in e-mails to me 
+<<--
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M6239@postgresql.org Tue Mar 20 17:12:06 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA24116
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 17:12:06 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KMBKH08034;
+	Tue, 20 Mar 2001 17:11:20 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6239@postgresql.org)
+Received: from wallace.ece.rice.edu (wallace.ece.rice.edu [128.42.12.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KMAxH07894
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 17:10:59 -0500 (EST)
+	(envelope-from reedstrm@rice.edu)
+Received: by rice.edu
+	via sendmail from stdin
+	id <m14fULB-000LGUC@wallace.ece.rice.edu> (Debian Smail3.2.0.102)
+	for pgsql-hackers@postgresql.org; Tue, 20 Mar 2001 16:10:57 -0600 (CST) 
+Date: Tue, 20 Mar 2001 16:10:57 -0600
+From: "Ross J. Reedstrom" <reedstrm@rice.edu>
+To: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] More on elog and error codes
+Message-ID: <20010320161057.C1703@rice.edu>
+Mail-Followup-To: PostgreSQL Development <pgsql-hackers@postgresql.org>
+References: <Pine.LNX.4.30.0103192110470.1131-100000@peter.localdomain> <01032109414401.09393@berty>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+User-Agent: Mutt/1.0i
+In-Reply-To: <01032109414401.09393@berty>; from csawtell@xtra.co.nz on Wed, Mar 21, 2001 at 09:41:44AM +1200
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+On Wed, Mar 21, 2001 at 09:41:44AM +1200, Christopher Sawtell wrote:
+> On Tue, 20 Mar 2001 10:56, you wrote:
+> 
+> Just that it might be a good idea to incorporate the  version / release 
+> details in some way so that when somebody on the list is squeaking about 
+> an error message it is obvious to the helper that the advice needed is to 
+> upgrade from the Cretatious Period version to a modern release, and have 
+
+ROFL - parsed this as Cretinous period on the first pass.
+
+Ross
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M6244@postgresql.org Tue Mar 20 17:46:15 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA29664
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 17:46:14 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KMj4H13670;
+	Tue, 20 Mar 2001 17:45:04 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6244@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KMi3H13356
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 17:44:04 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id JAA06820;
+	Wed, 21 Mar 2001 09:43:53 +1100
+Message-Id: <3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Wed, 21 Mar 2001 09:43:52 +1100
+To: Peter Eisentraut <peter_e@gmx.net>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes
+Cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <Pine.LNX.4.30.0103201726200.1639-100000@peter.localdomain>
+References: <3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 17:35 20/03/01 +0100, Peter Eisentraut wrote:
+>Philip Warner writes:
+>
+>>     elog(CACHELOOKUPFAIL, cacheItemThatFailed);
+>
+>The disadvantage of this approach, which I tried to explain in a previous
+>message, is that we might want to have different wordings for different
+>occurences of the same class of error.
+>
+>Additionally, the whole idea behind having error *codes* is that the
+>client program can easily distinguish errors that it can handle specially.
+>Thus the codes should be numeric or some other short, fixed scheme.  In
+>the backend they could be replaced by macros.
+
+This seems to be just an argument for constructing the value of
+PGERR_CACHELOOKUPFAIL carefully (which is what the VMS message source files
+did). The point is that when they are used by a developer, they are simple.
+
+
+
+>#define PGERR_TYPE 1854
+>
+>/* somewhere... */
+>
+>elogc(ERROR, PGERR_TYPE, "type %s cannot be created because it already
+exists", ...)
+>
+>/* elsewhere... */
+>
+>elogc(ERROR, PGERR_TYPE, "type %s used as argument %d of function %s
+doesn't exist", ...)
+>
+
+I can appreciate that there may be cases where the same message is reused,
+but that is where parameter substitution comes in. 
+
+In the specific example above, returning the same error code is not going
+to help the client. What if they want to handle "type %s used as argument
+%d of function %s doesn't exist" by creating the type, and silently ignore
+"type %s cannot be created because it already exists"?
+
+How do you handle "type %s can not be used as a function return type"? Is
+this PGERR_FUNC or PGERR_TYPE?
+
+If the motivation behind this is to alloy easy translation to SQL error
+codes, then I suggest we have an error definition file with explicit
+translation:
+
+Code             SQL   Text
+PGERR_TYPALREXI  02xxx "type %s cannot be created because it already exists"
+PGERR_FUNCNOTYPE 02xxx "type %s used as argument %d of function %s doesn't
+exist"
+
+and if we want a generic 'type does not exist', then:
+
+PGERR_NOSUCHTYPE 02xxx "type %s does not exist - %s"
+
+where the %s might contain 'it can't be used as a function argument'.
+
+the we just have
+
+elogc(ERROR, PGERR_TYPALEXI, ...)
+
+/* elsewhere... */
+
+elogc(ERROR, PGERR_FUNCNOTYPE, ...)
+
+
+Creating central message files/objects has the added advantage of a much
+simpler locale support - they're just resource files, and they're NOT
+embedded throughout the code.
+
+Finally, if you do want to have some kind of error classification beyond
+the SQL code, it could be encoded in the error message file.
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M6246@postgresql.org Tue Mar 20 17:48:13 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA29776
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 17:48:12 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KMlVH14127;
+	Tue, 20 Mar 2001 17:47:31 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6246@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KMlAH14010
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 17:47:11 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id JAA06895;
+	Wed, 21 Mar 2001 09:46:55 +1100
+Message-Id: <3.0.5.32.20010321094655.02852720@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Wed, 21 Mar 2001 09:46:55 +1100
+To: Christopher Sawtell <csawtell@xtra.co.nz>,
+        Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes
+In-Reply-To: <01032109414401.09393@berty>
+References: <Pine.LNX.4.30.0103192110470.1131-100000@peter.localdomain>
+	<Pine.LNX.4.30.0103192110470.1131-100000@peter.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 09:41 21/03/01 +1200, Christopher Sawtell wrote:
+>Just that it might be a good idea to incorporate the  version / release 
+>details in some way so that when somebody on the list is squeaking about 
+>an error message it is obvious to the helper that the advice needed is to 
+>upgrade from the Cretatious Period version to a modern release, and have 
+>another go.
+
+This is better handled by the bug *reporting* system; the users can easily
+get the current version number from PG and send it with their reports. We
+don't really want all the error codes changing between releases.
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6288@postgresql.org Tue Mar 20 21:47:12 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA14475
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 21:47:11 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2L2jHH28234;
+	Tue, 20 Mar 2001 21:45:17 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6288@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2L2hcH27912
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 21:43:38 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id NAA10433;
+	Wed, 21 Mar 2001 13:43:25 +1100
+Message-Id: <3.0.5.32.20010321134325.028a4e90@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Wed, 21 Mar 2001 13:43:25 +1100
+To: Peter Eisentraut <peter_e@gmx.net>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes
+Cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+References: <Pine.LNX.4.30.0103201726200.1639-100000@peter.localdomain>
+	<3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 09:43 21/03/01 +1100, Philip Warner wrote:
+>
+>Code             SQL   Text
+>PGERR_TYPALREXI  02xxx "type %s cannot be created because it already exists"
+>PGERR_FUNCNOTYPE 02xxx "type %s used as argument %d of function %s doesn't
+>exist"
+>
+
+Peter,
+
+Just to clarify, because in a previous email you seemed to believe that I
+wanted 'PGERR_TYPALREXI' to resolve to a string. I have no such desire; a
+meaningful number is fine, but we should never have to type it. One
+possibility is that it is the address of an error-info function (built by
+'compiling' the message file). Another possibility is that it could be a
+prefix to several external symbols, PGERR_TYPALREXI_msg,
+PGERR_TYPALREXI_code, PGERR_TYPALREXI_num, PGERR_TYPALREXI_sqlcode etc,
+which are again built by compiling the message file. We can then encode
+whatever we like into the message, have flexible text, and ease of use for
+developers.
+
+Hope this clarifies things...
+
+
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6357@postgresql.org Wed Mar 21 15:55:00 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA13050
+	for <pgman@candle.pha.pa.us>; Wed, 21 Mar 2001 15:54:59 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2LKsCt45782;
+	Wed, 21 Mar 2001 15:54:12 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6357@postgresql.org)
+Received: from mailout01.sul.t-online.com (mailout01.sul.t-online.com [194.25.134.80])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2LKrst45607
+	for <pgsql-hackers@postgresql.org>; Wed, 21 Mar 2001 15:53:54 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd07.sul.t-online.com 
+	by mailout01.sul.t-online.com with smtp 
+	id 14fpbU-0001v6-04; Wed, 21 Mar 2001 21:53:12 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.125]) by fmrl07.sul.t-online.com
+	with esmtp id 14fpbH-25w9q4C; Wed, 21 Mar 2001 21:52:59 +0100
+Date: Wed, 21 Mar 2001 22:03:09 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Philip Warner <pjw@rhyme.com.au>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] More on elog and error codes
+In-Reply-To: <3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+Message-ID: <Pine.LNX.4.30.0103212158370.1694-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Philip Warner writes:
+
+> If the motivation behind this is to alloy easy translation to SQL error
+> codes, then I suggest we have an error definition file with explicit
+> translation:
+>
+> Code             SQL   Text
+> PGERR_TYPALREXI  02xxx "type %s cannot be created because it already exists"
+> PGERR_FUNCNOTYPE 02xxx "type %s used as argument %d of function %s doesn't
+> exist"
+>
+> and if we want a generic 'type does not exist', then:
+>
+> PGERR_NOSUCHTYPE 02xxx "type %s does not exist - %s"
+>
+> where the %s might contain 'it can't be used as a function argument'.
+>
+> the we just have
+>
+> elogc(ERROR, PGERR_TYPALEXI, ...)
+>
+> /* elsewhere... */
+>
+> elogc(ERROR, PGERR_FUNCNOTYPE, ...)
+
+This is going to be a disaster for the coder.  Every time you look at an
+elog you don't know what it does? Is the first arg a %s or a %d?  What's
+the first %s, what the second?  How can this be checked against bugs?  (I
+know GCC can be pretty helpful here, but does it catch all problems?)
+
+Conversely, when you look at the error message you don't know from what
+contexts it's called.  The error messages will degrade rapidly in quality
+because changing one will become a major project.
+
+> Creating central message files/objects has the added advantage of a much
+> simpler locale support - they're just resource files, and they're NOT
+> embedded throughout the code.
+
+Actually, the fact that the messages are in the code, where they're used,
+and not in a catalog file is a reason why gettext is so popular and
+catgets gets laughed at.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M6370@postgresql.org Wed Mar 21 20:32:02 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA03400
+	for <pgman@candle.pha.pa.us>; Wed, 21 Mar 2001 20:32:02 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2M1VSt53916;
+	Wed, 21 Mar 2001 20:31:28 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6370@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2M1UZt53760
+	for <pgsql-hackers@postgresql.org>; Wed, 21 Mar 2001 20:30:36 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id MAA11046;
+	Thu, 22 Mar 2001 12:30:19 +1100
+Message-Id: <3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Thu, 22 Mar 2001 12:30:19 +1100
+To: Peter Eisentraut <peter_e@gmx.net>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes
+Cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <Pine.LNX.4.30.0103212158370.1694-100000@peter.localdomain>
+References: <3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 22:03 21/03/01 +0100, Peter Eisentraut wrote:
+>Philip Warner writes:
+>
+>> If the motivation behind this is to alloy easy translation to SQL error
+>> codes, then I suggest we have an error definition file with explicit
+>> translation:
+>>
+>> Code             SQL   Text
+>> PGERR_TYPALREXI  02xxx "type %s cannot be created because it already
+exists"
+>> PGERR_FUNCNOTYPE 02xxx "type %s used as argument %d of function %s doesn't
+>> exist"
+>>
+>> and if we want a generic 'type does not exist', then:
+>>
+>> PGERR_NOSUCHTYPE 02xxx "type %s does not exist - %s"
+>>
+>> where the %s might contain 'it can't be used as a function argument'.
+>>
+>> the we just have
+>>
+>> elogc(ERROR, PGERR_TYPALEXI, ...)
+>>
+>> /* elsewhere... */
+>>
+>> elogc(ERROR, PGERR_FUNCNOTYPE, ...)
+>
+>This is going to be a disaster for the coder.  Every time you look at an
+>elog you don't know what it does? Is the first arg a %s or a %d?  What's
+>the first %s, what the second?
+
+>From experience using this sort of system, probably 80% of errors in new
+code are new; if you don't know the format of your own errors, then you
+have a larger problem. Secondly, most errors have obvious parameters, and
+it only ever gets confusing when they have more than one parameter, and
+even then it's pretty obvious. This concern was often raised by people new
+to the system, but generally turned out to be more FUD than fact.
+
+
+>How can this be checked against bugs? 
+>Conversely, when you look at the error message you don't know from what
+>contexts it's called.
+
+Am I missing something here? The user gets a message like: 
+
+    TYPALREXI: Specified type 'fred' already exists.
+
+then we do 
+
+    glimpse TYPALREXI
+
+It is actually a lot easier than the plain text search we already have to
+do, when we have to guess at the words that have been substituted into the
+message. Besides, in *both* proposed systems, if we have done things
+properly, then the postgres log also contains the module name & line #.
+
+
+>The error messages will degrade rapidly in quality
+>because changing one will become a major project.
+
+Changing one will be a major project only if it is used everywhere. Most
+will be relatively localized. And, with glimpse 'XYZ', it's not really that
+big a task. Finally, you would need to ask why it was being changed - would
+a new message work better? Tell me where the degradation in quality is in
+comparison with text-in-the-source versions, with umpteen dozen slightly
+different versions of essentially the same error messages?
+
+
+>> Creating central message files/objects has the added advantage of a much
+>> simpler locale support - they're just resource files, and they're NOT
+>> embedded throughout the code.
+>
+>Actually, the fact that the messages are in the code, where they're used,
+>and not in a catalog file is a reason why gettext is so popular and
+>catgets gets laughed at.
+
+Is there a URL for a getcats vs. gettext debate would help me understand
+the reason for the laughter? I can understand laughing at code that looks
+like:
+
+    elog(ERROR, 123456, typename);
+
+but
+
+    elog(ERROR, TYPALREXI, typename);
+
+is a whole lot more readable.
+
+
+Also, you failed to address the two points below:
+
+>#define PGERR_TYPE 1854
+>
+>/* somewhere... */
+>
+>elogc(ERROR, PGERR_TYPE, "type %s cannot be created because it already
+exists", ...)
+>
+>/* elsewhere... */
+>
+>elogc(ERROR, PGERR_TYPE, "type %s used as argument %d of function %s
+doesn't exist", ...)
+>
+
+In the specific example above, returning the same error code is not going
+to help the client. What if they want to handle "type %s used as argument
+%d of function %s doesn't exist" by creating the type, and silently ignore
+"type %s cannot be created because it already exists"?
+
+How do you handle "type %s can not be used as a function return type"? Is
+this PGERR_FUNC or PGERR_TYPE?
+
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M6392@postgresql.org Wed Mar 21 23:27:40 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA12785
+	for <pgman@candle.pha.pa.us>; Wed, 21 Mar 2001 23:27:38 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2M4QOt75962;
+	Wed, 21 Mar 2001 23:26:24 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6392@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2M4PWt75732
+	for <pgsql-hackers@postgresql.org>; Wed, 21 Mar 2001 23:25:32 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f2M4Ov607983;
+	Wed, 21 Mar 2001 23:24:57 -0500 (EST)
+To: Philip Warner <pjw@rhyme.com.au>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] More on elog and error codes 
+In-reply-to: <3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au> 
+References: <3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au> <3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au>
+Comments: In-reply-to Philip Warner <pjw@rhyme.com.au>
+	message dated "Thu, 22 Mar 2001 12:30:19 +1100"
+Date: Wed, 21 Mar 2001 23:24:57 -0500
+Message-ID: <7980.985235097@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I've pretty much got to agree with Peter on both of these points.
+
+Philip Warner <pjw@rhyme.com.au> writes:
+> At 22:03 21/03/01 +0100, Peter Eisentraut wrote:
+>>>> elogc(ERROR, PGERR_FUNCNOTYPE, ...)
+>> 
+>> This is going to be a disaster for the coder.  Every time you look at an
+>> elog you don't know what it does? Is the first arg a %s or a %d?  What's
+>> the first %s, what the second?
+
+>> From experience using this sort of system, probably 80% of errors in new
+> code are new; if you don't know the format of your own errors, then you
+> have a larger problem. Secondly, most errors have obvious parameters, and
+> it only ever gets confusing when they have more than one parameter, and
+> even then it's pretty obvious.
+
+The general set of parameters might be pretty obvious, but the exact
+type that the format string expects them to be is not so obvious.  We
+have enough ints, longs, unsigned longs, etc etc running around the
+system that care is required.  If you look at the existing elog calls
+you'll find quite a lot of explicit casts to make certain that the right
+thing will happen.  If the format strings are not directly visible to
+the guy writing an elog call, then errors of that kind will creep in
+more easily.
+
+>> The error messages will degrade rapidly in quality
+>> because changing one will become a major project.
+
+> Changing one will be a major project only if it is used everywhere.
+
+I agree with Peter on this one too.  Even having to edit a separate
+file will create enough friction that people will tend to use an
+existing string if it's even marginally appropriate.  What I fear even
+more is that people will simply not code error checks, especially for
+"can't happen" cases, because it's too much of a pain in the neck to
+register the appropriate message.
+
+We must not raise the cost of adding error checks significantly, or we
+will lose the marginal checks that sometimes save our bacon by revealing
+bugs.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M6397@postgresql.org Wed Mar 21 23:50:40 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id XAA13781
+	for <pgman@candle.pha.pa.us>; Wed, 21 Mar 2001 23:50:39 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2M4oDt78916;
+	Wed, 21 Mar 2001 23:50:13 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6397@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2M4m9t78519
+	for <pgsql-hackers@postgresql.org>; Wed, 21 Mar 2001 23:48:09 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id PAA14815;
+	Thu, 22 Mar 2001 15:47:52 +1100
+Message-Id: <3.0.5.32.20010322154752.02983550@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Thu, 22 Mar 2001 15:47:52 +1100
+To: Peter Eisentraut <peter_e@gmx.net>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes
+Cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 22:03 21/03/01 +0100, Peter Eisentraut wrote:
+>
+>This is going to be a disaster for the coder.  Every time you look at an
+>elog you don't know what it does? Is the first arg a %s or a %d?  What's
+>the first %s, what the second?
+
+FWIW, I did a quick scan for elog in PG and found:
+
+- 6856 calls (may include commented-out calls) 
+- 2528 unique messages
+- 1248 have no parameters
+- 859 have exactly one argument
+- 285 have exactly 2 args
+- 136 have 3 or more args
+
+so 83% have one or no arguments, which is probably not going to be very
+confusing.
+
+Looking at the actual messages, there is also a great deal of opportunity
+to standardize and simplify since many of the messages only differ by their
+prefixed function name.
+
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M6411@postgresql.org Thu Mar 22 00:21:12 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA15497
+	for <pgman@candle.pha.pa.us>; Thu, 22 Mar 2001 00:21:11 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2M5Kkt84723;
+	Thu, 22 Mar 2001 00:20:46 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6411@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2M5K5t84513
+	for <pgsql-hackers@postgresql.org>; Thu, 22 Mar 2001 00:20:06 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id QAA15327;
+	Thu, 22 Mar 2001 16:19:38 +1100
+Message-Id: <3.0.5.32.20010322161938.02a87a70@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Thu, 22 Mar 2001 16:19:38 +1100
+To: Tom Lane <tgl@sss.pgh.pa.us>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes 
+Cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <7980.985235097@sss.pgh.pa.us>
+References: <3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au>
+	<3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+	<3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 23:24 21/03/01 -0500, Tom Lane wrote:
+>I've pretty much got to agree with Peter on both of these points.
+
+Damn.
+
+
+>Philip Warner <pjw@rhyme.com.au> writes:
+>> At 22:03 21/03/01 +0100, Peter Eisentraut wrote:
+>>>>> elogc(ERROR, PGERR_FUNCNOTYPE, ...)
+>>> 
+>>> This is going to be a disaster for the coder.  Every time you look at an
+>>> elog you don't know what it does? Is the first arg a %s or a %d?  What's
+>>> the first %s, what the second?
+>
+>>> From experience using this sort of system, probably 80% of errors in new
+>> code are new; if you don't know the format of your own errors, then you
+>> have a larger problem. Secondly, most errors have obvious parameters, and
+>> it only ever gets confusing when they have more than one parameter, and
+>> even then it's pretty obvious.
+>
+>The general set of parameters might be pretty obvious, but the exact
+>type that the format string expects them to be is not so obvious.  We
+>have enough ints, longs, unsigned longs, etc etc running around the
+>system that care is required.  If you look at the existing elog calls
+>you'll find quite a lot of explicit casts to make certain that the right
+>thing will happen.  If the format strings are not directly visible to
+>the guy writing an elog call, then errors of that kind will creep in
+>more easily.
+
+I agree it's more likely, but most (all?) cases can be caught by the
+compiler. It's not ideal, but neither is having eight different versions of
+the same message.
+
+
+>>> The error messages will degrade rapidly in quality
+>>> because changing one will become a major project.
+>
+>> Changing one will be a major project only if it is used everywhere.
+>
+>I agree with Peter on this one too.  Even having to edit a separate
+>file will create enough friction that people will tend to use an
+>existing string if it's even marginally appropriate.  What I fear even
+>more is that people will simply not code error checks, especially for
+>"can't happen" cases, because it's too much of a pain in the neck to
+>register the appropriate message.
+>
+>We must not raise the cost of adding error checks significantly, or we
+>will lose the marginal checks that sometimes save our bacon by revealing
+>bugs.
+
+This is a problem, I agree - but a procedural one. We need to make
+registering messages easy. To do this, rather than having a central message
+file, perhaps do the following:
+
+- allow multiple message files (which can be processed to produce .h
+files). eg. pg_dump would have it's own pg_dump_messages.xxx file.
+
+- define a message that will assume it's first arg is really a format
+string for use in the "can't happen" classes, and which has the SQLCODE for
+'internal error'.
+
+We do need some central control, but by creating module-based message files
+we can allocate number ranges easily, and we at least take a step down the
+path towards a both easy locale handling and a 'big book of error codes'.
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M6412@postgresql.org Thu Mar 22 00:39:33 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA16152
+	for <pgman@candle.pha.pa.us>; Thu, 22 Mar 2001 00:39:33 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2M5d5t87081;
+	Thu, 22 Mar 2001 00:39:06 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6412@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2M5aCt86851
+	for <pgsql-hackers@postgresql.org>; Thu, 22 Mar 2001 00:36:12 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f2M5Zm618634;
+	Thu, 22 Mar 2001 00:35:48 -0500 (EST)
+To: Philip Warner <pjw@rhyme.com.au>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] More on elog and error codes 
+In-reply-to: <3.0.5.32.20010322161938.02a87a70@mail.rhyme.com.au> 
+References: <3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au> <3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au> <3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au> <3.0.5.32.20010322161938.02a87a70@mail.rhyme.com.au>
+Comments: In-reply-to Philip Warner <pjw@rhyme.com.au>
+	message dated "Thu, 22 Mar 2001 16:19:38 +1100"
+Date: Thu, 22 Mar 2001 00:35:48 -0500
+Message-ID: <18631.985239348@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Philip Warner <pjw@rhyme.com.au> writes:
+> This is a problem, I agree - but a procedural one. We need to make
+> registering messages easy. To do this, rather than having a central message
+> file, perhaps do the following:
+
+> - allow multiple message files (which can be processed to produce .h
+> files). eg. pg_dump would have it's own pg_dump_messages.xxx file.
+
+I guess I fail to see why that's better than processing the .c files
+to extract the message strings from them.
+
+I agree that the sort of system Peter proposes doesn't have any direct
+forcing function to discourage gratuitous variations of what's basically
+the same message.  The forcing function would have to come from the
+translators, who will look at the extracted list of messages and
+complain that there are near-duplicates.  Then we fix the
+near-duplicates.  Seems like no big deal.
+
+However, a system that uses multiple message files is also not going to
+discourage near-duplicates very effectively.  I don't think you can have
+it both ways: if you are discouraging near-duplicates, then you are
+making it harder to for people to create new messages, whether
+duplicates or not.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M6417@postgresql.org Thu Mar 22 01:42:24 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id BAA20802
+	for <pgman@candle.pha.pa.us>; Thu, 22 Mar 2001 01:42:23 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2M6g2t94104;
+	Thu, 22 Mar 2001 01:42:02 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6417@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2M6eut94000
+	for <pgsql-hackers@postgresql.org>; Thu, 22 Mar 2001 01:40:57 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id RAA16408;
+	Thu, 22 Mar 2001 17:40:23 +1100
+Message-Id: <3.0.5.32.20010322174022.00b4fe60@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Thu, 22 Mar 2001 17:40:22 +1100
+To: Tom Lane <tgl@sss.pgh.pa.us>
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: Re: [HACKERS] More on elog and error codes 
+Cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <18631.985239348@sss.pgh.pa.us>
+References: <3.0.5.32.20010322161938.02a87a70@mail.rhyme.com.au>
+	<3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au>
+	<3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+	<3.0.5.32.20010322123019.02a9e760@mail.rhyme.com.au>
+	<3.0.5.32.20010322161938.02a87a70@mail.rhyme.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 00:35 22/03/01 -0500, Tom Lane wrote:
+>Philip Warner <pjw@rhyme.com.au> writes:
+>> This is a problem, I agree - but a procedural one. We need to make
+>> registering messages easy. To do this, rather than having a central message
+>> file, perhaps do the following:
+>
+>> - allow multiple message files (which can be processed to produce .h
+>> files). eg. pg_dump would have it's own pg_dump_messages.xxx file.
+>
+>However, a system that uses multiple message files is also not going to
+>discourage near-duplicates very effectively.  I don't think you can have
+>it both ways: if you are discouraging near-duplicates, then you are
+>making it harder to for people to create new messages, whether
+>duplicates or not.
+
+Many of the near duplicates are in the same, or related, code so with local
+message files there should be a good chance of reduced duplicates.
+
+Other advantages of a separate definition include:
+
+- Extra fields (eg. description, resolution) which could be used by client
+programs.
+- Message IDs which can be checked by clients to detect specific errors,
+independent of locale.
+- SQLCODE set in one place, rather than developers having to code it in
+multiple places.
+
+The original proposal also included a 'class' field:
+
+    elogc(ERROR, PGERR_TYPE, "type %s cannot be created because it already 
+
+ISTM that we will have a similar allocation problem with these. But, more
+recent example have exluded them, so I am not sure about their status is
+Peter's plans.
+
+
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M6178@postgresql.org Mon Mar 19 18:04:16 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA09636
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 18:04:15 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2JN3VN17922;
+	Mon, 19 Mar 2001 18:03:31 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6178@postgresql.org)
+Received: from mailout02.sul.t-online.com (mailout02.sul.t-online.com [194.25.134.17])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2JN0nN17660
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 18:00:49 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd03.sul.t-online.com 
+	by mailout02.sul.t-online.com with smtp 
+	id 14f8dr-0005W0-04; Tue, 20 Mar 2001 00:00:47 +0100
+Received: from peter.localdomain (520083510237-0001@[217.80.146.106]) by fmrl03.sul.t-online.com
+	with esmtp id 14f8dg-26MpaCC; Tue, 20 Mar 2001 00:00:36 +0100
+Date: Tue, 20 Mar 2001 00:10:43 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] elog with automatic file, line, and function
+Message-ID: <Pine.LNX.4.30.0103192356450.5764-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+It has been brought up that elog should be able to automatically fill in
+the file, line, and perhaps the function name where it's called, to avoid
+having to prefix each message with the function name by hand, which is
+quite ugly.
+
+This is doable, but it requires a C preprocessor that can handle varargs
+macros.  Since this is required by C99 and has been available in GCC for a
+while, it *might* be okay to rely on this.
+
+Additionally, C99 (and GCC for a while) would allow filling in the
+function name automatically.
+
+Since these would be mostly developer features, how do people feel about
+relying on modern tools for implementing these?  The bottom line seems to
+be that without these tools it would simply not be possible.
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6181@postgresql.org Mon Mar 19 18:26:30 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA10579
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 18:26:29 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2JNQ1N53252;
+	Mon, 19 Mar 2001 18:26:01 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6181@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2JNNXN45362
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 18:23:33 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f2JNNUt07935;
+	Mon, 19 Mar 2001 18:23:30 -0500 (EST)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] elog with automatic file, line, and function 
+In-reply-to: <Pine.LNX.4.30.0103192356450.5764-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0103192356450.5764-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Tue, 20 Mar 2001 00:10:43 +0100"
+Date: Mon, 19 Mar 2001 18:23:30 -0500
+Message-ID: <7932.985044210@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> It has been brought up that elog should be able to automatically fill in
+> the file, line, and perhaps the function name where it's called, to avoid
+> having to prefix each message with the function name by hand, which is
+> quite ugly.
+
+> Since these would be mostly developer features, how do people feel about
+> relying on modern tools for implementing these?
+
+Not happy.  A primary reason for wanting the exact location is to make
+bug reports more specific.  If Joe User's copy of Postgres doesn't
+report error location then it doesn't help me much that my copy does
+(if I could reproduce the reported failure, then gdb will tell me where
+the elog call is...).  In particular, we *cannot* remove the habit of
+mentioning the reporting routine name in the message text unless there
+is an adequate substitute in all builds.
+
+> The bottom line seems to be that without these tools it would simply
+> not be possible.
+
+Sure it is, it just requires a marginal increase in ugliness, namely
+double parentheses:
+
+	ELOG((level, format, arg1, arg2, ...))
+
+which might work like
+
+#define ELOG(ARGS)  (elog_setloc(__FILE__, __LINE__), elog ARGS)
+
+
+> Additionally, C99 (and GCC for a while) would allow filling in the
+> function name automatically.
+
+We could probably treat the function name as something that's optionally
+added to the file/line error report info if the compiler supports it.
+
+BTW, how does that work exactly?  I assume it can't be a macro ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M6183@postgresql.org Mon Mar 19 19:34:34 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id TAA15096
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 19:34:33 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K0Y3N60007;
+	Mon, 19 Mar 2001 19:34:03 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6183@postgresql.org)
+Received: from foghorn.airs.com (foghorn.airs.com [63.201.54.26])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K0XZN59897
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 19:33:35 -0500 (EST)
+	(envelope-from ian@airs.com)
+Received: (qmail 8819 invoked by uid 10); 20 Mar 2001 00:33:32 -0000
+Received: (qmail 1971 invoked by uid 269); 20 Mar 2001 00:33:28 -0000
+Mail-Followup-To: peter_e@gmx.net,
+  pgsql-hackers@postgresql.org,
+  tgl@sss.pgh.pa.us
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] elog with automatic file, line, and function
+References: <Pine.LNX.4.30.0103192356450.5764-100000@peter.localdomain>
+	<7932.985044210@sss.pgh.pa.us>
+From: Ian Lance Taylor <ian@airs.com>
+Date: 19 Mar 2001 16:33:28 -0800
+In-Reply-To: Tom Lane's message of "Mon, 19 Mar 2001 18:23:30 -0500"
+Message-ID: <siy9u11dpj.fsf@daffy.airs.com>
+Lines: 17
+User-Agent: Gnus/5.0807 (Gnus v5.8.7) Emacs/20.7
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane <tgl@sss.pgh.pa.us> writes:
+
+> > Additionally, C99 (and GCC for a while) would allow filling in the
+> > function name automatically.
+> 
+> We could probably treat the function name as something that's optionally
+> added to the file/line error report info if the compiler supports it.
+> 
+> BTW, how does that work exactly?  I assume it can't be a macro ...
+
+It's a macro just like __FILE__ and __LINE__ are macros.
+
+gcc has supported __FUNCTION__ and __PRETTY_FUNCTION__ for a long time
+(the latter is the demangled version of the function name when using
+C++).
+
+Ian
+
+---------------------------(end of broadcast)---------------------------
+TIP 4: Don't 'kill -9' the postmaster
+
+From pgsql-hackers-owner+M6185@postgresql.org Mon Mar 19 20:00:25 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA15947
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 20:00:24 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K0xjN63216;
+	Mon, 19 Mar 2001 19:59:45 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6185@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2K0ciN60815
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 19:38:44 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f2K0cbt08356;
+	Mon, 19 Mar 2001 19:38:37 -0500 (EST)
+To: Ian Lance Taylor <ian@airs.com>
+cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] elog with automatic file, line, and function 
+In-reply-to: <siy9u11dpj.fsf@daffy.airs.com> 
+References: <Pine.LNX.4.30.0103192356450.5764-100000@peter.localdomain> <7932.985044210@sss.pgh.pa.us> <siy9u11dpj.fsf@daffy.airs.com>
+Comments: In-reply-to Ian Lance Taylor <ian@airs.com>
+	message dated "19 Mar 2001 16:33:28 -0800"
+Date: Mon, 19 Mar 2001 19:38:36 -0500
+Message-ID: <8353.985048716@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Ian Lance Taylor <ian@airs.com> writes:
+> Tom Lane <tgl@sss.pgh.pa.us> writes:
+>> BTW, how does that work exactly?  I assume it can't be a macro ...
+
+> It's a macro just like __FILE__ and __LINE__ are macros.
+
+> gcc has supported __FUNCTION__ and __PRETTY_FUNCTION__ for a long time
+> (the latter is the demangled version of the function name when using
+> C++).
+
+Now that I know the name, I can find it in the gcc docs, which clearly
+explain that these names are not macros ;-).  The preprocessor would
+have a tough time making such a substitution.
+
+However, if the C99 spec has such a concept, they didn't use that name
+for it ...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M6188@postgresql.org Mon Mar 19 20:29:45 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA16850
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 20:29:45 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K1T5N83769;
+	Mon, 19 Mar 2001 20:29:05 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6188@postgresql.org)
+Received: from lerami.lerctr.org (lerami.lerctr.org [207.158.72.11])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2K1PrN75990
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 20:25:53 -0500 (EST)
+	(envelope-from ler@lerctr.org)
+Received: (from ler@localhost)
+	by lerami.lerctr.org (8.12.0.Beta5/8.12.0.Beta5/20010318/$Revision: 1.1 $) id f2K1Pm1K029350;
+	Mon, 19 Mar 2001 19:25:48 -0600 (CST)
+	(envelope-from ler)
+Date: Mon, 19 Mar 2001 19:25:48 -0600
+From: Larry Rosenman <ler@lerctr.org>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+Cc: Ian Lance Taylor <ian@airs.com>, Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] elog with automatic file, line, and function
+Message-ID: <20010319192547.A29294@lerami.lerctr.org>
+References: <Pine.LNX.4.30.0103192356450.5764-100000@peter.localdomain> <7932.985044210@sss.pgh.pa.us> <siy9u11dpj.fsf@daffy.airs.com> <8353.985048716@sss.pgh.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.3.16i
+In-Reply-To: <8353.985048716@sss.pgh.pa.us>; from tgl@sss.pgh.pa.us on Mon, Mar 19, 2001 at 07:38:36PM -0500
+X-Mailer: Mutt http://www.mutt.org/
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+* Tom Lane <tgl@sss.pgh.pa.us> [010319 18:58]:
+> Ian Lance Taylor <ian@airs.com> writes:
+> > Tom Lane <tgl@sss.pgh.pa.us> writes:
+> >> BTW, how does that work exactly?  I assume it can't be a macro ...
+> 
+> > It's a macro just like __FILE__ and __LINE__ are macros.
+> 
+> > gcc has supported __FUNCTION__ and __PRETTY_FUNCTION__ for a long time
+> > (the latter is the demangled version of the function name when using
+> > C++).
+> 
+> Now that I know the name, I can find it in the gcc docs, which clearly
+> explain that these names are not macros ;-).  The preprocessor would
+> have a tough time making such a substitution.
+> 
+> However, if the C99 spec has such a concept, they didn't use that name
+> for it ...
+My C99 compiler (SCO, UDK FS 7.1.1b), defines the following:
+Predefined names
+
+The following identifiers are predefined as object-like macros: 
+
+
+__LINE__
+    The current line number as a decimal constant. 
+
+__FILE__
+    A string literal representing the name of the file being compiled. 
+
+__DATE__
+    The date of compilation as a string literal in the form ``Mmm dd
+yyyy.'' 
+
+__TIME__
+    The time of compilation, as a string literal in the form
+``hh:mm:ss.'' 
+
+__STDC__
+    The constant 1 under compilation mode -Xc, otherwise 0. 
+
+__USLC__
+    A positive integer constant; its definition signifies a USL C
+compilation system. 
+
+Nothing for function that I can find. 
+
+LER
+
+> 
+> 			regards, tom lane
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 3: if posting/reading through Usenet, please send an appropriate
+> subscribe-nomail command to majordomo@postgresql.org so that your
+> message can get through to the mailing list cleanly
+-- 
+Larry Rosenman                     http://www.lerctr.org/~ler
+Phone: +1 972-414-9812                 E-Mail: ler@lerctr.org
+US Mail: 1905 Steamboat Springs Drive, Garland, TX 75044-6749
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M6189@postgresql.org Mon Mar 19 20:49:49 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id UAA17752
+	for <pgman@candle.pha.pa.us>; Mon, 19 Mar 2001 20:49:48 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K1n8N87285;
+	Mon, 19 Mar 2001 20:49:08 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6189@postgresql.org)
+Received: from smtp014.mail.yahoo.com (smtp014.mail.yahoo.com [216.136.173.58])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2K1iFN86846
+	for <pgsql-hackers@postgresql.org>; Mon, 19 Mar 2001 20:44:15 -0500 (EST)
+	(envelope-from nnorwitz@yahoo.com)
+Received: from 207-172-137-172.s45.as3.dam.md.dialup.rcn.com (HELO yahoo.com) (207.172.137.172)
+  by smtp.mail.vip.sc5.yahoo.com with SMTP; 20 Mar 2001 01:44:11 -0000
+X-Apparently-From: <nnorwitz@yahoo.com>
+Message-ID: <3AB6B5EB.21F2D551@yahoo.com>
+Date: Mon, 19 Mar 2001 20:44:11 -0500
+From: Neal Norwitz <nnorwitz@yahoo.com>
+Organization: MetaSlash, Inc.
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.2.16-22 i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: peter_e@gmx.net, pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] elog with automatic file, line, and function
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut wrote:
+> 
+> It has been brought up that elog should be able to automatically fill in
+> the file, line, and perhaps the function name where it's called, to avoid
+> having to prefix each message with the function name by hand, which is
+> quite ugly.
+> 
+> This is doable, but it requires a C preprocessor that can handle varargs
+> macros.  Since this is required by C99 and has been available in GCC for a
+> while, it *might* be okay to rely on this.
+>
+> Additionally, C99 (and GCC for a while) would allow filling in the
+> function name automatically.
+> 
+> Since these would be mostly developer features, how do people feel about
+> relying on modern tools for implementing these?  The bottom line seems to
+> be that without these tools it would simply not be possible.
+
+It is possible, however, the macros require an extra set of parentheses:
+
+void elog_internal(const char* file, unsigned long line, ... );
+#define ELOG(args)      elog_internal(__FILE__, __LINE__, args)
+
+ELOG(("%s error", string))
+
+For portability to older compilers, you should probably not require C99.
+
+Also, I'm not positive, but I think that varargs are not part of C++
+yet.  
+However, they will likely be added (if not already in draft form).
+
+Neal
+
+_________________________________________________________
+Do You Yahoo!?
+Get your free @yahoo.com address at http://mail.yahoo.com
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 5: Have you checked our extensive FAQ?
+
+http://www.postgresql.org/users-lounge/docs/faq.html
+
+From pgsql-hackers-owner+M6355@postgresql.org Wed Mar 21 15:48:41 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA12714
+	for <pgman@candle.pha.pa.us>; Wed, 21 Mar 2001 15:48:40 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2LKltt44369;
+	Wed, 21 Mar 2001 15:47:55 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6355@postgresql.org)
+Received: from mailout02.sul.t-online.com (mailout02.sul.t-online.com [194.25.134.17])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2LKlCt44260
+	for <pgsql-hackers@postgresql.org>; Wed, 21 Mar 2001 15:47:13 -0500 (EST)
+	(envelope-from peter_e@gmx.net)
+Received: from fwd01.sul.t-online.com 
+	by mailout02.sul.t-online.com with smtp 
+	id 14fpVX-00064K-01; Wed, 21 Mar 2001 21:47:03 +0100
+Received: from peter.localdomain (520083510237-0001@[212.185.245.125]) by fmrl01.sul.t-online.com
+	with esmtp id 14fpVN-1fGPi4C; Wed, 21 Mar 2001 21:46:53 +0100
+Date: Wed, 21 Mar 2001 21:57:04 +0100 (CET)
+From: Peter Eisentraut <peter_e@gmx.net>
+To: Tom Lane <tgl@sss.pgh.pa.us>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] elog with automatic file, line, and function 
+In-Reply-To: <7932.985044210@sss.pgh.pa.us>
+Message-ID: <Pine.LNX.4.30.0103212156130.1694-100000@peter.localdomain>
+MIME-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+X-Sender: 520083510237-0001@t-dialin.net
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Tom Lane writes:
+
+> Sure it is, it just requires a marginal increase in ugliness, namely
+> double parentheses:
+>
+> 	ELOG((level, format, arg1, arg2, ...))
+>
+> which might work like
+>
+> #define ELOG(ARGS)  (elog_setloc(__FILE__, __LINE__), elog ARGS)
+
+Would the first function save the data in global variables?
+
+-- 
+Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 6: Have you searched our list archives?
+
+http://www.postgresql.org/search.mpl
+
+From pgsql-hackers-owner+M6376@postgresql.org Wed Mar 21 21:55:11 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id VAA28552
+	for <pgman@candle.pha.pa.us>; Wed, 21 Mar 2001 21:55:11 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2M2slt64569;
+	Wed, 21 Mar 2001 21:54:47 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6376@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2M2sSt64463
+	for <pgsql-hackers@postgresql.org>; Wed, 21 Mar 2001 21:54:28 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f2M2sN602818;
+	Wed, 21 Mar 2001 21:54:23 -0500 (EST)
+To: Peter Eisentraut <peter_e@gmx.net>
+cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: [HACKERS] elog with automatic file, line, and function 
+In-reply-to: <Pine.LNX.4.30.0103212156130.1694-100000@peter.localdomain> 
+References: <Pine.LNX.4.30.0103212156130.1694-100000@peter.localdomain>
+Comments: In-reply-to Peter Eisentraut <peter_e@gmx.net>
+	message dated "Wed, 21 Mar 2001 21:57:04 +0100"
+Date: Wed, 21 Mar 2001 21:54:23 -0500
+Message-ID: <2815.985229663@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Peter Eisentraut <peter_e@gmx.net> writes:
+> Tom Lane writes:
+>> #define ELOG(ARGS)  (elog_setloc(__FILE__, __LINE__), elog ARGS)
+
+> Would the first function save the data in global variables?
+
+Yes, that's what I was envisioning.  Not a super clean solution,
+but workable, and better than requiring varargs macros.
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 3: if posting/reading through Usenet, please send an appropriate
+subscribe-nomail command to majordomo@postgresql.org so that your
+message can get through to the mailing list cleanly
+
+From pgsql-hackers-owner+M6210@postgresql.org Tue Mar 20 11:55:39 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA01567
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 11:55:39 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KGseN34601;
+	Tue, 20 Mar 2001 11:54:40 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6210@postgresql.org)
+Received: from reorxrsm.server.lan.at (zep3.it-austria.net [213.150.1.73])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KGsFN34478
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 11:54:16 -0500 (EST)
+	(envelope-from ZeugswetterA@wien.spardat.at)
+Received: from gz0153.gc.spardat.at (gz0153.gc.spardat.at [172.20.10.149])
+	by reorxrsm.server.lan.at (8.11.2/8.11.2) with ESMTP id f2KGs5T20888
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 17:54:05 +0100
+Received: by sdexcgtw01.f000.d0188.sd.spardat.at with Internet Mail Service (5.5.2650.21)
+	id <G8TZMX0Z>; Tue, 20 Mar 2001 17:53:58 +0100
+Message-ID: <11C1E6749A55D411A9670001FA687963368256@sdexcsrv1.f000.d0188.sd.spardat.at>
+From: Zeugswetter Andreas SB  <ZeugswetterA@wien.spardat.at>
+To: "'Peter Eisentraut'" <peter_e@gmx.net>, Philip Warner <pjw@rhyme.com.au>
+Cc: PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: AW: [HACKERS] More on elog and error codes
+Date: Tue, 20 Mar 2001 17:53:47 +0100
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2650.21)
+Content-Type: text/plain;
+	charset="ISO-8859-1"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> #define PGERR_TYPE 1854
+
+#define PGSQLSTATE_TYPE	"S0021"    // char(5) SQLSTATE 
+
+The standard calls this error variable SQLSTATE 
+(look up in ESQL standard)
+
+first 2 chars are class next 3 are subclass
+
+"00000"  is e.g. Success 
+"02000"  is Data not found
+"U0xxx" user defined routine error xxx is user defined
+
+> /* somewhere... */
+> 
+> elogc(ERROR, PGERR_TYPE, "type %s cannot be created because it already exists", ...)
+
+PGELOG(ERROR, PGSQLSTATE_TYPE, ("type %s cannot be created because it already exists", ...))
+
+put varargs into parentheses to avoid need for ... macros see Tom's proposal
+
+I also agree, that we can group different text messages into the same SQLSTATE,
+if it seems appropriate for the client to handle them alike.
+
+Andreas
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6212@postgresql.org Tue Mar 20 12:35:33 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id MAA03977
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 12:35:32 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KHXTN82858;
+	Tue, 20 Mar 2001 12:33:29 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6212@postgresql.org)
+Received: from sss.pgh.pa.us (sss.pgh.pa.us [209.114.132.154])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KHTsN75514
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 12:29:54 -0500 (EST)
+	(envelope-from tgl@sss.pgh.pa.us)
+Received: from sss2.sss.pgh.pa.us (tgl@localhost [127.0.0.1])
+	by sss.pgh.pa.us (8.11.1/8.11.1) with ESMTP id f2KHTdt11501;
+	Tue, 20 Mar 2001 12:29:39 -0500 (EST)
+To: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>
+cc: "'Peter Eisentraut'" <peter_e@gmx.net>, Philip Warner <pjw@rhyme.com.au>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: Re: AW: [HACKERS] More on elog and error codes 
+In-reply-to: <11C1E6749A55D411A9670001FA687963368256@sdexcsrv1.f000.d0188.sd.spardat.at> 
+References: <11C1E6749A55D411A9670001FA687963368256@sdexcsrv1.f000.d0188.sd.spardat.at>
+Comments: In-reply-to Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>
+	message dated "Tue, 20 Mar 2001 17:53:47 +0100"
+Date: Tue, 20 Mar 2001 12:29:38 -0500
+Message-ID: <11498.985109378@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Zeugswetter Andreas SB  <ZeugswetterA@wien.spardat.at> writes:
+> PGELOG(ERROR, PGSQLSTATE_TYPE, ("type %s cannot be created because it already exists", ...))
+
+> put varargs into parentheses to avoid need for ... macros see Tom's proposal
+
+I'd be inclined to make it
+
+PGELOG((ERROR, PGSQLSTATE_TYPE, "type %s cannot be created because it already exists", ...))
+
+The extra parens are ugly and annoying in any case, but they seem
+slightly less so if you just double the parens associated with the
+PGELOG call.  Takes less thought than adding a paren somewhere in the
+middle of the call.  IMHO anyway...
+
+			regards, tom lane
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6211@postgresql.org Tue Mar 20 11:59:14 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id LAA01976
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 11:59:14 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KGwMN35326;
+	Tue, 20 Mar 2001 11:58:22 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6211@postgresql.org)
+Received: from lerami.lerctr.org (lerami.lerctr.org [207.158.72.11])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KGvjN35102
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 11:57:45 -0500 (EST)
+	(envelope-from ler@lerctr.org)
+Received: from ler-freebie.iadfw.net (ler-freebie.iadfw.net [206.66.13.221])
+	by lerami.lerctr.org (8.12.0.Beta5/8.12.0.Beta5/20010318/$Revision: 1.1 $) with SMTP id f2KGvcOh016935;
+	Tue, 20 Mar 2001 10:57:38 -0600 (CST)
+	(envelope-from ler@lerctr.org)
+From: Larry Rosenman <ler@lerctr.org>
+Date: Tue, 20 Mar 2001 16:57:38 GMT
+Message-ID: <20010320.16573800@ler-freebie.iadfw.net>
+Subject: Re: AW: [HACKERS] Re: More on elog and error codes
+To: Peter Eisentraut <peter_e@gmx.net>
+CC: Zeugswetter Andreas SB <ZeugswetterA@wien.spardat.at>,
+        =?US-ASCII?Q?=27lockhart=40fourpalms=2Eorg=27?= <lockhart@fourpalms.org>,
+        =?US-ASCII?Q?PostgreSQL?= Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <Pine.LNX.4.30.0103201750450.1639-100000@peter.localdomain>
+References: <Pine.LNX.4.30.0103201750450.1639-100000@peter.localdomain>
+X-Mailer: Mozilla/3.0 (compatible; StarOffice/5.2; Linux)
+X-Priority: 3 (Normal)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8bit
+X-MIME-Autoconverted: from quoted-printable to 8bit by mail.postgresql.org id f2KGvkN35103
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+Coming from an IBM Mainframe background, I'm used to ALL OS/Product 
+messages having a message number, and a fat messages and codes book.
+
+I hope we can do that eventually. 
+(maybe a database of the error numbers and codes?)
+
+LER
+
+
+>>>>>>>>>>>>>>>>>> Original Message <<<<<<<<<<<<<<<<<<
+
+On 3/20/01, 10:53:42 AM, Peter Eisentraut <peter_e@gmx.net> wrote regarding 
+Re: AW: [HACKERS] Re: More on elog and error codes:
+
+
+> Zeugswetter Andreas SB writes:
+
+> > > SQL9x specifies some error codes, with no particular numbering scheme
+> > > other than negative numbers indicate a problem afaicr.
+> > >
+> > > Shouldn't we map to those where possible?
+> >
+> > Yes, it defines at least a few dozen char(5) error codes. These are 
+hierarchical,
+> > grouped into Warnings and Errors, and have room for implementation 
+specific
+> > message codes.
+
+> Let's use those then to start with.
+
+> Anyone got a good idea for a client API to this?  I think we could just
+> prefix the actual message with the error code, at least as a start.
+> Since they're all fixed width the client could take them apart easily.  I
+> recall other RDBMS' (Oracle?) also having an error code before each
+> message.
+
+> --
+> Peter Eisentraut      peter_e@gmx.net       http://yi.org/peter-e/
+
+
+> ---------------------------(end of broadcast)---------------------------
+> TIP 5: Have you checked our extensive FAQ?
+
+> http://www.postgresql.org/users-lounge/docs/faq.html
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6238@postgresql.org Tue Mar 20 17:10:47 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id RAA23987
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 17:10:47 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2KMAAH07636;
+	Tue, 20 Mar 2001 17:10:10 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6238@postgresql.org)
+Received: from mail.olabinc.com (mail.olabinc.com [63.102.247.99])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2KM88H07164
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 17:08:09 -0500 (EST)
+	(envelope-from otto.hirr@olabinc.com)
+Received: (from mail@localhost)
+	by mail.olabinc.com (8.9.3/8.9.3) id OAA02920
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 14:18:21 -0800 (PST)
+	(envelope-from otto.hirr@olabinc.com)
+X-Authentication-Warning: mail.olabinc.com: mail set sender to <otto.hirr@olabinc.com> using -f
+Received: from xcdt.olabinc.com(63.102.247.123) by mail.olabinc.com via smap (V2.0)
+	id xma002916; Tue, 20 Mar 01 14:18:10 -0800
+Reply-To: <otto.hirr@olabinc.com>
+From: "Otto A. Hirr, Jr." <otto.hirr@olabinc.com>
+To: "PostgreSQL Development" <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] RE: Re: More on elog and error codes
+Date: Tue, 20 Mar 2001 13:48:49 -0800
+Message-ID: <000001c0b187$8d761000$7bf7663f@xcdt.olabinc.com>
+MIME-Version: 1.0
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+X-Priority: 3 (Normal)
+X-MSMail-Priority: Normal
+X-Mailer: Microsoft Outlook 8.5, Build 4.71.2173.0
+Importance: Normal
+In-Reply-To: <11C1E6749A55D411A9670001FA687963368255@sdexcsrv1.f000.d0188.sd.spardat.at>
+X-MimeOLE: Produced By Microsoft MimeOLE V4.72.2106.4
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> So we need some good error numbering scheme.  Any ideas?
+
+I'm a newbie, but have been following dev and have a few comments
+and these are thoughts not criticisms:
+
+1) I've seen a huge mixture of "how to implement" to support some
+   desired feature without first knowing "all" of the features that
+   are desired.  Examination over all of the mailings reveals some
+   but not all of possible features you may want to include.
+2) Define what you want to have without worrying about how to do it.
+3) Design something that can implement all of the features.
+4) Reconsider design if there are performance issues.
+
+e.g.
+
+Features desired
+* system
+* subsystem
+* function
+* file, line, etc
+* severity
+* user-ability-to-recover
+* standards conformance - e.g.. SQL std
+* default msg statement
+* locale msg statement lookup mech, os dep or indep (careful here)
+* success/warning/failure
+* semantic taxonomy
+* syntactic taxonomy
+* forced to user, available to api, logging or not, tracing
+* concept of level
+* reports filtering on some attribute
+* interoperation with existing system reports e.g. syslog, event log,...
+* system environment snapshot option
+  (e.g. resource low/empty may/should trigger a log of conn cnt,
+   sys resource counts, load, etc)
+* non-mnemonic internal numbers (mnemonic only to obey stds and then
+  only as a function call, not by implementation)
+* ease of use (i.e. pgsql-dev-hacker use)
+* ease of use (i.e. api development use)
+* ease of use (i.e. rolling into an existing system, e.g. during
+              transition both may need to be in use.)
+* ease of use (i.e. looking through existing errors to find one
+              that may "correctly" fit the situation, instead of
+              creating yet-another-error-message.)
+* ease of use (i.e. maybe having each "sub-system" having its own
+              "error domain" but using the same error mechanism)
+* distinction btwn error report, debug report, tracing report, etc
+* separate the concepts of
+  - report creation
+  - report delivery
+  - report reception
+  - report interpretation
+* what do other's do, other's as in os, db, middleware, etc
+  along with their strong and weak points
+... what else do you want... and lets flesh out the meaning of
+each of these.  Then we can go on to a design...
+
+Sorry if this sounds like a lecture.
+
+With regards to mnemonic things - ugh - this is a database.
+I've worked with a LARGE electronics company that had
+10 and 12 digit mnemonic part numbers.  The mnemonic-ness
+begins to break down.  (So you have a part number of an eprom,
+what is the part number when it is blown - still an eprom?
+how about including the version of the sw on the eprom? is it
+now an assembly?  opps that tended to mean multiple parts attached
+together, humm still looks like an eprom?)  They have gone through
+a huge transition to move away, as has the industry from mnemonic
+numbers to simply an id number.  You look up the id number in a
+>database< :-) to find out what it is.
+
+So why not drop the mnemonic concept and apply a function to a
+blackbox dataitem to determine its attribute?  But again first
+determine what attributes you want, which are mandatory, optional,
+system supplied (e.g. __LINE__ etc), is it for erroring, tracing,
+debugging, some combo; then the appropriate dataitem can be
+designed and functions defined.  Functions (macros) for both the
+report creation, report distribution, report reception, and
+report interpretation.  Some other email pointed out that
+there are different people doing different things.  Each of these
+people-groups should identify what they need with regards to
+error, debug, tracing reports.  Each may have some nuances that
+are not needed elsewhere, but the reporting system should be able
+to support them all.
+
+Ok, so I've got my flame suit on...  but I am really trying to give
+an "outsiders" birdseye view of what I've been reading, hopefully
+which may be helpful.
+
+Best regards,
+
+.. Otto
+
+Otto Hirr
+OLAB Inc.
+otto.hirr@olabinc.com
+503 / 617-6595
+
+
+---------------------------(end of broadcast)---------------------------
+TIP 2: you can get off all lists at once with the unregister command
+    (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
+From pgsql-hackers-owner+M6294@postgresql.org Tue Mar 20 22:29:16 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA16697
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 22:29:16 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2L3SnH40522;
+	Tue, 20 Mar 2001 22:28:49 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6294@postgresql.org)
+Received: from golem.fourpalms.org (www.fourpalms.org [64.3.68.148])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2L3SRH40406
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 22:28:28 -0500 (EST)
+	(envelope-from lockhart@alumni.caltech.edu)
+Received: from alumni.caltech.edu (localhost.localdomain [127.0.0.1])
+	by golem.fourpalms.org (Postfix) with ESMTP
+	id 65C4CFEB4; Wed, 21 Mar 2001 03:28:24 +0000 (UTC)
+Message-ID: <3AB81FD8.5260E97A@alumni.caltech.edu>
+Date: Wed, 21 Mar 2001 03:28:24 +0000
+From: Thomas Lockhart <lockhart@alumni.caltech.edu>
+Reply-To: lockhart@fourpalms.org
+Organization: Yes
+X-Mailer: Mozilla 4.75 [en] (X11; U; Linux 2.2.17-21mdksmp i686)
+X-Accept-Language: en
+MIME-Version: 1.0
+To: Philip Warner <pjw@rhyme.com.au>
+Cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+Subject: [HACKERS] Re: More on elog and error codes
+References: <3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au> <3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+> Creating central message files/objects has the added advantage of a much
+> simpler locale support - they're just resource files, and they're NOT
+> embedded throughout the code.
+> Finally, if you do want to have some kind of error classification beyond
+> the SQL code, it could be encoded in the error message file.
+
+We could also (automatically) build a DBMS reference table *from* this
+message file (or files), which would allow lookup of messages from codes
+for applications which are not "message-aware".
+
+Not a requirement, and it does not meet all needs (e.g. you would have
+to be connected to get the messages in that case) but it would be
+helpful for some use cases...
+
+                      - Thomas
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
+From pgsql-hackers-owner+M6295@postgresql.org Tue Mar 20 22:40:59 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id WAA17120
+	for <pgman@candle.pha.pa.us>; Tue, 20 Mar 2001 22:40:58 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.3/8.11.1) with SMTP id f2L3dFH41288;
+	Tue, 20 Mar 2001 22:39:15 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M6295@postgresql.org)
+Received: from acheron.rime.com.au (albatr.lnk.telstra.net [139.130.54.222])
+	by mail.postgresql.org (8.11.3/8.11.1) with ESMTP id f2L3caH41183
+	for <pgsql-hackers@postgresql.org>; Tue, 20 Mar 2001 22:38:36 -0500 (EST)
+	(envelope-from pjw@rhyme.com.au)
+Received: from oberon (Oberon.rime.com.au [203.8.195.100])
+	by acheron.rime.com.au (8.9.3/8.9.3) with SMTP id OAA11228;
+	Wed, 21 Mar 2001 14:38:20 +1100
+Message-Id: <3.0.5.32.20010321143821.00af1e70@mail.rhyme.com.au>
+X-Sender: pjw@mail.rhyme.com.au
+X-Mailer: QUALCOMM Windows Eudora Pro Version 3.0.5 (32)
+Date: Wed, 21 Mar 2001 14:38:21 +1100
+To: lockhart@fourpalms.org
+From: Philip Warner <pjw@rhyme.com.au>
+Subject: [HACKERS] Re: More on elog and error codes
+Cc: Peter Eisentraut <peter_e@gmx.net>,
+        PostgreSQL Development <pgsql-hackers@postgresql.org>
+In-Reply-To: <3AB81FD8.5260E97A@alumni.caltech.edu>
+References: <3.0.5.32.20010320104855.0339d300@mail.rhyme.com.au>
+	<3.0.5.32.20010321094352.0287ad00@mail.rhyme.com.au>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+At 03:28 21/03/01 +0000, Thomas Lockhart wrote:
+>> Creating central message files/objects has the added advantage of a much
+>> simpler locale support - they're just resource files, and they're NOT
+>> embedded throughout the code.
+>> Finally, if you do want to have some kind of error classification beyond
+>> the SQL code, it could be encoded in the error message file.
+>
+>We could also (automatically) build a DBMS reference table *from* this
+>message file (or files), which would allow lookup of messages from codes
+>for applications which are not "message-aware".
+>
+>Not a requirement, and it does not meet all needs (e.g. you would have
+>to be connected to get the messages in that case) but it would be
+>helpful for some use cases...
+
+If we extended the message definitions to have (optional) description &
+user-resolution sections, then we have the possibilty of asking psql to
+explain the last error, and (broadly) how to fix it. Of course, in the
+first pass, these would all be empty.
+
+
+
+
+----------------------------------------------------------------
+Philip Warner                    |     __---_____
+Albatross Consulting Pty. Ltd.   |----/       -  \
+(A.B.N. 75 008 659 498)          |          /(@)   ______---_
+Tel: (+61) 0500 83 82 81         |                 _________  \
+Fax: (+61) 0500 83 82 82         |                 ___________ |
+Http://www.rhyme.com.au          |                /           \|
+                                 |    --________--
+PGP key available upon request,  |  /
+and from pgp5.ai.mit.edu:11371   |/
+
+---------------------------(end of broadcast)---------------------------
+TIP 1: subscribe and unsubscribe commands go to majordomo@postgresql.org
+
