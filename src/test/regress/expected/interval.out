@@ -3,44 +3,44 @@
 --
 SET DATESTYLE = DEFAULT;
 -- check acceptance of "time zone style"
-SELECT INTERVAL '01:00';
- ?column? 
+SELECT INTERVAL '01:00' AS "One hour";
+ One hour 
 ----------
  +01:00
 (1 row)
 
-SELECT INTERVAL '+02:00';
- ?column? 
-----------
+SELECT INTERVAL '+02:00' AS "Two hours";
+ Two hours 
+-----------
  +02:00
 (1 row)
 
-SELECT INTERVAL '-08:00';
- ?column? 
-----------
+SELECT INTERVAL '-08:00' AS "Eight hours";
+ Eight hours 
+-------------
  -08:00
 (1 row)
 
-SELECT INTERVAL '-05';
- ?column?  
------------
- -00:00:05
+SELECT INTERVAL '-05' AS "Five hours";
+ Five hours 
+------------
+ -05:00
 (1 row)
 
-SELECT INTERVAL '-1 +02:03';
- ?column? 
-----------
+SELECT INTERVAL '-1 +02:03' AS "22 hours ago...";
+ 22 hours ago... 
+-----------------
  -21:57
 (1 row)
 
-SELECT INTERVAL '-1 days +02:03';
- ?column? 
-----------
+SELECT INTERVAL '-1 days +02:03' AS "22 hours ago...";
+ 22 hours ago... 
+-----------------
  -21:57
 (1 row)
 
-SELECT INTERVAL '10 years -11 month -12 days +13:14';
-         ?column?         
+SELECT INTERVAL '10 years -11 month -12 days +13:14' AS "9 years...";
+        9 years...        
 --------------------------
  9 years 1 mon -11 -10:46
 (1 row)
