@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.165 2004/10/01 17:34:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.166 2004/10/18 22:00:41 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -1055,8 +1055,9 @@ PGresult *PQexec(PGconn *conn, const char *command);
           out-of-memory conditions or serious errors such as inability
           to send the command to the server.
           If a null pointer is returned, it
-          should be treated like a <symbol>PGRES_FATAL_ERROR</symbol> result.  Use
-          <function>PQerrorMessage</function> to get more information about the error.
+          should be treated like a <symbol>PGRES_FATAL_ERROR</symbol> result.
+          Use <function>PQerrorMessage</function> to get more information
+          about such errors.
 </para>
 </listitem>
 </varlistentry>
@@ -1147,6 +1148,81 @@ but has some usefulness as an extra defense against SQL-injection attacks.
 <para>
 <variablelist>
 <varlistentry>
+<term><function>PQprepare</function><indexterm><primary>PQprepare</></></term>
+<listitem>
+<para>
+          Submits a request to create a prepared statement with the
+          given parameters, and waits for completion.
+<synopsis>
+PGresult *PQprepare(PGconn *conn,
+                    const char *stmtName,
+                    const char *query,
+                    int nParams,
+                    const Oid *paramTypes);
+</synopsis>
+</para>
+
+<para>
+<function>PQprepare</> creates a prepared statement for later execution with
+<function>PQexecPrepared</>.
+This feature allows commands
+that will be used repeatedly to be parsed and planned just once, rather
+than each time they are executed.
+<function>PQprepare</> is supported only in protocol 3.0 and later
+connections; it will fail when using protocol 2.0.
+</para>
+
+<para>
+The function creates a prepared statement named <parameter>stmtName</>
+from the <parameter>query</> string, which must contain a single SQL command.
+<parameter>stmtName</> may be <literal>""</> to create an unnamed statement,
+in which case any pre-existing unnamed statement is automatically replaced;
+otherwise it is an error if the statement name is already defined in the
+current session.
+If any parameters are used, they are referred
+to in the query as <literal>$1</>, <literal>$2</>, etc.
+<parameter>nParams</> is the number of parameters for which types are
+pre-specified in the array <parameter>paramTypes[]</>.  (The array pointer
+may be <symbol>NULL</symbol> when <parameter>nParams</> is zero.)
+<parameter>paramTypes[]</> specifies, by OID, the data types to be assigned to
+the parameter symbols.  If <parameter>paramTypes</> is <symbol>NULL</symbol>,
+or any particular element in the array is zero, the server assigns a data type
+to the parameter symbol in the same way it would do for an untyped literal
+string.  Also, the query may use parameter symbols with numbers higher than
+<parameter>nParams</>; data types will be inferred for these symbols as
+well.
+</para>
+
+<para>
+As with <function>PQexec</>, the result is normally a
+<structname>PGresult</structname> object whose contents indicate server-side
+success or failure.  A null result indicates out-of-memory or inability to
+send the command at all.
+Use <function>PQerrorMessage</function> to get more information
+about such errors.
+</para>
+
+<para>
+At present, there is no way to determine the actual datatype inferred for
+any parameters whose types are not specified in <parameter>paramTypes[]</>.
+This is a <application>libpq</> omission that will probably be rectified
+in a future release.
+</para>
+</listitem>
+</varlistentry>
+</variablelist>
+
+Prepared statements for use with <function>PQexecPrepared</> can also be
+created by executing SQL <command>PREPARE</> statements.  (But
+<function>PQprepare</> is more flexible since it does not require
+parameter types to be pre-specified.)  Also, although there is no
+<application>libpq</> function for deleting a prepared statement,
+the SQL <command>DEALLOCATE</> statement can be used for that purpose.
+</para>
+
+<para>
+<variablelist>
+<varlistentry>
 <term><function>PQexecPrepared</function><indexterm><primary>PQexecPrepared</></></term>
 <listitem>
 <para>
@@ -1166,7 +1242,8 @@ PGresult *PQexecPrepared(PGconn *conn,
 <para>
 <function>PQexecPrepared</> is like <function>PQexecParams</>, but the
 command to be executed is specified by naming a previously-prepared
-statement, instead of giving a query string.  This feature allows commands
+statement, instead of giving a query string.
+This feature allows commands
 that will be used repeatedly to be parsed and planned just once, rather
 than each time they are executed.
 <function>PQexecPrepared</> is supported only in protocol 3.0 and later
@@ -1182,13 +1259,6 @@ the prepared statement's parameter types were determined when it was created).
 </listitem>
 </varlistentry>
 </variablelist>
-
-Presently, prepared statements for use with <function>PQexecPrepared</>
-must be set up by executing an SQL <command>PREPARE</> command,
-which is typically sent with <function>PQexec</> (though any of
-<application>libpq</>'s query-submission functions may be used).
-A lower-level interface for preparing statements may be offered in a
-future release.
 </para>
 
 <para>
@@ -2270,10 +2340,15 @@ discarded by <function>PQexec</function>.
 Applications that do not like these limitations can instead use the
 underlying functions that <function>PQexec</function> is built from:
 <function>PQsendQuery</function> and <function>PQgetResult</function>.
-There are also <function>PQsendQueryParams</function> and
-<function>PQsendQueryPrepared</function>, which can be used with
-<function>PQgetResult</function> to duplicate the functionality of
-<function>PQexecParams</function> and <function>PQexecPrepared</function>
+There are also
+<function>PQsendQueryParams</function>,
+<function>PQsendPrepare</function>, and
+<function>PQsendQueryPrepared</function>,
+which can be used with <function>PQgetResult</function> to duplicate the
+functionality of
+<function>PQexecParams</function>,
+<function>PQprepare</function>, and
+<function>PQexecPrepared</function>
 respectively.
 
 <variablelist>
@@ -2326,6 +2401,33 @@ int PQsendQueryParams(PGconn *conn,
 </varlistentry>
 
 <varlistentry>
+<term><function>PQsendPrepare</><indexterm><primary>PQsendPrepare</></></term>
+<listitem>
+<para>
+        Sends a request to create a prepared statement with the given
+        parameters, without waiting for completion.
+<synopsis>
+int PQsendPrepare(PGconn *conn,
+                  const char *stmtName,
+                  const char *query,
+                  int nParams,
+                  const Oid *paramTypes);
+</synopsis>
+
+        This is an asynchronous version of <function>PQprepare</>: it
+        returns 1 if it was able to dispatch the request, and 0 if not.
+        After a successful call, call <function>PQgetResult</function>
+        to determine whether the server successfully created the prepared
+        statement.
+        The function's parameters are handled identically to
+        <function>PQprepare</function>.  Like
+        <function>PQprepare</function>, it will not work on 2.0-protocol
+        connections.
+</para>
+</listitem>
+</varlistentry>
+
+<varlistentry>
 <term><function>PQsendQueryPrepared</function><indexterm><primary>PQsendQueryPrepared</></></term>
 <listitem>
 <para>
@@ -2358,7 +2460,8 @@ int PQsendQueryPrepared(PGconn *conn,
 <para>
           Waits for the next result from a prior
           <function>PQsendQuery</function>,
-          <function>PQsendQueryParams</function>, or
+          <function>PQsendQueryParams</function>,
+          <function>PQsendPrepare</function>, or
           <function>PQsendQueryPrepared</function> call,
           and returns it.  A null pointer is returned when the command is complete
           and there will be no more results.

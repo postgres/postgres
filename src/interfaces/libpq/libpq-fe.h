@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.111 2004/10/16 22:52:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.112 2004/10/18 22:00:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,6 +304,9 @@ extern PGresult *PQexecParams(PGconn *conn,
 			 const int *paramLengths,
 			 const int *paramFormats,
 			 int resultFormat);
+extern PGresult *PQprepare(PGconn *conn, const char *stmtName,
+						   const char *query, int nParams,
+						   const Oid *paramTypes);
 extern PGresult *PQexecPrepared(PGconn *conn,
 			   const char *stmtName,
 			   int nParams,
@@ -322,6 +325,9 @@ extern int PQsendQueryParams(PGconn *conn,
 				  const int *paramLengths,
 				  const int *paramFormats,
 				  int resultFormat);
+extern int PQsendPrepare(PGconn *conn, const char *stmtName,
+						 const char *query, int nParams,
+						 const Oid *paramTypes);
 extern int PQsendQueryPrepared(PGconn *conn,
 					const char *stmtName,
 					int nParams,

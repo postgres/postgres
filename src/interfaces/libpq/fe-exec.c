@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.163 2004/10/16 22:52:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.164 2004/10/18 22:00:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -664,7 +664,7 @@ PQsendQuery(PGconn *conn, const char *query)
 	}
 
 	/* remember we are using simple query protocol */
-	conn->ext_query = false;
+	conn->queryclass = PGQUERY_SIMPLE;
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're
@@ -715,6 +715,94 @@ PQsendQueryParams(PGconn *conn,
 						   paramLengths,
 						   paramFormats,
 						   resultFormat);
+}
+
+/*
+ * PQsendPrepare
+ *   Submit a Parse message, but don't wait for it to finish
+ *
+ * Returns: 1 if successfully submitted
+ *          0 if error (conn->errorMessage is set)
+ */
+int
+PQsendPrepare(PGconn *conn,
+			  const char *stmtName, const char *query,
+			  int nParams, const Oid *paramTypes)
+{
+	if (!PQsendQueryStart(conn))
+		return 0;
+
+	if (!stmtName)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("statement name is a null pointer\n"));
+		return 0;
+	}
+
+	if (!query)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+					libpq_gettext("command string is a null pointer\n"));
+		return 0;
+	}
+
+	/* This isn't gonna work on a 2.0 server */
+	if (PG_PROTOCOL_MAJOR(conn->pversion) < 3)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+						  libpq_gettext("function requires at least protocol version 3.0\n"));
+		return 0;
+	}
+
+	/* construct the Parse message */
+	if (pqPutMsgStart('P', false, conn) < 0 ||
+		pqPuts(stmtName, conn) < 0 ||
+		pqPuts(query, conn) < 0)
+		goto sendFailed;
+
+	if (nParams > 0 && paramTypes)
+	{
+		int i;
+
+		if (pqPutInt(nParams, 2, conn) < 0)
+			goto sendFailed;
+		for (i = 0; i < nParams; i++)
+		{
+			if (pqPutInt(paramTypes[i], 4, conn) < 0)
+				goto sendFailed;
+		}
+	}
+	else
+	{
+		if (pqPutInt(0, 2, conn) < 0)
+			goto sendFailed;
+	}
+	if (pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* construct the Sync message */
+	if (pqPutMsgStart('S', false, conn) < 0 ||
+		pqPutMsgEnd(conn) < 0)
+		goto sendFailed;
+
+	/* remember we are doing just a Parse */
+	conn->queryclass = PGQUERY_PREPARE;
+
+	/*
+	 * Give the data a push.  In nonblock mode, don't complain if we're
+	 * unable to send it all; PQgetResult() will do any additional
+	 * flushing needed.
+	 */
+	if (pqFlush(conn) < 0)
+		goto sendFailed;
+
+	/* OK, it's launched! */
+	conn->asyncStatus = PGASYNC_BUSY;
+	return 1;
+
+sendFailed:
+	pqHandleSendFailure(conn);
+	return 0;
 }
 
 /*
@@ -921,7 +1009,7 @@ PQsendQueryGuts(PGconn *conn,
 		goto sendFailed;
 
 	/* remember we are using extended query protocol */
-	conn->ext_query = true;
+	conn->queryclass = PGQUERY_EXTENDED;
 
 	/*
 	 * Give the data a push.  In nonblock mode, don't complain if we're
@@ -1134,7 +1222,6 @@ PQgetResult(PGconn *conn)
  * The user is responsible for freeing the PGresult via PQclear()
  * when done with it.
  */
-
 PGresult *
 PQexec(PGconn *conn, const char *query)
 {
@@ -1164,6 +1251,29 @@ PQexecParams(PGconn *conn,
 	if (!PQsendQueryParams(conn, command,
 						   nParams, paramTypes, paramValues, paramLengths,
 						   paramFormats, resultFormat))
+		return NULL;
+	return PQexecFinish(conn);
+}
+
+/*
+ * PQprepare
+ *    Creates a prepared statement by issuing a v3.0 parse message.
+ *
+ * If the query was not even sent, return NULL; conn->errorMessage is set to
+ * a relevant message.
+ * If the query was sent, a new PGresult is returned (which could indicate
+ * either success or failure).
+ * The user is responsible for freeing the PGresult via PQclear()
+ * when done with it.
+ */
+PGresult *
+PQprepare(PGconn *conn,
+		  const char *stmtName, const char *query,
+		  int nParams, const Oid *paramTypes)
+{
+	if (!PQexecStart(conn))
+		return NULL;
+	if (!PQsendPrepare(conn, stmtName, query, nParams, paramTypes))
 		return NULL;
 	return PQexecFinish(conn);
 }
@@ -1451,7 +1561,7 @@ PQputCopyEnd(PGconn *conn, const char *errormsg)
 		 * If we sent the COPY command in extended-query mode, we must
 		 * issue a Sync as well.
 		 */
-		if (conn->ext_query)
+		if (conn->queryclass != PGQUERY_SIMPLE)
 		{
 			if (pqPutMsgStart('S', false, conn) < 0 ||
 				pqPutMsgEnd(conn) < 0)
