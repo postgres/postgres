@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jun 10 07:56:22 EDT 2004
+Last updated:		Thu Jun 10 15:04:47 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -306,7 +306,7 @@ Referential Integrity
 * Support triggers on columns (Neil)
 * Have AFTER triggers execute after the appropriate SQL statement in a 
   function, not at the end of the function
-* Print table names with constraint names in error messages, or make constraint
+* -Print table names with constraint names in error messages, or make constraint
   names unique within a schema
 * -Issue NOTICE if foreign key data requires costly test to match primary key
 * Remove CREATE CONSTRAINT TRIGGER
