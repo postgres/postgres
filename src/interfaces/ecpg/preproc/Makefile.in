@@ -26,12 +26,12 @@ ecpg: $(OBJS)
 	$(CC) -o ecpg $(OBJS) $(LEXLIB) $(LDFLAGS)
 
 preproc.c preproc.h: preproc.y
-	$(YACC) $(YFLAGS) $<
+	$(YACC) -d $(YFLAGS) $<
 	mv y.tab.c preproc.c
 	mv y.tab.h preproc.h
 
 pgc.c: pgc.l
-	$(LEX) $<
+	$(LEX) $(LFLAGS) $<
 	mv lex.yy.c pgc.c
 
 clean:

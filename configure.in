@@ -214,15 +214,12 @@ if test "$LIBRARY_DIRS" -o "$SRCH_LIB"; then
 	done
 fi
 
-dnl We have read the default value of USE_LOCALE from the template
-dnl file.  We have a further option of using
-dnl	--enable-locale to explicitly enable it
-dnl It defaults to disabled
+
 AC_MSG_CHECKING(whether to support locale)
 AC_ARG_ENABLE(
    locale,
    [  --enable-locale         enable locale support ],
-   AC_DEFINE(USE_LOCALE) AC_MSG_RESULT(enabled),
+   [AC_DEFINE(USE_LOCALE) AC_MSG_RESULT(enabled)],
    AC_MSG_RESULT(disabled)
 )
 
@@ -233,7 +230,7 @@ AC_MSG_CHECKING(whether to support cyrillic recode)
 AC_ARG_ENABLE(
    recode,
    [  --enable-recode         enable cyrillic recode support ],
-   AC_DEFINE(CYR_RECODE) AC_MSG_RESULT(enabled),
+   [AC_DEFINE(CYR_RECODE) AC_MSG_RESULT(enabled)],
    AC_MSG_RESULT(disabled)
 )
 
@@ -598,6 +595,8 @@ AC_SUBST(INSTL_LIB_OPTS)
 AC_SUBST(INSTL_SHLIB_OPTS)
 AC_SUBST(INSTL_EXE_OPTS)
 
+AC_PROG_AWK
+
 dnl Check the option to echo to inhibit newlines.
 ECHO_N_OUT=`echo -n "" | wc -c`
 ECHO_C_OUT=`echo "\c" | wc -c`
@@ -640,30 +639,9 @@ AC_PATH_PROG(etags, etags)
 AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
 AC_CHECK_PROGS(PERL, perl,)
-
-dnl Changes to look for YACC.  We have three choices (in order of pref.)
-dnl (1) We specify in YACC and YFLAGS what we want
-dnl (2) We have bison and we use bison -y
-dnl (3) We have yacc and use it
-
-if test -f "$YACC"
-then
-	echo "- Using $YACC $YFLAGS"
-else
-    AC_PATH_PROG(bison, bison)
-    if test -f "$bison"
-    then
-	echo "- Using $bison -y $YFLAGS"
-	YACC="$bison"
-	YFLAGS="-y $YFLAGS"
-    else
-	AC_PATH_PROG(yacc, yacc)
-	echo "- Using $yacc $YFLAGS"
-	YACC="$yacc"
-    fi
-fi
-AC_SUBST(YACC)
+AC_PROG_YACC
 AC_SUBST(YFLAGS)
+
 
 AC_CHECK_LIB(sfio,     main)
 for curses in ncurses curses ; do

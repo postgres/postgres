@@ -4,8 +4,5 @@ SHARED_LIB:
 ALL:
 SRCH_INC:/usr/local/include
 SRCH_LIB:/usr/local/lib
-USE_LOCALE:no
 DLSUFFIX:.dll
-YFLAGS:-d -L /sw/cygwin-b20/share/
-YACC:
 LIBS:-lcygipc

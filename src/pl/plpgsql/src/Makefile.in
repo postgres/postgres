@@ -4,7 +4,7 @@
 #    Makefile for the plpgsql shared object
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.24 2000/06/06 22:01:12 petere Exp $
+#    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/Makefile.in,v 1.25 2000/06/07 16:26:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -56,7 +56,7 @@ pl_parse.o:	pl_gram.c pl_scan.c plpgsql.h
 	$(CC) $(CFLAGS) -c -o $@ pl_gram.c
 
 pl_gram.c pl.tab.h:	gram.y
-	$(YACC) $(YFLAGS) $<
+	$(YACC) -d $(YFLAGS) $<
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <y.tab.c >pl_gram.c
 	sed -e 's/yy/plpgsql_yy/g' -e 's/YY/PLPGSQL_YY/g' <y.tab.h >pl.tab.h
 	rm -f y.tab.c y.tab.h

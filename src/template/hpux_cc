@@ -5,8 +5,6 @@ ALL:
 SRCH_INC:
 SRCH_LIB:
 DLSUFFIX:.sl
-YFLAGS:-d
-YACC:
 CC:cc
 CPP:cc -E -Ae
 # Make aCC be first C++ compiler name tried...

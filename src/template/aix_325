@@ -4,8 +4,5 @@ SHARED_LIB:-e _nostart -lc
 ALL:
 SRCH_INC:
 SRCH_LIB:
-USE_LOCALE:no
 DLSUFFIX:.so
-YFLAGS:-d
-YACC:
 CC:xlc

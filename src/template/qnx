@@ -5,8 +5,5 @@ SHARED_LIB:
 ALL:
 SRCH_INC:
 SRCH_LIB:
-USE_LOCALE:no
 DLSUFFIX:.so
-YFLAGS:-d
-YACC:
 CXXFLAGS:-I/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++

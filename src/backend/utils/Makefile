@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.12 2000/05/29 05:45:18 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Makefile,v 1.13 2000/06/07 16:26:48 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,11 +31,20 @@ SUBSYS.o: $(OBJS)
 submake:
 	for i in $(DIRS); do $(MAKE) -C $$i SUBSYS.o; done
 
-fmgroids.h fmgrtab.c: Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
-	$(SHELL) $(SHOPTS) Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
+# Gen_fmgrtab.sh will not change the timestamp of its output files
+# if they already exist and would not be changed. This is to avoid
+# unnecessary recompilations. In order to avoid re-running it all
+# the time we update a stamp file instead. (Idea stolen from
+# autoconf and autoheader.)
 
+fmgroids.h fmgrtab.c: fmgrstamp-h
+fmgrstamp-h: Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
+	$(SHELL) $(SHOPTS) Gen_fmgrtab.sh $(SRCDIR)/include/catalog/pg_proc.h
+	echo timestamp > fmgrstamp-h
+
+# don't clean fmgroids.h and fmgrtab.c
 clean:
-	rm -f SUBSYS.o fmgroids.h fmgrtab.o fmgrtab.c
+	rm -f SUBSYS.o fmgrtab.o
 	for i in $(DIRS); do $(MAKE) -C $$i clean; done
 
 dep depend: fmgroids.h fmgrtab.c

@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.25 2000/05/29 05:44:53 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.26 2000/06/07 16:26:41 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,12 +25,12 @@ SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
 gram.c parse.h: gram.y
-	$(YACC) $(YFLAGS) $<
+	$(YACC) -d $(YFLAGS) $<
 	mv y.tab.c gram.c
 	mv y.tab.h parse.h
 
 scan.c:	scan.l
-	$(LEX) $<
+	$(LEX) $(LFLAGS) $<
 	mv lex.yy.c scan.c
 
 # The following dependencies on parse.h are computed by

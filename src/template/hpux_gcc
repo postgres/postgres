@@ -6,7 +6,5 @@ SRCH_INC:
 SRCH_LIB:
 DL_LIB:/usr/lib/libdld.sl
 DLSUFFIX:.sl
-YFLAGS:-d
-YACC:
 CC:gcc
 CCC:g++

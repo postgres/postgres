@@ -3,7 +3,4 @@ SHARED_LIB:-fpic -DPIC
 CFLAGS:-O2 -m486 -pipe
 SRCH_INC:
 SRCH_LIB:
-USE_LOCALE:no
 DLSUFFIX:.so
-YFLAGS:-d
-YACC:bison -y

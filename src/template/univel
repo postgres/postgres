@@ -3,9 +3,6 @@ CFLAGS:-v -O -K i486,host,inline,loop_unroll -Dsvr4
 SHARED_LIB:-K PIC
 SRCH_INC:
 SRCH_LIB:
-USE_LOCALE:no
 DLSUFFIX:.so
-YACC:yacc
-YFLAGS:-d
 CC:cc
 LIBS:-lc89 
