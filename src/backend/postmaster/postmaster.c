@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.390 2004/05/18 20:27:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.391 2004/05/19 18:58:44 momjian Exp $
  *
  * NOTES
  *
@@ -461,6 +461,11 @@ PostmasterMain(int argc, char *argv[])
 
 	IgnoreSystemIndexes(false);
 
+	if (find_my_exec(argv[0], my_exec_path) < 0)
+		elog(FATAL,
+				gettext("%s: could not locate my own executable path"),
+						argv[0]);
+	
 	/*
 	 * Options setup
 	 */
