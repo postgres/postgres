@@ -13,7 +13,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.28 2000/12/11 00:49:54 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.29 2001/05/08 19:38:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,8 +22,11 @@ top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
 OBJS = dynloader.o @INET_ATON@ @STRERROR@ @MISSING_RANDOM@ @SRANDOM@
-OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @STRDUP@ @TAS@ @ISINF@
+OBJS+= @GETHOSTNAME@ @GETRUSAGE@ @STRCASECMP@ @TAS@ @ISINF@
 OBJS+= @STRTOL@ @STRTOUL@ @SNPRINTF@
+ifdef STRDUP
+OBJS += $(top_builddir)/src/utils/strdup.o
+endif
 ifeq ($(PORTNAME), qnx4)
 OBJS += getrusage.o qnx4/SUBSYS.o
 endif
@@ -56,6 +59,10 @@ darwin.dir:
 
 tas.o: tas.s
 	$(CC) $(CFLAGS) -c $<
+
+$(top_builddir)/src/utils/strdup.o:
+	$(MAKE) -C $(top_builddir)/src/utils strdup.o
+
 
 distclean clean:
 	rm -f SUBSYS.o $(OBJS)
