@@ -202,7 +202,7 @@ SOCK_get_string(SocketClass *self, char *buffer, int bufsize)
 {
 	register int lf = 0;
 
-	for (lf = 0; lf < bufsize; lf++)
+	for (lf = 0; lf < bufsize - 1; lf++)
 		if (!(buffer[lf] = SOCK_get_next_byte(self)))
 			return FALSE;
 
