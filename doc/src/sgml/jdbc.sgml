@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.32 2001/11/27 01:20:17 barry Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/jdbc.sgml,v 1.33 2001/11/27 13:02:33 ishii Exp $
 -->
 
  <chapter id="jdbc">
@@ -764,7 +764,7 @@ ps.executeUpdate();
 ps.close();
 fis.close();
 </programlisting>
-
+</para>
    <para>
     Retrieving the image from the Large Object:
 
