@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.105 2004/02/12 19:58:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.106 2004/02/13 05:10:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1613,6 +1613,7 @@ lo_import 152801
 	underscores. See the section <xref
 	linkend="APP-PSQL-variables"
 	endterm="APP-PSQL-variables-title"> below for details.
+	Variable names are case-sensitive.
 	</para>
 
 	<para>
