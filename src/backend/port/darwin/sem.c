@@ -10,7 +10,7 @@
  *   - this required changing sem_info from containig an array of sem_t to an array of sem_t*
  *
  * IDENTIFICATION
- *       $Header: /cvsroot/pgsql/src/backend/port/darwin/Attic/sem.c,v 1.1 2000/12/11 00:49:54 tgl Exp $
+ *       $Header: /cvsroot/pgsql/src/backend/port/darwin/Attic/sem.c,v 1.2 2001/01/17 22:11:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,11 +155,13 @@ semget(key_t key, int nsems, int semflg)
 		fd = shm_open(SHM_INFO_NAME, O_RDWR | O_CREAT | O_EXCL, MODE);
 		if (fd == -1 && errno == EEXIST)
 		{
-			exist = 1;
-			fd = shm_open(SHM_INFO_NAME, O_RDWR | O_CREAT, MODE);
+/* 			exist = 1; */
+			shm_unlink(SHM_INFO_NAME);
+			fd = shm_open(SHM_INFO_NAME, O_RDWR | O_CREAT | O_EXCL, MODE);
 		}
 		if (fd == -1)
 			return fd;
+		shm_unlink(SHM_INFO_NAME);
 		/* The size may only be set once. Ignore errors. */
                ftruncate(fd, sizeof(struct sem_info));
 		SemInfo = mmap(NULL, sizeof(struct sem_info),
@@ -174,6 +176,7 @@ semget(key_t key, int nsems, int semflg)
                        fprintf(stderr, "darwin creating sem %s to cover shared mem.\n", semname);
 #endif
                        SemInfo->sem = sem_open(semname, O_CREAT, semflg & 0777, 1);
+                       sem_unlink(semname);
                        sem_wait(SemInfo->sem);
 			/* initilize shared memory */
 			memset(SemInfo->set, 0, sizeof(SemInfo->set));
@@ -244,6 +247,7 @@ fprintf(stderr, "darwin semget failed because if (nsems != 0 && SemInfo->set[sem
                fprintf(stderr, "darwin creating sem %s to cover set %d num %dm.\n", semname, semid, semnum);
 #endif
                SemInfo->set[semid].sem[semnum] = sem_open(semname, O_CREAT, semflg & 0777, 0);
+               sem_unlink(semname);
 
 /* Currently sem_init always returns -1.
 	if( sem_init( &SemInfo->set[semid].sem[semnum], 1, 0 ) == -1 )	{
