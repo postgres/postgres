@@ -13,7 +13,6 @@ it would be nice to be able to use :var[:index] as cvariable
 
 Missing statements:
  - exec sql type
- - exec sql define
  - exec sql prepare
  - exec sql allocate
  - exqc sql free

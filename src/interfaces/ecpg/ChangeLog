@@ -277,3 +277,23 @@ Fri Aug  7 12:38:50 CEST 1998
 	- Added support for variables in cursor
 	- Set version to 2.3.6
 	- Set library version to 2.5
+
+Fri Aug 14 12:44:21 CEST 1998
+
+	- Added EXEC SQL DEFINE statement
+	- Set version to 2.4.0
+
+Tue Aug 18 09:24:15 CEST 1998
+
+	- Removed keyword IS from DEFINE statement
+	- Added latest changes from gram.y
+	- Removed duplicate symbols from preproc.y
+	- Initialize sqlca structure
+	- Added check for connection to ecpglib
+	- Set version to 2.4.1
+
+Thu Aug 20 15:31:29 CEST 1998
+
+	- Cleaned up memory allocation in ecpglib.c
+	- Set library version to 2.6
+

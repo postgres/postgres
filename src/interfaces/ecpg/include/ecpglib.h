@@ -37,6 +37,8 @@ struct cursor {	const char *name;
 		struct cursor *next;
 	      };
 
+extern int no_auto_trans;
+
 /* define this for simplicity as well as compatibility */
 
 #define		  SQLCODE	 sqlca.sqlcode

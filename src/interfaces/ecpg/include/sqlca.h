@@ -38,8 +38,10 @@ struct sqlca
 		/*         7: empty                                   */
 		                                                                
 	char			sqlext[8];
-} sqlca;
+};
 
+extern struct sqlca sqlca;
+                                                                                 
 #endif
 
 #ifdef __cplusplus

@@ -22,12 +22,15 @@
 #define ECPG_FLOAT_FORMAT	-206
 #define ECPG_CONVERT_BOOL	-207
 #define ECPG_EMPTY		-208
-#define ECPG_NO_CONN		-209
+
 #define ECPG_UNDECLARED_CURSOR	-210
 
-/* finally the backend error messages, they start at 300 */
-#define ECPG_PGSQL		-300
-#define ECPG_TRANS		-301
-#define ECPG_CONNECT		-302
+#define ECPG_NO_CONN		-220
+#define ECPG_NOT_CONN		-221
+
+/* finally the backend error messages, they start at 400 */
+#define ECPG_PGSQL		-400
+#define ECPG_TRANS		-401
+#define ECPG_CONNECT		-402
 
 #endif /* !_ECPG_ERROR_H */
