@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.89 2003/10/12 23:19:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.90 2003/10/13 20:02:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
@@ -558,7 +559,6 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 							parent->relname)));
 
 		parentOids = lappendo(parentOids, RelationGetRelid(relation));
-		setRelhassubclassInRelation(RelationGetRelid(relation), true);
 
 		parentHasOids |= relation->rd_rel->relhasoids;
 
@@ -869,7 +869,6 @@ change_varattnos_of_a_node(Node *node, const AttrNumber *newattno)
  *		Updates the system catalogs with proper inheritance information.
  *
  * supers is a list of the OIDs of the new relation's direct ancestors.
- * NB: it is destructively changed to include indirect ancestors.
  */
 static void
 StoreCatalogInheritance(Oid relationId, List *supers)
@@ -890,7 +889,12 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 
 	/*
 	 * Store INHERITS information in pg_inherits using direct ancestors
-	 * only. Also enter dependencies on the direct ancestors.
+	 * only. Also enter dependencies on the direct ancestors, and make sure
+	 * they are marked with relhassubclass = true.
+	 *
+	 * (Once upon a time, both direct and indirect ancestors were found here
+	 * and then entered into pg_ipl.  Since that catalog doesn't exist anymore,
+	 * there's no need to look for indirect ancestors.)
 	 */
 	relation = heap_openr(InheritsRelationName, RowExclusiveLock);
 	desc = RelationGetDescr(relation);
@@ -898,14 +902,14 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	seqNumber = 1;
 	foreach(entry, supers)
 	{
-		Oid			entryOid = lfirsto(entry);
+		Oid			parentOid = lfirsto(entry);
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
 		ObjectAddress childobject,
 					parentobject;
 
 		datum[0] = ObjectIdGetDatum(relationId);		/* inhrel */
-		datum[1] = ObjectIdGetDatum(entryOid);	/* inhparent */
+		datum[1] = ObjectIdGetDatum(parentOid);	/* inhparent */
 		datum[2] = Int16GetDatum(seqNumber);	/* inhseqno */
 
 		nullarr[0] = ' ';
@@ -924,7 +928,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 		 * Store a dependency too
 		 */
 		parentobject.classId = RelOid_pg_class;
-		parentobject.objectId = entryOid;
+		parentobject.objectId = parentOid;
 		parentobject.objectSubId = 0;
 		childobject.classId = RelOid_pg_class;
 		childobject.objectId = relationId;
@@ -932,85 +936,15 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 
 		recordDependencyOn(&childobject, &parentobject, DEPENDENCY_NORMAL);
 
+		/*
+		 * Mark the parent as having subclasses.
+		 */
+		setRelhassubclassInRelation(parentOid, true);
+
 		seqNumber += 1;
 	}
 
 	heap_close(relation, RowExclusiveLock);
-
-	/* ----------------
-	 * Expand supers list to include indirect ancestors as well.
-	 *
-	 * Algorithm:
-	 *	0. begin with list of direct superclasses.
-	 *	1. append after each relationId, its superclasses, recursively.
-	 *	2. remove all but last of duplicates.
-	 * ----------------
-	 */
-
-	/*
-	 * 1. append after each relationId, its superclasses, recursively.
-	 */
-	foreach(entry, supers)
-	{
-		Oid			id = lfirsto(entry);
-		HeapTuple	tuple;
-		int16		number;
-		List	   *current;
-		List	   *next;
-
-		current = entry;
-		next = lnext(entry);
-
-		for (number = 1;; number += 1)
-		{
-			tuple = SearchSysCache(INHRELID,
-								   ObjectIdGetDatum(id),
-								   Int16GetDatum(number),
-								   0, 0);
-			if (!HeapTupleIsValid(tuple))
-				break;
-
-			lnext(current) = lconso(((Form_pg_inherits)
-									 GETSTRUCT(tuple))->inhparent,
-									NIL);
-			current = lnext(current);
-
-			ReleaseSysCache(tuple);
-		}
-		lnext(current) = next;
-	}
-
-	/*
-	 * 2. remove all but last of duplicates.
-	 */
-	foreach(entry, supers)
-	{
-		Oid			thisone;
-		bool		found;
-		List	   *rest;
-
-again:
-		found = false;
-		thisone = lfirsto(entry);
-		foreach(rest, lnext(entry))
-		{
-			if (thisone == lfirsto(rest))
-			{
-				found = true;
-				break;
-			}
-		}
-		if (found)
-		{
-			/*
-			 * found a later duplicate, so remove this entry.
-			 */
-			lfirsto(entry) = lfirsto(lnext(entry));
-			lnext(entry) = lnext(lnext(entry));
-
-			goto again;
-		}
-	}
 }
 
 /*
@@ -1044,9 +978,14 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 {
 	Relation	relationRelation;
 	HeapTuple	tuple;
+	Form_pg_class classtuple;
 
 	/*
 	 * Fetch a modifiable copy of the tuple, modify it, update pg_class.
+	 *
+	 * If the tuple already has the right relhassubclass setting, we
+	 * don't need to update it, but we still need to issue an SI inval
+	 * message.
 	 */
 	relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELOID,
@@ -1054,12 +993,21 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "cache lookup failed for relation %u", relationId);
+	classtuple = (Form_pg_class) GETSTRUCT(tuple);
 
-	((Form_pg_class) GETSTRUCT(tuple))->relhassubclass = relhassubclass;
-	simple_heap_update(relationRelation, &tuple->t_self, tuple);
+	if (classtuple->relhassubclass != relhassubclass)
+	{
+		classtuple->relhassubclass = relhassubclass;
+		simple_heap_update(relationRelation, &tuple->t_self, tuple);
 
-	/* keep the catalog indexes up to date */
-	CatalogUpdateIndexes(relationRelation, tuple);
+		/* keep the catalog indexes up to date */
+		CatalogUpdateIndexes(relationRelation, tuple);
+	}
+	else
+	{
+		/* no need to change tuple, but force relcache rebuild anyway */
+		CacheInvalidateRelcache(relationId);
+	}
 
 	heap_freetuple(tuple);
 	heap_close(relationRelation, RowExclusiveLock);
