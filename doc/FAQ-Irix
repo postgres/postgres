@@ -1,18 +1,16 @@
 =====================================================
-Frequently Asked Questions (FAQ) for PostgresSQL V6.0
+Frequently Asked Questions (FAQ) for PostgresSQL V6.1
 IRIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =====================================================
-last updated:           Wed Jan 29 21:25:00 GMT 1997
+last updated:           Fri Jun 13 09:54:00 BST 1997
 
 current maintainer:     Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 original author:        Andrew C.R. Martin (martin@biochem.ucl.ac.uk)
 
 
 Changes in this version (* = modified, + = new, - = removed):
-*1.2)   What changes do I need to make to src/Makefile.global or
-        src/Makefile.custom?
-*1.4)   Are there any other changes I should make?
++1.5)   Can I install PostgreSQL under Irix 6.4?
 
 This file is divided approximately as follows:
 1.*)    Installing Postgres95
@@ -26,7 +24,10 @@ Questions answered:
 1.3)    What are the references in X11_LIB to libsocket and libnsl in
         src/Makefile.global?
 1.4)    Are there any other changes I should make?
+1.5)    Can I install PostgreSQL under Irix 6.4?
 2.1)    Why can't I move the executable files?
+3.1)    How do I compile a C program to create a function for extending
+        Postgres95
 
 ----------------------------------------------------------------------
 Section 1:      Installing Postgres95
@@ -84,6 +85,38 @@ Section 1:      Installing Postgres95
         For an explanation as to why this is a good idea, see Question 2.1
 
 
+1.5)    Can I install PostgreSQL under Irix 6.4?
+
+        Irix 6.4 has a bug in ld which mishandles the addresses of
+        static procedures when object files are assembled into
+        larger object files using 'ld -r'. This bug has been reported
+        to Silicon Graphics. The following patch should be applied as
+        a workaround. (Supplied by Bob Bruccoleri <bruc@bms.com>)
+
+*** ./backend/Makefile.orig     Thu May 22 00:00:15 1997
+--- ./backend/Makefile  Thu Jun  5 16:47:27 1997
+***************
+*** 54,60 ****
+  all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source
+  
+  postgres: $(OBJS) ../utils/version.o
+!       $(CC) -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
+  
+  $(OBJS): $(DIRS:%=%.dir)
+  
+--- 54,64 ----
+  all: postgres $(POSTGRES_IMP) global1.bki.source local1_template1.bki.source
+  
+  postgres: $(OBJS) ../utils/version.o
+! #     $(CC) -o postgres $(OBJS) ../utils/version.o $(LDFLAGS)
+!       -rm -f *.o
+!       find . -name "*.o" -exec cp \{\} . \;
+!       rm -f SUBSYS.o
+!       $(CC) -o postgres *.o ../utils/version.o $(LDFLAGS)
+  
+  $(OBJS): $(DIRS:%=%.dir)
+
+
 ----------------------------------------------------------------------
 Section 2:      Deinstalling Postgres95
 ----------------------------------------------------------------------
@@ -118,3 +151,8 @@ Section 3:      Extending Postgres95
                 -shared -o funcs.so funcs.c
 
 
+----------------------------------------------------------------------------
+Dr. Andrew C.R. Martin                             University College London
+EMAIL: (Work) martin@biochem.ucl.ac.uk    (Home) andrew@stagleys.demon.co.uk
+URL:   http://www.biochem.ucl.ac.uk/~martin
+Tel:   (Work) +44(0)171 419 3890                    (Home) +44(0)1372 275775
