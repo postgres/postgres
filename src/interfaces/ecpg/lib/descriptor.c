@@ -59,7 +59,7 @@ ECPGget_desc_header(int lineno, char *desc_name, int *count)
 }
 
 static bool
-get_int_item(int lineno, void *var, enum ECPGdtype vartype, int value)
+get_int_item(int lineno, void *var, enum ECPGttype vartype, int value)
 {
 	switch (vartype)
 	{
@@ -102,7 +102,7 @@ get_int_item(int lineno, void *var, enum ECPGdtype vartype, int value)
 }
 
 static bool
-get_char_item(int lineno, void *var, enum ECPGdtype vartype, char *value, int varcharsize)
+get_char_item(int lineno, void *var, enum ECPGttype vartype, char *value, int varcharsize)
 {
 	switch (vartype)
 	{
