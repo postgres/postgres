@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.10 2000/03/31 03:27:41 thomas Exp $
+-->
+
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
 
@@ -521,7 +525,7 @@ SELECT lo_export(image.raster, '/tmp/motd') from image
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -531,7 +535,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/xaggr.sgml,v 1.7 2000/03/31 03:27:41 thomas Exp $
+-->
+
  <chapter id="xaggr">
   <title>Extending <acronym>SQL</acronym>: Aggregates</title>
 
@@ -165,7 +169,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

@@ -1,26 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.8 1999/03/30 15:25:56 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.9 2000/03/31 03:27:40 thomas Exp $
 Genetic Optimizer
-
-$Log: geqo.sgml,v $
-Revision 1.8  1999/03/30 15:25:56  thomas
-Fix up small markup problems. Force omit-tags to nil so we have tag
- completion as required by the newest DocBook conventions.
-
-Revision 1.7  1999/02/19 01:57:08  thomas
-Fix SGML markup from last content changes.
-
-Revision 1.6  1999/02/18 05:26:17  momjian
-Enable bushy plans by default.
-
-Revision 1.5  1998/12/29 02:24:15  thomas
-Clean up to ensure tag completion as required by the newest versions
- of Norm's Modular Style Sheets and jade/docbook.
-From Vince Vielhaber <vev@michvhf.com>.
-
-Revision 1.4  1998/08/15 06:55:05  thomas
-Change Id field in chapter tag to change html output file name.
-
 -->
 
 <Chapter Id="geqo">
@@ -402,7 +382,7 @@ The Benjamin/Cummings Pub., Inc.
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -412,7 +392,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

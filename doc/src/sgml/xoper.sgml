@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.9 2000/03/31 03:27:41 thomas Exp $
+-->
+
  <Chapter Id="xoper">
   <Title>Extending <Acronym>SQL</Acronym>: Operators</Title>
 
@@ -448,7 +452,7 @@ SELECT (a + b) AS c FROM test_complex;
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -458,7 +462,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

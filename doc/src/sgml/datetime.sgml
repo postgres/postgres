@@ -1,35 +1,6 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.7 2000/03/29 03:57:10 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.8 2000/03/31 03:27:40 thomas Exp $
 Date/time details
-
-$Log: datetime.sgml,v $
-Revision 2.7  2000/03/29 03:57:10  thomas
-Change rules for interpreting date/time input to disallow 1 and 3 character
- years. Rejects dates like '0.085', which were accepted previously.
-Minor mods of ODBC markup.
-
-Revision 2.6  2000/02/02 16:21:06  thomas
-Add detailed information on Australian time zones.
-
-Revision 2.5  1999/10/12 13:57:04  thomas
-Sequence of date interpretation not quite right.
-
-Revision 2.4  1999/06/23 06:17:51  thomas
-Clarify input/output timezone information.
-Add detail on exact interpretation of "concatenated date"
- for various lengths.
-
-Revision 2.3  1999/05/26 17:30:28  thomas
-Add chapters on CVS access, MVCC, SQL theory to the docs.
-Add an appendix with more details on date/time attributes and handling.
-Update most references to Postgres version numbers to 6.5,
- *except* for the porting list which will require a report
- from a successful installation to be updated.
-
-Revision 2.2  1999/05/22 02:27:23  thomas
-Finish initial markup of cvs.sgml, and include it in the programmer's guide
- and the integrated doc. Clean up other markup.
-
 -->
 
 <appendix label="UG1" id="datetime-appendix">
@@ -774,7 +745,7 @@ Finish initial markup of cvs.sgml, and include it in the programmer's guide
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -784,7 +755,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

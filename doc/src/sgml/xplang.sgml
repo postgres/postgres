@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.7 2000/03/31 03:27:42 thomas Exp $
+-->
+
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
 
@@ -142,7 +146,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/populate.sgml,v 2.2 2000/03/31 03:27:41 thomas Exp $
+-->
+
  <chapter>
   <title>Populating a Database</title>
 
@@ -69,7 +73,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

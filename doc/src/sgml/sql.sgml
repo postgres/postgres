@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.7 2000/03/31 03:27:41 thomas Exp $
+-->
+
  <chapter id="sql">
   <title>SQL</title>
 
@@ -1822,7 +1826,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -1832,7 +1836,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

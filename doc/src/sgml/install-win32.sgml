@@ -1,106 +1,105 @@
-<Chapter Id="install-win32">
-<Title>Installation on Win32</Title>
+ <chapter id="install-win32">
+  <title>Installation on Win32</title>
 
-<Abstract>
-<Para>
-Build and installation instructions for <ProductName>Postgres</ProductName>
-v6.4 client libraries on Win32.
-</Para>
-</Abstract>
+  <abstract>
+   <para>
+    Build and installation instructions for <productname>Postgres</productname>
+    v6.4 client libraries on Win32.
+   </para>
+  </abstract>
 
-<Sect1>
-<Title>Building the libraries</Title>
+  <sect1>
+   <title>Building the libraries</title>
 
-<Para>
-The makefiles included in <ProductName>Postgres</ProductName> are written
-for <ProductName>Microsoft Visual C++</ProductName>, and will probably
-not work with other systems. It should be possible to compile the libaries
-manually in other cases.
-</Para>
+   <para>
+    The makefiles included in <productname>Postgres</productname> are written
+    for <productname>Microsoft Visual C++</productname>, and will probably
+    not work with other systems. It should be possible to compile the libaries
+    manually in other cases.
+   </para>
 
-<Para>
-To build the libraries, change directory into the <filename>src</filename>
-directory, and type the commands
-<programlisting>
+   <para>
+    To build the libraries, change directory into the <filename>src</filename>
+    directory, and type the commands
+    <programlisting>
 copy include\config.h.win32 include\config.h
 nmake /f win32.mak
-</programlisting>
-This assumes that you have <ProductName>Visual C++</ProductName> in your
-path.
-</Para>
+    </programlisting>
+    This assumes that you have <productname>Visual C++</productname> in your
+    path.
+   </para>
 
-<Para>
-The following files will be built:
+   <para>
+    The following files will be built:
 
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-<filename>interfaces\libpq\Release\libpq.dll</filename>
- - The dynamically linkable frontend library
-</Para>
-</ListItem>
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       <filename>interfaces\libpq\Release\libpq.dll</filename>
+       - The dynamically linkable frontend library
+      </para>
+     </listitem>
 
-<ListItem>
-<Para>
-<filename>interfaces\libpq\Release\libpqdll.lib</filename>
- - Import library to link your program to libpq.dll
-</Para>
-</ListItem>
+     <listitem>
+      <para>
+       <filename>interfaces\libpq\Release\libpqdll.lib</filename>
+       - Import library to link your program to libpq.dll
+      </para>
+     </listitem>
 
-<ListItem>
-<Para>
-<filename>interfaces\libpq\Release\libpq.lib</filename> - Static library version of the frontend library
-</Para>
-</ListItem>
+     <listitem>
+      <para>
+       <filename>interfaces\libpq\Release\libpq.lib</filename> - Static library version of the frontend library
+      </para>
+     </listitem>
 
-<ListItem>
-<Para>
-<filename>bin\psql\Release\psql.exe</filename> - The <ProductName>Postgresql</ProductName> interactive SQL monitor
-</Para>
-</ListItem>
+     <listitem>
+      <para>
+       <filename>bin\psql\Release\psql.exe</filename> - The <productname>Postgresql</productname> interactive SQL monitor
+      </para>
+     </listitem>
 
-</ItemizedList>
-</Para>
+    </itemizedlist>
+   </para>
 
-</Sect1>
+  </sect1>
 
-<Sect1>
-<Title>Installing the libraries</Title>
-<Para>
-The only part of the library to really be installed is the 
-<filename>libpq.dll</filename> library. This file should in most cases 
-be placed in the <filename>WINNT\SYSTEM32</filename> directory (or in
-<filename>WINDOWS\SYSTEM</filename> on a Windows 95/98 system). If this
-file is installed using a setup program, it should be installed with
-version checking using the VERSIONINFO resource included in the file,
-to ensure that a newer version of the library is not overwritten.
-</Para>
-<Para>
-If you plan to do development using libpq on this machine, you will have
-to add the <filename>src\include</filename> and 
-<filename>src\interfaces\libpq</filename> directories to the include
-path in your compilers settings.
-</Para>
-</Sect1>
+  <sect1>
+   <title>Installing the libraries</title>
+   <para>
+    The only part of the library to really be installed is the 
+    <filename>libpq.dll</filename> library. This file should in most cases 
+    be placed in the <filename>WINNT\SYSTEM32</filename> directory (or in
+    <filename>WINDOWS\SYSTEM</filename> on a Windows 95/98 system). If this
+    file is installed using a setup program, it should be installed with
+    version checking using the VERSIONINFO resource included in the file,
+    to ensure that a newer version of the library is not overwritten.
+   </para>
+   <para>
+    If you plan to do development using libpq on this machine, you will have
+    to add the <filename>src\include</filename> and 
+    <filename>src\interfaces\libpq</filename> directories to the include
+    path in your compilers settings.
+   </para>
+  </sect1>
 
-<Sect1>
-<Title>Using the libraries</Title>
-<Para>
-To use the libraries, you must add the <filename>libpqdll.lib</filename>
-file to your project (in Visual C++, just right-click on the project and
-chose to add it).
-</Para>
-<Para>
-Once this is done, it should be possible to use the library just as you
-would on a Unix platform.
-</Para>
-</Sect1>
-
-</Chapter>
+  <sect1>
+   <title>Using the libraries</title>
+   <para>
+    To use the libraries, you must add the <filename>libpqdll.lib</filename>
+    file to your project (in Visual C++, just right-click on the project and
+    chose to add it).
+   </para>
+   <para>
+    Once this is done, it should be possible to use the library just as you
+    would on a Unix platform.
+   </para>
+  </sect1>
+ </chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:t
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -110,7 +109,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

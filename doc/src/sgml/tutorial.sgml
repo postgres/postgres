@@ -1,9 +1,10 @@
-<!-- tutorial.sgml
--
-- Postgres tutorial. Derived from postgres.sgml.
-- thomas 1998-02-23
--
-- -->
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/tutorial.sgml,v 1.9 2000/03/31 03:27:41 thomas Exp $
+
+Postgres tutorial. Derived from postgres.sgml.
+thomas 1998-02-23
+-->
+
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
 
 <!entity about    SYSTEM "about.sgml">
@@ -108,7 +109,7 @@ Your name here...
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -118,7 +119,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

@@ -1,5 +1,5 @@
 <Chapter Id="pgtcl">
-<Title>pgtcl</Title>
+<Title>pgtcl - TCL Binding Library</Title>
 
 <Para>
 <literal>pgtcl</literal> is a tcl package for front-end programs 

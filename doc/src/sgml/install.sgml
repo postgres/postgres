@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.37 2000/03/31 03:27:40 thomas Exp $
+-->
+
  <Chapter Id="install">
   <Title>Installation</Title>
 
@@ -12,31 +16,31 @@
    If you haven't gotten the <ProductName>PostgreSQL</ProductName> distribution,
    get it from <ULink url="ftp://ftp.postgresql.org">ftp.postgresql.org</ULink>,
    then unpack it:
-<ProgramListing>
+   <ProgramListing>
 gunzip postgresql-7.0.tar.gz
 tar -xf postgresql-7.0.tar
 mv postgresql-7.0 /usr/src
-</ProgramListing>
+   </ProgramListing>
   </Para>
 
   <Sect1>
    <Title>Before you start</Title>
 
-  <Para>
-   Building <Productname>PostgreSQL</Productname> requires <acronym>GNU</acronym>
-   <Application>make</Application>.  It will <Emphasis>not</Emphasis>
-   work with other <Application>make</Application> programs. On GNU/Linux systems
-   GNU make is the default tool, on other systems you may find that
-   GNU <Application>make</Application> is installed under the name <Quote>gmake</Quote>.
-   We will use that name from now on to indicate <acronym>GNU</acronym>
-   <Application>make</Application>, no matter what name it has on your system.
-   To test for <acronym>GNU</acronym> <Application>make</Application> enter
-<programlisting>
+   <Para>
+    Building <Productname>PostgreSQL</Productname> requires <acronym>GNU</acronym>
+    <Application>make</Application>.  It will <Emphasis>not</Emphasis>
+    work with other <Application>make</Application> programs. On GNU/Linux systems
+    GNU make is the default tool, on other systems you may find that
+    GNU <Application>make</Application> is installed under the name <Quote>gmake</Quote>.
+    We will use that name from now on to indicate <acronym>GNU</acronym>
+    <Application>make</Application>, no matter what name it has on your system.
+    To test for <acronym>GNU</acronym> <Application>make</Application> enter
+    <programlisting>
 <userinput>gmake --version</userinput>
-</programlisting>
-   If you need to get <acronym>GNU</acronym> <Application>make</Application>, you can
-   find it at <ULink url="ftp://ftp.gnu.org">ftp://ftp.gnu.org</ULink>.
-  </Para>
+    </programlisting>
+    If you need to get <acronym>GNU</acronym> <Application>make</Application>, you can
+    find it at <ULink url="ftp://ftp.gnu.org">ftp://ftp.gnu.org</ULink>.
+   </Para>
 
    <Para>
     Up to date information on supported platforms is at
@@ -600,7 +604,7 @@ and start experimenting.
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -610,7 +614,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

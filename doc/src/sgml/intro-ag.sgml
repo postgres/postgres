@@ -1,3 +1,7 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/intro-ag.sgml,v 1.5 2000/03/31 03:27:40 thomas Exp $
+-->
+
  <chapter id="intro-ag">
   <title>Introduction</title>
 
@@ -37,7 +41,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

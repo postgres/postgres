@@ -1,37 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.20 2000/03/30 22:22:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.21 2000/03/31 03:27:40 thomas Exp $
 
 Postgres Administrator's Guide.
 Derived from postgres.sgml.
 - thomas 1998-10-27
-
-$Log: admin.sgml,v $
-Revision 1.20  2000/03/30 22:22:40  thomas
-Accumulated fixups.
-Add some chapters on new topics.
-Change to referencing OASIS/Docbook v3.1 rather than Davenport/Docbook v3.0
-Grepped for and fixed apparent tag mangling from emacs
- "Normalize" operation. Should be the last of those.
-
-Revision 1.19  2000/03/28 14:16:06  thomas
-Update SGML catalog references to DocBook 3.1 on FreeBSD.
-Matches postgresql.org/hub.org environment.
-
-Revision 1.18  1999/12/06 16:37:11  thomas
-Remove references to PostgreSQL as "public-domain" since that has a
- specific meaning wrt copyright (or lack thereof).
-
-Revision 1.17  1999/09/29 05:18:14  thomas
-Strip out some cvs log info.
-
-Revision 1.16  1999/06/23 06:15:13  thomas
-Add backup/restore info to Admin Guide.
-Split management chapter from start-ag.sgml to manage-ag.sgml.
-
-Revision 1.15  1999/06/03 04:21:47  thomas
-Markup changes for v6.5 release.
-Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
-
 -->
 
 <!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
@@ -160,7 +132,7 @@ Don't bother with an index until we get some index entries.
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -170,7 +142,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

@@ -1,5 +1,9 @@
+<!--
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.36 2000/03/31 03:27:40 thomas Exp $
+-->
+
  <chapter id="libpq-chapter">
-  <title id="libpq">libpq</title>
+  <title id="libpq">libpq - C Library</title>
 
   <para>
    <filename>libpq</filename> is the <acronym>C</acronym>
@@ -2350,7 +2354,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/CATALOG")
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->

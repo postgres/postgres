@@ -1,4 +1,5 @@
 <!--
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/start-ag.sgml,v 1.10 2000/03/31 03:27:41 thomas Exp $
 -	This file currently contains several small chapters.
 -	Each chapter should be split off into a separate source file...
 -	- thomas 1998-02-24
@@ -124,7 +125,7 @@ Creating Postgres database system directory /home/postgres/data/base
 
 <!-- Keep this comment at the end of the file
 Local variables:
-mode: sgml
+mode:sgml
 sgml-omittag:nil
 sgml-shorttag:t
 sgml-minimize-attributes:nil
@@ -134,7 +135,7 @@ sgml-indent-data:t
 sgml-parent-document:nil
 sgml-default-dtd-file:"./reference.ced"
 sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/CATALOG"
+sgml-local-catalogs:("/usr/lib/sgml/catalog")
 sgml-local-ecat-files:nil
 End:
 -->
