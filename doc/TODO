@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Oct 12 13:33:14 EDT 2000
+Last updated:		Thu Oct 12 14:59:00 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -257,6 +257,8 @@ MISC
 * Gather more accurate dispersion statistics using indexes
 * Improve statistics storage in pg_class [performance]
 * Improve VACUUM speed with indexes [vacuum]
+* Reduce VACUUM lock time by moving tuples with read lock, then write
+  lock and truncate table [vacuum]
 * -BSD/OS does not support locale because there is no LC_MESSAGES (Bruce)
 * Add connection pooling [pool]
 
