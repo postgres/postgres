@@ -32,8 +32,8 @@ set path = ( /usr/local/pgsql/bin path )
      a  variant  of  the  Bourne  shell, such as <Application>sh</Application>, <Application>ksh</Application>, or
      <Application>bash</Application>, then you would add
 <ProgramListing>
-PATH=/usr/local/pgsql/bin PATH
-export PATH
+$ PATH=/usr/local/pgsql/bin:$PATH
+$ export PATH
 </ProgramListing>
      to the <FileName>.profile</FileName> file in your home directory.
      From now on, we will assume that  you  have  added  the
