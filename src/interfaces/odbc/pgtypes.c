@@ -55,6 +55,7 @@ Int4 pgtypes_defined[]	= {
 				PG_TYPE_TIME_WITH_TMZONE,
 				PG_TYPE_DATETIME,
 				PG_TYPE_ABSTIME,
+				PG_TYPE_TIMESTAMP_NO_TMZONE,
 				PG_TYPE_TIMESTAMP,
 				PG_TYPE_TEXT,
 				PG_TYPE_INT2,
@@ -312,6 +313,7 @@ pgtype_to_concise_type(StatementClass *stmt, Int4 type)
 			return SQL_TIME;
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 		case PG_TYPE_TIMESTAMP:
 #if (ODBCVER >= 0x0300)
 			if (EN_is_odbc3(env))
@@ -416,6 +418,7 @@ pgtype_to_ctype(StatementClass *stmt, Int4 type)
 			return SQL_C_TIME;
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 		case PG_TYPE_TIMESTAMP:
 #if (ODBCVER >= 0x0300)
 			if (EN_is_odbc3(env))
@@ -491,6 +494,8 @@ pgtype_to_name(StatementClass *stmt, Int4 type)
 			return "abstime";
 		case PG_TYPE_DATETIME:
 			return "datetime";
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
+			return "timestamp_nozone";
 		case PG_TYPE_TIMESTAMP:
 			return "timestamp";
 		case PG_TYPE_MONEY:
@@ -817,6 +822,7 @@ pgtype_column_size(StatementClass *stmt, Int4 type, int col, int handle_unknown_
 		case PG_TYPE_TIMESTAMP:
 			return 22;
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 			/* return 22; */
 			return getTimestampColumnSize(stmt, type, col);
 
@@ -851,6 +857,7 @@ pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unknown_si
 		case PG_TYPE_NUMERIC:
 			return getNumericColumnSize(stmt, type, col);
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 			return getTimestampDecimalDigits(stmt, type, col);
 	}
 	return -1;
@@ -938,6 +945,7 @@ pgtype_buffer_length(StatementClass *stmt, Int4 type, int col, int handle_unknow
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
 		case PG_TYPE_TIMESTAMP:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 			return 16;		/* sizeof(TIMESTAMP_STRUCT) */
 
 			/* Character types use the default precision */
@@ -1001,6 +1009,7 @@ pgtype_desclength(StatementClass *stmt, Int4 type, int col, int handle_unknown_s
 		case PG_TYPE_TIME:
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 		case PG_TYPE_TIMESTAMP:
 		case PG_TYPE_VARCHAR:
 		case PG_TYPE_BPCHAR:
@@ -1073,6 +1082,7 @@ pgtype_decimal_digits(StatementClass *stmt, Int4 type, int col)
 		case PG_TYPE_TIMESTAMP:
 			return 0;
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 			/* return 0; */
 			return getTimestampDecimalDigits(stmt, type, col);
 
@@ -1147,6 +1157,7 @@ pgtype_auto_increment(StatementClass *stmt, Int4 type)
 		case PG_TYPE_TIME:
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 		case PG_TYPE_TIMESTAMP:
 			return FALSE;
 

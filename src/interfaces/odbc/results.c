@@ -1964,7 +1964,7 @@ SC_pos_delete(StatementClass *stmt,
 	mylog("dltstr=%s\n", dltstr);
 	qres = CC_send_query(conn, dltstr, NULL, CLEAR_RESULT_ON_ABORT);
 	ret = SQL_SUCCESS;
-	if (qres && QR_command_successful(qres))
+	if (qres && QR_command_maybe_successful(qres))
 	{
 		int			dltcnt;
 		const char *cmdstr = QR_get_command(qres);

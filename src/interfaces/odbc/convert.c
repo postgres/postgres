@@ -169,6 +169,7 @@ timestamp2stime(const char *str, SIMPLE_TIME *st, BOOL *bZone, int *zone)
 	*bZone = FALSE;
 	*zone = 0;
 	st->fr = 0;
+	st->infinity = 0;
 	if ((scnt = sscanf(str, "%4d-%2d-%2d %2d:%2d:%2d%s", &st->y, &st->m, &st->d, &st->hh, &st->mm, &st->ss, rest)) < 6)
 		return FALSE;
 	else if (scnt == 6)
@@ -455,6 +456,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 		case PG_TYPE_ABSTIME:
 		case PG_TYPE_DATETIME:
+		case PG_TYPE_TIMESTAMP_NO_TMZONE:
 		case PG_TYPE_TIMESTAMP:
 			st.fr = 0;
 			st.infinity = 0;
@@ -464,9 +466,9 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				st.m = 12;
 				st.d = 31;
 				st.y = 9999;
-				st.hh = 24;
-				st.mm = 0;
-				st.ss = 0;
+				st.hh = 23;
+				st.mm = 59;
+				st.ss = 59;
 			}
 			if (strnicmp(value, "-infinity", 9) == 0)
 			{
@@ -641,6 +643,7 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 
 			case PG_TYPE_ABSTIME:
 			case PG_TYPE_DATETIME:
+			case PG_TYPE_TIMESTAMP_NO_TMZONE:
 			case PG_TYPE_TIMESTAMP:
 				len = 19;
 				if (cbValueMax > len)
@@ -1810,7 +1813,7 @@ copy_statement_with_parameters(StatementClass *stmt)
 					st.ss = tss->second;
 					st.fr = tss->fraction;
 
-					mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d\n", st.m, st.d, st.y, st.hh, st.mm, st.ss);
+					mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d,fr=%d\n", st.m, st.d, st.y, st.hh, st.mm, st.ss, st.fr);
 
 					break;
 

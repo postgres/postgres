@@ -384,7 +384,7 @@ CC_begin(ConnectionClass *self)
 
 		if (res != NULL)
 		{
-			ret = QR_command_successful(res);
+			ret = QR_command_maybe_successful(res);
 			QR_Destructor(res);
 		}
 		else
@@ -408,7 +408,7 @@ CC_commit(ConnectionClass *self)
 		mylog("CC_commit:  sending COMMIT!\n");
 		if (res != NULL)
 		{
-			ret = QR_command_successful(res);
+			ret = QR_command_maybe_successful(res);
 			QR_Destructor(res);
 		}
 		else

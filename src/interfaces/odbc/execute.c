@@ -553,7 +553,7 @@ PGAPI_Transact(
 			return SQL_ERROR;
 		}
 
-		ok = QR_command_successful(res);
+		ok = QR_command_maybe_successful(res);
 		QR_Destructor(res);
 
 		if (!ok)

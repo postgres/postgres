@@ -955,7 +955,7 @@ SC_execute(StatementClass *self)
 		/* send the declare/select */
 		res = CC_send_query(conn, self->stmt_with_params, NULL, qflag);
 		if (SC_is_fetchcursor(self) && res != NULL &&
-			QR_command_successful(res))
+			QR_command_maybe_successful(res))
 		{
 			QR_Destructor(res);
 			qflag &= (~ GO_INTO_TRANSACTION);

@@ -2966,6 +2966,7 @@ isMultibyte(const unsigned char *str)
 	}
 	return FALSE;
 }
+#ifdef NOT_USED
 static char *
 getClientTableName(ConnectionClass *conn, const char *serverSchemaName, char *serverTableName, BOOL *nameAlloced)
 {
@@ -3106,6 +3107,73 @@ getClientColumnName(ConnectionClass *conn, const char * serverSchemaName, const 
 	}
 	return ret;
 }
+#endif /* NOT_USED */
+static char *
+getClientColumnName(ConnectionClass *conn, UInt4 relid, char *serverColumnName, BOOL *nameAlloced)
+{
+	char		query[1024], saveattnum[16],
+			   *ret = serverColumnName;
+	BOOL		continueExec = TRUE,
+				bError = FALSE;
+	QResultClass *res;
+
+	*nameAlloced = FALSE;
+	if (!conn->client_encoding || !isMultibyte(serverColumnName))
+		return ret;
+	if (!conn->server_encoding)
+	{
+		if (res = CC_send_query(conn, "select getdatabaseencoding()", NULL, CLEAR_RESULT_ON_ABORT), res)
+		{
+			if (QR_get_num_tuples(res) > 0)
+				conn->server_encoding = strdup(QR_get_value_backend_row(res, 0, 0));
+			QR_Destructor(res);
+		}
+	}
+	if (!conn->server_encoding)
+		return ret;
+	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->server_encoding);
+	bError = (CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT) == NULL);
+	if (!bError && continueExec)
+	{
+		sprintf(query, "select attnum from pg_attribute "
+			"where attrelid = %u and attname = '%s'",
+			relid, serverColumnName);
+		if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
+		{
+			if (QR_get_num_tuples(res) > 0)
+			{
+				strcpy(saveattnum, QR_get_value_backend_row(res, 0, 0));
+			}
+			else
+				continueExec = FALSE;
+			QR_Destructor(res);
+		}
+		else
+			bError = TRUE;
+	}
+	continueExec = (continueExec && !bError);
+	if (bError && CC_is_in_trans(conn))
+	{
+		CC_abort(conn);
+		bError = FALSE;
+	}
+	/* restore the cleint encoding */
+	sprintf(query, "SET CLIENT_ENCODING TO '%s'", conn->client_encoding);
+	bError = (CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT) == NULL);
+	if (bError || !continueExec)
+		return ret;
+	sprintf(query, "select attname from pg_attribute where attrelid = %u and attnum = %s", relid, saveattnum);
+	if (res = CC_send_query(conn, query, NULL, CLEAR_RESULT_ON_ABORT), res)
+	{
+		if (QR_get_num_tuples(res) > 0)
+		{
+			ret = strdup(QR_get_value_backend_row(res, 0, 0));
+			*nameAlloced = TRUE;
+		}
+		QR_Destructor(res);
+	}
+	return ret;
+}
 #endif   /* MULTIBYTE */
 
 RETCODE		SQL_API
@@ -3140,23 +3208,20 @@ PGAPI_ForeignKeys(
 	char		upd_rule[MAX_TABLE_LEN],
 				del_rule[MAX_TABLE_LEN];
 	char		pk_table_needed[MAX_TABLE_LEN + 1];
+char		fk_table_fetched[MAX_TABLE_LEN + 1];
 	char		fk_table_needed[MAX_TABLE_LEN + 1];
-	char		schema_needed[MAX_TABLE_LEN + 1];
+char		pk_table_fetched[MAX_TABLE_LEN + 1];
+	char		schema_needed[MAX_SCHEMA_LEN + 1];
+char		schema_fetched[MAX_SCHEMA_LEN + 1];
 	char	   *pkey_ptr,
 			   *pkey_text,
 			   *fkey_ptr,
-			   *fkey_text,
-			   *pk_table,
-			   *pkt_text,
-			   *fk_table,
-			   *fkt_text;
+			   *fkey_text;
 
 	ConnectionClass *conn;
 #ifdef	MULTIBYTE
 	BOOL		pkey_alloced,
-				fkey_alloced,
-				pkt_alloced,
-				fkt_alloced;
+				fkey_alloced;
 #endif   /* MULTIBYTE */
 	int			i,
 				j,
@@ -3171,6 +3236,7 @@ PGAPI_ForeignKeys(
 #endif
 	char		pkey[MAX_INFO_STRING];
 	Int2		result_cols;
+	UInt4		relid1, relid2;
 
 	mylog("%s: entering...stmt=%u\n", func, stmt);
 
@@ -3251,14 +3317,15 @@ PGAPI_ForeignKeys(
 	pk_table_needed[0] = '\0';
 	fk_table_needed[0] = '\0';
 	schema_needed[0] = '\0';
+	schema_fetched[0] = '\0';
 
 	make_string(szPkTableName, cbPkTableName, pk_table_needed);
 	make_string(szFkTableName, cbFkTableName, fk_table_needed);
 
 	conn = SC_get_conn(stmt);
 #ifdef	MULTIBYTE
-	pkey_text = fkey_text = pkt_text = fkt_text = NULL;
-	pkey_alloced = fkey_alloced = pkt_alloced = fkt_alloced = FALSE;
+	pkey_text = fkey_text = NULL;
+	pkey_alloced = fkey_alloced = FALSE;
 #endif   /* MULTIBYTE */
 
 	/*
@@ -3275,31 +3342,39 @@ PGAPI_ForeignKeys(
 				"		pt.tgnargs, "
 				"		pt.tgdeferrable, "
 				"		pt.tginitdeferred, "
-				"		pg_proc.proname, "
-				"		pg_proc_1.proname "
+				"		pp1.proname, "
+				"		pp2.proname, "
+				"		pc.oid, "
+				"		pc1.oid, "
+				"		pc1.relname, "
+				"		pn.nspname "
 				"FROM	pg_class pc, "
-				"		pg_proc pg_proc, "
-				"		pg_proc pg_proc_1, "
-				"		pg_trigger pg_trigger, "
-				"		pg_trigger pg_trigger_1, "
+				"		pg_proc pp1, "
+				"		pg_proc pp2, "
+				"		pg_trigger pt1, "
+				"		pg_trigger pt2, "
 				"		pg_proc pp, "
-				"		pg_trigger pt "
+				"		pg_trigger pt, "
+				"		pg_class pc1, "
+				"		pg_namespace pn "
 				"WHERE	pt.tgrelid = pc.oid "
 				"AND pp.oid = pt.tgfoid "
-				"AND pg_trigger.tgconstrrelid = pc.oid "
-				"AND pg_proc.oid = pg_trigger.tgfoid "
-				"AND pg_trigger_1.tgfoid = pg_proc_1.oid "
-				"AND pg_trigger_1.tgconstrrelid = pc.oid "
+				"AND pt1.tgconstrrelid = pc.oid "
+				"AND pp1.oid = pt1.tgfoid "
+				"AND pt2.tgfoid = pp2.oid "
+				"AND pt2.tgconstrrelid = pc.oid "
 				"AND ((pc.relname='%s') "
 				"AND (pg_namespace.oid = pc.relnamespace) "
 				"AND (pg_namespace.nspname = '%s') "
 				"AND (pp.proname LIKE '%%ins') "
-				"AND (pg_proc.proname LIKE '%%upd') "
-				"AND (pg_proc_1.proname LIKE '%%del') "
-				"AND (pg_trigger.tgrelid=pt.tgconstrrelid) "
-				"AND (pg_trigger.tgconstrname=pt.tgconstrname) "
-				"AND (pg_trigger_1.tgrelid=pt.tgconstrrelid) "
-				"AND (pg_trigger_1.tgconstrname=pt.tgconstrname))",
+				"AND (pp1.proname LIKE '%%upd') "
+				"AND (pp2.proname LIKE '%%del') "
+				"AND (pt1.tgrelid=pt.tgconstrrelid) "
+				"AND (pt1.tgconstrname=pt.tgconstrname) "
+				"AND (pt2.tgrelid=pt.tgconstrrelid) "
+				"AND (pt2.tgconstrname=pt.tgconstrname) "
+				"AND (pt.tgconstrrelid=pc1.oid) "
+				"AND (pc1.relnamespace=pn.oid))",
 				fk_table_needed, schema_needed);
 		}
 		else
@@ -3307,29 +3382,34 @@ PGAPI_ForeignKeys(
 				"		pt.tgnargs, "
 				"		pt.tgdeferrable, "
 				"		pt.tginitdeferred, "
-				"		pg_proc.proname, "
-				"		pg_proc_1.proname "
+				"		pp1.proname, "
+				"		pp2.proname, "
+				"		pc.oid, "
+				"		pc1.oid, "
+				"		pc1.relname "
 				"FROM	pg_class pc, "
-				"		pg_proc pg_proc, "
-				"		pg_proc pg_proc_1, "
-				"		pg_trigger pg_trigger, "
-				"		pg_trigger pg_trigger_1, "
+				"		pg_proc pp1, "
+				"		pg_proc pp2, "
+				"		pg_trigger pt1, "
+				"		pg_trigger pt2, "
 				"		pg_proc pp, "
-				"		pg_trigger pt "
+				"		pg_trigger pt, "
+				"		pg_class pc1 "
 				"WHERE	pt.tgrelid = pc.oid "
 				"AND pp.oid = pt.tgfoid "
-				"AND pg_trigger.tgconstrrelid = pc.oid "
-				"AND pg_proc.oid = pg_trigger.tgfoid "
-				"AND pg_trigger_1.tgfoid = pg_proc_1.oid "
-				"AND pg_trigger_1.tgconstrrelid = pc.oid "
+				"AND pt1.tgconstrrelid = pc.oid "
+				"AND pp1.oid = pt1.tgfoid "
+				"AND pt2.tgfoid = pp2.oid "
+				"AND pt2.tgconstrrelid = pc.oid "
 				"AND ((pc.relname='%s') "
 				"AND (pp.proname LIKE '%%ins') "
-				"AND (pg_proc.proname LIKE '%%upd') "
-				"AND (pg_proc_1.proname LIKE '%%del') "
-				"AND (pg_trigger.tgrelid=pt.tgconstrrelid) "
-				"AND (pg_trigger.tgconstrname=pt.tgconstrname) "
-				"AND (pg_trigger_1.tgrelid=pt.tgconstrrelid) "
-				"AND (pg_trigger_1.tgconstrname=pt.tgconstrname))",
+				"AND (pp1.proname LIKE '%%upd') "
+				"AND (pp2.proname LIKE '%%del') "
+				"AND (pt1.tgrelid=pt.tgconstrrelid) "
+				"AND (pt1.tgconstrname=pt.tgconstrname) "
+				"AND (pt2.tgrelid=pt.tgconstrrelid) "
+				"AND (pt2.tgconstrname=pt.tgconstrname) "
+				"AND (pt.tgconstrrelid=pc1.oid)) ",
 				fk_table_needed);
 
 		result = PGAPI_ExecDirect(htbl_stmt, tables_query, strlen(tables_query));
@@ -3409,6 +3489,51 @@ PGAPI_ForeignKeys(
 			return SQL_ERROR;
 		}
 
+		result = PGAPI_BindCol(htbl_stmt, 7, SQL_C_ULONG,
+							   &relid1, sizeof(relid1), NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+		result = PGAPI_BindCol(htbl_stmt, 8, SQL_C_ULONG,
+							   &relid2, sizeof(relid2), NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+		result = PGAPI_BindCol(htbl_stmt, 9, SQL_C_CHAR,
+					pk_table_fetched, MAX_TABLE_LEN, NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+if (conn->schema_support)
+{
+		result = PGAPI_BindCol(htbl_stmt, 10, SQL_C_CHAR,
+					schema_fetched, MAX_SCHEMA_LEN, NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+}
+
 		result = PGAPI_Fetch(htbl_stmt);
 		if (result == SQL_NO_DATA_FOUND)
 			return SQL_SUCCESS;
@@ -3449,30 +3574,18 @@ PGAPI_ForeignKeys(
 
 			mylog("Foreign Key Case#2: trig_nargs = %d, num_keys = %d\n", trig_nargs, num_keys);
 
-			pk_table = trig_args;
-
-			/* Get to the PK Table Name */
-			for (k = 0; k < 2; k++)
-				pk_table += strlen(pk_table) + 1;
-
-#ifdef	MULTIBYTE
-			fk_table = trig_args + strlen(trig_args) + 1;
-			pkt_text = getClientTableName(conn, schema_needed, pk_table, &pkt_alloced);
-#else
-			pkt_text = pk_table;
-#endif   /* MULTIBYTE */
 			/* If there is a pk table specified, then check it. */
 			if (pk_table_needed[0] != '\0')
 			{
 				/* If it doesn't match, then continue */
-				if (strcmp(pkt_text, pk_table_needed))
+				if (strcmp(pk_table_fetched, pk_table_needed))
 				{
 					result = PGAPI_Fetch(htbl_stmt);
 					continue;
 				}
 			}
 
-			keyresult = PGAPI_PrimaryKeys(hpkey_stmt, NULL, 0, schema_needed, SQL_NTS, pkt_text, SQL_NTS);
+			keyresult = PGAPI_PrimaryKeys(hpkey_stmt, NULL, 0, schema_fetched, SQL_NTS, pk_table_fetched, SQL_NTS);
 			if (keyresult != SQL_SUCCESS)
 			{
 				stmt->errornumber = STMT_NO_MEMORY_ERROR;
@@ -3498,7 +3611,7 @@ PGAPI_ForeignKeys(
 					break;
 				}
 #ifdef	MULTIBYTE
-				pkey_text = getClientColumnName(conn, schema_needed, pk_table, pkey_ptr, &pkey_alloced);
+				pkey_text = getClientColumnName(conn, relid2, pkey_ptr, &pkey_alloced);
 #else
 				pkey_text = pkey_ptr;
 #endif   /* MULTIBYTE */
@@ -3566,16 +3679,16 @@ PGAPI_ForeignKeys(
 				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 #ifdef	MULTIBYTE
-				pkey_text = getClientColumnName(conn, schema_needed, pk_table, pkey_ptr, &pkey_alloced);
-				fkey_text = getClientColumnName(conn, schema_needed, fk_table, fkey_ptr, &fkey_alloced);
+				pkey_text = getClientColumnName(conn, relid2, pkey_ptr, &pkey_alloced);
+				fkey_text = getClientColumnName(conn, relid1, fkey_ptr, &fkey_alloced);
 #else
 				pkey_text = pkey_ptr;
 				fkey_text = fkey_ptr;
 #endif   /* MULTIBYTE */
-				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pkt_text, pkey_text);
+				mylog("%s: pk_table = '%s', pkey_ptr = '%s'\n", func, pk_table_fetched, pkey_text);
 				set_tuplefield_null(&row->tuple[0]);
-				set_tuplefield_string(&row->tuple[1], GET_SCHEMA_NAME(schema_needed));
-				set_tuplefield_string(&row->tuple[2], pkt_text);
+				set_tuplefield_string(&row->tuple[1], GET_SCHEMA_NAME(schema_fetched));
+				set_tuplefield_string(&row->tuple[2], pk_table_fetched);
 				set_tuplefield_string(&row->tuple[3], pkey_text);
 
 				mylog("%s: fk_table_needed = '%s', fkey_ptr = '%s'\n", func, fk_table_needed, fkey_text);
@@ -3611,11 +3724,6 @@ PGAPI_ForeignKeys(
 					pkey_ptr += strlen(pkey_ptr) + 1;
 				}
 			}
-#ifdef	MULTIBYTE
-			if (pkt_alloced)
-				free(pkt_text);
-			pkt_alloced = FALSE;
-#endif   /* MULTIBYTE */
 
 			result = PGAPI_Fetch(htbl_stmt);
 		}
@@ -3632,66 +3740,75 @@ PGAPI_ForeignKeys(
 		if (conn->schema_support)
 		{
 			schema_strcat(schema_needed, "%.*s", szPkTableOwner, cbPkTableOwner, szPkTableName, cbPkTableName); 	
-			sprintf(tables_query, "SELECT	pg_trigger.tgargs, "
-				"		pg_trigger.tgnargs, "
-				"		pg_trigger.tgdeferrable, "
-				"		pg_trigger.tginitdeferred, "
-				"		pg_proc.proname, "
-				"		pg_proc_1.proname "
-				"FROM	pg_class pg_class, "
-				"		pg_class pg_class_1, "
-				"		pg_class pg_class_2, "
-				"		pg_proc pg_proc, "
-				"		pg_proc pg_proc_1, "
-				"		pg_trigger pg_trigger, "
-				"		pg_trigger pg_trigger_1, "
-				"		pg_trigger pg_trigger_2 "
-				"WHERE	pg_trigger.tgconstrrelid = pg_class.oid "
-				"	AND pg_trigger.tgrelid = pg_class_1.oid "
-				"	AND pg_trigger_1.tgfoid = pg_proc_1.oid "
-				"	AND pg_trigger_1.tgconstrrelid = pg_class_1.oid "
-				"	AND pg_trigger_2.tgconstrrelid = pg_class_2.oid "
-				"	AND pg_trigger_2.tgfoid = pg_proc.oid "
-				"	AND pg_class_2.oid = pg_trigger.tgrelid "
+			sprintf(tables_query, "SELECT	pt.tgargs, "
+				"		pt.tgnargs, "
+				"		pt.tgdeferrable, "
+				"		pt.tginitdeferred, "
+				"		pp.proname, "
+				"		pp1.proname, "
+				"		pc.oid, "
+				"		pc1.oid, "
+				"		pc1.relname, "
+				"		pn.nspname "
+				"FROM	pg_class pc, "
+				"		pg_class pc1, "
+				"		pg_class pc2, "
+				"		pg_proc pp, "
+				"		pg_proc pp1, "
+				"		pg_trigger pt, "
+				"		pg_trigger pt1, "
+				"		pg_trigger pt2, "
+				"		pg_namespace pn "
+				"WHERE	pt.tgconstrrelid = pc.oid "
+				"	AND pt.tgrelid = pc1.oid "
+				"	AND pt1.tgfoid = pp1.oid "
+				"	AND pt1.tgconstrrelid = pc1.oid "
+				"	AND pt2.tgconstrrelid = pc2.oid "
+				"	AND pt2.tgfoid = pp.oid "
+				"	AND pc2.oid = pt.tgrelid "
 				"	AND ("
-				"		 (pg_class.relname='%s') "
-				"	AND  (pg_namespace.oid = pg_class.relnamespace) "
+				"		 (pc.relname='%s') "
+				"	AND  (pg_namespace.oid = pc.relnamespace) "
 				"	AND  (pg_namespace.nspname = '%s') "
-				"	AND  (pg_proc.proname Like '%%upd') "
-				"	AND  (pg_proc_1.proname Like '%%del')"
-				"	AND	 (pg_trigger_1.tgrelid = pg_trigger.tgconstrrelid) "
-				"	AND	 (pg_trigger_2.tgrelid = pg_trigger.tgconstrrelid) "
+				"	AND  (pp.proname Like '%%upd') "
+				"	AND  (pp1.proname Like '%%del')"
+				"	AND	 (pt1.tgrelid = pt.tgconstrrelid) "
+				"	AND	 (pt2.tgrelid = pt.tgconstrrelid) "
+				"	AND (pn.oid = pc1.relnamespace) "
 				"		)",
 				pk_table_needed, schema_needed);
 		}
 		else
-			sprintf(tables_query, "SELECT	pg_trigger.tgargs, "
-				"		pg_trigger.tgnargs, "
-				"		pg_trigger.tgdeferrable, "
-				"		pg_trigger.tginitdeferred, "
-				"		pg_proc.proname, "
-				"		pg_proc_1.proname "
-				"FROM	pg_class pg_class, "
-				"		pg_class pg_class_1, "
-				"		pg_class pg_class_2, "
-				"		pg_proc pg_proc, "
-				"		pg_proc pg_proc_1, "
-				"		pg_trigger pg_trigger, "
-				"		pg_trigger pg_trigger_1, "
-				"		pg_trigger pg_trigger_2 "
-				"WHERE	pg_trigger.tgconstrrelid = pg_class.oid "
-				"	AND pg_trigger.tgrelid = pg_class_1.oid "
-				"	AND pg_trigger_1.tgfoid = pg_proc_1.oid "
-				"	AND pg_trigger_1.tgconstrrelid = pg_class_1.oid "
-				"	AND pg_trigger_2.tgconstrrelid = pg_class_2.oid "
-				"	AND pg_trigger_2.tgfoid = pg_proc.oid "
-				"	AND pg_class_2.oid = pg_trigger.tgrelid "
+			sprintf(tables_query, "SELECT	pt.tgargs, "
+				"		pt.tgnargs, "
+				"		pt.tgdeferrable, "
+				"		pt.tginitdeferred, "
+				"		pp.proname, "
+				"		pp1.proname, "
+				"		pc.oid, "
+				"		pc1.oid, "
+				"		pc1.relname "
+				"FROM	pg_class pc, "
+				"		pg_class pc1, "
+				"		pg_class pc2, "
+				"		pg_proc pp, "
+				"		pg_proc pp1, "
+				"		pg_trigger pt, "
+				"		pg_trigger pt1, "
+				"		pg_trigger pt2 "
+				"WHERE	pt.tgconstrrelid = pc.oid "
+				"	AND pt.tgrelid = pc1.oid "
+				"	AND pt1.tgfoid = pp1.oid "
+				"	AND pt1.tgconstrrelid = pc1.oid "
+				"	AND pt2.tgconstrrelid = pc2.oid "
+				"	AND pt2.tgfoid = pp.oid "
+				"	AND pc2.oid = pt.tgrelid "
 				"	AND ("
-				"		 (pg_class.relname='%s') "
-				"	AND  (pg_proc.proname Like '%%upd') "
-				"	AND  (pg_proc_1.proname Like '%%del')"
-				"	AND	 (pg_trigger_1.tgrelid = pg_trigger.tgconstrrelid) "
-				"	AND	 (pg_trigger_2.tgrelid = pg_trigger.tgconstrrelid) "
+				"		 (pc.relname='%s') "
+				"	AND  (pp.proname Like '%%upd') "
+				"	AND  (pp1.proname Like '%%del')"
+				"	AND	 (pt1.tgrelid = pt.tgconstrrelid) "
+				"	AND	 (pt2.tgrelid = pt.tgconstrrelid) "
 				"		)",
 				pk_table_needed);
 
@@ -3771,6 +3888,51 @@ PGAPI_ForeignKeys(
 			return SQL_ERROR;
 		}
 
+		result = PGAPI_BindCol(htbl_stmt, 7, SQL_C_ULONG,
+						&relid1, sizeof(relid1), NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+		result = PGAPI_BindCol(htbl_stmt, 8, SQL_C_ULONG,
+						&relid2, sizeof(relid2), NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+		result = PGAPI_BindCol(htbl_stmt, 9, SQL_C_CHAR,
+					fk_table_fetched, MAX_TABLE_LEN, NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+if (conn->schema_support)
+{
+		result = PGAPI_BindCol(htbl_stmt, 10, SQL_C_CHAR,
+					schema_fetched, MAX_SCHEMA_LEN, NULL);
+		if ((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		{
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			PGAPI_FreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+}
+
 		result = PGAPI_Fetch(htbl_stmt);
 		if (result == SQL_NO_DATA_FOUND)
 			return SQL_SUCCESS;
@@ -3829,16 +3991,6 @@ PGAPI_ForeignKeys(
 			for (i = 0; i < 5; i++)
 				pkey_ptr += strlen(pkey_ptr) + 1;
 
-			/* Get to first foreign table */
-			fk_table = trig_args;
-			fk_table += strlen(fk_table) + 1;
-#ifdef	MULTIBYTE
-			pk_table = fk_table + strlen(fk_table) + 1;
-			fkt_text = getClientTableName(conn, schema_needed, fk_table, &fkt_alloced);
-#else
-			fkt_text = fk_table;
-#endif   /* MULTIBYTE */
-
 			/* Get to first foreign key */
 			fkey_ptr = trig_args;
 			for (k = 0; k < 4; k++)
@@ -3847,13 +3999,13 @@ PGAPI_ForeignKeys(
 			for (k = 0; k < num_keys; k++)
 			{
 #ifdef	MULTIBYTE
-				pkey_text = getClientColumnName(conn, schema_needed, pk_table, pkey_ptr, &pkey_alloced);
-				fkey_text = getClientColumnName(conn, schema_needed, fk_table, fkey_ptr, &fkey_alloced);
+				pkey_text = getClientColumnName(conn, relid1, pkey_ptr, &pkey_alloced);
+				fkey_text = getClientColumnName(conn, relid2, fkey_ptr, &fkey_alloced);
 #else
 				pkey_text = pkey_ptr;
 				fkey_text = fkey_ptr;
 #endif   /* MULTIBYTE */
-				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_text, fkt_text, fkey_text);
+				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_text, fk_table_fetched, fkey_text);
 
 				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
@@ -3863,10 +4015,10 @@ PGAPI_ForeignKeys(
 				set_tuplefield_string(&row->tuple[2], pk_table_needed);
 				set_tuplefield_string(&row->tuple[3], pkey_text);
 
-				mylog("fk_table = '%s', fkey_ptr = '%s'\n", fkt_text, fkey_text);
+				mylog("fk_table = '%s', fkey_ptr = '%s'\n", fk_table_fetched, fkey_text);
 				set_tuplefield_null(&row->tuple[4]);
-				set_tuplefield_string(&row->tuple[5], GET_SCHEMA_NAME(schema_needed));
-				set_tuplefield_string(&row->tuple[6], fkt_text);
+				set_tuplefield_string(&row->tuple[5], GET_SCHEMA_NAME(schema_fetched));
+				set_tuplefield_string(&row->tuple[6], fk_table_fetched);
 				set_tuplefield_string(&row->tuple[7], fkey_text);
 
 				set_tuplefield_int2(&row->tuple[8], (Int2) (k + 1));
@@ -3902,11 +4054,6 @@ PGAPI_ForeignKeys(
 					fkey_ptr += strlen(fkey_ptr) + 1;
 				}
 			}
-#ifdef	MULTIBYTE
-			if (fkt_alloced)
-				free(fkt_text);
-			fkt_alloced = FALSE;
-#endif   /* MULTIBYTE */
 			result = PGAPI_Fetch(htbl_stmt);
 		}
 	}
@@ -3919,12 +4066,8 @@ PGAPI_ForeignKeys(
 		return SQL_ERROR;
 	}
 #ifdef	MULTIBYTE
-	if (pkt_alloced)
-		free(pkt_text);
 	if (pkey_alloced)
 		free(pkey_text);
-	if (fkt_alloced)
-		free(fkt_text);
 	if (fkey_alloced)
 		free(fkey_text);
 #endif   /* MULTIBYTE */
@@ -4002,15 +4145,15 @@ PGAPI_Procedures(
 		" proname as " "PROCEDURE_NAME" ", '' as " "NUM_INPUT_PARAMS" ","
 		   " '' as " "NUM_OUTPUT_PARAMS" ", '' as " "NUM_RESULT_SETS" ","
 		   " '' as " "REMARKS" ","
-		   " case when prorettype = 0 then 1::int2 else 2::int2 end as " "PROCEDURE_TYPE" " from pg_proc where");
+		   " case when prorettype = 0 then 1::int2 else 2::int2 end as " "PROCEDURE_TYPE" " from pg_proc");
 	if (conn->schema_support)
 	{
-		strcat(proc_query, " pg_proc.namespace = pg_namespace.oid");
+		strcat(proc_query, " where pg_proc.pronamespace = pg_namespace.oid");
 		schema_strcat(proc_query, " and nspname like '%.*s'", szProcOwner, cbProcOwner, szProcName, cbProcName);
 		my_strcat(proc_query, " and proname like '%.*s'", szProcName, cbProcName);
 	}
 	else
-		my_strcat(proc_query, " proname like '%.*s'", szProcName, cbProcName);
+		my_strcat(proc_query, " where proname like '%.*s'", szProcName, cbProcName);
 
 	if (res = CC_send_query(conn, proc_query, NULL, CLEAR_RESULT_ON_ABORT), !res)
 	{
