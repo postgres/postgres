@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.34 2002/10/24 01:33:50 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.35 2002/11/01 15:12:19 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -212,21 +212,29 @@ print_aligned_text(const char *title, const char *const * headers,
 	for (ptr = headers; *ptr; ptr++)
 		col_count++;
 
-	widths = calloc(col_count, sizeof(*widths));
-	if (!widths)
+	if (col_count > 0)
 	{
-		perror("calloc");
-		exit(EXIT_FAILURE);
+		widths = calloc(col_count, sizeof(*widths));
+		if (!widths)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
+
+		head_w = calloc(col_count, sizeof(*head_w));
+		if (!head_w)
+		{
+			perror("calloc");
+			exit(EXIT_FAILURE);
+		}
+	}
+	else
+	{
+		widths = NULL;
+		head_w = NULL;
 	}
 
-	head_w = calloc(col_count, sizeof(*head_w));
-	if (!head_w)
-	{
-		perror("calloc");
-		exit(EXIT_FAILURE);
-	}
-
-	/* count rows */
+	/* count cells (rows * cols) */
 	for (ptr = cells; *ptr; ptr++)
 		cell_count++;
 
@@ -240,23 +248,25 @@ print_aligned_text(const char *title, const char *const * headers,
 		}
 	}
 	else
-		cell_w = 0;
-
+		cell_w = NULL;
 
 	/* calc column widths */
 	for (i = 0; i < col_count; i++)
 	{
-		if ((tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]))) > widths[i])
+		tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]));
+		if (tmp > widths[i])
 			widths[i] = tmp;
 		head_w[i] = tmp;
 	}
 
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		if ((tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr))) > widths[i % col_count])
+		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr));
+		if (tmp > widths[i % col_count])
 			widths[i % col_count] = tmp;
 		cell_w[i] = tmp;
 	}
+
 	if (opt_border == 0)
 		total_w = col_count - 1;
 	else if (opt_border == 1)
@@ -272,10 +282,11 @@ print_aligned_text(const char *title, const char *const * headers,
 	{
 		int			tlen;
 
-		if ((unsigned int) (tlen = pg_wcswidth((unsigned char *) title, strlen(title))) >= total_w)
+		tlen = pg_wcswidth((unsigned char *) title, strlen(title));
+		if (tlen >= (int) total_w)
 			fprintf(fout, "%s\n", title);
 		else
-			fprintf(fout, "%-*s%s\n", (int) (total_w - tlen) / 2, "", title);
+			fprintf(fout, "%-*s%s\n", ((int) total_w - tlen) / 2, "", title);
 	}
 
 	/* print headers */
@@ -330,7 +341,7 @@ print_aligned_text(const char *title, const char *const * headers,
 		}
 
 		/* content */
-		if (opt_align[(i) % col_count] == 'r')
+		if (opt_align[i % col_count] == 'r')
 		{
 			fprintf(fout, "%*s%s",
 					widths[i % col_count] - cell_w[i], "", cells[i]);
