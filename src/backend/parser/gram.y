@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.101 1998/02/03 01:53:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.102 1998/02/03 16:04:02 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -270,7 +270,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 /* Keywords for Postgres support (not in SQL92 reserved words) */
 %token	ABORT_TRANS, ACL, AFTER, AGGREGATE, ANALYZE,
-		APPEND, BACKWARD, BEFORE, BINARY, CHANGE, CLUSTER, COPY,
+		APPEND, BACKWARD, BEFORE, BINARY, CLUSTER, COPY,
 		DATABASE, DELIMITERS, DO, EXPLAIN, EXTEND,
 		FORWARD, FUNCTION, HANDLER,
 		INDEX, INHERITS, INSTEAD, ISNULL,
@@ -280,7 +280,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
-/* Keywords (obsolete; retain temporarily for parser - thomas 1997-12-04) */
+/* Keywords (obsolete; retain through next version for parser - thomas 1997-12-04) */
 %token	ARCHIVE
 
 /*
