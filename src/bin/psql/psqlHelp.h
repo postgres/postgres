@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.52 1998/09/01 04:33:53 momjian Exp $
+ * $Id: psqlHelp.h,v 1.53 1998/10/08 01:10:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,9 +273,9 @@ static struct _helpStruct QL_HELP[] = {
 \t[HAVING having_clause]\n\
 \t[UNION [ALL] SELECT ...];"},
 	{"listen",
-		"listen for notification on a relation name",
+		"listen for notification on a condition name",
 	"\
-\tLISTEN class_name|\"name\""},
+\tLISTEN name|\"non-name string\""},
 	{"load",
 		"dynamically load a module",
 	"\
@@ -289,9 +289,9 @@ static struct _helpStruct QL_HELP[] = {
 	"\
 \tMOVE [FORWARD|BACKWARD] [number|ALL] [IN cursorname];"},
 	{"notify",
-		"signal all frontends and backends listening on a relation",
+		"signal all frontends listening on a condition name",
 	"\
-\tNOTIFY class_name"},
+\tNOTIFY name|\"non-name string\""},
 	{"reset",
 		"set run-time environment back to default",
 #ifdef MULTIBYTE
@@ -346,9 +346,9 @@ set R_PLANS TO 'ON'| 'OFF'"},
 \tSHOW DateStyle|GEQO|R_PLANS"},
 #endif
 	{"unlisten",
-		"unlisten for notification on a relation name",
+		"stop listening for notification on a condition name",
 	"\
-\tUNLISTEN class_name|\"name\"|\"*\""},
+\tUNLISTEN name|\"non-name string\"|\"*\""},
 	{"update",
 		"update tuples",
 	"\
