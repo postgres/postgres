@@ -14,6 +14,7 @@ EXEC SQL BEGIN DECLARE SECTION;
 	char text[10] = "klmnopqrst";
 	char *t = "uvwxyz1234";
 	double f;
+	bool b = true;
 EXEC SQL END DECLARE SECTION;
 	FILE *dbgs;
 
@@ -28,24 +29,24 @@ EXEC SQL END DECLARE SECTION;
 
  	EXEC SQL BEGIN WORK;
 
-	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10));
+	EXEC SQL CREATE TABLE test (f float, i int, a int[10], text char(10), b bool);
 
-	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(404.90,1,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij');
+	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(404.90,1,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij', 'f');
 
-	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(140787.0,2,:a,:text);
+	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(140787.0,2,:a,:text,'t');
 	
-	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(14.07,:did,:a,:t);
+	EXEC SQL INSERT INTO test(f,i,a,text,b) VALUES(14.07,:did,:a,:t,:b);
 
 	EXEC SQL COMMIT;
 
 	EXEC SQL BEGIN WORK; 
 
-	EXEC SQL SELECT f,text
-         INTO :f,:text
+	EXEC SQL SELECT f,text,b
+         INTO :f,:text,:b
          FROM test
          WHERE i = 1;
 
-	printf("Found f=%f text=%10.10s\n", f, text);
+	printf("Found f=%f text=%10.10s b=%d\n", f, text, b);
 
 	f=14.07;
 	EXEC SQL SELECT a,text

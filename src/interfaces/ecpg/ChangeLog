@@ -902,5 +902,9 @@ Wed Apr  5 07:54:56 CEST 2000
 	- Removed duplicate ',' in execute.c.
 	- Changed error message for backend errors so it fits into sqlca.
 	- Fixed array handling.
+
+Wed Apr  5 17:35:53 CEST 2000
+
+	- Fixed handling of bool variables.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

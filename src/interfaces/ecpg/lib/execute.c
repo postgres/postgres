@@ -479,7 +479,7 @@ ECPGexecute(struct statement * stmt)
 						strncpy(mallocedval + strlen(mallocedval) - 1, "}'", sizeof("}'")); 
 					}
 					else
-						sprintf(mallocedval, "%c", (*((char *) var->value)) ? 't' : 'f');
+						sprintf(mallocedval, "'%c'", (*((char *) var->value)) ? 't' : 'f');
 
 					tobeinserted = mallocedval;
 					break;
@@ -859,7 +859,7 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.4 2000/04/05 09:05:28 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.5 2000/04/05 15:51:25 meskes Exp $
  */
 
 PGconn *ECPG_internal_get_connection(char *name);
