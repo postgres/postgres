@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.46 2003/11/07 21:55:50 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.47 2003/11/15 17:24:07 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -203,6 +203,14 @@ pgstat_init(void)
 		goto startup_failed;
 	}
 
+	/*
+	 * On some platforms, getaddrinfo_all() may return multiple addresses
+	 * only one of which will actually work (eg, both IPv6 and IPv4 addresses
+	 * when kernel will reject IPv6).  Worse, the failure may occur at the
+	 * bind() or perhaps even connect() stage.  So we must loop through the
+	 * results till we find a working combination.  We will generate LOG
+	 * messages, but no error, for bogus combinations.
+	 */
 	for (addr = addrs; addr; addr = addr->ai_next)
 	{
 #ifdef HAVE_UNIX_SOCKETS
@@ -210,53 +218,68 @@ pgstat_init(void)
 		if (addr->ai_family == AF_UNIX)
 			continue;
 #endif
-		if ((pgStatSock = socket(addr->ai_family, SOCK_DGRAM, 0)) >= 0)
-			break;
+		/*
+		 * Create the socket.
+		 */
+		if ((pgStatSock = socket(addr->ai_family, SOCK_DGRAM, 0)) < 0)
+		{
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("could not create socket for statistics collector: %m")));
+			continue;
+		}
+
+		/*
+		 * Bind it to a kernel assigned port on localhost and get the assigned
+		 * port via getsockname().
+		 */
+		if (bind(pgStatSock, addr->ai_addr, addr->ai_addrlen) < 0)
+		{
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("could not bind socket for statistics collector: %m")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+
+		alen = sizeof(pgStatAddr);
+		if (getsockname(pgStatSock, (struct sockaddr *) &pgStatAddr, &alen) < 0)
+		{
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("could not get address of socket for statistics collector: %m")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+
+		/*
+		 * Connect the socket to its own address.  This saves a few cycles by
+		 * not having to respecify the target address on every send. This also
+		 * provides a kernel-level check that only packets from this same
+		 * address will be received.
+		 */
+		if (connect(pgStatSock, (struct sockaddr *) &pgStatAddr, alen) < 0)
+		{
+			ereport(LOG,
+					(errcode_for_socket_access(),
+					 errmsg("could not connect socket for statistics collector: %m")));
+			closesocket(pgStatSock);
+			pgStatSock = -1;
+			continue;
+		}
+
+		/* If we get here, we have a working socket */
+		break;
 	}
 
+	/* Did we find a working address? */
 	if (!addr || pgStatSock < 0)
 	{
 		ereport(LOG,
 				(errcode_for_socket_access(),
-				 errmsg("could not create socket for statistics collector: %m")));
-		goto startup_failed;
-	}
-
-	/*
-	 * Bind it to a kernel assigned port on localhost and get the assigned
-	 * port via getsockname().
-	 */
-	if (bind(pgStatSock, addr->ai_addr, addr->ai_addrlen) < 0)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not bind socket for statistics collector: %m")));
-		goto startup_failed;
-	}
-
-	freeaddrinfo_all(hints.ai_family, addrs);
-	addrs = NULL;
-
-	alen = sizeof(pgStatAddr);
-	if (getsockname(pgStatSock, (struct sockaddr *) & pgStatAddr, &alen) < 0)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-		  errmsg("could not get address of socket for statistics collector: %m")));
-		goto startup_failed;
-	}
-
-	/*
-	 * Connect the socket to its own address.  This saves a few cycles by
-	 * not having to respecify the target address on every send. This also
-	 * provides a kernel-level check that only packets from this same
-	 * address will be received.
-	 */
-	if (connect(pgStatSock, (struct sockaddr *) & pgStatAddr, alen) < 0)
-	{
-		ereport(LOG,
-				(errcode_for_socket_access(),
-				 errmsg("could not connect socket for statistics collector: %m")));
+				 errmsg("disabling statistics collector for lack of working socket")));
 		goto startup_failed;
 	}
 
@@ -284,6 +307,8 @@ pgstat_init(void)
 		  errmsg("could not create pipe for statistics collector: %m")));
 		goto startup_failed;
 	}
+
+	freeaddrinfo_all(hints.ai_family, addrs);
 
 	return;
 
