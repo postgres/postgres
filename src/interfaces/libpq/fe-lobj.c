@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.47 2004/01/26 22:35:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.48 2004/03/05 01:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -534,6 +534,7 @@ lo_initialize(PGconn *conn)
 	PGresult   *res;
 	PGlobjfuncs *lobjfuncs;
 	int			n;
+	const char *query;
 	const char *fname;
 	Oid			foid;
 
@@ -550,17 +551,34 @@ lo_initialize(PGconn *conn)
 	MemSet((char *) lobjfuncs, 0, sizeof(PGlobjfuncs));
 
 	/*
-	 * Execute the query to get all the functions at once
+	 * Execute the query to get all the functions at once.  In 7.3 and later
+	 * we need to be schema-safe.
 	 */
-	res = PQexec(conn, "select proname, oid from pg_proc	\
-			where proname = 'lo_open'	\
-		   or proname = 'lo_close'	\
-		   or proname = 'lo_creat'	\
-		   or proname = 'lo_unlink'	\
-		   or proname = 'lo_lseek'	\
-		   or proname = 'lo_tell'	\
-		   or proname = 'loread'	\
-		   or proname = 'lowrite'");
+	if (conn->sversion >= 70300)
+		query = "select proname, oid from pg_catalog.pg_proc "
+			"where proname in ("
+			"'lo_open', "
+			"'lo_close', "
+			"'lo_creat', "
+			"'lo_unlink', "
+			"'lo_lseek', "
+			"'lo_tell', "
+			"'loread', "
+			"'lowrite') "
+			"and pronamespace = (select oid from pg_catalog.pg_namespace "
+			"where nspname = 'pg_catalog')";
+	else
+		query = "select proname, oid from pg_proc "
+			"where proname = 'lo_open' "
+			"or proname = 'lo_close' "
+			"or proname = 'lo_creat' "
+			"or proname = 'lo_unlink' "
+			"or proname = 'lo_lseek' "
+			"or proname = 'lo_tell' "
+			"or proname = 'loread' "
+			"or proname = 'lowrite'";
+
+	res = PQexec(conn, query);
 	if (res == NULL)
 	{
 		free(lobjfuncs);
