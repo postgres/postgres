@@ -135,6 +135,8 @@ Make char_length()/octet_length including trailing blanks (Tom)
 Made abstime/reltime use int4 instead of time_t (Peter E)
 Fix memory leak in odbc driver (Nick Gorham)
 Fix r-tree index optimizer selectivity (Thomas)
+New lztext data type for compressed text fields
+Larger views/rules supported
 
 Enhancements
 ------------
@@ -239,7 +241,7 @@ Updated user interfaces on initdb, initlocation, pg_dump, ipcclean
 NUMERIC now accepts scientific notation (Tom)
 NUMERIC to int4 rounds (Tom)
 Convert float4/8 to NUMERIC properly (Tom)
-New pg_char_to_encoding() and pg_encoding_to_char() functions
+New pg_char_to_encoding() and pg_encoding_to_char() functions (Tatsuo
 Libpq non-blocking mode (Alfred Perlstein)
 Improve conversion of types in casts that don't specify a length
 New plperl internal programming language (Mark Hollomon)
@@ -284,6 +286,8 @@ Allow PQrequestCancel() to terminate when in waiting-for-lock state (Hiroshi)
 Allow negation of a negative number in all cases
 Add ecpg descriptors
 Allow CREATE VIEW v AS SELECT f1::char(8) FROM tbl
+New libpq functions PQsetClientEncoding(), PQclientEncoding() (Tatsuo)
+Add support for SJIS user defined characters (Tatsuo)
 
 Source Tree Changes
 -------------------
@@ -311,6 +315,8 @@ Remove lextest, no longer needed (Peter E)
 Fix for libpq and psql on Win32 (Magnus)
 Internally change datetime and timespan into timestamp and interval (Thomas)
 Fix for plpgsql on BSDI
+Add SQL_ASCII test case to the regression test (Tatsuo)
+configure --with-mb now deprecated (Tatsuo)
 
 
 Release 6.5.3
