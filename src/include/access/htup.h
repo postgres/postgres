@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.37 2000/10/24 09:56:23 vadim Exp $
+ * $Id: htup.h,v 1.38 2000/11/14 20:47:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ typedef struct xl_heap_update
 #define TableOidAttributeNumber			        (-7)
 #define FirstLowInvalidHeapAttributeNumber		(-8)
 
-/* If you make any changes above, the order off offsets in this must change */
+/* If you make any changes above, the order of offsets in this must change */
 extern long heap_sysoffset[];
 
 /*
@@ -181,16 +181,16 @@ extern long heap_sysoffset[];
  *
  * Change for 7.0:
  *	  Up to now t_data could be NULL, the memory location directly following
- *	  HeapTupleData or pointing into a buffer. Now, it could also point to
+ *	  HeapTupleData, or pointing into a buffer. Now, it could also point to
  *	  a separate allocation that was done in the t_datamcxt memory context.
  */
 typedef struct HeapTupleData
 {
 	uint32		t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
-	Oid tableOid;                    /* */
-	MemoryContext t_datamcxt;	/* */
-	HeapTupleHeader t_data;		/* */
+	Oid			tableOid;		/* table the tuple came from */
+	MemoryContext	t_datamcxt;	/* mcxt in which allocated */
+	HeapTupleHeader	t_data;		/* -> tuple header and data */
 } HeapTupleData;
 
 typedef HeapTupleData *HeapTuple;
