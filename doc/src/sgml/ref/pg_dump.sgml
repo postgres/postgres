@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.23 2000/11/13 23:57:20 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.24 2000/11/21 15:39:09 pjw Exp $
 Postgres documentation
 -->
 
@@ -15,26 +15,29 @@ Postgres documentation
    <application>pg_dump</application>
   </refname>
   <refpurpose>
-   Extract a <productname>Postgres</productname> database into a script file
+   Extract a <productname>Postgres</productname> database into a script file or other archive file 
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>2000-11-22</date>
   </refsynopsisdivinfo>
   <synopsis>
 pg_dump [ <replaceable class="parameter">dbname</replaceable> ]
 pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
     [ -p <replaceable class="parameter">port</replaceable> ]
     [ -t <replaceable class="parameter">table</replaceable> ]
-    [ -a ] [ -c ] [ -d ] [ -D ] [ -i ] [ -n ] [ -N ]
-    [ -o ] [ -s ] [ -u ] [ -v ] [ -x ]
+    [ -a  ] [ -b ] [ -c  ] [-C] [ -d  ] [ -D  ] 
+    [-f <REPLACEABLE CLASS="PARAMETER">file</REPLACEABLE>] 
+    [-F <REPLACEABLE CLASS="PARAMETER">format</REPLACEABLE>] 
+    [ -i  ] [ -n  ] [ -N  ] [ -o  ] [ -O ] [-R] 
+    [ -s  ] [ -S ] [ -u  ] [ -v  ] [ -x ] [ -Z 0..9 ] 
     [ <replaceable class="parameter">dbname</replaceable> ]
   </synopsis>
 
   <refsect2 id="R2-APP-PG-DUMP-1">
    <refsect2info>
-    <date>1998-11-05</date>
+    <date>2000-11-22</date>
    </refsect2info>
    <title>
     Inputs
@@ -67,6 +70,15 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
      </varlistentry>
 
      <varlistentry>
+      <term>-b</term>
+      <listitem>
+       <para>
+	Dump BLOB data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-c</term>
       <listitem>
        <para>
@@ -76,10 +88,20 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
      </varlistentry>
 
      <varlistentry>
+      <term>-C</term>
+      <listitem>
+       <para>
+	For plain text (script) output, include SQL to create the database itself.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-d</term>
       <listitem>
        <para>
-	Dump data as proper insert strings.
+	Dump data as proper insert strings. This is not recommended for large databases
+      for performance reasons.
        </para>
       </listitem>
      </varlistentry>
@@ -88,8 +110,66 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
       <term>-D</term>
       <listitem>
        <para>
-	Dump data as inserts with attribute names
+	Dump data as inserts with attribute names. This is not recommended for large databases
+      for performance reasons.
        </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-f <replaceable class="parameter">file</replaceable></term>
+      <listitem>
+       <para>
+	Send output to the specified file.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-F <replaceable class="parameter">format</replaceable></term>
+      <listitem>
+       <para>
+	Format can be one of the following:
+       </para>
+
+
+       <variablelist>
+        <varlistentry>
+         <term>p</term>
+         <listitem>
+          <para>
+         output a plain text SQL script file (default)
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term>t</term>
+         <listitem>
+          <para>
+         output a TAR archive suitable for input into 
+         <APPLICATION>pg_restore</APPLICATION>. Using this archive format 
+         allows reordering and/or exclusion of schema elements 
+         at the time the database is restored. It is also possible to limit 
+         which data is reloaded at restore time.
+          </para>
+         </listitem>
+        </varlistentry>
+
+        <varlistentry>
+         <term>c</term>
+         <listitem>
+          <para>
+         output a custom archive suitable for input into 
+         <APPLICATION>pg_restore</APPLICATION>. This is the most flexible 
+         format in that it allows reordering of data load as well 
+         as schema elements. This format is also compressed by default.
+          </para>
+         </listitem>
+        </varlistentry>
+
+       </variablelist>
+
       </listitem>
      </varlistentry>
 
@@ -142,10 +222,42 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
      </varlistentry>
 
      <varlistentry>
+      <term>-O</term>
+      <listitem>
+       <para>
+	In plain text output mode, don't set object ownership to match the 
+      original database. Typically, <APPLICATION>pg_dump</APPLICATION> 
+      issues <PROGRAMLISTING>\connect</PROGRAMLISTING> statments to set 
+      ownership of schema elements.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-R</term>
+      <listitem>
+       <para>
+	In plain text output mode, prohibit <APPLICATION>pg_dump</APPLICATION> 
+      from issuing any <PROGRAMLISTING>\connect</PROGRAMLISTING> statements.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>-s</term>
       <listitem>
        <para>
 	Dump out only the schema (definitions), no data.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>-S <replaceable class="parameter">username</replaceable></term>
+      <listitem>
+       <para>
+	Specify the superuser username to use when disabling triggers and/or 
+      setting ownership of schema elements.
        </para>
       </listitem>
      </varlistentry>
@@ -185,6 +297,17 @@ pg_dump [ -h <replaceable class="parameter">host</replaceable> ]
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>-Z <replaceable class="parameter">0..9</replaceable></term>
+      <listitem>
+       <para>
+	Specify the compression level to use in archive formats that support 
+      compression (currently only the custom archive format supports compression).
+       </para>
+      </listitem>
+     </varlistentry>
+
 
     </variablelist>
    </para>
@@ -306,17 +429,26 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
 
  <refsect1 id="R1-APP-PG-DUMP-1">
   <refsect1info>
-   <date>1998-11-05</date>
+   <date>2000-</date>
   </refsect1info>
   <title>
    Description
   </title>
   <para>
    <application>pg_dump</application> is a utility for dumping out a 
-   <productname>Postgres</productname> database into a script file
-   containing query commands.  The script
-   files are in text format and can be used to reconstruct the database,
-   even on other machines and other architectures.  
+   <productname>Postgres</productname> database into a script or archive 
+   file containing query commands. The script files are in text format 
+   and can be used to reconstruct the database, even on other machines 
+   and other architectures.
+  </para>
+  <para> 
+   The archive files, new with this v7.1, contain enough information for 
+   <APPLICATION>pg_restore</APPLICATION> to rebuild the database, but also
+   allow pg_restore to be selective about what is restored, or even to 
+   reorder the items prior to being restored. The archive files should 
+   also be portable across architectures.
+  </para>
+  <para>
    <application>pg_dump</application> 
    will produce the queries necessary to re-generate all
    user-defined types, functions, tables, indices, aggregates, and
@@ -330,14 +462,28 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
    is useful for dumping out the contents of a database to move from one
    <productname>Postgres</productname> installation to another.  After running 
    <application>pg_dump</application>,
-   one should examine the output script file for any warnings, especially
+   one should examine the output for any warnings, especially
    in light of the limitations listed below. 
   </para>
+
+  <para>
+   When used with one of the alternate file formats and combined with 
+   <APPLICATION>pg_restore</APPLICATION>, it provides a flexible archival 
+   and trasfer mechanism. <APPLICATION>pg_dump</APPLICATION> can be used 
+   to backup an entire database, then <APPLICATION>pg_restore</APPLICATION> 
+   can be used to examine the archive and/or select which parts of the 
+   database are to be restored.
+  </para>
+
+  <para>
+   See the <APPLICATION>pg_restore</APPLICATION> documentation for details.
+  </para>
+
  </refsect1>
 
  <refsect1 id="R1-APP-PG-DUMP-2">
   <refsect1info>
-   <date>1998-11-05</date>
+   <date>2000-11-21</date>
   </refsect1info>
   <title>
    Notes
@@ -359,8 +505,9 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
 
     <listitem>
      <para>
-      <application>pg_dump</application> does not handle large objects.
-      Large objects are ignored and must be dealt with manually. 
+      When dumping a single table or as plain text, <application>pg_dump</application> 
+      does not handle large objects. Large objects must be dumped in their
+      entirity using one of the binary archive formats.
      </para>
     </listitem>
 
@@ -379,7 +526,7 @@ dumpSequence(<replaceable class="parameter">table</replaceable>): SELECT failed
 
  <refsect1 id="R1-APP-PG-DUMP-3">
   <refsect1info>
-   <date>1998-11-05</date>
+   <date>2000-11-21</date>
   </refsect1info>
   <title>
    Usage
@@ -399,6 +546,23 @@ $ pg_dump > db.out
 $ psql -e database < db.out
    </programlisting>
   </para>
+
+  <para>
+   To dump a database called mydb that contains BLOBs to a TAR file:
+
+   <programlisting>
+$ pg_dump -Ft --blobs mydb > db.tar
+   </programlisting>
+  </para>
+
+  <para>
+   To reload this database (with BLOBs) to an existing db called newdb:
+
+   <programlisting>
+$ pg_restore db.tar --db=newdb
+   </programlisting>
+  </para>
+
  </refsect1>
 </refentry>
 
