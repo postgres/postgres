@@ -18,14 +18,7 @@
 
 /* dynloader.c */
 
-#define SAVE_MAXPATHLEN MAXPATHLEN
-#undef MAXPATHLEN	/* prevent compiler warning */
-#include <sys/param.h>
-#undef MAXPATHLEN
-#define MAXPATHLEN SAVE_MAXPATHLEN 
-#undef SAVE_MAXPATHLEN
-
-#if _BSDI_VERSION >= 199510
+#ifndef  PRE_BSDI_2_1
 #  include <dlfcn.h>
 #  define	pg_dlopen(f)	dlopen(f, 1)
 #  define	pg_dlsym	dlsym
