@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.15 1997/03/12 20:47:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/Attic/parse_query.c,v 1.16 1997/05/31 07:10:25 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -771,6 +771,8 @@ checkTargetTypes(ParseState *pstate, char *target_colname,
     	rte = refnameRangeTableEntry(pstate->p_rtable, refname);
     else {
 	rte = colnameRangeTableEntry(pstate, colname);
+	if ( rte == (RangeTblEntry *) NULL )
+	    elog (WARN, "attribute %s not found", colname);
 	refname = rte->refname;
     }
 
