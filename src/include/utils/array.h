@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.45 2003/08/08 21:42:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.46 2003/11/29 22:41:15 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

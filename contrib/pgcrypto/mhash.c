@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mhash.c,v 1.8 2003/07/24 17:52:33 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/mhash.c,v 1.9 2003/11/29 22:39:28 pgsql Exp $
  */
 
 #include <postgres.h>

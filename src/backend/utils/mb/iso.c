@@ -4,7 +4,7 @@
  *
  * Tatsuo Ishii
  *
- * $Id: iso.c,v 1.3 2001/02/10 02:31:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/iso.c,v 1.4 2003/11/29 22:39:59 pgsql Exp $
  */
 
 #include <stdio.h>

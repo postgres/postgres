@@ -2,7 +2,7 @@
 #
 # pgstattuple Makefile
 #
-# $Id: Makefile,v 1.1 2001/10/01 01:52:38 ishii Exp $
+# $PostgreSQL: pgsql/contrib/pgstattuple/Makefile,v 1.2 2003/11/29 22:39:29 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 

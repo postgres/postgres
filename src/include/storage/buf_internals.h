@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.64 2003/11/13 14:57:15 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.65 2003/11/29 22:41:13 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

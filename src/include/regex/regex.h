@@ -29,7 +29,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: regex.h,v 1.25 2003/08/08 21:42:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regex.h,v 1.26 2003/11/29 22:41:10 pgsql Exp $
  */
 
 /*

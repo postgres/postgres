@@ -1,7 +1,7 @@
 # Czech translation of pg_scripts messages.
 # Karel Zak <zakkr@zf.jcu.cz>, 2003.
 #
-# $Id: cs.po,v 1.1 2003/07/23 09:36:42 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/cs.po,v 1.2 2003/11/29 22:40:51 pgsql Exp $
 #
 msgid ""
 msgstr ""

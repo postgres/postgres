@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $Id: guc.h,v 1.41 2003/09/01 04:15:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.42 2003/11/29 22:41:15 pgsql Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H

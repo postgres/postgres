@@ -1,4 +1,4 @@
-/*	$Id: sha1.c,v 1.11 2001/11/29 19:40:37 momjian Exp $ */
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.12 2003/11/29 22:39:28 pgsql Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*

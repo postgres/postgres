@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.71 2003/11/19 15:55:08 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.72 2003/11/29 22:41:13 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

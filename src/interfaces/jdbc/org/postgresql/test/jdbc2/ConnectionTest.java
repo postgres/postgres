@@ -10,7 +10,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: ConnectionTest.java,v 1.10 2002/10/17 05:33:52 barry Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/test/jdbc2/ConnectionTest.java,v 1.11 2003/11/29 22:41:23 pgsql Exp $
  */
 
 public class ConnectionTest extends TestCase

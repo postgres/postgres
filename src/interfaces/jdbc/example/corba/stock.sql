@@ -1,6 +1,6 @@
 --
 -- This creates the database for the stock example
--- $Id: stock.sql,v 1.1 1999/01/25 21:22:04 scrappy Exp $
+-- $PostgreSQL: pgsql/src/interfaces/jdbc/example/corba/stock.sql,v 1.2 2003/11/29 22:41:21 pgsql Exp $
 --
 drop table stock;
 

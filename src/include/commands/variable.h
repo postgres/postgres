@@ -2,7 +2,7 @@
  * variable.h
  *		Routines for handling specialized SET variables.
  *
- * $Id: variable.h,v 1.21 2003/07/15 19:19:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/variable.h,v 1.22 2003/11/29 22:40:59 pgsql Exp $
  *
  */
 #ifndef VARIABLE_H

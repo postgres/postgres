@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: adddepend,v 1.5 2003/06/25 01:11:09 momjian Exp $
+# $PostgreSQL: pgsql/contrib/adddepend/adddepend,v 1.6 2003/11/29 22:39:16 pgsql Exp $
 
 # Project exists to assist PostgreSQL users with their structural upgrade 
 # from PostgreSQL 7.2 (or prior) to 7.3 or 7.4.  Must be run against a 7.3 or 7.4

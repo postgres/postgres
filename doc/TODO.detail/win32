@@ -6475,7 +6475,7 @@ X-MimeOLE: Produced By Microsoft MimeOLE V6.00.2600.0000
 X-Spam-Status: Yes, hits=5.0 required=5.0 tests=RCVD_IN_OSIRUSOFT_COM,X_OSIRU_SPAM_SRC version=2.20
 X-Spam-Flag: YES
 X-Spam-Level: *****
-X-Spam-Checker-Version: SpamAssassin 2.20 (devel $Id: win32,v 1.6 2003/11/13 03:45:33 momjian Exp $)
+X-Spam-Checker-Version: SpamAssassin 2.20 (devel $PostgreSQL: pgsql/doc/TODO.detail/win32,v 1.7 2003/11/29 22:39:38 pgsql Exp $)
 X-Spam-Report: Detailed Report
 SPAM: -------------------- Start SpamAssassin results ----------------------
   SPAM: This mail is probably spam.  The original message has been altered

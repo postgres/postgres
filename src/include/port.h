@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: port.h,v 1.14 2003/09/13 14:49:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.15 2003/11/29 22:40:53 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

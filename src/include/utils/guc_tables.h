@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- *	  $Id: guc_tables.h,v 1.6 2003/08/04 02:40:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.7 2003/11/29 22:41:15 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

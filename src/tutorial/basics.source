@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994, Andrew Yu, University of California
 --
--- $Id: basics.source,v 1.4 2001/09/02 23:27:50 petere Exp $
+-- $PostgreSQL: pgsql/src/tutorial/basics.source,v 1.5 2003/11/29 22:41:33 pgsql Exp $
 --
 ---------------------------------------------------------------------------
 

@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2003, PostgreSQL Global Development Group
 #
-# $Id: UCS_to_GBK.pl,v 1.2 2003/08/04 23:59:39 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_GBK.pl,v 1.3 2003/11/29 22:40:01 pgsql Exp $
 #
 #
 # Generate UTF-8 <--> GBK code conversion tables from

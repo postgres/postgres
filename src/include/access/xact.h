@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.58 2003/11/06 22:08:15 petere Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.59 2003/11/29 22:40:55 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,7 +3,7 @@
  *
  * Copyright 1996-2003, PostgreSQL Global Development Group
  *
- * $Id: system_views.sql,v 1.2 2003/11/13 22:13:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.3 2003/11/29 22:39:40 pgsql Exp $
  */
 
 CREATE VIEW pg_user AS 

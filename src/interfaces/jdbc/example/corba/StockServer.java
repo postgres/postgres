@@ -5,7 +5,7 @@ import org.omg.CosNaming.*;
 /*
  * This class implements the server side of the example.
  *
- * $Id: StockServer.java,v 1.5 2002/09/06 21:23:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/example/corba/StockServer.java,v 1.6 2003/11/29 22:41:21 pgsql Exp $
  */
 public class StockServer
 {

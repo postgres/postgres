@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.45 2003/11/12 21:15:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amproc.h,v 1.46 2003/11/29 22:40:58 pgsql Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.156 2003/10/21 15:32:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.157 2003/11/29 22:40:53 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

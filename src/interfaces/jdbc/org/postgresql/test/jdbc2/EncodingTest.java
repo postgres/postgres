@@ -8,7 +8,7 @@ import java.io.*;
 /*
  * Tests for the Encoding class.
  *
- * $Id: EncodingTest.java,v 1.4 2001/11/19 22:33:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/test/jdbc2/EncodingTest.java,v 1.5 2003/11/29 22:41:23 pgsql Exp $
  */
 
 

@@ -4,7 +4,7 @@
  *	  Commands for manipulating users and groups.
  *
  *
- * $Id: user.h,v 1.21 2003/06/27 14:45:31 petere Exp $
+ * $PostgreSQL: pgsql/src/include/commands/user.h,v 1.22 2003/11/29 22:40:59 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

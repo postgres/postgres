@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.121 2003/08/17 19:58:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.122 2003/11/29 22:40:58 pgsql Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki

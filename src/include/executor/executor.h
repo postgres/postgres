@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.102 2003/10/01 21:30:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.103 2003/11/29 22:41:01 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -3,7 +3,7 @@
  *
  * Resource managers definition
  *
- * $Id: rmgr.h,v 1.9 2001/11/05 17:46:31 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/rmgr.h,v 1.10 2003/11/29 22:40:55 pgsql Exp $
  */
 #ifndef RMGR_H
 #define RMGR_H

@@ -1,4 +1,4 @@
-/* RCS $Id: CosQueryCollection.idl,v 1.2 2000/12/03 14:43:59 thomas Exp $
+/* RCS $PostgreSQL: pgsql/src/corba/CosQueryCollection.idl,v 1.3 2003/11/29 22:40:52 pgsql Exp $
  *
  * ----------------------------------------------------------------------------
  * This is unmarked software provided by the Object Management Group,Inc. (OMG)

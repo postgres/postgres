@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $Id: wchar.c,v 1.34 2003/09/25 06:58:05 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.35 2003/11/29 22:39:59 pgsql Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *

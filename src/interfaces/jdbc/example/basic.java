@@ -5,7 +5,7 @@ import java.sql.*;
 
 /*
  *
- * $Id: basic.java,v 1.14 2003/09/09 11:24:04 barry Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/example/basic.java,v 1.15 2003/11/29 22:41:19 pgsql Exp $
  *
  * This example tests the basic components of the JDBC driver, and shows
  * how even the simplest of queries can be implemented.

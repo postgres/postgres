@@ -27,7 +27,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: regguts.h,v 1.2 2003/08/04 00:43:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regguts.h,v 1.3 2003/11/29 22:41:10 pgsql Exp $
  */
 
 

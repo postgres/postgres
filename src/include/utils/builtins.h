@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.229 2003/11/12 21:15:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.230 2003/11/29 22:41:15 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

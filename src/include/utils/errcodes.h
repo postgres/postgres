@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: errcodes.h,v 1.6 2003/09/24 18:54:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.7 2003/11/29 22:41:15 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.53 2003/09/24 18:54:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/index.h,v 1.54 2003/11/29 22:40:58 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

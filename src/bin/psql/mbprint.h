@@ -1,4 +1,4 @@
-/* $Id: mbprint.h,v 1.6 2003/03/18 22:15:44 petere Exp $ */
+/* $PostgreSQL: pgsql/src/bin/psql/mbprint.h,v 1.7 2003/11/29 22:40:49 pgsql Exp $ */
 #ifndef MBPRINT_H
 #define MBPRINT_H
 

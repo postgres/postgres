@@ -1,6 +1,6 @@
 #-------------------------------------------------------------------------
 #
-# $Id: Makefile,v 1.2 2002/08/21 21:33:55 momjian Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_tw/Makefile,v 1.3 2003/11/29 22:40:21 pgsql Exp $
 #
 #-------------------------------------------------------------------------
 subdir = src/backend/utils/mb/conversion_procs/utf8_and_euc_tw

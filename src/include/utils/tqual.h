@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.48 2003/10/01 21:30:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.49 2003/11/29 22:41:16 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

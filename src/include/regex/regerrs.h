@@ -1,5 +1,5 @@
 /*
- * $Id: regerrs.h,v 1.2 2003/08/04 00:43:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regerrs.h,v 1.3 2003/11/29 22:41:10 pgsql Exp $
  */
 
 {

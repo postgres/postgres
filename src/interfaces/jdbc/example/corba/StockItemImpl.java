@@ -5,7 +5,7 @@ import org.omg.CosNaming.*;
 /*
  * This class implements the server side of the example.
  *
- * $Id: StockItemImpl.java,v 1.3 2001/11/19 22:43:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/example/corba/StockItemImpl.java,v 1.4 2003/11/29 22:41:21 pgsql Exp $
  */
 public class StockItemImpl extends stock._StockItemImplBase
 {

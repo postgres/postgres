@@ -1,5 +1,5 @@
 #
-# $Id: ucs2utf.pl,v 1.1 2000/10/30 10:40:30 ishii Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/ucs2utf.pl,v 1.2 2003/11/29 22:40:01 pgsql Exp $
 # convert UCS-2 to UTF-8
 #
 sub ucs2utf {

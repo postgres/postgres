@@ -2,5 +2,5 @@
  *
  * see dgux.h
  *
- * $Id: dgux.c,v 1.3 1998/02/26 04:34:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/dgux.c,v 1.4 2003/11/29 22:39:52 pgsql Exp $
  */

@@ -4,7 +4,7 @@
  * darcy@druid.net
  * http://www.druid.net/darcy/
  *
- * $Id: chkpass.c,v 1.11 2003/09/07 15:27:25 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/chkpass/chkpass.c,v 1.12 2003/11/29 22:39:18 pgsql Exp $
  * best viewed with tabs set to 4
  */
 

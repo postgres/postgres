@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.32 2003/11/19 15:55:08 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/bootstrap/bootstrap.h,v 1.33 2003/11/29 22:40:56 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

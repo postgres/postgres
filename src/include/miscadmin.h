@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.137 2003/11/13 14:57:15 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.138 2003/11/29 22:40:53 pgsql Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to

@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2001-2003, PostgreSQL Global Development Group
 #
-# $Id: UCS_to_EUC_JP.pl,v 1.3 2003/08/04 23:59:39 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/mb/Unicode/UCS_to_EUC_JP.pl,v 1.4 2003/11/29 22:40:01 pgsql Exp $
 #
 # Generate UTF-8 <--> EUC_JP code conversion tables from
 # map files provided by Unicode organization.

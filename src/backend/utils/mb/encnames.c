@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.17 2003/07/25 20:17:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.18 2003/11/29 22:39:59 pgsql Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"

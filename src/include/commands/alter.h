@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: alter.h,v 1.2 2003/08/04 00:43:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/alter.h,v 1.3 2003/11/29 22:40:59 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -1,7 +1,7 @@
 --
 --	PostgreSQL code for ISSNs.
 --
---	$Id: isbn_issn.sql.in,v 1.9 2003/06/28 00:36:40 momjian Exp $
+--	$PostgreSQL: pgsql/contrib/isbn_issn/isbn_issn.sql.in,v 1.10 2003/11/29 22:39:20 pgsql Exp $
 --
 
 -- Adjust this setting to control where the objects get created.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.53 2003/09/04 22:06:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.54 2003/11/29 22:40:55 pgsql Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.

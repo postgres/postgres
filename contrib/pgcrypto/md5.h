@@ -1,4 +1,4 @@
-/*	$Id: md5.h,v 1.7 2001/11/05 17:46:23 momjian Exp $	*/
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.h,v 1.8 2003/11/29 22:39:28 pgsql Exp $	*/
 /*	   $KAME: md5.h,v 1.3 2000/02/22 14:01:18 itojun Exp $	   */
 
 /*

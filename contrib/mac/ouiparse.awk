@@ -1,4 +1,4 @@
-# $Id: ouiparse.awk,v 1.2 2000/08/23 13:44:14 thomas Exp $
+# $PostgreSQL: pgsql/contrib/mac/ouiparse.awk,v 1.3 2003/11/29 22:39:24 pgsql Exp $
 #
 # ouiparse.awk
 # Author: Lawrence E. Rosenman <ler@lerctr.org>

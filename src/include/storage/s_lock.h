@@ -63,7 +63,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: s_lock.h,v 1.116 2003/11/04 09:53:36 petere Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.117 2003/11/29 22:41:13 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

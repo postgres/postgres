@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Id: stringutils.h,v 1.19 2003/08/04 23:59:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/stringutils.h,v 1.20 2003/11/29 22:40:49 pgsql Exp $
  */
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H

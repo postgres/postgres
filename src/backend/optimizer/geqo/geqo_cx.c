@@ -6,7 +6,7 @@
 *	 CX operator according to Oliver et al
 *	 (Proc 2nd Int'l Conf on GA's)
 *
-* $Id: geqo_cx.c,v 1.9 1999/07/16 04:59:07 momjian Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_cx.c,v 1.10 2003/11/29 22:39:49 pgsql Exp $
 *
 *-------------------------------------------------------------------------
 */

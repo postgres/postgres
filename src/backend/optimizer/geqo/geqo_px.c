@@ -6,7 +6,7 @@
 *	 PX operator according to Syswerda
 *	 (The Genetic Algorithms Handbook, L Davis, ed)
 *
-* $Id: geqo_px.c,v 1.9 1999/07/16 04:59:12 momjian Exp $
+* $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_px.c,v 1.10 2003/11/29 22:39:49 pgsql Exp $
 *
 *-------------------------------------------------------------------------
 */

@@ -5,7 +5,7 @@ import junit.framework.TestCase;
 import java.sql.*;
 
 /*
- * $Id: DriverTest.java,v 1.6 2003/11/03 15:22:07 davec Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/test/jdbc2/DriverTest.java,v 1.7 2003/11/29 22:41:23 pgsql Exp $
  *
  * Tests the dynamically created class org.postgresql.Driver
  *

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.c,v 1.7 2002/03/06 06:09:10 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.8 2003/11/29 22:39:28 pgsql Exp $
  */
 
 #include <postgres.h>

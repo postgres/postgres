@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.50 2003/09/25 06:57:57 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.51 2003/11/29 22:39:39 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.92 2003/08/17 23:43:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.93 2003/11/29 22:41:06 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -36,10 +36,14 @@
 # SUCH DAMAGE.
 #
 # $My2pg: my2pg.pl,v 1.27 2001/12/06 19:32:20 fonin Exp $
-# $Id: my2pg.pl,v 1.10 2003/01/07 22:18:43 momjian Exp $
+# $PostgreSQL: pgsql/contrib/mysql/my2pg.pl,v 1.11 2003/11/29 22:39:26 pgsql Exp $
 
 #
 # $Log: my2pg.pl,v $
+# Revision 1.11  2003/11/29 22:39:26  pgsql
+#
+# make sure the $Id tags are converted to $PostgreSQL as well ...
+#
 # Revision 1.10  2003/01/07 22:18:43  momjian
 # Upgrade to my2pg 1.9
 #
@@ -734,7 +738,7 @@ close(LIBTYPES);
 
 open(MAKE,">Makefile");
 print MAKE "#
-# My2Pg \$Revision: 1.10 $ \translated dump
+# My2Pg \$Revision: 1.11 $ \translated dump
 # Makefile
 #
 

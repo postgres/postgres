@@ -1,7 +1,7 @@
 # Czech translation of pg_dump messages
 # Karel Zak <zakkr@zf.jcu.cz>, 2001-2003.
 #
-# $Id: cs.po,v 1.2 2003/07/23 09:34:56 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/cs.po,v 1.3 2003/11/29 22:40:47 pgsql Exp $
 #
 msgid ""
 msgstr ""

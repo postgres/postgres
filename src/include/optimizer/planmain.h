@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.75 2003/08/08 21:42:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.76 2003/11/29 22:41:07 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

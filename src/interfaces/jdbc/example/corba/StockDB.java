@@ -13,7 +13,7 @@ import java.sql.*;
  * that an object could be changed by another client, and we need to ensure that
  * the returned data is live and accurate.
  *
- * $Id: StockDB.java,v 1.4 2001/11/19 22:43:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/jdbc/example/corba/StockDB.java,v 1.5 2003/11/29 22:41:21 pgsql Exp $
  */
 public class StockDB
 {

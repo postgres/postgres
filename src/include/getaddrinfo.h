@@ -15,7 +15,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: getaddrinfo.h,v 1.11 2003/08/14 18:32:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/getaddrinfo.h,v 1.12 2003/11/29 22:40:53 pgsql Exp $
  *
  *-------------------------------------------------------------------------
  */

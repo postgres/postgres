@@ -5,7 +5,7 @@
 *                                                                             *
 * Copyright (c) 1994, Regents of the University of California                 *
 *                                                                             *
-* $Id: README,v 1.1.1.1 1996/07/09 06:21:32 scrappy Exp $
+* $PostgreSQL: pgsql/src/backend/nodes/README,v 1.2 2003/11/29 22:39:45 pgsql Exp $
 *                                                                             *
 *******************************************************************************
 
