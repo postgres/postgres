@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.209 2001/03/13 01:17:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.210 2001/03/14 17:58:46 tgl Exp $
  *
  * NOTES
  *
@@ -804,6 +804,11 @@ ServerLoop(void)
 			{
 				/* Time to make the checkpoint... */
 				CheckPointPID = CheckPointDataBase();
+				/* if fork failed, schedule another try at 0.1 normal delay */
+				if (CheckPointPID == 0)
+				{
+					checkpointed = now - (9 * CheckPointTimeout) / 10;
+				}
 			}
 		}
 
@@ -2124,6 +2129,7 @@ schedule_checkpoint(SIGNAL_ARGS)
 		Shutdown == NoShutdown && !FatalError)
 	{
 		CheckPointPID = CheckPointDataBase();
+		/* note: if fork fails, CheckPointPID stays 0; nothing happens */
 	}
 
 	errno = save_errno;
@@ -2264,6 +2270,9 @@ InitSSL(void)
 
 /*
  * Fire off a subprocess for startup/shutdown/checkpoint.
+ *
+ * Return value is subprocess' PID, or 0 if failed to start subprocess
+ * (0 is returned only for checkpoint case).
  */
 static pid_t
 SSDataBase(int xlop)
@@ -2332,8 +2341,15 @@ SSDataBase(int xlop)
 
 		fprintf(stderr, "%s Data Base: fork failed: %s\n",
 				((xlop == BS_XLOG_STARTUP) ? "Startup" : 
-					((xlop == BS_XLOG_CHECKPOINT) ? "CheckPoint" :
-						"Shutdown")), strerror(errno));
+				 ((xlop == BS_XLOG_CHECKPOINT) ? "CheckPoint" :
+				  "Shutdown")),
+				strerror(errno));
+		/*
+		 * fork failure is fatal during startup/shutdown, but there's
+		 * no need to choke if a routine checkpoint fails.
+		 */
+		if (xlop == BS_XLOG_CHECKPOINT)
+			return 0;
 		ExitPostmaster(1);
 	}
 
@@ -2363,7 +2379,7 @@ SSDataBase(int xlop)
 		TouchSocketLockFile();
 	}
 
-	return (pid);
+	return pid;
 }
 
 
