@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.109 2004/02/08 22:28:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/async.c,v 1.110 2004/05/22 21:58:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,10 @@
  *	  transaction, since by assumption it is only called from outside any
  *	  transaction.
  *
- * Although we grab AccessExclusiveLock on pg_listener for any operation,
+ * Although we grab ExclusiveLock on pg_listener for any operation,
  * the lock is never held very long, so it shouldn't cause too much of
- * a performance problem.
+ * a performance problem.  (Previously we used AccessExclusiveLock, but
+ * there's no real reason to forbid concurrent reads.)
  *
  * An application that listens on the same relname it notifies will get
  * NOTIFY messages for its own NOTIFYs.  These can be ignored, if not useful,
@@ -196,7 +197,7 @@ Async_Listen(char *relname, int pid)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Listen(%s,%d)", relname, pid);
 
-	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
 
 	/* Detect whether we are already listening on this relname */
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
@@ -216,7 +217,7 @@ Async_Listen(char *relname, int pid)
 
 	if (alreadyListener)
 	{
-		heap_close(lRel, AccessExclusiveLock);
+		heap_close(lRel, ExclusiveLock);
 		return;
 	}
 
@@ -244,7 +245,7 @@ Async_Listen(char *relname, int pid)
 
 	heap_freetuple(tuple);
 
-	heap_close(lRel, AccessExclusiveLock);
+	heap_close(lRel, ExclusiveLock);
 
 	/*
 	 * now that we are listening, make sure we will unlisten before dying.
@@ -290,7 +291,7 @@ Async_Unlisten(char *relname, int pid)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_Unlisten(%s,%d)", relname, pid);
 
-	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
 
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
@@ -312,7 +313,7 @@ Async_Unlisten(char *relname, int pid)
 	}
 	heap_endscan(scan);
 
-	heap_close(lRel, AccessExclusiveLock);
+	heap_close(lRel, ExclusiveLock);
 
 	/*
 	 * We do not complain about unlistening something not being listened;
@@ -348,7 +349,7 @@ Async_UnlistenAll(void)
 	if (Trace_notify)
 		elog(DEBUG1, "Async_UnlistenAll");
 
-	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Find and delete all entries with my listenerPID */
@@ -362,7 +363,7 @@ Async_UnlistenAll(void)
 		simple_heap_delete(lRel, &lTuple->t_self);
 
 	heap_endscan(scan);
-	heap_close(lRel, AccessExclusiveLock);
+	heap_close(lRel, ExclusiveLock);
 }
 
 /*
@@ -457,7 +458,7 @@ AtCommit_Notify(void)
 	value[0] = value[1] = value[2] = (Datum) 0;
 	value[Anum_pg_listener_notify - 1] = Int32GetDatum(MyProcPid);
 
-	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 	scan = heap_beginscan(lRel, SnapshotNow, 0, NULL);
 
@@ -812,7 +813,7 @@ ProcessIncomingNotify(void)
 
 	StartTransactionCommand();
 
-	lRel = heap_openr(ListenerRelationName, AccessExclusiveLock);
+	lRel = heap_openr(ListenerRelationName, ExclusiveLock);
 	tdesc = RelationGetDescr(lRel);
 
 	/* Scan only entries with my listenerPID */
