@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/sv.po,v 1.19 2004/10/23 06:40:24 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/sv.po,v 1.20 2004/10/23 14:48:03 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-10-23 08:33+0200\n"
-"PO-Revision-Date: 2004-10-23 08:40+0200\n"
+"POT-Creation-Date: 2004-10-23 16:44+0200\n"
+"PO-Revision-Date: 2004-10-23 16:46+0200\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -174,7 +174,9 @@ msgstr ""
 msgid ""
 "\n"
 "Options controlling the output content:\n"
-msgstr "\nFlaggor som styr utmatning:\n"
+msgstr ""
+"\n"
+"Flaggor som styr utmatning:\n"
 
 #: pg_dump.c:680 pg_dumpall.c:346
 #, c-format
@@ -573,12 +575,13 @@ msgstr "ogiltigt kolumnnummer %d för tabell \"%s\"\n"
 
 #: pg_dump.c:6933
 #, c-format
-msgid "missing index for constraint %s\n"
-msgstr "saknar index för integritetsvillkor %s\n"
+msgid "missing index for constraint \"%s\"\n"
+msgstr "saknar index för integritetsvillkor \"%s\"\n"
 
 #: pg_dump.c:7103
-msgid "unexpected constraint type\n"
-msgstr "oväntad integritetsvillkorstyp\n"
+#, c-format
+msgid "unrecognized constraint type: %c\n"
+msgstr "oväntad integritetsvillkorstyp: %c\n"
 
 #: pg_dump.c:7145
 msgid "inserted invalid OID\n"
@@ -632,8 +635,8 @@ msgstr ""
 "rader returnerades"
 
 #: pg_dump.c:7702
-msgid "fetching dependency data\n"
-msgstr "hämtar beroendedata\n"
+msgid "reading dependency data\n"
+msgstr "läser beroendedata\n"
 
 #: pg_dump.c:7879
 #, c-format
@@ -815,8 +818,8 @@ msgstr "kör %s %s\n"
 
 #: pg_backup_archiver.c:398
 #, c-format
-msgid "setting owner and acl for %s %s\n"
-msgstr "sätter ägare och acl för %s %s\n"
+msgid "setting owner and privileges for %s %s\n"
+msgstr "sätter ägare och rättigheter för %s %s\n"
 
 #: pg_backup_archiver.c:516
 msgid "disabling triggers\n"
@@ -940,8 +943,8 @@ msgstr "Fel vid SLUTFÖRANDE:\n"
 
 #: pg_backup_archiver.c:1272
 #, c-format
-msgid "Error from TOC Entry %d; %u %u %s %s %s\n"
-msgstr "Fel från TOC-post %d; %u %u %s %s %s\n"
+msgid "Error from TOC entry %d; %u %u %s %s %s\n"
+msgstr "Fel på TOC-post %d; %u %u %s %s %s\n"
 
 #: pg_backup_archiver.c:1405
 #, c-format
@@ -1592,7 +1595,9 @@ msgstr "  -l, --list               skriv ut summerad TOC för arkivet\n"
 msgid ""
 "\n"
 "Options controlling the restore:\n"
-msgstr "\nFlaggor som styr återställning:\n"
+msgstr ""
+"\n"
+"Flaggor som styr återställning:\n"
 
 #: pg_restore.c:373
 #, c-format
@@ -1601,7 +1606,7 @@ msgstr "  -a, --data-only          återställ bara data, inte schema\n"
 
 #: pg_restore.c:375
 #, c-format
-msgid "  -C, --create             process commands to create the database\n"
+msgid "  -C, --create             issue commands to create the database\n"
 msgstr "  -C, --create             utför kommandon för att skapa databasen\n"
 
 #: pg_restore.c:376
@@ -1622,7 +1627,8 @@ msgstr ""
 #, c-format
 msgid ""
 "  -O, --no-owner           do not issue commands to set object ownership\n"
-msgstr "  -O, --no-owner           utför inte kommandon som sätter objektägare\n"
+msgstr ""
+"  -O, --no-owner           utför inte kommandon som sätter objektägare\n"
 
 #: pg_restore.c:380
 #, c-format
