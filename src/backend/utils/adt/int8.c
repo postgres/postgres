@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.52 2004/03/11 02:11:13 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.53 2004/04/01 22:51:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ scanint8(const char *str, bool errorOK, int64 *result)
 	}
 
 	/* allow trailing whitespace, but not other trailing chars */
-	while (*ptr != '\0' && isspace(*ptr))
+	while (*ptr != '\0' && isspace((unsigned char) *ptr))
 		ptr++;
 
 	if (*ptr != '\0')

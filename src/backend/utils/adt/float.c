@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.101 2004/03/15 03:29:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.102 2004/04/01 22:51:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,7 +276,7 @@ float4in(PG_FUNCTION_ARGS)
 	}
 
 	/* skip leading whitespace */
-	while (*num != '\0' && isspace(*num))
+	while (*num != '\0' && isspace((unsigned char) *num))
 		num++;
 
 	errno = 0;
@@ -319,7 +319,7 @@ float4in(PG_FUNCTION_ARGS)
 	}
 
 	/* skip trailing whitespace */
-	while (*endptr != '\0' && isspace(*endptr))
+	while (*endptr != '\0' && isspace((unsigned char) *endptr))
 		endptr++;
 
 	/* if there is any junk left at the end of the string, bail out */
@@ -441,7 +441,7 @@ float8in(PG_FUNCTION_ARGS)
 	}
 
 	/* skip leading whitespace */
-	while (*num != '\0' && isspace(*num))
+	while (*num != '\0' && isspace((unsigned char) *num))
 		num++;
 
 	errno = 0;
@@ -484,7 +484,7 @@ float8in(PG_FUNCTION_ARGS)
 	}
 
 	/* skip trailing whitespace */
-	while (*endptr != '\0' && isspace(*endptr))
+	while (*endptr != '\0' && isspace((unsigned char) *endptr))
 		endptr++;
 
 	/* if there is any junk left at the end of the string, bail out */
