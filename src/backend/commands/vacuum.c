@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.154 2000/05/29 16:06:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.155 2000/05/29 16:21:04 momjian Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -74,10 +74,10 @@ static TransactionId XmaxRecent;
 /* non-export function prototypes */
 static void vacuum_init(void);
 static void vacuum_shutdown(void);
-static void vac_vacuum(NameData *VacRelP, bool analyze, List *va_cols);
+static void vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2);
 static VRelList getrels(NameData *VacRelP);
-static void vacuum_rel(Oid relid, bool analyze, List *va_cols);
-static void analyze_rel(Oid relid, List *va_cols);
+static void vacuum_rel(Oid relid, bool analyze);
+static void analyze_rel(Oid relid, List *anal_cols2);
 static void scan_heap(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages, VPageList fraged_pages);
 static void repair_frag(VRelStats *vacrelstats, Relation onerel, VPageList vacuum_pages, VPageList fraged_pages, int nindices, Relation *Irel);
 static void vacuum_heap(VRelStats *vacrelstats, Relation onerel, VPageList vpl);
@@ -105,16 +105,16 @@ static char *show_rusage(struct rusage * ru0);
 /* CommonSpecialPortal function at the bottom */
 
 void
-vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
+vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols)
 {
 	NameData	VacRel;
 	Name		VacRelName;
 	PortalVariableMemory pmem;
 	MemoryContext old;
 	List	   *le;
-	List	   *va_cols = NIL;
+	List	   *anal_cols2 = NIL;
 
-	if (va_spec != NIL && !analyze)
+	if (anal_cols != NIL && !analyze)
 		elog(ERROR, "Can't vacuum columns, only tables.  You can 'vacuum analyze' columns.");
 
 	/*
@@ -149,11 +149,11 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 	/* must also copy the column list, if any, to safe storage */
 	pmem = CommonSpecialPortalGetMemory();
 	old = MemoryContextSwitchTo((MemoryContext) pmem);
-	foreach(le, va_spec)
+	foreach(le, anal_cols)
 	{
 		char	   *col = (char *) lfirst(le);
 
-		va_cols = lappend(va_cols, pstrdup(col));
+		anal_cols2 = lappend(anal_cols2, pstrdup(col));
 	}
 	MemoryContextSwitchTo(old);
 
@@ -168,7 +168,7 @@ vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec)
 	vacuum_init();
 
 	/* vacuum the database */
-	vac_vacuum(VacRelName, analyze, va_cols);
+	vac_vacuum(VacRelName, analyze, anal_cols2);
 
 	/* clean up */
 	vacuum_shutdown();
@@ -234,7 +234,7 @@ vacuum_shutdown()
  *		locks at one time.
  */
 static void
-vac_vacuum(NameData *VacRelP, bool analyze, List *va_cols)
+vac_vacuum(NameData *VacRelP, bool analyze, List *anal_cols2)
 {
 	VRelList	vrl,
 				cur;
@@ -244,12 +244,12 @@ vac_vacuum(NameData *VacRelP, bool analyze, List *va_cols)
 
 	/* vacuum each heap relation */
 	for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
-		vacuum_rel(cur->vrl_relid, analyze, va_cols);
+		vacuum_rel(cur->vrl_relid, analyze);
 
 	/* analyze separately so locking is minimized */
 	if (analyze)
 		for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
-			analyze_rel(cur->vrl_relid, va_cols);
+			analyze_rel(cur->vrl_relid, anal_cols2);
 }
 
 static VRelList
@@ -359,7 +359,7 @@ getrels(NameData *VacRelP)
  *		us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-vacuum_rel(Oid relid, bool analyze, List *va_cols)
+vacuum_rel(Oid relid, bool analyze)
 {
 	HeapTuple	tuple;
 	Relation	onerel;
@@ -508,7 +508,7 @@ vacuum_rel(Oid relid, bool analyze, List *va_cols)
  *	analyze_rel() -- analyze relation
  */
 static void
-analyze_rel(Oid relid, List *va_cols)
+analyze_rel(Oid relid, List *anal_cols2)
 {
 	HeapTuple	tuple,
 				typetuple;
@@ -569,16 +569,16 @@ analyze_rel(Oid relid, List *va_cols)
 	attr_cnt = onerel->rd_att->natts;
 	attr = onerel->rd_att->attrs;
 
-	if (va_cols != NIL)
+	if (anal_cols2 != NIL)
 	{
 		int			tcnt = 0;
 		List	   *le;
 
-		if (length(va_cols) > attr_cnt)
+		if (length(anal_cols2) > attr_cnt)
 			elog(ERROR, "vacuum: too many attributes specified for relation %s",
 				 RelationGetRelationName(onerel));
 		attnums = (int *) palloc(attr_cnt * sizeof(int));
-		foreach(le, va_cols)
+		foreach(le, anal_cols2)
 		{
 			char	   *col = (char *) lfirst(le);
 

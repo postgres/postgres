@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.28 2000/05/29 15:44:55 momjian Exp $
+ * $Id: vacuum.h,v 1.29 2000/05/29 16:21:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,7 @@ typedef struct VRelStats
 extern bool VacuumRunning;
 
 extern void vc_abort(void);
-extern void vacuum(char *vacrel, bool verbose, bool analyze, List *va_spec);
+extern void vacuum(char *vacrel, bool verbose, bool analyze, List *anal_cols);
 
 #define ATTNVALS_SCALE	1000000000		/* XXX so it can act as a float4 */
 
