@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.83 2005/02/20 14:57:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.84 2005/02/20 15:00:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -961,7 +961,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot,
 	}
 
 /* This is to be used only for disaster recovery and requires serious analysis. */
-#ifdef MAKE_ALL_TUPLES_VISIBLE
+#ifndef MAKE_ALL_TUPLES_VISIBLE
 	return false;
 #else
 	return true;
