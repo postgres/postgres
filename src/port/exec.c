@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.9 2004/05/19 04:36:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.10 2004/05/19 17:15:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,13 @@
 #define S_IROTH		 ((S_IRUSR)>>6)
 #define S_IWOTH		 ((S_IWUSR)>>6)
 #define S_IXOTH		 ((S_IXUSR)>>6)
+#endif
+
+#ifndef FRONTEND
+/* We use only 3-parameter elog calls in this file, for simplicity */
+#define log_error(str, param)	elog(LOG, (str), (param))
+#else
+#define log_error(str, param)	fprintf(stderr, (str), (param))
 #endif
 
 static void win32_make_absolute(char *path);
@@ -192,7 +199,7 @@ find_my_exec(const char *argv0, char *full_path)
 	{
 		if (*++p == '\0')
 		{
-			fprintf(stderr, "argv[0] ends with a path separator \"%s\"", argv0);
+			log_error("argv[0] ends with a path separator \"%s\"", argv0);
 			return -1;
 		}
 		if (is_absolute_path(argv0) || !getcwd(buf, MAXPGPATH))
@@ -208,7 +215,7 @@ find_my_exec(const char *argv0, char *full_path)
 		}
 		else
 		{
-			fprintf(stderr, "invalid binary \"%s\"", buf);
+			log_error("invalid binary \"%s\"", buf);
 			return -1;
 		}
 	}
@@ -245,7 +252,7 @@ find_my_exec(const char *argv0, char *full_path)
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
-					fprintf(stderr, "could not read binary \"%s\"", buf);
+					log_error("could not read binary \"%s\"", buf);
 					free(path);
 					return -1;
 			}
@@ -255,7 +262,7 @@ find_my_exec(const char *argv0, char *full_path)
 		free(path);
 	}
 
-	fprintf(stderr, "could not find a \"%s\" to execute", argv0);
+	log_error("could not find a \"%s\" to execute", argv0);
 	return -1;
 
 #if 0
@@ -337,17 +344,17 @@ pclose_check(FILE *stream)
 	}
 	else if (WIFEXITED(exitstatus))
 	{
-		fprintf(stderr, _("child process exited with exit code %d\n"),
+		log_error(_("child process exited with exit code %d\n"),
 				WEXITSTATUS(exitstatus));
 	}
 	else if (WIFSIGNALED(exitstatus))
 	{
-		fprintf(stderr, _("child process was terminated by signal %d\n"),
+		log_error(_("child process was terminated by signal %d\n"),
 				WTERMSIG(exitstatus));
 	}
 	else
 	{
-		fprintf(stderr, _("child process exited with unrecognized status %d\n"),
+		log_error(_("child process exited with unrecognized status %d\n"),
 				exitstatus);
 	}
 
@@ -369,7 +376,7 @@ win32_make_absolute(char *path)
 
 	if (_fullpath(abspath, path, MAXPGPATH) == NULL)
 	{
-		fprintf(stderr, "Win32 path expansion failed:  %s", strerror(errno));
+		log_error("Win32 path expansion failed:  %s", strerror(errno));
 		StrNCpy(abspath, path, MAXPGPATH);
 	}
 	canonicalize_path(abspath);
