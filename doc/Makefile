@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.16 2000/07/09 13:13:55 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/Makefile,v 1.17 2000/07/16 14:50:32 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -40,22 +40,22 @@ TARGETS= $(MODULES:%=%.html)
 .PRECIOUS: postgres.tex postgres.dvi
 .PHONY: beforeinstall install all clean distclean
 
-beforeinstall::
+beforeinstall:
 	-@if [ ! -d $(PGDOCS) ]; then mkdir $(PGDOCS); fi
 
-install::
+install:
 	$(MAKE) all
 	$(MAKE) man
 
-all:: beforeinstall $(MODULES)
+all: beforeinstall $(MODULES)
 
-clean::
+clean:
 	rm -rf $(MODULES)
 
-distclean::
+distclean:
 	$(MAKE) clean
 
-man::
+man:
 	-@if test ! -d $(POSTMANDIR) ; then mkdir $(POSTMANDIR) ; fi
 	gunzip -c man.tar.gz | (cd $(POSTMANDIR) ; $(TAR) xf - )
 

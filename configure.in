@@ -287,6 +287,18 @@ fi
 AC_DEFINE_UNQUOTED(PG_VERSION_STR, ["PostgreSQL $VERSION on $host, compiled by $cc_string"], [A canonical string containing the version number, platform, and C compiler])
 
 
+#
+# Automatic dependency tracking
+#
+AC_ARG_ENABLE(depend, [  --enable-depend         turn on automatic dependency tracking],
+[
+  if test x"$enableval" = x"yes" ; then
+    autodepend=yes
+  fi
+])
+AC_SUBST(autodepend)
+
+
 # --enable-debug adds -g to compiler flags
 # --disable-debug will forcefully remove it
 AC_MSG_CHECKING(setting debug compiler flag)

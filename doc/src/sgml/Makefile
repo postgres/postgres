@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.15 2000/06/18 21:24:51 petere Exp $
+#    $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.16 2000/07/16 14:50:38 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -121,9 +121,9 @@ SQLTARGETS= $(XSQLTARGETS:-ref.l=.l)
 .PRECIOUS: postgres.tex postgres.dvi
 .PHONY: install all clean distclean
 
-install::
+install:
 
-all::
+all:
 
 man:
 	$(MAKE) man1 manl
@@ -143,10 +143,10 @@ manl: $(SQLTARGETS) manpage.refs
 	if [ ! -d manl ]; then mkdir manl; fi
 	cp *.l manl/
 
-clean::
+clean:
 	(rm -rf HTML.manifest *.html *.htm *.1 *.l man1 manl manpage*)
 
-distclean::
+distclean:
 	$(MAKE) clean
 
 #

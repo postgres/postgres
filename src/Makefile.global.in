@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.86 2000/07/09 13:13:59 petere Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.87 2000/07/16 14:50:41 petere Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the
@@ -283,3 +283,71 @@ STRDUP = @STRDUP@
 
 .PHONY: all install installdirs uninstall dep depend clean distclean maintainer-clean
 .SILENT: installdirs
+
+# make `all' the default target
+all:
+
+$(top_builddir)/src/Makefile.global: $(top_srcdir)/src/Makefile.global.in $(top_builddir)/config.status
+	cd $(top_builddir) && CONFIG_FILES=src/Makefile.global CONFIG_HEADERS= ./config.status
+
+$(top_builddir)/config.status: $(top_srcdir)/configure
+	cd $(top_builddir) && ./config.status --recheck
+
+
+
+
+COMPILE.c = $(CC) -c $(CPPFLAGS) $(CFLAGS)
+
+# Automatic dependency generation
+# -------------------------------
+# When we configure with --enable-depend then we override the default
+# compilation rule with the magic below. While or after creating the
+# actual output file we also create a dependency list for the .c file.
+# Next time we invoke make we will have top-notch information about
+# whether this file needs to be updated. The dependency files are kept
+# in the .deps subdirectory of each directory.
+#
+# The sed command is necessary to post-process the dependency file:
+# Each dependency file becomes a target of its own, without
+# dependencies or commands. This is because if you happen to remove a
+# file that is a dependency (say, you rename a header file) the
+# dependency would point to a non-existing file and make would fail.
+# But if the file is listed as a target of its own, without
+# prerequisites and commands, and doesn't exist then make will
+# consider it updated. (That in turn also has the nice side effect
+# that make will update all files that depended on the now removed
+# file.)
+
+autodepend = @autodepend@
+
+ifdef autodepend
+
+DEPDIR = .deps
+df = $(DEPDIR)/$(*F)
+
+ifeq ($(GCC), yes)
+
+# GCC allows us to create object and dependency file in one invocation.
+%.o : %.c
+	$(COMPILE.c) -MMD $< -o $@
+	@if test ! -d $(DEPDIR); then mkdir $(DEPDIR); fi; \
+	 cp $*.d $(df).P; \
+	 sed -e 's/#.*//' -e 's/^[^:]*: *//' -e 's/ *\\$$//' \
+	     -e '/^$$/ d' -e 's/$$/ :/' < $*.d >> $(df).P; \
+	 rm -f $*.d
+
+endif # GCC
+
+# Include all the dependency files generated for the current
+# directory. List /dev/null as dummy because if the wildcard expands
+# to nothing then make would complain.
+-include $(wildcard $(DEPDIR)/*.P) /dev/null
+
+# hook for clean-up
+clean: clean-deps
+
+.PHONY: clean-deps
+clean-deps:
+	@rm -rf $(DEPDIR)
+
+endif # autodepend

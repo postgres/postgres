@@ -23,19 +23,19 @@ TARGETS= $(SRC:%=%.tar.gz)
 .PRECIOUS:
 .PHONY: install all sources clean distclean
 
-install::
+install:
 	$(MAKE) all
 	(mv -f *.gz ..)
 
-clean::
+clean:
 	$(MAKE) -C sgml clean
 
-distclean::
+distclean:
 	$(MAKE) -C sgml distclean
 
-all:: $(TARGETS)
+all: $(TARGETS)
 
-sources::
+sources:
 	$(MAKE) sources.tar.gz
 
 sources.tar:

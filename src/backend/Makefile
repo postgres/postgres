@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.61 2000/07/14 15:30:56 thomas Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.62 2000/07/16 14:50:44 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -187,7 +187,4 @@ quick: $(OBJS)
 	$(CC) -o postgres $(OBJS) $(LDFLAGS)
 
 depend dep: $(top_srcdir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
-	for i in $(DIRS); do $(MAKE) -C $$i $@; done
-
-.DEFAULT:
 	for i in $(DIRS); do $(MAKE) -C $$i $@; done

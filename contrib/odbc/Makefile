@@ -18,7 +18,7 @@ TARGETS= $(TARGETS_7)
 
 CLEANFILES+= $(TARGETS) $(TARGETS_PRE7)
 
-all:: $(TARGETS)
+all: $(TARGETS)
 
 install: all
 ifneq ($(filter odbc$(DLSUFFIX), $(TARGETS)),)

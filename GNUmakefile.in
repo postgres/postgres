@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.6 2000/06/28 18:29:11 petere Exp $
+# $Header: /cvsroot/pgsql/GNUmakefile.in,v 1.7 2000/07/16 14:50:28 petere Exp $
 #
 
 subdir =
@@ -29,9 +29,6 @@ distclean maintainer-clean:
 
 GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 	CONFIG_FILES=$@ CONFIG_HEADERS= ./config.status
-
-$(top_builddir)/config.status: $(top_srcdir)/configure
-	cd $(top_builddir) && ./config.status --recheck
 
 
 # These dependencies are risky because both the target and the sources

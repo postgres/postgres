@@ -1,7 +1,7 @@
 #
 # The PostgreSQL contrib tree Makefile
 #
-# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.6 2000/07/09 13:12:57 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.7 2000/07/16 14:50:29 petere Exp $
 #
 
 subdir = contrib
@@ -29,7 +29,7 @@ WANTED_DIRS =	array		\
 		vacuumlo	
 	#	odbc
 
-all .DEFAULT:
+all install installdirs uninstall clean distclean maintainer-clean:
 	for dir in $(WANTED_DIRS); do \
 	    if [ -e $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@ ; \
