@@ -6,7 +6,6 @@
 */
 #define JMP_BUF
 #define USE_POSIX_TIME
-#define USE_POSIX_SIGNALS
 #define HAS_TEST_AND_SET
 
 #if defined(PPC)

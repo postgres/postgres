@@ -1,6 +1,5 @@
 #define USE_POSIX_TIME
 #define NO_EMPTY_STMTS
-#define USE_POSIX_SIGNALS
 #define SYSV_DIRENT
 
 #define HAS_TEST_AND_SET

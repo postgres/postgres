@@ -263,6 +263,9 @@ extern void srandom(int seed);
 /* Define as the base type of the last arg to accept */
 #undef SOCKET_SIZE_TYPE
 
+/* Define if POSIX signal interface is available */
+#undef USE_POSIX_SIGNALS
+
 /*
  * Code below this point should not require changes
  */
