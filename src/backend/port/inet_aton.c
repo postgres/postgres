@@ -47,10 +47,6 @@
 #include <ctype.h>
 #include "inet_aton.h"
 
-#ifdef _AIX
-#include <sys/ltypes.h>	/* For definition of uint32 */
-#endif
-
 /*
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
@@ -61,7 +57,7 @@
 int
 inet_aton(const char *cp, struct in_addr * addr)
 {
-	register uint32 val;
+	register unsigned int val;
 	register int base,
 				n;
 	register char c;
