@@ -79,4 +79,3 @@ EXPORTS
 	destroyPQExpBuffer	@ 76
 	createPQExpBuffer	@ 77
 	PQconninfoFree		@ 78
-	PQunixsocket		@ 79
