@@ -121,6 +121,32 @@
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term>
+       Documentation
+      </term>
+      <listitem>
+       <para>
+	New and updated material is present throughout the
+	documentation. New <acronym>FAQ</acronym>s have been
+	contributed for SGI and AIX platforms.
+	The <citetitle>Tutorial</citetitle> has introductory information
+	on <acronym>SQL</acronym> from Stefan Simkovics.
+	For the <citetitle>User's Guide</citetitle>, there are
+	reference pages covering the postmaster and more utility
+	programs, and a new appendix
+	contains details on date/time behavior.
+	The <citetitle>Administrator's Guide</citetitle> has a new
+	chapter on troubleshooting from Tom Lane.
+	And the <citetitle>Programmer's Guide</citetitle> has a
+	description of query processing, also from Stefan, and details 
+	on obtaining the <productname>Postgres</productname> source
+	tree via anonymous <productname>CVS</productname> and
+	<productname>CVSup</productname>. 
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 

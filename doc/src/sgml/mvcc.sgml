@@ -515,7 +515,7 @@ ERROR:  Can't serialize access due to concurrent update
     by <command>SELECT</command> it doesn't mean that this row really
     exists at the time it is returned (i.e. sometime after the
     statement or transaction began) nor
-    that the row is protected from deletion or updation by concurrent
+    that the row is protected from deletion or update by concurrent
     transactions before the current transaction does a commit or rollback. 
    </para>
 

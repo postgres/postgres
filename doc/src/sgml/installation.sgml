@@ -1,10 +1,14 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.5 1999/06/03 04:21:48 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.6 1999/06/04 15:51:42 thomas Exp $
 
 Postgres quick Installation Guide.
 - thomas 1998-10-26
 
 $Log: installation.sgml,v $
+Revision 1.6  1999/06/04 15:51:42  thomas
+Add blurb on new docs in release notes.
+Make minor info and markup changes for v6.5 release.
+
 Revision 1.5  1999/06/03 04:21:48  thomas
 Markup changes for v6.5 release.
 Clean out duplicate stuff in odbc.sgml resulting from a faulty patch.
@@ -88,7 +92,7 @@ First cut at standalone installation guide to replace INSTALL text source.
 
 <legalnotice>
 <para>
-<productname>PostgreSQL</productname> is &copy; 1998-9
+<productname>PostgreSQL</productname> is Copyright &copy; 1996-9
 by the Postgres Global Development Group.
 </para>
 </legalnotice>
