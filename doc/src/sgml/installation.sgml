@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.44 2001/04/06 05:52:10 thomas Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.45 2001/04/06 15:52:41 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -1191,24 +1191,24 @@ gunzip -c user.ps.gz \
 	<entry>RS6000</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-21, Gilles Darold (<email>gilles@darold.net</email>)</entry>
-        <entry>See also <filename>doc/FAQ_AIX</filename></entry>
+        <entry>see also <filename>doc/FAQ_AIX</filename></entry>
        </row>
        <row>
 	<entry>BeOS 5.0.4</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
-	<entry>2001-02-26, Cyril Velter(<email>cyril.velter@libertysurf.fr</email>)</entry>
-        <entry>Requires new BONE networking stack</entry>
+	<entry>2001-02-26, Cyril Velter (<email>cyril.velter@libertysurf.fr</email>)</entry>
+        <entry>requires new BONE networking stack</entry>
        </row>
        <row>
-	<entry>BSDI 4.01</entry>
+	<entry>BSD/OS 4.01</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-20, Bruce Momjian (<email>pgman@candle.pha.pa.us</email>)</entry>
         <entry></entry>
        </row>
        <row>
-	<entry>Compaq Tru64</entry>
+	<entry>Compaq Tru64 UNIX</entry>
 	<entry>Alpha</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-26, Adriaan Joubert (<email>a.joubert@albourne.com</email>)</entry>
@@ -1222,12 +1222,12 @@ gunzip -c user.ps.gz \
         <entry></entry>
        </row>
        <row>
-	<entry>HPUX</entry>
+	<entry>HP/UX</entry>
 	<entry>PA-RISC</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, 10.20 Tom Lane (<email>tgl@sss.pgh.pa.us</email>),
 	       2001-03-22, 11.00, 11i Giles Lean (<email>giles@nemeton.com.au</email>)</entry>
-        <entry>32- and 64-bit on 11.00. See <filename>doc/FAQ_HPUX</filename></entry>
+        <entry>32- and 64-bit on 11.00; see also <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
 	<entry>IRIX 6.5.11</entry>
@@ -1357,18 +1357,11 @@ gunzip -c user.ps.gz \
         <entry></entry>
        </row>
        <row>
-	<entry>SCO OpenServer 5</entry>
-	<entry>x86</entry>
-	<entry>7.1</entry>
-	<entry>2001-03-13, Billy G. Allie (<email>Bill.Allie@mug.org</email>)</entry>
-	<entry>See also <filename>doc/FAQ_SCO</filename></entry>
-       </row>
-       <row>
 	<entry>SCO UnixWare 7.1.1</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-19, Larry Rosenman (<email>ler@lerctr.org</email>)</entry>
-	<entry>UDK FS compiler. See <filename>doc/FAQ_SCO</filename></entry>
+	<entry>UDK FS compiler; see also <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
 	<entry>Solaris 2.7-8</entry>
@@ -1376,14 +1369,14 @@ gunzip -c user.ps.gz \
 	<entry>7.1</entry>
 	<entry>2001-03-22, Marc Fournier (<email>scrappy@hub.org</email>),
        2001-03-25, Justin Clift (<email>justin@postgresql.org</email>)</entry>
-	<entry></entry>
+	<entry>see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry>Solaris 2.8</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-27, Mathijs Brands (<email>mathijs@ilse.nl</email>)</entry>
-	<entry></entry>
+	<entry>see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
 	<entry>SunOS 4.1.4</entry>
@@ -1393,11 +1386,11 @@ gunzip -c user.ps.gz \
 	<entry></entry>
        </row>
        <row>
-	<entry>WinNT/Cygwin</entry>
+	<entry>Windows NT/2000 with Cygwin</entry>
 	<entry>x86</entry>
 	<entry>7.1</entry>
 	<entry>2001-03-16, Jason Tishler (<email>Jason.Tishler@dothill.com</email>)</entry>
-        <entry>with <productname>Cygwin</productname> toolset</entry>
+        <entry>with <application>Cygwin</application> toolset, see <filename>doc/FAQ_MSWIN</filename></entry>
        </row>
       </tbody>
      </tgroup>
@@ -1433,7 +1426,7 @@ gunzip -c user.ps.gz \
       <entry>m88k</entry>
       <entry>6.3</entry>
       <entry>1998-03-01, Brian E Gallew (<email>geek+@cmu.edu</email>)</entry>
-      <entry>6.4 probably OK.</entry>
+      <entry>6.4 probably OK</entry>
      </row>
      <row>
       <entry>MkLinux DR1</entry>
@@ -1447,28 +1440,35 @@ gunzip -c user.ps.gz \
       <entry>x86</entry>
       <entry>6.x</entry>
       <entry>1998-03-01, David Wetzel (<email>dave@turbocat.de</email>)</entry>
-      <entry>Client-only support</entry>
+      <entry>bit rot suspected</entry>
      </row>
      <row>
       <entry>QNX 4.25</entry>
       <entry>x86</entry>
       <entry>7.0</entry>
       <entry>2000-04-01, Dr. Andreas Kardos (<email>kardos@repas-aeg.de</email>)</entry>
-      <entry>See also <filename>doc/FAQ_QNX4</filename></entry>
+      <entry>Spinlock code needs work.  See also <filename>doc/FAQ_QNX4</filename>.</entry>
+     </row>
+     <row>
+      <entry>SCO OpenServer 5</entry>
+      <entry>x86</entry>
+      <entry>6.5</entry>
+      <entry>1999-05-25, Andrew Merrill (<email>andrew@compclass.com</>)</entry>
+      <entry>7.1 should work, but no reports; see also <filename>doc/FAQ_SCO</filename></entry>
      </row>
      <row>
       <entry>System V R4</entry>
       <entry>m88k</entry>
       <entry>6.2.1</entry>
       <entry>1998-03-01, Doug Winterburn (<email>dlw@seavme.xroads.com</email>)</entry>
-      <entry>Needs new TAS spinlock code</entry>
+      <entry>needs new TAS spinlock code</entry>
      </row>
      <row>
       <entry>System V R4</entry>
       <entry>MIPS</entry>
       <entry>6.4</entry>
       <entry>1998-10-28, Frank Ridderbusch (<email>ridderbusch.pad@sni.de</email>)</entry>
-      <entry>No 64-bit integer</entry>
+      <entry>no 64-bit integer</entry>
      </row>
      <row>
       <entry>Ultrix</entry>
@@ -1485,11 +1485,16 @@ gunzip -c user.ps.gz \
       <entry>No recent reports. Obsolete?</entry>
      </row>
      <row>
-      <entry>Windows/Win32</entry>
+      <entry>Windows 9x, ME, NT, 2000 (native)</entry>
       <entry>x86</entry>
       <entry>7.1</entry>
       <entry>2001-03-26, Magnus Hagander (<email>mha@sollentuna.net</email>)</entry>
-      <entry>Client-side libraries or ODBC/JDBC, no server-side</entry>
+      <entry>
+       client-side libraries (libpq and psql) or ODBC/JDBC, no server-side;
+<![%flattext-install-include[see Administrator's Guide]]>
+<![%flattext-install-ignore[see <xref linkend="install-win32">]]>
+       for instructions
+      </entry>
      </row>
     </tbody>
    </tgroup>

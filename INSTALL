@@ -1,14 +1,4 @@
-PostgreSQL Installation Instructions
-
-Table of Contents
-Short Version
-Requirements
-If You Are Upgrading
-Installation Procedure
-Post-Installation Setup
-Getting Started
-What Now?
-Supported Platforms
+                    PostgreSQL Installation Instructions
 
 Short Version
 
@@ -21,6 +11,7 @@ su - postgres
 /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data >logfile 2>&1 &
 /usr/local/pgsql/bin/createdb test
 /usr/local/pgsql/bin/psql test
+
 
 The long version is the rest of this document.
 
@@ -53,7 +44,9 @@ The following prerequisites exist for building PostgreSQL:
 
    * The GNU Readline library for comfortable line editing and command
      history retrieval will automatically be used if found. You might wish
-     to install it before proceeding, but it is not required.
+     to install it before proceeding, but it is not required. (On NetBSD,
+     the libedit library is readline-compatible and is used if libreadline
+     is not found.)
 
    * Flex and Bison are not required when building from a released source
      package because the output files are pre-generated. You will need these
@@ -99,10 +92,12 @@ here. These instructions assume that your existing installation is under the
      pg_dumpall > outputfile
 
      If you need to preserve the OIDs (such as when using them as foreign
-     keys), then use the -o option when running pg_dumpall.
+     keys), then use the -o option when running pg_dumpall. pg_dumpall does
+     not save large objects. Check the Administrator's Guide if you need to
+     do this.
 
      Make sure that you use the pg_dumpall command from the version you are
-     currently running. 7.1devel's pg_dumpall should not be used on older
+     currently running. 7.1's pg_dumpall should not be used on older
      databases.
 
   3. If you are installing the new version at the same location as the old
@@ -116,9 +111,9 @@ here. These instructions assume that your existing installation is under the
      yourself, for example by typing ps ax | grep postmaster, and supply it
      to the kill command.
 
-     On systems which have PostgreSQL started at boot time, there is
-     probably a start-up file that will accomplish the same thing. For
-     example, on a Red Hat Linux system one might find that
+     On systems that have PostgreSQL started at boot time, there is probably
+     a start-up file that will accomplish the same thing. For example, on a
+     Red Hat Linux system one might find that
 
      /etc/rc.d/init.d/postgresql stop
 
@@ -130,10 +125,10 @@ here. These instructions assume that your existing installation is under the
 
      mv /usr/local/pgsql /usr/local/pgsql.old
 
-After you have installed PostgreSQL 7.1devel, create a new database
-directory and start the new server. Remember that you must execute these
-commands while logged in to the special database user account (which you
-already have if you are upgrading).
+After you have installed PostgreSQL 7.1, create a new database directory and
+start the new server. Remember that you must execute these commands while
+logged in to the special database user account (which you already have if
+you are upgrading).
 
 /usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data
 /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data
@@ -369,6 +364,13 @@ Installation Procedure
           to make sure that your OpenSSL installation is sufficient before
           proceeding.
 
+     --with-java
+
+          Build the JDBC driver and associated Java packages. This option
+          requires Ant to be installed (as well as a JDK, of course). Refer
+          to the JDBC driver documentation in the Programmer's Guide for
+          more information.
+
      --enable-syslog
 
           Enables the PostgreSQL server to use the syslog logging facility.
@@ -380,7 +382,26 @@ Installation Procedure
 
           Compiles all programs and libraries with debugging symbols. This
           means that you can run the programs through a debugger to analyze
-          problems. This option is not recommended for production use.
+          problems. This enlarges the size of the installed executables
+          considerably, and on non-gcc compilers it usually also disables
+          compiler optimization, causing slowdowns. However, having the
+          symbols available is extremely helpful for dealing with any
+          problems that may arise. Currently, this option is considered of
+          marginal value for production installations, but you should have
+          it on if you are doing development work or running a beta version.
+
+     --enable-cassert
+
+          Enables assertion checks in the server, which test for many "can't
+          happen" conditions. This is invaluable for code development
+          purposes, but the tests slow things down a little. Also, having
+          the tests turned on won't necessarily enhance the stability of
+          your server! The assertion checks are not categorized for
+          severity, and so what might be a relatively harmless bug will
+          still lead to postmaster restarts if it triggers an assertion
+          failure. Currently, this option is not recommended for production
+          use, but you should have it on for development work or when
+          running a beta version.
 
      If you prefer a C or C++ compiler different from the one configure
      picks then you can set the environment variables CC and CXX,
@@ -449,8 +470,21 @@ Installation Procedure
      other directories where Perl or Python can find them, but how to do
      that is left as an exercise.
 
+     The standard install installs only the header files needed for client
+     application development. If you plan to do any server-side program
+     development (such as custom functions or datatypes written in C), then
+     you may want to install the entire PostgreSQL include tree into your
+     target include directory. To do that, enter
+
+     gmake install-all-headers
+
+     This adds a megabyte or two to the install footprint, and is only
+     useful if you don't plan to keep the whole source tree around for
+     reference. (If you do, you can just use the source's include directory
+     when building server-side software.)
+
      Client-only installation. If you want to install only the client
-     applications and interfaces, then you can use these commands:
+     applications and interface libraries, then you can use these commands:
 
      gmake -C src/bin install
      gmake -C src/interfaces install
@@ -600,13 +634,13 @@ What Now?
 
    * The Tutorial should be your first reading if you are completely new to
      SQL databases. It should have been installed at
-     /usr/local/pgsql/doc/html/tutorial.htm unless you changed the
+     /usr/local/pgsql/doc/html/tutorial.html unless you changed the
      installation directories.
 
    * If you are familiar with database concepts then you want to proceed
      with the Administrator's Guide, which contains information about how to
      set up the database server, database users, and authentication. It can
-     be found at /usr/local/pgsql/doc/html/admin.htm.
+     be found at /usr/local/pgsql/doc/html/admin.html.
 
    * Usually, you will want to modify your computer so that it will
      automatically start the database server whenever it boots. Some
@@ -630,87 +664,113 @@ tests pass.
      supported platform, please write to <pgsql-bugs@postgresql.org> or
      <pgsql-ports@postgresql.org>, not to the people listed here.
 
- OS           Processor Version Reported                            Remarks
- AIX 4.3.2    RS6000    7.0     2000-04-05, Andread Zeugswetter     See also
-                                (<Andreas.Zeugswetter@telecom.at>)  doc/FAQ_AIX
- BSDI 4.01    x86       7.0     2000-04-04, Bruce Momjian
-                                (<pgman@candle.pha.pa.us>)
- Compaq Tru64 Alpha     7.0     2000-04-11, Andrew McMurry
- 5.0                            (<andrew.mcmurry@astro.uio.no>)
- FreeBSD 4.0  x86       7.0     2000-04-04, Marc Fournier
-                                (<scrappy@hub.org>)
- HPUX 9.0x andPA-RISC   7.0     2000-04-12, Tom Lane                See also
- 10.20                          (<tgl@sss.pgh.pa.us>)               doc/FAQ_HPUX
- IRIX 6.5.6f  MIPS      6.5.3   2000-02-18, Kevin Wheatley          MIPSPro
-                                (<hxpro@cinesite.co.uk>)            7.3.1.1m N32
-                                                                    build
- Linux 2.0.x  Alpha     7.0     2000-04-05, Ryan Kirkpatrick        with published
-                                (<pgsql@rkirkpat.net>)              patches
- Linux 2.2.x  armv4l    7.0     2000-04-17, Mark Knox               Regression
-                                (<segfault@hardline.org>)           test needs
-                                                                    work.
- Linux 2.2.x  x86       7.0     2000-03-26, Lamar Owen
-                                (<lamar.owen@wgcr.org>)
- Linux 2.0.x  MIPS      7.0     2000-04-13, Tatsuo Ishii            Cobalt Qube
-                                (<t-ishii@sra.co.jp>)
- Linux 2.2.5  Sparc     7.0     2000-04-02, Tom Szybist
-                                (<szybist@boxhill.com>)
- LinuxPPC R4  PPC603e   7.0     2000-04-13, Tatsuo Ishii
-                                (<t-ishii@sra.co.jp>)
- mklinux      PPC750    7.0     2000-04-13, Tatsuo Ishii
-                                (<t-ishii@sra.co.jp>)
- NetBSD 1.4   arm32     7.0     2000-04-08, Patrick Welche
-                                (<prlw1@newn.cam.ac.uk>)
- NetBSD 1.4U  x86       7.0     2000-03-26, Patrick Welche
-                                (<prlw1@newn.cam.ac.uk>)
- NetBSD       m68k      7.0     2000-04-10, Henry B. Hotz           Mac 8xx
-                                (<hotz@jpl.nasa.gov>)
- NetBSD       Sparc     7.0     2000-04-13, Tom I. Helbekkmo
-                                (<tih@kpnQwest.no>)
- QNX 4.25     x86       7.0     2000-04-01, Dr. Andreas Kardos      See also
-                                (<kardos@repas-aeg.de>)             doc/FAQ_QNX4
- SCO          x86       6.5     1999-05-25, Andrew Merrill          See also
- OpenServer 5                   (<andrew@compclass.com>)            doc/FAQ_SCO
- SCO UnixWare x86       7.0     2000-04-18, Billy G. Allie          See also
- 7                              (<Bill.Allie@mug.org>)              doc/FAQ_SCO
- Solaris      x86       7.0     2000-04-12, Marc Fournier
-                                (<scrappy@hub.org>)
- Solaris      Sparc     7.0     2000-04-12, Peter Eisentraut
- 2.5.1-2.7                      (<peter_e@gmx.net>), Marc Fournier
-                                (<scrappy@hub.org>)
- SunOS 4.1.4  Sparc     7.0     2000-04-13, Tatsuo Ishii
-                                (<t-ishii@sra.co.jp>)
- Windows/Win32x86       7.0     2000-04-02, Magnus Hagander         Client-side
-                                (<mha@sollentuna.net>)              libraries or
-                                                                    ODBC/JDBC, no
-                                                                    server-side
- WinNT/Cygwin x86       7.0     2000-03-30, Daniel Horak            with
-                                (<horak@sit.plzen-city.cz>)         RedHat/Cygnus
-                                                                    Cygwin toolset
+ OS       Processor Version Reported                               Remarks
+ AIX 4.3.3RS6000    7.1     2001-03-21, Gilles Darold              see also
+                            (<gilles@darold.net>)                  doc/FAQ_AIX
+ BeOS     x86       7.1     2001-02-26, Cyril Velter               requires new
+ 5.0.4                      (<cyril.velter@libertysurf.fr>)        BONE networking
+                                                                   stack
+ BSD/OS   x86       7.1     2001-03-20, Bruce Momjian
+ 4.01                       (<pgman@candle.pha.pa.us>)
+ Compaq   Alpha     7.1     2001-03-26, Adriaan Joubert            4.0-5.0, cc and
+ Tru64                      (<a.joubert@albourne.com>)             gcc
+ UNIX
+ FreeBSD  x86       7.1     2001-03-19, Vince Vielhaber
+ 4.3                        (<vev@hub.org>)
+ HP/UX    PA-RISC   7.1     2001-03-19, 10.20 Tom Lane             32- and 64-bit
+                            (<tgl@sss.pgh.pa.us>), 2001-03-22,     on 11.00; see
+                            11.00, 11i Giles Lean                  also
+                            (<giles@nemeton.com.au>)               doc/FAQ_HPUX
+ IRIX     MIPS      7.1     2001-03-22, Robert Bruccoleri          32-bit
+ 6.5.11                     (<bruc@acm.org>)                       compilation
+                                                                   model
+ Linux    Alpha     7.1     2001-01-23, Ryan Kirkpatrick
+ 2.2.x                      (<pgsql@rkirkpat.net>)
+ Linux    armv4l    7.1     2001-02-22, Mark Knox
+ 2.2.x                      (<segfault@hardline.org>)
+ Linux    MIPS      7.1     2001-03-30, Dominic Eidson             Cobalt Qube
+ 2.0.x                      (<sauron@the-infinite.org>)
+ Linux    PPC74xx   7.1     2001-03-19, Tom Lane                   Apple G3
+ 2.2.18                     (<tgl@sss.pgh.pa.us>)
+ Linux    S/390     7.1     2000-11-17, Neale Ferguson
+                            (<Neale.Ferguson@softwareAG-usa.com>)
+ Linux    Sparc     7.1     2001-01-30, Ryan Kirkpatrick
+ 2.2.15                     (<pgsql@rkirkpat.net>)
+ Linux    x86       7.1     2001-03-19, Thomas Lockhart            2.0.x, 2.2.x,
+                            (<thomas@fourpalms.org>)               2.4.2
+ MacOS X  PPC       7.1     2000-12-11, Peter Bierman              Darwin (only)
+                            (<bierman@apple.com>), 2000-12-11,     Beta-2 or higher
+                            Daniel Luke (<dluke@geeklair.net>)
+ NetBSD   Alpha     7.1     2001-03-22, Giles Lean
+ 1.5                        (<giles@nemeton.com.au>)
+ NetBSD   arm32     7.1     2001-03-21, Patrick Welche
+ 1.5E                       (<prlw1@cam.ac.uk>)
+ NetBSD   m68k      7.0     2000-04-10, Henry B. Hotz              Mac 8xx
+                            (<hotz@jpl.nasa.gov>)
+ NetBSD   PPC       7.1     2001-04-05, Henry B. Hotz              Mac G4
+                            (<hotz@jpl.nasa.gov>)
+ NetBSD   Sparc     7.1     2000-04-05, Matthew Green              32- and 64-bit
+                            (<mrg@eterna.com.au>)                  builds
+ NetBSD   VAX       7.1     2001-03-30, Tom I. Helbekkmo
+ 1.5                        (<tih@kpnQwest.no>)
+ NetBSD   x86       7.1     2001-03-23, Giles Lean
+ 1.5                        (<giles@nemeton.com.au>)
+ OpenBSD  Sparc     7.1     2001-03-23, Brandon Palmer
+ 2.8                        (<bpalmer@crimelabs.net>)
+ OpenBSD  x86       7.1     2001-03-21, Brandon Palmer
+ 2.8                        (<bpalmer@crimelabs.net>)
+ SCO      x86       7.1     2001-03-19, Larry Rosenman             UDK FS compiler;
+ UnixWare                   (<ler@lerctr.org>)                     see also
+ 7.1.1                                                             doc/FAQ_SCO
+ Solaris  Sparc     7.1     2001-03-22, Marc Fournier              see also
+ 2.7-8                      (<scrappy@hub.org>), 2001-03-25,       doc/FAQ_Solaris
+                            Justin Clift (<justin@postgresql.org>)
+ Solaris  x86       7.1     2001-03-27, Mathijs Brands             see also
+ 2.8                        (<mathijs@ilse.nl>)                    doc/FAQ_Solaris
+ SunOS    Sparc     7.1     2001-03-23, Tatsuo Ishii
+ 4.1.4                      (<t-ishii@sra.co.jp>)
+ Windows  x86       7.1     2001-03-16, Jason Tishler              with Cygwin
+ NT/2000                    (<Jason.Tishler@dothill.com>)          toolset, see
+ with                                                              doc/FAQ_MSWIN
+ Cygwin
 
 Unsupported Platforms. The following platforms have not been verified to
 work. Platforms listed for version 6.3.x and later should also work with
-7.1devel, but we did not receive explicit confirmation of such at the time
-this list was compiled. We include these here to let you know that these
+7.1, but we did not receive explicit confirmation of such at the time this
+list was compiled. We include these here to let you know that these
 platforms could be supported if given some attention.
 
- OS        Processor Version Reported                        Remarks
- BeOS      x86       7.0     2000-05-01, Adam Haberlach      Client-side
-                             (<adam@newsnipple.com>)         coming soon?
- DGUX      m88k      6.3     1998-03-01, Brian E Gallew      6.4 probably
- 5.4R4.11                    (<geek+@cmu.edu>)               OK. Needs new
-                                                             maintainer.
- NetBSD 1.3VAX       6.3     1998-03-01, Tom I Helbekkmo     7.0 should
-                             (<tih@kpnQwest.no>)             work.
- System V  m88k      6.2.1   1998-03-01, Doug Winterburn     Needs new TAS
- R4 4.4                      (<dlw@seavme.xroads.com>)       spinlock code
- System V  MIPS      6.4     1998-10-28, Frank Ridderbusch   No 64-bit
- R4                          (<ridderbusch.pad@sni.de>)      integer
- Ultrix    MIPS, VAX 6.x     1998-03-01                      No recent
-                                                             reports.
-                                                             Obsolete?
- MacOS     all       6.x     1998-03-01                      Not library
-                                                             compatible;
-                                                             use ODBC/JDBC.
- NextStep  x86       6.x     1998-03-01, David Wetzel        Client-only
-                             (<dave@turbocat.de>)            support
+ OS          Processor VersionReported                     Remarks
+ DGUX        m88k      6.3    1998-03-01, Brian E Gallew   6.4 probably OK
+ 5.4R4.11                     (<geek+@cmu.edu>)
+ MkLinux DR1 PPC750    7.0    2001-04-03, Tatsuo Ishii     7.1 needs OS
+                              (<t-ishii@sra.co.jp>)        update?
+ NextStep    x86       6.x    1998-03-01, David Wetzel     bit rot
+                              (<dave@turbocat.de>)         suspected
+ QNX 4.25    x86       7.0    2000-04-01, Dr. Andreas      Spinlock code
+                              Kardos                       needs work. See
+                              (<kardos@repas-aeg.de>)      also
+                                                           doc/FAQ_QNX4.
+ SCO         x86       6.5    1999-05-25, Andrew Merrill   7.1 should work,
+ OpenServer                   (<andrew@compclass.com>)     but no reports;
+ 5                                                         see also
+                                                           doc/FAQ_SCO
+ System V R4 m88k      6.2.1  1998-03-01, Doug Winterburn  needs new TAS
+                              (<dlw@seavme.xroads.com>)    spinlock code
+ System V R4 MIPS      6.4    1998-10-28, Frank            no 64-bit
+                              Ridderbusch                  integer
+                              (<ridderbusch.pad@sni.de>)
+ Ultrix      MIPS      7.1    2001-03-26                   TAS spinlock
+                                                           code not
+                                                           detected
+ Ultrix      VAX       6.x    1998-03-01                   No recent
+                                                           reports.
+                                                           Obsolete?
+ Windows 9x, x86       7.1    2001-03-26, Magnus Hagander  client-side
+ ME, NT,                      (<mha@sollentuna.net>)       libraries (libpq
+ 2000                                                      and psql) or
+ (native)                                                  ODBC/JDBC, no
+                                                           server-side; see
+                                                           Administrator's
+                                                           Guide for
+                                                           instructions
