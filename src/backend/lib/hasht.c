@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.13 2000/01/31 04:35:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.14 2001/01/02 04:33:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,23 +21,32 @@
 /* -----------------------------------
  *		HashTableWalk
  *
- *		call function on every element in hashtable
- *		one extra argument (arg) may be supplied
+ * call given function on every element in hashtable
+ *
+ * one extra argument (arg) may be supplied
+ *
+ * NOTE: it is allowed for the given function to delete the hashtable entry
+ * it is passed.  However, deleting any other element while the scan is
+ * in progress is UNDEFINED (see hash_seq functions).  Also, if elements are
+ * added to the table while the scan is in progress, it is unspecified
+ * whether they will be visited by the scan or not.
  * -----------------------------------
  */
 void
-HashTableWalk(HTAB *hashtable, HashtFunc function, int arg)
+HashTableWalk(HTAB *hashtable, HashtFunc function, Datum arg)
 {
+	HASH_SEQ_STATUS status;
 	long	   *hashent;
 	void	   *data;
 	int			keysize;
 
+	hash_seq_init(&status, hashtable);
 	keysize = hashtable->hctl->keysize;
-	hash_seq((HTAB *) NULL);
-	while ((hashent = hash_seq(hashtable)) != (long *) TRUE)
+
+	while ((hashent = hash_seq_search(&status)) != (long *) TRUE)
 	{
 		if (hashent == NULL)
-			elog(FATAL, "error in HashTableWalk.");
+			elog(FATAL, "error in HashTableWalk");
 
 		/*
 		 * XXX the corresponding hash table insertion does NOT LONGALIGN

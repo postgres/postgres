@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.16 2000/06/28 03:33:33 tgl Exp $
+ * $Id: hsearch.h,v 1.17 2001/01/02 04:33:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,14 @@ typedef enum
 	HASH_REMOVE_SAVED
 } HASHACTION;
 
+/* hash_seq status (should be considered an opaque type by callers) */
+typedef struct
+{
+	HTAB   *hashp;
+	long	curBucket;
+	BUCKET_INDEX curIndex;
+} HASH_SEQ_STATUS;
+
 /*
  * prototypes from functions in dynahash.c
  */
@@ -139,7 +147,8 @@ extern void hash_destroy(HTAB *hashp);
 extern void hash_stats(char *where, HTAB *hashp);
 extern long *hash_search(HTAB *hashp, char *keyPtr, HASHACTION action,
 			bool *foundPtr);
-extern long *hash_seq(HTAB *hashp);
+extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);
+extern long *hash_seq_search(HASH_SEQ_STATUS *status);
 extern long hash_estimate_size(long num_entries, long keysize, long datasize);
 extern long hash_select_dirsize(long num_entries);
 

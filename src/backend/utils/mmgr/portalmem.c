@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.37 2000/06/28 03:32:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.38 2001/01/02 04:33:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,6 @@
 #include "lib/hasht.h"
 #include "utils/memutils.h"
 #include "utils/portal.h"
-
-static void CollectNamedPortals(Portal *portalP, int destroy);
 
 /* ----------------
  *		Global state
@@ -121,64 +119,10 @@ static MemoryContext PortalMemory = NULL;
 
 
 /* ----------------------------------------------------------------
- *				  private internal support routines
- * ----------------------------------------------------------------
- */
-
-/*
- * This routine is used to collect all portals created in this xaction
- * and then destroy them.  There is a little trickiness required as a
- * result of the dynamic hashing interface to getting every hash entry
- * sequentially.  Its use of static variables requires that we get every
- * entry *before* we destroy anything (destroying updates the hashtable
- * and screws up the sequential walk of the table). -mer 17 Aug 1992
- */
-static void
-CollectNamedPortals(Portal *portalP, int destroy)
-{
-	static Portal *portalList = (Portal *) NULL;
-	static int	listIndex = 0;
-	static int	maxIndex = 9;
-
-	if (portalList == (Portal *) NULL)
-		portalList = (Portal *) malloc(10 * sizeof(Portal));
-
-	if (destroy != 0)
-	{
-		int			i;
-
-		for (i = 0; i < listIndex; i++)
-			PortalDrop(&portalList[i]);
-		listIndex = 0;
-	}
-	else
-	{
-		Assert(portalP);
-		Assert(*portalP);
-
-		portalList[listIndex] = *portalP;
-		listIndex++;
-		if (listIndex == maxIndex)
-		{
-			portalList = (Portal *)
-				realloc(portalList, (maxIndex + 11) * sizeof(Portal));
-			maxIndex += 10;
-		}
-	}
-	return;
-}
-
-void
-AtEOXact_portals()
-{
-	HashTableWalk(PortalHashTable, (HashtFunc) CollectNamedPortals, 0);
-	CollectNamedPortals(NULL, 1);
-}
-
-/* ----------------------------------------------------------------
  *				   public portal interface functions
  * ----------------------------------------------------------------
  */
+
 /*
  * EnablePortalManager
  *		Enables the portal management module at backend startup.
@@ -337,6 +281,9 @@ CreatePortal(char *name)
  * Exceptions:
  *		BadState if called when disabled.
  *		BadArg if portal is invalid.
+ *
+ * Note peculiar calling convention: pass a pointer to a portal pointer.
+ * This is mainly so that this routine can be used as a hashtable walker.
  */
 void
 PortalDrop(Portal *portalP)
@@ -358,6 +305,15 @@ PortalDrop(Portal *portalP)
 	/* release name and portal data (both are in PortalMemory) */
 	pfree(portal->name);
 	pfree(portal);
+}
+
+/*
+ * Destroy all portals created in the current transaction (ie, all of them).
+ */
+void
+AtEOXact_portals(void)
+{
+	HashTableWalk(PortalHashTable, (HashtFunc) PortalDrop, 0);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.32 2000/06/28 03:32:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.33 2001/01/02 04:33:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -681,50 +681,54 @@ hash_search(HTAB *hashp,
 }
 
 /*
- * hash_seq -- sequentially search through hash table and return
- *			   all the elements one by one, return NULL on error and
- *			   return TRUE in the end.
+ * hash_seq_init/_search
+ *			Sequentially search through hash table and return
+ *			all the elements one by one, return NULL on error and
+ *			return (long *) TRUE in the end.
  *
+ * NOTE: caller may delete the returned element before continuing the scan.
+ * However, deleting any other element while the scan is in progress is
+ * UNDEFINED (it might be the one that curIndex is pointing at!).  Also,
+ * if elements are added to the table while the scan is in progress, it is
+ * unspecified whether they will be visited by the scan or not.
  */
-long *
-hash_seq(HTAB *hashp)
+void
+hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp)
 {
-	static long curBucket = 0;
-	static BUCKET_INDEX curIndex;
-	ELEMENT    *curElem;
-	long		segment_num;
-	long		segment_ndx;
-	SEGMENT		segp;
-	HHDR	   *hctl;
+	status->hashp = hashp;
+	status->curBucket = 0;
+	status->curIndex = INVALID_INDEX;
+}
 
-	if (hashp == NULL)
+long *
+hash_seq_search(HASH_SEQ_STATUS *status)
+{
+	HTAB	   *hashp = status->hashp;
+	HHDR	   *hctl = hashp->hctl;
+
+	while (status->curBucket <= hctl->max_bucket)
 	{
+		long		segment_num;
+		long		segment_ndx;
+		SEGMENT		segp;
 
-		/*
-		 * reset static state
-		 */
-		curBucket = 0;
-		curIndex = INVALID_INDEX;
-		return (long *) NULL;
-	}
-
-	hctl = hashp->hctl;
-	while (curBucket <= hctl->max_bucket)
-	{
-		if (curIndex != INVALID_INDEX)
+		if (status->curIndex != INVALID_INDEX)
 		{
-			curElem = GET_BUCKET(hashp, curIndex);
-			curIndex = curElem->next;
-			if (curIndex == INVALID_INDEX)		/* end of this bucket */
-				++curBucket;
+			/* Continuing scan of curBucket... */
+			ELEMENT    *curElem;
+
+			curElem = GET_BUCKET(hashp, status->curIndex);
+			status->curIndex = curElem->next;
+			if (status->curIndex == INVALID_INDEX)	/* end of this bucket */
+				++status->curBucket;
 			return &(curElem->key);
 		}
 
 		/*
 		 * initialize the search within this bucket.
 		 */
-		segment_num = curBucket >> hctl->sshift;
-		segment_ndx = MOD(curBucket, hctl->ssize);
+		segment_num = status->curBucket >> hctl->sshift;
+		segment_ndx = MOD(status->curBucket, hctl->ssize);
 
 		/*
 		 * first find the right segment in the table directory.
@@ -742,10 +746,10 @@ hash_seq(HTAB *hashp)
 		 * directory of valid stuff.  if there are elements in the bucket
 		 * chains that point to the freelist we're in big trouble.
 		 */
-		curIndex = segp[segment_ndx];
+		status->curIndex = segp[segment_ndx];
 
-		if (curIndex == INVALID_INDEX)	/* empty bucket */
-			++curBucket;
+		if (status->curIndex == INVALID_INDEX)	/* empty bucket */
+			++status->curBucket;
 	}
 
 	return (long *) TRUE;		/* out of buckets */

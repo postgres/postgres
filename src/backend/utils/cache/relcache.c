@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.121 2000/12/22 23:12:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.122 2001/01/02 04:33:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,10 +253,10 @@ static void RelationClearRelation(Relation relation, bool rebuildIt);
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 static void RelationReloadClassinfo(Relation relation);
 #endif /* ENABLE_REINDEX_NAILED_RELATIONS */
-static void RelationFlushRelation(Relation *relationPtr,
-					  int skipLocalRelations);
+static void RelationFlushRelation(Relation relation);
 static Relation RelationNameCacheGetRelation(const char *relationName);
-static void RelationCacheAbortWalker(Relation *relationPtr, int dummy);
+static void RelationCacheInvalidateWalker(Relation *relationPtr, Datum listp);
+static void RelationCacheAbortWalker(Relation *relationPtr, Datum dummy);
 static void init_irels(void);
 static void write_irels(void);
 
@@ -1639,14 +1639,12 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	 * we'd be unable to recover.
 	 */
 	if (relation->rd_isnailed)
-#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 	{
+#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 		RelationReloadClassinfo(relation);
 #endif /* ENABLE_REINDEX_NAILED_RELATIONS */
 		return;
-#ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 	}
-#endif /* ENABLE_REINDEX_NAILED_RELATIONS */
 
 	/*
 	 * Remove relation from hash tables
@@ -1774,26 +1772,15 @@ RelationClearRelation(Relation relation, bool rebuildIt)
  * RelationFlushRelation
  *
  *	 Rebuild the relation if it is open (refcount > 0), else blow it away.
- *	 If skipLocalRelations is TRUE, xact-local relations are ignored
- *	 (which is useful when processing SI cache reset, since xact-local
- *	 relations could not be targets of notifications from other backends).
- *
- *	 The peculiar calling convention (pointer to pointer to relation)
- *	 is needed so that we can use this routine as a hash table walker.
  * --------------------------------
  */
 static void
-RelationFlushRelation(Relation *relationPtr,
-					  int skipLocalRelations)
+RelationFlushRelation(Relation relation)
 {
-	Relation	relation = *relationPtr;
 	bool		rebuildIt;
 
 	if (relation->rd_myxactonly)
 	{
-		if (skipLocalRelations)
-			return;				/* don't touch local rels if so commanded */
-
 		/*
 		 * Local rels should always be rebuilt, not flushed; the relcache
 		 * entry must live until RelationPurgeLocalRelation().
@@ -1878,7 +1865,7 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 	RelationIdCacheLookup(relationId, relation);
 
 	if (PointerIsValid(relation))
-		RelationFlushRelation(&relation, false);
+		RelationFlushRelation(relation);
 }
 
 #if NOT_USED
@@ -1900,34 +1887,11 @@ RelationFlushIndexes(Relation *r,
 	if (relation->rd_rel->relkind == RELKIND_INDEX &&	/* XXX style */
 		(!OidIsValid(accessMethodId) ||
 		 relation->rd_rel->relam == accessMethodId))
-		RelationFlushRelation(&relation, false);
+		RelationFlushRelation(relation);
 }
 
 #endif
 
-
-#if NOT_USED
-void
-RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
-{
-
-	/*
-	 * 25 aug 1992:  mao commented out the ht walk below.  it should be
-	 * doing the right thing, in theory, but flushing reldescs for index
-	 * relations apparently doesn't work.  we want to cut 4.0.1, and i
-	 * don't want to introduce new bugs.  this code never executed before,
-	 * so i'm turning it off for now.  after the release is cut, i'll fix
-	 * this up.
-	 *
-	 * 20 nov 1999:  this code has still never done anything, so I'm cutting
-	 * the routine out of the system entirely.	tgl
-	 */
-
-	HashTableWalk(RelationNameCache, (HashtFunc) RelationFlushIndexes,
-				  accessMethodId);
-}
-
-#endif
 
 /*
  * RelationCacheInvalidate
@@ -1938,12 +1902,59 @@ RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
  *	 so we do not touch transaction-local relations; they cannot be targets
  *	 of cross-backend SI updates (and our own updates now go through a
  *	 separate linked list that isn't limited by the SI message buffer size).
+ *
+ *	 We do this in two phases: the first pass deletes deletable items, and
+ *	 the second one rebuilds the rebuildable items.  This is essential for
+ *	 safety, because HashTableWalk only copes with concurrent deletion of
+ *	 the element it is currently visiting.  If a second SI overflow were to
+ *	 occur while we are walking the table, resulting in recursive entry to
+ *	 this routine, we could crash because the inner invocation blows away
+ *	 the entry next to be visited by the outer scan.  But this way is OK,
+ *	 because (a) during the first pass we won't process any more SI messages,
+ *	 so HashTableWalk will complete safely; (b) during the second pass we
+ *	 only hold onto pointers to nondeletable entries.
  */
 void
 RelationCacheInvalidate(void)
 {
-	HashTableWalk(RelationNameCache, (HashtFunc) RelationFlushRelation,
-				  (int) true);
+	List   *rebuildList = NIL;
+	List   *l;
+
+	/* Phase 1 */
+	HashTableWalk(RelationNameCache,
+				  (HashtFunc) RelationCacheInvalidateWalker,
+				  PointerGetDatum(&rebuildList));
+
+	/* Phase 2: rebuild the items found to need rebuild in phase 1 */
+	foreach (l, rebuildList)
+	{
+		Relation	relation = (Relation) lfirst(l);
+
+		RelationClearRelation(relation, true);
+	}
+	freeList(rebuildList);
+}
+
+static void
+RelationCacheInvalidateWalker(Relation *relationPtr, Datum listp)
+{
+	Relation	relation = *relationPtr;
+	List   **rebuildList = (List **) DatumGetPointer(listp);
+
+	/* We can ignore xact-local relations, since they are never SI targets */
+	if (relation->rd_myxactonly)
+		return;
+
+	if (RelationHasReferenceCountZero(relation))
+	{
+		/* Delete this entry immediately */
+		RelationClearRelation(relation, false);
+	}
+	else
+	{
+		/* Add entry to list of stuff to rebuild in second pass */
+		*rebuildList = lcons(relation, *rebuildList);
+	}
 }
 
 /*
@@ -1962,12 +1973,13 @@ RelationCacheInvalidate(void)
 void
 RelationCacheAbort(void)
 {
-	HashTableWalk(RelationNameCache, (HashtFunc) RelationCacheAbortWalker,
+	HashTableWalk(RelationNameCache,
+				  (HashtFunc) RelationCacheAbortWalker,
 				  0);
 }
 
 static void
-RelationCacheAbortWalker(Relation *relationPtr, int dummy)
+RelationCacheAbortWalker(Relation *relationPtr, Datum dummy)
 {
 	Relation	relation = *relationPtr;
 

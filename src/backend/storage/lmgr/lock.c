@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.74 2000/12/22 00:51:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.75 2001/01/02 04:33:16 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1772,6 +1772,7 @@ DumpAllLocks(void)
 	int			lockmethod = DEFAULT_LOCKMETHOD;
 	LOCKMETHODTABLE *lockMethodTable;
 	HTAB	   *holderTable;
+	HASH_SEQ_STATUS status;
 
 	pid = getpid();
 	ShmemPIDLookup(pid, &location);
@@ -1791,8 +1792,8 @@ DumpAllLocks(void)
 	if (proc->waitLock)
 		LOCK_PRINT("DumpAllLocks: waiting on", proc->waitLock, 0);
 
-	hash_seq(NULL);
-	while ((holder = (HOLDER *) hash_seq(holderTable)) &&
+	hash_seq_init(&status, holderTable);
+	while ((holder = (HOLDER *) hash_seq_search(&status)) &&
 		   (holder != (HOLDER *) TRUE))
 	{
 		HOLDER_PRINT("DumpAllLocks", holder);

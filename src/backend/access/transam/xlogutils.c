@@ -262,7 +262,7 @@ _xl_init_rel_cache(void)
 }
 
 static void
-_xl_remove_hash_entry(XLogRelDesc **edata, int dummy)
+_xl_remove_hash_entry(XLogRelDesc **edata, Datum dummy)
 {
 	XLogRelCacheEntry	   *hentry;
 	bool					found;
@@ -328,7 +328,7 @@ XLogCloseRelationCache(void)
 	if (!_xlrelarr)
 		return;
 
-	HashTableWalk(_xlrelcache, (HashtFunc)_xl_remove_hash_entry, 0);
+	HashTableWalk(_xlrelcache, (HashtFunc) _xl_remove_hash_entry, 0);
 	hash_destroy(_xlrelcache);
 
 	free(_xlrelarr);
