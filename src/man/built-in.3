@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/built-in.3,v 1.6 1997/04/27 19:26:24 thomas Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/built-in.3,v 1.7 1997/05/16 07:13:46 thomas Exp $
 .TH BUILT-INS INTRO 04/01/97 PostgreSQL PostgreSQL
 .SH "DESCRIPTION"
 This section describes the data types, functions and operators
@@ -79,9 +79,25 @@ types are either unique to Postgres, such as open and closed paths, or have
 several possibilities for formats, such as date and time types.
 
 .SH "Syntax of date and time types"
+Some date and time types share code for data input. For those types (currently
+.IR datetime
+and
+.IR abstime )
+the input can have any of a wide variety of styles. For numeric date representations,
+European and US conventions can differ, and the proper interpretation is obtained
+by using the
+.IR set (l)
+command before entering data.
+Output formats can be set to one of three styles: 
+ISO-8601, SQL (traditional Oracle/Ingres), and traditional
+Postgres (see section on
+.IR "absolute time" )
+with the SQL style having European and US variants (see
+.IR set (l)).
+
 .SH "DATETIME"
 General-use date and time is input using a wide range of
-syntaxes, including ISO-compatible, SQL-compatible, traditional
+styles, including ISO-compatible, SQL-compatible, traditional
 Postgres (see section on
 .IR "absolute time")
 and other permutations of date and time. Output styles can be ISO-compatible,
@@ -1053,20 +1069,21 @@ sum    |int2
 sum    |int4
 sum    |money
 
-\fBcount\fR is also available, where
-.BR count(*)
-returns a count of all rows while
-.BR count(column_name)
-returns a count of all non-null fields in the specified column.
-
 .fi
+\fBcount\fR is also available, where \fBcount(*)\fR returns a count of all
+rows while \fBcount(column_name)\fR returns a count of all non-null fields
+in the specified column.
+
 .in
 .SH "SEE ALSO"
+.IR set (l),
+.IR show (l),
+.IR reset (l).
 For examples on specifying literals of built-in types, see
-.IR SQL(l).
+.IR SQL (l).
 .SH BUGS
 .PP
-Although most of the input and output functions correponding to the
+Although most of the input and output functions corresponding to the
 base types (e.g., integers and floating point numbers) do some
 error-checking, some are not particularly rigorous about it.  More
 importantly, few of the operators and functions (e.g.,
