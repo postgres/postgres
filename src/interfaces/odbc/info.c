@@ -3006,6 +3006,7 @@ PGAPI_ForeignKeys(
 	make_string(szFkTableName, cbFkTableName, fk_table_needed);
 
 #ifdef	MULTIBYTE
+	pkey_text = fkey_text = pkt_text = fkt_text = NULL;
 	pkey_alloced = fkey_alloced = pkt_alloced = fkt_alloced = FALSE;
 	conn = SC_get_conn(stmt);
 #endif	 /* MULTIBYTE */
