@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Mar 21 00:26:29 EST 1998
+Last updated:		Tue Apr  7 16:56:24 EDT 1998
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -28,6 +28,7 @@ Developers who have claimed items are:
 	* Jan is Jan Wieck <wieck@sapserv.debis.de>
 	* Jun is Jun Kuwamura <juk@rccm.co.jp>
 	* Kurt is "Kurt J. Lidl" <lidl@va.pubnix.com>
+	* Maarten is Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
  	* Marc is Marc Fournier <scrappy@hub.org>
  	* Martin is Martin S. Utesch <utesch@aut.tu-freiberg.de>
 	* Michael is Michael Meskes <meskes@debian.org>
@@ -79,6 +80,9 @@ RELIABILITY
 * views on subselects fail
 * disallow inherited columns with the same name as new columns
 * recover or force failure when disk space is exhausted
+* default char() value not to full length crashes server on some OS's
+* -DISTINCT not on last query fails on UNION but not UNION ALL
+* Negative constants used with int2 or float4 columns fails
 
 ENHANCEMENTS
 ------------
@@ -88,7 +92,7 @@ ENHANCEMENTS
 * Allow transaction commits with rollback with no-fsync performance
 * More access control over who can create tables and access the database
 * Add full ANSI SQL capabilities
-	* Implement HAVING clause(Stephan)
+	* -Implement HAVING clause(Stephan)
 	* add OUTER joins, left and right (Thomas)
 	* make VIEWs updateable where possible
 	* add INTERSECTS, SUBTRACTS(Stephan)
@@ -157,6 +161,8 @@ ENHANCEMENTS
 * Have psql with no database name not connect to username as default(?)
 * Allow subqueries in target list
 * Granting permissions to another user looses permissions for the owner
+* Allow queries across multiple databases
+* Add replication of distributed databases
 
 PERFORMANCE
 -----------
@@ -193,6 +199,30 @@ DOCUMENTATION
 
 
 =============================================================================
+
+
+CHANGES IN THE 6.3.2 PATCH
+--------------------------
+configure detection improvements for tcl/tk(Brook Milligan, Alvin)
+Manual page improvements(Bruce)
+BETWEEN and LIKE fix(Thomas)
+fix for psql \connect used by pg_dump(Oliver Elphick)
+Cleanup of postodbc source code indentation
+pgaccess, version 0.86
+HAVING clause now supported in SELECT(Stefan)
+qsort removed, now uses libc version, cleanups(Jeroen)
+fix for buffer over-runs detected(Maurice Gittens)
+fix for buffer overrun in libpgtcl(Randy Kunkee)
+fix for UNION with DISTINCT or ORDER BY(Bruce)
+gettimeofday configure check(Doug Winterburn)
+Fix "indexes not used" bug(Vadim)
+docs additions(Thomas)
+Fix for backend memory leak(Bruce)
+libreadline cleanup(Erwan MAS)
+Remove DISTDIR(Bruce)
+Makefile dependency cleanup(Jeroen van Vianen)
+ASSERT fixes(Bruce)
+
 
 CHANGES IN THE 6.3.1 PATCH 
 --------------------------

@@ -1,3 +1,35 @@
+PostgreSQL 6.3.2             Tue Apr  7 16:53:16 EDT 1998
+-------------------------------------------------------------
+
+A dump/restore is NOT required for those running 6.3.1.  A 
+'make distclean', 'make', and 'make install' is all that is required.
+This last step should be performed while the postmaster is not running.
+You should re-link any custom applications that use PostgreSQL libraries.
+
+Changes
+-------
+configure detection improvements for tcl/tk(Brook Milligan, Alvin)
+Manual page improvements(Bruce)
+BETWEEN and LIKE fix(Thomas)
+fix for psql \connect used by pg_dump(Oliver Elphick)
+Cleanup of postodbc source code indentation
+pgaccess, version 0.86
+HAVING clause now supported in SELECT(Stefan)
+qsort removed, now uses libc version, cleanups(Jeroen)
+fix for buffer over-runs detected(Maurice Gittens)
+fix for buffer overrun in libpgtcl(Randy Kunkee)
+fix for UNION with DISTINCT or ORDER BY(Bruce)
+gettimeofday configure check(Doug Winterburn)
+Fix "indexes not used" bug(Vadim)
+docs additions(Thomas)
+Fix for backend memory leak(Bruce)
+libreadline cleanup(Erwan MAS)
+Remove DISTDIR(Bruce)
+Makefile dependency cleanup(Jeroen van Vianen)
+ASSERT fixes(Bruce)
+
+
+
 PostgreSQL 6.3.1             Mon Mar 23 10:21:52 EST 1998
 -------------------------------------------------------------
 
