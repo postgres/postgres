@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.102 1999/09/26 02:28:38 tgl Exp $
+ * $Id: pg_proc.h,v 1.103 1999/09/29 21:13:30 wieck Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2306,6 +2306,8 @@ DATA(insert OID = 1766 ( numeric_smaller		PGUID 11 f t t 2 f 1700 "1700 1700" 10
 DESCR("smaller of two numbers");
 DATA(insert OID = 1767 ( numeric_larger			PGUID 11 f t t 2 f 1700 "1700 1700" 100 0 0 100  numeric_larger - ));
 DESCR("larger of two numbers");
+DATA(insert OID = 1769 ( numeric_cmp			PGUID 11 f t t 2 f 23 "1700 1700" 100 0 0 100  numeric_cmp - ));
+DESCR("compare two numbers");
 
 
 /*

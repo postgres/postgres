@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.85 1999/08/01 04:54:20 tgl Exp $
+ * $Id: builtins.h,v 1.86 1999/09/29 21:13:31 wieck Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -572,6 +572,7 @@ Numeric		numeric_round(Numeric num, int32 scale);
 Numeric		numeric_trunc(Numeric num, int32 scale);
 Numeric		numeric_ceil(Numeric num);
 Numeric		numeric_floor(Numeric num);
+int32		numeric_cmp(Numeric num1, Numeric num2);
 bool		numeric_eq(Numeric num1, Numeric num2);
 bool		numeric_ne(Numeric num1, Numeric num2);
 bool		numeric_gt(Numeric num1, Numeric num2);
