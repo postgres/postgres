@@ -3,6 +3,10 @@
  * trigger.h
  *	  prototypes for trigger.c.
  *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * $Id: trigger.h,v 1.18 2000/01/31 04:35:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +73,12 @@ extern DLLIMPORT TriggerData *CurrentTriggerData;
 extern void CreateTrigger(CreateTrigStmt *stmt);
 extern void DropTrigger(DropTrigStmt *stmt);
 extern void RelationRemoveTriggers(Relation rel);
+
+extern void RelationBuildTriggers(Relation relation);
+
+extern void FreeTriggerDesc(TriggerDesc *trigdesc);
+
+extern bool equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2);
 
 extern HeapTuple ExecBRInsertTriggers(Relation rel, HeapTuple tuple);
 extern void ExecARInsertTriggers(Relation rel, HeapTuple tuple);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.33 2000/01/26 05:57:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.34 2000/01/31 04:35:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,7 +468,7 @@ CollectNamedPortals(Portal *portalP, int destroy)
 void
 AtEOXact_portals()
 {
-	HashTableWalk(PortalHashTable, CollectNamedPortals, 0);
+	HashTableWalk(PortalHashTable, (HashtFunc) CollectNamedPortals, 0);
 	CollectNamedPortals(NULL, 1);
 }
 
@@ -478,7 +478,7 @@ AtEOXact_portals()
  */
 #ifdef NOT_USED
 static void
-PortalDump(Portal *thisP)
+PortalDump(Portal *thisP, int dummy)
 {
 	/* XXX state/argument checking here */
 
@@ -498,7 +498,7 @@ DumpPortals()
 {
 	/* XXX state checking here */
 
-	HashTableWalk(PortalHashTable, PortalDump, 0);
+	HashTableWalk(PortalHashTable, (HashtFunc) PortalDump, 0);
 }
 
 #endif
@@ -556,7 +556,7 @@ EnablePortalManager(bool on)
 		/*
 		 * Each portal must free its non-memory resources specially.
 		 */
-		HashTableWalk(PortalHashTable, PortalDrop, 0);
+		HashTableWalk(PortalHashTable, (HashtFunc) PortalDrop, 0);
 		hash_destroy(PortalHashTable);
 		PortalHashTable = NULL;
 

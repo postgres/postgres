@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.23 2000/01/26 05:57:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.24 2000/01/31 04:35:53 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -388,6 +388,11 @@ AllocSetFree(AllocSet set, AllocPointer pointer)
 	AssertArg(AllocSetContains(set, pointer));
 
 	chunk = AllocPointerGetChunk(pointer);
+
+#ifdef CLOBBER_FREED_MEMORY
+	/* Wipe freed memory for debugging purposes */
+	memset(pointer, 0x7F, chunk->size);
+#endif
 
 	if (chunk->size >= ALLOC_BIGCHUNK_LIMIT)
 	{

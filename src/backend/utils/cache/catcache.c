@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.58 2000/01/26 05:57:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.59 2000/01/31 04:35:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,6 @@ static long comphash(long l, char *v);
 
 /* ----------------
  *		variables, macros and other stuff
- *
- *	note CCSIZE allocates 51 buckets .. one was already allocated in
- *	the catcache structure.
  * ----------------
  */
 
@@ -64,17 +61,20 @@ GlobalMemory CacheCxt;			/* context in which caches are allocated */
 
 
 /* ----------------
- *		EQPROC is used in CatalogCacheInitializeCache
- *		XXX this should be replaced by catalog lookups soon
+ *		EQPROC is used in CatalogCacheInitializeCache to find the equality
+ *		functions for system types that are used as cache key fields.
+ *
+ *		XXX this should be replaced by catalog lookups,
+ *		but that seems to pose considerable risk of circularity...
  * ----------------
  */
-static long eqproc[] = {
-	F_BOOLEQ, 0l, F_CHAREQ, F_NAMEEQ, 0l,
-	F_INT2EQ, F_KEYFIRSTEQ, F_INT4EQ, 0l, F_TEXTEQ,
-	F_OIDEQ, 0l, 0l, 0l, F_OIDVECTOREQ
+static const Oid eqproc[] = {
+	F_BOOLEQ, InvalidOid, F_CHAREQ, F_NAMEEQ, InvalidOid,
+	F_INT2EQ, F_KEYFIRSTEQ, F_INT4EQ, F_OIDEQ, F_TEXTEQ,
+	F_OIDEQ, InvalidOid, InvalidOid, InvalidOid, F_OIDVECTOREQ
 };
 
-#define EQPROC(SYSTEMTYPEOID)	eqproc[(SYSTEMTYPEOID)-16]
+#define EQPROC(SYSTEMTYPEOID)	eqproc[(SYSTEMTYPEOID)-BOOLOID]
 
 /* ----------------------------------------------------------------
  *					internal support functions
@@ -169,12 +169,13 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	}
 
 	/* ----------------
-	 *	initialize the cache's relation id
+	 *	initialize the cache's relation id and tuple descriptor
 	 * ----------------
 	 */
 	Assert(RelationIsValid(relation));
 	cache->relationId = RelationGetRelid(relation);
-	tupdesc = cache->cc_tupdesc = RelationGetDescr(relation);
+	tupdesc = CreateTupleDescCopyConstr(RelationGetDescr(relation));
+	cache->cc_tupdesc = tupdesc;
 
 	CACHE3_elog(DEBUG, "CatalogCacheInitializeCache: relid %u, %d keys",
 				cache->relationId, cache->cc_nkeys);
@@ -253,22 +254,6 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	 */
 	MemoryContextSwitchTo(oldcxt);
 }
-
-/* --------------------------------
- *		CatalogCacheSetId
- *
- *		XXX temporary function
- * --------------------------------
- */
-#ifdef NOT_USED
-void
-CatalogCacheSetId(CatCache *cacheInOutP, int id)
-{
-	Assert(id == InvalidCatalogCacheId || id >= 0);
-	cacheInOutP->id = id;
-}
-
-#endif
 
 /* ----------------
  * comphash
@@ -369,10 +354,12 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 								  Relation relation,
 								  HeapTuple tuple)
 {
-	bool		isNull = '\0';
+	bool		isNull = false;
 
+	/* XXX is this really needed? */
 	if (cacheInOutP->relationId == InvalidOid)
 		CatalogCacheInitializeCache(cacheInOutP, relation);
+
 	switch (cacheInOutP->cc_nkeys)
 	{
 		case 4:
@@ -417,8 +404,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 			break;
 		default:
 			elog(FATAL, "CCComputeTupleHashIndex: %d cc_nkeys",
-				 cacheInOutP->cc_nkeys
-				);
+				 cacheInOutP->cc_nkeys);
 			break;
 	}
 
@@ -427,6 +413,8 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 
 /* --------------------------------
  *		CatCacheRemoveCTup
+ *
+ *		NB: assumes caller has switched to CacheCxt
  * --------------------------------
  */
 static void
@@ -436,19 +424,24 @@ CatCacheRemoveCTup(CatCache *cache, Dlelem *elt)
 	CatCTup    *other_ct;
 	Dlelem	   *other_elt;
 
-	if (elt)
-		ct = (CatCTup *) DLE_VAL(elt);
-	else
+	if (!elt)					/* probably-useless safety check */
 		return;
 
+	/* We need to zap both linked-list elements as well as the tuple */
+
+	ct = (CatCTup *) DLE_VAL(elt);
 	other_elt = ct->ct_node;
 	other_ct = (CatCTup *) DLE_VAL(other_elt);
+
+	heap_freetuple(ct->ct_tup);
+
 	DLRemove(other_elt);
 	DLFreeElem(other_elt);
-	free(other_ct);
+	pfree(other_ct);
 	DLRemove(elt);
 	DLFreeElem(elt);
-	free(ct);
+	pfree(ct);
+
 	--cache->cc_ntup;
 }
 
@@ -529,7 +522,6 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(oldcxt);
-	/* sendpm('I', "Invalidated tuple"); */
 }
 
 /* ----------------------------------------------------------------
@@ -615,34 +607,26 @@ ResetSystemCache()
  *
  *	A special case occurs when relId is itself one of the cacheable system
  *	tables --- although those'll never be dropped, they can get flushed from
- *	the relcache (VACUUM causes this, for example).  In that case we need to
- *	force the next SearchSysCache() call to reinitialize the cache itself,
- *	because we have info (such as cc_tupdesc) that is pointing at the about-
- *	to-be-deleted relcache entry.
+ *	the relcache (VACUUM causes this, for example).  In that case we need
+ *	to flush all cache entries from that table.  The brute-force method
+ *	currently used takes care of that quite handily.  (At one point we
+ *	also tried to force re-execution of CatalogCacheInitializeCache for
+ *	the cache(s) on that table.  This is a bad idea since it leads to all
+ *	kinds of trouble if a cache flush occurs while loading cache entries.
+ *	We now avoid the need to do it by copying cc_tupdesc out of the relcache,
+ *	rather than relying on the relcache to keep a tupdesc for us.  Of course
+ *	this assumes the tupdesc of a cachable system table will not change...)
  * --------------------------------
  */
 void
 SystemCacheRelationFlushed(Oid relId)
 {
-	struct catcache *cache;
-
 	/*
 	 * XXX Ideally we'd search the caches and just zap entries that actually
-	 * refer to the indicated relation.  For now, we take the brute-force
-	 * approach: just flush the caches entirely.
+	 * refer to or come from the indicated relation.  For now, we take the
+	 * brute-force approach: just flush the caches entirely.
 	 */
 	ResetSystemCache();
-
-	/*
-	 * If relcache is dropping a system relation's cache entry, mark the
-	 * associated cache structures invalid, so we can rebuild them from
-	 * scratch (not just repopulate them) next time they are used.
-	 */
-	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
-	{
-		if (cache->relationId == relId)
-			cache->relationId = InvalidOid;
-	}
 }
 
 /* --------------------------------
@@ -715,11 +699,11 @@ InitSysCache(char *relname,
 	{
 		/*
 		 * We can only do this optimization because the number of hash
-		 * buckets never changes.  Without it, we call malloc() too much.
+		 * buckets never changes.  Without it, we call palloc() too much.
 		 * We could move this to dllist.c, but the way we do this is not
-		 * dynamic/portabl, so why allow other routines to use it.
+		 * dynamic/portable, so why allow other routines to use it.
 		 */
-		Dllist	   *cache_begin = malloc((NCCBUCK + 1) * sizeof(Dllist));
+		Dllist	   *cache_begin = palloc((NCCBUCK + 1) * sizeof(Dllist));
 
 		for (i = 0; i <= NCCBUCK; ++i)
 		{
@@ -927,7 +911,7 @@ SearchSysCache(struct catcache * cache,
 	MemoryContext oldcxt;
 
 	/* ----------------
-	 *	sanity checks
+	 *	one-time startup overhead
 	 * ----------------
 	 */
 	if (cache->relationId == InvalidOid)
@@ -946,7 +930,7 @@ SearchSysCache(struct catcache * cache,
 	 *	resolve self referencing informtion
 	 */
 	if ((ntp = SearchSelfReferences(cache)))
-		return	heap_copytuple(ntp);
+		return ntp;
 
 	/* ----------------
 	 *	find the hash bucket in which to look for the tuple
@@ -995,10 +979,8 @@ SearchSysCache(struct catcache * cache,
 		DLMoveToFront(elt);
 
 #ifdef CACHEDEBUG
-		relation = heap_open(cache->relationId, NoLock);
 		CACHE3_elog(DEBUG, "SearchSysCache(%s): found in bucket %d",
-					RelationGetRelationName(relation), hash);
-		heap_close(relation, NoLock);
+					cache->cc_relname, hash);
 #endif	 /* CACHEDEBUG */
 
 		return ct->ct_tup;
@@ -1020,9 +1002,7 @@ SearchSysCache(struct catcache * cache,
 	 */
 
 	if (cache->busy)
-	{
 		elog(ERROR, "SearchSysCache: recursive use of cache %d", cache->id);
-	}
 	cache->busy = true;
 
 	/* ----------------
@@ -1140,10 +1120,10 @@ SearchSysCache(struct catcache * cache,
 		 * it easier to remove something from both the cache bucket and
 		 * the lru list at the same time
 		 */
-		nct = (CatCTup *) malloc(sizeof(CatCTup));
+		nct = (CatCTup *) palloc(sizeof(CatCTup));
 		nct->ct_tup = ntp;
 		elt = DLNewElem(nct);
-		nct2 = (CatCTup *) malloc(sizeof(CatCTup));
+		nct2 = (CatCTup *) palloc(sizeof(CatCTup));
 		nct2->ct_tup = ntp;
 		lru_elt = DLNewElem(nct2);
 		nct2->ct_node = elt;

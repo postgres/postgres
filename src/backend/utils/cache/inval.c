@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.33 2000/01/29 19:51:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.34 2000/01/31 04:35:52 tgl Exp $
  *
  * Note - this code is real crufty...
  *
@@ -557,7 +557,7 @@ static void
 ResetSystemCaches()
 {
 	ResetSystemCache();
-	RelationCacheInvalidate(true);
+	RelationCacheInvalidate();
 }
 
 /* --------------------------------

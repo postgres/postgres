@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.18 2000/01/26 05:58:38 momjian Exp $
+ * $Id: relcache.h,v 1.19 2000/01/31 04:35:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,11 +29,9 @@ extern void RelationForgetRelation(Oid rid);
 /*
  * Routines for flushing/rebuilding relcache entries in various scenarios
  */
-extern void RelationRebuildRelation(Relation relation);
-
 extern void RelationIdInvalidateRelationCacheByRelationId(Oid relationId);
 
-extern void RelationCacheInvalidate(bool onlyFlushReferenceCountZero);
+extern void RelationCacheInvalidate(void);
 
 extern void RelationRegisterRelation(Relation relation);
 extern void RelationPurgeLocalRelation(bool xactComitted);

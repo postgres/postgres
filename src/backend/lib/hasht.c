@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.12 2000/01/26 05:56:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/hasht.c,v 1.13 2000/01/31 04:35:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,14 +22,14 @@
  *		HashTableWalk
  *
  *		call function on every element in hashtable
- *		one extra argument, arg may be supplied
+ *		one extra argument (arg) may be supplied
  * -----------------------------------
  */
 void
 HashTableWalk(HTAB *hashtable, HashtFunc function, int arg)
 {
 	long	   *hashent;
-	long	   *data;
+	void	   *data;
 	int			keysize;
 
 	keysize = hashtable->hctl->keysize;
@@ -43,7 +43,7 @@ HashTableWalk(HTAB *hashtable, HashtFunc function, int arg)
 		 * XXX the corresponding hash table insertion does NOT LONGALIGN
 		 * -- make sure the keysize is ok
 		 */
-		data = (long *) LONGALIGN((char *) hashent + keysize);
+		data = (void *) LONGALIGN((char *) hashent + keysize);
 		(*function) (data, arg);
 	}
 }

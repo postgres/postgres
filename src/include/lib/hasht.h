@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hasht.h,v 1.9 2000/01/26 05:58:09 momjian Exp $
+ * $Id: hasht.h,v 1.10 2000/01/31 04:35:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 
 #include "utils/hsearch.h"
 
-typedef void (*HashtFunc) ();
+typedef void (*HashtFunc) (void *hashitem, int arg);
 
 extern void HashTableWalk(HTAB *hashtable, HashtFunc function, int arg);
 

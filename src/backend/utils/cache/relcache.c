@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.88 2000/01/29 19:51:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.89 2000/01/31 04:35:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
  *		RelationIdGetRelation			- get a reldesc by relation id
  *		RelationNameGetRelation			- get a reldesc by relation name
  *		RelationClose					- close an open relation
- *		RelationRebuildRelation			- rebuild relation information
  *
  * NOTES
  *		This file is in the process of being cleaned up
@@ -37,7 +36,6 @@
 
 #include "postgres.h"
 
-#include "utils/builtins.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/istrat.h"
@@ -52,50 +50,45 @@
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_type.h"
 #include "catalog/pg_variable.h"
+#include "commands/trigger.h"
 #include "lib/hasht.h"
 #include "miscadmin.h"
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
+#include "utils/builtins.h"
 #include "utils/catcache.h"
 #include "utils/relcache.h"
 #include "utils/temprel.h"
 
 
-static void RelationClearRelation(Relation relation, bool rebuildIt);
-static void RelationFlushRelation(Relation *relationPtr,
-								  bool onlyFlushReferenceCountZero);
-static Relation RelationNameCacheGetRelation(const char *relationName);
-static void RelationCacheAbortWalker(Relation *relationPtr,
-									 int dummy);
-static void init_irels(void);
-static void write_irels(void);
-
-/* ----------------
- *		externs
- * ----------------
- */
-extern bool AMI_OVERRIDE;		/* XXX style */
-extern GlobalMemory CacheCxt;	/* from utils/cache/catcache.c */
-
 /* ----------------
  *		hardcoded tuple descriptors.  see lib/backend/catalog/pg_attribute.h
  * ----------------
  */
-FormData_pg_attribute Desc_pg_class[Natts_pg_class] = {Schema_pg_class};
-FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Schema_pg_attribute};
-FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
-FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
-FormData_pg_attribute Desc_pg_variable[Natts_pg_variable] = {Schema_pg_variable};
-FormData_pg_attribute Desc_pg_log[Natts_pg_log] = {Schema_pg_log};
+static FormData_pg_attribute Desc_pg_class[Natts_pg_class] = {Schema_pg_class};
+static FormData_pg_attribute Desc_pg_attribute[Natts_pg_attribute] = {Schema_pg_attribute};
+static FormData_pg_attribute Desc_pg_proc[Natts_pg_proc] = {Schema_pg_proc};
+static FormData_pg_attribute Desc_pg_type[Natts_pg_type] = {Schema_pg_type};
+static FormData_pg_attribute Desc_pg_variable[Natts_pg_variable] = {Schema_pg_variable};
+static FormData_pg_attribute Desc_pg_log[Natts_pg_log] = {Schema_pg_log};
 
 /* ----------------
- *		global variables
+ *		Hash tables that index the relation cache
  *
  *		Relations are cached two ways, by name and by id,
  *		thus there are two hash tables for referencing them.
  * ----------------
  */
-HTAB	   *RelationNameCache;
-HTAB	   *RelationIdCache;
+static HTAB	   *RelationNameCache;
+static HTAB	   *RelationIdCache;
+
+/*
+ * newlyCreatedRelns -
+ *	  relations created during this transaction. We need to keep track of
+ *	  these.
+ */
+static List *newlyCreatedRelns = NULL;
+
 
 /* ----------------
  *		RelationBuildDescInfo exists so code can be shared
@@ -207,8 +200,17 @@ do { \
 } while(0)
 
 /* non-export function prototypes */
+
+static void RelationClearRelation(Relation relation, bool rebuildIt);
+static void RelationFlushRelation(Relation *relationPtr,
+								  int skipLocalRelations);
+static Relation RelationNameCacheGetRelation(const char *relationName);
+static void RelationCacheAbortWalker(Relation *relationPtr, int dummy);
+static void init_irels(void);
+static void write_irels(void);
+
 static void formrdesc(char *relationName, u_int natts,
-		  FormData_pg_attribute *att);
+					  FormData_pg_attribute *att);
 
 static HeapTuple ScanPgRelation(RelationBuildDescInfo buildinfo);
 static HeapTuple scan_pg_rel_seq(RelationBuildDescInfo buildinfo);
@@ -226,16 +228,6 @@ static Relation RelationBuildDesc(RelationBuildDescInfo buildinfo,
 static void IndexedAccessMethodInitialize(Relation relation);
 static void AttrDefaultFetch(Relation relation);
 static void RelCheckFetch(Relation relation);
-
-extern void RelationBuildTriggers(Relation relation);
-extern void FreeTriggerDesc(Relation relation);
-
-/*
- * newlyCreatedRelns -
- *	  relations created during this transaction. We need to keep track of
- *	  these.
- */
-static List *newlyCreatedRelns = NULL;
 
 /* ----------------------------------------------------------------
  *		RelationIdGetRelation() and RelationNameGetRelation()
@@ -632,22 +624,20 @@ RelationBuildRuleLock(Relation relation)
 						   ObjectIdGetDatum(RelationGetRelid(relation)));
 
 	/* ----------------
-	 *	open pg_attribute and begin a scan
+	 *	open pg_rewrite and begin a scan
 	 * ----------------
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName, AccessShareLock);
 	pg_rewrite_scan = heap_beginscan(pg_rewrite_desc, 0, SnapshotNow, 1, &key);
 	pg_rewrite_tupdesc = RelationGetDescr(pg_rewrite_desc);
 
-	/* ----------------
-	 *	add attribute data to relation->rd_att
-	 * ----------------
-	 */
 	while (HeapTupleIsValid(pg_rewrite_tuple = heap_getnext(pg_rewrite_scan, 0)))
 	{
 		bool		isnull;
 		Datum		ruleaction;
-		Datum		rule_evqual_string;
+		Datum		rule_evqual;
+		char	   *ruleaction_str;
+		char	   *rule_evqual_str;
 		RewriteRule *rule;
 
 		rule = (RewriteRule *) palloc(sizeof(RewriteRule));
@@ -665,24 +655,27 @@ RelationBuildRuleLock(Relation relation)
 										 &isnull);
 
 		ruleaction = heap_getattr(pg_rewrite_tuple,
-						   Anum_pg_rewrite_ev_action, pg_rewrite_tupdesc,
+								  Anum_pg_rewrite_ev_action,
+								  pg_rewrite_tupdesc,
 								  &isnull);
-		rule_evqual_string = heap_getattr(pg_rewrite_tuple,
-							 Anum_pg_rewrite_ev_qual, pg_rewrite_tupdesc,
-										  &isnull);
+		ruleaction_str = textout((text *) DatumGetPointer(ruleaction));
+		rule->actions = (List *) stringToNode(ruleaction_str);
+		pfree(ruleaction_str);
 
-		ruleaction = PointerGetDatum(textout((text *) DatumGetPointer(ruleaction)));
-		rule_evqual_string = PointerGetDatum(textout((text *) DatumGetPointer(rule_evqual_string)));
+		rule_evqual = heap_getattr(pg_rewrite_tuple,
+								   Anum_pg_rewrite_ev_qual,
+								   pg_rewrite_tupdesc,
+								   &isnull);
+		rule_evqual_str = textout((text *) DatumGetPointer(rule_evqual));
+		rule->qual = (Node *) stringToNode(rule_evqual_str);
+		pfree(rule_evqual_str);
 
-		rule->actions = (List *) stringToNode(DatumGetPointer(ruleaction));
-		rule->qual = (Node *) stringToNode(DatumGetPointer(rule_evqual_string));
-
-		rules[numlocks++] = rule;
-		if (numlocks == maxlocks)
+		if (numlocks >= maxlocks)
 		{
 			maxlocks *= 2;
 			rules = (RewriteRule **) repalloc(rules, sizeof(RewriteRule *) * maxlocks);
 		}
+		rules[numlocks++] = rule;
 	}
 
 	/* ----------------
@@ -701,7 +694,91 @@ RelationBuildRuleLock(Relation relation)
 	rulelock->rules = rules;
 
 	relation->rd_rules = rulelock;
-	return;
+}
+
+/* --------------------------------
+ *		FreeRuleLock
+ *
+ *		Release the storage used for a set of rewrite rules.
+ *
+ *		Probably this should be in the rules code someplace...
+ * --------------------------------
+ */
+static void
+FreeRuleLock(RuleLock *rlock)
+{
+	int		i;
+
+	if (rlock == NULL)
+		return;
+	for (i = 0; i < rlock->numLocks; i++)
+	{
+		RewriteRule *rule = rlock->rules[i];
+
+#if 0							/* does freefuncs.c still work?  Not sure */
+		freeObject(rule->actions);
+		freeObject(rule->qual);
+#endif
+		pfree(rule);
+	}
+	pfree(rlock->rules);
+	pfree(rlock);
+}
+
+/* --------------------------------
+ *		equalRuleLocks
+ *
+ *		Determine whether two RuleLocks are equivalent
+ *
+ *		Probably this should be in the rules code someplace...
+ * --------------------------------
+ */
+static bool
+equalRuleLocks(RuleLock *rlock1, RuleLock *rlock2)
+{
+	int		i,
+			j;
+
+	if (rlock1 != NULL)
+	{
+		if (rlock2 == NULL)
+			return false;
+		if (rlock1->numLocks != rlock2->numLocks)
+			return false;
+		for (i = 0; i < rlock1->numLocks; i++)
+		{
+			RewriteRule *rule1 = rlock1->rules[i];
+			RewriteRule *rule2 = NULL;
+
+			/*
+			 * We can't assume that the rules are always read from
+			 * pg_rewrite in the same order; so use the rule OIDs to
+			 * identify the rules to compare.  (We assume here that the
+			 * same OID won't appear twice in either ruleset.)
+			 */
+			for (j = 0; j < rlock2->numLocks; j++)
+			{
+				rule2 = rlock2->rules[j];
+				if (rule1->ruleId == rule2->ruleId)
+					break;
+			}
+			if (j >= rlock2->numLocks)
+				return false;
+			if (rule1->event != rule2->event)
+				return false;
+			if (rule1->attrno != rule2->attrno)
+				return false;
+			if (rule1->isInstead != rule2->isInstead)
+				return false;
+			if (! equal(rule1->qual, rule2->qual))
+				return false;
+			if (! equal(rule1->actions, rule2->actions))
+				return false;
+		}
+	}
+	else if (rlock2 != NULL)
+		return false;
+	return true;
 }
 
 
@@ -800,7 +877,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	 * ----------------
 	 */
 	if (OidIsValid(relam))
-		relation->rd_am = (Form_pg_am) AccessMethodObjectIdGetForm(relam);
+		relation->rd_am = AccessMethodObjectIdGetForm(relam);
 
 	/* ----------------
 	 *	initialize the tuple descriptor (relation->rd_att).
@@ -1213,6 +1290,9 @@ RelationClose(Relation relation)
  *	 usually used when we are notified of a change to an open relation
  *	 (one with refcount > 0).  However, this routine just does whichever
  *	 it's told to do; callers must determine which they want.
+ *
+ *	 If we detect a change in the relation's TupleDesc or trigger data
+ *	 while rebuilding, we complain unless refcount is 0.
  * --------------------------------
  */
 static void
@@ -1252,26 +1332,53 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 	/* Clear out catcache's entries for this relation */
 	SystemCacheRelationFlushed(RelationGetRelid(relation));
 
-	/* Free all the subsidiary data structures of the relcache entry */
-	FreeTupleDesc(relation->rd_att);
-	FreeTriggerDesc(relation);
-	pfree(RelationGetForm(relation));
+	/*
+	 * Free all the subsidiary data structures of the relcache entry.
+	 * We cannot free rd_att if we are trying to rebuild the entry,
+	 * however, because pointers to it may be cached in various places.
+	 * The trigger manager might also have pointers into the trigdesc,
+	 * and the rule manager might have pointers into the rewrite rules.
+	 * So to begin with, we can only get rid of these fields:
+	 */
+	if (relation->rd_am)
+		pfree(relation->rd_am);
+	if (relation->rd_rel)
+		pfree(relation->rd_rel);
+	if (relation->rd_istrat)
+		pfree(relation->rd_istrat);
+	if (relation->rd_support)
+		pfree(relation->rd_support);
 
 	/*
 	 * If we're really done with the relcache entry, blow it away.
 	 * But if someone is still using it, reconstruct the whole deal
 	 * without moving the physical RelationData record (so that the
-	 * someone's pointer is still valid).  Must preserve ref count
-	 * and myxactonly flag, too.
+	 * someone's pointer is still valid).
 	 */
 	if (! rebuildIt)
 	{
+		/* ok to zap remaining substructure */
+		FreeTupleDesc(relation->rd_att);
+		FreeRuleLock(relation->rd_rules);
+		FreeTriggerDesc(relation->trigdesc);
 		pfree(relation);
 	}
 	else
 	{
-		uint16		old_refcnt = relation->rd_refcnt;
-		bool		old_myxactonly = relation->rd_myxactonly;
+		/*
+		 * When rebuilding an open relcache entry, must preserve ref count
+		 * and myxactonly flag.  Also attempt to preserve the tupledesc,
+		 * rewrite rules, and trigger substructures in place.
+		 * Furthermore we save/restore rd_nblocks (in case it is a local
+		 * relation) *and* call RelationGetNumberOfBlocks (in case it isn't).
+		 */
+		uint16			old_refcnt = relation->rd_refcnt;
+		bool			old_myxactonly = relation->rd_myxactonly;
+		TupleDesc		old_att = relation->rd_att;
+		RuleLock	   *old_rules = relation->rd_rules;
+		TriggerDesc	   *old_trigdesc = relation->trigdesc;
+		int				old_nblocks = relation->rd_nblocks;
+		bool			relDescChanged = false;
 		RelationBuildDescInfo buildinfo;
 
 		buildinfo.infotype = INFO_RELID;
@@ -1280,12 +1387,54 @@ RelationClearRelation(Relation relation, bool rebuildIt)
 		if (RelationBuildDesc(buildinfo, relation) != relation)
 		{
 			/* Should only get here if relation was deleted */
+			FreeTupleDesc(old_att);
+			FreeRuleLock(old_rules);
+			FreeTriggerDesc(old_trigdesc);
 			pfree(relation);
 			elog(ERROR, "RelationClearRelation: relation %u deleted while still in use",
 				 buildinfo.i.info_id);
 		}
 		RelationSetReferenceCount(relation, old_refcnt);
 		relation->rd_myxactonly = old_myxactonly;
+		if (equalTupleDescs(old_att, relation->rd_att))
+		{
+			FreeTupleDesc(relation->rd_att);
+			relation->rd_att = old_att;
+		}
+		else
+		{
+			FreeTupleDesc(old_att);
+			relDescChanged = true;
+		}
+		if (equalRuleLocks(old_rules, relation->rd_rules))
+		{
+			FreeRuleLock(relation->rd_rules);
+			relation->rd_rules = old_rules;
+		}
+		else
+		{
+			FreeRuleLock(old_rules);
+			relDescChanged = true;
+		}
+		if (equalTriggerDescs(old_trigdesc, relation->trigdesc))
+		{
+			FreeTriggerDesc(relation->trigdesc);
+			relation->trigdesc = old_trigdesc;
+		}
+		else
+		{
+			FreeTriggerDesc(old_trigdesc);
+			relDescChanged = true;
+		}
+		relation->rd_nblocks = old_nblocks;
+		/* this is kind of expensive, but I think we must do it in case
+		 * relation has been truncated...
+		 */
+		relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
+
+		if (relDescChanged && ! RelationHasReferenceCountZero(relation))
+			elog(ERROR, "RelationClearRelation: relation %u modified while in use",
+				 buildinfo.i.info_id);
 	}
 
 	MemoryContextSwitchTo(oldcxt);
@@ -1295,32 +1444,40 @@ RelationClearRelation(Relation relation, bool rebuildIt)
  * RelationFlushRelation
  *
  *	 Rebuild the relation if it is open (refcount > 0), else blow it away.
- *	 Setting onlyFlushReferenceCountZero to FALSE overrides refcount check.
- *	 This is currently only used to process SI invalidation notifications.
+ *	 If skipLocalRelations is TRUE, xact-local relations are ignored
+ *	 (which is useful when processing SI cache reset, since xact-local
+ *	 relations could not be targets of notifications from other backends).
+ *
  *	 The peculiar calling convention (pointer to pointer to relation)
  *	 is needed so that we can use this routine as a hash table walker.
  * --------------------------------
  */
 static void
 RelationFlushRelation(Relation *relationPtr,
-					  bool onlyFlushReferenceCountZero)
+					  int skipLocalRelations)
 {
 	Relation	relation = *relationPtr;
+	bool		rebuildIt;
 
-	/*
-	 * Do nothing to transaction-local relations, since they cannot be
-	 * subjects of SI notifications from other backends.
-	 */
 	if (relation->rd_myxactonly)
-		return;
+	{
+		if (skipLocalRelations)
+			return;				/* don't touch local rels if so commanded */
+		/*
+		 * Local rels should always be rebuilt, not flushed; the relcache
+		 * entry must live until RelationPurgeLocalRelation().
+		 */
+		rebuildIt = true;
+	}
+	else
+	{
+		/*
+		 * Nonlocal rels can be dropped from the relcache if not open.
+		 */
+		rebuildIt = ! RelationHasReferenceCountZero(relation);
+	}
 
-	/*
-	 * Zap it.  Rebuild if it has nonzero ref count and we did not get
-	 * the override flag.
-	 */
-	RelationClearRelation(relation,
-						  (onlyFlushReferenceCountZero &&
-						   ! RelationHasReferenceCountZero(relation)));
+	RelationClearRelation(relation, rebuildIt);
 }
 
 /* --------------------------------
@@ -1374,20 +1531,15 @@ RelationForgetRelation(Oid rid)
 }
 
 /* --------------------------------
- * RelationRebuildRelation -
- *
- *		   Force a relcache entry to be rebuilt from catalog entries.
- *		   This is needed, eg, after modifying an attribute of the rel.
- * --------------------------------
- */
-void
-RelationRebuildRelation(Relation relation)
-{
-	RelationClearRelation(relation, true);
-}
-
-/* --------------------------------
  *		RelationIdInvalidateRelationCacheByRelationId
+ *
+ *		This routine is invoked for SI cache flush messages.
+ *
+ *		We used to skip local relations, on the grounds that they could
+ *		not be targets of cross-backend SI update messages; but it seems
+ *		safer to process them, so that our *own* SI update messages will
+ *		have the same effects during CommandCounterIncrement for both
+ *		local and nonlocal relations.
  * --------------------------------
  */
 void
@@ -1397,36 +1549,8 @@ RelationIdInvalidateRelationCacheByRelationId(Oid relationId)
 
 	RelationIdCacheLookup(relationId, relation);
 
-	/*
-	 * "local" relations are invalidated by RelationPurgeLocalRelation.
-	 * (This is to make LocalBufferSync's life easier: want the descriptor
-	 * to hang around for a while. In fact, won't we want this for
-	 * BufferSync also? But I'll leave it for now since I don't want to
-	 * break anything.) - ay 3/95
-	 */
-	if (PointerIsValid(relation) && !relation->rd_myxactonly)
-	{
-#if 1
-		/*
-		 * Seems safest just to NEVER flush rels with positive refcounts.
-		 * I think the code only had that proviso as a rather lame method of
-		 * cleaning up unused relcache entries that had dangling refcounts
-		 * (following elog(ERROR) with an open rel).  Now we rely on
-		 * RelationCacheAbort to clean up dangling refcounts, so there's no
-		 * good reason to ever risk flushing a rel with positive refcount.
-		 * IMHO anyway --- tgl 1/29/00.
-		 */
-		RelationFlushRelation(&relation, true);
-#else
-		/*
-		 * The boolean onlyFlushReferenceCountZero in RelationFlushReln()
-		 * should be set to true when we are incrementing the command
-		 * counter and to false when we are starting a new xaction.  This
-		 * can be determined by checking the current xaction status.
-		 */
-		RelationFlushRelation(&relation, CurrentXactInProgress());
-#endif
-	}
+	if (PointerIsValid(relation))
+		RelationFlushRelation(&relation, false);
 }
 
 #if NOT_USED
@@ -1448,7 +1572,7 @@ RelationFlushIndexes(Relation *r,
 	if (relation->rd_rel->relkind == RELKIND_INDEX &&	/* XXX style */
 		(!OidIsValid(accessMethodId) ||
 		 relation->rd_rel->relam == accessMethodId))
-		RelationFlushRelation(&relation, true);
+		RelationFlushRelation(&relation, false);
 }
 
 #endif
@@ -1477,37 +1601,19 @@ RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
 
 /*
  * RelationCacheInvalidate
- *
- *	 Will blow away either all the cached relation descriptors or
- *	 those that have a zero reference count.
- *
- *	 CAUTION: this is only called with onlyFlushReferenceCountZero=true
- *	 at present, so that relation descriptors with positive refcounts
- *	 are rebuilt rather than clobbered.  It would only be safe to use a
- *	 "false" parameter in a totally idle backend with no open relations.
+ *	 Blow away cached relation descriptors that have zero reference counts,
+ *	 and rebuild those with positive reference counts.
  *
  *	 This is currently used only to recover from SI message buffer overflow,
- *	 so we do not blow away transaction-local relations; they cannot be
- *	 targets of SI updates.
+ *	 so we do not touch transaction-local relations; they cannot be targets
+ *	 of cross-backend SI updates (and our own updates now go through a
+ *	 separate linked list that isn't limited by the SI message buffer size).
  */
 void
-RelationCacheInvalidate(bool onlyFlushReferenceCountZero)
+RelationCacheInvalidate(void)
 {
 	HashTableWalk(RelationNameCache, (HashtFunc) RelationFlushRelation,
-				  onlyFlushReferenceCountZero);
-
-	if (!onlyFlushReferenceCountZero)
-	{
-		/*
-		 * Debugging check: what's left should be transaction-local relations
-		 * plus nailed-in reldescs.  There should be 6 hardwired heaps
-		 * + 3 hardwired indices == 9 total.
-		 */
-		int		numRels = length(newlyCreatedRelns) + 9;
-
-		Assert(RelationNameCache->hctl->nkeys == numRels);
-		Assert(RelationIdCache->hctl->nkeys == numRels);
-	}
+				  (int) true);
 }
 
 /*
@@ -1672,8 +1778,6 @@ RelationInitialize(void)
 	 *	initialize the cache with pre-made relation descriptors
 	 *	for some of the more important system relations.  These
 	 *	relations should always be in the cache.
-	 *
-	 *	NB: if you change this list, fix the count in RelationCacheInvalidate!
 	 * ----------------
 	 */
 	formrdesc(RelationRelationName, Natts_pg_class, Desc_pg_class);
@@ -2008,7 +2112,7 @@ init_irels(void)
 		}
 
 		/* oh, for god's sake... */
-#define SMD(i)	strat[0].strategyMapData[i].entry[0]
+#define SMD(i)	strat->strategyMapData[i].entry[0]
 
 		/* have to reinit the function pointers in the strategy maps */
 		for (i = 0; i < am->amstrategies * relform->relnatts; i++)
@@ -2038,11 +2142,6 @@ init_irels(void)
 			write_irels();
 			return;
 		}
-
-		/*
-		 * p += sizeof(IndexStrategy); ((RegProcedure **) p) = support;
-		 */
-
 		ird->rd_support = support;
 
 		RelationInitLockInfo(ird);
@@ -2085,8 +2184,6 @@ write_irels(void)
 	 * relation searches -- a necessary step, since we're trying to
 	 * instantiate the index relation descriptors here.  Once we have the
 	 * descriptors, nail them into cache so we never lose them.
-	 *
-	 * NB: if you change this list, fix the count in RelationCacheInvalidate!
 	 */
 
 	oldmode = GetProcessingMode();

@@ -3,10 +3,15 @@
  * trigger.c
  *	  PostgreSQL TRIGGERs support code.
  *
+ * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.56 2000/01/31 04:35:49 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -28,14 +33,13 @@
 
 DLLIMPORT TriggerData *CurrentTriggerData = NULL;
 
-void		RelationBuildTriggers(Relation relation);
-void		FreeTriggerDesc(Relation relation);
+/* XXX no points for style */
+extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
 
 static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
 static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
 				   TupleTableSlot **newSlot);
 
-extern GlobalMemory CacheCxt;
 
 void
 CreateTrigger(CreateTrigStmt *stmt)
@@ -52,7 +56,6 @@ CreateTrigger(CreateTrigStmt *stmt)
 	HeapTuple	tuple;
 	Relation	idescs[Num_pg_trigger_indices];
 	Relation	ridescs[Num_pg_class_indices];
-	MemoryContext oldcxt;
 	Oid			fargtypes[FUNC_MAX_ARGS];
 	int			found = 0;
 	int			i;
@@ -258,13 +261,11 @@ CreateTrigger(CreateTrigStmt *stmt)
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	heap_freetuple(tuple);
 	heap_close(pgrel, RowExclusiveLock);
-
-	CommandCounterIncrement();
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-	FreeTriggerDesc(rel);
-	rel->rd_rel->reltriggers = found + 1;
-	RelationBuildTriggers(rel);
-	MemoryContextSwitchTo(oldcxt);
+	/*
+	 * We used to try to update the rel's relcache entry here, but that's
+	 * fairly pointless since it will happen as a byproduct of the upcoming
+	 * CommandCounterIncrement...
+	 */
 	/* Keep lock on target rel until end of xact */
 	heap_close(rel, NoLock);
 }
@@ -279,7 +280,6 @@ DropTrigger(DropTrigStmt *stmt)
 	Relation	pgrel;
 	HeapTuple	tuple;
 	Relation	ridescs[Num_pg_class_indices];
-	MemoryContext oldcxt;
 	int			found = 0;
 	int			tgfound = 0;
 
@@ -337,14 +337,11 @@ DropTrigger(DropTrigStmt *stmt)
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	heap_freetuple(tuple);
 	heap_close(pgrel, RowExclusiveLock);
-
-	CommandCounterIncrement();
-	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
-	FreeTriggerDesc(rel);
-	rel->rd_rel->reltriggers = found;
-	if (found > 0)
-		RelationBuildTriggers(rel);
-	MemoryContextSwitchTo(oldcxt);
+	/*
+	 * We used to try to update the rel's relcache entry here, but that's
+	 * fairly pointless since it will happen as a byproduct of the upcoming
+	 * CommandCounterIncrement...
+	 */
 	/* Keep lock on target rel until end of xact */
 	heap_close(rel, NoLock);
 }
@@ -356,7 +353,6 @@ RelationRemoveTriggers(Relation rel)
 	HeapScanDesc tgscan;
 	ScanKeyData key;
 	HeapTuple	tup;
-	Form_pg_trigger	pg_trigger;
 
 	tgrel = heap_openr(TriggerRelationName, RowExclusiveLock);
 	ScanKeyEntryInitialize(&key, 0, Anum_pg_trigger_tgrelid,
@@ -387,6 +383,7 @@ RelationRemoveTriggers(Relation rel)
 	tgscan = heap_beginscan(tgrel, 0, SnapshotNow, 1, &key);
 	while (HeapTupleIsValid(tup = heap_getnext(tgscan, 0)))
 	{
+		Form_pg_trigger	pg_trigger;
 		Relation		refrel;
 		DropTrigStmt	stmt;
 
@@ -396,14 +393,14 @@ RelationRemoveTriggers(Relation rel)
 		stmt.relname = pstrdup(RelationGetRelationName(refrel));
 		stmt.trigname = nameout(&pg_trigger->tgname);
 
+		heap_close(refrel, NoLock);
+
 		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
 
 		DropTrigger(&stmt);
 
 		pfree(stmt.relname);
 		pfree(stmt.trigname);
-
-		heap_close(refrel, NoLock);
 	}
 	heap_endscan(tgscan);
 
@@ -453,8 +450,8 @@ RelationBuildTriggers(Relation relation)
 		if (!tuple.t_data)
 			continue;
 		if (found == ntrigs)
-			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %.*s",
-				 NAMEDATALEN, RelationGetRelationName(relation));
+			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %s",
+				 RelationGetRelationName(relation));
 
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(&tuple);
 
@@ -479,8 +476,8 @@ RelationBuildTriggers(Relation relation)
 											 Anum_pg_trigger_tgargs,
 											 tgrel->rd_att, &isnull);
 		if (isnull)
-			elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
-				 NAMEDATALEN, RelationGetRelationName(relation));
+			elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %s",
+				 RelationGetRelationName(relation));
 		if (build->tgnargs > 0)
 		{
 			char	   *p;
@@ -490,14 +487,13 @@ RelationBuildTriggers(Relation relation)
 												 Anum_pg_trigger_tgargs,
 												 tgrel->rd_att, &isnull);
 			if (isnull)
-				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
-					 NAMEDATALEN, RelationGetRelationName(relation));
+				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %s",
+					 RelationGetRelationName(relation));
 			p = (char *) VARDATA(val);
 			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
 			for (i = 0; i < build->tgnargs; i++)
 			{
-				build->tgargs[i] = (char *) palloc(strlen(p) + 1);
-				strcpy(build->tgargs[i], p);
+				build->tgargs[i] = pstrdup(p);
 				p += strlen(p) + 1;
 			}
 		}
@@ -509,9 +505,9 @@ RelationBuildTriggers(Relation relation)
 	}
 
 	if (found < ntrigs)
-		elog(ERROR, "RelationBuildTriggers: %d record not found for rel %.*s",
+		elog(ERROR, "RelationBuildTriggers: %d record(s) not found for rel %s",
 			 ntrigs - found,
-			 NAMEDATALEN, RelationGetRelationName(relation));
+			 RelationGetRelationName(relation));
 
 	index_endscan(sd);
 	index_close(irel);
@@ -519,60 +515,11 @@ RelationBuildTriggers(Relation relation)
 
 	/* Build trigdesc */
 	trigdesc->triggers = triggers;
+	trigdesc->numtriggers = ntrigs;
 	for (found = 0; found < ntrigs; found++)
-	{
-		build = &(triggers[found]);
-		DescribeTrigger(trigdesc, build);
-	}
+		DescribeTrigger(trigdesc, &(triggers[found]));
 
 	relation->trigdesc = trigdesc;
-
-}
-
-void
-FreeTriggerDesc(Relation relation)
-{
-	TriggerDesc *trigdesc = relation->trigdesc;
-	Trigger  ***t;
-	Trigger    *trigger;
-	int			i;
-
-	if (trigdesc == NULL)
-		return;
-
-	t = trigdesc->tg_before_statement;
-	for (i = 0; i < 3; i++)
-		if (t[i] != NULL)
-			pfree(t[i]);
-	t = trigdesc->tg_before_row;
-	for (i = 0; i < 3; i++)
-		if (t[i] != NULL)
-			pfree(t[i]);
-	t = trigdesc->tg_after_row;
-	for (i = 0; i < 3; i++)
-		if (t[i] != NULL)
-			pfree(t[i]);
-	t = trigdesc->tg_after_statement;
-	for (i = 0; i < 3; i++)
-		if (t[i] != NULL)
-			pfree(t[i]);
-
-	trigger = trigdesc->triggers;
-	for (i = 0; i < relation->rd_rel->reltriggers; i++)
-	{
-		pfree(trigger->tgname);
-		if (trigger->tgnargs > 0)
-		{
-			while (--(trigger->tgnargs) >= 0)
-				pfree(trigger->tgargs[trigger->tgnargs]);
-			pfree(trigger->tgargs);
-		}
-		trigger++;
-	}
-	pfree(trigdesc->triggers);
-	pfree(trigdesc);
-	relation->trigdesc = NULL;
-	return;
 }
 
 static void
@@ -648,6 +595,119 @@ DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger)
 	}
 
 }
+
+void
+FreeTriggerDesc(TriggerDesc *trigdesc)
+{
+	Trigger  ***t;
+	Trigger    *trigger;
+	int			i;
+
+	if (trigdesc == NULL)
+		return;
+
+	t = trigdesc->tg_before_statement;
+	for (i = 0; i < 4; i++)
+		if (t[i] != NULL)
+			pfree(t[i]);
+	t = trigdesc->tg_before_row;
+	for (i = 0; i < 4; i++)
+		if (t[i] != NULL)
+			pfree(t[i]);
+	t = trigdesc->tg_after_row;
+	for (i = 0; i < 4; i++)
+		if (t[i] != NULL)
+			pfree(t[i]);
+	t = trigdesc->tg_after_statement;
+	for (i = 0; i < 4; i++)
+		if (t[i] != NULL)
+			pfree(t[i]);
+
+	trigger = trigdesc->triggers;
+	for (i = 0; i < trigdesc->numtriggers; i++)
+	{
+		pfree(trigger->tgname);
+		if (trigger->tgnargs > 0)
+		{
+			while (--(trigger->tgnargs) >= 0)
+				pfree(trigger->tgargs[trigger->tgnargs]);
+			pfree(trigger->tgargs);
+		}
+		trigger++;
+	}
+	pfree(trigdesc->triggers);
+	pfree(trigdesc);
+}
+
+bool
+equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
+{
+	int		i,
+			j;
+
+	/*
+	 * We need not examine the "index" data, just the trigger array itself;
+	 * if we have the same triggers with the same types, the derived index
+	 * data should match.
+	 *
+	 * XXX It seems possible that the same triggers could appear in different
+	 * orders in the two trigger arrays; do we need to handle that?
+	 */
+	if (trigdesc1 != NULL)
+	{
+		if (trigdesc2 == NULL)
+			return false;
+		if (trigdesc1->numtriggers != trigdesc2->numtriggers)
+			return false;
+		for (i = 0; i < trigdesc1->numtriggers; i++)
+		{
+			Trigger	   *trig1 = trigdesc1->triggers + i;
+			Trigger	   *trig2 = NULL;
+
+			/*
+			 * We can't assume that the triggers are always read from
+			 * pg_trigger in the same order; so use the trigger OIDs to
+			 * identify the triggers to compare.  (We assume here that the
+			 * same OID won't appear twice in either trigger set.)
+			 */
+			for (j = 0; j < trigdesc2->numtriggers; j++)
+			{
+				trig2 = trigdesc2->triggers + i;
+				if (trig1->tgoid == trig2->tgoid)
+					break;
+			}
+			if (j >= trigdesc2->numtriggers)
+				return false;
+			if (strcmp(trig1->tgname, trig2->tgname) != 0)
+				return false;
+			if (trig1->tgfoid != trig2->tgfoid)
+				return false;
+			/* need not examine tgfunc, if tgfoid matches */
+			if (trig1->tgtype != trig2->tgtype)
+				return false;
+			if (trig1->tgenabled != trig2->tgenabled)
+				return false;
+			if (trig1->tgisconstraint != trig2->tgisconstraint)
+				return false;
+			if (trig1->tgdeferrable != trig2->tgdeferrable)
+				return false;
+			if (trig1->tginitdeferred != trig2->tginitdeferred)
+				return false;
+			if (trig1->tgnargs != trig2->tgnargs)
+				return false;
+			if (memcmp(trig1->tgattr, trig2->tgattr,
+					   sizeof(trig1->tgattr)) != 0)
+				return false;
+			for (j = 0; j < trig1->tgnargs; j++)
+				if (strcmp(trig1->tgargs[j], trig2->tgargs[j]) != 0)
+					return false;
+		}
+	}
+	else if (trigdesc2 != NULL)
+		return false;
+	return true;
+}
+
 
 static HeapTuple
 ExecCallTriggerFunc(Trigger *trigger)
@@ -811,7 +871,6 @@ ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	return;
 }
 
-extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti, ItemPointer tid);
 
 static HeapTuple
 GetTupleForTrigger(EState *estate, ItemPointer tid, TupleTableSlot **newSlot)

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * rel.h
- *	  POSTGRES relation descriptor definitions.
+ *	  POSTGRES relation descriptor (a/k/a relcache entry) definitions.
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.33 2000/01/26 05:58:38 momjian Exp $
+ * $Id: rel.h,v 1.34 2000/01/31 04:35:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,9 @@
 #include "catalog/pg_class.h"
 #include "rewrite/prs2lock.h"
 #include "storage/fd.h"
+
+/* added to prevent circular dependency.  bjm 1999/11/15 */
+extern char *get_temp_rel_by_physicalname(const char *relname);
 
 /*
  * LockRelId and LockInfo really belong to lmgr.h, but it's more convenient
@@ -39,6 +42,10 @@ typedef struct LockInfoData
 
 typedef LockInfoData *LockInfo;
 
+/*
+ * Likewise, this struct really belongs to trigger.h, but for convenience
+ * we put it here.
+ */
 
 typedef struct Trigger
 {
@@ -58,6 +65,7 @@ typedef struct Trigger
 
 typedef struct TriggerDesc
 {
+	/* index data to identify which triggers are which */
 	uint16		n_before_statement[4];
 	uint16		n_before_row[4];
 	uint16		n_after_row[4];
@@ -66,9 +74,14 @@ typedef struct TriggerDesc
 	Trigger   **tg_before_row[4];
 	Trigger   **tg_after_row[4];
 	Trigger   **tg_after_statement[4];
+	/* the actual array of triggers is here */
 	Trigger    *triggers;
+	int			numtriggers;
 } TriggerDesc;
 
+/*
+ * Here are the contents of a relation cache entry.
+ */
 
 typedef struct RelationData
 {
@@ -87,7 +100,7 @@ typedef struct RelationData
 	RuleLock   *rd_rules;		/* rewrite rules */
 	IndexStrategy rd_istrat;
 	RegProcedure *rd_support;
-	TriggerDesc *trigdesc;
+	TriggerDesc *trigdesc;		/* Trigger info, or NULL if rel has none */
 } RelationData;
 
 typedef RelationData *Relation;
@@ -109,15 +122,6 @@ typedef Relation *RelationPtr;
 #define RelationIsValid(relation) PointerIsValid(relation)
 
 #define InvalidRelation ((Relation) NULL)
-
-/*
- * RelationGetSystemPort
- *		Returns system port of a relation.
- *
- * Note:
- *		Assumes relation descriptor is valid.
- */
-#define RelationGetSystemPort(relation) ((relation)->rd_fd)
 
 /*
  * RelationHasReferenceCountZero
@@ -149,7 +153,7 @@ typedef Relation *RelationPtr;
 
 /*
  * RelationGetForm
- *		Returns relation attribute values for a relation.
+ *		Returns pg_class tuple for a relation.
  *
  * Note:
  *		Assumes relation descriptor is valid.
@@ -159,15 +163,14 @@ typedef Relation *RelationPtr;
 /*
  * RelationGetRelid
  *
- *	returns the object id of the relation
- *
+ *	returns the OID of the relation
  */
 #define RelationGetRelid(relation) ((relation)->rd_id)
 
 /*
  * RelationGetFile
  *
- *	  Returns the open File decscriptor
+ *	  Returns the open file descriptor for the rel
  */
 #define RelationGetFile(relation) ((relation)->rd_fd)
 
@@ -176,8 +179,6 @@ typedef Relation *RelationPtr;
  *
  *	  Returns a Relation Name
  */
-/* added to prevent circular dependency.  bjm 1999/11/15 */
-char 	   *get_temp_rel_by_physicalname(const char *relname);
 #define RelationGetRelationName(relation) \
 (\
 	(strncmp(RelationGetPhysicalRelationName(relation), \
@@ -210,10 +211,19 @@ char 	   *get_temp_rel_by_physicalname(const char *relname);
  */
 #define RelationGetDescr(relation) ((relation)->rd_att)
 
+/*
+ * RelationGetIndexStrategy
+ *		Returns index strategy for a relation.
+ *
+ * Note:
+ *		Assumes relation descriptor is valid.
+ *		Assumes relation descriptor is for an index relation.
+ */
+#define RelationGetIndexStrategy(relation) ((relation)->rd_istrat)
 
-extern IndexStrategy RelationGetIndexStrategy(Relation relation);
 
-extern void RelationSetIndexSupport(Relation relation, IndexStrategy strategy,
-						RegProcedure *support);
+extern void RelationSetIndexSupport(Relation relation,
+									IndexStrategy strategy,
+									RegProcedure *support);
 
 #endif	 /* REL_H */
