@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.70 2000/02/24 04:36:01 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.71 2000/04/10 00:45:42 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.70 2000/02/24 04:36:01 inoue Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.71 2000/04/10 00:45:42 inoue Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -493,7 +493,12 @@ void	SetWaitingForLock(bool waiting)
 	lockWaiting = waiting;
 	if (lockWaiting)
 	{
-		Assert(MyProc->links.next != INVALID_OFFSET);
+		/* The lock was already released ? */
+		if (MyProc->links.next == INVALID_OFFSET)
+		{
+			lockWaiting = false;
+			return;
+		}
 		if (QueryCancel) /* cancel request pending */
 		{
 			if (GetOffWaitqueue(MyProc))
