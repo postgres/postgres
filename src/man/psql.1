@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.11 1997/08/26 17:00:14 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/psql.1,v 1.12 1997/08/26 17:30:08 momjian Exp $
 .TH PSQL UNIX 1/20/96 PostgreSQL PostgreSQL
 .SH NAME
 psql \(em run the interactive query front-end
@@ -111,7 +111,7 @@ understands the following command-line options:
 Specifies an authentication system
 .IR "system"
 (see
-.IR introduction (1))
+.IR pgintro (1))
 to use in connecting to the
 .IR postmaster
 process.  The default is site-specific.
@@ -385,12 +385,12 @@ only applies if
 authentication is in use.  If this environment variable is set, Postgres
 will attempt authentication with servers for this realm and use
 separate ticket files to avoid conflicts with local ticket files.  See
-.IR introduction (1)
+.IR pgintro (1)
 for additional information on
 .IR Kerberos .
 .PP
 See
-.IR introduction (libpq)
+.IR pgintro (libpq)
 for additional details.
 .SH "RETURN VALUE"
 .IR psql
@@ -400,7 +400,7 @@ returns 0 to the shell on successful completion of all queries,
 will also return 1 if the connection to a database could not be made for
 any reason.
 .SH "SEE ALSO"
-introduction(libpq),
+libpq(3),
 monitor(1)
 postgres(1),
 postmaster(1).

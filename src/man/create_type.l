@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_type.l,v 1.2 1996/12/11 00:27:20 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_type.l,v 1.3 1997/08/26 17:29:53 momjian Exp $
 .TH "CREATE TYPE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create type \(em define a new base data type 
@@ -158,4 +158,4 @@ base type's name prepended with an underscore.
 create function(l),
 create operator(l),
 drop type(l),
-introduction(large objects).
+large_objects(3).

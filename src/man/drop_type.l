@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_type.l,v 1.2 1996/12/11 00:27:43 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_type.l,v 1.3 1997/08/26 17:30:00 momjian Exp $
 .TH "DROP TYPE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 drop type \(em remove a user-defined type from the system catalogs
@@ -23,7 +23,7 @@ deleted type.
 drop type box
 .fi
 .SH "SEE ALSO"
-introduction(l),
+pgintro(l),
 create type(l),
 drop operator(l).
 .SH "BUGS"
