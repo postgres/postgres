@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.47 1999/10/22 11:51:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.48 1999/12/17 14:47:35 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ transformWhereClause(ParseState *pstate, Node *a_expr, Node *o_expr)
 	return qual;
 }
 
-#ifdef NOT_USED
+#ifdef ENABLE_OUTER_JOINS
 static Attr *
 makeAttr(char *relname, char *attname)
 {
