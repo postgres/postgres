@@ -7,7 +7,6 @@ mbutilc.c:	public functions for the backend only.
 		requires conv.c and wchar.c
 wstrcmp.c:	strcmp for mb
 wstrncmp.c:	strncmp for mb
-varable.c:	public functions for show/set/reset variable commands
 alt.c:		a tool to generate KOI8 <--> CP866 conversion table
 iso.c:		a tool to generate KOI8 <--> ISO8859-5 conversion table
 win.c:		a tool to generate KOI8 <--> CP1251 conversion table

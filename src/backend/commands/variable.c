@@ -9,15 +9,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.41 2000/09/22 15:34:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.42 2000/10/25 19:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
+#include "postgres.h"
+
 #include <ctype.h>
 #include <time.h>
-
-#include "postgres.h"
 
 #include "access/xact.h"
 #include "catalog/pg_shadow.h"
@@ -32,8 +32,11 @@
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
+#else
+/* Grand unified hard-coded badness */
+#define pg_encoding_to_char(x) "SQL_ASCII"
+#define pg_get_client_encoding()  0
 #endif
-
 
 
 static bool show_date(void);
@@ -52,6 +55,13 @@ static bool parse_XactIsoLevel(char *);
 static bool parse_random_seed(char *);
 static bool show_random_seed(void);
 static bool reset_random_seed(void);
+
+static bool show_client_encoding(void);
+static bool reset_client_encoding(void);
+static bool parse_client_encoding(char *);
+static bool show_server_encoding(void);
+static bool reset_server_encoding(void);
+static bool parse_server_encoding(char *);
 
 
 /*
@@ -250,7 +260,7 @@ parse_date(char *value)
 }
 
 static bool
-show_date()
+show_date(void)
 {
 	char		buf[64];
 
@@ -280,7 +290,7 @@ show_date()
 }
 
 static bool
-reset_date()
+reset_date(void)
 {
 	DateStyle = DefaultDateStyle;
 	EuroDates = DefaultEuroDates;
@@ -379,7 +389,7 @@ parse_timezone(char *value)
 }	/* parse_timezone() */
 
 static bool
-show_timezone()
+show_timezone(void)
 {
 	char	   *tz;
 
@@ -401,7 +411,7 @@ show_timezone()
  * - thomas 1998-01-26
  */
 static bool
-reset_timezone()
+reset_timezone(void)
 {
 	/* no time zone has been set in this session? */
 	if (defaultTZ == NULL)
@@ -470,7 +480,7 @@ parse_DefaultXactIsoLevel(char *value)
 }
 
 static bool
-show_DefaultXactIsoLevel()
+show_DefaultXactIsoLevel(void)
 {
 
 	if (DefaultXactIsoLevel == XACT_SERIALIZABLE)
@@ -481,7 +491,7 @@ show_DefaultXactIsoLevel()
 }
 
 static bool
-reset_DefaultXactIsoLevel()
+reset_DefaultXactIsoLevel(void)
 {
 #if 0
 	TransactionState s = CurrentTransactionState;
@@ -527,7 +537,7 @@ parse_XactIsoLevel(char *value)
 }
 
 static bool
-show_XactIsoLevel()
+show_XactIsoLevel(void)
 {
 
 	if (XactIsoLevel == XACT_SERIALIZABLE)
@@ -538,7 +548,7 @@ show_XactIsoLevel()
 }
 
 static bool
-reset_XactIsoLevel()
+reset_XactIsoLevel(void)
 {
 
 	if (SerializableSnapshot != NULL)
@@ -588,6 +598,96 @@ reset_random_seed(void)
 }
 
 
+/*
+ * MULTIBYTE-related functions
+ *
+ * If MULTIBYTE support was not compiled, we still allow these variables
+ * to exist, but you can't set them to anything but "SQL_ASCII".  This
+ * minimizes interoperability problems between non-MB servers and MB-enabled
+ * clients.
+ */
+
+static bool
+parse_client_encoding(char *value)
+{
+#ifdef MULTIBYTE
+	int			encoding;
+
+	encoding = pg_valid_client_encoding(value);
+	if (encoding < 0)
+	{
+		if (value)
+			elog(ERROR, "Client encoding %s is not supported", value);
+		else
+			elog(ERROR, "No client encoding is specified");
+	}
+	else
+	{
+		if (pg_set_client_encoding(encoding))
+		{
+			elog(ERROR, "Conversion between %s and %s is not supported",
+				 value, pg_encoding_to_char(GetDatabaseEncoding()));
+		}
+	}
+#else
+	if (value &&
+		strcasecmp(value, pg_encoding_to_char(pg_get_client_encoding())) != 0)
+		elog(ERROR, "Client encoding %s is not supported", value);
+#endif
+	return TRUE;
+}
+
+static bool
+show_client_encoding(void)
+{
+	elog(NOTICE, "Current client encoding is %s",
+		 pg_encoding_to_char(pg_get_client_encoding()));
+	return TRUE;
+}
+
+static bool
+reset_client_encoding(void)
+{
+#ifdef MULTIBYTE
+	int			encoding;
+	char	   *env = getenv("PGCLIENTENCODING");
+
+	if (env)
+	{
+		encoding = pg_char_to_encoding(env);
+		if (encoding < 0)
+			encoding = GetDatabaseEncoding();
+	}
+	else
+		encoding = GetDatabaseEncoding();
+	pg_set_client_encoding(encoding);
+#endif
+	return TRUE;
+}
+
+static bool
+parse_server_encoding(char *value)
+{
+	elog(NOTICE, "SET SERVER_ENCODING is not supported");
+	return TRUE;
+}
+
+static bool
+show_server_encoding(void)
+{
+	elog(NOTICE, "Current server encoding is %s",
+		 pg_encoding_to_char(GetDatabaseEncoding()));
+	return TRUE;
+}
+
+static bool
+reset_server_encoding(void)
+{
+	elog(NOTICE, "RESET SERVER_ENCODING is not supported");
+	return TRUE;
+}
+
+
 
 void
 SetPGVariable(const char *name, const char *value)
@@ -606,12 +706,10 @@ SetPGVariable(const char *name, const char *value)
         parse_DefaultXactIsoLevel(mvalue);
     else if (strcasecmp(name, "XactIsoLevel")==0)
         parse_XactIsoLevel(mvalue);
-#ifdef MULTIBYTE
     else if (strcasecmp(name, "client_encoding")==0)
         parse_client_encoding(mvalue);
     else if (strcasecmp(name, "server_encoding")==0)
         parse_server_encoding(mvalue);
-#endif
     else if (strcasecmp(name, "random_seed")==0)
         parse_random_seed(mvalue);
     else
@@ -633,12 +731,10 @@ GetPGVariable(const char *name)
         show_DefaultXactIsoLevel();
     else if (strcasecmp(name, "XactIsoLevel")==0)
         show_XactIsoLevel();
-#ifdef MULTIBYTE
     else if (strcasecmp(name, "client_encoding")==0)
         show_client_encoding();
     else if (strcasecmp(name, "server_encoding")==0)
         show_server_encoding();
-#endif
     else if (strcasecmp(name, "random_seed")==0)
         show_random_seed();
     else
@@ -659,12 +755,10 @@ ResetPGVariable(const char *name)
 			reset_DefaultXactIsoLevel();
     else if (strcasecmp(name, "XactIsoLevel")==0)
 			reset_XactIsoLevel();
-#ifdef MULTIBYTE
     else if (strcasecmp(name, "client_encoding")==0)
         reset_client_encoding();
     else if (strcasecmp(name, "server_encoding")==0)
         reset_server_encoding();
-#endif
     else if (strcasecmp(name, "random_seed")==0)
         reset_random_seed();
     else
