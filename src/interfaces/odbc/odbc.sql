@@ -1,5 +1,5 @@
 -- PostgreSQL catalog extensions for ODBC compatibility
--- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.4 2001/12/02 11:36:04 petere Exp $
+-- $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/odbc.sql,v 1.5 2001/12/10 00:01:14 thomas Exp $
 
 -- ODBC functions are described here:
 -- <http://msdn.microsoft.com/library/en-us/odbc/htm/odbcscalar_functions.asp>
@@ -141,6 +141,14 @@ CREATE OR REPLACE FUNCTION curtime() RETURNS time with time zone AS '
     SELECT current_time;
 ' LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION odbc_timestamp() RETURNS timestamp with time zone AS '
+    SELECT current_timestamp;
+' LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION odbc_timestamp() RETURNS timestamp with time zone AS '
+    SELECT current_timestamp;
+' LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION dayname(timestamp) RETURNS text AS '
     SELECT to_char($1,''Day'');
 ' LANGUAGE SQL;
@@ -206,7 +214,31 @@ CREATE OR REPLACE FUNCTION year(timestamp) RETURNS integer AS '
 
 
 -- System Functions
+
+CREATE OR REPLACE FUNCTION odbc_user() RETURNS text AS '
+    SELECT CAST(current_user AS TEXT);
+' LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION odbc_current_user() RETURNS text AS '
+    SELECT CAST(current_user AS TEXT);
+' LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION odbc_session_user() RETURNS text AS '
+    SELECT CAST(session_user AS TEXT);
+' LANGUAGE SQL;
 -- ++++++++++++++++
 --
 -- Built-in: USER
 -- Missing: DATABASE, IFNULL
+
+CREATE OR REPLACE FUNCTION odbc_user() RETURNS text AS '
+    SELECT CAST(current_user AS TEXT);
+' LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION odbc_current_user() RETURNS text AS '
+    SELECT CAST(current_user AS TEXT);
+' LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION odbc_session_user() RETURNS text AS '
+    SELECT CAST(session_user AS TEXT);
+' LANGUAGE SQL;

@@ -94,6 +94,16 @@ char	   *mapFuncs[][2] = {
 /*	{ "TAN",		 "tan"		  }, */
 	{"TRUNCATE", "trunc"},
 
+	{"CURRENT_DATE", "curdate"},
+	{"CURRENT_TIME", "curtime"},
+	{"CURRENT_TIMESTAMP", "odbc_timestamp"},
+	{"CURRENT_USER", "odbc_current_user"},
+	{"SESSION_USER", "odbc_session_user"},
+	{"CURRENT_DATE", "curdate"},
+	{"CURRENT_TIME", "curtime"},
+	{"CURRENT_TIMESTAMP", "odbc_timestamp"},
+	{"CURRENT_USER", "odbc_current_user"},
+	{"SESSION_USER", "odbc_session_user"},
 /*	{ "CURDATE",	 "curdate"	  }, */
 /*	{ "CURTIME",	 "curtime"	  }, */
 /*	{ "DAYNAME",	 "dayname"	  }, */
