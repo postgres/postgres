@@ -7,7 +7,7 @@
 # with broken/missing library files.
 
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/port/Makefile,v 1.7 2003/09/27 15:32:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/port/Makefile,v 1.8 2003/10/24 20:31:43 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ all: libpgport.a
 endif
 
 libpgport.a: $(LIBOBJS)
-	$(AR) crs $@ $^
+	$(AR) $(AROPT) $@ $^
 
 thread.o: thread.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(THREAD_CPPFLAGS) -c $<
