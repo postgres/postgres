@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.32 2001/11/05 19:41:56 tgl Exp $
+ * $Id: spi.h,v 1.33 2001/11/08 20:37:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,7 +90,7 @@ extern int	SPI_freeplan(void *plan);
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
 extern TupleDesc SPI_copytupledesc(TupleDesc tupdesc);
 extern TupleTableSlot *SPI_copytupleintoslot(HeapTuple tuple,
-											 TupleDesc tupdesc);
+					  TupleDesc tupdesc);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
 				int *attnum, Datum *Values, char *Nulls);
 extern int	SPI_fnumber(TupleDesc tupdesc, char *fname);

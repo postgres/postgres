@@ -1,5 +1,5 @@
 /*
- * $Id: aix.h,v 1.9 2001/11/05 17:46:27 momjian Exp $
+ * $Id: aix.h,v 1.10 2001/11/08 20:37:52 momjian Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -31,23 +31,23 @@ extern		"C"
  * To be able to intialize, a library may provide a dl_info structure
  * that contains functions to be called to initialize and terminate.
  */
-	struct dl_info
-	{
-		void		(*init) (void);
-		void		(*fini) (void);
-	};
+struct dl_info
+{
+	void		(*init) (void);
+	void		(*fini) (void);
+};
 
 #if __STDC__ || defined(_IBMR2)
-	void	   *dlopen(const char *path, int mode);
-	void	   *dlsym(void *handle, const char *symbol);
-	char	   *dlerror(void);
-	int			dlclose(void *handle);
+void	   *dlopen(const char *path, int mode);
+void	   *dlsym(void *handle, const char *symbol);
+char	   *dlerror(void);
+int			dlclose(void *handle);
 
 #else
-	void	   *dlopen();
-	void	   *dlsym();
-	char	   *dlerror();
-	int			dlclose();
+void	   *dlopen();
+void	   *dlsym();
+char	   *dlerror();
+int			dlclose();
 #endif
 
 #ifdef __cplusplus

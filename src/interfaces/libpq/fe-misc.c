@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.61 2001/11/08 04:05:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.62 2001/11/08 20:37:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("could not flush enough data (space available: %d, space needed %d)\n"),
-							  (int) Max(conn->outBufSize - conn->outCount, 0),
+						 (int) Max(conn->outBufSize - conn->outCount, 0),
 							  (int) nbytes);
 			return EOF;
 		}

@@ -16,44 +16,44 @@ extern		"C"
 {
 #endif
 
-	struct sqlca
+struct sqlca
+{
+	char		sqlcaid[8];
+	long		sqlabc;
+	long		sqlcode;
+	struct
 	{
-		char		sqlcaid[8];
-		long		sqlabc;
-		long		sqlcode;
-		struct
-		{
-			int			sqlerrml;
-			char		sqlerrmc[SQLERRMC_LEN];
-		}			sqlerrm;
-		char		sqlerrp[8];
-		long		sqlerrd[6];
-		/* Element 0: empty						*/
-		/* 1: OID of processed tuple if applicable			*/
-		/* 2: number of rows processed				*/
-		/* after an INSERT, UPDATE or				*/
-		/* DELETE statement					*/
-		/* 3: empty						*/
-		/* 4: empty						*/
-		/* 5: empty						*/
-		char		sqlwarn[8];
-		/* Element 0: set to 'W' if at least one other is 'W'	*/
-		/* 1: if 'W' at least one character string		*/
-		/* value was truncated when it was			*/
-		/* stored into a host variable.				*/
+		int			sqlerrml;
+		char		sqlerrmc[SQLERRMC_LEN];
+	}			sqlerrm;
+	char		sqlerrp[8];
+	long		sqlerrd[6];
+	/* Element 0: empty						*/
+	/* 1: OID of processed tuple if applicable			*/
+	/* 2: number of rows processed				*/
+	/* after an INSERT, UPDATE or				*/
+	/* DELETE statement					*/
+	/* 3: empty						*/
+	/* 4: empty						*/
+	/* 5: empty						*/
+	char		sqlwarn[8];
+	/* Element 0: set to 'W' if at least one other is 'W'	*/
+	/* 1: if 'W' at least one character string		*/
+	/* value was truncated when it was			*/
+	/* stored into a host variable.				*/
 
-		/*
-		 * 2: if 'W' a (hopefully) non-fatal notice occured
-		 */	/* 3: empty */
-		/* 4: empty						*/
-		/* 5: empty						*/
-		/* 6: empty						*/
-		/* 7: empty						*/
+	/*
+	 * 2: if 'W' a (hopefully) non-fatal notice occured
+	 */	/* 3: empty */
+	/* 4: empty						*/
+	/* 5: empty						*/
+	/* 6: empty						*/
+	/* 7: empty						*/
 
-		char		sqlext[8];
-	};
+	char		sqlext[8];
+};
 
-	extern DLLIMPORT struct sqlca sqlca;
+extern DLLIMPORT struct sqlca sqlca;
 
 
 #ifdef __cplusplus

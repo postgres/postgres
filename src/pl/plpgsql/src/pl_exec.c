@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.49 2001/11/05 19:41:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.50 2001/11/08 20:37:52 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -419,6 +419,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
 											func->fn_rettypelem,
 											-1,
 											&fcinfo->isnull);
+
 			/*
 			 * If the functions return type isn't by value, copy the value
 			 * into upper executor memory context.

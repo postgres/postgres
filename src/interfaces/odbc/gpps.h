@@ -18,24 +18,24 @@ extern		"C"
 {
 #endif
 
-	DWORD
-				GetPrivateProfileString(const char *theSection, /* section name */
-													const char *theKey, /* search key name */
-												  const char *theDefault,		/* default value if not
-																				 * found */
-													char *theReturnBuffer,		/* return valuse stored
-																				 * here */
-												  size_t theBufferLength,		/* byte length of return
-																				 * buffer */
-											 const char *theIniFileName);		/* pathname of ini file
-																				 * to search */
+DWORD
+GetPrivateProfileString(const char *theSection, /* section name */
+						const char *theKey,		/* search key name */
+						const char *theDefault, /* default value if not
+												 * found */
+						char *theReturnBuffer,	/* return valuse stored
+												 * here */
+						size_t theBufferLength, /* byte length of return
+												 * buffer */
+						const char *theIniFileName);	/* pathname of ini file
+														 * to search */
 
-	DWORD
-				WritePrivateProfileString(const char *theSection,		/* section name */
-													  const char *theKey,		/* write key name */
-												   const char *theBuffer,		/* input buffer */
-											 const char *theIniFileName);		/* pathname of ini file
-																				 * to write */
+DWORD
+WritePrivateProfileString(const char *theSection,		/* section name */
+						  const char *theKey,	/* write key name */
+						  const char *theBuffer,		/* input buffer */
+						  const char *theIniFileName);	/* pathname of ini file
+														 * to write */
 
 #ifdef __cplusplus
 }

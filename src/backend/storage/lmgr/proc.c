@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.115 2001/11/06 00:38:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.116 2001/11/08 20:37:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ InitProcGlobal(int maxBackends)
 	/*
 	 * Compute size for ProcGlobal structure.  Note we need one more sema
 	 * besides those used for regular backends; this is accounted for in
-	 * the PROC_SEM_MAP_ENTRIES macro.  (We do it that way so that other
+	 * the PROC_SEM_MAP_ENTRIES macro.	(We do it that way so that other
 	 * modules that use PROC_SEM_MAP_ENTRIES(maxBackends) to size data
 	 * structures don't have to know about this explicitly.)
 	 */
