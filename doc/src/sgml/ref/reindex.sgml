@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.1 2000/03/31 08:16:33 inoue Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.2 2000/07/22 04:45:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -15,7 +15,7 @@ Postgres documentation
    REINDEX
   </refname>
   <refpurpose>
-   Recover corrupted system indexes under standalone Postgres
+   Recover corrupted system indexes under stand-alone Postgres
   </refpurpose>
  </refnamediv>
  <refsynopsisdiv>
@@ -40,7 +40,7 @@ REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replac
       <term>TABLE</term>
       <listitem>
        <para>
-	Recreate all indexes of a specfied table.
+	Recreate all indexes of a specified table.
        </para>
       </listitem>
      </varlistentry>
@@ -48,7 +48,7 @@ REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replac
       <term>DATABASE</term>
       <listitem>
        <para>
-	Recreate all system indexes of a specfied database.
+	Recreate all system indexes of a specified database.
        </para>
       </listitem>
      </varlistentry>
@@ -56,7 +56,7 @@ REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replac
       <term>INDEX</term>
       <listitem>
        <para>
-	Recreate a specfied index.
+	Recreate a specified index.
        </para>
       </listitem>
      </varlistentry>
@@ -116,7 +116,7 @@ REINDEX
   <para>
    <command>REINDEX</command> is used to recover corrupted system indexes.
     In order to run REINDEX command,Postmaster must be shutdown and 
-    standalone Postgres should be started instead with options -O and
+    stand-alone Postgres should be started instead with options -O and
     -P(an option to ignore system indexes).  Note that we couldn't rely
     on system indexes for the recovery of system indexes.
   </para>

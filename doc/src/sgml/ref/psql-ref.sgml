@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.34 2000/07/21 17:58:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.35 2000/07/22 04:45:09 momjian Exp $
 Postgres documentation
 -->
 
@@ -1645,7 +1645,7 @@ bar
         <term><envar>DBNAME</envar></term>
 	<listitem>
 	<para>
-        The name of the database you are currently connected to. This is set everytime
+        The name of the database you are currently connected to. This is set every time
         you connect to a database (including program startup), but can be unset.
 	</para>
 	</listitem>
@@ -1727,7 +1727,7 @@ bar
         <term><envar>HOST</envar></term>
 	<listitem>
 	<para>
-        The database server host you are currently connected to. This is set everytime
+        The database server host you are currently connected to. This is set every time
         you connect to a database (including program startup), but can be unset.
 	</para>
 	</listitem>
@@ -1755,7 +1755,7 @@ bar
 	<listitem>
 	<para>
         The value of the last affected oid, as returned from an <command>INSERT</command>
-        or <command>lo_insert</command> commmand. This variable is only guaranteed to be
+        or <command>lo_insert</command> command. This variable is only guaranteed to be
         valid until after the result of the next <acronym>SQL</acronym> command has been
         displayed.
 	</para>
@@ -1799,7 +1799,7 @@ bar
 	<para>
 	By default, if non-interactive scripts encounter an error, such as a
 	malformed <acronym>SQL</acronym> query or internal meta-command,
-	processing continues. This has been the traditional behaviour of
+	processing continues. This has been the traditional behavior of
         <application>psql</application> but it is sometimes not desirable. If this variable
 	is set, script processing will immediately terminate. If the script was
 	called from another script it will terminate in the same fashion.
@@ -2023,7 +2023,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 	If <replaceable class="parameter">digits</replaceable> starts with
         <literal>0x</literal> the rest of the characters are interpreted at a
         hexadecimal digit and the character with the corresponding code is
-        subsituted. If the first digit is <literal>0</literal> the characters are
+        substituted. If the first digit is <literal>0</literal> the characters are
         interpreted as on octal number and the corresponding character is
         substituted. Otherwise a decimal number is assumed.</para>
 	</listitem>
@@ -2184,7 +2184,7 @@ peter@localhost testdb=> SELECT * FROM my_table;
 (4 rows)
 
 </programlisting>
-  Notice how the int4 colums in right aligned while the text column in left aligned.
+  Notice how the int4 columns in right aligned while the text column in left aligned.
   You can make this table look differently by using the <command>\pset</command>
   command:
 <programlisting>
@@ -2279,7 +2279,7 @@ Field separator is "oo".
 
       <listitem>
       <para>
-      <application>psql</application> only works smootly with servers of the
+      <application>psql</application> only works smoothly with servers of the
       same version. That does not mean other combinations will fail outright,
       but subtle and not-so-subtle problems might come up.
       </para>
@@ -2288,7 +2288,7 @@ Field separator is "oo".
       <listitem>
       <para>
       Pressing Control-C during a <quote>copy in</quote> (data sent to the
-      server) doesn't show the most ideal of behaviours. If you get a message
+      server) doesn't show the most ideal of behaviors. If you get a message
       such as <quote>PQexec: you gotta get out of a COPY state yourself</quote>,
       simply reset the connection by entering <literal>\c - -</literal>.
       </para>
