@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.49 1999/01/17 06:19:22 momjian Exp $
+ * $Id: c.h,v 1.50 1999/02/11 01:36:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -821,6 +821,7 @@ extern char *form(const char *fmt,...);
 #if defined(sun) && defined(sparc) && !defined(__SVR4)
 #define memmove(d, s, l)		bcopy(s, d, l)
 #include <unistd.h>
+#include <varargs.h>
 #endif
 
 /* These are for things that are one way on Unix and another on NT */
