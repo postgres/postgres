@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.76 2000/02/21 01:13:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.77 2000/03/14 02:23:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,11 +360,14 @@ union_planner(Query *parse,
 			 * In GROUP BY mode, we have the little problem that we don't
 			 * really know how many input tuples will be needed to make a
 			 * group, so we can't translate an output LIMIT count into an
-			 * input count.  For lack of a better idea, assume 10% of the
+			 * input count.  For lack of a better idea, assume 25% of the
 			 * input data will be processed if there is any output limit.
+			 * However, if the caller gave us a fraction rather than an
+			 * absolute count, we can keep using that fraction (which amounts
+			 * to assuming that all the groups are about the same size).
 			 */
-			if (tuple_fraction > 0.0)
-				tuple_fraction = 0.10;
+			if (tuple_fraction >= 1.0)
+				tuple_fraction = 0.25;
 			/*
 			 * If both GROUP BY and ORDER BY are specified, we will need
 			 * two levels of sort --- and, therefore, certainly need to
@@ -386,11 +389,10 @@ union_planner(Query *parse,
 		{
 			/*
 			 * SELECT DISTINCT, like GROUP, will absorb an unpredictable
-			 * number of input tuples per output tuple.  So, fall back to
-			 * our same old 10% default...
+			 * number of input tuples per output tuple.  Handle the same way.
 			 */
-			if (tuple_fraction > 0.0)
-				tuple_fraction = 0.10;
+			if (tuple_fraction >= 1.0)
+				tuple_fraction = 0.25;
 		}
 
 		/* Generate the (sub) plan */

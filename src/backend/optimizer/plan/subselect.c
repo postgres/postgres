@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.30 2000/03/11 23:53:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.31 2000/03/14 02:23:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,25 +134,34 @@ make_subplan(SubLink *slink)
 
 	PlannerInitPlan = NULL;
 
-	PlannerQueryLevel++;		/* we becomes child */
+	PlannerQueryLevel++;		/* we become child */
 
 	/*
 	 * For an EXISTS subplan, tell lower-level planner to expect that
-	 * only the first tuple will be retrieved.  For ALL, ANY, and MULTIEXPR
-	 * subplans, we will be able to stop evaluating if the test condition
-	 * fails, so very often not all the tuples will be retrieved; for lack
-	 * of a better idea, specify 50% retrieval.  For EXPR_SUBLINK use default
-	 * behavior.
+	 * only the first tuple will be retrieved.  For ALL and ANY subplans,
+	 * we will be able to stop evaluating if the test condition fails,
+	 * so very often not all the tuples will be retrieved; for lack of a
+	 * better idea, specify 50% retrieval.  For EXPR and MULTIEXPR subplans,
+	 * use default behavior (we're only expecting one row out, anyway).
 	 *
-	 * NOTE: if you change these numbers, also change cost_qual_eval_walker
-	 * in costsize.c.
+	 * NOTE: if you change these numbers, also change cost_qual_eval_walker()
+	 * in path/costsize.c.
+	 *
+	 * XXX If an ALL/ANY subplan is uncorrelated, we may decide to materialize
+	 * its result below.  In that case it would've been better to specify
+	 * full retrieval.  At present, however, we can only detect correlation
+	 * or lack of it after we've made the subplan :-(.  Perhaps detection
+	 * of correlation should be done as a separate step.  Meanwhile, we don't
+	 * want to be too optimistic about the percentage of tuples retrieved,
+	 * for fear of selecting a plan that's bad for the materialization case.
 	 */
 	if (slink->subLinkType == EXISTS_SUBLINK)
 		tuple_fraction = 1.0;	/* just like a LIMIT 1 */
-	else if (slink->subLinkType == EXPR_SUBLINK)
-		tuple_fraction = -1.0;	/* default behavior */
-	else
+	else if (slink->subLinkType == ALL_SUBLINK ||
+			 slink->subLinkType == ANY_SUBLINK)
 		tuple_fraction = 0.5;	/* 50% */
+	else
+		tuple_fraction = -1.0;	/* default behavior */
 
 	node->plan = plan = union_planner(subquery, tuple_fraction);
 
