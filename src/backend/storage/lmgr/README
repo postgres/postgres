@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.6 2001/01/22 22:30:06 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.7 2001/01/25 03:31:16 tgl Exp $
 
 There are two fundamental lock structures: the per-lockable-object LOCK
 struct, and the per-lock-holder HOLDER struct.  A LOCK object exists
@@ -373,7 +373,8 @@ time with "C before B", which won't move C far enough up.  So we look for
 soft edges outgoing from C starting at the front of the wait queue.
 
 5. The working data structures needed by the deadlock detection code can
-be proven not to need more than MAXBACKENDS entries.  Therefore the
-working storage can be statically allocated instead of depending on
-palloc().  This is a good thing, since if the deadlock detector could
-fail for extraneous reasons, all the above safety proofs fall down.
+be limited to numbers of entries computed from MaxBackends.  Therefore,
+we can allocate the worst-case space needed during backend startup.
+This seems a safer approach than trying to allocate workspace on the fly;
+we don't want to risk having the deadlock detector run out of memory,
+else we really have no guarantees at all that deadlock will be detected.

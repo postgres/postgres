@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.43 2001/01/24 19:43:27 momjian Exp $
+ * $Id: lock.h,v 1.44 2001/01/25 03:31:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,6 +247,7 @@ typedef struct HOLDER
 extern void InitLocks(void);
 extern void LockDisable(bool status);
 extern bool LockingDisabled(void);
+extern LOCKMETHODTABLE *GetLocksMethodTable(LOCK *lock);
 extern LOCKMETHOD LockMethodTableInit(char *tabName, LOCKMASK *conflictsP,
 					int *prioP, int numModes, int maxBackends);
 extern LOCKMETHOD LockMethodTableRename(LOCKMETHOD lockmethod);
@@ -256,12 +257,15 @@ extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 						TransactionId xid, LOCKMODE lockmode);
 extern bool LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 						   bool allxids, TransactionId xid);
-extern int LockResolveConflicts(LOCKMETHOD lockmethod, LOCKMODE lockmode,
-								LOCK *lock, HOLDER *holder, PROC *proc,
-								int *myHolding);
+extern int LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
+							  LOCKMODE lockmode,
+							  LOCK *lock, HOLDER *holder, PROC *proc,
+							  int *myHolding);
 extern void GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode);
+extern void RemoveFromWaitQueue(PROC *proc);
 extern int	LockShmemSize(int maxBackends);
-extern bool DeadLockCheck(PROC *thisProc, LOCK *findlock);
+extern bool DeadLockCheck(PROC *proc);
+extern void InitDeadLockChecking(void);
 
 #ifdef LOCK_DEBUG
 extern void DumpLocks(void);

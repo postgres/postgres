@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.80 2001/01/24 19:43:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.81 2001/01/25 03:31:16 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -24,15 +24,15 @@
  *
  *	LockAcquire(), LockRelease(), LockMethodTableInit(),
  *	LockMethodTableRename(), LockReleaseAll,
- *	LockResolveConflicts(), GrantLock()
+ *	LockCheckConflicts(), GrantLock()
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <signal.h>
-
-#include "postgres.h"
 
 #include "access/xact.h"
 #include "miscadmin.h"
@@ -44,7 +44,6 @@ static int	WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 					   LOCK *lock, HOLDER *holder);
 static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PROC *proc,
 							 int *myHolding);
-static int LockGetMyHeldLocks(SHMEM_OFFSET lockOffset, PROC *proc);
 
 static char *lock_types[] =
 {
@@ -209,6 +208,18 @@ bool
 LockingDisabled(void)
 {
 	return LockingIsDisabled;
+}
+
+/*
+ * Fetch the lock method table associated with a given lock
+ */
+LOCKMETHODTABLE *
+GetLocksMethodTable(LOCK *lock)
+{
+	LOCKMETHOD lockmethod = LOCK_LOCKMETHOD(*lock);
+
+	Assert(lockmethod > 0 && lockmethod < NumLockMethods);
+	return LockMethodTable[lockmethod];
 }
 
 
@@ -559,7 +570,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	if (!holder)
 	{
 		SpinRelease(masterLock);
-		elog(NOTICE, "LockAcquire: holder table corrupted");
+		elog(FATAL, "LockAcquire: holder table corrupted");
 		return FALSE;
 	}
 
@@ -623,11 +634,11 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	Assert((lock->nRequested > 0) && (lock->requested[lockmode] > 0));
 
 	/* --------------------
-	 * If I'm the only one holding any lock on this object, then there
-	 * cannot be a conflict. The same is true if I already hold this lock.
+	 * If I already hold one or more locks of the requested type,
+	 * just grant myself another one without blocking.
 	 * --------------------
 	 */
-	if (holder->nHolding == lock->nGranted || holder->holding[lockmode] != 0)
+	if (holder->holding[lockmode] > 0)
 	{
 		GrantLock(lock, holder, lockmode);
 		HOLDER_PRINT("LockAcquire: owning", holder);
@@ -637,11 +648,11 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 	/* --------------------
 	 * If this process (under any XID) is a holder of the lock,
-	 * then there is no conflict, either.
+	 * also grant myself another one without blocking.
 	 * --------------------
 	 */
 	LockCountMyLocks(holder->tag.lock, MyProc, myHolding);
-	if (myHolding[lockmode] != 0)
+	if (myHolding[lockmode] > 0)
 	{
 		GrantLock(lock, holder, lockmode);
 		HOLDER_PRINT("LockAcquire: my other XID owning", holder);
@@ -649,42 +660,27 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		return TRUE;
 	}
 
-	/*
-	 * If lock requested conflicts with locks requested by waiters...
+	/* --------------------
+	 * If lock requested conflicts with locks requested by waiters,
+	 * must join wait queue.  Otherwise, check for conflict with
+	 * already-held locks.  (That's last because most complex check.)
+	 * --------------------
 	 */
 	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
-	{
-		/*
-		 * If my process doesn't hold any locks that conflict with waiters
-		 * then force to sleep, so that prior waiters get first chance.
-		 */
-		for (i = 1; i <= lockMethodTable->ctl->numLockModes; i++)
-		{
-			if (myHolding[i] > 0 &&
-				lockMethodTable->ctl->conflictTab[i] & lock->waitMask)
-				break;			/* yes, there is a conflict */
-		}
-
-		if (i > lockMethodTable->ctl->numLockModes)
-		{
-			HOLDER_PRINT("LockAcquire: another proc already waiting",
-						 holder);
-			status = STATUS_FOUND;
-		}
-		else
-			status = LockResolveConflicts(lockmethod, lockmode,
-										  lock, holder,
-										  MyProc, myHolding);
-	}
+		status = STATUS_FOUND;
 	else
-		status = LockResolveConflicts(lockmethod, lockmode,
-									  lock, holder,
-									  MyProc, myHolding);
+		status = LockCheckConflicts(lockMethodTable, lockmode,
+									lock, holder,
+									MyProc, myHolding);
 
 	if (status == STATUS_OK)
-		GrantLock(lock, holder, lockmode);
-	else if (status == STATUS_FOUND)
 	{
+		/* No conflict with held or previously requested locks */
+		GrantLock(lock, holder, lockmode);
+	}
+	else
+	{
+		Assert(status == STATUS_FOUND);
 #ifdef USER_LOCKS
 
 		/*
@@ -765,49 +761,50 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 }
 
 /* ----------------------------
- * LockResolveConflicts -- test for lock conflicts
+ * LockCheckConflicts -- test whether requested lock conflicts
+ *		with those already granted
+ *
+ * Returns STATUS_FOUND if conflict, STATUS_OK if no conflict.
  *
  * NOTES:
- *		Here's what makes this complicated: one transaction's
- * locks don't conflict with one another.  When many processes
- * hold locks, each has to subtract off the other's locks when
- * determining whether or not any new lock acquired conflicts with
- * the old ones.
+ *		Here's what makes this complicated: one process's locks don't
+ * conflict with one another, even if they are held under different
+ * transaction IDs (eg, session and xact locks do not conflict).
+ * So, we must subtract off our own locks when determining whether the
+ * requested new lock conflicts with those already held.
  *
  * The caller can optionally pass the process's total holding counts, if
  * known.  If NULL is passed then these values will be computed internally.
  * ----------------------------
  */
 int
-LockResolveConflicts(LOCKMETHOD lockmethod,
-					 LOCKMODE lockmode,
-					 LOCK *lock,
-					 HOLDER *holder,
-					 PROC *proc,
-					 int *myHolding)		/* myHolding[] array or NULL */
+LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
+				   LOCKMODE lockmode,
+				   LOCK *lock,
+				   HOLDER *holder,
+				   PROC *proc,
+				   int *myHolding)		/* myHolding[] array or NULL */
 {
-	LOCKMETHODCTL *lockctl = LockMethodTable[lockmethod]->ctl;
+	LOCKMETHODCTL *lockctl = lockMethodTable->ctl;
 	int			numLockModes = lockctl->numLockModes;
 	int			bitmask;
 	int			i,
 				tmpMask;
 	int			localHolding[MAX_LOCKMODES];
 
-	Assert((holder->nHolding >= 0) && (holder->holding[lockmode] >= 0));
-
 	/* ----------------------------
 	 * first check for global conflicts: If no locks conflict
-	 * with mine, then I get the lock.
+	 * with my request, then I get the lock.
 	 *
 	 * Checking for conflict: lock->grantMask represents the types of
 	 * currently held locks.  conflictTable[lockmode] has a bit
-	 * set for each type of lock that conflicts with mine.	Bitwise
+	 * set for each type of lock that conflicts with request.	Bitwise
 	 * compare tells if there is a conflict.
 	 * ----------------------------
 	 */
 	if (!(lockctl->conflictTab[lockmode] & lock->grantMask))
 	{
-		HOLDER_PRINT("LockResolveConflicts: no conflict", holder);
+		HOLDER_PRINT("LockCheckConflicts: no conflict", holder);
 		return STATUS_OK;
 	}
 
@@ -844,11 +841,11 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 	if (!(lockctl->conflictTab[lockmode] & bitmask))
 	{
 		/* no conflict. OK to get the lock */
-		HOLDER_PRINT("LockResolveConflicts: resolved", holder);
+		HOLDER_PRINT("LockCheckConflicts: resolved", holder);
 		return STATUS_OK;
 	}
 
-	HOLDER_PRINT("LockResolveConflicts: conflicting", holder);
+	HOLDER_PRINT("LockCheckConflicts: conflicting", holder);
 	return STATUS_FOUND;
 }
 
@@ -890,32 +887,11 @@ LockCountMyLocks(SHMEM_OFFSET lockOffset, PROC *proc, int *myHolding)
 }
 
 /*
- * LockGetMyHeldLocks -- compute bitmask of lock types held by a process
- *		for a given lockable object.
- */
-static int
-LockGetMyHeldLocks(SHMEM_OFFSET lockOffset, PROC *proc)
-{
-	int			myHolding[MAX_LOCKMODES];
-	int			heldLocks = 0;
-	int			i,
-				tmpMask;
-
-	LockCountMyLocks(lockOffset, proc, myHolding);
-
-	for (i = 1, tmpMask = 2;
-		 i < MAX_LOCKMODES;
-		 i++, tmpMask <<= 1)
-	{
-		if (myHolding[i] > 0)
-			heldLocks |= tmpMask;
-	}
-	return heldLocks;
-}
-
-/*
  * GrantLock -- update the lock and holder data structures to show
  *		the lock request has been granted.
+ *
+ * NOTE: if proc was blocked, it also needs to be removed from the wait list
+ * and have its waitLock/waitHolder fields cleared.  That's not done here.
  */
 void
 GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode)
@@ -935,6 +911,9 @@ GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode)
 
 /*
  * WaitOnLock -- wait to acquire a lock
+ *
+ * Caller must have set MyProc->heldLocks to reflect locks already held
+ * on the lockable object by this process (under all XIDs).
  *
  * The locktable spinlock must be held at entry.
  */
@@ -956,7 +935,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	strcat(new_status, " waiting");
 	set_ps_display(new_status);
 
-	/*
+	/* -------------------
 	 * NOTE: Think not to put any lock state cleanup after the call to
 	 * ProcSleep, in either the normal or failure path.  The lock state
 	 * must be fully set by the lock grantor, or by HandleDeadLock if we
@@ -965,12 +944,13 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	 * after someone else grants us the lock, but before we've noticed it.
 	 * Hence, after granting, the locktable state must fully reflect the
 	 * fact that we own the lock; we can't do additional work on return.
+	 * -------------------
 	 */
 
-	if (ProcSleep(lockMethodTable->ctl,
+	if (ProcSleep(lockMethodTable,
 				  lockmode,
 				  lock,
-				  holder) != NO_ERROR)
+				  holder) != STATUS_OK)
 	{
 		/* -------------------
 		 * We failed as a result of a deadlock, see HandleDeadLock().
@@ -992,14 +972,60 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 	return STATUS_OK;
 }
 
+/*--------------------
+ * Remove a proc from the wait-queue it is on
+ * (caller must know it is on one).
+ *
+ * Locktable lock must be held by caller.
+ *
+ * NB: this does not remove the process' holder object, nor the lock object,
+ * even though their counts might now have gone to zero.  That will happen
+ * during a subsequent LockReleaseAll call, which we expect will happen
+ * during transaction cleanup.  (Removal of a proc from its wait queue by
+ * this routine can only happen if we are aborting the transaction.)
+ *--------------------
+ */
+void
+RemoveFromWaitQueue(PROC *proc)
+{
+	LOCK   *waitLock = proc->waitLock;
+	LOCKMODE lockmode = proc->waitLockMode;
+
+	/* Make sure proc is waiting */
+	Assert(proc->links.next != INVALID_OFFSET);
+	Assert(waitLock);
+	Assert(waitLock->waitProcs.size > 0);
+
+	/* Remove proc from lock's wait queue */
+	SHMQueueDelete(&(proc->links));
+	waitLock->waitProcs.size--;
+
+	/* Undo increments of request counts by waiting process */
+	Assert(waitLock->nRequested > 0);
+	Assert(waitLock->nRequested > proc->waitLock->nGranted);
+	waitLock->nRequested--;
+	Assert(waitLock->requested[lockmode] > 0);
+	waitLock->requested[lockmode]--;
+	/* don't forget to clear waitMask bit if appropriate */
+	if (waitLock->granted[lockmode] == waitLock->requested[lockmode])
+		waitLock->waitMask &= BITS_OFF[lockmode];
+
+	/* Clean up the proc's own state */
+	proc->waitLock = NULL;
+	proc->waitHolder = NULL;
+
+	/* See if any other waiters for the lock can be woken up now */
+	ProcLockWakeup(GetLocksMethodTable(waitLock), waitLock);
+}
+
 /*
  * LockRelease -- look up 'locktag' in lock table 'lockmethod' and
- *		release it.
+ *		release one 'lockmode' lock on it.
  *
- * Side Effects: if the lock no longer conflicts with the highest
- *		priority waiting process, that process is granted the lock
- *		and awoken. (We have to grant the lock here to avoid a
- *		race between the waking process and any new process to
+ * Side Effects: find any waiting processes that are now wakable,
+ *		grant them their requested locks and awaken them.
+ *		(We have to grant the lock here to avoid a race between
+ *		the waking process and any new process to
  *		come along and request the lock.)
  */
 bool
@@ -1013,7 +1039,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	HOLDER	   *holder;
 	HOLDERTAG	holdertag;
 	HTAB	   *holderTable;
-	bool		wakeupNeeded = true;
+	bool		wakeupNeeded = false;
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD && Trace_userlocks)
@@ -1086,7 +1112,6 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		return FALSE;
 	}
 	HOLDER_PRINT("LockRelease: found", holder);
-	Assert(holder->tag.lock == MAKE_OFFSET(lock));
 
 	/*
 	 * Check that we are actually holding a lock of the type we want to
@@ -1094,11 +1119,11 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 */
 	if (!(holder->holding[lockmode] > 0))
 	{
-		SpinRelease(masterLock);
 		HOLDER_PRINT("LockRelease: WRONGTYPE", holder);
+		Assert(holder->holding[lockmode] >= 0);
+		SpinRelease(masterLock);
 		elog(NOTICE, "LockRelease: you don't own a lock of type %s",
 			 lock_types[lockmode]);
-		Assert(holder->holding[lockmode] >= 0);
 		return FALSE;
 	}
 	Assert(holder->nHolding > 0);
@@ -1120,33 +1145,23 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		lock->grantMask &= BITS_OFF[lockmode];
 	}
 
-#ifdef NOT_USED
-	/* --------------------------
-	 * If there are still active locks of the type I just released, no one
-	 * should be woken up.	Whoever is asleep will still conflict
-	 * with the remaining locks.
-	 * --------------------------
-	 */
-	if (lock->granted[lockmode])
-		wakeupNeeded = false;
-	else
-#endif
-
-		/*
-		 * Above is not valid any more (due to MVCC lock modes). Actually
-		 * we should compare granted[lockmode] with number of
-		 * waiters holding lock of this type and try to wakeup only if
-		 * these numbers are equal (and lock released conflicts with locks
-		 * requested by waiters). For the moment we only check the last
-		 * condition.
-		 */
-	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
-		wakeupNeeded = true;
-
 	LOCK_PRINT("LockRelease: updated", lock, lockmode);
 	Assert((lock->nRequested >= 0) && (lock->requested[lockmode] >= 0));
 	Assert((lock->nGranted >= 0) && (lock->granted[lockmode] >= 0));
 	Assert(lock->nGranted <= lock->nRequested);
+
+	/* --------------------------
+	 * We need only run ProcLockWakeup if the released lock conflicts with
+	 * at least one of the lock types requested by waiter(s).  Otherwise
+	 * whatever conflict made them wait must still exist.  NOTE: before MVCC,
+	 * we could skip wakeup if lock->granted[lockmode] was still positive.
+	 * But that's not true anymore, because the remaining granted locks might
+	 * belong to some waiter, who could now be awakened because he doesn't
+	 * conflict with his own locks.
+	 * --------------------------
+	 */
+	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
+		wakeupNeeded = true;
 
 	if (lock->nRequested == 0)
 	{
@@ -1161,8 +1176,13 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 									(Pointer) &(lock->tag),
 									HASH_REMOVE,
 									&found);
-		Assert(lock && found);
-		wakeupNeeded = false;
+		if (!lock || !found)
+		{
+			SpinRelease(masterLock);
+			elog(NOTICE, "LockRelease: remove lock, table corrupted");
+			return FALSE;
+		}
+		wakeupNeeded = false;	/* should be false, but make sure */
 	}
 
 	/*
@@ -1192,12 +1212,11 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		}
 	}
 
+	/*
+	 * Wake up waiters if needed.
+	 */
 	if (wakeupNeeded)
-		ProcLockWakeup(lockmethod, lock);
-#ifdef LOCK_DEBUG
-	else if (LOCK_DEBUG_ENABLED(lock))
-        elog(DEBUG, "LockRelease: no wakeup needed");
-#endif
+		ProcLockWakeup(lockMethodTable, lock);
 
 	SpinRelease(masterLock);
 	return TRUE;
@@ -1310,8 +1329,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 		else
 		{
 			/* --------------
-			 * set nRequested to zero so that we can garbage collect the lock
-			 * down below...
+			 * This holder accounts for all the requested locks on the object,
+			 * so we can be lazy and just zero things out.
 			 * --------------
 			 */
 			lock->nRequested = 0;
@@ -1347,7 +1366,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			return FALSE;
 		}
 
-		if (!lock->nRequested)
+		if (lock->nRequested == 0)
 		{
 			/* --------------------
 			 * We've just released the last lock, so garbage-collect the
@@ -1359,7 +1378,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			lock = (LOCK *) hash_search(lockMethodTable->lockHash,
 										(Pointer) &(lock->tag),
 										HASH_REMOVE, &found);
-			if ((!lock) || (!found))
+			if (!lock || !found)
 			{
 				SpinRelease(masterLock);
 				elog(NOTICE, "LockReleaseAll: cannot remove lock from HTAB");
@@ -1367,7 +1386,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 			}
 		}
 		else if (wakeupNeeded)
-			ProcLockWakeup(lockmethod, lock);
+			ProcLockWakeup(lockMethodTable, lock);
 
 next_item:
 		holder = nextHolder;
@@ -1412,245 +1431,6 @@ LockShmemSize(int maxBackends)
 	return size;
 }
 
-/*
- * DeadLockCheck -- Checks for deadlocks for a given process
- *
- * This code takes a list of locks a process holds, and the lock that
- * the process is sleeping on, and tries to find if any of the processes
- * waiting on its locks hold the lock it is waiting for.  If no deadlock
- * is found, it goes on to look at all the processes waiting on their locks.
- *
- * We can't block on user locks, so no sense testing for deadlock
- * because there is no blocking, and no timer for the block.  So,
- * only look at regular locks.
- *
- * We have already locked the master lock before being called.
- */
-bool
-DeadLockCheck(PROC *thisProc, LOCK *findlock)
-{
-	PROC	   *waitProc;
-	PROC_QUEUE *waitQueue;
-	SHM_QUEUE  *procHolders = &(thisProc->procHolders);
-	HOLDER	   *holder;
-	HOLDER	   *nextHolder;
-	LOCKMETHODCTL *lockctl = LockMethodTable[DEFAULT_LOCKMETHOD]->ctl;
-	LOCK	   *lock;
-	int			i,
-				j;
-	bool		first_run = (thisProc == MyProc);
-
-	static PROC *checked_procs[MAXBACKENDS];
-	static int	nprocs;
-
-	/* initialize at start of recursion */
-	if (first_run)
-	{
-		checked_procs[0] = thisProc;
-		nprocs = 1;
-	}
-
-	/*
-	 * Scan over all the locks held/awaited by thisProc.
-	 */
-	holder = (HOLDER *) SHMQueueNext(procHolders, procHolders,
-									 offsetof(HOLDER, procLink));
-
-	while (holder)
-	{
-		/* Get link first, since we may unlink/delete this holder */
-		nextHolder = (HOLDER *) SHMQueueNext(procHolders, &holder->procLink,
-											 offsetof(HOLDER, procLink));
-
-		Assert(holder->tag.proc == MAKE_OFFSET(thisProc));
-
-		lock = (LOCK *) MAKE_PTR(holder->tag.lock);
-
-		/* Ignore user locks */
-		if (lock->tag.lockmethod != DEFAULT_LOCKMETHOD)
-			goto nxtl;
-
-		HOLDER_PRINT("DeadLockCheck", holder);
-		LOCK_PRINT("DeadLockCheck", lock, 0);
-
-		/*
-		 * waitLock is always in procHolders of waiting proc, if !first_run
-		 * then upper caller will handle waitProcs queue of waitLock.
-		 */
-		if (thisProc->waitLock == lock && !first_run)
-			goto nxtl;
-
-		/*
-		 * If we found proc holding findlock and sleeping on some my other
-		 * lock then we have to check does it block me or another waiters.
-		 */
-		if (lock == findlock && !first_run)
-		{
-			int			lm;
-
-			Assert(holder->nHolding > 0);
-			for (lm = 1; lm <= lockctl->numLockModes; lm++)
-			{
-				if (holder->holding[lm] > 0 &&
-					lockctl->conflictTab[lm] & findlock->waitMask)
-					return true;
-			}
-
-			/*
-			 * Else - get the next lock from thisProc's procHolders
-			 */
-			goto nxtl;
-		}
-
-		waitQueue = &(lock->waitProcs);
-		waitProc = (PROC *) MAKE_PTR(waitQueue->links.next);
-
-		/*
-		 * Inner loop scans over all processes waiting for this lock.
-		 *
-		 * NOTE: loop must count down because we want to examine each item
-		 * in the queue even if waitQueue->size decreases due to waking up
-		 * some of the processes.
-		 */
-		for (i = waitQueue->size; --i >= 0; )
-		{
-			Assert(waitProc->waitLock == lock);
-			if (waitProc == thisProc)
-			{
-				/* This should only happen at first level */
-				Assert(waitProc == MyProc);
-				goto nextWaitProc;
-			}
-			if (lock == findlock)		/* first_run also true */
-			{
-				/*
-				 * If I'm blocked by his heldLocks...
-				 */
-				if (lockctl->conflictTab[MyProc->waitLockMode] & waitProc->heldLocks)
-				{
-					/* and he blocked by me -> deadlock */
-					if (lockctl->conflictTab[waitProc->waitLockMode] & MyProc->heldLocks)
-						return true;
-					/* we shouldn't look at procHolders of our blockers */
-					goto nextWaitProc;
-				}
-
-				/*
-				 * If he isn't blocked by me and we request
-				 * non-conflicting lock modes - no deadlock here because
-				 * he isn't blocked by me in any sense (explicitly or
-				 * implicitly). Note that we don't do like test if
-				 * !first_run (when thisProc is holder and non-waiter on
-				 * lock) and so we call DeadLockCheck below for every
-				 * waitProc in thisProc->procHolders, even for waitProc-s
-				 * un-blocked by thisProc. Should we? This could save us
-				 * some time...
-				 */
-				if (!(lockctl->conflictTab[waitProc->waitLockMode] & MyProc->heldLocks) &&
-					!(lockctl->conflictTab[waitProc->waitLockMode] & (1 << MyProc->waitLockMode)))
-					goto nextWaitProc;
-			}
-
-			/*
-			 * Skip this waiter if already checked.
-			 */
-			for (j = 0; j < nprocs; j++)
-			{
-				if (checked_procs[j] == waitProc)
-					goto nextWaitProc;
-			}
-
-			/* Recursively check this process's procHolders. */
-			Assert(nprocs < MAXBACKENDS);
-			checked_procs[nprocs++] = waitProc;
-
-			if (DeadLockCheck(waitProc, findlock))
-			{
-				int			heldLocks;
-
-				/*
-				 * Ok, but is waitProc waiting for me (thisProc) ?
-				 */
-				if (thisProc->waitLock == lock)
-				{
-					Assert(first_run);
-					heldLocks = thisProc->heldLocks;
-				}
-				else
-				{
-					/* should we cache heldLocks to speed this up? */
-					heldLocks = LockGetMyHeldLocks(holder->tag.lock, thisProc);
-					Assert(heldLocks != 0);
-				}
-				if (lockctl->conflictTab[waitProc->waitLockMode] & heldLocks)
-				{
-					/*
-					 * Last attempt to avoid deadlock: try to wakeup myself.
-					 */
-					if (first_run)
-					{
-						if (LockResolveConflicts(DEFAULT_LOCKMETHOD,
-												 MyProc->waitLockMode,
-												 MyProc->waitLock,
-												 MyProc->waitHolder,
-												 MyProc,
-												 NULL) == STATUS_OK)
-						{
-							GrantLock(MyProc->waitLock,
-									  MyProc->waitHolder,
-									  MyProc->waitLockMode);
-							ProcWakeup(MyProc, NO_ERROR);
-							return false;
-						}
-					}
-					return true;
-				}
-
-				/*
-				 * Hell! Is he blocked by any (other) holder ?
-				 */
-				if (LockResolveConflicts(DEFAULT_LOCKMETHOD,
-										 waitProc->waitLockMode,
-										 lock,
-										 waitProc->waitHolder,
-										 waitProc,
-										 NULL) != STATUS_OK)
-				{
-					/*
-					 * Blocked by others - no deadlock...
-					 */
-					LOCK_PRINT("DeadLockCheck: blocked by others",
-							   lock, waitProc->waitLockMode);
-					goto nextWaitProc;
-				}
-
-				/*
-				 * Well - wakeup this guy! This is the case of
-				 * implicit blocking: thisProc blocked someone who
-				 * blocked waitProc by the fact that he/someone is
-				 * already waiting for lock.  We do this for
-				 * anti-starving.
-				 */
-				GrantLock(lock, waitProc->waitHolder, waitProc->waitLockMode);
-				waitProc = ProcWakeup(waitProc, NO_ERROR);
-				/*
-				 * Use next-proc link returned by ProcWakeup, since this
-				 * proc's own links field is now cleared.
-				 */
-				continue;
-			}
-
-nextWaitProc:
-			waitProc = (PROC *) MAKE_PTR(waitProc->links.next);
-		}
-
-nxtl:
-		holder = nextHolder;
-	}
-
-	/* if we got here, no deadlock */
-	return false;
-}
 
 #ifdef LOCK_DEBUG
 /*
