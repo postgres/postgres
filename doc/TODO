@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Jul 18 20:49:38 EDT 1999
+Last updated:		Tue Jul 20 13:15:50 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -179,6 +179,7 @@ MISC
 * Make postgres user have a password by default
 * Add configure test to check for C++ need for *.h and namespaces
 * Allow BLCKSZ <= 64k, not <= 32k
+* redesign UNION structures to have separarate target lists
 
 PERFORMANCE
 -----------
