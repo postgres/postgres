@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Nov  1 19:15:14 EST 2002
+Last updated:		Fri Nov  1 21:42:54 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -341,6 +341,7 @@ Referential Integrity
 * -Fix foreign key constraints to not error on intermediate db states (Stephan)
 * Allow DEFERRABLE UNIQUE constraints
 * Allow triggers to be disabled [trigger]
+* Support statement-level triggers and triggers on columns (Neil)
 
 
 Dependency Checking
