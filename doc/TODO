@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul 18 01:01:32 EDT 2002
+Last updated:		Thu Jul 18 19:06:19 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -467,7 +467,7 @@ Source Code
 * Add use of 'const' for variables in source tree
 * -Fix problems with libpq non-blocking/async code
 * -Make sure all block numbers are unsigned to increase maximum table size
-* Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
+* -Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
 * HOLDER/HOLDERTAB rename to PROCLOCK/PROCLOCKTAG (Bruce)
 * Remove LockMethodTable.prio field, not used (Bruce)
 * Rename some /contrib modules from pg* to pg_*
