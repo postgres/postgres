@@ -6,16 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.2 1996/10/31 09:50:07 scrappy Exp $
+ * $Id: sinvaladt.h,v 1.3 1996/11/05 06:11:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SINVALADT_H
 #define SINVALADT_H
 
-#include "storage/ipc.h"
-#include "storage/itemptr.h"
-#include "storage/sinval.h"
+#include <storage/itemptr.h>
+#include <storage/ipc.h>
  
 /*
  * The structure of the shared cache invaidation segment

@@ -6,17 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lmgr.h,v 1.2 1996/10/31 09:49:56 scrappy Exp $
+ * $Id: lmgr.h,v 1.3 1996/11/05 06:10:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	LMGR_H
 #define LMGR_H
 
-
-#include "storage/itemptr.h"
-#include "storage/lock.h"
-#include "utils/rel.h"
+#include <storage/lock.h>
+#include <utils/rel.h>
 
 /* 
  * This was moved from pladt.h for the new lock manager.  Want to obsolete

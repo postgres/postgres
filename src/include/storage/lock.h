@@ -6,18 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.2 1996/10/31 09:49:57 scrappy Exp $
+ * $Id: lock.h,v 1.3 1996/11/05 06:11:00 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCK_H_
 #define LOCK_H_
 
-#include "storage/itemptr.h"
-#include "storage/shmem.h"
-#include "storage/spin.h"
-#include "storage/backendid.h"
-#include "utils/hsearch.h"
+#include <storage/shmem.h>
+#include <storage/itemptr.h>
 
 extern SPINLOCK LockMgrLock;
 typedef int MASK;

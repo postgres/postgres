@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itempos.h,v 1.2 1996/10/31 09:49:50 scrappy Exp $
+ * $Id: itempos.h,v 1.3 1996/11/05 06:10:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	ITEMPOS_H
 #define ITEMPOS_H
 
-#include "storage/buf.h"
-#include "storage/itemid.h"
+#include <storage/itemid.h>
+#include <storage/buf.h>
 
 typedef struct ItemSubpositionData {
 	Buffer		op_db;

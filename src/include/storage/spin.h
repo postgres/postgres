@@ -6,14 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: spin.h,v 1.1 1996/08/28 01:58:33 scrappy Exp $
+ * $Id: spin.h,v 1.2 1996/11/05 06:11:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	SPIN_H
 #define SPIN_H
 
-#include "ipc.h"
+#include <storage/ipc.h>
 
 /* 
  * two implementations of spin locks

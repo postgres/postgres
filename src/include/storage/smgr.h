@@ -6,15 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.1 1996/08/28 01:58:32 scrappy Exp $
+ * $Id: smgr.h,v 1.2 1996/11/05 06:11:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SMGR_H
 #define SMGR_H
 
-#include "utils/rel.h"
-#include "storage/spin.h"	/* for SPINLOCK */
+#include <storage/spin.h>
+#include <storage/block.h>
+#include <utils/rel.h>
 
 #define SM_FAIL		0
 #define	SM_SUCCESS	1

@@ -7,15 +7,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: large_object.h,v 1.2 1996/10/31 09:49:54 scrappy Exp $
+ * $Id: large_object.h,v 1.3 1996/11/05 06:10:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	LARGE_OBJECT_H
 #define	LARGE_OBJECT_H
 
-#include "utils/rel.h"
-#include "access/relscan.h"
+#include <sys/types.h>
+
+#include <access/relscan.h>
 
 /*
  * This structure will eventually have lots more stuff associated with it.

@@ -6,15 +6,16 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.1 1996/08/28 01:58:26 scrappy Exp $
+ * $Id: shmem.h,v 1.2 1996/11/05 06:11:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	SHMEM_H
 #define SHMEM_H
 
-#include "storage/spin.h"		/* for SPINLOCK */
-#include "utils/hsearch.h"		/* for HTAB */
+#include <utils/hsearch.h>
+#include <storage/spin.h>
+
 
 /* The shared memory region can start at a different address
  * in every process.  Shared memory "pointers" are actually

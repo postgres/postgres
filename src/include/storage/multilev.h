@@ -7,15 +7,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: multilev.h,v 1.1 1996/08/28 01:58:17 scrappy Exp $
+ * $Id: multilev.h,v 1.2 1996/11/05 06:11:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef MULTILEV_H
 #define MULTILEV_H
 
-#include "storage/lock.h"
-#include "storage/lmgr.h"
+#include <storage/lmgr.h>
 
 #define READ_LOCK  	2
 #define WRITE_LOCK 	1

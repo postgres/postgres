@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pagenum.h,v 1.2 1996/10/31 09:50:00 scrappy Exp $
+ * $Id: pagenum.h,v 1.3 1996/11/05 06:11:02 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	PAGENUM_H
 #define PAGENUM_H
 
-#include "storage/page.h"
 
 typedef uint16	PageNumber;
 

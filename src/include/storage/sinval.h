@@ -6,17 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.2 1996/10/31 09:50:06 scrappy Exp $
+ * $Id: sinval.h,v 1.3 1996/11/05 06:11:05 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef	SINVAL_H
 #define SINVAL_H
 
-#include "storage/spin.h"
-#include "storage/ipc.h"
-#include "storage/itemptr.h"
-#include "storage/backendid.h"
+#include <storage/itemptr.h>
+#include <storage/spin.h>
 
 extern SPINLOCK SInvalLock;
 

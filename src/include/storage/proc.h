@@ -6,23 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.2 1996/10/31 05:57:45 momjian Exp $
+ * $Id: proc.h,v 1.3 1996/11/05 06:11:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _PROC_H_
 #define _PROC_H_
 
-#include "storage/ipc.h"
-#include "storage/lock.h"
+#include <storage/lock.h>
+
 #ifndef WIN32
-#include <sys/ipc.h>
-#include <sys/sem.h>
 #else
 /* This is because WIN32 already defines PROC */
 #define PROC	PGL_PROC
 #endif /* WIN32 */
-#include "storage/shmem.h"
 
 
 typedef struct {
