@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.34 2000/10/02 21:45:32 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.35 2000/11/12 20:51:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,6 +117,7 @@ SISegInit(SISeg *segP, int maxBackends)
 	/* Clear message counters, save size of procState array */
 	segP->minMsgNum = 0;
 	segP->maxMsgNum = 0;
+	segP->lastBackend = 0;
 	segP->maxBackends = maxBackends;
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
@@ -126,7 +127,6 @@ SISegInit(SISeg *segP, int maxBackends)
 	{
 		segP->procState[i].nextMsgNum = -1;		/* inactive */
 		segP->procState[i].resetState = false;
-		segP->procState[i].tag = InvalidBackendTag;
 		segP->procState[i].procStruct = INVALID_OFFSET;
 	}
 }
@@ -145,47 +145,45 @@ SIBackendInit(SISeg *segP)
 	int			index;
 	ProcState  *stateP = NULL;
 
-	Assert(MyBackendTag > 0);
-
-	/* Check for duplicate backend tags (should never happen) */
-	for (index = 0; index < segP->maxBackends; index++)
-	{
-		if (segP->procState[index].tag == MyBackendTag)
-			elog(FATAL, "SIBackendInit: tag %d already in use", MyBackendTag);
-	}
-
 	/* Look for a free entry in the procState array */
-	for (index = 0; index < segP->maxBackends; index++)
+	for (index = 0; index < segP->lastBackend; index++)
 	{
-		if (segP->procState[index].tag == InvalidBackendTag)
+		if (segP->procState[index].nextMsgNum < 0) /* inactive slot? */
 		{
 			stateP = &segP->procState[index];
 			break;
 		}
 	}
 
-	/*
-	 * elog() with spinlock held is probably not too cool, but this
-	 * condition should never happen anyway.
-	 */
 	if (stateP == NULL)
 	{
-		elog(NOTICE, "SIBackendInit: no free procState slot available");
-		MyBackendId = InvalidBackendTag;
-		return 0;
+		if (segP->lastBackend < segP->maxBackends)
+		{
+			stateP = &segP->procState[segP->lastBackend];
+			Assert(stateP->nextMsgNum < 0);
+			segP->lastBackend++;
+		}
+		else
+		{
+			/*
+			 * elog() with spinlock held is probably not too cool, but this
+			 * condition should never happen anyway.
+			 */
+			elog(NOTICE, "SIBackendInit: no free procState slot available");
+			MyBackendId = InvalidBackendId;
+			return 0;
+		}
 	}
 
 	MyBackendId = (stateP - &segP->procState[0]) + 1;
 
 #ifdef	INVALIDDEBUG
-	elog(DEBUG, "SIBackendInit: backend tag %d; backend id %d.",
-		 MyBackendTag, MyBackendId);
+	elog(DEBUG, "SIBackendInit: backend id %d", MyBackendId);
 #endif	 /* INVALIDDEBUG */
 
 	/* mark myself active, with all extant messages already read */
 	stateP->nextMsgNum = segP->maxMsgNum;
 	stateP->resetState = false;
-	stateP->tag = MyBackendTag;
 	stateP->procStruct = MAKE_OFFSET(MyProc);
 
 	/* register exit routine to mark my entry inactive at exit */
@@ -206,16 +204,25 @@ SIBackendInit(SISeg *segP)
 static void
 CleanupInvalidationState(int status, Datum arg)
 {
-	SISeg *segP = (void*) DatumGetPointer(arg);
+	SISeg	   *segP = (SISeg *) DatumGetPointer(arg);
+	int			i;
 
 	Assert(PointerIsValid(segP));
 
 	SpinAcquire(SInvalLock);
 
+	/* Mark myself inactive */
 	segP->procState[MyBackendId - 1].nextMsgNum = -1;
 	segP->procState[MyBackendId - 1].resetState = false;
-	segP->procState[MyBackendId - 1].tag = InvalidBackendTag;
 	segP->procState[MyBackendId - 1].procStruct = INVALID_OFFSET;
+
+	/* Recompute index of last active backend */
+	for (i = segP->lastBackend; i > 0; i--)
+	{
+		if (segP->procState[i - 1].nextMsgNum >= 0)
+			break;
+	}
+	segP->lastBackend = i;
 
 	SpinRelease(SInvalLock);
 }
@@ -299,7 +306,7 @@ SISetProcStateInvalid(SISeg *segP)
 	segP->minMsgNum = 0;
 	segP->maxMsgNum = 0;
 
-	for (i = 0; i < segP->maxBackends; i++)
+	for (i = 0; i < segP->lastBackend; i++)
 	{
 		if (segP->procState[i].nextMsgNum >= 0) /* active backend? */
 		{
@@ -324,8 +331,6 @@ SIGetDataEntry(SISeg *segP, int backendId,
 			   SharedInvalidData *data)
 {
 	ProcState  *stateP = &segP->procState[backendId - 1];
-
-	Assert(stateP->tag == MyBackendTag);
 
 	if (stateP->resetState)
 	{
@@ -373,7 +378,7 @@ SIDelExpiredDataEntries(SISeg *segP)
 
 	/* Recompute minMsgNum = minimum of all backends' nextMsgNum */
 
-	for (i = 0; i < segP->maxBackends; i++)
+	for (i = 0; i < segP->lastBackend; i++)
 	{
 		h = segP->procState[i].nextMsgNum;
 		if (h >= 0)
@@ -392,7 +397,7 @@ SIDelExpiredDataEntries(SISeg *segP)
 	{
 		segP->minMsgNum -= MSGNUMWRAPAROUND;
 		segP->maxMsgNum -= MSGNUMWRAPAROUND;
-		for (i = 0; i < segP->maxBackends; i++)
+		for (i = 0; i < segP->lastBackend; i++)
 		{
 			if (segP->procState[i].nextMsgNum >= 0)
 				segP->procState[i].nextMsgNum -= MSGNUMWRAPAROUND;

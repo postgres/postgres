@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.22 2000/11/05 22:50:20 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.23 2000/11/12 20:51:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,6 +185,9 @@ void
 /*
  * DatabaseHasActiveBackends -- are there any backends running in the given DB
  *
+ * If 'ignoreMyself' is TRUE, ignore this particular backend while checking
+ * for backends in the target database.
+ *
  * This function is used to interlock DROP DATABASE against there being
  * any active backends in the target DB --- dropping the DB while active
  * backends remain would be a Bad Thing.  Note that we cannot detect here
@@ -194,7 +197,7 @@ void
  */
 
 bool
-DatabaseHasActiveBackends(Oid databaseId)
+DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 {
 	bool		result = false;
 	SISeg	   *segP = shmInvalBuffer;
@@ -203,7 +206,7 @@ DatabaseHasActiveBackends(Oid databaseId)
 
 	SpinAcquire(SInvalLock);
 
-	for (index = 0; index < segP->maxBackends; index++)
+	for (index = 0; index < segP->lastBackend; index++)
 	{
 		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
@@ -213,6 +216,9 @@ DatabaseHasActiveBackends(Oid databaseId)
 
 			if (proc->databaseId == databaseId)
 			{
+				if (ignoreMyself && proc == MyProc)
+					continue;
+
 				result = true;
 				break;
 			}
@@ -237,7 +243,7 @@ TransactionIdIsInProgress(TransactionId xid)
 
 	SpinAcquire(SInvalLock);
 
-	for (index = 0; index < segP->maxBackends; index++)
+	for (index = 0; index < segP->lastBackend; index++)
 	{
 		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
@@ -275,7 +281,7 @@ GetXmaxRecent(TransactionId *XmaxRecent)
 
 	SpinAcquire(SInvalLock);
 
-	for (index = 0; index < segP->maxBackends; index++)
+	for (index = 0; index < segP->lastBackend; index++)
 	{
 		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
@@ -309,11 +315,11 @@ GetSnapshotData(bool serializable)
 	int			count = 0;
 
 	/*
-	 * There can be no more than maxBackends active transactions, so this
+	 * There can be no more than lastBackend active transactions, so this
 	 * is enough space:
 	 */
 	snapshot->xip = (TransactionId *)
-		malloc(segP->maxBackends * sizeof(TransactionId));
+		malloc(segP->lastBackend * sizeof(TransactionId));
 	snapshot->xmin = GetCurrentTransactionId();
 
 	SpinAcquire(SInvalLock);
@@ -326,7 +332,7 @@ GetSnapshotData(bool serializable)
 	 */
 	ReadNewTransactionId(&(snapshot->xmax));
 
-	for (index = 0; index < segP->maxBackends; index++)
+	for (index = 0; index < segP->lastBackend; index++)
 	{
 		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 
@@ -386,7 +392,7 @@ GetUndoRecPtr(void)
 
 	SpinAcquire(SInvalLock);
 
-	for (index = 0; index < segP->maxBackends; index++)
+	for (index = 0; index < segP->lastBackend; index++)
 	{
 		SHMEM_OFFSET pOffset = stateP[index].procStruct;
 

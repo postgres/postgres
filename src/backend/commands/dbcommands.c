@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.65 2000/11/08 23:24:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.66 2000/11/12 20:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,7 +225,7 @@ dropdb(const char *dbname)
 	/*
 	 * Check for active backends in the target database.
 	 */
-	if (DatabaseHasActiveBackends(db_id))
+	if (DatabaseHasActiveBackends(db_id, false))
 	{
 		heap_close(pgdbrel, AccessExclusiveLock);
 		elog(ERROR, "DROP DATABASE: database \"%s\" is being accessed by other users", dbname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.69 2000/10/28 16:20:58 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.70 2000/11/12 20:51:52 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -138,75 +138,37 @@ ReverifyMyDatabase(const char *name)
  *
  *		This routine initializes stuff needed for ipc, locking, etc.
  *		it should be called something more informative.
- *
- * Note:
- *		This does not set MyBackendId.	MyBackendTag is set, however.
  * --------------------------------
  */
 static void
 InitCommunication()
 {
-	char	   *postid;			/* value of environment variable */
-	char	   *postport;		/* value of environment variable */
-	char	   *ipc_key;		/* value of environemnt variable */
-	IPCKey		key = 0;
-
-	/* ----------------
-	 *	try and get the backend tag from POSTID
-	 * ----------------
-	 */
-	MyBackendId = -1;
-
-	postid = getenv("POSTID");
-	if (!PointerIsValid(postid))
-		MyBackendTag = -1;
-	else
-	{
-		MyBackendTag = atoi(postid);
-		Assert(MyBackendTag >= 0);
-	}
-
-
-	ipc_key = getenv("IPC_KEY");
-	if (!PointerIsValid(ipc_key))
-		key = -1;
-	else
-	{
-		key = atoi(ipc_key);
-		Assert(MyBackendTag >= 0);
-	}
-
-	postport = getenv("POSTPORT");
-
-	if (PointerIsValid(postport))
-	{
-		if (MyBackendTag == -1)
-			elog(FATAL, "InitCommunication: missing POSTID");
-	}
-	else if (IsUnderPostmaster)
-	{
-		elog(FATAL,
-			 "InitCommunication: under postmaster and POSTPORT not set");
-	}
-	else
-	{
-		/* ----------------
-		 *	assume we're running a postgres backend by itself with
-		 *	no front end or postmaster.
-		 * ----------------
-		 */
-		if (MyBackendTag == -1)
-			MyBackendTag = 1;
-
-		key = PrivateIPCKey;
-	}
-
 	/* ----------------
 	 *	initialize shared memory and semaphores appropriately.
 	 * ----------------
 	 */
 	if (!IsUnderPostmaster)		/* postmaster already did this */
 	{
+		/* ----------------
+		 *	we're running a postgres backend by itself with
+		 *	no front end or postmaster.
+		 * ----------------
+		 */
+		char	   *ipc_key;	/* value of environment variable */
+		IPCKey		key;
+
+		ipc_key = getenv("IPC_KEY");
+
+		if (!PointerIsValid(ipc_key))
+		{
+			/* Normal standalone backend */
+			key = PrivateIPCKey;
+		}
+		else
+		{
+			/* Allow standalone's IPC key to be set */
+			key = atoi(ipc_key);
+		}
 		PostgresIpcKey = key;
 		AttachSharedMemoryAndSemaphores(key);
 	}
@@ -343,14 +305,12 @@ InitPostgres(const char *dbname, const char *username)
 	 *
 	 * Sets up MyBackendId, a unique backend identifier.
 	 */
+	MyBackendId = InvalidBackendId;
+
 	InitSharedInvalidationState();
 
 	if (MyBackendId > MAXBACKENDS || MyBackendId <= 0)
-	{
-		elog(FATAL, "cinit2: bad backend id %d (%d)",
-			 MyBackendTag,
-			 MyBackendId);
-	}
+		elog(FATAL, "cinit2: bad backend id %d", MyBackendId);
 
 	/*
 	 * Initialize the access methods. Does not touch files (?) - thomas

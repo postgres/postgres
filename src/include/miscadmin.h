@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.69 2000/11/04 12:43:24 petere Exp $
+ * $Id: miscadmin.h,v 1.70 2000/11/12 20:51:52 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -55,7 +55,6 @@ extern char OutputFileName[];
  * done in storage/backendid.h for now.
  *
  * extern BackendId    MyBackendId;
- * extern BackendTag   MyBackendTag;
  */
 extern bool MyDatabaseIdIsInitialized;
 extern Oid	MyDatabaseId;
