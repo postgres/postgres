@@ -13,7 +13,15 @@ output_line_number()
 void
 output_simple_statement(char *cmd)
 {
-	fputs(cmd, yyout);
+	int i, j = strlen(cmd);;
+	
+	/* do this char by char as we have to filter '\"' */
+	for (i = 0; i < j; i++) {
+		if (cmd[i] != '"')
+			fputc(cmd[i], yyout);
+		else
+			fputs("\\\"", yyout);
+	}
 	output_line_number();
         free(cmd);
 }
@@ -86,19 +94,20 @@ hashline_number(void)
 }
 
 void
-output_statement(char * stmt, int mode, char *descriptor)
+output_statement(char * stmt, int mode, char *descriptor,
+	char *con, struct arguments *insert, struct arguments *result)
 {
-	int i, j=strlen(stmt);
+	int i, j = strlen(stmt);
 
 	if (descriptor == NULL)
-		fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", connection ? connection : "NULL");
+		fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"", con ? con : "NULL");
 	else
 	        fprintf(yyout, "{ ECPGdo_descriptor(__LINE__, %s, \"%s\", \"",
-	                        connection ? connection : "NULL", descriptor);
+	                        con ? con : "NULL", descriptor);
 
 	/* do this char by char as we have to filter '\"' */
-	for (i = 0;i < j; i++) {
-		if (stmt[i] != '\"')
+	for (i = 0; i < j; i++) {
+		if (stmt[i] != '"')
 			fputc(stmt[i], yyout);
 		else
 			fputs("\\\"", yyout);
@@ -109,9 +118,9 @@ output_statement(char * stmt, int mode, char *descriptor)
 		fputs("\", ", yyout);
 		
 		/* dump variables to C file */
-		dump_variables(argsinsert, 1);
+		dump_variables(insert, 1);
 		fputs("ECPGt_EOIT, ", yyout);
-		dump_variables(argsresult, 1);
+		dump_variables(result, 1);
 		fputs("ECPGt_EORT);", yyout);
 	}
 	else
@@ -120,7 +129,8 @@ output_statement(char * stmt, int mode, char *descriptor)
 	mode |= 2;
 	whenever_action(mode);
 	free(stmt);
-	free(descriptor);
+	if (descriptor != NULL)
+		free(descriptor);
 	if (connection != NULL)
 		free(connection);
 }

@@ -837,5 +837,11 @@ Wed Mar  1 10:49:03 CET 2000
 
 	- Synced preproc.y with gram.y.
 	- Added output of arrays.
+
+Thu Mar  2 11:25:09 CET 2000
+
+	- Fixed some parsing problems. A variable can now be a reserved
+	  SQL keyword.
+	- Made sure double quotes in statements are correctly quoted.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

@@ -350,17 +350,18 @@ make_name(void)
 %type  <str>    storage_clause opt_initializer c_anything blockstart
 %type  <str>    blockend variable_list variable c_thing c_term
 %type  <str>	opt_pointer cvariable ECPGDisconnect dis_name storage_modifier
-%type  <str>	stmt symbol opt_symbol ECPGRelease execstring server_name
+%type  <str>	stmt ECPGRelease execstring server_name
 %type  <str>	connection_object opt_server opt_port c_stuff opt_reference
 %type  <str>    user_name opt_user char_variable ora_user ident
 %type  <str>    db_prefix server opt_options opt_connection_name c_list
-%type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args
+%type  <str>	ECPGSetConnection cpp_line ECPGTypedef c_args ECPGKeywords
 %type  <str>	enum_type civariableonly ECPGCursorStmt ECPGDeallocate
 %type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
 %type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
-%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr
-%type  <str>	ECPGGetDescriptorHeader 
+%type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_symbol
+%type  <str>	ECPGGetDescriptorHeader ECPGColId ECPGColLabel ECPGTypeName
+%type  <str>	ECPGLabelTypeName
 
 %type  <descriptor> ECPGFetchDescStmt ECPGGetDescriptor
 
@@ -391,64 +392,64 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 
 opt_at:	SQL_AT connection_target	{ connection = $2; }
 
-stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
-		| AlterGroupStmt	{ output_statement($1, 0, NULL); }
-		| AlterUserStmt		{ output_statement($1, 0, NULL); }
-		| ClosePortalStmt	{ output_statement($1, 0, NULL); }
-		| CommentStmt		{ output_statement($1, 0, NULL); }
-		| CopyStmt		{ output_statement($1, 0, NULL); }
-		| CreateStmt		{ output_statement($1, 0, NULL); }
-		| CreateAsStmt		{ output_statement($1, 0, NULL); }
-		| CreateGroupStmt	{ output_statement($1, 0, NULL); }
-		| CreateSeqStmt		{ output_statement($1, 0, NULL); }
-		| CreatePLangStmt	{ output_statement($1, 0, NULL); }
-		| CreateTrigStmt	{ output_statement($1, 0, NULL); }
-		| CreateUserStmt	{ output_statement($1, 0, NULL); }
-  		| ClusterStmt		{ output_statement($1, 0, NULL); }
-		| DefineStmt 		{ output_statement($1, 0, NULL); }
-		| DropStmt		{ output_statement($1, 0, NULL); }
-		| TruncateStmt		{ output_statement($1, 0, NULL); }
-		| DropGroupStmt		{ output_statement($1, 0, NULL); }
-		| DropPLangStmt		{ output_statement($1, 0, NULL); }
-		| DropTrigStmt		{ output_statement($1, 0, NULL); }
-		| DropUserStmt		{ output_statement($1, 0, NULL); }
-		| ExtendStmt 		{ output_statement($1, 0, NULL); }
-		| ExplainStmt		{ output_statement($1, 0, NULL); }
-		| FetchStmt		{ output_statement($1, 1, NULL); }
-		| GrantStmt		{ output_statement($1, 0, NULL); }
-		| IndexStmt		{ output_statement($1, 0, NULL); }
-		| ListenStmt		{ output_statement($1, 0, NULL); }
-		| UnlistenStmt		{ output_statement($1, 0, NULL); }
-		| LockStmt		{ output_statement($1, 0, NULL); }
-		| ProcedureStmt		{ output_statement($1, 0, NULL); }
-		| ReindexStmt		{ output_statement($1, 0, NULL); }
-		| RemoveAggrStmt	{ output_statement($1, 0, NULL); }
-		| RemoveOperStmt	{ output_statement($1, 0, NULL); }
-		| RemoveFuncStmt	{ output_statement($1, 0, NULL); }
-		| RemoveStmt		{ output_statement($1, 0, NULL); }
-		| RenameStmt		{ output_statement($1, 0, NULL); }
-		| RevokeStmt		{ output_statement($1, 0, NULL); }
+stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| AlterGroupStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| AlterUserStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ClosePortalStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CommentStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CopyStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreateStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreateAsStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreateGroupStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreateSeqStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreatePLangStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreateTrigStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreateUserStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+  		| ClusterStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| DefineStmt 		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| DropStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| TruncateStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| DropGroupStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| DropPLangStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| DropTrigStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| DropUserStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ExtendStmt 		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ExplainStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| FetchStmt		{ output_statement($1, 1, NULL, connection, argsinsert, argsresult); }
+		| GrantStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| IndexStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ListenStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| UnlistenStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| LockStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ProcedureStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ReindexStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| RemoveAggrStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| RemoveOperStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| RemoveFuncStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| RemoveStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| RenameStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| RevokeStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
                 | OptimizableStmt	{
 						if (strncmp($1, "/* " , sizeof("/* ")-1) == 0)
 							output_simple_statement($1);
 						else
-							output_statement($1, 1, NULL);
+							output_statement($1, 1, NULL, connection, argsinsert, argsresult);
 					}
-		| RuleStmt		{ output_statement($1, 0, NULL); }
+		| RuleStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
 		| TransactionStmt	{
 						fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 						whenever_action(2);
 						free($1);
 					}
-		| ViewStmt		{ output_statement($1, 0, NULL); }
-		| LoadStmt		{ output_statement($1, 0, NULL); }
-		| CreatedbStmt		{ output_statement($1, 0, NULL); }
-		| DropdbStmt		{ output_statement($1, 0, NULL); }
-		| VacuumStmt		{ output_statement($1, 0, NULL); }
-		| VariableSetStmt	{ output_statement($1, 0, NULL); }
-		| VariableShowStmt	{ output_statement($1, 0, NULL); }
-		| VariableResetStmt	{ output_statement($1, 0, NULL); }
-		| ConstraintsSetStmt	{ output_statement($1, 0, NULL); }
+		| ViewStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| LoadStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| CreatedbStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| DropdbStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| VacuumStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| VariableSetStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| VariableShowStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| VariableResetStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ConstraintsSetStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
 		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, \"%s\");",$1);
 								whenever_action(0);
 								free($1);
@@ -488,8 +489,8 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
 						whenever_action(2);
 						free($1);
 					} 
-		| ECPGExecute		{	output_statement($1, 0, NULL); }
-		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name); }
+		| ECPGExecute		{	output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name, connection, argsinsert, argsresult); }
 		| ECPGFree		{
 						fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
 
@@ -509,7 +510,8 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
 					}
 		| ECPGOpen		{	
 						struct cursor *ptr;
-						 
+						struct arguments *p;
+ 
 						for (ptr = cur; ptr != NULL; ptr=ptr->next)
 						{
 					               if (strcmp(ptr->name, $1) == 0)
@@ -521,16 +523,15 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
 							sprintf(errortext, "trying to open undeclared cursor %s\n", $1);
 							mmerror(ET_ERROR, errortext);
 						}
-                  
-						fprintf(yyout, "{ ECPGdo(__LINE__, %s, \"%s\",", ptr->connection ? ptr->connection : "NULL", ptr->command);
-						/* dump variables to C file*/
-						dump_variables(ptr->argsinsert, 0);
-						dump_variables(argsinsert, 0);
-						fputs("ECPGt_EOIT, ", yyout);
-						dump_variables(ptr->argsresult, 0);
-						fputs("ECPGt_EORT);", yyout);
-						whenever_action(2);
-						free($1);
+
+						/* merge variables given in prepare statement with those given here */
+						for (p = argsinsert; p && p->next; p = p->next);
+						if (p)
+							p->next = ptr->argsinsert;
+						else
+							argsinsert = ptr->argsinsert;
+
+						output_statement(ptr->command, 0, NULL, ptr->connection, argsinsert, ptr->argsresult);
 					}
 		| ECPGPrepare		{
 						if (connection)
@@ -3840,138 +3841,10 @@ TypeId:  ColId
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
  */
-ColId:  ident					{ $$ = $1; }
-		| datetime			{ $$ = $1; }
-		| ABSOLUTE			{ $$ = make_str("absolute"); }
-		| ACCESS			{ $$ = make_str("access"); }
-		| ACTION			{ $$ = make_str("action"); }
-		| AFTER				{ $$ = make_str("after"); }
-		| AGGREGATE			{ $$ = make_str("aggregate"); }
-		| BACKWARD			{ $$ = make_str("backward"); }
-		| BEFORE			{ $$ = make_str("before"); }
-		| CACHE				{ $$ = make_str("cache"); }
-		| COMMENT			{ $$ = make_str("comment"); } 
-		| COMMITTED			{ $$ = make_str("committed"); }
-		| CONSTRAINTS			{ $$ = make_str("constraints"); }
-		| CREATEDB			{ $$ = make_str("createdb"); }
-		| CREATEUSER			{ $$ = make_str("createuser"); }
-		| CYCLE				{ $$ = make_str("cycle"); }
-		| DATABASE			{ $$ = make_str("database"); }
-		| DEFERRED			{ $$ = make_str("deferred"); }
-		| DELIMITERS			{ $$ = make_str("delimiters"); }
-		| DOUBLE			{ $$ = make_str("double"); }
-		| EACH				{ $$ = make_str("each"); }
-		| ENCODING			{ $$ = make_str("encoding"); }
-		| EXCLUSIVE			{ $$ = make_str("exclusive"); }
-		| FORWARD			{ $$ = make_str("forward"); }
-		| FUNCTION			{ $$ = make_str("function"); }
-		| HANDLER			{ $$ = make_str("handler"); }
-		| IMMEDIATE			{ $$ = make_str("immediate"); }
-		| INCREMENT			{ $$ = make_str("increment"); }
-		| INDEX				{ $$ = make_str("index"); }
-		| INHERITS			{ $$ = make_str("inherits"); }
-		| INSENSITIVE			{ $$ = make_str("insensitive"); }
-		| INSTEAD			{ $$ = make_str("instead"); }
-		| INTERVAL			{ $$ = make_str("interval"); }
-		| ISNULL			{ $$ = make_str("isnull"); }
-		| ISOLATION			{ $$ = make_str("isolation"); }
-		| KEY				{ $$ = make_str("key"); }
-		| LANGUAGE			{ $$ = make_str("language"); }
-		| LANCOMPILER			{ $$ = make_str("lancompiler"); }
-		| LEVEL				{ $$ = make_str("level"); }
-		| LOCATION			{ $$ = make_str("location"); }
-		| MATCH				{ $$ = make_str("match"); }
-		| MAXVALUE			{ $$ = make_str("maxvalue"); }
-		| MINVALUE			{ $$ = make_str("minvalue"); }
-		| MODE				{ $$ = make_str("mode"); }
-		| NEXT				{ $$ = make_str("next"); }
-		| NOCREATEDB			{ $$ = make_str("nocreatedb"); }
-		| NOCREATEUSER			{ $$ = make_str("nocreateuser"); }
-		| NOTHING			{ $$ = make_str("nothing"); }
-		| NOTNULL			{ $$ = make_str("notnull"); }
-		| OF				{ $$ = make_str("of"); }
-		| OIDS				{ $$ = make_str("oids"); }
-		| ONLY				{ $$ = make_str("only"); }
-		| OPERATOR			{ $$ = make_str("operator"); }
-		| OPTION			{ $$ = make_str("option"); }
-		| PASSWORD			{ $$ = make_str("password"); }
-		| PENDANT			{ $$ = make_str("pendant"); }
-		| PRIOR				{ $$ = make_str("prior"); }
-		| PRIVILEGES			{ $$ = make_str("privileges"); }
-		| PROCEDURAL			{ $$ = make_str("procedural"); }
-		| READ				{ $$ = make_str("read"); }
-		| RELATIVE			{ $$ = make_str("relative"); }
-		| RENAME			{ $$ = make_str("rename"); }
-		| RESTRICT			{ $$ = make_str("restrict"); }
-		| RETURNS			{ $$ = make_str("returns"); }
-		| ROW				{ $$ = make_str("row"); }
-		| RULE				{ $$ = make_str("rule"); }
-		| SCROLL			{ $$ = make_str("scroll"); }
-		| SEQUENCE                      { $$ = make_str("sequence"); }
-		| SERIAL			{ $$ = make_str("serial"); }
-		| SERIALIZABLE			{ $$ = make_str("serializable"); }
-		| SHARE				{ $$ = make_str("share"); }
-		| START				{ $$ = make_str("start"); }
-		| STATEMENT			{ $$ = make_str("statement"); }
-		| STDIN                         { $$ = make_str("stdin"); }
-		| STDOUT                        { $$ = make_str("stdout"); }
-		| SYSID                         { $$ = make_str("sysid"); }
-		| TEMP				{ $$ = make_str("temp"); }
-		| TEMPORARY			{ $$ = make_str("temporary"); }
-		| TIME				{ $$ = make_str("time"); }
-		| TIMESTAMP			{ $$ = make_str("timestamp"); }
-		| TIMEZONE_HOUR                 { $$ = make_str("timezone_hour"); }
-                | TIMEZONE_MINUTE               { $$ = make_str("timezone_minute"); }
-		| TRIGGER			{ $$ = make_str("trigger"); }
-		| TRUNCATE			{ $$ = make_str("truncate"); }
-		| TRUSTED			{ $$ = make_str("trusted"); }
-		| TYPE_P			{ $$ = make_str("type"); }
-		| VALID				{ $$ = make_str("valid"); }
-		| VERSION			{ $$ = make_str("version"); }
-		| ZONE				{ $$ = make_str("zone"); }
-		| SQL_AT			{ $$ = make_str("at"); }
-		| SQL_BOOL			{ $$ = make_str("bool"); }
-		| SQL_BREAK			{ $$ = make_str("break"); }
-		| SQL_CALL			{ $$ = make_str("call"); }
-		| SQL_CONNECT			{ $$ = make_str("connect"); }
-		| SQL_CONTINUE			{ $$ = make_str("continue"); }
-		| SQL_COUNT			{ $$ = make_str("count"); }
-		| SQL_DATA			{ $$ = make_str("data"); }
-		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
-		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
-		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
-		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
-		| SQL_FOUND			{ $$ = make_str("found"); }
-		| SQL_GO			{ $$ = make_str("go"); }
-		| SQL_GOTO			{ $$ = make_str("goto"); }
-		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
-		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
-		| SQL_INT			{ $$ = make_str("int"); }
-		| SQL_KEY_MEMBER		{ $$ = make_str("key_member"); }
-		| SQL_LENGTH			{ $$ = make_str("length"); }
-		| SQL_LONG			{ $$ = make_str("long"); }
-		| SQL_NAME			{ $$ = make_str("name"); }
-		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
-		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
-		| SQL_OFF			{ $$ = make_str("off"); }
-		| SQL_OPEN			{ $$ = make_str("open"); }
-		| SQL_PREPARE			{ $$ = make_str("prepare"); }
-		| SQL_RELEASE			{ $$ = make_str("release"); }
-		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
-		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
-		| SQL_SCALE			{ $$ = make_str("scale"); }
-		| SQL_SECTION			{ $$ = make_str("section"); }
-		| SQL_SHORT			{ $$ = make_str("short"); }
-		| SQL_SIGNED			{ $$ = make_str("signed"); }
-		| SQL_SQLERROR			{ $$ = make_str("sqlerror"); }
-		| SQL_SQLPRINT			{ $$ = make_str("sqlprint"); }
-		| SQL_SQLWARNING		{ $$ = make_str("sqlwarning"); }
-		| SQL_STOP			{ $$ = make_str("stop"); }
-		| SQL_STRUCT			{ $$ = make_str("struct"); }
-		| SQL_UNSIGNED			{ $$ = make_str("unsigned"); }
-		| SQL_VAR			{ $$ = make_str("var"); }
-		| SQL_WHENEVER			{ $$ = make_str("whenever"); }
-		;
+ColId: ECPGColId			{ $$ = $1; }
+	| ECPGTypeName			{ $$ = $1; }
+	;
+
 /* Column label
  * Allowed labels in "AS" clauses.
  * Include TRUE/FALSE SQL3 reserved words for Postgres backward
@@ -3982,55 +3855,9 @@ ColId:  ident					{ $$ = $1; }
  *  rather than in ColId if there was a shift/reduce conflict
  *  when used as a full identifier. - thomas 1997-11-06
  */
-ColLabel:  ColId			{ $$ = $1; }
-		| ABORT_TRANS           { $$ = make_str("abort"); }
-		| ANALYZE               { $$ = make_str("analyze"); }
-		| BINARY                { $$ = make_str("binary"); }
-		| CASE                  { $$ = make_str("case"); }
-		| CLUSTER		{ $$ = make_str("cluster"); }
-		| COALESCE              { $$ = make_str("coalesce"); }
-		| CONSTRAINT		{ $$ = make_str("constraint"); }
-		| COPY			{ $$ = make_str("copy"); }
-		| CURRENT		{ $$ = make_str("current"); }
-		| CURRENT_USER		{ $$ = make_str("current_user"); }
-		| DEC			{ $$ = make_str("dec"); }
-		| DECIMAL		{ $$ = make_str("decimal"); }
-		| DEFERRABLE		{ $$ = make_str("deferrable"); }
-		| DO			{ $$ = make_str("do"); }
-		| ELSE                  { $$ = make_str("else"); }
-		| END_TRANS             { $$ = make_str("end"); }
-		| EXPLAIN		{ $$ = make_str("explain"); }
-		| EXTEND		{ $$ = make_str("extend"); }
-		| FALSE_P		{ $$ = make_str("false"); }
-		| FLOAT			{ $$ = make_str("float"); }
-		| FOREIGN		{ $$ = make_str("foreign"); }
-		| GLOBAL		{ $$ = make_str("global"); }
-		| GROUP			{ $$ = make_str("group"); }
-		| INITIALLY		{ $$ = make_str("initially"); }
-		| LISTEN		{ $$ = make_str("listen"); }
-		| LOAD			{ $$ = make_str("load"); }
-		| LOCK_P		{ $$ = make_str("lock"); }
-		| MOVE			{ $$ = make_str("move"); }
-		| NEW			{ $$ = make_str("new"); }
-		| NONE			{ $$ = make_str("none"); }
-		| NULLIF                { $$ = make_str("nullif"); }
-		| NUMERIC               { $$ = make_str("numeric"); }
-		| ORDER			{ $$ = make_str("order"); }
-		| POSITION		{ $$ = make_str("position"); }
-		| PRECISION		{ $$ = make_str("precision"); }
-		| RESET			{ $$ = make_str("reset"); }
-		| SESSION_USER		{ $$ = make_str("session_user"); }
-		| SETOF			{ $$ = make_str("setof"); }
-		| SHOW			{ $$ = make_str("show"); }
-		| TABLE			{ $$ = make_str("table"); }
-		| THEN                  { $$ = make_str("then"); }
-		| TRANSACTION		{ $$ = make_str("transaction"); }
-		| TRUE_P		{ $$ = make_str("true"); }
-		| USER			{ $$ = make_str("user"); }
-		| VACUUM		{ $$ = make_str("vacuum"); }
-		| VERBOSE		{ $$ = make_str("verbose"); }
-		| WHEN                  { $$ = make_str("when"); }
-		;
+ColLabel:  ECPGLabelTypeName			{ $$ = $1; }
+	| ECPGColLabel                  { $$ = $1; }
+	;
 
 SpecialRuleRelation:  CURRENT
 				{
@@ -4364,7 +4191,7 @@ type: simple_type
 			$$.type_dimension = -1;
   			$$.type_index = -1;
 		}
-	| symbol
+	| ECPGColLabel
 		{
 			/* this is for typedef'ed types */
 			struct typedefs *this = get_typedef($1);
@@ -4427,9 +4254,6 @@ s_union: UNION opt_symbol
 	    $$ = cat2_str(make_str("union"), $2);
 	}
 
-opt_symbol: /* empty */ 	{ $$ = EMPTY; }
-	| symbol		{ $$ = $1; }
-
 simple_type: unsigned_type		{ $$=$1; }
 	|	opt_signed signed_type	{ $$=$2; }
 	;
@@ -4469,7 +4293,7 @@ variable_list: variable
 		$$ = cat_str(3, $1, make_str(","), $3);
 	}
 
-variable: opt_pointer symbol opt_array_bounds opt_initializer
+variable: opt_pointer ECPGColLabel opt_array_bounds opt_initializer
 		{
 			struct ECPGtype * type;
                         int dimension = $3.index1; /* dimension of array */
@@ -4788,7 +4612,7 @@ ECPGSetConnection:  SET SQL_CONNECTION to_equal connection_object
 /*
  * define a new type for embedded SQL
  */
-ECPGTypedef: TYPE_P symbol IS type opt_type_array_bounds opt_reference
+ECPGTypedef: TYPE_P ECPGColLabel IS type opt_type_array_bounds opt_reference
 	{
 		/* add entry to list */
 		struct typedefs *ptr, *this;
@@ -4880,7 +4704,7 @@ opt_reference: SQL_REFERENCE { $$ = make_str("reference"); }
 /*
  * define the type of one variable for embedded SQL
  */
-ECPGVar: SQL_VAR symbol IS type opt_type_array_bounds opt_reference
+ECPGVar: SQL_VAR ECPGColLabel IS type opt_type_array_bounds opt_reference
 	{
 		struct variable *p = find_variable($2);
 		int dimension = $5.index1;
@@ -4998,110 +4822,204 @@ action : SQL_CONTINUE {
 }
 
 /* some other stuff for ecpg */
-/*
- * no longer used
-ecpg_expr:  c_expr 
-				{	$$ = $1; }
-		| a_expr TYPECAST Typename
-				{	$$ = cat_str(3, $1, make_str("::"), $3); }
-		| '-' ecpg_expr %prec UMINUS
-				{	$$ = cat2_str(make_str("-"), $2); }
-		| '%' ecpg_expr
-				{       $$ = cat2_str(make_str("%"), $2); }
-		| '^' ecpg_expr
-				{       $$ = cat2_str(make_str("^"), $2); }
-		| '|' ecpg_expr
-				{       $$ = cat2_str(make_str("|"), $2); }
-		| ';' a_expr
-				{       $$ = cat2_str(make_str(";"), $2); }
-		| a_expr '%'
-				{       $$ = cat2_str($1, make_str("%")); }
-		| a_expr '^'
-				{       $$ = cat2_str($1, make_str("^")); }
-		| a_expr '|'
-				{       $$ = cat2_str($1, make_str("|")); }
-		| a_expr '+' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("+"), $3); }
-		| a_expr '-' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("-"), $3); }
-		| a_expr '*' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("*"), $3); }
-		| a_expr '/' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("/"), $3); }
-		| a_expr '%' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("%"), $3); }
-		| a_expr '^' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("^"), $3); }
-		| a_expr '|' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("|"), $3); }
-		| a_expr '<' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("<"), $3); }
-		| a_expr '>' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str(">"), $3); }
-		| a_expr '=' NULL_P
-                                {       $$ = cat2_str($1, make_str("= NULL")); }
-		| NULL_P '=' ecpg_expr
-                                {       $$ = cat2_str(make_str("= NULL"), $3); }
-		| a_expr '=' ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("="), $3); }
-		| a_expr Op ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("="), $3); }
-		| Op ecpg_expr
-				{	$$ = cat2_str($1, $2); }
-		| a_expr Op
-				{	$$ = cat2_str($1, $2); }
-		| a_expr AND ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("and"), $3); }
-		| a_expr OR ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("or"), $3); }
-		| NOT ecpg_expr
-				{	$$ = cat2_str(make_str("not"), $2); }
-		| a_expr LIKE ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("like"), $3); }
-		| a_expr NOT LIKE ecpg_expr
-				{	$$ = cat_str(3, $1, make_str("not like"), $4); }
-		| a_expr ISNULL
-				{	$$ = cat2_str($1, make_str("isnull")); }
-		| a_expr IS NULL_P
-				{	$$ = cat2_str($1, make_str("is null")); }
-		| a_expr NOTNULL
-				{	$$ = cat2_str($1, make_str("notnull")); }
-		| a_expr IS NOT NULL_P
-				{	$$ = cat2_str($1, make_str("is not null")); }
-		| a_expr IS TRUE_P
-				{	$$ = cat2_str($1, make_str("is true")); }
-		| a_expr IS NOT FALSE_P
-				{	$$ = cat2_str($1, make_str("is not false")); }
-		| a_expr IS FALSE_P
-				{	$$ = cat2_str($1, make_str("is false")); }
-		| a_expr IS NOT TRUE_P
-				{	$$ = cat2_str($1, make_str("is not true")); }
-		| a_expr BETWEEN b_expr AND b_expr
-				{
-					$$ = cat_str(5, $1, make_str("between"), $3, make_str("and"), $5); 
-				}
-		| a_expr NOT BETWEEN b_expr AND b_expr
-				{
-					$$ = cat_str(5, $1, make_str("not between"), $4, make_str("and"), $6); 
-				}
-		| a_expr IN '(' in_expr ')'
-				{
-					$$ = cat_str(4, $1, make_str(" in ("), $4, make_str(")")); 
-				}
-		| a_expr NOT IN '(' in_expr ')'
-				{
-					$$ = cat_str(4, $1, make_str(" not in ("), $5, make_str(")")); 
-				}
-		| a_expr all_Op sub_type '(' SubSelect ')'
-				{
-					$$ = cat_str(4, $1, $2, $3, cat_str(3, make_str("("), $5, make_str(")"))); 
-				}
-		| row_expr
-				{       $$ = $1; }
-		| civariableonly
-			        { 	$$ = $1; }
+
+/* additional ColId entries */
+ECPGKeywords: 	SQL_AT				{ $$ = make_str("at"); }
+		| SQL_BREAK			{ $$ = make_str("break"); }
+		| SQL_CALL			{ $$ = make_str("call"); }
+		| SQL_CONNECT			{ $$ = make_str("connect"); }
+		| SQL_CONTINUE			{ $$ = make_str("continue"); }
+		| SQL_COUNT			{ $$ = make_str("count"); }
+		| SQL_DATA			{ $$ = make_str("data"); }
+		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
+		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
+		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
+		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
+		| SQL_FOUND			{ $$ = make_str("found"); }
+		| SQL_GO			{ $$ = make_str("go"); }
+		| SQL_GOTO			{ $$ = make_str("goto"); }
+		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
+		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
+		| SQL_KEY_MEMBER		{ $$ = make_str("key_member"); }
+		| SQL_LENGTH			{ $$ = make_str("length"); }
+		| SQL_NAME			{ $$ = make_str("name"); }
+		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
+		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
+		| SQL_OFF			{ $$ = make_str("off"); }
+		| SQL_OPEN			{ $$ = make_str("open"); }
+		| SQL_PREPARE			{ $$ = make_str("prepare"); }
+		| SQL_RELEASE			{ $$ = make_str("release"); }
+		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
+		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
+		| SQL_SCALE			{ $$ = make_str("scale"); }
+		| SQL_SECTION			{ $$ = make_str("section"); }
+		| SQL_SQLERROR			{ $$ = make_str("sqlerror"); }
+		| SQL_SQLPRINT			{ $$ = make_str("sqlprint"); }
+		| SQL_SQLWARNING		{ $$ = make_str("sqlwarning"); }
+		| SQL_STOP			{ $$ = make_str("stop"); }
+		| SQL_VAR			{ $$ = make_str("var"); }
+		| SQL_WHENEVER			{ $$ = make_str("whenever"); }
 		;
-*/
+
+ECPGTypeName:	  SQL_BOOL		{ $$ = make_str("bool"); }
+		| SQL_INT		{ $$ = make_str("int"); }
+		| SQL_LONG		{ $$ = make_str("long"); }
+		| SQL_SHORT		{ $$ = make_str("short"); }
+		| SQL_STRUCT		{ $$ = make_str("struct"); }
+		| SQL_SIGNED		{ $$ = make_str("signed"); }
+		| SQL_UNSIGNED		{ $$ = make_str("unsigned"); }
+		| DOUBLE		{ $$ = make_str("double"); }
+
+ECPGLabelTypeName:	 FLOAT		{ $$ = make_str("float"); }
+			| ECPGTypeName	{ $$ = $1; }
+		;
+
+opt_symbol:	symbol		{ $$ = $1; }
+		| /*EMPTY*/	{ $$ = EMPTY; }
+		;
+
+symbol:		ColLabel	{ $$ = $1; }
+
+ECPGColId:  /* to be used instead of ColId */
+	 ECPGKeywords			{ $$ = $1; }
+	| ident				{ $$ = $1; }
+	| datetime			{ $$ = $1; }
+	| ABSOLUTE			{ $$ = make_str("absolute"); }
+	| ACCESS			{ $$ = make_str("access"); }
+	| ACTION			{ $$ = make_str("action"); }
+	| AFTER				{ $$ = make_str("after"); }
+	| AGGREGATE			{ $$ = make_str("aggregate"); }
+	| BACKWARD			{ $$ = make_str("backward"); }
+	| BEFORE			{ $$ = make_str("before"); }
+	| CACHE				{ $$ = make_str("cache"); }
+	| COMMENT			{ $$ = make_str("comment"); } 
+	| COMMITTED			{ $$ = make_str("committed"); }
+	| CONSTRAINTS			{ $$ = make_str("constraints"); }
+	| CREATEDB			{ $$ = make_str("createdb"); }
+	| CREATEUSER			{ $$ = make_str("createuser"); }
+	| CYCLE				{ $$ = make_str("cycle"); }
+	| DATABASE			{ $$ = make_str("database"); }
+	| DEFERRED			{ $$ = make_str("deferred"); }
+	| DELIMITERS			{ $$ = make_str("delimiters"); }
+	| EACH				{ $$ = make_str("each"); }
+	| ENCODING			{ $$ = make_str("encoding"); }
+	| EXCLUSIVE			{ $$ = make_str("exclusive"); }
+	| FORWARD			{ $$ = make_str("forward"); }
+	| FUNCTION			{ $$ = make_str("function"); }
+	| HANDLER			{ $$ = make_str("handler"); }
+	| IMMEDIATE			{ $$ = make_str("immediate"); }
+	| INCREMENT			{ $$ = make_str("increment"); }
+	| INDEX				{ $$ = make_str("index"); }
+	| INHERITS			{ $$ = make_str("inherits"); }
+	| INSENSITIVE			{ $$ = make_str("insensitive"); }
+	| INSTEAD			{ $$ = make_str("instead"); }
+	| INTERVAL			{ $$ = make_str("interval"); }
+	| ISNULL			{ $$ = make_str("isnull"); }
+	| ISOLATION			{ $$ = make_str("isolation"); }
+	| KEY				{ $$ = make_str("key"); }
+	| LANGUAGE			{ $$ = make_str("language"); }
+	| LANCOMPILER			{ $$ = make_str("lancompiler"); }
+	| LEVEL				{ $$ = make_str("level"); }
+	| LOCATION			{ $$ = make_str("location"); }
+	| MATCH				{ $$ = make_str("match"); }
+	| MAXVALUE			{ $$ = make_str("maxvalue"); }
+	| MINVALUE			{ $$ = make_str("minvalue"); }
+	| MODE				{ $$ = make_str("mode"); }
+	| NEXT				{ $$ = make_str("next"); }
+	| NOCREATEDB			{ $$ = make_str("nocreatedb"); }
+	| NOCREATEUSER			{ $$ = make_str("nocreateuser"); }
+	| NOTHING			{ $$ = make_str("nothing"); }
+	| NOTNULL			{ $$ = make_str("notnull"); }
+	| OF				{ $$ = make_str("of"); }
+	| OIDS				{ $$ = make_str("oids"); }
+	| ONLY				{ $$ = make_str("only"); }
+	| OPERATOR			{ $$ = make_str("operator"); }
+	| OPTION			{ $$ = make_str("option"); }
+	| PASSWORD			{ $$ = make_str("password"); }
+	| PENDANT			{ $$ = make_str("pendant"); }
+	| PRIOR				{ $$ = make_str("prior"); }
+	| PRIVILEGES			{ $$ = make_str("privileges"); }
+	| PROCEDURAL			{ $$ = make_str("procedural"); }
+	| READ				{ $$ = make_str("read"); }
+	| RELATIVE			{ $$ = make_str("relative"); }
+	| RENAME			{ $$ = make_str("rename"); }
+	| RESTRICT			{ $$ = make_str("restrict"); }
+	| RETURNS			{ $$ = make_str("returns"); }
+	| ROW				{ $$ = make_str("row"); }
+	| RULE				{ $$ = make_str("rule"); }
+	| SCROLL			{ $$ = make_str("scroll"); }
+	| SEQUENCE                      { $$ = make_str("sequence"); }
+	| SERIAL			{ $$ = make_str("serial"); }
+	| SERIALIZABLE			{ $$ = make_str("serializable"); }
+	| SHARE				{ $$ = make_str("share"); }
+	| START				{ $$ = make_str("start"); }
+	| STATEMENT			{ $$ = make_str("statement"); }
+	| STDIN                         { $$ = make_str("stdin"); }
+	| STDOUT                        { $$ = make_str("stdout"); }
+	| SYSID                         { $$ = make_str("sysid"); }
+	| TEMP				{ $$ = make_str("temp"); }
+	| TEMPORARY			{ $$ = make_str("temporary"); }
+	| TIME				{ $$ = make_str("time"); }
+	| TIMESTAMP			{ $$ = make_str("timestamp"); }
+	| TIMEZONE_HOUR                 { $$ = make_str("timezone_hour"); }
+        | TIMEZONE_MINUTE               { $$ = make_str("timezone_minute"); }
+	| TRIGGER			{ $$ = make_str("trigger"); }
+	| TRUNCATE			{ $$ = make_str("truncate"); }
+	| TRUSTED			{ $$ = make_str("trusted"); }
+	| TYPE_P			{ $$ = make_str("type"); }
+	| VALID				{ $$ = make_str("valid"); }
+	| VERSION			{ $$ = make_str("version"); }
+	| ZONE				{ $$ = make_str("zone"); }
+	;
+
+ECPGColLabel:  ECPGColId		{ $$ = $1; }
+		| ABORT_TRANS           { $$ = make_str("abort"); }
+		| ANALYZE               { $$ = make_str("analyze"); }
+		| BINARY                { $$ = make_str("binary"); }
+		| CASE                  { $$ = make_str("case"); }
+		| CLUSTER		{ $$ = make_str("cluster"); }
+		| COALESCE              { $$ = make_str("coalesce"); }
+		| CONSTRAINT		{ $$ = make_str("constraint"); }
+		| COPY			{ $$ = make_str("copy"); }
+		| CURRENT		{ $$ = make_str("current"); }
+		| CURRENT_USER		{ $$ = make_str("current_user"); }
+		| DEC			{ $$ = make_str("dec"); }
+		| DECIMAL		{ $$ = make_str("decimal"); }
+		| DEFERRABLE		{ $$ = make_str("deferrable"); }
+		| DO			{ $$ = make_str("do"); }
+		| ELSE                  { $$ = make_str("else"); }
+		| END_TRANS             { $$ = make_str("end"); }
+		| EXPLAIN		{ $$ = make_str("explain"); }
+		| EXTEND		{ $$ = make_str("extend"); }
+		| FALSE_P		{ $$ = make_str("false"); }
+		| FOREIGN		{ $$ = make_str("foreign"); }
+		| GLOBAL		{ $$ = make_str("global"); }
+		| GROUP			{ $$ = make_str("group"); }
+		| INITIALLY		{ $$ = make_str("initially"); }
+		| LISTEN		{ $$ = make_str("listen"); }
+		| LOAD			{ $$ = make_str("load"); }
+		| LOCK_P		{ $$ = make_str("lock"); }
+		| MOVE			{ $$ = make_str("move"); }
+		| NEW			{ $$ = make_str("new"); }
+		| NONE			{ $$ = make_str("none"); }
+		| NULLIF                { $$ = make_str("nullif"); }
+		| NUMERIC               { $$ = make_str("numeric"); }
+		| ORDER			{ $$ = make_str("order"); }
+		| POSITION		{ $$ = make_str("position"); }
+		| PRECISION		{ $$ = make_str("precision"); }
+		| RESET			{ $$ = make_str("reset"); }
+		| SESSION_USER		{ $$ = make_str("session_user"); }
+		| SETOF			{ $$ = make_str("setof"); }
+		| SHOW			{ $$ = make_str("show"); }
+		| TABLE			{ $$ = make_str("table"); }
+		| THEN                  { $$ = make_str("then"); }
+		| TRANSACTION		{ $$ = make_str("transaction"); }
+		| TRUE_P		{ $$ = make_str("true"); }
+		| USER			{ $$ = make_str("user"); }
+		| VACUUM		{ $$ = make_str("vacuum"); }
+		| VERBOSE		{ $$ = make_str("verbose"); }
+		| WHEN                  { $$ = make_str("when"); }
+		;
 
 into_list : coutputvariable | into_list ',' coutputvariable;
 
@@ -5130,14 +5048,12 @@ indicator: /* empty */			{ $$ = NULL; }
 	| SQL_INDICATOR cvariable 	{ check_indicator((find_variable($2))->type); $$ = $2; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 
-ident: IDENT	{ $$ = $1; }
+ident: IDENT		{ $$ = $1; }
 	| CSTRING	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); };
 
 /*
  * C stuff
  */
-
-symbol: ident	{ $$ = $1; }
 
 cpp_line: CPP_LINE	{ $$ = $1; }
 

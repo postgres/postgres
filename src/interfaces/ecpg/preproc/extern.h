@@ -39,7 +39,7 @@ extern const char *get_dtype(enum ECPGdtype);
 extern void lex_init(void);
 extern char *make_str(const char *);
 extern void output_line_number(void);
-extern void output_statement(char *, int, char *);
+extern void output_statement(char *, int, char *, char *, struct arguments *, struct arguments *);
 extern void output_simple_statement(char *);
 extern char *hashline_number(void);
 extern int	yyparse(void);
