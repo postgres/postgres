@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.6 1997/02/19 14:03:28 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.7 1997/02/19 14:14:40 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,6 +22,30 @@ SPLIT = @split@
 
 ETAGS = @etags@
 XARGS = @xargs@
+
+all:
+	@if test $(PORTNAME) = UNDEFINED; then \
+	  echo You must set the PORTNAME value in Makefile.global before \
+	       you can build Postgres. ;\
+	  false ;\
+        else true;\
+	fi
+	$(MAKE) -C utils all
+	$(MAKE) -C backend all
+	$(MAKE) -C libpq all
+ifeq ($(HAVE_Cplusplus), true)
+	$(MAKE) -C libpq++ all
+endif
+ifeq ($(USE_TCL), true)
+	$(MAKE) -C libpgtcl all
+endif
+	$(MAKE) -C bin all
+ifneq ($(wildcard man), )
+	$(MAKE) -C man all
+endif
+	@if test $@. = all. -o $@. = .; then \
+	echo All of PostgreSQL is successfully made.  Ready to install. ;\
+        fi
 
 clean:
 	@if test $(PORTNAME) = UNDEFINED; then \
