@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.177 1999/05/03 19:10:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.178 1999/05/12 23:26:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ typedef struct _psqlSettings
  * of passing them around through many function parameter lists seems
  * worse.
  */
-static FILE * cur_cmd_source = stdin; /* current source of command input */
+static FILE * cur_cmd_source = NULL; /* current source of command input */
 static bool cur_cmd_interactive = false; /* is it an interactive source? */
 
 
@@ -2816,6 +2816,12 @@ main(int argc, char **argv)
 
 	char	   *home = NULL;	/* Used to store $HOME */
 	char       *version = NULL;     /* PostgreSQL version */
+
+	/* initialize cur_cmd_source in case we do not use MainLoop ...
+	 * some systems fail if we try to use a static initializer for this :-(
+	 */
+	cur_cmd_source = stdin;
+	cur_cmd_interactive = false;
 
 	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
