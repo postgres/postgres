@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.25 2001/03/23 22:07:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.26 2001/05/08 00:09:22 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1306,7 +1306,7 @@ END LOOP;
     <productname>Postgres</productname> elog mechanism.
 
 <synopsis>
-RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">format</replaceable>' <optional>, <replaceable class="parameter">identifier</replaceable> <optional>...</optional></optional>;
+RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="parameter">string</replaceable>' <optional>, <replaceable class="parameter">variable</replaceable> <optional>...</optional></optional>;
 </synopsis>
 
     Inside the format, <literal>%</literal> is used as a placeholder for the
