@@ -227,11 +227,11 @@ Operator that sorts the right-hand data type of this operator.
    (either  one or two).
   </para>
   <para>
-   The  commutator  operator  is present so that
-   <productname>Postgres</productname> can
+   The commutator operator should be identified if one exists,
+   so that <productname>Postgres</productname> can
    reverse the order of the operands if it wishes.
    For example, the operator area-less-than, &lt;&lt;&lt;,
-   would have a commutator
+   would probably have a commutator
    operator, area-greater-than, &gt;&gt;&gt;.
    Hence, the query optimizer could freely  convert:
    <programlisting>
@@ -243,14 +243,15 @@ Operator that sorts the right-hand data type of this operator.
   </para>
   <para>
    This  allows  the  execution code to always use the latter
-   representation and simplifies the  query  optimizer  some
-   what.
+   representation and simplifies the  query  optimizer  somewhat.
   </para>
   <para>
+   Similarly, if there is a negator operator then it should be
+   identified.
    Suppose  that  an
    operator,  area-equal, ===, exists, as well as an area not
    equal, !==.
-   The negator operator allows the query optimizer to convert
+   The negator link allows the query optimizer to simplify
    <programlisting>
     NOT MYBOXES.description === "0,0,1,1"::box
    </programlisting>
@@ -325,8 +326,8 @@ Operator that sorts the right-hand data type of this operator.
    satisfy  the clause.  The function
    <replaceable class="parameter">res_proc</replaceable>
    must be a registered function (meaning  it  is  already  defined  using
-   define function(l)) which accepts one argument of the correct
-   data type and returns a floating point  number.   The
+   CREATE FUNCTION) which accepts arguments of the correct
+   data types and returns a floating point  number.   The
    query  optimizer  simply  calls this function, passing the
    parameter "0,0,1,1" and multiplies the result by the relation
    size to get the desired expected number of instances.
