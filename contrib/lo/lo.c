@@ -1,26 +1,29 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Id: lo.c,v 1.5 2000/11/20 20:36:55 tgl Exp $
+ *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.6 2000/11/21 21:51:58 tgl Exp $
  *
  */
 
+#include "postgres.h"
+
 #include <stdio.h>
 
-#include <postgres.h>
-#include <utils/palloc.h>
+#include "utils/palloc.h"
 
 /* Required for largeobjects */
-#include <libpq/libpq-fs.h>
-#include <libpq/be-fsstubs.h>
+#include "libpq/libpq-fs.h"
+#include "libpq/be-fsstubs.h"
 
 /* Required for SPI */
-#include <executor/spi.h>
+#include "executor/spi.h"
 
 /* Required for triggers */
-#include <commands/trigger.h>
+#include "commands/trigger.h"
 
-/* required for tolower() */
+
+#define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
 
 /*
  *	This is the internal storage format for managed large objects
@@ -40,7 +43,7 @@ Blob	   *lo(Oid oid);		/* Return Blob based on oid */
 Datum		lo_manage(PG_FUNCTION_ARGS); /* Trigger handler			*/
 
 /*
- * This creates a large object, and set's its OID to the value in the
+ * This creates a large object, and sets its OID to the value in the
  * supplied string.
  *
  * If the string is empty, then a new LargeObject is created, and its oid
@@ -55,20 +58,13 @@ lo_in(char *str)
 
 	if (strlen(str) > 0)
 	{
-
-		count = sscanf(str, "%d", &oid);
+		count = sscanf(str, "%u", &oid);
 
 		if (count < 1)
-		{
 			elog(ERROR, "lo_in: error in parsing \"%s\"", str);
-			return (NULL);
-		}
 
-		if (oid < 0)
-		{
+		if (oid == InvalidOid)
 			elog(ERROR, "lo_in: illegal oid \"%s\"", str);
-			return (NULL);
-		}
 	}
 	else
 	{
@@ -79,10 +75,7 @@ lo_in(char *str)
 		oid = DatumGetObjectId(DirectFunctionCall1(lo_creat,
 							   Int32GetDatum(INV_READ | INV_WRITE)));
 		if (oid == InvalidOid)
-		{
 			elog(ERROR, "lo_in: InvalidOid returned from lo_creat");
-			return (NULL);
-		}
 	}
 
 	result = (Blob *) palloc(sizeof(Blob));
@@ -104,7 +97,7 @@ lo_out(Blob * addr)
 		return (NULL);
 
 	result = (char *) palloc(32);
-	sprintf(result, "%d", *addr);
+	sprintf(result, "%u", *addr);
 	return (result);
 }
 
@@ -190,7 +183,7 @@ lo_manage(PG_FUNCTION_ARGS)
 
 		if ((orig != newv && (orig == NULL || newv == NULL)) || (orig != NULL && newv != NULL && strcmp(orig, newv)))
 			DirectFunctionCall1(lo_unlink,
-								ObjectIdGetDatum((Oid) atoi(orig)));
+								ObjectIdGetDatum(atooid(orig)));
 
 		if (newv)
 			pfree(newv);
@@ -211,7 +204,7 @@ lo_manage(PG_FUNCTION_ARGS)
 		if (orig != NULL)
 		{
 			DirectFunctionCall1(lo_unlink,
-								ObjectIdGetDatum((Oid) atoi(orig)));
+								ObjectIdGetDatum(atooid(orig)));
 
 			pfree(orig);
 		}
