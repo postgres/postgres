@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.13 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.14 2002/11/17 23:43:32 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
    <date>2000-03-30</date>
   </refsynopsisdivinfo>
   <synopsis>
-REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replaceable> [ FORCE ]
+REINDEX { DATABASE | TABLE | INDEX } <replaceable class="PARAMETER">name</replaceable> [ FORCE ]
   </synopsis>
   
   <refsect2 id="R2-SQL-REINDEX-1">
@@ -35,19 +35,19 @@ REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replac
 
     <variablelist>
      <varlistentry>
-      <term>TABLE</term>
-      <listitem>
-       <para>
-	Recreate all indexes of a specified table.
-       </para>
-      </listitem>
-     </varlistentry>
-     <varlistentry>
       <term>DATABASE</term>
       <listitem>
        <para>
 	Recreate all system indexes of a specified database.
 	(User-table indexes are not included.)
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term>TABLE</term>
+      <listitem>
+       <para>
+	Recreate all indexes of a specified table.
        </para>
       </listitem>
      </varlistentry>
@@ -63,7 +63,7 @@ REINDEX { TABLE | DATABASE | INDEX } <replaceable class="PARAMETER">name</replac
       <term><replaceable class="PARAMETER">name</replaceable></term>
       <listitem>
        <para>
-	The name of the specific table/database/index to be reindexed.
+	The name of the specific database/table/index to be reindexed.
 	Table and index names may be schema-qualified.
        </para>
       </listitem>
@@ -156,8 +156,8 @@ REINDEX
    started instead, giving it
    the command-line options -O and -P (these options allow system table
    modifications and prevent use of system indexes, respectively).  Then
-   issue <command>REINDEX INDEX</>, <command>REINDEX TABLE</>, or
-   <command>REINDEX DATABASE</> depending on how much you want to reconstruct.
+   issue <command>REINDEX DATABASE</>, <command>REINDEX TABLE</>, 
+   <command>REINDEX INDEX</>, or depending on how much you want to reconstruct.
    If in doubt, use <command>REINDEX DATABASE FORCE</> to force reconstruction
    of all system indexes in the database.  Then quit the standalone backend
    and restart the postmaster.
