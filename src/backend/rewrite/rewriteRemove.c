@@ -7,10 +7,13 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.1.1.1 1996/07/09 06:21:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.2 1996/11/03 04:51:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#include "postgres.h"
+
 #include "access/skey.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/catname.h"	/* for RewriteRelationName */
