@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.32 2002/06/20 16:00:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.33 2002/07/18 04:43:50 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,8 @@ PostgreSQL documentation
    <date>1999-12-11</date>
   </refsynopsisdivinfo>
   <synopsis>
-COPY <replaceable class="parameter">table</replaceable>
+COPY <replaceable class="parameter">table</replaceable> 
+    [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     FROM { '<replaceable class="parameter">filename</replaceable>' | <filename>stdin</filename> }
     [ [ WITH ] 
           [ BINARY ] 
@@ -29,6 +30,7 @@ COPY <replaceable class="parameter">table</replaceable>
           [ DELIMITER [ AS ] '<replaceable class="parameter">delimiter</replaceable>' ]
           [ NULL [ AS ] '<replaceable class="parameter">null string</replaceable>' ] ]
 COPY <replaceable class="parameter">table</replaceable>
+    [ ( <replaceable class="parameter">column</replaceable> [, ...] ) ]
     TO { '<replaceable class="parameter">filename</replaceable>' | <filename>stdout</filename> }
     [ [ WITH ] 
           [ BINARY ]
@@ -52,6 +54,16 @@ COPY <replaceable class="parameter">table</replaceable>
       <listitem>
        <para>
 	The name (possibly schema-qualified) of an existing table.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+		 <varlistentry>
+      <term><replaceable class="parameter">column list</replaceable></term>
+      <listitem>
+       <para>
+	An optional list of columns to be copied.  If no column list is
+	specified, all columns will be used.
        </para>
       </listitem>
      </varlistentry>
@@ -185,6 +197,14 @@ ERROR: <replaceable>reason</replaceable>
    <emphasis>to</> a file, while <command>COPY FROM</command> copies
    data <emphasis>from</> a file to a table (appending the data to
    whatever is in the table already).
+  </para>
+
+	<para>
+   When using the optional column list syntax, <command>COPY TO</command> 
+	 and <command>COPY FROM</command> will only copy the specified
+	 columns' values to/from the table. If a column in the table
+	 is not in the column list, <command>COPY FROM</command> will insert 
+	 default values for that column if a default value is defined.
   </para>
 
   <para>

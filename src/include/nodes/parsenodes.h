@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.189 2002/07/18 04:42:29 momjian Exp $
+ * $Id: parsenodes.h,v 1.190 2002/07/18 04:43:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -884,6 +884,7 @@ typedef struct CopyStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
+	List *attlist;
 	bool		is_from;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
 	List	   *options;		/* List of DefElem nodes */

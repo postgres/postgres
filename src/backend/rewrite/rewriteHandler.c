@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.103 2002/06/20 20:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.104 2002/07/18 04:43:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@ static List *adjustJoinTreeList(Query *parsetree, bool removert, int rt_index);
 static void rewriteTargetList(Query *parsetree, Relation target_relation);
 static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 										TargetEntry *prior_tle);
-static Node *build_column_default(Relation rel, int attrno);
 static void markQueryForUpdate(Query *qry, bool skipOldNew);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
@@ -411,7 +410,7 @@ process_matched_tle(TargetEntry *src_tle,
  *
  * If there is no default, return a NULL instead.
  */
-static Node *
+Node *
 build_column_default(Relation rel, int attrno)
 {
 	TupleDesc	rd_att = rel->rd_att;

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.271 2002/07/12 18:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.272 2002/07/18 04:43:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,6 +133,7 @@ static char *GetPrivileges(Archive *AH, const char *s, const char *type);
 static int	dumpBlobs(Archive *AH, char *, void *);
 static int	dumpDatabase(Archive *AH);
 static const char *getAttrName(int attrnum, TableInfo *tblInfo);
+static const char* fmtCopyColumnList(const TableInfo* ti);
 
 extern char *optarg;
 extern int	optind,
@@ -842,6 +843,7 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 	int			ret;
 	bool		copydone;
 	char		copybuf[COPYBUFSIZ];
+  const char*   column_list;
 
 	if (g_verbose)
 		write_msg(NULL, "dumping out the contents of table %s\n", classname);
@@ -854,17 +856,19 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 	 */
 	selectSourceSchema(tbinfo->relnamespace->nspname);
 
+	column_list = fmtCopyColumnList(tbinfo);
+
 	if (oids && hasoids)
 	{
-		appendPQExpBuffer(q, "COPY %s WITH OIDS TO stdout;",
+		appendPQExpBuffer(q, "COPY %s %s WITH OIDS TO stdout;",
 						  fmtQualifiedId(tbinfo->relnamespace->nspname,
-										 classname));
+										 classname),column_list);
 	}
 	else
 	{
-		appendPQExpBuffer(q, "COPY %s TO stdout;",
+		appendPQExpBuffer(q, "COPY %s %s TO stdout;",
 						  fmtQualifiedId(tbinfo->relnamespace->nspname,
-										 classname));
+										 classname), column_list);
 	}
 	res = PQexec(g_conn, q->data);
 	if (!res ||
@@ -1189,8 +1193,9 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 			{
 				/* Dump/restore using COPY */
 				dumpFn = dumpClasses_nodumpData;
-				sprintf(copyBuf, "COPY %s %sFROM stdin;\n",
-						fmtId(tblinfo[i].relname, force_quotes),
+				sprintf(copyBuf, "COPY %s %s %sFROM stdin;\n",
+						fmtQualifiedId(tblinfo[i].relnamespace->nspname,tblinfo[i].relname),
+						fmtCopyColumnList(&(tblinfo[i])),
 						(oids && tblinfo[i].hasoids) ? "WITH OIDS " : "");
 				copyStmt = copyBuf;
 			}
@@ -5860,3 +5865,38 @@ fmtQualifiedId(const char *schema, const char *id)
 
 	return id_return->data;
 }
+
+/*
+ * return a column list clause for the qualified relname.
+ * returns an empty string if the remote server is older than
+ * 7.3.
+ */
+static const char*
+fmtCopyColumnList(const TableInfo* ti)
+{
+	static PQExpBuffer q = NULL;
+	int			numatts = ti->numatts;
+	char**  attnames = ti->attnames;
+	int i;
+
+	if (g_fout->remoteVersion < 70300 )
+		return "";
+
+	if (q)				/* first time through? */
+		resetPQExpBuffer(q);
+	else
+		q = createPQExpBuffer();
+
+	resetPQExpBuffer(q);
+	
+	appendPQExpBuffer(q,"(");
+	for (i = 0; i < numatts; i++)
+	{
+		if( i > 0 )
+			appendPQExpBuffer(q,",");
+		appendPQExpBuffer(q, fmtId(attnames[i], force_quotes));
+	}
+	appendPQExpBuffer(q, ")");
+	return q->data;
+}
+
