@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.111 1999/05/09 23:31:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.112 1999/05/11 09:06:31 wieck Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -103,11 +103,15 @@
 #define DebugPrintQuery		pg_options[TRACE_QUERY]
 #define DebugPrintPlan		pg_options[TRACE_PLAN]
 #define DebugPrintParse		pg_options[TRACE_PARSE]
+#define DebugPrintRewrittenParsetree \
+							pg_options[TRACE_REWRITTEN]
+#define DebugPPrintPlan		pg_options[TRACE_PRETTY_PLAN]
+#define DebugPPrintParse	pg_options[TRACE_PRETTY_PARSE]
+#define DebugPPrintRewrittenParsetree \
+							pg_options[TRACE_PRETTY_REWRITTEN]
 #define ShowParserStats		pg_options[TRACE_PARSERSTATS]
 #define ShowPlannerStats	pg_options[TRACE_PLANNERSTATS]
 #define ShowExecutorStats	pg_options[TRACE_EXECUTORSTATS]
-#define DebugPrintRewrittenParsetree \
-							pg_options[TRACE_REWRITTEN]
 #ifdef LOCK_MGR_DEBUG
 #define LockDebug			pg_options[TRACE_LOCKS]
 #endif
@@ -474,10 +478,15 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	{
 		querytree = querytree_list->qtrees[i];
 
-		if (DebugPrintParse)
+		if (DebugPrintParse || DebugPPrintParse)
 		{
-			TPRINTF(TRACE_PARSE, "parser outputs:");
-			nodeDisplay(querytree);
+			if (DebugPPrintParse) {
+				TPRINTF(TRACE_PRETTY_PARSE, "parser outputs:");
+				nodeDisplay(querytree);
+			} else {
+				TPRINTF(TRACE_PARSE, "parser outputs:");
+				printf("\n%s\n\n", nodeToString(querytree));
+			}
 		}
 
 		/* don't rewrite utilites, just dump 'em into new_list */
@@ -545,14 +554,23 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		}
 	}
 
-	if (DebugPrintRewrittenParsetree)
+	if (DebugPrintRewrittenParsetree || DebugPPrintRewrittenParsetree)
 	{
-		TPRINTF(TRACE_REWRITTEN, "after rewriting:");
+		if (DebugPPrintRewrittenParsetree) {
+			TPRINTF(TRACE_PRETTY_REWRITTEN, "after rewriting:");
 
-		for (i = 0; i < querytree_list->len; i++)
-		{
-			nodeDisplay(querytree_list->qtrees[i]);
-			printf("\n");
+			for (i = 0; i < querytree_list->len; i++)
+			{
+				nodeDisplay(querytree_list->qtrees[i]);
+				printf("\n");
+			}
+		} else {
+			TPRINTF(TRACE_REWRITTEN, "after rewriting:");
+
+			for (i = 0; i < querytree_list->len; i++)
+			{
+				printf("\n%s\n\n", nodeToString(querytree_list->qtrees[i]));
+			}
 		}
 	}
 
@@ -608,10 +626,15 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			 *	also for queries in functions.	DZ - 27-8-1996
 			 * ----------------
 			 */
-			if (DebugPrintPlan)
+			if (DebugPrintPlan || DebugPPrintPlan)
 			{
-				TPRINTF(TRACE_PLAN, "plan:");
-				nodeDisplay(plan);
+				if (DebugPPrintPlan) {
+					TPRINTF(TRACE_PRETTY_PLAN, "plan:");
+					nodeDisplay(plan);
+				} else {
+					TPRINTF(TRACE_PLAN, "plan:");
+					printf("\n%s\n\n", nodeToString(plan));
+				}
 			}
 #endif
 		}
@@ -747,10 +770,15 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			 *	print plan if debugging
 			 * ----------------
 			 */
-			if (DebugPrintPlan)
+			if (DebugPrintPlan || DebugPPrintPlan)
 			{
-				TPRINTF(TRACE_PLAN, "plan:");
-				nodeDisplay(plan);
+				if (DebugPPrintPlan) {
+					TPRINTF(TRACE_PRETTY_PLAN, "plan:");
+					nodeDisplay(plan);
+				} else {
+					TPRINTF(TRACE_PLAN, "plan:");
+					printf("\n%s\n\n", nodeToString(plan));
+				}
 			}
 #endif
 
@@ -1046,6 +1074,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					DebugPrintParse = true;
 					DebugPrintPlan = true;
 					DebugPrintRewrittenParsetree = true;
+				}
+				if (DebugLvl >= 5)
+				{
+					DebugPPrintParse = true;
+					DebugPPrintPlan = true;
+					DebugPPrintRewrittenParsetree = true;
 				}
 				break;
 
@@ -1510,7 +1544,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.111 $ $Date: 1999/05/09 23:31:47 $\n");
+		puts("$Revision: 1.112 $ $Date: 1999/05/11 09:06:31 $\n");
 	}
 
 	/* ----------------
