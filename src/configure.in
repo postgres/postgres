@@ -424,9 +424,14 @@ fi
 
 AC_CHECK_LIB(curses,   main)
 AC_CHECK_LIB(termcap,  main)
+
+ice_save_LIBS="$LIBS"
+LIBS="$LIBS $PGSQL_LDFLAGS"
 AC_CHECK_LIB(history,  main)
 AC_CHECK_LIB(readline, main)
 AC_CHECK_LIB(readline, write_history, AC_DEFINE(HAVE_HISTORY))
+LIBS="$ice_save_LIBS"
+
 if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
 then
 	AC_CHECK_LIB(bsd,      main)
