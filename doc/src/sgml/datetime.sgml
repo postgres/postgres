@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.23 2001/11/21 05:53:41 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datetime.sgml,v 2.24 2001/12/29 18:35:47 thomas Exp $
 Date/time details
 -->
 
@@ -54,17 +54,17 @@ Date/time details
        </row>
        <row>
 	<entry>AESST</entry>
-	<entry>+11:00 </entry>
+	<entry>+11:00</entry>
 	<entry>Australia Eastern Summer Standard Time</entry>
        </row>
        <row>
 	<entry>ACSST</entry>
-	<entry>+10:30 </entry>
+	<entry>+10:30</entry>
 	<entry>Central Australia Summer Standard Time</entry>
        </row>
        <row>
 	<entry>CADT</entry>
-	<entry>+10:30 </entry>
+	<entry>+10:30</entry>
 	<entry>Central Australia Daylight Savings Time</entry>
        </row>
        <row>
@@ -74,12 +74,12 @@ Date/time details
        </row>
        <row>
 	<entry>AEST</entry>
-	<entry>+10:00 </entry>
+	<entry>+10:00</entry>
 	<entry>Australia Eastern Standard Time</entry>
        </row>
        <row>
 	<entry>EAST</entry>
-	<entry>+10:00 </entry>
+	<entry>+10:00</entry>
 	<entry>East Australian Standard Time</entry>
        </row>
        <row>
@@ -93,367 +93,422 @@ Date/time details
 	<entry>Melbourne, Australia</entry>
        </row>
        <row>
-	<entry>ACST</entry>
-	<entry>+09:30 </entry>
-	<entry>Central Australia Standard Time</entry>
-       </row>
-       <row>
 	<entry>SAST</entry>
-	<entry>+09:30 </entry>
+	<entry>+09:30</entry>
 	<entry>South Australia Standard Time</entry>
        </row>
        <row>
 	<entry>CAST</entry>
-	<entry>+09:30 </entry>
+	<entry>+09:30</entry>
 	<entry>Central Australia Standard Time</entry>
        </row>
        <row>
 	<entry>AWSST</entry>
-	<entry>+9:00 </entry>
+	<entry>+09:00</entry>
 	<entry>Australia Western Summer Standard Time</entry>
        </row>
        <row>
 	<entry>JST</entry>
-	<entry>+9:00</entry>
+	<entry>+09:00</entry>
 	<entry>Japan Standard Time,USSR Zone 8</entry>
        </row>
        <row>
 	<entry>KST</entry>
-	<entry>+9:00</entry>
+	<entry>+09:00</entry>
 	<entry>Korea Standard Time</entry>
        </row>
        <row>
+	<entry>MHT</entry>
+	<entry>+09:00</entry>
+	<entry>Kwajalein Time</entry>
+       </row>
+       <row>
 	<entry>WDT</entry>
-	<entry>+9:00</entry>
+	<entry>+09:00</entry>
 	<entry>West Australian Daylight Time</entry>
        </row>
        <row>
 	<entry>MT</entry>
-	<entry>+8:30</entry>
+	<entry>+08:30</entry>
 	<entry>Moluccas Time</entry>
        </row>
        <row>
 	<entry>AWST</entry>
-	<entry>+8:00 </entry>
+	<entry>+08:00</entry>
 	<entry>Australia Western Standard Time</entry>
        </row>
        <row>
 	<entry>CCT</entry>
-	<entry>+8:00 </entry>
+	<entry>+08:00</entry>
 	<entry>China Coastal Time</entry>
        </row>
        <row>
 	<entry>WADT</entry>
-	<entry>+8:00</entry>
+	<entry>+08:00</entry>
 	<entry>West Australian Daylight Time</entry>
        </row>
        <row>
 	<entry>WST</entry>
-	<entry>+8:00</entry>
+	<entry>+08:00</entry>
 	<entry>West Australian Standard Time</entry>
        </row>
        <row>
 	<entry>JT</entry>
-	<entry>+7:30</entry>
+	<entry>+07:30</entry>
 	<entry>Java Time</entry>
        </row>
        <row>
+	<entry>ALMST</entry>
+	<entry>+07:00</entry>
+	<entry>Almaty Summer Time</entry>
+       </row>
+       <row>
 	<entry>WAST</entry>
-	<entry>+7:00</entry>
+	<entry>+07:00</entry>
 	<entry>West Australian Standard Time</entry>
        </row>
        <row>
 	<entry>CXT</entry>
-	<entry>+7:00</entry>
+	<entry>+07:00</entry>
 	<entry>Christmas (Island) Time</entry>
+       </row>
+       <row>
+	<entry>ALMT</entry>
+	<entry>+06:00</entry>
+	<entry>Almaty Time</entry>
        </row>
 <!--
        Conflicts with China Coastal Time
        <row>
 	<entry>CCT</entry>
-	<entry>+6:30 </entry>
+	<entry>+06:30</entry>
 	<entry>Cocos Island Time</entry>
        </row>
 -->
        <row>
+	<entry>MAWT</entry>
+	<entry>+06:00</entry>
+	<entry>Mawson (Antarctica) Time</entry>
+       </row>
+       <row>
 	<entry>IOT</entry>
-	<entry>+5:00</entry>
+	<entry>+05:00</entry>
 	<entry>Indian Chagos Time</entry>
        </row>
        <row>
 	<entry>MVT</entry>
-	<entry>+5:00</entry>
+	<entry>+05:00</entry>
 	<entry>Maldives Island Time</entry>
        </row>
        <row>
 	<entry>TFT</entry>
-	<entry>+5:00</entry>
+	<entry>+05:00</entry>
 	<entry>Kerguelen Time</entry>
        </row>
        <row>
+	<entry>AFT</entry>
+	<entry>+04:30</entry>
+	<entry>Afganistan Time</entry>
+       </row>
+       <row>
 	<entry>EAST</entry>
-	<entry>+4:00</entry>
+	<entry>+04:00</entry>
 	<entry>Antananarivo Savings Time</entry>
        </row>
        <row>
 	<entry>MUT</entry>
-	<entry>+4:00</entry>
+	<entry>+04:00</entry>
 	<entry>Mauritius Island Time</entry>
        </row>
        <row>
 	<entry>RET</entry>
-	<entry>+4:00</entry>
+	<entry>+04:00</entry>
 	<entry>Reunion Island Time</entry>
        </row>
        <row>
 	<entry>SCT</entry>
-	<entry>+4:00</entry>
+	<entry>+04:00</entry>
 	<entry>Mahe Island Time</entry>
        </row>
        <row>
 	<entry>IT</entry>
-	<entry>+3:30</entry>
+	<entry>+03:30</entry>
 	<entry>Iran Time</entry>
        </row>
        <row>
 	<entry>EAT</entry>
-	<entry>+3:00</entry>
+	<entry>+03:00</entry>
 	<entry>Antananarivo, Comoro Time</entry>
        </row>
        <row>
 	<entry>BT</entry>
-	<entry>+3:00 </entry>
+	<entry>+03:00</entry>
 	<entry>Baghdad Time</entry>
        </row>
        <row>
 	<entry>EETDST</entry>
-	<entry>+3:00 </entry>
+	<entry>+03:00</entry>
 	<entry>Eastern Europe Daylight Savings Time</entry>
        </row>
        <row>
+	<entry>HMT</entry>
+	<entry>+03:00</entry>
+	<entry>Hellas Mediterranean Time (?)</entry>
+       </row>
+       <row>
 	<entry>BDST</entry>
-	<entry>+2:00 </entry>
+	<entry>+02:00</entry>
 	<entry>British Double Standard Time</entry>
        </row>
        <row>
 	<entry>CEST</entry>
-	<entry>+2:00 </entry>
+	<entry>+02:00</entry>
 	<entry>Central European Savings Time</entry>
        </row>
        <row>
 	<entry>CETDST</entry>
-	<entry>+2:00 </entry>
+	<entry>+02:00</entry>
 	<entry>Central European Daylight Savings Time</entry>
        </row>
        <row>
 	<entry>EET</entry>
-	<entry>+2:00 </entry>
+	<entry>+02:00</entry>
 	<entry>Eastern Europe, USSR Zone 1</entry>
        </row>
        <row>
 	<entry>FWT</entry>
-	<entry>+2:00</entry>
+	<entry>+02:00</entry>
 	<entry>French Winter Time</entry>
        </row>
        <row>
 	<entry>IST</entry>
-	<entry>+2:00</entry>
+	<entry>+02:00</entry>
 	<entry>Israel Standard Time</entry>
        </row>
        <row>
 	<entry>MEST</entry>
-	<entry>+2:00</entry>
+	<entry>+02:00</entry>
 	<entry>Middle Europe Summer Time</entry>
        </row>
        <row>
 	<entry>METDST</entry>
-	<entry>+2:00</entry>
+	<entry>+02:00</entry>
 	<entry>Middle Europe Daylight Time</entry>
        </row>
        <row>
 	<entry>SST</entry>
-	<entry>+2:00</entry>
+	<entry>+02:00</entry>
 	<entry>Swedish Summer Time</entry>
        </row>
        <row>
 	<entry>BST</entry>
-	<entry>+1:00 </entry>
+	<entry>+01:00</entry>
 	<entry>British Summer Time</entry>
        </row>
        <row>
 	<entry>CET</entry>
-	<entry>+1:00 </entry>
+	<entry>+01:00</entry>
 	<entry>Central European Time</entry>
        </row>
        <row>
 	<entry>DNT</entry>
-	<entry>+1:00 </entry>
+	<entry>+01:00</entry>
 	<entry><foreignphrase>Dansk Normal Tid</foreignphrase></entry>
        </row>
        <row>
 	<entry>FST</entry>
-	<entry>+1:00 </entry>
+	<entry>+01:00</entry>
 	<entry>French Summer Time</entry>
        </row>
        <row>
 	<entry>MET</entry>
-	<entry>+1:00</entry>
+	<entry>+01:00</entry>
 	<entry>Middle Europe Time</entry>
        </row>
        <row>
 	<entry>MEWT</entry>
-	<entry>+1:00</entry>
+	<entry>+01:00</entry>
 	<entry>Middle Europe Winter Time</entry>
        </row>
        <row>
 	<entry>MEZ</entry>
-	<entry>+1:00</entry>
+	<entry>+01:00</entry>
 	<entry>Middle Europe Zone</entry>
        </row>
        <row>
 	<entry>NOR</entry>
-	<entry>+1:00</entry>
+	<entry>+01:00</entry>
 	<entry>Norway Standard Time</entry>
        </row>
        <row>
 	<entry>SET</entry>
-	<entry>+1:00</entry>
+	<entry>+01:00</entry>
 	<entry>Seychelles Time</entry>
        </row>
        <row>
 	<entry>SWT</entry>
-	<entry>+1:00</entry>
+	<entry>+01:00</entry>
 	<entry>Swedish Winter Time</entry>
        </row>
        <row>
 	<entry>WETDST</entry>
-	<entry>+1:00</entry>
+	<entry>+01:00</entry>
 	<entry>Western Europe Daylight Savings Time</entry>
        </row>
        <row>
 	<entry>GMT</entry>
-	<entry>0:00</entry>
+	<entry>+00:00</entry>
 	<entry>Greenwich Mean Time</entry>
        </row>
        <row>
 	<entry>WET</entry>
-	<entry>0:00</entry>
+	<entry>+00:00</entry>
 	<entry>Western Europe</entry>
        </row>
        <row>
 	<entry>WAT</entry>
-	<entry>-1:00</entry>
+	<entry>-01:00</entry>
 	<entry>West Africa Time</entry>
        </row>
        <row>
 	<entry>NDT</entry>
-	<entry>-2:30</entry>
+	<entry>-02:30</entry>
 	<entry>Newfoundland Daylight Time</entry>
        </row>
        <row>
 	<entry>ADT</entry>
-	<entry>-03:00 </entry>
+	<entry>-03:00</entry>
 	<entry>Atlantic Daylight Time</entry>
        </row>
        <row>
+	<entry>AWT</entry>
+	<entry>-03:00</entry>
+	<entry>(unknown)</entry>
+       </row>
+       <row>
 	<entry>NFT</entry>
-	<entry>-3:30</entry>
+	<entry>-03:30</entry>
 	<entry>Newfoundland Standard Time</entry>
        </row>
        <row>
 	<entry>NST</entry>
-	<entry>-3:30</entry>
+	<entry>-03:30</entry>
 	<entry>Newfoundland Standard Time</entry>
        </row>
        <row>
 	<entry>AST</entry>
-	<entry>-4:00 </entry>
+	<entry>-04:00</entry>
 	<entry>Atlantic Standard Time (Canada)</entry>
        </row>
        <row>
+	<entry>ACST</entry>
+	<entry>-04:00</entry>
+	<entry>Atlantic/Porto Acre Summer Time</entry>
+       </row>
+       <row>
+	<entry>ACT</entry>
+	<entry>-05:00</entry>
+	<entry>Atlantic/Porto Acre Standard Time</entry>
+       </row>
+       <row>
 	<entry>EDT</entry>
-	<entry>-4:00 </entry>
+	<entry>-04:00</entry>
 	<entry>Eastern Daylight Time</entry>
        </row>
        <!--
       <row>
       <entry>ZP4</entry>
-      <entry>-4:00</entry>
+      <entry>-04:00</entry>
       <entry>GMT +4 hours</entry>
       </row>
        -->
        <row>
 	<entry>CDT</entry>
-	<entry>-5:00 </entry>
+	<entry>-05:00</entry>
 	<entry>Central Daylight Time</entry>
        </row>
        <row>
 	<entry>EST</entry>
-	<entry>-5:00 </entry>
+	<entry>-05:00</entry>
 	<entry>Eastern Standard Time</entry>
        </row>
        <!--
       <row>
       <entry>ZP5</entry>
-      <entry>-5:00</entry>
+      <entry>-05:00</entry>
       <entry>GMT +5  hours</entry>
       </row>
        -->
        <row>
 	<entry>CST</entry>
-	<entry>-6:00 </entry>
+	<entry>-06:00</entry>
 	<entry>Central Standard Time</entry>
        </row>
        <row>
 	<entry>MDT</entry>
-	<entry>-6:00</entry>
+	<entry>-06:00</entry>
 	<entry>Mountain Daylight Time</entry>
        </row>
        <!--
       <row>
       <entry>ZP6</entry>
-      <entry>-6:00</entry>
+      <entry>-06:00</entry>
       <entry>GMT +6  hours</entry>
       </row>
        -->
        <row>
 	<entry>MST</entry>
-	<entry>-7:00</entry>
+	<entry>-07:00</entry>
 	<entry>Mountain Standard Time</entry>
        </row>
        <row>
 	<entry>PDT</entry>
-	<entry>-7:00</entry>
+	<entry>-07:00</entry>
 	<entry>Pacific Daylight Time</entry>
        </row>
        <row>
+	<entry>AKDT</entry>
+	<entry>-08:00</entry>
+	<entry>Alaska Daylight Time</entry>
+       </row>
+       <row>
 	<entry>PST</entry>
-	<entry>-8:00</entry>
+	<entry>-08:00</entry>
 	<entry>Pacific Standard Time</entry>
        </row>
        <row>
 	<entry>YDT</entry>
-	<entry>-8:00</entry>
+	<entry>-08:00</entry>
 	<entry>Yukon Daylight Time</entry>
        </row>
        <row>
+	<entry>AKST</entry>
+	<entry>-09:00</entry>
+	<entry>Alaska Standard Time</entry>
+       </row>
+       <row>
 	<entry>HDT</entry>
-	<entry>-9:00</entry>
+	<entry>-09:00</entry>
 	<entry>Hawaii/Alaska Daylight Time</entry>
        </row>
        <row>
 	<entry>YST</entry>
-	<entry>-9:00</entry>
+	<entry>-09:00</entry>
 	<entry>Yukon Standard Time</entry>
        </row>
        <row>
 	<entry>AHST</entry>
-	<entry>-10:00 </entry>
+	<entry>-10:00</entry>
 	<entry>Alaska-Hawaii Standard Time</entry>
        </row>
        <row>
+	<entry>HST</entry>
+	<entry>-10:00</entry>
+	<entry>Hawaii Standard Time</entry>
+       </row>
+       <row>
 	<entry>CAT</entry>
-	<entry>-10:00 </entry>
+	<entry>-10:00</entry>
 	<entry>Central Alaska Time</entry>
        </row>
        <row>
@@ -504,6 +559,11 @@ Date/time details
       </thead>
       <tbody>
        <row>
+	<entry>ACST</entry>
+	<entry>+09:30</entry>
+	<entry>Central Australia Standard Time</entry>
+       </row>
+       <row>
 	<entry>CST</entry>
 	<entry>+10:30</entry>
 	<entry>Australian Central Standard Time</entry>
@@ -515,7 +575,7 @@ Date/time details
        </row>
        <row>
 	<entry>SAT</entry>
-	<entry>+9:30</entry>
+	<entry>+09:30</entry>
 	<entry>South Australian Standard Time</entry>
        </row>
       </tbody>
@@ -582,7 +642,7 @@ Date/time details
 	as either a special string (e.g. <literal>today</literal>),
 	day (e.g. <literal>Thursday</literal>),
 	month (e.g. <literal>January</literal>),
-	or noise word (e.g. <literal>on</literal>).
+	or noise word (e.g. <literal>at</literal>, <literal>on</literal>).
        </para>
        <para>
 	Set field values and bit mask for fields.

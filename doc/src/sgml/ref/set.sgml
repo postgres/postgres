@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.54 2001/12/08 03:24:39 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/set.sgml,v 1.55 2001/12/29 18:35:54 thomas Exp $
 PostgreSQL documentation
 -->
 
@@ -235,6 +235,13 @@ SELECT setseed(<replaceable>value</replaceable>);
       <term>TIME ZONE</term>
       <term>TIMEZONE</term>
       <listitem>
+      <para>
+       Sets the default time zone for your session. Arguments can be
+       an SQL time interval constant, an integer or double precision
+       constant, or a string representing a time zone supported by
+       the host operating system.
+      </para>
+
        <para>
 	The possible values for time zone depends on your operating
 	system. For example, on Linux
@@ -243,10 +250,10 @@ SELECT setseed(<replaceable>value</replaceable>);
        </para>
        <para>
 	Here are some valid values for time zone:
-				
-	<variablelist>
+
+       <variablelist>
 	 <varlistentry>
-	  <term>PST8PDT</term>
+	  <term>'PST8PDT'</term>
 	  <listitem>
 	   <para>
 	    Set the time zone for California.
@@ -254,10 +261,10 @@ SELECT setseed(<replaceable>value</replaceable>);
 	  </listitem>
 	 </varlistentry>
 	 <varlistentry>
-	  <term>Portugal</term>
+	  <term>'Portugal'</term>
 	  <listitem>
 	   <para>
-	    Set time zone for Portugal.
+	    Set the time zone for Portugal.
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -265,7 +272,24 @@ SELECT setseed(<replaceable>value</replaceable>);
 	  <term>'Europe/Rome'</term>
 	  <listitem>
 	   <para>
-	    Set time zone for Italy.
+	    Set the time zone for Italy.
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	 <varlistentry>
+	  <term>7</term>
+	  <listitem>
+	   <para>
+	    Set the time zone to 7 hours offset west from GMT (equivalent
+	   to PDT).
+	   </para>
+	  </listitem>
+	 </varlistentry>
+	  <term>INTERVAL '08:00' HOUR TO MINUTE</term>
+	  <listitem>
+	   <para>
+	    Set the time zone to 8 hours offset west from GMT (equivalent
+	   to PST).
 	   </para>
 	  </listitem>
 	 </varlistentry>
@@ -286,9 +310,9 @@ SELECT setseed(<replaceable>value</replaceable>);
 	becomes GMT (on most systems anyway).
        </para>
        <para>
-        If the PGTZ environment variable is set in the frontend
+        If the <envar>PGTZ</envar> environment variable is set in the frontend
 	environment of a client based on libpq, libpq will automatically
-	set TIMEZONE to the value of PGTZ during connection start-up.
+	set TIMEZONE to the value of <envar>PGTZ</envar> during connection start-up.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.80 2001/12/23 20:21:37 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.81 2001/12/29 18:35:46 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -135,7 +135,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.80 2001/12/23 20:21:37 tg
       </row>
 
       <row>
-       <entry><type>interval</type></entry>
+       <entry><type>interval(<replaceable>p</replaceable>)</type></entry>
        <entry></entry>
        <entry>general-use time span</entry>
       </row>
@@ -165,8 +165,10 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.80 2001/12/23 20:21:37 tg
       </row>
 
       <row>
-       <entry><type>numeric(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
-       <entry><type>decimal(<replaceable>p</replaceable>, <replaceable>s</replaceable>)</type></entry>
+       <entry><type>numeric [ (<replaceable>p</replaceable>,
+	 <replaceable>s</replaceable>) ]</type></entry>
+       <entry><type>decimal [ (<replaceable>p</replaceable>,
+	 <replaceable>s</replaceable>) ]</type></entry>
        <entry>exact numeric with selectable precision</entry>
       </row>
 
@@ -1306,7 +1308,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>1 day</entry>
        </row>
        <row>
-        <entry><type>time [ without time zone ]</type></entry>
+        <entry><type>time [ (<replaceable>p</replaceable>) ] [ without time zone ]</type></entry>
         <entry>times of day only</entry>
         <entry>8 bytes</entry>
         <entry>00:00:00.00</entry>
@@ -1314,7 +1316,7 @@ SELECT b, char_length(b) FROM test2;
         <entry>1 microsecond</entry>
        </row>
        <row>
-        <entry><type>time with time zone</type></entry>
+        <entry><type>time [ (<replaceable>p</replaceable>) ] with time zone</type></entry>
         <entry>times of day only</entry>
         <entry>12 bytes</entry>
         <entry>00:00:00.00+12</entry>
@@ -2164,7 +2166,7 @@ January 8 04:05:06 1999 PST
      <productname>PostgreSQL</productname> for legacy applications and
      for compatibility with other RDBMS implementations).
      <productname>PostgreSQL</productname> 
-     assumes local time for any type containing only
+     assumes your local time zone for any type containing only
      date or time. Further, time zone support is derived from 
      the underlying operating system
      time-zone capabilities, and hence can handle daylight-saving time 
