@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Mar 22 21:49:46 EST 2005
+Last updated:		Tue Mar 22 21:50:58 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -124,7 +124,6 @@ Administration
   This is useful for checking PITR recovery.
 
 * Allow the PITR process to be debugged and data examined
-* Allow a warm standby system to also allow read-only queries
 * Add the client IP address and port to pg_stat_activity
 * Improve replication solutions
 	o Load balancing
