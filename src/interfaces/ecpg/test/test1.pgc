@@ -126,7 +126,8 @@ exec sql end declare section;
 	exec sql at pm commit;
 
 	strcpy(msg, "disconnect"); 
-        exec sql disconnect all;
+        exec sql disconnect main;
+	exec sql disconnect pm;
         
 	if (dbgs != NULL)
                 fclose(dbgs);

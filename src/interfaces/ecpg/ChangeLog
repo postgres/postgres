@@ -867,5 +867,9 @@ Wed Mar 15 17:36:02 CET 2000
 	- Synced preproc.y with gram.y.
 	- Synced pgc.l with scan.l.
 	- Synced keyword.c.
+
+Sun Mar 19 11:03:13 CET 2000
+
+	- Fixed quoting bug in disconnect statement.
 	- Set library version to 3.1.0.
 	- Set ecpg version to 2.7.0.

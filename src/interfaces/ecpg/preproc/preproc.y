@@ -486,7 +486,7 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection); }
 						if (connection)
 							mmerror(ET_ERROR, "no at option for disconnect statement.\n");
 
-						fprintf(yyout, "{ ECPGdisconnect(__LINE__, \"%s\");", $1); 
+						fprintf(yyout, "{ ECPGdisconnect(__LINE__, %s);", $1); 
 						whenever_action(2);
 						free($1);
 					} 
@@ -4372,12 +4372,12 @@ ECPGDeclare: DECLARE STATEMENT ident
 ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
 
 dis_name: connection_object	{ $$ = $1; }
-	| CURRENT	{ $$ = make_str("CURRENT"); }
-	| ALL		{ $$ = make_str("ALL"); }
-	| /* empty */	{ $$ = make_str("CURRENT"); }
+	| CURRENT	{ $$ = make_str("\"CURRENT\""); }
+	| ALL		{ $$ = make_str("\"ALL\""); }
+	| /* empty */	{ $$ = make_str("\"CURRENT\""); }
 
 connection_object: connection_target { $$ = $1; }
-	| DEFAULT	{ $$ = make_str("DEFAULT"); }
+	| DEFAULT	{ $$ = make_str("\"DEFAULT\""); }
 
 /*
  * execute a given string as sql command
