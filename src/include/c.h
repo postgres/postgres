@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.3 1996/11/05 05:28:20 scrappy Exp $
+ * $Id: c.h,v 1.4 1996/11/14 06:06:39 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,12 @@
  */
 #ifndef	C_H
 #define C_H
+
+/* We have to include stdlib.h here because it defines many of these macros
+   on some platforms, and we only want our definitions used if stdlib.h doesn't
+   have its own.
+*/
+#include <stdlib.h>
 
 /* ----------------------------------------------------------------
  *		Section 1:  bool, true, false, TRUE, FALSE
