@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sunos4.h,v 1.11 2001/11/05 17:46:27 momjian Exp $
+ * $Id: sunos4.h,v 1.12 2001/12/05 02:03:59 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,7 @@
  * library as the file to be dynamically loaded.
  *
  */
-#define pg_dlopen(f)	dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
+#define pg_dlopen(f)	dlopen((f),1)
 #define pg_dlsym		dlsym
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
