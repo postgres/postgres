@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.112 2000/04/14 03:05:35 tgl Exp $
+ * $Id: config.h.in,v 1.113 2000/05/12 13:58:25 scrappy Exp $
  */
 
 #ifndef CONFIG_H
@@ -301,6 +301,9 @@
 
 /* default path for the location of the odbcinst.ini file */
 #undef ODBCINST
+
+/* Define if you have the setproctitle function.  */
+#undef HAVE_SETPROCTITLE
 
 /* Define if you have the stricmp function.  */
 #undef HAVE_STRICMP
