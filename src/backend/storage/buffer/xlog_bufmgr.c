@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.3 2000/11/10 03:53:44 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/xlog_bufmgr.c,v 1.4 2000/11/22 02:19:14 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1158,7 +1158,8 @@ BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
 	return ((relation->rd_myxactonly) ? relation->rd_nblocks :
-			smgrnblocks(DEFAULT_SMGR, relation));
+		((relation->rd_rel->relkind == RELKIND_VIEW) ? 0 :
+			smgrnblocks(DEFAULT_SMGR, relation)));
 }
 
 /* ---------------------------------------------------------------------
