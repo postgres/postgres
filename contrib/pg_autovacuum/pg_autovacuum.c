@@ -225,70 +225,73 @@ update_table_list(db_info * dbi)
 		 * tables to the list that are new
 		 */
 		res = send_query((char *) TABLE_STATS_QUERY, dbi);
-		t = PQntuples(res);
-
-		/*
-		 * First: use the tbl_list as the outer loop and the result set as
-		 * the inner loop, this will determine what tables should be
-		 * removed
-		 */
-		while (tbl_elem != NULL)
+		if (res != NULL)
 		{
-			tbl = ((tbl_info *) DLE_VAL(tbl_elem));
-			found_match = 0;
-
-			for (i = 0; i < t; i++)
-			{					/* loop through result set looking for a
-								 * match */
-				if (tbl->relid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
-				{
-					found_match = 1;
-					break;
-				}
-			}
-			if (found_match == 0)
-			{					/* then we didn't find this tbl_elem in
-								 * the result set */
-				Dlelem	   *elem_to_remove = tbl_elem;
-
-				tbl_elem = DLGetSucc(tbl_elem);
-				remove_table_from_list(elem_to_remove);
-			}
-			else
-				tbl_elem = DLGetSucc(tbl_elem);
-		}						/* Done removing dropped tables from the
-								 * table_list */
-
-		/*
-		 * Then loop use result set as outer loop and tbl_list as the
-		 * inner loop to determine what tables are new
-		 */
-		for (i = 0; i < t; i++)
-		{
-			tbl_elem = DLGetHead(dbi->table_list);
-			found_match = 0;
+			t = PQntuples(res);
+			
+			/*
+			* First: use the tbl_list as the outer loop and the result set as
+			* the inner loop, this will determine what tables should be
+			* removed
+			*/
 			while (tbl_elem != NULL)
 			{
 				tbl = ((tbl_info *) DLE_VAL(tbl_elem));
-				if (tbl->relid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
-				{
-					found_match = 1;
-					break;
+				found_match = 0;
+				
+				for (i = 0; i < t; i++)
+				{					/* loop through result set looking for a
+									* match */
+					if (tbl->relid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+					{
+						found_match = 1;
+						break;
+					}
 				}
-				tbl_elem = DLGetSucc(tbl_elem);
-			}
-			if (found_match == 0)		/* then we didn't find this result
-										 * now in the tbl_list */
+				if (found_match == 0)
+				{					/* then we didn't find this tbl_elem in
+									* the result set */
+					Dlelem	   *elem_to_remove = tbl_elem;
+					
+					tbl_elem = DLGetSucc(tbl_elem);
+					remove_table_from_list(elem_to_remove);
+				}
+				else
+					tbl_elem = DLGetSucc(tbl_elem);
+			}						/* Done removing dropped tables from the
+									* table_list */
+			
+			/*
+			* Then loop use result set as outer loop and tbl_list as the
+			* inner loop to determine what tables are new
+			*/
+			for (i = 0; i < t; i++)
 			{
-				DLAddTail(dbi->table_list, DLNewElem(init_table_info(res, i, dbi)));
-				if (args->debug >= 1)
+				tbl_elem = DLGetHead(dbi->table_list);
+				found_match = 0;
+				while (tbl_elem != NULL)
 				{
-					sprintf(logbuffer, "added table: %s.%s", dbi->dbname,
-							((tbl_info *) DLE_VAL(DLGetTail(dbi->table_list)))->table_name);
-					log_entry(logbuffer);
+					tbl = ((tbl_info *) DLE_VAL(tbl_elem));
+					if (tbl->relid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+					{
+						found_match = 1;
+						break;
+					}
+					tbl_elem = DLGetSucc(tbl_elem);
 				}
-			}
-		}						/* end of for loop that adds tables */
+				if (found_match == 0)		/* then we didn't find this result
+											* now in the tbl_list */
+				{
+					DLAddTail(dbi->table_list, DLNewElem(init_table_info(res, i, dbi)));
+					if (args->debug >= 1)
+					{
+						sprintf(logbuffer, "added table: %s.%s", dbi->dbname,
+								((tbl_info *) DLE_VAL(DLGetTail(dbi->table_list)))->table_name);
+						log_entry(logbuffer);
+					}
+				}
+			}						/* end of for loop that adds tables */
+		}
 		fflush(LOGOUTPUT);
 		PQclear(res);
 		res = NULL;
@@ -410,13 +413,18 @@ init_db_list()
 	if (dbs->conn != NULL)
 	{
 		res = send_query(FROZENOID_QUERY, dbs);
-		dbs->oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "oid")));
-		dbs->age = atol(PQgetvalue(res, 0, PQfnumber(res, "age")));
-		if (res)
-			PQclear(res);
-
-		if (args->debug >= 2)
-			print_db_list(db_list, 0);
+		if (res != NULL)
+		{
+			dbs->oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "oid")));
+			dbs->age = atol(PQgetvalue(res, 0, PQfnumber(res, "age")));
+			if (res)
+				PQclear(res);
+	
+			if (args->debug >= 2)
+				print_db_list(db_list, 0);
+		}
+		else
+			return NULL;
 	}
 	return db_list;
 }
@@ -488,78 +496,81 @@ update_db_list(Dllist *db_list)
 		 * add databases to the list that are new
 		 */
 		res = send_query(FROZENOID_QUERY2, dbi_template1);
-		t = PQntuples(res);
-
-		/*
-		 * First: use the db_list as the outer loop and the result set as
-		 * the inner loop, this will determine what databases should be
-		 * removed
-		 */
-		while (db_elem != NULL)
+		if (res != NULL)
 		{
-			dbi = ((db_info *) DLE_VAL(db_elem));
-			found_match = 0;
-
-			for (i = 0; i < t; i++)
-			{					/* loop through result set looking for a
-								 * match */
-				if (dbi->oid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
-				{
-					found_match = 1;
-
-					/*
-					 * update the dbi->age so that we ensure
-					 * xid_wraparound won't happen
-					 */
-					dbi->age = atol(PQgetvalue(res, i, PQfnumber(res, "age")));
-					break;
-				}
-			}
-			if (found_match == 0)
-			{					/* then we didn't find this db_elem in the
-								 * result set */
-				Dlelem	   *elem_to_remove = db_elem;
-
-				db_elem = DLGetSucc(db_elem);
-				remove_db_from_list(elem_to_remove);
-			}
-			else
-				db_elem = DLGetSucc(db_elem);
-		}						/* Done removing dropped databases from
-								 * the table_list */
-
-		/*
-		 * Then loop use result set as outer loop and db_list as the inner
-		 * loop to determine what databases are new
-		 */
-		for (i = 0; i < t; i++)
-		{
-			db_elem = DLGetHead(db_list);
-			found_match = 0;
+			t = PQntuples(res);
+	
+			/*
+			* First: use the db_list as the outer loop and the result set as
+			* the inner loop, this will determine what databases should be
+			* removed
+			*/
 			while (db_elem != NULL)
 			{
 				dbi = ((db_info *) DLE_VAL(db_elem));
-				if (dbi->oid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
-				{
-					found_match = 1;
-					break;
+				found_match = 0;
+	
+				for (i = 0; i < t; i++)
+				{					/* loop through result set looking for a
+									* match */
+					if (dbi->oid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+					{
+						found_match = 1;
+	
+						/*
+						* update the dbi->age so that we ensure
+						* xid_wraparound won't happen
+						*/
+						dbi->age = atol(PQgetvalue(res, i, PQfnumber(res, "age")));
+						break;
+					}
 				}
-				db_elem = DLGetSucc(db_elem);
-			}
-			if (found_match == 0)		/* then we didn't find this result
-										 * now in the tbl_list */
+				if (found_match == 0)
+				{					/* then we didn't find this db_elem in the
+									* result set */
+					Dlelem	   *elem_to_remove = db_elem;
+	
+					db_elem = DLGetSucc(db_elem);
+					remove_db_from_list(elem_to_remove);
+				}
+				else
+					db_elem = DLGetSucc(db_elem);
+			}						/* Done removing dropped databases from
+									* the table_list */
+	
+			/*
+			* Then loop use result set as outer loop and db_list as the inner
+			* loop to determine what databases are new
+			*/
+			for (i = 0; i < t; i++)
 			{
-				DLAddTail(db_list, DLNewElem(init_dbinfo
-						  (PQgetvalue(res, i, PQfnumber(res, "datname")),
-						 atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))),
-					  atol(PQgetvalue(res, i, PQfnumber(res, "age"))))));
-				if (args->debug >= 1)
+				db_elem = DLGetHead(db_list);
+				found_match = 0;
+				while (db_elem != NULL)
 				{
-					sprintf(logbuffer, "added database: %s", ((db_info *) DLE_VAL(DLGetTail(db_list)))->dbname);
-					log_entry(logbuffer);
+					dbi = ((db_info *) DLE_VAL(db_elem));
+					if (dbi->oid == atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))))
+					{
+						found_match = 1;
+						break;
+					}
+					db_elem = DLGetSucc(db_elem);
 				}
-			}
-		}						/* end of for loop that adds tables */
+				if (found_match == 0)		/* then we didn't find this result
+											* now in the tbl_list */
+				{
+					DLAddTail(db_list, DLNewElem(init_dbinfo
+							(PQgetvalue(res, i, PQfnumber(res, "datname")),
+							atooid(PQgetvalue(res, i, PQfnumber(res, "oid"))),
+						atol(PQgetvalue(res, i, PQfnumber(res, "age"))))));
+					if (args->debug >= 1)
+					{
+						sprintf(logbuffer, "added database: %s", ((db_info *) DLE_VAL(DLGetTail(db_list)))->dbname);
+						log_entry(logbuffer);
+					}
+				}
+			}						/* end of for loop that adds tables */
+		}
 		fflush(LOGOUTPUT);
 		PQclear(res);
 		res = NULL;
@@ -599,7 +610,10 @@ xid_wraparound_check(db_info * dbi)
 
 		res = send_query("VACUUM", dbi);
 		/* FIXME: Perhaps should add a check for PQ_COMMAND_OK */
-		PQclear(res);
+		if (res != NULL)
+		{
+			PQclear(res);
+		}
 		return 1;
 	}
 	return 0;
@@ -750,7 +764,7 @@ check_stats_enabled(db_info * dbi)
 	int			ret = 0;
 
 	res = send_query("SHOW stats_row_level", dbi);
-	if (res)
+	if (res != NULL)
 	{
 		ret = strcmp("on", PQgetvalue(res, 0, PQfnumber(res, "stats_row_level")));
 		PQclear(res);
@@ -1079,81 +1093,84 @@ main(int argc, char *argv[])
 					res = send_query(TABLE_STATS_QUERY, dbs);	/* Get an updated
 																 * snapshot of this dbs
 																 * table stats */
-					for (j = 0; j < PQntuples(res); j++)
-					{			/* loop through result set */
-						tbl_elem = DLGetHead(dbs->table_list);	/* Reset tbl_elem to top
-																 * of dbs->table_list */
-						while (tbl_elem != NULL)
-						{		/* Loop through tables in list */
-							tbl = ((tbl_info *) DLE_VAL(tbl_elem));		/* set tbl_info =
-																		 * current_table */
-							if (tbl->relid == atooid(PQgetvalue(res, j, PQfnumber(res, "oid"))))
-							{
-								tbl->curr_analyze_count =
-									(atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_ins"))) +
-									 atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_upd"))) +
-									 atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_del"))));
-								tbl->curr_vacuum_count =
-									(atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_del"))) +
-									 atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_upd"))));
-
-								/*
-								 * Check numDeletes to see if we need to
-								 * vacuum, if so: Run vacuum analyze
-								 * (adding analyze is small so we might as
-								 * well) Update table thresholds and
-								 * related information if numDeletes is
-								 * not big enough for vacuum then check
-								 * numInserts for analyze
-								 */
-								if (tbl->curr_vacuum_count - tbl->CountAtLastVacuum >= tbl->vacuum_threshold)
+					if (res != NULL)
+					{
+						for (j = 0; j < PQntuples(res); j++)
+						{			/* loop through result set */
+							tbl_elem = DLGetHead(dbs->table_list);	/* Reset tbl_elem to top
+																	* of dbs->table_list */
+							while (tbl_elem != NULL)
+							{		/* Loop through tables in list */
+								tbl = ((tbl_info *) DLE_VAL(tbl_elem));		/* set tbl_info =
+																			* current_table */
+								if (tbl->relid == atooid(PQgetvalue(res, j, PQfnumber(res, "oid"))))
 								{
+									tbl->curr_analyze_count =
+										(atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_ins"))) +
+										atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_upd"))) +
+										atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_del"))));
+									tbl->curr_vacuum_count =
+										(atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_del"))) +
+										atol(PQgetvalue(res, j, PQfnumber(res, "n_tup_upd"))));
+	
 									/*
-									 * if relisshared = t and database !=
-									 * template1 then only do an analyze
-									 */
-									if (tbl->relisshared > 0 && strcmp("template1", dbs->dbname))
+									* Check numDeletes to see if we need to
+									* vacuum, if so: Run vacuum analyze
+									* (adding analyze is small so we might as
+									* well) Update table thresholds and
+									* related information if numDeletes is
+									* not big enough for vacuum then check
+									* numInserts for analyze
+									*/
+									if (tbl->curr_vacuum_count - tbl->CountAtLastVacuum >= tbl->vacuum_threshold)
+									{
+										/*
+										* if relisshared = t and database !=
+										* template1 then only do an analyze
+										*/
+										if (tbl->relisshared > 0 && strcmp("template1", dbs->dbname))
+											snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
+										else
+											snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
+										if (args->debug >= 1)
+										{
+											sprintf(logbuffer, "Performing: %s", buf);
+											log_entry(logbuffer);
+											fflush(LOGOUTPUT);
+										}
+										send_query(buf, dbs);
+										update_table_thresholds(dbs, tbl, VACUUM_ANALYZE);
+										if (args->debug >= 2)
+											print_table_info(tbl);
+									}
+									else if (tbl->curr_analyze_count - tbl->CountAtLastAnalyze >= tbl->analyze_threshold)
+									{
 										snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
-									else
-										snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
-									if (args->debug >= 1)
-									{
-										sprintf(logbuffer, "Performing: %s", buf);
-										log_entry(logbuffer);
-										fflush(LOGOUTPUT);
+										if (args->debug >= 1)
+										{
+											sprintf(logbuffer, "Performing: %s", buf);
+											log_entry(logbuffer);
+											fflush(LOGOUTPUT);
+										}
+										send_query(buf, dbs);
+										update_table_thresholds(dbs, tbl, ANALYZE_ONLY);
+										if (args->debug >= 2)
+											print_table_info(tbl);
 									}
-									send_query(buf, dbs);
-									update_table_thresholds(dbs, tbl, VACUUM_ANALYZE);
-									if (args->debug >= 2)
-										print_table_info(tbl);
+									
+									break;	/* once we have found a match, no
+											* need to keep checking. */
 								}
-								else if (tbl->curr_analyze_count - tbl->CountAtLastAnalyze >= tbl->analyze_threshold)
-								{
-									snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
-									if (args->debug >= 1)
-									{
-										sprintf(logbuffer, "Performing: %s", buf);
-										log_entry(logbuffer);
-										fflush(LOGOUTPUT);
-									}
-									send_query(buf, dbs);
-									update_table_thresholds(dbs, tbl, ANALYZE_ONLY);
-									if (args->debug >= 2)
-										print_table_info(tbl);
-								}
-
-								break;	/* once we have found a match, no
-										 * need to keep checking. */
-							}
-
-							/*
-							 * Advance the table pointers for the next
-							 * loop
-							 */
-							tbl_elem = DLGetSucc(tbl_elem);
-
-						}		/* end for table while loop */
-					}			/* end for j loop (tuples in PGresult) */
+								
+								/*
+								* Advance the table pointers for the next
+								* loop
+								*/
+								tbl_elem = DLGetSucc(tbl_elem);
+								
+							}		/* end for table while loop */
+						}			/* end for j loop (tuples in PGresult) */
+					}			/* end if (res != NULL) */
 				}				/* close of if(xid_wraparound_check()) */
 				/* Done working on this db, Clean up, then advance cur_db */
 				PQclear(res);
