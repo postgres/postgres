@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.1.1.1 1996/07/09 06:21:22 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.2 1996/10/03 04:19:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,10 +44,10 @@
 bool VacuumRunning =	false;
 
 /* non-export function prototypes */
-static void _vc_init(char *vacrel);
-static void _vc_shutdown(char *vacrel);
-static void _vc_vacuum(char *vacrel);
-static VRelList _vc_getrels(Portal p, char *vacrel);
+static void _vc_init(void);
+static void _vc_shutdown(void);
+static void _vc_vacuum(NameData *VacRelP);
+static VRelList _vc_getrels(Portal p, NameData *VacRelP);
 static void _vc_vacone(Portal p, VRelList curvrl);
 static void _vc_vacheap(Portal p, VRelList curvrl, Relation onerel);
 static void _vc_vacindices(VRelList curvrl, Relation onerel);
@@ -65,14 +65,24 @@ static bool _vc_isarchrel(char *rname);
 void
 vacuum(char *vacrel)
 {
+    NameData VacRel;
+
+    /* vacrel gets de-allocated on transaction commit */
+    	
     /* initialize vacuum cleaner */
-    _vc_init(vacrel);
+    _vc_init();
 
     /* vacuum the database */
-    _vc_vacuum(vacrel);
+    if (vacrel)
+    {
+	strcpy(VacRel.data,vacrel);
+	_vc_vacuum(&VacRel);
+    }
+    else
+	_vc_vacuum(NULL);
 
     /* clean up */
-    _vc_shutdown(vacrel);
+    _vc_shutdown();
 }
 
 /*
@@ -93,7 +103,7 @@ vacuum(char *vacrel)
  *	PostgresMain().
  */
 static void
-_vc_init(char *vacrel)
+_vc_init()
 {
     int fd;
 
@@ -116,7 +126,7 @@ _vc_init(char *vacrel)
 }
 
 static void
-_vc_shutdown(char *vacrel)
+_vc_shutdown()
 {
     /* on entry, not in a transaction */
     if (unlink("pg_vlock") < 0)
@@ -147,7 +157,7 @@ vc_abort()
  *	locks at one time.
  */
 static void
-_vc_vacuum(char *vacrel)
+_vc_vacuum(NameData *VacRelP)
 {
     VRelList vrl, cur;
     char *pname;
@@ -166,7 +176,7 @@ _vc_vacuum(char *vacrel)
     pfree(pname);
 
     /* get list of relations */
-    vrl = _vc_getrels(p, vacrel);
+    vrl = _vc_getrels(p, VacRelP);
 
     /* vacuum each heap relation */
     for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
@@ -178,7 +188,7 @@ _vc_vacuum(char *vacrel)
 }
 
 static VRelList
-_vc_getrels(Portal p, char *vacrel)
+_vc_getrels(Portal p, NameData *VacRelP)
 {
     Relation pgclass;
     TupleDesc pgcdesc;
@@ -196,10 +206,10 @@ _vc_getrels(Portal p, char *vacrel)
 
     StartTransactionCommand();
 
-    if (vacrel) {
+    if (VacRelP->data) {
 	ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relname,
 			       NameEqualRegProcedure, 
-			       PointerGetDatum(vacrel));
+			       PointerGetDatum(VacRelP->data));
     } else {
 	ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relkind,
 			       CharacterEqualRegProcedure, CharGetDatum('r'));
