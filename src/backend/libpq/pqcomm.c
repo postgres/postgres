@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: pqcomm.c,v 1.69 1999/05/04 23:39:20 tgl Exp $
+ *  $Id: pqcomm.c,v 1.70 1999/05/10 16:10:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,6 +202,11 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
 	}
+
+#ifdef ONLY_REUSE_INET_SOCKETS
+	if (family == AF_INET) {
+#endif
+
 	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 					sizeof(one))) == -1)
 	{
@@ -212,6 +217,11 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		pqdebug("%s", PQerrormsg);
 		return STATUS_ERROR;
 	}
+
+#ifdef ONLY_REUSE_INET_SOCKETS
+	}
+#endif
+
 	MemSet((char *) &saddr, 0, sizeof(saddr));
 	saddr.sa.sa_family = family;
 	if (family == AF_UNIX)
