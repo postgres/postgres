@@ -6,7 +6,7 @@
 # and "pg_group" tables, which belong to the whole installation rather
 # than any one individual database.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.17 2002/04/11 04:56:21 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall.sh,v 1.18 2002/04/11 19:23:36 momjian Exp $
 
 CMDNAME="`basename $0`"
 
@@ -24,7 +24,8 @@ if echo "$0" | grep '/' > /dev/null 2>&1 ; then
     PGPATH=`echo "$0" | sed 's,/[^/]*$,,'`       # (dirname command is not portable)
 else
     # look for it in PATH ('which' command is not portable)
-    for dir in `echo "$PATH" | sed 's/:/ /g'` ; do
+    echo "$PATH" | sed 's/:/\
+/g' | while read dir; do
         # empty entry in path means current dir
         [ x"$dir" = x ] && dir='.'
         if [ -f "$dir/$CMDNAME" ] ; then
@@ -193,17 +194,19 @@ echo
 echo "DELETE FROM pg_group;"
 echo
 
-$PSQL -d template1 -At -F ' ' \
--c 'SELECT groname,grosysid,grolist FROM pg_group;' | \
-while read GRONAME GROSYSID GROLIST ; do
+
+$PSQL -d template1 -At -F '
+' -c 'SELECT groname,grosysid,grolist FROM pg_group;' | \
+while read GRONAME ; do
+    read GROSYSID
+    read GROLIST
     echo "CREATE GROUP \"$GRONAME\" WITH SYSID ${GROSYSID};"
-    raw_grolist=`echo "$GROLIST" | sed 's/^{\(.*\)}$/\1/' | tr ',' ' '`
-    for userid in $raw_grolist ; do
-        username=`$PSQL -d template1 -At -c "SELECT usename FROM pg_shadow WHERE usesysid = ${userid};"`
+    echo "$GROLIST" | sed 's/^{\(.*\)}$/\1/' | tr ',' '\n' |
+    while read userid; do
+        username="`$PSQL -d template1 -At -c \"SELECT usename FROM pg_shadow WHERE usesysid = ${userid};\"`"
         echo "  ALTER GROUP \"$GRONAME\" ADD USER \"$username\";"
     done
 done
-
 
 test "$globals_only" = yes && exit 0
 
@@ -218,10 +221,13 @@ exec 4<&0
 # We skip databases marked not datallowconn, since we'd be unable to
 # connect to them anyway (and besides, we don't want to dump template0).
 
-$PSQL -d template1 -At -F ' ' \
-  -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
-while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
-
+$PSQL -d template1 -At -F '
+' -c "SELECT datname, coalesce(usename, (select usename from pg_shadow where usesysid=(select datdba from pg_database where datname='template0'))), pg_encoding_to_char(d.encoding), datistemplate, datpath FROM pg_database d LEFT JOIN pg_shadow u ON (datdba = usesysid) WHERE datallowconn ORDER BY 1;" | \
+while read DATABASE ; do
+    read DBOWNER
+    read ENCODING
+    read ISTEMPLATE
+    read DBPATH
     if [ "$DATABASE" != template1 ] ; then
 	echo
 
@@ -243,8 +249,8 @@ while read DATABASE DBOWNER ENCODING ISTEMPLATE DBPATH; do
     fi
 done
 
-$PSQL -d template1 -At -F ' ' \
-  -c "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;" | \
+$PSQL -d template1 -At -F '
+' -c "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;" | \
 while read DATABASE; do
     echo "dumping database \"$DATABASE\"..." 1>&2
     echo
