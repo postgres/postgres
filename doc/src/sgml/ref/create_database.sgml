@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.23 2002/01/20 22:19:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_database.sgml,v 1.24 2002/02/24 20:20:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,9 +24,10 @@ PostgreSQL documentation
   </refsynopsisdivinfo>
   <synopsis>
 CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
-    [ WITH [ LOCATION = '<replaceable class="parameter">dbpath</replaceable>' ]
-           [ TEMPLATE = <replaceable class="parameter">template</replaceable> ]
-           [ ENCODING = <replaceable class="parameter">encoding</replaceable> ] ]
+    [ WITH [ OWNER [ = ] <replaceable class="parameter">dbowner</replaceable> ]
+           [ LOCATION [ = ] '<replaceable class="parameter">dbpath</replaceable>' ]
+           [ TEMPLATE [ = ] <replaceable class="parameter">template</replaceable> ]
+           [ ENCODING [ = ] <replaceable class="parameter">encoding</replaceable> ] ]
   </synopsis>
 
   <refsect2 id="R2-SQL-CREATEDATABASE-1">
@@ -44,6 +45,16 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
       <listitem>
        <para>
 	The name of a database to create.
+       </para>
+      </listitem>
+     </varlistentry>
+     <varlistentry>
+      <term><replaceable class="parameter">dbowner</replaceable></term>
+      <listitem>
+       <para>
+        Name of the database user who will own the new database,
+	or <literal>DEFAULT</literal> to use the default (namely, the
+	user executing the command).
        </para>
       </listitem>
      </varlistentry>
@@ -171,7 +182,15 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
   <para>
    <command>CREATE DATABASE</command> creates a new
    <productname>PostgreSQL</productname> database.
-   The creator becomes the owner of the new database.
+  </para>
+
+  <para>
+   Normally, the creator becomes the owner of the new database.
+   A different owner may be specified by using the <option>OWNER</>
+   clause (but only superusers may create databases on behalf of other users).
+   To create a database owned by oneself, either superuser privilege
+   or CREATEDB privilege is required.  A superuser may create a database
+   for another user, even if that user has no special privileges himself.
   </para>
 
   <para>
@@ -327,7 +346,8 @@ Type:  \copyright for distribution terms
    </title>
    <para>
     There is no <command>CREATE DATABASE</command> statement in SQL92.
-    Databases are equivalent to catalogs whose creation is implementation-defined.
+    Databases are equivalent to catalogs, whose creation is
+    implementation-defined.
    </para>
   </refsect2>
  </refsect1>

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.125 2002/02/07 00:27:30 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.126 2002/02/24 20:20:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,8 +624,9 @@ ProcessUtility(Node *parsetree,
 
 				set_ps_display(commandTag = "CREATE DATABASE");
 
-				createdb(stmt->dbname, stmt->dbpath,
-						 stmt->dbtemplate, stmt->encoding);
+				createdb(stmt->dbname, stmt->dbowner,
+						 stmt->dbpath, stmt->dbtemplate,
+						 stmt->encoding);
 			}
 			break;
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.278 2002/02/18 23:11:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.279 2002/02/24 20:20:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -153,6 +153,7 @@ static void doNegateFloat(Value *v);
 %type <ival>    drop_behavior
 
 %type <list>	createdb_opt_list, createdb_opt_item
+%type <boolean>	opt_equal
 
 %type <ival>	opt_lock, lock_type
 %type <boolean>	opt_force, opt_or_replace
@@ -733,6 +734,7 @@ CreateSchemaStmt:  CREATE SCHEMA UserId
 					/* for now, just make this the same as CREATE DATABASE */
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
+					n->dbowner = NULL;
 					n->dbpath = NULL;
 					n->dbtemplate = NULL;
 					n->encoding = -1;
@@ -3049,6 +3051,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
 
 					n->dbname = $3;
 					/* set default options */
+					n->dbowner = NULL;
 					n->dbpath = NULL;
 					n->dbtemplate = NULL;
 					n->encoding = -1;
@@ -3068,6 +3071,9 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
 							case 3:
 								n->encoding = lfirsti(lnext(optitem));
 								break;
+							case 4:
+								n->dbowner = (char *) lsecond(optitem);
+								break;
 						}
 					}
 					$$ = (Node *)n;
@@ -3076,6 +3082,7 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_list
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
+					n->dbowner = NULL;
 					n->dbpath = NULL;
 					n->dbtemplate = NULL;
 					n->encoding = -1;
@@ -3093,23 +3100,23 @@ createdb_opt_list:  createdb_opt_item
  * createdb_opt_item returns 2-element lists, with the first element
  * being an integer code to indicate which item was specified.
  */
-createdb_opt_item:  LOCATION '=' Sconst
+createdb_opt_item:  LOCATION opt_equal Sconst
 				{
 					$$ = lconsi(1, makeList1($3));
 				}
-		| LOCATION '=' DEFAULT
+		| LOCATION opt_equal DEFAULT
 				{
 					$$ = lconsi(1, makeList1(NULL));
 				}
-		| TEMPLATE '=' name
+		| TEMPLATE opt_equal name
 				{
 					$$ = lconsi(2, makeList1($3));
 				}
-		| TEMPLATE '=' DEFAULT
+		| TEMPLATE opt_equal DEFAULT
 				{
 					$$ = lconsi(2, makeList1(NULL));
 				}
-		| ENCODING '=' Sconst
+		| ENCODING opt_equal Sconst
 				{
 					int		encoding;
 #ifdef MULTIBYTE
@@ -3123,7 +3130,7 @@ createdb_opt_item:  LOCATION '=' Sconst
 #endif
 					$$ = lconsi(3, makeListi1(encoding));
 				}
-		| ENCODING '=' Iconst
+		| ENCODING opt_equal Iconst
 				{
 #ifdef MULTIBYTE
 					if (!pg_get_enconv_by_encoding($3))
@@ -3134,12 +3141,23 @@ createdb_opt_item:  LOCATION '=' Sconst
 #endif
 					$$ = lconsi(3, makeListi1($3));
 				}
-		| ENCODING '=' DEFAULT
+		| ENCODING opt_equal DEFAULT
 				{
 					$$ = lconsi(3, makeListi1(-1));
 				}
+		| OWNER opt_equal name 
+				{
+					$$ = lconsi(4, makeList1($3));
+				}
+		| OWNER opt_equal DEFAULT
+				{
+					$$ = lconsi(4, makeList1(NULL));
+				}
 		;
 
+opt_equal: '='								{ $$ = TRUE; }
+		| /*EMPTY*/							{ $$ = FALSE; }
+		;
 
 /*****************************************************************************
  *

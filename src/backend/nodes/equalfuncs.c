@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.109 2002/02/18 23:11:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.110 2002/02/24 20:20:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1098,6 +1098,8 @@ static bool
 _equalCreatedbStmt(CreatedbStmt *a, CreatedbStmt *b)
 {
 	if (!equalstr(a->dbname, b->dbname))
+		return false;
+	if (!equalstr(a->dbowner, b->dbowner))
 		return false;
 	if (!equalstr(a->dbpath, b->dbpath))
 		return false;

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.161 2002/02/18 23:11:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.162 2002/02/24 20:20:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2231,6 +2231,8 @@ _copyCreatedbStmt(CreatedbStmt *from)
 
 	if (from->dbname)
 		newnode->dbname = pstrdup(from->dbname);
+	if (from->dbowner)
+		newnode->dbowner = pstrdup(from->dbowner);
 	if (from->dbpath)
 		newnode->dbpath = pstrdup(from->dbpath);
 	if (from->dbtemplate)

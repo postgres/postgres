@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.152 2002/02/18 23:11:41 petere Exp $
+ * $Id: parsenodes.h,v 1.153 2002/02/24 20:20:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -679,6 +679,7 @@ typedef struct CreatedbStmt
 {
 	NodeTag		type;
 	char	   *dbname;			/* name of database to create */
+	char	   *dbowner;		/* name of owner (NULL = default) */
 	char	   *dbpath;			/* location of database (NULL = default) */
 	char	   *dbtemplate;		/* template to use (NULL = default) */
 	int			encoding;		/* MULTIBYTE encoding (-1 = use default) */

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.82 2002/02/23 20:55:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.83 2002/02/24 20:20:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "storage/sinval.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 #ifdef MULTIBYTE
@@ -55,8 +56,9 @@ static bool remove_dbdirs(const char *real_loc, const char *altloc);
  */
 
 void
-createdb(const char *dbname, const char *dbpath,
-		 const char *dbtemplate, int encoding)
+createdb(const char *dbname, const char *dbowner,
+		 const char *dbpath, const char *dbtemplate,
+		 int encoding)
 {
 	char	   *nominal_loc;
 	char	   *alt_loc;
@@ -79,12 +81,31 @@ createdb(const char *dbname, const char *dbpath,
 	Datum		new_record[Natts_pg_database];
 	char		new_record_nulls[Natts_pg_database];
 	Oid			dboid;
+	int32		datdba;
 
+	/* obtain sysid of proposed owner */
+	if (dbowner)
+		datdba = get_usesysid(dbowner);	/* will elog if no such user */
+	else
+		datdba = GetUserId();
+
+	/* check permission to create database */
 	if (!get_user_info(GetUserId(), &use_super, &use_createdb))
 		elog(ERROR, "current user name is invalid");
 
-	if (!use_createdb && !use_super)
-		elog(ERROR, "CREATE DATABASE: permission denied");
+	if (datdba == (int32) GetUserId())
+	{
+		/* creating database for self: can be superuser or createdb */
+		if (!use_createdb && !use_super)
+			elog(ERROR, "CREATE DATABASE: permission denied");
+	}
+	else
+	{
+		/* creating database for someone else: must be superuser */
+		/* note that the someone else need not have any permissions */
+		if (!use_super)
+			elog(ERROR, "CREATE DATABASE: permission denied");
+	}
 
 	/* don't call this in a transaction block */
 	if (IsTransactionBlock())
@@ -254,7 +275,7 @@ createdb(const char *dbname, const char *dbpath,
 	/* Form tuple */
 	new_record[Anum_pg_database_datname - 1] =
 		DirectFunctionCall1(namein, CStringGetDatum(dbname));
-	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(GetUserId());
+	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(datdba);
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
 	new_record[Anum_pg_database_datistemplate - 1] = BoolGetDatum(false);
 	new_record[Anum_pg_database_datallowconn - 1] = BoolGetDatum(true);
