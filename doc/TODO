@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Aug  6 19:36:02 EDT 2003
+Last updated:		Thu Aug  7 22:00:19 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -32,12 +32,12 @@ Urgent
 Reporting
 =========
 
-* Allow elog() to return error codes, module name, file name, line
-  number, not just messages (Peter E)
-* Add error codes (Peter E)
-* Make error messages more consistent [error]
+* -Allow elog() to return error codes, module name, file name, line
+  number, not just messages (Tom)
+* -Add error codes (Tom)
+* -Make error messages more consistent
 * Show location of syntax error in query [yacc]
-* Add GUC log_statement_and_duration to print statement and >= min duration
+* -Add GUC log_statement_and_duration to print statement and >= min duration
 
 
 Administration
@@ -81,16 +81,16 @@ Data Types
 * Allow better handling of numeric constants, type conversion [typeconv]
 * Allow backend to output result sets in XML
 * Prevent whole-row references from leaking memory, e.g. SELECT COUNT(tab.*)
-* Allow current datestyle to restrict dates;  prevent month/day swapping
+* -Allow current datestyle to restrict dates;  prevent month/day swapping
   from making invalid dates valid
-* Prevent month/day swapping of ISO dates to make invalid dates valid
+* -Prevent month/day swapping of ISO dates to make invalid dates valid
 * Have initdb set DateStyle based on locale?
-* Delay resolution of array expression type so assignment coercion 
+* -Delay resolution of array expression type so assignment coercion 
   can be performed on empty array expressions (Joe)
 
 * ARRAYS
 	o Allow nulls in arrays
-	o Allow arrays to be ORDER'ed
+	o -Allow arrays to be ORDER'ed
 	o Support construction of array result values in expressions
 
 * BINARY DATA
@@ -113,7 +113,7 @@ Multi-Language Support
 * Make octet_length_client the same as octet_length() (?)
 * Prevent mismatch of frontend/backend encodings from converting bytea
   data from being interpreted as encoded strings
-* Remove Cyrillic recode support
+* -Remove Cyrillic recode support
 
  
 Views / Rules
@@ -141,7 +141,7 @@ Indexes
 * Add UNIQUE capability to non-btree indexes
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
-* Certain indexes will not shrink, e.g. indexes on ever-increasing
+* -Certain indexes will not shrink, e.g. indexes on ever-increasing
   columns and indexes with many duplicate keys
 * Use indexes for min() and max() or convert to SELECT col FROM tab ORDER
   BY col DESC LIMIT 1 if appropriate index exists and WHERE clause acceptible
@@ -182,7 +182,7 @@ Commands
 * -Allow UPDATE to use SET col = DEFAULT
 * -Add config variable to prevent auto-adding missing FROM-clause tables
 * Allow SET CONSTRAINTS to be qualified by schema/table
-* Have SELECT '13 minutes'::interval display zero seconds in ISO datestyle
+* -Have SELECT '13 minutes'::interval display zero seconds in ISO datestyle
 * Prevent COMMENT ON DATABASE from using a database name
 * Add GUC variable to prevent waiting on locks
 
@@ -193,7 +193,7 @@ Commands
 	  rows with DEFAULT value
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
           of the item above
-	o -Add ALTER TABLE tab SET WITHOUT OIDS (Rod)
+	o --Add ALTER TABLE tab SET WITHOUT OIDS (Rod)
 	o -Add ALTER SEQUENCE to modify min/max/increment/cache/cycle values
 	o Have ALTER TABLE rename SERIAL sequences
 	o Allow columns to be reordered using ALTER ... POSITION i col1 [,col2];
@@ -218,7 +218,7 @@ Commands
 	o Allow BINARY option to SELECT, just like DECLARE
 	o -MOVE 0 should not move to end of cursor (Bruce)
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor using per-cursor tid
-	  stored in the backend
+	  stored in the backend (Gavin)
 	o Prevent DROP of table being referenced by our own open cursor
 	o -Allow cursors outside transactions
 
@@ -232,13 +232,12 @@ Commands
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
 	  ANALYZE, and CLUSTER
 	o Add SET SCHEMA
-	o Allow EXPLAIN EXECUTE to see prepared plans
+	o -Allow EXPLAIN EXECUTE to see prepared plans
 	o Allow SHOW of non-modifiable variables, like pg_controldata
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
 	o Change PL/PgSQL to use palloc() instead of malloc()
-	o Add untrusted version of plpython
 	o Allow Java server-side programming, http://pljava.sourceforge.net
 	  [java]
 	o Fix problems with complex temporary table creation/destruction
@@ -262,15 +261,15 @@ Commands
 Clients
 =======
 
-* Allow psql to show transaction status if backend protocol changes made
+* -Allow psql to show transaction status if backend protocol changes made
 * -Add schema, cast, and conversion backslash commands to psql (Christopher)
 * -Allow pg_dump to dump a specific schema (Neil Conway)
 * Allow psql to do table completion for SELECT * FROM schema_part and
   table completion for SELECT * FROM schema_name.
 * Add XML capability to pg_dump and COPY, when backend XML capability
 * -Allow SSL-enabled clients to turn off SSL transfers
-* Modify pg_get_triggerdef() to take a boolean to pretty-print,
- and use that as part of pg_dump along with psql
+* -Modify pg_get_triggerdef() to take a boolean to pretty-print,
+  and use that as part of pg_dump along with psql
 
 
 
@@ -289,11 +288,11 @@ Clients
 	o Solve cardinality > 1 for input descriptors / variables
 	o Improve error handling
 	o Add a semantic check level, e.g. check if a table really exists
-	o Add SQLSTATE
+	o -Add SQLSTATE
 	o fix handling of DB attributes that are arrays
 	o Use backend prepare/execute facility for ecpg where possible
 	o -Make casts work in variable initializations
-	o Implement SQLDA (do we really need this?)
+	o -Implement SQLDA
 	o Fix nested C comments
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
 	o -Allow multi-threaded use of SQLCA
@@ -361,7 +360,6 @@ Cache
 =====
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
 * Add free-behind capability for large sequential scans (Bruce)
-* Allow binding query args over FE/BE protocol
 * Consider use of open/fcntl(O_DIRECT) to minimize OS caching
 * Make blind writes go through the file descriptor cache
 * Cache last known per-tuple offsets to speed long tuple access
@@ -375,7 +373,8 @@ Vacuum
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
-* Provide automatic running of vacuum in the background (Tom) [vacuum]
+* Provide automatic running of vacuum in the background in backend
+  rather than in /contrib [vacuum]
 * Allow free space map to be auto-sized or warn when it is too small
 
 
@@ -424,9 +423,9 @@ Optimizer / Executor
 ====================
 
 * Improve Subplan list handling
-* Allow Subplans to use efficient joins(hash, merge) with upper variable
+* -Allow Subplans to use efficient joins(hash, merge) with upper variable
 * -Add hash for evaluating GROUP BY aggregates (Tom)
-* Allow merge and hash joins on expressions not just simple variables (Tom)
+* -Allow merge and hash joins on expressions not just simple variables (Tom)
 * -Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS (Tom)
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Allow ORDER BY ... LIMIT to select top values without sort or index
@@ -471,11 +470,11 @@ Source Code
 * Clarify use of 'application' and 'command' tags in SGML docs
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
-* Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
+* Remove memory/file descriptor freeing before ereport(ERROR)  (Bruce)
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1106 2003/08/06 23:36:02 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1106 2003/08/06 23:36:02 momjian Exp $
+* Change CVS $Id: TODO,v 1.1107 2003/08/08 02:00:20 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1107 2003/08/08 02:00:20 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
@@ -486,21 +485,19 @@ Source Code
 
 
 * Wire Protocol Changes
-	o Show transaction status in psql
-	o Allow binding of query parameters, support for prepared queries
+	o -Show transaction status in psql
+	o -Allow binding of query parameters, support for prepared queries
 	o Add optional textual message to NOTIFY
-	o Remove hard-coded limits on user/db/password names
-	o Remove unused elements of startup packet (unused, tty, passlength)
-	o Fix COPY/fastpath protocol?
+	o -Remove hard-coded limits on user/db/password names
+	o -Remove unused elements of startup packet (unused, tty, passlength)
+	o -Fix COPY/fastpath protocol
 	o Allow fastpast to pass values in portable format
-	o Replication support?
-	o Error codes
+	o -Error codes
 	o Dynamic character set handling
 	o Special passing of binary values in platform-neutral format (bytea?)
-	o ecpg improvements?
 	o Add decoded type, length, precision
 	o Compression?
-	o Report server version number, database encoding, client encoding
+	o -Report server version number, database encoding, client encoding
 	o Update clients to use data types, typmod, schema.table.column names of
 	  result sets using new query protocol
 
