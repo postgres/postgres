@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.24 2001/09/21 21:10:56 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.25 2001/09/29 03:09:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -238,9 +238,9 @@ POSTOPTSFILE=$PGDATA/postmaster.opts
 PIDFILE=$PGDATA/postmaster.pid
 
 if [ "$op" = "status" ];then
-    if [ -f $PIDFILE ];then
+    if [ -f "$PIDFILE" ];then
 	PID=`sed -n 1p $PIDFILE`
-	if [ $PID -lt 0 ];then
+	if [ "$PID" -lt 0 ];then
 	    PID=`expr 0 - $PID`
 	    echo "$CMDNAME: postgres is running (pid: $PID)"
 	else
@@ -256,9 +256,9 @@ if [ "$op" = "status" ];then
 fi
 
 if [ "$op" = "stop" -o "$op" = "restart" -o "$op" = "reload" ];then
-    if [ -f $PIDFILE ];then
+    if [ -f "$PIDFILE" ];then
 	PID=`sed -n 1p $PIDFILE`
-	if [ $PID -lt 0 ];then
+	if [ "$PID" -lt 0 ];then
 	    PID=`expr 0 - $PID`
 	    echo "$CMDNAME: Cannot restart postmaster.  postgres is running (pid: $PID)" 1>&2
 	    echo "Please terminate postgres and try again." 1>&2
@@ -274,10 +274,10 @@ if [ "$op" = "stop" -o "$op" = "restart" -o "$op" = "reload" ];then
 
 	    while :
 	    do
-		if [ -f $PIDFILE ];then
+		if [ -f "$PIDFILE" ];then
 		    $silence_echo $ECHO_N "."$ECHO_C
 		    cnt=`expr $cnt + 1`
-		    if [ $cnt -gt $wait_seconds ];then
+		    if [ "$cnt" -gt "$wait_seconds" ];then
 			$silence_echo echo " failed"
 			echo "$CMDNAME: postmaster does not shut down" 1>&2
 			exit 1
@@ -309,7 +309,7 @@ fi # stop, restart, reload
 
 if [ "$op" = "start" -o "$op" = "restart" ];then
     oldpid=""
-    if [ -f $PIDFILE ];then
+    if [ -f "$PIDFILE" ];then
 	echo "$CMDNAME: Another postmaster may be running.  Trying to start postmaster anyway." 1>&2
 	oldpid=`sed -n 1p $PIDFILE`
     fi
@@ -318,7 +318,7 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
     if [ -z "$POSTOPTS" ];then
 	if [ "$op" = "start" ];then
 	    # if we are in start mode, then look for postmaster.opts.default
-	    if [ -f $DEFPOSTOPTS ]; then
+	    if [ -f "$DEFPOSTOPTS" ]; then
 		eval set X "`cat $DEFPOSTOPTS`"; shift
 	    fi
 	else
@@ -343,7 +343,7 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
     # if had an old lockfile, check to see if we were able to start
     if [ -n "$oldpid" ];then
 	sleep 1
-	if [ -f $PIDFILE ];then
+	if [ -f "$PIDFILE" ];then
 	    if [ "`sed -n 1p $PIDFILE`" = "$oldpid" ];then
 		echo "$CMDNAME: cannot start postmaster" 1>&2
 		echo "Examine the log output." 1>&2
@@ -376,7 +376,7 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
 	    else
 		$silence_echo $ECHO_N "."$ECHO_C
 		cnt=`expr $cnt + 1`
-		if [ $cnt -gt $wait_seconds ];then
+		if [ "$cnt" -gt "$wait_seconds" ];then
 		    $silence_echo echo "failed"
 		    echo "$CMDNAME: postmaster does not start" 1>&2
 		    exit 1
