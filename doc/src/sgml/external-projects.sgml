@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.1 2004/12/03 05:50:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.2 2004/12/03 06:04:38 momjian Exp $
 -->
 
  <chapter id="external-projects">
@@ -185,15 +185,6 @@ $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.1 2004/12/03 05:50:17
    <application>Slony</> is a popular master/slave replication solution
    that is developed independently from the main projects.
   </para>
-
- </sect1>
-
- <sect1 id="administration-tools">
- <title>Administration Tools</title>
-
-  <indexterm>
-   <primary>administration tools</primary>
-  </indexterm>
 
   <para>
    There are several administration tools available for
