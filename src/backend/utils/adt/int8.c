@@ -59,8 +59,7 @@ int8in(char *str)
 
 	/*
 	 * Do our own scan, rather than relying on sscanf which might be
-	 * broken for long long.  NOTE: this will not detect int64 overflow...
-	 * but sscanf doesn't either...
+	 * broken for long long.
 	 */
 	while (*ptr && isspace(*ptr))		/* skip leading spaces */
 		ptr++;
@@ -69,11 +68,17 @@ int8in(char *str)
 	else if (*ptr == '+')
 		ptr++;
 	if (!isdigit(*ptr))			/* require at least one digit */
-		elog(ERROR, "Bad int8 external representation '%s'", str);
+		elog(ERROR, "Bad int8 external representation \"%s\"", str);
 	while (*ptr && isdigit(*ptr))		/* process digits */
-		tmp = tmp * 10 + (*ptr++ - '0');
+	{
+		int64	newtmp = tmp * 10 + (*ptr++ - '0');
+
+		if ((newtmp / 10) != tmp)		/* overflow? */
+			elog(ERROR,"int8 value out of range: \"%s\"", str);
+		tmp = newtmp;
+	}
 	if (*ptr)					/* trailing junk? */
-		elog(ERROR, "Bad int8 external representation '%s'", str);
+		elog(ERROR, "Bad int8 external representation \"%s\"", str);
 
 	*result = (sign < 0) ? -tmp : tmp;
 
