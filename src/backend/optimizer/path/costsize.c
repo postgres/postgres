@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.137 2004/12/31 22:00:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.138 2005/03/06 22:15:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1074,9 +1074,9 @@ cost_hashjoin(HashPath *path, Query *root)
 	double		innerbytes = relation_byte_size(inner_path_rows,
 											  inner_path->parent->width);
 	int			num_hashclauses = list_length(hashclauses);
-	int			virtualbuckets;
-	int			physicalbuckets;
+	int			numbuckets;
 	int			numbatches;
+	double		virtualbuckets;
 	Selectivity innerbucketsize;
 	Selectivity joininfactor;
 	ListCell   *hcl;
@@ -1123,9 +1123,9 @@ cost_hashjoin(HashPath *path, Query *root)
 	/* Get hash table size that executor would use for inner relation */
 	ExecChooseHashTableSize(inner_path_rows,
 							inner_path->parent->width,
-							&virtualbuckets,
-							&physicalbuckets,
+							&numbuckets,
 							&numbatches);
+	virtualbuckets = (double) numbuckets * (double) numbatches;
 
 	/*
 	 * Determine bucketsize fraction for inner relation.  We use the
@@ -1196,13 +1196,13 @@ cost_hashjoin(HashPath *path, Query *root)
 	}
 
 	/*
-	 * if inner relation is too big then we will need to "batch" the join,
+	 * If inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an
 	 * extra time.	Charge one cost unit per page of I/O (correct since it
 	 * should be nice and sequential...).  Writing the inner rel counts as
 	 * startup cost, all the rest as run cost.
 	 */
-	if (numbatches)
+	if (numbatches > 1)
 	{
 		double		outerpages = page_size(outer_path_rows,
 										   outer_path->parent->width);
@@ -1228,7 +1228,9 @@ cost_hashjoin(HashPath *path, Query *root)
 	 * The number of tuple comparisons needed is the number of outer
 	 * tuples times the typical number of tuples in a hash bucket, which
 	 * is the inner relation size times its bucketsize fraction.  At each
-	 * one, we need to evaluate the hashjoin quals.
+	 * one, we need to evaluate the hashjoin quals.  (Note: charging the
+	 * full qual eval cost at each tuple is pessimistic, since we don't
+	 * evaluate the quals unless the hash values match exactly.)
 	 */
 	startup_cost += hash_qual_cost.startup;
 	run_cost += hash_qual_cost.per_tuple *

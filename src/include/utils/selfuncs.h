@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.21 2004/12/31 22:03:46 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.22 2005/03/06 22:15:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ extern double estimate_num_groups(Query *root, List *groupExprs,
 					double input_rows);
 
 extern Selectivity estimate_hash_bucketsize(Query *root, Node *hashkey,
-						 int nbuckets);
+						 double nbuckets);
 
 extern Datum btcostestimate(PG_FUNCTION_ARGS);
 extern Datum rtcostestimate(PG_FUNCTION_ARGS);

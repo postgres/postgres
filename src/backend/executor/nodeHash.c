@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.88 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.89 2005/03/06 22:15:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,12 +21,16 @@
 #include "postgres.h"
 
 #include "executor/execdebug.h"
+#include "executor/hashjoin.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
+
+
+static void ExecHashIncreaseNumBatches(HashJoinTable hashtable);
 
 
 /* ----------------------------------------------------------------
@@ -39,33 +43,19 @@
 TupleTableSlot *
 ExecHash(HashState *node)
 {
-	EState	   *estate;
 	PlanState  *outerNode;
 	List	   *hashkeys;
 	HashJoinTable hashtable;
 	TupleTableSlot *slot;
 	ExprContext *econtext;
-	int			nbatch;
-	int			i;
+	uint32		hashvalue;
 
 	/*
 	 * get state info from node
 	 */
-	estate = node->ps.state;
 	outerNode = outerPlanState(node);
 
 	hashtable = node->hashtable;
-	nbatch = hashtable->nbatch;
-
-	if (nbatch > 0)
-	{
-		/*
-		 * Open temp files for inner batches, if needed. Note that file
-		 * buffers are palloc'd in regular executor context.
-		 */
-		for (i = 0; i < nbatch; i++)
-			hashtable->innerBatchFile[i] = BufFileCreateTemp(false);
-	}
 
 	/*
 	 * set expression context
@@ -82,14 +72,15 @@ ExecHash(HashState *node)
 		if (TupIsNull(slot))
 			break;
 		hashtable->hashNonEmpty = true;
+		/* We have to compute the hash value */
 		econtext->ecxt_innertuple = slot;
-		ExecHashTableInsert(hashtable, econtext, hashkeys);
-		ExecClearTuple(slot);
+		hashvalue = ExecHashGetHashValue(hashtable, econtext, hashkeys);
+		ExecHashTableInsert(hashtable, slot->val, hashvalue);
 	}
 
 	/*
 	 * Return the slot so that we have the tuple descriptor when we need
-	 * to save/restore them.  -Jeff 11 July 1991
+	 * to save/restore them.  -Jeff 11 July 1991  (XXX isn't this dead code?)
 	 */
 	return slot;
 }
@@ -198,7 +189,6 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 {
 	HashJoinTable hashtable;
 	Plan	   *outerNode;
-	int			totalbuckets;
 	int			nbuckets;
 	int			nbatch;
 	int			nkeys;
@@ -214,11 +204,10 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	outerNode = outerPlan(node);
 
 	ExecChooseHashTableSize(outerNode->plan_rows, outerNode->plan_width,
-							&totalbuckets, &nbuckets, &nbatch);
+							&nbuckets, &nbatch);
 
 #ifdef HJDEBUG
-	printf("nbatch = %d, totalbuckets = %d, nbuckets = %d\n",
-		   nbatch, totalbuckets, nbuckets);
+	printf("nbatch = %d, nbuckets = %d\n", nbatch, nbuckets);
 #endif
 
 	/*
@@ -229,15 +218,17 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	 */
 	hashtable = (HashJoinTable) palloc(sizeof(HashJoinTableData));
 	hashtable->nbuckets = nbuckets;
-	hashtable->totalbuckets = totalbuckets;
 	hashtable->buckets = NULL;
 	hashtable->nbatch = nbatch;
 	hashtable->curbatch = 0;
+	hashtable->nbatch_original = nbatch;
+	hashtable->nbatch_outstart = nbatch;
+	hashtable->growEnabled = true;
 	hashtable->hashNonEmpty = false;
 	hashtable->innerBatchFile = NULL;
 	hashtable->outerBatchFile = NULL;
-	hashtable->innerBatchSize = NULL;
-	hashtable->outerBatchSize = NULL;
+	hashtable->spaceUsed = 0;
+	hashtable->spaceAllowed = work_mem * 1024L;
 
 	/*
 	 * Get info about the hash functions to be used for each hash key.
@@ -277,7 +268,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 
 	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
 
-	if (nbatch > 0)
+	if (nbatch > 1)
 	{
 		/*
 		 * allocate and initialize the file arrays in hashCxt
@@ -286,11 +277,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 			palloc0(nbatch * sizeof(BufFile *));
 		hashtable->outerBatchFile = (BufFile **)
 			palloc0(nbatch * sizeof(BufFile *));
-		hashtable->innerBatchSize = (long *)
-			palloc0(nbatch * sizeof(long));
-		hashtable->outerBatchSize = (long *)
-			palloc0(nbatch * sizeof(long));
-		/* The files will not be opened until later... */
+		/* The files will not be opened until needed... */
 	}
 
 	/*
@@ -312,42 +299,44 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
  * Compute appropriate size for hashtable given the estimated size of the
  * relation to be hashed (number of rows and average row width).
  *
- * Caution: the input is only the planner's estimates, and so can't be
- * trusted too far.  Apply a healthy fudge factor.
- *
  * This is exported so that the planner's costsize.c can use it.
  */
 
 /* Target bucket loading (tuples per bucket) */
 #define NTUP_PER_BUCKET			10
-/* Fudge factor to allow for inaccuracy of input estimates */
-#define FUDGE_FAC				2.0
+
+/* Prime numbers that we like to use as nbuckets values */
+static const int hprimes[] = {
+	1033, 2063, 4111, 8219, 16417, 32779, 65539, 131111,
+	262151, 524341, 1048589, 2097211, 4194329, 8388619, 16777289, 33554473,
+	67108913, 134217773, 268435463, 536870951, 1073741831
+};
 
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth,
-						int *virtualbuckets,
-						int *physicalbuckets,
+						int *numbuckets,
 						int *numbatches)
 {
 	int			tupsize;
 	double		inner_rel_bytes;
 	long		hash_table_bytes;
-	double		dtmp;
 	int			nbatch;
 	int			nbuckets;
-	int			totalbuckets;
-	int			bucketsize;
+	int			i;
 
 	/* Force a plausible relation size if no info */
 	if (ntuples <= 0.0)
 		ntuples = 1000.0;
 
 	/*
-	 * Estimate tupsize based on footprint of tuple in hashtable... but
-	 * what about palloc overhead?
+	 * Estimate tupsize based on footprint of tuple in hashtable... note
+	 * this does not allow for any palloc overhead.  The manipulations of
+	 * spaceUsed don't count palloc overhead either.
 	 */
-	tupsize = MAXALIGN(tupwidth) + MAXALIGN(sizeof(HashJoinTupleData));
-	inner_rel_bytes = ntuples * tupsize * FUDGE_FAC;
+	tupsize = MAXALIGN(sizeof(HashJoinTupleData)) +
+		MAXALIGN(sizeof(HeapTupleHeaderData)) +
+		MAXALIGN(tupwidth);
+	inner_rel_bytes = ntuples * tupsize;
 
 	/*
 	 * Target in-memory hashtable size is work_mem kilobytes.
@@ -355,73 +344,57 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 	hash_table_bytes = work_mem * 1024L;
 
 	/*
-	 * Count the number of hash buckets we want for the whole relation,
-	 * for an average bucket load of NTUP_PER_BUCKET (per virtual
-	 * bucket!).  It has to fit in an int, however.
+	 * Set nbuckets to achieve an average bucket load of NTUP_PER_BUCKET when
+	 * memory is filled.  Set nbatch to the smallest power of 2 that appears
+	 * sufficient.
 	 */
-	dtmp = ceil(ntuples * FUDGE_FAC / NTUP_PER_BUCKET);
-	if (dtmp < INT_MAX)
-		totalbuckets = (int) dtmp;
-	else
-		totalbuckets = INT_MAX;
-	if (totalbuckets <= 0)
-		totalbuckets = 1;
-
-	/*
-	 * Count the number of buckets we think will actually fit in the
-	 * target memory size, at a loading of NTUP_PER_BUCKET (physical
-	 * buckets). NOTE: FUDGE_FAC here determines the fraction of the
-	 * hashtable space reserved to allow for nonuniform distribution of
-	 * hash values. Perhaps this should be a different number from the
-	 * other uses of FUDGE_FAC, but since we have no real good way to pick
-	 * either one...
-	 */
-	bucketsize = NTUP_PER_BUCKET * tupsize;
-	nbuckets = (int) (hash_table_bytes / (bucketsize * FUDGE_FAC));
-	if (nbuckets <= 0)
-		nbuckets = 1;
-
-	if (totalbuckets <= nbuckets)
+	if (inner_rel_bytes > hash_table_bytes)
 	{
-		/*
-		 * We have enough space, so no batching.  In theory we could even
-		 * reduce nbuckets, but since that could lead to poor behavior if
-		 * estimated ntuples is much less than reality, it seems better to
-		 * make more buckets instead of fewer.
-		 */
-		totalbuckets = nbuckets;
-		nbatch = 0;
+		/* We'll need multiple batches */
+		long	lbuckets;
+		double	dbatch;
+		int		minbatch;
+
+		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
+		lbuckets = Min(lbuckets, INT_MAX);
+		nbuckets = (int) lbuckets;
+
+		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
+		dbatch = Min(dbatch, INT_MAX/2);
+		minbatch = (int) dbatch;
+		nbatch = 2;
+		while (nbatch < minbatch)
+			nbatch <<= 1;
 	}
 	else
 	{
-		/*
-		 * Need to batch; compute how many batches we want to use. Note
-		 * that nbatch doesn't have to have anything to do with the ratio
-		 * totalbuckets/nbuckets; in fact, it is the number of groups we
-		 * will use for the part of the data that doesn't fall into the
-		 * first nbuckets hash buckets.  We try to set it to make all the
-		 * batches the same size.
-		 */
-		dtmp = ceil((inner_rel_bytes - hash_table_bytes) /
-					hash_table_bytes);
-		if (dtmp < INT_MAX)
-			nbatch = (int) dtmp;
-		else
-			nbatch = INT_MAX;
-		if (nbatch <= 0)
-			nbatch = 1;
+		/* We expect the hashtable to fit in memory */
+		double	dbuckets;
+
+		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
+		dbuckets = Min(dbuckets, INT_MAX);
+		nbuckets = (int) dbuckets;
+
+		nbatch = 1;
 	}
 
 	/*
-	 * Now, totalbuckets is the number of (virtual) hashbuckets for the
-	 * whole relation, and nbuckets is the number of physical hashbuckets
-	 * we will use in the first pass.  Data falling into the first
-	 * nbuckets virtual hashbuckets gets handled in the first pass;
-	 * everything else gets divided into nbatch batches to be processed in
-	 * additional passes.
+	 * We want nbuckets to be prime so as to avoid having bucket and batch
+	 * numbers depend on only some bits of the hash code.  Choose the next
+	 * larger prime from the list in hprimes[].  (This also enforces that
+	 * nbuckets is not very small, by the simple expedient of not putting
+	 * any very small entries in hprimes[].)
 	 */
-	*virtualbuckets = totalbuckets;
-	*physicalbuckets = nbuckets;
+	for (i = 0; i < (int) lengthof(hprimes); i++)
+	{
+		if (hprimes[i] >= nbuckets)
+		{
+			nbuckets = hprimes[i];
+			break;
+		}
+	}
+
+	*numbuckets = nbuckets;
 	*numbatches = nbatch;
 }
 
@@ -437,8 +410,12 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 {
 	int			i;
 
-	/* Make sure all the temp files are closed */
-	for (i = 0; i < hashtable->nbatch; i++)
+	/*
+	 * Make sure all the temp files are closed.  We skip batch 0, since it
+	 * can't have any temp files (and the arrays might not even exist if
+	 * nbatch is only 1).
+	 */
+	for (i = 1; i < hashtable->nbatch; i++)
 	{
 		if (hashtable->innerBatchFile[i])
 			BufFileClose(hashtable->innerBatchFile[i]);
@@ -453,27 +430,159 @@ ExecHashTableDestroy(HashJoinTable hashtable)
 	pfree(hashtable);
 }
 
-/* ----------------------------------------------------------------
- *		ExecHashTableInsert
- *
+/*
+ * ExecHashIncreaseNumBatches
+ *		increase the original number of batches in order to reduce
+ *		current memory consumption
+ */
+static void
+ExecHashIncreaseNumBatches(HashJoinTable hashtable)
+{
+	int			oldnbatch = hashtable->nbatch;
+	int			curbatch = hashtable->curbatch;
+	int			nbatch;
+	int			i;
+	MemoryContext oldcxt;
+	long		ninmemory;
+	long		nfreed;
+
+	/* do nothing if we've decided to shut off growth */
+	if (!hashtable->growEnabled)
+		return;
+
+	/* safety check to avoid overflow */
+	if (oldnbatch > INT_MAX/2)
+		return;
+
+	nbatch = oldnbatch * 2;
+	Assert(nbatch > 1);
+
+#ifdef HJDEBUG
+	printf("Increasing nbatch to %d because space = %lu\n",
+		   nbatch, (unsigned long) hashtable->spaceUsed);
+#endif
+
+	oldcxt = MemoryContextSwitchTo(hashtable->hashCxt);
+
+	if (hashtable->innerBatchFile == NULL)
+	{
+		/* we had no file arrays before */
+		hashtable->innerBatchFile = (BufFile **)
+			palloc0(nbatch * sizeof(BufFile *));
+		hashtable->outerBatchFile = (BufFile **)
+			palloc0(nbatch * sizeof(BufFile *));
+	}
+	else
+	{
+		/* enlarge arrays and zero out added entries */
+		hashtable->innerBatchFile = (BufFile **)
+			repalloc(hashtable->innerBatchFile, nbatch * sizeof(BufFile *));
+		hashtable->outerBatchFile = (BufFile **)
+			repalloc(hashtable->outerBatchFile, nbatch * sizeof(BufFile *));
+		MemSet(hashtable->innerBatchFile + oldnbatch, 0,
+			   (nbatch - oldnbatch) * sizeof(BufFile *));
+		MemSet(hashtable->outerBatchFile + oldnbatch, 0,
+			   (nbatch - oldnbatch) * sizeof(BufFile *));
+	}
+
+	MemoryContextSwitchTo(oldcxt);
+
+	hashtable->nbatch = nbatch;
+
+	/*
+	 * Scan through the existing hash table entries and dump out any
+	 * that are no longer of the current batch.
+	 */
+	ninmemory = nfreed = 0;
+
+	for (i = 0; i < hashtable->nbuckets; i++)
+	{
+		HashJoinTuple prevtuple;
+		HashJoinTuple tuple;
+
+		prevtuple = NULL;
+		tuple = hashtable->buckets[i];
+
+		while (tuple != NULL)
+		{
+			/* save link in case we delete */
+			HashJoinTuple nexttuple = tuple->next;
+			int			bucketno;
+			int			batchno;
+
+			ninmemory++;
+			ExecHashGetBucketAndBatch(hashtable, tuple->hashvalue,
+									  &bucketno, &batchno);
+			Assert(bucketno == i);
+			if (batchno == curbatch)
+			{
+				/* keep tuple */
+				prevtuple = tuple;
+			}
+			else
+			{
+				/* dump it out */
+				Assert(batchno > curbatch);
+				ExecHashJoinSaveTuple(&tuple->htup, tuple->hashvalue,
+									  &hashtable->innerBatchFile[batchno]);
+				/* and remove from hash table */
+				if (prevtuple)
+					prevtuple->next = nexttuple;
+				else
+					hashtable->buckets[i] = nexttuple;
+				/* prevtuple doesn't change */
+				hashtable->spaceUsed -=
+					MAXALIGN(sizeof(HashJoinTupleData)) + tuple->htup.t_len;
+				pfree(tuple);
+				nfreed++;
+			}
+
+			tuple = nexttuple;
+		}
+	}
+
+#ifdef HJDEBUG
+	printf("Freed %ld of %ld tuples, space now %lu\n",
+		   nfreed, ninmemory, (unsigned long) hashtable->spaceUsed);
+#endif
+
+	/*
+	 * If we dumped out either all or none of the tuples in the table,
+	 * disable further expansion of nbatch.  This situation implies that
+	 * we have enough tuples of identical hashvalues to overflow spaceAllowed.
+	 * Increasing nbatch will not fix it since there's no way to subdivide
+	 * the group any more finely.
+	 * We have to just gut it out and hope the server has enough RAM.
+	 */
+	if (nfreed == 0 || nfreed == ninmemory)
+	{
+		hashtable->growEnabled = false;
+#ifdef HJDEBUG
+		printf("Disabling further increase of nbatch\n");
+#endif
+	}
+}
+
+/*
+ * ExecHashTableInsert
  *		insert a tuple into the hash table depending on the hash value
- *		it may just go to a tmp file for other batches
- * ----------------------------------------------------------------
+ *		it may just go to a temp file for later batches
  */
 void
 ExecHashTableInsert(HashJoinTable hashtable,
-					ExprContext *econtext,
-					List *hashkeys)
+					HeapTuple tuple,
+					uint32 hashvalue)
 {
-	int			bucketno = ExecHashGetBucket(hashtable, econtext, hashkeys);
-	int			batchno = ExecHashGetBatch(bucketno, hashtable);
-	TupleTableSlot *slot = econtext->ecxt_innertuple;
-	HeapTuple	heapTuple = slot->val;
+	int			bucketno;
+	int			batchno;
+
+	ExecHashGetBucketAndBatch(hashtable, hashvalue,
+							  &bucketno, &batchno);
 
 	/*
-	 * decide whether to put the tuple in the hash table or a tmp file
+	 * decide whether to put the tuple in the hash table or a temp file
 	 */
-	if (batchno < 0)
+	if (batchno == hashtable->curbatch)
 	{
 		/*
 		 * put the tuple in hash table
@@ -481,45 +590,50 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		HashJoinTuple hashTuple;
 		int			hashTupleSize;
 
-		hashTupleSize = MAXALIGN(sizeof(*hashTuple)) + heapTuple->t_len;
+		hashTupleSize = MAXALIGN(sizeof(HashJoinTupleData)) + tuple->t_len;
 		hashTuple = (HashJoinTuple) MemoryContextAlloc(hashtable->batchCxt,
 													   hashTupleSize);
+		hashTuple->hashvalue = hashvalue;
 		memcpy((char *) &hashTuple->htup,
-			   (char *) heapTuple,
+			   (char *) tuple,
 			   sizeof(hashTuple->htup));
 		hashTuple->htup.t_datamcxt = hashtable->batchCxt;
 		hashTuple->htup.t_data = (HeapTupleHeader)
-			(((char *) hashTuple) + MAXALIGN(sizeof(*hashTuple)));
+			(((char *) hashTuple) + MAXALIGN(sizeof(HashJoinTupleData)));
 		memcpy((char *) hashTuple->htup.t_data,
-			   (char *) heapTuple->t_data,
-			   heapTuple->t_len);
+			   (char *) tuple->t_data,
+			   tuple->t_len);
 		hashTuple->next = hashtable->buckets[bucketno];
 		hashtable->buckets[bucketno] = hashTuple;
+		hashtable->spaceUsed += hashTupleSize;
+		if (hashtable->spaceUsed > hashtable->spaceAllowed)
+			ExecHashIncreaseNumBatches(hashtable);
 	}
 	else
 	{
 		/*
-		 * put the tuple into a tmp file for later batches
+		 * put the tuple into a temp file for later batches
 		 */
-		hashtable->innerBatchSize[batchno]++;
-		ExecHashJoinSaveTuple(heapTuple,
-							  hashtable->innerBatchFile[batchno]);
+		Assert(batchno > hashtable->curbatch);
+		ExecHashJoinSaveTuple(tuple, hashvalue,
+							  &hashtable->innerBatchFile[batchno]);
 	}
 }
 
-/* ----------------------------------------------------------------
- *		ExecHashGetBucket
+/*
+ * ExecHashGetHashValue
+ *		Compute the hash value for a tuple
  *
- *		Get the hash value for a tuple
- * ----------------------------------------------------------------
+ * The tuple to be tested must be in either econtext->ecxt_outertuple or
+ * econtext->ecxt_innertuple.  Vars in the hashkeys expressions reference
+ * either OUTER or INNER.
  */
-int
-ExecHashGetBucket(HashJoinTable hashtable,
-				  ExprContext *econtext,
-				  List *hashkeys)
+uint32
+ExecHashGetHashValue(HashJoinTable hashtable,
+					 ExprContext *econtext,
+					 List *hashkeys)
 {
 	uint32		hashkey = 0;
-	int			bucketno;
 	ListCell   *hk;
 	int			i = 0;
 	MemoryContext oldContext;
@@ -561,51 +675,63 @@ ExecHashGetBucket(HashJoinTable hashtable,
 		i++;
 	}
 
-	bucketno = hashkey % (uint32) hashtable->totalbuckets;
-
-#ifdef HJDEBUG
-	if (bucketno >= hashtable->nbuckets)
-		printf("hash(%u) = %d SAVED\n", hashkey, bucketno);
-	else
-		printf("hash(%u) = %d\n", hashkey, bucketno);
-#endif
-
 	MemoryContextSwitchTo(oldContext);
 
-	return bucketno;
+	return hashkey;
 }
 
-/* ----------------------------------------------------------------
- *		ExecHashGetBatch
+/*
+ * ExecHashGetBucketAndBatch
+ *		Determine the bucket number and batch number for a hash value
  *
- *		determine the batch number for a bucketno
+ * Note: on-the-fly increases of nbatch must not change the bucket number
+ * for a given hash code (since we don't move tuples to different hash
+ * chains), and must only cause the batch number to remain the same or
+ * increase.  Our algorithm is
+ *		bucketno = hashvalue MOD nbuckets
+ *		batchno = (hashvalue DIV nbuckets) MOD nbatch
+ * where nbuckets should preferably be prime so that all bits of the
+ * hash value can affect both bucketno and batchno.
+ * nbuckets doesn't change over the course of the join.
  *
- * Returns -1 if bucket belongs to initial (or current) batch,
- * else 0..nbatch-1 corresponding to external batch file number for bucket.
- * ----------------------------------------------------------------
+ * nbatch is always a power of 2; we increase it only by doubling it.  This
+ * effectively adds one more bit to the top of the batchno.
  */
-int
-ExecHashGetBatch(int bucketno, HashJoinTable hashtable)
+void
+ExecHashGetBucketAndBatch(HashJoinTable hashtable,
+						  uint32 hashvalue,
+						  int *bucketno,
+						  int *batchno)
 {
-	if (bucketno < hashtable->nbuckets)
-		return -1;
+	uint32	nbuckets = (uint32) hashtable->nbuckets;
+	uint32	nbatch = (uint32) hashtable->nbatch;
 
-	return (bucketno - hashtable->nbuckets) % hashtable->nbatch;
+	if (nbatch > 1)
+	{
+		*bucketno = hashvalue % nbuckets;
+		*batchno = (hashvalue / nbuckets) % nbatch;
+	}
+	else
+	{
+		*bucketno = hashvalue % nbuckets;
+		*batchno = 0;
+	}
 }
 
-/* ----------------------------------------------------------------
- *		ExecScanHashBucket
+/*
+ * ExecScanHashBucket
+ *		scan a hash bucket for matches to the current outer tuple
  *
- *		scan a hash bucket of matches
- * ----------------------------------------------------------------
+ * The current outer tuple must be stored in econtext->ecxt_outertuple.
  */
 HeapTuple
 ExecScanHashBucket(HashJoinState *hjstate,
-				   List *hjclauses,
 				   ExprContext *econtext)
 {
+	List	   *hjclauses = hjstate->hashclauses;
 	HashJoinTable hashtable = hjstate->hj_HashTable;
 	HashJoinTuple hashTuple = hjstate->hj_CurTuple;
+	uint32		hashvalue = hjstate->hj_CurHashValue;
 
 	/*
 	 * hj_CurTuple is NULL to start scanning a new bucket, or the address
@@ -618,23 +744,26 @@ ExecScanHashBucket(HashJoinState *hjstate,
 
 	while (hashTuple != NULL)
 	{
-		HeapTuple	heapTuple = &hashTuple->htup;
-		TupleTableSlot *inntuple;
-
-		/* insert hashtable's tuple into exec slot so ExecQual sees it */
-		inntuple = ExecStoreTuple(heapTuple,	/* tuple to store */
-								  hjstate->hj_HashTupleSlot,	/* slot */
-								  InvalidBuffer,
-								  false);		/* do not pfree this tuple */
-		econtext->ecxt_innertuple = inntuple;
-
-		/* reset temp memory each time to avoid leaks from qual expression */
-		ResetExprContext(econtext);
-
-		if (ExecQual(hjclauses, econtext, false))
+		if (hashTuple->hashvalue == hashvalue)
 		{
-			hjstate->hj_CurTuple = hashTuple;
-			return heapTuple;
+			HeapTuple	heapTuple = &hashTuple->htup;
+			TupleTableSlot *inntuple;
+
+			/* insert hashtable's tuple into exec slot so ExecQual sees it */
+			inntuple = ExecStoreTuple(heapTuple,
+									  hjstate->hj_HashTupleSlot,
+									  InvalidBuffer,
+									  false);	/* do not pfree */
+			econtext->ecxt_innertuple = inntuple;
+
+			/* reset temp memory each time to avoid leaks from qual expr */
+			ResetExprContext(econtext);
+
+			if (ExecQual(hjclauses, econtext, false))
+			{
+				hjstate->hj_CurTuple = hashTuple;
+				return heapTuple;
+			}
 		}
 
 		hashTuple = hashTuple->next;
@@ -646,17 +775,13 @@ ExecScanHashBucket(HashJoinState *hjstate,
 	return NULL;
 }
 
-/* ----------------------------------------------------------------
- *		ExecHashTableReset
+/*
+ * ExecHashTableReset
  *
  *		reset hash table header for new batch
- *
- *		ntuples is the number of tuples in the inner relation's batch
- *		(which we currently don't actually use...)
- * ----------------------------------------------------------------
  */
 void
-ExecHashTableReset(HashJoinTable hashtable, long ntuples)
+ExecHashTableReset(HashJoinTable hashtable)
 {
 	MemoryContext oldcxt;
 	int			nbuckets = hashtable->nbuckets;
@@ -668,21 +793,11 @@ ExecHashTableReset(HashJoinTable hashtable, long ntuples)
 	MemoryContextReset(hashtable->batchCxt);
 	oldcxt = MemoryContextSwitchTo(hashtable->batchCxt);
 
-	/*
-	 * We still use the same number of physical buckets as in the first
-	 * pass. (It could be different; but we already decided how many
-	 * buckets would be appropriate for the allowed memory, so stick with
-	 * that number.) We MUST set totalbuckets to equal nbuckets, because
-	 * from now on no tuples will go out to temp files; there are no more
-	 * virtual buckets, only real buckets.	(This implies that tuples will
-	 * go into different bucket numbers than they did on the first pass,
-	 * but that's OK.)
-	 */
-	hashtable->totalbuckets = nbuckets;
-
 	/* Reallocate and reinitialize the hash bucket headers. */
 	hashtable->buckets = (HashJoinTuple *)
 		palloc0(nbuckets * sizeof(HashJoinTuple));
+
+	hashtable->spaceUsed = 0;
 
 	MemoryContextSwitchTo(oldcxt);
 }
