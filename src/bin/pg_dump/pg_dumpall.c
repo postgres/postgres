@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.21 2003/06/11 05:13:11 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.22 2003/06/22 00:56:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -701,7 +701,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	PGconn	   *conn;
 	char	   *password = NULL;
 	bool		need_pass = false;
-	PGresult   *res;
+	const char *remoteversion_str;
 
 	if (require_password)
 		password = simple_prompt("Password: ", 100, false);
@@ -745,23 +745,19 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		exit(1);
 	}
 
-	res = executeQuery(conn, "SELECT version();");
-	if (PQntuples(res) != 1)
+	remoteversion_str = PQparameterStatus(conn, "server_version");
+	if (!remoteversion_str)
 	{
 		fprintf(stderr, _("%s: could not get server version\n"), progname);
 		exit(1);
 	}
-	else
+	server_version = parse_version(remoteversion_str);
+	if (server_version < 0)
 	{
-		char *val = PQgetvalue(res, 0, 0);
-		server_version = parse_version(val + strcspn(val, "0123456789"));
-		if (server_version < 0)
-		{
-			fprintf(stderr, _("%s: could not parse server version \"%s\"\n"), progname, val);
-			exit(1);
-		}
+		fprintf(stderr, _("%s: could not parse server version \"%s\"\n"),
+				progname, remoteversion_str);
+		exit(1);
 	}
-	PQclear(res);
 
 	return conn;
 }

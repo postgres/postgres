@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.47 2003/05/14 03:26:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.48 2003/06/22 00:56:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,29 +53,23 @@ _parse_version(ArchiveHandle *AH, const char *versionString)
 static void
 _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 {
-	PGresult   *res;
 	int			myversion;
 	const char *remoteversion_str;
 	int			remoteversion;
-	PGconn	   *conn = AH->connection;
 
 	myversion = _parse_version(AH, PG_VERSION);
 
-	res = PQexec(conn, "SELECT version();");
-	if (!res ||
-		PQresultStatus(res) != PGRES_TUPLES_OK ||
-		PQntuples(res) != 1)
-		die_horribly(AH, modulename, "could not get version from server: %s", PQerrorMessage(conn));
+	remoteversion_str = PQparameterStatus(AH->connection, "server_version");
+	if (!remoteversion_str)
+		die_horribly(AH, modulename, "could not get server_version from libpq\n");
 
-	remoteversion_str = PQgetvalue(res, 0, 0);
-	remoteversion = _parse_version(AH, remoteversion_str + 11);
-
-	PQclear(res);
+	remoteversion = _parse_version(AH, remoteversion_str);
 
 	AH->public.remoteVersion = remoteversion;
 
 	if (myversion != remoteversion
-		&& (remoteversion < AH->public.minRemoteVersion || remoteversion > AH->public.maxRemoteVersion))
+		&& (remoteversion < AH->public.minRemoteVersion ||
+			remoteversion > AH->public.maxRemoteVersion))
 	{
 		write_msg(NULL, "server version: %s; %s version: %s\n",
 				  remoteversion_str, progname, PG_VERSION);
