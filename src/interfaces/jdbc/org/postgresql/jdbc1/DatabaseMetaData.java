@@ -1787,9 +1787,9 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   {
     Field f[] = new Field[1];
     Vector v = new Vector();
-    byte[][] tuple = new byte[1][0];
     f[0] = new Field(connection,new String("TABLE_TYPE"),iVarcharOid,32);
     for(int i=0;i<getTableTypes.length;i++) {
+      byte[][] tuple = new byte[1][0];
       tuple[0] = getTableTypes[i][0].getBytes();
       v.addElement(tuple);
     }
